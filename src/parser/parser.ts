@@ -230,6 +230,7 @@ class Parser {
   private readonly scores: Score[] = []
   private readonly diagnostics: Diagnostic[] = []
   private builder: ScoreBuilder | null = null
+  private inTextBlock = false
 
   constructor(private readonly src: string) {}
 
@@ -269,6 +270,22 @@ class Parser {
 
   private processLine(start: number, end: number): void {
     const line = this.src.slice(start, end).replace(/\r$/, '')
+
+    // A `%%begintext` block runs to `%%endtext`. Its content lines carry no `%%` prefix,
+    // so they must be claimed here — otherwise ordinary English prose parses as music and
+    // every a-g in it becomes a note. Checked before the blank-line flush: a blank line
+    // inside the block is part of the text, not the end of the tune.
+    // ponytail: the text itself is discarded. v2 keeps it as `Score.freeText`; add that
+    // when something (a renderer) actually consumes it.
+    if (this.inTextBlock) {
+      if (line.startsWith('%%endtext')) this.inTextBlock = false
+      return
+    }
+    if (line.startsWith('%%begintext')) {
+      this.inTextBlock = true
+      return
+    }
+
     if (line.trim() === '') {
       this.flush() // A blank line ends the tune.
       return
