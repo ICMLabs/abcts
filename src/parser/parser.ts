@@ -292,6 +292,7 @@ class Parser {
   private readonly diagnostics: Diagnostic[] = []
   private builder: ScoreBuilder | null = null
   private inTextBlock = false
+  private lastFieldLetter: string | null = null
 
   constructor(private readonly src: string) {}
 
@@ -372,7 +373,14 @@ class Parser {
     if (line.startsWith('%')) return // comment
 
     if (/^[A-Za-z]:/.test(line)) {
-      this.applyField(line[0] as string, line.slice(2), start, end)
+      this.lastFieldLetter = line[0] as string
+      this.applyField(this.lastFieldLetter, line.slice(2), start, end)
+      return
+    }
+    // `+:` continues the previous field over another line. Without this it falls through
+    // to scanMusic and ordinary prose parses as music.
+    if (line.startsWith('+:') && this.lastFieldLetter) {
+      this.applyField(this.lastFieldLetter, line.slice(2), start, end)
       return
     }
     this.scanMusic(start, end)

@@ -25,6 +25,20 @@ import { corpusDir, goldenNotes } from './corpus.js'
  */
 const BASELINE = 39
 
+/**
+ * Fixtures where core INTENTIONALLY disagrees with abcjs, with the reason.
+ *
+ * These are abcjs bugs that core exists to fix, so matching the golden would be a
+ * regression, not progress. They are excluded from the pass requirement but still
+ * reported — a divergence that starts matching means something changed and needs a look.
+ */
+const KNOWN_DIVERGENCES: Record<string, string> = {
+  'frere-jacques':
+    'abcjs parses `+:` field-continuation lines as music — its notes at offsets 256-296 ' +
+    'are the prose of "+:belongs to their respective owners". Core treats `+:` as a ' +
+    'continuation of the previous field (ABC 2.1), giving 32 real notes against abcjs 45.',
+}
+
 /** Full per-fixture breakdown, written on every run for triage. */
 const REPORT_PATH = '/tmp/abcts-content-parity.txt'
 
@@ -77,8 +91,10 @@ function abcjsNotes(name: string): string[] {
 
 it('content parity against abcjs goldens does not regress', () => {
   const rows: string[] = []
+  const unexpectedMatches: string[] = []
   let matched = 0
   let compared = 0
+  let diverged = 0
 
   const fixtures = readdirSync(corpusDir)
     .filter((f) => f.endsWith('.abc'))
@@ -96,17 +112,31 @@ it('content parity against abcjs goldens does not regress', () => {
     compared++
     const ours = ourNotes(readFileSync(join(corpusDir, file), 'utf-8'))
     const same = ours.length === theirs.length && ours.every((k, i) => k === theirs[i])
+    const divergence = KNOWN_DIVERGENCES[name]
+    if (divergence) {
+      diverged++
+      if (same) unexpectedMatches.push(name)
+      rows.push(
+        `DIVERGE ${name.padEnd(33)} ours=${String(ours.length).padStart(4)} abcjs=${String(theirs.length).padStart(4)}  ${same ? '!! NOW MATCHES — divergence may be stale' : divergence}`,
+      )
+      continue
+    }
     if (same) matched++
     rows.push(
       `${same ? 'MATCH ' : 'diff  '} ${name.padEnd(34)} ours=${String(ours.length).padStart(4)} abcjs=${String(theirs.length).padStart(4)}`,
     )
   }
 
-  const summary = `=== ${matched}/${compared} compared fixtures match (${fixtures.length - compared} skipped) ===`
+  const gated = compared - diverged
+  const summary = `=== ${matched}/${gated} gated fixtures match (${diverged} known divergences, ${fixtures.length - compared} skipped) ===`
   // A skipped fixture means the golden yielded no notes at all. That should now be
   // impossible — if it reappears, the reader has lost a dump shape again, not the corpus.
   writeFileSync(REPORT_PATH, `${rows.join('\n')}\n${summary}\n`)
 
   expect(compared, 'no fixtures were comparable — the goldens are not loading').toBeGreaterThan(0)
+  expect(
+    unexpectedMatches,
+    'a known divergence now matches abcjs — re-check whether it is still a real divergence',
+  ).toEqual([])
   expect(matched, `${summary}\nfull report: ${REPORT_PATH}`).toBeGreaterThanOrEqual(BASELINE)
 })
