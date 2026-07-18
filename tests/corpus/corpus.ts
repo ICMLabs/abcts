@@ -84,20 +84,36 @@ function goldenTunes(name: string): readonly GoldenTune[] {
   return golden.tunes ?? [golden]
 }
 
-/** Every sounding note element in a golden, flattened across tunes, lines, staves and voices. */
+/**
+ * Every sounding note element in a golden, in VOICE-MAJOR order.
+ *
+ * abcjs stores elements system-major — `lines[].staff[].voices[]`, where each line is one
+ * rendered system — so a two-voice tune interleaves V1 and V2 once per system. The core
+ * model is voice-major (`Score.voices[].measures[]`). Regrouping by `(staff, voice)` here
+ * undoes abcjs's layout order to recover the logical order; it does not discard anything.
+ * Grouping restarts per tune, so tune 0's voice 0 never merges with tune 1's.
+ */
 export function goldenNotes(name: string): GoldenElement[] {
   const out: GoldenElement[] = []
   for (const tune of goldenTunes(name)) {
+    const byVoice = new Map<string, GoldenElement[]>() // insertion order = first appearance
     for (const line of tune.lines ?? []) {
-      for (const staff of line.staff ?? []) {
-        for (const voice of staff.voices ?? []) {
+      ;(line.staff ?? []).forEach((staff, staffIndex) => {
+        ;(staff.voices ?? []).forEach((voice, voiceIndex) => {
+          const key = `${staffIndex}:${voiceIndex}`
+          let bucket = byVoice.get(key)
+          if (!bucket) {
+            bucket = []
+            byVoice.set(key, bucket)
+          }
           for (const element of voice) {
             if (element.el_type !== 'note' || element.rest || !element.pitches) continue
-            out.push(element)
+            bucket.push(element)
           }
-        }
-      }
+        })
+      })
     }
+    for (const bucket of byVoice.values()) out.push(...bucket)
   }
   return out
 }

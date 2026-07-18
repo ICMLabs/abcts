@@ -132,6 +132,8 @@ const BARLINES: Record<string, Barline> = {
   ':||:': 'repeatBoth',
 }
 
+const DEFAULT_VOICE_ID = '1'
+
 const KNOWN_FIELDS = 'ABCDFGHIKLMNOPQRSTUVWXZmrsw'
 
 // ─── Builders ────────────────────────────────────────────────────────────────
@@ -196,12 +198,38 @@ class ScoreBuilder {
   bodyStarted = false
   keySourceRange: SourceRange | null = null
   meterSourceRange: SourceRange | null = null
-  readonly voice = new VoiceBuilder('1')
+  /** Declaration order is output order — a Map preserves insertion order. */
+  private readonly voices = new Map<string, VoiceBuilder>()
+  private currentVoiceId = DEFAULT_VOICE_ID
 
   constructor(readonly sourceStartOffset: number) {}
 
+  /** The voice music currently lands in. Created on demand for tunes with no `V:` at all. */
+  get voice(): VoiceBuilder {
+    return this.voiceFor(this.currentVoiceId)
+  }
+
+  voiceFor(id: string): VoiceBuilder {
+    let builder = this.voices.get(id)
+    if (!builder) {
+      builder = new VoiceBuilder(id)
+      this.voices.set(id, builder)
+    }
+    return builder
+  }
+
+  /** `V:2` in the body switches; in the header it only declares. */
+  selectVoice(id: string): void {
+    this.voiceFor(id)
+    this.currentVoiceId = id
+  }
+
   get isEmpty(): boolean {
-    return this.tuneNumber === null && this.titles.length === 0 && this.voice.isEmpty
+    return (
+      this.tuneNumber === null &&
+      this.titles.length === 0 &&
+      [...this.voices.values()].every((v) => v.isEmpty)
+    )
   }
 
   finish(): Score {
@@ -216,7 +244,7 @@ class ScoreBuilder {
       key: this.key,
       meter: this.meter,
       unitNoteLength: this.unitNoteLength,
-      voices: [this.voice.finish()],
+      voices: [...this.voices.values()].map((v) => v.finish()),
       sourceStartOffset: this.sourceStartOffset,
       keySourceRange: this.keySourceRange,
       meterSourceRange: this.meterSourceRange,
@@ -349,6 +377,13 @@ class Parser {
         builder.unitExplicit = true
         return
       }
+      case 'V': {
+        // `V:1 clef=treble name="..."` — the id is the first token; the rest is voice
+        // configuration. ponytail: clef/name/transpose parsed when a fixture needs them.
+        const id = value.split(/\s+/)[0]
+        if (id) builder.selectVoice(id)
+        return
+      }
       case 'K': {
         if (builder.bodyStarted) {
           this.info('parsed-not-realized', 'mid-tune key change not yet implemented', range)
@@ -411,9 +446,13 @@ class Parser {
           break
         }
         case 'openBracket': {
-          voice.noteMeasureStart(token.start)
           const built = this.buildChord(tokens, i, builder)
-          voice.push(built.chord)
+          // An empty `[…]` is not a musical event — emitting it would insert a phantom
+          // zero-pitch chord into the stream.
+          if (built.chord.pitches.length > 0) {
+            voice.noteMeasureStart(token.start)
+            voice.push(built.chord)
+          }
           i = built.next
           pendingAccidental = null
           accidentalStart = null

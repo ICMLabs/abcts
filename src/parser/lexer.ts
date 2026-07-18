@@ -98,9 +98,11 @@ export class Lexer {
       return token('digit', i - start)
     }
 
-    // Greedy run: `|`, `||`, `|]`, `:|`, `|:`, `::` all lex as one barline.
-    if (c === '|' || c === ':') {
-      let i = start
+    // Greedy run: `|`, `||`, `|]`, `:|`, `|:`, `::`, `[|` all lex as one barline.
+    // `[` must be tested for a following `|` here, BEFORE the chord-open branch below —
+    // otherwise `[|` opens a chord that never closes.
+    if (c === '|' || c === ':' || (c === '[' && src[start + 1] === '|')) {
+      let i = start + 1 // the opening char is part of the run by construction
       while (i < src.length) {
         const d = src[i]
         if (d !== '|' && d !== ':' && d !== ']') break
