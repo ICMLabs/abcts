@@ -134,11 +134,19 @@ const BARLINES: Record<string, Barline> = {
 
 const DEFAULT_VOICE_ID = '1'
 
+/** `octave=±n` on a `V:` or `K:` field — a sounding shift, not a written-pitch change. */
+function octaveModifier(spec: string): number | null {
+  const match = /octave=(-?\d+)/.exec(spec)
+  const value = match?.[1]
+  return value === undefined ? null : Number.parseInt(value, 10)
+}
+
 const KNOWN_FIELDS = 'ABCDFGHIKLMNOPQRSTUVWXZmrsw'
 
 // ─── Builders ────────────────────────────────────────────────────────────────
 
 class VoiceBuilder {
+  octaveShift = 0
   private readonly measures: Measure[] = []
   private events: MusicEvent[] = []
   private measureStart: number | null = null
@@ -187,7 +195,7 @@ class VoiceBuilder {
       this.events = []
       this.measureStart = null
     }
-    return { id: this.id, measures: this.measures }
+    return { id: this.id, octaveShift: this.octaveShift, measures: this.measures }
   }
 
   get isEmpty(): boolean {
@@ -390,7 +398,10 @@ class Parser {
         // `V:1 clef=treble name="..."` — the id is the first token; the rest is voice
         // configuration. ponytail: clef/name/transpose parsed when a fixture needs them.
         const id = value.split(/\s+/)[0]
-        if (id) builder.selectVoice(id)
+        if (!id) return
+        builder.selectVoice(id)
+        const octave = octaveModifier(value)
+        if (octave !== null) builder.voiceFor(id).octaveShift = octave
         return
       }
       case 'K': {
@@ -400,6 +411,8 @@ class Parser {
         }
         builder.key = parseKey(value)
         builder.keySourceRange = range
+        const keyOctave = octaveModifier(value)
+        if (keyOctave !== null) builder.voice.octaveShift = keyOctave
         builder.bodyStarted = true // K: ends the header.
         return
       }

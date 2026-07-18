@@ -231,6 +231,12 @@ export interface Measure {
 
 export interface Voice {
   readonly id: string
+  /**
+   * `V:… octave=±n` — a sounding shift in octaves, NOT baked into `Pitch.octave`.
+   * Pitches stay as written; consumers (audio, engrave) apply this. abcjs bakes the
+   * shift into its pitch numbers instead, so any comparison against it must add it back.
+   */
+  readonly octaveShift: number
   readonly measures: readonly Measure[]
 }
 

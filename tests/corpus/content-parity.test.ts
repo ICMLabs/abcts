@@ -23,7 +23,7 @@ import { corpusDir, goldenNotes } from './corpus.js'
  * on something else (multi-voice, mostly). Counts reconcile exactly, so chords are
  * correct; they are just not what this gate measures.
  */
-const BASELINE = 29
+const BASELINE = 30
 
 /** Full per-fixture breakdown, written on every run for triage. */
 const REPORT_PATH = '/tmp/abcts-content-parity.txt'
@@ -49,14 +49,20 @@ function ourNotes(abc: string): string[] {
   if (!result.ok) return []
   return result.scores
     .flatMap((score) => score.voices)
-    .flatMap((voice) => voice.measures)
-    .flatMap((measure) => measure.events)
-    .filter((event) => event.type === 'note' || event.type === 'chord')
-    .map((event) =>
-      keyOf({
-        duration: ratToNumber(event.duration),
-        pitches: (event.type === 'chord' ? event.pitches : [event.pitch]).map(diatonic),
-      }),
+    .flatMap((voice) =>
+      voice.measures
+        .flatMap((measure) => measure.events)
+        .filter((event) => event.type === 'note' || event.type === 'chord')
+        .map((event) =>
+          keyOf({
+            duration: ratToNumber(event.duration),
+            // abcjs bakes `octave=` into its pitch numbers; the core model keeps it on
+            // the Voice as a sounding shift, so add it back to compare like for like.
+            pitches: (event.type === 'chord' ? event.pitches : [event.pitch]).map(
+              (pitch) => diatonic(pitch) + voice.octaveShift * 7,
+            ),
+          }),
+        ),
     )
 }
 
