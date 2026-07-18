@@ -1,0 +1,43 @@
+{
+  "name": "abcts",
+  "version": "0.0.0",
+  "description": "Modern TypeScript ABC notation library — community successor to abcjs",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:corpus": "vitest run tests/corpus",
+    "lint": "biome check ./src ./tests",
+    "lint:fix": "biome check --write ./src ./tests",
+    "format": "biome format --write ./src ./tests",
+    "typecheck": "tsc --noEmit",
+    "docs": "typedoc",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "npm run build && changeset publish"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.4",
+    "@changesets/cli": "^2.31.1",
+    "tsup": "^8.5.1",
+    "typedoc": "^0.28.20",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
+  }
+}
