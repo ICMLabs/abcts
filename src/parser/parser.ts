@@ -217,6 +217,8 @@ class ScoreBuilder {
   meterSourceRange: SourceRange | null = null
   /** Declaration order is output order — a Map preserves insertion order. */
   private readonly voices = new Map<string, VoiceBuilder>()
+  /** Voice ids from `%%score`/`%%staves`, which overrides declaration order. */
+  scoreOrder: string[] | null = null
   private currentVoiceId = DEFAULT_VOICE_ID
 
   constructor(readonly sourceStartOffset: number) {}
@@ -249,6 +251,20 @@ class ScoreBuilder {
     )
   }
 
+  /**
+   * `%%score` sets the staff layout, and with it the order voices are presented in.
+   * Voices it does not mention keep declaration order, appended after the listed ones.
+   */
+  private orderedVoices(): VoiceBuilder[] {
+    if (!this.scoreOrder) return [...this.voices.values()]
+    const listed = this.scoreOrder.filter((id) => this.voices.has(id))
+    const seen = new Set(listed)
+    return [
+      ...listed.map((id) => this.voiceFor(id)),
+      ...[...this.voices.entries()].filter(([id]) => !seen.has(id)).map(([, v]) => v),
+    ]
+  }
+
   finish(): Score {
     const metadata: ScoreMetadata = {
       tuneNumber: this.tuneNumber,
@@ -261,7 +277,7 @@ class ScoreBuilder {
       key: this.key,
       meter: this.meter,
       unitNoteLength: this.unitNoteLength,
-      voices: [...this.voices.values()].map((v) => v.finish()),
+      voices: this.orderedVoices().map((v) => v.finish()),
       sourceStartOffset: this.sourceStartOffset,
       keySourceRange: this.keySourceRange,
       meterSourceRange: this.meterSourceRange,
@@ -333,6 +349,16 @@ class Parser {
 
     if (line.trim() === '') {
       this.flush() // A blank line ends the tune.
+      return
+    }
+    // `%%score [(S A) | (T B)]` / `%%staves` — grouping punctuation is layout; the bare
+    // words are voice ids, and their order is the order voices are presented in.
+    const scoreDirective = /^%%(?:score|staves)\s+(.*)$/.exec(line)
+    if (scoreDirective?.[1]) {
+      this.ensureScore(start).scoreOrder = scoreDirective[1]
+        .replace(/[[\](){}|*&]/g, ' ')
+        .split(/\s+/)
+        .filter(Boolean)
       return
     }
     if (line.startsWith('%%')) {
