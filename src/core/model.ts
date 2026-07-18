@@ -223,6 +223,11 @@ export type Barline = 'thin' | 'double' | 'final' | 'repeatStart' | 'repeatEnd' 
 
 export interface Measure {
   readonly events: readonly MusicEvent[]
+  /**
+   * `&` overlay layers — additional simultaneous lines within this measure, each a
+   * parallel stream to `events`. `G2 &E2 B2` puts `E2 B2` in overlay layer 0.
+   */
+  readonly overlays: readonly (readonly MusicEvent[])[]
   /** `null` when the tune ends without a closing barline. */
   readonly closingBarline: Barline | null
   readonly sourceRange: SourceRange | null

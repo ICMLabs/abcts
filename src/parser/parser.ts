@@ -149,6 +149,9 @@ class VoiceBuilder {
   octaveShift = 0
   private readonly measures: Measure[] = []
   private events: MusicEvent[] = []
+  private overlays: MusicEvent[][] = []
+  /** Which `&` layer new events land in; null means the main line. */
+  private overlayIndex: number | null = null
   private measureStart: number | null = null
 
   constructor(readonly id: string) {}
@@ -157,17 +160,30 @@ class VoiceBuilder {
     if (this.measureStart === null) this.measureStart = offset
   }
 
+  /** `&` opens the next overlay layer; the layer resets at the barline. */
+  startOverlay(): void {
+    this.overlayIndex = this.overlayIndex === null ? 0 : this.overlayIndex + 1
+    while (this.overlays.length <= this.overlayIndex) this.overlays.push([])
+  }
+
+  private get target(): MusicEvent[] {
+    if (this.overlayIndex === null) return this.events
+    return this.overlays[this.overlayIndex] as MusicEvent[]
+  }
+
   push(event: MusicEvent): void {
-    this.events.push(event)
+    this.target.push(event)
   }
 
   /** The event a broken-rhythm mark reaches back to. Null once a barline has closed. */
   get last(): MusicEvent | null {
-    return this.events[this.events.length - 1] ?? null
+    const target = this.target
+    return target[target.length - 1] ?? null
   }
 
   replaceLast(event: MusicEvent): void {
-    if (this.events.length > 0) this.events[this.events.length - 1] = event
+    const target = this.target
+    if (target.length > 0) target[target.length - 1] = event
   }
 
   closeMeasure(barline: Barline, barlineRange: SourceRange): void {
@@ -175,11 +191,14 @@ class VoiceBuilder {
     if (this.events.length === 0 && this.measureStart === null) return
     this.measures.push({
       events: this.events,
+      overlays: this.overlays,
       closingBarline: barline,
       sourceRange: sourceRange(this.measureStart ?? barlineRange.start, barlineRange.end),
       closingBarlineSourceRange: barlineRange,
     })
     this.events = []
+    this.overlays = []
+    this.overlayIndex = null
     this.measureStart = null
   }
 
@@ -188,18 +207,21 @@ class VoiceBuilder {
       const last = this.events[this.events.length - 1]
       this.measures.push({
         events: this.events,
+        overlays: this.overlays,
         closingBarline: null,
         sourceRange: sourceRange(this.measureStart ?? 0, last?.sourceRange?.end ?? 0),
         closingBarlineSourceRange: null,
       })
       this.events = []
+      this.overlays = []
+      this.overlayIndex = null
       this.measureStart = null
     }
     return { id: this.id, octaveShift: this.octaveShift, measures: this.measures }
   }
 
   get isEmpty(): boolean {
-    return this.measures.length === 0 && this.events.length === 0
+    return this.measures.length === 0 && this.events.length === 0 && this.overlays.length === 0
   }
 }
 
@@ -542,6 +564,11 @@ class Parser {
             )
           }
           i += arrows
+          break
+        }
+        case 'voiceOverlay': {
+          voice().startOverlay()
+          i++
           break
         }
         case 'inlineField': {

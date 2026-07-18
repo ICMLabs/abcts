@@ -23,7 +23,7 @@ import { corpusDir, goldenNotes } from './corpus.js'
  * on something else (multi-voice, mostly). Counts reconcile exactly, so chords are
  * correct; they are just not what this gate measures.
  */
-const BASELINE = 39
+const BASELINE = 40
 
 /**
  * Fixtures where core INTENTIONALLY disagrees with abcjs, with the reason.
@@ -64,8 +64,12 @@ function ourNotes(abc: string): string[] {
   return result.scores
     .flatMap((score) => score.voices)
     .flatMap((voice) =>
-      voice.measures
-        .flatMap((measure) => measure.events)
+      // abcjs promotes `&` overlay layers to their own voice, emitted after the main
+      // line, so the main stream comes first and overlays follow.
+      [
+        ...voice.measures.flatMap((measure) => measure.events),
+        ...voice.measures.flatMap((measure) => measure.overlays.flat()),
+      ]
         .filter((event) => event.type === 'note' || event.type === 'chord')
         .map((event) =>
           keyOf({
