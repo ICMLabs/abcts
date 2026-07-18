@@ -193,6 +193,11 @@ export interface Note {
   readonly graceSlash: boolean
   /** Shared id across a beamed run; null when this event beams with nothing. */
   readonly beamGroup: number | null
+  /** First-verse syllable sung on this event, if any. */
+  readonly lyric: string | null
+  readonly lyricSourceRange: SourceRange | null
+  /** Verses 2..n, parallel and positional — null where a verse skips this event. */
+  readonly extraVerses: readonly (string | null)[]
   readonly style: NoteStyle
   /**
    * Microtonal detune in cents from a fractional accidental — `^/` is +50, `_/` is -50,
@@ -250,6 +255,11 @@ export interface Chord {
   readonly graceSlash: boolean
   /** Shared id across a beamed run; null when this event beams with nothing. */
   readonly beamGroup: number | null
+  /** First-verse syllable sung on this event, if any. */
+  readonly lyric: string | null
+  readonly lyricSourceRange: SourceRange | null
+  /** Verses 2..n, parallel and positional — null where a verse skips this event. */
+  readonly extraVerses: readonly (string | null)[]
   readonly style: NoteStyle
   /**
    * Per-notehead notated durations for a mixed-length chord (`[C2G]` → half + quarter),

@@ -79,6 +79,9 @@ describe('parse: simple-c', () => {
       graceNotes: [],
       graceSlash: false,
       beamGroup: null,
+      lyric: null,
+      lyricSourceRange: null,
+      extraVerses: [],
       style: 'normal',
       microtoneCents: 0,
       tuplet: null,
@@ -326,5 +329,58 @@ describe('mid-tune key and meter changes', () => {
     const result = parse('X:1\nL:1/4\nK:C\nCDEF|\nK:G\nGABc|\n')
     if (!result.ok) throw new Error('expected parse to succeed')
     expect(result.diagnostics.filter((d) => d.code === 'parsed-not-realized')).toEqual([])
+  })
+})
+
+describe('lyrics', () => {
+  const notesOf = (abc: string) => {
+    const result = parse(abc)
+    if (!result.ok) throw new Error('expected parse to succeed')
+    return (result.scores[0]?.voices[0]?.measures ?? [])
+      .flatMap((measure) => measure.events)
+      .filter((event) => event.type === 'note')
+  }
+
+  it('aligns syllables to notes by position', () => {
+    const notes = notesOf('X:1\nL:1/4\nK:C\nCDEF|\nw:Do Re Mi Fa\n')
+    expect(notes.map((n) => n.lyric)).toEqual(['Do', 'Re', 'Mi', 'Fa'])
+  })
+
+  it('splits a hyphenated word across notes, keeping the hyphen', () => {
+    const notes = notesOf('X:1\nL:1/4\nK:C\nCDEF|\nw:Fre-re Jac-ques\n')
+    expect(notes.map((n) => n.lyric)).toEqual(['Fre-', 're', 'Jac-', 'ques'])
+  })
+
+  it('treats * as a skipped note and | as an alignment hint occupying none', () => {
+    const notes = notesOf('X:1\nL:1/4\nK:C\nCDEF|\nw:Do * | Mi Fa\n')
+    expect(notes.map((n) => n.lyric)).toEqual(['Do', null, 'Mi', 'Fa'])
+  })
+
+  it('stacks successive w: lines as verses', () => {
+    const notes = notesOf('X:1\nL:1/4\nK:C\nCD|\nw:one two\nw:ein zwei\n')
+    expect(notes.map((n) => n.lyric)).toEqual(['one', 'two'])
+    expect(notes.map((n) => n.extraVerses)).toEqual([['ein'], ['zwei']])
+  })
+
+  it('continues verse 1 across a second music line', () => {
+    const notes = notesOf('X:1\nL:1/4\nK:C\nCD|\nw:one two\nEF|\nw:three four\n')
+    expect(notes.map((n) => n.lyric)).toEqual(['one', 'two', 'three', 'four'])
+  })
+
+  it('does not put a lyric on a rest', () => {
+    const result = parse('X:1\nL:1/4\nK:C\nCzD|\nw:do re\n')
+    if (!result.ok) throw new Error('expected parse to succeed')
+    const events = (result.scores[0]?.voices[0]?.measures ?? []).flatMap((m) => m.events)
+    expect(events[1]?.type).toBe('rest')
+    // The rest is skipped entirely, so `re` lands on the note after it.
+    expect(events[0]?.type === 'note' && events[0].lyric).toBe('do')
+    expect(events[2]?.type === 'note' && events[2].lyric).toBe('re')
+  })
+
+  it('records a source range for cross-linking', () => {
+    const abc = 'X:1\nL:1/4\nK:C\nCD|\nw:do re\n'
+    const [first] = notesOf(abc)
+    const range = first?.lyricSourceRange
+    expect(abc.slice(range?.start ?? 0, range?.end ?? 0)).toBe('do')
   })
 })

@@ -10,8 +10,10 @@
  * chords, barlines, measures, broken rhythm, tuplets, microtones, `&` overlays,
  * `%%score` voice ordering, `%%begintext` blocks, `+:` continuations, chord symbols,
  * annotations and decorations.
- * ponytail: DEFERRED — grace notes, slurs, ties, lyrics (`w:`), beaming, mid-tune
- * key/meter changes, part order, `U:` user-defined symbols, most `%%` directives.
+ * ponytail: DEFERRED — ABC §8.2 text-escape decoding (`\\vao` → ǎo, `` \\`a `` → à) on
+ * lyrics, titles and annotations; v2 runs decodeTextString over all of them and we
+ * currently keep the raw source. Also: part order (`P:`), `U:` user-defined symbols,
+ * symbol lines (`s:`), and most `%%` directives.
  * Each is a separate step driven by the corpus fixture that needs it; the lexer
  * already tokenizes all of them, so the work is parser-side only.
  */
@@ -161,6 +163,11 @@ class VoiceBuilder {
   /** Which `&` layer new events land in; null means the main line. */
   private overlayIndex: number | null = null
   private measureStart: number | null = null
+  /** Lyric-bearing events emitted so far in the PRIMARY layer — the `w:` alignment index. */
+  private noteCounter = 0
+  /** The counter value when the current music line began; `w:` lines align from here. */
+  private lineNoteStart = 0
+  private readonly lyricLines: { start: number; syllables: Syllable[] }[] = []
 
   constructor(readonly id: string) {}
 
@@ -205,6 +212,55 @@ class VoiceBuilder {
 
   push(event: MusicEvent): void {
     this.target.push(event)
+    // Lyrics align to the primary melody only: overlay notes do not advance the counter,
+    // since an overlay plus lyrics is otherwise ambiguous. Rests bear no lyric.
+    if (this.overlayIndex === null && event.type !== 'rest') this.noteCounter += 1
+  }
+
+  /** Called before scanning a music line, so following `w:` lines know where to start. */
+  beginMusicLine(): void {
+    this.lineNoteStart = this.noteCounter
+  }
+
+  addLyricLine(syllables: Syllable[]): void {
+    this.lyricLines.push({ start: this.lineNoteStart, syllables })
+  }
+
+  /**
+   * Distribute `w:` syllables onto lyric-bearing events by position.
+   *
+   * Several `w:` lines after the same music line are successive verses of that line, and
+   * verse numbering is per music line — the second line's first `w:` continues verse 1.
+   */
+  private applyLyrics(): void {
+    if (this.lyricLines.length === 0) return
+    const verses: Map<number, Syllable>[] = []
+    const verseOfStart = new Map<number, number>()
+    for (const line of this.lyricLines) {
+      const verse = verseOfStart.get(line.start) ?? 0
+      verseOfStart.set(line.start, verse + 1)
+      while (verses.length <= verse) verses.push(new Map())
+      line.syllables.forEach((syllable, offset) => {
+        if (syllable.text !== null) verses[verse]?.set(line.start + offset, syllable)
+      })
+    }
+
+    let index = 0
+    for (const measure of this.measures) {
+      const events = measure.events as MusicEvent[]
+      events.forEach((event, position) => {
+        if (event.type === 'rest') return
+        const first = verses[0]?.get(index)
+        const extras = verses.slice(1).map((verse) => verse.get(index)?.text ?? null)
+        events[position] = {
+          ...event,
+          lyric: first?.text ?? null,
+          lyricSourceRange: first?.range ?? null,
+          extraVerses: extras,
+        }
+        index += 1
+      })
+    }
   }
 
   /** The event a broken-rhythm mark reaches back to. Null once a barline has closed. */
@@ -276,6 +332,7 @@ class VoiceBuilder {
       this.overlayIndex = null
       this.measureStart = null
     }
+    this.applyLyrics()
     return { id: this.id, octaveShift: this.octaveShift, measures: this.measures }
   }
 
@@ -522,6 +579,11 @@ class Parser {
         builder.unitExplicit = true
         return
       }
+      case 'w': {
+        // `w:` follows the music line it belongs to. Offset by 2 for the `w:` prefix.
+        builder.voice.addLyricLine(parseLyricSyllables(content, start + 2))
+        return
+      }
       case 'V': {
         // `V:1 clef=treble name="..."` — the id is the first token; the rest is voice
         // configuration. ponytail: clef/name/transpose parsed when a fixture needs them.
@@ -557,6 +619,7 @@ class Parser {
   // (octave marks, then length) plain indexing instead of a peek/rewind protocol.
   private scanMusic(start: number, end: number): void {
     const builder = this.ensureScore(start)
+    builder.voice.beginMusicLine()
     // Re-read through the builder rather than capturing: an inline `[V:2]` mid-line
     // switches which voice subsequent events belong to.
     const voice = () => builder.voice
@@ -878,6 +941,9 @@ class Parser {
       graceNotes: [],
       graceSlash: false,
       beamGroup: null,
+      lyric: null,
+      lyricSourceRange: null,
+      extraVerses: [],
       style: 'normal',
       microtoneCents,
       tuplet: null, // set by applyTuplet() on emit
@@ -973,6 +1039,9 @@ class Parser {
         graceNotes: [],
         graceSlash: false,
         beamGroup: null,
+        lyric: null,
+        lyricSourceRange: null,
+        extraVerses: [],
         style: 'normal',
         headDurations: mixed ? headDurations : [],
         microtoneCents: 0, // ponytail: microtones inside a chord when a fixture needs it
@@ -1157,6 +1226,52 @@ function parseGracePitches(raw: string): { pitches: Pitch[]; slash: boolean } {
     pitches.push({ step: letter.toLowerCase() as DiatonicStep, octave, accidental })
   }
   return { pitches, slash }
+}
+
+/** One syllable position in a `w:` line. `text` is null where the verse skips a note. */
+interface Syllable {
+  text: string | null
+  range: SourceRange | null
+}
+
+/**
+ * Split a `w:` line into per-note syllables.
+ *
+ * Whitespace separates notes. `|` is a barline-alignment hint and occupies no note. `*`
+ * and `_` (melisma) occupy a note but carry no text. Within a token, `-` splits a word
+ * across notes and each non-final piece keeps its hyphen. `~` is a hard space.
+ */
+function parseLyricSyllables(text: string, base: number): Syllable[] {
+  const out: Syllable[] = []
+  let i = 0
+  while (i < text.length) {
+    while (i < text.length && text[i] === ' ') i++
+    if (i >= text.length) break
+    const tokenStart = i
+    while (i < text.length && text[i] !== ' ') i++
+    const token = text.slice(tokenStart, i)
+    if (token === '|') continue // alignment hint, not a note
+    if (token === '*' || token === '_') {
+      out.push({ text: null, range: null })
+      continue
+    }
+    // Split on `-`, keeping empty trailing pieces so `word-` advances two notes.
+    const parts: { start: number; end: number }[] = []
+    let partStart = tokenStart
+    for (let j = tokenStart; j <= i; j++) {
+      if (j === i || text[j] === '-') {
+        parts.push({ start: partStart, end: j })
+        partStart = j + 1
+      }
+    }
+    parts.forEach((part, index) => {
+      const raw = text.slice(part.start, part.end).split('~').join(' ') // '~' is a hard space; ES2020 has no replaceAll
+      const range = sourceRange(base + part.start, base + part.end)
+      if (index < parts.length - 1) out.push({ text: `${raw}-`, range })
+      else if (raw !== '') out.push({ text: raw, range })
+    })
+  }
+  return out
 }
 
 const REST_KINDS: Record<string, RestKind> = {
