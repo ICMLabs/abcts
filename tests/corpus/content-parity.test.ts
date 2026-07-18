@@ -41,6 +41,18 @@ const KNOWN_DIVERGENCES: Record<string, string> = {
     'continuation of the previous field (ABC 2.1), giving 32 real notes against abcjs 45.',
 }
 
+/**
+ * Fixtures exempt from the OFFSET check only — content must still match exactly.
+ * Narrower than KNOWN_DIVERGENCES so a content regression can never hide behind one.
+ */
+const OFFSET_DIVERGENCES: Record<string, string> = {
+  'S3-note-syntax':
+    'Microtonal accidentals (`^3/2G`): core spans the whole `^3/2G` because v2 includes a ' +
+    'leading accidental in the note range, but abcjs starts its span at the `G`, excluding ' +
+    "the fraction — inconsistent with abcjs's own handling of plain `^G`, which it does " +
+    'include. 2 of 466 notes.',
+}
+
 /** Full per-fixture breakdown, written on every run for triage. */
 const REPORT_PATH = '/tmp/abcts-content-parity.txt'
 
@@ -147,7 +159,8 @@ it('content parity against abcjs goldens does not regress', () => {
       ours.length === theirs.length && ours.every((o, i) => o.key === theirs[i]?.key)
     const offsetsOk =
       sameContent &&
-      ours.every((o, i) => offsetWithin(o.start, theirs[i]?.start ?? 0, theirs[i]?.end ?? 0))
+      (name in OFFSET_DIVERGENCES ||
+        ours.every((o, i) => offsetWithin(o.start, theirs[i]?.start ?? 0, theirs[i]?.end ?? 0)))
     const same = sameContent && offsetsOk
     const offsetOnly = sameContent && !offsetsOk
     const divergence = KNOWN_DIVERGENCES[name]
@@ -161,7 +174,7 @@ it('content parity against abcjs goldens does not regress', () => {
     }
     if (same) matched++
     rows.push(
-      `${same ? 'MATCH ' : 'diff  '} ${name.padEnd(34)} ours=${String(ours.length).padStart(4)} abcjs=${String(theirs.length).padStart(4)}${offsetOnly ? '  content OK, OFFSET out of span' : ''}`,
+      `${same ? 'MATCH ' : 'diff  '} ${name.padEnd(34)} ours=${String(ours.length).padStart(4)} abcjs=${String(theirs.length).padStart(4)}${name in OFFSET_DIVERGENCES ? '  (offsets exempt)' : ''}${offsetOnly ? '  content OK, OFFSET out of span' : ''}`,
     )
   }
 

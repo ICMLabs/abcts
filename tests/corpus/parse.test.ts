@@ -150,9 +150,9 @@ describe('microtonal accidentals', () => {
     expect(duration?.microtoneCents).toBe(0)
   })
 
-  it('excludes a leading accidental from the note source range, as v2 does', () => {
+  it('includes a leading accidental in the note source range, as v2 implements', () => {
     const abc = 'X:1\nL:1/8\nK:C\n^G |\n'
     const [note] = notesOfAbc(abc)
-    expect(abc.slice(note?.sourceRange?.start ?? 0, note?.sourceRange?.end ?? 0)).toBe('G')
+    expect(abc.slice(note?.sourceRange?.start ?? 0, note?.sourceRange?.end ?? 0)).toBe('^G')
   })
 })

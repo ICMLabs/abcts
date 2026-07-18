@@ -537,7 +537,14 @@ class Parser {
         }
         case 'noteLetter': {
           voice().noteMeasureStart(accidentalStart ?? token.start)
-          const built = this.buildNote(tokens, i, builder, pendingAccidental, pendingMicrotone)
+          const built = this.buildNote(
+            tokens,
+            i,
+            builder,
+            pendingAccidental,
+            pendingMicrotone,
+            accidentalStart,
+          )
           emit(built.note)
           i = built.next
           pendingAccidental = null
@@ -660,6 +667,7 @@ class Parser {
     builder: ScoreBuilder,
     accidental: Accidental | null,
     microtoneCents: number,
+    accidentalStart: number | null,
   ): { note: Note; next: number } {
     const token = tokens[index] as Token
     const head = this.readNoteHead(tokens, index, accidental)
@@ -676,8 +684,10 @@ class Parser {
       style: 'normal',
       microtoneCents,
       ...noAttachments(), // filled in by emit()
-      // v2: "note letter through its duration; a leading accidental is not included".
-      sourceRange: sourceRange(token.start, last.start + last.length),
+      // Includes a leading accidental, matching v2's implementation (`from: accStart`).
+      // v2's doc comment on Note.sourceRange claims the opposite; the code wins, and
+      // including it is what editor cross-linking wants — clicking `^` selects its note.
+      sourceRange: sourceRange(accidentalStart ?? token.start, last.start + last.length),
     }
     return { note, next: length.next }
   }
