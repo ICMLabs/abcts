@@ -292,6 +292,15 @@ export interface Measure {
    * parallel stream to `events`. `G2 &E2 B2` puts `E2 B2` in overlay layer 0.
    */
   readonly overlays: readonly (readonly MusicEvent[])[]
+  /**
+   * A mid-tune `K:` taking effect at this measure. The Score's `key` stays the header
+   * key; a consumer accumulates changes forward to get the key in force.
+   */
+  readonly keyChange: KeySignature | null
+  readonly keyChangeSourceRange: SourceRange | null
+  /** A mid-tune `M:` taking effect at this measure. */
+  readonly meterChange: Meter | null
+  readonly meterChangeSourceRange: SourceRange | null
   /** `null` when the tune ends without a closing barline. */
   readonly closingBarline: Barline | null
   readonly sourceRange: SourceRange | null

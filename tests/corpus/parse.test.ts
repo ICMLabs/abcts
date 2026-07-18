@@ -287,3 +287,44 @@ describe('ties, slurs, grace notes and beams', () => {
     expect(groups[0]).not.toBeNull()
   })
 })
+
+describe('mid-tune key and meter changes', () => {
+  const measuresOf = (abc: string) => {
+    const result = parse(abc)
+    if (!result.ok) throw new Error('expected parse to succeed')
+    return result.scores[0]?.voices[0]?.measures ?? []
+  }
+
+  it('attaches a mid-tune K: to the measure it opens', () => {
+    const measures = measuresOf('X:1\nL:1/4\nK:C\nCDEF|\nK:G\nGABc|\n')
+    expect(measures[0]?.keyChange).toBeNull()
+    expect(measures[1]?.keyChange).toEqual({
+      tonic: { step: 'g', accidental: 0 },
+      mode: 'major',
+    })
+  })
+
+  it('attaches a mid-tune M: likewise, leaving the header meter alone', () => {
+    const result = parse('X:1\nL:1/4\nM:4/4\nK:C\nCDEF|\nM:3/4\nGAB|\n')
+    if (!result.ok) throw new Error('expected parse to succeed')
+    const score = result.scores[0]
+    // Score.meter is the INITIAL meter, frozen at the header K:.
+    expect(score?.meter).toEqual({ numerator: 4, denominator: 4, symbol: 'numeric' })
+    expect(score?.voices[0]?.measures[1]?.meterChange).toEqual({
+      numerator: 3,
+      denominator: 4,
+      symbol: 'numeric',
+    })
+  })
+
+  it('reads an inline [K:...] change too', () => {
+    const measures = measuresOf('X:1\nL:1/4\nK:C\nCDEF|[K:F]GABc|\n')
+    expect(measures[1]?.keyChange?.tonic.step).toBe('f')
+  })
+
+  it('no longer reports mid-tune changes as unimplemented', () => {
+    const result = parse('X:1\nL:1/4\nK:C\nCDEF|\nK:G\nGABc|\n')
+    if (!result.ok) throw new Error('expected parse to succeed')
+    expect(result.diagnostics.filter((d) => d.code === 'parsed-not-realized')).toEqual([])
+  })
+})

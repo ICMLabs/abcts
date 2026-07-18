@@ -150,6 +150,11 @@ const KNOWN_FIELDS = 'ABCDFGHIKLMNOPQRSTUVWXZmrsw'
 
 class VoiceBuilder {
   octaveShift = 0
+  /** A mid-tune `K:`/`M:` applies to the measure it opens, so it pends until close. */
+  private pendingKeyChange: KeySignature | null = null
+  private pendingKeyChangeRange: SourceRange | null = null
+  private pendingMeterChange: Meter | null = null
+  private pendingMeterChangeRange: SourceRange | null = null
   private readonly measures: Measure[] = []
   private events: MusicEvent[] = []
   private overlays: MusicEvent[][] = []
@@ -158,6 +163,30 @@ class VoiceBuilder {
   private measureStart: number | null = null
 
   constructor(readonly id: string) {}
+
+  setKeyChange(key: KeySignature, range: SourceRange): void {
+    this.pendingKeyChange = key
+    this.pendingKeyChangeRange = range
+  }
+
+  setMeterChange(meter: Meter | null, range: SourceRange): void {
+    this.pendingMeterChange = meter
+    this.pendingMeterChangeRange = range
+  }
+
+  private takeChanges() {
+    const changes = {
+      keyChange: this.pendingKeyChange,
+      keyChangeSourceRange: this.pendingKeyChangeRange,
+      meterChange: this.pendingMeterChange,
+      meterChangeSourceRange: this.pendingMeterChangeRange,
+    }
+    this.pendingKeyChange = null
+    this.pendingKeyChangeRange = null
+    this.pendingMeterChange = null
+    this.pendingMeterChangeRange = null
+    return changes
+  }
 
   noteMeasureStart(offset: number): void {
     if (this.measureStart === null) this.measureStart = offset
@@ -220,6 +249,7 @@ class VoiceBuilder {
     this.measures.push({
       events: this.events,
       overlays: this.overlays,
+      ...this.takeChanges(),
       closingBarline: barline,
       sourceRange: sourceRange(this.measureStart ?? barlineRange.start, barlineRange.end),
       closingBarlineSourceRange: barlineRange,
@@ -236,6 +266,7 @@ class VoiceBuilder {
       this.measures.push({
         events: this.events,
         overlays: this.overlays,
+        ...this.takeChanges(),
         closingBarline: null,
         sourceRange: sourceRange(this.measureStart ?? 0, last?.sourceRange?.end ?? 0),
         closingBarlineSourceRange: null,
@@ -473,7 +504,7 @@ class Parser {
         return
       case 'M': {
         if (builder.bodyStarted) {
-          this.info('parsed-not-realized', 'mid-tune meter change not yet implemented', range)
+          builder.voice.setMeterChange(parseMeter(value), range)
           return
         }
         builder.meter = parseMeter(value)
@@ -503,7 +534,7 @@ class Parser {
       }
       case 'K': {
         if (builder.bodyStarted) {
-          this.info('parsed-not-realized', 'mid-tune key change not yet implemented', range)
+          builder.voice.setKeyChange(parseKey(value), range)
           return
         }
         builder.key = parseKey(value)
