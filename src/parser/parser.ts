@@ -499,12 +499,18 @@ class Parser {
     let i = 0
     let pendingAccidental: Accidental | null = null
     let accidentalStart: number | null = null
+    /** Cents from a fractional accidental (`^3/2G`), pending until the note letter. */
+    let pendingMicrotone = 0
     /** Set by a `>`/`<` mark; scales the NEXT event, then clears. */
     let pendingBroken: Rational | null = null
+    /** Chord symbols, annotations and decorations bind to the next event. */
+    let pending = noAttachments()
 
     const emit = (event: MusicEvent): void => {
-      voice().push(pendingBroken ? scaleEvent(event, pendingBroken) : event)
+      const scaled = pendingBroken ? scaleEvent(event, pendingBroken) : event
+      voice().push({ ...scaled, ...pending } as MusicEvent)
       pendingBroken = null
+      pending = noAttachments()
     }
 
     while (i < tokens.length) {
@@ -514,15 +520,29 @@ class Parser {
           if (accidentalStart === null) accidentalStart = token.start
           pendingAccidental = combineAccidental(pendingAccidental, token.aux)
           i++
+          // A fraction directly after the accidental and BEFORE the note letter is a
+          // microtone (`^3/2G`), not a duration — durations follow the note letter.
+          if (
+            (tokens[i] as Token | undefined)?.kind === 'digit' ||
+            (tokens[i] as Token | undefined)?.kind === 'slash'
+          ) {
+            const fraction = this.readLength(tokens, i)
+            const sign = Math.sign(pendingAccidental ?? 0)
+            pendingMicrotone = Math.round(
+              ((sign * fraction.factor.numerator) / fraction.factor.denominator) * 100,
+            )
+            i = fraction.next
+          }
           break
         }
         case 'noteLetter': {
           voice().noteMeasureStart(accidentalStart ?? token.start)
-          const built = this.buildNote(tokens, i, builder, pendingAccidental, accidentalStart)
+          const built = this.buildNote(tokens, i, builder, pendingAccidental, pendingMicrotone)
           emit(built.note)
           i = built.next
           pendingAccidental = null
           accidentalStart = null
+          pendingMicrotone = 0
           break
         }
         case 'rest': {
@@ -566,6 +586,38 @@ class Parser {
           i += arrows
           break
         }
+        case 'chordSymbol': {
+          const range = sourceRange(token.start, token.start + token.length)
+          const text = this.src.slice(token.start + 1, token.start + token.length - 1)
+          if (isAnnotation(text)) {
+            pending.annotations.push(text)
+            pending.annotationSourceRanges.push(range)
+          } else {
+            pending.chordSymbol = text
+            pending.chordSymbolSourceRange = range
+          }
+          i++
+          break
+        }
+        case 'decoration': {
+          pending.decorations.push(this.src.slice(token.start + 1, token.start + token.length - 1))
+          pending.decorationSourceRanges.push(sourceRange(token.start, token.start + token.length))
+          i++
+          break
+        }
+        case 'unknown': {
+          // Decoration shorthands (`.` staccato, `T` trill, `v` downbow) lex as unknown
+          // because they are not note letters. Anything else stays ignored.
+          const shorthand = DECORATION_SHORTHAND[token.aux]
+          if (shorthand) {
+            pending.decorations.push(shorthand)
+            pending.decorationSourceRanges.push(
+              sourceRange(token.start, token.start + token.length),
+            )
+          }
+          i++
+          break
+        }
         case 'voiceOverlay': {
           voice().startOverlay()
           i++
@@ -607,7 +659,7 @@ class Parser {
     index: number,
     builder: ScoreBuilder,
     accidental: Accidental | null,
-    accidentalStart: number | null,
+    microtoneCents: number,
   ): { note: Note; next: number } {
     const token = tokens[index] as Token
     const head = this.readNoteHead(tokens, index, accidental)
@@ -622,7 +674,10 @@ class Parser {
       notatedDuration: duration,
       tiedToNext: false,
       style: 'normal',
-      sourceRange: sourceRange(accidentalStart ?? token.start, last.start + last.length),
+      microtoneCents,
+      ...noAttachments(), // filled in by emit()
+      // v2: "note letter through its duration; a leading accidental is not included".
+      sourceRange: sourceRange(token.start, last.start + last.length),
     }
     return { note, next: length.next }
   }
@@ -707,6 +762,9 @@ class Parser {
         tiedToNext: false,
         style: 'normal',
         headDurations: mixed ? headDurations : [],
+        microtoneCents: 0, // ponytail: microtones inside a chord when a fixture needs it
+
+        ...noAttachments(), // filled in by emit()
         sourceRange: sourceRange(open.start, last.start + last.length),
       },
       next: post.next,
@@ -785,6 +843,47 @@ function scaleEvent(event: MusicEvent, factor: Rational): MusicEvent {
     duration: ratMul(event.duration, factor),
     notatedDuration: ratMul(event.notatedDuration, factor),
   }
+}
+
+/** Everything that can be written before a note and belongs to it. */
+interface Attachments {
+  chordSymbol: string | null
+  chordSymbolSourceRange: SourceRange | null
+  decorations: string[]
+  decorationSourceRanges: SourceRange[]
+  annotations: string[]
+  annotationSourceRanges: SourceRange[]
+}
+
+const noAttachments = (): Attachments => ({
+  chordSymbol: null,
+  chordSymbolSourceRange: null,
+  decorations: [],
+  decorationSourceRanges: [],
+  annotations: [],
+  annotationSourceRanges: [],
+})
+
+/**
+ * A `"…"` span is an annotation when it opens with a placement char, otherwise it is a
+ * chord symbol. `"^above"`, `"_below"`, `"<left"`, `">right"`, `"@x,y text"` are
+ * annotations; `"Am7"` is a chord symbol.
+ */
+const isAnnotation = (text: string): boolean => '^_<>@'.includes(text[0] ?? '')
+
+/** Decoration shorthands. Safe to treat as decorations: none of these are note letters. */
+const DECORATION_SHORTHAND: Record<string, string> = {
+  '.': 'staccato',
+  '~': 'roll',
+  H: 'fermata',
+  L: 'accent',
+  M: 'lowermordent',
+  O: 'coda',
+  P: 'uppermordent',
+  S: 'segno',
+  T: 'trill',
+  u: 'upbow',
+  v: 'downbow',
 }
 
 const REST_KINDS: Record<string, RestKind> = {

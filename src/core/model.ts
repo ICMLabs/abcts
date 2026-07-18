@@ -173,6 +173,23 @@ export interface Note {
   readonly notatedDuration: Rational
   readonly tiedToNext: boolean
   readonly style: NoteStyle
+  /**
+   * Microtonal detune in cents from a fractional accidental — `^/` is +50, `_/` is -50,
+   * `^3/2` is +150. The printed accidental stays the base sign; this is the sounding
+   * deviation, realized as a MIDI pitch bend. 0 means none.
+   */
+  readonly microtoneCents: number
+  /** `"Am7"` printed above the staff, if one precedes this event. */
+  readonly chordSymbol: string | null
+  readonly chordSymbolSourceRange: SourceRange | null
+  /** `!trill!`, `.` staccato, and the shorthand letters. */
+  readonly decorations: readonly string[]
+  /** Parallel to `decorations`. */
+  readonly decorationSourceRanges: readonly SourceRange[]
+  /** `"^above"` / `"_below"` free text, which is NOT a chord symbol. */
+  readonly annotations: readonly string[]
+  /** Parallel to `annotations`. */
+  readonly annotationSourceRanges: readonly SourceRange[]
   readonly sourceRange: SourceRange | null
 }
 
@@ -207,6 +224,19 @@ export interface Chord {
    * duration all follow the chord's own `notatedDuration`/`duration`.
    */
   readonly headDurations: readonly Rational[]
+  /** See `Note.microtoneCents`. */
+  readonly microtoneCents: number
+  /** `"Am7"` printed above the staff, if one precedes this event. */
+  readonly chordSymbol: string | null
+  readonly chordSymbolSourceRange: SourceRange | null
+  /** `!trill!`, `.` staccato, and the shorthand letters. */
+  readonly decorations: readonly string[]
+  /** Parallel to `decorations`. */
+  readonly decorationSourceRanges: readonly SourceRange[]
+  /** `"^above"` / `"_below"` free text, which is NOT a chord symbol. */
+  readonly annotations: readonly string[]
+  /** Parallel to `annotations`. */
+  readonly annotationSourceRanges: readonly SourceRange[]
   readonly sourceRange: SourceRange | null
 }
 

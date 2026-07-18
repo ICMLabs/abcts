@@ -1,7 +1,8 @@
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { expect, it } from 'vitest'
-import { type Pitch, ratToNumber, stepIndex } from '../../src/core/model.js'
+import type { Pitch } from '../../src/core/model.js'
+import { ratToNumber, stepIndex } from '../../src/core/model.js'
 import { parse } from '../../src/parser/parser.js'
 import { corpusDir, goldenNotes } from './corpus.js'
 
@@ -16,7 +17,8 @@ import { corpusDir, goldenNotes } from './corpus.js'
  *
  * Raise BASELINE as parser features land. Never lower it to make a change pass.
  *
- * History: 4 with offsets in the key, 18 after dropping them (see keyOf), 24 once the
+ * History: offsets are back in the gate as of the attachment work — see offsetWithin.
+ * Earlier: 4 with offsets compared by equality, 18 after dropping them, 24 once the
  * golden reader learned abcjs's multi-tune `{tunes: [...]}` shape — that last step added
  * 12 fixtures to the denominator and 6 to the numerator without touching the parser.
  * Implementing chords moved this number by ZERO: every chord-bearing fixture still fails
@@ -48,17 +50,34 @@ interface NoteKey {
   pitches: number[]
 }
 
-// ponytail: source offsets are NOT compared. abcjs anchors `startChar` at the start of the
-// whole attached group, so `"C"G` starts at the `"`, while v2 keeps the chord symbol in a
-// separate `chordSymbolSourceRange`. We cannot compute abcjs's anchor until chord symbols
-// and decorations are parsed. Ceiling: this gate cannot catch an offset regression.
-// Upgrade: put `start` back in the key once attached-token parsing lands.
 const keyOf = (n: NoteKey): string => `${n.duration}:${n.pitches.join(',')}`
+
+/**
+ * Source offsets are checked by CONTAINMENT, not equality.
+ *
+ * abcjs's `startChar` is not a semantic anchor — it is wherever the previous element
+ * ended, so abcjs tiles the source contiguously and absorbs leading whitespace and slur
+ * parens into the next element (`" ^d#"` starts at the space, `"(GG)"` at the paren).
+ * Reproducing that byte-for-byte is compat-mode work, not core's job: v2 anchors each
+ * event on its own token and keeps attachments in their own ranges.
+ *
+ * What core must guarantee is that an offset identifies the RIGHT element — which is what
+ * cross-linking an editor caret to a notehead depends on. So the check is that our start
+ * falls inside abcjs's span for the same element. That catches a wrong or drifted offset
+ * while tolerating abcjs's leading trivia.
+ */
+const offsetWithin = (ourStart: number | undefined, start: number, end: number): boolean =>
+  ourStart !== undefined && ourStart >= start && ourStart < end
 
 /** abcjs numbers pitches diatonically from middle C: C4 is 0, c5 is 7. */
 const diatonic = (p: Pitch): number => (p.octave - 4) * 7 + stepIndex(p.step)
 
-function ourNotes(abc: string): string[] {
+interface OurNote {
+  key: string
+  start: number | undefined
+}
+
+function ourNotes(abc: string): OurNote[] {
   const result = parse(abc)
   if (!result.ok) return []
   return result.scores
@@ -71,8 +90,9 @@ function ourNotes(abc: string): string[] {
         ...voice.measures.flatMap((measure) => measure.overlays.flat()),
       ]
         .filter((event) => event.type === 'note' || event.type === 'chord')
-        .map((event) =>
-          keyOf({
+        .map((event) => ({
+          start: event.sourceRange?.start,
+          key: keyOf({
             duration: ratToNumber(event.duration),
             // abcjs bakes `octave=` into its pitch numbers; the core model keeps it on
             // the Voice as a sounding shift, so add it back to compare like for like.
@@ -80,17 +100,25 @@ function ourNotes(abc: string): string[] {
               (pitch) => diatonic(pitch) + voice.octaveShift * 7,
             ),
           }),
-        ),
+        })),
     )
 }
 
-function abcjsNotes(name: string): string[] {
-  return goldenNotes(name).map((element) =>
-    keyOf({
+interface GoldenNote {
+  key: string
+  start: number
+  end: number
+}
+
+function abcjsNotes(name: string): GoldenNote[] {
+  return goldenNotes(name).map((element) => ({
+    start: element.startChar,
+    end: element.endChar,
+    key: keyOf({
       duration: element.duration,
       pitches: (element.pitches ?? []).map((p) => p.pitch),
     }),
-  )
+  }))
 }
 
 it('content parity against abcjs goldens does not regress', () => {
@@ -115,7 +143,13 @@ it('content parity against abcjs goldens does not regress', () => {
     }
     compared++
     const ours = ourNotes(readFileSync(join(corpusDir, file), 'utf-8'))
-    const same = ours.length === theirs.length && ours.every((k, i) => k === theirs[i])
+    const sameContent =
+      ours.length === theirs.length && ours.every((o, i) => o.key === theirs[i]?.key)
+    const offsetsOk =
+      sameContent &&
+      ours.every((o, i) => offsetWithin(o.start, theirs[i]?.start ?? 0, theirs[i]?.end ?? 0))
+    const same = sameContent && offsetsOk
+    const offsetOnly = sameContent && !offsetsOk
     const divergence = KNOWN_DIVERGENCES[name]
     if (divergence) {
       diverged++
@@ -127,7 +161,7 @@ it('content parity against abcjs goldens does not regress', () => {
     }
     if (same) matched++
     rows.push(
-      `${same ? 'MATCH ' : 'diff  '} ${name.padEnd(34)} ours=${String(ours.length).padStart(4)} abcjs=${String(theirs.length).padStart(4)}`,
+      `${same ? 'MATCH ' : 'diff  '} ${name.padEnd(34)} ours=${String(ours.length).padStart(4)} abcjs=${String(theirs.length).padStart(4)}${offsetOnly ? '  content OK, OFFSET out of span' : ''}`,
     )
   }
 

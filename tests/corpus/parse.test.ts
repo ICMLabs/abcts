@@ -75,6 +75,13 @@ describe('parse: simple-c', () => {
       notatedDuration: rational(1, 4),
       tiedToNext: false,
       style: 'normal',
+      microtoneCents: 0,
+      chordSymbol: null,
+      chordSymbolSourceRange: null,
+      decorations: [],
+      decorationSourceRanges: [],
+      annotations: [],
+      annotationSourceRanges: [],
       sourceRange: { start: 31, end: 32 },
     })
   })
@@ -110,4 +117,42 @@ describe('content parity with abcjs goldens', () => {
       expect(notesOf(score)).toEqual(expected)
     })
   }
+})
+
+// Microtonal accidentals (ABC 2.1 §4.5). The fraction sits BEFORE the note letter, where
+// a duration would sit after it — `^3/2G` is a three-quarter-sharp G, not G of length 3/2.
+describe('microtonal accidentals', () => {
+  const notesOfAbc = (abc: string) => {
+    const result = parse(abc)
+    if (!result.ok) throw new Error('expected parse to succeed')
+    return (result.scores[0]?.voices[0]?.measures ?? [])
+      .flatMap((measure) => measure.events)
+      .filter((event) => event.type === 'note')
+  }
+
+  it('reads cents from a fractional accidental', () => {
+    const notes = notesOfAbc('X:1\nL:1/8\nK:C\nG ^/G ^G ^3/2G _/A _3/2A |\n')
+    expect(notes.map((n) => n.microtoneCents)).toEqual([0, 50, 0, 150, -50, -150])
+  })
+
+  it('keeps the printed accidental as the base sign', () => {
+    const notes = notesOfAbc('X:1\nL:1/8\nK:C\n^3/2G _3/2A |\n')
+    expect(notes[0]?.pitch.accidental).toBe(1) // sharp
+    expect(notes[1]?.pitch.accidental).toBe(-1) // flat
+  })
+
+  it('does not confuse a microtone with a duration', () => {
+    const [micro] = notesOfAbc('X:1\nL:1/8\nK:C\n^3/2G |\n')
+    const [duration] = notesOfAbc('X:1\nL:1/8\nK:C\n^G3/2 |\n')
+    expect(micro?.duration).toEqual(rational(1, 8))
+    expect(micro?.microtoneCents).toBe(150)
+    expect(duration?.duration).toEqual(rational(3, 16))
+    expect(duration?.microtoneCents).toBe(0)
+  })
+
+  it('excludes a leading accidental from the note source range, as v2 does', () => {
+    const abc = 'X:1\nL:1/8\nK:C\n^G |\n'
+    const [note] = notesOfAbc(abc)
+    expect(abc.slice(note?.sourceRange?.start ?? 0, note?.sourceRange?.end ?? 0)).toBe('G')
+  })
 })
