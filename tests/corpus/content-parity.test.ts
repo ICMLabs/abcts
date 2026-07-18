@@ -23,7 +23,7 @@ import { corpusDir, goldenNotes } from './corpus.js'
  * on something else (multi-voice, mostly). Counts reconcile exactly, so chords are
  * correct; they are just not what this gate measures.
  */
-const BASELINE = 26
+const BASELINE = 29
 
 /** Full per-fixture breakdown, written on every run for triage. */
 const REPORT_PATH = '/tmp/abcts-content-parity.txt'

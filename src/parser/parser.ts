@@ -153,6 +153,15 @@ class VoiceBuilder {
     this.events.push(event)
   }
 
+  /** The event a broken-rhythm mark reaches back to. Null once a barline has closed. */
+  get last(): MusicEvent | null {
+    return this.events[this.events.length - 1] ?? null
+  }
+
+  replaceLast(event: MusicEvent): void {
+    if (this.events.length > 0) this.events[this.events.length - 1] = event
+  }
+
   closeMeasure(barline: Barline, barlineRange: SourceRange): void {
     // A barline with nothing before it (leading `|:`) opens rather than closes.
     if (this.events.length === 0 && this.measureStart === null) return
@@ -419,6 +428,13 @@ class Parser {
     let i = 0
     let pendingAccidental: Accidental | null = null
     let accidentalStart: number | null = null
+    /** Set by a `>`/`<` mark; scales the NEXT event, then clears. */
+    let pendingBroken: Rational | null = null
+
+    const emit = (event: MusicEvent): void => {
+      voice.push(pendingBroken ? scaleEvent(event, pendingBroken) : event)
+      pendingBroken = null
+    }
 
     while (i < tokens.length) {
       const token = tokens[i] as Token
@@ -432,7 +448,7 @@ class Parser {
         case 'noteLetter': {
           voice.noteMeasureStart(accidentalStart ?? token.start)
           const built = this.buildNote(tokens, i, builder, pendingAccidental, accidentalStart)
-          voice.push(built.note)
+          emit(built.note)
           i = built.next
           pendingAccidental = null
           accidentalStart = null
@@ -441,7 +457,7 @@ class Parser {
         case 'rest': {
           voice.noteMeasureStart(token.start)
           const built = this.buildRest(tokens, i, builder)
-          voice.push(built.rest)
+          emit(built.rest)
           i = built.next
           break
         }
@@ -451,11 +467,32 @@ class Parser {
           // zero-pitch chord into the stream.
           if (built.chord.pitches.length > 0) {
             voice.noteMeasureStart(token.start)
-            voice.push(built.chord)
+            emit(built.chord)
           }
           i = built.next
           pendingAccidental = null
           accidentalStart = null
+          break
+        }
+        case 'brokenRhythm': {
+          // `>` lengthens what came before and shortens what follows; `<` is the mirror.
+          // Consecutive marks stack (`>>`), and the lexer emits one token per character.
+          let arrows = 1
+          while ((tokens[i + arrows] as Token | undefined)?.kind === 'brokenRhythm') arrows++
+          const { long, short } = brokenRhythmFactors(arrows)
+          const lengthenFirst = token.aux === '>'
+          const previous = voice.last
+          if (previous) {
+            voice.replaceLast(scaleEvent(previous, lengthenFirst ? long : short))
+            pendingBroken = lengthenFirst ? short : long
+          } else {
+            this.warn(
+              'broken-rhythm-without-note',
+              'broken rhythm mark has no preceding note',
+              sourceRange(token.start, token.start + token.length),
+            )
+          }
+          i += arrows
           break
         }
         case 'barline': {
@@ -634,6 +671,28 @@ class Parser {
 
   private text(token: Token): string {
     return this.src.slice(token.start, token.start + token.length)
+  }
+}
+
+/**
+ * Broken rhythm (`a>b`): one side is dotted, the other shortened by the same amount, so
+ * the pair still fills the same time. n arrows give (2 - 2^-n) and 2^-n — `>` is 3/2 and
+ * 1/2, `>>` is 7/4 and 1/4, `>>>` is 15/8 and 1/8.
+ */
+function brokenRhythmFactors(arrows: number): { long: Rational; short: Rational } {
+  const denominator = 2 ** arrows
+  return {
+    long: rational(2 * denominator - 1, denominator),
+    short: rational(1, denominator),
+  }
+}
+
+/** Broken rhythm scales BOTH sounding and notated duration — unlike a tuplet. */
+function scaleEvent(event: MusicEvent, factor: Rational): MusicEvent {
+  return {
+    ...event,
+    duration: ratMul(event.duration, factor),
+    notatedDuration: ratMul(event.notatedDuration, factor),
   }
 }
 
