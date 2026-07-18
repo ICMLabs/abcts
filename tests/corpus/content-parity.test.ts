@@ -53,6 +53,16 @@ const OFFSET_DIVERGENCES: Record<string, string> = {
     'include. 2 of 466 notes.',
 }
 
+/**
+ * Beam runs are gated separately from content, with their own baseline.
+ *
+ * Beaming is a layout decision, not a musical one, and abcjs has conventions we have not
+ * fully reverse-engineered — 4 fixtures still differ for reasons not yet analysed
+ * (S5-directives, S7-voices, S8-layout, ragtime-nightingale). Tracking it separately
+ * keeps those from blocking the content gate while still catching a regression.
+ */
+const BEAM_BASELINE = 36
+
 /** Full per-fixture breakdown, written on every run for triage. */
 const REPORT_PATH = '/tmp/abcts-content-parity.txt'
 
@@ -138,6 +148,46 @@ interface GoldenNote {
   end: number
 }
 
+/** Which beam run each event belongs to, as a link-to-previous flag per event. */
+const beamLinks = (runs: (number | null)[]): boolean[] =>
+  runs.map((run, i) => i > 0 && run !== null && run === runs[i - 1])
+
+function ourBeams(abc: string): boolean[] {
+  const result = parse(abc)
+  if (!result.ok) return []
+  const runs: (number | null)[] = []
+  for (const voice of result.scores.flatMap((score) => score.voices)) {
+    for (const event of [
+      ...voice.measures.flatMap((measure) => measure.events),
+      ...voice.measures.flatMap((measure) => measure.overlays.flat()),
+    ]) {
+      runs.push(event.type === 'rest' ? null : event.beamGroup)
+    }
+  }
+  return beamLinks(runs)
+}
+
+/** abcjs marks run boundaries with startBeam/endBeam rather than a shared id. */
+function abcjsBeams(name: string): boolean[] {
+  const runs: (number | null)[] = []
+  let runId = 0
+  let inRun = false
+  for (const element of goldenElements(name)) {
+    if (element.rest) {
+      runs.push(null)
+      if (element.endBeam) inRun = false
+      continue
+    }
+    if (element.startBeam) {
+      runId++
+      inRun = true
+    }
+    runs.push(inRun ? runId : null)
+    if (element.endBeam) inRun = false
+  }
+  return beamLinks(runs)
+}
+
 function abcjsNotes(name: string): GoldenNote[] {
   // abcjs marks only the FIRST note of a tuplet, with `tripletMultiplier` and a
   // `tripletR` count; the following R-1 notes are implicitly members. Propagate it so
@@ -174,6 +224,7 @@ it('content parity against abcjs goldens does not regress', () => {
   let matched = 0
   let compared = 0
   let diverged = 0
+  let beamsMatched = 0
 
   const fixtures = readdirSync(corpusDir)
     .filter((f) => f.endsWith('.abc'))
@@ -189,7 +240,14 @@ it('content parity against abcjs goldens does not regress', () => {
       continue
     }
     compared++
-    const ours = ourNotes(readFileSync(join(corpusDir, file), 'utf-8'))
+    const abc = readFileSync(join(corpusDir, file), 'utf-8')
+    const ourBeamRuns = ourBeams(abc)
+    const theirBeamRuns = abcjsBeams(name)
+    const beamsSame =
+      ourBeamRuns.length === theirBeamRuns.length &&
+      ourBeamRuns.every((v, i) => v === theirBeamRuns[i])
+    if (beamsSame) beamsMatched++
+    const ours = ourNotes(abc)
     const sameContent =
       ours.length === theirs.length && ours.every((o, i) => o.key === theirs[i]?.key)
     const offsetsOk =
@@ -209,17 +267,23 @@ it('content parity against abcjs goldens does not regress', () => {
     }
     if (same) matched++
     rows.push(
-      `${same ? 'MATCH ' : 'diff  '} ${name.padEnd(34)} ours=${String(ours.length).padStart(4)} abcjs=${String(theirs.length).padStart(4)}${name in OFFSET_DIVERGENCES ? '  (offsets exempt)' : ''}${offsetOnly ? '  content OK, OFFSET out of span' : ''}`,
+      `${same ? 'MATCH ' : 'diff  '} ${name.padEnd(34)}${beamsSame ? '' : ' [beam]'} ours=${String(ours.length).padStart(4)} abcjs=${String(theirs.length).padStart(4)}${name in OFFSET_DIVERGENCES ? '  (offsets exempt)' : ''}${offsetOnly ? '  content OK, OFFSET out of span' : ''}`,
     )
   }
 
   const gated = compared - diverged
-  const summary = `=== ${matched}/${gated} gated fixtures match (${diverged} known divergences, ${fixtures.length - compared} skipped) ===`
+  const summary =
+    `=== ${matched}/${gated} gated fixtures match (${diverged} known divergences, ${fixtures.length - compared} skipped) ===\n` +
+    `=== beams: ${beamsMatched}/${fixtures.length} match ===`
   // A skipped fixture means the golden yielded no notes at all. That should now be
   // impossible — if it reappears, the reader has lost a dump shape again, not the corpus.
   writeFileSync(REPORT_PATH, `${rows.join('\n')}\n${summary}\n`)
 
   expect(compared, 'no fixtures were comparable — the goldens are not loading').toBeGreaterThan(0)
+  expect(
+    beamsMatched,
+    `beam runs regressed — see ${REPORT_PATH}, rows tagged [beam]`,
+  ).toBeGreaterThanOrEqual(BEAM_BASELINE)
   expect(
     unexpectedMatches,
     'a known divergence now matches abcjs — re-check whether it is still a real divergence',

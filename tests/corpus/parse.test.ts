@@ -225,3 +225,65 @@ describe('tuplets', () => {
     expect(compound[0]?.duration).toEqual(rational(3, 40)) // 1/8 * 3/5
   })
 })
+
+describe('ties, slurs, grace notes and beams', () => {
+  const eventsOf = (abc: string) => {
+    const result = parse(abc)
+    if (!result.ok) throw new Error('expected parse to succeed')
+    return (result.scores[0]?.voices[0]?.measures ?? []).flatMap((measure) => measure.events)
+  }
+
+  it('ties reach back to the note already emitted', () => {
+    const [a, b] = eventsOf('X:1\nL:1/4\nK:C\nc-c d |\n')
+    expect(a?.type === 'note' && a.tiedToNext).toBe(true)
+    expect(b?.type === 'note' && b.tiedToNext).toBe(false)
+  })
+
+  it('slurs open on the next note and close on the previous one', () => {
+    const notes = eventsOf('X:1\nL:1/4\nK:C\n(abc) d |\n')
+    expect(notes[0]?.type === 'note' && notes[0].slurStarts).toBe(1)
+    expect(notes[2]?.type === 'note' && notes[2].slurEnds).toBe(1)
+    expect(notes[3]?.type === 'note' && notes[3].slurStarts).toBe(0)
+  })
+
+  it('does not mistake a tuplet for a slur', () => {
+    const [first] = eventsOf('X:1\nL:1/8\nM:4/4\nK:C\n(3abc |\n')
+    expect(first?.type === 'note' && first.slurStarts).toBe(0)
+    expect(first?.tuplet).not.toBeNull()
+  })
+
+  it('attaches grace notes to the following event', () => {
+    const [note] = eventsOf('X:1\nL:1/4\nK:C\n{gab}c |\n')
+    if (note?.type !== 'note') throw new Error('expected a note')
+    expect(note.graceNotes.map((p) => p.step)).toEqual(['g', 'a', 'b'])
+    expect(note.graceSlash).toBe(false)
+    expect(note.pitch.step).toBe('c')
+  })
+
+  it('reads {/g} as an acciaccatura', () => {
+    const [note] = eventsOf('X:1\nL:1/4\nK:C\n{/g}c |\n')
+    expect(note?.type === 'note' && note.graceSlash).toBe(true)
+  })
+
+  it('beams runs shorter than a quarter, breaking on space and barline', () => {
+    const notes = eventsOf('X:1\nL:1/8\nK:C\nabcd efgh |\n')
+    const groups = notes.map((n) => (n.type === 'rest' ? null : n.beamGroup))
+    // Two runs of four, split by the space.
+    expect(new Set(groups.slice(0, 4)).size).toBe(1)
+    expect(new Set(groups.slice(4, 8)).size).toBe(1)
+    expect(groups[0]).not.toBe(groups[4])
+  })
+
+  it('does not beam quarter notes or longer', () => {
+    const notes = eventsOf('X:1\nL:1/4\nK:C\nabcd |\n')
+    expect(notes.every((n) => n.type !== 'rest' && n.beamGroup === null)).toBe(true)
+  })
+
+  it('keeps a beam across a space that follows a tie', () => {
+    // abcjs beams `[G=Bg]/4- [GBg]/4` as one run: the tie binds across the space.
+    const notes = eventsOf('X:1\nL:1/8\nK:C\na/4b/4- c/4d/4 |\n')
+    const groups = notes.map((n) => (n.type === 'rest' ? null : n.beamGroup))
+    expect(new Set(groups).size).toBe(1)
+    expect(groups[0]).not.toBeNull()
+  })
+})

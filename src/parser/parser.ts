@@ -189,6 +189,17 @@ class VoiceBuilder {
     if (target.length > 0) target[target.length - 1] = event
   }
 
+  /** Index of the event just pushed, within whichever layer it landed in. */
+  get lastIndex(): number {
+    return this.target.length - 1
+  }
+
+  setBeamGroup(index: number, group: number): void {
+    const target = this.target
+    const event = target[index]
+    if (event && event.type !== 'rest') target[index] = { ...event, beamGroup: group }
+  }
+
   /** `-` reaches back: the tie belongs to the note already emitted. Rests cannot tie. */
   tieLast(): void {
     const last = this.last
@@ -259,6 +270,12 @@ class ScoreBuilder {
   /** Voice ids from `%%score`/`%%staves`, which overrides declaration order. */
   scoreOrder: string[] | null = null
   private tupletGroups = 0
+  private beamGroups = 0
+
+  nextBeamGroup(): number {
+    this.beamGroups += 1
+    return this.beamGroups
+  }
 
   /** Tune-unique, so adjacent triplets stay distinguishable. */
   nextTupletGroup(): number {
@@ -551,6 +568,25 @@ class Parser {
     let pendingGrace: Pitch[] = []
     let pendingGraceSlash = false
 
+    // ABC beaming: adjacent notes shorter than a quarter beam together. A space,
+    // barline, rest, longer note, overlay boundary or end of line breaks the run.
+    let beamRun: number[] = []
+    const closeBeamRun = (): void => {
+      if (beamRun.length >= 2) {
+        const group = builder.nextBeamGroup()
+        for (const index of beamRun) voice().setBeamGroup(index, group)
+      }
+      beamRun = []
+    }
+    const beamAfterEmit = (): void => {
+      const last = voice().last
+      if (last && last.type !== 'rest' && ratLt(last.notatedDuration, rational(1, 4))) {
+        beamRun.push(voice().lastIndex)
+      } else {
+        closeBeamRun()
+      }
+    }
+
     const emit = (event: MusicEvent): void => {
       const scaled = applyTuplet(pendingBroken ? scaleEvent(event, pendingBroken) : event)
       // A rest carries none of these — no ties, slurs, grace notes or chord symbols —
@@ -571,6 +607,7 @@ class Parser {
       pendingSlurStarts = 0
       pendingGrace = []
       pendingGraceSlash = false
+      beamAfterEmit()
     }
 
     while (i < tokens.length) {
@@ -685,6 +722,13 @@ class Parser {
           i++
           break
         }
+        case 'whitespace': {
+          // A space breaks the beam (ABC convention) — but not when it follows a tie,
+          // where the tie binds the two notes and abcjs keeps them beamed.
+          if ((tokens[i - 1] as Token | undefined)?.kind !== 'tie') closeBeamRun()
+          i++
+          break
+        }
         case 'tie': {
           voice().tieLast()
           i++
@@ -739,6 +783,7 @@ class Parser {
           break
         }
         case 'voiceOverlay': {
+          closeBeamRun() // a beam cannot cross a layer boundary
           voice().startOverlay()
           tupletRemaining = 0 // a tuplet group cannot span an `&` layer boundary
           i++
@@ -760,6 +805,7 @@ class Parser {
           break
         }
         case 'barline': {
+          closeBeamRun() // beams do not cross barlines; assign before the measure closes
           const text = this.src.slice(token.start, token.start + token.length)
           voice().closeMeasure(
             BARLINES[text] ?? 'thin',
@@ -773,6 +819,7 @@ class Parser {
           break
       }
     }
+    closeBeamRun() // end of line breaks any open beam
   }
 
   private buildNote(

@@ -67,6 +67,11 @@ export interface GoldenElement {
   readonly tripletMultiplier?: number
   /** On the first note of a tuplet: how many notes the multiplier covers. */
   readonly tripletR?: number
+  /** Beam-run boundaries: set on the first and last note of a beamed run. */
+  readonly startBeam?: boolean
+  readonly endBeam?: boolean
+  /** Grace-note pitches attached to this element. */
+  readonly gracenotes?: readonly { readonly pitch: number }[]
 }
 
 interface GoldenTune {
