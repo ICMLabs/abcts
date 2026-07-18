@@ -182,7 +182,17 @@ export interface Note {
   readonly duration: Rational
   /** Written duration — length and dots, excluding any tuplet ratio. */
   readonly notatedDuration: Rational
+  /** `-` ties this event into the next; they sound as one. */
   readonly tiedToNext: boolean
+  /** How many slurs open on this event, and how many close on it. */
+  readonly slurStarts: number
+  readonly slurEnds: number
+  /** `{gfe}` ornament pitches played before this event; empty means none. */
+  readonly graceNotes: readonly Pitch[]
+  /** `{/g}` — an acciaccatura, drawn with a slash through the stem. */
+  readonly graceSlash: boolean
+  /** Shared id across a beamed run; null when this event beams with nothing. */
+  readonly beamGroup: number | null
   readonly style: NoteStyle
   /**
    * Microtonal detune in cents from a fractional accidental — `^/` is +50, `_/` is -50,
@@ -229,7 +239,17 @@ export interface Chord {
   readonly pitches: readonly Pitch[]
   readonly duration: Rational
   readonly notatedDuration: Rational
+  /** `-` ties this event into the next; they sound as one. */
   readonly tiedToNext: boolean
+  /** How many slurs open on this event, and how many close on it. */
+  readonly slurStarts: number
+  readonly slurEnds: number
+  /** `{gfe}` ornament pitches played before this event; empty means none. */
+  readonly graceNotes: readonly Pitch[]
+  /** `{/g}` — an acciaccatura, drawn with a slash through the stem. */
+  readonly graceSlash: boolean
+  /** Shared id across a beamed run; null when this event beams with nothing. */
+  readonly beamGroup: number | null
   readonly style: NoteStyle
   /**
    * Per-notehead notated durations for a mixed-length chord (`[C2G]` → half + quarter),

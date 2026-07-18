@@ -189,6 +189,20 @@ class VoiceBuilder {
     if (target.length > 0) target[target.length - 1] = event
   }
 
+  /** `-` reaches back: the tie belongs to the note already emitted. Rests cannot tie. */
+  tieLast(): void {
+    const last = this.last
+    if (last && last.type !== 'rest') this.replaceLast({ ...last, tiedToNext: true })
+  }
+
+  /** `)` likewise closes the slur on the preceding note. Rests cannot be slurred. */
+  slurEndLast(): void {
+    const last = this.last
+    if (last && last.type !== 'rest') {
+      this.replaceLast({ ...last, slurEnds: last.slurEnds + 1 })
+    }
+  }
+
   closeMeasure(barline: Barline, barlineRange: SourceRange): void {
     // A barline with nothing before it (leading `|:`) opens rather than closes.
     if (this.events.length === 0 && this.measureStart === null) return
@@ -532,12 +546,31 @@ class Parser {
     let pendingBroken: Rational | null = null
     /** Chord symbols, annotations and decorations bind to the next event. */
     let pending = noAttachments()
+    /** `(` opens a slur on the NEXT event; `)` closes on the PREVIOUS one. */
+    let pendingSlurStarts = 0
+    let pendingGrace: Pitch[] = []
+    let pendingGraceSlash = false
 
     const emit = (event: MusicEvent): void => {
       const scaled = applyTuplet(pendingBroken ? scaleEvent(event, pendingBroken) : event)
-      voice().push({ ...scaled, ...pending } as MusicEvent)
+      // A rest carries none of these — no ties, slurs, grace notes or chord symbols —
+      // but it still consumes the pending state so they cannot leak past it.
+      voice().push(
+        scaled.type === 'rest'
+          ? scaled
+          : ({
+              ...scaled,
+              ...pending,
+              slurStarts: pendingSlurStarts,
+              graceNotes: pendingGrace,
+              graceSlash: pendingGraceSlash,
+            } as MusicEvent),
+      )
       pendingBroken = null
       pending = noAttachments()
+      pendingSlurStarts = 0
+      pendingGrace = []
+      pendingGraceSlash = false
     }
 
     while (i < tokens.length) {
@@ -652,6 +685,24 @@ class Parser {
           i++
           break
         }
+        case 'tie': {
+          voice().tieLast()
+          i++
+          break
+        }
+        case 'rparen': {
+          voice().slurEndLast()
+          i++
+          break
+        }
+        case 'grace': {
+          const inner = this.src.slice(token.start + 1, token.start + token.length - 1)
+          const grace = parseGracePitches(inner)
+          pendingGrace = grace.pitches
+          pendingGraceSlash = grace.slash
+          i++
+          break
+        }
         case 'lparen': {
           // `(` alone is a slur; `(p:q:r` opens a tuplet — p notes in the time of q, over
           // the next r notes, with q and r each optional (`(3`, `(3:2`, `(3::4`).
@@ -663,7 +714,8 @@ class Parser {
             this.src.slice(token.start, token.start + 16),
           )
           if (!spec?.[1]) {
-            i++ // ponytail: slurs are not modelled yet.
+            pendingSlurStarts++
+            i++
             break
           }
           const specEnd = token.start + spec[0].length
@@ -743,6 +795,11 @@ class Parser {
       duration,
       notatedDuration: duration,
       tiedToNext: false,
+      slurStarts: 0,
+      slurEnds: 0,
+      graceNotes: [],
+      graceSlash: false,
+      beamGroup: null,
       style: 'normal',
       microtoneCents,
       tuplet: null, // set by applyTuplet() on emit
@@ -833,6 +890,11 @@ class Parser {
         duration,
         notatedDuration: duration,
         tiedToNext: false,
+        slurStarts: 0,
+        slurEnds: 0,
+        graceNotes: [],
+        graceSlash: false,
+        beamGroup: null,
         style: 'normal',
         headDurations: mixed ? headDurations : [],
         microtoneCents: 0, // ponytail: microtones inside a chord when a fixture needs it
@@ -980,6 +1042,43 @@ function defaultTupletQ(p: number, compound: boolean): number {
     default:
       return compound ? 3 : 2
   }
+}
+
+/**
+ * `{gfe}` grace pitches, or `{/g}` for an acciaccatura. Parsed from the raw inner text
+ * rather than tokens — a grace group is a self-contained span with its own accidentals
+ * and octave marks, and never carries durations.
+ */
+function parseGracePitches(raw: string): { pitches: Pitch[]; slash: boolean } {
+  let text = raw
+  let slash = false
+  if (text.startsWith('/')) {
+    slash = true
+    text = text.slice(1)
+  }
+  const pitches: Pitch[] = []
+  let i = 0
+  while (i < text.length) {
+    let accidental: Accidental | null = null
+    while (i < text.length && '^_='.includes(text[i] as string)) {
+      accidental = combineAccidental(accidental, text[i] as string)
+      i++
+    }
+    const letter = text[i]
+    if (!letter || !/[a-gA-G]/.test(letter)) {
+      i++
+      continue
+    }
+    let octave = letter >= 'a' && letter <= 'g' ? 5 : 4
+    i++
+    while (i < text.length && (text[i] === "'" || text[i] === ',')) {
+      octave += text[i] === "'" ? 1 : -1
+      i++
+    }
+    while (i < text.length && /[0-9/]/.test(text[i] as string)) i++ // lengths are ignored
+    pitches.push({ step: letter.toLowerCase() as DiatonicStep, octave, accidental })
+  }
+  return { pitches, slash }
 }
 
 const REST_KINDS: Record<string, RestKind> = {
