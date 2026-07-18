@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { expect, it } from 'vitest'
-import { ratToNumber, stepIndex } from '../../src/core/model.js'
+import { type Pitch, ratToNumber, stepIndex } from '../../src/core/model.js'
 import { parse } from '../../src/parser/parser.js'
 import { corpusDir, goldensDir } from './corpus.js'
 
@@ -15,19 +15,32 @@ import { corpusDir, goldensDir } from './corpus.js'
  * regression-net convention abcMusicKit2 runs against v1 (`BASELINE=` in FREEZE.md).
  *
  * Raise BASELINE as parser features land. Never lower it to make a change pass.
+ *
+ * History: 4 with offsets in the key, 18 after dropping them (see keyOf). Implementing
+ * chords moved this number by ZERO — every chord-bearing fixture still fails on something
+ * else (multi-voice, mostly). Counts reconcile exactly, so chords are correct; they just
+ * are not what this gate is currently measuring.
  */
-const BASELINE = 4
+const BASELINE = 18
 
 /** Full per-fixture breakdown, written on every run for triage. */
 const REPORT_PATH = '/tmp/abcts-content-parity.txt'
 
 interface NoteKey {
-  start: number | undefined
   duration: number
-  pitch: number
+  /** All pitches in the event — a chord is one entry with N pitches, never N entries. */
+  pitches: number[]
 }
 
-const keyOf = (n: NoteKey): string => `${n.start}:${n.duration}:${n.pitch}`
+// ponytail: source offsets are NOT compared. abcjs anchors `startChar` at the start of the
+// whole attached group, so `"C"G` starts at the `"`, while v2 keeps the chord symbol in a
+// separate `chordSymbolSourceRange`. We cannot compute abcjs's anchor until chord symbols
+// and decorations are parsed. Ceiling: this gate cannot catch an offset regression.
+// Upgrade: put `start` back in the key once attached-token parsing lands.
+const keyOf = (n: NoteKey): string => `${n.duration}:${n.pitches.join(',')}`
+
+/** abcjs numbers pitches diatonically from middle C: C4 is 0, c5 is 7. */
+const diatonic = (p: Pitch): number => (p.octave - 4) * 7 + stepIndex(p.step)
 
 function ourNotes(abc: string): string[] {
   const result = parse(abc)
@@ -36,13 +49,11 @@ function ourNotes(abc: string): string[] {
     .flatMap((score) => score.voices)
     .flatMap((voice) => voice.measures)
     .flatMap((measure) => measure.events)
-    .filter((event) => event.type === 'note')
-    .map((note) =>
+    .filter((event) => event.type === 'note' || event.type === 'chord')
+    .map((event) =>
       keyOf({
-        start: note.sourceRange?.start,
-        duration: ratToNumber(note.duration),
-        // abcjs numbers pitches diatonically from middle C: C4 is 0, c5 is 7.
-        pitch: (note.pitch.octave - 4) * 7 + stepIndex(note.pitch.step),
+        duration: ratToNumber(event.duration),
+        pitches: (event.type === 'chord' ? event.pitches : [event.pitch]).map(diatonic),
       }),
     )
 }
@@ -57,9 +68,8 @@ function abcjsNotes(name: string): string[] {
           if (element.el_type !== 'note' || element.rest || !element.pitches) continue
           out.push(
             keyOf({
-              start: element.startChar,
               duration: element.duration,
-              pitch: element.pitches[0].pitch,
+              pitches: element.pitches.map((p: { pitch: number }) => p.pitch),
             }),
           )
         }

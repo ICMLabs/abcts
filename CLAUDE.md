@@ -9,20 +9,37 @@ specification, decision record, and setup guide. Do not make
 architectural decisions that contradict it without flagging them
 explicitly and getting confirmation from Lance.
 
-## Two Swift Reference Packages
+## Two Swift Reference Packages — SPLIT BY QUESTION TYPE
 ICM Labs maintains two Swift packages you will reference. Both are
 siblings of this repo under `ICMLabs/Code/`:
 
-- **`../abcMusicKit`**  — direct Swift port of abcjs. Preserves abcjs behavior
-                          including its bugs. Reference for abcts/compat only.
-                          FROZEN at tag `v1-frozen-2026-07-07`.
-- **`../abcMusicKit2`** — clean-room Swift reimplementation. Exceeds abcjs.
-                          This is the PRIMARY reference for abcts core.
-                          ACTIVELY DEVELOPED — it is a moving target.
+- **`../abcMusicKit`** (v1)  — direct Swift port of abcjs, inheriting abcjs's design,
+                               algorithms and performance along with its behavior.
+                               FROZEN at tag `v1-frozen-2026-07-07`. **In production**
+                               — the engine Music Studio ships today.
+- **`../abcMusicKit2`** (v2) — clean-room reimplementation. **Not production**;
+                               still being brought to functional parity with v1.
+                               Actively developed, so it is a moving target.
 
-Do not confuse them. When in doubt about correct behavior:
-- abcMusicKit2 defines the answer for core and extended modes
-- abcMusicKit defines the answer for compat mode
+**Which one answers depends on what you are asking:**
+
+| Question | Reference | Why |
+|---|---|---|
+| *What should the output BE?* | **v1** | It is production and shipping. Behavior is proven. |
+| *How should this be BUILT?* | **v2** | Modern design, written to be better than what v1 inherited. |
+
+So: take the model shape, type design, algorithms, pipeline structure,
+exact-`Rational` durations and source-map approach from **v2**. Take the answer to
+"what notes, what durations, what does this ABC actually produce" from **v1**.
+
+**Never port an algorithm out of v1.** Its internals are abcjs's internals, carried
+over wholesale — including the slow and awkward parts. Read v1 for *what* it
+produces, never for *how*.
+
+Do not treat v2 as a behavior oracle — it has known gaps against v1.
+
+When the two conflict on something that is BOTH (a model shape that changes
+observable behavior), say so and ask rather than picking.
 
 ## License — Non-Negotiable
 - abcts is MIT. All runtime dependencies must be MIT, ISC, BSD, or Apache 2.0.

@@ -186,7 +186,31 @@ export interface Rest {
   readonly sourceRange: SourceRange | null
 }
 
-export type MusicEvent = Note | Rest
+/**
+ * Notes sounding simultaneously — one event, N pitches.
+ *
+ * Both references group rather than flatten (v1 `ChordModel.notes`, v2 `Chord.pitches`),
+ * and grouping is what makes per-note audition possible: a consumer iterates `pitches` to
+ * audition one notehead, or plays them together for the chord. Flattening to N separate
+ * notes would lose the simultaneity that distinguishes a chord from a melody.
+ */
+export interface Chord {
+  readonly type: 'chord'
+  readonly pitches: readonly Pitch[]
+  readonly duration: Rational
+  readonly notatedDuration: Rational
+  readonly tiedToNext: boolean
+  readonly style: NoteStyle
+  /**
+   * Per-notehead notated durations for a mixed-length chord (`[C2G]` → half + quarter),
+   * parallel to `pitches`. Empty when uniform. Visual only — stems, flags and sounding
+   * duration all follow the chord's own `notatedDuration`/`duration`.
+   */
+  readonly headDurations: readonly Rational[]
+  readonly sourceRange: SourceRange | null
+}
+
+export type MusicEvent = Note | Rest | Chord
 
 export interface SourceRange {
   readonly start: number

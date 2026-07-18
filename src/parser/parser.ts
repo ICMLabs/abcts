@@ -17,6 +17,7 @@
 import {
   Accidental,
   type Barline,
+  type Chord,
   type Diagnostic,
   type DiatonicStep,
   type KeySignature,
@@ -30,6 +31,7 @@ import {
   type Rational,
   type Rest,
   type RestKind,
+  ratEq,
   rational,
   ratLt,
   ratMul,
@@ -391,6 +393,15 @@ class Parser {
           i = built.next
           break
         }
+        case 'openBracket': {
+          voice.noteMeasureStart(token.start)
+          const built = this.buildChord(tokens, i, builder)
+          voice.push(built.chord)
+          i = built.next
+          pendingAccidental = null
+          accidentalStart = null
+          break
+        }
         case 'barline': {
           const text = this.src.slice(token.start, token.start + token.length)
           voice.closeMeasure(
@@ -415,30 +426,14 @@ class Parser {
     accidentalStart: number | null,
   ): { note: Note; next: number } {
     const token = tokens[index] as Token
-    const letter = token.aux
-    const step = letter.toLowerCase() as DiatonicStep
-    // Case sets the octave: uppercase C..B is octave 4, lowercase c..b is octave 5.
-    let octave = letter >= 'a' && letter <= 'g' ? 5 : 4
-
-    let i = index + 1
-    let last = token
-    while (i < tokens.length) {
-      const next = tokens[i] as Token
-      if (next.kind === 'octaveUp') octave++
-      else if (next.kind === 'octaveDown') octave--
-      else break
-      last = next
-      i++
-    }
-
-    const length = this.readLength(tokens, i)
-    if (length.next > i) last = tokens[length.next - 1] as Token
+    const head = this.readNoteHead(tokens, index, accidental)
+    const length = this.readLength(tokens, head.next)
+    const last = tokens[Math.max(index, length.next - 1)] as Token
     const duration = ratMul(builder.unitNoteLength, length.factor)
 
-    const pitch: Pitch = { step, octave, accidental }
     const note: Note = {
       type: 'note',
-      pitch,
+      pitch: head.pitch,
       duration,
       notatedDuration: duration,
       tiedToNext: false,
@@ -446,6 +441,92 @@ class Parser {
       sourceRange: sourceRange(accidentalStart ?? token.start, last.start + last.length),
     }
     return { note, next: length.next }
+  }
+
+  /** Reads `noteLetter octave*` into a pitch. The caller supplies any preceding accidental. */
+  private readNoteHead(
+    tokens: readonly Token[],
+    index: number,
+    accidental: Accidental | null,
+  ): { pitch: Pitch; next: number } {
+    const letter = (tokens[index] as Token).aux
+    const step = letter.toLowerCase() as DiatonicStep
+    // Case sets the octave: uppercase C..B is octave 4, lowercase c..b is octave 5.
+    let octave = letter >= 'a' && letter <= 'g' ? 5 : 4
+
+    let i = index + 1
+    while (i < tokens.length) {
+      const next = tokens[i] as Token
+      if (next.kind === 'octaveUp') octave++
+      else if (next.kind === 'octaveDown') octave--
+      else break
+      i++
+    }
+    return { pitch: { step, octave, accidental }, next: i }
+  }
+
+  /**
+   * `[CEG]` — notes sounding simultaneously, one event.
+   *
+   * Chord length follows ABC §4.18: a length after the `]` wins (`[CEG]2`), otherwise the
+   * FIRST inner note's length carries the chord (`[g4d4]`). Per-notehead durations are
+   * recorded only when they actually differ, so a uniform chord stays clean.
+   */
+  private buildChord(
+    tokens: readonly Token[],
+    index: number,
+    builder: ScoreBuilder,
+  ): { chord: Chord; next: number } {
+    const open = tokens[index] as Token
+    const pitches: Pitch[] = []
+    const innerMultipliers: Rational[] = []
+    let accidental: Accidental | null = null
+    let i = index + 1
+
+    while (i < tokens.length && (tokens[i] as Token).kind !== 'closeBracket') {
+      const token = tokens[i] as Token
+      if (token.kind === 'accidental') {
+        accidental = combineAccidental(accidental, token.aux)
+        i++
+        continue
+      }
+      if (token.kind === 'noteLetter') {
+        const head = this.readNoteHead(tokens, i, accidental)
+        const length = this.readLength(tokens, head.next)
+        pitches.push(head.pitch)
+        innerMultipliers.push(length.factor)
+        accidental = null
+        i = length.next
+        continue
+      }
+      i++ // ponytail: decorations and chord symbols inside `[…]` are skipped for now.
+    }
+    if ((tokens[i] as Token | undefined)?.kind === 'closeBracket') i++
+
+    const post = this.readLength(tokens, i)
+    const postIsUnit = post.factor.numerator === 1 && post.factor.denominator === 1
+    const chordMultiplier = postIsUnit ? (innerMultipliers[0] ?? rational(1)) : post.factor
+    const duration = ratMul(builder.unitNoteLength, chordMultiplier)
+
+    const headDurations = innerMultipliers.map((m) =>
+      ratMul(ratMul(builder.unitNoteLength, m), post.factor),
+    )
+    const mixed = headDurations.some((h) => !ratEq(h, duration))
+
+    const last = tokens[Math.max(index, post.next - 1)] as Token
+    return {
+      chord: {
+        type: 'chord',
+        pitches,
+        duration,
+        notatedDuration: duration,
+        tiedToNext: false,
+        style: 'normal',
+        headDurations: mixed ? headDurations : [],
+        sourceRange: sourceRange(open.start, last.start + last.length),
+      },
+      next: post.next,
+    }
   }
 
   private buildRest(

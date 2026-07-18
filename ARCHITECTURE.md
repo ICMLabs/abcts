@@ -9,9 +9,24 @@
 
 ICM Labs maintains two Swift ABC notation packages that together form the reference for abcts:
 
-**abcMusicKit** — direct port of abcjs into Swift. Preserves abcjs behavior including its bugs. Used as the compat layer reference. **Frozen** at tag `v1-frozen-2026-07-07`; it is a behavior oracle, not a moving target.
+**abcMusicKit (v1)** — direct port of abcjs into Swift, and a faithful one: it inherited abcjs's design, its algorithms, and its performance characteristics along with its behavior. **Frozen** at tag `v1-frozen-2026-07-07`, and **in production** — the engine Music Studio ships today. Its behavior is proven. Its internals are not a model to follow.
 
-**abcMusicKit2** — clean-room Swift reimplementation. Goal is to replicate and exceed abcjs without porting. Independently implements behavioral parity with abcm2ps and abc2svg. This is the primary reference for abcts core. **Actively developed** — it is Music Studio's v2 engine as of 2026-07-07.
+**abcMusicKit2 (v2)** — clean-room Swift reimplementation. Goal is to replicate and exceed abcjs without porting. **Not production** — still being brought to functional parity with v1, and actively developed, so it is a moving target. Its design and architecture are materially better than v1's.
+
+### Reference policy — split by question type
+
+*Amended 2026-07-18. Supersedes the original "v2 is the primary reference for core".*
+
+| Question | Reference |
+|---|---|
+| **What should the output BE?** — notes, durations, what a given ABC produces | **v1** — it is production and shipping |
+| **How should this be BUILT?** — model shape, type design, algorithms, pipeline | **v2** — modern design, written to be better than what v1 inherited |
+
+Concretely from **v2**: exact-`Rational` durations, the `Score → Voice → Measure → MusicEvent` nesting, deferred accidental resolution, the diagnostics model, the source-map approach — and algorithm choice generally. From **v1**: the answer to "what does this ABC actually parse to".
+
+Never port an algorithm out of v1. v1's internals are abcjs's internals, carried over wholesale — including the parts that are slow or awkward. Read v1 to learn *what* it produces, not *how* it gets there.
+
+v2 is not a behavior oracle — it has known gaps against v1. Where a decision is both at once (a model shape that changes observable behavior), flag it rather than picking silently.
 
 The two packages map directly onto abcts architecture:
 
@@ -22,7 +37,7 @@ abcMusicKit2  (Swift, clean-room)      → abcts core      (the real engine)
 
 Where abcMusicKit and abcMusicKit2 diverge, that divergence is intentional and self-documenting — it is either a bug fix or a feature addition. Those divergences become the abcts changelog.
 
-abcts translates abcMusicKit2 into TypeScript for the broader ABC web community. It is not a mechanical port of abcjs — it is a reimplementation against a known-correct clean-room reference with a full regression corpus.
+abcts brings this work to TypeScript for the broader ABC web community: v2's architecture, validated against v1's production behavior. It is not a mechanical port of abcjs — it is a reimplementation against known-correct references with a full regression corpus.
 
 **abcm2ps and abc2svg are GPL licensed. abcts derives from neither.** All behavioral parity with those tools was achieved independently through abcMusicKit2, which was developed by observing output behavior only — no source was read or ported. abcts inherits that clean lineage:
 
