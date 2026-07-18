@@ -10,10 +10,8 @@
  * chords, barlines, measures, broken rhythm, tuplets, microtones, `&` overlays,
  * `%%score` voice ordering, `%%begintext` blocks, `+:` continuations, chord symbols,
  * annotations and decorations.
- * ponytail: DEFERRED — ABC §8.2 text-escape decoding (`\\vao` → ǎo, `` \\`a `` → à) on
- * lyrics, titles and annotations; v2 runs decodeTextString over all of them and we
- * currently keep the raw source. Also: part order (`P:`), `U:` user-defined symbols,
- * symbol lines (`s:`), and most `%%` directives.
+ * ponytail: DEFERRED — part order (`P:`), `U:` user-defined symbols, symbol lines
+ * (`s:`), and most `%%` directives.
  * Each is a separate step driven by the corpus fixture that needs it; the lexer
  * already tokenizes all of them, so the work is parser-side only.
  */
@@ -47,6 +45,7 @@ import {
   type Voice,
 } from '../core/model.js'
 import { Lexer, type Token } from './lexer.js'
+import { decodeTextString } from './text.js'
 
 export type ParseResult =
   | {
@@ -551,13 +550,13 @@ class Parser {
     const builder = this.ensureScore(start)
     switch (letter) {
       case 'T':
-        builder.titles.push(value)
+        builder.titles.push(decodeTextString(value))
         return
       case 'C':
-        builder.composer = value
+        builder.composer = decodeTextString(value)
         return
       case 'R':
-        builder.rhythm = value
+        builder.rhythm = decodeTextString(value)
         return
       case 'M': {
         if (builder.bodyStarted) {
@@ -788,10 +787,10 @@ class Parser {
           const range = sourceRange(token.start, token.start + token.length)
           const text = this.src.slice(token.start + 1, token.start + token.length - 1)
           if (isAnnotation(text)) {
-            pending.annotations.push(text)
+            pending.annotations.push(decodeTextString(text))
             pending.annotationSourceRanges.push(range)
           } else {
-            pending.chordSymbol = text
+            pending.chordSymbol = decodeTextString(text)
             pending.chordSymbolSourceRange = range
           }
           i++
@@ -1240,6 +1239,11 @@ interface Syllable {
  * Whitespace separates notes. `|` is a barline-alignment hint and occupies no note. `*`
  * and `_` (melisma) occupy a note but carry no text. Within a token, `-` splits a word
  * across notes and each non-final piece keeps its hyphen. `~` is a hard space.
+ *
+ * A SPACED hyphen (`A - ve`) becomes its own syllable occupying a note, rather than
+ * binding to the preceding one as `A- ve` does. That matches v2, and renders as a
+ * connecting hyphen. Unverified against abcjs: its `.parse.json` carries no lyric fields,
+ * so the corpus cannot arbitrate this one.
  */
 function parseLyricSyllables(text: string, base: number): Syllable[] {
   const out: Syllable[] = []
@@ -1265,10 +1269,12 @@ function parseLyricSyllables(text: string, base: number): Syllable[] {
       }
     }
     parts.forEach((part, index) => {
-      const raw = text.slice(part.start, part.end).split('~').join(' ') // '~' is a hard space; ES2020 has no replaceAll
+      // `~` is a hard space (ES2020 has no replaceAll). The RANGE stays the raw source
+      // span so cross-linking still points at the `w:` text, not the decoded form.
+      const raw = text.slice(part.start, part.end).split('~').join(' ')
       const range = sourceRange(base + part.start, base + part.end)
-      if (index < parts.length - 1) out.push({ text: `${raw}-`, range })
-      else if (raw !== '') out.push({ text: raw, range })
+      if (index < parts.length - 1) out.push({ text: `${decodeTextString(raw)}-`, range })
+      else if (raw !== '') out.push({ text: decodeTextString(raw), range })
     })
   }
   return out
