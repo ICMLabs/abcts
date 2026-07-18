@@ -54,3 +54,50 @@ export function loadCorpus(): CorpusCase[] {
 export function parseGolden(name: string): unknown {
   return JSON.parse(readFileSync(join(goldensDir, `${name}.parse.json`), 'utf-8'))
 }
+
+/** The subset of an abcjs golden element this suite reads. */
+export interface GoldenElement {
+  readonly el_type: string
+  readonly startChar: number
+  readonly endChar: number
+  readonly duration: number
+  readonly rest?: unknown
+  readonly pitches?: readonly { readonly pitch: number }[]
+}
+
+interface GoldenTune {
+  readonly lines?: readonly {
+    readonly staff?: readonly { readonly voices?: GoldenElement[][] }[]
+  }[]
+}
+
+/**
+ * Every tune in a `.parse.json` golden, normalized across abcjs's two dump shapes.
+ *
+ * A single-tune golden is the tune object itself (`{warnings, formatting, metaText,
+ * lines}`); a multi-tune golden wraps them in `{_meta, tunes: [...]}` with no top-level
+ * `lines`. Reading only the single-tune shape silently yields zero notes for all 12
+ * tunebook fixtures, which reads as "no coverage" rather than "wrong reader".
+ */
+function goldenTunes(name: string): readonly GoldenTune[] {
+  const golden = parseGolden(name) as { tunes?: GoldenTune[] } & GoldenTune
+  return golden.tunes ?? [golden]
+}
+
+/** Every sounding note element in a golden, flattened across tunes, lines, staves and voices. */
+export function goldenNotes(name: string): GoldenElement[] {
+  const out: GoldenElement[] = []
+  for (const tune of goldenTunes(name)) {
+    for (const line of tune.lines ?? []) {
+      for (const staff of line.staff ?? []) {
+        for (const voice of staff.voices ?? []) {
+          for (const element of voice) {
+            if (element.el_type !== 'note' || element.rest || !element.pitches) continue
+            out.push(element)
+          }
+        }
+      }
+    }
+  }
+  return out
+}

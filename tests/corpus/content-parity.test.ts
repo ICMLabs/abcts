@@ -3,7 +3,7 @@ import { basename, join } from 'node:path'
 import { expect, it } from 'vitest'
 import { type Pitch, ratToNumber, stepIndex } from '../../src/core/model.js'
 import { parse } from '../../src/parser/parser.js'
-import { corpusDir, goldensDir } from './corpus.js'
+import { corpusDir, goldenNotes } from './corpus.js'
 
 /**
  * Content-parity scoreboard and ratchet.
@@ -16,12 +16,14 @@ import { corpusDir, goldensDir } from './corpus.js'
  *
  * Raise BASELINE as parser features land. Never lower it to make a change pass.
  *
- * History: 4 with offsets in the key, 18 after dropping them (see keyOf). Implementing
- * chords moved this number by ZERO — every chord-bearing fixture still fails on something
- * else (multi-voice, mostly). Counts reconcile exactly, so chords are correct; they just
- * are not what this gate is currently measuring.
+ * History: 4 with offsets in the key, 18 after dropping them (see keyOf), 24 once the
+ * golden reader learned abcjs's multi-tune `{tunes: [...]}` shape — that last step added
+ * 12 fixtures to the denominator and 6 to the numerator without touching the parser.
+ * Implementing chords moved this number by ZERO: every chord-bearing fixture still fails
+ * on something else (multi-voice, mostly). Counts reconcile exactly, so chords are
+ * correct; they are just not what this gate measures.
  */
-const BASELINE = 18
+const BASELINE = 24
 
 /** Full per-fixture breakdown, written on every run for triage. */
 const REPORT_PATH = '/tmp/abcts-content-parity.txt'
@@ -59,24 +61,12 @@ function ourNotes(abc: string): string[] {
 }
 
 function abcjsNotes(name: string): string[] {
-  const golden = JSON.parse(readFileSync(join(goldensDir, `${name}.parse.json`), 'utf-8'))
-  const out: string[] = []
-  for (const line of golden.lines ?? []) {
-    for (const staff of line.staff ?? []) {
-      for (const voice of staff.voices ?? []) {
-        for (const element of voice) {
-          if (element.el_type !== 'note' || element.rest || !element.pitches) continue
-          out.push(
-            keyOf({
-              duration: element.duration,
-              pitches: element.pitches.map((p: { pitch: number }) => p.pitch),
-            }),
-          )
-        }
-      }
-    }
-  }
-  return out
+  return goldenNotes(name).map((element) =>
+    keyOf({
+      duration: element.duration,
+      pitches: (element.pitches ?? []).map((p) => p.pitch),
+    }),
+  )
 }
 
 it('content parity against abcjs goldens does not regress', () => {
@@ -107,6 +97,8 @@ it('content parity against abcjs goldens does not regress', () => {
   }
 
   const summary = `=== ${matched}/${compared} compared fixtures match (${fixtures.length - compared} skipped) ===`
+  // A skipped fixture means the golden yielded no notes at all. That should now be
+  // impossible — if it reappears, the reader has lost a dump shape again, not the corpus.
   writeFileSync(REPORT_PATH, `${rows.join('\n')}\n${summary}\n`)
 
   expect(compared, 'no fixtures were comparable — the goldens are not loading').toBeGreaterThan(0)

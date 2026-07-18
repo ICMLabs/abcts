@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { rational, ratToNumber, type Score, stepIndex } from '../../src/core/model.js'
 import { parse } from '../../src/parser/parser.js'
-import { corpusDir, goldensDir } from './corpus.js'
+import { corpusDir, goldenNotes } from './corpus.js'
 
 const fixture = (name: string): string => readFileSync(join(corpusDir, `${name}.abc`), 'utf-8')
 
@@ -22,26 +22,13 @@ const notesOf = (score: Score) =>
     }))
 
 /** The same stream pulled out of an abcjs `.parse.json` golden. */
-function abcjsNotesOf(name: string) {
-  const golden = JSON.parse(readFileSync(join(goldensDir, `${name}.parse.json`), 'utf-8'))
-  const out: { start: number; end: number; duration: number; pitch: number }[] = []
-  for (const line of golden.lines ?? []) {
-    for (const staff of line.staff ?? []) {
-      for (const voice of staff.voices ?? []) {
-        for (const element of voice) {
-          if (element.el_type !== 'note' || element.rest || !element.pitches) continue
-          out.push({
-            start: element.startChar,
-            end: element.endChar,
-            duration: element.duration,
-            pitch: element.pitches[0].pitch,
-          })
-        }
-      }
-    }
-  }
-  return out
-}
+const abcjsNotesOf = (name: string) =>
+  goldenNotes(name).map((element) => ({
+    start: element.startChar,
+    end: element.endChar,
+    duration: element.duration,
+    pitch: element.pitches?.[0]?.pitch ?? -1,
+  }))
 
 describe('parse: simple-c', () => {
   const result = parse(fixture('simple-c'))
