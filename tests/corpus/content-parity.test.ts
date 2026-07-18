@@ -4,7 +4,7 @@ import { expect, it } from 'vitest'
 import type { Pitch } from '../../src/core/model.js'
 import { ratToNumber, stepIndex } from '../../src/core/model.js'
 import { parse } from '../../src/parser/parser.js'
-import { corpusDir, goldenNotes } from './corpus.js'
+import { corpusDir, goldenElements } from './corpus.js'
 
 /**
  * Content-parity scoreboard and ratchet.
@@ -57,12 +57,23 @@ const OFFSET_DIVERGENCES: Record<string, string> = {
 const REPORT_PATH = '/tmp/abcts-content-parity.txt'
 
 interface NoteKey {
-  duration: number
+  /**
+   * NOTATED duration — what is written. abcjs's `duration` is the notated value and it
+   * carries the tuplet ratio separately as `tripletMultiplier`, so comparing our sounding
+   * `duration` against it would report every triplet as a mismatch.
+   */
+  notated: number
+  /** Sounding / notated — 1 outside a tuplet, 2/3 inside a triplet. */
+  soundingRatio: number
   /** All pitches in the event — a chord is one entry with N pitches, never N entries. */
   pitches: number[]
 }
 
-const keyOf = (n: NoteKey): string => `${n.duration}:${n.pitches.join(',')}`
+/** Floats from two engines; compare at a tolerance rather than by identity. */
+const round = (n: number): number => Math.round(n * 1e9) / 1e9
+
+const keyOf = (n: NoteKey): string =>
+  `${round(n.notated)}:${round(n.soundingRatio)}:${n.pitches.join(',')}`
 
 /**
  * Source offsets are checked by CONTAINMENT, not equality.
@@ -105,7 +116,12 @@ function ourNotes(abc: string): OurNote[] {
         .map((event) => ({
           start: event.sourceRange?.start,
           key: keyOf({
-            duration: ratToNumber(event.duration),
+            notated: ratToNumber(event.notatedDuration),
+            // `B0` is a legal zero-duration note, so guard the 0/0.
+            soundingRatio:
+              ratToNumber(event.notatedDuration) === 0
+                ? 1
+                : ratToNumber(event.duration) / ratToNumber(event.notatedDuration),
             // abcjs bakes `octave=` into its pitch numbers; the core model keeps it on
             // the Voice as a sounding shift, so add it back to compare like for like.
             pitches: (event.type === 'chord' ? event.pitches : [event.pitch]).map(
@@ -123,14 +139,33 @@ interface GoldenNote {
 }
 
 function abcjsNotes(name: string): GoldenNote[] {
-  return goldenNotes(name).map((element) => ({
-    start: element.startChar,
-    end: element.endChar,
-    key: keyOf({
-      duration: element.duration,
-      pitches: (element.pitches ?? []).map((p) => p.pitch),
-    }),
-  }))
+  // abcjs marks only the FIRST note of a tuplet, with `tripletMultiplier` and a
+  // `tripletR` count; the following R-1 notes are implicitly members. Propagate it so
+  // every member is compared against the ratio it actually sounds at.
+  let remaining = 0
+  let multiplier = 1
+  const out: GoldenNote[] = []
+  // Walk rests too: a tuplet can open on one (`(3z2A2G2`), and dropping it here would
+  // strip the tuplet from the notes that follow.
+  for (const element of goldenElements(name)) {
+    if (element.tripletMultiplier !== undefined) {
+      multiplier = element.tripletMultiplier
+      remaining = element.tripletR ?? 1
+    }
+    const soundingRatio = remaining > 0 ? multiplier : 1
+    if (remaining > 0) remaining--
+    if (element.rest || !element.pitches) continue
+    out.push({
+      start: element.startChar,
+      end: element.endChar,
+      key: keyOf({
+        notated: element.duration,
+        soundingRatio,
+        pitches: element.pitches.map((p) => p.pitch),
+      }),
+    })
+  }
+  return out
 }
 
 it('content parity against abcjs goldens does not regress', () => {

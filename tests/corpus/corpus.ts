@@ -63,6 +63,10 @@ export interface GoldenElement {
   readonly duration: number
   readonly rest?: unknown
   readonly pitches?: readonly { readonly pitch: number }[]
+  /** On the FIRST note of a tuplet only: the sounding multiplier, e.g. 2/3 for a triplet. */
+  readonly tripletMultiplier?: number
+  /** On the first note of a tuplet: how many notes the multiplier covers. */
+  readonly tripletR?: number
 }
 
 interface GoldenTune {
@@ -85,7 +89,11 @@ function goldenTunes(name: string): readonly GoldenTune[] {
 }
 
 /**
- * Every sounding note element in a golden, in VOICE-MAJOR order.
+ * Every note element in a golden — INCLUDING RESTS — in VOICE-MAJOR order.
+ *
+ * Rests are kept because abcjs attaches `tripletMultiplier` to whichever element opens a
+ * tuplet, and `(3z2A2G2` opens on a rest. Filtering rests before propagating that marker
+ * silently strips the tuplet from the notes that follow it.
  *
  * abcjs stores elements system-major — `lines[].staff[].voices[]`, where each line is one
  * rendered system — so a two-voice tune interleaves V1 and V2 once per system. The core
@@ -93,7 +101,7 @@ function goldenTunes(name: string): readonly GoldenTune[] {
  * undoes abcjs's layout order to recover the logical order; it does not discard anything.
  * Grouping restarts per tune, so tune 0's voice 0 never merges with tune 1's.
  */
-export function goldenNotes(name: string): GoldenElement[] {
+export function goldenElements(name: string): GoldenElement[] {
   const out: GoldenElement[] = []
   for (const tune of goldenTunes(name)) {
     const byVoice = new Map<string, GoldenElement[]>() // insertion order = first appearance
@@ -107,7 +115,7 @@ export function goldenNotes(name: string): GoldenElement[] {
             byVoice.set(key, bucket)
           }
           for (const element of voice) {
-            if (element.el_type !== 'note' || element.rest || !element.pitches) continue
+            if (element.el_type !== 'note') continue
             bucket.push(element)
           }
         })
@@ -117,3 +125,7 @@ export function goldenNotes(name: string): GoldenElement[] {
   }
   return out
 }
+
+/** Sounding notes only — rests dropped. Use `goldenElements` when tuplet state matters. */
+export const goldenNotes = (name: string): GoldenElement[] =>
+  goldenElements(name).filter((element) => !element.rest && element.pitches)

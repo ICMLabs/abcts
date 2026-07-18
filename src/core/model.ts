@@ -164,6 +164,17 @@ export const measureDuration = (m: Meter): Rational => rational(m.numerator, m.d
 
 export type NoteStyle = 'normal' | 'x' | 'harmonic' | 'triangle' | 'rhythm'
 
+/** Membership in a tuplet group. `number` is the p in `(p`, drawn over the bracket. */
+export interface TupletMark {
+  /** Tune-unique id, so adjacent tuplets of the same size stay distinguishable. */
+  readonly group: number
+  readonly number: number
+}
+
+/** A compound meter beats in threes — 6/8, 9/8, 12/8 — which changes the default tuplet q. */
+export const isCompoundMeter = (m: Meter): boolean =>
+  m.numerator % 3 === 0 && m.numerator > 3 && [4, 8, 16].includes(m.denominator)
+
 export interface Note {
   readonly type: 'note'
   readonly pitch: Pitch
@@ -179,6 +190,7 @@ export interface Note {
    * deviation, realized as a MIDI pitch bend. 0 means none.
    */
   readonly microtoneCents: number
+  readonly tuplet: TupletMark | null
   /** `"Am7"` printed above the staff, if one precedes this event. */
   readonly chordSymbol: string | null
   readonly chordSymbolSourceRange: SourceRange | null
@@ -200,6 +212,7 @@ export interface Rest {
   readonly duration: Rational
   readonly notatedDuration: Rational
   readonly kind: RestKind
+  readonly tuplet: TupletMark | null
   readonly sourceRange: SourceRange | null
 }
 
@@ -226,6 +239,7 @@ export interface Chord {
   readonly headDurations: readonly Rational[]
   /** See `Note.microtoneCents`. */
   readonly microtoneCents: number
+  readonly tuplet: TupletMark | null
   /** `"Am7"` printed above the staff, if one precedes this event. */
   readonly chordSymbol: string | null
   readonly chordSymbolSourceRange: SourceRange | null

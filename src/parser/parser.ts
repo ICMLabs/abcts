@@ -6,10 +6,12 @@
  * original it never throws — everything is lenient recovery plus collected
  * diagnostics.
  *
- * IMPLEMENTED: X/T/C/R/M/L/K headers, notes, rests, barlines, measures.
- * ponytail: DEFERRED — chords, tuplets, grace notes, slurs, ties, broken rhythm,
- * decorations, chord symbols, annotations, lyrics, multi-voice (V:), overlays (&),
- * inline fields, directives (%%), mid-tune key/meter changes, beaming, part order.
+ * IMPLEMENTED: X/T/C/R/M/L/K/V headers and their inline `[V:2]` forms, notes, rests,
+ * chords, barlines, measures, broken rhythm, tuplets, microtones, `&` overlays,
+ * `%%score` voice ordering, `%%begintext` blocks, `+:` continuations, chord symbols,
+ * annotations and decorations.
+ * ponytail: DEFERRED — grace notes, slurs, ties, lyrics (`w:`), beaming, mid-tune
+ * key/meter changes, part order, `U:` user-defined symbols, most `%%` directives.
  * Each is a separate step driven by the corpus fixture that needs it; the lexer
  * already tokenizes all of them, so the work is parser-side only.
  */
@@ -20,6 +22,7 @@ import {
   type Chord,
   type Diagnostic,
   type DiatonicStep,
+  isCompoundMeter,
   type KeySignature,
   type Measure,
   type Meter,
@@ -241,6 +244,13 @@ class ScoreBuilder {
   private readonly voices = new Map<string, VoiceBuilder>()
   /** Voice ids from `%%score`/`%%staves`, which overrides declaration order. */
   scoreOrder: string[] | null = null
+  private tupletGroups = 0
+
+  /** Tune-unique, so adjacent triplets stay distinguishable. */
+  nextTupletGroup(): number {
+    this.tupletGroups += 1
+    return this.tupletGroups
+  }
   private currentVoiceId = DEFAULT_VOICE_ID
 
   constructor(readonly sourceStartOffset: number) {}
@@ -501,13 +511,30 @@ class Parser {
     let accidentalStart: number | null = null
     /** Cents from a fractional accidental (`^3/2G`), pending until the note letter. */
     let pendingMicrotone = 0
+    // Tuplet state. The ratio scales SOUNDING duration only — notatedDuration keeps the
+    // written value, which is the whole reason those are separate fields: a triplet
+    // eighth is written as an eighth but sounds for a twelfth.
+    let tupletRemaining = 0
+    let tupletRatio: Rational | null = null
+    let tupletNumber = 0
+    let tupletGroup = 0
+
+    const applyTuplet = (event: MusicEvent): MusicEvent => {
+      if (tupletRemaining <= 0 || !tupletRatio) return event
+      tupletRemaining--
+      return {
+        ...event,
+        duration: ratMul(event.duration, tupletRatio),
+        tuplet: { group: tupletGroup, number: tupletNumber },
+      }
+    }
     /** Set by a `>`/`<` mark; scales the NEXT event, then clears. */
     let pendingBroken: Rational | null = null
     /** Chord symbols, annotations and decorations bind to the next event. */
     let pending = noAttachments()
 
     const emit = (event: MusicEvent): void => {
-      const scaled = pendingBroken ? scaleEvent(event, pendingBroken) : event
+      const scaled = applyTuplet(pendingBroken ? scaleEvent(event, pendingBroken) : event)
       voice().push({ ...scaled, ...pending } as MusicEvent)
       pendingBroken = null
       pending = noAttachments()
@@ -625,8 +652,43 @@ class Parser {
           i++
           break
         }
+        case 'lparen': {
+          // `(` alone is a slur; `(p:q:r` opens a tuplet — p notes in the time of q, over
+          // the next r notes, with q and r each optional (`(3`, `(3:2`, `(3::4`).
+          //
+          // Read the spec straight from the source rather than from tokens: `::` lexes as
+          // a double-repeat barline and a lone `:` is ambiguous, so a token walk misreads
+          // exactly the forms that omit a field.
+          const spec = /^\((\d+)(?::(\d*))?(?::(\d*))?/.exec(
+            this.src.slice(token.start, token.start + 16),
+          )
+          if (!spec?.[1]) {
+            i++ // ponytail: slurs are not modelled yet.
+            break
+          }
+          const specEnd = token.start + spec[0].length
+          while (i < tokens.length && (tokens[i] as Token).start < specEnd) i++
+
+          // A nested `(3` inside an unfinished group is swallowed: `(3:2:6(3GGGA2Bc` is
+          // one 6-note group, matching abcjs. The outer group keeps running.
+          if (tupletRemaining > 0) break
+
+          const p = Number.parseInt(spec[1], 10)
+          const compound = builder.meter ? isCompoundMeter(builder.meter) : false
+          const q = spec[2] ? Number.parseInt(spec[2], 10) : defaultTupletQ(p, compound)
+          const r = spec[3] ? Number.parseInt(spec[3], 10) : p
+          // A tuplet needs at least 2 notes; `(0`/`(1` would divide by ~zero.
+          if (p >= 2 && q >= 1) {
+            tupletRemaining = Math.max(r, 1)
+            tupletRatio = rational(q, p)
+            tupletNumber = p
+            tupletGroup = builder.nextTupletGroup()
+          }
+          break
+        }
         case 'voiceOverlay': {
           voice().startOverlay()
+          tupletRemaining = 0 // a tuplet group cannot span an `&` layer boundary
           i++
           break
         }
@@ -683,6 +745,7 @@ class Parser {
       tiedToNext: false,
       style: 'normal',
       microtoneCents,
+      tuplet: null, // set by applyTuplet() on emit
       ...noAttachments(), // filled in by emit()
       // Includes a leading accidental, matching v2's implementation (`from: accStart`).
       // v2's doc comment on Note.sourceRange claims the opposite; the code wins, and
@@ -773,6 +836,7 @@ class Parser {
         style: 'normal',
         headDurations: mixed ? headDurations : [],
         microtoneCents: 0, // ponytail: microtones inside a chord when a fixture needs it
+        tuplet: null, // set by applyTuplet() on emit
 
         ...noAttachments(), // filled in by emit()
         sourceRange: sourceRange(open.start, last.start + last.length),
@@ -798,6 +862,7 @@ class Parser {
         duration,
         notatedDuration: duration,
         kind,
+        tuplet: null, // set by applyTuplet() on emit
         sourceRange: sourceRange(token.start, last.start + last.length),
       },
       next: length.next,
@@ -894,6 +959,27 @@ const DECORATION_SHORTHAND: Record<string, string> = {
   T: 'trill',
   u: 'upbow',
   v: 'downbow',
+}
+
+/**
+ * Default q for `(p` — p notes in the time of q (ABC 2.1 §4.13). The odd sizes depend on
+ * whether the meter beats in threes, so `(5` is 5-in-3 in 6/8 but 5-in-2 in 4/4.
+ */
+function defaultTupletQ(p: number, compound: boolean): number {
+  switch (p) {
+    case 2:
+      return 3
+    case 3:
+      return 2
+    case 4:
+      return 3
+    case 6:
+      return 2
+    case 8:
+      return 3
+    default:
+      return compound ? 3 : 2
+  }
 }
 
 const REST_KINDS: Record<string, RestKind> = {

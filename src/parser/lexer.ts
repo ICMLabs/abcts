@@ -101,7 +101,10 @@ export class Lexer {
     // Greedy run: `|`, `||`, `|]`, `:|`, `|:`, `::`, `[|` all lex as one barline.
     // `[` must be tested for a following `|` here, BEFORE the chord-open branch below —
     // otherwise `[|` opens a chord that never closes.
-    if (c === '|' || c === ':' || (c === '[' && src[start + 1] === '|')) {
+    // A LONE `:` is not a barline: it is the separator in the general tuplet form
+    // `(p:q:r`. It only joins a barline next to `|` or another `:`.
+    const colonStartsBarline = c === ':' && (src[start + 1] === '|' || src[start + 1] === ':')
+    if (c === '|' || colonStartsBarline || (c === '[' && src[start + 1] === '|')) {
       let i = start + 1 // the opening char is part of the run by construction
       while (i < src.length) {
         const d = src[i]
