@@ -429,7 +429,9 @@ class Parser {
   // (octave marks, then length) plain indexing instead of a peek/rewind protocol.
   private scanMusic(start: number, end: number): void {
     const builder = this.ensureScore(start)
-    const { voice } = builder
+    // Re-read through the builder rather than capturing: an inline `[V:2]` mid-line
+    // switches which voice subsequent events belong to.
+    const voice = () => builder.voice
     const lexer = new Lexer(this.src.slice(0, end), start)
     const tokens: Token[] = []
     for (;;) {
@@ -445,7 +447,7 @@ class Parser {
     let pendingBroken: Rational | null = null
 
     const emit = (event: MusicEvent): void => {
-      voice.push(pendingBroken ? scaleEvent(event, pendingBroken) : event)
+      voice().push(pendingBroken ? scaleEvent(event, pendingBroken) : event)
       pendingBroken = null
     }
 
@@ -459,7 +461,7 @@ class Parser {
           break
         }
         case 'noteLetter': {
-          voice.noteMeasureStart(accidentalStart ?? token.start)
+          voice().noteMeasureStart(accidentalStart ?? token.start)
           const built = this.buildNote(tokens, i, builder, pendingAccidental, accidentalStart)
           emit(built.note)
           i = built.next
@@ -468,7 +470,7 @@ class Parser {
           break
         }
         case 'rest': {
-          voice.noteMeasureStart(token.start)
+          voice().noteMeasureStart(token.start)
           const built = this.buildRest(tokens, i, builder)
           emit(built.rest)
           i = built.next
@@ -479,7 +481,7 @@ class Parser {
           // An empty `[…]` is not a musical event — emitting it would insert a phantom
           // zero-pitch chord into the stream.
           if (built.chord.pitches.length > 0) {
-            voice.noteMeasureStart(token.start)
+            voice().noteMeasureStart(token.start)
             emit(built.chord)
           }
           i = built.next
@@ -494,9 +496,9 @@ class Parser {
           while ((tokens[i + arrows] as Token | undefined)?.kind === 'brokenRhythm') arrows++
           const { long, short } = brokenRhythmFactors(arrows)
           const lengthenFirst = token.aux === '>'
-          const previous = voice.last
+          const previous = voice().last
           if (previous) {
-            voice.replaceLast(scaleEvent(previous, lengthenFirst ? long : short))
+            voice().replaceLast(scaleEvent(previous, lengthenFirst ? long : short))
             pendingBroken = lengthenFirst ? short : long
           } else {
             this.warn(
@@ -508,9 +510,24 @@ class Parser {
           i += arrows
           break
         }
+        case 'inlineField': {
+          // `[V:2]`, `[K:G]`, `[M:3/4]` — same fields as a header line, written inline.
+          const text = this.src.slice(token.start + 1, token.start + token.length - 1)
+          const colon = text.indexOf(':')
+          if (colon === 1) {
+            this.applyField(
+              text[0] as string,
+              text.slice(2),
+              token.start,
+              token.start + token.length,
+            )
+          }
+          i++
+          break
+        }
         case 'barline': {
           const text = this.src.slice(token.start, token.start + token.length)
-          voice.closeMeasure(
+          voice().closeMeasure(
             BARLINES[text] ?? 'thin',
             sourceRange(token.start, token.start + token.length),
           )
