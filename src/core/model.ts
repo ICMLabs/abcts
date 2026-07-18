@@ -1,0 +1,242 @@
+/**
+ * Core music model — TypeScript translation of abcMusicKit2's `abcMusicKit2Core`.
+ *
+ * Deliberate deviations from the Swift original, both flagged in ARCHITECTURE.md:
+ *  - Source offsets are UTF-16 (JS-native string indices), not UTF-8 bytes. This also
+ *    makes them directly comparable to abcjs `startChar`/`endChar`.
+ *  - Swift `Optional` is modelled as `| null`, never `?:`. `exactOptionalPropertyTypes`
+ *    makes an omitted property and an explicit `undefined` different types; null sidesteps
+ *    that and survives a JSON round-trip.
+ */
+
+// ─── Rational ────────────────────────────────────────────────────────────────
+// Durations are exact rationals, never floats. This is a locked decision in
+// abcMusicKit2 and one of the abcjs bugs core exists to fix: abcjs stores
+// duration as a double, so a triplet eighth is 0.041666666666666664.
+
+const gcd = (a: number, b: number): number => (b === 0 ? Math.abs(a) : gcd(b, a % b))
+
+export interface Rational {
+  readonly numerator: number
+  readonly denominator: number
+}
+
+/** Always reduced with a positive denominator, so equality is structural. */
+export function rational(numerator: number, denominator = 1): Rational {
+  if (denominator === 0) throw new Error('rational: zero denominator')
+  const sign = denominator < 0 ? -1 : 1
+  const divisor = gcd(numerator, denominator) || 1
+  return { numerator: (sign * numerator) / divisor, denominator: (sign * denominator) / divisor }
+}
+
+export const ratMul = (a: Rational, b: Rational): Rational =>
+  rational(a.numerator * b.numerator, a.denominator * b.denominator)
+
+export const ratAdd = (a: Rational, b: Rational): Rational =>
+  rational(a.numerator * b.denominator + b.numerator * a.denominator, a.denominator * b.denominator)
+
+export const ratEq = (a: Rational, b: Rational): boolean =>
+  a.numerator === b.numerator && a.denominator === b.denominator
+
+export const ratLt = (a: Rational, b: Rational): boolean =>
+  a.numerator * b.denominator < b.numerator * a.denominator
+
+/** Lossy — for comparison against abcjs goldens only, never for internal math. */
+export const ratToNumber = (r: Rational): number => r.numerator / r.denominator
+
+// ─── Pitch ───────────────────────────────────────────────────────────────────
+
+export type DiatonicStep = 'c' | 'd' | 'e' | 'f' | 'g' | 'a' | 'b'
+
+const STEPS: readonly DiatonicStep[] = ['c', 'd', 'e', 'f', 'g', 'a', 'b']
+const SEMITONES_ABOVE_C: Record<DiatonicStep, number> = {
+  c: 0,
+  d: 2,
+  e: 4,
+  f: 5,
+  g: 7,
+  a: 9,
+  b: 11,
+}
+const CIRCLE_OF_FIFTHS: Record<DiatonicStep, number> = {
+  c: 0,
+  d: 2,
+  e: 4,
+  f: -1,
+  g: 1,
+  a: 3,
+  b: 5,
+}
+
+export const stepIndex = (step: DiatonicStep): number => STEPS.indexOf(step)
+export const semitonesAboveC = (step: DiatonicStep): number => SEMITONES_ABOVE_C[step]
+
+/** Numeric so it doubles as the semitone alteration. */
+export const Accidental = {
+  doubleFlat: -2,
+  flat: -1,
+  natural: 0,
+  sharp: 1,
+  doubleSharp: 2,
+} as const
+export type Accidental = (typeof Accidental)[keyof typeof Accidental]
+
+export interface Pitch {
+  readonly step: DiatonicStep
+  /** Scientific octave — middle C is C4. */
+  readonly octave: number
+  /** `null` means "inherit from the key signature". Key resolution is deferred to engrave. */
+  readonly accidental: Accidental | null
+}
+
+/** Ignores the key signature — an unaltered pitch reads as natural. */
+export const midiNoteIgnoringKey = (p: Pitch): number =>
+  12 * (p.octave + 1) + semitonesAboveC(p.step) + (p.accidental ?? 0)
+
+export interface PitchClass {
+  readonly step: DiatonicStep
+  readonly accidental: Accidental
+}
+
+// ─── Key signature ───────────────────────────────────────────────────────────
+// Derived from the circle of fifths, never stored as an accidental list.
+
+export type Mode =
+  | 'major'
+  | 'ionian'
+  | 'mixolydian'
+  | 'dorian'
+  | 'minor'
+  | 'aeolian'
+  | 'phrygian'
+  | 'locrian'
+  | 'lydian'
+
+const MODE_FIFTHS_OFFSET: Record<Mode, number> = {
+  major: 0,
+  ionian: 0,
+  mixolydian: -1,
+  dorian: -2,
+  minor: -3,
+  aeolian: -3,
+  phrygian: -4,
+  locrian: -5,
+  lydian: 1,
+}
+
+export interface KeySignature {
+  readonly tonic: PitchClass
+  readonly mode: Mode
+}
+
+export const keyFifths = (key: KeySignature): number =>
+  CIRCLE_OF_FIFTHS[key.tonic.step] + 7 * key.tonic.accidental + MODE_FIFTHS_OFFSET[key.mode]
+
+const SHARP_ORDER: readonly DiatonicStep[] = ['f', 'c', 'g', 'd', 'a', 'e', 'b']
+const FLAT_ORDER: readonly DiatonicStep[] = ['b', 'e', 'a', 'd', 'g', 'c', 'f']
+
+/** Which steps the key alters, in F-C-G-D-A-E-B order. */
+export function keyAlterations(key: KeySignature): ReadonlyMap<DiatonicStep, Accidental> {
+  const fifths = keyFifths(key)
+  const out = new Map<DiatonicStep, Accidental>()
+  const order = fifths >= 0 ? SHARP_ORDER : FLAT_ORDER
+  const alteration: Accidental = fifths >= 0 ? Accidental.sharp : Accidental.flat
+  for (let i = 0; i < Math.min(Math.abs(fifths), 7); i++) {
+    const step = order[i]
+    if (step) out.set(step, alteration)
+  }
+  return out
+}
+
+// ─── Meter ───────────────────────────────────────────────────────────────────
+
+export type MeterSymbol = 'numeric' | 'common' | 'cut'
+
+export interface Meter {
+  readonly numerator: number
+  readonly denominator: number
+  readonly symbol: MeterSymbol
+}
+
+export const measureDuration = (m: Meter): Rational => rational(m.numerator, m.denominator)
+
+// ─── Events ──────────────────────────────────────────────────────────────────
+
+export type NoteStyle = 'normal' | 'x' | 'harmonic' | 'triangle' | 'rhythm'
+
+export interface Note {
+  readonly type: 'note'
+  readonly pitch: Pitch
+  /** Sounding duration — includes tuplet scaling. */
+  readonly duration: Rational
+  /** Written duration — length and dots, excluding any tuplet ratio. */
+  readonly notatedDuration: Rational
+  readonly tiedToNext: boolean
+  readonly style: NoteStyle
+  readonly sourceRange: SourceRange | null
+}
+
+export type RestKind = 'normal' | 'invisible' | 'multiMeasure' | 'invisibleMultiMeasure' | 'spacer'
+
+export interface Rest {
+  readonly type: 'rest'
+  readonly duration: Rational
+  readonly notatedDuration: Rational
+  readonly kind: RestKind
+  readonly sourceRange: SourceRange | null
+}
+
+export type MusicEvent = Note | Rest
+
+export interface SourceRange {
+  readonly start: number
+  readonly end: number
+}
+
+export const sourceRange = (start: number, end: number): SourceRange => ({ start, end })
+
+export type Barline = 'thin' | 'double' | 'final' | 'repeatStart' | 'repeatEnd' | 'repeatBoth'
+
+export interface Measure {
+  readonly events: readonly MusicEvent[]
+  /** `null` when the tune ends without a closing barline. */
+  readonly closingBarline: Barline | null
+  readonly sourceRange: SourceRange | null
+  readonly closingBarlineSourceRange: SourceRange | null
+}
+
+export interface Voice {
+  readonly id: string
+  readonly measures: readonly Measure[]
+}
+
+export interface ScoreMetadata {
+  readonly tuneNumber: number | null
+  readonly titles: readonly string[]
+  readonly composer: string | null
+  readonly rhythm: string | null
+}
+
+export interface Score {
+  readonly metadata: ScoreMetadata
+  readonly key: KeySignature
+  /** The *initial* meter, frozen at the header `K:`. `null` means free meter. */
+  readonly meter: Meter | null
+  readonly unitNoteLength: Rational
+  readonly voices: readonly Voice[]
+  readonly sourceStartOffset: number
+  readonly keySourceRange: SourceRange | null
+  readonly meterSourceRange: SourceRange | null
+}
+
+// ─── Diagnostics ─────────────────────────────────────────────────────────────
+
+export type Severity = 'error' | 'warning' | 'info'
+
+export interface Diagnostic {
+  /** Stable kebab-case identifier, e.g. `unknown-field`. */
+  readonly code: string
+  readonly severity: Severity
+  readonly message: string
+  readonly range: SourceRange | null
+}
