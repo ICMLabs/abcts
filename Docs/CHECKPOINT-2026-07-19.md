@@ -11,7 +11,7 @@ the parser and whose risk list is still live except where noted below.
 
 | | |
 |---|---|
-| Tests | **258 passing** (74 parser + 184 renderer) |
+| Tests | **264 passing** (74 parser + 190 renderer) |
 | Parser content parity | 39/39 gated fixtures, unchanged |
 | **Render structural parity** | **40 of 41** — the 41st is a recorded abcjs bug |
 | **Visual baselines** | **41 of 41**, committed geometry snapshots |
@@ -27,6 +27,7 @@ abcm2ps's measured square-root curve, with all six barline shapes, slurs, ties, 
 notes, chord symbols, lyrics and decorations.
 
 **Everything in the model now reaches the page**, except the decorations listed below.
+Whole tunebooks render, each tune headed by its title.
 
 **Every note in the corpus draws.** No fixture has missing output.
 
