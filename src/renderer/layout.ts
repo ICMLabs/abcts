@@ -23,7 +23,6 @@ import {
   type KeySignature,
   type Mode,
   type MusicEvent,
-  type Note,
   type Pitch,
   type Rational,
   type Rest,
