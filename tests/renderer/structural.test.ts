@@ -25,6 +25,7 @@
  *     `vree-grace-notes` and `curves` are green and neither grace notes nor slurs are
  *     drawn; `vree-sharps` is green and no accidental is drawn on any note. Accidentals
  *     are called out because they are where the parser audit's blind spot lived.
+ *     Chord noteheads ARE gated — every one of them, not just `heads[0]`.
  *  4. REST POSITION. Compared as presence only. abcjs anchors every rest at its own
  *     pitch 7 whatever the duration, because its glyphs carry different origins than
  *     SMuFL's; a whole rest hangs below its origin and a half rest sits above it. The
@@ -131,11 +132,18 @@ const TYPE_MAP: Readonly<Record<string, string>> = {
   'staff-extra time-signature': 'timeSignature',
 }
 
-/** A comparable step: `type@staffStep`, the step omitted where it is meaningless. */
+/**
+ * A comparable step: `type@step,step,…` listing EVERY notehead, ascending.
+ *
+ * All of them, not just `heads[0]`: a chord has several, and comparing only the lowest
+ * would leave every upper notehead in the corpus unverified while reporting MATCH.
+ * `ragtime-nightingale` alone is full of them.
+ */
 const describeGolden = (el: GoldenLayoutElement): string => {
   const type = TYPE_MAP[el.type] ?? el.type
-  const head = el.heads?.[0]
-  return type === 'note' && head ? `note@${head.pitch - ABCJS_MIDDLE_LINE}` : type
+  if (type !== 'note') return type
+  const steps = (el.heads ?? []).map((h) => h.pitch - ABCJS_MIDDLE_LINE).sort((a, b) => a - b)
+  return steps.length > 0 ? `note@${steps.join(',')}` : type
 }
 
 function coreSequence(abc: string): string[] {
@@ -143,7 +151,9 @@ function coreSequence(abc: string): string[] {
   const score = result.scores[0]
   if (!score) return []
   return layout(score).systems.flatMap((system) =>
-    system.elements.map((el) => (el.staffStep === null ? el.type : `${el.type}@${el.staffStep}`)),
+    system.elements.map((el) =>
+      el.staffSteps.length === 0 ? el.type : `${el.type}@${el.staffSteps.join(',')}`,
+    ),
   )
 }
 
@@ -173,6 +183,12 @@ describe('structural render parity vs abcjs layout', () => {
         'note@1',
         'bar',
       ])
+    })
+
+    it('compares every notehead of a chord, not just the lowest', () => {
+      // ragtime-mini's first voice opens on a two-note chord. If the key collapsed to
+      // heads[0] this would read as a single note and the upper head would be untested.
+      expect(goldenSequence('ragtime-mini').some((s) => /^note@-?\d+,/.test(s))).toBe(true)
     })
 
     it('is sensitive to staff position, not just element type', () => {

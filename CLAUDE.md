@@ -79,18 +79,25 @@ No git submodules — corpus and abcjs live inside the abcMusicKit repo and are
 reached by relative sibling path. See ARCHITECTURE.md § Repository Structure.
 
 ## Current phase
-The PARSER is complete and gated (39/39 corpus fixtures, saturated). The RENDERER is
-under way: 146 tests, **33 of 41** fixtures passing the structural gate, and all 41 now
-have a layout oracle. Renders staff, all clefs, key signatures, meters, tempo marks,
-noteheads with stems and ledger lines, accidentals, rests and barlines.
+The PARSER is complete and gated (39/39 corpus fixtures, saturated). The RENDERER now
+reproduces **40 of 41** fixtures on the structural gate; the 41st is a recorded abcjs bug,
+so the corpus is COMPLETE — every fixture is either reproduced or explained. 160 tests.
+Renders staff, all clefs, key signatures, meters, tempo marks, part labels, noteheads and
+chords with stems and ledger lines, accidentals, rests and barlines.
 
 All three rendering decisions are settled — inline Bravura paths for glyphs, `<text>` for
 prose, structural comparison against `golden/*.elements.json` rather than the SVG
 goldens. See ARCHITECTURE.md § Rendering.
 
-The renderer phase MAY change the parser; clef and `Q:` both did and the parser gate held.
-Next work is picked by the diff and needs no decision: chords (largest gap), a leading
-`[|` barline the parser drops, and `P:` parts. See the checkpoint.
+The renderer phase MAY change the parser; clef, `Q:`, opening barlines and `P:` all did,
+and the parser gate held each time.
+
+**The corpus has stopped driving the work** — with 40/41 reproduced there is no failing
+diff to follow. What remains is known from the code, not from a fixture: dotted/tuplet
+durations (which currently draw NOTHING), flags and beams, proportional spacing,
+multi-voice and system breaking. Committed visual baselines are now the highest-value
+gate work, because none of those are things structural comparison can see. See the
+checkpoint.
 
 ## Session Prompts
 

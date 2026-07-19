@@ -111,7 +111,7 @@ describe('accidentalGlyph', () => {
     expect(notes[0]?.glyphs.map((g) => g.name)).toEqual(['accidentalNatural', 'noteheadBlack'])
     expect(notes[1]?.glyphs.map((g) => g.name)).toEqual(['noteheadBlack'])
     // Both are the same written pitch, so they sit on the same line.
-    expect(notes[0]?.staffStep).toBe(notes[1]?.staffStep)
+    expect(notes[0]?.staffSteps).toEqual(notes[1]?.staffSteps)
   })
 })
 
@@ -185,7 +185,7 @@ describe('clefs', () => {
     const note = layout(score as Score)
       .systems.flatMap((s) => s.elements)
       .find((e) => e.type === 'note')
-    expect(note?.staffStep).toBe(-8)
+    expect(note?.staffSteps).toEqual([-8])
   })
 })
 
@@ -258,11 +258,10 @@ describe('chords', () => {
     layout(parse(abc).scores[0] as Score).systems.flatMap((s) => s.elements)
   const notesOf = (abc: string) => elementsOf(abc).filter((e) => e.type === 'note')
 
-  it('reports the LOWEST notehead as the element step, which is what abcjs keys on', () => {
-    // abcjs sorts a chord's heads ascending and the structural gate reads heads[0], so
-    // reporting the first-WRITTEN pitch instead would pass or fail by luck of spelling.
+  it('reports every notehead ascending, whatever order they were written in', () => {
+    // `[GCE]` and `[CEG]` are the same chord; both must give the same ascending steps.
     const written = notesOf('X:1\nL:1/4\nK:C\n[GCE]|\n')[0]
-    expect(written?.staffStep).toBe(-6) // C4, the lowest, though G was written first
+    expect(written?.staffSteps).toEqual([-6, -4, -2])
   })
 
   it('draws one notehead per pitch', () => {

@@ -11,15 +11,18 @@ the parser and whose risk list is still live except where noted below.
 
 | | |
 |---|---|
-| Tests | **146 passing** (73 parser + 73 renderer) |
+| Tests | **160 passing** (73 parser + 87 renderer) |
 | Parser content parity | 39/39 gated fixtures, unchanged |
-| **Render structural parity** | **33 of 41** — and all 41 now have a layout oracle |
+| **Render structural parity** | **40 of 41** — the 41st is a recorded abcjs bug |
 | Typecheck / lint / build | clean; ESM + CJS + `.d.ts`, `.` and `./renderer` entry points |
 | Renderer source | `src/renderer/{glyphs,layout,svg,index}.ts` + `scripts/gen-glyphs.mjs` |
 | Compat layer | none — zero code |
 
-Renders today: staff, all clefs, key signatures, meters, tempo marks, noteheads with
-stems and ledger lines, accidentals, rests, thin barlines.
+Renders today: staff, all clefs, key signatures, meters, tempo marks, part labels,
+noteheads and chords with stems and ledger lines, accidentals, rests, barlines.
+
+**The corpus is complete.** Every fixture is either reproduced or a recorded divergence,
+asserted as such — adding a new fixture fails the suite until someone decides which it is.
 
 ---
 
@@ -59,7 +62,7 @@ middle line.
   risk 2 below.
 - **Notehead spine only.** Slurs, ties, grace notes, chord symbols, decorations and
   **accidentals** are not `children` elements in abcjs's layout. `vree-grace-notes` and
-  `curves` are green with neither grace notes nor slurs drawn.
+  `curves` are green with neither grace notes nor slurs drawn. Chord noteheads ARE gated.
 - **Rest position.** Presence only. abcjs anchors every rest at its pitch 7 whatever the
   duration because its glyphs carry different origins than SMuFL's; the conventions are
   not comparable.
@@ -95,20 +98,29 @@ pointed at a comment-headed fixture.
 
 ---
 
-## Next work, picked by the diff
+## Next work — the corpus no longer drives it
 
-The eight remaining divergences have three named causes. None needs a decision.
+With 40 of 41 reproduced, the diff has stopped picking features. What remains is known
+from the code rather than from a failing fixture, which is a real change in method: from
+here, work needs either new fixtures or the visual baselines.
 
-1. **CHORDS** — the largest win and renderer-only. `S7-voices` opens on `[C8E8]`;
-   `ragtime-mini` and `ragtime-nightingale` are full of them. A chord is a note element
-   with N noteheads plus second-interval offsetting.
-2. **A LEADING BARLINE** — `little swallow` opens with `[|` before any note and the
-   parser drops it, so core emits no bar where abcjs does. Also explains the doubled
-   `bar bar` in `S4-bars-repeats` and `two-voice-invention`.
-3. **`P:` PARTS** — `full-song-template`. Already on the parser's deferred list.
+Ranked by how wrong the output is today:
 
-Then, not corpus-driven but real: dotted and tuplet durations (`noteGlyph` returns null
-and the note draws nothing), flags and beams, and duration-proportional spacing.
+1. **Dotted and tuplet durations.** `noteGlyph` returns null for any non-power-of-two
+   duration and the note draws NOTHING. Deliberate — a wrong notehead is worse — but it
+   means real tunes have holes. The structural gate cannot see it (staff position is
+   still right) and no gated fixture currently hits it.
+2. **Flags and beams.** An unbeamed eighth draws as a stemmed black notehead, so it is
+   indistinguishable from a quarter. Beaming also has 4 unanalysed parser failures.
+3. **Duration-proportional spacing.** A half note takes an eighth's width.
+4. **Multi-voice and system breaking.** Only voice 0 of tune 0 is laid out, on one
+   endless staff. This is the largest structural gap and the gate is blind to it by
+   construction — it reads voice 0 too.
+5. **Repeat, double and final barlines** all draw as a thin line.
+
+**Visual baselines are now the highest-value gate work**, because every remaining item is
+something structure cannot see. The clipping bug and the tempo/part collision were both
+found by rendering and looking, which does not scale.
 
 **The renderer phase may now change the parser** — clef and `Q:` both did, and the
 39/39 parser gate held through both. Treat that as settled unless it starts costing.

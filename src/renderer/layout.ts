@@ -143,11 +143,15 @@ export interface LayoutElement {
   readonly x: number
   readonly width: number
   /**
-   * Staff step of the notehead — 0 is the middle line, positive is upward. `null` for
-   * anything unpitched. This is the field that makes the structural gate meaningful:
-   * it says which line or space the note actually landed on.
+   * Staff steps of every notehead, ascending — 0 is the middle line, positive upward.
+   * Empty for anything unpitched.
+   *
+   * ALL of them, not just the lowest, because this is what makes the structural gate
+   * meaningful and a chord has more than one. Reporting a single step would leave every
+   * upper notehead of every chord unverified while the suite reported MATCH — the exact
+   * shape of the blind spot the parser audit found.
    */
-  readonly staffStep: number | null
+  readonly staffSteps: readonly number[]
   readonly glyphs: readonly PlacedGlyph[]
   readonly lines: readonly PlacedLine[]
   readonly texts: readonly PlacedText[]
@@ -268,7 +272,7 @@ function layoutClef(x: number, clef: Clef): LayoutElement | null {
     type: 'clef',
     x,
     width: GLYPHS[name].advance,
-    staffStep: null,
+    staffSteps: [],
     glyphs: [glyphAt(name, x, step)],
     lines: [],
     texts: [],
@@ -318,7 +322,7 @@ function layoutMeter(x: number, numerator: number, denominator: number): LayoutE
     type: 'timeSignature',
     x,
     width,
-    staffStep: null,
+    staffSteps: [],
     glyphs: [...digitGlyphs(top, centre, 2), ...digitGlyphs(bottom, centre, -2)],
     lines: [],
     texts: [],
@@ -413,7 +417,7 @@ function layoutKeySignature(x: number, key: KeySignature, clef: Clef): LayoutEle
     x,
     // No trailing gap: the signature ends at the last glyph's ink.
     width: steps.length * pitch - ENGRAVE.keySignatureGap,
-    staffStep: null,
+    staffSteps: [],
     glyphs: steps.map((step, i) => glyphAt(name, x + i * pitch, step)),
     lines: [],
     texts: [],
@@ -484,7 +488,7 @@ function layoutTempo(x: number, tempo: Tempo): LayoutElement | null {
   }
 
   if (glyphs.length === 0 && texts.length === 0) return null
-  return { type: 'tempo', x, width: 0, staffStep: null, glyphs, lines, texts }
+  return { type: 'tempo', x, width: 0, staffSteps: [], glyphs, lines, texts }
 }
 
 /**
@@ -495,7 +499,7 @@ const layoutPart = (x: number, label: string): LayoutElement => ({
   type: 'part',
   x,
   width: 0,
-  staffStep: null,
+  staffSteps: [],
   glyphs: [],
   lines: [],
   texts: [
@@ -555,7 +559,7 @@ function layoutRest(rest: Rest, x: number): LayoutElement {
     type: 'rest',
     x,
     width: ENGRAVE.noteAdvance,
-    staffStep: null,
+    staffSteps: [],
     glyphs: spec ? [glyphAt(spec.name, x, spec.step)] : [],
     lines: [],
     texts: [],
@@ -625,8 +629,9 @@ function layoutNoteheads(
   x: number,
   clef: Clef,
 ): LayoutElement {
-  // abcjs reports a chord's heads lowest-first and the structural gate keys on heads[0],
-  // so the element's staffStep must be the LOWEST notehead, not the first written.
+  // Sorted ascending to match abcjs, which reports a chord's heads lowest-first — so the
+  // gate compares like with like regardless of the order the pitches were written in.
+  // `[GCE]` and `[CEG]` are the same chord and must produce the same steps.
   const steps = pitches.map((p) => pitchToStep(p, clef)).sort((a, b) => a - b)
   const lowest = steps[0] ?? 0
   const highest = steps[steps.length - 1] ?? 0
@@ -639,7 +644,7 @@ function layoutNoteheads(
       type: 'note',
       x,
       width: ENGRAVE.noteAdvance,
-      staffStep: lowest,
+      staffSteps: steps,
       glyphs: [],
       lines: [],
       texts: [],
@@ -720,7 +725,7 @@ function layoutNoteheads(
     type: 'note',
     x,
     width: accidentalWidth + spread + ENGRAVE.noteAdvance,
-    staffStep: lowest,
+    staffSteps: steps,
     glyphs,
     lines,
     texts: [],
@@ -735,7 +740,7 @@ function layoutBar(x: number): LayoutElement {
     type: 'bar',
     x,
     width: thickness,
-    staffStep: null,
+    staffSteps: [],
     glyphs: [],
     lines: [
       {
