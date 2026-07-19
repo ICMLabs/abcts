@@ -31,7 +31,8 @@
     "lint": "biome check ./src ./tests",
     "lint:fix": "biome check --write ./src ./tests",
     "typecheck": "tsc --noEmit",
-    "baseline": "ABCTS_SNAPSHOT_RECORD=1 vitest run tests/renderer/baseline.test.ts"
+    "baseline": "ABCTS_SNAPSHOT_RECORD=1 vitest run tests/renderer/baseline.test.ts",
+    "parity": "node scripts/parity.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.4",

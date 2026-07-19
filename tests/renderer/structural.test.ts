@@ -40,6 +40,7 @@
  * Green here means "the right noteheads landed on the right lines, in the right order,
  * in the first voice of the first tune". It does not mean the fixture renders correctly.
  */
+import { writeFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { parse } from '../../src/parser/parser.js'
 import { layout } from '../../src/renderer/layout.js'
@@ -249,6 +250,20 @@ describe('structural render parity vs abcjs layout', () => {
         ).not.toEqual(golden)
       })
     }
+  })
+
+  // Machine-readable counts for `npm run parity`, written from the same lists the
+  // assertions use so the tracker cannot drift from the gate.
+  it('records its coverage for the parity tracker', () => {
+    writeFileSync(
+      '/tmp/abcts-parity-render.json',
+      JSON.stringify({
+        renderable: RENDERABLE.length,
+        total: corpus.length,
+        divergences: Object.keys(KNOWN_DIVERGENCES),
+      }),
+    )
+    expect(RENDERABLE.length + Object.keys(KNOWN_DIVERGENCES).length).toBe(corpus.length)
   })
 
   describe('coverage is accounted for', () => {

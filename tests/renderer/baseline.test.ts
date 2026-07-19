@@ -95,6 +95,14 @@ describe('visual baselines', () => {
   // A baseline for a fixture that no longer exists would sit unread forever, and a
   // fixture with no baseline would be silently unguarded. Both are caught here rather
   // than by anyone noticing the counts differ.
+  it('records its coverage for the parity tracker', () => {
+    writeFileSync(
+      '/tmp/abcts-parity-baseline.json',
+      JSON.stringify({ baselines: corpus.length, undrawnNotes: Object.keys(UNDRAWN_NOTES).length }),
+    )
+    expect(corpus.length).toBeGreaterThan(0)
+  })
+
   it('baselines and fixtures correspond exactly', () => {
     const recorded = readdirSync(BASELINE_DIR)
       .filter((f) => f.endsWith('.txt'))

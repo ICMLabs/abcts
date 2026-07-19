@@ -97,6 +97,8 @@ const LYRIC_DIVERGENCES: Record<string, string> = {
 
 /** Full per-fixture breakdown, written on every run for triage. */
 const REPORT_PATH = '/tmp/abcts-content-parity.txt'
+/** Machine-readable counts for `npm run parity`, so the tracker has one source of truth. */
+const METRICS_PATH = '/tmp/abcts-parity-content.json'
 
 /**
  * Fields folded in from the goldens on 2026-07-18, after an audit found they existed.
@@ -454,6 +456,25 @@ it('content parity against abcjs goldens does not regress', () => {
       ours.length === theirs.length && ours.every((syllable, i) => syllable === theirs[i])
     if (!same) lyricFailures.push(name)
   }
+
+  writeFileSync(
+    METRICS_PATH,
+    JSON.stringify({
+      // `gated` is the number of fixtures actually held to the comparison; the
+      // divergences are the rest. Summing `compared + diverged` double-counted them.
+      content: { matched, total: gated, divergences: Object.keys(KNOWN_DIVERGENCES) },
+      beams: {
+        matched: fixtures.length - beamFailures.length,
+        total: fixtures.length,
+        failures: beamFailures,
+      },
+      lyrics: {
+        matched: lyricsCompared - lyricFailures.length,
+        total: lyricsCompared,
+        divergences: Object.keys(LYRIC_DIVERGENCES),
+      },
+    }),
+  )
 
   expect(lyricsCompared, 'no fixture had lyrics — the goldens are not loading').toBeGreaterThan(5)
   expect(
