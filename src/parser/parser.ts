@@ -46,6 +46,7 @@ import {
   type ScoreMetadata,
   type SourceRange,
   sourceRange,
+  type Tempo,
   type Voice,
 } from '../core/model.js'
 import { Lexer, type Token } from './lexer.js'
@@ -217,6 +218,46 @@ export function parseClef(spec: string): Clef | null {
     if (clef) return clef
   }
   return null
+}
+
+/**
+ * A `Q:` tempo field.
+ *
+ * Handles every spelling the corpus uses — `Q:1/4=120`, `Q:"Adagio"`,
+ * `Q:"Allegro" 1/4 = 120 % comment`, and the legacy bare `Q:120` — by looking for each
+ * part independently rather than matching whole forms, since any part may be absent.
+ * Returns null when none is found, so a malformed field declares no tempo instead of a
+ * default one.
+ */
+function parseTempo(content: string): Tempo | null {
+  // A `%` starts a comment; strip before parsing, or `% tempo` reads as a stray word.
+  const spec = (content.split('%')[0] ?? '').trim()
+
+  const quoted = /"([^"]*)"/.exec(spec)
+  const text = quoted?.[1] ?? null
+
+  // `1/4=120`, tolerating spaces round the `=`. Take the beat unit only when it is
+  // attached to a rate — a lone fraction is not a tempo.
+  const rate = /(\d+)\s*\/\s*(\d+)\s*=\s*(\d+)/.exec(spec)
+  let beatUnit: Rational | null = null
+  let bpm: number | null = null
+  if (rate) {
+    const numerator = Number.parseInt(rate[1] ?? '', 10)
+    const denominator = Number.parseInt(rate[2] ?? '', 10)
+    if (Number.isSafeInteger(numerator) && Number.isSafeInteger(denominator) && denominator > 0) {
+      beatUnit = rational(numerator, denominator)
+    }
+    bpm = Number.parseInt(rate[3] ?? '', 10)
+  } else {
+    // Legacy `Q:120` — a bare number is a rate with no stated unit. Guarded against
+    // picking up a digit out of the quoted text.
+    const bare = /(?:^|\s)(\d+)\s*$/.exec(spec.replace(/"[^"]*"/g, ''))
+    if (bare) bpm = Number.parseInt(bare[1] ?? '', 10)
+  }
+
+  if (bpm !== null && !Number.isFinite(bpm)) bpm = null
+  if (text === null && bpm === null) return null
+  return { beatUnit, bpm, text }
 }
 
 /** `octave=±n` on a `V:` or `K:` field — a sounding shift, not a written-pitch change. */
@@ -456,6 +497,7 @@ class ScoreBuilder {
   rhythm: string | null = null
   key: KeySignature = defaultKey()
   clef: Clef = defaultClef
+  tempo: Tempo | null = null
   meter: Meter | null = null
   unitNoteLength: Rational = rational(1, 8)
   unitExplicit = false
@@ -544,6 +586,7 @@ class ScoreBuilder {
       key: this.key,
       clef: this.clef,
       meter: this.meter,
+      tempo: this.tempo,
       unitNoteLength: this.unitNoteLength,
       voices: this.orderedVoices().map((v) => v.finish()),
       sourceStartOffset: this.sourceStartOffset,
@@ -716,6 +759,11 @@ class Parser {
         }
         builder.unitNoteLength = unit
         builder.unitExplicit = true
+        return
+      }
+      case 'Q': {
+        // ponytail: header Q: only; a mid-tune Q: is ignored rather than mis-applied.
+        if (!builder.bodyStarted) builder.tempo = parseTempo(value)
         return
       }
       case 'w': {

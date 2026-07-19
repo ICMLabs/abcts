@@ -189,6 +189,70 @@ describe('clefs', () => {
   })
 })
 
+describe('tempo', () => {
+  const tempoOf = (q: string) =>
+    parse(`X:1\nM:4/4\nL:1/4\n${q}\nK:C\nC|\n`).scores[0]?.tempo ?? null
+
+  it('reads every spelling the corpus uses', () => {
+    expect(tempoOf('Q:1/4=120')).toEqual({ beatUnit: rational(1, 4), bpm: 120, text: null })
+    expect(tempoOf('Q: "Adagio"')).toEqual({ beatUnit: null, bpm: null, text: 'Adagio' })
+    expect(tempoOf('Q:"Allegretto" 1/4=100')).toEqual({
+      beatUnit: rational(1, 4),
+      bpm: 100,
+      text: 'Allegretto',
+    })
+  })
+
+  it('ignores a trailing comment', () => {
+    // `Q: "Allegro" 1/4 = 120 % tempo` is in the corpus verbatim, spaces and all.
+    expect(tempoOf('Q: "Allegro" 1/4 = 120 % tempo')).toEqual({
+      beatUnit: rational(1, 4),
+      bpm: 120,
+      text: 'Allegro',
+    })
+  })
+
+  it('reads the legacy bare rate without taking a digit out of the text', () => {
+    expect(tempoOf('Q:120')).toEqual({ beatUnit: null, bpm: 120, text: null })
+    expect(tempoOf('Q:"Tempo di Marcia 2"')).toEqual({
+      beatUnit: null,
+      bpm: null,
+      text: 'Tempo di Marcia 2',
+    })
+  })
+
+  it('declares no tempo rather than a default one when the field says nothing', () => {
+    expect(tempoOf('Q:')).toBeNull()
+    expect(parse('X:1\nK:C\nC|\n').scores[0]?.tempo).toBeNull()
+  })
+
+  it('lays the mark out above the staff, taking no horizontal space', () => {
+    const score = parse('X:1\nM:4/4\nL:1/4\nQ:"Allegro" 1/4=120\nK:C\nCDEF|\n').scores[0]
+    const elements = layout(score as Score).systems.flatMap((s) => s.elements)
+    const tempo = elements.find((e) => e.type === 'tempo')
+
+    expect(tempo).toBeDefined()
+    // Zero width, matching abcjs, so it cannot push the music around.
+    expect(tempo?.width).toBe(0)
+    expect(tempo?.texts.map((t) => t.text)).toEqual(['Allegro', '= 120'])
+    // A real beat-unit note is drawn, not the digits alone.
+    expect(tempo?.glyphs.map((g) => g.name)).toEqual(['noteheadBlack'])
+    // Above the top staff line, which is at y = -2.
+    for (const t of tempo?.texts ?? []) expect(t.y).toBeLessThan(-2)
+  })
+
+  it('grows the drawing box to fit content that sits outside the staff', () => {
+    // A fixed margin silently clipped: notes on high ledger lines and the tempo mark
+    // both fall outside any constant, and nothing in the structural gate can see it.
+    const plain = layout(parse('X:1\nL:1/4\nK:C\nB|\n').scores[0] as Score)
+    const high = layout(parse('X:1\nL:1/4\nK:C bass\nc|\n').scores[0] as Score)
+    const marked = layout(parse('X:1\nL:1/4\nQ:"Adagio"\nK:C\nB|\n').scores[0] as Score)
+
+    expect(high.top).toBeLessThan(plain.top)
+    expect(marked.top).toBeLessThan(plain.top)
+  })
+})
+
 describe('noteGlyph', () => {
   it('maps the plain power-of-two durations', () => {
     expect(noteGlyph(rational(1, 1))?.head).toBe('noteheadWhole')

@@ -29,7 +29,10 @@
  *     pitch 7 whatever the duration, because its glyphs carry different origins than
  *     SMuFL's; a whole rest hangs below its origin and a half rest sits above it. The
  *     two conventions are not comparable, so only the rest's existence is gated.
- *  5. NO VISUAL PROPERTIES. Spacing, stem direction and length, beams, ledger lines. A
+ *  5. TEMPO CONTENT. abcjs's tempo element is a zero-width marker carrying no text or
+ *     rate, so this gates only that a tempo mark exists at the right point in the
+ *     sequence. What it SAYS is covered by unit tests in layout.test.ts.
+ *  6. NO VISUAL PROPERTIES. Spacing, stem direction and length, beams, ledger lines. A
  *     regression preserving sequence and positions passes here. Committed visual
  *     baselines are the second half of this gate and are not built yet.
  *
@@ -51,22 +54,26 @@ import { type GoldenLayoutElement, goldenLayoutElements, loadCorpus } from '../c
  */
 const RENDERABLE = [
   'S1-decorations',
+  'S2-fields',
   'S3-note-syntax',
   'S5-directives',
   'S6-keys',
   'S8-layout',
+  'ave-verum-corpus',
   'brother-john-inline-voices',
   'center-text',
   'chord-grid',
   'clefs',
   'curves',
+  'happy-birthday',
+  'missing-decorations',
   'multi-voice-lyrics-two-voices',
   'multi-voice-rest-collision',
   'multi-voice-rest-placement',
-  'missing-decorations',
   'multi-voice-triplet-brackets',
-  'score-reorder',
+  'program-127-test',
   'score-reorder-shared',
+  'score-reorder',
   'simple-c',
   'stacked-annotations',
   'tunebook-3',
@@ -78,6 +85,7 @@ const RENDERABLE = [
   'vree-sharps',
   'vree-slurs-and-triplets',
   'vree-ties-across-bars',
+  'zocharti-loch',
 ]
 
 /**

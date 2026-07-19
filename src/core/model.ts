@@ -153,6 +153,21 @@ export interface Meter {
 
 export const measureDuration = (m: Meter): Rational => rational(m.numerator, m.denominator)
 
+// ─── Tempo ───────────────────────────────────────────────────────────────────
+
+/**
+ * A `Q:` field. Every part is optional because ABC allows each on its own:
+ * `Q:1/4=120`, `Q:"Adagio"`, and `Q:"Allegro" 1/4=120` are all legal.
+ */
+export interface Tempo {
+  /** The note value the rate counts — the `1/4` in `Q:1/4=120`. */
+  readonly beatUnit: Rational | null
+  /** Beats per minute. */
+  readonly bpm: number | null
+  /** A quoted direction, e.g. "Allegro". */
+  readonly text: string | null
+}
+
 // ─── Events ──────────────────────────────────────────────────────────────────
 
 /** Notehead shape, set by `!style=…!` or `K: style=…`. */
@@ -368,6 +383,11 @@ export interface Score {
   readonly clef: Clef
   /** The *initial* meter, frozen at the header `K:`. `null` means free meter. */
   readonly meter: Meter | null
+  /**
+   * The header `Q:`. ponytail: header only — ABC allows a mid-tune `Q:`, which would
+   * belong on Measure alongside keyChange. Add when a fixture needs one.
+   */
+  readonly tempo: Tempo | null
   readonly unitNoteLength: Rational
   readonly voices: readonly Voice[]
   readonly sourceStartOffset: number

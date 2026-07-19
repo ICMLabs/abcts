@@ -30,6 +30,7 @@ import {
   ratToNumber,
   type Score,
   stepIndex,
+  type Tempo,
 } from '../core/model.js'
 import { ENGRAVING_DEFAULTS, GLYPHS, type GlyphName } from './glyphs.js'
 
@@ -75,11 +76,22 @@ const ENGRAVE = {
   noteAdvance: 3.5,
   /** Space either side of a barline. PROVISIONAL. */
   barGap: 1.0,
+  /** Staff step the tempo mark sits on — clear above the top line at step 4. */
+  tempoStep: 8,
+  /** Tempo text size, in staff spaces. PROVISIONAL. */
+  tempoTextSize: 1.6,
 } as const
 
 // ─── Layout model ────────────────────────────────────────────────────────────
 
-export type ElementType = 'clef' | 'keySignature' | 'timeSignature' | 'note' | 'rest' | 'bar'
+export type ElementType =
+  | 'clef'
+  | 'keySignature'
+  | 'timeSignature'
+  | 'tempo'
+  | 'note'
+  | 'rest'
+  | 'bar'
 
 export interface PlacedGlyph {
   readonly name: GlyphName
@@ -95,6 +107,26 @@ export interface PlacedLine {
   readonly thickness: number
 }
 
+/**
+ * Prose — a tempo direction, and later titles, lyrics and chord symbols.
+ *
+ * Kept separate from `PlacedGlyph` because the two are drawn by different mechanisms and
+ * for a stated reason. Musical glyphs are inline paths so the SVG is self-contained; text
+ * is a real `<text>` element in a generic family, because a missing serif face degrades
+ * to a different serif whereas a missing Bravura degrades to nothing legible. That
+ * asymmetry is the whole argument, and abcMusicKit2 splits the same way.
+ */
+export interface PlacedText {
+  readonly text: string
+  readonly x: number
+  /** Baseline y, staff spaces. */
+  readonly y: number
+  /** Font size in staff spaces. */
+  readonly size: number
+  readonly bold: boolean
+  readonly italic: boolean
+}
+
 export interface LayoutElement {
   readonly type: ElementType
   /** Left edge, staff spaces from the system origin. */
@@ -108,6 +140,7 @@ export interface LayoutElement {
   readonly staffStep: number | null
   readonly glyphs: readonly PlacedGlyph[]
   readonly lines: readonly PlacedLine[]
+  readonly texts: readonly PlacedText[]
 }
 
 export interface LayoutSystem {
@@ -228,6 +261,7 @@ function layoutClef(x: number, clef: Clef): LayoutElement | null {
     staffStep: null,
     glyphs: [glyphAt(name, x, step)],
     lines: [],
+    texts: [],
   }
 }
 
@@ -277,6 +311,7 @@ function layoutMeter(x: number, numerator: number, denominator: number): LayoutE
     staffStep: null,
     glyphs: [...digitGlyphs(top, centre, 2), ...digitGlyphs(bottom, centre, -2)],
     lines: [],
+    texts: [],
   }
 }
 
@@ -371,7 +406,75 @@ function layoutKeySignature(x: number, key: KeySignature, clef: Clef): LayoutEle
     staffStep: null,
     glyphs: steps.map((step, i) => glyphAt(name, x + i * pitch, step)),
     lines: [],
+    texts: [],
   }
+}
+
+// ─── Tempo ───────────────────────────────────────────────────────────────────
+
+/**
+ * A tempo direction above the staff: `"Allegro"`, or a beat-unit note, `=`, and a rate.
+ *
+ * Zero width, matching abcjs, whose tempo element reports `w: 0` — the mark sits above
+ * the music and takes no room in the horizontal spine, so it cannot push notes around.
+ * Its text therefore overhangs to the right, which is also why this needs no text
+ * metrics: nothing downstream depends on how wide the words turn out to be.
+ */
+function layoutTempo(x: number, tempo: Tempo): LayoutElement | null {
+  const glyphs: PlacedGlyph[] = []
+  const texts: PlacedText[] = []
+  const lines: PlacedLine[] = []
+
+  // Above the staff, clear of anything reaching over the top line.
+  const step = ENGRAVE.tempoStep
+  const baseline = stepToY(step)
+  let cursor = x
+
+  if (tempo.text !== null && tempo.text !== '') {
+    texts.push({
+      text: tempo.text,
+      x: cursor,
+      y: baseline,
+      size: ENGRAVE.tempoTextSize,
+      bold: true,
+      italic: false,
+    })
+    // ponytail: no text metrics, so the advance past a direction is estimated at half
+    // the font size per character. Only affects where the `=120` that may follow lands.
+    // Real metrics need a measured font; revisit if a fixture looks wrong.
+    cursor += tempo.text.length * ENGRAVE.tempoTextSize * 0.5 + 1
+  }
+
+  if (tempo.bpm !== null) {
+    // The beat unit is drawn as a real note — a quarter note for `1/4=120`.
+    const spec = tempo.beatUnit === null ? null : noteGlyph(tempo.beatUnit)
+    if (spec !== null) {
+      const head = GLYPHS[spec.head]
+      glyphs.push({ name: spec.head, x: cursor, y: baseline })
+      if (spec.stemmed) {
+        const [ax, ay] = head.anchors.stemUpSE ?? [head.width, 0]
+        lines.push({
+          x1: cursor + ax,
+          y1: baseline + ay,
+          x2: cursor + ax,
+          y2: baseline + ay - ENGRAVE.stemLength,
+          thickness: ENGRAVING_DEFAULTS.stemThickness,
+        })
+      }
+      cursor += head.advance + 0.3
+    }
+    texts.push({
+      text: `= ${tempo.bpm}`,
+      x: cursor,
+      y: baseline,
+      size: ENGRAVE.tempoTextSize,
+      bold: false,
+      italic: false,
+    })
+  }
+
+  if (glyphs.length === 0 && texts.length === 0) return null
+  return { type: 'tempo', x, width: 0, staffStep: null, glyphs, lines, texts }
 }
 
 // ─── Rests ───────────────────────────────────────────────────────────────────
@@ -422,6 +525,7 @@ function layoutRest(rest: Rest, x: number): LayoutElement {
     staffStep: null,
     glyphs: spec ? [glyphAt(spec.name, x, spec.step)] : [],
     lines: [],
+    texts: [],
   }
 }
 
@@ -478,7 +582,15 @@ function layoutNote(note: Note, x: number, clef: Clef): LayoutElement {
   if (spec === null) {
     // Unsupported duration — see noteGlyph. Emit the position with no ink rather than
     // the wrong notehead, so the gap is visible in output and in the gate.
-    return { type: 'note', x, width: ENGRAVE.noteAdvance, staffStep: step, glyphs: [], lines: [] }
+    return {
+      type: 'note',
+      x,
+      width: ENGRAVE.noteAdvance,
+      staffStep: step,
+      glyphs: [],
+      lines: [],
+      texts: [],
+    }
   }
 
   const glyphs: PlacedGlyph[] = []
@@ -521,7 +633,7 @@ function layoutNote(note: Note, x: number, clef: Clef): LayoutElement {
     // notehead. Wire up when the first fixture with unbeamed eighths lands.
   }
 
-  return { type: 'note', x, width, staffStep: step, glyphs, lines }
+  return { type: 'note', x, width, staffStep: step, glyphs, lines, texts: [] }
 }
 
 function layoutBar(x: number): LayoutElement {
@@ -543,6 +655,7 @@ function layoutBar(x: number): LayoutElement {
         thickness,
       },
     ],
+    texts: [],
   }
 }
 
@@ -581,6 +694,12 @@ export function layout(score: Score): Layout {
     x += meter.width + ENGRAVE.prefixGap
   }
 
+  if (score.tempo !== null) {
+    const tempo = layoutTempo(x, score.tempo)
+    // Zero width, so it does not advance the cursor — the mark floats above the music.
+    if (tempo !== null) elements.push(tempo)
+  }
+
   for (const measure of voice?.measures ?? []) {
     for (const event of measure.events) {
       const el = layoutEvent(event, x, clef)
@@ -604,12 +723,48 @@ export function layout(score: Score): Layout {
     thickness: ENGRAVING_DEFAULTS.staffLineThickness,
   }))
 
+  const { top, bottom } = verticalExtent(elements)
   return {
     systems: [{ elements, staffLines }],
     width,
-    height: ENGRAVE.marginY * 2,
-    top: -ENGRAVE.marginY,
+    height: bottom - top,
+    top,
   }
+}
+
+/**
+ * The vertical span of everything drawn, plus a margin.
+ *
+ * Measured from content rather than assumed, because a fixed margin silently CLIPS: a
+ * bass-clef voice written in treble range sits four ledger lines above the staff, well
+ * outside any constant, and a tempo mark sits above that again. The bug is invisible in
+ * the structural gate, which sees no geometry at all — it shows up only as notes missing
+ * from the rendered SVG.
+ */
+function verticalExtent(elements: readonly LayoutElement[]): { top: number; bottom: number } {
+  // The staff itself is always present, spanning steps 4 to -4.
+  let top = stepToY(4)
+  let bottom = stepToY(-4)
+  const include = (a: number, b: number) => {
+    top = Math.min(top, a)
+    bottom = Math.max(bottom, b)
+  }
+
+  for (const el of elements) {
+    for (const g of el.glyphs) {
+      const glyph = GLYPHS[g.name]
+      include(g.y + glyph.y, g.y + glyph.y + glyph.height)
+    }
+    for (const line of el.lines) {
+      const half = line.thickness / 2
+      include(Math.min(line.y1, line.y2) - half, Math.max(line.y1, line.y2) + half)
+    }
+    // No text metrics available, so bound the box by the font size: ascenders reach
+    // roughly 0.8 of it above the baseline and descenders 0.25 below.
+    for (const t of el.texts) include(t.y - t.size * 0.8, t.y + t.size * 0.25)
+  }
+
+  return { top: top - ENGRAVE.marginY, bottom: bottom + ENGRAVE.marginY }
 }
 
 /**

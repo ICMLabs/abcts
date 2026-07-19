@@ -24,6 +24,14 @@ export interface RenderOptions {
 const escapeAttr = (s: string): string =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
 
+/**
+ * Character data. Escaped, not sanitised: ABC text is untrusted input — a `T:` or `Q:`
+ * field carries whatever the file said — and it is being spliced into markup that a host
+ * will put in a page. `&` first, or it would double-escape the entities added after it.
+ */
+const escapeText = (s: string): string =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
 const num = (n: number): string => {
   const r = Math.round(n * 1000) / 1000
   return Object.is(r, -0) ? '0' : String(r)
@@ -60,6 +68,17 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
         // The glyph path is authored at the origin, so a translate is all that is needed.
         parts.push(
           `<path class="${cls}" transform="translate(${num(g.x)},${num(g.y)})" d="${GLYPHS[g.name].path}"/>`,
+        )
+      }
+      // Prose is a real <text> in a generic family, unlike musical glyphs, which are
+      // paths so the SVG stays self-contained. A missing serif face falls back to
+      // another serif; a missing Bravura falls back to nothing legible. See layout.ts.
+      for (const t of el.texts) {
+        const style =
+          (t.bold ? ' font-weight="bold"' : '') + (t.italic ? ' font-style="italic"' : '')
+        parts.push(
+          `<text class="${cls}" x="${num(t.x)}" y="${num(t.y)}" ` +
+            `font-family="serif" font-size="${num(t.size)}"${style}>${escapeText(t.text)}</text>`,
         )
       }
     }
