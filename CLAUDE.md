@@ -103,6 +103,12 @@ diff to follow. What remains is known from the code: the decoration tail (rolls,
 no text metrics, fixed lanes rather than a skyline, and page furniture beyond titles.
 See the checkpoint.
 
+## Running it
+`abcts tune.abc` (CLI, after `npm run build`) renders to stdout or a file.
+`npm run compare` puts abcts and the abcjs goldens side by side — or overlaid, cyan over
+magenta, the way abcMusicKitWorkbench compares v1. The overlay is only a true match test
+for a byte-parity engine; core renders in its own style, so side by side is the default.
+
 ## Measuring progress
 `npm run parity` prints every parity axis in one view. Note that abcjs parity and
 abcMusicKit v1 parity are NOT separate axes: v1 is a port of abcjs whose abcjsStrict

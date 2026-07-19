@@ -58,6 +58,38 @@ oracle exists" should be verified against the data before it is believed.*
 
 ---
 
+## Running it, and looking at it
+
+| | |
+|---|---|
+| `abcts tune.abc` | render to stdout or `-o file.svg`. `--width`, `--first` |
+| `npm run parity` | every parity axis in one view |
+| `npm run compare` | abcts vs the abcjs goldens, side by side or overlaid |
+
+`npm run compare` adapts abcMusicKitWorkbench's technique — v1 in cyan over abcjs in
+magenta, black meaning agreement — but with an important qualification. That overlay
+works for v1 because v1 is a byte-parity port with identical pixel coordinates. Core is
+not: it has its own spacing engine and its own units, so overlaid raw the two would not
+align at all.
+
+So the default is SIDE BY SIDE, which answers the question no gate here asks — does core's
+engraving read as well as abcjs's. The overlay is offered too, staff-aligned, where
+horizontal disagreement is expected and VERTICAL disagreement means a wrong pitch. It
+becomes a true match test when compat mode exists.
+
+### What the first look showed
+
+Core's spacing is about **19% looser than abcjs's** — abcjs sets a quarter note at 5.47
+staff spaces, core at 6.5 — so `twinkle` wraps to two systems where abcjs fits it on one,
+despite core's default system being wider (90 staff spaces against abcjs's 86.5).
+
+Not a bug: core follows abcm2ps's density through abcMusicKit2's oracle-calibrated
+constant, and abcm2ps is looser than abcjs. But it is the single most visible difference
+between the two renderings, and it is a decision that should be recorded rather than
+discovered.
+
+---
+
 ## Parity tracker — `npm run parity`
 
 One view of how close core is to its references. The numbers come from the assertions
