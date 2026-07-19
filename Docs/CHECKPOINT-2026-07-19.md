@@ -11,9 +11,10 @@ the parser and whose risk list is still live except where noted below.
 
 | | |
 |---|---|
-| Tests | **160 passing** (73 parser + 87 renderer) |
+| Tests | **203 passing** (73 parser + 130 renderer) |
 | Parser content parity | 39/39 gated fixtures, unchanged |
 | **Render structural parity** | **40 of 41** — the 41st is a recorded abcjs bug |
+| **Visual baselines** | **41 of 41**, committed geometry snapshots |
 | Typecheck / lint / build | clean; ESM + CJS + `.d.ts`, `.` and `./renderer` entry points |
 | Renderer source | `src/renderer/{glyphs,layout,svg,index}.ts` + `scripts/gen-glyphs.mjs` |
 | Compat layer | none — zero code |
@@ -35,7 +36,8 @@ All three are recorded in ARCHITECTURE.md § Rendering. In brief:
    Metrics come from `bravura_metadata.json`, already in staff spaces, so only outlines
    need the font binary. `src/renderer/glyphs.ts` alone is OFL 1.1; the rest stays MIT.
 2. **Correct means structural**, against `golden/*.elements.json` — abcjs's laid-out
-   elements, not its SVG. Visual baselines are the deferred second half.
+   elements, not its SVG. The deferred second half — visual baselines — **now exists**;
+   see below.
 3. **Prose text is `<text font-family="serif">`** — the OPPOSITE call from glyphs, and
    deliberately so. A missing serif falls back to another serif; a missing Bravura falls
    back to tofu. Self-containment is worth paying for in noteheads, not in words.
@@ -98,6 +100,38 @@ pointed at a comment-headed fixture.
 
 ---
 
+## Visual baselines — the second half of the gate
+
+`tests/renderer/baselines/*.txt`, one per fixture, recording rendered GEOMETRY: element
+positions and widths, glyph names and placements, line coordinates, text, and the drawing
+bounds. `tests/renderer/baseline.test.ts` compares; `npm run baseline` re-records.
+
+**Structure catches WRONG, baselines catch CHANGED**, and the split is real rather than
+theoretical. With stem direction inverted so every stem in the corpus points the wrong
+way, the structural gate is **fully green** and the baselines fail 39 of 43. Same for a
+0.1 spacing change (41 failures) and dropped ledger lines (30).
+
+Geometry rather than pixels or SVG: no rasterizer exists in this toolchain and binary
+diffs are unreviewable; full SVG would embed ~40KB of glyph paths per fixture, so a glyph
+regeneration would churn all 41 at once and hide real movement. Glyph outlines are
+version-controlled in `glyphs.ts`, which git already covers.
+
+Bounds are recorded first, deliberately — the clipping bug that silently cut high ledger
+lines and tempo marks out of the output now fails here.
+
+**Re-recording without reading the diff defeats the mechanism.** Read it, and commit
+baselines alongside the code change so a reviewer sees both.
+
+### What the baselines exposed
+
+44 notes across 7 fixtures draw NOTHING — the dotted/tuplet gap (durations 3/16, 3/8,
+3/4, and chords on the same path). Correct per `noteGlyph`, which refuses a wrong
+notehead, but it would now sit silently in 41 files, so it is recorded as an explicit
+per-fixture count that FAILS when dotted durations land. Undrawn *rests* were checked
+separately and are correct: ABC's invisible `x` and spacer `y`.
+
+---
+
 ## Next work — the corpus no longer drives it
 
 With 40 of 41 reproduced, the diff has stopped picking features. What remains is known
@@ -118,9 +152,11 @@ Ranked by how wrong the output is today:
    construction — it reads voice 0 too.
 5. **Repeat, double and final barlines** all draw as a thin line.
 
-**Visual baselines are now the highest-value gate work**, because every remaining item is
-something structure cannot see. The clipping bug and the tempo/part collision were both
-found by rendering and looking, which does not scale.
+Visual baselines now cover all of these: any change to spacing, stems, beams or bounds
+fails the baseline gate even though structure stays green. **Dotted durations are the
+top item** — they are the only entry on this list that produces missing output today
+rather than merely crude output, and the undrawn-note counts are already recorded so the
+fix announces itself.
 
 **The renderer phase may now change the parser** — clef and `Q:` both did, and the
 39/39 parser gate held through both. Treat that as settled unless it starts costing.

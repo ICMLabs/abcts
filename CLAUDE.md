@@ -81,7 +81,8 @@ reached by relative sibling path. See ARCHITECTURE.md § Repository Structure.
 ## Current phase
 The PARSER is complete and gated (39/39 corpus fixtures, saturated). The RENDERER now
 reproduces **40 of 41** fixtures on the structural gate; the 41st is a recorded abcjs bug,
-so the corpus is COMPLETE — every fixture is either reproduced or explained. 160 tests.
+so the corpus is COMPLETE — every fixture is either reproduced or explained. All 41 also
+have committed visual baselines. 203 tests.
 Renders staff, all clefs, key signatures, meters, tempo marks, part labels, noteheads and
 chords with stems and ledger lines, accidentals, rests and barlines.
 
@@ -92,12 +93,15 @@ goldens. See ARCHITECTURE.md § Rendering.
 The renderer phase MAY change the parser; clef, `Q:`, opening barlines and `P:` all did,
 and the parser gate held each time.
 
+TWO GATES, and they are complementary — structure catches WRONG (vs abcjs), baselines
+catch CHANGED (vs committed geometry). Invert every stem in the corpus and the structural
+gate stays fully green while baselines fail 39 of 43. Re-record with `npm run baseline`,
+but READ the diff and commit baselines with the code change.
+
 **The corpus has stopped driving the work** — with 40/41 reproduced there is no failing
-diff to follow. What remains is known from the code, not from a fixture: dotted/tuplet
-durations (which currently draw NOTHING), flags and beams, proportional spacing,
-multi-voice and system breaking. Committed visual baselines are now the highest-value
-gate work, because none of those are things structural comparison can see. See the
-checkpoint.
+diff to follow. What remains is known from the code: dotted/tuplet durations (which draw
+NOTHING today, and whose per-fixture counts are pinned so the fix announces itself), flags
+and beams, proportional spacing, multi-voice and system breaking. See the checkpoint.
 
 ## Session Prompts
 
