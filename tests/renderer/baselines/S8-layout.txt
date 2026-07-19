@@ -1,7 +1,7 @@
-bounds  width=90.000 height=70.600 top=0.000
+bounds  width=90.000 height=77.960 top=0.000
 systems 4
 system 0 width=90.000 originY=0.000
-  staff 0 originY=8.060
+  staff 0 originY=15.420
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -11,6 +11,8 @@ system 0 width=90.000 originY=0.000
     beam   29.782,-2.250 -> 45.441,-3.750 t=0.500
     beam   60.052,-0.750 -> 65.277,-1.250 t=0.500
     beam   77.891,-2.250 -> 83.116,-2.750 t=0.500
+    title x=0.000 w=0.000
+      text  31.200,-9.500 size=2.400 bold "S8-1 Beams and Grouping"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
@@ -64,7 +66,7 @@ system 0 width=90.000 originY=0.000
       line  82.955,0.332 -> 82.955,-3.000 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 1 width=41.761 originY=18.692
+system 1 width=41.761 originY=26.052
   staff 0 originY=7.560
     staffline 0.000,2.000 -> 41.761,2.000 t=0.130
     staffline 0.000,1.000 -> 41.761,1.000 t=0.130
@@ -99,7 +101,7 @@ system 1 width=41.761 originY=18.692
       line  35.345,-0.168 -> 35.345,-3.500 t=0.120
     bar x=39.761 w=0.160
       line  39.841,-2.000 -> 39.841,2.000 t=0.160
-system 2 width=90.000 originY=36.884
+system 2 width=90.000 originY=44.244
   staff 0 originY=8.060
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -168,7 +170,7 @@ system 2 width=90.000 originY=36.884
       line  83.035,2.832 -> 83.035,-0.500 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 3 width=44.454 originY=55.576
+system 3 width=44.454 originY=62.936
   staff 0 originY=7.392
     staffline 0.000,2.000 -> 44.454,2.000 t=0.130
     staffline 0.000,1.000 -> 44.454,1.000 t=0.130

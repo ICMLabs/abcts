@@ -1,12 +1,14 @@
-bounds  width=90.000 height=51.072 top=0.000
+bounds  width=90.000 height=59.100 top=0.000
 systems 3
 system 0 width=90.000 originY=0.000
-  staff 0 originY=7.392
+  staff 0 originY=15.420
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
+    title x=0.000 w=0.000
+      text  27.600,-9.500 size=2.400 bold "S4-1 Bars Repeats and Endings"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
@@ -45,7 +47,7 @@ system 0 width=90.000 originY=0.000
       glyph repeatDots 88.000,1.976
       line  88.640,-2.000 -> 88.640,2.000 t=0.160
       line  89.370,-2.000 -> 89.370,2.000 t=0.500
-system 1 width=90.000 originY=18.024
+system 1 width=90.000 originY=26.052
   staff 0 originY=7.392
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -89,7 +91,7 @@ system 1 width=90.000 originY=18.024
       glyph repeatDots 88.000,1.976
       line  88.640,-2.000 -> 88.640,2.000 t=0.160
       line  89.370,-2.000 -> 89.370,2.000 t=0.500
-system 2 width=89.684 originY=36.048
+system 2 width=89.684 originY=44.076
   staff 0 originY=7.392
     staffline 0.000,2.000 -> 89.684,2.000 t=0.130
     staffline 0.000,1.000 -> 89.684,1.000 t=0.130

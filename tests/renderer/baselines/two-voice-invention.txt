@@ -1,7 +1,7 @@
-bounds  width=90.000 height=155.768 top=0.000
+bounds  width=90.000 height=156.460 top=0.000
 systems 4
 system 0 width=90.000 originY=0.000
-  staff 0 originY=14.728
+  staff 0 originY=15.420
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -11,6 +11,8 @@ system 0 width=90.000 originY=0.000
     beam   28.204,-2.250 -> 42.713,-3.750 t=0.500
     beam   49.550,-3.750 -> 64.059,-2.250 t=0.500
     beam   68.896,-1.750 -> 83.405,-0.250 t=0.500
+    title x=0.000 w=0.000
+      text  33.600,-9.500 size=2.400 bold "Two Voice Invention"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
@@ -74,7 +76,7 @@ system 0 width=90.000 originY=0.000
       line  83.344,2.832 -> 83.344,-0.500 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=31.360
+  staff 1 originY=32.052
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -114,7 +116,7 @@ system 0 width=90.000 originY=0.000
       line  77.327,-2.832 -> 77.327,0.500 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 1 width=90.000 originY=41.920
+system 1 width=90.000 originY=42.612
   staff 0 originY=7.392
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -186,7 +188,7 @@ system 1 width=90.000 originY=41.920
       glyph restQuarter 76.707,0.000
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 2 width=90.000 originY=76.004
+system 2 width=90.000 originY=76.696
   staff 0 originY=8.500
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -351,7 +353,7 @@ system 2 width=90.000 originY=76.004
       line  77.232,-9.832 -> 77.232,-6.500 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 3 width=60.621 originY=117.386
+system 3 width=60.621 originY=118.078
   staff 0 originY=8.500
     staffline 0.000,2.000 -> 60.621,2.000 t=0.130
     staffline 0.000,1.000 -> 60.621,1.000 t=0.130

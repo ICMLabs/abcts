@@ -1,7 +1,7 @@
-bounds  width=68.628 height=84.205 top=0.000
+bounds  width=68.628 height=87.345 top=0.000
 systems 1
 system 0 width=68.628 originY=0.000
-  staff 0 originY=12.280
+  staff 0 originY=15.420
     staffline 0.000,2.000 -> 68.628,2.000 t=0.130
     staffline 0.000,1.000 -> 68.628,1.000 t=0.130
     staffline 0.000,0.000 -> 68.628,0.000 t=0.130
@@ -10,6 +10,8 @@ system 0 width=68.628 originY=0.000
     beam   39.628,4.679 -> 62.378,2.679 t=0.500
     beam   39.628,3.929 -> 62.378,1.929 t=0.500
     tie  51.680,-3.300 -> 52.328,-3.300 bulge=-0.500
+    title x=0.000 w=0.000
+      text  27.114,-9.500 size=2.400 bold "Ragtime Mini"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=3.012
@@ -57,7 +59,7 @@ system 0 width=68.628 originY=0.000
       line  62.378,-1.832 -> 62.378,2.929 t=0.120
     bar x=66.628 w=0.160
       line  66.708,-2.000 -> 66.708,2.000 t=0.160
-  staff 1 originY=30.161
+  staff 1 originY=33.301
     staffline 0.000,2.000 -> 68.628,2.000 t=0.130
     staffline 0.000,1.000 -> 68.628,1.000 t=0.130
     staffline 0.000,0.000 -> 68.628,0.000 t=0.130
@@ -78,7 +80,7 @@ system 0 width=68.628 originY=0.000
     rest x=39.628 w=9.192
     bar x=66.628 w=0.160
       line  66.708,-2.000 -> 66.708,2.000 t=0.160
-  staff 2 originY=47.793
+  staff 2 originY=50.933
     staffline 0.000,2.000 -> 68.628,2.000 t=0.130
     staffline 0.000,1.000 -> 68.628,1.000 t=0.130
     staffline 0.000,0.000 -> 68.628,0.000 t=0.130
@@ -155,7 +157,7 @@ system 0 width=68.628 originY=0.000
       glyph rest8th 59.738,0.000
     bar x=66.628 w=0.160
       line  66.708,-2.000 -> 66.708,2.000 t=0.160
-  staff 3 originY=64.049
+  staff 3 originY=67.189
     staffline 0.000,2.000 -> 68.628,2.000 t=0.130
     staffline 0.000,1.000 -> 68.628,1.000 t=0.130
     staffline 0.000,0.000 -> 68.628,0.000 t=0.130
@@ -176,7 +178,7 @@ system 0 width=68.628 originY=0.000
     rest x=39.628 w=9.192
     bar x=66.628 w=0.160
       line  66.708,-2.000 -> 66.708,2.000 t=0.160
-  staff 4 originY=78.005
+  staff 4 originY=81.145
     staffline 0.000,2.000 -> 68.628,2.000 t=0.130
     staffline 0.000,1.000 -> 68.628,1.000 t=0.130
     staffline 0.000,0.000 -> 68.628,0.000 t=0.130

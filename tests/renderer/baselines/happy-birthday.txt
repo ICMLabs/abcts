@@ -1,12 +1,14 @@
-bounds  width=90.000 height=62.018 top=0.000
+bounds  width=90.000 height=62.710 top=0.000
 systems 3
 system 0 width=90.000 originY=0.000
-  staff 0 originY=14.728
+  staff 0 originY=15.420
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
+    title x=0.000 w=0.000
+      text  29.400,-9.500 size=2.400 bold "Happy Birthday with chords"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=0.904
@@ -89,7 +91,7 @@ system 0 width=90.000 originY=0.000
       text  80.185,4.000 size=1.400 "to"
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 1 width=90.000 originY=26.078
+system 1 width=90.000 originY=26.770
   staff 0 originY=8.120
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -163,7 +165,7 @@ system 1 width=90.000 originY=26.078
       text  83.104,4.000 size=1.400 "py"
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 2 width=42.346 originY=45.548
+system 2 width=42.346 originY=46.240
   staff 0 originY=8.120
     staffline 0.000,2.000 -> 42.346,2.000 t=0.130
     staffline 0.000,1.000 -> 42.346,1.000 t=0.130

@@ -1,12 +1,14 @@
-bounds  width=32.756 height=15.024 top=0.000
+bounds  width=32.756 height=23.052 top=0.000
 systems 1
 system 0 width=32.756 originY=0.000
-  staff 0 originY=7.392
+  staff 0 originY=15.420
     staffline 0.000,2.000 -> 32.756,2.000 t=0.130
     staffline 0.000,1.000 -> 32.756,1.000 t=0.130
     staffline 0.000,0.000 -> 32.756,0.000 t=0.130
     staffline 0.000,-1.000 -> 32.756,-1.000 t=0.130
     staffline 0.000,-2.000 -> 32.756,-2.000 t=0.130
+    title x=0.000 w=0.000
+      text  9.778,-9.500 size=2.400 bold "Grace Notes"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880

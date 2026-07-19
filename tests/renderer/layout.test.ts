@@ -22,6 +22,7 @@ import {
   accidentalGlyph,
   keyFifths,
   layout,
+  layoutBook,
   middleLineIndex,
   naturalWidth,
   noteGlyph,
@@ -950,6 +951,57 @@ describe('grace notes, chord symbols, lyrics and decorations', () => {
     expect(glyphs).toHaveLength(3)
     const ys = glyphs.map((g) => g.y)
     expect(new Set(ys).size).toBe(3)
+  })
+})
+
+describe('tunebooks', () => {
+  const book = (n: number) =>
+    Array.from({ length: n }, (_, i) => `X:${i + 1}\nT:Tune ${i + 1}\nL:1/4\nK:C\nCDEF|\n`).join('')
+
+  it('lays out every tune, not just the first', () => {
+    // 12 of the 41 corpus fixtures hold more than one tune, and `clefs` holds eight —
+    // so rendering only the first left seven of its eight clefs invisible.
+    const scores = parse(book(3)).scores
+    expect(scores).toHaveLength(3)
+    const doc = layoutBook(scores)
+    expect(doc.systems).toHaveLength(3)
+  })
+
+  it('stacks tunes down the page without overlapping', () => {
+    const doc = layoutBook(parse(book(4)).scores)
+    const ys = doc.systems.map((s) => s.originY)
+    for (let i = 1; i < ys.length; i++) expect(ys[i]).toBeGreaterThan(ys[i - 1] as number)
+    expect(doc.height).toBeGreaterThan(ys[ys.length - 1] as number)
+  })
+
+  it('lays each tune out independently of the ones above it', () => {
+    // Same trick as systems and staves: a tune is laid out in its own space and
+    // translated, so adding a tune at the top cannot shift the geometry of one below.
+    const alone = layoutBook(parse('X:9\nT:Solo\nL:1/4\nK:C\nCDEF|\n').scores)
+    const second = layoutBook(parse(`${book(1)}X:9\nT:Solo\nL:1/4\nK:C\nCDEF|\n`).scores)
+    const strip = (doc: ReturnType<typeof layoutBook>, i: number) =>
+      (doc.systems[i]?.staves[0]?.elements ?? []).map((e) => `${e.type}@${e.x.toFixed(3)}`)
+    expect(strip(second, 1)).toEqual(strip(alone, 0))
+  })
+
+  it('heads each tune with its title, inside the layout so it is not clipped', () => {
+    // The title must be added BEFORE extents are measured. Added afterwards it sits
+    // above y = 0 and is clipped — which happened only to the FIRST tune, because every
+    // later one had the tune above it to make room.
+    const doc = layoutBook(parse(book(2)).scores)
+    doc.systems.forEach((system, i) => {
+      const title = system.staves[0]?.elements.find((e) => e.type === 'title')
+      expect(title?.texts[0]?.text, `tune ${i}`).toBe(`Tune ${i + 1}`)
+      // Absolute top of the title's ink must be on the page.
+      const text = title?.texts[0]
+      const top = system.originY + (system.staves[0]?.originY ?? 0) + (text?.y ?? 0)
+      expect(top - (text?.size ?? 0), `tune ${i} title is clipped`).toBeGreaterThanOrEqual(0)
+    })
+  })
+
+  it('renders a single score without a book wrapper', () => {
+    const one = parse(book(1)).scores[0] as Score
+    expect(layout(one).systems).toHaveLength(1)
   })
 })
 

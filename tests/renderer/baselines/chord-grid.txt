@@ -1,12 +1,14 @@
-bounds  width=90.000 height=34.504 top=0.000
+bounds  width=90.000 height=41.804 top=0.000
 systems 2
 system 0 width=90.000 originY=0.000
-  staff 0 originY=8.120
+  staff 0 originY=15.420
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
+    title x=0.000 w=0.000
+      text  36.000,-9.500 size=2.400 bold "Chord Grid Test"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
@@ -43,7 +45,7 @@ system 0 width=90.000 originY=0.000
       line  77.321,-0.332 -> 77.321,3.000 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 1 width=61.684 originY=18.752
+system 1 width=61.684 originY=26.052
   staff 0 originY=8.120
     staffline 0.000,2.000 -> 61.684,2.000 t=0.130
     staffline 0.000,1.000 -> 61.684,1.000 t=0.130

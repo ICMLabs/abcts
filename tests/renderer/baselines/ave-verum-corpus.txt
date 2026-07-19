@@ -1,12 +1,14 @@
-bounds  width=90.000 height=255.772 top=0.000
+bounds  width=90.000 height=258.912 top=0.000
 systems 2
 system 0 width=90.000 originY=0.000
-  staff 0 originY=12.280
+  staff 0 originY=15.420
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
+    title x=0.000 w=0.000
+      text  35.400,-9.500 size=2.400 bold "Ave Verum Corpus"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=2.142
@@ -25,7 +27,7 @@ system 0 width=90.000 originY=0.000
       glyph restWhole 49.879,-1.000
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=28.812
+  staff 1 originY=31.952
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -47,7 +49,7 @@ system 0 width=90.000 originY=0.000
       glyph restWhole 49.879,-1.000
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 2 originY=44.344
+  staff 2 originY=47.484
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -69,7 +71,7 @@ system 0 width=90.000 originY=0.000
       glyph restWhole 49.879,-1.000
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 3 originY=58.324
+  staff 3 originY=61.464
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -91,7 +93,7 @@ system 0 width=90.000 originY=0.000
       glyph restWhole 49.879,-1.000
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 4 originY=73.304
+  staff 4 originY=76.444
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -142,7 +144,7 @@ system 0 width=90.000 originY=0.000
       line  78.900,1.832 -> 78.900,-2.500 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 5 originY=90.704
+  staff 5 originY=93.844
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -162,7 +164,7 @@ system 0 width=90.000 originY=0.000
     rest x=49.879 w=13.000
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 6 originY=106.336
+  staff 6 originY=109.476
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -198,7 +200,7 @@ system 0 width=90.000 originY=0.000
       line  71.624,-1.832 -> 71.624,1.500 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 7 originY=120.796
+  staff 7 originY=123.936
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -221,7 +223,7 @@ system 0 width=90.000 originY=0.000
       glyph noteheadWhole 49.879,0.000
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 1 width=64.878 originY=129.876
+system 1 width=64.878 originY=133.016
   staff 0 originY=7.400
     staffline 0.000,2.000 -> 64.878,2.000 t=0.130
     staffline 0.000,1.000 -> 64.878,1.000 t=0.130

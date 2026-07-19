@@ -149,6 +149,15 @@ const describeGolden = (el: GoldenLayoutElement): string => {
 /** Prefix kinds reprinted at the head of every system — layout, not content. */
 const PREFIX_TYPES = new Set(['clef', 'keySignature', 'timeSignature'])
 
+/**
+ * Page furniture that is not part of the music spine at all.
+ *
+ * A title is not a laid-out element in abcjs — it lives in `metaText`, outside the
+ * element tree this gate reads — so core emitting one is a difference in what gets
+ * DRAWN, not in what the music says. Filtered rather than the gate being relaxed.
+ */
+const FURNITURE_TYPES = new Set(['title'])
+
 function coreSequence(abc: string): string[] {
   const result = parse(abc)
   const score = result.scores[0]
@@ -160,6 +169,7 @@ function coreSequence(abc: string): string[] {
       // `goldenLayoutElements` drops those — WHERE a line breaks is a layout decision
       // that two engines make differently by design, so neither side's break points are
       // compared. Both sides must drop them or the sequences cannot align at all.
+      .filter((el) => !FURNITURE_TYPES.has(el.type))
       .filter((el) => systemIndex === 0 || !PREFIX_TYPES.has(el.type))
       .map((el) =>
         el.staffSteps.length === 0 ? el.type : `${el.type}@${el.staffSteps.join(',')}`,

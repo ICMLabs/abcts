@@ -1,12 +1,14 @@
-bounds  width=90.000 height=169.740 top=0.000
+bounds  width=90.000 height=177.768 top=0.000
 systems 5
 system 0 width=90.000 originY=0.000
-  staff 0 originY=7.392
+  staff 0 originY=15.420
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
+    title x=0.000 w=0.000
+      text  31.200,-9.500 size=2.400 bold "Brother John - improved"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=0.904
@@ -39,7 +41,7 @@ system 0 width=90.000 originY=0.000
       line  78.379,1.332 -> 78.379,-2.000 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=23.916
+  staff 1 originY=31.944
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -57,7 +59,7 @@ system 0 width=90.000 originY=0.000
       glyph restWhole 47.794,-1.000
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 1 width=90.000 originY=34.548
+system 1 width=90.000 originY=42.576
   staff 0 originY=7.392
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -132,7 +134,7 @@ system 1 width=90.000 originY=34.548
       line  78.379,1.332 -> 78.379,-2.000 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 2 width=90.000 originY=69.096
+system 2 width=90.000 originY=77.124
   staff 0 originY=7.392
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -221,7 +223,7 @@ system 2 width=90.000 originY=69.096
       glyph restQuarter 77.199,0.000
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 3 width=90.000 originY=103.644
+system 3 width=90.000 originY=111.672
   staff 0 originY=7.392
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -312,7 +314,7 @@ system 3 width=90.000 originY=103.644
       line  80.060,1.332 -> 80.060,-2.000 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 4 width=63.588 originY=138.192
+system 4 width=63.588 originY=146.220
   staff 0 originY=7.392
     staffline 0.000,2.000 -> 63.588,2.000 t=0.130
     staffline 0.000,1.000 -> 63.588,1.000 t=0.130

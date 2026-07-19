@@ -1,12 +1,14 @@
-bounds  width=90.000 height=59.110 top=0.000
+bounds  width=90.000 height=64.250 top=0.000
 systems 3
 system 0 width=90.000 originY=0.000
-  staff 0 originY=10.280
+  staff 0 originY=15.420
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
+    title x=0.000 w=0.000
+      text  37.200,-9.500 size=2.400 bold "Frère Jacques"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
@@ -65,7 +67,7 @@ system 0 width=90.000 originY=0.000
       text  76.492,4.000 size=1.400 "vous?"
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 1 width=90.000 originY=21.630
+system 1 width=90.000 originY=26.770
   staff 0 originY=10.280
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -123,7 +125,7 @@ system 1 width=90.000 originY=21.630
       text  76.479,4.000 size=1.400 "nes,"
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 2 width=87.454 originY=43.260
+system 2 width=87.454 originY=48.400
   staff 0 originY=7.500
     staffline 0.000,2.000 -> 87.454,2.000 t=0.130
     staffline 0.000,1.000 -> 87.454,1.000 t=0.130

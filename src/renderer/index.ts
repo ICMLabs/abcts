@@ -19,9 +19,21 @@ export {
 export { type RenderOptions, toSVG } from './svg.js'
 
 import type { Score } from '../core/model.js'
-import { type LayoutOptions, layout } from './layout.js'
+import { type LayoutOptions, layout, layoutBook } from './layout.js'
 import { type RenderOptions, toSVG } from './svg.js'
 
-/** Lay out and emit in one call — the common case. */
-export const render = (score: Score, options: RenderOptions & LayoutOptions = {}): string =>
-  toSVG(layout(score, options), options)
+/**
+ * Lay out and emit in one call — the common case.
+ *
+ * Takes one tune or a whole tunebook. `parse()` returns `scores`, so passing that array
+ * straight through renders every tune rather than silently only the first, which is what
+ * a caller doing `render(result.scores[0])` gets and rarely means.
+ */
+export const render = (
+  score: Score | readonly Score[],
+  options: RenderOptions & LayoutOptions = {},
+): string =>
+  toSVG(
+    Array.isArray(score) ? layoutBook(score, options) : layout(score as Score, options),
+    options,
+  )

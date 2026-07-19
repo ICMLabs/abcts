@@ -1,12 +1,14 @@
-bounds  width=43.144 height=15.532 top=0.000
+bounds  width=43.144 height=23.052 top=0.000
 systems 1
 system 0 width=43.144 originY=0.000
-  staff 0 originY=7.900
+  staff 0 originY=15.420
     staffline 0.000,2.000 -> 43.144,2.000 t=0.130
     staffline 0.000,1.000 -> 43.144,1.000 t=0.130
     staffline 0.000,0.000 -> 43.144,0.000 t=0.130
     staffline 0.000,-1.000 -> 43.144,-1.000 t=0.130
     staffline 0.000,-2.000 -> 43.144,-2.000 t=0.130
+    title x=0.000 w=0.000
+      text  9.572,-9.500 size=2.400 bold "Key with Many Sharps"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=5.580

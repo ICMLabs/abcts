@@ -1,12 +1,14 @@
-bounds  width=64.564 height=22.360 top=0.000
+bounds  width=64.564 height=23.052 top=0.000
 systems 1
 system 0 width=64.564 originY=0.000
-  staff 0 originY=14.728
+  staff 0 originY=15.420
     staffline 0.000,2.000 -> 64.564,2.000 t=0.130
     staffline 0.000,1.000 -> 64.564,1.000 t=0.130
     staffline 0.000,0.000 -> 64.564,0.000 t=0.130
     staffline 0.000,-1.000 -> 64.564,-1.000 t=0.130
     staffline 0.000,-2.000 -> 64.564,-2.000 t=0.130
+    title x=0.000 w=0.000
+      text  15.482,-9.500 size=2.400 bold "S2-1 Title and Header Fields"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880

@@ -110,11 +110,16 @@ const ENGRAVE = {
   dynamicStep: -7,
   partStep: 10,
   tempoStep: 14,
+  /** A tune's title sits above everything else it owns. */
+  titleStep: 19,
   /** First verse below the staff; further verses stack downward by `lyricLineStep`. */
   lyricStep: -8,
   lyricLineStep: 4,
   /** Tempo and part labels are directions; chord symbols and lyrics are smaller. */
   tempoTextSize: 1.6,
+  titleTextSize: 2.4,
+  /** Vertical gap between tunes in a tunebook — wider than between systems. */
+  tuneGap: 6.0,
   lyricTextSize: 1.4,
   /**
    * A stem shortened to meet a beam never drops below this. *Behind Bars* keeps beamed
@@ -168,6 +173,7 @@ const ENGRAVE = {
 // ─── Layout model ────────────────────────────────────────────────────────────
 
 export type ElementType =
+  | 'title'
   | 'clef'
   | 'keySignature'
   | 'timeSignature'
@@ -1745,7 +1751,38 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     const justify = wanted > 1 && wanted <= ENGRAVE.maxJustifyStretch ? wanted : 1
 
     const staves: LayoutStaff[] = plans.map((plan, voiceIndex) => {
-      const elements: LayoutElement[] = [...plan.prefix(withMeter, voiceIndex === 0).elements]
+      // The title heads the tune: first system, top staff, and inside the layout so the
+      // vertical extent accounts for it. Added afterwards it would sit above y = 0 and
+      // be clipped away — which is what happened to the first tune of a tunebook, while
+      // every later tune looked fine because the tune above had already made room.
+      const title = score.metadata.titles[0]
+      const heading: LayoutElement[] =
+        systemIndex === 0 && voiceIndex === 0 && title !== undefined && title !== ''
+          ? [
+              {
+                type: 'title',
+                x: 0,
+                width: 0,
+                staffSteps: [],
+                glyphs: [],
+                lines: [],
+                texts: [
+                  {
+                    text: title,
+                    x: 0,
+                    y: stepToY(ENGRAVE.titleStep),
+                    size: ENGRAVE.titleTextSize,
+                    bold: true,
+                    italic: false,
+                  },
+                ],
+              },
+            ]
+          : []
+      const elements: LayoutElement[] = [
+        ...heading,
+        ...plan.prefix(withMeter, voiceIndex === 0).elements,
+      ]
       const beamGroups = new Map<number, StemInfo[]>()
       const anchors: NoteAnchor[] = []
       let x = head
@@ -1804,10 +1841,30 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
 
     const width = head + natural * justify + ENGRAVE.marginX
 
+    // The title centres on the finished system, whose width is only known now.
+    const centred = staves.map((staff, staffIndex) =>
+      staffIndex !== 0
+        ? staff
+        : {
+            ...staff,
+            elements: staff.elements.map((el) =>
+              el.type !== 'title'
+                ? el
+                : {
+                    ...el,
+                    texts: el.texts.map((t) => ({
+                      ...t,
+                      x: Math.max(0, (width - textWidth(t.text, t.size)) / 2),
+                    })),
+                  },
+            ),
+          },
+    )
+
     // Stack the staves, each measured from its own content so a staff with a tempo mark
     // or high ledger lines gets the room it needs and no more.
     let cursor = 0
-    const placed = staves.map((staff) => {
+    const placed = centred.map((staff) => {
       const extent = verticalExtent(staff.elements, staff.beams)
       const originY = cursor - extent.top
       cursor += extent.bottom - extent.top + ENGRAVE.staffGap
@@ -1833,6 +1890,35 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     height: Math.max(0, cursor - ENGRAVE.systemGap),
     top: 0,
   }
+}
+
+/**
+ * Lay out a whole tunebook: several tunes stacked down the page.
+ *
+ * Each tune is laid out INDEPENDENTLY by `layout` and then translated into place, which
+ * is the same trick as systems within a tune and staves within a system, for the same
+ * reason — nothing inside a tune depends on how many tunes precede it, so adding a tune
+ * at the top cannot shift the geometry of one below.
+ *
+ * This is not a niche case: 12 of the 41 corpus fixtures hold more than one tune, and
+ * `clefs` holds eight. Rendering only the first meant seven of its eight clefs were
+ * invisible.
+ */
+export function layoutBook(scores: readonly Score[], options: LayoutOptions = {}): Layout {
+  const systems: LayoutSystem[] = []
+  let cursor = 0
+  let width = 0
+
+  scores.forEach((score, index) => {
+    const tune = layout(score, options)
+    for (const system of tune.systems) {
+      systems.push({ ...system, originY: system.originY + cursor })
+    }
+    width = Math.max(width, tune.width)
+    cursor += tune.height + (index === scores.length - 1 ? 0 : ENGRAVE.tuneGap)
+  })
+
+  return { systems, width, height: cursor, top: 0 }
 }
 
 /** A system's full vertical extent, from the top of its first staff's content down. */

@@ -1,7 +1,7 @@
-bounds  width=90.000 height=81.236 top=0.000
+bounds  width=90.000 height=81.928 top=0.000
 systems 2
 system 0 width=90.000 originY=0.000
-  staff 0 originY=14.728
+  staff 0 originY=15.420
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -9,6 +9,8 @@ system 0 width=90.000 originY=0.000
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
     beam   54.231,-1.750 -> 73.292,-1.250 t=0.500
     tie  60.884,1.800 -> 65.007,1.800 bulge=0.742
+    title x=0.000 w=0.000
+      text  33.000,-9.500 size=2.400 bold "S7-1 Piano Two Voice"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
@@ -48,7 +50,7 @@ system 0 width=90.000 originY=0.000
       line  79.194,2.832 -> 79.194,-0.500 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=31.252
+  staff 1 originY=31.944
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -131,7 +133,7 @@ system 0 width=90.000 originY=0.000
       line  68.270,6.332 -> 68.270,1.000 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 1 width=89.260 originY=45.252
+system 1 width=89.260 originY=45.944
   staff 0 originY=7.392
     staffline 0.000,2.000 -> 89.260,2.000 t=0.130
     staffline 0.000,1.000 -> 89.260,1.000 t=0.130

@@ -1,7 +1,7 @@
-bounds  width=90.000 height=41.192 top=0.000
+bounds  width=90.000 height=49.052 top=0.000
 systems 2
 system 0 width=90.000 originY=0.000
-  staff 0 originY=7.560
+  staff 0 originY=15.420
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -9,6 +9,8 @@ system 0 width=90.000 originY=0.000
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
     beam   8.807,2.500 -> 42.685,0.500 t=0.500
     beam   49.525,-0.750 -> 78.563,-2.750 t=0.500
+    title x=0.000 w=0.000
+      text  28.800,-9.500 size=2.400 bold "S3-1 Scales and Pitch Range"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
@@ -88,7 +90,7 @@ system 0 width=90.000 originY=0.000
       line  82.160,-0.332 -> 82.160,3.000 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 1 width=64.838 originY=21.560
+system 1 width=64.838 originY=29.420
   staff 0 originY=12.000
     staffline 0.000,2.000 -> 64.838,2.000 t=0.130
     staffline 0.000,1.000 -> 64.838,1.000 t=0.130
