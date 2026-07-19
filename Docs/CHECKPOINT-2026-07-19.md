@@ -11,7 +11,7 @@ the parser and whose risk list is still live except where noted below.
 
 | | |
 |---|---|
-| Tests | **237 passing** (73 parser + 164 renderer) |
+| Tests | **250 passing** (73 parser + 177 renderer) |
 | Parser content parity | 39/39 gated fixtures, unchanged |
 | **Render structural parity** | **40 of 41** — the 41st is a recorded abcjs bug |
 | **Visual baselines** | **41 of 41**, committed geometry snapshots |
@@ -23,7 +23,7 @@ Renders today: staff, all clefs, key signatures, meters, tempo marks, part label
 noteheads and chords with stems, flags, beams and ledger lines, accidentals, dotted
 durations (including double and triple dots), rests, barlines — across MULTIPLE VOICES,
 each on its own staff, wrapped into justified systems, with notes spaced by duration on
-abcm2ps's measured square-root curve.
+abcm2ps's measured square-root curve, with all six barline shapes, slurs and ties.
 
 **Every note in the corpus draws.** No fixture has missing output.
 
@@ -195,10 +195,15 @@ Carried forward from 2026-07-18 and still open: decoration/chord-symbol vocabula
      `end_beam` on the note it FOLLOWS, and `endBeamHere` includes that note in the run.
      `force_end_beam_last` (chord symbol + whitespace) is ruled out — S8-layout has no
      such pattern. A third cause remains unidentified.
-4. **A no-op mutation looks exactly like a passing suite.** When verifying by breaking
-   the code, CHECK THE EDIT APPLIED. One spacing mutation silently matched nothing
-   because lint had reformatted the target line, and reported a clean 164/164 — caught
-   only because "flat spacing changes nothing" is implausible on its face.
+4. **Two ways a verification can lie, both hit this session and both now guarded.**
+   - A no-op MUTATION looks exactly like a passing suite. One spacing mutation matched
+     nothing because lint had reformatted the target line and reported a clean 164/164.
+     Mutations now assert the edit applied before running.
+   - A TEST that cannot distinguish the cases it claims to cover. The slur-nesting test
+     used `((GG)GG)`, where both slurs open on the same note, so stack and queue
+     matching return the same index — replacing `pop()` with `shift()` passed all 177
+     tests. `(G(GG)G)` discriminates. This is the parser audit's blind spot exactly, and
+     it was found by mutation rather than by review.
 
 Risk 5 of the 2026-07-18 list — the falsy `Accidental.natural` — is **closed**: the
 renderer checks `=== null`, and two tests fail if that is rewritten as truthiness,
