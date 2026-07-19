@@ -16,7 +16,10 @@
  */
 import {
   Accidental,
+  type Clef,
+  type ClefShape,
   type DiatonicStep,
+  defaultClef,
   type KeySignature,
   type Mode,
   type MusicEvent,
@@ -133,13 +136,35 @@ export const stepToY = (step: number): number => -step * ENGRAVE.spacePerStep
 const diatonicIndex = (p: Pitch): number => stepIndex(p.step) + 7 * p.octave
 
 /**
- * ponytail: treble clef assumed. The model carries no clef yet — the parser reads
- * `V:… clef=` as an unparsed token — so there is nothing to branch on. When clef lands
- * in the model this becomes a per-clef offset and nothing else here changes.
+ * Which pitch sits on a clef's own line: a G clef marks G4, an F clef F3, a C clef C4.
+ * That single fact, plus the line the clef sits on, positions every note on the staff.
  */
-const MIDDLE_LINE_INDEX = 34 // B4
+const CLEF_REFERENCE: Readonly<Record<ClefShape, number>> = {
+  // Diatonic indices: G4 = 4 + 7*4, F3 = 3 + 7*3, C4 = 0 + 7*4.
+  G: 32,
+  F: 24,
+  C: 28,
+  // Unpitched. Treated as a C clef on the middle line so notes land somewhere sane
+  // rather than at a wild offset; neither is a real pitch mapping.
+  percussion: 28,
+  none: 28,
+}
 
-const pitchToStep = (p: Pitch): number => diatonicIndex(p) - MIDDLE_LINE_INDEX
+/**
+ * The diatonic index that lands on the middle staff line, for a given clef.
+ *
+ * The clef's reference pitch sits on its own line, and staff line `n` is `(n - 3) * 2`
+ * steps from the middle line, so the middle line carries `reference - (line - 3) * 2`.
+ *
+ * Treble checks out as B4: G clef, line 2, so 32 - (2-3)*2 = 34, which is B4. Bass as
+ * D3: F clef, line 4, 24 - (4-3)*2 = 22. And that second number is what makes
+ * `score-reorder` agree with abcjs — `C,,` is index 14, so 14 - 22 = -8, exactly the
+ * step abcjs records, where the old hardcoded treble constant gave -20.
+ */
+export const middleLineIndex = (clef: Clef): number =>
+  CLEF_REFERENCE[clef.shape] - (clef.line - 3) * 2
+
+const pitchToStep = (p: Pitch, clef: Clef): number => diatonicIndex(p) - middleLineIndex(clef)
 
 // ─── Duration → notehead ─────────────────────────────────────────────────────
 
@@ -181,15 +206,27 @@ const glyphAt = (name: GlyphName, x: number, step: number): PlacedGlyph => ({
   y: stepToY(step),
 })
 
-function layoutClef(x: number): LayoutElement {
-  // The gClef origin sits on the line its curl encircles: G4, two steps below B4.
-  const glyph = GLYPHS.gClef
+const CLEF_GLYPHS: Readonly<Record<ClefShape, GlyphName | null>> = {
+  G: 'gClef',
+  F: 'fClef',
+  C: 'cClef',
+  // ponytail: no percussion glyph extracted, and `clef=none` draws nothing by definition.
+  percussion: null,
+  none: null,
+}
+
+function layoutClef(x: number, clef: Clef): LayoutElement | null {
+  const name = CLEF_GLYPHS[clef.shape] ?? null
+  if (name === null) return null
+  // Every SMuFL clef's origin sits on the line it marks, so the glyph goes exactly where
+  // the clef's line is — no per-clef offsets. Line n is (n - 3) * 2 steps from the middle.
+  const step = (clef.line - 3) * 2
   return {
     type: 'clef',
     x,
-    width: glyph.advance,
+    width: GLYPHS[name].advance,
     staffStep: null,
-    glyphs: [glyphAt('gClef', x, -2)],
+    glyphs: [glyphAt(name, x, step)],
     lines: [],
   }
 }
@@ -292,12 +329,37 @@ export function keyFifths(key: KeySignature): number {
   return Math.max(-7, Math.min(7, fifths))
 }
 
-function layoutKeySignature(x: number, key: KeySignature): LayoutElement | null {
+/**
+ * How far a key signature's accidentals shift for a clef, in staff steps.
+ *
+ * The written positions are conventional in treble; in another clef the same pitch
+ * classes land elsewhere, and the signature follows the pitch, not the position. Two
+ * clefs' middle lines differ by a whole number of diatonic steps, so the shift is that
+ * difference reduced mod 7 and folded into [-3, 3] — which picks the octave that keeps
+ * the accidentals on or near the staff.
+ *
+ * Bass works out to -2, giving F# on the fourth line and C# in the second space, the
+ * standard pattern. Alto gives -1.
+ *
+ * ponytail: TENOR is genuinely irregular. Engravers drop some of its accidentals an
+ * octave to avoid ledger lines, and no single shift reproduces that. This formula puts
+ * them an octave high. No corpus fixture uses a tenor key signature; fix it when one does.
+ */
+function keySignatureShift(clef: Clef): number {
+  const delta = middleLineIndex(defaultClef) - middleLineIndex(clef)
+  const wrapped = ((delta % 7) + 7) % 7
+  return wrapped > 3 ? wrapped - 7 : wrapped
+}
+
+function layoutKeySignature(x: number, key: KeySignature, clef: Clef): LayoutElement | null {
   const fifths = keyFifths(key)
   if (fifths === 0) return null // C major and K:none both draw nothing.
 
+  const shift = keySignatureShift(clef)
   const sharps = fifths > 0
-  const steps = (sharps ? SHARP_STEPS : FLAT_STEPS).slice(0, Math.abs(fifths))
+  const steps = (sharps ? SHARP_STEPS : FLAT_STEPS)
+    .slice(0, Math.abs(fifths))
+    .map((step) => step + shift)
   const name: GlyphName = sharps ? 'accidentalSharp' : 'accidentalFlat'
   const pitch = GLYPHS[name].advance + ENGRAVE.keySignatureGap
 
@@ -410,8 +472,8 @@ function ledgerLines(step: number, x: number, headWidth: number): PlacedLine[] {
   return lines
 }
 
-function layoutNote(note: Note, x: number): LayoutElement {
-  const step = pitchToStep(note.pitch)
+function layoutNote(note: Note, x: number, clef: Clef): LayoutElement {
+  const step = pitchToStep(note.pitch, clef)
   const spec = noteGlyph(note.notatedDuration)
   if (spec === null) {
     // Unsupported duration — see noteGlyph. Emit the position with no ink rather than
@@ -495,14 +557,19 @@ function layoutBar(x: number): LayoutElement {
  */
 export function layout(score: Score): Layout {
   const voice = score.voices[0]
+  // A voice's own `clef=` wins over the tune's `K:` clef; treble is the fallback.
+  const clef = voice?.clef ?? score.clef
   const elements: LayoutElement[] = []
   let x = ENGRAVE.marginX
 
-  elements.push(layoutClef(x))
-  x += GLYPHS.gClef.advance + ENGRAVE.prefixGap
+  const clefElement = layoutClef(x, clef)
+  if (clefElement !== null) {
+    elements.push(clefElement)
+    x += clefElement.width + ENGRAVE.prefixGap
+  }
 
   // Clef, then key, then meter — the fixed order of a staff prefix.
-  const keySig = layoutKeySignature(x, score.key)
+  const keySig = layoutKeySignature(x, score.key, clef)
   if (keySig !== null) {
     elements.push(keySig)
     x += keySig.width + ENGRAVE.prefixGap
@@ -516,7 +583,7 @@ export function layout(score: Score): Layout {
 
   for (const measure of voice?.measures ?? []) {
     for (const event of measure.events) {
-      const el = layoutEvent(event, x)
+      const el = layoutEvent(event, x, clef)
       if (el === null) continue
       elements.push(el)
       x += el.width
@@ -549,8 +616,8 @@ export function layout(score: Score): Layout {
  * ponytail: chords lay out as nothing. A chord is a note element with N noteheads plus
  * second-interval offsetting, so it is a real slice of work rather than a line here.
  */
-function layoutEvent(event: MusicEvent, x: number): LayoutElement | null {
-  if (event.type === 'note') return layoutNote(event, x)
+function layoutEvent(event: MusicEvent, x: number, clef: Clef): LayoutElement | null {
+  if (event.type === 'note') return layoutNote(event, x, clef)
   if (event.type === 'rest') return layoutRest(event, x)
   return null
 }

@@ -20,8 +20,11 @@ import {
   Accidental,
   type Barline,
   type Chord,
+  type Clef,
+  type ClefShape,
   type Diagnostic,
   type DiatonicStep,
+  defaultClef,
   isCompoundMeter,
   type KeySignature,
   type Measure,
@@ -160,6 +163,62 @@ const BARLINES: Record<string, Barline> = {
 
 const DEFAULT_VOICE_ID = '1'
 
+/**
+ * Named ABC clefs → shape and default staff line.
+ *
+ * The line is a DEFAULT because ABC lets a digit override it: `bass3` is an F clef on
+ * line 3 (the baritone), `alto1` a C clef on line 1 (the soprano), `alto2` a C clef on
+ * line 2 (the mezzo-soprano). That is why the model stores a line rather than a name —
+ * ABC can spell clefs that have no common name at all.
+ */
+const CLEF_NAMES: ReadonlyArray<readonly [string, ClefShape, number]> = [
+  // Longest first: `treble` must not be matched by a shorter prefix, and `perc` must be
+  // tried before nothing at all.
+  ['treble', 'G', 2],
+  ['bass', 'F', 4],
+  ['alto', 'C', 3],
+  ['tenor', 'C', 4],
+  ['baritone', 'F', 3],
+  ['mezzosoprano', 'C', 2],
+  ['soprano', 'C', 1],
+  ['perc', 'percussion', 3],
+  ['none', 'none', 3],
+]
+
+/**
+ * A clef from a `K:` or `V:` field value, or `null` if the field names none.
+ *
+ * Accepts both ABC spellings: `clef=bass` and a bare clef name, as in `K:C bass`. The
+ * optional trailing digit overrides the staff line and `+8` / `-8` sets the sounding
+ * octave — `clef=treble-8` is the tenor's octave-down treble clef.
+ */
+export function parseClef(spec: string): Clef | null {
+  const build = (name: string, digit: string, octave: string): Clef | null => {
+    const entry = CLEF_NAMES.find(([n]) => n === name.toLowerCase())
+    if (!entry) return null
+    const [, shape, defaultLine] = entry
+    const line = digit ? Number.parseInt(digit, 10) : defaultLine
+    return {
+      shape,
+      line: line >= 1 && line <= 5 ? line : defaultLine,
+      octaveShift: octave === '+8' ? 1 : octave === '-8' ? -1 : 0,
+    }
+  }
+
+  const explicit = /clef=([a-z]+)(\d?)([+-]8)?/i.exec(spec)
+  if (explicit) return build(explicit[1] ?? '', explicit[2] ?? '', explicit[3] ?? '')
+
+  // Bare form, as in `K:C bass`. EVERY word is tried, not just the first: the first word
+  // of a K: field is the key itself, so returning on the first non-clef match would never
+  // reach the clef. A word that names no clef is simply some other token — a mode, a
+  // `name=`, a `stafflines=` — and is skipped rather than defaulting to something.
+  for (const m of spec.matchAll(/(?:^|\s)([a-z]+)(\d?)([+-]8)?(?=\s|$)/gi)) {
+    const clef = build(m[1] ?? '', m[2] ?? '', m[3] ?? '')
+    if (clef) return clef
+  }
+  return null
+}
+
 /** `octave=±n` on a `V:` or `K:` field — a sounding shift, not a written-pitch change. */
 function octaveModifier(spec: string): number | null {
   const match = /octave=(-?\d+)/.exec(spec)
@@ -176,6 +235,7 @@ const CONTINUABLE_FIELDS = 'ABCDFGHNORSTZw'
 
 class VoiceBuilder {
   octaveShift = 0
+  clef: Clef | null = null
   /**
    * A `>`/`<` mark scales the NEXT event. It lives on the voice, not the scan of one
    * line: a plain line break does not end a measure, so `A>` at the end of one line and
@@ -381,7 +441,7 @@ class VoiceBuilder {
       this.measureStart = null
     }
     this.applyLyrics()
-    return { id: this.id, octaveShift: this.octaveShift, measures: this.measures }
+    return { id: this.id, octaveShift: this.octaveShift, clef: this.clef, measures: this.measures }
   }
 
   get isEmpty(): boolean {
@@ -395,6 +455,7 @@ class ScoreBuilder {
   composer: string | null = null
   rhythm: string | null = null
   key: KeySignature = defaultKey()
+  clef: Clef = defaultClef
   meter: Meter | null = null
   unitNoteLength: Rational = rational(1, 8)
   unitExplicit = false
@@ -481,6 +542,7 @@ class ScoreBuilder {
     return {
       metadata,
       key: this.key,
+      clef: this.clef,
       meter: this.meter,
       unitNoteLength: this.unitNoteLength,
       voices: this.orderedVoices().map((v) => v.finish()),
@@ -673,6 +735,8 @@ class Parser {
         if (builder.bodyStarted) builder.selectVoice(id)
         const octave = octaveModifier(value)
         if (octave !== null) builder.voiceFor(id).octaveShift = octave
+        const voiceClef = parseClef(value)
+        if (voiceClef !== null) builder.voiceFor(id).clef = voiceClef
         return
       }
       case 'K': {
@@ -682,6 +746,9 @@ class Parser {
         }
         builder.key = parseKey(value)
         builder.keySourceRange = range
+        // `K:C bass` sets the tune's clef; a `V:… clef=` still overrides it per voice.
+        const keyClef = parseClef(value)
+        if (keyClef !== null) builder.clef = keyClef
         const keyOctave = octaveModifier(value)
         if (keyOctave !== null) builder.voice.octaveShift = keyOctave
         builder.bodyStarted = true // K: ends the header.

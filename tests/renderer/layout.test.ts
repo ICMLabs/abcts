@@ -10,13 +10,20 @@
 import { describe, expect, it } from 'vitest'
 import {
   Accidental,
+  defaultClef,
   type KeySignature,
   type Mode,
   rational,
   type Score,
 } from '../../src/core/model.js'
 import { parse } from '../../src/parser/parser.js'
-import { accidentalGlyph, keyFifths, layout, noteGlyph } from '../../src/renderer/layout.js'
+import {
+  accidentalGlyph,
+  keyFifths,
+  layout,
+  middleLineIndex,
+  noteGlyph,
+} from '../../src/renderer/layout.js'
 
 const key = (
   step: KeySignature['tonic']['step'],
@@ -105,6 +112,80 @@ describe('accidentalGlyph', () => {
     expect(notes[1]?.glyphs.map((g) => g.name)).toEqual(['noteheadBlack'])
     // Both are the same written pitch, so they sit on the same line.
     expect(notes[0]?.staffStep).toBe(notes[1]?.staffStep)
+  })
+})
+
+describe('clefs', () => {
+  const clefOf = (abc: string) => parse(abc).scores[0]?.voices[0]?.clef ?? null
+
+  it('reads a bare clef name on K:, past the key itself', () => {
+    // `K:C bass` — the FIRST word is the key, so a scan that stopped at the first
+    // non-clef word would never reach `bass`.
+    expect(parse('X:1\nK:C bass\nC|\n').scores[0]?.clef).toEqual({
+      shape: 'F',
+      line: 4,
+      octaveShift: 0,
+    })
+    expect(parse('X:1\nK:C treble\nC|\n').scores[0]?.clef).toEqual({
+      shape: 'G',
+      line: 2,
+      octaveShift: 0,
+    })
+  })
+
+  it('reads clef= on a voice', () => {
+    expect(clefOf('X:1\nV:1 clef=bass\nK:C\nC|\n')).toEqual({ shape: 'F', line: 4, octaveShift: 0 })
+  })
+
+  it('takes the trailing digit as the staff line, which is how ABC spells three clefs', () => {
+    // The `clefs` fixture writes the baritone, mezzo-soprano and soprano exactly this way.
+    expect(parse('X:1\nK:C bass3\nC|\n').scores[0]?.clef).toEqual({
+      shape: 'F',
+      line: 3, // baritone
+      octaveShift: 0,
+    })
+    expect(parse('X:1\nK:C alto1\nC|\n').scores[0]?.clef).toEqual({
+      shape: 'C',
+      line: 1, // soprano
+      octaveShift: 0,
+    })
+    expect(parse('X:1\nK:C alto2\nC|\n').scores[0]?.clef).toEqual({
+      shape: 'C',
+      line: 2, // mezzo-soprano
+      octaveShift: 0,
+    })
+  })
+
+  it('reads the octave suffix', () => {
+    expect(parse('X:1\nK:C treble-8\nC|\n').scores[0]?.clef.octaveShift).toBe(-1)
+    expect(parse('X:1\nK:C treble+8\nC|\n').scores[0]?.clef.octaveShift).toBe(1)
+  })
+
+  it('defaults to treble, and ignores words that name no clef', () => {
+    expect(parse('X:1\nK:C\nC|\n').scores[0]?.clef).toEqual(defaultClef)
+    // `Dm` is a key, `name=` is a voice label — neither is a clef, and neither may
+    // produce one by accident.
+    expect(parse('X:1\nK:Dm\nC|\n').scores[0]?.clef).toEqual(defaultClef)
+    expect(clefOf('X:1\nV:1 name="Bass Line"\nK:C\nC|\n')).toBeNull()
+  })
+
+  it('puts the middle line where each clef says it is', () => {
+    // Treble B4 = 34, bass D3 = 22, alto C4 = 28, tenor A3 = 26.
+    expect(middleLineIndex({ shape: 'G', line: 2, octaveShift: 0 })).toBe(34)
+    expect(middleLineIndex({ shape: 'F', line: 4, octaveShift: 0 })).toBe(22)
+    expect(middleLineIndex({ shape: 'C', line: 3, octaveShift: 0 })).toBe(28)
+    expect(middleLineIndex({ shape: 'C', line: 4, octaveShift: 0 })).toBe(26)
+  })
+
+  it('puts a bass voice where abcjs puts it, which the treble assumption did not', () => {
+    // The `score-reorder` regression in one assertion. `C,,` is C2; in bass clef abcjs
+    // records staff position -8 relative to the middle line, and core produced -20 while
+    // it assumed treble — silently wrong output rather than a missing feature.
+    const score = parse('X:1\nL:1/4\nV:1 clef=bass\nK:C\nC,,|\n').scores[0]
+    const note = layout(score as Score)
+      .systems.flatMap((s) => s.elements)
+      .find((e) => e.type === 'note')
+    expect(note?.staffStep).toBe(-8)
   })
 })
 

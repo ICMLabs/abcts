@@ -50,14 +50,22 @@ import { type GoldenLayoutElement, goldenLayoutElements, loadCorpus } from '../c
  * anti-rot property `KNOWN_DIVERGENCES` has in the parser gate.
  */
 const RENDERABLE = [
+  'S1-decorations',
+  'S3-note-syntax',
+  'S5-directives',
+  'S6-keys',
+  'S8-layout',
   'brother-john-inline-voices',
+  'center-text',
   'chord-grid',
   'clefs',
   'curves',
   'multi-voice-lyrics-two-voices',
   'multi-voice-rest-collision',
   'multi-voice-rest-placement',
+  'missing-decorations',
   'multi-voice-triplet-brackets',
+  'score-reorder',
   'score-reorder-shared',
   'simple-c',
   'stacked-annotations',
@@ -70,33 +78,6 @@ const RENDERABLE = [
   'vree-sharps',
   'vree-slurs-and-triplets',
   'vree-ties-across-bars',
-]
-
-/**
- * Fixtures with NO layout oracle: abcjs's harness emitted `staffGroups: []` for them.
- *
- * This is a harness gap, not absent data — the same fixtures have 3 to 20 SVG goldens
- * each, so abcjs laid them out fine and only the element dump came back empty.
- * `abcMusicKit/Tools/abcjs-debug` can regenerate them, which would bring 10 fixtures
- * into this gate, several of them (`S3-note-syntax`, `S4-bars-repeats`, `S6-keys`) far
- * more demanding than anything currently in RENDERABLE.
- *
- * They are listed rather than filtered so they cannot hide: an empty golden compares
- * unequal to core's output and would otherwise sit forever in the "still beyond core"
- * bucket, passing for entirely the wrong reason, and still passing on the day core
- * renders them perfectly.
- */
-const NO_LAYOUT_ORACLE = [
-  'S1-decorations',
-  'S2-fields',
-  'S3-note-syntax',
-  'S4-bars-repeats',
-  'S5-directives',
-  'S6-keys',
-  'S7-voices',
-  'S8-layout',
-  'center-text',
-  'missing-decorations',
 ]
 
 /**
@@ -188,23 +169,8 @@ describe('structural render parity vs abcjs layout', () => {
     }
   })
 
-  describe('no layout oracle — abcjs harness emitted no elements', () => {
-    for (const name of NO_LAYOUT_ORACLE) {
-      it(`${name} — still has an empty golden`, () => {
-        // Fails if the harness is ever regenerated, which is the point: that is the day
-        // these ten join the gate, and it should not pass unnoticed.
-        expect(
-          goldenSequence(name),
-          `${name} now has layout goldens — move it into the gate`,
-        ).toEqual([])
-      })
-    }
-  })
-
   describe('not yet renderable', () => {
-    const notYet = corpus.filter(
-      (c) => !RENDERABLE.includes(c.name) && !NO_LAYOUT_ORACLE.includes(c.name),
-    )
+    const notYet = corpus.filter((c) => !RENDERABLE.includes(c.name))
     for (const fixture of notYet) {
       it(`${fixture.name} — still diverges, so absent from RENDERABLE`, () => {
         let core: string[]

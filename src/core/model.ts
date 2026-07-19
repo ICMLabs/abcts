@@ -109,6 +109,38 @@ export interface KeySignature {
   readonly none: boolean
 }
 
+// ─── Clef ────────────────────────────────────────────────────────────────────
+
+/**
+ * The letter a clef is built from. `percussion` and `none` are ABC's `clef=perc` and
+ * `clef=none`, which carry no pitch reference at all.
+ */
+export type ClefShape = 'G' | 'F' | 'C' | 'percussion' | 'none'
+
+/**
+ * A clef as shape plus the staff line it sits on, rather than a closed enum of named
+ * clefs.
+ *
+ * abcMusicKit2 models this as `enum Clef { treble, bass, alto, tenor, percussion, none }`,
+ * which cannot express three clefs the corpus actually uses: ABC writes the baritone as
+ * `bass3`, the mezzo-soprano as `alto2` and the soprano as `alto1`, and the `clefs`
+ * fixture has all three. The digit in those names IS the staff line, so shape + line
+ * covers every ABC clef including ones nobody named, and it makes staff position a
+ * formula instead of a lookup table — see `middleLineIndex` in the renderer.
+ */
+export interface Clef {
+  readonly shape: ClefShape
+  /** Staff line the clef's reference pitch sits on, 1 = bottom line, 3 = middle. */
+  readonly line: number
+  /**
+   * `clef=treble-8` — sounds an octave lower than written. A SOUNDING shift: it moves no
+   * notehead, unlike `Voice.octaveShift`, whose written/sounding status is still open.
+   */
+  readonly octaveShift: number
+}
+
+export const defaultClef: Clef = { shape: 'G', line: 2, octaveShift: 0 }
+
 // ─── Meter ───────────────────────────────────────────────────────────────────
 
 export type MeterSymbol = 'numeric' | 'common' | 'cut'
@@ -317,6 +349,8 @@ export interface Voice {
    * shift into its pitch numbers instead, so any comparison against it must add it back.
    */
   readonly octaveShift: number
+  /** `V:… clef=`. `null` means this voice takes the tune's clef from `Score.clef`. */
+  readonly clef: Clef | null
   readonly measures: readonly Measure[]
 }
 
@@ -330,6 +364,8 @@ export interface ScoreMetadata {
 export interface Score {
   readonly metadata: ScoreMetadata
   readonly key: KeySignature
+  /** The tune's clef, from `K:… clef=` or a bare clef name on `K:`. Defaults to treble. */
+  readonly clef: Clef
   /** The *initial* meter, frozen at the header `K:`. `null` means free meter. */
   readonly meter: Meter | null
   readonly unitNoteLength: Rational
