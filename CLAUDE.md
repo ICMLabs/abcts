@@ -71,7 +71,8 @@ correct behavior. Nothing ships red.
 - `ARCHITECTURE.md`   — full specification and decision record (read first)
 - `abcts.config.json` — corpus and goldens paths
 - `../abcMusicKit/Tools/abcjs-debug/fixtures/` — 41 `.abc` corpus fixtures
-- `../abcMusicKit/Tools/abcjs-debug/golden/`   — abcjs goldens: 41 `.parse.json` (used by the gate) + 503 SVGs (unused; for the renderer)
+- `../abcMusicKit/Tools/abcjs-debug/golden/`   — abcjs goldens: 41 `.parse.json` (parser gate) +
+  41 `.elements.json` (renderer gate — laid-out elements) + 503 SVGs (compat mode only, unused)
 - `../abcMusicKit/Docs/References/abcjs/abcjs-6.6.3/` — vendored abcjs source
 
 No git submodules — corpus and abcjs live inside the abcMusicKit repo and are
@@ -79,15 +80,17 @@ reached by relative sibling path. See ARCHITECTURE.md § Repository Structure.
 
 ## Current phase
 The PARSER is complete and gated (39/39 corpus fixtures, saturated). The RENDERER is
-under way: 129 tests, 20 of the 31 fixtures with a layout oracle passing the structural
-gate. Glyphs are inline SVG paths extracted from Bravura; core is gated structurally
-against `golden/*.elements.json`, not the SVG goldens. Both are settled — see
-ARCHITECTURE.md § Rendering.
+under way: 146 tests, **33 of 41** fixtures passing the structural gate, and all 41 now
+have a layout oracle. Renders staff, all clefs, key signatures, meters, tempo marks,
+noteheads with stems and ledger lines, accidentals, rests and barlines.
 
-Next up, and both need Lance: prose text rendering (nothing renders text at all), and
-whether the renderer phase may reach back into the parser — `Q:` and `clef=` are neither
-parsed nor modelled, and the treble-clef assumption is currently producing silently wrong
-staff positions for bass and alto voices.
+All three rendering decisions are settled — inline Bravura paths for glyphs, `<text>` for
+prose, structural comparison against `golden/*.elements.json` rather than the SVG
+goldens. See ARCHITECTURE.md § Rendering.
+
+The renderer phase MAY change the parser; clef and `Q:` both did and the parser gate held.
+Next work is picked by the diff and needs no decision: chords (largest gap), a leading
+`[|` barline the parser drops, and `P:` parts. See the checkpoint.
 
 ## Session Prompts
 

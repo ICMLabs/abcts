@@ -211,10 +211,26 @@ and engraving defaults in staff spaces already, so only outlines need the font b
 That the two agree is a genuine cross-check and they do — the extracted `noteheadBlack`
 path spans exactly the published 1.18 × 1.0 box.
 
-Prose text (titles, tempo marks, lyrics, chord symbols) is a **separate, still-open**
-question — see `Docs/CHECKPOINT-2026-07-19.md`. The reasoning above does not transfer:
-a missing serif face degrades to another serif, whereas a missing Bravura degrades to
-nothing legible.
+### Prose text — `<text>`, the opposite call
+
+*Decided 2026-07-19 with the tempo work.*
+
+Prose (tempo marks, and later titles, lyrics, chord symbols) is emitted as a real `<text>`
+element in a generic family, NOT as paths. The glyph reasoning deliberately does not
+transfer: a missing serif face falls back to another serif, whereas a missing Bravura
+falls back to nothing legible. Self-containment is worth paying for in noteheads and not
+worth paying for in words — paths for text would also bloat output and destroy
+selectability and screen-reader access. abcMusicKit2's `CGBackend` splits the same way:
+music from Bravura, "prose uses a CoreText system font".
+
+Text from ABC is untrusted — a `T:` or `Q:` field carries whatever the file said — and it
+is spliced into markup a host will put in a page, so it is escaped at emission. That is a
+trust boundary, not a formatting nicety.
+
+No text metrics are available, so layout estimates advance where it must. The tempo mark
+is zero-width (matching abcjs) and floats above the staff, so nothing downstream depends
+on those estimates. Anything that needs real metrics — centred titles, lyric alignment —
+needs a measured font first.
 
 ### Units and coordinates
 
