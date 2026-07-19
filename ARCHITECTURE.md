@@ -189,6 +189,57 @@ Source of truth: the ICM Labs fix/feature list derived from abcMusicKit developm
 
 ---
 
+## Rendering
+
+*Added 2026-07-19. Both decisions were escalated as "needs a human" in the parser-phase
+checkpoint and are settled here.*
+
+### Glyph source — inline SVG paths
+
+Musical glyphs are emitted as `<path>`, with outlines extracted from Bravura at build time
+by `scripts/gen-glyphs.mjs` into `src/renderer/glyphs.ts`. Regenerate with
+`node scripts/gen-glyphs.mjs`; adding a glyph means adding its SMuFL name to the `GLYPHS`
+list in that script.
+
+The alternative was an embedded SMuFL font with `<text>` and a codepoint, which is what
+abcMusicKit2's `SVGBackend` does. Rejected for the web: it needs a ~380KB woff2 to reach
+the page, and a saved, pasted or mailed SVG renders as tofu without it. Self-contained
+output is worth more to a library than restyleable glyphs.
+
+**Metrics are not extracted.** `bravura_metadata.json` publishes bounding boxes, anchors
+and engraving defaults in staff spaces already, so only outlines need the font binary.
+That the two agree is a genuine cross-check and they do — the extracted `noteheadBlack`
+path spans exactly the published 1.18 × 1.0 box.
+
+Prose text (titles, tempo marks, lyrics, chord symbols) is a **separate, still-open**
+question — see `Docs/CHECKPOINT-2026-07-19.md`. The reasoning above does not transfer:
+a missing serif face degrades to another serif, whereas a missing Bravura degrades to
+nothing legible.
+
+### Units and coordinates
+
+Staff spaces throughout, y-down, middle staff line at y = 0. A *staff step* is one
+diatonic position, half a staff space, so `y = -step / 2`. Following abcMusicKit2, font
+metadata (glyph metrics, line thicknesses) stays in the font and engraving conventions
+(stem length, spacing) live in the engine's `ENGRAVE` constants — no magic numbers loose
+in layout code. Scaling to pixels happens once, in the SVG backend.
+
+### What "correct" means — structural, then baselines
+
+Core renders in its own visual style, so the 503 golden SVGs gate **compat** mode only.
+Core is gated structurally against `golden/*.elements.json` — abcjs's laid-out elements,
+which carry element sequence and staff positions and survive stylistic divergence.
+
+Committed visual baselines are the second half and are deliberately deferred: a baseline
+committed from unverified output locks the bug in, and day one is when output is least
+verified. **Structure catches wrong; baselines catch changed.** Add baselines once core's
+visual style stabilises.
+
+The gate's blind spots are documented in the header of
+`tests/renderer/structural.test.ts` and must be kept honest there — green means "the right
+noteheads landed on the right lines, in the first voice of the first tune", not "this
+fixture renders correctly".
+
 ## Internal Source Structure
 
 ```
@@ -407,6 +458,28 @@ abcts is MIT licensed. This is non-negotiable for community adoption and must be
 - Dev dependencies (test runners, build tools) may be GPL — they don't ship to consumers
 - License of every dependency must be verified before adding it
 - Use `license-checker` or `licensee` in CI to enforce this automatically
+
+**Bundled font data — OFL 1.1**
+
+*Added 2026-07-19 with the glyph-source decision below.*
+
+One file departs from the MIT/ISC/BSD/Apache rule, deliberately and with the reasoning
+recorded: `src/renderer/glyphs.ts` contains SVG outlines extracted from **Bravura**, which
+is **SIL OFL 1.1**. OFL is permissive but is not on the list above, so it needed an
+explicit call rather than being waved through as "close enough".
+
+- **That file alone** carries an OFL header and is licensed OFL 1.1. The rest of abcts,
+  including the extraction script that generates it, stays MIT.
+- The two are compatible. OFL permits redistribution, modification and embedding without
+  restriction; it requires only that derivatives of the *font software* stay OFL and not
+  use a Reserved Font Name. "Bravura" therefore appears in that file as attribution only,
+  never as an identifier the module exports.
+- OFL does **not** propagate to documents that embed the font, nor to the rest of a
+  program that links it. Consumers of abcts are unaffected.
+- Any future SMuFL font added (Petaluma, Leland) is OFL too and follows the same pattern.
+
+Note this is font *data*, not a dependency: nothing is installed, and `npm ls` shows no
+OFL package. `opentype.js` (MIT) reads the font at build time and is a devDependency.
 
 **What contributors must understand**
 

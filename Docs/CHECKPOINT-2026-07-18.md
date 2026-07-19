@@ -2,7 +2,19 @@
 
 State at the end of the parser phase, immediately before renderer work begins.
 
-**Read this, then `ARCHITECTURE.md`, then `CLAUDE.md`.**
+> **SUPERSEDED by `CHECKPOINT-2026-07-19.md`. Read that first.**
+>
+> Still accurate for the parser, the corpus gate and the audit history — that material
+> was not restated and this remains its record. Out of date in two places:
+>
+> - **Both "open decisions" 1 and 2 are settled** (glyph source, and what "correct" means).
+>   See ARCHITECTURE.md § Rendering.
+> - **"Core has no oracle" was wrong.** It reasoned from the 503 SVGs, which do gate compat
+>   only — but every fixture also ships a `.elements.json` layout dump that is
+>   style-independent and now gates core. A case of this document's own lesson.
+>
+> Risk 5 (falsy `Accidental.natural`) is **closed**. Risk 3 (`octaveShift`) is **not**
+> settled by the first SVG comparison as predicted here — see the newer checkpoint.
 
 ---
 

@@ -4,8 +4,9 @@ You are developing abcts, a modern TypeScript ABC notation library
 and community successor to abcjs.
 
 ## First Step — Always
-Read `Docs/CHECKPOINT-2026-07-18.md` first — it is the current state of play, the open
-decisions, and the known risks. Then read ARCHITECTURE.md in full. It is your
+Read `Docs/CHECKPOINT-2026-07-19.md` first — it is the current state of play, the open
+decisions, and the known risks. (`CHECKPOINT-2026-07-18.md` is superseded but still the
+record of the parser phase and its audit.) Then read ARCHITECTURE.md in full. It is your
 specification, decision record, and setup guide. Do not make
 architectural decisions that contradict it without flagging them
 explicitly and getting confirmation from Lance.
@@ -77,10 +78,16 @@ No git submodules — corpus and abcjs live inside the abcMusicKit repo and are
 reached by relative sibling path. See ARCHITECTURE.md § Repository Structure.
 
 ## Current phase
-The PARSER is complete and gated (73 tests, 39/39 corpus fixtures saturated). The RENDERER
-has zero code and is the next phase. Two decisions must be made before renderer code is
-written — glyph source, and what "correct" means for core rendering. Both are in the
-checkpoint.
+The PARSER is complete and gated (39/39 corpus fixtures, saturated). The RENDERER is
+under way: 129 tests, 20 of the 31 fixtures with a layout oracle passing the structural
+gate. Glyphs are inline SVG paths extracted from Bravura; core is gated structurally
+against `golden/*.elements.json`, not the SVG goldens. Both are settled — see
+ARCHITECTURE.md § Rendering.
+
+Next up, and both need Lance: prose text rendering (nothing renders text at all), and
+whether the renderer phase may reach back into the parser — `Q:` and `clef=` are neither
+parsed nor modelled, and the treble-clef assumption is currently producing silently wrong
+staff positions for bass and alto voices.
 
 ## Session Prompts
 
