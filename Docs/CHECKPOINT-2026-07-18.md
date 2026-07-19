@@ -17,7 +17,7 @@ State at the end of the parser phase, immediately before renderer work begins.
 | Source | `src/core/model.ts`, `src/parser/{lexer,parser,text}.ts`, `src/index.ts` |
 | Renderer | **none — zero code.** This is the next phase. |
 | Compat layer | none — zero code |
-| CI | **not wired.** See Open Decisions. |
+| CI | **not wired, by decision.** No remote; the local gate is the gate — run `npm test` before every commit. |
 
 The parser covers essentially all of ABC 2.1's musical content. What remains unimplemented
 is listed in the header comment of `src/parser/parser.ts`, and is deliberately small:
@@ -118,10 +118,19 @@ those* introduced a third: 53+ broken-rhythm arrows tripping the new safe-intege
    (element counts and relative positions, as `abc-vs-abcm2ps` does in this workspace) or
    its own committed baselines like v2's `ExtendedModeSnapshotTests`. **Decide before
    writing renderer code**; the first snapshot test bakes it in.
-3. **CI corpus checkout.** The corpus is a sibling repo, not a submodule, so
-   `npm run test:corpus` fails on a plain `actions/checkout`. Either a second checkout step
-   or a committed corpus snapshot. Until this is settled there is no CI at all — the gate
-   runs only when someone runs it.
+3. ~~**CI corpus checkout.**~~ **DECIDED 2026-07-19: deferred deliberately. Do not
+   re-open.** abcts has no git remote — it is local-only, so there is nothing for CI to run
+   against. Publishing is a product decision, not a technical one, and Lance has deferred
+   it. **The local gate IS the gate for now**: run `npm test` before every commit, because
+   nothing else will.
+
+   When abcts is published, the corpus strategy is already settled: **commit a ~3.3MB
+   snapshot** (436K fixtures + 2.9M `.parse.json` goldens) into abcts rather than checking
+   out ABCMusicKit in CI. ABCMusicKit is private, so a checkout-based workflow means no
+   external contributor could ever run the corpus gate — on a fork or a PR. ARCHITECTURE.md
+   makes the corpus the only gate that matters, and a gate only ICM Labs can execute does
+   not survive contact with contributors. Licensing is clean: the fixtures are ICM Labs'
+   own and the goldens are abcjs output, and abcjs is MIT.
 4. **Decoration and chord-symbol vocabulary** — settle against v2 (see above).
 5. **abcMusicKit2 pinning** — core's design reference is under active development. Pin to a
    tag or follow head?
