@@ -4,7 +4,8 @@ You are developing abcts, a modern TypeScript ABC notation library
 and community successor to abcjs.
 
 ## First Step — Always
-Read ARCHITECTURE.md in full before doing anything else. It is your
+Read `Docs/CHECKPOINT-2026-07-18.md` first — it is the current state of play, the open
+decisions, and the known risks. Then read ARCHITECTURE.md in full. It is your
 specification, decision record, and setup guide. Do not make
 architectural decisions that contradict it without flagging them
 explicitly and getting confirmation from Lance.
@@ -74,6 +75,12 @@ correct behavior. Nothing ships red.
 
 No git submodules — corpus and abcjs live inside the abcMusicKit repo and are
 reached by relative sibling path. See ARCHITECTURE.md § Repository Structure.
+
+## Current phase
+The PARSER is complete and gated (73 tests, 39/39 corpus fixtures saturated). The RENDERER
+has zero code and is the next phase. Two decisions must be made before renderer code is
+written — glyph source, and what "correct" means for core rendering. Both are in the
+checkpoint.
 
 ## Session Prompts
 
