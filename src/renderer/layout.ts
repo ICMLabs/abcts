@@ -21,6 +21,7 @@ import {
   type DiatonicStep,
   defaultClef,
   type KeySignature,
+  type Measure,
   type Mode,
   type MusicEvent,
   type Pitch,
@@ -103,6 +104,13 @@ const ENGRAVE = {
   beamMaxRise: 2.0,
   /** Length of a secondary-beam stub on a note whose neighbours lack that level. */
   beamStubLength: 1.1,
+  /**
+   * Width a system may reach before it wraps, in staff spaces. Roughly a page width at a
+   * typical staff size; a host that knows its viewport should pass `systemWidth`.
+   */
+  systemWidth: 90,
+  /** Vertical gap between stacked systems. PROVISIONAL. */
+  systemGap: 3.0,
 } as const
 
 // ─── Layout model ────────────────────────────────────────────────────────────
@@ -189,6 +197,17 @@ export interface StemInfo {
 export interface LayoutSystem {
   readonly elements: readonly LayoutElement[]
   readonly staffLines: readonly PlacedLine[]
+  /** Width of this system, staff spaces. Systems wrap, so they differ. */
+  readonly width: number
+  /**
+   * Vertical offset of this system's middle staff line within the whole drawing.
+   *
+   * Each system is laid out in its OWN coordinate space with the middle line at y = 0,
+   * and stacked by translation. That keeps every position within a system independent of
+   * how many systems precede it, so a break inserted earlier cannot shift the geometry
+   * of a later one — which would otherwise churn every baseline below the break.
+   */
+  readonly originY: number
   /**
    * Beams, which belong to no single element — a beam spans several noteheads and is
    * drawn once for the group, after every member's position is known.
@@ -1022,99 +1041,229 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
  * staff however wide that gets. Multi-voice and system breaking are the next two slices;
  * both are layout-only changes that this element model already accommodates.
  */
-export function layout(score: Score): Layout {
+export interface LayoutOptions {
+  /**
+   * Width a system may reach before it wraps, in staff spaces. 90 is roughly a page
+   * width at a typical staff size; a host with a known viewport should pass its own.
+   */
+  readonly systemWidth?: number
+}
+
+/** A measure laid out on its own, ready to be placed into whichever system it lands in. */
+interface MeasureBlock {
+  readonly elements: readonly LayoutElement[]
+  readonly width: number
+  /** Beam members, with element indices LOCAL to this block. */
+  readonly beams: ReadonlyMap<number, readonly StemInfo[]>
+}
+
+/**
+ * Lay out one measure at x = 0. Position within a system comes later, by translation,
+ * which is what lets a measure be measured before anywhere is chosen to put it.
+ */
+function layoutMeasure(
+  measure: Measure,
+  clef: Clef,
+  directions: ReadonlyMap<number, boolean>,
+): MeasureBlock {
+  const elements: LayoutElement[] = []
+  const beams = new Map<number, StemInfo[]>()
+  let x = 0
+
+  // The label precedes the barline that opens its part.
+  if (measure.partLabel !== null) elements.push(layoutPart(x, measure.partLabel))
+  // An opening `|:` or `[|` prints before the measure it belongs to, and is a SEPARATE
+  // barline from the previous measure's closer.
+  if (measure.openingBarline !== null) {
+    x += ENGRAVE.barGap
+    elements.push(layoutBar(x))
+    x += ENGRAVE.barGap
+  }
+
+  for (const event of measure.events) {
+    const group = event.type === 'rest' ? null : event.beamGroup
+    const stemOut: { value: Omit<StemInfo, 'element'> | null } | null =
+      group === null ? null : { value: null }
+    const el = layoutEvent(
+      event,
+      x,
+      clef,
+      group === null ? null : (directions.get(group) ?? null),
+      stemOut,
+    )
+    if (el === null) continue
+    if (group !== null && stemOut?.value) {
+      const members = beams.get(group) ?? []
+      members.push({ ...stemOut.value, element: elements.length })
+      beams.set(group, members)
+    }
+    elements.push(el)
+    x += el.width
+  }
+
+  if (measure.closingBarline !== null) {
+    x += ENGRAVE.barGap
+    elements.push(layoutBar(x))
+    x += ENGRAVE.barGap
+  }
+
+  return { elements, width: x, beams }
+}
+
+/** Shift a laid-out measure sideways into its place in a system. */
+const shiftElement = (el: LayoutElement, dx: number): LayoutElement => ({
+  ...el,
+  x: el.x + dx,
+  glyphs: el.glyphs.map((g) => ({ ...g, x: g.x + dx })),
+  lines: el.lines.map((l) => ({ ...l, x1: l.x1 + dx, x2: l.x2 + dx })),
+  texts: el.texts.map((t) => ({ ...t, x: t.x + dx })),
+})
+
+/**
+ * Lay out a score.
+ *
+ * ponytail: first voice only. Multi-voice needs staves stacked within a system, which is
+ * a further model change; system breaking is independent of it and lands first.
+ */
+export function layout(score: Score, options: LayoutOptions = {}): Layout {
   const voice = score.voices[0]
   // A voice's own `clef=` wins over the tune's `K:` clef; treble is the fallback.
   const clef = voice?.clef ?? score.clef
-  const elements: LayoutElement[] = []
-  let x = ENGRAVE.marginX
-
+  const systemWidth = options.systemWidth ?? ENGRAVE.systemWidth
   const directions = beamDirections(voice, clef)
-  const beamGroups = new Map<number, StemInfo[]>()
 
-  const clefElement = layoutClef(x, clef)
-  if (clefElement !== null) {
-    elements.push(clefElement)
-    x += clefElement.width + ENGRAVE.prefixGap
-  }
+  /**
+   * The clef and key reprinted at the head of every system, which is what makes a
+   * wrapped line readable. The meter is NOT reprinted — it appears once, at the start,
+   * or again only where it changes.
+   */
+  const prefix = (withMeter: boolean): { elements: LayoutElement[]; width: number } => {
+    const elements: LayoutElement[] = []
+    let x = ENGRAVE.marginX
 
-  // Clef, then key, then meter — the fixed order of a staff prefix.
-  const keySig = layoutKeySignature(x, score.key, clef)
-  if (keySig !== null) {
-    elements.push(keySig)
-    x += keySig.width + ENGRAVE.prefixGap
-  }
-
-  if (score.meter !== null) {
-    const meter = layoutMeter(x, score.meter.numerator, score.meter.denominator)
-    elements.push(meter)
-    x += meter.width + ENGRAVE.prefixGap
-  }
-
-  if (score.tempo !== null) {
-    const tempo = layoutTempo(x, score.tempo)
-    // Zero width, so it does not advance the cursor — the mark floats above the music.
-    if (tempo !== null) elements.push(tempo)
-  }
-
-  for (const measure of voice?.measures ?? []) {
-    // An opening `|:` or `[|` prints before the measure it belongs to, and is a SEPARATE
-    // barline from the previous measure's closer — a line ending `:|` followed by one
-    // starting `|:` draws two.
-    // The label precedes the barline that opens its part.
-    if (measure.partLabel !== null) elements.push(layoutPart(x, measure.partLabel))
-    if (measure.openingBarline !== null) {
-      x += ENGRAVE.barGap
-      elements.push(layoutBar(x))
-      x += ENGRAVE.barGap
+    const clefElement = layoutClef(x, clef)
+    if (clefElement !== null) {
+      elements.push(clefElement)
+      x += clefElement.width + ENGRAVE.prefixGap
     }
-    for (const event of measure.events) {
-      const group = event.type === 'rest' ? null : event.beamGroup
-      const stemOut: { value: Omit<StemInfo, 'element'> | null } | null =
-        group === null ? null : { value: null }
-      const el = layoutEvent(
-        event,
-        x,
-        clef,
-        group === null ? null : (directions.get(group) ?? null),
-        stemOut,
-      )
-      if (el === null) continue
-      if (group !== null && stemOut?.value) {
-        const members = beamGroups.get(group) ?? []
-        members.push({ ...stemOut.value, element: elements.length })
-        beamGroups.set(group, members)
+    const keySig = layoutKeySignature(x, score.key, clef)
+    if (keySig !== null) {
+      elements.push(keySig)
+      x += keySig.width + ENGRAVE.prefixGap
+    }
+    if (withMeter && score.meter !== null) {
+      const meter = layoutMeter(x, score.meter.numerator, score.meter.denominator)
+      elements.push(meter)
+      x += meter.width + ENGRAVE.prefixGap
+    }
+    // The tempo mark belongs to the tune, not to each system, so it prints once — with
+    // the meter, on the first system. Zero width, so it does not advance the cursor.
+    if (withMeter && score.tempo !== null) {
+      const tempo = layoutTempo(x, score.tempo)
+      if (tempo !== null) elements.push(tempo)
+    }
+    return { elements, width: x }
+  }
+
+  const blocks = (voice?.measures ?? []).map((measure) => layoutMeasure(measure, clef, directions))
+
+  // Pack measures into systems, breaking before the measure that would overflow. A
+  // system always takes at least one measure, so a measure wider than the page overflows
+  // rather than looping forever.
+  const systems: LayoutSystem[] = []
+  let pending: MeasureBlock[] = []
+  let pendingWidth = 0
+  let first = true
+
+  const flush = (): void => {
+    if (pending.length === 0) return
+    const head = prefix(first)
+    const elements = [...head.elements]
+    const beamGroups = new Map<number, StemInfo[]>()
+    let x = head.width
+
+    for (const block of pending) {
+      const base = elements.length
+      for (const el of block.elements) elements.push(shiftElement(el, x))
+      for (const [group, members] of block.beams) {
+        const shifted = members.map((m) => ({ ...m, x: m.x + x, element: m.element + base }))
+        beamGroups.set(group, [...(beamGroups.get(group) ?? []), ...shifted])
       }
-      elements.push(el)
-      x += el.width
+      x += block.width
     }
-    if (measure.closingBarline !== null) {
-      x += ENGRAVE.barGap
-      elements.push(layoutBar(x))
-      x += ENGRAVE.barGap
-    }
+
+    const beams: PlacedLine[] = []
+    // Beams last: they retarget stems that are already placed, and need every member's
+    // final position. A beam never crosses a barline, so it never crosses a system break.
+    for (const group of beamGroups.values()) beams.push(...layoutBeam(group, elements))
+
+    const width = x + ENGRAVE.marginX
+    const staffLines = ENGRAVE.staffLineSteps.map((step) => ({
+      x1: 0,
+      y1: stepToY(step),
+      x2: width,
+      y2: stepToY(step),
+      thickness: ENGRAVING_DEFAULTS.staffLineThickness,
+    }))
+    systems.push({ elements, staffLines, beams, width, originY: 0 })
+    pending = []
+    pendingWidth = 0
+    first = false
   }
 
-  // Beams last: they retarget stems that are already placed, and need every member's
-  // position, which is only known once the whole line has been laid out.
-  const beamLines: PlacedLine[] = []
-  for (const group of beamGroups.values()) beamLines.push(...layoutBeam(group, elements))
+  // Only the first system carries the meter, so the two possible prefix widths are
+  // computed once rather than per measure.
+  const headWidths = { first: prefix(true).width, rest: prefix(false).width }
 
-  const width = x + ENGRAVE.marginX
-  const staffLines = ENGRAVE.staffLineSteps.map((step) => ({
-    x1: 0,
-    y1: stepToY(step),
-    x2: width,
-    y2: stepToY(step),
-    thickness: ENGRAVING_DEFAULTS.staffLineThickness,
-  }))
+  for (const block of blocks) {
+    const head = systems.length === 0 ? headWidths.first : headWidths.rest
+    // A system always takes at least one measure: a measure wider than the page
+    // OVERFLOWS rather than looping forever trying to place it.
+    // The trailing margin counts: a system's final width includes it, so leaving it
+    // out of the test let a system finish one margin over the limit.
+    if (pending.length > 0 && head + pendingWidth + block.width + ENGRAVE.marginX > systemWidth) {
+      flush()
+    }
+    pending.push(block)
+    pendingWidth += block.width
+  }
+  flush()
 
-  const { top, bottom } = verticalExtent(elements, beamLines)
+  if (systems.length === 0) {
+    // An empty tune still draws its staff and prefix, rather than nothing at all.
+    const head = prefix(true)
+    const width = head.width + ENGRAVE.marginX
+    systems.push({
+      elements: head.elements,
+      staffLines: ENGRAVE.staffLineSteps.map((step) => ({
+        x1: 0,
+        y1: stepToY(step),
+        x2: width,
+        y2: stepToY(step),
+        thickness: ENGRAVING_DEFAULTS.staffLineThickness,
+      })),
+      beams: [],
+      width,
+      originY: 0,
+    })
+  }
+
+  // Stack the systems, each measured from its own content so a system with a tempo mark
+  // or high ledger lines gets the room it needs and no more.
+  let cursor = 0
+  const placed = systems.map((system) => {
+    const extent = verticalExtent(system.elements, system.beams)
+    const originY = cursor - extent.top
+    cursor += extent.bottom - extent.top + ENGRAVE.systemGap
+    return { ...system, originY }
+  })
+
   return {
-    systems: [{ elements, staffLines, beams: beamLines }],
-    width,
-    height: bottom - top,
-    top,
+    systems: placed,
+    width: Math.max(...placed.map((s) => s.width), 0),
+    // `cursor` has one trailing gap on it, added after the last system.
+    height: Math.max(0, cursor - ENGRAVE.systemGap),
+    top: 0,
   }
 }
 

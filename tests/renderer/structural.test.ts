@@ -146,14 +146,23 @@ const describeGolden = (el: GoldenLayoutElement): string => {
   return steps.length > 0 ? `note@${steps.join(',')}` : type
 }
 
+/** Prefix kinds reprinted at the head of every system — layout, not content. */
+const PREFIX_TYPES = new Set(['clef', 'keySignature', 'timeSignature'])
+
 function coreSequence(abc: string): string[] {
   const result = parse(abc)
   const score = result.scores[0]
   if (!score) return []
-  return layout(score).systems.flatMap((system) =>
-    system.elements.map((el) =>
-      el.staffSteps.length === 0 ? el.type : `${el.type}@${el.staffSteps.join(',')}`,
-    ),
+  return layout(score).systems.flatMap((system, systemIndex) =>
+    system.elements
+      // Systems after the first reprint the clef and key. So does abcjs, and
+      // `goldenLayoutElements` drops those — WHERE a line breaks is a layout decision
+      // that two engines make differently by design, so neither side's break points are
+      // compared. Both sides must drop them or the sequences cannot align at all.
+      .filter((el) => systemIndex === 0 || !PREFIX_TYPES.has(el.type))
+      .map((el) =>
+        el.staffSteps.length === 0 ? el.type : `${el.type}@${el.staffSteps.join(',')}`,
+      ),
   )
 }
 

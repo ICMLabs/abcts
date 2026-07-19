@@ -73,6 +73,9 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
   const parts: string[] = []
 
   for (const system of doc.systems) {
+    // Each system is laid out about its own middle line at y = 0 and placed by
+    // translation, so nothing inside it depends on how many systems precede it.
+    parts.push(`<g class="${prefix}-system" transform="translate(0,${num(system.originY)})">`)
     for (const line of system.staffLines) parts.push(lineToRect(line, `${prefix}-staff`))
     for (const beam of system.beams) parts.push(lineToRect(beam, `${prefix}-beam`))
 
@@ -97,6 +100,7 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
         )
       }
     }
+    parts.push('</g>')
   }
 
   const w = doc.width * scale

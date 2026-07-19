@@ -45,20 +45,29 @@ describe('output shape', () => {
   })
 
   it('puts the whole drawing inside the viewBox', () => {
-    // The clipping bug: a bass voice written in treble range sits well above the staff.
-    const svg = svgFor('X:1\nM:4/4\nL:1/4\nK:C bass\nGABc|\n')
+    // The clipping bug: a bass voice written in treble range sits well above the staff,
+    // and a long tune now wraps, so this walks every system. Rect coordinates are
+    // SYSTEM-local — each system is wrapped in a translate — so the offset has to be
+    // applied before comparing against the document's box.
+    const svg = svgFor(`X:1\nM:4/4\nL:1/4\nK:C bass\n${'GABc|'.repeat(30)}\n`)
     const viewBox = /viewBox="([^"]+)"/.exec(svg)?.[1]?.split(' ').map(Number)
     expect(viewBox).toHaveLength(4)
     const [, minY, , height] = viewBox as number[]
 
-    const ys = [...svg.matchAll(/<rect[^>]*y="(-?[\d.]+)"[^>]*height="([\d.]+)"/g)].flatMap((m) => [
-      Number(m[1]),
-      Number(m[1]) + Number(m[2]),
-    ])
-    expect(ys.length).toBeGreaterThan(0)
-    for (const y of ys) {
-      expect(y).toBeGreaterThanOrEqual(minY as number)
-      expect(y).toBeLessThanOrEqual((minY as number) + (height as number))
+    const groups = svg.split('<g class="abcts-system"').slice(1)
+    expect(groups.length).toBeGreaterThan(1) // it really did wrap
+    let checked = 0
+    for (const group of groups) {
+      const originY = Number(/transform="translate\(0,(-?[\d.]+)\)"/.exec(group)?.[1] ?? 'NaN')
+      expect(Number.isFinite(originY)).toBe(true)
+      for (const m of group.matchAll(/<rect[^>]*y="(-?[\d.]+)"[^>]*height="([\d.]+)"/g)) {
+        const top = originY + Number(m[1])
+        const bottom = top + Number(m[2])
+        expect(top).toBeGreaterThanOrEqual(minY as number)
+        expect(bottom).toBeLessThanOrEqual((minY as number) + (height as number))
+        checked++
+      }
     }
+    expect(checked).toBeGreaterThan(0)
   })
 })

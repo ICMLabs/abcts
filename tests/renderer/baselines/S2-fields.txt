@@ -1,6 +1,6 @@
-bounds  width=40.564 height=20.360 top=-12.728
+bounds  width=40.564 height=20.360 top=0.000
 systems 1
-system 0
+system 0 width=40.564 originY=12.728
   staff  0.000,2.000 -> 40.564,2.000 t=0.130
   staff  0.000,1.000 -> 40.564,1.000 t=0.130
   staff  0.000,0.000 -> 40.564,0.000 t=0.130

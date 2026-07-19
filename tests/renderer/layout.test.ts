@@ -242,14 +242,17 @@ describe('tempo', () => {
   })
 
   it('grows the drawing box to fit content that sits outside the staff', () => {
-    // A fixed margin silently clipped: notes on high ledger lines and the tempo mark
+    // A fixed margin silently CLIPPED: notes on high ledger lines and the tempo mark
     // both fall outside any constant, and nothing in the structural gate can see it.
+    // Since systems are stacked, that room now shows up as extra height and as the first
+    // system's origin being pushed further down to make space above it.
     const plain = layout(parse('X:1\nL:1/4\nK:C\nB|\n').scores[0] as Score)
     const high = layout(parse('X:1\nL:1/4\nK:C bass\nc|\n').scores[0] as Score)
     const marked = layout(parse('X:1\nL:1/4\nQ:"Adagio"\nK:C\nB|\n').scores[0] as Score)
 
-    expect(high.top).toBeLessThan(plain.top)
-    expect(marked.top).toBeLessThan(plain.top)
+    expect(high.height).toBeGreaterThan(plain.height)
+    expect(marked.height).toBeGreaterThan(plain.height)
+    expect(marked.systems[0]?.originY).toBeGreaterThan(plain.systems[0]?.originY ?? 0)
   })
 })
 
@@ -455,6 +458,82 @@ describe('flags and beams', () => {
     const system = sys('X:1\nM:4/4\nL:1/4\nK:C\nCDEF|\n')
     expect(system?.beams).toHaveLength(0)
     expect(glyphNames('X:1\nM:4/4\nL:1/4\nK:C\nCDEF|\n')).not.toContain('flag8thUp')
+  })
+})
+
+describe('system breaking', () => {
+  const long = (bars: number) =>
+    `X:1\nM:4/4\nL:1/4\nK:C\n${Array.from({ length: bars }, () => 'CDEF|').join('')}\n`
+
+  it('keeps a short tune on one system', () => {
+    expect(layout(parse(long(2)).scores[0] as Score).systems).toHaveLength(1)
+  })
+
+  it('wraps a long tune, and no system exceeds the width', () => {
+    const doc = layout(parse(long(40)).scores[0] as Score)
+    expect(doc.systems.length).toBeGreaterThan(1)
+    for (const system of doc.systems) expect(system.width).toBeLessThanOrEqual(90)
+  })
+
+  it('honours an explicit width', () => {
+    const wide = layout(parse(long(40)).scores[0] as Score, { systemWidth: 200 })
+    const narrow = layout(parse(long(40)).scores[0] as Score, { systemWidth: 40 })
+    expect(narrow.systems.length).toBeGreaterThan(wide.systems.length)
+    for (const system of narrow.systems) expect(system.width).toBeLessThanOrEqual(40)
+  })
+
+  it('reprints the clef and key on every system, but the meter and tempo only once', () => {
+    const abc = `X:1\nM:3/4\nL:1/4\nQ:"Andante"\nK:Eb\n${'CDE|'.repeat(40)}\n`
+    const doc = layout(parse(abc).scores[0] as Score)
+    expect(doc.systems.length).toBeGreaterThan(1)
+
+    doc.systems.forEach((system, index) => {
+      const types = system.elements.map((e) => e.type)
+      expect(types, `system ${index} clef`).toContain('clef')
+      expect(types, `system ${index} key`).toContain('keySignature')
+      // The meter and tempo belong to the tune, not to each line of it.
+      if (index === 0) {
+        expect(types).toContain('timeSignature')
+        expect(types).toContain('tempo')
+      } else {
+        expect(types, `system ${index} must not reprint the meter`).not.toContain('timeSignature')
+        expect(types, `system ${index} must not reprint the tempo`).not.toContain('tempo')
+      }
+    })
+  })
+
+  it('always places at least one measure, even one wider than the page', () => {
+    // A measure that cannot fit must OVERFLOW rather than send the packer round forever
+    // looking for a system it will fit in.
+    const doc = layout(parse(long(1)).scores[0] as Score, { systemWidth: 1 })
+    expect(doc.systems).toHaveLength(1)
+    expect(doc.systems[0]?.elements.some((e) => e.type === 'note')).toBe(true)
+  })
+
+  it('stacks systems without overlapping', () => {
+    const doc = layout(parse(long(40)).scores[0] as Score)
+    let previousBottom = Number.NEGATIVE_INFINITY
+    for (const system of doc.systems) {
+      // Staff lines sit at ±2 about the system's own origin.
+      const top = system.originY - 2
+      expect(top).toBeGreaterThan(previousBottom)
+      previousBottom = system.originY + 2
+    }
+    // And the document is tall enough to hold them all.
+    const last = doc.systems[doc.systems.length - 1]
+    expect(doc.height).toBeGreaterThan((last?.originY ?? 0) + 2)
+  })
+
+  it('lays every system out in its own coordinate space', () => {
+    // Each system's staff sits at y = ±2 regardless of position, so inserting a break
+    // earlier cannot shift the geometry of a later system — which would otherwise churn
+    // every baseline below the break on any spacing change.
+    const doc = layout(parse(long(40)).scores[0] as Score)
+    for (const system of doc.systems) {
+      // `+ 0` normalises the -0 that stepToY(0) produces; -0 and 0 are the same line.
+      const ys = system.staffLines.map((l) => l.y1 + 0).sort((a, b) => a - b)
+      expect(ys).toEqual([-2, -1, 0, 1, 2])
+    }
   })
 })
 

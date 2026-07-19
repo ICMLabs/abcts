@@ -45,7 +45,7 @@ export function snapshot(score: Score): string {
   ]
 
   doc.systems.forEach((system, index) => {
-    lines.push(`system ${index}`)
+    lines.push(`system ${index} width=${n(system.width)} originY=${n(system.originY)}`)
     for (const line of system.staffLines) {
       lines.push(
         `  staff  ${n(line.x1)},${n(line.y1)} -> ${n(line.x2)},${n(line.y2)} t=${n(line.thickness)}`,

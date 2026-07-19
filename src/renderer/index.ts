@@ -9,6 +9,7 @@ export {
   type ElementType,
   type Layout,
   type LayoutElement,
+  type LayoutOptions,
   type LayoutSystem,
   layout,
   type PlacedGlyph,
@@ -18,9 +19,9 @@ export {
 export { type RenderOptions, toSVG } from './svg.js'
 
 import type { Score } from '../core/model.js'
-import { layout } from './layout.js'
+import { type LayoutOptions, layout } from './layout.js'
 import { type RenderOptions, toSVG } from './svg.js'
 
 /** Lay out and emit in one call — the common case. */
-export const render = (score: Score, options: RenderOptions = {}): string =>
-  toSVG(layout(score), options)
+export const render = (score: Score, options: RenderOptions & LayoutOptions = {}): string =>
+  toSVG(layout(score, options), options)
