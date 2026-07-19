@@ -1,7 +1,7 @@
-bounds  width=68.628 height=82.205 top=0.000
+bounds  width=68.628 height=84.205 top=0.000
 systems 1
 system 0 width=68.628 originY=0.000
-  staff 0 originY=10.280
+  staff 0 originY=12.280
     staffline 0.000,2.000 -> 68.628,2.000 t=0.130
     staffline 0.000,1.000 -> 68.628,1.000 t=0.130
     staffline 0.000,0.000 -> 68.628,0.000 t=0.130
@@ -20,7 +20,7 @@ system 0 width=68.628 originY=0.000
       glyph timeSig2 8.744,-1.000
       glyph timeSig4 8.696,1.000
     tempo x=11.576 w=0.000
-      text  11.576,-5.000 size=1.600 "= 80"
+      text  11.576,-7.000 size=1.600 "= 80"
     rest x=11.628 w=9.192
     bar x=38.628 w=0.160
       line  38.708,-2.000 -> 38.708,2.000 t=0.160
@@ -57,7 +57,7 @@ system 0 width=68.628 originY=0.000
       line  62.378,-1.832 -> 62.378,2.929 t=0.120
     bar x=66.628 w=0.160
       line  66.708,-2.000 -> 66.708,2.000 t=0.160
-  staff 1 originY=28.161
+  staff 1 originY=30.161
     staffline 0.000,2.000 -> 68.628,2.000 t=0.130
     staffline 0.000,1.000 -> 68.628,1.000 t=0.130
     staffline 0.000,0.000 -> 68.628,0.000 t=0.130
@@ -78,7 +78,7 @@ system 0 width=68.628 originY=0.000
     rest x=39.628 w=9.192
     bar x=66.628 w=0.160
       line  66.708,-2.000 -> 66.708,2.000 t=0.160
-  staff 2 originY=45.793
+  staff 2 originY=47.793
     staffline 0.000,2.000 -> 68.628,2.000 t=0.130
     staffline 0.000,1.000 -> 68.628,1.000 t=0.130
     staffline 0.000,0.000 -> 68.628,0.000 t=0.130
@@ -155,7 +155,7 @@ system 0 width=68.628 originY=0.000
       glyph rest8th 59.738,0.000
     bar x=66.628 w=0.160
       line  66.708,-2.000 -> 66.708,2.000 t=0.160
-  staff 3 originY=62.049
+  staff 3 originY=64.049
     staffline 0.000,2.000 -> 68.628,2.000 t=0.130
     staffline 0.000,1.000 -> 68.628,1.000 t=0.130
     staffline 0.000,0.000 -> 68.628,0.000 t=0.130
@@ -176,7 +176,7 @@ system 0 width=68.628 originY=0.000
     rest x=39.628 w=9.192
     bar x=66.628 w=0.160
       line  66.708,-2.000 -> 66.708,2.000 t=0.160
-  staff 4 originY=76.005
+  staff 4 originY=78.005
     staffline 0.000,2.000 -> 68.628,2.000 t=0.130
     staffline 0.000,1.000 -> 68.628,1.000 t=0.130
     staffline 0.000,0.000 -> 68.628,0.000 t=0.130

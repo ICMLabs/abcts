@@ -1,7 +1,7 @@
-bounds  width=90.000 height=219.972 top=0.000
+bounds  width=90.000 height=221.972 top=0.000
 systems 3
 system 0 width=90.000 originY=0.000
-  staff 0 originY=12.728
+  staff 0 originY=14.728
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -17,9 +17,9 @@ system 0 width=90.000 originY=0.000
       glyph timeSig4 7.642,-1.000
       glyph timeSig4 7.642,1.000
     tempo x=10.522 w=0.000
-      glyph noteheadBlack 10.522,-5.000
-      line  11.702,-5.168 -> 11.702,-8.668 t=0.120
-      text  12.002,-5.000 size=1.600 "= 76"
+      glyph noteheadBlack 10.522,-7.000
+      line  11.702,-7.168 -> 11.702,-10.668 t=0.120
+      text  12.002,-7.000 size=1.600 "= 76"
     note@0 x=10.574 w=6.500
       glyph noteheadBlack 10.574,0.000
       line  10.574,0.168 -> 10.574,3.500 t=0.120
@@ -43,7 +43,7 @@ system 0 width=90.000 originY=0.000
       line  73.379,-1.332 -> 73.379,2.000 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=29.252
+  staff 1 originY=31.252
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -81,7 +81,7 @@ system 0 width=90.000 originY=0.000
       line  73.379,-0.332 -> 73.379,3.000 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 2 originY=51.884
+  staff 2 originY=53.884
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -131,7 +131,7 @@ system 0 width=90.000 originY=0.000
       line  77.697,-8.832 -> 77.697,-5.500 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 3 originY=65.720
+  staff 3 originY=67.720
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -151,7 +151,7 @@ system 0 width=90.000 originY=0.000
     rest x=49.787 w=13.000
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 1 width=90.000 originY=74.800
+system 1 width=90.000 originY=76.800
   staff 0 originY=7.392
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -362,7 +362,7 @@ system 1 width=90.000 originY=74.800
     rest x=60.611 w=13.000
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 2 width=80.202 originY=146.264
+system 2 width=80.202 originY=148.264
   staff 0 originY=7.392
     staffline 0.000,2.000 -> 80.202,2.000 t=0.130
     staffline 0.000,1.000 -> 80.202,1.000 t=0.130

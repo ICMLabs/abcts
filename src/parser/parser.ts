@@ -1545,9 +1545,14 @@ interface Syllable {
  * across notes and each non-final piece keeps its hyphen. `~` is a hard space.
  *
  * A SPACED hyphen (`A - ve`) becomes its own syllable occupying a note, rather than
- * binding to the preceding one as `A- ve` does. That matches v2, and renders as a
- * connecting hyphen. Unverified against abcjs: its `.parse.json` carries no lyric fields,
- * so the corpus cannot arbitrate this one.
+ * binding to the preceding one as `A- ve` does. That matches v2.
+ *
+ * ARBITRATED, 2026-07-19, and core diverges knowingly. The claim that "the corpus cannot
+ * arbitrate this one because abcjs's .parse.json carries no lyric fields" was simply
+ * wrong — the goldens carry lyrics on every fixture, and abcjs reads `A - ve,` as
+ * syllable "A" with an attached hyphen, then a SKIPPED note, then "ve,". Core keeps v2's
+ * reading. `ave-verum-corpus` is the fixture; the difference is recorded in the lyric
+ * gate's divergence list rather than silently absorbed.
  */
 function parseLyricSyllables(text: string, base: number): Syllable[] {
   const out: Syllable[] = []
@@ -1559,13 +1564,16 @@ function parseLyricSyllables(text: string, base: number): Syllable[] {
     while (i < text.length && text[i] !== ' ') i++
     const token = text.slice(tokenStart, i)
     if (token === '|') continue // alignment hint, not a note
-    if (token === '*') {
-      out.push({ kind: 'skip', text: null, range: null })
-      continue
-    }
-    // Scan the token: `-` ends a syllable and keeps its hyphen, `_` ends a syllable and
-    // emits a hold. Both are separators, so a bare `_` and an attached one behave alike —
-    // the spec writes `A-_ma-zing_`, which is `A-` · hold · `ma-` · `zing` · hold.
+
+    // Scan the token: `-` ends a syllable and keeps its hyphen; `_` ends one and emits a
+    // hold; `*` ends one and skips a note. All three are SEPARATORS, so an attached one
+    // behaves like a standalone one — the spec writes `A-_ma-zing_`, which is `A-` ·
+    // hold · `ma-` · `zing` · hold.
+    //
+    // `*` used to be handled only as a whole token, so `Xiao* yan*` — the form every
+    // real tune uses — kept the star inside the syllable AND emitted no skip, which put
+    // every later syllable on the wrong note. Invisible while lyrics went unrendered and
+    // ungated; abcjs's goldens have said `"Xiao", "", "yan", ""` all along.
     let buffer = ''
     let bufferStart = tokenStart
     const flush = (end: number, hyphen: boolean): void => {
@@ -1586,6 +1594,19 @@ function parseLyricSyllables(text: string, base: number): Syllable[] {
       } else if (ch === '_') {
         flush(j, false)
         out.push({ kind: 'melisma', text: null, range: null })
+        bufferStart = j + 1
+      } else if (ch === '*') {
+        flush(j, false)
+        out.push({ kind: 'skip', text: null, range: null })
+        bufferStart = j + 1
+      } else if (ch === '|') {
+        // A bar hint aligns the line to the next barline and occupies NO note, so unlike
+        // `*` it emits nothing. Attached as often as standalone — `a |rin,` is real
+        // corpus text, and leaving it in the buffer put a pipe inside the syllable.
+        // ponytail: dropped rather than honoured. Honouring it means re-aligning the
+        // remaining syllables to the next barline, which needs the barline positions the
+        // lyric pass does not have.
+        flush(j, false)
         bufferStart = j + 1
       } else {
         if (buffer === '') bufferStart = j

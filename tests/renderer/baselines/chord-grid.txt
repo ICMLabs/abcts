@@ -1,7 +1,7 @@
-bounds  width=90.000 height=33.048 top=0.000
+bounds  width=90.000 height=34.504 top=0.000
 systems 2
 system 0 width=90.000 originY=0.000
-  staff 0 originY=7.392
+  staff 0 originY=8.120
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -16,6 +16,7 @@ system 0 width=90.000 originY=0.000
       glyph noteheadBlack 7.564,3.000
       line  7.164,3.000 -> 9.144,3.000 t=0.160
       line  8.744,2.832 -> 8.744,-0.500 t=0.120
+      text  7.804,-3.000 size=1.400 "C"
     note@-5 x=17.244 w=6.500
       glyph noteheadBlack 17.244,2.500
       line  18.424,2.332 -> 18.424,-1.000 t=0.120
@@ -30,6 +31,7 @@ system 0 width=90.000 originY=0.000
     note@-2 x=48.282 w=6.500
       glyph noteheadBlack 48.282,1.000
       line  49.462,0.832 -> 49.462,-2.500 t=0.120
+      text  48.522,-3.000 size=1.400 "G"
     note@-1 x=57.962 w=6.500
       glyph noteheadBlack 57.962,0.500
       line  59.142,0.332 -> 59.142,-3.000 t=0.120
@@ -41,8 +43,8 @@ system 0 width=90.000 originY=0.000
       line  77.321,-0.332 -> 77.321,3.000 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 1 width=61.684 originY=18.024
-  staff 0 originY=7.392
+system 1 width=61.684 originY=18.752
+  staff 0 originY=8.120
     staffline 0.000,2.000 -> 61.684,2.000 t=0.130
     staffline 0.000,1.000 -> 61.684,1.000 t=0.130
     staffline 0.000,0.000 -> 61.684,0.000 t=0.130
@@ -53,6 +55,7 @@ system 1 width=61.684 originY=18.024
     note@1 x=4.684 w=6.500
       glyph noteheadBlack 4.684,-0.500
       line  4.684,-0.332 -> 4.684,3.000 t=0.120
+      text  4.574,-3.000 size=1.400 "Am"
     note@0 x=11.184 w=6.500
       glyph noteheadBlack 11.184,0.000
       line  11.184,0.168 -> 11.184,3.500 t=0.120
@@ -67,6 +70,7 @@ system 1 width=61.684 originY=18.024
     note@-3 x=32.684 w=6.500
       glyph noteheadBlack 32.684,1.500
       line  33.864,1.332 -> 33.864,-2.000 t=0.120
+      text  32.924,-3.000 size=1.400 "F"
     note@-4 x=39.184 w=6.500
       glyph noteheadBlack 39.184,2.000
       line  40.364,1.832 -> 40.364,-1.500 t=0.120

@@ -1,7 +1,7 @@
-bounds  width=90.000 height=79.236 top=0.000
+bounds  width=90.000 height=81.236 top=0.000
 systems 2
 system 0 width=90.000 originY=0.000
-  staff 0 originY=12.728
+  staff 0 originY=14.728
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -15,9 +15,9 @@ system 0 width=90.000 originY=0.000
       glyph timeSig4 4.684,-1.000
       glyph timeSig4 4.684,1.000
     tempo x=7.564 w=0.000
-      glyph noteheadBlack 7.564,-5.000
-      line  8.744,-5.168 -> 8.744,-8.668 t=0.120
-      text  9.044,-5.000 size=1.600 "= 128"
+      glyph noteheadBlack 7.564,-7.000
+      line  8.744,-7.168 -> 8.744,-10.668 t=0.120
+      text  9.044,-7.000 size=1.600 "= 128"
     note@-6,-4 x=7.564 w=13.000
       glyph noteheadWhole 7.564,3.000
       glyph noteheadWhole 7.564,2.000
@@ -48,7 +48,7 @@ system 0 width=90.000 originY=0.000
       line  79.194,2.832 -> 79.194,-0.500 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=29.252
+  staff 1 originY=31.252
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -131,7 +131,7 @@ system 0 width=90.000 originY=0.000
       line  68.270,6.332 -> 68.270,1.000 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 1 width=89.260 originY=43.252
+system 1 width=89.260 originY=45.252
   staff 0 originY=7.392
     staffline 0.000,2.000 -> 89.260,2.000 t=0.130
     staffline 0.000,1.000 -> 89.260,1.000 t=0.130

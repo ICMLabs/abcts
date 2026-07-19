@@ -4,7 +4,8 @@ import { expect, it } from 'vitest'
 import type { Pitch } from '../../src/core/model.js'
 import { ratToNumber, stepIndex } from '../../src/core/model.js'
 import { parse } from '../../src/parser/parser.js'
-import { corpusDir, type GoldenElement, goldenElements } from './corpus.js'
+import { decodeTextString } from '../../src/parser/text.js'
+import { corpusDir, type GoldenElement, goldenElements, goldenNotes } from './corpus.js'
 
 /**
  * Content-parity scoreboard and ratchet.
@@ -66,6 +67,30 @@ const BEAM_FAILURES = [
   'frere-jacques',
   'ragtime-nightingale',
 ]
+
+/**
+ * Fixtures whose verse-1 lyrics do NOT line up with abcjs, and why.
+ *
+ * This gate is new — until 2026-07-19 lyrics were verified only by unit tests written
+ * alongside the implementation, which the 2026-07-18 checkpoint called the highest-value
+ * remaining gate work. It was left undone on the belief that the goldens carried no
+ * lyric data. They carry it on every fixture. Folding it in immediately found two real
+ * parser bugs, both of the same shape: `*` and `|` were handled as whole tokens but not
+ * when ATTACHED to a syllable, which is how every real tune writes them.
+ */
+const LYRIC_DIVERGENCES: Record<string, string> = {
+  'frere-jacques':
+    'The same abcjs `+:` mis-parse as the note gate: abcjs reads the continuation lines ' +
+    'as music, so its notes and therefore its lyric alignment are built on a wrong tune.',
+  'ave-verum-corpus':
+    'A SPACED hyphen (`A - ve,`). abcjs binds the hyphen to the preceding syllable and ' +
+    'skips a note; core makes it a syllable of its own, following abcMusicKit2. A ' +
+    'deliberate divergence, arbitrated 2026-07-19 — see parseLyricSyllables.',
+  'S5-directives':
+    'Multiple `w:` lines against one music line align differently: core is 2 notes ' +
+    'ahead of abcjs from the second verse onward. UNANALYSED — the first real lead on ' +
+    'multi-verse alignment, and the next thing to look at here.',
+}
 
 /** Full per-fixture breakdown, written on every run for triage. */
 const REPORT_PATH = '/tmp/abcts-content-parity.txt'
@@ -392,6 +417,39 @@ it('content parity against abcjs goldens does not regress', () => {
   // A skipped fixture means the golden yielded no notes at all. That should now be
   // impossible — if it reappears, the reader has lost a dump shape again, not the corpus.
   writeFileSync(REPORT_PATH, `${rows.join('\n')}\n${summary}\n`)
+
+  // ─── Lyrics ───────────────────────────────────────────────────────────────
+  // Verse 1 only. abcjs stores a hyphen as a `divider` on the syllable rather than in
+  // it, and does not decode `\vao`-style escapes, so both sides are normalised before
+  // comparing: reattach abcjs's divider, decode its text, and read its "" skip as null.
+  const lyricFailures: string[] = []
+  let lyricsCompared = 0
+  for (const file of fixtures) {
+    const name = basename(file, '.abc')
+    const abc = readFileSync(join(corpusDir, file), 'utf-8')
+    const ours = parse(abc)
+      .scores.flatMap((score) => score.voices)
+      .flatMap((voice) => voice.measures.flatMap((measure) => measure.events))
+      .filter((event) => event.type !== 'rest')
+      .map((event) => event.lyric)
+    const theirs = goldenNotes(name).map((note: GoldenElement) => {
+      const first = note.lyric?.[0]
+      if (!first) return null
+      const syllable = decodeTextString(first.syllable ?? '')
+      return syllable === '' ? null : syllable + (first.divider === '-' ? '-' : '')
+    })
+    if (!ours.some(Boolean) && !theirs.some(Boolean)) continue
+    lyricsCompared++
+    const same =
+      ours.length === theirs.length && ours.every((syllable, i) => syllable === theirs[i])
+    if (!same) lyricFailures.push(name)
+  }
+
+  expect(lyricsCompared, 'no fixture had lyrics — the goldens are not loading').toBeGreaterThan(5)
+  expect(
+    lyricFailures.sort(),
+    'lyric failures changed. A fixture that starts matching means a divergence is stale.',
+  ).toEqual(Object.keys(LYRIC_DIVERGENCES).sort())
 
   expect(compared, 'no fixtures were comparable — the goldens are not loading').toBeGreaterThan(0)
   expect(

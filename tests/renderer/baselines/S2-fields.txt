@@ -1,7 +1,7 @@
-bounds  width=64.564 height=20.360 top=0.000
+bounds  width=64.564 height=22.360 top=0.000
 systems 1
 system 0 width=64.564 originY=0.000
-  staff 0 originY=12.728
+  staff 0 originY=14.728
     staffline 0.000,2.000 -> 64.564,2.000 t=0.130
     staffline 0.000,1.000 -> 64.564,1.000 t=0.130
     staffline 0.000,0.000 -> 64.564,0.000 t=0.130
@@ -13,9 +13,9 @@ system 0 width=64.564 originY=0.000
       glyph timeSig4 4.684,-1.000
       glyph timeSig4 4.684,1.000
     tempo x=7.564 w=0.000
-      glyph noteheadBlack 7.564,-5.000
-      line  8.744,-5.168 -> 8.744,-8.668 t=0.120
-      text  9.044,-5.000 size=1.600 "= 120"
+      glyph noteheadBlack 7.564,-7.000
+      line  8.744,-7.168 -> 8.744,-10.668 t=0.120
+      text  9.044,-7.000 size=1.600 "= 120"
     note@-6 x=7.564 w=6.500
       glyph noteheadBlack 7.564,3.000
       line  7.164,3.000 -> 9.144,3.000 t=0.160

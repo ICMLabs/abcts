@@ -94,18 +94,26 @@ const ENGRAVE = {
   /** Space either side of a barline. PROVISIONAL. */
   barGap: 1.0,
   /**
-   * Staff steps for the two marks that sit above the staff (top line is step 4).
+   * LANES above and below the staff, in staff steps. The staff itself spans -4 to 4.
    *
-   * Four steps apart, which is two staff spaces — enough that 1.6-space text does not
-   * collide when a tune carries both, as `full-song-template` does. ponytail: fixed
-   * lanes, not a skyline pass. Real engraving stacks whatever is present and closes the
-   * gap when something is absent; with exactly two kinds of mark, lanes are the smaller
-   * correct answer. Revisit when a third joins them.
+   * Fixed lanes rather than a skyline pass. Real engraving stacks whatever is present
+   * and closes the gap when something is absent; lanes are the smaller correct answer
+   * while the set of things that can appear is small and known. Each is far enough from
+   * its neighbour that 1.4-space text cannot collide — `full-song-template` carries a
+   * tempo and a part label at once, and `chord-grid` a symbol over every note.
+   *
+   * Nothing costs vertical space when absent: the drawing box is measured from the
+   * content actually placed, so a tune with no tempo is no taller for the lane existing.
    */
-  tempoStep: 10,
-  partStep: 6,
-  /** Tempo text size, in staff spaces. PROVISIONAL. */
+  chordSymbolStep: 6,
+  partStep: 10,
+  tempoStep: 14,
+  /** First verse below the staff; further verses stack downward by `lyricLineStep`. */
+  lyricStep: -8,
+  lyricLineStep: 4,
+  /** Tempo and part labels are directions; chord symbols and lyrics are smaller. */
   tempoTextSize: 1.6,
+  lyricTextSize: 1.4,
   /**
    * A stem shortened to meet a beam never drops below this. *Behind Bars* keeps beamed
    * stems from collapsing to stubs. PROVISIONAL.
@@ -115,6 +123,15 @@ const ENGRAVE = {
   beamMaxRise: 2.0,
   /** Length of a secondary-beam stub on a note whose neighbours lack that level. */
   beamStubLength: 1.1,
+  /**
+   * Estimated width of one text character, as a fraction of the font size.
+   *
+   * ponytail: there are NO text metrics — prose is emitted as `<text>` in a generic
+   * family, and measuring it would need a font loaded and shaped. Everything that
+   * centres or advances past text uses this estimate. It is why a chord symbol is
+   * centred approximately rather than exactly. Real metrics need a measured font.
+   */
+  textWidthRatio: 0.5,
   /** How far a slur or tie endpoint sits clear of the notehead it springs from. */
   curveEndGap: 0.3,
   /** Arc height as a fraction of the curve's horizontal span, before clamping. */
@@ -859,6 +876,8 @@ function layoutNoteheads(
   forcedUp: boolean | null = null,
   /** Set when this note is beamed: suppresses its flag and reports its stem. */
   stemOut: { value: Omit<StemInfo, 'element'> | null } | null = null,
+  /** The source event, for the text attached to it. Null when there is none to attach. */
+  event: MusicEvent | null = null,
 ): LayoutElement {
   // Sorted ascending to match abcjs, which reports a chord's heads lowest-first — so the
   // gate compares like with like regardless of the order the pitches were written in.
@@ -963,6 +982,8 @@ function layoutNoteheads(
     }
   }
 
+  const texts = event === null ? [] : noteText(event, headX, head.width)
+
   // The spring is the natural width, but ink is a rod: an accidental, a displaced head
   // or a dot column must never be crushed by a short duration, so the element is at
   // least as wide as what it draws plus the minimum gap.
@@ -975,7 +996,7 @@ function layoutNoteheads(
     staffSteps: steps,
     glyphs,
     lines,
-    texts: [],
+    texts,
   }
 }
 
@@ -1073,6 +1094,55 @@ function layoutBar(x: number, kind: Barline): LayoutElement {
     lines,
     texts: [],
   }
+}
+
+/** Estimated width of a run of text, in staff spaces. See `ENGRAVE.textWidthRatio`. */
+const textWidth = (text: string, size: number): number =>
+  text.length * size * ENGRAVE.textWidthRatio
+
+/**
+ * Text attached to a note: its chord symbol above, its lyric syllables below.
+ *
+ * Both are CENTRED on the notehead, which without text metrics means centred on an
+ * estimate — see `ENGRAVE.textWidthRatio`. A chord symbol in real engraving is left
+ * aligned to the note rather than centred; centring reads better against an estimated
+ * width, since the error is halved and falls on both sides instead of accumulating to
+ * one. Revisit when there are metrics.
+ */
+function noteText(event: MusicEvent, headX: number, headWidth: number): PlacedText[] {
+  if (event.type === 'rest') return []
+  const texts: PlacedText[] = []
+  const centre = headX + headWidth / 2
+
+  if (event.chordSymbol !== null && event.chordSymbol !== '') {
+    const size = ENGRAVE.lyricTextSize
+    texts.push({
+      text: event.chordSymbol,
+      x: centre - textWidth(event.chordSymbol, size) / 2,
+      y: stepToY(ENGRAVE.chordSymbolStep),
+      size,
+      bold: false,
+      italic: false,
+    })
+  }
+
+  // Verse 1 comes from `lyric`; `extraVerses` holds 2..n, positionally, with a null
+  // wherever a verse skips this note.
+  const verses = [event.lyric, ...event.extraVerses]
+  verses.forEach((verse, index) => {
+    if (verse === null || verse === '') return
+    const size = ENGRAVE.lyricTextSize
+    texts.push({
+      text: verse,
+      x: centre - textWidth(verse, size) / 2,
+      y: stepToY(ENGRAVE.lyricStep - index * ENGRAVE.lyricLineStep),
+      size,
+      bold: false,
+      italic: false,
+    })
+  })
+
+  return texts
 }
 
 // ─── Slurs and ties ──────────────────────────────────────────────────────────
@@ -1697,6 +1767,7 @@ function layoutEvent(
       clef,
       forcedUp,
       stemOut,
+      event,
     )
   }
   if (event.type === 'chord') {
@@ -1708,6 +1779,7 @@ function layoutEvent(
       clef,
       forcedUp,
       stemOut,
+      event,
     )
   }
   return layoutRest(event, advance, x)
