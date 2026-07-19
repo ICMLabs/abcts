@@ -145,6 +145,8 @@ const ENGRAVE = {
   graceAdvance: 1.1,
   /** Gap between the last grace note and the notehead it leads into. */
   graceGap: 0.4,
+  /** Length of the hook that resumes a curve at the start of the next system. */
+  curveContinuation: 2.0,
   /** How far a slur or tie endpoint sits clear of the notehead it springs from. */
   curveEndGap: 0.3,
   /** Arc height as a fraction of the curve's horizontal span, before clamping. */
@@ -1301,6 +1303,8 @@ interface NoteAnchor {
   readonly stemUp: boolean
   /** The source event, so ties and slurs can be matched to what the music said. */
   readonly event: MusicEvent
+  /** Which system this note ended up in — a curve spanning two is drawn in halves. */
+  readonly system: number
 }
 
 /**
@@ -1356,9 +1360,56 @@ function buildCurve(from: NoteAnchor, to: NoteAnchor, kind: 'tie' | 'slur'): Pla
  * is a slice of its own. `vree-ties-across-bars` ties across a BARLINE, which is fine —
  * only a system break drops one.
  */
-function layoutCurves(anchors: readonly NoteAnchor[]): PlacedCurve[] {
-  const curves: PlacedCurve[] = []
+function layoutCurves(
+  anchors: readonly NoteAnchor[],
+  /**
+   * Where each system's music starts and ends. A split curve runs to the right edge of
+   * the system it leaves and resumes after the clef and key of the one it enters.
+   */
+  bounds: readonly { left: number; right: number }[],
+): PlacedCurve[][] {
+  const curves: PlacedCurve[][] = bounds.map(() => [])
   const open: number[] = []
+
+  /**
+   * Emit one logical curve, SPLITTING it if its ends are in different systems.
+   *
+   * Engraving breaks such a curve in two: a piece running from the first note to the end
+   * of its system, and a piece from the start of the next system to the second note.
+   * Each half keeps the full arc shape, so the eye completes it across the break.
+   *
+   * ponytail: a curve spanning THREE systems — possible only for a very long slur —
+   * gets its two ends and no middle. The intervening systems would each want a full-width
+   * arc; no corpus fixture has one.
+   */
+  const emit = (from: NoteAnchor, to: NoteAnchor, kind: 'tie' | 'slur'): void => {
+    if (from.system === to.system) {
+      curves[from.system]?.push(buildCurve(from, to, kind))
+      return
+    }
+    const start = bounds[from.system]
+    const end = bounds[to.system]
+    if (start === undefined || end === undefined) return
+
+    // Each half is LEVEL at its own note's height. Sloping it toward a note in another
+    // system would aim at a pitch the reader cannot see, and the two halves would tilt
+    // in unrelated directions.
+    curves[from.system]?.push(
+      buildCurve(from, { ...from, left: start.right, right: start.right }, kind),
+    )
+    // The continuation resumes after the new system's clef and key — starting at the
+    // system's left edge drew it straight through the clef, where it was invisible.
+    //
+    // ponytail: if the first note sits hard against the prefix there is no room for the
+    // hook, and it is OMITTED rather than drawn backwards. The half running off the
+    // previous system still signals that the curve continues, which is most of the
+    // reading benefit. Engraving reserves room at the system start for exactly this;
+    // doing that means feeding the curve back into spacing, which is a slice of its own.
+    const resume = Math.max(end.left, to.left - ENGRAVE.curveContinuation)
+    if (to.left - resume >= ENGRAVE.curveEndGap * 2) {
+      curves[to.system]?.push(buildCurve({ ...to, left: resume, right: resume }, to, kind))
+    }
+  }
 
   anchors.forEach((anchor, i) => {
     const event = anchor.event
@@ -1368,15 +1419,14 @@ function layoutCurves(anchors: readonly NoteAnchor[]): PlacedCurve[] {
     for (let n = 0; n < event.slurEnds; n++) {
       const start = open.pop()
       const from = start === undefined ? undefined : anchors[start]
-      if (from !== undefined) curves.push(buildCurve(from, anchor, 'slur'))
+      if (from !== undefined) emit(from, anchor, 'slur')
     }
     for (let n = 0; n < event.slurStarts; n++) open.push(i)
 
+    // A tie joins this note to the next SOUNDING one, wherever it falls.
     if (event.tiedToNext) {
       const next = anchors[i + 1]
-      // A tie needs somewhere to land: the last note of a staff has no next note,
-      // which is what a tie across a system break looks like from here.
-      if (next !== undefined) curves.push(buildCurve(anchor, next, 'tie'))
+      if (next !== undefined) emit(anchor, next, 'tie')
     }
   })
 
@@ -1588,6 +1638,7 @@ function layoutMeasure(
     if (heads.length > 0) {
       const width = GLYPHS[heads[0]?.name ?? 'noteheadBlack'].width
       anchors.push({
+        system: 0, // filled in when the block is placed into a system
         left: Math.min(...heads.map((h) => h.x)),
         right: Math.max(...heads.map((h) => h.x)) + width,
         top: Math.min(...heads.map((h) => h.y)) - 0.5,
@@ -1731,6 +1782,10 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
   if (columns > 0) spans.push({ start, end: columns })
   if (spans.length === 0) spans.push({ start: 0, end: 0 })
 
+  // Anchors for every note of every voice, tagged with the system it landed in. A slur
+  // or tie can span a break, so pairing them needs the whole tune, not one system.
+  const voiceAnchors: NoteAnchor[][] = plans.map(() => [])
+
   const systems: LayoutSystem[] = spans.map((span, systemIndex) => {
     const withMeter = systemIndex === 0
     const head = headWidth(withMeter)
@@ -1784,7 +1839,6 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         ...plan.prefix(withMeter, voiceIndex === 0).elements,
       ]
       const beamGroups = new Map<number, StemInfo[]>()
-      const anchors: NoteAnchor[] = []
       let x = head
 
       for (let i = span.start; i < span.end; i++) {
@@ -1821,7 +1875,12 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
             beamGroups.set(group, [...(beamGroups.get(group) ?? []), ...shifted])
           }
           for (const a of block.anchors) {
-            anchors.push({ ...a, left: a.left * stretch + x, right: a.right * stretch + x })
+            voiceAnchors[voiceIndex]?.push({
+              ...a,
+              system: systemIndex,
+              left: a.left * stretch + x,
+              right: a.right * stretch + x,
+            })
           }
         }
         // Advance by the COLUMN, not the block, so every staff stays in step.
@@ -1832,11 +1891,11 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       // Beams last: they retarget stems already placed and need every member's final
       // position. A beam never crosses a barline, so it never crosses a system break.
       for (const group of beamGroups.values()) beams.push(...layoutBeam(group, elements))
-      // Curves after beams, since a slur sits clear of the noteheads either way but the
-      // stem directions it reads are only settled once beaming has forced them.
-      const curves = layoutCurves(anchors)
 
-      return { elements, staffLines: [], beams, curves, originY: 0 }
+      // Curves are NOT resolved here: a slur or tie can span a system break, so it needs
+      // every system's anchors, which only exist once the whole tune is packed. Filled
+      // in by the pass below.
+      return { elements, staffLines: [], beams, curves: [], originY: 0 }
     })
 
     const width = head + natural * justify + ENGRAVE.marginX
@@ -1874,9 +1933,25 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     return { staves: placed, width, originY: 0 }
   })
 
+  // Now that every system exists, resolve each voice's slurs and ties across the whole
+  // tune and hand each system its share.
+  // Music starts after the widest prefix on the system and ends at its right margin.
+  const systemBounds = systems.map((system, i) => ({
+    left: headWidth(i === 0),
+    right: system.width - ENGRAVE.marginX,
+  }))
+  const curvesBySystem = voiceAnchors.map((anchors) => layoutCurves(anchors, systemBounds))
+  const withCurves = systems.map((system, systemIndex) => ({
+    ...system,
+    staves: system.staves.map((staff, voiceIndex) => ({
+      ...staff,
+      curves: curvesBySystem[voiceIndex]?.[systemIndex] ?? [],
+    })),
+  }))
+
   // Stack the systems.
   let cursor = 0
-  const placed = systems.map((system) => {
+  const placed = withCurves.map((system) => {
     const height = systemHeight(system)
     const originY = cursor
     cursor += height + ENGRAVE.systemGap

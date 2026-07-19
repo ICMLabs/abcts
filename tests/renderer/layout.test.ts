@@ -867,10 +867,24 @@ describe('slurs and ties', () => {
     expect(Math.abs(curvesOf('(GG)|')[0]?.bulge ?? 0)).toBeGreaterThanOrEqual(0.5)
   })
 
-  it('drops a curve with nowhere to land rather than drawing it wrong', () => {
-    // A tie on the last note of a staff has no next note. Engraving splits such a curve
-    // across the system break; until that exists, drawing nothing beats drawing a curve
-    // to an arbitrary point.
+  it('splits a curve across a system break instead of dropping it', () => {
+    // Both ends exist but in different systems. The first half runs to the right edge of
+    // the system it leaves — which is the signal to the reader that it continues.
+    const doc = layout(parse('X:1\nM:4/4\nL:1/4\nK:C\n(CDEG-|G2 G2)|\n').scores[0] as Score, {
+      systemWidth: 30,
+    })
+    expect(doc.systems.length).toBeGreaterThan(1)
+    const first = doc.systems[0]
+    const leaving = (first?.staves[0]?.curves ?? []).filter((c) => c.x2 >= (first?.width ?? 0) - 2)
+    expect(leaving.length).toBeGreaterThan(0)
+    // And the continuation resumes on the next system, after its clef.
+    const resuming = doc.systems[1]?.staves[0]?.curves ?? []
+    expect(resuming.length).toBeGreaterThan(0)
+    for (const c of resuming) expect(c.x1).toBeGreaterThan(0)
+  })
+
+  it('still drops a curve with nowhere to land at all', () => {
+    // A tie on the very last note of the tune has no next note anywhere.
     expect(curvesOf('GGGG|GGGG-|')).toEqual([])
   })
 })
