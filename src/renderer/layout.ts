@@ -71,15 +71,25 @@ const ENGRAVE = {
   /** Spacing between successive dots on a double- or triple-dotted note. PROVISIONAL. */
   dotSpacing: 0.45,
   /**
-   * Horizontal advance allotted to a note.
+   * Square-root spacing coefficient, in staff spaces: a note's natural width is
+   * `spacingScale · √(duration / reference)`.
    *
-   * ponytail: flat, duration-independent spacing — a half note takes the same width as
-   * an eighth. Legible for the single-duration fixtures, and wrong the moment a tune
-   * mixes durations in a bar. Upgrade path is the Gourlay/LilyPond spring-and-rod model
-   * abcMusicKit2 uses (EngravingConstants "GOLDEN note-spacing calibration"); do it when
-   * a mixed-duration fixture makes the spacing visibly wrong, not before.
+   * Taken from abcMusicKit2's `EngravingConstants.spacingScale`, which is not a guess:
+   * abcm2ps's duration→width curve was measured by black-box probe and fits a pure
+   * SQUARE ROOT of duration (its per-halving increment shrinks by ~1/√2 each step,
+   * steeper than log2), and the full recovered model `W(d|s) = min(6.667, 13.3·√s)·√(d/s)`
+   * collapses to `13.3·√d` for any line whose shortest note is a quarter or less — which
+   * is nearly all music. 3.25 ≈ 13.3/4 is the corpus-centered scale.
    */
-  noteAdvance: 3.5,
+  spacingScale: 3.25,
+  /**
+   * Absolute spacing anchor. A sixteenth gets exactly `spacingScale`; everything else
+   * scales from it by √duration, so a note's width depends only on its own duration and
+   * not on what surrounds it.
+   */
+  spacingReference: 1 / 16,
+  /** Hard minimum gap between adjacent columns — the rod floor beneath the springs. */
+  minColumnGap: 0.6,
   /** Space either side of a barline. PROVISIONAL. */
   barGap: 1.0,
   /**
@@ -111,6 +121,12 @@ const ENGRAVE = {
   systemWidth: 90,
   /** Vertical gap between stacked systems. PROVISIONAL. */
   systemGap: 3.0,
+  /**
+   * A system is justified to the full width unless stretching it by more than this
+   * factor. A nearly-empty last-but-one line would otherwise be pulled apart into
+   * something unreadable; *Behind Bars* leaves such a line short instead.
+   */
+  maxJustifyStretch: 1.6,
   /** Vertical gap between staves WITHIN one system — tighter than between systems, so
    * the voices of one score read as belonging together. PROVISIONAL. */
   staffGap: 1.5,
@@ -385,6 +401,27 @@ function dotGlyphs(count: number, x: number, step: number, taken: Set<number>): 
     out.push(glyphAt('augmentationDot', x + i * ENGRAVE.dotSpacing, dotStep))
   }
   return out
+}
+
+/**
+ * A note's natural horizontal width for its duration — the spring, before justification.
+ *
+ * `spacingScale · √(duration / reference)`, floored by the rod. Uses SOUNDING duration,
+ * not written: three triplet eighths occupy the time of two and get the space of two,
+ * which is what makes a tuplet look like one.
+ *
+ * The base cap in abcm2ps's full model (`reference = max(absolute, shortest/4)`) only
+ * bites on a line whose shortest note is longer than a quarter. ponytail: not
+ * implemented — every corpus fixture has something a quarter or shorter, so the cap
+ * would never fire. Add it with the line's shortest note when a long-only tune appears.
+ */
+export function naturalWidth(duration: Rational): number {
+  const d = ratToNumber(duration)
+  if (!(d > 0)) return ENGRAVE.minColumnGap
+  return Math.max(
+    ENGRAVE.minColumnGap,
+    ENGRAVE.spacingScale * Math.sqrt(d / ENGRAVE.spacingReference),
+  )
 }
 
 // ─── Element builders ────────────────────────────────────────────────────────
@@ -695,7 +732,7 @@ function restGlyph(notated: Rational): { name: GlyphName; step: number; dots: nu
   return { name, step: 0, dots }
 }
 
-function layoutRest(rest: Rest, x: number): LayoutElement {
+function layoutRest(rest: Rest, advance: number, x: number): LayoutElement {
   // `x` and `y` occupy horizontal space but print nothing; a spacer prints nothing and
   // is not even a rest musically. Both still advance, so following notes stay put.
   const invisible = rest.kind === 'invisible' || rest.kind === 'invisibleMultiMeasure'
@@ -713,7 +750,7 @@ function layoutRest(rest: Rest, x: number): LayoutElement {
   return {
     type: 'rest',
     x,
-    width: ENGRAVE.noteAdvance,
+    width: advance,
     staffSteps: [],
     glyphs,
     lines: [],
@@ -781,6 +818,8 @@ function ledgerLines(step: number, x: number, headWidth: number): PlacedLine[] {
 function layoutNoteheads(
   pitches: readonly Pitch[],
   notated: Rational,
+  /** Natural width for this event's SOUNDING duration — see `naturalWidth`. */
+  advance: number,
   x: number,
   clef: Clef,
   /** Forced by the beam group when this note is beamed — every stem in a beam agrees. */
@@ -799,15 +838,7 @@ function layoutNoteheads(
   if (spec === null || steps.length === 0) {
     // Unsupported duration — see noteGlyph. Emit the position with no ink rather than
     // the wrong notehead, so the gap is visible in output and in the gate.
-    return {
-      type: 'note',
-      x,
-      width: ENGRAVE.noteAdvance,
-      staffSteps: steps,
-      glyphs: [],
-      lines: [],
-      texts: [],
-    }
+    return { type: 'note', x, width: advance, staffSteps: steps, glyphs: [], lines: [], texts: [] }
   }
 
   const head = GLYPHS[spec.head]
@@ -899,12 +930,15 @@ function layoutNoteheads(
     }
   }
 
-  // A head displaced across the stem, or a dot column, widens the element.
+  // The spring is the natural width, but ink is a rod: an accidental, a displaced head
+  // or a dot column must never be crushed by a short duration, so the element is at
+  // least as wide as what it draws plus the minimum gap.
   const spread = Math.max(0, ...[...offsets.values()].map(Math.abs), dotWidth)
+  const ink = accidentalWidth + spread + head.width + ENGRAVE.minColumnGap
   return {
     type: 'note',
     x,
-    width: accidentalWidth + spread + ENGRAVE.noteAdvance,
+    width: Math.max(advance, ink),
     staffSteps: steps,
     glyphs,
     lines,
@@ -1081,6 +1115,14 @@ interface MeasureBlock {
    * busy voice's, and the staves would stop lining up.
    */
   readonly closingBarIndex: number | null
+  /**
+   * Width of the music alone, excluding the closing barline and its gaps.
+   *
+   * A barline is a ROD, not a spring: it keeps its size and its distance from the
+   * column edge however far the measure stretches. Only the music between barlines is
+   * justified, so this is the span the stretch factor applies to.
+   */
+  readonly musicWidth: number
 }
 
 /**
@@ -1128,6 +1170,7 @@ function layoutMeasure(
   }
 
   let closingBarIndex: number | null = null
+  const musicWidth = x
   if (measure.closingBarline !== null) {
     x += ENGRAVE.barGap
     closingBarIndex = elements.length
@@ -1135,7 +1178,7 @@ function layoutMeasure(
     x += ENGRAVE.barGap
   }
 
-  return { elements, width: x, beams, closingBarIndex }
+  return { elements, width: x, beams, closingBarIndex, musicWidth }
 }
 
 /** Shift a laid-out measure sideways into its place in a system. */
@@ -1261,6 +1304,21 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     const withMeter = systemIndex === 0
     const head = headWidth(withMeter)
 
+    /**
+     * Justify the system to the page: every column stretches by a common factor so the
+     * right edges line up, which is what makes a page of music look like a page rather
+     * than a ragged list.
+     *
+     * The LAST system is left alone — a final line holding one bar would otherwise be
+     * stretched across the whole page. And a system that would need more than
+     * `maxJustifyStretch` is left short for the same reason, per *Behind Bars*.
+     */
+    const natural = columnWidths.slice(span.start, span.end).reduce((sum, w) => sum + w, 0)
+    const available = systemWidth - head - ENGRAVE.marginX
+    const isLast = systemIndex === spans.length - 1
+    const wanted = natural > 0 && !isLast ? available / natural : 1
+    const justify = wanted > 1 && wanted <= ENGRAVE.maxJustifyStretch ? wanted : 1
+
     const staves: LayoutStaff[] = plans.map((plan, voiceIndex) => {
       const elements: LayoutElement[] = [...plan.prefix(withMeter, voiceIndex === 0).elements]
       const beamGroups = new Map<number, StemInfo[]>()
@@ -1270,22 +1328,38 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         const block = plan.blocks[i]
         if (block !== undefined) {
           const base = elements.length
-          // A measure narrower than its column leaves the slack BEFORE its closing
-          // barline, so barlines align across staves. ponytail: the notes stay packed to
-          // the left of the column rather than spread through it — real justification
-          // distributes the slack between them, and belongs with proportional spacing.
-          const slack = (columnWidths[i] ?? 0) - block.width
+          // JUSTIFY the measure into its column. Scaling each element's ORIGIN by the
+          // stretch factor distributes the slack between the notes in proportion to the
+          // space each already occupies — which is exactly what stretching springs of
+          // different natural widths by a common factor does. Internal geometry is
+          // untouched, because `shiftElement` translates a whole element: an accidental
+          // stays the same distance from its notehead however far the measure stretches.
+          // Only the music stretches; the closing barline is a rod that keeps its
+          // distance from the column edge, so barlines stay aligned across staves.
+          const column = (columnWidths[i] ?? 0) * justify
+          const barSpace = block.width - block.musicWidth
+          const stretch =
+            block.musicWidth > 0 ? Math.max(0, column - barSpace) / block.musicWidth : 1
           block.elements.forEach((el, index) => {
-            const dx = index === block.closingBarIndex ? x + slack : x
+            const dx =
+              index === block.closingBarIndex
+                ? x + column - barSpace + ENGRAVE.barGap - el.x
+                : x + el.x * (stretch - 1)
             elements.push(shiftElement(el, dx))
           })
           for (const [group, members] of block.beams) {
-            const shifted = members.map((m) => ({ ...m, x: m.x + x, element: m.element + base }))
+            const shifted = members.map((m) => ({
+              ...m,
+              // A stem sits at its element's origin plus an offset within it, so it
+              // moves with the element rather than scaling on its own.
+              x: m.x * stretch + x,
+              element: m.element + base,
+            }))
             beamGroups.set(group, [...(beamGroups.get(group) ?? []), ...shifted])
           }
         }
         // Advance by the COLUMN, not the block, so every staff stays in step.
-        x += columnWidths[i] ?? 0
+        x += (columnWidths[i] ?? 0) * justify
       }
 
       const beams: PlacedLine[] = []
@@ -1296,10 +1370,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       return { elements, staffLines: [], beams, originY: 0 }
     })
 
-    const width =
-      head +
-      columnWidths.slice(span.start, span.end).reduce((sum, w) => sum + w, 0) +
-      ENGRAVE.marginX
+    const width = head + natural * justify + ENGRAVE.marginX
 
     // Stack the staves, each measured from its own content so a staff with a tempo mark
     // or high ledger lines gets the room it needs and no more.
@@ -1392,13 +1463,30 @@ function layoutEvent(
   forcedUp: boolean | null = null,
   stemOut: { value: Omit<StemInfo, 'element'> | null } | null = null,
 ): LayoutElement | null {
+  const advance = naturalWidth(event.duration)
   if (event.type === 'note') {
-    return layoutNoteheads([event.pitch], event.notatedDuration, x, clef, forcedUp, stemOut)
+    return layoutNoteheads(
+      [event.pitch],
+      event.notatedDuration,
+      advance,
+      x,
+      clef,
+      forcedUp,
+      stemOut,
+    )
   }
   if (event.type === 'chord') {
-    return layoutNoteheads(event.pitches, event.notatedDuration, x, clef, forcedUp, stemOut)
+    return layoutNoteheads(
+      event.pitches,
+      event.notatedDuration,
+      advance,
+      x,
+      clef,
+      forcedUp,
+      stemOut,
+    )
   }
-  return layoutRest(event, x)
+  return layoutRest(event, advance, x)
 }
 
 /**

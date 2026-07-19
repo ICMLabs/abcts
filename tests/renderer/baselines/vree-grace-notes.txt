@@ -1,25 +1,25 @@
-bounds  width=21.064 height=15.024 top=0.000
+bounds  width=32.756 height=15.024 top=0.000
 systems 1
-system 0 width=21.064 originY=0.000
+system 0 width=32.756 originY=0.000
   staff 0 originY=7.392
-    staffline 0.000,2.000 -> 21.064,2.000 t=0.130
-    staffline 0.000,1.000 -> 21.064,1.000 t=0.130
-    staffline 0.000,0.000 -> 21.064,0.000 t=0.130
-    staffline 0.000,-1.000 -> 21.064,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 21.064,-2.000 t=0.130
+    staffline 0.000,2.000 -> 32.756,2.000 t=0.130
+    staffline 0.000,1.000 -> 32.756,1.000 t=0.130
+    staffline 0.000,0.000 -> 32.756,0.000 t=0.130
+    staffline 0.000,-1.000 -> 32.756,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 32.756,-2.000 t=0.130
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
       glyph timeSig4 4.684,-1.000
       glyph timeSig4 4.684,1.000
-    note@0 x=7.564 w=3.500
+    note@0 x=7.564 w=6.500
       glyph noteheadBlack 7.564,0.000
       line  7.564,0.168 -> 7.564,3.500 t=0.120
-    note@-1 x=11.064 w=3.500
-      glyph noteheadBlack 11.064,0.500
-      line  12.244,0.332 -> 12.244,-3.000 t=0.120
-    note@-2 x=14.564 w=3.500
-      glyph noteheadHalf 14.564,1.000
-      line  15.744,0.832 -> 15.744,-2.500 t=0.120
-    bar x=19.064 w=0.160
-      line  19.064,-2.000 -> 19.064,2.000 t=0.160
+    note@-1 x=14.064 w=6.500
+      glyph noteheadBlack 14.064,0.500
+      line  15.244,0.332 -> 15.244,-3.000 t=0.120
+    note@-2 x=20.564 w=9.192
+      glyph noteheadHalf 20.564,1.000
+      line  21.744,0.832 -> 21.744,-2.500 t=0.120
+    bar x=30.756 w=0.160
+      line  30.756,-2.000 -> 30.756,2.000 t=0.160

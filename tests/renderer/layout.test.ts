@@ -22,6 +22,7 @@ import {
   keyFifths,
   layout,
   middleLineIndex,
+  naturalWidth,
   noteGlyph,
 } from '../../src/renderer/layout.js'
 
@@ -627,6 +628,96 @@ C,D,E,F,|G,A,B,C|
     const doc = layout(parse('X:1\nL:1/4\nK:C\nCDEF|\n').scores[0] as Score)
     expect(doc.systems).toHaveLength(1)
     expect(doc.systems[0]?.staves).toHaveLength(1)
+  })
+})
+
+describe('spacing and justification', () => {
+  const staffOf = (abc: string, opts = {}) =>
+    layout(parse(abc).scores[0] as Score, opts).systems[0]?.staves[0]
+  const noteXs = (abc: string, opts = {}) =>
+    (staffOf(abc, opts)?.elements ?? []).filter((e) => e.type === 'note').map((e) => e.x)
+
+  it('follows a square-root curve, so a note four times as long is twice as wide', () => {
+    // abcm2ps's measured duration→width curve is a pure √ — its per-halving increment
+    // shrinks by ~1/√2 each step, steeper than log2. Taken from abcMusicKit2's
+    // oracle-calibrated constant rather than invented.
+    expect(naturalWidth(rational(1, 16))).toBeCloseTo(3.25, 5)
+    expect(naturalWidth(rational(1, 4))).toBeCloseTo(6.5, 5)
+    expect(naturalWidth(rational(1, 1))).toBeCloseTo(13, 5)
+    // Four times the duration, twice the width — at every scale.
+    expect(naturalWidth(rational(1, 2)) / naturalWidth(rational(1, 8))).toBeCloseTo(2, 5)
+  })
+
+  it('never lets a note fall below the rod floor', () => {
+    expect(naturalWidth(rational(1, 1024))).toBeGreaterThanOrEqual(0.6)
+    expect(naturalWidth(rational(0, 1))).toBeGreaterThanOrEqual(0.6)
+  })
+
+  it('gives a longer note more room than a shorter one in the same bar', () => {
+    // The whole point: with flat spacing these were identical.
+    const xs = noteXs('X:1\nM:4/4\nL:1/8\nK:C\nC4C2C1C1|\n')
+    expect(xs).toHaveLength(4)
+    const gaps = xs.slice(1).map((x, i) => x - (xs[i] as number))
+    expect(gaps[0]).toBeGreaterThan(gaps[1] as number)
+    expect(gaps[1]).toBeGreaterThan(gaps[2] as number)
+  })
+
+  it('spaces a tuplet by its SOUNDING duration, not its written one', () => {
+    // Three triplet eighths occupy the time of two and must take the space of two —
+    // spacing off the written duration would make a triplet as wide as three eighths.
+    const triplet = noteXs('X:1\nM:4/4\nL:1/8\nK:C\n(3CCC C4|\n')
+    const plain = noteXs('X:1\nM:4/4\nL:1/8\nK:C\nCCC C4|\n')
+    const span = (xs: number[]) => (xs[2] as number) - (xs[0] as number)
+    expect(span(triplet)).toBeLessThan(span(plain))
+  })
+
+  it('keeps ink from being crushed by a short duration', () => {
+    // A rod, not a spring: a sixteenth carrying an accidental and a dot needs more room
+    // than its duration alone would buy.
+    const bare = staffOf('X:1\nM:4/4\nL:1/16\nK:C\nCC|\n')
+    const inky = staffOf('X:1\nM:4/4\nL:1/16\nK:C\n^C3C|\n')
+    const widthOf = (s: typeof bare) => s?.elements.find((e) => e.type === 'note')?.width ?? 0
+    expect(widthOf(inky)).toBeGreaterThan(widthOf(bare))
+  })
+
+  it('distributes a measure’s slack between its notes, not before the barline', () => {
+    // Two voices, one sparse. The sparse voice's notes must spread through its column
+    // rather than huddle at the left with a gap before the bar.
+    const abc = `X:1\nM:4/4\nL:1/8\nV:1\nV:2\nK:C\nV:1\nCDEFGABc|\nV:2\nC2E2G2c2|\n`
+    const doc = layout(parse(abc).scores[0] as Score)
+    const staff = doc.systems[0]?.staves[1]
+    const notes = (staff?.elements ?? []).filter((e) => e.type === 'note')
+    const bar = (staff?.elements ?? []).find((e) => e.type === 'bar')
+    expect(notes).toHaveLength(4)
+
+    const last = notes[notes.length - 1]?.x ?? 0
+    const first = notes[0]?.x ?? 0
+    const barX = bar?.x ?? 0
+    // The gap after the last note is not wildly larger than the gaps between notes —
+    // which is exactly what dumping all the slack before the barline would produce.
+    const averageGap = (last - first) / (notes.length - 1)
+    expect(barX - last).toBeLessThan(averageGap * 2)
+  })
+
+  it('justifies every system to the same width, except the last', () => {
+    const abc = `X:1\nM:4/4\nL:1/4\nK:C\n${'CDEF|'.repeat(40)}\n`
+    const doc = layout(parse(abc).scores[0] as Score, { systemWidth: 90 })
+    expect(doc.systems.length).toBeGreaterThan(2)
+
+    const widths = doc.systems.map((s) => s.width)
+    for (const w of widths.slice(0, -1)) expect(w).toBeCloseTo(90, 5)
+    // The last line keeps its natural width — a final bar stretched across the page is
+    // the classic ugly justification bug.
+    expect(widths[widths.length - 1]).toBeLessThan(90)
+  })
+
+  it('leaves a system short rather than stretching it absurdly', () => {
+    // A system needing more than the cap is left ragged, per *Behind Bars*. Two systems
+    // where the second holds almost nothing: the first must not be pulled apart.
+    const doc = layout(parse('X:1\nM:4/4\nL:1/4\nK:C\nCDEF|C16|\n').scores[0] as Score, {
+      systemWidth: 40,
+    })
+    for (const system of doc.systems) expect(system.width).toBeLessThanOrEqual(90)
   })
 })
 
