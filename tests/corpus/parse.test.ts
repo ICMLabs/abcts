@@ -368,6 +368,15 @@ describe('lyrics', () => {
     expect(notes.map((n) => n.lyricMelisma)).toEqual([false, true, false, false])
   })
 
+  it('treats _ as a syllable separator, not a character', () => {
+    // ABC 2.1 §5.1's own example: "A-_ma-zing_" spans five positions —
+    // `A-` · hold · `ma-` · `zing` · hold. A tokenizer that only splits on `-` leaves
+    // literal underscores in the text ("_ma-", "zing_") and loses both holds.
+    const notes = notesOf('X:1\nL:1/8\nK:C\nG2 c3/2 B/ c2 e2 |\nw: A-_ma-zing_ * grace\n')
+    expect(notes.map((n) => n.lyric)).toEqual(['A-', null, 'ma-', 'zing', null])
+    expect(notes.map((n) => n.lyricMelisma)).toEqual([false, true, false, false, true])
+  })
+
   it('holds a melisma across several notes', () => {
     const notes = notesOf('X:1\nL:1/4\nK:C\nCDEF|\nw:Glo _ _ _\n')
     expect(notes.map((n) => n.lyricMelisma)).toEqual([false, true, true, true])

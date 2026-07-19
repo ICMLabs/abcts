@@ -1277,30 +1277,36 @@ function parseLyricSyllables(text: string, base: number): Syllable[] {
       out.push({ kind: 'skip', text: null, range: null })
       continue
     }
-    if (token === '_') {
-      out.push({ kind: 'melisma', text: null, range: null })
-      continue
+    // Scan the token: `-` ends a syllable and keeps its hyphen, `_` ends a syllable and
+    // emits a hold. Both are separators, so a bare `_` and an attached one behave alike —
+    // the spec writes `A-_ma-zing_`, which is `A-` · hold · `ma-` · `zing` · hold.
+    let buffer = ''
+    let bufferStart = tokenStart
+    const flush = (end: number, hyphen: boolean): void => {
+      if (buffer === '') return
+      const raw = buffer.split('~').join(' ') // `~` is a hard space
+      out.push({
+        kind: 'text',
+        text: decodeTextString(raw) + (hyphen ? '-' : ''),
+        range: sourceRange(base + bufferStart, base + end),
+      })
+      buffer = ''
     }
-    // Split on `-`, keeping empty trailing pieces so `word-` advances two notes.
-    const parts: { start: number; end: number }[] = []
-    let partStart = tokenStart
-    for (let j = tokenStart; j <= i; j++) {
-      if (j === i || text[j] === '-') {
-        parts.push({ start: partStart, end: j })
-        partStart = j + 1
+    for (let j = tokenStart; j < i; j++) {
+      const ch = text[j] as string
+      if (ch === '-') {
+        flush(j, true)
+        bufferStart = j + 1
+      } else if (ch === '_') {
+        flush(j, false)
+        out.push({ kind: 'melisma', text: null, range: null })
+        bufferStart = j + 1
+      } else {
+        if (buffer === '') bufferStart = j
+        buffer += ch
       }
     }
-    parts.forEach((part, index) => {
-      // `~` is a hard space (ES2020 has no replaceAll). The RANGE stays the raw source
-      // span so cross-linking still points at the `w:` text, not the decoded form.
-      const raw = text.slice(part.start, part.end).split('~').join(' ')
-      const range = sourceRange(base + part.start, base + part.end)
-      if (index < parts.length - 1) {
-        out.push({ kind: 'text', text: `${decodeTextString(raw)}-`, range })
-      } else if (raw !== '') {
-        out.push({ kind: 'text', text: decodeTextString(raw), range })
-      }
-    })
+    flush(i, false)
   }
   return out
 }
