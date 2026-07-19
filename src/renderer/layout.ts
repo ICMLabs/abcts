@@ -26,6 +26,7 @@ import {
   type Pitch,
   type Rational,
   type Rest,
+  rational,
   ratToNumber,
   type Score,
   stepIndex,
@@ -63,6 +64,10 @@ const ENGRAVE = {
   keySignatureGap: 0.15,
   /** Gap between an accidental and the notehead it alters. PROVISIONAL. */
   accidentalGap: 0.15,
+  /** Gap from the notehead's right edge to the first augmentation dot. PROVISIONAL. */
+  dotGap: 0.35,
+  /** Spacing between successive dots on a double- or triple-dotted note. PROVISIONAL. */
+  dotSpacing: 0.45,
   /**
    * Horizontal advance allotted to a note.
    *
@@ -219,29 +224,100 @@ interface NoteGlyphSpec {
   readonly stemmed: boolean
   /** Number of flags: 1 for an eighth, 2 for a sixteenth, 0 for a quarter or longer. */
   readonly flags: number
+  /** Augmentation dots — 1 for a dotted quarter, 2 for a double-dotted one. */
+  readonly dots: number
+}
+
+/** True for 1, 2, 4, 8, … and nothing else. */
+const isPowerOfTwo = (value: number): boolean =>
+  Number.isInteger(value) && value > 0 && (value & (value - 1)) === 0
+
+/**
+ * Split a written duration into the note value that is printed and its dots.
+ *
+ * A dot adds half of what precedes it, so `d` dots on a base `b` sound
+ * `b × (2^(d+1) − 1) / 2^d`. Reduced, that puts an ODD numerator of the form
+ * 2^(d+1)−1 — 1, 3, 7, 15 — over a power of two. So the numerator alone names the dot
+ * count and the denominator then yields the base:
+ *
+ *   3/8  → numerator 3 = 2^2−1 → 1 dot,  base 1/4  (dotted quarter)
+ *   7/16 → numerator 7 = 2^3−1 → 2 dots, base 1/4  (double-dotted quarter)
+ *   3/4  → numerator 3          → 1 dot,  base 1/2  (dotted half)
+ *
+ * Deriving it rather than tabling the handful of common cases costs no more code and
+ * gets double dots and dotted breves for free.
+ *
+ * Returns null when the numerator is not 2^(d+1)−1 or the denominator is not a power of
+ * two — a value no combination of dots can write. That is not the same as a tuplet:
+ * `notatedDuration` excludes tuplet scaling by contract, so a triplet eighth arrives
+ * here as a plain 1/8 and its ratio never reaches this function.
+ */
+function splitDots(notated: Rational): { base: Rational; dots: number } | null {
+  const { numerator, denominator } = notated
+  if (numerator <= 0 || denominator <= 0) return null
+
+  // Split the numerator into its power-of-two part and its ODD part. Only the odd part
+  // can carry dots, since 2^(d+1)−1 is always odd — which is what lets a breve (2/1) and
+  // a dotted quarter (3/8) be told apart: odd parts 1 and 3.
+  let odd = numerator
+  while (odd % 2 === 0) odd /= 2
+  if (!isPowerOfTwo(odd + 1)) return null
+
+  const dots = Math.log2(odd + 1) - 1
+  const base = rational(numerator * 2 ** dots, denominator * odd)
+
+  // The base must be a plain note value — a power of two either side. Anything else is a
+  // duration no combination of notehead and dots can write.
+  if (!isPowerOfTwo(base.numerator) || !isPowerOfTwo(base.denominator)) return null
+  return { base, dots }
 }
 
 /**
- * Written duration → notehead, stem and flag count.
+ * Written duration → notehead, stem, flag count and dots.
  *
- * Returns `null` for a duration that is not a plain power of two — a dotted or tuplet
- * value. Callers must handle that rather than fall back to a quarter: silently drawing a
- * dotted half as a half is wrong OUTPUT, which is worse than an absent feature, and it
- * would not trip a gate that only checks staff positions.
- *
- * ponytail: dots and tuplet-scaled durations unhandled. Add when a fixture needs them.
+ * Returns `null` for a duration no notehead can express. Callers must handle that rather
+ * than fall back to a quarter: silently drawing a dotted half as a half is wrong OUTPUT,
+ * which is worse than an absent feature, and the structural gate would never catch it
+ * because the staff position is still right.
  */
 export function noteGlyph(notated: Rational): NoteGlyphSpec | null {
-  const whole = ratToNumber(notated)
-  if (!(whole > 0)) return null
-  if (whole >= 1) return { head: 'noteheadWhole', stemmed: false, flags: 0 }
+  const split = splitDots(notated)
+  if (split === null) return null
+  const { base, dots } = split
 
-  // 1/2 → 1, 1/4 → 2, 1/8 → 3 …; non-integral means it is not a plain power of two.
+  const whole = ratToNumber(base)
+  if (!(whole > 0)) return null
+  if (whole >= 1) return { head: 'noteheadWhole', stemmed: false, flags: 0, dots }
+
+  // 1/2 → 1, 1/4 → 2, 1/8 → 3 …
   const log = Math.log2(1 / whole)
   if (!Number.isInteger(log)) return null
 
-  if (log === 1) return { head: 'noteheadHalf', stemmed: true, flags: 0 }
-  return { head: 'noteheadBlack', stemmed: true, flags: Math.max(0, log - 2) }
+  if (log === 1) return { head: 'noteheadHalf', stemmed: true, flags: 0, dots }
+  return { head: 'noteheadBlack', stemmed: true, flags: Math.max(0, log - 2), dots }
+}
+
+/**
+ * Augmentation dots for one notehead, starting at `x`.
+ *
+ * A dot NEVER sits on a staff line — it goes in the space beside the notehead, so a note
+ * on a line takes its dot in the space above. Even staff steps are lines (0 is the middle
+ * line, ±2 and ±4 the others) and odd steps are spaces, so the rule is simply: bump an
+ * even step up by one.
+ */
+function dotGlyphs(count: number, x: number, step: number, taken: Set<number>): PlacedGlyph[] {
+  let dotStep = step % 2 === 0 ? step + 1 : step
+  // ponytail: in a chord, two notes a second apart can want the same dot space — one is
+  // on a line and bumps up onto its neighbour's. Moved up a space rather than solved
+  // properly; engraving has finer rules for dot columns. No corpus fixture has one.
+  while (taken.has(dotStep)) dotStep += 2
+  taken.add(dotStep)
+
+  const out: PlacedGlyph[] = []
+  for (let i = 0; i < count; i++) {
+    out.push(glyphAt('augmentationDot', x + i * ENGRAVE.dotSpacing, dotStep))
+  }
+  return out
 }
 
 // ─── Element builders ────────────────────────────────────────────────────────
@@ -529,10 +605,14 @@ const layoutPart = (x: number, label: string): LayoutElement => ({
  * therefore not comparable between the two engines; the structural gate compares only
  * that a rest is present. See the gate's blind-spot list.
  */
-function restGlyph(notated: Rational): { name: GlyphName; step: number } | null {
-  const whole = ratToNumber(notated)
+function restGlyph(notated: Rational): { name: GlyphName; step: number; dots: number } | null {
+  const split = splitDots(notated)
+  if (split === null) return null
+  const { base, dots } = split
+
+  const whole = ratToNumber(base)
   if (!(whole > 0)) return null
-  if (whole >= 1) return { name: 'restWhole', step: 2 }
+  if (whole >= 1) return { name: 'restWhole', step: 2, dots }
 
   const log = Math.log2(1 / whole)
   if (!Number.isInteger(log)) return null
@@ -545,7 +625,7 @@ function restGlyph(notated: Rational): { name: GlyphName; step: number } | null 
   }
   const name = byLog[log]
   if (!name) return null
-  return { name, step: name === 'restHalf' ? 0 : 0 }
+  return { name, step: 0, dots }
 }
 
 function layoutRest(rest: Rest, x: number): LayoutElement {
@@ -554,12 +634,21 @@ function layoutRest(rest: Rest, x: number): LayoutElement {
   const invisible = rest.kind === 'invisible' || rest.kind === 'invisibleMultiMeasure'
   const spec = invisible || rest.kind === 'spacer' ? null : restGlyph(rest.notatedDuration)
 
+  const glyphs: PlacedGlyph[] = []
+  if (spec) {
+    glyphs.push(glyphAt(spec.name, x, spec.step))
+    if (spec.dots > 0) {
+      const dotX = x + GLYPHS[spec.name].width + ENGRAVE.dotGap
+      glyphs.push(...dotGlyphs(spec.dots, dotX, spec.step, new Set()))
+    }
+  }
+
   return {
     type: 'rest',
     x,
     width: ENGRAVE.noteAdvance,
     staffSteps: [],
-    glyphs: spec ? [glyphAt(spec.name, x, spec.step)] : [],
+    glyphs,
     lines: [],
     texts: [],
   }
@@ -694,6 +783,17 @@ function layoutNoteheads(
     lines.push(...ledgerLines(step, headX + dx, head.width))
   }
 
+  // Dots align in one column right of the WIDEST extent, so a chord's dots line up
+  // rather than stepping in and out with each displaced notehead.
+  let dotWidth = 0
+  if (spec.dots > 0) {
+    const rightmost = headX + Math.max(0, ...[...offsets.values()]) + head.width
+    const dotX = rightmost + ENGRAVE.dotGap
+    const taken = new Set<number>()
+    for (const step of steps) glyphs.push(...dotGlyphs(spec.dots, dotX, step, taken))
+    dotWidth = dotX - headX + spec.dots * ENGRAVE.dotSpacing
+  }
+
   if (spec.stemmed) {
     const anchor = up ? head.anchors.stemUpSE : head.anchors.stemDownNW
     const [ax, ay] = anchor ?? [up ? head.width : 0, 0]
@@ -718,8 +818,8 @@ function layoutNoteheads(
     // notehead. Wire up when the first fixture with unbeamed eighths lands.
   }
 
-  // A head displaced across the stem widens the element.
-  const spread = Math.max(0, ...[...offsets.values()].map(Math.abs))
+  // A head displaced across the stem, or a dot column, widens the element.
+  const spread = Math.max(0, ...[...offsets.values()].map(Math.abs), dotWidth)
   return {
     type: 'note',
     x,

@@ -73,13 +73,10 @@ describe('visual baselines', () => {
    * ABC's invisible `x` and spacer `y` rests, which occupy space and print nothing.
    */
   const UNDRAWN_NOTES: Record<string, number> = {
-    'S7-voices': 1,
-    'full-song-template': 4,
-    'happy-birthday': 7,
-    'little swallow': 7,
-    'program-127-test': 4,
-    'ragtime-nightingale': 18,
-    'zocharti-loch': 3,
+    // EMPTY, as of the dotted-duration work: every note in the corpus now draws. Kept
+    // rather than deleted because it is the assertion that a future duration change does
+    // not silently reintroduce holes — `noteGlyph` still returns null for a value no
+    // notehead can write, and that must stay visible if one ever reaches the corpus.
   }
 
   it('records exactly which fixtures still have notes that draw nothing', () => {

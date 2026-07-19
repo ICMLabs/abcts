@@ -379,12 +379,46 @@ describe('noteGlyph', () => {
     expect(noteGlyph(rational(1, 32))?.flags).toBe(3)
   })
 
-  it('refuses a dotted or tuplet duration rather than rounding it to a wrong notehead', () => {
-    // The whole point of the null return: a dotted half drawn as a half is wrong output,
-    // and the structural gate would never catch it because the staff position is right.
-    expect(noteGlyph(rational(3, 8))).toBeNull() // dotted quarter
-    expect(noteGlyph(rational(3, 4))).toBeNull() // dotted half
-    expect(noteGlyph(rational(1, 6))).toBeNull() // triplet eighth
+  it('splits a dotted duration into its base note and dot count', () => {
+    // A dot adds half of what precedes it, so d dots on base b are b(2^(d+1)-1)/2^d —
+    // which puts an ODD numerator of the form 2^(d+1)-1 over a power of two. Derived
+    // rather than tabled, so double and triple dots come free.
+    expect(noteGlyph(rational(3, 8))).toMatchObject({ head: 'noteheadBlack', dots: 1, flags: 0 })
+    expect(noteGlyph(rational(3, 4))).toMatchObject({ head: 'noteheadHalf', dots: 1 })
+    expect(noteGlyph(rational(3, 16))).toMatchObject({ head: 'noteheadBlack', dots: 1, flags: 1 })
+    expect(noteGlyph(rational(7, 16))).toMatchObject({ head: 'noteheadBlack', dots: 2 })
+    expect(noteGlyph(rational(15, 16))).toMatchObject({ head: 'noteheadHalf', dots: 3 })
+    expect(noteGlyph(rational(3, 2))).toMatchObject({ head: 'noteheadWhole', dots: 1 })
+  })
+
+  it("tells a breve from a dotted note by the numerator's ODD part", () => {
+    // `G8` at L:1/4 is 2/1 — undotted and twice a whole note. Testing (numerator + 1)
+    // for a power of two calls 3/8 dotted and 2/1 unwritable, which broke every long
+    // note in the corpus. Only the odd part can carry dots.
+    expect(noteGlyph(rational(2, 1))).toMatchObject({ head: 'noteheadWhole', dots: 0 })
+    expect(noteGlyph(rational(4, 1))).toMatchObject({ head: 'noteheadWhole', dots: 0 })
+    expect(noteGlyph(rational(3, 1))).toMatchObject({ head: 'noteheadWhole', dots: 1 })
+    expect(noteGlyph(rational(6, 1))).toMatchObject({ head: 'noteheadWhole', dots: 1 })
+  })
+
+  it('still refuses a duration no notehead and dots can write', () => {
+    // A wrong notehead is worse than none, and the structural gate would never catch it
+    // because the staff position stays right.
+    expect(noteGlyph(rational(1, 6))).toBeNull() // triplet eighth — but see below
+    expect(noteGlyph(rational(5, 8))).toBeNull()
     expect(noteGlyph(rational(0, 1))).toBeNull()
+  })
+
+  it('never sees a tuplet ratio, because notatedDuration excludes it by contract', () => {
+    // `(3abc` sounds each note as 1/12 but WRITES three eighths. If tuplet scaling ever
+    // leaked into notatedDuration, every tuplet note would silently stop drawing.
+    const score = parse('X:1\nM:4/4\nL:1/8\nK:C\n(3abc|\n').scores[0]
+    const notes = (score?.voices[0]?.measures[0]?.events ?? []).filter((e) => e.type === 'note')
+    expect(notes).toHaveLength(3)
+    for (const note of notes) {
+      expect(note.type === 'note' && noteGlyph(note.notatedDuration)).toMatchObject({
+        head: 'noteheadBlack',
+      })
+    }
   })
 })
