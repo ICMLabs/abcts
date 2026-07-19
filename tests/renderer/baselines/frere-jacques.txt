@@ -60,6 +60,7 @@ system 0 width=90.000 originY=0.000
       text  70.582,4.000 size=1.400 "mez"
     note@5 x=77.652 w=9.192
       glyph noteheadHalf 77.652,-2.500
+      glyph articAccentAbove 77.564,-3.500
       line  77.652,-2.332 -> 77.652,1.000 t=0.120
       text  76.492,4.000 size=1.400 "vous?"
     bar x=88.000 w=0.160
@@ -84,6 +85,7 @@ system 1 width=90.000 originY=21.630
       text  14.015,4.000 size=1.400 "mez"
     note@5 x=24.265 w=9.192
       glyph noteheadHalf 24.265,-2.500
+      glyph articAccentAbove 24.177,-3.500
       line  24.265,-2.332 -> 24.265,1.000 t=0.120
       text  23.105,4.000 size=1.400 "vous?"
     bar x=39.111 w=0.160
@@ -92,19 +94,23 @@ system 1 width=90.000 originY=21.630
       text  40.111,-5.000 size=1.600 bold "B"
     note@5 x=40.111 w=4.596
       glyph noteheadBlack 40.111,-2.500
+      glyph articStaccatoAbove 40.533,-3.500
       line  40.111,-2.332 -> 40.111,1.000 t=0.120
       text  39.301,4.000 size=1.400 "son-"
     note@6 x=46.978 w=4.596
       glyph noteheadBlack 46.978,-3.000
+      glyph articStaccatoAbove 47.400,-4.000
       line  46.578,-3.000 -> 48.558,-3.000 t=0.160
       line  46.978,-2.832 -> 46.978,1.167 t=0.120
       text  46.518,4.000 size=1.400 "nez"
     note@5 x=53.845 w=4.596
       glyph noteheadBlack 53.845,-2.500
+      glyph articStaccatoAbove 54.267,-3.500
       line  53.845,-2.332 -> 53.845,1.000 t=0.120
       text  53.385,4.000 size=1.400 "les"
     note@4 x=60.711 w=4.596
       glyph noteheadBlack 60.711,-2.000
+      glyph articStaccatoAbove 61.133,-3.000
       line  60.711,-1.832 -> 60.711,1.500 t=0.120
       text  60.251,4.000 size=1.400 "mâ-"
     note@3 x=67.578 w=6.500

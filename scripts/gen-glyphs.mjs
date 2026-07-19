@@ -79,6 +79,33 @@ const GLYPHS = [
   'augmentationDot',
   // Barlines — the dots of a repeat sign.
   'repeatDots',
+  // Articulations. SMuFL gives an Above and a Below design for each rather than one
+  // glyph reflected, because the shapes genuinely differ.
+  'articStaccatoAbove',
+  'articStaccatoBelow',
+  'articAccentAbove',
+  'articAccentBelow',
+  'articTenutoAbove',
+  'articTenutoBelow',
+  'articMarcatoAbove',
+  'articMarcatoBelow',
+  // Ornaments — always above the staff.
+  'fermataAbove',
+  'fermataBelow',
+  'ornamentTrill',
+  'ornamentMordent',
+  'ornamentShortTrill',
+  'ornamentTurn',
+  // Bowing.
+  'stringsUpBow',
+  'stringsDownBow',
+  // Navigation.
+  'segno',
+  'coda',
+  // Dynamics.
+  'dynamicPiano',
+  'dynamicMezzo',
+  'dynamicForte',
 ]
 
 const font = opentype.parse(readFileSync(FONT).buffer)

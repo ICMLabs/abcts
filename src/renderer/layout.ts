@@ -106,6 +106,8 @@ const ENGRAVE = {
    * content actually placed, so a tune with no tempo is no taller for the lane existing.
    */
   chordSymbolStep: 6,
+  ornamentStep: 7,
+  dynamicStep: -7,
   partStep: 10,
   tempoStep: 14,
   /** First verse below the staff; further verses stack downward by `lyricLineStep`. */
@@ -132,6 +134,12 @@ const ENGRAVE = {
    * centred approximately rather than exactly. Real metrics need a measured font.
    */
   textWidthRatio: 0.5,
+  /** Grace notes are drawn at this fraction of full size. *Behind Bars* ~60%. */
+  graceScale: 0.6,
+  /** Horizontal advance per grace note, before the note it decorates. */
+  graceAdvance: 1.1,
+  /** Gap between the last grace note and the notehead it leads into. */
+  graceGap: 0.4,
   /** How far a slur or tie endpoint sits clear of the notehead it springs from. */
   curveEndGap: 0.3,
   /** Arc height as a fraction of the curve's horizontal span, before clamping. */
@@ -173,6 +181,11 @@ export interface PlacedGlyph {
   readonly name: GlyphName
   readonly x: number
   readonly y: number
+  /**
+   * Uniform scale about the glyph origin. 1 unless stated — grace notes are the only
+   * thing that shrinks, and they shrink everything: notehead, stem and flag together.
+   */
+  readonly scale?: number
 }
 
 export interface PlacedLine {
@@ -897,6 +910,48 @@ function layoutNoteheads(
   const glyphs: PlacedGlyph[] = []
   const lines: PlacedLine[] = []
 
+  // Grace notes lead INTO the note, so they are laid out first and push everything else
+  // right. Each is a small notehead with a small stem; an acciaccatura (`{/g}`) takes a
+  // slash through the stems. *Behind Bars* draws them at about 60% and always stem-up.
+  let graceWidth = 0
+  if (event !== null && event.type !== 'rest' && event.graceNotes.length > 0) {
+    const scale = ENGRAVE.graceScale
+    const small = GLYPHS.noteheadBlack
+    const graceSteps = event.graceNotes.map((p) => pitchToStep(p, clef))
+
+    graceSteps.forEach((graceStep, i) => {
+      const gx = x + i * ENGRAVE.graceAdvance
+      glyphs.push({ name: 'noteheadBlack', x: gx, y: stepToY(graceStep), scale })
+      // The stem attaches at the scaled anchor and runs a scaled length upward.
+      const [ax, ay] = small.anchors.stemUpSE ?? [small.width, 0]
+      const stemX = gx + ax * scale
+      const base = stepToY(graceStep) + ay * scale
+      lines.push({
+        x1: stemX,
+        y1: base,
+        x2: stemX,
+        y2: base - ENGRAVE.stemLength * scale,
+        thickness: ENGRAVING_DEFAULTS.stemThickness * scale,
+      })
+    })
+
+    graceWidth = graceSteps.length * ENGRAVE.graceAdvance + ENGRAVE.graceGap
+
+    if (event.graceSlash) {
+      // One slash across the first grace note's stem, which is what marks the whole
+      // group as an acciaccatura however many notes it has.
+      const firstStep = graceSteps[0] ?? 0
+      const tipY = stepToY(firstStep) - ENGRAVE.stemLength * scale
+      lines.push({
+        x1: x - 0.2,
+        y1: tipY + 1.0,
+        x2: x + ENGRAVE.graceAdvance * 0.9,
+        y2: tipY - 0.2,
+        thickness: ENGRAVING_DEFAULTS.stemThickness * 1.4,
+      })
+    }
+  }
+
   // Stem direction follows the chord as a whole: away from the middle line, judged by
   // the midpoint of its outermost notes. On the middle line itself the stem goes down.
   // A beamed note takes its group's direction instead — a beam cannot join opposed stems.
@@ -906,6 +961,7 @@ function layoutNoteheads(
   // ONE column. Real engraving fans accidentals into several columns when they would
   // collide; with the heads at distinct steps they only collide for a cluster, and no
   // corpus fixture has one.
+  const noteX = x + graceWidth
   const accidentals = pitches
     .map((p) => ({ glyph: accidentalGlyph(p.accidental), step: pitchToStep(p, clef) }))
     .filter((a): a is { glyph: GlyphName; step: number } => a.glyph !== null)
@@ -915,8 +971,8 @@ function layoutNoteheads(
       ? 0
       : Math.max(...accidentals.map((a) => GLYPHS[a.glyph].advance)) + ENGRAVE.accidentalGap
 
-  for (const a of accidentals) glyphs.push(glyphAt(a.glyph, x, a.step))
-  const headX = x + accidentalWidth
+  for (const a of accidentals) glyphs.push(glyphAt(a.glyph, noteX, a.step))
+  const headX = noteX + accidentalWidth
 
   // A second cannot be printed on the same side of the stem — the noteheads would
   // overlap — so the offending head moves across it. *Behind Bars*. Working from the
@@ -983,12 +1039,15 @@ function layoutNoteheads(
   }
 
   const texts = event === null ? [] : noteText(event, headX, head.width)
+  if (event !== null && event.decorations.length > 0) {
+    glyphs.push(...decorationGlyphs(event.decorations, headX, head.width, highest, lowest, up))
+  }
 
   // The spring is the natural width, but ink is a rod: an accidental, a displaced head
   // or a dot column must never be crushed by a short duration, so the element is at
   // least as wide as what it draws plus the minimum gap.
   const spread = Math.max(0, ...[...offsets.values()].map(Math.abs), dotWidth)
-  const ink = accidentalWidth + spread + head.width + ENGRAVE.minColumnGap
+  const ink = graceWidth + accidentalWidth + spread + head.width + ENGRAVE.minColumnGap
   return {
     type: 'note',
     x,
@@ -1094,6 +1153,85 @@ function layoutBar(x: number, kind: Barline): LayoutElement {
     lines,
     texts: [],
   }
+}
+
+/**
+ * ABC decoration name → SMuFL glyph, and where it belongs.
+ *
+ * `articulation` hugs the notehead on the side opposite the stem; `ornament` sits above
+ * the staff clear of everything; `dynamic` sits below it. That is the convention and it
+ * is also what keeps three kinds of mark from fighting for one lane.
+ *
+ * Deliberately PARTIAL. The corpus uses a long tail — rolls, slides, glissandi,
+ * crescendo hairpins, fingerings — and several have no unambiguous SMuFL equivalent or
+ * are line-based rather than a glyph. Those are left undrawn and counted, rather than
+ * approximated with a glyph that means something else: an Irish roll is not a turn, and
+ * drawing one for the other is wrong output, which is worse than absent output.
+ */
+const DECORATIONS: Readonly<
+  Record<
+    string,
+    { above: GlyphName; below: GlyphName; place: 'articulation' | 'ornament' | 'dynamic' }
+  >
+> = {
+  staccato: { above: 'articStaccatoAbove', below: 'articStaccatoBelow', place: 'articulation' },
+  accent: { above: 'articAccentAbove', below: 'articAccentBelow', place: 'articulation' },
+  tenuto: { above: 'articTenutoAbove', below: 'articTenutoBelow', place: 'articulation' },
+  marcato: { above: 'articMarcatoAbove', below: 'articMarcatoBelow', place: 'articulation' },
+  fermata: { above: 'fermataAbove', below: 'fermataBelow', place: 'ornament' },
+  trill: { above: 'ornamentTrill', below: 'ornamentTrill', place: 'ornament' },
+  // ABC's `M` is the mordent with the vertical stroke; `P` is the one without, which
+  // SMuFL calls a short trill.
+  lowermordent: { above: 'ornamentMordent', below: 'ornamentMordent', place: 'ornament' },
+  uppermordent: { above: 'ornamentShortTrill', below: 'ornamentShortTrill', place: 'ornament' },
+  turn: { above: 'ornamentTurn', below: 'ornamentTurn', place: 'ornament' },
+  upbow: { above: 'stringsUpBow', below: 'stringsUpBow', place: 'ornament' },
+  downbow: { above: 'stringsDownBow', below: 'stringsDownBow', place: 'ornament' },
+  segno: { above: 'segno', below: 'segno', place: 'ornament' },
+  coda: { above: 'coda', below: 'coda', place: 'ornament' },
+  p: { above: 'dynamicPiano', below: 'dynamicPiano', place: 'dynamic' },
+  f: { above: 'dynamicForte', below: 'dynamicForte', place: 'dynamic' },
+}
+
+/**
+ * Decoration glyphs for one note.
+ *
+ * Articulations stack outward from the notehead on the side away from the stem, so a
+ * staccato dot never collides with its own stem. Ornaments and dynamics take their own
+ * lanes above and below the staff.
+ */
+function decorationGlyphs(
+  names: readonly string[],
+  headX: number,
+  headWidth: number,
+  topStep: number,
+  bottomStep: number,
+  stemUp: boolean,
+): PlacedGlyph[] {
+  const out: PlacedGlyph[] = []
+  // Away from the stem, and never inside the staff for a note that sits in it.
+  const artAbove = !stemUp
+  let artStep = artAbove ? Math.max(topStep, 4) + 2 : Math.min(bottomStep, -4) - 2
+  let ornamentStep = ENGRAVE.ornamentStep
+
+  for (const name of names) {
+    const spec = DECORATIONS[name]
+    if (spec === undefined) continue // unmapped — counted by the test, never guessed at
+
+    const glyph = spec.place === 'articulation' ? (artAbove ? spec.above : spec.below) : spec.above
+    const centre = headX + headWidth / 2 - GLYPHS[glyph].width / 2
+
+    if (spec.place === 'articulation') {
+      out.push({ name: glyph, x: centre, y: stepToY(artStep) })
+      artStep += artAbove ? 2 : -2
+    } else if (spec.place === 'ornament') {
+      out.push({ name: glyph, x: centre, y: stepToY(ornamentStep) })
+      ornamentStep += 2
+    } else {
+      out.push({ name: glyph, x: centre, y: stepToY(ENGRAVE.dynamicStep) })
+    }
+  }
+  return out
 }
 
 /** Estimated width of a run of text, in staff spaces. See `ENGRAVE.textWidthRatio`. */

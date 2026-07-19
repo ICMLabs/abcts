@@ -66,7 +66,10 @@ export function snapshot(score: Score): string {
       for (const el of staff.elements) {
         const steps = el.staffSteps.length > 0 ? `@${el.staffSteps.join(',')}` : ''
         lines.push(`    ${el.type}${steps} x=${n(el.x)} w=${n(el.width)}`)
-        for (const g of el.glyphs) lines.push(`      glyph ${g.name} ${n(g.x)},${n(g.y)}`)
+        for (const g of el.glyphs) {
+          const scale = g.scale === undefined || g.scale === 1 ? '' : ` scale=${n(g.scale)}`
+          lines.push(`      glyph ${g.name} ${n(g.x)},${n(g.y)}${scale}`)
+        }
         for (const l of el.lines) {
           lines.push(
             `      line  ${n(l.x1)},${n(l.y1)} -> ${n(l.x2)},${n(l.y2)} t=${n(l.thickness)}`,

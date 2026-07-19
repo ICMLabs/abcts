@@ -874,6 +874,85 @@ describe('slurs and ties', () => {
   })
 })
 
+describe('grace notes, chord symbols, lyrics and decorations', () => {
+  const notesOf = (abc: string) =>
+    layout(parse(`X:1\nM:4/4\nL:1/4\nK:C\n${abc}\n`).scores[0] as Score, { systemWidth: 300 })
+      .systems.flatMap((s) => s.staves.flatMap((st) => st.elements))
+      .filter((e) => e.type === 'note')
+
+  it('draws grace notes small, before the note they lead into', () => {
+    const [note] = notesOf('{AB}G2|')
+    const graces = (note?.glyphs ?? []).filter((g) => g.scale !== undefined && g.scale < 1)
+    expect(graces).toHaveLength(2)
+    const main = (note?.glyphs ?? []).find((g) => g.scale === undefined)
+    // Small, and to the LEFT of the notehead they decorate.
+    for (const g of graces) expect(g.x).toBeLessThan(main?.x ?? 0)
+  })
+
+  it('widens a SHORT note to make room for its grace notes', () => {
+    // Grace notes are ink, so they push the rod out — but only when the rod exceeds the
+    // spring. On a half note they fit inside the width its duration already buys, and
+    // the note does not widen at all; that is correct, not a missing feature.
+    const short = (abc: string) => notesOf(abc)[0]?.width ?? 0
+    expect(short('{ABc}G/4|')).toBeGreaterThan(short('G/4|'))
+    expect(short('{AB}G2|')).toBe(short('G2|'))
+  })
+
+  it('slashes an acciaccatura and not an appoggiatura', () => {
+    const lines = (abc: string) => notesOf(abc)[0]?.lines.length ?? 0
+    // `{/g}` is the slashed one. Same note, same grace count — one extra line.
+    expect(lines('{/A}G2|')).toBeGreaterThan(lines('{A}G2|'))
+  })
+
+  it('puts a chord symbol above and a lyric below', () => {
+    const [note] = notesOf('"Am"G2|\nw:la')
+    const chord = note?.texts.find((t) => t.text === 'Am')
+    const lyric = note?.texts.find((t) => t.text === 'la')
+    expect(chord).toBeDefined()
+    expect(lyric).toBeDefined()
+    // y is down: above the staff is negative, below is positive.
+    expect(chord?.y).toBeLessThan(-2)
+    expect(lyric?.y).toBeGreaterThan(2)
+  })
+
+  it('stacks extra verses downward', () => {
+    const [note] = notesOf('G2|\nw:one\nw:two')
+    const ys = (note?.texts ?? []).map((t) => t.y).sort((a, b) => a - b)
+    expect(ys).toHaveLength(2)
+    expect(ys[1]).toBeGreaterThan(ys[0] as number)
+  })
+
+  it('places an articulation away from the stem', () => {
+    // A low note has an up stem, so its staccato dot goes BELOW the notehead.
+    const low = notesOf('.C|')[0]?.glyphs.find((g) => g.name.startsWith('articStaccato'))
+    const high = notesOf(".c'|")[0]?.glyphs.find((g) => g.name.startsWith('articStaccato'))
+    expect(low?.name).toBe('articStaccatoBelow')
+    expect(high?.name).toBe('articStaccatoAbove')
+  })
+
+  it('maps the decorations it knows and draws nothing for the rest', () => {
+    // Partial by design: an Irish roll is not a turn, and drawing one for the other is
+    // wrong output rather than missing output.
+    const named = (abc: string) =>
+      (notesOf(abc)[0]?.glyphs ?? []).map((g) => g.name).filter((n) => !n.startsWith('notehead'))
+    expect(named('!trill!G|')).toEqual(['ornamentTrill'])
+    expect(named('!fermata!G|')).toEqual(['fermataAbove'])
+    expect(named('!upbow!G|')).toEqual(['stringsUpBow'])
+    // Unmapped: no glyph, and emphatically not a wrong one.
+    expect(named('!roll!G|')).toEqual([])
+    expect(named('!slide!G|')).toEqual([])
+  })
+
+  it('stacks several decorations on one note without overlapping', () => {
+    const glyphs = (notesOf('!staccato!!accent!!tenuto!G|')[0]?.glyphs ?? []).filter((g) =>
+      g.name.startsWith('artic'),
+    )
+    expect(glyphs).toHaveLength(3)
+    const ys = glyphs.map((g) => g.y)
+    expect(new Set(ys).size).toBe(3)
+  })
+})
+
 describe('noteGlyph', () => {
   it('maps the plain power-of-two durations', () => {
     expect(noteGlyph(rational(1, 1))?.head).toBe('noteheadWhole')

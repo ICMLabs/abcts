@@ -1,4 +1,4 @@
-bounds  width=90.000 height=109.856 top=0.000
+bounds  width=90.000 height=111.524 top=0.000
 systems 3
 system 0 width=90.000 originY=0.000
   staff 0 originY=7.392
@@ -156,7 +156,7 @@ system 1 width=90.000 originY=35.416
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
 system 2 width=71.371 originY=75.940
-  staff 0 originY=7.392
+  staff 0 originY=9.060
     staffline 0.000,2.000 -> 71.371,2.000 t=0.130
     staffline 0.000,1.000 -> 71.371,1.000 t=0.130
     staffline 0.000,0.000 -> 71.371,0.000 t=0.130
@@ -178,6 +178,7 @@ system 2 width=71.371 originY=75.940
       line  20.606,-0.332 -> 20.606,3.000 t=0.120
     note@-1 x=25.913 w=5.307
       glyph noteheadBlack 25.913,0.500
+      glyph ornamentTrill 25.461,-3.500
       line  27.093,0.332 -> 27.093,-3.000 t=0.120
     note@-2 x=31.220 w=5.307
       glyph noteheadBlack 31.220,1.000
@@ -202,7 +203,7 @@ system 2 width=71.371 originY=75.940
       line  64.244,0.832 -> 64.244,-2.500 t=0.120
     bar x=69.371 w=0.160
       line  69.451,-2.000 -> 69.451,2.000 t=0.160
-  staff 1 originY=23.916
+  staff 1 originY=25.584
     staffline 0.000,2.000 -> 71.371,2.000 t=0.130
     staffline 0.000,1.000 -> 71.371,1.000 t=0.130
     staffline 0.000,0.000 -> 71.371,0.000 t=0.130

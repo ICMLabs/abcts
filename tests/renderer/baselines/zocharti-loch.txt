@@ -1,4 +1,4 @@
-bounds  width=90.000 height=221.972 top=0.000
+bounds  width=90.000 height=224.820 top=0.000
 systems 3
 system 0 width=90.000 originY=0.000
   staff 0 originY=14.728
@@ -363,7 +363,7 @@ system 1 width=90.000 originY=76.800
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
 system 2 width=80.202 originY=148.264
-  staff 0 originY=7.392
+  staff 0 originY=8.816
     staffline 0.000,2.000 -> 80.202,2.000 t=0.130
     staffline 0.000,1.000 -> 80.202,1.000 t=0.130
     staffline 0.000,0.000 -> 80.202,0.000 t=0.130
@@ -402,11 +402,12 @@ system 2 width=80.202 originY=148.264
     note@2 x=65.943 w=11.258
       glyph noteheadHalf 65.943,-1.000
       glyph augmentationDot 67.473,-1.500
+      glyph fermataAbove 65.329,-3.500
       line  65.943,-0.832 -> 65.943,2.500 t=0.120
     bar x=78.202 w=0.720
       line  78.282,-2.000 -> 78.282,2.000 t=0.160
       line  78.842,-2.000 -> 78.842,2.000 t=0.160
-  staff 1 originY=23.916
+  staff 1 originY=26.764
     staffline 0.000,2.000 -> 80.202,2.000 t=0.130
     staffline 0.000,1.000 -> 80.202,1.000 t=0.130
     staffline 0.000,0.000 -> 80.202,0.000 t=0.130
@@ -441,11 +442,12 @@ system 2 width=80.202 originY=148.264
     note@-1 x=65.943 w=11.258
       glyph noteheadHalf 65.943,0.500
       glyph augmentationDot 67.473,0.500
+      glyph fermataAbove 65.329,-3.500
       line  67.123,0.332 -> 67.123,-3.000 t=0.120
     bar x=78.202 w=0.720
       line  78.282,-2.000 -> 78.282,2.000 t=0.160
       line  78.842,-2.000 -> 78.842,2.000 t=0.160
-  staff 2 originY=48.048
+  staff 2 originY=50.896
     staffline 0.000,2.000 -> 80.202,2.000 t=0.130
     staffline 0.000,1.000 -> 80.202,1.000 t=0.130
     staffline 0.000,0.000 -> 80.202,0.000 t=0.130
@@ -503,6 +505,7 @@ system 2 width=80.202 originY=148.264
       glyph accidentalSharp 65.943,-8.000
       glyph noteheadHalf 67.089,-8.000
       glyph augmentationDot 68.619,-8.500
+      glyph fermataAbove 66.475,-3.500
       line  66.689,-3.000 -> 68.669,-3.000 t=0.160
       line  66.689,-4.000 -> 68.669,-4.000 t=0.160
       line  66.689,-5.000 -> 68.669,-5.000 t=0.160
@@ -513,7 +516,7 @@ system 2 width=80.202 originY=148.264
     bar x=78.202 w=0.720
       line  78.282,-2.000 -> 78.282,2.000 t=0.160
       line  78.842,-2.000 -> 78.842,2.000 t=0.160
-  staff 3 originY=67.628
+  staff 3 originY=70.476
     staffline 0.000,2.000 -> 80.202,2.000 t=0.130
     staffline 0.000,1.000 -> 80.202,1.000 t=0.130
     staffline 0.000,0.000 -> 80.202,0.000 t=0.130
@@ -589,6 +592,7 @@ system 2 width=80.202 originY=148.264
     note@14 x=65.943 w=11.258
       glyph noteheadHalf 65.943,-7.000
       glyph augmentationDot 67.473,-7.500
+      glyph fermataAbove 65.329,-3.500
       line  65.543,-3.000 -> 67.523,-3.000 t=0.160
       line  65.543,-4.000 -> 67.523,-4.000 t=0.160
       line  65.543,-5.000 -> 67.523,-5.000 t=0.160

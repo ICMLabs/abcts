@@ -114,7 +114,9 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
         for (const g of el.glyphs) {
           // The glyph path is authored at the origin, so a translate is all that is needed.
           parts.push(
-            `<path class="${cls}" transform="translate(${num(g.x)},${num(g.y)})" d="${GLYPHS[g.name].path}"/>`,
+            `<path class="${cls}" transform="translate(${num(g.x)},${num(g.y)})${
+              g.scale === undefined || g.scale === 1 ? '' : ` scale(${num(g.scale)})`
+            }" d="${GLYPHS[g.name].path}"/>`,
           )
         }
         // Prose is a real <text> in a generic family, unlike musical glyphs, which are
