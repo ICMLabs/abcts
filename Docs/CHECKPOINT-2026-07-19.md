@@ -11,7 +11,7 @@ the parser and whose risk list is still live except where noted below.
 
 | | |
 |---|---|
-| Tests | **206 passing** (73 parser + 133 renderer) |
+| Tests | **215 passing** (73 parser + 142 renderer) |
 | Parser content parity | 39/39 gated fixtures, unchanged |
 | **Render structural parity** | **40 of 41** — the 41st is a recorded abcjs bug |
 | **Visual baselines** | **41 of 41**, committed geometry snapshots |
@@ -20,8 +20,8 @@ the parser and whose risk list is still live except where noted below.
 | Compat layer | none — zero code |
 
 Renders today: staff, all clefs, key signatures, meters, tempo marks, part labels,
-noteheads and chords with stems and ledger lines, accidentals, dotted durations
-(including double and triple dots), rests, barlines.
+noteheads and chords with stems, flags, beams and ledger lines, accidentals, dotted
+durations (including double and triple dots), rests, barlines.
 
 **Every note in the corpus draws.** No fixture has missing output.
 
@@ -148,12 +148,7 @@ here, work needs either new fixtures or the visual baselines.
 Ranked by how wrong the output is today. Nothing on this list produces MISSING output
 any more — dotted durations were the last of those.
 
-1. **Flags and beams.** An unbeamed eighth draws as a stemmed black notehead, so it is
-   indistinguishable from a quarter. The glyphs are extracted and the flag count is
-   computed; nothing places them, because beaming decides whether a flag is drawn at all.
-   Beaming also has 4 unanalysed parser failures carried from 2026-07-18. Biggest
-   remaining correctness gap.
-2. **Multi-voice and system breaking.** Only voice 0 of tune 0 is laid out, on one
+1. **Multi-voice and system breaking.** Only voice 0 of tune 0 is laid out, on one
    endless staff. Largest structural gap, and the structural gate is blind to it by
    construction — it reads voice 0 too. Baselines would catch a change here but there is
    nothing yet to change.
@@ -182,7 +177,19 @@ Carried forward from 2026-07-18 and still open: decoration/chord-symbol vocabula
    checkpoint expected the first SVG comparison to settle it. It has not:
    `voice-octave-shift` passes on voice 1, which has no shift. Still open, still needs
    voice 2 and a v1 comparison.
-3. **Beaming has 4 unanalysed failures**, and no beams or flags are rendered at all yet.
+3. **Beam GROUPING differs from abcjs on 3 fixtures** (`S5-directives`, `S7-voices`,
+   `S8-layout`), a handful of links each — the asserted `BEAM_FAILURES` set. Beams and
+   flags now RENDER; this is about which notes get grouped, not how a group is drawn.
+
+   No longer unanalysed. Three findings:
+   - The tie-then-space rule is **verified load-bearing**, not a guess: removing it takes
+     parity from 36/41 to 35/41 because `ragtime-mini` depends on it.
+   - It is also **insufficient** — it does not explain S7-voices or S8-layout, which have
+     the same tie-then-space shape yet diverge the other way.
+   - abcjs's mechanism is now known from its own source (MIT, vendored): a space sets
+     `end_beam` on the note it FOLLOWS, and `endBeamHere` includes that note in the run.
+     `force_end_beam_last` (chord symbol + whitespace) is ruled out — S8-layout has no
+     such pattern. A third cause remains unidentified.
 4. **Spacing is flat and duration-independent.** A half note takes an eighth's width.
    Legible now, wrong the moment a bar mixes durations. Upgrade path is the
    Gourlay/LilyPond spring model abcMusicKit2 already uses.
