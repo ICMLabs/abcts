@@ -1,0 +1,33 @@
+bounds  width=32.060 height=15.032 top=-7.400
+systems 1
+system 0
+  staff  0.000,2.000 -> 32.060,2.000 t=0.130
+  staff  0.000,1.000 -> 32.060,1.000 t=0.130
+  staff  0.000,0.000 -> 32.060,0.000 t=0.130
+  staff  0.000,-1.000 -> 32.060,-1.000 t=0.130
+  staff  0.000,-2.000 -> 32.060,-2.000 t=0.130
+  clef x=1.000 w=2.684
+    glyph gClef 1.000,1.000
+  keySignature x=4.684 w=0.996
+    glyph accidentalSharp 4.684,-2.000
+  timeSignature x=6.680 w=1.880
+    glyph timeSig4 6.680,-1.000
+    glyph timeSig4 6.680,1.000
+  note@-5 x=9.560 w=3.500
+    glyph noteheadWhole 9.560,2.500
+  bar x=14.060 w=0.160
+    line  14.060,-2.000 -> 14.060,2.000 t=0.160
+  note@0 x=15.060 w=3.500
+    glyph noteheadBlack 15.060,0.000
+    line  15.060,0.168 -> 15.060,3.500 t=0.120
+  note@-2 x=18.560 w=3.500
+    glyph noteheadBlack 18.560,1.000
+    line  19.740,0.832 -> 19.740,-2.500 t=0.120
+  note@-5 x=22.060 w=3.500
+    glyph noteheadBlack 22.060,2.500
+    line  23.240,2.332 -> 23.240,-1.000 t=0.120
+  note@-4 x=25.560 w=3.500
+    glyph noteheadBlack 25.560,2.000
+    line  26.740,1.832 -> 26.740,-1.500 t=0.120
+  bar x=30.060 w=0.160
+    line  30.060,-2.000 -> 30.060,2.000 t=0.160

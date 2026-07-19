@@ -1,7 +1,7 @@
 {
   "name": "abcts",
   "version": "0.0.0",
-  "description": "Modern TypeScript ABC notation library — community successor to abcjs",
+  "description": "Modern TypeScript ABC notation library \u2014 community successor to abcjs",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -30,7 +30,8 @@
     "test:corpus": "vitest run tests/corpus",
     "lint": "biome check ./src ./tests",
     "lint:fix": "biome check --write ./src ./tests",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "baseline": "ABCTS_SNAPSHOT_RECORD=1 vitest run tests/renderer/baseline.test.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.4",

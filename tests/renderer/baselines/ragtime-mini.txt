@@ -1,0 +1,55 @@
+bounds  width=48.898 height=18.840 top=-10.280
+systems 1
+system 0
+  staff  0.000,2.000 -> 48.898,2.000 t=0.130
+  staff  0.000,1.000 -> 48.898,1.000 t=0.130
+  staff  0.000,0.000 -> 48.898,0.000 t=0.130
+  staff  0.000,-1.000 -> 48.898,-1.000 t=0.130
+  staff  0.000,-2.000 -> 48.898,-2.000 t=0.130
+  clef x=1.000 w=2.684
+    glyph gClef 1.000,1.000
+  keySignature x=4.684 w=3.012
+    glyph accidentalFlat 4.684,0.000
+    glyph accidentalFlat 5.738,-1.500
+    glyph accidentalFlat 6.792,0.500
+  timeSignature x=8.696 w=1.880
+    glyph timeSig2 8.744,-1.000
+    glyph timeSig4 8.696,1.000
+  tempo x=11.576 w=0.000
+    text  11.576,-5.000 size=1.600 "= 80"
+  rest x=11.576 w=3.500
+  bar x=16.076 w=0.160
+    line  16.076,-2.000 -> 16.076,2.000 t=0.160
+  note@-3,1 x=17.076 w=3.500
+    glyph noteheadBlack 17.076,1.500
+    glyph noteheadBlack 17.076,-0.500
+    line  18.256,1.332 -> 18.256,-4.000 t=0.120
+  note@4 x=20.576 w=3.500
+    glyph noteheadBlack 20.576,-2.000
+    line  20.576,-1.832 -> 20.576,1.500 t=0.120
+  note@-3,1 x=24.076 w=3.500
+    glyph noteheadBlack 24.076,1.500
+    glyph noteheadBlack 24.076,-0.500
+    line  25.256,1.332 -> 25.256,-4.000 t=0.120
+  note@-2,0,5 x=27.576 w=4.322
+    glyph accidentalNatural 27.576,0.000
+    glyph noteheadBlack 28.398,1.000
+    glyph noteheadBlack 28.398,0.000
+    glyph noteheadBlack 28.398,-2.500
+    line  28.398,-2.332 -> 28.398,4.500 t=0.120
+  note@-2,0,5 x=31.898 w=3.500
+    glyph noteheadBlack 31.898,1.000
+    glyph noteheadBlack 31.898,0.000
+    glyph noteheadBlack 31.898,-2.500
+    line  31.898,-2.332 -> 31.898,4.500 t=0.120
+  note@-2 x=35.398 w=3.500
+    glyph noteheadBlack 35.398,1.000
+    line  36.578,0.832 -> 36.578,-2.500 t=0.120
+  note@5 x=38.898 w=3.500
+    glyph noteheadBlack 38.898,-2.500
+    line  38.898,-2.332 -> 38.898,1.000 t=0.120
+  note@4 x=42.398 w=3.500
+    glyph noteheadBlack 42.398,-2.000
+    line  42.398,-1.832 -> 42.398,1.500 t=0.120
+  bar x=46.898 w=0.160
+    line  46.898,-2.000 -> 46.898,2.000 t=0.160

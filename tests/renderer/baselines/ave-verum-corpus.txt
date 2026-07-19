@@ -1,0 +1,50 @@
+bounds  width=49.674 height=17.912 top=-10.280
+systems 1
+system 0
+  staff  0.000,2.000 -> 49.674,2.000 t=0.130
+  staff  0.000,1.000 -> 49.674,1.000 t=0.130
+  staff  0.000,0.000 -> 49.674,0.000 t=0.130
+  staff  0.000,-1.000 -> 49.674,-1.000 t=0.130
+  staff  0.000,-2.000 -> 49.674,-2.000 t=0.130
+  clef x=1.000 w=2.684
+    glyph gClef 1.000,1.000
+  keySignature x=4.684 w=2.142
+    glyph accidentalSharp 4.684,-2.000
+    glyph accidentalSharp 5.830,-0.500
+  timeSignature x=7.826 w=1.880
+    glyph timeSig4 7.826,-1.000
+    glyph timeSig4 7.826,1.000
+  tempo x=10.706 w=0.000
+    text  10.706,-5.000 size=1.600 bold "Adagio"
+  rest x=10.706 w=3.500
+    glyph restWhole 10.706,-1.000
+  bar x=15.206 w=0.160
+    line  15.206,-2.000 -> 15.206,2.000 t=0.160
+  rest x=16.206 w=3.500
+    glyph restWhole 16.206,-1.000
+  bar x=20.706 w=0.160
+    line  20.706,-2.000 -> 20.706,2.000 t=0.160
+  note@-1 x=21.706 w=3.500
+    glyph noteheadHalf 21.706,0.500
+    line  22.886,0.332 -> 22.886,-3.000 t=0.120
+  note@2 x=25.206 w=3.500
+    glyph noteheadBlack 25.206,-1.000
+    line  25.206,-0.832 -> 25.206,2.500 t=0.120
+  note@-3 x=28.706 w=3.500
+    glyph noteheadBlack 28.706,1.500
+    line  29.886,1.332 -> 29.886,-2.000 t=0.120
+  bar x=33.206 w=0.160
+    line  33.206,-2.000 -> 33.206,2.000 t=0.160
+  note@-1 x=34.206 w=3.500
+    glyph noteheadBlack 34.206,0.500
+    line  35.386,0.332 -> 35.386,-3.000 t=0.120
+  note@-2 x=37.706 w=4.646
+    glyph accidentalSharp 37.706,1.000
+    glyph noteheadBlack 38.852,1.000
+    line  40.032,0.832 -> 40.032,-2.500 t=0.120
+  note@-2 x=42.352 w=4.322
+    glyph accidentalNatural 42.352,1.000
+    glyph noteheadHalf 43.174,1.000
+    line  44.354,0.832 -> 44.354,-2.500 t=0.120
+  bar x=47.674 w=0.160
+    line  47.674,-2.000 -> 47.674,2.000 t=0.160
