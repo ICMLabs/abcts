@@ -58,6 +58,11 @@ export function snapshot(score: Score): string {
           `    beam   ${n(beam.x1)},${n(beam.y1)} -> ${n(beam.x2)},${n(beam.y2)} t=${n(beam.thickness)}`,
         )
       }
+      for (const c of staff.curves) {
+        lines.push(
+          `    ${c.kind}  ${n(c.x1)},${n(c.y1)} -> ${n(c.x2)},${n(c.y2)} bulge=${n(c.bulge)}`,
+        )
+      }
       for (const el of staff.elements) {
         const steps = el.staffSteps.length > 0 ? `@${el.staffSteps.join(',')}` : ''
         lines.push(`    ${el.type}${steps} x=${n(el.x)} w=${n(el.width)}`)

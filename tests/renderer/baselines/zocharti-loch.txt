@@ -7,6 +7,7 @@ system 0 width=90.000 originY=0.000
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
+    slur  12.563,-0.800 -> 38.184,-3.300 bulge=-2.200
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=1.958
@@ -48,6 +49,7 @@ system 0 width=90.000 originY=0.000
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
+    slur  12.563,0.200 -> 38.184,-2.300 bulge=-2.200
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=1.958
@@ -156,6 +158,8 @@ system 1 width=90.000 originY=74.800
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
+    slur  9.192,-1.800 -> 20.588,-1.800 bulge=-2.051
+    slur  62.109,-0.800 -> 80.103,-3.300 bulge=-2.200
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=1.958
@@ -205,6 +209,7 @@ system 1 width=90.000 originY=74.800
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
+    slur  9.192,-0.800 -> 20.588,-0.800 bulge=-2.051
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=1.958
@@ -244,6 +249,7 @@ system 1 width=90.000 originY=74.800
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
+    slur  62.109,-7.800 -> 80.103,-11.800 bulge=-2.200
     clef x=1.000 w=2.736
       glyph fClef 1.000,-1.000
     keySignature x=4.736 w=1.958
@@ -364,6 +370,7 @@ system 2 width=80.202 originY=146.264
     staffline 0.000,-1.000 -> 80.202,-1.000 t=0.130
     staffline 0.000,-2.000 -> 80.202,-2.000 t=0.130
     beam   54.751,1.250 -> 59.347,1.750 t=0.500
+    slur  49.731,-1.800 -> 59.047,-2.300 bulge=-1.677
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=1.958
@@ -405,6 +412,7 @@ system 2 width=80.202 originY=146.264
     staffline 0.000,0.000 -> 80.202,0.000 t=0.130
     staffline 0.000,-1.000 -> 80.202,-1.000 t=0.130
     staffline 0.000,-2.000 -> 80.202,-2.000 t=0.130
+    slur  51.178,-0.800 -> 56.459,-1.300 bulge=-0.950
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=1.958
@@ -511,6 +519,7 @@ system 2 width=80.202 originY=146.264
     staffline 0.000,0.000 -> 80.202,0.000 t=0.130
     staffline 0.000,-1.000 -> 80.202,-1.000 t=0.130
     staffline 0.000,-2.000 -> 80.202,-2.000 t=0.130
+    slur  51.178,-7.800 -> 56.459,-7.300 bulge=-0.950
     clef x=1.000 w=2.736
       glyph fClef 1.000,-1.000
     keySignature x=4.736 w=1.958

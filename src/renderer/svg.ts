@@ -11,7 +11,7 @@
  */
 
 import { GLYPHS } from './glyphs.js'
-import type { Layout, PlacedLine } from './layout.js'
+import type { Layout, PlacedCurve, PlacedLine } from './layout.js'
 
 export interface RenderOptions {
   /** Pixels per staff space. 8 gives a ~32px staff, close to typical engraving size. */
@@ -66,6 +66,29 @@ function lineToRect(line: PlacedLine, cls: string): string {
   return `<rect class="${cls}" x="${num(x)}" y="${num(y)}" width="${num(w)}" height="${num(h)}"/>`
 }
 
+/**
+ * A slur or tie as a filled lens: out along the top edge, back along the bottom.
+ *
+ * Drawn as a closed shape rather than a stroked spline because a slur is not a constant
+ * width — it tapers to a hairline at both ends and swells in the middle, which is what
+ * SMuFL's separate endpoint and midpoint thicknesses describe. Two cubics with control
+ * points at the thirds give the shallow, even arc *Behind Bars* asks for.
+ */
+function curveToPath(curve: PlacedCurve, cls: string): string {
+  const { x1, y1, x2, y2, bulge } = curve
+  const dx = x2 - x1
+  // Control points at the thirds, pushed out by the bulge. The outer edge carries the
+  // full arc; the inner edge falls short by the midpoint thickness, which opens the lens.
+  const inner = bulge - Math.sign(bulge) * curve.midThickness
+  const cx1 = x1 + dx / 3
+  const cx2 = x1 + (dx * 2) / 3
+  const lift = (t: number) => (v: number) => v + t
+
+  const outer = `C${num(cx1)},${num(lift(bulge)(y1))} ${num(cx2)},${num(lift(bulge)(y2))} ${num(x2)},${num(y2)}`
+  const back = `C${num(cx2)},${num(lift(inner)(y2))} ${num(cx1)},${num(lift(inner)(y1))} ${num(x1)},${num(y1)}`
+  return `<path class="${cls}" d="M${num(x1)},${num(y1)} ${outer} ${back}Z"/>`
+}
+
 export function toSVG(doc: Layout, options: RenderOptions = {}): string {
   const scale = options.staffSpace ?? 8
   const prefix = options.className ?? 'abcts'
@@ -81,6 +104,9 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
       parts.push(`<g class="${prefix}-staff-group" transform="translate(0,${num(staff.originY)})">`)
       for (const line of staff.staffLines) parts.push(lineToRect(line, `${prefix}-staff`))
       for (const beam of staff.beams) parts.push(lineToRect(beam, `${prefix}-beam`))
+      for (const curve of staff.curves) {
+        parts.push(curveToPath(curve, `${prefix}-${curve.kind}`))
+      }
 
       for (const el of staff.elements) {
         const cls = `${prefix}-${el.type}`

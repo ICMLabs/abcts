@@ -115,6 +115,13 @@ const ENGRAVE = {
   beamMaxRise: 2.0,
   /** Length of a secondary-beam stub on a note whose neighbours lack that level. */
   beamStubLength: 1.1,
+  /** How far a slur or tie endpoint sits clear of the notehead it springs from. */
+  curveEndGap: 0.3,
+  /** Arc height as a fraction of the curve's horizontal span, before clamping. */
+  curveBulgeRatio: 0.18,
+  /** Arc height floor and ceiling, in staff spaces. *Behind Bars* keeps slurs shallow. */
+  curveMinBulge: 0.5,
+  curveMaxBulge: 2.2,
   /**
    * Width a system may reach before it wraps, in staff spaces. Roughly a page width at a
    * typical staff size; a host that knows its viewport should pass `systemWidth`.
@@ -221,6 +228,26 @@ export interface StemInfo {
  * `originY`. Each staff carries its own clef, so a staff step means a different pitch on
  * different staves — which is exactly why the coordinate space is per staff, not shared.
  */
+/**
+ * A slur or tie: a lens-shaped curve, thin at the ends and thicker in the middle.
+ *
+ * Stored as endpoints plus a signed bulge rather than explicit control points, because
+ * everything downstream wants the shape rather than the spline — the SVG backend derives
+ * the two cubics, and a future canvas backend would derive its own.
+ */
+export interface PlacedCurve {
+  readonly x1: number
+  readonly y1: number
+  readonly x2: number
+  readonly y2: number
+  /** Height of the arc at its midpoint. NEGATIVE arcs upward, matching y-down. */
+  readonly bulge: number
+  readonly endThickness: number
+  readonly midThickness: number
+  /** A tie joins one pitch to itself; a slur spans a phrase. They differ in shape rules. */
+  readonly kind: 'tie' | 'slur'
+}
+
 export interface LayoutStaff {
   readonly elements: readonly LayoutElement[]
   readonly staffLines: readonly PlacedLine[]
@@ -230,6 +257,11 @@ export interface LayoutStaff {
    * a beam never joins two voices.
    */
   readonly beams: readonly PlacedLine[]
+  /**
+   * Slurs and ties, which like beams belong to no single element — each spans from one
+   * notehead to another and is resolved once every member's position is known.
+   */
+  readonly curves: readonly PlacedCurve[]
   /** Vertical offset of this staff's middle line within its system. */
   readonly originY: number
 }
@@ -1043,6 +1075,100 @@ function layoutBar(x: number, kind: Barline): LayoutElement {
   }
 }
 
+// ─── Slurs and ties ──────────────────────────────────────────────────────────
+
+/** Where a curve can attach to a note, recorded during layout. */
+interface NoteAnchor {
+  /** Left and right edges of the notehead, and its vertical extremes. */
+  readonly left: number
+  readonly right: number
+  readonly top: number
+  readonly bottom: number
+  readonly stemUp: boolean
+  /** The source event, so ties and slurs can be matched to what the music said. */
+  readonly event: MusicEvent
+}
+
+/**
+ * Build one curve between two anchors.
+ *
+ * A slur or tie sits on the NOTEHEAD side, opposite the stems — that is the convention,
+ * and it is also what keeps the curve clear of the stems and beams. When the two ends
+ * disagree about stem direction the curve goes above, which is the usual tie-break.
+ */
+function buildCurve(from: NoteAnchor, to: NoteAnchor, kind: 'tie' | 'slur'): PlacedCurve {
+  // Opposite the stems: an up-stem note carries its slur below the notehead.
+  const above = !(from.stemUp && to.stemUp)
+  const direction = above ? -1 : 1
+
+  const x1 = from.right + ENGRAVE.curveEndGap
+  const x2 = to.left - ENGRAVE.curveEndGap
+  const edge = (a: NoteAnchor) => (above ? a.top : a.bottom) + direction * ENGRAVE.curveEndGap
+
+  const span = Math.max(0, x2 - x1)
+  const bulge = Math.min(
+    ENGRAVE.curveMaxBulge,
+    Math.max(ENGRAVE.curveMinBulge, span * ENGRAVE.curveBulgeRatio),
+  )
+
+  return {
+    x1,
+    y1: edge(from),
+    x2,
+    y2: edge(to),
+    bulge: bulge * direction,
+    endThickness:
+      kind === 'tie'
+        ? ENGRAVING_DEFAULTS.tieEndpointThickness
+        : ENGRAVING_DEFAULTS.slurEndpointThickness,
+    midThickness:
+      kind === 'tie'
+        ? ENGRAVING_DEFAULTS.tieMidpointThickness
+        : ENGRAVING_DEFAULTS.slurMidpointThickness,
+    kind,
+  }
+}
+
+/**
+ * Resolve every tie and slur over one staff's notes, in order.
+ *
+ * Ties are pairwise and local: `tiedToNext` joins a note to the one after it. Slurs
+ * nest, so `slurStarts` and `slurEnds` are COUNTS and matching them needs a stack —
+ * `((AB)C)` has two slurs opening on the same note and they close in reverse.
+ *
+ * ponytail: a curve whose ends fall in different SYSTEMS is dropped rather than drawn
+ * wrong. Engraving splits it in two, one piece running to the end of the first system
+ * and another from the start of the next; that needs the halves laid out separately and
+ * is a slice of its own. `vree-ties-across-bars` ties across a BARLINE, which is fine —
+ * only a system break drops one.
+ */
+function layoutCurves(anchors: readonly NoteAnchor[]): PlacedCurve[] {
+  const curves: PlacedCurve[] = []
+  const open: number[] = []
+
+  anchors.forEach((anchor, i) => {
+    const event = anchor.event
+    if (event.type === 'rest') return
+
+    // Slurs close before they open, so `(A)(B)` closes on A before opening on B.
+    for (let n = 0; n < event.slurEnds; n++) {
+      const start = open.pop()
+      const from = start === undefined ? undefined : anchors[start]
+      if (from !== undefined) curves.push(buildCurve(from, anchor, 'slur'))
+    }
+    for (let n = 0; n < event.slurStarts; n++) open.push(i)
+
+    if (event.tiedToNext) {
+      const next = anchors[i + 1]
+      // A tie needs somewhere to land: the last note of a staff has no next note,
+      // which is what a tie across a system break looks like from here.
+      if (next !== undefined) curves.push(buildCurve(anchor, next, 'tie'))
+    }
+  })
+
+  return curves
+}
+
 // ─── Beams ───────────────────────────────────────────────────────────────────
 
 /**
@@ -1189,6 +1315,8 @@ interface MeasureBlock {
    * busy voice's, and the staves would stop lining up.
    */
   readonly closingBarIndex: number | null
+  /** Note anchors for slur and tie resolution, positioned LOCAL to this block. */
+  readonly anchors: readonly NoteAnchor[]
   /**
    * Width of the music alone, excluding the closing barline and its gaps.
    *
@@ -1210,6 +1338,7 @@ function layoutMeasure(
 ): MeasureBlock {
   const elements: LayoutElement[] = []
   const beams = new Map<number, StemInfo[]>()
+  const anchors: NoteAnchor[] = []
   let x = 0
 
   // The label precedes the barline that opens its part.
@@ -1239,6 +1368,20 @@ function layoutMeasure(
       members.push({ ...stemOut.value, element: elements.length })
       beams.set(group, members)
     }
+    // Anchor the curve endpoints on the NOTEHEAD, not the element: an accidental shifts
+    // the head right, and a slur springing from the accidental would start in mid-air.
+    const heads = el.glyphs.filter((g) => g.name.startsWith('notehead'))
+    if (heads.length > 0) {
+      const width = GLYPHS[heads[0]?.name ?? 'noteheadBlack'].width
+      anchors.push({
+        left: Math.min(...heads.map((h) => h.x)),
+        right: Math.max(...heads.map((h) => h.x)) + width,
+        top: Math.min(...heads.map((h) => h.y)) - 0.5,
+        bottom: Math.max(...heads.map((h) => h.y)) + 0.5,
+        stemUp: el.lines.some((l) => l.x1 === l.x2 && l.y2 < l.y1),
+        event,
+      })
+    }
     elements.push(el)
     x += el.width
   }
@@ -1252,7 +1395,7 @@ function layoutMeasure(
     x += ENGRAVE.barGap
   }
 
-  return { elements, width: x, beams, closingBarIndex, musicWidth }
+  return { elements, width: x, beams, anchors, closingBarIndex, musicWidth }
 }
 
 /** Shift a laid-out measure sideways into its place in a system. */
@@ -1396,6 +1539,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     const staves: LayoutStaff[] = plans.map((plan, voiceIndex) => {
       const elements: LayoutElement[] = [...plan.prefix(withMeter, voiceIndex === 0).elements]
       const beamGroups = new Map<number, StemInfo[]>()
+      const anchors: NoteAnchor[] = []
       let x = head
 
       for (let i = span.start; i < span.end; i++) {
@@ -1431,6 +1575,9 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
             }))
             beamGroups.set(group, [...(beamGroups.get(group) ?? []), ...shifted])
           }
+          for (const a of block.anchors) {
+            anchors.push({ ...a, left: a.left * stretch + x, right: a.right * stretch + x })
+          }
         }
         // Advance by the COLUMN, not the block, so every staff stays in step.
         x += (columnWidths[i] ?? 0) * justify
@@ -1440,8 +1587,11 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       // Beams last: they retarget stems already placed and need every member's final
       // position. A beam never crosses a barline, so it never crosses a system break.
       for (const group of beamGroups.values()) beams.push(...layoutBeam(group, elements))
+      // Curves after beams, since a slur sits clear of the noteheads either way but the
+      // stem directions it reads are only settled once beaming has forced them.
+      const curves = layoutCurves(anchors)
 
-      return { elements, staffLines: [], beams, originY: 0 }
+      return { elements, staffLines: [], beams, curves, originY: 0 }
     })
 
     const width = head + natural * justify + ENGRAVE.marginX

@@ -798,6 +798,82 @@ describe('barline shapes', () => {
   })
 })
 
+describe('slurs and ties', () => {
+  const curvesOf = (abc: string) =>
+    layout(parse(`X:1\nM:4/4\nL:1/4\nK:C\n${abc}\n`).scores[0] as Score, {
+      systemWidth: 400,
+    }).systems.flatMap((s) => s.staves.flatMap((st) => st.curves))
+
+  it('draws a tie between tied notes and a slur between slurred ones', () => {
+    expect(curvesOf('G-G|').map((c) => c.kind)).toEqual(['tie'])
+    expect(curvesOf('(GG)|').map((c) => c.kind)).toEqual(['slur'])
+    expect(curvesOf('GG|')).toEqual([])
+  })
+
+  it('nests slurs, matching each close to the most recent open', () => {
+    // `(G(GG)G)` — the slurs open on DIFFERENT notes, which is what makes this a real
+    // test of the stack. In `((GG)GG)` both open on the same note, so pairing them
+    // first-in-first-out gives identical answers and the test proves nothing; a
+    // mutation to `shift()` passed the whole suite until this case was used.
+    const curves = [...curvesOf('(G(GG)G)|')].sort((a, b) => a.x2 - a.x1 - (b.x2 - b.x1))
+    expect(curves).toHaveLength(2)
+    // The inner (shorter) slur opens LATER than the outer one. Matched first-in-
+    // first-out they would both start on the first note.
+    expect(curves[0]?.x1 ?? 0).toBeGreaterThan(curves[1]?.x1 ?? 0)
+  })
+
+  it('handles a slur that opens and closes on the same note', () => {
+    expect(curvesOf('(G(G)GG)|')).toHaveLength(2)
+  })
+
+  it('tells a tie from a slur when both are on one note', () => {
+    const kinds = curvesOf('(G-GGG)|')
+      .map((c) => c.kind)
+      .sort()
+    expect(kinds).toEqual(['slur', 'tie'])
+  })
+
+  it('ties across a barline', () => {
+    // `vree-ties-across-bars` is a corpus fixture: a tie is a musical join and does not
+    // care where the bar falls.
+    const [tie] = curvesOf('G-|G|')
+    expect(tie?.kind).toBe('tie')
+    expect(tie?.x2).toBeGreaterThan(tie?.x1 as number)
+  })
+
+  it('arcs away from the stems', () => {
+    // The convention, and it is also what keeps a curve clear of stems and beams: an
+    // up-stem note carries its slur BELOW the notehead. y is down, so a downward arc is
+    // a positive bulge.
+    expect(curvesOf('(GG)|')[0]?.bulge).toBeGreaterThan(0) // low notes, stems up
+    expect(curvesOf('(cc)|')[0]?.bulge).toBeLessThan(0) // high notes, stems down
+  })
+
+  it('springs from the notehead, not from the accidental', () => {
+    // An accidental shifts the head right; a curve anchored on the element origin would
+    // start in mid-air to the left of the note.
+    const plain = curvesOf('(GG)|')[0]
+    const sharped = curvesOf('(^G^G)|')[0]
+    expect((sharped?.x1 ?? 0) - (plain?.x1 ?? 0)).toBeGreaterThan(0.5)
+  })
+
+  it('keeps the arc shallow however long the span', () => {
+    // *Behind Bars* keeps slurs shallow; an arc proportional to span without a cap
+    // becomes a semicircle over a long phrase.
+    const long = curvesOf('(GGGGGGGG)|')[0]
+    expect(Math.abs(long?.bulge ?? 0)).toBeLessThanOrEqual(2.2)
+    // And not vanishingly flat over a short one.
+    expect(Math.abs(curvesOf('(GG)|')[0]?.bulge ?? 0)).toBeGreaterThanOrEqual(0.5)
+  })
+
+  it('drops a curve with nowhere to land rather than drawing it wrong', () => {
+    // A tie on the last note of a staff has no next note. Engraving splits such a curve
+    // across the system break; until that exists, drawing nothing beats drawing a curve
+    // to an arbitrary point.
+    expect(curvesOf('GGGG|GGGG-|')).toEqual([])
+  })
+})
+
 describe('noteGlyph', () => {
   it('maps the plain power-of-two durations', () => {
     expect(noteGlyph(rational(1, 1))?.head).toBe('noteheadWhole')
