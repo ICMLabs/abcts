@@ -11,7 +11,7 @@ the parser and whose risk list is still live except where noted below.
 
 | | |
 |---|---|
-| Tests | **215 passing** (73 parser + 142 renderer) |
+| Tests | **229 passing** (73 parser + 156 renderer) |
 | Parser content parity | 39/39 gated fixtures, unchanged |
 | **Render structural parity** | **40 of 41** — the 41st is a recorded abcjs bug |
 | **Visual baselines** | **41 of 41**, committed geometry snapshots |
@@ -21,7 +21,8 @@ the parser and whose risk list is still live except where noted below.
 
 Renders today: staff, all clefs, key signatures, meters, tempo marks, part labels,
 noteheads and chords with stems, flags, beams and ledger lines, accidentals, dotted
-durations (including double and triple dots), rests, barlines.
+durations (including double and triple dots), rests, barlines — across MULTIPLE VOICES,
+each on its own staff, wrapped into systems that break at the page width.
 
 **Every note in the corpus draws.** No fixture has missing output.
 
@@ -64,7 +65,10 @@ middle line.
 
 - **First tune, first voice only.** `clefs` is eight tunes and passes on tune 1.
   `voice-octave-shift` passes on its *unshifted* voice, so it does **not** settle
-  risk 2 below.
+  risk 2 below. Core now RENDERS every voice, but the gate still reads `staves[0]`
+  because abcjs's own dump is regrouped per system and the two engines break lines
+  differently — extending it to every voice is real work and the best remaining
+  gate improvement.
 - **Notehead spine only.** Slurs, ties, grace notes, chord symbols, decorations and
   **accidentals** are not `children` elements in abcjs's layout. `vree-grace-notes` and
   `curves` are green with neither grace notes nor slurs drawn. Chord noteheads ARE gated.
