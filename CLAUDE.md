@@ -68,9 +68,9 @@ correct behavior. Nothing ships red.
 
 ## Key Files and Paths
 - `ARCHITECTURE.md`   — full specification and decision record (read first)
-- `abcts.config.json` — corpus and reference paths, profiles
-- `../abcMusicKit/Tools/abcjs-debug/fixtures/` — 47 `.abc` corpus fixtures
-- `../abcMusicKit/Tools/abcjs-debug/golden/`   — 503 abcjs reference SVGs
+- `abcts.config.json` — corpus and goldens paths
+- `../abcMusicKit/Tools/abcjs-debug/fixtures/` — 41 `.abc` corpus fixtures
+- `../abcMusicKit/Tools/abcjs-debug/golden/`   — abcjs goldens: 41 `.parse.json` (used by the gate) + 503 SVGs (unused; for the renderer)
 - `../abcMusicKit/Docs/References/abcjs/abcjs-6.6.3/` — vendored abcjs source
 
 No git submodules — corpus and abcjs live inside the abcMusicKit repo and are
