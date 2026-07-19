@@ -1,9 +1,10 @@
 # Melisma (`_`) extension lines — why neither engine draws them
 
 **Status:** read-only investigation, 2026-07-18. No files were modified in v1 or v2.
-**Revision 2** — the geometry section previously recommended duration-proportional extender
-lengths. That was wrong and has been corrected against both the engraving convention and
-observed abcm2ps/abc2svg output. See "The geometry — CORRECTED".
+**Revision 3** — the geometry section originally recommended duration-proportional extender
+lengths. That was wrong. It is now corrected against the primary source (Gould, *Behind
+Bars* p. 447, in our own reference library) and cross-checked against measured
+abcm2ps/abc2svg output, which agree with it. See "The geometry — CORRECTED".
 **Audience:** the abcMusicKit (v1) and abcMusicKit2 (v2) agents.
 **Every claim below cites `file:line` so it can be verified before acting on it.**
 
@@ -142,22 +143,50 @@ Full chain, in order:
 > than from the engraving convention or from observed reference output. Both were then
 > checked. This section replaces it.
 
-### What the convention says
+### The primary source — Gould, *Behind Bars*, p. 447 "Extenders"
 
-Standard Western practice, per Gould's *Behind Bars* and the engraving references:
+Available locally at `abcMusicKit/Docs/References/Behind Bars/`. Quoted verbatim (the PDF is
+an OCR'd scan; typography has been tidied, wording has not):
 
-- The extender is used only after a **single-syllable word or the final syllable** of a
-  multi-syllable word — not after a syllable that is already followed by a hyphen.
-- **The line ends at the right side of the last melisma NOTE — not at the end of that
-  note's value.** This is the explicit rule, and it is the opposite of duration-proportional.
-- A melisma syllable is **left-aligned** to the first note of the melisma, rather than
-  centred as an ordinary one-note syllable is — it draws the singer's eye rightward across
-  the notes still to be sung.
+> "An extender, a line of stave-line thickness, follows a final syllable or mono-syllabic
+> word that extends beyond one written note, including a tied note. **The line extends to
+> the last written note, but not to the end of the duration.** Any punctuation goes at the
+> end of the word, before the extender."
 
-A duration-proportional extender ("line runs the full length of the note") does exist as a
-variant — it is reported as normal in some Japanese engraving practice, and is a recurring
-MuseScore feature request — but it is a **deviation from the Western convention, not the
-convention itself.**
+The facing example in the book is captioned **"extenders too long"** — the over-extended
+form is shown explicitly as the mistake to avoid. That sentence is the direct answer to the
+question this document was opened for.
+
+The full rule set from that page, all actionable:
+
+1. **When.** An extender follows a **final syllable or mono-syllabic word** that extends
+   beyond one written note, **including a tied note**.
+2. **Where it ends.** At the **last written note** — *not* the end of that note's duration.
+3. **When NOT to draw one at all.** "No extender is needed where a syllable occupies the
+   length of its written duration nor where a single syllable is sung to one note alone."
+   So a lone whole note carrying one syllable gets **no extender**.
+4. **Never between syllables of a word.** "Never use an extender between syllables — an
+   extender indicates that a word has ended and its incorrect use will cause confusion."
+   Mid-word continuation is a hyphen, never an extender.
+5. **Vertical placement.** "Place the extender on a level with the base of the text; it
+   should not be centred like a hyphen." Conversely a hyphen sits "midway between the base
+   and top of a lower-case letter, and not at the base of the text, where it will be
+   mistaken for an extender." The two are deliberately distinguished by height.
+6. **Punctuation** goes at the end of the word, *before* the extender — `come,_` not `come_,`.
+7. **System ends.** On a key or time change at the end of a system, the extender **stops
+   with the barline**. If an extender starts at the very end of a system, allow extra space
+   before the barline so the extender's start fits after the word.
+8. **System starts.** At the beginning of a system the extender "starts just before the
+   first note, together with the slur or tie."
+9. **Rests inside the span.** Short rests: continue the extender **uninterrupted** beneath
+   them to the last written duration of the syllable. Longer rests: discontinue it and
+   **reiterate the word in brackets** — `(dance)—` — the brackets signalling the text is not
+   sung afresh.
+
+Rule 3 is worth pausing on, because it reframes the original question: a syllable held over
+a *single* note gets no line at all, whatever that note's duration. So "the line should be
+longer under a whole note" has no case to apply to — either the syllable spans further notes
+(and the line ends at the last of them), or it doesn't (and there is no line).
 
 ### What the reference engines actually do
 
@@ -170,7 +199,7 @@ both are GPL; see "Clean-room note"). Test: `Glo` on note 1, held on note 2, var
 | quarter + rests (`C4 \| D z3 \|`) | **32.6** | **60.60** |
 
 **The shorter note produced the LONGER line in both engines** — the reverse of
-duration-proportional. The reason is that the extender's start is fixed (just past the
+duration-proportional, and consistent with Gould's rule 2. The reason is that the extender's start is fixed (just past the
 syllable's right text edge) and its end tracks *where the held notehead sits*. In the
 second test the held `D` is pushed rightward by the rests sharing its measure, so the line
 grows. Duration enters only indirectly, through layout.
@@ -184,10 +213,14 @@ output across the same three.
 
 ```
 start x = right text edge of the held syllable  + left padding
-end x   = right edge of the LAST held note's NOTEHEAD  + right padding
+end x   = right edge of the LAST WRITTEN NOTE's notehead  + right padding
 ```
 
-Not the note's duration allotment, and not the next syllable's x. Both engines already have
+Not the note's duration allotment, and not the next syllable's x. Normalising the measured
+output against each engine's own noteheads shows both already do exactly this — the end
+lands just past the held notehead (abcm2ps +5.0 whole / +3.0 quarter; abc2svg +11.2 / +6.8),
+the variation being notehead *glyph* width, since a whole notehead is wider than a quarter.
+The two engines agree on the rule and differ only in padding constant. Both engines already have
 the notehead x and glyph width at the draw site, which is all this needs — v1 in
 `drawVoice`'s walk of `voice.children` (`SVGDraw.swift:2140`), v2 from the resolved `noteX`
 columns before `BasicLayouter.swift` §8.6.
