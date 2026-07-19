@@ -10,18 +10,22 @@ system 0
     glyph gClef 1.000,1.000
   note@-6 x=4.684 w=3.500
     glyph noteheadBlack 4.684,3.000
+    glyph flag8thUp 5.864,-0.500
     line  4.284,3.000 -> 6.264,3.000 t=0.160
     line  5.864,2.832 -> 5.864,-0.500 t=0.120
   note@-5 x=8.184 w=3.500
     glyph noteheadBlack 8.184,2.500
+    glyph flag8thUp 9.364,-1.000
     line  9.364,2.332 -> 9.364,-1.000 t=0.120
   bar x=12.684 w=0.160
     line  12.684,-2.000 -> 12.684,2.000 t=0.160
   note@-4 x=13.684 w=3.500
     glyph noteheadBlack 13.684,2.000
+    glyph flag8thUp 14.864,-1.500
     line  14.864,1.832 -> 14.864,-1.500 t=0.120
   note@-3 x=17.184 w=3.500
     glyph noteheadBlack 17.184,1.500
+    glyph flag8thUp 18.364,-2.000
     line  18.364,1.332 -> 18.364,-2.000 t=0.120
   bar x=21.684 w=0.160
     line  21.684,-2.000 -> 21.684,2.000 t=0.160

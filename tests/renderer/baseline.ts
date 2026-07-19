@@ -51,6 +51,11 @@ export function snapshot(score: Score): string {
         `  staff  ${n(line.x1)},${n(line.y1)} -> ${n(line.x2)},${n(line.y2)} t=${n(line.thickness)}`,
       )
     }
+    for (const beam of system.beams) {
+      lines.push(
+        `  beam   ${n(beam.x1)},${n(beam.y1)} -> ${n(beam.x2)},${n(beam.y2)} t=${n(beam.thickness)}`,
+      )
+    }
     for (const el of system.elements) {
       const steps = el.staffSteps.length > 0 ? `@${el.staffSteps.join(',')}` : ''
       lines.push(`  ${el.type}${steps} x=${n(el.x)} w=${n(el.width)}`)

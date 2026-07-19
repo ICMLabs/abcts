@@ -21,10 +21,12 @@ system 0
   note@-6 x=9.468 w=5.480
     glyph noteheadBlack 9.468,3.000
     glyph augmentationDot 10.998,2.500
+    glyph flag8thUp 10.648,-0.500
     line  9.068,3.000 -> 11.048,3.000 t=0.160
     line  10.648,2.832 -> 10.648,-0.500 t=0.120
   note@-6 x=14.948 w=3.500
     glyph noteheadBlack 14.948,3.000
+    glyph flag16thUp 16.128,-0.500
     line  14.548,3.000 -> 16.528,3.000 t=0.160
     line  16.128,2.832 -> 16.128,-0.500 t=0.120
   bar x=19.448 w=0.160
@@ -50,10 +52,12 @@ system 0
   note@-6 x=41.928 w=5.480
     glyph noteheadBlack 41.928,3.000
     glyph augmentationDot 43.458,2.500
+    glyph flag8thUp 43.108,-0.500
     line  41.528,3.000 -> 43.508,3.000 t=0.160
     line  43.108,2.832 -> 43.108,-0.500 t=0.120
   note@-6 x=47.408 w=3.500
     glyph noteheadBlack 47.408,3.000
+    glyph flag16thUp 48.588,-0.500
     line  47.008,3.000 -> 48.988,3.000 t=0.160
     line  48.588,2.832 -> 48.588,-0.500 t=0.120
   bar x=51.908 w=0.160
@@ -79,10 +83,12 @@ system 0
   note@-6 x=74.388 w=5.480
     glyph noteheadBlack 74.388,3.000
     glyph augmentationDot 75.918,2.500
+    glyph flag8thUp 75.568,-0.500
     line  73.988,3.000 -> 75.968,3.000 t=0.160
     line  75.568,2.832 -> 75.568,-0.500 t=0.120
   note@-6 x=79.868 w=3.500
     glyph noteheadBlack 79.868,3.000
+    glyph flag16thUp 81.048,-0.500
     line  79.468,3.000 -> 81.448,3.000 t=0.160
     line  81.048,2.832 -> 81.048,-0.500 t=0.120
   bar x=84.368 w=0.160
@@ -103,15 +109,18 @@ system 0
     line  99.048,1.832 -> 99.048,-1.500 t=0.120
   note@-5 x=101.368 w=3.500
     glyph noteheadBlack 101.368,2.500
+    glyph flag8thUp 102.548,-1.000
     line  102.548,2.332 -> 102.548,-1.000 t=0.120
   rest x=104.868 w=3.500
     glyph rest8th 104.868,0.000
   note@0 x=108.368 w=5.480
     glyph noteheadBlack 108.368,0.000
     glyph augmentationDot 109.898,-0.500
+    glyph flag8thDown 108.368,3.500
     line  108.368,0.168 -> 108.368,3.500 t=0.120
   note@0 x=113.848 w=3.500
     glyph noteheadBlack 113.848,0.000
+    glyph flag16thDown 113.848,3.500
     line  113.848,0.168 -> 113.848,3.500 t=0.120
   bar x=118.348 w=0.160
     line  118.348,-2.000 -> 118.348,2.000 t=0.160

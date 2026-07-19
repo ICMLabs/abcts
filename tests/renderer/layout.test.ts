@@ -358,6 +358,106 @@ describe('part labels', () => {
   })
 })
 
+describe('flags and beams', () => {
+  const sys = (abc: string) => layout(parse(abc).scores[0] as Score).systems[0]
+  const notesOf = (abc: string) => (sys(abc)?.elements ?? []).filter((e) => e.type === 'note')
+  const glyphNames = (abc: string) => notesOf(abc).flatMap((n) => n.glyphs.map((g) => g.name))
+  const stemOf = (el: { lines: readonly { x1: number; x2: number; y1: number; y2: number }[] }) =>
+    el.lines.find((l) => l.x1 === l.x2)
+
+  it('flags an unbeamed eighth and beams a beamed one — never both', () => {
+    // A space breaks the beam in ABC, so `C C` is two unbeamed eighths and `CC` is a
+    // beamed pair. The distinction is the whole reason an eighth can look like either.
+    const alone = 'X:1\nM:4/4\nL:1/8\nK:C\nC2 C C2|\n'
+    expect(glyphNames(alone)).toContain('flag8thUp')
+    expect(sys(alone)?.beams).toHaveLength(0)
+
+    const beamed = 'X:1\nM:4/4\nL:1/8\nK:C\nCCCC|\n'
+    expect(glyphNames(beamed)).not.toContain('flag8thUp')
+    expect(sys(beamed)?.beams.length).toBeGreaterThan(0)
+  })
+
+  it('flags in the direction of the stem', () => {
+    expect(glyphNames('X:1\nM:4/4\nL:1/8\nK:C\nC2 C C2|\n')).toContain('flag8thUp')
+    expect(glyphNames('X:1\nM:4/4\nL:1/8\nK:C\nc2 c c2|\n')).toContain('flag8thDown')
+  })
+
+  it('gives every stem in a beam the same direction', () => {
+    // `ABcd` straddles the middle line, so note-by-note these would disagree — and a
+    // beam cannot join opposed stems. The group decides, by its furthest note.
+    const notes = notesOf('X:1\nM:4/4\nL:1/8\nK:C\nABcd|\n')
+    const directions = notes.map((n) => {
+      const stem = stemOf(n)
+      return (stem?.y2 ?? 0) > (stem?.y1 ?? 0) // true = downward
+    })
+    expect(new Set(directions).size).toBe(1)
+  })
+
+  it('lands every stem on the beam', () => {
+    const system = sys('X:1\nM:4/4\nL:1/8\nK:C\nDEFG|\n')
+    const beam = system?.beams[0]
+    expect(beam).toBeDefined()
+    const half = (beam?.thickness ?? 0) / 2
+    const yAt = (x: number) => {
+      const { x1, y1, x2, y2 } = beam as { x1: number; y1: number; x2: number; y2: number }
+      return x1 === x2 ? y1 : y1 + ((x - x1) / (x2 - x1)) * (y2 - y1)
+    }
+    for (const note of (system?.elements ?? []).filter((e) => e.type === 'note')) {
+      const stem = stemOf(note)
+      expect(stem).toBeDefined()
+      // The tip meets the beam's outer edge, within a rounding hair.
+      expect(Math.abs((stem?.y2 ?? 0) - (yAt(stem?.x1 ?? 0) - half))).toBeLessThan(0.001)
+    }
+  })
+
+  it('keeps a beamed stem from collapsing when a note spikes toward the beam', () => {
+    // `CcCC` puts one high note under a beam sitting above four low ones. Without a
+    // minimum the spike's stem would reach zero and the beam would cut the notehead.
+    const notes = notesOf('X:1\nM:4/4\nL:1/8\nK:C\nCcCC|\n')
+    for (const note of notes) {
+      const stem = stemOf(note)
+      expect(Math.abs((stem?.y2 ?? 0) - (stem?.y1 ?? 0))).toBeGreaterThan(2)
+    }
+  })
+
+  it('clamps the slope so a beam stays gently inclined', () => {
+    const beam = sys("X:1\nM:4/4\nL:1/8\nK:C\nCc'|\n")?.beams[0]
+    expect(beam).toBeDefined()
+    // A 14-step leap; the beam rises far less than the notes do.
+    expect(Math.abs((beam?.y2 ?? 0) - (beam?.y1 ?? 0))).toBeLessThanOrEqual(2.001)
+  })
+
+  it('draws a second beam only where consecutive notes both carry one', () => {
+    // `CDE2` is 16th, 16th, 8th: the secondary beam covers the first two and stops.
+    const system = sys('X:1\nM:4/4\nL:1/16\nK:C\nCDE2F2|\n')
+    expect(system?.beams).toHaveLength(2)
+    const primary = system?.beams[0]
+    const secondary = system?.beams[1]
+    expect(primary).toBeDefined()
+    expect(secondary).toBeDefined()
+    const span = (b?: { x1: number; x2: number }) => (b?.x2 ?? 0) - (b?.x1 ?? 0)
+    expect(span(secondary)).toBeLessThan(span(primary))
+  })
+
+  it('stubs a lone short note rather than beaming it to nothing', () => {
+    // `C2DE2` — an eighth, a lone sixteenth, an eighth. The sixteenth's second beam has
+    // no neighbour to span to, so it becomes a stub pointing back at the note before it.
+    const system = sys('X:1\nM:4/4\nL:1/16\nK:C\nC2DE2|\n')
+    expect(system?.beams).toHaveLength(2)
+    const stub = system?.beams[1]
+    expect(stub).toBeDefined()
+    const width = (stub?.x2 ?? 0) - (stub?.x1 ?? 0)
+    expect(width).toBeGreaterThan(0)
+    expect(width).toBeLessThan(2) // a stub, not a span
+  })
+
+  it('does not beam a quarter note or anything longer', () => {
+    const system = sys('X:1\nM:4/4\nL:1/4\nK:C\nCDEF|\n')
+    expect(system?.beams).toHaveLength(0)
+    expect(glyphNames('X:1\nM:4/4\nL:1/4\nK:C\nCDEF|\n')).not.toContain('flag8thUp')
+  })
+})
+
 describe('noteGlyph', () => {
   it('maps the plain power-of-two durations', () => {
     expect(noteGlyph(rational(1, 1))?.head).toBe('noteheadWhole')

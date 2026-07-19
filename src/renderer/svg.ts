@@ -44,6 +44,20 @@ const num = (n: number): string => {
  * differences between renderers. A rect is unambiguous.
  */
 function lineToRect(line: PlacedLine, cls: string): string {
+  // A SLOPED line — only a beam is — is neither a horizontal nor a vertical rect. Drawn
+  // as a parallelogram with vertical ends, which is how beams are cut in engraving, and
+  // which a rect would silently render as a vertical bar.
+  if (line.y1 !== line.y2 && line.x1 !== line.x2) {
+    const half = line.thickness / 2
+    const points = [
+      `${num(line.x1)},${num(line.y1 - half)}`,
+      `${num(line.x2)},${num(line.y2 - half)}`,
+      `${num(line.x2)},${num(line.y2 + half)}`,
+      `${num(line.x1)},${num(line.y1 + half)}`,
+    ].join(' ')
+    return `<polygon class="${cls}" points="${points}"/>`
+  }
+
   const horizontal = line.y1 === line.y2
   const x = horizontal ? Math.min(line.x1, line.x2) : line.x1 - line.thickness / 2
   const y = horizontal ? line.y1 - line.thickness / 2 : Math.min(line.y1, line.y2)
@@ -60,6 +74,7 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
 
   for (const system of doc.systems) {
     for (const line of system.staffLines) parts.push(lineToRect(line, `${prefix}-staff`))
+    for (const beam of system.beams) parts.push(lineToRect(beam, `${prefix}-beam`))
 
     for (const el of system.elements) {
       const cls = `${prefix}-${el.type}`

@@ -31,6 +31,7 @@ import {
   type Score,
   stepIndex,
   type Tempo,
+  type Voice,
 } from '../core/model.js'
 import { ENGRAVING_DEFAULTS, GLYPHS, type GlyphName } from './glyphs.js'
 
@@ -93,6 +94,15 @@ const ENGRAVE = {
   partStep: 6,
   /** Tempo text size, in staff spaces. PROVISIONAL. */
   tempoTextSize: 1.6,
+  /**
+   * A stem shortened to meet a beam never drops below this. *Behind Bars* keeps beamed
+   * stems from collapsing to stubs. PROVISIONAL.
+   */
+  minStemLength: 2.5,
+  /** Maximum total vertical rise of a sloped beam across its span. *Behind Bars*. */
+  beamMaxRise: 2.0,
+  /** Length of a secondary-beam stub on a note whose neighbours lack that level. */
+  beamStubLength: 1.1,
 } as const
 
 // ─── Layout model ────────────────────────────────────────────────────────────
@@ -161,9 +171,29 @@ export interface LayoutElement {
   readonly texts: readonly PlacedText[]
 }
 
+/**
+ * Everything a beam needs to know about one of its members, recorded during layout so
+ * the beam pass does not have to reverse-engineer it out of the drawn lines.
+ */
+export interface StemInfo {
+  /** Index into the system's `elements`. */
+  readonly element: number
+  readonly x: number
+  /** Staff step of the notehead furthest along the stem — where the tip is measured from. */
+  readonly farStep: number
+  readonly up: boolean
+  /** Beams needed at this note: 1 for an eighth, 2 for a sixteenth. */
+  readonly beams: number
+}
+
 export interface LayoutSystem {
   readonly elements: readonly LayoutElement[]
   readonly staffLines: readonly PlacedLine[]
+  /**
+   * Beams, which belong to no single element — a beam spans several noteheads and is
+   * drawn once for the group, after every member's position is known.
+   */
+  readonly beams: readonly PlacedLine[]
 }
 
 export interface Layout {
@@ -716,6 +746,10 @@ function layoutNoteheads(
   notated: Rational,
   x: number,
   clef: Clef,
+  /** Forced by the beam group when this note is beamed — every stem in a beam agrees. */
+  forcedUp: boolean | null = null,
+  /** Set when this note is beamed: suppresses its flag and reports its stem. */
+  stemOut: { value: Omit<StemInfo, 'element'> | null } | null = null,
 ): LayoutElement {
   // Sorted ascending to match abcjs, which reports a chord's heads lowest-first — so the
   // gate compares like with like regardless of the order the pitches were written in.
@@ -745,7 +779,8 @@ function layoutNoteheads(
 
   // Stem direction follows the chord as a whole: away from the middle line, judged by
   // the midpoint of its outermost notes. On the middle line itself the stem goes down.
-  const up = (lowest + highest) / 2 < 0
+  // A beamed note takes its group's direction instead — a beam cannot join opposed stems.
+  const up = forcedUp ?? (lowest + highest) / 2 < 0
 
   // Accidentals sit in a column before the heads and push everything right. ponytail:
   // ONE column. Real engraving fans accidentals into several columns when they would
@@ -812,10 +847,19 @@ function layoutNoteheads(
       thickness: ENGRAVING_DEFAULTS.stemThickness,
     })
 
-    // ponytail: flags unrendered — the glyphs are extracted and the count is computed,
-    // but nothing places them, because beaming decides whether a flag is drawn at all
-    // and beaming is not built. An unbeamed eighth currently draws as a stemmed black
-    // notehead. Wire up when the first fixture with unbeamed eighths lands.
+    if (stemOut !== null) {
+      // Beamed: the beam pass retargets this stem and draws the beams. No flag — a note
+      // cannot carry both.
+      stemOut.value = { x: stemX, farStep: up ? highest : lowest, up, beams: spec.flags }
+    } else if (spec.flags > 0) {
+      // Unbeamed: a flag per level, hung from the stem tip. The glyph is drawn from the
+      // tip, and SMuFL's up and down flags are separate designs rather than a reflection.
+      const flag: GlyphName | null =
+        spec.flags === 1 ? (up ? 'flag8thUp' : 'flag8thDown') : up ? 'flag16thUp' : 'flag16thDown'
+      // ponytail: 32nds and shorter reuse the 16th flag — the extracted set stops there.
+      // Two flags is already rare in the corpus; extend gen-glyphs when one appears.
+      if (flag !== null) glyphs.push({ name: flag, x: stemX, y: tip })
+    }
   }
 
   // A head displaced across the stem, or a dot column, widens the element.
@@ -854,6 +898,121 @@ function layoutBar(x: number): LayoutElement {
   }
 }
 
+// ─── Beams ───────────────────────────────────────────────────────────────────
+
+/**
+ * Draw one beam group: retarget every member's stem to a common beam line, and add the
+ * beams themselves.
+ *
+ * The line is fitted from the two end notes' natural stem tips and then clamped twice —
+ * once on slope, so a beam stays gently inclined however far the melody leaps, and once
+ * on position, so no stem in the middle of the group ends up shorter than
+ * `minStemLength`. Both are *Behind Bars*; the second is what stops a beam cutting
+ * through a notehead that sits high inside a rising run.
+ *
+ * Returns the beam rectangles. Stems are rewritten in place in `elements`.
+ */
+function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): PlacedLine[] {
+  const first = group[0]
+  const last = group[group.length - 1]
+  if (!first || !last || group.length < 2) return []
+
+  const up = first.up
+  const direction = up ? -1 : 1
+  const tipOf = (stem: StemInfo): number => stepToY(stem.farStep) + direction * ENGRAVE.stemLength
+
+  // Fit through the end notes, then clamp the rise.
+  const span = last.x - first.x
+  let startY = tipOf(first)
+  let endY = tipOf(last)
+  const rise = endY - startY
+  if (Math.abs(rise) > ENGRAVE.beamMaxRise) {
+    const clamped = Math.sign(rise) * ENGRAVE.beamMaxRise
+    const mid = (startY + endY) / 2
+    startY = mid - clamped / 2
+    endY = mid + clamped / 2
+  }
+
+  const yAt = (x: number): number =>
+    span === 0 ? startY : startY + ((x - first.x) / span) * (endY - startY)
+
+  // Push the line out until the shortest stem clears the minimum. An interior note can
+  // sit closer to the beam than either end note does.
+  let shift = 0
+  for (const stem of group) {
+    const length = (yAt(stem.x) - stepToY(stem.farStep)) * direction
+    if (length < ENGRAVE.minStemLength) {
+      shift = Math.max(shift, ENGRAVE.minStemLength - length)
+    }
+  }
+  startY += shift * direction
+  endY += shift * direction
+
+  // Retarget each stem to the beam.
+  for (const stem of group) {
+    const element = elements[stem.element]
+    if (!element) continue
+    const beamY = yAt(stem.x)
+    const lines = element.lines.map((line) =>
+      line.x1 === line.x2 && line.x1 === stem.x ? { ...line, y2: beamY } : line,
+    )
+    elements[stem.element] = { ...element, lines }
+  }
+
+  // Level 0 spans the whole group; deeper levels only where consecutive notes both carry
+  // them, and a lone note at a level gets a stub pointing back toward its neighbour.
+  //
+  // Deeper beams stack INWARD, toward the noteheads: the outermost beam is the one the
+  // stems actually end on, so an up-stem's second beam sits below its first.
+  const beams: PlacedLine[] = []
+  const maxLevel = Math.max(...group.map((stem) => stem.beams))
+  const thickness = ENGRAVING_DEFAULTS.beamThickness
+  const inward = -direction
+  const step = (thickness + ENGRAVING_DEFAULTS.beamSpacing) * inward
+
+  for (let level = 0; level < maxLevel; level++) {
+    // y here is the beam's CENTRE line; the emitted line carries its thickness.
+    const offset = level * step + (inward * thickness) / 2
+    let runStart: StemInfo | null = null
+    let runEnd: StemInfo | null = null
+
+    const flush = () => {
+      if (runStart === null || runEnd === null) return
+      let x1 = runStart.x
+      let x2 = runEnd.x
+      if (runStart === runEnd) {
+        // A stub: point it back toward the previous note when there is one, so a lone
+        // sixteenth in a run of eighths reads as belonging to what precedes it.
+        const index = group.indexOf(runStart)
+        const backward = index > 0
+        x1 = backward ? runStart.x - ENGRAVE.beamStubLength : runStart.x
+        x2 = backward ? runStart.x : runStart.x + ENGRAVE.beamStubLength
+      }
+      beams.push({
+        x1,
+        y1: yAt(x1) + offset,
+        x2,
+        y2: yAt(x2) + offset,
+        thickness,
+      })
+      runStart = null
+      runEnd = null
+    }
+
+    for (const stem of group) {
+      if (stem.beams > level) {
+        runStart ??= stem
+        runEnd = stem
+      } else {
+        flush()
+      }
+    }
+    flush()
+  }
+
+  return beams
+}
+
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
 /**
@@ -869,6 +1028,9 @@ export function layout(score: Score): Layout {
   const clef = voice?.clef ?? score.clef
   const elements: LayoutElement[] = []
   let x = ENGRAVE.marginX
+
+  const directions = beamDirections(voice, clef)
+  const beamGroups = new Map<number, StemInfo[]>()
 
   const clefElement = layoutClef(x, clef)
   if (clefElement !== null) {
@@ -907,8 +1069,22 @@ export function layout(score: Score): Layout {
       x += ENGRAVE.barGap
     }
     for (const event of measure.events) {
-      const el = layoutEvent(event, x, clef)
+      const group = event.type === 'rest' ? null : event.beamGroup
+      const stemOut: { value: Omit<StemInfo, 'element'> | null } | null =
+        group === null ? null : { value: null }
+      const el = layoutEvent(
+        event,
+        x,
+        clef,
+        group === null ? null : (directions.get(group) ?? null),
+        stemOut,
+      )
       if (el === null) continue
+      if (group !== null && stemOut?.value) {
+        const members = beamGroups.get(group) ?? []
+        members.push({ ...stemOut.value, element: elements.length })
+        beamGroups.set(group, members)
+      }
       elements.push(el)
       x += el.width
     }
@@ -919,6 +1095,11 @@ export function layout(score: Score): Layout {
     }
   }
 
+  // Beams last: they retarget stems that are already placed, and need every member's
+  // position, which is only known once the whole line has been laid out.
+  const beamLines: PlacedLine[] = []
+  for (const group of beamGroups.values()) beamLines.push(...layoutBeam(group, elements))
+
   const width = x + ENGRAVE.marginX
   const staffLines = ENGRAVE.staffLineSteps.map((step) => ({
     x1: 0,
@@ -928,9 +1109,9 @@ export function layout(score: Score): Layout {
     thickness: ENGRAVING_DEFAULTS.staffLineThickness,
   }))
 
-  const { top, bottom } = verticalExtent(elements)
+  const { top, bottom } = verticalExtent(elements, beamLines)
   return {
-    systems: [{ elements, staffLines }],
+    systems: [{ elements, staffLines, beams: beamLines }],
     width,
     height: bottom - top,
     top,
@@ -946,13 +1127,21 @@ export function layout(score: Score): Layout {
  * the structural gate, which sees no geometry at all — it shows up only as notes missing
  * from the rendered SVG.
  */
-function verticalExtent(elements: readonly LayoutElement[]): { top: number; bottom: number } {
+function verticalExtent(
+  elements: readonly LayoutElement[],
+  beams: readonly PlacedLine[] = [],
+): { top: number; bottom: number } {
   // The staff itself is always present, spanning steps 4 to -4.
   let top = stepToY(4)
   let bottom = stepToY(-4)
   const include = (a: number, b: number) => {
     top = Math.min(top, a)
     bottom = Math.max(bottom, b)
+  }
+
+  for (const beam of beams) {
+    const half = beam.thickness / 2
+    include(Math.min(beam.y1, beam.y2) - half, Math.max(beam.y1, beam.y2) + half)
   }
 
   for (const el of elements) {
@@ -972,8 +1161,52 @@ function verticalExtent(elements: readonly LayoutElement[]): { top: number; bott
   return { top: top - ENGRAVE.marginY, bottom: bottom + ENGRAVE.marginY }
 }
 
-function layoutEvent(event: MusicEvent, x: number, clef: Clef): LayoutElement | null {
-  if (event.type === 'note') return layoutNoteheads([event.pitch], event.notatedDuration, x, clef)
-  if (event.type === 'chord') return layoutNoteheads(event.pitches, event.notatedDuration, x, clef)
+function layoutEvent(
+  event: MusicEvent,
+  x: number,
+  clef: Clef,
+  forcedUp: boolean | null = null,
+  stemOut: { value: Omit<StemInfo, 'element'> | null } | null = null,
+): LayoutElement | null {
+  if (event.type === 'note') {
+    return layoutNoteheads([event.pitch], event.notatedDuration, x, clef, forcedUp, stemOut)
+  }
+  if (event.type === 'chord') {
+    return layoutNoteheads(event.pitches, event.notatedDuration, x, clef, forcedUp, stemOut)
+  }
   return layoutRest(event, x)
+}
+
+/**
+ * Stem direction for each beam group, decided before anything is drawn.
+ *
+ * Every stem in a beam must point the same way — a beam cannot join opposed stems — so
+ * the decision belongs to the group, not the note. The rule is the usual one: away from
+ * the middle line, judged by the note furthest from it, so the beam ends up on the side
+ * with the most room.
+ */
+function beamDirections(voice: Voice | undefined, clef: Clef): Map<number, boolean> {
+  const extremes = new Map<number, { min: number; max: number }>()
+  for (const measure of voice?.measures ?? []) {
+    for (const event of measure.events) {
+      if (event.type === 'rest' || event.beamGroup === null) continue
+      const pitches = event.type === 'chord' ? event.pitches : [event.pitch]
+      for (const pitch of pitches) {
+        const step = pitchToStep(pitch, clef)
+        const seen = extremes.get(event.beamGroup)
+        if (seen === undefined) extremes.set(event.beamGroup, { min: step, max: step })
+        else {
+          seen.min = Math.min(seen.min, step)
+          seen.max = Math.max(seen.max, step)
+        }
+      }
+    }
+  }
+
+  const directions = new Map<number, boolean>()
+  for (const [group, { min, max }] of extremes) {
+    // Whichever extreme is further from the middle line decides; ties go stem-down.
+    directions.set(group, Math.abs(min) > Math.abs(max) ? min < 0 : max < 0)
+  }
+  return directions
 }
