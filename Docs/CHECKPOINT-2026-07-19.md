@@ -11,7 +11,7 @@ the parser and whose risk list is still live except where noted below.
 
 | | |
 |---|---|
-| Tests | **203 passing** (73 parser + 130 renderer) |
+| Tests | **206 passing** (73 parser + 133 renderer) |
 | Parser content parity | 39/39 gated fixtures, unchanged |
 | **Render structural parity** | **40 of 41** — the 41st is a recorded abcjs bug |
 | **Visual baselines** | **41 of 41**, committed geometry snapshots |
@@ -20,7 +20,10 @@ the parser and whose risk list is still live except where noted below.
 | Compat layer | none — zero code |
 
 Renders today: staff, all clefs, key signatures, meters, tempo marks, part labels,
-noteheads and chords with stems and ledger lines, accidentals, rests, barlines.
+noteheads and chords with stems and ledger lines, accidentals, dotted durations
+(including double and triple dots), rests, barlines.
+
+**Every note in the corpus draws.** No fixture has missing output.
 
 **The corpus is complete.** Every fixture is either reproduced or a recorded divergence,
 asserted as such — adding a new fixture fails the suite until someone decides which it is.
@@ -122,13 +125,17 @@ lines and tempo marks out of the output now fails here.
 **Re-recording without reading the diff defeats the mechanism.** Read it, and commit
 baselines alongside the code change so a reviewer sees both.
 
-### What the baselines exposed
+### What the baselines exposed, and what came of it
 
-44 notes across 7 fixtures draw NOTHING — the dotted/tuplet gap (durations 3/16, 3/8,
-3/4, and chords on the same path). Correct per `noteGlyph`, which refuses a wrong
-notehead, but it would now sit silently in 41 files, so it is recorded as an explicit
-per-fixture count that FAILS when dotted durations land. Undrawn *rests* were checked
-separately and are correct: ABC's invisible `x` and spacer `y`.
+44 notes across 7 fixtures drew NOTHING — the dotted-duration gap. Recorded as an
+explicit per-fixture count rather than left to sit silently in 41 files, precisely so the
+fix would announce itself. **It did**: implementing dots broke exactly nine tests — the 7
+baseline snapshots, that count, and the unit test asserting dotted durations return null
+— and nothing had to be hunted for. `UNDRAWN_NOTES` is now empty but kept, as the
+assertion that a future duration change does not reintroduce holes.
+
+Undrawn *rests* were checked separately and are correct: ABC's invisible `x` and spacer
+`y`, which occupy space and print nothing.
 
 ---
 
@@ -138,25 +145,26 @@ With 40 of 41 reproduced, the diff has stopped picking features. What remains is
 from the code rather than from a failing fixture, which is a real change in method: from
 here, work needs either new fixtures or the visual baselines.
 
-Ranked by how wrong the output is today:
+Ranked by how wrong the output is today. Nothing on this list produces MISSING output
+any more — dotted durations were the last of those.
 
-1. **Dotted and tuplet durations.** `noteGlyph` returns null for any non-power-of-two
-   duration and the note draws NOTHING. Deliberate — a wrong notehead is worse — but it
-   means real tunes have holes. The structural gate cannot see it (staff position is
-   still right) and no gated fixture currently hits it.
-2. **Flags and beams.** An unbeamed eighth draws as a stemmed black notehead, so it is
-   indistinguishable from a quarter. Beaming also has 4 unanalysed parser failures.
+1. **Flags and beams.** An unbeamed eighth draws as a stemmed black notehead, so it is
+   indistinguishable from a quarter. The glyphs are extracted and the flag count is
+   computed; nothing places them, because beaming decides whether a flag is drawn at all.
+   Beaming also has 4 unanalysed parser failures carried from 2026-07-18. Biggest
+   remaining correctness gap.
+2. **Multi-voice and system breaking.** Only voice 0 of tune 0 is laid out, on one
+   endless staff. Largest structural gap, and the structural gate is blind to it by
+   construction — it reads voice 0 too. Baselines would catch a change here but there is
+   nothing yet to change.
 3. **Duration-proportional spacing.** A half note takes an eighth's width.
-4. **Multi-voice and system breaking.** Only voice 0 of tune 0 is laid out, on one
-   endless staff. This is the largest structural gap and the gate is blind to it by
-   construction — it reads voice 0 too.
-5. **Repeat, double and final barlines** all draw as a thin line.
+4. **Repeat, double and final barlines** all draw as a thin line; `Measure.barline`
+   already carries the distinction.
+5. **Tenor-clef key signatures** are knowingly wrong — engravers drop some accidentals an
+   octave to dodge ledger lines and no single shift reproduces that. No fixture uses one.
 
-Visual baselines now cover all of these: any change to spacing, stems, beams or bounds
-fails the baseline gate even though structure stays green. **Dotted durations are the
-top item** — they are the only entry on this list that produces missing output today
-rather than merely crude output, and the undrawn-note counts are already recorded so the
-fix announces itself.
+Visual baselines cover all of these: any change to spacing, stems, beams or bounds fails
+the baseline gate even though structure stays green.
 
 **The renderer phase may now change the parser** — clef and `Q:` both did, and the
 39/39 parser gate held through both. Treat that as settled unless it starts costing.
@@ -174,11 +182,8 @@ Carried forward from 2026-07-18 and still open: decoration/chord-symbol vocabula
    checkpoint expected the first SVG comparison to settle it. It has not:
    `voice-octave-shift` passes on voice 1, which has no shift. Still open, still needs
    voice 2 and a v1 comparison.
-3. **Beaming has 4 unanalysed failures**, and no beams are rendered at all yet.
-4. **Chords, dotted durations and tuplet durations do not render.** `noteGlyph` returns
-   null for a non-power-of-two duration and the note draws nothing rather than a wrong
-   notehead — visible in output and deliberate. Chords are the largest single gap.
-5. **Spacing is flat and duration-independent.** A half note takes an eighth's width.
+3. **Beaming has 4 unanalysed failures**, and no beams or flags are rendered at all yet.
+4. **Spacing is flat and duration-independent.** A half note takes an eighth's width.
    Legible now, wrong the moment a bar mixes durations. Upgrade path is the
    Gourlay/LilyPond spring model abcMusicKit2 already uses.
 
