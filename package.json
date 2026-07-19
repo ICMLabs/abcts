@@ -32,7 +32,8 @@
     "lint:fix": "biome check --write ./src ./tests",
     "typecheck": "tsc --noEmit",
     "baseline": "ABCTS_SNAPSHOT_RECORD=1 vitest run tests/renderer/baseline.test.ts",
-    "parity": "node scripts/parity.mjs"
+    "parity": "node scripts/parity.mjs",
+    "compare": "node scripts/compare.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.4",
@@ -42,5 +43,8 @@
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "bin": {
+    "abcts": "./dist/cli.js"
+  }
 }
