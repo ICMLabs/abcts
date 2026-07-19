@@ -44,7 +44,7 @@ describe('parse: simple-c', () => {
   it('reads the header fields', () => {
     expect(score.metadata.tuneNumber).toBe(1)
     expect(score.metadata.titles).toEqual(['Simple C'])
-    expect(score.key).toEqual({ tonic: { step: 'c', accidental: 0 }, mode: 'major' })
+    expect(score.key).toEqual({ tonic: { step: 'c', accidental: 0 }, mode: 'major', none: false })
     // M:4/4 is numeric — `common` requires a literal `M:C`.
     expect(score.meter).toEqual({ numerator: 4, denominator: 4, symbol: 'numeric' })
     expect(score.unitNoteLength).toEqual(rational(1, 4))
@@ -305,6 +305,7 @@ describe('mid-tune key and meter changes', () => {
     expect(measures[1]?.keyChange).toEqual({
       tonic: { step: 'g', accidental: 0 },
       mode: 'major',
+      none: false,
     })
   })
 
@@ -446,5 +447,78 @@ describe('malformed length input', () => {
     expect(
       parseOk('X:1\nL:1/4\nK:C\nC3/2 |\n').scores[0]?.voices[0]?.measures[0]?.events[0]?.duration,
     ).toEqual(rational(3, 8))
+  })
+})
+
+// Each of these was a real bug found by an adversarial audit, verified reproducing, and
+// fixed. They are pinned here because none of them failed any existing test.
+describe('audit regressions', () => {
+  const shape = (abc: string) => {
+    const result = parse(abc)
+    if (!result.ok) throw new Error('parser should never fail')
+    return result
+  }
+
+  it('keeps a trailing overlay measure that has no closing barline', () => {
+    // `AB|&cd` silently discarded `cd` entirely; adding a closing `|` made it reappear.
+    const voice = shape('X:1\nK:C\nAB|&cd\n').scores[0]?.voices[0]
+    expect(voice?.measures).toHaveLength(2)
+    expect(voice?.measures[1]?.overlays[0]).toHaveLength(2)
+  })
+
+  it('treats a header V: as a declaration, not a voice switch', () => {
+    // All four notes used to land in voice 2, the last one declared.
+    const voices = shape('X:1\nV:1\nV:2\nK:C\nCDEF\n').scores[0]?.voices
+    expect(voices?.[0]?.measures.flatMap((m) => m.events)).toHaveLength(4)
+    expect(voices?.[1]?.measures.flatMap((m) => m.events)).toHaveLength(0)
+  })
+
+  it('does not let an unterminated %%begintext swallow later tunes', () => {
+    const result = shape('X:1\nK:C\nCD|\n%%begintext\nblah\n\nX:2\nK:C\nEF|\n')
+    expect(result.scores).toHaveLength(2)
+    expect(result.diagnostics.map((d) => d.code)).toContain('unterminated-text-block')
+  })
+
+  it('does not leak a pending microtone past a rest', () => {
+    const events = shape('X:1\nK:C\n^2zA\n').scores[0]?.voices[0]?.measures[0]?.events
+    expect(events?.[1]?.type === 'note' && events[1].microtoneCents).toBe(0)
+  })
+
+  it('does not let +: continue a K: into a phantom key change', () => {
+    const measure = shape('X:1\nK:C\n+:prose here\nCD|\n').scores[0]?.voices[0]?.measures[0]
+    expect(measure?.keyChange).toBeNull()
+  })
+
+  it('distinguishes K:none from C major', () => {
+    expect(shape('X:1\nK:none\nCD|\n').scores[0]?.key.none).toBe(true)
+    expect(shape('X:1\nK:C\nCD|\n').scores[0]?.key.none).toBe(false)
+  })
+
+  it('closes a beam run at a mid-line voice switch', () => {
+    // Beam indices were resolved against whichever voice was current at close time, so
+    // voice 1 went unbeamed and its indices were applied to voice 2.
+    const voices = shape('X:1\nK:C\nAB[V:2]cd\n').scores[0]?.voices
+    const groups = (i: number) =>
+      voices?.[i]?.measures
+        .flatMap((m) => m.events)
+        .map((e) => (e.type === 'rest' ? null : e.beamGroup))
+    expect(new Set(groups(0)).size).toBe(1)
+    expect(new Set(groups(1)).size).toBe(1)
+    expect(groups(0)?.[0]).not.toBe(groups(1)?.[0])
+  })
+
+  it('completes a broken-rhythm pair across a line break', () => {
+    // A plain line break does not end a measure, so `A>` / `B` are still a pair. The
+    // first note used to be lengthened while the second was never shortened.
+    const events = shape('X:1\nL:1/8\nK:C\nA>\nB\n').scores[0]?.voices[0]?.measures.flatMap(
+      (m) => m.events,
+    )
+    expect(events?.[0]?.duration).toEqual(rational(3, 16))
+    expect(events?.[1]?.duration).toEqual(rational(1, 16))
+  })
+
+  it('clamps an absurd broken-rhythm run instead of overflowing', () => {
+    const result = shape(`X:1\nK:C\nc${'>'.repeat(60)}d`)
+    expect(result.diagnostics.map((d) => d.code)).toContain('malformed-broken-rhythm')
   })
 })

@@ -1,4 +1,5 @@
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, it } from 'vitest'
 import { parse } from '../src/parser/parser.js'
@@ -61,6 +62,8 @@ it('survives malformed, hostile and randomly mutated input', () => {
     'X:1\nL:0/0\nK:C\nabc',
     'X:1\nL:1/4\nK:C\nA0 B/0 C999999999 |',
     'X:1\nK:C\na>>>>>>>>>>b',
+    `X:1\nK:C\na${'>'.repeat(60)}b`,
+    `X:1\nK:C\na${'<'.repeat(200)}b`,
     'X:1\nK:C\n(0abc',
     'X:1\nK:C\n(999999:999999:999999abc',
     'X:1\nK:C\n"unterminated',
@@ -99,8 +102,11 @@ it('survives malformed, hostile and randomly mutated input', () => {
     const len = Math.floor(rnd() * 2000)
     check(Array.from({ length: len }, () => pick(CHARS)).join(''), `rand#${n}`)
   }
-  writeFileSync(
-    '/tmp/fuzz.txt',
-    problems.length ? [...new Set(problems)].slice(0, 40).join('\n') : 'NO PROBLEMS',
-  )
+  const unique = [...new Set(problems)]
+  writeFileSync(join(tmpdir(), 'abcts-fuzz.txt'), unique.slice(0, 40).join('\n') || 'NO PROBLEMS')
+  // THE ASSERTION IS THE POINT. Without it this file accumulates findings, writes them to
+  // a temp file, and passes — which is exactly what it did while three separate crashes
+  // were live. parse() promises it never throws and always yields finite durations with
+  // positive denominators; this is what holds it to that.
+  expect(unique.slice(0, 10)).toEqual([])
 })

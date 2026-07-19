@@ -73,9 +73,13 @@ const MODES: ReadonlyArray<readonly [string, Mode]> = [
 export const DEFAULT_KEY: KeySignature = {
   tonic: { step: 'c', accidental: Accidental.natural },
   mode: 'major',
+  none: false,
 }
 
 function parseKey(content: string): KeySignature {
+  // `K:none` means NO key signature — no alterations, and a renderer draws nothing. It is
+  // not C major, even though both alter no steps.
+  if (/^none\b/i.test(content.trim())) return { ...DEFAULT_KEY, none: true }
   // ponytail: `clef=`, `octave=`, `transpose=`, `middle=`, `stafflines=` also ride on
   // K:. Stripped here, implemented when a fixture needs them.
   const spec = (content.split(/\s+/)[0] ?? '').trim()
@@ -94,7 +98,7 @@ function parseKey(content: string): KeySignature {
 
   const rest = spec.slice(i).toLowerCase()
   const mode = MODES.find(([prefix]) => rest.startsWith(prefix))?.[1] ?? 'major'
-  return { tonic: { step: head as DiatonicStep, accidental }, mode }
+  return { tonic: { step: head as DiatonicStep, accidental }, mode, none: false }
 }
 
 function parseMeter(content: string): Meter | null {
@@ -147,10 +151,20 @@ function octaveModifier(spec: string): number | null {
 
 const KNOWN_FIELDS = 'ABCDFGHIKLMNOPQRSTUVWXZmrsw'
 
+/** Fields whose value is free text, so a `+:` continuation is meaningful. */
+const CONTINUABLE_FIELDS = 'ABCDFGHNORSTZw'
+
 // ─── Builders ────────────────────────────────────────────────────────────────
 
 class VoiceBuilder {
   octaveShift = 0
+  /**
+   * A `>`/`<` mark scales the NEXT event. It lives on the voice, not the scan of one
+   * line: a plain line break does not end a measure, so `A>` at the end of one line and
+   * `B` at the start of the next are still a broken-rhythm pair. Keeping it line-local
+   * lengthened the first note and never shortened the second.
+   */
+  pendingBroken: Rational | null = null
   /** A mid-tune `K:`/`M:` applies to the measure it opens, so it pends until close. */
   private pendingKeyChange: KeySignature | null = null
   private pendingKeyChangeRange: SourceRange | null = null
@@ -305,8 +319,14 @@ class VoiceBuilder {
   }
 
   closeMeasure(barline: Barline, barlineRange: SourceRange): void {
-    // A barline with nothing before it (leading `|:`) opens rather than closes.
-    if (this.events.length === 0 && this.measureStart === null) return
+    // A barline with nothing before it (leading `|:`) opens rather than closes. Overlay
+    // state must be checked too: `|&|` used to return early leaving overlayIndex set, so
+    // every later note in the voice landed in an overlay layer and measure.events stayed
+    // empty for the rest of the tune.
+    if (this.events.length === 0 && this.measureStart === null && this.overlays.length === 0) {
+      this.overlayIndex = null
+      return
+    }
     this.measures.push({
       events: this.events,
       overlays: this.overlays,
@@ -322,7 +342,9 @@ class VoiceBuilder {
   }
 
   finish(): Voice {
-    if (this.events.length > 0) {
+    // Overlays must be checked too: `AB|&cd` with no closing barline used to discard the
+    // whole overlay layer, so whether the notes existed depended on a trailing `|`.
+    if (this.events.length > 0 || this.overlays.length > 0) {
       const last = this.events[this.events.length - 1]
       this.measures.push({
         events: this.events,
@@ -393,7 +415,14 @@ class ScoreBuilder {
     return builder
   }
 
-  /** `V:2` in the body switches; in the header it only declares. */
+  /** Header `V:` — creates the voice, and makes the FIRST one declared current. */
+  declareVoice(id: string): void {
+    const isFirst = this.voices.size === 0
+    this.voiceFor(id)
+    if (isFirst) this.currentVoiceId = id
+  }
+
+  /** A body `V:2` switches the voice music lands in. */
   selectVoice(id: string): void {
     this.voiceFor(id)
     this.currentVoiceId = id
@@ -500,8 +529,19 @@ class Parser {
     // ponytail: the text itself is discarded. v2 keeps it as `Score.freeText`; add that
     // when something (a renderer) actually consumes it.
     if (this.inTextBlock) {
-      if (line.startsWith('%%endtext')) this.inTextBlock = false
-      return
+      if (line.startsWith('%%endtext')) {
+        this.inTextBlock = false
+        return
+      }
+      // An `X:` ends the block regardless: without this an unterminated `%%begintext`
+      // swallowed every remaining tune in the file.
+      if (!/^X:/.test(line)) return
+      this.inTextBlock = false
+      this.warn(
+        'unterminated-text-block',
+        '%%begintext was not closed by %%endtext',
+        sourceRange(start, end),
+      )
     }
     if (line.startsWith('%%begintext')) {
       this.inTextBlock = true
@@ -537,9 +577,14 @@ class Parser {
       this.applyField(this.lastFieldLetter, line.slice(2), start, end)
       return
     }
-    // `+:` continues the previous field over another line. Without this it falls through
-    // to scanMusic and ordinary prose parses as music.
-    if (line.startsWith('+:') && this.lastFieldLetter) {
+    // `+:` continues the previous field over another line. Restricted to text-bearing
+    // fields: replaying it into K:/M:/L:/V: re-parsed prose as a field value and injected
+    // a phantom mid-tune key change.
+    if (
+      line.startsWith('+:') &&
+      this.lastFieldLetter &&
+      CONTINUABLE_FIELDS.includes(this.lastFieldLetter)
+    ) {
       this.applyField(this.lastFieldLetter, line.slice(2), start, end)
       return
     }
@@ -598,7 +643,11 @@ class Parser {
         // configuration. ponytail: clef/name/transpose parsed when a fixture needs them.
         const id = value.split(/\s+/)[0]
         if (!id) return
-        builder.selectVoice(id)
+        // In the header a `V:` only DECLARES. Only a `V:` in the body switches the
+        // current voice — otherwise `V:1` / `V:2` in the header left voice 2 current and
+        // every note landed in it.
+        builder.declareVoice(id)
+        if (builder.bodyStarted) builder.selectVoice(id)
         const octave = octaveModifier(value)
         if (octave !== null) builder.voiceFor(id).octaveShift = octave
         return
@@ -662,8 +711,7 @@ class Parser {
         tuplet: { group: tupletGroup, number: tupletNumber },
       }
     }
-    /** Set by a `>`/`<` mark; scales the NEXT event, then clears. */
-    let pendingBroken: Rational | null = null
+
     /** Chord symbols, annotations and decorations bind to the next event. */
     let pending = noAttachments()
     /** `(` opens a slur on the NEXT event; `)` closes on the PREVIOUS one. */
@@ -691,7 +739,8 @@ class Parser {
     }
 
     const emit = (event: MusicEvent): void => {
-      const scaled = applyTuplet(pendingBroken ? scaleEvent(event, pendingBroken) : event)
+      const broken = voice().pendingBroken
+      const scaled = applyTuplet(broken ? scaleEvent(event, broken) : event)
       // A rest carries none of these — no ties, slurs, grace notes or chord symbols —
       // but it still consumes the pending state so they cannot leak past it.
       voice().push(
@@ -705,7 +754,7 @@ class Parser {
               graceSlash: pendingGraceSlash,
             } as MusicEvent),
       )
-      pendingBroken = null
+      voice().pendingBroken = null
       pending = noAttachments()
       pendingSlurStarts = 0
       pendingGrace = []
@@ -757,6 +806,11 @@ class Parser {
           const built = this.buildRest(tokens, i, builder)
           emit(built.rest)
           i = built.next
+          // A rest consumes pending accidental state rather than passing it to the next
+          // note: `^2zA` used to give the unaltered `A` a microtone of 200 cents.
+          pendingAccidental = null
+          accidentalStart = null
+          pendingMicrotone = 0
           break
         }
         case 'openBracket': {
@@ -777,12 +831,15 @@ class Parser {
           // Consecutive marks stack (`>>`), and the lexer emits one token per character.
           let arrows = 1
           while ((tokens[i + arrows] as Token | undefined)?.kind === 'brokenRhythm') arrows++
+          if (arrows > MAX_BROKEN_RHYTHM_ARROWS) {
+            this.warnAt(token, 'malformed-broken-rhythm', `${arrows} broken-rhythm marks; clamped`)
+          }
           const { long, short } = brokenRhythmFactors(arrows)
           const lengthenFirst = token.aux === '>'
           const previous = voice().last
           if (previous) {
             voice().replaceLast(scaleEvent(previous, lengthenFirst ? long : short))
-            pendingBroken = lengthenFirst ? short : long
+            voice().pendingBroken = lengthenFirst ? short : long
           } else {
             this.warn(
               'broken-rhythm-without-note',
@@ -896,6 +953,10 @@ class Parser {
           // `[V:2]`, `[K:G]`, `[M:3/4]` — same fields as a header line, written inline.
           const text = this.src.slice(token.start + 1, token.start + token.length - 1)
           const colon = text.indexOf(':')
+          // Beam-run indices are resolved against whatever voice is current when the run
+          // closes, so a voice switch must close it first — otherwise voice 1's notes
+          // went unbeamed and its indices were applied to voice 2.
+          if (colon === 1 && text[0] === 'V') closeBeamRun()
           if (colon === 1) {
             this.applyField(
               text[0] as string,
@@ -1142,7 +1203,10 @@ class Parser {
  * 1/2, `>>` is 7/4 and 1/4, `>>>` is 15/8 and 1/8.
  */
 function brokenRhythmFactors(arrows: number): { long: Rational; short: Rational } {
-  const denominator = 2 ** arrows
+  // Clamped: `2 * 2**arrows - 1` passes MAX_SAFE_INTEGER at 53 arrows and would throw in
+  // rational(). Beyond about 4 the notation is meaningless anyway — `>>>>` already means
+  // 31/16 against 1/16.
+  const denominator = 2 ** Math.min(arrows, MAX_BROKEN_RHYTHM_ARROWS)
   return {
     long: rational(2 * denominator - 1, denominator),
     short: rational(1, denominator),
@@ -1332,6 +1396,9 @@ function parseLyricSyllables(text: string, base: number): Syllable[] {
   }
   return out
 }
+
+/** `>>>>` is already 31:1; past this the factors overflow and mean nothing musically. */
+const MAX_BROKEN_RHYTHM_ARROWS = 8
 
 const REST_KINDS: Record<string, RestKind> = {
   z: 'normal',

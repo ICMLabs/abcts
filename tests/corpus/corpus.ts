@@ -62,7 +62,11 @@ export interface GoldenElement {
   readonly endChar: number
   readonly duration: number
   readonly rest?: unknown
-  readonly pitches?: readonly { readonly pitch: number }[]
+  readonly pitches?: readonly {
+    readonly pitch: number
+    /** 'sharp' | 'flat' | 'natural' | 'dblsharp' | 'dblflat' | 'quartersharp' | 'quarterflat' */
+    readonly accidental?: string
+  }[]
   /** On the FIRST note of a tuplet only: the sounding multiplier, e.g. 2/3 for a triplet. */
   readonly tripletMultiplier?: number
   /** On the first note of a tuplet: how many notes the multiplier covers. */

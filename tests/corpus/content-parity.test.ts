@@ -76,7 +76,7 @@ interface NoteKey {
   /** Sounding / notated — 1 outside a tuplet, 2/3 inside a triplet. */
   soundingRatio: number
   /** All pitches in the event — a chord is one entry with N pitches, never N entries. */
-  pitches: number[]
+  pitches: string[]
 }
 
 /** Floats from two engines; compare at a tolerance rather than by identity. */
@@ -105,8 +105,35 @@ const offsetWithin = (ourStart: number | undefined, start: number, end: number):
 /** abcjs numbers pitches diatonically from middle C: C4 is 0, c5 is 7. */
 const diatonic = (p: Pitch): number => (p.octave - 4) * 7 + stepIndex(p.step)
 
+/**
+ * Accidentals MUST be in the comparison key.
+ *
+ * Both sides number pitches diatonically, so `^F`, `F`, `_F` and `=F` are the same number.
+ * Comparing pitch alone left every accidental path unverified across the whole corpus —
+ * key-signature alteration, explicit accidentals, doubles, naturals — while `vree-sharps`
+ * reported MATCH with a sharp on every note. The goldens carry `pitches[].accidental` on
+ * 376 pitches; this reads it.
+ *
+ * `null` on our side means "inherit from the key signature", which abcjs resolves and we
+ * deliberately defer to engrave — so an unaltered note is compared as absent on both
+ * sides, and only WRITTEN accidentals are gated.
+ */
+const ACCIDENTAL_NAMES: Record<number, string> = {
+  [-2]: 'dblflat',
+  [-1]: 'flat',
+  0: 'natural',
+  1: 'sharp',
+  2: 'dblsharp',
+}
+const ourAccidental = (p: Pitch): string =>
+  p.accidental === null ? '' : (ACCIDENTAL_NAMES[p.accidental] ?? '?')
+
 interface OurNote {
   key: string
+  /** Same key with accidentals stripped — see the microtone note on ourAccidental. */
+  keyNoAccidental: string
+  /** True when any pitch carries a microtonal detune. */
+  microtonal: boolean
   start: number | undefined
 }
 
@@ -125,6 +152,17 @@ function ourNotes(abc: string): OurNote[] {
         .filter((event) => event.type === 'note' || event.type === 'chord')
         .map((event) => ({
           start: event.sourceRange?.start,
+          microtonal: event.microtoneCents !== 0,
+          keyNoAccidental: keyOf({
+            notated: ratToNumber(event.notatedDuration),
+            soundingRatio:
+              ratToNumber(event.notatedDuration) === 0
+                ? 1
+                : ratToNumber(event.duration) / ratToNumber(event.notatedDuration),
+            pitches: (event.type === 'chord' ? event.pitches : [event.pitch]).map(
+              (pitch) => `${diatonic(pitch) + voice.octaveShift * 7}`,
+            ),
+          }),
           key: keyOf({
             notated: ratToNumber(event.notatedDuration),
             // `B0` is a legal zero-duration note, so guard the 0/0.
@@ -135,7 +173,7 @@ function ourNotes(abc: string): OurNote[] {
             // abcjs bakes `octave=` into its pitch numbers; the core model keeps it on
             // the Voice as a sounding shift, so add it back to compare like for like.
             pitches: (event.type === 'chord' ? event.pitches : [event.pitch]).map(
-              (pitch) => diatonic(pitch) + voice.octaveShift * 7,
+              (pitch) => `${diatonic(pitch) + voice.octaveShift * 7}${ourAccidental(pitch)}`,
             ),
           }),
         })),
@@ -144,6 +182,7 @@ function ourNotes(abc: string): OurNote[] {
 
 interface GoldenNote {
   key: string
+  keyNoAccidental: string
   start: number
   end: number
 }
@@ -208,10 +247,15 @@ function abcjsNotes(name: string): GoldenNote[] {
     out.push({
       start: element.startChar,
       end: element.endChar,
+      keyNoAccidental: keyOf({
+        notated: element.duration,
+        soundingRatio,
+        pitches: element.pitches.map((p) => `${p.pitch}`),
+      }),
       key: keyOf({
         notated: element.duration,
         soundingRatio,
-        pitches: element.pitches.map((p) => p.pitch),
+        pitches: element.pitches.map((p) => `${p.pitch}${p.accidental ?? ''}`),
       }),
     })
   }
@@ -248,8 +292,16 @@ it('content parity against abcjs goldens does not regress', () => {
       ourBeamRuns.every((v, i) => v === theirBeamRuns[i])
     if (beamsSame) beamsMatched++
     const ours = ourNotes(abc)
+    // Microtonal notes compare WITHOUT the accidental. v2's rule is that the printed
+    // accidental stays the base sign and the deviation lives in microtoneCents, while
+    // abcjs picks a distinct glyph (`^/` -> quartersharp) or none at all (`^3/2`). That is
+    // a design divergence, not a defect — so the pitch and duration are still gated for
+    // these notes, only the accidental name is not. Four notes corpus-wide.
     const sameContent =
-      ours.length === theirs.length && ours.every((o, i) => o.key === theirs[i]?.key)
+      ours.length === theirs.length &&
+      ours.every((o, i) =>
+        o.microtonal ? o.keyNoAccidental === theirs[i]?.keyNoAccidental : o.key === theirs[i]?.key,
+      )
     const offsetsOk =
       sameContent &&
       (name in OFFSET_DIVERGENCES ||

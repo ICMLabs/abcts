@@ -145,6 +145,11 @@ const MODE_FIFTHS_OFFSET: Record<Mode, number> = {
 export interface KeySignature {
   readonly tonic: PitchClass
   readonly mode: Mode
+  /**
+   * `K:none` — no key signature at all. Distinct from C major, which also alters nothing
+   * but IS a key: a renderer draws nothing here, and no step is implicitly altered.
+   */
+  readonly none: boolean
 }
 
 export const keyFifths = (key: KeySignature): number =>
