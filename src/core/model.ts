@@ -14,7 +14,18 @@
 // abcMusicKit2 and one of the abcjs bugs core exists to fix: abcjs stores
 // duration as a double, so a triplet eighth is 0.041666666666666664.
 
-const gcd = (a: number, b: number): number => (b === 0 ? Math.abs(a) : gcd(b, a % b))
+// Iterative, not recursive: a non-finite input made the recursive form spin on NaN until
+// the stack blew. Callers are validated too, but this is the last line of defence.
+function gcd(a: number, b: number): number {
+  let x = Math.abs(a)
+  let y = Math.abs(b)
+  while (y !== 0) {
+    const t = y
+    y = x % y
+    x = t
+  }
+  return x
+}
 
 export interface Rational {
   readonly numerator: number
@@ -23,6 +34,13 @@ export interface Rational {
 
 /** Always reduced with a positive denominator, so equality is structural. */
 export function rational(numerator: number, denominator = 1): Rational {
+  // Validated rather than assumed: ABC durations come from untrusted text, and an
+  // overflowed digit run (`C` followed by 400 nines) arrives here as Infinity.
+  if (!Number.isSafeInteger(numerator) || !Number.isSafeInteger(denominator)) {
+    throw new Error(
+      `rational: numerator and denominator must be safe integers, got ${numerator}/${denominator}`,
+    )
+  }
   if (denominator === 0) throw new Error('rational: zero denominator')
   const sign = denominator < 0 ? -1 : 1
   const divisor = gcd(numerator, denominator) || 1

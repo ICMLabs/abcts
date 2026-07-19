@@ -468,6 +468,10 @@ class Parser {
     return { ok: true, scores: this.scores, diagnostics: this.diagnostics }
   }
 
+  private warnAt(token: Token, code: string, message: string): void {
+    this.warn(code, message, sourceRange(token.start, token.start + token.length))
+  }
+
   private warn(code: string, message: string, range: SourceRange | null): void {
     this.diagnostics.push({ code, severity: 'warning', message, range })
   }
@@ -1093,17 +1097,35 @@ class Parser {
 
     const first = tokens[i]
     if (first?.kind === 'digit') {
-      numerator = Number.parseInt(this.text(first), 10)
+      // A digit run long enough to overflow parses as Infinity, which used to reach
+      // rational() and hang gcd(). Zero IS valid here — `B0` is a legal zero-duration note.
+      const value = Number.parseInt(this.text(first), 10)
+      if (Number.isSafeInteger(value) && value >= 0) numerator = value
+      else this.warnAt(first, 'malformed-length', `note length out of range: ${this.text(first)}`)
       i++
     }
     while (tokens[i]?.kind === 'slash') {
       i++
       const digits = tokens[i]
       if (digits?.kind === 'digit') {
-        denominator = Number.parseInt(this.text(digits), 10)
+        // `/0` is not a length. Ignore it rather than dividing by zero.
+        const value = Number.parseInt(this.text(digits), 10)
+        if (Number.isSafeInteger(value) && value > 0) denominator = value
+        else
+          this.warnAt(
+            digits,
+            'malformed-length',
+            `note length divisor invalid: /${this.text(digits)}`,
+          )
         i++
       } else {
         denominator *= 2
+      }
+      // `A////////…` doubles the denominator each time; stop before it overflows.
+      if (!Number.isSafeInteger(denominator)) {
+        this.warn('malformed-length', 'note length divisor overflowed', null)
+        denominator = 1
+        break
       }
     }
     return { factor: rational(numerator, denominator), next: i }

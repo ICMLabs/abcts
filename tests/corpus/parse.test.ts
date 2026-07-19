@@ -410,3 +410,41 @@ describe('lyrics', () => {
     expect(abc.slice(range?.start ?? 0, range?.end ?? 0)).toBe('do')
   })
 })
+
+describe('malformed length input', () => {
+  const parseOk = (abc: string) => {
+    const result = parse(abc)
+    if (!result.ok) throw new Error('parser should never fail')
+    return result
+  }
+
+  it('recovers from a zero divisor instead of throwing', () => {
+    const result = parseOk('X:1\nL:1/4\nK:C\nB/0 |\n')
+    const note = result.scores[0]?.voices[0]?.measures[0]?.events[0]
+    expect(note?.duration).toEqual(rational(1, 4)) // divisor ignored
+    expect(result.diagnostics.map((d) => d.code)).toContain('malformed-length')
+  })
+
+  it('recovers from a digit run that overflows to Infinity', () => {
+    // Previously reached rational() as Infinity and hung gcd() until the stack blew —
+    // a denial-of-service for any consumer parsing untrusted ABC.
+    const result = parseOk(`X:1\nL:1/4\nK:C\nC${'9'.repeat(400)} |\n`)
+    expect(result.scores[0]?.voices[0]?.measures[0]?.events[0]?.duration).toEqual(rational(1, 4))
+    expect(result.diagnostics.map((d) => d.code)).toContain('malformed-length')
+  })
+
+  it('stops a runaway divisor before it overflows', () => {
+    const result = parseOk(`X:1\nL:1/4\nK:C\nC${'/'.repeat(200)} |\n`)
+    const duration = result.scores[0]?.voices[0]?.measures[0]?.events[0]?.duration
+    expect(Number.isSafeInteger(duration?.denominator)).toBe(true)
+  })
+
+  it('still accepts a legitimate zero-duration note and a normal fraction', () => {
+    expect(
+      parseOk('X:1\nL:1/4\nK:C\nB0 |\n').scores[0]?.voices[0]?.measures[0]?.events[0]?.duration,
+    ).toEqual(rational(0, 1))
+    expect(
+      parseOk('X:1\nL:1/4\nK:C\nC3/2 |\n').scores[0]?.voices[0]?.measures[0]?.events[0]?.duration,
+    ).toEqual(rational(3, 8))
+  })
+})
