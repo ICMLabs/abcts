@@ -11,7 +11,7 @@ the parser and whose risk list is still live except where noted below.
 
 | | |
 |---|---|
-| Tests | **250 passing** (73 parser + 177 renderer) |
+| Tests | **258 passing** (74 parser + 184 renderer) |
 | Parser content parity | 39/39 gated fixtures, unchanged |
 | **Render structural parity** | **40 of 41** — the 41st is a recorded abcjs bug |
 | **Visual baselines** | **41 of 41**, committed geometry snapshots |
@@ -23,7 +23,10 @@ Renders today: staff, all clefs, key signatures, meters, tempo marks, part label
 noteheads and chords with stems, flags, beams and ledger lines, accidentals, dotted
 durations (including double and triple dots), rests, barlines — across MULTIPLE VOICES,
 each on its own staff, wrapped into justified systems, with notes spaced by duration on
-abcm2ps's measured square-root curve, with all six barline shapes, slurs and ties.
+abcm2ps's measured square-root curve, with all six barline shapes, slurs, ties, grace
+notes, chord symbols, lyrics and decorations.
+
+**Everything in the model now reaches the page**, except the decorations listed below.
 
 **Every note in the corpus draws.** No fixture has missing output.
 
@@ -176,8 +179,16 @@ Carried forward from 2026-07-18 and still open: decoration/chord-symbol vocabula
 
 ## Known risks, ranked
 
-1. **Lyrics remain verified only by unit tests.** Unchanged from 2026-07-18, and now
-   also unrendered. The highest-value remaining gate work.
+1. **Lyrics are now GATED against the goldens** — the 2026-07-18 risk is closed. Seven
+   fixtures match; three diverge with recorded reasons (`frere-jacques` the known abcjs
+   `+:` mis-parse, `ave-verum-corpus` a deliberate spaced-hyphen divergence,
+   `S5-directives` an UNANALYSED 2-note drift between multiple `w:` lines — the next
+   thing to look at).
+
+   Building the gate found two real parser bugs immediately: `*` and `|` were handled as
+   whole tokens but not when ATTACHED to a syllable, which is how every tune writes
+   them. It also arbitrated a question the code had recorded as unanswerable — the
+   comment claimed the goldens carry no lyric fields. They carry them on every fixture.
 2. **`Voice.octaveShift` — sounding vs written — is still unresolved.** The previous
    checkpoint expected the first SVG comparison to settle it. It has not:
    `voice-octave-shift` passes on voice 1, which has no shift. Still open, still needs
@@ -195,7 +206,7 @@ Carried forward from 2026-07-18 and still open: decoration/chord-symbol vocabula
      `end_beam` on the note it FOLLOWS, and `endBeamHere` includes that note in the run.
      `force_end_beam_last` (chord symbol + whitespace) is ruled out — S8-layout has no
      such pattern. A third cause remains unidentified.
-4. **Two ways a verification can lie, both hit this session and both now guarded.**
+4. **Three ways a verification can lie, all hit this session.**
    - A no-op MUTATION looks exactly like a passing suite. One spacing mutation matched
      nothing because lint had reformatted the target line and reported a clean 164/164.
      Mutations now assert the edit applied before running.
@@ -204,6 +215,9 @@ Carried forward from 2026-07-18 and still open: decoration/chord-symbol vocabula
      matching return the same index — replacing `pop()` with `shift()` passed all 177
      tests. `(G(GG)G)` discriminates. This is the parser audit's blind spot exactly, and
      it was found by mutation rather than by review.
+   - A MEASUREMENT that reads the wrong number. A grep for the mutation failure count
+     matched elsewhere in vitest's output and reported 3 where the truth was 9,
+     flattering the code by understating what the tests caught. Read `Tests N failed`.
 
 Risk 5 of the 2026-07-18 list — the falsy `Accidental.natural` — is **closed**: the
 renderer checks `=== null`, and two tests fail if that is rewritten as truthiness,
