@@ -11,7 +11,7 @@ the parser and whose risk list is still live except where noted below.
 
 | | |
 |---|---|
-| Tests | **229 passing** (73 parser + 156 renderer) |
+| Tests | **237 passing** (73 parser + 164 renderer) |
 | Parser content parity | 39/39 gated fixtures, unchanged |
 | **Render structural parity** | **40 of 41** — the 41st is a recorded abcjs bug |
 | **Visual baselines** | **41 of 41**, committed geometry snapshots |
@@ -22,7 +22,8 @@ the parser and whose risk list is still live except where noted below.
 Renders today: staff, all clefs, key signatures, meters, tempo marks, part labels,
 noteheads and chords with stems, flags, beams and ledger lines, accidentals, dotted
 durations (including double and triple dots), rests, barlines — across MULTIPLE VOICES,
-each on its own staff, wrapped into systems that break at the page width.
+each on its own staff, wrapped into justified systems, with notes spaced by duration on
+abcm2ps's measured square-root curve.
 
 **Every note in the corpus draws.** No fixture has missing output.
 
@@ -194,9 +195,10 @@ Carried forward from 2026-07-18 and still open: decoration/chord-symbol vocabula
      `end_beam` on the note it FOLLOWS, and `endBeamHere` includes that note in the run.
      `force_end_beam_last` (chord symbol + whitespace) is ruled out — S8-layout has no
      such pattern. A third cause remains unidentified.
-4. **Spacing is flat and duration-independent.** A half note takes an eighth's width.
-   Legible now, wrong the moment a bar mixes durations. Upgrade path is the
-   Gourlay/LilyPond spring model abcMusicKit2 already uses.
+4. **A no-op mutation looks exactly like a passing suite.** When verifying by breaking
+   the code, CHECK THE EDIT APPLIED. One spacing mutation silently matched nothing
+   because lint had reformatted the target line, and reported a clean 164/164 — caught
+   only because "flat spacing changes nothing" is implausible on its face.
 
 Risk 5 of the 2026-07-18 list — the falsy `Accidental.natural` — is **closed**: the
 renderer checks `=== null`, and two tests fail if that is rewritten as truthiness,

@@ -82,7 +82,7 @@ reached by relative sibling path. See ARCHITECTURE.md § Repository Structure.
 The PARSER is complete and gated (39/39 corpus fixtures, saturated). The RENDERER now
 reproduces **40 of 41** fixtures on the structural gate; the 41st is a recorded abcjs bug,
 so the corpus is COMPLETE — every fixture is either reproduced or explained. All 41 also
-have committed visual baselines. 229 tests.
+have committed visual baselines. 237 tests.
 Renders staff, all clefs, key signatures, meters, tempo marks, part labels, noteheads and
 chords with stems and ledger lines, accidentals, rests and barlines.
 
@@ -99,9 +99,9 @@ gate stays fully green while baselines fail 39 of 43. Re-record with `npm run ba
 but READ the diff and commit baselines with the code change.
 
 **The corpus has stopped driving the work** — with 40/41 reproduced there is no failing
-diff to follow. What remains is known from the code: spacing and justification (a half note takes an
-eighth's width; measures leave their slack before the barline; systems are ragged-right),
-repeat/final barline shapes, and multi-tune layout. See the checkpoint.
+diff to follow. What remains is known from the code: barline SHAPES (repeats, doubles and finals all
+draw thin), and the fact that slurs, ties, grace notes, chord symbols and decorations
+are all in the model and none of them render. See the checkpoint.
 
 ## Session Prompts
 
