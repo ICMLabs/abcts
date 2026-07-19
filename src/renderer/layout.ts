@@ -16,6 +16,7 @@
  */
 import {
   Accidental,
+  type Barline,
   type Clef,
   type ClefShape,
   type DiatonicStep,
@@ -946,25 +947,98 @@ function layoutNoteheads(
   }
 }
 
-function layoutBar(x: number): LayoutElement {
-  // ponytail: thin barline only. Repeats, doubles and finals are in the model as
-  // `Measure.closingBarline`; draw them when a fixture exercises them.
-  const thickness = ENGRAVING_DEFAULTS.thinBarlineThickness
+/**
+ * A barline, in all six shapes ABC can write.
+ *
+ * Built left to right from three pieces — thin rule, thick rule, repeat dots — because
+ * that is what the shapes are: a final is thin-then-thick, a repeat end is dots-then-
+ * thin-then-thick, and a two-way repeat is that mirrored around a single thick rule.
+ * Drawing them from parts rather than as six special cases means the spacing constants
+ * (all from the font) apply uniformly.
+ */
+function layoutBar(x: number, kind: Barline): LayoutElement {
+  const thin = ENGRAVING_DEFAULTS.thinBarlineThickness
+  const thick = ENGRAVING_DEFAULTS.thickBarlineThickness
+  const gap = ENGRAVING_DEFAULTS.barlineSeparation
+  const dotGap = ENGRAVING_DEFAULTS.repeatBarlineDotSeparation
+
+  const lines: PlacedLine[] = []
+  const glyphs: PlacedGlyph[] = []
+  let cursor = x
+
+  const rule = (thickness: number): void => {
+    // A rule is placed by its LEFT edge and the line is its centre, so the cursor
+    // advances by the full thickness and nothing overlaps.
+    lines.push({
+      x1: cursor + thickness / 2,
+      y1: stepToY(4),
+      x2: cursor + thickness / 2,
+      y2: stepToY(-4),
+      thickness,
+    })
+    cursor += thickness
+  }
+
+  const dots = (): void => {
+    // The two dots straddle the middle staff line, one in the space either side.
+    //
+    // SMuFL anchors `repeatDots` at the BOTTOM staff line, not the middle — its ink sits
+    // ~1.98 spaces ABOVE its origin — so placing it at step 0 puts the dots up near the
+    // top line. Centring from the bounding box rather than hardcoding the offset means a
+    // different SMuFL font with a different anchor still lands correctly.
+    const glyph = GLYPHS.repeatDots
+    glyphs.push({ name: 'repeatDots', x: cursor, y: -(glyph.y + glyph.height / 2) })
+    cursor += glyph.width + dotGap
+  }
+
+  switch (kind) {
+    case 'thin':
+      rule(thin)
+      break
+    case 'double':
+      rule(thin)
+      cursor += gap
+      rule(thin)
+      break
+    case 'final':
+      rule(thin)
+      cursor += gap
+      rule(thick)
+      break
+    case 'repeatStart':
+      rule(thick)
+      cursor += gap
+      rule(thin)
+      cursor += dotGap
+      dots()
+      break
+    case 'repeatEnd':
+      dots()
+      rule(thin)
+      cursor += gap
+      rule(thick)
+      break
+    case 'repeatBoth':
+      // One thick rule serving both directions, dots on each side — the standard
+      // back-to-back form, rather than two complete repeat signs jammed together.
+      dots()
+      rule(thin)
+      cursor += gap
+      rule(thick)
+      cursor += gap
+      rule(thin)
+      cursor += dotGap
+      dots()
+      break
+  }
+
   return {
     type: 'bar',
     x,
-    width: thickness,
+    width: cursor - x,
     staffSteps: [],
-    glyphs: [],
-    lines: [
-      {
-        x1: x,
-        y1: stepToY(4),
-        x2: x,
-        y2: stepToY(-4),
-        thickness,
-      },
-    ],
+    glyphs,
+    lines,
     texts: [],
   }
 }
@@ -1144,7 +1218,7 @@ function layoutMeasure(
   // barline from the previous measure's closer.
   if (measure.openingBarline !== null) {
     x += ENGRAVE.barGap
-    elements.push(layoutBar(x))
+    elements.push(layoutBar(x, measure.openingBarline))
     x += ENGRAVE.barGap
   }
 
@@ -1174,7 +1248,7 @@ function layoutMeasure(
   if (measure.closingBarline !== null) {
     x += ENGRAVE.barGap
     closingBarIndex = elements.length
-    elements.push(layoutBar(x))
+    elements.push(layoutBar(x, measure.closingBarline))
     x += ENGRAVE.barGap
   }
 

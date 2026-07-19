@@ -77,6 +77,8 @@ const GLYPHS = [
   'timeSigCutCommon',
   // Augmentation
   'augmentationDot',
+  // Barlines — the dots of a repeat sign.
+  'repeatDots',
 ]
 
 const font = opentype.parse(readFileSync(FONT).buffer)
@@ -204,6 +206,7 @@ export const ENGRAVING_DEFAULTS = {
   thinBarlineThickness: ${defaults.thinBarlineThickness},
   thickBarlineThickness: ${defaults.thickBarlineThickness},
   barlineSeparation: ${defaults.barlineSeparation},
+  repeatBarlineDotSeparation: ${defaults.repeatBarlineDotSeparation},
   slurEndpointThickness: ${defaults.slurEndpointThickness},
   slurMidpointThickness: ${defaults.slurMidpointThickness},
   tieEndpointThickness: ${defaults.tieEndpointThickness},

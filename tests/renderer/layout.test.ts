@@ -17,6 +17,7 @@ import {
   type Score,
 } from '../../src/core/model.js'
 import { parse } from '../../src/parser/parser.js'
+import { GLYPHS } from '../../src/renderer/glyphs.js'
 import {
   accidentalGlyph,
   keyFifths,
@@ -718,6 +719,82 @@ describe('spacing and justification', () => {
       systemWidth: 40,
     })
     for (const system of doc.systems) expect(system.width).toBeLessThanOrEqual(90)
+  })
+})
+
+describe('barline shapes', () => {
+  const barsOf = (abc: string) =>
+    layout(parse(abc).scores[0] as Score)
+      .systems.flatMap((s) => s.staves.flatMap((st) => st.elements))
+      .filter((e) => e.type === 'bar')
+
+  const shape = (bar: { lines: readonly { thickness: number }[]; glyphs: readonly unknown[] }) => ({
+    rules: bar.lines.map((l) => (l.thickness > 0.3 ? 'thick' : 'thin')),
+    dots: bar.glyphs.length,
+  })
+
+  it('draws each shape from its own parts', () => {
+    // A final is thin-then-thick; a repeat end is dots-then-thin-then-thick; a two-way
+    // repeat is one thick rule with dots on both sides.
+    expect(shape(barsOf('X:1\nL:1/4\nK:C\nC|\n')[0] as never)).toEqual({
+      rules: ['thin'],
+      dots: 0,
+    })
+    expect(shape(barsOf('X:1\nL:1/4\nK:C\nC||\n')[0] as never)).toEqual({
+      rules: ['thin', 'thin'],
+      dots: 0,
+    })
+    expect(shape(barsOf('X:1\nL:1/4\nK:C\nC|]\n')[0] as never)).toEqual({
+      rules: ['thin', 'thick'],
+      dots: 0,
+    })
+    expect(shape(barsOf('X:1\nL:1/4\nK:C\n|:C:|\n')[0] as never)).toEqual({
+      rules: ['thick', 'thin'],
+      dots: 1,
+    })
+    expect(shape(barsOf('X:1\nL:1/4\nK:C\n|:C:|\n')[1] as never)).toEqual({
+      rules: ['thin', 'thick'],
+      dots: 1,
+    })
+    // `CDEF::` not `C::` — a body line beginning `C:` is the COMPOSER field, so the
+    // parser eats the whole line and the tune has no music at all. A real ABC trap.
+    expect(shape(barsOf('X:1\nL:1/4\nK:C\nCDEF::GABc|\n')[0] as never)).toEqual({
+      rules: ['thin', 'thick', 'thin'],
+      dots: 2,
+    })
+  })
+
+  it('makes a heavier barline wider than a plain one', () => {
+    const width = (abc: string) => barsOf(abc)[0]?.width ?? 0
+    expect(width('X:1\nL:1/4\nK:C\nC||\n')).toBeGreaterThan(width('X:1\nL:1/4\nK:C\nC|\n'))
+    expect(width('X:1\nL:1/4\nK:C\nC|]\n')).toBeGreaterThan(width('X:1\nL:1/4\nK:C\nC||\n'))
+    expect(width('X:1\nL:1/4\nK:C\nCDEF::GABc|\n')).toBeGreaterThan(width('X:1\nL:1/4\nK:C\nC|]\n'))
+  })
+
+  it('straddles the middle line with the repeat dots', () => {
+    // SMuFL anchors repeatDots at the BOTTOM staff line — its ink sits ~2 spaces above
+    // its origin — so placing it at step 0 puts the dots up by the top line. Centred
+    // from the bounding box, so a font with a different anchor still lands right.
+    const dots = barsOf('X:1\nL:1/4\nK:C\n|:C:|\n')[0]?.glyphs[0]
+    expect(dots?.name).toBe('repeatDots')
+    const glyph = GLYPHS.repeatDots
+    const inkTop = (dots?.y ?? 0) + glyph.y
+    const inkBottom = inkTop + glyph.height
+    // The ink is centred on the middle line, one dot either side.
+    expect((inkTop + inkBottom) / 2).toBeCloseTo(0, 5)
+    expect(inkTop).toBeLessThan(0)
+    expect(inkBottom).toBeGreaterThan(0)
+  })
+
+  it('spans the staff, whatever the shape', () => {
+    for (const abc of ['C|', 'C||', 'C|]', '|:C:|', 'CDEF::GABc|']) {
+      for (const bar of barsOf(`X:1\nL:1/4\nK:C\n${abc}\n`)) {
+        for (const line of bar.lines) {
+          expect(Math.min(line.y1, line.y2)).toBeCloseTo(-2, 5)
+          expect(Math.max(line.y1, line.y2)).toBeCloseTo(2, 5)
+        }
+      }
+    }
   })
 })
 
