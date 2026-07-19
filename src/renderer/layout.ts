@@ -19,8 +19,11 @@ import {
   type Barline,
   type Clef,
   type ClefShape,
+  type CompatibilityMode,
   type DiatonicStep,
   defaultClef,
+  defaultMode,
+  isStrict,
   type KeySignature,
   type Measure,
   type Mode,
@@ -185,10 +188,38 @@ export type ElementType =
   | 'rest'
   | 'bar'
 
+/**
+ * What a drawn part IS, independent of which element owns it.
+ *
+ * A note element draws a notehead, a stem and maybe a ledger line, and a host wants to
+ * tell them apart — for styling, for hit-testing, and for the compat layer, which must
+ * emit abcjs's per-part class names (`abcjs-notehead`, `abcjs-stem`, `abcjs-ledger`)
+ * rather than one class for the whole note.
+ */
+export type PartRole =
+  | 'notehead'
+  | 'stem'
+  | 'ledger'
+  | 'accidental'
+  | 'flag'
+  | 'dot'
+  | 'grace'
+  | 'staff'
+  | 'beam'
+  | 'bar'
+  | 'clef'
+  | 'keySignature'
+  | 'timeSignature'
+  | 'rest'
+  | 'decoration'
+  | 'text'
+
 export interface PlacedGlyph {
   readonly name: GlyphName
   readonly x: number
   readonly y: number
+  /** What this glyph is. Absent means it inherits its element's kind. */
+  readonly role?: PartRole
   /**
    * Uniform scale about the glyph origin. 1 unless stated — grace notes are the only
    * thing that shrinks, and they shrink everything: notehead, stem and flag together.
@@ -202,6 +233,8 @@ export interface PlacedLine {
   readonly x2: number
   readonly y2: number
   readonly thickness: number
+  /** What this line is. Absent means it inherits its element's kind. */
+  readonly role?: PartRole
 }
 
 /**
@@ -469,7 +502,7 @@ function dotGlyphs(count: number, x: number, step: number, taken: Set<number>): 
 
   const out: PlacedGlyph[] = []
   for (let i = 0; i < count; i++) {
-    out.push(glyphAt('augmentationDot', x + i * ENGRAVE.dotSpacing, dotStep))
+    out.push({ ...glyphAt('augmentationDot', x + i * ENGRAVE.dotSpacing, dotStep), role: 'dot' })
   }
   return out
 }
@@ -486,13 +519,13 @@ function dotGlyphs(count: number, x: number, step: number, taken: Set<number>): 
  * implemented — every corpus fixture has something a quarter or shorter, so the cap
  * would never fire. Add it with the line's shortest note when a long-only tune appears.
  */
-export function naturalWidth(duration: Rational): number {
+export function naturalWidth(
+  duration: Rational,
+  spacingScale: number = ENGRAVE.spacingScale,
+): number {
   const d = ratToNumber(duration)
   if (!(d > 0)) return ENGRAVE.minColumnGap
-  return Math.max(
-    ENGRAVE.minColumnGap,
-    ENGRAVE.spacingScale * Math.sqrt(d / ENGRAVE.spacingReference),
-  )
+  return Math.max(ENGRAVE.minColumnGap, spacingScale * Math.sqrt(d / ENGRAVE.spacingReference))
 }
 
 // ─── Element builders ────────────────────────────────────────────────────────
@@ -869,6 +902,7 @@ function ledgerLines(step: number, x: number, headWidth: number): PlacedLine[] {
       x2,
       y2: stepToY(s),
       thickness: ENGRAVING_DEFAULTS.legerLineThickness,
+      role: 'ledger',
     })
   }
   for (let s = ENGRAVE.firstLedgerStep; s <= step; s += 2) push(s)
@@ -929,7 +963,7 @@ function layoutNoteheads(
 
     graceSteps.forEach((graceStep, i) => {
       const gx = x + i * ENGRAVE.graceAdvance
-      glyphs.push({ name: 'noteheadBlack', x: gx, y: stepToY(graceStep), scale })
+      glyphs.push({ name: 'noteheadBlack', x: gx, y: stepToY(graceStep), scale, role: 'grace' })
       // The stem attaches at the scaled anchor and runs a scaled length upward.
       const [ax, ay] = small.anchors.stemUpSE ?? [small.width, 0]
       const stemX = gx + ax * scale
@@ -940,6 +974,7 @@ function layoutNoteheads(
         x2: stemX,
         y2: base - ENGRAVE.stemLength * scale,
         thickness: ENGRAVING_DEFAULTS.stemThickness * scale,
+        role: 'stem',
       })
     })
 
@@ -979,7 +1014,8 @@ function layoutNoteheads(
       ? 0
       : Math.max(...accidentals.map((a) => GLYPHS[a.glyph].advance)) + ENGRAVE.accidentalGap
 
-  for (const a of accidentals) glyphs.push(glyphAt(a.glyph, noteX, a.step))
+  for (const a of accidentals)
+    glyphs.push({ ...glyphAt(a.glyph, noteX, a.step), role: 'accidental' })
   const headX = noteX + accidentalWidth
 
   // A second cannot be printed on the same side of the stem — the noteheads would
@@ -998,7 +1034,7 @@ function layoutNoteheads(
 
   for (const step of steps) {
     const dx = offsets.get(step) ?? 0
-    glyphs.push(glyphAt(spec.head, headX + dx, step))
+    glyphs.push({ ...glyphAt(spec.head, headX + dx, step), role: 'notehead' })
     lines.push(...ledgerLines(step, headX + dx, head.width))
   }
 
@@ -1029,6 +1065,7 @@ function layoutNoteheads(
       x2: stemX,
       y2: tip,
       thickness: ENGRAVING_DEFAULTS.stemThickness,
+      role: 'stem',
     })
 
     if (stemOut !== null) {
@@ -1042,7 +1079,7 @@ function layoutNoteheads(
         spec.flags === 1 ? (up ? 'flag8thUp' : 'flag8thDown') : up ? 'flag16thUp' : 'flag16thDown'
       // ponytail: 32nds and shorter reuse the 16th flag — the extracted set stops there.
       // Two flags is already rare in the corpus; extend gen-glyphs when one appears.
-      if (flag !== null) glyphs.push({ name: flag, x: stemX, y: tip })
+      if (flag !== null) glyphs.push({ name: flag, x: stemX, y: tip, role: 'flag' })
     }
   }
 
@@ -1557,7 +1594,37 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
  * staff however wide that gets. Multi-voice and system breaking are the next two slices;
  * both are layout-only changes that this element model already accommodates.
  */
+/**
+ * Which engine's look to reproduce.
+ *
+ * `standard` is core's own: abcm2ps's density, via abcMusicKit2's oracle-calibrated
+ * constant. `abcjs` reproduces abcjs's, for the compat path where an existing page must
+ * not visibly shift when abcts replaces abcjs.
+ *
+ * The two differ by ONE number, which is a genuinely surprising result and worth stating.
+ * abcjs computes a note's spacing as `sqrt(duration * 8)` units of 30px
+ * (`write/layout/voice-elements.js:23`, `engraver-controller.js:43`) — the same
+ * SQUARE-ROOT law abcm2ps uses, just calibrated differently. In staff spaces abcjs is
+ * `sqrt(d) * 10.949` against core's `sqrt(d) * 13.0`, so abcjs is about 16% tighter.
+ * Predicted 42.43px for a quarter note; the goldens measure 42.43px.
+ */
+export type RenderProfile = 'standard' | 'abcjs'
+
+const PROFILES: Readonly<Record<RenderProfile, { spacingScale: number }>> = {
+  standard: { spacingScale: 3.25 },
+  // sqrt(8) * 30 / 7.75 / 4 — abcjs's coefficient expressed against core's 1/16 reference.
+  abcjs: { spacingScale: 2.7372 },
+}
+
 export interface LayoutOptions {
+  /**
+   * Which dialect's look to render. `abcjs-strict` reproduces abcjs's engraving density
+   * so an existing page does not visibly shift; the other modes use core's own, which
+   * follows abcm2ps.
+   */
+  readonly mode?: CompatibilityMode
+  /** Override the mode's density directly. Rarely needed; `mode` is the usual control. */
+  readonly profile?: RenderProfile
   /**
    * Width a system may reach before it wraps, in staff spaces. 90 is roughly a page
    * width at a typical staff size; a host with a known viewport should pass its own.
@@ -1599,6 +1666,7 @@ function layoutMeasure(
   measure: Measure,
   clef: Clef,
   directions: ReadonlyMap<number, boolean>,
+  spacingScale: number,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
   const beams = new Map<number, StemInfo[]>()
@@ -1623,6 +1691,7 @@ function layoutMeasure(
       event,
       x,
       clef,
+      spacingScale,
       group === null ? null : (directions.get(group) ?? null),
       stemOut,
     )
@@ -1701,6 +1770,10 @@ interface VoicePlan {
  */
 export function layout(score: Score, options: LayoutOptions = {}): Layout {
   const systemWidth = options.systemWidth ?? ENGRAVE.systemWidth
+  // The mode picks the look; `profile` can still override it explicitly.
+  const profile: RenderProfile =
+    options.profile ?? (isStrict(options.mode ?? defaultMode) ? 'abcjs' : 'standard')
+  const { spacingScale } = PROFILES[profile]
   const voices = score.voices.length > 0 ? score.voices : [undefined]
 
   const plans: VoicePlan[] = voices.map((voice) => {
@@ -1708,7 +1781,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     const clef = voice?.clef ?? score.clef
     const directions = beamDirections(voice, clef)
     const blocks = (voice?.measures ?? []).map((measure) =>
-      layoutMeasure(measure, clef, directions),
+      layoutMeasure(measure, clef, directions, spacingScale),
     )
 
     /**
@@ -2053,10 +2126,11 @@ function layoutEvent(
   event: MusicEvent,
   x: number,
   clef: Clef,
+  spacingScale: number,
   forcedUp: boolean | null = null,
   stemOut: { value: Omit<StemInfo, 'element'> | null } | null = null,
 ): LayoutElement | null {
-  const advance = naturalWidth(event.duration)
+  const advance = naturalWidth(event.duration, spacingScale)
   if (event.type === 'note') {
     return layoutNoteheads(
       [event.pitch],

@@ -1,30 +1,30 @@
-bounds  width=34.564 height=23.052 top=0.000
+bounds  width=30.462 height=23.052 top=0.000
 systems 1
-system 0 width=34.564 originY=0.000
+system 0 width=30.462 originY=0.000
   staff 0 originY=15.420
-    staffline 0.000,2.000 -> 34.564,2.000 t=0.130
-    staffline 0.000,1.000 -> 34.564,1.000 t=0.130
-    staffline 0.000,0.000 -> 34.564,0.000 t=0.130
-    staffline 0.000,-1.000 -> 34.564,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 34.564,-2.000 t=0.130
-    tie  9.044,1.800 -> 13.764,1.800 bulge=0.850
-    tie  22.044,1.800 -> 26.764,1.800 bulge=0.850
+    staffline 0.000,2.000 -> 30.462,2.000 t=0.130
+    staffline 0.000,1.000 -> 30.462,1.000 t=0.130
+    staffline 0.000,0.000 -> 30.462,0.000 t=0.130
+    staffline 0.000,-1.000 -> 30.462,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 30.462,-2.000 t=0.130
+    tie  9.044,1.800 -> 12.738,1.800 bulge=0.665
+    tie  19.993,1.800 -> 23.687,1.800 bulge=0.665
     title x=0.000 w=0.000
-      text  14.882,-9.500 size=2.400 bold "Ties"
+      text  12.831,-9.500 size=2.400 bold "Ties"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
       glyph timeSig4 4.684,-1.000
       glyph timeSig4 4.684,1.000
-    note@-2 x=7.564 w=6.500
+    note@-2 x=7.564 w=5.474
       glyph noteheadBlack 7.564,1.000
       line  8.744,0.832 -> 8.744,-2.500 t=0.120
-    note@-2 x=14.064 w=6.500
-      glyph noteheadBlack 14.064,1.000
-      line  15.244,0.832 -> 15.244,-2.500 t=0.120
-    note@-2 x=20.564 w=6.500
-      glyph noteheadBlack 20.564,1.000
-      line  21.744,0.832 -> 21.744,-2.500 t=0.120
-    note@-2 x=27.064 w=6.500
-      glyph noteheadBlack 27.064,1.000
-      line  28.244,0.832 -> 28.244,-2.500 t=0.120
+    note@-2 x=13.038 w=5.474
+      glyph noteheadBlack 13.038,1.000
+      line  14.218,0.832 -> 14.218,-2.500 t=0.120
+    note@-2 x=18.513 w=5.474
+      glyph noteheadBlack 18.513,1.000
+      line  19.693,0.832 -> 19.693,-2.500 t=0.120
+    note@-2 x=23.987 w=5.474
+      glyph noteheadBlack 23.987,1.000
+      line  25.167,0.832 -> 25.167,-2.500 t=0.120

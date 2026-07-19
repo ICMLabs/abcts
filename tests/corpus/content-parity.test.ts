@@ -25,14 +25,19 @@ import { corpusDir, type GoldenElement, goldenElements, goldenNotes } from './co
  */
 const KNOWN_DIVERGENCES: Record<string, string> = {
   'S1-decorations':
-    'abcjs DROPS `!staccato!`. Its golden records decoration:[...] for fermata, accent, ' +
-    'tenuto, trill, mordent, turn and upbow on the surrounding notes, but decoration:None ' +
-    'for `!staccato!F` at offset 194. Core attaches it, which is correct — matching abcjs ' +
-    'here would mean reproducing the omission.',
+    'STRICT-MODE GAP, not a design choice. abcjs DROPS `!staccato!` — its golden records ' +
+    'decoration for fermata, accent, tenuto, trill, mordent, turn and upbow on the ' +
+    'surrounding notes but decoration:None for `!staccato!F` at offset 194. Strict mode ' +
+    'is meant to reproduce abcjs bugs and does not reproduce this one yet. Under abc2.1 ' +
+    'and extended the decoration is correctly attached and the divergence is intended.',
   'frere-jacques':
-    'abcjs parses `+:` field-continuation lines as music — its notes at offsets 256-296 ' +
-    'are the prose of "+:belongs to their respective owners". Core treats `+:` as a ' +
-    'continuation of the previous field (ABC 2.1), giving 32 real notes against abcjs 45.',
+    'STRICT-MODE GAP, narrowed. abcjs does not implement `+:` at all and parses the ' +
+    'continuation line as MUSIC, so the prose of a copyright notice becomes noteheads. ' +
+    'Strict mode now does the same — the structural behaviour matches — but lexes that ' +
+    'prose slightly differently: 50 notes against abcjs 45. Closing it means matching ' +
+    "abcjs's lexer on arbitrary text, where a comma is an octave mark and `+` was an old " +
+    'decoration delimiter. Under abc2.1 `+:` is a continuation, which is what ABC 2.1 ' +
+    'says, and the 32 notes there are the real ones.',
 }
 
 /**
@@ -80,12 +85,9 @@ const BEAM_FAILURES = [
  */
 const LYRIC_DIVERGENCES: Record<string, string> = {
   'frere-jacques':
-    'The same abcjs `+:` mis-parse as the note gate: abcjs reads the continuation lines ' +
-    'as music, so its notes and therefore its lyric alignment are built on a wrong tune.',
-  'ave-verum-corpus':
-    'A SPACED hyphen (`A - ve,`). abcjs binds the hyphen to the preceding syllable and ' +
-    'skips a note; core makes it a syllable of its own, following abcMusicKit2. A ' +
-    'deliberate divergence, arbitrated 2026-07-19 — see parseLyricSyllables.',
+    'Downstream of the note-level gap below: strict mode parses the `+:` prose as music ' +
+    'like abcjs, but lexes it slightly differently, so the note count differs and the ' +
+    'lyric alignment inherits that.',
 }
 
 // `S5-directives` was listed here as a 2-note multi-verse drift and was NOT a parser

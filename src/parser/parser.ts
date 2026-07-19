@@ -22,10 +22,13 @@ import {
   type Chord,
   type Clef,
   type ClefShape,
+  type CompatibilityMode,
   type Diagnostic,
   type DiatonicStep,
   defaultClef,
+  defaultMode,
   isCompoundMeter,
+  isStrict,
   type KeySignature,
   type Measure,
   type Meter,
@@ -641,7 +644,10 @@ class Parser {
   private inTextBlock = false
   private lastFieldLetter: string | null = null
 
-  constructor(private readonly src: string) {}
+  constructor(
+    private readonly src: string,
+    private readonly mode: CompatibilityMode = defaultMode,
+  ) {}
 
   parse(): ParseResult {
     let lineStart = 0
@@ -744,7 +750,13 @@ class Parser {
     // `+:` continues the previous field over another line. Restricted to text-bearing
     // fields: replaying it into K:/M:/L:/V: re-parsed prose as a field value and injected
     // a phantom mid-tune key change.
+    // MODE-GATED. abcjs does not implement `+:` at all: it falls through and parses the
+    // continuation line as MUSIC, so the prose of a copyright notice becomes noteheads
+    // on the staff. `frere-jacques` is the fixture — 13 of abcjs's 45 "notes" there are
+    // the words of "+:belongs to their respective owners". Strict mode reproduces that;
+    // every other mode reads `+:` as ABC 2.1 defines it.
     if (
+      !isStrict(this.mode) &&
       line.startsWith('+:') &&
       this.lastFieldLetter &&
       CONTINUABLE_FIELDS.includes(this.lastFieldLetter)
@@ -812,7 +824,7 @@ class Parser {
       }
       case 'w': {
         // `w:` follows the music line it belongs to. Offset by 2 for the `w:` prefix.
-        builder.voice.addLyricLine(parseLyricSyllables(content, start + 2))
+        builder.voice.addLyricLine(parseLyricSyllables(content, start + 2, this.mode))
         return
       }
       case 'V': {
@@ -1554,7 +1566,11 @@ interface Syllable {
  * reading. `ave-verum-corpus` is the fixture; the difference is recorded in the lyric
  * gate's divergence list rather than silently absorbed.
  */
-function parseLyricSyllables(text: string, base: number): Syllable[] {
+function parseLyricSyllables(
+  text: string,
+  base: number,
+  mode: CompatibilityMode = defaultMode,
+): Syllable[] {
   const out: Syllable[] = []
   let i = 0
   while (i < text.length) {
@@ -1586,6 +1602,18 @@ function parseLyricSyllables(text: string, base: number): Syllable[] {
       })
       buffer = ''
     }
+    // MODE-GATED. A STANDALONE `-` (`A - ve`): abcjs binds the hyphen to the syllable
+    // before it and consumes a note; abcMusicKit2 makes it a syllable in its own right.
+    // Arbitrated against the goldens 2026-07-19 — `ave-verum-corpus` is the fixture.
+    if (isStrict(mode) && token === '-') {
+      const previous = out[out.length - 1]
+      if (previous?.kind === 'text' && previous.text !== null && !previous.text.endsWith('-')) {
+        out[out.length - 1] = { ...previous, text: `${previous.text}-` }
+      }
+      out.push({ kind: 'skip', text: null, range: null })
+      continue
+    }
+
     for (let j = tokenStart; j < i; j++) {
       const ch = text[j] as string
       if (ch === '-') {
@@ -1697,6 +1725,14 @@ function deepFreeze<T>(value: T, seen = new WeakSet<object>()): T {
  * diagnostics rather than failure — so `ok: false` is reserved for `error`-severity
  * diagnostics, which nothing currently emits. The result is deeply frozen.
  */
-export function parse(source: string): ParseResult {
-  return deepFreeze(new Parser(source).parse())
+export interface ParseOptions {
+  /**
+   * Which dialect to read. Defaults to `abcjs-strict`, which reproduces abcjs including
+   * its bugs — see `CompatibilityMode`.
+   */
+  readonly mode?: CompatibilityMode
+}
+
+export function parse(source: string, options: ParseOptions = {}): ParseResult {
+  return deepFreeze(new Parser(source, options.mode ?? defaultMode).parse())
 }

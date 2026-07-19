@@ -14,6 +14,7 @@ export {
   layout,
   type PlacedGlyph,
   type PlacedLine,
+  type RenderProfile,
   stepToY,
 } from './layout.js'
 export { type RenderOptions, toSVG } from './svg.js'

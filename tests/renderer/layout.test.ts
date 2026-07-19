@@ -10,7 +10,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   Accidental,
+  type CompatibilityMode,
   defaultClef,
+  defaultMode,
   type KeySignature,
   type Mode,
   rational,
@@ -1081,5 +1083,50 @@ describe('noteGlyph', () => {
         head: 'noteheadBlack',
       })
     }
+  })
+})
+
+describe('compatibility modes', () => {
+  it('defaults to abcjs-strict', () => {
+    // A replacement whose default output differs from the thing it replaces is not one.
+    expect(defaultMode).toBe('abcjs-strict')
+  })
+
+  it("renders at abcjs density in strict mode, and core's own otherwise", () => {
+    const gap = (mode: CompatibilityMode) => {
+      const abc = 'X:1\nM:4/4\nL:1/4\nK:C\nCDEF|\n'
+      const notes = (
+        layout(parse(abc, { mode }).scores[0] as Score, { mode }).systems[0]?.staves[0]?.elements ??
+        []
+      ).filter((e) => e.type === 'note')
+      return (notes[1]?.x ?? 0) - (notes[0]?.x ?? 0)
+    }
+    // abcjs sets a quarter note at sqrt(0.25*8)*30px = 42.43px = 5.474 staff spaces,
+    // measured identically in the goldens. Core follows abcm2ps and is looser.
+    expect(gap('abcjs-strict')).toBeCloseTo(5.474, 2)
+    expect(gap('abc2.1')).toBeCloseTo(6.5, 2)
+    expect(gap('extended')).toBeCloseTo(6.5, 2)
+  })
+
+  it('reads `+:` as music in strict mode and as a continuation otherwise', () => {
+    // abcjs does not implement `+:`, so the prose falls through and is parsed as notes.
+    const abc = 'X:1\nL:1/4\nT:Title\n+:continued CDEF\nK:C\nGABc|\n'
+    const notes = (mode: CompatibilityMode) =>
+      parse(abc, { mode })
+        .scores.flatMap((s) => s.voices)
+        .flatMap((v) => v.measures.flatMap((m) => m.events))
+        .filter((e) => e.type === 'note').length
+    expect(notes('abcjs-strict')).toBeGreaterThan(notes('abc2.1'))
+  })
+
+  it('binds a spaced lyric hyphen abcjs-style in strict mode only', () => {
+    // `A - ve,`: abcjs attaches the hyphen to the previous syllable and skips a note;
+    // abcMusicKit2 makes it a syllable of its own. Arbitrated against the goldens.
+    const lyrics = (mode: CompatibilityMode) =>
+      (parse('X:1\nL:1/4\nK:C\nCDE|\nw:A - ve,\n', { mode }).scores[0]?.voices[0]?.measures ?? [])
+        .flatMap((m) => m.events)
+        .map((e) => (e.type === 'rest' ? null : e.lyric))
+    expect(lyrics('abcjs-strict')).toEqual(['A-', null, 've,'])
+    expect(lyrics('abc2.1')).toEqual(['A', 've,', null])
   })
 })

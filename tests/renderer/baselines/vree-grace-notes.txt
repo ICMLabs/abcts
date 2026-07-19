@@ -1,37 +1,37 @@
-bounds  width=32.756 height=23.052 top=0.000
+bounds  width=29.255 height=23.052 top=0.000
 systems 1
-system 0 width=32.756 originY=0.000
+system 0 width=29.255 originY=0.000
   staff 0 originY=15.420
-    staffline 0.000,2.000 -> 32.756,2.000 t=0.130
-    staffline 0.000,1.000 -> 32.756,1.000 t=0.130
-    staffline 0.000,0.000 -> 32.756,0.000 t=0.130
-    staffline 0.000,-1.000 -> 32.756,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 32.756,-2.000 t=0.130
+    staffline 0.000,2.000 -> 29.255,2.000 t=0.130
+    staffline 0.000,1.000 -> 29.255,1.000 t=0.130
+    staffline 0.000,0.000 -> 29.255,0.000 t=0.130
+    staffline 0.000,-1.000 -> 29.255,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 29.255,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  9.778,-9.500 size=2.400 bold "Grace Notes"
+      text  8.027,-9.500 size=2.400 bold "Grace Notes"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
       glyph timeSig4 4.684,-1.000
       glyph timeSig4 4.684,1.000
-    note@0 x=7.564 w=6.500
+    note@0 x=7.564 w=5.474
       glyph noteheadBlack 7.564,-0.500 scale=0.600
       glyph noteheadBlack 9.064,0.000
       line  8.272,-0.601 -> 8.272,-2.701 t=0.072
       line  7.364,-1.600 -> 8.554,-2.800 t=0.168
       line  9.064,0.168 -> 9.064,3.500 t=0.120
-    note@-1 x=14.064 w=6.500
-      glyph noteheadBlack 14.064,1.000 scale=0.600
-      glyph noteheadBlack 15.564,0.500
-      line  14.772,0.899 -> 14.772,-1.201 t=0.072
-      line  16.744,0.332 -> 16.744,-3.000 t=0.120
-    note@-2 x=20.564 w=9.192
-      glyph noteheadBlack 20.564,0.500 scale=0.600
-      glyph noteheadBlack 21.664,0.000 scale=0.600
-      glyph noteheadHalf 23.164,1.000
-      line  21.272,0.399 -> 21.272,-1.701 t=0.072
-      line  22.372,-0.101 -> 22.372,-2.201 t=0.072
-      line  24.344,0.832 -> 24.344,-2.500 t=0.120
-    bar x=30.756 w=1.060
-      line  30.836,-2.000 -> 30.836,2.000 t=0.160
-      line  31.566,-2.000 -> 31.566,2.000 t=0.500
+    note@-1 x=13.038 w=5.474
+      glyph noteheadBlack 13.038,1.000 scale=0.600
+      glyph noteheadBlack 14.538,0.500
+      line  13.746,0.899 -> 13.746,-1.201 t=0.072
+      line  15.718,0.332 -> 15.718,-3.000 t=0.120
+    note@-2 x=18.513 w=7.742
+      glyph noteheadBlack 18.513,0.500 scale=0.600
+      glyph noteheadBlack 19.613,0.000 scale=0.600
+      glyph noteheadHalf 21.113,1.000
+      line  19.221,0.399 -> 19.221,-1.701 t=0.072
+      line  20.321,-0.101 -> 20.321,-2.201 t=0.072
+      line  22.293,0.832 -> 22.293,-2.500 t=0.120
+    bar x=27.255 w=1.060
+      line  27.335,-2.000 -> 27.335,2.000 t=0.160
+      line  28.065,-2.000 -> 28.065,2.000 t=0.500

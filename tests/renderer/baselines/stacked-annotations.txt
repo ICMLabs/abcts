@@ -1,34 +1,34 @@
-bounds  width=28.069 height=23.052 top=0.000
+bounds  width=25.168 height=23.052 top=0.000
 systems 1
-system 0 width=28.069 originY=0.000
+system 0 width=25.168 originY=0.000
   staff 0 originY=15.420
-    staffline 0.000,2.000 -> 28.069,2.000 t=0.130
-    staffline 0.000,1.000 -> 28.069,1.000 t=0.130
-    staffline 0.000,0.000 -> 28.069,0.000 t=0.130
-    staffline 0.000,-1.000 -> 28.069,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 28.069,-2.000 t=0.130
+    staffline 0.000,2.000 -> 25.168,2.000 t=0.130
+    staffline 0.000,1.000 -> 25.168,1.000 t=0.130
+    staffline 0.000,0.000 -> 25.168,0.000 t=0.130
+    staffline 0.000,-1.000 -> 25.168,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 25.168,-2.000 t=0.130
     title x=0.000 w=0.000
       text  0.000,-9.500 size=2.400 bold "Stacked annotations test"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
-    note@-6 x=4.684 w=4.596
+    note@-6 x=4.684 w=3.871
       glyph noteheadBlack 4.684,3.000
       glyph flag8thUp 5.864,-0.500
       line  4.284,3.000 -> 6.264,3.000 t=0.160
       line  5.864,2.832 -> 5.864,-0.500 t=0.120
-    note@-5 x=9.280 w=4.596
-      glyph noteheadBlack 9.280,2.500
-      glyph flag8thUp 10.460,-1.000
-      line  10.460,2.332 -> 10.460,-1.000 t=0.120
-    bar x=14.876 w=0.160
-      line  14.956,-2.000 -> 14.956,2.000 t=0.160
-    note@-4 x=15.876 w=4.596
-      glyph noteheadBlack 15.876,2.000
-      glyph flag8thUp 17.056,-1.500
-      line  17.056,1.832 -> 17.056,-1.500 t=0.120
-    note@-3 x=20.473 w=4.596
-      glyph noteheadBlack 20.473,1.500
-      glyph flag8thUp 21.653,-2.000
-      line  21.653,1.332 -> 21.653,-2.000 t=0.120
-    bar x=26.069 w=0.160
-      line  26.149,-2.000 -> 26.149,2.000 t=0.160
+    note@-5 x=8.555 w=3.871
+      glyph noteheadBlack 8.555,2.500
+      glyph flag8thUp 9.735,-1.000
+      line  9.735,2.332 -> 9.735,-1.000 t=0.120
+    bar x=13.426 w=0.160
+      line  13.506,-2.000 -> 13.506,2.000 t=0.160
+    note@-4 x=14.426 w=3.871
+      glyph noteheadBlack 14.426,2.000
+      glyph flag8thUp 15.606,-1.500
+      line  15.606,1.832 -> 15.606,-1.500 t=0.120
+    note@-3 x=18.297 w=3.871
+      glyph noteheadBlack 18.297,1.500
+      glyph flag8thUp 19.477,-2.000
+      line  19.477,1.332 -> 19.477,-2.000 t=0.120
+    bar x=23.168 w=0.160
+      line  23.248,-2.000 -> 23.248,2.000 t=0.160

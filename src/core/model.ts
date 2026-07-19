@@ -9,6 +9,31 @@
  *    that and survives a JSON round-trip.
  */
 
+// ─── Compatibility mode ──────────────────────────────────────────────────────
+
+/**
+ * Which dialect and which look abcts produces, mirroring abcMusicKit's own three modes.
+ *
+ * - `abcjs-strict` — reproduce abcjs, INCLUDING its bugs. The default, because abcts
+ *   exists to replace abcjs and a replacement whose default output differs from the
+ *   thing it replaces is not one. Someone swapping the import should see their page
+ *   unchanged; opting into corrections should be a choice they make.
+ * - `abc2.1` — the standard read correctly: abcjs's parsing bugs fixed, engraving
+ *   still conventional.
+ * - `extended` — beyond the standard, where abcm2ps and abc2svg have features abcjs
+ *   lacks.
+ *
+ * The mode gates BEHAVIOUR, not just appearance. Where core deliberately departs from
+ * abcjs — `+:` continuations, a dropped decoration, a spaced lyric hyphen — the
+ * departure IS the mode, and strict reproduces abcjs instead.
+ */
+export type CompatibilityMode = 'abcjs-strict' | 'abc2.1' | 'extended'
+
+export const defaultMode: CompatibilityMode = 'abcjs-strict'
+
+/** True when the mode wants abcjs's behaviour rather than the standard's. */
+export const isStrict = (mode: CompatibilityMode): boolean => mode === 'abcjs-strict'
+
 // ─── Rational ────────────────────────────────────────────────────────────────
 // Durations are exact rationals, never floats. This is a locked decision in
 // abcMusicKit2 and one of the abcjs bugs core exists to fix: abcjs stores

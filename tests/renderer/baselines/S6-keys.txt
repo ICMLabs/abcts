@@ -1,18 +1,18 @@
-bounds  width=26.949 height=23.052 top=0.000
+bounds  width=24.048 height=23.052 top=0.000
 systems 1
-system 0 width=26.949 originY=0.000
+system 0 width=24.048 originY=0.000
   staff 0 originY=15.420
-    staffline 0.000,2.000 -> 26.949,2.000 t=0.130
-    staffline 0.000,1.000 -> 26.949,1.000 t=0.130
-    staffline 0.000,0.000 -> 26.949,0.000 t=0.130
-    staffline 0.000,-1.000 -> 26.949,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 26.949,-2.000 t=0.130
+    staffline 0.000,2.000 -> 24.048,2.000 t=0.130
+    staffline 0.000,1.000 -> 24.048,1.000 t=0.130
+    staffline 0.000,0.000 -> 24.048,0.000 t=0.130
+    staffline 0.000,-1.000 -> 24.048,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 24.048,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  9.874,-9.500 size=2.400 bold "S6-1 C"
+      text  8.424,-9.500 size=2.400 bold "S6-1 C"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
       glyph timeSig8 4.752,-1.000
       glyph timeSig4 4.684,1.000
-    note@-2 x=7.564 w=18.385
+    note@-2 x=7.564 w=15.484
       glyph noteheadWhole 7.564,1.000
