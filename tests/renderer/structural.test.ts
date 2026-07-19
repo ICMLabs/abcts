@@ -19,11 +19,17 @@
  *  2. FIRST VOICE ONLY. Both sides read voice 0. `voice-octave-shift` passes on its
  *     unshifted voice 1, so it does NOT settle the octaveShift question in CHECKPOINT
  *     risk 3 — that needs voice 2.
- *  3. NOTEHEAD SPINE ONLY. Slurs, ties, grace notes, chord symbols, decorations and
- *     annotations are not `children` elements in abcjs's layout, so a fixture named for
- *     one of them passes without that feature being rendered at all. `vree-grace-notes`
- *     and `curves` are green and neither grace notes nor slurs are drawn.
- *  4. NO VISUAL PROPERTIES. Spacing, stem direction and length, beams, ledger lines. A
+ *  3. NOTEHEAD SPINE ONLY. Slurs, ties, grace notes, chord symbols, decorations,
+ *     annotations and ACCIDENTALS are not `children` elements in abcjs's layout, so a
+ *     fixture named for one of them passes without that feature being rendered at all.
+ *     `vree-grace-notes` and `curves` are green and neither grace notes nor slurs are
+ *     drawn; `vree-sharps` is green and no accidental is drawn on any note. Accidentals
+ *     are called out because they are where the parser audit's blind spot lived.
+ *  4. REST POSITION. Compared as presence only. abcjs anchors every rest at its own
+ *     pitch 7 whatever the duration, because its glyphs carry different origins than
+ *     SMuFL's; a whole rest hangs below its origin and a half rest sits above it. The
+ *     two conventions are not comparable, so only the rest's existence is gated.
+ *  5. NO VISUAL PROPERTIES. Spacing, stem direction and length, beams, ledger lines. A
  *     regression preserving sequence and positions passes here. Committed visual
  *     baselines are the second half of this gate and are not built yet.
  *
@@ -44,9 +50,14 @@ import { type GoldenLayoutElement, goldenLayoutElements, loadCorpus } from '../c
  * anti-rot property `KNOWN_DIVERGENCES` has in the parser gate.
  */
 const RENDERABLE = [
+  'brother-john-inline-voices',
   'chord-grid',
   'clefs',
   'curves',
+  'multi-voice-lyrics-two-voices',
+  'multi-voice-rest-collision',
+  'multi-voice-rest-placement',
+  'multi-voice-triplet-brackets',
   'score-reorder-shared',
   'simple-c',
   'stacked-annotations',
@@ -56,6 +67,7 @@ const RENDERABLE = [
   'voice-octave-shift',
   'vree-compound-meter',
   'vree-grace-notes',
+  'vree-sharps',
   'vree-slurs-and-triplets',
   'vree-ties-across-bars',
 ]

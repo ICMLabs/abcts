@@ -15,10 +15,14 @@
  * the font, engraving conventions (stem length, spacing) live in ENGRAVE below.
  */
 import {
+  type DiatonicStep,
+  type KeySignature,
+  type Mode,
   type MusicEvent,
   type Note,
   type Pitch,
   type Rational,
+  type Rest,
   ratToNumber,
   type Score,
   stepIndex,
@@ -47,6 +51,13 @@ const ENGRAVE = {
   /** Gap after a clef or meter before the next element. PROVISIONAL. */
   prefixGap: 1.0,
   /**
+   * Gap between adjacent accidentals in a key signature. Bravura's advance width for a
+   * sharp equals its ink width exactly, so laying them out on advance alone butts them
+   * edge to edge — and a sharp is 2.8 staff spaces tall, so neighbours at different
+   * heights visibly interpenetrate. Engraving sets them close but clear. PROVISIONAL.
+   */
+  keySignatureGap: 0.15,
+  /**
    * Horizontal advance allotted to a note.
    *
    * ponytail: flat, duration-independent spacing — a half note takes the same width as
@@ -62,7 +73,7 @@ const ENGRAVE = {
 
 // ─── Layout model ────────────────────────────────────────────────────────────
 
-export type ElementType = 'clef' | 'timeSignature' | 'note' | 'rest' | 'bar'
+export type ElementType = 'clef' | 'keySignature' | 'timeSignature' | 'note' | 'rest' | 'bar'
 
 export interface PlacedGlyph {
   readonly name: GlyphName
@@ -229,6 +240,126 @@ function layoutMeter(x: number, numerator: number, denominator: number): LayoutE
   }
 }
 
+// ─── Key signature ───────────────────────────────────────────────────────────
+
+/**
+ * Staff steps for accidentals in a key signature, in the order they are written.
+ *
+ * Sharps run F C G D A E B and flats the reverse, each at a fixed staff position — the
+ * placement is conventional, not derived, and is the same in every book. Treble clef;
+ * other clefs shift these, which is part of the clef work and not yet done.
+ */
+const SHARP_STEPS = [4, 1, 5, 2, -1, 3, 0] as const
+const FLAT_STEPS = [0, 3, -1, 2, -2, 1, -3] as const
+
+/** Position on the circle of fifths for a natural step: F=-1, C=0, G=1, D=2 … */
+const NATURAL_FIFTHS: Readonly<Record<DiatonicStep, number>> = {
+  f: -1,
+  c: 0,
+  g: 1,
+  d: 2,
+  a: 3,
+  e: 4,
+  b: 5,
+}
+
+/** How far each mode sits from major on the circle. D dorian has no accidentals, so -2. */
+const MODE_FIFTHS: Readonly<Record<Mode, number>> = {
+  lydian: 1,
+  major: 0,
+  mixolydian: -1,
+  dorian: -2,
+  minor: -3,
+  phrygian: -4,
+  locrian: -5,
+}
+
+/**
+ * Signed accidental count for a key: positive is that many sharps, negative that many
+ * flats. Derived from the circle of fifths rather than a lookup table of key names,
+ * which is abcMusicKit2's approach and the reason `KeySignature` stores a tonic and a
+ * mode instead of an accidental list.
+ */
+export function keyFifths(key: KeySignature): number {
+  if (key.none) return 0
+  // Each sharp on the tonic moves it seven places round the circle: C→C# is 0→7.
+  const fifths = NATURAL_FIFTHS[key.tonic.step] + 7 * key.tonic.accidental + MODE_FIFTHS[key.mode]
+  // Beyond ±7 the signature would need double accidentals. Real ABC does reach K:A#
+  // (10 sharps); clamping draws seven rather than indexing off the end of the table.
+  return Math.max(-7, Math.min(7, fifths))
+}
+
+function layoutKeySignature(x: number, key: KeySignature): LayoutElement | null {
+  const fifths = keyFifths(key)
+  if (fifths === 0) return null // C major and K:none both draw nothing.
+
+  const sharps = fifths > 0
+  const steps = (sharps ? SHARP_STEPS : FLAT_STEPS).slice(0, Math.abs(fifths))
+  const name: GlyphName = sharps ? 'accidentalSharp' : 'accidentalFlat'
+  const pitch = GLYPHS[name].advance + ENGRAVE.keySignatureGap
+
+  return {
+    type: 'keySignature',
+    x,
+    // No trailing gap: the signature ends at the last glyph's ink.
+    width: steps.length * pitch - ENGRAVE.keySignatureGap,
+    staffStep: null,
+    glyphs: steps.map((step, i) => glyphAt(name, x + i * pitch, step)),
+    lines: [],
+  }
+}
+
+// ─── Rests ───────────────────────────────────────────────────────────────────
+
+/**
+ * Written duration → rest glyph and the staff step its origin sits on.
+ *
+ * The step is not a free choice: SMuFL designs each rest around its origin, so a whole
+ * rest's ink hangs BELOW the origin (bbox -0.54 to 0.036) and a half rest's sits ABOVE
+ * it (-0.008 to 0.568). Putting the whole rest on step 2 and the half on step 0 is what
+ * makes the first hang from the fourth line and the second sit on the middle line, which
+ * is the engraving convention. The shorter rests are drawn about their own centre.
+ *
+ * NOTE this is a different convention from abcjs, which anchors every rest at its pitch
+ * 7 regardless of duration, because its glyphs have different origins. Rest POSITION is
+ * therefore not comparable between the two engines; the structural gate compares only
+ * that a rest is present. See the gate's blind-spot list.
+ */
+function restGlyph(notated: Rational): { name: GlyphName; step: number } | null {
+  const whole = ratToNumber(notated)
+  if (!(whole > 0)) return null
+  if (whole >= 1) return { name: 'restWhole', step: 2 }
+
+  const log = Math.log2(1 / whole)
+  if (!Number.isInteger(log)) return null
+
+  const byLog: Readonly<Record<number, GlyphName>> = {
+    1: 'restHalf',
+    2: 'restQuarter',
+    3: 'rest8th',
+    4: 'rest16th',
+  }
+  const name = byLog[log]
+  if (!name) return null
+  return { name, step: name === 'restHalf' ? 0 : 0 }
+}
+
+function layoutRest(rest: Rest, x: number): LayoutElement {
+  // `x` and `y` occupy horizontal space but print nothing; a spacer prints nothing and
+  // is not even a rest musically. Both still advance, so following notes stay put.
+  const invisible = rest.kind === 'invisible' || rest.kind === 'invisibleMultiMeasure'
+  const spec = invisible || rest.kind === 'spacer' ? null : restGlyph(rest.notatedDuration)
+
+  return {
+    type: 'rest',
+    x,
+    width: ENGRAVE.noteAdvance,
+    staffStep: null,
+    glyphs: spec ? [glyphAt(spec.name, x, spec.step)] : [],
+    lines: [],
+  }
+}
+
 /** Ledger lines for a note that sits beyond the staff. */
 function ledgerLines(step: number, x: number, headWidth: number): PlacedLine[] {
   const lines: PlacedLine[] = []
@@ -326,6 +457,13 @@ export function layout(score: Score): Layout {
   elements.push(layoutClef(x))
   x += GLYPHS.gClef.advance + ENGRAVE.prefixGap
 
+  // Clef, then key, then meter — the fixed order of a staff prefix.
+  const keySig = layoutKeySignature(x, score.key)
+  if (keySig !== null) {
+    elements.push(keySig)
+    x += keySig.width + ENGRAVE.prefixGap
+  }
+
   if (score.meter !== null) {
     const meter = layoutMeter(x, score.meter.numerator, score.meter.denominator)
     elements.push(meter)
@@ -364,9 +502,11 @@ export function layout(score: Score): Layout {
 }
 
 /**
- * ponytail: notes only. Rests and chords return null and lay out as nothing — the rest
- * glyphs are extracted and ready, but no gated fixture in the first slice has one.
+ * ponytail: chords lay out as nothing. A chord is a note element with N noteheads plus
+ * second-interval offsetting, so it is a real slice of work rather than a line here.
  */
 function layoutEvent(event: MusicEvent, x: number): LayoutElement | null {
-  return event.type === 'note' ? layoutNote(event, x) : null
+  if (event.type === 'note') return layoutNote(event, x)
+  if (event.type === 'rest') return layoutRest(event, x)
+  return null
 }
