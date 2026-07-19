@@ -196,6 +196,18 @@ export interface Note {
   /** First-verse syllable sung on this event, if any. */
   readonly lyric: string | null
   readonly lyricSourceRange: SourceRange | null
+  /**
+   * `_` in a `w:` line — this note CONTINUES the previous syllable rather than being
+   * wordless. Distinct from `lyric: null` with `lyricMelisma: false`, which is `*`:
+   * genuinely nothing sung here.
+   *
+   * A renderer draws an extension line under a melisma. To do that correctly the line
+   * must span the full horizontal extent the note OCCUPIES — a whole note is wider than
+   * a half — rather than stopping at the next notehead's x. That needs the laid-out
+   * width, so it is a layout-time decision; parse only records that the melisma exists
+   * and, by position, which syllable it extends.
+   */
+  readonly lyricMelisma: boolean
   /** Verses 2..n, parallel and positional — null where a verse skips this event. */
   readonly extraVerses: readonly (string | null)[]
   readonly style: NoteStyle
@@ -258,6 +270,18 @@ export interface Chord {
   /** First-verse syllable sung on this event, if any. */
   readonly lyric: string | null
   readonly lyricSourceRange: SourceRange | null
+  /**
+   * `_` in a `w:` line — this note CONTINUES the previous syllable rather than being
+   * wordless. Distinct from `lyric: null` with `lyricMelisma: false`, which is `*`:
+   * genuinely nothing sung here.
+   *
+   * A renderer draws an extension line under a melisma. To do that correctly the line
+   * must span the full horizontal extent the note OCCUPIES — a whole note is wider than
+   * a half — rather than stopping at the next notehead's x. That needs the laid-out
+   * width, so it is a layout-time decision; parse only records that the melisma exists
+   * and, by position, which syllable it extends.
+   */
+  readonly lyricMelisma: boolean
   /** Verses 2..n, parallel and positional — null where a verse skips this event. */
   readonly extraVerses: readonly (string | null)[]
   readonly style: NoteStyle

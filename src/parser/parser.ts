@@ -240,7 +240,9 @@ class VoiceBuilder {
       verseOfStart.set(line.start, verse + 1)
       while (verses.length <= verse) verses.push(new Map())
       line.syllables.forEach((syllable, offset) => {
-        if (syllable.text !== null) verses[verse]?.set(line.start + offset, syllable)
+        // `skip` is the absence of a syllable, so it need not be recorded; `melisma`
+        // must be, or the held note becomes indistinguishable from a wordless one.
+        if (syllable.kind !== 'skip') verses[verse]?.set(line.start + offset, syllable)
       })
     }
 
@@ -255,6 +257,10 @@ class VoiceBuilder {
           ...event,
           lyric: first?.text ?? null,
           lyricSourceRange: first?.range ?? null,
+          // ponytail: melisma is tracked for verse 1 only. extraVerses is a plain
+          // (string|null)[]; per-verse melismas need it to become a richer type, which
+          // is worth doing when a renderer actually lays out multiple verses.
+          lyricMelisma: first?.kind === 'melisma',
           extraVerses: extras,
         }
         index += 1
@@ -942,6 +948,7 @@ class Parser {
       beamGroup: null,
       lyric: null,
       lyricSourceRange: null,
+      lyricMelisma: false,
       extraVerses: [],
       style: 'normal',
       microtoneCents,
@@ -1040,6 +1047,7 @@ class Parser {
         beamGroup: null,
         lyric: null,
         lyricSourceRange: null,
+        lyricMelisma: false,
         extraVerses: [],
         style: 'normal',
         headDurations: mixed ? headDurations : [],
@@ -1227,8 +1235,18 @@ function parseGracePitches(raw: string): { pitches: Pitch[]; slash: boolean } {
   return { pitches, slash }
 }
 
-/** One syllable position in a `w:` line. `text` is null where the verse skips a note. */
+/**
+ * One syllable position in a `w:` line.
+ *
+ * `text` — sung on this note.
+ * `skip` — `*`, nothing sung here.
+ * `melisma` — `_`, the previous syllable is held through this note.
+ *
+ * `skip` and `melisma` both occupy a note, which is why alignment is the same either way;
+ * they differ in what a renderer draws.
+ */
 interface Syllable {
+  kind: 'text' | 'skip' | 'melisma'
   text: string | null
   range: SourceRange | null
 }
@@ -1255,8 +1273,12 @@ function parseLyricSyllables(text: string, base: number): Syllable[] {
     while (i < text.length && text[i] !== ' ') i++
     const token = text.slice(tokenStart, i)
     if (token === '|') continue // alignment hint, not a note
-    if (token === '*' || token === '_') {
-      out.push({ text: null, range: null })
+    if (token === '*') {
+      out.push({ kind: 'skip', text: null, range: null })
+      continue
+    }
+    if (token === '_') {
+      out.push({ kind: 'melisma', text: null, range: null })
       continue
     }
     // Split on `-`, keeping empty trailing pieces so `word-` advances two notes.
@@ -1273,8 +1295,11 @@ function parseLyricSyllables(text: string, base: number): Syllable[] {
       // span so cross-linking still points at the `w:` text, not the decoded form.
       const raw = text.slice(part.start, part.end).split('~').join(' ')
       const range = sourceRange(base + part.start, base + part.end)
-      if (index < parts.length - 1) out.push({ text: `${decodeTextString(raw)}-`, range })
-      else if (raw !== '') out.push({ text: decodeTextString(raw), range })
+      if (index < parts.length - 1) {
+        out.push({ kind: 'text', text: `${decodeTextString(raw)}-`, range })
+      } else if (raw !== '') {
+        out.push({ kind: 'text', text: decodeTextString(raw), range })
+      }
     })
   }
   return out

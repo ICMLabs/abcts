@@ -81,6 +81,7 @@ describe('parse: simple-c', () => {
       beamGroup: null,
       lyric: null,
       lyricSourceRange: null,
+      lyricMelisma: false,
       extraVerses: [],
       style: 'normal',
       microtoneCents: 0,
@@ -354,6 +355,22 @@ describe('lyrics', () => {
   it('treats * as a skipped note and | as an alignment hint occupying none', () => {
     const notes = notesOf('X:1\nL:1/4\nK:C\nCDEF|\nw:Do * | Mi Fa\n')
     expect(notes.map((n) => n.lyric)).toEqual(['Do', null, 'Mi', 'Fa'])
+    // `*` is nothing sung — NOT a held syllable.
+    expect(notes.map((n) => n.lyricMelisma)).toEqual([false, false, false, false])
+  })
+
+  it('distinguishes _ (melisma) from * (skip)', () => {
+    // Both leave `lyric` null and occupy a note, but only `_` means the previous
+    // syllable is still being sung — which is what a renderer needs to draw an
+    // extension line rather than a gap.
+    const notes = notesOf('X:1\nL:1/4\nK:C\nCDEF|\nw:Do _ * Fa\n')
+    expect(notes.map((n) => n.lyric)).toEqual(['Do', null, null, 'Fa'])
+    expect(notes.map((n) => n.lyricMelisma)).toEqual([false, true, false, false])
+  })
+
+  it('holds a melisma across several notes', () => {
+    const notes = notesOf('X:1\nL:1/4\nK:C\nCDEF|\nw:Glo _ _ _\n')
+    expect(notes.map((n) => n.lyricMelisma)).toEqual([false, true, true, true])
   })
 
   it('stacks successive w: lines as verses', () => {
