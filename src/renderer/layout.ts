@@ -15,6 +15,7 @@
  * the font, engraving conventions (stem length, spacing) live in ENGRAVE below.
  */
 import {
+  Accidental,
   type DiatonicStep,
   type KeySignature,
   type Mode,
@@ -57,6 +58,8 @@ const ENGRAVE = {
    * heights visibly interpenetrate. Engraving sets them close but clear. PROVISIONAL.
    */
   keySignatureGap: 0.15,
+  /** Gap between an accidental and the notehead it alters. PROVISIONAL. */
+  accidentalGap: 0.15,
   /**
    * Horizontal advance allotted to a note.
    *
@@ -360,6 +363,34 @@ function layoutRest(rest: Rest, x: number): LayoutElement {
   }
 }
 
+// ─── Accidentals ─────────────────────────────────────────────────────────────
+
+/**
+ * The accidental glyph to print before a note, or `null` for none.
+ *
+ * THE RULE IS `!== null`, NEVER TRUTHINESS. `Pitch.accidental` is null when the source
+ * wrote no accidental and the note inherits from the key, and a NUMBER when the source
+ * wrote one — where `Accidental.natural` is 0, which is falsy. So the idiomatic
+ * `if (pitch.accidental)` collapses "inherit from the key" and "explicitly natural",
+ * which are musically opposite: in D major, `=F` is F natural and a bare `F` is F sharp.
+ * Writing it that way silently drops every natural sign in the corpus and is wrong in
+ * every key but C major. This is risk 5 in CHECKPOINT-2026-07-18.
+ *
+ * ABC prints an accidental exactly where the source wrote one — that is the notation's
+ * convention and why this needs no key or measure state. A note inheriting a sharp from
+ * the key signature prints nothing, which is what `null` already says.
+ */
+const ACCIDENTAL_GLYPHS: Readonly<Record<Accidental, GlyphName>> = {
+  [Accidental.doubleFlat]: 'accidentalDoubleFlat',
+  [Accidental.flat]: 'accidentalFlat',
+  [Accidental.natural]: 'accidentalNatural',
+  [Accidental.sharp]: 'accidentalSharp',
+  [Accidental.doubleSharp]: 'accidentalDoubleSharp',
+}
+
+export const accidentalGlyph = (accidental: Accidental | null): GlyphName | null =>
+  accidental === null ? null : ACCIDENTAL_GLYPHS[accidental]
+
 /** Ledger lines for a note that sits beyond the staff. */
 function ledgerLines(step: number, x: number, headWidth: number): PlacedLine[] {
   const lines: PlacedLine[] = []
@@ -388,9 +419,21 @@ function layoutNote(note: Note, x: number): LayoutElement {
     return { type: 'note', x, width: ENGRAVE.noteAdvance, staffStep: step, glyphs: [], lines: [] }
   }
 
+  const glyphs: PlacedGlyph[] = []
+
+  // An accidental sits before the notehead and pushes it right, so it occupies its own
+  // space rather than colliding with whatever precedes the note.
+  const accidental = accidentalGlyph(note.pitch.accidental)
+  let headX = x
+  if (accidental !== null) {
+    glyphs.push(glyphAt(accidental, x, step))
+    headX = x + GLYPHS[accidental].advance + ENGRAVE.accidentalGap
+  }
+
   const head = GLYPHS[spec.head]
-  const glyphs: PlacedGlyph[] = [glyphAt(spec.head, x, step)]
-  const lines: PlacedLine[] = ledgerLines(step, x, head.width)
+  glyphs.push(glyphAt(spec.head, headX, step))
+  const lines: PlacedLine[] = ledgerLines(step, headX, head.width)
+  const width = headX - x + ENGRAVE.noteAdvance
 
   if (spec.stemmed) {
     // Stems point away from the middle line, so the note stays near the staff. On the
@@ -398,7 +441,8 @@ function layoutNote(note: Note, x: number): LayoutElement {
     const up = step < 0
     const anchor = up ? head.anchors.stemUpSE : head.anchors.stemDownNW
     const [ax, ay] = anchor ?? [up ? head.width : 0, 0]
-    const stemX = x + ax
+    // headX, not x: an accidental shifts the notehead, and the stem follows the head.
+    const stemX = headX + ax
     const base = stepToY(step) + ay
     const tip = base + (up ? -ENGRAVE.stemLength : ENGRAVE.stemLength)
     lines.push({
@@ -415,7 +459,7 @@ function layoutNote(note: Note, x: number): LayoutElement {
     // notehead. Wire up when the first fixture with unbeamed eighths lands.
   }
 
-  return { type: 'note', x, width: ENGRAVE.noteAdvance, staffStep: step, glyphs, lines }
+  return { type: 'note', x, width, staffStep: step, glyphs, lines }
 }
 
 function layoutBar(x: number): LayoutElement {

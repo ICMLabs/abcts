@@ -8,8 +8,15 @@
  * unverified. These are the direct checks.
  */
 import { describe, expect, it } from 'vitest'
-import { Accidental, type KeySignature, type Mode, rational } from '../../src/core/model.js'
-import { keyFifths, noteGlyph } from '../../src/renderer/layout.js'
+import {
+  Accidental,
+  type KeySignature,
+  type Mode,
+  rational,
+  type Score,
+} from '../../src/core/model.js'
+import { parse } from '../../src/parser/parser.js'
+import { accidentalGlyph, keyFifths, layout, noteGlyph } from '../../src/renderer/layout.js'
 
 const key = (
   step: KeySignature['tonic']['step'],
@@ -58,6 +65,46 @@ describe('keyFifths', () => {
     // K:A# is 10 sharps. Seven is as many as a signature can print without doubles.
     expect(keyFifths(key('a', Accidental.sharp, 'major'))).toBe(7)
     expect(keyFifths(key('g', Accidental.flat, 'minor'))).toBe(-7)
+  })
+})
+
+describe('accidentalGlyph', () => {
+  // CHECKPOINT risk 5, pinned. `Accidental.natural` is 0 and therefore FALSY, while
+  // `null` means "inherit from the key signature" — musically opposite cases that the
+  // idiomatic `if (pitch.accidental)` silently merges. In D major that renders `=F` as
+  // F sharp: no natural sign is drawn, so the note reads as the key's F#. These two
+  // tests fail the moment anyone rewrites the check as a truthiness test.
+  it('draws a natural for an explicitly written natural, which is 0 and falsy', () => {
+    expect(Accidental.natural).toBe(0) // the trap itself, stated
+    expect(accidentalGlyph(Accidental.natural)).toBe('accidentalNatural')
+  })
+
+  it('draws nothing when the accidental is null, meaning inherit from the key', () => {
+    expect(accidentalGlyph(null)).toBeNull()
+  })
+
+  it('maps the remaining accidentals', () => {
+    expect(accidentalGlyph(Accidental.sharp)).toBe('accidentalSharp')
+    expect(accidentalGlyph(Accidental.flat)).toBe('accidentalFlat')
+    expect(accidentalGlyph(Accidental.doubleSharp)).toBe('accidentalDoubleSharp')
+    expect(accidentalGlyph(Accidental.doubleFlat)).toBe('accidentalDoubleFlat')
+  })
+
+  it('prints the natural end to end, in a key where it changes the pitch', () => {
+    // D major has F#. `=F` cancels it for that note and MUST print a natural; the bare
+    // `F` after it inherits the key and must print nothing. This is the whole risk in
+    // one bar, through the real parser and layout rather than the mapping alone.
+    const score = parse('X:1\nL:1/4\nK:D\n=FF|\n').scores[0]
+    expect(score).toBeDefined()
+    const notes = layout(score as Score)
+      .systems.flatMap((s) => s.elements)
+      .filter((e) => e.type === 'note')
+
+    expect(notes).toHaveLength(2)
+    expect(notes[0]?.glyphs.map((g) => g.name)).toEqual(['accidentalNatural', 'noteheadBlack'])
+    expect(notes[1]?.glyphs.map((g) => g.name)).toEqual(['noteheadBlack'])
+    // Both are the same written pitch, so they sit on the same line.
+    expect(notes[0]?.staffStep).toBe(notes[1]?.staffStep)
   })
 })
 
