@@ -1,7 +1,7 @@
 {
   "name": "abcts",
   "version": "0.0.0",
-  "description": "Modern TypeScript ABC notation library \u2014 community successor to abcjs",
+  "description": "Modern TypeScript ABC notation library — community successor to abcjs",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -12,6 +12,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./renderer": {
+      "types": "./dist/renderer/index.d.ts",
+      "import": "./dist/renderer/index.js",
+      "require": "./dist/renderer/index.cjs"
     }
   },
   "files": [
@@ -30,6 +35,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.5.4",
     "@types/node": "^26.1.1",
+    "opentype.js": "^2.0.0",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"

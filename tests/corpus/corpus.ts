@@ -149,3 +149,53 @@ export function goldenElements(name: string): GoldenElement[] {
 /** Sounding notes only — rests dropped. Use `goldenElements` when tuplet state matters. */
 export const goldenNotes = (name: string): GoldenElement[] =>
   goldenElements(name).filter((element) => !element.rest && element.pitches)
+
+// ─── Layout goldens (`*.elements.json`) ──────────────────────────────────────
+// abcjs's LAID-OUT elements, as distinct from its parse tree. This is the renderer's
+// structural oracle: element sequence and staff positions, which survive core rendering
+// in its own visual style, unlike the SVG goldens which gate compat mode only.
+
+/** The subset of an abcjs layout element this suite reads. */
+export interface GoldenLayoutElement {
+  /** e.g. 'note', 'bar', 'rest', 'staff-extra clef'. */
+  readonly type: string
+  readonly duration: number
+  readonly w: number
+  /** Noteheads, carrying the staff position in abcjs's pitch numbering. */
+  readonly heads?: readonly { readonly c: string; readonly pitch: number }[]
+}
+
+interface GoldenLayout {
+  readonly staffGroups?: readonly {
+    readonly voices?: readonly { readonly children?: GoldenLayoutElement[] }[]
+  }[]
+}
+
+/**
+ * abcjs's laid-out elements for the FIRST voice, in reading order.
+ *
+ * abcjs's `staffGroups` are rendered systems, so a tune that wraps appears as several
+ * groups. Concatenating voice 0 across them recovers the logical voice — but abcjs
+ * reprints the clef, key and meter at the head of every system, and those repeats are
+ * layout, not content. They are dropped after the first system so the sequence reflects
+ * what the music says rather than where abcjs chose to break the line.
+ *
+ * Caveat, and the reason this is not simply `filter(startsWith('staff-extra'))`: a
+ * genuine mid-tune `K:` or `M:` change also surfaces as a `staff-extra`, and this drops
+ * those too when they fall in a later system. No fixture in the current gate has one;
+ * revisit when one enters.
+ */
+export function goldenLayoutElements(name: string): GoldenLayoutElement[] {
+  const layout = JSON.parse(
+    readFileSync(join(goldensDir, `${name}.elements.json`), 'utf-8'),
+  ) as GoldenLayout
+
+  const out: GoldenLayoutElement[] = []
+  ;(layout.staffGroups ?? []).forEach((group, systemIndex) => {
+    for (const child of group.voices?.[0]?.children ?? []) {
+      if (systemIndex > 0 && child.type.startsWith('staff-extra')) continue
+      out.push(child)
+    }
+  })
+  return out
+}

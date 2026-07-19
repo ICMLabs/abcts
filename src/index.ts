@@ -33,3 +33,8 @@ export type {
 // Reading a duration requires these two; comparing an accidental requires Accidental.
 export { Accidental, rational, ratToNumber } from './core/model.js'
 export { type ParseResult, parse } from './parser/parser.js'
+
+// The renderer's own types stay behind `abcts/renderer`, so a parse-only consumer does
+// not pull ~40KB of glyph outlines. `render` is re-exported here because ARCHITECTURE.md
+// specifies `import { parse, render } from 'abcts'` as the standard-mode surface.
+export { type RenderOptions, render } from './renderer/index.js'

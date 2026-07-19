@@ -7,7 +7,10 @@ import { corpusDir } from './corpus/corpus.js'
 
 // Deterministic PRNG so a failure is reproducible.
 let seed = 12345
-const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff
+const rnd = () => {
+  seed = (seed * 1103515245 + 12345) & 0x7fffffff
+  return seed / 0x7fffffff
+}
 const pick = <T>(a: T[]): T => a[Math.floor(rnd() * a.length)] as T
 
 const CHARS = [...'ABCDEFGabcdefgz^_=,\'/0123456789|:[]{}()"!+-<>&\\\n \tXKLMQVwW%~*.']
