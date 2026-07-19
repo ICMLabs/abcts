@@ -11,7 +11,7 @@ the parser and whose risk list is still live except where noted below.
 
 | | |
 |---|---|
-| Tests | **264 passing** (74 parser + 190 renderer) |
+| Tests | **266 passing** (74 parser + 192 renderer) |
 | Parser content parity | 39/39 gated fixtures, unchanged |
 | **Render structural parity** | **40 of 41** — the 41st is a recorded abcjs bug |
 | **Visual baselines** | **41 of 41**, committed geometry snapshots |
@@ -55,6 +55,44 @@ All three are recorded in ARCHITECTURE.md § Rendering. In brief:
 which do only gate compat. Every fixture also ships an element dump with sequence and
 staff positions. That is the previous checkpoint's own lesson turned on itself: *"no
 oracle exists" should be verified against the data before it is believed.*
+
+---
+
+## Parity tracker — `npm run parity`
+
+One view of how close core is to its references. The numbers come from the assertions
+themselves, so the report cannot drift from the gates.
+
+| Axis | | |
+|---|---|---|
+| Note content | 39/39 | 2 known divergences |
+| Beam grouping | 36/41 | 3 open, cause unidentified |
+| Lyrics | 8/10 | 2 known divergences |
+| Render structure | 40/41 | 1 known divergence |
+| Visual baselines | 41/41 | self-referential |
+
+### "v1 parity" is not a separate axis, and here is why
+
+ARCHITECTURE.md names two references, but they are not independent. v1 is a direct PORT
+of abcjs and its `abcjsStrict` path is byte-identical to abcjs by construction — v1's own
+`SVGComparison` tests gate exactly that.
+
+**Verified rather than assumed**: rendering `simple-c` through v1's CLI and diffing
+against the abcjs golden gives identical staff-line coordinates, identical stem paths
+(`M 80.66 89.18L 80.66 115.01`), identical barlines. The files differ only in packaging —
+v1 emits `<defs>` + `<use>` where the golden inlines each path — and in a default page
+width.
+
+So the abcjs goldens ARE v1's shared surface, and every number above measures both.
+
+What v1 has BEYOND abcjs is its extended mode: per-element colour, modern collision
+detection, theory overlays, tablature. That is feature coverage, not numeric parity, and
+no amount of corpus diffing answers it. abcts implements none of it. Tracked as an
+explicit gap rather than folded into a percentage.
+
+Also unmeasured, and listed by the tracker: compat mode (zero code, and nothing consumes
+the 503 SVG goldens) and visual CORRECTNESS (baselines catch change, not wrongness —
+nothing compares core's rendering to a reference image).
 
 ---
 

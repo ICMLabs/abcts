@@ -82,7 +82,7 @@ reached by relative sibling path. See ARCHITECTURE.md § Repository Structure.
 The PARSER is complete and gated (39/39 corpus fixtures, saturated). The RENDERER now
 reproduces **40 of 41** fixtures on the structural gate; the 41st is a recorded abcjs bug,
 so the corpus is COMPLETE — every fixture is either reproduced or explained. All 41 also
-have committed visual baselines. 264 tests.
+have committed visual baselines. 266 tests.
 Renders staff, all clefs, key signatures, meters, tempo marks, part labels, noteheads and
 chords with stems and ledger lines, accidentals, rests and barlines.
 
@@ -102,6 +102,13 @@ but READ the diff and commit baselines with the code change.
 diff to follow. What remains is known from the code: the decoration tail (rolls, slides, hairpins),
 no text metrics, fixed lanes rather than a skyline, and page furniture beyond titles.
 See the checkpoint.
+
+## Measuring progress
+`npm run parity` prints every parity axis in one view. Note that abcjs parity and
+abcMusicKit v1 parity are NOT separate axes: v1 is a port of abcjs whose abcjsStrict
+output is byte-identical to it (verified by diffing v1's CLI output against the goldens),
+so the abcjs goldens are v1's shared surface. v1's extended-mode features are a
+feature-coverage gap, tracked separately and implemented not at all.
 
 ## Session Prompts
 
