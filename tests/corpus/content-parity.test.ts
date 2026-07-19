@@ -86,11 +86,14 @@ const LYRIC_DIVERGENCES: Record<string, string> = {
     'A SPACED hyphen (`A - ve,`). abcjs binds the hyphen to the preceding syllable and ' +
     'skips a note; core makes it a syllable of its own, following abcMusicKit2. A ' +
     'deliberate divergence, arbitrated 2026-07-19 — see parseLyricSyllables.',
-  'S5-directives':
-    'Multiple `w:` lines against one music line align differently: core is 2 notes ' +
-    'ahead of abcjs from the second verse onward. UNANALYSED — the first real lead on ' +
-    'multi-verse alignment, and the next thing to look at here.',
 }
+
+// `S5-directives` was listed here as a 2-note multi-verse drift and was NOT a parser
+// bug: this gate's own flattening omitted `&` overlay events, which the note comparison
+// above has always included. The two sides then differed by exactly the overlay count,
+// which reads convincingly as a lyric drift and was written up as one. It matches with
+// overlays included. The lesson is the older one about a gate being only as good as what
+// it compares — and it applies to a NEW gate as readily as to an old one.
 
 /** Full per-fixture breakdown, written on every run for triage. */
 const REPORT_PATH = '/tmp/abcts-content-parity.txt'
@@ -427,9 +430,16 @@ it('content parity against abcjs goldens does not regress', () => {
   for (const file of fixtures) {
     const name = basename(file, '.abc')
     const abc = readFileSync(join(corpusDir, file), 'utf-8')
+    // Same flattening as the note comparison above, overlays included: abcjs promotes
+    // `&` layers to their own voice after the main line. Omitting them made the two
+    // sides differ by exactly the overlay count, which read convincingly as a lyric
+    // drift and was recorded as one.
     const ours = parse(abc)
       .scores.flatMap((score) => score.voices)
-      .flatMap((voice) => voice.measures.flatMap((measure) => measure.events))
+      .flatMap((voice) => [
+        ...voice.measures.flatMap((measure) => measure.events),
+        ...voice.measures.flatMap((measure) => measure.overlays.flat()),
+      ])
       .filter((event) => event.type !== 'rest')
       .map((event) => event.lyric)
     const theirs = goldenNotes(name).map((note: GoldenElement) => {
