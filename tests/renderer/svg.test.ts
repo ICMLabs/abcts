@@ -54,18 +54,26 @@ describe('output shape', () => {
     expect(viewBox).toHaveLength(4)
     const [, minY, , height] = viewBox as number[]
 
-    const groups = svg.split('<g class="abcts-system"').slice(1)
-    expect(groups.length).toBeGreaterThan(1) // it really did wrap
+    // Coordinates nest twice: a system translate, then a staff translate inside it.
+    const systems = svg.split('<g class="abcts-system"').slice(1)
+    expect(systems.length).toBeGreaterThan(1) // it really did wrap
+    const offsetOf = (chunk: string) =>
+      Number(/^[^>]*transform="translate\(0,(-?[\d.]+)\)"/.exec(chunk)?.[1] ?? 'NaN')
+
     let checked = 0
-    for (const group of groups) {
-      const originY = Number(/transform="translate\(0,(-?[\d.]+)\)"/.exec(group)?.[1] ?? 'NaN')
-      expect(Number.isFinite(originY)).toBe(true)
-      for (const m of group.matchAll(/<rect[^>]*y="(-?[\d.]+)"[^>]*height="([\d.]+)"/g)) {
-        const top = originY + Number(m[1])
-        const bottom = top + Number(m[2])
-        expect(top).toBeGreaterThanOrEqual(minY as number)
-        expect(bottom).toBeLessThanOrEqual((minY as number) + (height as number))
-        checked++
+    for (const system of systems) {
+      const systemY = offsetOf(system)
+      expect(Number.isFinite(systemY)).toBe(true)
+      for (const staff of system.split('<g class="abcts-staff-group"').slice(1)) {
+        const staffY = offsetOf(staff)
+        expect(Number.isFinite(staffY)).toBe(true)
+        for (const m of staff.matchAll(/<rect[^>]*y="(-?[\d.]+)"[^>]*height="([\d.]+)"/g)) {
+          const top = systemY + staffY + Number(m[1])
+          const bottom = top + Number(m[2])
+          expect(top).toBeGreaterThanOrEqual(minY as number)
+          expect(bottom).toBeLessThanOrEqual((minY as number) + (height as number))
+          checked++
+        }
       }
     }
     expect(checked).toBeGreaterThan(0)

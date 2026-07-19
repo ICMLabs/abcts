@@ -1,36 +1,37 @@
 bounds  width=34.582 height=15.532 top=0.000
 systems 1
-system 0 width=34.582 originY=7.900
-  staff  0.000,2.000 -> 34.582,2.000 t=0.130
-  staff  0.000,1.000 -> 34.582,1.000 t=0.130
-  staff  0.000,0.000 -> 34.582,0.000 t=0.130
-  staff  0.000,-1.000 -> 34.582,-1.000 t=0.130
-  staff  0.000,-2.000 -> 34.582,-2.000 t=0.130
-  clef x=1.000 w=2.684
-    glyph gClef 1.000,1.000
-  keySignature x=4.684 w=5.580
-    glyph accidentalSharp 4.684,-2.000
-    glyph accidentalSharp 5.830,-0.500
-    glyph accidentalSharp 6.976,-2.500
-    glyph accidentalSharp 8.122,-1.000
-    glyph accidentalSharp 9.268,0.500
-  timeSignature x=11.264 w=1.880
-    glyph timeSig4 11.264,-1.000
-    glyph timeSig4 11.264,1.000
-  note@0 x=14.144 w=3.500
-    glyph noteheadBlack 14.144,0.000
-    line  14.144,0.168 -> 14.144,3.500 t=0.120
-  note@1 x=17.644 w=4.646
-    glyph accidentalSharp 17.644,-0.500
-    glyph noteheadBlack 18.790,-0.500
-    line  18.790,-0.332 -> 18.790,3.000 t=0.120
-  note@2 x=22.290 w=4.646
-    glyph accidentalSharp 22.290,-1.000
-    glyph noteheadBlack 23.436,-1.000
-    line  23.436,-0.832 -> 23.436,2.500 t=0.120
-  note@3 x=26.936 w=4.646
-    glyph accidentalSharp 26.936,-1.500
-    glyph noteheadBlack 28.082,-1.500
-    line  28.082,-1.332 -> 28.082,2.000 t=0.120
-  bar x=32.582 w=0.160
-    line  32.582,-2.000 -> 32.582,2.000 t=0.160
+system 0 width=34.582 originY=0.000
+  staff 0 originY=7.900
+    staffline 0.000,2.000 -> 34.582,2.000 t=0.130
+    staffline 0.000,1.000 -> 34.582,1.000 t=0.130
+    staffline 0.000,0.000 -> 34.582,0.000 t=0.130
+    staffline 0.000,-1.000 -> 34.582,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 34.582,-2.000 t=0.130
+    clef x=1.000 w=2.684
+      glyph gClef 1.000,1.000
+    keySignature x=4.684 w=5.580
+      glyph accidentalSharp 4.684,-2.000
+      glyph accidentalSharp 5.830,-0.500
+      glyph accidentalSharp 6.976,-2.500
+      glyph accidentalSharp 8.122,-1.000
+      glyph accidentalSharp 9.268,0.500
+    timeSignature x=11.264 w=1.880
+      glyph timeSig4 11.264,-1.000
+      glyph timeSig4 11.264,1.000
+    note@0 x=14.144 w=3.500
+      glyph noteheadBlack 14.144,0.000
+      line  14.144,0.168 -> 14.144,3.500 t=0.120
+    note@1 x=17.644 w=4.646
+      glyph accidentalSharp 17.644,-0.500
+      glyph noteheadBlack 18.790,-0.500
+      line  18.790,-0.332 -> 18.790,3.000 t=0.120
+    note@2 x=22.290 w=4.646
+      glyph accidentalSharp 22.290,-1.000
+      glyph noteheadBlack 23.436,-1.000
+      line  23.436,-0.832 -> 23.436,2.500 t=0.120
+    note@3 x=26.936 w=4.646
+      glyph accidentalSharp 26.936,-1.500
+      glyph noteheadBlack 28.082,-1.500
+      line  28.082,-1.332 -> 28.082,2.000 t=0.120
+    bar x=32.582 w=0.160
+      line  32.582,-2.000 -> 32.582,2.000 t=0.160

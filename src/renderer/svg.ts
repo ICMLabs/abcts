@@ -73,32 +73,37 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
   const parts: string[] = []
 
   for (const system of doc.systems) {
-    // Each system is laid out about its own middle line at y = 0 and placed by
-    // translation, so nothing inside it depends on how many systems precede it.
+    // Each system is laid out in its own space and placed by translation, so nothing
+    // inside it depends on how many systems precede it. Staves nest the same way, one
+    // per voice, because a staff step means a different pitch under a different clef.
     parts.push(`<g class="${prefix}-system" transform="translate(0,${num(system.originY)})">`)
-    for (const line of system.staffLines) parts.push(lineToRect(line, `${prefix}-staff`))
-    for (const beam of system.beams) parts.push(lineToRect(beam, `${prefix}-beam`))
+    for (const staff of system.staves) {
+      parts.push(`<g class="${prefix}-staff-group" transform="translate(0,${num(staff.originY)})">`)
+      for (const line of staff.staffLines) parts.push(lineToRect(line, `${prefix}-staff`))
+      for (const beam of staff.beams) parts.push(lineToRect(beam, `${prefix}-beam`))
 
-    for (const el of system.elements) {
-      const cls = `${prefix}-${el.type}`
-      for (const line of el.lines) parts.push(lineToRect(line, cls))
-      for (const g of el.glyphs) {
-        // The glyph path is authored at the origin, so a translate is all that is needed.
-        parts.push(
-          `<path class="${cls}" transform="translate(${num(g.x)},${num(g.y)})" d="${GLYPHS[g.name].path}"/>`,
-        )
+      for (const el of staff.elements) {
+        const cls = `${prefix}-${el.type}`
+        for (const line of el.lines) parts.push(lineToRect(line, cls))
+        for (const g of el.glyphs) {
+          // The glyph path is authored at the origin, so a translate is all that is needed.
+          parts.push(
+            `<path class="${cls}" transform="translate(${num(g.x)},${num(g.y)})" d="${GLYPHS[g.name].path}"/>`,
+          )
+        }
+        // Prose is a real <text> in a generic family, unlike musical glyphs, which are
+        // paths so the SVG stays self-contained. A missing serif face falls back to
+        // another serif; a missing Bravura falls back to nothing legible. See layout.ts.
+        for (const t of el.texts) {
+          const style =
+            (t.bold ? ' font-weight="bold"' : '') + (t.italic ? ' font-style="italic"' : '')
+          parts.push(
+            `<text class="${cls}" x="${num(t.x)}" y="${num(t.y)}" ` +
+              `font-family="serif" font-size="${num(t.size)}"${style}>${escapeText(t.text)}</text>`,
+          )
+        }
       }
-      // Prose is a real <text> in a generic family, unlike musical glyphs, which are
-      // paths so the SVG stays self-contained. A missing serif face falls back to
-      // another serif; a missing Bravura falls back to nothing legible. See layout.ts.
-      for (const t of el.texts) {
-        const style =
-          (t.bold ? ' font-weight="bold"' : '') + (t.italic ? ' font-style="italic"' : '')
-        parts.push(
-          `<text class="${cls}" x="${num(t.x)}" y="${num(t.y)}" ` +
-            `font-family="serif" font-size="${num(t.size)}"${style}>${escapeText(t.text)}</text>`,
-        )
-      }
+      parts.push('</g>')
     }
     parts.push('</g>')
   }

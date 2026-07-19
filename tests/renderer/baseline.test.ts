@@ -85,7 +85,7 @@ describe('visual baselines', () => {
       const score = parse(fixture.abc).scores[0]
       if (!score) continue
       const undrawn = layout(score)
-        .systems.flatMap((s) => s.elements)
+        .systems.flatMap((s) => s.staves.flatMap((st) => st.elements))
         .filter((e) => e.type === 'note' && e.glyphs.length === 0).length
       if (undrawn > 0) actual[fixture.name] = undrawn
     }

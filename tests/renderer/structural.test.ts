@@ -153,8 +153,9 @@ function coreSequence(abc: string): string[] {
   const result = parse(abc)
   const score = result.scores[0]
   if (!score) return []
+  // Voice 0 only — see the blind-spot list. `staves[0]` is that voice.
   return layout(score).systems.flatMap((system, systemIndex) =>
-    system.elements
+    (system.staves[0]?.elements ?? [])
       // Systems after the first reprint the clef and key. So does abcjs, and
       // `goldenLayoutElements` drops those — WHERE a line breaks is a layout decision
       // that two engines make differently by design, so neither side's break points are

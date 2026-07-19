@@ -46,30 +46,35 @@ export function snapshot(score: Score): string {
 
   doc.systems.forEach((system, index) => {
     lines.push(`system ${index} width=${n(system.width)} originY=${n(system.originY)}`)
-    for (const line of system.staffLines) {
-      lines.push(
-        `  staff  ${n(line.x1)},${n(line.y1)} -> ${n(line.x2)},${n(line.y2)} t=${n(line.thickness)}`,
-      )
-    }
-    for (const beam of system.beams) {
-      lines.push(
-        `  beam   ${n(beam.x1)},${n(beam.y1)} -> ${n(beam.x2)},${n(beam.y2)} t=${n(beam.thickness)}`,
-      )
-    }
-    for (const el of system.elements) {
-      const steps = el.staffSteps.length > 0 ? `@${el.staffSteps.join(',')}` : ''
-      lines.push(`  ${el.type}${steps} x=${n(el.x)} w=${n(el.width)}`)
-      for (const g of el.glyphs) lines.push(`    glyph ${g.name} ${n(g.x)},${n(g.y)}`)
-      for (const l of el.lines) {
-        lines.push(`    line  ${n(l.x1)},${n(l.y1)} -> ${n(l.x2)},${n(l.y2)} t=${n(l.thickness)}`)
-      }
-      for (const t of el.texts) {
-        const style = `${t.bold ? ' bold' : ''}${t.italic ? ' italic' : ''}`
+    system.staves.forEach((staff, staffIndex) => {
+      lines.push(`  staff ${staffIndex} originY=${n(staff.originY)}`)
+      for (const line of staff.staffLines) {
         lines.push(
-          `    text  ${n(t.x)},${n(t.y)} size=${n(t.size)}${style} ${JSON.stringify(t.text)}`,
+          `    staffline ${n(line.x1)},${n(line.y1)} -> ${n(line.x2)},${n(line.y2)} t=${n(line.thickness)}`,
         )
       }
-    }
+      for (const beam of staff.beams) {
+        lines.push(
+          `    beam   ${n(beam.x1)},${n(beam.y1)} -> ${n(beam.x2)},${n(beam.y2)} t=${n(beam.thickness)}`,
+        )
+      }
+      for (const el of staff.elements) {
+        const steps = el.staffSteps.length > 0 ? `@${el.staffSteps.join(',')}` : ''
+        lines.push(`    ${el.type}${steps} x=${n(el.x)} w=${n(el.width)}`)
+        for (const g of el.glyphs) lines.push(`      glyph ${g.name} ${n(g.x)},${n(g.y)}`)
+        for (const l of el.lines) {
+          lines.push(
+            `      line  ${n(l.x1)},${n(l.y1)} -> ${n(l.x2)},${n(l.y2)} t=${n(l.thickness)}`,
+          )
+        }
+        for (const t of el.texts) {
+          const style = `${t.bold ? ' bold' : ''}${t.italic ? ' italic' : ''}`
+          lines.push(
+            `      text  ${n(t.x)},${n(t.y)} size=${n(t.size)}${style} ${JSON.stringify(t.text)}`,
+          )
+        }
+      }
+    })
   })
 
   return `${lines.join('\n')}\n`

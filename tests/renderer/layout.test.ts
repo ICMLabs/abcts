@@ -104,7 +104,7 @@ describe('accidentalGlyph', () => {
     const score = parse('X:1\nL:1/4\nK:D\n=FF|\n').scores[0]
     expect(score).toBeDefined()
     const notes = layout(score as Score)
-      .systems.flatMap((s) => s.elements)
+      .systems.flatMap((s) => s.staves.flatMap((st) => st.elements))
       .filter((e) => e.type === 'note')
 
     expect(notes).toHaveLength(2)
@@ -183,7 +183,7 @@ describe('clefs', () => {
     // it assumed treble — silently wrong output rather than a missing feature.
     const score = parse('X:1\nL:1/4\nV:1 clef=bass\nK:C\nC,,|\n').scores[0]
     const note = layout(score as Score)
-      .systems.flatMap((s) => s.elements)
+      .systems.flatMap((s) => s.staves.flatMap((st) => st.elements))
       .find((e) => e.type === 'note')
     expect(note?.staffSteps).toEqual([-8])
   })
@@ -228,7 +228,9 @@ describe('tempo', () => {
 
   it('lays the mark out above the staff, taking no horizontal space', () => {
     const score = parse('X:1\nM:4/4\nL:1/4\nQ:"Allegro" 1/4=120\nK:C\nCDEF|\n').scores[0]
-    const elements = layout(score as Score).systems.flatMap((s) => s.elements)
+    const elements = layout(score as Score).systems.flatMap((s) =>
+      s.staves.flatMap((st) => st.elements),
+    )
     const tempo = elements.find((e) => e.type === 'tempo')
 
     expect(tempo).toBeDefined()
@@ -252,13 +254,18 @@ describe('tempo', () => {
 
     expect(high.height).toBeGreaterThan(plain.height)
     expect(marked.height).toBeGreaterThan(plain.height)
-    expect(marked.systems[0]?.originY).toBeGreaterThan(plain.systems[0]?.originY ?? 0)
+    // The room appears as the first STAFF being pushed down within its system.
+    expect(marked.systems[0]?.staves[0]?.originY).toBeGreaterThan(
+      plain.systems[0]?.staves[0]?.originY ?? 0,
+    )
   })
 })
 
 describe('chords', () => {
   const elementsOf = (abc: string) =>
-    layout(parse(abc).scores[0] as Score).systems.flatMap((s) => s.elements)
+    layout(parse(abc).scores[0] as Score).systems.flatMap((s) =>
+      s.staves.flatMap((st) => st.elements),
+    )
   const notesOf = (abc: string) => elementsOf(abc).filter((e) => e.type === 'note')
 
   it('reports every notehead ascending, whatever order they were written in', () => {
@@ -319,7 +326,7 @@ describe('chords', () => {
 describe('barlines that open a measure', () => {
   const typesOf = (abc: string) =>
     layout(parse(abc).scores[0] as Score)
-      .systems.flatMap((s) => s.elements)
+      .systems.flatMap((s) => s.staves.flatMap((st) => st.elements))
       .map((e) => e.type)
 
   it('keeps a leading barline instead of dropping it', () => {
@@ -348,7 +355,7 @@ describe('part labels', () => {
     expect(measures[1]?.partLabel).toBe('B')
 
     const parts = layout(score as Score)
-      .systems.flatMap((s) => s.elements)
+      .systems.flatMap((s) => s.staves.flatMap((st) => st.elements))
       .filter((e) => e.type === 'part')
     expect(parts).toHaveLength(1)
     expect(parts[0]?.texts[0]?.text).toBe('B')
@@ -362,7 +369,7 @@ describe('part labels', () => {
 })
 
 describe('flags and beams', () => {
-  const sys = (abc: string) => layout(parse(abc).scores[0] as Score).systems[0]
+  const sys = (abc: string) => layout(parse(abc).scores[0] as Score).systems[0]?.staves[0]
   const notesOf = (abc: string) => (sys(abc)?.elements ?? []).filter((e) => e.type === 'note')
   const glyphNames = (abc: string) => notesOf(abc).flatMap((n) => n.glyphs.map((g) => g.name))
   const stemOf = (el: { lines: readonly { x1: number; x2: number; y1: number; y2: number }[] }) =>
@@ -488,7 +495,7 @@ describe('system breaking', () => {
     expect(doc.systems.length).toBeGreaterThan(1)
 
     doc.systems.forEach((system, index) => {
-      const types = system.elements.map((e) => e.type)
+      const types = (system.staves[0]?.elements ?? []).map((e) => e.type)
       expect(types, `system ${index} clef`).toContain('clef')
       expect(types, `system ${index} key`).toContain('keySignature')
       // The meter and tempo belong to the tune, not to each line of it.
@@ -507,7 +514,7 @@ describe('system breaking', () => {
     // looking for a system it will fit in.
     const doc = layout(parse(long(1)).scores[0] as Score, { systemWidth: 1 })
     expect(doc.systems).toHaveLength(1)
-    expect(doc.systems[0]?.elements.some((e) => e.type === 'note')).toBe(true)
+    expect(doc.systems[0]?.staves[0]?.elements.some((e) => e.type === 'note')).toBe(true)
   })
 
   it('stacks systems without overlapping', () => {
@@ -530,10 +537,96 @@ describe('system breaking', () => {
     // every baseline below the break on any spacing change.
     const doc = layout(parse(long(40)).scores[0] as Score)
     for (const system of doc.systems) {
-      // `+ 0` normalises the -0 that stepToY(0) produces; -0 and 0 are the same line.
-      const ys = system.staffLines.map((l) => l.y1 + 0).sort((a, b) => a - b)
-      expect(ys).toEqual([-2, -1, 0, 1, 2])
+      for (const staff of system.staves) {
+        // `+ 0` normalises the -0 that stepToY(0) produces; -0 and 0 are the same line.
+        const ys = staff.staffLines.map((l) => l.y1 + 0).sort((a, b) => a - b)
+        expect(ys).toEqual([-2, -1, 0, 1, 2])
+      }
     }
+  })
+})
+
+describe('multiple voices', () => {
+  const two = `X:1
+M:4/4
+L:1/4
+Q:"Andante"
+V:1 clef=treble
+V:2 clef=bass
+K:C
+V:1
+CDEF|GABc|
+V:2
+C,D,E,F,|G,A,B,C|
+`
+
+  it('gives every voice its own staff', () => {
+    const doc = layout(parse(two).scores[0] as Score)
+    expect(doc.systems[0]?.staves).toHaveLength(2)
+  })
+
+  it('gives each staff its own clef, so the same step is a different pitch', () => {
+    const doc = layout(parse(two).scores[0] as Score)
+    const clefOf = (i: number) =>
+      doc.systems[0]?.staves[i]?.elements.find((e) => e.type === 'clef')?.glyphs[0]?.name
+    expect(clefOf(0)).toBe('gClef')
+    expect(clefOf(1)).toBe('fClef')
+
+    // `C` on the treble staff and `C,` on the bass one are an octave apart in pitch but
+    // land on positions the two clefs place differently — the reason each staff has its
+    // own coordinate space.
+    const firstNote = (i: number) =>
+      doc.systems[0]?.staves[i]?.elements.find((e) => e.type === 'note')?.staffSteps[0]
+    expect(firstNote(0)).toBe(-6) // C4 in treble
+    expect(firstNote(1)).toBe(-1) // C3 in bass
+  })
+
+  it('prints the tempo once, on the top staff — it belongs to the tune', () => {
+    const doc = layout(parse(two).scores[0] as Score)
+    const tempos = doc.systems.flatMap((s, i) =>
+      s.staves.map((st, j) => ({ i, j, n: st.elements.filter((e) => e.type === 'tempo').length })),
+    )
+    expect(tempos.filter((t) => t.n > 0)).toEqual([{ i: 0, j: 0, n: 1 }])
+  })
+
+  it('still gives every staff its own clef, key and meter', () => {
+    // Unlike the tempo, these are per-staff by definition — a reader needs them on the
+    // line they are reading.
+    const abc = two.replace('K:C', 'K:D')
+    const doc = layout(parse(abc).scores[0] as Score)
+    for (const staff of doc.systems[0]?.staves ?? []) {
+      const types = staff.elements.map((e) => e.type)
+      expect(types).toContain('clef')
+      expect(types).toContain('keySignature')
+      expect(types).toContain('timeSignature')
+    }
+  })
+
+  it('aligns measures across staves, so bar 2 starts at the same x on both', () => {
+    // Without column alignment the staves drift apart and the score stops reading as one
+    // thing. The voices here have the same note count, but the packer must not depend on
+    // that — the bass voice below is deliberately sparser.
+    const uneven = `X:1\nM:4/4\nL:1/8\nV:1\nV:2\nK:C\nV:1\nCDEFGABc|cBAGFEDC|\nV:2\nC2E2G2c2|c2G2E2C2|\n`
+    const doc = layout(parse(uneven).scores[0] as Score)
+    const barsOf = (i: number) =>
+      (doc.systems[0]?.staves[i]?.elements ?? []).filter((e) => e.type === 'bar').map((e) => e.x)
+    expect(barsOf(0).length).toBeGreaterThan(0)
+    expect(barsOf(1)).toEqual(barsOf(0))
+  })
+
+  it('stacks staves within a system without overlapping', () => {
+    const doc = layout(parse(two).scores[0] as Score)
+    const staves = doc.systems[0]?.staves ?? []
+    expect(staves.length).toBe(2)
+    for (let i = 1; i < staves.length; i++) {
+      expect(staves[i]?.originY ?? 0).toBeGreaterThan(staves[i - 1]?.originY ?? 0)
+    }
+  })
+
+  it('renders a single-voice tune as one staff, unchanged', () => {
+    const doc = layout(parse('X:1\nL:1/4\nK:C\nCDEF|\n').scores[0] as Score)
+    expect(doc.systems).toHaveLength(1)
+    expect(doc.systems[0]?.staves).toHaveLength(1)
   })
 })
 

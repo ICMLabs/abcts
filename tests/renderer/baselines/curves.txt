@@ -1,25 +1,26 @@
 bounds  width=22.564 height=15.024 top=0.000
 systems 1
-system 0 width=22.564 originY=7.392
-  staff  0.000,2.000 -> 22.564,2.000 t=0.130
-  staff  0.000,1.000 -> 22.564,1.000 t=0.130
-  staff  0.000,0.000 -> 22.564,0.000 t=0.130
-  staff  0.000,-1.000 -> 22.564,-1.000 t=0.130
-  staff  0.000,-2.000 -> 22.564,-2.000 t=0.130
-  clef x=1.000 w=2.684
-    glyph gClef 1.000,1.000
-  timeSignature x=4.684 w=1.880
-    glyph timeSig4 4.684,-1.000
-    glyph timeSig4 4.684,1.000
-  note@-2 x=7.564 w=3.500
-    glyph noteheadBlack 7.564,1.000
-    line  8.744,0.832 -> 8.744,-2.500 t=0.120
-  note@-2 x=11.064 w=3.500
-    glyph noteheadBlack 11.064,1.000
-    line  12.244,0.832 -> 12.244,-2.500 t=0.120
-  note@-2 x=14.564 w=3.500
-    glyph noteheadBlack 14.564,1.000
-    line  15.744,0.832 -> 15.744,-2.500 t=0.120
-  note@-2 x=18.064 w=3.500
-    glyph noteheadBlack 18.064,1.000
-    line  19.244,0.832 -> 19.244,-2.500 t=0.120
+system 0 width=22.564 originY=0.000
+  staff 0 originY=7.392
+    staffline 0.000,2.000 -> 22.564,2.000 t=0.130
+    staffline 0.000,1.000 -> 22.564,1.000 t=0.130
+    staffline 0.000,0.000 -> 22.564,0.000 t=0.130
+    staffline 0.000,-1.000 -> 22.564,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 22.564,-2.000 t=0.130
+    clef x=1.000 w=2.684
+      glyph gClef 1.000,1.000
+    timeSignature x=4.684 w=1.880
+      glyph timeSig4 4.684,-1.000
+      glyph timeSig4 4.684,1.000
+    note@-2 x=7.564 w=3.500
+      glyph noteheadBlack 7.564,1.000
+      line  8.744,0.832 -> 8.744,-2.500 t=0.120
+    note@-2 x=11.064 w=3.500
+      glyph noteheadBlack 11.064,1.000
+      line  12.244,0.832 -> 12.244,-2.500 t=0.120
+    note@-2 x=14.564 w=3.500
+      glyph noteheadBlack 14.564,1.000
+      line  15.744,0.832 -> 15.744,-2.500 t=0.120
+    note@-2 x=18.064 w=3.500
+      glyph noteheadBlack 18.064,1.000
+      line  19.244,0.832 -> 19.244,-2.500 t=0.120
