@@ -522,3 +522,57 @@ describe('audit regressions', () => {
     expect(result.diagnostics.map((d) => d.code)).toContain('malformed-broken-rhythm')
   })
 })
+
+describe('attachment classification', () => {
+  const eventsOfAbc = (abc: string) => {
+    const result = parse(abc)
+    if (!result.ok) throw new Error('parser should never fail')
+    return (result.scores[0]?.voices[0]?.measures ?? []).flatMap((m) => m.events)
+  }
+
+  it('does not read a dotted slur or dotted tie as staccato', () => {
+    // `.(` marks the SLUR as dotted and `.-` the TIE; neither is a decoration on the note.
+    expect(eventsOfAbc('X:1\nK:C\n.(C D E F)\n')[0]?.decorations).toEqual([])
+    expect(eventsOfAbc('X:1\nK:C\nC.-C D\n')[0]?.decorations).toEqual([])
+    // A bare `.` before a note IS staccato.
+    expect(eventsOfAbc('X:1\nK:C\n.C D\n')[0]?.decorations).toEqual(['staccato'])
+  })
+
+  it('reads J as the slide shorthand', () => {
+    expect(eventsOfAbc('X:1\nK:C\nJc d\n')[0]?.decorations).toEqual(['slide'])
+  })
+
+  it('treats !style=…! as a notehead style, not a decoration', () => {
+    const [note] = eventsOfAbc('X:1\nK:C\n!style=harmonic!G A\n')
+    expect(note?.type === 'note' && note.style).toBe('harmonic')
+    expect(note?.decorations).toEqual([])
+  })
+
+  it('separates chord symbols from annotations', () => {
+    const [withChord] = eventsOfAbc('X:1\nK:C\n"Am7"C\n')
+    expect(withChord?.type === 'note' && withChord.chordSymbol).toBe('Am7')
+    const [withAnnotation] = eventsOfAbc('X:1\nK:C\n"^above"C\n')
+    expect(withAnnotation?.type === 'note' && withAnnotation.chordSymbol).toBeNull()
+    expect(withAnnotation?.type === 'note' && withAnnotation.annotations).toEqual(['^above'])
+  })
+
+  it('keeps decorations on a rest', () => {
+    // `!fermata!z4` is idiomatic; the attachment used to be dropped silently.
+    const [rest] = eventsOfAbc('X:1\nK:C\n!fermata!z4\n')
+    expect(rest?.type).toBe('rest')
+    expect(rest?.decorations).toEqual(['fermata'])
+  })
+
+  it('folds mode aliases so key equality is structural', () => {
+    const ionian = parse('X:1\nK:Cion\nC\n')
+    const major = parse('X:1\nK:Cmaj\nC\n')
+    if (!ionian.ok || !major.ok) throw new Error('parse failed')
+    expect(ionian.scores[0]?.key).toEqual(major.scores[0]?.key)
+  })
+
+  it('does not share one key object across scores', () => {
+    const result = parse('X:1\nK:C\nC\n\nX:2\nK:C\nD\n')
+    if (!result.ok) throw new Error('parse failed')
+    expect(result.scores[0]?.key).not.toBe(result.scores[1]?.key)
+  })
+})

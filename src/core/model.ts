@@ -50,9 +50,6 @@ export function rational(numerator: number, denominator = 1): Rational {
 export const ratMul = (a: Rational, b: Rational): Rational =>
   rational(a.numerator * b.numerator, a.denominator * b.denominator)
 
-export const ratAdd = (a: Rational, b: Rational): Rational =>
-  rational(a.numerator * b.denominator + b.numerator * a.denominator, a.denominator * b.denominator)
-
 export const ratEq = (a: Rational, b: Rational): boolean =>
   a.numerator === b.numerator && a.denominator === b.denominator
 
@@ -67,27 +64,7 @@ export const ratToNumber = (r: Rational): number => r.numerator / r.denominator
 export type DiatonicStep = 'c' | 'd' | 'e' | 'f' | 'g' | 'a' | 'b'
 
 const STEPS: readonly DiatonicStep[] = ['c', 'd', 'e', 'f', 'g', 'a', 'b']
-const SEMITONES_ABOVE_C: Record<DiatonicStep, number> = {
-  c: 0,
-  d: 2,
-  e: 4,
-  f: 5,
-  g: 7,
-  a: 9,
-  b: 11,
-}
-const CIRCLE_OF_FIFTHS: Record<DiatonicStep, number> = {
-  c: 0,
-  d: 2,
-  e: 4,
-  f: -1,
-  g: 1,
-  a: 3,
-  b: 5,
-}
-
 export const stepIndex = (step: DiatonicStep): number => STEPS.indexOf(step)
-export const semitonesAboveC = (step: DiatonicStep): number => SEMITONES_ABOVE_C[step]
 
 /** Numeric so it doubles as the semitone alteration. */
 export const Accidental = {
@@ -107,10 +84,6 @@ export interface Pitch {
   readonly accidental: Accidental | null
 }
 
-/** Ignores the key signature — an unaltered pitch reads as natural. */
-export const midiNoteIgnoringKey = (p: Pitch): number =>
-  12 * (p.octave + 1) + semitonesAboveC(p.step) + (p.accidental ?? 0)
-
 export interface PitchClass {
   readonly step: DiatonicStep
   readonly accidental: Accidental
@@ -119,28 +92,12 @@ export interface PitchClass {
 // ─── Key signature ───────────────────────────────────────────────────────────
 // Derived from the circle of fifths, never stored as an accidental list.
 
-export type Mode =
-  | 'major'
-  | 'ionian'
-  | 'mixolydian'
-  | 'dorian'
-  | 'minor'
-  | 'aeolian'
-  | 'phrygian'
-  | 'locrian'
-  | 'lydian'
-
-const MODE_FIFTHS_OFFSET: Record<Mode, number> = {
-  major: 0,
-  ionian: 0,
-  mixolydian: -1,
-  dorian: -2,
-  minor: -3,
-  aeolian: -3,
-  phrygian: -4,
-  locrian: -5,
-  lydian: 1,
-}
+/**
+ * Canonical modes only. ABC's `ionian` and `aeolian` are accepted on input and folded to
+ * `major`/`minor` by the parser, so two KeySignatures that denote the same key are always
+ * structurally equal — the same guarantee `rational()` makes for durations.
+ */
+export type Mode = 'major' | 'mixolydian' | 'dorian' | 'minor' | 'phrygian' | 'locrian' | 'lydian'
 
 export interface KeySignature {
   readonly tonic: PitchClass
@@ -150,25 +107,6 @@ export interface KeySignature {
    * but IS a key: a renderer draws nothing here, and no step is implicitly altered.
    */
   readonly none: boolean
-}
-
-export const keyFifths = (key: KeySignature): number =>
-  CIRCLE_OF_FIFTHS[key.tonic.step] + 7 * key.tonic.accidental + MODE_FIFTHS_OFFSET[key.mode]
-
-const SHARP_ORDER: readonly DiatonicStep[] = ['f', 'c', 'g', 'd', 'a', 'e', 'b']
-const FLAT_ORDER: readonly DiatonicStep[] = ['b', 'e', 'a', 'd', 'g', 'c', 'f']
-
-/** Which steps the key alters, in F-C-G-D-A-E-B order. */
-export function keyAlterations(key: KeySignature): ReadonlyMap<DiatonicStep, Accidental> {
-  const fifths = keyFifths(key)
-  const out = new Map<DiatonicStep, Accidental>()
-  const order = fifths >= 0 ? SHARP_ORDER : FLAT_ORDER
-  const alteration: Accidental = fifths >= 0 ? Accidental.sharp : Accidental.flat
-  for (let i = 0; i < Math.min(Math.abs(fifths), 7); i++) {
-    const step = order[i]
-    if (step) out.set(step, alteration)
-  }
-  return out
 }
 
 // ─── Meter ───────────────────────────────────────────────────────────────────
@@ -185,6 +123,7 @@ export const measureDuration = (m: Meter): Rational => rational(m.numerator, m.d
 
 // ─── Events ──────────────────────────────────────────────────────────────────
 
+/** Notehead shape, set by `!style=…!` or `K: style=…`. */
 export type NoteStyle = 'normal' | 'x' | 'harmonic' | 'triangle' | 'rhythm'
 
 /** Membership in a tuplet group. `number` is the p in `(p`, drawn over the bracket. */
@@ -252,7 +191,7 @@ export interface Note {
   readonly annotations: readonly string[]
   /** Parallel to `annotations`. */
   readonly annotationSourceRanges: readonly SourceRange[]
-  readonly sourceRange: SourceRange | null
+  readonly sourceRange: SourceRange
 }
 
 export type RestKind = 'normal' | 'invisible' | 'multiMeasure' | 'invisibleMultiMeasure' | 'spacer'
@@ -262,6 +201,12 @@ export interface Rest {
   readonly duration: Rational
   readonly notatedDuration: Rational
   readonly kind: RestKind
+  /**
+   * `!fermata!z4` is idiomatic, so a rest does carry decorations — but not ties, slurs,
+   * grace notes or lyrics, none of which apply to silence.
+   */
+  readonly decorations: readonly string[]
+  readonly decorationSourceRanges: readonly SourceRange[]
   readonly tuplet: TupletMark | null
   readonly sourceRange: SourceRange | null
 }

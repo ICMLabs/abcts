@@ -30,6 +30,7 @@ import {
   type MusicEvent,
   measureDuration,
   type Note,
+  type NoteStyle,
   type Pitch,
   type Rational,
   type Rest,
@@ -47,13 +48,23 @@ import {
 import { Lexer, type Token } from './lexer.js'
 import { decodeTextString } from './text.js'
 
-export type ParseResult =
-  | {
-      readonly ok: true
-      readonly scores: readonly Score[]
-      readonly diagnostics: readonly Diagnostic[]
-    }
-  | { readonly ok: false; readonly errors: readonly Diagnostic[] }
+/**
+ * Both branches carry everything.
+ *
+ * An ABC file is a collection of tunes, so a fatal error in one must not discard the
+ * others — the original shape returned only `errors` on failure, throwing away every
+ * successfully parsed score and every warning alongside it. `ok` reports whether any
+ * diagnostic reached `error` severity; `scores` and `diagnostics` are always present, and
+ * `errors` is the pre-filtered subset so a consumer need not filter by severity itself.
+ *
+ * Nothing currently emits `error` severity, so `ok` is always true today. The branch is
+ * kept because ARCHITECTURE.md mandates a Result type and fatal errors are a plausible
+ * near-term need — but it no longer loses work if one appears.
+ */
+export type ParseResult = {
+  readonly scores: readonly Score[]
+  readonly diagnostics: readonly Diagnostic[]
+} & ({ readonly ok: true } | { readonly ok: false; readonly errors: readonly Diagnostic[] })
 
 // ─── Field parsing ───────────────────────────────────────────────────────────
 
@@ -63,28 +74,35 @@ const MODES: ReadonlyArray<readonly [string, Mode]> = [
   ['phr', 'phrygian'],
   ['lyd', 'lydian'],
   ['loc', 'locrian'],
-  ['ion', 'ionian'],
-  ['aeo', 'aeolian'],
+  // ABC accepts `ionian` and `aeolian`; they are folded to their canonical names so key
+  // equality stays structural.
+  ['ion', 'major'],
+  ['aeo', 'minor'],
   ['maj', 'major'],
   ['min', 'minor'],
   ['m', 'minor'],
 ]
 
-export const DEFAULT_KEY: KeySignature = {
+/**
+ * A fresh object each call. Returning one shared constant meant the first parse() froze a
+ * module-level singleton — a cross-call side effect from a pure function — and made
+ * `scoreA.key === scoreB.key` true for any two C-major tunes.
+ */
+const defaultKey = (): KeySignature => ({
   tonic: { step: 'c', accidental: Accidental.natural },
   mode: 'major',
   none: false,
-}
+})
 
 function parseKey(content: string): KeySignature {
   // `K:none` means NO key signature — no alterations, and a renderer draws nothing. It is
   // not C major, even though both alter no steps.
-  if (/^none\b/i.test(content.trim())) return { ...DEFAULT_KEY, none: true }
+  if (/^none\b/i.test(content.trim())) return { ...defaultKey(), none: true }
   // ponytail: `clef=`, `octave=`, `transpose=`, `middle=`, `stafflines=` also ride on
   // K:. Stripped here, implemented when a fixture needs them.
   const spec = (content.split(/\s+/)[0] ?? '').trim()
   const head = spec[0]?.toLowerCase()
-  if (!head || head < 'a' || head > 'g') return DEFAULT_KEY
+  if (!head || head < 'a' || head > 'g') return defaultKey()
 
   let i = 1
   let accidental: Accidental = Accidental.natural
@@ -170,7 +188,7 @@ class VoiceBuilder {
   private pendingKeyChangeRange: SourceRange | null = null
   private pendingMeterChange: Meter | null = null
   private pendingMeterChangeRange: SourceRange | null = null
-  private readonly measures: Measure[] = []
+  private measures: Measure[] = []
   private events: MusicEvent[] = []
   private overlays: MusicEvent[][] = []
   /** Which `&` layer new events land in; null means the main line. */
@@ -261,13 +279,17 @@ class VoiceBuilder {
     }
 
     let index = 0
-    for (const measure of this.measures) {
-      const events = measure.events as MusicEvent[]
-      events.forEach((event, position) => {
-        if (event.type === 'rest') return
+    // Rebuilt, not mutated: casting `readonly MusicEvent[]` to a mutable array and writing
+    // through it deletes the compile-time check that enforces the immutable-AST rule, in
+    // the one function that touches an already-built tree.
+    this.measures = this.measures.map((measure) => ({
+      ...measure,
+      events: measure.events.map((event) => {
+        if (event.type === 'rest') return event
         const first = verses[0]?.get(index)
         const extras = verses.slice(1).map((verse) => verse.get(index)?.text ?? null)
-        events[position] = {
+        index += 1
+        return {
           ...event,
           lyric: first?.text ?? null,
           lyricSourceRange: first?.range ?? null,
@@ -277,9 +299,8 @@ class VoiceBuilder {
           lyricMelisma: first?.kind === 'melisma',
           extraVerses: extras,
         }
-        index += 1
-      })
-    }
+      }),
+    }))
   }
 
   /** The event a broken-rhythm mark reaches back to. Null once a barline has closed. */
@@ -373,7 +394,7 @@ class ScoreBuilder {
   titles: string[] = []
   composer: string | null = null
   rhythm: string | null = null
-  key: KeySignature = DEFAULT_KEY
+  key: KeySignature = defaultKey()
   meter: Meter | null = null
   unitNoteLength: Rational = rational(1, 8)
   unitExplicit = false
@@ -493,7 +514,9 @@ class Parser {
     this.flush()
 
     const errors = this.diagnostics.filter((d) => d.severity === 'error')
-    if (errors.length > 0) return { ok: false, errors }
+    if (errors.length > 0) {
+      return { ok: false, errors, scores: this.scores, diagnostics: this.diagnostics }
+    }
     return { ok: true, scores: this.scores, diagnostics: this.diagnostics }
   }
 
@@ -743,17 +766,25 @@ class Parser {
       const scaled = applyTuplet(broken ? scaleEvent(event, broken) : event)
       // A rest carries none of these — no ties, slurs, grace notes or chord symbols —
       // but it still consumes the pending state so they cannot leak past it.
-      voice().push(
-        scaled.type === 'rest'
-          ? scaled
-          : ({
-              ...scaled,
-              ...pending,
-              slurStarts: pendingSlurStarts,
-              graceNotes: pendingGrace,
-              graceSlash: pendingGraceSlash,
-            } as MusicEvent),
-      )
+      if (scaled.type === 'rest') {
+        // A rest carries decorations but no ties, slurs, grace notes or chord symbols.
+        voice().push({
+          ...scaled,
+          decorations: pending.decorations,
+          decorationSourceRanges: pending.decorationSourceRanges,
+        })
+      } else {
+        const style = resolveStyle(pending)
+        const attached: Note | Chord = {
+          ...scaled,
+          ...pending,
+          style,
+          slurStarts: pendingSlurStarts,
+          graceNotes: pendingGrace,
+          graceSlash: pendingGraceSlash,
+        }
+        voice().push(attached)
+      }
       voice().pendingBroken = null
       pending = noAttachments()
       pendingSlurStarts = 0
@@ -872,7 +903,13 @@ class Parser {
         case 'unknown': {
           // Decoration shorthands (`.` staccato, `T` trill, `v` downbow) lex as unknown
           // because they are not note letters. Anything else stays ignored.
-          const shorthand = DECORATION_SHORTHAND[token.aux]
+          //
+          // `.` is the exception: before `(` or `-` it marks a DOTTED SLUR or DOTTED TIE
+          // and belongs to that, not to the note. Treating it as staccato attached a
+          // decoration no renderer should draw.
+          const nextKind = (tokens[i + 1] as Token | undefined)?.kind
+          const dotsAMark = token.aux === '.' && (nextKind === 'lparen' || nextKind === 'tie')
+          const shorthand = dotsAMark ? undefined : DECORATION_SHORTHAND[token.aux]
           if (shorthand) {
             pending.decorations.push(shorthand)
             pending.decorationSourceRanges.push(
@@ -1143,6 +1180,8 @@ class Parser {
         duration,
         notatedDuration: duration,
         kind,
+        decorations: [], // filled in by emit()
+        decorationSourceRanges: [],
         tuplet: null, // set by applyTuplet() on emit
         sourceRange: sourceRange(token.start, last.start + last.length),
       },
@@ -1253,10 +1292,12 @@ const DECORATION_SHORTHAND: Record<string, string> = {
   '.': 'staccato',
   '~': 'roll',
   H: 'fermata',
+  J: 'slide',
   L: 'accent',
   M: 'lowermordent',
   O: 'coda',
   P: 'uppermordent',
+  R: 'roll',
   S: 'segno',
   T: 'trill',
   u: 'upbow',
@@ -1400,6 +1441,33 @@ function parseLyricSyllables(text: string, base: number): Syllable[] {
 /** `>>>>` is already 31:1; past this the factors overflow and mean nothing musically. */
 const MAX_BROKEN_RHYTHM_ARROWS = 8
 
+const NOTE_STYLES: readonly NoteStyle[] = ['normal', 'x', 'harmonic', 'triangle', 'rhythm']
+
+/**
+ * `!style=harmonic!` sets the notehead shape; it is NOT a decoration and abcjs does not
+ * record it as one. Pulls any `style=` entries out of the pending decoration list and
+ * returns the resulting style, mirroring v2's resolveStyle.
+ */
+function resolveStyle(attachments: Attachments): NoteStyle {
+  let style: NoteStyle = 'normal'
+  const keep: string[] = []
+  const keepRanges: SourceRange[] = []
+  attachments.decorations.forEach((decoration, index) => {
+    const match = /^style=(.+)$/.exec(decoration)
+    const named = match?.[1] as NoteStyle | undefined
+    if (named && NOTE_STYLES.includes(named)) {
+      style = named
+      return
+    }
+    keep.push(decoration)
+    const range = attachments.decorationSourceRanges[index]
+    if (range) keepRanges.push(range)
+  })
+  attachments.decorations = keep
+  attachments.decorationSourceRanges = keepRanges
+  return style
+}
+
 const REST_KINDS: Record<string, RestKind> = {
   z: 'normal',
   x: 'invisible',
@@ -1416,11 +1484,27 @@ function combineAccidental(current: Accidental | null, raw: string): Accidental 
   return Math.max(-2, Math.min(2, combined)) as Accidental
 }
 
-function deepFreeze<T>(value: T): T {
-  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
-    Object.freeze(value)
-    for (const key of Object.getOwnPropertyNames(value)) {
-      deepFreeze((value as Record<string, unknown>)[key])
+/**
+ * Freeze the whole tree. `readonly` is erased at runtime, so this is the only thing that
+ * makes the immutable-AST guarantee true for a JavaScript consumer.
+ *
+ * A `seen` set rather than an `isFrozen` short-circuit: the latter skipped the RECURSION
+ * too, so anything already frozen kept mutable children. Arrays iterate by value —
+ * getOwnPropertyNames allocates an index string per element, which on a large score is
+ * hundreds of thousands of throwaway strings.
+ *
+ * Note this makes a consumer's `score.voices.push(x)` throw a TypeError under ESM's strict
+ * mode. That is intended, and is the one way parse()'s output can raise.
+ */
+function deepFreeze<T>(value: T, seen = new WeakSet<object>()): T {
+  if (!value || typeof value !== 'object' || seen.has(value)) return value
+  seen.add(value)
+  Object.freeze(value)
+  if (Array.isArray(value)) {
+    for (const item of value) deepFreeze(item, seen)
+  } else {
+    for (const key of Object.keys(value)) {
+      deepFreeze((value as Record<string, unknown>)[key], seen)
     }
   }
   return value

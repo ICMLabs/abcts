@@ -76,6 +76,17 @@ export interface GoldenElement {
   readonly endBeam?: boolean
   /** Grace-note pitches attached to this element. */
   readonly gracenotes?: readonly { readonly pitch: number }[]
+  /** Decoration names attached to this element, e.g. ['trill']. */
+  readonly decoration?: readonly string[]
+  /** Chord symbols / annotations: {name, position}. */
+  readonly chord?: readonly {
+    readonly name: string
+    readonly position?: string
+    /** Present on `"@x,y text"` annotations, which are NOT chord symbols. */
+    readonly rel_position?: unknown
+  }[]
+  /** Lyric syllables, one per verse: {syllable, divider}. */
+  readonly lyric?: readonly { readonly syllable: string; readonly divider?: string }[]
 }
 
 interface GoldenTune {
