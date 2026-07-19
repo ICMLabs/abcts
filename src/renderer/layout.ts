@@ -76,8 +76,17 @@ const ENGRAVE = {
   noteAdvance: 3.5,
   /** Space either side of a barline. PROVISIONAL. */
   barGap: 1.0,
-  /** Staff step the tempo mark sits on — clear above the top line at step 4. */
-  tempoStep: 8,
+  /**
+   * Staff steps for the two marks that sit above the staff (top line is step 4).
+   *
+   * Four steps apart, which is two staff spaces — enough that 1.6-space text does not
+   * collide when a tune carries both, as `full-song-template` does. ponytail: fixed
+   * lanes, not a skyline pass. Real engraving stacks whatever is present and closes the
+   * gap when something is absent; with exactly two kinds of mark, lanes are the smaller
+   * correct answer. Revisit when a third joins them.
+   */
+  tempoStep: 10,
+  partStep: 6,
   /** Tempo text size, in staff spaces. PROVISIONAL. */
   tempoTextSize: 1.6,
 } as const
@@ -89,6 +98,7 @@ export type ElementType =
   | 'keySignature'
   | 'timeSignature'
   | 'tempo'
+  | 'part'
   | 'note'
   | 'rest'
   | 'bar'
@@ -477,6 +487,29 @@ function layoutTempo(x: number, tempo: Tempo): LayoutElement | null {
   return { type: 'tempo', x, width: 0, staffStep: null, glyphs, lines, texts }
 }
 
+/**
+ * A `P:` part label above the staff. Zero width, like the tempo mark and for the same
+ * reason: abcjs reports `w: 0`, and a label must not push the music it labels.
+ */
+const layoutPart = (x: number, label: string): LayoutElement => ({
+  type: 'part',
+  x,
+  width: 0,
+  staffStep: null,
+  glyphs: [],
+  lines: [],
+  texts: [
+    {
+      text: label,
+      x,
+      y: stepToY(ENGRAVE.partStep),
+      size: ENGRAVE.tempoTextSize,
+      bold: true,
+      italic: false,
+    },
+  ],
+})
+
 // ─── Rests ───────────────────────────────────────────────────────────────────
 
 /**
@@ -576,49 +609,97 @@ function ledgerLines(step: number, x: number, headWidth: number): PlacedLine[] {
   return lines
 }
 
-function layoutNote(note: Note, x: number, clef: Clef): LayoutElement {
-  const step = pitchToStep(note.pitch, clef)
-  const spec = noteGlyph(note.notatedDuration)
-  if (spec === null) {
+/**
+ * One or more noteheads sharing a stem — the general case, of which a single note is
+ * simply N = 1.
+ *
+ * Written as one function rather than two because a chord needs everything a note needs
+ * (stem, ledger lines, accidental) and duplicating that was how the stem came to anchor
+ * to the wrong x when accidentals landed. The differences from a note are real but
+ * small: the stem spans the outermost heads, and heads a second apart must sit on
+ * opposite sides of the stem.
+ */
+function layoutNoteheads(
+  pitches: readonly Pitch[],
+  notated: Rational,
+  x: number,
+  clef: Clef,
+): LayoutElement {
+  // abcjs reports a chord's heads lowest-first and the structural gate keys on heads[0],
+  // so the element's staffStep must be the LOWEST notehead, not the first written.
+  const steps = pitches.map((p) => pitchToStep(p, clef)).sort((a, b) => a - b)
+  const lowest = steps[0] ?? 0
+  const highest = steps[steps.length - 1] ?? 0
+  const spec = noteGlyph(notated)
+
+  if (spec === null || steps.length === 0) {
     // Unsupported duration — see noteGlyph. Emit the position with no ink rather than
     // the wrong notehead, so the gap is visible in output and in the gate.
     return {
       type: 'note',
       x,
       width: ENGRAVE.noteAdvance,
-      staffStep: step,
+      staffStep: lowest,
       glyphs: [],
       lines: [],
       texts: [],
     }
   }
 
+  const head = GLYPHS[spec.head]
   const glyphs: PlacedGlyph[] = []
+  const lines: PlacedLine[] = []
 
-  // An accidental sits before the notehead and pushes it right, so it occupies its own
-  // space rather than colliding with whatever precedes the note.
-  const accidental = accidentalGlyph(note.pitch.accidental)
-  let headX = x
-  if (accidental !== null) {
-    glyphs.push(glyphAt(accidental, x, step))
-    headX = x + GLYPHS[accidental].advance + ENGRAVE.accidentalGap
+  // Stem direction follows the chord as a whole: away from the middle line, judged by
+  // the midpoint of its outermost notes. On the middle line itself the stem goes down.
+  const up = (lowest + highest) / 2 < 0
+
+  // Accidentals sit in a column before the heads and push everything right. ponytail:
+  // ONE column. Real engraving fans accidentals into several columns when they would
+  // collide; with the heads at distinct steps they only collide for a cluster, and no
+  // corpus fixture has one.
+  const accidentals = pitches
+    .map((p) => ({ glyph: accidentalGlyph(p.accidental), step: pitchToStep(p, clef) }))
+    .filter((a): a is { glyph: GlyphName; step: number } => a.glyph !== null)
+
+  const accidentalWidth =
+    accidentals.length === 0
+      ? 0
+      : Math.max(...accidentals.map((a) => GLYPHS[a.glyph].advance)) + ENGRAVE.accidentalGap
+
+  for (const a of accidentals) glyphs.push(glyphAt(a.glyph, x, a.step))
+  const headX = x + accidentalWidth
+
+  // A second cannot be printed on the same side of the stem — the noteheads would
+  // overlap — so the offending head moves across it. *Behind Bars*. Working from the
+  // stem side outward keeps a cluster alternating rather than every head shifting.
+  const ordered = up ? steps : [...steps].reverse()
+  const offsets = new Map<number, number>()
+  let previous: number | null = null
+  let shifted = false
+  for (const step of ordered) {
+    shifted = previous !== null && Math.abs(step - previous) === 1 ? !shifted : false
+    // With an up stem the displaced head goes right of it; with a down stem, left.
+    offsets.set(step, shifted ? (up ? head.width : -head.width) : 0)
+    previous = step
   }
 
-  const head = GLYPHS[spec.head]
-  glyphs.push(glyphAt(spec.head, headX, step))
-  const lines: PlacedLine[] = ledgerLines(step, headX, head.width)
-  const width = headX - x + ENGRAVE.noteAdvance
+  for (const step of steps) {
+    const dx = offsets.get(step) ?? 0
+    glyphs.push(glyphAt(spec.head, headX + dx, step))
+    lines.push(...ledgerLines(step, headX + dx, head.width))
+  }
 
   if (spec.stemmed) {
-    // Stems point away from the middle line, so the note stays near the staff. On the
-    // middle line itself the stem goes down, by convention.
-    const up = step < 0
     const anchor = up ? head.anchors.stemUpSE : head.anchors.stemDownNW
     const [ax, ay] = anchor ?? [up ? head.width : 0, 0]
-    // headX, not x: an accidental shifts the notehead, and the stem follows the head.
+    // headX, not x: an accidental shifts the noteheads, and the stem follows them.
     const stemX = headX + ax
-    const base = stepToY(step) + ay
-    const tip = base + (up ? -ENGRAVE.stemLength : ENGRAVE.stemLength)
+    // The stem starts at the head nearest its own end and runs past the far one, so a
+    // chord's stem spans the whole spread rather than one notehead's worth.
+    const base = stepToY(up ? lowest : highest) + ay
+    const far = stepToY(up ? highest : lowest)
+    const tip = far + (up ? -ENGRAVE.stemLength : ENGRAVE.stemLength)
     lines.push({
       x1: stemX,
       y1: base,
@@ -633,7 +714,17 @@ function layoutNote(note: Note, x: number, clef: Clef): LayoutElement {
     // notehead. Wire up when the first fixture with unbeamed eighths lands.
   }
 
-  return { type: 'note', x, width, staffStep: step, glyphs, lines, texts: [] }
+  // A head displaced across the stem widens the element.
+  const spread = Math.max(0, ...[...offsets.values()].map(Math.abs))
+  return {
+    type: 'note',
+    x,
+    width: accidentalWidth + spread + ENGRAVE.noteAdvance,
+    staffStep: lowest,
+    glyphs,
+    lines,
+    texts: [],
+  }
 }
 
 function layoutBar(x: number): LayoutElement {
@@ -701,6 +792,16 @@ export function layout(score: Score): Layout {
   }
 
   for (const measure of voice?.measures ?? []) {
+    // An opening `|:` or `[|` prints before the measure it belongs to, and is a SEPARATE
+    // barline from the previous measure's closer — a line ending `:|` followed by one
+    // starting `|:` draws two.
+    // The label precedes the barline that opens its part.
+    if (measure.partLabel !== null) elements.push(layoutPart(x, measure.partLabel))
+    if (measure.openingBarline !== null) {
+      x += ENGRAVE.barGap
+      elements.push(layoutBar(x))
+      x += ENGRAVE.barGap
+    }
     for (const event of measure.events) {
       const el = layoutEvent(event, x, clef)
       if (el === null) continue
@@ -767,12 +868,8 @@ function verticalExtent(elements: readonly LayoutElement[]): { top: number; bott
   return { top: top - ENGRAVE.marginY, bottom: bottom + ENGRAVE.marginY }
 }
 
-/**
- * ponytail: chords lay out as nothing. A chord is a note element with N noteheads plus
- * second-interval offsetting, so it is a real slice of work rather than a line here.
- */
 function layoutEvent(event: MusicEvent, x: number, clef: Clef): LayoutElement | null {
-  if (event.type === 'note') return layoutNote(event, x, clef)
-  if (event.type === 'rest') return layoutRest(event, x)
-  return null
+  if (event.type === 'note') return layoutNoteheads([event.pitch], event.notatedDuration, x, clef)
+  if (event.type === 'chord') return layoutNoteheads(event.pitches, event.notatedDuration, x, clef)
+  return layoutRest(event, x)
 }

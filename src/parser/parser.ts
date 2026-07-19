@@ -440,19 +440,54 @@ class VoiceBuilder {
     }
   }
 
+  /** A leading barline awaiting the measure it opens. */
+  private pendingOpening: { barline: Barline; range: SourceRange } | null = null
+  /** A `P:` label awaiting the measure it marks. */
+  private pendingPart: { label: string; range: SourceRange } | null = null
+
+  setPartLabel(label: string, range: SourceRange): void {
+    this.pendingPart = { label, range }
+  }
+
+  private takeOpening(): {
+    openingBarline: Barline | null
+    openingBarlineSourceRange: SourceRange | null
+    partLabel: string | null
+    partLabelSourceRange: SourceRange | null
+  } {
+    const pending = this.pendingOpening
+    this.pendingOpening = null
+    const part = this.pendingPart
+    this.pendingPart = null
+    return {
+      openingBarline: pending?.barline ?? null,
+      openingBarlineSourceRange: pending?.range ?? null,
+      partLabel: part?.label ?? null,
+      partLabelSourceRange: part?.range ?? null,
+    }
+  }
+
   closeMeasure(barline: Barline, barlineRange: SourceRange): void {
-    // A barline with nothing before it (leading `|:`) opens rather than closes. Overlay
-    // state must be checked too: `|&|` used to return early leaving overlayIndex set, so
-    // every later note in the voice landed in an overlay layer and measure.events stayed
-    // empty for the rest of the tune.
+    // A barline with nothing before it (leading `|:`) opens rather than closes, so it is
+    // held for the NEXT measure instead of being dropped. Dropping it lost a printed
+    // barline wherever a line ended `:|` and the next began `|:`, and lost the opening
+    // `[|` of any tune that starts with one.
+    //
+    // Overlay state must be checked too: `|&|` used to return early leaving overlayIndex
+    // set, so every later note in the voice landed in an overlay layer and measure.events
+    // stayed empty for the rest of the tune.
     if (this.events.length === 0 && this.measureStart === null && this.overlays.length === 0) {
       this.overlayIndex = null
+      // Two openers in a row keep the first; `[|` then `|:` prints both, but nothing in
+      // the corpus does it and one slot is enough until something does.
+      this.pendingOpening ??= { barline, range: barlineRange }
       return
     }
     this.measures.push({
       events: this.events,
       overlays: this.overlays,
       ...this.takeChanges(),
+      ...this.takeOpening(),
       closingBarline: barline,
       sourceRange: sourceRange(this.measureStart ?? barlineRange.start, barlineRange.end),
       closingBarlineSourceRange: barlineRange,
@@ -472,6 +507,7 @@ class VoiceBuilder {
         events: this.events,
         overlays: this.overlays,
         ...this.takeChanges(),
+        ...this.takeOpening(),
         closingBarline: null,
         sourceRange: sourceRange(this.measureStart ?? 0, last?.sourceRange?.end ?? 0),
         closingBarlineSourceRange: null,
@@ -759,6 +795,14 @@ class Parser {
         }
         builder.unitNoteLength = unit
         builder.unitExplicit = true
+        return
+      }
+      case 'P': {
+        // A body `P:` labels the part that starts here. A header `P:` is a part ORDER,
+        // a different feature, and is still deferred.
+        if (builder.bodyStarted && value.trim() !== '') {
+          builder.voice.setPartLabel(value.trim(), range)
+        }
         return
       }
       case 'Q': {

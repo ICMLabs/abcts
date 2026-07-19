@@ -56,8 +56,10 @@ const RENDERABLE = [
   'S1-decorations',
   'S2-fields',
   'S3-note-syntax',
+  'S4-bars-repeats',
   'S5-directives',
   'S6-keys',
+  'S7-voices',
   'S8-layout',
   'ave-verum-corpus',
   'brother-john-inline-voices',
@@ -65,19 +67,24 @@ const RENDERABLE = [
   'chord-grid',
   'clefs',
   'curves',
+  'full-song-template',
   'happy-birthday',
+  'little swallow',
   'missing-decorations',
   'multi-voice-lyrics-two-voices',
   'multi-voice-rest-collision',
   'multi-voice-rest-placement',
   'multi-voice-triplet-brackets',
   'program-127-test',
+  'ragtime-mini',
+  'ragtime-nightingale',
   'score-reorder-shared',
   'score-reorder',
   'simple-c',
   'stacked-annotations',
   'tunebook-3',
   'twinkle',
+  'two-voice-invention',
   'voice-middle-after-clef',
   'voice-octave-shift',
   'vree-compound-meter',
@@ -87,6 +94,21 @@ const RENDERABLE = [
   'vree-ties-across-bars',
   'zocharti-loch',
 ]
+
+/**
+ * Fixtures where abcjs's own layout is WRONG, so matching it would mean reproducing a bug.
+ *
+ * Same mechanism and same reasoning as the parser gate's `KNOWN_DIVERGENCES`, including
+ * the anti-rot property: a divergence that starts matching FAILS, so a stale entry cannot
+ * sit here unnoticed.
+ */
+const KNOWN_DIVERGENCES: Record<string, string> = {
+  'frere-jacques':
+    'abcjs parses `+:` field-continuation lines as music, so its layout is built from a ' +
+    'mis-parsed tune — it has no timeSignature at all and its noteheads are the prose of ' +
+    '"+:belongs to their respective owners" on the staff. The parser gate documents the ' +
+    'same divergence at the content level; this is the same abcjs bug seen through layout.',
+}
 
 /**
  * abcjs numbers staff positions with 0 = C4, so a treble middle line (B4) is 6. Core puts
@@ -177,18 +199,57 @@ describe('structural render parity vs abcjs layout', () => {
     }
   })
 
-  describe('not yet renderable', () => {
-    const notYet = corpus.filter((c) => !RENDERABLE.includes(c.name))
+  describe('known divergences — abcjs is wrong', () => {
+    for (const [name, reason] of Object.entries(KNOWN_DIVERGENCES)) {
+      it(`${name} — still diverges: ${reason.slice(0, 60)}…`, () => {
+        const fixture = byName.get(name)
+        expect(fixture).toBeDefined()
+        const golden = goldenSequence(name)
+        expect(golden.length, `${name} has an empty layout golden`).toBeGreaterThan(0)
+        // Fails if it starts matching, so the entry cannot go stale.
+        expect(
+          coreSequence(fixture?.abc ?? ''),
+          `${name} now matches abcjs — the divergence is stale, remove it`,
+        ).not.toEqual(golden)
+      })
+    }
+  })
+
+  describe('coverage is accounted for', () => {
+    const notYet = corpus.filter(
+      (c) => !RENDERABLE.includes(c.name) && KNOWN_DIVERGENCES[c.name] === undefined,
+    )
+
+    // Every fixture is either reproduced or a recorded divergence. Asserted rather than
+    // left implicit so that ADDING a fixture to the corpus fails here until someone
+    // decides which it is — silence would otherwise read as coverage.
+    it('every corpus fixture is either renderable or a known divergence', () => {
+      expect(notYet.map((c) => c.name)).toEqual([])
+    })
+
+    it('RENDERABLE and KNOWN_DIVERGENCES do not overlap or name absent fixtures', () => {
+      const names = new Set(corpus.map((c) => c.name))
+      for (const name of [...RENDERABLE, ...Object.keys(KNOWN_DIVERGENCES)]) {
+        expect(names.has(name), `${name} is listed but not in the corpus`).toBe(true)
+      }
+      for (const name of RENDERABLE) {
+        expect(KNOWN_DIVERGENCES[name], `${name} is both renderable and divergent`).toBeUndefined()
+      }
+    })
+
+    // Kept for when the corpus grows: each unaccounted fixture reports its own diff.
     for (const fixture of notYet) {
       it(`${fixture.name} — still diverges, so absent from RENDERABLE`, () => {
         let core: string[]
         try {
           core = coreSequence(fixture.abc)
         } catch {
-          return // A throw is a legitimate way to not-yet-render.
+          return
         }
+        const golden = goldenSequence(fixture.name)
+        expect(golden.length, `${fixture.name} has an empty layout golden`).toBeGreaterThan(0)
         expect(core, `${fixture.name} now matches abcjs layout — add it to RENDERABLE`).not.toEqual(
-          goldenSequence(fixture.name),
+          golden,
         )
       })
     }

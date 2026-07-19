@@ -253,6 +253,112 @@ describe('tempo', () => {
   })
 })
 
+describe('chords', () => {
+  const elementsOf = (abc: string) =>
+    layout(parse(abc).scores[0] as Score).systems.flatMap((s) => s.elements)
+  const notesOf = (abc: string) => elementsOf(abc).filter((e) => e.type === 'note')
+
+  it('reports the LOWEST notehead as the element step, which is what abcjs keys on', () => {
+    // abcjs sorts a chord's heads ascending and the structural gate reads heads[0], so
+    // reporting the first-WRITTEN pitch instead would pass or fail by luck of spelling.
+    const written = notesOf('X:1\nL:1/4\nK:C\n[GCE]|\n')[0]
+    expect(written?.staffStep).toBe(-6) // C4, the lowest, though G was written first
+  })
+
+  it('draws one notehead per pitch', () => {
+    const chord = notesOf('X:1\nL:1/4\nK:C\n[CEG]|\n')[0]
+    expect(chord?.glyphs.filter((g) => g.name === 'noteheadBlack')).toHaveLength(3)
+  })
+
+  it('moves a second across the stem instead of overlapping two heads', () => {
+    // *Behind Bars*: seconds cannot share a side. A cluster alternates rather than
+    // shifting every head, so C and E stay put and D moves.
+    const chord = notesOf('X:1\nL:1/4\nK:C\n[CDE]|\n')[0]
+    const xs = (chord?.glyphs ?? []).filter((g) => g.name === 'noteheadBlack').map((g) => g.x)
+    expect(new Set(xs).size).toBe(2)
+    // Exactly one head is displaced, not all three.
+    const base = Math.min(...xs)
+    expect(xs.filter((x) => x !== base)).toHaveLength(1)
+  })
+
+  it('leaves a chord of thirds in a single column', () => {
+    const chord = notesOf('X:1\nL:1/4\nK:C\n[CEG]|\n')[0]
+    const xs = (chord?.glyphs ?? []).filter((g) => g.name === 'noteheadBlack').map((g) => g.x)
+    expect(new Set(xs).size).toBe(1)
+  })
+
+  it('spans the stem across the whole chord, not one notehead', () => {
+    const chord = notesOf('X:1\nL:1/4\nK:C\n[CEG]|\n')[0]
+    const stem = chord?.lines.find((l) => l.x1 === l.x2)
+    // Lowest head is C4 (y = 3), stem runs up past G4 (y = 1) by the stem length.
+    expect(stem).toBeDefined()
+    expect(Math.abs((stem?.y1 ?? 0) - (stem?.y2 ?? 0))).toBeGreaterThan(3.5)
+  })
+
+  it('flips the stem down for a chord above the middle line', () => {
+    const low = notesOf('X:1\nL:1/4\nK:C\n[CEG]|\n')[0]
+    const high = notesOf('X:1\nL:1/4\nK:C\n[ceg]|\n')[0]
+    const tipOf = (el: typeof low) => {
+      const stem = el?.lines.find((l) => l.x1 === l.x2)
+      return (stem?.y2 ?? 0) - (stem?.y1 ?? 0)
+    }
+    expect(tipOf(low)).toBeLessThan(0) // up: y decreases
+    expect(tipOf(high)).toBeGreaterThan(0) // down
+  })
+
+  it('gives every altered pitch in a chord its own accidental', () => {
+    const chord = notesOf('X:1\nL:1/4\nK:C\n[^C_EG]|\n')[0]
+    const names = (chord?.glyphs ?? []).map((g) => g.name)
+    expect(names).toContain('accidentalSharp')
+    expect(names).toContain('accidentalFlat')
+  })
+})
+
+describe('barlines that open a measure', () => {
+  const typesOf = (abc: string) =>
+    layout(parse(abc).scores[0] as Score)
+      .systems.flatMap((s) => s.elements)
+      .map((e) => e.type)
+
+  it('keeps a leading barline instead of dropping it', () => {
+    // `little swallow` opens with `[|` before any note. The parser recognised this case
+    // and discarded the barline, so core drew nothing where abcjs draws a bar.
+    expect(typesOf('X:1\nL:1/4\nK:C\n[|CDEF|\n')).toContain('bar')
+    expect(
+      parse('X:1\nL:1/4\nK:C\n[|CDEF|\n').scores[0]?.voices[0]?.measures[0]?.openingBarline,
+    ).toBe('double')
+  })
+
+  it('draws two barlines when one closes and the next opens', () => {
+    // A line ending `:|` followed by one starting `|:` is TWO printed barlines. Folding
+    // them into one loses the repeat structure — and it is what abcjs does too.
+    const types = typesOf('X:1\nL:1/4\nK:C\nCDEF:|\n|:GABc|\n')
+    const bars = types.filter((t) => t === 'bar')
+    expect(bars.length).toBe(3) // the :| , the |: , and the final |
+  })
+})
+
+describe('part labels', () => {
+  it('marks a body P: on the measure it starts', () => {
+    const score = parse('X:1\nL:1/4\nK:C\nCDEF|\nP:B\nGABc|\n').scores[0]
+    const measures = score?.voices[0]?.measures ?? []
+    expect(measures[0]?.partLabel).toBeNull()
+    expect(measures[1]?.partLabel).toBe('B')
+
+    const parts = layout(score as Score)
+      .systems.flatMap((s) => s.elements)
+      .filter((e) => e.type === 'part')
+    expect(parts).toHaveLength(1)
+    expect(parts[0]?.texts[0]?.text).toBe('B')
+    expect(parts[0]?.width).toBe(0) // must not push the music it labels
+  })
+
+  it('ignores a header P:, which is a part ORDER and a different feature', () => {
+    const score = parse('X:1\nL:1/4\nP:ABAB\nK:C\nCDEF|\n').scores[0]
+    expect(score?.voices[0]?.measures[0]?.partLabel).toBeNull()
+  })
+})
+
 describe('noteGlyph', () => {
   it('maps the plain power-of-two durations', () => {
     expect(noteGlyph(rational(1, 1))?.head).toBe('noteheadWhole')

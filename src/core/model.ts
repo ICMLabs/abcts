@@ -350,6 +350,23 @@ export interface Measure {
   /** A mid-tune `M:` taking effect at this measure. */
   readonly meterChange: Meter | null
   readonly meterChangeSourceRange: SourceRange | null
+  /**
+   * A `P:` part label taking effect at this measure — "A", or "PART - VERSE, CHORUS".
+   * Printed above the staff.
+   *
+   * ponytail: BODY `P:` only. A `P:` in the header is a part ORDER ("ABAB"), a different
+   * thing entirely, and is still deferred.
+   */
+  readonly partLabel: string | null
+  readonly partLabelSourceRange: SourceRange | null
+  /**
+   * A barline that OPENS this measure — a leading `|:` or `[|`, which belongs to the
+   * measure after it rather than the one before. Distinct from `closingBarline` because
+   * both can occur back to back: a line ending `:|` followed by one starting `|:` is two
+   * printed barlines, and folding them into one loses a repeat structure.
+   */
+  readonly openingBarline: Barline | null
+  readonly openingBarlineSourceRange: SourceRange | null
   /** `null` when the tune ends without a closing barline. */
   readonly closingBarline: Barline | null
   readonly sourceRange: SourceRange | null
