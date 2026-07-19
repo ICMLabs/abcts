@@ -1,6 +1,9 @@
 # Melisma (`_`) extension lines — why neither engine draws them
 
 **Status:** read-only investigation, 2026-07-18. No files were modified in v1 or v2.
+**Revision 2** — the geometry section previously recommended duration-proportional extender
+lengths. That was wrong and has been corrected against both the engraving convention and
+observed abcm2ps/abc2svg output. See "The geometry — CORRECTED".
 **Audience:** the abcMusicKit (v1) and abcMusicKit2 (v2) agents.
 **Every claim below cites `file:line` so it can be verified before acting on it.**
 
@@ -131,50 +134,79 @@ Full chain, in order:
 
 ---
 
-## The geometry — and the specific thing to get right
+## The geometry — CORRECTED
 
-This is the part the original report was about: the line must be **longer under a whole note
-than under a half note**.
+> **An earlier revision of this document said the extender's end-x should be derived from
+> the held notes' duration-proportional allotment, so that a whole note gets a longer line
+> than a half note. That was wrong.** It was reasoning from the engines' layout code rather
+> than from the engraving convention or from observed reference output. Both were then
+> checked. This section replaces it.
 
-**Do not derive the end-x from the next *syllable's* x.** That is what v1's hyphen does —
-`SVGDraw.swift:2126-2158` — and what v2's hyphen does — `BasicLayouter.swift:1325`:
+### What the convention says
 
-```swift
-let hx = (i + 1 < syllables.count) ? (s.x + syllables[i + 1].x) / 2 : s.x + s.w / 2 + s.h * 0.25
+Standard Western practice, per Gould's *Behind Bars* and the engraving references:
+
+- The extender is used only after a **single-syllable word or the final syllable** of a
+  multi-syllable word — not after a syllable that is already followed by a hyphen.
+- **The line ends at the right side of the last melisma NOTE — not at the end of that
+  note's value.** This is the explicit rule, and it is the opposite of duration-proportional.
+- A melisma syllable is **left-aligned** to the first note of the melisma, rather than
+  centred as an ordinary one-note syllable is — it draws the singer's eye rightward across
+  the notes still to be sung.
+
+A duration-proportional extender ("line runs the full length of the note") does exist as a
+variant — it is reported as normal in some Japanese engraving practice, and is a recurring
+MuseScore feature request — but it is a **deviation from the Western convention, not the
+convention itself.**
+
+### What the reference engines actually do
+
+Verified by running the binaries and reading only their SVG output (no source consulted —
+both are GPL; see "Clean-room note"). Test: `Glo` on note 1, held on note 2, varying note 2.
+
+| held note | abc2svg extender length | abcm2ps extender length |
+|---|---|---|
+| whole note (`C4 \| D4 \|`) | 28.6 | 35.60 |
+| quarter + rests (`C4 \| D z3 \|`) | **32.6** | **60.60** |
+
+**The shorter note produced the LONGER line in both engines** — the reverse of
+duration-proportional. The reason is that the extender's start is fixed (just past the
+syllable's right text edge) and its end tracks *where the held notehead sits*. In the
+second test the held `D` is pushed rightward by the rests sharing its measure, so the line
+grows. Duration enters only indirectly, through layout.
+
+Sweeping duration alone confirms it. Holding layout otherwise constant, abc2svg gives 28.6
+(whole) / 27.6 (half) / 27.3 (quarter) — a 4× duration change moves the line under 5%, and
+that residue tracks *notehead glyph width*, not duration. abcm2ps gives byte-identical
+output across the same three.
+
+### The rule to implement
+
+```
+start x = right text edge of the held syllable  + left padding
+end x   = right edge of the LAST held note's NOTEHEAD  + right padding
 ```
 
-In v2 that array contains **only notes that got a syllable** (`:1307`), so held notes aren't
-in it. Copying this pattern for a melisma would appear to work — the next entry is past the
-held notes — but only by accident, and it gives you no control over where the line stops.
+Not the note's duration allotment, and not the next syllable's x. Both engines already have
+the notehead x and glyph width at the draw site, which is all this needs — v1 in
+`drawVoice`'s walk of `voice.children` (`SVGDraw.swift:2140`), v2 from the resolved `noteX`
+columns before `BasicLayouter.swift` §8.6.
 
-**Derive the end-x from the horizontal extent the held notes actually OCCUPY.** Both engines
-allot horizontal space by duration, so this is where "whole note ⇒ longer line" comes from:
+Also worth adopting, and independent of the line itself: **left-align a melisma syllable**
+instead of centring it. v1 centres unconditionally (`AbstractEngraver.swift:1515-1527`,
+`dx: 0` + `addCentered`, drawn `anchor: "middle"`); v2 likewise
+(`BasicLayouter.swift:1292`, `align: .middle`).
 
-- **v1** — `LayoutInGrid.swift:69-84`, allotment is literally `child.duration * durationUnit`:
-  ```swift
-  child.x = x + (child.duration * durationUnit) / 2 - child.w / 2
-  x += child.duration * durationUnit
-  ```
-- **v2** — `BasicLayouter.swift:238-240`, square-root-proportional (standard engraving):
-  ```swift
-  Swift.max(minColumnGap, spacingScale * (Swift.max(d.doubleValue / reference.doubleValue, 0.0)).squareRoot())
-  ```
+Break and resume the line across a system break, as both already do for hyphens (v1
+`SVGDraw.swift:2155-2158`, v2 `:1325` fallback).
 
-So the rule is:
+### If duration-proportional is wanted anyway
 
-```
-start x = right text edge of the syllable being held  + small gap
-end x   = right edge of the allotted extent of the LAST held note  - small gap
-          (equivalently: the next column's x, minus the inter-column gap)
-```
-
-Both quantities are already available at the draw site in both engines. In v1, `drawVoice`
-iterates `voice.children` (`SVGDraw.swift:2140`) and each `AbsoluteElement` carries `.duration`,
-`.w`, `.extraW` and its final `.x`. In v2 the per-column `noteX` positions are resolved before
-§8.6 runs. **Neither engine currently consults any of it for lyrics** — that is the whole gap.
-
-Break the line at a system break and resume it on the next staff, as both already do for
-hyphens (v1 `SVGDraw.swift:2155-2158`, v2 `:1325` fallback branch).
+It is a legitimate product choice, but it should be a deliberate, documented deviation
+rather than presented as a correctness fix — and ideally a setting, since it will diverge
+from both reference engines and from every parity comparison against them. The allotment is
+available: v1 `LayoutInGrid.swift:69-84` (`child.duration * durationUnit`), v2
+`BasicLayouter.swift:238-240` (square-root spacing curve).
 
 ### Test cases
 
@@ -260,3 +292,24 @@ Parse-side only; abcts has no renderer yet.
 This is a deliberate divergence from v2, which conflates the two. Recorded in
 `src/core/model.ts`, with the duration-proportional requirement written into the
 `lyricMelisma` doc comment so it isn't lost before the renderer exists.
+
+---
+
+## Clean-room note
+
+abcm2ps and abc2svg are **GPL**. Nothing in this document derives from their source, which
+was never opened. The reference-engine table above comes from **running the installed
+binaries and reading their SVG output** — black-box behavioural observation, which is the
+permitted mode under the project's clean-room policy. Behavioural descriptions of what the
+output looks like are usable; their implementations are not.
+
+The test inputs are reproduced in full above so the measurements can be re-taken
+independently:
+
+```bash
+printf 'X:1\nL:1/4\nM:4/4\nK:C\nC4 | D4 |\nw: Glo _\n' > f1.abc
+printf 'X:1\nL:1/4\nM:4/4\nK:C\nC4 | D z3 |\nw: Glo _\n' > f2.abc
+abc2svg f1.abc > f1.svg ;  abcm2ps -g f1.abc -O f1m.svg
+```
+
+The extender is the last `<path class="stroke" …>` in the lyric group of each SVG.
