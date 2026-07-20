@@ -281,12 +281,28 @@ only mentions of `tuplet` and `style` are in comments.
 |---|---|---|
 | ~~Tuplet brackets and numbers~~ | 177 members | **DONE** — beamed groups print the number alone, unbeamed get a bracket. 26 numbers across 4 fixtures. |
 | ~~Voltas / 1st–2nd endings~~ | 45 | **DONE** — parsed into `Measure.volta` (a STRING: `1,2` and `1-3` are legal) and bracketed. 32 labels across 2 fixtures. |
-| Mixed-length chords (`headDurations`) | 18 | parsed, not rendered — `[C2G]` draws both heads at the chord's own duration |
-| Annotations (`"^text"`) | 15 | parsed, not rendered |
+| ~~Mixed-length chords (`headDurations`)~~ | 18 | **NOT A GAP** — see below. We already match abcjs; rendering it would diverge. |
+| ~~Annotations (`"^text"`)~~ | 15 | **DONE** — `^`/`_` stack in abcjs's line order, `<`/`>` sit beside the note. |
 | Microtones | 4 | parsed, not rendered |
 | Styled noteheads (`!style=harmonic!`) | 1 | parsed, not rendered |
 | Melisma extension lines | 1 | parsed, not rendered |
 | `V:… octave=` | 1 | parsed, not applied at layout |
+
+**CORRECTION, 2026-07-19 (later).** "Mixed-length chords, 18 occurrences" was the top of
+this list and was not a gap at all. The entry was built by counting how often a model
+field is POPULATED, which is not the same as counting where the rendering is wrong.
+
+Probing abcjs 6.6.3 directly settles it: it takes ONE head glyph for the whole chord,
+from the FIRST note's duration. `[C4G]` is two whole heads, `[CG4]` two quarter heads,
+`[C4G2]` two whole heads. abcts already produces exactly that, because our chord's
+`notatedDuration` IS that first duration. Drawing `headDurations` per head would be
+better engraving and a divergence — which belongs in `abc2.1`/`extended`, not in the
+strict default. It is now pinned by a test that fails if either rule changes.
+
+The corpus could never have answered this. All 18 of its mixed chords combine eighths,
+quarters and sixteenths, and those three share a single filled notehead — so every
+candidate rule produces identical ink. A frequency count over a saturated corpus reads
+like evidence and is not; the reference had to be asked directly.
 
 ### Then, none of which the corpus hits as hard
 

@@ -95,9 +95,14 @@ backup remote is not a licence to vendor someone else's tree into this one.
 The PARSER is complete and gated (39/39 corpus fixtures, saturated). The RENDERER now
 reproduces **40 of 41** fixtures on the structural gate; the 41st is a recorded abcjs bug,
 so the corpus is COMPLETE — every fixture is either reproduced or explained. All 41 also
-have committed visual baselines. 288 tests.
+have committed visual baselines. 295 tests.
 Renders staff, all clefs, key signatures, meters, tempo marks, part labels, noteheads and
-chords with stems and ledger lines, accidentals, rests and barlines.
+chords with stems and ledger lines, accidentals, rests and barlines, grace notes, chord
+symbols, decorations, lyrics, slurs and ties, tuplets, voltas and annotations.
+
+Beware the gap list in the checkpoint: it was built by counting how often a model field
+is POPULATED, and its top entry turned out not to be a gap at all — see the second
+CORRECTION there. Ask the reference directly before believing a frequency count.
 
 All three rendering decisions are settled — inline Bravura paths for glyphs, `<text>` for
 prose, structural comparison against `golden/*.elements.json` rather than the SVG
