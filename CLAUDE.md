@@ -82,7 +82,7 @@ reached by relative sibling path. See ARCHITECTURE.md § Repository Structure.
 The PARSER is complete and gated (39/39 corpus fixtures, saturated). The RENDERER now
 reproduces **40 of 41** fixtures on the structural gate; the 41st is a recorded abcjs bug,
 so the corpus is COMPLETE — every fixture is either reproduced or explained. All 41 also
-have committed visual baselines. 278 tests.
+have committed visual baselines. 288 tests.
 Renders staff, all clefs, key signatures, meters, tempo marks, part labels, noteheads and
 chords with stems and ledger lines, accidentals, rests and barlines.
 

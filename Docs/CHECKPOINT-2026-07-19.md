@@ -11,7 +11,7 @@ the parser and whose risk list is still live except where noted below.
 
 | | |
 |---|---|
-| Tests | **278 passing** (74 parser + 196 renderer + 8 compat) |
+| Tests | **288 passing** (74 parser + 206 renderer + 8 compat) |
 | Parser content parity | 39/39 gated fixtures, unchanged |
 | **Render structural parity** | **40 of 41** — the 41st is a recorded abcjs bug |
 | **Visual baselines** | **41 of 41**, committed geometry snapshots |
@@ -279,8 +279,8 @@ only mentions of `tuplet` and `style` are in comments.
 
 | Gap | Corpus | State |
 |---|---|---|
-| **Tuplet brackets and numbers** | **177 members** | NOT RENDERED. A triplet is indistinguishable from three plain notes. There is a fixture named `multi-voice-triplet-brackets`. Biggest visible hole. |
-| **Voltas / 1st–2nd endings** | **45** | NOT PARSED. `\|1` and `\|2` reach the parser and the ending number is silently dropped, so a reader cannot tell where a repeat goes. Needs model, parser and renderer. |
+| ~~Tuplet brackets and numbers~~ | 177 members | **DONE** — beamed groups print the number alone, unbeamed get a bracket. 26 numbers across 4 fixtures. |
+| ~~Voltas / 1st–2nd endings~~ | 45 | **DONE** — parsed into `Measure.volta` (a STRING: `1,2` and `1-3` are legal) and bracketed. 32 labels across 2 fixtures. |
 | Mixed-length chords (`headDurations`) | 18 | parsed, not rendered — `[C2G]` draws both heads at the chord's own duration |
 | Annotations (`"^text"`) | 15 | parsed, not rendered |
 | Microtones | 4 | parsed, not rendered |
