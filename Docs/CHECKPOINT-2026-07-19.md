@@ -283,7 +283,7 @@ only mentions of `tuplet` and `style` are in comments.
 | ~~Voltas / 1st–2nd endings~~ | 45 | **DONE** — parsed into `Measure.volta` (a STRING: `1,2` and `1-3` are legal) and bracketed. 32 labels across 2 fixtures. |
 | ~~Mixed-length chords (`headDurations`)~~ | 18 | **NOT A GAP** — see below. We already match abcjs; rendering it would diverge. |
 | ~~Annotations (`"^text"`)~~ | 15 | **DONE** — `^`/`_` stack in abcjs's line order, `<`/`>` sit beside the note. |
-| Microtones | 4 | parsed, not rendered — LAST, by request, after everything else is green |
+| ~~Microtones~~ | 4 | **DONE** — quarter-tone pair in all modes; three-quarter tones drawn in `abc2.1`/`extended` and BLANK in strict, as abcjs leaves them. Was rendered WRONG (full sharp), not merely unrendered. |
 | ~~Styled noteheads~~ | 1 inline, 16 via `[K: style=]` | **DONE** — diamond, x, triangle, rhythm slash; 6 Bravura glyphs added. Count understated it: it missed the K: form. |
 | ~~Melisma extension lines~~ | 1 | **DONE** — strict prints abcjs's literal `_`, non-strict strokes the extender to the last held notehead (Gould p.447). NO GATE COVERS IT; see below. |
 | ~~`V:… octave=`~~ | 1 | **DONE** — moves the WRITTEN pitch (abcjs-verified). The gate had been compensating for the bug; compensation removed. |
