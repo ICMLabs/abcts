@@ -1220,3 +1220,91 @@ describe('repeat endings (voltas)', () => {
     expect(staffOf('CDEF|GABc|')?.voltaLines).toEqual([])
   })
 })
+
+describe('annotations', () => {
+  const textsOf = (abc: string) =>
+    (
+      layout(parse(`X:1\nM:4/4\nL:1/4\nK:C\n${abc}\n`).scores[0] as Score, { systemWidth: 200 })
+        .systems[0]?.staves[0]?.elements ?? []
+    ).flatMap((e) => e.texts)
+
+  it('prints the text and not the placement char', () => {
+    // `^` says where, not what. Printing it would put a caret on the page.
+    expect(textsOf('"^dolce"C|').map((t) => t.text)).toEqual(['dolce'])
+    expect(textsOf('"_p"C|').map((t) => t.text)).toEqual(['p'])
+  })
+
+  it('is not confused with a chord symbol', () => {
+    // Same `"…"` syntax and the same parser field; only the leading char separates them.
+    // A chord symbol sits in its own lane, so the two must not land on the same line.
+    const chord = textsOf('"Am7"C|')[0]
+    const annotation = textsOf('"^Am7"C|')[0]
+    expect(chord?.text).toBe('Am7')
+    expect(annotation?.text).toBe('Am7')
+    expect(chord?.y).not.toBe(annotation?.y)
+  })
+
+  it('stacks above the staff with the first one written on top', () => {
+    // abcjs joins same-position annotations into one block, so `"^Allegro""^con brio"`
+    // reads as two lines with Allegro above. Verified against abcjs's element dump.
+    const texts = textsOf('"^Allegro""^con brio"C|')
+    const allegro = texts.find((t) => t.text === 'Allegro')
+    const conBrio = texts.find((t) => t.text === 'con brio')
+    // SVG y grows downward, so "above" is the smaller number.
+    expect(allegro?.y ?? 0).toBeLessThan(conBrio?.y ?? 0)
+    expect(conBrio?.y ?? 0).toBeLessThan(0)
+  })
+
+  it('stacks below the staff with the first one written nearest', () => {
+    // The mirror of the above case, and the reason the two loops count in opposite
+    // directions: both put the first-written on the block's TOP line.
+    const texts = textsOf('"_p""_dolce"C|')
+    const p = texts.find((t) => t.text === 'p')
+    const dolce = texts.find((t) => t.text === 'dolce')
+    expect(p?.y ?? 0).toBeLessThan(dolce?.y ?? 0)
+    expect(p?.y ?? 0).toBeGreaterThan(0)
+  })
+
+  it('puts `<` and `>` beside the note rather than above it', () => {
+    const left = textsOf('"<cresc"C|')[0]
+    const right = textsOf('">cresc"C|')[0]
+    // Staff height. `toBeCloseTo` because stepToY(0) is -0, which draws the same as 0.
+    expect(left?.y).toBeCloseTo(0)
+    expect(right?.y).toBeCloseTo(0)
+    expect(left?.x ?? 0).toBeLessThan(right?.x ?? 0)
+  })
+})
+
+describe('mixed-length chords', () => {
+  const headsOf = (abc: string) =>
+    (
+      layout(parse(`X:1\nM:4/4\nL:1/4\nK:C\n${abc}\n`).scores[0] as Score, { systemWidth: 200 })
+        .systems[0]?.staves[0]?.elements ?? []
+    )
+      .flatMap((e) => e.glyphs)
+      .filter((g) => g.role === 'notehead')
+      .map((g) => g.name)
+
+  it('takes ONE head glyph for the whole chord, from its first note — as abcjs does', () => {
+    // `[C4G]` is a whole-note head and a quarter-note head written together, and the
+    // obvious reading is that it should draw one of each. abcjs does not: it takes the
+    // FIRST note's duration for every head in the chord. Probed directly against abcjs
+    // 6.6.3 — `[C4G]` gives noteheads.whole twice, `[CG4]` gives noteheads.quarter twice.
+    //
+    // So `Chord.headDurations` is deliberately NOT rendered. Drawing it would be better
+    // engraving and a DIVERGENCE, which strict mode is the wrong place for. The corpus
+    // hides this: all 18 of its mixed chords combine eighths, quarters and sixteenths,
+    // and those share one filled head, so nothing there can tell the two rules apart.
+    expect(headsOf('[C4G]|')).toEqual(['noteheadWhole', 'noteheadWhole'])
+    expect(headsOf('[CG4]|')).toEqual(['noteheadBlack', 'noteheadBlack'])
+    expect(headsOf('[C4G2]|')).toEqual(['noteheadWhole', 'noteheadWhole'])
+  })
+
+  it('still records the per-head durations for a non-strict renderer to use', () => {
+    // Parsed and kept, just not drawn — `abc2.1`/`extended` are where honouring it belongs.
+    const score = parse('X:1\nL:1/4\nK:C\n[C4G]|\n').scores[0] as Score
+    const event = score.voices[0]?.measures[0]?.events[0]
+    expect(event?.type).toBe('chord')
+    expect(event?.type === 'chord' ? event.headDurations.length : 0).toBe(2)
+  })
+})

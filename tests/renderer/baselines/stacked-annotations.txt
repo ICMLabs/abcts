@@ -1,4 +1,4 @@
-bounds  width=25.168 height=23.052 top=0.000
+bounds  width=25.168 height=24.020 top=0.000
 systems 1
 system 0 width=25.168 originY=0.000
   staff 0 originY=15.420
@@ -16,19 +16,25 @@ system 0 width=25.168 originY=0.000
       glyph flag8thUp 5.864,-0.500
       line  4.284,3.000 -> 6.264,3.000 t=0.160
       line  5.864,2.832 -> 5.864,-0.500 t=0.120
+      text  2.824,-5.250 size=1.400 "Allegro"
+      text  2.474,-4.000 size=1.400 "con brio"
     note@-5 x=8.555 w=3.871
       glyph noteheadBlack 8.555,2.500
       glyph flag8thUp 9.735,-1.000
       line  9.735,2.332 -> 9.735,-1.000 t=0.120
+      text  8.795,3.000 size=1.400 "p"
+      text  7.395,4.250 size=1.400 "dolce"
     bar x=13.426 w=0.160
       line  13.506,-2.000 -> 13.506,2.000 t=0.160
     note@-4 x=14.426 w=3.871
       glyph noteheadBlack 14.426,2.000
       glyph flag8thUp 15.606,-1.500
       line  15.606,1.832 -> 15.606,-1.500 t=0.120
+      text  12.216,-4.000 size=1.400 "staccato"
     note@-3 x=18.297 w=3.871
       glyph noteheadBlack 18.297,1.500
       glyph flag8thUp 19.477,-2.000
       line  19.477,1.332 -> 19.477,-2.000 t=0.120
+      text  16.437,3.000 size=1.400 "marcato"
     bar x=23.168 w=0.160
       line  23.248,-2.000 -> 23.248,2.000 t=0.160

@@ -111,6 +111,21 @@ const ENGRAVE = {
   chordSymbolStep: 6,
   ornamentStep: 7,
   dynamicStep: -7,
+  /**
+   * `"^text"` above the staff and `"_text"` below.
+   *
+   * abcjs joins same-position annotations into ONE multi-line block, so the first one
+   * written becomes the top line. Above the staff that puts it furthest out; below, it
+   * puts it nearest. Stacking outward in reverse above and in written order below
+   * reproduces both without special-casing either.
+   *
+   * ponytail: the above lane can reach `partStep` once three annotations stack, and the
+   * below lane can reach `lyricStep` at two. No fixture combines them, and the real fix is
+   * the skyline pass this whole block is waiting on rather than more hand-picked numbers.
+   */
+  annotationAboveStep: 8,
+  annotationBelowStep: -6,
+  annotationLineStep: 2.5,
   partStep: 10,
   tempoStep: 14,
   /** A tune's title sits above everything else it owns. */
@@ -1321,6 +1336,58 @@ function noteText(event: MusicEvent, headX: number, headWidth: number): PlacedTe
       text: event.chordSymbol,
       x: centre - textWidth(event.chordSymbol, size) / 2,
       y: stepToY(ENGRAVE.chordSymbolStep),
+      size,
+      bold: false,
+      italic: false,
+    })
+  }
+
+  // `"^text"` and `"_text"` — free annotations, which the parser separates from chord
+  // symbols by that leading char. It is placement, not content, so it is stripped here
+  // rather than printed. See `ENGRAVE.annotationAboveStep` for the stacking order.
+  const annotations = event.annotations.map((a) => ({ where: a[0] ?? '^', text: a.slice(1) }))
+  const above = annotations.filter((a) => a.where === '^' || a.where === '@')
+  const below = annotations.filter((a) => a.where === '_')
+
+  above.forEach((a, index) => {
+    const size = ENGRAVE.lyricTextSize
+    const lane =
+      ENGRAVE.annotationAboveStep + (above.length - 1 - index) * ENGRAVE.annotationLineStep
+    texts.push({
+      text: a.text,
+      x: centre - textWidth(a.text, size) / 2,
+      y: stepToY(lane),
+      size,
+      bold: false,
+      italic: false,
+    })
+  })
+
+  below.forEach((a, index) => {
+    const size = ENGRAVE.lyricTextSize
+    texts.push({
+      text: a.text,
+      x: centre - textWidth(a.text, size) / 2,
+      y: stepToY(ENGRAVE.annotationBelowStep - index * ENGRAVE.annotationLineStep),
+      size,
+      bold: false,
+      italic: false,
+    })
+  })
+
+  // `"<text"` and `">text"` sit beside the note at staff height instead of above it.
+  // ponytail: `"@x,y text"` is free placement — its coordinates would need parsing, so it
+  // falls in with `^` above and prints them. No corpus fixture writes one.
+  for (const a of annotations) {
+    if (a.where !== '<' && a.where !== '>') continue
+    const size = ENGRAVE.lyricTextSize
+    texts.push({
+      text: a.text,
+      x:
+        a.where === '<'
+          ? headX - textWidth(a.text, size) - ENGRAVE.minColumnGap
+          : headX + headWidth + ENGRAVE.minColumnGap,
+      y: stepToY(0),
       size,
       bold: false,
       italic: false,

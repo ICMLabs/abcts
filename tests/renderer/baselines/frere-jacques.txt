@@ -232,6 +232,7 @@ system 2 width=90.000 originY=46.600
     note@1 x=66.506 w=5.474
       glyph noteheadBlack 66.506,-0.500
       line  66.506,-0.332 -> 66.506,3.000 t=0.120
+      text  63.596,-4.000 size=1.400 "dolcemente"
       text  65.696,4.000 size=1.400 "dig,"
     note@-2 x=72.508 w=5.474
       glyph noteheadBlack 72.508,1.000
