@@ -269,21 +269,53 @@ With 40 of 41 reproduced, the diff has stopped picking features. What remains is
 from the code rather than from a failing fixture, which is a real change in method: from
 here, work needs either new fixtures or the visual baselines.
 
-Ranked by how wrong the output is today. Nothing on this list produces MISSING output
-any more — dotted durations were the last of those.
+**CORRECTION, 2026-07-19.** An earlier revision of this section claimed "everything in
+the model now reaches the page". That was wrong, and wrong in an instructive way: it was
+asserted from having built the features I remembered building, rather than from checking.
+Auditing which model fields the renderer actually READS found six it never touches — its
+only mentions of `tuplet` and `style` are in comments.
 
-1. **Multi-voice and system breaking.** Only voice 0 of tune 0 is laid out, on one
-   endless staff. Largest structural gap, and the structural gate is blind to it by
-   construction — it reads voice 0 too. Baselines would catch a change here but there is
-   nothing yet to change.
-3. **Duration-proportional spacing.** A half note takes an eighth's width.
-4. **Repeat, double and final barlines** all draw as a thin line; `Measure.barline`
-   already carries the distinction.
-5. **Tenor-clef key signatures** are knowingly wrong — engravers drop some accidentals an
-   octave to dodge ledger lines and no single shift reproduces that. No fixture uses one.
+### Ranked by how often the corpus hits it
 
-Visual baselines cover all of these: any change to spacing, stems, beams or bounds fails
-the baseline gate even though structure stays green.
+| Gap | Corpus | State |
+|---|---|---|
+| **Tuplet brackets and numbers** | **177 members** | NOT RENDERED. A triplet is indistinguishable from three plain notes. There is a fixture named `multi-voice-triplet-brackets`. Biggest visible hole. |
+| **Voltas / 1st–2nd endings** | **45** | NOT PARSED. `\|1` and `\|2` reach the parser and the ending number is silently dropped, so a reader cannot tell where a repeat goes. Needs model, parser and renderer. |
+| Mixed-length chords (`headDurations`) | 18 | parsed, not rendered — `[C2G]` draws both heads at the chord's own duration |
+| Annotations (`"^text"`) | 15 | parsed, not rendered |
+| Microtones | 4 | parsed, not rendered |
+| Styled noteheads (`!style=harmonic!`) | 1 | parsed, not rendered |
+| Melisma extension lines | 1 | parsed, not rendered |
+| `V:… octave=` | 1 | parsed, not applied at layout |
+
+### Then, none of which the corpus hits as hard
+
+1. **Decoration coverage is partial by design** — 15 names map to SMuFL; rolls, slides,
+   glissandi, hairpins and fingerings draw nothing, asserted so the gap cannot be
+   mistaken for coverage.
+2. **No text metrics.** Everything that centres or advances past text uses an estimated
+   character width. Real metrics would also unlock lyric-driven spacing and melisma lines.
+3. **Fixed lanes, not a skyline.** Chord symbols, ornaments, dynamics, lyrics, parts and
+   tempo each own a staff step. Nothing collides in the corpus, but a note on far ledger
+   lines can reach into the lyric lane.
+4. **A split curve loses its continuation hook** when the next system's first note sits
+   hard against the clef. A curve spanning three systems gets its ends and no middle.
+5. **Beam grouping** differs from abcjs on 3 fixtures; third cause unidentified.
+6. **32nd notes and shorter reuse the 16th flag.**
+7. **`%%score` staff grouping** — no braces or brackets joining a piano staff.
+8. **Page furniture** beyond tune titles: no composer, rhythm or page numbering.
+9. **Tenor-clef key signatures** are knowingly wrong.
+
+### Strict-mode fidelity gaps
+
+- `S1-decorations` — abcjs drops `!staccato!`; strict does not drop it yet.
+- `frere-jacques` — strict parses the `+:` prose as music like abcjs, so the structure
+  matches, but lexes it differently: 50 notes against 45.
+
+Visual baselines cover geometry changes in all of the above: any change to spacing,
+stems, beams or bounds fails the baseline gate even though structure stays green. What
+they do NOT cover is whether the output is right in the first place — see `npm run
+compare`, which is the only thing that answers that and needs a human.
 
 **The renderer phase may now change the parser** — clef and `Q:` both did, and the
 39/39 parser gate held through both. Treat that as settled unless it starts costing.
