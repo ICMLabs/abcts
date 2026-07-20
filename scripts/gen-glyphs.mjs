@@ -65,6 +65,13 @@ const GLYPHS = [
   'accidentalSharp',
   'accidentalDoubleSharp',
   'accidentalDoubleFlat',
+  // Microtones. abcjs draws only the QUARTER-tone pair — Stein's half-sharp and
+  // half-flat — and nothing at all for three-quarter tones, which strict reproduces.
+  // The three-quarter glyphs are for abc2.1/extended, which draw what the ABC says.
+  'accidentalQuarterToneSharpStein',
+  'accidentalQuarterToneFlatStein',
+  'accidentalThreeQuarterTonesSharpStein',
+  'accidentalThreeQuarterTonesFlatZimmermann',
   // Rests
   'restWhole',
   'restHalf',

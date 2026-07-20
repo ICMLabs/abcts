@@ -1461,3 +1461,59 @@ describe('styled noteheads', () => {
     ])
   })
 })
+
+describe('microtonal accidentals', () => {
+  const accidentalsOf = (abc: string, mode: CompatibilityMode) =>
+    (
+      layout(parse(abc, { mode }).scores[0] as Score, { mode, systemWidth: 300 }).systems[0]
+        ?.staves[0]?.elements ?? []
+    )
+      .flatMap((e) => e.glyphs)
+      .filter((g) => g.role === 'accidental')
+      .map((g) => g.name)
+
+  const ALL = 'X:1\nL:1/4\nK:C\n^/G ^G ^3/2G _/A _3/2A G|\n'
+
+  it('draws the quarter-tone pair, which abcjs draws too', () => {
+    // abcjs emits `accidentals.halfsharp` / `.halfflat` for `^/` and `_/`. We drew a FULL
+    // sharp or flat for both, so a half-sharp printed as a plain sharp — wrong output
+    // rather than missing output, which is why "parsed, not rendered" undersold this.
+    expect(accidentalsOf('X:1\nL:1/4\nK:C\n^/G _/A|\n', 'abcjs-strict')).toEqual([
+      'accidentalQuarterToneSharpStein',
+      'accidentalQuarterToneFlatStein',
+    ])
+  })
+
+  it('prints NO accidental for a three-quarter tone in strict, as abcjs does', () => {
+    // Probed against 6.6.3: `^3/2G` yields accidental "-" and no glyph in its element
+    // dump. abcjs knows the quarter-tone pair and nothing wider. We were printing a full
+    // sharp there — ink abcjs does not put on the page.
+    expect(accidentalsOf('X:1\nL:1/4\nK:C\n^3/2G _3/2A|\n', 'abcjs-strict')).toEqual([])
+  })
+
+  it('draws the three-quarter glyphs in abc2.1 and extended', () => {
+    // The mode split: strict reproduces abcjs's blank, the other modes draw what the ABC
+    // actually says. This is the divergence being deliberate rather than accidental.
+    for (const mode of ['abc2.1', 'extended'] as const) {
+      expect(accidentalsOf('X:1\nL:1/4\nK:C\n^3/2G _3/2A|\n', mode)).toEqual([
+        'accidentalThreeQuarterTonesSharpStein',
+        'accidentalThreeQuarterTonesFlatZimmermann',
+      ])
+    }
+  })
+
+  it('leaves ordinary accidentals alone in every mode', () => {
+    for (const mode of ['abcjs-strict', 'abc2.1', 'extended'] as const) {
+      expect(accidentalsOf('X:1\nL:1/4\nK:C\n^G _A =B|\n', mode)).toEqual([
+        'accidentalSharp',
+        'accidentalFlat',
+        'accidentalNatural',
+      ])
+    }
+  })
+
+  it('differs between the modes on exactly the two three-quarter tones', () => {
+    expect(accidentalsOf(ALL, 'abcjs-strict')).toHaveLength(3)
+    expect(accidentalsOf(ALL, 'abc2.1')).toHaveLength(5)
+  })
+})

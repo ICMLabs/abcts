@@ -963,6 +963,50 @@ const ACCIDENTAL_GLYPHS: Readonly<Record<Accidental, GlyphName>> = {
 export const accidentalGlyph = (accidental: Accidental | null): GlyphName | null =>
   accidental === null ? null : ACCIDENTAL_GLYPHS[accidental]
 
+/**
+ * Microtonal accidentals, by quarter-tone step: 1 is a half-sharp, 3 a three-quarter
+ * sharp. `Pitch.accidental` records only the printed SIGN, so the alteration itself has
+ * to come from `microtoneCents`.
+ */
+const MICROTONE_GLYPHS: Readonly<Record<number, GlyphName>> = {
+  [-3]: 'accidentalThreeQuarterTonesFlatZimmermann',
+  [-2]: 'accidentalFlat',
+  [-1]: 'accidentalQuarterToneFlatStein',
+  [1]: 'accidentalQuarterToneSharpStein',
+  [2]: 'accidentalSharp',
+  [3]: 'accidentalThreeQuarterTonesSharpStein',
+}
+
+/**
+ * The accidental a note actually draws, once microtones have had a say.
+ *
+ * MODE SPLIT, measured against abcjs 6.6.3 rather than assumed:
+ *
+ *   `^/G`   half-sharp     abcjs draws `accidentals.halfsharp`; so do we, both modes.
+ *   `^3/2G` ¾-sharp        abcjs draws NOTHING — no accidental in its element dump at
+ *                          all. Strict reproduces that; abc2.1/extended draw the
+ *                          three-quarter glyph, which is what the ABC actually says.
+ *
+ * Before this, every microtone drew a FULL sharp or flat — so `^/G` printed as a plain
+ * sharp and `^3/2G` printed ink abcjs does not print. Wrong output, not missing output,
+ * which is why the gap list's "parsed, not rendered" undersold it.
+ *
+ * ponytail: quantised to the nearest quarter tone, so `^1/3G` rounds to a half-sharp
+ * rather than drawing nothing. Bravura has no third-tone glyph and no fixture writes one.
+ */
+function microtoneAccidental(
+  accidental: Accidental | null,
+  cents: number,
+  strict: boolean,
+): GlyphName | null {
+  if (cents === 0) return accidentalGlyph(accidental)
+  const steps = Math.round(cents / 50)
+  // abcjs knows the quarter-tone pair and nothing else; anything wider prints no
+  // accidental at all rather than an approximation.
+  if (strict && Math.abs(steps) !== 1) return null
+  return MICROTONE_GLYPHS[steps] ?? null
+}
+
 /** Ledger lines for a note that sits beyond the staff. */
 function ledgerLines(step: number, x: number, headWidth: number): PlacedLine[] {
   const lines: PlacedLine[] = []
@@ -1006,6 +1050,8 @@ function layoutNoteheads(
   stemOut: { value: Omit<StemInfo, 'element'> | null } | null = null,
   /** The source event, for the text attached to it. Null when there is none to attach. */
   event: MusicEvent | null = null,
+  /** `abcjs-strict` — decides which microtonal accidentals print. See `microtoneAccidental`. */
+  strict = true,
 ): LayoutElement {
   // Sorted ascending to match abcjs, which reports a chord's heads lowest-first — so the
   // gate compares like with like regardless of the order the pitches were written in.
@@ -1081,8 +1127,16 @@ function layoutNoteheads(
   // collide; with the heads at distinct steps they only collide for a cluster, and no
   // corpus fixture has one.
   const noteX = x + graceWidth
+  // ponytail: `microtoneCents` is per-EVENT, not per-pitch, so a chord's microtone
+  // applies to every altered head in it. `[^/G^/B]` is right; a chord mixing a microtone
+  // with a plain accidental is not expressible. No fixture writes one, and fixing it
+  // means moving the field onto Pitch.
+  const cents = event === null || event.type === 'rest' ? 0 : event.microtoneCents
   const accidentals = pitches
-    .map((p) => ({ glyph: accidentalGlyph(p.accidental), step: pitchToStep(p, clef) }))
+    .map((p) => ({
+      glyph: microtoneAccidental(p.accidental, cents, strict),
+      step: pitchToStep(p, clef),
+    }))
     .filter((a): a is { glyph: GlyphName; step: number } => a.glyph !== null)
 
   const accidentalWidth =
@@ -2005,6 +2059,8 @@ function layoutMeasure(
   clef: Clef,
   directions: ReadonlyMap<number, boolean>,
   spacingScale: number,
+  /** `abcjs-strict` — passed through for microtonal accidentals. */
+  strict = true,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
   const beams = new Map<number, StemInfo[]>()
@@ -2032,6 +2088,7 @@ function layoutMeasure(
       spacingScale,
       group === null ? null : (directions.get(group) ?? null),
       stemOut,
+      strict,
     )
     if (el === null) continue
     if (group !== null && stemOut?.value) {
@@ -2156,7 +2213,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     const clef = voice?.clef ?? score.clef
     const directions = beamDirections(voice, clef)
     const blocks = (voice?.measures ?? []).map((measure) =>
-      layoutMeasure(measure, clef, directions, spacingScale),
+      layoutMeasure(measure, clef, directions, spacingScale, strict),
     )
 
     /**
@@ -2574,6 +2631,8 @@ function layoutEvent(
   spacingScale: number,
   forcedUp: boolean | null = null,
   stemOut: { value: Omit<StemInfo, 'element'> | null } | null = null,
+  /** `abcjs-strict` — passed through for microtonal accidentals. */
+  strict = true,
 ): LayoutElement | null {
   const advance = naturalWidth(event.duration, spacingScale)
   if (event.type === 'note') {
@@ -2586,6 +2645,7 @@ function layoutEvent(
       forcedUp,
       stemOut,
       event,
+      strict,
     )
   }
   if (event.type === 'chord') {
@@ -2598,6 +2658,7 @@ function layoutEvent(
       forcedUp,
       stemOut,
       event,
+      strict,
     )
   }
   return layoutRest(event, advance, x)

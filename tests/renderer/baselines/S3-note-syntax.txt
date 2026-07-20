@@ -358,20 +358,19 @@ system 3 width=56.136 originY=63.568
       glyph flag8thUp 5.864,-2.500
       line  5.864,0.832 -> 5.864,-2.500 t=0.120
     note@-2 x=8.555 w=3.871
-      glyph accidentalSharp 8.555,1.000
-      glyph noteheadBlack 9.701,1.000
-      glyph flag8thUp 10.881,-2.500
-      line  10.881,0.832 -> 10.881,-2.500 t=0.120
+      glyph accidentalQuarterToneSharpStein 8.555,1.000
+      glyph noteheadBlack 9.421,1.000
+      glyph flag8thUp 10.601,-2.500
+      line  10.601,0.832 -> 10.601,-2.500 t=0.120
     note@-2 x=12.426 w=3.871
       glyph accidentalSharp 12.426,1.000
       glyph noteheadBlack 13.572,1.000
       glyph flag8thUp 14.752,-2.500
       line  14.752,0.832 -> 14.752,-2.500 t=0.120
     note@-2 x=16.297 w=3.871
-      glyph accidentalSharp 16.297,1.000
-      glyph noteheadBlack 17.443,1.000
-      glyph flag8thUp 18.623,-2.500
-      line  18.623,0.832 -> 18.623,-2.500 t=0.120
+      glyph noteheadBlack 16.297,1.000
+      glyph flag8thUp 17.477,-2.500
+      line  17.477,0.832 -> 17.477,-2.500 t=0.120
     note@-1 x=20.168 w=7.742
       glyph noteheadHalf 20.168,0.500
       line  21.348,0.332 -> 21.348,-3.000 t=0.120
@@ -382,20 +381,19 @@ system 3 width=56.136 originY=63.568
       glyph flag8thUp 31.090,-3.000
       line  31.090,0.332 -> 31.090,-3.000 t=0.120
     note@-1 x=33.781 w=3.871
-      glyph accidentalFlat 33.781,0.500
-      glyph noteheadBlack 34.835,0.500
-      glyph flag8thUp 36.015,-3.000
-      line  36.015,0.332 -> 36.015,-3.000 t=0.120
+      glyph accidentalQuarterToneFlatStein 33.781,0.500
+      glyph noteheadBlack 34.839,0.500
+      glyph flag8thUp 36.019,-3.000
+      line  36.019,0.332 -> 36.019,-3.000 t=0.120
     note@-1 x=37.652 w=3.871
       glyph accidentalFlat 37.652,0.500
       glyph noteheadBlack 38.706,0.500
       glyph flag8thUp 39.886,-3.000
       line  39.886,0.332 -> 39.886,-3.000 t=0.120
     note@-1 x=41.523 w=3.871
-      glyph accidentalFlat 41.523,0.500
-      glyph noteheadBlack 42.577,0.500
-      glyph flag8thUp 43.757,-3.000
-      line  43.757,0.332 -> 43.757,-3.000 t=0.120
+      glyph noteheadBlack 41.523,0.500
+      glyph flag8thUp 42.703,-3.000
+      line  42.703,0.332 -> 42.703,-3.000 t=0.120
     note@-2 x=45.394 w=7.742
       glyph noteheadHalf 45.394,1.000
       line  46.574,0.832 -> 46.574,-2.500 t=0.120
