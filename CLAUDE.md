@@ -73,10 +73,24 @@ correct behavior. Nothing ships red.
 - `../abcMusicKit/Tools/abcjs-debug/fixtures/` — 41 `.abc` corpus fixtures
 - `../abcMusicKit/Tools/abcjs-debug/golden/`   — abcjs goldens: 41 `.parse.json` (parser gate) +
   41 `.elements.json` (renderer gate — laid-out elements) + 503 SVGs (compat mode only, unused)
-- `../abcMusicKit/Docs/References/abcjs/abcjs-6.6.3/` — vendored abcjs source
+- `../abcMusicKit/Docs/References/abcjs/abcjs-6.6.3/` — vendored abcjs source. The ONLY
+  thing left under `Docs/References/`; it stayed because the `.abcjsStrict` porting rules
+  cite it by path. Everything else there moved to abcDocs on 2026-07-20.
+- `../abcDocs/` — workspace-wide docs, private. Owns anything serving more than one repo.
+  Two entries matter here: `reference/INDEX.md` catalogues the reference library (Gould's
+  *Behind Bars*, the source for melisma geometry — contents gitignored, never
+  redistributed), and `policy/CLEAN-ROOM-IMPLEMENTATION.md` holds the clean-room rule.
 
 No git submodules — corpus and abcjs live inside the abcMusicKit repo and are
 reached by relative sibling path. See ARCHITECTURE.md § Repository Structure.
+
+**Clean-room, precisely.** §Scope of the policy above draws the line: the prohibition is on
+reading the SOURCE CODE of tools implementing the same functionality — abc2svg, abcm2ps,
+abc2midi, LilyPond, MuseScore — which stay black boxes, observed only through their output.
+It is NOT a prohibition on published documentation. Gould's *Behind Bars* and the
+Dorico/LilyPond/MuseScore architecture essays may be read and cited. What may never happen
+is reproducing their prose, tables or figures verbatim into our docs — summarise and cite.
+This repo pushes to a remote, so a verbatim quote here is redistribution.
 
 ## Remote
 `origin` is a private backup remote on the ICMLabs GitHub org. It exists for off-machine

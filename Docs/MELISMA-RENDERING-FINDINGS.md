@@ -145,43 +145,42 @@ Full chain, in order:
 
 ### The primary source — Gould, *Behind Bars*, p. 447 "Extenders"
 
-Available locally at `abcMusicKit/Docs/References/Behind Bars/`. Quoted verbatim (the PDF is
-an OCR'd scan; typography has been tidied, wording has not):
+Catalogued in the workspace reference library — see `../abcDocs/reference/INDEX.md`. The
+library's contents are local-only and never redistributed.
 
-> "An extender, a line of stave-line thickness, follows a final syllable or mono-syllabic
-> word that extends beyond one written note, including a tied note. **The line extends to
-> the last written note, but not to the end of the duration.** Any punctuation goes at the
-> end of the word, before the extender."
+Summarised in our own words below rather than quoted. Reading it is expressly permitted:
+Gould is published documentation, not the source code of a functional equivalent, and
+`../abcDocs/policy/CLEAN-ROOM-IMPLEMENTATION.md` §Scope names it as the clarifying case.
+The same section's provenance discipline is why the verbatim block quote that stood here
+until 2026-07-20 is gone — cite and summarise, never reproduce. The engineering content is
+unaffected: the rules below are the ideas, which is what we needed and what we may restate.
 
-The facing example in the book is captioned **"extenders too long"** — the over-extended
-form is shown explicitly as the mistake to avoid. That sentence is the direct answer to the
-question this document was opened for.
+The decisive point for this document is that the line stops at the last written NOTE, not
+at the end of that note's duration. The book makes it doubly clear by printing the
+over-extended form as a captioned example of the mistake to avoid.
 
 The full rule set from that page, all actionable:
 
-1. **When.** An extender follows a **final syllable or mono-syllabic word** that extends
-   beyond one written note, **including a tied note**.
-2. **Where it ends.** At the **last written note** — *not* the end of that note's duration.
-3. **When NOT to draw one at all.** "No extender is needed where a syllable occupies the
-   length of its written duration nor where a single syllable is sung to one note alone."
-   So a lone whole note carrying one syllable gets **no extender**.
-4. **Never between syllables of a word.** "Never use an extender between syllables — an
-   extender indicates that a word has ended and its incorrect use will cause confusion."
-   Mid-word continuation is a hyphen, never an extender.
-5. **Vertical placement.** "Place the extender on a level with the base of the text; it
-   should not be centred like a hyphen." Conversely a hyphen sits "midway between the base
-   and top of a lower-case letter, and not at the base of the text, where it will be
-   mistaken for an extender." The two are deliberately distinguished by height.
+1. **When.** An extender follows a final syllable, or a single-syllable word, that is held
+   past one written note. Tied notes count as held.
+2. **Where it ends.** At the last written note — *not* the end of that note's duration.
+3. **When NOT to draw one at all.** None is needed where a syllable simply fills its own
+   written duration, or where one syllable is sung to a single note. So a lone whole note
+   carrying one syllable gets **no extender**.
+4. **Never between syllables of a word.** An extender signals that a word has *ended*, so
+   using one mid-word misleads. Continuation inside a word is a hyphen.
+5. **Vertical placement.** The extender sits level with the base of the text. A hyphen
+   deliberately does not: it rides midway up a lower-case letter, precisely so the two are
+   not confused. Height is what distinguishes them.
 6. **Punctuation** goes at the end of the word, *before* the extender — `come,_` not `come_,`.
-7. **System ends.** On a key or time change at the end of a system, the extender **stops
-   with the barline**. If an extender starts at the very end of a system, allow extra space
-   before the barline so the extender's start fits after the word.
-8. **System starts.** At the beginning of a system the extender "starts just before the
-   first note, together with the slur or tie."
-9. **Rests inside the span.** Short rests: continue the extender **uninterrupted** beneath
-   them to the last written duration of the syllable. Longer rests: discontinue it and
-   **reiterate the word in brackets** — `(dance)—` — the brackets signalling the text is not
-   sung afresh.
+7. **System ends.** At a key or time change ending a system, the extender stops with the
+   barline. If one would begin at the very end of a system, add space before the barline so
+   its start still fits after the word.
+8. **System starts.** Beginning a system, the extender starts just before the first note,
+   along with the slur or tie.
+9. **Rests inside the span.** Short rests: carry the extender under them unbroken, through
+   to the syllable's last written duration. Longer rests: break it and restate the word in
+   brackets — `(dance)—` — the brackets showing the text is not sung again.
 
 Rule 3 is worth pausing on, because it reframes the original question: a syllable held over
 a *single* note gets no line at all, whatever that note's duration. So "the line should be

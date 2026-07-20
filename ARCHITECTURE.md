@@ -83,8 +83,23 @@ ICMLabs/Code/
                          Docs/References/abcjs/      → vendored abcjs 6.6.3 source
   abcMusicKit2/      → Swift clean-room engine (primary core reference)
   abcMusicStudio/    → Mac/iPad app
+  abcDocs/           → workspace-wide docs, private (see below)
   abcts/             → this project
 ```
+
+**`Docs/References/` under abcMusicKit now holds only `abcjs/`.** As of 2026-07-20 the
+workspace keeps a doc in a project's own `Docs/` only when it serves that project alone;
+anything serving two or more moved to the `abcDocs` repo. The Dorico/LilyPond/MuseScore
+architecture articles, the ABC standards PDFs and the third-party tool distributions went
+with it. **The vendored abcjs source deliberately did NOT** — the `.abcjsStrict` porting
+rules cite it by path, so it stays put and `abcts.config.json` needs no edit.
+
+Two things in abcDocs matter to this project:
+
+| | |
+|---|---|
+| `../abcDocs/reference/INDEX.md` | catalogues the reference library, including Gould's *Behind Bars* — the source for the melisma extender geometry. Library contents are gitignored and never redistributed. |
+| `../abcDocs/policy/CLEAN-ROOM-IMPLEMENTATION.md` | the clean-room rule. §Scope draws the line this project depends on: the prohibition is on reading the SOURCE of functional equivalents, not on reading published documentation. abc2svg and abcm2ps stay black boxes; Gould, and the Dorico/LilyPond/MuseScore essays, may be read and cited — but never reproduced verbatim. |
 
 **No git submodules.** Submodules were specified originally on the assumption that `corpus` and `abcjs` were independent repositories. They are not — both live inside the abcMusicKit repo. A submodule would require first extracting a corpus repo and then maintaining a sync path back to the Swift test suites that generate it. Sibling relative paths in `abcts.config.json` achieve the same determinism with none of that.
 
