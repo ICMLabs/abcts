@@ -1520,3 +1520,34 @@ describe('microtonal accidentals', () => {
     expect(accidentalsOf(ALL, 'abc2.1')).toHaveLength(5)
   })
 })
+
+describe('flags beyond the sixteenth', () => {
+  const flagsOf = (unit: string) =>
+    (
+      layout(parse(`X:1\nL:${unit}\nK:C\nC z C|\n`).scores[0] as Score, { systemWidth: 200 })
+        .systems[0]?.staves[0]?.elements ?? []
+    )
+      .flatMap((e) => e.glyphs)
+      .filter((g) => g.role === 'flag')
+      .map((g) => g.name)
+
+  it('draws one glyph per duration, not a repeated sixteenth', () => {
+    // Everything shorter than a 16th used to fall back to the 16th flag, justified as
+    // "two flags is already rare in the corpus". The corpus has 72 such notes; 63 are
+    // beamed and were fine, but 9 are unbeamed and every one printed the wrong rhythm.
+    // Four of those nine are 64ths.
+    expect(flagsOf('1/8')).toEqual(['flag8thUp', 'flag8thUp'])
+    expect(flagsOf('1/16')).toEqual(['flag16thUp', 'flag16thUp'])
+    expect(flagsOf('1/32')).toEqual(['flag32ndUp', 'flag32ndUp'])
+    expect(flagsOf('1/64')).toEqual(['flag64thUp', 'flag64thUp'])
+  })
+
+  it('leaves beamed runs to the beam pass, which already had the levels right', () => {
+    const staff = layout(parse('X:1\nM:1/8\nL:1/32\nK:C\nCCCC|\n').scores[0] as Score, {
+      systemWidth: 200,
+    }).systems[0]?.staves[0]
+    expect(staff?.elements.flatMap((e) => e.glyphs).filter((g) => g.role === 'flag')).toEqual([])
+    // Three beam levels for a 32nd, which is what a flag would have carried.
+    expect(new Set((staff?.beams ?? []).map((b) => b.y1.toFixed(3))).size).toBe(3)
+  })
+})

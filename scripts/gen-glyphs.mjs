@@ -59,6 +59,10 @@ const GLYPHS = [
   'flag8thDown',
   'flag16thUp',
   'flag16thDown',
+  'flag32ndUp',
+  'flag32ndDown',
+  'flag64thUp',
+  'flag64thDown',
   // Accidentals
   'accidentalFlat',
   'accidentalNatural',

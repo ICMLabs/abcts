@@ -1007,6 +1007,22 @@ function microtoneAccidental(
   return MICROTONE_GLYPHS[steps] ?? null
 }
 
+/**
+ * Flag glyphs by level, `[up, down]`. Index is `spec.flags`, so index 1 is an eighth.
+ *
+ * Index 0 is unused — a note with no flags draws none — and is filled with the eighth
+ * pair so the array indexes directly rather than needing an offset. Levels beyond the
+ * last entry clamp to it: a 128th prints as a 64th, which is the same ponytail the 16th
+ * used to be, but four levels deeper and out of reach of any real music.
+ */
+const FLAG_GLYPHS: readonly (readonly [GlyphName, GlyphName])[] = [
+  ['flag8thUp', 'flag8thDown'],
+  ['flag8thUp', 'flag8thDown'],
+  ['flag16thUp', 'flag16thDown'],
+  ['flag32ndUp', 'flag32ndDown'],
+  ['flag64thUp', 'flag64thDown'],
+]
+
 /** Ledger lines for a note that sits beyond the staff. */
 function ledgerLines(step: number, x: number, headWidth: number): PlacedLine[] {
   const lines: PlacedLine[] = []
@@ -1203,13 +1219,17 @@ function layoutNoteheads(
       // cannot carry both.
       stemOut.value = { x: stemX, farStep: up ? highest : lowest, up, beams: spec.flags }
     } else if (spec.flags > 0) {
-      // Unbeamed: a flag per level, hung from the stem tip. The glyph is drawn from the
-      // tip, and SMuFL's up and down flags are separate designs rather than a reflection.
-      const flag: GlyphName | null =
-        spec.flags === 1 ? (up ? 'flag8thUp' : 'flag8thDown') : up ? 'flag16thUp' : 'flag16thDown'
-      // ponytail: 32nds and shorter reuse the 16th flag — the extracted set stops there.
-      // Two flags is already rare in the corpus; extend gen-glyphs when one appears.
-      if (flag !== null) glyphs.push({ name: flag, x: stemX, y: tip, role: 'flag' })
+      // Unbeamed: ONE glyph carrying every flag level, hung from the stem tip. SMuFL
+      // draws a 32nd as a single three-tailed glyph rather than three stacked 8th flags,
+      // and its up and down designs are separate rather than a reflection.
+      //
+      // This used to fall back to the 16th flag for anything shorter, on the stated
+      // grounds that "two flags is already rare in the corpus". The corpus has 72 notes
+      // shorter than a 16th; 63 are beamed (and the beam pass already draws three levels
+      // correctly), but 9 are not, and every one of them printed as a 16th. A 32nd drawn
+      // as a 16th is the wrong rhythm on the page, not a missing detail.
+      const flag = FLAG_GLYPHS[Math.min(spec.flags, FLAG_GLYPHS.length - 1)]?.[up ? 0 : 1]
+      if (flag !== undefined) glyphs.push({ name: flag, x: stemX, y: tip, role: 'flag' })
     }
   }
 

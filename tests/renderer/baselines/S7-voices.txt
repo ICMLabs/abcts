@@ -678,7 +678,7 @@ system 0 width=80.523 originY=0.000
       glyph augmentationDot 73.865,-0.500
     note@-11 x=75.588 w=1.935
       glyph noteheadBlack 75.588,5.500
-      glyph flag16thUp 76.768,2.000
+      glyph flag32ndUp 76.768,2.000
       line  75.188,3.000 -> 77.168,3.000 t=0.160
       line  75.188,4.000 -> 77.168,4.000 t=0.160
       line  75.188,5.000 -> 77.168,5.000 t=0.160

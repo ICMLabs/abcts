@@ -553,11 +553,11 @@ system 0 width=90.000 originY=0.000
       line  66.833,-1.332 -> 66.833,2.000 t=0.120
     note@2 x=69.977 w=1.935
       glyph noteheadBlack 69.977,-1.000
-      glyph flag16thDown 69.977,2.500
+      glyph flag32ndDown 69.977,2.500
       line  69.977,-0.832 -> 69.977,2.500 t=0.120
     note@-6 x=72.200 w=1.935
       glyph noteheadBlack 72.200,3.000
-      glyph flag16thUp 73.380,-0.500
+      glyph flag32ndUp 73.380,-0.500
       line  71.800,3.000 -> 73.780,3.000 t=0.160
       line  73.380,2.832 -> 73.380,-0.500 t=0.120
     note@-6 x=74.424 w=2.737

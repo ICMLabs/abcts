@@ -460,27 +460,27 @@ system 0 width=90.000 originY=0.000
       line  74.124,0.832 -> 74.124,-2.500 t=0.120
     note@-2 x=75.747 w=1.935
       glyph noteheadBlack 75.747,1.000
-      glyph flag16thUp 76.927,-2.500
+      glyph flag32ndUp 76.927,-2.500
       line  76.927,0.832 -> 76.927,-2.500 t=0.120
     note@-2 x=77.728 w=1.935
       glyph noteheadBlack 77.728,1.000
-      glyph flag16thUp 78.908,-2.500
+      glyph flag32ndUp 78.908,-2.500
       line  78.908,0.832 -> 78.908,-2.500 t=0.120
     note@-2 x=79.710 w=1.780
       glyph noteheadBlack 79.710,1.000
-      glyph flag16thUp 80.890,-2.500
+      glyph flag64thUp 80.890,-2.500
       line  80.890,0.832 -> 80.890,-2.500 t=0.120
     note@-2 x=81.533 w=1.780
       glyph noteheadBlack 81.533,1.000
-      glyph flag16thUp 82.713,-2.500
+      glyph flag64thUp 82.713,-2.500
       line  82.713,0.832 -> 82.713,-2.500 t=0.120
     note@-2 x=83.355 w=1.780
       glyph noteheadBlack 83.355,1.000
-      glyph flag16thUp 84.535,-2.500
+      glyph flag64thUp 84.535,-2.500
       line  84.535,0.832 -> 84.535,-2.500 t=0.120
     note@-2 x=85.178 w=1.780
       glyph noteheadBlack 85.178,1.000
-      glyph flag16thUp 86.358,-2.500
+      glyph flag64thUp 86.358,-2.500
       line  86.358,0.832 -> 86.358,-2.500 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
