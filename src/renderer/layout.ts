@@ -134,6 +134,12 @@ const ENGRAVE = {
   /** First verse below the staff; further verses stack downward by `lyricLineStep`. */
   lyricStep: -8,
   lyricLineStep: 4,
+  /** Mouth of a hairpin at its open end — abcjs paints 8px against a 7.75px space. */
+  hairpinMouth: 1.0,
+  /** Clearance either side of a glissando, so it does not touch the noteheads. */
+  spannerGap: 0.3,
+  /** Below this a hairpin is a smudge rather than a shape. */
+  spannerMinLength: 1.5,
   /** Gap either side of a melisma extender — off the syllable, past the last notehead. */
   melismaGap: 0.4,
   /** Below this a run is a speck rather than a line; drawn as nothing. */
@@ -376,6 +382,11 @@ export interface LayoutStaff {
    * prints a literal `_` on the syllable instead, as abcjs does.
    */
   readonly melismaLines: readonly PlacedLine[]
+  /**
+   * Hairpins and glissandi — decorations that SPAN, opened by one note and closed by a
+   * later one, so they belong to no single element for the same reason beams do not.
+   */
+  readonly spannerLines: readonly PlacedLine[]
   /** Repeat-ending (volta) brackets and their labels. Span whole measures. */
   readonly voltaLines: readonly PlacedLine[]
   readonly voltaTexts: readonly PlacedText[]
@@ -1598,6 +1609,126 @@ function noteText(event: MusicEvent, headX: number, headWidth: number): PlacedTe
  * arrive already filtered to one system. v1 draws a stub and resumes on the next; worth
  * doing when a fixture needs it.
  */
+/**
+ * Spanning decorations: hairpins and glissandi.
+ *
+ * These come in open/close pairs — `!<(!` … `!<)!` — so unlike every other decoration
+ * they cannot be drawn from one note. The pass mirrors `layoutCurves`: walk the anchors,
+ * remember where each kind opened, emit geometry when it closes.
+ *
+ * HAIRPIN geometry from abcjs 6.6.3's painted output. It draws two strokes from a common
+ * apex to a spread mouth — `M 70.85 128.35 L 198.13 124.35` plus `L 198.13 132.35`, a
+ * mouth of 8px against its 7.75px staff space, so almost exactly one space. A crescendo
+ * points left and opens right; a diminuendo is the mirror. Both sit in the dynamic lane
+ * below the staff, which is where a lone `!p!` already goes.
+ *
+ * ponytail: a pair that opens on one system and closes on another is dropped rather than
+ * split, because anchors arrive filtered to a single system. Slurs solve this properly by
+ * resolving after the whole tune is packed; hairpins can move to that machinery when a
+ * fixture needs it. No corpus fixture spans one.
+ */
+const SPANNER_OPEN: Readonly<Record<string, 'crescendo' | 'diminuendo' | 'glissando'>> = {
+  '<(': 'crescendo',
+  'crescendo(': 'crescendo',
+  '>(': 'diminuendo',
+  'diminuendo(': 'diminuendo',
+  'glissando(': 'glissando',
+}
+const SPANNER_CLOSE: Readonly<Record<string, 'crescendo' | 'diminuendo' | 'glissando'>> = {
+  '<)': 'crescendo',
+  'crescendo)': 'crescendo',
+  '>)': 'diminuendo',
+  'diminuendo)': 'diminuendo',
+  'glissando)': 'glissando',
+}
+
+function layoutSpanners(
+  anchors: readonly NoteAnchor[],
+  /** Where each system's music starts and ends, exactly as `layoutCurves` uses it. */
+  bounds: readonly { left: number; right: number }[],
+): PlacedLine[][] {
+  const out: PlacedLine[][] = bounds.map(() => [])
+  const thickness = ENGRAVING_DEFAULTS.staffLineThickness
+
+  /**
+   * One hairpin piece: two strokes whose gap goes from `startGap` to `endGap`.
+   *
+   * A hairpin split across systems is NOT two whole hairpins — it is one shape cut in
+   * half, so each piece continues the taper the other left off at. The mouth therefore
+   * interpolates by how much of the span each system carries.
+   */
+  const hairpin = (system: number, x1: number, x2: number, g1: number, g2: number): void => {
+    if (x2 - x1 < ENGRAVE.spannerMinLength) return
+    const y = stepToY(ENGRAVE.dynamicStep)
+    out[system]?.push(
+      { x1, y1: y - g1 / 2, x2, y2: y - g2 / 2, thickness, role: 'decoration' },
+      { x1, y1: y + g1 / 2, x2, y2: y + g2 / 2, thickness, role: 'decoration' },
+    )
+  }
+
+  const emit = (from: NoteAnchor, to: NoteAnchor, kind: string): void => {
+    if (kind === 'glissando') {
+      // Tracks PITCH, so it follows the noteheads rather than sitting in a lane. A
+      // glissando across a system break is dropped rather than split: half a pitch line
+      // aimed at a note the reader cannot see says nothing. No fixture writes one.
+      if (from.system !== to.system) return
+      out[from.system]?.push({
+        x1: from.right + ENGRAVE.spannerGap,
+        y1: (from.top + from.bottom) / 2,
+        x2: to.left - ENGRAVE.spannerGap,
+        y2: (to.top + to.bottom) / 2,
+        thickness,
+        role: 'decoration',
+      })
+      return
+    }
+
+    const mouth = ENGRAVE.hairpinMouth
+    // Gap as a fraction of the way along: a crescendo opens, a diminuendo closes.
+    const gapAt = (t: number) => (kind === 'crescendo' ? t : 1 - t) * mouth
+
+    if (from.system === to.system) {
+      hairpin(from.system, from.left, to.right, gapAt(0), gapAt(1))
+      return
+    }
+    const start = bounds[from.system]
+    const end = bounds[to.system]
+    if (start === undefined || end === undefined) return
+    const firstRun = Math.max(0, start.right - from.left)
+    const lastRun = Math.max(0, to.right - end.left)
+    const total = firstRun + lastRun
+    const split = total === 0 ? 0.5 : firstRun / total
+    hairpin(from.system, from.left, start.right, gapAt(0), gapAt(split))
+    hairpin(to.system, end.left, to.right, gapAt(split), gapAt(1))
+  }
+
+  // A QUEUE per kind, not a single slot. `S1-decorations` writes `!crescendo(!G!<(!G`
+  // and then closes both — the two spellings are the same kind, so a single slot let the
+  // second open overwrite the first and silently lost a hairpin. FIFO rather than a
+  // stack because hairpins on one voice run in sequence; they do not nest, so the first
+  // open belongs to the first close.
+  const open = new Map<string, NoteAnchor[]>()
+
+  for (const anchor of anchors) {
+    if (anchor.event.type === 'rest') continue
+    for (const name of anchor.event.decorations) {
+      const opens = SPANNER_OPEN[name]
+      if (opens !== undefined) {
+        const queue = open.get(opens)
+        if (queue === undefined) open.set(opens, [anchor])
+        else queue.push(anchor)
+        continue
+      }
+      const closes = SPANNER_CLOSE[name]
+      if (closes === undefined) continue
+      const from = open.get(closes)?.shift()
+      if (from !== undefined) emit(from, anchor, closes)
+    }
+  }
+
+  return out
+}
+
 function layoutMelismas(
   anchors: readonly NoteAnchor[],
   elements: LayoutElement[],
@@ -2529,6 +2660,9 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         voltaLines,
         voltaTexts,
         melismaLines,
+        // Filled in after packing, with curves: a hairpin can cross a system break, and
+        // resolving it here would silently drop every one that does.
+        spannerLines: [],
         originY: 0,
       }
     })
@@ -2576,11 +2710,16 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     right: system.width - ENGRAVE.marginX,
   }))
   const curvesBySystem = voiceAnchors.map((anchors) => layoutCurves(anchors, systemBounds))
+  // Hairpins need the same treatment and for the same reason. Resolved per system, they
+  // lost HALF the hairpins in S1-decorations tune 2 — it wraps to six systems and the
+  // pairs straddle the breaks.
+  const spannersBySystem = voiceAnchors.map((anchors) => layoutSpanners(anchors, systemBounds))
   const withCurves = systems.map((system, systemIndex) => ({
     ...system,
     staves: system.staves.map((staff, voiceIndex) => ({
       ...staff,
       curves: curvesBySystem[voiceIndex]?.[systemIndex] ?? [],
+      spannerLines: spannersBySystem[voiceIndex]?.[systemIndex] ?? [],
     })),
   }))
 

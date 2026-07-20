@@ -1604,3 +1604,68 @@ describe('decoration coverage', () => {
     expect(glyphsOf('!glissando(!')).toEqual([])
   })
 })
+
+describe('spanning decorations', () => {
+  const staffOf = (abc: string, width = 300) =>
+    layout(parse(abc).scores[0] as Score, { systemWidth: width }).systems[0]?.staves[0]
+
+  it('opens a crescendo to the right and mirrors it for a diminuendo', () => {
+    // abcjs paints two strokes from a common apex to a spread mouth, ~1 staff space at
+    // 7.75px per space. A crescendo points left; a diminuendo is its mirror.
+    const cresc = staffOf('X:1\nM:4/4\nL:1/4\nK:C\n!<(!C D E !<)!F|\n')?.spannerLines ?? []
+    expect(cresc).toHaveLength(2)
+    // Apex: both strokes meet at the left.
+    expect(cresc[0]?.y1).toBe(cresc[1]?.y1)
+    expect(cresc[0]?.y2).not.toBe(cresc[1]?.y2)
+
+    const dim = staffOf('X:1\nM:4/4\nL:1/4\nK:C\n!>(!C D E !>)!F|\n')?.spannerLines ?? []
+    expect(dim).toHaveLength(2)
+    // Apex on the RIGHT instead.
+    expect(dim[0]?.y2).toBe(dim[1]?.y2)
+    expect(dim[0]?.y1).not.toBe(dim[1]?.y1)
+  })
+
+  it('accepts both spellings of each hairpin', () => {
+    // `!<(!` and `!crescendo(!` are the same mark; abcjs treats them as one kind.
+    const a = staffOf('X:1\nM:4/4\nL:1/4\nK:C\n!crescendo(!C D !crescendo)!E z|\n')
+    expect(a?.spannerLines).toHaveLength(2)
+  })
+
+  it('pairs consecutive hairpins of the same kind in order', () => {
+    // S1-decorations writes `!crescendo(!G!<(!G` and then closes both. A single open slot
+    // per kind let the second overwrite the first and silently lost a hairpin, so this is
+    // a queue. FIFO because hairpins run in sequence rather than nesting.
+    const staff = staffOf(
+      'X:1\nM:4/4\nL:1/4\nK:C\n!crescendo(!G!<(!G |\n!crescendo)!G!<)!G z2|\n',
+      400,
+    )
+    expect(staff?.spannerLines).toHaveLength(4)
+  })
+
+  it('splits a hairpin across a system break instead of dropping it', () => {
+    // Resolved per system, a pair whose ends land in different systems vanished — which
+    // cost HALF the hairpins in S1-decorations tune 2, since it wraps to six systems.
+    // Now resolved after packing, alongside slurs, which have the same problem.
+    const doc = layout(
+      parse("X:1\nM:4/4\nL:1/4\nK:C\n!<(!C D E F|G A B c|d e f g|a b c' !<)!d'|\n")
+        .scores[0] as Score,
+      { systemWidth: 26 },
+    )
+    expect(doc.systems.length).toBeGreaterThan(1)
+    const total = doc.systems.flatMap((s) => s.staves).flatMap((st) => st.spannerLines)
+    // Two strokes on each of the two systems the hairpin touches.
+    expect(total.length).toBeGreaterThanOrEqual(4)
+  })
+
+  it('draws a glissando between the noteheads, not in the dynamic lane', () => {
+    const staff = staffOf('X:1\nM:4/4\nL:1/4\nK:C\n!glissando(!C !glissando)!G z2|\n')
+    const line = staff?.spannerLines[0]
+    expect(staff?.spannerLines).toHaveLength(1)
+    // Slopes with the pitch rather than running level under the staff.
+    expect(line?.y1).not.toBe(line?.y2)
+  })
+
+  it('draws nothing for an unpaired open', () => {
+    expect(staffOf('X:1\nM:4/4\nL:1/4\nK:C\n!<(!C D E F|\n')?.spannerLines).toEqual([])
+  })
+})

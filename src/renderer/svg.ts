@@ -199,6 +199,11 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
       for (const line of staff.melismaLines) {
         parts.push(lineToRect(line, abcjs ? ' class="abcjs-lyric"' : ` class="${prefix}-lyric"`))
       }
+      // Hairpins and glissandi. abcjs paints these with no class of its own, so compat
+      // emits none either rather than inventing one a stylesheet could not know about.
+      for (const line of staff.spannerLines) {
+        parts.push(lineToRect(line, abcjs ? '' : ` class="${prefix}-decoration"`))
+      }
       for (const t of staff.tupletTexts) {
         const style = `${t.bold ? ' font-weight="bold"' : ''}${t.italic ? ' font-style="italic"' : ''}`
         parts.push(

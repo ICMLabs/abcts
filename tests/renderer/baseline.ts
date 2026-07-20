@@ -91,6 +91,9 @@ function snapshotTune(score: Score, index: number): string {
       for (const l of staff.melismaLines) {
         lines.push(`    melisma ${n(l.x1)},${n(l.y1)} -> ${n(l.x2)},${n(l.y2)} t=${n(l.thickness)}`)
       }
+      for (const l of staff.spannerLines) {
+        lines.push(`    spanner ${n(l.x1)},${n(l.y1)} -> ${n(l.x2)},${n(l.y2)} t=${n(l.thickness)}`)
+      }
       for (const c of staff.curves) {
         lines.push(
           `    ${c.kind}  ${n(c.x1)},${n(c.y1)} -> ${n(c.x2)},${n(c.y2)} bulge=${n(c.bulge)}`,
