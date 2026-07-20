@@ -113,8 +113,16 @@ have committed visual baselines, covering ALL 119 tunes across the 41 fixtures (
 the first tune of each). 317 tests. The ranked gap list is CLOSED.
 Renders staff, all clefs, key signatures, meters, tempo marks, part labels, noteheads and
 chords with stems and ledger lines, accidentals, rests and barlines, grace notes, chord
-symbols, decorations, lyrics, slurs and ties, tuplets, voltas and annotations. Melisma extenders draw in non-strict modes;
-strict prints abcjs's literal `_` instead.
+symbols, decorations, lyrics, slurs and ties, tuplets, voltas, annotations and styled
+noteheads (diamond / x / triangle / rhythm slash).
+
+Two features are MODE-SPLIT, and the split is the point — strict is faithful to abcjs,
+the other modes are correct:
+
+| | `abcjs-strict` | `abc2.1` / `extended` |
+|---|---|---|
+| Melisma | prints abcjs's literal `_` | suppresses it, strokes an extender to the last held notehead |
+| Three-quarter tones | draws NOTHING, as abcjs does | draws the three-quarter glyph |
 
 Beware the gap list in the checkpoint: it was built by counting how often a model field
 is POPULATED, and its top entry turned out not to be a gap at all — see the second
