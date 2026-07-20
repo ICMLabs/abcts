@@ -8,6 +8,7 @@ system 0 width=40.465 originY=0.000
     staffline 0.000,-1.000 -> 40.465,-1.000 t=0.130
     staffline 0.000,-2.000 -> 40.465,-2.000 t=0.130
     beam   23.689,-3.000 -> 30.010,-1.000 t=0.500
+    tuplettext 25.909,-4.590 size=1.400 "3"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=0.996

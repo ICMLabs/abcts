@@ -133,6 +133,13 @@ const ENGRAVE = {
   beamMaxRise: 2.0,
   /** Length of a secondary-beam stub on a note whose neighbours lack that level. */
   beamStubLength: 1.1,
+  /** Clearance from a tuplet's furthest note to its bracket or number. PROVISIONAL. */
+  tupletGap: 1.2,
+  /** Half-gap the bracket leaves around its number. */
+  tupletNumberGap: 0.35,
+  /** Length of the hook turning down from each end of a tuplet bracket. */
+  tupletHook: 0.6,
+  tupletTextSize: 1.4,
   /**
    * Estimated width of one text character, as a fraction of the font size.
    *
@@ -333,6 +340,9 @@ export interface LayoutStaff {
    * notehead to another and is resolved once every member's position is known.
    */
   readonly curves: readonly PlacedCurve[]
+  /** Tuplet brackets, and the numbers that go with them. Also span elements. */
+  readonly tupletLines: readonly PlacedLine[]
+  readonly tupletTexts: readonly PlacedText[]
   /** Vertical offset of this staff's middle line within its system. */
   readonly originY: number
 }
@@ -1342,6 +1352,14 @@ interface NoteAnchor {
   readonly event: MusicEvent
   /** Which system this note ended up in — a curve spanning two is drawn in halves. */
   readonly system: number
+  /**
+   * Index into the staff's `elements`, filled when the block is placed.
+   *
+   * A tuplet bracket must clear the STEMS and BEAMS, not just the noteheads, and those
+   * are only final after the beam pass has retargeted them — so the bracket reads the
+   * drawn element rather than the anchor's own notehead extent.
+   */
+  readonly element: number
 }
 
 /**
@@ -1468,6 +1486,115 @@ function layoutCurves(
   })
 
   return curves
+}
+
+// ─── Tuplets ─────────────────────────────────────────────────────────────────
+
+/**
+ * Tuplet brackets and their number.
+ *
+ * A tuplet is a rhythmic claim — "three in the time of two" — and without the digit a
+ * triplet is indistinguishable from three plain notes. 177 tuplet members sit in the
+ * corpus and none of them were drawn; the structural gate never noticed, because it
+ * compares noteheads and abcjs does not put a tuplet bracket in `children` either.
+ *
+ * *Behind Bars*: over a BEAMED group the beam already shows the grouping, so only the
+ * number is printed. Over unbeamed notes the number needs a bracket to say how far the
+ * claim extends. Both sit on the stem side, with the beam rather than across the
+ * noteheads.
+ */
+function layoutTuplets(
+  anchors: readonly NoteAnchor[],
+  elements: readonly LayoutElement[],
+): { lines: PlacedLine[]; texts: PlacedText[] } {
+  /** Full vertical ink of a member, stems and beams included. */
+  const extentOf = (anchor: NoteAnchor): { top: number; bottom: number } => {
+    const el = elements[anchor.element]
+    if (el === undefined) return { top: anchor.top, bottom: anchor.bottom }
+    let top = anchor.top
+    let bottom = anchor.bottom
+    for (const line of el.lines) {
+      top = Math.min(top, line.y1, line.y2)
+      bottom = Math.max(bottom, line.y1, line.y2)
+    }
+    for (const g of el.glyphs) {
+      const glyph = GLYPHS[g.name]
+      const scale = g.scale ?? 1
+      top = Math.min(top, g.y + glyph.y * scale)
+      bottom = Math.max(bottom, g.y + (glyph.y + glyph.height) * scale)
+    }
+    return { top, bottom }
+  }
+
+  const lines: PlacedLine[] = []
+  const texts: PlacedText[] = []
+
+  // Members of one tuplet are contiguous, so grouping by id preserves their order.
+  const groups = new Map<number, NoteAnchor[]>()
+  for (const anchor of anchors) {
+    const tuplet = anchor.event.tuplet
+    if (tuplet === null) continue
+    const members = groups.get(tuplet.group) ?? []
+    members.push(anchor)
+    groups.set(tuplet.group, members)
+  }
+
+  for (const members of groups.values()) {
+    const first = members[0]
+    const last = members[members.length - 1]
+    if (first === undefined || last === undefined) continue
+    const number = first.event.tuplet?.number ?? 0
+    if (number === 0) continue
+
+    // The bracket goes on the stem side, where the beam is, so it never crosses the
+    // noteheads. A majority vote: a group whose stems disagree is rare and the beam
+    // pass has usually forced them to agree anyway.
+    const up = members.filter((m) => m.stemUp).length * 2 >= members.length
+    const direction = up ? -1 : 1
+
+    // Clear of the furthest extent any member reaches, so the bracket never collides.
+    const extents = members.map(extentOf)
+    const edge = up
+      ? Math.min(...extents.map((e) => e.top))
+      : Math.max(...extents.map((e) => e.bottom))
+    const y = edge + direction * ENGRAVE.tupletGap
+
+    // A tuplet entirely inside ONE beam group needs no bracket: the beam already says
+    // where it starts and stops.
+    const beamed =
+      members.every((m) => m.event.type !== 'rest' && m.event.beamGroup !== null) &&
+      new Set(members.map((m) => (m.event.type === 'rest' ? null : m.event.beamGroup))).size === 1
+
+    const label = String(number)
+    const size = ENGRAVE.tupletTextSize
+    const width = textWidth(label, size)
+    const centre = (first.left + last.right) / 2
+
+    texts.push({
+      text: label,
+      x: centre - width / 2,
+      // Text hangs from its baseline, so a bracket ABOVE needs the number lifted clear.
+      y: up ? y - size * 0.1 : y + size * 0.9,
+      size,
+      bold: false,
+      italic: true,
+    })
+
+    if (beamed) continue
+
+    // Bracket: a horizontal rule broken around the number, with a hook at each end
+    // turning toward the notes.
+    const gap = width / 2 + ENGRAVE.tupletNumberGap
+    const thickness = ENGRAVING_DEFAULTS.slurEndpointThickness
+    const hook = ENGRAVE.tupletHook * -direction
+
+    lines.push({ x1: first.left, y1: y, x2: centre - gap, y2: y, thickness })
+    lines.push({ x1: centre + gap, y1: y, x2: last.right, y2: y, thickness })
+    lines.push({ x1: first.left, y1: y, x2: first.left, y2: y - hook, thickness })
+    lines.push({ x1: last.right, y1: y, x2: last.right, y2: y - hook, thickness })
+  }
+
+  return { lines, texts }
 }
 
 // ─── Beams ───────────────────────────────────────────────────────────────────
@@ -1708,11 +1835,28 @@ function layoutMeasure(
       const width = GLYPHS[heads[0]?.name ?? 'noteheadBlack'].width
       anchors.push({
         system: 0, // filled in when the block is placed into a system
+        element: elements.length,
         left: Math.min(...heads.map((h) => h.x)),
         right: Math.max(...heads.map((h) => h.x)) + width,
         top: Math.min(...heads.map((h) => h.y)) - 0.5,
         bottom: Math.max(...heads.map((h) => h.y)) + 0.5,
         stemUp: el.lines.some((l) => l.x1 === l.x2 && l.y2 < l.y1),
+        event,
+      })
+    } else if (event.type === 'rest') {
+      // Rests get an anchor too — not for curves, which skip them, but because a tuplet
+      // can contain one (`(3cz` and `(3z` are both in the corpus) and its bracket has to
+      // span the rest like any other member.
+      const glyph = el.glyphs[0]
+      const ink = glyph === undefined ? undefined : GLYPHS[glyph.name]
+      anchors.push({
+        system: 0,
+        element: elements.length,
+        left: el.x,
+        right: el.x + (ink?.width ?? el.width),
+        top: (glyph?.y ?? 0) + (ink?.y ?? 0),
+        bottom: (glyph?.y ?? 0) + (ink?.y ?? 0) + (ink?.height ?? 0),
+        stemUp: false,
         event,
       })
     }
@@ -1951,6 +2095,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
             voiceAnchors[voiceIndex]?.push({
               ...a,
               system: systemIndex,
+              element: a.element + base,
               left: a.left * stretch + x,
               right: a.right * stretch + x,
             })
@@ -1968,7 +2113,22 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       // Curves are NOT resolved here: a slur or tie can span a system break, so it needs
       // every system's anchors, which only exist once the whole tune is packed. Filled
       // in by the pass below.
-      return { elements, staffLines: [], beams, curves: [], originY: 0 }
+      // Tuplets resolve here — unlike curves they never span a system, because a beam
+      // and a barline both break them long before a line break can.
+      const tuplets = layoutTuplets(
+        (voiceAnchors[voiceIndex] ?? []).filter((anchor) => anchor.system === systemIndex),
+        elements,
+      )
+
+      return {
+        elements,
+        staffLines: [],
+        beams,
+        curves: [],
+        tupletLines: tuplets.lines,
+        tupletTexts: tuplets.texts,
+        originY: 0,
+      }
     })
 
     const width = head + natural * justify + ENGRAVE.marginX

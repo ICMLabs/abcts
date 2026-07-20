@@ -1130,3 +1130,48 @@ describe('compatibility modes', () => {
     expect(lyrics('abc2.1')).toEqual(['A', 've,', null])
   })
 })
+
+describe('tuplets', () => {
+  const staffOf = (abc: string) =>
+    layout(parse(`X:1\nM:4/4\nL:1/8\nK:C\n${abc}\n`).scores[0] as Score, { systemWidth: 200 })
+      .systems[0]?.staves[0]
+
+  it('numbers a tuplet, so a triplet is not three plain notes', () => {
+    // 177 tuplet members sit in the corpus and none were drawn. The structural gate
+    // never noticed: it compares noteheads, and abcjs does not put a bracket in
+    // `children` either — the same blind spot slurs and accidentals had.
+    expect(staffOf('(3cde c4|')?.tupletTexts.map((t) => t.text)).toEqual(['3'])
+    expect(staffOf('(5cdefg c2|')?.tupletTexts.map((t) => t.text)).toEqual(['5'])
+    expect(staffOf('cdef|')?.tupletTexts).toEqual([])
+  })
+
+  it('brackets an unbeamed tuplet and leaves a beamed one bare', () => {
+    // *Behind Bars*: the beam already shows the grouping, so a beamed tuplet prints only
+    // its number. Unbeamed, the number needs a bracket to say how far the claim extends.
+    expect(staffOf('(3cde c4|')?.tupletLines).toHaveLength(0)
+    // Two rule segments either side of the number, plus a hook at each end.
+    expect(staffOf('(3c2d2e2 c2|')?.tupletLines).toHaveLength(4)
+  })
+
+  it('spans a rest inside the tuplet', () => {
+    // `(3cz` and `(3z` are both in the corpus, so a rest needs an anchor like any member.
+    const staff = staffOf('(3c2z2d2 c2|')
+    expect(staff?.tupletLines).toHaveLength(4)
+    const notes = (staff?.elements ?? []).filter((e) => e.type === 'note')
+    const rule = staff?.tupletLines[0]
+    // The bracket starts at the first note and reaches past the rest to the last.
+    expect(rule?.x1).toBeLessThanOrEqual(notes[0]?.x ?? 0)
+  })
+
+  it('clears the stems and beams, not just the noteheads', () => {
+    // Measuring the notehead extent put the number underneath the beam — the geometry
+    // was right and the drawing was useless. The bracket reads the DRAWN element.
+    const staff = staffOf('(3cde c4|')
+    const text = staff?.tupletTexts[0]
+    const beam = staff?.beams[0]
+    expect(text).toBeDefined()
+    expect(beam).toBeDefined()
+    // High notes take down stems, so the beam is below the heads and the number below it.
+    expect(text?.y ?? 0).toBeGreaterThan(Math.max(beam?.y1 ?? 0, beam?.y2 ?? 0))
+  })
+})
