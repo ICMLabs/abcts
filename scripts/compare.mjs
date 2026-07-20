@@ -68,11 +68,10 @@ for (const name of fixtures) {
   // a whole tunebook against one tune would look like a catastrophic difference.
   let ours
   try {
-    ours = execFileSync(
-      'node',
-      ['dist/cli.js', join(CORPUS, `${name}.abc`), '--first'],
-      { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 },
-    )
+    ours = execFileSync('node', ['dist/cli.js', join(CORPUS, `${name}.abc`), '--first'], {
+      encoding: 'utf8',
+      maxBuffer: 64 * 1024 * 1024,
+    })
   } catch (error) {
     cards.push({ name, error: String(error).slice(0, 200) })
     continue
@@ -132,7 +131,8 @@ const html = `<!doctype html>
 <div class="bar"><button id="toggle">Show overlay</button></div>
 ${cards
   .map((c) => {
-    if (c.error) return `<div class="card"><h2>${esc(c.name)}</h2><div class="err">${esc(c.error)}</div></div>`
+    if (c.error)
+      return `<div class="card"><h2>${esc(c.name)}</h2><div class="err">${esc(c.error)}</div></div>`
     if (!c.theirs)
       return `<div class="card"><h2>${esc(c.name)}</h2><div class="missing">no abcjs golden for this fixture</div></div>`
     return `<div class="card"><h2>${esc(c.name)}</h2>

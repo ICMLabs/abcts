@@ -44,7 +44,9 @@ const bar = (n, total, width = 24) => {
 
 const row = (label, n, total, note = '') => {
   const pct = total ? `${Math.round((n / total) * 100)}%`.padStart(4) : '   —'
-  console.log(`  ${label.padEnd(30)} ${bar(n, total)} ${String(n).padStart(3)}/${String(total).padEnd(3)} ${pct}  ${note}`)
+  console.log(
+    `  ${label.padEnd(30)} ${bar(n, total)} ${String(n).padStart(3)}/${String(total).padEnd(3)} ${pct}  ${note}`,
+  )
 }
 
 console.log('Running gates…\n')
@@ -58,24 +60,47 @@ const content = read('/tmp/abcts-parity-content.json')
 const render = read('/tmp/abcts-parity-render.json')
 const baseline = read('/tmp/abcts-parity-baseline.json')
 
-console.log('abcts parity — against abcjs goldens (= abcMusicKit v1\'s shared surface)')
+console.log("abcts parity — against abcjs goldens (= abcMusicKit v1's shared surface)")
 console.log('═'.repeat(78))
 
 if (content) {
-  row('Note content', content.content.matched, content.content.total,
-    `${content.content.divergences.length} known divergence(s)`)
-  row('Beam grouping', content.beams.matched, content.beams.total,
-    content.beams.failures.length ? `open: ${content.beams.failures.filter((f) => f !== 'frere-jacques').join(', ')}` : '')
-  row('Lyrics', content.lyrics.matched, content.lyrics.total,
-    `${content.lyrics.divergences.length} known divergence(s)`)
+  row(
+    'Note content',
+    content.content.matched,
+    content.content.total,
+    `${content.content.divergences.length} known divergence(s)`,
+  )
+  row(
+    'Beam grouping',
+    content.beams.matched,
+    content.beams.total,
+    content.beams.failures.length
+      ? `open: ${content.beams.failures.filter((f) => f !== 'frere-jacques').join(', ')}`
+      : '',
+  )
+  row(
+    'Lyrics',
+    content.lyrics.matched,
+    content.lyrics.total,
+    `${content.lyrics.divergences.length} known divergence(s)`,
+  )
 }
 if (render) {
-  row('Render structure', render.renderable, render.total,
-    `${render.divergences.length} known divergence(s)`)
+  row(
+    'Render structure',
+    render.renderable,
+    render.total,
+    `${render.divergences.length} known divergence(s)`,
+  )
 }
 if (baseline) {
   console.log()
-  row('Visual baselines (self)', baseline.baselines, baseline.baselines, 'committed geometry snapshots')
+  row(
+    'Visual baselines (self)',
+    baseline.baselines,
+    baseline.baselines,
+    'committed geometry snapshots',
+  )
   if (baseline.undrawnNotes > 0) {
     console.log(`  ⚠ ${baseline.undrawnNotes} fixture(s) still have notes that draw nothing`)
   }
