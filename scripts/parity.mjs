@@ -89,7 +89,7 @@ ${'─'.repeat(78)}
                                   A feature-coverage question; corpus diffing cannot
                                   answer it. abcts implements none of it yet.
 
-  Compat DOM/API fidelity         `abcts/compat` reproduces abcjs's classes, data-name
+  Compat DOM/API fidelity         abcts/compat reproduces abcjs's classes, data-name
                                   hooks, density and element width, and is tested for
                                   each. Not measured: how much of abcjs's wider API
                                   (audio, timing, the engraver) is absent — deliberately
