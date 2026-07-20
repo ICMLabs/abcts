@@ -235,13 +235,28 @@ export interface Note {
    * wordless. Distinct from `lyric: null` with `lyricMelisma: false`, which is `*`:
    * genuinely nothing sung here.
    *
-   * A renderer draws an extension line under a melisma. To do that correctly the line
-   * must span the full horizontal extent the note OCCUPIES — a whole note is wider than
-   * a half — rather than stopping at the next notehead's x. That needs the laid-out
-   * width, so it is a layout-time decision; parse only records that the melisma exists
-   * and, by position, which syllable it extends.
+   * A renderer draws an extension line under a melisma, in NON-STRICT modes only — abcjs
+   * draws no line and prints the `_` literally, so strict does too. See
+   * `lyricMelismaStart`.
+   *
+   * CORRECTED: this said the line "must span the full horizontal extent the note
+   * OCCUPIES — a whole note is wider than a half — rather than stopping at the next
+   * notehead's x". That is the one geometry Gould singles out as wrong; *Behind Bars*
+   * p.447 is "the line extends to the last written note, but not to the end of the
+   * duration", against a facing example captioned "extenders too long". The endpoint is
+   * the last held NOTEHEAD's right edge. abcMusicKit v1 and v2 both landed there.
    */
   readonly lyricMelisma: boolean
+  /**
+   * Set on the syllable a melisma run HOLDS — the note carrying `lyric`, not the held
+   * notes carrying `lyricMelisma`.
+   *
+   * Both ends are needed and neither implies the other locally: the syllable knows the
+   * text and where the line starts, the holds know where it stops. Recorded at parse
+   * because it is structural, and consumed differently per mode — strict prints a literal
+   * `_` after the syllable the way abcjs does, non-strict suppresses it and strokes a line.
+   */
+  readonly lyricMelismaStart: boolean
   /** Verses 2..n, parallel and positional — null where a verse skips this event. */
   readonly extraVerses: readonly (string | null)[]
   readonly style: NoteStyle
@@ -315,13 +330,28 @@ export interface Chord {
    * wordless. Distinct from `lyric: null` with `lyricMelisma: false`, which is `*`:
    * genuinely nothing sung here.
    *
-   * A renderer draws an extension line under a melisma. To do that correctly the line
-   * must span the full horizontal extent the note OCCUPIES — a whole note is wider than
-   * a half — rather than stopping at the next notehead's x. That needs the laid-out
-   * width, so it is a layout-time decision; parse only records that the melisma exists
-   * and, by position, which syllable it extends.
+   * A renderer draws an extension line under a melisma, in NON-STRICT modes only — abcjs
+   * draws no line and prints the `_` literally, so strict does too. See
+   * `lyricMelismaStart`.
+   *
+   * CORRECTED: this said the line "must span the full horizontal extent the note
+   * OCCUPIES — a whole note is wider than a half — rather than stopping at the next
+   * notehead's x". That is the one geometry Gould singles out as wrong; *Behind Bars*
+   * p.447 is "the line extends to the last written note, but not to the end of the
+   * duration", against a facing example captioned "extenders too long". The endpoint is
+   * the last held NOTEHEAD's right edge. abcMusicKit v1 and v2 both landed there.
    */
   readonly lyricMelisma: boolean
+  /**
+   * Set on the syllable a melisma run HOLDS — the note carrying `lyric`, not the held
+   * notes carrying `lyricMelisma`.
+   *
+   * Both ends are needed and neither implies the other locally: the syllable knows the
+   * text and where the line starts, the holds know where it stops. Recorded at parse
+   * because it is structural, and consumed differently per mode — strict prints a literal
+   * `_` after the syllable the way abcjs does, non-strict suppresses it and strokes a line.
+   */
+  readonly lyricMelismaStart: boolean
   /** Verses 2..n, parallel and positional — null where a verse skips this event. */
   readonly extraVerses: readonly (string | null)[]
   readonly style: NoteStyle

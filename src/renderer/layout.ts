@@ -133,6 +133,10 @@ const ENGRAVE = {
   /** First verse below the staff; further verses stack downward by `lyricLineStep`. */
   lyricStep: -8,
   lyricLineStep: 4,
+  /** Gap either side of a melisma extender — off the syllable, past the last notehead. */
+  melismaGap: 0.4,
+  /** Below this a run is a speck rather than a line; drawn as nothing. */
+  melismaMinLength: 0.8,
   /** Tempo and part labels are directions; chord symbols and lyrics are smaller. */
   tempoTextSize: 1.6,
   titleTextSize: 2.4,
@@ -240,6 +244,7 @@ export type PartRole =
   | 'rest'
   | 'decoration'
   | 'text'
+  | 'lyric'
 
 export interface PlacedGlyph {
   readonly name: GlyphName
@@ -275,6 +280,8 @@ export interface PlacedLine {
  */
 export interface PlacedText {
   readonly text: string
+  /** What this text is. Absent means it inherits its element's kind. */
+  readonly role?: PartRole
   readonly x: number
   /** Baseline y, staff spaces. */
   readonly y: number
@@ -363,6 +370,11 @@ export interface LayoutStaff {
   /** Tuplet brackets, and the numbers that go with them. Also span elements. */
   readonly tupletLines: readonly PlacedLine[]
   readonly tupletTexts: readonly PlacedText[]
+  /**
+   * Melisma extenders — one syllable held across several notes. Non-strict only; strict
+   * prints a literal `_` on the syllable instead, as abcjs does.
+   */
+  readonly melismaLines: readonly PlacedLine[]
   /** Repeat-ending (volta) brackets and their labels. Span whole measures. */
   readonly voltaLines: readonly PlacedLine[]
   readonly voltaTexts: readonly PlacedText[]
@@ -1402,6 +1414,9 @@ function noteText(event: MusicEvent, headX: number, headWidth: number): PlacedTe
     const size = ENGRAVE.lyricTextSize
     texts.push({
       text: verse,
+      // Tagged so the melisma pass can find the syllable it must extend from. Matching
+      // on the y lane instead would couple that pass to this one's lane arithmetic.
+      role: 'lyric',
       x: centre - textWidth(verse, size) / 2,
       y: stepToY(ENGRAVE.lyricStep - index * ENGRAVE.lyricLineStep),
       size,
@@ -1411,6 +1426,93 @@ function noteText(event: MusicEvent, headX: number, headWidth: number): PlacedTe
   })
 
   return texts
+}
+
+/**
+ * Melisma runs — one syllable held across several notes.
+ *
+ * Two different jobs, because the modes disagree about what a melisma LOOKS like:
+ *
+ *   strict    abcjs prints the `_` literally after the syllable and draws no line. Its
+ *             element dump carries `c: "sing_"` as one text, so the underscore is folded
+ *             into the syllable and the pair re-centred, not dropped alongside it.
+ *   non-strict  the `_` is suppressed and an extender line is stroked instead, which is
+ *             what every engraving convention actually asks for.
+ *
+ * ENDPOINT, per Gould, *Behind Bars* p.447: "the line extends to the last written note,
+ * but not to the end of the duration" — the facing example is captioned *extenders too
+ * long*. So it stops at the last held NOTEHEAD's right edge, NOT at the end of that
+ * note's duration allotment and NOT at the next syllable. abcMusicKit v1 and v2 both
+ * arrived here independently; this model's own comment used to prescribe the duration
+ * extent, which is the error Gould is warning about.
+ *
+ * A rest inside the run keeps it alive without moving its end — also v1's rule. Rests
+ * carry no lyric fields at all, so they are skipped rather than tested.
+ *
+ * ponytail: a run that crosses a system break is truncated at the edge, because anchors
+ * arrive already filtered to one system. v1 draws a stub and resumes on the next; worth
+ * doing when a fixture needs it.
+ */
+function layoutMelismas(
+  anchors: readonly NoteAnchor[],
+  elements: LayoutElement[],
+  strict: boolean,
+): PlacedLine[] {
+  const lines: PlacedLine[] = []
+
+  anchors.forEach((start, index) => {
+    if (start.event.type === 'rest' || !start.event.lyricMelismaStart) return
+
+    const element = elements[start.element]
+    const lyricIndex = element?.texts.findIndex((t) => t.role === 'lyric') ?? -1
+    const lyric = lyricIndex < 0 ? undefined : element?.texts[lyricIndex]
+    if (element === undefined || lyric === undefined) return
+
+    if (strict) {
+      // One text, as abcjs emits it. Appending widens the string by the underscore, so
+      // the pair re-centres by half that — the syllable itself shifts left, which is
+      // what centring "sing_" rather than "sing" does.
+      const widened = `${lyric.text}_`
+      const texts = [...element.texts]
+      texts[lyricIndex] = {
+        ...lyric,
+        text: widened,
+        x: lyric.x - textWidth('_', lyric.size) / 2,
+      }
+      elements[start.element] = { ...element, texts }
+      return
+    }
+
+    // Only the LINE needs the far end, which is why the search sits below the strict
+    // branch rather than above it. The two modes wrap differently — strict renders at
+    // abcjs's denser spacing — so a run can be intact in one mode and split across a
+    // system break in the other. abcjs prints the `_` either way, because for abcjs it
+    // is part of the syllable's text and has nothing to do with where the hold landed.
+    // Gating it on finding a hold in THIS system dropped the underscore from
+    // S5-directives, which is real corpus content no gate renders.
+    let last: NoteAnchor | null = null
+    for (const anchor of anchors.slice(index + 1)) {
+      if (anchor.event.type === 'rest') continue
+      if (!anchor.event.lyricMelisma) break
+      last = anchor
+    }
+    if (last === null) return
+
+    const from = lyric.x + textWidth(lyric.text, lyric.size) + ENGRAVE.melismaGap
+    const to = last.right + ENGRAVE.melismaGap
+    // A run so tight that the line would be a speck reads as a smudge; drop it instead.
+    if (to - from < ENGRAVE.melismaMinLength) return
+    lines.push({
+      x1: from,
+      y1: lyric.y,
+      x2: to,
+      y2: lyric.y,
+      thickness: ENGRAVING_DEFAULTS.staffLineThickness,
+      role: 'lyric',
+    })
+  })
+
+  return lines
 }
 
 // ─── Slurs and ties ──────────────────────────────────────────────────────────
@@ -2011,6 +2113,10 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
   // The mode picks the look; `profile` can still override it explicitly.
   const profile: RenderProfile =
     options.profile ?? (isStrict(options.mode ?? defaultMode) ? 'abcjs' : 'standard')
+  // Read from the MODE, not from `profile`: profile is a density override and a caller
+  // may set it either way, but whether a melisma prints abcjs's literal `_` or an
+  // extender is a question about which engine's behaviour is being reproduced.
+  const strict = isStrict(options.mode ?? defaultMode)
   const { spacingScale } = PROFILES[profile]
   const voices = score.voices.length > 0 ? score.voices : [undefined]
 
@@ -2257,10 +2363,13 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
 
       // Tuplets resolve here — unlike curves they never span a system, because a beam
       // and a barline both break them long before a line break can.
-      const tuplets = layoutTuplets(
-        (voiceAnchors[voiceIndex] ?? []).filter((anchor) => anchor.system === systemIndex),
-        elements,
+      const systemAnchors = (voiceAnchors[voiceIndex] ?? []).filter(
+        (anchor) => anchor.system === systemIndex,
       )
+      const tuplets = layoutTuplets(systemAnchors, elements)
+      // Melismas resolve here for the same reason tuplets do, and must run AFTER the
+      // elements are final: in strict mode this rewrites the syllable's text in place.
+      const melismaLines = layoutMelismas(systemAnchors, elements, strict)
 
       return {
         elements,
@@ -2271,6 +2380,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         tupletTexts: tuplets.texts,
         voltaLines,
         voltaTexts,
+        melismaLines,
         originY: 0,
       }
     })

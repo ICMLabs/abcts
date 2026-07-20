@@ -194,6 +194,11 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
       for (const line of staff.tupletLines) {
         parts.push(lineToRect(line, abcjs ? ' class="abcjs-tuplet"' : ` class="${prefix}-tuplet"`))
       }
+      // Never present in strict mode, where abcjs prints a literal `_` instead — so this
+      // reuses abcjs's lyric class rather than inventing one it has no counterpart for.
+      for (const line of staff.melismaLines) {
+        parts.push(lineToRect(line, abcjs ? ' class="abcjs-lyric"' : ` class="${prefix}-lyric"`))
+      }
       for (const t of staff.tupletTexts) {
         const style = `${t.bold ? ' font-weight="bold"' : ''}${t.italic ? ' font-style="italic"' : ''}`
         parts.push(

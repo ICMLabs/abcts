@@ -392,6 +392,9 @@ class VoiceBuilder {
         if (event.type === 'rest') return event
         const first = verses[0]?.get(index)
         const extras = verses.slice(1).map((verse) => verse.get(index)?.text ?? null)
+        // Named rather than read after `index += 1`: the lookahead is deliberate, and
+        // spelling it out keeps it from reading as an off-by-one.
+        const next = verses[0]?.get(index + 1)
         index += 1
         return {
           ...event,
@@ -401,6 +404,12 @@ class VoiceBuilder {
           // (string|null)[]; per-verse melismas need it to become a richer type, which
           // is worth doing when a renderer actually lays out multiple verses.
           lyricMelisma: first?.kind === 'melisma',
+          // A run opens on the syllable BEFORE the first hold, so this is the one place
+          // with both in view — `verses` is indexed by note position, and the holds are
+          // the entries that follow. Looking ahead one is enough: a run of several holds
+          // still starts at exactly one syllable.
+          lyricMelismaStart:
+            first !== undefined && first.kind !== 'melisma' && next?.kind === 'melisma',
           extraVerses: extras,
         }
       }),
@@ -1270,6 +1279,7 @@ class Parser {
       lyric: null,
       lyricSourceRange: null,
       lyricMelisma: false,
+      lyricMelismaStart: false,
       extraVerses: [],
       style: 'normal',
       microtoneCents,
@@ -1369,6 +1379,7 @@ class Parser {
         lyric: null,
         lyricSourceRange: null,
         lyricMelisma: false,
+        lyricMelismaStart: false,
         extraVerses: [],
         style: 'normal',
         headDurations: mixed ? headDurations : [],

@@ -1308,3 +1308,81 @@ describe('mixed-length chords', () => {
     expect(event?.type === 'chord' ? event.headDurations.length : 0).toBe(2)
   })
 })
+
+describe('melisma extenders', () => {
+  const staffOf = (abc: string, mode: CompatibilityMode = 'abc2.1') =>
+    layout(parse(abc, { mode }).scores[0] as Score, { mode, systemWidth: 400 }).systems[0]
+      ?.staves[0]
+
+  const textsOf = (abc: string, mode: CompatibilityMode = 'abc2.1') =>
+    (staffOf(abc, mode)?.elements ?? []).flatMap((e) => e.texts).map((t) => t.text)
+
+  const HELD = 'X:1\nL:1/4\nK:C\nCDEF|\nw:sing_ _ _ ing\n'
+
+  it("prints abcjs's literal underscore in strict mode and draws no line", () => {
+    // abcjs's element dump carries `c: "sing_"` — one text, underscore folded in. Strict
+    // reproduces that rather than drawing the extender every engraving convention wants.
+    expect(textsOf(HELD, 'abcjs-strict')).toContain('sing_')
+    expect(staffOf(HELD, 'abcjs-strict')?.melismaLines).toHaveLength(0)
+  })
+
+  it('suppresses the underscore and strokes a line in non-strict modes', () => {
+    expect(textsOf(HELD)).toContain('sing')
+    expect(textsOf(HELD)).not.toContain('sing_')
+    expect(staffOf(HELD)?.melismaLines).toHaveLength(1)
+  })
+
+  it('stops at the last held NOTEHEAD, not at the end of its duration', () => {
+    // Gould, Behind Bars p.447: "the line extends to the last written note, but not to
+    // the end of the duration" — the facing example is captioned "extenders too long".
+    // A whole note makes the two endpoints far apart, which is why this uses one.
+    const staff = staffOf('X:1\nL:1/4\nK:C\nC4|D4|\nw:Glo_ _\n')
+    const line = staff?.melismaLines[0]
+    const notes = (staff?.elements ?? []).filter((e) => e.type === 'note')
+    const held = notes[notes.length - 1]
+    expect(line).toBeDefined()
+    expect(held).toBeDefined()
+    const noteheadRight = Math.max(
+      ...(held?.glyphs ?? []).filter((g) => g.role === 'notehead').map((g) => g.x + 1),
+    )
+    const durationRight = (held?.x ?? 0) + (held?.width ?? 0)
+    // Far from the duration's end, and close to the notehead's.
+    expect(line?.x2 ?? 0).toBeLessThan(durationRight - 1)
+    expect(Math.abs((line?.x2 ?? 0) - noteheadRight)).toBeLessThan(1.5)
+  })
+
+  it('lets a rest keep the run alive without moving its end', () => {
+    // v1's rule: a rest inside a melisma neither closes the run nor extends it. Asserting
+    // the COUNT would not test that — a rest that wrongly closed the run still leaves one
+    // line, just a shorter one. The endpoint is what distinguishes the two.
+    const staff = staffOf('X:1\nL:1/4\nK:C\nCDzE|\nw:sing_ _ _\n')
+    const line = staff?.melismaLines[0]
+    const notes = (staff?.elements ?? []).filter((e) => e.type === 'note')
+    const last = notes[notes.length - 1]
+    expect(staff?.melismaLines).toHaveLength(1)
+    // Reaches the note AFTER the rest, not the one before it.
+    expect(line?.x2 ?? 0).toBeGreaterThan(last?.x ?? 0)
+  })
+
+  it('draws nothing when no syllable is held', () => {
+    expect(staffOf('X:1\nL:1/4\nK:C\nCDEF|\nw:one two three four\n')?.melismaLines).toEqual([])
+  })
+
+  it("keeps strict's underscore when the hold wraps to the next system", () => {
+    // Regression. The underscore was first gated on finding a hold in the SAME system,
+    // which is wrong: for abcjs the `_` is part of the syllable's text and says nothing
+    // about where the held note ended up. The modes wrap differently — strict renders at
+    // abcjs's denser spacing — so this silently dropped the underscore from the one piece
+    // of real corpus content that has a melisma, which no gate renders.
+    const abc = 'X:1\nL:1/4\nK:C\nCDEF|GABc|defg|\nw:a b c d e f g sing_ _ _ _\n'
+    const narrow = layout(parse(abc, { mode: 'abcjs-strict' }).scores[0] as Score, {
+      mode: 'abcjs-strict',
+      systemWidth: 26,
+    })
+    expect(narrow.systems.length).toBeGreaterThan(1)
+    const texts = narrow.systems.flatMap((s) =>
+      s.staves.flatMap((st) => st.elements.flatMap((e) => e.texts.map((t) => t.text))),
+    )
+    expect(texts).toContain('sing_')
+  })
+})

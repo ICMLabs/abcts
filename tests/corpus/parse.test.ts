@@ -82,6 +82,7 @@ describe('parse: simple-c', () => {
       lyric: null,
       lyricSourceRange: null,
       lyricMelisma: false,
+      lyricMelismaStart: false,
       extraVerses: [],
       style: 'normal',
       microtoneCents: 0,
