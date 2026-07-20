@@ -95,8 +95,8 @@ backup remote is not a licence to vendor someone else's tree into this one.
 The PARSER is complete and gated (39/39 corpus fixtures, saturated). The RENDERER now
 reproduces **40 of 41** fixtures on the structural gate; the 41st is a recorded abcjs bug,
 so the corpus is COMPLETE — every fixture is either reproduced or explained. All 41 also
-have committed visual baselines. 303 tests. NOTE: baselines render the FIRST TUNE only,
-so multi-tune fixtures are largely unbaselined — see the checkpoint.
+have committed visual baselines, covering ALL 119 tunes across the 41 fixtures (not just
+the first tune of each). 303 tests.
 Renders staff, all clefs, key signatures, meters, tempo marks, part labels, noteheads and
 chords with stems and ledger lines, accidentals, rests and barlines, grace notes, chord
 symbols, decorations, lyrics, slurs and ties, tuplets, voltas and annotations. Melisma extenders draw in non-strict modes;

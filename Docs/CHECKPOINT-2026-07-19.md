@@ -304,17 +304,22 @@ quarters and sixteenths, and those three share a single filled notehead — so e
 candidate rule produces identical ink. A frequency count over a saturated corpus reads
 like evidence and is not; the reference had to be asked directly.
 
-**BASELINES RENDER THE FIRST TUNE ONLY — a blind spot found 2026-07-19.** `baseline.ts`
-calls `layout(score)`, which takes `scores[0]`. The structural gate documents this about
-itself; the baseline gate did not, and it matters more there, because baselines are the
-only thing watching the *look*. `S5-directives` has six tunes, so five are unbaselined —
-and the corpus's ONLY melisma lives in tune 5. Melisma rendering could therefore not
-change a single committed baseline, in either direction.
+**BASELINES RENDERED THE FIRST TUNE ONLY — found and FIXED 2026-07-19.** `baseline.test.ts`
+took `scores[0]`, so `S3-note-syntax` was watched on 1 of its 25 tunes and `S5-directives`
+on 1 of 6. The structural gate documents this limit about itself; the baseline gate did
+not, and it mattered more there, because baselines are the only thing watching the *look*.
 
-It is worse than untested. A synthetic unit test passed while the real fixture silently
-lost its underscore, because strict and non-strict wrap differently and the two disagreed
-about which system a held note landed in. Rendering the actual fixture found it; nothing
-in the suite would have. Extending baselines to every tune is the fix and is not done.
+It was worse than untested. The corpus's only melisma is in `S5-directives` tune 5, so
+melisma rendering could not move a committed baseline in either direction — and a real bug
+in it did not. A synthetic unit test passed while the real fixture silently lost its
+underscore. Rendering the actual fixture found it; nothing in the suite would have.
+
+Now **119 tunes baselined, up from 41**, and mutating the strict underscore away fails
+`S5-directives` where it previously failed nothing. Each tune is snapshotted separately
+rather than through `layoutBook`, which reports `top: 0` for the book instead of each
+tune's real top — that bounds line is what once caught a fixed margin clipping ledger
+lines out of the drawing. The re-record was purely additive: 12,121 insertions, zero
+deletions, so every previously committed geometry is byte-identical.
 
 ### Then, none of which the corpus hits as hard
 
