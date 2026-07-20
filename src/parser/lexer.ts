@@ -130,7 +130,21 @@ export class Lexer {
       // `+` is only a decoration when its closing `+` is on the same line.
       const end = delimited(src, start, '+')
       if (src[end - 1] === '+') return token('decoration', end - start)
-      return token('unknown', 1)
+
+      // UNCLOSED. abcjs does not fall back to a single character here, and the difference
+      // is visible: its `getBrackettedSubstring` gives up after `maxErrorChars` (5) so
+      // that "a missing end quote won't eat up the entire line", consuming SIX characters
+      // — the `+` and five more — clamped to the end of the line.
+      //
+      // This is only reachable on malformed input, where prose is being read as music.
+      // frere-jacques is the case: abcjs does not implement `+:` continuations, so
+      // `+:belongs to their…` is lexed as notes. Consuming one character started that at
+      // the `b` of "belongs"; consuming six lands on `n`, which is not a note letter, so
+      // the first note becomes the `g` — which is where abcjs starts. 50 notes against
+      // its 45 was entirely this.
+      const lineEnd = src.indexOf('\n', start)
+      const lastIndex = (lineEnd === -1 ? src.length : lineEnd) - 1
+      return token('unknown', Math.min(5, lastIndex - start) + 1)
     }
 
     return token('unknown', 1)

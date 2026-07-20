@@ -31,13 +31,15 @@ const KNOWN_DIVERGENCES: Record<string, string> = {
   // hard-codes it. This assertion is what reported the fix — the divergence started
   // matching and had to be removed deliberately.
   'frere-jacques':
-    'STRICT-MODE GAP, narrowed. abcjs does not implement `+:` at all and parses the ' +
-    'continuation line as MUSIC, so the prose of a copyright notice becomes noteheads. ' +
-    'Strict mode now does the same — the structural behaviour matches — but lexes that ' +
-    'prose slightly differently: 50 notes against abcjs 45. Closing it means matching ' +
-    "abcjs's lexer on arbitrary text, where a comma is an octave mark and `+` was an old " +
-    'decoration delimiter. Under abc2.1 `+:` is a continuation, which is what ABC 2.1 ' +
-    'says, and the 32 notes there are the real ones.',
+    'STRICT-MODE GAP, NARROWED TWICE and now residual. abcjs does not implement `+:`, so ' +
+    'a copyright notice is lexed as music. Strict does that too, and as of 2026-07-20 ' +
+    "produces the SAME 45 notes — abcjs's unclosed-`+` rule was the cause of the earlier " +
+    '50 (see `lexer.ts`). All 45 agree on PITCH and DURATION exactly, asserted separately ' +
+    'in parse.test.ts so this exclusion does not hide it. What still differs is 17 source ' +
+    'offsets, 8 decoration counts and 1 chord symbol — abcjs attaching marks it finds in ' +
+    'the prose. Closing that means emulating its lexer on arbitrary English, which buys ' +
+    'nothing a reader would see. Under abc2.1 `+:` is a continuation, as ABC 2.1 says, ' +
+    'and the 32 notes there are the real ones.',
 }
 
 /**
@@ -81,12 +83,11 @@ const BEAM_FAILURES = ['S5-directives', 'S8-layout', 'frere-jacques', 'ragtime-n
  * parser bugs, both of the same shape: `*` and `|` were handled as whole tokens but not
  * when ATTACHED to a syllable, which is how every real tune writes them.
  */
-const LYRIC_DIVERGENCES: Record<string, string> = {
-  'frere-jacques':
-    'Downstream of the note-level gap below: strict mode parses the `+:` prose as music ' +
-    'like abcjs, but lexes it slightly differently, so the note count differs and the ' +
-    'lyric alignment inherits that.',
-}
+// `frere-jacques` was here and is CLOSED (2026-07-20). It was downstream of the note-level
+// gap: strict lexed the `+:` prose differently, so the note count differed and the lyric
+// alignment inherited it. Matching abcjs's unclosed-`+` rule fixed the notes, and the
+// lyrics came with them. Empty, and asserted empty — a new entry has to be added on purpose.
+const LYRIC_DIVERGENCES: Record<string, string> = {}
 
 // `S5-directives` was listed here as a 2-note multi-verse drift and was NOT a parser
 // bug: this gate's own flattening omitted `&` overlay events, which the note comparison

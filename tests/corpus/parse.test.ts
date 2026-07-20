@@ -676,3 +676,50 @@ describe('strict drops the decorations abcjs does not know', () => {
     expect(decorationsOf(note('!madeupname!'), 'abcjs-strict')).toEqual([])
   })
 })
+
+describe("frere-jacques: the `+:` prose lexes to abcjs's notes", () => {
+  // frere-jacques is excluded from the content gate as a KNOWN_DIVERGENCE, so without
+  // this nothing would notice the part that DOES agree. abcjs has no `+:` continuation,
+  // so a copyright notice is read as music; strict reproduces that, and since the
+  // unclosed-`+` fix it reproduces it note for note. The residual difference is decoration
+  // and chord-symbol attachment, not pitch or rhythm.
+  const abc = fixture('frere-jacques')
+  const oursNotes = () => {
+    const result = parse(abc, { mode: 'abcjs-strict' })
+    if (!result.ok) throw new Error('expected frere-jacques to parse')
+    return result.scores
+      .flatMap((s) => s.voices)
+      .flatMap((v) => v.measures)
+      .flatMap((m) => m.events)
+      .filter((e) => e.type === 'note')
+  }
+
+  it("produces exactly abcjs's note count", () => {
+    // Was 50 against 45. abcjs's getBrackettedSubstring gives up after 5 characters on an
+    // unclosed `+`, so `+:belongs…` starts its first note at the `g`, not the `b`.
+    expect(oursNotes()).toHaveLength(goldenNotes('frere-jacques').length)
+    expect(oursNotes().length).toBe(45)
+  })
+
+  it('agrees with abcjs on every pitch and duration', () => {
+    const theirs = goldenNotes('frere-jacques')
+    const ours = oursNotes()
+    expect(ours.map((n) => (n.pitch.octave - 4) * 7 + stepIndex(n.pitch.step))).toEqual(
+      theirs.map((e) => e.pitches?.[0]?.pitch),
+    )
+    expect(ours.map((n) => ratToNumber(n.notatedDuration))).toEqual(theirs.map((e) => e.duration))
+  })
+
+  it('reads `+:` as a real continuation under abc2.1, where it is not music at all', () => {
+    // The mode split: the prose is a field continuation, so the tune has only its real
+    // notes. This is the number a reader would call correct.
+    const result = parse(abc, { mode: 'abc2.1' })
+    if (!result.ok) throw new Error('expected frere-jacques to parse')
+    const notes = result.scores
+      .flatMap((s) => s.voices)
+      .flatMap((v) => v.measures)
+      .flatMap((m) => m.events)
+      .filter((e) => e.type === 'note')
+    expect(notes.length).toBeLessThan(45)
+  })
+})
