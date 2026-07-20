@@ -31,15 +31,29 @@ const n = (value: number): string => {
 }
 
 /**
- * A score's geometry as text.
+ * Every tune in a fixture, each with its own geometry block.
+ *
+ * WHY NOT `layoutBook`. It stacks tunes into one Layout, which is what a renderer wants
+ * and the wrong thing to snapshot: it reports `top: 0` for the book rather than each
+ * tune's real top. The bounds line is the part of this record that once caught a fixed
+ * margin CLIPPING high ledger lines out of the drawing, so trading it away to gain tune
+ * coverage would close one hole by opening another. Laying out each tune keeps both.
+ */
+export function snapshot(scores: readonly Score[]): string {
+  return scores.map((score, index) => snapshotTune(score, index)).join('')
+}
+
+/**
+ * One tune's geometry as text.
  *
  * The drawing bounds are recorded first and deliberately: a fixed margin used to CLIP
  * high ledger lines and tempo marks out of the output entirely, and nothing caught it.
  * A change to what fits in the box is exactly the kind of regression this exists for.
  */
-export function snapshot(score: Score): string {
+function snapshotTune(score: Score, index: number): string {
   const doc: Layout = layout(score)
   const lines: string[] = [
+    `tune ${index}`,
     `bounds  width=${n(doc.width)} height=${n(doc.height)} top=${n(doc.top)}`,
     `systems ${doc.systems.length}`,
   ]
@@ -71,6 +85,11 @@ export function snapshot(score: Score): string {
       }
       for (const t of staff.tupletTexts) {
         lines.push(`    tuplettext ${n(t.x)},${n(t.y)} size=${n(t.size)} ${JSON.stringify(t.text)}`)
+      }
+      // Non-strict only — strict prints a literal `_` on the syllable instead, which
+      // shows up under the element's texts rather than here.
+      for (const l of staff.melismaLines) {
+        lines.push(`    melisma ${n(l.x1)},${n(l.y1)} -> ${n(l.x2)},${n(l.y2)} t=${n(l.thickness)}`)
       }
       for (const c of staff.curves) {
         lines.push(

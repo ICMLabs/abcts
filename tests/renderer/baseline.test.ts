@@ -31,12 +31,15 @@ describe('visual baselines', () => {
 
   for (const fixture of corpus) {
     it(`${fixture.name} — rendered geometry is unchanged`, () => {
-      const score = parse(fixture.abc).scores[0]
+      // EVERY tune, not just the first. Taking `scores[0]` left five of `S5-directives`'s
+      // six tunes unbaselined, and the corpus's only melisma is in tune 5 — so melisma
+      // rendering could not move a baseline in either direction, and a bug in it did not.
+      const scores = parse(fixture.abc).scores
       // Every corpus fixture parses to at least one score; a fixture that stopped doing
       // so would otherwise snapshot as empty and pass.
-      expect(score, `${fixture.name} produced no score`).toBeDefined()
+      expect(scores.length, `${fixture.name} produced no score`).toBeGreaterThan(0)
 
-      const actual = snapshot(score as Score)
+      const actual = snapshot(scores as Score[])
       const path = join(BASELINE_DIR, `${fixture.name}.txt`)
 
       if (RECORD) {
