@@ -1470,10 +1470,10 @@ function noteText(event: MusicEvent, headX: number, headWidth: number): PlacedTe
  *   non-strict  the `_` is suppressed and an extender line is stroked instead, which is
  *             what every engraving convention actually asks for.
  *
- * ENDPOINT, per Gould, *Behind Bars* p.447: "the line extends to the last written note,
- * but not to the end of the duration" — the facing example is captioned *extenders too
- * long*. So it stops at the last held NOTEHEAD's right edge, NOT at the end of that
- * note's duration allotment and NOT at the next syllable. abcMusicKit v1 and v2 both
+ * ENDPOINT, per Gould, *Behind Bars* p.447: the line runs to the last written NOTE, not to
+ * the end of that note's duration — and the book prints the over-long form as a captioned
+ * example of the mistake. So it stops at the last held NOTEHEAD's right edge, NOT at the
+ * end of the duration allotment and NOT at the next syllable. abcMusicKit v1 and v2 both
  * arrived here independently; this model's own comment used to prescribe the duration
  * extent, which is the error Gould is warning about.
  *

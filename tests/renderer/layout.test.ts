@@ -1333,9 +1333,9 @@ describe('melisma extenders', () => {
   })
 
   it('stops at the last held NOTEHEAD, not at the end of its duration', () => {
-    // Gould, Behind Bars p.447: "the line extends to the last written note, but not to
-    // the end of the duration" — the facing example is captioned "extenders too long".
-    // A whole note makes the two endpoints far apart, which is why this uses one.
+    // Gould, Behind Bars p.447: the line runs to the last written NOTE, not to the end of
+    // that note's duration — the book prints the over-long form as a captioned example of
+    // the mistake. A whole note puts the two endpoints far apart, which is why this uses one.
     const staff = staffOf('X:1\nL:1/4\nK:C\nC4|D4|\nw:Glo_ _\n')
     const line = staff?.melismaLines[0]
     const notes = (staff?.elements ?? []).filter((e) => e.type === 'note')

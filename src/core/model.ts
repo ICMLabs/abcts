@@ -241,9 +241,10 @@ export interface Note {
    *
    * CORRECTED: this said the line "must span the full horizontal extent the note
    * OCCUPIES — a whole note is wider than a half — rather than stopping at the next
-   * notehead's x". That is the one geometry Gould singles out as wrong; *Behind Bars*
-   * p.447 is "the line extends to the last written note, but not to the end of the
-   * duration", against a facing example captioned "extenders too long". The endpoint is
+   * notehead's x". That is the one geometry Gould singles out as wrong. *Behind Bars*
+   * p.447 puts the endpoint at the last written NOTE rather than at the end of that
+   * note's duration, and prints the over-long form as a captioned example of the
+   * mistake to avoid — so the error was the documented one. The endpoint is
    * the last held NOTEHEAD's right edge. abcMusicKit v1 and v2 both landed there.
    */
   readonly lyricMelisma: boolean
@@ -336,9 +337,10 @@ export interface Chord {
    *
    * CORRECTED: this said the line "must span the full horizontal extent the note
    * OCCUPIES — a whole note is wider than a half — rather than stopping at the next
-   * notehead's x". That is the one geometry Gould singles out as wrong; *Behind Bars*
-   * p.447 is "the line extends to the last written note, but not to the end of the
-   * duration", against a facing example captioned "extenders too long". The endpoint is
+   * notehead's x". That is the one geometry Gould singles out as wrong. *Behind Bars*
+   * p.447 puts the endpoint at the last written NOTE rather than at the end of that
+   * note's duration, and prints the over-long form as a captioned example of the
+   * mistake to avoid — so the error was the documented one. The endpoint is
    * the last held NOTEHEAD's right edge. abcMusicKit v1 and v2 both landed there.
    */
   readonly lyricMelisma: boolean
