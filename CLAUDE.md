@@ -78,6 +78,19 @@ correct behavior. Nothing ships red.
 No git submodules — corpus and abcjs live inside the abcMusicKit repo and are
 reached by relative sibling path. See ARCHITECTURE.md § Repository Structure.
 
+## Remote
+`origin` is a private backup remote on the ICMLabs GitHub org. It exists for off-machine
+backup, not distribution — this repo is not published. Push at session checkpoints; there
+is no need to push after every commit.
+
+**Never push `--force`, and never `pull --rebase` unattended.** If a push is rejected as
+non-fast-forward, **stop and report it** — another agent may be working in this repo. Do
+not attempt to resolve it automatically.
+
+Nothing from `../abcMusicKit` is committed here: the corpus, the goldens and the vendored
+abcjs source are all reached by sibling path and stay in that repo. Keep it that way — a
+backup remote is not a licence to vendor someone else's tree into this one.
+
 ## Current phase
 The PARSER is complete and gated (39/39 corpus fixtures, saturated). The RENDERER now
 reproduces **40 of 41** fixtures on the structural gate; the 41st is a recorded abcjs bug,
