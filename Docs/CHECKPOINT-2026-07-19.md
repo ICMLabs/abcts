@@ -283,10 +283,10 @@ only mentions of `tuplet` and `style` are in comments.
 | ~~Voltas / 1st–2nd endings~~ | 45 | **DONE** — parsed into `Measure.volta` (a STRING: `1,2` and `1-3` are legal) and bracketed. 32 labels across 2 fixtures. |
 | ~~Mixed-length chords (`headDurations`)~~ | 18 | **NOT A GAP** — see below. We already match abcjs; rendering it would diverge. |
 | ~~Annotations (`"^text"`)~~ | 15 | **DONE** — `^`/`_` stack in abcjs's line order, `<`/`>` sit beside the note. |
-| Microtones | 4 | parsed, not rendered |
-| Styled noteheads (`!style=harmonic!`) | 1 | parsed, not rendered |
+| Microtones | 4 | parsed, not rendered — LAST, by request, after everything else is green |
+| ~~Styled noteheads~~ | 1 inline, 16 via `[K: style=]` | **DONE** — diamond, x, triangle, rhythm slash; 6 Bravura glyphs added. Count understated it: it missed the K: form. |
 | ~~Melisma extension lines~~ | 1 | **DONE** — strict prints abcjs's literal `_`, non-strict strokes the extender to the last held notehead (Gould p.447). NO GATE COVERS IT; see below. |
-| `V:… octave=` | 1 | parsed, not applied at layout |
+| ~~`V:… octave=`~~ | 1 | **DONE** — moves the WRITTEN pitch (abcjs-verified). The gate had been compensating for the bug; compensation removed. |
 
 **CORRECTION, 2026-07-19 (later).** "Mixed-length chords, 18 occurrences" was the top of
 this list and was not a gap at all. The entry was built by counting how often a model
