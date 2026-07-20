@@ -93,13 +93,25 @@ cannot change what is painted.
 Deliberately absent rather than stubbed: abcjs's audio and timing methods and its
 `engraver`. A method returning a plausible number is worse than one that is missing.
 
-### Strict-mode fidelity gaps
+### Strict-mode fidelity gaps — BOTH CLOSED, 2026-07-20
 
-Two, now GAPS rather than design choices — a real change in what they mean:
-- `S1-decorations` — abcjs drops `!staccato!`; strict does not drop it yet.
-- `frere-jacques` — strict parses the `+:` prose as music like abcjs, so the structure
-  matches, but lexes it differently: 50 notes against 45. Closing it means matching
-  abcjs's lexer on arbitrary prose, where a comma is an octave mark.
+- ~~`S1-decorations`~~ — abcjs drops `!staccato!` and strict did not. Closed as a RULE:
+  a `!name!` survives strict only if it is in one of abcjs's FIVE decoration tables, and
+  `staccato` is in none while its `.` shorthand hard-codes the name. Filtering against
+  `legalAccents` alone — the obvious list — dropped every dynamic and hairpin in the
+  corpus and cost five fixtures, which is how the other four tables were found.
+  **Note content 39/39 → 40/40**: the fixture moved from excluded to gated and matching.
+- ~~`frere-jacques`~~ — closed as a CONTENT divergence. abcjs's
+  `getBrackettedSubstring` gives up after 5 characters on an unmatched `+`, consuming
+  six; ours consumed one. Six lands on a non-note letter and one does not, and the whole
+  50-against-45 gap was that single character. All 45 notes now agree on pitch and
+  duration exactly. **Lyrics 9/10 → 10/10, zero divergences** — that entry was recorded
+  as downstream of this one and proved to be.
+
+  A residual entry remains, narrowed to what actually differs: 17 source offsets, 8
+  decoration counts, 1 chord symbol — abcjs attaching marks it finds in English prose.
+  Emulating that buys nothing a reader would see. Pitch and duration are asserted in
+  `parse.test.ts` so the exclusion cannot hide the part that agrees.
 
 ---
 
