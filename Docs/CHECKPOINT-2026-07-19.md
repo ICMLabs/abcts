@@ -143,7 +143,7 @@ themselves, so the report cannot drift from the gates.
 | Axis | | |
 |---|---|---|
 | Note content | 39/39 | 2 known divergences |
-| Beam grouping | 36/41 | 3 open, cause unidentified |
+| Beam grouping | 37/41 | 3 open: S5-directives, S8-layout, ragtime-nightingale |
 | Lyrics | 8/10 | 2 known divergences |
 | Render structure | 40/41 | 1 known divergence |
 | Visual baselines | 41/41 | self-referential |
@@ -357,19 +357,36 @@ Carried forward from 2026-07-18 and still open: decoration/chord-symbol vocabula
    checkpoint expected the first SVG comparison to settle it. It has not:
    `voice-octave-shift` passes on voice 1, which has no shift. Still open, still needs
    voice 2 and a v1 comparison.
-3. **Beam GROUPING differs from abcjs on 3 fixtures** (`S5-directives`, `S7-voices`,
-   `S8-layout`), a handful of links each — the asserted `BEAM_FAILURES` set. Beams and
-   flags now RENDER; this is about which notes get grouped, not how a group is drawn.
+3. **Beam GROUPING differs from abcjs on 3 fixtures** (`S5-directives`, `S8-layout`,
+   `ragtime-nightingale`), a handful of links each — the asserted `BEAM_FAILURES` set.
+   Beams and flags now RENDER; this is about which notes get grouped, not how a group is
+   drawn.
 
-   No longer unanalysed. Three findings:
-   - The tie-then-space rule is **verified load-bearing**, not a guess: removing it takes
-     parity from 36/41 to 35/41 because `ragtime-mini` depends on it.
-   - It is also **insufficient** — it does not explain S7-voices or S8-layout, which have
-     the same tie-then-space shape yet diverge the other way.
-   - abcjs's mechanism is now known from its own source (MIT, vendored): a space sets
-     `end_beam` on the note it FOLLOWS, and `endBeamHere` includes that note in the run.
-     `force_end_beam_last` (chord symbol + whitespace) is ruled out — S8-layout has no
-     such pattern. A third cause remains unidentified.
+   **RESOLVED IN PART, 2026-07-19 (later): 36/41 → 37/41, `S7-voices` now matches.**
+
+   The tie-then-space rule was read here as "verified load-bearing" because removing it
+   dropped parity to 35/41. That inference was one step short. The rule was not right; it
+   was too BROAD, and `ragtime-mini` depended on the part of it that happened to be true.
+   Both the keep-it and drop-it experiments score worse than the actual rule, which is:
+
+   |           | tie + space | space alone |
+   |-----------|-------------|-------------|
+   | **chord** | NO break    | break       |
+   | **note**  | break       | break       |
+
+   A tie suppresses the break only when what was tied is a CHORD — almost certainly an
+   abcjs bug, and reproduced. A second exception turned up in the same pass: a space
+   arriving while a decoration still awaits its note does not break either (`de/f/P ^c`
+   beams through, `de/f/ ^c` does not). That was the unidentified third cause.
+
+   How the wrong rule survived: its test observed the chord case — the comment cites
+   `[G=Bg]/4- [GBg]/4` — then coded plain NOTES and asserted the chord's answer for them.
+   Green, and wrong, and it made the false rule look measured. A fourth entry for the
+   list in §4 below: a test whose comment and body describe different inputs.
+
+   Note that "removing it costs a fixture" proved only that SOME of the rule was
+   load-bearing. It could not distinguish a correct rule from an over-broad one, and it
+   was read as if it could. Asking abcjs directly settled it in one probe.
 4. **Three ways a verification can lie, all hit this session.**
    - A no-op MUTATION looks exactly like a passing suite. One spacing mutation matched
      nothing because lint had reformatted the target line and reported a clean 164/164.
