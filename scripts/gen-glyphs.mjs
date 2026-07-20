@@ -123,9 +123,27 @@ const GLYPHS = [
   'segno',
   'coda',
   // Dynamics.
+  // Dynamics. SMuFL has precomposed multi-letter glyphs; abcjs's volumeDecoration
+  // handles all eleven of these names.
   'dynamicPiano',
   'dynamicMezzo',
   'dynamicForte',
+  'dynamicPP',
+  'dynamicPPP',
+  'dynamicPPPP',
+  'dynamicMP',
+  'dynamicMF',
+  'dynamicFF',
+  'dynamicFFF',
+  'dynamicFFFF',
+  'dynamicSforzando1',
+  // Fingerings — abcjs draws `!3!` as a decoration digit above the staff.
+  'fingering0',
+  'fingering1',
+  'fingering2',
+  'fingering3',
+  'fingering4',
+  'fingering5',
 ]
 
 const font = opentype.parse(readFileSync(FONT).buffer)

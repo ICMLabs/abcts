@@ -1386,6 +1386,46 @@ const DECORATIONS: Readonly<
   coda: { above: 'coda', below: 'coda', place: 'ornament' },
   p: { above: 'dynamicPiano', below: 'dynamicPiano', place: 'dynamic' },
   f: { above: 'dynamicForte', below: 'dynamicForte', place: 'dynamic' },
+
+  // ── The rest of abcjs's volumeDecoration set ────────────────────────────────
+  // SMuFL precomposes the multi-letter dynamics, so `mp` is one glyph rather than an
+  // `m` and a `p` set side by side.
+  pp: { above: 'dynamicPP', below: 'dynamicPP', place: 'dynamic' },
+  ppp: { above: 'dynamicPPP', below: 'dynamicPPP', place: 'dynamic' },
+  pppp: { above: 'dynamicPPPP', below: 'dynamicPPPP', place: 'dynamic' },
+  mp: { above: 'dynamicMP', below: 'dynamicMP', place: 'dynamic' },
+  mf: { above: 'dynamicMF', below: 'dynamicMF', place: 'dynamic' },
+  ff: { above: 'dynamicFF', below: 'dynamicFF', place: 'dynamic' },
+  fff: { above: 'dynamicFFF', below: 'dynamicFFF', place: 'dynamic' },
+  ffff: { above: 'dynamicFFFF', below: 'dynamicFFFF', place: 'dynamic' },
+  sfz: { above: 'dynamicSforzando1', below: 'dynamicSforzando1', place: 'dynamic' },
+
+  // ── Fingerings ─────────────────────────────────────────────────────────────
+  // abcjs draws `!3!` as a decoration digit above the staff, so these take the ornament
+  // lane rather than the dynamic one.
+  '0': { above: 'fingering0', below: 'fingering0', place: 'ornament' },
+  '1': { above: 'fingering1', below: 'fingering1', place: 'ornament' },
+  '2': { above: 'fingering2', below: 'fingering2', place: 'ornament' },
+  '3': { above: 'fingering3', below: 'fingering3', place: 'ornament' },
+  '4': { above: 'fingering4', below: 'fingering4', place: 'ornament' },
+  '5': { above: 'fingering5', below: 'fingering5', place: 'ornament' },
+
+  // ── Aliases ────────────────────────────────────────────────────────────────
+  // abcjs rewrites these to canonical names through `accentPseudonyms`; we keep the
+  // source spelling in the model, so the renderer resolves them instead. Each already
+  // had its glyph — they drew nothing only because the table was keyed on the canonical
+  // name. Verified against 6.6.3: `!>!` and `!emphasis!` both draw its sforzato (the
+  // accent wedge), `!^!` its umarcato, `!tr!` its trill.
+  '>': { above: 'articAccentAbove', below: 'articAccentBelow', place: 'articulation' },
+  '<': { above: 'articAccentAbove', below: 'articAccentBelow', place: 'articulation' },
+  emphasis: { above: 'articAccentAbove', below: 'articAccentBelow', place: 'articulation' },
+  '^': { above: 'articMarcatoAbove', below: 'articMarcatoBelow', place: 'articulation' },
+  umarcato: { above: 'articMarcatoAbove', below: 'articMarcatoBelow', place: 'articulation' },
+  tr: { above: 'ornamentTrill', below: 'ornamentTrill', place: 'ornament' },
+  // abcjs draws `!mordent!` and `!trillh!` with the same glyphs as `!lowermordent!` and
+  // `!trill!` — its scripts.mordent and scripts.trill respectively.
+  mordent: { above: 'ornamentMordent', below: 'ornamentMordent', place: 'ornament' },
+  trillh: { above: 'ornamentTrill', below: 'ornamentTrill', place: 'ornament' },
 }
 
 /**
@@ -1417,13 +1457,13 @@ function decorationGlyphs(
     const centre = headX + headWidth / 2 - GLYPHS[glyph].width / 2
 
     if (spec.place === 'articulation') {
-      out.push({ name: glyph, x: centre, y: stepToY(artStep) })
+      out.push({ name: glyph, x: centre, y: stepToY(artStep), role: 'decoration' })
       artStep += artAbove ? 2 : -2
     } else if (spec.place === 'ornament') {
-      out.push({ name: glyph, x: centre, y: stepToY(ornamentStep) })
+      out.push({ name: glyph, x: centre, y: stepToY(ornamentStep), role: 'decoration' })
       ornamentStep += 2
     } else {
-      out.push({ name: glyph, x: centre, y: stepToY(ENGRAVE.dynamicStep) })
+      out.push({ name: glyph, x: centre, y: stepToY(ENGRAVE.dynamicStep), role: 'decoration' })
     }
   }
   return out

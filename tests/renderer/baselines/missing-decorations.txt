@@ -64,6 +64,7 @@ system 0 width=56.359 originY=0.000
       glyph timeSig4 4.684,1.000
     note@-6 x=7.564 w=5.474
       glyph noteheadBlack 7.564,3.000
+      glyph ornamentTrill 7.112,-3.500
       line  7.164,3.000 -> 9.144,3.000 t=0.160
       line  8.744,2.832 -> 8.744,-0.500 t=0.120
     note@-5 x=13.038 w=5.474
@@ -71,6 +72,7 @@ system 0 width=56.359 originY=0.000
       line  14.218,2.332 -> 14.218,-1.000 t=0.120
     note@-4 x=18.513 w=5.474
       glyph noteheadBlack 18.513,2.000
+      glyph ornamentTrill 18.061,-3.500
       line  19.693,1.832 -> 19.693,-1.500 t=0.120
     note@-3 x=23.987 w=5.474
       glyph noteheadBlack 23.987,1.500
@@ -88,6 +90,7 @@ system 0 width=56.359 originY=0.000
       line  42.410,0.168 -> 42.410,3.500 t=0.120
     note@1 x=47.885 w=5.474
       glyph noteheadBlack 47.885,-0.500
+      glyph ornamentTrill 47.433,-3.500
       line  47.885,-0.332 -> 47.885,3.000 t=0.120
     bar x=54.359 w=1.060
       line  54.439,-2.000 -> 54.439,2.000 t=0.160
@@ -329,6 +332,7 @@ system 0 width=56.359 originY=0.000
       line  8.744,2.832 -> 8.744,-0.500 t=0.120
     note@-5 x=13.038 w=5.474
       glyph noteheadBlack 13.038,2.500
+      glyph ornamentTrill 12.586,-3.500
       line  14.218,2.332 -> 14.218,-1.000 t=0.120
     note@-4 x=18.513 w=5.474
       glyph accidentalSharp 18.513,2.000
@@ -348,6 +352,7 @@ system 0 width=56.359 originY=0.000
       line  38.116,0.332 -> 38.116,-3.000 t=0.120
     note@0 x=42.410 w=5.474
       glyph noteheadBlack 42.410,0.000
+      glyph ornamentTrill 41.958,-3.500
       line  42.410,0.168 -> 42.410,3.500 t=0.120
     note@1 x=47.885 w=5.474
       glyph noteheadBlack 47.885,-0.500

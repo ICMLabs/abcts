@@ -325,7 +325,7 @@ system 1 width=56.702 originY=46.812
     bar x=54.702 w=0.160
       line  54.782,-2.000 -> 54.782,2.000 t=0.160
 tune 1
-bounds  width=80.523 height=48.812 top=0.000
+bounds  width=80.523 height=49.936 top=0.000
 systems 1
 system 0 width=80.523 originY=0.000
   staff 0 originY=15.420
@@ -390,6 +390,7 @@ system 0 width=80.523 originY=0.000
     note@-9,-6 x=21.073 w=1.935
       glyph noteheadBlack 21.073,4.500
       glyph noteheadBlack 21.073,3.000
+      glyph fingering3 21.293,-3.500
       line  20.673,3.000 -> 22.653,3.000 t=0.160
       line  20.673,4.000 -> 22.653,4.000 t=0.160
       line  20.673,3.000 -> 22.653,3.000 t=0.160
@@ -402,6 +403,7 @@ system 0 width=80.523 originY=0.000
       glyph augmentationDot 25.415,4.500
       glyph augmentationDot 25.415,3.500
       glyph augmentationDot 25.415,2.500
+      glyph fingering4 24.083,-3.500
       line  23.485,3.000 -> 25.465,3.000 t=0.160
       line  23.485,4.000 -> 25.465,4.000 t=0.160
       line  23.485,3.000 -> 25.465,3.000 t=0.160
@@ -410,6 +412,7 @@ system 0 width=80.523 originY=0.000
       glyph noteheadBlack 27.776,4.500
       glyph noteheadBlack 27.776,3.000
       glyph noteheadBlack 27.776,2.000
+      glyph fingering5 27.996,-3.500
       line  27.376,3.000 -> 29.356,3.000 t=0.160
       line  27.376,4.000 -> 29.356,4.000 t=0.160
       line  27.376,3.000 -> 29.356,3.000 t=0.160
@@ -428,6 +431,7 @@ system 0 width=80.523 originY=0.000
       glyph noteheadBlack 36.218,3.500
       glyph noteheadBlack 36.218,2.500
       glyph flag8thUp 37.398,-1.000
+      glyph fingering4 36.416,-3.500
       line  35.818,3.000 -> 37.798,3.000 t=0.160
       line  37.398,3.332 -> 37.398,-1.000 t=0.120
     rest x=39.377 w=3.871
@@ -440,6 +444,7 @@ system 0 width=80.523 originY=0.000
       glyph noteheadBlack 46.180,2.500
       glyph noteheadBlack 46.180,1.500
       glyph dynamicForte 45.760,3.500
+      glyph fingering3 46.400,-3.500
       line  45.780,3.000 -> 47.760,3.000 t=0.160
       line  47.360,3.332 -> 47.360,-2.000 t=0.120
     note@-7,-5,-3 x=51.212 w=3.760
@@ -483,13 +488,14 @@ system 0 width=80.523 originY=0.000
       glyph noteheadBlack 69.245,2.000
       glyph noteheadBlack 69.245,1.000
       glyph flag8thUp 70.425,-2.500
+      glyph fingering3 69.465,-3.500
       line  68.845,3.000 -> 70.825,3.000 t=0.160
       line  70.425,2.832 -> 70.425,-2.500 t=0.120
     rest x=73.384 w=3.871
       glyph rest8th 73.384,0.000
     bar x=78.523 w=0.160
       line  78.603,-2.000 -> 78.603,2.000 t=0.160
-  staff 1 originY=34.312
+  staff 1 originY=35.436
     staffline 0.000,2.000 -> 80.523,2.000 t=0.130
     staffline 0.000,1.000 -> 80.523,1.000 t=0.130
     staffline 0.000,0.000 -> 80.523,0.000 t=0.130
@@ -584,6 +590,7 @@ system 0 width=80.523 originY=0.000
       line  18.230,9.832 -> 18.230,3.000 t=0.120
     note@-11 x=20.810 w=1.935
       glyph noteheadBlack 20.810,5.500
+      glyph fingering2 20.996,-3.500
       line  20.410,3.000 -> 22.390,3.000 t=0.160
       line  20.410,4.000 -> 22.390,4.000 t=0.160
       line  20.410,5.000 -> 22.390,5.000 t=0.160
@@ -591,6 +598,7 @@ system 0 width=80.523 originY=0.000
     note@-12 x=22.746 w=3.760
       glyph noteheadBlack 22.746,6.000
       glyph augmentationDot 24.276,5.500
+      glyph fingering3 22.966,-3.500
       line  22.346,3.000 -> 24.326,3.000 t=0.160
       line  22.346,4.000 -> 24.326,4.000 t=0.160
       line  22.346,5.000 -> 24.326,5.000 t=0.160
@@ -598,6 +606,7 @@ system 0 width=80.523 originY=0.000
       line  23.926,5.832 -> 23.926,3.000 t=0.120
     note@-13 x=26.506 w=1.935
       glyph noteheadBlack 26.506,6.500
+      glyph fingering4 26.704,-3.500
       line  26.106,3.000 -> 28.086,3.000 t=0.160
       line  26.106,4.000 -> 28.086,4.000 t=0.160
       line  26.106,5.000 -> 28.086,5.000 t=0.160
@@ -606,6 +615,7 @@ system 0 width=80.523 originY=0.000
     note@-10 x=28.441 w=5.474
       glyph accidentalSharp 28.441,5.000
       glyph noteheadBlack 29.587,5.000
+      glyph fingering2 29.773,-3.500
       line  29.187,3.000 -> 31.167,3.000 t=0.160
       line  29.187,4.000 -> 31.167,4.000 t=0.160
       line  29.187,5.000 -> 31.167,5.000 t=0.160
@@ -644,12 +654,14 @@ system 0 width=80.523 originY=0.000
       line  52.012,3.832 -> 52.012,0.500 t=0.120
     note@-8 x=54.592 w=1.935
       glyph noteheadBlack 54.592,4.000
+      glyph fingering2 54.778,-3.500
       line  54.192,3.000 -> 56.172,3.000 t=0.160
       line  54.192,4.000 -> 56.172,4.000 t=0.160
       line  55.772,3.832 -> 55.772,0.866 t=0.120
     note@-9 x=56.528 w=3.760
       glyph noteheadBlack 56.528,4.500
       glyph augmentationDot 58.058,4.500
+      glyph fingering1 56.884,-3.500
       line  56.128,3.000 -> 58.108,3.000 t=0.160
       line  56.128,4.000 -> 58.108,4.000 t=0.160
       line  57.708,4.332 -> 57.708,1.054 t=0.120

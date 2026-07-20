@@ -1551,3 +1551,56 @@ describe('flags beyond the sixteenth', () => {
     expect(new Set((staff?.beams ?? []).map((b) => b.y1.toFixed(3))).size).toBe(3)
   })
 })
+
+describe('decoration coverage', () => {
+  const glyphsOf = (dec: string) =>
+    (
+      layout(parse(`X:1\nL:1/4\nK:C\n${dec}F|\n`).scores[0] as Score, { systemWidth: 200 })
+        .systems[0]?.staves[0]?.elements ?? []
+    )
+      .flatMap((e) => e.glyphs)
+      .filter((g) => g.role === 'decoration')
+      .map((g) => g.name)
+
+  it("resolves abcjs's pseudonyms, which already had glyphs", () => {
+    // These drew NOTHING only because the table was keyed on the canonical name while the
+    // model keeps the source spelling. abcjs rewrites them via accentPseudonyms; we alias
+    // instead. Verified against 6.6.3: `!>!` and `!emphasis!` draw its sforzato (the
+    // accent wedge), `!^!` its umarcato, `!tr!` its trill.
+    // Below, not Above: a lone middle-C takes an up stem, and articulations sit opposite
+    // the stem. The point here is that a glyph appears at all.
+    expect(glyphsOf('!>!')).toEqual(['articAccentBelow'])
+    expect(glyphsOf('!emphasis!')).toEqual(['articAccentBelow'])
+    expect(glyphsOf('!^!')).toEqual(['articMarcatoBelow'])
+    expect(glyphsOf('!tr!')).toEqual(['ornamentTrill'])
+  })
+
+  it("draws every dynamic in abcjs's volumeDecoration set", () => {
+    // Only `p` and `f` were mapped. SMuFL precomposes the multi-letter ones, so `mp` is a
+    // single glyph rather than an `m` and a `p` placed side by side.
+    expect(glyphsOf('!mp!')).toEqual(['dynamicMP'])
+    expect(glyphsOf('!ff!')).toEqual(['dynamicFF'])
+    expect(glyphsOf('!pp!')).toEqual(['dynamicPP'])
+    expect(glyphsOf('!sfz!')).toEqual(['dynamicSforzando1'])
+  })
+
+  it('draws fingerings as digits', () => {
+    expect(glyphsOf('!3!')).toEqual(['fingering3'])
+    expect(glyphsOf('!0!')).toEqual(['fingering0'])
+    expect(glyphsOf('!5!')).toEqual(['fingering5'])
+  })
+
+  it('aliases `mordent` and `trillh` the way abcjs draws them', () => {
+    // abcjs gives `!mordent!` its scripts.mordent — the same glyph as `!lowermordent!` —
+    // and `!trillh!` its scripts.trill.
+    expect(glyphsOf('!mordent!')).toEqual(glyphsOf('!lowermordent!'))
+    expect(glyphsOf('!trillh!')).toEqual(glyphsOf('!trill!'))
+  })
+
+  it('still draws nothing for the spanners, which are the next wave', () => {
+    // Hairpins and glissandi need start/end anchors like slurs, not a stamped glyph.
+    // Asserted so the gap stays visible rather than being mistaken for coverage.
+    expect(glyphsOf('!<(!')).toEqual([])
+    expect(glyphsOf('!glissando(!')).toEqual([])
+  })
+})

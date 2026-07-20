@@ -39,6 +39,7 @@ system 0 width=90.000 originY=0.000
       line  35.889,0.832 -> 35.889,-2.500 t=0.120
     note@-1 x=40.996 w=5.474
       glyph noteheadBlack 40.996,0.500
+      glyph ornamentMordent 40.130,-3.500
       line  42.176,0.332 -> 42.176,-3.000 t=0.120
     note@0 x=47.282 w=5.474
       glyph noteheadBlack 47.282,0.000
@@ -87,9 +88,11 @@ system 1 width=29.582 originY=26.896
       line  11.338,0.332 -> 11.338,-3.000 t=0.120
     note@0 x=15.633 w=5.474
       glyph noteheadBlack 15.633,0.000
+      glyph dynamicFF 14.733,3.500
       line  15.633,0.168 -> 15.633,3.500 t=0.120
     note@1 x=21.107 w=5.474
       glyph noteheadBlack 21.107,-0.500
+      glyph dynamicPP 20.077,3.500
       line  21.107,-0.332 -> 21.107,3.000 t=0.120
     bar x=27.582 w=1.060
       line  27.662,-2.000 -> 27.662,2.000 t=0.160
@@ -172,7 +175,7 @@ system 0 width=77.050 originY=0.000
     bar x=75.050 w=0.160
       line  75.130,-2.000 -> 75.130,2.000 t=0.160
 tune 2
-bounds  width=90.000 height=121.204 top=0.000
+bounds  width=90.000 height=121.692 top=0.000
 systems 6
 system 0 width=90.000 originY=0.000
   staff 0 originY=15.420
@@ -212,6 +215,7 @@ system 0 width=90.000 originY=0.000
       line  42.176,0.832 -> 42.176,-2.500 t=0.120
     note@-2 x=47.282 w=5.474
       glyph noteheadBlack 47.282,1.000
+      glyph ornamentMordent 46.416,-3.500
       line  48.462,0.832 -> 48.462,-2.500 t=0.120
     note@-2 x=53.568 w=5.474
       glyph noteheadBlack 53.568,1.000
@@ -250,6 +254,7 @@ system 1 width=90.000 originY=26.052
       line  11.892,0.832 -> 11.892,-2.500 t=0.120
     note@-2 x=16.740 w=5.474
       glyph noteheadBlack 16.740,1.000
+      glyph articAccentBelow 16.652,3.000
       line  17.920,0.832 -> 17.920,-2.500 t=0.120
     note@-2 x=22.768 w=5.474
       glyph noteheadBlack 22.768,1.000
@@ -259,6 +264,7 @@ system 1 width=90.000 originY=26.052
       line  29.875,-2.000 -> 29.875,2.000 t=0.160
     note@-2 x=30.795 w=5.474
       glyph noteheadBlack 30.795,1.000
+      glyph articAccentBelow 30.707,3.000
       line  31.975,0.832 -> 31.975,-2.500 t=0.120
     note@-2 x=36.823 w=5.474
       glyph noteheadBlack 36.823,1.000
@@ -275,18 +281,23 @@ system 1 width=90.000 originY=26.052
       line  55.987,-2.000 -> 55.987,2.000 t=0.160
     note@-2 x=56.907 w=5.474
       glyph noteheadBlack 56.907,1.000
+      glyph fingering0 57.067,-3.500
       line  58.087,0.832 -> 58.087,-2.500 t=0.120
     note@-2 x=62.926 w=5.474
       glyph noteheadBlack 62.926,1.000
+      glyph fingering1 63.282,-3.500
       line  64.106,0.832 -> 64.106,-2.500 t=0.120
     note@-2 x=68.944 w=5.474
       glyph noteheadBlack 68.944,1.000
+      glyph fingering2 69.130,-3.500
       line  70.124,0.832 -> 70.124,-2.500 t=0.120
     note@-2 x=74.963 w=5.474
       glyph noteheadBlack 74.963,1.000
+      glyph fingering3 75.183,-3.500
       line  76.143,0.832 -> 76.143,-2.500 t=0.120
     note@-2 x=80.981 w=5.474
       glyph noteheadBlack 80.981,1.000
+      glyph fingering4 81.179,-3.500
       line  82.161,0.832 -> 82.161,-2.500 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
@@ -301,6 +312,7 @@ system 2 width=90.000 originY=45.844
       glyph gClef 1.000,1.000
     note@-2 x=4.684 w=5.474
       glyph noteheadBlack 4.684,1.000
+      glyph fingering5 4.904,-3.500
       line  5.864,0.832 -> 5.864,-2.500 t=0.120
     note@-2 x=11.210 w=5.474
       glyph noteheadBlack 11.210,1.000
@@ -340,10 +352,11 @@ system 2 width=90.000 originY=45.844
       line  75.127,0.832 -> 75.127,-2.500 t=0.120
     note@-2 x=80.474 w=5.474
       glyph noteheadBlack 80.474,1.000
+      glyph dynamicPPPP 78.024,3.500
       line  81.654,0.832 -> 81.654,-2.500 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 3 width=90.000 originY=65.956
+system 3 width=90.000 originY=66.392
   staff 0 originY=7.392
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -354,9 +367,11 @@ system 3 width=90.000 originY=65.956
       glyph gClef 1.000,1.000
     note@-2 x=4.684 w=5.474
       glyph noteheadBlack 4.684,1.000
+      glyph dynamicPPP 2.944,3.500
       line  5.864,0.832 -> 5.864,-2.500 t=0.120
     note@-2 x=11.210 w=5.474
       glyph noteheadBlack 11.210,1.000
+      glyph dynamicPP 10.180,3.500
       line  12.390,0.832 -> 12.390,-2.500 t=0.120
     note@-2 x=17.737 w=5.474
       glyph noteheadBlack 17.737,1.000
@@ -364,11 +379,13 @@ system 3 width=90.000 originY=65.956
       line  18.917,0.832 -> 18.917,-2.500 t=0.120
     note@-2 x=24.263 w=5.474
       glyph noteheadBlack 24.263,1.000
+      glyph dynamicMP 23.163,3.500
       line  25.443,0.832 -> 25.443,-2.500 t=0.120
     bar x=31.789 w=0.160
       line  31.869,-2.000 -> 31.869,2.000 t=0.160
     note@-2 x=32.789 w=5.474
       glyph noteheadBlack 32.789,1.000
+      glyph dynamicMF 31.703,3.500
       line  33.969,0.832 -> 33.969,-2.500 t=0.120
     note@-2 x=39.316 w=5.474
       glyph noteheadBlack 39.316,1.000
@@ -376,17 +393,21 @@ system 3 width=90.000 originY=65.956
       line  40.496,0.832 -> 40.496,-2.500 t=0.120
     note@-2 x=45.842 w=5.474
       glyph noteheadBlack 45.842,1.000
+      glyph dynamicFF 44.942,3.500
       line  47.022,0.832 -> 47.022,-2.500 t=0.120
     note@-2 x=52.368 w=5.474
       glyph noteheadBlack 52.368,1.000
+      glyph dynamicFFF 50.988,3.500
       line  53.548,0.832 -> 53.548,-2.500 t=0.120
     bar x=59.895 w=0.160
       line  59.975,-2.000 -> 59.975,2.000 t=0.160
     note@-2 x=60.895 w=5.474
       glyph noteheadBlack 60.895,1.000
+      glyph dynamicFFFF 59.035,3.500
       line  62.075,0.832 -> 62.075,-2.500 t=0.120
     note@-2 x=67.421 w=5.474
       glyph noteheadBlack 67.421,1.000
+      glyph dynamicSforzando1 66.803,3.500
       line  68.601,0.832 -> 68.601,-2.500 t=0.120
     note@-2 x=73.947 w=5.474
       glyph noteheadBlack 73.947,1.000
@@ -396,7 +417,7 @@ system 3 width=90.000 originY=65.956
       line  81.654,0.832 -> 81.654,-2.500 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 4 width=90.000 originY=84.456
+system 4 width=90.000 originY=84.944
   staff 0 originY=11.092
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -449,7 +470,7 @@ system 4 width=90.000 originY=84.456
       line  81.654,0.832 -> 81.654,-2.500 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 5 width=29.582 originY=106.180
+system 5 width=29.582 originY=106.668
   staff 0 originY=7.392
     staffline 0.000,2.000 -> 29.582,2.000 t=0.130
     staffline 0.000,1.000 -> 29.582,1.000 t=0.130
