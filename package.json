@@ -17,6 +17,11 @@
       "types": "./dist/renderer/index.d.ts",
       "import": "./dist/renderer/index.js",
       "require": "./dist/renderer/index.cjs"
+    },
+    "./compat": {
+      "types": "./dist/compat/index.d.ts",
+      "import": "./dist/compat/index.js",
+      "require": "./dist/compat/index.cjs"
     }
   },
   "files": [
