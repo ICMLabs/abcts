@@ -263,6 +263,23 @@ function parseTempo(content: string): Tempo | null {
   return { beatUnit, bpm, text }
 }
 
+/** Move every written pitch in a measure by whole octaves — `V:… octave=±n`. */
+function shiftMeasure(measure: Measure, octaves: number): Measure {
+  const move = (pitch: Pitch): Pitch => ({ ...pitch, octave: pitch.octave + octaves })
+  const shift = (event: MusicEvent): MusicEvent => {
+    if (event.type === 'rest') return event
+    if (event.type === 'note') {
+      return { ...event, pitch: move(event.pitch), graceNotes: event.graceNotes.map(move) }
+    }
+    return { ...event, pitches: event.pitches.map(move), graceNotes: event.graceNotes.map(move) }
+  }
+  return {
+    ...measure,
+    events: measure.events.map(shift),
+    overlays: measure.overlays.map((layer) => layer.map(shift)),
+  }
+}
+
 /**
  * `style=` on a `K:` or `V:` field — the notehead shape for everything that follows.
  * Distinct from the `!style=x!` decoration, which applies to one note.
@@ -580,7 +597,23 @@ class VoiceBuilder {
       this.measureStart = null
     }
     this.applyLyrics()
-    return { id: this.id, octaveShift: this.octaveShift, clef: this.clef, measures: this.measures }
+    // `V:2 clef=bass octave=-2` moves the WRITTEN pitch, so it is baked into the model
+    // here rather than left for a renderer to remember. Settled by probing abcjs 6.6.3,
+    // which reports pitch -14 where an unshifted voice reports 0: the noteheads move.
+    //
+    // The model called this "a sounding shift, not a written-pitch change" and left the
+    // question open in a comment, and the content gate compensated for it — adding the
+    // shift back before comparing, which made the fixture pass while our noteheads sat
+    // two octaves off abcjs's. The compensation went with this change, so the gate now
+    // verifies the shift instead of normalising it away.
+    //
+    // ponytail: the voice's FINAL shift applies to all of its measures. A mid-body `V:`
+    // that changes `octave=` partway would need this per-measure; none does.
+    const measures =
+      this.octaveShift === 0
+        ? this.measures
+        : this.measures.map((m) => shiftMeasure(m, this.octaveShift))
+    return { id: this.id, octaveShift: this.octaveShift, clef: this.clef, measures }
   }
 
   get isEmpty(): boolean {

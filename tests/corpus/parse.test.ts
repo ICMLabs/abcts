@@ -594,3 +594,37 @@ describe('attachment classification', () => {
     expect(result.scores[0]?.key).not.toBe(result.scores[1]?.key)
   })
 })
+
+describe('V: octave= shifts the written pitch', () => {
+  const pitchesOf = (abc: string, voiceIndex: number) => {
+    const result = parse(abc)
+    if (!result.ok) throw new Error('expected parse to succeed')
+    const voice = result.scores[0]?.voices[voiceIndex]
+    return (voice?.measures ?? [])
+      .flatMap((m) => m.events)
+      .filter((e) => e.type === 'note')
+      .map((n) => (n.pitch.octave - 4) * 7 + stepIndex(n.pitch.step))
+  }
+
+  const TWO_VOICES =
+    'X:1\nM:4/4\nL:1/4\nV:1 clef=treble\nV:2 clef=bass octave=-2\nK:C\nV:1\nCDEF|\nV:2\nCDEF|\n'
+
+  it('moves the notehead, and is not a sounding-only shift', () => {
+    // Settled by probing abcjs 6.6.3: an unshifted voice reports pitch 0 where
+    // `octave=-2` reports -14, so the written pitch moves and so do the noteheads.
+    // The model recorded this as "a sounding shift" with the question left open, and
+    // the content gate ADDED the shift back before comparing — which made this fixture
+    // pass while our noteheads sat two octaves off abcjs's. Both are now corrected.
+    expect(pitchesOf(TWO_VOICES, 0)).toEqual([0, 1, 2, 3])
+    expect(pitchesOf(TWO_VOICES, 1)).toEqual([-14, -13, -12, -11])
+  })
+
+  it('shifts by whole octaves in either direction', () => {
+    const up = 'X:1\nL:1/4\nV:1 octave=1\nK:C\nCDEF|\n'
+    expect(pitchesOf(up, 0)).toEqual([7, 8, 9, 10])
+  })
+
+  it('leaves an unshifted voice alone', () => {
+    expect(pitchesOf('X:1\nL:1/4\nV:1\nK:C\nCDEF|\n', 0)).toEqual([0, 1, 2, 3])
+  })
+})

@@ -227,7 +227,7 @@ function ourNotes(abc: string): OurNote[] {
                 ? 1
                 : ratToNumber(event.duration) / ratToNumber(event.notatedDuration),
             pitches: (event.type === 'chord' ? event.pitches : [event.pitch]).map(
-              (pitch) => `${diatonic(pitch) + voice.octaveShift * 7}`,
+              (pitch) => `${diatonic(pitch)}`,
             ),
             decorationCount: event.decorations.length,
             hasChordSymbol: event.chordSymbol !== null,
@@ -240,10 +240,11 @@ function ourNotes(abc: string): OurNote[] {
               ratToNumber(event.notatedDuration) === 0
                 ? 1
                 : ratToNumber(event.duration) / ratToNumber(event.notatedDuration),
-            // abcjs bakes `octave=` into its pitch numbers; the core model keeps it on
-            // the Voice as a sounding shift, so add it back to compare like for like.
+            // No octave compensation: `octave=` is now baked into the model pitch, as abcjs
+            // bakes it into its own. Adding it back here made voice-octave-shift pass while
+            // our noteheads sat two octaves off abcjs's.
             pitches: (event.type === 'chord' ? event.pitches : [event.pitch]).map(
-              (pitch) => `${diatonic(pitch) + voice.octaveShift * 7}${ourAccidental(pitch)}`,
+              (pitch) => `${diatonic(pitch)}${ourAccidental(pitch)}`,
             ),
             decorationCount: event.decorations.length,
             hasChordSymbol: event.chordSymbol !== null,
