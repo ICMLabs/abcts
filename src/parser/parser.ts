@@ -447,6 +447,12 @@ class VoiceBuilder {
   private pendingOpening: { barline: Barline; range: SourceRange } | null = null
   /** A `P:` label awaiting the measure it marks. */
   private pendingPart: { label: string; range: SourceRange } | null = null
+  /** A repeat ending awaiting the measure it opens. */
+  private pendingVolta: { label: string; range: SourceRange } | null = null
+
+  setVolta(label: string, range: SourceRange): void {
+    this.pendingVolta = { label, range }
+  }
 
   setPartLabel(label: string, range: SourceRange): void {
     this.pendingPart = { label, range }
@@ -457,16 +463,22 @@ class VoiceBuilder {
     openingBarlineSourceRange: SourceRange | null
     partLabel: string | null
     partLabelSourceRange: SourceRange | null
+    volta: string | null
+    voltaSourceRange: SourceRange | null
   } {
     const pending = this.pendingOpening
     this.pendingOpening = null
     const part = this.pendingPart
     this.pendingPart = null
+    const volta = this.pendingVolta
+    this.pendingVolta = null
     return {
       openingBarline: pending?.barline ?? null,
       openingBarlineSourceRange: pending?.range ?? null,
       partLabel: part?.label ?? null,
       partLabelSourceRange: part?.range ?? null,
+      volta: volta?.label ?? null,
+      voltaSourceRange: volta?.range ?? null,
     }
   }
 
@@ -1184,6 +1196,24 @@ class Parser {
             sourceRange(token.start, token.start + token.length),
           )
           i++
+
+          // A digit straight after the barline opens a repeat ENDING — `|1`, `:|2`. The
+          // lexer already emits it as a digit token; nothing consumed it, so the number
+          // was silently dropped and a reader could not tell where a repeat went.
+          // `1,2` and `1-3` label one ending for several passes.
+          const label: string[] = []
+          while (i < tokens.length) {
+            const next = tokens[i]
+            if (next === undefined) break
+            const raw = this.src.slice(next.start, next.start + next.length)
+            if (next.kind === 'digit' || (label.length > 0 && (raw === ',' || raw === '-'))) {
+              label.push(raw)
+              i++
+            } else break
+          }
+          if (label.length > 0) {
+            voice().setVolta(label.join(''), sourceRange(token.start, tokens[i - 1]?.start ?? 0))
+          }
           break
         }
         default:

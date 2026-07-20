@@ -58,6 +58,12 @@ export function snapshot(score: Score): string {
           `    beam   ${n(beam.x1)},${n(beam.y1)} -> ${n(beam.x2)},${n(beam.y2)} t=${n(beam.thickness)}`,
         )
       }
+      for (const l of staff.voltaLines) {
+        lines.push(`    volta  ${n(l.x1)},${n(l.y1)} -> ${n(l.x2)},${n(l.y2)} t=${n(l.thickness)}`)
+      }
+      for (const t of staff.voltaTexts) {
+        lines.push(`    voltatext ${n(t.x)},${n(t.y)} ${JSON.stringify(t.text)}`)
+      }
       for (const l of staff.tupletLines) {
         lines.push(
           `    tupletline ${n(l.x1)},${n(l.y1)} -> ${n(l.x2)},${n(l.y2)} t=${n(l.thickness)}`,

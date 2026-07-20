@@ -1175,3 +1175,48 @@ describe('tuplets', () => {
     expect(text?.y ?? 0).toBeGreaterThan(Math.max(beam?.y1 ?? 0, beam?.y2 ?? 0))
   })
 })
+
+describe('repeat endings (voltas)', () => {
+  const staffOf = (abc: string) =>
+    layout(parse(`X:1\nM:4/4\nL:1/4\nK:C\n${abc}\n`).scores[0] as Score, { systemWidth: 200 })
+      .systems[0]?.staves[0]
+
+  it('parses the ending number, which used to be silently dropped', () => {
+    // `|1` reached the lexer as barline + digit and nothing consumed the digit, so a
+    // reader could not tell which pass through a repeat plays which bars.
+    const measures = parse('X:1\nL:1/4\nK:C\n|:CDEF|1 GABc:|2 cBAG||\n').scores[0]?.voices[0]
+      ?.measures
+    expect(measures?.map((m) => m.volta)).toEqual([null, '1', '2'])
+  })
+
+  it('reads a multi-pass label', () => {
+    const measures = parse('X:1\nL:1/4\nK:C\nCDEF|1,2 GABc:|\n').scores[0]?.voices[0]?.measures
+    expect(measures?.[1]?.volta).toBe('1,2')
+  })
+
+  it('brackets each ending and labels it', () => {
+    const staff = staffOf('|:CDEF|1 GABc:|2 cBAG||')
+    expect(staff?.voltaTexts.map((t) => t.text)).toEqual(['1', '2'])
+    // Each ending: a rule, an opening hook, and a closing hook.
+    expect(staff?.voltaLines).toHaveLength(6)
+  })
+
+  it('starts a new ending where the previous one stops', () => {
+    // `|1 … :|2` runs them back to back, so ending 2 opens exactly where 1 closes.
+    const lines = staffOf('|:CDEF|1 GABc:|2 cBAG||')?.voltaLines ?? []
+    const rules = lines.filter((l) => l.y1 === l.y2).sort((a, b) => a.x1 - b.x1)
+    expect(rules).toHaveLength(2)
+    expect(rules[1]?.x1).toBeCloseTo(rules[0]?.x2 ?? 0, 1)
+  })
+
+  it('sits above the staff, clear of the music', () => {
+    for (const line of staffOf('|:CDEF|1 GABc:|2 cBAG||')?.voltaLines ?? []) {
+      // y is down; the staff's top line is at -2.
+      expect(Math.max(line.y1, line.y2)).toBeLessThan(-2)
+    }
+  })
+
+  it('draws nothing when there are no endings', () => {
+    expect(staffOf('CDEF|GABc|')?.voltaLines).toEqual([])
+  })
+})

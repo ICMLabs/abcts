@@ -140,6 +140,11 @@ const ENGRAVE = {
   /** Length of the hook turning down from each end of a tuplet bracket. */
   tupletHook: 0.6,
   tupletTextSize: 1.4,
+  /** Staff step for a repeat-ending bracket, above everything the staff itself draws. */
+  voltaStep: 8,
+  /** How far the volta bracket's end hooks turn down toward the staff. */
+  voltaHook: 1.4,
+  voltaTextSize: 1.3,
   /**
    * Estimated width of one text character, as a fraction of the font size.
    *
@@ -343,6 +348,9 @@ export interface LayoutStaff {
   /** Tuplet brackets, and the numbers that go with them. Also span elements. */
   readonly tupletLines: readonly PlacedLine[]
   readonly tupletTexts: readonly PlacedText[]
+  /** Repeat-ending (volta) brackets and their labels. Span whole measures. */
+  readonly voltaLines: readonly PlacedLine[]
+  readonly voltaTexts: readonly PlacedText[]
   /** Vertical offset of this staff's middle line within its system. */
   readonly originY: number
 }
@@ -1775,6 +1783,9 @@ interface MeasureBlock {
   readonly closingBarIndex: number | null
   /** Note anchors for slur and tie resolution, positioned LOCAL to this block. */
   readonly anchors: readonly NoteAnchor[]
+  /** A repeat ending opening at this measure, and whether this measure closes it. */
+  readonly volta: string | null
+  readonly closesVolta: boolean
   /**
    * Width of the music alone, excluding the closing barline and its gaps.
    *
@@ -1873,7 +1884,23 @@ function layoutMeasure(
     x += ENGRAVE.barGap
   }
 
-  return { elements, width: x, beams, anchors, closingBarIndex, musicWidth }
+  // A repeat barline or a final ends the ending it sits in; a plain one does not.
+  const closesVolta =
+    measure.closingBarline === 'repeatEnd' ||
+    measure.closingBarline === 'repeatBoth' ||
+    measure.closingBarline === 'final' ||
+    measure.closingBarline === 'double'
+
+  return {
+    elements,
+    width: x,
+    beams,
+    anchors,
+    closingBarIndex,
+    musicWidth,
+    volta: measure.volta,
+    closesVolta,
+  }
 }
 
 /** Shift a laid-out measure sideways into its place in a system. */
@@ -2056,11 +2083,55 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         ...plan.prefix(withMeter, voiceIndex === 0).elements,
       ]
       const beamGroups = new Map<number, StemInfo[]>()
+      const voltaLines: PlacedLine[] = []
+      const voltaTexts: PlacedText[] = []
+      /** The repeat ending currently open, and where its bracket started. */
+      let openVolta: { label: string; startX: number } | null = null
+
+      /**
+       * Close the open ending, drawing its bracket.
+       *
+       * `hooked` is false when the ending simply runs off the end of a system —
+       * engraving leaves that end open, because the bracket resumes on the next line.
+       */
+      const closeVolta = (endX: number, hooked: boolean): void => {
+        if (openVolta === null) return
+        const y = stepToY(ENGRAVE.voltaStep)
+        const thickness = ENGRAVING_DEFAULTS.thinBarlineThickness
+        voltaLines.push({ x1: openVolta.startX, y1: y, x2: endX, y2: y, thickness })
+        // The opening hook always turns down; the closing one only when the ending
+        // really ends here rather than continuing onto the next system.
+        voltaLines.push({
+          x1: openVolta.startX,
+          y1: y,
+          x2: openVolta.startX,
+          y2: y + ENGRAVE.voltaHook,
+          thickness,
+        })
+        if (hooked) {
+          voltaLines.push({ x1: endX, y1: y, x2: endX, y2: y + ENGRAVE.voltaHook, thickness })
+        }
+        voltaTexts.push({
+          text: openVolta.label,
+          x: openVolta.startX + 0.4,
+          y: y + ENGRAVE.voltaTextSize,
+          size: ENGRAVE.voltaTextSize,
+          bold: false,
+          italic: false,
+        })
+        openVolta = null
+      }
+
       let x = head
 
       for (let i = span.start; i < span.end; i++) {
         const block = plan.blocks[i]
         if (block !== undefined) {
+          // A new ending closes whatever was open — `|1 … :|2` runs them back to back.
+          if (block.volta !== null) {
+            closeVolta(x, true)
+            openVolta = { label: block.volta, startX: x }
+          }
           const base = elements.length
           // JUSTIFY the measure into its column. Scaling each element's ORIGIN by the
           // stretch factor distributes the slack between the notes in proportion to the
@@ -2103,6 +2174,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         }
         // Advance by the COLUMN, not the block, so every staff stays in step.
         x += (columnWidths[i] ?? 0) * justify
+        if (block?.closesVolta) closeVolta(x, true)
       }
 
       const beams: PlacedLine[] = []
@@ -2113,6 +2185,9 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       // Curves are NOT resolved here: a slur or tie can span a system break, so it needs
       // every system's anchors, which only exist once the whole tune is packed. Filled
       // in by the pass below.
+      // An ending still open at the end of a system runs off it, unhooked.
+      closeVolta(x, false)
+
       // Tuplets resolve here — unlike curves they never span a system, because a beam
       // and a barline both break them long before a line break can.
       const tuplets = layoutTuplets(
@@ -2127,6 +2202,8 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         curves: [],
         tupletLines: tuplets.lines,
         tupletTexts: tuplets.texts,
+        voltaLines,
+        voltaTexts,
         originY: 0,
       }
     })

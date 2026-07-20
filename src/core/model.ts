@@ -376,6 +376,17 @@ export interface Measure {
   readonly meterChange: Meter | null
   readonly meterChangeSourceRange: SourceRange | null
   /**
+   * A repeat ending (volta) starting at this measure — the `1` in `|1`, or `1,2`.
+   *
+   * ABC writes the number after the barline that opens the ending, and the ending runs
+   * until the next one or the repeat that closes it. Without this a reader cannot tell
+   * which pass through a repeat plays which bars, so it is structural rather than
+   * decorative — and it is playback structure too, which is why it belongs in the model
+   * rather than only in the renderer.
+   */
+  readonly volta: string | null
+  readonly voltaSourceRange: SourceRange | null
+  /**
    * A `P:` part label taking effect at this measure — "A", or "PART - VERSE, CHORUS".
    * Printed above the staff.
    *

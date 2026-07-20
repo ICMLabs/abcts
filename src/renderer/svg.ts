@@ -182,6 +182,15 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
       for (const beam of staff.beams) {
         parts.push(lineToRect(beam, abcjs ? ' class="abcjs-beam"' : ` class="${prefix}-beam"`))
       }
+      for (const line of staff.voltaLines) {
+        parts.push(lineToRect(line, abcjs ? ' class="abcjs-ending"' : ` class="${prefix}-volta"`))
+      }
+      for (const t of staff.voltaTexts) {
+        parts.push(
+          `<text${abcjs ? ' class="abcjs-ending"' : ` class="${prefix}-volta"`} x="${num(t.x)}" ` +
+            `y="${num(t.y)}" font-family="serif" font-size="${num(t.size)}">${escapeText(t.text)}</text>`,
+        )
+      }
       for (const line of staff.tupletLines) {
         parts.push(lineToRect(line, abcjs ? ' class="abcjs-tuplet"' : ` class="${prefix}-tuplet"`))
       }
