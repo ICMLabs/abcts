@@ -285,7 +285,7 @@ only mentions of `tuplet` and `style` are in comments.
 | ~~Annotations (`"^text"`)~~ | 15 | **DONE** — `^`/`_` stack in abcjs's line order, `<`/`>` sit beside the note. |
 | Microtones | 4 | parsed, not rendered |
 | Styled noteheads (`!style=harmonic!`) | 1 | parsed, not rendered |
-| Melisma extension lines | 1 | parsed, not rendered |
+| ~~Melisma extension lines~~ | 1 | **DONE** — strict prints abcjs's literal `_`, non-strict strokes the extender to the last held notehead (Gould p.447). NO GATE COVERS IT; see below. |
 | `V:… octave=` | 1 | parsed, not applied at layout |
 
 **CORRECTION, 2026-07-19 (later).** "Mixed-length chords, 18 occurrences" was the top of
@@ -303,6 +303,18 @@ The corpus could never have answered this. All 18 of its mixed chords combine ei
 quarters and sixteenths, and those three share a single filled notehead — so every
 candidate rule produces identical ink. A frequency count over a saturated corpus reads
 like evidence and is not; the reference had to be asked directly.
+
+**BASELINES RENDER THE FIRST TUNE ONLY — a blind spot found 2026-07-19.** `baseline.ts`
+calls `layout(score)`, which takes `scores[0]`. The structural gate documents this about
+itself; the baseline gate did not, and it matters more there, because baselines are the
+only thing watching the *look*. `S5-directives` has six tunes, so five are unbaselined —
+and the corpus's ONLY melisma lives in tune 5. Melisma rendering could therefore not
+change a single committed baseline, in either direction.
+
+It is worse than untested. A synthetic unit test passed while the real fixture silently
+lost its underscore, because strict and non-strict wrap differently and the two disagreed
+about which system a held note landed in. Rendering the actual fixture found it; nothing
+in the suite would have. Extending baselines to every tune is the fix and is not done.
 
 ### Then, none of which the corpus hits as hard
 
