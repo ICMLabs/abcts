@@ -82,7 +82,7 @@ reached by relative sibling path. See ARCHITECTURE.md § Repository Structure.
 The PARSER is complete and gated (39/39 corpus fixtures, saturated). The RENDERER now
 reproduces **40 of 41** fixtures on the structural gate; the 41st is a recorded abcjs bug,
 so the corpus is COMPLETE — every fixture is either reproduced or explained. All 41 also
-have committed visual baselines. 266 tests.
+have committed visual baselines. 278 tests.
 Renders staff, all clefs, key signatures, meters, tempo marks, part labels, noteheads and
 chords with stems and ledger lines, accidentals, rests and barlines.
 
@@ -102,6 +102,12 @@ but READ the diff and commit baselines with the code change.
 diff to follow. What remains is known from the code: the decoration tail (rolls, slides, hairpins),
 no text metrics, fixed lanes rather than a skyline, and page furniture beyond titles.
 See the checkpoint.
+
+## Modes — abcjs-strict is the DEFAULT
+`abcjs-strict` (reproduce abcjs, bugs included) | `abc2.1` (standard read correctly) |
+`extended`. `parse(abc, { mode })` and `render(score, { mode })`. Strict is default
+because a replacement whose default output differs from what it replaces is not one.
+`abcts/compat` gives abcjs's `renderAbc` signature, classes and density for a drop-in.
 
 ## Running it
 `abcts tune.abc` (CLI, after `npm run build`) renders to stdout or a file.

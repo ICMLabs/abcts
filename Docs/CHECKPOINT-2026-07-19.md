@@ -11,7 +11,7 @@ the parser and whose risk list is still live except where noted below.
 
 | | |
 |---|---|
-| Tests | **266 passing** (74 parser + 192 renderer) |
+| Tests | **278 passing** (74 parser + 196 renderer + 8 compat) |
 | Parser content parity | 39/39 gated fixtures, unchanged |
 | **Render structural parity** | **40 of 41** — the 41st is a recorded abcjs bug |
 | **Visual baselines** | **41 of 41**, committed geometry snapshots |
@@ -55,6 +55,51 @@ All three are recorded in ARCHITECTURE.md § Rendering. In brief:
 which do only gate compat. Every fixture also ships an element dump with sequence and
 staff positions. That is the previous checkpoint's own lesson turned on itself: *"no
 oracle exists" should be verified against the data before it is believed.*
+
+---
+
+## Compatibility modes — and why strict is the DEFAULT
+
+Mirrors abcMusicKit's three, and `abcjs-strict` is the default because a replacement
+whose default output differs from the thing it replaces is not one.
+
+| Mode | |
+|---|---|
+| `abcjs-strict` | reproduce abcjs, bugs included. **Default.** |
+| `abc2.1` | the standard read correctly |
+| `extended` | beyond the standard |
+
+**The mode gates BEHAVIOUR, not just look**, and that is the point. Every place core
+deliberately departed from abcjs was already recorded as a KNOWN_DIVERGENCE; under modes
+those became the difference between modes rather than permanent divergences. `+:`
+continuations and the spaced lyric hyphen are both mode-gated now, and lyric parity went
+8/10 to 9/10 because strict reproduces abcjs exactly on `ave-verum-corpus`.
+
+### Spacing: one constant, not a second engraver
+
+abcjs computes a note's width as `sqrt(duration * 8)` units of 30px
+(`write/layout/voice-elements.js:23`, `engraver-controller.js:43`) — the SAME square-root
+law abcm2ps uses, differently calibrated. abcjs is `sqrt(d) * 10.949` staff spaces against
+core's `sqrt(d) * 13.0`. Predicted 42.43px for a quarter note; the goldens measure 42.43px.
+
+### `abcts/compat`
+
+`import { renderAbc } from 'abcts/compat'` — abcjs's signature, its CSS classes, its
+`data-name` hooks, its density, and its padded element width. The bar is VISUAL
+EQUIVALENCE plus the same DOM, not byte-identical SVG: the markup is core's own (fewer
+wrappers, no `xlink:href`, `currentColor`), which leaves room for optimisation that
+cannot change what is painted.
+
+Deliberately absent rather than stubbed: abcjs's audio and timing methods and its
+`engraver`. A method returning a plausible number is worse than one that is missing.
+
+### Strict-mode fidelity gaps
+
+Two, now GAPS rather than design choices — a real change in what they mean:
+- `S1-decorations` — abcjs drops `!staccato!`; strict does not drop it yet.
+- `frere-jacques` — strict parses the `+:` prose as music like abcjs, so the structure
+  matches, but lexes it differently: 50 notes against 45. Closing it means matching
+  abcjs's lexer on arbitrary prose, where a comma is an octave mark.
 
 ---
 
