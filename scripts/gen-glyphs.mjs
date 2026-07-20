@@ -45,6 +45,15 @@ const GLYPHS = [
   'noteheadWhole',
   'noteheadHalf',
   'noteheadBlack',
+  // Styled heads — `!style=x!` and `[K: style=x]`. abcjs draws harmonic as a diamond,
+  // x as `noteheads.indeterminate`, rhythm as a slash. White variants are here because
+  // a styled note can still be a half or a whole.
+  'noteheadDiamondBlack',
+  'noteheadDiamondWhite',
+  'noteheadXBlack',
+  'noteheadTriangleUpBlack',
+  'noteheadTriangleUpWhite',
+  'noteheadSlashVerticalEnds',
   // Flags
   'flag8thUp',
   'flag8thDown',

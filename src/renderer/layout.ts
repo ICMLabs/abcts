@@ -28,6 +28,7 @@ import {
   type Measure,
   type Mode,
   type MusicEvent,
+  type NoteStyle,
   type Pitch,
   type Rational,
   type Rest,
@@ -924,6 +925,33 @@ function layoutRest(rest: Rest, advance: number, x: number): LayoutElement {
  * convention and why this needs no key or measure state. A note inheriting a sharp from
  * the key signature prints nothing, which is what `null` already says.
  */
+/**
+ * Notehead shape for `!style=x!` and `[K: style=x]`, keyed the way abcjs draws them:
+ * harmonic is a diamond, `x` its `noteheads.indeterminate`, rhythm a slash.
+ *
+ * `filled` and `open` follow the DURATION, because a styled note is still a quarter or a
+ * half — the style picks the shape, the duration picks whether it is filled.
+ *
+ * ponytail: abcjs has one glyph for `x` and one for rhythm whatever the duration
+ * (`noteheads.indeterminate`, `noteheads.slash.quarter`), so both map to themselves here.
+ * A half-note rhythm slash is its own SMuFL glyph if a fixture ever needs one.
+ */
+const STYLED_HEADS: Readonly<
+  Record<Exclude<NoteStyle, 'normal'>, { readonly filled: GlyphName; readonly open: GlyphName }>
+> = {
+  harmonic: { filled: 'noteheadDiamondBlack', open: 'noteheadDiamondWhite' },
+  x: { filled: 'noteheadXBlack', open: 'noteheadXBlack' },
+  triangle: { filled: 'noteheadTriangleUpBlack', open: 'noteheadTriangleUpWhite' },
+  rhythm: { filled: 'noteheadSlashVerticalEnds', open: 'noteheadSlashVerticalEnds' },
+}
+
+/** The head a note actually draws, once its style has had a say. */
+function styledHead(base: GlyphName, event: MusicEvent | null): GlyphName {
+  if (event === null || event.type === 'rest' || event.style === 'normal') return base
+  const pair = STYLED_HEADS[event.style]
+  return base === 'noteheadBlack' ? pair.filled : pair.open
+}
+
 const ACCIDENTAL_GLYPHS: Readonly<Record<Accidental, GlyphName>> = {
   [Accidental.doubleFlat]: 'accidentalDoubleFlat',
   [Accidental.flat]: 'accidentalFlat',
@@ -993,7 +1021,10 @@ function layoutNoteheads(
     return { type: 'note', x, width: advance, staffSteps: steps, glyphs: [], lines: [], texts: [] }
   }
 
-  const head = GLYPHS[spec.head]
+  // The style picks the SHAPE; `spec` still decides filled-vs-open, dots, stem and flags,
+  // so a harmonic eighth is a filled diamond with a flag.
+  const headName = styledHead(spec.head, event)
+  const head = GLYPHS[headName]
   const glyphs: PlacedGlyph[] = []
   const lines: PlacedLine[] = []
 
@@ -1079,7 +1110,7 @@ function layoutNoteheads(
 
   for (const step of steps) {
     const dx = offsets.get(step) ?? 0
-    glyphs.push({ ...glyphAt(spec.head, headX + dx, step), role: 'notehead' })
+    glyphs.push({ ...glyphAt(headName, headX + dx, step), role: 'notehead' })
     lines.push(...ledgerLines(step, headX + dx, head.width))
   }
 

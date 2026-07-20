@@ -263,6 +263,38 @@ function parseTempo(content: string): Tempo | null {
   return { beatUnit, bpm, text }
 }
 
+/**
+ * `style=` on a `K:` or `V:` field — the notehead shape for everything that follows.
+ * Distinct from the `!style=x!` decoration, which applies to one note.
+ *
+ * MEASURED DIVERGENCE. abcjs honours this in a tune header (`K:C treble style=rhythm`)
+ * and on an inline field at the START of a music line (`[K: style=harmonic]G A B c`), but
+ * IGNORES it mid-line: `C|[K: style=harmonic]G A|` keeps plain quarter heads there.
+ * Probed directly against 6.6.3. We honour it in all three positions.
+ *
+ * Not reproduced, deliberately. Matching it means teaching the parser where a line begins
+ * so it can discard the field it just read, and no golden covers the case — abcjs's
+ * element dumps are FIRST TUNE ONLY, and the corpus's only mid-line `[K: style=]` is in
+ * S5-directives tune 1. So the quirk cannot be gated, and an ungated reproduction of a
+ * bug is just an untested branch. Tune 0, which the goldens do cover, matches exactly.
+ */
+function styleModifier(spec: string): NoteStyle | null {
+  const named = /(?:^|\s)style=([a-z]+)/i.exec(spec)?.[1]?.toLowerCase() as NoteStyle | undefined
+  return named !== undefined && NOTE_STYLES.includes(named) ? named : null
+}
+
+/**
+ * Does this `K:` content actually name a key?
+ *
+ * `K: style=harmonic` carries no key at all, and `parseKey` falls back to C major for
+ * anything it cannot read — so without this check a style change silently becomes a key
+ * change, wiping the tune's accidentals from that bar on.
+ */
+function hasKeySpec(content: string): boolean {
+  const first = (content.trim().split(/\s+/)[0] ?? '').toLowerCase()
+  return /^none\b/.test(first) || /^[a-g]/.test(first)
+}
+
 /** `octave=±n` on a `V:` or `K:` field — a sounding shift, not a written-pitch change. */
 function octaveModifier(spec: string): number | null {
   const match = /octave=(-?\d+)/.exec(spec)
@@ -280,6 +312,12 @@ const CONTINUABLE_FIELDS = 'ABCDFGHNORSTZw'
 class VoiceBuilder {
   octaveShift = 0
   clef: Clef | null = null
+  /**
+   * Notehead shape set by `K: style=` / `V: style=`, in force until the next one. Voice
+   * state rather than per-note, which is what makes `[K: style=harmonic]` apply to a whole
+   * passage. An inline `!style=x!` still overrides it for the one note it precedes.
+   */
+  noteStyle: NoteStyle = 'normal'
   /**
    * A `>`/`<` mark scales the NEXT event. It lives on the voice, not the scan of one
    * line: a plain line break does not end a measure, so `A>` at the end of one line and
@@ -865,8 +903,16 @@ class Parser {
         return
       }
       case 'K': {
+        // `style=` rides on K: and sets the notehead shape for everything that follows,
+        // until the next one — `[K: style=harmonic]`, then `[K: style=normal]` to end it.
+        // It is voice state, not a property of the K: field.
+        const keyStyle = styleModifier(value)
+        if (keyStyle !== null) builder.voice.noteStyle = keyStyle
         if (builder.bodyStarted) {
-          builder.voice.setKeyChange(parseKey(value), range)
+          // A style-only K: must not touch the key. `parseKey` reads the first token and
+          // falls back to C for anything that is not a key letter, so passing it
+          // `style=harmonic` would silently transpose the rest of the tune to C major.
+          if (hasKeySpec(value)) builder.voice.setKeyChange(parseKey(value), range)
           return
         }
         builder.key = parseKey(value)
@@ -966,7 +1012,10 @@ class Parser {
           decorationSourceRanges: pending.decorationSourceRanges,
         })
       } else {
-        const style = resolveStyle(pending)
+        // Inline `!style=x!` wins for this note; otherwise the voice's standing style
+        // from `K: style=` applies.
+        const inline = resolveStyle(pending)
+        const style = inline === 'normal' ? voice().noteStyle : inline
         const attached: Note | Chord = {
           ...scaled,
           ...pending,

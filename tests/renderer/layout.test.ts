@@ -1386,3 +1386,78 @@ describe('melisma extenders', () => {
     expect(texts).toContain('sing_')
   })
 })
+
+describe('styled noteheads', () => {
+  const headsOf = (abc: string) =>
+    (
+      layout(parse(abc).scores[0] as Score, { systemWidth: 300 }).systems[0]?.staves[0]?.elements ??
+      []
+    )
+      .flatMap((e) => e.glyphs)
+      .filter((g) => g.role === 'notehead')
+      .map((g) => g.name)
+
+  it('draws the four shapes abcjs draws', () => {
+    // Verified against abcjs 6.6.3's element dump: harmonic is a diamond, `x` is its
+    // `noteheads.indeterminate`, rhythm a slash, triangle a triangle.
+    expect(
+      headsOf(
+        'X:1\nL:1/4\nK:C\nC !style=harmonic! D !style=x! E !style=triangle! F !style=rhythm! G|\n',
+      ),
+    ).toEqual([
+      'noteheadBlack',
+      'noteheadDiamondBlack',
+      'noteheadXBlack',
+      'noteheadTriangleUpBlack',
+      'noteheadSlashVerticalEnds',
+    ])
+  })
+
+  it('lets the DURATION still pick filled vs open', () => {
+    // The style picks the shape and the duration picks the fill, so a harmonic half note
+    // is an open diamond rather than a second harmonic glyph.
+    expect(headsOf('X:1\nL:1/4\nK:C\n!style=harmonic!C !style=harmonic!C2|\n')).toEqual([
+      'noteheadDiamondBlack',
+      'noteheadDiamondWhite',
+    ])
+  })
+
+  it('applies `[K: style=]` to every following note until the next one', () => {
+    // The form the corpus actually uses, and the reason style is VOICE state rather than
+    // a property of one note.
+    const heads = headsOf(
+      'X:1\nM:4/4\nL:1/4\nK:C\nC D|\n[K: style=harmonic]G A|\n[K: style=normal]c B|\n',
+    )
+    expect(heads).toEqual([
+      'noteheadBlack',
+      'noteheadBlack',
+      'noteheadDiamondBlack',
+      'noteheadDiamondBlack',
+      'noteheadBlack',
+      'noteheadBlack',
+    ])
+  })
+
+  it('applies a header `K:C treble style=rhythm` to the whole tune', () => {
+    expect(headsOf('X:1\nL:1/4\nK:C treble style=rhythm\nC D|\n')).toEqual([
+      'noteheadSlashVerticalEnds',
+      'noteheadSlashVerticalEnds',
+    ])
+  })
+
+  it('does NOT let a style-only K: field wipe the key signature', () => {
+    // `parseKey` falls back to C for anything it cannot read, so passing it
+    // `style=harmonic` would silently transpose the rest of the tune out of G major.
+    const score = parse('X:1\nM:4/4\nL:1/4\nK:G\nF G|\n[K: style=harmonic]F G|\n').scores[0]
+    expect(score?.key.tonic.step).toBe('g')
+    expect(score?.voices[0]?.measures[1]?.keyChange ?? null).toBeNull()
+  })
+
+  it('lets an inline !style=! override the standing style for one note', () => {
+    expect(headsOf('X:1\nM:4/4\nL:1/4\nK:C style=rhythm\nC !style=harmonic!D C|\n')).toEqual([
+      'noteheadSlashVerticalEnds',
+      'noteheadDiamondBlack',
+      'noteheadSlashVerticalEnds',
+    ])
+  })
+})
