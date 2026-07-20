@@ -30,7 +30,6 @@ system 0 width=90.000 originY=0.000
       line  21.317,1.832 -> 21.317,-1.500 t=0.120
     note@-3 x=26.423 w=5.474
       glyph noteheadBlack 26.423,1.500
-      glyph articStaccatoBelow 26.845,3.000
       line  27.603,1.332 -> 27.603,-2.000 t=0.120
     bar x=33.709 w=0.160
       line  33.789,-2.000 -> 33.789,2.000 t=0.160

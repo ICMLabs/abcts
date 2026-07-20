@@ -961,7 +961,10 @@ describe('grace notes, chord symbols, lyrics and decorations', () => {
   })
 
   it('stacks several decorations on one note without overlapping', () => {
-    const glyphs = (notesOf('!staccato!!accent!!tenuto!G|')[0]?.glyphs ?? []).filter((g) =>
+    // `.` rather than `!staccato!` — the default mode is strict, which drops the LONG
+    // form because abcjs's tables omit it while its `.` path hard-codes it. The point
+    // here is the stacking, so this uses the spelling that survives.
+    const glyphs = (notesOf('.!accent!!tenuto!G|')[0]?.glyphs ?? []).filter((g) =>
       g.name.startsWith('artic'),
     )
     expect(glyphs).toHaveLength(3)

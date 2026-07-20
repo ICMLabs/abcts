@@ -1169,8 +1169,16 @@ class Parser {
           break
         }
         case 'decoration': {
-          pending.decorations.push(this.src.slice(token.start + 1, token.start + token.length - 1))
-          pending.decorationSourceRanges.push(sourceRange(token.start, token.start + token.length))
+          // `!name!` — the LONG form. Strict drops any name abcjs does not recognise; see
+          // ABCJS_LEGAL_ACCENTS. The shorthand path below is deliberately not filtered,
+          // because abcjs does not filter it either.
+          const name = this.src.slice(token.start + 1, token.start + token.length - 1)
+          if (!isStrict(this.mode) || ABCJS_KNOWN_DECORATIONS.has(decorationLookupName(name))) {
+            pending.decorations.push(name)
+            pending.decorationSourceRanges.push(
+              sourceRange(token.start, token.start + token.length),
+            )
+          }
           i++
           break
         }
@@ -1598,6 +1606,147 @@ const noAttachments = (): Attachments => ({
  * annotations; `"Am7"` is a chord symbol.
  */
 const isAnnotation = (text: string): boolean => '^_<>@'.includes(text[0] ?? '')
+
+/**
+ * Every `!name!` decoration abcjs accepts, as data.
+ *
+ * Strict drops anything not here, because abcjs does: an unrecognised name yields no
+ * decoration and a warning. Reproducing that closes the `S1-decorations` strict-fidelity
+ * gap, and closes it as a RULE rather than a patch for one name.
+ *
+ * FIVE lists, not one — `abc_parse_settings.js`. Taking only `legalAccents` (the obvious
+ * one, and the one that omits `staccato`) dropped every dynamic and hairpin in the corpus
+ * and cost five fixtures on the content gate:
+ *
+ *   legalAccents (66)             the ornaments, fingerings, repeats, `style=`
+ *   volumeDecorations (11)        p, pp, f, ff, mf, mp, ppp, pppp, fff, ffff, sfz
+ *   dynamicDecorations (8)        crescendo(/) diminuendo(/) glissando(/) ~( ~)
+ *   accentPseudonyms (7)          aliases: < > tr plus emphasis ^ marcato
+ *   accentDynamicPseudonyms (4)   <( <) >( >)
+ *
+ * Only the KEYS of the pseudonym tables matter here. abcjs rewrites them to canonical
+ * names on the way out; we keep the source spelling, which the content gate allows for
+ * because it compares decoration COUNT rather than vocabulary.
+ *
+ * `staccato` is the point of interest and is deliberately absent from all five. abcjs
+ * simply forgot it, while its `.` shorthand hard-codes the name
+ * (`abc_parse_music.js:785`). So `!staccato!F` silently loses its dot and `.F` keeps it —
+ * abcjs's own bug, and strict's job is to have it too. That asymmetry is exactly why the
+ * shorthand path is NOT filtered against this set.
+ *
+ * Non-strict modes accept any name, which is the ABC 2.1 reading: an unknown decoration
+ * is one the renderer has no glyph for, not a parse error.
+ */
+const ABCJS_KNOWN_DECORATIONS: ReadonlySet<string> = new Set([
+  // legalAccents
+  'trill',
+  'trillh',
+  'lowermordent',
+  'uppermordent',
+  'mordent',
+  'pralltriller',
+  'accent',
+  'fermata',
+  'invertedfermata',
+  'tenuto',
+  '0',
+  '1',
+  '2',
+  '3',
+  '4',
+  '5',
+  '+',
+  'wedge',
+  'open',
+  'thumb',
+  'snap',
+  'turn',
+  'roll',
+  'breath',
+  'shortphrase',
+  'mediumphrase',
+  'longphrase',
+  'segno',
+  'coda',
+  'D.S.',
+  'D.C.',
+  'fine',
+  'beambr1',
+  'beambr2',
+  'slide',
+  'marcato',
+  'upbow',
+  'downbow',
+  '/',
+  '//',
+  '///',
+  '////',
+  'trem1',
+  'trem2',
+  'trem3',
+  'trem4',
+  'turnx',
+  'invertedturn',
+  'invertedturnx',
+  'trill(',
+  'trill)',
+  'arpeggio',
+  'xstem',
+  'mark',
+  'umarcato',
+  'style=normal',
+  'style=harmonic',
+  'style=rhythm',
+  'style=x',
+  'style=triangle',
+  'D.C.alcoda',
+  'D.C.alfine',
+  'D.S.alcoda',
+  'D.S.alfine',
+  'editorial',
+  'courtesy',
+  // volumeDecorations
+  'p',
+  'pp',
+  'f',
+  'ff',
+  'mf',
+  'mp',
+  'ppp',
+  'pppp',
+  'fff',
+  'ffff',
+  'sfz',
+  // dynamicDecorations
+  'crescendo(',
+  'crescendo)',
+  'diminuendo(',
+  'diminuendo)',
+  'glissando(',
+  'glissando)',
+  '~(',
+  '~)',
+  // accentPseudonyms + accentDynamicPseudonyms — keys only
+  '<',
+  '>',
+  'tr',
+  'plus',
+  'emphasis',
+  '^',
+  'marcato',
+  '<(',
+  '<)',
+  '>(',
+  '>)',
+])
+
+/**
+ * abcjs strips a leading `^` or `_` before looking a decoration up — they force the mark
+ * above or below the staff and are not part of its name. Only when something follows,
+ * so bare `^` still resolves through `accentPseudonyms`.
+ */
+const decorationLookupName = (name: string): string =>
+  name.length > 1 && (name[0] === '^' || name[0] === '_') ? name.slice(1) : name
 
 /** Decoration shorthands. Safe to treat as decorations: none of these are note letters. */
 const DECORATION_SHORTHAND: Record<string, string> = {

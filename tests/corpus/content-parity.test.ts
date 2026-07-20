@@ -24,12 +24,12 @@ import { corpusDir, type GoldenElement, goldenElements, goldenNotes } from './co
  * reported — a divergence that starts matching means something changed and needs a look.
  */
 const KNOWN_DIVERGENCES: Record<string, string> = {
-  'S1-decorations':
-    'STRICT-MODE GAP, not a design choice. abcjs DROPS `!staccato!` — its golden records ' +
-    'decoration for fermata, accent, tenuto, trill, mordent, turn and upbow on the ' +
-    'surrounding notes but decoration:None for `!staccato!F` at offset 194. Strict mode ' +
-    'is meant to reproduce abcjs bugs and does not reproduce this one yet. Under abc2.1 ' +
-    'and extended the decoration is correctly attached and the divergence is intended.',
+  // `S1-decorations` was here — abcjs DROPS `!staccato!` and strict did not. CLOSED
+  // 2026-07-20 by reproducing abcjs's acceptance rule rather than special-casing the one
+  // name: a `!name!` decoration survives strict only if it appears in one of abcjs's five
+  // decoration tables, and `staccato` is in none of them while its `.` shorthand
+  // hard-codes it. This assertion is what reported the fix — the divergence started
+  // matching and had to be removed deliberately.
   'frere-jacques':
     'STRICT-MODE GAP, narrowed. abcjs does not implement `+:` at all and parses the ' +
     'continuation line as MUSIC, so the prose of a copyright notice becomes noteheads. ' +

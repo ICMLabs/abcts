@@ -628,3 +628,51 @@ describe('V: octave= shifts the written pitch', () => {
     expect(pitchesOf('X:1\nL:1/4\nV:1\nK:C\nCDEF|\n', 0)).toEqual([0, 1, 2, 3])
   })
 })
+
+describe('strict drops the decorations abcjs does not know', () => {
+  const decorationsOf = (abc: string, mode: 'abcjs-strict' | 'abc2.1') => {
+    const result = parse(abc, { mode })
+    if (!result.ok) throw new Error('expected parse to succeed')
+    const event = result.scores[0]?.voices[0]?.measures[0]?.events[0]
+    return event && event.type !== 'rest' ? [...event.decorations] : []
+  }
+  const note = (d: string) => `X:1\nL:1/4\nK:C\n${d}F G|\n`
+
+  it('drops `!staccato!` but keeps the `.` shorthand — abcjs does exactly this', () => {
+    // abcjs's five decoration tables all omit `staccato`, while its `.` path hard-codes
+    // the name (abc_parse_music.js:785). So the two spellings disagree, and strict has to
+    // disagree the same way. This was the S1-decorations divergence.
+    expect(decorationsOf(note('!staccato!'), 'abcjs-strict')).toEqual([])
+    expect(decorationsOf(note('.'), 'abcjs-strict')).toEqual(['staccato'])
+  })
+
+  it('keeps everything abcjs does know, including dynamics and hairpins', () => {
+    // Regression: filtering against `legalAccents` ALONE — the obvious list, and the one
+    // that omits staccato — dropped every dynamic and hairpin in the corpus and cost five
+    // fixtures on the content gate. Acceptance spans five tables, not one.
+    expect(decorationsOf(note('!accent!'), 'abcjs-strict')).toEqual(['accent'])
+    expect(decorationsOf(note('!p!'), 'abcjs-strict')).toEqual(['p']) // volumeDecorations
+    expect(decorationsOf(note('!<(!'), 'abcjs-strict')).toEqual(['<(']) // accentDynamicPseudonyms
+    expect(decorationsOf(note('!crescendo(!'), 'abcjs-strict')).toEqual(['crescendo(']) // dynamicDecorations
+    expect(decorationsOf(note('!tr!'), 'abcjs-strict')).toEqual(['tr']) // accentPseudonyms
+  })
+
+  it('strips a leading ^ or _ before deciding, as abcjs does', () => {
+    // `^`/`_` force the mark above or below and are not part of the name, so `!^trill!`
+    // resolves to trill. Only when something follows: bare `!^!` is itself a pseudonym
+    // for umarcato. Verified against 6.6.3 for all four spellings below.
+    expect(decorationsOf(note('!^trill!'), 'abcjs-strict')).toEqual(['^trill'])
+    expect(decorationsOf(note('!_fermata!'), 'abcjs-strict')).toEqual(['_fermata'])
+    expect(decorationsOf(note('!^!'), 'abcjs-strict')).toEqual(['^'])
+    // ...and stripping does not rescue a name abcjs still would not know.
+    expect(decorationsOf(note('!^staccato!'), 'abcjs-strict')).toEqual([])
+  })
+
+  it('accepts any name in non-strict modes', () => {
+    // ABC 2.1's reading: an unknown decoration is one the renderer has no glyph for, not
+    // a parse error. Only strict reproduces abcjs's rejection.
+    expect(decorationsOf(note('!staccato!'), 'abc2.1')).toEqual(['staccato'])
+    expect(decorationsOf(note('!madeupname!'), 'abc2.1')).toEqual(['madeupname'])
+    expect(decorationsOf(note('!madeupname!'), 'abcjs-strict')).toEqual([])
+  })
+})
