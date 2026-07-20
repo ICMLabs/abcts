@@ -1103,9 +1103,27 @@ class Parser {
           break
         }
         case 'whitespace': {
-          // A space breaks the beam (ABC convention) — but not when it follows a tie,
-          // where the tie binds the two notes and abcjs keeps them beamed.
-          if ((tokens[i - 1] as Token | undefined)?.kind !== 'tie') closeBeamRun()
+          // A space breaks the beam, with two exceptions measured out of abcjs 6.6.3.
+          //
+          // This once carried a blanket exception for `note- note`, justified in a comment
+          // as "the tie binds the two notes and abcjs keeps them beamed". That is false as
+          // stated, and the true rule is narrower and stranger:
+          //
+          //             tie + space      space alone
+          //   chord     NO break         break
+          //   note      break            break
+          //
+          // A tie suppresses the break only when what was tied is a CHORD. `[Ce]- [Ce]`
+          // stays in one run; `CD- DE` splits into two. Almost certainly an abcjs bug —
+          // a chord tie leaves state set that swallows the break — but strict mode's job
+          // is to reproduce it, so it is reproduced rather than tidied.
+          //
+          // The second exception is a decoration still waiting for its note: in
+          // `de/f/P ^c3/d/` the space sits between `P` and the note it decorates, and
+          // abcjs beams straight through. Without the decoration the same space breaks.
+          const tiedChord =
+            (tokens[i - 1] as Token | undefined)?.kind === 'tie' && voice().last?.type === 'chord'
+          if (!tiedChord && pending.decorations.length === 0) closeBeamRun()
           i++
           break
         }

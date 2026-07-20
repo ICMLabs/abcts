@@ -283,12 +283,29 @@ describe('ties, slurs, grace notes and beams', () => {
     expect(notes.every((n) => n.type !== 'rest' && n.beamGroup === null)).toBe(true)
   })
 
-  it('keeps a beam across a space that follows a tie', () => {
-    // abcjs beams `[G=Bg]/4- [GBg]/4` as one run: the tie binds across the space.
-    const notes = eventsOf('X:1\nL:1/8\nK:C\na/4b/4- c/4d/4 |\n')
-    const groups = notes.map((n) => (n.type === 'rest' ? null : n.beamGroup))
-    expect(new Set(groups).size).toBe(1)
-    expect(groups[0]).not.toBeNull()
+  // A space after a tie breaks the beam for a NOTE and not for a CHORD. Both rows are
+  // asserted because this pair replaces a test that observed the chord case, wrote the
+  // note case, and asserted the chord's answer for it — which held the wrong rule in
+  // place across the whole corpus. Measured against abcjs 6.6.3; see the `whitespace`
+  // case in the parser for the table.
+  const runsOf = (abc: string) =>
+    new Set(eventsOf(abc).map((n) => (n.type === 'rest' ? null : n.beamGroup))).size
+
+  it('breaks a beam at a space after a tied NOTE', () => {
+    expect(runsOf('X:1\nL:1/8\nK:C\na/4b/4- c/4d/4 |\n')).toBe(2)
+  })
+
+  it('keeps the beam at a space after a tied CHORD', () => {
+    // abcjs beams `[G=Bg]/4- [GBg]/4` as one run. Almost certainly its bug; strict mode
+    // reproduces it rather than correcting it.
+    expect(runsOf('X:1\nL:1/8\nK:C\n[ac]/4[bd]/4- [ce]/4[df]/4 |\n')).toBe(1)
+  })
+
+  it('keeps the beam at a space that is still waiting to place a decoration', () => {
+    // In `de/f/P ^c3/d/` the space sits between `P` and the note it decorates; abcjs
+    // beams straight through. Drop the decoration and the same space breaks.
+    expect(runsOf('X:1\nL:1/8\nK:C\nde/f/P ^c3/d/|\n')).toBe(1)
+    expect(runsOf('X:1\nL:1/8\nK:C\nde/f/ ^c3/d/|\n')).toBe(2)
   })
 })
 

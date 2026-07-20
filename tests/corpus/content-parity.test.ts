@@ -62,16 +62,14 @@ const OFFSET_DIVERGENCES: Record<string, string> = {
  *
  * Beaming is a layout decision, not a musical one, and abcjs has conventions we have not
  * fully reverse-engineered. The exact SET of failures is asserted rather than a count:
- * a count of 36 has five units of live slack, so a change that fixed one fixture and broke
+ * a count of 37 has four units of live slack, so a change that fixed one fixture and broke
  * another would stay green. The set makes any swap a visible diff.
+ *
+ * That is not hypothetical. Chasing the space-after-tie rule fixed three fixtures'
+ * divergences and broke `ragtime-mini`, holding the COUNT at a plausible-looking number
+ * while the set churned underneath. The assertion caught it on the first run.
  */
-const BEAM_FAILURES = [
-  'S5-directives',
-  'S7-voices',
-  'S8-layout',
-  'frere-jacques',
-  'ragtime-nightingale',
-]
+const BEAM_FAILURES = ['S5-directives', 'S8-layout', 'frere-jacques', 'ragtime-nightingale']
 
 /**
  * Fixtures whose verse-1 lyrics do NOT line up with abcjs, and why.
