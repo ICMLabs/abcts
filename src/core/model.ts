@@ -501,8 +501,9 @@ export interface Score {
   /** The *initial* meter, frozen at the header `K:`. `null` means free meter. */
   readonly meter: Meter | null
   /**
-   * The header `Q:`. ponytail: header only — ABC allows a mid-tune `Q:`, which would
-   * belong on Measure alongside keyChange. Add when a fixture needs one.
+   * The tune's `Q:`, from wherever in the file it sits — abcjs models tempo tune-level
+   * (`metaText.tempo`) and draws it at the head of the first system even when the field
+   * is mid-tune, so a mid-tune `Q:` lands here rather than on a Measure. First one wins.
    */
   readonly tempo: Tempo | null
   readonly unitNoteLength: Rational

@@ -18,6 +18,11 @@ system 0 width=90.000 originY=0.000
     timeSignature x=4.684 w=1.880
       glyph timeSig4 4.684,-1.000
       glyph timeSig4 4.684,1.000
+    tempo x=7.564 w=0.000
+      glyph noteheadBlack 14.472,-7.000
+      line  15.652,-7.168 -> 15.652,-10.668 t=0.120
+      text  7.564,-7.000 size=1.600 bold "Allegretto"
+      text  15.952,-7.000 size=1.600 "= 100"
     part x=7.564 w=0.000
       text  7.564,-5.000 size=1.600 bold "A"
     note@5 x=7.564 w=3.871

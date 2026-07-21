@@ -1132,8 +1132,18 @@ class Parser {
         return
       }
       case 'Q': {
-        // ponytail: header Q: only; a mid-tune Q: is ignored rather than mis-applied.
-        if (!builder.bodyStarted) builder.tempo = parseTempo(value)
+        // A mid-tune `Q:` sets the TUNE's tempo, not a tempo change at that point, because
+        // that is what abcjs models: `tune.metaText.tempo` is tune-level wherever the field
+        // sits, and its layout puts the mark at the head of the first system. Verified on
+        // `frere-jacques`, whose only `Q:` is on line 21 and whose tempo element abcjs
+        // emits on system 1, ahead of music that PRECEDES the field in the source.
+        //
+        // First one wins, matching abcjs's `if (!tune.metaText.tempo)`.
+        //
+        // ponytail: so a second `Q:` is dropped rather than drawn as a tempo CHANGE in
+        // place. No corpus fixture has two, and modelling one means a `tempoChange` on
+        // Measure plus a renderer path with nothing to gate it.
+        if (builder.tempo === null) builder.tempo = parseTempo(value)
         return
       }
       case 'w': {
