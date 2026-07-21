@@ -1159,6 +1159,7 @@ system 0 width=51.745 originY=0.000
       glyph noteheadHalf 20.312,-1.000
       glyph noteheadHalf 20.312,-2.000
       glyph noteheadHalf 20.312,-3.000
+      glyph ornamentTremblement 18.934,-3.500
       line  19.912,-3.000 -> 21.892,-3.000 t=0.160
       line  20.312,-2.832 -> 20.312,2.500 t=0.120
     bar x=29.054 w=0.160
@@ -1652,7 +1653,7 @@ system 3 width=53.832 originY=63.453
     bar x=51.832 w=0.160
       line  51.912,-2.000 -> 51.912,2.000 t=0.160
 tune 7
-bounds  width=90.000 height=103.852 top=0.000
+bounds  width=90.000 height=106.436 top=0.000
 systems 5
 system 0 width=47.698 originY=0.000
   staff 0 originY=15.420
@@ -1702,7 +1703,7 @@ system 0 width=47.698 originY=0.000
     bar x=45.698 w=0.160
       line  45.778,-2.000 -> 45.778,2.000 t=0.160
 system 1 width=90.000 originY=26.812
-  staff 0 originY=8.776
+  staff 0 originY=9.360
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -1743,20 +1744,24 @@ system 1 width=90.000 originY=26.812
       line  28.367,-1.832 -> 28.367,1.500 t=0.120
     note@1 x=32.246 w=5.474
       glyph noteheadBlack 32.246,-0.500
+      glyph brassLiftShort 31.990,-3.500
       line  32.246,-0.332 -> 32.246,3.000 t=0.120
     note@1 x=37.732 w=5.474
       glyph accidentalSharp 37.732,-0.500
       glyph noteheadBlack 38.878,-0.500
+      glyph brassLiftShort 38.622,-3.500
       line  38.878,-0.332 -> 38.878,3.000 t=0.120
     note@1,4 x=43.218 w=5.474
       glyph accidentalSharp 43.218,-2.000
       glyph noteheadBlack 44.364,-0.500
       glyph noteheadBlack 44.364,-2.000
+      glyph brassLiftShort 44.108,-3.500
       line  44.364,-1.832 -> 44.364,3.000 t=0.120
     note@1,5 x=48.704 w=5.474
       glyph accidentalSharp 48.704,-2.500
       glyph noteheadBlack 49.850,-0.500
       glyph noteheadBlack 49.850,-2.500
+      glyph brassLiftShort 49.594,-3.500
       line  49.850,-2.332 -> 49.850,3.000 t=0.120
     bar x=55.190 w=0.160
       line  55.270,-2.000 -> 55.270,2.000 t=0.160
@@ -1798,7 +1803,7 @@ system 1 width=90.000 originY=26.812
       line  85.206,-0.832 -> 85.206,2.500 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 2 width=90.000 originY=46.220
+system 2 width=90.000 originY=46.804
   staff 0 originY=9.480
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -1875,7 +1880,7 @@ system 2 width=90.000 originY=46.220
       line  81.558,-3.832 -> 81.558,-0.500 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 3 width=90.000 originY=66.332
+system 3 width=90.000 originY=66.916
   staff 0 originY=9.480
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -1894,15 +1899,19 @@ system 3 width=90.000 originY=66.332
       glyph accidentalSharp 6.976,-2.500
     note@-1 x=8.972 w=5.474
       glyph noteheadBlack 8.972,0.500
+      glyph ornamentTremblement 7.594,-3.500
       line  10.152,0.332 -> 10.152,-3.000 t=0.120
     note@5 x=15.984 w=5.474
       glyph noteheadBlack 15.984,-2.500
+      glyph ornamentTremblement 14.606,-3.500
       line  15.984,-2.332 -> 15.984,1.000 t=0.120
     note@-1 x=22.995 w=5.474
       glyph noteheadBlack 22.995,0.500
+      glyph ornamentTremblement 21.617,-3.500
       line  24.175,0.332 -> 24.175,-3.000 t=0.120
     note@5 x=30.007 w=5.474
       glyph noteheadBlack 30.007,-2.500
+      glyph ornamentTremblement 28.629,-3.500
       line  30.007,-2.332 -> 30.007,1.000 t=0.120
     note@-1 x=37.018 w=5.474
       glyph noteheadBlack 37.018,0.500
@@ -1942,8 +1951,8 @@ system 3 width=90.000 originY=66.332
       line  82.027,-3.332 -> 82.027,0.000 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 4 width=30.663 originY=86.444
-  staff 0 originY=9.776
+system 4 width=30.663 originY=87.028
+  staff 0 originY=11.776
     staffline 0.000,2.000 -> 30.663,2.000 t=0.130
     staffline 0.000,1.000 -> 30.663,1.000 t=0.130
     staffline 0.000,0.000 -> 30.663,0.000 t=0.130
@@ -1958,7 +1967,9 @@ system 4 width=30.663 originY=86.444
     note@1 x=8.972 w=7.742
       glyph noteheadHalf 8.972,-0.500
       glyph stringsUpBow 9.066,-3.500
-      glyph ornamentMordent 8.106,-4.500
+      glyph ornamentTremblement 7.594,-4.500
+      glyph ornamentTremblement 7.594,-5.500
+      glyph ornamentMordent 8.106,-6.500
       glyph articStaccatoAbove 9.394,-3.000
       line  8.972,-0.332 -> 8.972,3.000 t=0.120
     note@5 x=16.714 w=10.949

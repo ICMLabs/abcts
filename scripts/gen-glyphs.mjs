@@ -119,10 +119,24 @@ const GLYPHS = [
   // Bowing.
   'stringsUpBow',
   'stringsDownBow',
+  // Ornaments and techniques abcjs paints but we did not. Verified against its rendered
+  // SVG rather than its element dump — the dump misses anything attached via addOther,
+  // which is what made `slide` and `breath` look unsupported when they are not.
+  'ornamentTremblement',
+  'brassLiftShort',
+  'breathMarkComma',
+  'articStaccatissimoAbove',
+  'articStaccatissimoBelow',
+  'brassMuteOpen',
+  'stringsThumbPosition',
+  'pluckedSnapPizzicatoAbove',
+  'pluckedSnapPizzicatoBelow',
+  // Only reachable in abc2.1/extended — abcjs draws nothing for the inverted turns.
+  'ornamentTurnInverted',
+  'ornamentTurnSlash',
   // Navigation.
   'segno',
   'coda',
-  // Dynamics.
   // Dynamics. SMuFL has precomposed multi-letter glyphs; abcjs's volumeDecoration
   // handles all eleven of these names.
   'dynamicPiano',

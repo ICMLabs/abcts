@@ -948,16 +948,23 @@ describe('grace notes, chord symbols, lyrics and decorations', () => {
   })
 
   it('maps the decorations it knows and draws nothing for the rest', () => {
-    // Partial by design: an Irish roll is not a turn, and drawing one for the other is
-    // wrong output rather than missing output.
+    // Still partial, and still the same principle: an unmapped mark gets NO glyph rather
+    // than a near-enough one, because a wrong symbol is worse than an absent one.
+    //
+    // `!roll!` and `!slide!` used to be the examples here and now draw their own glyphs —
+    // the roll a tremblement, the slide a lift. What remains unmapped is a different
+    // shape of problem: navigation words like `D.C.` are TEXT, and `xstem` is a stem
+    // instruction with no symbol at all.
     const named = (abc: string) =>
       (notesOf(abc)[0]?.glyphs ?? []).map((g) => g.name).filter((n) => !n.startsWith('notehead'))
     expect(named('!trill!G|')).toEqual(['ornamentTrill'])
     expect(named('!fermata!G|')).toEqual(['fermataAbove'])
     expect(named('!upbow!G|')).toEqual(['stringsUpBow'])
+    expect(named('!roll!G|')).toEqual(['ornamentTremblement'])
+    expect(named('!slide!G|')).toEqual(['brassLiftShort'])
     // Unmapped: no glyph, and emphatically not a wrong one.
-    expect(named('!roll!G|')).toEqual([])
-    expect(named('!slide!G|')).toEqual([])
+    expect(named('!D.C.!G|')).toEqual([])
+    expect(named('!xstem!G|')).toEqual([])
   })
 
   it('stacks several decorations on one note without overlapping', () => {
@@ -1667,5 +1674,70 @@ describe('spanning decorations', () => {
 
   it('draws nothing for an unpaired open', () => {
     expect(staffOf('X:1\nM:4/4\nL:1/4\nK:C\n!<(!C D E F|\n')?.spannerLines).toEqual([])
+  })
+})
+
+describe('ornaments and techniques', () => {
+  const glyphsOf = (dec: string, mode: CompatibilityMode = 'abcjs-strict') =>
+    (
+      layout(parse(`X:1\nL:1/4\nK:C\n${dec}F|\n`, { mode }).scores[0] as Score, {
+        mode,
+        systemWidth: 200,
+      }).systems[0]?.staves[0]?.elements ?? []
+    )
+      .flatMap((e) => e.glyphs)
+      .filter((g) => g.role === 'decoration')
+      .map((g) => g.name)
+
+  it('draws every ornament abcjs paints', () => {
+    // Checked against abcjs's RENDERED SVG, not its element dump. The dump misses
+    // anything attached through addOther, which made `slide` and `breath` look
+    // unsupported on the first pass — the same blind spot that nearly lost the dynamics.
+    for (const name of [
+      'roll',
+      'slide',
+      'breath',
+      'wedge',
+      'open',
+      'thumb',
+      'snap',
+      'invertedfermata',
+      'pralltriller',
+    ]) {
+      expect(glyphsOf(`!${name}!`), `!${name}! should draw`).toHaveLength(1)
+    }
+  })
+
+  it('draws NOTHING for the inverted turns in strict, as abcjs does', () => {
+    // abcjs recognises these — they are in its legalAccents, so the parser keeps them —
+    // and then paints nothing. Confirmed twice, by element dump and by rendered SVG.
+    // Distinct from a name abcjs REJECTS, which never reaches the renderer at all.
+    for (const name of ['invertedturn', 'turnx', 'invertedturnx']) {
+      expect(glyphsOf(`!${name}!`, 'abcjs-strict'), `!${name}! in strict`).toEqual([])
+    }
+  })
+
+  it('draws them in abc2.1 and extended', () => {
+    // Third instance of the same split, after melisma and the microtones: strict is
+    // faithful, the other modes draw what the ABC names.
+    for (const mode of ['abc2.1', 'extended'] as const) {
+      expect(glyphsOf('!invertedturn!', mode)).toEqual(['ornamentTurnInverted'])
+      expect(glyphsOf('!turnx!', mode)).toEqual(['ornamentTurnSlash'])
+    }
+  })
+
+  it('stacks a crowded note outward instead of overprinting', () => {
+    // Adding the roll to a note that already had ornaments pushed the mordent to the next
+    // lane rather than colliding with it — which is what the baseline diff showed.
+    const ys = (
+      layout(parse('X:1\nL:1/4\nK:C\n!roll!!lowermordent!!upbow!F|\n').scores[0] as Score, {
+        systemWidth: 200,
+      }).systems[0]?.staves[0]?.elements ?? []
+    )
+      .flatMap((e) => e.glyphs)
+      .filter((g) => g.role === 'decoration')
+      .map((g) => g.y)
+    expect(ys.length).toBeGreaterThanOrEqual(3)
+    expect(new Set(ys).size).toBe(ys.length)
   })
 })

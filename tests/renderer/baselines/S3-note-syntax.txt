@@ -1203,7 +1203,7 @@ system 2 width=42.530 originY=44.804
       line  40.610,-2.000 -> 40.610,2.000 t=0.160
       line  41.340,-2.000 -> 41.340,2.000 t=0.500
 tune 8
-bounds  width=90.000 height=79.841 top=0.000
+bounds  width=90.000 height=80.257 top=0.000
 systems 4
 system 0 width=90.000 originY=0.000
   staff 0 originY=15.420
@@ -1264,7 +1264,7 @@ system 0 width=90.000 originY=0.000
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
 system 1 width=90.000 originY=26.756
-  staff 0 originY=8.060
+  staff 0 originY=8.476
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -1315,6 +1315,7 @@ system 1 width=90.000 originY=26.756
       line  63.558,-2.000 -> 63.558,2.000 t=0.160
     note@1 x=64.478 w=7.742
       glyph noteheadHalf 64.478,-0.500
+      glyph ornamentTremblement 63.100,-3.500
       line  64.478,-0.332 -> 64.478,3.000 t=0.120
     note@1 x=73.807 w=5.474
       glyph noteheadBlack 73.807,-1.000 scale=0.600
@@ -1331,7 +1332,7 @@ system 1 width=90.000 originY=26.756
       line  83.003,-0.332 -> 83.003,3.000 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 2 width=90.000 originY=45.448
+system 2 width=90.000 originY=45.864
   staff 0 originY=8.737
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -1420,7 +1421,7 @@ system 2 width=90.000 originY=45.448
       line  81.878,-0.332 -> 81.878,3.000 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 3 width=30.780 originY=64.817
+system 3 width=30.780 originY=65.233
   staff 0 originY=7.392
     staffline 0.000,2.000 -> 30.780,2.000 t=0.130
     staffline 0.000,1.000 -> 30.780,1.000 t=0.130

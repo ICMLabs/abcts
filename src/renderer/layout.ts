@@ -1246,7 +1246,9 @@ function layoutNoteheads(
 
   const texts = event === null ? [] : noteText(event, headX, head.width)
   if (event !== null && event.decorations.length > 0) {
-    glyphs.push(...decorationGlyphs(event.decorations, headX, head.width, highest, lowest, up))
+    glyphs.push(
+      ...decorationGlyphs(event.decorations, headX, head.width, highest, lowest, up, strict),
+    )
   }
 
   // The spring is the natural width, but ink is a rod: an accidental, a displaced head
@@ -1437,7 +1439,51 @@ const DECORATIONS: Readonly<
   // `!trill!` — its scripts.mordent and scripts.trill respectively.
   mordent: { above: 'ornamentMordent', below: 'ornamentMordent', place: 'ornament' },
   trillh: { above: 'ornamentTrill', below: 'ornamentTrill', place: 'ornament' },
+
+  // ── Ornaments and techniques ───────────────────────────────────────────────
+  // Every one of these is painted by abcjs. Checked against its RENDERED SVG, because
+  // its element dump misses anything attached through addOther — which is exactly what
+  // made `slide` and `breath` look unsupported on the first pass. They are not.
+  //
+  // The glyph is core's own choice from SMuFL, as everywhere else: what is reproduced is
+  // abcjs's decision to MARK the note, not the shape of its private font.
+  roll: { above: 'ornamentTremblement', below: 'ornamentTremblement', place: 'ornament' },
+  slide: { above: 'brassLiftShort', below: 'brassLiftShort', place: 'ornament' },
+  breath: { above: 'breathMarkComma', below: 'breathMarkComma', place: 'ornament' },
+  pralltriller: { above: 'ornamentShortTrill', below: 'ornamentShortTrill', place: 'ornament' },
+  // An inverted fermata is the below-facing design, which was already extracted.
+  invertedfermata: { above: 'fermataBelow', below: 'fermataBelow', place: 'ornament' },
+  wedge: {
+    above: 'articStaccatissimoAbove',
+    below: 'articStaccatissimoBelow',
+    place: 'articulation',
+  },
+  open: { above: 'brassMuteOpen', below: 'brassMuteOpen', place: 'ornament' },
+  thumb: { above: 'stringsThumbPosition', below: 'stringsThumbPosition', place: 'ornament' },
+  snap: {
+    above: 'pluckedSnapPizzicatoAbove',
+    below: 'pluckedSnapPizzicatoBelow',
+    place: 'ornament',
+  },
+
+  // ── Drawn only in abc2.1 / extended ────────────────────────────────────────
+  // abcjs paints NOTHING for these three — confirmed twice, by element dump and by
+  // rendered SVG. Strict reproduces the blank; the other modes draw the ornament the ABC
+  // actually names. Third instance of this split, after melisma and the microtones.
+  invertedturn: { above: 'ornamentTurnInverted', below: 'ornamentTurnInverted', place: 'ornament' },
+  invertedturnx: { above: 'ornamentTurnSlash', below: 'ornamentTurnSlash', place: 'ornament' },
+  turnx: { above: 'ornamentTurnSlash', below: 'ornamentTurnSlash', place: 'ornament' },
 }
+
+/**
+ * Decorations abcjs recognises but never paints. Strict draws nothing for them; every
+ * other mode draws the glyph above.
+ *
+ * Not the same thing as a name abcjs REJECTS — those never reach the renderer, because
+ * the parser drops them in strict (see `ABCJS_KNOWN_DECORATIONS`). These are accepted,
+ * attached to the note, and then silently not drawn.
+ */
+const STRICT_UNDRAWN: ReadonlySet<string> = new Set(['invertedturn', 'invertedturnx', 'turnx'])
 
 /**
  * Decoration glyphs for one note.
@@ -1453,6 +1499,8 @@ function decorationGlyphs(
   topStep: number,
   bottomStep: number,
   stemUp: boolean,
+  /** `abcjs-strict` — suppresses the marks abcjs accepts but never paints. */
+  strict: boolean,
 ): PlacedGlyph[] {
   const out: PlacedGlyph[] = []
   // Away from the stem, and never inside the staff for a note that sits in it.
@@ -1461,6 +1509,7 @@ function decorationGlyphs(
   let ornamentStep = ENGRAVE.ornamentStep
 
   for (const name of names) {
+    if (strict && STRICT_UNDRAWN.has(name)) continue
     const spec = DECORATIONS[name]
     if (spec === undefined) continue // unmapped — counted by the test, never guessed at
 
