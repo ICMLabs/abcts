@@ -8,7 +8,8 @@ system 0 width=90.000 originY=0.000
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
-    beam   13.059,1.750 -> 25.622,1.750 t=0.500
+    beam   4.684,0.950 -> 25.622,1.950 t=0.500
+    beam   29.810,1.750 -> 33.998,1.750 t=0.500
     beam   42.373,1.750 -> 50.748,2.250 t=0.500
     beam   54.936,2.250 -> 59.123,1.750 t=0.500
     title x=0.000 w=0.000
@@ -22,20 +23,18 @@ system 0 width=90.000 originY=0.000
       text  13.072,-7.000 size=1.600 "= 100"
     note@5 x=4.684 w=3.871
       glyph noteheadBlack 4.684,-2.500
-      glyph flag8thDown 4.684,1.000
-      line  4.684,-2.332 -> 4.684,1.000 t=0.120
+      line  4.684,-2.332 -> 4.684,1.200 t=0.120
     note@3 x=8.872 w=3.871
       glyph noteheadBlack 8.872,-1.500
-      glyph flag8thDown 8.872,2.000
       glyph ornamentTrill 8.420,-3.500
       glyph ornamentTrill 8.420,-4.500
-      line  8.872,-1.332 -> 8.872,2.000 t=0.120
+      line  8.872,-1.332 -> 8.872,1.400 t=0.120
     note@3 x=13.059 w=3.871
       glyph noteheadBlack 13.059,-1.500
-      line  13.059,-1.332 -> 13.059,2.000 t=0.120
+      line  13.059,-1.332 -> 13.059,1.600 t=0.120
     note@3 x=17.247 w=3.871
       glyph noteheadBlack 17.247,-1.500
-      line  17.247,-1.332 -> 17.247,2.000 t=0.120
+      line  17.247,-1.332 -> 17.247,1.800 t=0.120
     note@1 x=21.435 w=3.871
       glyph noteheadBlack 21.435,-0.500
       line  21.435,-0.332 -> 21.435,2.000 t=0.120
@@ -43,14 +42,12 @@ system 0 width=90.000 originY=0.000
       glyph noteheadBlack 25.622,-1.500
       glyph ornamentTrill 25.170,-3.500
       glyph stringsDownBow 25.588,-4.500
-      line  25.622,-1.332 -> 25.622,2.000 t=0.120
+      line  25.622,-1.332 -> 25.622,2.200 t=0.120
     note@3 x=29.810 w=3.871
       glyph noteheadBlack 29.810,-1.500
-      glyph flag8thDown 29.810,2.000
       line  29.810,-1.332 -> 29.810,2.000 t=0.120
     note@3 x=33.998 w=3.871
       glyph noteheadBlack 33.998,-1.500
-      glyph flag8thDown 33.998,2.000
       glyph ornamentTrill 33.546,-3.500
       glyph ornamentTrill 33.546,-4.500
       line  33.998,-1.332 -> 33.998,2.000 t=0.120

@@ -1283,7 +1283,15 @@ class Parser {
       }
     }
 
+    /**
+     * A character abcjs warns "Unknown character ignored" about has been seen since the
+     * last note. See the whitespace case — it swallows the beam break that a space would
+     * otherwise make.
+     */
+    let ignoredSinceNote = false
+
     const emit = (event: MusicEvent): void => {
+      ignoredSinceNote = false
       const broken = voice().pendingBroken
       voice().lastBroken = broken !== null
       const scaled = applyTuplet(broken ? scaleEvent(event, broken) : event)
@@ -1453,6 +1461,10 @@ class Parser {
             pending.decorationSourceRanges.push(
               sourceRange(token.start, token.start + token.length),
             )
+          } else {
+            // abcjs's "Unknown character ignored". Ignored for CONTENT, but not inert —
+            // see the whitespace case.
+            ignoredSinceNote = true
           }
           i++
           break
@@ -1501,7 +1513,25 @@ class Parser {
           // decoration or a grace group. `de/f/P ^c` and `C/D/{=de} E/F/` both beam
           // through; move either mark past the space and it breaks again.
           const pendingAttachment = pending.decorations.length > 0 || pendingGrace.length > 0
-          if (!tiedChord && !pendingAttachment) closeBeamRun()
+          // The third exception, and the one that closed `frere-jacques`'s last 3 links.
+          // A space breaks the beam only when it is still the NOTE's own business — when
+          // nothing has come between. Let a character abcjs merely warns about intervene
+          // and the break is gone, even though that character contributes nothing to the
+          // music and no attachment is pending.
+          //
+          // Measured across all eight boundaries in the `+:` prose abcjs lexes as music,
+          // where the ignored characters are the consonants of an English sentence:
+          //
+          //   "…respective owners"   `e` then space          BREAK
+          //   "…entitled holders"    `d` then space          BREAK
+          //   "belongs to their"     `g` then `s` then space  no break
+          //   "their respective"     `e` then `ir` then space no break
+          //   "owners, or to the"    `e` then `rs,` then space no break
+          //
+          // Eight of eight. A TIE does not have this effect — `CD- DE` still breaks — so
+          // this is not "anything at all suppresses it": abcjs handles a tie inside the
+          // note's own parse and an unknown character outside it.
+          if (!tiedChord && !pendingAttachment && !ignoredSinceNote) closeBeamRun()
           i++
           break
         }

@@ -89,8 +89,16 @@ const OFFSET_DIVERGENCES: Record<string, string> = {
  *
  * Two of the three were therefore gate or model bugs wearing a beam label — which is why
  * the entry above says to look at what a number MEANS before chasing it.
+ *
+ * `frere-jacques`, the last of them, closed the same day and WAS a beam rule: a space
+ * ends a beam only when nothing has come between it and the note, and a character abcjs
+ * merely warns about counts as something. Measured across all eight boundaries in its
+ * `+:` prose; the table is in the parser's `whitespace` case.
+ *
+ * The set is now empty, which is the goal state and NOT a reason to delete this. An
+ * empty list still asserts: the next fixture whose beams diverge fails here.
  */
-const BEAM_FAILURES = ['frere-jacques']
+const BEAM_FAILURES: string[] = []
 
 /**
  * Fixtures whose verse-1 lyrics do NOT line up with abcjs, and why.
