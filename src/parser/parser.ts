@@ -465,6 +465,13 @@ class VoiceBuilder {
    * lengthened the first note and never shortened the second.
    */
   pendingBroken: Rational | null = null
+  /**
+   * Whether the event just emitted was scaled by a broken rhythm (`>` or `<`).
+   *
+   * Needed only by the beam rule: a broken rhythm cancels the chord-tie exception, and
+   * `pendingBroken` is consumed at emit, so by the time the space is read it is gone.
+   */
+  lastBroken = false
   /** A mid-tune `K:`/`M:` applies to the measure it opens, so it pends until close. */
   private pendingKeyChange: KeySignature | null = null
   private pendingKeyChangeRange: SourceRange | null = null
@@ -1188,6 +1195,7 @@ class Parser {
 
     const emit = (event: MusicEvent): void => {
       const broken = voice().pendingBroken
+      voice().lastBroken = broken !== null
       const scaled = applyTuplet(broken ? scaleEvent(event, broken) : event)
       // A rest carries none of these — no ties, slurs, grace notes or chord symbols —
       // but it still consumes the pending state so they cannot leak past it.
@@ -1362,21 +1370,44 @@ class Parser {
           // as "the tie binds the two notes and abcjs keeps them beamed". That is false as
           // stated, and the true rule is narrower and stranger:
           //
-          //             tie + space      space alone
-          //   chord     NO break         break
-          //   note      break            break
+          //                          tie + space   space alone
+          //   chord                    NO break      break
+          //   chord after `>` or `<`   break         break
+          //   note                     break         break
+          //
+          // The broken-rhythm row came from `ragtime-nightingale`, whose
+          // `[fa]/>[da]/- [da]/` breaks where `[fa]/[da]/- [da]/` does not.
+          //
+          // NO MECHANISM IS CLAIMED. abcjs's parser was read three times to explain this
+          // and gave a different answer each time: it sets `end_beam` unconditionally on
+          // whitespace (`abc_parse_music.js:1242`), promotes it only below a quarter
+          // (`addEndBeam`), and the tie lookahead never clears it — which predicts a break
+          // in EVERY row above, including the one that does not break. The table is
+          // reproducible across all eight cases; the explanation is not available here.
+          // Recording evidence instead of inventing a cause is the point: the original
+          // version of this exception asserted a plausible reason ("the tie binds the two
+          // notes") that was false, and it cost a fixture.
           //
           // A tie suppresses the break only when what was tied is a CHORD. `[Ce]- [Ce]`
           // stays in one run; `CD- DE` splits into two. Almost certainly an abcjs bug —
           // a chord tie leaves state set that swallows the break — but strict mode's job
           // is to reproduce it, so it is reproduced rather than tidied.
           //
-          // The second exception is a decoration still waiting for its note: in
-          // `de/f/P ^c3/d/` the space sits between `P` and the note it decorates, and
-          // abcjs beams straight through. Without the decoration the same space breaks.
+          // The second exception is anything still WAITING to attach to the next note.
+          // In `de/f/P ^c3/d/` the space sits between `P` and the note it decorates, and
+          // abcjs beams straight through; the same holds for a grace group, so
+          // `C/D/{=de} E/F/` is one run while `C/D/ {=de}E/F/` is two. Move the mark to
+          // the far side of the space and the break comes back.
           const tiedChord =
-            (tokens[i - 1] as Token | undefined)?.kind === 'tie' && voice().last?.type === 'chord'
-          if (!tiedChord && pending.decorations.length === 0) closeBeamRun()
+            (tokens[i - 1] as Token | undefined)?.kind === 'tie' &&
+            voice().last?.type === 'chord' &&
+            // A BROKEN RHYTHM cancels the exception. Measured, not derived.
+            !voice().lastBroken
+          // Anything still waiting to attach to the NEXT note holds the beam open — a
+          // decoration or a grace group. `de/f/P ^c` and `C/D/{=de} E/F/` both beam
+          // through; move either mark past the space and it breaks again.
+          const pendingAttachment = pending.decorations.length > 0 || pendingGrace.length > 0
+          if (!tiedChord && !pendingAttachment) closeBeamRun()
           i++
           break
         }

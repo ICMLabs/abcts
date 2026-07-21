@@ -96,7 +96,7 @@ const OFFSET_DIVERGENCES: Record<string, string> = {
  * behaviour in both directions. Whatever reconciles that lives downstream in the beam
  * builder, not in the tokenizer, and that is the code to read next.
  */
-const BEAM_FAILURES = ['S5-directives', 'S8-layout', 'frere-jacques', 'ragtime-nightingale']
+const BEAM_FAILURES = ['S5-directives', 'frere-jacques']
 
 /**
  * Fixtures whose verse-1 lyrics do NOT line up with abcjs, and why.
@@ -295,12 +295,25 @@ function ourBeams(abc: string): boolean[] {
   const result = parse(abc)
   if (!result.ok) return []
   const runs: (number | null)[] = []
-  for (const voice of result.scores.flatMap((score) => score.voices)) {
-    for (const event of [
-      ...voice.measures.flatMap((measure) => measure.events),
-      ...voice.measures.flatMap((measure) => measure.overlays.flat()),
-    ]) {
-      runs.push(event.type === 'rest' ? null : event.beamGroup)
+  // Beam-group ids restart at 1 in every TUNE and every VOICE, so concatenating them and
+  // comparing `id === previous id` reported a beam link across each boundary — tune 10's
+  // group 1 sitting next to tune 11's group 1 reads as one run. That cost `S8-layout` a
+  // phantom failure. Qualifying the id by its owner makes equality mean what the
+  // comparison assumes it means.
+  let owner = 0
+  for (const score of result.scores) {
+    for (const voice of score.voices) {
+      owner += 1
+      for (const event of [
+        ...voice.measures.flatMap((measure) => measure.events),
+        ...voice.measures.flatMap((measure) => measure.overlays.flat()),
+      ]) {
+        runs.push(
+          event.type === 'rest' || event.beamGroup === null
+            ? null
+            : owner * 100_000 + event.beamGroup,
+        )
+      }
     }
   }
   return beamLinks(runs)
