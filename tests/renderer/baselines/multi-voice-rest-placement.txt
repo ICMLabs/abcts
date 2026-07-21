@@ -1,5 +1,5 @@
 tune 0
-bounds  width=60.282 height=33.916 top=0.000
+bounds  width=60.282 height=17.392 top=0.000
 systems 1
 system 0 width=60.282 originY=0.000
   staff 0 originY=7.392
@@ -44,12 +44,6 @@ system 0 width=60.282 originY=0.000
       glyph restQuarter 51.808,0.000
     bar x=58.282 w=0.160
       line  58.362,-2.000 -> 58.362,2.000 t=0.160
-  staff 1 originY=23.916
-    staffline 0.000,2.000 -> 60.282,2.000 t=0.130
-    staffline 0.000,1.000 -> 60.282,1.000 t=0.130
-    staffline 0.000,0.000 -> 60.282,0.000 t=0.130
-    staffline 0.000,-1.000 -> 60.282,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 60.282,-2.000 t=0.130
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     note@-11 x=4.684 w=7.742

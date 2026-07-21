@@ -48,6 +48,8 @@ import {
   type Score,
   type ScoreMetadata,
   type SourceRange,
+  type StaffConnector,
+  type StaffGroup,
   sourceRange,
   type Tempo,
   type Voice,
@@ -278,6 +280,127 @@ function shiftMeasure(measure: Measure, octaves: number): Measure {
     events: measure.events.map(shift),
     overlays: measure.overlays.map((layer) => layer.map(shift)),
   }
+}
+
+/**
+ * `%%score` / `%%staves` — which staves exist and which voices sit on each.
+ *
+ * A port of abcjs's `abc_parse_directive.js:1046-1132`, by way of abcMusicKit v1's
+ * line-cited Swift port of the same function. abcjs and v1 agree here by construction, so
+ * ONE implementation serves all three modes; there is no split to make.
+ *
+ * The whole sharing rule is `newStaff = !openParen || justOpenParen`: a voice opens a new
+ * staff unless it is inside `( … )` and not the first one there. So `{1 (2 3)}` is two
+ * staves, not three.
+ *
+ * `%%staves` differs from `%%score` in exactly one way — it connects barlines after EVERY
+ * voice, where `%%score` connects only where the directive writes `|`.
+ */
+function parseStaffGroups(spec: string, directive: 'score' | 'staves'): MutableStaffGroup[] {
+  const staves: MutableStaffGroup[] = []
+  const voiceStaff = new Map<string, number>()
+
+  let openParen = false
+  let openBracket = false
+  let openBrace = false
+  let justOpenParen = false
+  let justOpenBracket = false
+  let justOpenBrace = false
+  let continueBar = false
+  let lastStaff: number | null = null
+
+  /** `|` — barlines run through to the staff below. */
+  const addContinueBar = (): void => {
+    continueBar = true
+    if (lastStaff === null) return
+    const previous = lastStaff > 0 ? staves[lastStaff - 1]?.connectBarLines : null
+    const staff = staves[lastStaff]
+    if (staff !== undefined) {
+      staff.connectBarLines = previous === 'start' || previous === 'continue' ? 'continue' : 'start'
+    }
+  }
+
+  const addVoice = (id: string, newStaff: boolean): void => {
+    if (newStaff || staves.length === 0) {
+      staves.push({ voiceIds: [], brace: null, bracket: null, connectBarLines: null })
+    }
+    const index = staves.length - 1
+    const staff = staves[index]
+    if (staff === undefined) return
+    // First writer wins, matching abcjs: a group's opening mark is not overwritten by the
+    // `continue` of a voice added after it.
+    if (justOpenBracket) staff.bracket ??= 'start'
+    else if (openBracket) staff.bracket ??= 'continue'
+    if (justOpenBrace) staff.brace ??= 'start'
+    else if (openBrace) staff.brace ??= 'continue'
+    if (continueBar) staff.connectBarLines = 'end'
+    if (!voiceStaff.has(id)) {
+      voiceStaff.set(id, index)
+      staff.voiceIds.push(id)
+    }
+    lastStaff = index
+  }
+
+  // Tokens are the punctuation characters and runs of everything else, which is what a
+  // voice id is — `RH`, `LH`, `1`, `mpguitarlow`.
+  for (const token of spec.match(/[()[\]{}|]|[^\s()[\]{}|]+/g) ?? []) {
+    switch (token) {
+      case '(':
+        if (!openParen) {
+          openParen = true
+          justOpenParen = true
+        }
+        break
+      case ')':
+        openParen = false
+        break
+      case '[':
+        if (!openBracket) {
+          openBracket = true
+          justOpenBracket = true
+        }
+        break
+      case ']':
+        openBracket = false
+        if (lastStaff !== null) {
+          const staff = staves[lastStaff]
+          if (staff !== undefined) staff.bracket = 'end'
+        }
+        break
+      case '{':
+        if (!openBrace) {
+          openBrace = true
+          justOpenBrace = true
+        }
+        break
+      case '}':
+        openBrace = false
+        if (lastStaff !== null) {
+          const staff = staves[lastStaff]
+          if (staff !== undefined) staff.brace = 'end'
+        }
+        break
+      case '|':
+        addContinueBar()
+        break
+      default: {
+        addVoice(token, !openParen || justOpenParen)
+        justOpenParen = false
+        justOpenBracket = false
+        justOpenBrace = false
+        continueBar = false
+        if (directive === 'staves') addContinueBar()
+      }
+    }
+  }
+  return staves
+}
+
+interface MutableStaffGroup {
+  voiceIds: string[]
+  brace: StaffConnector | null
+  bracket: StaffConnector | null
+  connectBarLines: StaffConnector | null
 }
 
 /**
@@ -637,6 +760,11 @@ class ScoreBuilder {
   meterSourceRange: SourceRange | null = null
   /** Declaration order is output order — a Map preserves insertion order. */
   private readonly voices = new Map<string, VoiceBuilder>()
+  /**
+   * Staves from `%%score`/`%%staves` — one entry per staff, with the voices on it.
+   * Empty when the tune has no directive, in which case every voice takes its own staff.
+   */
+  staffGroups: StaffGroup[] = []
   /** Voice ids from `%%score`/`%%staves`, which overrides declaration order. */
   scoreOrder: string[] | null = null
   private tupletGroups = 0
@@ -705,6 +833,29 @@ class ScoreBuilder {
     ]
   }
 
+  /**
+   * Staves as they actually exist, after dropping voices the directive names but the tune
+   * never defines.
+   *
+   * `%%score` is written by hand and routinely lists a voice that is not there — a part
+   * commented out, a template reused. abcjs warns and carries on; a staff left holding no
+   * voices would otherwise render as an empty stave.
+   */
+  private resolvedStaves(): StaffGroup[] {
+    if (this.staffGroups.length === 0) return []
+    const declared = new Set(this.voices.keys())
+    const kept = this.staffGroups
+      .map((g) => ({ ...g, voiceIds: g.voiceIds.filter((id) => declared.has(id)) }))
+      .filter((g) => g.voiceIds.length > 0)
+    // Voices the directive never mentions keep declaration order, each on its own staff,
+    // appended after the listed ones — the same fallback `orderedVoices` uses.
+    const listed = new Set(kept.flatMap((g) => g.voiceIds))
+    const extra = [...declared]
+      .filter((id) => !listed.has(id))
+      .map((id) => ({ voiceIds: [id], brace: null, bracket: null, connectBarLines: null }))
+    return [...kept, ...extra]
+  }
+
   finish(): Score {
     const metadata: ScoreMetadata = {
       tuneNumber: this.tuneNumber,
@@ -720,6 +871,7 @@ class ScoreBuilder {
       tempo: this.tempo,
       unitNoteLength: this.unitNoteLength,
       voices: this.orderedVoices().map((v) => v.finish()),
+      staves: this.resolvedStaves(),
       sourceStartOffset: this.sourceStartOffset,
       keySourceRange: this.keySourceRange,
       meterSourceRange: this.meterSourceRange,
@@ -816,12 +968,13 @@ class Parser {
     }
     // `%%score [(S A) | (T B)]` / `%%staves` — grouping punctuation is layout; the bare
     // words are voice ids, and their order is the order voices are presented in.
-    const scoreDirective = /^%%(?:score|staves)\s+(.*)$/.exec(line)
-    if (scoreDirective?.[1]) {
-      this.ensureScore(start).scoreOrder = scoreDirective[1]
-        .replace(/[[\](){}|*&]/g, ' ')
-        .split(/\s+/)
-        .filter(Boolean)
+    const scoreDirective = /^%%(score|staves)\s+(.*)$/.exec(line)
+    if (scoreDirective?.[2]) {
+      const builder = this.ensureScore(start)
+      const groups = parseStaffGroups(scoreDirective[2], scoreDirective[1] as 'score' | 'staves')
+      builder.staffGroups = groups
+      // Voice ORDER falls out of the grouping: staves top to bottom, voices within each.
+      builder.scoreOrder = groups.flatMap((g) => g.voiceIds)
       return
     }
     if (line.startsWith('%%')) {

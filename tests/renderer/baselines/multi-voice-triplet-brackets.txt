@@ -1,33 +1,8 @@
 tune 0
-bounds  width=90.000 height=111.524 top=0.000
+bounds  width=90.000 height=61.952 top=0.000
 systems 3
 system 0 width=90.000 originY=0.000
   staff 0 originY=7.392
-    staffline 0.000,2.000 -> 90.000,2.000 t=0.130
-    staffline 0.000,1.000 -> 90.000,1.000 t=0.130
-    staffline 0.000,0.000 -> 90.000,0.000 t=0.130
-    staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
-    clef x=1.000 w=2.684
-      glyph gClef 1.000,1.000
-    note@3 x=4.684 w=7.742
-      glyph noteheadHalf 4.684,-1.500
-      line  4.684,-1.332 -> 4.684,2.000 t=0.120
-    note@3 x=21.147 w=7.742
-      glyph noteheadHalf 21.147,-1.500
-      line  21.147,-1.332 -> 21.147,2.000 t=0.120
-    note@3 x=37.610 w=7.742
-      glyph noteheadHalf 37.610,-1.500
-      line  37.610,-1.332 -> 37.610,2.000 t=0.120
-    note@3 x=54.074 w=7.742
-      glyph noteheadHalf 54.074,-1.500
-      line  54.074,-1.332 -> 54.074,2.000 t=0.120
-    note@3 x=70.537 w=7.742
-      glyph noteheadHalf 70.537,-1.500
-      line  70.537,-1.332 -> 70.537,2.000 t=0.120
-    bar x=88.000 w=0.160
-      line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=23.916
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -53,6 +28,25 @@ system 0 width=90.000 originY=0.000
     tuplettext 32.701,-4.340 size=1.400 "3"
     tuplettext 53.200,5.460 size=1.400 "3"
     tuplettext 73.859,-3.840 size=1.400 "3"
+    clef x=1.000 w=2.684
+      glyph gClef 1.000,1.000
+    note@3 x=4.684 w=7.742
+      glyph noteheadHalf 4.684,-1.500
+      line  4.684,-1.332 -> 4.684,2.000 t=0.120
+    note@3 x=21.147 w=7.742
+      glyph noteheadHalf 21.147,-1.500
+      line  21.147,-1.332 -> 21.147,2.000 t=0.120
+    note@3 x=37.610 w=7.742
+      glyph noteheadHalf 37.610,-1.500
+      line  37.610,-1.332 -> 37.610,2.000 t=0.120
+    note@3 x=54.074 w=7.742
+      glyph noteheadHalf 54.074,-1.500
+      line  54.074,-1.332 -> 54.074,2.000 t=0.120
+    note@3 x=70.537 w=7.742
+      glyph noteheadHalf 70.537,-1.500
+      line  70.537,-1.332 -> 70.537,2.000 t=0.120
+    bar x=88.000 w=0.160
+      line  88.080,-2.000 -> 88.080,2.000 t=0.160
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     note@1 x=4.684 w=4.470
@@ -93,7 +87,7 @@ system 0 width=90.000 originY=0.000
       line  81.320,0.832 -> 81.320,-2.500 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 1 width=90.000 originY=35.416
+system 1 width=90.000 originY=18.892
   staff 0 originY=11.000
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -162,12 +156,6 @@ system 1 width=90.000 originY=35.416
       line  81.320,0.832 -> 81.320,-2.500 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=27.524
-    staffline 0.000,2.000 -> 90.000,2.000 t=0.130
-    staffline 0.000,1.000 -> 90.000,1.000 t=0.130
-    staffline 0.000,0.000 -> 90.000,0.000 t=0.130
-    staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     note@-11 x=4.684 w=7.742
@@ -196,7 +184,7 @@ system 1 width=90.000 originY=35.416
       line  67.601,5.332 -> 67.601,2.000 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 2 width=61.322 originY=75.940
+system 2 width=61.322 originY=42.892
   staff 0 originY=9.060
     staffline 0.000,2.000 -> 61.322,2.000 t=0.130
     staffline 0.000,1.000 -> 61.322,1.000 t=0.130
@@ -264,12 +252,6 @@ system 2 width=61.322 originY=75.940
       line  55.032,0.832 -> 55.032,-2.500 t=0.120
     bar x=59.322 w=0.160
       line  59.402,-2.000 -> 59.402,2.000 t=0.160
-  staff 1 originY=25.584
-    staffline 0.000,2.000 -> 61.322,2.000 t=0.130
-    staffline 0.000,1.000 -> 61.322,1.000 t=0.130
-    staffline 0.000,0.000 -> 61.322,0.000 t=0.130
-    staffline 0.000,-1.000 -> 61.322,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 61.322,-2.000 t=0.130
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     note@-11 x=4.684 w=7.742

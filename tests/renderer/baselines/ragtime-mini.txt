@@ -1,5 +1,5 @@
 tune 0
-bounds  width=60.423 height=87.345 top=0.000
+bounds  width=60.423 height=42.909 top=0.000
 systems 1
 system 0 width=60.423 originY=0.000
   staff 0 originY=15.420
@@ -60,12 +60,6 @@ system 0 width=60.423 originY=0.000
       line  54.686,-1.832 -> 54.686,2.929 t=0.120
     bar x=58.423 w=0.160
       line  58.503,-2.000 -> 58.503,2.000 t=0.160
-  staff 1 originY=33.301
-    staffline 0.000,2.000 -> 60.423,2.000 t=0.130
-    staffline 0.000,1.000 -> 60.423,1.000 t=0.130
-    staffline 0.000,0.000 -> 60.423,0.000 t=0.130
-    staffline 0.000,-1.000 -> 60.423,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 60.423,-2.000 t=0.130
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=3.012
@@ -81,7 +75,7 @@ system 0 width=60.423 originY=0.000
     rest x=35.526 w=7.742
     bar x=58.423 w=0.160
       line  58.503,-2.000 -> 58.503,2.000 t=0.160
-  staff 2 originY=50.933
+  staff 1 originY=34.409
     staffline 0.000,2.000 -> 60.423,2.000 t=0.130
     staffline 0.000,1.000 -> 60.423,1.000 t=0.130
     staffline 0.000,0.000 -> 60.423,0.000 t=0.130
@@ -160,12 +154,6 @@ system 0 width=60.423 originY=0.000
       glyph rest8th 52.462,0.000
     bar x=58.423 w=0.160
       line  58.503,-2.000 -> 58.503,2.000 t=0.160
-  staff 3 originY=67.189
-    staffline 0.000,2.000 -> 60.423,2.000 t=0.130
-    staffline 0.000,1.000 -> 60.423,1.000 t=0.130
-    staffline 0.000,0.000 -> 60.423,0.000 t=0.130
-    staffline 0.000,-1.000 -> 60.423,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 60.423,-2.000 t=0.130
     clef x=1.000 w=2.736
       glyph fClef 1.000,-1.000
     keySignature x=4.736 w=3.012
@@ -181,12 +169,6 @@ system 0 width=60.423 originY=0.000
     rest x=35.526 w=7.742
     bar x=58.423 w=0.160
       line  58.503,-2.000 -> 58.503,2.000 t=0.160
-  staff 4 originY=81.145
-    staffline 0.000,2.000 -> 60.423,2.000 t=0.130
-    staffline 0.000,1.000 -> 60.423,1.000 t=0.130
-    staffline 0.000,0.000 -> 60.423,0.000 t=0.130
-    staffline 0.000,-1.000 -> 60.423,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 60.423,-2.000 t=0.130
     clef x=1.000 w=2.736
       glyph fClef 1.000,-1.000
     keySignature x=4.736 w=3.012

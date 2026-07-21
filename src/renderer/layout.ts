@@ -353,7 +353,24 @@ export interface PlacedCurve {
 }
 
 export interface LayoutStaff {
+  /**
+   * Everything drawn on this staff, in drawing order — the concatenation of `voices`.
+   *
+   * Most consumers want this: a renderer does not care which voice a stem belongs to.
+   */
   readonly elements: readonly LayoutElement[]
+  /**
+   * The same elements, still split BY VOICE.
+   *
+   * A staff is not a voice — `%%score {1 (2 3)}` prints voices 2 and 3 on one staff — so
+   * the flat list above cannot answer "what did voice 0 draw". abcjs keeps the same split
+   * (`staffGroups[].voices[]`) and so does abcMusicKit v1 (`StaffDef.numVoices`), because
+   * the answer is needed for stem-direction convention within a shared staff, and by any
+   * gate comparing one voice against a reference.
+   *
+   * These hold the SAME element objects as `elements`, not copies.
+   */
+  readonly voices: readonly (readonly LayoutElement[])[]
   readonly staffLines: readonly PlacedLine[]
   /**
    * Beams, which belong to no single element — a beam spans several noteheads and is
@@ -2567,6 +2584,25 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
   const { spacingScale } = PROFILES[profile]
   const voices = score.voices.length > 0 ? score.voices : [undefined]
 
+  /**
+   * Which VOICES share each staff — the whole point of `%%score`'s `( … )`.
+   *
+   * Indices into `voices`, grouped by staff, top to bottom. Without a directive every
+   * voice takes a staff of its own, which is what abcts did unconditionally until
+   * 2026-07-20: five staves for a piano rag abcjs renders on two.
+   *
+   * Computed once for the tune, not per system, because staff membership is a property of
+   * the score. It has to outlive the per-system build, since slurs and hairpins resolve
+   * after packing and are indexed BY VOICE — so the merge needs to know, at that point,
+   * which voices' curves belong to which staff.
+   */
+  const voicesOfStaff: number[][] =
+    score.staves.length > 0
+      ? score.staves.map((group) =>
+          group.voiceIds.map((id) => voices.findIndex((v) => v?.id === id)).filter((i) => i >= 0),
+        )
+      : voices.map((_, i) => [i])
+
   const plans: VoicePlan[] = voices.map((voice) => {
     // A voice's own `clef=` wins over the tune's `K:` clef; treble is the fallback.
     const clef = voice?.clef ?? score.clef
@@ -2820,6 +2856,8 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
 
       return {
         elements,
+        // One voice per staff until the merge below folds shared staves together.
+        voices: [elements],
         staffLines: [],
         beams,
         curves: [],
@@ -2857,10 +2895,32 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
           },
     )
 
+    // MERGE the voices that share a staff. Everything above is built per voice, because
+    // beams, stems and lyrics are a voice's own; what is shared is the five lines they
+    // are printed on. So the drawing is concatenated and one set of staff lines is drawn,
+    // rather than each voice getting its own stave.
+    const merged = voicesOfStaff.map((members) => {
+      const parts = members.map((i) => centred[i]).filter((x) => x !== undefined)
+      const first = parts[0]
+      if (first === undefined) return centred[0] as (typeof centred)[number]
+      if (parts.length === 1) return { ...first, voices: [first.elements] }
+      return {
+        ...first,
+        voices: parts.map((p) => p.elements),
+        elements: parts.flatMap((p) => p.elements),
+        beams: parts.flatMap((p) => p.beams),
+        tupletLines: parts.flatMap((p) => p.tupletLines),
+        tupletTexts: parts.flatMap((p) => p.tupletTexts),
+        voltaLines: parts.flatMap((p) => p.voltaLines),
+        voltaTexts: parts.flatMap((p) => p.voltaTexts),
+        melismaLines: parts.flatMap((p) => p.melismaLines),
+      }
+    })
+
     // Stack the staves, each measured from its own content so a staff with a tempo mark
     // or high ledger lines gets the room it needs and no more.
     let cursor = 0
-    const placed = centred.map((staff) => {
+    const placed = merged.map((staff) => {
       const extent = verticalExtent(staff.elements, staff.beams)
       const originY = cursor - extent.top
       cursor += extent.bottom - extent.top + ENGRAVE.staffGap
@@ -2884,10 +2944,16 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
   const spannersBySystem = voiceAnchors.map((anchors) => layoutSpanners(anchors, systemBounds))
   const withCurves = systems.map((system, systemIndex) => ({
     ...system,
-    staves: system.staves.map((staff, voiceIndex) => ({
+    // By STAFF now, not by voice: a shared staff collects the curves and hairpins of
+    // every voice on it.
+    staves: system.staves.map((staff, staffIndex) => ({
       ...staff,
-      curves: curvesBySystem[voiceIndex]?.[systemIndex] ?? [],
-      spannerLines: spannersBySystem[voiceIndex]?.[systemIndex] ?? [],
+      curves: (voicesOfStaff[staffIndex] ?? []).flatMap(
+        (v) => curvesBySystem[v]?.[systemIndex] ?? [],
+      ),
+      spannerLines: (voicesOfStaff[staffIndex] ?? []).flatMap(
+        (v) => spannersBySystem[v]?.[systemIndex] ?? [],
+      ),
     })),
   }))
 

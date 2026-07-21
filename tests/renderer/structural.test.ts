@@ -163,9 +163,14 @@ function coreSequence(abc: string): string[] {
   const result = parse(abc)
   const score = result.scores[0]
   if (!score) return []
-  // Voice 0 only — see the blind-spot list. `staves[0]` is that voice.
+  // Voice 0 only — see the blind-spot list.
+  //
+  // `staves[0].voices[0]`, NOT `staves[0].elements`: since `%%score`'s `( … )` shares a
+  // staff, staff 0 can carry several voices and its flat element list interleaves them.
+  // Reading that list would compare abcjs's voice 0 against ours plus everyone else's,
+  // which is how this gate broke the day staff sharing landed.
   return layout(score).systems.flatMap((system, systemIndex) =>
-    (system.staves[0]?.elements ?? [])
+    (system.staves[0]?.voices[0] ?? [])
       // Systems after the first reprint the clef and key. So does abcjs, and
       // `goldenLayoutElements` drops those — WHERE a line breaks is a layout decision
       // that two engines make differently by design, so neither side's break points are

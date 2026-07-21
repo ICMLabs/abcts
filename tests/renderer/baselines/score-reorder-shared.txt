@@ -1,5 +1,5 @@
 tune 0
-bounds  width=32.462 height=40.944 top=0.000
+bounds  width=32.462 height=24.420 top=0.000
 systems 1
 system 0 width=32.462 originY=0.000
   staff 0 originY=15.420
@@ -35,12 +35,6 @@ system 0 width=32.462 originY=0.000
       line  25.167,2.832 -> 25.167,-0.500 t=0.120
     bar x=30.462 w=0.160
       line  30.542,-2.000 -> 30.542,2.000 t=0.160
-  staff 1 originY=33.312
-    staffline 0.000,2.000 -> 32.462,2.000 t=0.130
-    staffline 0.000,1.000 -> 32.462,1.000 t=0.130
-    staffline 0.000,0.000 -> 32.462,0.000 t=0.130
-    staffline 0.000,-1.000 -> 32.462,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 32.462,-2.000 t=0.130
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880

@@ -1936,22 +1936,31 @@ describe('%%score / %%staves staff grouping', () => {
     expect(score.voices.map((v) => v.id)).toEqual(['3', '1', '2'])
   })
 
-  it('KNOWN GAP: `( )` should share one staff and does not', () => {
-    // Pinned, not passing-by-accident. `%%score {1 (2 3)}` means voices 2 and 3 share a
-    // staff, so abcjs renders TWO. We render three, because the layout pipeline is built
-    // one-staff-per-voice from `plans` through `voiceAnchors` to `systems`.
+  it('shares one staff for `( )`, as abcjs and abcMusicKit v1 do', () => {
+    // `%%score {1 (2 3)}` means voices 2 and 3 print on ONE staff, so three voices become
+    // two staves. This was a recorded gap until 2026-07-20: the layout was
+    // one-staff-per-voice from `plans` through `voiceAnchors` to `systems`, and a piano
+    // rag rendered on five staves where abcjs uses two.
     //
-    // Measured against abcjs 6.6.3 on `ragtime-mini`, whose `%%score { ( 4 5 ) | ( 1 2 3 ) }`
-    // it lays out as voiceNumber/voiceTotal `[0/2 1/2 0/3 1/3 2/3]` — two staves carrying
-    // two and three voices. We give it five.
-    //
-    // 9 of the 11 corpus fixtures with a `%%score`/`%%staves` directive are affected, and
-    // NO gate sees it: the structural gate reads voice 0 only, and baselines record our
-    // own output. This assertion is the only thing watching, and it fails the day sharing
-    // lands — which is the point.
-    expect(stavesFor(THREE_VOICES('%%score {1 (2 3)}'))).toBe(3) // should become 2
-    expect(stavesFor(THREE_VOICES('%%score {(1 2) 3}'))).toBe(3) // should become 2
-    expect(stavesFor(THREE_VOICES('%%score (1 2 3)'))).toBe(3) // should become 1
+    // The rule is one line of abcjs's `abc_parse_directive.js`, which abcMusicKit v1
+    // ports with citations: a voice opens a new staff unless it is inside `( … )` and not
+    // the first one there. abcjs and v1 therefore agree, so one implementation serves all
+    // three modes and there is no split to make.
+    expect(stavesFor(THREE_VOICES('%%score {1 (2 3)}'))).toBe(2)
+    expect(stavesFor(THREE_VOICES('%%score {(1 2) 3}'))).toBe(2)
+    expect(stavesFor(THREE_VOICES('%%score (1 2 3)'))).toBe(1)
+  })
+
+  it('keeps the voices distinguishable on a shared staff', () => {
+    // A staff is not a voice. The flat element list interleaves them for drawing, but
+    // `voices` keeps the split — needed for stem-direction convention, and by any gate
+    // comparing ONE voice against a reference. The structural gate read `staves[0].elements`
+    // and silently started comparing abcjs's voice 0 against ours plus everyone else's.
+    const staff = layout(parse(THREE_VOICES('%%score (1 2 3)')).scores[0] as Score, {
+      systemWidth: 300,
+    }).systems[0]?.staves[0]
+    expect(staff?.voices).toHaveLength(3)
+    expect(staff?.elements.length).toBe((staff?.voices ?? []).reduce((n, v) => n + v.length, 0))
   })
 
   it('is already right where the directive asks for no sharing', () => {

@@ -461,6 +461,38 @@ export interface ScoreMetadata {
   readonly rhythm: string | null
 }
 
+/**
+ * One STAFF, and the voices printed on it — the parsed result of `%%score` / `%%staves`.
+ *
+ * A staff is not a voice. `%%score {1 (2 3)}` puts voices 2 and 3 on ONE staff, so three
+ * voices become two staves. Without this the directive's grouping punctuation is thrown
+ * away and every voice gets a staff of its own, which is what abcts did until 2026-07-20
+ * — five staves for a piano rag that abcjs renders on two.
+ *
+ * SHAPE follows abcMusicKit v1, which ports abcjs's `abc_parse_directive.js` line for
+ * line, rather than abcMusicKit2's grouping TREE. v2's tree is closer to the source
+ * syntax and better for round-tripping, but it records `( … )` with its merge explicitly
+ * deferred — the one thing this exists to do. A renderer needs the flattened answer:
+ * which staves exist, and which voices are on each.
+ */
+export interface StaffGroup {
+  /** Voice ids on this staff, in order. The first is the upper voice. */
+  readonly voiceIds: readonly string[]
+  /** `{ … }` — a brace, as on a piano grand staff. */
+  readonly brace: StaffConnector | null
+  /** `[ … ]` — a bracket, as over an instrument family. */
+  readonly bracket: StaffConnector | null
+  /**
+   * Whether barlines run through to the staff below. `%%staves` connects every staff;
+   * `%%score` connects only where the directive writes `|`. That is the entire difference
+   * between the two spellings.
+   */
+  readonly connectBarLines: StaffConnector | null
+}
+
+/** Where a staff sits in a run of grouped staves. */
+export type StaffConnector = 'start' | 'continue' | 'end'
+
 export interface Score {
   readonly metadata: ScoreMetadata
   readonly key: KeySignature
@@ -475,6 +507,11 @@ export interface Score {
   readonly tempo: Tempo | null
   readonly unitNoteLength: Rational
   readonly voices: readonly Voice[]
+  /**
+   * One entry per STAFF, in top-to-bottom order. Empty when the tune has no
+   * `%%score`/`%%staves`, in which case every voice takes a staff of its own.
+   */
+  readonly staves: readonly StaffGroup[]
   readonly sourceStartOffset: number
   readonly keySourceRange: SourceRange | null
   readonly meterSourceRange: SourceRange | null
