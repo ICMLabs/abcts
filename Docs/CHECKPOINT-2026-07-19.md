@@ -1,5 +1,9 @@
 # abcts — Checkpoint, 2026-07-19
 
+> **SUPERSEDED by `CHECKPOINT-2026-07-21.md`.** Read that first for current state and
+> the remaining diffs. This file stays accurate for the renderer's first slices and for
+> the lessons recorded in it.
+
 First renderer slices. Supersedes `CHECKPOINT-2026-07-18.md`, which remains accurate for
 the parser and whose risk list is still live except where noted below.
 

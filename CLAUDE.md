@@ -4,9 +4,9 @@ You are developing abcts, a modern TypeScript ABC notation library
 and community successor to abcjs.
 
 ## First Step — Always
-Read `Docs/CHECKPOINT-2026-07-19.md` first — it is the current state of play, the open
-decisions, and the known risks. (`CHECKPOINT-2026-07-18.md` is superseded but still the
-record of the parser phase and its audit.) Then read ARCHITECTURE.md in full. It is your
+Read `Docs/CHECKPOINT-2026-07-21.md` first — it is the current state of play, the open
+decisions, and the known risks. (`CHECKPOINT-2026-07-19.md` and `-07-18.md` are superseded but remain the record of the
+renderer's first slices and the parser phase.) Then read ARCHITECTURE.md in full. It is your
 specification, decision record, and setup guide. Do not make
 architectural decisions that contradict it without flagging them
 explicitly and getting confirmation from Lance.
