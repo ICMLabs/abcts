@@ -27,6 +27,8 @@ system 0 width=90.000 originY=0.000
     note@3 x=11.605 w=3.871
       glyph noteheadBlack 11.605,-1.500
       glyph flag8thDown 11.605,2.000
+      glyph ornamentTrill 11.153,-3.500
+      glyph ornamentTrill 11.153,-4.500
       line  11.605,-1.332 -> 11.605,2.000 t=0.120
     note@3 x=15.646 w=3.871
       glyph noteheadBlack 15.646,-1.500
@@ -39,7 +41,8 @@ system 0 width=90.000 originY=0.000
       line  23.729,-0.332 -> 23.729,3.000 t=0.120
     note@3 x=27.770 w=3.871
       glyph noteheadBlack 27.770,-1.500
-      glyph stringsDownBow 27.736,-3.500
+      glyph ornamentTrill 27.318,-3.500
+      glyph stringsDownBow 27.736,-4.500
       line  27.770,-1.332 -> 27.770,2.000 t=0.120
     note@3 x=31.811 w=3.871
       glyph noteheadBlack 31.811,-1.500
@@ -48,6 +51,8 @@ system 0 width=90.000 originY=0.000
     note@3 x=35.852 w=3.871
       glyph noteheadBlack 35.852,-1.500
       glyph flag8thDown 35.852,2.000
+      glyph ornamentTrill 35.400,-3.500
+      glyph ornamentTrill 35.400,-4.500
       line  35.852,-1.332 -> 35.852,2.000 t=0.120
     rest x=39.893 w=3.871
     note@3 x=43.934 w=3.871
@@ -55,6 +60,8 @@ system 0 width=90.000 originY=0.000
       line  43.934,-1.332 -> 43.934,2.000 t=0.120
     note@3 x=47.975 w=3.871
       glyph noteheadBlack 47.975,-1.500
+      glyph ornamentTrill 47.523,-3.500
+      glyph ornamentTrill 47.523,-4.500
       line  47.975,-1.332 -> 47.975,2.250 t=0.120
     note@2 x=52.016 w=3.871
       glyph noteheadBlack 52.016,-1.000
@@ -187,19 +194,23 @@ system 2 width=90.000 originY=46.600
       line  34.675,-2.000 -> 34.675,2.000 t=0.160
     note@5 x=35.595 w=3.871
       glyph noteheadBlack 35.595,-2.500
+      glyph articTenutoAbove 35.507,-3.500
       line  35.595,-2.332 -> 35.595,1.000 t=0.120
       text  35.037,4.000 size=1.400 "son-"
     note@6 x=39.829 w=3.871
       glyph noteheadBlack 39.829,-3.000
+      glyph articTenutoAbove 39.741,-4.000
       line  39.429,-3.000 -> 41.409,-3.000 t=0.160
       line  39.829,-2.832 -> 39.829,0.500 t=0.120
       text  39.519,4.000 size=1.400 "nez"
     note@5 x=44.063 w=3.871
       glyph noteheadBlack 44.063,-2.500
+      glyph articTenutoAbove 43.975,-3.500
       line  44.063,-2.332 -> 44.063,1.000 t=0.120
       text  44.196,4.000 size=1.400 "le"
     note@4 x=48.297 w=3.871
       glyph noteheadBlack 48.297,-2.000
+      glyph articTenutoAbove 48.209,-3.000
       line  48.297,-1.832 -> 48.297,1.500 t=0.120
       text  47.844,4.000 size=1.400 "mâ-"
     note@3 x=52.531 w=5.474

@@ -30,16 +30,12 @@ const KNOWN_DIVERGENCES: Record<string, string> = {
   // decoration tables, and `staccato` is in none of them while its `.` shorthand
   // hard-codes it. This assertion is what reported the fix — the divergence started
   // matching and had to be removed deliberately.
-  'frere-jacques':
-    'STRICT-MODE GAP, NARROWED TWICE and now residual. abcjs does not implement `+:`, so ' +
-    'a copyright notice is lexed as music. Strict does that too, and as of 2026-07-20 ' +
-    "produces the SAME 45 notes — abcjs's unclosed-`+` rule was the cause of the earlier " +
-    '50 (see `lexer.ts`). All 45 agree on PITCH and DURATION exactly, asserted separately ' +
-    'in parse.test.ts so this exclusion does not hide it. What still differs is 17 source ' +
-    'offsets, 8 decoration counts and 1 chord symbol — abcjs attaching marks it finds in ' +
-    'the prose. Closing that means emulating its lexer on arbitrary English, which buys ' +
-    'nothing a reader would see. Under abc2.1 `+:` is a continuation, as ABC 2.1 says, ' +
-    'and the 32 notes there are the real ones.',
+  // `frere-jacques` was the last content divergence and is CLOSED (2026-07-21). abcjs
+  // does not implement `+:`, so a copyright notice is lexed as music; strict does the
+  // same, and now produces the same 45 notes with the same decorations. The residual was
+  // never prose-lexing at all — it was two missing features: `U:` user-defined symbols
+  // (the fixture REDEFINES `u` and `v`, swapping them, so we were emitting wrong
+  // decorations rather than absent ones) and abcjs's lowercase `t` shorthand.
 }
 
 /**

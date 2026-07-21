@@ -819,6 +819,15 @@ class ScoreBuilder {
    * Staves from `%%score`/`%%staves` — one entry per staff, with the voices on it.
    * Empty when the tune has no directive, in which case every voice takes its own staff.
    */
+  /**
+   * `U:` user-defined symbols — one character standing for a decoration.
+   *
+   * These OVERRIDE the built-in shorthands rather than supplementing them, which is not a
+   * detail: `frere-jacques` writes `U:u = !downbow!` and `U:v = !upbow!`, deliberately
+   * swapping the two built-ins. Treating them as additions left us emitting the WRONG
+   * decoration on those notes, not merely a missing one.
+   */
+  userSymbols = new Map<string, string>()
   staffGroups: StaffGroup[] = []
   /** Voice ids from `%%score`/`%%staves`, which overrides declaration order. */
   scoreOrder: string[] | null = null
@@ -1149,6 +1158,18 @@ class Parser {
         if (voiceClef !== null) builder.voiceFor(id).clef = voiceClef
         return
       }
+      case 'U': {
+        // `U:t = !tenuto!` — a single character standing for a decoration. The definition
+        // is normally `!name!`; the delimiters are stripped so it joins the same namespace
+        // the long form uses, and abcjs accepts `+name+` for the same thing.
+        const define = /^\s*(\S)\s*=\s*(.+?)\s*$/.exec(value)
+        const symbol = define?.[1]
+        const body = define?.[2]?.replace(/^[!+]|[!+]$/g, '')
+        if (symbol !== undefined && body !== undefined && body !== '') {
+          this.ensureScore(start).userSymbols.set(symbol, body)
+        }
+        return
+      }
       case 'K': {
         // `style=` rides on K: and sets the notehead shape for everything that follows,
         // until the next one — `[K: style=harmonic]`, then `[K: style=normal]` to end it.
@@ -1406,7 +1427,11 @@ class Parser {
           // decoration no renderer should draw.
           const nextKind = (tokens[i + 1] as Token | undefined)?.kind
           const dotsAMark = token.aux === '.' && (nextKind === 'lparen' || nextKind === 'tie')
-          const shorthand = dotsAMark ? undefined : DECORATION_SHORTHAND[token.aux]
+          // User definitions WIN over the built-ins — abcjs looks in its macro table
+          // first (`abc_parse_music.js:756`) and only falls through to the hard-coded
+          // letters. `frere-jacques` relies on exactly that to swap `u` and `v`.
+          const userSymbol = builder.userSymbols.get(token.aux)
+          const shorthand = dotsAMark ? undefined : (userSymbol ?? DECORATION_SHORTHAND[token.aux])
           if (shorthand) {
             pending.decorations.push(shorthand)
             pending.decorationSourceRanges.push(
@@ -1999,6 +2024,9 @@ const DECORATION_SHORTHAND: Record<string, string> = {
   R: 'roll',
   S: 'segno',
   T: 'trill',
+  // Lowercase `t` is a SEPARATE shorthand in abcjs, not a case-insensitive `T`:
+  // `abc_parse_music.js:838` gives it `trillh`, the trill with a diacritical mark.
+  t: 'trillh',
   u: 'upbow',
   v: 'downbow',
 }
