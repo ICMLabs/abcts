@@ -2092,3 +2092,26 @@ describe('drawing bounds include prose, not just music', () => {
     }
   })
 })
+
+describe('tempo direction advance', () => {
+  it('measures the direction text properly, not at half an em per character', () => {
+    // This kept the flat estimate after `textWidth` replaced it everywhere else — a stale
+    // ponytail that was still RUNNING, not merely still written. A narrow direction like
+    // "Illi" was reserving as much room as a wide one, pushing the beat-unit note right.
+    const beatNote = (text: string) =>
+      (
+        layout(parse(`X:1\nQ:"${text}" 1/4=60\nL:1/4\nK:C\nC|\n`).scores[0] as Score, {
+          systemWidth: 200,
+        }).systems[0]?.staves[0]?.elements ?? []
+      )
+        .flatMap((e) => e.glyphs)
+        .find((g) => g.name === 'noteheadBlack')?.x
+
+    // Same character count, very different real width.
+    const narrow = beatNote('lili')
+    const wide = beatNote('WMWM')
+    expect(narrow).toBeDefined()
+    expect(wide).toBeDefined()
+    expect(narrow ?? 0).toBeLessThan(wide ?? 0)
+  })
+})

@@ -1074,7 +1074,8 @@ class Parser {
       }
       case 'V': {
         // `V:1 clef=treble name="..."` — the id is the first token; the rest is voice
-        // configuration. ponytail: clef/name/transpose parsed when a fixture needs them.
+        // configuration. `clef=`, `octave=` and `style=` are read; ponytail: `name=`,
+        // `transpose=`, `middle=` and `stafflines=` are not, and no fixture needs them.
         const id = value.split(/\s+/)[0]
         if (!id) return
         // In the header a `V:` only DECLARES. Only a `V:` in the body switches the

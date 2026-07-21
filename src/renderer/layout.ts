@@ -826,10 +826,10 @@ function layoutTempo(x: number, tempo: Tempo): LayoutElement | null {
       bold: true,
       italic: false,
     })
-    // ponytail: no text metrics, so the advance past a direction is estimated at half
-    // the font size per character. Only affects where the `=120` that may follow lands.
-    // Real metrics need a measured font; revisit if a fixture looks wrong.
-    cursor += tempo.text.length * ENGRAVE.tempoTextSize * 0.5 + 1
+    // Real per-character metrics, like everything else that measures text. This kept the
+    // flat half-em-per-character estimate after `textWidth` replaced it everywhere else —
+    // a stale ponytail that was still running, not just still written.
+    cursor += textWidth(tempo.text, ENGRAVE.tempoTextSize) + 1
   }
 
   if (tempo.bpm !== null) {
@@ -2462,9 +2462,9 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
 /**
  * Lay out a score.
  *
- * ponytail: first voice only, one system, no line breaking — the whole tune goes on one
- * staff however wide that gets. Multi-voice and system breaking are the next two slices;
- * both are layout-only changes that this element model already accommodates.
+ * Every voice, wrapped into justified systems, with voices that `%%score` groups with
+ * `( … )` sharing a staff. (This once said "first voice only, one system, no line
+ * breaking" — all three stopped being true and the comment did not.)
  */
 /**
  * Which engine's look to reproduce.
