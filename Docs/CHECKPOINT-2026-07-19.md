@@ -335,9 +335,29 @@ deletions, so every previously committed geometry is byte-identical.
 
 ### Then, none of which the corpus hits as hard
 
-1. **Decoration coverage is partial by design** — 15 names map to SMuFL; rolls, slides,
-   glissandi, hairpins and fingerings draw nothing, asserted so the gap cannot be
-   mistaken for coverage.
+1. ~~**Decoration coverage is partial by design**~~ — **CLOSED 2026-07-20.** It was 15
+   names mapped and **145 of the corpus's 245 decoration occurrences reaching the page as
+   nothing**. Now zero: every occurrence either draws or is an asserted blank matching
+   abcjs. 104 glyphs (from 55), plus a spanner pass for hairpins and glissandi, text for
+   the navigation directions, and stem placement for tremolo.
+
+   Four things worth carrying forward from that work:
+
+   - **The gap list undercounted it.** "Styled noteheads: 1" counted the inline
+     `!style=…!` and missed the `[K: style=…]` form, which is what the corpus actually
+     uses. Frequency counts over model fields measure population, not wrongness.
+   - **Three more mode splits fell out**, all the same shape as melisma and the
+     microtones: abcjs ACCEPTS a decoration and then paints nothing. `invertedturn`,
+     `turnx`, `invertedturnx` draw in `abc2.1`/`extended` and are blank in strict.
+     Distinct from a name abcjs REJECTS, which the parser drops before the renderer sees
+     it — different mechanism, different place to handle it.
+   - **abcjs's element dump is not a reliable answer to "does it paint this".** It misses
+     anything attached through `addOther`, which hid all eleven dynamics, then `slide` and
+     `breath`. It cost the same mistake twice.
+   - **Diffing the SET of SVG paths is unsound.** It loses duplicates — a second identical
+     tremolo stroke vanishes — and reports staff lines as new when a decoration shifts
+     them half a pixel. **Counting drawable elements against a plain note** is the method
+     that held up, and is the one to use next time.
 2. **No text metrics.** Everything that centres or advances past text uses an estimated
    character width. Real metrics would also unlock lyric-driven spacing and melisma lines.
 3. **Fixed lanes, not a skyline.** Chord symbols, ornaments, dynamics, lyrics, parts and
