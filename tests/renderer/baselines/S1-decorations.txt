@@ -177,7 +177,7 @@ system 0 width=77.050 originY=0.000
     bar x=75.050 w=0.160
       line  75.130,-2.000 -> 75.130,2.000 t=0.160
 tune 2
-bounds  width=90.000 height=121.804 top=0.000
+bounds  width=90.000 height=124.532 top=0.000
 systems 6
 system 0 width=90.000 originY=0.000
   staff 0 originY=15.420
@@ -480,19 +480,23 @@ system 4 width=90.000 originY=85.056
     note@-2 x=60.895 w=5.474
       glyph noteheadBlack 60.895,1.000
       line  62.075,0.832 -> 62.075,-2.500 t=0.120
+      text  60.085,-5.000 size=1.400 italic "D.S."
     note@-2 x=67.421 w=5.474
       glyph noteheadBlack 67.421,1.000
       line  68.601,0.832 -> 68.601,-2.500 t=0.120
+      text  66.611,-5.000 size=1.400 italic "D.C."
     note@-2 x=73.947 w=5.474
       glyph noteheadBlack 73.947,1.000
       line  75.127,0.832 -> 75.127,-2.500 t=0.120
+      text  70.337,-5.000 size=1.400 italic "D.C. al Coda"
     note@-2 x=80.474 w=5.474
       glyph noteheadBlack 80.474,1.000
       line  81.654,0.832 -> 81.654,-2.500 t=0.120
+      text  76.864,-5.000 size=1.400 italic "D.C. al Fine"
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
 system 5 width=29.582 originY=106.780
-  staff 0 originY=7.392
+  staff 0 originY=10.120
     staffline 0.000,2.000 -> 29.582,2.000 t=0.130
     staffline 0.000,1.000 -> 29.582,1.000 t=0.130
     staffline 0.000,0.000 -> 29.582,0.000 t=0.130
@@ -503,6 +507,7 @@ system 5 width=29.582 originY=106.780
     note@-2 x=4.684 w=5.474
       glyph noteheadBlack 4.684,1.000
       line  5.864,0.832 -> 5.864,-2.500 t=0.120
+      text  3.874,-5.000 size=1.400 italic "Fine"
     note@-2 x=10.158 w=5.474
       glyph noteheadBlack 10.158,1.000
       line  11.338,0.832 -> 11.338,-2.500 t=0.120

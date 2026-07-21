@@ -1741,3 +1741,67 @@ describe('ornaments and techniques', () => {
     expect(new Set(ys).size).toBe(ys.length)
   })
 })
+
+describe('navigation directions', () => {
+  const textsOf = (dec: string) =>
+    (
+      layout(parse(`X:1\nL:1/4\nK:C\n${dec}F|\n`).scores[0] as Score, { systemWidth: 200 })
+        .systems[0]?.staves[0]?.elements ?? []
+    ).flatMap((e) => e.texts)
+
+  it('draws them as WORDS, in conventional engraving spelling', () => {
+    // The ABC token is an identifier; the page wants prose. abcjs paints each of these —
+    // verified as a delta against a plain note in its rendered SVG.
+    expect(textsOf('!D.C.!').map((t) => t.text)).toEqual(['D.C.'])
+    expect(textsOf('!fine!').map((t) => t.text)).toEqual(['Fine'])
+    expect(textsOf('!D.S.alcoda!').map((t) => t.text)).toEqual(['D.S. al Coda'])
+    expect(textsOf('!D.C.alfine!').map((t) => t.text)).toEqual(['D.C. al Fine'])
+  })
+
+  it('sets them in italic, as directions rather than lyrics', () => {
+    expect(textsOf('!D.C.!')[0]?.italic).toBe(true)
+  })
+
+  it('stacks two on one note rather than overprinting', () => {
+    const ys = textsOf('!D.C.!!fine!').map((t) => t.y)
+    expect(ys).toHaveLength(2)
+    expect(new Set(ys).size).toBe(2)
+  })
+
+  it('draws no GLYPH for them — they are text, not symbols', () => {
+    const glyphs = (
+      layout(parse('X:1\nL:1/4\nK:C\n!D.C.!F|\n').scores[0] as Score, { systemWidth: 200 })
+        .systems[0]?.staves[0]?.elements ?? []
+    )
+      .flatMap((e) => e.glyphs)
+      .filter((g) => g.role === 'decoration')
+    expect(glyphs).toEqual([])
+  })
+})
+
+describe('decorations abcjs accepts but never paints', () => {
+  // Distinct from names abcjs REJECTS, which the parser drops in strict. These are
+  // accepted, attached to the note, and then drawn by nobody — so asserting the blank
+  // keeps it a recorded decision rather than a hole someone re-discovers.
+  //
+  // `xstem` is a stem instruction, `editorial`/`courtesy` mark an accidental's status,
+  // `mark` is a reference point, `trill(`/`trill)` open and close a span abcjs does not
+  // render. Verified by SVG delta against a plain note: all zero.
+  const drawnFor = (dec: string) => {
+    const staff = layout(parse(`X:1\nL:1/4\nK:C\n${dec}F|\n`).scores[0] as Score, {
+      systemWidth: 200,
+    }).systems[0]?.staves[0]
+    const els = staff?.elements ?? []
+    return [
+      ...els.flatMap((e) => e.glyphs).filter((g) => g.role === 'decoration'),
+      ...els.flatMap((e) => e.texts),
+      ...(staff?.spannerLines ?? []),
+    ]
+  }
+
+  for (const name of ['xstem', 'editorial', 'courtesy', 'mark']) {
+    it(`draws nothing for !${name}!, matching abcjs`, () => {
+      expect(drawnFor(`!${name}!`)).toEqual([])
+    })
+  }
+})

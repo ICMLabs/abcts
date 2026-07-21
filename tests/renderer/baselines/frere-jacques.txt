@@ -1,5 +1,5 @@
 tune 0
-bounds  width=90.000 height=83.972 top=0.000
+bounds  width=90.000 height=86.700 top=0.000
 systems 4
 system 0 width=90.000 originY=0.000
   staff 0 originY=15.420
@@ -228,7 +228,7 @@ system 2 width=90.000 originY=46.600
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
 system 3 width=26.375 originY=68.230
-  staff 0 originY=7.392
+  staff 0 originY=10.120
     staffline 0.000,2.000 -> 26.375,2.000 t=0.130
     staffline 0.000,1.000 -> 26.375,1.000 t=0.130
     staffline 0.000,0.000 -> 26.375,0.000 t=0.130
@@ -248,6 +248,7 @@ system 3 width=26.375 originY=68.230
       glyph noteheadHalf 15.633,-0.500
       line  15.633,-0.332 -> 15.633,3.000 t=0.120
       text  14.473,4.000 size=1.400 "dong."
+      text  14.823,-5.000 size=1.400 italic "D.C."
     bar x=24.375 w=1.060
       line  24.455,-2.000 -> 24.455,2.000 t=0.160
       line  25.185,-2.000 -> 25.185,2.000 t=0.500

@@ -1245,6 +1245,9 @@ function layoutNoteheads(
   }
 
   const texts = event === null ? [] : noteText(event, headX, head.width)
+  if (event !== null && event.type !== 'rest') {
+    texts.push(...decorationTexts(event.decorations, headX, head.width))
+  }
   if (event !== null && event.decorations.length > 0) {
     glyphs.push(
       ...decorationGlyphs(event.decorations, headX, head.width, highest, lowest, up, strict),
@@ -1484,6 +1487,48 @@ const DECORATIONS: Readonly<
  * attached to the note, and then silently not drawn.
  */
 const STRICT_UNDRAWN: ReadonlySet<string> = new Set(['invertedturn', 'invertedturnx', 'turnx'])
+
+/**
+ * Navigation directions, drawn as WORDS rather than symbols — which is what they are.
+ *
+ * abcjs paints each of these; verified by the delta against a plain note in its rendered
+ * SVG. The display spelling is conventional engraving (`D.C. al Fine`), not the ABC
+ * token, because the token is an identifier and the page wants prose.
+ */
+const DECORATION_TEXTS: Readonly<Record<string, string>> = {
+  'D.C.': 'D.C.',
+  'D.S.': 'D.S.',
+  fine: 'Fine',
+  'D.C.alcoda': 'D.C. al Coda',
+  'D.C.alfine': 'D.C. al Fine',
+  'D.S.alcoda': 'D.S. al Coda',
+  'D.S.alfine': 'D.S. al Fine',
+}
+
+/**
+ * Words a note carries — the navigation directions above.
+ *
+ * Italic and in the part lane, well clear of the ornament stack, because these address
+ * the PLAYER rather than marking the note: they are read at a glance while navigating,
+ * not while reading pitch. Stacked so two on one note cannot overprint.
+ */
+function decorationTexts(names: readonly string[], headX: number, headWidth: number): PlacedText[] {
+  const out: PlacedText[] = []
+  const size = ENGRAVE.lyricTextSize
+  for (const name of names) {
+    const text = DECORATION_TEXTS[name]
+    if (text === undefined) continue
+    out.push({
+      text,
+      x: headX + headWidth / 2 - textWidth(text, size) / 2,
+      y: stepToY(ENGRAVE.partStep - out.length * ENGRAVE.annotationLineStep),
+      size,
+      bold: false,
+      italic: true,
+    })
+  }
+  return out
+}
 
 /**
  * Decoration glyphs for one note.
