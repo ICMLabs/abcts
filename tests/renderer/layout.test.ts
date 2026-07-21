@@ -1921,3 +1921,41 @@ describe('text metrics', () => {
     expect((one?.x ?? 0) - (three?.x ?? 0)).toBeCloseTo(FALLBACK_ADVANCE * size, 4)
   })
 })
+
+describe('%%score / %%staves staff grouping', () => {
+  const stavesFor = (abc: string) =>
+    layout(parse(abc).scores[0] as Score, { systemWidth: 300 }).systems[0]?.staves.length ?? 0
+
+  const THREE_VOICES = (directive: string) =>
+    `X:1\nM:4/4\nL:1/4\n${directive}\nV:1\nV:2\nV:3\nK:C\nV:1\nCDEF|\nV:2\nGABc|\nV:3\nEFGA|\n`
+
+  it('takes the voice ORDER from the directive', () => {
+    // This much works: grouping punctuation is stripped and the bare words reorder the
+    // voices. It is the sharing the punctuation encodes that is not implemented.
+    const score = parse(THREE_VOICES('%%score 3 1 2')).scores[0] as Score
+    expect(score.voices.map((v) => v.id)).toEqual(['3', '1', '2'])
+  })
+
+  it('KNOWN GAP: `( )` should share one staff and does not', () => {
+    // Pinned, not passing-by-accident. `%%score {1 (2 3)}` means voices 2 and 3 share a
+    // staff, so abcjs renders TWO. We render three, because the layout pipeline is built
+    // one-staff-per-voice from `plans` through `voiceAnchors` to `systems`.
+    //
+    // Measured against abcjs 6.6.3 on `ragtime-mini`, whose `%%score { ( 4 5 ) | ( 1 2 3 ) }`
+    // it lays out as voiceNumber/voiceTotal `[0/2 1/2 0/3 1/3 2/3]` — two staves carrying
+    // two and three voices. We give it five.
+    //
+    // 9 of the 11 corpus fixtures with a `%%score`/`%%staves` directive are affected, and
+    // NO gate sees it: the structural gate reads voice 0 only, and baselines record our
+    // own output. This assertion is the only thing watching, and it fails the day sharing
+    // lands — which is the point.
+    expect(stavesFor(THREE_VOICES('%%score {1 (2 3)}'))).toBe(3) // should become 2
+    expect(stavesFor(THREE_VOICES('%%score {(1 2) 3}'))).toBe(3) // should become 2
+    expect(stavesFor(THREE_VOICES('%%score (1 2 3)'))).toBe(3) // should become 1
+  })
+
+  it('is already right where the directive asks for no sharing', () => {
+    expect(stavesFor(THREE_VOICES('%%score 1 2 3'))).toBe(3)
+    expect(stavesFor(THREE_VOICES('%%score {1 2 3}'))).toBe(3)
+  })
+})

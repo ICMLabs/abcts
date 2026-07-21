@@ -333,6 +333,35 @@ tune's real top — that bounds line is what once caught a fixed margin clipping
 lines out of the drawing. The re-record was purely additive: 12,121 insertions, zero
 deletions, so every previously committed geometry is byte-identical.
 
+### `%%score` / `%%staves` — voices that should SHARE a staff do not
+
+**Investigated 2026-07-20; recorded, not fixed.** Bigger than the "staff braces" it was
+filed as, and worth stating precisely before anyone picks it up.
+
+We parse the directive and take the voice ORDER from it, discarding the grouping
+punctuation. `( )` means *these voices share one staff*, and that is the part not
+implemented — so a 5-voice piano rag renders as five staves.
+
+Measured against abcjs 6.6.3 on `ragtime-mini`, whose `%%score { ( 4 5 ) | ( 1 2 3 ) }` it
+lays out as voiceNumber/voiceTotal `[0/2 1/2 0/3 1/3 2/3]` — **two** staves carrying two
+and three voices. We give it five. **9 of the 11 corpus fixtures with the directive render
+the wrong number of staves**, including `multi-voice-rest-collision`, which is named for a
+problem that only exists once voices share.
+
+**No gate sees any of it.** The structural gate reads voice 0 only, and baselines record
+our own output, so a wrong staff count is invisible to both. A pinned assertion in
+`layout.test.ts` is the only thing watching, written to fail the day sharing lands.
+
+Why it was not done in the same pass: the layout pipeline is one-staff-per-voice from
+`plans` through `voiceAnchors` to `systems`, and sharing changes the fundamental unit from
+voice to staff — measure packing has to interleave several voices by x, and stem direction
+becomes a per-voice convention within a staff rather than a per-note decision. That is a
+real refactor, not an edit.
+
+Braces and brackets were deliberately NOT drawn first. A grouping mark around five staves
+that ought to be two is decoration on a wrong structure; the glyphs (`brace`, `bracket`)
+are in Bravura and the marks are an afternoon once the staves are right.
+
 ### Then, none of which the corpus hits as hard
 
 1. ~~**Decoration coverage is partial by design**~~ — **CLOSED 2026-07-20.** It was 15
