@@ -362,6 +362,37 @@ Braces and brackets were deliberately NOT drawn first. A grouping mark around fi
 that ought to be two is decoration on a wrong structure; the glyphs (`brace`, `bracket`)
 are in Bravura and the marks are an afternoon once the staves are right.
 
+### Ponytail debt — triaged 2026-07-21
+
+33 `ponytail:` markers in `src/`. Triaged rather than counted, because the interesting
+question is which are WRONG, not how many there are.
+
+**Three were stale, and one of those was still running.** `layout.ts` said "no text
+metrics, so the advance past a tempo direction is estimated at half the font size per
+character" — and it still was, using the flat formula `textWidth` had replaced everywhere
+else, so a narrow direction reserved as much room as a wide one. Fixed. The other two were
+misinformation only: `layout()` documented as "first voice only, one system, no line
+breaking" (all three long since false), and the `V:` field claiming clef/name/transpose are
+unparsed (clef, octave and style are read).
+
+**The rest divide cleanly, and neither group needs work now:**
+
+*Legitimately deferred — a documented ceiling that is the right call at this size:* the
+system-break truncations (melisma, hairpin, a curve spanning three systems), tenor-clef
+accidental irregularity, no percussion glyph, one accidental column per chord, fixed lanes
+rather than a skyline, three-voice stem convention, `"@x,y"` free placement, glyph-level
+`data-name`.
+
+*Real but unexercised — the corpus barely touches them, and every frequency count this
+session that looked large turned out not to be:* decorations inside a chord (**0**
+occurrences), microtones inside a chord (**0**), multi-verse melisma (**0**), chord symbol
+inside a chord (**1**), mid-tune `Q:` (**1**, not the 20 a careless count suggested),
+header `P:` part order (**3**).
+
+The lesson from the gap list applies to the debt list too: **count what is wrong, not what
+is populated.** A first pass at mid-tune `Q:` said 20 by counting every `Q:` after the
+first `K:` — which in a multi-tune file is mostly the next tune's header.
+
 ### Then, none of which the corpus hits as hard
 
 1. ~~**Decoration coverage is partial by design**~~ — **CLOSED 2026-07-20.** It was 15
