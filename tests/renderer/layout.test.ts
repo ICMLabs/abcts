@@ -29,7 +29,14 @@ import {
   naturalWidth,
   noteGlyph,
 } from '../../src/renderer/layout.js'
-import { FALLBACK_ADVANCE } from '../../src/renderer/text-metrics.js'
+import { CHAR_ADVANCE, FALLBACK_ADVANCE } from '../../src/renderer/text-metrics.js'
+
+/** Mirrors the renderer's own measure, for asserting that nothing falls outside bounds. */
+const textWidthOf = (text: string, size: number): number => {
+  let em = 0
+  for (const ch of text) em += CHAR_ADVANCE[ch] ?? FALLBACK_ADVANCE
+  return em * size
+}
 
 const key = (
   step: KeySignature['tonic']['step'],
@@ -2043,5 +2050,45 @@ describe('staff connectors — braces and brackets', () => {
   it('sits left of the staff, outside the music', () => {
     const brace = systemFor('%%score {1 2}')?.connectorGlyphs[0]
     expect(brace?.x ?? 0).toBeLessThan(0)
+  })
+})
+
+describe('drawing bounds include prose, not just music', () => {
+  const doc = (abc: string) => layout(parse(abc).scores[0] as Score, { systemWidth: 20 })
+
+  it('widens for a title longer than the bar it heads', () => {
+    // Sizing the system from the music alone CLIPPED the title: a 64-character title on a
+    // one-bar tune gave a 13-space viewBox with text reaching well past it, so most of the
+    // title was cut off the right edge and the output looked like a rendering bug.
+    const long = doc(
+      'X:1\nT:A very considerably longer title than the music beneath it needs\nL:1/4\nK:C\nC|\n',
+    )
+    const short = doc('X:1\nT:A\nL:1/4\nK:C\nC|\n')
+    expect(long.width).toBeGreaterThan(short.width)
+  })
+
+  it('leaves the width alone when the music is the wider thing', () => {
+    const wide = doc('X:1\nT:A\nM:4/4\nL:1/4\nK:C\nCDEF|GABc|defg|\n')
+    expect(wide.width).toBeGreaterThan(30)
+  })
+
+  it('fits every text it draws', () => {
+    // The general property, rather than the title case that exposed it: nothing the
+    // renderer places may fall outside the box it reports.
+    for (const abc of [
+      'X:1\nT:A very considerably longer title than the music beneath it needs\nL:1/4\nK:C\nC|\n',
+      'X:1\nT:T\nL:1/4\nK:C\nC|\nw:enormouslylongsyllable\n',
+    ]) {
+      const d = doc(abc)
+      const right = Math.max(
+        0,
+        ...d.systems.flatMap((s) =>
+          s.staves.flatMap((st) =>
+            st.elements.flatMap((e) => e.texts.map((t) => t.x + textWidthOf(t.text, t.size))),
+          ),
+        ),
+      )
+      expect(right).toBeLessThanOrEqual(d.width + 0.01)
+    }
   })
 })

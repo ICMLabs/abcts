@@ -2991,7 +2991,33 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       }
     })
 
-    const width = head + natural * justify + ENGRAVE.marginX
+    const musicWidth = head + natural * justify + ENGRAVE.marginX
+
+    /**
+     * The drawing has to fit its PROSE too, not just its music.
+     *
+     * A title is routinely wider than the bar it heads, and a lyric under the last note
+     * runs past it. Sizing the system from the music alone clipped both: a 64-character
+     * title on a one-bar tune produced a 13-space viewBox with text reaching 77, so most
+     * of it was simply cut off the right edge.
+     *
+     * A title is measured BARE because it has not been centred yet — that happens below,
+     * against this width. Everything else is already placed, so it measures from its x.
+     */
+    const textWidth_ = (t: { text: string; size: number }) => textWidth(t.text, t.size)
+    const proseWidth = Math.max(
+      0,
+      ...staves.flatMap((staff) =>
+        staff.elements.flatMap((el) =>
+          el.texts.map((t) =>
+            el.type === 'title'
+              ? textWidth_(t) + 2 * ENGRAVE.marginX
+              : t.x + textWidth_(t) + ENGRAVE.marginX,
+          ),
+        ),
+      ),
+    )
+    const width = Math.max(musicWidth, proseWidth)
 
     // The title centres on the finished system, whose width is only known now.
     const centred = staves.map((staff, staffIndex) =>
