@@ -81,6 +81,7 @@ describe('parse: simple-c', () => {
       beamGroup: null,
       lyric: null,
       lyricSourceRange: null,
+      lyricFont: null,
       lyricMelisma: false,
       lyricMelismaStart: false,
       extraVerses: [],

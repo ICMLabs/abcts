@@ -178,6 +178,45 @@ export interface Meter {
 
 export const measureDuration = (m: Meter): Rational => rational(m.numerator, m.denominator)
 
+// ─── Fonts ───────────────────────────────────────────────────────────────────
+
+/**
+ * A font named by `%%vocalfont` (or `I: vocalfont`), reduced to what can be DRAWN.
+ *
+ * `size` is in points, as the directive writes it — converted to staff spaces at layout,
+ * so a change to the staff-space scale does not have to be chased through the parser.
+ *
+ * ponytail: the FACE is recorded but not emitted. Output asks for `font-family="serif"`
+ * and lets the viewer supply the face, which is the same call the rest of the text layer
+ * makes and the reason the width table is an estimate. Weight, style and size are what
+ * Gonzato §4.1.4 actually distinguishes — Times-Roman 12, Times-Bold 16, Times-Italic 12
+ * are three visibly different runs on those three axes alone. Emit `font-family` when
+ * something needs a face that is not a serif, and expect the width estimate to be wrong
+ * for it until there are real metrics.
+ */
+export interface LyricFont {
+  readonly face: string
+  /** Points, as written in the directive. */
+  readonly size: number
+  readonly bold: boolean
+  readonly italic: boolean
+}
+
+/**
+ * The point size `%%vocalfont` is understood to be changing FROM.
+ *
+ * 13, measured — abcjs's `formatting.vocalfont` reports size 13 when nothing has set one,
+ * and this has to agree with it or every explicit size is scaled against the wrong
+ * baseline. It is the DENOMINATOR in the pt-to-staff-space conversion, not a default that
+ * anything gets compared against: a tune with no `%%vocalfont` has `lyricFont: null` and
+ * never reaches this constant at all.
+ *
+ * That distinction is the safety property. A "differs from the default" guard is exactly
+ * how a font change leaks into the measurement path of every font-free tune, and the
+ * leak shows up as sub-pixel drift that only a snapshot suite catches.
+ */
+export const DEFAULT_VOCALFONT_PT = 13
+
 // ─── Tempo ───────────────────────────────────────────────────────────────────
 
 /**
@@ -230,6 +269,11 @@ export interface Note {
   /** First-verse syllable sung on this event, if any. */
   readonly lyric: string | null
   readonly lyricSourceRange: SourceRange | null
+  /**
+   * The `%%vocalfont` in force when THIS SYLLABLE's line was parsed; null for the
+   * default. Per note because one lyric line can carry several fonts — see `LyricFont`.
+   */
+  readonly lyricFont: LyricFont | null
   /**
    * `_` in a `w:` line — this note CONTINUES the previous syllable rather than being
    * wordless. Distinct from `lyric: null` with `lyricMelisma: false`, which is `*`:
@@ -326,6 +370,11 @@ export interface Chord {
   /** First-verse syllable sung on this event, if any. */
   readonly lyric: string | null
   readonly lyricSourceRange: SourceRange | null
+  /**
+   * The `%%vocalfont` in force when THIS SYLLABLE's line was parsed; null for the
+   * default. Per note because one lyric line can carry several fonts — see `LyricFont`.
+   */
+  readonly lyricFont: LyricFont | null
   /**
    * `_` in a `w:` line — this note CONTINUES the previous syllable rather than being
    * wordless. Distinct from `lyric: null` with `lyricMelisma: false`, which is `*`:

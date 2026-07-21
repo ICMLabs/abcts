@@ -23,6 +23,7 @@ import {
   type Clef,
   type ClefShape,
   type CompatibilityMode,
+  DEFAULT_VOCALFONT_PT,
   type Diagnostic,
   type DiatonicStep,
   defaultClef,
@@ -30,6 +31,7 @@ import {
   isCompoundMeter,
   isStrict,
   type KeySignature,
+  type LyricFont,
   type Measure,
   type Meter,
   type Mode,
@@ -588,6 +590,16 @@ class VoiceBuilder {
     this.lyricLines.push({ start: this.lineNoteStart, syllables })
   }
 
+  /** Extend the lyric line in progress — a `\` continuation, not a new verse. */
+  appendLyricLine(syllables: Syllable[]): void {
+    const current = this.lyricLines[this.lyricLines.length - 1]
+    if (current === undefined) {
+      this.addLyricLine(syllables)
+      return
+    }
+    current.syllables.push(...syllables)
+  }
+
   /**
    * Distribute `w:` syllables onto lyric-bearing events by position.
    *
@@ -627,6 +639,7 @@ class VoiceBuilder {
           ...event,
           lyric: first?.text ?? null,
           lyricSourceRange: first?.range ?? null,
+          lyricFont: first?.font ?? null,
           // ponytail: melisma is tracked for verse 1 only. extraVerses is a plain
           // (string|null)[]; per-verse melismas need it to become a richer type, which
           // is worth doing when a renderer actually lays out multiple verses.
@@ -811,6 +824,15 @@ class ScoreBuilder {
   unitNoteLength: Rational = rational(1, 8)
   unitExplicit = false
   bodyStarted = false
+  /**
+   * The `%%vocalfont` in force, or null while none has been seen.
+   *
+   * Null is load-bearing: it means "nothing said", and the renderer answers it with the
+   * default constant rather than by computing a size that happens to equal it. A tune
+   * with no `%%vocalfont` therefore takes a path with no font arithmetic on it at all,
+   * which is the only way to guarantee its geometry cannot drift.
+   */
+  vocalFont: LyricFont | null = null
   keySourceRange: SourceRange | null = null
   meterSourceRange: SourceRange | null = null
   /** Declaration order is output order — a Map preserves insertion order. */
@@ -956,6 +978,8 @@ class Parser {
   private builder: ScoreBuilder | null = null
   private inTextBlock = false
   private lastFieldLetter: string | null = null
+  /** A `w:`/`+:` line ended in `\`, so the lyric is not finished. See the handler. */
+  private lyricContinues = false
 
   constructor(
     private readonly src: string,
@@ -1035,28 +1059,59 @@ class Parser {
       this.flush() // A blank line ends the tune.
       return
     }
-    // `%%score [(S A) | (T B)]` / `%%staves` — grouping punctuation is layout; the bare
-    // words are voice ids, and their order is the order voices are presented in.
-    const scoreDirective = /^%%(score|staves)\s+(.*)$/.exec(line)
-    if (scoreDirective?.[2]) {
-      const builder = this.ensureScore(start)
-      const groups = parseStaffGroups(scoreDirective[2], scoreDirective[1] as 'score' | 'staves')
-      builder.staffGroups = groups
-      // Voice ORDER falls out of the grouping: staves top to bottom, voices within each.
-      builder.scoreOrder = groups.flatMap((g) => g.voiceIds)
-      return
-    }
     if (line.startsWith('%%')) {
-      this.info(
-        'unknown-directive',
-        `directive not yet implemented: ${line}`,
-        sourceRange(start, end),
-      )
+      this.applyDirective(line.slice(2), start, end)
       return
     }
     if (line.startsWith('%')) return // comment
 
+    // A `w:` line ending in `\` continues onto a later line, and what counts as "later"
+    // is where abcjs and ABC 2.1 part company. MEASURED against abcjs 6.6.3 on Gonzato
+    // §4.1.4, not assumed:
+    //
+    //   abcjs   swallows the VERY NEXT line whatever it is, strips its `X:` prefix and
+    //           reads the rest as syllables — so `I: vocalfont Times-Bold 16` lands under
+    //           the noteheads as "vocalfont", "Times", "Bold", "16". (`Times-Bold` is two
+    //           syllables because `-` splits a word across notes.) It then drops the `+:`
+    //           continuations entirely, because it does not implement `+:` at all and
+    //           lexes those lines as MUSIC: 10 phantom notes, 4 of 16 syllables.
+    //
+    //   ABC 2.1 an interposed `%%` or `I:` line is FORMATTING, not lyric text. The lyric
+    //           resumes at the next `+:`, giving all 16 syllables.
+    //
+    // Strict reproduces the first because reproducing abcjs is its job; every other mode
+    // implements the second. Both are pinned by name in the lyric-continuation tests.
+    if (this.lyricContinues) {
+      if (isStrict(this.mode)) {
+        // Whatever this line is, it is lyric now. Strip a field prefix if it has one.
+        this.continueLyric(line.replace(/^[A-Za-z+]:/, ''), start, end)
+        return
+      }
+      // `%%` was handled above and left `lyricContinues` set, which is the whole point:
+      // formatting interposed in a continuation is transparent to it. `I:` is the same
+      // directive spelled differently (ABC 2.1 §11.4) and is handled below.
+      if (line.startsWith('+:')) {
+        this.continueLyric(line.slice(2), start, end)
+        return
+      }
+      if (!/^I:/.test(line)) this.lyricContinues = false
+    }
+
     if (/^[A-Za-z]:/.test(line)) {
+      // `I: <directive>` IS `%%<directive>` (ABC 2.1 §11.4) — mid-tune included, and
+      // inside a lyric continuation included. abcjs does not implement this: it has no
+      // `I:` case at all, which is why the field's text ends up sung. Strict keeps that
+      // by falling through to the no-op below; every other mode routes it to the same
+      // handler `%%` uses.
+      //
+      // Deliberately does NOT touch `lastFieldLetter`. It used to, by falling into the
+      // generic dispatch, and that alone broke the `+:` chain after it: `I` is not a
+      // continuable field, so the next `+:` stopped continuing the `w:` and fell through
+      // to scanMusic as music. That was the leak, before any font question.
+      if (!isStrict(this.mode) && line[0] === 'I') {
+        this.applyDirective(line.slice(2).trim(), start, end)
+        return
+      }
       this.lastFieldLetter = line[0] as string
       this.applyField(this.lastFieldLetter, line.slice(2), start, end)
       return
@@ -1079,6 +1134,67 @@ class Parser {
       return
     }
     this.scanMusic(start, end)
+  }
+
+  /**
+   * A `%%directive` body, with the `%%` already stripped.
+   *
+   * Shared with `I:`, which ABC 2.1 §11.4 defines as the same thing spelled differently.
+   * Extracted for that reason — the two must not drift apart, which they would as soon
+   * as one of them grew a case the other did not.
+   */
+  private applyDirective(body: string, start: number, end: number): void {
+    // `%%score [(S A) | (T B)]` / `%%staves` — grouping punctuation is layout; the bare
+    // words are voice ids, and their order is the order voices are presented in.
+    const scoreDirective = /^(score|staves)\s+(.*)$/.exec(body)
+    if (scoreDirective?.[2]) {
+      const builder = this.ensureScore(start)
+      const groups = parseStaffGroups(scoreDirective[2], scoreDirective[1] as 'score' | 'staves')
+      builder.staffGroups = groups
+      // Voice ORDER falls out of the grouping: staves top to bottom, voices within each.
+      builder.scoreOrder = groups.flatMap((g) => g.voiceIds)
+      return
+    }
+    // `%%vocalfont Times-Bold 16` — the font for lyric lines parsed AFTER it. Held on the
+    // builder rather than applied to notes: the notes are already parsed by the time a
+    // `w:` line below them is read, so a note-level stamp cannot carry this. It is
+    // captured per SYLLABLE at the moment its line is parsed. See `parseLyricSyllables`.
+    const vocalfont = /^vocalfont\s+(.*)$/.exec(body)
+    if (vocalfont?.[1]) {
+      this.ensureScore(start).vocalFont = parseFontSpec(vocalfont[1])
+      return
+    }
+    this.info(
+      'unknown-directive',
+      `directive not yet implemented: %%${body}`,
+      sourceRange(start, end),
+    )
+  }
+
+  /**
+   * Append to the lyric line already in progress, rather than starting a new one.
+   *
+   * `addLyricLine` would make this the NEXT VERSE — a second `w:` under the same music is
+   * verse 2 — so a continuation that used it would stack the second half of one line
+   * underneath the first instead of after it.
+   */
+  private continueLyric(content: string, start: number, end: number): void {
+    const builder = this.ensureScore(start)
+    const offset = start + (end - start - content.length)
+    builder.voice.appendLyricLine(this.takeLyricLine(content, offset, builder))
+  }
+
+  /**
+   * Syllables for one `w:`/`+:` line, and the continuation flag it leaves behind.
+   *
+   * A trailing `\` is a CONTINUATION MARK, not text. abcjs strips it too — its fourth
+   * syllable is "la", not "la\" — so this is not mode-split.
+   */
+  private takeLyricLine(content: string, offset: number, builder: ScoreBuilder): Syllable[] {
+    const continues = /\\\s*$/.test(content)
+    this.lyricContinues = continues
+    const text = continues ? content.replace(/\\\s*$/, '') : content
+    return parseLyricSyllables(text, offset, this.mode, builder.vocalFont)
   }
 
   private applyField(letter: string, content: string, start: number, end: number): void {
@@ -1148,7 +1264,8 @@ class Parser {
       }
       case 'w': {
         // `w:` follows the music line it belongs to. Offset by 2 for the `w:` prefix.
-        builder.voice.addLyricLine(parseLyricSyllables(content, start + 2, this.mode))
+        // `takeLyricLine` also sets `lyricContinues` from a trailing `\`.
+        builder.voice.addLyricLine(this.takeLyricLine(content, start + 2, builder))
         return
       }
       case 'V': {
@@ -1677,6 +1794,7 @@ class Parser {
       beamGroup: null,
       lyric: null,
       lyricSourceRange: null,
+      lyricFont: null,
       lyricMelisma: false,
       lyricMelismaStart: false,
       extraVerses: [],
@@ -1777,6 +1895,7 @@ class Parser {
         beamGroup: null,
         lyric: null,
         lyricSourceRange: null,
+        lyricFont: null,
         lyricMelisma: false,
         lyricMelismaStart: false,
         extraVerses: [],
@@ -2136,6 +2255,30 @@ function parseGracePitches(raw: string): { pitches: Pitch[]; slash: boolean } {
 }
 
 /**
+ * `Times-Roman 12`, `Times-Bold 16`, `Helvetica-BoldOblique 10` — a PostScript font name
+ * and a point size, which is how `%%vocalfont` and its siblings are written.
+ *
+ * The name carries weight and style as suffixes after the family: `-Bold`, `-Italic`,
+ * `-Oblique`, and combinations. Matched case-insensitively on the whole name rather than
+ * split on `-`, because families themselves contain hyphens (`Times-Roman` is one face,
+ * not a Times in Roman weight) and a split would read the family as a style.
+ *
+ * A missing size is not an error — `%%vocalfont Times-Bold` is legal and means "that
+ * face, current size". It comes back as null and the caller keeps the size it had.
+ */
+function parseFontSpec(spec: string): LyricFont {
+  const trimmed = spec.trim()
+  const sizeMatch = /\s(\d+(?:\.\d+)?)\s*$/.exec(trimmed)
+  const face = (sizeMatch ? trimmed.slice(0, sizeMatch.index) : trimmed).trim()
+  return {
+    face,
+    size: sizeMatch?.[1] ? Number.parseFloat(sizeMatch[1]) : DEFAULT_VOCALFONT_PT,
+    bold: /bold/i.test(face),
+    italic: /italic|oblique/i.test(face),
+  }
+}
+
+/**
  * One syllable position in a `w:` line.
  *
  * `text` — sung on this note.
@@ -2149,6 +2292,16 @@ interface Syllable {
   kind: 'text' | 'skip' | 'melisma'
   text: string | null
   range: SourceRange | null
+  /**
+   * The `%%vocalfont` in force WHEN THIS LINE WAS PARSED, or null for the default.
+   *
+   * Per syllable, and captured here rather than read later, because that is the only
+   * place the answer is still available. A lyric line is parsed after the music line it
+   * sits under, so the notes are already built and cannot carry it; and one lyric LINE
+   * can span several fonts, since a `\` continuation may have a `%%vocalfont` between
+   * its segments. Gonzato §4.1.4 is exactly that case — one line, three fonts.
+   */
+  font: LyricFont | null
 }
 
 /**
@@ -2172,6 +2325,8 @@ function parseLyricSyllables(
   text: string,
   base: number,
   mode: CompatibilityMode = defaultMode,
+  /** The `%%vocalfont` in force as this line is parsed; stamped on every syllable. */
+  font: LyricFont | null = null,
 ): Syllable[] {
   const out: Syllable[] = []
   let i = 0
@@ -2201,6 +2356,7 @@ function parseLyricSyllables(
         kind: 'text',
         text: decodeTextString(raw) + (hyphen ? '-' : ''),
         range: sourceRange(base + bufferStart, base + end),
+        font,
       })
       buffer = ''
     }
@@ -2212,7 +2368,7 @@ function parseLyricSyllables(
       if (previous?.kind === 'text' && previous.text !== null && !previous.text.endsWith('-')) {
         out[out.length - 1] = { ...previous, text: `${previous.text}-` }
       }
-      out.push({ kind: 'skip', text: null, range: null })
+      out.push({ kind: 'skip', text: null, range: null, font: null })
       continue
     }
 
@@ -2223,11 +2379,11 @@ function parseLyricSyllables(
         bufferStart = j + 1
       } else if (ch === '_') {
         flush(j, false)
-        out.push({ kind: 'melisma', text: null, range: null })
+        out.push({ kind: 'melisma', text: null, range: null, font: null })
         bufferStart = j + 1
       } else if (ch === '*') {
         flush(j, false)
-        out.push({ kind: 'skip', text: null, range: null })
+        out.push({ kind: 'skip', text: null, range: null, font: null })
         bufferStart = j + 1
       } else if (ch === '|') {
         // A bar hint aligns the line to the next barline and occupies NO note, so unlike

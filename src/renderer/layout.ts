@@ -20,6 +20,7 @@ import {
   type Clef,
   type ClefShape,
   type CompatibilityMode,
+  DEFAULT_VOCALFONT_PT,
   type DiatonicStep,
   defaultClef,
   defaultMode,
@@ -1282,7 +1283,7 @@ function layoutNoteheads(
     }
   }
 
-  const texts = event === null ? [] : noteText(event, headX, head.width)
+  const texts = event === null ? [] : noteText(event, headX, head.width, strict)
   if (event !== null && event.type !== 'rest') {
     texts.push(...decorationTexts(event.decorations, headX, head.width))
   }
@@ -1707,7 +1708,13 @@ const FULL_WIDTH_ADVANCE = 1.0
  * width, since the error is halved and falls on both sides instead of accumulating to
  * one. Revisit when there are metrics.
  */
-function noteText(event: MusicEvent, headX: number, headWidth: number): PlacedText[] {
+function noteText(
+  event: MusicEvent,
+  headX: number,
+  headWidth: number,
+  /** `abcjs-strict` — gates whether `%%vocalfont` is realized. See the verses block. */
+  strict = true,
+): PlacedText[] {
   if (event.type === 'rest') return []
   const texts: PlacedText[] = []
   const centre = headX + headWidth / 2
@@ -1779,19 +1786,51 @@ function noteText(event: MusicEvent, headX: number, headWidth: number): PlacedTe
   // Verse 1 comes from `lyric`; `extraVerses` holds 2..n, positionally, with a null
   // wherever a verse skips this note.
   const verses = [event.lyric, ...event.extraVerses]
+  // `%%vocalfont`, realized. THE NULL BRANCH DOES NO ARITHMETIC: a tune that never sets a
+  // vocalfont takes `ENGRAVE.lyricTextSize` itself, the same object it always took, so
+  // its geometry cannot move by a rounding step. Computing a size and finding it equal to
+  // the default would be the same value in theory and a sub-pixel drift across every
+  // font-free fixture in practice.
+  //
+  // Verse 1 only, because `lyricFont` is per event and `extraVerses` is a bare
+  // (string|null)[] with nowhere to put one — the same limitation melisma has, recorded
+  // on `lyricMelisma` in the model. A `%%vocalfont` between two `w:` lines under the same
+  // music therefore styles verse 1 and not verse 2.
+  //
+  // MODE-GATED, and this direction is deliberate: abcjs stamps `el.fonts` at parse time
+  // and never reads `.fonts` anywhere in its write phase, so its mid-tune vocalfont is
+  // parsed and never realized. Strict reproduces that by drawing every syllable in the
+  // default. Realizing it in strict would be an IMPROVEMENT, which is the one thing
+  // strict must not do.
+  const lyricSize =
+    !strict && event.lyricFont !== null
+      ? // Ratio FIRST. `size / DEFAULT` is exactly 1 when they are equal, whatever the
+        // values, so `%%vocalfont Times-Bold` with no size lands on the default size
+        // exactly rather than a rounding step away from it. Multiplying first happens to
+        // be exact for 13 too, and would stop being so if either constant moved.
+        ENGRAVE.lyricTextSize * (event.lyricFont.size / DEFAULT_VOCALFONT_PT)
+      : ENGRAVE.lyricTextSize
+  const lyricBold = !strict && event.lyricFont !== null ? event.lyricFont.bold : false
+  const lyricItalic = !strict && event.lyricFont !== null ? event.lyricFont.italic : false
   verses.forEach((verse, index) => {
     if (verse === null || verse === '') return
-    const size = ENGRAVE.lyricTextSize
+    // Verse 1 carries the font; later verses stay at the default until `extraVerses` can
+    // hold one of their own.
+    const size = index === 0 ? lyricSize : ENGRAVE.lyricTextSize
     texts.push({
       text: verse,
       // Tagged so the melisma pass can find the syllable it must extend from. Matching
       // on the y lane instead would couple that pass to this one's lane arithmetic.
       role: 'lyric',
+      // MEASUREMENT follows the same `size`, so a bigger font both draws and occupies
+      // bigger. A font that draws large and measures at the default width is how lyrics
+      // end up overlapping — the centring here and the melisma extender's start both
+      // read this width.
       x: centre - textWidth(verse, size) / 2,
       y: stepToY(ENGRAVE.lyricStep - index * ENGRAVE.lyricLineStep),
       size,
-      bold: false,
-      italic: false,
+      bold: index === 0 ? lyricBold : false,
+      italic: index === 0 ? lyricItalic : false,
     })
   })
 

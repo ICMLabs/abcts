@@ -1,0 +1,11 @@
+X: 65
+T: 4.1.4 Directives as I: Fields
+L: 1/4
+K: C
+CDEF | GABc | cBAG | FEDC |
+%%vocalfont Times-Roman 12
+w: la la la la\
+I: vocalfont Times-Bold 16
++: la la la la, la la la la\
+%%vocalfont Times-Italic 12
++: la la la la.
