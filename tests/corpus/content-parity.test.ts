@@ -70,6 +70,31 @@ const OFFSET_DIVERGENCES: Record<string, string> = {
  * That is not hypothetical. Chasing the space-after-tie rule fixed three fixtures'
  * divergences and broke `ragtime-mini`, holding the COUNT at a plausible-looking number
  * while the set churned underneath. The assertion caught it on the first run.
+ *
+ * ── WHAT THE REMAINING FOUR ACTUALLY ARE (investigated 2026-07-21) ───────────
+ * Five disagreeing links across ~2000 compared. Recorded rather than fixed, because each
+ * attempt so far has produced a rule fitted to an observation without a mechanism — which
+ * is exactly what the original tie exception was, and it had to be undone.
+ *
+ *  `S5-directives` — NOT a beam-grouping failure at all. All 185 comparable links MATCH;
+ *      the two sides differ in LENGTH (ours 185, abcjs 187), and abcjs has 5 rests to our
+ *      3. It fails here because the arrays are different lengths, so this is an
+ *      element-count question wearing a beam label. Worth splitting off.
+ *
+ *  `ragtime-nightingale` — 4 links, all the same shape: a BROKEN RHYTHM before a chord
+ *      tie. `[fa]/>[da]/- [da]/` breaks in abcjs; `[fa]/[da]/- [da]/` does not. So `>`
+ *      suppresses the chord-tie exception. Observed, not explained.
+ *
+ *  `S8-layout` — 1 link, at a `\` continuation before a mid-tune `M:`. Does NOT reproduce
+ *      in isolation: the same construct alone beams identically in both engines, so
+ *      something else in that tune is the cause.
+ *
+ * WHERE A FUTURE DIG SHOULD START, and why it is not the parser: abcjs sets
+ * `el.end_beam = true` UNCONDITIONALLY on whitespace (`abc_parse_music.js:1242`), and the
+ * tie lookahead immediately below sets `startTie` without ever clearing it. So a space
+ * always ends a beam as far as its PARSER is concerned — which contradicts the observed
+ * behaviour in both directions. Whatever reconciles that lives downstream in the beam
+ * builder, not in the tokenizer, and that is the code to read next.
  */
 const BEAM_FAILURES = ['S5-directives', 'S8-layout', 'frere-jacques', 'ragtime-nightingale']
 
