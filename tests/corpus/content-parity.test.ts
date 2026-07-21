@@ -76,27 +76,25 @@ const OFFSET_DIVERGENCES: Record<string, string> = {
  * attempt so far has produced a rule fitted to an observation without a mechanism — which
  * is exactly what the original tie exception was, and it had to be undone.
  *
- *  `S5-directives` — NOT a beam-grouping failure at all. All 185 comparable links MATCH;
- *      the two sides differ in LENGTH (ours 185, abcjs 187), and abcjs has 5 rests to our
- *      3. It fails here because the arrays are different lengths, so this is an
- *      element-count question wearing a beam label. Worth splitting off.
+ * ALL THREE were closed on 2026-07-21, and only one of them was a beam rule:
  *
- *  `ragtime-nightingale` — 4 links, all the same shape: a BROKEN RHYTHM before a chord
- *      tie. `[fa]/>[da]/- [da]/` breaks in abcjs; `[fa]/[da]/- [da]/` does not. So `>`
- *      suppresses the chord-tie exception. Observed, not explained.
+ *  `ragtime-nightingale` — a BROKEN RHYTHM cancels the chord-tie exception, plus a
+ *      pending GRACE group holds a beam open exactly as a pending decoration does. Both
+ *      are rules; see the `whitespace` case in the parser for the measured table.
  *
- *  `S8-layout` — 1 link, at a `\` continuation before a mid-tune `M:`. Does NOT reproduce
- *      in isolation: the same construct alone beams identically in both engines, so
- *      something else in that tune is the cause.
+ *  `S8-layout` — never a beam divergence. Beam ids restart at 1 in every tune and voice,
+ *      and this gate concatenated them, so tune 10's group 1 next to tune 11's group 1
+ *      read as one run. Ids are now qualified by owner.
  *
- * WHERE A FUTURE DIG SHOULD START, and why it is not the parser: abcjs sets
- * `el.end_beam = true` UNCONDITIONALLY on whitespace (`abc_parse_music.js:1242`), and the
- * tie lookahead immediately below sets `startTie` without ever clearing it. So a space
- * always ends a beam as far as its PARSER is concerned — which contradicts the observed
- * behaviour in both directions. Whatever reconciles that lives downstream in the beam
- * builder, not in the tokenizer, and that is the code to read next.
+ *  `S5-directives` — never a beam divergence either. An `&` overlay is a VOICE and spans
+ *      the whole tune; abcjs pads the measures where it is silent with a whole-measure
+ *      invisible rest and we emitted nothing, so the arrays differed in LENGTH while
+ *      every beam link matched. Fixed in the parser, not here.
+ *
+ * Two of the three were therefore gate or model bugs wearing a beam label — which is why
+ * the entry above says to look at what a number MEANS before chasing it.
  */
-const BEAM_FAILURES = ['S5-directives', 'frere-jacques']
+const BEAM_FAILURES = ['frere-jacques']
 
 /**
  * Fixtures whose verse-1 lyrics do NOT line up with abcjs, and why.

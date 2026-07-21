@@ -283,6 +283,46 @@ function shiftMeasure(measure: Measure, octaves: number): Measure {
 }
 
 /**
+ * An `&` overlay is a VOICE, so it exists for the whole tune — not only where it sings.
+ *
+ * abcjs models it that way: for `C2 E2 | G2 &E2 B2 | A2 G2 |` its overlay voice is a
+ * whole-measure invisible rest, then `E B`, then another whole-measure invisible rest.
+ * We emitted just the two notes, so the tune had two fewer elements and `S5-directives`
+ * failed a beam gate on LENGTH while every beam link in it matched.
+ *
+ * Padding with an invisible rest changes nothing on the page — it draws nothing — but it
+ * makes the overlay a voice rather than a fragment, which is what it is.
+ */
+function padOverlays(measures: readonly Measure[], meter: Meter | null): Measure[] {
+  const layers = Math.max(0, ...measures.map((m) => m.overlays.length))
+  if (layers === 0) return [...measures]
+  // A measure's worth of silence. Without a meter there is no measure length to fill, so
+  // the padding is skipped rather than guessed at.
+  const full = meter === null ? null : measureDuration(meter)
+  if (full === null) return [...measures]
+
+  return measures.map((measure) => {
+    if (measure.overlays.length === layers) return measure
+    const padded = Array.from({ length: layers }, (_, i) => {
+      const existing = measure.overlays[i]
+      if (existing !== undefined && existing.length > 0) return existing
+      const rest: Rest = {
+        type: 'rest',
+        kind: 'invisible',
+        duration: full,
+        notatedDuration: full,
+        decorations: [],
+        decorationSourceRanges: [],
+        tuplet: null,
+        sourceRange: null,
+      }
+      return [rest]
+    })
+    return { ...measure, overlays: padded }
+  })
+}
+
+/**
  * `%%score` / `%%staves` — which staves exist and which voices sit on each.
  *
  * A port of abcjs's `abc_parse_directive.js:1046-1132`, by way of abcMusicKit v1's
@@ -472,6 +512,8 @@ class VoiceBuilder {
    * `pendingBroken` is consumed at emit, so by the time the space is read it is gone.
    */
   lastBroken = false
+  /** The tune's meter, so an empty overlay layer can be padded to a full measure. */
+  meterForOverlays: Meter | null = null
   /** A mid-tune `K:`/`M:` applies to the measure it opens, so it pends until close. */
   private pendingKeyChange: KeySignature | null = null
   private pendingKeyChangeRange: SourceRange | null = null
@@ -743,7 +785,13 @@ class VoiceBuilder {
       this.octaveShift === 0
         ? this.measures
         : this.measures.map((m) => shiftMeasure(m, this.octaveShift))
-    return { id: this.id, octaveShift: this.octaveShift, clef: this.clef, measures }
+    // An `&` overlay is a voice, so it spans the whole tune — see `padOverlays`.
+    return {
+      id: this.id,
+      octaveShift: this.octaveShift,
+      clef: this.clef,
+      measures: padOverlays(measures, this.meterForOverlays),
+    }
   }
 
   get isEmpty(): boolean {
@@ -877,7 +925,12 @@ class ScoreBuilder {
       meter: this.meter,
       tempo: this.tempo,
       unitNoteLength: this.unitNoteLength,
-      voices: this.orderedVoices().map((v) => v.finish()),
+      voices: this.orderedVoices().map((v) => {
+        // The meter lives on the score, and a voice needs it to pad an empty overlay
+        // layer to a full measure's silence.
+        v.meterForOverlays = this.meter
+        return v.finish()
+      }),
       staves: this.resolvedStaves(),
       sourceStartOffset: this.sourceStartOffset,
       keySourceRange: this.keySourceRange,
