@@ -109,11 +109,18 @@ backup remote is not a licence to vendor someone else's tree into this one.
 The PARSER and RENDERER are both complete against the corpus. **Note content parity is
 41/41 with ZERO known divergences** — every fixture matches abcjs on notes, durations,
 offsets, decorations, chord symbols and grace notes, nothing excluded. Lyrics 10/10.
-Beam grouping 40/41, render structure 40/41. 376 tests. Visual baselines cover all 119
-tunes across the 41 fixtures, not just the first tune of each.
+Beam grouping 41/41 and render structure 41/41, both with zero divergences. 376 tests.
+Visual baselines cover all 119 tunes across the 41 fixtures, not just the first tune of
+each.
 
-**Three diffs remain and they are the current work** — all diagnosed to causes in
-`Docs/CHECKPOINT-2026-07-21.md` § THE REMAINING DIFFS. Start there.
+**All four parity axes are at 100% with nothing recorded as divergent.** The three
+remaining diffs closed on 2026-07-21; `Docs/CHECKPOINT-2026-07-21.md` § THE REMAINING
+DIFFS records what each turned out to be, and two of the three had a diagnosis that did
+not survive being checked. Read § "Method notes that earned their place" before trusting
+any other recorded diagnosis in these documents.
+
+The next item is named there: **mid-tune `M:` and `K:` are parsed and drawn nowhere.**
+It needs the structural gate's prefix filter fixed before it can be scored.
 
 Renders staff, all clefs, key signatures, meters, tempo marks, part labels, noteheads and
 chords with stems and ledger lines, accidentals, rests and barlines, grace notes, chord
@@ -146,8 +153,9 @@ catch CHANGED (vs committed geometry). Invert every stem in the corpus and the s
 gate stays fully green while baselines fail 39 of 43. Re-record with `npm run baseline`,
 but READ the diff and commit baselines with the code change.
 
-**The corpus has stopped driving the work** — with 40/41 reproduced there is no failing
-diff to follow. What remains is known from the code: the decoration tail (rolls, slides, hairpins),
+**The corpus has stopped driving the work** — with 41/41 reproduced on every axis there is
+no failing diff left to follow at all. What remains is known from the code: mid-tune `M:`
+and `K:` drawn nowhere,
 no text metrics, fixed lanes rather than a skyline, and page furniture beyond titles.
 See the checkpoint.
 

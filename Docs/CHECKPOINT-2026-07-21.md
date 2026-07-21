@@ -13,13 +13,19 @@ slices and for the lessons recorded in it. **Read this, then `ARCHITECTURE.md`, 
 | Tests | **376 passing** |
 | **Note content parity** | **41/41 — ZERO known divergences** |
 | **Lyrics** | **10/10 — zero divergences** |
-| Beam grouping | 40/41 |
-| Render structure | 40/41 |
+| **Beam grouping** | **41/41 — zero divergences** |
+| **Render structure** | **41/41 — zero divergences** |
 | Visual baselines | 41/41 fixtures, **119 tunes** |
 | Typecheck / lint / build | clean |
 
 Content parity is complete: every corpus fixture matches abcjs on notes, durations,
 offsets, decorations, chord symbols and grace notes, with nothing excluded.
+
+**All four parity axes are at 100% with no recorded divergence on any of them**, as of
+the three commits below. `KNOWN_DIVERGENCES` in the structural gate and `BEAM_FAILURES`
+in the content gate are both empty — kept, not deleted, because an empty list still
+asserts: the next fixture that diverges fails there. The structural gate's divergence
+suite is `describe.skipIf`'d, since vitest fails a suite with no tests in it.
 
 ---
 
@@ -35,49 +41,64 @@ offsets, decorations, chord symbols and grace notes, with nothing excluded.
   stem convention and brace/bracket connectors. Was one staff per voice: five staves for a
   piano rag abcjs renders on two.
 - **Both strict-fidelity gaps** — `!staccato!` and the `+:` prose.
-- **Beam grouping 37/41 → 40/41.**
+- **Beam grouping 37/41 → 40/41 → 41/41.**
+- **Render structure 40/41 → 41/41**, and the last three diffs with it — see below.
 - **Compat DOM** — the claim "a stylesheet written against abcjs keeps working" is now
   measured against abcjs's own 29 golden SVGs, not asserted. 8 of 8 classes.
 
 ---
 
-## THE REMAINING DIFFS — all three, precisely
+## THE REMAINING DIFFS — CLOSED
 
-This is the list to close. Each has been diagnosed to a cause, not left as a symptom.
+All three are done. What follows is what each turned out to be, because in two of the
+three the recorded diagnosis was wrong, and how it was wrong is the reusable part.
 
-### 1. Structural gate — `frere-jacques`, two causes
+### 1. Structural gate — `frere-jacques`. THREE causes, not two
 
-**(a) Mid-tune `Q:` is unimplemented.** `frere-jacques:21` has `Q:"Allegretto" 1/4=100`
-AFTER `K:C` on line 20. abcjs honours it and emits a `tempo` element; we set
-`score.tempo = null` and emit nothing. Confirmed: our `score.tempo` is `null` for this
-fixture.
+**(a) Mid-tune `Q:`.** Correctly identified as unimplemented. The proposed FIX was
+wrong: "`Q:` on `Measure` alongside `keyChange`" would have drawn the mark mid-tune and
+matched nothing. abcjs models tempo TUNE-level — `tune.metaText.tempo`, set wherever the
+field sits — and puts the element at the head of system 1, ahead of music that PRECEDES
+the field in the source. So a body `Q:` now feeds `score.tempo`, first-one-wins,
+mirroring abcjs's own `if (!tune.metaText.tempo)`.
 
-This is a recorded ponytail (`model.ts`, `parser.ts` — "header `Q:` only; a mid-tune `Q:`
-is ignored rather than mis-applied"). It is the ONLY mid-tune `Q:` in the corpus — an
-earlier count said 20, which was wrong: it counted every `Q:` after the first `K:`, and in
-a multi-tune file that is mostly the next tune's header.
+It is still the only mid-tune `Q:` in the corpus; that part of the note held up.
 
-Fixing it means `Q:` on `Measure` alongside `keyChange`, the same shape mid-tune `K:` and
-`M:` already use.
+**(b) The `timeSignature`.** The claim was "we emit one and abcjs emits none". abcjs
+emits one. It is on system 3, and the gate drops `staff-extra` on every system after the
+first, so from inside the gate it read as absent. **The note was describing the gate's
+view and calling it abcjs's behaviour.** The instruction to verify before changing
+anything is what caught it.
 
-**(b) We emit a `timeSignature` element and abcjs does not.** `M:4/4` is on line 14, in
-the header, so we are arguably right and abcjs's `+:` mis-parse loses it. **Verify before
-changing anything** — if abcjs is simply broken here, matching it is the goal only if the
-project still wants strict to reproduce abcjs bugs, which it does.
+The real difference was WHERE, and the cause was where the body starts: abcjs lexes the
+`+:` prose on line 8 as music, so `M:4/4` on line 14 is a mid-tune meter, not a header
+one. `scanMusic` now sets `bodyStarted` — music ends the header, and `K:` is merely where
+that normally happens.
+
+**(c) The `P:` part label — not in the list at all.** Found by diffing the two element
+sequences instead of re-reading the summary. `P:A` drew at its measure's head, and in
+this tune the prose and the real first bar are ONE measure with the `P:` between them, so
+the label sat ahead of fourteen notes it should follow. It now anchors on
+`partLabelSourceRange` — before the first event that starts after the field. Identical
+placement in every ordinary tune, where the `P:` is on its own line and everything
+follows it.
 
 ### 2. Beam grouping — `frere-jacques`, 3 links
 
-All inside the `+:` prose abcjs lexes as music. We BREAK where abcjs KEEPS, at a space
-with no pending attachment (`…gs to their…`). Genuinely prose-specific, unlike the rest of
-that fixture's residual, which dissolved into two ordinary features.
+The diagnosis held: we broke where abcjs kept, at a space with no pending attachment.
+The rule is that **a space ends a beam only when nothing has come between it and the
+note** — and a character abcjs merely warns "Unknown character ignored" about counts as
+something, despite contributing nothing and leaving nothing pending. Measured across all
+eight boundaries in the prose; the table is in the parser's `whitespace` case.
 
-Where to start: abcjs sets `el.end_beam = true` unconditionally on whitespace
-(`abc_parse_music.js:1242`) and promotes it only for durations under a quarter
-(`addEndBeam`), which predicts a break here. Something downstream in the beam builder
-reconciles that, and it is the code to read — the tokenizer has been read three times and
-gives a different answer each time.
+The pointer to read the beam builder rather than the tokenizer was reasonable and also
+unnecessary. **It was neither: abcjs's WARNINGS in the golden settled it.** They name
+every ignored character with its column, which killed the theory that those letters were
+decorations holding the beam open — a theory that fits five of the eight boundaries and
+looks convincing until you check the other three. Two layers of source had been read
+three times without answering what one field of the artifact answered immediately.
 
-### 3. Offsets — `S3-note-syntax`, 2 of 466
+### 3. Offsets — `S3-note-syntax`, 2 of 466 — LEFT ALONE, as recommended
 
 abcjs's span for `^3/2G` starts at the `G`, EXCLUDING the microtone fraction, while a
 plain `^G` INCLUDES the accidental. It is inconsistent with itself.
@@ -86,6 +107,36 @@ plain `^G` INCLUDES the accidental. It is inconsistent with itself.
 way, and they would be worse for the editor cross-linking they exist for — a caret inside
 `^3/2` would identify no note. The gate already tolerates it as a 2-note allowance with the
 reason recorded.
+
+---
+
+## THE NEXT ITEM — mid-tune `M:` and `K:` are parsed and drawn nowhere
+
+Uncovered by the `bodyStarted` fix, but **not caused by it**. `Measure.meterChange` and
+`Measure.keyChange` have been populated since the model gained them and the renderer
+reads neither, so every `[M:…]` and `[K:…]` in the corpus silently changes the barring or
+the key and shows nothing. `S8-layout` has three meter changes; `S6-keys` has five key
+changes.
+
+`frere-jacques` now makes it visible: we draw no meter for that tune at all, where abcjs
+draws one on system 3.
+
+It was written, measured and reverted in this session rather than shipped, for reasons
+worth keeping:
+
+- **The gate cannot adjudicate it.** Each engine puts the change on a different system,
+  and the gate drops prefix-kind elements on every system after the first — so whichever
+  side is "late" gets filtered and the other reads as a spurious extra. Drawing the meter
+  traded `frere-jacques`'s structural match for a different mismatch the gate scores the
+  same way. That is a gate blind spot as much as a feature gap: `PREFIX_TYPES` assumes a
+  time signature only ever appears AS a system prefix, and a mid-measure one breaks the
+  assumption.
+- **Meter alone is not coherent.** A mid-tune `K:` needs naturals against the key in
+  force, which means accumulating key state forward through the measures. Shipping the
+  easy half would leave the pair half-done in the way that reads as finished.
+
+So: do the two together, and fix the gate's prefix filter to distinguish a system prefix
+from a mid-measure change before trusting the result either way.
 
 ---
 
@@ -113,6 +164,26 @@ listed because every one cost real time and would have cost more unchecked.
    Reading which decorations actually differed took ten minutes and found two ordinary
    unimplemented features (`U:` symbols and a lowercase `t` shorthand). The note described
    a symptom and inferred a cause nobody had checked.
+
+   **It happened again the next session, to this file.** Of the three diffs recorded
+   above, one named the wrong fix, one named a behaviour abcjs does not have, and one
+   missed a cause entirely — while every one of them was written as settled. The three
+   took under an hour once each was checked against the goldens rather than against the
+   note. Recording a diagnosis makes it look tested; it is not, and the instruction to
+   verify before changing anything is the only thing that catches it.
+
+7. **A gate's view is not the reference's behaviour.** "abcjs emits no timeSignature" was
+   true of what the gate SHOWS and false of abcjs — the element is there, on a system the
+   gate filters. Anything read through a comparison that drops, maps or normalises has to
+   be confirmed against the raw golden before it goes in a document as a fact about the
+   other engine. The same filter is why the mid-tune meter gap above cannot be scored yet.
+
+8. **Warnings are evidence, and cheaper than source.** abcjs's `warnings` array names
+   every character it ignored, with line and column. It settled the beam rule in a minute
+   after two layers of parser had been read three times without settling it — and it
+   falsified a theory that fit five of eight cases and would otherwise have shipped. When
+   the question is "what did the reference DO with this input", prefer what it says about
+   its own run over what its code appears to say.
 
 **Three GATE bugs were found this session**, all of the same shape — a comparison quietly
 measuring something other than what its comment claimed:
