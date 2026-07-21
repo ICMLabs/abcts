@@ -106,16 +106,21 @@ abcjs source are all reached by sibling path and stay in that repo. Keep it that
 backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
-The PARSER is complete and gated (39/39 corpus fixtures, saturated). The RENDERER now
-reproduces **40 of 41** fixtures on the structural gate; the 41st is a recorded abcjs bug,
-so the corpus is COMPLETE — every fixture is either reproduced or explained. All 41 also
-have committed visual baselines, covering ALL 119 tunes across the 41 fixtures (not just
-the first tune of each). 324 tests. The ranked gap list is CLOSED, and so are both
-strict-mode fidelity gaps — strict now reproduces abcjs on every gated fixture.
+The PARSER and RENDERER are both complete against the corpus. **Note content parity is
+41/41 with ZERO known divergences** — every fixture matches abcjs on notes, durations,
+offsets, decorations, chord symbols and grace notes, nothing excluded. Lyrics 10/10.
+Beam grouping 40/41, render structure 40/41. 376 tests. Visual baselines cover all 119
+tunes across the 41 fixtures, not just the first tune of each.
+
+**Three diffs remain and they are the current work** — all diagnosed to causes in
+`Docs/CHECKPOINT-2026-07-21.md` § THE REMAINING DIFFS. Start there.
+
 Renders staff, all clefs, key signatures, meters, tempo marks, part labels, noteheads and
 chords with stems and ledger lines, accidentals, rests and barlines, grace notes, chord
-symbols, decorations, lyrics, slurs and ties, tuplets, voltas, annotations and styled
-noteheads (diamond / x / triangle / rhythm slash).
+symbols, the full decoration set, lyrics, slurs and ties, tuplets, voltas, annotations,
+styled noteheads, hairpins and glissandi, melisma extenders, and `%%score` staff grouping
+with braces and brackets — voices grouped with `( … )` share a staff, upper voice
+stems up.
 
 Two features are MODE-SPLIT, and the split is the point — strict is faithful to abcjs,
 the other modes are correct:
