@@ -1382,7 +1382,7 @@ function layoutBar(x: number, kind: Barline): LayoutElement {
 const DECORATIONS: Readonly<
   Record<
     string,
-    { above: GlyphName; below: GlyphName; place: 'articulation' | 'ornament' | 'dynamic' }
+    { above: GlyphName; below: GlyphName; place: 'articulation' | 'ornament' | 'dynamic' | 'stem' }
   >
 > = {
   staccato: { above: 'articStaccatoAbove', below: 'articStaccatoBelow', place: 'articulation' },
@@ -1476,6 +1476,38 @@ const DECORATIONS: Readonly<
   invertedturn: { above: 'ornamentTurnInverted', below: 'ornamentTurnInverted', place: 'ornament' },
   invertedturnx: { above: 'ornamentTurnSlash', below: 'ornamentTurnSlash', place: 'ornament' },
   turnx: { above: 'ornamentTurnSlash', below: 'ornamentTurnSlash', place: 'ornament' },
+
+  // ── Tremolo ────────────────────────────────────────────────────────────────
+  // Strokes across the STEM, not a lane mark — the stroke count is the rhythm, so it has
+  // to read against the stem it divides. SMuFL gives one glyph per count, so `!//!` is
+  // tremolo2 rather than two copies of tremolo1.
+  //
+  // abcjs paints the slash spellings and NOT `trem1`..`trem4`, which are the same marks
+  // under different names. Its own quirk; the named forms are left undrawn to match, and
+  // asserted as such.
+  '/': { above: 'tremolo1', below: 'tremolo1', place: 'stem' },
+  '//': { above: 'tremolo2', below: 'tremolo2', place: 'stem' },
+  '///': { above: 'tremolo3', below: 'tremolo3', place: 'stem' },
+  '////': { above: 'tremolo4', below: 'tremolo4', place: 'stem' },
+
+  // ── Phrase separators and technique ────────────────────────────────────────
+  // Three lengths of the same idea, so three widths of the same family.
+  shortphrase: { above: 'breathMarkTick', below: 'breathMarkTick', place: 'ornament' },
+  mediumphrase: { above: 'caesuraShort', below: 'caesuraShort', place: 'ornament' },
+  longphrase: { above: 'caesura', below: 'caesura', place: 'ornament' },
+  // ABC's `+` is left-hand pizzicato; `plus` is abcjs's spelling of the same mark.
+  '+': {
+    above: 'pluckedLeftHandPizzicato',
+    below: 'pluckedLeftHandPizzicato',
+    place: 'ornament',
+  },
+  plus: {
+    above: 'pluckedLeftHandPizzicato',
+    below: 'pluckedLeftHandPizzicato',
+    place: 'ornament',
+  },
+  // Rolled chord — a vertical wiggle beside the notehead rather than above it.
+  arpeggio: { above: 'wiggleArpeggiatoUp', below: 'wiggleArpeggiatoUp', place: 'stem' },
 }
 
 /**
@@ -1567,6 +1599,22 @@ function decorationGlyphs(
     } else if (spec.place === 'ornament') {
       out.push({ name: glyph, x: centre, y: stepToY(ornamentStep), role: 'decoration' })
       ornamentStep += 2
+    } else if (spec.place === 'stem') {
+      // Centred on the stem's midpoint. An arpeggio instead sits just LEFT of the head,
+      // which is where a rolled chord is read from.
+      const onStem =
+        name === 'arpeggio'
+          ? headX - GLYPHS[glyph].width - ENGRAVE.spannerGap
+          : headX + headWidth / 2 - GLYPHS[glyph].width / 2
+      const tip = stemUp
+        ? Math.max(topStep, 4) + ENGRAVE.stemLength
+        : Math.min(bottomStep, -4) - ENGRAVE.stemLength
+      out.push({
+        name: glyph,
+        x: onStem,
+        y: stepToY(((stemUp ? topStep : bottomStep) + tip) / 2),
+        role: 'decoration',
+      })
     } else {
       out.push({ name: glyph, x: centre, y: stepToY(ENGRAVE.dynamicStep), role: 'decoration' })
     }

@@ -134,6 +134,20 @@ const GLYPHS = [
   // Only reachable in abc2.1/extended — abcjs draws nothing for the inverted turns.
   'ornamentTurnInverted',
   'ornamentTurnSlash',
+  // Tremolo: SMuFL gives ONE glyph per stroke count, so `!//!` is tremolo2 rather than
+  // two copies of tremolo1.
+  'tremolo1',
+  'tremolo2',
+  'tremolo3',
+  'tremolo4',
+  // `!+!` / `!plus!` — left-hand pizzicato, which is what the ABC `+` means.
+  'pluckedLeftHandPizzicato',
+  // Phrase separators, shortest to longest.
+  'breathMarkTick',
+  'caesuraShort',
+  'caesura',
+  // abcjs draws an arpeggio as a plain vertical rule; SMuFL's is the conventional wiggle.
+  'wiggleArpeggiatoUp',
   // Navigation.
   'segno',
   'coda',

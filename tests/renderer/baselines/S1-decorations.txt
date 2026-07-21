@@ -255,6 +255,7 @@ system 1 width=90.000 originY=26.052
       line  5.864,0.832 -> 5.864,-2.500 t=0.120
     note@-2 x=10.712 w=5.474
       glyph noteheadBlack 10.712,1.000
+      glyph wiggleArpeggiatoUp 9.112,-1.375
       line  11.892,0.832 -> 11.892,-2.500 t=0.120
     note@-2 x=16.740 w=5.474
       glyph noteheadBlack 16.740,1.000
@@ -321,9 +322,11 @@ system 2 width=90.000 originY=45.844
       line  5.864,0.832 -> 5.864,-2.500 t=0.120
     note@-2 x=11.210 w=5.474
       glyph noteheadBlack 11.210,1.000
+      glyph pluckedLeftHandPizzicato 11.256,-3.500
       line  12.390,0.832 -> 12.390,-2.500 t=0.120
     note@-2 x=17.737 w=5.474
       glyph noteheadBlack 17.737,1.000
+      glyph pluckedLeftHandPizzicato 17.783,-3.500
       line  18.917,0.832 -> 18.917,-2.500 t=0.120
     note@-2 x=24.263 w=5.474
       glyph noteheadBlack 24.263,1.000
@@ -510,12 +513,15 @@ system 5 width=29.582 originY=106.780
       text  3.874,-5.000 size=1.400 italic "Fine"
     note@-2 x=10.158 w=5.474
       glyph noteheadBlack 10.158,1.000
+      glyph breathMarkTick 9.748,-3.500
       line  11.338,0.832 -> 11.338,-2.500 t=0.120
     note@-2 x=15.633 w=5.474
       glyph noteheadBlack 15.633,1.000
+      glyph caesuraShort 15.851,-3.500
       line  16.813,0.832 -> 16.813,-2.500 t=0.120
     note@-2 x=21.107 w=5.474
       glyph noteheadBlack 21.107,1.000
+      glyph caesura 20.929,-3.500
       line  22.287,0.832 -> 22.287,-2.500 t=0.120
     bar x=27.582 w=0.160
       line  27.662,-2.000 -> 27.662,2.000 t=0.160

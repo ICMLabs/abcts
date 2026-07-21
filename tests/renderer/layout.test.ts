@@ -1805,3 +1805,70 @@ describe('decorations abcjs accepts but never paints', () => {
     })
   }
 })
+
+describe('tremolo, phrases and technique', () => {
+  const glyphsOf = (dec: string) =>
+    (
+      layout(parse(`X:1\nL:1/4\nK:C\n${dec}F|\n`).scores[0] as Score, { systemWidth: 200 })
+        .systems[0]?.staves[0]?.elements ?? []
+    )
+      .flatMap((e) => e.glyphs)
+      .filter((g) => g.role === 'decoration')
+      .map((g) => g.name)
+
+  it('picks one tremolo glyph per stroke count', () => {
+    // The count IS the rhythm, so `!//!` is tremolo2 rather than two tremolo1s stacked.
+    expect(glyphsOf('!/!')).toEqual(['tremolo1'])
+    expect(glyphsOf('!//!')).toEqual(['tremolo2'])
+    expect(glyphsOf('!///!')).toEqual(['tremolo3'])
+    expect(glyphsOf('!////!')).toEqual(['tremolo4'])
+  })
+
+  it('draws nothing for `trem1`..`trem4`, matching abcjs', () => {
+    // The same marks under different names, and abcjs paints the slash spellings only.
+    // Its quirk; reproduced rather than tidied, and asserted so it stays deliberate.
+    for (const n of ['trem1', 'trem2', 'trem3', 'trem4']) {
+      expect(glyphsOf(`!${n}!`), `!${n}!`).toEqual([])
+    }
+  })
+
+  it('puts a tremolo on the stem, not in an ornament lane', () => {
+    const y = (
+      layout(parse('X:1\nL:1/4\nK:C\n!//!F|\n').scores[0] as Score, { systemWidth: 200 }).systems[0]
+        ?.staves[0]?.elements ?? []
+    )
+      .flatMap((e) => e.glyphs)
+      .find((g) => g.name === 'tremolo2')?.y
+    const ornament = (
+      layout(parse('X:1\nL:1/4\nK:C\n!trill!F|\n').scores[0] as Score, { systemWidth: 200 })
+        .systems[0]?.staves[0]?.elements ?? []
+    )
+      .flatMap((e) => e.glyphs)
+      .find((g) => g.name === 'ornamentTrill')?.y
+    expect(y).toBeDefined()
+    expect(y).not.toBe(ornament)
+  })
+
+  it('gives the three phrase lengths three widths of the same family', () => {
+    expect(glyphsOf('!shortphrase!')).toEqual(['breathMarkTick'])
+    expect(glyphsOf('!mediumphrase!')).toEqual(['caesuraShort'])
+    expect(glyphsOf('!longphrase!')).toEqual(['caesura'])
+  })
+
+  it('draws `+` and `plus` as the same left-hand pizzicato mark', () => {
+    expect(glyphsOf('!+!')).toEqual(['pluckedLeftHandPizzicato'])
+    expect(glyphsOf('!plus!')).toEqual(glyphsOf('!+!'))
+  })
+
+  it('puts the arpeggio wiggle LEFT of the notehead', () => {
+    const staff = layout(parse('X:1\nL:1/4\nK:C\n!arpeggio![CEG]|\n').scores[0] as Score, {
+      systemWidth: 200,
+    }).systems[0]?.staves[0]
+    const wiggle = (staff?.elements ?? [])
+      .flatMap((e) => e.glyphs)
+      .find((g) => g.name === 'wiggleArpeggiatoUp')
+    const head = (staff?.elements ?? []).flatMap((e) => e.glyphs).find((g) => g.role === 'notehead')
+    expect(wiggle).toBeDefined()
+    expect(wiggle?.x ?? 0).toBeLessThan(head?.x ?? 0)
+  })
+})
