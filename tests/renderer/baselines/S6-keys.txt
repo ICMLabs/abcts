@@ -9,7 +9,7 @@ system 0 width=24.048 originY=0.000
     staffline 0.000,-1.000 -> 24.048,-1.000 t=0.130
     staffline 0.000,-2.000 -> 24.048,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  8.424,-9.500 size=2.400 bold "S6-1 C"
+      text  9.163,-9.500 size=2.400 bold "S6-1 C"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
@@ -28,7 +28,7 @@ system 0 width=90.000 originY=0.000
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  33.600,-9.500 size=2.400 bold "S6-2 Change Key Sig"
+      text  35.721,-9.500 size=2.400 bold "S6-2 Change Key Sig"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=3.288
@@ -44,7 +44,7 @@ system 0 width=90.000 originY=0.000
       glyph noteheadBlack 14.013,3.000
       line  13.613,3.000 -> 15.593,3.000 t=0.160
       line  15.193,2.832 -> 15.193,-0.500 t=0.120
-      text  14.253,-3.000 size=1.400 "G"
+      text  14.173,-3.000 size=1.400 "G"
     note@-5 x=19.928 w=5.474
       glyph noteheadBlack 19.928,2.500
       line  21.108,2.332 -> 21.108,-1.000 t=0.120
@@ -101,7 +101,7 @@ system 1 width=90.000 originY=26.052
       glyph noteheadBlack 11.218,3.000
       line  10.818,3.000 -> 12.798,3.000 t=0.160
       line  12.398,2.832 -> 12.398,-0.500 t=0.120
-      text  11.108,-3.000 size=1.400 "Bb"
+      text  11.088,-3.000 size=1.400 "Bb"
     note@-5 x=17.365 w=5.474
       glyph noteheadBlack 17.365,2.500
       line  18.545,2.332 -> 18.545,-1.000 t=0.120
@@ -158,7 +158,7 @@ system 2 width=90.000 originY=44.804
       glyph noteheadBlack 11.218,3.000
       line  10.818,3.000 -> 12.798,3.000 t=0.160
       line  12.398,2.832 -> 12.398,-0.500 t=0.120
-      text  11.108,-3.000 size=1.400 "Dm"
+      text  10.841,-3.000 size=1.400 "Dm"
     note@-5 x=17.365 w=5.474
       glyph noteheadBlack 17.365,2.500
       line  18.545,2.332 -> 18.545,-1.000 t=0.120
@@ -215,7 +215,7 @@ system 3 width=81.665 originY=63.556
       glyph noteheadBlack 10.972,3.000
       line  10.572,3.000 -> 12.552,3.000 t=0.160
       line  12.152,2.832 -> 12.152,-0.500 t=0.120
-      text  10.512,-3.000 size=1.400 "F#m"
+      text  10.303,-3.000 size=1.400 "F#m"
     note@-5 x=16.446 w=5.474
       glyph noteheadBlack 16.446,2.500
       line  17.626,2.332 -> 17.626,-1.000 t=0.120
@@ -264,7 +264,7 @@ system 0 width=90.000 originY=0.000
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  33.600,-9.500 size=2.400 bold "S6-3 Key Signatures"
+      text  35.943,-9.500 size=2.400 bold "S6-3 Key Signatures"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
@@ -403,7 +403,7 @@ system 0 width=90.000 originY=0.000
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  30.000,-9.500 size=2.400 bold "S6-4 Modal Key Signatures"
+      text  32.807,-9.500 size=2.400 bold "S6-4 Modal Key Signatures"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=2.142
@@ -629,7 +629,7 @@ system 0 width=90.000 originY=0.000
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  31.200,-9.500 size=2.400 bold "S6-5 Double Accidentals"
+      text  34.028,-9.500 size=2.400 bold "S6-5 Double Accidentals"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880

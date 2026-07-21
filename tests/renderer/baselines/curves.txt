@@ -11,7 +11,7 @@ system 0 width=30.462 originY=0.000
     tie  9.044,1.800 -> 12.738,1.800 bulge=0.665
     tie  19.993,1.800 -> 23.687,1.800 bulge=0.665
     title x=0.000 w=0.000
-      text  12.831,-9.500 size=2.400 bold "Ties"
+      text  13.373,-9.500 size=2.400 bold "Ties"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
@@ -42,7 +42,7 @@ system 0 width=30.462 originY=0.000
     slur  9.044,1.800 -> 12.738,1.800 bulge=0.665
     slur  19.993,1.800 -> 23.687,1.800 bulge=0.665
     title x=0.000 w=0.000
-      text  12.231,-9.500 size=2.400 bold "Slurs"
+      text  12.929,-9.500 size=2.400 bold "Slurs"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
@@ -73,7 +73,7 @@ system 0 width=30.462 originY=0.000
     slur  9.044,1.800 -> 12.738,1.800 bulge=0.665
     slur  9.044,1.800 -> 23.687,1.800 bulge=2.200
     title x=0.000 w=0.000
-      text  8.031,-9.500 size=2.400 bold "Nested Slurs"
+      text  9.547,-9.500 size=2.400 bold "Nested Slurs"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
@@ -104,7 +104,7 @@ system 0 width=30.462 originY=0.000
     slur  10.224,3.800 -> 12.738,3.800 bulge=0.500
     slur  21.173,3.800 -> 23.687,1.800 bulge=0.500
     title x=0.000 w=0.000
-      text  0.831,-9.500 size=2.400 bold "Slurs over Stacked Notes"
+      text  4.108,-9.500 size=2.400 bold "Slurs over Stacked Notes"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
@@ -144,7 +144,7 @@ system 0 width=30.462 originY=0.000
     slur  10.224,3.800 -> 12.738,1.800 bulge=0.500
     slur  10.224,3.800 -> 23.687,1.800 bulge=2.200
     title x=0.000 w=0.000
-      text  0.000,-9.500 size=2.400 bold "Nested slurs over Stacked Notes"
+      text  0.857,-9.500 size=2.400 bold "Nested slurs over Stacked Notes"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
@@ -212,7 +212,7 @@ system 0 width=30.462 originY=0.000
     tie  9.044,1.800 -> 12.738,1.800 bulge=0.665
     slur  9.044,1.800 -> 23.687,1.800 bulge=2.200
     title x=0.000 w=0.000
-      text  6.231,-9.500 size=2.400 bold "Tie within slur"
+      text  8.702,-9.500 size=2.400 bold "Tie within slur"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880

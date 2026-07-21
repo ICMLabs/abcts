@@ -9,7 +9,7 @@ system 0 width=90.000 originY=0.000
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  36.000,-9.500 size=2.400 bold "Chord Grid Test"
+      text  37.771,-9.500 size=2.400 bold "Chord Grid Test"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
@@ -19,7 +19,7 @@ system 0 width=90.000 originY=0.000
       glyph noteheadBlack 7.564,3.000
       line  7.164,3.000 -> 9.144,3.000 t=0.160
       line  8.744,2.832 -> 8.744,-0.500 t=0.120
-      text  7.804,-3.000 size=1.400 "C"
+      text  7.773,-3.000 size=1.400 "C"
     note@-5 x=13.850 w=5.474
       glyph noteheadBlack 13.850,2.500
       line  15.030,2.332 -> 15.030,-1.000 t=0.120
@@ -34,7 +34,7 @@ system 0 width=90.000 originY=0.000
     note@-2 x=34.709 w=5.474
       glyph noteheadBlack 34.709,1.000
       line  35.889,0.832 -> 35.889,-2.500 t=0.120
-      text  34.949,-3.000 size=1.400 "G"
+      text  34.869,-3.000 size=1.400 "G"
     note@-1 x=40.996 w=5.474
       glyph noteheadBlack 40.996,0.500
       line  42.176,0.332 -> 42.176,-3.000 t=0.120
@@ -49,7 +49,7 @@ system 0 width=90.000 originY=0.000
     note@1 x=61.855 w=5.474
       glyph noteheadBlack 61.855,-0.500
       line  61.855,-0.332 -> 61.855,3.000 t=0.120
-      text  61.745,-3.000 size=1.400 "Am"
+      text  61.524,-3.000 size=1.400 "Am"
     note@0 x=68.141 w=5.474
       glyph noteheadBlack 68.141,0.000
       line  68.141,0.168 -> 68.141,3.500 t=0.120
@@ -73,7 +73,7 @@ system 1 width=29.582 originY=26.052
     note@-3 x=4.684 w=5.474
       glyph noteheadBlack 4.684,1.500
       line  5.864,1.332 -> 5.864,-2.000 t=0.120
-      text  4.924,-3.000 size=1.400 "F"
+      text  4.919,-3.000 size=1.400 "F"
     note@-4 x=10.158 w=5.474
       glyph noteheadBlack 10.158,2.000
       line  11.338,1.832 -> 11.338,-1.500 t=0.120

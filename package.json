@@ -38,7 +38,9 @@
     "typecheck": "tsc --noEmit",
     "baseline": "ABCTS_SNAPSHOT_RECORD=1 vitest run tests/renderer/baseline.test.ts",
     "parity": "node scripts/parity.mjs",
-    "compare": "node scripts/compare.mjs"
+    "compare": "node scripts/compare.mjs",
+    "glyphs": "node scripts/gen-glyphs.mjs",
+    "metrics": "node scripts/gen-text-metrics.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.4",

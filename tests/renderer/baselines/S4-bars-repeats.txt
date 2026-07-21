@@ -9,7 +9,7 @@ system 0 width=90.000 originY=0.000
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  27.600,-9.500 size=2.400 bold "S4-1 Bars Repeats and Endings"
+      text  31.045,-9.500 size=2.400 bold "S4-1 Bars Repeats and Endings"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
@@ -176,7 +176,7 @@ system 0 width=90.000 originY=0.000
     voltatext 36.583,-2.700 "1"
     voltatext 62.991,-2.700 "2"
     title x=0.000 w=0.000
-      text  28.800,-9.500 size=2.400 bold "S4-2 Extended Volta Endings"
+      text  31.809,-9.500 size=2.400 bold "S4-2 Extended Volta Endings"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
@@ -508,7 +508,7 @@ system 0 width=90.000 originY=0.000
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  33.600,-9.500 size=2.400 bold "S4-3 Bars and Rests"
+      text  36.015,-9.500 size=2.400 bold "S4-3 Bars and Rests"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=2.142

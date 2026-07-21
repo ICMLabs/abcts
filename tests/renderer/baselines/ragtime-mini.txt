@@ -12,7 +12,7 @@ system 0 width=60.423 originY=0.000
     beam   35.526,3.929 -> 54.686,1.929 t=0.500
     tie  46.039,-3.300 -> 46.174,-3.300 bulge=-0.500
     title x=0.000 w=0.000
-      text  23.012,-9.500 size=2.400 bold "Ragtime Mini"
+      text  24.049,-9.500 size=2.400 bold "Ragtime Mini"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=3.012

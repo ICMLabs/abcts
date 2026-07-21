@@ -13,7 +13,7 @@ system 0 width=90.000 originY=0.000
     beam   49.782,-3.750 -> 64.292,-2.250 t=0.500
     beam   69.128,-1.750 -> 83.638,-0.250 t=0.500
     title x=0.000 w=0.000
-      text  33.600,-9.500 size=2.400 bold "Two Voice Invention"
+      text  35.716,-9.500 size=2.400 bold "Two Voice Invention"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880

@@ -9,7 +9,7 @@ system 0 width=56.359 originY=0.000
     staffline 0.000,-1.000 -> 56.359,-1.000 t=0.130
     staffline 0.000,-2.000 -> 56.359,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  23.380,-9.500 size=2.400 bold "Simple C"
+      text  24.155,-9.500 size=2.400 bold "Simple C"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
@@ -55,7 +55,7 @@ system 0 width=90.000 originY=0.000
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  36.000,-9.500 size=2.400 bold "Twinkle Twinkle"
+      text  37.547,-9.500 size=2.400 bold "Twinkle Twinkle"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
@@ -134,7 +134,7 @@ system 0 width=59.501 originY=0.000
     staffline 0.000,-1.000 -> 59.501,-1.000 t=0.130
     staffline 0.000,-2.000 -> 59.501,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  25.551,-9.500 size=2.400 bold "D Scale"
+      text  26.417,-9.500 size=2.400 bold "D Scale"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=2.142

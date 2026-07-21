@@ -9,7 +9,7 @@ system 0 width=32.514 originY=0.000
     staffline 0.000,-1.000 -> 32.514,-1.000 t=0.130
     staffline 0.000,-2.000 -> 32.514,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  9.057,-9.500 size=2.400 bold "Reorder Test"
+      text  10.440,-9.500 size=2.400 bold "Reorder Test"
     clef x=1.000 w=2.736
       glyph fClef 1.000,-1.000
     timeSignature x=4.736 w=1.880

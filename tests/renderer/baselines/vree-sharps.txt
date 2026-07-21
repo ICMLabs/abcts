@@ -9,7 +9,7 @@ system 0 width=39.042 originY=0.000
     staffline 0.000,-1.000 -> 39.042,-1.000 t=0.130
     staffline 0.000,-2.000 -> 39.042,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  7.521,-9.500 size=2.400 bold "Key with Many Sharps"
+      text  9.431,-9.500 size=2.400 bold "Key with Many Sharps"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=5.580

@@ -10,7 +10,7 @@ system 0 width=36.729 originY=0.000
     staffline 0.000,-2.000 -> 36.729,-2.000 t=0.130
     tie  9.044,1.300 -> 14.738,1.300 bulge=1.025
     title x=0.000 w=0.000
-      text  8.765,-9.500 size=2.400 bold "Ties Across Bars"
+      text  10.997,-9.500 size=2.400 bold "Ties Across Bars"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880

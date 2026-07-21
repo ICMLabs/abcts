@@ -29,6 +29,7 @@ import {
   naturalWidth,
   noteGlyph,
 } from '../../src/renderer/layout.js'
+import { FALLBACK_ADVANCE } from '../../src/renderer/text-metrics.js'
 
 const key = (
   step: KeySignature['tonic']['step'],
@@ -1870,5 +1871,53 @@ describe('tremolo, phrases and technique', () => {
     const head = (staff?.elements ?? []).flatMap((e) => e.glyphs).find((g) => g.role === 'notehead')
     expect(wiggle).toBeDefined()
     expect(wiggle?.x ?? 0).toBeLessThan(head?.x ?? 0)
+  })
+})
+
+describe('text metrics', () => {
+  const centreOf = (text: string) => {
+    const staff = layout(parse(`X:1\nL:1/4\nK:C\nC|\nw:${text}\n`).scores[0] as Score, {
+      systemWidth: 200,
+    }).systems[0]?.staves[0]
+    const t = (staff?.elements ?? []).flatMap((e) => e.texts).find((x) => x.text === text)
+    return t
+  }
+
+  it('measures narrow and wide characters differently', () => {
+    // The whole point. The flat estimate this replaces measured these the same, with a
+    // median error of 24% against real serif metrics over the corpus.
+    const narrow = centreOf('iiiii')
+    const wide = centreOf('WWWWW')
+    expect(narrow).toBeDefined()
+    expect(wide).toBeDefined()
+    // Centred, so a wider string starts further LEFT of the same notehead.
+    expect(wide?.x ?? 0).toBeLessThan(narrow?.x ?? 0)
+  })
+
+  it('treats CJK as full width', () => {
+    // A range test, not a table entry — there are tens of thousands of them and they
+    // share one advance. The corpus's Chinese-lyric fixture was being measured at half
+    // its real width, which was the whole of the residual error after the table landed.
+    const cjk = centreOf('小燕子')
+    const latin = centreOf('abc')
+    expect(cjk).toBeDefined()
+    // Three full-width characters are about twice three Latin letters, so they start
+    // markedly further left when centred on the same note.
+    expect(cjk?.x ?? 0).toBeLessThan(latin?.x ?? 0)
+  })
+
+  it('falls back for a character the table lacks, rather than measuring zero', () => {
+    // A zero-width fallback would centre an unknown string on the wrong point and, worse,
+    // look plausible. Cyrillic Zhe is not in the table, so each one should cost exactly
+    // FALLBACK_ADVANCE — measured as the shift between one and three of them, since
+    // centring moves the start by half the added width.
+    const one = centreOf('Ж')
+    const three = centreOf('ЖЖЖ')
+    expect(one).toBeDefined()
+    expect(three).toBeDefined()
+    const size = one?.size ?? 1
+    // Two extra characters widen the string by 2 × fallback, so the centred start moves
+    // left by one fallback's worth.
+    expect((one?.x ?? 0) - (three?.x ?? 0)).toBeCloseTo(FALLBACK_ADVANCE * size, 4)
   })
 })

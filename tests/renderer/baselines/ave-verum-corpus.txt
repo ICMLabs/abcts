@@ -10,7 +10,7 @@ system 0 width=90.000 originY=0.000
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
     slur  74.714,-1.800 -> 79.647,0.700 bulge=-0.888
     title x=0.000 w=0.000
-      text  35.400,-9.500 size=2.400 bold "Ave Verum Corpus"
+      text  36.543,-9.500 size=2.400 bold "Ave Verum Corpus"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=2.142
@@ -32,11 +32,11 @@ system 0 width=90.000 originY=0.000
     note@-1 x=62.919 w=7.742
       glyph noteheadHalf 62.919,0.500
       line  64.099,0.332 -> 64.099,-3.000 t=0.120
-      text  62.809,4.000 size=1.400 "A-"
+      text  62.890,4.000 size=1.400 "A-"
     note@2 x=72.894 w=5.474
       glyph noteheadBlack 72.894,-1.000
       line  72.894,-0.832 -> 72.894,2.500 t=0.120
-      text  72.434,4.000 size=1.400 "ve,"
+      text  72.743,4.000 size=1.400 "ve,"
     note@-3 x=79.947 w=5.474
       glyph noteheadBlack 79.947,1.500
       line  81.127,1.332 -> 81.127,-2.000 t=0.120
@@ -127,11 +127,11 @@ system 0 width=90.000 originY=0.000
     note@0 x=62.919 w=7.742
       glyph noteheadHalf 62.919,0.000
       line  62.919,0.168 -> 62.919,3.500 t=0.120
-      text  62.809,4.000 size=1.400 "A-"
+      text  62.890,4.000 size=1.400 "A-"
     note@0 x=74.960 w=7.742
       glyph noteheadHalf 74.960,0.000
       line  74.960,0.168 -> 74.960,3.500 t=0.120
-      text  74.500,4.000 size=1.400 "ve,"
+      text  74.809,4.000 size=1.400 "ve,"
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
   staff 4 originY=80.692
@@ -312,7 +312,7 @@ system 1 width=32.776 originY=137.264
     note@-1 x=7.878 w=5.474
       glyph noteheadBlack 7.878,0.500
       line  9.058,0.332 -> 9.058,-3.000 t=0.120
-      text  7.768,4.000 size=1.400 "A-"
+      text  7.848,4.000 size=1.400 "A-"
     note@-2 x=14.292 w=5.474
       glyph accidentalSharp 14.292,1.000
       glyph noteheadBlack 15.438,1.000
@@ -321,7 +321,7 @@ system 1 width=32.776 originY=137.264
       glyph accidentalNatural 20.705,1.000
       glyph noteheadHalf 21.527,1.000
       line  22.707,0.832 -> 22.707,-2.500 t=0.120
-      text  21.067,4.000 size=1.400 "ve,"
+      text  21.376,4.000 size=1.400 "ve,"
     bar x=30.776 w=0.160
       line  30.856,-2.000 -> 30.856,2.000 t=0.160
   staff 1 originY=24.650
@@ -376,11 +376,11 @@ system 1 width=32.776 originY=137.264
     note@0 x=7.878 w=7.742
       glyph noteheadHalf 7.878,0.000
       line  7.878,0.168 -> 7.878,3.500 t=0.120
-      text  7.768,4.000 size=1.400 "A-"
+      text  7.848,4.000 size=1.400 "A-"
     note@0 x=18.827 w=7.742
       glyph noteheadHalf 18.827,0.000
       line  18.827,0.168 -> 18.827,3.500 t=0.120
-      text  18.367,4.000 size=1.400 "ve,"
+      text  18.676,4.000 size=1.400 "ve,"
     bar x=30.776 w=0.160
       line  30.856,-2.000 -> 30.856,2.000 t=0.160
   staff 4 originY=72.012

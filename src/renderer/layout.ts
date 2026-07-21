@@ -40,6 +40,7 @@ import {
   type Voice,
 } from '../core/model.js'
 import { ENGRAVING_DEFAULTS, GLYPHS, type GlyphName } from './glyphs.js'
+import { CHAR_ADVANCE, FALLBACK_ADVANCE } from './text-metrics.js'
 
 // ─── Engine constants ────────────────────────────────────────────────────────
 // Engraving conventions, NOT font metadata. Sources noted; values marked PROVISIONAL
@@ -171,15 +172,6 @@ const ENGRAVE = {
   /** How far the volta bracket's end hooks turn down toward the staff. */
   voltaHook: 1.4,
   voltaTextSize: 1.3,
-  /**
-   * Estimated width of one text character, as a fraction of the font size.
-   *
-   * ponytail: there are NO text metrics — prose is emitted as `<text>` in a generic
-   * family, and measuring it would need a font loaded and shaped. Everything that
-   * centres or advances past text uses this estimate. It is why a chord symbol is
-   * centred approximately rather than exactly. Real metrics need a measured font.
-   */
-  textWidthRatio: 0.5,
   /** Grace notes are drawn at this fraction of full size. *Behind Bars* ~60%. */
   graceScale: 0.6,
   /** Horizontal advance per grace note, before the note it decorates. */
@@ -1622,15 +1614,49 @@ function decorationGlyphs(
   return out
 }
 
-/** Estimated width of a run of text, in staff spaces. See `ENGRAVE.textWidthRatio`. */
-const textWidth = (text: string, size: number): number =>
-  text.length * size * ENGRAVE.textWidthRatio
+/**
+ * Width of a run of text, in staff spaces.
+ *
+ * Per-character advances rather than one number per character. The flat estimate this
+ * replaces measured `iiiii` and `WWWWW` the same, with a median error of 8.9% against
+ * real serif metrics over the corpus and a worst case of +77% — on the short narrow
+ * syllables lyrics are actually made of. Still an ESTIMATE: the output asks for
+ * `font-family="serif"` and the viewer supplies the font, so no table can be exact.
+ */
+const textWidth = (text: string, size: number): number => {
+  let em = 0
+  for (const ch of text)
+    em += CHAR_ADVANCE[ch] ?? (isFullWidth(ch) ? FULL_WIDTH_ADVANCE : FALLBACK_ADVANCE)
+  return em * size
+}
+
+/**
+ * CJK and kana, which are FULL WIDTH — about one em, against a Latin letter's half.
+ *
+ * A range test rather than a table entry: there are tens of thousands of these and they
+ * share one advance, so enumerating them would be absurd. Found because the corpus has a
+ * Chinese-lyric fixture whose three characters were each measured at half their real
+ * width, which was the whole of the table's residual error.
+ */
+function isFullWidth(ch: string): boolean {
+  const c = ch.codePointAt(0) ?? 0
+  return (
+    (c >= 0x1100 && c <= 0x115f) || // Hangul Jamo
+    (c >= 0x2e80 && c <= 0x9fff) || // CJK radicals through unified ideographs, incl. kana
+    (c >= 0xac00 && c <= 0xd7a3) || // Hangul syllables
+    (c >= 0xf900 && c <= 0xfaff) || // CJK compatibility ideographs
+    (c >= 0xff00 && c <= 0xff60) // full-width forms
+  )
+}
+
+/** One em, the standard advance for a full-width character. */
+const FULL_WIDTH_ADVANCE = 1.0
 
 /**
  * Text attached to a note: its chord symbol above, its lyric syllables below.
  *
  * Both are CENTRED on the notehead, which without text metrics means centred on an
- * estimate — see `ENGRAVE.textWidthRatio`. A chord symbol in real engraving is left
+ * estimate — see `textWidth`. A chord symbol in real engraving is left
  * aligned to the note rather than centred; centring reads better against an estimated
  * width, since the error is halved and falls on both sides instead of accumulating to
  * one. Revisit when there are metrics.

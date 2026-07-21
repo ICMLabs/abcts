@@ -11,7 +11,7 @@ system 0 width=90.000 originY=0.000
     slur  12.175,-0.800 -> 28.380,-3.300 bulge=-2.200
     slur  64.459,-1.800 -> 74.629,-1.800 bulge=-1.831
     title x=0.000 w=0.000
-      text  37.200,-9.500 size=2.400 bold "Zocharti Loch"
+      text  38.749,-9.500 size=2.400 bold "Zocharti Loch"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=1.958
