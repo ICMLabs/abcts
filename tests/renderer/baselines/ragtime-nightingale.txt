@@ -1,5 +1,5 @@
 tune 0
-bounds  width=90.000 height=1296.389 top=0.000
+bounds  width=90.000 height=1336.477 top=0.000
 systems 30
 system 0 width=90.000 originY=0.000
   staff 0 originY=15.420
@@ -267,7 +267,7 @@ system 0 width=90.000 originY=0.000
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
 system 1 width=90.000 originY=45.909
-  staff 0 originY=7.392
+  staff 0 originY=10.060
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -292,7 +292,7 @@ system 1 width=90.000 originY=45.909
       glyph noteheadBlack 9.570,1.000
       glyph noteheadBlack 9.570,0.000
       glyph noteheadBlack 9.570,-2.500
-      line  9.570,-2.332 -> 9.570,4.500 t=0.120
+      line  10.750,0.832 -> 10.750,-6.000 t=0.120
     rest x=15.306 w=2.737
       glyph rest16th 15.306,0.000
     note@-2 x=18.585 w=2.737
@@ -320,7 +320,7 @@ system 1 width=90.000 originY=45.909
       line  39.439,-2.332 -> 39.439,1.000 t=0.120
     note@5 x=48.465 w=5.474
       glyph noteheadBlack 48.465,-2.500
-      line  48.465,-2.332 -> 48.465,1.000 t=0.120
+      line  49.645,-2.668 -> 49.645,-6.000 t=0.120
     bar x=59.887 w=0.160
       line  59.967,-2.000 -> 59.967,2.000 t=0.160
     rest x=60.887 w=7.742
@@ -381,7 +381,7 @@ system 1 width=90.000 originY=45.909
       line  83.736,1.168 -> 83.736,4.500 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=26.952
+  staff 1 originY=32.680
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -403,7 +403,7 @@ system 1 width=90.000 originY=45.909
       glyph noteheadBlack 8.748,-1.500
       glyph noteheadBlack 8.748,-3.500
       line  8.348,-3.000 -> 10.328,-3.000 t=0.160
-      line  8.748,-3.332 -> 8.748,2.000 t=0.120
+      line  9.928,-1.668 -> 9.928,-7.000 t=0.120
     note@-11,-4 x=16.897 w=3.871
       glyph noteheadBlack 16.897,5.500
       glyph noteheadBlack 16.897,2.000
@@ -418,10 +418,10 @@ system 1 width=90.000 originY=45.909
       glyph noteheadBlack 23.481,-1.500
       glyph noteheadBlack 23.481,-2.500
       glyph noteheadBlack 23.481,-4.500
-      glyph flag8thDown 23.481,2.000
+      glyph flag8thUp 24.661,-8.000
       line  23.081,-3.000 -> 25.061,-3.000 t=0.160
       line  23.081,-4.000 -> 25.061,-4.000 t=0.160
-      line  23.481,-4.332 -> 23.481,2.000 t=0.120
+      line  24.661,-1.668 -> 24.661,-8.000 t=0.120
     bar x=29.421 w=0.160
       line  29.501,-2.000 -> 29.501,2.000 t=0.160
     bar x=31.612 w=1.780
@@ -521,8 +521,8 @@ system 1 width=90.000 originY=45.909
     rest x=60.887 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 2 width=90.000 originY=87.377
-  staff 0 originY=8.500
+system 2 width=90.000 originY=93.105
+  staff 0 originY=10.060
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -554,7 +554,7 @@ system 2 width=90.000 originY=87.377
       line  14.100,-2.332 -> 14.100,1.000 t=0.120
     note@5 x=23.369 w=5.474
       glyph noteheadBlack 23.369,-2.500
-      line  23.369,-2.332 -> 23.369,1.000 t=0.120
+      line  24.549,-2.668 -> 24.549,-6.000 t=0.120
     bar x=35.073 w=0.160
       line  35.153,-2.000 -> 35.153,2.000 t=0.160
     rest x=36.073 w=7.742
@@ -647,7 +647,7 @@ system 2 width=90.000 originY=87.377
       line  83.835,-3.832 -> 83.835,1.833 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=28.171
+  staff 1 originY=31.427
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -709,9 +709,9 @@ system 2 width=90.000 originY=87.377
     note@3,7 x=47.819 w=3.871
       glyph noteheadBlack 47.819,-1.500
       glyph noteheadBlack 47.819,-3.500
-      glyph flag8thDown 47.819,2.000
+      glyph flag8thUp 48.999,-7.000
       line  47.419,-3.000 -> 49.399,-3.000 t=0.160
-      line  47.819,-3.332 -> 47.819,2.000 t=0.120
+      line  48.999,-1.668 -> 48.999,-7.000 t=0.120
     rest x=53.692 w=3.871
       glyph rest8th 53.692,0.000
     bar x=60.564 w=0.160
@@ -775,7 +775,7 @@ system 2 width=90.000 originY=87.377
     rest x=61.564 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 3 width=90.000 originY=130.441
+system 3 width=90.000 originY=139.425
   staff 0 originY=8.000
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -1039,8 +1039,8 @@ system 3 width=90.000 originY=130.441
     rest x=62.249 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 4 width=90.000 originY=173.835
-  staff 0 originY=7.392
+system 4 width=90.000 originY=182.819
+  staff 0 originY=10.060
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -1070,7 +1070,7 @@ system 4 width=90.000 originY=173.835
       line  13.978,-2.332 -> 13.978,1.000 t=0.120
     note@5 x=23.038 w=5.474
       glyph noteheadBlack 23.038,-2.500
-      line  23.038,-2.332 -> 23.038,1.000 t=0.120
+      line  24.218,-2.668 -> 24.218,-6.000 t=0.120
     bar x=34.499 w=0.160
       line  34.579,-2.000 -> 34.579,2.000 t=0.160
     rest x=35.499 w=7.742
@@ -1085,7 +1085,7 @@ system 4 width=90.000 originY=173.835
       line  67.480,-2.332 -> 67.480,1.000 t=0.120
     note@5 x=76.539 w=5.474
       glyph noteheadBlack 76.539,-2.500
-      line  76.539,-2.332 -> 76.539,1.000 t=0.120
+      line  77.719,-2.668 -> 77.719,-6.000 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
     clef x=1.000 w=2.684
@@ -1142,7 +1142,7 @@ system 4 width=90.000 originY=173.835
       line  62.249,-1.332 -> 62.249,4.500 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=26.952
+  staff 1 originY=29.620
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -1280,7 +1280,7 @@ system 4 width=90.000 originY=173.835
     rest x=62.249 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 5 width=90.000 originY=212.287
+system 5 width=90.000 originY=223.939
   staff 0 originY=8.500
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -1434,7 +1434,7 @@ system 5 width=90.000 originY=212.287
       line  83.102,-0.332 -> 83.102,5.000 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=28.424
+  staff 1 originY=30.120
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -1464,9 +1464,9 @@ system 5 width=90.000 originY=212.287
     note@3,7 x=21.104 w=3.871
       glyph noteheadBlack 21.104,-1.500
       glyph noteheadBlack 21.104,-3.500
-      glyph flag8thDown 21.104,2.000
+      glyph flag8thUp 22.284,-7.000
       line  20.704,-3.000 -> 22.684,-3.000 t=0.160
-      line  21.104,-3.332 -> 21.104,2.000 t=0.120
+      line  22.284,-1.668 -> 22.284,-7.000 t=0.120
     rest x=27.282 w=3.871
       glyph rest8th 27.282,0.000
     bar x=34.460 w=0.160
@@ -1554,8 +1554,8 @@ system 5 width=90.000 originY=212.287
     rest x=64.209 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 6 width=90.000 originY=254.271
-  staff 0 originY=9.500
+system 6 width=90.000 originY=267.619
+  staff 0 originY=11.560
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -1647,7 +1647,7 @@ system 6 width=90.000 originY=254.271
       glyph noteheadBlack 31.898,1.000
       glyph noteheadBlack 31.898,0.000
       glyph noteheadBlack 31.898,-1.500
-      line  31.898,-1.332 -> 31.898,4.500 t=0.120
+      line  33.078,0.832 -> 33.078,-5.000 t=0.120
     note@-2,0,3 x=37.456 w=2.737
       glyph noteheadBlack 37.456,1.000
       glyph noteheadBlack 37.456,0.000
@@ -1675,7 +1675,7 @@ system 6 width=90.000 originY=254.271
       glyph noteheadBlack 53.658,1.000
       glyph noteheadBlack 53.658,0.000
       glyph noteheadBlack 53.658,-1.500
-      line  53.658,-1.332 -> 53.658,4.500 t=0.120
+      line  54.838,0.832 -> 54.838,-5.000 t=0.120
     note@-2,0,3 x=58.161 w=2.737
       glyph noteheadBlack 58.161,1.000
       glyph noteheadBlack 58.161,0.000
@@ -1709,21 +1709,21 @@ system 6 width=90.000 originY=254.271
       glyph accidentalNatural 71.276,-3.500
       glyph noteheadBlack 72.098,0.000
       glyph noteheadBlack 72.098,-2.000
-      glyph noteheadBlack 70.918,-3.000
-      glyph noteheadBlack 72.098,-3.500
-      line  70.518,-3.000 -> 72.498,-3.000 t=0.160
+      glyph noteheadBlack 72.098,-3.000
+      glyph noteheadBlack 73.278,-3.500
       line  71.698,-3.000 -> 73.678,-3.000 t=0.160
-      line  72.098,-3.332 -> 72.098,3.500 t=0.120
+      line  72.878,-3.000 -> 74.858,-3.000 t=0.160
+      line  73.278,-0.168 -> 73.278,-7.000 t=0.120
     note@1,4,6,8 x=77.336 w=2.737
       glyph noteheadBlack 77.336,-0.500
       glyph noteheadBlack 77.336,-2.000
       glyph noteheadBlack 77.336,-3.000
       glyph noteheadBlack 77.336,-4.000
-      glyph flag16thDown 77.336,3.000
+      glyph flag16thUp 78.516,-7.500
       line  76.936,-3.000 -> 78.916,-3.000 t=0.160
       line  76.936,-3.000 -> 78.916,-3.000 t=0.160
       line  76.936,-4.000 -> 78.916,-4.000 t=0.160
-      line  77.336,-3.832 -> 77.336,3.000 t=0.120
+      line  78.516,-0.668 -> 78.516,-7.500 t=0.120
     note@-5,-1,0,2 x=80.365 w=5.994
       glyph accidentalFlat 80.365,0.000
       glyph noteheadBlack 81.419,2.500
@@ -1762,7 +1762,7 @@ system 6 width=90.000 originY=254.271
     rest x=71.276 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=30.620
+  staff 1 originY=32.680
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -1956,7 +1956,7 @@ system 6 width=90.000 originY=254.271
     rest x=71.276 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 7 width=90.000 originY=297.701
+system 7 width=90.000 originY=313.109
   staff 0 originY=9.500
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -2281,7 +2281,7 @@ system 7 width=90.000 originY=297.701
     rest x=62.735 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 8 width=90.000 originY=343.071
+system 8 width=90.000 originY=358.479
   staff 0 originY=9.060
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -2587,8 +2587,8 @@ system 8 width=90.000 originY=343.071
     rest x=61.573 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 9 width=90.000 originY=388.311
-  staff 0 originY=10.500
+system 9 width=90.000 originY=403.719
+  staff 0 originY=11.560
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -2611,8 +2611,8 @@ system 9 width=90.000 originY=388.311
       glyph noteheadBlack 8.748,0.000
       glyph noteheadBlack 8.748,-1.000
       glyph noteheadBlack 8.748,-2.500
-      glyph flag8thDown 8.748,4.500
-      line  8.748,-2.332 -> 8.748,4.500 t=0.120
+      glyph flag8thUp 9.928,-6.000
+      line  9.928,0.832 -> 9.928,-6.000 t=0.120
     rest x=14.021 w=3.871
       glyph rest8th 14.021,0.000
     note@12 x=19.294 w=2.737
@@ -2648,21 +2648,21 @@ system 9 width=90.000 originY=388.311
       glyph accidentalNatural 36.208,-3.500
       glyph noteheadBlack 37.030,0.000
       glyph noteheadBlack 37.030,-2.000
-      glyph noteheadBlack 35.850,-3.000
-      glyph noteheadBlack 37.030,-3.500
-      line  35.450,-3.000 -> 37.430,-3.000 t=0.160
+      glyph noteheadBlack 37.030,-3.000
+      glyph noteheadBlack 38.210,-3.500
       line  36.630,-3.000 -> 38.610,-3.000 t=0.160
-      line  37.030,-3.332 -> 37.030,3.500 t=0.120
+      line  37.810,-3.000 -> 39.790,-3.000 t=0.160
+      line  38.210,-0.168 -> 38.210,-7.000 t=0.120
     note@1,4,6,8 x=44.379 w=2.737
       glyph noteheadBlack 44.379,-0.500
       glyph noteheadBlack 44.379,-2.000
       glyph noteheadBlack 44.379,-3.000
       glyph noteheadBlack 44.379,-4.000
-      glyph flag16thDown 44.379,3.000
+      glyph flag16thUp 45.559,-7.500
       line  43.979,-3.000 -> 45.959,-3.000 t=0.160
       line  43.979,-3.000 -> 45.959,-3.000 t=0.160
       line  43.979,-4.000 -> 45.959,-4.000 t=0.160
-      line  44.379,-3.832 -> 44.379,3.000 t=0.120
+      line  45.559,-0.668 -> 45.559,-7.500 t=0.120
     note@-5,-1,0,2 x=48.465 w=5.994
       glyph accidentalFlat 48.465,0.000
       glyph noteheadBlack 49.519,2.500
@@ -2739,7 +2739,7 @@ system 9 width=90.000 originY=388.311
     rest x=59.412 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=34.560
+  staff 1 originY=35.620
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -2870,7 +2870,7 @@ system 9 width=90.000 originY=388.311
       glyph accidentalFlat 6.844,1.500
     note@-4 x=8.748 w=5.474
       glyph noteheadBlack 8.748,2.000
-      line  9.928,1.832 -> 9.928,-1.500 t=0.120
+      line  8.748,2.168 -> 8.748,5.500 t=0.120
     rest x=21.478 w=5.474
     bar x=35.208 w=0.160
       line  35.288,-2.000 -> 35.288,2.000 t=0.160
@@ -2880,7 +2880,7 @@ system 9 width=90.000 originY=388.311
     rest x=59.412 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 10 width=90.000 originY=435.871
+system 10 width=90.000 originY=452.339
   staff 0 originY=9.500
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -3201,7 +3201,7 @@ system 10 width=90.000 originY=435.871
     rest x=62.549 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 11 width=90.000 originY=480.051
+system 11 width=90.000 originY=496.519
   staff 0 originY=9.500
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -3529,9 +3529,9 @@ system 11 width=90.000 originY=480.051
     note@-6,1 x=59.479 w=3.871
       glyph noteheadBlack 59.479,3.000
       glyph noteheadBlack 59.479,-0.500
-      glyph flag8thUp 60.659,-4.000
+      glyph flag8thDown 59.479,6.500
       line  59.079,3.000 -> 61.059,3.000 t=0.160
-      line  60.659,2.832 -> 60.659,-4.000 t=0.120
+      line  59.479,-0.332 -> 59.479,6.500 t=0.120
     rest x=63.712 w=3.871
       glyph rest8th 63.712,0.000
     bar x=68.946 w=1.620
@@ -3565,8 +3565,8 @@ system 11 width=90.000 originY=480.051
     bar x=88.000 w=0.720
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
       line  88.640,-2.000 -> 88.640,2.000 t=0.160
-system 12 width=90.000 originY=525.171
-  staff 0 originY=7.392
+system 12 width=90.000 originY=541.699
+  staff 0 originY=10.060
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -3596,7 +3596,7 @@ system 12 width=90.000 originY=525.171
       line  13.978,-2.332 -> 13.978,1.000 t=0.120
     note@5 x=23.038 w=5.474
       glyph noteheadBlack 23.038,-2.500
-      line  23.038,-2.332 -> 23.038,1.000 t=0.120
+      line  24.218,-2.668 -> 24.218,-6.000 t=0.120
     bar x=34.499 w=0.160
       line  34.579,-2.000 -> 34.579,2.000 t=0.160
     rest x=35.499 w=7.742
@@ -3611,7 +3611,7 @@ system 12 width=90.000 originY=525.171
       line  67.480,-2.332 -> 67.480,1.000 t=0.120
     note@5 x=76.539 w=5.474
       glyph noteheadBlack 76.539,-2.500
-      line  76.539,-2.332 -> 76.539,1.000 t=0.120
+      line  77.719,-2.668 -> 77.719,-6.000 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
     clef x=1.000 w=2.684
@@ -3669,7 +3669,7 @@ system 12 width=90.000 originY=525.171
       line  62.249,-1.332 -> 62.249,4.500 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=26.952
+  staff 1 originY=29.620
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -3807,7 +3807,7 @@ system 12 width=90.000 originY=525.171
     rest x=62.249 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 13 width=90.000 originY=563.623
+system 13 width=90.000 originY=582.819
   staff 0 originY=8.500
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -3950,7 +3950,7 @@ system 13 width=90.000 originY=563.623
       line  83.834,-1.332 -> 83.834,2.714 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=28.171
+  staff 1 originY=29.867
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -3979,9 +3979,9 @@ system 13 width=90.000 originY=563.623
     note@3,7 x=20.494 w=3.871
       glyph noteheadBlack 20.494,-1.500
       glyph noteheadBlack 20.494,-3.500
-      glyph flag8thDown 20.494,2.000
+      glyph flag8thUp 21.674,-7.000
       line  20.094,-3.000 -> 22.074,-3.000 t=0.160
-      line  20.494,-3.332 -> 20.494,2.000 t=0.120
+      line  21.674,-1.668 -> 21.674,-7.000 t=0.120
     rest x=26.367 w=3.871
       glyph rest8th 26.367,0.000
     bar x=33.240 w=0.160
@@ -4073,8 +4073,8 @@ system 13 width=90.000 originY=563.623
     rest x=61.675 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 14 width=90.000 originY=606.688
-  staff 0 originY=8.000
+system 14 width=90.000 originY=627.580
+  staff 0 originY=10.060
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -4111,7 +4111,7 @@ system 14 width=90.000 originY=606.688
       line  67.480,-2.332 -> 67.480,1.000 t=0.120
     note@5 x=76.539 w=5.474
       glyph noteheadBlack 76.539,-2.500
-      line  76.539,-2.332 -> 76.539,1.000 t=0.120
+      line  77.719,-2.668 -> 77.719,-6.000 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
     clef x=1.000 w=2.684
@@ -4193,7 +4193,7 @@ system 14 width=90.000 originY=606.688
       line  62.249,-1.332 -> 62.249,4.500 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=29.120
+  staff 1 originY=31.180
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -4325,8 +4325,8 @@ system 14 width=90.000 originY=606.688
     rest x=62.249 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 15 width=90.000 originY=648.868
-  staff 0 originY=7.392
+system 15 width=90.000 originY=671.820
+  staff 0 originY=10.060
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -4360,7 +4360,7 @@ system 15 width=90.000 originY=648.868
       line  41.470,-2.332 -> 41.470,1.000 t=0.120
     note@5 x=50.754 w=5.474
       glyph noteheadBlack 50.754,-2.500
-      line  50.754,-2.332 -> 50.754,1.000 t=0.120
+      line  51.934,-2.668 -> 51.934,-6.000 t=0.120
     bar x=62.473 w=0.160
       line  62.553,-2.000 -> 62.553,2.000 t=0.160
     rest x=63.473 w=7.742
@@ -4443,7 +4443,7 @@ system 15 width=90.000 originY=648.868
       line  83.827,-1.832 -> 83.827,2.747 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=26.952
+  staff 1 originY=31.680
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -4530,9 +4530,9 @@ system 15 width=90.000 originY=648.868
     note@3,7 x=75.237 w=3.871
       glyph noteheadBlack 75.237,-1.500
       glyph noteheadBlack 75.237,-3.500
-      glyph flag8thDown 75.237,2.000
+      glyph flag8thUp 76.417,-7.000
       line  74.837,-3.000 -> 76.817,-3.000 t=0.160
-      line  75.237,-3.332 -> 75.237,2.000 t=0.120
+      line  76.417,-1.668 -> 76.417,-7.000 t=0.120
     rest x=81.118 w=3.871
       glyph rest8th 81.118,0.000
     bar x=88.000 w=0.160
@@ -4567,7 +4567,7 @@ system 15 width=90.000 originY=648.868
     rest x=63.473 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 16 width=90.000 originY=687.320
+system 16 width=90.000 originY=715.000
   staff 0 originY=9.256
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -4877,7 +4877,7 @@ system 16 width=90.000 originY=687.320
     rest x=61.858 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 17 width=90.000 originY=730.696
+system 17 width=90.000 originY=758.376
   staff 0 originY=13.000
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -4902,7 +4902,7 @@ system 17 width=90.000 originY=730.696
     beam   78.403,-1.928 -> 84.134,-3.000 t=0.500
     tuplettext 24.102,1.960 size=1.400 "3"
     tuplettext 81.698,1.532 size=1.400 "3"
-    tie  10.568,-2.300 -> 15.502,-2.300 bulge=-0.888
+    tie  10.568,1.800 -> 15.502,1.800 bulge=0.888
     tie  73.427,-5.800 -> 73.701,-5.800 bulge=-0.500
     tie  71.742,-3.300 -> 73.139,-3.300 bulge=-0.500
     clef x=1.000 w=2.684
@@ -4915,13 +4915,13 @@ system 17 width=90.000 originY=730.696
       glyph noteheadBlack 8.748,1.000
       glyph noteheadBlack 8.748,0.000
       glyph noteheadBlack 8.748,-1.500
-      line  8.748,-1.332 -> 8.748,4.500 t=0.120
+      line  9.928,0.832 -> 9.928,-5.000 t=0.120
     note@-2,0,3 x=15.802 w=3.871
       glyph noteheadBlack 15.802,1.000
       glyph noteheadBlack 15.802,0.000
       glyph noteheadBlack 15.802,-1.500
-      glyph flag8thDown 15.802,4.500
-      line  15.802,-1.332 -> 15.802,4.500 t=0.120
+      glyph flag8thUp 16.982,-5.000
+      line  16.982,0.832 -> 16.982,-5.000 t=0.120
     note@8 x=20.789 w=2.235
       glyph noteheadBlack 20.789,-4.000
       line  20.389,-3.000 -> 22.369,-3.000 t=0.160
@@ -5094,7 +5094,7 @@ system 17 width=90.000 originY=730.696
       line  84.134,-7.332 -> 84.134,-2.000 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=31.560
+  staff 1 originY=31.068
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -5212,7 +5212,7 @@ system 17 width=90.000 originY=730.696
     rest x=61.456 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 18 width=90.000 originY=774.316
+system 18 width=90.000 originY=801.504
   staff 0 originY=13.000
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -5639,7 +5639,7 @@ system 18 width=90.000 originY=774.316
     rest x=64.254 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 19 width=90.000 originY=819.818
+system 19 width=90.000 originY=847.006
   staff 0 originY=9.864
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -5705,8 +5705,8 @@ system 19 width=90.000 originY=819.818
       line  58.400,-2.000 -> 58.400,2.000 t=0.160
     note@3 x=59.320 w=3.871
       glyph noteheadBlack 59.320,-1.500
-      glyph flag8thDown 59.320,2.000
-      line  59.320,-1.332 -> 59.320,2.000 t=0.120
+      glyph flag8thUp 60.500,-5.000
+      line  60.500,-1.668 -> 60.500,-5.000 t=0.120
     note@0 x=63.753 w=1.780
       glyph noteheadBlack 63.753,0.000
       line  63.753,0.168 -> 63.753,3.500 t=0.120
@@ -5725,8 +5725,8 @@ system 19 width=90.000 originY=819.818
       line  72.849,0.168 -> 72.849,3.500 t=0.120
     note@3 x=74.888 w=3.871
       glyph noteheadBlack 74.888,-1.500
-      glyph flag8thDown 74.888,2.000
-      line  74.888,-1.332 -> 74.888,2.000 t=0.120
+      glyph flag8thUp 76.068,-5.000
+      line  76.068,-1.668 -> 76.068,-5.000 t=0.120
     note@1 x=79.321 w=2.235
       glyph noteheadBlack 79.321,-0.500
       line  79.321,-0.332 -> 79.321,3.000 t=0.120
@@ -5909,8 +5909,8 @@ system 19 width=90.000 originY=819.818
     note@1,3 x=73.160 w=3.871
       glyph noteheadBlack 73.160,-0.500
       glyph noteheadBlack 73.160,-1.500
-      glyph flag8thDown 73.160,3.000
-      line  73.160,-1.332 -> 73.160,3.000 t=0.120
+      glyph flag8thUp 74.340,-5.000
+      line  74.340,-0.668 -> 74.340,-5.000 t=0.120
     rest x=80.080 w=3.871
       glyph rest8th 80.080,0.000
     bar x=88.000 w=0.160
@@ -5945,7 +5945,7 @@ system 19 width=90.000 originY=819.818
     rest x=59.320 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 20 width=90.000 originY=862.704
+system 20 width=90.000 originY=889.892
   staff 0 originY=9.500
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -5974,7 +5974,7 @@ system 20 width=90.000 originY=862.704
     beam   61.491,1.500 -> 80.623,-0.500 t=0.500
     tuplettext 54.639,1.960 size=1.400 "3"
     tie  48.363,-2.300 -> 48.483,-2.300 bulge=-0.500
-    tie  45.640,1.800 -> 46.857,1.800 bulge=0.500
+    tie  45.640,0.200 -> 46.857,0.200 bulge=-0.500
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=3.012
@@ -6103,8 +6103,8 @@ system 20 width=90.000 originY=862.704
       line  45.144,0.832 -> 45.144,-2.500 t=0.120
     note@-2 x=47.157 w=3.871
       glyph noteheadBlack 47.157,1.000
-      glyph flag8thUp 48.337,-2.500
-      line  48.337,0.832 -> 48.337,-2.500 t=0.120
+      glyph flag8thDown 47.157,4.500
+      line  47.157,1.168 -> 47.157,4.500 t=0.120
     note@8 x=51.671 w=2.235
       glyph noteheadBlack 51.671,-4.000
       line  51.271,-3.000 -> 53.251,-3.000 t=0.160
@@ -6140,7 +6140,7 @@ system 20 width=90.000 originY=862.704
       line  80.623,-3.832 -> 80.623,-0.250 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=29.692
+  staff 1 originY=30.620
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -6264,7 +6264,7 @@ system 20 width=90.000 originY=862.704
     rest x=61.491 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 21 width=90.000 originY=905.206
+system 21 width=90.000 originY=933.322
   staff 0 originY=9.500
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -6589,8 +6589,8 @@ system 21 width=90.000 originY=905.206
     rest x=64.290 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 22 width=90.000 originY=947.832
-  staff 0 originY=10.000
+system 22 width=90.000 originY=975.948
+  staff 0 originY=10.560
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -6703,10 +6703,10 @@ system 22 width=90.000 originY=947.832
       glyph noteheadBlack 53.063,-0.500
       glyph noteheadBlack 53.063,-1.500
       glyph noteheadBlack 53.063,-3.000
-      glyph flag8thDown 53.063,4.000
-      glyph articStaccatoAbove 53.485,-4.000
+      glyph flag8thUp 54.243,-6.500
+      glyph articStaccatoBelow 53.485,3.000
       line  52.663,-3.000 -> 54.643,-3.000 t=0.160
-      line  53.063,-2.832 -> 53.063,4.000 t=0.120
+      line  54.243,0.332 -> 54.243,-6.500 t=0.120
     rest x=57.056 w=3.871
       glyph rest8th 57.056,0.000
     note@-1,1,3,6 x=61.048 w=3.871
@@ -6714,9 +6714,9 @@ system 22 width=90.000 originY=947.832
       glyph noteheadBlack 61.048,-0.500
       glyph noteheadBlack 61.048,-1.500
       glyph noteheadBlack 61.048,-3.000
-      glyph flag8thDown 61.048,4.000
+      glyph flag8thUp 62.228,-6.500
       line  60.648,-3.000 -> 62.628,-3.000 t=0.160
-      line  61.048,-2.832 -> 61.048,4.000 t=0.120
+      line  62.228,0.332 -> 62.228,-6.500 t=0.120
     rest x=65.040 w=3.871
       glyph rest8th 65.040,0.000
     bar x=70.032 w=0.720
@@ -6780,7 +6780,7 @@ system 22 width=90.000 originY=947.832
     rest x=81.155 w=3.871
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=29.960
+  staff 1 originY=33.180
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -6865,12 +6865,12 @@ system 22 width=90.000 originY=947.832
       glyph noteheadBlack 41.362,-2.500
       glyph noteheadBlack 41.362,-3.500
       glyph noteheadBlack 41.362,-5.000
-      glyph flag8thDown 41.362,1.000
+      glyph flag8thUp 42.542,-8.500
       line  40.962,-3.000 -> 42.942,-3.000 t=0.160
       line  40.962,-3.000 -> 42.942,-3.000 t=0.160
       line  40.962,-4.000 -> 42.942,-4.000 t=0.160
       line  40.962,-5.000 -> 42.942,-5.000 t=0.160
-      line  41.362,-4.832 -> 41.362,1.000 t=0.120
+      line  42.542,-2.668 -> 42.542,-8.500 t=0.120
     rest x=46.213 w=3.871
       glyph rest8th 46.213,0.000
     bar x=52.063 w=1.620
@@ -6881,8 +6881,8 @@ system 22 width=90.000 originY=947.832
       glyph accidentalFlat 53.063,-2.000
       glyph noteheadBlack 54.117,1.500
       glyph noteheadBlack 54.117,-2.000
-      glyph flag8thDown 54.117,5.000
-      line  54.117,-1.832 -> 54.117,5.000 t=0.120
+      glyph flag8thUp 55.297,-5.500
+      line  55.297,1.332 -> 55.297,-5.500 t=0.120
     rest x=57.056 w=3.871
       glyph rest8th 57.056,0.000
     note@-10,-3 x=61.048 w=3.871
@@ -6901,9 +6901,9 @@ system 22 width=90.000 originY=947.832
     note@5,7 x=71.032 w=3.871
       glyph noteheadBlack 71.032,-2.500
       glyph noteheadBlack 71.032,-3.500
-      glyph flag8thDown 71.032,1.000
+      glyph flag8thUp 72.212,-7.000
       line  70.632,-3.000 -> 72.612,-3.000 t=0.160
-      line  71.032,-3.332 -> 71.032,1.000 t=0.120
+      line  72.212,-2.668 -> 72.212,-7.000 t=0.120
     rest x=75.709 w=3.871
       glyph rest8th 75.709,0.000
     rest x=80.386 w=5.474
@@ -6952,7 +6952,7 @@ system 22 width=90.000 originY=947.832
     rest x=71.032 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 23 width=90.000 originY=990.602
+system 23 width=90.000 originY=1021.938
   staff 0 originY=11.500
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -6968,14 +6968,14 @@ system 23 width=90.000 originY=990.602
     beam   76.434,3.250 -> 83.478,3.250 t=0.500
     beam   76.434,2.500 -> 83.478,2.500 t=0.500
     beam   45.112,2.250 -> 51.911,1.750 t=0.500
-    tupletline 60.711,3.758 -> 64.736,3.758 t=0.100
-    tupletline 66.091,3.758 -> 70.116,3.758 t=0.100
-    tupletline 60.711,3.758 -> 60.711,4.358 t=0.100
-    tupletline 70.116,3.758 -> 70.116,4.358 t=0.100
+    tupletline 60.711,-8.235 -> 64.736,-8.235 t=0.100
+    tupletline 66.091,-8.235 -> 70.116,-8.235 t=0.100
+    tupletline 60.711,-8.235 -> 60.711,-8.835 t=0.100
+    tupletline 70.116,-8.235 -> 70.116,-8.835 t=0.100
     tuplettext 24.166,5.460 size=1.400 "3"
     tuplettext 39.795,1.960 size=1.400 "3"
     tuplettext 53.395,1.960 size=1.400 "3"
-    tuplettext 65.086,5.018 size=1.400 "3"
+    tuplettext 65.086,-8.375 size=1.400 "3"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=3.012
@@ -6998,8 +6998,8 @@ system 23 width=90.000 originY=990.602
       line  30.593,-2.000 -> 30.593,2.000 t=0.160
     note@0 x=31.513 w=3.871
       glyph noteheadBlack 31.513,0.000
-      glyph flag8thDown 31.513,3.500
-      line  31.513,0.168 -> 31.513,3.500 t=0.120
+      glyph flag8thUp 32.693,-3.500
+      line  32.693,-0.168 -> 32.693,-3.500 t=0.120
     note@8 x=36.490 w=2.235
       glyph noteheadBlack 36.490,-4.000
       line  36.090,-3.000 -> 38.070,-3.000 t=0.160
@@ -7018,9 +7018,9 @@ system 23 width=90.000 originY=990.602
       line  42.238,-4.332 -> 42.238,-1.000 t=0.120
     note@6 x=45.112 w=3.871
       glyph noteheadBlack 45.112,-3.000
-      glyph flag8thDown 45.112,0.500
+      glyph flag8thUp 46.292,-6.500
       line  44.712,-3.000 -> 46.692,-3.000 t=0.160
-      line  45.112,-2.832 -> 45.112,0.500 t=0.120
+      line  46.292,-3.168 -> 46.292,-6.500 t=0.120
     note@8 x=50.089 w=2.235
       glyph noteheadBlack 50.089,-4.000
       line  49.689,-3.000 -> 51.669,-3.000 t=0.160
@@ -7041,15 +7041,15 @@ system 23 width=90.000 originY=990.602
       line  59.791,-2.000 -> 59.791,2.000 t=0.160
     note@7 x=60.711 w=3.161
       glyph noteheadBlack 60.711,-3.500
-      glyph flag8thDown 60.711,0.000
+      glyph flag8thUp 61.891,-7.000
       line  60.311,-3.000 -> 62.291,-3.000 t=0.160
-      line  60.711,-3.332 -> 60.711,0.000 t=0.120
+      line  61.891,-3.668 -> 61.891,-7.000 t=0.120
     note@2,6 x=64.778 w=3.161
       glyph noteheadBlack 64.778,-1.000
       glyph noteheadBlack 64.778,-3.000
-      glyph flag8thDown 64.778,2.500
+      glyph flag8thUp 65.958,-6.500
       line  64.378,-3.000 -> 66.358,-3.000 t=0.160
-      line  64.778,-2.832 -> 64.778,2.500 t=0.120
+      line  65.958,-1.168 -> 65.958,-6.500 t=0.120
     rest x=68.845 w=3.161
       glyph rest8th 68.845,0.000
     rest x=72.912 w=2.737
@@ -7093,15 +7093,15 @@ system 23 width=90.000 originY=990.602
     note@-4,-1 x=23.431 w=3.871
       glyph noteheadBlack 23.431,2.000
       glyph noteheadBlack 23.431,0.500
-      glyph flag8thUp 24.611,-3.000
-      line  24.611,1.832 -> 24.611,-3.000 t=0.120
+      glyph flag8thDown 23.431,5.500
+      line  23.431,0.668 -> 23.431,5.500 t=0.120
     bar x=30.513 w=0.160
       line  30.593,-2.000 -> 30.593,2.000 t=0.160
     note@-5,-1 x=31.513 w=3.871
       glyph noteheadBlack 31.513,2.500
       glyph noteheadBlack 31.513,0.500
-      glyph flag8thUp 32.693,-3.000
-      line  32.693,2.332 -> 32.693,-3.000 t=0.120
+      glyph flag8thDown 31.513,6.000
+      line  31.513,0.668 -> 31.513,6.000 t=0.120
     note@3,6 x=38.312 w=3.871
       glyph noteheadBlack 38.312,-1.500
       glyph noteheadBlack 38.312,-3.000
@@ -7122,7 +7122,7 @@ system 23 width=90.000 originY=990.602
     bar x=88.000 w=0.720
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
       line  88.640,-2.000 -> 88.640,2.000 t=0.160
-  staff 1 originY=27.668
+  staff 1 originY=29.620
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -7195,8 +7195,8 @@ system 23 width=90.000 originY=990.602
     bar x=88.000 w=0.720
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
       line  88.640,-2.000 -> 88.640,2.000 t=0.160
-system 24 width=90.000 originY=1031.786
-  staff 0 originY=9.500
+system 24 width=90.000 originY=1065.074
+  staff 0 originY=11.560
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -7222,21 +7222,21 @@ system 24 width=90.000 originY=1031.786
       glyph accidentalNatural 8.748,-3.500
       glyph noteheadBlack 9.570,0.000
       glyph noteheadBlack 9.570,-2.000
-      glyph noteheadBlack 8.390,-3.000
-      glyph noteheadBlack 9.570,-3.500
-      line  7.990,-3.000 -> 9.970,-3.000 t=0.160
+      glyph noteheadBlack 9.570,-3.000
+      glyph noteheadBlack 10.750,-3.500
       line  9.170,-3.000 -> 11.150,-3.000 t=0.160
-      line  9.570,-3.332 -> 9.570,3.500 t=0.120
+      line  10.350,-3.000 -> 12.330,-3.000 t=0.160
+      line  10.750,-0.168 -> 10.750,-7.000 t=0.120
     note@1,4,6,8 x=16.544 w=2.737
       glyph noteheadBlack 16.544,-0.500
       glyph noteheadBlack 16.544,-2.000
       glyph noteheadBlack 16.544,-3.000
       glyph noteheadBlack 16.544,-4.000
-      glyph flag16thDown 16.544,3.000
+      glyph flag16thUp 17.724,-7.500
       line  16.144,-3.000 -> 18.124,-3.000 t=0.160
       line  16.144,-3.000 -> 18.124,-3.000 t=0.160
       line  16.144,-4.000 -> 18.124,-4.000 t=0.160
-      line  16.544,-3.832 -> 16.544,3.000 t=0.120
+      line  17.724,-0.668 -> 17.724,-7.500 t=0.120
     note@-5,-1,0,2 x=20.442 w=5.994
       glyph accidentalFlat 20.442,0.000
       glyph noteheadBlack 21.496,2.500
@@ -7371,7 +7371,7 @@ system 24 width=90.000 originY=1031.786
     rest x=59.325 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=32.120
+  staff 1 originY=34.180
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -7494,7 +7494,7 @@ system 24 width=90.000 originY=1031.786
     rest x=59.325 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 25 width=90.000 originY=1076.906
+system 25 width=90.000 originY=1112.254
   staff 0 originY=9.500
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -7806,8 +7806,8 @@ system 25 width=90.000 originY=1076.906
     rest x=61.113 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 26 width=90.000 originY=1122.026
-  staff 0 originY=10.500
+system 26 width=90.000 originY=1157.374
+  staff 0 originY=11.560
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -7868,8 +7868,8 @@ system 26 width=90.000 originY=1122.026
       glyph noteheadBlack 37.864,0.000
       glyph noteheadBlack 37.864,-1.000
       glyph noteheadBlack 37.864,-2.500
-      glyph flag8thDown 37.864,4.500
-      line  37.864,-2.332 -> 37.864,4.500 t=0.120
+      glyph flag8thUp 39.044,-6.000
+      line  39.044,0.832 -> 39.044,-6.000 t=0.120
     rest x=43.190 w=3.871
       glyph rest8th 43.190,0.000
     note@12 x=48.516 w=2.737
@@ -7905,21 +7905,21 @@ system 26 width=90.000 originY=1122.026
       glyph accidentalNatural 65.580,-3.500
       glyph noteheadBlack 66.402,0.000
       glyph noteheadBlack 66.402,-2.000
-      glyph noteheadBlack 65.222,-3.000
-      glyph noteheadBlack 66.402,-3.500
-      line  64.822,-3.000 -> 66.802,-3.000 t=0.160
+      glyph noteheadBlack 66.402,-3.000
+      glyph noteheadBlack 67.582,-3.500
       line  66.002,-3.000 -> 67.982,-3.000 t=0.160
-      line  66.402,-3.332 -> 66.402,3.500 t=0.120
+      line  67.182,-3.000 -> 69.162,-3.000 t=0.160
+      line  67.582,-0.168 -> 67.582,-7.000 t=0.120
     note@1,4,6,8 x=73.834 w=2.737
       glyph noteheadBlack 73.834,-0.500
       glyph noteheadBlack 73.834,-2.000
       glyph noteheadBlack 73.834,-3.000
       glyph noteheadBlack 73.834,-4.000
-      glyph flag16thDown 73.834,3.000
+      glyph flag16thUp 75.014,-7.500
       line  73.434,-3.000 -> 75.414,-3.000 t=0.160
       line  73.434,-3.000 -> 75.414,-3.000 t=0.160
       line  73.434,-4.000 -> 75.414,-4.000 t=0.160
-      line  73.834,-3.832 -> 73.834,3.000 t=0.120
+      line  75.014,-0.668 -> 75.014,-7.500 t=0.120
     note@-5,-1,0,2 x=77.962 w=5.994
       glyph accidentalFlat 77.962,0.000
       glyph noteheadBlack 79.016,2.500
@@ -7949,7 +7949,7 @@ system 26 width=90.000 originY=1122.026
     rest x=65.580 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=34.560
+  staff 1 originY=35.620
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -8093,14 +8093,14 @@ system 26 width=90.000 originY=1122.026
       line  36.944,-2.000 -> 36.944,2.000 t=0.160
     note@-4 x=37.864 w=5.474
       glyph noteheadBlack 37.864,2.000
-      line  39.044,1.832 -> 39.044,-1.500 t=0.120
+      line  37.864,2.168 -> 37.864,5.500 t=0.120
     rest x=50.722 w=5.474
     bar x=64.580 w=0.160
       line  64.660,-2.000 -> 64.660,2.000 t=0.160
     rest x=65.580 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 27 width=90.000 originY=1169.086
+system 27 width=90.000 originY=1205.554
   staff 0 originY=9.500
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -8424,8 +8424,8 @@ system 27 width=90.000 originY=1169.086
     rest x=62.584 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 28 width=90.000 originY=1214.206
-  staff 0 originY=9.500
+system 28 width=90.000 originY=1250.674
+  staff 0 originY=10.060
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -8520,7 +8520,7 @@ system 28 width=90.000 originY=1214.206
     note@-2,5 x=52.211 w=5.474
       glyph noteheadBlack 52.211,1.000
       glyph noteheadBlack 52.211,-2.500
-      line  52.211,-2.332 -> 52.211,4.500 t=0.120
+      line  53.391,0.832 -> 53.391,-6.000 t=0.120
     bar x=60.193 w=0.160
       line  60.273,-2.000 -> 60.273,2.000 t=0.160
     note@-1,1,6 x=61.193 w=2.737
@@ -8585,7 +8585,7 @@ system 28 width=90.000 originY=1214.206
     rest x=61.193 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-  staff 1 originY=31.575
+  staff 1 originY=32.135
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -8712,8 +8712,8 @@ system 28 width=90.000 originY=1214.206
     rest x=61.193 w=7.742
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 29 width=27.232 originY=1259.281
-  staff 0 originY=9.500
+system 29 width=27.232 originY=1296.309
+  staff 0 originY=12.560
     staffline 0.000,2.000 -> 27.232,2.000 t=0.130
     staffline 0.000,1.000 -> 27.232,1.000 t=0.130
     staffline 0.000,0.000 -> 27.232,0.000 t=0.130
@@ -8734,18 +8734,18 @@ system 29 width=27.232 originY=1259.281
       line  8.348,-3.000 -> 10.328,-3.000 t=0.160
       line  8.348,-4.000 -> 10.328,-4.000 t=0.160
       line  8.348,-5.000 -> 10.328,-5.000 t=0.160
-      line  8.748,-4.832 -> 8.748,2.000 t=0.120
+      line  9.928,-1.668 -> 9.928,-8.500 t=0.120
     note@3,5,7,10 x=15.162 w=3.871
       glyph noteheadBlack 15.162,-1.500
       glyph noteheadBlack 15.162,-2.500
       glyph noteheadBlack 15.162,-3.500
       glyph noteheadBlack 15.162,-5.000
-      glyph flag8thDown 15.162,2.000
+      glyph flag8thUp 16.342,-8.500
       line  14.762,-3.000 -> 16.742,-3.000 t=0.160
       line  14.762,-3.000 -> 16.742,-3.000 t=0.160
       line  14.762,-4.000 -> 16.742,-4.000 t=0.160
       line  14.762,-5.000 -> 16.742,-5.000 t=0.160
-      line  15.162,-4.832 -> 15.162,2.000 t=0.120
+      line  16.342,-1.668 -> 16.342,-8.500 t=0.120
     rest x=19.697 w=3.871
       glyph rest8th 19.697,0.000
     bar x=25.232 w=1.060
@@ -8761,7 +8761,7 @@ system 29 width=27.232 originY=1259.281
     bar x=25.232 w=1.060
       line  25.312,-2.000 -> 25.312,2.000 t=0.160
       line  26.042,-2.000 -> 26.042,2.000 t=0.500
-  staff 1 originY=28.132
+  staff 1 originY=31.192
     staffline 0.000,2.000 -> 27.232,2.000 t=0.130
     staffline 0.000,1.000 -> 27.232,1.000 t=0.130
     staffline 0.000,0.000 -> 27.232,0.000 t=0.130

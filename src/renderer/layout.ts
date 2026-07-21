@@ -2437,6 +2437,8 @@ function layoutMeasure(
   spacingScale: number,
   /** `abcjs-strict` — passed through for microtonal accidentals. */
   strict = true,
+  /** Voice convention on a SHARED staff; null lets pitch decide. */
+  voiceStem: boolean | null = null,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
   const beams = new Map<number, StemInfo[]>()
@@ -2465,6 +2467,7 @@ function layoutMeasure(
       group === null ? null : (directions.get(group) ?? null),
       stemOut,
       strict,
+      voiceStem,
     )
     if (el === null) continue
     if (group !== null && stemOut?.value) {
@@ -2603,12 +2606,34 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         )
       : voices.map((_, i) => [i])
 
-  const plans: VoicePlan[] = voices.map((voice) => {
+  /**
+   * Stem direction by a voice's POSITION on its staff, not by its pitch.
+   *
+   * Two voices sharing a staff are read apart by their stems: the upper voice takes them
+   * up, the lower down, whatever the notes do. Without this, `%%score (1 2)` on two
+   * middle-register voices gives every stem the same direction — both down, since both
+   * sit above the middle line — and the parts become unreadable exactly where sharing was
+   * supposed to help. abcjs does the same: for `(1 2)` on identical notes, voice 0's stem
+   * runs up and voice 1's down.
+   *
+   * `null` on a staff of one, where pitch is the right answer and forcing would be wrong.
+   *
+   * ponytail: voice 0 up, everything below it down. Three voices on a staff — the corpus
+   * has `( 1 2 3 )` — conventionally wants the middle one placed by context, which needs
+   * collision detection this engine does not have yet.
+   */
+  const stemForVoice = (index: number): boolean | null => {
+    const staff = voicesOfStaff.find((members) => members.includes(index))
+    if (staff === undefined || staff.length < 2) return null
+    return staff.indexOf(index) === 0
+  }
+
+  const plans: VoicePlan[] = voices.map((voice, voiceIndex) => {
     // A voice's own `clef=` wins over the tune's `K:` clef; treble is the fallback.
     const clef = voice?.clef ?? score.clef
     const directions = beamDirections(voice, clef)
     const blocks = (voice?.measures ?? []).map((measure) =>
-      layoutMeasure(measure, clef, directions, spacingScale, strict),
+      layoutMeasure(measure, clef, directions, spacingScale, strict, stemForVoice(voiceIndex)),
     )
 
     /**
@@ -3066,8 +3091,13 @@ function layoutEvent(
   stemOut: { value: Omit<StemInfo, 'element'> | null } | null = null,
   /** `abcjs-strict` — passed through for microtonal accidentals. */
   strict = true,
+  /** Voice convention on a SHARED staff; null lets pitch decide. See `stemForVoice`. */
+  voiceStem: boolean | null = null,
 ): LayoutElement | null {
   const advance = naturalWidth(event.duration, spacingScale)
+  // The beam's direction wins over the voice convention: a beam cannot join opposed stems,
+  // and the beam pass already agreed one direction for the whole group.
+  const stem = forcedUp ?? voiceStem
   if (event.type === 'note') {
     return layoutNoteheads(
       [event.pitch],
@@ -3075,7 +3105,7 @@ function layoutEvent(
       advance,
       x,
       clef,
-      forcedUp,
+      stem,
       stemOut,
       event,
       strict,
@@ -3088,7 +3118,7 @@ function layoutEvent(
       advance,
       x,
       clef,
-      forcedUp,
+      stem,
       stemOut,
       event,
       strict,

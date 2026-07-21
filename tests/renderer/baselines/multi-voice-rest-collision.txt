@@ -1,5 +1,5 @@
 tune 0
-bounds  width=40.465 height=17.400 top=0.000
+bounds  width=40.465 height=19.460 top=0.000
 systems 1
 system 0 width=40.465 originY=0.000
   staff 0 originY=7.400
@@ -54,7 +54,7 @@ system 0 width=40.465 originY=0.000
       glyph noteheadBlack 22.509,4.500
       line  22.109,3.000 -> 24.089,3.000 t=0.160
       line  22.109,4.000 -> 24.089,4.000 t=0.160
-      line  23.689,4.332 -> 23.689,1.000 t=0.120
+      line  22.509,4.668 -> 22.509,8.000 t=0.120
     rest x=29.987 w=5.474
       glyph restQuarter 29.987,0.000
     bar x=38.465 w=1.060

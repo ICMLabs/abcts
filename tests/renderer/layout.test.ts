@@ -1968,3 +1968,42 @@ describe('%%score / %%staves staff grouping', () => {
     expect(stavesFor(THREE_VOICES('%%score {1 2 3}'))).toBe(3)
   })
 })
+
+describe('stem direction on a shared staff', () => {
+  const stemsPerVoice = (abc: string) => {
+    const staff = layout(parse(abc).scores[0] as Score, { systemWidth: 300 }).systems[0]?.staves[0]
+    return (staff?.voices ?? []).map((v) =>
+      v
+        .flatMap((e) => e.lines)
+        .filter((l) => l.role === 'stem')
+        .map((l) => (l.y2 < l.y1 ? 'up' : 'down')),
+    )
+  }
+
+  const SHARED = 'X:1\nM:4/4\nL:1/4\n%%score (1 2)\nV:1\nV:2\nK:C\nV:1\ncccc|\nV:2\ncccc|\n'
+
+  it('sends the upper voice up and the lower voice down, whatever the pitch', () => {
+    // Both voices here are the same note, ABOVE the middle line, so pitch alone gives
+    // every stem the same direction — and the parts become unreadable exactly where
+    // sharing a staff was supposed to help. abcjs forces them apart; for `(1 2)` on
+    // identical notes its voice 0 stem runs up and voice 1's down.
+    const [upper, lower] = stemsPerVoice(SHARED)
+    expect(upper?.every((d) => d === 'up')).toBe(true)
+    expect(lower?.every((d) => d === 'down')).toBe(true)
+  })
+
+  it('leaves a staff of ONE voice to decide by pitch', () => {
+    // Forcing here would be wrong: a lone voice high on the staff wants a down stem.
+    const [only] = stemsPerVoice('X:1\nM:4/4\nL:1/4\nK:C\ncccc|\n')
+    expect(only?.every((d) => d === 'down')).toBe(true)
+  })
+
+  it('lets a BEAM override the voice convention', () => {
+    // A beam cannot join opposed stems, so the group's agreed direction has to win over
+    // the per-voice rule. Beamed eighths in the lower voice stay one direction.
+    const [, lower] = stemsPerVoice(
+      'X:1\nM:4/4\nL:1/8\n%%score (1 2)\nV:1\nV:2\nK:C\nV:1\ncccccccc|\nV:2\nCCCCCCCC|\n',
+    )
+    expect(new Set(lower).size).toBe(1)
+  })
+})
