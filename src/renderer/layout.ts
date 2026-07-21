@@ -2552,8 +2552,23 @@ function layoutMeasure(
   const anchors: NoteAnchor[] = []
   let x = 0
 
-  // The label precedes the barline that opens its part.
-  if (measure.partLabel !== null) elements.push(layoutPart(x, measure.partLabel))
+  // The label precedes the first event that comes AFTER the `P:` in the source, which is
+  // the measure head in every ordinary tune — a `P:` sits on its own line, so everything
+  // in the measure follows it. The two come apart only when a measure spans the `P:`,
+  // which `frere-jacques` does: abcjs lexes its `+:` prose as music, so the prose and the
+  // real first bar are one measure with `P:A` between them, and abcjs prints the label
+  // after the prose. Anchoring on the offset rather than on the measure gets both.
+  //
+  // An event with no source range is treated as following the `P:`, so an unknown offset
+  // keeps the head placement rather than pushing the label to the end of the bar.
+  const partAfter = measure.partLabelSourceRange?.start ?? -1
+  const partIndex =
+    measure.partLabel === null
+      ? -1
+      : measure.events.findIndex(
+          (e) => (e.sourceRange?.start ?? Number.POSITIVE_INFINITY) >= partAfter,
+        )
+  if (measure.partLabel !== null && partIndex === 0) elements.push(layoutPart(x, measure.partLabel))
   // An opening `|:` or `[|` prints before the measure it belongs to, and is a SEPARATE
   // barline from the previous measure's closer.
   if (measure.openingBarline !== null) {
@@ -2562,7 +2577,10 @@ function layoutMeasure(
     x += ENGRAVE.barGap
   }
 
-  for (const event of measure.events) {
+  for (const [eventIndex, event] of measure.events.entries()) {
+    if (measure.partLabel !== null && eventIndex === partIndex && partIndex > 0) {
+      elements.push(layoutPart(x, measure.partLabel))
+    }
     const group = event.type === 'rest' ? null : event.beamGroup
     const stemOut: { value: Omit<StemInfo, 'element'> | null } | null =
       group === null ? null : { value: null }
@@ -2617,6 +2635,10 @@ function layoutMeasure(
     elements.push(el)
     x += el.width
   }
+
+  // Every event preceded the `P:` — the label belongs after them, before the barline.
+  if (measure.partLabel !== null && partIndex === -1)
+    elements.push(layoutPart(x, measure.partLabel))
 
   let closingBarIndex: number | null = null
   const musicWidth = x

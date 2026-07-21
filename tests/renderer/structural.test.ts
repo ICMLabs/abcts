@@ -69,6 +69,7 @@ const RENDERABLE = [
   'chord-grid',
   'clefs',
   'curves',
+  'frere-jacques',
   'full-song-template',
   'happy-birthday',
   'little swallow',
@@ -104,13 +105,7 @@ const RENDERABLE = [
  * the anti-rot property: a divergence that starts matching FAILS, so a stale entry cannot
  * sit here unnoticed.
  */
-const KNOWN_DIVERGENCES: Record<string, string> = {
-  'frere-jacques':
-    'abcjs parses `+:` field-continuation lines as music, so its layout is built from a ' +
-    'mis-parsed tune — it has no timeSignature at all and its noteheads are the prose of ' +
-    '"+:belongs to their respective owners" on the staff. The parser gate documents the ' +
-    'same divergence at the content level; this is the same abcjs bug seen through layout.',
-}
+const KNOWN_DIVERGENCES: Record<string, string> = {}
 
 /**
  * abcjs numbers staff positions with 0 = C4, so a treble middle line (B4) is 6. Core puts
@@ -241,21 +236,27 @@ describe('structural render parity vs abcjs layout', () => {
     }
   })
 
-  describe('known divergences — abcjs is wrong', () => {
-    for (const [name, reason] of Object.entries(KNOWN_DIVERGENCES)) {
-      it(`${name} — still diverges: ${reason.slice(0, 60)}…`, () => {
-        const fixture = byName.get(name)
-        expect(fixture).toBeDefined()
-        const golden = goldenSequence(name)
-        expect(golden.length, `${name} has an empty layout golden`).toBeGreaterThan(0)
-        // Fails if it starts matching, so the entry cannot go stale.
-        expect(
-          coreSequence(fixture?.abc ?? ''),
-          `${name} now matches abcjs — the divergence is stale, remove it`,
-        ).not.toEqual(golden)
-      })
-    }
-  })
+  // Empty is the goal state, and vitest fails a suite with no tests in it — so the block
+  // is skipped rather than deleted. It has to stay: the next fixture abcjs gets wrong
+  // goes here, and its anti-rot assertion is what stops the entry outliving the bug.
+  describe.skipIf(Object.keys(KNOWN_DIVERGENCES).length === 0)(
+    'known divergences — abcjs is wrong',
+    () => {
+      for (const [name, reason] of Object.entries(KNOWN_DIVERGENCES)) {
+        it(`${name} — still diverges: ${reason.slice(0, 60)}…`, () => {
+          const fixture = byName.get(name)
+          expect(fixture).toBeDefined()
+          const golden = goldenSequence(name)
+          expect(golden.length, `${name} has an empty layout golden`).toBeGreaterThan(0)
+          // Fails if it starts matching, so the entry cannot go stale.
+          expect(
+            coreSequence(fixture?.abc ?? ''),
+            `${name} now matches abcjs — the divergence is stale, remove it`,
+          ).not.toEqual(golden)
+        })
+      }
+    },
+  )
 
   // Machine-readable counts for `npm run parity`, written from the same lists the
   // assertions use so the tracker cannot drift from the gate.

@@ -1216,6 +1216,12 @@ class Parser {
   // (octave marks, then length) plain indexing instead of a peek/rewind protocol.
   private scanMusic(start: number, end: number): void {
     const builder = this.ensureScore(start)
+    // Music ENDS the header, not just `K:`. Normally the two coincide; they come apart
+    // when a line before the `K:` is scanned as music, which strict mode does to `+:`
+    // because abcjs does. abcjs agrees: `frere-jacques`'s `M:4/4` sits on line 14 and its
+    // time signature is printed on system 3, so the `+:` prose on line 8 had already made
+    // every later field a mid-tune one.
+    builder.bodyStarted = true
     builder.voice.beginMusicLine()
     // Re-read through the builder rather than capturing: an inline `[V:2]` mid-line
     // switches which voice subsequent events belong to.
