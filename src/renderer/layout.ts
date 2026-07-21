@@ -252,6 +252,15 @@ export type PartRole =
 
 export interface PlacedGlyph {
   readonly name: GlyphName
+  /**
+   * Position within a CHORD, 1 = lowest pitch, counting upward. Absent on a single note.
+   *
+   * abcjs puts `abcjs-chord-pos-N` on each notehead of a chord and nothing on a lone one,
+   * which is what its 722/715 split of pos-1 to pos-2 across the corpus shows — a single
+   * note would make pos-1 dwarf the rest. Compat reproduces it because a stylesheet can
+   * legitimately target it, and it was the ONLY class abcjs emits that we did not.
+   */
+  readonly chordPos?: number
   readonly x: number
   readonly y: number
   /** What this glyph is. Absent means it inherits its element's kind. */
@@ -1213,9 +1222,14 @@ function layoutNoteheads(
     previous = step
   }
 
-  for (const step of steps) {
+  for (const [position, step] of steps.entries()) {
     const dx = offsets.get(step) ?? 0
-    glyphs.push({ ...glyphAt(headName, headX + dx, step), role: 'notehead' })
+    glyphs.push({
+      ...glyphAt(headName, headX + dx, step),
+      role: 'notehead',
+      // `steps` is sorted ascending, so the index IS the chord position from the bottom.
+      ...(steps.length > 1 ? { chordPos: position + 1 } : {}),
+    })
     lines.push(...ledgerLines(step, headX + dx, head.width))
   }
 

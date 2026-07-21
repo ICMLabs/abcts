@@ -154,9 +154,13 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
    * note draws); abcjs names by PART and adds `data-name` hooks. Both are emitted from
    * the same role, so neither naming is the privileged one.
    */
-  const attrs = (elementType: string, role: string | undefined): string => {
+  const attrs = (elementType: string, role: string | undefined, chordPos?: number): string => {
     if (!abcjs) return ` class="${prefix}-${elementType}"`
-    const cls = role === undefined ? undefined : ABCJS_CLASSES[role]
+    const base = role === undefined ? undefined : ABCJS_CLASSES[role]
+    // abcjs appends the chord position to the notehead's own class rather than replacing
+    // it: `class="abcjs-notehead abcjs-chord-pos-2"`.
+    const cls =
+      base !== undefined && chordPos !== undefined ? `${base} abcjs-chord-pos-${chordPos}` : base
     const name = role === undefined ? undefined : ABCJS_DATA_NAMES[role]
     return `${cls ? ` class="${cls}"` : ''}${name ? ` data-name="${name}"` : ''}`
   }
@@ -242,7 +246,7 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
         for (const g of el.glyphs) {
           // The glyph path is authored at the origin, so a translate is all that is needed.
           parts.push(
-            `<path${attrs(el.type, g.role)} transform="translate(${num(g.x)},${num(g.y)})${
+            `<path${attrs(el.type, g.role, g.chordPos)} transform="translate(${num(g.x)},${num(g.y)})${
               g.scale === undefined || g.scale === 1 ? '' : ` scale(${num(g.scale)})`
             }" d="${GLYPHS[g.name].path}"/>`,
           )
