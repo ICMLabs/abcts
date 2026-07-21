@@ -60,6 +60,15 @@ function snapshotTune(score: Score, index: number): string {
 
   doc.systems.forEach((system, index) => {
     lines.push(`system ${index} width=${n(system.width)} originY=${n(system.originY)}`)
+    for (const g of system.connectorGlyphs) {
+      const scale = g.scale === undefined || g.scale === 1 ? '' : ` scale=${n(g.scale)}`
+      lines.push(`  connector ${g.name} ${n(g.x)},${n(g.y)}${scale}`)
+    }
+    for (const l of system.connectorLines) {
+      lines.push(
+        `  connector line ${n(l.x1)},${n(l.y1)} -> ${n(l.x2)},${n(l.y2)} t=${n(l.thickness)}`,
+      )
+    }
     system.staves.forEach((staff, staffIndex) => {
       lines.push(`  staff ${staffIndex} originY=${n(staff.originY)}`)
       for (const line of staff.staffLines) {

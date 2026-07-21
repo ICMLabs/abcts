@@ -2,6 +2,7 @@ tune 0
 bounds  width=60.423 height=42.909 top=0.000
 systems 1
 system 0 width=60.423 originY=0.000
+  connector brace -0.920,13.420 scale=5.764
   staff 0 originY=15.420
     staffline 0.000,2.000 -> 60.423,2.000 t=0.130
     staffline 0.000,1.000 -> 60.423,1.000 t=0.130

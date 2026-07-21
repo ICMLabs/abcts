@@ -37,6 +37,12 @@ const OUT = resolve(root, 'src/renderer/glyphs.ts')
  * feature list drawn up in advance.
  */
 const GLYPHS = [
+  // Staff connectors — `%%score {A B}` braces a grand staff, `[A B]` brackets a family.
+  // SMuFL's brace is drawn to be stretched vertically; the bracket is a rule with
+  // separate serif glyphs at each end.
+  'brace',
+  'bracketTop',
+  'bracketBottom',
   // Clefs
   'gClef',
   'fClef',

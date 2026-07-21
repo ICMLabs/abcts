@@ -170,6 +170,17 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
     parts.push(
       `<g${abcjs ? '' : ` class="${prefix}-system"`} transform="translate(0,${num(system.originY)})">`,
     )
+    // Braces and brackets first: they belong to the SYSTEM, joining staves rather than
+    // sitting on one, and they are drawn at the left edge outside the music area.
+    for (const line of system.connectorLines) {
+      parts.push(lineToRect(line, abcjs ? '' : ` class="${prefix}-staff"`))
+    }
+    for (const g of system.connectorGlyphs) {
+      const scale = g.scale === undefined || g.scale === 1 ? '' : ` scale(1,${num(g.scale)})`
+      parts.push(
+        `<path${abcjs ? '' : ` class="${prefix}-staff"`} transform="translate(${num(g.x)},${num(g.y)})${scale}" d="${GLYPHS[g.name].path}"/>`,
+      )
+    }
     for (const staff of system.staves) {
       parts.push(
         `<g${abcjs ? '' : ` class="${prefix}-staff-group"`} transform="translate(0,${num(staff.originY)})">`,

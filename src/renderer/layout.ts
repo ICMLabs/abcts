@@ -35,6 +35,7 @@ import {
   rational,
   ratToNumber,
   type Score,
+  type StaffGroup,
   stepIndex,
   type Tempo,
   type Voice,
@@ -135,6 +136,10 @@ const ENGRAVE = {
   /** First verse below the staff; further verses stack downward by `lyricLineStep`. */
   lyricStep: -8,
   lyricLineStep: 4,
+  /** Clearance between a brace or bracket and the staff it joins. */
+  connectorGap: 0.6,
+  /** A bracket is a rule, and a heavy one. */
+  bracketThickness: 0.5,
   /** Mouth of a hairpin at its open end — abcjs paints 8px against a 7.75px space. */
   hairpinMouth: 1.0,
   /** Clearance either side of a glissando, so it does not touch the noteheads. */
@@ -404,8 +409,18 @@ export interface LayoutStaff {
 }
 
 export interface LayoutSystem {
-  /** One per voice, in score order, top to bottom. */
+  /** One per STAFF, top to bottom. `%%score`'s `( … )` puts several voices on one. */
   readonly staves: readonly LayoutStaff[]
+  /**
+   * Braces and brackets at the system's left edge, joining the staves of a group.
+   *
+   * On the SYSTEM rather than a staff, because that is what they span: a brace over a
+   * grand staff belongs to neither of its two staves. abcjs draws both — a curvy path for
+   * the brace, verified against its rendered SVG — and so does abcMusicKit v1, whose
+   * `drawBraces` ports the same element.
+   */
+  readonly connectorGlyphs: readonly PlacedGlyph[]
+  readonly connectorLines: readonly PlacedLine[]
   /** Width of this system, staff spaces. Systems wrap, so they differ. */
   readonly width: number
   /**
@@ -1827,6 +1842,84 @@ const SPANNER_CLOSE: Readonly<Record<string, 'crescendo' | 'diminuendo' | 'gliss
   'glissando)': 'glissando',
 }
 
+/**
+ * Braces and brackets joining the staves of a `%%score` group.
+ *
+ * Placed once the staves have their final `originY`, since a connector spans from the top
+ * of the first staff in its group to the bottom of the last — which is only known then.
+ *
+ * SMuFL draws a brace as one glyph meant to be STRETCHED vertically, and a bracket as a
+ * plain rule with separate serifs at each end. So the brace is scaled and the bracket is
+ * built, which is also how the two differ in engraving: a brace is a piece of lettering,
+ * a bracket is a rule.
+ */
+function layoutConnectors(
+  groups: readonly StaffGroup[],
+  staves: readonly { readonly originY: number }[],
+): { glyphs: PlacedGlyph[]; lines: PlacedLine[] } {
+  const glyphs: PlacedGlyph[] = []
+  const lines: PlacedLine[] = []
+  if (groups.length === 0) return { glyphs, lines }
+
+  /** Runs of consecutive staves sharing a connector, from its `start`…`end` markers. */
+  const runs = (kind: 'brace' | 'bracket'): { from: number; to: number }[] => {
+    const out: { from: number; to: number }[] = []
+    let open: number | null = null
+    groups.forEach((group, i) => {
+      const mark = kind === 'brace' ? group.brace : group.bracket
+      if (mark === 'start') open = i
+      if (mark === 'end' && open !== null) {
+        out.push({ from: open, to: i })
+        open = null
+      }
+    })
+    return out
+  }
+
+  const edge = (index: number): { top: number; bottom: number } | null => {
+    const staff = staves[index]
+    if (staff === undefined) return null
+    // A staff spans steps +4 to -4 around its own origin.
+    return { top: staff.originY + stepToY(4), bottom: staff.originY + stepToY(-4) }
+  }
+
+  for (const { from, to } of runs('brace')) {
+    const first = edge(from)
+    const last = edge(to)
+    if (first === null || last === null) continue
+    const height = last.bottom - first.top
+    const glyph = GLYPHS.brace
+    // Stretched to the span. The glyph's own height is its natural size, so the scale is
+    // the ratio — the one place a glyph is deliberately not drawn at 1:1.
+    glyphs.push({
+      name: 'brace',
+      x: -ENGRAVE.connectorGap - glyph.width,
+      y: first.top,
+      scale: height / glyph.height,
+      role: 'staff',
+    })
+  }
+
+  for (const { from, to } of runs('bracket')) {
+    const first = edge(from)
+    const last = edge(to)
+    if (first === null || last === null) continue
+    const x = -ENGRAVE.connectorGap
+    lines.push({
+      x1: x,
+      y1: first.top,
+      x2: x,
+      y2: last.bottom,
+      thickness: ENGRAVE.bracketThickness,
+      role: 'staff',
+    })
+    glyphs.push({ name: 'bracketTop', x, y: first.top, role: 'staff' })
+    glyphs.push({ name: 'bracketBottom', x, y: last.bottom, role: 'staff' })
+  }
+
+  return { glyphs, lines }
+}
+
 function layoutSpanners(
   anchors: readonly NoteAnchor[],
   /** Where each system's music starts and ends, exactly as `layoutCurves` uses it. */
@@ -2952,7 +3045,14 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       return { ...staff, staffLines: staffLinesFor(width), originY }
     })
 
-    return { staves: placed, width, originY: 0 }
+    const connectors = layoutConnectors(score.staves, placed)
+    return {
+      staves: placed,
+      connectorGlyphs: connectors.glyphs,
+      connectorLines: connectors.lines,
+      width,
+      originY: 0,
+    }
   })
 
   // Now that every system exists, resolve each voice's slurs and ties across the whole

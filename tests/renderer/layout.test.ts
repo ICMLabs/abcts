@@ -2007,3 +2007,41 @@ describe('stem direction on a shared staff', () => {
     expect(new Set(lower).size).toBe(1)
   })
 })
+
+describe('staff connectors — braces and brackets', () => {
+  const systemFor = (directive: string) =>
+    layout(
+      parse(`X:1\nM:4/4\nL:1/4\n${directive}\nV:1\nV:2\nK:C\nV:1\nCDEF|\nV:2\nGABc|\n`)
+        .scores[0] as Score,
+      { systemWidth: 300 },
+    ).systems[0]
+
+  it('braces a `{ … }` group and brackets a `[ … ]` one', () => {
+    // abcjs draws both. Verified by finding the brace's CURVY path in its rendered SVG,
+    // present with `{1 2}` and absent without — an element COUNT showed no difference,
+    // because the staff lines merely shift right to make room for the brace.
+    expect(systemFor('%%score {1 2}')?.connectorGlyphs.map((g) => g.name)).toEqual(['brace'])
+    expect(systemFor('%%score [1 2]')?.connectorGlyphs.map((g) => g.name)).toEqual([
+      'bracketTop',
+      'bracketBottom',
+    ])
+  })
+
+  it('draws nothing without grouping punctuation', () => {
+    expect(systemFor('%%score 1 2')?.connectorGlyphs).toEqual([])
+    expect(systemFor('%%score 1 2')?.connectorLines).toEqual([])
+  })
+
+  it('stretches the brace to the staves it spans', () => {
+    // SMuFL draws the brace as one glyph MEANT to be stretched, which is the one place a
+    // glyph is deliberately not drawn at 1:1. A bracket is a rule with serifs instead.
+    const brace = systemFor('%%score {1 2}')?.connectorGlyphs[0]
+    expect(brace?.scale).toBeGreaterThan(1)
+    expect(systemFor('%%score [1 2]')?.connectorLines).toHaveLength(1)
+  })
+
+  it('sits left of the staff, outside the music', () => {
+    const brace = systemFor('%%score {1 2}')?.connectorGlyphs[0]
+    expect(brace?.x ?? 0).toBeLessThan(0)
+  })
+})
