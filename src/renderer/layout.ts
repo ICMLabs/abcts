@@ -59,8 +59,16 @@ const ENGRAVE = {
   firstLedgerStep: 6,
   /** Ledger line overhang past the notehead each side. */
   ledgerExtension: ENGRAVING_DEFAULTS.legerLineExtension,
-  /** Page margin left of the staff. PROVISIONAL. */
-  marginX: 1.0,
+  /**
+   * Page margin left of the staff.
+   *
+   * 15px at abcjs's 7.75px staff space — its SCREEN default `padding.left`
+   * (`write/renderer.js:71`; print uses 68px, which is 1.8cm). Was 1.0 and marked
+   * PROVISIONAL, which put every drawing about 7px left of abcjs's and, more sharply,
+   * dropped `multi-voice-rest-placement` to a fill of 0.659 against the 0.66 threshold —
+   * so it kept its natural width where abcjs justified it, by one thousandth.
+   */
+  marginX: 15 / 7.75,
   /** Vertical padding above and below the staff. PROVISIONAL. */
   marginY: 4.0,
   /** Gap after a clef or meter before the next element. PROVISIONAL. */
@@ -3056,7 +3064,10 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     // `simple-c` is the case that makes the threshold visible rather than arbitrary — it
     // fills about 60% and NEITHER engine stretches it, which is why its notes already
     // matched to the pixel while its neighbours did not.
-    const fill = (natural + head) / systemWidth
+    // The margin counts: abcjs compares `staffGroup.w` — which starts at its left
+    // padding — against the target, so leaving it out understates the fill and suppresses
+    // justification on lines that sit just under the threshold.
+    const fill = (natural + head + ENGRAVE.marginX) / systemWidth
     const stretchLast = fill >= ENGRAVE.lastSystemFill
     const wanted = natural > 0 ? available / natural : 1
     // COMPRESSION IS UNCONDITIONAL, and it is what makes source-line breaking work at

@@ -1,57 +1,57 @@
 tune 0
-bounds  width=32.462 height=25.980 top=0.000
+bounds  width=34.333 height=25.980 top=0.000
 systems 1
-system 0 width=32.462 originY=0.000
+system 0 width=34.333 originY=0.000
   staff 0 originY=15.420
-    staffline 0.000,2.000 -> 32.462,2.000 t=0.130
-    staffline 0.000,1.000 -> 32.462,1.000 t=0.130
-    staffline 0.000,0.000 -> 32.462,0.000 t=0.130
-    staffline 0.000,-1.000 -> 32.462,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 32.462,-2.000 t=0.130
+    staffline 0.000,2.000 -> 34.333,2.000 t=0.130
+    staffline 0.000,1.000 -> 34.333,1.000 t=0.130
+    staffline 0.000,0.000 -> 34.333,0.000 t=0.130
+    staffline 0.000,-1.000 -> 34.333,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 34.333,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  7.515,-9.500 size=2.400 bold "Same Staff Reorder"
-    clef x=1.000 w=2.684
-      glyph gClef 1.000,1.000
-    timeSignature x=4.684 w=1.880
-      glyph timeSig4 4.684,-1.000
-      glyph timeSig4 4.684,1.000
-    note@-9 x=7.564 w=5.474
-      glyph noteheadBlack 7.564,4.500
-      line  7.164,3.000 -> 9.144,3.000 t=0.160
-      line  7.164,4.000 -> 9.144,4.000 t=0.160
-      line  8.744,4.332 -> 8.744,1.000 t=0.120
-    note@-8 x=13.038 w=5.474
-      glyph noteheadBlack 13.038,4.000
-      line  12.638,3.000 -> 14.618,3.000 t=0.160
-      line  12.638,4.000 -> 14.618,4.000 t=0.160
-      line  14.218,3.832 -> 14.218,0.500 t=0.120
-    note@-7 x=18.513 w=5.474
-      glyph noteheadBlack 18.513,3.500
-      line  18.113,3.000 -> 20.093,3.000 t=0.160
-      line  19.693,3.332 -> 19.693,0.000 t=0.120
-    note@-6 x=23.987 w=5.474
-      glyph noteheadBlack 23.987,3.000
-      line  23.587,3.000 -> 25.567,3.000 t=0.160
-      line  25.167,2.832 -> 25.167,-0.500 t=0.120
-    bar x=30.462 w=0.160
-      line  30.542,-2.000 -> 30.542,2.000 t=0.160
-    clef x=1.000 w=2.684
-      glyph gClef 1.000,1.000
-    timeSignature x=4.684 w=1.880
-      glyph timeSig4 4.684,-1.000
-      glyph timeSig4 4.684,1.000
-    note@-6 x=7.564 w=5.474
-      glyph noteheadBlack 7.564,3.000
-      line  7.164,3.000 -> 9.144,3.000 t=0.160
-      line  7.564,3.168 -> 7.564,6.500 t=0.120
-    note@-5 x=13.038 w=5.474
-      glyph noteheadBlack 13.038,2.500
-      line  13.038,2.668 -> 13.038,6.000 t=0.120
-    note@-4 x=18.513 w=5.474
-      glyph noteheadBlack 18.513,2.000
-      line  18.513,2.168 -> 18.513,5.500 t=0.120
-    note@-3 x=23.987 w=5.474
-      glyph noteheadBlack 23.987,1.500
-      line  23.987,1.668 -> 23.987,5.000 t=0.120
-    bar x=30.462 w=0.160
-      line  30.542,-2.000 -> 30.542,2.000 t=0.160
+      text  8.451,-9.500 size=2.400 bold "Same Staff Reorder"
+    clef x=1.935 w=2.684
+      glyph gClef 1.935,1.000
+    timeSignature x=5.619 w=1.880
+      glyph timeSig4 5.619,-1.000
+      glyph timeSig4 5.619,1.000
+    note@-9 x=8.499 w=5.474
+      glyph noteheadBlack 8.499,4.500
+      line  8.099,3.000 -> 10.079,3.000 t=0.160
+      line  8.099,4.000 -> 10.079,4.000 t=0.160
+      line  9.679,4.332 -> 9.679,1.000 t=0.120
+    note@-8 x=13.974 w=5.474
+      glyph noteheadBlack 13.974,4.000
+      line  13.574,3.000 -> 15.554,3.000 t=0.160
+      line  13.574,4.000 -> 15.554,4.000 t=0.160
+      line  15.154,3.832 -> 15.154,0.500 t=0.120
+    note@-7 x=19.448 w=5.474
+      glyph noteheadBlack 19.448,3.500
+      line  19.048,3.000 -> 21.028,3.000 t=0.160
+      line  20.628,3.332 -> 20.628,0.000 t=0.120
+    note@-6 x=24.923 w=5.474
+      glyph noteheadBlack 24.923,3.000
+      line  24.523,3.000 -> 26.503,3.000 t=0.160
+      line  26.103,2.832 -> 26.103,-0.500 t=0.120
+    bar x=31.397 w=0.160
+      line  31.477,-2.000 -> 31.477,2.000 t=0.160
+    clef x=1.935 w=2.684
+      glyph gClef 1.935,1.000
+    timeSignature x=5.619 w=1.880
+      glyph timeSig4 5.619,-1.000
+      glyph timeSig4 5.619,1.000
+    note@-6 x=8.499 w=5.474
+      glyph noteheadBlack 8.499,3.000
+      line  8.099,3.000 -> 10.079,3.000 t=0.160
+      line  8.499,3.168 -> 8.499,6.500 t=0.120
+    note@-5 x=13.974 w=5.474
+      glyph noteheadBlack 13.974,2.500
+      line  13.974,2.668 -> 13.974,6.000 t=0.120
+    note@-4 x=19.448 w=5.474
+      glyph noteheadBlack 19.448,2.000
+      line  19.448,2.168 -> 19.448,5.500 t=0.120
+    note@-3 x=24.923 w=5.474
+      glyph noteheadBlack 24.923,1.500
+      line  24.923,1.668 -> 24.923,5.000 t=0.120
+    bar x=31.397 w=0.160
+      line  31.477,-2.000 -> 31.477,2.000 t=0.160

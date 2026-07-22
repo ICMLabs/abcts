@@ -26,6 +26,11 @@
  * 2. POSITION SPREAD, tracked against recorded ceilings. `dySpread` is the range of
  *    (ours - abcjs) over every notehead: ZERO means our geometry differs from abcjs's by
  *    a pure constant offset, which is a margin, not an engraving difference.
+ * 3. POSITION OFFSET (`oy`/`ox`), the MEAN of the same deltas — where the drawing sits,
+ *    as opposed to how much it disagrees with itself. Added 2026-07-22 after the spread
+ *    numbers were found to be flattering: `score-reorder-shared` reported a dx spread of
+ *    0.0, a perfect score, while sitting 100px to the left of abcjs. Spread alone cannot
+ *    see a uniform translation, and a picture in the wrong place is not parity.
  *
  * THE CEILINGS BELOW ARE A TODO LIST, NOT A SPECIFICATION. Every one of them should end
  * at 0. They are recorded so the gap cannot silently widen while it is being closed, and
@@ -78,37 +83,38 @@ import { absolutePixels, byClass } from './pixel-geometry.js'
  * `heads` is asserted exactly. `dy`/`dx` are ceilings — the measured value must not
  * exceed them, and must not come in UNDER them without the entry being updated.
  */
-const EXPECTED: Record<string, { heads: number; dy: number; dx: number }> = {
-  'ave-verum-corpus': { heads: 55, dy: 176.5, dx: 97.2 },
-  'brother-john-inline-voices': { heads: 64, dy: 145.5, dx: 86.5 },
-  'center-text': { heads: 8, dy: 0.0, dx: 219.3 },
-  'chord-grid': { heads: 16, dy: 0.0, dx: 7.4 },
-  'frere-jacques': { heads: 45, dy: 192.4, dx: 640.1 },
-  'full-song-template': { heads: 20, dy: 40.0, dx: 23.3 },
-  'happy-birthday': { heads: 25, dy: 48.6, dx: 39.5 },
-  'little swallow': { heads: 89, dy: 209.6, dx: 51.7 },
-  'multi-voice-lyrics-two-voices': { heads: 16, dy: 5.7, dx: 336.9 },
-  'multi-voice-rest-collision': { heads: 7, dy: 0.0, dx: 4.9 },
-  'multi-voice-rest-placement': { heads: 14, dy: 0.0, dx: 200.9 },
-  'multi-voice-triplet-brackets': { heads: 45, dy: 53.1, dx: 116.3 },
-  'program-127-test': { heads: 20, dy: 44.9, dx: 16.9 },
-  'ragtime-mini': { heads: 30, dy: 49.5, dx: 199.3 },
-  'ragtime-nightingale': { heads: 2009, dy: 2069.8, dx: 101.5 },
-  'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0 },
-  'score-reorder': { heads: 8, dy: 55.8, dx: 0.0 },
-  'simple-c': { heads: 8, dy: 0.0, dx: 4.5 },
-  'stacked-annotations': { heads: 4, dy: 0.0, dx: 4.5 },
-  twinkle: { heads: 14, dy: 0.0, dx: 7.3 },
-  'two-voice-invention': { heads: 74, dy: 176.7, dx: 34.9 },
-  'voice-middle-after-clef': { heads: 10, dy: 49.9, dx: 79.0 },
-  'voice-octave-shift': { heads: 8, dy: 38.9, dx: 0.0 },
-  'vree-compound-meter': { heads: 12, dy: 0.0, dx: 11.3 },
-  'vree-grace-notes': { heads: 7, dy: 11.6, dx: 31.5 },
-  'vree-sharps': { heads: 4, dy: 0.0, dx: 8.9 },
-  'vree-slurs-and-triplets': { heads: 8, dy: 0.0, dx: 4.5 },
-  'vree-ties-across-bars': { heads: 4, dy: 0.0, dx: 4.5 },
-  'zocharti-loch': { heads: 64, dy: 178.0, dx: 108.7 },
-}
+const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: number; ox: number }> =
+  {
+    'ave-verum-corpus': { heads: 55, dy: 176.5, dx: 84.2, oy: 70.0, ox: -58.1 },
+    'brother-john-inline-voices': { heads: 64, dy: 145.5, dx: 73.6, oy: 60.6, ox: -48.9 },
+    'center-text': { heads: 8, dy: 0.0, dx: 219.3, oy: -23.3, ox: -120.7 },
+    'chord-grid': { heads: 16, dy: 0.0, dx: 8.2, oy: 8.1, ox: -20.4 },
+    'frere-jacques': { heads: 45, dy: 192.4, dx: 637.3, oy: -227.2, ox: -36.4 },
+    'full-song-template': { heads: 20, dy: 40.0, dx: 17.1, oy: -85.4, ox: -25.2 },
+    'happy-birthday': { heads: 25, dy: 48.6, dx: 33.3, oy: 2.3, ox: -31.5 },
+    'little swallow': { heads: 89, dy: 209.6, dx: 44.1, oy: 42.6, ox: -32.1 },
+    'multi-voice-lyrics-two-voices': { heads: 16, dy: 5.7, dx: 336.9, oy: -36.4, ox: -86.6 },
+    'multi-voice-rest-collision': { heads: 7, dy: 0.0, dx: 4.9, oy: -25.5, ox: -10.8 },
+    'multi-voice-rest-placement': { heads: 14, dy: 0.0, dx: 19.2, oy: 13.0, ox: -18.5 },
+    'multi-voice-triplet-brackets': { heads: 45, dy: 53.1, dx: 109.4, oy: 4.5, ox: -15.2 },
+    'program-127-test': { heads: 20, dy: 44.9, dx: 12.5, oy: -56.9, ox: -23.1 },
+    'ragtime-mini': { heads: 30, dy: 49.5, dx: 19.2, oy: 1.6, ox: -21.8 },
+    'ragtime-nightingale': { heads: 2009, dy: 2074.1, dx: 101.2, oy: 987.6, ox: -24.9 },
+    'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0, oy: 30.5, ox: -93.3 },
+    'score-reorder': { heads: 8, dy: 55.8, dx: 0.0, oy: 72.8, ox: -102.5 },
+    'simple-c': { heads: 8, dy: 0.0, dx: 4.5, oy: 30.5, ox: -8.8 },
+    'stacked-annotations': { heads: 4, dy: 0.0, dx: 4.5, oy: -10.4, ox: -9.3 },
+    twinkle: { heads: 14, dy: 0.0, dx: 10.9, oy: 30.5, ox: -16.3 },
+    'two-voice-invention': { heads: 74, dy: 176.7, dx: 22.2, oy: 38.1, ox: -19.9 },
+    'voice-middle-after-clef': { heads: 10, dy: 49.9, dx: 79.0, oy: 60.4, ox: -24.5 },
+    'voice-octave-shift': { heads: 8, dy: 38.9, dx: 0.0, oy: 49.9, ox: -11.8 },
+    'vree-compound-meter': { heads: 12, dy: 0.0, dx: 3.3, oy: 29.3, ox: -12.9 },
+    'vree-grace-notes': { heads: 7, dy: 11.6, dx: 31.5, oy: 30.5, ox: -6.7 },
+    'vree-sharps': { heads: 4, dy: 0.0, dx: 8.9, oy: 30.2, ox: -12.7 },
+    'vree-slurs-and-triplets': { heads: 8, dy: 0.0, dx: 4.5, oy: 11.1, ox: -9.0 },
+    'vree-ties-across-bars': { heads: 4, dy: 0.0, dx: 4.5, oy: 30.5, ox: -8.0 },
+    'zocharti-loch': { heads: 64, dy: 178.0, dx: 98.1, oy: 40.2, ox: -45.7 },
+  }
 
 /** Rounding slack, so a last-digit wobble is not a failure. */
 const EPSILON = 0.05
@@ -118,6 +124,11 @@ interface Measured {
   ourHeads: number
   dy: number
   dx: number
+  /** MEAN offset — how far the whole drawing sits from abcjs's, as opposed to how much
+   * it disagrees internally. Spread alone reports 0.0 for a render uniformly 100px to
+   * the left of abcjs's, which is a perfect score for a picture in the wrong place. */
+  oy: number
+  ox: number
 }
 
 function measure(name: string): Measured {
@@ -133,11 +144,15 @@ function measure(name: string): Measured {
     values.length === 0 ? 0 : Math.max(...values) - Math.min(...values)
   const deltas = (axis: 'x' | 'y'): number[] =>
     goldenHeads.slice(0, n).map((head, i) => (ourHeads[i]?.[axis] ?? 0) - head[axis])
+  const mean = (values: number[]): number =>
+    values.length === 0 ? 0 : values.reduce((a, b) => a + b, 0) / values.length
   return {
     goldenHeads: goldenHeads.length,
     ourHeads: ourHeads.length,
     dy: spread(deltas('y')),
     dx: spread(deltas('x')),
+    oy: mean(deltas('y')),
+    ox: mean(deltas('x')),
   }
 }
 
@@ -180,9 +195,18 @@ describe('pixel parity vs abcjs rendered SVG', () => {
       it(`${name}`, () => {
         const expected = EXPECTED[name]
         if (expected === undefined) throw new Error(`${name} has no recorded ceiling`)
-        const { dy, dx } = measure(name)
+        const { dy, dx, oy, ox } = measure(name)
         expect(dy, `${name} dySpread widened`).toBeLessThanOrEqual(expected.dy + EPSILON)
         expect(dx, `${name} dxSpread widened`).toBeLessThanOrEqual(expected.dx + EPSILON)
+        // OFFSET as well as spread. A drawing uniformly 100px left of abcjs's scores a
+        // perfect spread and is still in the wrong place — `score-reorder-shared` sat at
+        // dx 0.0 and ox -100.5 for two days because only spread was checked.
+        expect(Math.abs(oy), `${name} y offset grew`).toBeLessThanOrEqual(
+          Math.abs(expected.oy) + EPSILON,
+        )
+        expect(Math.abs(ox), `${name} x offset grew`).toBeLessThanOrEqual(
+          Math.abs(expected.ox) + EPSILON,
+        )
         // Improving is the goal, and an improvement must be RECORDED — otherwise the
         // ceiling drifts away from reality and stops meaning anything. Lower the number.
         expect(

@@ -1,53 +1,53 @@
 tune 0
-bounds  width=55.613 height=23.052 top=0.000
+bounds  width=57.484 height=23.052 top=0.000
 systems 1
-system 0 width=55.613 originY=0.000
+system 0 width=57.484 originY=0.000
   staff 0 originY=15.420
-    staffline 0.000,2.000 -> 55.613,2.000 t=0.130
-    staffline 0.000,1.000 -> 55.613,1.000 t=0.130
-    staffline 0.000,0.000 -> 55.613,0.000 t=0.130
-    staffline 0.000,-1.000 -> 55.613,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 55.613,-2.000 t=0.130
-    tupletline 31.462,4.700 -> 35.844,4.700 t=0.100
-    tupletline 37.199,4.700 -> 41.581,4.700 t=0.100
-    tupletline 31.462,4.700 -> 31.462,5.300 t=0.100
-    tupletline 41.581,4.700 -> 41.581,5.300 t=0.100
-    tuplettext 36.194,5.960 size=1.400 "3"
-    slur  9.044,1.300 -> 23.687,3.300 bulge=2.200
+    staffline 0.000,2.000 -> 57.484,2.000 t=0.130
+    staffline 0.000,1.000 -> 57.484,1.000 t=0.130
+    staffline 0.000,0.000 -> 57.484,0.000 t=0.130
+    staffline 0.000,-1.000 -> 57.484,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 57.484,-2.000 t=0.130
+    tupletline 32.397,4.700 -> 36.780,4.700 t=0.100
+    tupletline 38.134,4.700 -> 42.517,4.700 t=0.100
+    tupletline 32.397,4.700 -> 32.397,5.300 t=0.100
+    tupletline 42.517,4.700 -> 42.517,5.300 t=0.100
+    tuplettext 37.130,5.960 size=1.400 "3"
+    slur  9.979,1.300 -> 24.623,3.300 bulge=2.200
     title x=0.000 w=0.000
-      text  19.821,-9.500 size=2.400 bold "Slurs and Triplets"
-    clef x=1.000 w=2.684
-      glyph gClef 1.000,1.000
-    timeSignature x=4.684 w=1.880
-      glyph timeSig4 4.684,-1.000
-      glyph timeSig4 4.684,1.000
-    note@-1 x=7.564 w=5.474
-      glyph noteheadBlack 7.564,0.500
-      line  8.744,0.332 -> 8.744,-3.000 t=0.120
-    note@0 x=13.038 w=5.474
-      glyph noteheadBlack 13.038,0.000
-      line  13.038,0.168 -> 13.038,3.500 t=0.120
-    note@-6 x=18.513 w=5.474
-      glyph noteheadBlack 18.513,3.000
-      line  18.113,3.000 -> 20.093,3.000 t=0.160
-      line  19.693,2.832 -> 19.693,-0.500 t=0.120
-    note@-5 x=23.987 w=5.474
-      glyph noteheadBlack 23.987,2.500
-      line  25.167,2.332 -> 25.167,-1.000 t=0.120
-    bar x=30.462 w=0.160
-      line  30.542,-2.000 -> 30.542,2.000 t=0.160
-    note@-1 x=31.462 w=4.470
-      glyph noteheadBlack 31.462,0.500
-      line  32.642,0.332 -> 32.642,-3.000 t=0.120
-    note@0 x=35.931 w=4.470
-      glyph noteheadBlack 35.931,0.000
-      line  35.931,0.168 -> 35.931,3.500 t=0.120
-    note@1 x=40.401 w=4.470
-      glyph noteheadBlack 40.401,-0.500
-      line  40.401,-0.332 -> 40.401,3.000 t=0.120
-    note@2 x=44.871 w=7.742
-      glyph noteheadHalf 44.871,-1.000
-      line  44.871,-0.832 -> 44.871,2.500 t=0.120
-    bar x=53.613 w=1.060
-      line  53.693,-2.000 -> 53.693,2.000 t=0.160
-      line  54.423,-2.000 -> 54.423,2.000 t=0.500
+      text  20.756,-9.500 size=2.400 bold "Slurs and Triplets"
+    clef x=1.935 w=2.684
+      glyph gClef 1.935,1.000
+    timeSignature x=5.619 w=1.880
+      glyph timeSig4 5.619,-1.000
+      glyph timeSig4 5.619,1.000
+    note@-1 x=8.499 w=5.474
+      glyph noteheadBlack 8.499,0.500
+      line  9.679,0.332 -> 9.679,-3.000 t=0.120
+    note@0 x=13.974 w=5.474
+      glyph noteheadBlack 13.974,0.000
+      line  13.974,0.168 -> 13.974,3.500 t=0.120
+    note@-6 x=19.448 w=5.474
+      glyph noteheadBlack 19.448,3.000
+      line  19.048,3.000 -> 21.028,3.000 t=0.160
+      line  20.628,2.832 -> 20.628,-0.500 t=0.120
+    note@-5 x=24.923 w=5.474
+      glyph noteheadBlack 24.923,2.500
+      line  26.103,2.332 -> 26.103,-1.000 t=0.120
+    bar x=31.397 w=0.160
+      line  31.477,-2.000 -> 31.477,2.000 t=0.160
+    note@-1 x=32.397 w=4.470
+      glyph noteheadBlack 32.397,0.500
+      line  33.577,0.332 -> 33.577,-3.000 t=0.120
+    note@0 x=36.867 w=4.470
+      glyph noteheadBlack 36.867,0.000
+      line  36.867,0.168 -> 36.867,3.500 t=0.120
+    note@1 x=41.337 w=4.470
+      glyph noteheadBlack 41.337,-0.500
+      line  41.337,-0.332 -> 41.337,3.000 t=0.120
+    note@2 x=45.807 w=7.742
+      glyph noteheadHalf 45.807,-1.000
+      line  45.807,-0.832 -> 45.807,2.500 t=0.120
+    bar x=54.549 w=1.060
+      line  54.629,-2.000 -> 54.629,2.000 t=0.160
+      line  55.359,-2.000 -> 55.359,2.000 t=0.500

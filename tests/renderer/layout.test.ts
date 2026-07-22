@@ -900,12 +900,17 @@ describe('slurs and ties', () => {
     // the system it leaves — which is the signal to the reader that it continues.
     // The break is where the SOURCE breaks — abcts does not re-wrap, so a narrow page
     // no longer produces one. The slur opens on line 1 and closes on line 2.
-    const doc = layout(parse('X:1\nM:4/4\nL:1/4\nK:C\n(CDEG-|\nG2 G2)|\n').scores[0] as Score, {
-      systemWidth: 30,
-    })
+    // A normal page width: the break comes from the SOURCE line now, so the narrow page
+    // that used to force a wrap only squeezes the music and moves the curve off the edge.
+    const doc = layout(parse('X:1\nM:4/4\nL:1/4\nK:C\n(CDEG-|\nG2 G2)|\n').scores[0] as Score)
     expect(doc.systems.length).toBeGreaterThan(1)
     const first = doc.systems[0]
-    const leaving = (first?.staves[0]?.curves ?? []).filter((c) => c.x2 >= (first?.width ?? 0) - 2)
+    // A FRACTION of the system, not a pixel tolerance: "runs to the right edge" is the
+    // property, and a fixed 2-space slack was quietly tied to the old geometry — the
+    // curve now stops 2.2 short, behind the closing barline, which is correct.
+    const leaving = (first?.staves[0]?.curves ?? []).filter(
+      (c) => c.x2 >= (first?.width ?? 0) * 0.9,
+    )
     expect(leaving.length).toBeGreaterThan(0)
     // And the continuation resumes on the next system, after its clef.
     const resuming = doc.systems[1]?.staves[0]?.curves ?? []
