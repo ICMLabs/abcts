@@ -149,18 +149,37 @@ const ENGRAVE = {
    * `spacing.music` 7.56 above the first staff (`write/renderer.js:94`). That 30px is
    * the whole of the vertical offset every fixture's noteheads carry.
    *
-   * MEASURED BUT NOT CHANGED, and the attempt is worth recording. Setting this to 11.12
-   * puts the gap at exactly 27.6px and drives SIX fixtures to a y offset of exactly 0.0
-   * — `simple-c`, `twinkle`, `vree-grace-notes`, `vree-ties-across-bars`,
-   * `score-reorder-shared`, with `vree-sharps` at -0.3. The clean single-system case
-   * becomes pixel-exact. But eight fixtures with content ABOVE the staff regress by a
-   * suspiciously uniform ~5.3px, and `chord-grid` by 14.3, and that is not explained.
+   * TWO ATTEMPTS MEASURED, NEITHER SHIPPED. Recorded together because it is the PAIR
+   * that localises the remaining problem.
    *
-   * The uniformity is the clue: fitting one constant is the wrong shape. abcjs builds
-   * this vertically — padding, then a text BLOCK whose height depends on what is in it,
-   * then `spacing.music` above the staff — and a tune with a tempo, part label or
-   * annotation has a different block. Rebuilding that model is the fix; moving one
-   * number trades a known error for an unexplained one.
+   * 1. As a constant. `titleStep: 11.12` puts the gap at exactly 27.6px and drives SIX
+   *    fixtures to a y offset of exactly 0.0 — `simple-c`, `twinkle`, `vree-grace-notes`,
+   *    `vree-ties-across-bars`, `score-reorder-shared`, with `vree-sharps` at -0.3. The
+   *    plain single-staff case becomes pixel-exact. Eight fixtures with content ABOVE the
+   *    staff regress by a uniform ~5.3px, and `chord-grid` by 14.3.
+   *
+   * 2. As abcjs's actual model, which abcMusicKit v1 reproduces byte for byte and cites
+   *    line by line (`SVGDraw.swift`, against `draw.js:14-17`): `moveY(padding.top)`,
+   *    then the top-text BLOCK whose height is whatever its contents need, then
+   *    `moveY(spacing.music)`, then the music. The key point is that `spacing.music`
+   *    separates the text from the TOP OF THE MUSIC — which already includes a tempo
+   *    mark, part label or annotation — and NOT from the staff line.
+   *
+   *    Implemented by placing the title from the music extent instead of from the middle
+   *    line, it fixes exactly what attempt 1 broke: `program-127-test` -56.9 -> -4.2,
+   *    `full-song-template` -85.4 -> -32.7, `frere-jacques` -227.2 -> -174.5,
+   *    `stacked-annotations` -10.4 -> 8.5. And it regresses the MULTI-STAFF fixtures:
+   *    `ave-verum-corpus` 70.0 -> 103.7, `two-voice-invention` 38.1 -> 90.8,
+   *    `zocharti-loch` 40.2 -> 92.9. 15 better, 9 worse, mean |offset| flat.
+   *
+   * So the model is right for a single staff and something else is wrong for several.
+   * The candidate is `staffGap`: abcjs distinguishes `systemStaffSeparation` (48, between
+   * staves INSIDE one system) from `staffSeparation` (61.33, between systems), and we
+   * have one constant for both. v1 keeps abcjs's values in strict and pads to 84 in
+   * extended, so the two are known and the shape of the fix is known.
+   *
+   * Do the two together — model plus separations — and re-measure. Neither half is worth
+   * shipping alone, which is what these two attempts demonstrate.
    */
   titleStep: 19,
   /** First verse below the staff; further verses stack downward by `lyricLineStep`. */
@@ -248,7 +267,9 @@ const ENGRAVE = {
    */
   lastSystemFill: 0.66,
   /** Vertical gap between staves WITHIN one system — tighter than between systems, so
-   * the voices of one score read as belonging together. PROVISIONAL. */
+   * the voices of one score read as belonging together. PROVISIONAL, and a suspect: see
+   * the note on `titleStep`. abcjs has `systemStaffSeparation` 48 here and
+   * `staffSeparation` 61.33 between systems; we use one constant for both. */
   staffGap: 1.5,
 } as const
 
