@@ -46,14 +46,20 @@ const KNOWN_DIVERGENCES: Record<string, string> = {
  * dense fixture in the corpus. An allowance ratchets instead: only the known number may
  * fail, and a 3rd is a failure.
  */
-const OFFSET_ALLOWANCE: Record<string, number> = { 'S3-note-syntax': 2 }
-const OFFSET_DIVERGENCES: Record<string, string> = {
-  'S3-note-syntax':
-    'Microtonal accidentals (`^3/2G`): core spans the whole `^3/2G` because v2 includes a ' +
-    'leading accidental in the note range, but abcjs starts its span at the `G`, excluding ' +
-    "the fraction — inconsistent with abcjs's own handling of plain `^G`, which it does " +
-    'include. 2 of 466 notes.',
-}
+/**
+ * Notes whose SOURCE RANGE may differ from abcjs's. EMPTY, and it stays empty.
+ *
+ * `S3-note-syntax` carried an allowance of 2 for microtonal accidentals: abcjs starts a
+ * `^3/2G` span at the note LETTER while starting a plain `^G` at the accidental, which is
+ * inconsistent with itself. The allowance was recorded on the grounds that matching it
+ * would make our ranges worse for the editor cross-linking they exist for.
+ *
+ * Both halves are now true at once, because the modes are for exactly this: strict
+ * reproduces abcjs's span, inconsistency included, and every other mode keeps the whole
+ * `^3/2G` so a caret inside the fraction still identifies its note. There was never a
+ * reason to choose.
+ */
+const OFFSET_ALLOWANCE: Record<string, number> = {}
 
 /**
  * Beam runs are gated separately from content, with their own baseline.

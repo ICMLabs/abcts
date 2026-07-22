@@ -1499,6 +1499,16 @@ class Parser {
               ((sign * fraction.factor.numerator) / fraction.factor.denominator) * 100,
             )
             i = fraction.next
+            // MODE-GATED SOURCE RANGE. abcjs starts a microtonal note's span at the note
+            // LETTER, excluding the `^3/2` — while a plain `^G` starts at the accidental
+            // and includes it. That is inconsistent with itself, and strict's job is to
+            // reproduce abcjs rather than to improve on it, so the range is dropped back
+            // to the letter here.
+            //
+            // Every other mode keeps the whole `^3/2G`, which is what the range is FOR:
+            // these offsets drive editor cross-linking, and a caret inside `^3/2` must
+            // identify the note it alters rather than nothing at all.
+            if (isStrict(this.mode)) accidentalStart = null
           }
           break
         }
