@@ -4,9 +4,10 @@ You are developing abcts, a modern TypeScript ABC notation library
 and community successor to abcjs.
 
 ## First Step — Always
-Read `Docs/CHECKPOINT-2026-07-21.md` first — it is the current state of play, the open
-decisions, and the known risks. (`CHECKPOINT-2026-07-19.md` and `-07-18.md` are superseded but remain the record of the
-renderer's first slices and the parser phase.) Then read ARCHITECTURE.md in full. It is your
+Read `Docs/CHECKPOINT-2026-07-22.md` first — it is the current state of play, the open
+decisions, and the known risks. (`CHECKPOINT-2026-07-21.md`, `-07-19.md` and `-07-18.md` are superseded but remain the
+record of the parser phase, the renderer's first slices, and how the last three parser
+diffs closed.) Then read ARCHITECTURE.md in full. It is your
 specification, decision record, and setup guide. Do not make
 architectural decisions that contradict it without flagging them
 explicitly and getting confirmation from Lance.
@@ -106,64 +107,40 @@ abcjs source are all reached by sibling path and stay in that repo. Keep it that
 backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
-The PARSER and RENDERER are both complete against the corpus. **Note content parity is
-41/41 with ZERO known divergences** — every fixture matches abcjs on notes, durations,
-offsets, decorations, chord symbols and grace notes, nothing excluded. Lyrics 10/10.
-Beam grouping 41/41 and render structure 41/41, both with zero divergences. 376 tests.
-Visual baselines cover all 119 tunes across the 41 fixtures, not just the first tune of
-each.
+**Structural parity is done: note content, lyrics, beams and render structure are all
+41/41 with zero recorded divergences.** 498 tests.
 
-**All four parity axes are at 100% with nothing recorded as divergent.** The three
-remaining diffs closed on 2026-07-21; `Docs/CHECKPOINT-2026-07-21.md` § THE REMAINING
-DIFFS records what each turned out to be, and two of the three had a diagnosis that did
-not survive being checked. Read § "Method notes that earned their place" before trusting
-any other recorded diagnosis in these documents.
+The work is now GEOMETRIC — does abcts put the ink where abcjs puts it. A pixel-parity
+gate (`tests/pixel-parity.test.ts`) resolves both engines' SVG to absolute pixels and
+measures it. Noteheads match 2696/2696, systems 28/29, output is 0.34x abcjs's bytes.
 
-Since then: Gonzato §4.1.4 lyric continuation + per-segment `%%vocalfont`, and mid-tune
-`K:` with cancelling naturals. 397 tests.
-
-The next item is named there: **mid-tune `M:` is still drawn nowhere**, and it is blocked
-on the structural gate being FIRST TUNE ONLY — not on the prefix filter, which an earlier
-version of that note wrongly named as the blocker.
+**The open problem is VERTICAL PLACEMENT** — mean |y offset| 73.8px, four measured
+attempts, none shipped. The model is known (from v1) and the terms are ordered. Read
+`Docs/CHECKPOINT-2026-07-22.md` § THE OPEN PROBLEM and the note on `ENGRAVE.titleStep`
+before touching it; the trap is that all three terms interact and a single aggregate
+number cannot tell them apart.
 
 Renders staff, all clefs, key signatures, meters, tempo marks, part labels, noteheads and
 chords with stems and ledger lines, accidentals, rests and barlines, grace notes, chord
 symbols, the full decoration set, lyrics, slurs and ties, tuplets, voltas, annotations,
-styled noteheads, hairpins and glissandi, melisma extenders, and `%%score` staff grouping
-with braces and brackets — voices grouped with `( … )` share a staff, upper voice
-stems up.
+styled noteheads, hairpins and glissandi, melisma extenders, mid-tune key changes, and
+`%%score` staff grouping with braces and brackets.
 
 Two features are MODE-SPLIT, and the split is the point — strict is faithful to abcjs,
 the other modes are correct:
 
 | | `abcjs-strict` | `abc2.1` / `extended` |
 |---|---|---|
-| Melisma | prints abcjs's literal `_` | suppresses it, strokes an extender to the last held notehead |
+| Melisma | prints abcjs's literal `_` | suppresses it, strokes an extender |
 | Three-quarter tones | draws NOTHING, as abcjs does | draws the three-quarter glyph |
-
-Beware the gap list in the checkpoint: it was built by counting how often a model field
-is POPULATED, and its top entry turned out not to be a gap at all — see the second
-CORRECTION there. Ask the reference directly before believing a frequency count.
-
-Rendering decisions: inline Bravura paths for glyphs, `<text>` for prose. The third —
-"structural comparison rather than the SVG goldens" — was CORRECTED 2026-07-21: the
-default mode is meant to be byte-identical to abcjs bar the glyph dictionary, and
-`pixel-parity.test.ts` now measures that. See ARCHITECTURE.md § Rendering.
-
-The renderer phase MAY change the parser; clef, `Q:`, opening barlines and `P:` all did,
-and the parser gate held each time.
+| `%%vocalfont` | parsed, NOT realized (abcjs never reads it) | realized, per lyric segment |
+| `+:` in a lyric continuation | abcjs's leak, reproduced | ABC 2.1 semantics |
+| `<defs>`/`<use>` | off, so markup stays abcjs-shaped | on, 0.34x the bytes |
 
 THREE GATES, complementary — **pixel parity** catches DIFFERENT-ON-SCREEN (vs abcjs's own
 SVG, glyph outlines excepted), structure catches WRONG (vs abcjs's laid-out elements),
-baselines catch CHANGED (vs committed geometry). Invert every stem in the corpus and the structural
-gate stays fully green while baselines fail 39 of 43. Re-record with `npm run baseline`,
-but READ the diff and commit baselines with the code change.
-
-**The corpus has stopped driving the work** — with 41/41 reproduced on every axis there is
-no failing diff left to follow at all. What remains is known from the code: mid-tune `M:`
-drawn nowhere,
-no text metrics, fixed lanes rather than a skyline, and page furniture beyond titles.
-See the checkpoint.
+baselines catch CHANGED (vs committed geometry). Re-record with `npm run baseline`, but
+READ the diff and commit baselines with the code change.
 
 ## Modes — abcjs-strict is the DEFAULT
 `abcjs-strict` (reproduce abcjs, bugs included) | `abc2.1` (standard read correctly) |
