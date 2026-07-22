@@ -2953,9 +2953,9 @@ system 1 width=90.000 originY=26.920
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
-    beam   56.635,1.750 -> 66.757,1.750 t=0.500
-    beam   71.817,1.750 -> 81.939,2.750 t=0.500
-    tie  39.940,-2.300 -> 56.335,-2.300 bulge=-2.200
+    beam   61.377,1.750 -> 69.918,1.750 t=0.500
+    beam   74.188,1.750 -> 82.729,2.750 t=0.500
+    tie  39.273,-2.300 -> 61.077,-2.300 bulge=-2.200
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=0.996
@@ -2964,45 +2964,56 @@ system 1 width=90.000 originY=26.920
       glyph noteheadBlack 6.680,0.500
       line  7.860,0.332 -> 7.860,-3.000 t=0.120
       text  6.840,-3.000 size=1.400 "G"
-    note@0 x=13.856 w=5.474
-      glyph noteheadBlack 13.856,0.000
-      line  13.856,0.168 -> 13.856,3.500 t=0.120
-    note@1 x=21.032 w=5.474
-      glyph noteheadBlack 21.032,-0.500
-      line  21.032,-0.332 -> 21.032,3.000 t=0.120
-      text  21.178,-3.000 size=1.400 "D"
-    note@2 x=28.208 w=5.474
-      glyph noteheadBlack 28.208,-1.000
-      line  28.208,-0.832 -> 28.208,2.500 t=0.120
-    bar x=36.384 w=0.720
-      line  36.464,-2.000 -> 36.464,2.000 t=0.160
-      line  37.024,-2.000 -> 37.024,2.000 t=0.160
-    note@3 x=37.384 w=10.949
-      glyph noteheadWhole 37.384,-1.500
-      text  37.508,-3.000 size=1.400 "Eb"
-    bar x=53.020 w=0.160
-      line  53.100,-2.000 -> 53.100,2.000 t=0.160
-    bar x=55.328 w=0.160
-      line  55.408,-2.000 -> 55.408,2.000 t=0.160
-    note@3 x=56.635 w=3.871
-      glyph noteheadBlack 56.635,-1.500
-      line  56.635,-1.332 -> 56.635,2.000 t=0.120
-      text  56.463,-3.000 size=1.400 "Gb"
-    note@2 x=61.696 w=3.871
-      glyph noteheadBlack 61.696,-1.000
-      line  61.696,-0.832 -> 61.696,2.500 t=0.120
-    note@3 x=66.757 w=3.871
-      glyph noteheadBlack 66.757,-1.500
-      line  66.757,-1.332 -> 66.757,2.000 t=0.120
-    note@3 x=71.817 w=3.871
-      glyph noteheadBlack 71.817,-1.500
-      line  71.817,-1.332 -> 71.817,2.000 t=0.120
-    note@2 x=76.878 w=3.871
-      glyph noteheadBlack 76.878,-1.000
-      line  76.878,-0.832 -> 76.878,2.500 t=0.120
-    note@1 x=81.939 w=3.871
-      glyph noteheadBlack 81.939,-0.500
-      line  81.939,-0.332 -> 81.939,3.000 t=0.120
+    note@0 x=12.735 w=5.474
+      glyph noteheadBlack 12.735,0.000
+      line  12.735,0.168 -> 12.735,3.500 t=0.120
+    note@1 x=18.790 w=5.474
+      glyph noteheadBlack 18.790,-0.500
+      line  18.790,-0.332 -> 18.790,3.000 t=0.120
+      text  18.936,-3.000 size=1.400 "D"
+    note@2 x=24.846 w=5.474
+      glyph noteheadBlack 24.846,-1.000
+      line  24.846,-0.832 -> 24.846,2.500 t=0.120
+    bar x=31.901 w=0.720
+      line  31.981,-2.000 -> 31.981,2.000 t=0.160
+      line  32.541,-2.000 -> 32.541,2.000 t=0.160
+    keySignature x=32.901 w=2.780
+      glyph accidentalNatural 32.901,-2.000
+      glyph accidentalFlat 33.723,0.000
+      glyph accidentalFlat 34.777,-1.500
+    note@3 x=37.098 w=10.949
+      glyph noteheadWhole 37.098,-1.500
+      text  37.223,-3.000 size=1.400 "Eb"
+    bar x=50.256 w=0.160
+      line  50.336,-2.000 -> 50.336,2.000 t=0.160
+    bar x=52.359 w=0.160
+      line  52.439,-2.000 -> 52.439,2.000 t=0.160
+    keySignature x=53.462 w=6.174
+      glyph accidentalFlat 53.462,0.000
+      glyph accidentalFlat 54.516,-1.500
+      glyph accidentalFlat 55.570,0.500
+      glyph accidentalFlat 56.624,-1.000
+      glyph accidentalFlat 57.678,1.000
+      glyph accidentalFlat 58.732,-0.500
+    note@3 x=61.377 w=3.871
+      glyph noteheadBlack 61.377,-1.500
+      line  61.377,-1.332 -> 61.377,2.000 t=0.120
+      text  61.205,-3.000 size=1.400 "Gb"
+    note@2 x=65.647 w=3.871
+      glyph noteheadBlack 65.647,-1.000
+      line  65.647,-0.832 -> 65.647,2.000 t=0.120
+    note@3 x=69.918 w=3.871
+      glyph noteheadBlack 69.918,-1.500
+      line  69.918,-1.332 -> 69.918,2.000 t=0.120
+    note@3 x=74.188 w=3.871
+      glyph noteheadBlack 74.188,-1.500
+      line  74.188,-1.332 -> 74.188,2.000 t=0.120
+    note@2 x=78.459 w=3.871
+      glyph noteheadBlack 78.459,-1.000
+      line  78.459,-0.832 -> 78.459,2.500 t=0.120
+    note@1 x=82.729 w=3.871
+      glyph noteheadBlack 82.729,-0.500
+      line  82.729,-0.332 -> 82.729,3.000 t=0.120
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
 system 2 width=90.000 originY=45.672

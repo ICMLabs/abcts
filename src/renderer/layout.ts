@@ -798,6 +798,74 @@ function layoutKeySignature(x: number, key: KeySignature, clef: Clef): LayoutEle
   }
 }
 
+/**
+ * A mid-tune key change: naturals for what the old key had and the new one drops, then
+ * the new key's own accidentals.
+ *
+ * The naturals are the whole reason this is not just `layoutKeySignature` at a different
+ * x. Going from D (F#, C#) to G (F#) has to CANCEL the C# — print a natural on C — or a
+ * reader carries the sharp forward and plays the wrong note. Going to C major cancels
+ * everything and is nothing but naturals, which is why `layoutKeySignature` returning
+ * null for C is right there and wrong here.
+ *
+ * Sharps to flats (or back) cancels ALL of them, not the numeric difference: the two
+ * signatures share no step, so every outgoing accidental is dropped.
+ */
+function layoutKeyChange(
+  x: number,
+  from: KeySignature,
+  to: KeySignature,
+  clef: Clef,
+): LayoutElement | null {
+  // A `K:` that restates the key in force prints NOTHING. This is not an optimisation —
+  // it is the difference between correct and a duplicated key signature in the middle of
+  // a bar. Three fixtures reach it and none of them is about key changes: a per-voice
+  // `K:G clef=treble` on each of two voices makes the second one a "change" from G to G
+  // (`multi-voice-rest-collision`), and `clefs` restates the key per voice the same way.
+  //
+  // Compared on FIFTHS, not on the key object: `K:G` and `K:Em` are the same signature in
+  // different modes, and a reader sees no accidental change between them, so neither
+  // should the page.
+  if (keyFifths(from) === keyFifths(to)) return null
+
+  const shift = keySignatureShift(clef)
+  const stepsFor = (key: KeySignature): { step: number; sharp: boolean }[] => {
+    const fifths = keyFifths(key)
+    const sharp = fifths > 0
+    return (sharp ? SHARP_STEPS : FLAT_STEPS)
+      .slice(0, Math.abs(fifths))
+      .map((step) => ({ step: step + shift, sharp }))
+  }
+  const outgoing = stepsFor(from)
+  const incoming = stepsFor(to)
+  // Compared on step AND sign: a step that was sharp and is now flat is not "kept", it
+  // is cancelled and re-marked.
+  const kept = new Set(incoming.map((entry) => `${entry.step}:${entry.sharp}`))
+  const cancelled = outgoing.filter((entry) => !kept.has(`${entry.step}:${entry.sharp}`))
+  if (cancelled.length === 0 && incoming.length === 0) return null
+
+  const glyphs: PlacedGlyph[] = []
+  let cursor = x
+  const advance = (name: GlyphName, step: number): void => {
+    glyphs.push(glyphAt(name, cursor, step))
+    cursor += GLYPHS[name].advance + ENGRAVE.keySignatureGap
+  }
+  for (const entry of cancelled) advance('accidentalNatural', entry.step)
+  for (const entry of incoming)
+    advance(entry.sharp ? 'accidentalSharp' : 'accidentalFlat', entry.step)
+
+  return {
+    type: 'keySignature',
+    x,
+    // No trailing gap: the signature ends at the last glyph's ink.
+    width: cursor - x - ENGRAVE.keySignatureGap,
+    staffSteps: [],
+    glyphs,
+    lines: [],
+    texts: [],
+  }
+}
+
 // ─── Tempo ───────────────────────────────────────────────────────────────────
 
 /**
@@ -2585,6 +2653,11 @@ function layoutMeasure(
   strict = true,
   /** Voice convention on a SHARED staff; null lets pitch decide. */
   voiceStem: boolean | null = null,
+  /**
+   * The key in force as this measure BEGINS — needed only to cancel it. A key change
+   * cannot be drawn from the new key alone: the naturals depend on what is being left.
+   */
+  keyInForce: KeySignature | null = null,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
   const beams = new Map<number, StemInfo[]>()
@@ -2614,6 +2687,18 @@ function layoutMeasure(
     x += ENGRAVE.barGap
     elements.push(layoutBar(x, measure.openingBarline))
     x += ENGRAVE.barGap
+  }
+
+  // A mid-tune `K:` prints AFTER the barline that opens the measure it takes effect in —
+  // the new signature belongs to the music it governs, not to the bar before it. Parsed
+  // since the model gained `keyChange` and drawn nowhere until now, so every `[K:…]` in
+  // the corpus silently changed the key and showed nothing.
+  if (measure.keyChange !== null && keyInForce !== null) {
+    const change = layoutKeyChange(x, keyInForce, measure.keyChange, clef)
+    if (change !== null) {
+      elements.push(change)
+      x += change.width + ENGRAVE.prefixGap
+    }
   }
 
   for (const [eventIndex, event] of measure.events.entries()) {
@@ -2800,9 +2885,23 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     // A voice's own `clef=` wins over the tune's `K:` clef; treble is the fallback.
     const clef = voice?.clef ?? score.clef
     const directions = beamDirections(voice, clef)
-    const blocks = (voice?.measures ?? []).map((measure) =>
-      layoutMeasure(measure, clef, directions, spacingScale, strict, stemForVoice(voiceIndex)),
-    )
+    // The key in force, accumulated forward. `Measure.keyChange` is a DELTA — the model
+    // deliberately keeps `score.key` as the header key and leaves accumulation to the
+    // consumer — so the renderer is the consumer that has to do it.
+    let keyInForce = score.key
+    const blocks = (voice?.measures ?? []).map((measure) => {
+      const block = layoutMeasure(
+        measure,
+        clef,
+        directions,
+        spacingScale,
+        strict,
+        stemForVoice(voiceIndex),
+        keyInForce,
+      )
+      if (measure.keyChange !== null) keyInForce = measure.keyChange
+      return block
+    })
 
     /**
      * The clef and key reprinted at the head of every system, which is what makes a
