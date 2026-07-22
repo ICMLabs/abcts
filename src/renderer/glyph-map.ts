@@ -1,0 +1,163 @@
+/**
+ * SMuFL name → abcjs glyph name.
+ *
+ * abcts names glyphs by SMuFL, which is the standard and what Bravura ships. abcjs has
+ * its own vocabulary, inherited from the Postscript music fonts it grew out of —
+ * `noteheads.quarter`, `scripts.ufermata`, `flags.d8th`. The parity build needs abcjs's
+ * outlines AND its advances (they differ from Bravura's by up to 13%, which moves notes),
+ * so it needs this bridge.
+ *
+ * ── WHAT IS DELIBERATELY ABSENT ──────────────────────────────────────────────
+ * An unmapped glyph is NOT an oversight to be filled in later — in most cases abcjs has
+ * no such glyph, and that absence is itself the parity behaviour. Three groups:
+ *
+ *  1. **abcjs draws nothing.** Three-quarter-tone accidentals are the recorded example:
+ *     abcjs has `halfsharp` and `halfflat` but nothing for three quarters, and strict
+ *     mode already reproduces that blank. Mapping them would be inventing parity.
+ *
+ *  2. **abcjs COMPOSES rather than having a glyph.** Dynamics are letters: it draws `pp`
+ *     from the `p` glyph twice, where Bravura has a single kerned `dynamicPP`. A 1:1 map
+ *     cannot express that, and faking it with one letter would draw the wrong mark.
+ *
+ *  3. **abcjs draws it as geometry, not a glyph.** Braces and brackets are constructed
+ *     paths in its engraver, not entries in its glyph table.
+ *
+ * `glyph-map.test.ts` asserts every name here exists in abcjs's table, and lists what is
+ * unmapped so the gap stays visible instead of being discovered later as a blank on a page.
+ */
+
+/**
+ * The mapping. Left side is a `GlyphName` from `glyphs.ts`; right side is a key of
+ * `ABCJS_GLYPHS`.
+ *
+ * Several SMuFL names collapse onto one abcjs glyph, which is a real difference in
+ * vocabulary rather than a shortcut: abcjs has ONE `scripts.staccato` and orients it by
+ * position, where SMuFL distinguishes `articStaccatoAbove` from `articStaccatoBelow`.
+ */
+export const SMUFL_TO_ABCJS: Readonly<Record<string, string>> = {
+  // Noteheads
+  noteheadWhole: 'noteheads.whole',
+  noteheadHalf: 'noteheads.half',
+  noteheadBlack: 'noteheads.quarter',
+  noteheadXBlack: 'noteheads.indeterminate',
+  noteheadSlashVerticalEnds: 'noteheads.slash.nostem',
+
+  // Clefs
+  gClef: 'clefs.G',
+  fClef: 'clefs.F',
+  cClef: 'clefs.C',
+
+  // Accidentals. `halfsharp`/`halfflat` are abcjs's quarter tones; it has no three-quarter
+  // tone glyph at all, which is why those two SMuFL names are absent — see the header.
+  accidentalSharp: 'accidentals.sharp',
+  accidentalFlat: 'accidentals.flat',
+  accidentalNatural: 'accidentals.nat',
+  accidentalDoubleSharp: 'accidentals.dblsharp',
+  accidentalDoubleFlat: 'accidentals.dblflat',
+  accidentalQuarterToneSharpStein: 'accidentals.halfsharp',
+  accidentalQuarterToneFlatStein: 'accidentals.halfflat',
+
+  // Rests
+  restWhole: 'rests.whole',
+  restHalf: 'rests.half',
+  restQuarter: 'rests.quarter',
+  rest8th: 'rests.8th',
+  rest16th: 'rests.16th',
+
+  // Flags
+  flag8thUp: 'flags.u8th',
+  flag8thDown: 'flags.d8th',
+  flag16thUp: 'flags.u16th',
+  flag16thDown: 'flags.d16th',
+  flag32ndUp: 'flags.u32nd',
+  flag32ndDown: 'flags.d32nd',
+  flag64thUp: 'flags.u64th',
+  flag64thDown: 'flags.d64th',
+
+  // Time signatures. The digits are abcjs's plain numeral glyphs, named "0".."9".
+  timeSig0: '0',
+  timeSig1: '1',
+  timeSig2: '2',
+  timeSig3: '3',
+  timeSig4: '4',
+  timeSig5: '5',
+  timeSig6: '6',
+  timeSig7: '7',
+  timeSig8: '8',
+  timeSig9: '9',
+  timeSigCommon: 'timesig.common',
+  timeSigCutCommon: 'timesig.cut',
+
+  // Dots
+  augmentationDot: 'dots.dot',
+
+  // Articulations. abcjs orients one glyph by placement where SMuFL has an Above/Below
+  // pair, so both SMuFL names land on the same abcjs entry.
+  articStaccatoAbove: 'scripts.staccato',
+  articStaccatoBelow: 'scripts.staccato',
+  articAccentAbove: 'scripts.sforzato',
+  articAccentBelow: 'scripts.sforzato',
+  articTenutoAbove: 'scripts.tenuto',
+  articTenutoBelow: 'scripts.tenuto',
+  articMarcatoAbove: 'scripts.umarcato',
+  articMarcatoBelow: 'scripts.dmarcato',
+  fermataAbove: 'scripts.ufermata',
+  fermataBelow: 'scripts.dfermata',
+
+  // Ornaments
+  ornamentTrill: 'scripts.trill',
+  ornamentMordent: 'scripts.mordent',
+  ornamentShortTrill: 'scripts.prall',
+  ornamentTurn: 'scripts.turn',
+
+  // Techniques
+  stringsUpBow: 'scripts.upbow',
+  stringsDownBow: 'scripts.downbow',
+  stringsThumbPosition: 'scripts.thumb',
+  brassMuteOpen: 'scripts.open',
+  pluckedSnapPizzicatoAbove: 'scripts.snap',
+  pluckedSnapPizzicatoBelow: 'scripts.snap',
+  wiggleArpeggiatoUp: 'scripts.arpeggio',
+
+  // Navigation and breath
+  segno: 'scripts.segno',
+  coda: 'scripts.coda',
+  breathMarkComma: 'scripts.comma',
+}
+
+/** abcjs glyphs no SMuFL name above claims — its vocabulary, minus what we use. */
+export const UNMAPPED_ABCJS = [
+  'rests.multimeasure',
+  'rests.32nd',
+  'rests.64th',
+  'rests.128th',
+  'noteheads.dbl',
+  'scripts.stopped',
+  'scripts.roll',
+  'scripts.wedge',
+  'scripts.longphrase',
+  'scripts.mediumphrase',
+  'scripts.shortphrase',
+  'flags.ugrace',
+  'flags.dgrace',
+  'clefs.perc',
+  'tab.big',
+  'tab.tiny',
+  'timesig.imperfectum',
+  'timesig.imperfectum2',
+  'timesig.perfectum',
+  'timesig.perfectum2',
+  // Text glyphs abcjs draws inline in chord symbols and annotations — a `+` for an
+  // added note, a `,` in a figured bass. abcts sets prose in <text>, so it has no
+  // outline for either and needs none.
+  '+',
+  ',',
+  'f',
+  'm',
+  'p',
+  'r',
+  's',
+  'z',
+  '-',
+  '.',
+] as const
