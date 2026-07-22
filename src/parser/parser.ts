@@ -848,6 +848,7 @@ class ScoreBuilder {
   titles: string[] = []
   composer: string | null = null
   rhythm: string | null = null
+  origin: string | null = null
   key: KeySignature = defaultKey()
   clef: Clef = defaultClef
   tempo: Tempo | null = null
@@ -979,6 +980,7 @@ class ScoreBuilder {
       titles: this.titles,
       composer: this.composer,
       rhythm: this.rhythm,
+      origin: this.origin,
     }
     return {
       metadata,
@@ -1249,6 +1251,9 @@ class Parser {
         return
       case 'R':
         builder.rhythm = decodeTextString(value)
+        return
+      case 'O':
+        builder.origin = decodeTextString(value)
         return
       case 'M': {
         if (builder.bodyStarted) {

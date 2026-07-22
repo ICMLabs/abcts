@@ -36,6 +36,7 @@ import {
   rational,
   ratToNumber,
   type Score,
+  type ScoreMetadata,
   type StaffGroup,
   stepIndex,
   type Tempo,
@@ -186,7 +187,32 @@ const ENGRAVE = {
   melismaMinLength: 0.8,
   /** Tempo and part labels are directions; chord symbols and lyrics are smaller. */
   tempoTextSize: 1.6,
-  titleTextSize: 2.4,
+  /**
+   * Top-text font sizes, in staff spaces.
+   *
+   * abcjs's defaults are in POINTS (`abc_parse_directive.js:25-38`), converted by 4/3 to
+   * pixels at a 7.75px staff space: title 20pt, subtitle 16pt, composer and info 14pt.
+   * `titleTextSize` was 2.4 — 18.6px against abcjs's 26.7 — so the title was undersized
+   * as well as mispositioned.
+   */
+  titleTextSize: (20 * 4) / 3 / 7.75,
+  subtitleTextSize: (16 * 4) / 3 / 7.75,
+  composerTextSize: (14 * 4) / 3 / 7.75,
+  infoTextSize: (14 * 4) / 3 / 7.75,
+  /**
+   * Page margin above everything — abcjs's `padding.top`, 15px on screen
+   * (`write/renderer.js:69`; print uses 38px, which is 1cm). We had none: our drawing
+   * began at the top text's own ink, so every tune sat 15px higher than abcjs's.
+   */
+  marginTop: 15 / 7.75,
+  /** Space above the title, a subtitle, and the composer row (`renderer.js:94`). */
+  titleSpace: 7.56 / 7.75,
+  subtitleSpace: 3.78 / 7.75,
+  composerSpace: 7.56 / 7.75,
+  /** Space between the top-text block and the top of the music (`renderer.js:101`). */
+  musicSpace: 7.56 / 7.75,
+  /** A text line advances by its height times this, rounded to whole pixels by abcjs. */
+  lineSkipFactor: 1.1,
   /** Vertical gap between tunes in a tunebook — wider than between systems. */
   tuneGap: 6.0,
   lyricTextSize: 1.4,
@@ -310,6 +336,7 @@ export type PartRole =
   | 'decoration'
   | 'text'
   | 'lyric'
+  | 'title'
 
 export interface PlacedGlyph {
   readonly name: GlyphName
@@ -363,10 +390,21 @@ export interface PlacedText {
   readonly size: number
   readonly bold: boolean
   readonly italic: boolean
+  /**
+   * Horizontal alignment. Absent means `start`, which is every text the music draws —
+   * only the top-text block centres a title or right-aligns a composer.
+   */
+  readonly anchor?: 'start' | 'middle' | 'end'
 }
 
 export interface LayoutElement {
   readonly type: ElementType
+  /**
+   * Total height, for an element that is a BLOCK rather than a mark — only the top text.
+   * abcjs advances its cursor by a rounded line height per row, which is more than the
+   * last row's descender, so the block cannot be measured from its texts after the fact.
+   */
+  readonly blockHeight?: number
   /** Left edge, staff spaces from the system origin. */
   readonly x: number
   readonly width: number
@@ -518,6 +556,9 @@ export const stepToY = (step: number): number => -step * ENGRAVE.spacePerStep
 
 /** Middle line to outer staff line, in staff spaces — the staff is four spaces tall. */
 const STAFF_HALF_HEIGHT = 2
+
+/** abcjs's staff space in pixels — the unit its published constants are given in. */
+const ABCJS_PX_PER_SPACE = 7.75
 
 /**
  * Text box estimate, in multiples of the font size — the renderer's CONTRACT for how
@@ -3147,10 +3188,17 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       // vertical extent accounts for it. Added afterwards it would sit above y = 0 and
       // be clipped away — which is what happened to the first tune of a tunebook, while
       // every later tune looked fine because the tune above had already made room.
-      const title = score.metadata.titles[0]
+      // The top text is a BLOCK — title, subtitles, composer row — with y relative to
+      // its own top. `placed` moves it into position once the music's extent is known,
+      // which is abcjs's sequence: block, then `spacing.music`, then the music.
+      const block =
+        systemIndex === 0 && voiceIndex === 0
+          ? topTextBlock(score.metadata, systemWidth - ENGRAVE.marginX * 2)
+          : { texts: [], height: 0 }
       const heading: LayoutElement[] =
-        systemIndex === 0 && voiceIndex === 0 && title !== undefined && title !== ''
-          ? [
+        block.texts.length === 0
+          ? []
+          : [
               {
                 type: 'title',
                 x: 0,
@@ -3158,19 +3206,10 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
                 staffSteps: [],
                 glyphs: [],
                 lines: [],
-                texts: [
-                  {
-                    text: title,
-                    x: 0,
-                    y: stepToY(ENGRAVE.titleStep),
-                    size: ENGRAVE.titleTextSize,
-                    bold: true,
-                    italic: false,
-                  },
-                ],
+                texts: block.texts,
+                blockHeight: block.height,
               },
             ]
-          : []
       const elements: LayoutElement[] = [
         ...heading,
         ...plan.prefix(withMeter, voiceIndex === 0).elements,
@@ -3386,7 +3425,29 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     /** Bottom staff LINE of the staff placed before this one, in system coordinates. */
     let previousBottomLine: number | null = null
     const placed = merged.map((staff) => {
-      const extent = verticalExtent(staff.elements, staff.beams)
+      // Place the top-text block FROM the music: its bottom sits `musicSpace` clear of
+      // whatever the music's own top is, which already includes a tempo mark or an
+      // annotation. The block shifts as a whole, so its internal spacing is untouched.
+      const heading = staff.elements.filter((el) => el.type === 'title')
+      const musicOnly = staff.elements.filter((el) => el.type !== 'title')
+      const positioned =
+        heading.length === 0
+          ? staff.elements
+          : (() => {
+              const musicTop = verticalExtent(musicOnly, staff.beams).top
+              // The block's own height, not its last descender: abcjs advances by a
+              // rounded line height per row and that trailing space is part of the block.
+              const blockBottom = Math.max(...heading.map((el) => el.blockHeight ?? 0))
+              const offset = musicTop - ENGRAVE.musicSpace - blockBottom
+              return [
+                ...heading.map((el) => ({
+                  ...el,
+                  texts: el.texts.map((t) => ({ ...t, y: t.y + offset })),
+                })),
+                ...musicOnly,
+              ]
+            })()
+      const extent = verticalExtent(positioned, staff.beams)
       const stacked = cursor - extent.top
       // The separation is a minimum LINE-to-LINE distance, which is what abcjs measures:
       // `draw.js:86-89` works from each staff's overhang past its own outer lines, so
@@ -3399,7 +3460,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
           : Math.max(stacked, previousBottomLine + ENGRAVE.staffSeparation + STAFF_HALF_HEIGHT)
       previousBottomLine = originY + STAFF_HALF_HEIGHT
       cursor = originY + extent.bottom + ENGRAVE.staffGap
-      return { ...staff, staffLines: staffLinesFor(width), originY }
+      return { ...staff, elements: positioned, staffLines: staffLinesFor(width), originY }
     })
 
     const connectors = layoutConnectors(score.staves, placed)
@@ -3460,9 +3521,12 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
   return {
     systems: placed,
     width: Math.max(0, ...placed.map((s) => s.width)),
-    // `cursor` has one trailing gap on it, added after the last system.
-    height: Math.max(0, cursor - ENGRAVE.systemGap),
-    top: 0,
+    // `cursor` has one trailing gap on it, added after the last system. abcjs opens with
+    // `moveY(padding.top)` before drawing anything (`draw.js:14`), so the page begins
+    // ABOVE the ink — expressed as a negative viewBox top rather than by shifting every
+    // system, which would put the same constant in two places.
+    height: Math.max(0, cursor - ENGRAVE.systemGap) + ENGRAVE.marginTop,
+    top: -ENGRAVE.marginTop,
   }
 }
 
@@ -3492,7 +3556,10 @@ export function layoutBook(scores: readonly Score[], options: LayoutOptions = {}
     cursor += tune.height + (index === scores.length - 1 ? 0 : ENGRAVE.tuneGap)
   })
 
-  return { systems, width, height: cursor, top: 0 }
+  // abcjs opens with `moveY(padding.top)` before anything is drawn (`draw.js:14`), so
+  // the page begins ABOVE the ink. Expressed as a negative viewBox top rather than by
+  // shifting every system, which would put the same constant in two places.
+  return { systems, width, height: cursor + ENGRAVE.marginTop, top: -ENGRAVE.marginTop }
 }
 
 /** A system's full vertical extent, from the top of its first staff's content down. */
@@ -3514,6 +3581,110 @@ function systemHeight(system: LayoutSystem): number {
  * the structural gate, which sees no geometry at all — it shows up only as notes missing
  * from the rendered SVG.
  */
+/**
+ * The tune's top text — title, subtitles, then the rhythm / composer / origin row.
+ *
+ * A BLOCK with its own height, which is the point. abcjs walks a cursor down it and only
+ * then leaves `spacing.music` before the staff (`draw.js:14-17` via `top-text.js`,
+ * reproduced line by line in abcMusicKit v1's `drawTopText`). So a tune with a composer
+ * pushes its music further down than one without, and no single "title height" constant
+ * can stand in for that — which is what four earlier attempts at the vertical offset kept
+ * rediscovering, and why our first system used to start at a fixed 72.5px while abcjs's
+ * ranged from 126.7 to 213.1 across the corpus.
+ *
+ * y runs DOWN from the block's own top, so the caller can place the whole thing against
+ * the music without knowing what is in it.
+ *
+ * ponytail: no `%%titleformat`, `%%writefields` or `%%aligncomposer`. v1 has all three as
+ * NATIVE extensions; nothing in the corpus sets any, and each changes only where within
+ * the block a field lands, not the block's shape.
+ */
+function topTextBlock(
+  metadata: ScoreMetadata,
+  width: number,
+): { texts: PlacedText[]; height: number } {
+  const texts: PlacedText[] = []
+  let y = 0
+  // abcjs rounds each line advance to whole PIXELS before moving on, so a block's height
+  // is not simply a sum of ems. Reproduced rather than smoothed.
+  const advance = (size: number): void => {
+    y += Math.round(size * ENGRAVE.lineSkipFactor * ABCJS_PX_PER_SPACE) / ABCJS_PX_PER_SPACE
+  }
+  const centre = width / 2
+
+  const [title, ...subtitles] = metadata.titles
+  if (title !== undefined && title !== '') {
+    y += ENGRAVE.titleSpace
+    texts.push({
+      text: title,
+      role: 'title',
+      x: centre,
+      // abcjs writes the baseline one font size below the cursor (`text.js:30`).
+      y: y + ENGRAVE.titleTextSize,
+      size: ENGRAVE.titleTextSize,
+      bold: true,
+      italic: false,
+      anchor: 'middle',
+    })
+    advance(ENGRAVE.titleTextSize)
+  }
+
+  // Second and later `T:` fields are subtitles — abcm2ps's convention, and abcjs's.
+  for (const subtitle of subtitles) {
+    if (subtitle === '') continue
+    y += ENGRAVE.subtitleSpace
+    texts.push({
+      text: subtitle,
+      role: 'title',
+      x: centre,
+      y: y + ENGRAVE.subtitleTextSize,
+      size: ENGRAVE.subtitleTextSize,
+      bold: false,
+      italic: false,
+      anchor: 'middle',
+    })
+    advance(ENGRAVE.subtitleTextSize)
+  }
+
+  // ONE row carrying up to three fields: rhythm left, composer and origin right. They
+  // share a baseline, so the row advances once however many are present.
+  const rhythm = metadata.rhythm ?? ''
+  const composer = metadata.composer ?? ''
+  const origin = metadata.origin ?? ''
+  if (rhythm !== '' || composer !== '' || origin !== '') {
+    y += ENGRAVE.composerSpace
+    if (rhythm !== '') {
+      texts.push({
+        text: rhythm,
+        role: 'title',
+        x: 0,
+        y: y + ENGRAVE.infoTextSize,
+        size: ENGRAVE.infoTextSize,
+        bold: false,
+        italic: true,
+        anchor: 'start',
+      })
+    }
+    // abcjs emits composer and origin as ONE text, the origin parenthesised.
+    const right = origin === '' ? composer : `${composer === '' ? '' : `${composer} `}(${origin})`
+    if (right !== '') {
+      texts.push({
+        text: right,
+        role: 'title',
+        x: width,
+        y: y + ENGRAVE.composerTextSize,
+        size: ENGRAVE.composerTextSize,
+        bold: false,
+        italic: true,
+        anchor: 'end',
+      })
+    }
+    advance(Math.max(ENGRAVE.infoTextSize, ENGRAVE.composerTextSize))
+  }
+
+  return { texts, height: y }
+}
+
 function verticalExtent(
   elements: readonly LayoutElement[],
   beams: readonly PlacedLine[] = [],

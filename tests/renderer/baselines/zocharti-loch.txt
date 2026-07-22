@@ -1,8 +1,8 @@
 tune 0
-bounds  width=90.000 height=64.654 top=0.000
+bounds  width=90.000 height=73.611 top=-1.935
 systems 2
 system 0 width=90.000 originY=0.000
-  staff 0 originY=11.420
+  staff 0 originY=18.442
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -13,7 +13,8 @@ system 0 width=90.000 originY=0.000
     slur  12.769,0.200 -> 24.562,-2.300 bulge=-2.123
     slur  52.375,-0.800 -> 59.717,-0.800 bulge=-1.322
     title x=0.000 w=0.000
-      text  38.749,-9.500 size=2.400 bold "Zocharti Loch"
+      text  36.038,-15.690 size=3.441 bold "Zocharti Loch"
+      text  30.461,-12.005 size=2.409 italic "Louis Lewandowski (1821-1894)"
     clef x=1.935 w=2.684
       glyph gClef 1.935,1.000
     keySignature x=5.619 w=1.958
@@ -128,7 +129,7 @@ system 0 width=90.000 originY=0.000
       glyph restQuarter 81.628,0.000
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 1 originY=30.540
+  staff 1 originY=37.562
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -244,7 +245,7 @@ system 0 width=90.000 originY=0.000
     rest x=70.919 w=10.949
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 1 width=90.000 originY=36.394
+system 1 width=90.000 originY=43.416
   staff 0 originY=6.060
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130

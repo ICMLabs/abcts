@@ -1,15 +1,15 @@
 tune 0
-bounds  width=31.126 height=15.052 top=0.000
+bounds  width=31.126 height=12.989 top=-1.935
 systems 1
 system 0 width=31.126 originY=0.000
-  staff 0 originY=11.420
+  staff 0 originY=7.421
     staffline 0.000,2.000 -> 31.126,2.000 t=0.130
     staffline 0.000,1.000 -> 31.126,1.000 t=0.130
     staffline 0.000,0.000 -> 31.126,0.000 t=0.130
     staffline 0.000,-1.000 -> 31.126,-1.000 t=0.130
     staffline 0.000,-2.000 -> 31.126,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  10.089,-9.500 size=2.400 bold "Grace Notes"
+      text  7.715,-4.669 size=3.441 bold "Grace Notes"
     clef x=1.935 w=2.684
       glyph gClef 1.935,1.000
     timeSignature x=5.619 w=1.880

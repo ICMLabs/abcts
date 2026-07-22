@@ -338,7 +338,10 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
             (t.bold ? ' font-weight="bold"' : '') + (t.italic ? ' font-style="italic"' : '')
           parts.push(
             `<text${attrs(el.type, 'text')} x="${num(t.x)}" y="${num(t.y)}" ` +
-              `font-family="serif" font-size="${num(t.size)}"${style}>${escapeText(t.text)}</text>`,
+              `font-family="serif" font-size="${num(t.size)}"${style}` +
+              // Only the top-text block sets one; the music's own text is all left-aligned.
+              `${t.anchor === undefined || t.anchor === 'start' ? '' : ` text-anchor="${t.anchor}"`}` +
+              `>${escapeText(t.text)}</text>`,
           )
         }
         if (abcjs) parts.push('</g>')

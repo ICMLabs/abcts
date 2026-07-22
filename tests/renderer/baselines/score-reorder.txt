@@ -1,15 +1,15 @@
 tune 0
-bounds  width=34.385 height=25.246 top=0.000
+bounds  width=34.385 height=21.870 top=-1.935
 systems 1
 system 0 width=34.385 originY=0.000
-  staff 0 originY=11.420
+  staff 0 originY=6.109
     staffline 0.000,2.000 -> 34.385,2.000 t=0.130
     staffline 0.000,1.000 -> 34.385,1.000 t=0.130
     staffline 0.000,0.000 -> 34.385,0.000 t=0.130
     staffline 0.000,-1.000 -> 34.385,-1.000 t=0.130
     staffline 0.000,-2.000 -> 34.385,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  11.376,-9.500 size=2.400 bold "Reorder Test"
+      text  8.853,-3.357 size=3.441 bold "Reorder Test"
     clef x=1.935 w=2.736
       glyph fClef 1.935,-1.000
     timeSignature x=5.671 w=1.880
@@ -33,7 +33,7 @@ system 0 width=34.385 originY=0.000
       line  26.155,2.332 -> 26.155,-1.000 t=0.120
     bar x=31.449 w=0.160
       line  31.529,-2.000 -> 31.529,2.000 t=0.160
-  staff 1 originY=21.614
+  staff 1 originY=16.303
     staffline 0.000,2.000 -> 34.385,2.000 t=0.130
     staffline 0.000,1.000 -> 34.385,1.000 t=0.130
     staffline 0.000,0.000 -> 34.385,0.000 t=0.130

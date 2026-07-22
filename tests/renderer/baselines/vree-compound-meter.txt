@@ -1,8 +1,8 @@
 tune 0
-bounds  width=90.000 height=15.052 top=0.000
+bounds  width=90.000 height=13.597 top=-1.935
 systems 1
 system 0 width=90.000 originY=0.000
-  staff 0 originY=11.420
+  staff 0 originY=8.029
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -13,7 +13,7 @@ system 0 width=90.000 originY=0.000
     beam   50.035,-2.250 -> 61.986,-3.250 t=0.500
     beam   68.139,2.500 -> 80.089,0.500 t=0.500
     title x=0.000 w=0.000
-      text  34.402,-9.500 size=2.400 bold "Compound Meter (6/8)"
+      text  29.806,-5.277 size=3.441 bold "Compound Meter (6/8)"
     clef x=1.935 w=2.684
       glyph gClef 1.935,1.000
     timeSignature x=5.619 w=1.744

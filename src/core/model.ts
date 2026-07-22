@@ -517,6 +517,8 @@ export interface ScoreMetadata {
   readonly titles: readonly string[]
   readonly composer: string | null
   readonly rhythm: string | null
+  /** `O:` — where the tune comes from. Printed in the top-text block beside the composer. */
+  readonly origin: string | null
 }
 
 /**

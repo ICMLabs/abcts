@@ -1,8 +1,8 @@
 tune 0
-bounds  width=57.484 height=15.052 top=0.000
+bounds  width=57.484 height=12.989 top=-1.935
 systems 1
 system 0 width=57.484 originY=0.000
-  staff 0 originY=11.420
+  staff 0 originY=7.421
     staffline 0.000,2.000 -> 57.484,2.000 t=0.130
     staffline 0.000,1.000 -> 57.484,1.000 t=0.130
     staffline 0.000,0.000 -> 57.484,0.000 t=0.130
@@ -15,7 +15,7 @@ system 0 width=57.484 originY=0.000
     tuplettext 37.130,5.960 size=1.400 "3"
     slur  9.979,1.300 -> 24.623,3.300 bulge=2.200
     title x=0.000 w=0.000
-      text  20.756,-9.500 size=2.400 bold "Slurs and Triplets"
+      text  17.293,-4.669 size=3.441 bold "Slurs and Triplets"
     clef x=1.935 w=2.684
       glyph gClef 1.935,1.000
     timeSignature x=5.619 w=1.880
