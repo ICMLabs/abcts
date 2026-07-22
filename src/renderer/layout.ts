@@ -140,7 +140,28 @@ const ENGRAVE = {
   annotationLineStep: 2.5,
   partStep: 10,
   tempoStep: 14,
-  /** A tune's title sits above everything else it owns. */
+  /**
+   * A tune's title sits above everything else it owns, in staff STEPS above the middle
+   * line — so the gap to the top staff line is `titleStep / 2 - 2` spaces.
+   *
+   * 19 leaves 58px there. abcjs leaves 27.6px: its title baseline lands at y 49.6 and
+   * its top staff line at 77.2, built from `padding.top` 15, `spacing.title` 7.56 and
+   * `spacing.music` 7.56 above the first staff (`write/renderer.js:94`). That 30px is
+   * the whole of the vertical offset every fixture's noteheads carry.
+   *
+   * MEASURED BUT NOT CHANGED, and the attempt is worth recording. Setting this to 11.12
+   * puts the gap at exactly 27.6px and drives SIX fixtures to a y offset of exactly 0.0
+   * — `simple-c`, `twinkle`, `vree-grace-notes`, `vree-ties-across-bars`,
+   * `score-reorder-shared`, with `vree-sharps` at -0.3. The clean single-system case
+   * becomes pixel-exact. But eight fixtures with content ABOVE the staff regress by a
+   * suspiciously uniform ~5.3px, and `chord-grid` by 14.3, and that is not explained.
+   *
+   * The uniformity is the clue: fitting one constant is the wrong shape. abcjs builds
+   * this vertically — padding, then a text BLOCK whose height depends on what is in it,
+   * then `spacing.music` above the staff — and a tune with a tempo, part label or
+   * annotation has a different block. Rebuilding that model is the fix; moving one
+   * number trades a known error for an unexplained one.
+   */
   titleStep: 19,
   /** First verse below the staff; further verses stack downward by `lyricLineStep`. */
   lyricStep: -8,

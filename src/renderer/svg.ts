@@ -259,8 +259,22 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
         `<g${abcjs ? '' : ` class="${prefix}-staff-group"`} transform="translate(0,${num(staff.originY)})">`,
       )
       // abcjs classes only the TOP staff line; the other four carry no class at all.
+      //
+      // Found by the LOWEST y rather than by index. `staffLines[0]` is the BOTTOM line —
+      // y is down and the array runs upward — so keying on index 0 put `abcjs-top-line`
+      // on the bottom line, four staff spaces from where a stylesheet targeting it would
+      // expect. Silent, because the class was present and the count was right.
+      const topLine = staff.staffLines.reduce(
+        (best, line, i) =>
+          line.y1 < (staff.staffLines[best]?.y1 ?? Number.POSITIVE_INFINITY) ? i : best,
+        0,
+      )
       staff.staffLines.forEach((line, i) => {
-        const attr = abcjs ? (i === 0 ? ' class="abcjs-top-line"' : '') : ` class="${prefix}-staff"`
+        const attr = abcjs
+          ? i === topLine
+            ? ' class="abcjs-top-line"'
+            : ''
+          : ` class="${prefix}-staff"`
         parts.push(lineToRect(line, attr))
       })
       for (const beam of staff.beams) {
