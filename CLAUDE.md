@@ -4,7 +4,7 @@ You are developing abcts, a modern TypeScript ABC notation library
 and community successor to abcjs.
 
 ## First Step — Always
-Read `Docs/CHECKPOINT-2026-07-22.md` first — it is the current state of play, the open
+Read `Docs/CHECKPOINT-2026-07-22b.md` first — it is the current state of play, the open
 decisions, and the known risks. (`CHECKPOINT-2026-07-21.md`, `-07-19.md` and `-07-18.md` are superseded but remain the
 record of the parser phase, the renderer's first slices, and how the last three parser
 diffs closed.) Then read ARCHITECTURE.md in full. It is your
@@ -117,6 +117,12 @@ abcjs source are all reached by sibling path and stay in that repo. Keep it that
 backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
+**Every structural gate is at 100% with zero recorded divergences** — content, lyrics,
+beams, structure, source offsets. 498 tests. The work is now entirely GEOMETRIC and
+entirely strict-mode: corpus median notehead distance from abcjs is **32.6px**, and the
+remaining causes are named in the checkpoint's priority list.
+
+
 **Structural parity is done: note content, lyrics, beams and render structure are all
 41/41 with zero recorded divergences.** 498 tests.
 
