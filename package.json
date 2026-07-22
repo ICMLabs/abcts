@@ -40,6 +40,7 @@
     "parity": "node scripts/parity.mjs",
     "compare": "node scripts/compare.mjs",
     "glyphs": "node scripts/gen-glyphs.mjs",
+    "glyphs:abcjs": "node scripts/gen-abcjs-glyphs.mjs",
     "metrics": "node scripts/gen-text-metrics.mjs"
   },
   "devDependencies": {

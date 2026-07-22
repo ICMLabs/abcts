@@ -1,4 +1,5 @@
 {
   "corpus": "../abcMusicKit/Tools/abcjs-debug/fixtures",
-  "goldens": "../abcMusicKit/Tools/abcjs-debug/golden"
+  "goldens": "../abcMusicKit/Tools/abcjs-debug/golden",
+  "abcjsRef": "../abcMusicKit/Docs/References/abcjs/abcjs-6.6.3"
 }
