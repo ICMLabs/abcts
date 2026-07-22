@@ -104,6 +104,12 @@ export function absolutePixels(svg: string): PixelDoc {
         ly = +y[1]
       }
     } else if (tag === 'use') {
+      // A `<use>` may be placed by transform instead of x/y — the accumulated transform
+      // above already carries it, so an absent x/y means the origin.
+      if (!/\sx="/.test(attrs) && tr) {
+        lx = 0
+        ly = 0
+      }
       // `<use href="#g0" x= y=>` — a browser resolves this to the referenced outline
       // placed at x/y, so for a coordinate walk it IS the glyph. Without this, an
       // optimized render would measure as having no glyphs at all and every comparison

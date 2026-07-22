@@ -44,12 +44,95 @@ const table = eval(`(${text.slice(text.indexOf('{', start), end + 2)})`)
  */
 const toPath = (d) => d.map((seg) => `${seg[0]} ${seg.slice(1).join(' ')}`).join('')
 
+/**
+ * Ink bounding box, walked from the segment arrays.
+ *
+ * abcjs publishes `w` and `h` but no ORIGIN offset, and a renderer cannot place a glyph
+ * vertically without knowing where its ink sits relative to the point it is drawn at —
+ * Bravura's table carries `x`/`y` for exactly that. So it is derived here.
+ *
+ * Control points are included rather than solved for: a cubic stays inside its hull, so
+ * the box is a safe over-estimate and never clips. Bravura's boxes are tight, which makes
+ * this a small systematic difference in the direction of reserving slightly too much —
+ * the safe direction, and the alternative is a cubic extrema solver for a few tenths.
+ */
+function boundingBox(d) {
+  let x = 0
+  let y = 0
+  let minX = Number.POSITIVE_INFINITY
+  let minY = Number.POSITIVE_INFINITY
+  let maxX = Number.NEGATIVE_INFINITY
+  let maxY = Number.NEGATIVE_INFINITY
+  const hit = (px, py) => {
+    minX = Math.min(minX, px)
+    minY = Math.min(minY, py)
+    maxX = Math.max(maxX, px)
+    maxY = Math.max(maxY, py)
+  }
+  for (const seg of d) {
+    const [cmd, ...n] = seg
+    switch (cmd) {
+      case 'M':
+        x = n[0]
+        y = n[1]
+        hit(x, y)
+        break
+      case 'm':
+        x += n[0]
+        y += n[1]
+        hit(x, y)
+        break
+      case 'l':
+        x += n[0]
+        y += n[1]
+        hit(x, y)
+        break
+      case 'c':
+        // Three relative point pairs; the first two are controls.
+        hit(x + n[0], y + n[1])
+        hit(x + n[2], y + n[3])
+        x += n[4]
+        y += n[5]
+        hit(x, y)
+        break
+      case 's':
+        // Smooth cubic: one control pair then the endpoint, both relative.
+        hit(x + n[0], y + n[1])
+        x += n[2]
+        y += n[3]
+        hit(x, y)
+        break
+      case 'a': {
+        // Elliptical arc: rx ry rot largeArc sweep dx dy, the endpoint relative.
+        // Bounded by the endpoint plus the radii, which contains any arc between them.
+        const [rx, ry] = n
+        x += n[5]
+        y += n[6]
+        hit(x, y)
+        hit(x - rx, y - ry)
+        hit(x + rx, y + ry)
+        break
+      }
+      case 'z':
+        break
+      default:
+        throw new Error(`unhandled path command ${cmd}`)
+    }
+  }
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
+}
+
 const entries = Object.entries(table)
   .filter(([, g]) => Array.isArray(g?.d))
-  .map(
-    ([name, g]) =>
-      `  ${JSON.stringify(name)}: { path: ${JSON.stringify(toPath(g.d))}, w: ${g.w}, h: ${g.h} },`,
-  )
+  .map(([name, g]) => {
+    const box = boundingBox(g.d)
+    const n = (v) => +v.toFixed(4)
+    return (
+      `  ${JSON.stringify(name)}: { path: ${JSON.stringify(toPath(g.d))}, ` +
+      `w: ${g.w}, h: ${g.h}, x: ${n(box.x)}, y: ${n(box.y)}, ` +
+      `boxWidth: ${n(box.width)}, boxHeight: ${n(box.height)} },`
+    )
+  })
 
 writeFileSync(
   'src/renderer/glyphs-abcjs.ts',
@@ -78,6 +161,11 @@ export interface AbcjsGlyph {
   readonly w: number
   /** Height, abcjs pixels. */
   readonly h: number
+  /** Ink box left/top relative to the draw origin, abcjs pixels — DERIVED, see the generator. */
+  readonly x: number
+  readonly y: number
+  readonly boxWidth: number
+  readonly boxHeight: number
 }
 
 /** One staff space, in the units this table is expressed in. abcjs's STEP is half of it. */

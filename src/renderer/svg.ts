@@ -11,6 +11,7 @@
  */
 
 import { type CompatibilityMode, defaultMode, isStrict } from '../core/model.js'
+import { glyphsFor } from './glyph-table.js'
 import { GLYPHS, type GlyphName } from './glyphs.js'
 import type { Layout, PlacedCurve, PlacedLine } from './layout.js'
 
@@ -170,7 +171,19 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
   const prefix = options.className ?? 'abcts'
   const abcjs = options.classes === 'abcjs'
   // Tri-state resolved once: explicit wins, otherwise the mode decides and strict says no.
-  const optimize = options.optimizeSVG ?? !isStrict(options.mode ?? defaultMode)
+  const strict = isStrict(options.mode ?? defaultMode)
+  const optimize = options.optimizeSVG ?? !strict
+  // The OUTLINES from the same table layout took its metrics from. Drawing Bravura at
+  // abcjs's advances would be the worst of both — correctly sized gaps around wrongly
+  // sized shapes — which is the whole reason there are two tables rather than one set of
+  // numbers. abcjs's paths are in ITS pixels, 7.75 to a staff space, so they carry a
+  // scale; Bravura's are already in staff spaces and carry none.
+  const table = glyphsFor(strict)
+  const outline = (name: GlyphName): { path: string; scale: number } => {
+    const g = table.get(name)
+    if (g === undefined) return { path: GLYPHS[name].path, scale: 1 }
+    return { path: g.path, scale: 1 / g.unitsPerSpace }
+  }
 
   /**
    * Each distinct glyph outline, in first-use order, so `<defs>` can emit it once.
@@ -205,12 +218,18 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
     scale: number | undefined,
     attributes: string,
   ): string => {
-    const scaled = scale !== undefined && scale !== 1
-    if (!optimize || scaled) {
-      const transform = `translate(${num(x)},${num(y)})${scaled ? ` scale(${num(scale)})` : ''}`
-      return `<path${attributes} transform="${transform}" d="${GLYPHS[name].path}"/>`
-    }
-    return `<use${attributes} href="#${defId(name)}" x="${num(x)}" y="${num(y)}"/>`
+    const ink = outline(name)
+    const total = (scale ?? 1) * ink.scale
+    const scaled = total !== 1
+    const transform = `translate(${num(x)},${num(y)})${scaled ? ` scale(${num(total)})` : ''}`
+    if (!optimize) return `<path${attributes} transform="${transform}" d="${ink.path}"/>`
+    // A `<use>` takes a transform, so a scaled glyph dedupes like any other. It used to
+    // fall back to an inline path when scaled, which was fine while only a stretched
+    // brace was scaled — and stopped being fine the moment abcjs's outlines arrived,
+    // since those are in ITS pixels and every one of them carries a scale.
+    return scaled
+      ? `<use${attributes} href="#${defId(name)}" transform="${transform}"/>`
+      : `<use${attributes} href="#${defId(name)}" x="${num(x)}" y="${num(y)}"/>`
   }
 
   /**
@@ -251,7 +270,7 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
       parts.push(
         scale === ''
           ? glyphMarkup(g.name, g.x, g.y, undefined, attr)
-          : `<path${attr} transform="translate(${num(g.x)},${num(g.y)})${scale}" d="${GLYPHS[g.name].path}"/>`,
+          : `<path${attr} transform="translate(${num(g.x)},${num(g.y)})${scale}" d="${outline(g.name).path}"/>`,
       )
     }
     for (const staff of system.staves) {
@@ -368,7 +387,7 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
     (glyphDefs.size === 0
       ? ''
       : `<defs>${[...glyphDefs]
-          .map(([name, id]) => `<path id="${id}" d="${GLYPHS[name].path}"/>`)
+          .map(([name, id]) => `<path id="${id}" d="${outline(name).path}"/>`)
           .join('')}</defs>`) +
     `<g fill="currentColor">${parts.join('')}</g>` +
     `</svg>`

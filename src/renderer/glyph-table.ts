@@ -39,6 +39,8 @@ export interface ResolvedGlyph {
   readonly width: number
   /** Ink height, STAFF SPACES. */
   readonly height: number
+  /** Ink box top relative to the draw origin, STAFF SPACES — negative is above. */
+  readonly y: number
   /**
    * How many units of `path` make one staff space — 1 for Bravura, 7.75 for abcjs.
    *
@@ -67,6 +69,7 @@ const bravuraEntry = (name: GlyphName): ResolvedGlyph | undefined => {
     advance: glyph.advance,
     width: glyph.width,
     height: glyph.height,
+    y: glyph.y,
     unitsPerSpace: 1,
   }
 }
@@ -96,7 +99,10 @@ const ABCJS: GlyphTable = {
       path: glyph.path,
       advance: glyph.w / ABCJS_STAFF_SPACE,
       width: glyph.w / ABCJS_STAFF_SPACE,
-      height: glyph.h / ABCJS_STAFF_SPACE,
+      // The DERIVED ink box, not the published `h`: abcjs ships a height but no origin
+      // offset, and a glyph cannot be placed vertically without one. See the generator.
+      height: glyph.boxHeight / ABCJS_STAFF_SPACE,
+      y: glyph.y / ABCJS_STAFF_SPACE,
       unitsPerSpace: ABCJS_STAFF_SPACE,
     }
   },
@@ -108,5 +114,14 @@ const ABCJS: GlyphTable = {
 /** The table a mode draws with. Strict gets abcjs's; everything else gets Bravura. */
 export const glyphTableFor = (mode: CompatibilityMode): GlyphTable =>
   isStrict(mode) ? ABCJS : BRAVURA
+
+/**
+ * The table for a render, from the `strict` flag layout already threads everywhere.
+ *
+ * Keyed on that rather than passed as a parameter through fourteen signatures: the flag
+ * is already in scope at every site that reads a glyph metric, and it is the same
+ * decision. A second parameter carrying the same bit would be two ways to say one thing.
+ */
+export const glyphsFor = (strict: boolean): GlyphTable => (strict ? ABCJS : BRAVURA)
 
 export { ABCJS as ABCJS_TABLE, BRAVURA as BRAVURA_TABLE }

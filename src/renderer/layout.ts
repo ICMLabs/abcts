@@ -42,6 +42,7 @@ import {
   type Tempo,
   type Voice,
 } from '../core/model.js'
+import { glyphsFor } from './glyph-table.js'
 import { ENGRAVING_DEFAULTS, GLYPHS, type GlyphName } from './glyphs.js'
 import { CHAR_ADVANCE, FALLBACK_ADVANCE } from './text-metrics.js'
 
@@ -763,7 +764,7 @@ const CLEF_GLYPHS: Readonly<Record<ClefShape, GlyphName | null>> = {
   none: null,
 }
 
-function layoutClef(x: number, clef: Clef): LayoutElement | null {
+function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null {
   const name = CLEF_GLYPHS[clef.shape] ?? null
   if (name === null) return null
   // Every SMuFL clef's origin sits on the line it marks, so the glyph goes exactly where
@@ -772,7 +773,7 @@ function layoutClef(x: number, clef: Clef): LayoutElement | null {
   return {
     type: 'clef',
     x,
-    width: GLYPHS[name].advance,
+    width: glyphsFor(strict).advance(name),
     staffSteps: [],
     glyphs: [glyphAt(name, x, step)],
     lines: [],
@@ -799,15 +800,20 @@ const digitNames = (value: number): GlyphName[] =>
     .split('')
     .map((d) => DIGIT_GLYPHS[Number(d)] ?? 'timeSig0')
 
-const totalAdvance = (names: readonly GlyphName[]): number =>
-  names.reduce((sum, name) => sum + GLYPHS[name].advance, 0)
+const totalAdvance = (names: readonly GlyphName[], strict = true): number =>
+  names.reduce((sum, name) => sum + glyphsFor(strict).advance(name), 0)
 
 /** Digits laid out left to right, the group centred on `centre`. */
-function digitGlyphs(names: readonly GlyphName[], centre: number, step: number): PlacedGlyph[] {
+function digitGlyphs(
+  names: readonly GlyphName[],
+  centre: number,
+  step: number,
+  strict = true,
+): PlacedGlyph[] {
   let cursor = centre - totalAdvance(names) / 2
   return names.map((name) => {
     const placed = glyphAt(name, cursor, step)
-    cursor += GLYPHS[name].advance
+    cursor += glyphsFor(strict).advance(name)
     return placed
   })
 }
@@ -901,7 +907,12 @@ function keySignatureShift(clef: Clef): number {
   return wrapped > 3 ? wrapped - 7 : wrapped
 }
 
-function layoutKeySignature(x: number, key: KeySignature, clef: Clef): LayoutElement | null {
+function layoutKeySignature(
+  x: number,
+  key: KeySignature,
+  clef: Clef,
+  strict = true,
+): LayoutElement | null {
   const fifths = keyFifths(key)
   if (fifths === 0) return null // C major and K:none both draw nothing.
 
@@ -911,7 +922,7 @@ function layoutKeySignature(x: number, key: KeySignature, clef: Clef): LayoutEle
     .slice(0, Math.abs(fifths))
     .map((step) => step + shift)
   const name: GlyphName = sharps ? 'accidentalSharp' : 'accidentalFlat'
-  const pitch = GLYPHS[name].advance + ENGRAVE.keySignatureGap
+  const pitch = glyphsFor(strict).advance(name) + ENGRAVE.keySignatureGap
 
   return {
     type: 'keySignature',
@@ -943,6 +954,7 @@ function layoutKeyChange(
   from: KeySignature,
   to: KeySignature,
   clef: Clef,
+  strict = true,
 ): LayoutElement | null {
   // A `K:` that restates the key in force prints NOTHING. This is not an optimisation —
   // it is the difference between correct and a duplicated key signature in the middle of
@@ -975,7 +987,7 @@ function layoutKeyChange(
   let cursor = x
   const advance = (name: GlyphName, step: number): void => {
     glyphs.push(glyphAt(name, cursor, step))
-    cursor += GLYPHS[name].advance + ENGRAVE.keySignatureGap
+    cursor += glyphsFor(strict).advance(name) + ENGRAVE.keySignatureGap
   }
   for (const entry of cancelled) advance('accidentalNatural', entry.step)
   for (const entry of incoming)
@@ -1003,7 +1015,7 @@ function layoutKeyChange(
  * Its text therefore overhangs to the right, which is also why this needs no text
  * metrics: nothing downstream depends on how wide the words turn out to be.
  */
-function layoutTempo(x: number, tempo: Tempo): LayoutElement | null {
+function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | null {
   const glyphs: PlacedGlyph[] = []
   const texts: PlacedText[] = []
   const lines: PlacedLine[] = []
@@ -1032,7 +1044,11 @@ function layoutTempo(x: number, tempo: Tempo): LayoutElement | null {
     // The beat unit is drawn as a real note — a quarter note for `1/4=120`.
     const spec = tempo.beatUnit === null ? null : noteGlyph(tempo.beatUnit)
     if (spec !== null) {
+      // Anchors are Bravura's alone — abcjs's table has none, and a stem attachment is
+      // a property of the OUTLINE, so it stays with the font that defines it. Only the
+      // advance comes from the active table.
       const head = GLYPHS[spec.head]
+      const headAdvance = glyphsFor(strict).advance(spec.head)
       glyphs.push({ name: spec.head, x: cursor, y: baseline })
       if (spec.stemmed) {
         const [ax, ay] = head.anchors.stemUpSE ?? [head.width, 0]
@@ -1044,7 +1060,7 @@ function layoutTempo(x: number, tempo: Tempo): LayoutElement | null {
           thickness: ENGRAVING_DEFAULTS.stemThickness,
         })
       }
-      cursor += head.advance + 0.3
+      cursor += headAdvance + 0.3
     }
     texts.push({
       text: `= ${tempo.bpm}`,
@@ -1122,7 +1138,7 @@ function restGlyph(notated: Rational): { name: GlyphName; step: number; dots: nu
   return { name, step: 0, dots }
 }
 
-function layoutRest(rest: Rest, advance: number, x: number): LayoutElement {
+function layoutRest(rest: Rest, advance: number, x: number, strict = true): LayoutElement {
   // `x` and `y` occupy horizontal space but print nothing; a spacer prints nothing and
   // is not even a rest musically. Both still advance, so following notes stay put.
   const invisible = rest.kind === 'invisible' || rest.kind === 'invisibleMultiMeasure'
@@ -1132,7 +1148,7 @@ function layoutRest(rest: Rest, advance: number, x: number): LayoutElement {
   if (spec) {
     glyphs.push(glyphAt(spec.name, x, spec.step))
     if (spec.dots > 0) {
-      const dotX = x + GLYPHS[spec.name].width + ENGRAVE.dotGap
+      const dotX = x + glyphsFor(strict).width(spec.name) + ENGRAVE.dotGap
       glyphs.push(...dotGlyphs(spec.dots, dotX, spec.step, new Set()))
     }
   }
@@ -1326,7 +1342,11 @@ function layoutNoteheads(
   // The style picks the SHAPE; `spec` still decides filled-vs-open, dots, stem and flags,
   // so a harmonic eighth is a filled diamond with a flag.
   const headName = styledHead(spec.head, event)
+  // The OUTLINE stays Bravura's — anchors are a property of the shape — while the
+  // metrics come from the active table, so strict spaces at abcjs's widths.
   const head = GLYPHS[headName]
+  const headAdvance = glyphsFor(strict).advance(headName)
+  const headInk = glyphsFor(strict).width(headName)
   const glyphs: PlacedGlyph[] = []
   const lines: PlacedLine[] = []
 
@@ -1398,7 +1418,8 @@ function layoutNoteheads(
   const accidentalWidth =
     accidentals.length === 0
       ? 0
-      : Math.max(...accidentals.map((a) => GLYPHS[a.glyph].advance)) + ENGRAVE.accidentalGap
+      : Math.max(...accidentals.map((a) => glyphsFor(strict).advance(a.glyph))) +
+        ENGRAVE.accidentalGap
 
   for (const a of accidentals)
     glyphs.push({ ...glyphAt(a.glyph, noteX, a.step), role: 'accidental' })
@@ -1414,7 +1435,7 @@ function layoutNoteheads(
   for (const step of ordered) {
     shifted = previous !== null && Math.abs(step - previous) === 1 ? !shifted : false
     // With an up stem the displaced head goes right of it; with a down stem, left.
-    offsets.set(step, shifted ? (up ? head.width : -head.width) : 0)
+    offsets.set(step, shifted ? (up ? headInk : -headInk) : 0)
     previous = step
   }
 
@@ -1426,14 +1447,14 @@ function layoutNoteheads(
       // `steps` is sorted ascending, so the index IS the chord position from the bottom.
       ...(steps.length > 1 ? { chordPos: position + 1 } : {}),
     })
-    lines.push(...ledgerLines(step, headX + dx, head.width))
+    lines.push(...ledgerLines(step, headX + dx, headInk))
   }
 
   // Dots align in one column right of the WIDEST extent, so a chord's dots line up
   // rather than stepping in and out with each displaced notehead.
   let dotWidth = 0
   if (spec.dots > 0) {
-    const rightmost = headX + Math.max(0, ...[...offsets.values()]) + head.width
+    const rightmost = headX + Math.max(0, ...[...offsets.values()]) + headInk
     const dotX = rightmost + ENGRAVE.dotGap
     const taken = new Set<number>()
     for (const step of steps) glyphs.push(...dotGlyphs(spec.dots, dotX, step, taken))
@@ -1442,7 +1463,7 @@ function layoutNoteheads(
 
   if (spec.stemmed) {
     const anchor = up ? head.anchors.stemUpSE : head.anchors.stemDownNW
-    const [ax, ay] = anchor ?? [up ? head.width : 0, 0]
+    const [ax, ay] = anchor ?? [up ? headInk : 0, 0]
     // headX, not x: an accidental shifts the noteheads, and the stem follows them.
     const stemX = headX + ax
     // The stem starts at the head nearest its own end and runs past the far one, so a
@@ -1478,7 +1499,7 @@ function layoutNoteheads(
     }
   }
 
-  const texts = event === null ? [] : noteText(event, headX, head.width, strict)
+  const texts = event === null ? [] : noteText(event, headX, headInk, strict)
   if (event !== null && event.type !== 'rest') {
     texts.push(...decorationTexts(event.decorations, headX, head.width))
   }
@@ -1513,7 +1534,7 @@ function layoutNoteheads(
  * Drawing them from parts rather than as six special cases means the spacing constants
  * (all from the font) apply uniformly.
  */
-function layoutBar(x: number, kind: Barline): LayoutElement {
+function layoutBar(x: number, kind: Barline, strict = true): LayoutElement {
   const thin = ENGRAVING_DEFAULTS.thinBarlineThickness
   const thick = ENGRAVING_DEFAULTS.thickBarlineThickness
   const gap = ENGRAVING_DEFAULTS.barlineSeparation
@@ -1543,7 +1564,7 @@ function layoutBar(x: number, kind: Barline): LayoutElement {
     // ~1.98 spaces ABOVE its origin — so placing it at step 0 puts the dots up near the
     // top line. Centring from the bounding box rather than hardcoding the offset means a
     // different SMuFL font with a different anchor still lands correctly.
-    const glyph = GLYPHS.repeatDots
+    const glyph = glyphsFor(strict).get('repeatDots') ?? GLYPHS.repeatDots
     glyphs.push({ name: 'repeatDots', x: cursor, y: -(glyph.y + glyph.height / 2) })
     cursor += glyph.width + dotGap
   }
@@ -1825,7 +1846,7 @@ function decorationGlyphs(
     if (spec === undefined) continue // unmapped — counted by the test, never guessed at
 
     const glyph = spec.place === 'articulation' ? (artAbove ? spec.above : spec.below) : spec.above
-    const centre = headX + headWidth / 2 - GLYPHS[glyph].width / 2
+    const centre = headX + headWidth / 2 - glyphsFor(strict).width(glyph) / 2
 
     if (spec.place === 'articulation') {
       out.push({ name: glyph, x: centre, y: stepToY(artStep), role: 'decoration' })
@@ -1838,8 +1859,8 @@ function decorationGlyphs(
       // which is where a rolled chord is read from.
       const onStem =
         name === 'arpeggio'
-          ? headX - GLYPHS[glyph].width - ENGRAVE.spannerGap
-          : headX + headWidth / 2 - GLYPHS[glyph].width / 2
+          ? headX - glyphsFor(strict).width(glyph) - ENGRAVE.spannerGap
+          : headX + headWidth / 2 - glyphsFor(strict).width(glyph) / 2
       const tip = stemUp
         ? Math.max(topStep, 4) + ENGRAVE.stemLength
         : Math.min(bottomStep, -4) - ENGRAVE.stemLength
@@ -2826,7 +2847,7 @@ function layoutMeasure(
   const openingBarAt = measure.openingBarlineSourceRange?.start ?? Number.POSITIVE_INFINITY
   const drawKeyChange = (): void => {
     if (measure.keyChange === null || keyInForce === null) return
-    const change = layoutKeyChange(x, keyInForce, measure.keyChange, clef)
+    const change = layoutKeyChange(x, keyInForce, measure.keyChange, clef, strict)
     if (change === null) return
     elements.push(change)
     x += change.width + ENGRAVE.prefixGap
@@ -2836,7 +2857,7 @@ function layoutMeasure(
     // barline from the previous measure's closer.
     if (measure.openingBarline === null) return
     x += ENGRAVE.barGap
-    elements.push(layoutBar(x, measure.openingBarline))
+    elements.push(layoutBar(x, measure.openingBarline, strict))
     x += ENGRAVE.barGap
   }
   if (keyChangeAt < openingBarAt) {
@@ -2915,7 +2936,7 @@ function layoutMeasure(
   if (measure.closingBarline !== null) {
     x += ENGRAVE.barGap
     closingBarIndex = elements.length
-    elements.push(layoutBar(x, measure.closingBarline))
+    elements.push(layoutBar(x, measure.closingBarline, strict))
     x += ENGRAVE.barGap
   }
 
@@ -3063,12 +3084,12 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       const elements: LayoutElement[] = []
       let x = ENGRAVE.marginX
 
-      const clefElement = layoutClef(x, clef)
+      const clefElement = layoutClef(x, clef, strict)
       if (clefElement !== null) {
         elements.push(clefElement)
         x += clefElement.width + ENGRAVE.prefixGap
       }
-      const keySig = layoutKeySignature(x, score.key, clef)
+      const keySig = layoutKeySignature(x, score.key, clef, strict)
       if (keySig !== null) {
         elements.push(keySig)
         x += keySig.width + ENGRAVE.prefixGap
@@ -3083,7 +3104,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       // its own clef, key and meter, which are per-staff by definition.
       // Zero width, so it does not advance the cursor.
       if (withMeter && topStaff && score.tempo !== null) {
-        const tempo = layoutTempo(x, score.tempo)
+        const tempo = layoutTempo(x, score.tempo, strict)
         if (tempo !== null) elements.push(tempo)
       }
       return { elements, width: x }
@@ -3442,7 +3463,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         heading.length === 0
           ? staff.elements
           : (() => {
-              const musicTop = verticalExtent(musicOnly, staff.beams).top
+              const musicTop = verticalExtent(musicOnly, staff.beams, strict).top
               // The block's own height, not its last descender: abcjs advances by a
               // rounded line height per row and that trailing space is part of the block.
               const blockBottom = Math.max(...heading.map((el) => el.blockHeight ?? 0))
@@ -3456,7 +3477,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
                 ...musicOnly,
               ]
             })()
-      const extent = verticalExtent(positioned, staff.beams)
+      const extent = verticalExtent(positioned, staff.beams, strict)
       const stacked = cursor - extent.top
       // The separation is a minimum LINE-to-LINE distance, which is what abcjs measures:
       // `draw.js:86-89` works from each staff's overhang past its own outer lines, so
@@ -3514,7 +3535,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
   /** Absolute y of the BOTTOM staff line of the last system placed. */
   let previousBottomLine: number | null = null
   const placed = withCurves.map((system) => {
-    const height = systemHeight(system)
+    const height = systemHeight(system, strict)
     const staves = system.staves
     const topLineOffset = (staves[0]?.originY ?? 0) - STAFF_HALF_HEIGHT
     const bottomLineOffset = (staves[staves.length - 1]?.originY ?? 0) + STAFF_HALF_HEIGHT
@@ -3572,10 +3593,10 @@ export function layoutBook(scores: readonly Score[], options: LayoutOptions = {}
 }
 
 /** A system's full vertical extent, from the top of its first staff's content down. */
-function systemHeight(system: LayoutSystem): number {
+function systemHeight(system: LayoutSystem, strict = true): number {
   let bottom = 0
   for (const staff of system.staves) {
-    const extent = verticalExtent(staff.elements, staff.beams)
+    const extent = verticalExtent(staff.elements, staff.beams, strict)
     bottom = Math.max(bottom, staff.originY + extent.bottom)
   }
   return bottom
@@ -3697,6 +3718,7 @@ function topTextBlock(
 function verticalExtent(
   elements: readonly LayoutElement[],
   beams: readonly PlacedLine[] = [],
+  strict = true,
 ): { top: number; bottom: number } {
   // The staff itself is always present, spanning steps 4 to -4.
   let top = stepToY(4)
@@ -3713,7 +3735,10 @@ function verticalExtent(
 
   for (const el of elements) {
     for (const g of el.glyphs) {
-      const glyph = GLYPHS[g.name]
+      // The ACTIVE table's box: abcjs's clef reaches 4.84 staff spaces above its origin
+      // where Bravura's reaches 4.39, and that difference is space reserved above the
+      // staff — visible as the last of the vertical offset on a title-only tune.
+      const glyph = glyphsFor(strict).get(g.name) ?? GLYPHS[g.name]
       include(g.y + glyph.y, g.y + glyph.y + glyph.height)
     }
     for (const line of el.lines) {
@@ -3772,7 +3797,7 @@ function layoutEvent(
       strict,
     )
   }
-  return layoutRest(event, advance, x)
+  return layoutRest(event, advance, x, strict)
 }
 
 /**
