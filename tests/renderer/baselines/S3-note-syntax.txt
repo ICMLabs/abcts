@@ -1458,17 +1458,17 @@ system 3 width=30.780 originY=65.233
       line  28.860,-2.000 -> 28.860,2.000 t=0.160
       line  29.590,-2.000 -> 29.590,2.000 t=0.500
 tune 9
-bounds  width=69.308 height=23.052 top=0.000
+bounds  width=90.000 height=23.052 top=0.000
 systems 1
-system 0 width=69.308 originY=0.000
+system 0 width=90.000 originY=0.000
   staff 0 originY=15.420
-    staffline 0.000,2.000 -> 69.308,2.000 t=0.130
-    staffline 0.000,1.000 -> 69.308,1.000 t=0.130
-    staffline 0.000,0.000 -> 69.308,0.000 t=0.130
-    staffline 0.000,-1.000 -> 69.308,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 69.308,-2.000 t=0.130
+    staffline 0.000,2.000 -> 90.000,2.000 t=0.130
+    staffline 0.000,1.000 -> 90.000,1.000 t=0.130
+    staffline 0.000,0.000 -> 90.000,0.000 t=0.130
+    staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  22.431,-9.500 size=2.400 bold "S3-10 Multi-Measure Rests"
+      text  32.777,-9.500 size=2.400 bold "S3-10 Multi-Measure Rests"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     timeSignature x=4.684 w=1.880
@@ -1478,36 +1478,36 @@ system 0 width=69.308 originY=0.000
       glyph noteheadBlack 7.564,3.000
       line  7.164,3.000 -> 9.144,3.000 t=0.160
       line  8.744,2.832 -> 8.744,-0.500 t=0.120
-    note@-5 x=13.038 w=5.474
-      glyph noteheadBlack 13.038,2.500
-      line  14.218,2.332 -> 14.218,-1.000 t=0.120
-    note@-4 x=18.513 w=5.474
-      glyph noteheadBlack 18.513,2.000
-      line  19.693,1.832 -> 19.693,-1.500 t=0.120
-    note@-3 x=23.987 w=5.474
-      glyph noteheadBlack 23.987,1.500
-      line  25.167,1.332 -> 25.167,-2.000 t=0.120
-    bar x=30.462 w=0.160
-      line  30.542,-2.000 -> 30.542,2.000 t=0.160
-    rest x=31.462 w=10.949
-      glyph restWhole 31.462,-1.000
-    bar x=43.410 w=0.160
-      line  43.490,-2.000 -> 43.490,2.000 t=0.160
-    note@-2 x=44.410 w=5.474
-      glyph noteheadBlack 44.410,1.000
-      line  45.590,0.832 -> 45.590,-2.500 t=0.120
-    note@-1 x=49.885 w=5.474
-      glyph noteheadBlack 49.885,0.500
-      line  51.065,0.332 -> 51.065,-3.000 t=0.120
-    note@0 x=55.359 w=5.474
-      glyph noteheadBlack 55.359,0.000
-      line  55.359,0.168 -> 55.359,3.500 t=0.120
-    note@1 x=60.834 w=5.474
-      glyph noteheadBlack 60.834,-0.500
-      line  60.834,-0.332 -> 60.834,3.000 t=0.120
-    bar x=67.308 w=1.060
-      line  67.388,-2.000 -> 67.388,2.000 t=0.160
-      line  68.118,-2.000 -> 68.118,2.000 t=0.500
+    note@-5 x=15.074 w=5.474
+      glyph noteheadBlack 15.074,2.500
+      line  16.254,2.332 -> 16.254,-1.000 t=0.120
+    note@-4 x=22.583 w=5.474
+      glyph noteheadBlack 22.583,2.000
+      line  23.763,1.832 -> 23.763,-1.500 t=0.120
+    note@-3 x=30.093 w=5.474
+      glyph noteheadBlack 30.093,1.500
+      line  31.273,1.332 -> 31.273,-2.000 t=0.120
+    bar x=38.602 w=0.160
+      line  38.682,-2.000 -> 38.682,2.000 t=0.160
+    rest x=39.602 w=10.949
+      glyph restWhole 39.602,-1.000
+    bar x=55.962 w=0.160
+      line  56.042,-2.000 -> 56.042,2.000 t=0.160
+    note@-2 x=56.962 w=5.474
+      glyph noteheadBlack 56.962,1.000
+      line  58.142,0.832 -> 58.142,-2.500 t=0.120
+    note@-1 x=64.471 w=5.474
+      glyph noteheadBlack 64.471,0.500
+      line  65.651,0.332 -> 65.651,-3.000 t=0.120
+    note@0 x=71.981 w=5.474
+      glyph noteheadBlack 71.981,0.000
+      line  71.981,0.168 -> 71.981,3.500 t=0.120
+    note@1 x=79.490 w=5.474
+      glyph noteheadBlack 79.490,-0.500
+      line  79.490,-0.332 -> 79.490,3.000 t=0.120
+    bar x=88.000 w=1.060
+      line  88.080,-2.000 -> 88.080,2.000 t=0.160
+      line  88.810,-2.000 -> 88.810,2.000 t=0.500
 tune 10
 bounds  width=90.000 height=41.076 top=0.000
 systems 2
@@ -1588,17 +1588,17 @@ system 1 width=26.375 originY=26.052
     bar x=24.375 w=0.160
       line  24.455,-2.000 -> 24.455,2.000 t=0.160
 tune 11
-bounds  width=63.769 height=23.052 top=0.000
+bounds  width=90.000 height=23.052 top=0.000
 systems 1
-system 0 width=63.769 originY=0.000
+system 0 width=90.000 originY=0.000
   staff 0 originY=15.420
-    staffline 0.000,2.000 -> 63.769,2.000 t=0.130
-    staffline 0.000,1.000 -> 63.769,1.000 t=0.130
-    staffline 0.000,0.000 -> 63.769,0.000 t=0.130
-    staffline 0.000,-1.000 -> 63.769,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 63.769,-2.000 t=0.130
+    staffline 0.000,2.000 -> 90.000,2.000 t=0.130
+    staffline 0.000,1.000 -> 90.000,1.000 t=0.130
+    staffline 0.000,0.000 -> 90.000,0.000 t=0.130
+    staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  22.469,-9.500 size=2.400 bold "S3-12 Rests and Bars"
+      text  35.585,-9.500 size=2.400 bold "S3-12 Rests and Bars"
     clef x=1.000 w=2.684
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=2.142
@@ -1610,36 +1610,36 @@ system 0 width=63.769 originY=0.000
     note@-5 x=10.706 w=5.474
       glyph noteheadBlack 10.706,2.500
       line  11.886,2.332 -> 11.886,-1.000 t=0.120
-    note@-4 x=16.180 w=5.474
-      glyph noteheadBlack 16.180,2.000
-      line  17.360,1.832 -> 17.360,-1.500 t=0.120
-    note@-3 x=21.655 w=5.474
-      glyph noteheadBlack 21.655,1.500
-      line  22.835,1.332 -> 22.835,-2.000 t=0.120
-    bar x=28.129 w=0.160
-      line  28.209,-2.000 -> 28.209,2.000 t=0.160
-    rest x=29.129 w=7.742
-      glyph restHalf 29.129,0.000
-    note@-5 x=36.871 w=5.474
-      glyph noteheadBlack 36.871,2.500
-      line  38.051,2.332 -> 38.051,-1.000 t=0.120
-    bar x=43.346 w=1.780
-      glyph repeatDots 44.566,1.976
-      line  43.596,-2.000 -> 43.596,2.000 t=0.500
-      line  44.326,-2.000 -> 44.326,2.000 t=0.160
-    note@-3 x=44.346 w=5.474
-      glyph noteheadBlack 44.346,1.500
-      line  45.526,1.332 -> 45.526,-2.000 t=0.120
-    note@-1 x=49.820 w=5.474
-      glyph noteheadBlack 49.820,0.500
-      line  51.000,0.332 -> 51.000,-3.000 t=0.120
-    note@2 x=55.294 w=5.474
-      glyph noteheadBlack 55.294,-1.000
-      line  55.294,-0.832 -> 55.294,2.500 t=0.120
-    bar x=61.769 w=1.620
-      glyph repeatDots 61.769,1.976
-      line  62.409,-2.000 -> 62.409,2.000 t=0.160
-      line  63.139,-2.000 -> 63.139,2.000 t=0.500
+    note@-4 x=19.275 w=5.474
+      glyph noteheadBlack 19.275,2.000
+      line  20.455,1.832 -> 20.455,-1.500 t=0.120
+    note@-3 x=27.843 w=5.474
+      glyph noteheadBlack 27.843,1.500
+      line  29.023,1.332 -> 29.023,-2.000 t=0.120
+    bar x=37.412 w=0.160
+      line  37.492,-2.000 -> 37.492,2.000 t=0.160
+    rest x=38.412 w=7.742
+      glyph restHalf 38.412,0.000
+    note@-5 x=50.644 w=5.474
+      glyph noteheadBlack 50.644,2.500
+      line  51.824,2.332 -> 51.824,-1.000 t=0.120
+    bar x=60.294 w=1.780
+      glyph repeatDots 61.514,1.976
+      line  60.544,-2.000 -> 60.544,2.000 t=0.500
+      line  61.274,-2.000 -> 61.274,2.000 t=0.160
+    note@-3 x=61.294 w=5.474
+      glyph noteheadBlack 61.294,1.500
+      line  62.474,1.332 -> 62.474,-2.000 t=0.120
+    note@-1 x=69.863 w=5.474
+      glyph noteheadBlack 69.863,0.500
+      line  71.043,0.332 -> 71.043,-3.000 t=0.120
+    note@2 x=78.431 w=5.474
+      glyph noteheadBlack 78.431,-1.000
+      line  78.431,-0.832 -> 78.431,2.500 t=0.120
+    bar x=88.000 w=1.620
+      glyph repeatDots 88.000,1.976
+      line  88.640,-2.000 -> 88.640,2.000 t=0.160
+      line  89.370,-2.000 -> 89.370,2.000 t=0.500
 tune 12
 bounds  width=90.000 height=41.076 top=0.000
 systems 2

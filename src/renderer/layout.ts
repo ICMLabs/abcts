@@ -206,6 +206,18 @@ const ENGRAVE = {
    * something unreadable; *Behind Bars* leaves such a line short instead.
    */
   maxJustifyStretch: 1.6,
+  /**
+   * How full a LAST system must already be before it is justified to the page.
+   *
+   * 0.66, taken from abcjs `write/layout/layout.js:102`, where it is the threshold under
+   * which a last line keeps its natural width. Not a taste judgement — matching it is
+   * what puts a single-system tune's notes where abcjs puts them, and every single-tune
+   * fixture in the corpus is a last system.
+   *
+   * abcjs also exposes `%%stretchlast` to override it with a "lack" fraction. Not
+   * implemented; no fixture sets it.
+   */
+  lastSystemFill: 0.66,
   /** Vertical gap between staves WITHIN one system — tighter than between systems, so
    * the voices of one score read as belonging together. PROVISIONAL. */
   staffGap: 1.5,
@@ -3013,7 +3025,21 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     const natural = columnWidths.slice(span.start, span.end).reduce((sum, w) => sum + w, 0)
     const available = systemWidth - head - ENGRAVE.marginX
     const isLast = systemIndex === spans.length - 1
-    const wanted = natural > 0 && !isLast ? available / natural : 1
+    // The last system is stretched only when it is ALREADY most of the way across.
+    //
+    // "Never stretch the last system" was too blunt and was the single largest source of
+    // horizontal divergence from abcjs — bigger than line breaking. abcjs's rule is in
+    // `write/layout/layout.js:99`: a last line under `LAST_SYSTEM_FILL` of the target is
+    // left at its natural width, and anything above it is justified like any other. Every
+    // single-tune fixture is a last system, so we justified NONE of them where abcjs
+    // justified most: `vree-compound-meter` sat 183px out, `center-text` 219px.
+    //
+    // `simple-c` is the case that makes the threshold visible rather than arbitrary — it
+    // fills about 60% and NEITHER engine stretches it, which is why its notes already
+    // matched to the pixel while its neighbours did not.
+    const fill = (natural + head) / systemWidth
+    const stretchLast = fill >= ENGRAVE.lastSystemFill
+    const wanted = natural > 0 && (!isLast || stretchLast) ? available / natural : 1
     const justify = wanted > 1 && wanted <= ENGRAVE.maxJustifyStretch ? wanted : 1
 
     const staves: LayoutStaff[] = plans.map((plan, voiceIndex) => {
