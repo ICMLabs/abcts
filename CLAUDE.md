@@ -94,8 +94,18 @@ is reproducing their prose, tables or figures verbatim into our docs — summari
 This repo pushes to a remote, so a verbatim quote here is redistribution.
 
 ## Remote
-`origin` is a private backup remote on the ICMLabs GitHub org. It exists for off-machine
-backup, not distribution — this repo is not published. Push at session checkpoints; there
+`origin` is PUBLIC on the ICMLabs GitHub org, as of 2026-07-22. It was a private backup
+remote before that and several notes still assume so — the clean-room rule in particular
+reasons from "this repo pushes to a remote, so a verbatim quote here is redistribution",
+which is now sharper rather than weaker.
+
+Two consequences that are live rather than theoretical:
+- **Licence notices are obligations now.** `glyphs-abcjs.ts` reproduces abcjs's glyph
+  table, which is a substantial portion of that Software, so it carries abcjs's full MIT
+  notice — not a source credit. `glyphs.ts` carries Bravura's OFL notice. `LICENSE` at the
+  repo root states abcts's own MIT and both third-party notices.
+- **Nothing GPL may be read into this repo**, and nothing from `abcDocs` (private) or the
+  reference library may be quoted verbatim. Push at session checkpoints; there
 is no need to push after every commit.
 
 **Never push `--force`, and never `pull --rebase` unattended.** If a push is rejected as
