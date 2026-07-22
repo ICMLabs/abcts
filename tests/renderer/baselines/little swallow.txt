@@ -1,8 +1,8 @@
 tune 0
-bounds  width=90.000 height=108.738 top=0.000
+bounds  width=90.000 height=68.738 top=0.000
 systems 5
 system 0 width=90.000 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -123,8 +123,8 @@ system 0 width=90.000 originY=0.000
       text  79.310,6.000 size=1.400 "里，"
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 1 width=90.000 originY=28.770
-  staff 0 originY=7.392
+system 1 width=90.000 originY=20.770
+  staff 0 originY=3.392
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -235,8 +235,8 @@ system 1 width=90.000 originY=28.770
       text  81.415,6.000 size=1.400 "天"
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 2 width=90.000 originY=49.512
-  staff 0 originY=7.392
+system 2 width=90.000 originY=33.512
+  staff 0 originY=3.392
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -344,8 +344,8 @@ system 2 width=90.000 originY=49.512
       text  81.374,6.000 size=1.400 "里"
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 3 width=90.000 originY=70.254
-  staff 0 originY=7.392
+system 3 width=90.000 originY=46.254
+  staff 0 originY=3.392
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -455,8 +455,8 @@ system 3 width=90.000 originY=70.254
       text  81.404,6.000 size=1.400 "了"
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 4 width=90.000 originY=90.996
-  staff 0 originY=7.392
+system 4 width=90.000 originY=58.996
+  staff 0 originY=3.392
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130

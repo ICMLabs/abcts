@@ -1,8 +1,8 @@
 tune 0
-bounds  width=58.230 height=23.052 top=0.000
+bounds  width=58.230 height=15.052 top=0.000
 systems 1
 system 0 width=58.230 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 58.230,2.000 t=0.130
     staffline 0.000,1.000 -> 58.230,1.000 t=0.130
     staffline 0.000,0.000 -> 58.230,0.000 t=0.130
@@ -46,10 +46,10 @@ system 0 width=58.230 originY=0.000
       line  55.375,-2.000 -> 55.375,2.000 t=0.160
       line  56.105,-2.000 -> 56.105,2.000 t=0.500
 tune 1
-bounds  width=58.230 height=23.052 top=0.000
+bounds  width=58.230 height=15.052 top=0.000
 systems 1
 system 0 width=58.230 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 58.230,2.000 t=0.130
     staffline 0.000,1.000 -> 58.230,1.000 t=0.130
     staffline 0.000,0.000 -> 58.230,0.000 t=0.130
@@ -96,10 +96,10 @@ system 0 width=58.230 originY=0.000
       line  55.375,-2.000 -> 55.375,2.000 t=0.160
       line  56.105,-2.000 -> 56.105,2.000 t=0.500
 tune 2
-bounds  width=58.230 height=23.052 top=0.000
+bounds  width=58.230 height=15.052 top=0.000
 systems 1
 system 0 width=58.230 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 58.230,2.000 t=0.130
     staffline 0.000,1.000 -> 58.230,1.000 t=0.130
     staffline 0.000,0.000 -> 58.230,0.000 t=0.130
@@ -151,10 +151,10 @@ system 0 width=58.230 originY=0.000
       line  55.375,-2.000 -> 55.375,2.000 t=0.160
       line  56.105,-2.000 -> 56.105,2.000 t=0.500
 tune 3
-bounds  width=58.230 height=23.812 top=0.000
+bounds  width=58.230 height=15.812 top=0.000
 systems 1
 system 0 width=58.230 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 58.230,2.000 t=0.130
     staffline 0.000,1.000 -> 58.230,1.000 t=0.130
     staffline 0.000,0.000 -> 58.230,0.000 t=0.130
@@ -202,10 +202,10 @@ system 0 width=58.230 originY=0.000
       line  55.375,-2.000 -> 55.375,2.000 t=0.160
       line  56.105,-2.000 -> 56.105,2.000 t=0.500
 tune 4
-bounds  width=58.230 height=65.528 top=0.000
+bounds  width=58.230 height=41.528 top=0.000
 systems 3
 system 0 width=58.230 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 58.230,2.000 t=0.130
     staffline 0.000,1.000 -> 58.230,1.000 t=0.130
     staffline 0.000,0.000 -> 58.230,0.000 t=0.130
@@ -249,8 +249,8 @@ system 0 width=58.230 originY=0.000
       text  46.219,-5.000 size=1.400 italic "D.S. al Coda"
     bar x=55.295 w=0.160
       line  55.375,-2.000 -> 55.375,2.000 t=0.160
-system 1 width=55.350 originY=26.052
-  staff 0 originY=11.092
+system 1 width=55.350 originY=18.052
+  staff 0 originY=7.092
     staffline 0.000,2.000 -> 55.350,2.000 t=0.130
     staffline 0.000,1.000 -> 55.350,1.000 t=0.130
     staffline 0.000,0.000 -> 55.350,0.000 t=0.130
@@ -289,8 +289,8 @@ system 1 width=55.350 originY=26.052
       text  43.465,-5.000 size=1.400 italic "D.C. al Fine"
     bar x=52.415 w=0.160
       line  52.495,-2.000 -> 52.495,2.000 t=0.160
-system 2 width=55.350 originY=47.776
-  staff 0 originY=10.120
+system 2 width=55.350 originY=31.776
+  staff 0 originY=6.120
     staffline 0.000,2.000 -> 55.350,2.000 t=0.130
     staffline 0.000,1.000 -> 55.350,1.000 t=0.130
     staffline 0.000,0.000 -> 55.350,0.000 t=0.130
@@ -331,10 +331,10 @@ system 2 width=55.350 originY=47.776
       line  52.495,-2.000 -> 52.495,2.000 t=0.160
       line  53.225,-2.000 -> 53.225,2.000 t=0.500
 tune 5
-bounds  width=58.230 height=23.052 top=0.000
+bounds  width=58.230 height=15.052 top=0.000
 systems 1
 system 0 width=58.230 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 58.230,2.000 t=0.130
     staffline 0.000,1.000 -> 58.230,1.000 t=0.130
     staffline 0.000,0.000 -> 58.230,0.000 t=0.130

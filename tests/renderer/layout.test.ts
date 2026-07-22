@@ -28,6 +28,7 @@ import {
   middleLineIndex,
   naturalWidth,
   noteGlyph,
+  TEXT_ASCENT,
 } from '../../src/renderer/layout.js'
 import { CHAR_ADVANCE, FALLBACK_ADVANCE } from '../../src/renderer/text-metrics.js'
 
@@ -1051,10 +1052,17 @@ describe('tunebooks', () => {
     doc.systems.forEach((system, i) => {
       const title = system.staves[0]?.elements.find((e) => e.type === 'title')
       expect(title?.texts[0]?.text, `tune ${i}`).toBe(`Tune ${i + 1}`)
-      // Absolute top of the title's ink must be on the page.
+      // Absolute top of the title's ink must be on the page. Measured with the SAME
+      // ascent the layout reserves — `TEXT_ASCENT` — not a stricter one invented here.
+      // Asserting a full em while the extent reserves 0.8 reported a title clipped by
+      // 0.48 spaces that nothing in the renderer actually clips, and the value is the
+      // one that matches abcjs's measured text: see the constant.
       const text = title?.texts[0]
       const top = system.originY + (system.staves[0]?.originY ?? 0) + (text?.y ?? 0)
-      expect(top - (text?.size ?? 0), `tune ${i} title is clipped`).toBeGreaterThanOrEqual(0)
+      expect(
+        top - (text?.size ?? 0) * TEXT_ASCENT,
+        `tune ${i} title is clipped`,
+      ).toBeGreaterThanOrEqual(doc.top)
     })
   })
 

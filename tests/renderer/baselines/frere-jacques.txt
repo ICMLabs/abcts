@@ -1,8 +1,8 @@
 tune 0
-bounds  width=90.000 height=45.400 top=0.000
+bounds  width=90.000 height=29.400 top=0.000
 systems 2
 system 0 width=90.000 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -137,8 +137,8 @@ system 0 width=90.000 originY=0.000
       text  81.059,4.000 size=1.400 "vous?"
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 1 width=90.000 originY=26.770
-  staff 0 originY=10.280
+system 1 width=90.000 originY=18.770
+  staff 0 originY=6.280
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130

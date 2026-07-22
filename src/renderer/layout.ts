@@ -69,8 +69,17 @@ const ENGRAVE = {
    * so it kept its natural width where abcjs justified it, by one thousandth.
    */
   marginX: 15 / 7.75,
-  /** Vertical padding above and below the staff. PROVISIONAL. */
-  marginY: 4.0,
+  /**
+   * Vertical padding above and below a staff's ink.
+   *
+   * ZERO, because abcjs and abcMusicKit v1 have none: v1 advances its cursor by
+   * `(staff.top - staff.bottom) * STEP` — the pitch extent of what is actually drawn —
+   * and relies on a MINIMUM separation to keep systems apart (`SVGDraw.swift`
+   * `addStaffPadding`, against `draw.js:84-92`). A per-staff margin adds room every time
+   * instead, which accumulates: `ragtime-nightingale` has 46 systems and carried 987px of
+   * it. Was 4.0 — 31px on each side of every staff.
+   */
+  marginY: 0,
   /** Gap after a clef or meter before the next element. PROVISIONAL. */
   prefixGap: 1.0,
   /**
@@ -149,55 +158,13 @@ const ENGRAVE = {
    * `spacing.music` 7.56 above the first staff (`write/renderer.js:94`). That 30px is
    * the whole of the vertical offset every fixture's noteheads carry.
    *
-   * TWO ATTEMPTS MEASURED, NEITHER SHIPPED. Recorded together because it is the PAIR
-   * that localises the remaining problem.
+   * MEASURED AND LEFT ALONE. Setting this to 11.12 makes the gap exactly abcjs's, but
+   * the 30px it was correcting turned out to be `marginY` — 31px of per-staff padding
+   * abcjs does not have — and removing that fixed the gap without touching this. Six
+   * fixtures went to a y offset of ~0.5px with `titleStep` untouched.
    *
-   * 1. As a constant. `titleStep: 11.12` puts the gap at exactly 27.6px and drives SIX
-   *    fixtures to a y offset of exactly 0.0 — `simple-c`, `twinkle`, `vree-grace-notes`,
-   *    `vree-ties-across-bars`, `score-reorder-shared`, with `vree-sharps` at -0.3. The
-   *    plain single-staff case becomes pixel-exact. Eight fixtures with content ABOVE the
-   *    staff regress by a uniform ~5.3px, and `chord-grid` by 14.3.
-   *
-   * 2. As abcjs's actual model, which abcMusicKit v1 reproduces byte for byte and cites
-   *    line by line (`SVGDraw.swift`, against `draw.js:14-17`): `moveY(padding.top)`,
-   *    then the top-text BLOCK whose height is whatever its contents need, then
-   *    `moveY(spacing.music)`, then the music. The key point is that `spacing.music`
-   *    separates the text from the TOP OF THE MUSIC — which already includes a tempo
-   *    mark, part label or annotation — and NOT from the staff line.
-   *
-   *    Implemented by placing the title from the music extent instead of from the middle
-   *    line, it fixes exactly what attempt 1 broke: `program-127-test` -56.9 -> -4.2,
-   *    `full-song-template` -85.4 -> -32.7, `frere-jacques` -227.2 -> -174.5,
-   *    `stacked-annotations` -10.4 -> 8.5. And it regresses the MULTI-STAFF fixtures:
-   *    `ave-verum-corpus` 70.0 -> 103.7, `two-voice-invention` 38.1 -> 90.8,
-   *    `zocharti-loch` 40.2 -> 92.9. 15 better, 9 worse, mean |offset| flat.
-   *
-   * 3. Model PLUS abcjs's separations (`systemStaffSeparation` 48 within a system,
-   *    `staffSeparation` 61.33 between them, both from `write/renderer.js`). Result
-   *    IDENTICAL to attempt 2 to the decimal — the minimums never bind, because our
-   *    natural stacking is already looser than either of them.
-   *
-   *    That is the finding. `marginY` pads EVERY staff extent by 4.0 spaces on each
-   *    side — 31px a side — where abcjs adds no per-staff margin at all and lets the
-   *    minimum supply the spacing (`draw.js:84-92` pads only when the natural ink
-   *    clearance falls short). We are not too tight anywhere; we are too loose
-   *    everywhere, and a minimum cannot fix loose.
-   *
-   * 4. `marginY` 4.0 -> 0.5 alone moves the mean |y offset| from 73.8px to 54.1px, the
-   *    largest single move of the four, and collapses `ragtime-nightingale` from 987 to
-   *    -264 — 46 systems, so its error was accumulated padding. It also flips the sign
-   *    almost everywhere: we go from sitting too LOW to sitting too HIGH.
-   *
-   * ── WHERE THIS LEAVES IT ─────────────────────────────────────────────────────
-   * Ordered by size: per-staff padding (`marginY`) dominates, the title gap is worth
-   * ~30px, and the separations are currently inert. All three interact, and every
-   * attempt above was judged against ONE aggregate number, which is why four of them
-   * moved it around without settling it — that is constant-fitting, not modelling.
-   *
-   * The next attempt should measure the three terms SEPARATELY against abcjs — title
-   * baseline to music top, staff origin to staff origin within a system, system origin
-   * to system origin — and set each from its own constant. Ganged together they cannot
-   * be told apart, and the aggregate will keep looking half-fixed whichever way it goes.
+   * Which is the lesson: the title was never mispositioned relative to the music. The
+   * MUSIC was carrying padding, and the title rode along on top of it.
    */
   titleStep: 19,
   /** First verse below the staff; further verses stack downward by `lyricLineStep`. */
@@ -267,6 +234,16 @@ const ENGRAVE = {
   /** Vertical gap between stacked systems. PROVISIONAL. */
   systemGap: 3.0,
   /**
+   * MINIMUM distance from one system's bottom staff line to the next system's top staff
+   * line — abcjs's `staffSeparation`, 61.33px at its 7.75px space
+   * (`write/renderer.js:105`).
+   *
+   * A minimum, not a fixed gap: `draw.js:84-92` computes the natural clearance and pads
+   * only when it falls short, so tall content takes the room it needs and no more.
+   * abcMusicKit v1 implements exactly this in `addStaffPadding`.
+   */
+  systemSeparation: 61.33 / 7.75,
+  /**
    * A system is justified to the full width unless stretching it by more than this
    * factor. A nearly-empty last-but-one line would otherwise be pulled apart into
    * something unreadable; *Behind Bars* leaves such a line short instead.
@@ -284,11 +261,14 @@ const ENGRAVE = {
    * implemented; no fixture sets it.
    */
   lastSystemFill: 0.66,
-  /** Vertical gap between staves WITHIN one system — tighter than between systems, so
-   * the voices of one score read as belonging together. PROVISIONAL, and a suspect: see
-   * the note on `titleStep`. abcjs has `systemStaffSeparation` 48 here and
-   * `staffSeparation` 61.33 between systems; we use one constant for both. */
+  /** Vertical gap between staves WITHIN one system, on top of the minimum separation. */
   staffGap: 1.5,
+  /**
+   * The same minimum, between staves WITHIN one system — abcjs's
+   * `systemStaffSeparation`, 48px (`write/renderer.js:109`). Tighter than between
+   * systems, which is what makes the staves of one score read as belonging together.
+   */
+  staffSeparation: 48 / 7.75,
 } as const
 
 // ─── Layout model ────────────────────────────────────────────────────────────
@@ -535,6 +515,24 @@ export interface Layout {
 
 /** Staff step → y, in staff spaces. Higher pitch is lower y. */
 export const stepToY = (step: number): number => -step * ENGRAVE.spacePerStep
+
+/** Middle line to outer staff line, in staff spaces — the staff is four spaces tall. */
+const STAFF_HALF_HEIGHT = 2
+
+/**
+ * Text box estimate, in multiples of the font size — the renderer's CONTRACT for how
+ * tall text is, since there are no real metrics and abcjs measures where we estimate.
+ *
+ * Exported because anything reserving space for text has to use the same numbers. A test
+ * that assumed a full em above the baseline while the extent reserved 0.8 reported a
+ * title clipped by 0.48 spaces that was not clipped by anything the renderer does.
+ *
+ * 0.8 is not a guess to be made safer: raising it to 1.0 moves every drawing 3.7px down
+ * and takes eight fixtures from a y offset of ~0.5px to ~3.2px against abcjs. It is the
+ * value that matches what abcjs's own measured text does.
+ */
+export const TEXT_ASCENT = 0.8
+export const TEXT_DESCENT = 0.25
 
 // ─── Pitch → staff position ──────────────────────────────────────────────────
 
@@ -3385,10 +3383,22 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     // Stack the staves, each measured from its own content so a staff with a tempo mark
     // or high ledger lines gets the room it needs and no more.
     let cursor = 0
+    /** Bottom staff LINE of the staff placed before this one, in system coordinates. */
+    let previousBottomLine: number | null = null
     const placed = merged.map((staff) => {
       const extent = verticalExtent(staff.elements, staff.beams)
-      const originY = cursor - extent.top
-      cursor += extent.bottom - extent.top + ENGRAVE.staffGap
+      const stacked = cursor - extent.top
+      // The separation is a minimum LINE-to-LINE distance, which is what abcjs measures:
+      // `draw.js:86-89` works from each staff's overhang past its own outer lines, so
+      // what it pads to is bottom-line to top-line. Comparing origins instead is short by
+      // however far the ink reaches beyond the lines — which is the part that varies, and
+      // it made the minimum silently never bind.
+      const originY =
+        previousBottomLine === null
+          ? stacked
+          : Math.max(stacked, previousBottomLine + ENGRAVE.staffSeparation + STAFF_HALF_HEIGHT)
+      previousBottomLine = originY + STAFF_HALF_HEIGHT
+      cursor = originY + extent.bottom + ENGRAVE.staffGap
       return { ...staff, staffLines: staffLinesFor(width), originY }
     })
 
@@ -3429,12 +3439,21 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     })),
   }))
 
-  // Stack the systems.
+  // Stack the systems, with the same line-to-line minimum the staves use.
   let cursor = 0
+  /** Absolute y of the BOTTOM staff line of the last system placed. */
+  let previousBottomLine: number | null = null
   const placed = withCurves.map((system) => {
     const height = systemHeight(system)
-    const originY = cursor
-    cursor += height + ENGRAVE.systemGap
+    const staves = system.staves
+    const topLineOffset = (staves[0]?.originY ?? 0) - STAFF_HALF_HEIGHT
+    const bottomLineOffset = (staves[staves.length - 1]?.originY ?? 0) + STAFF_HALF_HEIGHT
+    const originY =
+      previousBottomLine === null
+        ? cursor
+        : Math.max(cursor, previousBottomLine + ENGRAVE.systemSeparation - topLineOffset)
+    previousBottomLine = originY + bottomLineOffset
+    cursor = originY + height + ENGRAVE.systemGap
     return { ...system, originY }
   })
 
@@ -3523,7 +3542,7 @@ function verticalExtent(
     }
     // No text metrics available, so bound the box by the font size: ascenders reach
     // roughly 0.8 of it above the baseline and descenders 0.25 below.
-    for (const t of el.texts) include(t.y - t.size * 0.8, t.y + t.size * 0.25)
+    for (const t of el.texts) include(t.y - t.size * TEXT_ASCENT, t.y + t.size * TEXT_DESCENT)
   }
 
   return { top: top - ENGRAVE.marginY, bottom: bottom + ENGRAVE.marginY }

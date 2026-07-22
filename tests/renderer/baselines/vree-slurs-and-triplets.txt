@@ -1,8 +1,8 @@
 tune 0
-bounds  width=57.484 height=23.052 top=0.000
+bounds  width=57.484 height=15.052 top=0.000
 systems 1
 system 0 width=57.484 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 57.484,2.000 t=0.130
     staffline 0.000,1.000 -> 57.484,1.000 t=0.130
     staffline 0.000,0.000 -> 57.484,0.000 t=0.130

@@ -1,8 +1,8 @@
 tune 0
-bounds  width=32.333 height=23.052 top=0.000
+bounds  width=32.333 height=15.052 top=0.000
 systems 1
 system 0 width=32.333 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 32.333,2.000 t=0.130
     staffline 0.000,1.000 -> 32.333,1.000 t=0.130
     staffline 0.000,0.000 -> 32.333,0.000 t=0.130
@@ -30,10 +30,10 @@ system 0 width=32.333 originY=0.000
       glyph noteheadBlack 24.923,1.000
       line  26.103,0.832 -> 26.103,-2.500 t=0.120
 tune 1
-bounds  width=32.333 height=23.052 top=0.000
+bounds  width=32.333 height=15.052 top=0.000
 systems 1
 system 0 width=32.333 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 32.333,2.000 t=0.130
     staffline 0.000,1.000 -> 32.333,1.000 t=0.130
     staffline 0.000,0.000 -> 32.333,0.000 t=0.130
@@ -61,10 +61,10 @@ system 0 width=32.333 originY=0.000
       glyph noteheadBlack 24.923,1.000
       line  26.103,0.832 -> 26.103,-2.500 t=0.120
 tune 2
-bounds  width=32.333 height=23.052 top=0.000
+bounds  width=32.333 height=15.052 top=0.000
 systems 1
 system 0 width=32.333 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 32.333,2.000 t=0.130
     staffline 0.000,1.000 -> 32.333,1.000 t=0.130
     staffline 0.000,0.000 -> 32.333,0.000 t=0.130
@@ -92,10 +92,10 @@ system 0 width=32.333 originY=0.000
       glyph noteheadBlack 24.923,1.000
       line  26.103,0.832 -> 26.103,-2.500 t=0.120
 tune 3
-bounds  width=32.333 height=23.052 top=0.000
+bounds  width=32.333 height=15.052 top=0.000
 systems 1
 system 0 width=32.333 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 32.333,2.000 t=0.130
     staffline 0.000,1.000 -> 32.333,1.000 t=0.130
     staffline 0.000,0.000 -> 32.333,0.000 t=0.130
@@ -132,10 +132,10 @@ system 0 width=32.333 originY=0.000
       glyph noteheadBlack 24.923,1.000
       line  26.103,0.832 -> 26.103,-2.500 t=0.120
 tune 4
-bounds  width=32.618 height=23.052 top=0.000
+bounds  width=32.618 height=15.052 top=0.000
 systems 1
 system 0 width=32.618 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 32.618,2.000 t=0.130
     staffline 0.000,1.000 -> 32.618,1.000 t=0.130
     staffline 0.000,0.000 -> 32.618,0.000 t=0.130
@@ -169,10 +169,10 @@ system 0 width=32.618 originY=0.000
       glyph noteheadBlack 24.923,1.000
       line  26.103,0.832 -> 26.103,-2.500 t=0.120
 tune 5
-bounds  width=38.922 height=23.052 top=0.000
+bounds  width=38.922 height=15.052 top=0.000
 systems 1
 system 0 width=38.922 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 38.922,2.000 t=0.130
     staffline 0.000,1.000 -> 38.922,1.000 t=0.130
     staffline 0.000,0.000 -> 38.922,0.000 t=0.130
@@ -200,10 +200,10 @@ system 0 width=38.922 originY=0.000
       glyph noteheadBlack 24.923,1.000
       line  26.103,0.832 -> 26.103,-2.500 t=0.120
 tune 6
-bounds  width=32.333 height=23.052 top=0.000
+bounds  width=32.333 height=15.052 top=0.000
 systems 1
 system 0 width=32.333 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 32.333,2.000 t=0.130
     staffline 0.000,1.000 -> 32.333,1.000 t=0.130
     staffline 0.000,0.000 -> 32.333,0.000 t=0.130

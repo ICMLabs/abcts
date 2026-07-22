@@ -1,8 +1,8 @@
 tune 0
-bounds  width=25.919 height=23.052 top=0.000
+bounds  width=25.919 height=15.052 top=0.000
 systems 1
 system 0 width=25.919 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 25.919,2.000 t=0.130
     staffline 0.000,1.000 -> 25.919,1.000 t=0.130
     staffline 0.000,0.000 -> 25.919,0.000 t=0.130
@@ -18,10 +18,10 @@ system 0 width=25.919 originY=0.000
     note@-2 x=8.499 w=15.484
       glyph noteheadWhole 8.499,1.000
 tune 1
-bounds  width=25.971 height=21.420 top=0.000
+bounds  width=25.971 height=13.420 top=0.000
 systems 1
 system 0 width=25.971 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 25.971,2.000 t=0.130
     staffline 0.000,1.000 -> 25.971,1.000 t=0.130
     staffline 0.000,0.000 -> 25.971,0.000 t=0.130
@@ -40,10 +40,10 @@ system 0 width=25.971 originY=0.000
       line  8.151,-4.000 -> 10.639,-4.000 t=0.160
       line  8.151,-5.000 -> 10.639,-5.000 t=0.160
 tune 2
-bounds  width=25.971 height=21.960 top=0.000
+bounds  width=25.971 height=13.960 top=0.000
 systems 1
 system 0 width=25.971 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 25.971,2.000 t=0.130
     staffline 0.000,1.000 -> 25.971,1.000 t=0.130
     staffline 0.000,0.000 -> 25.971,0.000 t=0.130
@@ -61,10 +61,10 @@ system 0 width=25.971 originY=0.000
       line  8.151,-3.000 -> 10.639,-3.000 t=0.160
       line  8.151,-4.000 -> 10.639,-4.000 t=0.160
 tune 3
-bounds  width=26.031 height=21.420 top=0.000
+bounds  width=26.031 height=13.420 top=0.000
 systems 1
 system 0 width=26.031 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 26.031,2.000 t=0.130
     staffline 0.000,1.000 -> 26.031,1.000 t=0.130
     staffline 0.000,0.000 -> 26.031,0.000 t=0.130
@@ -81,10 +81,10 @@ system 0 width=26.031 originY=0.000
       glyph noteheadWhole 8.611,-3.000
       line  8.211,-3.000 -> 10.699,-3.000 t=0.160
 tune 4
-bounds  width=26.031 height=21.444 top=0.000
+bounds  width=26.031 height=13.444 top=0.000
 systems 1
 system 0 width=26.031 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 26.031,2.000 t=0.130
     staffline 0.000,1.000 -> 26.031,1.000 t=0.130
     staffline 0.000,0.000 -> 26.031,0.000 t=0.130
@@ -100,10 +100,10 @@ system 0 width=26.031 originY=0.000
     note@4 x=8.611 w=15.484
       glyph noteheadWhole 8.611,-2.000
 tune 5
-bounds  width=26.031 height=22.444 top=0.000
+bounds  width=26.031 height=14.444 top=0.000
 systems 1
 system 0 width=26.031 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 26.031,2.000 t=0.130
     staffline 0.000,1.000 -> 26.031,1.000 t=0.130
     staffline 0.000,0.000 -> 26.031,0.000 t=0.130
@@ -119,10 +119,10 @@ system 0 width=26.031 originY=0.000
     note@2 x=8.611 w=15.484
       glyph noteheadWhole 8.611,-1.000
 tune 6
-bounds  width=26.031 height=23.444 top=0.000
+bounds  width=26.031 height=15.444 top=0.000
 systems 1
 system 0 width=26.031 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 26.031,2.000 t=0.130
     staffline 0.000,1.000 -> 26.031,1.000 t=0.130
     staffline 0.000,0.000 -> 26.031,0.000 t=0.130
@@ -138,10 +138,10 @@ system 0 width=26.031 originY=0.000
     note@0 x=8.611 w=15.484
       glyph noteheadWhole 8.611,0.000
 tune 7
-bounds  width=90.000 height=60.556 top=0.000
+bounds  width=90.000 height=38.879 top=0.000
 systems 3
 system 0 width=90.000 originY=0.000
-  staff 0 originY=15.420
+  staff 0 originY=11.420
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -206,8 +206,8 @@ system 0 width=90.000 originY=0.000
       line  80.594,-2.332 -> 80.594,1.000 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 1 width=90.000 originY=26.052
-  staff 0 originY=8.120
+system 1 width=90.000 originY=19.214
+  staff 0 originY=4.120
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -267,8 +267,8 @@ system 1 width=90.000 originY=26.052
       line  80.384,-2.332 -> 80.384,1.000 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 2 width=90.000 originY=44.804
-  staff 0 originY=8.120
+system 2 width=90.000 originY=31.127
+  staff 0 originY=4.120
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
