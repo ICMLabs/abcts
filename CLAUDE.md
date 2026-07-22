@@ -119,8 +119,12 @@ DIFFS records what each turned out to be, and two of the three had a diagnosis t
 not survive being checked. Read § "Method notes that earned their place" before trusting
 any other recorded diagnosis in these documents.
 
-The next item is named there: **mid-tune `M:` and `K:` are parsed and drawn nowhere.**
-It needs the structural gate's prefix filter fixed before it can be scored.
+Since then: Gonzato §4.1.4 lyric continuation + per-segment `%%vocalfont`, and mid-tune
+`K:` with cancelling naturals. 397 tests.
+
+The next item is named there: **mid-tune `M:` is still drawn nowhere**, and it is blocked
+on the structural gate being FIRST TUNE ONLY — not on the prefix filter, which an earlier
+version of that note wrongly named as the blocker.
 
 Renders staff, all clefs, key signatures, meters, tempo marks, part labels, noteheads and
 chords with stems and ledger lines, accidentals, rests and barlines, grace notes, chord
@@ -155,7 +159,7 @@ but READ the diff and commit baselines with the code change.
 
 **The corpus has stopped driving the work** — with 41/41 reproduced on every axis there is
 no failing diff left to follow at all. What remains is known from the code: mid-tune `M:`
-and `K:` drawn nowhere,
+drawn nowhere,
 no text metrics, fixed lanes rather than a skyline, and page furniture beyond titles.
 See the checkpoint.
 

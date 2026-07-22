@@ -10,7 +10,7 @@ slices and for the lessons recorded in it. **Read this, then `ARCHITECTURE.md`, 
 
 | | |
 |---|---|
-| Tests | **376 passing** |
+| Tests | **397 passing** |
 | **Note content parity** | **41/41 — ZERO known divergences** |
 | **Lyrics** | **10/10 — zero divergences** |
 | **Beam grouping** | **41/41 — zero divergences** |
@@ -45,6 +45,11 @@ suite is `describe.skipIf`'d, since vitest fails a suite with no tests in it.
 - **Render structure 40/41 → 41/41**, and the last three diffs with it — see below.
 - **Compat DOM** — the claim "a stylesheet written against abcjs keeps working" is now
   measured against abcjs's own 29 golden SVGs, not asserted. 8 of 8 classes.
+- **Lyric continuation across interposed directives**, and per-segment `%%vocalfont` —
+  Gonzato §4.1.4. `I:` is now `%%` (ABC 2.1 §11.4) and no longer clobbers the `+:` chain,
+  which was the whole leak; fonts are captured per SYLLABLE and realized in measurement
+  as well as draw. Mode-split: strict reproduces abcjs's version, verified by running it.
+- **Mid-tune `K:`** — drawn, with cancelling naturals. See below for the `M:` half.
 
 ---
 
@@ -110,33 +115,51 @@ reason recorded.
 
 ---
 
-## THE NEXT ITEM — mid-tune `M:` and `K:` are parsed and drawn nowhere
+## Mid-tune `M:` and `K:` — key DONE, meter still open
 
-Uncovered by the `bodyStarted` fix, but **not caused by it**. `Measure.meterChange` and
-`Measure.keyChange` have been populated since the model gained them and the renderer
-reads neither, so every `[M:…]` and `[K:…]` in the corpus silently changes the barring or
-the key and shows nothing. `S8-layout` has three meter changes; `S6-keys` has five key
-changes.
+`Measure.meterChange` and `Measure.keyChange` have been populated since the model gained
+them and the renderer read neither. **`K:` now draws**, with the naturals that cancel the
+outgoing key, matched glyph for glyph against abcjs's inline `key` elements. `M:` does
+not, and the reason is below.
 
-`frere-jacques` now makes it visible: we draw no meter for that tune at all, where abcjs
-draws one on system 3.
+**Two corrections to the first version of this entry, both mine, both the same mistake.**
+It said "`S8-layout` has three meter changes; `S6-keys` has five key changes":
 
-It was written, measured and reverted in this session rather than shipped, for reasons
-worth keeping:
+- Those came from grepping the FILE. The structural gate is **first tune only** on both
+  sides — abcjs's dump covers tune 0 and `layout()` takes `scores[0]` — and every
+  mid-tune key change in the corpus is in a LATER tune (S6-keys' in X:602, clefs' in
+  X:608). So the gate cannot see this feature at all, and the prefix-filter blind spot
+  named below is **secondary** to first-tune-only, which is the real blocker.
+- The "five" counted `[K: style=harmonic]` lines, which are style-only and change no key.
+  The parser already guards them with `hasKeySpec`.
 
-- **The gate cannot adjudicate it.** Each engine puts the change on a different system,
-  and the gate drops prefix-kind elements on every system after the first — so whichever
-  side is "late" gets filtered and the other reads as a spurious extra. Drawing the meter
-  traded `frere-jacques`'s structural match for a different mismatch the gate scores the
-  same way. That is a gate blind spot as much as a feature gap: `PREFIX_TYPES` assumes a
-  time signature only ever appears AS a system prefix, and a mid-measure one breaks the
-  assumption.
-- **Meter alone is not coherent.** A mid-tune `K:` needs naturals against the key in
-  force, which means accumulating key state forward through the measures. Shipping the
-  easy half would leave the pair half-done in the way that reads as finished.
+Method note 5 — a frequency count measures population, not wrongness — written by the
+person who then made the same mistake in the same document, one day later.
 
-So: do the two together, and fix the gate's prefix filter to distinguish a system prefix
-from a mid-measure change before trusting the result either way.
+### What is left: mid-tune `M:`
+
+Still parsed and drawn nowhere. It was written, measured and reverted TWICE now, for one
+reason that has not changed:
+
+**The gate cannot adjudicate it.** Both engines put the meter at the same musical point,
+but abcjs's lands at the head of a later system, where the gate drops it as a
+`staff-extra` reprint, while ours lands mid-measure on system 0, where it does not. No
+system-index filter can reconcile that, because WHERE a line breaks is precisely what the
+gate refuses to compare. `PREFIX_TYPES` assumes a time signature only ever appears AS a
+system prefix, and a mid-measure one breaks the assumption.
+
+Doing it honestly means one of:
+
+1. Teach the gate to distinguish a system prefix from a mid-measure change, and compare
+   the latter as content. Correct, and worth doing for its own sake.
+2. Extend the structural gate past tune 0. Bigger — the `.elements.json` goldens only
+   contain tune 0, so it needs regeneration with the harness in the abcMusicKit repo,
+   which is another lane. It would also close blind spot 1 in `structural.test.ts`
+   ("seven clefs are untested by a green result").
+
+Do NOT reach for relaxing `PREFIX_TYPES` to make the fixture pass. That trades a real
+check for a green light, and the check it trades away — clef and meter on the first
+system — is the only one the gate currently has on either.
 
 ---
 
