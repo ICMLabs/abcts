@@ -1,12 +1,12 @@
 tune 0
-bounds  width=90.000 height=55.100 top=-1.935
+bounds  width=90.000 height=56.764 top=-1.935
 systems 1
 system 0 width=90.000 originY=0.000
-  connector brace -0.920,37.524 scale=3.902
-  connector bracketTop -0.600,13.994
-  connector bracketBottom -0.600,31.114
-  connector line -0.600,13.994 -> -0.600,31.114 t=0.500
-  staff 0 originY=15.994
+  connector brace -0.920,39.188 scale=3.902
+  connector bracketTop -0.600,15.658
+  connector bracketBottom -0.600,32.778
+  connector line -0.600,15.658 -> -0.600,32.778 t=0.500
+  staff 0 originY=17.658
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -95,7 +95,7 @@ system 0 width=90.000 originY=0.000
       line  77.518,2.168 -> 77.518,5.500 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 1 originY=29.114
+  staff 1 originY=30.778
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -169,7 +169,7 @@ system 0 width=90.000 originY=0.000
       text  77.367,4.000 size=1.400 "ve,"
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 2 originY=39.524
+  staff 2 originY=41.188
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -275,7 +275,7 @@ system 0 width=90.000 originY=0.000
       glyph noteheadWhole 68.972,2.000
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 3 originY=51.084
+  staff 3 originY=52.748
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130

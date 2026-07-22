@@ -1,8 +1,8 @@
 tune 0
-bounds  width=90.000 height=73.611 top=-1.935
+bounds  width=90.000 height=75.275 top=-1.935
 systems 2
 system 0 width=90.000 originY=0.000
-  staff 0 originY=18.442
+  staff 0 originY=20.106
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -129,7 +129,7 @@ system 0 width=90.000 originY=0.000
       glyph restQuarter 81.628,0.000
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 1 originY=37.562
+  staff 1 originY=39.226
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -245,7 +245,7 @@ system 0 width=90.000 originY=0.000
     rest x=70.919 w=10.949
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 1 width=90.000 originY=43.416
+system 1 width=90.000 originY=45.080
   staff 0 originY=6.060
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130

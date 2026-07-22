@@ -405,6 +405,14 @@ export interface LayoutElement {
    * last row's descender, so the block cannot be measured from its texts after the fact.
    */
   readonly blockHeight?: number
+  /**
+   * Absolute y of a block's TOP — its cursor origin, above the first line's ink.
+   *
+   * abcjs's block starts at the cursor and its first baseline is a font size below that,
+   * so the space above the title's ascender is part of the block and must be reserved.
+   * Without this the page began at the title's INK and every drawing sat 13.3px high.
+   */
+  readonly blockTop?: number
   /** Left edge, staff spaces from the system origin. */
   readonly x: number
   readonly width: number
@@ -3442,6 +3450,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
               return [
                 ...heading.map((el) => ({
                   ...el,
+                  blockTop: offset,
                   texts: el.texts.map((t) => ({ ...t, y: t.y + offset })),
                 })),
                 ...musicOnly,
@@ -3714,6 +3723,8 @@ function verticalExtent(
     // No text metrics available, so bound the box by the font size: ascenders reach
     // roughly 0.8 of it above the baseline and descenders 0.25 below.
     for (const t of el.texts) include(t.y - t.size * TEXT_ASCENT, t.y + t.size * TEXT_DESCENT)
+    // A block reserves from its own top, not from its first line's ascender.
+    if (el.blockTop !== undefined) include(el.blockTop, el.blockTop)
   }
 
   return { top: top - ENGRAVE.marginY, bottom: bottom + ENGRAVE.marginY }

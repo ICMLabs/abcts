@@ -1,9 +1,9 @@
 tune 0
-bounds  width=90.000 height=62.357 top=-1.935
+bounds  width=90.000 height=64.021 top=-1.935
 systems 2
 system 0 width=90.000 originY=0.000
-  connector brace -0.920,16.442 scale=3.559
-  staff 0 originY=18.442
+  connector brace -0.920,18.106 scale=3.559
+  staff 0 originY=20.106
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -75,7 +75,7 @@ system 0 width=90.000 originY=0.000
       line  78.512,3.332 -> 78.512,-1.000 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 1 originY=28.636
+  staff 1 originY=30.300
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -197,7 +197,7 @@ system 0 width=90.000 originY=0.000
       line  78.512,6.832 -> 78.512,1.000 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 1 width=58.573 originY=39.136
+system 1 width=58.573 originY=40.800
   connector brace -0.920,1.392 scale=3.559
   staff 0 originY=3.392
     staffline 0.000,2.000 -> 58.573,2.000 t=0.130
@@ -328,11 +328,11 @@ system 1 width=58.573 originY=39.136
     bar x=55.637 w=0.160
       line  55.717,-2.000 -> 55.717,2.000 t=0.160
 tune 1
-bounds  width=48.229 height=67.594 top=-1.935
+bounds  width=48.229 height=69.258 top=-1.935
 systems 2
 system 0 width=48.229 originY=0.000
-  connector brace -0.920,16.442 scale=4.015
-  staff 0 originY=18.442
+  connector brace -0.920,18.106 scale=4.015
+  staff 0 originY=20.106
     staffline 0.000,2.000 -> 48.229,2.000 t=0.130
     staffline 0.000,1.000 -> 48.229,1.000 t=0.130
     staffline 0.000,0.000 -> 48.229,0.000 t=0.130
@@ -437,7 +437,7 @@ system 0 width=48.229 originY=0.000
       glyph rest8th 40.312,0.000
     bar x=45.293 w=0.160
       line  45.373,-2.000 -> 45.373,2.000 t=0.160
-  staff 1 originY=30.454
+  staff 1 originY=32.118
     staffline 0.000,2.000 -> 48.229,2.000 t=0.130
     staffline 0.000,1.000 -> 48.229,1.000 t=0.130
     staffline 0.000,0.000 -> 48.229,0.000 t=0.130
@@ -576,7 +576,7 @@ system 0 width=48.229 originY=0.000
       line  43.693,7.332 -> 43.693,4.000 t=0.120
     bar x=45.293 w=0.160
       line  45.373,-2.000 -> 45.373,2.000 t=0.160
-system 1 width=45.732 originY=43.954
+system 1 width=45.732 originY=45.618
   connector brace -0.920,2.508 scale=3.725
   staff 0 originY=4.508
     staffline 0.000,2.000 -> 45.732,2.000 t=0.130
@@ -729,11 +729,11 @@ system 1 width=45.732 originY=43.954
     bar x=42.797 w=0.160
       line  42.877,-2.000 -> 42.877,2.000 t=0.160
 tune 2
-bounds  width=90.000 height=37.571 top=-1.935
+bounds  width=90.000 height=39.235 top=-1.935
 systems 1
 system 0 width=90.000 originY=0.000
-  connector brace -0.920,16.442 scale=3.559
-  staff 0 originY=18.442
+  connector brace -0.920,18.106 scale=3.559
+  staff 0 originY=20.106
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -842,7 +842,7 @@ system 0 width=90.000 originY=0.000
       line  83.594,-0.168 -> 83.594,-3.500 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 1 originY=28.636
+  staff 1 originY=30.300
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -1012,11 +1012,11 @@ system 0 width=90.000 originY=0.000
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
 tune 3
-bounds  width=90.000 height=40.131 top=-1.935
+bounds  width=90.000 height=41.795 top=-1.935
 systems 1
 system 0 width=90.000 originY=0.000
-  connector brace -0.920,16.442 scale=3.559
-  staff 0 originY=18.442
+  connector brace -0.920,18.106 scale=3.559
+  staff 0 originY=20.106
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -1140,7 +1140,7 @@ system 0 width=90.000 originY=0.000
       line  83.641,0.168 -> 83.641,3.500 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 1 originY=28.636
+  staff 1 originY=30.300
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -1333,13 +1333,13 @@ system 0 width=90.000 originY=0.000
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
 tune 4
-bounds  width=90.000 height=44.168 top=-1.935
+bounds  width=90.000 height=45.832 top=-1.935
 systems 1
 system 0 width=90.000 originY=0.000
-  connector bracketTop -0.600,16.213
-  connector bracketBottom -0.600,33.173
-  connector line -0.600,16.213 -> -0.600,33.173 t=0.500
-  staff 0 originY=18.213
+  connector bracketTop -0.600,17.876
+  connector bracketBottom -0.600,34.836
+  connector line -0.600,17.876 -> -0.600,34.836 t=0.500
+  staff 0 originY=19.876
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -1616,7 +1616,7 @@ system 0 width=90.000 originY=0.000
       glyph repeatDots 87.065,1.976
       line  87.705,-2.000 -> 87.705,2.000 t=0.160
       line  88.435,-2.000 -> 88.435,2.000 t=0.500
-  staff 1 originY=31.173
+  staff 1 originY=32.836
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -1960,13 +1960,13 @@ system 0 width=90.000 originY=0.000
       line  87.705,-2.000 -> 87.705,2.000 t=0.160
       line  88.435,-2.000 -> 88.435,2.000 t=0.500
 tune 5
-bounds  width=90.000 height=53.023 top=-1.935
+bounds  width=90.000 height=54.687 top=-1.935
 systems 1
 system 0 width=90.000 originY=0.000
-  connector bracketTop -0.600,16.442
-  connector bracketBottom -0.600,43.088
-  connector line -0.600,16.442 -> -0.600,43.088 t=0.500
-  staff 0 originY=18.442
+  connector bracketTop -0.600,18.106
+  connector bracketBottom -0.600,44.752
+  connector line -0.600,18.106 -> -0.600,44.752 t=0.500
+  staff 0 originY=20.106
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -2037,7 +2037,7 @@ system 0 width=90.000 originY=0.000
       glyph restWhole 66.845,-1.000
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 1 originY=28.636
+  staff 1 originY=30.300
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -2188,7 +2188,7 @@ system 0 width=90.000 originY=0.000
       line  85.173,1.832 -> 85.173,-1.500 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 2 originY=41.088
+  staff 2 originY=42.752
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -2287,11 +2287,11 @@ system 0 width=90.000 originY=0.000
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
 tune 6
-bounds  width=90.000 height=37.714 top=-1.935
+bounds  width=90.000 height=39.378 top=-1.935
 systems 1
 system 0 width=90.000 originY=0.000
-  connector brace -0.920,16.442 scale=3.971
-  staff 0 originY=18.442
+  connector brace -0.920,18.106 scale=3.971
+  staff 0 originY=20.106
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -2546,7 +2546,7 @@ system 0 width=90.000 originY=0.000
       line  84.240,-0.332 -> 84.240,3.000 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 1 originY=30.278
+  staff 1 originY=31.942
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
