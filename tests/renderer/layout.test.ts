@@ -482,28 +482,35 @@ describe('flags and beams', () => {
 })
 
 describe('system breaking', () => {
+  // Four bars per SOURCE LINE. abcts breaks systems where the file breaks lines — the
+  // ABC default, and what abcjs does — so a long tune on one source line is one long
+  // system, not several. It takes several lines to get several systems.
   const long = (bars: number) =>
-    `X:1\nM:4/4\nL:1/4\nK:C\n${Array.from({ length: bars }, () => 'CDEF|').join('')}\n`
+    `X:1\nM:4/4\nL:1/4\nK:C\n${Array.from({ length: Math.ceil(bars / 4) }, () => 'CDEF|CDEF|CDEF|CDEF|\n').join('')}`
 
   it('keeps a short tune on one system', () => {
     expect(layout(parse(long(2)).scores[0] as Score).systems).toHaveLength(1)
   })
 
-  it('wraps a long tune, and no system exceeds the width', () => {
+  it('gives each source line its own system', () => {
+    // The break points are the AUTHOR's, not a packer's — ten source lines, ten systems,
+    // however wide or narrow the page. This is the ABC default and what abcjs does: it
+    // has no line-breaking pass at all.
     const doc = layout(parse(long(40)).scores[0] as Score)
-    expect(doc.systems.length).toBeGreaterThan(1)
-    for (const system of doc.systems) expect(system.width).toBeLessThanOrEqual(90)
+    expect(doc.systems).toHaveLength(10)
   })
 
-  it('honours an explicit width', () => {
+  it('does NOT re-wrap when the page is narrow — it compresses', () => {
+    // The behaviour that replaced width packing. A narrower page does not add systems;
+    // the same music is fitted into less room, which is what abcjs's
+    // `calcHorizontalSpacing` does when a line is longer than the target.
     const wide = layout(parse(long(40)).scores[0] as Score, { systemWidth: 200 })
     const narrow = layout(parse(long(40)).scores[0] as Score, { systemWidth: 40 })
-    expect(narrow.systems.length).toBeGreaterThan(wide.systems.length)
-    for (const system of narrow.systems) expect(system.width).toBeLessThanOrEqual(40)
+    expect(narrow.systems).toHaveLength(wide.systems.length)
   })
 
   it('reprints the clef and key on every system, but the meter and tempo only once', () => {
-    const abc = `X:1\nM:3/4\nL:1/4\nQ:"Andante"\nK:Eb\n${'CDE|'.repeat(40)}\n`
+    const abc = `X:1\nM:3/4\nL:1/4\nQ:"Andante"\nK:Eb\n${'CDE|CDE|CDE|CDE|\n'.repeat(10)}\n`
     const doc = layout(parse(abc).scores[0] as Score)
     expect(doc.systems.length).toBeGreaterThan(1)
 
@@ -711,16 +718,27 @@ describe('spacing and justification', () => {
     expect(barX - last).toBeLessThan(averageGap * 2)
   })
 
-  it('justifies every system to the same width, except the last', () => {
-    const abc = `X:1\nM:4/4\nL:1/4\nK:C\n${'CDEF|'.repeat(40)}\n`
+  it('justifies every system to the same width', () => {
+    const abc = `X:1\nM:4/4\nL:1/4\nK:C\n${'CDEF|CDEF|CDEF|CDEF|\n'.repeat(10)}\n`
     const doc = layout(parse(abc).scores[0] as Score, { systemWidth: 90 })
     expect(doc.systems.length).toBeGreaterThan(2)
+    // Including the last, HERE, because every line of this tune is the same length and
+    // the last one is therefore as full as the rest. See the next test for the case that
+    // makes the rule visible.
+    for (const w of doc.systems.map((s) => s.width)) expect(w).toBeCloseTo(90, 5)
+  })
 
+  it('leaves a SHORT last system at its natural width', () => {
+    // abcjs's rule (`write/layout/layout.js:102`): a last line filling less than 66% of
+    // the page keeps its natural width, and anything fuller is justified like any other.
+    // A final bar stretched across a whole page is the classic ugly justification bug,
+    // and this is the threshold that avoids it without leaving every full last line short.
+    const abc = `X:1\nM:4/4\nL:1/4\nK:C\n${'CDEF|CDEF|CDEF|CDEF|\n'.repeat(3)}CDEF|\n`
+    const doc = layout(parse(abc).scores[0] as Score, { systemWidth: 90 })
     const widths = doc.systems.map((s) => s.width)
+    expect(widths).toHaveLength(4)
     for (const w of widths.slice(0, -1)) expect(w).toBeCloseTo(90, 5)
-    // The last line keeps its natural width — a final bar stretched across the page is
-    // the classic ugly justification bug.
-    expect(widths[widths.length - 1]).toBeLessThan(90)
+    expect(widths[widths.length - 1]).toBeLessThan(45)
   })
 
   it('leaves a system short rather than stretching it absurdly', () => {
@@ -880,7 +898,9 @@ describe('slurs and ties', () => {
   it('splits a curve across a system break instead of dropping it', () => {
     // Both ends exist but in different systems. The first half runs to the right edge of
     // the system it leaves — which is the signal to the reader that it continues.
-    const doc = layout(parse('X:1\nM:4/4\nL:1/4\nK:C\n(CDEG-|G2 G2)|\n').scores[0] as Score, {
+    // The break is where the SOURCE breaks — abcts does not re-wrap, so a narrow page
+    // no longer produces one. The slur opens on line 1 and closes on line 2.
+    const doc = layout(parse('X:1\nM:4/4\nL:1/4\nK:C\n(CDEG-|\nG2 G2)|\n').scores[0] as Score, {
       systemWidth: 30,
     })
     expect(doc.systems.length).toBeGreaterThan(1)
@@ -1294,11 +1314,10 @@ describe('annotations', () => {
 })
 
 describe('mixed-length chords', () => {
+  // Every system — see the note on the other `headsOf`.
   const headsOf = (abc: string) =>
-    (
-      layout(parse(`X:1\nM:4/4\nL:1/4\nK:C\n${abc}\n`).scores[0] as Score, { systemWidth: 200 })
-        .systems[0]?.staves[0]?.elements ?? []
-    )
+    layout(parse(`X:1\nM:4/4\nL:1/4\nK:C\n${abc}\n`).scores[0] as Score, { systemWidth: 200 })
+      .systems.flatMap((system) => system.staves[0]?.elements ?? [])
       .flatMap((e) => e.glyphs)
       .filter((g) => g.role === 'notehead')
       .map((g) => g.name)
@@ -1392,7 +1411,9 @@ describe('melisma extenders', () => {
     // about where the held note ended up. The modes wrap differently — strict renders at
     // abcjs's denser spacing — so this silently dropped the underscore from the one piece
     // of real corpus content that has a melisma, which no gate renders.
-    const abc = 'X:1\nL:1/4\nK:C\nCDEF|GABc|defg|\nw:a b c d e f g sing_ _ _ _\n'
+    // Two source lines, so the held syllable and the notes holding it land in different
+    // systems — which is the case this guards. A narrow page no longer splits a line.
+    const abc = 'X:1\nL:1/4\nK:C\nCDEF|GABc|\nw:a b c d e f g sing_\ndefg|\nw:_ _ _ _\n'
     const narrow = layout(parse(abc, { mode: 'abcjs-strict' }).scores[0] as Score, {
       mode: 'abcjs-strict',
       systemWidth: 26,
@@ -1406,11 +1427,12 @@ describe('melisma extenders', () => {
 })
 
 describe('styled noteheads', () => {
+  // EVERY system, not `systems[0]`. Each source line is now its own system, so reading
+  // only the first silently truncated any test whose ABC spans more than one line —
+  // which is exactly what a `[K: style=]` test needs to do.
   const headsOf = (abc: string) =>
-    (
-      layout(parse(abc).scores[0] as Score, { systemWidth: 300 }).systems[0]?.staves[0]?.elements ??
-      []
-    )
+    layout(parse(abc).scores[0] as Score, { systemWidth: 300 })
+      .systems.flatMap((system) => system.staves[0]?.elements ?? [])
       .flatMap((e) => e.glyphs)
       .filter((g) => g.role === 'notehead')
       .map((g) => g.name)
@@ -1662,7 +1684,8 @@ describe('spanning decorations', () => {
     // cost HALF the hairpins in S1-decorations tune 2, since it wraps to six systems.
     // Now resolved after packing, alongside slurs, which have the same problem.
     const doc = layout(
-      parse("X:1\nM:4/4\nL:1/4\nK:C\n!<(!C D E F|G A B c|d e f g|a b c' !<)!d'|\n")
+      // Break where the SOURCE breaks: the hairpin opens on line 1 and closes on line 2.
+      parse("X:1\nM:4/4\nL:1/4\nK:C\n!<(!C D E F|G A B c|\nd e f g|a b c' !<)!d'|\n")
         .scores[0] as Score,
       { systemWidth: 26 },
     )
@@ -2068,8 +2091,20 @@ describe('drawing bounds include prose, not just music', () => {
   })
 
   it('leaves the width alone when the music is the wider thing', () => {
-    const wide = doc('X:1\nT:A\nM:4/4\nL:1/4\nK:C\nCDEF|GABc|defg|\n')
+    // Its own page width rather than the shared 20-space one the title tests use: at 20
+    // the music no longer overflows, it COMPRESSES to fit, so the drawing would be
+    // exactly 20 wide and the comparison would say nothing about which is wider.
+    const wide = layout(
+      parse('X:1\nT:A\nM:4/4\nL:1/4\nK:C\nCDEF|GABc|defg|\n').scores[0] as Score,
+      { systemWidth: 200 },
+    )
     expect(wide.width).toBeGreaterThan(30)
+    // And the one-character title is not what set it.
+    expect(wide.width).toBeGreaterThan(
+      layout(parse('X:1\nT:A\nM:4/4\nL:1/4\nK:C\nC|\n').scores[0] as Score, {
+        systemWidth: 200,
+      }).width,
+    )
   })
 
   it('fits every text it draws', () => {

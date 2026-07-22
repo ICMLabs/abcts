@@ -1,6 +1,6 @@
 tune 0
-bounds  width=90.000 height=62.710 top=0.000
-systems 3
+bounds  width=90.000 height=43.240 top=0.000
+systems 2
 system 0 width=90.000 originY=0.000
   staff 0 originY=15.420
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
@@ -29,67 +29,90 @@ system 0 width=90.000 originY=0.000
       line  9.068,3.000 -> 11.048,3.000 t=0.160
       line  10.648,2.832 -> 10.648,-0.500 t=0.120
       text  8.715,4.000 size=1.400 "Hap-"
-    note@-6 x=15.400 w=2.737
-      glyph noteheadBlack 15.400,3.000
-      glyph flag16thUp 16.580,-0.500
-      line  15.000,3.000 -> 16.980,3.000 t=0.160
-      line  16.580,2.832 -> 16.580,-0.500 t=0.120
-      text  15.359,4.000 size=1.400 "py"
-    bar x=19.824 w=0.160
-      line  19.904,-2.000 -> 19.904,2.000 t=0.160
-    note@-5 x=20.824 w=5.474
-      glyph noteheadBlack 20.824,2.500
-      line  22.004,2.332 -> 22.004,-1.000 t=0.120
-      text  21.059,-3.000 size=1.400 "F"
-      text  19.894,4.000 size=1.400 "birth-"
-    note@-6 x=27.516 w=5.474
-      glyph noteheadBlack 27.516,3.000
-      line  27.116,3.000 -> 29.096,3.000 t=0.160
-      line  28.696,2.832 -> 28.696,-0.500 t=0.120
-      text  27.174,4.000 size=1.400 "day"
-    note@-3 x=34.207 w=5.474
-      glyph noteheadBlack 34.207,1.500
-      line  35.387,1.332 -> 35.387,-2.000 t=0.120
-      text  34.273,4.000 size=1.400 "to"
-    bar x=41.898 w=0.160
-      line  41.978,-2.000 -> 41.978,2.000 t=0.160
-    note@-4 x=42.898 w=6.705
-      glyph noteheadBlack 42.898,2.000
-      glyph augmentationDot 44.428,1.500
-      line  44.078,1.832 -> 44.078,-1.500 t=0.120
-      text  43.107,-3.000 size=1.400 "C"
-      text  42.376,4.000 size=1.400 "you,"
-    rest x=51.079 w=3.871
-      glyph rest8th 51.079,0.000
-    note@-6 x=55.802 w=4.741
-      glyph noteheadBlack 55.802,3.000
-      glyph augmentationDot 57.332,2.500
-      glyph flag8thUp 56.982,-0.500
-      line  55.402,3.000 -> 57.382,3.000 t=0.160
-      line  56.982,2.832 -> 56.982,-0.500 t=0.120
-      text  55.049,4.000 size=1.400 "Hap-"
-    note@-6 x=61.586 w=2.737
-      glyph noteheadBlack 61.586,3.000
-      glyph flag16thUp 62.766,-0.500
-      line  61.186,3.000 -> 63.166,3.000 t=0.160
-      line  62.766,2.832 -> 62.766,-0.500 t=0.120
-      text  61.546,4.000 size=1.400 "py"
-    bar x=65.926 w=0.160
-      line  66.006,-2.000 -> 66.006,2.000 t=0.160
-    note@-5 x=66.926 w=5.474
-      glyph noteheadBlack 66.926,2.500
-      line  68.106,2.332 -> 68.106,-1.000 t=0.120
-      text  67.135,-3.000 size=1.400 "C"
-      text  65.995,4.000 size=1.400 "birth-"
-    note@-6 x=73.617 w=5.474
-      glyph noteheadBlack 73.617,3.000
-      line  73.217,3.000 -> 75.197,3.000 t=0.160
-      line  74.797,2.832 -> 74.797,-0.500 t=0.120
-      text  73.276,4.000 size=1.400 "day"
-    note@-2 x=80.309 w=5.474
-      glyph noteheadBlack 80.309,1.000
-      line  81.489,0.832 -> 81.489,-2.500 t=0.120
-      text  80.374,4.000 size=1.400 "to"
+    note@-6 x=13.729 w=2.737
+      glyph noteheadBlack 13.729,3.000
+      glyph flag16thUp 14.909,-0.500
+      line  13.329,3.000 -> 15.309,3.000 t=0.160
+      line  14.909,2.832 -> 14.909,-0.500 t=0.120
+      text  13.689,4.000 size=1.400 "py"
+    bar x=17.189 w=0.160
+      line  17.269,-2.000 -> 17.269,2.000 t=0.160
+    note@-5 x=18.189 w=5.474
+      glyph noteheadBlack 18.189,2.500
+      line  19.369,2.332 -> 19.369,-1.000 t=0.120
+      text  18.424,-3.000 size=1.400 "F"
+      text  17.259,4.000 size=1.400 "birth-"
+    note@-6 x=23.174 w=5.474
+      glyph noteheadBlack 23.174,3.000
+      line  22.774,3.000 -> 24.754,3.000 t=0.160
+      line  24.354,2.832 -> 24.354,-0.500 t=0.120
+      text  22.832,4.000 size=1.400 "day"
+    note@-3 x=28.158 w=5.474
+      glyph noteheadBlack 28.158,1.500
+      line  29.338,1.332 -> 29.338,-2.000 t=0.120
+      text  28.223,4.000 size=1.400 "to"
+    bar x=34.142 w=0.160
+      line  34.222,-2.000 -> 34.222,2.000 t=0.160
+    note@-4 x=35.142 w=6.705
+      glyph noteheadBlack 35.142,2.000
+      glyph augmentationDot 36.672,1.500
+      line  36.322,1.832 -> 36.322,-1.500 t=0.120
+      text  35.351,-3.000 size=1.400 "C"
+      text  34.619,4.000 size=1.400 "you,"
+    rest x=41.252 w=3.871
+      glyph rest8th 41.252,0.000
+    note@-6 x=44.780 w=4.741
+      glyph noteheadBlack 44.780,3.000
+      glyph augmentationDot 46.310,2.500
+      glyph flag8thUp 45.960,-0.500
+      line  44.380,3.000 -> 46.360,3.000 t=0.160
+      line  45.960,2.832 -> 45.960,-0.500 t=0.120
+      text  44.027,4.000 size=1.400 "Hap-"
+    note@-6 x=49.100 w=2.737
+      glyph noteheadBlack 49.100,3.000
+      glyph flag16thUp 50.280,-0.500
+      line  48.700,3.000 -> 50.680,3.000 t=0.160
+      line  50.280,2.832 -> 50.280,-0.500 t=0.120
+      text  49.060,4.000 size=1.400 "py"
+    bar x=52.595 w=0.160
+      line  52.675,-2.000 -> 52.675,2.000 t=0.160
+    note@-5 x=53.595 w=5.474
+      glyph noteheadBlack 53.595,2.500
+      line  54.775,2.332 -> 54.775,-1.000 t=0.120
+      text  53.804,-3.000 size=1.400 "C"
+      text  52.664,4.000 size=1.400 "birth-"
+    note@-6 x=58.579 w=5.474
+      glyph noteheadBlack 58.579,3.000
+      line  58.179,3.000 -> 60.159,3.000 t=0.160
+      line  59.759,2.832 -> 59.759,-0.500 t=0.120
+      text  58.238,4.000 size=1.400 "day"
+    note@-2 x=63.563 w=5.474
+      glyph noteheadBlack 63.563,1.000
+      line  64.743,0.832 -> 64.743,-2.500 t=0.120
+      text  63.629,4.000 size=1.400 "to"
+    bar x=69.547 w=0.160
+      line  69.627,-2.000 -> 69.627,2.000 t=0.160
+    note@-3 x=70.547 w=6.705
+      glyph noteheadBlack 70.547,1.500
+      glyph augmentationDot 72.077,1.500
+      line  71.727,1.332 -> 71.727,-2.000 t=0.120
+      text  70.782,-3.000 size=1.400 "F"
+      text  70.025,4.000 size=1.400 "you,"
+    rest x=76.657 w=3.871
+      glyph rest8th 76.657,0.000
+    note@-6 x=80.185 w=4.741
+      glyph noteheadBlack 80.185,3.000
+      glyph augmentationDot 81.715,2.500
+      glyph flag8thUp 81.365,-0.500
+      line  79.785,3.000 -> 81.765,3.000 t=0.160
+      line  81.365,2.832 -> 81.365,-0.500 t=0.120
+      text  79.570,4.000 size=1.400 "hap-"
+    note@-6 x=84.506 w=2.737
+      glyph noteheadBlack 84.506,3.000
+      glyph flag16thUp 85.686,-0.500
+      line  84.106,3.000 -> 86.086,3.000 t=0.160
+      line  85.686,2.832 -> 85.686,-0.500 t=0.120
+      text  84.465,4.000 size=1.400 "py"
     bar x=88.000 w=0.160
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
 system 1 width=90.000 originY=26.770
@@ -103,102 +126,68 @@ system 1 width=90.000 originY=26.770
       glyph gClef 1.000,1.000
     keySignature x=4.684 w=0.904
       glyph accidentalFlat 4.684,0.000
-    note@-3 x=6.588 w=6.705
-      glyph noteheadBlack 6.588,1.500
-      glyph augmentationDot 8.118,1.500
-      line  7.768,1.332 -> 7.768,-2.000 t=0.120
+    note@1 x=6.588 w=5.474
+      glyph noteheadBlack 6.588,-0.500
+      line  6.588,-0.332 -> 6.588,3.000 t=0.120
       text  6.823,-3.000 size=1.400 "F"
-      text  6.065,4.000 size=1.400 "you,"
-    rest x=13.556 w=3.871
-      glyph rest8th 13.556,0.000
-    note@-6 x=17.580 w=4.741
-      glyph noteheadBlack 17.580,3.000
-      glyph augmentationDot 19.110,2.500
-      glyph flag8thUp 18.760,-0.500
-      line  17.180,3.000 -> 19.160,3.000 t=0.160
-      line  18.760,2.832 -> 18.760,-0.500 t=0.120
-      text  16.965,4.000 size=1.400 "hap-"
-    note@-6 x=22.507 w=2.737
-      glyph noteheadBlack 22.507,3.000
-      glyph flag16thUp 23.687,-0.500
-      line  22.107,3.000 -> 24.087,3.000 t=0.160
-      line  23.687,2.832 -> 23.687,-0.500 t=0.120
-      text  22.466,4.000 size=1.400 "py"
-    bar x=26.352 w=0.160
-      line  26.432,-2.000 -> 26.432,2.000 t=0.160
-    note@1 x=27.352 w=5.474
-      glyph noteheadBlack 27.352,-0.500
-      line  27.352,-0.332 -> 27.352,3.000 t=0.120
-      text  27.586,-3.000 size=1.400 "F"
-      text  26.421,4.000 size=1.400 "birth-"
-    note@-1 x=33.043 w=5.474
-      glyph noteheadBlack 33.043,0.500
-      line  34.223,0.332 -> 34.223,-3.000 t=0.120
-      text  32.702,4.000 size=1.400 "day"
-    note@-3 x=38.735 w=5.474
-      glyph noteheadBlack 38.735,1.500
-      line  39.915,1.332 -> 39.915,-2.000 t=0.120
-      text  38.156,4.000 size=1.400 "dear"
-    bar x=45.427 w=0.160
-      line  45.507,-2.000 -> 45.507,2.000 t=0.160
-    note@-4 x=46.427 w=5.474
-      glyph noteheadBlack 46.427,2.000
-      line  47.607,1.832 -> 47.607,-1.500 t=0.120
-      text  46.297,-3.000 size=1.400 "Bb"
-      text  46.146,4.000 size=1.400 "fel-"
-    note@-5 x=52.114 w=3.871
-      glyph noteheadBlack 52.114,2.500
-      glyph flag8thUp 53.294,-1.000
-      line  53.294,2.332 -> 53.294,-1.000 t=0.120
-      text  51.617,4.000 size=1.400 "low,"
-    rest x=56.135 w=3.871
-      glyph rest8th 56.135,0.000
-    note@0 x=60.156 w=4.741
-      glyph noteheadBlack 60.156,0.000
-      glyph augmentationDot 61.686,-0.500
-      glyph flag8thDown 60.156,3.500
-      line  60.156,0.168 -> 60.156,3.500 t=0.120
-      text  59.542,4.000 size=1.400 "hap-"
-    note@0 x=65.081 w=2.737
-      glyph noteheadBlack 65.081,0.000
-      glyph flag16thDown 65.081,3.500
-      line  65.081,0.168 -> 65.081,3.500 t=0.120
-      text  65.041,4.000 size=1.400 "py"
-    bar x=68.925 w=0.160
-      line  69.005,-2.000 -> 69.005,2.000 t=0.160
-    note@-1 x=69.925 w=5.474
-      glyph noteheadBlack 69.925,0.500
-      line  71.105,0.332 -> 71.105,-3.000 t=0.120
-      text  70.159,-3.000 size=1.400 "F"
-      text  68.994,4.000 size=1.400 "birth-"
-    note@-3 x=75.616 w=5.474
-      glyph noteheadBlack 75.616,1.500
-      line  76.796,1.332 -> 76.796,-2.000 t=0.120
-      text  75.275,4.000 size=1.400 "day"
-    note@-2 x=81.308 w=5.474
-      glyph noteheadBlack 81.308,1.000
-      line  82.488,0.832 -> 82.488,-2.500 t=0.120
-      text  81.517,-3.000 size=1.400 "C"
-      text  81.374,4.000 size=1.400 "to"
-    bar x=88.000 w=0.160
+      text  5.657,4.000 size=1.400 "birth-"
+    note@-1 x=13.047 w=5.474
+      glyph noteheadBlack 13.047,0.500
+      line  14.227,0.332 -> 14.227,-3.000 t=0.120
+      text  12.706,4.000 size=1.400 "day"
+    note@-3 x=19.506 w=5.474
+      glyph noteheadBlack 19.506,1.500
+      line  20.686,1.332 -> 20.686,-2.000 t=0.120
+      text  18.927,4.000 size=1.400 "dear"
+    bar x=26.966 w=0.160
+      line  27.046,-2.000 -> 27.046,2.000 t=0.160
+    note@-4 x=27.966 w=5.474
+      glyph noteheadBlack 27.966,2.000
+      line  29.146,1.832 -> 29.146,-1.500 t=0.120
+      text  27.836,-3.000 size=1.400 "Bb"
+      text  27.685,4.000 size=1.400 "fel-"
+    note@-5 x=34.403 w=3.871
+      glyph noteheadBlack 34.403,2.500
+      glyph flag8thUp 35.583,-1.000
+      line  35.583,2.332 -> 35.583,-1.000 t=0.120
+      text  33.906,4.000 size=1.400 "low,"
+    rest x=38.954 w=3.871
+      glyph rest8th 38.954,0.000
+    note@0 x=43.506 w=4.741
+      glyph noteheadBlack 43.506,0.000
+      glyph augmentationDot 45.036,-0.500
+      glyph flag8thDown 43.506,3.500
+      line  43.506,0.168 -> 43.506,3.500 t=0.120
+      text  42.891,4.000 size=1.400 "hap-"
+    note@0 x=49.081 w=2.737
+      glyph noteheadBlack 49.081,0.000
+      glyph flag16thDown 49.081,3.500
+      line  49.081,0.168 -> 49.081,3.500 t=0.120
+      text  49.040,4.000 size=1.400 "py"
+    bar x=53.299 w=0.160
+      line  53.379,-2.000 -> 53.379,2.000 t=0.160
+    note@-1 x=54.299 w=5.474
+      glyph noteheadBlack 54.299,0.500
+      line  55.479,0.332 -> 55.479,-3.000 t=0.120
+      text  54.534,-3.000 size=1.400 "F"
+      text  53.369,4.000 size=1.400 "birth-"
+    note@-3 x=60.758 w=5.474
+      glyph noteheadBlack 60.758,1.500
+      line  61.938,1.332 -> 61.938,-2.000 t=0.120
+      text  60.417,4.000 size=1.400 "day"
+    note@-2 x=67.218 w=5.474
+      glyph noteheadBlack 67.218,1.000
+      line  68.398,0.832 -> 68.398,-2.500 t=0.120
+      text  67.427,-3.000 size=1.400 "C"
+      text  67.283,4.000 size=1.400 "to"
+    bar x=74.677 w=0.160
+      line  74.757,-2.000 -> 74.757,2.000 t=0.160
+    note@-3 x=75.677 w=9.482
+      glyph noteheadHalf 75.677,1.500
+      glyph augmentationDot 77.207,1.500
+      line  76.857,1.332 -> 76.857,-2.000 t=0.120
+      text  75.912,-3.000 size=1.400 "F"
+      text  75.118,4.000 size=1.400 "you!"
+    bar x=88.000 w=1.060
       line  88.080,-2.000 -> 88.080,2.000 t=0.160
-system 2 width=19.070 originY=46.240
-  staff 0 originY=8.120
-    staffline 0.000,2.000 -> 19.070,2.000 t=0.130
-    staffline 0.000,1.000 -> 19.070,1.000 t=0.130
-    staffline 0.000,0.000 -> 19.070,0.000 t=0.130
-    staffline 0.000,-1.000 -> 19.070,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 19.070,-2.000 t=0.130
-    clef x=1.000 w=2.684
-      glyph gClef 1.000,1.000
-    keySignature x=4.684 w=0.904
-      glyph accidentalFlat 4.684,0.000
-    note@-3 x=6.588 w=9.482
-      glyph noteheadHalf 6.588,1.500
-      glyph augmentationDot 8.118,1.500
-      line  7.768,1.332 -> 7.768,-2.000 t=0.120
-      text  6.823,-3.000 size=1.400 "F"
-      text  6.029,4.000 size=1.400 "you!"
-    bar x=17.070 w=1.060
-      line  17.150,-2.000 -> 17.150,2.000 t=0.160
-      line  17.880,-2.000 -> 17.880,2.000 t=0.500
+      line  88.810,-2.000 -> 88.810,2.000 t=0.500

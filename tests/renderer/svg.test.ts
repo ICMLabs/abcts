@@ -49,7 +49,7 @@ describe('output shape', () => {
     // and a long tune now wraps, so this walks every system. Rect coordinates are
     // SYSTEM-local — each system is wrapped in a translate — so the offset has to be
     // applied before comparing against the document's box.
-    const svg = svgFor(`X:1\nM:4/4\nL:1/4\nK:C bass\n${'GABc|'.repeat(30)}\n`)
+    const svg = svgFor(`X:1\nM:4/4\nL:1/4\nK:C bass\n${'GABc|GABc|GABc|\n'.repeat(10)}\n`)
     const viewBox = /viewBox="([^"]+)"/.exec(svg)?.[1]?.split(' ').map(Number)
     expect(viewBox).toHaveLength(4)
     const [, minY, , height] = viewBox as number[]

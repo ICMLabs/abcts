@@ -582,8 +582,16 @@ class VoiceBuilder {
   }
 
   /** Called before scanning a music line, so following `w:` lines know where to start. */
+  /**
+   * A new line of music in the SOURCE, which is a new system on the page.
+   *
+   * ABC's default is one source line per printed staff line, and abcjs has no
+   * line-breaking algorithm at all — it never re-wraps, it fits each source line to the
+   * page. So the break points are the author's, recorded here rather than recomputed.
+   */
   beginMusicLine(): void {
     this.lineNoteStart = this.noteCounter
+    this.pendingLineStart = true
   }
 
   addLyricLine(syllables: Syllable[]): void {
@@ -692,6 +700,15 @@ class VoiceBuilder {
     }
   }
 
+  /**
+   * The next measure opens a new SYSTEM, because a new source line just began.
+   *
+   * Held rather than applied immediately: a music line begins before its first event, and
+   * the measure that event lands in may already be open — a measure continued across a
+   * line break belongs to the line it STARTED on, and abcjs agrees, since it lays out
+   * whatever the line contains and a half-measure is what it contains.
+   */
+  private pendingLineStart = false
   /** A leading barline awaiting the measure it opens. */
   private pendingOpening: { barline: Barline; range: SourceRange } | null = null
   /** A `P:` label awaiting the measure it marks. */
@@ -731,6 +748,18 @@ class VoiceBuilder {
     }
   }
 
+  /**
+   * Whether the measure being closed opened a system, clearing the flag as it goes.
+   *
+   * The FIRST measure of a voice never needs it — a voice starts a system by definition —
+   * but it is set anyway so the flag means one thing everywhere.
+   */
+  private takeLineStart(): boolean {
+    const value = this.pendingLineStart
+    this.pendingLineStart = false
+    return value
+  }
+
   closeMeasure(barline: Barline, barlineRange: SourceRange): void {
     // A barline with nothing before it (leading `|:`) opens rather than closes, so it is
     // held for the NEXT measure instead of being dropped. Dropping it lost a printed
@@ -752,6 +781,7 @@ class VoiceBuilder {
       overlays: this.overlays,
       ...this.takeChanges(),
       ...this.takeOpening(),
+      startsSystem: this.takeLineStart(),
       closingBarline: barline,
       sourceRange: sourceRange(this.measureStart ?? barlineRange.start, barlineRange.end),
       closingBarlineSourceRange: barlineRange,
@@ -772,6 +802,7 @@ class VoiceBuilder {
         overlays: this.overlays,
         ...this.takeChanges(),
         ...this.takeOpening(),
+        startsSystem: this.takeLineStart(),
         closingBarline: null,
         sourceRange: sourceRange(this.measureStart ?? 0, last?.sourceRange?.end ?? 0),
         closingBarlineSourceRange: null,

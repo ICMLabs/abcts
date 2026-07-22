@@ -477,6 +477,15 @@ export interface Measure {
   readonly partLabel: string | null
   readonly partLabelSourceRange: SourceRange | null
   /**
+   * This measure opens a new SYSTEM, because a new line of music began in the source.
+   *
+   * ABC breaks staff lines where the FILE breaks them — one source music line is one
+   * printed system — and abcjs has no line-breaking pass at all: it fits each source line
+   * to the page width, compressing when the line is long rather than wrapping it. So the
+   * break points are the author's and are recorded at parse, not recomputed at layout.
+   */
+  readonly startsSystem: boolean
+  /**
    * A barline that OPENS this measure — a leading `|:` or `[|`, which belongs to the
    * measure after it rather than the one before. Distinct from `closingBarline` because
    * both can occur back to back: a line ending `:|` followed by one starting `|:` is two

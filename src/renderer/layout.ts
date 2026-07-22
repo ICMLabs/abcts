@@ -2845,6 +2845,8 @@ const staffLinesFor = (width: number): PlacedLine[] =>
 interface VoicePlan {
   readonly clef: Clef
   readonly blocks: readonly MeasureBlock[]
+  /** The measures the blocks came from — read for their source-line break points. */
+  readonly measures: readonly Measure[]
   /** The staff prefix, whose width differs per voice because clefs and keys differ. */
   readonly prefix: (
     withMeter: boolean,
@@ -2972,7 +2974,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       return { elements, width: x }
     }
 
-    return { clef, blocks, prefix }
+    return { clef, blocks, measures: voice?.measures ?? [], prefix }
   })
 
   // Measures align across voices: column i is as wide as the widest voice's bar i. A
@@ -2987,20 +2989,37 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     Math.max(0, ...plans.map((plan) => plan.prefix(withMeter, false).width))
 
   // Pack columns into systems, breaking before the column that would overflow.
+  /**
+   * Systems follow the SOURCE, not a width packer.
+   *
+   * ABC breaks staff lines where the file breaks them — one line of music is one printed
+   * system — and abcjs has no line-breaking pass at all. It never re-wraps; it fits each
+   * source line to the page, compressing a long one rather than splitting it. Packing by
+   * width instead was the largest remaining structural divergence: we made 60 systems of
+   * `ragtime-nightingale` where abcjs makes 46, split `twinkle`'s single source line in
+   * two, and merged two of `multi-voice-lyrics-two-voices`'s into one.
+   *
+   * `Measure.startsSystem` carries the author's break points from the parser. A measure
+   * continued across a line break belongs to the line it STARTED on, which is what abcjs
+   * lays out too.
+   *
+   * ponytail: NO width fallback. A source line wider than the page compresses to fit and
+   * keeps compressing, exactly as abcjs does — there is no width at which it wraps. A
+   * host wanting reflow needs a mode that re-breaks, and none is asked for; adding one
+   * speculatively would put back the packer this replaces.
+   */
+  const breaksAt = new Set<number>()
+  for (const plan of plans) {
+    plan.measures.forEach((measure, index) => {
+      if (measure.startsSystem) breaksAt.add(index)
+    })
+  }
   const spans: { start: number; end: number }[] = []
   let start = 0
-  let used = 0
-  for (let i = 0; i < columns; i++) {
-    const head = headWidth(spans.length === 0)
-    const width = columnWidths[i] ?? 0
-    // A system always takes at least one column: a measure wider than the page
-    // OVERFLOWS rather than sending the packer round forever.
-    if (i > start && head + used + width + ENGRAVE.marginX > systemWidth) {
-      spans.push({ start, end: i })
-      start = i
-      used = 0
-    }
-    used += width
+  for (let i = 1; i < columns; i++) {
+    if (!breaksAt.has(i)) continue
+    spans.push({ start, end: i })
+    start = i
   }
   if (columns > 0) spans.push({ start, end: columns })
   if (spans.length === 0) spans.push({ start: 0, end: 0 })
@@ -3039,8 +3058,20 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     // matched to the pixel while its neighbours did not.
     const fill = (natural + head) / systemWidth
     const stretchLast = fill >= ENGRAVE.lastSystemFill
-    const wanted = natural > 0 && (!isLast || stretchLast) ? available / natural : 1
-    const justify = wanted > 1 && wanted <= ENGRAVE.maxJustifyStretch ? wanted : 1
+    const wanted = natural > 0 ? available / natural : 1
+    // COMPRESSION IS UNCONDITIONAL, and it is what makes source-line breaking work at
+    // all: a line longer than the page is squeezed to fit, never wrapped. abcjs's
+    // `calcHorizontalSpacing` computes one spacing that serves both directions, and its
+    // last-line guard only ever suppresses STRETCHING — a last line that is too long has
+    // `lineWidth / targetWidth > 1`, sails past the 0.66 test, and gets compressed like
+    // any other. Without this half, replacing the width packer just let long lines
+    // overflow the page.
+    const justify =
+      wanted < 1
+        ? wanted
+        : (!isLast || stretchLast) && wanted <= ENGRAVE.maxJustifyStretch
+          ? wanted
+          : 1
 
     const staves: LayoutStaff[] = plans.map((plan, voiceIndex) => {
       // The title heads the tune: first system, top staff, and inside the layout so the
