@@ -72,7 +72,7 @@ correct behavior. Nothing ships red.
 - `abcts.config.json` — corpus and goldens paths
 - `../abcMusicKit/Tools/abcjs-debug/fixtures/` — 41 `.abc` corpus fixtures
 - `../abcMusicKit/Tools/abcjs-debug/golden/`   — abcjs goldens: 41 `.parse.json` (parser gate) +
-  41 `.elements.json` (renderer gate — laid-out elements) + 503 SVGs (compat mode only, unused)
+  41 `.elements.json` (renderer gate — laid-out elements) + 379 SVGs (**pixel-parity gate** — no longer unused, and there are 379 not 503)
 - `../abcMusicKit/Docs/References/abcjs/abcjs-6.6.3/` — vendored abcjs source. The ONLY
   thing left under `Docs/References/`; it stayed because the `.abcjsStrict` porting rules
   cite it by path. Everything else there moved to abcDocs on 2026-07-20.
@@ -145,15 +145,17 @@ Beware the gap list in the checkpoint: it was built by counting how often a mode
 is POPULATED, and its top entry turned out not to be a gap at all — see the second
 CORRECTION there. Ask the reference directly before believing a frequency count.
 
-All three rendering decisions are settled — inline Bravura paths for glyphs, `<text>` for
-prose, structural comparison against `golden/*.elements.json` rather than the SVG
-goldens. See ARCHITECTURE.md § Rendering.
+Rendering decisions: inline Bravura paths for glyphs, `<text>` for prose. The third —
+"structural comparison rather than the SVG goldens" — was CORRECTED 2026-07-21: the
+default mode is meant to be byte-identical to abcjs bar the glyph dictionary, and
+`pixel-parity.test.ts` now measures that. See ARCHITECTURE.md § Rendering.
 
 The renderer phase MAY change the parser; clef, `Q:`, opening barlines and `P:` all did,
 and the parser gate held each time.
 
-TWO GATES, and they are complementary — structure catches WRONG (vs abcjs), baselines
-catch CHANGED (vs committed geometry). Invert every stem in the corpus and the structural
+THREE GATES, complementary — **pixel parity** catches DIFFERENT-ON-SCREEN (vs abcjs's own
+SVG, glyph outlines excepted), structure catches WRONG (vs abcjs's laid-out elements),
+baselines catch CHANGED (vs committed geometry). Invert every stem in the corpus and the structural
 gate stays fully green while baselines fail 39 of 43. Re-record with `npm run baseline`,
 but READ the diff and commit baselines with the code change.
 

@@ -10,7 +10,7 @@ slices and for the lessons recorded in it. **Read this, then `ARCHITECTURE.md`, 
 
 | | |
 |---|---|
-| Tests | **397 passing** |
+| Tests | **458 passing** |
 | **Note content parity** | **41/41 — ZERO known divergences** |
 | **Lyrics** | **10/10 — zero divergences** |
 | **Beam grouping** | **41/41 — zero divergences** |
@@ -160,6 +160,41 @@ Doing it honestly means one of:
 Do NOT reach for relaxing `PREFIX_TYPES` to make the fixture pass. That trades a real
 check for a green light, and the check it trades away — clef and meter on the first
 system — is the only one the gate currently has on either.
+
+---
+
+## THE BIG ONE — pixel parity is now measured, and the doctrine was wrong
+
+`ARCHITECTURE.md` said "core renders in its own visual style, so the golden SVGs gate
+compat mode only", and `CLAUDE.md` called those SVGs "unused". Both wrong, and the second
+proves the first was never tested: `abcts/compat` calls the same core `layout()` +
+`toSVG()` as everything else, so nothing rendered differently and nothing was compared.
+
+**The intent is byte-identical to abcjs in the default mode, glyph dictionary excepted.**
+That was never a live disagreement — it was a phrase in an architecture doc that hardened
+into doctrine without being decided or measured. It cost nothing to disprove once
+someone rendered both and subtracted.
+
+`pixel-parity.test.ts` resolves both SVGs to absolute pixels and compares there.
+
+| | abcjs | abcts |
+|---|---|---|
+| Note spacing, quarter | 42.426 px | 42.427 px |
+| Staff space | 7.75 px | 7.75 px |
+| Noteheads across 29 fixtures | 2,652 | **2,652, exact** |
+
+Nine fixtures differ vertically by a PURE CONSTANT; three already match horizontally to
+the pixel. The engraving grid is already abcjs's. What remains, ranked by measurement:
+
+1. **Line breaking** — dominates every multi-system fixture. One algorithm; closing it
+   collapses most of the table.
+2. **A constant ~34px vertical origin.** One constant.
+3. **A 4.5px step at a barline** — four fixtures show 4.5 EXACTLY, so one shared cause.
+4. Accidental and grace widths.
+
+The recorded ceilings are a TODO list, not a specification. Every one should end at 0. A
+fixture that improves past its ceiling fails, so the number gets lowered rather than
+rotting. Never raise one to make a change pass.
 
 ---
 

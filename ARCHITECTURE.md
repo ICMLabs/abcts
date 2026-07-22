@@ -255,11 +255,42 @@ metadata (glyph metrics, line thicknesses) stays in the font and engraving conve
 (stem length, spacing) live in the engine's `ENGRAVE` constants — no magic numbers loose
 in layout code. Scaling to pixels happens once, in the SVG backend.
 
-### What "correct" means — structural, then baselines
+### What "correct" means — pixel parity, structure, then baselines
 
-Core renders in its own visual style, so the 503 golden SVGs gate **compat** mode only.
-Core is gated structurally against `golden/*.elements.json` — abcjs's laid-out elements,
-which carry element sequence and staff positions and survive stylistic divergence.
+*Amended 2026-07-21. The previous version said "core renders in its own visual style, so
+the golden SVGs gate compat mode only". **Wrong on both counts**, and it hardened into
+doctrine without ever being decided or measured — `abcts/compat` calls the same core
+`layout()` + `toSVG()` as everything else, and nothing read those SVGs at all.*
+
+**The intent is byte-identical output to abcjs in the default mode, the glyph dictionary
+excepted.** abcjs is read for constants and for algorithmic APPROACH, adversarially,
+looking for the optimisation and writing modern TypeScript. The rule against "porting an
+algorithm out of v1" forbids transliterating a 20-year-old codebase unexamined; it is NOT
+a licence to diverge visually.
+
+Measured 2026-07-21 — the gap is a calibration, not a re-engraving:
+
+| | abcjs | abcts |
+|---|---|---|
+| Note spacing, quarter | 42.426 px | 42.427 px |
+| Staff space | 7.75 px | 7.75 px |
+| Noteheads across 29 fixtures | 2,652 | 2,652, exact |
+
+Nine fixtures differ vertically by a pure constant; three already match horizontally to
+the pixel. What remains, ranked: **line breaking** (dominates every multi-system tune), a
+**constant ~34px vertical origin**, a **4.5px step at a barline**, then accidental and
+grace widths.
+
+Three gates, answering different questions:
+
+| Gate | Question |
+|---|---|
+| `pixel-parity.test.ts` | Does it match abcjs ON SCREEN? Resolves both SVGs to absolute pixels. |
+| `structural.test.ts` | Did the right notes land on the right lines? Style-independent, so it survives the calibration gap. |
+| `baseline.test.ts` | Did OUR OWN geometry change? |
+
+Glyph OUTLINES stay out of scope: Bravura against abcjs's own font is the intended
+difference, and the reason abcts's output is smaller.
 
 Committed visual baselines are the second half and are deliberately deferred: a baseline
 committed from unverified output locks the bug in, and day one is when output is least
