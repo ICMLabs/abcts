@@ -172,14 +172,32 @@ const ENGRAVE = {
    *    `ave-verum-corpus` 70.0 -> 103.7, `two-voice-invention` 38.1 -> 90.8,
    *    `zocharti-loch` 40.2 -> 92.9. 15 better, 9 worse, mean |offset| flat.
    *
-   * So the model is right for a single staff and something else is wrong for several.
-   * The candidate is `staffGap`: abcjs distinguishes `systemStaffSeparation` (48, between
-   * staves INSIDE one system) from `staffSeparation` (61.33, between systems), and we
-   * have one constant for both. v1 keeps abcjs's values in strict and pads to 84 in
-   * extended, so the two are known and the shape of the fix is known.
+   * 3. Model PLUS abcjs's separations (`systemStaffSeparation` 48 within a system,
+   *    `staffSeparation` 61.33 between them, both from `write/renderer.js`). Result
+   *    IDENTICAL to attempt 2 to the decimal — the minimums never bind, because our
+   *    natural stacking is already looser than either of them.
    *
-   * Do the two together — model plus separations — and re-measure. Neither half is worth
-   * shipping alone, which is what these two attempts demonstrate.
+   *    That is the finding. `marginY` pads EVERY staff extent by 4.0 spaces on each
+   *    side — 31px a side — where abcjs adds no per-staff margin at all and lets the
+   *    minimum supply the spacing (`draw.js:84-92` pads only when the natural ink
+   *    clearance falls short). We are not too tight anywhere; we are too loose
+   *    everywhere, and a minimum cannot fix loose.
+   *
+   * 4. `marginY` 4.0 -> 0.5 alone moves the mean |y offset| from 73.8px to 54.1px, the
+   *    largest single move of the four, and collapses `ragtime-nightingale` from 987 to
+   *    -264 — 46 systems, so its error was accumulated padding. It also flips the sign
+   *    almost everywhere: we go from sitting too LOW to sitting too HIGH.
+   *
+   * ── WHERE THIS LEAVES IT ─────────────────────────────────────────────────────
+   * Ordered by size: per-staff padding (`marginY`) dominates, the title gap is worth
+   * ~30px, and the separations are currently inert. All three interact, and every
+   * attempt above was judged against ONE aggregate number, which is why four of them
+   * moved it around without settling it — that is constant-fitting, not modelling.
+   *
+   * The next attempt should measure the three terms SEPARATELY against abcjs — title
+   * baseline to music top, staff origin to staff origin within a system, system origin
+   * to system origin — and set each from its own constant. Ganged together they cannot
+   * be told apart, and the aggregate will keep looking half-fixed whichever way it goes.
    */
   titleStep: 19,
   /** First verse below the staff; further verses stack downward by `lyricLineStep`. */
