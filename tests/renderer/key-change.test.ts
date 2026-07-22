@@ -83,6 +83,25 @@ describe('mid-tune key changes', () => {
     )
   })
 
+  it('prints the key and the opening barline in SOURCE ORDER', () => {
+    // Not a convention to pick — what the file says. `[K:Bb] |` is signature then bar;
+    // `| [K:Bb]` is bar then signature. abcjs does exactly this, and S6-keys X:602
+    // writes the key BEFORE the barline in all four of its changes, so a rule that
+    // always put the key after the bar was wrong in every corpus instance of it.
+    const before = parse('X:1\nL:1/4\nK:C\nCDEF|[K:G] |GABc|\n').scores[0]
+    const after = parse('X:1\nL:1/4\nK:C\nCDEF| [K:G]GABc|\n').scores[0]
+    const seq = (score: typeof before) => {
+      if (score === undefined) throw new Error('did not parse')
+      return layout(score)
+        .systems.flatMap((system) => system.staves[0]?.voices[0] ?? [])
+        .map((element) => element.type)
+        .filter((type) => type === 'bar' || type === 'keySignature')
+    }
+    // The opening `|` of the second measure, and where the signature sits around it.
+    expect(seq(before).join(' ')).toContain('keySignature bar')
+    expect(seq(after).join(' ')).toContain('bar keySignature')
+  })
+
   it('treats a mode change with the same signature as no change', () => {
     // K:G and K:Em are one signature. A reader sees no accidental move, so neither
     // should the page — this is why the guard compares FIFTHS, not the key object.

@@ -2681,24 +2681,43 @@ function layoutMeasure(
           (e) => (e.sourceRange?.start ?? Number.POSITIVE_INFINITY) >= partAfter,
         )
   if (measure.partLabel !== null && partIndex === 0) elements.push(layoutPart(x, measure.partLabel))
-  // An opening `|:` or `[|` prints before the measure it belongs to, and is a SEPARATE
-  // barline from the previous measure's closer.
-  if (measure.openingBarline !== null) {
+
+  // A mid-tune `K:` and the barline that opens the measure print in SOURCE ORDER.
+  //
+  // Which comes first is not a convention to pick, it is what the file says: `[K:Bb] |`
+  // draws the signature then the bar, and `| [K:Bb]` draws the bar then the signature.
+  // abcjs does exactly this — `S6-keys` X:602 writes `[K:Bb]       |` and abcjs emits
+  // `[key]` BEFORE the bar — and strict has to match it. Anchoring on the two offsets
+  // gets both spellings without a rule about either.
+  //
+  // The first version of this drew the key unconditionally after the barline, on the
+  // stated grounds that "the new signature belongs to the music it governs". That reads
+  // as sound engraving and is wrong here: it put the key on the far side of a barline
+  // the author wrote it before, in all four of S6-keys' changes. The corpus fixture that
+  // proves it is in tune 1, which the structural gate never looks at.
+  const keyChangeAt = measure.keyChangeSourceRange?.start ?? Number.POSITIVE_INFINITY
+  const openingBarAt = measure.openingBarlineSourceRange?.start ?? Number.POSITIVE_INFINITY
+  const drawKeyChange = (): void => {
+    if (measure.keyChange === null || keyInForce === null) return
+    const change = layoutKeyChange(x, keyInForce, measure.keyChange, clef)
+    if (change === null) return
+    elements.push(change)
+    x += change.width + ENGRAVE.prefixGap
+  }
+  const drawOpeningBar = (): void => {
+    // An opening `|:` or `[|` prints before the measure it belongs to, and is a SEPARATE
+    // barline from the previous measure's closer.
+    if (measure.openingBarline === null) return
     x += ENGRAVE.barGap
     elements.push(layoutBar(x, measure.openingBarline))
     x += ENGRAVE.barGap
   }
-
-  // A mid-tune `K:` prints AFTER the barline that opens the measure it takes effect in —
-  // the new signature belongs to the music it governs, not to the bar before it. Parsed
-  // since the model gained `keyChange` and drawn nowhere until now, so every `[K:…]` in
-  // the corpus silently changed the key and showed nothing.
-  if (measure.keyChange !== null && keyInForce !== null) {
-    const change = layoutKeyChange(x, keyInForce, measure.keyChange, clef)
-    if (change !== null) {
-      elements.push(change)
-      x += change.width + ENGRAVE.prefixGap
-    }
+  if (keyChangeAt < openingBarAt) {
+    drawKeyChange()
+    drawOpeningBar()
+  } else {
+    drawOpeningBar()
+    drawKeyChange()
   }
 
   for (const [eventIndex, event] of measure.events.entries()) {

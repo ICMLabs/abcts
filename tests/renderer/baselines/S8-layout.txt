@@ -2986,15 +2986,15 @@ system 1 width=90.000 originY=26.920
       text  37.223,-3.000 size=1.400 "Eb"
     bar x=50.256 w=0.160
       line  50.336,-2.000 -> 50.336,2.000 t=0.160
-    bar x=52.359 w=0.160
-      line  52.439,-2.000 -> 52.439,2.000 t=0.160
-    keySignature x=53.462 w=6.174
-      glyph accidentalFlat 53.462,0.000
-      glyph accidentalFlat 54.516,-1.500
-      glyph accidentalFlat 55.570,0.500
-      glyph accidentalFlat 56.624,-1.000
-      glyph accidentalFlat 57.678,1.000
-      glyph accidentalFlat 58.732,-0.500
+    keySignature x=51.256 w=6.174
+      glyph accidentalFlat 51.256,0.000
+      glyph accidentalFlat 52.310,-1.500
+      glyph accidentalFlat 53.364,0.500
+      glyph accidentalFlat 54.418,-1.000
+      glyph accidentalFlat 55.472,1.000
+      glyph accidentalFlat 56.526,-0.500
+    bar x=60.274 w=0.160
+      line  60.354,-2.000 -> 60.354,2.000 t=0.160
     note@3 x=61.377 w=3.871
       glyph noteheadBlack 61.377,-1.500
       line  61.377,-1.332 -> 61.377,2.000 t=0.120
