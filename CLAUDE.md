@@ -152,6 +152,21 @@ SVG, glyph outlines excepted), structure catches WRONG (vs abcjs's laid-out elem
 baselines catch CHANGED (vs committed geometry). Re-record with `npm run baseline`, but
 READ the diff and commit baselines with the code change.
 
+## Parity targets, by mode
+`abcjs-strict` is measured against **abcjs 6.6.3 itself** — its parse trees, element dumps
+and SVG goldens. 100% is the bar; a divergence is a defect, not a tolerance.
+
+`abc2.1` and `extended` are measured against the OTHER engines, since abcjs is wrong or
+absent for much of what they cover. Golden sets exist in `../abcMusicKit` (v1),
+`../abcMusicKit2` (v2) and `../abcMusicKitCpp` — abcm2ps and abc2svg observed through
+their OUTPUT only, never their source (both are GPL; see the clean-room rule).
+
+`Docs/ABCJS-DIFFERENCES.md` is the verified list of abcjs bugs and gaps that strict
+reproduces and the other modes fix. It is public-facing — every entry must cite how it was
+checked, and anything read from abcjs's source rather than measured from its output says
+so. Three entries were originally written from a plausible reading of its parser and were
+wrong.
+
 ## Modes — abcjs-strict is the DEFAULT
 `abcjs-strict` (reproduce abcjs, bugs included) | `abc2.1` (standard read correctly) |
 `extended`. `parse(abc, { mode })` and `render(score, { mode })`. Strict is default
