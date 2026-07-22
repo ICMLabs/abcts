@@ -29,10 +29,19 @@ GEOMETRIC: does abcts put the ink where abcjs puts it.
 | Noteheads | **2696 / 2696 exact**, all 29 fixtures with SVG goldens |
 | Systems matching abcjs | **28 / 29** (was 18/29) |
 | Mean dx spread | 68.7px |
-| Mean dy spread | 122.4px |
 | Mean abs x offset | 33.0px |
-| Mean abs y offset | **73.8px — the open problem** |
+| Mean abs y offset | 43.6px (was 73.8) |
+| **Corpus median notehead distance** | **30.9px** (was 40.6) |
+| Fixtures within 25px / 50px | 11 / 21 of 29 |
 | Output size vs abcjs | **0.34x** (was 0.90x) |
+
+THE HEADLINE NUMBER is the corpus median of each fixture's median notehead distance from
+abcjs: **30.9px**, about four staff spaces. Every notehead abcjs draws we draw, in the
+right order on the right line — but typically four spaces from where abcjs puts it.
+
+Do NOT quote a per-note median pooled across the corpus. `ragtime-nightingale` holds 2009
+of the 2696 noteheads, so pooling makes its median the corpus's and reports 252px. Weight
+per fixture.
 
 Worst remaining dx: `frere-jacques` 637 (the `+:` prose fixture, breaks mid-measure),
 `multi-voice-lyrics-two-voices` 337, `center-text` 219 (waits on `%%center`).
@@ -89,7 +98,32 @@ is one system, fitted to the page.
 
 ---
 
-## THE OPEN PROBLEM — vertical placement
+## Vertical placement — mostly closed
+
+Mean |y offset| 73.8 -> 43.6 over the session. What fixed it, in order of size:
+
+1. **`marginY` 4.0 -> 0** — abcjs and v1 add NO per-staff margin; they advance by the ink
+   extent and enforce a minimum separation (`draw.js:84-92`). 31px a side, accumulating
+   per system, was the dominant term all along. The "title gap" three attempts chased was
+   this padding, not the title.
+2. **The top-text BLOCK** — composer, rhythm and origin are drawn and reserve height;
+   abcjs's font sizes (title 20pt, not our 18.6px); `padding.top` 15px, which we lacked.
+3. **`blockTop`** — a block reserves from its cursor origin, not its first line's ink.
+   Worth 13.3px; the title baseline now lands within 0.4px of abcjs's.
+4. **Separations measured LINE-TO-LINE**, not origin-to-origin — four staff spaces short
+   the other way, which is why they silently never bound.
+
+### What is left of it
+
+`simple-c` keeps 10.3px above the top staff line where abcjs keeps 17.7px. That is the
+CLEF's box: abcjs's `clefs.G` is 57.057px tall and reaches ~4.83 spaces above its origin;
+Bravura's `gClef` is 7.024 spaces tall reaching 4.392. So it is the unwired glyph table,
+not another spacing constant — `happy-birthday` already matches to 0.4px because a taller
+top-text block dominates it.
+
+---
+
+## SUPERSEDED — the four failed vertical attempts
 
 Mean |y offset| 73.8px, and it is the largest remaining term by a distance.
 
