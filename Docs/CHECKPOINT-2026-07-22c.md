@@ -20,13 +20,13 @@ beams, structure, source offsets. **499 tests**, typecheck and build clean.
 
 | Geometry (corrected metric — see below) | |
 |---|---|
-| Corpus median notehead distance | **19.5px** |
-| Within 25 / 50 / 100px | **19 / 28 / 29** of 29 |
+| Corpus median notehead distance | **17.4px** |
+| Within 25 / 50 / 100px | **21 / 28 / 29** of 29 |
 | Systems matching abcjs | **29 / 29** |
 | Noteheads drawn | 2696 / 2696 |
 
-Only two fixtures remain above 25px: `multi-voice-lyrics-two-voices` 92.9,
-`multi-voice-rest-collision` 42.7. Everything else is inside 25px.
+Eight fixtures remain above 25px; only `multi-voice-lyrics-two-voices` (121) is above 50.
+Its cause is diagnosed and listed first below.
 
 > **The metric changed meaning this session and old numbers are NOT comparable.** The gate
 > used to compare abcjs's first `M` — wherever an outline's contour starts — against
@@ -74,44 +74,58 @@ Only two fixtures remain above 25px: `multi-voice-lyrics-two-voices` 92.9,
    baseline is now abcjs's 49.56 exactly and our composer 82.12 exactly; the whole
    title-only group went oy −4.3 → −0.2.
 
-7. **Geometry axis wired into `npm run parity`** — it printed four structural axes at 100%
+7. **Out-of-staff furniture reserves room at last.** `verticalExtent` read only `elements`
+   and `beams`, so tuplet brackets, repeat-ending brackets, hairpins and melisma rules
+   reserved nothing and the staff sat as high as if they were not drawn. A tuplet bracket
+   rides above the beam, so the tuplet fixtures were the worst offenders after ragtime:
+   `multi-voice-triplet-brackets` −36 → −9, `multi-voice-rest-collision` −42 → −28.
+
+8. **Lane distances, measured off abcjs — and NOT a skyline.** The previous checkpoint
+   called for a skyline pass because `setUpperAndLowerElements` reads as one. Built,
+   measured, discarded: abcjs puts the innermost above-staff text at a near-CONSTANT
+   20.8px above the top staff line whether the notes sit inside the staff (`chord-grid`),
+   23px above it (`happy-birthday`) or 27px above it (`stacked-annotations`). The lanes
+   were right in kind and simply too tight — four measured constants, not a pass:
+   chord 7.75 → 20.8, annotation above 15.5 → 19.3, annotation below 7.75 → 27.8, line to
+   line 9.7 → 20.0 (which is `round(height × 1.1)` for a 16px font, the same advance rule
+   the top-text block uses), first lyric 15.5 → 28.8 with verses 21.7 apart.
+
+9. **Geometry axis wired into `npm run parity`** — it printed four structural axes at 100%
    and stayed silent on the open one.
 
 ---
 
 ## Next, in priority order
 
-1. **The above-staff SKYLINE.** This is now the single dominant term and it is one cause,
-   not several. Our `ENGRAVE` places above-staff content in FIXED LANES
-   (`chordSymbolStep`, `annotationAboveStep`, `annotationLineStep`, `tempoStep`,
-   `partStep`) and its own comment already names the fix as "the skyline pass this whole
-   block is waiting on". Measured against abcjs:
-   - `chord-grid` — abcjs puts a chord symbol **20.8px** above the top staff line, we put
-     it 7.75. Staff 20.4px too high.
-   - `stacked-annotations` — abcjs stacks annotation lines **20px** apart, we use 9.7.
-     20 is exactly `round(annotationHeight × 1.1)` = `round(16 × 1.1575 × 1.1)`, the same
-     text-height rule the top-text block now uses. Staff 21.5px too high.
-   Everything in the −20 group (`chord-grid`, `ragtime-mini`, `stacked-annotations`,
-   `vree-slurs-and-triplets`, `frere-jacques`) is this. Do it as a real skyline stack
-   driven by measured text height, not by moving the lane constants.
+1. **Two voices sharing a staff print their lyrics ON TOP OF EACH OTHER.** abcjs offsets
+   by the voice's index within the staff (`child.pitch -= child.voiceNumber * child[key]`,
+   `set-upper-and-lower-elements.js`), and `multi-voice-lyrics-two-voices` exists to pin
+   exactly that — its own header says so. The fix is ~15 lines at the staff merge and it
+   WORKS (two lyric lines 21px apart, against abcjs's 18.8). It is not committed because
+   it costs `ave-verum-corpus` 20.6 -> 31.7px, and raising a ceiling to land a change is
+   forbidden. **The regression is not the fix's fault** — see 2.
 
-2. **`multi-voice-lyrics-two-voices` 92.9px** — two voices sharing one staff, both with
-   lyrics, stacked one `lyricHeightBelow` apart (the fixture's own header says so). Its
-   oy is −87, so it is the same under-reservation but below the staff and multiplied by
-   the voice count.
+2. **`ave-verum-corpus` staff grouping.** abcjs renders it as ONE line of FOUR staves;
+   we appear to render TWO systems of TWO staves. Both give four top staff lines, which is
+   why the system-count check has never caught it. Settle this and (1) lands with it.
 
-3. **`multi-voice-rest-collision` 42.7px** — has no `T:`; abcjs's topmost ink is at 49.7
-   where ours is at 9.2, so something is being drawn far too high. Diagnose what that text
-   is before assuming it is the same skyline term.
+3. **Dynamics go ABOVE the staff for the upper voice.** In
+   `multi-voice-lyrics-two-voices`, abcjs's topmost ink is a decoration at y 35.9 with its
+   top staff line at 96.2 — the `!p!` marks sit ~60px ABOVE the staff. Ours are at
+   `dynamicStep`, below it. That is most of that fixture's remaining 121px and all of why
+   its first system starts 53.6px too high.
 
-4. **abcjs's absolute stretch guard is NOT reproduced** — `spacing * minSpace > 50`, the
+4. **Our ink extents are short of abcjs's by about `systemGap`.** abcjs adds NO gap
+   between systems — it pads only when the natural ink separation falls short of
+   `staffSeparation` — but setting ours to 0 to match moves the corpus the wrong way
+   (median 17.4 -> 19.0). The 3.0 has been standing in for a missing extent. Find the
+   missing extent; do not tune the constant.
+
+5. **abcjs's absolute stretch guard is NOT reproduced** — `spacing * minSpace > 50`, the
    stretched spring of the shortest note. Our column model has no `spacingUnits`
-   equivalent; measuring it off element origins includes the rod and binds far too early
-   (it pulled `frere-jacques` from 42px back to 280). Uncapped matches abcjs on all 29
-   gated fixtures; the cost is that an ungated sparse line stretches wide. Needs a real
-   spring/rod split. See the ponytail note in `layout.ts`.
-
----
+   equivalent; measuring it off element origins includes the rod and binds far too early.
+   Uncapped matches abcjs on all 29 gated fixtures; the cost is that an ungated sparse
+   line stretches wide. Needs a real spring/rod split.
 
 ## Method notes — new this session
 
@@ -140,6 +154,15 @@ The `b`, 07-21 and 07-22 notes still apply. New:
    simple-c's treble one sits at 77.55, so abcjs places by real ink.
 6. **A drawing outside its own viewBox is a measurement bug or a reservation bug.** Ink
    resolving to y = −8.1 was what exposed the unscaled outline box.
+7. **Read the model out of the OUTPUT before porting it from the SOURCE.**
+   `setUpperAndLowerElements` genuinely stacks against the music's ink, so a skyline was
+   the obvious port — and three measurements of abcjs's own SVG killed it in a minute by
+   showing the same 20.8px whatever the notes did. The source says how abcjs is built; the
+   goldens say what it produces, and only the second is the contract.
+8. **A correct fix can still be unshippable.** The per-voice lyric offset is right, is
+   abcjs's documented rule, and visibly fixes overlapping syllables — and it costs
+   `ave-verum-corpus` 11px because of an unrelated staff-grouping divergence. Landing it
+   would have meant raising a ceiling. Left out, with the real cause written up next to it.
 
 ---
 

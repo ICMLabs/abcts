@@ -120,10 +120,11 @@ backup remote is not a licence to vendor someone else's tree into this one.
 ## Current phase
 **Every structural gate is at 100% with zero recorded divergences** — content, lyrics,
 beams, structure, source offsets. 499 tests. The work is now entirely GEOMETRIC and
-entirely strict-mode: corpus median notehead distance from abcjs is **19.5px**, with
-**28/29** fixtures within 50px and **29/29** within 100px, and systems matching 29/29.
-The remaining causes are named in the checkpoint's priority list — the dominant one is
-the above-staff SKYLINE (fixed lanes where abcjs stacks by measured text height).
+entirely strict-mode: corpus median notehead distance from abcjs is **17.4px**, with
+**21/29** fixtures within 25px, **28/29** within 50px and **29/29** within 100px, and
+systems matching 29/29. The remaining causes are named in the checkpoint's priority list.
+It is NOT a skyline: abcjs places out-of-staff text at fixed distances from the staff, a
+finding that killed a skyline port — measure its OUTPUT before porting its SOURCE.
 NOTE the metric was corrected on 2026-07-22 and earlier figures are not comparable: the
 gate had been comparing abcjs's outline START against our glyph ORIGIN, a 4px bias.
 
