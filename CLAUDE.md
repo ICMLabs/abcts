@@ -4,10 +4,11 @@ You are developing abcts, a modern TypeScript ABC notation library
 and community successor to abcjs.
 
 ## First Step — Always
-Read `Docs/CHECKPOINT-2026-07-22b.md` first — it is the current state of play, the open
-decisions, and the known risks. (`CHECKPOINT-2026-07-21.md`, `-07-19.md` and `-07-18.md` are superseded but remain the
-record of the parser phase, the renderer's first slices, and how the last three parser
-diffs closed.) Then read ARCHITECTURE.md in full. It is your
+Read `Docs/CHECKPOINT-2026-07-22c.md` first — it is the current state of play, the open
+decisions, and the known risks. (`CHECKPOINT-2026-07-22b.md`, `-07-21.md`, `-07-19.md` and
+`-07-18.md` are superseded but remain the record of the parser phase, the renderer's first
+slices, how the last parser diffs closed, and the geometric work up to the voice-name and
+`%%staffsep` fixes.) Then read ARCHITECTURE.md in full. It is your
 specification, decision record, and setup guide. Do not make
 architectural decisions that contradict it without flagging them
 explicitly and getting confirmation from Lance.
@@ -118,23 +119,27 @@ backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
 **Every structural gate is at 100% with zero recorded divergences** — content, lyrics,
-beams, structure, source offsets. 498 tests. The work is now entirely GEOMETRIC and
-entirely strict-mode: corpus median notehead distance from abcjs is **32.6px**, and the
-remaining causes are named in the checkpoint's priority list.
+beams, structure, source offsets. 499 tests. The work is now entirely GEOMETRIC and
+entirely strict-mode: corpus median notehead distance from abcjs is **24.2px** (down from
+32.6 after the voice-name indent and `%%staffsep`/`%%sysstaffsep` fixes), 26/29 fixtures
+within 50px, and the remaining causes are named in the checkpoint's priority list.
 
 
 **Structural parity is done: note content, lyrics, beams and render structure are all
-41/41 with zero recorded divergences.** 498 tests.
+41/41 with zero recorded divergences.** 499 tests.
 
 The work is now GEOMETRIC — does abcts put the ink where abcjs puts it. A pixel-parity
 gate (`tests/pixel-parity.test.ts`) resolves both engines' SVG to absolute pixels and
 measures it. Noteheads match 2696/2696, systems 28/29, output is 0.34x abcjs's bytes.
 
-**The open problem is VERTICAL PLACEMENT** — mean |y offset| 73.8px, four measured
-attempts, none shipped. The model is known (from v1) and the terms are ordered. Read
-`Docs/CHECKPOINT-2026-07-22.md` § THE OPEN PROBLEM and the note on `ENGRAVE.titleStep`
-before touching it; the trap is that all three terms interact and a single aggregate
-number cannot tell them apart.
+**The open problems are now three fixtures, not a corpus-wide term** — see
+`Docs/CHECKPOINT-2026-07-22c.md` § Next. Vertical placement is largely closed (the
+voice-name indent, `%%staffsep`/`%%sysstaffsep` and the prior per-staff-margin work took
+the corpus median to 24.2px); what remains is `frere-jacques` (abcjs wraps a source line,
+which fights the "one source line = one system" model — read the risk note), `center-text`
+(needs `%%center`), `multi-voice-lyrics-two-voices`, and ragtime's small intra-staff
+residual. A single aggregate number still cannot tell interacting terms apart — decompose
+by per-step pitch, and read `ox`/`oy` offset, not just spread.
 
 Renders staff, all clefs, key signatures, meters, tempo marks, part labels, noteheads and
 chords with stems and ledger lines, accidentals, rests and barlines, grace notes, chord
