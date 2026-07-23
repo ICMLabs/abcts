@@ -231,8 +231,12 @@ const ENGRAVE = {
    */
   lyricInkGap: 17 / 7.75,
   lyricVoiceStep: (17 * 1.108) / 7.75,
-  /** Verse to verse: `round(18.84 x 1.1)` = 21px for abcjs's 17px vocal font. */
-  lyricLineStep: 5.42,
+  /**
+   * Verse to verse: abcjs stacks verses as `<tspan dy="1.2em">` inside ONE `<text>` per
+   * note, so the step is 1.2 x the 17px vocal font = 20.4px, not the 21px an advance rule
+   * would give. Read off its own goldens' markup, not inferred.
+   */
+  lyricLineStep: (17 * 1.2) / 3.875,
   /** Clearance between a brace or bracket and the staff it joins. */
   connectorGap: 0.6,
   /** A bracket is a rule, and a heavy one. */
@@ -3150,14 +3154,37 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
    *
    * `null` on a staff of one, where pitch is the right answer and forcing would be wrong.
    *
-   * ponytail: voice 0 up, everything below it down. Three voices on a staff — the corpus
-   * has `( 1 2 3 )` — conventionally wants the middle one placed by context, which needs
-   * collision detection this engine does not have yet.
+   * AND `null` ON THE UPPER VOICE OF A STAFF ITS LOWER VOICE OPENED FIRST, which is not a
+   * refinement but abcjs's actual rule, and it is worth stating because the shape is odd.
+   * `createVoice` (`parse/tune-builder.js:961-989`) forces `down` on every voice after the
+   * first on a staff, unconditionally — but it only back-fills `up` onto the first voice
+   * `if (thisStaff.voices[0] !== undefined)`, and `voices[0]` exists only once that voice
+   * has opened a line. So a tune whose body writes the LOWER voice first leaves the upper
+   * one unforced, following its pitch like a solo voice.
+   *
+   * `ave-verum-corpus` is that tune — its body runs MD1, MD2, MS1, MS2, B, T, A, S, so the
+   * second voice of each vocal staff opens before the first — and abcjs's own element dump
+   * confirms every consequence: Soprano stemmed up (by pitch), Alto down (forced), Tenore
+   * DOWN (by pitch, unforced), Basso down (forced). Forcing Tenore up put our staff's ink
+   * top 23.5px above abcjs's, and that was the whole of the fixture's vertical error.
+   *
+   * Body order comes from the first measure's source offset, which the model already
+   * carries — no new field, and it is the same order `createVoice` walks in.
+   *
+   * ponytail: first voice up, everything below it down. Three voices on a staff — the
+   * corpus has `( 1 2 3 )` — conventionally wants the middle one placed by context, which
+   * needs collision detection this engine does not have yet. abcjs does the same thing
+   * here, forcing every voice after the first down, so strict has nothing to answer for.
    */
+  const opensAt = (index: number): number =>
+    voices[index]?.measures?.[0]?.sourceRange?.start ?? Number.POSITIVE_INFINITY
   const stemForVoice = (index: number): boolean | null => {
     const staff = voicesOfStaff.find((members) => members.includes(index))
     if (staff === undefined || staff.length < 2) return null
-    return staff.indexOf(index) === 0
+    if (staff.indexOf(index) !== 0) return false
+    return staff.every((member) => member === index || opensAt(index) < opensAt(member))
+      ? true
+      : null
   }
 
   const plans: VoicePlan[] = voices.map((voice, voiceIndex) => {
@@ -4033,8 +4060,8 @@ function verticalExtent(
     include(Math.min(beam.y1, beam.y2) - half, Math.max(beam.y1, beam.y2) + half)
   }
 
-  /** Topmost lyric baseline on the staff — verse 1 of whichever voice sits highest. */
-  let lyricTop = Number.POSITIVE_INFINITY
+  /** LOWEST lyric baseline on the staff — the last verse of the lowest-offset voice. */
+  let lyricBottom = Number.NEGATIVE_INFINITY
 
   for (const el of elements) {
     for (const g of el.glyphs) {
@@ -4052,7 +4079,7 @@ function verticalExtent(
     // roughly 0.8 of it above the baseline and descenders 0.25 below.
     for (const t of el.texts) {
       if (t.role === 'lyric') {
-        lyricTop = Math.min(lyricTop, t.y)
+        lyricBottom = Math.max(lyricBottom, t.y)
         continue
       }
       include(t.y - t.size * TEXT_ASCENT, t.y + t.size * TEXT_DESCENT)
@@ -4061,18 +4088,31 @@ function verticalExtent(
     if (el.blockTop !== undefined) include(el.blockTop, el.blockTop)
   }
 
-  // A LYRIC BLOCK RESERVES A FIXED HEIGHT, not the box it draws. abcjs subtracts
-  // `lyricHeightBelow + margin` from the staff bottom once (`:52-55`), where
-  // `lyricHeightBelow` is ONE rendered line whatever the verse count — its two-verse
-  // fixture and its one-verse fixture both record 4.862 pitch. Verses past the first
-  // therefore hang into space nothing reserved, and reproducing abcjs means reproducing
-  // that: measuring the drawn box instead made every system of `little swallow` 19px
-  // taller than abcjs's. The extra per-voice depth is already in the baseline, since
-  // `anchorLyrics` pushed the k-th voice's block down before this ran.
-  if (Number.isFinite(lyricTop)) {
+  // A LYRIC BLOCK RESERVES ITS OWN HEIGHT PLUS ONE PITCH STEP, measured from the LAST
+  // verse's baseline rather than from the drawn box — our vocal font is not abcjs's, and
+  // what has to match is the room taken, not the ink.
+  //
+  // abcjs subtracts `lyricHeightBelow + margin` from the staff bottom (`:52-55`), where
+  // `lyricHeightBelow` is `18.84 + (verses - 1) x 20.4` — the multi-line `getBBox` its own
+  // golden generator measures with. Since verse n sits `(n - 1) x 20.4` below verse 1 and
+  // the k-th voice's block another `k x 18.84` below that, the LOWEST baseline already
+  // carries both, and everything reduces to one constant below it:
+  //
+  //     18.84 + 3.875 - 17  =  5.715px
+  //
+  // Verified against abcjs's own output on three shapes: one verse one voice
+  // (`ave-verum` staff 0, 22.715px below the ink), one verse SECOND voice (staff 1,
+  // 41.55px), two verses first voice (`little swallow`, 43.115px). Reproducing its
+  // arithmetic over the goldens takes `full-song-template` to 0.00px of residual.
+  //
+  // NOT one line whatever the verse count, which is what the `.elements.json` dump says:
+  // that dump's `getBBox` stub returns a single line's height where the SVG generator's
+  // measures every tspan (`dump-svg.js:120-124`). The dump is the wrong oracle for this
+  // one field, and believing it cost `little swallow` 19px a system.
+  if (Number.isFinite(lyricBottom)) {
     bottom = Math.max(
       bottom,
-      lyricTop + ENGRAVE.lyricVoiceStep + ENGRAVE.spacePerStep - ENGRAVE.lyricInkGap,
+      lyricBottom + ENGRAVE.lyricVoiceStep + ENGRAVE.spacePerStep - ENGRAVE.lyricInkGap,
     )
   }
 
