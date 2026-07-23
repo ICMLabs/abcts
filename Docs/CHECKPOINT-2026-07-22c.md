@@ -21,12 +21,12 @@ beams, structure, source offsets. **499 tests**, typecheck and build clean.
 | Geometry (corrected metric — see below) | |
 |---|---|
 | Corpus median notehead distance | **17.4px** |
-| Within 25 / 50 / 100px | **21 / 28 / 29** of 29 |
+| Within 25 / 50 / 100px | **21 / 29 / 29** of 29 |
 | Systems matching abcjs | **29 / 29** |
 | Noteheads drawn | 2696 / 2696 |
 
-Eight fixtures remain above 25px; only `multi-voice-lyrics-two-voices` (121) is above 50.
-Its cause is diagnosed and listed first below.
+**Every fixture is now within 50px of abcjs.** Eight remain above 25px; the worst is
+`multi-voice-lyrics-two-voices` at 39.9.
 
 > **The metric changed meaning this session and old numbers are NOT comparable.** The gate
 > used to compare abcjs's first `M` — wherever an outline's contour starts — against
@@ -90,8 +90,15 @@ Its cause is diagnosed and listed first below.
    line 9.7 → 20.0 (which is `round(height × 1.1)` for a 16px font, the same advance rule
    the top-text block uses), first lyric 15.5 → 28.8 with verses 21.7 apart.
 
-9. **Geometry axis wired into `npm run parity`** — it printed four structural axes at 100%
-   and stayed silent on the open one.
+9. **Dynamics belong ABOVE the staff.** Not a distance error, a SIDE error:
+   `DynamicDecoration` sets `volumeHeightBelow` only when the positioning says `below` and
+   `volumeHeightAbove` otherwise, so `!p!`, `!mf!` and hairpins default above. Ours were
+   under the staff. Confirmed in output too — abcjs's dynamic box centre sits 60px clear
+   above the top staff line. `multi-voice-lyrics-two-voices` 121.4 → 39.9,
+   `ragtime-nightingale` 34.0 → 28.3, and within-50 reached 29/29.
+
+10. **Geometry axis wired into `npm run parity`** — it printed four structural axes at 100%
+    and stayed silent on the open one.
 
 ---
 
@@ -99,29 +106,28 @@ Its cause is diagnosed and listed first below.
 
 1. **Two voices sharing a staff print their lyrics ON TOP OF EACH OTHER.** abcjs offsets
    by the voice's index within the staff (`child.pitch -= child.voiceNumber * child[key]`,
-   `set-upper-and-lower-elements.js`), and `multi-voice-lyrics-two-voices` exists to pin
-   exactly that — its own header says so. The fix is ~15 lines at the staff merge and it
-   WORKS (two lyric lines 21px apart, against abcjs's 18.8). It is not committed because
-   it costs `ave-verum-corpus` 20.6 -> 31.7px, and raising a ceiling to land a change is
-   forbidden. **The regression is not the fix's fault** — see 2.
+   `set-upper-and-lower-elements.js`), and `multi-voice-lyrics-two-voices` confirms it in
+   output: its two voices' lyrics sit 18.8px apart. Ours land on the same baseline. The fix
+   is ~15 lines at the staff merge and it produces 21px, close to abcjs's 18.8.
 
-2. **`ave-verum-corpus` staff grouping.** abcjs renders it as ONE line of FOUR staves;
-   we appear to render TWO systems of TWO staves. Both give four top staff lines, which is
-   why the system-count check has never caught it. Settle this and (1) lands with it.
+   **Not committed, and the earlier reason for that was wrong.** A previous note guessed
+   `ave-verum-corpus` was grouped differently from abcjs; it is not — abcjs's own parse
+   golden gives it 4 staves of 2 voices, exactly what we build. The real obstacle is that
+   abcjs does NOT appear to apply the offset there: `ave-verum`'s two lyric-bearing staves
+   sit 48.0px and 51.3px below their own bottom staff lines, 3.3px apart, where a
+   voice-index offset would put them a full ~21px apart. Only the SECOND voice of that
+   staff sings, which is the exact case abcjs's own TODO says leaves unused space — so
+   either the rule does not fire as read, or that staff's ink bottom differs by ~18px and
+   masks it. Measure `ave-verum`'s per-staff ink bottom before applying the offset; landing
+   it as-is costs that fixture 20.6 -> 31.7px and would mean raising a ceiling.
 
-3. **Dynamics go ABOVE the staff for the upper voice.** In
-   `multi-voice-lyrics-two-voices`, abcjs's topmost ink is a decoration at y 35.9 with its
-   top staff line at 96.2 — the `!p!` marks sit ~60px ABOVE the staff. Ours are at
-   `dynamicStep`, below it. That is most of that fixture's remaining 121px and all of why
-   its first system starts 53.6px too high.
-
-4. **Our ink extents are short of abcjs's by about `systemGap`.** abcjs adds NO gap
+2. **Our ink extents are short of abcjs's by about `systemGap`.** abcjs adds NO gap
    between systems — it pads only when the natural ink separation falls short of
    `staffSeparation` — but setting ours to 0 to match moves the corpus the wrong way
    (median 17.4 -> 19.0). The 3.0 has been standing in for a missing extent. Find the
    missing extent; do not tune the constant.
 
-5. **abcjs's absolute stretch guard is NOT reproduced** — `spacing * minSpace > 50`, the
+3. **abcjs's absolute stretch guard is NOT reproduced** — `spacing * minSpace > 50`, the
    stretched spring of the shortest note. Our column model has no `spacingUnits`
    equivalent; measuring it off element origins includes the rod and binds far too early.
    Uncapped matches abcjs on all 29 gated fixtures; the cost is that an ungated sparse
@@ -161,8 +167,13 @@ The `b`, 07-21 and 07-22 notes still apply. New:
    goldens say what it produces, and only the second is the contract.
 8. **A correct fix can still be unshippable.** The per-voice lyric offset is right, is
    abcjs's documented rule, and visibly fixes overlapping syllables — and it costs
-   `ave-verum-corpus` 11px because of an unrelated staff-grouping divergence. Landing it
-   would have meant raising a ceiling. Left out, with the real cause written up next to it.
+   `ave-verum-corpus` 11px. Landing it would have meant raising a ceiling. Left out twice,
+   with the obstacle written up beside it — and the second write-up had to CORRECT the
+   first, which had guessed at a staff-grouping difference that does not exist.
+9. **Check the SIDE before tuning the distance.** Dynamics were under the staff where
+   abcjs puts them over it. Every previous attempt to improve those fixtures had been
+   adjusting how far below they sat. One constructor in abcjs
+   (`if (position === 'below') ... else ...`) settled it in a line.
 
 ---
 
