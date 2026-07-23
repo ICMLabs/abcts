@@ -151,8 +151,11 @@ const PREFIX_TYPES = new Set(['clef', 'keySignature', 'timeSignature'])
  * A title is not a laid-out element in abcjs — it lives in `metaText`, outside the
  * element tree this gate reads — so core emitting one is a difference in what gets
  * DRAWN, not in what the music says. Filtered rather than the gate being relaxed.
+ *
+ * A voice name is the same: abcjs draws it as a `staff-extra voice-name` label at the
+ * left edge, not as an element in the music spine this gate walks.
  */
-const FURNITURE_TYPES = new Set(['title'])
+const FURNITURE_TYPES = new Set(['title', 'voiceName'])
 
 function coreSequence(abc: string): string[] {
   const result = parse(abc)

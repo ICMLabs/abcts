@@ -45,6 +45,7 @@ import {
 import { glyphsFor } from './glyph-table.js'
 import { ENGRAVING_DEFAULTS, GLYPHS, type GlyphName } from './glyphs.js'
 import { CHAR_ADVANCE, FALLBACK_ADVANCE } from './text-metrics.js'
+import { VOICE_NAME_GAP_PX, voiceNameWidthPx } from './voice-name-metrics.js'
 
 // ─── Engine constants ────────────────────────────────────────────────────────
 // Engraving conventions, NOT font metadata. Sources noted; values marked PROVISIONAL
@@ -302,6 +303,7 @@ const ENGRAVE = {
 
 export type ElementType =
   | 'title'
+  | 'voiceName'
   | 'clef'
   | 'keySignature'
   | 'timeSignature'
@@ -2983,10 +2985,18 @@ interface VoicePlan {
   readonly blocks: readonly MeasureBlock[]
   /** The measures the blocks came from — read for their source-line break points. */
   readonly measures: readonly Measure[]
-  /** The staff prefix, whose width differs per voice because clefs and keys differ. */
+  /** `V:… name=` / `subname=`, or null — the label printed left of the staff. */
+  readonly name: string | null
+  readonly subname: string | null
+  /**
+   * The staff prefix, whose width differs per voice because clefs and keys differ.
+   * `indent` is the voice-name reservation, in staff spaces — the prefix (and so all the
+   * music after it) starts that far right of the page margin.
+   */
   readonly prefix: (
     withMeter: boolean,
     topStaff: boolean,
+    indent: number,
   ) => { elements: LayoutElement[]; width: number }
 }
 
@@ -3080,9 +3090,12 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     const prefix = (
       withMeter: boolean,
       topStaff: boolean,
+      indent: number,
     ): { elements: LayoutElement[]; width: number } => {
       const elements: LayoutElement[] = []
-      let x = ENGRAVE.marginX
+      // The voice-name reservation pushes the whole prefix — and the music after it —
+      // right, exactly as abcjs's `getLeftEdgeOfStaff` moves `staffGroup.startx`.
+      let x = ENGRAVE.marginX + indent
 
       const clefElement = layoutClef(x, clef, strict)
       if (clefElement !== null) {
@@ -3110,8 +3123,37 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       return { elements, width: x }
     }
 
-    return { clef, blocks, measures: voice?.measures ?? [], prefix }
+    return {
+      clef,
+      blocks,
+      measures: voice?.measures ?? [],
+      name: voice?.name ?? null,
+      subname: voice?.subname ?? null,
+      prefix,
+    }
   })
+
+  /**
+   * The voice-name reservation for a system, in staff spaces — abcjs's `getLeftEdgeOfStaff`.
+   *
+   * The widest label across the staves (the `name` on the first system, the `subname` on
+   * later ones) plus, when there is any label at all, "the width of an A" of trailing
+   * space. Zero when no voice on this system is labelled, so an unlabelled tune keeps its
+   * old left edge to the pixel. Braces and brackets can widen it too, but no fixture pairs
+   * a group connector with a name — ponytail: add their width here when one does.
+   */
+  const indentFor = (systemIndex: number): number => {
+    const label = (plan: VoicePlan): string | null => (systemIndex === 0 ? plan.name : plan.subname)
+    const widest = Math.max(
+      0,
+      ...plans.map((plan) => {
+        const text = label(plan)
+        return text ? voiceNameWidthPx(text) : 0
+      }),
+    )
+    if (widest === 0) return 0
+    return (widest + VOICE_NAME_GAP_PX) / 7.75
+  }
 
   // Measures align across voices: column i is as wide as the widest voice's bar i. A
   // voice that runs short simply contributes nothing to the columns past its end.
@@ -3121,8 +3163,8 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
   )
 
   // Every staff in a system shares one prefix width, or the columns would not line up.
-  const headWidth = (withMeter: boolean): number =>
-    Math.max(0, ...plans.map((plan) => plan.prefix(withMeter, false).width))
+  const headWidth = (withMeter: boolean, indent: number): number =>
+    Math.max(0, ...plans.map((plan) => plan.prefix(withMeter, false, indent).width))
 
   // Pack columns into systems, breaking before the column that would overflow.
   /**
@@ -3166,7 +3208,8 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
 
   const systems: LayoutSystem[] = spans.map((span, systemIndex) => {
     const withMeter = systemIndex === 0
-    const head = headWidth(withMeter)
+    const indent = indentFor(systemIndex)
+    const head = headWidth(withMeter, indent)
 
     /**
      * Justify the system to the page: every column stretches by a common factor so the
@@ -3239,9 +3282,34 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
                 blockHeight: block.height,
               },
             ]
+      // The voice label sits at the page margin, vertically centred on its staff. When
+      // several voices share a staff their labels stack, centred as a block — abcjs's
+      // `headerPosition`. Zero-width: it lives left of the music the indent already made
+      // room for, so it advances nothing.
+      const labelText = systemIndex === 0 ? plan.name : plan.subname
+      const nameElements: LayoutElement[] = []
+      if (labelText) {
+        const members = voicesOfStaff.find((m) => m.includes(voiceIndex)) ?? [voiceIndex]
+        const pos = Math.max(0, members.indexOf(voiceIndex))
+        const size = 17 / 7.75
+        const centre =
+          (pos - (members.length - 1) / 2) * size * ENGRAVE.lineSkipFactor + size * 0.35
+        nameElements.push({
+          type: 'voiceName',
+          x: ENGRAVE.marginX,
+          width: 0,
+          staffSteps: [],
+          glyphs: [],
+          lines: [],
+          texts: [
+            { text: labelText, x: ENGRAVE.marginX, y: centre, size, bold: true, italic: false },
+          ],
+        })
+      }
       const elements: LayoutElement[] = [
         ...heading,
-        ...plan.prefix(withMeter, voiceIndex === 0).elements,
+        ...nameElements,
+        ...plan.prefix(withMeter, voiceIndex === 0, indent).elements,
       ]
       const beamGroups = new Map<number, StemInfo[]>()
       const voltaLines: PlacedLine[] = []
@@ -3507,7 +3575,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
   // tune and hand each system its share.
   // Music starts after the widest prefix on the system and ends at its right margin.
   const systemBounds = systems.map((system, i) => ({
-    left: headWidth(i === 0),
+    left: headWidth(i === 0, indentFor(i)),
     right: system.width - ENGRAVE.marginX,
   }))
   const curvesBySystem = voiceAnchors.map((anchors) => layoutCurves(anchors, systemBounds))

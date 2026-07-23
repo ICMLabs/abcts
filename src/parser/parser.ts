@@ -477,6 +477,19 @@ function hasKeySpec(content: string): boolean {
   return /^none\b/.test(first) || /^[a-g]/.test(first)
 }
 
+/**
+ * `name=`/`nm=` and `subname=`/`sname=`/`snm=` on a `V:` field — the labels abcjs prints
+ * to the left of the staff. Accepts a quoted value (`name="Violin I"`) or a bare single
+ * token (`name=Vln`). Returns undefined when the attribute is absent, so a later `V:` for
+ * the same voice does not clear a name an earlier one set.
+ */
+function voiceLabel(spec: string, keys: readonly string[]): string | undefined {
+  const alt = keys.join('|')
+  const match = new RegExp(`\\b(?:${alt})=(?:"([^"]*)"|(\\S+))`).exec(spec)
+  if (match === null) return undefined
+  return match[1] ?? match[2] ?? ''
+}
+
 /** `octave=±n` on a `V:` or `K:` field — a sounding shift, not a written-pitch change. */
 function octaveModifier(spec: string): number | null {
   const match = /octave=(-?\d+)/.exec(spec)
@@ -494,6 +507,9 @@ const CONTINUABLE_FIELDS = 'ABCDFGHNORSTZw'
 class VoiceBuilder {
   octaveShift = 0
   clef: Clef | null = null
+  /** `V:… name=` / `subname=` — labels printed left of the staff. See `Voice`. */
+  name: string | null = null
+  subname: string | null = null
   /**
    * Notehead shape set by `K: style=` / `V: style=`, in force until the next one. Voice
    * state rather than per-note, which is what makes `[K: style=harmonic]` apply to a whole
@@ -834,6 +850,8 @@ class VoiceBuilder {
       id: this.id,
       octaveShift: this.octaveShift,
       clef: this.clef,
+      name: this.name,
+      subname: this.subname,
       measures: padOverlays(measures, this.meterForOverlays),
     }
   }
@@ -1319,6 +1337,10 @@ class Parser {
         if (octave !== null) builder.voiceFor(id).octaveShift = octave
         const voiceClef = parseClef(value)
         if (voiceClef !== null) builder.voiceFor(id).clef = voiceClef
+        const name = voiceLabel(value, ['name', 'nm'])
+        if (name !== undefined) builder.voiceFor(id).name = name
+        const subname = voiceLabel(value, ['subname', 'sname', 'snm'])
+        if (subname !== undefined) builder.voiceFor(id).subname = subname
         return
       }
       case 'U': {

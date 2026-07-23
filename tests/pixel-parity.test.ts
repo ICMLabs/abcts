@@ -98,8 +98,8 @@ import { absolutePixels, byClass } from './pixel-geometry.js'
  */
 const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: number; ox: number }> =
   {
-    'ave-verum-corpus': { heads: 55, dy: 26.8, dx: 86.8, oy: -3.6, ox: -59.4 },
-    'brother-john-inline-voices': { heads: 64, dy: 0.0, dx: 75.4, oy: -2.1, ox: -50.0 },
+    'ave-verum-corpus': { heads: 55, dy: 26.8, dx: 28.0, oy: -3.6, ox: -23.7 },
+    'brother-john-inline-voices': { heads: 64, dy: 0.0, dx: 16.7, oy: -2.1, ox: -19.8 },
     'center-text': { heads: 8, dy: 0.0, dx: 219.3, oy: -25.4, ox: -125.2 },
     'chord-grid': { heads: 16, dy: 0.0, dx: 7.0, oy: -20.4, ox: -22.8 },
     'frere-jacques': { heads: 45, dy: 232.0, dx: 637.6, oy: -173.9, ox: -37.4 },
@@ -113,8 +113,8 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     'program-127-test': { heads: 20, dy: 13.7, dx: 14.3, oy: -8.1, ox: -24.9 },
     'ragtime-mini': { heads: 30, dy: 11.8, dx: 19.9, oy: -27.3, ox: -23.8 },
     'ragtime-nightingale': { heads: 2009, dy: 712.2, dx: 100.9, oy: -373.0, ox: -25.9 },
-    'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0, oy: -0.1, ox: -97.8 },
-    'score-reorder': { heads: 8, dy: 0.0, dx: 0.0, oy: 7.4, ox: -106.3 },
+    'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0, oy: -0.1, ox: -15.6 },
+    'score-reorder': { heads: 8, dy: 0.0, dx: 0.0, oy: 7.4, ox: -15.6 },
     'simple-c': { heads: 8, dy: 0.0, dx: 4.5, oy: -0.1, ox: -13.3 },
     'stacked-annotations': { heads: 4, dy: 0.0, dx: 4.5, oy: -21.4, ox: -11.1 },
     twinkle: { heads: 14, dy: 0.0, dx: 6.8, oy: -0.1, ox: -18.8 },
@@ -126,7 +126,7 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     'vree-sharps': { heads: 4, dy: 0.0, dx: 9.4, oy: 0.5, ox: -14.1 },
     'vree-slurs-and-triplets': { heads: 8, dy: 0.0, dx: 4.5, oy: -19.5, ox: -13.5 },
     'vree-ties-across-bars': { heads: 4, dy: 0.0, dx: 4.5, oy: -0.1, ox: -12.6 },
-    'zocharti-loch': { heads: 64, dy: 3.0, dx: 102.0, oy: 7.4, ox: -47.2 },
+    'zocharti-loch': { heads: 64, dy: 3.0, dx: 47.5, oy: 7.4, ox: -15.7 },
   }
 
 /** Rounding slack, so a last-digit wobble is not a failure. */

@@ -509,6 +509,13 @@ export interface Voice {
   readonly octaveShift: number
   /** `V:… clef=`. `null` means this voice takes the tune's clef from `Score.clef`. */
   readonly clef: Clef | null
+  /**
+   * `V:… name=` — the label printed to the left of the FIRST system. `null` means none.
+   * abcjs reserves horizontal space for it, shifting the staff (and its notes) right.
+   */
+  readonly name: string | null
+  /** `V:… subname=`/`sname=` — the label on LATER systems. `null` means none. */
+  readonly subname: string | null
   readonly measures: readonly Measure[]
 }
 

@@ -95,6 +95,7 @@ const ABCJS_ELEMENT_NAMES: Readonly<Record<string, string>> = {
   clef: 'staff-extra clef',
   keySignature: 'staff-extra key-signature',
   timeSignature: 'staff-extra time-signature',
+  voiceName: 'voice-name',
 }
 
 /** SVG needs `&` and `<` escaped; attribute values here also carry `"`. */
