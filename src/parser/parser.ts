@@ -901,6 +901,9 @@ class ScoreBuilder {
    */
   userSymbols = new Map<string, string>()
   staffGroups: StaffGroup[] = []
+  /** `%%staffsep` / `%%sysstaffsep`, in PIXELS (directive points × 4/3). See `Score`. */
+  staffSep: number | null = null
+  sysStaffSep: number | null = null
   /** Voice ids from `%%score`/`%%staves`, which overrides declaration order. */
   scoreOrder: string[] | null = null
   private tupletGroups = 0
@@ -1014,6 +1017,8 @@ class ScoreBuilder {
         return v.finish()
       }),
       staves: this.resolvedStaves(),
+      staffSep: this.staffSep,
+      sysStaffSep: this.sysStaffSep,
       sourceStartOffset: this.sourceStartOffset,
       keySourceRange: this.keySourceRange,
       meterSourceRange: this.meterSourceRange,
@@ -1213,6 +1218,16 @@ class Parser {
     const vocalfont = /^vocalfont\s+(.*)$/.exec(body)
     if (vocalfont?.[1]) {
       this.ensureScore(start).vocalFont = parseFontSpec(vocalfont[1])
+      return
+    }
+    // `%%staffsep` / `%%sysstaffsep` — minimum staff separations, given in POINTS and
+    // scaled to pixels by 4/3 exactly as abcjs does (`write/renderer.js:148,160`).
+    const staffSep = /^(staffsep|sysstaffsep)\s+(-?\d+(?:\.\d+)?)/.exec(body)
+    if (staffSep?.[2] !== undefined) {
+      const px = (Number.parseFloat(staffSep[2]) * 4) / 3
+      const builder = this.ensureScore(start)
+      if (staffSep[1] === 'staffsep') builder.staffSep = px
+      else builder.sysStaffSep = px
       return
     }
     this.info(

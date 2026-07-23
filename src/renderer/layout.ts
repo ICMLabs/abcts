@@ -3019,6 +3019,14 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
   const { spacingScale } = PROFILES[profile]
   const voices = score.voices.length > 0 ? score.voices : [undefined]
 
+  // `%%staffsep` / `%%sysstaffsep` override the engine defaults when the tune sets them —
+  // ragtime-nightingale asks for a wider system gap (staffsep 90 -> 120px) and a wider
+  // intra-staff gap (sysstaffsep 50 -> 66.67px), and abcjs honours both. The model carries
+  // them already in pixels; here they become staff spaces like the rest of `ENGRAVE`.
+  const interSystemSep = score.staffSep !== null ? score.staffSep / 7.75 : ENGRAVE.systemSeparation
+  const intraStaffSep =
+    score.sysStaffSep !== null ? score.sysStaffSep / 7.75 : ENGRAVE.staffSeparation
+
   /**
    * Which VOICES share each staff — the whole point of `%%score`'s `( … )`.
    *
@@ -3555,7 +3563,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       const originY =
         previousBottomLine === null
           ? stacked
-          : Math.max(stacked, previousBottomLine + ENGRAVE.staffSeparation + STAFF_HALF_HEIGHT)
+          : Math.max(stacked, previousBottomLine + intraStaffSep + STAFF_HALF_HEIGHT)
       previousBottomLine = originY + STAFF_HALF_HEIGHT
       cursor = originY + extent.bottom + ENGRAVE.staffGap
       return { ...staff, elements: positioned, staffLines: staffLinesFor(width), originY }
@@ -3610,7 +3618,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     const originY =
       previousBottomLine === null
         ? cursor
-        : Math.max(cursor, previousBottomLine + ENGRAVE.systemSeparation - topLineOffset)
+        : Math.max(cursor, previousBottomLine + interSystemSep - topLineOffset)
     previousBottomLine = originY + bottomLineOffset
     cursor = originY + height + ENGRAVE.systemGap
     return { ...system, originY }

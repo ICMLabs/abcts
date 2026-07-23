@@ -1,8 +1,8 @@
 tune 0
-bounds  width=90.000 height=31.517 top=-1.935
+bounds  width=90.000 height=33.033 top=-1.935
 systems 1
 system 0 width=90.000 originY=0.000
-  connector brace -0.920,11.973 scale=3.783
+  connector brace -0.920,11.973 scale=4.163
   staff 0 originY=13.973
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -76,7 +76,7 @@ system 0 width=90.000 originY=0.000
     rest x=50.018 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 1 originY=25.059
+  staff 1 originY=26.575
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130

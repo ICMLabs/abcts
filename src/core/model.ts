@@ -580,6 +580,15 @@ export interface Score {
    * `%%score`/`%%staves`, in which case every voice takes a staff of its own.
    */
   readonly staves: readonly StaffGroup[]
+  /**
+   * `%%staffsep` — minimum gap between one system's bottom staff LINE and the next
+   * system's top staff line, in PIXELS at a 7.75px staff space. `null` takes the engine
+   * default. abcjs reads the directive in points and scales it by 4/3, so the value here
+   * is already in pixels (`staffsep * 4 / 3`).
+   */
+  readonly staffSep: number | null
+  /** `%%sysstaffsep` — the same minimum, but between staves WITHIN a system. Pixels, or null. */
+  readonly sysStaffSep: number | null
   readonly sourceStartOffset: number
   readonly keySourceRange: SourceRange | null
   readonly meterSourceRange: SourceRange | null
