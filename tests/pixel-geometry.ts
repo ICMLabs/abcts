@@ -7,8 +7,8 @@
  * ever report "different"; comparing what a browser PUTS ON SCREEN is the real question.
  *
  * So: accumulate `translate()` down the tree, then apply the viewBox -> width/height
- * scale. Only `translate` is handled, which is all either engine emits — a `scale()` on
- * a glyph affects its own outline, not where it sits.
+ * scale. A glyph's own `scale()` is applied to its outline box — see the note at the
+ * transform, and `pathBox` for why an outline box is what gets compared at all.
  *
  * `<use href="#id" x= y=>` counts as the glyph it references, because that is what a
  * browser draws. Without that, an optimized render measures as having no glyphs and any
@@ -191,6 +191,14 @@ export function absolutePixels(svg: string): PixelDoc {
     }
     if (inDefs) continue
     const tr = /transform="translate\(\s*([-\d.]+)\s*,\s*([-\d.]+)\s*\)/.exec(attrs)
+    // `scale()` MATTERS now that a glyph's box offset is added to its placement. It did
+    // not before, when the placement WAS the translate — hence the old note here saying a
+    // scale "affects its own outline, not where it sits". Half true: it affects where
+    // every point of that outline sits relative to the origin, which is exactly what the
+    // box centre is. abcjs's own outlines are in ITS pixels, so every one of them carries
+    // `scale(1/7.75)`; ignoring it put the box offset 7.75x too far out.
+    const sc = /transform="[^"]*scale\(\s*([-\d.]+)/.exec(attrs)
+    const scale = sc?.[1] !== undefined ? +sc[1] : 1
     const top = stack[stack.length - 1] ?? { x: 0, y: 0 }
     const here =
       tr?.[1] !== undefined && tr[2] !== undefined ? { x: top.x + +tr[1], y: top.y + +tr[2] } : top
@@ -216,8 +224,8 @@ export function absolutePixels(svg: string): PixelDoc {
       const d = /\sd="([^"]+)"/.exec(attrs)?.[1]
       const box = d === undefined ? null : pathBox(d)
       if (box !== null) {
-        lx = box.x
-        ly = box.y
+        lx = box.x * scale
+        ly = box.y * scale
       }
     } else if (tag === 'rect') {
       // CENTRE, like a path's box — abcts draws a staff line as a `<rect>` where abcjs
@@ -247,8 +255,8 @@ export function absolutePixels(svg: string): PixelDoc {
       const px = x?.[1] !== undefined ? +x[1] : tr ? 0 : null
       const py = y?.[1] !== undefined ? +y[1] : tr ? 0 : null
       if (px !== null && py !== null) {
-        lx = px + (box?.x ?? 0)
-        ly = py + (box?.y ?? 0)
+        lx = px + (box?.x ?? 0) * scale
+        ly = py + (box?.y ?? 0) * scale
       }
     } else if (tag === 'text') {
       const x = /\sx="([-\d.]+)"/.exec(attrs),
