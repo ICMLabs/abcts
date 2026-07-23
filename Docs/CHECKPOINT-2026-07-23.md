@@ -15,122 +15,154 @@ golden sets, observed through OUTPUT only. Never raise a pixel-parity ceiling to
 
 ## Where things stand
 
-`main` is unchanged from `a761cf8` in behaviour: **499 tests green**, every structural gate
-at 100% with zero recorded divergences, corpus median notehead distance **17.4px**, 21/29
-within 25px, 29/29 within 50px, systems 29/29.
+`main` is unchanged in behaviour from `a761cf8`: **499 tests green**, every structural gate
+at 100%, corpus median notehead distance 17.4px, 21/29 within 25px, 29/29 within 50px.
 
-**The session's work is on the branch `geometry/lyric-ink-anchor` (`8196bfd`), not on
-`main`,** because it regresses four ceilings. Its commit message is the full record; the
-summary is below. Read it before doing anything with lyrics — it answers priority 1 and
-disproves the reason the last two sessions gave for leaving it out.
+**The session's work is on the branch `geometry/lyric-ink-anchor`, not on `main`** — three
+commits, `8196bfd` → `152c8b7` → `520cfb4`. Read `520cfb4`'s message first; it supersedes
+parts of the two below it. The branch is parked because six fixtures still regress against
+their recorded ceilings, but the vertical MODEL on it is now abcjs's, and that is the change
+in position: this is no longer "a correct fix we cannot land", it is three named defects
+standing between a correct model and landing it.
+
+### What the branch achieves
+
+Our final per-staff extents against abcjs's own — computed by replicating its
+`setUpperAndLowerElements` over the element goldens — now sit at a **median of 0.03px above
+the staff and 0.46px below**, from +15.8 / −3.4 at the start of the session. Excluding
+`ragtime-nightingale`, every staff in the corpus is within about half a pixel of abcjs on
+both sides.
+
+Against the recorded ceilings: **9 fixtures better, 14 unchanged, 6 worse or mixed.**
+
+| | dy | oy |
+|---|---|---|
+| `ave-verum-corpus` | 13.5 → **2.4** | 10.5 → **10.1** |
+| `happy-birthday` | 12.9 → **0.0** | 9.4 → **3.7** |
+| `little swallow` | 50.6 → **7.1** | 25.2 → **3.4** |
+| `multi-voice-lyrics-two-voices` | 26.7 → **4.5** | −26.0 → **−14.9** |
+| `program-127-test` | 9.2 → **0.4** | 8.3 → **3.9** |
+| `chord-grid`, `stacked-annotations` | — | −7.3 → **0.0** |
+
+`ave-verum-corpus` — the fixture that blocked this work for three sessions — is now within
+both of its ceilings.
 
 ---
 
-## Priority 1 — ANSWERED, and the old obstacle was a misreading
+## What was found, and what it corrects
 
-abcjs's lyric model, measured from its own output and exact to 0.01px on four independent
-points:
+### 1. Lyrics hang off the staff's INK, one lyric height lower per voice
 
 ```
 lyric baseline  = staff INK BOTTOM + 17px + voiceIndex x 18.84px
-staff reserves  = ink bottom + 18.84px + 3.875px, ONCE, whatever the verse count
+staff reserves  = last verse's baseline + 5.715px
 ```
 
-`17` is abcjs's vocal font size (the SVG baseline offset), `18.84` is `17 x 1.108` — the
-same calibrated height ratio `ENGRAVE.textHeightRatio` already carries — and `3.875` is its
-`margin = 1` pitch step.
+17 is abcjs's vocal font size (the SVG baseline offset); 18.84 is `17 x 1.108`, the
+calibrated height ratio `ENGRAVE.textHeightRatio` already carries; 5.715 is
+`18.84 + 3.875 − 17`, where 3.875 is abcjs's `margin = 1` pitch step. Measuring from the
+LAST verse's baseline collapses every case to that one constant, because that baseline
+already carries both the verse stacking and the per-voice offset. Exact against abcjs on
+one-verse-one-voice, one-verse-second-voice and two-verses-first-voice.
 
-**Lyrics hang off the staff's INK, not off a fixed lane.** This is the one out-of-staff
-thing that does, which is why fixed lanes were the right answer for chords and dynamics and
-the wrong one here. abcjs resolves a lyric's pitch to `staff.bottom`
-(`set-upper-and-lower-elements.js:52-55`) and the k-th voice's one lyric height below that
-(`:165-169`).
+**abcjs DOES apply the voice offset in `ave-verum-corpus`.** Two previous checkpoints said
+it does not, reading its two lyric lines' 3.3px separation as absence. That staff's upper
+neighbour reaches 15.5px further down, and `18.84 − 15.5 = 3.34` is the 3.3.
 
-**abcjs DOES apply the voice offset in `ave-verum-corpus`.** Two sessions recorded that it
-does not, because that fixture's two lyric lines sit 3.3px apart where the rule implies
-~21px. They do — and its upper staff's ink reaches 15.5px further down, so
-`18.84 - 15.5 = 3.34` is the 3.3 that was read as absence. Reasoning from the gap BETWEEN
-two staves instead of from each staff's OWN ink is what hid it.
+### 2. The shared-staff stem rule — and it needed no model change
 
-**A lyric block reserves ONE line, whatever the verse count.** `specialY.lyricHeightBelow`
-is `4.862` pitch in abcjs's two-verse `little swallow` golden and `4.862` in its one-verse
-`ave-verum` golden. Verses past the first hang into space nothing reserved, and strict must
-reproduce that. Measuring the drawn box instead made every system of `little swallow` 19px
-taller than abcjs's. (abcjs stacks verses as `<tspan dy="1.2em">` inside ONE `<text>` per
-note — that is why its golden shows 19 lyric elements on one baseline where ours shows
-13 + 13 on two.)
+abcjs forces `down` on every voice after the first on a staff, unconditionally, but
+back-fills `up` onto the FIRST voice only `if (thisStaff.voices[0] !== undefined)`
+(`parse/tune-builder.js:961-989`) — and `voices[0]` exists only once that voice has opened a
+line. **A tune whose body writes the LOWER voice first leaves the upper one unforced.**
 
-On the branch this gives `little swallow` dy 50.6 -> 3.1 / oy 25.2 -> 1.5,
-`multi-voice-lyrics-two-voices` dy 26.7 -> 4.0, `frere-jacques` dy 34.1 -> 31.0, and the
-overprint is gone.
+`ave-verum` is that tune, and abcjs's dump confirms all four vocal voices: Soprano up (by
+pitch), Alto down (forced), Tenore DOWN (by pitch, unforced), Basso down (forced). We forced
+Tenore up, which put that staff's ink top 23.5px above abcjs's. Body order is the first
+measure's source offset, which `Voice` already carries.
 
-### What blocks it — one fixture, and the cause is located
+### 3. Out-of-staff text — the reserve, the sizes, and the lane that was a coincidence
 
-`ave-verum-corpus` goes dy 13.5 -> 48.8, oy 10.5 -> 40.7. Its staff 1 (`(T B)`, bass)
-measures its ink top **23.5px above abcjs's**, because our shared-staff rule forces voice 0's
-stems UP and abcjs's Tenore is stemmed DOWN.
+abcjs reserves a full font size ABOVE a text's baseline and the rest of its rendered height
+below (`text.js:30-31`), not the 0.8/0.25 estimate. And `lyricTextSize` was 1.4 — 10.85px —
+serving lyrics, chord symbols, annotations, decorations and inline text alike, where abcjs
+uses 17px (`vocalfont`) and 16px (`gchordfont`/`annotationfont`). Together these close a
+−7.3px shortfall on every staff carrying chord symbols.
 
-abcjs prepends `stem: up` to a staff's first voice only if that voice ALREADY HAS MUSIC when
-the second voice is declared (`parse/tune-builder.js:974-987` — the guard is
-`thisStaff.voices[0] !== undefined`). ave-verum declares all eight voices in the header, so
-nothing is forced and every voice follows its pitch. `multi-voice-triplet-brackets` and
-`multi-voice-rest-placement` write `V:Top`, music, `V:Bottom`, so they DO get the forcing.
+**Chords are a STACK, not a lane.** abcjs's chord baseline is 20.83px above the top line in
+`chord-grid`, `happy-birthday` AND `full-song-template` — but only because the CLEF sets the
+ink top at 14.43px in all three. The rule is `ink + chordHeight + margin`; 20.83 is what it
+evaluates to when the clef wins. This is the same coincidence that made a skyline port look
+wrong in `CHECKPOINT-2026-07-22c` — the finding there ("abcjs places out-of-staff text at
+fixed distances from the staff") is retracted. It stacks; this corpus makes stacking look
+fixed.
 
-Making voice 0 unforced everywhere takes ave-verum 50.0 -> 27.9 and costs triplet-brackets
-17.4 -> 58.4 and rest-placement 14.5 -> 27.4. **Reproducing abcjs needs the model to record
-whether a voice was declared before any music** — a parser/model change (`Voice` has no such
-field), not a renderer one. That is the next piece of work, and it unblocks the branch.
+### 4. `systemGap` and `staffGap` are gone
 
-`full-song-template` (oy -17.4 -> -26.3), `happy-birthday` (dy 12.9 -> 16.0) and
-`program-127-test` (dy 9.2 -> 12.5) also regress and are NOT diagnosed.
+Both to zero, which is abcjs's own value (`staffTopMargin: 0`; `addStaffPadding` pads only
+up to a minimum). Not tuned to zero — **deleted**, because the extents they stood in for are
+now right. Boundary error goes from 10.64px mean to 5.90px, 23 of 73 boundaries exact.
 
----
+### 5. A correction to this checkpoint's own earlier claim
 
-## Priority 2 — the missing extent, narrowed but not closed
-
-A direct oracle exists and was not being used: abcjs's `.elements.json` goldens carry each
-staff's own `top` and `bottom` in pitch units, which is its MUSIC INK before any
-out-of-staff furniture is added. Compared against our `verticalExtent` over 53 staves:
-
-| | median |
-|---|---|
-| ink TOP vs abcjs | **+0.03px** — already right |
-| ink BOTTOM vs abcjs | **-3.41px** — we are short |
-
-The bottom shortfall is not noise: it is **-3.4 exactly** on every staff whose lowest thing
-is a down-stem and **0.0** on every staff where it is not. abcjs reserves one pitch step
-below a down-stem's drawn end — `bottom: p1 - 1` on the stem's `RelativeElement`
-(`abstract-engraver.js:762`), where `p1` is the stem's low pitch. On an up-stem the reserve
-sits at the notehead and is swallowed by the head's own; on a down-stem it binds. The drawn
-stems themselves agree to 0.2px, so this is a reservation difference, not a drawing one.
-
-**Adding it makes the corpus WORSE** — median 16.1 -> 17.4, within-50 29 -> 26 — so it is
-not landed. It is right in kind and something larger is still wrong in the same direction.
-
-`systemGap` / `staffGap` still cannot be zeroed. A 3x3 grid over
-`systemGap {3.0, 1.5, 0} x staffGap {1.5, 0.75, 0}`, measured with the lyric model in place,
-puts the current 3.0/1.5 at the best cell of nine; every step toward zero costs mean |oy|.
-Do not tune them; the fix is still the missing extent.
+An earlier version of this file said abcjs reserves ONE lyric line whatever the verse count,
+citing `specialY.lyricHeightBelow` = 4.862 pitch in both its one-verse and two-verse
+goldens. **That is wrong.** `dump-elements.js`'s `getBBox` stub returns a single line's
+height, while the SVG generator that produced the actual goldens measures every tspan:
+`18.84 + (n − 1) x 17 x 1.2` (`dump-svg.js:120-124`). The two harnesses disagree and the SVG
+is the gate. `lyricLineStep` follows it — abcjs writes `dy="1.2em"`, so 20.4px, not the 21px
+an advance rule gives.
 
 ---
 
-## Priority 3 — the absolute stretch guard — untouched
+## Next, in priority order
 
-`spacing * minSpace > 50` still needs a real spring/rod split. Unchanged from `c`.
+1. **DYNAMICS ARE ON THE WRONG SIDE, and the rule is one line.**
+   `volumePosition: hasVocals ? 'above' : 'below'` (`write/creation/decoration.js:379`) —
+   abcjs puts dynamics above the staff **only when that staff has lyrics**. Its dumps agree:
+   `multi-voice-lyrics-two-voices` records `volumeHeightAbove`; `ragtime-nightingale` and
+   `two-voice-invention` record `volumeHeightBelow`. `CHECKPOINT-2026-07-22c`'s "dynamics
+   belong ABOVE the staff" was generalised from the one corpus fixture that sings, and is
+   wrong for every fixture that does not.
+
+   Worth `ragtime-nightingale` 61 → 47 on its own. Needs a `hasVocals` flag threaded down
+   the path `voiceStem` already takes (`layoutMeasure` → `layoutEvent` → `layoutNoteheads`
+   → `decorationGlyphs`), plus `layoutSpanners` for hairpins. The below position is a stack
+   at the ink bottom, not a mirrored lane.
+
+2. **`ragtime-nightingale`'s remaining drift** — dy 189 over 23 systems, not diagnosed
+   beyond the dynamics. It sets `%%staffsep`/`%%sysstaffsep`, so any replica of abcjs's
+   arithmetic must read those before its residuals mean anything.
+
+3. **`frere-jacques`** — abcjs reserves 46.5 and 49.5px above its later systems where we
+   reserve 35.6 and 15.4. Its second and third systems are the `+:` prose abcjs parses as
+   music, so this may be a structural difference rather than a spacing one.
+
+4. **`voice-middle-after-clef`** (dy 12.7 → 24.1), and `zocharti-loch`,
+   `full-song-template`, `multi-voice-triplet-brackets` mixed — better on one axis, worse on
+   the other. Undiagnosed.
+
+5. **The absolute stretch guard** — `spacing * minSpace > 50`, still needing a real
+   spring/rod split. Unchanged from `c`.
 
 ---
 
-## Also measured, not landed
+## Tools this session added — use them before re-deriving anything
 
-**Our out-of-staff text is undersized, and one constant does five jobs.**
-`ENGRAVE.lyricTextSize` is 1.4 (10.85px) where abcjs's `vocalfont` is 17px and its
-`gchordfont` / `annotationfont` 16px, and chord symbols, annotations, decorations, inline
-`"<text"` and lyrics all read that single constant. Sizing it correctly moves the corpus by
-0.2px of mean |oy| — not a gate mover — but it is the same undersizing that was found and
-fixed for the title, and it makes every out-of-staff reserve too small. It also explains a
--7.3px `oy` cluster (`chord-grid`, `stacked-annotations`, `multi-voice-rest-placement`,
-`voice-middle-after-clef`): abcjs reserves `chordHeightAbove + margin` from a 16px font
-where we reserve the ascender of a 10.85px one.
+- **`tests/staff-spacing.test.ts`** (on the branch) measures the vertical question ALONE,
+  boundary by boundary, instead of through a notehead distance that mixes in a horizontal
+  axis still tens of pixels out. It reverses a conclusion: tuning the gap constants against
+  the notehead median picks 3.0/1.5, tuning against boundary error picks 0/0, which is what
+  abcjs uses.
+- **The `.elements.json` goldens are an extent oracle**, not just a structural one. They
+  carry `staffs[].top/.bottom` and the full `specialY` block — abcjs's own answer to how much
+  room a staff takes and why. Replicating `setUpperAndLowerElements` over them and comparing
+  the predicted bottom-line-to-top-line distance against the SVG lands EXACTLY (0.00px) on
+  nine fixtures; every residual that remains is named (the voice-lyric offset, ragtime's
+  `%%staffsep`, slur bounds). That replica is the fastest way to test a hypothesis about
+  vertical space — no build, no renderer.
+- **But `dump-elements.js` and `dump-svg.js` do not measure text the same way.** See §5.
+  Where they disagree, the SVG is the gate.
 
 ---
 
@@ -138,34 +170,38 @@ where we reserve the ascender of a 10.85px one.
 
 The `c`, `b`, 07-21 and 07-22 notes still apply. New:
 
-1. **A scratch probe that writes to a fixed path will lie to you.** A geometry table was
-   overwritten by a later probe writing the same `/tmp` file, and nine consecutive
+1. **A scratch probe writing to a fixed path will lie to you.** A geometry table was
+   overwritten by a later probe using the same `/tmp` file, and nine consecutive
    configurations reported byte-identical results — which was the tell, because a constant
-   that changes nothing at all changes nothing at all. Check the file's mtime, or make the
-   probe fail loudly when it writes nothing.
-2. **The element goldens are an oracle for EXTENTS, not just for structure.**
-   `.elements.json` carries `staffs[].top/.bottom` and `specialY` per staff — abcjs's own
-   answer to "how much room does this staff take, and why". Three sessions of reasoning
-   about extents happened without opening it. It settled the lyric reserve, the ink-top
-   agreement and the down-stem shortfall in one pass.
+   that changes nothing at all changes nothing at all. `tests/staff-spacing.test.ts` asserts
+   it read real staves before anything reads its table.
+2. **Pick a metric that measures ONE thing.** The notehead median mixes a horizontal axis
+   still tens of pixels out into every vertical judgement, and `oy` mixes where the first
+   staff sits with how far apart the rest are stacked. Two constants were tuned for three
+   sessions against a number that could not see what they did.
 3. **Two errors that cancel look like one model.** Our lyric lane was too shallow AND our
-   staff stacking too generous; the sum was near enough that fixing only the lane made
-   fixtures worse. That is the same shape as the 4px gate bias in `c` — and the same
-   remedy: measure each term against its own reference, never the sum against the total.
-4. **"abcjs does not do X here" is a claim about your measurement's frame.** The
-   ave-verum lyric offset was declared absent twice, from the distance between two staves'
-   lyrics. Measured from each staff's own ink instead, it is present and exact. Pick the
-   frame the source computes in.
-5. **Excluding the right things from a measurement is most of the measurement.** The first
-   ink-bottom probe included the top-text block, which at merge time has not been moved yet
-   — a four-row heading measured as ink 96px BELOW the staff. The second used the wrong
-   glyph table and read Bravura's clef where strict draws abcjs's, inventing a 3.6px
-   corpus-wide top error that does not exist.
-6. **A parked branch beats a third write-up.** This is the third session to leave the
-   per-voice lyric offset out. The difference now is that the obstacle is a NAMED defect
-   with a source citation and a numbered cost, the work is committed where it can be
-   rebased rather than rebuilt, and the wrong reason the last two write-ups gave has been
-   retracted rather than repeated.
+   stacking too generous. Fixing only the lane made fixtures worse, which reads as "the fix
+   is wrong" and is really "the fix is half of one". Same shape as the 4px gate bias in `c`.
+4. **A constant that reproduces across three fixtures can still be a coincidence.** abcjs's
+   chord baseline is 20.83px above the top line in three fixtures because the clef sets the
+   ink top in all three. Three agreeing measurements killed a skyline port that was right.
+   Vary the thing the model says matters, not just the fixture.
+5. **Two harnesses from the same project can disagree, and only one is the gate.** The
+   element dump and the SVG dump measure multi-line text differently. Believing the wrong
+   one cost `little swallow` 19px a system and put a false claim in this file, which §5
+   above retracts.
+6. **Deleting a fudge is not tuning it.** `systemGap`/`staffGap` went to zero only after the
+   extents they stood in for were measured right. The instruction was "find the missing
+   extent, not tune the constant", and the constants went to abcjs's own value on their own
+   once the extents did.
+7. **"abcjs does X" is a claim about the fixture you measured.** Dynamics above the staff,
+   the lyric voice offset, the chord lane — three findings generalised from one fixture
+   each, all three wrong. Check whether the corpus holds a fixture where the rule's
+   condition is FALSE before writing the rule down.
+8. **A test that hard-codes a defective constant pins the defect in place.**
+   `tests/lyric-continuation.test.ts` asserted the undersized 1.4 as a literal in three
+   places. Its subject was "the default is applied exactly, not recomputed", which means
+   asserting against the constant, not against its value.
 
 ---
 

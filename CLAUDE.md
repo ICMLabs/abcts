@@ -136,17 +136,20 @@ The work is now GEOMETRIC — does abcts put the ink where abcjs puts it. A pixe
 gate (`tests/pixel-parity.test.ts`) resolves both engines' SVG to absolute pixels and
 measures it. Noteheads match 2696/2696, systems 29/29, output is 0.34x abcjs's bytes.
 
-**The lyric model is solved and PARKED on `geometry/lyric-ink-anchor`** — see
-`Docs/CHECKPOINT-2026-07-23.md` § Priority 1 before touching anything to do with lyrics.
-It is blocked on one named defect: our shared-staff rule forces voice 0's stems up where
-abcjs forces them only when that voice already had music at the second voice's
-declaration, which needs a field on `Voice` the model does not have.
+**The VERTICAL model is solved and PARKED on `geometry/lyric-ink-anchor`** — read
+`Docs/CHECKPOINT-2026-07-23.md` before touching staff spacing, lyrics, chord symbols or
+dynamics. Our per-staff extents now match abcjs's to a median of 0.03px above and 0.46px
+below; `systemGap`/`staffGap` are deleted. Three named defects block it, the first being
+that dynamics go above the staff only when it HAS LYRICS
+(`decoration.js:379`) — the opposite finding is recorded in the superseded `-07-22c`.
 
 The `.elements.json` goldens carry `staffs[].top/.bottom` and `specialY` — abcjs's own
-answer to how much room a staff takes. Use them before reasoning about extents; they are
-the oracle three sessions of extent work went without. A single aggregate number still
-cannot tell interacting terms apart — decompose by per-step pitch, and read `ox`/`oy`
-offset, not just spread.
+answer to how much room a staff takes. Replicating `setUpperAndLowerElements` over them
+reproduces its SVG exactly on nine fixtures, and is the fastest way to test any vertical
+hypothesis. But `dump-elements.js` and `dump-svg.js` measure multi-line text differently;
+where they disagree, the SVG is the gate. A single aggregate number still cannot tell
+interacting terms apart, and the notehead median cannot see the vertical question at all —
+use `tests/staff-spacing.test.ts`.
 
 Renders staff, all clefs, key signatures, meters, tempo marks, part labels, noteheads and
 chords with stems and ledger lines, accidentals, rests and barlines, grace notes, chord
