@@ -601,12 +601,21 @@ class VoiceBuilder {
   /**
    * A new line of music in the SOURCE, which is a new system on the page.
    *
-   * ABC's default is one source line per printed staff line, and abcjs has no
-   * line-breaking algorithm at all — it never re-wraps, it fits each source line to the
-   * page. So the break points are the author's, recorded here rather than recomputed.
+   * ABC's default is one source line per printed staff line, and abcjs does not re-wrap
+   * to fit — `parse/wrap_lines.js` runs only when a host passes BOTH `wrap` and
+   * `staffwidth`, which the goldens do not. So the break points are the author's,
+   * recorded here rather than recomputed.
+   *
+   * The measure is closed FIRST, barline-less, when a line ends mid-measure. abcjs starts
+   * its new staff line at the source line whether or not a barline falls there, while our
+   * systems break between measures — so without this the break has nowhere to land and
+   * two source lines share one system. `frere-jacques` is the case that shows it: abcjs
+   * parses its `+:` prose as music (a bug we reproduce), gives each prose line its own
+   * staff line, and runs the last one straight into the first real bar.
    */
   beginMusicLine(): void {
     this.lineNoteStart = this.noteCounter
+    this.closeUnterminatedMeasure()
     this.pendingLineStart = true
   }
 
@@ -808,26 +817,37 @@ class VoiceBuilder {
     this.measureStart = null
   }
 
+  /**
+   * Close whatever has accumulated as a measure with NO closing barline.
+   *
+   * Two callers, and the barline-less part is the point of both: the end of a tune whose
+   * last bar is unterminated, and a source line that ends mid-measure. Nothing is drawn
+   * for the missing barline — this only ends the measure as a LAYOUT unit.
+   *
+   * Overlays must be checked too: `AB|&cd` with no closing barline used to discard the
+   * whole overlay layer, so whether the notes existed depended on a trailing `|`.
+   */
+  private closeUnterminatedMeasure(): void {
+    if (this.events.length === 0 && this.overlays.length === 0) return
+    const last = this.events[this.events.length - 1]
+    this.measures.push({
+      events: this.events,
+      overlays: this.overlays,
+      ...this.takeChanges(),
+      ...this.takeOpening(),
+      startsSystem: this.takeLineStart(),
+      closingBarline: null,
+      sourceRange: sourceRange(this.measureStart ?? 0, last?.sourceRange?.end ?? 0),
+      closingBarlineSourceRange: null,
+    })
+    this.events = []
+    this.overlays = []
+    this.overlayIndex = null
+    this.measureStart = null
+  }
+
   finish(): Voice {
-    // Overlays must be checked too: `AB|&cd` with no closing barline used to discard the
-    // whole overlay layer, so whether the notes existed depended on a trailing `|`.
-    if (this.events.length > 0 || this.overlays.length > 0) {
-      const last = this.events[this.events.length - 1]
-      this.measures.push({
-        events: this.events,
-        overlays: this.overlays,
-        ...this.takeChanges(),
-        ...this.takeOpening(),
-        startsSystem: this.takeLineStart(),
-        closingBarline: null,
-        sourceRange: sourceRange(this.measureStart ?? 0, last?.sourceRange?.end ?? 0),
-        closingBarlineSourceRange: null,
-      })
-      this.events = []
-      this.overlays = []
-      this.overlayIndex = null
-      this.measureStart = null
-    }
+    this.closeUnterminatedMeasure()
     this.applyLyrics()
     // `V:2 clef=bass octave=-2` moves the WRITTEN pitch, so it is baked into the model
     // here rather than left for a renderer to remember. Settled by probing abcjs 6.6.3,

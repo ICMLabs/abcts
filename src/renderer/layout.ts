@@ -272,12 +272,6 @@ const ENGRAVE = {
    */
   systemSeparation: 61.33 / 7.75,
   /**
-   * A system is justified to the full width unless stretching it by more than this
-   * factor. A nearly-empty last-but-one line would otherwise be pulled apart into
-   * something unreadable; *Behind Bars* leaves such a line short instead.
-   */
-  maxJustifyStretch: 1.6,
-  /**
    * How full a LAST system must already be before it is justified to the page.
    *
    * 0.66, taken from abcjs `write/layout/layout.js:102`, where it is the threshold under
@@ -3256,12 +3250,24 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     // `lineWidth / targetWidth > 1`, sails past the 0.66 test, and gets compressed like
     // any other. Without this half, replacing the width packer just let long lines
     // overflow the page.
-    const justify =
-      wanted < 1
-        ? wanted
-        : (!isLast || stretchLast) && wanted <= ENGRAVE.maxJustifyStretch
-          ? wanted
-          : 1
+    // NO RATIO CAP on a non-last line. abcjs's `calcHorizontalSpacing`
+    // (`write/layout/layout.js:99`) justifies every line that is not the last one, however
+    // far it has to stretch — its only guard is an ABSOLUTE one on the resulting spacing,
+    // not a ratio. `maxJustifyStretch` was a *Behind Bars* judgement abcjs does not share,
+    // and it left `frere-jacques`'s two short prose-derived systems at a quarter of the
+    // page where abcjs fills it.
+    //
+    // ponytail: abcjs's ABSOLUTE guard is not reproduced — `if (spacing * minSpace > 50)
+    // spacing = 50 / minSpace`, which caps the stretched spring of the shortest note.
+    // Modelling it needs abcjs's spacing-unit accounting (`sqrt(duration * 8)` summed per
+    // layout step, with rods excluded), and our column model has no equivalent of
+    // `spacingUnits`: measuring the cap off element ORIGINS instead includes the rod and
+    // binds far too early — it pulled `frere-jacques` from a 42px spread back to 280px and
+    // `multi-voice-lyrics-two-voices` from 51 to 223. Uncapped matches abcjs on all 29
+    // pixel-gated fixtures; what it costs is that an ungated sparse line (`S3-note-syntax`
+    // has a two-note system) stretches across the page where abcjs would hold it in.
+    // Reinstate this together with a real spring/rod split, not before.
+    const justify = wanted < 1 ? wanted : !isLast || stretchLast ? wanted : 1
 
     const staves: LayoutStaff[] = plans.map((plan, voiceIndex) => {
       // The title heads the tune: first system, top staff, and inside the layout so the

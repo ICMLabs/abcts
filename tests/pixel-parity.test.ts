@@ -47,17 +47,29 @@
  *     `center-text` is unmoved and is NOT this rule failing: its trailing `%%center`
  *     means abcjs's music line is not its last line, so abcjs always justifies it. That
  *     one waits on `%%center`.
- *  1. LINE BREAKING — CLOSED 2026-07-22, and it was not an algorithm. abcjs HAS no
- *     line-breaking pass: in ABC one source music line is one printed system, and abcjs
- *     fits each to the page, compressing a long line rather than wrapping it. We packed
- *     measures by width instead. Systems now match on 28 of 29 fixtures, up from 18, and
- *     the horizontal spreads collapsed with them — `chord-grid` 639.6 -> 7.4, `twinkle`
- *     636.9 -> 7.3, `two-voice-invention` 918.8 -> 34.9, `ragtime-nightingale`
- *     1142.6 -> 101.5.
- *     `frere-jacques` is the one fixture whose system COUNT still differs (4 vs our 2),
- *     and it is the `+:` prose again: abcjs breaks per source line even mid-measure,
- *     while our systems are measure-granular, and its prose and first real bar are one
- *     measure. Nothing else in the corpus breaks inside a measure.
+ *  1. LINE BREAKING — CLOSED 2026-07-22, and it was not an algorithm. In ABC one source
+ *     music line is one printed system, and abcjs fits each to the page, compressing a
+ *     long line rather than wrapping it. We packed measures by width instead. Systems now
+ *     match on 29 of 29 fixtures, up from 18, and the horizontal spreads collapsed with
+ *     them — `chord-grid` 639.6 -> 7.4, `twinkle` 636.9 -> 7.3, `two-voice-invention`
+ *     918.8 -> 34.9, `ragtime-nightingale` 1142.6 -> 101.5.
+ *
+ *     CORRECTION — abcjs DOES have a line-breaking pass, and an earlier note here saying
+ *     it "HAS no line-breaking pass" was wrong. It lives in `parse/wrap_lines.js`, in the
+ *     PARSER rather than under `write/`, which is why listing `write/` found nothing. It
+ *     runs only when a host passes BOTH `wrap` and `staffwidth` (`api/abc_tunebook_svg.js`
+ *     `doLineWrapping`), and the golden generator passes only `staffwidth` — so the
+ *     goldens are UNWRAPPED and one source line is one system after all. The conclusion
+ *     held; the reason given for it did not.
+ *
+ *     `frere-jacques` was the last fixture whose system COUNT differed (abcjs 4, ours 2)
+ *     and it was never wrapping: abcjs parses its `+:` prose as music (a bug we reproduce
+ *     — 45 noteheads on both sides) and gives each prose line its own staff line, running
+ *     the last one straight into the first real bar with no barline between. abcjs breaks
+ *     per source line whether or not a barline falls there; our systems break between
+ *     MEASURES, so the break had nowhere to land. The parser now closes an unterminated
+ *     measure at a source-line boundary, which is a layout unit, not a musical bar —
+ *     nothing is drawn for the absent barline. 244 -> 40px.
  *  2. VERTICAL — PARTLY CLOSED 2026-07-22, and it was never a constant. `marginY` padded
  *     every staff extent by 4 spaces a side, 31px, where abcjs and abcMusicKit v1 add no
  *     per-staff margin at all: they advance by the ink extent and enforce a MINIMUM
@@ -77,6 +89,13 @@
  *     `vree-slurs-and-triplets` and `vree-ties-across-bars` all show 4.5 exactly, which
  *     is one shared cause and almost certainly one constant in `ENGRAVE`.
  *  4. Accidental and grace-note widths — `vree-sharps` 8.9, `vree-grace-notes` 31.5.
+ *  5. JUSTIFICATION HAS NO RATIO CAP — closed 2026-07-22. `maxJustifyStretch: 1.6` was a
+ *     *Behind Bars* judgement abcjs does not share: `calcHorizontalSpacing` justifies
+ *     every non-last line however far it must stretch. Removing it took `frere-jacques`
+ *     47 -> 40 and `multi-voice-lyrics-two-voices` 339.7 -> 51.0 of dx spread.
+ *     abcjs's own guard is ABSOLUTE (`spacing * minSpace > 50`) and is NOT reproduced —
+ *     see the ponytail note in `layout.ts` for why measuring it off element origins binds
+ *     too early, and what a faithful version needs.
  *
  * Three fixtures ALREADY MATCH horizontally to the pixel (`score-reorder`,
  * `score-reorder-shared`, `voice-octave-shift` have `dxSpread` 0.0), which is the
@@ -102,19 +121,19 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     'brother-john-inline-voices': { heads: 64, dy: 0.0, dx: 16.7, oy: -2.1, ox: -19.8 },
     'center-text': { heads: 8, dy: 0.0, dx: 219.3, oy: -25.4, ox: -125.2 },
     'chord-grid': { heads: 16, dy: 0.0, dx: 7.0, oy: -20.4, ox: -22.8 },
-    'frere-jacques': { heads: 45, dy: 232.0, dx: 637.6, oy: -173.9, ox: -37.4 },
+    'frere-jacques': { heads: 45, dy: 47.3, dx: 41.8, oy: -24.7, ox: -25.0 },
     'full-song-template': { heads: 20, dy: 22.1, dx: 19.8, oy: -38.3, ox: -27.0 },
     'happy-birthday': { heads: 25, dy: 10.0, dx: 36.6, oy: -0.7, ox: -33.5 },
     'little swallow': { heads: 89, dy: 24.6, dx: 47.5, oy: -19.1, ox: -33.3 },
-    'multi-voice-lyrics-two-voices': { heads: 16, dy: 67.7, dx: 339.7, oy: -83.4, ox: -89.7 },
+    'multi-voice-lyrics-two-voices': { heads: 16, dy: 67.7, dx: 51.0, oy: -83.4, ox: -15.5 },
     'multi-voice-rest-collision': { heads: 7, dy: 0.0, dx: 4.9, oy: -38.1, ox: -14.7 },
     'multi-voice-rest-placement': { heads: 14, dy: 0.0, dx: 18.4, oy: -3.1, ox: -19.4 },
     'multi-voice-triplet-brackets': { heads: 45, dy: 4.8, dx: 110.2, oy: -32.1, ox: -16.1 },
     'program-127-test': { heads: 20, dy: 13.7, dx: 14.3, oy: -8.1, ox: -24.9 },
     'ragtime-mini': { heads: 30, dy: 0.0, dx: 19.9, oy: -21.0, ox: -23.8 },
     'ragtime-nightingale': { heads: 2009, dy: 151.7, dx: 100.9, oy: -28.6, ox: -25.9 },
-    'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0, oy: -0.1, ox: -15.6 },
     'score-reorder': { heads: 8, dy: 0.0, dx: 0.0, oy: 7.4, ox: -15.6 },
+    'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0, oy: -0.1, ox: -15.6 },
     'simple-c': { heads: 8, dy: 0.0, dx: 4.5, oy: -0.1, ox: -13.3 },
     'stacked-annotations': { heads: 4, dy: 0.0, dx: 4.5, oy: -21.4, ox: -11.1 },
     twinkle: { heads: 14, dy: 0.0, dx: 6.8, oy: -0.1, ox: -18.8 },
