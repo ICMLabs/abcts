@@ -202,8 +202,35 @@ const ENGRAVE = {
    */
   titleStep: 19,
   /** First verse below the staff; further verses stack downward by `lyricLineStep`. */
-  /** First verse's baseline, 28.8px below the bottom staff line in abcjs's goldens. */
+  /**
+   * Verse 1's baseline as WRITTEN — a provisional lane, 28.8px below the bottom staff
+   * line. `anchorLyrics` moves the whole block to where abcjs puts it once the staff's
+   * voices are merged and its music ink is known; this is only the origin the shift is
+   * measured from, and the verse stacking below it rides along untouched.
+   */
   lyricStep: -11.43,
+  /**
+   * Lyrics hang from the staff's MUSIC INK BOTTOM, not from a fixed lane — and this is
+   * the one out-of-staff thing that genuinely does, which is why fixed lanes were right
+   * for chords and dynamics and wrong here.
+   *
+   * abcjs resolves a lyric's pitch to `staff.bottom`, the ink bottom over every voice on
+   * the staff (`set-upper-and-lower-elements.js:52-55`), and the k-th voice's lyrics one
+   * rendered lyric height lower than that (`:165-169`). Both constants below are its own
+   * 17px vocal font: the gap is the SVG baseline offset, the step is `17 x 1.108`, the
+   * same calibrated height ratio `textHeightRatio` carries.
+   *
+   * MEASURED, on four independent points, exact to 0.01px:
+   *   `ave-verum-corpus`  staff 0 ink bottom 8 steps below its bottom line, lyric 214.24
+   *                       staff 1 ink bottom 4 steps below its bottom line, lyric 310.23
+   *   `multi-voice-lyrics-two-voices`  two voices' lyrics 18.84px apart, both systems.
+   * ave-verum's two lyric lines sit only 3.3px apart NOT because the voice offset is
+   * absent there, but because its upper staff's ink reaches 15.5px further down and very
+   * nearly cancels it. Reading that 3.3 as "abcjs does not offset here" is what left this
+   * unfixed for two sessions.
+   */
+  lyricInkGap: 17 / 7.75,
+  lyricVoiceStep: (17 * 1.108) / 7.75,
   /** Verse to verse: `round(18.84 x 1.1)` = 21px for abcjs's 17px vocal font. */
   lyricLineStep: 5.42,
   /** Clearance between a brace or bracket and the staff it joins. */
@@ -3587,7 +3614,10 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     // are printed on. So the drawing is concatenated and one set of staff lines is drawn,
     // rather than each voice getting its own stave.
     const merged = voicesOfStaff.map((members) => {
-      const parts = members.map((i) => centred[i]).filter((x) => x !== undefined)
+      const parts = anchorLyrics(
+        members.map((i) => centred[i]).filter((x) => x !== undefined),
+        strict,
+      )
       const first = parts[0]
       if (first === undefined) return centred[0] as (typeof centred)[number]
       if (parts.length === 1) return { ...first, voices: [first.elements] }
@@ -3903,6 +3933,64 @@ function topTextBlock(
  * a staff is placed its `curves` are still empty. The SYSTEM height is measured later and
  * does see them.
  */
+/**
+ * Hang each voice's lyrics off the staff's music, once the voices sharing it are known.
+ *
+ * Two voices on one staff printed their syllables ON TOP OF EACH OTHER, because a lyric
+ * was placed at a fixed lane below the staff when its own voice was laid out — before
+ * anything knew a second voice would land on the same five lines. abcjs resolves both
+ * facts here instead, at the staff: the block hangs from the staff's ink bottom, and each
+ * voice after the first hangs one lyric height lower again. See `ENGRAVE.lyricInkGap`.
+ *
+ * The shift is UNIFORM per voice, so verse-to-verse stacking and the melisma extenders
+ * already aligned to verse 1 ride along without being recomputed.
+ */
+function anchorLyrics<
+  T extends {
+    readonly elements: readonly LayoutElement[]
+    readonly beams: readonly PlacedLine[]
+    readonly melismaLines: readonly PlacedLine[]
+  } & StaffFurniture,
+>(parts: readonly T[], strict: boolean): T[] {
+  const isLyric = (t: PlacedText): boolean => t.role === 'lyric'
+  if (!parts.some((p) => p.elements.some((el) => el.texts.some(isLyric)))) return [...parts]
+  // The MUSIC's ink, with the lyrics themselves taken out — including them would let the
+  // block push the anchor it hangs from further down, one staff at a time. The top-text
+  // block goes too: it is not music, and it has not been moved into place yet, so a
+  // four-row heading measured as ink 96px BELOW the staff and dragged the lyrics after it.
+  const inkBottom = verticalExtent(
+    parts.flatMap((p) =>
+      p.elements
+        .filter((el) => el.type !== 'title')
+        .map((el) => ({ ...el, texts: el.texts.filter((t) => !isLyric(t)) })),
+    ),
+    parts.flatMap((p) => p.beams),
+    strict,
+    {
+      tupletLines: parts.flatMap((p) => p.tupletLines ?? []),
+      tupletTexts: parts.flatMap((p) => p.tupletTexts ?? []),
+      voltaLines: parts.flatMap((p) => p.voltaLines ?? []),
+      voltaTexts: parts.flatMap((p) => p.voltaTexts ?? []),
+    },
+  ).bottom
+  const written = stepToY(ENGRAVE.lyricStep)
+  return parts.map((part, voiceIndex) => {
+    const shift =
+      inkBottom + ENGRAVE.lyricInkGap + voiceIndex * ENGRAVE.lyricVoiceStep - written
+    return {
+      ...part,
+      elements: part.elements.map((el) =>
+        el.texts.some(isLyric)
+          ? { ...el, texts: el.texts.map((t) => (isLyric(t) ? { ...t, y: t.y + shift } : t)) }
+          : el,
+      ),
+      melismaLines: part.melismaLines.map((line) =>
+        line.role === 'lyric' ? { ...line, y1: line.y1 + shift, y2: line.y2 + shift } : line,
+      ),
+    }
+  })
+}
+
 interface StaffFurniture {
   readonly tupletLines?: readonly PlacedLine[]
   readonly tupletTexts?: readonly PlacedText[]
@@ -3945,6 +4033,9 @@ function verticalExtent(
     include(Math.min(beam.y1, beam.y2) - half, Math.max(beam.y1, beam.y2) + half)
   }
 
+  /** Topmost lyric baseline on the staff — verse 1 of whichever voice sits highest. */
+  let lyricTop = Number.POSITIVE_INFINITY
+
   for (const el of elements) {
     for (const g of el.glyphs) {
       // The ACTIVE table's box: abcjs's clef reaches 4.84 staff spaces above its origin
@@ -3959,9 +4050,30 @@ function verticalExtent(
     }
     // No text metrics available, so bound the box by the font size: ascenders reach
     // roughly 0.8 of it above the baseline and descenders 0.25 below.
-    for (const t of el.texts) include(t.y - t.size * TEXT_ASCENT, t.y + t.size * TEXT_DESCENT)
+    for (const t of el.texts) {
+      if (t.role === 'lyric') {
+        lyricTop = Math.min(lyricTop, t.y)
+        continue
+      }
+      include(t.y - t.size * TEXT_ASCENT, t.y + t.size * TEXT_DESCENT)
+    }
     // A block reserves from its own top, not from its first line's ascender.
     if (el.blockTop !== undefined) include(el.blockTop, el.blockTop)
+  }
+
+  // A LYRIC BLOCK RESERVES A FIXED HEIGHT, not the box it draws. abcjs subtracts
+  // `lyricHeightBelow + margin` from the staff bottom once (`:52-55`), where
+  // `lyricHeightBelow` is ONE rendered line whatever the verse count — its two-verse
+  // fixture and its one-verse fixture both record 4.862 pitch. Verses past the first
+  // therefore hang into space nothing reserved, and reproducing abcjs means reproducing
+  // that: measuring the drawn box instead made every system of `little swallow` 19px
+  // taller than abcjs's. The extra per-voice depth is already in the baseline, since
+  // `anchorLyrics` pushed the k-th voice's block down before this ran.
+  if (Number.isFinite(lyricTop)) {
+    bottom = Math.max(
+      bottom,
+      lyricTop + ENGRAVE.lyricVoiceStep + ENGRAVE.spacePerStep - ENGRAVE.lyricInkGap,
+    )
   }
 
   return { top: top - ENGRAVE.marginY, bottom: bottom + ENGRAVE.marginY }
@@ -4045,3 +4157,4 @@ function beamDirections(voice: Voice | undefined, clef: Clef): Map<number, boole
   }
   return directions
 }
+
