@@ -49,8 +49,8 @@ system 0 width=90.000 originY=0.000
       glyph repeatDots 87.065,1.976
       line  87.705,-2.000 -> 87.705,2.000 t=0.160
       line  88.435,-2.000 -> 88.435,2.000 t=0.500
-system 1 width=90.000 originY=22.066
-  staff 0 originY=3.839
+system 1 width=90.000 originY=21.825
+  staff 0 originY=4.080
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -160,10 +160,10 @@ system 2 width=55.124 originY=33.979
       line  52.269,-2.000 -> 52.269,2.000 t=0.160
       line  52.999,-2.000 -> 52.999,2.000 t=0.500
 tune 1
-bounds  width=90.000 height=67.141 top=-1.935
+bounds  width=90.000 height=67.382 top=-1.935
 systems 5
 system 0 width=90.000 originY=0.000
-  staff 0 originY=13.991
+  staff 0 originY=14.232
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -177,8 +177,8 @@ system 0 width=90.000 originY=0.000
     voltatext 36.482,-2.700 "1"
     voltatext 62.473,-2.700 "2"
     title x=0.000 w=0.000
-      text  25.851,-9.532 size=3.484 bold "S4-2 Extended Volta Endings"
-      text  39.464,-5.330 size=2.452 italic "Test Fixture"
+      text  25.851,-9.773 size=3.484 bold "S4-2 Extended Volta Endings"
+      text  39.464,-5.572 size=2.452 italic "Test Fixture"
     clef x=1.935 w=2.458
       glyph gClef 1.935,1.000
     timeSignature x=5.394 w=1.522
@@ -234,7 +234,7 @@ system 0 width=90.000 originY=0.000
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
 system 1 width=90.000 originY=22.066
-  staff 0 originY=3.839
+  staff 0 originY=4.080
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -322,7 +322,7 @@ system 1 width=90.000 originY=22.066
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
 system 2 width=90.000 originY=33.979
-  staff 0 originY=3.839
+  staff 0 originY=4.080
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -385,7 +385,7 @@ system 2 width=90.000 originY=33.979
       line  79.862,-0.832 -> 79.862,2.500 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 3 width=90.000 originY=45.893
+system 3 width=90.000 originY=46.134
   staff 0 originY=3.839
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -430,7 +430,7 @@ system 3 width=90.000 originY=45.893
       line  87.705,-2.000 -> 87.705,2.000 t=0.160
       line  88.435,-2.000 -> 88.435,2.000 t=0.500
 system 4 width=90.000 originY=57.806
-  staff 0 originY=3.839
+  staff 0 originY=4.080
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130

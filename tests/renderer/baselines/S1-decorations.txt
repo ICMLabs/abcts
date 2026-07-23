@@ -178,7 +178,7 @@ system 0 width=90.000 originY=0.000
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
 tune 2
-bounds  width=90.000 height=197.565 top=-1.935
+bounds  width=90.000 height=197.976 top=-1.935
 systems 16
 system 0 width=90.000 originY=0.000
   staff 0 originY=11.799
@@ -539,7 +539,7 @@ system 12 width=90.000 originY=151.054
       line  67.077,0.832 -> 67.077,-2.500 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 13 width=90.000 originY=161.847
+system 13 width=90.000 originY=161.958
   staff 0 originY=4.959
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -568,7 +568,7 @@ system 13 width=90.000 originY=161.847
       line  67.077,0.832 -> 67.077,-2.500 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 14 width=90.000 originY=173.334
+system 14 width=90.000 originY=173.745
   staff 0 originY=6.120
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -595,7 +595,7 @@ system 14 width=90.000 originY=173.334
       text  63.422,-5.000 size=1.400 italic "D.C. al Fine"
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 15 width=31.227 originY=185.982
+system 15 width=31.227 originY=186.393
   staff 0 originY=6.120
     staffline 0.000,2.000 -> 31.227,2.000 t=0.130
     staffline 0.000,1.000 -> 31.227,1.000 t=0.130

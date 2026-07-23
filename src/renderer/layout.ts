@@ -132,7 +132,15 @@ const ENGRAVE = {
    * Nothing costs vertical space when absent: the drawing box is measured from the
    * content actually placed, so a tune with no tempo is no taller for the lane existing.
    */
-  chordSymbolStep: 6,
+  /**
+   * Chord symbols and annotations sit FURTHER out than a staff step or two, and abcjs
+   * puts them at a fixed distance from the staff rather than stacking them above the
+   * notes. Measured from its goldens: a chord symbol's baseline is 20.8px above the top
+   * staff line in `chord-grid` (notes inside the staff), in `happy-birthday` (notes 23px
+   * above it) and in `full-song-template` alike — the note height does not move it.
+   * 20.8px is 5.37 steps above the top line, which is step 4.
+   */
+  chordSymbolStep: 9.37,
   ornamentStep: 7,
   dynamicStep: -7,
   /**
@@ -147,9 +155,16 @@ const ENGRAVE = {
    * below lane can reach `lyricStep` at two. No fixture combines them, and the real fix is
    * the skyline pass this whole block is waiting on rather than more hand-picked numbers.
    */
-  annotationAboveStep: 8,
-  annotationBelowStep: -6,
-  annotationLineStep: 2.5,
+  annotationAboveStep: 9.0,
+  /** 27.8px below the BOTTOM line (step -4) in `stacked-annotations`. */
+  annotationBelowStep: -11.17,
+  /**
+   * One text line to the next, out of staff: 20px, which is `round(height x 1.1)` for
+   * abcjs's 16px annotation font — the same advance rule the top-text block uses. Ours
+   * was 2.5 steps, 9.7px, so three stacked annotations occupied half the room abcjs
+   * gives them.
+   */
+  annotationLineStep: 5.16,
   partStep: 10,
   tempoStep: 14,
   /**
@@ -171,8 +186,10 @@ const ENGRAVE = {
    */
   titleStep: 19,
   /** First verse below the staff; further verses stack downward by `lyricLineStep`. */
-  lyricStep: -8,
-  lyricLineStep: 4,
+  /** First verse's baseline, 28.8px below the bottom staff line in abcjs's goldens. */
+  lyricStep: -11.43,
+  /** Verse to verse: `round(18.84 x 1.1)` = 21px for abcjs's 17px vocal font. */
+  lyricLineStep: 5.42,
   /** Clearance between a brace or bracket and the staff it joins. */
   connectorGap: 0.6,
   /** A bracket is a rule, and a heavy one. */
@@ -288,7 +305,16 @@ const ENGRAVE = {
    * typical staff size; a host that knows its viewport should pass `systemWidth`.
    */
   systemWidth: 90,
-  /** Vertical gap between stacked systems. PROVISIONAL. */
+  /**
+   * Vertical gap between stacked systems, on top of the ink.
+   *
+   * abcjs has NO such gap — `addStaffPadding` (`draw/draw.js:84-92`) computes the natural
+   * ink separation and pads only when it falls short of `staffSeparation`. Setting this to
+   * 0 to match moves the corpus the WRONG way (median 17.4 -> 19.0, `little swallow` to
+   * -19.7px), which says our ink extents are short of abcjs's by roughly this much and
+   * this constant has been standing in for that. Left in place, and named for what it is
+   * rather than tuned: the fix is to find the missing extent, not to trade fixtures.
+   */
   systemGap: 3.0,
   /**
    * MINIMUM distance from one system's bottom staff line to the next system's top staff
@@ -3577,7 +3603,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         heading.length === 0
           ? staff.elements
           : (() => {
-              const musicTop = verticalExtent(musicOnly, staff.beams, strict).top
+              const musicTop = verticalExtent(musicOnly, staff.beams, strict, staff).top
               // The block's own height, not its last descender: abcjs advances by a
               // rounded line height per row and that trailing space is part of the block.
               const blockBottom = Math.max(...heading.map((el) => el.blockHeight ?? 0))
@@ -3591,7 +3617,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
                 ...musicOnly,
               ]
             })()
-      const extent = verticalExtent(positioned, staff.beams, strict)
+      const extent = verticalExtent(positioned, staff.beams, strict, staff)
       const stacked = cursor - extent.top
       // The separation is a minimum LINE-to-LINE distance, which is what abcjs measures:
       // `draw.js:86-89` works from each staff's overhang past its own outer lines, so
@@ -3710,7 +3736,7 @@ export function layoutBook(scores: readonly Score[], options: LayoutOptions = {}
 function systemHeight(system: LayoutSystem, strict = true): number {
   let bottom = 0
   for (const staff of system.staves) {
-    const extent = verticalExtent(staff.elements, staff.beams, strict)
+    const extent = verticalExtent(staff.elements, staff.beams, strict, staff)
     bottom = Math.max(bottom, staff.originY + extent.bottom)
   }
   return bottom
@@ -3849,10 +3875,32 @@ function topTextBlock(
   return { texts, height: y }
 }
 
+/**
+ * Everything a staff draws that does NOT live in `elements` — tuplet brackets and their
+ * numbers, repeat-ending brackets and labels, hairpins and melisma rules.
+ *
+ * These were absent from the extent entirely, so nothing reserved room for them and the
+ * staff sat as high as if they were not drawn. A tuplet bracket rides above the beam, so
+ * the tuplet fixtures were the corpus's worst vertical offenders after ragtime.
+ *
+ * Slurs and ties are deliberately NOT here: they resolve after packing, so at the moment
+ * a staff is placed its `curves` are still empty. The SYSTEM height is measured later and
+ * does see them.
+ */
+interface StaffFurniture {
+  readonly tupletLines?: readonly PlacedLine[]
+  readonly tupletTexts?: readonly PlacedText[]
+  readonly voltaLines?: readonly PlacedLine[]
+  readonly voltaTexts?: readonly PlacedText[]
+  readonly melismaLines?: readonly PlacedLine[]
+  readonly spannerLines?: readonly PlacedLine[]
+}
+
 function verticalExtent(
   elements: readonly LayoutElement[],
   beams: readonly PlacedLine[] = [],
   strict = true,
+  furniture: StaffFurniture = {},
 ): { top: number; bottom: number } {
   // The staff itself is always present, spanning steps 4 to -4.
   let top = stepToY(4)
@@ -3860,6 +3908,20 @@ function verticalExtent(
   const include = (a: number, b: number) => {
     top = Math.min(top, a)
     bottom = Math.max(bottom, b)
+  }
+  for (const lines of [
+    furniture.tupletLines,
+    furniture.voltaLines,
+    furniture.melismaLines,
+    furniture.spannerLines,
+  ]) {
+    for (const line of lines ?? []) {
+      const half = line.thickness / 2
+      include(Math.min(line.y1, line.y2) - half, Math.max(line.y1, line.y2) + half)
+    }
+  }
+  for (const texts of [furniture.tupletTexts, furniture.voltaTexts]) {
+    for (const t of texts ?? []) include(t.y - t.size * TEXT_ASCENT, t.y + t.size * TEXT_DESCENT)
   }
 
   for (const beam of beams) {

@@ -1,15 +1,15 @@
 tune 0
-bounds  width=35.806 height=19.115 top=-1.935
+bounds  width=35.806 height=24.860 top=-1.935
 systems 1
 system 0 width=35.806 originY=0.000
-  staff 0 originY=12.579
+  staff 0 originY=14.409
     staffline 0.000,2.000 -> 35.806,2.000 t=0.130
     staffline 0.000,1.000 -> 35.806,1.000 t=0.130
     staffline 0.000,0.000 -> 35.806,0.000 t=0.130
     staffline 0.000,-1.000 -> 35.806,-1.000 t=0.130
     staffline 0.000,-2.000 -> 35.806,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  1.935,-8.120 size=3.484 bold "Stacked annotations test"
+      text  1.935,-9.950 size=3.484 bold "Stacked annotations test"
     clef x=1.935 w=2.458
       glyph gClef 1.935,1.000
     note@-6 x=5.394 w=3.871
@@ -17,25 +17,25 @@ system 0 width=35.806 originY=0.000
       glyph flag8thUp 6.574,-0.500
       line  4.994,3.000 -> 7.059,3.000 t=0.160
       line  6.574,2.832 -> 6.574,-0.500 t=0.120
-      text  4.138,-5.250 size=1.400 "Allegro"
-      text  3.876,-4.000 size=1.400 "con brio"
+      text  4.138,-7.080 size=1.400 "Allegro"
+      text  3.876,-4.500 size=1.400 "con brio"
     note@-5 x=9.265 w=3.871
       glyph noteheadBlack 9.265,2.500
       glyph flag8thUp 10.445,-1.000
       line  10.445,2.332 -> 10.445,-1.000 t=0.120
-      text  9.559,3.000 size=1.400 "p"
-      text  8.512,4.250 size=1.400 "dolce"
+      text  9.559,5.585 size=1.400 "p"
+      text  8.512,8.165 size=1.400 "dolce"
     bar x=14.136 w=0.160
       line  14.216,-2.000 -> 14.216,2.000 t=0.160
     note@-4 x=15.136 w=3.871
       glyph noteheadBlack 15.136,2.000
       glyph flag8thUp 16.316,-1.500
       line  16.316,1.832 -> 16.316,-1.500 t=0.120
-      text  13.647,-4.000 size=1.400 "staccato"
+      text  13.647,-4.500 size=1.400 "staccato"
     note@-3 x=19.007 w=3.871
       glyph noteheadBlack 19.007,1.500
       glyph flag8thUp 20.187,-2.000
       line  20.187,1.332 -> 20.187,-2.000 t=0.120
-      text  17.483,3.000 size=1.400 "marcato"
+      text  17.483,5.585 size=1.400 "marcato"
     bar x=23.878 w=0.160
       line  23.958,-2.000 -> 23.958,2.000 t=0.160
