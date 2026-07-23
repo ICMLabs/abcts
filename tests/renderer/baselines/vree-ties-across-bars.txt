@@ -1,8 +1,8 @@
 tune 0
-bounds  width=38.016 height=15.027 top=-1.935
+bounds  width=38.016 height=15.543 top=-1.935
 systems 1
 system 0 width=38.016 originY=0.000
-  staff 0 originY=9.532
+  staff 0 originY=10.048
     staffline 0.000,2.000 -> 38.016,2.000 t=0.130
     staffline 0.000,1.000 -> 38.016,1.000 t=0.130
     staffline 0.000,0.000 -> 38.016,0.000 t=0.130
@@ -10,7 +10,7 @@ system 0 width=38.016 originY=0.000
     staffline 0.000,-2.000 -> 38.016,-2.000 t=0.130
     tie  9.396,1.300 -> 15.090,1.300 bulge=1.025
     title x=0.000 w=0.000
-      text  8.445,-5.115 size=3.441 bold "Ties Across Bars"
+      text  8.313,-5.588 size=3.484 bold "Ties Across Bars"
     clef x=1.935 w=2.458
       glyph gClef 1.935,1.000
     timeSignature x=5.394 w=1.522

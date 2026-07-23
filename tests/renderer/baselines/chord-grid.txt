@@ -1,15 +1,15 @@
 tune 0
-bounds  width=90.000 height=15.308 top=-1.935
+bounds  width=90.000 height=15.825 top=-1.935
 systems 1
 system 0 width=90.000 originY=0.000
-  staff 0 originY=9.813
+  staff 0 originY=10.329
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  34.636,-5.397 size=3.441 bold "Chord Grid Test"
+      text  34.506,-5.870 size=3.484 bold "Chord Grid Test"
     clef x=1.935 w=2.458
       glyph gClef 1.935,1.000
     timeSignature x=5.394 w=1.522

@@ -1,9 +1,9 @@
 tune 0
-bounds  width=90.000 height=33.033 top=-1.935
+bounds  width=90.000 height=33.549 top=-1.935
 systems 1
 system 0 width=90.000 originY=0.000
-  connector brace -0.920,11.973 scale=4.163
-  staff 0 originY=13.973
+  connector brace -0.920,12.489 scale=4.163
+  staff 0 originY=14.489
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -13,7 +13,7 @@ system 0 width=90.000 originY=0.000
     beam   50.018,3.929 -> 81.559,1.929 t=0.500
     tie  67.172,-3.300 -> 67.741,-3.300 bulge=-0.500
     title x=0.000 w=0.000
-      text  36.164,-9.557 size=3.441 bold "Ragtime Mini"
+      text  36.054,-10.030 size=3.484 bold "Ragtime Mini"
     clef x=1.935 w=2.458
       glyph gClef 1.935,1.000
     keySignature x=5.394 w=2.913
@@ -76,7 +76,7 @@ system 0 width=90.000 originY=0.000
     rest x=50.018 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 1 originY=26.575
+  staff 1 originY=27.091
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130

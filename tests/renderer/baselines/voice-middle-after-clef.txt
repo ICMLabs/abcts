@@ -1,15 +1,15 @@
 tune 0
-bounds  width=48.035 height=29.271 top=-1.935
+bounds  width=48.035 height=29.787 top=-1.935
 systems 1
 system 0 width=48.035 originY=0.000
-  staff 0 originY=9.532
+  staff 0 originY=10.048
     staffline 0.000,2.000 -> 48.035,2.000 t=0.130
     staffline 0.000,1.000 -> 48.035,1.000 t=0.130
     staffline 0.000,0.000 -> 48.035,0.000 t=0.130
     staffline 0.000,-1.000 -> 48.035,-1.000 t=0.130
     staffline 0.000,-2.000 -> 48.035,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  8.698,-5.115 size=3.441 bold "Voice middle= after clef"
+      text  8.507,-5.588 size=3.484 bold "Voice middle= after clef"
     clef x=1.935 w=2.458
       glyph gClef 1.935,1.000
     timeSignature x=5.394 w=1.389
@@ -32,7 +32,7 @@ system 0 width=48.035 originY=0.000
     bar x=45.099 w=1.060
       line  45.179,-2.000 -> 45.179,2.000 t=0.160
       line  45.909,-2.000 -> 45.909,2.000 t=0.500
-  staff 1 originY=25.086
+  staff 1 originY=25.602
     staffline 0.000,2.000 -> 48.035,2.000 t=0.130
     staffline 0.000,1.000 -> 48.035,1.000 t=0.130
     staffline 0.000,0.000 -> 48.035,0.000 t=0.130

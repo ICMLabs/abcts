@@ -30,6 +30,125 @@ export interface PixelDoc {
   readonly items: PixelItem[]
 }
 
+/**
+ * Centre of a path's bounding box, in the path's own units.
+ *
+ * WHY A BOUNDING BOX AND NOT THE `M`. The two engines put their glyphs on the page by
+ * different references, and comparing those references compares different points on the
+ * same shape. abcjs bakes absolute coordinates into `d`, so its first `M` is wherever that
+ * outline's contour happens to start — for `noteheads.quarter` that is the TOP of the
+ * ellipse, 4.035px above its centre. abcts authors every outline at the origin and places
+ * it with a translate, so its reference is the glyph ORIGIN, which for a notehead is the
+ * vertical centre. Comparing one against the other reported a ~4px bias as agreement, and
+ * hid a real vertical offset of the same size underneath it.
+ *
+ * The box centre is the one point both engines can be asked for, because both embed the
+ * actual outline: abcjs inline, abcts in `<defs>` behind a `<use>`. Control points are
+ * included rather than solved for — a Bézier's hull bounds its curve, both engines' hulls
+ * are tight on these shapes, and the error is common to both sides anyway.
+ */
+function pathBox(d: string): { x: number; y: number } | null {
+  const tokens = d.match(/[MmCcLlHhVvSsQqTtAaZz]|-?\d*\.?\d+(?:e[-+]?\d+)?/gi)
+  if (tokens === null) return null
+  let x = 0
+  let y = 0
+  let cmd = ''
+  let minX = Number.POSITIVE_INFINITY
+  let maxX = Number.NEGATIVE_INFINITY
+  let minY = Number.POSITIVE_INFINITY
+  let maxY = Number.NEGATIVE_INFINITY
+  const mark = (px: number, py: number): void => {
+    minX = Math.min(minX, px)
+    maxX = Math.max(maxX, px)
+    minY = Math.min(minY, py)
+    maxY = Math.max(maxY, py)
+  }
+  const num = (i: number): number => Number(tokens[i] ?? 0)
+  let i = 0
+  while (i < tokens.length) {
+    const token = tokens[i] ?? ''
+    if (/[A-Za-z]/.test(token)) {
+      cmd = token
+      i += 1
+      if (cmd === 'Z' || cmd === 'z') mark(x, y)
+      continue
+    }
+    const rel = cmd === cmd.toLowerCase()
+    switch (cmd.toUpperCase()) {
+      case 'M':
+      case 'L':
+      case 'T': {
+        const nx = num(i)
+        const ny = num(i + 1)
+        i += 2
+        x = rel ? x + nx : nx
+        y = rel ? y + ny : ny
+        mark(x, y)
+        // A repeated coordinate pair after M is an implicit L.
+        if (cmd === 'M') cmd = 'L'
+        else if (cmd === 'm') cmd = 'l'
+        break
+      }
+      case 'H': {
+        const nx = num(i)
+        i += 1
+        x = rel ? x + nx : nx
+        mark(x, y)
+        break
+      }
+      case 'V': {
+        const ny = num(i)
+        i += 1
+        y = rel ? y + ny : ny
+        mark(x, y)
+        break
+      }
+      case 'C': {
+        for (let k = 0; k < 3; k++) {
+          mark(
+            rel ? x + num(i + k * 2) : num(i + k * 2),
+            rel ? y + num(i + k * 2 + 1) : num(i + k * 2 + 1),
+          )
+        }
+        const ex = num(i + 4)
+        const ey = num(i + 5)
+        i += 6
+        x = rel ? x + ex : ex
+        y = rel ? y + ey : ey
+        break
+      }
+      case 'S':
+      case 'Q': {
+        for (let k = 0; k < 2; k++) {
+          mark(
+            rel ? x + num(i + k * 2) : num(i + k * 2),
+            rel ? y + num(i + k * 2 + 1) : num(i + k * 2 + 1),
+          )
+        }
+        const ex = num(i + 2)
+        const ey = num(i + 3)
+        i += 4
+        x = rel ? x + ex : ex
+        y = rel ? y + ey : ey
+        break
+      }
+      case 'A': {
+        const ex = num(i + 5)
+        const ey = num(i + 6)
+        i += 7
+        x = rel ? x + ex : ex
+        y = rel ? y + ey : ey
+        mark(x, y)
+        break
+      }
+      default:
+        i += 1
+    }
+  }
+  if (!Number.isFinite(minX) || !Number.isFinite(minY)) return null
+  return { x: (minX + maxX) / 2, y: (minY + maxY) / 2 }
+}
+
 export function absolutePixels(svg: string): PixelDoc {
   const dim = /width="([\d.]+)"\s+height="([\d.]+)"/.exec(svg)
   const vb = /viewBox="([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)"/.exec(svg)
@@ -38,6 +157,18 @@ export function absolutePixels(svg: string): PixelDoc {
   const [vx = 0, vy = 0, vw = W ?? 1, vh = H ?? 1] = vb ? vb.slice(1).map(Number) : []
   const sx = W && vw ? W / vw : 1,
     sy = H && vh ? H / vh : 1
+
+  // `<defs>` outlines, by id, so a `<use>` can be resolved to the shape it draws.
+  const defs = new Map<string, { x: number; y: number }>()
+  for (const m of svg.matchAll(/<path\b([^>]*)\/?>/g)) {
+    const attrs = m[1] ?? ''
+    const id = /\sid="([^"]+)"/.exec(attrs)?.[1]
+    const d = /\sd="([^"]+)"/.exec(attrs)?.[1]
+    if (id !== undefined && d !== undefined) {
+      const box = pathBox(d)
+      if (box !== null) defs.set(id, box)
+    }
+  }
 
   const out: PixelItem[] = []
   const stack = [{ x: 0, y: 0 }]
@@ -72,53 +203,52 @@ export function absolutePixels(svg: string): PixelDoc {
     let lx: number | null = null
     let ly: number | null = null
     if (tag === 'path') {
-      // WHERE a path is drawn depends on which engine wrote it, and conflating the two
-      // silently compares different things.
+      // The BOX CENTRE of the outline, whichever engine wrote it — see `pathBox`.
       //
-      //   abcjs bakes ABSOLUTE coordinates into `d` and uses no transform, so the `M`
-      //   is the position.
-      //   abcts authors every glyph outline at the ORIGIN and places it with a
-      //   translate, so the transform is the position and the `M` is outline-local —
-      //   whatever arbitrary point on the contour the outline happens to start from.
+      //   abcjs bakes ABSOLUTE coordinates into `d` and uses no transform, so the box is
+      //   already in page coordinates and the accumulated transform is zero.
+      //   abcts authors every outline at the ORIGIN and places it with a translate, so the
+      //   box is outline-local and the transform carries it into place.
       //
-      // A path carrying its own translate is therefore positioned BY that translate and
-      // its `M` must be ignored. Adding both put each abcts glyph off by its outline's
-      // start point. That cancels out of a same-glyph SPREAD, which is why the pixel
-      // gate's numbers were unaffected — and it would not have cancelled the moment
-      // anything compared absolute positions, or compared a `<path>` against a `<use>`.
-      if (tr) {
-        lx = 0
-        ly = 0
-      } else {
-        const d = /\sd="M\s*([-\d.]+)[\s,]+([-\d.]+)/.exec(attrs)
-        if (d?.[1] !== undefined && d[2] !== undefined) {
-          lx = +d[1]
-          ly = +d[2]
-        }
+      // Either way the two add, and the result is the same point on the same shape. Taking
+      // the `M` instead compared abcjs's contour START against abcts's glyph ORIGIN — for
+      // a notehead, its top against its centre, a 4.035px bias that read as agreement.
+      const d = /\sd="([^"]+)"/.exec(attrs)?.[1]
+      const box = d === undefined ? null : pathBox(d)
+      if (box !== null) {
+        lx = box.x
+        ly = box.y
       }
     } else if (tag === 'rect') {
-      const x = /\sx="([-\d.]+)"/.exec(attrs),
-        y = /\sy="([-\d.]+)"/.exec(attrs)
+      // CENTRE, like a path's box — abcts draws a staff line as a `<rect>` where abcjs
+      // draws the same line as a filled `<path>`, and comparing a rect's top edge against
+      // a path's box centre offsets every rule by half its thickness.
+      const x = /\sx="([-\d.]+)"/.exec(attrs)
+      const y = /\sy="([-\d.]+)"/.exec(attrs)
+      const w = /\swidth="([-\d.]+)"/.exec(attrs)
+      const h = /\sheight="([-\d.]+)"/.exec(attrs)
       if (x?.[1] !== undefined && y?.[1] !== undefined) {
-        lx = +x[1]
-        ly = +y[1]
+        lx = +x[1] + (w?.[1] !== undefined ? +w[1] / 2 : 0)
+        ly = +y[1] + (h?.[1] !== undefined ? +h[1] / 2 : 0)
       }
     } else if (tag === 'use') {
-      // A `<use>` may be placed by transform instead of x/y — the accumulated transform
-      // above already carries it, so an absent x/y means the origin.
-      if (!/\sx="/.test(attrs) && tr) {
-        lx = 0
-        ly = 0
-      }
       // `<use href="#g0" x= y=>` — a browser resolves this to the referenced outline
       // placed at x/y, so for a coordinate walk it IS the glyph. Without this, an
       // optimized render would measure as having no glyphs at all and every comparison
       // against it would trivially "pass".
+      //
+      // The referenced outline's BOX CENTRE is added for the same reason a `<path>`'s is:
+      // a `<use>` and an inline `<path>` of the same glyph must measure to the same point,
+      // or turning `<defs>` dedup on would move the drawing.
+      const href = /\s(?:xlink:href|href)="#([^"]+)"/.exec(attrs)?.[1]
+      const box = href === undefined ? undefined : defs.get(href)
       const x = /\sx="([-\d.]+)"/.exec(attrs)
       const y = /\sy="([-\d.]+)"/.exec(attrs)
-      if (x?.[1] !== undefined && y?.[1] !== undefined) {
-        lx = +x[1]
-        ly = +y[1]
+      const px = x?.[1] !== undefined ? +x[1] : tr ? 0 : null
+      const py = y?.[1] !== undefined ? +y[1] : tr ? 0 : null
+      if (px !== null && py !== null) {
+        lx = px + (box?.x ?? 0)
+        ly = py + (box?.y ?? 0)
       }
     } else if (tag === 'text') {
       const x = /\sx="([-\d.]+)"/.exec(attrs),

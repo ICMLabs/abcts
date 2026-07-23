@@ -924,6 +924,9 @@ class ScoreBuilder {
   /** `%%staffsep` / `%%sysstaffsep`, in PIXELS (directive points × 4/3). See `Score`. */
   staffSep: number | null = null
   sysStaffSep: number | null = null
+  /** `%%center` text, split by whether any music had been parsed when it was read. */
+  textAbove: string[] = []
+  textBelow: string[] = []
   /** Voice ids from `%%score`/`%%staves`, which overrides declaration order. */
   scoreOrder: string[] | null = null
   private tupletGroups = 0
@@ -1039,6 +1042,8 @@ class ScoreBuilder {
       staves: this.resolvedStaves(),
       staffSep: this.staffSep,
       sysStaffSep: this.sysStaffSep,
+      textAbove: this.textAbove,
+      textBelow: this.textBelow,
       sourceStartOffset: this.sourceStartOffset,
       keySourceRange: this.keySourceRange,
       meterSourceRange: this.meterSourceRange,
@@ -1238,6 +1243,19 @@ class Parser {
     const vocalfont = /^vocalfont\s+(.*)$/.exec(body)
     if (vocalfont?.[1]) {
       this.ensureScore(start).vocalFont = parseFontSpec(vocalfont[1])
+      return
+    }
+    // `%%center <text>` — one line of centred free text. abcjs builds it as a `FreeText`
+    // with `anchor: 'middle'` at `width / 2` (`write/creation/elements/free-text.js`),
+    // where `width` is the STAFF width — so it centres on 335 where the title, which
+    // centres on the paper, sits at 350.
+    const centred = /^center\s+(.*)$/.exec(body)
+    if (centred?.[1] !== undefined) {
+      const builder = this.ensureScore(start)
+      // Before any music it heads the tune; after it, it trails — and trailing text is
+      // what stops the last music line being the last line, so abcjs justifies it.
+      const target = builder.voice.isEmpty ? builder.textAbove : builder.textBelow
+      target.push(decodeTextString(centred[1].trim()))
       return
     }
     // `%%staffsep` / `%%sysstaffsep` — minimum staff separations, given in POINTS and

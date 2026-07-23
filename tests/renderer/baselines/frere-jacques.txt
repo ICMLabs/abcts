@@ -1,8 +1,8 @@
 tune 0
-bounds  width=90.909 height=68.509 top=-1.935
+bounds  width=90.909 height=69.670 top=-1.935
 systems 4
 system 0 width=90.000 originY=0.000
-  staff 0 originY=23.562
+  staff 0 originY=24.723
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -11,9 +11,9 @@ system 0 width=90.000 originY=0.000
     beam   5.394,0.950 -> 57.063,1.950 t=0.500
     beam   67.397,1.750 -> 77.731,1.750 t=0.500
     title x=0.000 w=0.000
-      text  36.033,-19.145 size=3.441 bold "Frère Jacques"
-      text  36.886,-15.604 size=2.753 "(French rhyme)"
-      text  6.334,-12.005 size=2.409 italic "attr. to Jean-Philippe Rameau (1683 - 1764) (arr. S. Di Mico for educational purposes)"
+      text  35.921,-20.263 size=3.484 bold "Frère Jacques"
+      text  37.013,-16.292 size=2.710 "(French rhyme)"
+      text  5.644,-12.220 size=2.452 italic "attr. to Jean-Philippe Rameau (1683 - 1764) (arr. S. Di Mico for educational purposes)"
     clef x=1.935 w=2.458
       glyph gClef 1.935,1.000
     tempo x=5.394 w=0.000
@@ -51,7 +51,7 @@ system 0 width=90.000 originY=0.000
       glyph ornamentTrill 77.162,-3.500
       glyph ornamentTrill 77.162,-4.500
       line  77.731,-1.332 -> 77.731,2.000 t=0.120
-system 1 width=90.909 originY=30.089
+system 1 width=90.909 originY=31.251
   staff 0 originY=6.590
     staffline 0.000,2.000 -> 90.909,2.000 t=0.130
     staffline 0.000,1.000 -> 90.909,1.000 t=0.130
@@ -82,7 +82,7 @@ system 1 width=90.909 originY=30.089
       line  74.286,-1.332 -> 74.286,2.000 t=0.120
     part x=88.065 w=0.000
       text  88.065,-5.000 size=1.600 bold "A"
-system 2 width=90.000 originY=44.609
+system 2 width=90.000 originY=45.771
   staff 0 originY=3.984
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -157,7 +157,7 @@ system 2 width=90.000 originY=44.609
       text  78.121,4.000 size=1.400 "vous?"
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 3 width=90.000 originY=55.943
+system 3 width=90.000 originY=57.104
   staff 0 originY=6.280
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130

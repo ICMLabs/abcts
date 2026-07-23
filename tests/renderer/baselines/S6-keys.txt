@@ -1,15 +1,15 @@
 tune 0
-bounds  width=25.335 height=14.995 top=-1.935
+bounds  width=25.335 height=15.511 top=-1.935
 systems 1
 system 0 width=25.335 originY=0.000
-  staff 0 originY=9.532
+  staff 0 originY=10.048
     staffline 0.000,2.000 -> 25.335,2.000 t=0.130
     staffline 0.000,1.000 -> 25.335,1.000 t=0.130
     staffline 0.000,0.000 -> 25.335,0.000 t=0.130
     staffline 0.000,-1.000 -> 25.335,-1.000 t=0.130
     staffline 0.000,-2.000 -> 25.335,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  8.566,-5.115 size=3.441 bold "S6-1 C"
+      text  8.515,-5.588 size=3.484 bold "S6-1 C"
     clef x=1.935 w=2.458
       glyph gClef 1.935,1.000
     timeSignature x=5.394 w=1.522
@@ -18,17 +18,17 @@ system 0 width=25.335 originY=0.000
     note@-2 x=7.916 w=15.484
       glyph noteheadWhole 7.916,1.000
 tune 1
-bounds  width=90.000 height=51.049 top=-1.935
+bounds  width=90.000 height=51.565 top=-1.935
 systems 4
 system 0 width=90.000 originY=0.000
-  staff 0 originY=9.813
+  staff 0 originY=10.329
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  31.696,-5.397 size=3.441 bold "S6-2 Change Key Sig"
+      text  31.530,-5.870 size=3.484 bold "S6-2 Change Key Sig"
     clef x=1.935 w=2.458
       glyph gClef 1.935,1.000
     keySignature x=5.394 w=3.494
@@ -86,7 +86,7 @@ system 0 width=90.000 originY=0.000
       line  80.574,-2.332 -> 80.574,1.000 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 1 width=90.000 originY=17.606
+system 1 width=90.000 originY=18.123
   staff 0 originY=4.120
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -147,7 +147,7 @@ system 1 width=90.000 originY=17.606
       line  80.379,-2.332 -> 80.379,1.000 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 2 width=90.000 originY=29.520
+system 2 width=90.000 originY=30.036
   staff 0 originY=4.120
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -207,7 +207,7 @@ system 2 width=90.000 originY=29.520
       line  80.296,-2.332 -> 80.296,1.000 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 3 width=90.000 originY=41.434
+system 3 width=90.000 originY=41.950
   staff 0 originY=4.120
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -270,18 +270,18 @@ system 3 width=90.000 originY=41.434
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
 tune 2
-bounds  width=90.000 height=90.161 top=-1.935
+bounds  width=90.000 height=90.935 top=-1.935
 systems 7
 system 0 width=90.000 originY=0.000
-  staff 0 originY=13.217
+  staff 0 originY=13.991
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  32.016,-8.800 size=3.441 bold "S6-3 Key Signatures"
-      text  30.932,-5.115 size=2.409 italic "Test - from Gonzato guide Ch.2"
+      text  31.853,-9.532 size=3.484 bold "S6-3 Key Signatures"
+      text  30.681,-5.330 size=2.452 italic "Test - from Gonzato guide Ch.2"
     clef x=1.935 w=2.458
       glyph gClef 1.935,1.000
     timeSignature x=5.394 w=1.522
@@ -302,7 +302,7 @@ system 0 width=90.000 originY=0.000
       line  67.707,1.332 -> 67.707,-2.000 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 1 width=90.000 originY=21.292
+system 1 width=90.000 originY=22.066
   staff 0 originY=3.839
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -327,7 +327,7 @@ system 1 width=90.000 originY=21.292
       line  67.634,-0.332 -> 67.634,3.000 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 2 width=90.000 originY=33.205
+system 2 width=90.000 originY=33.979
   staff 0 originY=3.839
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -354,7 +354,7 @@ system 2 width=90.000 originY=33.205
       line  69.703,0.332 -> 69.703,-3.000 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 3 width=90.000 originY=45.119
+system 3 width=90.000 originY=45.893
   staff 0 originY=3.839
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -382,7 +382,7 @@ system 3 width=90.000 originY=45.119
       line  69.741,0.168 -> 69.741,3.500 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 4 width=90.000 originY=57.032
+system 4 width=90.000 originY=57.806
   staff 0 originY=3.839
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -410,7 +410,7 @@ system 4 width=90.000 originY=57.032
       line  69.271,-1.332 -> 69.271,2.000 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 5 width=90.000 originY=68.946
+system 5 width=90.000 originY=69.720
   staff 0 originY=3.839
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -436,7 +436,7 @@ system 5 width=90.000 originY=68.946
       line  67.996,-0.832 -> 67.996,2.500 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 6 width=33.098 originY=80.859
+system 6 width=33.098 originY=81.634
   staff 0 originY=3.839
     staffline 0.000,2.000 -> 33.098,2.000 t=0.130
     staffline 0.000,1.000 -> 33.098,1.000 t=0.130
@@ -463,18 +463,18 @@ system 6 width=33.098 originY=80.859
       line  30.242,-2.000 -> 30.242,2.000 t=0.160
       line  30.972,-2.000 -> 30.972,2.000 t=0.500
 tune 3
-bounds  width=90.000 height=78.280 top=-1.935
+bounds  width=90.000 height=79.054 top=-1.935
 systems 6
 system 0 width=90.000 originY=0.000
-  staff 0 originY=13.217
+  staff 0 originY=13.991
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  27.519,-8.800 size=3.441 bold "S6-4 Modal Key Signatures"
-      text  39.561,-5.115 size=2.409 italic "Test Fixture"
+      text  27.301,-9.532 size=3.484 bold "S6-4 Modal Key Signatures"
+      text  39.464,-5.330 size=2.452 italic "Test Fixture"
     clef x=1.935 w=2.458
       glyph gClef 1.935,1.000
     keySignature x=5.394 w=2.279
@@ -511,7 +511,7 @@ system 0 width=90.000 originY=0.000
       line  76.956,-0.832 -> 76.956,2.500 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 1 width=90.000 originY=21.171
+system 1 width=90.000 originY=21.945
   staff 0 originY=3.959
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -556,7 +556,7 @@ system 1 width=90.000 originY=21.171
       line  77.493,-2.832 -> 77.493,0.500 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 2 width=90.000 originY=33.085
+system 2 width=90.000 originY=33.859
   staff 0 originY=3.959
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -601,7 +601,7 @@ system 2 width=90.000 originY=33.085
       line  77.699,-1.332 -> 77.699,2.000 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 3 width=90.000 originY=44.979
+system 3 width=90.000 originY=45.753
   staff 0 originY=3.979
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -648,7 +648,7 @@ system 3 width=90.000 originY=44.979
       line  77.793,-1.832 -> 77.793,1.500 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 4 width=90.000 originY=57.032
+system 4 width=90.000 originY=57.806
   staff 0 originY=3.839
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -692,7 +692,7 @@ system 4 width=90.000 originY=57.032
       line  77.364,-2.332 -> 77.364,1.000 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 5 width=90.000 originY=68.946
+system 5 width=90.000 originY=69.720
   staff 0 originY=3.839
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -740,18 +740,18 @@ system 5 width=90.000 originY=68.946
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
       line  87.875,-2.000 -> 87.875,2.000 t=0.500
 tune 4
-bounds  width=90.000 height=54.453 top=-1.935
+bounds  width=90.000 height=55.227 top=-1.935
 systems 4
 system 0 width=90.000 originY=0.000
-  staff 0 originY=13.217
+  staff 0 originY=13.991
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  29.270,-8.800 size=3.441 bold "S6-5 Double Accidentals"
-      text  39.561,-5.115 size=2.409 italic "Test Fixture"
+      text  29.073,-9.532 size=3.484 bold "S6-5 Double Accidentals"
+      text  39.464,-5.330 size=2.452 italic "Test Fixture"
     clef x=1.935 w=2.458
       glyph gClef 1.935,1.000
     timeSignature x=5.394 w=1.522
@@ -788,7 +788,7 @@ system 0 width=90.000 originY=0.000
       line  76.546,-0.332 -> 76.546,3.000 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 1 width=90.000 originY=21.292
+system 1 width=90.000 originY=22.066
   staff 0 originY=3.839
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -838,7 +838,7 @@ system 1 width=90.000 originY=21.292
       line  78.257,2.332 -> 78.257,-1.000 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 2 width=90.000 originY=32.984
+system 2 width=90.000 originY=33.758
   staff 0 originY=4.060
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -870,7 +870,7 @@ system 2 width=90.000 originY=32.984
       line  68.788,0.832 -> 68.788,-4.000 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 3 width=51.918 originY=45.119
+system 3 width=51.918 originY=45.893
   staff 0 originY=3.839
     staffline 0.000,2.000 -> 51.918,2.000 t=0.130
     staffline 0.000,1.000 -> 51.918,1.000 t=0.130

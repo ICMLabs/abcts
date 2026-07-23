@@ -589,6 +589,20 @@ export interface Score {
   readonly staffSep: number | null
   /** `%%sysstaffsep` — the same minimum, but between staves WITHIN a system. Pixels, or null. */
   readonly sysStaffSep: number | null
+  /**
+   * `%%center` lines standing BEFORE any music — centred free text under the top-text
+   * block. abcjs centres these on the STAFF width, not the paper width the title uses.
+   */
+  readonly textAbove: readonly string[]
+  /**
+   * `%%center` lines standing AFTER the music. As well as being drawn, these make the last
+   * music line no longer the LAST line, so abcjs justifies it like any other.
+   *
+   * ponytail: `%%center` BETWEEN two music lines lands here too. No fixture does it, and
+   * placing it properly needs free text to be a line in its own right rather than a
+   * property of the tune.
+   */
+  readonly textBelow: readonly string[]
   readonly sourceStartOffset: number
   readonly keySourceRange: SourceRange | null
   readonly meterSourceRange: SourceRange | null

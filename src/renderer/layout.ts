@@ -197,10 +197,26 @@ const ENGRAVE = {
    * `titleTextSize` was 2.4 — 18.6px against abcjs's 26.7 — so the title was undersized
    * as well as mispositioned.
    */
-  titleTextSize: (20 * 4) / 3 / 7.75,
-  subtitleTextSize: (16 * 4) / 3 / 7.75,
-  composerTextSize: (14 * 4) / 3 / 7.75,
-  infoTextSize: (14 * 4) / 3 / 7.75,
+  // ROUNDED TO WHOLE PIXELS, as abcjs emits them: its title is `font-size="27"`, not
+  // 26.67, its composer `19` not 18.67. The rounding is visible in the goldens and it
+  // feeds the line advance below, where it is worth 4px on the first staff.
+  titleTextSize: Math.round((20 * 4) / 3) / 7.75,
+  subtitleTextSize: Math.round((16 * 4) / 3) / 7.75,
+  composerTextSize: Math.round((14 * 4) / 3) / 7.75,
+  infoTextSize: Math.round((14 * 4) / 3) / 7.75,
+  /**
+   * Rendered text HEIGHT as a multiple of font size — a line of prose is taller than its
+   * point size, and abcjs advances by the height, not the size.
+   *
+   * 1.108, from the WebKit-calibrated heights the golden generator measures with
+   * (`dump-svg.js`: 27px -> 29.91, 21 -> 23.27, 20 -> 22.16, 19 -> 21.06, 17 -> 18.84).
+   * Every one of those serif faces gives the same ratio to three decimals.
+   *
+   * This was the last of the corpus-wide vertical offset. We advanced by
+   * `round(size * 1.1)` where abcjs advances by `round(size * 1.108 * 1.1)` — for a title
+   * that is 29px against abcjs's 33, so the first staff of every tune sat 4px high.
+   */
+  textHeightRatio: 1.108,
   /**
    * Page margin above everything — abcjs's `padding.top`, 15px on screen
    * (`write/renderer.js:69`; print uses 38px, which is 1cm). We had none: our drawing
@@ -213,6 +229,19 @@ const ENGRAVE = {
   composerSpace: 7.56 / 7.75,
   /** Space between the top-text block and the top of the music (`renderer.js:101`). */
   musicSpace: 7.56 / 7.75,
+  /**
+   * `%%center` free text — abcjs's `textfont`, 21px at its 7.75px staff space.
+   *
+   * `freeTextSpace` is the gap above such a line, and it is abcjs's standard 7.56 — the
+   * same unit as `titleSpace`, `composerSpace` and `musicSpace`. Derived, not guessed:
+   * abcjs's composer baseline in the `center-text` golden is 82.12 and its centred line's
+   * is 114.68, and 114.68 = 82.12 + (23 - 19) + 7.56 + 21 exactly, where 23 is the
+   * composer row's advance and 21 the free-text size.
+   */
+  freeTextSize: 21 / 7.75,
+  freeTextSpace: 7.56 / 7.75,
+  /** Gap from the last staff line down to a trailing `%%center` line's baseline. */
+  freeTextBelowSpace: 36.85 / 7.75,
   /** A text line advances by its height times this, rounded to whole pixels by abcjs. */
   lineSkipFactor: 1.1,
   /** Vertical gap between tunes in a tunebook — wider than between systems. */
@@ -3224,7 +3253,10 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
      */
     const natural = columnWidths.slice(span.start, span.end).reduce((sum, w) => sum + w, 0)
     const available = systemWidth - head - ENGRAVE.marginX
-    const isLast = systemIndex === spans.length - 1
+    // Trailing `%%center` text means the music is no longer the LAST LINE of the tune, so
+    // abcjs justifies it unconditionally — its last-line guard tests the last LINE, not
+    // the last STAFF line. `center-text` sat 219px out on exactly this.
+    const isLast = systemIndex === spans.length - 1 && score.textBelow.length === 0
     // The last system is stretched only when it is ALREADY most of the way across.
     //
     // "Never stretch the last system" was too blunt and was the single largest source of
@@ -3279,7 +3311,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       // which is abcjs's sequence: block, then `spacing.music`, then the music.
       const block =
         systemIndex === 0 && voiceIndex === 0
-          ? topTextBlock(score.metadata, systemWidth - ENGRAVE.marginX * 2)
+          ? topTextBlock(score.metadata, systemWidth - ENGRAVE.marginX * 2, score.textAbove)
           : { texts: [], height: 0 }
       const heading: LayoutElement[] =
         block.texts.length === 0
@@ -3714,13 +3746,16 @@ function systemHeight(system: LayoutSystem, strict = true): number {
 function topTextBlock(
   metadata: ScoreMetadata,
   width: number,
+  textAbove: readonly string[] = [],
 ): { texts: PlacedText[]; height: number } {
   const texts: PlacedText[] = []
   let y = 0
   // abcjs rounds each line advance to whole PIXELS before moving on, so a block's height
   // is not simply a sum of ems. Reproduced rather than smoothed.
   const advance = (size: number): void => {
-    y += Math.round(size * ENGRAVE.lineSkipFactor * ABCJS_PX_PER_SPACE) / ABCJS_PX_PER_SPACE
+    y +=
+      Math.round(size * ENGRAVE.textHeightRatio * ENGRAVE.lineSkipFactor * ABCJS_PX_PER_SPACE) /
+      ABCJS_PX_PER_SPACE
   }
   const centre = width / 2
 
@@ -3792,6 +3827,23 @@ function topTextBlock(
       })
     }
     advance(Math.max(ENGRAVE.infoTextSize, ENGRAVE.composerTextSize))
+  }
+
+  // `%%center` lines standing before the music close the block. Centred like the title,
+  // but on the STAFF width rather than the paper width — which is the width passed here.
+  for (const line of textAbove) {
+    y += ENGRAVE.freeTextSpace
+    texts.push({
+      text: line,
+      role: 'title',
+      x: centre,
+      y: y + ENGRAVE.freeTextSize,
+      size: ENGRAVE.freeTextSize,
+      bold: false,
+      italic: false,
+      anchor: 'middle',
+    })
+    advance(ENGRAVE.freeTextSize)
   }
 
   return { texts, height: y }

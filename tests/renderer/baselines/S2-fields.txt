@@ -1,18 +1,18 @@
 tune 0
-bounds  width=57.646 height=29.057 top=-1.935
+bounds  width=57.646 height=30.218 top=-1.935
 systems 1
 system 0 width=57.646 originY=0.000
-  staff 0 originY=23.562
+  staff 0 originY=24.723
     staffline 0.000,2.000 -> 57.646,2.000 t=0.130
     staffline 0.000,1.000 -> 57.646,1.000 t=0.130
     staffline 0.000,0.000 -> 57.646,0.000 t=0.130
     staffline 0.000,-1.000 -> 57.646,-1.000 t=0.130
     staffline 0.000,-2.000 -> 57.646,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  10.574,-19.145 size=3.441 bold "S2-1 Title and Header Fields"
-      text  20.901,-15.604 size=2.753 "A Subtitle Here"
-      text  25.888,-12.005 size=2.409 italic "March"
-      text  12.764,-12.005 size=2.409 italic "John Composer (Country of Origin)"
+      text  10.346,-20.263 size=3.484 bold "S2-1 Title and Header Fields"
+      text  21.025,-16.292 size=2.710 "A Subtitle Here"
+      text  25.835,-12.220 size=2.452 italic "March"
+      text  12.477,-12.220 size=2.452 italic "John Composer (Country of Origin)"
     clef x=1.935 w=2.458
       glyph gClef 1.935,1.000
     timeSignature x=5.394 w=1.522
@@ -53,17 +53,17 @@ system 0 width=57.646 originY=0.000
       line  54.791,-2.000 -> 54.791,2.000 t=0.160
       line  55.521,-2.000 -> 55.521,2.000 t=0.500
 tune 1
-bounds  width=90.000 height=48.763 top=-1.935
+bounds  width=90.000 height=49.279 top=-1.935
 systems 3
 system 0 width=90.000 originY=0.000
-  staff 0 originY=16.421
+  staff 0 originY=16.937
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  31.701,-12.005 size=3.441 bold "S2-2 Text Placement"
+      text  31.535,-12.478 size=3.484 bold "S2-2 Text Placement"
     clef x=1.935 w=2.458
       glyph gClef 1.935,1.000
     tempo x=5.394 w=0.000
@@ -88,7 +88,7 @@ system 0 width=90.000 originY=0.000
       text  64.998,-4.000 size=1.400 "above"
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 1 width=90.000 originY=23.214
+system 1 width=90.000 originY=23.731
   staff 0 originY=5.120
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
@@ -115,7 +115,7 @@ system 1 width=90.000 originY=23.214
       text  54.588,0.000 size=1.400 ")"
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 2 width=31.227 originY=35.857
+system 2 width=31.227 originY=36.373
   staff 0 originY=5.120
     staffline 0.000,2.000 -> 31.227,2.000 t=0.130
     staffline 0.000,1.000 -> 31.227,1.000 t=0.130
@@ -144,17 +144,17 @@ system 2 width=31.227 originY=35.857
     bar x=28.291 w=0.160
       line  28.371,-2.000 -> 28.371,2.000 t=0.160
 tune 2
-bounds  width=90.000 height=26.941 top=-1.935
+bounds  width=90.000 height=27.457 top=-1.935
 systems 2
 system 0 width=90.000 originY=0.000
-  staff 0 originY=9.532
+  staff 0 originY=10.048
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  32.044,-5.115 size=3.441 bold "S2-3 BeginText Test"
+      text  31.882,-5.588 size=3.484 bold "S2-3 BeginText Test"
     clef x=1.935 w=2.458
       glyph gClef 1.935,1.000
     timeSignature x=5.394 w=1.522
@@ -189,7 +189,7 @@ system 0 width=90.000 originY=0.000
       line  76.546,-0.332 -> 76.546,3.000 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 1 width=55.124 originY=17.606
+system 1 width=55.124 originY=18.123
   staff 0 originY=3.839
     staffline 0.000,2.000 -> 55.124,2.000 t=0.130
     staffline 0.000,1.000 -> 55.124,1.000 t=0.130

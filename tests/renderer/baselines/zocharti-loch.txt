@@ -1,8 +1,8 @@
 tune 0
-bounds  width=90.000 height=75.718 top=-1.935
+bounds  width=90.000 height=76.492 top=-1.935
 systems 2
 system 0 width=90.000 originY=0.000
-  staff 0 originY=20.106
+  staff 0 originY=20.880
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -13,8 +13,8 @@ system 0 width=90.000 originY=0.000
     slur  22.616,0.200 -> 32.611,-2.300 bulge=-1.799
     slur  57.056,-0.800 -> 63.246,-0.800 bulge=-1.114
     title x=0.000 w=0.000
-      text  36.038,-15.690 size=3.441 bold "Zocharti Loch"
-      text  30.461,-12.005 size=2.409 italic "Louis Lewandowski (1821-1894)"
+      text  35.926,-16.421 size=3.484 bold "Zocharti Loch"
+      text  30.201,-12.220 size=2.452 italic "Louis Lewandowski (1821-1894)"
     voiceName x=1.935 w=0.000
       text  1.935,-0.439 size=2.194 bold "Tenore I"
     clef x=12.482 w=2.458
@@ -133,7 +133,7 @@ system 0 width=90.000 originY=0.000
       glyph restQuarter 82.284,0.000
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 1 originY=39.226
+  staff 1 originY=40.000
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -253,7 +253,7 @@ system 0 width=90.000 originY=0.000
     rest x=73.155 w=10.949
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 1 width=90.000 originY=45.080
+system 1 width=90.000 originY=45.854
   staff 0 originY=6.060
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130

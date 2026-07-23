@@ -1,12 +1,12 @@
 tune 0
-bounds  width=90.000 height=56.786 top=-1.935
+bounds  width=90.000 height=57.560 top=-1.935
 systems 1
 system 0 width=90.000 originY=0.000
-  connector brace -0.920,39.188 scale=3.907
-  connector bracketTop -0.600,15.658
-  connector bracketBottom -0.600,32.778
-  connector line -0.600,15.658 -> -0.600,32.778 t=0.500
-  staff 0 originY=17.658
+  connector brace -0.920,39.962 scale=3.907
+  connector bracketTop -0.600,16.432
+  connector bracketBottom -0.600,33.552
+  connector line -0.600,16.432 -> -0.600,33.552 t=0.500
+  staff 0 originY=18.432
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -15,8 +15,8 @@ system 0 width=90.000 originY=0.000
     slur  61.824,-0.200 -> 64.625,2.300 bulge=0.504
     slur  72.496,1.300 -> 76.259,1.800 bulge=0.677
     title x=0.000 w=0.000
-      text  32.876,-13.242 size=3.441 bold "Ave Verum Corpus"
-      text  39.045,-9.557 size=2.409 italic "W. A. Mozart"
+      text  32.724,-13.973 size=3.484 bold "Ave Verum Corpus"
+      text  38.939,-9.772 size=2.452 italic "W. A. Mozart"
     voiceName x=1.935 w=0.000
       text  1.935,-0.439 size=2.194 bold "Soprano"
     clef x=11.450 w=2.458
@@ -99,7 +99,7 @@ system 0 width=90.000 originY=0.000
       line  78.663,2.168 -> 78.663,5.500 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 1 originY=30.778
+  staff 1 originY=31.552
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -177,7 +177,7 @@ system 0 width=90.000 originY=0.000
       text  78.591,4.000 size=1.400 "ve,"
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 2 originY=41.188
+  staff 2 originY=41.962
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -285,7 +285,7 @@ system 0 width=90.000 originY=0.000
       glyph noteheadWhole 71.261,2.000
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 3 originY=52.771
+  staff 3 originY=53.545
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130

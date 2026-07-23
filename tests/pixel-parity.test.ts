@@ -19,6 +19,16 @@
  * font, and that difference is intended — it is why abcts's output is smaller. Where a
  * glyph is placed is in scope. What it looks like is not.
  *
+ * ── THE NUMBERS BELOW CHANGED MEANING ON 2026-07-22 ──────────────────────────
+ * Positions are now the BOUNDING-BOX CENTRE of the real outline on both sides (see
+ * `pathBox` in `pixel-geometry.ts`). They used to be abcjs's first `M` against abcts's
+ * glyph origin — for a notehead, its TOP against its CENTRE, a fixed 4.035px bias that
+ * read as agreement and hid a real 4.3px vertical error of the same size underneath it.
+ * Ceilings recorded before that change are NOT comparable with ones recorded after.
+ * The tell was that `oy` and the staff-line offset disagreed by a constant 4.2px on 25 of
+ * 29 fixtures while each engine was internally consistent — B4 centres on the middle line
+ * in both.
+ *
  * ── TWO ASSERTIONS, AND THEY DO DIFFERENT JOBS ───────────────────────────────
  * 1. NOTEHEAD COUNT, exact, per fixture. Currently 29/29 fixtures and 2,652 noteheads.
  *    This is a real parity statement and it can only ever regress, so it is asserted
@@ -117,35 +127,35 @@ import { absolutePixels, byClass } from './pixel-geometry.js'
  */
 const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: number; ox: number }> =
   {
-    'ave-verum-corpus': { heads: 55, dy: 26.8, dx: 28.0, oy: -3.6, ox: -23.7 },
-    'brother-john-inline-voices': { heads: 64, dy: 0.0, dx: 16.7, oy: -2.1, ox: -19.8 },
-    'center-text': { heads: 8, dy: 0.0, dx: 219.3, oy: -25.4, ox: -125.2 },
-    'chord-grid': { heads: 16, dy: 0.0, dx: 7.0, oy: -20.4, ox: -22.8 },
-    'frere-jacques': { heads: 45, dy: 47.3, dx: 41.8, oy: -24.7, ox: -25.0 },
-    'full-song-template': { heads: 20, dy: 22.1, dx: 19.8, oy: -38.3, ox: -27.0 },
-    'happy-birthday': { heads: 25, dy: 10.0, dx: 36.6, oy: -0.7, ox: -33.5 },
-    'little swallow': { heads: 89, dy: 24.6, dx: 47.5, oy: -19.1, ox: -33.3 },
-    'multi-voice-lyrics-two-voices': { heads: 16, dy: 67.7, dx: 51.0, oy: -83.4, ox: -15.5 },
-    'multi-voice-rest-collision': { heads: 7, dy: 0.0, dx: 4.9, oy: -38.1, ox: -14.7 },
-    'multi-voice-rest-placement': { heads: 14, dy: 0.0, dx: 18.4, oy: -3.1, ox: -19.4 },
-    'multi-voice-triplet-brackets': { heads: 45, dy: 4.8, dx: 110.2, oy: -32.1, ox: -16.1 },
-    'program-127-test': { heads: 20, dy: 13.7, dx: 14.3, oy: -8.1, ox: -24.9 },
-    'ragtime-mini': { heads: 30, dy: 0.0, dx: 19.9, oy: -21.0, ox: -23.8 },
-    'ragtime-nightingale': { heads: 2009, dy: 151.7, dx: 100.9, oy: -28.6, ox: -25.9 },
-    'score-reorder': { heads: 8, dy: 0.0, dx: 0.0, oy: 7.4, ox: -15.6 },
-    'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0, oy: -0.1, ox: -15.6 },
-    'simple-c': { heads: 8, dy: 0.0, dx: 4.5, oy: -0.1, ox: -13.3 },
-    'stacked-annotations': { heads: 4, dy: 0.0, dx: 4.5, oy: -21.4, ox: -11.1 },
-    twinkle: { heads: 14, dy: 0.0, dx: 6.8, oy: -0.1, ox: -18.8 },
-    'two-voice-invention': { heads: 74, dy: 11.9, dx: 23.1, oy: 13.1, ox: -21.3 },
-    'voice-middle-after-clef': { heads: 10, dy: 12.7, dx: 79.0, oy: -7.8, ox: -28.7 },
-    'voice-octave-shift': { heads: 8, dy: 0.0, dx: 0.0, oy: -0.1, ox: -15.6 },
-    'vree-compound-meter': { heads: 12, dy: 0.0, dx: 5.3, oy: 0.1, ox: -15.3 },
-    'vree-grace-notes': { heads: 7, dy: 11.6, dx: 31.5, oy: -0.1, ox: -11.2 },
-    'vree-sharps': { heads: 4, dy: 0.0, dx: 9.4, oy: 0.5, ox: -14.1 },
-    'vree-slurs-and-triplets': { heads: 8, dy: 0.0, dx: 4.5, oy: -19.5, ox: -13.5 },
-    'vree-ties-across-bars': { heads: 4, dy: 0.0, dx: 4.5, oy: -0.1, ox: -12.6 },
-    'zocharti-loch': { heads: 64, dy: 3.0, dx: 47.5, oy: 7.4, ox: -15.7 },
+    'ave-verum-corpus': { heads: 55, dy: 26.9, dx: 33.0, oy: -1.7, ox: 18.8 },
+    'brother-john-inline-voices': { heads: 64, dy: 0.0, dx: 16.7, oy: -0.3, ox: 19.6 },
+    'center-text': { heads: 8, dy: 0.0, dx: 3.9, oy: 10.0, ox: 23.9 },
+    'chord-grid': { heads: 16, dy: 0.0, dx: 7.0, oy: -20.5, ox: 16.6 },
+    'frere-jacques': { heads: 45, dy: 47.3, dx: 41.8, oy: -19.8, ox: 14.7 },
+    'full-song-template': { heads: 20, dy: 22.2, dx: 19.8, oy: -33.4, ox: 13.6 },
+    'happy-birthday': { heads: 25, dy: 10.0, dx: 36.6, oy: -0.8, ox: 6.1 },
+    'little swallow': { heads: 89, dy: 24.7, dx: 47.5, oy: -11.2, ox: 6.5 },
+    'multi-voice-lyrics-two-voices': { heads: 16, dy: 67.8, dx: 54.1, oy: -87.5, ox: 24.3 },
+    'multi-voice-rest-collision': { heads: 7, dy: 0.0, dx: 12.9, oy: -42.2, ox: 29.8 },
+    'multi-voice-rest-placement': { heads: 14, dy: 0.1, dx: 21.5, oy: -7.2, ox: 20.4 },
+    'multi-voice-triplet-brackets': { heads: 45, dy: 4.9, dx: 110.2, oy: -36.2, ox: 24.2 },
+    'program-127-test': { heads: 20, dy: 13.8, dx: 15.7, oy: -3.2, ox: 15.7 },
+    'ragtime-mini': { heads: 30, dy: 0.0, dx: 19.9, oy: -21.2, ox: 15.6 },
+    'ragtime-nightingale': { heads: 2009, dy: 151.7, dx: 98.5, oy: -26.7, ox: 13.5 },
+    'score-reorder': { heads: 8, dy: 0.0, dx: 0.0, oy: 7.2, ox: 23.8 },
+    'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0, oy: -0.3, ox: 23.8 },
+    'simple-c': { heads: 8, dy: 0.0, dx: 4.5, oy: -0.3, ox: 26.1 },
+    'stacked-annotations': { heads: 4, dy: 0.0, dx: 4.5, oy: -21.6, ox: 28.3 },
+    twinkle: { heads: 14, dy: 0.1, dx: 5.7, oy: -0.3, ox: 21.1 },
+    'two-voice-invention': { heads: 74, dy: 12.0, dx: 24.6, oy: 15.0, ox: 18.3 },
+    'voice-middle-after-clef': { heads: 10, dy: 12.8, dx: 79.0, oy: -7.8, ox: 16.8 },
+    'voice-octave-shift': { heads: 8, dy: 0.0, dx: 0.0, oy: -0.3, ox: 23.8 },
+    'vree-compound-meter': { heads: 12, dy: 0.0, dx: 5.3, oy: -0.1, ox: 24.1 },
+    'vree-grace-notes': { heads: 7, dy: 11.8, dx: 32.4, oy: -0.3, ox: 28.6 },
+    'vree-sharps': { heads: 4, dy: 0.0, dx: 9.4, oy: 0.4, ox: 25.3 },
+    'vree-slurs-and-triplets': { heads: 8, dy: 0.1, dx: 6.2, oy: -19.6, ox: 26.3 },
+    'vree-ties-across-bars': { heads: 4, dy: 0.1, dx: 6.2, oy: -0.3, ox: 27.6 },
+    'zocharti-loch': { heads: 64, dy: 3.1, dx: 50.6, oy: 9.2, ox: 24.7 },
   }
 
 /** Rounding slack, so a last-digit wobble is not a failure. */

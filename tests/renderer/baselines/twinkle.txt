@@ -1,15 +1,15 @@
 tune 0
-bounds  width=90.000 height=14.995 top=-1.935
+bounds  width=90.000 height=15.511 top=-1.935
 systems 1
 system 0 width=90.000 originY=0.000
-  staff 0 originY=9.532
+  staff 0 originY=10.048
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  34.315,-5.115 size=3.441 bold "Twinkle Twinkle"
+      text  34.182,-5.588 size=3.484 bold "Twinkle Twinkle"
     clef x=1.935 w=2.458
       glyph gClef 1.935,1.000
     timeSignature x=5.394 w=1.522

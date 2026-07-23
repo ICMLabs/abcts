@@ -1,15 +1,15 @@
 tune 0
-bounds  width=40.671 height=15.148 top=-1.935
+bounds  width=40.671 height=15.664 top=-1.935
 systems 1
 system 0 width=40.671 originY=0.000
-  staff 0 originY=9.652
+  staff 0 originY=10.168
     staffline 0.000,2.000 -> 40.671,2.000 t=0.130
     staffline 0.000,1.000 -> 40.671,1.000 t=0.130
     staffline 0.000,0.000 -> 40.671,0.000 t=0.130
     staffline 0.000,-1.000 -> 40.671,-1.000 t=0.130
     staffline 0.000,-2.000 -> 40.671,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  5.870,-5.236 size=3.441 bold "Key with Many Sharps"
+      text  5.689,-5.709 size=3.484 bold "Key with Many Sharps"
     clef x=1.935 w=2.458
       glyph gClef 1.935,1.000
     keySignature x=5.394 w=5.923
