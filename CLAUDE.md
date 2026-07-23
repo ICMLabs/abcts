@@ -4,8 +4,8 @@ You are developing abcts, a modern TypeScript ABC notation library
 and community successor to abcjs.
 
 ## First Step — Always
-Read `Docs/CHECKPOINT-2026-07-22c.md` first — it is the current state of play, the open
-decisions, and the known risks. (`CHECKPOINT-2026-07-22b.md`, `-07-21.md`, `-07-19.md` and
+Read `Docs/CHECKPOINT-2026-07-23.md` first — it is the current state of play, the open
+decisions, and the known risks. (`CHECKPOINT-2026-07-22c.md`, `CHECKPOINT-2026-07-22b.md`, `-07-21.md`, `-07-19.md` and
 `-07-18.md` are superseded but remain the record of the parser phase, the renderer's first
 slices, how the last parser diffs closed, and the geometric work up to the voice-name and
 `%%staffsep` fixes.) Then read ARCHITECTURE.md in full. It is your
@@ -134,16 +134,19 @@ gate had been comparing abcjs's outline START against our glyph ORIGIN, a 4px bi
 
 The work is now GEOMETRIC — does abcts put the ink where abcjs puts it. A pixel-parity
 gate (`tests/pixel-parity.test.ts`) resolves both engines' SVG to absolute pixels and
-measures it. Noteheads match 2696/2696, systems 28/29, output is 0.34x abcjs's bytes.
+measures it. Noteheads match 2696/2696, systems 29/29, output is 0.34x abcjs's bytes.
 
-**The open problems are now three fixtures, not a corpus-wide term** — see
-`Docs/CHECKPOINT-2026-07-22c.md` § Next. Vertical placement is largely closed (the
-voice-name indent, `%%staffsep`/`%%sysstaffsep` and the prior per-staff-margin work took
-the corpus median to 24.2px); what remains is `frere-jacques` (abcjs wraps a source line,
-which fights the "one source line = one system" model — read the risk note), `center-text`
-(needs `%%center`), `multi-voice-lyrics-two-voices`, and ragtime's small intra-staff
-residual. A single aggregate number still cannot tell interacting terms apart — decompose
-by per-step pitch, and read `ox`/`oy` offset, not just spread.
+**The lyric model is solved and PARKED on `geometry/lyric-ink-anchor`** — see
+`Docs/CHECKPOINT-2026-07-23.md` § Priority 1 before touching anything to do with lyrics.
+It is blocked on one named defect: our shared-staff rule forces voice 0's stems up where
+abcjs forces them only when that voice already had music at the second voice's
+declaration, which needs a field on `Voice` the model does not have.
+
+The `.elements.json` goldens carry `staffs[].top/.bottom` and `specialY` — abcjs's own
+answer to how much room a staff takes. Use them before reasoning about extents; they are
+the oracle three sessions of extent work went without. A single aggregate number still
+cannot tell interacting terms apart — decompose by per-step pitch, and read `ox`/`oy`
+offset, not just spread.
 
 Renders staff, all clefs, key signatures, meters, tempo marks, part labels, noteheads and
 chords with stems and ledger lines, accidentals, rests and barlines, grace notes, chord
