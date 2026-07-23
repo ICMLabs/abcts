@@ -1,5 +1,5 @@
 tune 0
-bounds  width=90.000 height=776.675 top=-1.935
+bounds  width=90.000 height=783.712 top=-1.935
 systems 23
 system 0 width=90.000 originY=0.000
   connector brace -0.920,16.432 scale=4.651
@@ -165,8 +165,8 @@ system 0 width=90.000 originY=0.000
     beam   53.060,1.250 -> 58.407,1.250 t=0.500
     beam   57.307,0.500 -> 58.407,0.500 t=0.500
     beam   61.494,1.250 -> 65.860,1.250 t=0.500
-    spanner 14.289,3.500 -> 29.197,3.000 t=0.130
-    spanner 14.289,3.500 -> 29.197,4.000 t=0.130
+    spanner 14.289,-9.750 -> 29.197,-10.250 t=0.130
+    spanner 14.289,-9.750 -> 29.197,-9.250 t=0.130
     tie  41.268,-4.300 -> 42.358,-4.300 bulge=-0.500
     tie  60.038,-3.800 -> 61.194,-3.800 bulge=-0.500
     clef x=1.935 w=2.600
@@ -325,9 +325,9 @@ system 0 width=90.000 originY=0.000
     rest x=72.226 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 1 width=90.000 originY=46.405
-  connector brace -0.920,4.060 scale=4.418
-  staff 0 originY=6.060
+system 1 width=90.000 originY=43.549
+  connector brace -0.920,8.846 scale=4.418
+  staff 0 originY=10.846
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -400,7 +400,7 @@ system 1 width=90.000 originY=46.405
       glyph noteheadHalf 13.393,1.000
       glyph noteheadHalf 13.393,-0.500
       glyph noteheadHalf 13.393,-1.500
-      glyph dynamicMP 12.293,3.500
+      glyph dynamicMP 12.293,-9.750
       line  13.393,-1.332 -> 13.393,4.500 t=0.120
     bar x=29.660 w=0.160
       line  29.740,-2.000 -> 29.740,2.000 t=0.160
@@ -475,7 +475,7 @@ system 1 width=90.000 originY=46.405
       line  83.871,-1.832 -> 83.871,2.747 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 1 originY=19.680
+  staff 1 originY=24.466
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -652,7 +652,7 @@ system 1 width=90.000 originY=46.405
     rest x=69.805 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 2 width=90.000 originY=81.042
+system 2 width=90.000 originY=82.973
   connector brace -0.920,2.526 scale=4.347
   staff 0 originY=4.526
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
@@ -1001,7 +1001,7 @@ system 2 width=90.000 originY=81.042
     rest x=68.424 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 3 width=90.000 originY=112.327
+system 3 width=90.000 originY=114.257
   connector brace -0.920,4.060 scale=4.418
   staff 0 originY=6.060
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
@@ -1307,7 +1307,7 @@ system 3 width=90.000 originY=112.327
     rest x=69.416 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 4 width=90.000 originY=146.167
+system 4 width=90.000 originY=148.098
   connector brace -0.920,3.323 scale=4.163
   staff 0 originY=5.323
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
@@ -1707,7 +1707,7 @@ system 4 width=90.000 originY=146.167
       glyph repeatDots 87.065,1.976
       line  87.705,-2.000 -> 87.705,2.000 t=0.160
       line  88.435,-2.000 -> 88.435,2.000 t=0.500
-system 5 width=90.000 originY=176.017
+system 5 width=90.000 originY=177.947
   connector brace -0.920,5.560 scale=4.732
   staff 0 originY=7.560
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
@@ -1958,8 +1958,8 @@ system 5 width=90.000 originY=176.017
     voltatext 9.849,-2.700 "2"
     voltatext 9.849,-2.700 "2"
     voltatext 9.849,-2.700 "2"
-    spanner 19.001,3.500 -> 36.884,3.000 t=0.130
-    spanner 19.001,3.500 -> 36.884,4.000 t=0.130
+    spanner 19.001,-9.750 -> 36.884,-10.250 t=0.130
+    spanner 19.001,-9.750 -> 36.884,-9.250 t=0.130
     clef x=1.935 w=2.600
       glyph fClef 1.935,-1.000
     keySignature x=5.536 w=2.913
@@ -2108,7 +2108,7 @@ system 5 width=90.000 originY=176.017
     rest x=66.084 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 6 width=90.000 originY=212.404
+system 6 width=90.000 originY=214.335
   connector brace -0.920,3.526 scale=4.669
   staff 0 originY=5.526
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
@@ -2510,7 +2510,7 @@ system 6 width=90.000 originY=212.404
     rest x=68.196 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 7 width=90.000 originY=244.474
+system 7 width=90.000 originY=246.405
   connector brace -0.920,5.560 scale=5.037
   staff 0 originY=7.560
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
@@ -2901,7 +2901,7 @@ system 7 width=90.000 originY=244.474
     rest x=66.097 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 8 width=90.000 originY=282.078
+system 8 width=90.000 originY=284.009
   connector brace -0.920,3.526 scale=4.533
   staff 0 originY=5.526
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
@@ -3263,9 +3263,9 @@ system 8 width=90.000 originY=282.078
     rest x=70.077 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 9 width=90.000 originY=315.106
-  connector brace -0.920,4.060 scale=4.163
-  staff 0 originY=6.060
+system 9 width=90.000 originY=313.136
+  connector brace -0.920,8.846 scale=4.163
+  staff 0 originY=10.846
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -3295,8 +3295,8 @@ system 9 width=90.000 originY=315.106
     voltatext 28.380,-2.700 "2"
     voltatext 9.849,-2.700 "1"
     voltatext 28.380,-2.700 "2"
-    spanner 35.338,3.000 -> 41.301,3.500 t=0.130
-    spanner 35.338,4.000 -> 41.301,3.500 t=0.130
+    spanner 35.338,-10.250 -> 41.301,-9.750 t=0.130
+    spanner 35.338,-9.250 -> 41.301,-9.750 t=0.130
     tie  12.602,-2.300 -> 15.856,-2.300 bulge=-0.586
     tie  29.337,-2.300 -> 32.586,-2.300 bulge=-0.585
     tie  50.950,-3.300 -> 55.761,-3.300 bulge=-0.866
@@ -3402,7 +3402,7 @@ system 9 width=90.000 originY=315.106
       glyph noteheadHalf 44.697,1.000
       glyph noteheadHalf 44.697,-0.500
       glyph noteheadHalf 44.697,-1.500
-      glyph dynamicMP 43.597,3.500
+      glyph dynamicMP 43.597,-9.750
       line  44.697,-1.332 -> 44.697,4.500 t=0.120
     bar x=65.381 w=0.160
       line  65.461,-2.000 -> 65.461,2.000 t=0.160
@@ -3440,7 +3440,7 @@ system 9 width=90.000 originY=315.106
       line  83.604,1.168 -> 83.604,4.500 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 1 originY=18.662
+  staff 1 originY=23.448
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -3627,7 +3627,7 @@ system 9 width=90.000 originY=315.106
     rest x=66.381 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 10 width=90.000 originY=347.192
+system 10 width=90.000 originY=350.008
   connector brace -0.920,4.060 scale=4.355
   staff 0 originY=6.060
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
@@ -3957,7 +3957,7 @@ system 10 width=90.000 originY=347.192
     rest x=68.089 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 11 width=90.000 originY=380.044
+system 11 width=90.000 originY=382.859
   connector brace -0.920,4.060 scale=4.418
   staff 0 originY=6.060
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
@@ -4282,7 +4282,7 @@ system 11 width=90.000 originY=380.044
     rest x=68.411 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 12 width=90.000 originY=413.147
+system 12 width=90.000 originY=415.963
   connector brace -0.920,4.060 scale=4.418
   staff 0 originY=6.060
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
@@ -4620,9 +4620,9 @@ system 12 width=90.000 originY=413.147
     rest x=70.159 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 13 width=90.000 originY=443.387
-  connector brace -0.920,7.026 scale=4.163
-  staff 0 originY=9.026
+system 13 width=90.000 originY=446.203
+  connector brace -0.920,8.846 scale=4.163
+  staff 0 originY=10.846
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -4851,7 +4851,7 @@ system 13 width=90.000 originY=443.387
       glyph accidentalFlat 47.653,-1.000
     note@3 x=50.075 w=3.871
       glyph noteheadBlack 50.075,-1.500
-      glyph dynamicMP 48.975,3.500
+      glyph dynamicMP 48.975,-9.750
       line  50.075,-1.332 -> 50.075,2.000 t=0.120
     note@4 x=54.378 w=3.871
       glyph noteheadBlack 54.378,-2.000
@@ -4907,7 +4907,7 @@ system 13 width=90.000 originY=443.387
       line  84.182,-7.332 -> 84.182,-2.000 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 1 originY=21.629
+  staff 1 originY=23.448
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -5081,7 +5081,7 @@ system 13 width=90.000 originY=443.387
     rest x=69.287 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 14 width=90.000 originY=475.473
+system 14 width=90.000 originY=480.108
   connector brace -0.920,7.026 scale=4.163
   staff 0 originY=9.026
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
@@ -5455,8 +5455,8 @@ system 14 width=90.000 originY=475.473
     beam   51.362,-3.500 -> 55.396,-5.500 t=0.500
     beam   58.201,3.750 -> 63.299,3.750 t=0.500
     beam   68.269,5.089 -> 82.650,3.089 t=0.500
-    spanner 68.269,3.500 -> 79.221,3.000 t=0.130
-    spanner 68.269,3.500 -> 79.221,4.000 t=0.130
+    spanner 68.269,-9.750 -> 79.221,-10.250 t=0.130
+    spanner 68.269,-9.750 -> 79.221,-9.250 t=0.130
     clef x=1.935 w=2.600
       glyph fClef 1.935,-1.000
     keySignature x=5.536 w=2.913
@@ -5604,7 +5604,7 @@ system 14 width=90.000 originY=475.473
     rest x=68.269 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 15 width=90.000 originY=511.059
+system 15 width=90.000 originY=515.694
   connector brace -0.920,3.526 scale=4.857
   staff 0 originY=5.526
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
@@ -5642,8 +5642,8 @@ system 15 width=90.000 originY=511.059
     tuplettext 34.644,6.460 size=1.400 "5"
     tuplettext 44.361,5.460 size=1.400 "3"
     tuplettext 82.568,1.960 size=1.400 "3"
-    spanner 32.993,3.000 -> 39.463,3.500 t=0.130
-    spanner 32.993,4.000 -> 39.463,3.500 t=0.130
+    spanner 32.993,-10.250 -> 39.463,-9.750 t=0.130
+    spanner 32.993,-9.250 -> 39.463,-9.750 t=0.130
     tie  78.394,-2.300 -> 78.292,-2.300 bulge=-0.500
     tie  76.453,0.200 -> 77.125,0.200 bulge=-0.500
     clef x=1.935 w=2.458
@@ -5993,7 +5993,7 @@ system 15 width=90.000 originY=511.059
     rest x=69.791 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 16 width=90.000 originY=545.913
+system 16 width=90.000 originY=550.548
   connector brace -0.920,3.526 scale=4.565
   staff 0 originY=5.526
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
@@ -6420,9 +6420,9 @@ system 16 width=90.000 originY=545.913
     rest x=70.262 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 17 width=90.000 originY=578.569
-  connector brace -0.920,4.560 scale=4.669
-  staff 0 originY=6.560
+system 17 width=90.000 originY=579.840
+  connector brace -0.920,9.474 scale=4.669
+  staff 0 originY=11.474
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -6561,7 +6561,7 @@ system 17 width=90.000 originY=578.569
       glyph accidentalFlat 69.846,0.500
     note@0 x=71.450 w=3.871
       glyph noteheadBlack 71.450,0.000
-      glyph dynamicMF 70.364,3.500
+      glyph dynamicMF 70.364,-9.750
       line  71.450,0.168 -> 71.450,3.500 t=0.120
     note@4 x=75.103 w=3.871
       glyph noteheadBlack 75.103,-2.000
@@ -6622,7 +6622,7 @@ system 17 width=90.000 originY=578.569
     rest x=81.241 w=3.871
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 1 originY=21.180
+  staff 1 originY=26.094
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -6809,9 +6809,9 @@ system 17 width=90.000 originY=578.569
     rest x=74.232 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 18 width=90.000 originY=609.737
-  connector brace -0.920,7.495 scale=4.163
-  staff 0 originY=9.495
+system 18 width=90.000 originY=614.744
+  connector brace -0.920,9.526 scale=4.163
+  staff 0 originY=11.526
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -6915,7 +6915,7 @@ system 18 width=90.000 originY=609.737
     note@0,7 x=61.186 w=2.737
       glyph noteheadBlack 61.186,0.000
       glyph noteheadBlack 61.186,-3.500
-      glyph dynamicFF 60.286,3.500
+      glyph dynamicFF 60.286,-9.750
       line  60.786,-3.000 -> 62.852,-3.000 t=0.160
       line  61.186,-3.332 -> 61.186,3.500 t=0.120
     note@-1,6 x=63.830 w=2.737
@@ -7018,7 +7018,7 @@ system 18 width=90.000 originY=609.737
     rest x=71.120 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 1 originY=22.097
+  staff 1 originY=24.128
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -7124,7 +7124,7 @@ system 18 width=90.000 originY=609.737
     rest x=71.120 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 19 width=90.000 originY=645.792
+system 19 width=90.000 originY=652.829
   connector brace -0.920,3.526 scale=4.669
   staff 0 originY=5.526
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
@@ -7533,7 +7533,7 @@ system 19 width=90.000 originY=645.792
     rest x=70.201 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 20 width=90.000 originY=677.862
+system 20 width=90.000 originY=684.899
   connector brace -0.920,5.560 scale=5.037
   staff 0 originY=7.560
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
@@ -7917,7 +7917,7 @@ system 20 width=90.000 originY=677.862
     rest x=71.366 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 21 width=90.000 originY=715.466
+system 21 width=90.000 originY=722.503
   connector brace -0.920,3.526 scale=4.669
   staff 0 originY=5.526
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
@@ -8327,7 +8327,7 @@ system 21 width=90.000 originY=715.466
     rest x=68.508 w=7.742
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 22 width=90.000 originY=746.537
+system 22 width=90.000 originY=753.574
   connector brace -0.920,6.560 scale=4.293
   staff 0 originY=8.560
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130

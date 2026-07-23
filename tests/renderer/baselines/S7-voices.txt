@@ -328,11 +328,11 @@ system 1 width=58.347 originY=41.600
     bar x=55.412 w=0.160
       line  55.492,-2.000 -> 55.492,2.000 t=0.160
 tune 1
-bounds  width=90.000 height=70.339 top=-1.935
+bounds  width=90.000 height=78.155 top=-1.935
 systems 2
 system 0 width=90.000 originY=0.000
-  connector brace -0.920,18.880 scale=4.021
-  staff 0 originY=20.880
+  connector brace -0.920,19.678 scale=4.021
+  staff 0 originY=21.678
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -345,8 +345,8 @@ system 0 width=90.000 originY=0.000
     tie  14.945,6.300 -> 24.596,6.300 bulge=1.737
     slur  59.655,4.800 -> 69.306,4.300 bulge=1.737
     title x=0.000 w=0.000
-      text  27.412,-16.421 size=3.484 bold "S7-2 Piano Dense Notation"
-      text  37.103,-12.220 size=2.452 italic "L. van Beethoven"
+      text  27.412,-17.219 size=3.484 bold "S7-2 Piano Dense Notation"
+      text  37.103,-13.018 size=2.452 italic "L. van Beethoven"
     clef x=1.935 w=2.458
       glyph gClef 1.935,1.000
     keySignature x=5.394 w=2.913
@@ -364,7 +364,7 @@ system 0 width=90.000 originY=0.000
       glyph noteheadBlack 11.829,5.500
       glyph noteheadBlack 11.829,4.500
       glyph noteheadBlack 11.829,3.000
-      glyph dynamicForte 11.409,3.500
+      glyph dynamicForte 11.409,-9.750
       line  11.429,3.000 -> 13.494,3.000 t=0.160
       line  11.429,4.000 -> 13.494,4.000 t=0.160
       line  11.429,5.000 -> 13.494,5.000 t=0.160
@@ -437,7 +437,7 @@ system 0 width=90.000 originY=0.000
       glyph rest8th 76.824,0.000
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 1 originY=32.915
+  staff 1 originY=33.713
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -576,9 +576,9 @@ system 0 width=90.000 originY=0.000
       line  81.751,7.332 -> 81.751,4.000 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 1 width=45.604 originY=46.437
-  connector brace -0.920,2.508 scale=3.758
-  staff 0 originY=4.508
+system 1 width=45.604 originY=47.235
+  connector brace -0.920,9.526 scale=3.758
+  staff 0 originY=11.526
     staffline 0.000,2.000 -> 45.604,2.000 t=0.130
     staffline 0.000,1.000 -> 45.604,1.000 t=0.130
     staffline 0.000,0.000 -> 45.604,0.000 t=0.130
@@ -601,7 +601,7 @@ system 1 width=45.604 originY=46.437
       glyph noteheadBlack 10.153,3.500
       glyph noteheadBlack 10.153,2.500
       glyph noteheadBlack 10.153,1.500
-      glyph dynamicForte 9.733,3.500
+      glyph dynamicForte 9.733,-9.750
       glyph fingering3 10.373,-3.500
       line  9.753,3.000 -> 11.819,3.000 t=0.160
       line  11.333,3.332 -> 11.333,-2.000 t=0.120
@@ -653,7 +653,7 @@ system 1 width=45.604 originY=46.437
       glyph rest8th 37.527,0.000
     bar x=42.668 w=0.160
       line  42.748,-2.000 -> 42.748,2.000 t=0.160
-  staff 1 originY=15.495
+  staff 1 originY=22.513
     staffline 0.000,2.000 -> 45.604,2.000 t=0.130
     staffline 0.000,1.000 -> 45.604,1.000 t=0.130
     staffline 0.000,0.000 -> 45.604,0.000 t=0.130
@@ -1012,11 +1012,11 @@ system 0 width=90.000 originY=0.000
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
 tune 3
-bounds  width=90.000 height=42.569 top=-1.935
+bounds  width=90.000 height=42.687 top=-1.935
 systems 1
 system 0 width=90.000 originY=0.000
-  connector brace -0.920,18.880 scale=3.559
-  staff 0 originY=20.880
+  connector brace -0.920,18.998 scale=3.559
+  staff 0 originY=20.998
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -1031,8 +1031,8 @@ system 0 width=90.000 originY=0.000
     slur  42.338,2.300 -> 46.479,1.800 bulge=0.745
     slur  51.763,-1.300 -> 67.508,-0.300 bulge=-2.200
     title x=0.000 w=0.000
-      text  29.836,-16.421 size=3.484 bold "S7-4 Three Voice Piano"
-      text  40.079,-12.220 size=2.452 italic "Schumann"
+      text  29.836,-16.539 size=3.484 bold "S7-4 Three Voice Piano"
+      text  40.079,-12.338 size=2.452 italic "Schumann"
     clef x=1.935 w=2.458
       glyph gClef 1.935,1.000
     keySignature x=5.394 w=1.065
@@ -1046,7 +1046,7 @@ system 0 width=90.000 originY=0.000
       text  11.546,-7.000 size=1.600 "= 66"
     note@0 x=9.980 w=5.474
       glyph noteheadBlack 9.980,0.000
-      glyph dynamicPiano 9.660,3.500
+      glyph dynamicPiano 9.660,-9.750
       line  9.980,0.168 -> 9.980,3.500 t=0.120
     note@-1 x=14.199 w=3.871
       glyph noteheadBlack 14.199,0.500
@@ -1140,7 +1140,7 @@ system 0 width=90.000 originY=0.000
       line  83.622,0.168 -> 83.622,3.500 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 1 originY=31.074
+  staff 1 originY=31.192
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130

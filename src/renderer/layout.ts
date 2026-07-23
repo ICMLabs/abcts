@@ -142,7 +142,23 @@ const ENGRAVE = {
    */
   chordSymbolStep: 9.37,
   ornamentStep: 7,
-  dynamicStep: -7,
+  /**
+   * Dynamics (`!p!`, `!mf!`) and hairpins go ABOVE the staff, not below.
+   *
+   * abcjs's default is unambiguous: `DynamicDecoration` sets `volumeHeightBelow` only
+   * when the positioning says `below`, and `volumeHeightAbove` otherwise
+   * (`write/creation/elements/dynamic-decoration.js`). Ours was -7, below the staff, which
+   * is the wrong SIDE — a defect no amount of tuning the distance would have fixed.
+   *
+   * 19.5 steps is 60px above the top staff line, measured off abcjs's own
+   * `multi-voice-lyrics-two-voices` golden (dynamic box centre 35.9, top line 95.8). It is
+   * also where the corpus is happiest, which is the check that it is not overfitted: 23
+   * would take that one fixture to 16px and push `ragtime-nightingale` from 28 to 52.
+   *
+   * ponytail: a FIXED lane where abcjs stacks this one against the ink, like everything
+   * else out here. The two agree while nothing collides.
+   */
+  dynamicStep: 19.5,
   /**
    * `"^text"` above the staff and `"_text"` below.
    *

@@ -1,8 +1,8 @@
 tune 0
-bounds  width=90.000 height=62.727 top=-1.935
+bounds  width=90.000 height=62.845 top=-1.935
 systems 2
 system 0 width=90.000 originY=0.000
-  staff 0 originY=20.880
+  staff 0 originY=20.998
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -15,8 +15,8 @@ system 0 width=90.000 originY=0.000
     beam   55.637,-1.250 -> 58.289,-1.750 t=0.500
     tie  74.488,-1.300 -> 78.339,-1.300 bulge=-0.693
     title x=0.000 w=0.000
-      text  31.523,-16.421 size=3.484 bold "Two Voice Invention"
-      text  39.748,-12.220 size=2.452 italic "Test fixture"
+      text  31.523,-16.539 size=3.484 bold "Two Voice Invention"
+      text  39.748,-12.338 size=2.452 italic "Test fixture"
     clef x=1.935 w=2.458
       glyph gClef 1.935,1.000
     timeSignature x=5.394 w=1.522
@@ -28,7 +28,7 @@ system 0 width=90.000 originY=0.000
       text  9.481,-7.000 size=1.600 "= 100"
     note@-6 x=8.058 w=3.871
       glyph noteheadBlack 8.058,3.000
-      glyph dynamicMP 6.958,3.500
+      glyph dynamicMP 6.958,-9.750
       line  7.658,3.000 -> 9.724,3.000 t=0.160
       line  9.238,2.832 -> 9.238,-0.500 t=0.120
     note@-5 x=10.731 w=3.871
@@ -108,7 +108,7 @@ system 0 width=90.000 originY=0.000
       glyph restQuarter 82.352,0.000
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 1 originY=31.074
+  staff 1 originY=31.192
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -174,7 +174,7 @@ system 0 width=90.000 originY=0.000
       glyph restQuarter 82.352,0.000
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 1 width=90.000 originY=38.461
+system 1 width=90.000 originY=38.579
   staff 0 originY=4.526
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130

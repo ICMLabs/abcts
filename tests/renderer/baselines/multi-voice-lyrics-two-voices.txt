@@ -1,8 +1,8 @@
 tune 0
-bounds  width=90.000 height=34.175 top=-1.935
+bounds  width=90.000 height=44.747 top=-1.935
 systems 2
 system 0 width=90.000 originY=0.000
-  staff 0 originY=5.560
+  staff 0 originY=10.846
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -17,7 +17,7 @@ system 0 width=90.000 originY=0.000
       glyph timeSig4 5.394,1.000
     note@8 x=7.916 w=3.871
       glyph noteheadBlack 7.916,-4.000
-      glyph dynamicPiano 7.596,3.500
+      glyph dynamicPiano 7.596,-9.750
       line  7.516,-3.000 -> 9.581,-3.000 t=0.160
       line  7.516,-4.000 -> 9.581,-4.000 t=0.160
       line  7.916,-3.832 -> 7.916,-0.500 t=0.120
@@ -51,7 +51,7 @@ system 0 width=90.000 originY=0.000
       glyph timeSig4 5.394,1.000
     note@-11 x=7.916 w=5.474
       glyph noteheadBlack 7.916,5.500
-      glyph dynamicPiano 7.596,3.500
+      glyph dynamicPiano 7.596,-9.750
       line  7.516,3.000 -> 9.581,3.000 t=0.160
       line  7.516,4.000 -> 9.581,4.000 t=0.160
       line  7.516,5.000 -> 9.581,5.000 t=0.160
@@ -72,8 +72,8 @@ system 0 width=90.000 originY=0.000
       text  53.965,5.715 size=1.400 "A"
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 1 width=35.762 originY=17.620
-  staff 0 originY=5.560
+system 1 width=35.762 originY=22.906
+  staff 0 originY=10.846
     staffline 0.000,2.000 -> 35.762,2.000 t=0.130
     staffline 0.000,1.000 -> 35.762,1.000 t=0.130
     staffline 0.000,0.000 -> 35.762,0.000 t=0.130
@@ -85,7 +85,7 @@ system 1 width=35.762 originY=17.620
       glyph gClef 1.935,1.000
     note@8 x=5.394 w=3.871
       glyph noteheadBlack 5.394,-4.000
-      glyph dynamicPiano 5.074,3.500
+      glyph dynamicPiano 5.074,-9.750
       line  4.994,-3.000 -> 7.059,-3.000 t=0.160
       line  4.994,-4.000 -> 7.059,-4.000 t=0.160
       line  5.394,-3.832 -> 5.394,-0.500 t=0.120
@@ -116,7 +116,7 @@ system 1 width=35.762 originY=17.620
       glyph gClef 1.935,1.000
     note@-11 x=5.394 w=5.474
       glyph noteheadBlack 5.394,5.500
-      glyph dynamicPiano 5.074,3.500
+      glyph dynamicPiano 5.074,-9.750
       line  4.994,3.000 -> 7.059,3.000 t=0.160
       line  4.994,4.000 -> 7.059,4.000 t=0.160
       line  4.994,5.000 -> 7.059,5.000 t=0.160
