@@ -59,6 +59,7 @@ try {
 const content = read('/tmp/abcts-parity-content.json')
 const render = read('/tmp/abcts-parity-render.json')
 const baseline = read('/tmp/abcts-parity-baseline.json')
+const pixel = read('/tmp/abcts-parity-pixel.json')
 
 console.log("abcts parity — against abcjs goldens (= abcMusicKit v1's shared surface)")
 console.log('═'.repeat(78))
@@ -106,6 +107,25 @@ if (baseline) {
   }
 }
 
+// The geometric axis — the one still OPEN, and until now the one this report omitted while
+// showing the four structural axes at 100%. It is a distance, not a match count, so it is
+// shown as "fixtures within Npx of abcjs" plus the corpus median the checkpoint tracks.
+if (pixel) {
+  console.log()
+  console.log('GEOMETRY — does the ink land where abcjs puts it (STILL OPEN)')
+  console.log('─'.repeat(78))
+  row('Noteheads within 25px', pixel.within25, pixel.fixtures, 'of abcjs')
+  row('Noteheads within 50px', pixel.within50, pixel.fixtures)
+  row('Noteheads within 100px', pixel.within100, pixel.fixtures)
+  console.log(
+    `\n  Corpus median notehead distance: ${pixel.corpusMedian.toFixed(1)}px  (per-fixture median, not pooled)`,
+  )
+  console.log('  Worst fixtures:')
+  for (const f of pixel.worst) {
+    console.log(`    ${f.name.padEnd(34)} ${f.median.toFixed(1).padStart(6)}px`)
+  }
+}
+
 console.log(`
 NOT MEASURED — and why
 ${'─'.repeat(78)}
@@ -120,8 +140,10 @@ ${'─'.repeat(78)}
                                   (audio, timing, the engraver) is absent — deliberately
                                   unstubbed, so it fails loudly rather than lying.
 
-  Visual correctness              Baselines catch CHANGE, not WRONGNESS. Nothing
-                                  compares abcts's own rendering to a reference image.
+  Glyph appearance                The GEOMETRY axis above compares notehead POSITIONS to
+                                  abcjs, but not how the glyphs LOOK: abcts draws Bravura,
+                                  abcjs its own font, and that difference is intended. No
+                                  gate compares outline against outline.
 ${'─'.repeat(78)}
 Known divergences are recorded with reasons in the gates themselves, and each FAILS if
 it starts matching, so none can quietly go stale.`)

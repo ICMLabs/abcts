@@ -83,7 +83,7 @@
  * evidence that the engraving grid itself is right and this is calibration rather than
  * a re-engraving.
  */
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { renderAbc } from '../src/compat/index.js'
@@ -171,6 +171,43 @@ function measure(name: string): Measured {
   }
 }
 
+const median = (values: number[]): number => {
+  if (values.length === 0) return 0
+  const sorted = [...values].sort((a, b) => a - b)
+  const mid = Math.floor(sorted.length / 2)
+  return sorted.length % 2 === 0
+    ? ((sorted[mid - 1] ?? 0) + (sorted[mid] ?? 0)) / 2
+    : (sorted[mid] ?? 0)
+}
+
+/**
+ * The MEDIAN euclidean distance from each of our noteheads to abcjs's, per fixture.
+ *
+ * Per fixture, not pooled per note: `ragtime-nightingale` holds 2009 of the corpus's
+ * 2696 noteheads, so a pooled median is simply its median and hides everything else.
+ */
+function fixtureMedianDistance(name: string): number {
+  const golden = byClass(
+    absolutePixels(readFileSync(join(goldensDir, `${name}.svg`), 'utf-8')),
+    'notehead',
+  )
+  const ours = byClass(
+    absolutePixels(
+      renderAbc('paper', readFileSync(join(corpusDir, `${name}.abc`), 'utf-8'), {})[0]?.svg ?? '',
+    ),
+    'notehead',
+  )
+  const n = Math.min(golden.length, ours.length)
+  const distances: number[] = []
+  for (let i = 0; i < n; i++) {
+    const g = golden[i]
+    const o = ours[i]
+    if (g === undefined || o === undefined) continue
+    distances.push(Math.hypot(o.x - g.x, o.y - g.y))
+  }
+  return median(distances)
+}
+
 describe('pixel parity vs abcjs rendered SVG', () => {
   const withGoldens = loadCorpus()
     .map((entry) => entry.name)
@@ -234,5 +271,32 @@ describe('pixel parity vs abcjs rendered SVG', () => {
         ).toBeGreaterThan(expected.dx - 1)
       })
     }
+  })
+
+  // Machine-readable geometry summary for `npm run parity`, so the one axis that is NOT
+  // at 100% stops being invisible. The MEDIAN notehead distance per fixture (weighted per
+  // fixture, never pooled — see `fixtureMedianDistance`), and how many fixtures land
+  // within 25 / 50 / 100px of abcjs. The corpus figure is the median of the per-fixture
+  // medians, which is the number the checkpoint tracks.
+  it('records its geometry for the parity tracker', () => {
+    const perFixture = withGoldens
+      .map((name) => ({ name, median: fixtureMedianDistance(name) }))
+      .sort((a, b) => b.median - a.median)
+    const within = (px: number) => perFixture.filter((f) => f.median <= px).length
+    writeFileSync(
+      '/tmp/abcts-parity-pixel.json',
+      JSON.stringify({
+        fixtures: perFixture.length,
+        corpusMedian: median(perFixture.map((f) => f.median)),
+        within25: within(25),
+        within50: within(50),
+        within100: within(100),
+        worst: perFixture.slice(0, 6).map((f) => ({ name: f.name, median: +f.median.toFixed(1) })),
+      }),
+    )
+    // A gate that writes numbers should also prove it can read real ones — the whole point
+    // of the axis is that it is not yet at parity, so a zero here means it measured nothing.
+    expect(perFixture.length).toBe(withGoldens.length)
+    expect(perFixture.every((f) => Number.isFinite(f.median))).toBe(true)
   })
 })
