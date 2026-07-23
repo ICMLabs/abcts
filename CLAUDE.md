@@ -120,9 +120,12 @@ backup remote is not a licence to vendor someone else's tree into this one.
 ## Current phase
 **Every structural gate is at 100% with zero recorded divergences** — content, lyrics,
 beams, structure, source offsets. 499 tests. The work is now entirely GEOMETRIC and
-entirely strict-mode: corpus median notehead distance from abcjs is **24.2px** (down from
-32.6 after the voice-name indent and `%%staffsep`/`%%sysstaffsep` fixes), 26/29 fixtures
-within 50px, and the remaining causes are named in the checkpoint's priority list.
+entirely strict-mode: corpus median notehead distance from abcjs is **19.5px**, with
+**28/29** fixtures within 50px and **29/29** within 100px, and systems matching 29/29.
+The remaining causes are named in the checkpoint's priority list — the dominant one is
+the above-staff SKYLINE (fixed lanes where abcjs stacks by measured text height).
+NOTE the metric was corrected on 2026-07-22 and earlier figures are not comparable: the
+gate had been comparing abcjs's outline START against our glyph ORIGIN, a 4px bias.
 
 
 **Structural parity is done: note content, lyrics, beams and render structure are all
