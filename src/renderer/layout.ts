@@ -51,7 +51,7 @@ import { VOICE_NAME_GAP_PX, voiceNameWidthPx } from './voice-name-metrics.js'
 // Engraving conventions, NOT font metadata. Sources noted; values marked PROVISIONAL
 // are starting points pending calibration against reference renders.
 
-const ENGRAVE = {
+export const ENGRAVE = {
   /** Steps of the five staff lines, bottom → top, about the middle line at 0. */
   staffLineSteps: [-4, -2, 0, 2, 4],
   /** A staff step is half a staff space. */
@@ -310,7 +310,15 @@ const ENGRAVE = {
   lineSkipFactor: 1.1,
   /** Vertical gap between tunes in a tunebook — wider than between systems. */
   tuneGap: 6.0,
-  lyricTextSize: 1.4,
+  /**
+   * abcjs's `vocalfont`, 13pt -> `round(13 x 4/3)` = 17px, and its `gchordfont` /
+   * `annotationfont`, 12pt -> 16px (`abc_parse_directive.js:25-38`). Both were 1.4 —
+   * 10.85px — one constant serving lyrics, chord symbols, annotations and decorations at
+   * two thirds of abcjs's size. Same undersizing the title carried before `titleTextSize`
+   * was derived; it makes every out-of-staff reserve too small as well as drawing small.
+   */
+  lyricTextSize: 17 / 7.75,
+  chordTextSize: 16 / 7.75,
   /**
    * A stem shortened to meet a beam never drops below this. *Behind Bars* keeps beamed
    * stems from collapsing to stubs. PROVISIONAL.
@@ -362,7 +370,7 @@ const ENGRAVE = {
    * this constant has been standing in for that. Left in place, and named for what it is
    * rather than tuned: the fix is to find the missing extent, not to trade fixtures.
    */
-  systemGap: 3.0,
+  systemGap: 0,
   /**
    * MINIMUM distance from one system's bottom staff line to the next system's top staff
    * line — abcjs's `staffSeparation`, 61.33px at its 7.75px space
@@ -386,7 +394,7 @@ const ENGRAVE = {
    */
   lastSystemFill: 0.66,
   /** Vertical gap between staves WITHIN one system, on top of the minimum separation. */
-  staffGap: 1.5,
+  staffGap: 0,
   /**
    * The same minimum, between staves WITHIN one system — abcjs's
    * `systemStaffSeparation`, 48px (`write/renderer.js:109`). Tighter than between
@@ -1899,7 +1907,7 @@ const DECORATION_TEXTS: Readonly<Record<string, string>> = {
  */
 function decorationTexts(names: readonly string[], headX: number, headWidth: number): PlacedText[] {
   const out: PlacedText[] = []
-  const size = ENGRAVE.lyricTextSize
+  const size = ENGRAVE.chordTextSize
   for (const name of names) {
     const text = DECORATION_TEXTS[name]
     if (text === undefined) continue
@@ -2034,7 +2042,7 @@ function noteText(
   const centre = headX + headWidth / 2
 
   if (event.chordSymbol !== null && event.chordSymbol !== '') {
-    const size = ENGRAVE.lyricTextSize
+    const size = ENGRAVE.chordTextSize
     texts.push({
       text: event.chordSymbol,
       x: centre - textWidth(event.chordSymbol, size) / 2,
@@ -2053,7 +2061,7 @@ function noteText(
   const below = annotations.filter((a) => a.where === '_')
 
   above.forEach((a, index) => {
-    const size = ENGRAVE.lyricTextSize
+    const size = ENGRAVE.chordTextSize
     const lane =
       ENGRAVE.annotationAboveStep + (above.length - 1 - index) * ENGRAVE.annotationLineStep
     texts.push({
@@ -2067,7 +2075,7 @@ function noteText(
   })
 
   below.forEach((a, index) => {
-    const size = ENGRAVE.lyricTextSize
+    const size = ENGRAVE.chordTextSize
     texts.push({
       text: a.text,
       x: centre - textWidth(a.text, size) / 2,
@@ -2083,7 +2091,7 @@ function noteText(
   // falls in with `^` above and prints them. No corpus fixture writes one.
   for (const a of annotations) {
     if (a.where !== '<' && a.where !== '>') continue
-    const size = ENGRAVE.lyricTextSize
+    const size = ENGRAVE.chordTextSize
     texts.push({
       text: a.text,
       x:
@@ -4073,7 +4081,16 @@ function verticalExtent(
     }
     for (const line of el.lines) {
       const half = line.thickness / 2
-      include(Math.min(line.y1, line.y2) - half, Math.max(line.y1, line.y2) + half)
+      // A STEM reserves one step below its low end — `bottom: p1 - 1` on the stem's
+      // RelativeElement (`abstract-engraver.js:762`), `p1` being the low pitch. On an
+      // up-stem that end is at the notehead and the head's own box swallows it; on a
+      // down-stem it binds, and it is a uniform 3.4px our staff bottoms ran short of
+      // abcjs's on every staff whose lowest thing is a down-stem.
+      const stemReserve = line.role === 'stem' ? ENGRAVE.spacePerStep : 0
+      include(
+        Math.min(line.y1, line.y2) - half,
+        Math.max(line.y1, line.y2) + half + stemReserve,
+      )
     }
     // No text metrics available, so bound the box by the font size: ascenders reach
     // roughly 0.8 of it above the baseline and descenders 0.25 below.
@@ -4082,7 +4099,17 @@ function verticalExtent(
         lyricBottom = Math.max(lyricBottom, t.y)
         continue
       }
-      include(t.y - t.size * TEXT_ASCENT, t.y + t.size * TEXT_DESCENT)
+      // OUT-OF-STAFF TEXT RESERVES ABCJS'S WAY: a full font size above the baseline and
+      // the rest of the rendered height below it. abcjs stacks such a text on the staff's
+      // ink (`incTop`) reserving `height + margin`, and draws its baseline one font size
+      // below the top it reserved (`text.js:30-31`) — so the box is exactly
+      // [y - size, y + (height - size)], and `textHeightRatio - 1` is that remainder.
+      //
+      // The 0.8/0.25 estimate is kept for the TITLE block, where it was measured and where
+      // raising the ascent to 1.0 is recorded as moving every drawing 3.7px down.
+      const ascent = el.type === 'title' ? TEXT_ASCENT : 1
+      const descent = el.type === 'title' ? TEXT_DESCENT : ENGRAVE.textHeightRatio - 1
+      include(t.y - t.size * ascent, t.y + t.size * descent)
     }
     // A block reserves from its own top, not from its first line's ascender.
     if (el.blockTop !== undefined) include(el.blockTop, el.blockTop)
@@ -4197,4 +4224,5 @@ function beamDirections(voice: Voice | undefined, clef: Clef): Map<number, boole
   }
   return directions
 }
+
 
