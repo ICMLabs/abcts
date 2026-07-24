@@ -221,11 +221,20 @@ contract (every non-zero `staffGap` scores fewer within-ceiling). The 4, with ca
    from `middle=`. Written `transpose=` would let `middle=` compose here, but does not by
    itself close the spacing gap.
 
-3. **`full-song-template`** (oy −22, ceil −17.4; dy 0) — **pure top/bottom-text shortfall,
-   pre-existing.** dy is a perfect 0, so every staff is consistent and the whole drawing
-   simply sits ~22px too high: the `W:`/`H:` blocks it carries are under-reserved. The
-   baseline ceiling was already −17.4 for the same reason; this session added ~5px. Needs
-   `W:`/`H:` block reservation, not a geometry tweak.
+3. **`full-song-template`** (oy −22, ceil −17.4; dy 0) — **ABOVE-STAFF STACKING of chord +
+   part + tempo, not `W:`/`H:`** (the earlier "W:/H: block shortfall" note here was a wrong
+   guess — abcjs suppresses `O:`/`S:`/`D:`/`N:`/`Z:`/`H:` entirely; its top text is just
+   title, subtitle, composer+rhythm, tempo). dy is a perfect 0, so every staff is consistent
+   and the whole drawing sits ~22px too high. Measured: our title/subtitle/composer rows land
+   on abcjs's to 0.1px, and the `P: PART` label matches abcjs's absolute y (170.3 vs 170.6) —
+   but the FIRST STAFF sits 22px too high beneath it. Cause: abcjs STACKS the three
+   above-staff elements the first staff carries — `chordHeightAbove 4.78` + `partHeightAbove
+   5.72` + `tempoHeightAbove 6`, each + 1 margin, ≈ 19.5 pitch ≈ 75px above the note — where
+   we place them in FIXED non-stacking lanes (`chordSymbolStep`, `partStep`, `tempoStep`)
+   whose highest (tempo) reaches only ~53px. This is the SKYLINE-stacking problem the `-c`
+   checkpoint flagged, now with a concrete fixture: the above-staff lanes want to become a
+   stack like the tuplet lane became a fixed reserve. `frere-jacques` shares the `P:` path,
+   so a `partStep` tweak is not safe — the stack has to be real.
 
 4. **`multi-voice-triplet-brackets`** — **CLOSED 2026-07-24 (`224ff8d`).** abcjs reserves a
    tuplet/volta as a FIXED `endingHeightAbove` lane (5 pitch = 2.5 spaces) beyond the top/
