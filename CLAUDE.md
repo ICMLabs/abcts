@@ -139,10 +139,14 @@ measures it. Noteheads match 2696/2696, systems 29/29, output is 0.34x abcjs's b
 **The VERTICAL model is solved and PARKED on `geometry/lyric-ink-anchor`** — read
 `Docs/CHECKPOINT-2026-07-23.md` before touching staff spacing, lyrics, chord symbols or
 dynamics. Our per-staff extents now match abcjs's to a median of 0.03px above and 0.46px
-below; `systemGap`/`staffGap` are deleted. Named residuals block it. The dynamics-side rule (above only when the
-tune HAS LYRICS, `decoration.js:379` — the opposite of the superseded `-07-22c` finding)
-is now FIXED on the branch; what remains is `ragtime-nightingale`'s bass-staff extent,
-`frere-jacques`, and a few mixed fixtures.
+below; `systemGap`/`staffGap` are deleted. 23 of 29 fixtures are within their pixel-parity
+ceiling; the 6 that block the merge are ALL feature gaps or idiosyncratic cases, not
+tunable constants (see the checkpoint's "What blocks the merge"). The gating one is
+`ragtime-nightingale`, which needs 3-voice shared-staff stem support; also `middle=` clef
+(`voice-middle-after-clef`), `W:`/`H:` block reservation (`full-song-template`), and
+`frere-jacques`'s prose systems. The dynamics-side rule (above only when the tune HAS
+LYRICS, `decoration.js:379` — the opposite of the superseded `-07-22c` finding) is FIXED
+on the branch.
 
 The `.elements.json` goldens carry `staffs[].top/.bottom` and `specialY` — abcjs's own
 answer to how much room a staff takes. Replicating `setUpperAndLowerElements` over them

@@ -146,16 +146,63 @@ an advance rule gives.
    it to what `verticalExtent` returns for the same staff and close the gap that remains
    after the down-stem reserve.
 
-3. **`frere-jacques`** — abcjs reserves 46.5 and 49.5px above its later systems where we
-   reserve 35.6 and 15.4. Its second and third systems are the `+:` prose abcjs parses as
-   music, so this may be a structural difference rather than a spacing one.
+## What blocks the merge — all six, fully diagnosed
 
-4. **`voice-middle-after-clef`** (dy 12.7 → 24.1), and `zocharti-loch`,
-   `full-song-template`, `multi-voice-triplet-brackets` mixed — better on one axis, worse on
-   the other. Undiagnosed.
+The branch cannot land until every fixture is within its recorded pixel-parity ceiling.
+Measured against the `a761cf8` ceilings, **23 of 29 fixtures are within** and 6 are over.
+Every one of the 6 is a FEATURE GAP or an idiosyncratic reproduction case — none is a
+constant to tune, and the gap constants `0/0` are already the best choice for the contract
+(23 within vs 21 at `3.0/1.5`; verified by counting fixtures inside their ceilings, not by
+the boundary metric). The 6, with cause:
 
-5. **The absolute stretch guard** — `spacing * minSpace > 50`, still needing a real
-   spring/rod split. Unchanged from `c`.
+1. **`ragtime-nightingale`** (dy 177) — **3-voice shared-staff stem directions.** Its bass
+   staff is `%%score { (4 5) | (1 2 3) }` — three voices. Our `stemForVoice` handles two
+   (first up, rest down) and explicitly punts on three; abcjs places the middle voice by
+   context. On 6 systems our bass draws a down-stem reaching ~27px deeper than abcjs's
+   `staff.bottom` (abcjs draws it up or on a higher voice). On ~5 more, dynamics-below sit
+   at our fixed `dynamicBelowStep` lane where abcjs STACKS them below the note ink
+   (`volumeHeightBelow` subtracts from `staff.bottom`). Both need real multi-voice support;
+   neither is a spacing constant. This is the one blocker that gates the whole merge.
+
+2. **`voice-middle-after-clef`** (dy 24, ceil 12.7) — **the `middle=` clef modifier is not
+   honored.** `V:2 clef=bass middle=d` shifts the pitch-to-staff mapping; without it, that
+   voice's `[c'2e2]`/`[g4d4]` chords place ~62px above the staff where abcjs (honoring
+   `middle=d`) places them ~12px above. Pre-existing (baseline dy was already 12.7); the
+   extent work amplified the misplaced high notes.
+
+3. **`full-song-template`** (oy −22, ceil −17.4; dy 0) — **pure top/bottom-text shortfall,
+   pre-existing.** dy is a perfect 0, so every staff is consistent and the whole drawing
+   simply sits ~22px too high: the `W:`/`H:` blocks it carries are under-reserved. The
+   baseline ceiling was already −17.4 for the same reason; this session added ~5px. Needs
+   `W:`/`H:` block reservation, not a geometry tweak.
+
+4. **`multi-voice-triplet-brackets`** (oy −17, ceil −8.7; dy within) — **tuplet brackets
+   over-reserve ~17px above the staff**, consistently across both systems. dy is within
+   ceiling; only the offset is over. The one blocker that might be a genuine
+   over-reservation to trim rather than a feature — worth a look first.
+
+5. **`frere-jacques`** (dy 48, ceil 34) — **idiosyncratic.** abcjs lexes its `+:` prose as
+   music and gives each prose line its own staff, reserving 46.5/23.4/23.4px above systems
+   1/2/3 where we reserve 35.6/15.4/39.3. No rule we model produces those; it is a
+   structural artifact of abcjs's prose-as-music bug, which we already reproduce for note
+   COUNT but not for this spacing.
+
+6. **`zocharti-loch`** (dy 18, ceil 3) — within-fixture spread regression from the down-stem
+   reserve / font-size change interacting with its `clef=treble-8` staves. The only one of
+   the 6 whose regression this session's changes CAUSED outright (was dy 3), rather than
+   amplified or left. Bisects to `520cfb4`. Worth isolating which of that commit's four
+   sub-changes moved it.
+
+**The gate also wants six IMPROVEMENTS recorded** — `ave-verum` 12.5→2.4, `happy-birthday`
+→0.0, `little swallow`→7.1, `multi-voice-lyrics`→4.5, `program-127`→0.4,
+`two-voice-invention`→6.4. Do NOT lower those ceilings on `main`: they can only be recorded
+when the branch lands, and it cannot land while the 6 above are over. Lower them in the same
+commit that closes the last blocker.
+
+## Also still open (unchanged from `c`)
+
+- **The absolute stretch guard** — `spacing * minSpace > 50`, still needing a real
+  spring/rod split.
 
 ---
 
