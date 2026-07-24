@@ -3712,7 +3712,16 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
 
     // Stack the staves, each measured from its own content so a staff with a tempo mark
     // or high ledger lines gets the room it needs and no more.
-    let cursor = 0
+    //
+    // abcjs leaves `spacing.music` between the top text and the first staff even when the
+    // top text is empty — `draw.js` runs `y += spacing.music` unconditionally after
+    // `nonMusic`. A TITLED first system folds that gap into the heading offset below; a
+    // TITLE-LESS one has no heading to fold it into, so without this the whole system
+    // rides `musicSpace` too high. Only system 0, and only when it has no heading — a
+    // later system's spacing is the inter-system minimum, not this.
+    const headingless =
+      systemIndex === 0 && !merged[0]?.elements.some((el) => el.type === 'title')
+    let cursor = headingless ? ENGRAVE.musicSpace : 0
     /** Bottom staff LINE of the staff placed before this one, in system coordinates. */
     let previousBottomLine: number | null = null
     const placed = merged.map((staff) => {
