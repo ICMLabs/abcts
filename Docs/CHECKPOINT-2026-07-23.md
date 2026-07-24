@@ -18,20 +18,21 @@ golden sets, observed through OUTPUT only. Never raise a pixel-parity ceiling to
 `main` is unchanged in behaviour from `a761cf8`: **499 tests green**, every structural gate
 at 100%, corpus median notehead distance 17.4px, 21/29 within 25px, 29/29 within 50px.
 
-**The session's work is on the branch `geometry/lyric-ink-anchor`, not on `main`** — five
-commits, `8196bfd` → `152c8b7` → `520cfb4` → `67ff28c` → `d54b644`. Read `520cfb4`,
-`67ff28c` and `d54b644` first; they supersede parts of the earlier two. The branch is parked
-because fixtures still regress against their recorded ceilings, but the vertical MODEL on it
-is now abcjs's, and that is the change in position: this is no longer "a correct fix we
-cannot land", it is a shrinking set of named residuals standing between a correct model and
-landing it. Two former priority items are now FIXED on the branch: dynamics side (`67ff28c`)
-and the missing `spacing.music` above title-less first systems (`d54b644`), which took
-`multi-voice-triplet-brackets` to 0.3px from its ceiling.
+**The session's work is on the branch `geometry/lyric-ink-anchor`, not on `main`** — six
+commits, `8196bfd` → `152c8b7` → `520cfb4` → `67ff28c` → `d54b644` → `224ff8d`. Read the
+last three first; they supersede parts of the earlier ones. The branch is parked because
+fixtures still regress against their recorded ceilings, but the vertical MODEL on it is now
+abcjs's, and the residual set is SHRINKING: **24 of 29 fixtures are now within their ceiling,
+up from 21 at the session's start.** Four former priority items are FIXED on the branch:
+dynamics side (`67ff28c`), the missing `spacing.music` above title-less first systems
+(`d54b644`), and the tuplet/volta fixed lane (`224ff8d`), which CLOSED
+`multi-voice-triplet-brackets` and took `ragtime-nightingale` from dy 177 to 122 as a bonus.
 
-**Two clean-win candidates remain**, both the same "reserve a fixed lane, not the drawn
-geometry" (overhang) principle, and both independent of the coupled ragtime system: the
-tuplet-bracket fixed lane (item 4 below — closes triplet, touches 5 fixtures) and, further
-out, the down-stem overhang that ragtime needs (item 2 in "Next" — coupled, hard).
+**The remaining 5 blockers reduce to 3 problems:** the down-stem overhang (ragtime, coupled
+— item 2 in "Next"), the `middle=` clef modifier (voice-middle-after-clef AND zocharti-loch,
+one feature closing TWO — see items below), and two idiosyncratic/pre-existing text cases
+(frere-jacques prose, full-song-template `W:`/`H:`). `middle=` is the best next target: a
+bounded parser + pitch-mapping feature that closes two blockers at once.
 
 ### What the branch achieves
 
@@ -178,11 +179,12 @@ an advance rule gives.
 ## What blocks the merge — all six, fully diagnosed
 
 The branch cannot land until every fixture is within its recorded pixel-parity ceiling.
-Measured against the `a761cf8` ceilings, **23 of 29 fixtures are within** and 6 are over.
-Every one of the 6 is a FEATURE GAP or an idiosyncratic reproduction case — none is a
-constant to tune, and the gap constants `0/0` are already the best choice for the contract
-(23 within vs 21 at `3.0/1.5`; verified by counting fixtures inside their ceilings, not by
-the boundary metric). The 6, with cause:
+Measured against the `a761cf8` ceilings, **24 of 29 fixtures are within** and 5 are over
+(down from 6 — `224ff8d` closed `multi-voice-triplet-brackets`). Every one of the 5 is a
+FEATURE GAP or an idiosyncratic reproduction case — none is a constant to tune, and the gap
+constants `0/0` are already the best choice for the contract (24 within; every non-zero
+`staffGap` scores 23 or fewer, re-verified 2026-07-24 with the tuplet lane in place). The 5,
+with cause:
 
 1. **`ragtime-nightingale`** (dy 177) — **`stems=` + down-stem overhang, ATTEMPTED and
    reverted 2026-07-24.** Its bass voices are `V:1/2/3 bass stems=down`, which we ignored
@@ -195,11 +197,19 @@ the boundary metric). The 6, with cause:
    `stemForVoice` already does. This is the one blocker that gates the whole merge, and it
    needs a coordinated extent + lyric-anchor recalibration, not a constant.
 
-2. **`voice-middle-after-clef`** (dy 24, ceil 12.7) — **the `middle=` clef modifier is not
-   honored.** `V:2 clef=bass middle=d` shifts the pitch-to-staff mapping; without it, that
-   voice's `[c'2e2]`/`[g4d4]` chords place ~62px above the staff where abcjs (honoring
-   `middle=d`) places them ~12px above. Pre-existing (baseline dy was already 12.7); the
-   extent work amplified the misplaced high notes.
+2. **`voice-middle-after-clef`** (dy 24, ceil 12.7) AND **`zocharti-loch`** (dy 18, ceil 3) —
+   **the `middle=` clef modifier is not honored, and it gates BOTH.** `middle=<pitch>` sets
+   which pitch sits on the middle staff line, shifting `middleLineIndex` in the renderer.
+   voice-middle's `V:2 clef=bass middle=d` places its `[c'2e2]`/`[g4d4]` chords ~62px above
+   the staff where abcjs puts them ~12px above; zocharti's `V:B1/B2 clef=bass transpose=-24
+   middle=d` basses sit too high, squeezing its intra-staff gaps ~7–10px too small. zocharti
+   passed at dy 3 BEFORE `520cfb4` with `middle=` already unhonoured, so the fudge deletion
+   merely exposed the latent misplacement — but the correct fix for both is `middle=`, not a
+   `staffGap` (re-checked: no `staffGap` value beats `0` for the corpus). This is the best
+   next target — **one bounded feature, two blockers.** Scope: parse `middle=<pitch>` on
+   `V:`/`K:` into the `Clef` (or a sibling field), and offset `middleLineIndex` by the
+   difference from the clef's default middle pitch. Mind the interaction with `transpose=`
+   (sounding-only, must not move noteheads) and `clef=treble-8` (`octaveShift`).
 
 3. **`full-song-template`** (oy −22, ceil −17.4; dy 0) — **pure top/bottom-text shortfall,
    pre-existing.** dy is a perfect 0, so every staff is consistent and the whole drawing
@@ -207,20 +217,14 @@ the boundary metric). The 6, with cause:
    baseline ceiling was already −17.4 for the same reason; this session added ~5px. Needs
    `W:`/`H:` block reservation, not a geometry tweak.
 
-4. **`multi-voice-triplet-brackets`** (oy −9, ceil −8.7; dy within) — **0.3px from passing**,
-   and the cause of the last 8px is pinned. Was oy −17; the `spacing.music` fix (`d54b644`,
-   see below) took it to −9. The remainder is that we reserve the tuplet bracket's ACTUAL
-   geometry above the staff — bracket line, hook, and the "3" number's box — while abcjs
-   reserves a FIXED lane: `staff.top` in its element dump is the highest NOTE exactly (26.0
-   for system 0), and the tuplet is carried by `specialY.endingHeightAbove = 4` (+1 margin =
-   5 pitch = 2.5 staff-spaces), a constant that does not track how high the bracket actually
-   sits. Our highest ink is the bracket at 5.3 spaces above the note where abcjs reserves
-   2.5. **The fix is to reserve tuplets (and endings) as a fixed `endingHeightAbove` lane
-   above the top note, not their drawn geometry — the same overhang principle as down-stems
-   below.** It touches all five tuplet fixtures (`triplet-brackets`, `rest-collision`,
-   `rest-placement`, `vree-slurs-and-triplets`, `vree-grace-notes`), so it needs measuring
-   across them together; left unmade this session to avoid a speculative multi-fixture change
-   while the merge is gated on ragtime anyway.
+4. **`multi-voice-triplet-brackets`** — **CLOSED 2026-07-24 (`224ff8d`).** abcjs reserves a
+   tuplet/volta as a FIXED `endingHeightAbove` lane (5 pitch = 2.5 spaces) beyond the top/
+   bottom NOTE and lets the bracket overhang it; we had reserved the bracket's actual line +
+   hook + number geometry, which over-reserved ~8px on a tune with a high note under a
+   bracket. `verticalExtent` now gathers tuplet/volta furniture as above/below flags and
+   applies the fixed `endingLane` after the note extent is known. oy −17 → −2.3 (ceil −8.7),
+   within ceiling; ragtime dy 177 → 122 as a bonus (its below-brackets over-reserved too);
+   all five tuplet/grace fixtures within ceiling, no regression.
 
 5. **`frere-jacques`** (dy 48, ceil 34) — **idiosyncratic.** abcjs lexes its `+:` prose as
    music and gives each prose line its own staff, reserving 46.5/23.4/23.4px above systems
@@ -228,11 +232,9 @@ the boundary metric). The 6, with cause:
    structural artifact of abcjs's prose-as-music bug, which we already reproduce for note
    COUNT but not for this spacing.
 
-6. **`zocharti-loch`** (dy 18, ceil 3) — within-fixture spread regression from the down-stem
-   reserve / font-size change interacting with its `clef=treble-8` staves. The only one of
-   the 6 whose regression this session's changes CAUSED outright (was dy 3), rather than
-   amplified or left. Bisects to `520cfb4`. Worth isolating which of that commit's four
-   sub-changes moved it.
+6. **`zocharti-loch`** — folded into item 2: it needs `middle=`, not a fudge. (The earlier
+   "isolate which sub-change of `520cfb4` moved it" line is retired — the answer is that the
+   fudge deletion merely exposed the unhonoured `middle=`.)
 
 **The gate also wants six IMPROVEMENTS recorded** — `ave-verum` 12.5→2.4, `happy-birthday`
 →0.0, `little swallow`→7.1, `multi-voice-lyrics`→4.5, `program-127`→0.4,
