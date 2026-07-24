@@ -143,22 +143,27 @@ export const ENGRAVE = {
   chordSymbolStep: 9.37,
   ornamentStep: 7,
   /**
-   * Dynamics (`!p!`, `!mf!`) and hairpins go ABOVE the staff, not below.
+   * Dynamics (`!p!`, `!mf!`) and hairpins go ABOVE the staff WHEN THE TUNE HAS LYRICS,
+   * and below it otherwise — abcjs's rule, not a taste choice.
    *
-   * abcjs's default is unambiguous: `DynamicDecoration` sets `volumeHeightBelow` only
-   * when the positioning says `below`, and `volumeHeightAbove` otherwise
-   * (`write/creation/elements/dynamic-decoration.js`). Ours was -7, below the staff, which
-   * is the wrong SIDE — a defect no amount of tuning the distance would have fixed.
+   * `createDecoration` defaults `volumePosition` to `hasVocals ? 'above' : 'below'`
+   * (`write/creation/decoration.js:379`), and `hasVocals` is set once per system if any
+   * voice on it carries a `w:` line below the staff (`abstract-engraver.js:110-122`).
+   * `DynamicDecoration` then reserves `volumeHeightAbove` or `volumeHeightBelow` from that
+   * (`dynamic-decoration.js`). The element dumps confirm the split:
+   * `multi-voice-lyrics-two-voices` records `volumeHeightAbove`, `ragtime-nightingale` and
+   * `two-voice-invention` `volumeHeightBelow`.
    *
-   * 19.5 steps is 60px above the top staff line, measured off abcjs's own
-   * `multi-voice-lyrics-two-voices` golden (dynamic box centre 35.9, top line 95.8). It is
-   * also where the corpus is happiest, which is the check that it is not overfitted: 23
-   * would take that one fixture to 16px and push `ragtime-nightingale` from 28 to 52.
+   * `dynamicAboveStep` 19.5 is 60px above the top line, off `multi-voice-lyrics-two-voices`
+   * (box centre 35.9, top line 95.8). `dynamicBelowStep` −10.96 is 27px below the bottom
+   * line, off `two-voice-invention` (box centre 201.7, bottom line 174.7).
    *
-   * ponytail: a FIXED lane where abcjs stacks this one against the ink, like everything
-   * else out here. The two agree while nothing collides.
+   * ponytail: two FIXED lanes where abcjs stacks against the ink. `hasVocals` is read
+   * tune-wide, not per system — the corpus never varies lyrics across a tune's systems, so
+   * the two agree; a per-system read is the faithful version if one ever does.
    */
-  dynamicStep: 19.5,
+  dynamicAboveStep: 19.5,
+  dynamicBelowStep: -10.96,
   /**
    * `"^text"` above the staff and `"_text"` below.
    *
@@ -1430,6 +1435,8 @@ function layoutNoteheads(
   event: MusicEvent | null = null,
   /** `abcjs-strict` — decides which microtonal accidentals print. See `microtoneAccidental`. */
   strict = true,
+  /** Dynamics above the staff when the tune sings, below otherwise. See `dynamicAboveStep`. */
+  dynamicsAbove = true,
 ): LayoutElement {
   // Sorted ascending to match abcjs, which reports a chord's heads lowest-first — so the
   // gate compares like with like regardless of the order the pitches were written in.
@@ -1611,7 +1618,16 @@ function layoutNoteheads(
   }
   if (event !== null && event.decorations.length > 0) {
     glyphs.push(
-      ...decorationGlyphs(event.decorations, headX, head.width, highest, lowest, up, strict),
+      ...decorationGlyphs(
+        event.decorations,
+        headX,
+        head.width,
+        highest,
+        lowest,
+        up,
+        strict,
+        dynamicsAbove,
+      ),
     )
   }
 
@@ -1939,6 +1955,8 @@ function decorationGlyphs(
   stemUp: boolean,
   /** `abcjs-strict` — suppresses the marks abcjs accepts but never paints. */
   strict: boolean,
+  /** Dynamics above the staff when the tune sings, below when it does not. */
+  dynamicsAbove: boolean,
 ): PlacedGlyph[] {
   const out: PlacedGlyph[] = []
   // Away from the stem, and never inside the staff for a note that sits in it.
@@ -1977,7 +1995,8 @@ function decorationGlyphs(
         role: 'decoration',
       })
     } else {
-      out.push({ name: glyph, x: centre, y: stepToY(ENGRAVE.dynamicStep), role: 'decoration' })
+      const lane = dynamicsAbove ? ENGRAVE.dynamicAboveStep : ENGRAVE.dynamicBelowStep
+      out.push({ name: glyph, x: centre, y: stepToY(lane), role: 'decoration' })
     }
   }
   return out
@@ -2299,6 +2318,8 @@ function layoutSpanners(
   anchors: readonly NoteAnchor[],
   /** Where each system's music starts and ends, exactly as `layoutCurves` uses it. */
   bounds: readonly { left: number; right: number }[],
+  /** Hairpins share the dynamics lane, so they share its side. See `dynamicAboveStep`. */
+  dynamicsAbove: boolean,
 ): PlacedLine[][] {
   const out: PlacedLine[][] = bounds.map(() => [])
   const thickness = ENGRAVING_DEFAULTS.staffLineThickness
@@ -2312,7 +2333,7 @@ function layoutSpanners(
    */
   const hairpin = (system: number, x1: number, x2: number, g1: number, g2: number): void => {
     if (x2 - x1 < ENGRAVE.spannerMinLength) return
-    const y = stepToY(ENGRAVE.dynamicStep)
+    const y = stepToY(dynamicsAbove ? ENGRAVE.dynamicAboveStep : ENGRAVE.dynamicBelowStep)
     out[system]?.push(
       { x1, y1: y - g1 / 2, x2, y2: y - g2 / 2, thickness, role: 'decoration' },
       { x1, y1: y + g1 / 2, x2, y2: y + g2 / 2, thickness, role: 'decoration' },
@@ -2912,6 +2933,8 @@ function layoutMeasure(
    * cannot be drawn from the new key alone: the naturals depend on what is being left.
    */
   keyInForce: KeySignature | null = null,
+  /** Dynamics above the staff when the tune sings, below otherwise. */
+  dynamicsAbove = true,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
   const beams = new Map<number, StemInfo[]>()
@@ -2990,6 +3013,7 @@ function layoutMeasure(
       stemOut,
       strict,
       voiceStem,
+      dynamicsAbove,
     )
     if (el === null) continue
     if (group !== null && stemOut?.value) {
@@ -3195,6 +3219,22 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       : null
   }
 
+  // Does the tune SING? Dynamics stack above the staff if so, below if not — abcjs's
+  // `hasVocals` (`abstract-engraver.js:110`), which it reads per system but which never
+  // varies across a corpus tune's systems. Any note in any voice carrying a syllable or a
+  // held-melisma marker counts; a wordless `*` (`lyric: null, lyricMelisma: false`) does
+  // not, matching abcjs's test on `el.lyric`.
+  const hasVocals = voices.some((voice) =>
+    (voice?.measures ?? []).some((measure) =>
+      measure.events.some(
+        (event) =>
+          (event.type === 'note' || event.type === 'chord') &&
+          ((event.lyric !== null && event.lyric !== '') ||
+            event.extraVerses.some((v) => v !== null && v !== '')),
+      ),
+    ),
+  )
+
   const plans: VoicePlan[] = voices.map((voice, voiceIndex) => {
     // A voice's own `clef=` wins over the tune's `K:` clef; treble is the fallback.
     const clef = voice?.clef ?? score.clef
@@ -3212,6 +3252,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         strict,
         stemForVoice(voiceIndex),
         keyInForce,
+        hasVocals,
       )
       if (measure.keyChange !== null) keyInForce = measure.keyChange
       return block
@@ -3735,7 +3776,9 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
   // Hairpins need the same treatment and for the same reason. Resolved per system, they
   // lost HALF the hairpins in S1-decorations tune 2 — it wraps to six systems and the
   // pairs straddle the breaks.
-  const spannersBySystem = voiceAnchors.map((anchors) => layoutSpanners(anchors, systemBounds))
+  const spannersBySystem = voiceAnchors.map((anchors) =>
+    layoutSpanners(anchors, systemBounds, hasVocals),
+  )
   const withCurves = systems.map((system, systemIndex) => ({
     ...system,
     // By STAFF now, not by voice: a shared staff collects the curves and hairpins of
@@ -4157,6 +4200,8 @@ function layoutEvent(
   strict = true,
   /** Voice convention on a SHARED staff; null lets pitch decide. See `stemForVoice`. */
   voiceStem: boolean | null = null,
+  /** Dynamics above the staff when the tune sings, below otherwise. */
+  dynamicsAbove = true,
 ): LayoutElement | null {
   const advance = naturalWidth(event.duration, spacingScale)
   // The beam's direction wins over the voice convention: a beam cannot join opposed stems,
@@ -4173,6 +4218,7 @@ function layoutEvent(
       stemOut,
       event,
       strict,
+      dynamicsAbove,
     )
   }
   if (event.type === 'chord') {
@@ -4186,6 +4232,7 @@ function layoutEvent(
       stemOut,
       event,
       strict,
+      dynamicsAbove,
     )
   }
   return layoutRest(event, advance, x, strict)
