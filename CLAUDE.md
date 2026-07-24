@@ -139,12 +139,12 @@ measures it. Noteheads match 2696/2696, systems 29/29, output is 0.34x abcjs's b
 **The VERTICAL model is solved and PARKED on `geometry/lyric-ink-anchor`** — read
 `Docs/CHECKPOINT-2026-07-23.md` before touching staff spacing, lyrics, chord symbols or
 dynamics. Our per-staff extents now match abcjs's to a median of 0.03px above and 0.46px
-below; `systemGap`/`staffGap` are deleted. 24 of 29 fixtures are within their pixel-parity
-ceiling; the 5 that block the merge are ALL feature gaps or idiosyncratic cases, not
+below; `systemGap`/`staffGap` are deleted. 25 of 29 fixtures are within their pixel-parity
+ceiling; the 4 that block the merge are ALL feature gaps or idiosyncratic cases, not
 tunable constants (see the checkpoint's "What blocks the merge"). The gating one is
-`ragtime-nightingale` (down-stem overhang, coupled). The best next target is `middle=` clef
-support, which closes TWO blockers (`voice-middle-after-clef` and `zocharti-loch`); the rest
-are `W:`/`H:` block reservation (`full-song-template`) and `frere-jacques`'s prose systems. The dynamics-side rule (above only when the tune HAS
+`ragtime-nightingale` (down-stem overhang, coupled). The rest: `zocharti-loch` (intra-staff
+spacing residual — NOT `middle=`, which is already honoured for `voice-middle-after-clef`),
+`full-song-template` (`W:`/`H:` block reservation), and `frere-jacques`'s prose systems. The dynamics-side rule (above only when the tune HAS
 LYRICS, `decoration.js:379` — the opposite of the superseded `-07-22c` finding) is FIXED
 on the branch.
 

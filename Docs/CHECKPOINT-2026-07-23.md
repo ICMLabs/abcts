@@ -18,21 +18,28 @@ golden sets, observed through OUTPUT only. Never raise a pixel-parity ceiling to
 `main` is unchanged in behaviour from `a761cf8`: **499 tests green**, every structural gate
 at 100%, corpus median notehead distance 17.4px, 21/29 within 25px, 29/29 within 50px.
 
-**The session's work is on the branch `geometry/lyric-ink-anchor`, not on `main`** — six
-commits, `8196bfd` → `152c8b7` → `520cfb4` → `67ff28c` → `d54b644` → `224ff8d`. Read the
-last three first; they supersede parts of the earlier ones. The branch is parked because
-fixtures still regress against their recorded ceilings, but the vertical MODEL on it is now
-abcjs's, and the residual set is SHRINKING: **24 of 29 fixtures are now within their ceiling,
-up from 21 at the session's start.** Four former priority items are FIXED on the branch:
-dynamics side (`67ff28c`), the missing `spacing.music` above title-less first systems
-(`d54b644`), and the tuplet/volta fixed lane (`224ff8d`), which CLOSED
-`multi-voice-triplet-brackets` and took `ragtime-nightingale` from dy 177 to 122 as a bonus.
+**The session's work is on the branch `geometry/lyric-ink-anchor`, not on `main`** — seven
+commits through `3a80638`. Read the last four first; they supersede parts of the earlier
+ones. The branch is parked because fixtures still regress against their recorded ceilings,
+but the vertical MODEL on it is now abcjs's, and the residual set is SHRINKING: **25 of 29
+fixtures are now within their ceiling, up from 21 at the session's start.** Five former
+priority items are FIXED on the branch: dynamics side (`67ff28c`), `spacing.music` above
+title-less first systems (`d54b644`), the tuplet/volta fixed lane (`224ff8d`, which CLOSED
+`multi-voice-triplet-brackets` and took `ragtime` dy 177 → 122), and the `middle=` clef
+modifier (`3a80638`, which CLOSED `voice-middle-after-clef`).
 
-**The remaining 5 blockers reduce to 3 problems:** the down-stem overhang (ragtime, coupled
-— item 2 in "Next"), the `middle=` clef modifier (voice-middle-after-clef AND zocharti-loch,
-one feature closing TWO — see items below), and two idiosyncratic/pre-existing text cases
-(frere-jacques prose, full-song-template `W:`/`H:`). `middle=` is the best next target: a
-bounded parser + pitch-mapping feature that closes two blockers at once.
+**Now 4 blockers, 3 distinct problems** (`middle=` closed voice-middle-after-clef on the
+branch, `3a80638` — 26/29… no: 25/29). The remaining four: the down-stem overhang (ragtime,
+coupled — item 2 in "Next"), an intra-staff spacing residual (zocharti-loch — see item 2 in
+"What blocks the merge"), and two text cases (frere-jacques prose, full-song-template
+`W:`/`H:`).
+
+CORRECTION to the previous version of this file: it claimed `middle=` would close BOTH
+voice-middle-after-clef and zocharti-loch. It closes only voice-middle. zocharti has
+`transpose=-24` alongside `middle=d`; the two nearly cancel, and since written `transpose=`
+is not realized, `middle=` there is GUARDED OFF (else zocharti went dy 3 → 72). zocharti at
+its guarded bass-default is dy 17.5 — the SAME as the `520cfb4` regression — so its problem
+was never `middle=` but the intra-staff spacing the fudge deletion exposed.
 
 ### What the branch achieves
 
@@ -179,12 +186,11 @@ an advance rule gives.
 ## What blocks the merge — all six, fully diagnosed
 
 The branch cannot land until every fixture is within its recorded pixel-parity ceiling.
-Measured against the `a761cf8` ceilings, **24 of 29 fixtures are within** and 5 are over
-(down from 6 — `224ff8d` closed `multi-voice-triplet-brackets`). Every one of the 5 is a
-FEATURE GAP or an idiosyncratic reproduction case — none is a constant to tune, and the gap
-constants `0/0` are already the best choice for the contract (24 within; every non-zero
-`staffGap` scores 23 or fewer, re-verified 2026-07-24 with the tuplet lane in place). The 5,
-with cause:
+Measured against the `a761cf8` ceilings, **25 of 29 fixtures are within** and 4 are over
+(`224ff8d` closed `multi-voice-triplet-brackets`; `3a80638` closed `voice-middle-after-clef`
+via `middle=`). Every one of the 4 is a FEATURE GAP or an idiosyncratic reproduction case —
+none is a constant to tune, and the gap constants `0/0` are already the best choice for the
+contract (every non-zero `staffGap` scores fewer within-ceiling). The 4, with cause:
 
 1. **`ragtime-nightingale`** (dy 177) — **`stems=` + down-stem overhang, ATTEMPTED and
    reverted 2026-07-24.** Its bass voices are `V:1/2/3 bass stems=down`, which we ignored
@@ -197,19 +203,23 @@ with cause:
    `stemForVoice` already does. This is the one blocker that gates the whole merge, and it
    needs a coordinated extent + lyric-anchor recalibration, not a constant.
 
-2. **`voice-middle-after-clef`** (dy 24, ceil 12.7) AND **`zocharti-loch`** (dy 18, ceil 3) —
-   **the `middle=` clef modifier is not honored, and it gates BOTH.** `middle=<pitch>` sets
-   which pitch sits on the middle staff line, shifting `middleLineIndex` in the renderer.
-   voice-middle's `V:2 clef=bass middle=d` places its `[c'2e2]`/`[g4d4]` chords ~62px above
-   the staff where abcjs puts them ~12px above; zocharti's `V:B1/B2 clef=bass transpose=-24
-   middle=d` basses sit too high, squeezing its intra-staff gaps ~7–10px too small. zocharti
-   passed at dy 3 BEFORE `520cfb4` with `middle=` already unhonoured, so the fudge deletion
-   merely exposed the latent misplacement — but the correct fix for both is `middle=`, not a
-   `staffGap` (re-checked: no `staffGap` value beats `0` for the corpus). This is the best
-   next target — **one bounded feature, two blockers.** Scope: parse `middle=<pitch>` on
-   `V:`/`K:` into the `Clef` (or a sibling field), and offset `middleLineIndex` by the
-   difference from the clef's default middle pitch. Mind the interaction with `transpose=`
-   (sounding-only, must not move noteheads) and `clef=treble-8` (`octaveShift`).
+2. **`voice-middle-after-clef` — CLOSED 2026-07-24 (`3a80638`).** `middle=<pitch>` sets which
+   pitch sits on the middle staff line — a WRITTEN shift (abcjs's `clef.verticalPos`) that
+   moves noteheads. New `Clef.middleOverride`; `clef=bass middle=d` puts D5 (36) on the
+   middle line, dropping its high chords onto the staff. dy 24 → 0.0, oy → −0.2, exact.
+
+   **`zocharti-loch`** (dy 17.5, ceil 3) — an INTRA-STAFF SPACING residual, NOT `middle=` (an
+   earlier note here was wrong to bundle them). Its `V:B1/B2 clef=bass transpose=-24
+   middle=d` basses are written in treble range; the `middle=` and `transpose=` nearly
+   cancel, and since written `transpose=` is unrealized, `middle=` is GUARDED OFF there
+   (honouring it alone sent zocharti to dy 72). At its guarded bass-default zocharti is dy
+   17.5 — identical to the `520cfb4` regression — so the problem is the intra-staff gap the
+   fudge deletion exposed: abcjs reserves the bass staff top at pitch 32/35 (its high notes)
+   and the tenor↔bass gap is ~7–10px wider than ours. No `staffGap` value fixes it without
+   costing more elsewhere (re-verified). Needs the bass staff's top extent, or the treble-8
+   tenor's placement, measured against abcjs's `staffs[].top` — a different investigation
+   from `middle=`. Written `transpose=` would let `middle=` compose here, but does not by
+   itself close the spacing gap.
 
 3. **`full-song-template`** (oy −22, ceil −17.4; dy 0) — **pure top/bottom-text shortfall,
    pre-existing.** dy is a perfect 0, so every staff is consistent and the whole drawing
