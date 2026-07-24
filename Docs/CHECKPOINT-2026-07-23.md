@@ -18,12 +18,13 @@ golden sets, observed through OUTPUT only. Never raise a pixel-parity ceiling to
 `main` is unchanged in behaviour from `a761cf8`: **499 tests green**, every structural gate
 at 100%, corpus median notehead distance 17.4px, 21/29 within 25px, 29/29 within 50px.
 
-**The session's work is on the branch `geometry/lyric-ink-anchor`, not on `main`** — three
-commits, `8196bfd` → `152c8b7` → `520cfb4`. Read `520cfb4`'s message first; it supersedes
-parts of the two below it. The branch is parked because six fixtures still regress against
-their recorded ceilings, but the vertical MODEL on it is now abcjs's, and that is the change
-in position: this is no longer "a correct fix we cannot land", it is three named defects
-standing between a correct model and landing it.
+**The session's work is on the branch `geometry/lyric-ink-anchor`, not on `main`** — four
+commits, `8196bfd` → `152c8b7` → `520cfb4` → `67ff28c`. Read `520cfb4` and `67ff28c`
+first; they supersede parts of the earlier two. The branch is parked because fixtures still
+regress against their recorded ceilings, but the vertical MODEL on it is now abcjs's, and
+that is the change in position: this is no longer "a correct fix we cannot land", it is a
+shrinking set of named residuals standing between a correct model and landing it. The
+dynamics-side defect that was priority 1 below is now FIXED on the branch (`67ff28c`).
 
 ### What the branch achieves
 
@@ -117,22 +118,33 @@ an advance rule gives.
 
 ## Next, in priority order
 
-1. **DYNAMICS ARE ON THE WRONG SIDE, and the rule is one line.**
-   `volumePosition: hasVocals ? 'above' : 'below'` (`write/creation/decoration.js:379`) —
-   abcjs puts dynamics above the staff **only when that staff has lyrics**. Its dumps agree:
-   `multi-voice-lyrics-two-voices` records `volumeHeightAbove`; `ragtime-nightingale` and
-   `two-voice-invention` record `volumeHeightBelow`. `CHECKPOINT-2026-07-22c`'s "dynamics
-   belong ABOVE the staff" was generalised from the one corpus fixture that sings, and is
-   wrong for every fixture that does not.
+1. **DYNAMICS SIDE — DONE (`67ff28c`).** abcjs puts dynamics above the staff only when the
+   tune sings — `volumePosition: hasVocals ? 'above' : 'below'`
+   (`write/creation/decoration.js:379`), `hasVocals` set from any `w:` line
+   (`abstract-engraver.js:110`). `dynamicStep` became two lanes, `dynamicAboveStep` 19.5 and
+   `dynamicBelowStep` −10.96 (27px below the bottom line, off `two-voice-invention`'s dynamic
+   box centre). A `dynamicsAbove` boolean, computed tune-wide, threads down the path
+   `voiceStem` takes plus `layoutSpanners` for hairpins. `ragtime-nightingale` 61.1 → 57.9,
+   `two-voice-invention` 21.5 → 20.8, `multi-voice-lyrics-two-voices` correctly unchanged
+   (it sings), no regressions.
 
-   Worth `ragtime-nightingale` 61 → 47 on its own. Needs a `hasVocals` flag threaded down
-   the path `voiceStem` already takes (`layoutMeasure` → `layoutEvent` → `layoutNoteheads`
-   → `decorationGlyphs`), plus `layoutSpanners` for hairpins. The below position is a stack
-   at the ink bottom, not a mirrored lane.
+2. **`ragtime-nightingale`'s remaining drift — DIAGNOSED, not closed.** dy 176 over 23
+   systems. The cause is the INTER-SYSTEM boundary, not the intra: measured boundary by
+   boundary against the golden, the 22 intra-system gaps average +0.7px but the 22
+   inter-system gaps average −6.9px, because **our inter-system gap clamps to the 151px
+   minimum on every boundary while abcjs's NATURAL separation exceeds it on 11 of them**
+   (156–178px). Those 11 are the systems whose lower (bass) staff reaches deep — a low note
+   at pitch −6 to −8, sometimes with `dynamicHeightBelow` on the same staff. abcjs's
+   `staff.bottom` there runs to −13 pitch; ours stops short, so the natural separation never
+   binds and the minimum wins. It is an ink-extent shortfall below the BASS staff
+   specifically, on the systems that have one — the same family as the down-stem reserve
+   (already in `520cfb4`) but not fully accounted by it. The `%%staffsep`/`%%sysstaffsep`
+   handling itself is correct: the intra gaps and the non-spiking inter gaps are exact.
 
-2. **`ragtime-nightingale`'s remaining drift** — dy 189 over 23 systems, not diagnosed
-   beyond the dynamics. It sets `%%staffsep`/`%%sysstaffsep`, so any replica of abcjs's
-   arithmetic must read those before its residuals mean anything.
+   The fix is to make the bass staff's extent reach abcjs's `staff.bottom` on those
+   systems. The `.elements.json` `staffs[].bottom` is the exact per-system target; compare
+   it to what `verticalExtent` returns for the same staff and close the gap that remains
+   after the down-stem reserve.
 
 3. **`frere-jacques`** — abcjs reserves 46.5 and 49.5px above its later systems where we
    reserve 35.6 and 15.4. Its second and third systems are the `+:` prose abcjs parses as
