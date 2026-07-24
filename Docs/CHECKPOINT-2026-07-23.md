@@ -18,13 +18,20 @@ golden sets, observed through OUTPUT only. Never raise a pixel-parity ceiling to
 `main` is unchanged in behaviour from `a761cf8`: **499 tests green**, every structural gate
 at 100%, corpus median notehead distance 17.4px, 21/29 within 25px, 29/29 within 50px.
 
-**The session's work is on the branch `geometry/lyric-ink-anchor`, not on `main`** — four
-commits, `8196bfd` → `152c8b7` → `520cfb4` → `67ff28c`. Read `520cfb4` and `67ff28c`
-first; they supersede parts of the earlier two. The branch is parked because fixtures still
-regress against their recorded ceilings, but the vertical MODEL on it is now abcjs's, and
-that is the change in position: this is no longer "a correct fix we cannot land", it is a
-shrinking set of named residuals standing between a correct model and landing it. The
-dynamics-side defect that was priority 1 below is now FIXED on the branch (`67ff28c`).
+**The session's work is on the branch `geometry/lyric-ink-anchor`, not on `main`** — five
+commits, `8196bfd` → `152c8b7` → `520cfb4` → `67ff28c` → `d54b644`. Read `520cfb4`,
+`67ff28c` and `d54b644` first; they supersede parts of the earlier two. The branch is parked
+because fixtures still regress against their recorded ceilings, but the vertical MODEL on it
+is now abcjs's, and that is the change in position: this is no longer "a correct fix we
+cannot land", it is a shrinking set of named residuals standing between a correct model and
+landing it. Two former priority items are now FIXED on the branch: dynamics side (`67ff28c`)
+and the missing `spacing.music` above title-less first systems (`d54b644`), which took
+`multi-voice-triplet-brackets` to 0.3px from its ceiling.
+
+**Two clean-win candidates remain**, both the same "reserve a fixed lane, not the drawn
+geometry" (overhang) principle, and both independent of the coupled ragtime system: the
+tuplet-bracket fixed lane (item 4 below — closes triplet, touches 5 fixtures) and, further
+out, the down-stem overhang that ragtime needs (item 2 in "Next" — coupled, hard).
 
 ### What the branch achieves
 
@@ -200,10 +207,20 @@ the boundary metric). The 6, with cause:
    baseline ceiling was already −17.4 for the same reason; this session added ~5px. Needs
    `W:`/`H:` block reservation, not a geometry tweak.
 
-4. **`multi-voice-triplet-brackets`** (oy −17, ceil −8.7; dy within) — **tuplet brackets
-   over-reserve ~17px above the staff**, consistently across both systems. dy is within
-   ceiling; only the offset is over. The one blocker that might be a genuine
-   over-reservation to trim rather than a feature — worth a look first.
+4. **`multi-voice-triplet-brackets`** (oy −9, ceil −8.7; dy within) — **0.3px from passing**,
+   and the cause of the last 8px is pinned. Was oy −17; the `spacing.music` fix (`d54b644`,
+   see below) took it to −9. The remainder is that we reserve the tuplet bracket's ACTUAL
+   geometry above the staff — bracket line, hook, and the "3" number's box — while abcjs
+   reserves a FIXED lane: `staff.top` in its element dump is the highest NOTE exactly (26.0
+   for system 0), and the tuplet is carried by `specialY.endingHeightAbove = 4` (+1 margin =
+   5 pitch = 2.5 staff-spaces), a constant that does not track how high the bracket actually
+   sits. Our highest ink is the bracket at 5.3 spaces above the note where abcjs reserves
+   2.5. **The fix is to reserve tuplets (and endings) as a fixed `endingHeightAbove` lane
+   above the top note, not their drawn geometry — the same overhang principle as down-stems
+   below.** It touches all five tuplet fixtures (`triplet-brackets`, `rest-collision`,
+   `rest-placement`, `vree-slurs-and-triplets`, `vree-grace-notes`), so it needs measuring
+   across them together; left unmade this session to avoid a speculative multi-fixture change
+   while the merge is gated on ragtime anyway.
 
 5. **`frere-jacques`** (dy 48, ceil 34) — **idiosyncratic.** abcjs lexes its `+:` prose as
    music and gives each prose line its own staff, reserving 46.5/23.4/23.4px above systems
