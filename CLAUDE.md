@@ -4,9 +4,9 @@ You are developing abcts, a modern TypeScript ABC notation library
 and community successor to abcjs.
 
 ## First Step — Always
-Read `Docs/CHECKPOINT-2026-07-23.md` first — it is the current state of play, the open
+Read `Docs/CHECKPOINT-2026-07-24.md` first — it is the current state of play, the open
 decisions, and the known risks. (`CHECKPOINT-2026-07-22c.md`, `CHECKPOINT-2026-07-22b.md`, `-07-21.md`, `-07-19.md` and
-`-07-18.md` are superseded but remain the record of the parser phase, the renderer's first
+`CHECKPOINT-2026-07-23.md`, `-07-18.md` are superseded but remain the record of the parser phase, the renderer's first
 slices, how the last parser diffs closed, and the geometric work up to the voice-name and
 `%%staffsep` fixes.) Then read ARCHITECTURE.md in full. It is your
 specification, decision record, and setup guide. Do not make
@@ -137,7 +137,7 @@ gate (`tests/pixel-parity.test.ts`) resolves both engines' SVG to absolute pixel
 measures it. Noteheads match 2696/2696, systems 29/29, output is 0.34x abcjs's bytes.
 
 **The VERTICAL model is solved and PARKED on `geometry/lyric-ink-anchor`** — read
-`Docs/CHECKPOINT-2026-07-23.md` before touching staff spacing, lyrics, chord symbols or
+`Docs/CHECKPOINT-2026-07-24.md` before touching staff spacing, lyrics, chord symbols or
 dynamics. Our per-staff extents now match abcjs's to a median of 0.03px above and 0.46px
 below; `systemGap`/`staffGap` are deleted. 25 of 29 fixtures are within their pixel-parity
 ceiling; the 4 that block the merge are ALL feature gaps or idiosyncratic cases, not
