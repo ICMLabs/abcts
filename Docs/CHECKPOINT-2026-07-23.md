@@ -128,23 +128,45 @@ an advance rule gives.
    `two-voice-invention` 21.5 → 20.8, `multi-voice-lyrics-two-voices` correctly unchanged
    (it sings), no regressions.
 
-2. **`ragtime-nightingale`'s remaining drift — DIAGNOSED, not closed.** dy 176 over 23
-   systems. The cause is the INTER-SYSTEM boundary, not the intra: measured boundary by
-   boundary against the golden, the 22 intra-system gaps average +0.7px but the 22
-   inter-system gaps average −6.9px, because **our inter-system gap clamps to the 151px
-   minimum on every boundary while abcjs's NATURAL separation exceeds it on 11 of them**
-   (156–178px). Those 11 are the systems whose lower (bass) staff reaches deep — a low note
-   at pitch −6 to −8, sometimes with `dynamicHeightBelow` on the same staff. abcjs's
-   `staff.bottom` there runs to −13 pitch; ours stops short, so the natural separation never
-   binds and the minimum wins. It is an ink-extent shortfall below the BASS staff
-   specifically, on the systems that have one — the same family as the down-stem reserve
-   (already in `520cfb4`) but not fully accounted by it. The `%%staffsep`/`%%sysstaffsep`
-   handling itself is correct: the intra gaps and the non-spiking inter gaps are exact.
+2. **`ragtime-nightingale`'s remaining drift — DIAGNOSED, and a fix ATTEMPTED AND REVERTED
+   on 2026-07-24.** dy 176 over 23 systems. Three things are true, the third correcting an
+   earlier version of this note:
 
-   The fix is to make the bass staff's extent reach abcjs's `staff.bottom` on those
-   systems. The `.elements.json` `staffs[].bottom` is the exact per-system target; compare
-   it to what `verticalExtent` returns for the same staff and close the gap that remains
-   after the down-stem reserve.
+   a. **We ignore `V:… stems=up`/`stems=down`.** Ragtime declares `V:1/2/3 bass stems=down`
+      and the model dropped it entirely — no `stemDirection` field. abcjs takes the
+      `if (params.stem)` branch in `createVoice` (`tune-builder.js:972`) and forces those
+      three bass voices down, skipping the position convention. Our `stemForVoice` forced
+      the first bass voice UP by position, drawing up-stems where abcjs draws down. Parsing
+      and honouring `stems=` is a genuine missing feature, correct to add.
+
+   b. **abcjs lets down-stems OVERHANG the inter-system gap.** Measured from its own SVG:
+      ragtime's bass down-stems reach 44.9px below the bottom line while its `staff.bottom`
+      stays at 19.5px — the NOTEHEAD depth. The stem laps into the gap without pushing the
+      next system down. (The earlier note here said our extent "stops short of abcjs's
+      `staff.bottom`" and that the fix was to reach it. That was WRONG — it conflated the
+      few systems with `dynamicHeightBelow` on the bass, where `staff.bottom` genuinely is
+      deep at 58px, with the many plain down-stem systems, where it is shallow at 19.5px and
+      our extent is if anything too DEEP because we reserve the stem tip.)
+
+   c. **Fixing (a) and (b) together made the corpus WORSE, so it was reverted.** Honouring
+      `stems=down` alone: ragtime 57.9 → 66.8 (its new down-stems reserve their tips, growing
+      the gap). Making down-stems overhang alone (stem reserved only on its high side, tip
+      overhanging): `ave-verum` 2.4 → 23.4, `multi-voice-lyrics` 20 → 41, ragtime 57.9 →
+      72.7 — worse everywhere. The overhang is right by abcjs's output yet wrong for our
+      corpus, which by this project's iron rule means the model is still incomplete. The
+      obvious culprit — our notehead glyph box being shallower than abcjs's − was CHECKED
+      AND DISPROVEN: our `noteheadBlack` reaches 0.5 staff-spaces below centre, abcjs's
+      0.522 (`pitch − 1.044` in its half-space units), a 0.17px difference. So the `+1`
+      stem reserve added in `520cfb4` is compensating for something still unidentified, and
+      the up-stem side, the down-stem side, the lyric anchor (which reads `verticalExtent`'s
+      bottom) and the inter-system minimum are too coupled to change one term without
+      recalibrating the others.
+
+   **Next attempt:** change all of (a), (b) and the lyric anchor in ONE pass, and
+   re-derive the lyric-anchor constant and the inter-system behaviour AFTER the extent is
+   overhang-correct — do not expect any single edit to hold the corpus. The
+   `.elements.json` `staffs[].bottom` is the per-system target for the extent BELOW; abcjs's
+   own SVG stem tips are the target for what may overhang past it.
 
 ## What blocks the merge — all six, fully diagnosed
 
@@ -155,14 +177,16 @@ constant to tune, and the gap constants `0/0` are already the best choice for th
 (23 within vs 21 at `3.0/1.5`; verified by counting fixtures inside their ceilings, not by
 the boundary metric). The 6, with cause:
 
-1. **`ragtime-nightingale`** (dy 177) — **3-voice shared-staff stem directions.** Its bass
-   staff is `%%score { (4 5) | (1 2 3) }` — three voices. Our `stemForVoice` handles two
-   (first up, rest down) and explicitly punts on three; abcjs places the middle voice by
-   context. On 6 systems our bass draws a down-stem reaching ~27px deeper than abcjs's
-   `staff.bottom` (abcjs draws it up or on a higher voice). On ~5 more, dynamics-below sit
-   at our fixed `dynamicBelowStep` lane where abcjs STACKS them below the note ink
-   (`volumeHeightBelow` subtracts from `staff.bottom`). Both need real multi-voice support;
-   neither is a spacing constant. This is the one blocker that gates the whole merge.
+1. **`ragtime-nightingale`** (dy 177) — **`stems=` + down-stem overhang, ATTEMPTED and
+   reverted 2026-07-24.** Its bass voices are `V:1/2/3 bass stems=down`, which we ignored
+   entirely, and abcjs lets their down-stems overhang the inter-system gap while its
+   `staff.bottom` stays at the notehead. Honouring `stems=` and making down-stems overhang
+   are both correct against abcjs, but together they moved the corpus the WRONG way and were
+   reverted — see § "Next, in priority order" item 2 for the full negative result and why.
+   Not a 3-voice-collision problem after all (an earlier version of this note said so):
+   `createVoice` forces every non-first voice down regardless of count, which our
+   `stemForVoice` already does. This is the one blocker that gates the whole merge, and it
+   needs a coordinated extent + lyric-anchor recalibration, not a constant.
 
 2. **`voice-middle-after-clef`** (dy 24, ceil 12.7) — **the `middle=` clef modifier is not
    honored.** `V:2 clef=bass middle=d` shifts the pitch-to-staff mapping; without it, that
