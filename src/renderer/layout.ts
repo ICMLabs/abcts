@@ -737,7 +737,7 @@ const CLEF_REFERENCE: Readonly<Record<ClefShape, number>> = {
  * step abcjs records, where the old hardcoded treble constant gave -20.
  */
 export const middleLineIndex = (clef: Clef): number =>
-  CLEF_REFERENCE[clef.shape] - (clef.line - 3) * 2
+  clef.middleOverride ?? CLEF_REFERENCE[clef.shape] - (clef.line - 3) * 2
 
 const pitchToStep = (p: Pitch, clef: Clef): number => diatonicIndex(p) - middleLineIndex(clef)
 

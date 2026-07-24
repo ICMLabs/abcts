@@ -53,6 +53,7 @@ import {
   type StaffConnector,
   type StaffGroup,
   sourceRange,
+  stepIndex,
   type Tempo,
   type Voice,
 } from '../core/model.js'
@@ -201,6 +202,7 @@ const CLEF_NAMES: ReadonlyArray<readonly [string, ClefShape, number]> = [
  * octave — `clef=treble-8` is the tenor's octave-down treble clef.
  */
 export function parseClef(spec: string): Clef | null {
+  const middleOverride = middleLineOverride(spec)
   const build = (name: string, digit: string, octave: string): Clef | null => {
     const entry = CLEF_NAMES.find(([n]) => n === name.toLowerCase())
     if (!entry) return null
@@ -210,6 +212,7 @@ export function parseClef(spec: string): Clef | null {
       shape,
       line: line >= 1 && line <= 5 ? line : defaultLine,
       octaveShift: octave === '+8' ? 1 : octave === '-8' ? -1 : 0,
+      middleOverride,
     }
   }
 
@@ -225,6 +228,37 @@ export function parseClef(spec: string): Clef | null {
     if (clef) return clef
   }
   return null
+}
+
+/**
+ * `V:… middle=<pitch>` (or `m=`) → the diatonic index of the pitch on the MIDDLE staff
+ * line, or `null` if absent. The pitch is written in ABC: an uppercase letter is octave 4,
+ * lowercase octave 5, each `'` an octave up and each `,` down — so `middle=d` is D5.
+ *
+ * Diatonic index matches the renderer's `diatonicIndex`: `stepIndex(step) + 7 * octave`.
+ * D5 = 1 + 7×5 = 36, which is what `clef=bass middle=d` puts on the middle line in place of
+ * plain bass's D3 (22). Only diatonic letter + octave marks are read; a `middle=` with an
+ * accidental (`middle=^c`) drops the accidental, which does not affect the LINE a pitch
+ * sits on. No corpus fixture writes one.
+ */
+function middleLineOverride(spec: string): number | null {
+  // `middle=` and `transpose=` interact — a vocal score writes its basses in treble range,
+  // shifts them down whole octaves with `transpose=`, and repositions the clef with
+  // `middle=` so they read correctly, the two nearly cancelling (`zocharti-loch`). We
+  // realize `middle=` but not the WRITTEN half of `transpose=`, so applying `middle=` alone
+  // where `transpose=` is also present moves that voice the wrong way. Honour `middle=` only
+  // when `transpose=` is absent — the case we can get right (`voice-middle-after-clef`) —
+  // and leave the combined case for when `transpose=` (written) lands.
+  // ponytail: drop this guard once written `transpose=` exists; the two then compose.
+  if (/\btranspose=/.test(spec)) return null
+  const m = /\b(?:middle|m)=\^*_*=?([A-Ga-g])([,']*)/.exec(spec)
+  if (!m) return null
+  const letter = m[1] ?? ''
+  const step = stepIndex(letter.toLowerCase() as DiatonicStep)
+  if (step < 0) return null
+  let octave = letter === letter.toUpperCase() ? 4 : 5
+  for (const mark of m[2] ?? '') octave += mark === "'" ? 1 : -1
+  return step + 7 * octave
 }
 
 /**

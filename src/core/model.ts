@@ -162,9 +162,19 @@ export interface Clef {
    * notehead, unlike `Voice.octaveShift`, whose written/sounding status is still open.
    */
   readonly octaveShift: number
+  /**
+   * `V:… middle=<pitch>` — the diatonic index that sits on the MIDDLE staff line, which
+   * overrides the one the clef's shape and line imply. `null` when no `middle=` was given.
+   *
+   * abcjs's `clef.verticalPos`: a WRITTEN-position shift, not a sounding one, so unlike
+   * `octaveShift` it moves noteheads. `clef=bass middle=d` puts D5 (index 36) on the middle
+   * line where plain bass puts D3 (22), dropping that voice's high notes onto the staff.
+   * Independent of `transpose=`, which is sounding-only and moves nothing on the page.
+   */
+  readonly middleOverride: number | null
 }
 
-export const defaultClef: Clef = { shape: 'G', line: 2, octaveShift: 0 }
+export const defaultClef: Clef = { shape: 'G', line: 2, octaveShift: 0, middleOverride: null }
 
 // ─── Meter ───────────────────────────────────────────────────────────────────
 
