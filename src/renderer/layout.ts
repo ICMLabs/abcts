@@ -341,6 +341,13 @@ export const ENGRAVE = {
   tupletHook: 0.6,
   tupletTextSize: 1.4,
   /** Staff step for a repeat-ending bracket, above everything the staff itself draws. */
+  /**
+   * Fixed lane a tuplet bracket or volta ending reserves beyond the top/bottom note —
+   * abcjs's `endingHeightAbove`, 4 pitch + 1 margin = 5 pitch, which at 0.5 space/pitch is
+   * 2.5 staff-spaces. The bracket is DRAWN where its geometry puts it and overhangs this
+   * lane; only the lane is reserved. See `verticalExtent`.
+   */
+  endingLane: 5 * 0.5,
   voltaStep: 8,
   /** How far the volta bracket's end hooks turn down toward the staff. */
   voltaHook: 1.4,
@@ -4100,19 +4107,29 @@ function verticalExtent(
     top = Math.min(top, a)
     bottom = Math.max(bottom, b)
   }
-  for (const lines of [
-    furniture.tupletLines,
-    furniture.voltaLines,
-    furniture.melismaLines,
-    furniture.spannerLines,
-  ]) {
-    for (const line of lines ?? []) {
-      const half = line.thickness / 2
-      include(Math.min(line.y1, line.y2) - half, Math.max(line.y1, line.y2) + half)
-    }
+  // Tuplet brackets and volta endings reserve a FIXED LANE beyond the top (or bottom) NOTE,
+  // not their drawn geometry. abcjs adds `endingHeightAbove` (`set-upper-and-lower-
+  // elements.js`) — 4 pitch + 1 margin = 5 pitch — ABOVE `staff.top`, which is the highest
+  // note; the bracket and its number are then drawn where they go and OVERHANG that lane,
+  // exactly as a down-stem overhangs below. Its element dump proves it: `staff.top` for
+  // `multi-voice-triplet-brackets` is the highest note (26.0) with `endingHeightAbove: 4`,
+  // not the bracket that sits well above it. So these are gathered as ABOVE/BELOW flags and
+  // the lane is applied after the note extent is known; their real y is ignored here.
+  let endingAbove = false
+  let endingBelow = false
+  const flag = (y: number) => {
+    if (y < 0) endingAbove = true
+    else endingBelow = true
   }
-  for (const texts of [furniture.tupletTexts, furniture.voltaTexts]) {
-    for (const t of texts ?? []) include(t.y - t.size * TEXT_ASCENT, t.y + t.size * TEXT_DESCENT)
+  for (const line of [...(furniture.tupletLines ?? []), ...(furniture.voltaLines ?? [])]) {
+    flag((line.y1 + line.y2) / 2)
+  }
+  for (const t of [...(furniture.tupletTexts ?? []), ...(furniture.voltaTexts ?? [])]) flag(t.y)
+  // Melisma extenders and hairpins/glissandi keep their actual geometry — they sit in the
+  // lyric and dynamic lanes, not the ending lane.
+  for (const line of [...(furniture.melismaLines ?? []), ...(furniture.spannerLines ?? [])]) {
+    const half = line.thickness / 2
+    include(Math.min(line.y1, line.y2) - half, Math.max(line.y1, line.y2) + half)
   }
 
   for (const beam of beams) {
@@ -4194,6 +4211,12 @@ function verticalExtent(
       lyricBottom + ENGRAVE.lyricVoiceStep + ENGRAVE.spacePerStep - ENGRAVE.lyricInkGap,
     )
   }
+
+  // Apply the tuplet/volta ending lane now that `top`/`bottom` are the NOTE extent: a fixed
+  // 5 pitch (`ENGRAVE.endingLane`) beyond the note on whichever side an ending sits, never
+  // the bracket's real height. See the ABOVE/BELOW gather at the top of this function.
+  if (endingAbove) top = Math.min(top, top - ENGRAVE.endingLane)
+  if (endingBelow) bottom = Math.max(bottom, bottom + ENGRAVE.endingLane)
 
   return { top: top - ENGRAVE.marginY, bottom: bottom + ENGRAVE.marginY }
 }
