@@ -502,10 +502,25 @@ export interface PlacedGlyph {
   /** What this glyph is. Absent means it inherits its element's kind. */
   readonly role?: PartRole
   /**
-   * Uniform scale about the glyph origin. 1 unless stated — grace notes are the only
-   * thing that shrinks, and they shrink everything: notehead, stem and flag together.
+   * Uniform scale about the glyph origin. 1 unless stated — grace notes and the octave
+   * marker on a `-8` clef are the only things that shrink, and a scale shrinks everything:
+   * notehead, stem and flag together.
    */
   readonly scale?: number
+  /**
+   * Vertical extent this glyph DECLARES, replacing its ink box — `[top, bottom]` in the
+   * same y-down staff spaces as `y`.
+   *
+   * abcjs's `RelativeElement` takes `top`/`bottom` overrides that need not bracket the ink
+   * at all (`elements/relative-element.js:38-41`), and the octave marker on a `clef=treble-8`
+   * is the clearest case: drawn at pitch -2, it declares -4/-6 — a reserve four pitch
+   * deeper than anything it draws. Reserving its ink box instead leaves the staff below it
+   * 4 pitch too close, which is the whole of `zocharti-loch`'s tenor-to-bass gap.
+   *
+   * The same "reserve a fixed lane, let the ink overhang it" shape as the tuplet lane and
+   * the above-staff stack.
+   */
+  readonly reserve?: readonly [top: number, bottom: number]
 }
 
 export interface PlacedLine {
@@ -911,18 +926,71 @@ const CLEF_GLYPHS: Readonly<Record<ClefShape, GlyphName | null>> = {
   none: null,
 }
 
+/**
+ * How far a clef's declared bottom sits below the line it marks, in PITCH.
+ *
+ * abcjs's `clefOffsets` (`creation/create-clef.js:61-69`). Nothing to do with where the
+ * glyph is DRAWN — it is the offset the clef's `RelativeElement` declares its extent from,
+ * and the octave marker below a `-8` clef is positioned off that declared bottom rather
+ * than off any ink.
+ */
+const CLEF_PITCH_OFFSET: Readonly<Record<ClefShape, number>> = {
+  G: -5,
+  C: -4,
+  F: -4,
+  percussion: -2,
+  none: 0,
+}
+
+/** abcjs draws the octave marker at two thirds size (`create-clef.js:39`). */
+const OCTAVE_MARKER_SCALE = 2 / 3
+
 function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null {
   const name = CLEF_GLYPHS[clef.shape] ?? null
   if (name === null) return null
   // Every SMuFL clef's origin sits on the line it marks, so the glyph goes exactly where
   // the clef's line is — no per-clef offsets. Line n is (n - 3) * 2 steps from the middle.
   const step = (clef.line - 3) * 2
+  const glyphs = [glyphAt(name, x, step)]
+
+  // `clef=treble-8` and friends: a small `8` under (or over) the clef.
+  //
+  // Source: `creation/create-clef.js:39-56`. Its arithmetic is in abcjs PITCH, where the
+  // bottom staff line is 2 and the clef's own line is `2 x clef.line`; a pitch is half a
+  // staff step here, hence `pitchStep`. The clef element's declared bottom is its line plus
+  // `CLEF_PITCH_OFFSET`, and the marker hangs one pitch under that while RESERVING from
+  // three under it down to five — a reserve that does not bracket its own ink, which is
+  // why it is declared rather than measured. See `PlacedGlyph.reserve`.
+  if (clef.octaveShift !== 0) {
+    const pitchStep = (pitch: number): number => stepToY(pitch - 6)
+    const clefBottom = 2 * clef.line + (CLEF_PITCH_OFFSET[clef.shape] ?? 0)
+    const clefTop = clefBottom + 2 * (glyphsFor(strict).get(name)?.height ?? 0)
+    const up = clef.octaveShift > 0
+    const anchor = up ? clefTop + 3 : clefBottom - 3
+    // `bass-8` hugs the clef instead of hanging off it — abcjs's own exception (`:45-48`).
+    const bassEight = clef.shape === 'F' && !up
+    const drawPitch = bassEight ? 3 : up ? clefTop + 3 : clefBottom - 1
+    const width = glyphsFor(strict).advance('timeSig8') * OCTAVE_MARKER_SCALE
+    const adjust = bassEight ? 0 : (glyphsFor(strict).advance(name) - width) / 2
+    glyphs.push({
+      name: 'timeSig8',
+      x: x + adjust,
+      y: pitchStep(drawPitch),
+      scale: OCTAVE_MARKER_SCALE,
+      role: 'clef',
+      // `top` is `anchor`, `bottom` is `anchor - 2` — in PITCH, so y-down reverses them.
+      reserve: [pitchStep(anchor), pitchStep(anchor - 2)],
+    })
+  }
+
   return {
     type: 'clef',
     x,
+    // The octave marker does NOT widen the clef: abcjs fixes the element at `w: 10` and
+    // adds the `8` inside it (`create-clef.js:11`), so the music behind it does not move.
     width: glyphsFor(strict).advance(name),
     staffSteps: [],
-    glyphs: [glyphAt(name, x, step)],
+    glyphs,
     lines: [],
     texts: [],
   }
@@ -4277,6 +4345,10 @@ function verticalExtent(
       // The ACTIVE table's box: abcjs's clef reaches 4.84 staff spaces above its origin
       // where Bravura's reaches 4.39, and that difference is space reserved above the
       // staff — visible as the last of the vertical offset on a title-only tune.
+      if (g.reserve !== undefined) {
+        include(g.reserve[0], g.reserve[1])
+        continue
+      }
       const glyph = glyphsFor(strict).get(g.name) ?? GLYPHS[g.name]
       include(g.y + glyph.y, g.y + glyph.y + glyph.height)
     }
