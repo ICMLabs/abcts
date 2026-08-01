@@ -121,8 +121,9 @@ backup remote is not a licence to vendor someone else's tree into this one.
 **Every structural gate is at 100% with zero recorded divergences** — content, lyrics,
 beams, structure, source offsets. 499 tests. The work is now entirely GEOMETRIC and
 entirely strict-mode. On `main` the corpus median notehead distance from abcjs is
-**17.4px** with **21/29** fixtures within 25px; on the geometry branch it is **14.6px**
-with **25/29**. Both are **29/29** within 50px, systems matching 29/29.
+**17.4px** with **21/29** fixtures within 25px; on the geometry branch it is **14.7px**
+with **25/29**, and **27/29** within their pixel-parity ceiling. Both are **29/29** within
+50px, systems matching 29/29.
 The remaining causes are named in the checkpoint's priority list.
 It is NOT a skyline: abcjs places most out-of-staff text at fixed distances from the staff,
 a finding that killed a skyline port — measure its OUTPUT before porting its SOURCE. It is
@@ -142,17 +143,22 @@ measures it. Noteheads match 2696/2696, systems 29/29, output is 0.34x abcjs's b
 **The VERTICAL model is solved and PARKED on `geometry/lyric-ink-anchor`** — read
 `Docs/CHECKPOINT-2026-08-01.md` before touching staff spacing, lyrics, chord symbols,
 part labels, tempo marks or dynamics. Our per-staff extents now match abcjs's to a median
-of 0.03px above and 0.46px below; `systemGap`/`staffGap` are deleted. **26 of 29** fixtures
-are within their pixel-parity ceiling, and the merge is blocked by **two causes, not four**:
-`ragtime` (down-stem overhang + `V:… stems=` + treble beam direction — all coupled, one
-pass, `ragtime-mini` joined `ragtime-nightingale` here) and `zocharti-loch` (intra-staff
-spacing residual — NOT `middle=`, which is already honoured for `voice-middle-after-clef`).
-`full-song-template` and `frere-jacques` CLOSED on 2026-08-01: their cause was never
-`W:`/`H:` reservation or prose systems but the above-staff STACK — abcjs stacks a chord
-symbol, part label and tempo mark on the music's ink, `height + 1` pitch each, where we used
-fixed lanes (`set-upper-and-lower-elements.js:31-49`). The dynamics-side rule (above only
-when the tune HAS LYRICS, `decoration.js:379` — the opposite of the superseded `-07-22c`
-finding) is FIXED on the branch.
+of 0.03px above and 0.46px below; `systemGap`/`staffGap` are deleted. **27 of 29** fixtures
+are within their pixel-parity ceiling, and the merge is blocked by **ONE cause**: `ragtime`
+(down-stem overhang + `V:… stems=` + treble beam direction — all coupled, one pass;
+`ragtime-mini` joined `ragtime-nightingale` there on 2026-08-01). The checkpoint carries the
+term-by-term extent table to start from.
+
+Three blockers closed on 2026-08-01, and **not one had the cause the previous checkpoint
+recorded** — read the checkpoint's method note 2b before diagnosing anything vertical.
+`full-song-template` and `frere-jacques` were never `W:`/`H:` reservation or prose systems
+but the above-staff STACK (abcjs stacks chord symbol, part label and tempo mark on the
+music's ink, `height + 1` pitch each, where we used fixed lanes —
+`set-upper-and-lower-elements.js:31-49`). `zocharti-loch` was never the bass staff's top but
+the TENOR's bottom: `clef=treble-8` drew no octave marker and so reserved none
+(`create-clef.js:33-56`). The dynamics-side rule (above only when the tune HAS LYRICS,
+`decoration.js:379` — the opposite of the superseded `-07-22c` finding) is FIXED on the
+branch.
 
 The `.elements.json` goldens carry `staffs[].top/.bottom` and `specialY` — abcjs's own
 answer to how much room a staff takes. Replicating `setUpperAndLowerElements` over them
