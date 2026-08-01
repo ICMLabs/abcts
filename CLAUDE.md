@@ -4,8 +4,8 @@ You are developing abcts, a modern TypeScript ABC notation library
 and community successor to abcjs.
 
 ## First Step — Always
-Read `Docs/CHECKPOINT-2026-07-24.md` first — it is the current state of play, the open
-decisions, and the known risks. (`CHECKPOINT-2026-07-22c.md`, `CHECKPOINT-2026-07-22b.md`, `-07-21.md`, `-07-19.md` and
+Read `Docs/CHECKPOINT-2026-08-01.md` first — it is the current state of play, the open
+decisions, and the known risks. (`CHECKPOINT-2026-07-24.md`, `-07-22c.md`, `CHECKPOINT-2026-07-22b.md`, `-07-21.md`, `-07-19.md` and
 `CHECKPOINT-2026-07-23.md`, `-07-18.md` are superseded but remain the record of the parser phase, the renderer's first
 slices, how the last parser diffs closed, and the geometric work up to the voice-name and
 `%%staffsep` fixes.) Then read ARCHITECTURE.md in full. It is your
@@ -120,11 +120,14 @@ backup remote is not a licence to vendor someone else's tree into this one.
 ## Current phase
 **Every structural gate is at 100% with zero recorded divergences** — content, lyrics,
 beams, structure, source offsets. 499 tests. The work is now entirely GEOMETRIC and
-entirely strict-mode: corpus median notehead distance from abcjs is **17.4px**, with
-**21/29** fixtures within 25px and **29/29** within 50px, systems matching 29/29.
+entirely strict-mode. On `main` the corpus median notehead distance from abcjs is
+**17.4px** with **21/29** fixtures within 25px; on the geometry branch it is **14.6px**
+with **25/29**. Both are **29/29** within 50px, systems matching 29/29.
 The remaining causes are named in the checkpoint's priority list.
-It is NOT a skyline: abcjs places out-of-staff text at fixed distances from the staff, a
-finding that killed a skyline port — measure its OUTPUT before porting its SOURCE.
+It is NOT a skyline: abcjs places most out-of-staff text at fixed distances from the staff,
+a finding that killed a skyline port — measure its OUTPUT before porting its SOURCE. It is
+not a flat lane model either: chord symbols, part labels and tempo marks STACK on the
+music's ink (see the checkpoint). Both facts were measured from its output, not read.
 NOTE the metric was corrected on 2026-07-22 and earlier figures are not comparable: the
 gate had been comparing abcjs's outline START against our glyph ORIGIN, a 4px bias.
 
@@ -137,16 +140,19 @@ gate (`tests/pixel-parity.test.ts`) resolves both engines' SVG to absolute pixel
 measures it. Noteheads match 2696/2696, systems 29/29, output is 0.34x abcjs's bytes.
 
 **The VERTICAL model is solved and PARKED on `geometry/lyric-ink-anchor`** — read
-`Docs/CHECKPOINT-2026-07-24.md` before touching staff spacing, lyrics, chord symbols or
-dynamics. Our per-staff extents now match abcjs's to a median of 0.03px above and 0.46px
-below; `systemGap`/`staffGap` are deleted. 25 of 29 fixtures are within their pixel-parity
-ceiling; the 4 that block the merge are ALL feature gaps or idiosyncratic cases, not
-tunable constants (see the checkpoint's "What blocks the merge"). The gating one is
-`ragtime-nightingale` (down-stem overhang, coupled). The rest: `zocharti-loch` (intra-staff
-spacing residual — NOT `middle=`, which is already honoured for `voice-middle-after-clef`),
-`full-song-template` (`W:`/`H:` block reservation), and `frere-jacques`'s prose systems. The dynamics-side rule (above only when the tune HAS
-LYRICS, `decoration.js:379` — the opposite of the superseded `-07-22c` finding) is FIXED
-on the branch.
+`Docs/CHECKPOINT-2026-08-01.md` before touching staff spacing, lyrics, chord symbols,
+part labels, tempo marks or dynamics. Our per-staff extents now match abcjs's to a median
+of 0.03px above and 0.46px below; `systemGap`/`staffGap` are deleted. **26 of 29** fixtures
+are within their pixel-parity ceiling, and the merge is blocked by **two causes, not four**:
+`ragtime` (down-stem overhang + `V:… stems=` + treble beam direction — all coupled, one
+pass, `ragtime-mini` joined `ragtime-nightingale` here) and `zocharti-loch` (intra-staff
+spacing residual — NOT `middle=`, which is already honoured for `voice-middle-after-clef`).
+`full-song-template` and `frere-jacques` CLOSED on 2026-08-01: their cause was never
+`W:`/`H:` reservation or prose systems but the above-staff STACK — abcjs stacks a chord
+symbol, part label and tempo mark on the music's ink, `height + 1` pitch each, where we used
+fixed lanes (`set-upper-and-lower-elements.js:31-49`). The dynamics-side rule (above only
+when the tune HAS LYRICS, `decoration.js:379` — the opposite of the superseded `-07-22c`
+finding) is FIXED on the branch.
 
 The `.elements.json` goldens carry `staffs[].top/.bottom` and `specialY` — abcjs's own
 answer to how much room a staff takes. Replicating `setUpperAndLowerElements` over them
