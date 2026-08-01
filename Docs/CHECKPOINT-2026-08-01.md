@@ -22,8 +22,8 @@ The strict-mode VERTICAL-geometry work still lives on a **branch, not `main`**:
 
 | Lane | HEAD | State |
 |---|---|---|
-| `main` | `ac475f9` | 499 tests green, geometry UNCHANGED from `a761cf8`. |
-| `geometry/lyric-ink-anchor` | `4ea24aa` | The geometry work. Typecheck clean; 452 functional tests green; 49 pixel-parity/baseline **ceiling** tests fail BY DESIGN. NOT pushed since `3a80638`. |
+| `main` | `ac475f9`+ | 499 tests green, geometry UNCHANGED from `a761cf8`. Docs only. |
+| `geometry/lyric-ink-anchor` | `1168e5d` | The geometry work. Typecheck clean; 452 functional tests green; 49 pixel-parity/baseline **ceiling** tests fail BY DESIGN. NOT pushed since `3a80638`. |
 
 **Confirm your lane before any structural work:** `git rev-parse --abbrev-ref HEAD`.
 
@@ -31,8 +31,8 @@ The strict-mode VERTICAL-geometry work still lives on a **branch, not `main`**:
 
 ## Where the branch stands (measured 2026-08-01)
 
-- **26 of 29 fixtures within their `a761cf8` ceiling**, up from 25.
-- Noteheads within 25px **25/29** (was 23/29). Corpus median notehead distance **14.6px**.
+- **27 of 29 fixtures within their `a761cf8` ceiling**, up from 25.
+- Noteheads within 25px **25/29** (was 23/29). Corpus median notehead distance **14.7px**.
 - Notehead COUNT matches abcjs 29/29.
 
 **What closed this session:**
@@ -40,8 +40,10 @@ The strict-mode VERTICAL-geometry work still lives on a **branch, not `main`**:
 | commit | what | effect |
 |---|---|---|
 | `4ea24aa` | above-staff lanes became a real STACK (`anchorAboveStaff`) | `full-song-template` oy 22.1 → 0.3; `frere-jacques` dy 47.9 → 21.9 |
+| `1168e5d` | `±8` clefs draw AND reserve their octave marker | `zocharti-loch` dy 17.5 → 0.9 |
 
-That is blockers 2 and 4 of the previous checkpoint's four, both CLOSED.
+**Three of the previous checkpoint's four blockers are CLOSED**, and not one of them had
+the cause that checkpoint recorded. Only ragtime remains.
 
 ### The stack, since it is the reusable part
 
@@ -64,11 +66,27 @@ here and remains unmodelled.
 `tempoTextSize` went 1.6 → 20/7.75 with it: abcjs's `partsfont` and `tempofont` are both
 15pt → 20px, and the stack draws each item one FONT SIZE below the top it reserved.
 
+### The octave clef, since it corrected a standing diagnosis
+
+`clef=treble-8` drew no `8` at all, and the missing RESERVE — not the missing ink — was the
+whole of zocharti's tenor-to-bass gap. `-07-24` recorded the cause as the BASS staff's top
+extent. It is not: against abcjs's own `staffs[]`, our bass tops are 22.12 and 25.12 pitch
+against its 22 and 25, right to a tenth. The TENOR's bottom was short — 6.12 and 5.12
+against a flat 8.00 — and abcjs's being IDENTICAL in both systems while ours varied with the
+notes is what named the cause. A constant, not ink.
+
+Source `creation/create-clef.js:33-56`: the clef element declares its bottom at
+`2 x line + clefOffsets(shape)` (treble: `4 + (-5) = -1`), and the marker hangs one pitch
+under that while reserving from three under it down to five — `bottom = -6`, exactly the
+golden's `staff.bottom`, 8 pitch below the bottom line, note-independent. The declared
+extent does not bracket the marker's own ink, so `PlacedGlyph.reserve` carries it, mirroring
+abcjs's `RelativeElement` `top`/`bottom` overrides.
+
 ---
 
-## The remaining blockers — now 2 causes, not 4
+## The remaining blocker — ONE cause
 
-### 1. ragtime (`ragtime-nightingale` dy 122, `ragtime-mini` oy 30.4) — THE gate, coupled.
+### ragtime (`ragtime-nightingale` dy 122, `ragtime-mini` oy 30.4) — THE gate, coupled.
 `ragtime-mini` joined this blocker this session; it is not a second problem. With a fixed
 lane its tempo sat 38.8px above the top line against abcjs's 47.8, and the lane was **right
 by accident** — once the stack anchored the tempo on real ink, the underlying ink gap
@@ -98,15 +116,33 @@ average rule left every other fixture byte-identical and moved `ragtime-nighting
   (computed averages 6.75 and 8.0, both → down). **Settle it by measuring abcjs's output
   across the corpus, not by reading further.**
 
-### 2. `zocharti-loch` (dy 17.5, oy 2) — intra-staff spacing, NOT `middle=`. UNTOUCHED.
-Unchanged from `-07-24` and unaffected by this session. Its `V:B1/B2 clef=bass transpose=-24
-middle=d` basses are written in treble range; `middle=` is GUARDED OFF where `transpose=` is
-present. At its guarded bass default it is dy 17.5, identical to the `520cfb4` regression —
-so the problem was never `middle=` but the intra-staff gap the fudge deletion exposed. abcjs
-reserves the bass staff top at pitch 32/35 and its tenor↔bass gap is ~7–10px wider than
-ours. No `staffGap` value fixes it without costing more elsewhere (re-verified). Needs the
-bass staff's top extent, or the `clef=treble-8` tenor's placement, measured against abcjs's
-`staffs[].top`. **This is the decoupled one — do it before touching ragtime.**
+### The measurement to start from — a term-by-term extent table
+
+This is the first per-staff breakdown of ragtime that exists, and it is what every previous
+attempt lacked. Method: dump abcjs's `staffs[].top/.bottom` from the element golden as
+`above = top - 10` / `below = 2 - bottom`, dump ours from the packing loop in the same
+units, and diff. It is the same probe that cracked `zocharti-loch` in one pass, and it
+replaces the aggregate numbers that misled the earlier attempts.
+
+Ours minus abcjs, in PITCH, over all 23 systems (staff 0 = treble, staff 1 = bass):
+
+- **ABOVE** median +1.22, mean +2.15. **BELOW** median +3.12, mean +2.53. We over-reserve on
+  both sides — it is not one term and not a constant.
+- **Staff 0 BELOW is the loudest.** abcjs reports exactly **3.00** on 13 of 23 systems; ours
+  runs 6–13. 3.00 is pitch -1, which is precisely the CLEF's own declared bottom
+  (`4 + (-5)`) — meaning that on those staves abcjs's deepest DECLARED thing is the clef and
+  its down-stems reserve nothing at all below. That is the overhang, seen from the treble
+  side rather than the bass, and it is why we run 3–10 pitch deep.
+- **Staff 1 ABOVE is over by 3–5 pitch** on most systems (0/1 +5.12, 1/1 +4.08, 3/1 +4.08,
+  4/1 +5.01, 6/1 +6.08 …). ragtime declares `V:… stems=down` on all three bass voices; we
+  have no model field for it, so we point some of those stems up and reserve a stem length
+  above that abcjs never reserves.
+- A handful of rows are NEGATIVE (14/0 -2.95, 17/1 -5.38, 22/1 -5.95) — we under-reserve
+  there. Any fix has to be measured against this whole table, not against a mean.
+
+**Nothing was attempted against it this session.** Both single-term fixes are already
+recorded as failures (`overhang alone`: ave-verum 2.4 → 23.4; `stems=down` alone: ragtime
+57.9 → 66.8) and re-running a known-failed experiment is not progress.
 
 ---
 
@@ -115,8 +151,9 @@ bass staff's top extent, or the `clef=treble-8` tenor's placement, measured agai
 The gate wants these IMPROVEMENTS recorded as lower ceilings — `ave-verum` 12.5→2.4,
 `frere-jacques` 33.1→21.9, `full-song-template` 8.8→0.3, `happy-birthday`→0.2,
 `little swallow`→7.1, `multi-voice-lyrics`→4.5, `multi-voice-triplet-brackets` 18.8→14.6,
-`program-127`→0.3, `two-voice-invention`→6.4, `voice-middle-after-clef`→0.0. **Do NOT lower
-any ceiling on `main`**, and only in the commit that closes the last blocker. Until then the
+`program-127`→0.3, `two-voice-invention`→6.4, `voice-middle-after-clef`→0.0,
+`zocharti-loch` 2.0→0.9. **Do NOT lower any ceiling on `main`**, and only in the commit that
+closes the last blocker. Until then the
 gate's "improved — lower the ceiling" failures are expected.
 
 Still open, untouched: the absolute stretch guard (`spacing * minSpace > 50`, needs a real
@@ -134,6 +171,19 @@ spring/rod split).
    `staff.top` is the PRE-beam, PRE-stem ink top. `layoutVoice` raises it before
    `setUpperAndLowerElements` sees it (`layout/layout.js:35-41`). Reading the dump's `top`
    as the stack's anchor is off by whatever the beams add — 6 pitch on `ragtime-mini`.
+2b. **THE PROBE THAT WORKS — a term-by-term extent diff.** It has now cracked two blockers
+   in a session, and it is the first thing to reach for on any vertical question:
+   - abcjs's side: `staffs[].top/.bottom` from the element golden, as `above = top - 10`,
+     `below = 2 - bottom` (PITCH beyond the outer staff lines);
+   - our side: one `console.log` in the packing loop next to `verticalExtent`, printing
+     `-extent.top * 2 - 4` and `extent.bottom * 2 - 4` — the same units;
+   - diff them per staff, and read the STRUCTURE, not the mean.
+   It works because it separates the two things every aggregate mixes: which SIDE is wrong
+   and which STAFF. On zocharti it showed the bass top right to a tenth of a pitch and the
+   tenor bottom flat-wrong, which named the cause in one pass after two sessions of the
+   diagnosis pointing at the wrong staff. Add the SVG line-to-line gap check next to it
+   (`abcjs` gap = `(2 - prevBottom) + (thisTop - 10)` pitch, exactly, when the
+   `staffSeparation` minimum does not bind) to confirm the extents explain the drawing.
 3. **The notehead median can't see the vertical axis alone.** Use a boundary-by-boundary
    probe (`tests/staff-spacing.test.ts` shape).
 4. **A scratch probe on a fixed path will lie to you** — assert it measured real data.
