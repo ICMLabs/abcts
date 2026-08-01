@@ -189,6 +189,26 @@ export const ENGRAVE = {
   partStep: 10,
   tempoStep: 14,
   /**
+   * The above-staff STACK — what `anchorAboveStaff` walks, and why the three lanes above
+   * are only the origin it shifts from.
+   *
+   * abcjs reserves each of these on the running staff top, `height + margin` per item,
+   * and DRAWS the item at the top it just reserved (`set-upper-and-lower-elements.js:31-49`,
+   * `incTop`; `margin = 1` at `:102`). So a tune carrying a chord, a part label and a tempo
+   * mark stacks all three — where a fixed lane puts each at one distance from the staff
+   * whatever else is present, and the whole drawing sits as high as its outermost lane.
+   *
+   * The heights are abcjs's own `specialY`, and they are CONSTANTS: every staff of every
+   * fixture in the corpus reports the same three. In its pitch units, halved here because
+   * a step is half a staff space.
+   */
+  aboveStackMargin: 1 * 0.5,
+  chordHeightAbove: 4.779354838709677 * 0.5,
+  partHeightAbove: 5.718709677419355 * 0.5,
+  tempoHeightAbove: 6 * 0.5,
+  /** abcjs bumps the tempo's baseline 2px past the top it reserved (`draw/tempo.js:15`). */
+  tempoDescenderBump: 2 / 7.75,
+  /**
    * A tune's title sits above everything else it owns, in staff STEPS above the middle
    * line — so the gap to the top staff line is `titleStep / 2 - 2` spaces.
    *
@@ -256,8 +276,16 @@ export const ENGRAVE = {
   melismaGap: 0.4,
   /** Below this a run is a speck rather than a line; drawn as nothing. */
   melismaMinLength: 0.8,
-  /** Tempo and part labels are directions; chord symbols and lyrics are smaller. */
-  tempoTextSize: 1.6,
+  /**
+   * Tempo and part labels are directions; chord symbols and lyrics are smaller.
+   *
+   * abcjs's `partsfont` and `tempofont` are both 15pt -> `round(15 x 4/3)` = 20px
+   * (`abc_parse_directive.js:25-38`). Ours was 1.6 — 12.4px — which is the same
+   * two-thirds undersizing `titleTextSize` and `chordTextSize` carried before they were
+   * derived, and it matters twice over: the stack draws each item one FONT SIZE below the
+   * top it reserved, so an undersized font lands the baseline high as well as small.
+   */
+  tempoTextSize: 20 / 7.75,
   /**
    * Top-text font sizes, in staff spaces.
    *
@@ -455,6 +483,7 @@ export type PartRole =
   | 'decoration'
   | 'text'
   | 'lyric'
+  | 'chord'
   | 'title'
 
 export interface PlacedGlyph {
@@ -2071,6 +2100,9 @@ function noteText(
     const size = ENGRAVE.chordTextSize
     texts.push({
       text: event.chordSymbol,
+      // The lane is only the origin: `anchorAboveStaff` moves the whole set onto the
+      // staff's music once the voices sharing it are known, exactly as lyrics are.
+      role: 'chord',
       x: centre - textWidth(event.chordSymbol, size) / 2,
       y: stepToY(ENGRAVE.chordSymbolStep),
       size,
@@ -3697,8 +3729,11 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     // are printed on. So the drawing is concatenated and one set of staff lines is drawn,
     // rather than each voice getting its own stave.
     const merged = voicesOfStaff.map((members) => {
-      const parts = anchorLyrics(
-        members.map((i) => centred[i]).filter((x) => x !== undefined),
+      const parts = anchorAboveStaff(
+        anchorLyrics(
+          members.map((i) => centred[i]).filter((x) => x !== undefined),
+          strict,
+        ),
         strict,
       )
       const first = parts[0]
@@ -4083,6 +4118,103 @@ function anchorLyrics<
       ),
     }
   })
+}
+
+/**
+ * Stack the above-staff furniture on the staff's music, once its voices are known.
+ *
+ * The mirror of `anchorLyrics`, and the same lesson from the other side: abcjs does NOT
+ * hold a chord symbol, a part label and a tempo mark at three fixed distances from the
+ * staff. It stacks them on the music's own ink top, each reserving its rendered height
+ * plus a one-pitch margin and then drawing at the top it reserved
+ * (`set-upper-and-lower-elements.js:31-49`, `incTop`). A tune carrying all three sits
+ * ~19.5 pitch lower than one carrying only a chord — which fixed lanes, topping out at
+ * whichever lane is furthest out, cannot express: `full-song-template` reserved ~53px
+ * where abcjs reserves ~75, and its whole drawing rode 22px high as a result.
+ *
+ * MEASURED off abcjs's own SVG before it was modelled, per this repo's iron rule. In
+ * `full-song-template`'s golden the chord baseline sits 6.7187 pitch below the part
+ * baseline — `partHeightAbove` 5.71871 + 1 margin, exactly — and the part 7.0013 below
+ * the tempo, `tempoHeightAbove` 6 + 1. Both within the goldens' two-decimal rounding,
+ * and the resolved chord pitch lands on 19.504 against a predicted 19.5037.
+ *
+ * Order is abcjs's, innermost first: chord, part, tempo. Its `endingHeightAbove` and the
+ * dynamics pair sit between chord and part; both are reserved elsewhere — the ending as a
+ * fixed lane in `verticalExtent`, dynamics in their own — and neither shares a staff with
+ * this stack anywhere in the corpus.
+ *
+ * Each item is drawn one FONT SIZE below the top it reserved, which is abcjs's universal
+ * text rule (`text.js:30-31`), plus the tempo's own 2px bump (`draw/tempo.js:15`).
+ */
+function anchorAboveStaff<
+  T extends {
+    readonly elements: readonly LayoutElement[]
+    readonly beams: readonly PlacedLine[]
+  } & StaffFurniture,
+>(parts: readonly T[], strict: boolean): T[] {
+  const isChord = (t: PlacedText): boolean => t.role === 'chord'
+  const has = (fn: (el: LayoutElement) => boolean) => parts.some((p) => p.elements.some(fn))
+  const chords = has((el) => el.texts.some(isChord))
+  const partLabels = has((el) => el.type === 'part')
+  const tempos = has((el) => el.type === 'tempo')
+  if (!chords && !partLabels && !tempos) return [...parts]
+
+  // The MUSIC's ink — the stack itself taken out, or each item would reserve room above
+  // the lane the previous one is still sitting in and the staff would grow every pass.
+  // The top-text block goes too: it is not music and has not been placed yet.
+  const inkTop = verticalExtent(
+    parts.flatMap((p) =>
+      p.elements
+        .filter((el) => el.type !== 'title' && el.type !== 'part' && el.type !== 'tempo')
+        .map((el) => ({ ...el, texts: el.texts.filter((t) => !isChord(t)) })),
+    ),
+    parts.flatMap((p) => p.beams),
+    strict,
+    {
+      tupletLines: parts.flatMap((p) => p.tupletLines ?? []),
+      tupletTexts: parts.flatMap((p) => p.tupletTexts ?? []),
+      voltaLines: parts.flatMap((p) => p.voltaLines ?? []),
+      voltaTexts: parts.flatMap((p) => p.voltaTexts ?? []),
+    },
+  ).top
+
+  // y is DOWN, so reserving room above walks it negative.
+  let top = inkTop
+  const reserve = (height: number): number => {
+    top -= height + ENGRAVE.aboveStackMargin
+    return top
+  }
+  const chordY = chords ? reserve(ENGRAVE.chordHeightAbove) + ENGRAVE.chordTextSize : null
+  const partY = partLabels ? reserve(ENGRAVE.partHeightAbove) + ENGRAVE.tempoTextSize : null
+  const tempoY = tempos
+    ? reserve(ENGRAVE.tempoHeightAbove) + ENGRAVE.tempoTextSize + ENGRAVE.tempoDescenderBump
+    : null
+
+  // A uniform shift per item, so a tempo mark's beat-unit glyph and its stem ride along
+  // with the `= 120` they belong to rather than being re-derived.
+  const shiftBy = (el: LayoutElement, shift: number): LayoutElement => ({
+    ...el,
+    glyphs: el.glyphs.map((g) => ({ ...g, y: g.y + shift })),
+    lines: el.lines.map((l) => ({ ...l, y1: l.y1 + shift, y2: l.y2 + shift })),
+    texts: el.texts.map((t) => ({ ...t, y: t.y + shift })),
+  })
+
+  const chordShift = chordY === null ? 0 : chordY - stepToY(ENGRAVE.chordSymbolStep)
+  const partShift = partY === null ? 0 : partY - stepToY(ENGRAVE.partStep)
+  const tempoShift = tempoY === null ? 0 : tempoY - stepToY(ENGRAVE.tempoStep)
+
+  return parts.map((part) => ({
+    ...part,
+    elements: part.elements.map((el) => {
+      if (el.type === 'part') return shiftBy(el, partShift)
+      if (el.type === 'tempo') return shiftBy(el, tempoShift)
+      if (!el.texts.some(isChord)) return el
+      return {
+        ...el,
+        texts: el.texts.map((t) => (isChord(t) ? { ...t, y: t.y + chordShift } : t)),
+      }
+    }),
+  }))
 }
 
 interface StaffFurniture {
