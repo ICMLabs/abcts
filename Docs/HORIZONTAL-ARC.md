@@ -145,3 +145,57 @@ says "reinstate this together with a real spring/rod split, not before"; this is
 |---|---|
 | `geometry/lyric-ink-anchor` | **GREEN, 505/505.** Vertical arc, ready to merge. Untouched by this. |
 | `geometry/horizontal` | This arc. RED by design. |
+
+
+---
+
+## Where it stands after the solve (`f8924ca`)
+
+| | arc start | now |
+|---|---|---|
+| dx exactly zero | 3/29 | **8/29** |
+| ox exactly zero | **0/29** | **8/29** |
+| both exactly zero | 0/29 | **8/29** |
+| ox median | −9.60 | **−2.56** |
+
+Exact on `simple-c`, `score-reorder`, `score-reorder-shared`, `multi-voice-rest-collision`,
+`stacked-annotations`, `voice-octave-shift`, `vree-slurs-and-triplets`,
+`vree-ties-across-bars`.
+
+## The next structural piece: ONE CURSOR ACROSS VOICES
+
+`multi-voice-triplet-brackets` went 109 → 227px and is now the worst fixture. It is NOT the
+spacing curve and NOT the tuplet duration — both were instrumented and both already match:
+
+```
+abcjs   elem=0.25 mult=0.6667 forSpacing=0.16667 units=1.1547   ->  34.641px
+ours    dur=0.16667 notated=0.25                                ->  34.641px
+```
+
+It is that **two voices sharing a staff are spaced independently in our model**. Measured
+notehead x on its first system, where both voices are on one staff:
+
+```
+abcjs   54  54  78 102 126 149 173 197 197     gaps  0 24 24 24 23 24 24  0
+ours    54  54  80 105 116 156 177 182 207     gaps  0 26 25 11 40 21  5 25
+```
+
+abcjs's coincide at shared time points; ours do not. Its `layoutStaffGroup`
+(`layout/staff-group.js`) walks ONE cursor across all voices, stepping to the smallest
+pending duration index each pass and laying out only the voices at that level:
+
+```js
+while (!finished(staffGroup.voices)) {
+    currentduration = min over voices of getDurationIndex(voice)   // smallest pending
+    currentvoices   = voices at that duration level                // lay these out
+    ...                                                            // others wait
+}
+```
+
+So simultaneous notes get the same x by construction. We lay each voice out independently
+and only reconcile at barlines — which is why the barlines line up and nothing between them
+does. Our per-block factor solve keeps the bars aligned but cannot align the interior.
+
+**This is the piece to do next, and it is the last structural one on this axis.** It
+subsumes the per-block factor: with a shared cursor there is one line, one spring solve, and
+no per-measure column reconciliation at all.
