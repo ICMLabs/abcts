@@ -4,9 +4,9 @@ You are developing abcts, a modern TypeScript ABC notation library
 and community successor to abcjs.
 
 ## First Step — Always
-Read `Docs/CHECKPOINT-2026-07-22c.md` first — it is the current state of play, the open
-decisions, and the known risks. (`CHECKPOINT-2026-07-22b.md`, `-07-21.md`, `-07-19.md` and
-`-07-18.md` are superseded but remain the record of the parser phase, the renderer's first
+Read `Docs/CHECKPOINT-2026-08-02b.md` first — it is the current state of play, the open
+decisions, and the known risks. (`CHECKPOINT-2026-08-02.md`, `CHECKPOINT-2026-08-01.md`, `CHECKPOINT-2026-07-24.md`, `-07-22c.md`, `CHECKPOINT-2026-07-22b.md`, `-07-21.md`, `-07-19.md` and
+`CHECKPOINT-2026-07-23.md`, `-07-18.md` are superseded but remain the record of the parser phase, the renderer's first
 slices, how the last parser diffs closed, and the geometric work up to the voice-name and
 `%%staffsep` fixes.) Then read ARCHITECTURE.md in full. It is your
 specification, decision record, and setup guide. Do not make
@@ -120,11 +120,15 @@ backup remote is not a licence to vendor someone else's tree into this one.
 ## Current phase
 **Every structural gate is at 100% with zero recorded divergences** — content, lyrics,
 beams, structure, source offsets. 499 tests. The work is now entirely GEOMETRIC and
-entirely strict-mode: corpus median notehead distance from abcjs is **17.4px**, with
-**21/29** fixtures within 25px and **29/29** within 50px, systems matching 29/29.
+entirely strict-mode. On `main` the corpus median notehead distance from abcjs is
+**17.4px** with **21/29** fixtures within 25px; on the geometry branch it is **14.7px**
+with **27/29**, and **29/29** — all of them — within their pixel-parity ceiling. Both are
+**29/29** within 50px, systems matching 29/29.
 The remaining causes are named in the checkpoint's priority list.
-It is NOT a skyline: abcjs places out-of-staff text at fixed distances from the staff, a
-finding that killed a skyline port — measure its OUTPUT before porting its SOURCE.
+It is NOT a skyline: abcjs places most out-of-staff text at fixed distances from the staff,
+a finding that killed a skyline port — measure its OUTPUT before porting its SOURCE. It is
+not a flat lane model either: chord symbols, part labels and tempo marks STACK on the
+music's ink (see the checkpoint). Both facts were measured from its output, not read.
 NOTE the metric was corrected on 2026-07-22 and earlier figures are not comparable: the
 gate had been comparing abcjs's outline START against our glyph ORIGIN, a 4px bias.
 
@@ -134,16 +138,38 @@ gate had been comparing abcjs's outline START against our glyph ORIGIN, a 4px bi
 
 The work is now GEOMETRIC — does abcts put the ink where abcjs puts it. A pixel-parity
 gate (`tests/pixel-parity.test.ts`) resolves both engines' SVG to absolute pixels and
-measures it. Noteheads match 2696/2696, systems 28/29, output is 0.34x abcjs's bytes.
+measures it. Noteheads match 2696/2696, systems 29/29, output is 0.34x abcjs's bytes.
 
-**The open problems are now three fixtures, not a corpus-wide term** — see
-`Docs/CHECKPOINT-2026-07-22c.md` § Next. Vertical placement is largely closed (the
-voice-name indent, `%%staffsep`/`%%sysstaffsep` and the prior per-staff-margin work took
-the corpus median to 24.2px); what remains is `frere-jacques` (abcjs wraps a source line,
-which fights the "one source line = one system" model — read the risk note), `center-text`
-(needs `%%center`), `multi-voice-lyrics-two-voices`, and ragtime's small intra-staff
-residual. A single aggregate number still cannot tell interacting terms apart — decompose
-by per-step pitch, and read `ox`/`oy` offset, not just spread.
+**The VERTICAL arc is DONE and MERGED** — `main` is green at 505/505, all 29 pixel-gated
+fixtures within their ceilings, ceilings re-recorded. Branch vs the old main: fixtures within
+ceiling 25/29 → **29/29**, noteheads within 25px 21/29 → **27/29**, corpus median 17.4px →
+**14.7px**.
+
+**The HORIZONTAL arc is CLOSED** on `geometry/horizontal`, which is now GREEN at 505/505 —
+pixel-parity gate included, ceilings re-recorded. dx and ox are exactly zero on **22 of 29**
+fixtures, up from 8. The timeline is per LINE, as abcjs's `layoutStaffGroup` is: no columns,
+no per-measure reconciliation, barlines unaligned across voices because they are ordinary
+zero-duration elements on one timeline. `Docs/HORIZONTAL-ARC.md` and
+`Docs/CHECKPOINT-2026-08-02b.md` carry the full account.
+
+**A PASSING GATE IS NOT PARITY.** The gate asserts "no worse than recorded". Parity means
+dy/dx/oy/ox at ZERO — currently dy median +0.01 (18/29 at zero), dx median **+0.01**
+(22/29), ox median −0.00 (22/29), notehead distance median 5.59px.
+
+**ONE GATE NUMBER IS AN ARTEFACT.** `vree-grace-notes` reports dx 32.5 and is not diverging:
+the gate pairs the i-th notehead of each engine, and abcjs emits a graced note's MAIN head
+before its graces where we emit them after. Sorted by x its mains are exact.
+
+**PORT THE STRUCTURE, THEN THE CONSTANTS.** The costly divergences have all been
+architectural, not numeric; see the checkpoint's opening section before starting anything.
+
+The `.elements.json` goldens carry `staffs[].top/.bottom` and `specialY` — abcjs's own
+answer to how much room a staff takes. Replicating `setUpperAndLowerElements` over them
+reproduces its SVG exactly on nine fixtures, and is the fastest way to test any vertical
+hypothesis. But `dump-elements.js` and `dump-svg.js` measure multi-line text differently;
+where they disagree, the SVG is the gate. A single aggregate number still cannot tell
+interacting terms apart, and the notehead median cannot see the vertical question at all —
+use `tests/staff-spacing.test.ts`.
 
 Renders staff, all clefs, key signatures, meters, tempo marks, part labels, noteheads and
 chords with stems and ledger lines, accidentals, rests and barlines, grace notes, chord
@@ -205,7 +231,50 @@ feature-coverage gap, tracked separately and implemented not at all.
 
 ### Continuing mid-project
 ```
-We are continuing abcts development. Read CLAUDE.md and
-ARCHITECTURE.md, then review what has been built so far
-before proposing next steps.
+We are continuing abcts development in the abcts repo (Code/abcts).
+
+Read Docs/CHECKPOINT-2026-08-02b.md first, and the -08-02 one before it
+for why this work once drifted into trial and error. Then
+Docs/HORIZONTAL-ARC.md, then ARCHITECTURE.md, then this file.
+
+THE RULE THAT MATTERS: port abcjs's STRUCTURE, then its constants.
+Reading abcjs gives you its numbers cheaply; the expensive divergences
+have all been architectural — one cursor vs per-measure columns, a
+spring/rod solve vs a width multiplier, ink-anchored lanes vs fixed
+ones. Dropping a correct constant into a different structure moves the
+output unpredictably. Before changing a constant, ask whether the
+surrounding LOOP is abcjs's; if not, fix that first.
+
+Work by INSTRUMENTING — env-guarded console.log in the vendored abcjs
+source, run its own dump-svg.js harness, then
+`git -C ../abcMusicKit checkout -- Docs/References/abcjs/` and verify
+clean. Instrument to ANSWER A QUESTION, not to see what happens: used
+that way it has killed three wrong hypotheses for one run each. Used as
+a feedback loop for guesses it is the expensive mode.
+
+The bar is 100% parity with abcjs. A passing gate is not parity — the
+gate says "no worse than recorded"; parity means dy/dx/oy/ox at ZERO.
+
+Confirm your lane with `git rev-parse --abbrev-ref HEAD`. `main` holds
+the merged vertical arc and is GREEN at 505/505 — keep it that way.
+`geometry/horizontal` is the open arc.
+```
+
+### The open task, specifically
+```
+Continue geometric parity in Code/abcts.
+
+Read Docs/CHECKPOINT-2026-08-02b.md and Docs/HORIZONTAL-ARC.md.
+
+The HORIZONTAL arc is closed: one timeline per line, 22/29 fixtures at
+exact dx and ox, suite green at 505/505. What is left on that axis is
+not structural — `little swallow` is Chinese-lyric metrics,
+`frere-jacques` is the source-line-wrap model conflict, and
+`ragtime-nightingale`'s bigger term is its dy of 58.1, so the VERTICAL
+is where it should be attacked.
+
+The method that closed the arc, unchanged: instrument abcjs to ANSWER A
+QUESTION, read the ground truth, restore. Port abcjs's STRUCTURE, then
+its constants — every win this session was a loop, and every constant
+came out of a probe after the loop around it was already abcjs's.
 ```
