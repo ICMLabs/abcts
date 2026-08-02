@@ -1,79 +1,79 @@
 tune 0
-bounds  width=90.000 height=18.873 top=-1.935
+bounds  width=90.323 height=18.873 top=-1.935
 systems 1
-system 0 width=90.000 originY=0.000
+system 0 width=90.323 originY=0.000
   staff 0 originY=12.937
-    staffline 0.000,2.000 -> 90.000,2.000 t=0.130
-    staffline 0.000,1.000 -> 90.000,1.000 t=0.130
-    staffline 0.000,0.000 -> 90.000,0.000 t=0.130
-    staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
+    staffline 0.000,2.000 -> 90.323,2.000 t=0.130
+    staffline 0.000,1.000 -> 90.323,1.000 t=0.130
+    staffline 0.000,0.000 -> 90.323,0.000 t=0.130
+    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  34.506,-8.478 size=3.484 bold "Chord Grid Test"
-    clef x=1.935 w=2.458
-      glyph gClef 1.935,1.000
-    timeSignature x=5.394 w=1.522
-      glyph timeSig4 5.394,-1.000
-      glyph timeSig4 5.394,1.000
-    note@-6 x=7.916 w=5.474
-      glyph noteheadBlack 7.916,3.000
-      line  7.516,3.000 -> 9.581,3.000 t=0.160
-      line  9.096,2.832 -> 9.096,-0.500 t=0.120
-      text  7.987,-4.664 size=2.065 "C"
-    note@-5 x=12.425 w=5.474
-      glyph noteheadBlack 12.425,2.500
-      line  13.605,2.332 -> 13.605,-1.000 t=0.120
-    note@-4 x=16.934 w=5.474
-      glyph noteheadBlack 16.934,2.000
-      line  18.114,1.832 -> 18.114,-1.500 t=0.120
-    note@-3 x=21.444 w=5.474
-      glyph noteheadBlack 21.444,1.500
-      line  22.624,1.332 -> 22.624,-2.000 t=0.120
-    bar x=26.953 w=0.160
-      line  27.033,-2.000 -> 27.033,2.000 t=0.160
-    note@-2 x=27.953 w=5.474
-      glyph noteheadBlack 27.953,1.000
-      line  29.133,0.832 -> 29.133,-2.500 t=0.120
-      text  27.952,-4.664 size=2.065 "G"
-    note@-1 x=32.462 w=5.474
-      glyph noteheadBlack 32.462,0.500
-      line  33.642,0.332 -> 33.642,-3.000 t=0.120
-    note@0 x=36.971 w=5.474
-      glyph noteheadBlack 36.971,0.000
-      line  36.971,0.168 -> 36.971,3.500 t=0.120
-    note@1 x=41.481 w=5.474
-      glyph noteheadBlack 41.481,-0.500
-      line  41.481,-0.332 -> 41.481,3.000 t=0.120
-    bar x=46.990 w=0.160
-      line  47.070,-2.000 -> 47.070,2.000 t=0.160
-    note@1 x=47.990 w=5.474
-      glyph noteheadBlack 47.990,-0.500
-      line  47.990,-0.332 -> 47.990,3.000 t=0.120
-      text  47.266,-4.664 size=2.065 "Am"
-    note@0 x=52.499 w=5.474
-      glyph noteheadBlack 52.499,0.000
-      line  52.499,0.168 -> 52.499,3.500 t=0.120
-    note@-1 x=57.009 w=5.474
-      glyph noteheadBlack 57.009,0.500
-      line  58.189,0.332 -> 58.189,-3.000 t=0.120
-    note@-2 x=61.518 w=5.474
-      glyph noteheadBlack 61.518,1.000
-      line  62.698,0.832 -> 62.698,-2.500 t=0.120
-    bar x=67.027 w=0.160
-      line  67.107,-2.000 -> 67.107,2.000 t=0.160
-    note@-3 x=68.027 w=5.474
-      glyph noteheadBlack 68.027,1.500
-      line  69.207,1.332 -> 69.207,-2.000 t=0.120
-      text  68.136,-4.664 size=2.065 "F"
-    note@-4 x=72.537 w=5.474
-      glyph noteheadBlack 72.537,2.000
-      line  73.717,1.832 -> 73.717,-1.500 t=0.120
-    note@-5 x=77.046 w=5.474
-      glyph noteheadBlack 77.046,2.500
-      line  78.226,2.332 -> 78.226,-1.000 t=0.120
-    note@-6 x=81.555 w=5.474
-      glyph noteheadBlack 81.555,3.000
-      line  81.155,3.000 -> 83.221,3.000 t=0.160
-      line  82.735,2.832 -> 82.735,-0.500 t=0.120
-    bar x=87.065 w=0.160
-      line  87.145,-2.000 -> 87.145,2.000 t=0.160
+      text  34.667,-8.478 size=3.484 bold "Chord Grid Test"
+    clef x=1.935 w=3.103
+      glyph gClef 2.581,1.000
+    timeSignature x=6.329 w=1.522
+      glyph timeSig4 6.329,-1.000
+      glyph timeSig4 6.329,1.000
+    note@-6 x=9.141 w=5.474
+      glyph noteheadBlack 9.141,3.000
+      line  8.741,3.000 -> 10.807,3.000 t=0.160
+      line  10.321,2.832 -> 10.321,-0.500 t=0.120
+      text  9.213,-4.664 size=2.065 "C"
+    note@-5 x=13.820 w=5.474
+      glyph noteheadBlack 13.820,2.500
+      line  15.000,2.332 -> 15.000,-1.000 t=0.120
+    note@-4 x=18.499 w=5.474
+      glyph noteheadBlack 18.499,2.000
+      line  19.679,1.832 -> 19.679,-1.500 t=0.120
+    note@-3 x=23.177 w=5.474
+      glyph noteheadBlack 23.177,1.500
+      line  24.357,1.332 -> 24.357,-2.000 t=0.120
+    bar x=27.856 w=0.160
+      line  27.936,-2.000 -> 27.936,2.000 t=0.160
+    note@-2 x=29.275 w=5.474
+      glyph noteheadBlack 29.275,1.000
+      line  30.455,0.832 -> 30.455,-2.500 t=0.120
+      text  29.274,-4.664 size=2.065 "G"
+    note@-1 x=33.954 w=5.474
+      glyph noteheadBlack 33.954,0.500
+      line  35.134,0.332 -> 35.134,-3.000 t=0.120
+    note@0 x=38.633 w=5.474
+      glyph noteheadBlack 38.633,0.000
+      line  38.633,0.168 -> 38.633,3.500 t=0.120
+    note@1 x=43.311 w=5.474
+      glyph noteheadBlack 43.311,-0.500
+      line  43.311,-0.332 -> 43.311,3.000 t=0.120
+    bar x=47.990 w=0.160
+      line  48.070,-2.000 -> 48.070,2.000 t=0.160
+    note@1 x=49.409 w=5.474
+      glyph noteheadBlack 49.409,-0.500
+      line  49.409,-0.332 -> 49.409,3.000 t=0.120
+      text  48.685,-4.664 size=2.065 "Am"
+    note@0 x=54.088 w=5.474
+      glyph noteheadBlack 54.088,0.000
+      line  54.088,0.168 -> 54.088,3.500 t=0.120
+    note@-1 x=58.767 w=5.474
+      glyph noteheadBlack 58.767,0.500
+      line  59.947,0.332 -> 59.947,-3.000 t=0.120
+    note@-2 x=63.445 w=5.474
+      glyph noteheadBlack 63.445,1.000
+      line  64.625,0.832 -> 64.625,-2.500 t=0.120
+    bar x=68.124 w=0.160
+      line  68.204,-2.000 -> 68.204,2.000 t=0.160
+    note@-3 x=69.543 w=5.474
+      glyph noteheadBlack 69.543,1.500
+      line  70.723,1.332 -> 70.723,-2.000 t=0.120
+      text  69.652,-4.664 size=2.065 "F"
+    note@-4 x=74.222 w=5.474
+      glyph noteheadBlack 74.222,2.000
+      line  75.402,1.832 -> 75.402,-1.500 t=0.120
+    note@-5 x=78.901 w=5.474
+      glyph noteheadBlack 78.901,2.500
+      line  80.081,2.332 -> 80.081,-1.000 t=0.120
+    note@-6 x=83.579 w=5.474
+      glyph noteheadBlack 83.579,3.000
+      line  83.179,3.000 -> 85.245,3.000 t=0.160
+      line  84.759,2.832 -> 84.759,-0.500 t=0.120
+    bar x=88.258 w=0.160
+      line  88.338,-2.000 -> 88.338,2.000 t=0.160

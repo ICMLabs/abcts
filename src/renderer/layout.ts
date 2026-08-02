@@ -178,6 +178,33 @@ export const ENGRAVE = {
    */
   barGap: 11 / 7.75,
   /**
+   * What a barline occupies on the LAYOUT cursor, by kind — abcjs's `child.w`, which is
+   * not its drawn thickness but a flat width per type. Read out of abcjs by probe, one
+   * measure per kind:
+   *
+   * ```
+   * |  1     ||  4     |]  8     |:  16     :|  14     ::  22     [|  13
+   * ```
+   *
+   * The rod is this plus the flat 10 of `minspacing`, which is where the familiar 11 for
+   * a plain barline comes from. Using one flat 11 for every kind puts a final `|]` 7px
+   * narrow, and because a line's LAST element keeps its width and loses its `minspacing`
+   * that 7px lands entirely in the justification's constant term: on
+   * `vree-compound-meter` it stretched every gap by 0.58px, a drift that reached 6.4px by
+   * the twelfth note.
+   *
+   * `[|` is not here because the parser folds it into `double`, where abcjs keeps them
+   * apart at 13 and 4 — a model question, not a spacing one.
+   */
+  barLayoutWidth: {
+    thin: 1 / 7.75,
+    double: 4 / 7.75,
+    final: 8 / 7.75,
+    repeatStart: 16 / 7.75,
+    repeatEnd: 14 / 7.75,
+    repeatBoth: 22 / 7.75,
+  } as Record<Barline, number>,
+  /**
    * LANES above and below the staff, in staff steps. The staff itself spans -4 to 4.
    *
    * Fixed lanes rather than a skyline pass. Real engraving stacks whatever is present
@@ -1005,17 +1032,6 @@ function dotGlyphs(count: number, x: number, step: number, taken: Set<number>): 
  * implemented — every corpus fixture has something a quarter or shorter, so the cap
  * would never fire. Add it with the line's shortest note when a long-only tune appears.
  */
-/**
- * How far an element advances at a given spring factor — abcjs's
- * `x = max(voice.minx, voice.nextx)` (`layout/voice-elements.js:81,99`).
- *
- * The rod is fixed and the spring scales, so which one wins can CHANGE as the factor moves.
- * That is what makes the total width piecewise-linear in the factor, and why solving for it
- * takes iteration rather than a division.
- */
-const advanceAt = (el: LayoutElement, factor: number): number =>
-  el.spring === undefined ? el.width : Math.max(el.rod ?? 0, factor * el.spring)
-
 export function naturalWidth(
   duration: Rational,
   spacingScale: number = ENGRAVE.spacingScale,
@@ -3211,21 +3227,38 @@ interface MeasureBlock {
    */
   readonly musicWidth: number
   /**
-   * Per element: the ROD and SPRING it advances x by, the musical time it starts at, and
-   * its duration. `onset` is abcjs's `voice.durationindex`, `duration` its
-   * `voice.spacingduration` — both needed to walk every voice on one cursor.
+   * Per element: the ROD it advances x by and its duration — abcjs's `getMinWidth(child) +
+   * child.minspacing` and `child.duration`. Musical time is NOT recorded here: the cursor
+   * accumulates it as abcjs's `voice.durationindex` does, per voice and across the whole
+   * LINE, so a bar of 1.0 in one voice and 1.5 in another simply drift apart.
    */
-  readonly advances: readonly {
-    readonly rod: number
-    readonly spring: number
-    readonly onset: number
-    readonly duration: number
-  }[]
+  readonly advances: readonly Advance[]
 }
 
-/** A measure's width at a given spring factor. */
-const blockWidthAt = (block: MeasureBlock, factor: number): number =>
-  block.advances.reduce((sum, a) => sum + Math.max(a.rod, factor * a.spring), 0)
+/**
+ * One step of a voice's cursor.
+ *
+ * `rod` is the whole of `getMinWidth(child) + child.minspacing`; `gap` is the `minspacing`
+ * part of it alone, kept apart because **a line's last element does not get its
+ * `minspacing`** (`if (voice.i !== voice.children.length - 1) voice.minx += child.minspacing`,
+ * `layout/voice-elements.js`). The spring is not stored — it is `sqrt(duration)`, and the
+ * cursor recomputes it at whatever factor the solve has reached.
+ */
+interface Advance {
+  readonly rod: number
+  readonly gap: number
+  readonly duration: number
+}
+
+/**
+ * How far a barline pushes the cursor: its own layout width plus the flat `minspacing`.
+ *
+ * Strict takes the width from abcjs's table, because that number is abcjs's and has
+ * nothing to do with how thick the rules are drawn. The other modes measure the glyph
+ * they actually draw, which is the honest answer once byte-parity is not the point.
+ */
+const barRod = (kind: Barline, el: LayoutElement, strict: boolean): number =>
+  (strict ? (ENGRAVE.barLayoutWidth[kind] ?? el.width) : el.width) + ENGRAVE.prefixGap
 
 /**
  * Lay out one measure at x = 0. Position within a system comes later, by translation,
@@ -3257,11 +3290,10 @@ function layoutMeasure(
    * nothing at all. Justification has to re-run this sum at a new spring factor, so the
    * split has to survive the measure.
    */
-  const advances: { rod: number; spring: number; onset: number; duration: number }[] = []
-  /** Musical time reached so far — abcjs's `voice.durationindex`. */
-  let onset = 0
-  const fixed = (rod: number): void => {
-    advances.push({ rod, spring: 0, onset, duration: 0 })
+  const advances: Advance[] = []
+  /** A zero-duration element: a bar, a key change, a part label. */
+  const fixed = (rod: number, gap: number): void => {
+    advances.push({ rod, gap, duration: 0 })
   }
   const beams = new Map<number, StemInfo[]>()
   const anchors: NoteAnchor[] = []
@@ -3285,7 +3317,7 @@ function layoutMeasure(
         )
   if (measure.partLabel !== null && partIndex === 0) {
     elements.push(layoutPart(x, measure.partLabel))
-    fixed(0)
+    fixed(0, 0)
   }
 
   // A mid-tune `K:` and the barline that opens the measure print in SOURCE ORDER.
@@ -3308,15 +3340,16 @@ function layoutMeasure(
     const change = layoutKeyChange(x, keyInForce, measure.keyChange, clef, strict)
     if (change === null) return
     elements.push(change)
-    fixed(change.width + ENGRAVE.prefixGap)
+    fixed(change.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
     x += change.width + ENGRAVE.prefixGap
   }
   const drawOpeningBar = (): void => {
     // An opening `|:` or `[|` prints before the measure it belongs to, and is a SEPARATE
     // barline from the previous measure's closer.
     if (measure.openingBarline === null) return
-    elements.push(layoutBar(x, measure.openingBarline, strict))
-    fixed(ENGRAVE.barGap)
+    const bar = layoutBar(x, measure.openingBarline, strict)
+    elements.push(bar)
+    fixed(barRod(measure.openingBarline, bar, strict), ENGRAVE.prefixGap)
     x += ENGRAVE.barGap
   }
   if (keyChangeAt < openingBarAt) {
@@ -3330,7 +3363,7 @@ function layoutMeasure(
   for (const [eventIndex, event] of measure.events.entries()) {
     if (measure.partLabel !== null && eventIndex === partIndex && partIndex > 0) {
       elements.push(layoutPart(x, measure.partLabel))
-      fixed(0)
+      fixed(0, 0)
     }
     const group = event.type === 'rest' ? null : event.beamGroup
     const stemOut: { value: Omit<StemInfo, 'element'> | null } | null =
@@ -3386,23 +3419,23 @@ function layoutMeasure(
     }
     elements.push(el)
     const duration = ratToNumber(event.duration)
-    advances.push({ rod: el.rod ?? el.width, spring: el.spring ?? 0, onset, duration })
-    onset += duration
+    advances.push({ rod: el.rod ?? el.width, gap: ENGRAVE.noteRodGap, duration })
     x += el.width
   }
 
   // Every event preceded the `P:` — the label belongs after them, before the barline.
   if (measure.partLabel !== null && partIndex === -1) {
     elements.push(layoutPart(x, measure.partLabel))
-    fixed(0)
+    fixed(0, 0)
   }
 
   let closingBarIndex: number | null = null
   const musicWidth = x
   if (measure.closingBarline !== null) {
     closingBarIndex = elements.length
-    elements.push(layoutBar(x, measure.closingBarline, strict))
-    fixed(ENGRAVE.barGap)
+    const bar = layoutBar(x, measure.closingBarline, strict)
+    elements.push(bar)
+    fixed(barRod(measure.closingBarline, bar, strict), ENGRAVE.prefixGap)
     x += ENGRAVE.barGap
   }
 
@@ -3482,7 +3515,7 @@ interface VoicePlan {
     withMeter: boolean,
     topStaff: boolean,
     indent: number,
-  ) => { elements: LayoutElement[]; width: number }
+  ) => { elements: LayoutElement[]; advances: Advance[] }
 }
 
 /**
@@ -3638,26 +3671,31 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       withMeter: boolean,
       topStaff: boolean,
       indent: number,
-    ): { elements: LayoutElement[]; width: number } => {
+    ): { elements: LayoutElement[]; advances: Advance[] } => {
       const elements: LayoutElement[] = []
+      const advances: Advance[] = []
       // The voice-name reservation pushes the whole prefix — and the music after it —
       // right, exactly as abcjs's `getLeftEdgeOfStaff` moves `staffGroup.startx`.
+      //
+      // These are abcjs's `staff-extra` children: ordinary zero-duration elements on the
+      // voice's own child list, laid out through the SAME shared cursor as the music. So a
+      // treble clef against a bass clef does not give the two staves different prefix
+      // widths — the cursor takes the wider ONE ELEMENT AT A TIME and both time signatures
+      // land on the same x. Summing each voice's prefix and taking the widest total is a
+      // different number whenever the two voices' prefixes differ in shape.
       let x = ENGRAVE.marginX + indent
+      const push = (el: LayoutElement): void => {
+        elements.push(el)
+        advances.push({ rod: el.width + ENGRAVE.prefixGap, gap: ENGRAVE.prefixGap, duration: 0 })
+        x += el.width + ENGRAVE.prefixGap
+      }
 
       const clefElement = layoutClef(x, clef, strict)
-      if (clefElement !== null) {
-        elements.push(clefElement)
-        x += clefElement.width + ENGRAVE.prefixGap
-      }
+      if (clefElement !== null) push(clefElement)
       const keySig = layoutKeySignature(x, score.key, clef, strict)
-      if (keySig !== null) {
-        elements.push(keySig)
-        x += keySig.width + ENGRAVE.prefixGap
-      }
+      if (keySig !== null) push(keySig)
       if (withMeter && score.meter !== null) {
-        const meter = layoutMeter(x, score.meter.numerator, score.meter.denominator)
-        elements.push(meter)
-        x += meter.width + ENGRAVE.prefixGap
+        push(layoutMeter(x, score.meter.numerator, score.meter.denominator))
       }
       // The tempo mark belongs to the TUNE — not to each system, and not to each voice.
       // It prints once: on the first system, above the top staff. Every staff still gets
@@ -3665,9 +3703,12 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       // Zero width, so it does not advance the cursor.
       if (withMeter && topStaff && score.tempo !== null) {
         const tempo = layoutTempo(x, score.tempo, strict)
-        if (tempo !== null) elements.push(tempo)
+        if (tempo !== null) {
+          elements.push(tempo)
+          advances.push({ rod: 0, gap: 0, duration: 0 })
+        }
       }
-      return { elements, width: x }
+      return { elements, advances }
     }
 
     return {
@@ -3702,18 +3743,9 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     return (widest + VOICE_NAME_GAP_PX) / 7.75
   }
 
-  // Measures align across voices: column i is as wide as the widest voice's bar i. A
-  // voice that runs short simply contributes nothing to the columns past its end.
+  /** How many measures the longest voice has — the span indices run over these. */
   const columns = Math.max(0, ...plans.map((plan) => plan.blocks.length))
-  const columnWidths = Array.from({ length: columns }, (_, i) =>
-    Math.max(0, ...plans.map((plan) => plan.blocks[i]?.width ?? 0)),
-  )
 
-  // Every staff in a system shares one prefix width, or the columns would not line up.
-  const headWidth = (withMeter: boolean, indent: number): number =>
-    Math.max(0, ...plans.map((plan) => plan.prefix(withMeter, false, indent).width))
-
-  // Pack columns into systems, breaking before the column that would overflow.
   /**
    * Systems follow the SOURCE, not a width packer.
    *
@@ -3752,109 +3784,46 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
   // Anchors for every note of every voice, tagged with the system it landed in. A slur
   // or tie can span a break, so pairing them needs the whole tune, not one system.
   const voiceAnchors: NoteAnchor[][] = plans.map(() => [])
+  /**
+   * Where the MUSIC starts on each system, past the clef and key — the left clamp for a
+   * slur continued from the system above. With one cursor per line there is no shared
+   * prefix width to read this off, so each system records where its first music element
+   * actually landed.
+   */
+  const musicLeft: number[] = []
 
   const systems: LayoutSystem[] = spans.map((span, systemIndex) => {
     const withMeter = systemIndex === 0
     const indent = indentFor(systemIndex)
-    const head = headWidth(withMeter, indent)
 
     /**
-     * Justify the system to the page: every column stretches by a common factor so the
-     * right edges line up, which is what makes a page of music look like a page rather
-     * than a ragged list.
+     * ONE CURSOR ACROSS EVERY VOICE, FOR THE WHOLE LINE — abcjs's `layoutStaffGroup`.
      *
-     * The LAST system is left alone — a final line holding one bar would otherwise be
-     * stretched across the whole page. And a system that would need more than
-     * `maxJustifyStretch` is left short for the same reason, per *Behind Bars*.
-     */
-    const natural = columnWidths.slice(span.start, span.end).reduce((sum, w) => sum + w, 0)
-    const available = systemWidth - head - ENGRAVE.marginX
-    // Trailing `%%center` text means the music is no longer the LAST LINE of the tune, so
-    // abcjs justifies it unconditionally — its last-line guard tests the last LINE, not
-    // the last STAFF line. `center-text` sat 219px out on exactly this.
-    const isLast = systemIndex === spans.length - 1 && score.textBelow.length === 0
-    // The last system is stretched only when it is ALREADY most of the way across.
-    //
-    // "Never stretch the last system" was too blunt and was the single largest source of
-    // horizontal divergence from abcjs — bigger than line breaking. abcjs's rule is in
-    // `write/layout/layout.js:99`: a last line under `LAST_SYSTEM_FILL` of the target is
-    // left at its natural width, and anything above it is justified like any other. Every
-    // single-tune fixture is a last system, so we justified NONE of them where abcjs
-    // justified most: `vree-compound-meter` sat 183px out, `center-text` 219px.
-    //
-    // `simple-c` is the case that makes the threshold visible rather than arbitrary — it
-    // fills about 60% and NEITHER engine stretches it, which is why its notes already
-    // matched to the pixel while its neighbours did not.
-    // The margin counts: abcjs compares `staffGroup.w` — which starts at its left
-    // padding — against the target, so leaving it out understates the fill and suppresses
-    // justification on lines that sit just under the threshold.
-    const fill = (natural + head + ENGRAVE.marginX) / systemWidth
-    const stretchLast = fill >= ENGRAVE.lastSystemFill
-    const wanted = natural > 0 ? available / natural : 1
-    // COMPRESSION IS UNCONDITIONAL, and it is what makes source-line breaking work at
-    // all: a line longer than the page is squeezed to fit, never wrapped. abcjs's
-    // `calcHorizontalSpacing` computes one spacing that serves both directions, and its
-    // last-line guard only ever suppresses STRETCHING — a last line that is too long has
-    // `lineWidth / targetWidth > 1`, sails past the 0.66 test, and gets compressed like
-    // any other. Without this half, replacing the width packer just let long lines
-    // overflow the page.
-    // NO RATIO CAP on a non-last line. abcjs's `calcHorizontalSpacing`
-    // (`write/layout/layout.js:99`) justifies every line that is not the last one, however
-    // far it has to stretch — its only guard is an ABSOLUTE one on the resulting spacing,
-    // not a ratio. `maxJustifyStretch` was a *Behind Bars* judgement abcjs does not share,
-    // and it left `frere-jacques`'s two short prose-derived systems at a quarter of the
-    // page where abcjs fills it.
-    //
-    // ponytail: abcjs's ABSOLUTE guard is not reproduced — `if (spacing * minSpace > 50)
-    // spacing = 50 / minSpace`, which caps the stretched spring of the shortest note.
-    // Modelling it needs abcjs's spacing-unit accounting (`sqrt(duration * 8)` summed per
-    // layout step, with rods excluded), and our column model has no equivalent of
-    // `spacingUnits`: measuring the cap off element ORIGINS instead includes the rod and
-    // binds far too early — it pulled `frere-jacques` from a 42px spread back to 280px and
-    // `multi-voice-lyrics-two-voices` from 51 to 223. Uncapped matches abcjs on all 29
-    // pixel-gated fixtures; what it costs is that an ungated sparse line (`S3-note-syntax`
-    // has a two-note system) stretches across the page where abcjs would hold it in.
-    // Reinstate this together with a real spring/rod split, not before.
-    /**
-     * THE SPRING SOLVE — abcjs's `calcHorizontalSpacing` loop (`layout/layout.js:70-76,100`).
+     * There are no columns here and there is no per-measure reconciliation. abcjs walks a
+     * single cursor along one timeline per LINE: each pass takes the voices whose next
+     * element sits at the smallest pending musical time, moves the cursor to the furthest
+     * right any of them wants to be, places them all THERE, and tells every voice still
+     * waiting that some of its time has been spent without it.
      *
-     * Justification scales the SPRINGS and leaves the RODS where they are, so the width is
-     * `sum of max(rod, factor * spring)` — piecewise-linear in the factor, because which
-     * term wins changes as it moves. That cannot be inverted in one step, which is why
-     * abcjs re-solves up to 8 times and why a single multiplier was never going to land.
+     * Two consequences the per-column model could not have, and both are load-bearing:
      *
-     * Each pass takes the springs that currently win, holds everything else fixed, and
-     * solves `factor = (target - rods) / springs` for them. It converges in two or three
-     * passes on real music; the 8 is abcjs's own bound and its 2px tolerance is kept too.
-     */
-    /**
-     * THE LAST ELEMENT OF A LINE DOES NOT GET ITS `minspacing`.
+     * 1. **Barlines are not aligned.** They are ordinary zero-duration elements on the
+     *    timeline. `voice-middle-after-clef` writes a bar of 1.0 against a bar of 1.5 and
+     *    abcjs simply lets the two voices' bars fall where their own time says — measure 2
+     *    starts at 207.1 on one staff and 278.1 on the other. A column model force-aligns
+     *    them because a column IS a measure, and that fixture sat at exactly 79.0px of
+     *    spread through every change of the arc.
+     * 2. **A FINISHED voice still pushes the cursor.** `getDurationIndex` on an exhausted
+     *    voice reads `children[i]` as undefined and so returns `durationindex - 5e-7`,
+     *    which lands it in `currentvoices` on every remaining pass; `layoutOneItem` places
+     *    nothing, but the isolation loop above it has already taken its `getNextX`. Its
+     *    last element's rod therefore keeps shunting the other voices right after it has
+     *    stopped having anything to say. Measured, not read: on `voice-middle-after-clef`
+     *    the shorter voice's final `|]` at 332.917 pushes the longer voice's next note to
+     *    340.917, exactly its own 8px width.
      *
-     * `if (voice.i !== voice.children.length - 1) voice.minx += child.minspacing`
-     * (`layout/voice-elements.js`). So a system's final barline advances by its own 1px and
-     * not the 11 every other one takes, and the line is 10px narrower than summing the
-     * blocks suggests. On `twinkle` that 10.01px was the whole of the residual once the
-     * page width was right: our natural came to 673.12px against abcjs's 663.11.
-     */
-    const trailingRelief =
-      span.end > span.start &&
-      plans.some((plan) => (plan.blocks[span.end - 1]?.closingBarIndex ?? null) !== null)
-        ? ENGRAVE.barGap - 1 / 7.75
-        : 0
-    /**
-     * ONE CURSOR ACROSS EVERY VOICE — abcjs's `layoutStaffGroup` loop, ported.
-     *
-     * Each pass takes the voices whose next element sits at the smallest pending musical
-     * time, moves the cursor to the furthest right any of them wants to be, places them all
-     * THERE, and then tells every voice still waiting that some of its time has been spent
-     * without it. Simultaneous notes get the same x by construction.
-     *
-     * Laying each voice out alone and reconciling at barlines — what we did — aligns the
-     * bars and nothing between them: `multi-voice-triplet-brackets` had abcjs's gaps at a
-     * regular 24px against ours at 26, 25, 11, 40, 21, 5.
-     *
-     * THE WAITING VOICES ARE THE WHOLE TRICK, and leaving them out is what made the first
-     * attempt at this worse than no attempt. abcjs:
+     * THE WAITING VOICES ARE THE TRICK, and leaving them out is what made the first
+     * attempt at a shared cursor worse than none:
      *
      *     // if a voice had planned to use up 5 spacing units but is not in line to be laid
      *     // out at this duration level - where we've used 2 spacing units - then we must
@@ -3864,113 +3833,171 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
      *
      * A half note does not push the cursor its full width at once; it gives up its width in
      * instalments as another voice's shorter notes go by. The recompute is
-     * `sqrt(remaining)`, NOT a proportional share, so it cannot be faked by splitting an
-     * advance evenly across the onsets it spans.
-     *
-     * Per COLUMN rather than per line, which is equivalent because barlines already agree
-     * across voices, and much less invasive.
+     * `sqrt(remaining)`, NOT a proportional share.
      */
-    const timelineAt = (i: number, factor: number): { positions: number[][]; width: number } => {
-      const lists = plans.map((plan) => plan.blocks[i]?.advances ?? [])
-      const at = lists.map(() => 0)
-      const positions: number[][] = lists.map(() => [])
-      // abcjs's per-voice state: where it wants its next element, and how much of its
-      // current note's duration is still unspent.
-      const minx = lists.map(() => 0)
-      const nextx = lists.map(() => 0)
-      const unspent = lists.map(() => 0)
-      const index = lists.map(() => 0)
-      const spring = (d: number): number => factor * springForDuration(d, spacingScale)
-      const nextXOf = (v: number): number => Math.max(minx[v] ?? 0, nextx[v] ?? 0)
-      let x = 0
-      // Bounded rather than `while (true)`: every pass advances at least one voice's cursor,
-      // so the element count is the ceiling, and a bug cannot hang the renderer.
-      const passes = lists.reduce((n, l) => n + l.length, 0)
-      for (let pass = 0; pass <= passes; pass += 1) {
-        let currentTime = Number.POSITIVE_INFINITY
-        for (const [v, list] of lists.entries()) {
-          const a = list[at[v] ?? 0]
-          if (a !== undefined) currentTime = Math.min(currentTime, index[v] ?? a.onset)
-        }
-        if (!Number.isFinite(currentTime)) break
-        const current: number[] = []
-        const waiting: number[] = []
-        for (const [v, list] of lists.entries()) {
-          if (list[at[v] ?? 0] === undefined) continue
-          // Floating durations, so compare with a tolerance as abcjs does.
-          ;((index[v] ?? 0) - currentTime > 1e-9 ? waiting : current).push(v)
-        }
-        if (current.length === 0) break
+    /** abcjs's `epsilon` — durations are floats and are compared, never equated. */
+    const EPSILON = 1e-7
+    /**
+     * A zero-duration element is fractionally EARLIER than a note at the same time, so a
+     * clef, key, meter, bar or part label is laid out before the other voices' notes reach
+     * it (`getDurationIndex`, `layout/staff-group.js`).
+     */
+    const BEFORE = 5e-7
+    /** Where the staff's music starts — abcjs's `getLeftEdgeOfStaff`. */
+    const leftEdge = ENGRAVE.marginX + indent
 
-        // The cursor moves to the furthest right any current voice wants to be, and the
-        // voice that pushed it there is the one whose spent time the others must account for.
+    /** Every element of one voice on this line, prefix included, in cursor order. */
+    const heads = plans.map((plan) => plan.prefix(withMeter, plans.indexOf(plan) === 0, indent))
+    const lines = plans.map((plan, v) => {
+      const items: Advance[] = [...(heads[v]?.advances ?? [])]
+      /** Where item `k` belongs: the prefix (`block: -1`) or element `index` of `block`. */
+      const slots: { block: number; index: number }[] = (heads[v]?.advances ?? []).map(
+        (_, index) => ({ block: -1, index }),
+      )
+      for (let i = span.start; i < span.end; i++) {
+        const block = plan.blocks[i]
+        if (block === undefined) continue
+        block.advances.forEach((a, index) => {
+          items.push(a)
+          slots.push({ block: i, index })
+        })
+      }
+      return { items, slots }
+    })
+
+    /**
+     * Lay the whole line out at one spacing factor, and report what abcjs's solve needs.
+     *
+     * `units` is abcjs's `spacingUnits`: the `sqrt(duration * 8)` of whichever voice pushed
+     * the cursor, summed over every pass. It is the part of the line's width that scales
+     * with the factor, and the solve inverts on it directly — no piecewise search, because
+     * the rods that won are already accounted for in `width - units * spacing`.
+     */
+    const lineAt = (factor: number): { at: number[][]; width: number; units: number } => {
+      const n = lines.length
+      const i = new Array<number>(n).fill(0)
+      const durationIndex = new Array<number>(n).fill(0)
+      const minx = new Array<number>(n).fill(leftEdge)
+      const nextx = new Array<number>(n).fill(leftEdge)
+      const unspent = new Array<number>(n).fill(0)
+      const at: number[][] = lines.map(() => [])
+      /** abcjs's `getSpacingUnits` — NO floor, and zero for a zero-duration element. */
+      const unitsOf = (d: number): number => (d > 0 ? Math.sqrt(d / ENGRAVE.spacingReference) : 0)
+      const spring = (d: number): number => factor * spacingScale * unitsOf(d)
+      const itemOf = (v: number): Advance | undefined => lines[v]?.items[i[v] ?? 0]
+      const ended = (v: number): boolean => itemOf(v) === undefined
+      const nextXOf = (v: number): number => Math.max(minx[v] ?? 0, nextx[v] ?? 0)
+      /** Time this voice is pending at — earlier by a hair when its next element is fixed. */
+      const timeOf = (v: number): number =>
+        (durationIndex[v] ?? 0) - ((itemOf(v)?.duration ?? 0) > 0 ? 0 : BEFORE)
+
+      let x = leftEdge
+      let units = 0
+      // Bounded rather than `while (!finished)`: every pass advances at least one voice, so
+      // the element count is the ceiling and a bug cannot hang the renderer.
+      const passes = lines.reduce((sum, line) => sum + line.items.length, 0)
+      for (let pass = 0; pass < passes; pass += 1) {
+        // The smallest pending time among the voices that still have something to place.
+        // ENDED VOICES ARE EXCLUDED HERE and included in the isolation below — abcjs's own
+        // asymmetry, and what stops an exhausted short voice pinning the cursor forever.
+        let current = Number.POSITIVE_INFINITY
+        for (let v = 0; v < n; v += 1) if (!ended(v)) current = Math.min(current, timeOf(v))
+        if (!Number.isFinite(current)) break
+
+        const now: number[] = []
+        const waiting: number[] = []
+        for (let v = 0; v < n; v += 1) (timeOf(v) - current > EPSILON ? waiting : now).push(v)
+
+        // The cursor goes to the furthest right any of them wants to be, and the voice that
+        // pushed it there is the one whose spent time the others have to account for.
+        let unit = 0
         let spent = 0
-        for (const v of current) {
+        for (const v of now) {
           if (nextXOf(v) > x) {
             x = nextXOf(v)
+            unit = unitsOf(unspent[v] ?? 0)
             spent = unspent[v] ?? 0
           }
         }
-        for (const v of current) {
-          const a = lists[v]?.[at[v] ?? 0]
-          if (a === undefined) continue
-          positions[v]?.push(x)
-          unspent[v] = a.duration
-          minx[v] = x + a.rod
-          nextx[v] = x + spring(a.duration)
-          index[v] = (index[v] ?? 0) + a.duration
-          at[v] = (at[v] ?? 0) + 1
+        units += unit
+
+        for (const v of now) {
+          const item = itemOf(v)
+          if (item === undefined) continue // exhausted: it moved the cursor and nothing else
+          at[v]?.push(x)
+          unspent[v] = item.duration
+          // The line's LAST element keeps its own width and loses its `minspacing`.
+          const last = (i[v] ?? 0) === (lines[v]?.items.length ?? 0) - 1
+          minx[v] = x + item.rod - (last ? item.gap : 0)
+          nextx[v] = x + spring(item.duration)
+          durationIndex[v] = (durationIndex[v] ?? 0) + item.duration
+          i[v] = (i[v] ?? 0) + 1
         }
         for (const v of waiting) {
-          const left = (unspent[v] ?? 0) - spent
-          unspent[v] = left
-          nextx[v] = x + spring(left)
+          unspent[v] = (unspent[v] ?? 0) - spent
+          nextx[v] = x + spring(unspent[v] ?? 0)
         }
       }
-      // The column ends where the last thing placed still needs room.
-      let width = x
-      for (const [v] of lists.entries()) width = Math.max(width, nextXOf(v))
-      return { positions, width }
-    }
-    const columnWidthAt = (i: number, factor: number): number => timelineAt(i, factor).width
-    const totalAt = (factor: number): number => {
-      let sum = 0
-      for (let i = span.start; i < span.end; i++) sum += columnWidthAt(i, factor)
-      return sum - trailingRelief
-    }
-    const solve = (target: number): number => {
-      let factor = 1
-      for (let pass = 0; pass < 8; pass++) {
-        const width = totalAt(factor)
-        if (Math.abs(width - target) < 2 / 7.75) break
-        let springs = 0
-        let rods = 0
-        for (let i = span.start; i < span.end; i++) {
-          // The column is as wide as its widest voice, so that voice's split is the one
-          // that moves when the factor does.
-          let widest: MeasureBlock | undefined
-          let widestW = -1
-          for (const plan of plans) {
-            const block = plan.blocks[i]
-            if (block === undefined) continue
-            const w = blockWidthAt(block, factor)
-            if (w > widestW) {
-              widestW = w
-              widest = block
-            }
-          }
-          for (const a of widest?.advances ?? []) {
-            if (factor * a.spring > a.rod) springs += a.spring
-            else rods += a.rod
-          }
+
+      // The line ends where the last thing placed still needs room.
+      let unit = 0
+      for (let v = 0; v < n; v += 1) {
+        if (nextXOf(v) > x) {
+          x = nextXOf(v)
+          unit = unitsOf(unspent[v] ?? 0)
         }
-        if (springs <= 0) break
-        factor = (target - rods) / springs
+      }
+      return { at, width: x, units: units + unit }
+    }
+
+    /**
+     * THE SOLVE — abcjs's `setXSpacing` / `calcHorizontalSpacing` (`layout/layout.js`).
+     *
+     * Justification scales the SPRINGS and leaves the RODS where they are, and the springs
+     * are exactly `units * spacing` — so `constSpace = width - units * spacing` is
+     * everything that will not move, and one division gives the spacing that hits the
+     * target. It still iterates, because which rods win changes as the spacing does; abcjs
+     * re-lays out up to 8 times and stops within 2px.
+     *
+     * ponytail: abcjs's ABSOLUTE guard — `if (spacing * minSpace > 50) spacing = 50/minSpace`
+     * — is NOT reproduced, and this closes that long-standing open item rather than
+     * deferring it again. `minSpace` is `min` over every pass of the pushing voice's spacing
+     * units, and the FIRST pass always contributes zero: every voice starts at `leftEdge`,
+     * so no voice's `getNextX` is greater than the cursor and `spacingunit` stays 0.
+     * Measured on `voice-middle-after-clef`: `minSpace=0`. `spacing * 0 > 50` is never true,
+     * so the guard is inert in abcjs itself and implementing it would be a divergence.
+     */
+    const target = systemWidth - ENGRAVE.marginX
+    // Trailing `%%center` text means the music is no longer the LAST LINE of the tune, so
+    // abcjs justifies it unconditionally — its last-line guard tests the last LINE, not
+    // the last STAFF line. `center-text` sat 219px out on exactly this.
+    const isLast = systemIndex === spans.length - 1 && score.textBelow.length === 0
+    const justify = ((): number => {
+      let factor = 1
+      for (let pass = 0; pass < 8; pass += 1) {
+        const { width, units } = lineAt(factor)
+        // A last line under `LAST_SYSTEM_FILL` of the page is left at its natural width;
+        // above it, it is justified like any other. "Never stretch the last system" was too
+        // blunt and was the single largest source of horizontal divergence from abcjs —
+        // every single-tune fixture is a last system. COMPRESSION is unconditional: a line
+        // longer than the page has `width / target > 1`, sails past this test and is
+        // squeezed, which is what makes source-line breaking work without a width packer.
+        if (isLast && width / target < ENGRAVE.lastSystemFill) break
+        if (Math.abs(target - width) < 2 / 7.75) break
+        if (units <= 0) break
+        const springs = units * spacingScale
+        factor = (target - (width - factor * springs)) / springs
       }
       return factor
-    }
-    const justify =
-      natural <= 0 ? 1 : wanted < 1 || !isLast || stretchLast ? solve(available) : 1
+    })()
+    const solved = lineAt(justify)
+    musicLeft[systemIndex] = Math.min(
+      ...lines.map((line, v) => {
+        const first = line.slots.findIndex((slot) => slot.block >= 0)
+        return first < 0 ? Number.POSITIVE_INFINITY : (solved.at[v]?.[first] ?? leftEdge)
+      }),
+      systemWidth,
+    )
 
     const staves: LayoutStaff[] = plans.map((plan, voiceIndex) => {
       // The title heads the tune: first system, top staff, and inside the layout so the
@@ -4023,10 +4050,29 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
           ],
         })
       }
+      // Where the cursor put every one of this voice's elements, split back out by the
+      // slot each item came from.
+      const line = lines[voiceIndex]
+      const xs = solved.at[voiceIndex] ?? []
+      const prefixX: number[] = []
+      const blockX = new Map<number, number[]>()
+      line?.slots.forEach((slot, k) => {
+        const x = xs[k]
+        if (x === undefined) return
+        if (slot.block < 0) prefixX[slot.index] = x
+        else {
+          const row = blockX.get(slot.block) ?? []
+          row[slot.index] = x
+          blockX.set(slot.block, row)
+        }
+      })
       const elements: LayoutElement[] = [
         ...heading,
         ...nameElements,
-        ...plan.prefix(withMeter, voiceIndex === 0, indent).elements,
+        // The prefix rides the same cursor as the music, so its elements move with it.
+        ...(heads[voiceIndex]?.elements ?? []).map((el, index) =>
+          shiftElement(el, (prefixX[index] ?? el.x) - el.x),
+        ),
       ]
       const beamGroups = new Map<number, StemInfo[]>()
       const voltaLines: PlacedLine[] = []
@@ -4068,42 +4114,41 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         openVolta = null
       }
 
-      let x = head
+      // Where this voice's measure `i` begins and ends on the line — a volta bracket spans
+      // measures, and with no columns left there is no shared edge to read it off.
+      const startOf = (i: number): number => blockX.get(i)?.find((v) => v !== undefined) ?? leftEdge
+      /**
+       * Where measure `i`'s bracket stops: at the start of the next measure that has any
+       * ink, so `|1 … :|2` runs its two endings back to back with no gap between them.
+       * A column model got this for free — both ends were the same column edge.
+       */
+      const endOf = (i: number): number => {
+        for (let j = i + 1; j < span.end; j++) {
+          const next = blockX.get(j)?.find((v) => v !== undefined)
+          if (next !== undefined) return next
+        }
+        return solved.width
+      }
 
       for (let i = span.start; i < span.end; i++) {
         const block = plan.blocks[i]
         if (block !== undefined) {
           // A new ending closes whatever was open — `|1 … :|2` runs them back to back.
           if (block.volta !== null) {
-            closeVolta(x, true)
-            openVolta = { label: block.volta, startX: x }
+            closeVolta(startOf(i), true)
+            openVolta = { label: block.volta, startX: startOf(i) }
           }
           const base = elements.length
-          // JUSTIFY the measure into its column. Scaling each element's ORIGIN by the
-          // stretch factor distributes the slack between the notes in proportion to the
-          // space each already occupies — which is exactly what stretching springs of
-          // different natural widths by a common factor does. Internal geometry is
-          // untouched, because `shiftElement` translates a whole element: an accidental
-          // stays the same distance from its notehead however far the measure stretches.
-          // Only the music stretches; the closing barline is a rod that keeps its
-          // distance from the column edge, so barlines stay aligned across staves.
-          // Each element is re-placed at the running sum of `max(rod, factor * spring)`,
-          // which is abcjs's cursor exactly. The closing barline still snaps to the column
-          // edge: the column is as wide as its widest voice, and a sparser voice's bar has
-          // to land on the same line or the staves stop agreeing.
-          const column = columnWidthAt(i, justify)
-          // Every voice reads its x out of the COLUMN's shared timeline, so notes at the
-          // same musical time land on the same x however differently the voices are
-          // written. Internal geometry is untouched: `shiftElement` translates a whole
-          // element, so an accidental keeps its distance from its notehead. The barline
-          // needs no special case — it is one more entry on the timeline, and every voice's
-          // copy lands on the same x because they all read the same one.
-          const placedAt = timelineAt(i, justify).positions[voiceIndex] ?? []
+          // Every element sits where the LINE's shared cursor put it: notes at the same
+          // musical time land on the same x however differently the voices are written, and
+          // a barline is one more entry on that timeline rather than a column edge. Internal
+          // geometry is untouched — `shiftElement` translates a whole element, so an
+          // accidental keeps its distance from its notehead however far the line stretches.
+          const placedAt = blockX.get(i) ?? []
           /** How far element `index` moved — beams and anchors ride with their element. */
           const shiftOf = (index: number): number => {
-            const el = block.elements[index]
-            if (el === undefined) return x
-            return x + (placedAt[index] ?? el.x) - el.x
+            const at = block.elements[index]?.x ?? 0
+            return (placedAt[index] ?? at) - at
           }
           block.elements.forEach((el, index) => {
             elements.push(shiftElement(el, shiftOf(index)))
@@ -4128,9 +4173,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
             })
           }
         }
-        // Advance by the COLUMN, not the block, so every staff stays in step.
-        x += columnWidthAt(i, justify)
-        if (block?.closesVolta) closeVolta(x, true)
+        if (block?.closesVolta) closeVolta(endOf(i), true)
       }
 
       const beams: PlacedLine[] = []
@@ -4142,7 +4185,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       // every system's anchors, which only exist once the whole tune is packed. Filled
       // in by the pass below.
       // An ending still open at the end of a system runs off it, unhooked.
-      closeVolta(x, false)
+      closeVolta(solved.width, false)
 
       // Tuplets resolve here — unlike curves they never span a system, because a beam
       // and a barline both break them long before a line break can.
@@ -4177,9 +4220,9 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       }
     })
 
-    // From the SOLVED total, not `natural * justify` — the two part company as soon as a
-    // rod wins over its spring, and the trailing relief is only in the former.
-    const musicWidth = head + totalAt(justify) + ENGRAVE.marginX
+    // The line's own solved width — abcjs's `staffGroup.w`, which is absolute and already
+    // carries the left edge — plus the right margin.
+    const musicWidth = solved.width + ENGRAVE.marginX
 
     /**
      * The drawing has to fit its PROSE too, not just its music.
@@ -4267,8 +4310,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     // TITLE-LESS one has no heading to fold it into, so without this the whole system
     // rides `musicSpace` too high. Only system 0, and only when it has no heading — a
     // later system's spacing is the inter-system minimum, not this.
-    const headingless =
-      systemIndex === 0 && !merged[0]?.elements.some((el) => el.type === 'title')
+    const headingless = systemIndex === 0 && !merged[0]?.elements.some((el) => el.type === 'title')
     let cursor = headingless ? ENGRAVE.musicSpace : 0
     /** Bottom staff LINE of the staff placed before this one, in system coordinates. */
     let previousBottomLine: number | null = null
@@ -4331,7 +4373,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
   // tune and hand each system its share.
   // Music starts after the widest prefix on the system and ends at its right margin.
   const systemBounds = systems.map((system, i) => ({
-    left: headWidth(i === 0, indentFor(i)),
+    left: musicLeft[i] ?? ENGRAVE.marginX + indentFor(i),
     right: system.width - ENGRAVE.marginX,
   }))
   const curvesBySystem = voiceAnchors.map((anchors) => layoutCurves(anchors, systemBounds))
@@ -4616,8 +4658,7 @@ function anchorLyrics<
   ).bottom
   const written = stepToY(ENGRAVE.lyricStep)
   return parts.map((part, voiceIndex) => {
-    const shift =
-      inkBottom + ENGRAVE.lyricInkGap + voiceIndex * ENGRAVE.lyricVoiceStep - written
+    const shift = inkBottom + ENGRAVE.lyricInkGap + voiceIndex * ENGRAVE.lyricVoiceStep - written
     return {
       ...part,
       elements: part.elements.map((el) =>
@@ -4771,7 +4812,8 @@ function anchorBelowStaff<
         voltaLines: parts.flatMap((p) => p.voltaLines ?? []),
         voltaTexts: parts.flatMap((p) => p.voltaTexts ?? []),
       },
-    ).bottom - ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
+    ).bottom -
+    ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
 
   const shift = inkBottom - stepToY(ENGRAVE.dynamicBelowStep)
   const moveLine = (l: PlacedLine): PlacedLine =>
@@ -5073,5 +5115,3 @@ function beamDirections(
   }
   return directions
 }
-
-

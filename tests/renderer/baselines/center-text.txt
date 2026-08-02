@@ -1,49 +1,49 @@
 tune 0
-bounds  width=90.000 height=24.257 top=-1.935
+bounds  width=90.323 height=24.257 top=-1.935
 systems 1
-system 0 width=90.000 originY=0.000
+system 0 width=90.323 originY=0.000
   staff 0 originY=18.321
-    staffline 0.000,2.000 -> 90.000,2.000 t=0.130
-    staffline 0.000,1.000 -> 90.000,1.000 t=0.130
-    staffline 0.000,0.000 -> 90.000,0.000 t=0.130
-    staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
+    staffline 0.000,2.000 -> 90.323,2.000 t=0.130
+    staffline 0.000,1.000 -> 90.323,1.000 t=0.130
+    staffline 0.000,0.000 -> 90.323,0.000 t=0.130
+    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  31.241,-13.862 size=3.484 bold "Center Directive Test"
-      text  39.464,-9.661 size=2.452 italic "Test Fixture"
-      text  27.107,-5.459 size=2.710 "This is centered text above the tune"
-    clef x=1.935 w=2.458
-      glyph gClef 1.935,1.000
-    timeSignature x=5.394 w=1.522
-      glyph timeSig4 5.394,-1.000
-      glyph timeSig4 5.394,1.000
-    note@-6 x=7.916 w=5.474
-      glyph noteheadBlack 7.916,3.000
-      line  7.516,3.000 -> 9.581,3.000 t=0.160
-      line  9.096,2.832 -> 9.096,-0.500 t=0.120
-    note@-5 x=17.434 w=5.474
-      glyph noteheadBlack 17.434,2.500
-      line  18.614,2.332 -> 18.614,-1.000 t=0.120
-    note@-4 x=26.953 w=5.474
-      glyph noteheadBlack 26.953,2.000
-      line  28.133,1.832 -> 28.133,-1.500 t=0.120
-    note@-3 x=36.471 w=5.474
-      glyph noteheadBlack 36.471,1.500
-      line  37.651,1.332 -> 37.651,-2.000 t=0.120
-    bar x=46.990 w=0.160
-      line  47.070,-2.000 -> 47.070,2.000 t=0.160
-    note@-2 x=47.990 w=5.474
-      glyph noteheadBlack 47.990,1.000
-      line  49.170,0.832 -> 49.170,-2.500 t=0.120
-    note@-1 x=57.509 w=5.474
-      glyph noteheadBlack 57.509,0.500
-      line  58.689,0.332 -> 58.689,-3.000 t=0.120
-    note@0 x=67.027 w=5.474
-      glyph noteheadBlack 67.027,0.000
-      line  67.027,0.168 -> 67.027,3.500 t=0.120
-    note@1 x=76.546 w=5.474
-      glyph noteheadBlack 76.546,-0.500
-      line  76.546,-0.332 -> 76.546,3.000 t=0.120
-    bar x=87.065 w=1.060
-      line  87.145,-2.000 -> 87.145,2.000 t=0.160
-      line  87.875,-2.000 -> 87.875,2.000 t=0.500
+      text  31.402,-13.862 size=3.484 bold "Center Directive Test"
+      text  39.625,-9.661 size=2.452 italic "Test Fixture"
+      text  27.268,-5.459 size=2.710 "This is centered text above the tune"
+    clef x=1.935 w=3.103
+      glyph gClef 2.581,1.000
+    timeSignature x=6.329 w=1.522
+      glyph timeSig4 6.329,-1.000
+      glyph timeSig4 6.329,1.000
+    note@-6 x=9.141 w=5.474
+      glyph noteheadBlack 9.141,3.000
+      line  8.741,3.000 -> 10.807,3.000 t=0.160
+      line  10.321,2.832 -> 10.321,-0.500 t=0.120
+    note@-5 x=18.741 w=5.474
+      glyph noteheadBlack 18.741,2.500
+      line  19.921,2.332 -> 19.921,-1.000 t=0.120
+    note@-4 x=28.340 w=5.474
+      glyph noteheadBlack 28.340,2.000
+      line  29.520,1.832 -> 29.520,-1.500 t=0.120
+    note@-3 x=37.939 w=5.474
+      glyph noteheadBlack 37.939,1.500
+      line  39.119,1.332 -> 39.119,-2.000 t=0.120
+    bar x=47.538 w=0.160
+      line  47.618,-2.000 -> 47.618,2.000 t=0.160
+    note@-2 x=48.958 w=5.474
+      glyph noteheadBlack 48.958,1.000
+      line  50.138,0.832 -> 50.138,-2.500 t=0.120
+    note@-1 x=58.557 w=5.474
+      glyph noteheadBlack 58.557,0.500
+      line  59.737,0.332 -> 59.737,-3.000 t=0.120
+    note@0 x=68.156 w=5.474
+      glyph noteheadBlack 68.156,0.000
+      line  68.156,0.168 -> 68.156,3.500 t=0.120
+    note@1 x=77.756 w=5.474
+      glyph noteheadBlack 77.756,-0.500
+      line  77.756,-0.332 -> 77.756,3.000 t=0.120
+    bar x=87.355 w=1.060
+      line  87.435,-2.000 -> 87.435,2.000 t=0.160
+      line  88.165,-2.000 -> 88.165,2.000 t=0.500

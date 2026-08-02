@@ -153,7 +153,13 @@ describe('clefs', () => {
   })
 
   it('reads clef= on a voice', () => {
-    expect(clefOf('X:1\nV:1 clef=bass\nK:C\nC|\n')).toEqual({ shape: 'F', line: 4, octaveShift: 0, middleOverride: null, staffLines: 5 })
+    expect(clefOf('X:1\nV:1 clef=bass\nK:C\nC|\n')).toEqual({
+      shape: 'F',
+      line: 4,
+      octaveShift: 0,
+      middleOverride: null,
+      staffLines: 5,
+    })
   })
 
   it('takes the trailing digit as the staff line, which is how ABC spells three clefs', () => {
@@ -217,10 +223,18 @@ describe('clefs', () => {
 
   it('puts the middle line where each clef says it is', () => {
     // Treble B4 = 34, bass D3 = 22, alto C4 = 28, tenor A3 = 26.
-    expect(middleLineIndex({ shape: 'G', line: 2, octaveShift: 0, middleOverride: null, staffLines: 5 })).toBe(34)
-    expect(middleLineIndex({ shape: 'F', line: 4, octaveShift: 0, middleOverride: null, staffLines: 5 })).toBe(22)
-    expect(middleLineIndex({ shape: 'C', line: 3, octaveShift: 0, middleOverride: null, staffLines: 5 })).toBe(28)
-    expect(middleLineIndex({ shape: 'C', line: 4, octaveShift: 0, middleOverride: null, staffLines: 5 })).toBe(26)
+    expect(
+      middleLineIndex({ shape: 'G', line: 2, octaveShift: 0, middleOverride: null, staffLines: 5 }),
+    ).toBe(34)
+    expect(
+      middleLineIndex({ shape: 'F', line: 4, octaveShift: 0, middleOverride: null, staffLines: 5 }),
+    ).toBe(22)
+    expect(
+      middleLineIndex({ shape: 'C', line: 3, octaveShift: 0, middleOverride: null, staffLines: 5 }),
+    ).toBe(28)
+    expect(
+      middleLineIndex({ shape: 'C', line: 4, octaveShift: 0, middleOverride: null, staffLines: 5 }),
+    ).toBe(26)
   })
 
   it('puts a bass voice where abcjs puts it, which the treble assumption did not', () => {
@@ -244,7 +258,9 @@ describe('clefs', () => {
     expect(clefOf("X:1\nV:1 clef=treble m=d'\nK:C\nC|\n")?.middleOverride).toBe(43)
     // Skipped where `transpose=` is also present — the two interact and written transpose
     // is not realized yet, so honouring `middle=` alone would move the voice wrongly.
-    expect(clefOf('X:1\nV:1 clef=bass middle=d transpose=-24\nK:C\nC|\n')?.middleOverride).toBeNull()
+    expect(
+      clefOf('X:1\nV:1 clef=bass middle=d transpose=-24\nK:C\nC|\n')?.middleOverride,
+    ).toBeNull()
   })
 })
 
@@ -776,11 +792,15 @@ describe('spacing and justification', () => {
     // Including the last, HERE, because every line of this tune is the same length and
     // the last one is therefore as full as the rest. See the next test for the case that
     // makes the rule visible.
-    // 90 LESS THE TRAILING RELIEF. A line's final barline takes its own 1px and not the
-    // 10 of `minspacing` — abcjs skips it on the last element of a voice
-    // (`layout/voice-elements.js`) — so a justified line ends 10px, 1.29 spaces, inside the
-    // page. Every system does it equally, which is what "the same width" is really claiming.
-    const target = 90 - (11 - 1) / 7.75
+    // THE FULL PAGE WIDTH. A line's final barline takes its own 1px and not the 10 of
+    // `minspacing` — abcjs skips it on the last element of a voice
+    // (`layout/voice-elements.js`) — and that now happens INSIDE the cursor, where the
+    // element is placed, rather than as a correction to the finished total. So the solve
+    // stretches until the line really does end on the target and the page comes out whole,
+    // which is abcjs's own arithmetic: `staffGroup.w` reaches `width + padding.left` and
+    // the page is that plus `padding.right`. Every system does it equally, which is what
+    // "the same width" is really claiming.
+    const target = 90
     for (const w of doc.systems.map((s) => s.width)) expect(w).toBeCloseTo(target, 5)
   })
 
@@ -793,7 +813,7 @@ describe('spacing and justification', () => {
     const doc = layout(parse(abc).scores[0] as Score, { systemWidth: 90 })
     const widths = doc.systems.map((s) => s.width)
     expect(widths).toHaveLength(4)
-    const target = 90 - (11 - 1) / 7.75 // see the note above
+    const target = 90 // see the note above
     for (const w of widths.slice(0, -1)) expect(w).toBeCloseTo(target, 5)
     expect(widths[widths.length - 1]).toBeLessThan(45)
   })
