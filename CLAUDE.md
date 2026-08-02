@@ -140,32 +140,22 @@ The work is now GEOMETRIC — does abcts put the ink where abcjs puts it. A pixe
 gate (`tests/pixel-parity.test.ts`) resolves both engines' SVG to absolute pixels and
 measures it. Noteheads match 2696/2696, systems 29/29, output is 0.34x abcjs's bytes.
 
-**The VERTICAL arc is DONE and its branch is GREEN** — `geometry/lyric-ink-anchor` at
-`2e4851a`, 505/505, all 29 fixtures within their pixel-parity ceilings, ceilings re-recorded.
-Ready to merge into `main`; not merged. Read `Docs/CHECKPOINT-2026-08-02.md` before touching
-staff spacing, stems, beams, lyrics, chord symbols, part labels, tempo marks or dynamics.
+**The VERTICAL arc is DONE and MERGED** — `main` is green at 505/505, all 29 pixel-gated
+fixtures within their ceilings, ceilings re-recorded. Branch vs the old main: fixtures within
+ceiling 25/29 → **29/29**, noteheads within 25px 21/29 → **27/29**, corpus median 17.4px →
+**14.7px**.
 
-**The HORIZONTAL arc is OPEN** on `geometry/horizontal` (`52d8125`), red by design but with
-ZERO functional failures — if a functional test fails there, you broke it. dx and ox are
-exactly zero on **8 of 29** fixtures, up from 3 and 0. `Docs/HORIZONTAL-ARC.md` is its
-working spec, and the one structural piece left is a shared cursor across the voices of a
-system: it has been attempted and reverted once, and the missing term is named there.
+**The HORIZONTAL arc is OPEN** on `geometry/horizontal`, red by design but with ZERO
+functional failures — if a functional test fails there, you broke it. dx and ox are exactly
+zero on **8 of 29** fixtures, up from 3 and 0. `Docs/HORIZONTAL-ARC.md` is its working spec;
+the one structural piece left is making the shared-cursor timeline per LINE rather than per
+column.
 
-**A PASSING GATE IS NOT PARITY.** The pixel gate only asserts "no worse than recorded".
-Parity means dy/dx/oy/ox at ZERO on every fixture — currently dy median +0.00 (18/29 at
-zero), dx median +17.06 (8/29).
+**A PASSING GATE IS NOT PARITY.** The gate asserts "no worse than recorded". Parity means
+dy/dx/oy/ox at ZERO — currently dy median +0.00 (18/29 at zero), dx median +9.41 (8/29).
 
-Branch vs main: fixtures within ceiling 25/29 → **29/29**, noteheads within 25px 21/29 →
-**27/29**, corpus median 17.4px → **14.7px**.
-
-**THE METHOD, and the most valuable thing in the checkpoint: instrument abcjs ITSELF rather
-than infer from its output.** `abcMusicKit` is a clean git repo, so an env-guarded
-`console.log` in the vendored source plus `git checkout -- Docs/References/abcjs/`
-afterwards is safe and reversible — always verify clean. Measuring output alone stalled the
-last blocker for two sessions; instrumenting settled it in one, and retired a whole line of
-investigation by showing our beam geometry already matched term for term. Note especially
-that `.elements.json` is the WRONG oracle twice over: it predates beams, and
-`setUpperAndLowerElements` keeps mutating `staff.top`/`bottom` as it runs.
+**PORT THE STRUCTURE, THEN THE CONSTANTS.** The costly divergences have all been
+architectural, not numeric; see the checkpoint's opening section before starting anything.
 
 The `.elements.json` goldens carry `staffs[].top/.bottom` and `specialY` — abcjs's own
 answer to how much room a staff takes. Replicating `setUpperAndLowerElements` over them
@@ -235,41 +225,57 @@ feature-coverage gap, tracked separately and implemented not at all.
 
 ### Continuing mid-project
 ```
-We are continuing abcts development.
+We are continuing abcts development in the abcts repo (Code/abcts).
 
-Read Docs/CHECKPOINT-2026-08-02.md first, then ARCHITECTURE.md, then
-this file. Confirm your lane with `git rev-parse --abbrev-ref HEAD`
-before any structural work — geometry/lyric-ink-anchor is GREEN and
-must stay that way; geometry/horizontal is the open arc.
+Read Docs/CHECKPOINT-2026-08-02.md first — especially its opening
+section on why this work has drifted into trial and error. Then
+Docs/HORIZONTAL-ARC.md, then ARCHITECTURE.md, then this file.
 
-The bar is 100% parity with abcjs, not a passing gate. The gate only
-says "no worse than recorded"; parity means dy/dx/oy/ox at ZERO.
+THE RULE THAT MATTERS: port abcjs's STRUCTURE, then its constants.
+Reading abcjs gives you its numbers cheaply; the expensive divergences
+have all been architectural — one cursor vs per-measure columns, a
+spring/rod solve vs a width multiplier, ink-anchored lanes vs fixed
+ones. Dropping a correct constant into a different structure moves the
+output unpredictably. Before changing a constant, ask whether the
+surrounding LOOP is abcjs's; if not, fix that first.
 
-Work by INSTRUMENTING abcjs itself — env-guarded console.log in the
-vendored source, run its own dump-svg.js harness, then
+Work by INSTRUMENTING — env-guarded console.log in the vendored abcjs
+source, run its own dump-svg.js harness, then
 `git -C ../abcMusicKit checkout -- Docs/References/abcjs/` and verify
-clean. Do not guess-and-check: it is slower, and it has produced every
-wrong turn recorded in the checkpoint.
+clean. Instrument to ANSWER A QUESTION, not to see what happens: used
+that way it has killed three wrong hypotheses for one run each. Used as
+a feedback loop for guesses it is the expensive mode.
 
-The one open structural piece is the shared cursor across voices,
-specified in Docs/HORIZONTAL-ARC.md. It has been attempted and reverted
-once; the missing term is named there. Do it as one piece.
+The bar is 100% parity with abcjs. A passing gate is not parity — the
+gate says "no worse than recorded"; parity means dy/dx/oy/ox at ZERO.
+
+Confirm your lane with `git rev-parse --abbrev-ref HEAD`. `main` holds
+the merged vertical arc and is GREEN at 505/505 — keep it that way.
+`geometry/horizontal` is the open arc.
 ```
 
-### Reviving the horizontal arc specifically
+### The open task, specifically
 ```
-Continue the horizontal parity arc on `geometry/horizontal`.
+Continue the horizontal parity arc on `geometry/horizontal` in Code/abcts.
 
-Read Docs/CHECKPOINT-2026-08-02.md and Docs/HORIZONTAL-ARC.md. The task
-is the shared cursor across the voices of a system — abcjs's
-layoutStaffGroup loop, carrying per-voice `nextx` and `spacingduration`,
-where a WAITING voice's expectation shrinks by the duration consumed
-without it. A first cut that omitted that term made every multi-voice
-fixture much worse and was reverted; the numbers are in the checkpoint.
+Read Docs/CHECKPOINT-2026-08-02.md and Docs/HORIZONTAL-ARC.md.
 
-It retires the per-measure column model and the per-block factor solve
-with it, so treat it as one piece of work rather than an increment.
+The shared-cursor loop is already ported and working — per-voice minx,
+nextx, spacingduration, durationindex, and the waiting-voice recompute.
+It runs PER COLUMN. The remaining task is to make it PER LINE.
 
-Success is dx and ox at zero on more than the 8 fixtures that already
-have it, with no functional test failing.
+The per-column assumption is that barlines agree across voices. They do
+not: `voice-middle-after-clef` writes a bar of 1.0 against a bar of 1.5
+and abcjs does NOT align them — measure 2 starts at 207.1 on staff 0 and
+278.1 on staff 1. Our column model force-aligns them because a column IS
+a measure; abcjs has no columns, only one timeline per line. That
+fixture has been stuck at exactly 79.0 all arc.
+
+Going per line retires the per-measure column model, `columnWidths`, and
+the per-block factor with it. Do it as a STRUCTURAL port — one line, one
+cursor, one spring solve — not as an adaptation of the column model.
+That distinction is the whole lesson of the checkpoint's opening section.
+
+Success: dx and ox at zero on more than the 8 fixtures that already have
+it, with no functional test failing.
 ```
