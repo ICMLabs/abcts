@@ -605,6 +605,13 @@ export interface StemInfo {
   readonly x: number
   /** Staff step of the notehead furthest along the stem — where the tip is measured from. */
   readonly farStep: number
+  /**
+   * Mean staff step of this event's noteheads — abcjs's `abcelem.averagepitch`.
+   *
+   * A CHORD contributes its own mean rather than each notehead, which is what the beam's
+   * slant is measured from (`calcSlant` takes the first and last elements' averages).
+   */
+  readonly averageStep: number
   readonly up: boolean
   /** Beams needed at this note: 1 for an eighth, 2 for a sixteenth. */
   readonly beams: number
@@ -1724,7 +1731,13 @@ function layoutNoteheads(
     if (stemOut !== null) {
       // Beamed: the beam pass retargets this stem and draws the beams. No flag — a note
       // cannot carry both.
-      stemOut.value = { x: stemX, farStep: up ? highest : lowest, up, beams: spec.flags }
+      stemOut.value = {
+        x: stemX,
+        farStep: up ? highest : lowest,
+        averageStep: steps.reduce((a, b) => a + b, 0) / steps.length,
+        up,
+        beams: spec.flags,
+      }
     } else if (spec.flags > 0) {
       // Unbeamed: ONE glyph carrying every flag level, hung from the stem tip. SMuFL
       // draws a 32nd as a single three-tailed glyph rather than three stacked 8th flags,
@@ -2876,34 +2889,52 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
 
   const up = first.up
   const direction = up ? -1 : 1
-  const tipOf = (stem: StemInfo): number => stepToY(stem.farStep) + direction * ENGRAVE.stemLength
 
-  // Fit through the end notes, then clamp the rise.
-  const span = last.x - first.x
-  let startY = tipOf(first)
-  let endY = tipOf(last)
-  const rise = endY - startY
-  if (Math.abs(rise) > ENGRAVE.beamMaxRise) {
-    const clamped = Math.sign(rise) * ENGRAVE.beamMaxRise
-    const mid = (startY + endY) / 2
-    startY = mid - clamped / 2
-    endY = mid + clamped / 2
+  // THE BEAM SITS A FIXED DISTANCE BEYOND THE GROUP'S EXTREME NOTE, not beyond its end
+  // notes. Source: `layout/beam.js` `calcYPos`. In its own pitch units, which are our
+  // staff steps exactly:
+  //
+  //     pos = round(asc ? max(average + barpos, maxPitch + barminpos)
+  //                     : min(average - barpos, minPitch - barminpos))
+  //
+  // with `barpos === barminpos === stemHeight - 2`. Because the two are equal the
+  // `average` term can never win — `maxPitch >= average` and `minPitch <= average` by
+  // construction — so it reduces to `extreme +/- (stemHeight - 2)`. The vestigial term is
+  // kept out rather than reproduced; the commented-out `(isGrace)? 5:7` beside it says
+  // they were once different.
+  //
+  // This replaces a fit through the END notes plus a `minStemLength` push. The two agree
+  // whenever an end note is the extreme and disagree whenever an interior one is, which
+  // in a dense sixteenth run is most of the time.
+  const barpos = ENGRAVE.stemLength / ENGRAVE.spacePerStep - 2
+  const extreme = up
+    ? Math.max(...group.map((stem) => stem.farStep))
+    : Math.min(...group.map((stem) => stem.farStep))
+  const pos = Math.round(up ? extreme + barpos : extreme - barpos)
+
+  // Slant, from the END elements' average pitches and capped at half the stem count
+  // (`calcSlant`). `Math.floor` on both halves is abcjs's, negatives included — it is what
+  // makes an odd slant land asymmetrically rather than splitting evenly.
+  const maxSlant = group.length / 2
+  const rawSlant = first.averageStep - last.averageStep
+  const slant = Math.max(-maxSlant, Math.min(maxSlant, rawSlant))
+  let startStep = pos + Math.floor(slant / 2)
+  let endStep = pos + Math.floor(-slant / 2)
+
+  // "If the notes are too high or too low, make the beam go down to the middle" — abcjs's
+  // own comment. A run far from the middle line gets a FLAT beam on it rather than one
+  // riding the notes, which lengthens every stem in the group. Step 0 is its pitch 6.
+  if ((up && pos < 0) || (!up && pos > 0)) {
+    startStep = 0
+    endStep = 0
   }
+
+  const span = last.x - first.x
+  const startY = stepToY(startStep)
+  const endY = stepToY(endStep)
 
   const yAt = (x: number): number =>
     span === 0 ? startY : startY + ((x - first.x) / span) * (endY - startY)
-
-  // Push the line out until the shortest stem clears the minimum. An interior note can
-  // sit closer to the beam than either end note does.
-  let shift = 0
-  for (const stem of group) {
-    const length = (yAt(stem.x) - stepToY(stem.farStep)) * direction
-    if (length < ENGRAVE.minStemLength) {
-      shift = Math.max(shift, ENGRAVE.minStemLength - length)
-    }
-  }
-  startY += shift * direction
-  endY += shift * direction
 
   // Retarget each stem to the beam.
   for (const stem of group) {
