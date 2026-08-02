@@ -59,6 +59,19 @@ export const ENGRAVE = {
   spacePerStep: 0.5,
   /** Standard stem length ≈ one octave. *Behind Bars* (Gould). */
   stemLength: 3.5,
+  /**
+   * How far a BEAM sits beyond its group's extreme note, in staff STEPS — abcjs's beamed
+   * stem height, which is not the same constant as an unbeamed one's.
+   *
+   * abcjs hardcodes 7 for a lone stem (`abstract-engraver.js:739`) but takes the beam's
+   * from `renderer.spacing.stemHeight`, 26.67 + 10 = 36.67 PIXELS (`renderer.js:107`),
+   * which `setStemHeight` converts as `round(36.67 x 10 / 3.875) / 10` = **9.5** steps
+   * (`abstract-engraver.js:84-86`). `calcYPos` then uses `stemHeight - 2`.
+   *
+   * Reusing `stemLength` here — the unbeamed 7 — put every beam 2.5 steps too close to its
+   * notes, which on ragtime is most of the corpus's remaining vertical error.
+   */
+  beamStemHeight: Math.round((36.67 * 10) / 3.875) / 10,
   /** First ledger step beyond the staff; grows outward by 2. *Behind Bars*. */
   firstLedgerStep: 6,
   /** Ledger line overhang past the notehead each side. */
@@ -2906,7 +2919,7 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
   // This replaces a fit through the END notes plus a `minStemLength` push. The two agree
   // whenever an end note is the extreme and disagree whenever an interior one is, which
   // in a dense sixteenth run is most of the time.
-  const barpos = ENGRAVE.stemLength / ENGRAVE.spacePerStep - 2
+  const barpos = ENGRAVE.beamStemHeight - 2
   const extreme = up
     ? Math.max(...group.map((stem) => stem.farStep))
     : Math.min(...group.map((stem) => stem.farStep))
@@ -2937,10 +2950,17 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
     span === 0 ? startY : startY + ((x - first.x) / span) * (endY - startY)
 
   // Retarget each stem to the beam.
+  //
+  // A DOWN-stem stops half a beam-width short of the line the beam is drawn on, and an
+  // up-stem does not: `createStems` does `if (!asc) bary -= (dy / 2) / spacing.STEP` with
+  // `dy = -STEP` for a descending beam, which is `bary + 0.5` in pitch — abcjs calls it
+  // "just a fudge factor so the down-pointing stems don't overlap" (`layout/beam.js:125`).
+  // The BEAM itself is unmoved; only where the stem meets it changes.
+  const stemEndOffset = up ? 0 : -0.5 * ENGRAVE.spacePerStep
   for (const stem of group) {
     const element = elements[stem.element]
     if (!element) continue
-    const beamY = yAt(stem.x)
+    const beamY = yAt(stem.x) + stemEndOffset
     const lines = element.lines.map((line) =>
       line.x1 === line.x2 && line.x1 === stem.x ? { ...line, y2: beamY } : line,
     )
@@ -3434,7 +3454,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       voice?.staffLineOverride == null
         ? resolved
         : { ...resolved, staffLines: voice.staffLineOverride }
-    const directions = beamDirections(voice, clef)
+    const directions = beamDirections(voice, clef, stemForVoice(voiceIndex))
     // The key in force, accumulated forward. `Measure.keyChange` is a DELTA — the model
     // deliberately keeps `score.key` as the header key and leaves accumulation to the
     // consumer — so the renderer is the consumer that has to do it.
@@ -4582,7 +4602,24 @@ function layoutEvent(
  * the middle line, judged by the note furthest from it, so the beam ends up on the side
  * with the most room.
  */
-function beamDirections(voice: Voice | undefined, clef: Clef): Map<number, boolean> {
+function beamDirections(
+  voice: Voice | undefined,
+  clef: Clef,
+  /**
+   * The direction this VOICE is held to, or null to let each group choose by pitch.
+   *
+   * A forced voice forces its beams. abcjs has one mechanism for both: `createVoice`
+   * appends a `stem` element for a declared `V:… stems=` AND for the shared-staff
+   * convention (`parse/tune-builder.js:971-986`), the engraver turns that into
+   * `this.stemdir`, and `createBeam` hands it to `BeamElem` as `forceup`/`forcedown`,
+   * which `setStemDirection` tests BEFORE the pitch rule (`beam-element.js:74-86`).
+   *
+   * We had the beam's own choice overriding the voice instead, which is backwards. It is
+   * the whole of ragtime's treble: its `V:4`/`V:5` share a staff, so abcjs forces `V:4`
+   * up and we let each beam group pick by pitch — 388 up-stems against our 81.
+   */
+  forced: boolean | null = null,
+): Map<number, boolean> {
   const extremes = new Map<number, { min: number; max: number }>()
   for (const measure of voice?.measures ?? []) {
     for (const event of measure.events) {
@@ -4601,13 +4638,11 @@ function beamDirections(voice: Voice | undefined, clef: Clef): Map<number, boole
   }
 
   const directions = new Map<number, boolean>()
-  // `V:… stems=` beats the group's own choice, as abcjs's `forceup`/`forcedown` do — they
-  // are tested BEFORE the pitch rule (`beam-element.js:74-86`). A beam cannot join opposed
-  // stems, so a forced voice's beams simply all point the declared way.
-  const declared = voice?.stemDirection
+  // A beam cannot join opposed stems, so a forced voice's beams all point its way.
+  const declared = voice?.stemDirection == null ? forced : voice.stemDirection === 'up'
   for (const [group, { min, max }] of extremes) {
-    if (declared != null) {
-      directions.set(group, declared === 'up')
+    if (declared !== null) {
+      directions.set(group, declared)
       continue
     }
     // Whichever extreme is further from the middle line decides; ties go stem-down.
