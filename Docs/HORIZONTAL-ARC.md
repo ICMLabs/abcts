@@ -199,3 +199,45 @@ does. Our per-block factor solve keeps the bars aligned but cannot align the int
 **This is the piece to do next, and it is the last structural one on this axis.** It
 subsumes the per-block factor: with a shared cursor there is one line, one spring solve, and
 no per-measure column reconciliation at all.
+
+
+---
+
+## Shared cursor — ATTEMPTED, REVERTED, and the reason is exact
+
+A first cut of the shared cursor was written and measured: elements carry an `onset`
+(musical time within the measure), and a column's voices are walked together, each pass
+taking the voices at the smallest pending onset.
+
+It made every multi-voice fixture much worse — `ave-verum` 24 → 152px, `ragtime-nightingale`
+108 → 372, `multi-voice-triplet-brackets` 227 → 284 — and the reason is a specific omission,
+not the shape:
+
+**A waiting voice's expectation must SHRINK by the duration consumed without it.** My pass
+advanced x by the advance of the element at that onset, so a half note in one voice pushed
+the cursor its full width at once, ignoring that another voice has four sixteenths inside
+that span. abcjs spreads it, and says so in its own comment:
+
+```
+// remove the value of already counted spacing units in other voices (e.g. if a voice had
+// planned to use up 5 spacing units but is not in line to be laid out at this duration
+// level - where we've used 2 spacing units - then we must use up 3 spacing units, not 5)
+for (i = 0; i < othervoices.length; i++) {
+    othervoices[i].spacingduration -= spacingduration;
+    updateNextX(x, spacing, othervoices[i]);        // nextx = x + spacing * sqrt(remaining * 8)
+}
+```
+
+So the loop has to carry per-voice state, not just a cursor:
+
+- `nextx` — where this voice wants its next element, absolute;
+- `spacingduration` — how much of its current note's duration is still unspent.
+
+Each pass: `x = max over the current voices of nextx`; place them; set each one's
+`spacingduration` to its new element's duration and `nextx = x + spring(that element)`; then
+for every WAITING voice subtract the duration just consumed from its `spacingduration` and
+recompute `nextx = x + naturalWidth(remaining)`. The recompute is non-linear —
+`sqrt(remaining * 8)`, not a proportional share — so it cannot be approximated by splitting
+the advance evenly across the onsets it spans.
+
+That is the whole of what is left on this axis.
