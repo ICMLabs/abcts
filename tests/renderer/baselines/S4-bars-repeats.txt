@@ -9,8 +9,8 @@ system 0 width=90.323 originY=0.000
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  24.903,-9.532 size=3.484 bold "S4-1 Bars Repeats and Endings"
-      text  30.842,-5.330 size=2.452 italic "Test - from Gonzato guide Ch.2"
+      text  23.197,-9.532 size=3.484 bold "S4-1 Bars Repeats and Endings"
+      text  29.502,-5.330 size=2.452 italic "Test - from Gonzato guide Ch.2"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -177,8 +177,8 @@ system 0 width=90.323 originY=0.000
     voltatext 38.494,-2.700 "1"
     voltatext 65.125,-2.700 "2"
     title x=0.000 w=0.000
-      text  26.012,-12.032 size=3.484 bold "S4-2 Extended Volta Endings"
-      text  39.625,-7.830 size=2.452 italic "Test Fixture"
+      text  24.406,-12.032 size=3.484 bold "S4-2 Extended Volta Endings"
+      text  39.204,-7.830 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -508,7 +508,7 @@ system 0 width=90.323 originY=0.000
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  32.118,-5.588 size=3.484 bold "S4-3 Bars and Rests"
+      text  31.081,-5.588 size=3.484 bold "S4-3 Bars and Rests"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=2.387

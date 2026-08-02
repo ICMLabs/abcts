@@ -87,11 +87,18 @@ describe('lyric continuation across interposed directives', () => {
 
     it('does NOT realize %%vocalfont — abcjs parses it and never draws it', () => {
       // abcjs stamps `el.fonts` and reads `.fonts` nowhere in its write phase. Every
-      // syllable therefore draws at the default size, and realizing the font here would
-      // be an improvement — the one thing strict must not do.
+      // syllable therefore draws at the DEFAULT font, and realizing the directive here
+      // would be an improvement — the one thing strict must not do.
+      //
+      // The SIZE is what discriminates. The directive asks for `Times-Bold 16`, and
+      // abcjs's default `vocalfont` is already Times New Roman 13pt BOLD
+      // (`parse/abc_parse_directive.js:30`) — its own goldens draw every syllable with
+      // `font-weight="bold"` — so the weight cannot tell "ignored" from "applied". The
+      // size can, and the italic the directive does not ask for stays off either way.
       const sizes = new Set(drawnLyrics('abcjs-strict').map((text) => text.size))
       expect([...sizes]).toHaveLength(1)
-      expect(drawnLyrics('abcjs-strict').every((text) => !text.bold && !text.italic)).toBe(true)
+      expect(drawnLyrics('abcjs-strict').every((text) => text.size === 17 / 7.75)).toBe(true)
+      expect(drawnLyrics('abcjs-strict').every((text) => !text.italic)).toBe(true)
     })
   })
 

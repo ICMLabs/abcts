@@ -9,8 +9,8 @@ system 0 width=90.323 originY=0.000
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  34.278,-11.283 size=3.484 bold "S1-1 Decorations"
-      text  30.842,-7.082 size=2.452 italic "Test - from Gonzato guide Ch.2"
+      text  33.019,-11.283 size=3.484 bold "S1-1 Decorations"
+      text  29.502,-7.082 size=2.452 italic "Test - from Gonzato guide Ch.2"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -110,7 +110,7 @@ system 0 width=90.323 originY=0.000
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  26.813,-7.340 size=3.484 bold "S1-2 Shorthand Decorations"
+      text  25.423,-7.340 size=3.484 bold "S1-2 Shorthand Decorations"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -188,7 +188,7 @@ system 0 width=90.323 originY=0.000
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  31.907,-7.340 size=3.484 bold "S1-3 All Decorations"
+      text  30.358,-7.340 size=3.484 bold "S1-3 All Decorations"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -576,19 +576,19 @@ system 14 width=90.323 originY=173.777
     note@-2 x=6.329 w=5.474
       glyph noteheadBlack 6.329,1.000
       line  7.509,0.832 -> 7.509,-2.500 t=0.120
-      text  5.302,-5.000 size=2.065 italic "D.S."
+      text  5.083,-5.000 size=2.065 italic "D.S."
     note@-2 x=26.811 w=5.474
       glyph noteheadBlack 26.811,1.000
       line  27.991,0.832 -> 27.991,-2.500 t=0.120
-      text  25.714,-5.000 size=2.065 italic "D.C."
+      text  25.451,-5.000 size=2.065 italic "D.C."
     note@-2 x=47.294 w=5.474
       glyph noteheadBlack 47.294,1.000
       line  48.474,0.832 -> 48.474,-2.500 t=0.120
-      text  43.107,-5.000 size=2.065 italic "D.C. al Coda"
+      text  42.494,-5.000 size=2.065 italic "D.C. al Coda"
     note@-2 x=67.776 w=5.474
       glyph noteheadBlack 67.776,1.000
       line  68.956,0.832 -> 68.956,-2.500 t=0.120
-      text  63.846,-5.000 size=2.065 italic "D.C. al Fine"
+      text  63.320,-5.000 size=2.065 italic "D.C. al Fine"
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
 system 15 width=30.291 originY=185.690
@@ -603,7 +603,7 @@ system 15 width=30.291 originY=185.690
     note@-2 x=6.329 w=5.474
       glyph noteheadBlack 6.329,1.000
       line  7.509,0.832 -> 7.509,-2.500 t=0.120
-      text  5.200,-5.000 size=2.065 italic "Fine"
+      text  5.084,-5.000 size=2.065 italic "Fine"
     note@-2 x=11.804 w=5.474
       glyph noteheadBlack 11.804,1.000
       glyph breathMarkTick 11.394,-3.500
@@ -629,7 +629,7 @@ system 0 width=90.323 originY=0.000
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  27.724,-5.588 size=3.484 bold "S1-4 Mark Decoration Test"
+      text  26.054,-5.588 size=3.484 bold "S1-4 Mark Decoration Test"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -696,8 +696,8 @@ system 0 width=90.323 originY=0.000
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  32.424,-11.053 size=3.484 bold "S1-5 Glissando Test"
-      text  39.625,-6.852 size=2.452 italic "Test Fixture"
+      text  31.033,-11.053 size=3.484 bold "S1-5 Glissando Test"
+      text  39.204,-6.852 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522

@@ -45,7 +45,14 @@ import {
 } from '../core/model.js'
 import { glyphsFor } from './glyph-table.js'
 import { ENGRAVING_DEFAULTS, GLYPHS, type GlyphName } from './glyphs.js'
-import { CHAR_ADVANCE, FALLBACK_ADVANCE } from './text-metrics.js'
+import {
+  CHAR_ADVANCE,
+  CHAR_ADVANCE_BOLD,
+  CHAR_ADVANCE_BOLD_FALLBACK,
+  CHAR_ADVANCE_SANS,
+  CHAR_ADVANCE_SANS_FALLBACK,
+  FALLBACK_ADVANCE,
+} from './text-metrics.js'
 import { VOICE_NAME_GAP_PX, voiceNameWidthPx } from './voice-name-metrics.js'
 
 // ─── Engine constants ────────────────────────────────────────────────────────
@@ -363,6 +370,12 @@ export const ENGRAVE = {
    * would give. Read off its own goldens' markup, not inferred.
    */
   lyricLineStep: (17 * 1.2) / 3.875,
+  /**
+   * How far a brace or bracket moves the staff's left edge — abcjs's
+   * `BraceElem.getWidth()`, a flat 10 for both, with its own comment that the drawing
+   * does not vary it.
+   */
+  connectorIndent: 10 / 7.75,
   /** Clearance between a brace or bracket and the staff it joins. */
   connectorGap: 0.6,
   /** A bracket is a rule, and a heavy one. */
@@ -1417,7 +1430,7 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
     // Real per-character metrics, like everything else that measures text. This kept the
     // flat half-em-per-character estimate after `textWidth` replaced it everywhere else —
     // a stale ponytail that was still running, not just still written.
-    cursor += textWidth(tempo.text, ENGRAVE.tempoTextSize) + 1
+    cursor += textWidth(tempo.text, ENGRAVE.tempoTextSize, 'serifBold') + 1
   }
 
   if (tempo.bpm !== null) {
@@ -2329,18 +2342,38 @@ function decorationGlyphs(
 }
 
 /**
+ * Which of abcjs's faces a run of text is set in — and therefore measured in.
+ *
+ * abcjs names a font per role (`parse/abc_parse_directive.js:20-42`) and they are not all
+ * the same family: a lyric is Times New Roman BOLD, a chord symbol is Helvetica. The
+ * difference is not cosmetic here, because a lyric's width is half of its note's rod on
+ * each side — measuring bold text with regular metrics ran every sung fixture 13% narrow.
+ */
+type Face = 'serif' | 'serifBold' | 'sans'
+
+/**
  * Width of a run of text, in staff spaces.
  *
  * Per-character advances rather than one number per character. The flat estimate this
  * replaces measured `iiiii` and `WWWWW` the same, with a median error of 8.9% against
  * real serif metrics over the corpus and a worst case of +77% — on the short narrow
- * syllables lyrics are actually made of. Still an ESTIMATE: the output asks for
- * `font-family="serif"` and the viewer supplies the font, so no table can be exact.
+ * syllables lyrics are actually made of.
+ *
+ * Still an estimate — the output asks for a font FAMILY and the viewer supplies the face
+ * — but no longer a systematic one: the tables are real advances from the fonts abcjs
+ * names, checked against widths probed out of its own `extraw`.
  */
-const textWidth = (text: string, size: number): number => {
+const textWidth = (text: string, size: number, face: Face = 'serif'): number => {
+  const table =
+    face === 'serifBold' ? CHAR_ADVANCE_BOLD : face === 'sans' ? CHAR_ADVANCE_SANS : CHAR_ADVANCE
+  const fallback =
+    face === 'serifBold'
+      ? CHAR_ADVANCE_BOLD_FALLBACK
+      : face === 'sans'
+        ? CHAR_ADVANCE_SANS_FALLBACK
+        : FALLBACK_ADVANCE
   let em = 0
-  for (const ch of text)
-    em += CHAR_ADVANCE[ch] ?? (isFullWidth(ch) ? FULL_WIDTH_ADVANCE : FALLBACK_ADVANCE)
+  for (const ch of text) em += table[ch] ?? (isFullWidth(ch) ? FULL_WIDTH_ADVANCE : fallback)
   return em * size
 }
 
@@ -2406,22 +2439,22 @@ function noteText(
   const texts: PlacedText[] = []
   const centre = headX + headWidth / 2
   /** A text CENTRED on the note, `dx` from its x. Annotations do not call this. */
-  const centred = (text: string, size: number, dx: number): void => {
+  const centred = (text: string, size: number, dx: number, face: Face): void => {
     if (spans === null) return
-    const half = textWidth(text, size) / 2
+    const half = textWidth(text, size, face) / 2
     spans.left = Math.max(spans.left, half)
     spans.right = Math.max(spans.right, dx + half)
   }
 
   if (event.chordSymbol !== null && event.chordSymbol !== '') {
     const size = ENGRAVE.chordTextSize
-    centred(event.chordSymbol, size, headWidth / 2)
+    centred(event.chordSymbol, size, headWidth / 2, 'sans')
     texts.push({
       text: event.chordSymbol,
       // The lane is only the origin: `anchorAboveStaff` moves the whole set onto the
       // staff's music once the voices sharing it are known, exactly as lyrics are.
       role: 'chord',
-      x: centre - textWidth(event.chordSymbol, size) / 2,
+      x: centre - textWidth(event.chordSymbol, size, 'sans') / 2,
       y: stepToY(ENGRAVE.chordSymbolStep),
       size,
       bold: false,
@@ -2442,7 +2475,7 @@ function noteText(
       ENGRAVE.annotationAboveStep + (above.length - 1 - index) * ENGRAVE.annotationLineStep
     texts.push({
       text: a.text,
-      x: centre - textWidth(a.text, size) / 2,
+      x: centre - textWidth(a.text, size, 'sans') / 2,
       y: stepToY(lane),
       size,
       bold: false,
@@ -2454,7 +2487,7 @@ function noteText(
     const size = ENGRAVE.chordTextSize
     texts.push({
       text: a.text,
-      x: centre - textWidth(a.text, size) / 2,
+      x: centre - textWidth(a.text, size, 'sans') / 2,
       y: stepToY(ENGRAVE.annotationBelowStep - index * ENGRAVE.annotationLineStep),
       size,
       bold: false,
@@ -2472,7 +2505,7 @@ function noteText(
       text: a.text,
       x:
         a.where === '<'
-          ? headX - textWidth(a.text, size) - ENGRAVE.minColumnGap
+          ? headX - textWidth(a.text, size, 'sans') - ENGRAVE.minColumnGap
           : headX + headWidth + ENGRAVE.minColumnGap,
       y: stepToY(0),
       size,
@@ -2508,14 +2541,14 @@ function noteText(
         // be exact for 13 too, and would stop being so if either constant moved.
         ENGRAVE.lyricTextSize * (event.lyricFont.size / DEFAULT_VOCALFONT_PT)
       : ENGRAVE.lyricTextSize
-  const lyricBold = !strict && event.lyricFont !== null ? event.lyricFont.bold : false
+  const lyricBold = !strict && event.lyricFont !== null ? event.lyricFont.bold : true
   const lyricItalic = !strict && event.lyricFont !== null ? event.lyricFont.italic : false
   verses.forEach((verse, index) => {
     if (verse === null || verse === '') return
     // Verse 1 carries the font; later verses stay at the default until `extraVerses` can
     // hold one of their own.
     const size = index === 0 ? lyricSize : ENGRAVE.lyricTextSize
-    centred(verse, size, 0)
+    centred(verse, size, 0, 'serifBold')
     texts.push({
       text: verse,
       // Tagged so the melisma pass can find the syllable it must extend from. Matching
@@ -2525,10 +2558,17 @@ function noteText(
       // bigger. A font that draws large and measures at the default width is how lyrics
       // end up overlapping — the centring here and the melisma extender's start both
       // read this width.
-      x: centre - textWidth(verse, size) / 2,
+      // CENTRED ON THE ELEMENT'S x, which is the notehead's LEFT edge, not its middle —
+      // abcjs's lyric RelativeElement has `dx = 0` and the golden agrees to the pixel:
+      // `text-anchor="middle" x="106.03"` under a note placed at 106.03.
+      x: headX - textWidth(verse, size, 'serifBold') / 2,
       y: stepToY(ENGRAVE.lyricStep - index * ENGRAVE.lyricLineStep),
       size,
-      bold: index === 0 ? lyricBold : false,
+      // BOLD BY DEFAULT — abcjs's `vocalfont` is Times New Roman 13pt **bold**
+      // (`parse/abc_parse_directive.js:30`) and its goldens draw every syllable with
+      // `font-weight="bold"`. `%%vocalfont` can still turn it off in the modes that read
+      // the directive at all.
+      bold: index === 0 ? lyricBold : true,
       italic: index === 0 ? lyricItalic : false,
     })
   })
@@ -2785,7 +2825,7 @@ function layoutMelismas(
       texts[lyricIndex] = {
         ...lyric,
         text: widened,
-        x: lyric.x - textWidth('_', lyric.size) / 2,
+        x: lyric.x - textWidth('_', lyric.size, 'serifBold') / 2,
       }
       elements[start.element] = { ...element, texts }
       return
@@ -2806,7 +2846,7 @@ function layoutMelismas(
     }
     if (last === null) return
 
-    const from = lyric.x + textWidth(lyric.text, lyric.size) + ENGRAVE.melismaGap
+    const from = lyric.x + textWidth(lyric.text, lyric.size, 'serifBold') + ENGRAVE.melismaGap
     const to = last.right + ENGRAVE.melismaGap
     // A run so tight that the line would be a speck reads as a smudge; drop it instead.
     if (to - from < ENGRAVE.melismaMinLength) return
@@ -3835,8 +3875,19 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         return text ? voiceNameWidthPx(text) : 0
       }),
     )
-    if (widest === 0) return 0
-    return (widest + VOICE_NAME_GAP_PX) / 7.75
+    // A BRACE OR BRACKET MOVES THE LEFT EDGE, name or no name.
+    //
+    // `getLeftEdgeOfStaff` ends `return x + ofs`, where `ofs` is the widest connector's
+    // `getWidth()` — a flat 10 for both, with abcjs's own note that its drawing does not
+    // vary. The "width of an A" of trailing space is NOT part of it: that is added only
+    // when there is a header to clear, so an unnamed grand staff takes exactly the 10.
+    // Probed on `ragtime-mini`, which has `%%score { ( 4 5 ) | ( 1 2 3 ) }` and no names:
+    // `leftEdge = 25.000` against a bare tune's 15.
+    const connector = score.staves.some((group) => group.brace !== null || group.bracket !== null)
+      ? ENGRAVE.connectorIndent
+      : 0
+    if (widest === 0) return connector
+    return connector + (widest + VOICE_NAME_GAP_PX) / 7.75
   }
 
   /** How many measures the longest voice has — the span indices run over these. */

@@ -9,7 +9,7 @@ system 0 width=32.090 originY=0.000
     staffline 0.000,-1.000 -> 32.090,-1.000 t=0.130
     staffline 0.000,-2.000 -> 32.090,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  8.099,-5.588 size=3.484 bold "Grace Notes"
+      text  7.388,-5.588 size=3.484 bold "Grace Notes"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522

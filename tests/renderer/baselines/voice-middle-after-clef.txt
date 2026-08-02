@@ -9,7 +9,7 @@ system 0 width=54.699 originY=0.000
     staffline 0.000,-1.000 -> 54.699,-1.000 t=0.130
     staffline 0.000,-2.000 -> 54.699,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  11.839,-5.588 size=3.484 bold "Voice middle= after clef"
+      text  10.264,-5.588 size=3.484 bold "Voice middle= after clef"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.471 w=1.389

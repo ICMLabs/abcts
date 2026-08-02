@@ -13,7 +13,7 @@ system 0 width=90.323 originY=0.000
     beam   50.082,-3.250 -> 62.426,-3.750 t=0.500
     beam   68.838,3.250 -> 81.183,2.750 t=0.500
     title x=0.000 w=0.000
-      text  29.777,-5.776 size=3.484 bold "Compound Meter (6/8)"
+      text  29.003,-5.776 size=3.484 bold "Compound Meter (6/8)"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.410

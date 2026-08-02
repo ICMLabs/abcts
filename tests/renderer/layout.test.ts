@@ -31,7 +31,11 @@ import {
   noteGlyph,
   TEXT_ASCENT,
 } from '../../src/renderer/layout.js'
-import { CHAR_ADVANCE, FALLBACK_ADVANCE } from '../../src/renderer/text-metrics.js'
+import {
+  CHAR_ADVANCE,
+  CHAR_ADVANCE_BOLD_FALLBACK,
+  FALLBACK_ADVANCE,
+} from '../../src/renderer/text-metrics.js'
 
 /** Mirrors the renderer's own measure, for asserting that nothing falls outside bounds. */
 const textWidthOf = (text: string, size: number): number => {
@@ -2045,9 +2049,10 @@ describe('text metrics', () => {
   it('falls back for a character the table lacks, rather than measuring zero', () => {
     // A zero-width fallback would centre an unknown string on the wrong point and, worse,
     // look plausible. Cyrillic Zhe is not in the table, so each one should cost exactly
-    // FALLBACK_ADVANCE — measured as the difference between one and three of them, halved
-    // by the centring.
-    expect(leftOf('ЖЖЖ') - leftOf('Ж')).toBeCloseTo(FALLBACK_ADVANCE * sizeOf('Ж'), 4)
+    // the fallback — measured as the difference between one and three of them, halved by
+    // the centring. A lyric is set in abcjs's `vocalfont`, so it is the BOLD table's
+    // fallback that applies, not the serif one's.
+    expect(leftOf('ЖЖЖ') - leftOf('Ж')).toBeCloseTo(CHAR_ADVANCE_BOLD_FALLBACK * sizeOf('Ж'), 4)
   })
 })
 

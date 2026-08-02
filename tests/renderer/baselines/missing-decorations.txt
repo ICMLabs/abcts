@@ -9,8 +9,8 @@ system 0 width=57.324 originY=0.000
     staffline 0.000,-1.000 -> 57.324,-1.000 t=0.130
     staffline 0.000,-2.000 -> 57.324,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  16.771,-9.532 size=3.484 bold "S-missing-1 xstem"
-      text  23.126,-5.330 size=2.452 italic "Test Fixture"
+      text  15.645,-9.532 size=3.484 bold "S-missing-1 xstem"
+      text  22.704,-5.330 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -57,8 +57,8 @@ system 0 width=57.324 originY=0.000
     staffline 0.000,-1.000 -> 57.324,-1.000 t=0.130
     staffline 0.000,-2.000 -> 57.324,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  17.237,-11.283 size=3.484 bold "S-missing-2 trillh"
-      text  23.126,-7.082 size=2.452 italic "Test Fixture"
+      text  16.419,-11.283 size=3.484 bold "S-missing-2 trillh"
+      text  22.704,-7.082 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -108,8 +108,8 @@ system 0 width=57.324 originY=0.000
     staffline 0.000,-1.000 -> 57.324,-1.000 t=0.130
     staffline 0.000,-2.000 -> 57.324,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  10.237,-9.532 size=3.484 bold "S-missing-3 Beam Tremolos"
-      text  23.126,-5.330 size=2.452 italic "Test Fixture"
+      text  8.632,-9.532 size=3.484 bold "S-missing-3 Beam Tremolos"
+      text  22.704,-5.330 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -154,18 +154,18 @@ system 0 width=57.324 originY=0.000
       line  54.436,-2.000 -> 54.436,2.000 t=0.160
       line  55.166,-2.000 -> 55.166,2.000 t=0.500
 tune 3
-bounds  width=65.390 height=20.374 top=-1.935
+bounds  width=70.439 height=20.374 top=-1.935
 systems 1
-system 0 width=65.390 originY=0.000
+system 0 width=70.439 originY=0.000
   staff 0 originY=13.991
-    staffline 0.000,2.000 -> 65.390,2.000 t=0.130
-    staffline 0.000,1.000 -> 65.390,1.000 t=0.130
-    staffline 0.000,0.000 -> 65.390,0.000 t=0.130
-    staffline 0.000,-1.000 -> 65.390,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 65.390,-2.000 t=0.130
+    staffline 0.000,2.000 -> 70.439,2.000 t=0.130
+    staffline 0.000,1.000 -> 70.439,1.000 t=0.130
+    staffline 0.000,0.000 -> 70.439,0.000 t=0.130
+    staffline 0.000,-1.000 -> 70.439,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 70.439,-2.000 t=0.130
     title x=0.000 w=0.000
       text  1.935,-9.532 size=3.484 bold "S-missing-4 Editorial and Courtesy Accidentals"
-      text  27.159,-5.330 size=2.452 italic "Test Fixture"
+      text  29.262,-5.330 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -216,8 +216,8 @@ system 0 width=90.323 originY=0.000
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  16.004,-12.757 size=3.484 bold "S-missing-5 Dal Segno / Da Capo Navigation"
-      text  39.625,-8.556 size=2.452 italic "Test Fixture"
+      text  13.326,-12.757 size=3.484 bold "S-missing-5 Dal Segno / Da Capo Navigation"
+      text  39.204,-8.556 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -251,7 +251,7 @@ system 0 width=90.323 originY=0.000
     note@1 x=78.546 w=5.474
       glyph noteheadBlack 78.546,-0.500
       line  78.546,-0.332 -> 78.546,3.000 t=0.120
-      text  74.430,-5.000 size=2.065 italic "D.S. al Coda"
+      text  73.860,-5.000 size=2.065 italic "D.S. al Coda"
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
 system 1 width=90.323 originY=22.066
@@ -291,7 +291,7 @@ system 1 width=90.323 originY=22.066
     note@1 x=78.194 w=5.474
       glyph noteheadBlack 78.194,-0.500
       line  78.194,-0.332 -> 78.194,3.000 t=0.120
-      text  74.264,-5.000 size=2.065 italic "D.C. al Fine"
+      text  73.738,-5.000 size=2.065 italic "D.C. al Fine"
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
 system 2 width=54.511 originY=33.979
@@ -307,7 +307,7 @@ system 2 width=54.511 originY=33.979
       glyph noteheadBlack 6.329,3.000
       line  5.929,3.000 -> 7.995,3.000 t=0.160
       line  7.509,2.832 -> 7.509,-0.500 t=0.120
-      text  2.470,-5.000 size=2.065 italic "D.S. al Fine"
+      text  1.987,-5.000 size=2.065 italic "D.S. al Fine"
     note@-5 x=11.804 w=5.474
       glyph noteheadBlack 11.804,2.500
       line  12.984,2.332 -> 12.984,-1.000 t=0.120
@@ -331,7 +331,7 @@ system 2 width=54.511 originY=33.979
     note@1 x=46.069 w=5.474
       glyph noteheadBlack 46.069,-0.500
       line  46.069,-0.332 -> 46.069,3.000 t=0.120
-      text  41.883,-5.000 size=2.065 italic "D.C. al Coda"
+      text  41.269,-5.000 size=2.065 italic "D.C. al Coda"
     bar x=51.544 w=1.060
       line  51.624,-2.000 -> 51.624,2.000 t=0.160
       line  52.354,-2.000 -> 52.354,2.000 t=0.500
@@ -346,8 +346,8 @@ system 0 width=58.345 originY=0.000
     staffline 0.000,-1.000 -> 58.345,-1.000 t=0.130
     staffline 0.000,-2.000 -> 58.345,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  6.016,-12.757 size=3.484 bold "S-missing-6 Combined Decorations"
-      text  23.636,-8.556 size=2.452 italic "Test Fixture"
+      text  4.207,-12.757 size=3.484 bold "S-missing-6 Combined Decorations"
+      text  23.215,-8.556 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -386,7 +386,7 @@ system 0 width=58.345 originY=0.000
     note@1 x=49.903 w=5.474
       glyph noteheadBlack 49.903,-0.500
       line  49.903,-0.332 -> 49.903,3.000 t=0.120
-      text  45.716,-5.000 size=2.065 italic "D.C. al Coda"
+      text  45.103,-5.000 size=2.065 italic "D.C. al Coda"
     bar x=55.377 w=1.060
       line  55.457,-2.000 -> 55.457,2.000 t=0.160
       line  56.187,-2.000 -> 56.187,2.000 t=0.500
