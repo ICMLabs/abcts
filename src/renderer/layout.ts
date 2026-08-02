@@ -4641,6 +4641,10 @@ function verticalExtent(
   // 5 pitch (`ENGRAVE.endingLane`) beyond the note on whichever side an ending sits, never
   // the bracket's real height. See the ABOVE/BELOW gather at the top of this function.
   // Dynamics: a flat lane past the music, never their own drawn box.
+  // ponytail: a staff whose only below-dynamic is a HAIRPIN reserves nothing, because
+  // hairpins resolve after packing and `spannerLines` is still empty here. abcjs does
+  // reserve for them (`dynamicHeightBelow`, `crescendo-element.js:11`). Taking presence
+  // from the model instead was tried and made the corpus much worse — see the checkpoint.
   if (sawDynamicBelow) bottom += ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
   if (endingAbove) top = Math.min(top, top - ENGRAVE.endingLane)
   if (endingBelow) bottom = Math.max(bottom, bottom + ENGRAVE.endingLane)
