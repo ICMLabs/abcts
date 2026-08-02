@@ -140,9 +140,52 @@ Ours minus abcjs, in PITCH, over all 23 systems (staff 0 = treble, staff 1 = bas
 - A handful of rows are NEGATIVE (14/0 -2.95, 17/1 -5.38, 22/1 -5.95) — we under-reserve
   there. Any fix has to be measured against this whole table, not against a mean.
 
-**Nothing was attempted against it this session.** Both single-term fixes are already
-recorded as failures (`overhang alone`: ave-verum 2.4 → 23.4; `stems=down` alone: ragtime
-57.9 → 66.8) and re-running a known-failed experiment is not progress.
+### ATTEMPTED 2026-08-01, STAGED ON `geometry/ragtime-stems` (`cc9ee4a`) — not landed
+
+`V:… stems=` and the middle-line stem stretch are IMPLEMENTED and measured on that branch.
+The geometry branch does not carry them: they close the intra-system half and leave the
+inter-system half open, so `ragtime-nightingale` goes 121.5 → 147.4 and the branch would
+move further from landing. Cherry-pick them onto whatever closes the rest.
+
+**`stems=down` is correct, and this is the first time that has been shown rather than
+argued.** Measuring abcjs's own stem reach out of its SVG against ours, in pitch beyond the
+outer lines, ragtime's BASS staves go from mismatched to matching:
+
+| staff | abcjs above / below | ours | diff |
+|---|---|---|---|
+| 1 | 4.58 / 14.09 | 4.66 / 14.00 | **+0.09 / −0.09** |
+| 5 | 4.71 / 12.59 | 4.66 / 11.67 | −0.05 / −0.92 |
+| 9 | 6.71 / 11.59 | 6.66 / 11.00 | −0.05 / −0.59 |
+
+The intra-system boundary error over 23 systems falls **+133.0px → +41.6px** total. Nothing
+outside ragtime moves. The earlier "`stems=down` alone: 57.9 → 66.8" result stands as an
+aggregate but was never wrong about the model — only about which half it fixes.
+
+### The inter-system half — the LAST piece, and it is an algorithm
+
+Our inter-system gaps sit pinned at the `%%staffsep 90` minimum (90 × 4/3 = 120px; our
+conversion is right) on **every** boundary, while abcjs's natural separation exceeds it —
+125.94, 141.44, 146.99px. Our extent sums are 4–17 pitch short exactly on the boundaries
+where abcjs's gap proves its natural, and that deficit did **not move at all** with
+`stems=`.
+
+It is BEAM PLACEMENT. abcjs's beamed stems have no fixed length: `layout/beam.js` runs
+`calcYPos` over the group and draws each stem from its notehead to the resulting beam line,
+so the reach follows the beam. Ours uses a fixed `stemLength` and retargets afterwards.
+**Porting `calcYPos` is the next step and the last one.**
+
+Two things it will not explain, so check them separately: treble staves 0 and 8 are 8.66 and
+6.91 pitch short ABOVE against ~1.5 elsewhere — a direction difference on specific beam
+groups — and the beam-direction port is still unsettled (see the negative result above).
+
+### A trap that cost real time this session — the dump is PRE-BEAM, again
+
+The `-07-24` reading "abcjs's down-stems reserve nothing below" came from `staff.bottom = -1`
+in the element dump, and it is an artifact: beamed notes are built with `nostem = true`
+(`createBeam` → `createNote(elem, true, …)`), so they carry no stem element at creation, and
+`layout/beam.js` adds one later — after the dump is taken. The dump's extents exclude every
+beamed stem. Method note 2 already said this and it still caught this session; the SVG is the
+only extent oracle for anything beamed.
 
 ---
 
