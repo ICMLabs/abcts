@@ -115,6 +115,21 @@ export const ENGRAVE = {
    */
   clefIndent: 5 / 7.75,
   /**
+   * Gap a NOTE's rod adds beyond its own ink — abcjs's `minspacing`, and for a note that is
+   * **1px**, not the 10 a bar or a staff-extra gets.
+   *
+   * `new AbsoluteElement(elem, durationForSpacing, 1, absType, …)` for a note
+   * (`abstract-engraver.js:808`) against `new AbsoluteElement(elem, 0, 10, 'bar', …)` at
+   * `:959` and 10 for every `staff-extra`. The rod itself is `getMinWidth(child)`, which is
+   * simply `child.w` (`layout/voice-elements.js`), and the layout takes
+   * `x = max(x + rod + minspacing, x + spacing * sqrt(dur * 8))` — whichever is larger.
+   *
+   * Ours added `minColumnGap`, 0.6 of a space = 4.65px, which is nearly five times abcjs's
+   * and binds on exactly the short dense notes where the rod starts to win: a 32nd's spring
+   * is 15px against a ~20px rod.
+   */
+  noteRodGap: 1 / 7.75,
+  /**
    * Gap between adjacent accidentals in a key signature.
    *
    * abcjs steps by `getSymbolWidth(symbol) + 2` (`create-key-signature.js:26`) — a flat 2px,
@@ -149,8 +164,19 @@ export const ENGRAVE = {
   spacingReference: 1 / 16,
   /** Hard minimum gap between adjacent columns — the rod floor beneath the springs. */
   minColumnGap: 0.6,
-  /** Space either side of a barline. PROVISIONAL. */
-  barGap: 1.0,
+  /**
+   * Space AFTER a barline, before the next element. Nothing goes before it.
+   *
+   * abcjs's bar is `new AbsoluteElement(elem, 0, 10, 'bar', …)` (`abstract-engraver.js:959`)
+   * — width 1, `minspacing` 10 — and it has ZERO duration, so its spring is nothing and its
+   * rod always wins: the next element sits 11px past it. Nothing is inserted before it
+   * either; the preceding note's own advance puts it there.
+   *
+   * Measured on `simple-c`, whose note-to-note gaps already matched abcjs exactly at 42.4px
+   * everywhere EXCEPT across a barline — 53.4 against our 57.9. We were adding one space on
+   * each side, 15.5px, where abcjs adds 11.0 once.
+   */
+  barGap: 11 / 7.75,
   /**
    * LANES above and below the staff, in staff steps. The staff itself spans -4 to 4.
    *
@@ -1820,7 +1846,7 @@ function layoutNoteheads(
   // or a dot column must never be crushed by a short duration, so the element is at
   // least as wide as what it draws plus the minimum gap.
   const spread = Math.max(0, ...[...offsets.values()].map(Math.abs), dotWidth)
-  const ink = graceWidth + accidentalWidth + spread + head.width + ENGRAVE.minColumnGap
+  const ink = graceWidth + accidentalWidth + spread + head.width + ENGRAVE.noteRodGap
   return {
     type: 'note',
     x,
@@ -3201,7 +3227,6 @@ function layoutMeasure(
     // An opening `|:` or `[|` prints before the measure it belongs to, and is a SEPARATE
     // barline from the previous measure's closer.
     if (measure.openingBarline === null) return
-    x += ENGRAVE.barGap
     elements.push(layoutBar(x, measure.openingBarline, strict))
     x += ENGRAVE.barGap
   }
@@ -3280,7 +3305,6 @@ function layoutMeasure(
   let closingBarIndex: number | null = null
   const musicWidth = x
   if (measure.closingBarline !== null) {
-    x += ENGRAVE.barGap
     closingBarIndex = elements.length
     elements.push(layoutBar(x, measure.closingBarline, strict))
     x += ENGRAVE.barGap

@@ -677,7 +677,12 @@ C,D,E,F,|G,A,B,C|
     const barsOf = (i: number) =>
       (doc.systems[0]?.staves[i]?.elements ?? []).filter((e) => e.type === 'bar').map((e) => e.x)
     expect(barsOf(0).length).toBeGreaterThan(0)
-    expect(barsOf(1)).toEqual(barsOf(0))
+    expect(barsOf(1).length).toBe(barsOf(0).length)
+    // To the pixel, not to the bit: the claim is that the staves line up, and the two
+    // voices reach the same column by different sums, so the last float digit can differ.
+    barsOf(1).forEach((x, i) => {
+      expect(x).toBeCloseTo(barsOf(0)[i] as number, 6)
+    })
   })
 
   it('stacks staves within a system without overlapping', () => {
