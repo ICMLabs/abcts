@@ -35,7 +35,7 @@ import { describe, expect, it } from 'vitest'
 import type { CompatibilityMode } from '../src/core/model.js'
 import { parse } from '../src/parser/parser.js'
 import { render } from '../src/renderer/index.js'
-import { layout } from '../src/renderer/layout.js'
+import { ENGRAVE, layout } from '../src/renderer/layout.js'
 
 const abc = readFileSync('tests/fixtures/gonzato-4-1-4-directives-as-i-fields.abc', 'utf-8')
 
@@ -132,10 +132,13 @@ describe('lyric continuation across interposed directives', () => {
         const runs = drawn.map(
           (text) => `${text.size.toFixed(3)}${text.bold ? 'B' : ''}${text.italic ? 'I' : ''}`,
         )
-        // 1.4 staff spaces is the default at 13pt, so 12pt and 16pt scale from it.
-        const roman = (1.4 * (12 / 13)).toFixed(3)
-        const bold = `${(1.4 * (16 / 13)).toFixed(3)}B`
-        const italic = `${(1.4 * (12 / 13)).toFixed(3)}I`
+        // The 13pt default is the scale everything else is relative to, so this reads it
+        // rather than repeating it — it was written as a literal 1.4 and pinned the
+        // vocal font two thirds of abcjs's size in place.
+        const base = ENGRAVE.lyricTextSize
+        const roman = (base * (12 / 13)).toFixed(3)
+        const bold = `${(base * (16 / 13)).toFixed(3)}B`
+        const italic = `${(base * (12 / 13)).toFixed(3)}I`
         expect(runs).toEqual([
           ...Array(4).fill(roman),
           ...Array(8).fill(bold),
@@ -185,7 +188,7 @@ describe('lyric continuation across interposed directives', () => {
         expect(drawn).toHaveLength(4)
         // Exactly, not approximately. `toBeCloseTo` would pass on the drift this exists
         // to catch.
-        for (const text of drawn) expect(text.size).toBe(1.4)
+        for (const text of drawn) expect(text.size).toBe(ENGRAVE.lyricTextSize)
         expect(score.voices[0]?.measures[0]?.events[0]?.type === 'note').toBe(true)
       }
     })
@@ -199,7 +202,7 @@ describe('lyric continuation across interposed directives', () => {
       const drawn = layout(score, { mode: 'extended' })
         .systems.flatMap((system) => system.staves.flatMap((staff) => staff.voices.flat()))
         .flatMap((element) => element.texts.filter((text) => text.role === 'lyric'))
-      for (const text of drawn) expect(text.size).toBe(1.4)
+      for (const text of drawn) expect(text.size).toBe(ENGRAVE.lyricTextSize)
     })
   })
 

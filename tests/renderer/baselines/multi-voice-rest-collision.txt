@@ -1,15 +1,15 @@
 tune 0
-bounds  width=41.821 height=15.705 top=-1.935
+bounds  width=41.821 height=17.911 top=-1.935
 systems 1
 system 0 width=41.821 originY=0.000
-  staff 0 originY=5.710
+  staff 0 originY=7.475
     staffline 0.000,2.000 -> 41.821,2.000 t=0.130
     staffline 0.000,1.000 -> 41.821,1.000 t=0.130
     staffline 0.000,0.000 -> 41.821,0.000 t=0.130
     staffline 0.000,-1.000 -> 41.821,-1.000 t=0.130
     staffline 0.000,-2.000 -> 41.821,-2.000 t=0.130
-    beam   24.109,-3.000 -> 30.430,-1.000 t=0.500
-    tuplettext 26.352,-4.590 size=1.400 "3"
+    beam   24.109,-3.750 -> 30.430,-3.250 t=0.500
+    tuplettext 26.352,-5.340 size=1.400 "3"
     clef x=1.935 w=2.458
       glyph gClef 1.935,1.000
     keySignature x=5.394 w=1.065
@@ -23,13 +23,13 @@ system 0 width=41.821 originY=0.000
       line  22.009,-2.000 -> 22.009,2.000 t=0.160
     note@0 x=22.929 w=3.161
       glyph noteheadBlack 22.929,0.000
-      line  24.109,-0.168 -> 24.109,-3.250 t=0.120
+      line  24.109,-0.168 -> 24.109,-4.000 t=0.120
     note@-2 x=26.090 w=3.161
       glyph noteheadBlack 26.090,1.000
-      line  27.270,0.832 -> 27.270,-2.250 t=0.120
+      line  27.270,0.832 -> 27.270,-3.750 t=0.120
     note@-5 x=29.250 w=3.161
       glyph noteheadBlack 29.250,2.500
-      line  30.430,2.332 -> 30.430,-1.250 t=0.120
+      line  30.430,2.332 -> 30.430,-3.500 t=0.120
     note@-4 x=32.411 w=5.474
       glyph noteheadBlack 32.411,2.000
       line  33.591,1.832 -> 33.591,-1.500 t=0.120

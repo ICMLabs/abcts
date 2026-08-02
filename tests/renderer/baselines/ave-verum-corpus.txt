@@ -1,22 +1,22 @@
 tune 0
-bounds  width=90.000 height=59.780 top=-1.935
+bounds  width=90.000 height=57.260 top=-1.935
 systems 1
 system 0 width=90.000 originY=0.000
-  connector brace -0.920,42.182 scale=3.907
-  connector bracketTop -0.600,16.432
-  connector bracketBottom -0.600,34.057
-  connector line -0.600,16.432 -> -0.600,34.057 t=0.500
-  staff 0 originY=18.432
+  connector brace -0.920,41.051 scale=3.559
+  connector bracketTop -0.600,15.233
+  connector bracketBottom -0.600,31.190
+  connector line -0.600,15.233 -> -0.600,31.190 t=0.500
+  staff 0 originY=17.233
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
-    slur  61.824,-0.200 -> 64.625,2.300 bulge=0.504
+    slur  61.824,-1.800 -> 64.625,0.700 bulge=-0.504
     slur  72.496,1.300 -> 76.259,1.800 bulge=0.677
     title x=0.000 w=0.000
-      text  32.724,-13.973 size=3.484 bold "Ave Verum Corpus"
-      text  38.939,-9.772 size=2.452 italic "W. A. Mozart"
+      text  32.724,-12.774 size=3.484 bold "Ave Verum Corpus"
+      text  38.939,-8.572 size=2.452 italic "W. A. Mozart"
     voiceName x=1.935 w=0.000
       text  1.935,-0.439 size=2.194 bold "Soprano"
     clef x=11.450 w=2.458
@@ -28,7 +28,7 @@ system 0 width=90.000 originY=0.000
       glyph timeSig4 18.187,-1.000
       glyph timeSig4 18.187,1.000
     tempo x=20.709 w=0.000
-      text  20.709,-7.000 size=1.600 bold "Adagio"
+      text  20.709,-4.500 size=2.581 bold "Adagio"
     rest x=20.851 w=10.949
       glyph restWhole 20.851,-1.000
     bar x=36.654 w=0.160
@@ -40,11 +40,11 @@ system 0 width=90.000 originY=0.000
     note@-1 x=54.458 w=7.742
       glyph noteheadHalf 54.458,0.500
       line  55.638,0.332 -> 55.638,-3.000 t=0.120
-      text  54.507,5.715 size=1.400 "A-"
+      text  54.156,8.194 size=2.194 "A-"
     note@2 x=60.590 w=5.474
       glyph noteheadBlack 60.590,-1.000
-      line  61.770,-1.168 -> 61.770,-4.500 t=0.120
-      text  60.481,5.715 size=1.400 "ve,"
+      line  60.590,-0.832 -> 60.590,2.500 t=0.120
+      text  60.061,8.194 size=2.194 "ve,"
     note@-3 x=64.925 w=5.474
       glyph noteheadBlack 64.925,1.500
       line  66.105,1.332 -> 66.105,-2.000 t=0.120
@@ -53,7 +53,7 @@ system 0 width=90.000 originY=0.000
     note@-1 x=71.261 w=5.474
       glyph noteheadBlack 71.261,0.500
       line  72.441,0.332 -> 72.441,-3.000 t=0.120
-      text  71.274,5.715 size=1.400 "A-"
+      text  70.923,8.194 size=2.194 "A-"
     note@-2 x=75.597 w=5.474
       glyph accidentalSharp 75.597,1.000
       glyph noteheadBlack 76.811,1.000
@@ -62,7 +62,7 @@ system 0 width=90.000 originY=0.000
       glyph accidentalNatural 79.933,1.000
       glyph noteheadHalf 80.780,1.000
       line  81.960,0.832 -> 81.960,-2.500 t=0.120
-      text  80.708,5.715 size=1.400 "ve,"
+      text  80.288,8.194 size=2.194 "ve,"
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
     voiceName x=1.935 w=0.000
@@ -99,7 +99,7 @@ system 0 width=90.000 originY=0.000
       line  78.663,2.168 -> 78.663,5.500 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 1 originY=32.057
+  staff 1 originY=29.190
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -125,18 +125,18 @@ system 0 width=90.000 originY=0.000
       line  53.538,-2.000 -> 53.538,2.000 t=0.160
     note@4 x=54.458 w=7.742
       glyph noteheadHalf 54.458,-2.000
-      line  55.638,-2.168 -> 55.638,-5.500 t=0.120
+      line  54.458,-1.832 -> 54.458,1.500 t=0.120
     note@4 x=61.859 w=7.742
       glyph noteheadHalf 61.859,-2.000
-      line  63.039,-2.168 -> 63.039,-5.500 t=0.120
+      line  61.859,-1.832 -> 61.859,1.500 t=0.120
     bar x=70.261 w=0.160
       line  70.341,-2.000 -> 70.341,2.000 t=0.160
     note@5 x=71.261 w=7.742
       glyph noteheadHalf 71.261,-2.500
-      line  72.441,-2.668 -> 72.441,-6.000 t=0.120
+      line  71.261,-2.332 -> 71.261,1.000 t=0.120
     note@5 x=78.663 w=7.742
       glyph noteheadHalf 78.663,-2.500
-      line  79.843,-2.668 -> 79.843,-6.000 t=0.120
+      line  78.663,-2.332 -> 78.663,1.000 t=0.120
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
     voiceName x=1.935 w=0.000
@@ -160,24 +160,24 @@ system 0 width=90.000 originY=0.000
     note@0 x=54.458 w=7.742
       glyph noteheadHalf 54.458,0.000
       line  54.458,0.168 -> 54.458,3.500 t=0.120
-      text  54.507,5.715 size=1.400 "A-"
+      text  54.156,8.624 size=2.194 "A-"
     note@0 x=61.859 w=7.742
       glyph noteheadHalf 61.859,0.000
       line  61.859,0.168 -> 61.859,3.500 t=0.120
-      text  61.788,5.715 size=1.400 "ve,"
+      text  61.368,8.624 size=2.194 "ve,"
     bar x=70.261 w=0.160
       line  70.341,-2.000 -> 70.341,2.000 t=0.160
     note@0 x=71.261 w=7.742
       glyph noteheadHalf 71.261,0.000
       line  71.261,0.168 -> 71.261,3.500 t=0.120
-      text  71.310,5.715 size=1.400 "A-"
+      text  70.959,8.624 size=2.194 "A-"
     note@0 x=78.663 w=7.742
       glyph noteheadHalf 78.663,0.000
       line  78.663,0.168 -> 78.663,3.500 t=0.120
-      text  78.591,5.715 size=1.400 "ve,"
+      text  78.171,8.624 size=2.194 "ve,"
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 2 originY=44.182
+  staff 2 originY=43.051
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -285,7 +285,7 @@ system 0 width=90.000 originY=0.000
       glyph noteheadWhole 71.261,2.000
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 3 originY=55.765
+  staff 3 originY=53.244
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130

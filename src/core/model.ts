@@ -162,9 +162,39 @@ export interface Clef {
    * notehead, unlike `Voice.octaveShift`, whose written/sounding status is still open.
    */
   readonly octaveShift: number
+  /**
+   * `V:… middle=<pitch>` — the diatonic index that sits on the MIDDLE staff line, which
+   * overrides the one the clef's shape and line imply. `null` when no `middle=` was given.
+   *
+   * abcjs's `clef.verticalPos`: a WRITTEN-position shift, not a sounding one, so unlike
+   * `octaveShift` it moves noteheads. `clef=bass middle=d` puts D5 (index 36) on the middle
+   * line where plain bass puts D3 (22), dropping that voice's high notes onto the staff.
+   * Independent of `transpose=`, which is sounding-only and moves nothing on the page.
+   */
+  readonly middleOverride: number | null
+  /**
+   * `V:… stafflines=<n>` — how many staff lines to DRAW, 5 unless stated.
+   *
+   * A drawing count, not a coordinate system: notes keep their normal pitches and a
+   * `stafflines=1` rhythm staff still reads as a treble staff with four of its lines
+   * hidden. abcjs carries it on the clef for the same reason (`clef.stafflines`,
+   * `abstract-engraver.js:182`) and leaves the staff's own top/bottom limits at the
+   * five-line values — its `staff-group-element.js:53` records that as an open question,
+   * and matching it is what keeps a short staff from re-spacing everything around it.
+   */
+  readonly staffLines: number
 }
 
-export const defaultClef: Clef = { shape: 'G', line: 2, octaveShift: 0 }
+/** Five, as every ABC clef is unless `stafflines=` says otherwise. */
+export const DEFAULT_STAFF_LINES = 5
+
+export const defaultClef: Clef = {
+  shape: 'G',
+  line: 2,
+  octaveShift: 0,
+  middleOverride: null,
+  staffLines: DEFAULT_STAFF_LINES,
+}
 
 // ─── Meter ───────────────────────────────────────────────────────────────────
 
@@ -509,6 +539,26 @@ export interface Voice {
   readonly octaveShift: number
   /** `V:… clef=`. `null` means this voice takes the tune's clef from `Score.clef`. */
   readonly clef: Clef | null
+  /**
+   * `V:… stafflines=<n>` given WITHOUT a `clef=` beside it. `null` when absent.
+   *
+   * Separate from `clef.staffLines` because the two inherit differently: a bare
+   * `stafflines=` must not materialise a clef, or the voice would stop taking the tune's
+   * (`V:1 stafflines=1` above a `K:C bass` would silently turn treble). So the count rides
+   * on the voice and is applied to whichever clef resolution picks.
+   */
+  readonly staffLineOverride: number | null
+  /**
+   * `V:… stems=up|down` — every stem in this voice forced one way. `null` when absent.
+   *
+   * It WINS over the shared-staff convention rather than combining with it, which is
+   * abcjs's own precedence: `createVoice` takes `if (params.stem) … else if (voiceNum > 0)`
+   * (`parse/tune-builder.js:971-986`), so a declared `stems=` also suppresses the `up`
+   * that would otherwise be back-filled onto the staff's first voice. It beats the BEAM's
+   * choice too — abcjs hands it to `BeamElem` as `forceup`/`forcedown`, checked before the
+   * average-pitch rule (`beam-element.js:74-86`).
+   */
+  readonly stemDirection: 'up' | 'down' | null
   /**
    * `V:… name=` — the label printed to the left of the FIRST system. `null` means none.
    * abcjs reserves horizontal space for it, shifting the staff (and its notes) right.

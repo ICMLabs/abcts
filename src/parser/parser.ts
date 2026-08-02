@@ -10,8 +10,12 @@
  * chords, barlines, measures, broken rhythm, tuplets, microtones, `&` overlays,
  * `%%score` voice ordering, `%%begintext` blocks, `+:` continuations, chord symbols,
  * annotations and decorations.
- * ponytail: DEFERRED — part order (`P:`), `U:` user-defined symbols, symbol lines
- * (`s:`), and most `%%` directives.
+ * Also read: `U:` user-defined symbols, `P:` part labels, `w:`/`W:` lyrics, and the
+ * `clef=` / `octave=` / `middle=` / `stafflines=` / `style=` modifiers on both `K:` and
+ * `V:`.
+ * ponytail: DEFERRED — part ORDER (a header `P:ABAB`, which is a different thing from the
+ * body `P:` label), symbol lines (`s:`), the written half of `transpose=`, and most `%%`
+ * directives.
  * Each is a separate step driven by the corpus fixture that needs it; the lexer
  * already tokenizes all of them, so the work is parser-side only.
  */
@@ -23,6 +27,7 @@ import {
   type Clef,
   type ClefShape,
   type CompatibilityMode,
+  DEFAULT_STAFF_LINES,
   DEFAULT_VOCALFONT_PT,
   type Diagnostic,
   type DiatonicStep,
@@ -53,6 +58,7 @@ import {
   type StaffConnector,
   type StaffGroup,
   sourceRange,
+  stepIndex,
   type Tempo,
   type Voice,
 } from '../core/model.js'
@@ -109,8 +115,9 @@ function parseKey(content: string): KeySignature {
   // `K:none` means NO key signature — no alterations, and a renderer draws nothing. It is
   // not C major, even though both alter no steps.
   if (/^none\b/i.test(content.trim())) return { ...defaultKey(), none: true }
-  // ponytail: `clef=`, `octave=`, `transpose=`, `middle=`, `stafflines=` also ride on
-  // K:. Stripped here, implemented when a fixture needs them.
+  // `clef=`, `octave=`, `middle=` and `stafflines=` also ride on K:, and are read by the
+  // K: case in `field()` rather than here — this function returns the KEY alone.
+  // ponytail: `transpose=` is parsed but its written half is unrealized.
   const spec = (content.split(/\s+/)[0] ?? '').trim()
   const head = spec[0]?.toLowerCase()
   if (!head || head < 'a' || head > 'g') return defaultKey()
@@ -201,6 +208,8 @@ const CLEF_NAMES: ReadonlyArray<readonly [string, ClefShape, number]> = [
  * octave — `clef=treble-8` is the tenor's octave-down treble clef.
  */
 export function parseClef(spec: string): Clef | null {
+  const middleOverride = middleLineOverride(spec)
+  const staffLines = staffLineCount(spec)
   const build = (name: string, digit: string, octave: string): Clef | null => {
     const entry = CLEF_NAMES.find(([n]) => n === name.toLowerCase())
     if (!entry) return null
@@ -210,6 +219,8 @@ export function parseClef(spec: string): Clef | null {
       shape,
       line: line >= 1 && line <= 5 ? line : defaultLine,
       octaveShift: octave === '+8' ? 1 : octave === '-8' ? -1 : 0,
+      middleOverride,
+      staffLines,
     }
   }
 
@@ -225,6 +236,77 @@ export function parseClef(spec: string): Clef | null {
     if (clef) return clef
   }
   return null
+}
+
+/**
+ * A `V:`/`K:` field's clef, or the one already in force with its `stafflines=` updated.
+ *
+ * `stafflines=` can appear with no clef beside it — `V:1 stafflines=1` is a perfectly good
+ * rhythm staff — and `parseClef` rightly returns null there, since the field names no clef.
+ * So the count is applied to whatever clef the voice already has rather than forcing a
+ * default treble alongside it.
+ */
+function clefWith(current: Clef, spec: string): Clef {
+  return parseClef(spec) ?? { ...current, staffLines: staffLineCount(spec) }
+}
+
+/** `V:… stems=up|down` (ABC 2.1 §4.19), or `null` when the field does not set it. */
+function stemModifier(spec: string): 'up' | 'down' | null {
+  const m = /\bstems=(up|down)\b/i.exec(spec)
+  return m?.[1] === undefined ? null : (m[1].toLowerCase() as 'up' | 'down')
+}
+
+/** `stafflines=` written with no `clef=` beside it — see `Voice.staffLineOverride`. */
+const bareStaffLines = (spec: string): number | null =>
+  /\bstafflines=/i.test(spec) && parseClef(spec) === null ? staffLineCount(spec) : null
+
+/**
+ * `V:… stafflines=<n>` → how many staff lines to draw, defaulting to five.
+ *
+ * abcjs clamps to 0–10 (`test/abc_parser_lint.js:164`) and treats anything else as absent,
+ * which is what a non-integer or out-of-range value falls back to here. `stafflines=0` is a
+ * real value, not "unset" — it draws no staff at all — so the range test has to admit it.
+ */
+function staffLineCount(spec: string): number {
+  const m = /\bstafflines=(-?\d+)/i.exec(spec)
+  if (!m) return DEFAULT_STAFF_LINES
+  const n = Number.parseInt(m[1] ?? '', 10)
+  return Number.isInteger(n) && n >= 0 && n <= 10 ? n : DEFAULT_STAFF_LINES
+}
+
+/**
+ * `V:… middle=<pitch>` (or `m=`) → the diatonic index of the pitch on the MIDDLE staff
+ * line, or `null` if absent. The pitch is written in ABC: an uppercase letter is octave 4,
+ * lowercase octave 5, each `'` an octave up and each `,` down — so `middle=d` is D5.
+ *
+ * Diatonic index matches the renderer's `diatonicIndex`: `stepIndex(step) + 7 * octave`.
+ * D5 = 1 + 7×5 = 36, which is what `clef=bass middle=d` puts on the middle line in place of
+ * plain bass's D3 (22). Only diatonic letter + octave marks are read; a `middle=` with an
+ * accidental (`middle=^c`) drops the accidental, which does not affect the LINE a pitch
+ * sits on. No corpus fixture writes one.
+ */
+function middleLineOverride(spec: string): number | null {
+  // `middle=` and `transpose=` interact — a vocal score writes its basses in treble range,
+  // shifts them down whole octaves with `transpose=`, and repositions the clef with
+  // `middle=` so they read correctly, the two nearly cancelling (`zocharti-loch`). Honour
+  // `middle=` only when `transpose=` is absent, which is what abcjs's output does.
+  //
+  // NOT a placeholder for unimplemented work, though it was recorded as one. abcjs's
+  // RENDERER never reads `transpose=` at all: `src/write/` has zero references to it and
+  // only `src/synth/` uses it, so it is an audio-only field there and there is no "written
+  // half" owed. (`create-clef.js:30-31` likewise has its `verticalPos` line commented out.)
+  // Both `middle=` fixtures confirm the guard reproduces abcjs — `voice-middle-after-clef`
+  // at dy 0.0 with it honoured, `zocharti-loch` at dy 0.9 with it suppressed. Measured, not
+  // reasoned: honouring `middle=` here anyway sent zocharti to dy 72.
+  if (/\btranspose=/.test(spec)) return null
+  const m = /\b(?:middle|m)=\^*_*=?([A-Ga-g])([,']*)/.exec(spec)
+  if (!m) return null
+  const letter = m[1] ?? ''
+  const step = stepIndex(letter.toLowerCase() as DiatonicStep)
+  if (step < 0) return null
+  let octave = letter === letter.toUpperCase() ? 4 : 5
+  for (const mark of m[2] ?? '') octave += mark === "'" ? 1 : -1
+  return step + 7 * octave
 }
 
 /**
@@ -506,6 +588,10 @@ const CONTINUABLE_FIELDS = 'ABCDFGHNORSTZw'
 
 class VoiceBuilder {
   octaveShift = 0
+  /** `V:… stafflines=` with no `clef=` — see `Voice.staffLineOverride`. */
+  staffLineOverride: number | null = null
+  /** `V:… stems=up|down` — see `Voice.stemDirection`. */
+  stemDirection: 'up' | 'down' | null = null
   clef: Clef | null = null
   /** `V:… name=` / `subname=` — labels printed left of the staff. See `Voice`. */
   name: string | null = null
@@ -548,6 +634,8 @@ class VoiceBuilder {
   /** The counter value when the current music line began; `w:` lines align from here. */
   private lineNoteStart = 0
   private readonly lyricLines: { start: number; syllables: Syllable[] }[] = []
+  /** `s:` symbol lines, aligned to notes exactly as `w:` is. Non-strict modes only. */
+  private readonly symbolLines: { start: number; syllables: Syllable[] }[] = []
 
   constructor(readonly id: string) {}
 
@@ -623,6 +711,10 @@ class VoiceBuilder {
     this.lyricLines.push({ start: this.lineNoteStart, syllables })
   }
 
+  addSymbolLine(syllables: Syllable[]): void {
+    this.symbolLines.push({ start: this.lineNoteStart, syllables })
+  }
+
   /** Extend the lyric line in progress — a `\` continuation, not a new verse. */
   appendLyricLine(syllables: Syllable[]): void {
     const current = this.lyricLines[this.lyricLines.length - 1]
@@ -631,6 +723,55 @@ class VoiceBuilder {
       return
     }
     current.syllables.push(...syllables)
+  }
+
+  /**
+   * Distribute `s:` symbols onto notes by position — the CORRECT reading, which strict
+   * mode never reaches.
+   *
+   * ABC 2.1 §8.2: an `s:` line aligns decorations under its music line the same way `w:`
+   * aligns syllables, sharing that field's whole token grammar — space advances a note,
+   * `*` skips one, `|` skips to the next barline. So it reuses the `w:` splitter and the
+   * same index walk rather than growing a second one.
+   *
+   * abcjs does NOT do this. It reads `s:` with its `w:` parser and pushes the result onto
+   * `el.lyric`, so the symbols come out as lyric TEXT under the staff — its own comment at
+   * `parse/abc_parse.js:325` says "Currently copied from w: line. This needs to be read as
+   * symbols instead." `abcjs-strict` reproduces that by routing the line to the lyric path
+   * at the field, so nothing here runs in that mode; see the `s` case in `field`.
+   *
+   * The `!`/`+` delimiters are stripped so a symbol joins the same namespace `U:` and the
+   * inline `!trill!` form use. A token that names no decoration is simply carried — the
+   * renderer draws what it knows and ignores the rest, exactly as it does for an inline one.
+   */
+  private applySymbols(): void {
+    if (this.symbolLines.length === 0) return
+    const symbols = new Map<number, string[]>()
+    for (const line of this.symbolLines) {
+      line.syllables.forEach((token, offset) => {
+        if (token.kind === 'skip' || token.text === null) return
+        const name = token.text.replace(/^[!+]|[!+]$/g, '')
+        if (name === '') return
+        const at = line.start + offset
+        symbols.set(at, [...(symbols.get(at) ?? []), name])
+      })
+    }
+    if (symbols.size === 0) return
+
+    let index = 0
+    // Rebuilt rather than mutated, for the reason `applyLyrics` gives.
+    this.measures = this.measures.map((measure) => ({
+      ...measure,
+      events: measure.events.map((event) => {
+        if (event.type === 'rest') return event
+        const extra = symbols.get(index)
+        index += 1
+        // Appended, so an inline `!trill!` on the same note keeps its place in the stack.
+        return extra === undefined
+          ? event
+          : { ...event, decorations: [...event.decorations, ...extra] }
+      }),
+    }))
   }
 
   /**
@@ -849,6 +990,7 @@ class VoiceBuilder {
   finish(): Voice {
     this.closeUnterminatedMeasure()
     this.applyLyrics()
+    this.applySymbols()
     // `V:2 clef=bass octave=-2` moves the WRITTEN pitch, so it is baked into the model
     // here rather than left for a renderer to remember. Settled by probing abcjs 6.6.3,
     // which reports pitch -14 where an unshifted voice reports 0: the noteheads move.
@@ -870,6 +1012,8 @@ class VoiceBuilder {
       id: this.id,
       octaveShift: this.octaveShift,
       clef: this.clef,
+      staffLineOverride: this.staffLineOverride,
+      stemDirection: this.stemDirection,
       name: this.name,
       subname: this.subname,
       measures: padOverlays(measures, this.meterForOverlays),
@@ -1377,8 +1521,9 @@ class Parser {
       }
       case 'V': {
         // `V:1 clef=treble name="..."` — the id is the first token; the rest is voice
-        // configuration. `clef=`, `octave=` and `style=` are read; ponytail: `name=`,
-        // `transpose=`, `middle=` and `stafflines=` are not, and no fixture needs them.
+        // configuration. `clef=`, `octave=`, `middle=`, `stafflines=`, `name=`, `subname=`
+        // and `style=` are read; ponytail: `transpose=` is parsed but its WRITTEN half is
+        // unrealized, which is why `middle=` guards on it.
         const id = value.split(/\s+/)[0]
         if (!id) return
         // In the header a `V:` only DECLARES. Only a `V:` in the body switches the
@@ -1390,10 +1535,28 @@ class Parser {
         if (octave !== null) builder.voiceFor(id).octaveShift = octave
         const voiceClef = parseClef(value)
         if (voiceClef !== null) builder.voiceFor(id).clef = voiceClef
+        const bare = bareStaffLines(value)
+        if (bare !== null) builder.voiceFor(id).staffLineOverride = bare
+        const stems = stemModifier(value)
+        if (stems !== null) builder.voiceFor(id).stemDirection = stems
         const name = voiceLabel(value, ['name', 'nm'])
         if (name !== undefined) builder.voiceFor(id).name = name
         const subname = voiceLabel(value, ['subname', 'sname', 'snm'])
         if (subname !== undefined) builder.voiceFor(id).subname = subname
+        return
+      }
+      case 's': {
+        // `s:` — decorations aligned under the music line, ABC 2.1 §8.2. Same token
+        // grammar as `w:`, so the same splitter reads it.
+        //
+        // THE MODE SPLIT IS THE POINT. abcjs reads `s:` with its `w:` parser and pushes the
+        // tokens onto `el.lyric` (`parse/abc_parse.js:317-395`), printing `!trill!` as a
+        // lyric syllable — its own TODO at `:325` calls this out. Strict reproduces that by
+        // handing the line to the lyric path, where an `s:` after a `w:` becomes the next
+        // verse, which is what abcjs's `el.lyric.push` does. The other modes place them.
+        const tokens = this.takeLyricLine(content, start + 2, builder)
+        if (isStrict(this.mode)) builder.voice.addLyricLine(tokens)
+        else builder.voice.addSymbolLine(tokens)
         return
       }
       case 'U': {
@@ -1424,8 +1587,7 @@ class Parser {
         builder.key = parseKey(value)
         builder.keySourceRange = range
         // `K:C bass` sets the tune's clef; a `V:… clef=` still overrides it per voice.
-        const keyClef = parseClef(value)
-        if (keyClef !== null) builder.clef = keyClef
+        builder.clef = clefWith(builder.clef, value)
         const keyOctave = octaveModifier(value)
         if (keyOctave !== null) builder.voice.octaveShift = keyOctave
         builder.bodyStarted = true // K: ends the header.

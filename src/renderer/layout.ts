@@ -20,6 +20,7 @@ import {
   type Clef,
   type ClefShape,
   type CompatibilityMode,
+  DEFAULT_STAFF_LINES,
   DEFAULT_VOCALFONT_PT,
   type DiatonicStep,
   defaultClef,
@@ -51,13 +52,26 @@ import { VOICE_NAME_GAP_PX, voiceNameWidthPx } from './voice-name-metrics.js'
 // Engraving conventions, NOT font metadata. Sources noted; values marked PROVISIONAL
 // are starting points pending calibration against reference renders.
 
-const ENGRAVE = {
+export const ENGRAVE = {
   /** Steps of the five staff lines, bottom → top, about the middle line at 0. */
   staffLineSteps: [-4, -2, 0, 2, 4],
   /** A staff step is half a staff space. */
   spacePerStep: 0.5,
   /** Standard stem length ≈ one octave. *Behind Bars* (Gould). */
   stemLength: 3.5,
+  /**
+   * How far a BEAM sits beyond its group's extreme note, in staff STEPS — abcjs's beamed
+   * stem height, which is not the same constant as an unbeamed one's.
+   *
+   * abcjs hardcodes 7 for a lone stem (`abstract-engraver.js:739`) but takes the beam's
+   * from `renderer.spacing.stemHeight`, 26.67 + 10 = 36.67 PIXELS (`renderer.js:107`),
+   * which `setStemHeight` converts as `round(36.67 x 10 / 3.875) / 10` = **9.5** steps
+   * (`abstract-engraver.js:84-86`). `calcYPos` then uses `stemHeight - 2`.
+   *
+   * Reusing `stemLength` here — the unbeamed 7 — put every beam 2.5 steps too close to its
+   * notes, which on ragtime is most of the corpus's remaining vertical error.
+   */
+  beamStemHeight: Math.round((36.67 * 10) / 3.875) / 10,
   /** First ledger step beyond the staff; grows outward by 2. *Behind Bars*. */
   firstLedgerStep: 6,
   /** Ledger line overhang past the notehead each side. */
@@ -143,22 +157,38 @@ const ENGRAVE = {
   chordSymbolStep: 9.37,
   ornamentStep: 7,
   /**
-   * Dynamics (`!p!`, `!mf!`) and hairpins go ABOVE the staff, not below.
+   * Dynamics (`!p!`, `!mf!`) and hairpins go ABOVE the staff WHEN THE TUNE HAS LYRICS,
+   * and below it otherwise — abcjs's rule, not a taste choice.
    *
-   * abcjs's default is unambiguous: `DynamicDecoration` sets `volumeHeightBelow` only
-   * when the positioning says `below`, and `volumeHeightAbove` otherwise
-   * (`write/creation/elements/dynamic-decoration.js`). Ours was -7, below the staff, which
-   * is the wrong SIDE — a defect no amount of tuning the distance would have fixed.
+   * `createDecoration` defaults `volumePosition` to `hasVocals ? 'above' : 'below'`
+   * (`write/creation/decoration.js:379`), and `hasVocals` is set once per system if any
+   * voice on it carries a `w:` line below the staff (`abstract-engraver.js:110-122`).
+   * `DynamicDecoration` then reserves `volumeHeightAbove` or `volumeHeightBelow` from that
+   * (`dynamic-decoration.js`). The element dumps confirm the split:
+   * `multi-voice-lyrics-two-voices` records `volumeHeightAbove`, `ragtime-nightingale` and
+   * `two-voice-invention` `volumeHeightBelow`.
    *
-   * 19.5 steps is 60px above the top staff line, measured off abcjs's own
-   * `multi-voice-lyrics-two-voices` golden (dynamic box centre 35.9, top line 95.8). It is
-   * also where the corpus is happiest, which is the check that it is not overfitted: 23
-   * would take that one fixture to 16px and push `ragtime-nightingale` from 28 to 52.
+   * `dynamicAboveStep` 19.5 is 60px above the top line, off `multi-voice-lyrics-two-voices`
+   * (box centre 35.9, top line 95.8). `dynamicBelowStep` −10.96 is 27px below the bottom
+   * line, off `two-voice-invention` (box centre 201.7, bottom line 174.7).
    *
-   * ponytail: a FIXED lane where abcjs stacks this one against the ink, like everything
-   * else out here. The two agree while nothing collides.
+   * ponytail: two FIXED lanes where abcjs stacks against the ink. `hasVocals` is read
+   * tune-wide, not per system — the corpus never varies lyrics across a tune's systems, so
+   * the two agree; a per-system read is the faithful version if one ever does.
    */
-  dynamicStep: 19.5,
+  dynamicAboveStep: 19.5,
+  dynamicBelowStep: -10.96,
+  /**
+   * Room a staff reserves BELOW its ink for dynamics and hairpins, in staff steps.
+   *
+   * abcjs's `max(volumeHeightBelow, dynamicHeightBelow) + margin` = `max(6, 6) + 1` = 7
+   * pitch (`dynamic-decoration.js:8`, `crescendo-element.js:11`,
+   * `set-upper-and-lower-elements.js:63-71`). It reserves that BEYOND the staff's ink and
+   * draws the marks at the bottom it had BEFORE subtracting — so the mark is anchored on
+   * the music, and the room is a flat lane past it. A fixed lane for both, which is what
+   * we had, gets neither right.
+   */
+  dynamicBelowReserve: 7,
   /**
    * `"^text"` above the staff and `"_text"` below.
    *
@@ -184,6 +214,26 @@ const ENGRAVE = {
   partStep: 10,
   tempoStep: 14,
   /**
+   * The above-staff STACK — what `anchorAboveStaff` walks, and why the three lanes above
+   * are only the origin it shifts from.
+   *
+   * abcjs reserves each of these on the running staff top, `height + margin` per item,
+   * and DRAWS the item at the top it just reserved (`set-upper-and-lower-elements.js:31-49`,
+   * `incTop`; `margin = 1` at `:102`). So a tune carrying a chord, a part label and a tempo
+   * mark stacks all three — where a fixed lane puts each at one distance from the staff
+   * whatever else is present, and the whole drawing sits as high as its outermost lane.
+   *
+   * The heights are abcjs's own `specialY`, and they are CONSTANTS: every staff of every
+   * fixture in the corpus reports the same three. In its pitch units, halved here because
+   * a step is half a staff space.
+   */
+  aboveStackMargin: 1 * 0.5,
+  chordHeightAbove: 4.779354838709677 * 0.5,
+  partHeightAbove: 5.718709677419355 * 0.5,
+  tempoHeightAbove: 6 * 0.5,
+  /** abcjs bumps the tempo's baseline 2px past the top it reserved (`draw/tempo.js:15`). */
+  tempoDescenderBump: 2 / 7.75,
+  /**
    * A tune's title sits above everything else it owns, in staff STEPS above the middle
    * line — so the gap to the top staff line is `titleStep / 2 - 2` spaces.
    *
@@ -202,10 +252,41 @@ const ENGRAVE = {
    */
   titleStep: 19,
   /** First verse below the staff; further verses stack downward by `lyricLineStep`. */
-  /** First verse's baseline, 28.8px below the bottom staff line in abcjs's goldens. */
+  /**
+   * Verse 1's baseline as WRITTEN — a provisional lane, 28.8px below the bottom staff
+   * line. `anchorLyrics` moves the whole block to where abcjs puts it once the staff's
+   * voices are merged and its music ink is known; this is only the origin the shift is
+   * measured from, and the verse stacking below it rides along untouched.
+   */
   lyricStep: -11.43,
-  /** Verse to verse: `round(18.84 x 1.1)` = 21px for abcjs's 17px vocal font. */
-  lyricLineStep: 5.42,
+  /**
+   * Lyrics hang from the staff's MUSIC INK BOTTOM, not from a fixed lane — and this is
+   * the one out-of-staff thing that genuinely does, which is why fixed lanes were right
+   * for chords and dynamics and wrong here.
+   *
+   * abcjs resolves a lyric's pitch to `staff.bottom`, the ink bottom over every voice on
+   * the staff (`set-upper-and-lower-elements.js:52-55`), and the k-th voice's lyrics one
+   * rendered lyric height lower than that (`:165-169`). Both constants below are its own
+   * 17px vocal font: the gap is the SVG baseline offset, the step is `17 x 1.108`, the
+   * same calibrated height ratio `textHeightRatio` carries.
+   *
+   * MEASURED, on four independent points, exact to 0.01px:
+   *   `ave-verum-corpus`  staff 0 ink bottom 8 steps below its bottom line, lyric 214.24
+   *                       staff 1 ink bottom 4 steps below its bottom line, lyric 310.23
+   *   `multi-voice-lyrics-two-voices`  two voices' lyrics 18.84px apart, both systems.
+   * ave-verum's two lyric lines sit only 3.3px apart NOT because the voice offset is
+   * absent there, but because its upper staff's ink reaches 15.5px further down and very
+   * nearly cancels it. Reading that 3.3 as "abcjs does not offset here" is what left this
+   * unfixed for two sessions.
+   */
+  lyricInkGap: 17 / 7.75,
+  lyricVoiceStep: (17 * 1.108) / 7.75,
+  /**
+   * Verse to verse: abcjs stacks verses as `<tspan dy="1.2em">` inside ONE `<text>` per
+   * note, so the step is 1.2 x the 17px vocal font = 20.4px, not the 21px an advance rule
+   * would give. Read off its own goldens' markup, not inferred.
+   */
+  lyricLineStep: (17 * 1.2) / 3.875,
   /** Clearance between a brace or bracket and the staff it joins. */
   connectorGap: 0.6,
   /** A bracket is a rule, and a heavy one. */
@@ -220,8 +301,16 @@ const ENGRAVE = {
   melismaGap: 0.4,
   /** Below this a run is a speck rather than a line; drawn as nothing. */
   melismaMinLength: 0.8,
-  /** Tempo and part labels are directions; chord symbols and lyrics are smaller. */
-  tempoTextSize: 1.6,
+  /**
+   * Tempo and part labels are directions; chord symbols and lyrics are smaller.
+   *
+   * abcjs's `partsfont` and `tempofont` are both 15pt -> `round(15 x 4/3)` = 20px
+   * (`abc_parse_directive.js:25-38`). Ours was 1.6 — 12.4px — which is the same
+   * two-thirds undersizing `titleTextSize` and `chordTextSize` carried before they were
+   * derived, and it matters twice over: the stack draws each item one FONT SIZE below the
+   * top it reserved, so an undersized font lands the baseline high as well as small.
+   */
+  tempoTextSize: 20 / 7.75,
   /**
    * Top-text font sizes, in staff spaces.
    *
@@ -279,7 +368,15 @@ const ENGRAVE = {
   lineSkipFactor: 1.1,
   /** Vertical gap between tunes in a tunebook — wider than between systems. */
   tuneGap: 6.0,
-  lyricTextSize: 1.4,
+  /**
+   * abcjs's `vocalfont`, 13pt -> `round(13 x 4/3)` = 17px, and its `gchordfont` /
+   * `annotationfont`, 12pt -> 16px (`abc_parse_directive.js:25-38`). Both were 1.4 —
+   * 10.85px — one constant serving lyrics, chord symbols, annotations and decorations at
+   * two thirds of abcjs's size. Same undersizing the title carried before `titleTextSize`
+   * was derived; it makes every out-of-staff reserve too small as well as drawing small.
+   */
+  lyricTextSize: 17 / 7.75,
+  chordTextSize: 16 / 7.75,
   /**
    * A stem shortened to meet a beam never drops below this. *Behind Bars* keeps beamed
    * stems from collapsing to stubs. PROVISIONAL.
@@ -297,6 +394,13 @@ const ENGRAVE = {
   tupletHook: 0.6,
   tupletTextSize: 1.4,
   /** Staff step for a repeat-ending bracket, above everything the staff itself draws. */
+  /**
+   * Fixed lane a tuplet bracket or volta ending reserves beyond the top/bottom note —
+   * abcjs's `endingHeightAbove`, 4 pitch + 1 margin = 5 pitch, which at 0.5 space/pitch is
+   * 2.5 staff-spaces. The bracket is DRAWN where its geometry puts it and overhangs this
+   * lane; only the lane is reserved. See `verticalExtent`.
+   */
+  endingLane: 5 * 0.5,
   voltaStep: 8,
   /** How far the volta bracket's end hooks turn down toward the staff. */
   voltaHook: 1.4,
@@ -331,7 +435,7 @@ const ENGRAVE = {
    * this constant has been standing in for that. Left in place, and named for what it is
    * rather than tuned: the fix is to find the missing extent, not to trade fixtures.
    */
-  systemGap: 3.0,
+  systemGap: 0,
   /**
    * MINIMUM distance from one system's bottom staff line to the next system's top staff
    * line — abcjs's `staffSeparation`, 61.33px at its 7.75px space
@@ -355,7 +459,7 @@ const ENGRAVE = {
    */
   lastSystemFill: 0.66,
   /** Vertical gap between staves WITHIN one system, on top of the minimum separation. */
-  staffGap: 1.5,
+  staffGap: 0,
   /**
    * The same minimum, between staves WITHIN one system — abcjs's
    * `systemStaffSeparation`, 48px (`write/renderer.js:109`). Tighter than between
@@ -404,6 +508,8 @@ export type PartRole =
   | 'decoration'
   | 'text'
   | 'lyric'
+  | 'chord'
+  | 'dynamic'
   | 'title'
 
 export interface PlacedGlyph {
@@ -422,10 +528,25 @@ export interface PlacedGlyph {
   /** What this glyph is. Absent means it inherits its element's kind. */
   readonly role?: PartRole
   /**
-   * Uniform scale about the glyph origin. 1 unless stated — grace notes are the only
-   * thing that shrinks, and they shrink everything: notehead, stem and flag together.
+   * Uniform scale about the glyph origin. 1 unless stated — grace notes and the octave
+   * marker on a `-8` clef are the only things that shrink, and a scale shrinks everything:
+   * notehead, stem and flag together.
    */
   readonly scale?: number
+  /**
+   * Vertical extent this glyph DECLARES, replacing its ink box — `[top, bottom]` in the
+   * same y-down staff spaces as `y`.
+   *
+   * abcjs's `RelativeElement` takes `top`/`bottom` overrides that need not bracket the ink
+   * at all (`elements/relative-element.js:38-41`), and the octave marker on a `clef=treble-8`
+   * is the clearest case: drawn at pitch -2, it declares -4/-6 — a reserve four pitch
+   * deeper than anything it draws. Reserving its ink box instead leaves the staff below it
+   * 4 pitch too close, which is the whole of `zocharti-loch`'s tenor-to-bass gap.
+   *
+   * The same "reserve a fixed lane, let the ink overhang it" shape as the tuplet lane and
+   * the above-staff stack.
+   */
+  readonly reserve?: readonly [top: number, bottom: number]
 }
 
 export interface PlacedLine {
@@ -436,6 +557,8 @@ export interface PlacedLine {
   readonly thickness: number
   /** What this line is. Absent means it inherits its element's kind. */
   readonly role?: PartRole
+  /** Set on a stem a BEAM retargets — see the stem case in `verticalExtent`. */
+  readonly beamed?: boolean
 }
 
 /**
@@ -509,6 +632,13 @@ export interface StemInfo {
   readonly x: number
   /** Staff step of the notehead furthest along the stem — where the tip is measured from. */
   readonly farStep: number
+  /**
+   * Mean staff step of this event's noteheads — abcjs's `abcelem.averagepitch`.
+   *
+   * A CHORD contributes its own mean rather than each notehead, which is what the beam's
+   * slant is measured from (`calcSlant` takes the first and last elements' averages).
+   */
+  readonly averageStep: number
   readonly up: boolean
   /** Beams needed at this note: 1 for an eighth, 2 for a sixteenth. */
   readonly beams: number
@@ -561,6 +691,14 @@ export interface LayoutStaff {
    */
   readonly voices: readonly (readonly LayoutElement[])[]
   readonly staffLines: readonly PlacedLine[]
+  /**
+   * How many lines `staffLines` was built from — `V:… stafflines=`, 5 unless stated.
+   *
+   * Kept alongside the drawn rules because `staffLines` cannot be counted back: a
+   * `stafflines=1` staff and a `stafflines=0` one both have a length a consumer would
+   * misread, and the count is what a host asking "is this a rhythm staff" wants.
+   */
+  readonly staffLineCount: number
   /**
    * Beams, which belong to no single element — a beam spans several noteheads and is
    * drawn once for the group, after every member's position is known. Per staff, since
@@ -686,7 +824,7 @@ const CLEF_REFERENCE: Readonly<Record<ClefShape, number>> = {
  * step abcjs records, where the old hardcoded treble constant gave -20.
  */
 export const middleLineIndex = (clef: Clef): number =>
-  CLEF_REFERENCE[clef.shape] - (clef.line - 3) * 2
+  clef.middleOverride ?? CLEF_REFERENCE[clef.shape] - (clef.line - 3) * 2
 
 const pitchToStep = (p: Pitch, clef: Clef): number => diatonicIndex(p) - middleLineIndex(clef)
 
@@ -831,18 +969,71 @@ const CLEF_GLYPHS: Readonly<Record<ClefShape, GlyphName | null>> = {
   none: null,
 }
 
+/**
+ * How far a clef's declared bottom sits below the line it marks, in PITCH.
+ *
+ * abcjs's `clefOffsets` (`creation/create-clef.js:61-69`). Nothing to do with where the
+ * glyph is DRAWN — it is the offset the clef's `RelativeElement` declares its extent from,
+ * and the octave marker below a `-8` clef is positioned off that declared bottom rather
+ * than off any ink.
+ */
+const CLEF_PITCH_OFFSET: Readonly<Record<ClefShape, number>> = {
+  G: -5,
+  C: -4,
+  F: -4,
+  percussion: -2,
+  none: 0,
+}
+
+/** abcjs draws the octave marker at two thirds size (`create-clef.js:39`). */
+const OCTAVE_MARKER_SCALE = 2 / 3
+
 function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null {
   const name = CLEF_GLYPHS[clef.shape] ?? null
   if (name === null) return null
   // Every SMuFL clef's origin sits on the line it marks, so the glyph goes exactly where
   // the clef's line is — no per-clef offsets. Line n is (n - 3) * 2 steps from the middle.
   const step = (clef.line - 3) * 2
+  const glyphs = [glyphAt(name, x, step)]
+
+  // `clef=treble-8` and friends: a small `8` under (or over) the clef.
+  //
+  // Source: `creation/create-clef.js:39-56`. Its arithmetic is in abcjs PITCH, where the
+  // bottom staff line is 2 and the clef's own line is `2 x clef.line`; a pitch is half a
+  // staff step here, hence `pitchStep`. The clef element's declared bottom is its line plus
+  // `CLEF_PITCH_OFFSET`, and the marker hangs one pitch under that while RESERVING from
+  // three under it down to five — a reserve that does not bracket its own ink, which is
+  // why it is declared rather than measured. See `PlacedGlyph.reserve`.
+  if (clef.octaveShift !== 0) {
+    const pitchStep = (pitch: number): number => stepToY(pitch - 6)
+    const clefBottom = 2 * clef.line + (CLEF_PITCH_OFFSET[clef.shape] ?? 0)
+    const clefTop = clefBottom + 2 * (glyphsFor(strict).get(name)?.height ?? 0)
+    const up = clef.octaveShift > 0
+    const anchor = up ? clefTop + 3 : clefBottom - 3
+    // `bass-8` hugs the clef instead of hanging off it — abcjs's own exception (`:45-48`).
+    const bassEight = clef.shape === 'F' && !up
+    const drawPitch = bassEight ? 3 : up ? clefTop + 3 : clefBottom - 1
+    const width = glyphsFor(strict).advance('timeSig8') * OCTAVE_MARKER_SCALE
+    const adjust = bassEight ? 0 : (glyphsFor(strict).advance(name) - width) / 2
+    glyphs.push({
+      name: 'timeSig8',
+      x: x + adjust,
+      y: pitchStep(drawPitch),
+      scale: OCTAVE_MARKER_SCALE,
+      role: 'clef',
+      // `top` is `anchor`, `bottom` is `anchor - 2` — in PITCH, so y-down reverses them.
+      reserve: [pitchStep(anchor), pitchStep(anchor - 2)],
+    })
+  }
+
   return {
     type: 'clef',
     x,
+    // The octave marker does NOT widen the clef: abcjs fixes the element at `w: 10` and
+    // adds the `8` inside it (`create-clef.js:11`), so the music behind it does not move.
     width: glyphsFor(strict).advance(name),
     staffSteps: [],
-    glyphs: [glyphAt(name, x, step)],
+    glyphs,
     lines: [],
     texts: [],
   }
@@ -909,8 +1100,8 @@ function layoutMeter(x: number, numerator: number, denominator: number): LayoutE
  * Staff steps for accidentals in a key signature, in the order they are written.
  *
  * Sharps run F C G D A E B and flats the reverse, each at a fixed staff position — the
- * placement is conventional, not derived, and is the same in every book. Treble clef;
- * other clefs shift these, which is part of the clef work and not yet done.
+ * placement is conventional, not derived, and is the same in every book. These are the
+ * TREBLE positions; `keySignatureShift` moves them for any other clef.
  */
 const SHARP_STEPS = [4, 1, 5, 2, -1, 3, 0] as const
 const FLAT_STEPS = [0, 3, -1, 2, -2, 1, -3] as const
@@ -1391,6 +1582,8 @@ function layoutNoteheads(
   event: MusicEvent | null = null,
   /** `abcjs-strict` — decides which microtonal accidentals print. See `microtoneAccidental`. */
   strict = true,
+  /** Dynamics above the staff when the tune sings, below otherwise. See `dynamicAboveStep`. */
+  dynamicsAbove = true,
 ): LayoutElement {
   // Sorted ascending to match abcjs, which reports a chord's heads lowest-first — so the
   // gate compares like with like regardless of the order the pitches were written in.
@@ -1537,7 +1730,22 @@ function layoutNoteheads(
     // chord's stem spans the whole spread rather than one notehead's worth.
     const base = stepToY(up ? lowest : highest) + ay
     const far = stepToY(up ? highest : lowest)
-    const tip = far + (up ? -ENGRAVE.stemLength : ENGRAVE.stemLength)
+    // A STEM ON A NOTE FAR FROM THE MIDDLE LINE IS STRETCHED TO REACH IT — abcjs's own
+    // words, `create-note-head.js:39`: "the stem will have been stretched to the middle
+    // line if it is far from the center". A down-stem's tip is pulled down to the middle
+    // line and an up-stem's pushed up to it, so a note high above the staff gets a longer
+    // stem than the standard length rather than a floating stub. Conventional engraving,
+    // and abcjs's `p1`/`p2` clamps say the same (`abstract-engraver.js:740-745`).
+    //
+    // ONLY WHEN NO DIRECTION IS FORCED, which is what `forcedUp === null` means here:
+    // abcjs guards both clamps on `!stemdir`, and `stemdir` is truthy for a `V:… stems=`,
+    // for the shared-staff convention, AND inside a beam (`createBeam` sets it around the
+    // notes it builds). A beamed stem is retargeted to the beam anyway, so extending it
+    // first would be undone. `stems=down` bass voices therefore keep the plain length,
+    // which is what makes ragtime's bass staves match abcjs to a tenth of a pitch.
+    const plain = far + (up ? -ENGRAVE.stemLength : ENGRAVE.stemLength)
+    const middle = stepToY(0)
+    const tip = forcedUp !== null ? plain : up ? Math.min(plain, middle) : Math.max(plain, middle)
     lines.push({
       x1: stemX,
       y1: base,
@@ -1550,7 +1758,13 @@ function layoutNoteheads(
     if (stemOut !== null) {
       // Beamed: the beam pass retargets this stem and draws the beams. No flag — a note
       // cannot carry both.
-      stemOut.value = { x: stemX, farStep: up ? highest : lowest, up, beams: spec.flags }
+      stemOut.value = {
+        x: stemX,
+        farStep: up ? highest : lowest,
+        averageStep: steps.reduce((a, b) => a + b, 0) / steps.length,
+        up,
+        beams: spec.flags,
+      }
     } else if (spec.flags > 0) {
       // Unbeamed: ONE glyph carrying every flag level, hung from the stem tip. SMuFL
       // draws a 32nd as a single three-tailed glyph rather than three stacked 8th flags,
@@ -1572,7 +1786,16 @@ function layoutNoteheads(
   }
   if (event !== null && event.decorations.length > 0) {
     glyphs.push(
-      ...decorationGlyphs(event.decorations, headX, head.width, highest, lowest, up, strict),
+      ...decorationGlyphs(
+        event.decorations,
+        headX,
+        head.width,
+        highest,
+        lowest,
+        up,
+        strict,
+        dynamicsAbove,
+      ),
     )
   }
 
@@ -1868,7 +2091,7 @@ const DECORATION_TEXTS: Readonly<Record<string, string>> = {
  */
 function decorationTexts(names: readonly string[], headX: number, headWidth: number): PlacedText[] {
   const out: PlacedText[] = []
-  const size = ENGRAVE.lyricTextSize
+  const size = ENGRAVE.chordTextSize
   for (const name of names) {
     const text = DECORATION_TEXTS[name]
     if (text === undefined) continue
@@ -1900,6 +2123,8 @@ function decorationGlyphs(
   stemUp: boolean,
   /** `abcjs-strict` — suppresses the marks abcjs accepts but never paints. */
   strict: boolean,
+  /** Dynamics above the staff when the tune sings, below when it does not. */
+  dynamicsAbove: boolean,
 ): PlacedGlyph[] {
   const out: PlacedGlyph[] = []
   // Away from the stem, and never inside the staff for a note that sits in it.
@@ -1938,7 +2163,11 @@ function decorationGlyphs(
         role: 'decoration',
       })
     } else {
-      out.push({ name: glyph, x: centre, y: stepToY(ENGRAVE.dynamicStep), role: 'decoration' })
+      const lane = dynamicsAbove ? ENGRAVE.dynamicAboveStep : ENGRAVE.dynamicBelowStep
+      // `dynamic`, not `decoration`: the below-side ones are re-anchored on the staff's ink
+      // by `anchorBelowStaff`, and they have to be findable. Markup-neutral — neither
+      // `ABCJS_CLASSES` nor `ABCJS_DATA_NAMES` carries either name.
+      out.push({ name: glyph, x: centre, y: stepToY(lane), role: 'dynamic' })
     }
   }
   return out
@@ -2003,9 +2232,12 @@ function noteText(
   const centre = headX + headWidth / 2
 
   if (event.chordSymbol !== null && event.chordSymbol !== '') {
-    const size = ENGRAVE.lyricTextSize
+    const size = ENGRAVE.chordTextSize
     texts.push({
       text: event.chordSymbol,
+      // The lane is only the origin: `anchorAboveStaff` moves the whole set onto the
+      // staff's music once the voices sharing it are known, exactly as lyrics are.
+      role: 'chord',
       x: centre - textWidth(event.chordSymbol, size) / 2,
       y: stepToY(ENGRAVE.chordSymbolStep),
       size,
@@ -2022,7 +2254,7 @@ function noteText(
   const below = annotations.filter((a) => a.where === '_')
 
   above.forEach((a, index) => {
-    const size = ENGRAVE.lyricTextSize
+    const size = ENGRAVE.chordTextSize
     const lane =
       ENGRAVE.annotationAboveStep + (above.length - 1 - index) * ENGRAVE.annotationLineStep
     texts.push({
@@ -2036,7 +2268,7 @@ function noteText(
   })
 
   below.forEach((a, index) => {
-    const size = ENGRAVE.lyricTextSize
+    const size = ENGRAVE.chordTextSize
     texts.push({
       text: a.text,
       x: centre - textWidth(a.text, size) / 2,
@@ -2052,7 +2284,7 @@ function noteText(
   // falls in with `^` above and prints them. No corpus fixture writes one.
   for (const a of annotations) {
     if (a.where !== '<' && a.where !== '>') continue
-    const size = ENGRAVE.lyricTextSize
+    const size = ENGRAVE.chordTextSize
     texts.push({
       text: a.text,
       x:
@@ -2260,6 +2492,8 @@ function layoutSpanners(
   anchors: readonly NoteAnchor[],
   /** Where each system's music starts and ends, exactly as `layoutCurves` uses it. */
   bounds: readonly { left: number; right: number }[],
+  /** Hairpins share the dynamics lane, so they share its side. See `dynamicAboveStep`. */
+  dynamicsAbove: boolean,
 ): PlacedLine[][] {
   const out: PlacedLine[][] = bounds.map(() => [])
   const thickness = ENGRAVING_DEFAULTS.staffLineThickness
@@ -2273,10 +2507,10 @@ function layoutSpanners(
    */
   const hairpin = (system: number, x1: number, x2: number, g1: number, g2: number): void => {
     if (x2 - x1 < ENGRAVE.spannerMinLength) return
-    const y = stepToY(ENGRAVE.dynamicStep)
+    const y = stepToY(dynamicsAbove ? ENGRAVE.dynamicAboveStep : ENGRAVE.dynamicBelowStep)
     out[system]?.push(
-      { x1, y1: y - g1 / 2, x2, y2: y - g2 / 2, thickness, role: 'decoration' },
-      { x1, y1: y + g1 / 2, x2, y2: y + g2 / 2, thickness, role: 'decoration' },
+      { x1, y1: y - g1 / 2, x2, y2: y - g2 / 2, thickness, role: 'dynamic' },
+      { x1, y1: y + g1 / 2, x2, y2: y + g2 / 2, thickness, role: 'dynamic' },
     )
   }
 
@@ -2685,42 +2919,67 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
 
   const up = first.up
   const direction = up ? -1 : 1
-  const tipOf = (stem: StemInfo): number => stepToY(stem.farStep) + direction * ENGRAVE.stemLength
 
-  // Fit through the end notes, then clamp the rise.
-  const span = last.x - first.x
-  let startY = tipOf(first)
-  let endY = tipOf(last)
-  const rise = endY - startY
-  if (Math.abs(rise) > ENGRAVE.beamMaxRise) {
-    const clamped = Math.sign(rise) * ENGRAVE.beamMaxRise
-    const mid = (startY + endY) / 2
-    startY = mid - clamped / 2
-    endY = mid + clamped / 2
+  // THE BEAM SITS A FIXED DISTANCE BEYOND THE GROUP'S EXTREME NOTE, not beyond its end
+  // notes. Source: `layout/beam.js` `calcYPos`. In its own pitch units, which are our
+  // staff steps exactly:
+  //
+  //     pos = round(asc ? max(average + barpos, maxPitch + barminpos)
+  //                     : min(average - barpos, minPitch - barminpos))
+  //
+  // with `barpos === barminpos === stemHeight - 2`. Because the two are equal the
+  // `average` term can never win — `maxPitch >= average` and `minPitch <= average` by
+  // construction — so it reduces to `extreme +/- (stemHeight - 2)`. The vestigial term is
+  // kept out rather than reproduced; the commented-out `(isGrace)? 5:7` beside it says
+  // they were once different.
+  //
+  // This replaces a fit through the END notes plus a `minStemLength` push. The two agree
+  // whenever an end note is the extreme and disagree whenever an interior one is, which
+  // in a dense sixteenth run is most of the time.
+  const barpos = ENGRAVE.beamStemHeight - 2
+  const extreme = up
+    ? Math.max(...group.map((stem) => stem.farStep))
+    : Math.min(...group.map((stem) => stem.farStep))
+  const pos = Math.round(up ? extreme + barpos : extreme - barpos)
+
+  // Slant, from the END elements' average pitches and capped at half the stem count
+  // (`calcSlant`). `Math.floor` on both halves is abcjs's, negatives included — it is what
+  // makes an odd slant land asymmetrically rather than splitting evenly.
+  const maxSlant = group.length / 2
+  const rawSlant = first.averageStep - last.averageStep
+  const slant = Math.max(-maxSlant, Math.min(maxSlant, rawSlant))
+  let startStep = pos + Math.floor(slant / 2)
+  let endStep = pos + Math.floor(-slant / 2)
+
+  // "If the notes are too high or too low, make the beam go down to the middle" — abcjs's
+  // own comment. A run far from the middle line gets a FLAT beam on it rather than one
+  // riding the notes, which lengthens every stem in the group. Step 0 is its pitch 6.
+  if ((up && pos < 0) || (!up && pos > 0)) {
+    startStep = 0
+    endStep = 0
   }
+
+  const span = last.x - first.x
+  const startY = stepToY(startStep)
+  const endY = stepToY(endStep)
 
   const yAt = (x: number): number =>
     span === 0 ? startY : startY + ((x - first.x) / span) * (endY - startY)
 
-  // Push the line out until the shortest stem clears the minimum. An interior note can
-  // sit closer to the beam than either end note does.
-  let shift = 0
-  for (const stem of group) {
-    const length = (yAt(stem.x) - stepToY(stem.farStep)) * direction
-    if (length < ENGRAVE.minStemLength) {
-      shift = Math.max(shift, ENGRAVE.minStemLength - length)
-    }
-  }
-  startY += shift * direction
-  endY += shift * direction
-
   // Retarget each stem to the beam.
+  //
+  // A DOWN-stem stops half a beam-width short of the line the beam is drawn on, and an
+  // up-stem does not: `createStems` does `if (!asc) bary -= (dy / 2) / spacing.STEP` with
+  // `dy = -STEP` for a descending beam, which is `bary + 0.5` in pitch — abcjs calls it
+  // "just a fudge factor so the down-pointing stems don't overlap" (`layout/beam.js:125`).
+  // The BEAM itself is unmoved; only where the stem meets it changes.
+  const stemEndOffset = up ? 0 : -0.5 * ENGRAVE.spacePerStep
   for (const stem of group) {
     const element = elements[stem.element]
     if (!element) continue
-    const beamY = yAt(stem.x)
+    const beamY = yAt(stem.x) + stemEndOffset
     const lines = element.lines.map((line) =>
-      line.x1 === line.x2 && line.x1 === stem.x ? { ...line, y2: beamY } : line,
+      line.x1 === line.x2 && line.x1 === stem.x ? { ...line, y2: beamY, beamed: true } : line,
     )
     elements[stem.element] = { ...element, lines }
   }
@@ -2873,6 +3132,8 @@ function layoutMeasure(
    * cannot be drawn from the new key alone: the naturals depend on what is being left.
    */
   keyInForce: KeySignature | null = null,
+  /** Dynamics above the staff when the tune sings, below otherwise. */
+  dynamicsAbove = true,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
   const beams = new Map<number, StemInfo[]>()
@@ -2951,6 +3212,7 @@ function layoutMeasure(
       stemOut,
       strict,
       voiceStem,
+      dynamicsAbove,
     )
     if (el === null) continue
     if (group !== null && stemOut?.value) {
@@ -3035,14 +3297,34 @@ const shiftElement = (el: LayoutElement, dx: number): LayoutElement => ({
   texts: el.texts.map((t) => ({ ...t, x: t.x + dx })),
 })
 
-const staffLinesFor = (width: number): PlacedLine[] =>
-  ENGRAVE.staffLineSteps.map((step) => ({
+/**
+ * The staff's own lines — five, or however many `V:… stafflines=` asked for.
+ *
+ * Source: `write/draw/staff.js`. Lines are counted UP from the bottom line, `pitch =
+ * (i + 1) * 2` for `i` in `[0, n)`, so a three-line staff keeps the bottom line where it
+ * was and drops the top two. ONE line is special-cased to the B line — the middle — rather
+ * than the bottom, which is the percussion/rhythm convention; and zero draws no staff at
+ * all, which is how a chord chart or a lyrics-only part is written.
+ *
+ * The notes do not move: `stafflines=` changes what is DRAWN, not the coordinate system,
+ * so a `stafflines=1` treble staff still puts every pitch where a treble staff would and
+ * simply hides four of its lines. Ledger lines follow from the same unchanged pitches, as
+ * they do in abcjs.
+ */
+const staffLinesFor = (width: number, count: number): PlacedLine[] => {
+  const rule = (step: number): PlacedLine => ({
     x1: 0,
     y1: stepToY(step),
     x2: width,
     y2: stepToY(step),
     thickness: ENGRAVING_DEFAULTS.staffLineThickness,
-  }))
+  })
+  if (count === DEFAULT_STAFF_LINES) return ENGRAVE.staffLineSteps.map(rule)
+  if (count <= 0) return []
+  if (count === 1) return [rule(0)]
+  // Bottom line is step -4 (pitch 2) and each line up is two steps.
+  return Array.from({ length: count }, (_, i) => rule(-4 + 2 * i))
+}
 
 /** Everything about one voice that the packer needs. */
 interface VoicePlan {
@@ -3123,20 +3405,73 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
    *
    * `null` on a staff of one, where pitch is the right answer and forcing would be wrong.
    *
-   * ponytail: voice 0 up, everything below it down. Three voices on a staff — the corpus
-   * has `( 1 2 3 )` — conventionally wants the middle one placed by context, which needs
-   * collision detection this engine does not have yet.
+   * AND `null` ON THE UPPER VOICE OF A STAFF ITS LOWER VOICE OPENED FIRST, which is not a
+   * refinement but abcjs's actual rule, and it is worth stating because the shape is odd.
+   * `createVoice` (`parse/tune-builder.js:961-989`) forces `down` on every voice after the
+   * first on a staff, unconditionally — but it only back-fills `up` onto the first voice
+   * `if (thisStaff.voices[0] !== undefined)`, and `voices[0]` exists only once that voice
+   * has opened a line. So a tune whose body writes the LOWER voice first leaves the upper
+   * one unforced, following its pitch like a solo voice.
+   *
+   * `ave-verum-corpus` is that tune — its body runs MD1, MD2, MS1, MS2, B, T, A, S, so the
+   * second voice of each vocal staff opens before the first — and abcjs's own element dump
+   * confirms every consequence: Soprano stemmed up (by pitch), Alto down (forced), Tenore
+   * DOWN (by pitch, unforced), Basso down (forced). Forcing Tenore up put our staff's ink
+   * top 23.5px above abcjs's, and that was the whole of the fixture's vertical error.
+   *
+   * Body order comes from the first measure's source offset, which the model already
+   * carries — no new field, and it is the same order `createVoice` walks in.
+   *
+   * ponytail: first voice up, everything below it down. Three voices on a staff — the
+   * corpus has `( 1 2 3 )` — conventionally wants the middle one placed by context, which
+   * needs collision detection this engine does not have yet. abcjs does the same thing
+   * here, forcing every voice after the first down, so strict has nothing to answer for.
    */
+  const opensAt = (index: number): number =>
+    voices[index]?.measures?.[0]?.sourceRange?.start ?? Number.POSITIVE_INFINITY
   const stemForVoice = (index: number): boolean | null => {
+    // `V:… stems=` WINS over the shared-staff convention — abcjs takes
+    // `if (params.stem) … else if (voiceNum > 0)` (`parse/tune-builder.js:971-986`), so a
+    // declared direction also suppresses the `up` back-filled onto the staff's first voice.
+    // ponytail: that suppression is not modelled separately. It only shows when SOME voices
+    // on a staff declare and others do not, which no corpus tune does — ragtime declares on
+    // all three of its bass voices and none of its treble ones.
+    const declared = voices[index]?.stemDirection
+    if (declared != null) return declared === 'up'
     const staff = voicesOfStaff.find((members) => members.includes(index))
     if (staff === undefined || staff.length < 2) return null
-    return staff.indexOf(index) === 0
+    if (staff.indexOf(index) !== 0) return false
+    return staff.every((member) => member === index || opensAt(index) < opensAt(member))
+      ? true
+      : null
   }
+
+  // Does the tune SING? Dynamics stack above the staff if so, below if not — abcjs's
+  // `hasVocals` (`abstract-engraver.js:110`), which it reads per system but which never
+  // varies across a corpus tune's systems. Any note in any voice carrying a syllable or a
+  // held-melisma marker counts; a wordless `*` (`lyric: null, lyricMelisma: false`) does
+  // not, matching abcjs's test on `el.lyric`.
+  const hasVocals = voices.some((voice) =>
+    (voice?.measures ?? []).some((measure) =>
+      measure.events.some(
+        (event) =>
+          (event.type === 'note' || event.type === 'chord') &&
+          ((event.lyric !== null && event.lyric !== '') ||
+            event.extraVerses.some((v) => v !== null && v !== '')),
+      ),
+    ),
+  )
 
   const plans: VoicePlan[] = voices.map((voice, voiceIndex) => {
     // A voice's own `clef=` wins over the tune's `K:` clef; treble is the fallback.
-    const clef = voice?.clef ?? score.clef
-    const directions = beamDirections(voice, clef)
+    // A bare `V:… stafflines=` rides on the VOICE, not its clef, so that it can apply to
+    // an inherited clef without replacing it. Resolve it here, where the clef is picked.
+    const resolved = voice?.clef ?? score.clef
+    const clef =
+      voice?.staffLineOverride == null
+        ? resolved
+        : { ...resolved, staffLines: voice.staffLineOverride }
+    const directions = beamDirections(voice, clef, stemForVoice(voiceIndex))
     // The key in force, accumulated forward. `Measure.keyChange` is a DELTA — the model
     // deliberately keeps `score.key` as the header key and leaves accumulation to the
     // consumer — so the renderer is the consumer that has to do it.
@@ -3150,6 +3485,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         strict,
         stemForVoice(voiceIndex),
         keyInForce,
+        hasVocals,
       )
       if (measure.keyChange !== null) keyInForce = measure.keyChange
       return block
@@ -3519,6 +3855,10 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         elements,
         // One voice per staff until the merge below folds shared staves together.
         voices: [elements],
+        // How many lines this voice's staff draws — `V:… stafflines=`. The MERGE keeps the
+        // first voice's, which is abcjs's answer too: `stafflines` is read off the staff's
+        // clef (`abstract-engraver.js:182`), and a staff has one.
+        staffLineCount: plan.clef.staffLines,
         staffLines: [],
         beams,
         curves: [],
@@ -3587,7 +3927,16 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     // are printed on. So the drawing is concatenated and one set of staff lines is drawn,
     // rather than each voice getting its own stave.
     const merged = voicesOfStaff.map((members) => {
-      const parts = members.map((i) => centred[i]).filter((x) => x !== undefined)
+      const parts = anchorBelowStaff(
+        anchorAboveStaff(
+          anchorLyrics(
+            members.map((i) => centred[i]).filter((x) => x !== undefined),
+            strict,
+          ),
+          strict,
+        ),
+        strict,
+      )
       const first = parts[0]
       if (first === undefined) return centred[0] as (typeof centred)[number]
       if (parts.length === 1) return { ...first, voices: [first.elements] }
@@ -3606,7 +3955,16 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
 
     // Stack the staves, each measured from its own content so a staff with a tempo mark
     // or high ledger lines gets the room it needs and no more.
-    let cursor = 0
+    //
+    // abcjs leaves `spacing.music` between the top text and the first staff even when the
+    // top text is empty — `draw.js` runs `y += spacing.music` unconditionally after
+    // `nonMusic`. A TITLED first system folds that gap into the heading offset below; a
+    // TITLE-LESS one has no heading to fold it into, so without this the whole system
+    // rides `musicSpace` too high. Only system 0, and only when it has no heading — a
+    // later system's spacing is the inter-system minimum, not this.
+    const headingless =
+      systemIndex === 0 && !merged[0]?.elements.some((el) => el.type === 'title')
+    let cursor = headingless ? ENGRAVE.musicSpace : 0
     /** Bottom staff LINE of the staff placed before this one, in system coordinates. */
     let previousBottomLine: number | null = null
     const placed = merged.map((staff) => {
@@ -3646,7 +4004,12 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
           : Math.max(stacked, previousBottomLine + intraStaffSep + STAFF_HALF_HEIGHT)
       previousBottomLine = originY + STAFF_HALF_HEIGHT
       cursor = originY + extent.bottom + ENGRAVE.staffGap
-      return { ...staff, elements: positioned, staffLines: staffLinesFor(width), originY }
+      return {
+        ...staff,
+        elements: positioned,
+        staffLines: staffLinesFor(width, staff.staffLineCount),
+        originY,
+      }
     })
 
     const connectors = layoutConnectors(score.staves, placed)
@@ -3670,7 +4033,9 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
   // Hairpins need the same treatment and for the same reason. Resolved per system, they
   // lost HALF the hairpins in S1-decorations tune 2 — it wraps to six systems and the
   // pairs straddle the breaks.
-  const spannersBySystem = voiceAnchors.map((anchors) => layoutSpanners(anchors, systemBounds))
+  const spannersBySystem = voiceAnchors.map((anchors) =>
+    layoutSpanners(anchors, systemBounds, hasVocals),
+  )
   const withCurves = systems.map((system, systemIndex) => ({
     ...system,
     // By STAFF now, not by voice: a shared staff collects the curves and hairpins of
@@ -3699,6 +4064,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       previousBottomLine === null
         ? cursor
         : Math.max(cursor, previousBottomLine + interSystemSep - topLineOffset)
+
     previousBottomLine = originY + bottomLineOffset
     cursor = originY + height + ENGRAVE.systemGap
     return { ...system, originY }
@@ -3903,6 +4269,222 @@ function topTextBlock(
  * a staff is placed its `curves` are still empty. The SYSTEM height is measured later and
  * does see them.
  */
+/**
+ * Hang each voice's lyrics off the staff's music, once the voices sharing it are known.
+ *
+ * Two voices on one staff printed their syllables ON TOP OF EACH OTHER, because a lyric
+ * was placed at a fixed lane below the staff when its own voice was laid out — before
+ * anything knew a second voice would land on the same five lines. abcjs resolves both
+ * facts here instead, at the staff: the block hangs from the staff's ink bottom, and each
+ * voice after the first hangs one lyric height lower again. See `ENGRAVE.lyricInkGap`.
+ *
+ * The shift is UNIFORM per voice, so verse-to-verse stacking and the melisma extenders
+ * already aligned to verse 1 ride along without being recomputed.
+ */
+function anchorLyrics<
+  T extends {
+    readonly elements: readonly LayoutElement[]
+    readonly beams: readonly PlacedLine[]
+    readonly melismaLines: readonly PlacedLine[]
+  } & StaffFurniture,
+>(parts: readonly T[], strict: boolean): T[] {
+  const isLyric = (t: PlacedText): boolean => t.role === 'lyric'
+  if (!parts.some((p) => p.elements.some((el) => el.texts.some(isLyric)))) return [...parts]
+  // The MUSIC's ink, with the lyrics themselves taken out — including them would let the
+  // block push the anchor it hangs from further down, one staff at a time. The top-text
+  // block goes too: it is not music, and it has not been moved into place yet, so a
+  // four-row heading measured as ink 96px BELOW the staff and dragged the lyrics after it.
+  const inkBottom = verticalExtent(
+    parts.flatMap((p) =>
+      p.elements
+        .filter((el) => el.type !== 'title')
+        .map((el) => ({ ...el, texts: el.texts.filter((t) => !isLyric(t)) })),
+    ),
+    parts.flatMap((p) => p.beams),
+    strict,
+    {
+      tupletLines: parts.flatMap((p) => p.tupletLines ?? []),
+      tupletTexts: parts.flatMap((p) => p.tupletTexts ?? []),
+      voltaLines: parts.flatMap((p) => p.voltaLines ?? []),
+      voltaTexts: parts.flatMap((p) => p.voltaTexts ?? []),
+    },
+  ).bottom
+  const written = stepToY(ENGRAVE.lyricStep)
+  return parts.map((part, voiceIndex) => {
+    const shift =
+      inkBottom + ENGRAVE.lyricInkGap + voiceIndex * ENGRAVE.lyricVoiceStep - written
+    return {
+      ...part,
+      elements: part.elements.map((el) =>
+        el.texts.some(isLyric)
+          ? { ...el, texts: el.texts.map((t) => (isLyric(t) ? { ...t, y: t.y + shift } : t)) }
+          : el,
+      ),
+      melismaLines: part.melismaLines.map((line) =>
+        line.role === 'lyric' ? { ...line, y1: line.y1 + shift, y2: line.y2 + shift } : line,
+      ),
+    }
+  })
+}
+
+/**
+ * Stack the above-staff furniture on the staff's music, once its voices are known.
+ *
+ * The mirror of `anchorLyrics`, and the same lesson from the other side: abcjs does NOT
+ * hold a chord symbol, a part label and a tempo mark at three fixed distances from the
+ * staff. It stacks them on the music's own ink top, each reserving its rendered height
+ * plus a one-pitch margin and then drawing at the top it reserved
+ * (`set-upper-and-lower-elements.js:31-49`, `incTop`). A tune carrying all three sits
+ * ~19.5 pitch lower than one carrying only a chord — which fixed lanes, topping out at
+ * whichever lane is furthest out, cannot express: `full-song-template` reserved ~53px
+ * where abcjs reserves ~75, and its whole drawing rode 22px high as a result.
+ *
+ * MEASURED off abcjs's own SVG before it was modelled, per this repo's iron rule. In
+ * `full-song-template`'s golden the chord baseline sits 6.7187 pitch below the part
+ * baseline — `partHeightAbove` 5.71871 + 1 margin, exactly — and the part 7.0013 below
+ * the tempo, `tempoHeightAbove` 6 + 1. Both within the goldens' two-decimal rounding,
+ * and the resolved chord pitch lands on 19.504 against a predicted 19.5037.
+ *
+ * Order is abcjs's, innermost first: chord, part, tempo. Its `endingHeightAbove` and the
+ * dynamics pair sit between chord and part; both are reserved elsewhere — the ending as a
+ * fixed lane in `verticalExtent`, dynamics in their own — and neither shares a staff with
+ * this stack anywhere in the corpus.
+ *
+ * Each item is drawn one FONT SIZE below the top it reserved, which is abcjs's universal
+ * text rule (`text.js:30-31`), plus the tempo's own 2px bump (`draw/tempo.js:15`).
+ */
+function anchorAboveStaff<
+  T extends {
+    readonly elements: readonly LayoutElement[]
+    readonly beams: readonly PlacedLine[]
+  } & StaffFurniture,
+>(parts: readonly T[], strict: boolean): T[] {
+  const isChord = (t: PlacedText): boolean => t.role === 'chord'
+  const has = (fn: (el: LayoutElement) => boolean) => parts.some((p) => p.elements.some(fn))
+  const chords = has((el) => el.texts.some(isChord))
+  const partLabels = has((el) => el.type === 'part')
+  const tempos = has((el) => el.type === 'tempo')
+  if (!chords && !partLabels && !tempos) return [...parts]
+
+  // The MUSIC's ink — the stack itself taken out, or each item would reserve room above
+  // the lane the previous one is still sitting in and the staff would grow every pass.
+  // The top-text block goes too: it is not music and has not been placed yet.
+  const inkTop = verticalExtent(
+    parts.flatMap((p) =>
+      p.elements
+        .filter((el) => el.type !== 'title' && el.type !== 'part' && el.type !== 'tempo')
+        .map((el) => ({ ...el, texts: el.texts.filter((t) => !isChord(t)) })),
+    ),
+    parts.flatMap((p) => p.beams),
+    strict,
+    {
+      tupletLines: parts.flatMap((p) => p.tupletLines ?? []),
+      tupletTexts: parts.flatMap((p) => p.tupletTexts ?? []),
+      voltaLines: parts.flatMap((p) => p.voltaLines ?? []),
+      voltaTexts: parts.flatMap((p) => p.voltaTexts ?? []),
+    },
+  ).top
+
+  // y is DOWN, so reserving room above walks it negative.
+  let top = inkTop
+  const reserve = (height: number): number => {
+    top -= height + ENGRAVE.aboveStackMargin
+    return top
+  }
+  const chordY = chords ? reserve(ENGRAVE.chordHeightAbove) + ENGRAVE.chordTextSize : null
+  const partY = partLabels ? reserve(ENGRAVE.partHeightAbove) + ENGRAVE.tempoTextSize : null
+  const tempoY = tempos
+    ? reserve(ENGRAVE.tempoHeightAbove) + ENGRAVE.tempoTextSize + ENGRAVE.tempoDescenderBump
+    : null
+
+  // A uniform shift per item, so a tempo mark's beat-unit glyph and its stem ride along
+  // with the `= 120` they belong to rather than being re-derived.
+  const shiftBy = (el: LayoutElement, shift: number): LayoutElement => ({
+    ...el,
+    glyphs: el.glyphs.map((g) => ({ ...g, y: g.y + shift })),
+    lines: el.lines.map((l) => ({ ...l, y1: l.y1 + shift, y2: l.y2 + shift })),
+    texts: el.texts.map((t) => ({ ...t, y: t.y + shift })),
+  })
+
+  const chordShift = chordY === null ? 0 : chordY - stepToY(ENGRAVE.chordSymbolStep)
+  const partShift = partY === null ? 0 : partY - stepToY(ENGRAVE.partStep)
+  const tempoShift = tempoY === null ? 0 : tempoY - stepToY(ENGRAVE.tempoStep)
+
+  return parts.map((part) => ({
+    ...part,
+    elements: part.elements.map((el) => {
+      if (el.type === 'part') return shiftBy(el, partShift)
+      if (el.type === 'tempo') return shiftBy(el, tempoShift)
+      if (!el.texts.some(isChord)) return el
+      return {
+        ...el,
+        texts: el.texts.map((t) => (isChord(t) ? { ...t, y: t.y + chordShift } : t)),
+      }
+    }),
+  }))
+}
+
+/**
+ * Hang the below-staff dynamics and hairpins off the staff's music, once its voices are
+ * known — the third and last of these passes, after `anchorLyrics` and `anchorAboveStaff`.
+ *
+ * abcjs draws a `!mf!` or a hairpin at the staff's bottom AS IT STANDS when the below chain
+ * reaches them, then subtracts their height plus a margin from it
+ * (`set-upper-and-lower-elements.js:63-71`). So the mark sits on the music's ink and the
+ * room is a flat lane past it — where we had a fixed lane for both, which gets the mark
+ * wrong on any staff whose music does not happen to end where the lane sits.
+ *
+ * The chain is lyric, then chord, then volume/dynamic, so dynamics belong BELOW lyrics. No
+ * corpus tune has both: abcjs puts dynamics ABOVE whenever the tune sings (`hasVocals`,
+ * `decoration.js:379`), so a staff with lyrics never reaches this. Anchoring on the music
+ * ink alone is therefore exact here — and would need the lyric block added first if that
+ * ever changed.
+ */
+function anchorBelowStaff<
+  T extends {
+    readonly elements: readonly LayoutElement[]
+    readonly beams: readonly PlacedLine[]
+    readonly spannerLines: readonly PlacedLine[]
+  } & StaffFurniture,
+>(parts: readonly T[], strict: boolean): T[] {
+  const isDyn = (r: PartRole | undefined, y: number): boolean => r === 'dynamic' && y > 0
+  const present =
+    parts.some((p) => p.elements.some((el) => el.glyphs.some((g) => isDyn(g.role, g.y)))) ||
+    parts.some((p) => p.spannerLines.some((l) => isDyn(l.role, l.y1)))
+  if (!present) return [...parts]
+
+  // The MUSIC's ink, with the dynamics themselves taken out — `verticalExtent` already
+  // skips them, so this is just the staff's own bottom before the lane is added.
+  const inkBottom =
+    verticalExtent(
+      parts.flatMap((p) => p.elements),
+      parts.flatMap((p) => p.beams),
+      strict,
+      {
+        tupletLines: parts.flatMap((p) => p.tupletLines ?? []),
+        tupletTexts: parts.flatMap((p) => p.tupletTexts ?? []),
+        voltaLines: parts.flatMap((p) => p.voltaLines ?? []),
+        voltaTexts: parts.flatMap((p) => p.voltaTexts ?? []),
+      },
+    ).bottom - ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
+
+  const shift = inkBottom - stepToY(ENGRAVE.dynamicBelowStep)
+  const moveLine = (l: PlacedLine): PlacedLine =>
+    isDyn(l.role, l.y1) ? { ...l, y1: l.y1 + shift, y2: l.y2 + shift } : l
+  return parts.map((part) => ({
+    ...part,
+    elements: part.elements.map((el) =>
+      el.glyphs.some((g) => isDyn(g.role, g.y))
+        ? {
+            ...el,
+            glyphs: el.glyphs.map((g) => (isDyn(g.role, g.y) ? { ...g, y: g.y + shift } : g)),
+          }
+        : el,
+    ),
+    spannerLines: part.spannerLines.map(moveLine),
+  }))
+}
+
 interface StaffFurniture {
   readonly tupletLines?: readonly PlacedLine[]
   readonly tupletTexts?: readonly PlacedText[]
@@ -3925,19 +4507,41 @@ function verticalExtent(
     top = Math.min(top, a)
     bottom = Math.max(bottom, b)
   }
-  for (const lines of [
-    furniture.tupletLines,
-    furniture.voltaLines,
-    furniture.melismaLines,
-    furniture.spannerLines,
-  ]) {
-    for (const line of lines ?? []) {
-      const half = line.thickness / 2
-      include(Math.min(line.y1, line.y2) - half, Math.max(line.y1, line.y2) + half)
-    }
+  // Tuplet brackets and volta endings reserve a FIXED LANE beyond the top (or bottom) NOTE,
+  // not their drawn geometry. abcjs adds `endingHeightAbove` (`set-upper-and-lower-
+  // elements.js`) — 4 pitch + 1 margin = 5 pitch — ABOVE `staff.top`, which is the highest
+  // note; the bracket and its number are then drawn where they go and OVERHANG that lane,
+  // exactly as a down-stem overhangs below. Its element dump proves it: `staff.top` for
+  // `multi-voice-triplet-brackets` is the highest note (26.0) with `endingHeightAbove: 4`,
+  // not the bracket that sits well above it. So these are gathered as ABOVE/BELOW flags and
+  // the lane is applied after the note extent is known; their real y is ignored here.
+  let endingAbove = false
+  let endingBelow = false
+  /** Any dynamic or hairpin on the BELOW side, which reserves a flat lane past the ink. */
+  let sawDynamicBelow = false
+  const flag = (y: number) => {
+    if (y < 0) endingAbove = true
+    else endingBelow = true
   }
-  for (const texts of [furniture.tupletTexts, furniture.voltaTexts]) {
-    for (const t of texts ?? []) include(t.y - t.size * TEXT_ASCENT, t.y + t.size * TEXT_DESCENT)
+  for (const line of [...(furniture.tupletLines ?? []), ...(furniture.voltaLines ?? [])]) {
+    flag((line.y1 + line.y2) / 2)
+  }
+  for (const t of [...(furniture.tupletTexts ?? []), ...(furniture.voltaTexts ?? [])]) flag(t.y)
+  // Melisma extenders and hairpins/glissandi keep their actual geometry — they sit in the
+  // lyric and dynamic lanes, not the ending lane.
+  for (const line of [...(furniture.melismaLines ?? []), ...(furniture.spannerLines ?? [])]) {
+    // A HAIRPIN arrives here, not on an element, because it resolves after packing — and it
+    // reserves abcjs's flat `dynamicHeightBelow + margin` lane like any dynamic
+    // (`crescendo-element.js:11`), never its own drawn box. Instrumenting abcjs's own
+    // `specialY` per staff showed 4 of ragtime's 46 reserve on a hairpin with no `!mf!`
+    // beside it, and those are exactly the staves whose `lastBottomLine` ran 7.00 pitch
+    // short of abcjs's at the system boundary below them.
+    if (line.role === 'dynamic' && line.y1 > 0) {
+      sawDynamicBelow = true
+      continue
+    }
+    const half = line.thickness / 2
+    include(Math.min(line.y1, line.y2) - half, Math.max(line.y1, line.y2) + half)
   }
 
   for (const beam of beams) {
@@ -3945,24 +4549,116 @@ function verticalExtent(
     include(Math.min(beam.y1, beam.y2) - half, Math.max(beam.y1, beam.y2) + half)
   }
 
+  /** LOWEST lyric baseline on the staff — the last verse of the lowest-offset voice. */
+  let lyricBottom = Number.NEGATIVE_INFINITY
+
   for (const el of elements) {
     for (const g of el.glyphs) {
       // The ACTIVE table's box: abcjs's clef reaches 4.84 staff spaces above its origin
       // where Bravura's reaches 4.39, and that difference is space reserved above the
       // staff — visible as the last of the vertical offset on a title-only tune.
+      // Only the BELOW side is re-anchored and lane-reserved. An ABOVE dynamic keeps its
+      // own box in the ink scan, which is what it had before and what its fixtures expect.
+      if (g.role === 'dynamic' && g.y > 0) {
+        sawDynamicBelow = true
+        continue
+      }
+      if (g.reserve !== undefined) {
+        include(g.reserve[0], g.reserve[1])
+        continue
+      }
       const glyph = glyphsFor(strict).get(g.name) ?? GLYPHS[g.name]
       include(g.y + glyph.y, g.y + glyph.y + glyph.height)
     }
     for (const line of el.lines) {
       const half = line.thickness / 2
+      // A STEM reserves one step below its low end — `bottom: p1 - 1` on the stem's
+      // RelativeElement (`abstract-engraver.js:762`), `p1` being the low pitch. On an
+      // up-stem that end is at the notehead and the head's own box swallows it; on a
+      // down-stem it binds, and it is a uniform 3.4px our staff bottoms ran short of
+      // abcjs's on every staff whose lowest thing is a down-stem.
+      // Dynamics reserve a flat lane below the ink, applied after this scan — see
+      // `dynamicBelowReserve`. Their own geometry must not push the ink they hang off.
+      if (line.role === 'dynamic' && line.y1 > 0) {
+        sawDynamicBelow = true
+        continue
+      }
+      // A STEM RESERVES ITS ENDPOINTS, NOT ITS PAINTED BOX, and only an UNBEAMED one
+      // reserves the extra pitch below. abcjs's stem `RelativeElement` takes `top`/`bottom`
+      // from `pitch`/`pitch2` and never widens them by the line's thickness; the unbeamed
+      // one adds `bottom: p1 - 1` (`abstract-engraver.js:762`), the beamed one — built in
+      // `layout/beam.js:135-140` — passes no `bottom` at all. Measured against abcjs's own
+      // post-mutation `staff.bottom`, ours ran 1.12 pitch too deep, which is exactly this
+      // reserve (1) plus half a stem thickness (0.12).
+      if (line.role === 'stem') {
+        const low = Math.max(line.y1, line.y2)
+        include(Math.min(line.y1, line.y2), low + (line.beamed === true ? 0 : ENGRAVE.spacePerStep))
+        continue
+      }
       include(Math.min(line.y1, line.y2) - half, Math.max(line.y1, line.y2) + half)
     }
     // No text metrics available, so bound the box by the font size: ascenders reach
     // roughly 0.8 of it above the baseline and descenders 0.25 below.
-    for (const t of el.texts) include(t.y - t.size * TEXT_ASCENT, t.y + t.size * TEXT_DESCENT)
+    for (const t of el.texts) {
+      if (t.role === 'lyric') {
+        lyricBottom = Math.max(lyricBottom, t.y)
+        continue
+      }
+      // OUT-OF-STAFF TEXT RESERVES ABCJS'S WAY: a full font size above the baseline and
+      // the rest of the rendered height below it. abcjs stacks such a text on the staff's
+      // ink (`incTop`) reserving `height + margin`, and draws its baseline one font size
+      // below the top it reserved (`text.js:30-31`) — so the box is exactly
+      // [y - size, y + (height - size)], and `textHeightRatio - 1` is that remainder.
+      //
+      // The 0.8/0.25 estimate is kept for the TITLE block, where it was measured and where
+      // raising the ascent to 1.0 is recorded as moving every drawing 3.7px down.
+      const ascent = el.type === 'title' ? TEXT_ASCENT : 1
+      const descent = el.type === 'title' ? TEXT_DESCENT : ENGRAVE.textHeightRatio - 1
+      include(t.y - t.size * ascent, t.y + t.size * descent)
+    }
     // A block reserves from its own top, not from its first line's ascender.
     if (el.blockTop !== undefined) include(el.blockTop, el.blockTop)
   }
+
+  // A LYRIC BLOCK RESERVES ITS OWN HEIGHT PLUS ONE PITCH STEP, measured from the LAST
+  // verse's baseline rather than from the drawn box — our vocal font is not abcjs's, and
+  // what has to match is the room taken, not the ink.
+  //
+  // abcjs subtracts `lyricHeightBelow + margin` from the staff bottom (`:52-55`), where
+  // `lyricHeightBelow` is `18.84 + (verses - 1) x 20.4` — the multi-line `getBBox` its own
+  // golden generator measures with. Since verse n sits `(n - 1) x 20.4` below verse 1 and
+  // the k-th voice's block another `k x 18.84` below that, the LOWEST baseline already
+  // carries both, and everything reduces to one constant below it:
+  //
+  //     18.84 + 3.875 - 17  =  5.715px
+  //
+  // Verified against abcjs's own output on three shapes: one verse one voice
+  // (`ave-verum` staff 0, 22.715px below the ink), one verse SECOND voice (staff 1,
+  // 41.55px), two verses first voice (`little swallow`, 43.115px). Reproducing its
+  // arithmetic over the goldens takes `full-song-template` to 0.00px of residual.
+  //
+  // NOT one line whatever the verse count, which is what the `.elements.json` dump says:
+  // that dump's `getBBox` stub returns a single line's height where the SVG generator's
+  // measures every tspan (`dump-svg.js:120-124`). The dump is the wrong oracle for this
+  // one field, and believing it cost `little swallow` 19px a system.
+  if (Number.isFinite(lyricBottom)) {
+    bottom = Math.max(
+      bottom,
+      lyricBottom + ENGRAVE.lyricVoiceStep + ENGRAVE.spacePerStep - ENGRAVE.lyricInkGap,
+    )
+  }
+
+  // Apply the tuplet/volta ending lane now that `top`/`bottom` are the NOTE extent: a fixed
+  // 5 pitch (`ENGRAVE.endingLane`) beyond the note on whichever side an ending sits, never
+  // the bracket's real height. See the ABOVE/BELOW gather at the top of this function.
+  // Dynamics: a flat lane past the music, never their own drawn box.
+  // ponytail: a staff whose only below-dynamic is a HAIRPIN reserves nothing, because
+  // hairpins resolve after packing and `spannerLines` is still empty here. abcjs does
+  // reserve for them (`dynamicHeightBelow`, `crescendo-element.js:11`). Taking presence
+  // from the model instead was tried and made the corpus much worse — see the checkpoint.
+  if (sawDynamicBelow) bottom += ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
+  if (endingAbove) top = Math.min(top, top - ENGRAVE.endingLane)
+  if (endingBelow) bottom = Math.max(bottom, bottom + ENGRAVE.endingLane)
 
   return { top: top - ENGRAVE.marginY, bottom: bottom + ENGRAVE.marginY }
 }
@@ -3978,6 +4674,8 @@ function layoutEvent(
   strict = true,
   /** Voice convention on a SHARED staff; null lets pitch decide. See `stemForVoice`. */
   voiceStem: boolean | null = null,
+  /** Dynamics above the staff when the tune sings, below otherwise. */
+  dynamicsAbove = true,
 ): LayoutElement | null {
   const advance = naturalWidth(event.duration, spacingScale)
   // The beam's direction wins over the voice convention: a beam cannot join opposed stems,
@@ -3994,6 +4692,7 @@ function layoutEvent(
       stemOut,
       event,
       strict,
+      dynamicsAbove,
     )
   }
   if (event.type === 'chord') {
@@ -4007,6 +4706,7 @@ function layoutEvent(
       stemOut,
       event,
       strict,
+      dynamicsAbove,
     )
   }
   return layoutRest(event, advance, x, strict)
@@ -4020,7 +4720,24 @@ function layoutEvent(
  * the middle line, judged by the note furthest from it, so the beam ends up on the side
  * with the most room.
  */
-function beamDirections(voice: Voice | undefined, clef: Clef): Map<number, boolean> {
+function beamDirections(
+  voice: Voice | undefined,
+  clef: Clef,
+  /**
+   * The direction this VOICE is held to, or null to let each group choose by pitch.
+   *
+   * A forced voice forces its beams. abcjs has one mechanism for both: `createVoice`
+   * appends a `stem` element for a declared `V:… stems=` AND for the shared-staff
+   * convention (`parse/tune-builder.js:971-986`), the engraver turns that into
+   * `this.stemdir`, and `createBeam` hands it to `BeamElem` as `forceup`/`forcedown`,
+   * which `setStemDirection` tests BEFORE the pitch rule (`beam-element.js:74-86`).
+   *
+   * We had the beam's own choice overriding the voice instead, which is backwards. It is
+   * the whole of ragtime's treble: its `V:4`/`V:5` share a staff, so abcjs forces `V:4`
+   * up and we let each beam group pick by pitch — 388 up-stems against our 81.
+   */
+  forced: boolean | null = null,
+): Map<number, boolean> {
   const extremes = new Map<number, { min: number; max: number }>()
   for (const measure of voice?.measures ?? []) {
     for (const event of measure.events) {
@@ -4039,9 +4756,17 @@ function beamDirections(voice: Voice | undefined, clef: Clef): Map<number, boole
   }
 
   const directions = new Map<number, boolean>()
+  // A beam cannot join opposed stems, so a forced voice's beams all point its way.
+  const declared = voice?.stemDirection == null ? forced : voice.stemDirection === 'up'
   for (const [group, { min, max }] of extremes) {
+    if (declared !== null) {
+      directions.set(group, declared)
+      continue
+    }
     // Whichever extreme is further from the middle line decides; ties go stem-down.
     directions.set(group, Math.abs(min) > Math.abs(max) ? min < 0 : max < 0)
   }
   return directions
 }
+
+

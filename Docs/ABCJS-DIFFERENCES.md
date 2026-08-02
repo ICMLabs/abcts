@@ -74,6 +74,23 @@ so the syllables after it land one note late.
 
 *Verified against the `ave-verum-corpus` goldens, which carry lyrics on every fixture.*
 
+### `s:` symbol lines are read as LYRICS
+
+ABC 2.1 §8.2 defines `s:` as a line of decorations aligned under its music line, sharing
+`w:`'s token grammar — space advances a note, `*` skips one, `|` skips to the next bar.
+
+abcjs reads the line with its `w:` parser and pushes the tokens straight onto `el.lyric`,
+so the symbols are printed as sung text: a note carrying `s: !trill!` gets the literal
+string `!trill!` under the staff, delimiters and all. If a real `w:` line is already
+there, the symbols become its second verse.
+
+The other modes align the same tokens onto the notes as decorations, stripping the
+delimiters so they join the namespace `U:` and the inline `!trill!` form already share.
+
+*Verified: read from abcjs's source, not measured — no corpus fixture carries an `s:`
+line. Its own comment at `parse/abc_parse.js:325` states the behaviour outright: "Currently
+copied from w: line. This needs to be read as symbols instead."*
+
 ### Microtonal source ranges are inconsistent with themselves
 
 abcjs's character span for `^3/2G` starts at the `G`, excluding the accidental — while its

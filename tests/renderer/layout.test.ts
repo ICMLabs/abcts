@@ -10,6 +10,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   Accidental,
+  type Clef,
   type CompatibilityMode,
   defaultClef,
   defaultMode,
@@ -139,16 +140,20 @@ describe('clefs', () => {
       shape: 'F',
       line: 4,
       octaveShift: 0,
+      middleOverride: null,
+      staffLines: 5,
     })
     expect(parse('X:1\nK:C treble\nC|\n').scores[0]?.clef).toEqual({
       shape: 'G',
       line: 2,
       octaveShift: 0,
+      middleOverride: null,
+      staffLines: 5,
     })
   })
 
   it('reads clef= on a voice', () => {
-    expect(clefOf('X:1\nV:1 clef=bass\nK:C\nC|\n')).toEqual({ shape: 'F', line: 4, octaveShift: 0 })
+    expect(clefOf('X:1\nV:1 clef=bass\nK:C\nC|\n')).toEqual({ shape: 'F', line: 4, octaveShift: 0, middleOverride: null, staffLines: 5 })
   })
 
   it('takes the trailing digit as the staff line, which is how ABC spells three clefs', () => {
@@ -157,22 +162,49 @@ describe('clefs', () => {
       shape: 'F',
       line: 3, // baritone
       octaveShift: 0,
+      middleOverride: null,
+      staffLines: 5,
     })
     expect(parse('X:1\nK:C alto1\nC|\n').scores[0]?.clef).toEqual({
       shape: 'C',
       line: 1, // soprano
       octaveShift: 0,
+      middleOverride: null,
+      staffLines: 5,
     })
     expect(parse('X:1\nK:C alto2\nC|\n').scores[0]?.clef).toEqual({
       shape: 'C',
       line: 2, // mezzo-soprano
       octaveShift: 0,
+      middleOverride: null,
+      staffLines: 5,
     })
   })
 
   it('reads the octave suffix', () => {
     expect(parse('X:1\nK:C treble-8\nC|\n').scores[0]?.clef.octaveShift).toBe(-1)
     expect(parse('X:1\nK:C treble+8\nC|\n').scores[0]?.clef.octaveShift).toBe(1)
+  })
+
+  it('draws the staff lines `stafflines=` asks for, abcjs’s way', () => {
+    // `write/draw/staff.js`: lines count UP from the bottom line, ONE line is the middle
+    // (B) line rather than the bottom, and zero draws no staff at all.
+    const rules = (abc: string): number[] =>
+      (layout(parse(abc).scores[0] as Score).systems[0]?.staves[0]?.staffLines ?? []).map(
+        (l) => l.y1,
+      )
+    const five = rules('X:1\nK:C\nC|\n')
+    expect(five).toHaveLength(5)
+    expect(rules('X:1\nK:C\nV:1 stafflines=3\nC|\n')).toEqual(five.slice(0, 3))
+    expect(rules('X:1\nK:C\nV:1 stafflines=1\nC|\n')).toEqual([five[2]])
+    expect(rules('X:1\nK:C\nV:1 stafflines=0\nC|\n')).toEqual([])
+    // It rides on K: too, and alongside a `clef=` rather than instead of one.
+    expect(rules('X:1\nK:C stafflines=2\nC|\n')).toEqual(five.slice(0, 2))
+    expect(rules('X:1\nK:C\nV:1 clef=bass stafflines=1\nC|\n')).toEqual([five[2]])
+    // A bare `stafflines=` must not replace an inherited clef with a default treble.
+    expect(parse('X:1\nK:C bass\nV:1 stafflines=1\nC|\n').scores[0]?.clef.shape).toBe('F')
+    // Out of abcjs's 0-10 range, or not a number: treated as absent.
+    expect(rules('X:1\nK:C\nV:1 stafflines=99\nC|\n')).toHaveLength(5)
   })
 
   it('defaults to treble, and ignores words that name no clef', () => {
@@ -185,10 +217,10 @@ describe('clefs', () => {
 
   it('puts the middle line where each clef says it is', () => {
     // Treble B4 = 34, bass D3 = 22, alto C4 = 28, tenor A3 = 26.
-    expect(middleLineIndex({ shape: 'G', line: 2, octaveShift: 0 })).toBe(34)
-    expect(middleLineIndex({ shape: 'F', line: 4, octaveShift: 0 })).toBe(22)
-    expect(middleLineIndex({ shape: 'C', line: 3, octaveShift: 0 })).toBe(28)
-    expect(middleLineIndex({ shape: 'C', line: 4, octaveShift: 0 })).toBe(26)
+    expect(middleLineIndex({ shape: 'G', line: 2, octaveShift: 0, middleOverride: null, staffLines: 5 })).toBe(34)
+    expect(middleLineIndex({ shape: 'F', line: 4, octaveShift: 0, middleOverride: null, staffLines: 5 })).toBe(22)
+    expect(middleLineIndex({ shape: 'C', line: 3, octaveShift: 0, middleOverride: null, staffLines: 5 })).toBe(28)
+    expect(middleLineIndex({ shape: 'C', line: 4, octaveShift: 0, middleOverride: null, staffLines: 5 })).toBe(26)
   })
 
   it('puts a bass voice where abcjs puts it, which the treble assumption did not', () => {
@@ -200,6 +232,19 @@ describe('clefs', () => {
       .systems.flatMap((s) => s.staves.flatMap((st) => st.elements))
       .find((e) => e.type === 'note')
     expect(note?.staffSteps).toEqual([-8])
+  })
+
+  it('honours `middle=`, which moves noteheads where an octave clef would not', () => {
+    // `voice-middle-after-clef`: `clef=bass middle=d` puts D5 (index 36) on the middle line
+    // in place of plain bass's D3 (22), dropping high notes onto the staff.
+    const clef = clefOf('X:1\nV:1 clef=bass middle=d\nK:C\nC|\n')
+    expect(clef?.middleOverride).toBe(36)
+    expect(middleLineIndex(clef as Clef)).toBe(36)
+    // `d'` is D6 (index 43); the short spelling `m=` and octave marks both parse.
+    expect(clefOf("X:1\nV:1 clef=treble m=d'\nK:C\nC|\n")?.middleOverride).toBe(43)
+    // Skipped where `transpose=` is also present — the two interact and written transpose
+    // is not realized yet, so honouring `middle=` alone would move the voice wrongly.
+    expect(clefOf('X:1\nV:1 clef=bass middle=d transpose=-24\nK:C\nC|\n')?.middleOverride).toBeNull()
   })
 })
 
@@ -1609,7 +1654,9 @@ describe('decoration coverage', () => {
         .systems[0]?.staves[0]?.elements ?? []
     )
       .flatMap((e) => e.glyphs)
-      .filter((g) => g.role === 'decoration')
+      // `dynamic` as well as `decoration`: below-staff dynamics carry their own role so
+      // `anchorBelowStaff` can find them, but they are still decorations here.
+      .filter((g) => g.role === 'decoration' || g.role === 'dynamic')
       .map((g) => g.name)
 
   it("resolves abcjs's pseudonyms, which already had glyphs", () => {
@@ -1730,7 +1777,9 @@ describe('ornaments and techniques', () => {
       }).systems[0]?.staves[0]?.elements ?? []
     )
       .flatMap((e) => e.glyphs)
-      .filter((g) => g.role === 'decoration')
+      // `dynamic` as well as `decoration`: below-staff dynamics carry their own role so
+      // `anchorBelowStaff` can find them, but they are still decorations here.
+      .filter((g) => g.role === 'decoration' || g.role === 'dynamic')
       .map((g) => g.name)
 
   it('draws every ornament abcjs paints', () => {
@@ -1779,7 +1828,9 @@ describe('ornaments and techniques', () => {
       }).systems[0]?.staves[0]?.elements ?? []
     )
       .flatMap((e) => e.glyphs)
-      .filter((g) => g.role === 'decoration')
+      // `dynamic` as well as `decoration`: below-staff dynamics carry their own role so
+      // `anchorBelowStaff` can find them, but they are still decorations here.
+      .filter((g) => g.role === 'decoration' || g.role === 'dynamic')
       .map((g) => g.y)
     expect(ys.length).toBeGreaterThanOrEqual(3)
     expect(new Set(ys).size).toBe(ys.length)
@@ -1818,7 +1869,9 @@ describe('navigation directions', () => {
         .systems[0]?.staves[0]?.elements ?? []
     )
       .flatMap((e) => e.glyphs)
-      .filter((g) => g.role === 'decoration')
+      // `dynamic` as well as `decoration`: below-staff dynamics carry their own role so
+      // `anchorBelowStaff` can find them, but they are still decorations here.
+      .filter((g) => g.role === 'decoration' || g.role === 'dynamic')
     expect(glyphs).toEqual([])
   })
 })
@@ -1857,7 +1910,9 @@ describe('tremolo, phrases and technique', () => {
         .systems[0]?.staves[0]?.elements ?? []
     )
       .flatMap((e) => e.glyphs)
-      .filter((g) => g.role === 'decoration')
+      // `dynamic` as well as `decoration`: below-staff dynamics carry their own role so
+      // `anchorBelowStaff` can find them, but they are still decorations here.
+      .filter((g) => g.role === 'decoration' || g.role === 'dynamic')
       .map((g) => g.name)
 
   it('picks one tremolo glyph per stroke count', () => {
