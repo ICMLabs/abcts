@@ -1129,7 +1129,28 @@ function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null 
   // Every SMuFL clef's origin sits on the line it marks, so the glyph goes exactly where
   // the clef's line is — no per-clef offsets. Line n is (n - 3) * 2 steps from the middle.
   const step = (clef.line - 3) * 2
-  const glyphs = [glyphAt(name, x + ENGRAVE.clefIndent, step)]
+  /** abcjs PITCH -> our y. The bottom staff line is pitch 2, and a pitch is half a step. */
+  const pitchStep = (pitch: number): number => stepToY(pitch - 6)
+  // THE CLEF RESERVES A DECLARED BOX, NOT ITS INK.
+  //
+  // `createClef` hands the clef's RelativeElement `{ top: height + clefPos + ofs, bottom:
+  // clefPos + ofs }` with `ofs` a hardcoded per-clef constant — −5 for G, −4 for C and F,
+  // −2 for perc (`create-clef.js:37,62-70`). That is NOT the glyph's box: for the treble
+  // clef it comes to 14.7244 + 4 − 5 = 13.7244 pitch, where the outline's own top is
+  // 4.8387 spaces above the G line, 0.0235 of a space less.
+  //
+  // And the clef is what sets the staff's top on any tune with nothing above the staff —
+  // probed on `simple-c`, where `staff.top` is raised to 13.7244 BY THE CLEF and by nothing
+  // else, stems included. So that 0.0235 of a space was the whole vertical offset on eight
+  // fixtures: they sat a uniform 0.184px high, staff lines and noteheads together.
+  const clefBottom = 2 * clef.line + (CLEF_PITCH_OFFSET[clef.shape] ?? 0)
+  const clefTop = clefBottom + 2 * (glyphsFor(strict).get(name)?.height ?? 0)
+  const glyphs: PlacedGlyph[] = [
+    {
+      ...glyphAt(name, x + ENGRAVE.clefIndent, step),
+      reserve: [pitchStep(clefTop), pitchStep(clefBottom)],
+    },
+  ]
 
   // `clef=treble-8` and friends: a small `8` under (or over) the clef.
   //
@@ -1140,9 +1161,6 @@ function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null 
   // three under it down to five — a reserve that does not bracket its own ink, which is
   // why it is declared rather than measured. See `PlacedGlyph.reserve`.
   if (clef.octaveShift !== 0) {
-    const pitchStep = (pitch: number): number => stepToY(pitch - 6)
-    const clefBottom = 2 * clef.line + (CLEF_PITCH_OFFSET[clef.shape] ?? 0)
-    const clefTop = clefBottom + 2 * (glyphsFor(strict).get(name)?.height ?? 0)
     const up = clef.octaveShift > 0
     const anchor = up ? clefTop + 3 : clefBottom - 3
     // `bass-8` hugs the clef instead of hanging off it — abcjs's own exception (`:45-48`).
@@ -1205,7 +1223,23 @@ function digitGlyphs(
 ): PlacedGlyph[] {
   let cursor = centre - totalAdvance(names) / 2
   return names.map((name) => {
-    const placed = glyphAt(name, cursor, step)
+    // A TIME-SIGNATURE DIGIT RESERVES A BOX CENTRED ON ITS PITCH, not its ink.
+    //
+    // abcjs builds it as `RelativeElement(num, x, w, 8, { thickness:
+    // symbolHeightInPitches(num[0]) })` (`create-time-signature.js:25`), and `thickness`
+    // means `top = pitch + t/2, bottom = pitch - t/2` (`relative-element.js:22`). So the
+    // digit reserves half its height either side of the pitch it sits on and no more.
+    //
+    // Our ink box reached 7.31px ABOVE the top staff line, and on a staff with nothing
+    // else above it that was the whole of the staff's top: `score-reorder`'s bass staff
+    // sat 7.3px low against abcjs, which puts `staff.top` at exactly 10.0 there — the top
+    // line, set by a barline, with the time signature under it.
+    const glyph = glyphsFor(strict).get(name) ?? GLYPHS[name]
+    const y = stepToY(step)
+    const placed: PlacedGlyph = {
+      ...glyphAt(name, cursor, step),
+      reserve: [y - glyph.height / 2, y + glyph.height / 2],
+    }
     cursor += glyphsFor(strict).advance(name)
     return placed
   })
@@ -1300,6 +1334,26 @@ function keySignatureShift(clef: Clef): number {
   return wrapped > 3 ? wrapped - 7 : wrapped
 }
 
+/**
+ * The box a key-signature accidental reserves — abcjs's, not its ink.
+ *
+ * `top = verticalPos + symbolHeightInPitches(symbol) + fudge`, `bottom = verticalPos +
+ * fudge`, where the fudge is a constant per accidental (`create-key-signature.js:17-23`):
+ * a sharp's box starts 3 pitches BELOW its line, a flat's 1.2. A pitch is one staff step.
+ */
+const KEY_ACCIDENTAL_FUDGE: Partial<Record<GlyphName, number>> = {
+  accidentalSharp: -3,
+  accidentalFlat: -1.2,
+  accidentalNatural: 0,
+}
+
+function keyAccidentalReserve(name: GlyphName, step: number, strict: boolean): [number, number] {
+  const glyph = glyphsFor(strict).get(name) ?? GLYPHS[name]
+  const fudge = KEY_ACCIDENTAL_FUDGE[name] ?? 0
+  // `symbolHeightInPitches` is `h / STEP`, and our height is in staff spaces — twice that.
+  return [stepToY(step + 2 * glyph.height + fudge), stepToY(step + fudge)]
+}
+
 function layoutKeySignature(
   x: number,
   key: KeySignature,
@@ -1323,7 +1377,14 @@ function layoutKeySignature(
     // No trailing gap: the signature ends at the last glyph's ink.
     width: steps.length * pitch - ENGRAVE.keySignatureGap,
     staffSteps: [],
-    glyphs: steps.map((step, i) => glyphAt(name, x + i * pitch, step)),
+    glyphs: steps.map((step, i) => ({
+      ...glyphAt(name, x + i * pitch, step),
+      // A KEY-SIGNATURE ACCIDENTAL RESERVES A DECLARED BOX TOO — abcjs's
+      // `{ top: verticalPos + symbolHeightInPitches + fudge, bottom: verticalPos + fudge }`
+      // (`create-key-signature.js:25`), with `fudge` a per-accidental constant: -3 for a
+      // sharp, -1.2 for a flat. Its height is in PITCHES, which are our steps.
+      reserve: keyAccidentalReserve(name, step, strict),
+    })),
     lines: [],
     texts: [],
   }
@@ -5097,6 +5158,27 @@ function verticalExtent(
   let lyricBottom = Number.NEGATIVE_INFINITY
 
   for (const el of elements) {
+    // A TEMPO MARK RESERVES A FLAT 6 PITCHES, not its ink.
+    //
+    // abcjs's `TempoElement` sets `totalHeightInPitches = 6` and `tempoHeightAbove` to the
+    // same 6 (`creation/elements/tempo-element.js:12-13`) — a constant, whatever the mark
+    // says and however far the beat-unit note's stem reaches above it. The staff's top then
+    // becomes exactly the point that reserve started from (`set-upper-and-lower-elements.js:206`).
+    //
+    // Ours measured the drawn mark instead, and its little up-stem stuck 6.9px past the
+    // reserve. That is a rigid shift of the whole drawing: every fixture with a `Q:` — six
+    // of them — sat 6.89 to 6.94px below abcjs on EVERY staff, with their staff-to-staff
+    // spacing already exact.
+    //
+    // The baseline is one font size plus abcjs's 2px bump below the top it reserved, which
+    // is how `anchorAboveStaff` placed it, so reading the box back off the baseline gets
+    // the reserve without threading it through.
+    if (el.type === 'tempo' && el.texts.length > 0) {
+      const baseline = Math.min(...el.texts.map((t) => t.y))
+      const declaredTop = baseline - ENGRAVE.tempoTextSize - ENGRAVE.tempoDescenderBump
+      include(declaredTop, declaredTop + ENGRAVE.tempoHeightAbove)
+      continue
+    }
     for (const g of el.glyphs) {
       // The ACTIVE table's box: abcjs's clef reaches 4.84 staff spaces above its origin
       // where Bravura's reaches 4.39, and that difference is space reserved above the

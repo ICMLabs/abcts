@@ -1,9 +1,9 @@
 tune 0
-bounds  width=90.323 height=60.232 top=-1.935
+bounds  width=90.323 height=59.370 top=-1.935
 systems 2
 system 0 width=90.323 originY=0.000
-  connector brace -0.920,16.380 scale=3.559
-  staff 0 originY=18.380
+  connector brace -0.920,15.519 scale=3.559
+  staff 0 originY=17.519
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -14,17 +14,17 @@ system 0 width=90.323 originY=0.000
     tie  47.683,1.800 -> 50.346,1.800 bulge=0.500
     tie  76.410,4.300 -> 79.072,4.300 bulge=0.500
     title x=0.000 w=0.000
-      text  29.244,-13.921 size=3.484 bold "S7-1 Piano Two Voice"
-      text  39.883,-9.720 size=2.452 italic "Elton John"
+      text  29.244,-13.059 size=3.484 bold "S7-1 Piano Two Voice"
+      text  39.883,-8.858 size=2.452 italic "Elton John"
     clef x=3.226 w=3.103
       glyph gClef 3.871,1.000
     timeSignature x=7.619 w=1.522
       glyph timeSig4 7.619,-1.000
       glyph timeSig4 7.619,1.000
     tempo x=10.432 w=0.000
-      glyph noteheadBlack 10.432,-4.500
-      line  11.612,-4.668 -> 11.612,-8.168 t=0.120
-      text  11.998,-4.500 size=2.581 "= 128"
+      glyph noteheadBlack 10.432,-4.528
+      line  11.612,-4.696 -> 11.612,-8.196 t=0.120
+      text  11.998,-4.528 size=2.581 "= 128"
     note@-6,-4 x=10.432 w=10.949
       glyph noteheadWhole 10.432,3.000
       glyph noteheadWhole 10.432,2.000
@@ -75,7 +75,7 @@ system 0 width=90.323 originY=0.000
       line  80.552,3.332 -> 80.552,-1.000 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-  staff 1 originY=28.574
+  staff 1 originY=27.712
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -197,9 +197,9 @@ system 0 width=90.323 originY=0.000
       line  80.552,6.832 -> 80.552,0.000 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 1 width=59.142 originY=36.649
-  connector brace -0.920,1.839 scale=3.559
-  staff 0 originY=3.839
+system 1 width=59.142 originY=35.759
+  connector brace -0.920,1.866 scale=3.559
+  staff 0 originY=3.866
     staffline 0.000,2.000 -> 59.142,2.000 t=0.130
     staffline 0.000,1.000 -> 59.142,1.000 t=0.130
     staffline 0.000,0.000 -> 59.142,0.000 t=0.130
@@ -237,7 +237,7 @@ system 1 width=59.142 originY=36.649
       glyph noteheadWhole 38.760,2.500
     bar x=57.078 w=0.160
       line  57.158,-2.000 -> 57.158,2.000 t=0.160
-  staff 1 originY=14.032
+  staff 1 originY=14.060
     staffline 0.000,2.000 -> 59.142,2.000 t=0.130
     staffline 0.000,1.000 -> 59.142,1.000 t=0.130
     staffline 0.000,0.000 -> 59.142,0.000 t=0.130
@@ -328,11 +328,11 @@ system 1 width=59.142 originY=36.649
     bar x=57.078 w=0.160
       line  57.158,-2.000 -> 57.158,2.000 t=0.160
 tune 1
-bounds  width=90.323 height=69.532 top=-1.935
+bounds  width=90.323 height=68.643 top=-1.935
 systems 2
 system 0 width=90.323 originY=0.000
-  connector brace -0.920,17.074 scale=4.522
-  staff 0 originY=19.074
+  connector brace -0.920,16.184 scale=4.522
+  staff 0 originY=18.184
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -345,8 +345,8 @@ system 0 width=90.323 originY=0.000
     tie  16.331,6.300 -> 27.569,6.300 bulge=2.023
     slur  54.497,4.800 -> 65.735,4.300 bulge=2.023
     title x=0.000 w=0.000
-      text  26.147,-14.614 size=3.484 bold "S7-2 Piano Dense Notation"
-      text  36.482,-10.413 size=2.452 italic "L. van Beethoven"
+      text  26.147,-13.725 size=3.484 bold "S7-2 Piano Dense Notation"
+      text  36.482,-9.524 size=2.452 italic "L. van Beethoven"
     clef x=3.226 w=3.103
       glyph gClef 3.871,1.000
     keySignature x=7.619 w=3.129
@@ -437,7 +437,7 @@ system 0 width=90.323 originY=0.000
       glyph rest8th 75.240,0.000
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-  staff 1 originY=33.108
+  staff 1 originY=32.219
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -576,7 +576,7 @@ system 0 width=90.323 originY=0.000
       line  82.929,7.332 -> 82.929,0.000 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 1 width=46.691 originY=43.631
+system 1 width=46.691 originY=42.741
   connector brace -0.920,2.508 scale=4.260
   staff 0 originY=4.508
     staffline 0.000,2.000 -> 46.691,2.000 t=0.130
@@ -729,11 +729,11 @@ system 1 width=46.691 originY=43.631
     bar x=44.626 w=0.160
       line  44.706,-2.000 -> 44.706,2.000 t=0.160
 tune 2
-bounds  width=90.323 height=38.693 top=-1.935
+bounds  width=90.323 height=37.804 top=-1.935
 systems 1
 system 0 width=90.323 originY=0.000
-  connector brace -0.920,17.542 scale=3.559
-  staff 0 originY=19.542
+  connector brace -0.920,16.652 scale=3.559
+  staff 0 originY=18.652
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -750,8 +750,8 @@ system 0 width=90.323 originY=0.000
     beam   53.444,-3.750 -> 66.942,-4.750 t=0.500
     beam   71.441,-3.750 -> 84.939,-4.750 t=0.500
     title x=0.000 w=0.000
-      text  24.019,-15.082 size=3.484 bold "S7-3 Counterpoint Two Voice"
-      text  40.565,-10.881 size=2.452 italic "J.S. Bach"
+      text  24.019,-14.193 size=3.484 bold "S7-3 Counterpoint Two Voice"
+      text  40.565,-9.992 size=2.452 italic "J.S. Bach"
     clef x=3.226 w=3.103
       glyph gClef 3.871,1.000
     keySignature x=7.619 w=3.129
@@ -842,7 +842,7 @@ system 0 width=90.323 originY=0.000
       line  84.939,-0.168 -> 84.939,-5.000 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-  staff 1 originY=29.735
+  staff 1 originY=28.846
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -1012,11 +1012,11 @@ system 0 width=90.323 originY=0.000
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
 tune 3
-bounds  width=90.366 height=43.316 top=-1.935
+bounds  width=90.366 height=42.454 top=-1.935
 systems 1
 system 0 width=90.366 originY=0.000
-  connector brace -0.920,17.042 scale=4.097
-  staff 0 originY=19.042
+  connector brace -0.920,16.152 scale=4.104
+  staff 0 originY=18.152
     staffline 0.000,2.000 -> 90.366,2.000 t=0.130
     staffline 0.000,1.000 -> 90.366,1.000 t=0.130
     staffline 0.000,0.000 -> 90.366,0.000 t=0.130
@@ -1031,8 +1031,8 @@ system 0 width=90.366 originY=0.000
     slur  44.401,2.300 -> 48.624,1.800 bulge=0.760
     slur  54.641,-1.300 -> 70.268,-0.300 bulge=-2.200
     title x=0.000 w=0.000
-      text  28.398,-14.582 size=3.484 bold "S7-4 Three Voice Piano"
-      text  40.008,-10.381 size=2.452 italic "Schumann"
+      text  28.398,-13.693 size=3.484 bold "S7-4 Three Voice Piano"
+      text  40.008,-9.492 size=2.452 italic "Schumann"
     clef x=3.226 w=3.103
       glyph gClef 3.871,1.000
     keySignature x=7.619 w=1.065
@@ -1140,7 +1140,7 @@ system 0 width=90.366 originY=0.000
       line  85.815,0.168 -> 85.815,3.500 t=0.120
     bar x=88.302 w=0.160
       line  88.382,-2.000 -> 88.382,2.000 t=0.160
-  staff 1 originY=31.380
+  staff 1 originY=30.519
     staffline 0.000,2.000 -> 90.366,2.000 t=0.130
     staffline 0.000,1.000 -> 90.366,1.000 t=0.130
     staffline 0.000,0.000 -> 90.366,0.000 t=0.130
@@ -1333,13 +1333,13 @@ system 0 width=90.366 originY=0.000
     bar x=88.302 w=0.160
       line  88.382,-2.000 -> 88.382,2.000 t=0.160
 tune 4
-bounds  width=98.874 height=51.358 top=-1.935
+bounds  width=98.874 height=50.364 top=-1.935
 systems 1
 system 0 width=98.874 originY=0.000
-  connector bracketTop -0.600,16.400
-  connector bracketBottom -0.600,38.422
-  connector line -0.600,16.400 -> -0.600,38.422 t=0.500
-  staff 0 originY=18.400
+  connector bracketTop -0.600,15.459
+  connector bracketBottom -0.600,37.429
+  connector line -0.600,15.459 -> -0.600,37.429 t=0.500
+  staff 0 originY=17.459
     staffline 0.000,2.000 -> 98.874,2.000 t=0.130
     staffline 0.000,1.000 -> 98.874,1.000 t=0.130
     staffline 0.000,0.000 -> 98.874,0.000 t=0.130
@@ -1356,8 +1356,8 @@ system 0 width=98.874 originY=0.000
     slur  51.231,3.300 -> 52.047,2.300 bulge=0.500
     slur  51.231,2.700 -> 52.047,3.200 bulge=-0.500
     title x=0.000 w=0.000
-      text  36.082,-13.941 size=3.484 bold "S7-5 SATB Choral"
-      text  38.413,-9.969 size=2.710 "(Mor Fawr Wyt Ti!)"
+      text  36.082,-12.999 size=3.484 bold "S7-5 SATB Choral"
+      text  38.413,-9.028 size=2.710 "(Mor Fawr Wyt Ti!)"
     clef x=3.226 w=3.103
       glyph gClef 3.871,1.000
     keySignature x=7.619 w=3.710
@@ -1368,9 +1368,9 @@ system 0 width=98.874 originY=0.000
       glyph timeSig4 12.619,-1.000
       glyph timeSig4 12.619,1.000
     tempo x=15.432 w=0.000
-      glyph noteheadBlack 15.432,-4.621
-      line  16.612,-4.789 -> 16.612,-8.289 t=0.120
-      text  16.998,-4.621 size=2.581 "= 48"
+      glyph noteheadBlack 15.432,-4.568
+      line  16.612,-4.736 -> 16.612,-8.236 t=0.120
+      text  16.998,-4.568 size=2.581 "= 48"
     note@-4 x=17.198 w=3.871
       glyph noteheadBlack 17.198,2.000
       line  18.378,1.832 -> 18.378,-2.000 t=0.120
@@ -1616,7 +1616,7 @@ system 0 width=98.874 originY=0.000
       glyph repeatDots 95.133,1.976
       line  95.773,-2.000 -> 95.773,2.000 t=0.160
       line  96.503,-2.000 -> 96.503,2.000 t=0.500
-  staff 1 originY=36.422
+  staff 1 originY=35.429
     staffline 0.000,2.000 -> 98.874,2.000 t=0.130
     staffline 0.000,1.000 -> 98.874,1.000 t=0.130
     staffline 0.000,0.000 -> 98.874,0.000 t=0.130
@@ -1960,13 +1960,13 @@ system 0 width=98.874 originY=0.000
       line  95.773,-2.000 -> 95.773,2.000 t=0.160
       line  96.503,-2.000 -> 96.503,2.000 t=0.500
 tune 5
-bounds  width=90.421 height=52.520 top=-1.935
+bounds  width=90.421 height=51.658 top=-1.935
 systems 1
 system 0 width=90.421 originY=0.000
-  connector bracketTop -0.600,16.529
-  connector bracketBottom -0.600,42.562
-  connector line -0.600,16.529 -> -0.600,42.562 t=0.500
-  staff 0 originY=18.529
+  connector bracketTop -0.600,15.640
+  connector bracketBottom -0.600,41.700
+  connector line -0.600,15.640 -> -0.600,41.700 t=0.500
+  staff 0 originY=17.640
     staffline 0.000,2.000 -> 90.421,2.000 t=0.130
     staffline 0.000,1.000 -> 90.421,1.000 t=0.130
     staffline 0.000,0.000 -> 90.421,0.000 t=0.130
@@ -1976,8 +1976,8 @@ system 0 width=90.421 originY=0.000
     beam   49.212,2.000 -> 50.925,2.000 t=0.500
     beam   55.315,2.000 -> 56.415,2.000 t=0.500
     title x=0.000 w=0.000
-      text  28.810,-14.070 size=3.484 bold "S7-6 Organ Four Voice"
-      text  33.909,-9.869 size=2.452 italic "Johann Nicolaus Hanff"
+      text  28.810,-13.181 size=3.484 bold "S7-6 Organ Four Voice"
+      text  33.909,-8.979 size=2.452 italic "Johann Nicolaus Hanff"
     voiceName x=1.935 w=0.000
       text  1.935,0.768 size=2.194 bold "Rückpos"
     clef x=13.349 w=3.103
@@ -2039,7 +2039,7 @@ system 0 width=90.421 originY=0.000
       glyph restWhole 70.569,-1.000
     bar x=88.357 w=0.160
       line  88.437,-2.000 -> 88.437,2.000 t=0.160
-  staff 1 originY=28.723
+  staff 1 originY=27.834
     staffline 0.000,2.000 -> 90.421,2.000 t=0.130
     staffline 0.000,1.000 -> 90.421,1.000 t=0.130
     staffline 0.000,0.000 -> 90.421,0.000 t=0.130
@@ -2192,7 +2192,7 @@ system 0 width=90.421 originY=0.000
       line  86.402,2.168 -> 86.402,5.750 t=0.120
     bar x=88.357 w=0.160
       line  88.437,-2.000 -> 88.437,2.000 t=0.160
-  staff 2 originY=40.562
+  staff 2 originY=39.700
     staffline 0.000,2.000 -> 90.421,2.000 t=0.130
     staffline 0.000,1.000 -> 90.421,1.000 t=0.130
     staffline 0.000,0.000 -> 90.421,0.000 t=0.130
@@ -2291,11 +2291,11 @@ system 0 width=90.421 originY=0.000
     bar x=88.357 w=0.160
       line  88.437,-2.000 -> 88.437,2.000 t=0.160
 tune 6
-bounds  width=90.499 height=39.693 top=-1.935
+bounds  width=90.499 height=38.804 top=-1.935
 systems 1
 system 0 width=90.499 originY=0.000
-  connector brace -0.920,20.042 scale=3.559
-  staff 0 originY=22.042
+  connector brace -0.920,19.152 scale=3.559
+  staff 0 originY=21.152
     staffline 0.000,2.000 -> 90.499,2.000 t=0.130
     staffline 0.000,1.000 -> 90.499,1.000 t=0.130
     staffline 0.000,0.000 -> 90.499,0.000 t=0.130
@@ -2307,8 +2307,8 @@ system 0 width=90.499 originY=0.000
     beam   69.095,4.250 -> 70.404,4.750 t=0.500
     tie  65.389,0.300 -> 66.982,0.300 bulge=0.500
     title x=0.000 w=0.000
-      text  33.735,-17.582 size=3.484 bold "S7-7 Organ Trio"
-      text  38.474,-13.381 size=2.452 italic "André Raison"
+      text  33.735,-16.693 size=3.484 bold "S7-7 Organ Trio"
+      text  38.474,-12.492 size=2.452 italic "André Raison"
     clef x=3.226 w=3.103
       glyph gClef 3.871,1.000
     keySignature x=7.619 w=0.871
@@ -2550,7 +2550,7 @@ system 0 width=90.499 originY=0.000
       line  86.480,-0.332 -> 86.480,3.000 t=0.120
     bar x=88.434 w=0.160
       line  88.514,-2.000 -> 88.514,2.000 t=0.160
-  staff 1 originY=32.235
+  staff 1 originY=31.346
     staffline 0.000,2.000 -> 90.499,2.000 t=0.130
     staffline 0.000,1.000 -> 90.499,1.000 t=0.130
     staffline 0.000,0.000 -> 90.499,0.000 t=0.130

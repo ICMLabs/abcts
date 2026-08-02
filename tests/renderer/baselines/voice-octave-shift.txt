@@ -1,15 +1,15 @@
 tune 0
-bounds  width=34.923 height=26.699 top=-1.935
+bounds  width=34.923 height=26.727 top=-1.935
 systems 1
 system 0 width=34.923 originY=0.000
-  staff 0 originY=10.048
+  staff 0 originY=10.075
     staffline 0.000,2.000 -> 34.923,2.000 t=0.130
     staffline 0.000,1.000 -> 34.923,1.000 t=0.130
     staffline 0.000,0.000 -> 34.923,0.000 t=0.130
     staffline 0.000,-1.000 -> 34.923,-1.000 t=0.130
     staffline 0.000,-2.000 -> 34.923,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  1.935,-5.588 size=3.484 bold "Voice octave shift test"
+      text  1.935,-5.616 size=3.484 bold "Voice octave shift test"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.471 w=1.522
@@ -30,7 +30,7 @@ system 0 width=34.923 originY=0.000
       line  26.887,1.332 -> 26.887,-2.000 t=0.120
     bar x=31.181 w=0.160
       line  31.261,-2.000 -> 31.261,2.000 t=0.160
-  staff 1 originY=20.241
+  staff 1 originY=20.269
     staffline 0.000,2.000 -> 34.923,2.000 t=0.130
     staffline 0.000,1.000 -> 34.923,1.000 t=0.130
     staffline 0.000,0.000 -> 34.923,0.000 t=0.130

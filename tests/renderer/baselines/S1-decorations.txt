@@ -178,7 +178,7 @@ system 0 width=90.323 originY=0.000
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
 tune 2
-bounds  width=90.323 height=198.218 top=-1.935
+bounds  width=90.323 height=198.135 top=-1.935
 systems 16
 system 0 width=90.323 originY=0.000
   staff 0 originY=11.799
@@ -260,8 +260,8 @@ system 2 width=90.323 originY=31.150
       line  68.956,0.832 -> 68.956,-2.500 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 3 width=90.323 originY=43.701
-  staff 0 originY=3.839
+system 3 width=90.323 originY=43.674
+  staff 0 originY=3.866
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -421,12 +421,12 @@ system 8 width=90.323 originY=102.996
       line  48.474,0.832 -> 48.474,-2.500 t=0.120
     note@-2 x=67.776 w=5.474
       glyph noteheadBlack 67.776,1.000
-      glyph dynamicPPPP 65.326,3.528
+      glyph dynamicPPPP 65.326,3.500
       line  68.956,0.832 -> 68.956,-2.500 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 9 width=90.323 originY=115.183
-  staff 0 originY=3.839
+system 9 width=90.323 originY=115.155
+  staff 0 originY=3.866
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -436,24 +436,24 @@ system 9 width=90.323 originY=115.183
       glyph gClef 2.581,1.000
     note@-2 x=6.329 w=5.474
       glyph noteheadBlack 6.329,1.000
-      glyph dynamicPPP 4.589,3.528
+      glyph dynamicPPP 4.589,3.500
       line  7.509,0.832 -> 7.509,-2.500 t=0.120
     note@-2 x=26.811 w=5.474
       glyph noteheadBlack 26.811,1.000
-      glyph dynamicPP 25.781,3.528
+      glyph dynamicPP 25.781,3.500
       line  27.991,0.832 -> 27.991,-2.500 t=0.120
     note@-2 x=47.294 w=5.474
       glyph noteheadBlack 47.294,1.000
-      glyph dynamicPiano 46.974,3.528
+      glyph dynamicPiano 46.974,3.500
       line  48.474,0.832 -> 48.474,-2.500 t=0.120
     note@-2 x=67.776 w=5.474
       glyph noteheadBlack 67.776,1.000
-      glyph dynamicMP 66.676,3.528
+      glyph dynamicMP 66.676,3.500
       line  68.956,0.832 -> 68.956,-2.500 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 10 width=90.323 originY=127.096
-  staff 0 originY=3.839
+system 10 width=90.323 originY=127.068
+  staff 0 originY=3.866
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -463,24 +463,24 @@ system 10 width=90.323 originY=127.096
       glyph gClef 2.581,1.000
     note@-2 x=6.329 w=5.474
       glyph noteheadBlack 6.329,1.000
-      glyph dynamicMF 5.243,3.528
+      glyph dynamicMF 5.243,3.500
       line  7.509,0.832 -> 7.509,-2.500 t=0.120
     note@-2 x=26.811 w=5.474
       glyph noteheadBlack 26.811,1.000
-      glyph dynamicForte 26.391,3.528
+      glyph dynamicForte 26.391,3.500
       line  27.991,0.832 -> 27.991,-2.500 t=0.120
     note@-2 x=47.294 w=5.474
       glyph noteheadBlack 47.294,1.000
-      glyph dynamicFF 46.394,3.528
+      glyph dynamicFF 46.394,3.500
       line  48.474,0.832 -> 48.474,-2.500 t=0.120
     note@-2 x=67.776 w=5.474
       glyph noteheadBlack 67.776,1.000
-      glyph dynamicFFF 66.396,3.528
+      glyph dynamicFFF 66.396,3.500
       line  68.956,0.832 -> 68.956,-2.500 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 11 width=90.323 originY=139.010
-  staff 0 originY=3.839
+system 11 width=90.323 originY=138.982
+  staff 0 originY=3.866
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -494,11 +494,11 @@ system 11 width=90.323 originY=139.010
       glyph gClef 2.581,1.000
     note@-2 x=6.329 w=5.474
       glyph noteheadBlack 6.329,1.000
-      glyph dynamicFFFF 4.469,3.528
+      glyph dynamicFFFF 4.469,3.500
       line  7.509,0.832 -> 7.509,-2.500 t=0.120
     note@-2 x=26.811 w=5.474
       glyph noteheadBlack 26.811,1.000
-      glyph dynamicSforzando1 26.193,3.528
+      glyph dynamicSforzando1 26.193,3.500
       line  27.991,0.832 -> 27.991,-2.500 t=0.120
     note@-2 x=47.294 w=5.474
       glyph noteheadBlack 47.294,1.000
@@ -508,8 +508,8 @@ system 11 width=90.323 originY=139.010
       line  68.956,0.832 -> 68.956,-2.500 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 12 width=90.323 originY=150.923
-  staff 0 originY=3.839
+system 12 width=90.323 originY=150.895
+  staff 0 originY=3.866
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -537,7 +537,7 @@ system 12 width=90.323 originY=150.923
       line  68.956,0.832 -> 68.956,-2.500 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 13 width=90.323 originY=161.790
+system 13 width=90.323 originY=161.762
   staff 0 originY=4.959
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
@@ -564,7 +564,7 @@ system 13 width=90.323 originY=161.790
       line  68.956,0.832 -> 68.956,-2.500 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 14 width=90.323 originY=173.777
+system 14 width=90.323 originY=173.721
   staff 0 originY=7.065
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
@@ -591,7 +591,7 @@ system 14 width=90.323 originY=173.777
       text  63.320,-5.000 size=2.065 italic "D.C. al Fine"
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 15 width=30.291 originY=185.690
+system 15 width=30.291 originY=185.635
   staff 0 originY=7.065
     staffline 0.000,2.000 -> 30.291,2.000 t=0.130
     staffline 0.000,1.000 -> 30.291,1.000 t=0.130
@@ -619,17 +619,17 @@ system 15 width=30.291 originY=185.690
     bar x=28.227 w=0.160
       line  28.307,-2.000 -> 28.307,2.000 t=0.160
 tune 3
-bounds  width=90.323 height=15.983 top=-1.935
+bounds  width=90.323 height=16.011 top=-1.935
 systems 1
 system 0 width=90.323 originY=0.000
-  staff 0 originY=10.048
+  staff 0 originY=10.075
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  26.054,-5.588 size=3.484 bold "S1-4 Mark Decoration Test"
+      text  26.054,-5.616 size=3.484 bold "S1-4 Mark Decoration Test"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -686,7 +686,7 @@ system 0 width=90.323 originY=0.000
       line  87.435,-2.000 -> 87.435,2.000 t=0.160
       line  88.165,-2.000 -> 88.165,2.000 t=0.500
 tune 4
-bounds  width=90.323 height=32.889 top=-1.935
+bounds  width=90.323 height=32.884 top=-1.935
 systems 2
 system 0 width=90.323 originY=0.000
   staff 0 originY=15.512
@@ -734,8 +734,8 @@ system 0 width=90.323 originY=0.000
       line  78.546,-0.332 -> 78.546,3.000 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 1 width=54.511 originY=23.587
-  staff 0 originY=3.839
+system 1 width=54.511 originY=23.559
+  staff 0 originY=3.866
     staffline 0.000,2.000 -> 54.511,2.000 t=0.130
     staffline 0.000,1.000 -> 54.511,1.000 t=0.130
     staffline 0.000,0.000 -> 54.511,0.000 t=0.130
