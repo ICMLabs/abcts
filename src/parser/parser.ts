@@ -10,8 +10,12 @@
  * chords, barlines, measures, broken rhythm, tuplets, microtones, `&` overlays,
  * `%%score` voice ordering, `%%begintext` blocks, `+:` continuations, chord symbols,
  * annotations and decorations.
- * ponytail: DEFERRED — part order (`P:`), `U:` user-defined symbols, symbol lines
- * (`s:`), and most `%%` directives.
+ * Also read: `U:` user-defined symbols, `P:` part labels, `w:`/`W:` lyrics, and the
+ * `clef=` / `octave=` / `middle=` / `stafflines=` / `style=` modifiers on both `K:` and
+ * `V:`.
+ * ponytail: DEFERRED — part ORDER (a header `P:ABAB`, which is a different thing from the
+ * body `P:` label), symbol lines (`s:`), the written half of `transpose=`, and most `%%`
+ * directives.
  * Each is a separate step driven by the corpus fixture that needs it; the lexer
  * already tokenizes all of them, so the work is parser-side only.
  */
@@ -23,6 +27,7 @@ import {
   type Clef,
   type ClefShape,
   type CompatibilityMode,
+  DEFAULT_STAFF_LINES,
   DEFAULT_VOCALFONT_PT,
   type Diagnostic,
   type DiatonicStep,
@@ -110,8 +115,9 @@ function parseKey(content: string): KeySignature {
   // `K:none` means NO key signature — no alterations, and a renderer draws nothing. It is
   // not C major, even though both alter no steps.
   if (/^none\b/i.test(content.trim())) return { ...defaultKey(), none: true }
-  // ponytail: `clef=`, `octave=`, `transpose=`, `middle=`, `stafflines=` also ride on
-  // K:. Stripped here, implemented when a fixture needs them.
+  // `clef=`, `octave=`, `middle=` and `stafflines=` also ride on K:, and are read by the
+  // K: case in `field()` rather than here — this function returns the KEY alone.
+  // ponytail: `transpose=` is parsed but its written half is unrealized.
   const spec = (content.split(/\s+/)[0] ?? '').trim()
   const head = spec[0]?.toLowerCase()
   if (!head || head < 'a' || head > 'g') return defaultKey()
@@ -203,6 +209,7 @@ const CLEF_NAMES: ReadonlyArray<readonly [string, ClefShape, number]> = [
  */
 export function parseClef(spec: string): Clef | null {
   const middleOverride = middleLineOverride(spec)
+  const staffLines = staffLineCount(spec)
   const build = (name: string, digit: string, octave: string): Clef | null => {
     const entry = CLEF_NAMES.find(([n]) => n === name.toLowerCase())
     if (!entry) return null
@@ -213,6 +220,7 @@ export function parseClef(spec: string): Clef | null {
       line: line >= 1 && line <= 5 ? line : defaultLine,
       octaveShift: octave === '+8' ? 1 : octave === '-8' ? -1 : 0,
       middleOverride,
+      staffLines,
     }
   }
 
@@ -228,6 +236,36 @@ export function parseClef(spec: string): Clef | null {
     if (clef) return clef
   }
   return null
+}
+
+/**
+ * A `V:`/`K:` field's clef, or the one already in force with its `stafflines=` updated.
+ *
+ * `stafflines=` can appear with no clef beside it — `V:1 stafflines=1` is a perfectly good
+ * rhythm staff — and `parseClef` rightly returns null there, since the field names no clef.
+ * So the count is applied to whatever clef the voice already has rather than forcing a
+ * default treble alongside it.
+ */
+function clefWith(current: Clef, spec: string): Clef {
+  return parseClef(spec) ?? { ...current, staffLines: staffLineCount(spec) }
+}
+
+/** `stafflines=` written with no `clef=` beside it — see `Voice.staffLineOverride`. */
+const bareStaffLines = (spec: string): number | null =>
+  /\bstafflines=/i.test(spec) && parseClef(spec) === null ? staffLineCount(spec) : null
+
+/**
+ * `V:… stafflines=<n>` → how many staff lines to draw, defaulting to five.
+ *
+ * abcjs clamps to 0–10 (`test/abc_parser_lint.js:164`) and treats anything else as absent,
+ * which is what a non-integer or out-of-range value falls back to here. `stafflines=0` is a
+ * real value, not "unset" — it draws no staff at all — so the range test has to admit it.
+ */
+function staffLineCount(spec: string): number {
+  const m = /\bstafflines=(-?\d+)/i.exec(spec)
+  if (!m) return DEFAULT_STAFF_LINES
+  const n = Number.parseInt(m[1] ?? '', 10)
+  return Number.isInteger(n) && n >= 0 && n <= 10 ? n : DEFAULT_STAFF_LINES
 }
 
 /**
@@ -540,6 +578,8 @@ const CONTINUABLE_FIELDS = 'ABCDFGHNORSTZw'
 
 class VoiceBuilder {
   octaveShift = 0
+  /** `V:… stafflines=` with no `clef=` — see `Voice.staffLineOverride`. */
+  staffLineOverride: number | null = null
   clef: Clef | null = null
   /** `V:… name=` / `subname=` — labels printed left of the staff. See `Voice`. */
   name: string | null = null
@@ -904,6 +944,7 @@ class VoiceBuilder {
       id: this.id,
       octaveShift: this.octaveShift,
       clef: this.clef,
+      staffLineOverride: this.staffLineOverride,
       name: this.name,
       subname: this.subname,
       measures: padOverlays(measures, this.meterForOverlays),
@@ -1411,8 +1452,9 @@ class Parser {
       }
       case 'V': {
         // `V:1 clef=treble name="..."` — the id is the first token; the rest is voice
-        // configuration. `clef=`, `octave=` and `style=` are read; ponytail: `name=`,
-        // `transpose=`, `middle=` and `stafflines=` are not, and no fixture needs them.
+        // configuration. `clef=`, `octave=`, `middle=`, `stafflines=`, `name=`, `subname=`
+        // and `style=` are read; ponytail: `transpose=` is parsed but its WRITTEN half is
+        // unrealized, which is why `middle=` guards on it.
         const id = value.split(/\s+/)[0]
         if (!id) return
         // In the header a `V:` only DECLARES. Only a `V:` in the body switches the
@@ -1424,6 +1466,8 @@ class Parser {
         if (octave !== null) builder.voiceFor(id).octaveShift = octave
         const voiceClef = parseClef(value)
         if (voiceClef !== null) builder.voiceFor(id).clef = voiceClef
+        const bare = bareStaffLines(value)
+        if (bare !== null) builder.voiceFor(id).staffLineOverride = bare
         const name = voiceLabel(value, ['name', 'nm'])
         if (name !== undefined) builder.voiceFor(id).name = name
         const subname = voiceLabel(value, ['subname', 'sname', 'snm'])
@@ -1458,8 +1502,7 @@ class Parser {
         builder.key = parseKey(value)
         builder.keySourceRange = range
         // `K:C bass` sets the tune's clef; a `V:… clef=` still overrides it per voice.
-        const keyClef = parseClef(value)
-        if (keyClef !== null) builder.clef = keyClef
+        builder.clef = clefWith(builder.clef, value)
         const keyOctave = octaveModifier(value)
         if (keyOctave !== null) builder.voice.octaveShift = keyOctave
         builder.bodyStarted = true // K: ends the header.

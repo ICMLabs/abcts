@@ -141,17 +141,19 @@ describe('clefs', () => {
       line: 4,
       octaveShift: 0,
       middleOverride: null,
+      staffLines: 5,
     })
     expect(parse('X:1\nK:C treble\nC|\n').scores[0]?.clef).toEqual({
       shape: 'G',
       line: 2,
       octaveShift: 0,
       middleOverride: null,
+      staffLines: 5,
     })
   })
 
   it('reads clef= on a voice', () => {
-    expect(clefOf('X:1\nV:1 clef=bass\nK:C\nC|\n')).toEqual({ shape: 'F', line: 4, octaveShift: 0, middleOverride: null })
+    expect(clefOf('X:1\nV:1 clef=bass\nK:C\nC|\n')).toEqual({ shape: 'F', line: 4, octaveShift: 0, middleOverride: null, staffLines: 5 })
   })
 
   it('takes the trailing digit as the staff line, which is how ABC spells three clefs', () => {
@@ -161,24 +163,48 @@ describe('clefs', () => {
       line: 3, // baritone
       octaveShift: 0,
       middleOverride: null,
+      staffLines: 5,
     })
     expect(parse('X:1\nK:C alto1\nC|\n').scores[0]?.clef).toEqual({
       shape: 'C',
       line: 1, // soprano
       octaveShift: 0,
       middleOverride: null,
+      staffLines: 5,
     })
     expect(parse('X:1\nK:C alto2\nC|\n').scores[0]?.clef).toEqual({
       shape: 'C',
       line: 2, // mezzo-soprano
       octaveShift: 0,
       middleOverride: null,
+      staffLines: 5,
     })
   })
 
   it('reads the octave suffix', () => {
     expect(parse('X:1\nK:C treble-8\nC|\n').scores[0]?.clef.octaveShift).toBe(-1)
     expect(parse('X:1\nK:C treble+8\nC|\n').scores[0]?.clef.octaveShift).toBe(1)
+  })
+
+  it('draws the staff lines `stafflines=` asks for, abcjs’s way', () => {
+    // `write/draw/staff.js`: lines count UP from the bottom line, ONE line is the middle
+    // (B) line rather than the bottom, and zero draws no staff at all.
+    const rules = (abc: string): number[] =>
+      (layout(parse(abc).scores[0] as Score).systems[0]?.staves[0]?.staffLines ?? []).map(
+        (l) => l.y1,
+      )
+    const five = rules('X:1\nK:C\nC|\n')
+    expect(five).toHaveLength(5)
+    expect(rules('X:1\nK:C\nV:1 stafflines=3\nC|\n')).toEqual(five.slice(0, 3))
+    expect(rules('X:1\nK:C\nV:1 stafflines=1\nC|\n')).toEqual([five[2]])
+    expect(rules('X:1\nK:C\nV:1 stafflines=0\nC|\n')).toEqual([])
+    // It rides on K: too, and alongside a `clef=` rather than instead of one.
+    expect(rules('X:1\nK:C stafflines=2\nC|\n')).toEqual(five.slice(0, 2))
+    expect(rules('X:1\nK:C\nV:1 clef=bass stafflines=1\nC|\n')).toEqual([five[2]])
+    // A bare `stafflines=` must not replace an inherited clef with a default treble.
+    expect(parse('X:1\nK:C bass\nV:1 stafflines=1\nC|\n').scores[0]?.clef.shape).toBe('F')
+    // Out of abcjs's 0-10 range, or not a number: treated as absent.
+    expect(rules('X:1\nK:C\nV:1 stafflines=99\nC|\n')).toHaveLength(5)
   })
 
   it('defaults to treble, and ignores words that name no clef', () => {
@@ -191,10 +217,10 @@ describe('clefs', () => {
 
   it('puts the middle line where each clef says it is', () => {
     // Treble B4 = 34, bass D3 = 22, alto C4 = 28, tenor A3 = 26.
-    expect(middleLineIndex({ shape: 'G', line: 2, octaveShift: 0, middleOverride: null })).toBe(34)
-    expect(middleLineIndex({ shape: 'F', line: 4, octaveShift: 0, middleOverride: null })).toBe(22)
-    expect(middleLineIndex({ shape: 'C', line: 3, octaveShift: 0, middleOverride: null })).toBe(28)
-    expect(middleLineIndex({ shape: 'C', line: 4, octaveShift: 0, middleOverride: null })).toBe(26)
+    expect(middleLineIndex({ shape: 'G', line: 2, octaveShift: 0, middleOverride: null, staffLines: 5 })).toBe(34)
+    expect(middleLineIndex({ shape: 'F', line: 4, octaveShift: 0, middleOverride: null, staffLines: 5 })).toBe(22)
+    expect(middleLineIndex({ shape: 'C', line: 3, octaveShift: 0, middleOverride: null, staffLines: 5 })).toBe(28)
+    expect(middleLineIndex({ shape: 'C', line: 4, octaveShift: 0, middleOverride: null, staffLines: 5 })).toBe(26)
   })
 
   it('puts a bass voice where abcjs puts it, which the treble assumption did not', () => {

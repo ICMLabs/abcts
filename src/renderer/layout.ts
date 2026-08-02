@@ -20,6 +20,7 @@ import {
   type Clef,
   type ClefShape,
   type CompatibilityMode,
+  DEFAULT_STAFF_LINES,
   DEFAULT_VOCALFONT_PT,
   type DiatonicStep,
   defaultClef,
@@ -656,6 +657,14 @@ export interface LayoutStaff {
    */
   readonly voices: readonly (readonly LayoutElement[])[]
   readonly staffLines: readonly PlacedLine[]
+  /**
+   * How many lines `staffLines` was built from — `V:… stafflines=`, 5 unless stated.
+   *
+   * Kept alongside the drawn rules because `staffLines` cannot be counted back: a
+   * `stafflines=1` staff and a `stafflines=0` one both have a length a consumer would
+   * misread, and the count is what a host asking "is this a rhythm staff" wants.
+   */
+  readonly staffLineCount: number
   /**
    * Beams, which belong to no single element — a beam spans several noteheads and is
    * drawn once for the group, after every member's position is known. Per staff, since
@@ -3205,14 +3214,34 @@ const shiftElement = (el: LayoutElement, dx: number): LayoutElement => ({
   texts: el.texts.map((t) => ({ ...t, x: t.x + dx })),
 })
 
-const staffLinesFor = (width: number): PlacedLine[] =>
-  ENGRAVE.staffLineSteps.map((step) => ({
+/**
+ * The staff's own lines — five, or however many `V:… stafflines=` asked for.
+ *
+ * Source: `write/draw/staff.js`. Lines are counted UP from the bottom line, `pitch =
+ * (i + 1) * 2` for `i` in `[0, n)`, so a three-line staff keeps the bottom line where it
+ * was and drops the top two. ONE line is special-cased to the B line — the middle — rather
+ * than the bottom, which is the percussion/rhythm convention; and zero draws no staff at
+ * all, which is how a chord chart or a lyrics-only part is written.
+ *
+ * The notes do not move: `stafflines=` changes what is DRAWN, not the coordinate system,
+ * so a `stafflines=1` treble staff still puts every pitch where a treble staff would and
+ * simply hides four of its lines. Ledger lines follow from the same unchanged pitches, as
+ * they do in abcjs.
+ */
+const staffLinesFor = (width: number, count: number): PlacedLine[] => {
+  const rule = (step: number): PlacedLine => ({
     x1: 0,
     y1: stepToY(step),
     x2: width,
     y2: stepToY(step),
     thickness: ENGRAVING_DEFAULTS.staffLineThickness,
-  }))
+  })
+  if (count === DEFAULT_STAFF_LINES) return ENGRAVE.staffLineSteps.map(rule)
+  if (count <= 0) return []
+  if (count === 1) return [rule(0)]
+  // Bottom line is step -4 (pitch 2) and each line up is two steps.
+  return Array.from({ length: count }, (_, i) => rule(-4 + 2 * i))
+}
 
 /** Everything about one voice that the packer needs. */
 interface VoicePlan {
@@ -3344,7 +3373,13 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
 
   const plans: VoicePlan[] = voices.map((voice, voiceIndex) => {
     // A voice's own `clef=` wins over the tune's `K:` clef; treble is the fallback.
-    const clef = voice?.clef ?? score.clef
+    // A bare `V:… stafflines=` rides on the VOICE, not its clef, so that it can apply to
+    // an inherited clef without replacing it. Resolve it here, where the clef is picked.
+    const resolved = voice?.clef ?? score.clef
+    const clef =
+      voice?.staffLineOverride == null
+        ? resolved
+        : { ...resolved, staffLines: voice.staffLineOverride }
     const directions = beamDirections(voice, clef)
     // The key in force, accumulated forward. `Measure.keyChange` is a DELTA — the model
     // deliberately keeps `score.key` as the header key and leaves accumulation to the
@@ -3729,6 +3764,10 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         elements,
         // One voice per staff until the merge below folds shared staves together.
         voices: [elements],
+        // How many lines this voice's staff draws — `V:… stafflines=`. The MERGE keeps the
+        // first voice's, which is abcjs's answer too: `stafflines` is read off the staff's
+        // clef (`abstract-engraver.js:182`), and a staff has one.
+        staffLineCount: plan.clef.staffLines,
         staffLines: [],
         beams,
         curves: [],
@@ -3871,7 +3910,12 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
           : Math.max(stacked, previousBottomLine + intraStaffSep + STAFF_HALF_HEIGHT)
       previousBottomLine = originY + STAFF_HALF_HEIGHT
       cursor = originY + extent.bottom + ENGRAVE.staffGap
-      return { ...staff, elements: positioned, staffLines: staffLinesFor(width), originY }
+      return {
+        ...staff,
+        elements: positioned,
+        staffLines: staffLinesFor(width, staff.staffLineCount),
+        originY,
+      }
     })
 
     const connectors = layoutConnectors(score.staves, placed)

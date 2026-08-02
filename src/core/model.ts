@@ -172,9 +172,29 @@ export interface Clef {
    * Independent of `transpose=`, which is sounding-only and moves nothing on the page.
    */
   readonly middleOverride: number | null
+  /**
+   * `V:… stafflines=<n>` — how many staff lines to DRAW, 5 unless stated.
+   *
+   * A drawing count, not a coordinate system: notes keep their normal pitches and a
+   * `stafflines=1` rhythm staff still reads as a treble staff with four of its lines
+   * hidden. abcjs carries it on the clef for the same reason (`clef.stafflines`,
+   * `abstract-engraver.js:182`) and leaves the staff's own top/bottom limits at the
+   * five-line values — its `staff-group-element.js:53` records that as an open question,
+   * and matching it is what keeps a short staff from re-spacing everything around it.
+   */
+  readonly staffLines: number
 }
 
-export const defaultClef: Clef = { shape: 'G', line: 2, octaveShift: 0, middleOverride: null }
+/** Five, as every ABC clef is unless `stafflines=` says otherwise. */
+export const DEFAULT_STAFF_LINES = 5
+
+export const defaultClef: Clef = {
+  shape: 'G',
+  line: 2,
+  octaveShift: 0,
+  middleOverride: null,
+  staffLines: DEFAULT_STAFF_LINES,
+}
 
 // ─── Meter ───────────────────────────────────────────────────────────────────
 
@@ -519,6 +539,15 @@ export interface Voice {
   readonly octaveShift: number
   /** `V:… clef=`. `null` means this voice takes the tune's clef from `Score.clef`. */
   readonly clef: Clef | null
+  /**
+   * `V:… stafflines=<n>` given WITHOUT a `clef=` beside it. `null` when absent.
+   *
+   * Separate from `clef.staffLines` because the two inherit differently: a bare
+   * `stafflines=` must not materialise a clef, or the voice would stop taking the tune's
+   * (`V:1 stafflines=1` above a `K:C bass` would silently turn treble). So the count rides
+   * on the voice and is applied to whichever clef resolution picks.
+   */
+  readonly staffLineOverride: number | null
   /**
    * `V:… name=` — the label printed to the left of the FIRST system. `null` means none.
    * abcjs reserves horizontal space for it, shifting the staff (and its notes) right.
