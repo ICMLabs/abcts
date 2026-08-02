@@ -626,6 +626,8 @@ class VoiceBuilder {
   /** The counter value when the current music line began; `w:` lines align from here. */
   private lineNoteStart = 0
   private readonly lyricLines: { start: number; syllables: Syllable[] }[] = []
+  /** `s:` symbol lines, aligned to notes exactly as `w:` is. Non-strict modes only. */
+  private readonly symbolLines: { start: number; syllables: Syllable[] }[] = []
 
   constructor(readonly id: string) {}
 
@@ -701,6 +703,10 @@ class VoiceBuilder {
     this.lyricLines.push({ start: this.lineNoteStart, syllables })
   }
 
+  addSymbolLine(syllables: Syllable[]): void {
+    this.symbolLines.push({ start: this.lineNoteStart, syllables })
+  }
+
   /** Extend the lyric line in progress — a `\` continuation, not a new verse. */
   appendLyricLine(syllables: Syllable[]): void {
     const current = this.lyricLines[this.lyricLines.length - 1]
@@ -709,6 +715,55 @@ class VoiceBuilder {
       return
     }
     current.syllables.push(...syllables)
+  }
+
+  /**
+   * Distribute `s:` symbols onto notes by position — the CORRECT reading, which strict
+   * mode never reaches.
+   *
+   * ABC 2.1 §8.2: an `s:` line aligns decorations under its music line the same way `w:`
+   * aligns syllables, sharing that field's whole token grammar — space advances a note,
+   * `*` skips one, `|` skips to the next barline. So it reuses the `w:` splitter and the
+   * same index walk rather than growing a second one.
+   *
+   * abcjs does NOT do this. It reads `s:` with its `w:` parser and pushes the result onto
+   * `el.lyric`, so the symbols come out as lyric TEXT under the staff — its own comment at
+   * `parse/abc_parse.js:325` says "Currently copied from w: line. This needs to be read as
+   * symbols instead." `abcjs-strict` reproduces that by routing the line to the lyric path
+   * at the field, so nothing here runs in that mode; see the `s` case in `field`.
+   *
+   * The `!`/`+` delimiters are stripped so a symbol joins the same namespace `U:` and the
+   * inline `!trill!` form use. A token that names no decoration is simply carried — the
+   * renderer draws what it knows and ignores the rest, exactly as it does for an inline one.
+   */
+  private applySymbols(): void {
+    if (this.symbolLines.length === 0) return
+    const symbols = new Map<number, string[]>()
+    for (const line of this.symbolLines) {
+      line.syllables.forEach((token, offset) => {
+        if (token.kind === 'skip' || token.text === null) return
+        const name = token.text.replace(/^[!+]|[!+]$/g, '')
+        if (name === '') return
+        const at = line.start + offset
+        symbols.set(at, [...(symbols.get(at) ?? []), name])
+      })
+    }
+    if (symbols.size === 0) return
+
+    let index = 0
+    // Rebuilt rather than mutated, for the reason `applyLyrics` gives.
+    this.measures = this.measures.map((measure) => ({
+      ...measure,
+      events: measure.events.map((event) => {
+        if (event.type === 'rest') return event
+        const extra = symbols.get(index)
+        index += 1
+        // Appended, so an inline `!trill!` on the same note keeps its place in the stack.
+        return extra === undefined
+          ? event
+          : { ...event, decorations: [...event.decorations, ...extra] }
+      }),
+    }))
   }
 
   /**
@@ -927,6 +982,7 @@ class VoiceBuilder {
   finish(): Voice {
     this.closeUnterminatedMeasure()
     this.applyLyrics()
+    this.applySymbols()
     // `V:2 clef=bass octave=-2` moves the WRITTEN pitch, so it is baked into the model
     // here rather than left for a renderer to remember. Settled by probing abcjs 6.6.3,
     // which reports pitch -14 where an unshifted voice reports 0: the noteheads move.
@@ -1476,6 +1532,20 @@ class Parser {
         if (name !== undefined) builder.voiceFor(id).name = name
         const subname = voiceLabel(value, ['subname', 'sname', 'snm'])
         if (subname !== undefined) builder.voiceFor(id).subname = subname
+        return
+      }
+      case 's': {
+        // `s:` — decorations aligned under the music line, ABC 2.1 §8.2. Same token
+        // grammar as `w:`, so the same splitter reads it.
+        //
+        // THE MODE SPLIT IS THE POINT. abcjs reads `s:` with its `w:` parser and pushes the
+        // tokens onto `el.lyric` (`parse/abc_parse.js:317-395`), printing `!trill!` as a
+        // lyric syllable — its own TODO at `:325` calls this out. Strict reproduces that by
+        // handing the line to the lyric path, where an `s:` after a `w:` becomes the next
+        // verse, which is what abcjs's `el.lyric.push` does. The other modes place them.
+        const tokens = this.takeLyricLine(content, start + 2, builder)
+        if (isStrict(this.mode)) builder.voice.addLyricLine(tokens)
+        else builder.voice.addSymbolLine(tokens)
         return
       }
       case 'U': {

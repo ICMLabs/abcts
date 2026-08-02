@@ -1,7 +1,13 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { rational, ratToNumber, type Score, stepIndex } from '../../src/core/model.js'
+import {
+  type CompatibilityMode,
+  rational,
+  ratToNumber,
+  type Score,
+  stepIndex,
+} from '../../src/core/model.js'
 import { parse } from '../../src/parser/parser.js'
 import { corpusDir, goldenNotes } from './corpus.js'
 
@@ -722,5 +728,51 @@ describe("frere-jacques: the `+:` prose lexes to abcjs's notes", () => {
       .flatMap((m) => m.events)
       .filter((e) => e.type === 'note')
     expect(notes.length).toBeLessThan(45)
+  })
+})
+
+describe('`s:` symbol lines', () => {
+  // ABC 2.1 §8.2. Same token grammar as `w:` — space advances a note, `*` skips one.
+  const abc = 'X:1\nT:t\nM:4/4\nL:1/4\nK:C\nCDEF|\ns: !trill! * !fermata! !staccato!\n'
+  const events = (mode: CompatibilityMode) => {
+    const result = parse(abc, { mode })
+    if (!result.ok) throw new Error('expected the symbol-line tune to parse')
+    return (result.scores[0]?.voices[0]?.measures ?? [])
+      .flatMap((m) => m.events)
+      .filter((e) => e.type !== 'rest')
+  }
+
+  it('places them as decorations, skipping a note for `*`', () => {
+    expect(events('extended').map((e) => e.decorations)).toEqual([
+      ['trill'],
+      [],
+      ['fermata'],
+      ['staccato'],
+    ])
+    // The delimiters are stripped, so they share the namespace `U:` and `!trill!` use.
+    expect(events('extended').map((e) => e.lyric)).toEqual([null, null, null, null])
+  })
+
+  it('reproduces abcjs under strict, where they come out as LYRIC TEXT', () => {
+    // Not a shortcut — abcjs reads `s:` with its `w:` parser and pushes the tokens onto
+    // `el.lyric` (`parse/abc_parse.js:317-395`); its own TODO at `:325` says as much. A
+    // strict render therefore prints `!trill!` under the staff, delimiters and all.
+    expect(events('abcjs-strict').map((e) => e.lyric)).toEqual([
+      '!trill!',
+      null,
+      '!fermata!',
+      '!staccato!',
+    ])
+    expect(events('abcjs-strict').map((e) => e.decorations)).toEqual([[], [], [], []])
+  })
+
+  it('follows a `w:` as the next verse under strict, as `el.lyric.push` does', () => {
+    const withWords = parse('X:1\nT:t\nM:4/4\nL:1/4\nK:C\nCDEF|\nw: a b c d\ns: !trill! * * *\n', {
+      mode: 'abcjs-strict',
+    })
+    if (!withWords.ok) throw new Error('expected it to parse')
+    const first = withWords.scores[0]?.voices[0]?.measures[0]?.events[0]
+    expect(first?.type === 'note' ? first.lyric : null).toBe('a')
+    expect(first?.type === 'note' ? first.extraVerses : null).toEqual(['!trill!'])
   })
 })
