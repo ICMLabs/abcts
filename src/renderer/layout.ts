@@ -1951,7 +1951,15 @@ function layoutNoteheads(
   // The spring is the natural width, but ink is a rod: a displaced head or a dot column
   // must never be crushed by a short duration, so the element is at least as wide as what
   // it draws to the RIGHT of the notehead, plus the minimum gap.
-  const spread = Math.max(0, ...[...offsets.values()].map(Math.abs), dotWidth)
+  // RIGHT and LEFT are measured separately, as abcjs measures them: `addRight` takes
+  // `w = max(w, dx + w)` and `addHead` takes `extraw = min(extraw, dx)`. A displaced head
+  // reaches right by its own width and left by its offset, and those are not the same
+  // number. `dotWidth` is ALREADY a full extent from the notehead's origin, so the old
+  // `max(|offsets|, dotWidth) + head.width` counted the notehead twice for every dotted
+  // note: `happy-birthday`'s dotted eighth came out at 26.16px against abcjs's 18.44, and
+  // the 6.7px went straight into the gap after it.
+  const headRight = Math.max(0, ...[...offsets.values()]) + head.width
+  const headLeft = -Math.min(0, ...[...offsets.values()])
   // A lyric or a chord symbol is CENTRED on the note and counts on BOTH sides. It is the
   // dominant term in sung music: `birth-` makes a 9.81px notehead occupy 21.28px each way.
   //
@@ -1961,7 +1969,7 @@ function layoutNoteheads(
   const flagInk = glyphs
     .filter((g) => g.role === 'flag')
     .map((g) => g.x - headX + glyphsFor(strict).width(g.name))
-  const ink = Math.max(spread + head.width, textSpan.right, ...flagInk) + ENGRAVE.noteRodGap
+  const ink = Math.max(headRight, dotWidth, textSpan.right, ...flagInk) + ENGRAVE.noteRodGap
   return {
     type: 'note',
     // THE ELEMENT IS ITS NOTEHEAD. Grace notes and accidentals hang LEFT of it and cost
@@ -1975,7 +1983,7 @@ function layoutNoteheads(
     width: Math.max(advance, ink),
     spring: advance,
     rod: ink,
-    left: Math.max(headX - x, textSpan.left),
+    left: Math.max(headX - x, textSpan.left, headLeft),
     staffSteps: steps,
     glyphs,
     lines,

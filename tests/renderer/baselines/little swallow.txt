@@ -1,30 +1,30 @@
 tune 0
-bounds  width=90.756 height=89.308 top=-1.935
+bounds  width=90.894 height=89.308 top=-1.935
 systems 5
-system 0 width=90.542 originY=0.000
+system 0 width=90.577 originY=0.000
   staff 0 originY=21.676
-    staffline 0.000,2.000 -> 90.542,2.000 t=0.130
-    staffline 0.000,1.000 -> 90.542,1.000 t=0.130
-    staffline 0.000,0.000 -> 90.542,0.000 t=0.130
-    staffline 0.000,-1.000 -> 90.542,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 90.542,-2.000 t=0.130
-    beam   14.967,-2.250 -> 17.323,-2.750 t=0.500
-    beam   19.159,3.750 -> 21.515,4.250 t=0.500
-    beam   34.373,-2.250 -> 37.367,-2.750 t=0.500
-    beam   39.264,4.250 -> 41.621,3.750 t=0.500
-    beam   72.657,2.750 -> 75.013,3.250 t=0.500
-    beam   77.906,4.250 -> 80.262,3.750 t=0.500
-    slur  15.267,2.800 -> 15.843,1.800 bulge=0.500
-    slur  20.639,-1.300 -> 21.215,-0.300 bulge=-0.500
-    slur  34.673,2.800 -> 35.887,1.800 bulge=0.500
-    slur  40.744,-0.300 -> 41.321,-1.300 bulge=-0.500
-    slur  74.137,-1.800 -> 74.713,-1.300 bulge=-0.500
-    slur  79.386,-0.300 -> 79.962,-1.300 bulge=-0.500
+    staffline 0.000,2.000 -> 90.577,2.000 t=0.130
+    staffline 0.000,1.000 -> 90.577,1.000 t=0.130
+    staffline 0.000,0.000 -> 90.577,0.000 t=0.130
+    staffline 0.000,-1.000 -> 90.577,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 90.577,-2.000 t=0.130
+    beam   14.967,-2.250 -> 17.420,-2.750 t=0.500
+    beam   19.256,3.750 -> 21.710,4.250 t=0.500
+    beam   34.762,-2.250 -> 37.756,-2.750 t=0.500
+    beam   39.653,4.250 -> 42.107,3.750 t=0.500
+    beam   72.302,2.750 -> 74.756,3.250 t=0.500
+    beam   77.649,4.250 -> 80.102,3.750 t=0.500
+    slur  15.267,2.800 -> 15.940,1.800 bulge=0.500
+    slur  20.736,-1.300 -> 21.410,-0.300 bulge=-0.500
+    slur  35.062,2.800 -> 36.276,1.800 bulge=0.500
+    slur  41.133,-0.300 -> 41.807,-1.300 bulge=-0.500
+    slur  73.782,-1.800 -> 74.456,-1.300 bulge=-0.500
+    slur  79.129,-0.300 -> 79.802,-1.300 bulge=-0.500
     title x=0.000 w=0.000
-      text  34.966,-17.217 size=3.484 bold "Little Swallow"
-      text  39.026,-13.245 size=2.710 "Xiǎo yàn zi"
-      text  41.206,-9.403 size=2.710 "小燕子"
-      text  41.527,-5.330 size=2.452 italic "(China)"
+      text  34.983,-17.217 size=3.484 bold "Little Swallow"
+      text  39.044,-13.245 size=2.710 "Xiǎo yàn zi"
+      text  41.224,-9.403 size=2.710 "小燕子"
+      text  41.544,-5.330 size=2.452 italic "(China)"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -38,107 +38,107 @@ system 0 width=90.542 originY=0.000
       line  14.967,1.832 -> 14.967,-2.500 t=0.120
       text  11.593,6.694 size=2.194 bold "Xiǎo"
       text  12.690,9.326 size=2.194 bold "小"
-    note@-2 x=16.143 w=3.871
-      glyph noteheadBlack 16.143,1.000
-      line  17.323,0.832 -> 17.323,-3.000 t=0.120
-    note@1 x=19.159 w=3.871
-      glyph noteheadBlack 19.159,-0.500
-      line  19.159,-0.332 -> 19.159,3.750 t=0.120
-      text  17.452,6.694 size=2.194 bold "yàn"
-      text  18.062,9.326 size=2.194 bold "燕"
-    note@-1 x=21.515 w=3.871
-      glyph noteheadBlack 21.515,0.500
-      line  21.515,0.668 -> 21.515,4.250 t=0.120
-    note@-2 x=24.195 w=7.742
-      glyph noteheadHalf 24.195,1.000
-      line  25.375,0.832 -> 25.375,-2.500 t=0.120
-      text  23.130,6.694 size=2.194 bold "zi,"
-      text  22.824,9.326 size=2.194 bold "子,"
-    bar x=28.908 w=0.160
-      line  28.988,-2.000 -> 28.988,2.000 t=0.160
-    note@-4 x=33.193 w=3.871
-      glyph noteheadBlack 33.193,2.000
-      line  34.373,1.832 -> 34.373,-2.500 t=0.120
-      text  30.327,6.694 size=2.194 bold "chuān"
-      text  32.096,9.326 size=2.194 bold "穿"
-    note@-2 x=36.187 w=3.871
-      glyph noteheadBlack 36.187,1.000
-      line  37.367,0.832 -> 37.367,-3.000 t=0.120
-    note@-1 x=39.264 w=3.871
-      glyph noteheadBlack 39.264,0.500
-      line  39.264,0.668 -> 39.264,4.250 t=0.120
-      text  37.496,6.694 size=2.194 bold "huā"
-      text  38.168,9.326 size=2.194 bold "花"
-    note@1 x=41.621 w=3.871
-      glyph noteheadBlack 41.621,-0.500
-      line  41.621,-0.332 -> 41.621,3.750 t=0.120
-    note@-2 x=44.301 w=7.742
-      glyph noteheadHalf 44.301,1.000
-      line  45.481,0.832 -> 45.481,-2.500 t=0.120
-      text  43.448,6.694 size=2.194 bold "yī"
-      text  42.930,9.326 size=2.194 bold "衣,"
-    bar x=49.013 w=0.160
-      line  49.093,-2.000 -> 49.093,2.000 t=0.160
-    note@1 x=52.506 w=6.705
-      glyph noteheadBlack 52.506,-0.500
-      glyph augmentationDot 54.122,-0.500
-      line  52.506,-0.332 -> 52.506,3.000 t=0.120
-      text  50.433,6.694 size=2.194 bold "nián"
-      text  51.409,9.326 size=2.194 bold "年"
-    note@3 x=57.954 w=3.871
-      glyph noteheadBlack 57.954,-1.500
-      glyph flag8thDown 57.954,2.000
-      line  57.954,-1.332 -> 57.954,2.000 t=0.120
-      text  55.881,6.694 size=2.194 bold "nián"
-      text  56.857,9.326 size=2.194 bold "年"
-    note@2 x=62.473 w=5.474
-      glyph noteheadBlack 62.473,-1.000
-      line  62.473,-0.832 -> 62.473,2.500 t=0.120
-      text  60.156,6.694 size=2.194 bold "chūn"
-      text  61.376,9.326 size=2.194 bold "春"
-    note@1 x=66.747 w=5.474
-      glyph noteheadBlack 66.747,-0.500
-      line  66.747,-0.332 -> 66.747,3.000 t=0.120
-      text  64.919,6.694 size=2.194 bold "tiān"
-      text  65.650,9.326 size=2.194 bold "天"
-    bar x=70.080 w=0.160
-      line  70.160,-2.000 -> 70.160,2.000 t=0.160
-    note@2 x=72.657 w=3.871
-      glyph noteheadBlack 72.657,-1.000
-      line  72.657,-0.832 -> 72.657,2.750 t=0.120
-      text  71.499,6.694 size=2.194 bold "lái"
-      text  71.560,9.326 size=2.194 bold "来"
-    note@1 x=75.013 w=3.871
-      glyph noteheadBlack 75.013,-0.500
-      line  75.013,-0.332 -> 75.013,3.250 t=0.120
-    note@-1 x=77.906 w=3.871
-      glyph noteheadBlack 77.906,0.500
-      line  77.906,0.668 -> 77.906,4.250 t=0.120
-      text  76.322,6.694 size=2.194 bold "zhè"
-      text  76.809,9.326 size=2.194 bold "这"
-    note@1 x=80.262 w=3.871
-      glyph noteheadBlack 80.262,-0.500
-      line  80.262,-0.332 -> 80.262,3.750 t=0.120
-    note@-2 x=83.765 w=7.742
-      glyph noteheadHalf 83.765,1.000
-      line  84.945,0.832 -> 84.945,-2.500 t=0.120
-      text  83.155,6.694 size=2.194 bold "lǐ"
-      text  81.571,9.326 size=2.194 bold "里，"
-    bar x=88.477 w=0.160
-      line  88.557,-2.000 -> 88.557,2.000 t=0.160
-system 1 width=90.634 originY=31.739
+    note@-2 x=16.240 w=3.871
+      glyph noteheadBlack 16.240,1.000
+      line  17.420,0.832 -> 17.420,-3.000 t=0.120
+    note@1 x=19.256 w=3.871
+      glyph noteheadBlack 19.256,-0.500
+      line  19.256,-0.332 -> 19.256,3.750 t=0.120
+      text  17.549,6.694 size=2.194 bold "yàn"
+      text  18.159,9.326 size=2.194 bold "燕"
+    note@-1 x=21.710 w=3.871
+      glyph noteheadBlack 21.710,0.500
+      line  21.710,0.668 -> 21.710,4.250 t=0.120
+    note@-2 x=24.390 w=7.742
+      glyph noteheadHalf 24.390,1.000
+      line  25.570,0.832 -> 25.570,-2.500 t=0.120
+      text  23.324,6.694 size=2.194 bold "zi,"
+      text  23.019,9.326 size=2.194 bold "子,"
+    bar x=29.297 w=0.160
+      line  29.377,-2.000 -> 29.377,2.000 t=0.160
+    note@-4 x=33.582 w=3.871
+      glyph noteheadBlack 33.582,2.000
+      line  34.762,1.832 -> 34.762,-2.500 t=0.120
+      text  30.716,6.694 size=2.194 bold "chuān"
+      text  32.485,9.326 size=2.194 bold "穿"
+    note@-2 x=36.576 w=3.871
+      glyph noteheadBlack 36.576,1.000
+      line  37.756,0.832 -> 37.756,-3.000 t=0.120
+    note@-1 x=39.653 w=3.871
+      glyph noteheadBlack 39.653,0.500
+      line  39.653,0.668 -> 39.653,4.250 t=0.120
+      text  37.885,6.694 size=2.194 bold "huā"
+      text  38.557,9.326 size=2.194 bold "花"
+    note@1 x=42.107 w=3.871
+      glyph noteheadBlack 42.107,-0.500
+      line  42.107,-0.332 -> 42.107,3.750 t=0.120
+    note@-2 x=44.787 w=7.742
+      glyph noteheadHalf 44.787,1.000
+      line  45.967,0.832 -> 45.967,-2.500 t=0.120
+      text  43.934,6.694 size=2.194 bold "yī"
+      text  43.416,9.326 size=2.194 bold "衣,"
+    bar x=49.694 w=0.160
+      line  49.774,-2.000 -> 49.774,2.000 t=0.160
+    note@1 x=53.187 w=6.705
+      glyph noteheadBlack 53.187,-0.500
+      glyph augmentationDot 54.803,-0.500
+      line  53.187,-0.332 -> 53.187,3.000 t=0.120
+      text  51.114,6.694 size=2.194 bold "nián"
+      text  52.090,9.326 size=2.194 bold "年"
+    note@3 x=57.462 w=3.871
+      glyph noteheadBlack 57.462,-1.500
+      glyph flag8thDown 57.462,2.000
+      line  57.462,-1.332 -> 57.462,2.000 t=0.120
+      text  55.389,6.694 size=2.194 bold "nián"
+      text  56.365,9.326 size=2.194 bold "年"
+    note@2 x=61.981 w=5.474
+      glyph noteheadBlack 61.981,-1.000
+      line  61.981,-0.832 -> 61.981,2.500 t=0.120
+      text  59.664,6.694 size=2.194 bold "chūn"
+      text  60.884,9.326 size=2.194 bold "春"
+    note@1 x=66.255 w=5.474
+      glyph noteheadBlack 66.255,-0.500
+      line  66.255,-0.332 -> 66.255,3.000 t=0.120
+      text  64.427,6.694 size=2.194 bold "tiān"
+      text  65.159,9.326 size=2.194 bold "天"
+    bar x=69.725 w=0.160
+      line  69.805,-2.000 -> 69.805,2.000 t=0.160
+    note@2 x=72.302 w=3.871
+      glyph noteheadBlack 72.302,-1.000
+      line  72.302,-0.832 -> 72.302,2.750 t=0.120
+      text  71.145,6.694 size=2.194 bold "lái"
+      text  71.206,9.326 size=2.194 bold "来"
+    note@1 x=74.756 w=3.871
+      glyph noteheadBlack 74.756,-0.500
+      line  74.756,-0.332 -> 74.756,3.250 t=0.120
+    note@-1 x=77.649 w=3.871
+      glyph noteheadBlack 77.649,0.500
+      line  77.649,0.668 -> 77.649,4.250 t=0.120
+      text  76.065,6.694 size=2.194 bold "zhè"
+      text  76.552,9.326 size=2.194 bold "这"
+    note@1 x=80.102 w=3.871
+      glyph noteheadBlack 80.102,-0.500
+      line  80.102,-0.332 -> 80.102,3.750 t=0.120
+    note@-2 x=83.605 w=7.742
+      glyph noteheadHalf 83.605,1.000
+      line  84.785,0.832 -> 84.785,-2.500 t=0.120
+      text  82.995,6.694 size=2.194 bold "lǐ"
+      text  81.411,9.326 size=2.194 bold "里，"
+    bar x=88.512 w=0.160
+      line  88.592,-2.000 -> 88.592,2.000 t=0.160
+system 1 width=90.627 originY=31.739
   staff 0 originY=3.839
-    staffline 0.000,2.000 -> 90.634,2.000 t=0.130
-    staffline 0.000,1.000 -> 90.634,1.000 t=0.130
-    staffline 0.000,0.000 -> 90.634,0.000 t=0.130
-    staffline 0.000,-1.000 -> 90.634,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 90.634,-2.000 t=0.130
-    beam   22.203,-2.750 -> 25.179,-3.250 t=0.500
-    beam   34.189,4.250 -> 37.166,4.750 t=0.500
-    beam   50.890,-1.750 -> 54.309,-1.250 t=0.500
-    beam   74.662,-1.250 -> 77.639,-1.750 t=0.500
-    slur  35.669,-1.800 -> 36.866,0.200 bulge=-0.500
-    slur  51.190,2.800 -> 52.829,3.300 bulge=0.500
+    staffline 0.000,2.000 -> 90.627,2.000 t=0.130
+    staffline 0.000,1.000 -> 90.627,1.000 t=0.130
+    staffline 0.000,0.000 -> 90.627,0.000 t=0.130
+    staffline 0.000,-1.000 -> 90.627,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 90.627,-2.000 t=0.130
+    beam   22.112,-2.750 -> 25.094,-3.250 t=0.500
+    beam   34.117,4.250 -> 37.099,4.750 t=0.500
+    beam   50.838,-1.750 -> 54.258,-1.250 t=0.500
+    beam   74.642,-1.250 -> 77.625,-1.750 t=0.500
+    slur  35.597,-1.800 -> 36.799,0.200 bulge=-0.500
+    slur  51.138,2.800 -> 52.778,3.300 bulge=0.500
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     note@-4 x=7.670 w=6.705
@@ -147,114 +147,114 @@ system 1 width=90.634 originY=31.739
       line  8.850,1.832 -> 8.850,-1.500 t=0.120
       text  6.329,7.194 size=2.194 bold "wǒ"
       text  6.573,9.826 size=2.194 bold "我"
-    note@-2 x=12.933 w=3.871
-      glyph noteheadBlack 12.933,1.000
-      glyph flag8thUp 14.113,-2.500
-      line  14.113,0.832 -> 14.113,-2.500 t=0.120
-      text  11.044,7.194 size=2.194 bold "wèn"
-      text  11.837,9.826 size=2.194 bold "问"
-    note@-1 x=16.813 w=5.474
-      glyph noteheadBlack 16.813,0.500
-      line  17.993,0.332 -> 17.993,-3.000 t=0.120
-      text  15.106,7.194 size=2.194 bold "yàn"
-      text  15.716,9.826 size=2.194 bold "燕"
-    note@-2 x=21.023 w=3.871
-      glyph noteheadBlack 21.023,1.000
-      line  22.203,0.832 -> 22.203,-3.000 t=0.120
-      text  20.231,7.194 size=2.194 bold "zi"
-      text  19.926,9.826 size=2.194 bold "子"
-    note@-1 x=23.999 w=3.871
-      glyph noteheadBlack 23.999,0.500
-      line  25.179,0.332 -> 25.179,-3.500 t=0.120
-      text  23.085,7.194 size=2.194 bold "nǐ"
-    bar x=26.976 w=0.160
-      line  27.056,-2.000 -> 27.056,2.000 t=0.160
-    note@1 x=29.979 w=5.474
-      glyph noteheadBlack 29.979,-0.500
-      line  29.979,-0.332 -> 29.979,3.000 t=0.120
-      text  28.396,7.194 size=2.194 bold "wèi"
-      text  28.882,9.826 size=2.194 bold "你"
-    note@2 x=34.189 w=3.871
-      glyph noteheadBlack 34.189,-1.000
-      line  34.189,-0.832 -> 34.189,4.250 t=0.120
-      text  32.604,7.194 size=2.194 bold "shá"
-      text  33.092,9.826 size=2.194 bold "为"
-    note@-2 x=37.166 w=3.871
-      glyph noteheadBlack 37.166,1.000
-      line  37.166,1.168 -> 37.166,4.750 t=0.120
-    note@-1 x=40.143 w=7.742
-      glyph noteheadHalf 40.143,0.500
-      line  41.323,0.332 -> 41.323,-3.000 t=0.120
-      text  38.985,7.194 size=2.194 bold "lái"
-      text  39.046,9.826 size=2.194 bold "啥"
-    bar x=46.097 w=0.160
-      line  46.177,-2.000 -> 46.177,2.000 t=0.160
-    note@-4 x=49.710 w=3.871
-      glyph noteheadBlack 49.710,2.000
-      line  50.890,1.832 -> 50.890,-2.000 t=0.120
-      text  48.003,7.194 size=2.194 bold "yàn"
-      text  47.516,9.826 size=2.194 bold "来，"
-    note@-5 x=53.129 w=3.871
-      glyph noteheadBlack 53.129,2.500
-      line  54.309,2.332 -> 54.309,-1.500 t=0.120
-      text  52.032,9.826 size=2.194 bold "燕"
-    note@-6 x=56.106 w=5.474
-      glyph noteheadBlack 56.106,3.000
-      line  55.706,3.000 -> 57.772,3.000 t=0.160
-      line  57.286,2.832 -> 57.286,-0.500 t=0.120
-      text  55.314,7.194 size=2.194 bold "zi"
-      text  55.009,9.826 size=2.194 bold "子"
-    note@-5 x=60.316 w=7.742
-      glyph noteheadHalf 60.316,2.500
-      line  61.496,2.332 -> 61.496,-1.000 t=0.120
-      text  58.120,7.194 size=2.194 bold "shuō"
-      text  58.122,9.826 size=2.194 bold "说，"
-    bar x=66.270 w=0.160
-      line  66.350,-2.000 -> 66.350,2.000 t=0.160
-    note@-5 x=69.272 w=5.474
-      glyph noteheadBlack 69.272,2.500
-      line  70.452,2.332 -> 70.452,-1.000 t=0.120
-      text  67.689,7.194 size=2.194 bold "zhè"
-      text  68.176,9.826 size=2.194 bold "这"
-    note@-5 x=73.482 w=3.871
-      glyph noteheadBlack 73.482,2.500
-      line  74.662,2.332 -> 74.662,-1.500 t=0.120
-      text  72.873,7.194 size=2.194 bold "lǐ"
-      text  72.386,9.826 size=2.194 bold "里"
-    note@-4 x=76.459 w=3.871
-      glyph noteheadBlack 76.459,2.000
-      line  77.639,1.832 -> 77.639,-2.000 t=0.120
-      text  75.362,7.194 size=2.194 bold "de"
-      text  75.362,9.826 size=2.194 bold "的"
-    note@-2 x=80.085 w=5.474
-      glyph noteheadBlack 80.085,1.000
-      line  81.265,0.832 -> 81.265,-2.500 t=0.120
-      text  77.768,7.194 size=2.194 bold "chūn"
-      text  78.988,9.826 size=2.194 bold "春"
-    note@-2 x=84.359 w=5.474
-      glyph noteheadBlack 84.359,1.000
-      line  85.539,0.832 -> 85.539,-2.500 t=0.120
-      text  82.531,7.194 size=2.194 bold "tiān"
-      text  83.262,9.826 size=2.194 bold "天"
-    bar x=88.569 w=0.160
-      line  88.649,-2.000 -> 88.649,2.000 t=0.160
-system 2 width=90.607 originY=46.140
+    note@-2 x=12.835 w=3.871
+      glyph noteheadBlack 12.835,1.000
+      glyph flag8thUp 14.015,-2.500
+      line  14.015,0.832 -> 14.015,-2.500 t=0.120
+      text  10.946,7.194 size=2.194 bold "wèn"
+      text  11.738,9.826 size=2.194 bold "问"
+    note@-1 x=16.714 w=5.474
+      glyph noteheadBlack 16.714,0.500
+      line  17.894,0.332 -> 17.894,-3.000 t=0.120
+      text  15.008,7.194 size=2.194 bold "yàn"
+      text  15.618,9.826 size=2.194 bold "燕"
+    note@-2 x=20.932 w=3.871
+      glyph noteheadBlack 20.932,1.000
+      line  22.112,0.832 -> 22.112,-3.000 t=0.120
+      text  20.140,7.194 size=2.194 bold "zi"
+      text  19.835,9.826 size=2.194 bold "子"
+    note@-1 x=23.914 w=3.871
+      glyph noteheadBlack 23.914,0.500
+      line  25.094,0.332 -> 25.094,-3.500 t=0.120
+      text  22.999,7.194 size=2.194 bold "nǐ"
+    bar x=26.896 w=0.160
+      line  26.976,-2.000 -> 26.976,2.000 t=0.160
+    note@1 x=29.899 w=5.474
+      glyph noteheadBlack 29.899,-0.500
+      line  29.899,-0.332 -> 29.899,3.000 t=0.120
+      text  28.316,7.194 size=2.194 bold "wèi"
+      text  28.802,9.826 size=2.194 bold "你"
+    note@2 x=34.117 w=3.871
+      glyph noteheadBlack 34.117,-1.000
+      line  34.117,-0.832 -> 34.117,4.250 t=0.120
+      text  32.531,7.194 size=2.194 bold "shá"
+      text  33.020,9.826 size=2.194 bold "为"
+    note@-2 x=37.099 w=3.871
+      glyph noteheadBlack 37.099,1.000
+      line  37.099,1.168 -> 37.099,4.750 t=0.120
+    note@-1 x=40.081 w=7.742
+      glyph noteheadHalf 40.081,0.500
+      line  41.261,0.332 -> 41.261,-3.000 t=0.120
+      text  38.923,7.194 size=2.194 bold "lái"
+      text  38.984,9.826 size=2.194 bold "啥"
+    bar x=46.046 w=0.160
+      line  46.126,-2.000 -> 46.126,2.000 t=0.160
+    note@-4 x=49.658 w=3.871
+      glyph noteheadBlack 49.658,2.000
+      line  50.838,1.832 -> 50.838,-2.000 t=0.120
+      text  47.952,7.194 size=2.194 bold "yàn"
+      text  47.465,9.826 size=2.194 bold "来，"
+    note@-5 x=53.078 w=3.871
+      glyph noteheadBlack 53.078,2.500
+      line  54.258,2.332 -> 54.258,-1.500 t=0.120
+      text  51.981,9.826 size=2.194 bold "燕"
+    note@-6 x=56.060 w=5.474
+      glyph noteheadBlack 56.060,3.000
+      line  55.660,3.000 -> 57.726,3.000 t=0.160
+      line  57.240,2.832 -> 57.240,-0.500 t=0.120
+      text  55.269,7.194 size=2.194 bold "zi"
+      text  54.963,9.826 size=2.194 bold "子"
+    note@-5 x=60.277 w=7.742
+      glyph noteheadHalf 60.277,2.500
+      line  61.457,2.332 -> 61.457,-1.000 t=0.120
+      text  58.082,7.194 size=2.194 bold "shuō"
+      text  58.084,9.826 size=2.194 bold "说，"
+    bar x=66.242 w=0.160
+      line  66.322,-2.000 -> 66.322,2.000 t=0.160
+    note@-5 x=69.245 w=5.474
+      glyph noteheadBlack 69.245,2.500
+      line  70.425,2.332 -> 70.425,-1.000 t=0.120
+      text  67.661,7.194 size=2.194 bold "zhè"
+      text  68.148,9.826 size=2.194 bold "这"
+    note@-5 x=73.462 w=3.871
+      glyph noteheadBlack 73.462,2.500
+      line  74.642,2.332 -> 74.642,-1.500 t=0.120
+      text  72.853,7.194 size=2.194 bold "lǐ"
+      text  72.366,9.826 size=2.194 bold "里"
+    note@-4 x=76.445 w=3.871
+      glyph noteheadBlack 76.445,2.000
+      line  77.625,1.832 -> 77.625,-2.000 t=0.120
+      text  75.348,7.194 size=2.194 bold "de"
+      text  75.348,9.826 size=2.194 bold "的"
+    note@-2 x=80.070 w=5.474
+      glyph noteheadBlack 80.070,1.000
+      line  81.250,0.832 -> 81.250,-2.500 t=0.120
+      text  77.754,7.194 size=2.194 bold "chūn"
+      text  78.974,9.826 size=2.194 bold "春"
+    note@-2 x=84.345 w=5.474
+      glyph noteheadBlack 84.345,1.000
+      line  85.525,0.832 -> 85.525,-2.500 t=0.120
+      text  82.516,7.194 size=2.194 bold "tiān"
+      text  83.248,9.826 size=2.194 bold "天"
+    bar x=88.562 w=0.160
+      line  88.642,-2.000 -> 88.642,2.000 t=0.160
+system 2 width=90.768 originY=46.140
   staff 0 originY=3.839
-    staffline 0.000,2.000 -> 90.607,2.000 t=0.130
-    staffline 0.000,1.000 -> 90.607,1.000 t=0.130
-    staffline 0.000,0.000 -> 90.607,0.000 t=0.130
-    staffline 0.000,-1.000 -> 90.607,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 90.607,-2.000 t=0.130
-    beam   13.190,-1.250 -> 16.215,-1.750 t=0.500
-    beam   29.382,-2.250 -> 32.408,-2.750 t=0.500
-    beam   34.254,3.750 -> 37.279,4.250 t=0.500
-    beam   51.078,-2.250 -> 54.103,-2.750 t=0.500
-    beam   55.949,4.250 -> 58.975,3.750 t=0.500
-    slur  13.490,3.300 -> 14.735,2.800 bulge=0.500
-    slur  29.682,2.800 -> 30.928,1.800 bulge=0.500
-    slur  35.734,-1.300 -> 36.979,-0.300 bulge=-0.500
-    slur  51.378,2.800 -> 52.623,1.800 bulge=0.500
-    slur  57.429,-0.300 -> 58.675,-1.300 bulge=-0.500
+    staffline 0.000,2.000 -> 90.768,2.000 t=0.130
+    staffline 0.000,1.000 -> 90.768,1.000 t=0.130
+    staffline 0.000,0.000 -> 90.768,0.000 t=0.130
+    staffline 0.000,-1.000 -> 90.768,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 90.768,-2.000 t=0.130
+    beam   13.216,-1.250 -> 16.260,-1.750 t=0.500
+    beam   29.464,-2.250 -> 32.508,-2.750 t=0.500
+    beam   34.372,3.750 -> 37.416,4.250 t=0.500
+    beam   51.251,-2.250 -> 54.295,-2.750 t=0.500
+    beam   56.160,4.250 -> 59.204,3.750 t=0.500
+    slur  13.516,3.300 -> 14.780,2.800 bulge=0.500
+    slur  29.764,2.800 -> 31.028,1.800 bulge=0.500
+    slur  35.852,-1.300 -> 37.116,-0.300 bulge=-0.500
+    slur  51.551,2.800 -> 52.815,1.800 bulge=0.500
+    slur  57.640,-0.300 -> 58.904,-1.300 bulge=-0.500
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     note@1 x=7.731 w=5.474
@@ -262,106 +262,106 @@ system 2 width=90.607 originY=46.140
       line  7.731,-0.332 -> 7.731,3.000 t=0.120
       text  6.329,6.694 size=2.194 bold "zuì"
       text  6.634,9.326 size=2.194 bold "最"
-    note@-5 x=12.010 w=3.871
-      glyph noteheadBlack 12.010,2.500
-      line  13.190,2.332 -> 13.190,-1.500 t=0.120
-      text  10.305,6.694 size=2.194 bold "měi"
-      text  10.913,9.326 size=2.194 bold "美"
-    note@-4 x=15.035 w=3.871
-      glyph noteheadBlack 15.035,2.000
-      line  16.215,1.832 -> 16.215,-2.000 t=0.120
-    note@-2 x=18.538 w=7.742
-      glyph noteheadHalf 18.538,1.000
-      line  19.718,0.832 -> 19.718,-2.500 t=0.120
-      text  17.928,6.694 size=2.194 bold "lì"
-      text  16.344,9.326 size=2.194 bold "丽。"
-    bar x=24.589 w=0.160
-      line  24.669,-2.000 -> 24.669,2.000 t=0.160
-    note@-4 x=28.202 w=3.871
-      glyph noteheadBlack 28.202,2.000
-      line  29.382,1.832 -> 29.382,-2.500 t=0.120
-      text  26.009,6.694 size=2.194 bold "Xiǎo"
-      text  27.105,9.326 size=2.194 bold "小"
-    note@-2 x=31.228 w=3.871
-      glyph noteheadBlack 31.228,1.000
-      line  32.408,0.832 -> 32.408,-3.000 t=0.120
-    note@1 x=34.254 w=3.871
-      glyph noteheadBlack 34.254,-0.500
-      line  34.254,-0.332 -> 34.254,3.750 t=0.120
-      text  32.547,6.694 size=2.194 bold "yàn"
-      text  33.157,9.326 size=2.194 bold "燕"
-    note@-1 x=37.279 w=3.871
-      glyph noteheadBlack 37.279,0.500
-      line  37.279,0.668 -> 37.279,4.250 t=0.120
-    note@-2 x=40.782 w=7.742
-      glyph noteheadHalf 40.782,1.000
-      line  41.962,0.832 -> 41.962,-2.500 t=0.120
-      text  39.990,6.694 size=2.194 bold "zi"
-      text  38.588,9.326 size=2.194 bold "子，"
-    bar x=46.833 w=0.160
-      line  46.913,-2.000 -> 46.913,2.000 t=0.160
-    note@-4 x=49.898 w=3.871
-      glyph noteheadBlack 49.898,2.000
-      line  51.078,1.832 -> 51.078,-2.500 t=0.120
-      text  48.253,6.694 size=2.194 bold "gào"
-      text  48.801,9.326 size=2.194 bold "告"
-    note@-2 x=52.923 w=3.871
-      glyph noteheadBlack 52.923,1.000
-      line  54.103,0.832 -> 54.103,-3.000 t=0.120
-    note@-1 x=55.949 w=3.871
-      glyph noteheadBlack 55.949,0.500
-      line  55.949,0.668 -> 55.949,4.250 t=0.120
-      text  54.912,6.694 size=2.194 bold "su"
-      text  54.852,9.326 size=2.194 bold "诉"
-    note@1 x=58.975 w=3.871
-      glyph noteheadBlack 58.975,-0.500
-      line  58.975,-0.332 -> 58.975,3.750 t=0.120
-    note@-2 x=62.000 w=7.742
-      glyph noteheadHalf 62.000,1.000
-      line  63.180,0.832 -> 63.180,-2.500 t=0.120
-      text  61.086,6.694 size=2.194 bold "nǐ"
-      text  60.904,9.326 size=2.194 bold "你"
-    bar x=68.052 w=0.160
-      line  68.132,-2.000 -> 68.132,2.000 t=0.160
-    note@1 x=70.751 w=6.705
-      glyph noteheadBlack 70.751,-0.500
-      glyph augmentationDot 72.367,-0.500
-      line  70.751,-0.332 -> 70.751,3.000 t=0.120
-      text  69.471,6.694 size=2.194 bold "jīn"
-      text  69.654,9.326 size=2.194 bold "今"
-    note@3 x=76.199 w=3.871
-      glyph noteheadBlack 76.199,-1.500
-      glyph flag8thDown 76.199,2.000
-      line  76.199,-1.332 -> 76.199,2.000 t=0.120
-      text  74.126,6.694 size=2.194 bold "nián"
-      text  75.102,9.326 size=2.194 bold "年"
-    note@2 x=79.985 w=5.474
-      glyph noteheadBlack 79.985,-1.000
-      line  79.985,-0.832 -> 79.985,2.500 t=0.120
-      text  78.401,6.694 size=2.194 bold "zhè"
-      text  78.888,9.326 size=2.194 bold "这"
-    note@1 x=84.264 w=5.474
-      glyph noteheadBlack 84.264,-0.500
-      line  84.264,-0.332 -> 84.264,3.000 t=0.120
-      text  83.654,6.694 size=2.194 bold "lǐ"
-      text  83.167,9.326 size=2.194 bold "里"
-    bar x=88.543 w=0.160
-      line  88.623,-2.000 -> 88.623,2.000 t=0.160
-system 3 width=90.697 originY=60.042
+    note@-5 x=12.036 w=3.871
+      glyph noteheadBlack 12.036,2.500
+      line  13.216,2.332 -> 13.216,-1.500 t=0.120
+      text  10.331,6.694 size=2.194 bold "měi"
+      text  10.939,9.326 size=2.194 bold "美"
+    note@-4 x=15.080 w=3.871
+      glyph noteheadBlack 15.080,2.000
+      line  16.260,1.832 -> 16.260,-2.000 t=0.120
+    note@-2 x=18.582 w=7.742
+      glyph noteheadHalf 18.582,1.000
+      line  19.762,0.832 -> 19.762,-2.500 t=0.120
+      text  17.973,6.694 size=2.194 bold "lì"
+      text  16.389,9.326 size=2.194 bold "丽。"
+    bar x=24.671 w=0.160
+      line  24.751,-2.000 -> 24.751,2.000 t=0.160
+    note@-4 x=28.284 w=3.871
+      glyph noteheadBlack 28.284,2.000
+      line  29.464,1.832 -> 29.464,-2.500 t=0.120
+      text  26.090,6.694 size=2.194 bold "Xiǎo"
+      text  27.187,9.326 size=2.194 bold "小"
+    note@-2 x=31.328 w=3.871
+      glyph noteheadBlack 31.328,1.000
+      line  32.508,0.832 -> 32.508,-3.000 t=0.120
+    note@1 x=34.372 w=3.871
+      glyph noteheadBlack 34.372,-0.500
+      line  34.372,-0.332 -> 34.372,3.750 t=0.120
+      text  32.665,6.694 size=2.194 bold "yàn"
+      text  33.275,9.326 size=2.194 bold "燕"
+    note@-1 x=37.416 w=3.871
+      glyph noteheadBlack 37.416,0.500
+      line  37.416,0.668 -> 37.416,4.250 t=0.120
+    note@-2 x=40.919 w=7.742
+      glyph noteheadHalf 40.919,1.000
+      line  42.099,0.832 -> 42.099,-2.500 t=0.120
+      text  40.127,6.694 size=2.194 bold "zi"
+      text  38.725,9.326 size=2.194 bold "子，"
+    bar x=47.007 w=0.160
+      line  47.087,-2.000 -> 47.087,2.000 t=0.160
+    note@-4 x=50.071 w=3.871
+      glyph noteheadBlack 50.071,2.000
+      line  51.251,1.832 -> 51.251,-2.500 t=0.120
+      text  48.426,6.694 size=2.194 bold "gào"
+      text  48.975,9.326 size=2.194 bold "告"
+    note@-2 x=53.115 w=3.871
+      glyph noteheadBlack 53.115,1.000
+      line  54.295,0.832 -> 54.295,-3.000 t=0.120
+    note@-1 x=56.160 w=3.871
+      glyph noteheadBlack 56.160,0.500
+      line  56.160,0.668 -> 56.160,4.250 t=0.120
+      text  55.123,6.694 size=2.194 bold "su"
+      text  55.063,9.326 size=2.194 bold "诉"
+    note@1 x=59.204 w=3.871
+      glyph noteheadBlack 59.204,-0.500
+      line  59.204,-0.332 -> 59.204,3.750 t=0.120
+    note@-2 x=62.248 w=7.742
+      glyph noteheadHalf 62.248,1.000
+      line  63.428,0.832 -> 63.428,-2.500 t=0.120
+      text  61.333,6.694 size=2.194 bold "nǐ"
+      text  61.151,9.326 size=2.194 bold "你"
+    bar x=68.336 w=0.160
+      line  68.416,-2.000 -> 68.416,2.000 t=0.160
+    note@1 x=71.035 w=6.705
+      glyph noteheadBlack 71.035,-0.500
+      glyph augmentationDot 72.651,-0.500
+      line  71.035,-0.332 -> 71.035,3.000 t=0.120
+      text  69.755,6.694 size=2.194 bold "jīn"
+      text  69.939,9.326 size=2.194 bold "今"
+    note@3 x=76.308 w=3.871
+      glyph noteheadBlack 76.308,-1.500
+      glyph flag8thDown 76.308,2.000
+      line  76.308,-1.332 -> 76.308,2.000 t=0.120
+      text  74.235,6.694 size=2.194 bold "nián"
+      text  75.211,9.326 size=2.194 bold "年"
+    note@2 x=80.094 w=5.474
+      glyph noteheadBlack 80.094,-1.000
+      line  80.094,-0.832 -> 80.094,2.500 t=0.120
+      text  78.510,6.694 size=2.194 bold "zhè"
+      text  78.997,9.326 size=2.194 bold "这"
+    note@1 x=84.399 w=5.474
+      glyph noteheadBlack 84.399,-0.500
+      line  84.399,-0.332 -> 84.399,3.000 t=0.120
+      text  83.789,6.694 size=2.194 bold "lǐ"
+      text  83.302,9.326 size=2.194 bold "里"
+    bar x=88.704 w=0.160
+      line  88.784,-2.000 -> 88.784,2.000 t=0.160
+system 3 width=90.837 originY=60.042
   staff 0 originY=3.839
-    staffline 0.000,2.000 -> 90.697,2.000 t=0.130
-    staffline 0.000,1.000 -> 90.697,1.000 t=0.130
-    staffline 0.000,0.000 -> 90.697,0.000 t=0.130
-    staffline 0.000,-1.000 -> 90.697,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 90.697,-2.000 t=0.130
-    beam   8.523,2.750 -> 11.387,3.250 t=0.500
-    beam   14.401,4.250 -> 17.265,3.750 t=0.500
-    beam   42.806,-2.750 -> 45.670,-3.250 t=0.500
-    beam   53.981,4.250 -> 56.845,4.750 t=0.500
-    slur  10.003,-1.800 -> 11.087,-1.300 bulge=-0.500
-    slur  15.881,-0.300 -> 16.965,-1.300 bulge=-0.500
-    slur  55.461,-1.800 -> 56.545,0.200 bulge=-0.500
-    slur  72.999,1.200 -> 76.179,-1.300 bulge=-0.572
+    staffline 0.000,2.000 -> 90.837,2.000 t=0.130
+    staffline 0.000,1.000 -> 90.837,1.000 t=0.130
+    staffline 0.000,0.000 -> 90.837,0.000 t=0.130
+    staffline 0.000,-1.000 -> 90.837,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 90.837,-2.000 t=0.130
+    beam   8.523,2.750 -> 11.416,3.250 t=0.500
+    beam   14.430,4.250 -> 17.324,3.750 t=0.500
+    beam   42.621,-2.750 -> 45.515,-3.250 t=0.500
+    beam   53.898,4.250 -> 56.792,4.750 t=0.500
+    slur  10.003,-1.800 -> 11.116,-1.300 bulge=-0.500
+    slur  15.910,-0.300 -> 17.024,-1.300 bulge=-0.500
+    slur  55.378,-1.800 -> 56.492,0.200 bulge=-0.500
+    slur  73.004,1.200 -> 76.236,-1.300 bulge=-0.582
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     note@2 x=8.523 w=3.871
@@ -369,109 +369,109 @@ system 3 width=90.697 originY=60.042
       line  8.523,-0.832 -> 8.523,2.750 t=0.120
       text  6.329,7.194 size=2.194 bold "gèng"
       text  7.426,9.826 size=2.194 bold "更"
-    note@1 x=11.387 w=3.871
-      glyph noteheadBlack 11.387,-0.500
-      line  11.387,-0.332 -> 11.387,3.250 t=0.120
-    note@-1 x=14.401 w=3.871
-      glyph noteheadBlack 14.401,0.500
-      line  14.401,0.668 -> 14.401,4.250 t=0.120
-      text  12.696,7.194 size=2.194 bold "měi"
-      text  13.304,9.826 size=2.194 bold "美"
-    note@1 x=17.265 w=3.871
-      glyph noteheadBlack 17.265,-0.500
-      line  17.265,-0.332 -> 17.265,3.750 t=0.120
-    note@-2 x=20.129 w=7.742
-      glyph noteheadHalf 20.129,1.000
-      line  21.309,0.832 -> 21.309,-2.500 t=0.120
-      text  19.519,7.194 size=2.194 bold "lì"
-      text  19.032,9.826 size=2.194 bold "丽"
-    bar x=25.856 w=0.160
-      line  25.936,-2.000 -> 25.936,2.000 t=0.160
-    note@-4 x=28.616 w=6.705
-      glyph noteheadBlack 28.616,2.000
-      glyph augmentationDot 30.232,1.500
-      line  29.796,1.832 -> 29.796,-1.500 t=0.120
-      text  27.276,7.194 size=2.194 bold "wǒ"
-      text  27.519,9.826 size=2.194 bold "我"
-    note@-2 x=34.001 w=3.871
-      glyph noteheadBlack 34.001,1.000
-      glyph flag8thUp 35.181,-2.500
-      line  35.181,0.832 -> 35.181,-2.500 t=0.120
-      text  31.991,7.194 size=2.194 bold "men"
-      text  32.905,9.826 size=2.194 bold "们"
-    note@-1 x=37.575 w=5.474
-      glyph noteheadBlack 37.575,0.500
-      line  38.755,0.332 -> 38.755,-3.000 t=0.120
-      text  36.174,7.194 size=2.194 bold "gài"
-      text  36.479,9.826 size=2.194 bold "盖"
-    note@-2 x=41.626 w=3.871
-      glyph noteheadBlack 41.626,1.000
-      line  42.806,0.832 -> 42.806,-3.000 t=0.120
-      text  40.711,7.194 size=2.194 bold "qǐ"
-      text  40.529,9.826 size=2.194 bold "起"
-    note@-1 x=44.490 w=3.871
-      glyph noteheadBlack 44.490,0.500
-      line  45.670,0.332 -> 45.670,-3.500 t=0.120
-      text  43.698,7.194 size=2.194 bold "le"
-      text  43.393,9.826 size=2.194 bold "了"
-    bar x=47.353 w=0.160
-      line  47.433,-2.000 -> 47.433,2.000 t=0.160
-    note@1 x=49.931 w=5.474
-      glyph noteheadBlack 49.931,-0.500
-      line  49.931,-0.332 -> 49.931,3.000 t=0.120
-      text  48.773,7.194 size=2.194 bold "dà"
-      text  48.834,9.826 size=2.194 bold "大"
-    note@2 x=53.981 w=3.871
-      glyph noteheadBlack 53.981,-1.000
-      line  53.981,-0.832 -> 53.981,4.250 t=0.120
-      text  51.726,7.194 size=2.194 bold "gōng"
-      text  52.885,9.826 size=2.194 bold "工"
-    note@-2 x=56.845 w=3.871
-      glyph noteheadBlack 56.845,1.000
-      line  56.845,1.168 -> 56.845,4.750 t=0.120
-    note@-1 x=60.958 w=7.742
-      glyph noteheadHalf 60.958,0.500
-      line  62.138,0.332 -> 62.138,-3.000 t=0.120
-      text  58.154,7.194 size=2.194 bold "chǎng"
-      text  59.861,9.826 size=2.194 bold "厂"
-    bar x=66.686 w=0.160
-      line  66.766,-2.000 -> 66.766,2.000 t=0.160
-    note@-4 x=71.519 w=6.705
-      glyph noteheadBlack 71.519,2.000
-      glyph augmentationDot 73.134,1.500
-      line  72.699,1.832 -> 72.699,-1.500 t=0.120
-      text  68.105,7.194 size=2.194 bold "zhuāng"
-      text  70.422,9.826 size=2.194 bold "装"
-    note@1 x=76.479 w=3.871
-      glyph noteheadBlack 76.479,-0.500
-      glyph flag8thDown 76.479,3.000
-      line  76.479,-0.332 -> 76.479,3.000 t=0.120
-    note@-1 x=80.532 w=5.474
-      glyph noteheadBlack 80.532,0.500
-      line  81.712,0.332 -> 81.712,-3.000 t=0.120
-      text  77.788,7.194 size=2.194 bold "shàng"
-      text  79.435,9.826 size=2.194 bold "上"
-    note@-2 x=84.582 w=5.474
-      glyph noteheadBlack 84.582,1.000
-      line  85.762,0.832 -> 85.762,-2.500 t=0.120
-      text  83.791,7.194 size=2.194 bold "le"
-      text  83.485,9.826 size=2.194 bold "了"
-    bar x=88.632 w=0.160
-      line  88.712,-2.000 -> 88.712,2.000 t=0.160
-system 4 width=90.756 originY=74.443
+    note@1 x=11.416 w=3.871
+      glyph noteheadBlack 11.416,-0.500
+      line  11.416,-0.332 -> 11.416,3.250 t=0.120
+    note@-1 x=14.430 w=3.871
+      glyph noteheadBlack 14.430,0.500
+      line  14.430,0.668 -> 14.430,4.250 t=0.120
+      text  12.725,7.194 size=2.194 bold "měi"
+      text  13.333,9.826 size=2.194 bold "美"
+    note@1 x=17.324 w=3.871
+      glyph noteheadBlack 17.324,-0.500
+      line  17.324,-0.332 -> 17.324,3.750 t=0.120
+    note@-2 x=20.217 w=7.742
+      glyph noteheadHalf 20.217,1.000
+      line  21.397,0.832 -> 21.397,-2.500 t=0.120
+      text  19.608,7.194 size=2.194 bold "lì"
+      text  19.120,9.826 size=2.194 bold "丽"
+    bar x=26.004 w=0.160
+      line  26.084,-2.000 -> 26.084,2.000 t=0.160
+    note@-4 x=28.764 w=6.705
+      glyph noteheadBlack 28.764,2.000
+      glyph augmentationDot 30.380,1.500
+      line  29.944,1.832 -> 29.944,-1.500 t=0.120
+      text  27.423,7.194 size=2.194 bold "wǒ"
+      text  27.667,9.826 size=2.194 bold "我"
+    note@-2 x=33.776 w=3.871
+      glyph noteheadBlack 33.776,1.000
+      glyph flag8thUp 34.956,-2.500
+      line  34.956,0.832 -> 34.956,-2.500 t=0.120
+      text  31.765,7.194 size=2.194 bold "men"
+      text  32.679,9.826 size=2.194 bold "们"
+    note@-1 x=37.349 w=5.474
+      glyph noteheadBlack 37.349,0.500
+      line  38.529,0.332 -> 38.529,-3.000 t=0.120
+      text  35.948,7.194 size=2.194 bold "gài"
+      text  36.253,9.826 size=2.194 bold "盖"
+    note@-2 x=41.441 w=3.871
+      glyph noteheadBlack 41.441,1.000
+      line  42.621,0.832 -> 42.621,-3.000 t=0.120
+      text  40.527,7.194 size=2.194 bold "qǐ"
+      text  40.345,9.826 size=2.194 bold "起"
+    note@-1 x=44.335 w=3.871
+      glyph noteheadBlack 44.335,0.500
+      line  45.515,0.332 -> 45.515,-3.500 t=0.120
+      text  43.543,7.194 size=2.194 bold "le"
+      text  43.238,9.826 size=2.194 bold "了"
+    bar x=47.228 w=0.160
+      line  47.308,-2.000 -> 47.308,2.000 t=0.160
+    note@1 x=49.806 w=5.474
+      glyph noteheadBlack 49.806,-0.500
+      line  49.806,-0.332 -> 49.806,3.000 t=0.120
+      text  48.648,7.194 size=2.194 bold "dà"
+      text  48.709,9.826 size=2.194 bold "大"
+    note@2 x=53.898 w=3.871
+      glyph noteheadBlack 53.898,-1.000
+      line  53.898,-0.832 -> 53.898,4.250 t=0.120
+      text  51.643,7.194 size=2.194 bold "gōng"
+      text  52.801,9.826 size=2.194 bold "工"
+    note@-2 x=56.792 w=3.871
+      glyph noteheadBlack 56.792,1.000
+      line  56.792,1.168 -> 56.792,4.750 t=0.120
+    note@-1 x=60.904 w=7.742
+      glyph noteheadHalf 60.904,0.500
+      line  62.084,0.332 -> 62.084,-3.000 t=0.120
+      text  58.101,7.194 size=2.194 bold "chǎng"
+      text  59.807,9.826 size=2.194 bold "厂"
+    bar x=66.691 w=0.160
+      line  66.771,-2.000 -> 66.771,2.000 t=0.160
+    note@-4 x=71.524 w=6.705
+      glyph noteheadBlack 71.524,2.000
+      glyph augmentationDot 73.140,1.500
+      line  72.704,1.832 -> 72.704,-1.500 t=0.120
+      text  68.110,7.194 size=2.194 bold "zhuāng"
+      text  70.427,9.826 size=2.194 bold "装"
+    note@1 x=76.536 w=3.871
+      glyph noteheadBlack 76.536,-0.500
+      glyph flag8thDown 76.536,3.000
+      line  76.536,-0.332 -> 76.536,3.000 t=0.120
+    note@-1 x=80.588 w=5.474
+      glyph noteheadBlack 80.588,0.500
+      line  81.768,0.332 -> 81.768,-3.000 t=0.120
+      text  77.845,7.194 size=2.194 bold "shàng"
+      text  79.492,9.826 size=2.194 bold "上"
+    note@-2 x=84.680 w=5.474
+      glyph noteheadBlack 84.680,1.000
+      line  85.860,0.832 -> 85.860,-2.500 t=0.120
+      text  83.889,7.194 size=2.194 bold "le"
+      text  83.584,9.826 size=2.194 bold "了"
+    bar x=88.772 w=0.160
+      line  88.852,-2.000 -> 88.852,2.000 t=0.160
+system 4 width=90.894 originY=74.443
   staff 0 originY=3.839
-    staffline 0.000,2.000 -> 90.756,2.000 t=0.130
-    staffline 0.000,1.000 -> 90.756,1.000 t=0.130
-    staffline 0.000,0.000 -> 90.756,0.000 t=0.130
-    staffline 0.000,-1.000 -> 90.756,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 90.756,-2.000 t=0.130
-    beam   8.972,-1.750 -> 12.089,-1.250 t=0.500
-    beam   68.539,2.750 -> 72.202,3.250 t=0.500
-    beam   76.499,-2.750 -> 79.616,-3.250 t=0.500
-    slur  9.272,2.800 -> 10.609,3.300 bulge=0.500
-    slur  49.073,-1.300 -> 52.692,-2.300 bulge=-0.651
-    slur  57.590,-1.800 -> 60.218,-1.300 bulge=-0.500
-    slur  76.799,1.800 -> 78.136,1.300 bulge=0.500
+    staffline 0.000,2.000 -> 90.894,2.000 t=0.130
+    staffline 0.000,1.000 -> 90.894,1.000 t=0.130
+    staffline 0.000,0.000 -> 90.894,0.000 t=0.130
+    staffline 0.000,-1.000 -> 90.894,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 90.894,-2.000 t=0.130
+    beam   8.972,-1.750 -> 12.097,-1.250 t=0.500
+    beam   68.643,2.750 -> 72.305,3.250 t=0.500
+    beam   76.610,-2.750 -> 79.734,-3.250 t=0.500
+    slur  9.272,2.800 -> 10.617,3.300 bulge=0.500
+    slur  49.138,-1.300 -> 52.769,-2.300 bulge=-0.654
+    slur  57.673,-1.800 -> 60.312,-1.300 bulge=-0.500
+    slur  76.910,1.800 -> 78.254,1.300 bulge=0.500
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     note@-4 x=7.792 w=3.871
@@ -479,83 +479,83 @@ system 4 width=90.756 originY=74.443
       line  8.972,1.832 -> 8.972,-2.000 t=0.120
       text  6.329,5.721 size=2.194 bold "xīn"
       text  6.695,8.354 size=2.194 bold "新"
-    note@-5 x=10.909 w=3.871
-      glyph noteheadBlack 10.909,2.500
-      line  12.089,2.332 -> 12.089,-1.500 t=0.120
-    note@-6 x=14.027 w=5.474
-      glyph noteheadBlack 14.027,3.000
-      line  13.627,3.000 -> 15.693,3.000 t=0.160
-      line  15.207,2.832 -> 15.207,-0.500 t=0.120
-      text  13.357,5.721 size=2.194 bold "jī"
-      text  12.930,8.354 size=2.194 bold "机"
-    note@-5 x=18.435 w=7.742
-      glyph noteheadHalf 18.435,2.500
-      line  19.615,2.332 -> 19.615,-1.000 t=0.120
-      text  17.520,5.721 size=2.194 bold "qi"
-      text  17.064,8.354 size=2.194 bold "器."
-    bar x=24.670 w=0.160
-      line  24.750,-2.000 -> 24.750,2.000 t=0.160
-    note@-5 x=28.467 w=6.705
-      glyph noteheadBlack 28.467,2.500
-      glyph augmentationDot 30.083,2.500
-      line  29.647,2.332 -> 29.647,-1.000 t=0.120
-      text  26.089,5.721 size=2.194 bold "huān"
-      text  27.371,8.354 size=2.194 bold "欢"
-    note@-4 x=33.867 w=3.871
-      glyph noteheadBlack 33.867,2.000
-      glyph flag8thUp 35.047,-1.500
-      line  35.047,1.832 -> 35.047,-1.500 t=0.120
-      text  31.855,5.721 size=2.194 bold "yíng"
-      text  32.770,8.354 size=2.194 bold "迎"
-    note@-2 x=37.136 w=7.742
-      glyph noteheadHalf 37.136,1.000
-      line  38.316,0.832 -> 38.316,-2.500 t=0.120
-      text  36.221,5.721 size=2.194 bold "nǐ"
-      text  36.039,8.354 size=2.194 bold "你"
-    bar x=43.370 w=0.160
-      line  43.450,-2.000 -> 43.450,2.000 t=0.160
-    note@1 x=47.593 w=6.705
-      glyph noteheadBlack 47.593,-0.500
-      glyph augmentationDot 49.209,-0.500
-      line  47.593,-0.332 -> 47.593,3.000 t=0.120
-      text  44.790,5.721 size=2.194 bold "cháng"
-      text  46.496,8.354 size=2.194 bold "长"
-    note@3 x=52.992 w=3.871
-      glyph noteheadBlack 52.992,-1.500
-      glyph flag8thDown 52.992,2.000
-      line  52.992,-1.332 -> 52.992,2.000 t=0.120
-    note@2 x=56.110 w=5.474
-      glyph noteheadBlack 56.110,-1.000
-      line  56.110,-0.832 -> 56.110,2.500 t=0.120
-      text  55.195,5.721 size=2.194 bold "qī"
-      text  55.013,8.354 size=2.194 bold "期"
-    note@1 x=60.518 w=5.474
-      glyph noteheadBlack 60.518,-0.500
-      line  60.518,-0.332 -> 60.518,3.000 t=0.120
-    bar x=64.926 w=0.160
-      line  65.006,-2.000 -> 65.006,2.000 t=0.160
-    note@2 x=68.539 w=3.871
-      glyph noteheadBlack 68.539,-1.000
-      line  68.539,-0.832 -> 68.539,2.750 t=0.120
-      text  66.833,5.721 size=2.194 bold "zhù"
-      text  66.346,8.354 size=2.194 bold "住在"
-    note@1 x=72.202 w=3.871
-      glyph noteheadBlack 72.202,-0.500
-      line  72.202,-0.332 -> 72.202,3.250 t=0.120
-      text  70.862,5.721 size=2.194 bold "zài"
-      text  71.105,8.354 size=2.194 bold "这"
-    note@-2 x=75.319 w=3.871
-      glyph noteheadBlack 75.319,1.000
-      line  76.499,0.832 -> 76.499,-3.000 t=0.120
-      text  73.735,5.721 size=2.194 bold "zhè"
-    note@-1 x=78.436 w=3.871
-      glyph noteheadBlack 78.436,0.500
-      line  79.616,0.332 -> 79.616,-3.500 t=0.120
-      text  77.065,8.354 size=2.194 bold "里."
-    note@1 x=81.553 w=7.742
-      glyph noteheadHalf 81.553,-0.500
-      line  81.553,-0.332 -> 81.553,3.000 t=0.120
-      text  80.670,5.721 size=2.194 bold "lǐ."
-    bar x=87.788 w=1.060
-      line  87.868,-2.000 -> 87.868,2.000 t=0.160
-      line  88.598,-2.000 -> 88.598,2.000 t=0.500
+    note@-5 x=10.917 w=3.871
+      glyph noteheadBlack 10.917,2.500
+      line  12.097,2.332 -> 12.097,-1.500 t=0.120
+    note@-6 x=14.041 w=5.474
+      glyph noteheadBlack 14.041,3.000
+      line  13.641,3.000 -> 15.707,3.000 t=0.160
+      line  15.221,2.832 -> 15.221,-0.500 t=0.120
+      text  13.371,5.721 size=2.194 bold "jī"
+      text  12.944,8.354 size=2.194 bold "机"
+    note@-5 x=18.459 w=7.742
+      glyph noteheadHalf 18.459,2.500
+      line  19.639,2.332 -> 19.639,-1.000 t=0.120
+      text  17.544,5.721 size=2.194 bold "qi"
+      text  17.088,8.354 size=2.194 bold "器."
+    bar x=24.708 w=0.160
+      line  24.788,-2.000 -> 24.788,2.000 t=0.160
+    note@-5 x=28.506 w=6.705
+      glyph noteheadBlack 28.506,2.500
+      glyph augmentationDot 30.121,2.500
+      line  29.686,2.332 -> 29.686,-1.000 t=0.120
+      text  26.127,5.721 size=2.194 bold "huān"
+      text  27.409,8.354 size=2.194 bold "欢"
+    note@-4 x=33.917 w=3.871
+      glyph noteheadBlack 33.917,2.000
+      glyph flag8thUp 35.097,-1.500
+      line  35.097,1.832 -> 35.097,-1.500 t=0.120
+      text  31.905,5.721 size=2.194 bold "yíng"
+      text  32.820,8.354 size=2.194 bold "迎"
+    note@-2 x=37.186 w=7.742
+      glyph noteheadHalf 37.186,1.000
+      line  38.366,0.832 -> 38.366,-2.500 t=0.120
+      text  36.271,5.721 size=2.194 bold "nǐ"
+      text  36.089,8.354 size=2.194 bold "你"
+    bar x=43.435 w=0.160
+      line  43.515,-2.000 -> 43.515,2.000 t=0.160
+    note@1 x=47.658 w=6.705
+      glyph noteheadBlack 47.658,-0.500
+      glyph augmentationDot 49.273,-0.500
+      line  47.658,-0.332 -> 47.658,3.000 t=0.120
+      text  44.854,5.721 size=2.194 bold "cháng"
+      text  46.561,8.354 size=2.194 bold "长"
+    note@3 x=53.069 w=3.871
+      glyph noteheadBlack 53.069,-1.500
+      glyph flag8thDown 53.069,2.000
+      line  53.069,-1.332 -> 53.069,2.000 t=0.120
+    note@2 x=56.193 w=5.474
+      glyph noteheadBlack 56.193,-1.000
+      line  56.193,-0.832 -> 56.193,2.500 t=0.120
+      text  55.279,5.721 size=2.194 bold "qī"
+      text  55.097,8.354 size=2.194 bold "期"
+    note@1 x=60.612 w=5.474
+      glyph noteheadBlack 60.612,-0.500
+      line  60.612,-0.332 -> 60.612,3.000 t=0.120
+    bar x=65.030 w=0.160
+      line  65.110,-2.000 -> 65.110,2.000 t=0.160
+    note@2 x=68.643 w=3.871
+      glyph noteheadBlack 68.643,-1.000
+      line  68.643,-0.832 -> 68.643,2.750 t=0.120
+      text  66.936,5.721 size=2.194 bold "zhù"
+      text  66.449,8.354 size=2.194 bold "住在"
+    note@1 x=72.305 w=3.871
+      glyph noteheadBlack 72.305,-0.500
+      line  72.305,-0.332 -> 72.305,3.250 t=0.120
+      text  70.966,5.721 size=2.194 bold "zài"
+      text  71.209,8.354 size=2.194 bold "这"
+    note@-2 x=75.430 w=3.871
+      glyph noteheadBlack 75.430,1.000
+      line  76.610,0.832 -> 76.610,-3.000 t=0.120
+      text  73.846,5.721 size=2.194 bold "zhè"
+    note@-1 x=78.554 w=3.871
+      glyph noteheadBlack 78.554,0.500
+      line  79.734,0.332 -> 79.734,-3.500 t=0.120
+      text  77.183,8.354 size=2.194 bold "里."
+    note@1 x=81.678 w=7.742
+      glyph noteheadHalf 81.678,-0.500
+      line  81.678,-0.332 -> 81.678,3.000 t=0.120
+      text  80.795,5.721 size=2.194 bold "lǐ."
+    bar x=87.927 w=1.060
+      line  88.007,-2.000 -> 88.007,2.000 t=0.160
+      line  88.737,-2.000 -> 88.737,2.000 t=0.500

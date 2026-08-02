@@ -127,35 +127,35 @@ import { absolutePixels, byClass } from './pixel-geometry.js'
  */
 const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: number; ox: number }> =
   {
-    'ave-verum-corpus': { heads: 55, dy: 2.4, dx: 29.3, oy: -2.7, ox: -17.2 },
-    'brother-john-inline-voices': { heads: 64, dy: 0.0, dx: 16.7, oy: -0.2, ox: -13.7 },
-    'center-text': { heads: 8, dy: 0.0, dx: 3.9, oy: 10.1, ox: -9.4 },
-    'chord-grid': { heads: 16, dy: 0.0, dx: 7.0, oy: -0.2, ox: -16.7 },
-    'frere-jacques': { heads: 45, dy: 22.1, dx: 41.8, oy: -5.4, ox: -18.8 },
-    'full-song-template': { heads: 20, dy: 0.2, dx: 19.8, oy: 6.6, ox: -20.4 },
-    'happy-birthday': { heads: 25, dy: 0.2, dx: 36.6, oy: 6.6, ox: -27.3 },
-    'little swallow': { heads: 89, dy: 5.3, dx: 47.5, oy: 2.5, ox: -27.1 },
-    'multi-voice-lyrics-two-voices': { heads: 16, dy: 5.0, dx: 52.4, oy: -7.6, ox: -9.2 },
-    'multi-voice-rest-collision': { heads: 7, dy: 0.0, dx: 4.5, oy: -13.9, ox: -8.5 },
-    'multi-voice-rest-placement': { heads: 14, dy: 0.0, dx: 19.8, oy: -0.0, ox: -13.1 },
-    'multi-voice-triplet-brackets': { heads: 45, dy: 14.1, dx: 110.2, oy: -2.9, ox: -9.6 },
-    'program-127-test': { heads: 20, dy: 0.2, dx: 14.3, oy: 6.6, ox: -18.3 },
-    'ragtime-mini': { heads: 30, dy: 0.0, dx: 19.9, oy: -2.0, ox: -17.7 },
-    'ragtime-nightingale': { heads: 2009, dy: 58.1, dx: 99.5, oy: 7.0, ox: -19.7 },
-    'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0, oy: -0.2, ox: -9.5 },
-    'score-reorder': { heads: 8, dy: 0.0, dx: 0.0, oy: 7.3, ox: -9.5 },
-    'simple-c': { heads: 8, dy: 0.0, dx: 4.5, oy: -0.2, ox: -7.3 },
-    'stacked-annotations': { heads: 4, dy: 0.0, dx: 4.5, oy: 0.0, ox: -5.0 },
-    twinkle: { heads: 14, dy: 0.0, dx: 5.7, oy: -0.2, ox: -12.5 },
-    'two-voice-invention': { heads: 74, dy: 0.3, dx: 23.1, oy: 7.0, ox: -15.1 },
-    'voice-middle-after-clef': { heads: 10, dy: 0.0, dx: 79.0, oy: -0.2, ox: -21.4 },
-    'voice-octave-shift': { heads: 8, dy: 0.0, dx: 0.0, oy: -0.2, ox: -9.5 },
-    'vree-compound-meter': { heads: 12, dy: 0.0, dx: 5.3, oy: 0.0, ox: -9.2 },
-    'vree-grace-notes': { heads: 7, dy: 11.6, dx: 32.7, oy: -0.2, ox: -6.1 },
-    'vree-sharps': { heads: 4, dy: 0.0, dx: 9.4, oy: 0.5, ox: -8.0 },
-    'vree-slurs-and-triplets': { heads: 8, dy: 0.0, dx: 4.5, oy: -19.6, ox: -7.2 },
-    'vree-ties-across-bars': { heads: 4, dy: 0.0, dx: 4.5, oy: -0.2, ox: -6.1 },
-    'zocharti-loch': { heads: 64, dy: 0.0, dx: 48.9, oy: 6.9, ox: -9.4 },
+    'ave-verum-corpus': { heads: 55, dy: 2.4, dx: 0.0, oy: -2.7, ox: 0.0 },
+    'brother-john-inline-voices': { heads: 64, dy: 0.0, dx: 0.0, oy: -0.2, ox: 0.0 },
+    'center-text': { heads: 8, dy: 0.0, dx: 0.0, oy: 10.1, ox: 0.0 },
+    'chord-grid': { heads: 16, dy: 0.0, dx: 0.0, oy: -0.2, ox: 0.0 },
+    'frere-jacques': { heads: 45, dy: 22.1, dx: 22.2, oy: -5.4, ox: -3.6 },
+    'full-song-template': { heads: 20, dy: 0.2, dx: 0.0, oy: 6.6, ox: 0.0 },
+    'happy-birthday': { heads: 25, dy: 0.2, dx: 3.9, oy: 6.6, ox: -0.5 },
+    'little swallow': { heads: 89, dy: 5.3, dx: 24.0, oy: 2.5, ox: -5.7 },
+    'multi-voice-lyrics-two-voices': { heads: 16, dy: 5.0, dx: 7.6, oy: -7.6, ox: 3.8 },
+    'multi-voice-rest-collision': { heads: 7, dy: 0.0, dx: 0.0, oy: -13.9, ox: 0.0 },
+    'multi-voice-rest-placement': { heads: 14, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'multi-voice-triplet-brackets': { heads: 45, dy: 14.1, dx: 0.0, oy: -2.9, ox: 0.0 },
+    'program-127-test': { heads: 20, dy: 0.2, dx: 0.0, oy: 6.6, ox: 0.0 },
+    'ragtime-mini': { heads: 30, dy: 0.0, dx: 0.0, oy: -2.0, ox: 0.0 },
+    'ragtime-nightingale': { heads: 2009, dy: 58.1, dx: 72.4, oy: 7.0, ox: -1.0 },
+    'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0, oy: -0.2, ox: 0.0 },
+    'score-reorder': { heads: 8, dy: 0.0, dx: 0.0, oy: 7.3, ox: 0.0 },
+    'simple-c': { heads: 8, dy: 0.0, dx: 0.0, oy: -0.2, ox: 0.0 },
+    'stacked-annotations': { heads: 4, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    twinkle: { heads: 14, dy: 0.0, dx: 0.0, oy: -0.2, ox: 0.0 },
+    'two-voice-invention': { heads: 74, dy: 0.3, dx: 0.0, oy: 7.0, ox: 0.0 },
+    'voice-middle-after-clef': { heads: 10, dy: 0.0, dx: 0.0, oy: -0.2, ox: 0.0 },
+    'voice-octave-shift': { heads: 8, dy: 0.0, dx: 0.0, oy: -0.2, ox: 0.0 },
+    'vree-compound-meter': { heads: 12, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'vree-grace-notes': { heads: 7, dy: 11.6, dx: 32.5, oy: -0.2, ox: -1.1 },
+    'vree-sharps': { heads: 4, dy: 0.0, dx: 0.0, oy: 0.5, ox: 0.0 },
+    'vree-slurs-and-triplets': { heads: 8, dy: 0.0, dx: 0.0, oy: -19.6, ox: 0.0 },
+    'vree-ties-across-bars': { heads: 4, dy: 0.0, dx: 0.0, oy: -0.2, ox: 0.0 },
+    'zocharti-loch': { heads: 64, dy: 0.0, dx: 5.4, oy: 6.9, ox: 0.7 },
   }
 
 /** Rounding slack, so a last-digit wobble is not a failure. */
@@ -244,14 +244,21 @@ describe('pixel parity vs abcjs rendered SVG', () => {
 
   it('the gate reads real goldens and can tell positions apart', () => {
     // A gate that cannot fail reports coverage it does not have — the fuzz suite that
-    // passed while three crashes were live. `simple-c` has a known non-zero dx spread,
-    // so a comparison returning 0 for everything would fail here.
+    // passed while three crashes were live. This canary needs BOTH outcomes to be
+    // reachable, so it names a fixture at parity and one that is not.
+    //
+    // It used to name only `simple-c`, on the grounds that it had a known non-zero dx
+    // spread. It no longer does — the horizontal arc took it to exact — so that half is
+    // now the ZERO end of the check and `frere-jacques`, which abcjs wraps differently,
+    // is the non-zero end.
     const simple = measure('simple-c')
     expect(simple.goldenHeads).toBe(8)
-    expect(simple.dx).toBeGreaterThan(1)
     // Not `toBe(0)`: the resolved coordinates carry float noise, and a `0.0` in the
     // table means "a pure constant offset", not "exactly zero to the last bit".
+    expect(simple.dx).toBeLessThan(EPSILON)
     expect(simple.dy).toBeLessThan(EPSILON)
+    // …and a comparison returning 0 for everything would fail here.
+    expect(measure('frere-jacques').dx).toBeGreaterThan(1)
   })
 
   it('every fixture with an SVG golden is accounted for', () => {
