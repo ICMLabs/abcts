@@ -122,8 +122,8 @@ backup remote is not a licence to vendor someone else's tree into this one.
 beams, structure, source offsets. 499 tests. The work is now entirely GEOMETRIC and
 entirely strict-mode. On `main` the corpus median notehead distance from abcjs is
 **17.4px** with **21/29** fixtures within 25px; on the geometry branch it is **14.7px**
-with **25/29**, and **27/29** within their pixel-parity ceiling. Both are **29/29** within
-50px, systems matching 29/29.
+with **27/29**, and **29/29** — all of them — within their pixel-parity ceiling. Both are
+**29/29** within 50px, systems matching 29/29.
 The remaining causes are named in the checkpoint's priority list.
 It is NOT a skyline: abcjs places most out-of-staff text at fixed distances from the staff,
 a finding that killed a skyline port — measure its OUTPUT before porting its SOURCE. It is
@@ -140,25 +140,23 @@ The work is now GEOMETRIC — does abcts put the ink where abcjs puts it. A pixe
 gate (`tests/pixel-parity.test.ts`) resolves both engines' SVG to absolute pixels and
 measures it. Noteheads match 2696/2696, systems 29/29, output is 0.34x abcjs's bytes.
 
-**The VERTICAL model is solved and PARKED on `geometry/lyric-ink-anchor`** — read
-`Docs/CHECKPOINT-2026-08-01.md` before touching staff spacing, lyrics, chord symbols,
-part labels, tempo marks or dynamics. Our per-staff extents now match abcjs's to a median
-of 0.03px above and 0.46px below; `systemGap`/`staffGap` are deleted. **27 of 29** fixtures
-are within their pixel-parity ceiling, and the merge is blocked by **ONE cause**: `ragtime`
-(down-stem overhang + `V:… stems=` + treble beam direction — all coupled, one pass;
-`ragtime-mini` joined `ragtime-nightingale` there on 2026-08-01). The checkpoint carries the
-term-by-term extent table to start from.
+**The VERTICAL model is DONE and the geometry branch is GREEN** — `geometry/lyric-ink-anchor`
+at `2e4851a`, 505/505, all 29 fixtures within their pixel-parity ceilings, ceilings
+re-recorded. Ready to merge into `main`; not merged. Read `Docs/CHECKPOINT-2026-08-01.md`
+before touching staff spacing, stems, beams, lyrics, chord symbols, part labels, tempo marks
+or dynamics.
 
-Three blockers closed on 2026-08-01, and **not one had the cause the previous checkpoint
-recorded** — read the checkpoint's method note 2b before diagnosing anything vertical.
-`full-song-template` and `frere-jacques` were never `W:`/`H:` reservation or prose systems
-but the above-staff STACK (abcjs stacks chord symbol, part label and tempo mark on the
-music's ink, `height + 1` pitch each, where we used fixed lanes —
-`set-upper-and-lower-elements.js:31-49`). `zocharti-loch` was never the bass staff's top but
-the TENOR's bottom: `clef=treble-8` drew no octave marker and so reserved none
-(`create-clef.js:33-56`). The dynamics-side rule (above only when the tune HAS LYRICS,
-`decoration.js:379` — the opposite of the superseded `-07-22c` finding) is FIXED on the
-branch.
+Branch vs main: fixtures within ceiling 25/29 → **29/29**, noteheads within 25px 21/29 →
+**27/29**, corpus median 17.4px → **14.7px**.
+
+**THE METHOD, and the most valuable thing in the checkpoint: instrument abcjs ITSELF rather
+than infer from its output.** `abcMusicKit` is a clean git repo, so an env-guarded
+`console.log` in the vendored source plus `git checkout -- Docs/References/abcjs/`
+afterwards is safe and reversible — always verify clean. Measuring output alone stalled the
+last blocker for two sessions; instrumenting settled it in one, and retired a whole line of
+investigation by showing our beam geometry already matched term for term. Note especially
+that `.elements.json` is the WRONG oracle twice over: it predates beams, and
+`setUpperAndLowerElements` keeps mutating `staff.top`/`bottom` as it runs.
 
 The `.elements.json` goldens carry `staffs[].top/.bottom` and `specialY` — abcjs's own
 answer to how much room a staff takes. Replicating `setUpperAndLowerElements` over them

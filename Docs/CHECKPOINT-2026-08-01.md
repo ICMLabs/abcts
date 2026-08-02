@@ -18,208 +18,93 @@ Never raise a pixel-parity ceiling to make a change pass.
 
 ## Two-lane state — READ THIS FIRST
 
-The strict-mode VERTICAL-geometry work still lives on a **branch, not `main`**:
+**The geometry arc is CLOSED.** `geometry/lyric-ink-anchor` is GREEN — 505 tests pass, all
+29 fixtures are within their pixel-parity ceilings, and the ceilings are re-recorded to the
+values achieved. It is ready to merge into `main`; that call is Lance's, not the branch's.
 
 | Lane | HEAD | State |
 |---|---|---|
-| `main` | `ac475f9`+ | 499 tests green, geometry UNCHANGED from `a761cf8`. Docs only. |
-| `geometry/lyric-ink-anchor` | `1168e5d` | The geometry work. Typecheck clean; 452 functional tests green; 49 pixel-parity/baseline **ceiling** tests fail BY DESIGN. NOT pushed since `3a80638`. |
+| `main` | `ce348fe`+ | 499 tests green, geometry UNCHANGED from `a761cf8`. Docs only. |
+| `geometry/lyric-ink-anchor` | `2e4851a` | **GREEN. 505/505.** Ready to merge. |
+| `geometry/ragtime-stems` | `2e4851a` | Same commit; the working branch, now folded in. |
 
 **Confirm your lane before any structural work:** `git rev-parse --abbrev-ref HEAD`.
 
 ---
 
-## Where the branch stands (measured 2026-08-01)
+## Where it landed (2026-08-02)
 
-- **27 of 29 fixtures within their `a761cf8` ceiling**, up from 25.
-- Noteheads within 25px **25/29** (was 23/29). Corpus median notehead distance **14.7px**.
-- Notehead COUNT matches abcjs 29/29.
-
-**What closed this session:**
-
-| commit | what | effect |
+| | main | branch |
 |---|---|---|
-| `4ea24aa` | above-staff lanes became a real STACK (`anchorAboveStaff`) | `full-song-template` oy 22.1 → 0.3; `frere-jacques` dy 47.9 → 21.9 |
-| `1168e5d` | `±8` clefs draw AND reserve their octave marker | `zocharti-loch` dy 17.5 → 0.9 |
+| fixtures within ceiling | 25/29 | **29/29** |
+| noteheads within 25px | 21/29 | **27/29** |
+| corpus median | 17.4px | **14.7px** |
+| `ragtime-nightingale` | dy 121.5 | **58.1**, notehead distance 39.6 → **21.9px** |
 
-**Three of the previous checkpoint's four blockers are CLOSED**, and not one of them had
-the cause that checkpoint recorded. Only ragtime remains.
+Every blocker the `-07-24` checkpoint listed is closed, and **not one had the cause that
+checkpoint recorded**:
 
-### The stack, since it is the reusable part
+| blocker | recorded cause | actual cause |
+|---|---|---|
+| `full-song-template` | `W:`/`H:` block reservation | the above-staff STACK |
+| `frere-jacques` | prose-as-music spacing | the same stack |
+| `zocharti-loch` | the bass staff's top | the TENOR's bottom — a missing `±8` octave clef |
+| `ragtime` | down-stem overhang, coupled | four separate things, below |
 
-abcjs does not hold a chord symbol, a part label and a tempo mark at fixed distances from
-the staff. It stacks them on the music's ink top, each reserving `height + 1` pitch and
-drawing at the top it reserved (`set-upper-and-lower-elements.js:31-49`, `incTop`; margin
-at `:102`). `anchorAboveStaff` is the mirror of `anchorLyrics` and hooks at the same point
-in the per-staff merge, for the same reason: the anchor is unknown until the voices sharing
-the staff are.
+### What ragtime actually was
 
-MEASURED before it was modelled. In `full-song-template`'s golden SVG the chord baseline
-sits 6.7187 pitch below the part baseline — `partHeightAbove` 5.71871 + 1 exactly — and the
-part 7.0013 below the tempo, `tempoHeightAbove` 6 + 1, once the tempo's own 2px bump
-(`draw/tempo.js:15`) is removed. Resolved chord pitch lands on 19.504 against a predicted
-19.5037. The three heights are corpus-wide constants; every fixture reports the same
-`specialY`. Verified by script that `endingHeightAbove` and the dynamics pair never share a
-staff with the stack anywhere in the corpus, so their position in abcjs's order is untested
-here and remains unmodelled.
-
-`tempoTextSize` went 1.6 → 20/7.75 with it: abcjs's `partsfont` and `tempofont` are both
-15pt → 20px, and the stack draws each item one FONT SIZE below the top it reserved.
-
-### The octave clef, since it corrected a standing diagnosis
-
-`clef=treble-8` drew no `8` at all, and the missing RESERVE — not the missing ink — was the
-whole of zocharti's tenor-to-bass gap. `-07-24` recorded the cause as the BASS staff's top
-extent. It is not: against abcjs's own `staffs[]`, our bass tops are 22.12 and 25.12 pitch
-against its 22 and 25, right to a tenth. The TENOR's bottom was short — 6.12 and 5.12
-against a flat 8.00 — and abcjs's being IDENTICAL in both systems while ours varied with the
-notes is what named the cause. A constant, not ink.
-
-Source `creation/create-clef.js:33-56`: the clef element declares its bottom at
-`2 x line + clefOffsets(shape)` (treble: `4 + (-5) = -1`), and the marker hangs one pitch
-under that while reserving from three under it down to five — `bottom = -6`, exactly the
-golden's `staff.bottom`, 8 pitch below the bottom line, note-independent. The declared
-extent does not bracket the marker's own ink, so `PlacedGlyph.reserve` carries it, mirroring
-abcjs's `RelativeElement` `top`/`bottom` overrides.
+1. **A forced voice forces its beams.** We had the beam's pitch choice overriding the voice
+   convention; abcjs has one mechanism for both (`tune-builder.js:971-986` →
+   `forceup`/`forcedown`, tested before the pitch rule). Treble direction went from ours
+   81 up / 554 down against abcjs's 388/246 to 382/246.
+2. **A beam's stem height is not an unbeamed stem's** — 9.5 steps from
+   `spacing.stemHeight` 36.67px, not the hardcoded 7.
+3. **A down-stem stops half a beam-width short** of the beam line; an up-stem does not.
+4. **Dynamics and hairpins hang off the music** and reserve a flat 7-pitch lane past it,
+   where we had a fixed lane. `anchorBelowStaff` is the third of these passes after
+   `anchorLyrics` and `anchorAboveStaff` — the same shape three times over.
 
 ---
 
-## The remaining blocker — ONE cause
+## THE METHOD THAT CLOSED IT — instrument abcjs, do not infer from its output
 
-### ragtime (`ragtime-nightingale` dy 122, `ragtime-mini` oy 30.4) — THE gate, coupled.
-`ragtime-mini` joined this blocker this session; it is not a second problem. With a fixed
-lane its tempo sat 38.8px above the top line against abcjs's 47.8, and the lane was **right
-by accident** — once the stack anchored the tempo on real ink, the underlying ink gap
-surfaced. abcjs's staff-0 top there is 21 pitch where ours is ~4: its treble 16th-note runs
-carry UP-stems reaching 22.5px above the top line and ours carry none.
+This is the note to read before any future parity question. Measuring abcjs's OUTPUT was
+right as far as it went and it stalled for two sessions. What broke it open was
+instrumenting abcjs ITSELF:
 
-Everything the `-07-24` checkpoint said still holds: the down-stem overhang, `V:… stems=`
-(no model field), the lyric anchor and the inter-system minimum are too coupled to change
-one at a time, and each was attempted alone and reverted. **Add the treble beam direction to
-that list — one pass, whole-corpus measurement after.**
+```
+# abcMusicKit is a clean git repo, so this is safe and reversible
+edit  Docs/References/abcjs/abcjs-6.6.3/src/write/…      # env-guarded console.log
+cd    Tools/abcjs-debug && ABCJS_PROBE=1 node dump-svg.js --file fixtures/X.abc -o /tmp/x.svg
+git -C ../abcMusicKit checkout -- Docs/References/abcjs/   # ALWAYS, and verify clean
+```
 
-**NEGATIVE RESULT, 2026-08-01 — beam direction by AVERAGE pitch. Attempted, reverted.**
-abcjs decides beam stem direction by the group's average pitch against the middle line
-(`beam-element.js:74-86`), not by the note furthest from it, which is our rule. Porting the
-average rule left every other fixture byte-identical and moved `ragtime-nightingale` 36.9 →
-39.3px, so it went back. Two things were learned and both are worth having:
-- The rules genuinely disagree ONLY on ragtime in this corpus. Any future stem work can
-  treat beam direction as a ragtime-local question.
-- The port is **not settled**, and this is the part to resolve first next time. abcjs runs
-  the decision TWICE. `createBeam` calls `runningDirection` over the parsed elems *before*
-  `createNote` has run `setAveragePitch` on them, so on a first engrave `averagepitch` is
-  `undefined`, `runningDirection` returns early, and `setStemDirection` averages 0 → stems
-  UP. That provisional answer is what builds the stems (`this.stemdir = beamelem.stemsUp`).
-  `calcDir` afterwards recomputes from real pitches and sets `heads[].stemDir`. Which of the
-  two the DRAWN stem follows was not established. A first-engrave "always up" reading does
-  explain abcjs's up-stems on ragtime's treble runs, which the average rule does NOT
-  (computed averages 6.75 and 8.0, both → down). **Settle it by measuring abcjs's output
-  across the corpus, not by reading further.**
+Guard every probe on an env var so it is inert if a restore is ever missed, and check
+`git status` on that repo afterwards. It is a frozen sibling; leave no trace.
 
-### The measurement to start from — a term-by-term extent table
-
-This is the first per-staff breakdown of ragtime that exists, and it is what every previous
-attempt lacked. Method: dump abcjs's `staffs[].top/.bottom` from the element golden as
-`above = top - 10` / `below = 2 - bottom`, dump ours from the packing loop in the same
-units, and diff. It is the same probe that cracked `zocharti-loch` in one pass, and it
-replaces the aggregate numbers that misled the earlier attempts.
-
-Ours minus abcjs, in PITCH, over all 23 systems (staff 0 = treble, staff 1 = bass):
-
-- **ABOVE** median +1.22, mean +2.15. **BELOW** median +3.12, mean +2.53. We over-reserve on
-  both sides — it is not one term and not a constant.
-- **Staff 0 BELOW is the loudest.** abcjs reports exactly **3.00** on 13 of 23 systems; ours
-  runs 6–13. 3.00 is pitch -1, which is precisely the CLEF's own declared bottom
-  (`4 + (-5)`) — meaning that on those staves abcjs's deepest DECLARED thing is the clef and
-  its down-stems reserve nothing at all below. That is the overhang, seen from the treble
-  side rather than the bass, and it is why we run 3–10 pitch deep.
-- **Staff 1 ABOVE is over by 3–5 pitch** on most systems (0/1 +5.12, 1/1 +4.08, 3/1 +4.08,
-  4/1 +5.01, 6/1 +6.08 …). ragtime declares `V:… stems=down` on all three bass voices; we
-  have no model field for it, so we point some of those stems up and reserve a stem length
-  above that abcjs never reserves.
-- A handful of rows are NEGATIVE (14/0 -2.95, 17/1 -5.38, 22/1 -5.95) — we under-reserve
-  there. Any fix has to be measured against this whole table, not against a mean.
-
-### ATTEMPTED 2026-08-01, STAGED ON `geometry/ragtime-stems` (`cc9ee4a`) — not landed
-
-`V:… stems=` and the middle-line stem stretch are IMPLEMENTED and measured on that branch.
-The geometry branch does not carry them: they close the intra-system half and leave the
-inter-system half open, so `ragtime-nightingale` goes 121.5 → 147.4 and the branch would
-move further from landing. Cherry-pick them onto whatever closes the rest.
-
-**`stems=down` is correct, and this is the first time that has been shown rather than
-argued.** Measuring abcjs's own stem reach out of its SVG against ours, in pitch beyond the
-outer lines, ragtime's BASS staves go from mismatched to matching:
-
-| staff | abcjs above / below | ours | diff |
-|---|---|---|---|
-| 1 | 4.58 / 14.09 | 4.66 / 14.00 | **+0.09 / −0.09** |
-| 5 | 4.71 / 12.59 | 4.66 / 11.67 | −0.05 / −0.92 |
-| 9 | 6.71 / 11.59 | 6.66 / 11.00 | −0.05 / −0.59 |
-
-The intra-system boundary error over 23 systems falls **+133.0px → +41.6px** total. Nothing
-outside ragtime moves. The earlier "`stems=down` alone: 57.9 → 66.8" result stands as an
-aggregate but was never wrong about the model — only about which half it fixes.
-
-### The inter-system half — the LAST piece, and it is an algorithm
-
-Our inter-system gaps sit pinned at the `%%staffsep 90` minimum (90 × 4/3 = 120px; our
-conversion is right) on **every** boundary, while abcjs's natural separation exceeds it —
-125.94, 141.44, 146.99px. Our extent sums are 4–17 pitch short exactly on the boundaries
-where abcjs's gap proves its natural, and that deficit did **not move at all** with
-`stems=`.
-
-It is BEAM PLACEMENT. abcjs's beamed stems have no fixed length: `layout/beam.js` runs
-`calcYPos` over the group and draws each stem from its notehead to the resulting beam line,
-so the reach follows the beam. Ours used a fixed `stemLength` and retargeted afterwards.
-
-**`calcYPos` IS NOW PORTED** (`ca9c7d5`, same staged branch) and it was NOT the last step.
-
-The port itself is settled and worth having. abcjs puts the beam a fixed distance beyond
-the group's EXTREME note, wherever in the group that note falls, where we fitted through
-the two END notes and then pushed out for a minimum stem length — the two agree only when
-an end note is the extreme, which in a dense sixteenth run is rarely. `barpos` and
-`barminpos` are equal, so `calcYPos`'s `average` term can never win and it reduces to
-`extreme ± (stemHeight − 2)`. `calcSlant` and the "make the beam go down to the middle"
-flatten came with it.
-
-What it bought, measured:
-- `little swallow` dySpread **7.1 → 4.5**;
-- `ragtime-nightingale` notehead distance **36.9 → 33.7px** — closer, even though its
-  dySpread widens 121.5 → 125.6, which is why it is staged rather than landed;
-- ragtime's down-stem depth error collapses from a scatter (−0.92, −1.59, −2.59) to a
-  near-CONSTANT **−1.59 pitch** across staves 2–7. First time that residual has had one
-  value. It is close to `beamThickness + beamSpacing` (1.5) and is the obvious next thread.
-
-**The dominant remaining term is beam DIRECTION, not placement.** Treble staves 0 and 8 are
-**8.66 and 6.91 pitch short ABOVE** against ~1.5 elsewhere: abcjs points those groups' stems
-up and we point them down. No placement fix touches that, and the direction port is still
-unsettled — the average-pitch rule does not explain it either (negative result above).
-**Settle direction first; it is now the gate on ragtime.**
-
-### A trap that cost real time this session — the dump is PRE-BEAM, again
-
-The `-07-24` reading "abcjs's down-stems reserve nothing below" came from `staff.bottom = -1`
-in the element dump, and it is an artifact: beamed notes are built with `nostem = true`
-(`createBeam` → `createNote(elem, true, …)`), so they carry no stem element at creation, and
-`layout/beam.js` adds one later — after the dump is taken. The dump's extents exclude every
-beamed stem. Method note 2 already said this and it still caught this session; the SVG is the
-only extent oracle for anything beamed.
+What it settled that output never could:
+- **The element dump is the wrong oracle twice.** It is taken before beams exist, AND
+  `setUpperAndLowerElements` keeps mutating `staff.top`/`bottom` as it runs. Probing the
+  top of its loop gives 21.000/−3.500 for ragtime's first staff; the end of the loop gives
+  28.000/−3.500; at draw time its neighbour's bottom is −20 where the dump says −13. Only
+  the end-of-loop value is what the drawing uses.
+- **Our beam geometry was already exact** — abcjs's own numbers matched ours term for term,
+  which retired a whole line of investigation in one run.
+- **abcjs's dynamics reserve is sparse and PER-SYSTEM** — 9 of 46 staves, not 23. That one
+  fact explains a −318px blow-up that guess-and-check had left mysterious.
 
 ---
 
-## Also recorded when the branch lands
+## Still open, recorded rather than applied
 
-The gate wants these IMPROVEMENTS recorded as lower ceilings — `ave-verum` 12.5→2.4,
-`frere-jacques` 33.1→21.9, `full-song-template` 8.8→0.3, `happy-birthday`→0.2,
-`little swallow`→7.1, `multi-voice-lyrics`→4.5, `multi-voice-triplet-brackets` 18.8→14.6,
-`program-127`→0.3, `two-voice-invention`→6.4, `voice-middle-after-clef`→0.0,
-`zocharti-loch` 2.0→0.9. **Do NOT lower any ceiling on `main`**, and only in the commit that
-closes the last blocker. Until then the
-gate's "improved — lower the ceiling" failures are expected.
-
-Still open, untouched: the absolute stretch guard (`spacing * minSpace > 50`, needs a real
-spring/rod split).
+- **Beams should not count toward a staff's extent.** abcjs never counts one (a `BeamElem`
+  is in `voice.otherchildren`; `setUpperAndLowerVoiceElements` switches only on
+  Crescendo/Dynamic/Ending/Tie). Ours contributes a half-thickness below the stem tip — a
+  flat 0.50 pitch. Removing it improves the corpus median 14.7 → 14.5px and costs ragtime
+  more than it gains, so the gate says no. Revisit with a partner change.
+- The absolute stretch guard (`spacing * minSpace > 50`), untouched all arc.
+- `%%titleformat`, `%%writefields`, `%%aligncomposer`; `"@x,y"` free placement; header
+  `P:` part order; `s:` in strict is deliberately abcjs's bug.
 
 ---
 
