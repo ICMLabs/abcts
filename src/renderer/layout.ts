@@ -3972,8 +3972,6 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
               ]
             })()
       const extent = verticalExtent(positioned, staff.beams, strict, staff)
-      if (process.env.ABCTS_EXTENT)
-        console.log(`EXTENT ${systemIndex} ${(-extent.top * 2 - 4).toFixed(3)} ${(extent.bottom * 2 - 4).toFixed(3)}`)
       const stacked = cursor - extent.top
       // The separation is a minimum LINE-to-LINE distance, which is what abcjs measures:
       // `draw.js:86-89` works from each staff's overhang past its own outer lines, so
