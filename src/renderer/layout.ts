@@ -179,6 +179,17 @@ export const ENGRAVE = {
   dynamicAboveStep: 19.5,
   dynamicBelowStep: -10.96,
   /**
+   * Room a staff reserves BELOW its ink for dynamics and hairpins, in staff steps.
+   *
+   * abcjs's `max(volumeHeightBelow, dynamicHeightBelow) + margin` = `max(6, 6) + 1` = 7
+   * pitch (`dynamic-decoration.js:8`, `crescendo-element.js:11`,
+   * `set-upper-and-lower-elements.js:63-71`). It reserves that BEYOND the staff's ink and
+   * draws the marks at the bottom it had BEFORE subtracting — so the mark is anchored on
+   * the music, and the room is a flat lane past it. A fixed lane for both, which is what
+   * we had, gets neither right.
+   */
+  dynamicBelowReserve: 7,
+  /**
    * `"^text"` above the staff and `"_text"` below.
    *
    * abcjs joins same-position annotations into ONE multi-line block, so the first one
@@ -498,6 +509,7 @@ export type PartRole =
   | 'text'
   | 'lyric'
   | 'chord'
+  | 'dynamic'
   | 'title'
 
 export interface PlacedGlyph {
@@ -545,6 +557,8 @@ export interface PlacedLine {
   readonly thickness: number
   /** What this line is. Absent means it inherits its element's kind. */
   readonly role?: PartRole
+  /** Set on a stem a BEAM retargets — see the stem case in `verticalExtent`. */
+  readonly beamed?: boolean
 }
 
 /**
@@ -2150,7 +2164,10 @@ function decorationGlyphs(
       })
     } else {
       const lane = dynamicsAbove ? ENGRAVE.dynamicAboveStep : ENGRAVE.dynamicBelowStep
-      out.push({ name: glyph, x: centre, y: stepToY(lane), role: 'decoration' })
+      // `dynamic`, not `decoration`: the below-side ones are re-anchored on the staff's ink
+      // by `anchorBelowStaff`, and they have to be findable. Markup-neutral — neither
+      // `ABCJS_CLASSES` nor `ABCJS_DATA_NAMES` carries either name.
+      out.push({ name: glyph, x: centre, y: stepToY(lane), role: 'dynamic' })
     }
   }
   return out
@@ -2492,8 +2509,8 @@ function layoutSpanners(
     if (x2 - x1 < ENGRAVE.spannerMinLength) return
     const y = stepToY(dynamicsAbove ? ENGRAVE.dynamicAboveStep : ENGRAVE.dynamicBelowStep)
     out[system]?.push(
-      { x1, y1: y - g1 / 2, x2, y2: y - g2 / 2, thickness, role: 'decoration' },
-      { x1, y1: y + g1 / 2, x2, y2: y + g2 / 2, thickness, role: 'decoration' },
+      { x1, y1: y - g1 / 2, x2, y2: y - g2 / 2, thickness, role: 'dynamic' },
+      { x1, y1: y + g1 / 2, x2, y2: y + g2 / 2, thickness, role: 'dynamic' },
     )
   }
 
@@ -2962,7 +2979,7 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
     if (!element) continue
     const beamY = yAt(stem.x) + stemEndOffset
     const lines = element.lines.map((line) =>
-      line.x1 === line.x2 && line.x1 === stem.x ? { ...line, y2: beamY } : line,
+      line.x1 === line.x2 && line.x1 === stem.x ? { ...line, y2: beamY, beamed: true } : line,
     )
     elements[stem.element] = { ...element, lines }
   }
@@ -3910,9 +3927,12 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     // are printed on. So the drawing is concatenated and one set of staff lines is drawn,
     // rather than each voice getting its own stave.
     const merged = voicesOfStaff.map((members) => {
-      const parts = anchorAboveStaff(
-        anchorLyrics(
-          members.map((i) => centred[i]).filter((x) => x !== undefined),
+      const parts = anchorBelowStaff(
+        anchorAboveStaff(
+          anchorLyrics(
+            members.map((i) => centred[i]).filter((x) => x !== undefined),
+            strict,
+          ),
           strict,
         ),
         strict,
@@ -4403,6 +4423,67 @@ function anchorAboveStaff<
   }))
 }
 
+/**
+ * Hang the below-staff dynamics and hairpins off the staff's music, once its voices are
+ * known — the third and last of these passes, after `anchorLyrics` and `anchorAboveStaff`.
+ *
+ * abcjs draws a `!mf!` or a hairpin at the staff's bottom AS IT STANDS when the below chain
+ * reaches them, then subtracts their height plus a margin from it
+ * (`set-upper-and-lower-elements.js:63-71`). So the mark sits on the music's ink and the
+ * room is a flat lane past it — where we had a fixed lane for both, which gets the mark
+ * wrong on any staff whose music does not happen to end where the lane sits.
+ *
+ * The chain is lyric, then chord, then volume/dynamic, so dynamics belong BELOW lyrics. No
+ * corpus tune has both: abcjs puts dynamics ABOVE whenever the tune sings (`hasVocals`,
+ * `decoration.js:379`), so a staff with lyrics never reaches this. Anchoring on the music
+ * ink alone is therefore exact here — and would need the lyric block added first if that
+ * ever changed.
+ */
+function anchorBelowStaff<
+  T extends {
+    readonly elements: readonly LayoutElement[]
+    readonly beams: readonly PlacedLine[]
+    readonly spannerLines: readonly PlacedLine[]
+  } & StaffFurniture,
+>(parts: readonly T[], strict: boolean): T[] {
+  const isDyn = (r: PartRole | undefined, y: number): boolean => r === 'dynamic' && y > 0
+  const present =
+    parts.some((p) => p.elements.some((el) => el.glyphs.some((g) => isDyn(g.role, g.y)))) ||
+    parts.some((p) => p.spannerLines.some((l) => isDyn(l.role, l.y1)))
+  if (!present) return [...parts]
+
+  // The MUSIC's ink, with the dynamics themselves taken out — `verticalExtent` already
+  // skips them, so this is just the staff's own bottom before the lane is added.
+  const inkBottom =
+    verticalExtent(
+      parts.flatMap((p) => p.elements),
+      parts.flatMap((p) => p.beams),
+      strict,
+      {
+        tupletLines: parts.flatMap((p) => p.tupletLines ?? []),
+        tupletTexts: parts.flatMap((p) => p.tupletTexts ?? []),
+        voltaLines: parts.flatMap((p) => p.voltaLines ?? []),
+        voltaTexts: parts.flatMap((p) => p.voltaTexts ?? []),
+      },
+    ).bottom - ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
+
+  const shift = inkBottom - stepToY(ENGRAVE.dynamicBelowStep)
+  const moveLine = (l: PlacedLine): PlacedLine =>
+    isDyn(l.role, l.y1) ? { ...l, y1: l.y1 + shift, y2: l.y2 + shift } : l
+  return parts.map((part) => ({
+    ...part,
+    elements: part.elements.map((el) =>
+      el.glyphs.some((g) => isDyn(g.role, g.y))
+        ? {
+            ...el,
+            glyphs: el.glyphs.map((g) => (isDyn(g.role, g.y) ? { ...g, y: g.y + shift } : g)),
+          }
+        : el,
+    ),
+    spannerLines: part.spannerLines.map(moveLine),
+  }))
+}
+
 interface StaffFurniture {
   readonly tupletLines?: readonly PlacedLine[]
   readonly tupletTexts?: readonly PlacedText[]
@@ -4457,12 +4538,20 @@ function verticalExtent(
 
   /** LOWEST lyric baseline on the staff — the last verse of the lowest-offset voice. */
   let lyricBottom = Number.NEGATIVE_INFINITY
+  /** Any dynamic or hairpin on the BELOW side, which reserves a flat lane past the ink. */
+  let sawDynamicBelow = false
 
   for (const el of elements) {
     for (const g of el.glyphs) {
       // The ACTIVE table's box: abcjs's clef reaches 4.84 staff spaces above its origin
       // where Bravura's reaches 4.39, and that difference is space reserved above the
       // staff — visible as the last of the vertical offset on a title-only tune.
+      // Only the BELOW side is re-anchored and lane-reserved. An ABOVE dynamic keeps its
+      // own box in the ink scan, which is what it had before and what its fixtures expect.
+      if (g.role === 'dynamic' && g.y > 0) {
+        sawDynamicBelow = true
+        continue
+      }
       if (g.reserve !== undefined) {
         include(g.reserve[0], g.reserve[1])
         continue
@@ -4477,11 +4566,25 @@ function verticalExtent(
       // up-stem that end is at the notehead and the head's own box swallows it; on a
       // down-stem it binds, and it is a uniform 3.4px our staff bottoms ran short of
       // abcjs's on every staff whose lowest thing is a down-stem.
-      const stemReserve = line.role === 'stem' ? ENGRAVE.spacePerStep : 0
-      include(
-        Math.min(line.y1, line.y2) - half,
-        Math.max(line.y1, line.y2) + half + stemReserve,
-      )
+      // Dynamics reserve a flat lane below the ink, applied after this scan — see
+      // `dynamicBelowReserve`. Their own geometry must not push the ink they hang off.
+      if (line.role === 'dynamic' && line.y1 > 0) {
+        sawDynamicBelow = true
+        continue
+      }
+      // A STEM RESERVES ITS ENDPOINTS, NOT ITS PAINTED BOX, and only an UNBEAMED one
+      // reserves the extra pitch below. abcjs's stem `RelativeElement` takes `top`/`bottom`
+      // from `pitch`/`pitch2` and never widens them by the line's thickness; the unbeamed
+      // one adds `bottom: p1 - 1` (`abstract-engraver.js:762`), the beamed one — built in
+      // `layout/beam.js:135-140` — passes no `bottom` at all. Measured against abcjs's own
+      // post-mutation `staff.bottom`, ours ran 1.12 pitch too deep, which is exactly this
+      // reserve (1) plus half a stem thickness (0.12).
+      if (line.role === 'stem') {
+        const low = Math.max(line.y1, line.y2)
+        include(Math.min(line.y1, line.y2), low + (line.beamed === true ? 0 : ENGRAVE.spacePerStep))
+        continue
+      }
+      include(Math.min(line.y1, line.y2) - half, Math.max(line.y1, line.y2) + half)
     }
     // No text metrics available, so bound the box by the font size: ascenders reach
     // roughly 0.8 of it above the baseline and descenders 0.25 below.
@@ -4537,6 +4640,8 @@ function verticalExtent(
   // Apply the tuplet/volta ending lane now that `top`/`bottom` are the NOTE extent: a fixed
   // 5 pitch (`ENGRAVE.endingLane`) beyond the note on whichever side an ending sits, never
   // the bracket's real height. See the ABOVE/BELOW gather at the top of this function.
+  // Dynamics: a flat lane past the music, never their own drawn box.
+  if (sawDynamicBelow) bottom += ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
   if (endingAbove) top = Math.min(top, top - ENGRAVE.endingLane)
   if (endingBelow) bottom = Math.max(bottom, bottom + ENGRAVE.endingLane)
 

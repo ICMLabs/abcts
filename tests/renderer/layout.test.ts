@@ -1654,7 +1654,9 @@ describe('decoration coverage', () => {
         .systems[0]?.staves[0]?.elements ?? []
     )
       .flatMap((e) => e.glyphs)
-      .filter((g) => g.role === 'decoration')
+      // `dynamic` as well as `decoration`: below-staff dynamics carry their own role so
+      // `anchorBelowStaff` can find them, but they are still decorations here.
+      .filter((g) => g.role === 'decoration' || g.role === 'dynamic')
       .map((g) => g.name)
 
   it("resolves abcjs's pseudonyms, which already had glyphs", () => {
@@ -1775,7 +1777,9 @@ describe('ornaments and techniques', () => {
       }).systems[0]?.staves[0]?.elements ?? []
     )
       .flatMap((e) => e.glyphs)
-      .filter((g) => g.role === 'decoration')
+      // `dynamic` as well as `decoration`: below-staff dynamics carry their own role so
+      // `anchorBelowStaff` can find them, but they are still decorations here.
+      .filter((g) => g.role === 'decoration' || g.role === 'dynamic')
       .map((g) => g.name)
 
   it('draws every ornament abcjs paints', () => {
@@ -1824,7 +1828,9 @@ describe('ornaments and techniques', () => {
       }).systems[0]?.staves[0]?.elements ?? []
     )
       .flatMap((e) => e.glyphs)
-      .filter((g) => g.role === 'decoration')
+      // `dynamic` as well as `decoration`: below-staff dynamics carry their own role so
+      // `anchorBelowStaff` can find them, but they are still decorations here.
+      .filter((g) => g.role === 'decoration' || g.role === 'dynamic')
       .map((g) => g.y)
     expect(ys.length).toBeGreaterThanOrEqual(3)
     expect(new Set(ys).size).toBe(ys.length)
@@ -1863,7 +1869,9 @@ describe('navigation directions', () => {
         .systems[0]?.staves[0]?.elements ?? []
     )
       .flatMap((e) => e.glyphs)
-      .filter((g) => g.role === 'decoration')
+      // `dynamic` as well as `decoration`: below-staff dynamics carry their own role so
+      // `anchorBelowStaff` can find them, but they are still decorations here.
+      .filter((g) => g.role === 'decoration' || g.role === 'dynamic')
     expect(glyphs).toEqual([])
   })
 })
@@ -1902,7 +1910,9 @@ describe('tremolo, phrases and technique', () => {
         .systems[0]?.staves[0]?.elements ?? []
     )
       .flatMap((e) => e.glyphs)
-      .filter((g) => g.role === 'decoration')
+      // `dynamic` as well as `decoration`: below-staff dynamics carry their own role so
+      // `anchorBelowStaff` can find them, but they are still decorations here.
+      .filter((g) => g.role === 'decoration' || g.role === 'dynamic')
       .map((g) => g.name)
 
   it('picks one tremolo glyph per stroke count', () => {
