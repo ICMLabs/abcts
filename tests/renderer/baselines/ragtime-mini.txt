@@ -11,7 +11,7 @@ system 0 width=90.323 originY=0.000
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     beam   52.870,-5.250 -> 84.867,-7.250 t=0.500
     beam   52.870,-4.500 -> 84.867,-6.500 t=0.500
-    tie  67.730,1.800 -> 69.674,1.800 bulge=0.500
+    tie  66.883,1.800 -> 69.674,1.800 bulge=0.502
     title x=0.000 w=0.000
       text  36.215,-12.492 size=3.484 bold "Ragtime Mini"
     clef x=1.935 w=3.103
@@ -40,11 +40,11 @@ system 0 width=90.323 originY=0.000
       glyph noteheadBlack 60.832,-0.500
       line  62.012,1.332 -> 62.012,-6.071 t=0.120
     note@-2,0,5 x=65.403 w=2.737
-      glyph accidentalNatural 65.403,0.000
-      glyph noteheadBlack 66.250,1.000
-      glyph noteheadBlack 66.250,0.000
-      glyph noteheadBlack 66.250,-2.500
-      line  67.430,0.832 -> 67.430,-6.410 t=0.120
+      glyph accidentalNatural 64.556,0.000
+      glyph noteheadBlack 65.403,1.000
+      glyph noteheadBlack 65.403,0.000
+      glyph noteheadBlack 65.403,-2.500
+      line  66.583,0.832 -> 66.583,-6.357 t=0.120
     note@-2,0,5 x=69.974 w=2.737
       glyph noteheadBlack 69.974,1.000
       glyph noteheadBlack 69.974,0.000

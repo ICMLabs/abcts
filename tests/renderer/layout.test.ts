@@ -1016,13 +1016,17 @@ describe('grace notes, chord symbols, lyrics and decorations', () => {
     for (const g of graces) expect(g.x).toBeLessThan(main?.x ?? 0)
   })
 
-  it('widens a SHORT note to make room for its grace notes', () => {
-    // Grace notes are ink, so they push the rod out — but only when the rod exceeds the
-    // spring. On a half note they fit inside the width its duration already buys, and
-    // the note does not widen at all; that is correct, not a missing feature.
-    const short = (abc: string) => notesOf(abc)[0]?.width ?? 0
-    expect(short('{ABc}G/4|')).toBeGreaterThan(short('G/4|'))
-    expect(short('{AB}G2|')).toBe(short('G2|'))
+  it('hangs grace notes LEFT of the note, out of its width', () => {
+    // Grace notes reach back into the gap the previous note's spring already opened, and
+    // cost the cursor nothing while they fit in it. abcjs records exactly that: probed on
+    // `C{ABc}G/4 D2`, the graced note has `w = 15.903` — no larger for the graces — and
+    // `extraw = -30`, ten pixels per grace, all of it to the LEFT.
+    const first = (abc: string) => notesOf(abc)[0]
+    expect(first('{ABc}G/4|')?.left ?? 0).toBeGreaterThan(0)
+    expect(first('G/4|')?.left ?? 0).toBe(0)
+    // The width is the note's own, graces or not.
+    expect(first('{ABc}G/4|')?.width).toBe(first('G/4|')?.width)
+    expect(first('{AB}G2|')?.width).toBe(first('G2|')?.width)
   })
 
   it('slashes an acciaccatura and not an appoggiatura', () => {

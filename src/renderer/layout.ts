@@ -196,6 +196,12 @@ export const ENGRAVE = {
    * `[|` is not here because the parser folds it into `double`, where abcjs keeps them
    * apart at 13 and 4 — a model question, not a spacing one.
    */
+  /**
+   * Room a barline wants to its LEFT — abcjs's `extraw = -5` on every bar, flat.
+   * It only bites where the previous element's rod runs right up to the cursor, which is
+   * a compressed line; a line with any slack in it never notices.
+   */
+  barClearance: 5 / 7.75,
   barLayoutWidth: {
     thin: 1 / 7.75,
     double: 4 / 7.75,
@@ -477,10 +483,17 @@ export const ENGRAVE = {
   voltaTextSize: 1.3,
   /** Grace notes are drawn at this fraction of full size. *Behind Bars* ~60%. */
   graceScale: 0.6,
-  /** Horizontal advance per grace note, before the note it decorates. */
-  graceAdvance: 1.1,
-  /** Gap between the last grace note and the notehead it leads into. */
-  graceGap: 0.4,
+  /**
+   * Horizontal advance per grace note, before the note it decorates — a flat **10px**,
+   * and the last grace's own step is the gap to the notehead, so there is no separate
+   * one. abcjs records the whole group as `extraw`: probed on `C{ABc}G/4 D2`, a note with
+   * three graces reads `extraw = -30` exactly, and `w` unchanged at the notehead alone.
+   * Ours stepped 8.52px and then added 5.1px of gap, which put a single grace 3.6px too
+   * far from its note and every grace of a group at the wrong pitch of the ladder.
+   */
+  graceAdvance: 10 / 7.75,
+  /** No gap: the last grace's own advance IS the distance to the notehead. */
+  graceGap: 0,
   /** Length of the hook that resumes a curve at the start of the next system. */
   curveContinuation: 2.0,
   /** How far a slur or tie endpoint sits clear of the notehead it springs from. */
@@ -696,6 +709,15 @@ export interface LayoutElement {
    */
   readonly spring?: number
   readonly rod?: number
+  /**
+   * How far the element's ink reaches LEFT of its own x — abcjs's `-child.extraw`.
+   *
+   * An accidental, a grace group or a barline's clearance sits before the thing that
+   * names the element, and none of it advances the cursor: the gap the spring already
+   * opened absorbs it. It pushes only when there is not enough room, which is abcjs's
+   * `if (er < extraWidth) x += extraWidth - er`.
+   */
+  readonly left?: number
   /**
    * Staff steps of every notehead, ascending — 0 is the middle line, positive upward.
    * Empty for anything unpitched.
@@ -1911,17 +1933,25 @@ function layoutNoteheads(
     )
   }
 
-  // The spring is the natural width, but ink is a rod: an accidental, a displaced head
-  // or a dot column must never be crushed by a short duration, so the element is at
-  // least as wide as what it draws plus the minimum gap.
+  // The spring is the natural width, but ink is a rod: a displaced head or a dot column
+  // must never be crushed by a short duration, so the element is at least as wide as what
+  // it draws to the RIGHT of the notehead, plus the minimum gap.
   const spread = Math.max(0, ...[...offsets.values()].map(Math.abs), dotWidth)
-  const ink = graceWidth + accidentalWidth + spread + head.width + ENGRAVE.noteRodGap
+  const ink = spread + head.width + ENGRAVE.noteRodGap
   return {
     type: 'note',
-    x,
+    // THE ELEMENT IS ITS NOTEHEAD. Grace notes and accidentals hang LEFT of it and cost
+    // the cursor nothing — abcjs's `w` for `^c` is 9.810, the notehead alone, with the
+    // accidental recorded as `extraw = -14.375` and no part of the rod (probed on
+    // `vree-sharps`). It only pushes when there is not enough room already, which the
+    // spring nearly always provides: measured gaps there are a flat 42.43px, exactly the
+    // quarter-note spring, with the sharps sitting inside it. Anchoring at the accidental
+    // instead put every note after the first 9.4px right.
+    x: headX,
     width: Math.max(advance, ink),
     spring: advance,
     rod: ink,
+    left: headX - x,
     staffSteps: steps,
     glyphs,
     lines,
@@ -3248,6 +3278,10 @@ interface Advance {
   readonly rod: number
   readonly gap: number
   readonly duration: number
+  /** Ink reaching LEFT of the element's own x — abcjs's `-child.extraw`. */
+  readonly left: number
+  /** A barline gets no left clearance when it follows a part label or a tempo mark. */
+  readonly kind: 'bar' | 'part' | 'other'
 }
 
 /**
@@ -3292,8 +3326,8 @@ function layoutMeasure(
    */
   const advances: Advance[] = []
   /** A zero-duration element: a bar, a key change, a part label. */
-  const fixed = (rod: number, gap: number): void => {
-    advances.push({ rod, gap, duration: 0 })
+  const fixed = (rod: number, gap: number, kind: Advance['kind'] = 'other', left = 0): void => {
+    advances.push({ rod, gap, duration: 0, left, kind })
   }
   const beams = new Map<number, StemInfo[]>()
   const anchors: NoteAnchor[] = []
@@ -3317,7 +3351,7 @@ function layoutMeasure(
         )
   if (measure.partLabel !== null && partIndex === 0) {
     elements.push(layoutPart(x, measure.partLabel))
-    fixed(0, 0)
+    fixed(0, 0, 'part')
   }
 
   // A mid-tune `K:` and the barline that opens the measure print in SOURCE ORDER.
@@ -3349,7 +3383,12 @@ function layoutMeasure(
     if (measure.openingBarline === null) return
     const bar = layoutBar(x, measure.openingBarline, strict)
     elements.push(bar)
-    fixed(barRod(measure.openingBarline, bar, strict), ENGRAVE.prefixGap)
+    fixed(
+      barRod(measure.openingBarline, bar, strict),
+      ENGRAVE.prefixGap,
+      'bar',
+      ENGRAVE.barClearance,
+    )
     x += ENGRAVE.barGap
   }
   if (keyChangeAt < openingBarAt) {
@@ -3363,7 +3402,7 @@ function layoutMeasure(
   for (const [eventIndex, event] of measure.events.entries()) {
     if (measure.partLabel !== null && eventIndex === partIndex && partIndex > 0) {
       elements.push(layoutPart(x, measure.partLabel))
-      fixed(0, 0)
+      fixed(0, 0, 'part')
     }
     const group = event.type === 'rest' ? null : event.beamGroup
     const stemOut: { value: Omit<StemInfo, 'element'> | null } | null =
@@ -3419,14 +3458,20 @@ function layoutMeasure(
     }
     elements.push(el)
     const duration = ratToNumber(event.duration)
-    advances.push({ rod: el.rod ?? el.width, gap: ENGRAVE.noteRodGap, duration })
+    advances.push({
+      rod: el.rod ?? el.width,
+      gap: ENGRAVE.noteRodGap,
+      duration,
+      left: el.left ?? 0,
+      kind: 'other',
+    })
     x += el.width
   }
 
   // Every event preceded the `P:` — the label belongs after them, before the barline.
   if (measure.partLabel !== null && partIndex === -1) {
     elements.push(layoutPart(x, measure.partLabel))
-    fixed(0, 0)
+    fixed(0, 0, 'part')
   }
 
   let closingBarIndex: number | null = null
@@ -3435,7 +3480,12 @@ function layoutMeasure(
     closingBarIndex = elements.length
     const bar = layoutBar(x, measure.closingBarline, strict)
     elements.push(bar)
-    fixed(barRod(measure.closingBarline, bar, strict), ENGRAVE.prefixGap)
+    fixed(
+      barRod(measure.closingBarline, bar, strict),
+      ENGRAVE.prefixGap,
+      'bar',
+      ENGRAVE.barClearance,
+    )
     x += ENGRAVE.barGap
   }
 
@@ -3686,7 +3736,13 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       let x = ENGRAVE.marginX + indent
       const push = (el: LayoutElement): void => {
         elements.push(el)
-        advances.push({ rod: el.width + ENGRAVE.prefixGap, gap: ENGRAVE.prefixGap, duration: 0 })
+        advances.push({
+          rod: el.width + ENGRAVE.prefixGap,
+          gap: ENGRAVE.prefixGap,
+          duration: 0,
+          left: 0,
+          kind: 'other',
+        })
         x += el.width + ENGRAVE.prefixGap
       }
 
@@ -3705,7 +3761,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         const tempo = layoutTempo(x, score.tempo, strict)
         if (tempo !== null) {
           elements.push(tempo)
-          advances.push({ rod: 0, gap: 0, duration: 0 })
+          advances.push({ rod: 0, gap: 0, duration: 0, left: 0, kind: 'other' })
         }
       }
       return { elements, advances }
@@ -3921,17 +3977,40 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         }
         units += unit
 
+        /** Voices already placed in THIS pass — they follow the cursor if it moves again. */
+        const done: number[] = []
         for (const v of now) {
           const item = itemOf(v)
           if (item === undefined) continue // exhausted: it moved the cursor and nothing else
+          const k = i[v] ?? 0
+          // Ink hanging LEFT of the element pushes the cursor only when the gap already
+          // opened is too small to hold it — `if (er < extraWidth) x += extraWidth - er`
+          // (`layout/voice-elements.js`). An accidental normally sits inside the spring
+          // and costs nothing. abcjs's one exception: a barline straight after a part
+          // label does not shift, because the label has no width of its own to clear.
+          const room = x - (minx[v] ?? 0)
+          const shifts = k === 0 || item.kind !== 'bar' || lines[v]?.items[k - 1]?.kind !== 'part'
+          if (shifts && room < item.left) {
+            // Everything already placed at this time slot moves with the cursor —
+            // abcjs's `shiftRight`, which carries each voice's own expectations along.
+            const dx = item.left - room
+            x += dx
+            for (const w of done) {
+              const row = at[w]
+              if (row !== undefined && row.length > 0) row[row.length - 1] = x
+              minx[w] = (minx[w] ?? 0) + dx
+              nextx[w] = (nextx[w] ?? 0) + dx
+            }
+          }
           at[v]?.push(x)
+          done.push(v)
           unspent[v] = item.duration
           // The line's LAST element keeps its own width and loses its `minspacing`.
-          const last = (i[v] ?? 0) === (lines[v]?.items.length ?? 0) - 1
+          const last = k === (lines[v]?.items.length ?? 0) - 1
           minx[v] = x + item.rod - (last ? item.gap : 0)
           nextx[v] = x + spring(item.duration)
           durationIndex[v] = (durationIndex[v] ?? 0) + item.duration
-          i[v] = (i[v] ?? 0) + 1
+          i[v] = k + 1
         }
         for (const v of waiting) {
           unspent[v] = (unspent[v] ?? 0) - spent

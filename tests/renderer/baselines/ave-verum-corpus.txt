@@ -13,7 +13,7 @@ system 0 width=90.323 originY=0.000
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     slur  65.247,-1.800 -> 67.312,0.700 bulge=-0.500
-    slur  74.357,1.300 -> 77.637,1.800 bulge=0.590
+    slur  74.357,1.300 -> 76.422,1.800 bulge=0.500
     title x=0.000 w=0.000
       text  32.886,-12.774 size=3.484 bold "Ave Verum Corpus"
       text  39.100,-8.572 size=2.452 italic "W. A. Mozart"
@@ -55,14 +55,14 @@ system 0 width=90.323 originY=0.000
       line  74.057,0.332 -> 74.057,-3.000 t=0.120
       text  72.539,8.194 size=2.194 "A-"
     note@-2 x=76.722 w=5.474
-      glyph accidentalSharp 76.722,1.000
-      glyph noteheadBlack 77.937,1.000
-      line  79.117,0.832 -> 79.117,-2.500 t=0.120
+      glyph accidentalSharp 75.508,1.000
+      glyph noteheadBlack 76.722,1.000
+      line  77.902,0.832 -> 77.902,-2.500 t=0.120
     note@-2 x=80.567 w=7.742
-      glyph accidentalNatural 80.567,1.000
-      glyph noteheadHalf 81.414,1.000
-      line  82.594,0.832 -> 82.594,-2.500 t=0.120
-      text  80.922,8.194 size=2.194 "ve,"
+      glyph accidentalNatural 79.721,1.000
+      glyph noteheadHalf 80.567,1.000
+      line  81.747,0.832 -> 81.747,-2.500 t=0.120
+      text  80.076,8.194 size=2.194 "ve,"
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
     voiceName x=1.935 w=0.000
@@ -252,13 +252,13 @@ system 0 width=90.323 originY=0.000
       glyph noteheadBlack 72.877,0.500
       line  74.057,0.332 -> 74.057,-3.000 t=0.120
     note@-2 x=76.722 w=5.474
-      glyph accidentalSharp 76.722,1.000
-      glyph noteheadBlack 77.937,1.000
-      line  79.117,0.832 -> 79.117,-2.500 t=0.120
+      glyph accidentalSharp 75.508,1.000
+      glyph noteheadBlack 76.722,1.000
+      line  77.902,0.832 -> 77.902,-2.500 t=0.120
     note@-2 x=80.567 w=5.474
-      glyph accidentalNatural 80.567,1.000
-      glyph noteheadBlack 81.414,1.000
-      line  82.594,0.832 -> 82.594,-2.500 t=0.120
+      glyph accidentalNatural 79.721,1.000
+      glyph noteheadBlack 80.567,1.000
+      line  81.747,0.832 -> 81.747,-2.500 t=0.120
     note@-2 x=84.413 w=5.474
       glyph noteheadBlack 84.413,1.000
       line  85.593,0.832 -> 85.593,-2.500 t=0.120
