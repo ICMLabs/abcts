@@ -97,15 +97,32 @@ export const ENGRAVE = {
    * it. Was 4.0 — 31px on each side of every staff.
    */
   marginY: 0,
-  /** Gap after a clef or meter before the next element. PROVISIONAL. */
-  prefixGap: 1.0,
   /**
-   * Gap between adjacent accidentals in a key signature. Bravura's advance width for a
-   * sharp equals its ink width exactly, so laying them out on advance alone butts them
-   * edge to edge — and a sharp is 2.8 staff spaces tall, so neighbours at different
-   * heights visibly interpenetrate. Engraving sets them close but clear. PROVISIONAL.
+   * Gap after a clef, key signature or meter before the next element.
+   *
+   * abcjs's `minspacing`, a flat 10px on every `AbsoluteElement` (`absolute-element.js`,
+   * and visible as `minSpacing: 10` in its element dumps). Instrumenting its own layout on
+   * `simple-c` shows the chain exactly: clef at 15 (`padding.left`) w 24.051, meter at
+   * `15 + 24.051 + 10` = 49.051 w 11.795, first note at `49.051 + 11.795 + 10` = 70.846.
+   * Ours was one staff space, 7.75px, so every prefix ran short and took the music with it.
    */
-  keySignatureGap: 0.15,
+  prefixGap: 10 / 7.75,
+  /**
+   * A clef glyph sits this far INTO its element — abcjs's `var dx = 5` in `createClef`,
+   * which is why its clef element is 24.051 wide against a 19.051 glyph. We drew the glyph
+   * flush at the element's left and made the element glyph-wide, losing 5px before the
+   * music on every staff.
+   */
+  clefIndent: 5 / 7.75,
+  /**
+   * Gap between adjacent accidentals in a key signature.
+   *
+   * abcjs steps by `getSymbolWidth(symbol) + 2` (`create-key-signature.js:26`) — a flat 2px,
+   * which its own element dump confirms: five sharps at dx 0, 10.25, 20.5, 30.75, 41 with
+   * each glyph 8.25 wide. Ours was 0.15 of a space, 1.16px, so a five-sharp signature ran
+   * 3.35px narrow and pulled the music left with it.
+   */
+  keySignatureGap: 2 / 7.75,
   /** Gap between an accidental and the notehead it alters. PROVISIONAL. */
   accidentalGap: 0.15,
   /** Gap from the notehead's right edge to the first augmentation dot. PROVISIONAL. */
@@ -994,7 +1011,7 @@ function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null 
   // Every SMuFL clef's origin sits on the line it marks, so the glyph goes exactly where
   // the clef's line is — no per-clef offsets. Line n is (n - 3) * 2 steps from the middle.
   const step = (clef.line - 3) * 2
-  const glyphs = [glyphAt(name, x, step)]
+  const glyphs = [glyphAt(name, x + ENGRAVE.clefIndent, step)]
 
   // `clef=treble-8` and friends: a small `8` under (or over) the clef.
   //
@@ -1017,7 +1034,7 @@ function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null 
     const adjust = bassEight ? 0 : (glyphsFor(strict).advance(name) - width) / 2
     glyphs.push({
       name: 'timeSig8',
-      x: x + adjust,
+      x: x + ENGRAVE.clefIndent + adjust,
       y: pitchStep(drawPitch),
       scale: OCTAVE_MARKER_SCALE,
       role: 'clef',
@@ -1031,7 +1048,7 @@ function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null 
     x,
     // The octave marker does NOT widen the clef: abcjs fixes the element at `w: 10` and
     // adds the `8` inside it (`create-clef.js:11`), so the music behind it does not move.
-    width: glyphsFor(strict).advance(name),
+    width: ENGRAVE.clefIndent + glyphsFor(strict).advance(name),
     staffSteps: [],
     glyphs,
     lines: [],
