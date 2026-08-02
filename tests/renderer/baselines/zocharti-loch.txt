@@ -1,8 +1,8 @@
 tune 0
-bounds  width=90.000 height=76.492 top=-1.935
+bounds  width=90.000 height=76.102 top=-1.935
 systems 2
 system 0 width=90.000 originY=0.000
-  staff 0 originY=20.880
+  staff 0 originY=20.542
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -13,12 +13,13 @@ system 0 width=90.000 originY=0.000
     slur  22.616,0.200 -> 32.611,-2.300 bulge=-1.799
     slur  57.056,-0.800 -> 63.246,-0.800 bulge=-1.114
     title x=0.000 w=0.000
-      text  35.926,-16.421 size=3.484 bold "Zocharti Loch"
-      text  30.201,-12.220 size=2.452 italic "Louis Lewandowski (1821-1894)"
+      text  35.926,-16.082 size=3.484 bold "Zocharti Loch"
+      text  30.201,-11.881 size=2.452 italic "Louis Lewandowski (1821-1894)"
     voiceName x=1.935 w=0.000
       text  1.935,-0.439 size=2.194 bold "Tenore I"
     clef x=12.482 w=2.458
       glyph gClef 12.482,1.000
+      glyph timeSig8 13.241,4.000 scale=0.667
     keySignature x=15.940 w=1.892
       glyph accidentalFlat 15.940,0.000
       glyph accidentalFlat 16.961,-1.500
@@ -26,9 +27,9 @@ system 0 width=90.000 originY=0.000
       glyph timeSig4 18.832,-1.000
       glyph timeSig4 18.832,1.000
     tempo x=21.354 w=0.000
-      glyph noteheadBlack 21.354,-7.000
-      line  22.534,-7.168 -> 22.534,-10.668 t=0.120
-      text  22.920,-7.000 size=1.600 "= 76"
+      glyph noteheadBlack 21.354,-6.661
+      line  22.534,-6.829 -> 22.534,-10.329 t=0.120
+      text  22.920,-6.661 size=2.581 "= 76"
     note@0 x=21.496 w=5.474
       glyph noteheadBlack 21.496,0.000
       line  22.676,-0.168 -> 22.676,-3.500 t=0.120
@@ -80,6 +81,7 @@ system 0 width=90.000 originY=0.000
       text  1.935,1.974 size=2.194 bold "Tenore II"
     clef x=12.482 w=2.458
       glyph gClef 12.482,1.000
+      glyph timeSig8 13.241,4.000 scale=0.667
     keySignature x=15.940 w=1.892
       glyph accidentalFlat 15.940,0.000
       glyph accidentalFlat 16.961,-1.500
@@ -133,7 +135,7 @@ system 0 width=90.000 originY=0.000
       glyph restQuarter 82.284,0.000
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-  staff 1 originY=40.000
+  staff 1 originY=39.542
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
@@ -253,21 +255,22 @@ system 0 width=90.000 originY=0.000
     rest x=73.155 w=10.949
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
-system 1 width=90.000 originY=45.854
-  staff 0 originY=6.060
+system 1 width=90.000 originY=45.455
+  staff 0 originY=6.000
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.000,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.000,-2.000 t=0.130
-    beam   69.350,1.250 -> 72.691,1.750 t=0.500
+    beam   70.368,-5.750 -> 73.709,-5.250 t=0.500
     slur  15.052,0.800 -> 27.595,-1.700 bulge=2.200
-    slur  65.943,-1.800 -> 72.391,-2.300 bulge=-1.161
+    slur  65.943,-0.200 -> 72.391,-0.700 bulge=1.161
     slur  67.012,-0.800 -> 70.509,-1.300 bulge=-0.629
     voiceName x=1.935 w=0.000
       text  1.935,-0.439 size=2.194 bold "T.I"
     clef x=7.242 w=2.458
       glyph gClef 7.242,1.000
+      glyph timeSig8 8.001,4.000 scale=0.667
     keySignature x=10.700 w=1.892
       glyph accidentalFlat 10.700,0.000
       glyph accidentalFlat 11.721,-1.500
@@ -302,10 +305,10 @@ system 1 width=90.000 originY=45.854
       line  65.804,-1.168 -> 65.804,-4.500 t=0.120
     note@4 x=69.350 w=3.871
       glyph noteheadBlack 69.350,-2.000
-      line  69.350,-1.832 -> 69.350,1.500 t=0.120
+      line  70.530,-2.168 -> 70.530,-5.500 t=0.120
     note@3 x=72.691 w=3.871
       glyph noteheadBlack 72.691,-1.500
-      line  72.691,-1.332 -> 72.691,2.000 t=0.120
+      line  73.871,-1.668 -> 73.871,-5.000 t=0.120
     bar x=77.032 w=0.160
       line  77.112,-2.000 -> 77.112,2.000 t=0.160
     note@2 x=78.032 w=9.482
@@ -320,6 +323,7 @@ system 1 width=90.000 originY=45.854
       text  1.935,1.974 size=2.194 bold "T.II"
     clef x=7.242 w=2.458
       glyph gClef 7.242,1.000
+      glyph timeSig8 8.001,4.000 scale=0.667
     keySignature x=10.700 w=1.892
       glyph accidentalFlat 10.700,0.000
       glyph accidentalFlat 11.721,-1.500
@@ -355,7 +359,7 @@ system 1 width=90.000 originY=45.854
     bar x=87.065 w=0.720
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
       line  87.705,-2.000 -> 87.705,2.000 t=0.160
-  staff 1 originY=26.180
+  staff 1 originY=26.500
     staffline 0.000,2.000 -> 90.000,2.000 t=0.130
     staffline 0.000,1.000 -> 90.000,1.000 t=0.130
     staffline 0.000,0.000 -> 90.000,0.000 t=0.130

@@ -4064,6 +4064,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       previousBottomLine === null
         ? cursor
         : Math.max(cursor, previousBottomLine + interSystemSep - topLineOffset)
+
     previousBottomLine = originY + bottomLineOffset
     cursor = originY + height + ENGRAVE.systemGap
     return { ...system, originY }
@@ -4516,6 +4517,8 @@ function verticalExtent(
   // the lane is applied after the note extent is known; their real y is ignored here.
   let endingAbove = false
   let endingBelow = false
+  /** Any dynamic or hairpin on the BELOW side, which reserves a flat lane past the ink. */
+  let sawDynamicBelow = false
   const flag = (y: number) => {
     if (y < 0) endingAbove = true
     else endingBelow = true
@@ -4527,6 +4530,16 @@ function verticalExtent(
   // Melisma extenders and hairpins/glissandi keep their actual geometry — they sit in the
   // lyric and dynamic lanes, not the ending lane.
   for (const line of [...(furniture.melismaLines ?? []), ...(furniture.spannerLines ?? [])]) {
+    // A HAIRPIN arrives here, not on an element, because it resolves after packing — and it
+    // reserves abcjs's flat `dynamicHeightBelow + margin` lane like any dynamic
+    // (`crescendo-element.js:11`), never its own drawn box. Instrumenting abcjs's own
+    // `specialY` per staff showed 4 of ragtime's 46 reserve on a hairpin with no `!mf!`
+    // beside it, and those are exactly the staves whose `lastBottomLine` ran 7.00 pitch
+    // short of abcjs's at the system boundary below them.
+    if (line.role === 'dynamic' && line.y1 > 0) {
+      sawDynamicBelow = true
+      continue
+    }
     const half = line.thickness / 2
     include(Math.min(line.y1, line.y2) - half, Math.max(line.y1, line.y2) + half)
   }
@@ -4538,8 +4551,6 @@ function verticalExtent(
 
   /** LOWEST lyric baseline on the staff — the last verse of the lowest-offset voice. */
   let lyricBottom = Number.NEGATIVE_INFINITY
-  /** Any dynamic or hairpin on the BELOW side, which reserves a flat lane past the ink. */
-  let sawDynamicBelow = false
 
   for (const el of elements) {
     for (const g of el.glyphs) {

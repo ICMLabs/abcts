@@ -1,5 +1,5 @@
 tune 0
-bounds  width=57.646 height=15.543 top=-1.935
+bounds  width=57.646 height=15.983 top=-1.935
 systems 1
 system 0 width=57.646 originY=0.000
   staff 0 originY=10.048
@@ -115,7 +115,7 @@ system 0 width=90.000 originY=0.000
     bar x=87.065 w=0.160
       line  87.145,-2.000 -> 87.145,2.000 t=0.160
 tune 2
-bounds  width=90.000 height=15.543 top=-1.935
+bounds  width=90.000 height=15.983 top=-1.935
 systems 1
 system 0 width=90.000 originY=0.000
   staff 0 originY=10.048
