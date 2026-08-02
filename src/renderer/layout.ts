@@ -464,10 +464,14 @@ export const ENGRAVE = {
   curveMinBulge: 0.5,
   curveMaxBulge: 2.2,
   /**
-   * Width a system may reach before it wraps, in staff spaces. Roughly a page width at a
-   * typical staff size; a host that knows its viewport should pass `systemWidth`.
+   * Page width, in staff spaces — the span a system is justified into.
+   *
+   * abcjs's is `padding.left + staffwidth + padding.right` = 15 + 670 + 15 = **700px**
+   * (`renderer.js:69-72`, `staffwidthScreen`), so the music ends at 685 and its own solver
+   * targets exactly that. Ours was a round 90 spaces, 697.5px, which put the target 2.5px
+   * short and compressed every justified line by that much.
    */
-  systemWidth: 90,
+  systemWidth: 700 / 7.75,
   /**
    * Vertical gap between stacked systems, on top of the ink.
    *
@@ -650,6 +654,21 @@ export interface LayoutElement {
   /** Left edge, staff spaces from the system origin. */
   readonly x: number
   readonly width: number
+  /**
+   * The two halves `width` is the maximum of, for an element that stretches.
+   *
+   * abcjs advances by `max(rod, spacing * sqrt(duration * 8))` — a ROD, the element's own
+   * ink plus its `minspacing`, and a SPRING, the duration advance
+   * (`layout/voice-elements.js`: `x = Math.max(voice.minx, voice.nextx)`). Justification
+   * scales the spring and leaves the rod alone, which is why a line cannot be stretched by
+   * multiplying it: the winner can change as the factor moves, so the total width is
+   * piecewise-linear in the factor and abcjs re-solves it up to 8 times.
+   *
+   * Absent on anything that does not stretch — a barline, a clef, a key signature. Those
+   * are all rod, and `width` is it.
+   */
+  readonly spring?: number
+  readonly rod?: number
   /**
    * Staff steps of every notehead, ascending — 0 is the middle line, positive upward.
    * Empty for anything unpitched.
@@ -986,6 +1005,17 @@ function dotGlyphs(count: number, x: number, step: number, taken: Set<number>): 
  * implemented — every corpus fixture has something a quarter or shorter, so the cap
  * would never fire. Add it with the line's shortest note when a long-only tune appears.
  */
+/**
+ * How far an element advances at a given spring factor — abcjs's
+ * `x = max(voice.minx, voice.nextx)` (`layout/voice-elements.js:81,99`).
+ *
+ * The rod is fixed and the spring scales, so which one wins can CHANGE as the factor moves.
+ * That is what makes the total width piecewise-linear in the factor, and why solving for it
+ * takes iteration rather than a division.
+ */
+const advanceAt = (el: LayoutElement, factor: number): number =>
+  el.spring === undefined ? el.width : Math.max(el.rod ?? 0, factor * el.spring)
+
 export function naturalWidth(
   duration: Rational,
   spacingScale: number = ENGRAVE.spacingScale,
@@ -1458,6 +1488,8 @@ function layoutRest(rest: Rest, advance: number, x: number, strict = true): Layo
     type: 'rest',
     x,
     width: advance,
+    spring: advance,
+    rod: 0,
     staffSteps: [],
     glyphs,
     lines: [],
@@ -1639,7 +1671,17 @@ function layoutNoteheads(
   if (spec === null || steps.length === 0) {
     // Unsupported duration — see noteGlyph. Emit the position with no ink rather than
     // the wrong notehead, so the gap is visible in output and in the gate.
-    return { type: 'note', x, width: advance, staffSteps: steps, glyphs: [], lines: [], texts: [] }
+    return {
+      type: 'note',
+      x,
+      width: advance,
+      spring: advance,
+      rod: 0,
+      staffSteps: steps,
+      glyphs: [],
+      lines: [],
+      texts: [],
+    }
   }
 
   // The style picks the SHAPE; `spec` still decides filled-vs-open, dots, stem and flags,
@@ -1851,6 +1893,8 @@ function layoutNoteheads(
     type: 'note',
     x,
     width: Math.max(advance, ink),
+    spring: advance,
+    rod: ink,
     staffSteps: steps,
     glyphs,
     lines,
@@ -3155,7 +3199,13 @@ interface MeasureBlock {
    * justified, so this is the span the stretch factor applies to.
    */
   readonly musicWidth: number
+  /** What each element advances x by, rod and spring — see `layoutMeasure`. */
+  readonly advances: readonly { readonly rod: number; readonly spring: number }[]
 }
+
+/** A measure's width at a given spring factor. */
+const blockWidthAt = (block: MeasureBlock, factor: number): number =>
+  block.advances.reduce((sum, a) => sum + Math.max(a.rod, factor * a.spring), 0)
 
 /**
  * Lay out one measure at x = 0. Position within a system comes later, by translation,
@@ -3179,6 +3229,18 @@ function layoutMeasure(
   dynamicsAbove = true,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
+  /**
+   * What each element ADVANCES x by, split into rod and spring — parallel to `elements`.
+   *
+   * Recorded rather than re-derived because an element's `width` is not what moves the
+   * cursor: a barline advances by its gap and not its glyph, a part label advances by
+   * nothing at all. Justification has to re-run this sum at a new spring factor, so the
+   * split has to survive the measure.
+   */
+  const advances: { rod: number; spring: number }[] = []
+  const fixed = (rod: number): void => {
+    advances.push({ rod, spring: 0 })
+  }
   const beams = new Map<number, StemInfo[]>()
   const anchors: NoteAnchor[] = []
   let x = 0
@@ -3199,7 +3261,10 @@ function layoutMeasure(
       : measure.events.findIndex(
           (e) => (e.sourceRange?.start ?? Number.POSITIVE_INFINITY) >= partAfter,
         )
-  if (measure.partLabel !== null && partIndex === 0) elements.push(layoutPart(x, measure.partLabel))
+  if (measure.partLabel !== null && partIndex === 0) {
+    elements.push(layoutPart(x, measure.partLabel))
+    fixed(0)
+  }
 
   // A mid-tune `K:` and the barline that opens the measure print in SOURCE ORDER.
   //
@@ -3221,6 +3286,7 @@ function layoutMeasure(
     const change = layoutKeyChange(x, keyInForce, measure.keyChange, clef, strict)
     if (change === null) return
     elements.push(change)
+    fixed(change.width + ENGRAVE.prefixGap)
     x += change.width + ENGRAVE.prefixGap
   }
   const drawOpeningBar = (): void => {
@@ -3228,6 +3294,7 @@ function layoutMeasure(
     // barline from the previous measure's closer.
     if (measure.openingBarline === null) return
     elements.push(layoutBar(x, measure.openingBarline, strict))
+    fixed(ENGRAVE.barGap)
     x += ENGRAVE.barGap
   }
   if (keyChangeAt < openingBarAt) {
@@ -3241,6 +3308,7 @@ function layoutMeasure(
   for (const [eventIndex, event] of measure.events.entries()) {
     if (measure.partLabel !== null && eventIndex === partIndex && partIndex > 0) {
       elements.push(layoutPart(x, measure.partLabel))
+      fixed(0)
     }
     const group = event.type === 'rest' ? null : event.beamGroup
     const stemOut: { value: Omit<StemInfo, 'element'> | null } | null =
@@ -3295,18 +3363,22 @@ function layoutMeasure(
       })
     }
     elements.push(el)
+    advances.push({ rod: el.rod ?? el.width, spring: el.spring ?? 0 })
     x += el.width
   }
 
   // Every event preceded the `P:` — the label belongs after them, before the barline.
-  if (measure.partLabel !== null && partIndex === -1)
+  if (measure.partLabel !== null && partIndex === -1) {
     elements.push(layoutPart(x, measure.partLabel))
+    fixed(0)
+  }
 
   let closingBarIndex: number | null = null
   const musicWidth = x
   if (measure.closingBarline !== null) {
     closingBarIndex = elements.length
     elements.push(layoutBar(x, measure.closingBarline, strict))
+    fixed(ENGRAVE.barGap)
     x += ENGRAVE.barGap
   }
 
@@ -3319,6 +3391,7 @@ function layoutMeasure(
 
   return {
     elements,
+    advances,
     width: x,
     beams,
     anchors,
@@ -3718,7 +3791,81 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     // pixel-gated fixtures; what it costs is that an ungated sparse line (`S3-note-syntax`
     // has a two-note system) stretches across the page where abcjs would hold it in.
     // Reinstate this together with a real spring/rod split, not before.
-    const justify = wanted < 1 ? wanted : !isLast || stretchLast ? wanted : 1
+    /**
+     * THE SPRING SOLVE — abcjs's `calcHorizontalSpacing` loop (`layout/layout.js:70-76,100`).
+     *
+     * Justification scales the SPRINGS and leaves the RODS where they are, so the width is
+     * `sum of max(rod, factor * spring)` — piecewise-linear in the factor, because which
+     * term wins changes as it moves. That cannot be inverted in one step, which is why
+     * abcjs re-solves up to 8 times and why a single multiplier was never going to land.
+     *
+     * Each pass takes the springs that currently win, holds everything else fixed, and
+     * solves `factor = (target - rods) / springs` for them. It converges in two or three
+     * passes on real music; the 8 is abcjs's own bound and its 2px tolerance is kept too.
+     */
+    /**
+     * THE LAST ELEMENT OF A LINE DOES NOT GET ITS `minspacing`.
+     *
+     * `if (voice.i !== voice.children.length - 1) voice.minx += child.minspacing`
+     * (`layout/voice-elements.js`). So a system's final barline advances by its own 1px and
+     * not the 11 every other one takes, and the line is 10px narrower than summing the
+     * blocks suggests. On `twinkle` that 10.01px was the whole of the residual once the
+     * page width was right: our natural came to 673.12px against abcjs's 663.11.
+     */
+    const trailingRelief =
+      span.end > span.start &&
+      plans.some((plan) => (plan.blocks[span.end - 1]?.closingBarIndex ?? null) !== null)
+        ? ENGRAVE.barGap - 1 / 7.75
+        : 0
+    const columnWidthAt = (i: number, factor: number): number =>
+      Math.max(0, ...plans.map((plan) => {
+        const block = plan.blocks[i]
+        return block === undefined ? 0 : blockWidthAt(block, factor)
+      }))
+    /**
+     * The line's width. The relief comes off the TOTAL and never off a column: it is room
+     * the final barline does not take, not a squeeze applied to everything before it.
+     * Subtracting it per column made each block solve to a narrower target and compressed
+     * the whole line — a lone `CDEF|` lost its natural 5.474-space quarter to 5.15.
+     */
+    const totalAt = (factor: number): number => {
+      let sum = 0
+      for (let i = span.start; i < span.end; i++) sum += columnWidthAt(i, factor)
+      return sum - trailingRelief
+    }
+    const solve = (target: number): number => {
+      let factor = 1
+      for (let pass = 0; pass < 8; pass++) {
+        const width = totalAt(factor)
+        if (Math.abs(width - target) < 2 / 7.75) break
+        let springs = 0
+        let rods = 0
+        for (let i = span.start; i < span.end; i++) {
+          // The column is as wide as its widest voice, so that voice's split is the one
+          // that moves when the factor does.
+          let widest: MeasureBlock | undefined
+          let widestW = -1
+          for (const plan of plans) {
+            const block = plan.blocks[i]
+            if (block === undefined) continue
+            const w = blockWidthAt(block, factor)
+            if (w > widestW) {
+              widestW = w
+              widest = block
+            }
+          }
+          for (const a of widest?.advances ?? []) {
+            if (factor * a.spring > a.rod) springs += a.spring
+            else rods += a.rod
+          }
+        }
+        if (springs <= 0) break
+        factor = (target - rods) / springs
+      }
+      return factor
+    }
+    const justify =
+      natural <= 0 ? 1 : wanted < 1 || !isLast || stretchLast ? solve(available) : 1
 
     const staves: LayoutStaff[] = plans.map((plan, voiceIndex) => {
       // The title heads the tune: first system, top staff, and inside the layout so the
@@ -3835,23 +3982,57 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
           // stays the same distance from its notehead however far the measure stretches.
           // Only the music stretches; the closing barline is a rod that keeps its
           // distance from the column edge, so barlines stay aligned across staves.
-          const column = (columnWidths[i] ?? 0) * justify
-          const barSpace = block.width - block.musicWidth
-          const stretch =
-            block.musicWidth > 0 ? Math.max(0, column - barSpace) / block.musicWidth : 1
+          // Each element is re-placed at the running sum of `max(rod, factor * spring)`,
+          // which is abcjs's cursor exactly. The closing barline still snaps to the column
+          // edge: the column is as wide as its widest voice, and a sparser voice's bar has
+          // to land on the same line or the staves stop agreeing.
+          const column = columnWidthAt(i, justify)
+          // EACH BLOCK FILLS ITS COLUMN, so a sparse voice's springs stretch further than a
+          // busy one's and the two still meet at the barline. abcjs gets this for free by
+          // laying every voice out against one shared cursor; our columns are per-measure,
+          // so the factor has to be re-solved per block against the column it must fill.
+          // Placing a block at the SYSTEM factor instead leaves the sparser voice short —
+          // its bar landed 11px left of the other staff's.
+          const blockFactor = ((): number => {
+            let f = justify
+            for (let pass = 0; pass < 8; pass++) {
+              const w = blockWidthAt(block, f)
+              if (Math.abs(w - column) < 1e-9) break
+              let springs = 0
+              let rods = 0
+              for (const a of block.advances) {
+                if (f * a.spring > a.rod) springs += a.spring
+                else rods += a.rod
+              }
+              if (springs <= 0) break
+              f = (column - rods) / springs
+            }
+            return f
+          })()
+          const barSpace = column - blockWidthAt(block, blockFactor) + ENGRAVE.barGap
+          let cursor = 0
+          const placedAt: number[] = []
+          for (const a of block.advances) {
+            placedAt.push(cursor)
+            cursor += Math.max(a.rod, blockFactor * a.spring)
+          }
+          /** How far element `index` moved — beams and anchors ride with their element. */
+          const shiftOf = (index: number): number => {
+            const el = block.elements[index]
+            if (el === undefined) return x
+            return index === block.closingBarIndex
+              ? x + column - barSpace + ENGRAVE.barGap - el.x
+              : x + (placedAt[index] ?? el.x) - el.x
+          }
           block.elements.forEach((el, index) => {
-            const dx =
-              index === block.closingBarIndex
-                ? x + column - barSpace + ENGRAVE.barGap - el.x
-                : x + el.x * (stretch - 1)
-            elements.push(shiftElement(el, dx))
+            elements.push(shiftElement(el, shiftOf(index)))
           })
           for (const [group, members] of block.beams) {
             const shifted = members.map((m) => ({
               ...m,
               // A stem sits at its element's origin plus an offset within it, so it
               // moves with the element rather than scaling on its own.
-              x: m.x * stretch + x,
+              x: m.x + shiftOf(m.element),
               element: m.element + base,
             }))
             beamGroups.set(group, [...(beamGroups.get(group) ?? []), ...shifted])
@@ -3861,13 +4042,13 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
               ...a,
               system: systemIndex,
               element: a.element + base,
-              left: a.left * stretch + x,
-              right: a.right * stretch + x,
+              left: a.left + shiftOf(a.element),
+              right: a.right + shiftOf(a.element),
             })
           }
         }
         // Advance by the COLUMN, not the block, so every staff stays in step.
-        x += (columnWidths[i] ?? 0) * justify
+        x += columnWidthAt(i, justify)
         if (block?.closesVolta) closeVolta(x, true)
       }
 
@@ -3915,7 +4096,9 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       }
     })
 
-    const musicWidth = head + natural * justify + ENGRAVE.marginX
+    // From the SOLVED total, not `natural * justify` — the two part company as soon as a
+    // rod wins over its spring, and the trailing relief is only in the former.
+    const musicWidth = head + totalAt(justify) + ENGRAVE.marginX
 
     /**
      * The drawing has to fit its PROSE too, not just its music.
