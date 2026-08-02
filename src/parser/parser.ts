@@ -250,6 +250,12 @@ function clefWith(current: Clef, spec: string): Clef {
   return parseClef(spec) ?? { ...current, staffLines: staffLineCount(spec) }
 }
 
+/** `V:… stems=up|down` (ABC 2.1 §4.19), or `null` when the field does not set it. */
+function stemModifier(spec: string): 'up' | 'down' | null {
+  const m = /\bstems=(up|down)\b/i.exec(spec)
+  return m?.[1] === undefined ? null : (m[1].toLowerCase() as 'up' | 'down')
+}
+
 /** `stafflines=` written with no `clef=` beside it — see `Voice.staffLineOverride`. */
 const bareStaffLines = (spec: string): number | null =>
   /\bstafflines=/i.test(spec) && parseClef(spec) === null ? staffLineCount(spec) : null
@@ -584,6 +590,8 @@ class VoiceBuilder {
   octaveShift = 0
   /** `V:… stafflines=` with no `clef=` — see `Voice.staffLineOverride`. */
   staffLineOverride: number | null = null
+  /** `V:… stems=up|down` — see `Voice.stemDirection`. */
+  stemDirection: 'up' | 'down' | null = null
   clef: Clef | null = null
   /** `V:… name=` / `subname=` — labels printed left of the staff. See `Voice`. */
   name: string | null = null
@@ -1005,6 +1013,7 @@ class VoiceBuilder {
       octaveShift: this.octaveShift,
       clef: this.clef,
       staffLineOverride: this.staffLineOverride,
+      stemDirection: this.stemDirection,
       name: this.name,
       subname: this.subname,
       measures: padOverlays(measures, this.meterForOverlays),
@@ -1528,6 +1537,8 @@ class Parser {
         if (voiceClef !== null) builder.voiceFor(id).clef = voiceClef
         const bare = bareStaffLines(value)
         if (bare !== null) builder.voiceFor(id).staffLineOverride = bare
+        const stems = stemModifier(value)
+        if (stems !== null) builder.voiceFor(id).stemDirection = stems
         const name = voiceLabel(value, ['name', 'nm'])
         if (name !== undefined) builder.voiceFor(id).name = name
         const subname = voiceLabel(value, ['subname', 'sname', 'snm'])

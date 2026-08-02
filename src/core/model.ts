@@ -549,6 +549,17 @@ export interface Voice {
    */
   readonly staffLineOverride: number | null
   /**
+   * `V:… stems=up|down` — every stem in this voice forced one way. `null` when absent.
+   *
+   * It WINS over the shared-staff convention rather than combining with it, which is
+   * abcjs's own precedence: `createVoice` takes `if (params.stem) … else if (voiceNum > 0)`
+   * (`parse/tune-builder.js:971-986`), so a declared `stems=` also suppresses the `up`
+   * that would otherwise be back-filled onto the staff's first voice. It beats the BEAM's
+   * choice too — abcjs hands it to `BeamElem` as `forceup`/`forcedown`, checked before the
+   * average-pitch rule (`beam-element.js:74-86`).
+   */
+  readonly stemDirection: 'up' | 'down' | null
+  /**
    * `V:… name=` — the label printed to the left of the FIRST system. `null` means none.
    * abcjs reserves horizontal space for it, shifting the staff (and its notes) right.
    */

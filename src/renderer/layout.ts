@@ -1696,7 +1696,22 @@ function layoutNoteheads(
     // chord's stem spans the whole spread rather than one notehead's worth.
     const base = stepToY(up ? lowest : highest) + ay
     const far = stepToY(up ? highest : lowest)
-    const tip = far + (up ? -ENGRAVE.stemLength : ENGRAVE.stemLength)
+    // A STEM ON A NOTE FAR FROM THE MIDDLE LINE IS STRETCHED TO REACH IT — abcjs's own
+    // words, `create-note-head.js:39`: "the stem will have been stretched to the middle
+    // line if it is far from the center". A down-stem's tip is pulled down to the middle
+    // line and an up-stem's pushed up to it, so a note high above the staff gets a longer
+    // stem than the standard length rather than a floating stub. Conventional engraving,
+    // and abcjs's `p1`/`p2` clamps say the same (`abstract-engraver.js:740-745`).
+    //
+    // ONLY WHEN NO DIRECTION IS FORCED, which is what `forcedUp === null` means here:
+    // abcjs guards both clamps on `!stemdir`, and `stemdir` is truthy for a `V:… stems=`,
+    // for the shared-staff convention, AND inside a beam (`createBeam` sets it around the
+    // notes it builds). A beamed stem is retargeted to the beam anyway, so extending it
+    // first would be undone. `stems=down` bass voices therefore keep the plain length,
+    // which is what makes ragtime's bass staves match abcjs to a tenth of a pitch.
+    const plain = far + (up ? -ENGRAVE.stemLength : ENGRAVE.stemLength)
+    const middle = stepToY(0)
+    const tip = forcedUp !== null ? plain : up ? Math.min(plain, middle) : Math.max(plain, middle)
     lines.push({
       x1: stemX,
       y1: base,
@@ -3347,6 +3362,14 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
   const opensAt = (index: number): number =>
     voices[index]?.measures?.[0]?.sourceRange?.start ?? Number.POSITIVE_INFINITY
   const stemForVoice = (index: number): boolean | null => {
+    // `V:… stems=` WINS over the shared-staff convention — abcjs takes
+    // `if (params.stem) … else if (voiceNum > 0)` (`parse/tune-builder.js:971-986`), so a
+    // declared direction also suppresses the `up` back-filled onto the staff's first voice.
+    // ponytail: that suppression is not modelled separately. It only shows when SOME voices
+    // on a staff declare and others do not, which no corpus tune does — ragtime declares on
+    // all three of its bass voices and none of its treble ones.
+    const declared = voices[index]?.stemDirection
+    if (declared != null) return declared === 'up'
     const staff = voicesOfStaff.find((members) => members.includes(index))
     if (staff === undefined || staff.length < 2) return null
     if (staff.indexOf(index) !== 0) return false
@@ -3898,6 +3921,8 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
               ]
             })()
       const extent = verticalExtent(positioned, staff.beams, strict, staff)
+      if (process.env.ABCTS_EXTENT)
+        console.log(`EXTENT ${systemIndex} ${(-extent.top * 2 - 4).toFixed(3)} ${(extent.bottom * 2 - 4).toFixed(3)}`)
       const stacked = cursor - extent.top
       // The separation is a minimum LINE-to-LINE distance, which is what abcjs measures:
       // `draw.js:86-89` works from each staff's overhang past its own outer lines, so
@@ -4545,7 +4570,15 @@ function beamDirections(voice: Voice | undefined, clef: Clef): Map<number, boole
   }
 
   const directions = new Map<number, boolean>()
+  // `V:… stems=` beats the group's own choice, as abcjs's `forceup`/`forcedown` do — they
+  // are tested BEFORE the pitch rule (`beam-element.js:74-86`). A beam cannot join opposed
+  // stems, so a forced voice's beams simply all point the declared way.
+  const declared = voice?.stemDirection
   for (const [group, { min, max }] of extremes) {
+    if (declared != null) {
+      directions.set(group, declared === 'up')
+      continue
+    }
     // Whichever extreme is further from the middle line decides; ties go stem-down.
     directions.set(group, Math.abs(min) > Math.abs(max) ? min < 0 : max < 0)
   }
