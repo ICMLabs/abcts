@@ -171,12 +171,31 @@ where abcjs's gap proves its natural, and that deficit did **not move at all** w
 
 It is BEAM PLACEMENT. abcjs's beamed stems have no fixed length: `layout/beam.js` runs
 `calcYPos` over the group and draws each stem from its notehead to the resulting beam line,
-so the reach follows the beam. Ours uses a fixed `stemLength` and retargets afterwards.
-**Porting `calcYPos` is the next step and the last one.**
+so the reach follows the beam. Ours used a fixed `stemLength` and retargeted afterwards.
 
-Two things it will not explain, so check them separately: treble staves 0 and 8 are 8.66 and
-6.91 pitch short ABOVE against ~1.5 elsewhere — a direction difference on specific beam
-groups — and the beam-direction port is still unsettled (see the negative result above).
+**`calcYPos` IS NOW PORTED** (`ca9c7d5`, same staged branch) and it was NOT the last step.
+
+The port itself is settled and worth having. abcjs puts the beam a fixed distance beyond
+the group's EXTREME note, wherever in the group that note falls, where we fitted through
+the two END notes and then pushed out for a minimum stem length — the two agree only when
+an end note is the extreme, which in a dense sixteenth run is rarely. `barpos` and
+`barminpos` are equal, so `calcYPos`'s `average` term can never win and it reduces to
+`extreme ± (stemHeight − 2)`. `calcSlant` and the "make the beam go down to the middle"
+flatten came with it.
+
+What it bought, measured:
+- `little swallow` dySpread **7.1 → 4.5**;
+- `ragtime-nightingale` notehead distance **36.9 → 33.7px** — closer, even though its
+  dySpread widens 121.5 → 125.6, which is why it is staged rather than landed;
+- ragtime's down-stem depth error collapses from a scatter (−0.92, −1.59, −2.59) to a
+  near-CONSTANT **−1.59 pitch** across staves 2–7. First time that residual has had one
+  value. It is close to `beamThickness + beamSpacing` (1.5) and is the obvious next thread.
+
+**The dominant remaining term is beam DIRECTION, not placement.** Treble staves 0 and 8 are
+**8.66 and 6.91 pitch short ABOVE** against ~1.5 elsewhere: abcjs points those groups' stems
+up and we point them down. No placement fix touches that, and the direction port is still
+unsettled — the average-pitch rule does not explain it either (negative result above).
+**Settle direction first; it is now the gate on ragtime.**
 
 ### A trap that cost real time this session — the dump is PRE-BEAM, again
 
