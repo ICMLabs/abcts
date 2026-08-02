@@ -1020,7 +1020,18 @@ export function naturalWidth(
   duration: Rational,
   spacingScale: number = ENGRAVE.spacingScale,
 ): number {
-  const d = ratToNumber(duration)
+  return springForDuration(ratToNumber(duration), spacingScale)
+}
+
+/**
+ * The same curve from a plain number, for a duration that is no longer a written note's.
+ *
+ * A voice waiting through another's shorter notes has only PART of its duration left to
+ * spend, and abcjs recomputes its expectation from that remainder
+ * (`othervoices[i].spacingduration -= spacingduration; updateNextX(...)`). The remainder is
+ * arithmetic on durations already spent, not a notated value, so it arrives as a float.
+ */
+export function springForDuration(d: number, spacingScale: number = ENGRAVE.spacingScale): number {
   if (!(d > 0)) return ENGRAVE.minColumnGap
   return Math.max(ENGRAVE.minColumnGap, spacingScale * Math.sqrt(d / ENGRAVE.spacingReference))
 }
@@ -3199,8 +3210,17 @@ interface MeasureBlock {
    * justified, so this is the span the stretch factor applies to.
    */
   readonly musicWidth: number
-  /** What each element advances x by, rod and spring — see `layoutMeasure`. */
-  readonly advances: readonly { readonly rod: number; readonly spring: number }[]
+  /**
+   * Per element: the ROD and SPRING it advances x by, the musical time it starts at, and
+   * its duration. `onset` is abcjs's `voice.durationindex`, `duration` its
+   * `voice.spacingduration` — both needed to walk every voice on one cursor.
+   */
+  readonly advances: readonly {
+    readonly rod: number
+    readonly spring: number
+    readonly onset: number
+    readonly duration: number
+  }[]
 }
 
 /** A measure's width at a given spring factor. */
@@ -3237,9 +3257,11 @@ function layoutMeasure(
    * nothing at all. Justification has to re-run this sum at a new spring factor, so the
    * split has to survive the measure.
    */
-  const advances: { rod: number; spring: number }[] = []
+  const advances: { rod: number; spring: number; onset: number; duration: number }[] = []
+  /** Musical time reached so far — abcjs's `voice.durationindex`. */
+  let onset = 0
   const fixed = (rod: number): void => {
-    advances.push({ rod, spring: 0 })
+    advances.push({ rod, spring: 0, onset, duration: 0 })
   }
   const beams = new Map<number, StemInfo[]>()
   const anchors: NoteAnchor[] = []
@@ -3363,7 +3385,9 @@ function layoutMeasure(
       })
     }
     elements.push(el)
-    advances.push({ rod: el.rod ?? el.width, spring: el.spring ?? 0 })
+    const duration = ratToNumber(event.duration)
+    advances.push({ rod: el.rod ?? el.width, spring: el.spring ?? 0, onset, duration })
+    onset += duration
     x += el.width
   }
 
@@ -3817,17 +3841,98 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       plans.some((plan) => (plan.blocks[span.end - 1]?.closingBarIndex ?? null) !== null)
         ? ENGRAVE.barGap - 1 / 7.75
         : 0
-    const columnWidthAt = (i: number, factor: number): number =>
-      Math.max(0, ...plans.map((plan) => {
-        const block = plan.blocks[i]
-        return block === undefined ? 0 : blockWidthAt(block, factor)
-      }))
     /**
-     * The line's width. The relief comes off the TOTAL and never off a column: it is room
-     * the final barline does not take, not a squeeze applied to everything before it.
-     * Subtracting it per column made each block solve to a narrower target and compressed
-     * the whole line — a lone `CDEF|` lost its natural 5.474-space quarter to 5.15.
+     * ONE CURSOR ACROSS EVERY VOICE — abcjs's `layoutStaffGroup` loop, ported.
+     *
+     * Each pass takes the voices whose next element sits at the smallest pending musical
+     * time, moves the cursor to the furthest right any of them wants to be, places them all
+     * THERE, and then tells every voice still waiting that some of its time has been spent
+     * without it. Simultaneous notes get the same x by construction.
+     *
+     * Laying each voice out alone and reconciling at barlines — what we did — aligns the
+     * bars and nothing between them: `multi-voice-triplet-brackets` had abcjs's gaps at a
+     * regular 24px against ours at 26, 25, 11, 40, 21, 5.
+     *
+     * THE WAITING VOICES ARE THE WHOLE TRICK, and leaving them out is what made the first
+     * attempt at this worse than no attempt. abcjs:
+     *
+     *     // if a voice had planned to use up 5 spacing units but is not in line to be laid
+     *     // out at this duration level - where we've used 2 spacing units - then we must
+     *     // use up 3 spacing units, not 5
+     *     othervoices[i].spacingduration -= spacingduration
+     *     updateNextX(x, spacing, othervoices[i])
+     *
+     * A half note does not push the cursor its full width at once; it gives up its width in
+     * instalments as another voice's shorter notes go by. The recompute is
+     * `sqrt(remaining)`, NOT a proportional share, so it cannot be faked by splitting an
+     * advance evenly across the onsets it spans.
+     *
+     * Per COLUMN rather than per line, which is equivalent because barlines already agree
+     * across voices, and much less invasive.
      */
+    const timelineAt = (i: number, factor: number): { positions: number[][]; width: number } => {
+      const lists = plans.map((plan) => plan.blocks[i]?.advances ?? [])
+      const at = lists.map(() => 0)
+      const positions: number[][] = lists.map(() => [])
+      // abcjs's per-voice state: where it wants its next element, and how much of its
+      // current note's duration is still unspent.
+      const minx = lists.map(() => 0)
+      const nextx = lists.map(() => 0)
+      const unspent = lists.map(() => 0)
+      const index = lists.map(() => 0)
+      const spring = (d: number): number => factor * springForDuration(d, spacingScale)
+      const nextXOf = (v: number): number => Math.max(minx[v] ?? 0, nextx[v] ?? 0)
+      let x = 0
+      // Bounded rather than `while (true)`: every pass advances at least one voice's cursor,
+      // so the element count is the ceiling, and a bug cannot hang the renderer.
+      const passes = lists.reduce((n, l) => n + l.length, 0)
+      for (let pass = 0; pass <= passes; pass += 1) {
+        let currentTime = Number.POSITIVE_INFINITY
+        for (const [v, list] of lists.entries()) {
+          const a = list[at[v] ?? 0]
+          if (a !== undefined) currentTime = Math.min(currentTime, index[v] ?? a.onset)
+        }
+        if (!Number.isFinite(currentTime)) break
+        const current: number[] = []
+        const waiting: number[] = []
+        for (const [v, list] of lists.entries()) {
+          if (list[at[v] ?? 0] === undefined) continue
+          // Floating durations, so compare with a tolerance as abcjs does.
+          ;((index[v] ?? 0) - currentTime > 1e-9 ? waiting : current).push(v)
+        }
+        if (current.length === 0) break
+
+        // The cursor moves to the furthest right any current voice wants to be, and the
+        // voice that pushed it there is the one whose spent time the others must account for.
+        let spent = 0
+        for (const v of current) {
+          if (nextXOf(v) > x) {
+            x = nextXOf(v)
+            spent = unspent[v] ?? 0
+          }
+        }
+        for (const v of current) {
+          const a = lists[v]?.[at[v] ?? 0]
+          if (a === undefined) continue
+          positions[v]?.push(x)
+          unspent[v] = a.duration
+          minx[v] = x + a.rod
+          nextx[v] = x + spring(a.duration)
+          index[v] = (index[v] ?? 0) + a.duration
+          at[v] = (at[v] ?? 0) + 1
+        }
+        for (const v of waiting) {
+          const left = (unspent[v] ?? 0) - spent
+          unspent[v] = left
+          nextx[v] = x + spring(left)
+        }
+      }
+      // The column ends where the last thing placed still needs room.
+      let width = x
+      for (const [v] of lists.entries()) width = Math.max(width, nextXOf(v))
+      return { positions, width }
+    }
+    const columnWidthAt = (i: number, factor: number): number => timelineAt(i, factor).width
     const totalAt = (factor: number): number => {
       let sum = 0
       for (let i = span.start; i < span.end; i++) sum += columnWidthAt(i, factor)
@@ -3987,42 +4092,18 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
           // edge: the column is as wide as its widest voice, and a sparser voice's bar has
           // to land on the same line or the staves stop agreeing.
           const column = columnWidthAt(i, justify)
-          // EACH BLOCK FILLS ITS COLUMN, so a sparse voice's springs stretch further than a
-          // busy one's and the two still meet at the barline. abcjs gets this for free by
-          // laying every voice out against one shared cursor; our columns are per-measure,
-          // so the factor has to be re-solved per block against the column it must fill.
-          // Placing a block at the SYSTEM factor instead leaves the sparser voice short —
-          // its bar landed 11px left of the other staff's.
-          const blockFactor = ((): number => {
-            let f = justify
-            for (let pass = 0; pass < 8; pass++) {
-              const w = blockWidthAt(block, f)
-              if (Math.abs(w - column) < 1e-9) break
-              let springs = 0
-              let rods = 0
-              for (const a of block.advances) {
-                if (f * a.spring > a.rod) springs += a.spring
-                else rods += a.rod
-              }
-              if (springs <= 0) break
-              f = (column - rods) / springs
-            }
-            return f
-          })()
-          const barSpace = column - blockWidthAt(block, blockFactor) + ENGRAVE.barGap
-          let cursor = 0
-          const placedAt: number[] = []
-          for (const a of block.advances) {
-            placedAt.push(cursor)
-            cursor += Math.max(a.rod, blockFactor * a.spring)
-          }
+          // Every voice reads its x out of the COLUMN's shared timeline, so notes at the
+          // same musical time land on the same x however differently the voices are
+          // written. Internal geometry is untouched: `shiftElement` translates a whole
+          // element, so an accidental keeps its distance from its notehead. The barline
+          // needs no special case — it is one more entry on the timeline, and every voice's
+          // copy lands on the same x because they all read the same one.
+          const placedAt = timelineAt(i, justify).positions[voiceIndex] ?? []
           /** How far element `index` moved — beams and anchors ride with their element. */
           const shiftOf = (index: number): number => {
             const el = block.elements[index]
             if (el === undefined) return x
-            return index === block.closingBarIndex
-              ? x + column - barSpace + ENGRAVE.barGap - el.x
-              : x + (placedAt[index] ?? el.x) - el.x
+            return x + (placedAt[index] ?? el.x) - el.x
           }
           block.elements.forEach((el, index) => {
             elements.push(shiftElement(el, shiftOf(index)))
