@@ -1066,8 +1066,8 @@ function layoutMeter(x: number, numerator: number, denominator: number): LayoutE
  * Staff steps for accidentals in a key signature, in the order they are written.
  *
  * Sharps run F C G D A E B and flats the reverse, each at a fixed staff position — the
- * placement is conventional, not derived, and is the same in every book. Treble clef;
- * other clefs shift these, which is part of the clef work and not yet done.
+ * placement is conventional, not derived, and is the same in every book. These are the
+ * TREBLE positions; `keySignatureShift` moves them for any other clef.
  */
 const SHARP_STEPS = [4, 1, 5, 2, -1, 3, 0] as const
 const FLAT_STEPS = [0, 3, -1, 2, -2, 1, -3] as const

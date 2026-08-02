@@ -282,12 +282,16 @@ function staffLineCount(spec: string): number {
 function middleLineOverride(spec: string): number | null {
   // `middle=` and `transpose=` interact — a vocal score writes its basses in treble range,
   // shifts them down whole octaves with `transpose=`, and repositions the clef with
-  // `middle=` so they read correctly, the two nearly cancelling (`zocharti-loch`). We
-  // realize `middle=` but not the WRITTEN half of `transpose=`, so applying `middle=` alone
-  // where `transpose=` is also present moves that voice the wrong way. Honour `middle=` only
-  // when `transpose=` is absent — the case we can get right (`voice-middle-after-clef`) —
-  // and leave the combined case for when `transpose=` (written) lands.
-  // ponytail: drop this guard once written `transpose=` exists; the two then compose.
+  // `middle=` so they read correctly, the two nearly cancelling (`zocharti-loch`). Honour
+  // `middle=` only when `transpose=` is absent, which is what abcjs's output does.
+  //
+  // NOT a placeholder for unimplemented work, though it was recorded as one. abcjs's
+  // RENDERER never reads `transpose=` at all: `src/write/` has zero references to it and
+  // only `src/synth/` uses it, so it is an audio-only field there and there is no "written
+  // half" owed. (`create-clef.js:30-31` likewise has its `verticalPos` line commented out.)
+  // Both `middle=` fixtures confirm the guard reproduces abcjs — `voice-middle-after-clef`
+  // at dy 0.0 with it honoured, `zocharti-loch` at dy 0.9 with it suppressed. Measured, not
+  // reasoned: honouring `middle=` here anyway sent zocharti to dy 72.
   if (/\btranspose=/.test(spec)) return null
   const m = /\b(?:middle|m)=\^*_*=?([A-Ga-g])([,']*)/.exec(spec)
   if (!m) return null
