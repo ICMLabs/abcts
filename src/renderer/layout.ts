@@ -1914,7 +1914,9 @@ function layoutNoteheads(
     }
   }
 
-  const texts = event === null ? [] : noteText(event, headX, headInk, strict)
+  /** How far the note's attached text reaches either side of it — see `noteText`. */
+  const textSpan = { left: 0, right: 0 }
+  const texts = event === null ? [] : noteText(event, headX, headInk, strict, textSpan)
   if (event !== null && event.type !== 'rest') {
     texts.push(...decorationTexts(event.decorations, headX, head.width))
   }
@@ -1937,7 +1939,16 @@ function layoutNoteheads(
   // must never be crushed by a short duration, so the element is at least as wide as what
   // it draws to the RIGHT of the notehead, plus the minimum gap.
   const spread = Math.max(0, ...[...offsets.values()].map(Math.abs), dotWidth)
-  const ink = spread + head.width + ENGRAVE.noteRodGap
+  // A lyric or a chord symbol is CENTRED on the note and counts on BOTH sides. It is the
+  // dominant term in sung music: `birth-` makes a 9.81px notehead occupy 21.28px each way.
+  //
+  // An unbeamed FLAG counts too — abcjs reads `flags.u8th` at `dx = 9.21, w = 6.69`, so an
+  // eighth's rod is 15.90 where its notehead alone is 9.81. A beamed note has no flag and
+  // stays at its notehead.
+  const flagInk = glyphs
+    .filter((g) => g.role === 'flag')
+    .map((g) => g.x - headX + glyphsFor(strict).width(g.name))
+  const ink = Math.max(spread + head.width, textSpan.right, ...flagInk) + ENGRAVE.noteRodGap
   return {
     type: 'note',
     // THE ELEMENT IS ITS NOTEHEAD. Grace notes and accidentals hang LEFT of it and cost
@@ -1951,7 +1962,7 @@ function layoutNoteheads(
     width: Math.max(advance, ink),
     spring: advance,
     rod: ink,
-    left: headX - x,
+    left: Math.max(headX - x, textSpan.left),
     staffSteps: steps,
     glyphs,
     lines,
@@ -2370,13 +2381,41 @@ function noteText(
   headWidth: number,
   /** `abcjs-strict` — gates whether `%%vocalfont` is realized. See the verses block. */
   strict = true,
+  /**
+   * Out-param: how far the note's CENTRED text reaches each side of the element's x.
+   *
+   * abcjs's `addCentered` (`creation/elements/absolute-element.js`), verbatim:
+   *
+   *     var half = elem.w / 2;
+   *     if (-half < this.extraw) this.extraw = -half;      // LEFT: half, dx ignored
+   *     if (elem.dx + half > this.w) this.w = elem.dx + half;   // RIGHT: dx + half
+   *
+   * so a lyric and a chord symbol both widen the note AND reach back before it, and the
+   * two sides are not symmetric because the left one drops `dx`. The two differ in where
+   * they are anchored, which the probes give directly: a lyric has `dx = 0` and a chord
+   * symbol `dx = 4.91`, half a notehead — `Hap-` reads `w = 18.438, extraw = -18.438`
+   * while `Amaj7` reads `w = 27.593, extraw = -22.688` off a 45.38px string.
+   *
+   * ANNOTATIONS ARE NOT IN THIS. abcjs gives `"^Allegro"` a RelativeElement of `w = 0`:
+   * probed on `stacked-annotations`, four annotated notes all read `w = 15.902,
+   * extraw = 0` — the flag, and nothing from the text. They draw without occupying.
+   */
+  spans: { left: number; right: number } | null = null,
 ): PlacedText[] {
   if (event.type === 'rest') return []
   const texts: PlacedText[] = []
   const centre = headX + headWidth / 2
+  /** A text CENTRED on the note, `dx` from its x. Annotations do not call this. */
+  const centred = (text: string, size: number, dx: number): void => {
+    if (spans === null) return
+    const half = textWidth(text, size) / 2
+    spans.left = Math.max(spans.left, half)
+    spans.right = Math.max(spans.right, dx + half)
+  }
 
   if (event.chordSymbol !== null && event.chordSymbol !== '') {
     const size = ENGRAVE.chordTextSize
+    centred(event.chordSymbol, size, headWidth / 2)
     texts.push({
       text: event.chordSymbol,
       // The lane is only the origin: `anchorAboveStaff` moves the whole set onto the
@@ -2476,6 +2515,7 @@ function noteText(
     // Verse 1 carries the font; later verses stay at the default until `extraVerses` can
     // hold one of their own.
     const size = index === 0 ? lyricSize : ENGRAVE.lyricTextSize
+    centred(verse, size, 0)
     texts.push({
       text: verse,
       // Tagged so the melisma pass can find the syllable it must extend from. Matching
@@ -3847,6 +3887,21 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
    * actually landed.
    */
   const musicLeft: number[] = []
+  /**
+   * THE PAGE TARGET GROWS TO THE WIDEST LINE SO FAR, and later lines justify to the new
+   * width rather than to the page.
+   *
+   * abcjs's `layout()`: `if (Math.round(thisWidth) > Math.round(maxWidth)) maxWidth =
+   * thisWidth`, where `thisWidth` is what `setXSpacing` returns for the line just solved
+   * and `maxWidth` is what the next line is told to fill. A line that cannot compress to
+   * the page — its rods already exceed it — therefore widens the page for everything
+   * after it. Probed on `happy-birthday`: line 1 stops at 686.771 against a 685 target
+   * (inside abcjs's own 2px tolerance) and line 2 is then justified to 686.771, not 685.
+   *
+   * `expandToWidest` would re-run the earlier lines at the final width; abcjs leaves it
+   * off by default and so do we, which is why this is a forward-only ratchet.
+   */
+  let pageWidth = systemWidth - 2 * ENGRAVE.marginX
 
   const systems: LayoutSystem[] = spans.map((span, systemIndex) => {
     const withMeter = systemIndex === 0
@@ -4046,7 +4101,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
      * Measured on `voice-middle-after-clef`: `minSpace=0`. `spacing * 0 > 50` is never true,
      * so the guard is inert in abcjs itself and implementing it would be a divergence.
      */
-    const target = systemWidth - ENGRAVE.marginX
+    const target = pageWidth + ENGRAVE.marginX
     // Trailing `%%center` text means the music is no longer the LAST LINE of the tune, so
     // abcjs justifies it unconditionally — its last-line guard tests the last LINE, not
     // the last STAFF line. `center-text` sat 219px out on exactly this.
@@ -4070,6 +4125,10 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       return factor
     })()
     const solved = lineAt(justify)
+    // The ratchet. abcjs rounds to whole PIXELS before comparing, so a sub-pixel overrun
+    // does not drag the page with it.
+    const thisWidth = solved.width - leftEdge
+    if (Math.round(thisWidth * 7.75) > Math.round(pageWidth * 7.75)) pageWidth = thisWidth
     musicLeft[systemIndex] = Math.min(
       ...lines.map((line, v) => {
         const first = line.slots.findIndex((slot) => slot.block >= 0)

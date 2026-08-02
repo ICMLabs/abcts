@@ -2008,50 +2008,46 @@ describe('tremolo, phrases and technique', () => {
 })
 
 describe('text metrics', () => {
-  const centreOf = (text: string) => {
+  // READ OFF THE NOTE'S LEFT EXTENT, not the drawn x of the text.
+  //
+  // A lyric is centred on its note and reaches half its width back before it, which is
+  // abcjs's `addCentered`. At the START of a line that half is the only thing between the
+  // note and the cursor, so abcjs's `if (er < extraWidth) x += extraWidth - er` shifts the
+  // note right by exactly it and every syllable, narrow or wide, ends up drawn at the same
+  // absolute x. These tests used to compare that x and so measured a constant. `left` is
+  // the quantity they were always about: does the estimate tell characters apart.
+  const leftOf = (text: string) => {
     const staff = layout(parse(`X:1\nL:1/4\nK:C\nC|\nw:${text}\n`).scores[0] as Score, {
       systemWidth: 200,
     }).systems[0]?.staves[0]
-    const t = (staff?.elements ?? []).flatMap((e) => e.texts).find((x) => x.text === text)
-    return t
+    return (staff?.elements ?? []).find((e) => e.type === 'note')?.left ?? 0
+  }
+  const sizeOf = (text: string) => {
+    const staff = layout(parse(`X:1\nL:1/4\nK:C\nC|\nw:${text}\n`).scores[0] as Score, {
+      systemWidth: 200,
+    }).systems[0]?.staves[0]
+    return (staff?.elements ?? []).flatMap((e) => e.texts).find((x) => x.text === text)?.size ?? 1
   }
 
   it('measures narrow and wide characters differently', () => {
     // The whole point. The flat estimate this replaces measured these the same, with a
     // median error of 24% against real serif metrics over the corpus.
-    const narrow = centreOf('iiiii')
-    const wide = centreOf('WWWWW')
-    expect(narrow).toBeDefined()
-    expect(wide).toBeDefined()
-    // Centred, so a wider string starts further LEFT of the same notehead.
-    expect(wide?.x ?? 0).toBeLessThan(narrow?.x ?? 0)
+    expect(leftOf('WWWWW')).toBeGreaterThan(leftOf('iiiii'))
   })
 
   it('treats CJK as full width', () => {
     // A range test, not a table entry — there are tens of thousands of them and they
     // share one advance. The corpus's Chinese-lyric fixture was being measured at half
     // its real width, which was the whole of the residual error after the table landed.
-    const cjk = centreOf('小燕子')
-    const latin = centreOf('abc')
-    expect(cjk).toBeDefined()
-    // Three full-width characters are about twice three Latin letters, so they start
-    // markedly further left when centred on the same note.
-    expect(cjk?.x ?? 0).toBeLessThan(latin?.x ?? 0)
+    expect(leftOf('小燕子')).toBeGreaterThan(leftOf('abc'))
   })
 
   it('falls back for a character the table lacks, rather than measuring zero', () => {
     // A zero-width fallback would centre an unknown string on the wrong point and, worse,
     // look plausible. Cyrillic Zhe is not in the table, so each one should cost exactly
-    // FALLBACK_ADVANCE — measured as the shift between one and three of them, since
-    // centring moves the start by half the added width.
-    const one = centreOf('Ж')
-    const three = centreOf('ЖЖЖ')
-    expect(one).toBeDefined()
-    expect(three).toBeDefined()
-    const size = one?.size ?? 1
-    // Two extra characters widen the string by 2 × fallback, so the centred start moves
-    // left by one fallback's worth.
-    expect((one?.x ?? 0) - (three?.x ?? 0)).toBeCloseTo(FALLBACK_ADVANCE * size, 4)
+    // FALLBACK_ADVANCE — measured as the difference between one and three of them, halved
+    // by the centring.
+    expect(leftOf('ЖЖЖ') - leftOf('Ж')).toBeCloseTo(FALLBACK_ADVANCE * sizeOf('Ж'), 4)
   })
 })
 
