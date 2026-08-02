@@ -4,8 +4,8 @@ You are developing abcts, a modern TypeScript ABC notation library
 and community successor to abcjs.
 
 ## First Step — Always
-Read `Docs/CHECKPOINT-2026-08-01.md` first — it is the current state of play, the open
-decisions, and the known risks. (`CHECKPOINT-2026-07-24.md`, `-07-22c.md`, `CHECKPOINT-2026-07-22b.md`, `-07-21.md`, `-07-19.md` and
+Read `Docs/CHECKPOINT-2026-08-02.md` first — it is the current state of play, the open
+decisions, and the known risks. (`CHECKPOINT-2026-08-01.md`, `CHECKPOINT-2026-07-24.md`, `-07-22c.md`, `CHECKPOINT-2026-07-22b.md`, `-07-21.md`, `-07-19.md` and
 `CHECKPOINT-2026-07-23.md`, `-07-18.md` are superseded but remain the record of the parser phase, the renderer's first
 slices, how the last parser diffs closed, and the geometric work up to the voice-name and
 `%%staffsep` fixes.) Then read ARCHITECTURE.md in full. It is your
@@ -140,11 +140,20 @@ The work is now GEOMETRIC — does abcts put the ink where abcjs puts it. A pixe
 gate (`tests/pixel-parity.test.ts`) resolves both engines' SVG to absolute pixels and
 measures it. Noteheads match 2696/2696, systems 29/29, output is 0.34x abcjs's bytes.
 
-**The VERTICAL model is DONE and the geometry branch is GREEN** — `geometry/lyric-ink-anchor`
-at `2e4851a`, 505/505, all 29 fixtures within their pixel-parity ceilings, ceilings
-re-recorded. Ready to merge into `main`; not merged. Read `Docs/CHECKPOINT-2026-08-01.md`
-before touching staff spacing, stems, beams, lyrics, chord symbols, part labels, tempo marks
-or dynamics.
+**The VERTICAL arc is DONE and its branch is GREEN** — `geometry/lyric-ink-anchor` at
+`2e4851a`, 505/505, all 29 fixtures within their pixel-parity ceilings, ceilings re-recorded.
+Ready to merge into `main`; not merged. Read `Docs/CHECKPOINT-2026-08-02.md` before touching
+staff spacing, stems, beams, lyrics, chord symbols, part labels, tempo marks or dynamics.
+
+**The HORIZONTAL arc is OPEN** on `geometry/horizontal` (`52d8125`), red by design but with
+ZERO functional failures — if a functional test fails there, you broke it. dx and ox are
+exactly zero on **8 of 29** fixtures, up from 3 and 0. `Docs/HORIZONTAL-ARC.md` is its
+working spec, and the one structural piece left is a shared cursor across the voices of a
+system: it has been attempted and reverted once, and the missing term is named there.
+
+**A PASSING GATE IS NOT PARITY.** The pixel gate only asserts "no worse than recorded".
+Parity means dy/dx/oy/ox at ZERO on every fixture — currently dy median +0.00 (18/29 at
+zero), dx median +17.06 (8/29).
 
 Branch vs main: fixtures within ceiling 25/29 → **29/29**, noteheads within 25px 21/29 →
 **27/29**, corpus median 17.4px → **14.7px**.
@@ -226,7 +235,41 @@ feature-coverage gap, tracked separately and implemented not at all.
 
 ### Continuing mid-project
 ```
-We are continuing abcts development. Read CLAUDE.md and
-ARCHITECTURE.md, then review what has been built so far
-before proposing next steps.
+We are continuing abcts development.
+
+Read Docs/CHECKPOINT-2026-08-02.md first, then ARCHITECTURE.md, then
+this file. Confirm your lane with `git rev-parse --abbrev-ref HEAD`
+before any structural work — geometry/lyric-ink-anchor is GREEN and
+must stay that way; geometry/horizontal is the open arc.
+
+The bar is 100% parity with abcjs, not a passing gate. The gate only
+says "no worse than recorded"; parity means dy/dx/oy/ox at ZERO.
+
+Work by INSTRUMENTING abcjs itself — env-guarded console.log in the
+vendored source, run its own dump-svg.js harness, then
+`git -C ../abcMusicKit checkout -- Docs/References/abcjs/` and verify
+clean. Do not guess-and-check: it is slower, and it has produced every
+wrong turn recorded in the checkpoint.
+
+The one open structural piece is the shared cursor across voices,
+specified in Docs/HORIZONTAL-ARC.md. It has been attempted and reverted
+once; the missing term is named there. Do it as one piece.
+```
+
+### Reviving the horizontal arc specifically
+```
+Continue the horizontal parity arc on `geometry/horizontal`.
+
+Read Docs/CHECKPOINT-2026-08-02.md and Docs/HORIZONTAL-ARC.md. The task
+is the shared cursor across the voices of a system — abcjs's
+layoutStaffGroup loop, carrying per-voice `nextx` and `spacingduration`,
+where a WAITING voice's expectation shrinks by the duration consumed
+without it. A first cut that omitted that term made every multi-voice
+fixture much worse and was reverted; the numbers are in the checkpoint.
+
+It retires the per-measure column model and the per-block factor solve
+with it, so treat it as one piece of work rather than an increment.
+
+Success is dx and ox at zero on more than the 8 fixtures that already
+have it, with no functional test failing.
 ```
