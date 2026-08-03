@@ -154,7 +154,7 @@ system 0 width=57.324 originY=0.000
       line  54.436,-2.000 -> 54.436,2.000 t=0.160
       line  55.166,-2.000 -> 55.166,2.000 t=0.500
 tune 3
-bounds  width=70.439 height=22.337 top=-1.935
+bounds  width=70.439 height=22.339 top=-1.935
 systems 1
 system 0 width=70.439 originY=0.000
   staff 0 originY=14.019

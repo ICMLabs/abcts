@@ -1989,8 +1989,20 @@ function layoutNoteheads(
       : Math.max(...accidentals.map((a) => glyphsFor(strict).advance(a.glyph))) +
         ENGRAVE.accidentalGap
 
-  for (const a of accidentals)
-    glyphs.push({ ...glyphAt(a.glyph, noteX, a.step), role: 'accidental' })
+  // AN ACCIDENTAL DECLARES `pitch ± h / 2`, centred on the note it belongs to, and abcjs
+  // passes that as an explicit `top`/`bottom` rather than letting the outline stand
+  // (`create-note-head.js:99-100`) — the same escape the key signature takes two files
+  // over. Its ink box is not centred on its origin, so reserving the outline reaches
+  // higher than abcjs on any staff an accidental tops out.
+  for (const a of accidentals) {
+    const placed = glyphAt(a.glyph, noteX, a.step)
+    const half = (glyphsFor(strict).get(a.glyph)?.declaredHeight ?? 0) / 2
+    glyphs.push({
+      ...placed,
+      role: 'accidental',
+      reserve: [stepToY(a.step) - half, stepToY(a.step) + half],
+    })
+  }
   const headX = noteX + accidentalWidth
 
   // A second cannot be printed on the same side of the stem — the noteheads would

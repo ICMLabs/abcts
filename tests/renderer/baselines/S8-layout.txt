@@ -2542,17 +2542,17 @@ system 3 width=50.689 originY=44.218
       line  48.318,-2.000 -> 48.318,2.000 t=0.160
       line  48.878,-2.000 -> 48.878,2.000 t=0.160
 tune 10
-bounds  width=90.323 height=90.771 top=-1.935
+bounds  width=90.323 height=90.760 top=-1.935
 systems 7
 system 0 width=90.323 originY=0.000
-  staff 0 originY=11.168
+  staff 0 originY=11.158
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  19.521,-6.709 size=3.484 bold "S8-11 Chords with many accidentals"
+      text  19.521,-6.699 size=3.484 bold "S8-11 Chords with many accidentals"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=1.065
@@ -2606,7 +2606,7 @@ system 0 width=90.323 originY=0.000
       line  75.657,-3.332 -> 75.657,3.000 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 1 width=90.323 originY=19.215
+system 1 width=90.323 originY=19.205
   staff 0 originY=3.866
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
@@ -2667,8 +2667,8 @@ system 1 width=90.323 originY=19.215
       line  76.378,2.832 -> 76.378,-3.500 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 2 width=90.323 originY=29.672
-  staff 0 originY=5.323
+system 2 width=90.323 originY=30.272
+  staff 0 originY=4.713
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -2736,7 +2736,7 @@ system 2 width=90.323 originY=29.672
       line  87.435,-2.000 -> 87.435,2.000 t=0.160
       line  88.165,-2.000 -> 88.165,2.000 t=0.500
 system 3 width=90.323 originY=40.450
-  staff 0 originY=6.459
+  staff 0 originY=6.449
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -2803,7 +2803,7 @@ system 3 width=90.323 originY=40.450
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
 system 4 width=90.323 originY=53.863
-  staff 0 originY=4.959
+  staff 0 originY=4.949
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -2854,7 +2854,7 @@ system 4 width=90.323 originY=53.863
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
 system 5 width=90.323 originY=65.277
-  staff 0 originY=5.459
+  staff 0 originY=5.449
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -2909,7 +2909,7 @@ system 5 width=90.323 originY=65.277
       line  68.378,-4.000 -> 70.444,-4.000 t=0.160
       line  68.778,-3.832 -> 68.778,4.500 t=0.120
 system 6 width=31.705 originY=77.190
-  staff 0 originY=5.459
+  staff 0 originY=5.449
     staffline 0.000,2.000 -> 31.705,2.000 t=0.130
     staffline 0.000,1.000 -> 31.705,1.000 t=0.130
     staffline 0.000,0.000 -> 31.705,0.000 t=0.130

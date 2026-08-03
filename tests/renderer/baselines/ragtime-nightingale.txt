@@ -1,5 +1,5 @@
 tune 0
-bounds  width=90.574 height=785.259 top=-1.935
+bounds  width=90.574 height=784.639 top=-1.935
 systems 23
 system 0 width=90.323 originY=0.000
   connector brace -0.920,19.152 scale=4.163
@@ -5641,7 +5641,7 @@ system 15 width=90.574 originY=511.483
     bar x=88.509 w=0.160
       line  88.589,-2.000 -> 88.589,2.000 t=0.160
 system 16 width=90.368 originY=546.382
-  connector brace -0.920,8.361 scale=4.344
+  connector brace -0.920,8.361 scale=4.191
   staff 0 originY=10.361
     staffline 0.000,2.000 -> 90.368,2.000 t=0.130
     staffline 0.000,1.000 -> 90.368,1.000 t=0.130
@@ -5901,7 +5901,7 @@ system 16 width=90.368 originY=546.382
       line  83.827,0.168 -> 83.827,3.750 t=0.120
     bar x=88.303 w=0.160
       line  88.383,-2.000 -> 88.383,2.000 t=0.160
-  staff 1 originY=23.685
+  staff 1 originY=23.074
     staffline 0.000,2.000 -> 90.368,2.000 t=0.130
     staffline 0.000,1.000 -> 90.368,1.000 t=0.130
     staffline 0.000,0.000 -> 90.368,0.000 t=0.130
@@ -6053,8 +6053,8 @@ system 16 width=90.368 originY=546.382
     rest x=70.400 w=7.742
     bar x=88.303 w=0.160
       line  88.383,-2.000 -> 88.383,2.000 t=0.160
-system 17 width=90.342 originY=577.817
-  connector brace -0.920,12.797 scale=4.441
+system 17 width=90.342 originY=577.206
+  connector brace -0.920,12.797 scale=4.438
   staff 0 originY=14.797
     staffline 0.000,2.000 -> 90.342,2.000 t=0.130
     staffline 0.000,1.000 -> 90.342,1.000 t=0.130
@@ -6245,7 +6245,7 @@ system 17 width=90.342 originY=577.817
     rest x=84.773 w=3.871
     bar x=88.277 w=0.160
       line  88.357,-2.000 -> 88.357,2.000 t=0.160
-  staff 1 originY=28.506
+  staff 1 originY=28.496
     staffline 0.000,2.000 -> 90.342,2.000 t=0.130
     staffline 0.000,1.000 -> 90.342,1.000 t=0.130
     staffline 0.000,0.000 -> 90.342,0.000 t=0.130
@@ -6396,7 +6396,7 @@ system 17 width=90.342 originY=577.817
     rest x=74.259 w=7.742
     bar x=88.277 w=0.160
       line  88.357,-2.000 -> 88.357,2.000 t=0.160
-system 18 width=90.535 originY=615.323
+system 18 width=90.535 originY=614.702
   connector brace -0.920,11.678 scale=4.520
   staff 0 originY=13.678
     staffline 0.000,2.000 -> 90.535,2.000 t=0.130
@@ -6693,7 +6693,7 @@ system 18 width=90.535 originY=615.323
     rest x=72.040 w=7.742
     bar x=88.470 w=0.160
       line  88.550,-2.000 -> 88.550,2.000 t=0.160
-system 19 width=90.418 originY=652.291
+system 19 width=90.418 originY=651.670
   connector brace -0.920,8.221 scale=4.163
   staff 0 originY=10.221
     staffline 0.000,2.000 -> 90.418,2.000 t=0.130
@@ -7084,7 +7084,7 @@ system 19 width=90.418 originY=652.291
     rest x=72.507 w=7.742
     bar x=88.354 w=0.160
       line  88.434,-2.000 -> 88.434,2.000 t=0.160
-system 20 width=90.411 originY=684.364
+system 20 width=90.411 originY=683.743
   connector brace -0.920,8.500 scale=4.163
   staff 0 originY=10.500
     staffline 0.000,2.000 -> 90.411,2.000 t=0.130
@@ -7450,7 +7450,7 @@ system 20 width=90.411 originY=684.364
     rest x=73.180 w=7.742
     bar x=88.346 w=0.160
       line  88.426,-2.000 -> 88.426,2.000 t=0.160
-system 21 width=90.450 originY=716.727
+system 21 width=90.450 originY=716.107
   connector brace -0.920,8.222 scale=4.163
   staff 0 originY=10.222
     staffline 0.000,2.000 -> 90.450,2.000 t=0.130
@@ -7842,7 +7842,7 @@ system 21 width=90.450 originY=716.727
     rest x=70.892 w=7.742
     bar x=88.386 w=0.160
       line  88.466,-2.000 -> 88.466,2.000 t=0.160
-system 22 width=90.323 originY=749.286
+system 22 width=90.323 originY=748.665
   connector brace -0.920,7.750 scale=4.163
   staff 0 originY=9.750
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
