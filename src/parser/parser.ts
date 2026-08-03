@@ -786,10 +786,30 @@ class VoiceBuilder {
    * parses its `+:` prose as music (a bug we reproduce), gives each prose line its own
    * staff line, and runs the last one straight into the first real bar.
    */
+  /** Whether this voice has closed a measure since it last opened a line. */
+  private wroteSinceLineStart = false
+
   beginMusicLine(): void {
     this.lineNoteStart = this.noteCounter
     this.closeUnterminatedMeasure()
     this.pendingLineStart = true
+    this.wroteSinceLineStart = false
+  }
+
+  /**
+   * A `[V:x]` SWITCH opens a new line for x when x already has music on this one.
+   *
+   * abcjs's `setCurrentVoice` scans `tune.lines` from the top and points `lineNum` at the
+   * first line where this voice is undefined or holds no notes
+   * (`parse/tune-builder.js:410-428`); `startNewLine` does the same thing from the other
+   * end, incrementing past any line whose voice `containsNotes` (`:334-357`). A voice only
+   * ever appends, so both reduce to: if it has written here, move on.
+   *
+   * `[V:T]c|[V:B]A|[V:T]d|` is one source line and TWO printed systems because of it —
+   * T's `d` cannot share a line with its own `c`.
+   */
+  switchedTo(): void {
+    if (this.wroteSinceLineStart) this.beginMusicLine()
   }
 
   addLyricLine(syllables: Syllable[]): void {
@@ -1028,6 +1048,7 @@ class VoiceBuilder {
   private takeLineStart(): boolean {
     const value = this.pendingLineStart
     this.pendingLineStart = false
+    this.wroteSinceLineStart = true
     return value
   }
 
@@ -1235,9 +1256,18 @@ class ScoreBuilder {
     }
   }
 
-  /** A body `V:2` switches the voice music lands in. */
+  /**
+   * A body `V:2` switches the voice music lands in.
+   *
+   * A `[V:x]` naming the voice ALREADY CURRENT is a no-op — probed, abcjs's
+   * `setCurrentVoice` fires twice for `visual-parsing-08`'s six `[V:…]` lines, once per
+   * distinct id, and the repeats change nothing. Only a real switch can open a line.
+   */
   selectVoice(id: string): void {
-    this.voiceFor(id).explicit = true
+    if (id === this.currentVoiceId && this.voices.has(id)) return
+    const voice = this.voiceFor(id)
+    voice.explicit = true
+    voice.switchedTo()
     this.currentVoiceId = id
   }
 
@@ -1523,6 +1553,21 @@ class Parser {
       this.applyField(this.lastFieldLetter, line.slice(2), start, end)
       return
     }
+    // A `\` AT THE END OF A MUSIC LINE JOINS IT TO THE NEXT — one printed system from two
+    // source lines. abcjs marks it in preprocessing, `/\\([ \t]*)(%.*)*\n/` becoming
+    // `\` + `\x12` (`abc_parse.js:511-515`), and then declines to open a line at all when
+    // the PREVIOUS one carried the marker: `if (!hasBeginMusic() || (delayStartNewLine &&
+    // !this.lineContinuation)) this.startNewLine()` (`abc_parse_music.js:154`), with
+    // `lineContinuation` set from the line just finished (`:585`).
+    //
+    // We lexed `\` as whitespace and dropped the meaning, so every continued line opened a
+    // system of its own — `visual-parsing-09` came out as three where abcjs draws one.
+    //
+    // Nothing of `beginMusicLine` runs on a continuation: the measure carries across, and
+    // `lineNoteStart` must stay where the LOGICAL line began so a `w:` under it still
+    // lines up with the first note of the pair.
+    const continued = this.lineContinued || this.continueAll
+    this.lineContinued = /\\[ \t]*(%.*)?$/.test(line)
     // FREE TEXT ONLY TRAILS IF NOTHING FOLLOWS IT. abcjs's justification rule is per
     // LINE — a music line is justified unless it is the LAST line — and a `%%begintext`
     // sitting BETWEEN two music lines makes the first one non-last while leaving the
@@ -1534,7 +1579,7 @@ class Parser {
     // (the `ponytail:` on `textBelow` says why), and it must not change the last line
     // either.
     if (this.builder && this.builder.textBelow.length > 0) this.builder.textBelow = []
-    this.scanMusic(start, end)
+    this.scanMusic(start, end, continued)
   }
 
   /**
@@ -1831,7 +1876,12 @@ class Parser {
   // ponytail: the Swift lexer streams; buffering one line's tokens into an array
   // costs nothing at ABC line lengths and makes the lookahead in note assembly
   // (octave marks, then length) plain indexing instead of a peek/rewind protocol.
-  private scanMusic(start: number, end: number): void {
+  /** Whether the music line just read ended with a `\`, so the next continues it. */
+  private lineContinued = false
+  /** `%%continueall` — every music line continues (`abc_parse_directive.js:966`). */
+  private continueAll = false
+
+  private scanMusic(start: number, end: number, continued = false): void {
     const builder = this.ensureScore(start)
     // Music ENDS the header, not just `K:`. Normally the two coincide; they come apart
     // when a line before the `K:` is scanned as music, which strict mode does to `+:`
@@ -1839,7 +1889,7 @@ class Parser {
     // time signature is printed on system 3, so the `+:` prose on line 8 had already made
     // every later field a mid-tune one.
     builder.bodyStarted = true
-    builder.voice.beginMusicLine()
+    if (!continued) builder.voice.beginMusicLine()
     // Re-read through the builder rather than capturing: an inline `[V:2]` mid-line
     // switches which voice subsequent events belong to.
     const voice = () => builder.voice

@@ -64,16 +64,18 @@ const CONTENT_GAPS: Readonly<Record<string, string>> = {
  * 174 ceilings is a table nobody reads — see the header.
  */
 const WITHIN: Readonly<Record<string, number>> = {
-  // 72 / 83 / 91 / 116 before five fixes only this gate could see, since no 41-fixture
-  // exercises any of them: `clef=none` and `clef=perc` being read as a C clef on the
-  // middle line, `%%text` / `%%begintext` reserving nothing, `V:… merge` unimplemented,
-  // a clef name matched as a whole word rather than by prefix so `bass,,` was no clef at
-  // all, and an empty implicit voice `1` taking a staff on every system of any tune whose
-  // lines all begin with an inline `[V:…]`.
-  '0.05': 82,
-  '1': 93,
-  '5': 102,
-  '25': 126,
+  // 72 / 83 / 91 / 116 at the start of this arc's second session. What moved them, all
+  // read out of abcjs's algorithm and none of it exercised by the 41 fixtures except the
+  // last: `clef=none` and `clef=perc` read as a C clef on the middle line; `%%text` /
+  // `%%begintext` reserving nothing; `V:… merge` unimplemented; a clef name matched as a
+  // whole word rather than by prefix, so `bass,,` was no clef at all; an empty implicit
+  // voice `1` taking a staff on every system of a tune whose lines all begin `[V:…]`; and
+  // the two line-assignment rules — a trailing `\` continuing the line, and a `[V:x]`
+  // switch opening one only when x already has music.
+  '0.05': 86,
+  '1': 97,
+  '5': 106,
+  '25': 130,
 }
 
 const names = readdirSync(fixturesDir)
