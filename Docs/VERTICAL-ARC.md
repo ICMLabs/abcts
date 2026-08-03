@@ -17,11 +17,17 @@ Everything below was read out of abcjs by INSTRUMENTING IT.
 | dx spread | +0.01 | 22/29 | horizontal arc CLOSED |
 | ox offset | −0.00 | 22/29 | horizontal arc CLOSED |
 | dy spread | +0.01 | 21/29 | this arc |
-| oy offset | **+0.025** | **19/29** | this arc |
-| ALL FOUR at zero | — | **15/29** | — |
+| oy offset | +0.03 | **20/29** | this arc |
+| dx spread | +0.01 | **23/29** | horizontal, still improving |
+| ox offset | −0.00 | **23/29** | " |
+| ALL FOUR at zero | — | **16/29** | — |
 
-Fifteen fixtures now match abcjs on every axis at once. At the start of this session it was
+Sixteen fixtures now match abcjs on every axis at once. At the start of the session it was
 three, and dx/ox were zero on eight.
+
+**Only six fixtures are off ANY axis by more than 0.1px**: `ragtime-nightingale`,
+`frere-jacques`, `little swallow`, `vree-grace-notes`, `multi-voice-triplet-brackets`,
+`ave-verum-corpus` — plus `happy-birthday` and `zocharti-loch` on dx alone.
 
 ---
 
@@ -85,6 +91,39 @@ clears the music by its own gap where abcjs puts it at `max(parent.top, 9) + 4` 
 note. The declared box sidesteps that — it is what abcjs contributes whatever either engine
 draws.
 
+### FOUR MORE DECLARED-BOX AND CURSOR FINDINGS
+
+- **`%%center` is not a title row.** `FreeText` pushes `{ move: size.height }` bare where
+  `addTextIf` pushes `Math.round(size.height * 1.1)`, and abcjs's gap before it is
+  `spacing.music`, spent BEFORE the row and never after — the centered text ends exactly
+  where the staff group begins. `center-text` to parity.
+- **An ABOVE-side dynamic reserves a flat 7-pitch lane**, exactly as the below side did.
+  `set-upper-and-lower-elements.js:39-42` adds `max(dynamicHeightAbove, volumeHeightAbove)
+  + margin` when both are present, WITHOUT going through `incTop` — which is why no lane
+  shows in that probe. Measuring the `p` glyph's own box left both staves of
+  `multi-voice-lyrics-two-voices` 1.30 pitch short.
+- **A HAIRPIN reserves that lane too**, and must be read off the EVENTS: hairpins can span
+  a system break, so `spannerLines` is still empty when the extent is measured. This was a
+  recorded `ponytail:` gap saying the model-based approach "was tried and made the corpus
+  much worse" — it does not now, because the earlier attempt was landing a correct term on
+  top of several wrong ones.
+- **ONLY THE FIRST VOICE OF A STAFF CARRIES THE STAFF-EXTRAS.** abcjs gives the others
+  none: probed, the second voice's `i=0` is a NOTE and its `minx` is the bare left edge.
+  We gave every voice a clef, key and meter — four hidden copies stacked in `ragtime-mini`
+  — and it MOVED THE MUSIC, because `minx` is what `er` is measured from.
+- **A staff's reserves are the UNION of its voices'.** The shared-staff merge spread the
+  first voice's object, so a tuplet or hairpin on the LOWER voice reserved nothing.
+
+### A SECOND GATE LIMITATION, recorded like the grace-note one
+
+**`little swallow`'s dx cannot reach zero against these goldens.** The harness that made
+them (`dump-elements-char-widths.js`) carries an ASCII-only table per font and falls back to
+a flat **8px** for anything missing — `widths[ch] || 8`. 73 of that fixture's 576 lyric
+characters are CJK and were measured at 8px each in the golden, where we measure a full-width
+character properly. `frere-jacques` has four such characters (`èéâ`). No other fixture has
+any. This is a property of the golden, not of abcjs, and reproducing it would make our real
+output wrong — CJK drawn at 17px and spaced at 8.
+
 ### The partners, unfound
 
 A right change can make the corpus worse; look for its partner rather than reverting.
@@ -107,15 +146,21 @@ A right change can make the corpus worse; look for its partner rather than rever
   # convert: abcjs pitch = 6 - 2 * ourY(spaces)
   ```
 
-  Read that way, **`dBot` sits at a recurring −0.50 pitch on staff after staff** — a
-  constant, and the next thing to chase — while `dTop` is scattered. abcjs's bottoms land on
-  values like −12.500 and −9.500 where ours land on −13.000 and −10.000.
+  Read that way, and after the hairpin fix, **`dBot` is a recurring −0.50 pitch on 23 of
+  its 46 staves** — one constant, and by far the biggest single thing left in the corpus.
+  abcjs's bottoms land on values like −12.500 and −9.500 where ours land on −13.000 and
+  −10.000. The remaining 14 are scattered (+1.97, +2.08, +6.00 …).
+
+  What is known about the −0.50: the staff bottom is set by a STEM in 148 of ragtime's
+  cases (`PROBE range bot` counts: note 148, clef 115, key-signature 69, rest 3, TieElem 3,
+  TripletElem 2). abcjs's beamed down-stems end on half-pitches and ours on whole ones,
+  which points at the `+0.5` pitch fudge `layout/beam.js:125` applies to a descending
+  beam's stem end — but a direct endpoint comparison on a BASS staff has not been done, and
+  the up-stem sample taken instead was not the one setting the bottom. Take the sample from
+  a staff the extent table names, not from the first system.
 
   Also still true: abcjs's first staff reaches `staff.top = 21.0` from the MUSIC's own ink
   before the tempo's 6 pitches go on top, and ours falls ~2px short of that 21.
-
-  Boundary view, for cross-checking: 25 of ragtime's 45 boundaries are exact, the first
-  staff is exact to 0.01, and the cumulative drift swings +25.6 then −52.6 across the page.
 - **`little swallow`** dy 5.35 → 6.13 and **`frere-jacques`** dy 22.15 → 22.35. Spreads,
   not offsets, so something inside the system rather than above it.
 - **`center-text`** oy 10.15 → 10.32 — the clef's 0.18 landing on a fixture already 10px
