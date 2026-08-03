@@ -834,6 +834,11 @@ export interface LayoutStaff {
    * notehead to another and is resolved once every member's position is known.
    */
   readonly curves: readonly PlacedCurve[]
+  /**
+   * Whether a tuplet on this staff reserves abcjs's ending lane ABOVE it — declared by
+   * `layoutTuplets` from abcjs's own rule, never from where the bracket was drawn.
+   */
+  readonly tupletReservesAbove: boolean
   /** Tuplet brackets, and the numbers that go with them. Also span elements. */
   readonly tupletLines: readonly PlacedLine[]
   readonly tupletTexts: readonly PlacedText[]
@@ -3100,7 +3105,7 @@ function layoutCurves(
 function layoutTuplets(
   anchors: readonly NoteAnchor[],
   elements: readonly LayoutElement[],
-): { lines: PlacedLine[]; texts: PlacedText[] } {
+): { lines: PlacedLine[]; texts: PlacedText[]; reservesAbove: boolean } {
   /** Full vertical ink of a member, stems and beams included. */
   const extentOf = (anchor: NoteAnchor): { top: number; bottom: number } => {
     const el = elements[anchor.element]
@@ -3122,6 +3127,20 @@ function layoutTuplets(
 
   const lines: PlacedLine[] = []
   const texts: PlacedText[] = []
+  /**
+   * Whether ANY tuplet on this staff reserves the ending lane — and abcjs reserves it
+   * ABOVE whichever side it then draws the bracket on.
+   *
+   * `TripletElem.setCloseAnchor`: `if (!this.anchor1.parent.beam || this.anchor1.stemDir
+   * === 'up') this.endingHeightAbove = 4` (`elements/triplet-element.js:22-25`). There is
+   * no `endingHeightBelow` anywhere in abcjs — `positionY` has no such field — so an
+   * unbeamed triplet reserves 4 pitches ABOVE the staff even when its bracket hangs
+   * below. `vree-slurs-and-triplets` is exactly that case: abcjs draws its `3` under the
+   * staff, at y 149.24 against a bottom line at 127.9, and still reserves above, which
+   * put its whole drawing 19.35px lower than ours. Deriving the side from where the
+   * bracket is DRAWN is the reasonable reading and it is not abcjs's.
+   */
+  let reservesAbove = false
 
   // Members of one tuplet are contiguous, so grouping by id preserves their order.
   const groups = new Map<number, NoteAnchor[]>()
@@ -3145,6 +3164,12 @@ function layoutTuplets(
     // pass has usually forced them to agree anyway.
     const up = members.filter((m) => m.stemUp).length * 2 >= members.length
     const direction = up ? -1 : 1
+    // abcjs's reserve rule, off the FIRST member only — not the majority, and not the
+    // side the bracket lands on. Its `anchor1.parent.beam` is whether that note is drawn
+    // into a beam, which our stem line records.
+    const firstBeamed =
+      elements[first.element]?.lines.some((l) => l.role === 'stem' && l.beamed === true) ?? false
+    if (!firstBeamed || first.stemUp) reservesAbove = true
 
     // Clear of the furthest extent any member reaches, so the bracket never collides.
     const extents = members.map(extentOf)
@@ -3188,7 +3213,7 @@ function layoutTuplets(
     lines.push({ x1: last.right, y1: y, x2: last.right, y2: y - hook, thickness })
   }
 
-  return { lines, texts }
+  return { lines, texts, reservesAbove }
 }
 
 // ─── Beams ───────────────────────────────────────────────────────────────────
@@ -4466,6 +4491,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         staffLines: [],
         beams,
         curves: [],
+        tupletReservesAbove: tuplets.reservesAbove,
         tupletLines: tuplets.lines,
         tupletTexts: tuplets.texts,
         voltaLines,
@@ -5091,6 +5117,8 @@ function anchorBelowStaff<
 }
 
 interface StaffFurniture {
+  /** abcjs's `endingHeightAbove` from a tuplet — see `layoutTuplets`. Never below. */
+  readonly tupletReservesAbove?: boolean
   readonly tupletLines?: readonly PlacedLine[]
   readonly tupletTexts?: readonly PlacedText[]
   readonly voltaLines?: readonly PlacedLine[]
@@ -5128,10 +5156,12 @@ function verticalExtent(
     if (y < 0) endingAbove = true
     else endingBelow = true
   }
-  for (const line of [...(furniture.tupletLines ?? []), ...(furniture.voltaLines ?? [])]) {
-    flag((line.y1 + line.y2) / 2)
-  }
-  for (const t of [...(furniture.tupletTexts ?? []), ...(furniture.voltaTexts ?? [])]) flag(t.y)
+  // A TUPLET's lane is declared, not measured — abcjs reserves it ABOVE whichever side
+  // the bracket is drawn on, and has no below-side reserve for one at all. A VOLTA's is
+  // read from its geometry, which is always above.
+  if (furniture.tupletReservesAbove === true) endingAbove = true
+  for (const line of furniture.voltaLines ?? []) flag((line.y1 + line.y2) / 2)
+  for (const t of furniture.voltaTexts ?? []) flag(t.y)
   // Melisma extenders and hairpins/glissandi keep their actual geometry — they sit in the
   // lyric and dynamic lanes, not the ending lane.
   for (const line of [...(furniture.melismaLines ?? []), ...(furniture.spannerLines ?? [])]) {
@@ -5283,8 +5313,20 @@ function verticalExtent(
   // reserve for them (`dynamicHeightBelow`, `crescendo-element.js:11`). Taking presence
   // from the model instead was tried and made the corpus much worse — see the checkpoint.
   if (sawDynamicBelow) bottom += ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
-  if (endingAbove) top = Math.min(top, top - ENGRAVE.endingLane)
-  if (endingBelow) bottom = Math.max(bottom, bottom + ENGRAVE.endingLane)
+  // THE LANE EXTENDS THE MUSIC, AND ONLY THE MUSIC — so not on a pass that is measuring a
+  // top-text block as well.
+  //
+  // `verticalExtent` runs twice per staff: once over the music alone, to decide where the
+  // title block goes, and once over both, to set the staff's origin. Applying the lane on
+  // the second pass adds it to a total that already carries it, because the block was
+  // placed `musicSpace` above a `musicTop` that had it. Probed on
+  // `vree-slurs-and-triplets`: three applications, the last two both taking -97.46 to
+  // -116.84. The block always wins that `min` when it is present — its offset is
+  // `musicTop - musicSpace - blockHeight`, which is below `musicTop` by construction — so
+  // skipping the lane here cannot change the answer, only stop it being counted twice.
+  const hasBlock = elements.some((el) => el.type === 'title')
+  if (endingAbove && !hasBlock) top = Math.min(top, top - ENGRAVE.endingLane)
+  if (endingBelow && !hasBlock) bottom = Math.max(bottom, bottom + ENGRAVE.endingLane)
 
   return { top: top - ENGRAVE.marginY, bottom: bottom + ENGRAVE.marginY }
 }

@@ -160,10 +160,10 @@ system 2 width=57.221 originY=33.979
       line  54.333,-2.000 -> 54.333,2.000 t=0.160
       line  55.063,-2.000 -> 55.063,2.000 t=0.500
 tune 1
-bounds  width=90.323 height=72.608 top=-1.935
+bounds  width=90.323 height=70.108 top=-1.935
 systems 5
 system 0 width=90.323 originY=0.000
-  staff 0 originY=19.019
+  staff 0 originY=16.519
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -233,7 +233,7 @@ system 0 width=90.323 originY=0.000
       line  83.555,0.832 -> 83.555,-2.500 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 1 width=90.323 originY=24.566
+system 1 width=90.323 originY=22.066
   staff 0 originY=6.366
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
@@ -321,7 +321,7 @@ system 1 width=90.323 originY=24.566
       line  85.043,2.832 -> 85.043,-0.500 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 2 width=90.323 originY=36.479
+system 2 width=90.323 originY=33.979
   staff 0 originY=6.366
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
@@ -385,7 +385,7 @@ system 2 width=90.323 originY=36.479
       line  82.140,-0.832 -> 82.140,2.500 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 3 width=90.323 originY=50.893
+system 3 width=90.323 originY=48.393
   staff 0 originY=3.866
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
@@ -429,7 +429,7 @@ system 3 width=90.323 originY=50.893
       glyph repeatDots 86.581,1.976
       line  87.221,-2.000 -> 87.221,2.000 t=0.160
       line  87.951,-2.000 -> 87.951,2.000 t=0.500
-system 4 width=90.323 originY=60.306
+system 4 width=90.323 originY=57.806
   staff 0 originY=6.366
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
