@@ -53,24 +53,24 @@ system 0 width=57.324 originY=0.000
       line  54.436,-2.000 -> 54.436,2.000 t=0.160
       line  55.166,-2.000 -> 55.166,2.000 t=0.500
 tune 1
-bounds  width=90.323 height=55.399 top=-1.935
+bounds  width=90.323 height=55.782 top=-1.935
 systems 3
 system 0 width=90.323 originY=0.000
-  staff 0 originY=16.274
+  staff 0 originY=16.465
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  30.553,-11.814 size=3.484 bold "S2-2 Text Placement"
+      text  30.553,-12.006 size=3.484 bold "S2-2 Text Placement"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     tempo x=6.329 w=0.000
-      glyph noteheadBlack 20.226,-7.226
-      line  21.406,-7.394 -> 21.406,-10.894 t=0.120
-      text  6.329,-7.226 size=2.581 bold "Dolcemente"
-      text  21.791,-7.226 size=2.581 "= 60"
+      glyph noteheadBlack 20.226,-7.417
+      line  21.406,-7.585 -> 21.406,-11.085 t=0.120
+      text  6.329,-7.417 size=2.581 bold "Dolcemente"
+      text  21.791,-7.417 size=2.581 "= 60"
     note@-6 x=6.329 w=5.474
       glyph noteheadBlack 6.329,3.000
       line  5.929,3.000 -> 7.995,3.000 t=0.160
@@ -85,11 +85,11 @@ system 0 width=90.323 originY=0.000
     note@1 x=67.776 w=5.474
       glyph noteheadBlack 67.776,-0.500
       line  67.776,-0.332 -> 67.776,3.000 t=0.120
-      text  65.596,-4.500 size=2.065 "above"
+      text  65.596,-4.692 size=2.065 "above"
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 1 width=90.323 originY=22.082
-  staff 0 originY=6.565
+system 1 width=90.323 originY=22.273
+  staff 0 originY=6.756
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -110,13 +110,13 @@ system 1 width=90.323 originY=22.082
     note@-1 x=54.322 w=7.742
       glyph noteheadHalf 54.322,0.500
       line  55.502,0.332 -> 55.502,-3.000 t=0.120
-      text  47.759,-4.500 size=2.065 "around the note"
+      text  47.759,-4.692 size=2.065 "around the note"
       text  53.035,0.000 size=2.065 "("
       text  56.260,0.000 size=2.065 ")"
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 2 width=31.733 originY=33.995
-  staff 0 originY=6.565
+system 2 width=31.733 originY=34.187
+  staff 0 originY=6.756
     staffline 0.000,2.000 -> 31.733,2.000 t=0.130
     staffline 0.000,1.000 -> 31.733,1.000 t=0.130
     staffline 0.000,0.000 -> 31.733,0.000 t=0.130
@@ -140,7 +140,7 @@ system 2 width=31.733 originY=33.995
     note@1 x=22.752 w=5.474
       glyph noteheadBlack 22.752,-0.500
       line  22.752,-0.332 -> 22.752,3.000 t=0.120
-      text  15.409,-4.500 size=2.065 "-15,8.5 anywhere"
+      text  15.409,-4.692 size=2.065 "-15,8.5 anywhere"
     bar x=28.227 w=0.160
       line  28.307,-2.000 -> 28.307,2.000 t=0.160
 tune 2

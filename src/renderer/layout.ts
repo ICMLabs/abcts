@@ -247,6 +247,16 @@ export const ENGRAVE = {
   decorationMinTop: 12,
   /** The pitch of padding each stacked decoration adds so nothing touches (`:154`). */
   decorationPadding: 1,
+  /** `textFudge` — how far a TEXT decoration sits above the stack cursor (`:149`). */
+  decorationTextFudge: 2,
+  /** `textHeight` — the flat pitch a text decoration advances the cursor by (`:150`). */
+  decorationTextHeight: 5,
+  /**
+   * `thickness: 3` — a text decoration's DECLARED height in pitch (`decoration.js:151`),
+   * with abcjs's own "TODO-PER: Get the height of the current font and use that" beside
+   * it. It is not the font's height and reproducing the font's height is wrong.
+   */
+  decorationTextThickness: 3,
   /**
    * Dynamics (`!p!`, `!mf!`) and hairpins go ABOVE the staff WHEN THE TUNE HAS LYRICS,
    * and below it otherwise — abcjs's rule, not a taste choice.
@@ -726,6 +736,16 @@ export interface PlacedText {
   readonly text: string
   /** What this text is. Absent means it inherits its element's kind. */
   readonly role?: PartRole
+  /**
+   * Vertical extent this text DECLARES, replacing the box its font size implies — the
+   * same escape a glyph has. `[top, bottom]` in staff spaces.
+   *
+   * A text DECORATION is the case: abcjs gives `D.C.` and its like a flat
+   * `thickness: 3` (`decoration.js:151`), so it reserves `pitch ± 1.5` and not the font
+   * size its letters occupy. Reserving the letters put `frere-jacques`'s last staff 2.08
+   * pitch high.
+   */
+  readonly reserve?: readonly [number, number]
   readonly x: number
   /** Baseline y, staff spaces. */
   readonly y: number
@@ -2071,36 +2091,33 @@ function layoutNoteheads(
   /** How far the note's attached text reaches either side of it — see `noteText`. */
   const textSpan = { left: 0, right: 0 }
   const texts = event === null ? [] : noteText(event, headX, headInk, strict, textSpan)
-  if (event !== null && event.type !== 'rest') {
-    texts.push(...decorationTexts(event.decorations, headX, head.width))
-  }
   if (event !== null && event.decorations.length > 0) {
-    glyphs.push(
-      ...decorationGlyphs(
-        event.decorations,
-        headX,
-        head.width,
-        highest,
-        lowest,
-        up,
-        // abcjs's `abselem.top` / `.bottom`: the notehead's DECLARED box widened by the
-        // stem it just drew. `pushTop`/`pushBottom` over the element's children.
-        Math.max(
-          highest + ENGRAVE.noteheadHalfHeight / ENGRAVE.spacePerStep,
-          ...lines
-            .filter((l) => l.role === 'stem')
-            .map((l) => -Math.min(l.y1, l.y2) / ENGRAVE.spacePerStep),
-        ),
-        Math.min(
-          lowest - ENGRAVE.noteheadHalfHeight / ENGRAVE.spacePerStep,
-          ...lines
-            .filter((l) => l.role === 'stem')
-            .map((l) => -Math.max(l.y1, l.y2) / ENGRAVE.spacePerStep),
-        ),
-        strict,
-        dynamicsAbove,
+    const decorated = decorationGlyphs(
+      event.decorations,
+      headX,
+      head.width,
+      highest,
+      lowest,
+      up,
+      // abcjs's `abselem.top` / `.bottom`: the notehead's DECLARED box widened by the
+      // stem it just drew. `pushTop`/`pushBottom` over the element's children.
+      Math.max(
+        highest + ENGRAVE.noteheadHalfHeight / ENGRAVE.spacePerStep,
+        ...lines
+          .filter((l) => l.role === 'stem')
+          .map((l) => -Math.min(l.y1, l.y2) / ENGRAVE.spacePerStep),
       ),
+      Math.min(
+        lowest - ENGRAVE.noteheadHalfHeight / ENGRAVE.spacePerStep,
+        ...lines
+          .filter((l) => l.role === 'stem')
+          .map((l) => -Math.max(l.y1, l.y2) / ENGRAVE.spacePerStep),
+      ),
+      strict,
+      dynamicsAbove,
     )
+    glyphs.push(...decorated.glyphs)
+    texts.push(...decorated.texts)
   }
 
   // The spring is the natural width, but ink is a rod: a displaced head or a dot column
@@ -2419,31 +2436,6 @@ const DECORATION_TEXTS: Readonly<Record<string, string>> = {
 }
 
 /**
- * Words a note carries — the navigation directions above.
- *
- * Italic and in the part lane, well clear of the ornament stack, because these address
- * the PLAYER rather than marking the note: they are read at a glance while navigating,
- * not while reading pitch. Stacked so two on one note cannot overprint.
- */
-function decorationTexts(names: readonly string[], headX: number, headWidth: number): PlacedText[] {
-  const out: PlacedText[] = []
-  const size = ENGRAVE.chordTextSize
-  for (const name of names) {
-    const text = DECORATION_TEXTS[name]
-    if (text === undefined) continue
-    out.push({
-      text,
-      x: headX + headWidth / 2 - textWidth(text, size) / 2,
-      y: stepToY(ENGRAVE.partStep - out.length * ENGRAVE.annotationLineStep),
-      size,
-      bold: false,
-      italic: true,
-    })
-  }
-  return out
-}
-
-/**
  * Decoration glyphs for one note.
  *
  * Articulations stack outward from the notehead on the side away from the stem, so a
@@ -2469,8 +2461,9 @@ function decorationGlyphs(
   strict: boolean,
   /** Dynamics above the staff when the tune sings, below when it does not. */
   dynamicsAbove: boolean,
-): PlacedGlyph[] {
+): { glyphs: PlacedGlyph[]; texts: PlacedText[] } {
   const out: PlacedGlyph[] = []
+  const texts: PlacedText[] = []
 
   // ── THE ORNAMENT STACK IS abcjs's, AND IT IS NOT A FIXED STEP ───────────────
   //
@@ -2597,7 +2590,35 @@ function decorationGlyphs(
       out.push({ name: glyph, x: centre, y: stepToY(lane), role: 'dynamic' })
     }
   }
-  return out
+
+  // A TEXT DECORATION STACKS ON THE SAME CURSOR AS THE SYMBOLS. `D.C.`, `Fine` and the
+  // fingering digits go through `textDecoration` (`decoration.js:147-153`), which takes
+  // the running `yPos.above` exactly as `symbolDecoration` does, places the text a flat
+  // `textFudge = 2` pitch above it, and advances by a flat `textHeight = 5`. One list,
+  // one cursor, dispatched by name.
+  //
+  // Ours drew them at a fixed part-lane step instead, so `frere-jacques`'s `!D.C.!` sat
+  // 4.09 pitch above where abcjs puts it and took the staff's ink with it.
+  for (const name of names) {
+    if (strict && STRICT_UNDRAWN.has(name)) continue
+    const text = DECORATION_TEXTS[name]
+    if (text === undefined) continue
+    const size = ENGRAVE.chordTextSize
+    const y = stepToY(toStep(above + ENGRAVE.decorationTextFudge))
+    const half = (ENGRAVE.decorationTextThickness * ENGRAVE.spacePerStep) / 2
+    texts.push({
+      text,
+      x: headX + headWidth / 2 - textWidth(text, size) / 2,
+      y,
+      size,
+      bold: false,
+      italic: true,
+      reserve: [y - half, y + half],
+    })
+    above += ENGRAVE.decorationTextHeight
+  }
+
+  return { glyphs: out, texts }
 }
 
 /**
@@ -2739,6 +2760,13 @@ function noteText(
       size,
       bold: false,
       italic: false,
+      // AN ANNOTATION SHARES THE CHORD LANE. `RelativeElement` gives a `type: "text"`
+      // with no pitch the very same `chordHeightAbove` a `type: "chord"` gets
+      // (`relative-element.js:60-76`), and `setUpperAndLowerRelativeElements` handles
+      // both in one `case "text": case "chord":`. Ours drew them at a fixed step with no
+      // role, so `anchorAboveStaff` never saw them, reserved nothing, and let their ink
+      // set the staff's top instead — the whole of `frere-jacques`'s last residual.
+      role: 'chord',
     })
   })
 
@@ -5687,7 +5715,56 @@ function anchorAboveStaff<
     top -= height + ENGRAVE.aboveStackMargin
     return top
   }
-  const chordY = chords ? reserve(ENGRAVE.chordHeightAbove) + ENGRAVE.chordTextSize : null
+  // ── CHORD SYMBOLS AND ANNOTATIONS SHARE A LANE, AND THE LANE COUNT IS PACKED ─
+  //
+  // `setLaneForChord` (`layout/voice.js:70-101`) walks a voice's items left to right and
+  // drops each into the FIRST lane whose right edge clears its left one, opening a new
+  // lane when none does — so two marks that would touch stack, and two that would not sit
+  // side by side in lane 0. `placeInLane` is that loop; the count comes back as
+  // `staff.specialY.chordLines.above` and MULTIPLIES the reserve through `incTop`'s
+  // `count` argument.
+  //
+  // The reserve is `chordHeightAbove * lanes + margin`, and the height in that product is
+  // the PLAIN measured one. `putChordInLane` does rewrite an item's own
+  // `chordHeightAbove` to `height * 1.25 * lane`, but that happens in `layoutVoice`, long
+  // after `setLimit` fixed the staff's `specialY` at engrave time — so the rewrite never
+  // reaches the reserve. Probed rather than read: `stacked-annotations` reports
+  // `chordHeightAbove: 4.7794` with `chordLines.above: 2`, not the 5.97 the rewrite would
+  // give. Reading the source alone gets this wrong twice over.
+  //
+  // `draw/text.js:13-15` then offsets each lane DOWN from the top of the block by
+  // `fontSize * 1.25`, so lane 0 is the topmost and the item packed FIRST is drawn
+  // highest.
+  //
+  // NOT what `setLane`'s `invertLane` reads as it does, and the SVG settles it: abcjs
+  // draws `"^Allegro""^con brio"` with Allegro at y 79.12 and con brio at 99.12, exactly
+  // one `fontSize * 1.25` apart, first-written on top. Composing `invertLane` with the
+  // draw offset predicts the opposite. Measure the output before trusting a chain of
+  // three source reads.
+  const laneOf = new Map<PlacedText, number>()
+  let chordLanes = 1
+  for (const part of parts) {
+    // Per VOICE, as abcjs runs it — and the staff keeps the LAST voice's count, because
+    // `voice.staff.specialY.chordLines = setLaneForChord(...)` assigns rather than maxes.
+    const rightMost: number[] = [0]
+    const marks: PlacedText[] = []
+    for (const el of part.elements) for (const t of el.texts) if (isChord(t)) marks.push(t)
+    for (const t of marks) {
+      const left = t.x
+      const right = left + textWidth(t.text, t.size, 'sans')
+      const lane = rightMost.findIndex((edge) => edge < left)
+      if (lane >= 0) {
+        rightMost[lane] = right
+        laneOf.set(t, lane)
+      } else {
+        rightMost.push(right)
+        laneOf.set(t, rightMost.length - 1)
+      }
+    }
+    if (marks.length > 0) chordLanes = rightMost.length
+  }
+  const chordBlock = ENGRAVE.chordHeightAbove * chordLanes
+  const chordY = chords ? reserve(chordBlock) + ENGRAVE.chordTextSize : null
   // A BOXED PART LABEL MEASURES TALLER, so its whole lane grows: `getTextSize` returns
   // `height + padding * 4` for a boxed font (`helpers/get-text-size.js:46-48`), and
   // `padding` is `font.size * fontboxpadding`, default 0.1 (`get-font-and-attr.js:35-36`).
@@ -5710,7 +5787,10 @@ function anchorAboveStaff<
     texts: el.texts.map((t) => ({ ...t, y: t.y + shift })),
   })
 
-  const chordShift = chordY === null ? 0 : chordY - stepToY(ENGRAVE.chordSymbolStep)
+  /** A chord or annotation is placed ABSOLUTELY in its lane, not shifted from where it
+   * was drawn: the two kinds start from different steps, so one shift cannot serve both. */
+  const chordAt = (t: PlacedText): number =>
+    (chordY ?? 0) + (laneOf.get(t) ?? 0) * ENGRAVE.chordTextSize * 1.25
   const partShift = partY === null ? 0 : partY - stepToY(ENGRAVE.partStep)
   const tempoShift = tempoY === null ? 0 : tempoY - stepToY(ENGRAVE.tempoStep)
 
@@ -5725,7 +5805,7 @@ function anchorAboveStaff<
       if (!el.texts.some(isChord)) return el
       return {
         ...el,
-        texts: el.texts.map((t) => (isChord(t) ? { ...t, y: t.y + chordShift } : t)),
+        texts: el.texts.map((t) => (isChord(t) ? { ...t, y: chordAt(t) } : t)),
       }
     }),
   }))
@@ -6058,6 +6138,10 @@ function verticalExtent(
       //
       // The 0.8/0.25 estimate is kept for the TITLE block, where it was measured and where
       // raising the ascent to 1.0 is recorded as moving every drawing 3.7px down.
+      if (t.reserve !== undefined) {
+        include(t.reserve[0], t.reserve[1])
+        continue
+      }
       const ascent = el.type === 'title' ? TEXT_ASCENT : 1
       const descent = el.type === 'title' ? TEXT_DESCENT : ENGRAVE.textHeightRatio - 1
       include(t.y - t.size * ascent, t.y + t.size * descent)

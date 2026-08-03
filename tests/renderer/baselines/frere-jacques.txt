@@ -1,5 +1,5 @@
 tune 0
-bounds  width=90.483 height=78.516 top=-1.935
+bounds  width=90.483 height=79.363 top=-1.935
 systems 4
 system 0 width=90.323 originY=0.000
   staff 0 originY=25.500
@@ -162,7 +162,7 @@ system 2 width=90.323 originY=40.914
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
 system 3 width=90.483 originY=56.758
-  staff 0 originY=11.456
+  staff 0 originY=12.303
     staffline 0.000,2.000 -> 90.483,2.000 t=0.130
     staffline 0.000,1.000 -> 90.483,1.000 t=0.130
     staffline 0.000,0.000 -> 90.483,0.000 t=0.130
@@ -174,11 +174,11 @@ system 3 width=90.483 originY=56.758
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     part x=6.329 w=0.000
-      line  6.071,-11.456 -> 8.309,-11.456 t=0.129
-      line  6.071,-8.081 -> 8.309,-8.081 t=0.129
-      line  6.071,-11.456 -> 6.071,-8.081 t=0.129
-      line  8.309,-11.456 -> 8.309,-8.081 t=0.129
-      text  6.329,-8.617 size=2.581 bold "B"
+      line  6.071,-12.303 -> 8.309,-12.303 t=0.129
+      line  6.071,-8.928 -> 8.309,-8.928 t=0.129
+      line  6.071,-12.303 -> 6.071,-8.928 t=0.129
+      line  8.309,-12.303 -> 8.309,-8.928 t=0.129
+      text  6.329,-9.465 size=2.581 bold "B"
     note@5 x=8.280 w=3.871
       glyph noteheadBlack 8.280,-2.500
       glyph articStaccatoAbove 8.677,-4.522
@@ -244,7 +244,7 @@ system 3 width=90.483 originY=56.758
     note@1 x=55.122 w=5.474
       glyph noteheadBlack 55.122,-0.500
       line  55.122,-0.332 -> 55.122,3.000 t=0.120
-      text  50.418,-4.500 size=2.065 "dolcemente"
+      text  50.418,-5.847 size=2.065 "dolcemente"
       text  53.385,5.694 size=2.194 bold "dig,"
     note@-2 x=59.335 w=5.474
       glyph noteheadBlack 59.335,1.000
@@ -268,7 +268,7 @@ system 3 width=90.483 originY=56.758
       glyph noteheadHalf 82.178,-0.500
       line  82.178,-0.332 -> 82.178,3.000 t=0.120
       text  79.587,5.694 size=2.194 bold "dong."
-      text  80.818,-5.000 size=2.065 italic "D.C."
+      text  80.818,-4.000 size=2.065 italic "D.C."
     bar x=87.515 w=1.060
       line  87.595,-2.000 -> 87.595,2.000 t=0.160
       line  88.325,-2.000 -> 88.325,2.000 t=0.500

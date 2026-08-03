@@ -65,8 +65,8 @@ const CONTENT_GAPS: Readonly<Record<string, string>> = {
  */
 const WITHIN: Readonly<Record<string, number>> = {
   '0.05': 72,
-  '1': 82,
-  '5': 90,
+  '1': 83,
+  '5': 91,
   '25': 116,
 }
 

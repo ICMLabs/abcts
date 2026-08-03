@@ -1,15 +1,15 @@
 tune 0
-bounds  width=37.540 height=27.612 top=-1.935
+bounds  width=37.540 height=27.614 top=-1.935
 systems 1
 system 0 width=37.540 originY=0.000
-  staff 0 originY=15.354
+  staff 0 originY=15.355
     staffline 0.000,2.000 -> 37.540,2.000 t=0.130
     staffline 0.000,1.000 -> 37.540,1.000 t=0.130
     staffline 0.000,0.000 -> 37.540,0.000 t=0.130
     staffline 0.000,-1.000 -> 37.540,-1.000 t=0.130
     staffline 0.000,-2.000 -> 37.540,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  1.935,-10.894 size=3.484 bold "Stacked annotations test"
+      text  1.935,-10.895 size=3.484 bold "Stacked annotations test"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     note@-6 x=6.329 w=3.871
@@ -17,8 +17,8 @@ system 0 width=37.540 originY=0.000
       glyph flag8thUp 7.509,-0.500
       line  5.929,3.000 -> 7.995,3.000 t=0.160
       line  7.509,2.832 -> 7.509,-0.500 t=0.120
-      text  3.749,-7.080 size=2.065 "Allegro"
-      text  3.289,-4.500 size=2.065 "con brio"
+      text  3.749,-7.081 size=2.065 "Allegro"
+      text  3.289,-4.501 size=2.065 "con brio"
     note@-5 x=10.200 w=3.871
       glyph noteheadBlack 10.200,2.500
       glyph flag8thUp 11.380,-1.000
@@ -31,7 +31,7 @@ system 0 width=37.540 originY=0.000
       glyph noteheadBlack 15.490,2.000
       glyph flag8thUp 16.670,-1.500
       line  16.670,1.832 -> 16.670,-1.500 t=0.120
-      text  12.279,-4.500 size=2.065 "staccato"
+      text  12.279,-7.081 size=2.065 "staccato"
     note@-3 x=19.361 w=3.871
       glyph noteheadBlack 19.361,1.500
       glyph flag8thUp 20.541,-2.000

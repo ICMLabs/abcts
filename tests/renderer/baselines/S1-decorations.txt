@@ -178,7 +178,7 @@ system 0 width=90.323 originY=0.000
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
 tune 2
-bounds  width=90.323 height=201.052 top=-1.935
+bounds  width=90.323 height=198.901 top=-1.935
 systems 16
 system 0 width=90.323 originY=0.000
   staff 0 originY=11.587
@@ -564,8 +564,8 @@ system 13 width=90.323 originY=161.549
       line  68.956,0.832 -> 68.956,-2.500 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 14 width=90.323 originY=174.703
-  staff 0 originY=7.065
+system 14 width=90.323 originY=174.867
+  staff 0 originY=4.750
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -576,23 +576,23 @@ system 14 width=90.323 originY=174.703
     note@-2 x=6.329 w=5.474
       glyph noteheadBlack 6.329,1.000
       line  7.509,0.832 -> 7.509,-2.500 t=0.120
-      text  5.083,-5.000 size=2.065 italic "D.S."
+      text  5.083,-4.000 size=2.065 italic "D.S."
     note@-2 x=26.811 w=5.474
       glyph noteheadBlack 26.811,1.000
       line  27.991,0.832 -> 27.991,-2.500 t=0.120
-      text  25.451,-5.000 size=2.065 italic "D.C."
+      text  25.451,-4.000 size=2.065 italic "D.C."
     note@-2 x=47.294 w=5.474
       glyph noteheadBlack 47.294,1.000
       line  48.474,0.832 -> 48.474,-2.500 t=0.120
-      text  42.494,-5.000 size=2.065 italic "D.C. al Coda"
+      text  42.494,-4.000 size=2.065 italic "D.C. al Coda"
     note@-2 x=67.776 w=5.474
       glyph noteheadBlack 67.776,1.000
       line  68.956,0.832 -> 68.956,-2.500 t=0.120
-      text  63.320,-5.000 size=2.065 italic "D.C. al Fine"
+      text  63.320,-4.000 size=2.065 italic "D.C. al Fine"
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 15 width=30.291 originY=186.617
-  staff 0 originY=7.065
+system 15 width=30.291 originY=186.148
+  staff 0 originY=5.382
     staffline 0.000,2.000 -> 30.291,2.000 t=0.130
     staffline 0.000,1.000 -> 30.291,1.000 t=0.130
     staffline 0.000,0.000 -> 30.291,0.000 t=0.130
@@ -603,7 +603,7 @@ system 15 width=30.291 originY=186.617
     note@-2 x=6.329 w=5.474
       glyph noteheadBlack 6.329,1.000
       line  7.509,0.832 -> 7.509,-2.500 t=0.120
-      text  5.084,-5.000 size=2.065 italic "Fine"
+      text  5.084,-4.000 size=2.065 italic "Fine"
     note@-2 x=11.804 w=5.474
       glyph noteheadBlack 11.804,1.000
       glyph breathMarkTick 11.394,-4.254

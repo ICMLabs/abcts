@@ -1381,14 +1381,22 @@ describe('annotations', () => {
     expect(textsOf('"_p"C|').map((t) => t.text)).toEqual(['p'])
   })
 
-  it('is not confused with a chord symbol', () => {
-    // Same `"…"` syntax and the same parser field; only the leading char separates them.
-    // A chord symbol sits in its own lane, so the two must not land on the same line.
+  it("SHARES a chord symbol's lane, which is what abcjs does", () => {
+    // This used to assert the opposite — "a chord symbol sits in its own lane, so the two
+    // must not land on the same line". abcjs disagrees, and the SVG is the evidence:
+    // `"Am7"C` and `"^Am7"C` both draw at y 38.56. `RelativeElement` gives a `type:
+    // "text"` with no pitch the very same `chordHeightAbove` a `type: "chord"` gets
+    // (`relative-element.js:60-76`), and `setUpperAndLowerRelativeElements` handles both
+    // in one `case "text": case "chord":`.
+    //
+    // What still separates them is ALIGNMENT — a chord is centred on the notehead and an
+    // annotation is left-justified — and lane PACKING, which pushes the second of two
+    // overlapping marks onto its own line.
     const chord = textsOf('"Am7"C|')[0]
     const annotation = textsOf('"^Am7"C|')[0]
     expect(chord?.text).toBe('Am7')
     expect(annotation?.text).toBe('Am7')
-    expect(chord?.y).not.toBe(annotation?.y)
+    expect(chord?.y).toBe(annotation?.y)
   })
 
   it('stacks above the staff with the first one written on top', () => {
