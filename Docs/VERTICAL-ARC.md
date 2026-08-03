@@ -114,6 +114,21 @@ draws.
 - **A staff's reserves are the UNION of its voices'.** The shared-staff merge spread the
   first voice's object, so a tuplet or hairpin on the LOWER voice reserved nothing.
 
+### A BEAM IS NOT PART OF THE STAFF'S EXTENT
+
+`BeamElem` lives in `voice.otherchildren` and `setUpperAndLowerVoiceElements` switches only
+on Crescendo, Dynamic, Ending and Tie — so abcjs never adds a beam to the range. The STEMS
+carry it. Ours added half a beam thickness past the stem tip: 0.25 of a space, **0.5 pitch
+exactly**, which was the whole of the `dBot = -0.50` constant.
+
+THE RECORD SAID THIS COULD NOT LAND ALONE — the `-08-02` checkpoint lists the fact and adds
+"removing it costs ragtime more — it needs its partner, unfound". The fact was right and the
+conclusion was an artefact of when it was tried: it was being weighed against a corpus that
+still had the tuplet lanes, the declared boxes, the above-side dynamic, the hairpin lane and
+the per-voice prefix all wrong. Several of those ARE the partner. **A "needs its partner"
+note is a note about the corpus at that moment, not about the change** — re-test them after
+the ground moves.
+
 ### A SECOND GATE LIMITATION, recorded like the grace-note one
 
 **`little swallow`'s dx cannot reach zero against these goldens.** The harness that made
@@ -146,18 +161,20 @@ A right change can make the corpus worse; look for its partner rather than rever
   # convert: abcjs pitch = 6 - 2 * ourY(spaces)
   ```
 
-  Read that way, and after the hairpin fix, **`dBot` is a recurring −0.50 pitch on 23 of
-  its 46 staves** — one constant, and by far the biggest single thing left in the corpus.
-  abcjs's bottoms land on values like −12.500 and −9.500 where ours land on −13.000 and
-  −10.000. The remaining 14 are scattered (+1.97, +2.08, +6.00 …).
+  **The −0.50 is CLOSED**: it was the beam being counted in the extent (see below). Its
+  staves are now 7/46 exact and its BOTTOM errors are down from 37 to 11.
 
-  What is known about the −0.50: the staff bottom is set by a STEM in 148 of ragtime's
-  cases (`PROBE range bot` counts: note 148, clef 115, key-signature 69, rest 3, TieElem 3,
-  TripletElem 2). abcjs's beamed down-stems end on half-pitches and ours on whole ones,
-  which points at the `+0.5` pitch fudge `layout/beam.js:125` applies to a descending
-  beam's stem end — but a direct endpoint comparison on a BASS staff has not been done, and
-  the up-stem sample taken instead was not the one setting the bottom. Take the sample from
-  a staff the extent table names, not from the first system.
+  **Its TOP is now the dominant term** — 33 of 46 staves — and unlike the bottom it is
+  SCATTERED, not one constant: −7.25, −7.15, −2.07, −2.00, −1.00, −0.15, +5.01. Several
+  causes, so take them one at a time with the method that worked twice here:
+
+  1. Get abcjs's per-staff `staff.top`/`staff.bottom` (probe at the end of
+     `setUpperAndLowerElements`) and ours from the staff-origin call in the stacking loop —
+     NOT from inside `verticalExtent`, which also fires for `anchorAboveStaff` and
+     `systemHeight` and scrambles the order.
+  2. Pick a staff the table names, and instrument OUR `include()` to record which
+     contributor set that staff's top. Naming the winner is what found the beam in one run.
+  3. Then probe abcjs's `adjustRange` for the same staff and compare the two chains.
 
   Also still true: abcjs's first staff reaches `staff.top = 21.0` from the MUSIC's own ink
   before the tempo's 6 pitches go on top, and ours falls ~2px short of that 21.
