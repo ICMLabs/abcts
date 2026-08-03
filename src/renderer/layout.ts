@@ -494,6 +494,12 @@ export const ENGRAVE = {
    * One flat 5 for both cost every voltaed staff of `ragtime-nightingale` a pitch.
    */
   tupletLane: 4,
+  /**
+   * `RelativeElement`'s default `height` — a flat 4 pitch when nothing declares one
+   * (`relative-element.js:37`). A notehead never does, so this is what a notehead's
+   * height IS wherever abcjs reads that field.
+   */
+  relativeElementHeight: 4,
   voltaLane: 5,
   /** abcjs's `margin` in `set-upper-and-lower-elements.js:102` — one pitch on every lane. */
   laneMargin: 1,
@@ -3160,8 +3166,23 @@ function curveReserves(
   anchors: readonly NoteAnchor[],
   elements: readonly LayoutElement[],
   voicePos: number,
-): { top: number; bottom: number }[] {
+): { ink: { top: number; bottom: number }[]; post: { top: number; bottom: number }[] } {
   const reserves: { top: number; bottom: number }[] = []
+  /**
+   * The EARLIER of a curve's two reserves — a flat 4 pitch either side of its anchors,
+   * set the moment the closing note is known:
+   *
+   *     this.top    = Math.max(anchor1.pitch, anchor2.pitch) + 4
+   *     this.bottom = Math.min(anchor1.pitch, anchor2.pitch) - 4
+   *
+   * with abcjs's own "we don't really have enough info to know what the vertical extent
+   * is yet… this will just give it enough room on either side" beside it
+   * (`tie-element.js:28-36`). `voice.addOther` runs `setRange` on it, so unlike the
+   * `getYBounds` box this one is INK, and every lane then stacks on top of it.
+   * `ave-verum-corpus`'s tenor staff reaches its bottom on nothing else.
+   */
+  const ink: { top: number; bottom: number }[] = []
+  const four = 4 * ENGRAVE.spacePerStep
   const open: number[] = []
   const centre = (a: NoteAnchor) => (a.top + a.bottom) / 2
   /**
@@ -3226,6 +3247,10 @@ function curveReserves(
     // abcjs's `Math.min` over PITCHES is our `Math.max` over y — the lower end on screen.
     const y = Math.max(endAt(from, above, true), endAt(to, above, false))
     reserves.push(above ? { top: y - three, bottom: y } : { top: y, bottom: y + three })
+    ink.push({
+      top: Math.min(centre(from), centre(to)) - four,
+      bottom: Math.max(centre(from), centre(to)) + four,
+    })
   }
   anchors.forEach((anchor, i) => {
     if (anchor.event.type === 'rest') return
@@ -3240,7 +3265,7 @@ function curveReserves(
       if (next !== undefined) add(anchor, next)
     }
   })
-  return reserves
+  return { ink, post: reserves }
 }
 
 // ─── Tuplets ─────────────────────────────────────────────────────────────────
@@ -3287,7 +3312,12 @@ function layoutTuplets(
     let bottom = anchor.bottom - ENGRAVE.spacePerStep
     for (const line of el?.lines ?? []) {
       top = Math.min(top, line.y1, line.y2)
-      bottom = Math.max(bottom, line.y1, line.y2)
+      // An UNBEAMED stem declares one pitch past its low end — `bottom: p1 - 1`
+      // (`abstract-engraver.js:762`) — and `abselem.bottom` carries it, so the bracket
+      // arithmetic that reads `anchor.parent.bottom` gets it too. `multi-voice-triplet-
+      // brackets` sat exactly that pitch short at the bottom of its first system.
+      const extra = line.role === 'stem' && line.beamed !== true ? ENGRAVE.spacePerStep : 0
+      bottom = Math.max(bottom, line.y1 + extra, line.y2 + extra)
     }
     return { top, bottom }
   }
@@ -3425,10 +3455,14 @@ function layoutTuplets(
           endNote = highest + 3
         }
       } else {
-        // ponytail: abcjs subtracts the RelativeElement's `height` here as well
-        // (`min(bottom - height)`); ours has no per-element height and no corpus fixture
-        // has a low middle note that binds. Add it with the element height when one does.
-        const lowest = Math.min(0, ...middle.map((e) => pitchOf(e.bottom))) - 3
+        // A LOW MIDDLE NOTE COUNTS ITS OWN HEIGHT AS WELL AS ITS POSITION:
+        // `min(middleElems[i].bottom - middleElems[i].height)`, and `height` is
+        // `RelativeElement`'s DEFAULT 4 (`relative-element.js:37`) for a notehead — a flat
+        // figure, like everything else abcjs declares. The recorded ponytail note said no
+        // corpus fixture had a low middle note that binds; `multi-voice-triplet-brackets`
+        // does, and without the height its bracket sat 4 pitch high.
+        const lowest =
+          Math.min(0, ...middle.map((e) => pitchOf(e.bottom) - ENGRAVE.relativeElementHeight)) - 3
         if (lowest < startNote && lowest < endNote) {
           startNote = Math.min(lowest, startNote) - 2
           endNote = Math.min(lowest, endNote) - 2
@@ -4776,6 +4810,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       }
       const hasHairpin = systemAnchors.some((a) => a.event.decorations.some(isHairpin))
       const tuplets = layoutTuplets(systemAnchors, elements)
+      const curves = curveReserves(systemAnchors, elements, voicePosOf(voiceIndex))
       // Melismas resolve here for the same reason tuplets do, and must run AFTER the
       // elements are final: in strict mode this rewrites the syllable's text in place.
       const melismaLines = layoutMelismas(systemAnchors, elements, strict)
@@ -4796,8 +4831,8 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         tupletReservesAbove: tuplets.reservesAbove,
         // Ties and slurs reserve on the same terms — a declared box, folded in here so
         // `verticalExtent` has one list of them. See `curveReserves`.
-        tupletReserves: tuplets.reserves,
-        curveReserves: curveReserves(systemAnchors, elements, voicePosOf(voiceIndex)),
+        tupletReserves: [...tuplets.reserves, ...curves.ink],
+        curveReserves: curves.post,
         tupletLines: tuplets.lines,
         tupletTexts: tuplets.texts,
         voltaLines,

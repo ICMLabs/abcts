@@ -1834,8 +1834,8 @@ system 1 width=90.323 originY=19.282
       line  74.288,-0.832 -> 74.288,2.500 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 2 width=90.323 originY=29.879
-  staff 0 originY=5.517
+system 2 width=90.323 originY=29.396
+  staff 0 originY=6.000
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -1997,10 +1997,10 @@ system 3 width=90.323 originY=40.152
       line  87.951,-2.000 -> 87.951,2.000 t=0.160
       line  88.511,-2.000 -> 88.511,2.000 t=0.160
 tune 8
-bounds  width=90.323 height=31.267 top=-1.935
+bounds  width=90.323 height=32.401 top=-1.935
 systems 2
 system 0 width=90.323 originY=0.000
-  staff 0 originY=13.918
+  staff 0 originY=15.052
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -2025,8 +2025,8 @@ system 0 width=90.323 originY=0.000
     slur  78.006,-1.800 -> 81.239,-2.800 bulge=-0.582
     slur  73.665,-1.300 -> 83.746,-2.300 bulge=-1.815
     title x=0.000 w=0.000
-      text  31.468,-9.459 size=3.484 bold "S8-9 Slurs and Ties"
-      text  19.553,-5.487 size=2.710 "Title with funny chars like \u0005 Çéñô Àçäßö © …"
+      text  31.468,-10.592 size=3.484 bold "S8-9 Slurs and Ties"
+      text  19.553,-6.621 size=2.710 "Title with funny chars like \u0005 Çéñô Àçäßö © …"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=6.516
@@ -2117,7 +2117,7 @@ system 0 width=90.323 originY=0.000
       glyph noteheadBlack 84.046,-1.500
       line  84.046,-1.332 -> 84.046,2.000 t=0.120
 system 1 width=90.323 originY=21.965
-  staff 0 originY=3.866
+  staff 0 originY=5.000
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -2164,7 +2164,7 @@ system 1 width=90.323 originY=21.965
       line  87.435,-2.000 -> 87.435,2.000 t=0.160
       line  88.165,-2.000 -> 88.165,2.000 t=0.500
 tune 9
-bounds  width=90.323 height=58.744 top=-1.935
+bounds  width=90.323 height=59.631 top=-1.935
 systems 4
 system 0 width=90.323 originY=0.000
   staff 0 originY=12.575
@@ -2194,10 +2194,10 @@ system 0 width=90.323 originY=0.000
     tupletline 45.197,5.500 -> 47.432,5.500 t=0.100
     tupletline 41.561,5.500 -> 41.561,6.100 t=0.100
     tupletline 47.432,5.500 -> 47.432,6.100 t=0.100
-    tupletline 48.598,5.500 -> 51.805,5.500 t=0.100
-    tupletline 53.205,5.500 -> 56.412,5.500 t=0.100
-    tupletline 48.598,5.500 -> 48.598,6.100 t=0.100
-    tupletline 56.412,5.500 -> 56.412,6.100 t=0.100
+    tupletline 48.598,5.504 -> 51.805,5.504 t=0.100
+    tupletline 53.205,5.504 -> 56.412,5.504 t=0.100
+    tupletline 48.598,5.504 -> 48.598,6.104 t=0.100
+    tupletline 56.412,5.504 -> 56.412,6.104 t=0.100
     tupletline 62.611,5.500 -> 66.283,5.500 t=0.100
     tupletline 67.683,5.500 -> 71.354,5.500 t=0.100
     tupletline 62.611,5.500 -> 62.611,6.100 t=0.100
@@ -2206,7 +2206,7 @@ system 0 width=90.323 originY=0.000
     tuplettext 25.740,6.760 size=1.400 "3"
     tuplettext 35.167,6.760 size=1.400 "3"
     tuplettext 44.147,6.760 size=1.400 "3"
-    tuplettext 52.155,6.760 size=1.400 "3"
+    tuplettext 52.155,6.764 size=1.400 "3"
     tuplettext 66.633,6.760 size=1.400 "4"
     tuplettext 81.864,4.760 size=1.400 "3"
     tie  74.042,-1.800 -> 78.007,-1.800 bulge=-0.714
@@ -2294,7 +2294,7 @@ system 0 width=90.323 originY=0.000
       line  84.941,-1.832 -> 84.941,2.250 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 1 width=90.323 originY=19.075
+system 1 width=90.323 originY=19.079
   staff 0 originY=6.366
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
@@ -2304,11 +2304,11 @@ system 1 width=90.323 originY=19.075
     beam   34.790,3.250 -> 57.356,2.250 t=0.500
     beam   51.462,1.761 -> 57.356,1.500 t=0.500
     beam   63.250,1.750 -> 79.922,2.250 t=0.500
-    tupletline 6.329,4.000 -> 14.555,4.000 t=0.100
-    tupletline 15.955,4.000 -> 24.181,4.000 t=0.100
-    tupletline 6.329,4.000 -> 6.329,4.600 t=0.100
+    tupletline 6.329,4.500 -> 14.555,4.250 t=0.100
+    tupletline 15.955,4.250 -> 24.181,4.000 t=0.100
+    tupletline 6.329,4.500 -> 6.329,5.100 t=0.100
     tupletline 24.181,4.000 -> 24.181,4.600 t=0.100
-    tuplettext 14.905,5.260 size=1.400 "3"
+    tuplettext 14.905,5.510 size=1.400 "3"
     tuplettext 46.313,5.010 size=1.400 "3"
     tuplettext 71.826,4.260 size=1.400 "3"
     clef x=1.935 w=3.103
@@ -2342,7 +2342,7 @@ system 1 width=90.323 originY=19.075
       line  79.922,-1.332 -> 79.922,2.250 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 2 width=90.288 originY=30.442
+system 2 width=90.288 originY=30.696
   staff 0 originY=7.000
     staffline 0.000,2.000 -> 90.288,2.000 t=0.130
     staffline 0.000,1.000 -> 90.288,1.000 t=0.130
@@ -2441,8 +2441,8 @@ system 2 width=90.288 originY=30.442
       line  86.269,-2.332 -> 86.269,1.250 t=0.120
     bar x=88.223 w=0.160
       line  88.303,-2.000 -> 88.303,2.000 t=0.160
-system 3 width=50.689 originY=43.942
-  staff 0 originY=6.366
+system 3 width=50.689 originY=44.196
+  staff 0 originY=7.000
     staffline 0.000,2.000 -> 50.689,2.000 t=0.130
     staffline 0.000,1.000 -> 50.689,1.000 t=0.130
     staffline 0.000,0.000 -> 50.689,0.000 t=0.130

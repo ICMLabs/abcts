@@ -889,7 +889,7 @@ system 1 width=90.323 originY=22.199
       line  87.435,-2.000 -> 87.435,2.000 t=0.160
       line  88.165,-2.000 -> 88.165,2.000 t=0.500
 tune 6
-bounds  width=90.323 height=35.954 top=-1.935
+bounds  width=90.323 height=35.958 top=-1.935
 systems 2
 system 0 width=90.323 originY=0.000
   staff 0 originY=16.519
@@ -900,17 +900,17 @@ system 0 width=90.323 originY=0.000
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     beam   9.141,3.250 -> 22.118,2.750 t=0.500
     beam   41.264,2.750 -> 55.029,2.750 t=0.500
-    tupletline 41.264,5.500 -> 52.625,5.500 t=0.100
-    tupletline 54.025,5.500 -> 65.385,5.500 t=0.100
-    tupletline 41.264,5.500 -> 41.264,6.100 t=0.100
-    tupletline 65.385,5.500 -> 65.385,6.100 t=0.100
-    tupletline 68.793,5.500 -> 75.171,5.500 t=0.100
-    tupletline 76.571,5.500 -> 82.950,5.500 t=0.100
-    tupletline 68.793,5.500 -> 68.793,6.100 t=0.100
-    tupletline 82.950,5.500 -> 82.950,6.100 t=0.100
+    tupletline 41.264,5.504 -> 52.625,5.504 t=0.100
+    tupletline 54.025,5.504 -> 65.385,5.504 t=0.100
+    tupletline 41.264,5.504 -> 41.264,6.104 t=0.100
+    tupletline 65.385,5.504 -> 65.385,6.104 t=0.100
+    tupletline 68.793,5.504 -> 75.171,5.504 t=0.100
+    tupletline 76.571,5.504 -> 82.950,5.504 t=0.100
+    tupletline 68.793,5.504 -> 68.793,6.104 t=0.100
+    tupletline 82.950,5.504 -> 82.950,6.104 t=0.100
     tuplettext 15.870,5.260 size=1.400 "3"
-    tuplettext 52.975,6.760 size=1.400 "6"
-    tuplettext 75.521,6.760 size=1.400 "3"
+    tuplettext 52.975,6.764 size=1.400 "6"
+    tuplettext 75.521,6.764 size=1.400 "3"
     title x=0.000 w=0.000
       text  36.210,-12.059 size=3.484 bold "S3-7 Tuplets"
       text  29.502,-7.858 size=2.452 italic "Test - from Gonzato guide Ch.2"
@@ -963,7 +963,7 @@ system 0 width=90.323 originY=0.000
       line  81.770,-2.332 -> 81.770,1.000 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 1 width=58.461 originY=23.019
+system 1 width=58.461 originY=23.023
   staff 0 originY=7.250
     staffline 0.000,2.000 -> 58.461,2.000 t=0.130
     staffline 0.000,1.000 -> 58.461,1.000 t=0.130
@@ -2221,7 +2221,7 @@ system 0 width=21.713 originY=0.000
       line  13.720,-0.601 -> 13.720,-2.701 t=0.072
       line  15.483,0.332 -> 15.483,-3.000 t=0.120
 tune 22
-bounds  width=90.323 height=68.108 top=-1.935
+bounds  width=90.323 height=68.608 top=-1.935
 systems 5
 system 0 width=90.323 originY=0.000
   staff 0 originY=14.019

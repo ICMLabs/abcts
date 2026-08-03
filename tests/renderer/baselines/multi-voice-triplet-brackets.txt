@@ -1,5 +1,5 @@
 tune 0
-bounds  width=90.323 height=43.661 top=-1.935
+bounds  width=90.323 height=44.161 top=-1.935
 systems 2
 system 0 width=90.323 originY=0.000
   staff 0 originY=14.475
@@ -24,30 +24,30 @@ system 0 width=90.323 originY=0.000
     tupletline 83.411,-10.500 -> 86.369,-10.500 t=0.100
     tupletline 79.052,-10.500 -> 79.052,-11.100 t=0.100
     tupletline 86.369,-10.500 -> 86.369,-11.100 t=0.100
-    tupletline 6.329,4.000 -> 9.288,4.750 t=0.100
-    tupletline 10.688,4.750 -> 13.646,5.500 t=0.100
-    tupletline 6.329,4.000 -> 6.329,4.600 t=0.100
-    tupletline 13.646,5.500 -> 13.646,6.100 t=0.100
-    tupletline 15.535,5.500 -> 18.494,5.500 t=0.100
-    tupletline 19.894,5.500 -> 22.852,5.500 t=0.100
-    tupletline 15.535,5.500 -> 15.535,6.100 t=0.100
-    tupletline 22.852,5.500 -> 22.852,6.100 t=0.100
-    tupletline 24.741,5.500 -> 27.647,5.500 t=0.100
-    tupletline 29.047,5.500 -> 31.954,5.500 t=0.100
-    tupletline 24.741,5.500 -> 24.741,6.100 t=0.100
-    tupletline 31.954,5.500 -> 31.954,6.100 t=0.100
-    tupletline 33.946,7.000 -> 36.905,7.000 t=0.100
-    tupletline 38.305,7.000 -> 41.264,7.000 t=0.100
-    tupletline 33.946,7.000 -> 33.946,7.600 t=0.100
-    tupletline 41.264,7.000 -> 41.264,7.600 t=0.100
+    tupletline 6.329,4.500 -> 9.288,5.250 t=0.100
+    tupletline 10.688,5.250 -> 13.646,6.000 t=0.100
+    tupletline 6.329,4.500 -> 6.329,5.100 t=0.100
+    tupletline 13.646,6.000 -> 13.646,6.600 t=0.100
+    tupletline 15.535,6.000 -> 18.494,6.000 t=0.100
+    tupletline 19.894,6.000 -> 22.852,6.000 t=0.100
+    tupletline 15.535,6.000 -> 15.535,6.600 t=0.100
+    tupletline 22.852,6.000 -> 22.852,6.600 t=0.100
+    tupletline 24.741,4.500 -> 27.647,4.500 t=0.100
+    tupletline 29.047,4.500 -> 31.954,4.500 t=0.100
+    tupletline 24.741,4.500 -> 24.741,5.100 t=0.100
+    tupletline 31.954,4.500 -> 31.954,5.100 t=0.100
+    tupletline 33.946,9.000 -> 36.905,9.000 t=0.100
+    tupletline 38.305,9.000 -> 41.264,9.000 t=0.100
+    tupletline 33.946,9.000 -> 33.946,9.600 t=0.100
+    tupletline 41.264,9.000 -> 41.264,9.600 t=0.100
     tuplettext 54.615,-5.390 size=1.400 "3"
     tuplettext 63.820,-4.640 size=1.400 "3"
     tuplettext 72.974,-6.140 size=1.400 "3"
     tuplettext 82.361,-10.640 size=1.400 "3"
-    tuplettext 9.638,6.010 size=1.400 "3"
-    tuplettext 18.844,6.760 size=1.400 "3"
-    tuplettext 27.997,6.760 size=1.400 "3"
-    tuplettext 37.255,8.260 size=1.400 "3"
+    tuplettext 9.638,6.510 size=1.400 "3"
+    tuplettext 18.844,7.260 size=1.400 "3"
+    tuplettext 27.997,5.760 size=1.400 "3"
+    tuplettext 37.255,10.260 size=1.400 "3"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     note@3 x=6.329 w=7.742
@@ -171,7 +171,7 @@ system 0 width=90.323 originY=0.000
       line  69.717,5.668 -> 69.717,9.000 t=0.120
     bar x=78.923 w=0.160
       line  79.003,-2.000 -> 79.003,2.000 t=0.160
-system 1 width=90.323 originY=23.975
+system 1 width=90.323 originY=24.475
   staff 0 originY=8.250
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
