@@ -159,7 +159,9 @@ voices because they are ordinary zero-duration elements on one timeline.
 **21 of 29 fixtures are pixel-identical to abcjs on ALL FOUR axes at once** at a 0.05px
 threshold, from 0 at the start of that work; only EIGHT are off any axis and only FOUR off
 a vertical one. Page heights match abcjs to within 0.07px.
-`ragtime-nightingale` matches abcjs's own `staff.top`/`.bottom` on 39 of its 46 staves.
+`ragtime-nightingale` matches abcjs's own `staff.top`/`.bottom` on 40 of its 46 staves, and
+what is left on it is HORIZONTAL in origin — see the checkpoint before spending an axis on
+it. The harvested corpus is at 78 / 89 / 96 / 119 of 174 within 0.05 / 1 / 5 / 25px.
 **One red**, named in the checkpoint.
 
 `frere-jacques` is CLOSED vertically (dy 0.03, oy −0.02) and was never the "source-line-wrap
@@ -207,7 +209,10 @@ tree, which compat does not reproduce — only its inputs.
 It immediately found a whole feature that was parsed and never painted: **`&` overlay
 voices**. Nothing in the 41 uses `&`, so 505 tests went green over it for weeks. A GATE IS
 ONLY AS BROAD AS ITS INPUTS, and ours had all been chosen by the same people who wrote the
-engine.
+engine. It has kept doing it: `clef=none` and `clef=perc` read as a C clef on the middle
+line, and `%%text` / `%%begintext` reserving nothing, were both found there and neither is
+exercised by any of the 41. **RANK IT BY WORST AXIS WITH EACH FIXTURE'S DIRECTIVES BESIDE
+IT** — that list, not the aggregate counts, is what names the next defect.
 
 **A DECORATION IS STACKED BY ITS OWN GLYPH HEIGHT AND CENTRED ON THE RUNNING CURSOR** —
 `height = symbolHeightInPitches(symbol) + 1`, `y = cursor + height / 2`, `cursor += height`

@@ -2,7 +2,9 @@
 
 Supersedes `CHECKPOINT-2026-08-03.md`, which stays as the record of the declared-box idea,
 the two corpora and the four gate artefacts. **Two of its statements are corrected below**
-and both corrections came from measuring the output.
+and both corrections came from measuring the output. Five fixes landed; the last three all
+came off the harvested corpus's ranked list, which no gate summarises and which is the
+first thing to re-run.
 
 Read this, then `VERTICAL-ARC.md`, then `ARCHITECTURE.md`, then `CLAUDE.md`.
 
@@ -14,13 +16,13 @@ Read this, then `VERTICAL-ARC.md`, then `ARCHITECTURE.md`, then `CLAUDE.md`.
 |---|---|
 | `main` | vertical arc v1 merged. GREEN 505/505. Untouched. |
 | `geometry/horizontal` | closed, GREEN 505/505. Untouched. |
-| `geometry/vertical` | **THE OPEN ARC. 683 of 684**, and the one red is `ragtime-nightingale`'s `oy`, unchanged at 1.96 against 0.59 and NOT raised. |
+| `geometry/vertical` | **THE OPEN ARC. 683 of 684**, and the one red is `ragtime-nightingale`'s `oy`, now **1.49** against 0.59 and NOT raised. |
 
 | corpus | standing |
 |---|---|
 | 41-fixture | **21/29** exact on all four axes at 0.05px (was 20). Only EIGHT are off any axis, only FOUR off a vertical one. |
-| harvested (174) | **172/174** content-correct; within 0.05 / 1 / 5 / 25px unchanged at 72 / 83 / 91 / 116. |
-| `ragtime-nightingale` extents | **39 of 46** staves match abcjs's own `staff.top`/`.bottom`. |
+| harvested (174) | **172/174** content-correct; within 0.05 / 1 / 5 / 25px **78 / 89 / 96 / 119**, from 72 / 83 / 91 / 116. |
+| `ragtime-nightingale` extents | **40 of 46** staves match abcjs's own `staff.top`/`.bottom`, and staff 0's is the title-block accounting difference rather than an error. |
 
 ---
 
@@ -69,6 +71,57 @@ note stay unimplemented with the probed constants recorded at the site.
 
 **A parser test asserted `beatUnit: null` for `Q:120`.** It asserted abcjs was wrong and is
 corrected — the third such on this branch.
+
+### 3. `umarcato` is a STACKED decoration, not a close one
+
+abcjs's close list is exactly staccato, tenuto and accent (`decoration.js:19-20`); every
+other case in the switch goes through `symbolDecoration`. `marcato` was already on the
+stacked path with that rule written beside it — `umarcato`, its `!^!` spelling and `wedge`
+were added later on the CLOSE path, where they reserve a POINT at their own pitch instead
+of `cursor + symbolHeightInPitches + 0.5`.
+
+`ragtime-nightingale`'s staff 37 is a chord carrying `!^!`: abcjs reserves top 14.6277
+(cursor 12 + 2.1277 + 0.5), we reserved 14.0529. That 0.5748 pitch is **2.23px of the
+page's drift**, and every staff below it rode high. **oy 1.96 → 1.49.**
+
+A test asserted `!^!` on a down-stem note draws `articMarcatoBelow`. It does not —
+`symbolList` is placement-independent, and `!^!C !^!c` renders two `scripts.umarcato`,
+measured. The fourth test on this branch to have asserted abcjs was wrong.
+
+### 4. `clef=none` and `clef=perc` MAP LIKE TREBLE — only the glyph is absent
+
+abcjs's table gives both `mid: 0`, the same as treble (`abc_parse_key_voice.js:36,42`), and
+`none` carries no `pitch` field at all. Measured on its own output: `K:C`, `K:C none` and
+`K:C perc` all put `B4` **15.49px below the top staff line**. The whole visible difference
+between them is the CLEF's own reserve — 13.7244 pitch against a bare staff's 10.
+
+We read both as a C clef on the middle line, with a comment saying it was so notes would
+"land somewhere sane rather than at a wild offset". Three staff spaces wrong: every note
+rode high and the staff under it sat ~11.8px low in compensation, for a net 11.43px.
+
+**Found by SPLITTING one number into two.** A harvested fixture was 45.19px out; a
+controlled pair — the same tune with and without its `%%begintext` block — put 11.43 of
+that on the clef and 33.76 on the block. Neither was visible in the 45.19.
+
+### 5. `%%text` and `%%begintext` are drawn and reserved
+
+abcjs builds one `FreeText` per directive, and the spellings differ in more than alignment.
+Measured with a control pair on one tune: **`%%center A` costs 23.27px and `%%text A` costs
+33.77**, their rows exactly that 10.5 apart — the `{ move: fontSize / 2 }` the string branch
+spends before its row and the centred branch does not.
+
+A `%%begintext` block is ONE element however many lines it holds — a single `<text>` with a
+`tspan` per line. Each line past the first adds **25.2px**, 1.2em at the 21px `textfont`,
+the same `dy` a lyric verse steps by, and NOT the 1.108 line height the first line takes.
+
+`textAbove`/`textBelow` are now lists of BLOCKS rather than of lines, which is what abcjs's
+element already was. Verified against abcjs on five shapes — one- and two-line
+`%%begintext`, one and two `%%text`, and `%%center` — all within 0.02px.
+
+**FREE TEXT ONLY TRAILS IF NOTHING FOLLOWS IT.** abcjs's justification rule is per LINE, so
+a `%%begintext` between two music lines makes the FIRST non-last and leaves the second
+last. Measured on `S2-fields`'s BeginText tune: abcjs's first staff spans the full 350 and
+its second stops at 211. Marking any post-music block as trailing justified the wrong line.
 
 ---
 
@@ -125,10 +178,23 @@ breaks there — both halves of the rule in one bar.
 Ours: `beamAfterEmit` in `parser.ts` closes the run on any rest, with the comment "A space,
 barline, rest, longer note … breaks the run". The rest clause is wrong.
 
-**This is not a small change.** Making rests transparent is one line; making them MEMBERS —
-which is what abcjs's average, min, max and count all see — reaches `setBeamGroup` (which
-refuses rests today), the `members` filter in `beamPos`, and the beam-geometry inputs. Do
-it as a whole or not at all, and re-measure all 292.
+**This is not a small change, and it is NARROW.** Making rests transparent is one line;
+making them MEMBERS — which is what abcjs's average, min, max and count all see — reaches
+`setBeamGroup` (which refuses rests today), the `members` filter in `beamPos`, and the
+beam-geometry inputs. Do it as a whole or not at all, and re-measure all 292.
+
+The half-measure provably does not work: probed, that rest's `minpitch`/`maxpitch`/
+`averagepitch` are all **11** — `restpitch` is 7 by default but 11 on a MULTI-VOICE staff
+with stems up (`abstract-engraver.js:544-551`) — and it is the rest's 11 that lifts
+`beam.max` from 9 and takes `pos` from 17 to 19. Transparent-but-not-a-member leaves us at
+17. That single fact is also the whole of the 202 beams whose `min`/`max` disagree.
+
+**Weigh it before starting.** Across all 41 fixtures abcjs has 599 beams and exactly FOUR
+contain a rest — two in `S3-note-syntax`, one in `S8-layout`, one in ragtime — and none of
+those three fixtures is pixel-gated. Ragtime's is, but the change moves only the beam and
+its stems, and the pixel gate measures NOTEHEADS. **No gate in this repo can see this fix.**
+It is a real defect — a beam drawn in two pieces where abcjs draws one — and it has to be
+verified by comparing the two SVGs' beam probes directly.
 
 ### A TWO-NOTE GRACE GROUP IS BEAMED
 
@@ -138,53 +204,37 @@ carry generic objects, per `createStems`'s own comment). We emit no beam for it 
 
 ---
 
-## RAGTIME'S 4.09px OF PAGE DRIFT IS TWO STAVES
+## RAGTIME'S REMAINING RESIDUAL IS HORIZONTAL IN ORIGIN
 
-Comparing every staff's TOP LINE in both SVGs — the honest signal, and it tracks the
-notehead deltas band for band:
+Its page drift WAS two staves. One of them — staff 37 — is closed by the `umarcato` fix
+above. What is left is a −1.78px step at staff 9 and wobble under 0.9px, and **all of it
+traces back to the horizontal axis**:
 
-| staves | ours − abcjs |
-|---|---|
-| 0–8 | ±0.03 — exact |
-| 9–36 | **−1.78 to −1.90** |
-| 37–45 | **−4.00 to −4.25** |
-
-Two steps, two causes, and the extent table names both:
-
-| staff | abcjs | ours | what |
+| staff | abcjs | ours | who sets it |
 |---|---|---|---|
-| 8 | bottom −7.9748 | −7.5000 | the step at staff 9 |
-| 37 | top 14.6277 | 14.0529 | the step at staff 37 |
-| 16, 34, 42 | tops 26.5118 / 35.6574 / 26.5295 | 26.3038 / 35.5939 / 26.4449 | wobble, ≤0.21 pitch |
-| 24 | bottom −7.9688 | −7.5000 | absorbed by the separation minimum |
+| 8, 24 | bottom −7.9748 / −7.9688 | −7.5000 | a below-curve's `getYBounds` box |
+| 16, 42 | top 26.5118 / 26.5295 | 26.3038 / 26.4449 | the same, on the above side |
+| 34 | top 35.6574 | 35.5939 | " |
 
-**Fix those two and `oy` collapses** — the notehead mean IS this drift: −0.01 in the first
-band, −1.8 in the middle, −4.2 at the foot, weighted to −1.96. Two mis-paired heads at
-i=1498/1500 (+29.12 / −29.02) are the whole of `dy` 58 and change the mean by nothing.
+Staff 8's binding curve is a below-slur between members #3 and #4 of a six-note beam. Both
+engines take `calcSlurY`'s beamed branch and read `parent.fixed.b` — a beam-interpolated
+stem end — and both compute it the same way. What differs is the beam's own x SPAN:
 
-### Staff 8 is a below-curve, and IT IS NOT THE BEAM either
-
-Its bottom is set by a `TieElem.getYBounds` box — `top = min(startY, endY)`,
-`bottom = top − 3` (`tie-element.js:228-251`). Probed on both sides:
-
-| | startY | endY | → staff bottom |
+| | startX | endX | span |
 |---|---|---|---|
-| abcjs | −3.8997 | −4.9748 | −7.9748 |
-| ours | −4.0000 | −4.5000 | −7.5000 |
+| abcjs | 234.396 | 331.112 | 96.72 |
+| ours | 245.945 | 350.931 | 104.99 |
 
-Both engines take `calcSlurY`'s beamed branch (`parent.fixed.b`, our `beamPos` says
-`middle` for both ends), and **the beams in that region agree** — the only three beam
-divergences in the fixture are the two above. So the difference is in what `fixed.b`
-resolves to, not in where the beam is. Ours are exact halves where abcjs's are fractional,
-which says ours is not reading a beam-retargeted stem end at all. **That is the next thing
-to probe, and probe the MECHANISM: print our `fixedOf` inputs beside abcjs's `fixed`.**
+`startY`/`endY` are −3 and −6 in BOTH. A slanted beam sampled at an interior note therefore
+gives a different y, and the fractional numbers abcjs reports — −3.8997 and −4.9748 against
+our −4.0000 and −4.5000 — are that interpolation, nothing else. Working the fractions back:
+abcjs puts those two members at 0.4666 and 0.8249 along the beam, we put them at 0.5007 and
+0.6670. **That is within-bar horizontal spacing, and ragtime's `dx` is still 69.82.**
 
-One thing to check first: abcjs builds **169** `TieElem`s here to our **64**, because it
-makes one per CHORD NOTE where we make one per chord. The extra ones reserve less deep and
-none of them bind — but confirm that before assuming the two engines are comparing the same
-curve.
-
----
+**Do not chase these five on the vertical axis.** They will close when ragtime's horizontal
+does, and not before. The vertical arc has taken this fixture as far as it goes: 40 of 46
+staff extents exact, and staff 0's difference is the title-block accounting rather than an
+error.
 
 ## THE HARVESTED CORPUS, RANKED BY WORST AXIS
 
@@ -199,15 +249,20 @@ led with. Everything below is a fixture's worst of `dy`/`dx`/`|oy|`/`|ox|`, px:
 | 241.15 | `visual-wrap-02-stretchlast-1` | pure `dx` |
 | 228.85 | `visual-options-01-fonts` | the 18-font fixture |
 | 158.06 | `parse-tie-slur-01/02/03-staffwidth-200` | `%%staffwidth`, pure `dy`/`oy` |
-| **45.19** | `visual-misc-09 / -10 / -11-begintext` | **pure `oy`, all three identical** |
+| ~~45.19~~ | `visual-misc-09 / -10 / -11-begintext` | **CLOSED** — 11.43 of it was `clef=none`, 33.76 the block |
 
-`%%begintext` is the cleanest vertical item in the whole list: three fixtures, one
-mechanism, one number. abcjs renders the block as a `FreeText` — `{move: 7.56}` then
-`{move: fontSize / 2}` then the row then `{move: size.height}`
-(`creation/elements/free-text.js`), textfont at 21px, drawn left-aligned at `paddingLeft`.
-Its golden is a single `<text data-name="free-text" x="15" y="54.06">`. We discard the
-block's content at parse (`parser.ts`, an existing `ponytail:`), so the music rides 45.19px
-high. `%%text` (4 more fixtures) is the same machinery.
+**The list is worth re-running before picking from it.** Three of its entries have closed
+since it was made and the remaining order has not been re-measured; `npm run` nothing does
+this, so it takes a scratch test over `tests/corpus-abcjs/` that reports each fixture's
+worst of the four axes with its directives beside it. It is what put `%%begintext` ahead of
+the directive tail the last checkpoint led with, and what showed that `barnumbers-1` is not
+a bar-number fixture at all.
+
+**MID-TUNE free text is still not drawn.** A `%%begintext` between two music lines is
+dropped — it must not be marked as trailing (that justifies the wrong line) and placing it
+properly needs free text to be a LINE rather than a property of the tune, which is the
+standing `ponytail:` on `textBelow`. `S2-fields` is the fixture, and its second staff is
+59px high because of it.
 
 `abcjs-visual-misc-01-barnumbers-1` is `Z24 | F2 |` — a MULTI-MEASURE REST, not a bar-number
 problem. Its `dx`/`dy` of 0.00 are an artefact of having one paired notehead.
@@ -231,7 +286,16 @@ problem. Its `dx`/`dy` of 0.00 are an artefact of having one paired notehead.
 5. **`probeBottom` names the last `include()` that raised the bottom — not the final
    answer.** The lyric block, the lanes and the curve boxes are applied after the include
    loop and never appear in it. Read the printed `bottom=`, use `bottomBy=` only as a hint.
-6. **Check `git -C ../abcMusicKit status --short` before finishing.** Clean at handoff.
+6. **SPLIT A NUMBER BEFORE CHASING IT.** A harvested fixture was 45.19px out and that read
+   as one bug. A controlled pair — the same tune with and without its `%%begintext` block —
+   split it into 11.43 of clef and 33.76 of free text, two unrelated defects. Neither was
+   visible in the 45.19, and the clef one would never have been guessed from it.
+7. **`dump-svg.js --output /dev/null` LITTERS the sibling repo.** A multi-tune fixture
+   writes `<output>-tuneN`, so a batch loop over `fixtures/*.abc` leaves 25 untracked files
+   called `-tune0`… in `Tools/abcjs-debug/`. Write to `/tmp/x.svg` instead.
+8. **`git status --short` returning output still EXITS 0**, so `git status --short && echo
+   CLEAN` prints CLEAN over a dirty tree. Read the output, do not test the exit code.
+9. **Check `git -C ../abcMusicKit status --short` before finishing.** Clean at handoff.
 
 ---
 
