@@ -1081,6 +1081,21 @@ function splitDots(notated: Rational): { base: Rational; dots: number } | null {
  * because the staff position is still right.
  */
 export function noteGlyph(notated: Rational): NoteGlyphSpec | null {
+  // A ZERO-LENGTH NOTE IS A STEMLESS QUARTER HEAD, and it has to be tested BEFORE
+  // `splitDots`, which rejects a zero numerator as a duration no notehead can write.
+  //
+  // `C0` is legal ABC and abcjs keeps it:
+  // `if (duration === 0) { zeroDuration = true; duration = 0.25; nostem = true; }`, with
+  // its own comment "zero duration will draw a quarter note head"
+  // (`abstract-engraver.js:790-791`), and then `chartable[style].nostem`, which for a
+  // plain note is `noteheads.quarter` (`:36`). We drew nothing at all, so half the notes
+  // in abcjs's own `parse/note.test.js` fixture never reached the page.
+  //
+  // ponytail: abcjs also SPACES it as a quarter, by rewriting `duration` before spacing
+  // runs. Ours still spaces it at zero — the head is content, the advance is geometry,
+  // and no fixture measures the second yet.
+  if (notated.numerator === 0) return { head: 'noteheadBlack', stemmed: false, flags: 0, dots: 0 }
+
   const split = splitDots(notated)
   if (split === null) return null
   const { base, dots } = split
@@ -4224,7 +4239,72 @@ interface VoicePlan {
  * voices by column, so bar 3 begins at the same x on every staff — without that the
  * staves drift apart and the score stops being readable as one thing.
  */
-export function layout(score: Score, options: LayoutOptions = {}): Layout {
+/**
+ * `&` OVERLAY LAYERS BECOME VOICES ON THE SAME STAFF, which is what they are.
+ *
+ * `G8 & C4 D4` is one voice carrying two simultaneous lines, and the parser reads it that
+ * way — `measure.overlays` is a parallel stream per layer. Nothing downstream looked at
+ * it, so every layer but the first went undrawn: four fixtures in abcjs's own test suite
+ * lose most of their notes, and nothing in the 41-fixture corpus uses `&` at all, which
+ * is why it went unnoticed.
+ *
+ * Expanding here rather than in the parser keeps the MODEL honest — an overlay is a
+ * property of the measure it was written in, and flattening it away would lose that — and
+ * lets the renderer reuse everything it already does for two voices sharing a staff:
+ * stem-direction convention, the shared prefix, the union of reserves.
+ *
+ * A layer inherits its parent's clef and stems but not its NAME: `V:1 name="Melody"` puts
+ * one label beside the staff, not one per layer. It keeps the parent's barlines and
+ * volta, exactly as a second `V:` on a shared staff does — they draw at the same x.
+ */
+function expandOverlays(score: Score): Score {
+  const layersOf = (voice: Score['voices'][number]): number =>
+    Math.max(0, ...voice.measures.map((m) => m.overlays.length))
+  if (score.voices.every((v) => layersOf(v) === 0)) return score
+
+  const voices: Score['voices'][number][] = []
+  /** Parent voice id → the ids of its layers, in order. */
+  const layerIds = new Map<string, string[]>()
+  for (const voice of score.voices) {
+    voices.push({ ...voice, measures: voice.measures.map((m) => ({ ...m, overlays: [] })) })
+    const ids: string[] = []
+    for (let layer = 0; layer < layersOf(voice); layer++) {
+      // `$` cannot appear in an ABC voice id, so a synthetic id can never collide with a
+      // declared one.
+      const id = `${voice.id}$${layer + 1}`
+      ids.push(id)
+      voices.push({
+        ...voice,
+        id,
+        name: null,
+        subname: null,
+        measures: voice.measures.map((m) => ({
+          ...m,
+          events: m.overlays[layer] ?? [],
+          overlays: [],
+        })),
+      })
+    }
+    if (ids.length > 0) layerIds.set(voice.id, ids)
+  }
+
+  const withLayers = (ids: readonly string[]): string[] =>
+    ids.flatMap((id) => [id, ...(layerIds.get(id) ?? [])])
+  const staves =
+    score.staves.length > 0
+      ? score.staves.map((g) => ({ ...g, voiceIds: withLayers(g.voiceIds) }))
+      : // No `%%score`, so every voice had a staff of its own — and its layers join it.
+        score.voices.map((v) => ({
+          voiceIds: withLayers([v.id]),
+          brace: null,
+          bracket: null,
+          connectBarLines: null,
+        }))
+  return { ...score, voices, staves }
+}
+
+export function layout(input: Score, options: LayoutOptions = {}): Layout {
+  const score = expandOverlays(input)
   // `%%staffwidth` names the same quantity as the host's `staffwidth` param; the
   // DIRECTIVE wins, because it is the tune saying how wide it wants to be.
   const systemWidth =
@@ -5260,14 +5340,21 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     return { ...system, originY }
   })
 
+  // `%%maxStaves` — an INCIPIT. abcjs lays the whole tune out and simply stops drawing
+  // past the limit (`draw/draw.js:33-38`), so the systems that survive are placed exactly
+  // as they would be without the directive.
+  const shown = score.maxStaves === null ? placed : placed.slice(0, score.maxStaves)
+  const last = shown[shown.length - 1]
+  const bottom = last === undefined ? 0 : last.originY + systemHeight(last, strict)
+
   return {
-    systems: placed,
-    width: Math.max(0, ...placed.map((s) => s.width)),
+    systems: shown,
+    width: Math.max(0, ...shown.map((s) => s.width)),
     // `cursor` has one trailing gap on it, added after the last system. abcjs opens with
     // `moveY(padding.top)` before drawing anything (`draw.js:14`), so the page begins
     // ABOVE the ink — expressed as a negative viewBox top rather than by shifting every
     // system, which would put the same constant in two places.
-    height: Math.max(0, cursor - ENGRAVE.systemGap) + ENGRAVE.marginTop + ENGRAVE.marginBottom,
+    height: bottom + ENGRAVE.marginTop + ENGRAVE.marginBottom,
     top: -ENGRAVE.marginTop,
   }
 }

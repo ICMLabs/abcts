@@ -664,6 +664,13 @@ export interface Score {
   /** `%%staffwidth` — the music area in PIXELS, or `null` for the engine default. */
   readonly staffWidth: number | null
   /**
+   * `%%maxStaves` — an INCIPIT: draw at most this many staff lines and stop.
+   *
+   * abcjs counts them as it draws and `break`s past the limit
+   * (`write/draw/draw.js:33-38`), so the rest of the tune is laid out and never painted.
+   */
+  readonly maxStaves: number | null
+  /**
    * `%%center` lines standing BEFORE any music — centred free text under the top-text
    * block. abcjs centres these on the STAFF width, not the paper width the title uses.
    */

@@ -1090,6 +1090,7 @@ class ScoreBuilder {
   partsBox = false
   stretchLast: number | null = null
   staffWidth: number | null = null
+  maxStaves: number | null = null
   sysStaffSep: number | null = null
   /** `%%center` text, split by whether any music had been parsed when it was read. */
   textAbove: string[] = []
@@ -1211,6 +1212,7 @@ class ScoreBuilder {
       partsBox: this.partsBox,
       stretchLast: this.stretchLast,
       staffWidth: this.staffWidth,
+      maxStaves: this.maxStaves,
       sysStaffSep: this.sysStaffSep,
       textAbove: this.textAbove,
       textBelow: this.textBelow,
@@ -1464,6 +1466,13 @@ class Parser {
     const staffWidth = /^staffwidth\s+(\d+(?:\.\d+)?)\s*$/.exec(body)
     if (staffWidth?.[1] !== undefined) {
       this.ensureScore(start).staffWidth = Number.parseFloat(staffWidth[1])
+      return
+    }
+    // `%%maxStaves` — an incipit. abcjs matches the directive case-insensitively like
+    // every other, so `%%maxStaves` and `%%maxstaves` are the same thing.
+    const maxStaves = /^maxstaves\s+(\d+)\s*$/i.exec(body)
+    if (maxStaves?.[1] !== undefined) {
+      this.ensureScore(start).maxStaves = Number.parseInt(maxStaves[1], 10)
       return
     }
     // `%%partsbox` — a box round every `P:` label, and a taller lane to hold it.

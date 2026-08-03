@@ -43,21 +43,8 @@ const goldenDir = join(base, 'golden')
  * Every one is a real gap found by this corpus and by nothing else in the repo.
  */
 const CONTENT_GAPS: Readonly<Record<string, string>> = {
-  // `C0 D1 [EG]0 [FA]1` — a note with an explicit length of ZERO. abcjs keeps it and
-  // gives it duration 0 (its own `parse/note.test.js` asserts `[0, 0.125, 0, 0.125]`);
-  // we drop it, so two of the four events never reach the page.
-  'abcjs-parse-note-01-c0-d1-eg-0-fa-1': 'zero-length notes are dropped',
-  // `%%maxStaves 2` — an INCIPIT. abcjs renders the first two staves and stops; we have
-  // no such directive, so we draw all four.
-  'abcjs-visual-directives-01-incipit-test': '%%maxStaves not implemented',
-  // VOICE OVERLAYS (`&`). The parser reads them — `measure.overlays` is populated and
-  // correct — and the renderer never draws them, so only the first layer appears. Two
-  // fixtures here; nothing in the 41-fixture corpus uses `&` at all.
-  'abcjs-visual-layout-05-c3-abc-cf-3-abc-c3-fa-bc': 'overlay voices parsed but not drawn',
-  'abcjs-visual-tablature-13-g8-c4-d4-e4-f4': 'overlay voices parsed but not drawn',
-  'abcjs-synth-flattener-21-c4-d4': 'overlay voices parsed but not drawn',
-  'abcjs-synth-flattener-22-b-c4-d4': 'overlay voices parsed but not drawn',
-  // `(f3 {a})y` — the grace note's head is not classed as a notehead in our markup.
+  // `(f3 {a})y` — the grace note's head is drawn but carries no notehead class, so it is
+  // invisible to anything selecting on one. abcjs classes a grace head like any other.
   'abcjs-visual-tablature-10-f3-a-y': 'grace noteheads are not classed as noteheads',
   // `%%example` between tunes — abcjs treats the block as one tune, we split it in two.
   'abcjs-parse-book_parser-04-wed': 'tunebook split differs around %%example',
@@ -71,10 +58,10 @@ const CONTENT_GAPS: Readonly<Record<string, string>> = {
  * 174 ceilings is a table nobody reads — see the header.
  */
 const WITHIN: Readonly<Record<string, number>> = {
-  '0.05': 69,
-  '1': 79,
-  '5': 87,
-  '25': 112,
+  '0.05': 72,
+  '1': 82,
+  '5': 90,
+  '25': 116,
 }
 
 const names = readdirSync(fixturesDir)

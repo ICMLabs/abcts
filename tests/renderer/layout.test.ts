@@ -1204,7 +1204,19 @@ describe('noteGlyph', () => {
     // because the staff position stays right.
     expect(noteGlyph(rational(1, 6))).toBeNull() // triplet eighth — but see below
     expect(noteGlyph(rational(5, 8))).toBeNull()
-    expect(noteGlyph(rational(0, 1))).toBeNull()
+  })
+
+  it('draws a ZERO-length note as a stemless quarter head, as abcjs does', () => {
+    // `C0` is legal ABC. This used to return null and the note vanished — abcjs keeps it:
+    // `if (duration === 0) { zeroDuration = true; duration = 0.25; nostem = true; }`
+    // (`abstract-engraver.js:790-791`) and then `chartable[style].nostem`, which is
+    // `noteheads.quarter`. Its own `parse/note.test.js` asserts the durations survive.
+    expect(noteGlyph(rational(0, 1))).toEqual({
+      head: 'noteheadBlack',
+      stemmed: false,
+      flags: 0,
+      dots: 0,
+    })
   })
 
   it('never sees a tuplet ratio, because notatedDuration excludes it by contract', () => {
