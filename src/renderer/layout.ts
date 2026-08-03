@@ -15,6 +15,7 @@
  * the font, engraving conventions (stem length, spacing) live in ENGRAVE below.
  */
 import {
+  type FreeTextBlock,
   Accidental,
   type Barline,
   type Clef,
@@ -488,6 +489,12 @@ export const ENGRAVE = {
    * composer row's advance and 21 the free-text size.
    */
   freeTextSize: 21 / 7.75,
+  /**
+   * Line to line inside ONE `%%begintext` block — `1.2em` at the 21px `textfont`, the
+   * `tspan dy` abcjs stacks a multi-line `<text>` by. Measured: a two-line block costs
+   * 25.2px more than a one-line one, where the first line costs `21 x 1.108`.
+   */
+  freeTextLineStep: (21 * 1.2) / 7.75,
   freeTextSpace: 7.56 / 7.75,
   /** Gap from the last staff line down to a trailing `%%center` line's baseline. */
   freeTextBelowSpace: 36.85 / 7.75,
@@ -5529,7 +5536,7 @@ function systemHeight(system: LayoutSystem, strict = true): number {
 function topTextBlock(
   metadata: ScoreMetadata,
   width: number,
-  textAbove: readonly string[] = [],
+  textAbove: readonly FreeTextBlock[] = [],
 ): { texts: PlacedText[]; height: number } {
   const texts: PlacedText[] = []
   let y = 0
@@ -5628,18 +5635,35 @@ function topTextBlock(
   //    21px `textfont` that is 23.27 against our 26.
   //
   // Together they put `center-text` 10.32px low.
-  for (const line of textAbove) {
-    texts.push({
-      text: line,
-      role: 'title',
-      x: centre,
-      y: y + ENGRAVE.freeTextSize,
-      size: ENGRAVE.freeTextSize,
-      bold: false,
-      italic: false,
-      anchor: 'middle',
+  //
+  // `%%text` and `%%begintext` differ from `%%center` in exactly two ways, both measured
+  // off abcjs with a control pair on one tune: they sit at the LEFT margin with
+  // `anchor: "start"`, and they spend `{ move: hash.attr['font-size'] / 2 }` before the
+  // row (`free-text.js:12`) where the centred branch pushes its row bare (`:38`).
+  // `%%center A` costs 23.27px, `%%text A` costs 33.77, and their rows sit that same
+  // 10.5 apart — one half of the 21px `textfont`.
+  //
+  // A `%%begintext` block is ONE element however many lines it holds: abcjs draws it as a
+  // single `<text>` with a `tspan` per line and reserves one multi-line height. Measured,
+  // each line past the first adds 25.2px — `1.2em` at 21px, the same `dy` a lyric verse
+  // steps by, and NOT the 1.108 line height the first line takes.
+  for (const block of textAbove) {
+    if (block.align === 'left') y += ENGRAVE.freeTextSize / 2
+    block.lines.forEach((line, index) => {
+      texts.push({
+        text: line,
+        role: 'title',
+        x: block.align === 'center' ? centre : 0,
+        y: y + ENGRAVE.freeTextSize + index * ENGRAVE.freeTextLineStep,
+        size: ENGRAVE.freeTextSize,
+        bold: false,
+        italic: false,
+        anchor: block.align === 'center' ? 'middle' : 'start',
+      })
     })
-    y += ENGRAVE.freeTextSize * ENGRAVE.textHeightRatio
+    y +=
+      ENGRAVE.freeTextSize * ENGRAVE.textHeightRatio +
+      (block.lines.length - 1) * ENGRAVE.freeTextLineStep
   }
 
   return { texts, height: y }

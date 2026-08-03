@@ -21,6 +21,7 @@
  */
 
 import {
+  type FreeTextBlock,
   Accidental,
   type Barline,
   type Chord,
@@ -1117,8 +1118,8 @@ class ScoreBuilder {
   maxStaves: number | null = null
   sysStaffSep: number | null = null
   /** `%%center` text, split by whether any music had been parsed when it was read. */
-  textAbove: string[] = []
-  textBelow: string[] = []
+  textAbove: FreeTextBlock[] = []
+  textBelow: FreeTextBlock[] = []
   /** Voice ids from `%%score`/`%%staves`, which overrides declaration order. */
   scoreOrder: string[] | null = null
   private tupletGroups = 0
@@ -1254,6 +1255,8 @@ class Parser {
   private readonly diagnostics: Diagnostic[] = []
   private builder: ScoreBuilder | null = null
   private inTextBlock = false
+  /** Lines gathered since `%%begintext`, closed into one block by `%%endtext`. */
+  private textBlock: string[] = []
   private lastFieldLetter: string | null = null
   /** A `w:`/`+:` line ended in `\`, so the lyric is not finished. See the handler. */
   private lyricContinues = false
@@ -1298,6 +1301,15 @@ class Parser {
     this.builder = null
   }
 
+  /** One `FreeText` for the whole `%%begintext` block, above the music or below it. */
+  private closeTextBlock(at: number): void {
+    if (this.textBlock.length === 0) return
+    const builder = this.ensureScore(at)
+    const target = builder.voice.isEmpty ? builder.textAbove : builder.textBelow
+    target.push({ lines: this.textBlock, align: 'left' })
+    this.textBlock = []
+  }
+
   private ensureScore(at: number): ScoreBuilder {
     if (!this.builder) this.builder = new ScoreBuilder(at)
     return this.builder
@@ -1310,17 +1322,24 @@ class Parser {
     // so they must be claimed here — otherwise ordinary English prose parses as music and
     // every a-g in it becomes a note. Checked before the blank-line flush: a blank line
     // inside the block is part of the text, not the end of the tune.
-    // ponytail: the text itself is discarded. v2 keeps it as `Score.freeText`; add that
-    // when something (a renderer) actually consumes it.
+    //
+    // The WHOLE block is ONE `FreeText`, however many lines it holds — abcjs draws it as a
+    // single `<text>` with a `tspan` per line and reserves one multi-line height for it.
     if (this.inTextBlock) {
       if (line.startsWith('%%endtext')) {
         this.inTextBlock = false
+        this.closeTextBlock(start)
         return
       }
       // An `X:` ends the block regardless: without this an unterminated `%%begintext`
       // swallowed every remaining tune in the file.
-      if (!/^X:/.test(line)) return
+      if (!/^X:/.test(line)) {
+        // A content line may or may not repeat the `%%`; abcjs accepts both.
+        this.textBlock.push(decodeTextString(line.replace(/^%%\s?/, '').trim()))
+        return
+      }
       this.inTextBlock = false
+      this.closeTextBlock(start)
       this.warn(
         'unterminated-text-block',
         '%%begintext was not closed by %%endtext',
@@ -1329,6 +1348,7 @@ class Parser {
     }
     if (line.startsWith('%%begintext')) {
       this.inTextBlock = true
+      this.textBlock = []
       return
     }
 
@@ -1410,6 +1430,17 @@ class Parser {
       this.applyField(this.lastFieldLetter, line.slice(2), start, end)
       return
     }
+    // FREE TEXT ONLY TRAILS IF NOTHING FOLLOWS IT. abcjs's justification rule is per
+    // LINE — a music line is justified unless it is the LAST line — and a `%%begintext`
+    // sitting BETWEEN two music lines makes the first one non-last while leaving the
+    // second last. Measured on `S2-fields`'s BeginText tune: abcjs's first staff spans
+    // the full 350 and its second stops at 211.
+    //
+    // Marking any post-music block as trailing justified the wrong line. So a block that
+    // turns out to have music after it is dropped: mid-tune free text is still not drawn
+    // (the `ponytail:` on `textBelow` says why), and it must not change the last line
+    // either.
+    if (this.builder && this.builder.textBelow.length > 0) this.builder.textBelow = []
     this.scanMusic(start, end)
   }
 
@@ -1451,7 +1482,17 @@ class Parser {
       // Before any music it heads the tune; after it, it trails — and trailing text is
       // what stops the last music line being the last line, so abcjs justifies it.
       const target = builder.voice.isEmpty ? builder.textAbove : builder.textBelow
-      target.push(decodeTextString(centred[1].trim()))
+      target.push({ lines: [decodeTextString(centred[1].trim())], align: 'center' })
+      return
+    }
+    // `%%text <line>` — the same element left-aligned, one block per directive. Two
+    // `%%text` lines are two blocks, not one two-line block: measured, their rows sit
+    // 33.77px apart, exactly one block's cost.
+    const freeText = /^text(?:\s+(.*))?$/.exec(body)
+    if (freeText !== null) {
+      const builder = this.ensureScore(start)
+      const target = builder.voice.isEmpty ? builder.textAbove : builder.textBelow
+      target.push({ lines: [decodeTextString((freeText[1] ?? '').trim())], align: 'left' })
       return
     }
     // `%%staffsep` / `%%sysstaffsep` — minimum staff separations, given in POINTS and

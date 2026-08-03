@@ -247,6 +247,17 @@ export interface LyricFont {
  */
 export const DEFAULT_VOCALFONT_PT = 13
 
+/** One `%%center`, `%%text`, or `%%begintext` … `%%endtext` block. */
+export interface FreeTextBlock {
+  /** One entry per line. A `%%begintext` block is the only one that holds more than one. */
+  readonly lines: readonly string[]
+  /**
+   * `%%center` centres on the STAFF width — 335, not the paper's 350 the title uses.
+   * `%%text` and `%%begintext` sit at the left margin, `anchor: "start"`.
+   */
+  readonly align: 'center' | 'left'
+}
+
 // ─── Tempo ───────────────────────────────────────────────────────────────────
 
 /**
@@ -671,19 +682,25 @@ export interface Score {
    */
   readonly maxStaves: number | null
   /**
-   * `%%center` lines standing BEFORE any music — centred free text under the top-text
-   * block. abcjs centres these on the STAFF width, not the paper width the title uses.
-   */
-  readonly textAbove: readonly string[]
-  /**
-   * `%%center` lines standing AFTER the music. As well as being drawn, these make the last
-   * music line no longer the LAST line, so abcjs justifies it like any other.
+   * Free-text blocks standing BEFORE any music, in source order — one per `%%center`,
+   * one per `%%text`, and ONE per `%%begintext` … `%%endtext` however many lines it holds.
    *
-   * ponytail: `%%center` BETWEEN two music lines lands here too. No fixture does it, and
+   * abcjs builds one `FreeText` per directive (`creation/elements/free-text.js`) and the
+   * two spellings differ in more than alignment: `%%center` emits its row bare, `%%text`
+   * spends `{ move: fontSize / 2 }` first. Measured on abcjs's own output with a control
+   * pair — `%%center A` costs 23.27px and `%%text A` costs 33.77, and their rows sit
+   * exactly that 10.5 apart.
+   */
+  readonly textAbove: readonly FreeTextBlock[]
+  /**
+   * The same standing AFTER the music. As well as being drawn, these make the last music
+   * line no longer the LAST line, so abcjs justifies it like any other.
+   *
+   * ponytail: free text BETWEEN two music lines lands here too. No fixture does it, and
    * placing it properly needs free text to be a line in its own right rather than a
    * property of the tune.
    */
-  readonly textBelow: readonly string[]
+  readonly textBelow: readonly FreeTextBlock[]
   readonly sourceStartOffset: number
   readonly keySourceRange: SourceRange | null
   readonly meterSourceRange: SourceRange | null
