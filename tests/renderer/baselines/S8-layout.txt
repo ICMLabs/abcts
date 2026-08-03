@@ -1,5 +1,5 @@
 tune 0
-bounds  width=90.323 height=33.001 top=-1.935
+bounds  width=90.323 height=32.751 top=-1.935
 systems 2
 system 0 width=90.323 originY=0.000
   staff 0 originY=15.152
@@ -1158,7 +1158,7 @@ system 4 width=25.832 originY=51.703
     bar x=23.767 w=0.160
       line  23.847,-2.000 -> 23.847,2.000 t=0.160
 tune 5
-bounds  width=90.323 height=42.784 top=-1.935
+bounds  width=90.323 height=42.534 top=-1.935
 systems 3
 system 0 width=90.323 originY=0.000
   staff 0 originY=10.685
@@ -1284,7 +1284,7 @@ system 1 width=90.323 originY=18.099
       glyph noteheadBlack 83.997,-1.500
       glyph articStaccatoAbove 84.394,-3.000
       line  83.997,-1.332 -> 83.997,4.250 t=0.120
-system 2 width=52.273 originY=27.599
+system 2 width=52.273 originY=27.349
   staff 0 originY=7.500
     staffline 0.000,2.000 -> 52.273,2.000 t=0.130
     staffline 0.000,1.000 -> 52.273,1.000 t=0.130
@@ -2526,7 +2526,7 @@ system 3 width=50.689 originY=42.989
       line  48.318,-2.000 -> 48.318,2.000 t=0.160
       line  48.878,-2.000 -> 48.878,2.000 t=0.160
 tune 10
-bounds  width=90.323 height=89.085 top=-1.935
+bounds  width=90.323 height=88.835 top=-1.935
 systems 7
 system 0 width=90.323 originY=0.000
   staff 0 originY=11.168

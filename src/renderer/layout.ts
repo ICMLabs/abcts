@@ -5361,10 +5361,14 @@ function verticalExtent(
     include(Math.min(line.y1, line.y2) - half, Math.max(line.y1, line.y2) + half)
   }
 
-  for (const beam of beams) {
-    const half = beam.thickness / 2
-    include(Math.min(beam.y1, beam.y2) - half, Math.max(beam.y1, beam.y2) + half)
-  }
+  // A BEAM DOES NOT COUNT TOWARD THE STAFF'S EXTENT. A `BeamElem` lives in
+  // `voice.otherchildren`, and `setUpperAndLowerVoiceElements` switches only on
+  // Crescendo, Dynamic, Ending and Tie — a beam is none of those, so abcjs never adds one.
+  // The STEMS carry it instead: they end on the beam, and their endpoints are in the range.
+  //
+  // Ours added half a beam thickness past the stem tip — a flat 0.50 pitch — which is
+  // exactly the `dBot = -0.50` that sat on 23 of `ragtime-nightingale`'s 46 staves.
+  // ponytail: the loop is gone rather than guarded, since nothing else read it.
 
   /** LOWEST lyric baseline on the staff — the last verse of the lowest-offset voice. */
   let lyricBottom = Number.NEGATIVE_INFINITY

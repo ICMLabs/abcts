@@ -1012,10 +1012,10 @@ system 0 width=90.323 originY=0.000
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
 tune 3
-bounds  width=90.366 height=42.454 top=-1.935
+bounds  width=90.366 height=42.204 top=-1.935
 systems 1
 system 0 width=90.366 originY=0.000
-  connector brace -0.920,16.152 scale=4.104
+  connector brace -0.920,16.152 scale=4.041
   staff 0 originY=18.152
     staffline 0.000,2.000 -> 90.366,2.000 t=0.130
     staffline 0.000,1.000 -> 90.366,1.000 t=0.130
@@ -1140,7 +1140,7 @@ system 0 width=90.366 originY=0.000
       line  85.815,0.168 -> 85.815,3.500 t=0.120
     bar x=88.302 w=0.160
       line  88.382,-2.000 -> 88.382,2.000 t=0.160
-  staff 1 originY=30.519
+  staff 1 originY=30.269
     staffline 0.000,2.000 -> 90.366,2.000 t=0.130
     staffline 0.000,1.000 -> 90.366,1.000 t=0.130
     staffline 0.000,0.000 -> 90.366,0.000 t=0.130
@@ -1326,12 +1326,12 @@ system 0 width=90.366 originY=0.000
     bar x=88.302 w=0.160
       line  88.382,-2.000 -> 88.382,2.000 t=0.160
 tune 4
-bounds  width=98.874 height=50.364 top=-1.935
+bounds  width=98.874 height=49.864 top=-1.935
 systems 1
 system 0 width=98.874 originY=0.000
   connector bracketTop -0.600,15.459
-  connector bracketBottom -0.600,37.429
-  connector line -0.600,15.459 -> -0.600,37.429 t=0.500
+  connector bracketBottom -0.600,37.179
+  connector line -0.600,15.459 -> -0.600,37.179 t=0.500
   staff 0 originY=17.459
     staffline 0.000,2.000 -> 98.874,2.000 t=0.130
     staffline 0.000,1.000 -> 98.874,1.000 t=0.130
@@ -1367,18 +1367,18 @@ system 0 width=98.874 originY=0.000
     note@-4 x=17.198 w=3.871
       glyph noteheadBlack 17.198,2.000
       line  18.378,1.832 -> 18.378,-2.000 t=0.120
-      text  15.432,10.694 size=2.194 bold "Ka-"
-      text  15.857,13.326 size=2.194 bold "Eñ"
+      text  15.432,10.444 size=2.194 bold "Ka-"
+      text  15.857,13.076 size=2.194 bold "Eñ"
     note@-4 x=20.253 w=3.871
       glyph noteheadBlack 20.253,2.000
       line  21.433,1.832 -> 21.433,-2.000 t=0.120
-      text  19.094,10.694 size=2.194 bold "na"
-      text  19.217,13.326 size=2.194 bold "eo"
+      text  19.094,10.444 size=2.194 bold "na"
+      text  19.217,13.076 size=2.194 bold "eo"
     note@-4 x=22.658 w=3.871
       glyph noteheadBlack 22.658,2.000
       line  23.838,1.832 -> 23.838,-2.000 t=0.120
-      text  22.110,10.694 size=2.194 bold "a"
-      text  21.562,13.326 size=2.194 bold "va"
+      text  22.110,10.444 size=2.194 bold "a"
+      text  21.562,13.076 size=2.194 bold "va"
     bar x=24.613 w=0.160
       line  24.693,-2.000 -> 24.693,2.000 t=0.160
     note@-6 x=28.376 w=6.705
@@ -1386,41 +1386,41 @@ system 0 width=98.874 originY=0.000
       glyph augmentationDot 29.992,2.500
       line  27.976,3.000 -> 30.042,3.000 t=0.160
       line  29.556,2.832 -> 29.556,-0.500 t=0.120
-      text  26.701,10.694 size=2.194 bold "rin,"
-      text  26.032,13.326 size=2.194 bold "nerz,"
+      text  26.701,10.444 size=2.194 bold "rin,"
+      text  26.032,13.076 size=2.194 bold "nerz,"
     note@-4 x=32.374 w=3.871
       glyph noteheadBlack 32.374,2.000
       glyph flag8thUp 33.554,-1.500
       line  33.554,1.832 -> 33.554,-1.500 t=0.120
-      text  30.850,10.694 size=2.194 bold "ka-"
-      text  31.277,13.326 size=2.194 bold "eñ"
+      text  30.850,10.444 size=2.194 bold "ka-"
+      text  31.277,13.076 size=2.194 bold "eñ"
     note@-4 x=35.704 w=3.871
       glyph noteheadBlack 35.704,2.000
       line  36.884,1.832 -> 36.884,-2.000 t=0.120
-      text  34.546,10.694 size=2.194 bold "na"
-      text  34.669,13.326 size=2.194 bold "eo"
+      text  34.546,10.444 size=2.194 bold "na"
+      text  34.669,13.076 size=2.194 bold "eo"
     note@-4 x=37.683 w=3.871
       glyph noteheadBlack 37.683,2.000
       line  38.863,1.832 -> 38.863,-2.125 t=0.120
-      text  37.135,10.694 size=2.194 bold "a"
-      text  37.013,13.326 size=2.194 bold "i-"
+      text  37.135,10.444 size=2.194 bold "a"
+      text  37.013,13.076 size=2.194 bold "i-"
     note@-3 x=40.514 w=3.871
       glyph noteheadBlack 40.514,1.500
       line  41.694,1.332 -> 41.694,-2.304 t=0.120
-      text  39.113,10.694 size=2.194 bold "rin"
-      text  38.992,13.326 size=2.194 bold "vez"
+      text  39.113,10.444 size=2.194 bold "rin"
+      text  38.992,13.076 size=2.194 bold "vez"
     note@-3 x=43.627 w=3.871
       glyph noteheadBlack 43.627,1.500
       line  44.807,1.332 -> 44.807,-2.500 t=0.120
-      text  42.165,10.694 size=2.194 bold "be-"
-      text  42.530,13.326 size=2.194 bold "va"
+      text  42.165,10.444 size=2.194 bold "be-"
+      text  42.530,13.076 size=2.194 bold "va"
     bar x=45.863 w=0.160
       line  45.943,-2.000 -> 45.943,2.000 t=0.160
     note@-5 x=49.751 w=5.474
       glyph noteheadBlack 49.751,2.500
       line  50.931,2.332 -> 50.931,-1.000 t=0.120
-      text  47.283,10.694 size=2.194 bold "pred,"
-      text  47.586,13.326 size=2.194 bold "Zad,"
+      text  47.283,10.444 size=2.194 bold "pred,"
+      text  47.586,13.076 size=2.194 bold "Zad,"
     note@-3 x=52.347 w=6.705
       glyph noteheadBlack 52.347,1.500
       glyph augmentationDot 53.963,1.500
@@ -1428,61 +1428,61 @@ system 0 width=98.874 originY=0.000
     note@-3 x=56.126 w=3.871
       glyph noteheadBlack 56.126,1.500
       line  57.306,1.332 -> 57.306,-2.500 t=0.120
-      text  54.542,10.694 size=2.194 bold "rag"
-      text  55.029,13.326 size=2.194 bold "eñ"
+      text  54.542,10.444 size=2.194 bold "rag"
+      text  55.029,13.076 size=2.194 bold "eñ"
     note@-3 x=58.997 w=3.871
       glyph noteheadBlack 58.997,1.500
       line  60.177,1.332 -> 60.177,-2.500 t=0.120
-      text  57.838,10.694 size=2.194 bold "an"
-      text  57.961,13.326 size=2.194 bold "eo"
+      text  57.838,10.444 size=2.194 bold "an"
+      text  57.961,13.076 size=2.194 bold "eo"
     note@-3 x=62.011 w=3.871
       glyph noteheadBlack 62.011,1.500
       line  63.191,1.332 -> 63.191,-2.500 t=0.120
-      text  60.306,10.694 size=2.194 bold "Ao-"
-      text  60.915,13.326 size=2.194 bold "va"
+      text  60.306,10.444 size=2.194 bold "Ao-"
+      text  60.915,13.076 size=2.194 bold "va"
     bar x=64.491 w=0.160
       line  64.571,-2.000 -> 64.571,2.000 t=0.160
     note@-4 x=67.953 w=6.705
       glyph noteheadBlack 67.953,2.000
       glyph augmentationDot 69.569,1.500
       line  69.133,1.832 -> 69.133,-1.500 t=0.120
-      text  65.943,10.694 size=2.194 bold "trou"
-      text  65.911,13.326 size=2.194 bold "han,"
+      text  65.943,10.444 size=2.194 bold "trou"
+      text  65.911,13.076 size=2.194 bold "han,"
     note@-6 x=71.672 w=3.871
       glyph noteheadBlack 71.672,3.000
       glyph flag8thUp 72.852,-0.500
       line  71.272,3.000 -> 73.338,3.000 t=0.160
       line  72.852,2.832 -> 72.852,-0.500 t=0.120
-      text  70.210,10.694 size=2.194 bold "en-"
-      text  70.148,13.326 size=2.194 bold "ka-"
+      text  70.210,10.444 size=2.194 bold "en-"
+      text  70.148,13.076 size=2.194 bold "ka-"
     note@-4 x=75.368 w=3.871
       glyph noteheadBlack 75.368,2.000
       line  76.548,1.832 -> 76.548,-2.000 t=0.120
-      text  73.844,10.694 size=2.194 bold "eus"
-      text  74.209,13.326 size=2.194 bold "na"
+      text  73.844,10.444 size=2.194 bold "eus"
+      text  74.209,13.076 size=2.194 bold "na"
     note@-4 x=78.117 w=3.871
       glyph noteheadBlack 78.117,2.000
       line  79.297,1.832 -> 79.297,-1.859 t=0.120
-      text  77.021,10.694 size=2.194 bold "va"
-      text  77.569,13.326 size=2.194 bold "a"
+      text  77.021,10.444 size=2.194 bold "va"
+      text  77.569,13.076 size=2.194 bold "a"
     note@-5 x=81.437 w=3.871
       glyph noteheadBlack 81.437,2.500
       line  82.617,2.332 -> 82.617,-1.688 t=0.120
-      text  79.426,10.694 size=2.194 bold "zan-"
-      text  80.035,13.326 size=2.194 bold "rin"
+      text  79.426,10.444 size=2.194 bold "zan-"
+      text  80.035,13.076 size=2.194 bold "rin"
     note@-5 x=85.098 w=3.871
       glyph noteheadBlack 85.098,2.500
       line  86.278,2.332 -> 86.278,-1.500 t=0.120
-      text  83.576,10.694 size=2.194 bold "tel-"
-      text  84.611,13.326 size=2.194 bold "e"
+      text  83.576,10.444 size=2.194 bold "tel-"
+      text  84.611,13.076 size=2.194 bold "e"
     bar x=87.394 w=0.160
       line  87.474,-2.000 -> 87.474,2.000 t=0.160
     note@-6 x=91.586 w=7.742
       glyph noteheadHalf 91.586,3.000
       line  91.186,3.000 -> 93.324,3.000 t=0.160
       line  92.766,2.832 -> 92.766,-0.500 t=0.120
-      text  90.155,10.694 size=2.194 bold "let."
-      text  88.813,13.326 size=2.194 bold "hloar."
+      text  90.155,10.444 size=2.194 bold "let."
+      text  88.813,13.076 size=2.194 bold "hloar."
     rest x=94.487 w=3.871
       glyph rest8th 94.487,0.000
     bar x=95.133 w=1.620
@@ -1600,7 +1600,7 @@ system 0 width=98.874 originY=0.000
       glyph repeatDots 95.133,1.976
       line  95.773,-2.000 -> 95.773,2.000 t=0.160
       line  96.503,-2.000 -> 96.503,2.000 t=0.500
-  staff 1 originY=35.429
+  staff 1 originY=35.179
     staffline 0.000,2.000 -> 98.874,2.000 t=0.130
     staffline 0.000,1.000 -> 98.874,1.000 t=0.130
     staffline 0.000,0.000 -> 98.874,0.000 t=0.130
