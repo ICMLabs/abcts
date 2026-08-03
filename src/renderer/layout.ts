@@ -484,12 +484,19 @@ export const ENGRAVE = {
   tupletTextSize: 1.4,
   /** Staff step for a repeat-ending bracket, above everything the staff itself draws. */
   /**
-   * Fixed lane a tuplet bracket or volta ending reserves beyond the top/bottom note —
-   * abcjs's `endingHeightAbove`, 4 pitch + 1 margin = 5 pitch, which at 0.5 space/pitch is
-   * 2.5 staff-spaces. The bracket is DRAWN where its geometry puts it and overhangs this
+   * `endingHeightAbove` — the lane a tuplet or a volta reserves beyond the top note, in
+   * pitch, before abcjs adds its 1-pitch margin (`set-upper-and-lower-elements.js:37`).
+   * A TUPLET declares 4 (`triplet-element.js:25`) and a VOLTA declares 5
+   * (`ending-element.js:8`); a staff carrying both keeps the larger, since `setLimit`
+   * takes the max. The bracket is DRAWN where its geometry puts it and overhangs this
    * lane; only the lane is reserved. See `verticalExtent`.
+   *
+   * One flat 5 for both cost every voltaed staff of `ragtime-nightingale` a pitch.
    */
-  endingLane: 5 * 0.5,
+  tupletLane: 4,
+  voltaLane: 5,
+  /** abcjs's `margin` in `set-upper-and-lower-elements.js:102` — one pitch on every lane. */
+  laneMargin: 1,
   voltaStep: 8,
   /** How far the volta bracket's end hooks turn down toward the staff. */
   voltaHook: 1.4,
@@ -845,6 +852,8 @@ export interface LayoutStaff {
   readonly tupletReservesAbove: boolean
   /** abcjs's declared box per tuplet on this staff — see `layoutTuplets`. */
   readonly tupletReserves: readonly { top: number; bottom: number }[]
+  /** abcjs's declared box per tie and slur — see `curveReserves`. */
+  readonly curveReserves: readonly { top: number; bottom: number }[]
   /** Tuplet brackets, and the numbers that go with them. Also span elements. */
   readonly tupletLines: readonly PlacedLine[]
   readonly tupletTexts: readonly PlacedText[]
@@ -2974,9 +2983,14 @@ interface NoteAnchor {
  * and it is also what keeps the curve clear of the stems and beams. When the two ends
  * disagree about stem direction the curve goes above, which is the usual tie-break.
  */
-function buildCurve(from: NoteAnchor, to: NoteAnchor, kind: 'tie' | 'slur'): PlacedCurve {
-  // Opposite the stems: an up-stem note carries its slur below the notehead.
-  const above = !(from.stemUp && to.stemUp)
+function buildCurve(
+  from: NoteAnchor,
+  to: NoteAnchor,
+  kind: 'tie' | 'slur',
+  /** The voice's index on its staff, or −1 when it has that staff to itself. */
+  voicePos: number,
+): PlacedCurve {
+  const above = curveIsAbove(from, to, voicePos)
   const direction = above ? -1 : 1
 
   const x1 = from.right + ENGRAVE.curveEndGap
@@ -3008,6 +3022,26 @@ function buildCurve(from: NoteAnchor, to: NoteAnchor, kind: 'tie' | 'slur'): Pla
 }
 
 /**
+ * Which side of the notes a tie or slur sits on.
+ *
+ * ON A SHARED STAFF THE VOICE DECIDES, and the stems do not come into it:
+ * `calcSlurDirection` / `calcTieDirection` short-circuit on `voiceNumber === 0` -> above,
+ * `> 0` -> below, and only a voice with the staff to itself
+ * (`voicetotal < 2 ? -1 : voicenumber`, `abstract-engraver.js:235`) reaches the stem
+ * rules. Reading the stems for every voice put `ragtime-nightingale`'s upper-voice slurs
+ * BELOW, where abcjs draws them above — and, because a beamed end is pinned to the beam,
+ * that is the difference between reserving nothing and reserving 2.43 pitch.
+ *
+ * The stem rules themselves differ between the two, and this keeps our one-line
+ * approximation of them: a curve goes opposite the stems, above when they disagree.
+ */
+function curveIsAbove(from: NoteAnchor, to: NoteAnchor, voicePos: number): boolean {
+  if (voicePos === 0) return true
+  if (voicePos > 0) return false
+  return !(from.stemUp && to.stemUp)
+}
+
+/**
  * Resolve every tie and slur over one staff's notes, in order.
  *
  * Ties are pairwise and local: `tiedToNext` joins a note to the one after it. Slurs
@@ -3027,6 +3061,8 @@ function layoutCurves(
    * the system it leaves and resumes after the clef and key of the one it enters.
    */
   bounds: readonly { left: number; right: number }[],
+  /** The voice's index on its staff, or −1 when it has that staff to itself. */
+  voicePos: number,
 ): PlacedCurve[][] {
   const curves: PlacedCurve[][] = bounds.map(() => [])
   const open: number[] = []
@@ -3044,7 +3080,7 @@ function layoutCurves(
    */
   const emit = (from: NoteAnchor, to: NoteAnchor, kind: 'tie' | 'slur'): void => {
     if (from.system === to.system) {
-      curves[from.system]?.push(buildCurve(from, to, kind))
+      curves[from.system]?.push(buildCurve(from, to, kind, voicePos))
       return
     }
     const start = bounds[from.system]
@@ -3055,7 +3091,7 @@ function layoutCurves(
     // system would aim at a pitch the reader cannot see, and the two halves would tilt
     // in unrelated directions.
     curves[from.system]?.push(
-      buildCurve(from, { ...from, left: start.right, right: start.right }, kind),
+      buildCurve(from, { ...from, left: start.right, right: start.right }, kind, voicePos),
     )
     // The continuation resumes after the new system's clef and key — starting at the
     // system's left edge drew it straight through the clef, where it was invisible.
@@ -3067,7 +3103,9 @@ function layoutCurves(
     // doing that means feeding the curve back into spacing, which is a slice of its own.
     const resume = Math.max(end.left, to.left - ENGRAVE.curveContinuation)
     if (to.left - resume >= ENGRAVE.curveEndGap * 2) {
-      curves[to.system]?.push(buildCurve({ ...to, left: resume, right: resume }, to, kind))
+      curves[to.system]?.push(
+        buildCurve({ ...to, left: resume, right: resume }, to, kind, voicePos),
+      )
     }
   }
 
@@ -3091,6 +3129,118 @@ function layoutCurves(
   })
 
   return curves
+}
+
+/**
+ * What each tie and slur RESERVES on its staff — a flat 3-pitch box, not its arc.
+ *
+ * `setUpperAndLowerVoiceElements` gives `TieElem` a case of its own
+ * (`set-upper-and-lower-elements.js:139-146`) and grows the staff's range by
+ * `getYBounds()`, which is declared rather than measured
+ * (`creation/elements/tie-element.js:228-251`):
+ *
+ *     above: bottom = min(startY, endY);  top = bottom + 3
+ *     below: top    = min(startY, endY);  bottom = top - 3
+ *
+ * — in PITCH, off the anchors, with abcjs's own "it's hard to tell how far the arc is,
+ * so I'm just using 3 as the max" beside it. Both bounds then go through `max` AND `min`,
+ * so the staff covers the whole box. A below slur is therefore three pitch under its
+ * LOWER anchor whatever the curve draws, and that was 9 of `ragtime-nightingale`'s staves
+ * sitting 1.0 to 2.6 pitch short at the bottom.
+ *
+ * Paired over ONE system's anchors, because that is the set of `TieElem`s abcjs has in
+ * the voice when it measures. Like the hairpin lane this cannot read `curves` — those
+ * resolve after packing, when the extent is long decided.
+ *
+ * ponytail: `startY`/`endY` are the anchor pitches, which is `calcSlurY`'s `else` branch.
+ * An ABOVE slur between two up-stem notes reads the middle of the stem instead; that
+ * side is inside the notes' own ink in every corpus fixture, so it never binds.
+ */
+function curveReserves(
+  anchors: readonly NoteAnchor[],
+  elements: readonly LayoutElement[],
+  voicePos: number,
+): { top: number; bottom: number }[] {
+  const reserves: { top: number; bottom: number }[] = []
+  const open: number[] = []
+  const centre = (a: NoteAnchor) => (a.top + a.bottom) / 2
+  /**
+   * `parent.fixed` — the element's OWN box over its fixed children, so on a beamed note
+   * the beam-retargeted stem end, and on the other side the notehead's. Not the stem
+   * alone: reading only the stem left four staves half a pitch out either way.
+   */
+  const fixedOf = (a: NoteAnchor): { top: number; bottom: number } => {
+    // A NOTEHEAD's declared box is its PITCH, not its outline: `RelativeElement` sets
+    // `top = bottom = pitch` and only `pitch2`, `thickness` and `stemHeight` widen it
+    // (`relative-element.js:18-30`) — so a head contributes a point and the stem the rest.
+    // Reading the head's drawn edge instead left every pinned end a flat pitch out.
+    let top = a.top + 2 * ENGRAVE.spacePerStep
+    let bottom = a.bottom - 2 * ENGRAVE.spacePerStep
+    for (const line of elements[a.element]?.lines ?? []) {
+      top = Math.min(top, line.y1, line.y2)
+      bottom = Math.max(bottom, line.y1, line.y2)
+    }
+    return { top, bottom }
+  }
+  const three = 3 * ENGRAVE.spacePerStep
+  /** Position in its own beam group, so the mid-beam rules below can be applied. */
+  const beamPos = (a: NoteAnchor): 'none' | 'first' | 'last' | 'middle' => {
+    const group = a.event.type === 'rest' ? null : a.event.beamGroup
+    if (group === null) return 'none'
+    const members = anchors.filter((b) => b.event.type !== 'rest' && b.event.beamGroup === group)
+    if (members.length < 2) return 'none'
+    if (members[0] === a) return 'first'
+    if (members[members.length - 1] === a) return 'last'
+    return 'middle'
+  }
+  /**
+   * `calcSlurY`'s `startY`/`endY` for one end, in our y.
+   *
+   * A BEAMED end is pinned to `parent.fixed.t` / `.b` rather than to its notehead —
+   * TIES INCLUDED. `getYBounds` branches on `this.isTie`, and nothing sets that before
+   * layout: `TieElem`'s constructor never reads `options.isTie`, and only `draw/tie.js`
+   * assigns it, at draw time. So every curve takes `calcSlurY` here whatever it is —
+   * abcjs's own bug, and excluding real ties from the rule undid the whole finding.
+   * The rule proper:
+   * `hasBeam1 && !isLastInBeam` for the start, `hasBeam2 && !isFirstInBeam` for the end
+   * (`tie-element.js`, inside the `scalex === 1` non-grace guard). `fixed` is the
+   * element's own extent over its fixed children, so on the beam side that is where the
+   * beam retargeted the stem. EVERY curve that binds a staff in `ragtime-nightingale`
+   * takes this branch — its fractional `startY` against an integer anchor pitch is the
+   * tell — and reading the notehead instead reserved nothing at all.
+   *
+   * ponytail: `(highestVert + pitch) / 2`, the half-way-up-the-stem case for an above end
+   * on an up-stem note, is not reproduced. Probed, `highestVert` IS the anchor pitch on
+   * every binding curve here, so the average is the pitch and the branch is a no-op.
+   */
+  const endAt = (a: NoteAnchor, above: boolean, isStart: boolean): number => {
+    const pos = beamPos(a)
+    if (pos !== 'none' && (isStart ? pos !== 'last' : pos !== 'first')) {
+      const fixed = fixedOf(a)
+      return above ? fixed.top : fixed.bottom
+    }
+    return centre(a)
+  }
+  const add = (from: NoteAnchor, to: NoteAnchor): void => {
+    const above = curveIsAbove(from, to, voicePos)
+    // abcjs's `Math.min` over PITCHES is our `Math.max` over y — the lower end on screen.
+    const y = Math.max(endAt(from, above, true), endAt(to, above, false))
+    reserves.push(above ? { top: y - three, bottom: y } : { top: y, bottom: y + three })
+  }
+  anchors.forEach((anchor, i) => {
+    if (anchor.event.type === 'rest') return
+    for (let n = 0; n < anchor.event.slurEnds; n++) {
+      const start = open.pop()
+      const from = start === undefined ? undefined : anchors[start]
+      if (from !== undefined) add(from, anchor)
+    }
+    for (let n = 0; n < anchor.event.slurStarts; n++) open.push(i)
+    if (anchor.event.tiedToNext) {
+      const next = anchors[i + 1]
+      if (next !== undefined) add(anchor, next)
+    }
+  })
+  return reserves
 }
 
 // ─── Tuplets ─────────────────────────────────────────────────────────────────
@@ -3198,9 +3348,24 @@ function layoutTuplets(
     // A tuplet entirely inside ONE beam group needs no bracket: the beam already says
     // where it starts and stops. abcjs decides the same way and then takes a COMPLETELY
     // DIFFERENT y for it, so this has to come first.
+    //
+    // …and the beam must be the tuplet EXACTLY. abcjs re-checks that the group's first
+    // and last notes are the beam's own first and last —
+    // `beam.elems[0] !== anchor1.parent || beam.elems[len-1] !== anchor2.parent` clears
+    // `hasBeam` again (`layout/triplet.js:11`, with `(3 dcdcc` named in its comment). A
+    // triplet living INSIDE a longer beam still gets a bracket, and reading the beam's y
+    // for it put one of `ragtime-nightingale`'s staves 8 pitch shallow at the bottom.
+    const group =
+      first.event.type === 'rest' || last.event.type === 'rest' ? null : first.event.beamGroup
+    const inGroup =
+      group === null
+        ? []
+        : anchors.filter((a) => a.event.type !== 'rest' && a.event.beamGroup === group)
     const beamed =
-      members.every((m) => m.event.type !== 'rest' && m.event.beamGroup !== null) &&
-      new Set(members.map((m) => (m.event.type === 'rest' ? null : m.event.beamGroup))).size === 1
+      group !== null &&
+      members.every((m) => m.event.type !== 'rest' && m.event.beamGroup === group) &&
+      inGroup[0] === first &&
+      inGroup[inGroup.length - 1] === last
 
     // WHERE THE BRACKET GOES IS abcjs'S ARITHMETIC, per END NOTE and in PITCH
     // (`layout/triplet.js:29-64`):
@@ -3883,6 +4048,17 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       : voices.map((_, i) => [i])
 
   /**
+   * A voice's index on its staff, or −1 when it has that staff to itself.
+   *
+   * abcjs's `voice.voicetotal < 2 ? -1 : voice.voicenumber` (`abstract-engraver.js:235`),
+   * which is what decides a slur's side on a shared staff — see `curveIsAbove`.
+   */
+  const voicePosOf = (v: number): number => {
+    const members = voicesOfStaff.find((m) => m.includes(v))
+    return members === undefined || members.length < 2 ? -1 : members.indexOf(v)
+  }
+
+  /**
    * Stem direction by a voice's POSITION on its staff, not by its pitch.
    *
    * Two voices sharing a staff are read apart by their stems: the upper voice takes them
@@ -4471,6 +4647,14 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       const beamGroups = new Map<number, StemInfo[]>()
       const voltaLines: PlacedLine[] = []
       const voltaTexts: PlacedText[] = []
+      // ONE volta bracket per SYSTEM, on the first voice of the first staff — abcjs's
+      // `elem.startEnding && isFirstStaff && voice.voicenumber === 0`
+      // (`abstract-engraver.js:1034-1037`, comment: "only put the first & second ending
+      // marks on the first staff"). Every voice carries the `|1`/`|2` barline, so drawing
+      // per voice put FIVE brackets on `ragtime-nightingale` where abcjs draws one — 15
+      // `1` labels against its 3 — and, worse, reserved the ending lane on the BASS staff
+      // too, which pushed it 6 pitch clear of the treble on every voltaed system.
+      const drawsVoltas = voiceIndex === voicesOfStaff[0]?.[0]
       /** The repeat ending currently open, and where its bracket started. */
       let openVolta: { label: string; startX: number } | null = null
 
@@ -4528,7 +4712,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         const block = plan.blocks[i]
         if (block !== undefined) {
           // A new ending closes whatever was open — `|1 … :|2` runs them back to back.
-          if (block.volta !== null) {
+          if (block.volta !== null && drawsVoltas) {
             closeVolta(startOf(i), true)
             openVolta = { label: block.volta, startX: startOf(i) }
           }
@@ -4610,7 +4794,10 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         hasHairpin,
         dynamicsAbove: hasVocals,
         tupletReservesAbove: tuplets.reservesAbove,
+        // Ties and slurs reserve on the same terms — a declared box, folded in here so
+        // `verticalExtent` has one list of them. See `curveReserves`.
         tupletReserves: tuplets.reserves,
+        curveReserves: curveReserves(systemAnchors, elements, voicePosOf(voiceIndex)),
         tupletLines: tuplets.lines,
         tupletTexts: tuplets.texts,
         voltaLines,
@@ -4702,6 +4889,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         // spread alone kept only voice one's, so a hairpin or a tuplet on the lower voice
         // of a shared staff reserved nothing at all.
         tupletReserves: parts.flatMap((p) => p.tupletReserves),
+        curveReserves: parts.flatMap((p) => p.curveReserves),
         tupletReservesAbove: parts.some((p) => p.tupletReservesAbove),
         hasHairpin: parts.some((p) => p.hasHairpin),
         voltaLines: parts.flatMap((p) => p.voltaLines),
@@ -4748,6 +4936,14 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
               ]
             })()
       const extent = verticalExtent(positioned, staff.beams, strict, staff)
+      if (PROBE) {
+        // abcjs pitch = 6 - 2 * ourY(spaces); its `top` is our MIN y and vice versa.
+        const pitch = (y: number) => (6 - 2 * y).toFixed(4)
+        console.log(
+          `PROBE staff ${systemIndex} top=${pitch(extent.top)} bottom=${pitch(extent.bottom)}` +
+            `  topBy=${probeTop}  bottomBy=${probeBottom}  flags=${probeFlags}`,
+        )
+      }
       const stacked = cursor - extent.top
       // The separation is a minimum LINE-to-LINE distance, which is what abcjs measures:
       // `draw.js:86-89` works from each staff's overhang past its own outer lines, so
@@ -4785,7 +4981,9 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     left: musicLeft[i] ?? ENGRAVE.marginX + indentFor(i),
     right: system.width - ENGRAVE.marginX,
   }))
-  const curvesBySystem = voiceAnchors.map((anchors) => layoutCurves(anchors, systemBounds))
+  const curvesBySystem = voiceAnchors.map((anchors, v) =>
+    layoutCurves(anchors, systemBounds, voicePosOf(v)),
+  )
   // Hairpins need the same treatment and for the same reason. Resolved per system, they
   // lost HALF the hairpins in S1-decorations tune 2 — it wraps to six systems and the
   // pairs straddle the breaks.
@@ -5266,6 +5464,8 @@ interface StaffFurniture {
   readonly tupletReservesAbove?: boolean
   /** abcjs's declared box per tuplet — NOT the bracket's drawn lines. */
   readonly tupletReserves?: readonly { top: number; bottom: number }[]
+  /** abcjs's declared box per tie and slur, applied AFTER the lanes. */
+  readonly curveReserves?: readonly { top: number; bottom: number }[]
   readonly tupletLines?: readonly PlacedLine[]
   readonly tupletTexts?: readonly PlacedText[]
   readonly voltaLines?: readonly PlacedLine[]
@@ -5273,6 +5473,20 @@ interface StaffFurniture {
   readonly melismaLines?: readonly PlacedLine[]
   readonly spannerLines?: readonly PlacedLine[]
 }
+
+/**
+ * WHO SET THIS STAFF'S EXTENT — the probe that named the beam, the volta lane and the
+ * curve box, each in one run. `ABCTS_PROBE=1` makes the staff-origin call in the stacking
+ * loop print its own `top`/`bottom` in abcjs PITCH (`6 - 2 * y`) beside the source line
+ * that last raised each, ready to sit next to abcjs's `staff.top`/`.bottom`.
+ *
+ * Read ours from the STACKING LOOP and not from in here: `verticalExtent` also runs for
+ * the top-text block, and mixing the two scrambles the staff order.
+ */
+const PROBE = process.env.ABCTS_PROBE !== undefined
+let probeTop = ''
+let probeBottom = ''
+let probeFlags = ''
 
 function verticalExtent(
   elements: readonly LayoutElement[],
@@ -5284,6 +5498,14 @@ function verticalExtent(
   let top = stepToY(4)
   let bottom = stepToY(-4)
   const include = (a: number, b: number) => {
+    if (PROBE) {
+      const who = (new Error().stack ?? '')
+        .split('\n')[2]
+        ?.trim()
+        .replace(/.*layout\.ts:/, 'L')
+      if (a < top) probeTop = `${who} ${a.toFixed(4)}`
+      if (b > bottom) probeBottom = `${who} ${b.toFixed(4)}`
+    }
     top = Math.min(top, a)
     bottom = Math.max(bottom, b)
   }
@@ -5295,8 +5517,9 @@ function verticalExtent(
   // `multi-voice-triplet-brackets` is the highest note (26.0) with `endingHeightAbove: 4`,
   // not the bracket that sits well above it. So these are gathered as ABOVE/BELOW flags and
   // the lane is applied after the note extent is known; their real y is ignored here.
-  let endingAbove = false
-  let endingBelow = false
+  /** `endingHeightAbove` in PITCH — 0 for none, 4 for a tuplet, 5 for a volta. */
+  let endingAbove = 0
+  let endingBelow = 0
   /** Any dynamic or hairpin on the BELOW side, which reserves a flat lane past the ink. */
   let sawDynamicBelow = false
   /**
@@ -5322,8 +5545,8 @@ function verticalExtent(
     else sawDynamicBelow = true
   }
   const flag = (y: number) => {
-    if (y < 0) endingAbove = true
-    else endingBelow = true
+    if (y < 0) endingAbove = Math.max(endingAbove, ENGRAVE.voltaLane)
+    else endingBelow = Math.max(endingBelow, ENGRAVE.voltaLane)
   }
   // A TUPLET COUNTS TWICE: its BRACKET'S INK, and then the lane ON TOP OF THAT.
   //
@@ -5340,7 +5563,8 @@ function verticalExtent(
   //
   // A VOLTA is NOT the same: `EndingElem` goes through the `otherchildren` switch, which sets
   // its top from the lane it was given and never adjusts the staff's range by its ink.
-  if (furniture.tupletReservesAbove === true) endingAbove = true
+  if (furniture.tupletReservesAbove === true)
+    endingAbove = Math.max(endingAbove, ENGRAVE.tupletLane)
   for (const r of furniture.tupletReserves ?? []) include(r.top, r.bottom)
   for (const line of furniture.voltaLines ?? []) flag((line.y1 + line.y2) / 2)
   for (const t of furniture.voltaTexts ?? []) flag(t.y)
@@ -5492,13 +5716,19 @@ function verticalExtent(
   }
 
   // Apply the tuplet/volta ending lane now that `top`/`bottom` are the NOTE extent: a fixed
-  // 5 pitch (`ENGRAVE.endingLane`) beyond the note on whichever side an ending sits, never
+  // `endingHeightAbove + 1` beyond the note on whichever side an ending sits, never
   // the bracket's real height. See the ABOVE/BELOW gather at the top of this function.
   // Dynamics: a flat lane past the music, never their own drawn box.
   // ponytail: a staff whose only below-dynamic is a HAIRPIN reserves nothing, because
   // hairpins resolve after packing and `spannerLines` is still empty here. abcjs does
   // reserve for them (`dynamicHeightBelow`, `crescendo-element.js:11`). Taking presence
   // from the model instead was tried and made the corpus much worse — see the checkpoint.
+  if (PROBE)
+    probeFlags =
+      `dynBelow=${sawDynamicBelow} dynAbove=${sawDynamicAbove}` +
+      ` endAbove=${endingAbove} endBelow=${endingBelow}` +
+      ` tuplets=${(furniture.tupletReserves ?? []).length}` +
+      ` curves=${(furniture.curveReserves ?? []).length}`
   if (sawDynamicBelow) bottom += ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
   if (sawDynamicAbove) top -= ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
   // THE LANE EXTENDS THE MUSIC, AND ONLY THE MUSIC — so not on a pass that is measuring a
@@ -5513,8 +5743,25 @@ function verticalExtent(
   // `musicTop - musicSpace - blockHeight`, which is below `musicTop` by construction — so
   // skipping the lane here cannot change the answer, only stop it being counted twice.
   const hasBlock = elements.some((el) => el.type === 'title')
-  if (endingAbove && !hasBlock) top = Math.min(top, top - ENGRAVE.endingLane)
-  if (endingBelow && !hasBlock) bottom = Math.max(bottom, bottom + ENGRAVE.endingLane)
+  const lane = (pitch: number) => (pitch + ENGRAVE.laneMargin) * ENGRAVE.spacePerStep
+  if (endingAbove > 0 && !hasBlock) top -= lane(endingAbove)
+  if (endingBelow > 0 && !hasBlock) bottom += lane(endingBelow)
+
+  // A TIE OR SLUR PUSHES THE LANES' RESULT — IT DOES NOT GO UNDER THEM.
+  //
+  // `setUpperAndLowerElements` runs every lane onto `staff.top`/`.bottom` FIRST and only
+  // then loops the voices, where the `TieElem` case takes `max`/`min` against what the
+  // lanes already produced. So a curve that reaches less far than the lane contributes
+  // nothing at all, where a tuplet's box — which enters through `layoutVoice`'s
+  // `adjustRange`, before any of this — is ink the lane then sits on top of.
+  //
+  // Counting curves as ink instead put five of `ragtime-nightingale`'s staves 1.2 to 2.6
+  // pitch out, always on a staff that also had a lane, and always by the amount the curve
+  // poked past the music underneath it.
+  for (const r of furniture.curveReserves ?? []) {
+    top = Math.min(top, r.top)
+    bottom = Math.max(bottom, r.bottom)
+  }
 
   return { top: top - ENGRAVE.marginY, bottom: bottom + ENGRAVE.marginY }
 }

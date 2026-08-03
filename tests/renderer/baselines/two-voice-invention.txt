@@ -174,8 +174,8 @@ system 0 width=90.323 originY=0.000
       glyph restQuarter 84.355,0.000
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 1 width=90.323 originY=37.066
-  staff 0 originY=4.526
+system 1 width=90.323 originY=36.092
+  staff 0 originY=5.500
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -288,7 +288,7 @@ system 1 width=90.323 originY=37.066
       glyph repeatDots 86.581,1.976
       line  87.221,-2.000 -> 87.221,2.000 t=0.160
       line  87.951,-2.000 -> 87.951,2.000 t=0.500
-  staff 1 originY=18.553
+  staff 1 originY=19.526
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130

@@ -2221,7 +2221,7 @@ system 0 width=21.713 originY=0.000
       line  13.720,-0.601 -> 13.720,-2.701 t=0.072
       line  15.483,0.332 -> 15.483,-3.000 t=0.120
 tune 22
-bounds  width=90.323 height=67.131 top=-1.935
+bounds  width=90.323 height=68.108 top=-1.935
 systems 5
 system 0 width=90.323 originY=0.000
   staff 0 originY=14.019
