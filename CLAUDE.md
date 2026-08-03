@@ -178,8 +178,17 @@ Two stale ceilings surfaced only once the check ahead of them started passing, a
 axes behind the one you fixed rather than assuming they were passing.
 
 **abcjs's OWN test suite is NOT ported** — 272 `it()` cases in `abcjs-6.6.3/tests/`, none
-of them read. Our gate is the 41-fixture corpus plus hand-written suites. See the
-checkpoint's open-gap section before assuming a behaviour is covered.
+of them read. They assert against abcjs's internal `visualObj` tree, which compat does not
+reproduce, so running them is a project rather than a switch. What IS cheap is the 113
+distinct ABC tunes embedded in them: harvest those into the corpus and the goldens and
+gates we already have apply. See the checkpoint's open-gap section before assuming a
+behaviour is covered.
+
+**A DECORATION IS STACKED BY ITS OWN GLYPH HEIGHT AND CENTRED ON THE RUNNING CURSOR** —
+`height = symbolHeightInPitches(symbol) + 1`, `y = cursor + height / 2`, `cursor += height`
+(`creation/decoration.js:154-165`). We step one staff position per decoration instead. It
+is the ink under every one of `frere-jacques`'s staves and the next piece of vertical work;
+it will touch every decorated fixture, so measure them all on the same run.
 
 **FOUR GATE NUMBERS ARE ARTEFACTS — do not chase any of them.** The gate pairs the i-th
 notehead of each engine, so a difference in EMISSION ORDER reads as a position error.

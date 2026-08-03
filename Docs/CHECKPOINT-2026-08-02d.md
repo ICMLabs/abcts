@@ -234,7 +234,7 @@ Nine fixtures are off any axis by more than 0.05px, and three of the numbers are
 | fixture | dy | dx | oy | ox | what it is |
 |---|---|---|---|---|---|
 | `ragtime-nightingale` | 58.13 | 69.82 | −0.54 | −1.16 | dy is TWO MIS-PAIRED HEADS (below); dx is horizontal, untouched since that arc |
-| `frere-jacques` | 22.35 | 22.15 | −12.53 | −3.63 | the source-line-wrap model conflict — a design question |
+| `frere-jacques` | 14.34 | 22.15 | −19.12 | −3.63 | **NOT the wrap conflict — see below.** One named cause left: decoration stacking |
 | `vree-grace-notes` | 11.64 | 32.50 | — | −1.14 | **BOTH numbers are the same pairing artefact.** Sorted by x — valid here, one system — dy is 0.02 and dx a uniform 1.99, which is the grace glyph. Its dy was listed as "open" in `-c`; it is not. |
 | `little swallow` | 1.92 | 23.97 | −0.58 | −5.73 | dx is the golden limitation. dy/oy is the LYRIC RESERVE — diagnosed below |
 | `zocharti-loch` | — | 5.35 | — | 0.69 | horizontal only |
@@ -264,6 +264,57 @@ The structural fix is abcjs's own form — ink minus `(lyricHeightBelow + margin
 `lyricHeightBelow` is a MEASURED multi-line text height (10.1265 pitch here) and the
 current constant was verified against abcjs's output on three shapes. Port the structure,
 then re-derive the constant; do not drop a new constant into the old form.
+
+### `frere-jacques` — THE WRAP CONFLICT IS NOT WHAT IS LEFT
+
+It has been carried since 2026-07-22 as "the source-line-wrap model conflict, a design
+question". **That is out of date.** Its system COUNT has matched abcjs (4 and 4) since the
+parser started closing a measure at a source-line boundary. Measured against abcjs's own
+`staff.top`/`.bottom`, the whole of what is left is ONE cause:
+
+| staff | abcjs | ours | short by |
+|---|---|---|---|
+| 1 | 22.0110 | 19.1806 | 2.83 |
+| 2 | 24.8325 | 22.7510 | 2.08 |
+| 3 | 30.6070 | 28.9123 | 1.69 |
+
+Its bottoms match exactly. Its lanes match exactly — the `P:` lane, the `%%partsbox`
+widening and the chord lane all land on the digit now. What does not match is the INK
+underneath them, and probed, the ink top of every one of its staves is a DECORATION:
+
+```
+VTOP 22.0110 by scripts.trill    @19.8832   (systems 0, 1)
+VTOP 16.0493 by scripts.sforzato @16.0493   (system 2)
+VTOP 16.0444 by scripts.staccato @16.0444   (system 3)
+```
+
+Ours puts the same decorations at pitch **15.0**, **13.0** and **14.0** — round numbers,
+because we step one staff position per decoration. abcjs STACKS THEM BY THEIR OWN GLYPH
+HEIGHTS (`creation/decoration.js:154-165`):
+
+```js
+var height = glyphs.symbolHeightInPitches(symbol) + 1;   // a pitch of padding
+var y = getPlacement(placement);                          // the running yPos.above
+y = (placement === 'above') ? y + height / 2 : y - height / 2;   // CENTRE it
+… new RelativeElement(symbol, …, y, { thickness: glyphs.symbolHeightInPitches(symbol) })
+incrementPlacement(placement, height);                    // yPos.above += height
+```
+
+Three things in five lines, and the same shape as everything else in this arc: a
+DECLARED height per glyph, a flat pitch of padding, and the element CENTRED on the
+running cursor rather than sitting on it. `yPos.above` starts at the note's own top,
+clamped up to `minTop`.
+
+**This is the next piece of work on the vertical axis and it is not a `frere-jacques`
+fix** — it is every decorated fixture. The corpus's other decorated fixtures are at parity
+today, so a decoration-placement change can regress them; measure `vree-*`,
+`stacked-annotations` and `ragtime-nightingale` on the same run.
+
+`frere-jacques`'s `oy` is now 19.12 against a recorded 5.4, and it is the visible red.
+It was ALREADY failing at 12.53 and hidden behind the `dy` assertion (see the gate
+section); it got worse because moving `P:A` off the prose system — which abcjs does —
+shortened that system and let every system below it settle onto a decoration stack that
+is still too low. The number will come back when the stack does.
 
 ### `ragtime-nightingale` dy is TWO MIS-PAIRED NOTEHEADS — measured, not guessed
 
