@@ -17,8 +17,13 @@ Per-axis over the 29 pixel-gated fixtures:
 
 | within | dy | dx | oy | ox | ALL FOUR |
 |---|---|---|---|---|---|
-| 0.05px | 23/29 | 23/29 | 24/29 | 23/29 | **20/29** |
-| 0.25px | 25/29 | 23/29 | 26/29 | 23/29 | **23/29** |
+| 0.05px | 24/29 | 23/29 | 25/29 | 23/29 | **20/29** |
+| 0.25px | 26/29 | 23/29 | 27/29 | 23/29 | **23/29** |
+
+Only NINE of the 29 are off ANY axis, and on the VERTICAL axes only five are — three of
+those by artefacts. `ragtime-nightingale` matches abcjs's own `staff.top`/`.bottom` on
+**39 of its 46 staves**, from 7 at the start of this work, with two of its 45 staff-line
+boundaries off by more than 0.3px.
 
 **Only NINE fixtures are off any axis at all**, and four of their numbers are gate
 artefacts rather than divergences. `ragtime-nightingale` matches abcjs's own
@@ -79,6 +84,26 @@ different times, with different figures.** A tie sets `top/bottom = ±4 pitch` i
 | 11 | A `P:` belongs to the measure that FOLLOWS it, not the one it closes | `takeOpening` at close vs `pendingPart` |
 | 12 | `%%partsbox` is a LANE as well as a box — a boxed font measures `height + padding * 4` | `get-text-size.js:46-48`, `draw/text.js:81` |
 | 13 | Decorations are TWO ORDERED PASSES: a close pass, then a stack measured in GLYPH HEIGHTS and centred | `decoration.js:17-47`, `:154-165`, `:386-391` |
+| 14 | A CHORD SYMBOL AND AN ANNOTATION ARE ONE LANE, and the lane COUNT is packed by horizontal overlap | `relative-element.js:60-76`, `layout/voice.js:70-101` |
+| 15 | A TEXT DECORATION stacks on the ornament cursor and declares a flat `thickness: 3` | `decoration.js:147-153` |
+| 16 | An ACCIDENTAL declares `pitch ± h / 2` | `create-note-head.js:99-100` |
+
+**(14) is where reading the source lost to reading the output, twice in one change:**
+
+- `putChordInLane` rewrites an item's `chordHeightAbove` to `height * 1.25 * lane`, which
+  reads as if the reserve grows per lane. It does not — that runs in `layoutVoice`, long
+  after `setLimit` fixed the staff's `specialY` at engrave time. Probed,
+  `stacked-annotations` reports `chordHeightAbove: 4.7794` with `chordLines.above: 2`.
+- `setLane`'s `invertLane` composed with `draw/text.js`'s lane offset predicts the LAST
+  written annotation on top. The SVG has `"^Allegro""^con brio"` at y 79.12 and 99.12 —
+  first-written on top.
+
+**MEASURE THE OUTPUT BEFORE TRUSTING A CHAIN OF THREE SOURCE READS.** Both of these were
+derived carefully from the source and both were wrong; a single `grep` of the golden
+settled each in seconds.
+
+(14) also corrected a TEST that asserted the opposite of abcjs — that a chord and an
+annotation "must not land on the same line". They both draw at y 38.56.
 
 **(13) is the biggest of them and closed `frere-jacques`.** Three parts:
 
@@ -220,7 +245,7 @@ Its `dx` of 69.82 has still had no attention since the horizontal arc closed.
 
 | item | measured | recorded | what it is |
 |---|---|---|---|
-| `ragtime-nightingale` oy | 0.61 | 0.59 | **A GENUINE 0.07px WIDENING, from this session's decoration port** — and its extents got BETTER over the same change, 36 of 46 staves exact to 38. Not raised. |
+| `ragtime-nightingale` oy | 1.96 | 0.59 | **A GENUINE WIDENING, and its extents got BETTER over the same changes** — 36 of 46 staves exact to **39**, and only two of its 45 boundaries off by more than 0.3px. Not raised. See below. |
 | `ragtime-nightingale` ox | 1.16 | 1.05 | a STALE RECORD, not a widening — 1.16 on a clean tree too. Hidden behind the `oy` assertion. |
 
 **A FIXTURE'S ASSERTIONS SHORT-CIRCUIT, so a failing axis HIDES the ones after it.** All
@@ -257,8 +282,8 @@ Nine fixtures are off any axis by more than 0.05px, and three of the numbers are
 
 | fixture | dy | dx | oy | ox | what it is |
 |---|---|---|---|---|---|
-| `ragtime-nightingale` | 58.13 | 69.82 | −0.54 | −1.16 | dy is TWO MIS-PAIRED HEADS (below); dx is horizontal, untouched since that arc |
-| `frere-jacques` | **6.59** | 22.15 | **−2.65** | −3.63 | **NOT the wrap conflict, and now inside its ceilings** — see below |
+| `ragtime-nightingale` | 58.14 | 69.82 | −1.96 | −1.16 | dy is TWO MIS-PAIRED HEADS (below); oy is the BEAM, next section; dx is horizontal |
+| `frere-jacques` | **0.03** | 22.15 | **−0.02** | −3.63 | vertically CLOSED — what is left is horizontal |
 | `vree-grace-notes` | 11.64 | 32.50 | — | −1.14 | **BOTH numbers are the same pairing artefact.** Sorted by x — valid here, one system — dy is 0.02 and dx a uniform 1.99, which is the grace glyph. Its dy was listed as "open" in `-c`; it is not. |
 | `little swallow` | 1.92 | 23.97 | −0.58 | −5.73 | dx is the golden limitation. dy/oy is the LYRIC RESERVE — diagnosed below |
 | `zocharti-loch` | — | 5.35 | — | 0.69 | horizontal only |
@@ -289,7 +314,17 @@ The structural fix is abcjs's own form — ink minus `(lyricHeightBelow + margin
 current constant was verified against abcjs's output on three shapes. Port the structure,
 then re-derive the constant; do not drop a new constant into the old form.
 
-### `frere-jacques` — THE WRAP CONFLICT WAS NEVER WHAT WAS LEFT
+### `frere-jacques` — CLOSED ON BOTH VERTICAL AXES
+
+**dy 22.35 → 0.03 and oy −12.53 → −0.02.** All four of its staves now match abcjs's
+`staff.top` to a hundredth. What is left on it is horizontal (dx 22.15, ox −3.63).
+
+Four causes, none of them the design question it was filed under: a `P:` attached to the
+measure it followed instead of the one it heads; `%%partsbox` unimplemented as both a box
+and a lane; the decoration stack; and the annotation lane plus the text decoration's
+declared box.
+
+### How it was mislabelled for two weeks
 
 It was carried from 2026-07-22 as "the source-line-wrap model conflict, a design
 question". **It was not.** Its system count has matched abcjs (4 and 4) since the parser
@@ -378,6 +413,37 @@ recorded rather than taken.
 `%%measurefont` / `%%barlabelfont` (11 between them); `%%musicspace` (4); `%%text` (4);
 `%%sep` (2); `%%setbarnb` (2). The `%%MIDI *` and `%%percmap` families are audio and out
 of scope until there is a synth.
+
+---
+
+## WHY `ragtime-nightingale`'s `oy` GOT WORSE WHILE ITS GEOMETRY GOT BETTER
+
+Its mean offset went 0.54 → 1.96 over the decoration and accidental work, and its extents
+went 36 of 46 exact → 39, with its staff-line boundaries down to two off by more than
+0.3px and 4.09px of drift across a 6,000px page.
+
+**The two numbers measure different things and the mean is the weaker one.** `oy` was 0.54
+because errors above and below the line were cancelling; it is 1.96 because the page no
+longer drifts back. Extent accuracy is the honest signal — this arc has found that
+repeatedly — and it improved every time the mean did not.
+
+Its ceiling is NOT raised. It is red, and the reason is written here.
+
+### What is left on it is the BEAM
+
+Its two remaining boundaries turn on abcjs's beamed stems reaching **0.47 to 0.58 pitch**
+further than ours — fractional on both sides, so it is an interpolated position on a
+sloped beam rather than a constant.
+
+`calcYPos` and `calcSlant` are ALREADY ported faithfully (`layout/beam.js:83-102`),
+including the `pos = round(extreme ± (stemHeight - 2))` reduction, the `floor(slant/2)`
+asymmetry and the "go down to the middle" clamp. So are their inputs: `averageStep` is the
+chord's mean as `calcSlant` wants, and `farStep` is the extreme as `beam.max`/`beam.min`
+are. `isflat` is `%%flatbeams`, off here.
+
+So the divergence is NOT in the parts already read, and the next step is to instrument ONE
+ragtime beam on both sides — `beam.average`, `beam.max`, `stemHeight`, the computed
+`startY`/`endY` — rather than read further.
 
 ---
 
