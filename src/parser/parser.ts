@@ -21,7 +21,6 @@
  */
 
 import {
-  type FreeTextBlock,
   Accidental,
   type Barline,
   type Chord,
@@ -34,6 +33,7 @@ import {
   type DiatonicStep,
   defaultClef,
   defaultMode,
+  type FreeTextBlock,
   isCompoundMeter,
   isStrict,
   type KeySignature,

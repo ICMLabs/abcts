@@ -15,7 +15,6 @@
  * the font, engraving conventions (stem length, spacing) live in ENGRAVE below.
  */
 import {
-  type FreeTextBlock,
   Accidental,
   type Barline,
   type Clef,
@@ -26,6 +25,7 @@ import {
   type DiatonicStep,
   defaultClef,
   defaultMode,
+  type FreeTextBlock,
   isStrict,
   type KeySignature,
   type Measure,
