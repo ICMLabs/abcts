@@ -2,9 +2,18 @@
 
 Supersedes `CHECKPOINT-2026-08-03.md`, which stays as the record of the declared-box idea,
 the two corpora and the four gate artefacts. **Two of its statements are corrected below**
-and both corrections came from measuring the output. Five fixes landed; the last three all
-came off the harvested corpus's ranked list, which no gate summarises and which is the
-first thing to re-run.
+and both corrections came from measuring the output.
+
+**Nine fixes landed.** The last six all came off the harvested corpus's ranked table, and
+that table is now a committed diagnostic — `tests/corpus-abcjs-ranked.test.ts`, writing
+`/tmp/abcts-corpus-ranked.txt`. **Run it first.** The ratchet's four counts can say a
+number moved; only the table says what to fix.
+
+**AND THE ALGORITHM IS IN abcjs.** Findings 6–9 were read out of its source and then
+confirmed by instrumenting it, not inferred from a diff — three of them could not have
+been guessed from the output at all, and one of them (a `[V:x]` naming the current voice)
+is not visible in the source either and took a probe to see. Read the source for the
+MECHANISM, the output for the NUMBER, and instrument when the two disagree.
 
 Read this, then `VERTICAL-ARC.md`, then `ARCHITECTURE.md`, then `CLAUDE.md`.
 
@@ -21,7 +30,7 @@ Read this, then `VERTICAL-ARC.md`, then `ARCHITECTURE.md`, then `CLAUDE.md`.
 | corpus | standing |
 |---|---|
 | 41-fixture | **21/29** exact on all four axes at 0.05px (was 20). Only EIGHT are off any axis, only FOUR off a vertical one. |
-| harvested (174) | **172/174** content-correct; within 0.05 / 1 / 5 / 25px **78 / 89 / 96 / 119**, from 72 / 83 / 91 / 116. |
+| harvested (174) | **172/174** content-correct; within 0.05 / 1 / 5 / 25px **86 / 97 / 106 / 130**, from 72 / 83 / 91 / 116. **86 of its 174 are still off some axis** — `tests/corpus-abcjs-ranked.test.ts` lists them. |
 | `ragtime-nightingale` extents | **40 of 46** staves match abcjs's own `staff.top`/`.bottom`, and staff 0's is the title-block accounting difference rather than an error. |
 
 ---
@@ -122,6 +131,67 @@ element already was. Verified against abcjs on five shapes — one- and two-line
 a `%%begintext` between two music lines makes the FIRST non-last and leaves the second
 last. Measured on `S2-fields`'s BeginText tune: abcjs's first staff spans the full 350 and
 its second stops at 211. Marking any post-music block as trailing justified the wrong line.
+
+### 6. `V:… merge`, the bare `up` / `down`, and clef names matched by PREFIX
+
+Three gaps on one fixture — `visual-layout-07`, 186.63px out and now 0.03.
+
+- **`merge`.** abcjs builds `staffInfo` with `startStaff: isNew` — true the first time an
+  id is seen — and `case 'merge'` sets it false (`abc_parse_key_voice.js:518,714-716`).
+  Then `if (staffInfo.startStaff || staves.length === 0) staves.push(…)` and the voice takes
+  `staffNum = staves.length - 1`, assigned once and never revised (`:803-810`). So the
+  first voice always opens a staff whatever it says, and a merging voice lands on whichever
+  was opened last. We had no such token: four staves where abcjs draws two.
+- **The bare `up` / `down`.** abcjs gives them a case each and both assign
+  `voices[id].stem` (`:717-732`). ABC 2.1 §4.19 documents only `stems=`; abcjs's own
+  fixtures use the bare form.
+- **Clef names are matched by PREFIX.** `getClef` is a chain of `startsWith` and after the
+  name it consumes only `+8` or `-8`, leaving anything else where it is
+  (`abc_tokenizer.js:95-155`). So **`bass,,` IS the bass clef** with two stray commas.
+  Requiring a whole word read it as no clef and defaulted that voice to treble.
+
+### 7. An implicit voice with no music takes no staff
+
+`scanMusic` touches `builder.voice` to open the source line before it has read the line's
+tokens, so a tune whose every line starts with an inline `[V:T]` materialises the default
+voice `1` first and never puts anything in it. abcjs has no such voice. Left in, it took a
+whole extra staff on EVERY system: `visual-parsing-08` drew six staves where abcjs draws
+three, with the music on alternate ones.
+
+A voice now counts only if a `V:` or `[V:]` NAMED it or it holds music — so a tune with no
+`V:` at all keeps its implicit voice, and a header-declared silent voice keeps its staff.
+
+### 8. THE TWO LINE-ASSIGNMENT RULES
+
+The largest structural finding of the session, and the one that most needed instrumenting.
+
+**A TRAILING BACKSLASH JOINS A MUSIC LINE TO THE NEXT.** abcjs marks it in preprocessing —
+`/\\([ \t]*)(%.*)*\n/` becomes `\` + `\x12` (`abc_parse.js:511-515`) — and then declines
+to open a line at all when the PREVIOUS one carried the marker
+(`abc_parse_music.js:154,585`). We lexed `\` as whitespace and dropped the meaning, so
+every continued line opened a system of its own. The 41-corpus `clefs` tune 7 was
+**dy 207.93 / dx 884.41** out and is now **46.51 / 98.85**.
+
+**A `[V:x]` SWITCH OPENS A LINE ONLY WHEN x ALREADY HAS MUSIC.** `setCurrentVoice` points
+`lineNum` at the first line where the voice holds no notes (`tune-builder.js:410-428`) and
+`startNewLine` increments past one that does (`:334-357`). A voice only ever appends, so
+both reduce to: if it has written here, move on.
+
+**AND A `[V:x]` NAMING THE VOICE ALREADY CURRENT IS A NO-OP.** That half is not in the
+source — `parseVoice` ends `return setCurrentVoice(id)` unconditionally, so reading it
+predicts a line advance on every repeat. Probed, `setCurrentVoice` fires **twice** across
+`visual-parsing-08`'s six `[V:…]` lines, once per distinct id. Without the guard,
+`[V:1]f|\` + `[V:1]f|` split into two systems where abcjs draws one.
+
+All five inline-voice fixtures now match abcjs's system structure — `parsing-03` one, `-04`
+and `-05` two, `-08` three, `-09` one. Five 41-corpus baselines moved and all five improved.
+
+### 9. The ranked table is a committed diagnostic
+
+`tests/corpus-abcjs-ranked.test.ts`, on the `staff-spacing` pattern: writes
+`/tmp/abcts-corpus-ranked.txt`, asserts only that it measured something. It had been
+rewritten as a scratch file three times in one session, and every fix from 4 onward came
+off it.
 
 ---
 
@@ -236,38 +306,39 @@ does, and not before. The vertical arc has taken this fixture as far as it goes:
 staff extents exact, and staff 0's difference is the title-block accounting rather than an
 error.
 
-## THE HARVESTED CORPUS, RANKED BY WORST AXIS
+## THE HARVESTED CORPUS — RUN THE RANKED TABLE FIRST
 
-Measured this session; the top of the list is not the directive tail the last checkpoint
-led with. Everything below is a fixture's worst of `dy`/`dx`/`|oy|`/`|ox|`, px:
+```bash
+npx vitest run tests/corpus-abcjs-ranked.test.ts && cat /tmp/abcts-corpus-ranked.txt
+```
 
-| worst | fixture | what it looks like |
+**86 of 174 are still off some axis.** Read the SHAPE, not just the total: `dy 0.0` beside
+a large `dx` is a horizontal defect and not this arc's; a large `|oy|` with `dy` near zero
+is a rigid vertical shift, which is one term and usually one cause.
+
+What stands at the top, and what its shape says:
+
+| worst | fixture | shape |
 |---|---|---|
-| 496.88 | `visual-layout-09-endings` | `%%score` + `%%voicecolor` |
-| 342.67 | `visual-parsing-09-score-t-b` | `%%score` |
-| 300.30 | `visual-tablature-17-stretchlast` | |
-| 241.15 | `visual-wrap-02-stretchlast-1` | pure `dx` |
-| 228.85 | `visual-options-01-fonts` | the 18-font fixture |
-| 158.06 | `parse-tie-slur-01/02/03-staffwidth-200` | `%%staffwidth`, pure `dy`/`oy` |
-| ~~45.19~~ | `visual-misc-09 / -10 / -11-begintext` | **CLOSED** — 11.43 of it was `clef=none`, 33.76 the block |
+| — | `parse-book_parser-04-wed` | TUNE COUNT 2 vs 1 — the leading-header split, a known gap |
+| 496.9 | `visual-layout-09-endings` | `dx`-led, `%%voicecolor` |
+| 300.3 | `visual-tablature-17-stretchlast` | **`dy` 300.3** — the biggest vertical item left |
+| 241.2 | `visual-wrap-02-stretchlast-1` | `dy` 0.0 — pure horizontal |
+| 153.5 | `visual-options-01-fonts` | **`oy` −153.5** — 18 font directives plus `%%header`/`%%footer` |
+| 115.5 | `visual-svg-per-line-02-scaled` | `dy` 0.0 — `%%staffwidth`, horizontal |
+| 108.2, 106.8, 91.9, 84.7 | four `visual-transpose-*` | all `dy` 0.0 — ONE horizontal cause, four fixtures |
+| 85.7 ×2, 69.9 ×2 | `selection-test` / `all-element-types` | `%%barnumbers` + `%%text` + `%%sep`, mixed |
+| 75.8 ×2 | `misc-01-barnumbers-1`, `parsing-10-song` | `dy`/`dx` both 0.0, `ox` 75.84 — a RIGID x shift, and `misc-01` is a MULTI-MEASURE REST (`Z24`) rather than a bar-number fixture |
 
-**The list is worth re-running before picking from it.** Three of its entries have closed
-since it was made and the remaining order has not been re-measured; `npm run` nothing does
-this, so it takes a scratch test over `tests/corpus-abcjs/` that reports each fixture's
-worst of the four axes with its directives beside it. It is what put `%%begintext` ahead of
-the directive tail the last checkpoint led with, and what showed that `barnumbers-1` is not
-a bar-number fixture at all.
+The four `visual-transpose-*` at `dy 0.0` are the cheapest thing on the list by fixtures
+per cause, and the two at a rigid `ox` of 75.84 the cheapest by shape — both horizontal.
+The two vertical ones are `tablature-17` and `options-01`.
 
 **MID-TUNE free text is still not drawn.** A `%%begintext` between two music lines is
-dropped — it must not be marked as trailing (that justifies the wrong line) and placing it
-properly needs free text to be a LINE rather than a property of the tune, which is the
-standing `ponytail:` on `textBelow`. `S2-fields` is the fixture, and its second staff is
-59px high because of it.
-
-`abcjs-visual-misc-01-barnumbers-1` is `Z24 | F2 |` — a MULTI-MEASURE REST, not a bar-number
-problem. Its `dx`/`dy` of 0.00 are an artefact of having one paired notehead.
-
----
+dropped — it must not be marked as trailing (abcjs's justification rule is per LINE, so
+doing so justifies the wrong one) and placing it properly needs free text to be a LINE
+rather than a property of the tune, which is the standing `ponytail:` on `textBelow`.
+`S2-fields` is the fixture and its second staff is 59px high because of it.
 
 ## TRAPS PAID FOR THIS SESSION
 
@@ -295,7 +366,14 @@ problem. Its `dx`/`dy` of 0.00 are an artefact of having one paired notehead.
    called `-tune0`… in `Tools/abcjs-debug/`. Write to `/tmp/x.svg` instead.
 8. **`git status --short` returning output still EXITS 0**, so `git status --short && echo
    CLEAN` prints CLEAN over a dirty tree. Read the output, do not test the exit code.
-9. **Check `git -C ../abcMusicKit status --short` before finishing.** Clean at handoff.
+9. **THE SOURCE HOLDS THE MECHANISM AND THE PROBE HOLDS THE REST.** `parseVoice` ends
+   `return setCurrentVoice(id)` unconditionally, which reads as "every `[V:x]` repositions
+   the line". It does not — a `[V:x]` naming the voice already current is a no-op, and only
+   a probe shows it: `setCurrentVoice` fires twice across six `[V:…]` lines. Three of this
+   session's four algorithm ports needed the source to find them and the probe to finish
+   them. Reading alone would have shipped the wrong rule; measuring alone would never have
+   found the rule at all.
+10. **Check `git -C ../abcMusicKit status --short` before finishing.** Clean at handoff.
 
 ---
 

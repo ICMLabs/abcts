@@ -209,10 +209,20 @@ tree, which compat does not reproduce — only its inputs.
 It immediately found a whole feature that was parsed and never painted: **`&` overlay
 voices**. Nothing in the 41 uses `&`, so 505 tests went green over it for weeks. A GATE IS
 ONLY AS BROAD AS ITS INPUTS, and ours had all been chosen by the same people who wrote the
-engine. It has kept doing it: `clef=none` and `clef=perc` read as a C clef on the middle
-line, and `%%text` / `%%begintext` reserving nothing, were both found there and neither is
-exercised by any of the 41. **RANK IT BY WORST AXIS WITH EACH FIXTURE'S DIRECTIVES BESIDE
-IT** — that list, not the aggregate counts, is what names the next defect.
+engine.
+
+It has kept doing it — `clef=none` and `clef=perc` read as a C clef, `%%text` reserving
+nothing, `V:… merge` unimplemented, `bass,,` parsed as no clef, an empty implicit voice
+taking a staff, and both line-assignment rules were all found there, and only one of them
+is exercised by any of the 41. **START EVERY SESSION WITH
+`tests/corpus-abcjs-ranked.test.ts`** — that table, not the aggregate counts, is what
+names the next defect, and its DIRECTIVES column is what makes it actionable.
+
+**AND THE ALGORITHM IS IN ABCJS.** Read the named function, then finish with a probe: four
+of one session's nine fixes were ports of one (`merge`'s staff assignment, `getClef`'s
+prefix match, `setCurrentVoice`'s line scan, the backslash preprocessing) and none could
+have been guessed from a diff — but one rule is not in the source at all and took
+instrumenting to see.
 
 **A DECORATION IS STACKED BY ITS OWN GLYPH HEIGHT AND CENTRED ON THE RUNNING CURSOR** —
 `height = symbolHeightInPitches(symbol) + 1`, `y = cursor + height / 2`, `cursor += height`
