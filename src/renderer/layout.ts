@@ -3799,6 +3799,14 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
     endStep = 0
   }
 
+  if (PROBE)
+    console.log(
+      `BEAM up=${up} n=${group.length} avg=${(group.reduce((a, g) => a + g.averageStep, 0) / group.length + 6).toFixed(4)}` +
+        ` min=${Math.min(...group.map((g) => g.farStep)) + 6} max=${Math.max(...group.map((g) => g.farStep)) + 6}` +
+        ` barpos=${barpos} firstAvg=${first.averageStep + 6} lastAvg=${last.averageStep + 6}` +
+        ` pos=${pos + 6} startY=${startStep + 6} endY=${endStep + 6}` +
+        ` startX=${(first.x * 7.75).toFixed(3)} endX=${(last.x * 7.75).toFixed(3)}`,
+    )
   const span = last.x - first.x
   const startY = stepToY(startStep)
   const endY = stepToY(endStep)

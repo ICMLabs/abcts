@@ -429,21 +429,36 @@ repeatedly — and it improved every time the mean did not.
 
 Its ceiling is NOT raised. It is red, and the reason is written here.
 
-### What is left on it is the BEAM
+### IT IS NOT THE BEAM — that was a hypothesis recorded as a finding, and it is wrong
 
-Its two remaining boundaries turn on abcjs's beamed stems reaching **0.47 to 0.58 pitch**
-further than ours — fractional on both sides, so it is an interpolated position on a
-sloped beam rather than a constant.
+The previous entry here said its remaining boundaries turned on abcjs's beamed stems
+reaching 0.47 to 0.58 pitch further than ours. **Measured, they do not.** Both engines were
+instrumented to print every beam and every beamed stem:
 
-`calcYPos` and `calcSlant` are ALREADY ported faithfully (`layout/beam.js:83-102`),
-including the `pos = round(extreme ± (stemHeight - 2))` reduction, the `floor(slant/2)`
-asymmetry and the "go down to the middle" clamp. So are their inputs: `averageStep` is the
-chord's mean as `calcSlant` wants, and `farStep` is the extreme as `beam.max`/`beam.min`
-are. `isflat` is `%%flatbeams`, off here.
+| | abcjs | ours |
+|---|---|---|
+| beam lines | 292 | 292, and the first 194 match `startY`/`endY` EXACTLY |
+| beamed stems | 942 | 940 |
+| `bary` over the aligned stems | — | within **0.07 pitch**, and the outliers track the x delta |
+| stem x | — | **−0.54px** mean, which is the horizontal residual, not a beam one |
 
-So the divergence is NOT in the parts already read, and the next step is to instrument ONE
-ragtime beam on both sides — `beam.average`, `beam.max`, `stemHeight`, the computed
-`startY`/`endY` — rather than read further.
+`calcYPos`, `calcSlant`, the `pos = round(extreme ± (stemHeight − 2))` reduction, the
+`floor(slant / 2)` asymmetry, the middle-line clamp and the down-stem `dy / 2` fudge are
+all already ported and all already agree. The beam pass is not the gap.
+
+**The 0.47 figure came from comparing staff EXTENTS and attributing the difference to the
+nearest mechanism.** It is real as a number and the cause was guessed. Nothing was built on
+it, but it was written down as though it had been measured, which is the failure worth
+recording: an extent difference names a STAFF, not a mechanism, and the mechanism has to be
+probed separately.
+
+### What IS concrete
+
+**942 beamed stems against our 940.** Two beamed notes differ, which is also what throws
+the beam lists out of alignment from index 195 — every beam after it is compared against
+its neighbour. Find those two before reading anything else on this fixture; the first
+divergence in the stem lists is at index 168, and it is a SYSTEM boundary with matching
+`bary` on both sides, so it is horizontal.
 
 ---
 
@@ -454,21 +469,27 @@ ragtime beam on both sides — `beam.average`, `beam.max`, `stemHeight`, the com
    a comment mid-session — but the next lines widen it by `thickness / 2`, which
    `create-note-head.js` always passes. The 0.0444 of a pitch that leaves is visible in
    abcjs's own printed numbers, and it was on screen for two hours before it was read.
-1. **THE PHASE MATTERS AS MUCH AS THE FIGURE.** Ink, lane, then post-lane. The same box
+1. **AN EXTENT DIFFERENCE NAMES A STAFF, NOT A MECHANISM.** `ragtime-nightingale`'s
+   remaining 0.47 pitch was written into this document as "the beam", because a beam was
+   the nearest thing that could produce a fractional number there. Instrumented, the beam
+   pass agrees to 0.07 pitch across 940 stems and its first 194 beam lines are exact. The
+   number was measured; the cause was guessed; and the two were recorded as one thing.
+   **Probe the mechanism separately, every time.**
+2. **THE PHASE MATTERS AS MUCH AS THE FIGURE.** Ink, lane, then post-lane. The same box
    applied one phase early is a different number, and it looked like a wrong constant.
-2. **A FAILING ASSERTION HIDES THE ONES AFTER IT.** Two stale ceilings surfaced only when
+3. **A FAILING ASSERTION HIDES THE ONES AFTER IT.** Two stale ceilings surfaced only when
    the check ahead of them started passing. Always measure a clean tree before calling
    something your own regression — that is what separated these two from the work.
-3. **RE-TEST PARKED FINDINGS AFTER THE GROUND MOVES**, again. The tuplet middle-note
+4. **RE-TEST PARKED FINDINGS AFTER THE GROUND MOVES**, again. The tuplet middle-note
    height was recorded as a `ponytail:` note saying "no corpus fixture has a low middle
    note that binds". One does, and the note was written before the surrounding arithmetic
    was abcjs's.
-4. **A RIGHT CHANGE CAN MAKE THE NUMBERS WORSE ON ITS WAY IN.** The curve reserve took
+5. **A RIGHT CHANGE CAN MAKE THE NUMBERS WORSE ON ITS WAY IN.** The curve reserve took
    ragtime's oy from −11.7 to +18.6 before the phase fix took it to −0.41. Extent accuracy
    (7/46 → 33/46 → 36/46) was the honest signal throughout; the pixel number was not.
-5. **PROBE ABCJS AT EVERY PHASE BOUNDARY, NOT AT ONE POINT.** Three probes in the same
+6. **PROBE ABCJS AT EVERY PHASE BOUNDARY, NOT AT ONE POINT.** Three probes in the same
    function told three different stories and only one of them was the extent.
-6. **Check `git -C ../abcMusicKit status --short` before finishing.** Clean at handoff.
+7. **Check `git -C ../abcMusicKit status --short` before finishing.** Clean at handoff.
 
 ---
 
