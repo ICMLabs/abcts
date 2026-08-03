@@ -17,11 +17,11 @@ Everything below was read out of abcjs by INSTRUMENTING IT.
 | dx spread | +0.01 | 22/29 | horizontal arc CLOSED |
 | ox offset | −0.00 | 22/29 | horizontal arc CLOSED |
 | dy spread | +0.01 | 21/29 | this arc |
-| oy offset | **+0.025** | **18/29** | this arc |
-| ALL FOUR at zero | — | **14/29** | — |
+| oy offset | **+0.025** | **19/29** | this arc |
+| ALL FOUR at zero | — | **15/29** | — |
 
-Fourteen fixtures now match abcjs on every axis at once. At the start of this session it
-was three, and dx/ox were zero on eight.
+Fifteen fixtures now match abcjs on every axis at once. At the start of this session it was
+three, and dx/ox were zero on eight.
 
 ---
 
@@ -36,6 +36,7 @@ Nothing at the edge of a staff is measured by what it paints. abcjs hands each e
 | time signature | `pitch ± thickness/2`, thickness = the glyph's height in pitches | `create-time-signature.js:25`, `relative-element.js:22` |
 | key signature | `verticalPos + height + fudge` / `verticalPos + fudge`, fudge −3 sharp, −1.2 flat | `create-key-signature.js:17-25` |
 | tempo | a FLAT 6 pitches, whatever the mark says | `elements/tempo-element.js:12-13` |
+| tuplet | 4 pitches ABOVE, whichever side the bracket is drawn | `elements/triplet-element.js:22-25` |
 
 **THE CLEF IS WHAT SETS THE STAFF'S TOP** on any tune with nothing above the staff — not
 the stems, which is the intuitive guess and is wrong. Probed on `simple-c`: `staff.top` is
@@ -56,14 +57,37 @@ Two consequences worth keeping:
 
 ## What is open
 
-### The four partners, unfound
+### A TUPLET RESERVES ABOVE EVEN WHEN ITS BRACKET HANGS BELOW
+
+`if (!this.anchor1.parent.beam || this.anchor1.stemDir === 'up') this.endingHeightAbove = 4`
+— off the FIRST member, not a majority, and not the side the bracket lands on. abcjs has no
+`endingHeightBelow` at all; `positionY` has no such field. `vree-slurs-and-triplets` proves
+it beyond argument: abcjs draws its `3` UNDER the staff, at y 149.24 against a bottom line
+at 127.9, and still reserves above. That fixture sat 19.35px high and is now at parity on
+all four axes.
+
+**And the lane was being counted twice.** `verticalExtent` runs twice per titled staff —
+once over the music alone to place the top-text block, once over both to set the origin —
+and the second pass added the lane to a total that already carried it. Probed: three
+applications, the last two identical. The block always wins that `min` when present, so
+skipping the lane on a pass carrying one cannot change the answer, only stop the double.
+
+### The partners, unfound
 
 A right change can make the corpus worse; look for its partner rather than reverting.
 
-- **`ragtime-nightingale`** oy 7.05 → 8.89. NOT the tempo. Probed: abcjs's first staff
-  reaches `staff.top = 21.0` from the MUSIC's own ink *before* the tempo's 6 pitches go on
-  top, and ours falls ~2px short of that 21. A beam or stem extent. Its dy is 58.1, so the
-  vertical is this fixture's big term — start here.
+- **`ragtime-nightingale`** — THE TOP ITEM. dy 58.14 → 105.34, and that is not a reason to
+  revert the tuplet work: measured all three ways, the rule alone gives 105.34, the
+  double-count fix WITHOUT the rule gives 128.71, and the same run takes
+  `multi-voice-triplet-brackets` from 24.67 to 5.29. Its old 58.14 was resting on the
+  double count. Two handles on it:
+  - `tests/staff-spacing.test.ts` is built for exactly this and already localises it: 44 of
+    73 boundaries corpus-wide are exact, median 0.00, and ragtime's row is mostly 0.0 with
+    a few outliers — `2.0`, `11.7`, `-1.9`, `-7.5`. Chase those boundaries, not the
+    aggregate.
+  - Its oy: probed, abcjs's first staff reaches `staff.top = 21.0` from the MUSIC's own ink
+    *before* the tempo's 6 pitches go on top, and ours falls ~2px short of that 21. A beam
+    or stem extent.
 - **`little swallow`** dy 5.35 → 6.13 and **`frere-jacques`** dy 22.15 → 22.35. Spreads,
   not offsets, so something inside the system rather than above it.
 - **`center-text`** oy 10.15 → 10.32 — the clef's 0.18 landing on a fixture already 10px
