@@ -1,0 +1,6 @@
+X:1
+V:SnareDrum stem=up stafflines=1
+K:C clef=perc
+%%MIDI channel 10
+%%MIDI drummap B 38
+!f!B2 z2  B/4B/4B/4B/4 B/4B/4B/4B/4 B/4B/4B/4B/4 B/4B/4B/4B/4 B/4B/4B/4B/4 | B/4B/4B/4B/4 !>!B2 {/B}B4|

@@ -1,0 +1,42 @@
+X:1
+%%setfont-1 cursive 16 bold
+%%setfont-7 Arial 19 bold
+T:Title $1bold$0 $$100 reg, the
+T:subtitle $1bold$0 reg
+C:Thomas $7Fats$0 Waller
+O:Copyright $11924$0 All Rights Reserved
+A:by $1Me
+P:AA$1BB$0CC
+H:one $1two $0 three
+H:aye $1bee $0 sea
+B:$1book
+D:records
+N:four $1five $0 six
+N:seven
+L:1/4
+M:4/4
+W: lo $1loo $0lou $$1dollar
+K:C
+"C$1m$7\ntwo"G "Dm7"E2 F | "^above $1the$0 staff"D4 |]
+w: la $1le $0lu
+P:chorus $1with feeling
+A4|
+X:1
+T:Title bold $$100 reg, the
+T:subtitle bold reg
+C:Thomas Fats Waller
+O:Copyright 1924 All Rights Reserved
+A:by Me
+P:AABBCC
+H:one two three
+H:aye bee sea
+N:four five six
+N:seven
+L:1/4
+M:4/4
+W: lo loo lou $$1dollar
+K:C
+"Cm"G E2 F | "^above the staff"D4 |]
+w: la le lu
+P:chorus with feeling
+A4|

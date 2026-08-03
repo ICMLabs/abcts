@@ -1,0 +1,8 @@
+X:1
+T:percmap
+%%MIDI drummap F 36 %bass drum 1
+%%MIDI drummap c 38 %acoustic snare
+%%MIDI drummap g 42 %closed hi hat
+Q:1/4=50
+K:C perc
+[gF] g [gc] g [gF] g [gc] g | c c c c

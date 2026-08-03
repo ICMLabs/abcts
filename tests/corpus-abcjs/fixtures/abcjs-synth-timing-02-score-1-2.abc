@@ -1,0 +1,12 @@
+X:1
+%%score { 1 | 2 }
+L:1/8
+Q:1/4=140
+M:11/8
+K:C
+V:1 treble nm="Piano"
+V:2 bass
+V:1
+A,B,CD EFD E2 E2 |
+V:2
+A,,2 .[E,C,]2 E,,2 .[E,C,] A,,2 .[E,C,]2 |

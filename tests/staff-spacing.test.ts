@@ -41,10 +41,16 @@ describe('staff spacing vs abcjs', () => {
       const o = topLines(renderAbc('paper', abc, {})[0]?.svg ?? '')
       // A staff-count mismatch is a different defect and the structure gate owns it.
       if (g.length < 2 || g.length !== o.length) continue
-      const errors = g.slice(1).map((_, i) => (o[i + 1] ?? 0) - (o[i] ?? 0) - ((g[i + 1] ?? 0) - (g[i] ?? 0)))
+      const errors = g
+        .slice(1)
+        .map((_, i) => (o[i + 1] ?? 0) - (o[i] ?? 0) - ((g[i + 1] ?? 0) - (g[i] ?? 0)))
       all.push(...errors)
       rows.push(
-        entry.name.padEnd(30) + errors.slice(0, 12).map((e) => e.toFixed(1).padStart(7)).join(''),
+        entry.name.padEnd(30) +
+          errors
+            .slice(0, 12)
+            .map((e) => e.toFixed(1).padStart(7))
+            .join(''),
       )
     }
     const mean = (v: number[]) => v.reduce((a, b) => a + b, 0) / v.length

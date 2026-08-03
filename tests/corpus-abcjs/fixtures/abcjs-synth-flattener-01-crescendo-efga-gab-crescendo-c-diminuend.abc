@@ -1,0 +1,8 @@
+X:1
+M:4/4
+L:1/4
+Q:1/4=120
+K:C
+!crescendo(! EFGA| GAB !crescendo)!c | !diminuendo(! EFGA| GAB !diminuendo)!c |
+!pppp! A B !ppp!A B |!pp! A B !p!A B | !mp! AB !sfz! AB|
+!mf! AB !f! AB | !ff! AB !fff! AB | !ffff! ABAB|]

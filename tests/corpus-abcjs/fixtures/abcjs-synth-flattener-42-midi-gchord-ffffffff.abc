@@ -1,0 +1,8 @@
+X: 1
+L: 1/4
+M: 4/4
+K:C
+%%MIDI gchord ffffffff
+"C"z4|
+%%MIDI gchord
+"C"z4|

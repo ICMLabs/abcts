@@ -1088,6 +1088,8 @@ class ScoreBuilder {
   /** `%%staffsep` / `%%sysstaffsep`, in PIXELS (directive points × 4/3). See `Score`. */
   staffSep: number | null = null
   partsBox = false
+  stretchLast: number | null = null
+  staffWidth: number | null = null
   sysStaffSep: number | null = null
   /** `%%center` text, split by whether any music had been parsed when it was read. */
   textAbove: string[] = []
@@ -1207,6 +1209,8 @@ class ScoreBuilder {
       staves: this.resolvedStaves(),
       staffSep: this.staffSep,
       partsBox: this.partsBox,
+      stretchLast: this.stretchLast,
+      staffWidth: this.staffWidth,
       sysStaffSep: this.sysStaffSep,
       textAbove: this.textAbove,
       textBelow: this.textBelow,
@@ -1432,6 +1436,34 @@ class Parser {
       const builder = this.ensureScore(start)
       if (staffSep[1] === 'staffsep') builder.staffSep = px
       else builder.sysStaffSep = px
+      return
+    }
+    // `%%stretchlast` — bare or `true` is 1, `false` is 0, a number 0..1 is itself
+    // (`abc_parse_directive.js:1294-1305`). Anything else abcjs rejects, so it stays null
+    // and the 66% fallback applies.
+    const stretch = /^stretchlast(?:\s+(\S+))?\s*$/.exec(body)
+    if (stretch !== null) {
+      const arg = stretch[1]
+      const value =
+        arg === undefined || arg === 'true'
+          ? 1
+          : arg === 'false'
+            ? 0
+            : Number.isFinite(Number.parseFloat(arg)) &&
+                Number.parseFloat(arg) >= 0 &&
+                Number.parseFloat(arg) <= 1
+              ? Number.parseFloat(arg)
+              : null
+      if (value !== null) {
+        this.ensureScore(start).stretchLast = value
+        return
+      }
+    }
+    // `%%staffwidth` — the music area in pixels, the same quantity as the host's
+    // `staffwidth` render param.
+    const staffWidth = /^staffwidth\s+(\d+(?:\.\d+)?)\s*$/.exec(body)
+    if (staffWidth?.[1] !== undefined) {
+      this.ensureScore(start).staffWidth = Number.parseFloat(staffWidth[1])
       return
     }
     // `%%partsbox` — a box round every `P:` label, and a taller lane to hold it.

@@ -649,6 +649,21 @@ export interface Score {
    */
   readonly partsBox: boolean
   /**
+   * `%%stretchlast` — whether to justify the LAST music line, and how nearly full it has
+   * to be first. `null` when the directive is absent, which is a different rule and not a
+   * default: abcjs then falls back to "justify only if the line is at least 66% of the
+   * page", kept "for backward compatibility. The break isn't quite the same for some
+   * reason" (`write/layout/layout.js:100-102`).
+   *
+   * With a value, the test is on how much the line LACKS:
+   * `stretch = 1 - (lineWidth + padding) / targetWidth < stretchlast`
+   * (`:104-107`). Bare `%%stretchlast` and `true` are 1, `false` is 0, and a number 0..1
+   * is itself (`abc_parse_directive.js:1294-1305`).
+   */
+  readonly stretchLast: number | null
+  /** `%%staffwidth` — the music area in PIXELS, or `null` for the engine default. */
+  readonly staffWidth: number | null
+  /**
    * `%%center` lines standing BEFORE any music — centred free text under the top-text
    * block. abcjs centres these on the STAFF width, not the paper width the title uses.
    */

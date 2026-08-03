@@ -4225,7 +4225,12 @@ interface VoicePlan {
  * staves drift apart and the score stops being readable as one thing.
  */
 export function layout(score: Score, options: LayoutOptions = {}): Layout {
-  const systemWidth = options.systemWidth ?? ENGRAVE.systemWidth
+  // `%%staffwidth` names the same quantity as the host's `staffwidth` param; the
+  // DIRECTIVE wins, because it is the tune saying how wide it wants to be.
+  const systemWidth =
+    score.staffWidth !== null
+      ? score.staffWidth / 7.75 + 2 * ENGRAVE.marginX
+      : (options.systemWidth ?? ENGRAVE.systemWidth)
   // The mode picks the look; `profile` can still override it explicitly.
   const profile: RenderProfile =
     options.profile ?? (isStrict(options.mode ?? defaultMode) ? 'abcjs' : 'standard')
@@ -4764,7 +4769,16 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         // every single-tune fixture is a last system. COMPRESSION is unconditional: a line
         // longer than the page has `width / target > 1`, sails past this test and is
         // squeezed, which is what makes source-line breaking work without a width packer.
-        if (isLast && width / target < ENGRAVE.lastSystemFill) break
+        // `%%stretchlast` REPLACES the 66% rule rather than tuning it. With no directive
+        // abcjs keeps its backward-compatible "at least 66% of the page" test; with one,
+        // it asks how much the line LACKS and stretches only if that is under the value
+        // (`layout.js:100-107`). `padding` there is left PLUS right, both of which are our
+        // `marginX`.
+        if (isLast) {
+          if (score.stretchLast === null) {
+            if (width / target < ENGRAVE.lastSystemFill) break
+          } else if (!(1 - (width + 2 * ENGRAVE.marginX) / target < score.stretchLast)) break
+        }
         if (Math.abs(target - width) < 2 / 7.75) break
         if (units <= 0) break
         const springs = units * spacingScale

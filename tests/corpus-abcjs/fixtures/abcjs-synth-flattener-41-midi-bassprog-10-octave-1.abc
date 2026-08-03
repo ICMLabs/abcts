@@ -1,0 +1,7 @@
+X: 1
+L: 1/4
+M: 4/4
+K:C
+%%MIDI bassprog 10 octave=-1
+%%MIDI chordprog 4 octave=1
+"C"z4|

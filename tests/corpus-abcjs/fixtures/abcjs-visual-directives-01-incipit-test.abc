@@ -1,0 +1,11 @@
+X: 1
+T: Incipit Test
+T: with Subtitle
+%%staffwidth 140
+%%maxStaves 2
+M: 4/4
+L: 1/4
+A4|
+B4|
+c4|
+d4|

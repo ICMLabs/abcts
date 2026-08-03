@@ -1,0 +1,9 @@
+X:1
+L:1/8
+M:4/4
+%%score (S A) (T B)
+K:C
+[V:S](EFGCF2) (EF) | (E2D2) C4 | (f2e)c ||
+[V:A](C4CB,) C2 | (C2B,2) C4 | (c2G)E ||
+[V:T](G,4 A,F,) (G,F,) | G,2>F,2 E,4 | f(e c2) ||
+[V:B](C,D, E,2 D,2) (C,A,,) | G,,4 C,4 | c(G E2) ||

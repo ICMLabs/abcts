@@ -1,0 +1,10 @@
+X:1
+T:quarter-tone2
+M:12/8
+Q:1/8=120
+N: all combinations of accidentals in key sigs and in music
+K: C ^/f _/B _A ^D
+ABc def|_A_B_c _d_e_f ABc def|
+_/A_/B_/c _/d_/e_/f ABc def|=A=B=c =d=e=f ABc def|
+^/A^/B^/c ^/d^/e^/f ABc def|^A^B^c ^d^e^f ABc def|
+^^A^^B^^c ^^d^^e^^f ABc def|__A__B__c __d__e__f ABc def|

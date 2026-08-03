@@ -1,0 +1,8 @@
+X:1
+%%percmap ^c' high-tom  x
+%%percmap c' high-tom  x
+%%percmap b high-tom  x
+%%percmap C high-tom  x
+Q:1/4=50
+K:C perc
+b c' C ^c' C
