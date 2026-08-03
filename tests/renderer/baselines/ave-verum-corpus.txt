@@ -1,8 +1,8 @@
 tune 0
-bounds  width=90.323 height=57.546 top=-1.935
+bounds  width=90.323 height=57.852 top=-1.935
 systems 1
 system 0 width=90.323 originY=0.000
-  connector brace -0.920,41.337 scale=3.559
+  connector brace -0.920,41.337 scale=3.636
   connector bracketTop -0.600,15.519
   connector bracketBottom -0.600,31.476
   connector line -0.600,15.519 -> -0.600,31.476 t=0.500
@@ -261,7 +261,7 @@ system 0 width=90.323 originY=0.000
       glyph noteheadWhole 73.778,2.000
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-  staff 3 originY=53.530
+  staff 3 originY=53.837
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130

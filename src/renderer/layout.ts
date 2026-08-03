@@ -2967,6 +2967,17 @@ interface NoteAnchor {
   readonly right: number
   readonly top: number
   readonly bottom: number
+  /**
+   * `anchor.pitch` AS ABCJS MEANS IT — the FIRST pitch of the chord as the source wrote
+   * it, not the chord's middle and not its lowest note. A slur or tie is hung on
+   * `el.pitches[0]` and on nothing else (`parse/abc_parse_music.js:503-506`), so that one
+   * notehead is what every curve reserve is measured from. `ave-verum-corpus`'s organ
+   * staff pairs pitch 1 to pitch 0 on that rule where the chord's centre pairs 1 to 1.
+   *
+   * Taken from the EVENT rather than the drawn heads, which `layoutNoteheads` sorts by
+   * pitch so that `[GCE]` and `[CEG]` engrave alike.
+   */
+  readonly pitchY: number
   readonly stemUp: boolean
   /** The source event, so ties and slurs can be matched to what the music said. */
   readonly event: MusicEvent
@@ -3184,7 +3195,7 @@ function curveReserves(
   const ink: { top: number; bottom: number }[] = []
   const four = 4 * ENGRAVE.spacePerStep
   const open: number[] = []
-  const centre = (a: NoteAnchor) => (a.top + a.bottom) / 2
+  const centre = (a: NoteAnchor) => a.pitchY
   /**
    * `parent.fixed` — the element's OWN box over its fixed children, so on a beamed note
    * the beam-retargeted stem end, and on the other side the notehead's. Not the stem
@@ -3896,6 +3907,8 @@ function layoutMeasure(
     const heads = el.glyphs.filter((g) => g.name.startsWith('notehead'))
     if (heads.length > 0) {
       const width = GLYPHS[heads[0]?.name ?? 'noteheadBlack'].width
+      const first =
+        event.type === 'note' ? event.pitch : event.type === 'chord' ? event.pitches[0] : undefined
       anchors.push({
         system: 0, // filled in when the block is placed into a system
         element: elements.length,
@@ -3903,6 +3916,10 @@ function layoutMeasure(
         right: Math.max(...heads.map((h) => h.x)) + width,
         top: Math.min(...heads.map((h) => h.y)) - 0.5,
         bottom: Math.max(...heads.map((h) => h.y)) + 0.5,
+        pitchY:
+          first === undefined
+            ? (Math.min(...heads.map((h) => h.y)) + Math.max(...heads.map((h) => h.y))) / 2
+            : stepToY(pitchToStep(first, clef)),
         stemUp: el.lines.some((l) => l.x1 === l.x2 && l.y2 < l.y1),
         event,
       })
@@ -3919,6 +3936,8 @@ function layoutMeasure(
         right: el.x + (ink?.width ?? el.width),
         top: (glyph?.y ?? 0) + (ink?.y ?? 0),
         bottom: (glyph?.y ?? 0) + (ink?.y ?? 0) + (ink?.height ?? 0),
+        // A rest is never a curve anchor; only a tuplet reads this one.
+        pitchY: (glyph?.y ?? 0) + (ink?.y ?? 0) + (ink?.height ?? 0) / 2,
         stemUp: false,
         event,
       })
