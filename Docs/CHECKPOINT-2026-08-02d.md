@@ -11,7 +11,7 @@ Supersedes `CHECKPOINT-2026-08-02c.md`. Read this, then `VERTICAL-ARC.md`, then
 |---|---|
 | `main` | vertical arc v1 merged. GREEN 505/505. Untouched. |
 | `geometry/horizontal` | closed, GREEN 505/505. Untouched. |
-| `geometry/vertical` | **THE OPEN ARC.** Red on **2** gate items, down from 5 — and NEITHER is from this session's work. |
+| `geometry/vertical` | **THE OPEN ARC.** Red on **1** visible gate item, down from 5 — a 0.07px `oy` widening on `ragtime-nightingale`, with its stale `ox` behind it. |
 
 Per-axis over the 29 pixel-gated fixtures:
 
@@ -19,6 +19,10 @@ Per-axis over the 29 pixel-gated fixtures:
 |---|---|---|---|---|---|
 | 0.05px | 23/29 | 23/29 | 24/29 | 23/29 | **20/29** |
 | 0.25px | 25/29 | 23/29 | 26/29 | 23/29 | **23/29** |
+
+**Only NINE fixtures are off any axis at all**, and four of their numbers are gate
+artefacts rather than divergences. `ragtime-nightingale` matches abcjs's own
+`staff.top`/`.bottom` on **38 of its 46 staves**, from 7 at session start.
 
 Session start was 16/29. **Only NINE fixtures are off any axis by more than 0.05px**, and
 three of those nine are gate artefacts rather than divergences.
@@ -72,6 +76,29 @@ different times, with different figures.** A tie sets `top/bottom = ±4 pitch` i
 | 8 | A LINE reserves its endpoints, never its painted width — only glyphs pass a `thickness` | `relative-element.js:22-24` |
 | 9 | The page has a **bottom margin** as well as a top one | `draw/set-paper-size.js:3` |
 | 10 | A NOTEHEAD's declared box is **2.088774 pitches**, not 2 | `create-note-head.js:34`, `glyphs.js` `symbolHeightInPitches` |
+| 11 | A `P:` belongs to the measure that FOLLOWS it, not the one it closes | `takeOpening` at close vs `pendingPart` |
+| 12 | `%%partsbox` is a LANE as well as a box — a boxed font measures `height + padding * 4` | `get-text-size.js:46-48`, `draw/text.js:81` |
+| 13 | Decorations are TWO ORDERED PASSES: a close pass, then a stack measured in GLYPH HEIGHTS and centred | `decoration.js:17-47`, `:154-165`, `:386-391` |
+
+**(13) is the biggest of them and closed `frere-jacques`.** Three parts:
+
+- **Two ordered passes.** `closeDecoration` runs over the whole list before
+  `stackedDecoration` sees any of it, and hands the stack the last close decoration's
+  pitch as its floor. An ornament written before a staccato still stacks above it.
+- **The close rule** — staccato, tenuto, and accent when `accentAbove` is off:
+  `yPos = dir === 'down' ? pitch + 2 : minPitch - 2` and then `+= 2` per mark; an accent
+  always steps one further; anything else steps one further only if it would land ON A
+  STAVE LINE (2, 4, 6, 8, 10); and `if (pitch > 9) yPos++`, inside the loop, so it
+  compounds. `pitch` is `abselem.top` and `minPitch` its bottom, both DECLARED.
+- **The stack** advances by `symbolHeightInPitches(symbol) + 1` and sits at
+  `cursor + height / 2` — CENTRED on the room it takes, not sitting on the cursor — from
+  a floor of `max(abselem.top, minTop = 12)`.
+
+And the same declared-box rule as (10) applies to what they RESERVE: a stacked decoration
+gets `thickness: symbolHeightInPitches(symbol)` so it reserves `pitch ± thickness / 2`; a
+close one gets no options at all, so it reserves a POINT at its pitch. `scripts.trill`
+paints 2.09 spaces above its origin and 0.04 below, so its outline is nothing like its
+declared box.
 
 Six through ten, each one fixture's whole error:
 
@@ -189,26 +216,23 @@ Its `dx` of 69.82 has still had no attention since the horizontal arc closed.
 
 ---
 
-## THE GATE — and a way it can hide a failure
-
-Two items red, and **neither is from this session** — both measure identically on a clean
-tree, which is how they were classified:
+## THE GATE — one red, and the way it hides a failure
 
 | item | measured | recorded | what it is |
 |---|---|---|---|
-| `frere-jacques` dy | 22.35 | 22.15 | the source-line-wrap model conflict. A design question; read the risk note before touching it. |
-| `ragtime-nightingale` ox | 1.16 | 1.05 | **a STALE RECORD, not a widening.** 1.16 on a clean tree too. Left alone rather than raised. |
+| `ragtime-nightingale` oy | 0.61 | 0.59 | **A GENUINE 0.07px WIDENING, from this session's decoration port** — and its extents got BETTER over the same change, 36 of 46 staves exact to 38. Not raised. |
+| `ragtime-nightingale` ox | 1.16 | 1.05 | a STALE RECORD, not a widening — 1.16 on a clean tree too. Hidden behind the `oy` assertion. |
 
 **A FIXTURE'S ASSERTIONS SHORT-CIRCUIT, so a failing axis HIDES the ones after it.** All
-eight checks for a fixture live in one `it`, and the first `expect` to fail ends it. Both
-items above were invisible until this session's work made the assertion ahead of them
-pass — ragtime's `ox` behind its `dy`, and `frere-jacques` has a third one still hidden
-this way: its **`oy` measures −12.54 against a recorded −5.4**, and has for some time.
+eight checks live in one `it` and the first `expect` to fail ends it. This has now hidden
+something three separate times in one session — ragtime's `ox` behind its `dy`,
+`frere-jacques`'s `oy` behind ITS `dy`, and now ragtime's `ox` again behind its `oy`.
+**When a fixture goes green, do not assume the axes behind the one you fixed were ever
+passing — re-read them.**
 
-Raising either number to surface it is exactly what the contract forbids, and collecting
-all four before asserting would surface `frere-jacques` oy as a third red without fixing
-anything. Recorded here instead. **When a fixture goes green, do not assume the axes
-behind the one you fixed were ever passing — re-read them.**
+Raising a number to surface it is what the contract forbids. Collecting all four before
+asserting would surface them honestly and is the change to make when someone has the
+appetite; it will show more red before it shows less.
 
 Ceilings were re-recorded DOWNWARD only. Where the measurement is worse than the record,
 the record was left alone.
@@ -234,7 +258,7 @@ Nine fixtures are off any axis by more than 0.05px, and three of the numbers are
 | fixture | dy | dx | oy | ox | what it is |
 |---|---|---|---|---|---|
 | `ragtime-nightingale` | 58.13 | 69.82 | −0.54 | −1.16 | dy is TWO MIS-PAIRED HEADS (below); dx is horizontal, untouched since that arc |
-| `frere-jacques` | 14.34 | 22.15 | −19.12 | −3.63 | **NOT the wrap conflict — see below.** One named cause left: decoration stacking |
+| `frere-jacques` | **6.59** | 22.15 | **−2.65** | −3.63 | **NOT the wrap conflict, and now inside its ceilings** — see below |
 | `vree-grace-notes` | 11.64 | 32.50 | — | −1.14 | **BOTH numbers are the same pairing artefact.** Sorted by x — valid here, one system — dy is 0.02 and dx a uniform 1.99, which is the grace glyph. Its dy was listed as "open" in `-c`; it is not. |
 | `little swallow` | 1.92 | 23.97 | −0.58 | −5.73 | dx is the golden limitation. dy/oy is the LYRIC RESERVE — diagnosed below |
 | `zocharti-loch` | — | 5.35 | — | 0.69 | horizontal only |
@@ -265,56 +289,37 @@ The structural fix is abcjs's own form — ink minus `(lyricHeightBelow + margin
 current constant was verified against abcjs's output on three shapes. Port the structure,
 then re-derive the constant; do not drop a new constant into the old form.
 
-### `frere-jacques` — THE WRAP CONFLICT IS NOT WHAT IS LEFT
+### `frere-jacques` — THE WRAP CONFLICT WAS NEVER WHAT WAS LEFT
 
-It has been carried since 2026-07-22 as "the source-line-wrap model conflict, a design
-question". **That is out of date.** Its system COUNT has matched abcjs (4 and 4) since the
-parser started closing a measure at a source-line boundary. Measured against abcjs's own
-`staff.top`/`.bottom`, the whole of what is left is ONE cause:
+It was carried from 2026-07-22 as "the source-line-wrap model conflict, a design
+question". **It was not.** Its system count has matched abcjs (4 and 4) since the parser
+started closing a measure at a source-line boundary, and everything still on it was
+ordinary engraving:
 
-| staff | abcjs | ours | short by |
-|---|---|---|---|
-| 1 | 22.0110 | 19.1806 | 2.83 |
-| 2 | 24.8325 | 22.7510 | 2.08 |
-| 3 | 30.6070 | 28.9123 | 1.69 |
+| | dy | oy |
+|---|---|---|
+| carried since 2026-07-22 | 22.35 | −12.53 |
+| now | **6.59** | **−2.65** |
 
-Its bottoms match exactly. Its lanes match exactly — the `P:` lane, the `%%partsbox`
-widening and the chord lane all land on the digit now. What does not match is the INK
-underneath them, and probed, the ink top of every one of its staves is a DECORATION:
+Three causes, all cited, none of them a design question — a `P:` attached to the measure
+it followed instead of the one it heads, `%%partsbox` unimplemented as both a box and a
+lane, and the decoration stack. Its staff 1 now matches abcjs's `staff.top` to the digit
+(22.0110), and its staff 2 to 0.005.
 
-```
-VTOP 22.0110 by scripts.trill    @19.8832   (systems 0, 1)
-VTOP 16.0493 by scripts.sforzato @16.0493   (system 2)
-VTOP 16.0444 by scripts.staccato @16.0444   (system 3)
-```
+**What is left on it is one thing: an ANNOTATION does not take the chord lane.** abcjs
+puts `"^dolcemente"` and a chord symbol in the same lane — `setUpperAndLowerRelativeElements`
+has `case "text": case "chord":` in one branch, both reading `chordHeightAbove`. Ours
+draws an above annotation at a fixed `annotationAboveStep` with no `role: 'chord'`, so
+`anchorAboveStaff` never sees it, reserves no lane, and lets its drawn box land in the ink
+instead. Probed on staff 3: `chords=false` and `inkTop` 20.13 where abcjs has 16.0444 and
+a 5.7794 lane on top of it — 1.69 pitch, the whole of the residual.
 
-Ours puts the same decorations at pitch **15.0**, **13.0** and **14.0** — round numbers,
-because we step one staff position per decoration. abcjs STACKS THEM BY THEIR OWN GLYPH
-HEIGHTS (`creation/decoration.js:154-165`):
+Beware when fixing it: abcjs MULTIPLIES that lane by the number of stacked lines
+(`incTop(staff, positionY, 'chordHeightAbove', staff.specialY.chordLines.above)`, fed by
+`setLaneForChord`), which we do not model, and `stacked-annotations` is at parity today on
+the fixed-lane rule. Measure it on the same run.
 
-```js
-var height = glyphs.symbolHeightInPitches(symbol) + 1;   // a pitch of padding
-var y = getPlacement(placement);                          // the running yPos.above
-y = (placement === 'above') ? y + height / 2 : y - height / 2;   // CENTRE it
-… new RelativeElement(symbol, …, y, { thickness: glyphs.symbolHeightInPitches(symbol) })
-incrementPlacement(placement, height);                    // yPos.above += height
-```
-
-Three things in five lines, and the same shape as everything else in this arc: a
-DECLARED height per glyph, a flat pitch of padding, and the element CENTRED on the
-running cursor rather than sitting on it. `yPos.above` starts at the note's own top,
-clamped up to `minTop`.
-
-**This is the next piece of work on the vertical axis and it is not a `frere-jacques`
-fix** — it is every decorated fixture. The corpus's other decorated fixtures are at parity
-today, so a decoration-placement change can regress them; measure `vree-*`,
-`stacked-annotations` and `ragtime-nightingale` on the same run.
-
-`frere-jacques`'s `oy` is now 19.12 against a recorded 5.4, and it is the visible red.
-It was ALREADY failing at 12.53 and hidden behind the `dy` assertion (see the gate
-section); it got worse because moving `P:A` off the prose system — which abcjs does —
-shortened that system and let every system below it settle onto a decoration stack that
-is still too low. The number will come back when the stack does.
+---
 
 ### `ragtime-nightingale` dy is TWO MIS-PAIRED NOTEHEADS — measured, not guessed
 
