@@ -4,9 +4,11 @@ You are developing abcts, a modern TypeScript ABC notation library
 and community successor to abcjs.
 
 ## First Step — Always
-Read `Docs/CHECKPOINT-2026-08-03.md` first — it is the current state of play, the open
-decisions, and the known risks — and `Docs/HANDOFF-2026-08-03.md` beside it for where to
-start and the session prompt. (`CHECKPOINT-2026-08-02d.md`, `CHECKPOINT-2026-08-02c.md`, `CHECKPOINT-2026-08-02b.md`, `CHECKPOINT-2026-08-02.md`,
+Read `Docs/CHECKPOINT-2026-08-03b.md` first — it is the current state of play, the open
+decisions, and the known risks — and `Docs/HANDOFF-2026-08-03b.md` beside it for where to
+start and the session prompt. (`CHECKPOINT-2026-08-03.md` is superseded but remains the
+record of the declared-box list, the two corpora and the four gate artefacts; TWO of its
+statements are corrected in `-08-03b`. `CHECKPOINT-2026-08-02d.md`, `CHECKPOINT-2026-08-02c.md`, `CHECKPOINT-2026-08-02b.md`, `CHECKPOINT-2026-08-02.md`,
 `CHECKPOINT-2026-08-01.md`, `CHECKPOINT-2026-07-24.md`, `-07-22c.md`, `CHECKPOINT-2026-07-22b.md`, `-07-21.md`, `-07-19.md` and
 `CHECKPOINT-2026-07-23.md`, `-07-18.md` are superseded but remain the record of the parser phase, the renderer's first
 slices, how the last parser diffs closed, and the geometric work up to the voice-name and
@@ -153,10 +155,10 @@ pixel-parity gate included, ceilings re-recorded. The timeline is per LINE, as a
 voices because they are ordinary zero-duration elements on one timeline.
 
 **The VERTICAL arc is OPEN** on `geometry/vertical`, branched from it and red BY DESIGN.
-`Docs/VERTICAL-ARC.md` is its working spec and `Docs/CHECKPOINT-2026-08-03.md` the state.
-**20 of 29 fixtures are pixel-identical to abcjs on ALL FOUR axes at once** at a 0.05px
-threshold and **23 of 29** at 0.25px, from 0 at the start of that work; only NINE are off
-any axis and only FIVE off a vertical one. Page heights match abcjs to within 0.07px.
+`Docs/VERTICAL-ARC.md` is its working spec and `Docs/CHECKPOINT-2026-08-03b.md` the state.
+**21 of 29 fixtures are pixel-identical to abcjs on ALL FOUR axes at once** at a 0.05px
+threshold, from 0 at the start of that work; only EIGHT are off any axis and only FOUR off
+a vertical one. Page heights match abcjs to within 0.07px.
 `ragtime-nightingale` matches abcjs's own `staff.top`/`.bottom` on 39 of its 46 staves.
 **One red**, named in the checkpoint.
 
@@ -169,10 +171,17 @@ time signature, tempo, tuplet, dynamic, decoration and tie all reserve declared 
 and a BEAM reserves nothing at all. The clef is what sets a staff's top on a plain tune,
 not the stems.
 
-**AND MEASURE THE OUTPUT — the source will lie to you.** Three times on this branch a
-careful chain of source reads predicted something abcjs's own SVG denies, and a grep of the
-golden settled each in seconds. Read the source to find the MECHANISM; read the output to
-find the NUMBER. An extent difference names a STAFF, not a mechanism.
+**AND MEASURE THE OUTPUT — the source will lie to you.** Its sharper form, which cost a
+whole session: **A COUNT YOU CANNOT RE-DERIVE FROM THE OUTPUT IS NOT A MEASUREMENT.** And
+watch what the gate CANNOT see — abcjs classes only noteheads, ledgers, stems and the top
+staff line, so beams, tempo notes, ties and bar numbers are invisible to a class-based
+comparison, which is how a missing tempo note sat under a green gate.
+
+Three times on this branch a careful chain of source reads predicted something abcjs's own
+SVG denies, and a grep of the golden settled each in seconds. Read the source to find the
+MECHANISM; read the output to find the NUMBER. An extent difference names a STAFF, not a
+mechanism. And ask whether the quantity is MEASURED TWICE: the lyric-reserve bug was one
+number computed in two places whose inputs had drifted apart, with the formula never wrong.
 
 Two questions go with it, and both cost a run before they were asked. **WHOSE box is it** —
 a volta belongs to the first voice of the first staff, not to every voice carrying the
@@ -289,9 +298,8 @@ feature-coverage gap, tracked separately and implemented not at all.
 ```
 We are continuing abcts development in the abcts repo (Code/abcts).
 
-Read Docs/CHECKPOINT-2026-08-02b.md first, and the -08-02 one before it
-for why this work once drifted into trial and error. Then
-Docs/HORIZONTAL-ARC.md, then ARCHITECTURE.md, then this file.
+Read Docs/CHECKPOINT-2026-08-03b.md first, and Docs/HANDOFF-2026-08-03b.md
+beside it. Then Docs/VERTICAL-ARC.md, then ARCHITECTURE.md, then this file.
 
 THE RULE THAT MATTERS: port abcjs's STRUCTURE, then its constants.
 Reading abcjs gives you its numbers cheaply; the expensive divergences
@@ -313,21 +321,18 @@ gate says "no worse than recorded"; parity means dy/dx/oy/ox at ZERO.
 
 Confirm your lane with `git rev-parse --abbrev-ref HEAD`. `main` holds
 the merged vertical arc and is GREEN at 505/505 — keep it that way.
-`geometry/horizontal` is the open arc.
+`geometry/vertical` is the open arc, at 683/684.
 ```
 
 ### The open task, specifically
 ```
 Continue geometric parity in Code/abcts.
 
-Read Docs/CHECKPOINT-2026-08-02b.md and Docs/HORIZONTAL-ARC.md.
+Read Docs/CHECKPOINT-2026-08-03b.md and Docs/HANDOFF-2026-08-03b.md.
 
-The HORIZONTAL arc is closed: one timeline per line, 22/29 fixtures at
-exact dx and ox, suite green at 505/505. What is left on that axis is
-not structural — `little swallow` is Chinese-lyric metrics,
-`frere-jacques` is the source-line-wrap model conflict, and
-`ragtime-nightingale`'s bigger term is its dy of 58.1, so the VERTICAL
-is where it should be attacked.
+The VERTICAL arc is open on `geometry/vertical`, 683/684 with one
+expected red. Start where the handoff says: ragtime's drift is TWO
+staves and closing them closes the red.
 
 The method that closed the arc, unchanged: instrument abcjs to ANSWER A
 QUESTION, read the ground truth, restore. Port abcjs's STRUCTURE, then

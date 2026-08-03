@@ -1,7 +1,8 @@
 # The vertical arc — opened, not finished
 
-**STATE MOVED AGAIN ON 2026-08-03. `Docs/CHECKPOINT-2026-08-03.md` is the current state
-and `Docs/HANDOFF-2026-08-03.md` says where to start. `frere-jacques` is CLOSED vertically,
+**STATE MOVED AGAIN ON 2026-08-03b. `Docs/CHECKPOINT-2026-08-03b.md` is the current state
+and `Docs/HANDOFF-2026-08-03b.md` says where to start — it corrects two statements in the
+`-08-03` one, including the "942 beamed stems" lead, which named the wrong subsystem. `frere-jacques` is CLOSED vertically,
 there is a second 174-tune corpus harvested from abcjs's own test suite, and the rule that
 matters most is now MEASURE THE OUTPUT — the source misled three careful readings on this
 branch. What follows is the arc's working spec and its findings ledger.**
