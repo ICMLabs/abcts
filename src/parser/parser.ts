@@ -234,7 +234,16 @@ export function parseClef(spec: string): Clef | null {
   // of a K: field is the key itself, so returning on the first non-clef match would never
   // reach the clef. A word that names no clef is simply some other token — a mode, a
   // `name=`, a `stafflines=` — and is skipped rather than defaulting to something.
-  for (const m of spec.matchAll(/(?:^|\s)([a-z]+)(\d?)([+-]8)?(?=\s|$)/gi)) {
+  //
+  // MATCHED BY PREFIX, NOT AS A WHOLE WORD. abcjs's `getClef` is a chain of
+  // `startsWith` — `treble`, `bass3`, `bass`, `tenor`, `alto2`, `alto1`, `alto`, `perc` —
+  // and after the name it consumes only `+8` or `-8`, leaving anything else where it is
+  // (`abc_tokenizer.js:95-155`). So `bass,,` IS the bass clef with two stray commas, and
+  // requiring the token to end at whitespace read it as no clef at all and defaulted the
+  // voice to treble. `abcjs-visual-layout-07`'s lower staff is written that way.
+  //
+  // Quoted strings go first so a `name="Bass line"` cannot name a clef.
+  for (const m of spec.replace(/"[^"]*"/g, ' ').matchAll(/(?:^|\s)([a-z]+)(\d?)([+-]8)?/gi)) {
     const clef = build(m[1] ?? '', m[2] ?? '', m[3] ?? '')
     if (clef) return clef
   }
@@ -253,11 +262,48 @@ function clefWith(current: Clef, spec: string): Clef {
   return parseClef(spec) ?? { ...current, staffLines: staffLineCount(spec) }
 }
 
-/** `V:… stems=up|down` (ABC 2.1 §4.19), or `null` when the field does not set it. */
+/**
+ * A `V:` field's OPTION tokens — the value with its quoted strings and its leading id
+ * removed, so a bare keyword can be looked for without a voice called `up` or a
+ * `name="merge"` matching it. abcjs reads the id first and then tokenises the rest
+ * (`abc_parse_key_voice.js:518-800`); this is the same split.
+ */
+const voiceOptions = (spec: string): string =>
+  ` ${spec
+    .replace(/"[^"]*"/g, ' ')
+    .replace(/'[^']*'/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .slice(1)
+    .join(' ')} `
+
+/**
+ * `V:… stems=up|down`, or the BARE `up` / `down` that mean the same thing.
+ *
+ * abcjs gives them one case each and both assign `voices[id].stem`
+ * (`abc_parse_key_voice.js:717-732`) — `stems=` goes through `getVoiceToken`, the bare
+ * form is the token itself. ABC 2.1 §4.19 documents only the first spelling; abcjs accepts
+ * both, and its own test fixtures use the bare one (`V:1 up`, `V:2 merge down`).
+ */
 function stemModifier(spec: string): 'up' | 'down' | null {
-  const m = /\bstems=(up|down)\b/i.exec(spec)
-  return m?.[1] === undefined ? null : (m[1].toLowerCase() as 'up' | 'down')
+  const explicit = /\bstems=(up|down)\b/i.exec(spec)
+  if (explicit?.[1] !== undefined) return explicit[1].toLowerCase() as 'up' | 'down'
+  const bare = /\s(up|down)\s/i.exec(voiceOptions(spec))
+  return bare?.[1] === undefined ? null : (bare[1].toLowerCase() as 'up' | 'down')
 }
+
+/**
+ * `V:… merge` — this voice shares the PREVIOUS voice's staff instead of opening its own.
+ *
+ * abcjs's algorithm, and it is the whole of it: a `V:` builds `staffInfo` with
+ * `startStaff: isNew` — true the first time an id is seen — and `case 'merge'` sets it
+ * false (`abc_parse_key_voice.js:518,714-716`). Then
+ * `if (staffInfo.startStaff || staves.length === 0) staves.push(…)` and the voice takes
+ * `staffNum = staves.length - 1` (`:803-810`), assigned once and never revised. So the
+ * FIRST voice always gets a staff whatever it says, and a merging voice lands on whichever
+ * staff was opened last.
+ */
+const mergesStaff = (spec: string): boolean => /\smerge\s/i.test(voiceOptions(spec))
 
 /** `stafflines=` written with no `clef=` beside it — see `Voice.staffLineOverride`. */
 const bareStaffLines = (spec: string): number | null =>
@@ -1153,11 +1199,26 @@ class ScoreBuilder {
     return builder
   }
 
+  /**
+   * Which staff each voice landed on, by abcjs's rule — see `mergesStaff`. Assigned once,
+   * at the voice's FIRST `V:`, and never revised.
+   */
+  private staffOfVoice = new Map<string, number>()
+  private staffCount = 0
+  /** Whether any `V:… merge` was seen, so the default one-staff-per-voice path can stay. */
+  private sawMerge = false
+
   /** Header `V:` — creates the voice, and makes the FIRST one declared current. */
-  declareVoice(id: string): void {
+  declareVoice(id: string, merge = false): void {
     const isFirst = this.voices.size === 0
     this.voiceFor(id)
     if (isFirst) this.currentVoiceId = id
+    // `startStaff || staves.length === 0` — the first voice opens a staff whatever it says.
+    if (!this.staffOfVoice.has(id)) {
+      if (!merge || this.staffCount === 0) this.staffCount += 1
+      this.staffOfVoice.set(id, this.staffCount - 1)
+      if (merge) this.sawMerge = true
+    }
   }
 
   /** A body `V:2` switches the voice music lands in. */
@@ -1197,6 +1258,21 @@ class ScoreBuilder {
    * voices would otherwise render as an empty stave.
    */
   private resolvedStaves(): StaffGroup[] {
+    // `V:… merge` with no `%%score` to override it — group by the staff each voice was
+    // assigned at declaration. Only when a merge was actually seen: without one abcjs's
+    // rule gives every voice its own staff, which is exactly what an empty list already
+    // means here, and returning groups for every tune would put this on paths that have
+    // no reason to change.
+    if (this.staffGroups.length === 0 && this.sawMerge) {
+      const byStaff = new Map<number, string[]>()
+      for (const [id, staff] of this.staffOfVoice) {
+        if (!this.voices.has(id)) continue
+        byStaff.set(staff, [...(byStaff.get(staff) ?? []), id])
+      }
+      return [...byStaff.entries()]
+        .sort((a, b) => a[0] - b[0])
+        .map(([, voiceIds]) => ({ voiceIds, brace: null, bracket: null, connectBarLines: null }))
+    }
     if (this.staffGroups.length === 0) return []
     const declared = new Set(this.voices.keys())
     const kept = this.staffGroups
@@ -1663,7 +1739,7 @@ class Parser {
         // In the header a `V:` only DECLARES. Only a `V:` in the body switches the
         // current voice — otherwise `V:1` / `V:2` in the header left voice 2 current and
         // every note landed in it.
-        builder.declareVoice(id)
+        builder.declareVoice(id, mergesStaff(value))
         if (builder.bodyStarted) builder.selectVoice(id)
         const octave = octaveModifier(value)
         if (octave !== null) builder.voiceFor(id).octaveShift = octave
