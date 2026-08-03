@@ -838,6 +838,10 @@ export interface LayoutStaff {
    * Whether a tuplet on this staff reserves abcjs's ending lane ABOVE it — declared by
    * `layoutTuplets` from abcjs's own rule, never from where the bracket was drawn.
    */
+  /** A hairpin on this staff — see `StaffFurniture.hasHairpin`. */
+  readonly hasHairpin: boolean
+  /** Which side the dynamics lane is on. */
+  readonly dynamicsAbove: boolean
   readonly tupletReservesAbove: boolean
   /** abcjs's declared box per tuplet on this staff — see `layoutTuplets`. */
   readonly tupletReserves: readonly { top: number; bottom: number }[]
@@ -4582,6 +4586,11 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       const systemAnchors = (voiceAnchors[voiceIndex] ?? []).filter(
         (anchor) => anchor.system === systemIndex,
       )
+      const isHairpin = (name: string): boolean => {
+        const kind = SPANNER_OPEN[name] ?? SPANNER_CLOSE[name]
+        return kind === 'crescendo' || kind === 'diminuendo'
+      }
+      const hasHairpin = systemAnchors.some((a) => a.event.decorations.some(isHairpin))
       const tuplets = layoutTuplets(systemAnchors, elements)
       // Melismas resolve here for the same reason tuplets do, and must run AFTER the
       // elements are final: in strict mode this rewrites the syllable's text in place.
@@ -4598,6 +4607,8 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         staffLines: [],
         beams,
         curves: [],
+        hasHairpin,
+        dynamicsAbove: hasVocals,
         tupletReservesAbove: tuplets.reservesAbove,
         tupletReserves: tuplets.reserves,
         tupletLines: tuplets.lines,
@@ -4687,6 +4698,12 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         beams: parts.flatMap((p) => p.beams),
         tupletLines: parts.flatMap((p) => p.tupletLines),
         tupletTexts: parts.flatMap((p) => p.tupletTexts),
+        // The staff's reserves are the union of its voices', not the first voice's. A
+        // spread alone kept only voice one's, so a hairpin or a tuplet on the lower voice
+        // of a shared staff reserved nothing at all.
+        tupletReserves: parts.flatMap((p) => p.tupletReserves),
+        tupletReservesAbove: parts.some((p) => p.tupletReservesAbove),
+        hasHairpin: parts.some((p) => p.hasHairpin),
         voltaLines: parts.flatMap((p) => p.voltaLines),
         voltaTexts: parts.flatMap((p) => p.voltaTexts),
         melismaLines: parts.flatMap((p) => p.melismaLines),
@@ -5238,6 +5255,13 @@ function anchorBelowStaff<
 }
 
 interface StaffFurniture {
+  /**
+   * A hairpin somewhere on this staff, taken from the EVENTS rather than from the drawn
+   * lines — see the note where it is consumed.
+   */
+  readonly hasHairpin?: boolean
+  /** Which side the dynamics lane is on — hairpins share it. */
+  readonly dynamicsAbove?: boolean
   /** abcjs's `endingHeightAbove` from a tuplet — see `layoutTuplets`. Never below. */
   readonly tupletReservesAbove?: boolean
   /** abcjs's declared box per tuplet — NOT the bracket's drawn lines. */
@@ -5287,6 +5311,16 @@ function verticalExtent(
    * box instead left both its staves 1.30 pitch short.
    */
   let sawDynamicAbove = false
+  // A HAIRPIN RESERVES THE DYNAMICS LANE LIKE ANY OTHER DYNAMIC, and it has to be taken
+  // from the music rather than from `spannerLines`: hairpins can span a system break, so
+  // they are resolved after packing and that array is still empty here. abcjs reserves for
+  // them all the same (`CrescendoElem.dynamicHeightAbove`, `crescendo-element.js:9`).
+  // Probed on `ragtime-nightingale`, whose `!<(!` staves read `staff.bottom = -20.000`
+  // against our -13.000 — a flat 7 pitch, exactly the lane.
+  if (furniture.hasHairpin === true) {
+    if (furniture.dynamicsAbove === true) sawDynamicAbove = true
+    else sawDynamicBelow = true
+  }
   const flag = (y: number) => {
     if (y < 0) endingAbove = true
     else endingBelow = true
