@@ -5635,25 +5635,33 @@ function anchorLyrics<
 >(parts: readonly T[], strict: boolean): T[] {
   const isLyric = (t: PlacedText): boolean => t.role === 'lyric'
   if (!parts.some((p) => p.elements.some((el) => el.texts.some(isLyric)))) return [...parts]
-  // The MUSIC's ink, with the lyrics themselves taken out — including them would let the
-  // block push the anchor it hangs from further down, one staff at a time. The top-text
-  // block goes too: it is not music, and it has not been moved into place yet, so a
-  // four-row heading measured as ink 96px BELOW the staff and dragged the lyrics after it.
+  // THE ANCHOR IS THE SAME INK THE RESERVE IS TAKEN FROM, and it has to be the SAME
+  // NUMBER, not a second measurement of it. abcjs runs both off one value — `staff.bottom`
+  // at `set-upper-and-lower-elements.js:51`, before the lyric, chord and dynamic lanes and
+  // before the `TieElem` push: it draws at that ink (`:244`) and subtracts from it (`:54`).
+  //
+  // Measuring it again here drifted, because this call passed a hand-picked subset of the
+  // furniture — no tuplet boxes — and applied lanes the lyric phase has not reached yet.
+  // Probed on `little swallow`, abcjs subtracts a flat 11.1265 pitch from all five staves,
+  // where we subtracted 11.13 / 11.13 / 10.63 / 11.13 / 9.17: the two that drifted are the
+  // two carrying the most furniture. So take `inkBottom` from `verticalExtent` itself.
+  //
+  // The top-text block still goes: it is not music, and it has not been moved into place
+  // yet, so a four-row heading measured as ink 96px BELOW the staff and dragged the lyrics
+  // after it. The lyrics themselves need no stripping — `verticalExtent` routes a lyric
+  // text to `lyricBottom` and never to the ink.
   const inkBottom = verticalExtent(
-    parts.flatMap((p) =>
-      p.elements
-        .filter((el) => el.type !== 'title')
-        .map((el) => ({ ...el, texts: el.texts.filter((t) => !isLyric(t)) })),
-    ),
+    parts.flatMap((p) => p.elements.filter((el) => el.type !== 'title')),
     parts.flatMap((p) => p.beams),
     strict,
     {
+      tupletReserves: parts.flatMap((p) => p.tupletReserves ?? []),
       tupletLines: parts.flatMap((p) => p.tupletLines ?? []),
       tupletTexts: parts.flatMap((p) => p.tupletTexts ?? []),
       voltaLines: parts.flatMap((p) => p.voltaLines ?? []),
       voltaTexts: parts.flatMap((p) => p.voltaTexts ?? []),
     },
-  ).bottom
+  ).inkBottom
   const written = stepToY(ENGRAVE.lyricStep)
   return parts.map((part, voiceIndex) => {
     const shift = inkBottom + ENGRAVE.lyricInkGap + voiceIndex * ENGRAVE.lyricVoiceStep - written
@@ -5963,7 +5971,7 @@ function verticalExtent(
   beams: readonly PlacedLine[] = [],
   strict = true,
   furniture: StaffFurniture = {},
-): { top: number; bottom: number } {
+): { top: number; bottom: number; inkBottom: number } {
   // The staff itself is always present, spanning steps 4 to -4.
   let top = stepToY(4)
   let bottom = stepToY(-4)
@@ -6191,6 +6199,12 @@ function verticalExtent(
   // that dump's `getBBox` stub returns a single line's height where the SVG generator's
   // measures every tspan (`dump-svg.js:120-124`). The dump is the wrong oracle for this
   // one field, and believing it cost `little swallow` 19px a system.
+  /**
+   * The ink the lyric block hangs from and is subtracted from — abcjs's `staff.bottom` at
+   * `set-upper-and-lower-elements.js:51`, before the lyric, chord and dynamic lanes and
+   * before the `TieElem` push. `anchorLyrics` reads this rather than measuring its own.
+   */
+  const inkBottom = bottom
   if (Number.isFinite(lyricBottom)) {
     bottom = Math.max(
       bottom,
@@ -6246,7 +6260,7 @@ function verticalExtent(
     bottom = Math.max(bottom, r.bottom)
   }
 
-  return { top: top - ENGRAVE.marginY, bottom: bottom + ENGRAVE.marginY }
+  return { top: top - ENGRAVE.marginY, bottom: bottom + ENGRAVE.marginY, inkBottom }
 }
 
 function layoutEvent(

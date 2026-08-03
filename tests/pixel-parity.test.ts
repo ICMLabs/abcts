@@ -134,7 +134,9 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     'frere-jacques': { heads: 45, dy: 0.0, dx: 22.15, oy: 0.0, ox: -3.6 },
     'full-song-template': { heads: 20, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'happy-birthday': { heads: 25, dy: 0.0, dx: 3.85, oy: 0.0, ox: -0.49 },
-    'little swallow': { heads: 89, dy: 1.92, dx: 23.97, oy: -0.58, ox: -5.7 },
+    // dy 1.92 -> 0.32 and oy -0.58 -> 0.16 when `anchorLyrics` stopped measuring its own
+    // ink and took `verticalExtent`'s. dx/ox are the goldens' ASCII width table, not us.
+    'little swallow': { heads: 89, dy: 0.32, dx: 23.97, oy: 0.16, ox: -5.74 },
     'multi-voice-lyrics-two-voices': { heads: 16, dy: 0.07, dx: 0.0, oy: 0.05, ox: 0.0 },
     'multi-voice-rest-collision': { heads: 7, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'multi-voice-rest-placement': { heads: 14, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
