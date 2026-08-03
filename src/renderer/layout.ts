@@ -839,6 +839,8 @@ export interface LayoutStaff {
    * `layoutTuplets` from abcjs's own rule, never from where the bracket was drawn.
    */
   readonly tupletReservesAbove: boolean
+  /** abcjs's declared box per tuplet on this staff — see `layoutTuplets`. */
+  readonly tupletReserves: readonly { top: number; bottom: number }[]
   /** Tuplet brackets, and the numbers that go with them. Also span elements. */
   readonly tupletLines: readonly PlacedLine[]
   readonly tupletTexts: readonly PlacedText[]
@@ -3105,7 +3107,13 @@ function layoutCurves(
 function layoutTuplets(
   anchors: readonly NoteAnchor[],
   elements: readonly LayoutElement[],
-): { lines: PlacedLine[]; texts: PlacedText[]; reservesAbove: boolean } {
+): {
+  lines: PlacedLine[]
+  texts: PlacedText[]
+  reservesAbove: boolean
+  /** abcjs's declared `[top, bottom]` per tuplet, in our y — see `reserves` below. */
+  reserves: { top: number; bottom: number }[]
+} {
   /** Full vertical ink of a member, stems and beams included. */
   const extentOf = (anchor: NoteAnchor): { top: number; bottom: number } => {
     const el = elements[anchor.element]
@@ -3141,6 +3149,13 @@ function layoutTuplets(
    * bracket is DRAWN is the reasonable reading and it is not abcjs's.
    */
   let reservesAbove = false
+  /**
+   * What each tuplet contributes to the staff's range — abcjs's `element.top = yTextPos +
+   * 1; element.bottom = yTextPos - 2` (`layout/triplet.js:20-21,73-74`), a small box in
+   * PITCH around where the NUMBER sits, and not the bracket's drawn lines at all. `y` is
+   * our equivalent of `yTextPos`, so +1 pitch up is half a space and -2 pitch down is one.
+   */
+  const reserves: { top: number; bottom: number }[] = []
 
   // Members of one tuplet are contiguous, so grouping by id preserves their order.
   const groups = new Map<number, NoteAnchor[]>()
@@ -3199,6 +3214,8 @@ function layoutTuplets(
       italic: true,
     })
 
+    reserves.push({ top: y - ENGRAVE.spacePerStep, bottom: y + 2 * ENGRAVE.spacePerStep })
+
     if (beamed) continue
 
     // Bracket: a horizontal rule broken around the number, with a hook at each end
@@ -3213,7 +3230,7 @@ function layoutTuplets(
     lines.push({ x1: last.right, y1: y, x2: last.right, y2: y - hook, thickness })
   }
 
-  return { lines, texts, reservesAbove }
+  return { lines, texts, reservesAbove, reserves }
 }
 
 // ─── Beams ───────────────────────────────────────────────────────────────────
@@ -4492,6 +4509,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         beams,
         curves: [],
         tupletReservesAbove: tuplets.reservesAbove,
+        tupletReserves: tuplets.reserves,
         tupletLines: tuplets.lines,
         tupletTexts: tuplets.texts,
         voltaLines,
@@ -5119,6 +5137,8 @@ function anchorBelowStaff<
 interface StaffFurniture {
   /** abcjs's `endingHeightAbove` from a tuplet — see `layoutTuplets`. Never below. */
   readonly tupletReservesAbove?: boolean
+  /** abcjs's declared box per tuplet — NOT the bracket's drawn lines. */
+  readonly tupletReserves?: readonly { top: number; bottom: number }[]
   readonly tupletLines?: readonly PlacedLine[]
   readonly tupletTexts?: readonly PlacedText[]
   readonly voltaLines?: readonly PlacedLine[]
@@ -5156,10 +5176,23 @@ function verticalExtent(
     if (y < 0) endingAbove = true
     else endingBelow = true
   }
-  // A TUPLET's lane is declared, not measured — abcjs reserves it ABOVE whichever side
-  // the bracket is drawn on, and has no below-side reserve for one at all. A VOLTA's is
-  // read from its geometry, which is always above.
+  // A TUPLET COUNTS TWICE: its BRACKET'S INK, and then the lane ON TOP OF THAT.
+  //
+  // `layoutVoice` calls `voice.adjustRange(child)` on every `TripletElem` (`layout/voice.js:19-23`),
+  // so the drawn bracket enters the staff's range like any other ink — and THEN
+  // `setUpperAndLowerElements` adds `endingHeightAbove + margin` above the result. Probed on
+  // `multi-voice-rest-collision`, the chain is explicit: clef 13.7244 -> a note 13.9879 ->
+  // TripletElem 17.5929 -> +5 = 22.5929.
+  //
+  // We reserved the lane and ignored the ink, on the reading that `multi-voice-triplet-brackets`
+  // has `staff.top` at its highest NOTE rather than at its bracket. That is true there and it
+  // is not the rule — the bracket simply did not out-reach the notes in that fixture. Here it
+  // does, by 3.59 pitch, and that was the whole of that fixture's 13.93px offset.
+  //
+  // A VOLTA is NOT the same: `EndingElem` goes through the `otherchildren` switch, which sets
+  // its top from the lane it was given and never adjusts the staff's range by its ink.
   if (furniture.tupletReservesAbove === true) endingAbove = true
+  for (const r of furniture.tupletReserves ?? []) include(r.top, r.bottom)
   for (const line of furniture.voltaLines ?? []) flag((line.y1 + line.y2) / 2)
   for (const t of furniture.voltaTexts ?? []) flag(t.y)
   // Melisma extenders and hairpins/glissandi keep their actual geometry — they sit in the
