@@ -72,6 +72,19 @@ and the second pass added the lane to a total that already carried it. Probed: t
 applications, the last two identical. The block always wins that `min` when present, so
 skipping the lane on a pass carrying one cannot change the answer, only stop the double.
 
+### A TUPLET'S RANGE IS A BOX AROUND ITS NUMBER
+
+`layoutTriplet` ends both branches with `element.top = yTextPos + 1; element.bottom =
+yTextPos - 2` — a small box in PITCH around where the number sits, not the bracket's drawn
+lines. `layoutVoice` feeds that through `adjustRange`, so it enters the staff's range AND
+the lane goes on top. Probed on `multi-voice-rest-collision`: clef 13.7244 → a note 13.9879
+→ TripletElem 17.5929 → +5 = 22.5929.
+
+Counting the bracket's drawn LINES instead overshoots by 1.89 pitch, because our bracket
+clears the music by its own gap where abcjs puts it at `max(parent.top, 9) + 4` per end
+note. The declared box sidesteps that — it is what abcjs contributes whatever either engine
+draws.
+
 ### The partners, unfound
 
 A right change can make the corpus worse; look for its partner rather than reverting.
@@ -81,13 +94,28 @@ A right change can make the corpus worse; look for its partner rather than rever
   double-count fix WITHOUT the rule gives 128.71, and the same run takes
   `multi-voice-triplet-brackets` from 24.67 to 5.29. Its old 58.14 was resting on the
   double count. Two handles on it:
-  - `tests/staff-spacing.test.ts` is built for exactly this and already localises it: 44 of
-    73 boundaries corpus-wide are exact, median 0.00, and ragtime's row is mostly 0.0 with
-    a few outliers — `2.0`, `11.7`, `-1.9`, `-7.5`. Chase those boundaries, not the
-    aggregate.
-  - Its oy: probed, abcjs's first staff reaches `staff.top = 21.0` from the MUSIC's own ink
-    *before* the tempo's 6 pitches go on top, and ours falls ~2px short of that 21. A beam
-    or stem extent.
+  Its dy is 82.86 against 58.14 before the arc opened; its oy is 1.82 against 7.0. THE
+  DIAGNOSIS IS NOW SHARP, and it is a per-staff extent comparison, not a boundary hunt:
+
+  ```
+  # abcjs, all 46 staves
+  # probe `staff.top`/`staff.bottom` at the end of setUpperAndLowerElements
+  ABCJS_PROBE=1 node dump-svg.js --file fixtures/ragtime-nightingale.abc … | grep 'PROBE staff'
+  # ours, from the SAME call that sets the staff's origin — the one in the stacking loop.
+  # Recording from inside `verticalExtent` instead picks up the anchorAboveStaff and
+  # systemHeight calls and scrambles the order; that cost a run.
+  # convert: abcjs pitch = 6 - 2 * ourY(spaces)
+  ```
+
+  Read that way, **`dBot` sits at a recurring −0.50 pitch on staff after staff** — a
+  constant, and the next thing to chase — while `dTop` is scattered. abcjs's bottoms land on
+  values like −12.500 and −9.500 where ours land on −13.000 and −10.000.
+
+  Also still true: abcjs's first staff reaches `staff.top = 21.0` from the MUSIC's own ink
+  before the tempo's 6 pitches go on top, and ours falls ~2px short of that 21.
+
+  Boundary view, for cross-checking: 25 of ragtime's 45 boundaries are exact, the first
+  staff is exact to 0.01, and the cumulative drift swings +25.6 then −52.6 across the page.
 - **`little swallow`** dy 5.35 → 6.13 and **`frere-jacques`** dy 22.15 → 22.35. Spreads,
   not offsets, so something inside the system rather than above it.
 - **`center-text`** oy 10.15 → 10.32 — the clef's 0.18 landing on a fixture already 10px
