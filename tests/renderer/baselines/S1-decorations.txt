@@ -386,7 +386,7 @@ system 7 width=90.323 originY=89.718
       line  7.509,0.832 -> 7.509,-2.500 t=0.120
     note@-2 x=26.811 w=5.474
       glyph noteheadBlack 26.811,1.000
-      glyph articStaccatissimoBelow 27.203,2.022
+      glyph articStaccatissimoAbove 27.203,-3.840
       line  27.991,0.832 -> 27.991,-2.500 t=0.120
     note@-2 x=47.294 w=5.474
       glyph noteheadBlack 47.294,1.000

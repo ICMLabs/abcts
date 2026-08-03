@@ -1738,11 +1738,13 @@ describe('decoration coverage', () => {
     // model keeps the source spelling. abcjs rewrites them via accentPseudonyms; we alias
     // instead. Verified against 6.6.3: `!>!` and `!emphasis!` draw its sforzato (the
     // accent wedge), `!^!` its umarcato, `!tr!` its trill.
-    // Below, not Above: a lone middle-C takes an up stem, and articulations sit opposite
-    // the stem. The point here is that a glyph appears at all.
+    // Below, not Above, for the two ACCENTS: a lone middle-C takes an up stem and a close
+    // decoration sits opposite it. `!^!` is not a close decoration — abcjs stacks it, and
+    // `symbolList` is placement-independent, so it draws `scripts.umarcato` either way.
+    // Measured: `!^!C !^!c` renders two `scripts.umarcato` and no `dmarcato`.
     expect(glyphsOf('!>!')).toEqual(['articAccentBelow'])
     expect(glyphsOf('!emphasis!')).toEqual(['articAccentBelow'])
-    expect(glyphsOf('!^!')).toEqual(['articMarcatoBelow'])
+    expect(glyphsOf('!^!')).toEqual(['articMarcatoAbove'])
     expect(glyphsOf('!tr!')).toEqual(['ornamentTrill'])
   })
 

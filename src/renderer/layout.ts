@@ -2364,8 +2364,13 @@ const DECORATIONS: Readonly<
   '>': { above: 'articAccentAbove', below: 'articAccentBelow', place: 'articulation' },
   '<': { above: 'articAccentAbove', below: 'articAccentBelow', place: 'articulation' },
   emphasis: { above: 'articAccentAbove', below: 'articAccentBelow', place: 'articulation' },
-  '^': { above: 'articMarcatoAbove', below: 'articMarcatoBelow', place: 'articulation' },
-  umarcato: { above: 'articMarcatoAbove', below: 'articMarcatoBelow', place: 'articulation' },
+  // STACKED, like their `marcato` synonym above — abcjs's close list is only staccato,
+  // tenuto and accent (`decoration.js:19-20`), and `umarcato` sits in the long
+  // `symbolDecoration` case list beside `marcato` (`:255`). Left on the close path these
+  // reserved a POINT at their pitch where abcjs reserves `cursor + h + 0.5`, which is
+  // `ragtime-nightingale`'s staff 37 and 2.23px of its page drift.
+  '^': { above: 'articMarcatoAbove', below: 'articMarcatoBelow', place: 'ornament' },
+  umarcato: { above: 'articMarcatoAbove', below: 'articMarcatoBelow', place: 'ornament' },
   tr: { above: 'ornamentTrill', below: 'ornamentTrill', place: 'ornament' },
   // abcjs draws `!mordent!` and `!trillh!` with the same glyphs as `!lowermordent!` and
   // `!trill!` — its scripts.mordent and scripts.trill respectively.
@@ -2385,10 +2390,11 @@ const DECORATIONS: Readonly<
   pralltriller: { above: 'ornamentShortTrill', below: 'ornamentShortTrill', place: 'ornament' },
   // An inverted fermata is the below-facing design, which was already extracted.
   invertedfermata: { above: 'fermataBelow', below: 'fermataBelow', place: 'ornament' },
+  // Stacked for the same reason (`decoration.js:229`).
   wedge: {
     above: 'articStaccatissimoAbove',
     below: 'articStaccatissimoBelow',
-    place: 'articulation',
+    place: 'ornament',
   },
   open: { above: 'brassMuteOpen', below: 'brassMuteOpen', place: 'ornament' },
   thumb: { above: 'stringsThumbPosition', below: 'stringsThumbPosition', place: 'ornament' },
@@ -3482,6 +3488,13 @@ function curveReserves(
     const above = curveIsAbove(from, to, voicePos)
     // abcjs's `Math.min` over PITCHES is our `Math.max` over y — the lower end on screen.
     const y = Math.max(endAt(from, above, true), endAt(to, above, false))
+    if (process.env.ABCTS_CURVE) {
+      const p = (v: number) => (6 - 2 * v).toFixed(4)
+      const dump = (a: NoteAnchor) =>
+        `${a.left.toFixed(2)}@${p(centre(a))} pos=${beamPos(a)} el=${a.element}` +
+        ` fixed.b=${p(fixedOf(a).bottom)} lines=[${(elements[a.element]?.lines ?? []).map((l) => `${l.role ?? '?'}:${p(l.y1)}..${p(l.y2)}`).join(' ')}]`
+      console.log(`CURVE above=${above} res=${p(y + three)} | a1 ${dump(from)} | a2 ${dump(to)}`)
+    }
     reserves.push(above ? { top: y - three, bottom: y } : { top: y, bottom: y + three })
     ink.push({
       top: Math.min(centre(from), centre(to)) - four,
