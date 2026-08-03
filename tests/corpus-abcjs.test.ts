@@ -43,11 +43,17 @@ const goldenDir = join(base, 'golden')
  * Every one is a real gap found by this corpus and by nothing else in the repo.
  */
 const CONTENT_GAPS: Readonly<Record<string, string>> = {
-  // `(f3 {a})y` — the grace note's head is drawn but carries no notehead class, so it is
-  // invisible to anything selecting on one. abcjs classes a grace head like any other.
-  'abcjs-visual-tablature-10-f3-a-y': 'grace noteheads are not classed as noteheads',
-  // `%%example` between tunes — abcjs treats the block as one tune, we split it in two.
-  'abcjs-parse-book_parser-04-wed': 'tunebook split differs around %%example',
+  // `(f3 {a})y` — the grace attaches to the `y` SPACER that follows it, and `Rest` has
+  // no `graceNotes` field, so the parser drops it. The model says so deliberately: "a
+  // rest does carry decorations — but not ties, slurs, grace notes or lyrics, none of
+  // which apply to silence". abcjs disagrees for a spacer, which is a layout device
+  // rather than silence, and draws the grace with its own stem, flag and ledger.
+  // A MODEL DECISION, not a mechanical fix — see the checkpoint.
+  'abcjs-visual-tablature-10-f3-a-y': 'a grace note before a `y` spacer is dropped at parse',
+  // `%% example / T: wed / %%example / X:1` — a `T:` standing before any `X:`. abcjs
+  // keeps the leading block as part of the first tune; we split it off as a tune of its
+  // own, so the book has two where abcjs has one.
+  'abcjs-parse-book_parser-04-wed': 'a header block before the first X: splits the book',
 }
 
 /**
