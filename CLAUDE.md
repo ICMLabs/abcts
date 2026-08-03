@@ -4,8 +4,9 @@ You are developing abcts, a modern TypeScript ABC notation library
 and community successor to abcjs.
 
 ## First Step — Always
-Read `Docs/CHECKPOINT-2026-08-02b.md` first — it is the current state of play, the open
-decisions, and the known risks. (`CHECKPOINT-2026-08-02.md`, `CHECKPOINT-2026-08-01.md`, `CHECKPOINT-2026-07-24.md`, `-07-22c.md`, `CHECKPOINT-2026-07-22b.md`, `-07-21.md`, `-07-19.md` and
+Read `Docs/CHECKPOINT-2026-08-02c.md` first — it is the current state of play, the open
+decisions, and the known risks. (`CHECKPOINT-2026-08-02b.md`, `CHECKPOINT-2026-08-02.md`,
+`CHECKPOINT-2026-08-01.md`, `CHECKPOINT-2026-07-24.md`, `-07-22c.md`, `CHECKPOINT-2026-07-22b.md`, `-07-21.md`, `-07-19.md` and
 `CHECKPOINT-2026-07-23.md`, `-07-18.md` are superseded but remain the record of the parser phase, the renderer's first
 slices, how the last parser diffs closed, and the geometric work up to the voice-name and
 `%%staffsep` fixes.) Then read ARCHITECTURE.md in full. It is your
@@ -145,20 +146,30 @@ fixtures within their ceilings, ceilings re-recorded. Branch vs the old main: fi
 ceiling 25/29 → **29/29**, noteheads within 25px 21/29 → **27/29**, corpus median 17.4px →
 **14.7px**.
 
-**The HORIZONTAL arc is CLOSED** on `geometry/horizontal`, which is now GREEN at 505/505 —
-pixel-parity gate included, ceilings re-recorded. dx and ox are exactly zero on **22 of 29**
-fixtures, up from 8. The timeline is per LINE, as abcjs's `layoutStaffGroup` is: no columns,
-no per-measure reconciliation, barlines unaligned across voices because they are ordinary
-zero-duration elements on one timeline. `Docs/HORIZONTAL-ARC.md` and
-`Docs/CHECKPOINT-2026-08-02b.md` carry the full account.
+**The HORIZONTAL arc is CLOSED** on `geometry/horizontal`, which is GREEN at 505/505 —
+pixel-parity gate included, ceilings re-recorded. The timeline is per LINE, as abcjs's
+`layoutStaffGroup` is: no columns, no per-measure reconciliation, barlines unaligned across
+voices because they are ordinary zero-duration elements on one timeline.
+
+**The VERTICAL arc is OPEN** on `geometry/vertical`, branched from it and red BY DESIGN.
+`Docs/VERTICAL-ARC.md` is its working spec and `Docs/CHECKPOINT-2026-08-02c.md` the state.
+**16 of 29 fixtures are now pixel-identical to abcjs on ALL FOUR axes at once**, from 0 at
+the start of that work: dy 21/29 at zero, oy 20/29, dx 23/29, ox 23/29.
+
+THE IDEA THAT EXPLAINS MOST OF IT: **abcjs does not measure what it draws — it DECLARES a
+box and reserves that.** Clef, time signature, key signature, tempo, tuplet and dynamic all
+reserve declared figures, and a BEAM reserves nothing at all. The clef is what sets a
+staff's top on a plain tune, not the stems.
 
 **A PASSING GATE IS NOT PARITY.** The gate asserts "no worse than recorded". Parity means
-dy/dx/oy/ox at ZERO — currently dy median +0.01 (18/29 at zero), dx median **+0.01**
-(22/29), ox median −0.00 (22/29), notehead distance median 5.59px.
+dy/dx/oy/ox at ZERO on every fixture.
 
-**ONE GATE NUMBER IS AN ARTEFACT.** `vree-grace-notes` reports dx 32.5 and is not diverging:
-the gate pairs the i-th notehead of each engine, and abcjs emits a graced note's MAIN head
-before its graces where we emit them after. Sorted by x its mains are exact.
+**TWO GATE NUMBERS ARE ARTEFACTS — do not chase either.** `vree-grace-notes` dx 32.5: the
+gate pairs the i-th notehead of each engine and abcjs emits a graced note's MAIN head before
+its graces where we emit them after; sorted by x its mains are exact. `little swallow` dx:
+the harness that made the goldens has an ASCII-only width table with a flat `|| 8` fallback,
+so 73 of its 576 lyric characters — the Chinese — were measured at 8px each. That is a
+property of the GOLDEN, not of abcjs.
 
 **PORT THE STRUCTURE, THEN THE CONSTANTS.** The costly divergences have all been
 architectural, not numeric; see the checkpoint's opening section before starting anything.
