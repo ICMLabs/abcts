@@ -19,9 +19,9 @@ system 0 width=57.324 originY=0.000
       glyph timeSig4 6.329,-1.000
       glyph timeSig4 6.329,1.000
     tempo x=9.141 w=0.000
-      glyph noteheadBlack 9.141,-4.528
-      line  10.321,-4.696 -> 10.321,-8.196 t=0.120
-      text  10.707,-4.528 size=2.581 "= 120"
+      glyph noteheadBlack 9.141,-4.866 scale=0.750
+      line  10.091,-4.991 -> 10.091,-6.741 t=0.120
+      text  10.736,-4.528 size=2.581 "= 120"
     note@-6 x=9.141 w=5.474
       glyph noteheadBlack 9.141,3.000
       line  8.741,3.000 -> 10.807,3.000 t=0.160
@@ -67,10 +67,10 @@ system 0 width=90.323 originY=0.000
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     tempo x=6.329 w=0.000
-      glyph noteheadBlack 20.226,-7.417
-      line  21.406,-7.585 -> 21.406,-11.085 t=0.120
+      glyph noteheadBlack 20.226,-7.756 scale=0.750
+      line  21.175,-7.881 -> 21.175,-9.631 t=0.120
       text  6.329,-7.417 size=2.581 bold "Dolcemente"
-      text  21.791,-7.417 size=2.581 "= 60"
+      text  21.820,-7.417 size=2.581 "= 60"
     note@-6 x=6.329 w=5.474
       glyph noteheadBlack 6.329,3.000
       line  5.929,3.000 -> 7.995,3.000 t=0.160

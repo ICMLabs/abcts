@@ -291,8 +291,23 @@ describe('tempo', () => {
     })
   })
 
+  it('gives a bare rate the METER’s beat unit, not the L: one', () => {
+    // abcjs defers a unit-less `Q:` and finishes it with `1 / meter.denominator`
+    // (`abc_parse_header.js:139-150`), with its `default_length` alternative commented out
+    // beside it. `ragtime-nightingale` is `M:2/4 L:1/4 Q:80` and abcjs draws a QUARTER.
+    const withMeter = (m: string, q: string) =>
+      parse(`X:1\nM:${m}\nL:1/4\n${q}\nK:C\nC|\n`).scores[0]?.tempo ?? null
+    expect(withMeter('6/8', 'Q:120')).toEqual({ beatUnit: rational(1, 8), bpm: 120, text: null })
+    // No `M:` at all falls back to a quarter, as abcjs's `var dur = 1/4` does.
+    expect(parse('X:1\nQ:120\nK:C\nC|\n').scores[0]?.tempo).toEqual({
+      beatUnit: rational(1, 4),
+      bpm: 120,
+      text: null,
+    })
+  })
+
   it('reads the legacy bare rate without taking a digit out of the text', () => {
-    expect(tempoOf('Q:120')).toEqual({ beatUnit: null, bpm: 120, text: null })
+    expect(tempoOf('Q:120')).toEqual({ beatUnit: rational(1, 4), bpm: 120, text: null })
     expect(tempoOf('Q:"Tempo di Marcia 2"')).toEqual({
       beatUnit: null,
       bpm: null,

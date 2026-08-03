@@ -22,9 +22,9 @@ system 0 width=90.323 originY=0.000
       glyph timeSig4 7.619,-1.000
       glyph timeSig4 7.619,1.000
     tempo x=10.432 w=0.000
-      glyph noteheadBlack 10.432,-4.528
-      line  11.612,-4.696 -> 11.612,-8.196 t=0.120
-      text  11.998,-4.528 size=2.581 "= 128"
+      glyph noteheadBlack 10.432,-4.866 scale=0.750
+      line  11.381,-4.991 -> 11.381,-6.741 t=0.120
+      text  12.026,-4.528 size=2.581 "= 128"
     note@-6,-4 x=10.432 w=10.949
       glyph noteheadWhole 10.432,3.000
       glyph noteheadWhole 10.432,2.000
@@ -357,9 +357,9 @@ system 0 width=90.323 originY=0.000
       glyph timeSig4 12.039,-1.000
       glyph timeSig4 12.039,1.000
     tempo x=14.851 w=0.000
-      glyph noteheadBlack 14.851,-4.943
-      line  16.031,-5.111 -> 16.031,-8.611 t=0.120
-      text  16.417,-4.943 size=2.581 "= 66"
+      glyph noteheadBlack 14.851,-5.282 scale=0.750
+      line  15.800,-5.407 -> 15.800,-7.157 t=0.120
+      text  16.446,-4.943 size=2.581 "= 66"
     note@-11,-9,-6 x=14.851 w=5.474
       glyph noteheadBlack 14.851,5.500
       glyph noteheadBlack 14.851,4.500
@@ -762,9 +762,9 @@ system 0 width=90.323 originY=0.000
       glyph timeSig4 12.039,-1.000
       glyph timeSig4 12.039,1.000
     tempo x=14.851 w=0.000
-      glyph noteheadBlack 14.851,-5.661
-      line  16.031,-5.829 -> 16.031,-9.329 t=0.120
-      text  16.417,-5.661 size=2.581 "= 66"
+      glyph noteheadBlack 14.851,-6.000 scale=0.750
+      line  15.800,-6.125 -> 15.800,-7.875 t=0.120
+      text  16.446,-5.661 size=2.581 "= 66"
     rest x=14.851 w=2.737
       glyph rest16th 14.851,0.000
     note@-2 x=17.101 w=2.737
@@ -1041,9 +1041,9 @@ system 0 width=90.366 originY=0.000
       glyph timeSig4 9.974,-1.000
       glyph timeSig4 9.974,1.000
     tempo x=12.787 w=0.000
-      glyph noteheadBlack 12.787,-5.161
-      line  13.967,-5.329 -> 13.967,-8.829 t=0.120
-      text  14.352,-5.161 size=2.581 "= 66"
+      glyph noteheadBlack 12.787,-5.500 scale=0.750
+      line  13.736,-5.625 -> 13.736,-7.375 t=0.120
+      text  14.381,-5.161 size=2.581 "= 66"
     note@0 x=12.787 w=5.474
       glyph noteheadBlack 12.787,0.000
       glyph dynamicPiano 12.467,9.274
@@ -1361,9 +1361,9 @@ system 0 width=98.874 originY=0.000
       glyph timeSig4 12.619,-1.000
       glyph timeSig4 12.619,1.000
     tempo x=15.432 w=0.000
-      glyph noteheadBlack 15.432,-4.568
-      line  16.612,-4.736 -> 16.612,-8.236 t=0.120
-      text  16.998,-4.568 size=2.581 "= 48"
+      glyph noteheadBlack 15.432,-4.907 scale=0.750
+      line  16.381,-5.032 -> 16.381,-6.782 t=0.120
+      text  17.026,-4.568 size=2.581 "= 48"
     note@-4 x=17.198 w=3.871
       glyph noteheadBlack 17.198,2.000
       line  18.378,1.832 -> 18.378,-2.000 t=0.120
@@ -1961,9 +1961,9 @@ system 0 width=90.421 originY=0.000
       glyph timeSig4 17.743,-1.000
       glyph timeSig4 17.743,1.000
     tempo x=20.555 w=0.000
-      glyph noteheadBlack 20.555,-4.879
-      line  21.735,-5.047 -> 21.735,-8.547 t=0.120
-      text  22.121,-4.879 size=2.581 "= 66"
+      glyph noteheadBlack 20.555,-5.218 scale=0.750
+      line  21.504,-5.343 -> 21.504,-7.093 t=0.120
+      text  22.149,-4.879 size=2.581 "= 66"
     note@-1 x=20.555 w=6.705
       glyph noteheadBlack 20.555,0.500
       glyph augmentationDot 22.171,0.500
@@ -2287,9 +2287,9 @@ system 0 width=90.499 originY=0.000
       glyph timeSig3 9.914,-1.000
       glyph timeSig4 9.781,1.000
     tempo x=12.593 w=0.000
-      glyph noteheadBlack 12.593,-8.161
-      line  13.773,-8.329 -> 13.773,-11.829 t=0.120
-      text  14.159,-8.161 size=2.581 "= 92"
+      glyph noteheadBlack 12.593,-8.500 scale=0.750
+      line  13.542,-8.625 -> 13.542,-10.375 t=0.120
+      text  14.188,-8.161 size=2.581 "= 92"
     rest x=12.593 w=9.482
     bar x=18.077 w=0.160
       line  18.157,-2.000 -> 18.157,2.000 t=0.160

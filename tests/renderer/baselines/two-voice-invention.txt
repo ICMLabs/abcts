@@ -23,9 +23,9 @@ system 0 width=90.323 originY=0.000
       glyph timeSig4 6.471,-1.000
       glyph timeSig4 6.471,1.000
     tempo x=9.284 w=0.000
-      glyph noteheadBlack 9.284,-5.661
-      line  10.464,-5.829 -> 10.464,-9.329 t=0.120
-      text  10.849,-5.661 size=2.581 "= 100"
+      glyph noteheadBlack 9.284,-6.000 scale=0.750
+      line  10.233,-6.125 -> 10.233,-7.875 t=0.120
+      text  10.878,-5.661 size=2.581 "= 100"
     note@-6 x=9.284 w=3.871
       glyph noteheadBlack 9.284,3.000
       glyph dynamicMP 8.184,9.274

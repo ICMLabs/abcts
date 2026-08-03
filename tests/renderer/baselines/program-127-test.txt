@@ -19,9 +19,9 @@ system 0 width=90.323 originY=0.000
       glyph timeSig4 6.329,-1.000
       glyph timeSig4 6.329,1.000
     tempo x=9.141 w=0.000
-      glyph noteheadBlack 9.141,-7.417
-      line  10.321,-7.585 -> 10.321,-11.085 t=0.120
-      text  10.707,-7.417 size=2.581 "= 120"
+      glyph noteheadBlack 9.141,-7.756 scale=0.750
+      line  10.091,-7.881 -> 10.091,-9.631 t=0.120
+      text  10.736,-7.417 size=2.581 "= 120"
     note@-6 x=10.787 w=5.474
       glyph noteheadBlack 10.787,3.000
       line  10.387,3.000 -> 12.452,3.000 t=0.160

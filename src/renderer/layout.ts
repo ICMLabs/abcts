@@ -341,6 +341,10 @@ export const ENGRAVE = {
   tempoHeightAbove: 6 * 0.5,
   /** abcjs bumps the tempo's baseline 2px past the top it reserved (`draw/tempo.js:15`). */
   tempoDescenderBump: 2 / 7.75,
+  /** `temposcale` — the beat-unit note is a miniature (`tempo-element.js:25`). */
+  tempoNoteScale: 0.75,
+  /** `x += note.w + 5` between the beat-unit note and the rate (`draw/tempo.js:29`). */
+  tempoNoteGap: 5 / 7.75,
   /**
    * A tune's title sits above everything else it owns, in staff STEPS above the middle
    * line — so the gap to the top staff line is `titleStep / 2 - 2` spaces.
@@ -1595,26 +1599,44 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
   }
 
   if (tempo.bpm !== null) {
-    // The beat unit is drawn as a real note — a quarter note for `1/4=120`.
+    // THE BEAT-UNIT NOTE IS A 0.75-SCALE MINIATURE FIVE PITCHES BELOW THE RESERVED TOP,
+    // and its stem is a flat 3.5 pitch — not the note geometry the staff uses.
+    //
+    // abcjs builds it in `tempo-element.js:24-59`: `temposcale = 0.75` on the head, a stem
+    // from `1/3 * scale` to `5 * scale` — 0.25 to 3.75 pitch above the head — hung off
+    // `tempoNote.dx + tempoNote.w`, the scaled head's right edge, and an advance of
+    // `note.w + 5` before the rate (`draw/tempo.js:29`). The head's own pitch is
+    // `element.pitch - totalHeightInPitches + 1` (`set-upper-and-lower-elements.js:209`),
+    // which is five pitch below the top the mark reserved — the same point
+    // `verticalExtent` reads back off this baseline.
+    //
+    // Measured against abcjs's own SVG on `ragtime-nightingale`, all four to 0.01px: head
+    // centre 2.625px above the rate's baseline, stem spanning y 98.52 to 112.09, its left
+    // edge at 122.96, and the rate at x 128.56.
     const spec = tempo.beatUnit === null ? null : noteGlyph(tempo.beatUnit)
     if (spec !== null) {
-      // Anchors are Bravura's alone — abcjs's table has none, and a stem attachment is
-      // a property of the OUTLINE, so it stays with the font that defines it. Only the
-      // advance comes from the active table.
-      const head = GLYPHS[spec.head]
-      const headAdvance = glyphsFor(strict).advance(spec.head)
-      glyphs.push({ name: spec.head, x: cursor, y: baseline })
+      const headAdvance = glyphsFor(strict).advance(spec.head) * ENGRAVE.tempoNoteScale
+      const noteY =
+        baseline - ENGRAVE.tempoTextSize - ENGRAVE.tempoDescenderBump + 5 * ENGRAVE.spacePerStep
+      glyphs.push({ name: spec.head, x: cursor, y: noteY, scale: ENGRAVE.tempoNoteScale })
       if (spec.stemmed) {
-        const [ax, ay] = head.anchors.stemUpSE ?? [head.width, 0]
         lines.push({
-          x1: cursor + ax,
-          y1: baseline + ay,
-          x2: cursor + ax,
-          y2: baseline + ay - ENGRAVE.stemLength,
+          role: 'stem',
+          x1: cursor + headAdvance,
+          y1: noteY - 0.25 * ENGRAVE.spacePerStep,
+          x2: cursor + headAdvance,
+          y2: noteY - 3.75 * ENGRAVE.spacePerStep,
           thickness: ENGRAVING_DEFAULTS.stemThickness,
         })
       }
-      cursor += headAdvance + 0.3
+      // ponytail: no FLAG or DOT on the beat-unit note, so `Q:1/8=66` draws a bare stem
+      // where abcjs draws an eighth. Probed on `S7-voices`, ready to land: abcjs adds a
+      // second scaled symbol at `dx = headAdvance - 0.6px` and pitch `noteY + 5.25`, and
+      // the element's width becomes `dx + flagWidth` (`flags.u8th` w 6.692 unscaled) so
+      // the rate moves right with it. `tempo-element.js:32-49` also maps `3/8`, `3/16`
+      // and `3/32` to a DOT. No pixel-gated fixture has a non-quarter `Q:` — S7-voices is
+      // baseline-only — so it lands blind until one does.
+      cursor += headAdvance + ENGRAVE.tempoNoteGap
     }
     texts.push({
       text: `= ${tempo.bpm}`,

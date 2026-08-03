@@ -349,6 +349,28 @@ function parseTempo(content: string): Tempo | null {
   return { beatUnit, bpm, text }
 }
 
+/**
+ * A `Q:` that states a rate but no beat unit gets one from the METER, not from `L:`.
+ *
+ * abcjs defers exactly this — `setTempo` returns `delaySet` for `Q:120` and `Q:C=120`
+ * because the `M:` may not have been read yet, and `calcTempo` finishes the job at the end
+ * of the header with `dur = 1 / meter.denominator`, falling back to a quarter
+ * (`abc_parse_header.js:139-150`). Its `TempoElement` then draws that note beside the
+ * number, `noteheads.quarter` and a stem for anything down to a quarter
+ * (`tempo-element.js:15,32-56`).
+ *
+ * We resolved nothing and drew no note, so `ragtime-nightingale`'s `Q:80` came out as a
+ * bare `= 80` — the one stem in its 1017 that abcjs draws and we did not, found by diffing
+ * the two SVGs' stems rather than by reading either engine.
+ *
+ * `L:` is deliberately not consulted: ragtime is `M:2/4` with `L:1/4`, and abcjs's own
+ * commented-out `default_length` line beside the meter one says it chose.
+ */
+function resolveBeatUnit(tempo: Tempo | null, meter: Meter | null): Tempo | null {
+  if (tempo === null || tempo.bpm === null || tempo.beatUnit !== null) return tempo
+  return { ...tempo, beatUnit: rational(1, meter?.denominator ?? 4) }
+}
+
 /** Move every written pitch in a measure by whole octaves — `V:… octave=±n`. */
 function shiftMeasure(measure: Measure, octaves: number): Measure {
   const move = (pitch: Pitch): Pitch => ({ ...pitch, octave: pitch.octave + octaves })
@@ -1199,7 +1221,7 @@ class ScoreBuilder {
       key: this.key,
       clef: this.clef,
       meter: this.meter,
-      tempo: this.tempo,
+      tempo: resolveBeatUnit(this.tempo, this.meter),
       unitNoteLength: this.unitNoteLength,
       voices: this.orderedVoices().map((v) => {
         // The meter lives on the score, and a voice needs it to pad an empty overlay

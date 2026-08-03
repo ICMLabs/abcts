@@ -17,10 +17,10 @@ system 0 width=90.323 originY=0.000
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     tempo x=6.329 w=0.000
-      glyph noteheadBlack 18.362,-8.667
-      line  19.542,-8.835 -> 19.542,-12.335 t=0.120
+      glyph noteheadBlack 18.362,-9.005 scale=0.750
+      line  19.311,-9.130 -> 19.311,-10.880 t=0.120
       text  6.329,-8.667 size=2.581 bold "Allegretto"
-      text  19.928,-8.667 size=2.581 "= 100"
+      text  19.956,-8.667 size=2.581 "= 100"
     note@5 x=6.329 w=3.871
       glyph noteheadBlack 6.329,-2.500
       line  6.329,-2.332 -> 6.329,2.250 t=0.120

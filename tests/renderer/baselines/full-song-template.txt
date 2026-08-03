@@ -19,9 +19,9 @@ system 0 width=90.399 originY=0.000
       glyph timeSig4 6.329,-1.000
       glyph timeSig4 6.329,1.000
     tempo x=9.141 w=0.000
-      glyph noteheadBlack 9.141,-10.777
-      line  10.321,-10.945 -> 10.321,-14.445 t=0.120
-      text  10.707,-10.777 size=2.581 "= 120"
+      glyph noteheadBlack 9.141,-11.115 scale=0.750
+      line  10.091,-11.240 -> 10.091,-12.990 t=0.120
+      text  10.736,-10.777 size=2.581 "= 120"
     part x=9.141 w=0.000
       text  9.141,-7.535 size=2.581 bold "PART - VERSE, CHORUS, ETC."
     note@-6 x=11.092 w=5.474
