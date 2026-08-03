@@ -509,6 +509,21 @@ export const ENGRAVE = {
    * height IS wherever abcjs reads that field.
    */
   relativeElementHeight: 4,
+  /**
+   * HALF A NOTEHEAD'S DECLARED BOX, in staff spaces.
+   *
+   * `create-note-head.js:34` passes `thickness: symbolHeightInPitches(c) * scale`, and
+   * `RelativeElement` turns that into `top = pitch + thickness/2`,
+   * `bottom = pitch - thickness/2` (`relative-element.js:22-24`). For
+   * `noteheads.quarter` that is **2.088774 pitches**, so half of it is 1.0443871 pitch —
+   * NOT the 1 pitch a notehead looks like it is. The 0.0444 that difference leaves shows
+   * up in every one of abcjs's own numbers: `a1bot=5.9556` for a note at pitch 5,
+   * `mids=6.0444^3.9556`, `staff.bottom=-14.0444`.
+   *
+   * The other heads differ in the third decimal (half 2.0986, whole 2.0895, dbl 2.1019);
+   * one figure covers them to 0.02px.
+   */
+  noteheadHalfHeight: 2.088774193548387 / 4,
   voltaLane: 5,
   /** abcjs's `margin` in `set-upper-and-lower-elements.js:102` — one pitch on every lane. */
   laneMargin: 1,
@@ -3211,12 +3226,11 @@ function curveReserves(
    * alone: reading only the stem left four staves half a pitch out either way.
    */
   const fixedOf = (a: NoteAnchor): { top: number; bottom: number } => {
-    // A NOTEHEAD's declared box is its PITCH, not its outline: `RelativeElement` sets
-    // `top = bottom = pitch` and only `pitch2`, `thickness` and `stemHeight` widen it
-    // (`relative-element.js:18-30`) — so a head contributes a point and the stem the rest.
-    // Reading the head's drawn edge instead left every pinned end a flat pitch out.
-    let top = a.top + 2 * ENGRAVE.spacePerStep
-    let bottom = a.bottom - 2 * ENGRAVE.spacePerStep
+    // A NOTEHEAD's declared box is `pitch ± thickness / 2` and the thickness is the
+    // glyph's own height in pitches — see `ENGRAVE.noteheadHalfHeight`. `a.top`/`a.bottom`
+    // carry half a space of curve padding, so that comes off before the real half goes on.
+    let top = a.top + ENGRAVE.spacePerStep - ENGRAVE.noteheadHalfHeight
+    let bottom = a.bottom - ENGRAVE.spacePerStep + ENGRAVE.noteheadHalfHeight
     for (const line of elements[a.element]?.lines ?? []) {
       top = Math.min(top, line.y1, line.y2)
       bottom = Math.max(bottom, line.y1, line.y2)
@@ -3328,8 +3342,8 @@ function layoutTuplets(
    */
   const extentOf = (anchor: NoteAnchor): { top: number; bottom: number } => {
     const el = elements[anchor.element]
-    let top = anchor.top + ENGRAVE.spacePerStep
-    let bottom = anchor.bottom - ENGRAVE.spacePerStep
+    let top = anchor.top + ENGRAVE.spacePerStep - ENGRAVE.noteheadHalfHeight
+    let bottom = anchor.bottom - ENGRAVE.spacePerStep + ENGRAVE.noteheadHalfHeight
     for (const line of el?.lines ?? []) {
       top = Math.min(top, line.y1, line.y2)
       // An UNBEAMED stem declares one pitch past its low end — `bottom: p1 - 1`
@@ -3475,7 +3489,13 @@ function layoutTuplets(
     // `anchor1.parent.top` at the ends is the whole note. Probed on the same triplet:
     // abcjs reads a middle of 6.04 where our stem-tip reading said 12.00, and the six
     // pitches of difference fired the flattening override abcjs never reaches.
-    const middle = members.slice(1, -1).map((m) => ({ top: m.top, bottom: m.bottom }))
+    const middle = members.slice(1, -1).map((m) => ({
+      // A middle member contributes its NOTEHEAD's declared box — `pitch ± thickness/2`,
+      // see `ENGRAVE.noteheadHalfHeight` — not the anchor's curve-padded one. That
+      // 0.0444 of a pitch is what `multi-voice-triplet-brackets` was out by at both ends.
+      top: m.top + ENGRAVE.spacePerStep - ENGRAVE.noteheadHalfHeight,
+      bottom: m.bottom - ENGRAVE.spacePerStep + ENGRAVE.noteheadHalfHeight,
+    }))
     if (middle.length > 0) {
       if (up) {
         const highest = Math.max(0, ...middle.map((e) => pitchOf(e.top))) + 4

@@ -138,7 +138,7 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     'multi-voice-lyrics-two-voices': { heads: 16, dy: 0.07, dx: 0.0, oy: 0.05, ox: 0.0 },
     'multi-voice-rest-collision': { heads: 7, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'multi-voice-rest-placement': { heads: 14, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
-    'multi-voice-triplet-brackets': { heads: 45, dy: 0.17, dx: 0.0, oy: -0.24, ox: 0.0 },
+    'multi-voice-triplet-brackets': { heads: 45, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'program-127-test': { heads: 20, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'ragtime-mini': { heads: 30, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'ragtime-nightingale': { heads: 2009, dy: 58.1, dx: 69.82, oy: -0.54, ox: -1.0 },

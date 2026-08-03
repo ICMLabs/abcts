@@ -2164,7 +2164,7 @@ system 1 width=90.323 originY=21.965
       line  87.435,-2.000 -> 87.435,2.000 t=0.160
       line  88.165,-2.000 -> 88.165,2.000 t=0.500
 tune 9
-bounds  width=90.323 height=61.567 top=-1.935
+bounds  width=90.323 height=61.589 top=-1.935
 systems 4
 system 0 width=90.323 originY=0.000
   staff 0 originY=12.575
@@ -2194,10 +2194,10 @@ system 0 width=90.323 originY=0.000
     tupletline 45.197,5.500 -> 47.432,5.500 t=0.100
     tupletline 41.561,5.500 -> 41.561,6.100 t=0.100
     tupletline 47.432,5.500 -> 47.432,6.100 t=0.100
-    tupletline 48.598,5.504 -> 51.805,5.504 t=0.100
-    tupletline 53.205,5.504 -> 56.412,5.504 t=0.100
-    tupletline 48.598,5.504 -> 48.598,6.104 t=0.100
-    tupletline 56.412,5.504 -> 56.412,6.104 t=0.100
+    tupletline 48.598,5.526 -> 51.805,5.526 t=0.100
+    tupletline 53.205,5.526 -> 56.412,5.526 t=0.100
+    tupletline 48.598,5.526 -> 48.598,6.126 t=0.100
+    tupletline 56.412,5.526 -> 56.412,6.126 t=0.100
     tupletline 62.611,5.500 -> 66.283,5.500 t=0.100
     tupletline 67.683,5.500 -> 71.354,5.500 t=0.100
     tupletline 62.611,5.500 -> 62.611,6.100 t=0.100
@@ -2206,7 +2206,7 @@ system 0 width=90.323 originY=0.000
     tuplettext 25.740,6.760 size=1.400 "3"
     tuplettext 35.167,6.760 size=1.400 "3"
     tuplettext 44.147,6.760 size=1.400 "3"
-    tuplettext 52.155,6.764 size=1.400 "3"
+    tuplettext 52.155,6.786 size=1.400 "3"
     tuplettext 66.633,6.760 size=1.400 "4"
     tuplettext 81.864,4.760 size=1.400 "3"
     tie  74.042,-1.800 -> 78.007,-1.800 bulge=-0.714
@@ -2294,7 +2294,7 @@ system 0 width=90.323 originY=0.000
       line  84.941,-1.832 -> 84.941,2.250 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 1 width=90.323 originY=19.079
+system 1 width=90.323 originY=19.102
   staff 0 originY=6.366
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
@@ -2342,7 +2342,7 @@ system 1 width=90.323 originY=19.079
       line  79.922,-1.332 -> 79.922,2.250 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 2 width=90.288 originY=30.696
+system 2 width=90.288 originY=30.718
   staff 0 originY=7.000
     staffline 0.000,2.000 -> 90.288,2.000 t=0.130
     staffline 0.000,1.000 -> 90.288,1.000 t=0.130
@@ -2441,7 +2441,7 @@ system 2 width=90.288 originY=30.696
       line  86.269,-2.332 -> 86.269,1.250 t=0.120
     bar x=88.223 w=0.160
       line  88.303,-2.000 -> 88.303,2.000 t=0.160
-system 3 width=50.689 originY=44.196
+system 3 width=50.689 originY=44.218
   staff 0 originY=7.000
     staffline 0.000,2.000 -> 50.689,2.000 t=0.130
     staffline 0.000,1.000 -> 50.689,1.000 t=0.130
