@@ -658,6 +658,20 @@ const CONTINUABLE_FIELDS = 'ABCDFGHNORSTZw'
 // ─── Builders ────────────────────────────────────────────────────────────────
 
 class VoiceBuilder {
+  /**
+   * Whether a `V:` or `[V:]` ever NAMED this voice, as against it being conjured by the
+   * default `currentVoiceId` when the first music line began.
+   *
+   * `scanMusic` touches `builder.voice` to open the line before it has read the line's
+   * tokens, so a tune whose every line starts with an inline `[V:T]` materialises an empty
+   * voice `1` first. abcjs has no such voice: `setCurrentVoice` runs off the id the field
+   * gives and nothing creates one otherwise. Left in, it took a whole extra staff on every
+   * system of `visual-parsing-08` — three empty staves in a six-stave drawing.
+   *
+   * A tune with no `V:` at all still keeps its implicit voice: it holds the music, so it
+   * is not empty.
+   */
+  explicit = false
   octaveShift = 0
   /** `V:… stafflines=` with no `clef=` — see `Voice.staffLineOverride`. */
   staffLineOverride: number | null = null
@@ -1211,7 +1225,7 @@ class ScoreBuilder {
   /** Header `V:` — creates the voice, and makes the FIRST one declared current. */
   declareVoice(id: string, merge = false): void {
     const isFirst = this.voices.size === 0
-    this.voiceFor(id)
+    this.voiceFor(id).explicit = true
     if (isFirst) this.currentVoiceId = id
     // `startStaff || staves.length === 0` — the first voice opens a staff whatever it says.
     if (!this.staffOfVoice.has(id)) {
@@ -1223,7 +1237,7 @@ class ScoreBuilder {
 
   /** A body `V:2` switches the voice music lands in. */
   selectVoice(id: string): void {
-    this.voiceFor(id)
+    this.voiceFor(id).explicit = true
     this.currentVoiceId = id
   }
 
@@ -1240,13 +1254,14 @@ class ScoreBuilder {
    * Voices it does not mention keep declaration order, appended after the listed ones.
    */
   private orderedVoices(): VoiceBuilder[] {
-    if (!this.scoreOrder) return [...this.voices.values()]
+    const real = (v: VoiceBuilder): boolean => v.explicit || !v.isEmpty
+    if (!this.scoreOrder) return [...this.voices.values()].filter(real)
     const listed = this.scoreOrder.filter((id) => this.voices.has(id))
     const seen = new Set(listed)
     return [
       ...listed.map((id) => this.voiceFor(id)),
       ...[...this.voices.entries()].filter(([id]) => !seen.has(id)).map(([, v]) => v),
-    ]
+    ].filter(real)
   }
 
   /**
@@ -1274,7 +1289,9 @@ class ScoreBuilder {
         .map(([, voiceIds]) => ({ voiceIds, brace: null, bracket: null, connectBarLines: null }))
     }
     if (this.staffGroups.length === 0) return []
-    const declared = new Set(this.voices.keys())
+    const declared = new Set(
+      [...this.voices.entries()].filter(([, v]) => v.explicit || !v.isEmpty).map(([id]) => id),
+    )
     const kept = this.staffGroups
       .map((g) => ({ ...g, voiceIds: g.voiceIds.filter((id) => declared.has(id)) }))
       .filter((g) => g.voiceIds.length > 0)

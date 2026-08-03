@@ -64,15 +64,16 @@ const CONTENT_GAPS: Readonly<Record<string, string>> = {
  * 174 ceilings is a table nobody reads — see the header.
  */
 const WITHIN: Readonly<Record<string, number>> = {
-  // 72 / 83 / 91 / 116 before four fixes only this gate could see, since no 41-fixture
+  // 72 / 83 / 91 / 116 before five fixes only this gate could see, since no 41-fixture
   // exercises any of them: `clef=none` and `clef=perc` being read as a C clef on the
   // middle line, `%%text` / `%%begintext` reserving nothing, `V:… merge` unimplemented,
-  // and a clef name matched as a whole word rather than by prefix, so `bass,,` was no
-  // clef at all.
-  '0.05': 79,
-  '1': 90,
-  '5': 97,
-  '25': 120,
+  // a clef name matched as a whole word rather than by prefix so `bass,,` was no clef at
+  // all, and an empty implicit voice `1` taking a staff on every system of any tune whose
+  // lines all begin with an inline `[V:…]`.
+  '0.05': 82,
+  '1': 93,
+  '5': 102,
+  '25': 126,
 }
 
 const names = readdirSync(fixturesDir)
