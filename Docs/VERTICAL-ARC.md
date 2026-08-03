@@ -1,8 +1,13 @@
 # The vertical arc — opened, not finished
 
-**STATE MOVED ON 2026-08-02 (fourth session). `Docs/CHECKPOINT-2026-08-02d.md` is the
-current state; this file is the arc's working spec and its findings ledger.** What that
-checkpoint adds to what follows: the ending lane's real height, one volta per system, a
+**STATE MOVED AGAIN ON 2026-08-03. `Docs/CHECKPOINT-2026-08-03.md` is the current state
+and `Docs/HANDOFF-2026-08-03.md` says where to start. `frere-jacques` is CLOSED vertically,
+there is a second 174-tune corpus harvested from abcjs's own test suite, and the rule that
+matters most is now MEASURE THE OUTPUT — the source misled three careful readings on this
+branch. What follows is the arc's working spec and its findings ledger.**
+
+`Docs/CHECKPOINT-2026-08-02d.md` was the state before it, and what it added to what
+follows: the ending lane's real height, one volta per system, a
 tuplet inside a longer beam, the two reserves a tie or slur makes, and a low middle note's
 own height. Plus the two questions this file's central idea now has to be read with —
 **whose** box is it, and **when** is it applied (ink, lane, post-lane). And the finding

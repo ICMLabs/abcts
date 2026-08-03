@@ -4,8 +4,9 @@ You are developing abcts, a modern TypeScript ABC notation library
 and community successor to abcjs.
 
 ## First Step — Always
-Read `Docs/CHECKPOINT-2026-08-02d.md` first — it is the current state of play, the open
-decisions, and the known risks. (`CHECKPOINT-2026-08-02c.md`, `CHECKPOINT-2026-08-02b.md`, `CHECKPOINT-2026-08-02.md`,
+Read `Docs/CHECKPOINT-2026-08-03.md` first — it is the current state of play, the open
+decisions, and the known risks — and `Docs/HANDOFF-2026-08-03.md` beside it for where to
+start and the session prompt. (`CHECKPOINT-2026-08-02d.md`, `CHECKPOINT-2026-08-02c.md`, `CHECKPOINT-2026-08-02b.md`, `CHECKPOINT-2026-08-02.md`,
 `CHECKPOINT-2026-08-01.md`, `CHECKPOINT-2026-07-24.md`, `-07-22c.md`, `CHECKPOINT-2026-07-22b.md`, `-07-21.md`, `-07-19.md` and
 `CHECKPOINT-2026-07-23.md`, `-07-18.md` are superseded but remain the record of the parser phase, the renderer's first
 slices, how the last parser diffs closed, and the geometric work up to the voice-name and
@@ -152,15 +153,26 @@ pixel-parity gate included, ceilings re-recorded. The timeline is per LINE, as a
 voices because they are ordinary zero-duration elements on one timeline.
 
 **The VERTICAL arc is OPEN** on `geometry/vertical`, branched from it and red BY DESIGN.
-`Docs/VERTICAL-ARC.md` is its working spec and `Docs/CHECKPOINT-2026-08-02d.md` the state.
+`Docs/VERTICAL-ARC.md` is its working spec and `Docs/CHECKPOINT-2026-08-03.md` the state.
 **20 of 29 fixtures are pixel-identical to abcjs on ALL FOUR axes at once** at a 0.05px
-threshold and **23 of 29** at 0.25px, from 0 at the start of that work. Page heights match
-abcjs to within 0.07px. It is red on TWO gate items, both pre-existing.
+threshold and **23 of 29** at 0.25px, from 0 at the start of that work; only NINE are off
+any axis and only FIVE off a vertical one. Page heights match abcjs to within 0.07px.
+`ragtime-nightingale` matches abcjs's own `staff.top`/`.bottom` on 39 of its 46 staves.
+**One red**, named in the checkpoint.
+
+`frere-jacques` is CLOSED vertically (dy 0.03, oy −0.02) and was never the "source-line-wrap
+model conflict" it was filed as for two weeks.
 
 THE IDEA THAT EXPLAINS MOST OF IT: **abcjs does not measure what it draws — it DECLARES a
-box and reserves that.** Clef, time signature, key signature, tempo, tuplet and dynamic all
-reserve declared figures, and a BEAM reserves nothing at all. The clef is what sets a
-staff's top on a plain tune, not the stems.
+box and reserves that.** Notehead (`pitch ± 2.0888/2`, NOT ± 1), accidental, clef, key and
+time signature, tempo, tuplet, dynamic, decoration and tie all reserve declared figures,
+and a BEAM reserves nothing at all. The clef is what sets a staff's top on a plain tune,
+not the stems.
+
+**AND MEASURE THE OUTPUT — the source will lie to you.** Three times on this branch a
+careful chain of source reads predicted something abcjs's own SVG denies, and a grep of the
+golden settled each in seconds. Read the source to find the MECHANISM; read the output to
+find the NUMBER. An extent difference names a STAFF, not a mechanism.
 
 Two questions go with it, and both cost a run before they were asked. **WHOSE box is it** —
 a volta belongs to the first voice of the first staff, not to every voice carrying the
