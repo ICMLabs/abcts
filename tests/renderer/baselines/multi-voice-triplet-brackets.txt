@@ -214,7 +214,7 @@ system 1 width=90.323 originY=24.520
       line  27.991,-0.668 -> 27.991,-4.000 t=0.120
     note@-1 x=33.639 w=4.470
       glyph noteheadBlack 33.639,0.500
-      glyph ornamentTrill 33.070,-3.500
+      glyph ornamentTrill 33.070,-4.314
       line  34.819,0.332 -> 34.819,-3.000 t=0.120
     note@-2 x=40.466 w=4.470
       glyph noteheadBlack 40.466,1.000

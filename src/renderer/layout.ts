@@ -240,6 +240,14 @@ export const ENGRAVE = {
   chordSymbolStep: 9.37,
   ornamentStep: 7,
   /**
+   * `Decoration.minTop` — the floor the ornament stack starts from, in PITCH
+   * (`creation/decoration.js:13`). One pitch above the top staff line, so an ornament on
+   * a low note still clears the staff.
+   */
+  decorationMinTop: 12,
+  /** The pitch of padding each stacked decoration adds so nothing touches (`:154`). */
+  decorationPadding: 1,
+  /**
    * Dynamics (`!p!`, `!mf!`) and hairpins go ABOVE the staff WHEN THE TUNE HAS LYRICS,
    * and below it otherwise — abcjs's rule, not a taste choice.
    *
@@ -2060,6 +2068,20 @@ function layoutNoteheads(
         highest,
         lowest,
         up,
+        // abcjs's `abselem.top` / `.bottom`: the notehead's DECLARED box widened by the
+        // stem it just drew. `pushTop`/`pushBottom` over the element's children.
+        Math.max(
+          highest + ENGRAVE.noteheadHalfHeight / ENGRAVE.spacePerStep,
+          ...lines
+            .filter((l) => l.role === 'stem')
+            .map((l) => -Math.min(l.y1, l.y2) / ENGRAVE.spacePerStep),
+        ),
+        Math.min(
+          lowest - ENGRAVE.noteheadHalfHeight / ENGRAVE.spacePerStep,
+          ...lines
+            .filter((l) => l.role === 'stem')
+            .map((l) => -Math.max(l.y1, l.y2) / ENGRAVE.spacePerStep),
+        ),
         strict,
         dynamicsAbove,
       ),
@@ -2227,7 +2249,9 @@ const DECORATIONS: Readonly<
   staccato: { above: 'articStaccatoAbove', below: 'articStaccatoBelow', place: 'articulation' },
   accent: { above: 'articAccentAbove', below: 'articAccentBelow', place: 'articulation' },
   tenuto: { above: 'articTenutoAbove', below: 'articTenutoBelow', place: 'articulation' },
-  marcato: { above: 'articMarcatoAbove', below: 'articMarcatoBelow', place: 'articulation' },
+  // `marcato` is in abcjs's STACKED list (`scripts.umarcato`), not its close one — that
+  // holds only staccato, tenuto and accent (`decoration.js:19`).
+  marcato: { above: 'articMarcatoAbove', below: 'articMarcatoBelow', place: 'ornament' },
   fermata: { above: 'fermataAbove', below: 'fermataBelow', place: 'ornament' },
   trill: { above: 'ornamentTrill', below: 'ornamentTrill', place: 'ornament' },
   // ABC's `M` is the mordent with the vertical stroke; `P` is the one without, which
@@ -2366,6 +2390,9 @@ const STRICT_UNDRAWN: ReadonlySet<string> = new Set(['invertedturn', 'invertedtu
  * SVG. The display spelling is conventional engraving (`D.C. al Fine`), not the ABC
  * token, because the token is an identifier and the page wants prose.
  */
+/** Pitches a stave line sits on, which a close decoration is never left sitting on. */
+const ON_STAVE_LINE: ReadonlySet<number> = new Set([2, 4, 6, 8, 10])
+
 const DECORATION_TEXTS: Readonly<Record<string, string>> = {
   'D.C.': 'D.C.',
   'D.S.': 'D.S.',
@@ -2415,31 +2442,122 @@ function decorationGlyphs(
   topStep: number,
   bottomStep: number,
   stemUp: boolean,
+  /**
+   * `abselem.top` in STAFF STEPS — the element's own extent, STEM INCLUDED, which is what
+   * abcjs hands `createDecoration` as its starting pitch (`abstract-engraver.js:842`).
+   * Not the notehead's top: a long stem is what an ornament has to clear.
+   */
+  elemTopStep: number,
+  /** `abselem.bottom` in staff steps — the other end of the same extent. */
+  elemBottomStep: number,
   /** `abcjs-strict` — suppresses the marks abcjs accepts but never paints. */
   strict: boolean,
   /** Dynamics above the staff when the tune sings, below when it does not. */
   dynamicsAbove: boolean,
 ): PlacedGlyph[] {
   const out: PlacedGlyph[] = []
-  // Away from the stem, and never inside the staff for a note that sits in it.
+
+  // ── THE ORNAMENT STACK IS abcjs's, AND IT IS NOT A FIXED STEP ───────────────
+  //
+  // `stackedDecoration` walks a cursor in PITCH (`creation/decoration.js:154-165`):
+  //
+  //     var height = glyphs.symbolHeightInPitches(symbol) + 1;  // a pitch of padding
+  //     var y = getPlacement(placement);                        // the running cursor
+  //     y = y + height / 2;                                     // CENTRE it on the step
+  //     … new RelativeElement(symbol, …, y, …)
+  //     incrementPlacement(placement, height);                  // cursor += height
+  //
+  // Three things at once: each glyph advances the cursor by its OWN declared height plus
+  // a pitch of padding, it is CENTRED on the space it takes rather than sitting on the
+  // cursor, and the cursor starts at the note's own top — `Math.max(yPos.above, minTop)`
+  // with `minTop = 12` (`decoration.js:13,389`), which is one pitch above the top staff
+  // line.
+  //
+  // Ours stepped a flat 2 pitch per ornament from a fixed lane, so a trill landed at
+  // pitch 15 where abcjs puts it at 19.88 and a note reaching above the staff had its
+  // ornaments sitting in its own ink. Probed on `frere-jacques`, whose every staff top is
+  // an ornament: 19.8832, 16.0493 and 16.0444 against our 15, 13 and 14.
+  const table = glyphsFor(strict)
+  /** abcjs's `symbolHeightInPitches` — the PUBLISHED height, in pitch. */
+  const heightInPitches = (g: GlyphName): number =>
+    (table.get(g)?.declaredHeight ?? 0) / ENGRAVE.spacePerStep
+  /** abcjs works in pitch and we work in staff steps; they differ by the staff's middle. */
+  const toPitch = (step: number): number => step + 6
+  const toStep = (pitch: number): number => pitch - 6
+  // ── CLOSE DECORATIONS FIRST, AND THEY SET WHERE THE STACK STARTS ────────────
+  //
+  // `createDecoration` runs `closeDecoration` over the whole list before
+  // `stackedDecoration` sees any of it (`decoration.js:386-391`), and hands the stack the
+  // last close decoration's pitch as its floor. So the two are ORDERED PASSES, not one
+  // walk — an ornament written before a staccato still stacks above it.
+  //
+  // The close rule itself (`decoration.js:17-47`), which is fussier than it looks:
+  //
+  //     yPos = first ? (dir === 'down' ? pitch + 2 : minPitch - 2)
+  //                  : (dir === 'down' ? yPos + 2  : yPos - 2)
+  //     accent:  yPos += dir === 'up' ? -1 : +1      // always three pitches away
+  //     others:  if yPos is ON A STAVE LINE (2,4,6,8,10), step it one further
+  //     if (pitch > 9) yPos++                        // "take up some room of those above"
+  //
+  // `pitch` is `abselem.top` and `minPitch` its bottom, both DECLARED. Worked on
+  // `frere-jacques`: top 12.0493 → 14.0493 → accent → 15.0493 → above 9 → **16.0493**,
+  // which is abcjs's number to the digit.
   const artAbove = !stemUp
-  let artStep = artAbove ? Math.max(topStep, 4) + 2 : Math.min(bottomStep, -4) - 2
-  let ornamentStep = ENGRAVE.ornamentStep
+  const topPitch = toPitch(elemTopStep)
+  let closeY: number | undefined
+  for (const name of names) {
+    if (strict && STRICT_UNDRAWN.has(name)) continue
+    if (DECORATIONS[name]?.place !== 'articulation') continue
+    closeY =
+      closeY === undefined
+        ? artAbove
+          ? topPitch + 2
+          : toPitch(elemBottomStep) - 2
+        : artAbove
+          ? closeY + 2
+          : closeY - 2
+    if (name === 'accent') closeY += artAbove ? 1 : -1
+    else if (ON_STAVE_LINE.has(closeY)) closeY += artAbove ? 1 : -1
+    if (topPitch > 9) closeY += 1
+    const spec = DECORATIONS[name]
+    if (spec === undefined) continue
+    const glyph = artAbove ? spec.above : spec.below
+    const y = stepToY(toStep(closeY))
+    // A CLOSE decoration is given no `thickness`, so its declared box is a POINT at its
+    // own pitch — `new RelativeElement(symbol, deltaX, width, yPos)` with no options
+    // (`decoration.js:47`). Probed: abcjs's `scripts.sforzato` reports `top === pitch`.
+    out.push({
+      name: glyph,
+      x: headX + headWidth / 2 - table.width(glyph) / 2,
+      y,
+      role: 'decoration',
+      reserve: [y, y],
+    })
+  }
+
+  let above = Math.max(closeY ?? topPitch, ENGRAVE.decorationMinTop)
 
   for (const name of names) {
     if (strict && STRICT_UNDRAWN.has(name)) continue
     const spec = DECORATIONS[name]
     if (spec === undefined) continue // unmapped — counted by the test, never guessed at
+    if (spec.place === 'articulation') continue // already placed, above
 
-    const glyph = spec.place === 'articulation' ? (artAbove ? spec.above : spec.below) : spec.above
-    const centre = headX + headWidth / 2 - glyphsFor(strict).width(glyph) / 2
+    const glyph = spec.above
+    const centre = headX + headWidth / 2 - table.width(glyph) / 2
 
-    if (spec.place === 'articulation') {
-      out.push({ name: glyph, x: centre, y: stepToY(artStep), role: 'decoration' })
-      artStep += artAbove ? 2 : -2
-    } else if (spec.place === 'ornament') {
-      out.push({ name: glyph, x: centre, y: stepToY(ornamentStep), role: 'decoration' })
-      ornamentStep += 2
+    if (spec.place === 'ornament') {
+      const height = heightInPitches(glyph) + ENGRAVE.decorationPadding
+      const y = stepToY(toStep(above + height / 2))
+      // …and a STACKED one is given `thickness: symbolHeightInPitches(symbol)`
+      // (`decoration.js:163`), so it reserves `pitch ± thickness / 2` — its DECLARED box,
+      // centred on where it sits. Its ink box is not centred on the glyph origin at all:
+      // `scripts.trill` paints 2.09 spaces above its origin and 0.04 below, so reserving
+      // the outline put `multi-voice-triplet-brackets` 1.31 pitch high on the staff whose
+      // only ornament is a `T`.
+      const half = (table.get(glyph)?.declaredHeight ?? 0) / 2
+      out.push({ name: glyph, x: centre, y, role: 'decoration', reserve: [y - half, y + half] })
+      above += height
     } else if (spec.place === 'stem') {
       // Centred on the stem's midpoint. An arpeggio instead sits just LEFT of the head,
       // which is where a rolled chord is read from.

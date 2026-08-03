@@ -131,7 +131,7 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     'brother-john-inline-voices': { heads: 64, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'center-text': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'chord-grid': { heads: 16, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
-    'frere-jacques': { heads: 45, dy: 14.34, dx: 22.15, oy: -5.4, ox: -3.6 },
+    'frere-jacques': { heads: 45, dy: 6.59, dx: 22.15, oy: -2.65, ox: -3.6 },
     'full-song-template': { heads: 20, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'happy-birthday': { heads: 25, dy: 0.0, dx: 3.85, oy: 0.0, ox: -0.49 },
     'little swallow': { heads: 89, dy: 1.92, dx: 23.97, oy: -0.58, ox: -5.7 },

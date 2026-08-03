@@ -42,6 +42,14 @@ export interface ResolvedGlyph {
   /** Ink box top relative to the draw origin, STAFF SPACES — negative is above. */
   readonly y: number
   /**
+   * The height abcjs DECLARES for this glyph, staff spaces — its published `h`, which is
+   * what `symbolHeightInPitches` divides by `STEP` and what every reserve and decoration
+   * stack is measured in. NOT the derived ink box: the two differ (`noteheads.quarter`
+   * publishes 8.094 against an ink box of 8.13), and abcjs never consults the ink box.
+   * Bravura has no published figure, so its ink height stands in.
+   */
+  readonly declaredHeight: number
+  /**
    * How many units of `path` make one staff space — 1 for Bravura, 7.75 for abcjs.
    *
    * The emitter multiplies by its reciprocal. Carried rather than baked so the path data
@@ -70,6 +78,7 @@ const bravuraEntry = (name: GlyphName): ResolvedGlyph | undefined => {
     width: glyph.width,
     height: glyph.height,
     y: glyph.y,
+    declaredHeight: glyph.height,
     unitsPerSpace: 1,
   }
 }
@@ -103,6 +112,7 @@ const ABCJS: GlyphTable = {
       // offset, and a glyph cannot be placed vertically without one. See the generator.
       height: glyph.boxHeight / ABCJS_STAFF_SPACE,
       y: glyph.y / ABCJS_STAFF_SPACE,
+      declaredHeight: glyph.h / ABCJS_STAFF_SPACE,
       unitsPerSpace: ABCJS_STAFF_SPACE,
     }
   },

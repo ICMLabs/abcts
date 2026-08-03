@@ -1203,12 +1203,12 @@ system 0 width=90.323 originY=0.000
       glyph timeSig4 6.329,1.000
     note@-6 x=9.141 w=3.871
       glyph noteheadBlack 9.141,3.000
-      glyph articStaccatoBelow 9.539,4.000
+      glyph articStaccatoBelow 9.539,4.522
       line  8.741,3.000 -> 10.807,3.000 t=0.160
       line  10.321,2.832 -> 10.321,-1.000 t=0.120
     note@-6 x=12.199 w=3.871
       glyph noteheadBlack 12.199,3.000
-      glyph articStaccatoBelow 12.596,4.000
+      glyph articStaccatoBelow 12.596,4.522
       line  11.799,3.000 -> 13.865,3.000 t=0.160
       line  13.379,2.832 -> 13.379,-1.000 t=0.120
     note@-5 x=15.256 w=5.474
@@ -1219,11 +1219,11 @@ system 0 width=90.323 originY=0.000
       line  20.760,2.332 -> 20.760,-1.000 t=0.120
     note@-4 x=23.903 w=3.871
       glyph noteheadBlack 23.903,2.000
-      glyph articStaccatoBelow 24.300,3.000
+      glyph articStaccatoBelow 24.300,3.522
       line  25.083,1.832 -> 25.083,-2.000 t=0.120
     note@-4 x=26.961 w=3.871
       glyph noteheadBlack 26.961,2.000
-      glyph articStaccatoBelow 27.358,3.000
+      glyph articStaccatoBelow 27.358,3.522
       line  28.141,1.832 -> 28.141,-2.000 t=0.120
     bar x=30.018 w=0.160
       line  30.098,-2.000 -> 30.098,2.000 t=0.160
@@ -1277,8 +1277,8 @@ system 0 width=90.323 originY=0.000
       glyph restHalf 82.143,0.000
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 1 width=90.323 originY=22.590
-  staff 0 originY=4.476
+system 1 width=90.323 originY=22.840
+  staff 0 originY=4.226
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -1288,7 +1288,7 @@ system 1 width=90.323 originY=22.590
       glyph gClef 2.581,1.000
     note@1 x=6.329 w=7.742
       glyph noteheadHalf 6.329,-0.500
-      glyph ornamentTremblement 4.951,-3.500
+      glyph ornamentTremblement 4.951,-3.738
       line  6.329,-0.332 -> 6.329,3.000 t=0.120
     note@1 x=20.947 w=5.474
       glyph noteheadBlack 19.657,-1.000 scale=0.600

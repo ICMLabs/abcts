@@ -1,5 +1,5 @@
 tune 0
-bounds  width=90.574 height=785.305 top=-1.935
+bounds  width=90.574 height=785.259 top=-1.935
 systems 23
 system 0 width=90.323 originY=0.000
   connector brace -0.920,19.152 scale=4.163
@@ -258,7 +258,7 @@ system 0 width=90.323 originY=0.000
       glyph noteheadBlack 78.989,5.500
       glyph noteheadBlack 78.989,2.000
       glyph flag8thDown 78.989,9.000
-      glyph articMarcatoAbove 79.095,-3.000
+      glyph articMarcatoAbove 79.095,0.478
       line  78.589,3.000 -> 80.655,3.000 t=0.160
       line  78.589,4.000 -> 80.655,4.000 t=0.160
       line  78.589,5.000 -> 80.655,5.000 t=0.160
@@ -6122,12 +6122,12 @@ system 17 width=90.342 originY=577.817
       glyph noteheadBlack 31.974,-0.500
       glyph noteheadBlack 31.974,-1.500
       glyph noteheadBlack 31.974,-3.000
-      glyph articStaccatoBelow 32.371,3.000
+      glyph articStaccatoBelow 32.371,1.522
       line  31.574,-3.000 -> 33.639,-3.000 t=0.160
       line  33.154,0.332 -> 33.154,-8.000 t=0.120
     note@3 x=35.478 w=3.871
       glyph noteheadBlack 35.478,-1.500
-      glyph ornamentTrill 34.909,-3.500
+      glyph ornamentTrill 34.909,-6.314
       line  36.658,-1.668 -> 36.658,-8.352 t=0.120
     note@10 x=39.368 w=3.871
       glyph noteheadBlack 36.787,-1.000 scale=0.600
@@ -6165,7 +6165,7 @@ system 17 width=90.342 originY=577.817
       glyph noteheadBlack 53.060,-1.500
       glyph noteheadBlack 53.060,-3.000
       glyph flag8thUp 54.240,-6.500
-      glyph articStaccatoBelow 53.457,3.000
+      glyph articStaccatoBelow 53.457,1.522
       line  52.660,-3.000 -> 54.726,-3.000 t=0.160
       line  54.240,0.332 -> 54.240,-6.500 t=0.120
     rest x=56.565 w=3.871
@@ -6397,7 +6397,7 @@ system 17 width=90.342 originY=577.817
     bar x=88.277 w=0.160
       line  88.357,-2.000 -> 88.357,2.000 t=0.160
 system 18 width=90.535 originY=615.323
-  connector brace -0.920,11.678 scale=4.532
+  connector brace -0.920,11.678 scale=4.520
   staff 0 originY=13.678
     staffline 0.000,2.000 -> 90.535,2.000 t=0.130
     staffline 0.000,1.000 -> 90.535,1.000 t=0.130
@@ -6599,7 +6599,7 @@ system 18 width=90.535 originY=615.323
     rest x=72.040 w=7.742
     bar x=88.470 w=0.160
       line  88.550,-2.000 -> 88.550,2.000 t=0.160
-  staff 1 originY=27.751
+  staff 1 originY=27.705
     staffline 0.000,2.000 -> 90.535,2.000 t=0.130
     staffline 0.000,1.000 -> 90.535,1.000 t=0.130
     staffline 0.000,0.000 -> 90.535,0.000 t=0.130
@@ -6618,7 +6618,7 @@ system 18 width=90.535 originY=615.323
     note@-9,-2 x=17.231 w=5.474
       glyph noteheadBlack 17.231,4.500
       glyph noteheadBlack 17.231,1.000
-      glyph articMarcatoAbove 17.337,-3.000
+      glyph articMarcatoAbove 17.337,-0.522
       line  16.831,3.000 -> 18.896,3.000 t=0.160
       line  16.831,4.000 -> 18.896,4.000 t=0.160
       line  17.231,1.168 -> 17.231,8.000 t=0.120
@@ -6633,7 +6633,7 @@ system 18 width=90.535 originY=615.323
     note@-9,-2 x=54.311 w=5.474
       glyph noteheadBlack 54.311,4.500
       glyph noteheadBlack 54.311,1.000
-      glyph articMarcatoAbove 54.417,-3.000
+      glyph articMarcatoAbove 54.417,-0.522
       line  53.911,3.000 -> 55.977,3.000 t=0.160
       line  53.911,4.000 -> 55.977,4.000 t=0.160
       line  54.311,1.168 -> 54.311,8.000 t=0.120
@@ -6693,7 +6693,7 @@ system 18 width=90.535 originY=615.323
     rest x=72.040 w=7.742
     bar x=88.470 w=0.160
       line  88.550,-2.000 -> 88.550,2.000 t=0.160
-system 19 width=90.418 originY=652.337
+system 19 width=90.418 originY=652.291
   connector brace -0.920,8.221 scale=4.163
   staff 0 originY=10.221
     staffline 0.000,2.000 -> 90.418,2.000 t=0.130
@@ -7084,7 +7084,7 @@ system 19 width=90.418 originY=652.337
     rest x=72.507 w=7.742
     bar x=88.354 w=0.160
       line  88.434,-2.000 -> 88.434,2.000 t=0.160
-system 20 width=90.411 originY=684.410
+system 20 width=90.411 originY=684.364
   connector brace -0.920,8.500 scale=4.163
   staff 0 originY=10.500
     staffline 0.000,2.000 -> 90.411,2.000 t=0.130
@@ -7450,7 +7450,7 @@ system 20 width=90.411 originY=684.410
     rest x=73.180 w=7.742
     bar x=88.346 w=0.160
       line  88.426,-2.000 -> 88.426,2.000 t=0.160
-system 21 width=90.450 originY=716.773
+system 21 width=90.450 originY=716.727
   connector brace -0.920,8.222 scale=4.163
   staff 0 originY=10.222
     staffline 0.000,2.000 -> 90.450,2.000 t=0.130
@@ -7842,7 +7842,7 @@ system 21 width=90.450 originY=716.773
     rest x=70.892 w=7.742
     bar x=88.386 w=0.160
       line  88.466,-2.000 -> 88.466,2.000 t=0.160
-system 22 width=90.323 originY=749.332
+system 22 width=90.323 originY=749.286
   connector brace -0.920,7.750 scale=4.163
   staff 0 originY=9.750
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
@@ -8060,13 +8060,13 @@ system 22 width=90.323 originY=749.332
     note@-2,5 x=71.490 w=3.871
       glyph noteheadBlack 71.490,1.000
       glyph noteheadBlack 71.490,-2.500
-      glyph articAccentAbove 71.209,-3.500
+      glyph articAccentAbove 71.209,-4.522
       line  71.490,-2.332 -> 71.490,4.750 t=0.120
     note@-6,1 x=76.778 w=3.871
       glyph noteheadBlack 76.778,3.000
       glyph noteheadBlack 76.778,-0.500
       glyph flag8thDown 76.778,6.500
-      glyph articAccentAbove 76.497,-3.000
+      glyph articAccentAbove 76.497,-2.022
       line  76.378,3.000 -> 78.444,3.000 t=0.160
       line  76.778,-0.332 -> 76.778,6.500 t=0.120
     rest x=82.067 w=3.871

@@ -238,8 +238,8 @@ system 0 width=90.323 originY=0.000
     rest x=74.773 w=10.949
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 1 width=90.323 originY=44.566
-  staff 0 originY=6.000
+system 1 width=90.323 originY=44.359
+  staff 0 originY=6.207
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -297,7 +297,7 @@ system 1 width=90.323 originY=44.566
     note@2 x=79.587 w=9.482
       glyph noteheadHalf 79.587,-1.000
       glyph augmentationDot 81.275,-1.500
-      glyph fermataAbove 78.903,-3.500
+      glyph fermataAbove 78.903,-5.478
       line  80.767,-1.168 -> 80.767,-4.500 t=0.120
     bar x=87.871 w=0.720
       line  87.951,-2.000 -> 87.951,2.000 t=0.160
@@ -331,12 +331,12 @@ system 1 width=90.323 originY=44.566
     note@-1 x=79.587 w=9.482
       glyph noteheadHalf 79.587,0.500
       glyph augmentationDot 81.275,0.500
-      glyph fermataAbove 78.903,-3.500
+      glyph fermataAbove 78.903,-3.978
       line  79.587,0.668 -> 79.587,4.000 t=0.120
     bar x=87.871 w=0.720
       line  87.951,-2.000 -> 87.951,2.000 t=0.160
       line  88.511,-2.000 -> 88.511,2.000 t=0.160
-  staff 1 originY=26.500
+  staff 1 originY=26.707
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -439,7 +439,7 @@ system 1 width=90.323 originY=44.566
       glyph accidentalSharp 78.373,-8.000
       glyph noteheadHalf 79.587,-8.000
       glyph augmentationDot 81.275,-8.500
-      glyph fermataAbove 78.903,-3.500
+      glyph fermataAbove 78.903,-12.478
       line  79.187,-3.000 -> 81.325,-3.000 t=0.160
       line  79.187,-4.000 -> 81.325,-4.000 t=0.160
       line  79.187,-5.000 -> 81.325,-5.000 t=0.160
@@ -519,7 +519,7 @@ system 1 width=90.323 originY=44.566
     note@14 x=79.587 w=9.482
       glyph noteheadHalf 79.587,-7.000
       glyph augmentationDot 81.275,-7.500
-      glyph fermataAbove 78.903,-3.500
+      glyph fermataAbove 78.903,-8.501
       line  79.187,-3.000 -> 81.325,-3.000 t=0.160
       line  79.187,-4.000 -> 81.325,-4.000 t=0.160
       line  79.187,-5.000 -> 81.325,-5.000 t=0.160

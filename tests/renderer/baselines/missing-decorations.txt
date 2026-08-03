@@ -47,18 +47,18 @@ system 0 width=57.324 originY=0.000
       line  54.436,-2.000 -> 54.436,2.000 t=0.160
       line  55.166,-2.000 -> 55.166,2.000 t=0.500
 tune 1
-bounds  width=57.324 height=23.614 top=-1.935
+bounds  width=57.324 height=23.401 top=-1.935
 systems 1
 system 0 width=57.324 originY=0.000
-  staff 0 originY=15.743
+  staff 0 originY=15.530
     staffline 0.000,2.000 -> 57.324,2.000 t=0.130
     staffline 0.000,1.000 -> 57.324,1.000 t=0.130
     staffline 0.000,0.000 -> 57.324,0.000 t=0.130
     staffline 0.000,-1.000 -> 57.324,-1.000 t=0.130
     staffline 0.000,-2.000 -> 57.324,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  16.419,-11.283 size=3.484 bold "S-missing-2 trillh"
-      text  22.704,-7.082 size=2.452 italic "Test Fixture"
+      text  16.419,-11.071 size=3.484 bold "S-missing-2 trillh"
+      text  22.704,-6.869 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -66,7 +66,7 @@ system 0 width=57.324 originY=0.000
       glyph timeSig4 6.329,1.000
     note@-6 x=9.141 w=5.474
       glyph noteheadBlack 9.141,3.000
-      glyph ornamentTrill 8.573,-3.500
+      glyph ornamentTrill 8.573,-4.314
       line  8.741,3.000 -> 10.807,3.000 t=0.160
       line  10.321,2.832 -> 10.321,-0.500 t=0.120
     note@-5 x=14.616 w=5.474
@@ -74,7 +74,7 @@ system 0 width=57.324 originY=0.000
       line  15.796,2.332 -> 15.796,-1.000 t=0.120
     note@-4 x=20.090 w=5.474
       glyph noteheadBlack 20.090,2.000
-      glyph ornamentTrill 19.521,-3.500
+      glyph ornamentTrill 19.521,-4.314
       line  21.270,1.832 -> 21.270,-1.500 t=0.120
     note@-3 x=25.565 w=5.474
       glyph noteheadBlack 25.565,1.500
@@ -92,7 +92,7 @@ system 0 width=57.324 originY=0.000
       line  43.407,0.168 -> 43.407,3.500 t=0.120
     note@1 x=48.882 w=5.474
       glyph noteheadBlack 48.882,-0.500
-      glyph ornamentTrill 48.313,-3.500
+      glyph ornamentTrill 48.313,-4.314
       line  48.882,-0.332 -> 48.882,3.000 t=0.120
     bar x=54.356 w=1.060
       line  54.436,-2.000 -> 54.436,2.000 t=0.160
@@ -225,7 +225,7 @@ system 0 width=90.323 originY=0.000
       glyph timeSig4 6.329,1.000
     note@-6 x=9.141 w=5.474
       glyph noteheadBlack 9.141,3.000
-      glyph segno 8.764,-3.500
+      glyph segno 8.764,-4.702
       line  8.741,3.000 -> 10.807,3.000 t=0.160
       line  10.321,2.832 -> 10.321,-0.500 t=0.120
     note@-5 x=18.854 w=5.474
@@ -265,7 +265,7 @@ system 1 width=90.323 originY=22.066
       glyph gClef 2.581,1.000
     note@-6 x=6.329 w=5.474
       glyph noteheadBlack 6.329,3.000
-      glyph coda 5.885,-3.500
+      glyph coda 5.885,-4.609
       line  5.929,3.000 -> 7.995,3.000 t=0.160
       line  7.509,2.832 -> 7.509,-0.500 t=0.120
     note@-5 x=16.393 w=5.474
@@ -359,7 +359,7 @@ system 0 width=58.345 originY=0.000
       line  10.321,2.832 -> 10.321,-0.500 t=0.120
     note@-5 x=14.616 w=5.474
       glyph noteheadBlack 14.616,2.500
-      glyph ornamentTrill 14.047,-3.500
+      glyph ornamentTrill 14.047,-4.314
       line  15.796,2.332 -> 15.796,-1.000 t=0.120
     note@-4 x=20.090 w=5.474
       glyph accidentalSharp 18.876,2.000
@@ -381,7 +381,7 @@ system 0 width=58.345 originY=0.000
       line  40.134,0.332 -> 40.134,-3.000 t=0.120
     note@0 x=44.428 w=5.474
       glyph noteheadBlack 44.428,0.000
-      glyph ornamentTrill 43.859,-3.500
+      glyph ornamentTrill 43.859,-4.314
       line  44.428,0.168 -> 44.428,3.500 t=0.120
     note@1 x=49.903 w=5.474
       glyph noteheadBlack 49.903,-0.500
