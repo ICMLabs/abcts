@@ -3114,21 +3114,26 @@ function layoutTuplets(
   /** abcjs's declared `[top, bottom]` per tuplet, in our y — see `reserves` below. */
   reserves: { top: number; bottom: number }[]
 } {
-  /** Full vertical ink of a member, stems and beams included. */
+  /**
+   * A member's extent AS abcjs DECLARES IT — not as it paints.
+   *
+   * abcjs's `anchor1.parent.top` is the AbsoluteElement's top, a max over its children's
+   * DECLARED tops, and a notehead's is its PITCH — the centre of the head, with no ink
+   * around it. A stem contributes its endpoint. Measuring the outline instead runs every
+   * head 1 pitch high (half a space), which is enough to fire the high-middle-note
+   * override in `layoutTriplet` where abcjs's does not: on
+   * `multi-voice-triplet-brackets` that turned a bracket at 18/15 into one at 19/19.
+   *
+   * `NoteAnchor` pads the head box by half a space on each side for curve endpoints, so
+   * that padding comes back off here.
+   */
   const extentOf = (anchor: NoteAnchor): { top: number; bottom: number } => {
     const el = elements[anchor.element]
-    if (el === undefined) return { top: anchor.top, bottom: anchor.bottom }
-    let top = anchor.top
-    let bottom = anchor.bottom
-    for (const line of el.lines) {
+    let top = anchor.top + ENGRAVE.spacePerStep
+    let bottom = anchor.bottom - ENGRAVE.spacePerStep
+    for (const line of el?.lines ?? []) {
       top = Math.min(top, line.y1, line.y2)
       bottom = Math.max(bottom, line.y1, line.y2)
-    }
-    for (const g of el.glyphs) {
-      const glyph = GLYPHS[g.name]
-      const scale = g.scale ?? 1
-      top = Math.min(top, g.y + glyph.y * scale)
-      bottom = Math.max(bottom, g.y + (glyph.y + glyph.height) * scale)
     }
     return { top, bottom }
   }
@@ -3186,18 +3191,85 @@ function layoutTuplets(
       elements[first.element]?.lines.some((l) => l.role === 'stem' && l.beamed === true) ?? false
     if (!firstBeamed || first.stemUp) reservesAbove = true
 
-    // Clear of the furthest extent any member reaches, so the bracket never collides.
-    const extents = members.map(extentOf)
-    const edge = up
-      ? Math.min(...extents.map((e) => e.top))
-      : Math.max(...extents.map((e) => e.bottom))
-    const y = edge + direction * ENGRAVE.tupletGap
-
     // A tuplet entirely inside ONE beam group needs no bracket: the beam already says
-    // where it starts and stops.
+    // where it starts and stops. abcjs decides the same way and then takes a COMPLETELY
+    // DIFFERENT y for it, so this has to come first.
     const beamed =
       members.every((m) => m.event.type !== 'rest' && m.event.beamGroup !== null) &&
       new Set(members.map((m) => (m.event.type === 'rest' ? null : m.event.beamGroup))).size === 1
+
+    // WHERE THE BRACKET GOES IS abcjs'S ARITHMETIC, per END NOTE and in PITCH
+    // (`layout/triplet.js:29-64`):
+    //
+    //     up:   note = max(anchor.parent.top, 9) + 4      // never below the 'a' line
+    //     down: note = min(anchor.parent.bottom, 0) - 2   // never above the 'C' line
+    //
+    // taken at the FIRST and LAST member separately, so the bracket may SLOPE; then a
+    // really high (or low) middle note flattens it clear of itself. We cleared the
+    // furthest extent of ANY member by one flat gap, which is a different line whenever
+    // the ends differ, and 1.4 to 2.0 pitch out on `multi-voice-triplet-brackets`.
+    const extents = members.map(extentOf)
+    /** abcjs pitch from our y in staff spaces — pitch 0 is middle C, 2 the bottom line. */
+    const pitchOf = (y: number): number => 6 - 2 * y
+    const yOfPitch = (pitch: number): number => stepToY(pitch - 6)
+    const endPitch = (e: { top: number; bottom: number }): number =>
+      up ? Math.max(pitchOf(e.top), 9) + 4 : Math.min(pitchOf(e.bottom), 0) - 2
+    const firstExtent = extents[0]
+    const lastExtent = extents[extents.length - 1]
+    if (firstExtent === undefined || lastExtent === undefined) continue
+    /** A BEAMED tuplet has no bracket: its number rides the BEAM, 3 pitches clear above
+     * it or 2 below (`layout/triplet.js:15-21`). Nothing of the end-note arithmetic below
+     * applies — using it put `multi-voice-triplet-brackets` 24 pitch out. */
+    const beamY = (): number => {
+      const tipOf = (a: NoteAnchor): number | null => {
+        const stem = elements[a.element]?.lines.find((l) => l.role === 'stem')
+        return stem === undefined
+          ? null
+          : up
+            ? Math.min(stem.y1, stem.y2)
+            : Math.max(stem.y1, stem.y2)
+      }
+      const a = tipOf(first)
+      const b = tipOf(last)
+      const mid = a === null || b === null ? (a ?? b ?? 0) : (a + b) / 2
+      return mid + (up ? -3 : 2) * ENGRAVE.spacePerStep
+    }
+    let startNote = endPitch(firstExtent)
+    let endNote = endPitch(lastExtent)
+    // A rest at either end makes the bracket horizontal.
+    if (first.event.type === 'rest' && last.event.type !== 'rest') startNote = endNote
+    else if (last.event.type === 'rest' && first.event.type !== 'rest') endNote = startNote
+    // THE MIDDLE NOTES ARE MEASURED AS NOTEHEADS, THE ENDS AS WHOLE ELEMENTS.
+    //
+    // `middleElems` holds RELATIVE elements — abcjs pushes the notehead, which is why the
+    // down branch can ask for its `.height` (`layout/triplet.js:56`, a RelativeElement
+    // property). So a middle note contributes its HEAD's box and not its stem tip, where
+    // `anchor1.parent.top` at the ends is the whole note. Probed on the same triplet:
+    // abcjs reads a middle of 6.04 where our stem-tip reading said 12.00, and the six
+    // pitches of difference fired the flattening override abcjs never reaches.
+    const middle = members.slice(1, -1).map((m) => ({ top: m.top, bottom: m.bottom }))
+    if (middle.length > 0) {
+      if (up) {
+        const highest = Math.max(0, ...middle.map((e) => pitchOf(e.top))) + 4
+        if (highest > startNote || highest > endNote) {
+          startNote = highest + 3
+          endNote = highest + 3
+        }
+      } else {
+        // ponytail: abcjs subtracts the RelativeElement's `height` here as well
+        // (`min(bottom - height)`); ours has no per-element height and no corpus fixture
+        // has a low middle note that binds. Add it with the element height when one does.
+        const lowest = Math.min(0, ...middle.map((e) => pitchOf(e.bottom))) - 3
+        if (lowest < startNote && lowest < endNote) {
+          startNote = Math.min(lowest, startNote) - 2
+          endNote = Math.min(lowest, endNote) - 2
+        }
+      }
+    }
+    const yStart = beamed ? beamY() : yOfPitch(startNote)
+    const yEnd = beamed ? beamY() : yOfPitch(endNote)
+    /** abcjs's `yTextPos` — the bracket's midpoint, and what its declared box hangs off. */
+    const y = beamed ? beamY() : yOfPitch(startNote + (endNote - startNote) / 2)
 
     const label = String(number)
     const size = ENGRAVE.tupletTextSize
@@ -3224,10 +3296,11 @@ function layoutTuplets(
     const thickness = ENGRAVING_DEFAULTS.slurEndpointThickness
     const hook = ENGRAVE.tupletHook * -direction
 
-    lines.push({ x1: first.left, y1: y, x2: centre - gap, y2: y, thickness })
-    lines.push({ x1: centre + gap, y1: y, x2: last.right, y2: y, thickness })
-    lines.push({ x1: first.left, y1: y, x2: first.left, y2: y - hook, thickness })
-    lines.push({ x1: last.right, y1: y, x2: last.right, y2: y - hook, thickness })
+    // The rule runs from one end note's pitch to the other's, so it slopes with them.
+    lines.push({ x1: first.left, y1: yStart, x2: centre - gap, y2: y, thickness })
+    lines.push({ x1: centre + gap, y1: y, x2: last.right, y2: yEnd, thickness })
+    lines.push({ x1: first.left, y1: yStart, x2: first.left, y2: yStart - hook, thickness })
+    lines.push({ x1: last.right, y1: yEnd, x2: last.right, y2: yEnd - hook, thickness })
   }
 
   return { lines, texts, reservesAbove, reserves }
@@ -4888,8 +4961,21 @@ function topTextBlock(
 
   // `%%center` lines standing before the music close the block. Centred like the title,
   // but on the STAFF width rather than the paper width — which is the width passed here.
+  //
+  // TWO THINGS DIFFER FROM A TITLE ROW, and both are abcjs's:
+  //
+  // 1. NO LEADING GAP HERE. abcjs's own gap before a `%%center` is `spacing.music`, spent
+  //    by `draw.js:17` BEFORE the row and never again after it — the centered text ends
+  //    exactly where the staff group begins. We place the block `musicSpace` above the
+  //    music, so that same 7.56 is already accounted for on the other side; adding one
+  //    here too spent it twice.
+  // 2. NO LINE-SKIP. `FreeText` pushes `{ move: size.height }` bare
+  //    (`elements/free-text.js:38`), where `addTextIf` — the title, subtitle and composer
+  //    path — pushes `Math.round(size.height * 1.1)` (`add-text-if.js:26-27`). At the
+  //    21px `textfont` that is 23.27 against our 26.
+  //
+  // Together they put `center-text` 10.32px low.
   for (const line of textAbove) {
-    y += ENGRAVE.freeTextSpace
     texts.push({
       text: line,
       role: 'title',
@@ -4900,7 +4986,7 @@ function topTextBlock(
       italic: false,
       anchor: 'middle',
     })
-    advance(ENGRAVE.freeTextSize)
+    y += ENGRAVE.freeTextSize * ENGRAVE.textHeightRatio
   }
 
   return { texts, height: y }

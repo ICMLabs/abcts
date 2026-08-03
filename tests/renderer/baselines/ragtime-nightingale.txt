@@ -1,5 +1,5 @@
 tune 0
-bounds  width=90.535 height=782.384 top=-1.935
+bounds  width=90.535 height=782.831 top=-1.935
 systems 23
 system 0 width=90.323 originY=0.000
   connector brace -0.920,19.152 scale=4.163
@@ -4621,8 +4621,8 @@ system 12 width=90.344 originY=413.538
     bar x=88.279 w=0.160
       line  88.359,-2.000 -> 88.359,2.000 t=0.160
 system 13 width=90.517 originY=440.640
-  connector brace -0.920,11.200 scale=4.269
-  staff 0 originY=13.200
+  connector brace -0.920,11.500 scale=4.269
+  staff 0 originY=13.500
     staffline 0.000,2.000 -> 90.517,2.000 t=0.130
     staffline 0.000,1.000 -> 90.517,1.000 t=0.130
     staffline 0.000,0.000 -> 90.517,0.000 t=0.130
@@ -4646,8 +4646,8 @@ system 13 width=90.517 originY=440.640
     beam   76.718,0.916 -> 77.818,1.000 t=0.500
     beam   80.393,1.250 -> 86.499,0.250 t=0.500
     beam   83.227,0.036 -> 86.499,-0.500 t=0.500
-    tuplettext 41.534,-10.340 size=1.400 "3"
-    tuplettext 85.103,3.246 size=1.400 "3"
+    tuplettext 41.534,-10.640 size=1.400 "3"
+    tuplettext 85.103,2.778 size=1.400 "3"
     tie  21.090,0.300 -> 20.619,0.300 bulge=0.500
     tie  32.638,1.800 -> 36.525,1.800 bulge=0.700
     tie  80.564,-3.700 -> 80.093,-3.700 bulge=0.500
@@ -4907,7 +4907,7 @@ system 13 width=90.517 originY=440.640
       line  86.499,-7.332 -> 86.499,0.250 t=0.120
     bar x=88.453 w=0.160
       line  88.533,-2.000 -> 88.533,2.000 t=0.160
-  staff 1 originY=26.226
+  staff 1 originY=26.526
     staffline 0.000,2.000 -> 90.517,2.000 t=0.130
     staffline 0.000,1.000 -> 90.517,1.000 t=0.130
     staffline 0.000,0.000 -> 90.517,0.000 t=0.130
@@ -5081,7 +5081,7 @@ system 13 width=90.517 originY=440.640
     rest x=71.236 w=7.742
     bar x=88.453 w=0.160
       line  88.533,-2.000 -> 88.533,2.000 t=0.160
-system 14 width=90.445 originY=474.367
+system 14 width=90.445 originY=474.667
   connector brace -0.920,11.000 scale=4.163
   staff 0 originY=13.000
     staffline 0.000,2.000 -> 90.445,2.000 t=0.130
@@ -5113,7 +5113,7 @@ system 14 width=90.445 originY=474.367
     beam   70.607,3.250 -> 86.159,3.250 t=0.500
     beam   70.607,2.500 -> 79.494,2.500 t=0.500
     beam   85.059,2.500 -> 86.159,2.500 t=0.500
-    tuplettext 46.164,2.210 size=1.400 "3"
+    tuplettext 46.164,2.010 size=1.400 "3"
     tie  41.139,-7.200 -> 40.668,-7.200 bulge=0.500
     tie  39.873,-6.800 -> 40.668,-6.800 bulge=-0.500
     tie  78.752,-5.300 -> 79.194,-5.300 bulge=-0.500
@@ -5604,7 +5604,7 @@ system 14 width=90.445 originY=474.367
     rest x=70.607 w=7.742
     bar x=88.381 w=0.160
       line  88.461,-2.000 -> 88.461,2.000 t=0.160
-system 15 width=90.368 originY=511.469
+system 15 width=90.368 originY=511.769
   connector brace -0.920,8.500 scale=4.163
   staff 0 originY=10.500
     staffline 0.000,2.000 -> 90.368,2.000 t=0.130
@@ -5639,9 +5639,9 @@ system 15 width=90.368 originY=511.469
     beam   76.082,4.425 -> 77.182,4.500 t=0.500
     beam   82.817,-0.250 -> 86.349,-0.250 t=0.500
     beam   82.817,-1.000 -> 86.349,-1.000 t=0.500
-    tuplettext 36.917,-5.840 size=1.400 "5"
-    tuplettext 46.242,-6.840 size=1.400 "3"
-    tuplettext 84.823,2.210 size=1.400 "3"
+    tuplettext 36.917,-6.140 size=1.400 "5"
+    tuplettext 46.242,-7.140 size=1.400 "3"
+    tuplettext 84.823,2.010 size=1.400 "3"
     spanner 33.547,4.980 -> 42.356,5.480 t=0.130
     spanner 33.547,5.980 -> 42.356,5.480 t=0.130
     tie  79.928,-0.200 -> 79.457,-0.200 bulge=0.500
@@ -5993,7 +5993,7 @@ system 15 width=90.368 originY=511.469
     rest x=69.869 w=7.742
     bar x=88.304 w=0.160
       line  88.384,-2.000 -> 88.384,2.000 t=0.160
-system 16 width=90.368 originY=544.555
+system 16 width=90.368 originY=544.855
   connector brace -0.920,7.500 scale=4.163
   staff 0 originY=9.500
     staffline 0.000,2.000 -> 90.368,2.000 t=0.130
@@ -6027,7 +6027,7 @@ system 16 width=90.368 originY=544.555
     beam   70.400,4.000 -> 71.500,4.082 t=0.500
     beam   76.014,4.418 -> 77.114,4.500 t=0.500
     beam   79.352,4.250 -> 83.827,3.750 t=0.500
-    tuplettext 46.024,5.710 size=1.400 "3"
+    tuplettext 46.024,5.242 size=1.400 "3"
     tie  40.963,-3.700 -> 40.492,-3.700 bulge=0.500
     tie  78.594,-0.200 -> 79.052,-0.200 bulge=0.500
     tie  39.697,-3.300 -> 40.492,-3.300 bulge=-0.500
@@ -6420,9 +6420,9 @@ system 16 width=90.368 originY=544.555
     rest x=70.400 w=7.742
     bar x=88.303 w=0.160
       line  88.383,-2.000 -> 88.383,2.000 t=0.160
-system 17 width=90.342 originY=574.657
-  connector brace -0.920,11.700 scale=5.130
-  staff 0 originY=13.700
+system 17 width=90.342 originY=574.957
+  connector brace -0.920,11.797 scale=5.130
+  staff 0 originY=13.797
     staffline 0.000,2.000 -> 90.342,2.000 t=0.130
     staffline 0.000,1.000 -> 90.342,1.000 t=0.130
     staffline 0.000,0.000 -> 90.342,0.000 t=0.130
@@ -6455,7 +6455,7 @@ system 17 width=90.342 originY=574.657
     voltatext 53.460,-2.700 "2"
     voltatext 32.374,-2.700 "1"
     voltatext 53.460,-2.700 "2"
-    tuplettext 45.136,-10.840 size=1.400 "3"
+    tuplettext 45.136,-10.937 size=1.400 "3"
     tie  21.095,-1.700 -> 21.793,-1.700 bulge=0.500
     tie  21.095,-1.800 -> 21.793,-1.800 bulge=-0.500
     clef x=3.226 w=3.103
@@ -6622,7 +6622,7 @@ system 17 width=90.342 originY=574.657
     rest x=84.773 w=3.871
     bar x=88.277 w=0.160
       line  88.357,-2.000 -> 88.357,2.000 t=0.160
-  staff 1 originY=30.159
+  staff 1 originY=30.256
     staffline 0.000,2.000 -> 90.342,2.000 t=0.130
     staffline 0.000,1.000 -> 90.342,1.000 t=0.130
     staffline 0.000,0.000 -> 90.342,0.000 t=0.130
@@ -6809,9 +6809,9 @@ system 17 width=90.342 originY=574.657
     rest x=74.259 w=7.742
     bar x=88.277 w=0.160
       line  88.357,-2.000 -> 88.357,2.000 t=0.160
-system 18 width=90.535 originY=613.816
-  connector brace -0.920,11.700 scale=4.532
-  staff 0 originY=13.700
+system 18 width=90.535 originY=614.213
+  connector brace -0.920,11.750 scale=4.532
+  staff 0 originY=13.750
     staffline 0.000,2.000 -> 90.535,2.000 t=0.130
     staffline 0.000,1.000 -> 90.535,1.000 t=0.130
     staffline 0.000,0.000 -> 90.535,0.000 t=0.130
@@ -6826,14 +6826,14 @@ system 18 width=90.535 originY=613.816
     beam   62.993,-7.250 -> 68.042,-7.250 t=0.500
     beam   62.993,-6.500 -> 68.042,-6.500 t=0.500
     beam   38.160,2.750 -> 41.731,2.250 t=0.500
-    tupletline 49.334,-8.235 -> 52.647,-8.235 t=0.100
-    tupletline 54.047,-8.235 -> 57.361,-8.235 t=0.100
-    tupletline 49.334,-8.235 -> 49.334,-8.835 t=0.100
-    tupletline 57.361,-8.235 -> 57.361,-8.835 t=0.100
-    tuplettext 23.103,-7.340 size=1.400 "3"
-    tuplettext 34.277,-10.840 size=1.400 "3"
-    tuplettext 44.032,-10.840 size=1.400 "3"
-    tuplettext 52.997,-8.375 size=1.400 "3"
+    tupletline 49.334,-9.000 -> 52.647,-9.000 t=0.100
+    tupletline 54.047,-9.000 -> 57.361,-9.000 t=0.100
+    tupletline 49.334,-9.000 -> 49.334,-9.600 t=0.100
+    tupletline 57.361,-9.000 -> 57.361,-9.600 t=0.100
+    tuplettext 23.103,-7.390 size=1.400 "3"
+    tuplettext 34.277,-10.890 size=1.400 "3"
+    tuplettext 44.032,-10.890 size=1.400 "3"
+    tuplettext 52.997,-9.140 size=1.400 "3"
     clef x=3.226 w=3.103
       glyph gClef 3.871,1.000
     keySignature x=7.762 w=3.129
@@ -7018,7 +7018,7 @@ system 18 width=90.535 originY=613.816
     rest x=72.040 w=7.742
     bar x=88.470 w=0.160
       line  88.550,-2.000 -> 88.550,2.000 t=0.160
-  staff 1 originY=27.772
+  staff 1 originY=27.822
     staffline 0.000,2.000 -> 90.535,2.000 t=0.130
     staffline 0.000,1.000 -> 90.535,1.000 t=0.130
     staffline 0.000,0.000 -> 90.535,0.000 t=0.130
@@ -7124,7 +7124,7 @@ system 18 width=90.535 originY=613.816
     rest x=72.040 w=7.742
     bar x=88.470 w=0.160
       line  88.550,-2.000 -> 88.550,2.000 t=0.160
-system 19 width=90.418 originY=651.572
+system 19 width=90.418 originY=652.019
   connector brace -0.920,7.500 scale=4.163
   staff 0 originY=9.500
     staffline 0.000,2.000 -> 90.418,2.000 t=0.130
@@ -7533,7 +7533,7 @@ system 19 width=90.418 originY=651.572
     rest x=72.507 w=7.742
     bar x=88.354 w=0.160
       line  88.434,-2.000 -> 88.434,2.000 t=0.160
-system 20 width=90.411 originY=683.175
+system 20 width=90.411 originY=683.622
   connector brace -0.920,8.500 scale=4.163
   staff 0 originY=10.500
     staffline 0.000,2.000 -> 90.411,2.000 t=0.130
@@ -7917,7 +7917,7 @@ system 20 width=90.411 originY=683.175
     rest x=73.180 w=7.742
     bar x=88.346 w=0.160
       line  88.426,-2.000 -> 88.426,2.000 t=0.160
-system 21 width=90.450 originY=716.261
+system 21 width=90.450 originY=716.708
   connector brace -0.920,7.500 scale=4.163
   staff 0 originY=9.500
     staffline 0.000,2.000 -> 90.450,2.000 t=0.130
@@ -8327,7 +8327,7 @@ system 21 width=90.450 originY=716.261
     rest x=70.892 w=7.742
     bar x=88.386 w=0.160
       line  88.466,-2.000 -> 88.466,2.000 t=0.160
-system 22 width=90.323 originY=748.847
+system 22 width=90.323 originY=749.294
   connector brace -0.920,7.000 scale=4.163
   staff 0 originY=9.000
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
