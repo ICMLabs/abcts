@@ -434,6 +434,15 @@ export const ENGRAVE = {
    * began at the top text's own ink, so every tune sat 15px higher than abcjs's.
    */
   marginTop: 15 / 7.75,
+  /**
+   * And BELOW everything — abcjs's `padding.bottom`, also 15px on screen, spent in
+   * `(renderer.y + renderer.padding.bottom) * scale` (`draw/set-paper-size.js:3`).
+   *
+   * We had the top and not the bottom, so the page ended flush with the last staff line
+   * and clipped its own stroke: `simple-c` came out 124.085px against abcjs's 139.052,
+   * and every fixture was short by this exact 15.
+   */
+  marginBottom: 15 / 7.75,
   /** Space above the title, a subtitle, and the composer row (`renderer.js:94`). */
   titleSpace: 7.56 / 7.75,
   subtitleSpace: 3.78 / 7.75,
@@ -3431,18 +3440,27 @@ function layoutTuplets(
      * it or 2 below (`layout/triplet.js:15-21`). Nothing of the end-note arithmetic below
      * applies — using it put `multi-voice-triplet-brackets` 24 pitch out. */
     const beamY = (): number => {
-      const tipOf = (a: NoteAnchor): number | null => {
+      const tipOf = (a: NoteAnchor): { x: number; y: number } | null => {
         const stem = elements[a.element]?.lines.find((l) => l.role === 'stem')
-        return stem === undefined
-          ? null
-          : up
-            ? Math.min(stem.y1, stem.y2)
-            : Math.max(stem.y1, stem.y2)
+        if (stem === undefined) return null
+        return { x: stem.x1, y: up ? Math.min(stem.y1, stem.y2) : Math.max(stem.y1, stem.y2) }
       }
       const a = tipOf(first)
       const b = tipOf(last)
-      const mid = a === null || b === null ? (a ?? b ?? 0) : (a + b) / 2
-      return mid + (up ? -3 : 2) * ENGRAVE.spacePerStep
+      if (a === null || b === null) return (a ?? b)?.y ?? 0
+      // THE BEAM IS SAMPLED AT AN x MIDPOINT, NOT AVERAGED OVER ITS ENDS — and the span
+      // it is sampled over is NOT symmetric: `heightAtMidpoint(left, anchor2.x, beam)`
+      // with `left = isAbove(beam) ? anchor1.x + anchor1.w : anchor1.x`
+      // (`layout/triplet.js:15-16`). An ABOVE beam starts measuring from the far side of
+      // the first notehead and stops at the near side of the last, so on a sloped beam
+      // the sample lands off the midpoint of the two stem tips. The two agree on a level
+      // beam, which is why averaging looked right: `multi-voice-rest-collision` is
+      // sloped, and its `yTextPos` came out 16.5 against abcjs's 16.5929.
+      const leftX = up ? first.right : first.left
+      const midX = leftX + (last.left - leftX) / 2
+      const span = b.x - a.x
+      const y = span === 0 ? a.y : a.y + ((b.y - a.y) * (midX - a.x)) / span
+      return y + (up ? -3 : 2) * ENGRAVE.spacePerStep
     }
     let startNote = endPitch(firstExtent)
     let endNote = endPitch(lastExtent)
@@ -4980,6 +4998,10 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
               // rounded line height per row and that trailing space is part of the block.
               const blockBottom = Math.max(...heading.map((el) => el.blockHeight ?? 0))
               const offset = musicTop - ENGRAVE.musicSpace - blockBottom
+              if (PROBE)
+                console.log(
+                  `BLOCK musicTop=${musicTop.toFixed(4)} (pitch ${(6 - 2 * musicTop).toFixed(4)}) blockH=${blockBottom.toFixed(4)} musicSpace=${ENGRAVE.musicSpace} offset=${offset.toFixed(4)}`,
+                )
               return [
                 ...heading.map((el) => ({
                   ...el,
@@ -5085,7 +5107,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     // `moveY(padding.top)` before drawing anything (`draw.js:14`), so the page begins
     // ABOVE the ink — expressed as a negative viewBox top rather than by shifting every
     // system, which would put the same constant in two places.
-    height: Math.max(0, cursor - ENGRAVE.systemGap) + ENGRAVE.marginTop,
+    height: Math.max(0, cursor - ENGRAVE.systemGap) + ENGRAVE.marginTop + ENGRAVE.marginBottom,
     top: -ENGRAVE.marginTop,
   }
 }
@@ -5119,7 +5141,14 @@ export function layoutBook(scores: readonly Score[], options: LayoutOptions = {}
   // abcjs opens with `moveY(padding.top)` before anything is drawn (`draw.js:14`), so
   // the page begins ABOVE the ink. Expressed as a negative viewBox top rather than by
   // shifting every system, which would put the same constant in two places.
-  return { systems, width, height: cursor + ENGRAVE.marginTop, top: -ENGRAVE.marginTop }
+  //
+  // AND IT CLOSES WITH `padding.bottom` — see `ENGRAVE.marginBottom`.
+  return {
+    systems,
+    width,
+    height: cursor + ENGRAVE.marginTop + ENGRAVE.marginBottom,
+    top: -ENGRAVE.marginTop,
+  }
 }
 
 /** A system's full vertical extent, from the top of its first staff's content down. */
@@ -5716,7 +5745,16 @@ function verticalExtent(
         include(Math.min(line.y1, line.y2), low + (line.beamed === true ? 0 : ENGRAVE.spacePerStep))
         continue
       }
-      include(Math.min(line.y1, line.y2) - half, Math.max(line.y1, line.y2) + half)
+      // A LINE RESERVES ITS ENDPOINTS AND NOT ITS PAINTED WIDTH. `RelativeElement` widens
+      // `top`/`bottom` by `thickness / 2` only when a `thickness` is PASSED, and the only
+      // things that pass one are glyphs declaring their own height in pitches — noteheads,
+      // decorations, key and time signatures (`relative-element.js:22-24`). A barline
+      // never does: probed, abcjs's is `bar@2..10`, flush with the staff.
+      //
+      // Ours widened every line by half its stroke, and on a bass-clef staff whose top is
+      // the staff line itself that put the whole drawing 0.62px low — the barline's 0.16
+      // stroke, half of it, reaching 0.16 pitch above the top line.
+      include(Math.min(line.y1, line.y2), Math.max(line.y1, line.y2))
     }
     // No text metrics available, so bound the box by the font size: ascenders reach
     // roughly 0.8 of it above the baseline and descenders 0.25 below.

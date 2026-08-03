@@ -1,5 +1,5 @@
 tune 0
-bounds  width=26.561 height=15.511 top=-1.935
+bounds  width=26.561 height=17.446 top=-1.935
 systems 1
 system 0 width=26.561 originY=0.000
   staff 0 originY=10.075
@@ -18,7 +18,7 @@ system 0 width=26.561 originY=0.000
     note@-2 x=9.141 w=15.484
       glyph noteheadWhole 9.141,1.000
 tune 1
-bounds  width=90.590 height=54.754 top=-1.935
+bounds  width=90.590 height=56.689 top=-1.935
 systems 4
 system 0 width=90.450 originY=0.000
   staff 0 originY=13.077
@@ -270,7 +270,7 @@ system 3 width=90.590 originY=41.969
     bar x=88.525 w=0.160
       line  88.605,-2.000 -> 88.605,2.000 t=0.160
 tune 2
-bounds  width=90.323 height=90.935 top=-1.935
+bounds  width=90.323 height=92.871 top=-1.935
 systems 7
 system 0 width=90.323 originY=0.000
   staff 0 originY=14.019
@@ -463,7 +463,7 @@ system 6 width=33.356 originY=81.634
       line  30.468,-2.000 -> 30.468,2.000 t=0.160
       line  31.198,-2.000 -> 31.198,2.000 t=0.500
 tune 3
-bounds  width=90.323 height=79.522 top=-1.935
+bounds  width=90.323 height=81.457 top=-1.935
 systems 6
 system 0 width=90.323 originY=0.000
   staff 0 originY=14.019
@@ -740,7 +740,7 @@ system 5 width=90.323 originY=69.720
       line  87.435,-2.000 -> 87.435,2.000 t=0.160
       line  88.165,-2.000 -> 88.165,2.000 t=0.500
 tune 4
-bounds  width=90.323 height=55.695 top=-1.935
+bounds  width=90.323 height=57.630 top=-1.935
 systems 4
 system 0 width=90.323 originY=0.000
   staff 0 originY=14.019

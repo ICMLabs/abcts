@@ -1,5 +1,5 @@
 tune 0
-bounds  width=90.323 height=79.522 top=-1.935
+bounds  width=90.323 height=81.457 top=-1.935
 systems 6
 system 0 width=90.323 originY=0.000
   staff 0 originY=14.019
@@ -165,7 +165,7 @@ system 5 width=54.511 originY=69.720
       line  51.624,-2.000 -> 51.624,2.000 t=0.160
       line  52.354,-2.000 -> 52.354,2.000 t=0.500
 tune 1
-bounds  width=90.654 height=58.236 top=-1.935
+bounds  width=90.654 height=60.171 top=-1.935
 systems 4
 system 0 width=90.482 originY=0.000
   staff 0 originY=13.099
@@ -696,7 +696,7 @@ system 3 width=39.798 originY=44.973
     bar x=37.734 w=0.160
       line  37.814,-2.000 -> 37.814,2.000 t=0.160
 tune 2
-bounds  width=52.754 height=15.537 top=-1.935
+bounds  width=52.754 height=17.473 top=-1.935
 systems 1
 system 0 width=52.754 originY=0.000
   staff 0 originY=10.075
@@ -735,7 +735,7 @@ system 0 width=52.754 originY=0.000
     bar x=50.690 w=0.160
       line  50.770,-2.000 -> 50.770,2.000 t=0.160
 tune 3
-bounds  width=90.323 height=22.885 top=-1.935
+bounds  width=90.323 height=24.820 top=-1.935
 systems 1
 system 0 width=90.323 originY=0.000
   staff 0 originY=14.019
@@ -827,7 +827,7 @@ system 0 width=90.323 originY=0.000
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
 tune 4
-bounds  width=90.400 height=35.518 top=-1.935
+bounds  width=90.400 height=37.453 top=-1.935
 systems 2
 system 0 width=90.400 originY=0.000
   staff 0 originY=12.965
@@ -973,7 +973,7 @@ system 1 width=90.400 originY=19.896
     bar x=88.336 w=0.160
       line  88.416,-2.000 -> 88.416,2.000 t=0.160
 tune 5
-bounds  width=90.323 height=41.025 top=-1.935
+bounds  width=90.323 height=42.960 top=-1.935
 systems 2
 system 0 width=90.323 originY=0.000
   staff 0 originY=20.650

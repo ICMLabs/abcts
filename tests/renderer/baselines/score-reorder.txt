@@ -1,15 +1,15 @@
 tune 0
-bounds  width=44.951 height=23.941 top=-1.935
+bounds  width=44.951 height=25.796 top=-1.935
 systems 1
 system 0 width=44.951 originY=0.000
-  staff 0 originY=8.289
+  staff 0 originY=8.209
     staffline 0.000,2.000 -> 44.951,2.000 t=0.130
     staffline 0.000,1.000 -> 44.951,1.000 t=0.130
     staffline 0.000,0.000 -> 44.951,0.000 t=0.130
     staffline 0.000,-1.000 -> 44.951,-1.000 t=0.130
     staffline 0.000,-2.000 -> 44.951,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  13.431,-3.830 size=3.484 bold "Reorder Test"
+      text  13.431,-3.750 size=3.484 bold "Reorder Test"
     voiceName x=1.935 w=0.000
       text  1.935,0.768 size=2.194 bold "V2-bottom"
     clef x=13.641 w=3.246
@@ -35,7 +35,7 @@ system 0 width=44.951 originY=0.000
       line  38.592,2.332 -> 38.592,-1.000 t=0.120
     bar x=42.887 w=0.160
       line  42.967,-2.000 -> 42.967,2.000 t=0.160
-  staff 1 originY=18.483
+  staff 1 originY=18.403
     staffline 0.000,2.000 -> 44.951,2.000 t=0.130
     staffline 0.000,1.000 -> 44.951,1.000 t=0.130
     staffline 0.000,0.000 -> 44.951,0.000 t=0.130
