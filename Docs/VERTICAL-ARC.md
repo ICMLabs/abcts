@@ -1,5 +1,14 @@
 # The vertical arc — opened, not finished
 
+**STATE MOVED ON 2026-08-02 (fourth session). `Docs/CHECKPOINT-2026-08-02d.md` is the
+current state; this file is the arc's working spec and its findings ledger.** What that
+checkpoint adds to what follows: the ending lane's real height, one volta per system, a
+tuplet inside a longer beam, the two reserves a tie or slur makes, and a low middle note's
+own height. Plus the two questions this file's central idea now has to be read with —
+**whose** box is it, and **when** is it applied (ink, lane, post-lane). And the finding
+that `ragtime-nightingale`'s dy of 58 is TWO MIS-PAIRED NOTEHEADS over a real spread of
+5.4px; do not chase it as geometry.
+
 `geometry/horizontal` is CLOSED and GREEN at 505/505 (see
 `CHECKPOINT-2026-08-02b.md`). This is the next arc, on `geometry/vertical`, and it starts
 RED on purpose — for the same reason the horizontal one did, and by the same rule: four

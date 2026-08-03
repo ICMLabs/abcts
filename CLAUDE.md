@@ -4,8 +4,8 @@ You are developing abcts, a modern TypeScript ABC notation library
 and community successor to abcjs.
 
 ## First Step — Always
-Read `Docs/CHECKPOINT-2026-08-02c.md` first — it is the current state of play, the open
-decisions, and the known risks. (`CHECKPOINT-2026-08-02b.md`, `CHECKPOINT-2026-08-02.md`,
+Read `Docs/CHECKPOINT-2026-08-02d.md` first — it is the current state of play, the open
+decisions, and the known risks. (`CHECKPOINT-2026-08-02c.md`, `CHECKPOINT-2026-08-02b.md`, `CHECKPOINT-2026-08-02.md`,
 `CHECKPOINT-2026-08-01.md`, `CHECKPOINT-2026-07-24.md`, `-07-22c.md`, `CHECKPOINT-2026-07-22b.md`, `-07-21.md`, `-07-19.md` and
 `CHECKPOINT-2026-07-23.md`, `-07-18.md` are superseded but remain the record of the parser phase, the renderer's first
 slices, how the last parser diffs closed, and the geometric work up to the voice-name and
@@ -152,19 +152,38 @@ pixel-parity gate included, ceilings re-recorded. The timeline is per LINE, as a
 voices because they are ordinary zero-duration elements on one timeline.
 
 **The VERTICAL arc is OPEN** on `geometry/vertical`, branched from it and red BY DESIGN.
-`Docs/VERTICAL-ARC.md` is its working spec and `Docs/CHECKPOINT-2026-08-02c.md` the state.
-**16 of 29 fixtures are now pixel-identical to abcjs on ALL FOUR axes at once**, from 0 at
-the start of that work: dy 21/29 at zero, oy 20/29, dx 23/29, ox 23/29.
+`Docs/VERTICAL-ARC.md` is its working spec and `Docs/CHECKPOINT-2026-08-02d.md` the state.
+**16 of 29 fixtures are pixel-identical to abcjs on ALL FOUR axes at once** at a 0.05px
+threshold and **20 of 29** at 0.25px, from 0 at the start of that work. It is red on TWO
+gate items, both pre-existing.
 
 THE IDEA THAT EXPLAINS MOST OF IT: **abcjs does not measure what it draws — it DECLARES a
 box and reserves that.** Clef, time signature, key signature, tempo, tuplet and dynamic all
 reserve declared figures, and a BEAM reserves nothing at all. The clef is what sets a
 staff's top on a plain tune, not the stems.
 
+Two questions go with it, and both cost a run before they were asked. **WHOSE box is it** —
+a volta belongs to the first voice of the first staff, not to every voice carrying the
+`|1`. **WHEN is it applied** — a tuplet's box is INK and the lanes stack on it; a tie's
+`getYBounds` box comes AFTER the lanes and only pushes their result. The same box in the
+wrong phase is a different number. And one element can reserve TWICE with different
+figures: a tie declares ±4 pitch in `setEndAnchor` and a 3-pitch box in `getYBounds`.
+
 **A PASSING GATE IS NOT PARITY.** The gate asserts "no worse than recorded". Parity means
 dy/dx/oy/ox at ZERO on every fixture.
 
-**TWO GATE NUMBERS ARE ARTEFACTS — do not chase either.** `vree-grace-notes` dx 32.5: the
+**A FIXTURE'S GATE ASSERTIONS SHORT-CIRCUIT, so a failing axis HIDES the ones after it.**
+Two stale ceilings surfaced only once the check ahead of them started passing, and
+`frere-jacques`'s `oy` is still hidden that way. When a fixture goes green, re-read the
+axes behind the one you fixed rather than assuming they were passing.
+
+**abcjs's OWN test suite is NOT ported** — 272 `it()` cases in `abcjs-6.6.3/tests/`, none
+of them read. Our gate is the 41-fixture corpus plus hand-written suites. See the
+checkpoint's open-gap section before assuming a behaviour is covered.
+
+**THREE GATE NUMBERS ARE ARTEFACTS — do not chase any of them.** `ragtime-nightingale` dy
+58.1: two noteheads emitted in a different ORDER from abcjs's; drop that one pair and the
+spread is 5.4px. `vree-grace-notes` dx 32.5: the
 gate pairs the i-th notehead of each engine and abcjs emits a graced note's MAIN head before
 its graces where we emit them after; sorted by x its mains are exact. `little swallow` dx:
 the harness that made the goldens has an ASCII-only width table with a flat `|| 8` fallback,
