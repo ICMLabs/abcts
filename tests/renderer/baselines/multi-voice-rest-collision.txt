@@ -36,13 +36,6 @@ system 0 width=41.788 originY=0.000
     bar x=38.821 w=1.060
       line  38.901,-2.000 -> 38.901,2.000 t=0.160
       line  39.631,-2.000 -> 39.631,2.000 t=0.500
-    clef x=1.935 w=3.103
-      glyph gClef 2.581,1.000
-    keySignature x=6.329 w=1.065
-      glyph accidentalSharp 6.329,-2.000
-    timeSignature x=8.684 w=1.522
-      glyph timeSig4 8.684,-1.000
-      glyph timeSig4 8.684,1.000
     note@-11 x=11.496 w=10.949
       glyph noteheadWhole 11.496,5.500
       line  11.096,3.000 -> 13.830,3.000 t=0.160

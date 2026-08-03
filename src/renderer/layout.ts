@@ -4192,8 +4192,25 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     /** Where the staff's music starts — abcjs's `getLeftEdgeOfStaff`. */
     const leftEdge = ENGRAVE.marginX + indent
 
-    /** Every element of one voice on this line, prefix included, in cursor order. */
-    const heads = plans.map((plan) => plan.prefix(withMeter, plans.indexOf(plan) === 0, indent))
+    /**
+     * Every element of one voice on this line, prefix included, in cursor order.
+     *
+     * ONLY THE FIRST VOICE OF A STAFF CARRIES THE STAFF-EXTRAS. abcjs hangs the clef, key
+     * and meter off the staff's first voice and gives the others none at all — probed on
+     * `multi-voice-lyrics-two-voices`, where the second voice's `i=0` is a NOTE and its
+     * `minx` is still 15, the bare left edge.
+     *
+     * That is not cosmetic, because `minx` is what `er` is measured from. Giving the second
+     * voice its own clef left it with `er = 3.77` where abcjs has 61.99, so its lyric's
+     * 11.34px of left extent triggered a shift abcjs never makes — and `shiftRight` then
+     * dragged the whole time slot, and the rest of the line, 7.56px right.
+     */
+    const leadsStaff = (v: number): boolean =>
+      (voicesOfStaff.find((m) => m.includes(v)) ?? [v])[0] === v
+    const blank = { elements: [] as LayoutElement[], advances: [] as Advance[] }
+    const heads = plans.map((plan, v) =>
+      leadsStaff(v) ? plan.prefix(withMeter, v === 0, indent) : blank,
+    )
     const lines = plans.map((plan, v) => {
       const items: Advance[] = [...(heads[v]?.advances ?? [])]
       /** Where item `k` belongs: the prefix (`block: -1`) or element `index` of `block`. */
@@ -5258,6 +5275,18 @@ function verticalExtent(
   let endingBelow = false
   /** Any dynamic or hairpin on the BELOW side, which reserves a flat lane past the ink. */
   let sawDynamicBelow = false
+  /**
+   * The same on the ABOVE side, which kept its own drawn box until now.
+   *
+   * abcjs reserves a FLAT lane there too: `DynamicDecoration` sets `volumeHeightAbove = 6`
+   * and `CrescendoElem` `dynamicHeightAbove = 6`, and when both are present
+   * `set-upper-and-lower-elements.js:39-42` adds `max(...) + margin` — 7 pitch — above the
+   * staff's ink without going through `incTop` at all. Probed on
+   * `multi-voice-lyrics-two-voices`: its ink tops out at 21.993 on a note and `staff.top`
+   * lands at 28.993, exactly 7 higher, with no lane logged. Measuring the `p` glyph's own
+   * box instead left both its staves 1.30 pitch short.
+   */
+  let sawDynamicAbove = false
   const flag = (y: number) => {
     if (y < 0) endingAbove = true
     else endingBelow = true
@@ -5334,8 +5363,9 @@ function verticalExtent(
       // staff — visible as the last of the vertical offset on a title-only tune.
       // Only the BELOW side is re-anchored and lane-reserved. An ABOVE dynamic keeps its
       // own box in the ink scan, which is what it had before and what its fixtures expect.
-      if (g.role === 'dynamic' && g.y > 0) {
-        sawDynamicBelow = true
+      if (g.role === 'dynamic') {
+        if (g.y > 0) sawDynamicBelow = true
+        else sawDynamicAbove = true
         continue
       }
       if (g.reserve !== undefined) {
@@ -5432,6 +5462,7 @@ function verticalExtent(
   // reserve for them (`dynamicHeightBelow`, `crescendo-element.js:11`). Taking presence
   // from the model instead was tried and made the corpus much worse — see the checkpoint.
   if (sawDynamicBelow) bottom += ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
+  if (sawDynamicAbove) top -= ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
   // THE LANE EXTENDS THE MUSIC, AND ONLY THE MUSIC — so not on a pass that is measuring a
   // top-text block as well.
   //

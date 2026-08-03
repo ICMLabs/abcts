@@ -99,12 +99,22 @@ describe('optimizeSVG — <defs>/<use> deduplication', () => {
   })
 
   describe('it actually saves', () => {
-    it('cuts every glyph-dense fixture by more than half', () => {
-      for (const name of ['ave-verum-corpus', 'ragtime-mini', 'zocharti-loch']) {
+    it('cuts every glyph-dense fixture by a large fraction', () => {
+      // `ragtime-mini` is the loosest of the three at 0.62, and that is a SIGN OF PROGRESS
+      // rather than of the optimizer weakening: it has five voices on two staves, and the
+      // renderer used to draw a clef, key and meter for every one of them — four hidden
+      // duplicates per staff, stacked exactly on top of each other. abcjs hangs the
+      // staff-extras off a staff's FIRST voice only, and now so do we, so there is simply
+      // less redundancy left to dedupe. The plain output shrank; the optimizer did not.
+      for (const [name, limit] of [
+        ['ave-verum-corpus', 0.5],
+        ['ragtime-mini', 0.65],
+        ['zocharti-loch', 0.5],
+      ] as const) {
         const abc = fixture(name)
         const plain = Buffer.byteLength(svgFor(abc, 'extended', false))
         const optimized = Buffer.byteLength(svgFor(abc, 'extended', true))
-        expect(optimized, `${name} did not shrink`).toBeLessThan(plain * 0.5)
+        expect(optimized, `${name} did not shrink`).toBeLessThan(plain * limit)
       }
     })
 

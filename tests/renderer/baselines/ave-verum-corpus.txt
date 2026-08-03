@@ -67,14 +67,6 @@ system 0 width=90.323 originY=0.000
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
     voiceName x=1.935 w=0.000
       text  1.935,1.974 size=2.194 bold "Alto"
-    clef x=12.740 w=3.103
-      glyph gClef 13.385,1.000
-    keySignature x=17.276 w=2.387
-      glyph accidentalSharp 17.276,-2.000
-      glyph accidentalSharp 18.598,-0.500
-    timeSignature x=20.953 w=1.522
-      glyph timeSig4 20.953,-1.000
-      glyph timeSig4 20.953,1.000
     rest x=23.765 w=10.949
       glyph restWhole 23.765,-1.000
     bar x=38.245 w=0.160
@@ -141,14 +133,6 @@ system 0 width=90.323 originY=0.000
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
     voiceName x=1.935 w=0.000
       text  1.935,1.974 size=2.194 bold "Basso"
-    clef x=12.740 w=3.246
-      glyph fClef 13.385,-1.000
-    keySignature x=17.276 w=2.387
-      glyph accidentalSharp 17.276,-1.000
-      glyph accidentalSharp 18.598,0.500
-    timeSignature x=20.953 w=1.522
-      glyph timeSig4 20.953,-1.000
-      glyph timeSig4 20.953,1.000
     rest x=23.765 w=10.949
       glyph restWhole 23.765,-1.000
     bar x=38.245 w=0.160
@@ -264,14 +248,6 @@ system 0 width=90.323 originY=0.000
       line  85.818,0.832 -> 85.818,-2.500 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-    clef x=12.740 w=3.103
-      glyph gClef 13.385,1.000
-    keySignature x=17.276 w=2.387
-      glyph accidentalSharp 17.276,-2.000
-      glyph accidentalSharp 18.598,-0.500
-    timeSignature x=20.953 w=1.522
-      glyph timeSig4 20.953,-1.000
-      glyph timeSig4 20.953,1.000
     rest x=23.765 w=10.949
     bar x=38.245 w=0.160
       line  38.325,-2.000 -> 38.325,2.000 t=0.160
@@ -333,14 +309,6 @@ system 0 width=90.323 originY=0.000
       glyph noteheadWhole 73.778,-2.500
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-    clef x=12.740 w=3.246
-      glyph fClef 13.385,-1.000
-    keySignature x=17.276 w=2.387
-      glyph accidentalSharp 17.276,-1.000
-      glyph accidentalSharp 18.598,0.500
-    timeSignature x=20.953 w=1.522
-      glyph timeSig4 20.953,-1.000
-      glyph timeSig4 20.953,1.000
     note@0 x=23.765 w=10.949
       glyph noteheadWhole 23.765,0.000
     bar x=38.245 w=0.160

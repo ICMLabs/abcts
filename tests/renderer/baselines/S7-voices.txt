@@ -1204,13 +1204,6 @@ system 0 width=90.366 originY=0.000
     rest x=74.474 w=10.949
     bar x=88.302 w=0.160
       line  88.382,-2.000 -> 88.382,2.000 t=0.160
-    clef x=3.226 w=3.103
-      glyph gClef 3.871,1.000
-    keySignature x=7.619 w=1.065
-      glyph accidentalSharp 7.619,-2.000
-    timeSignature x=9.974 w=1.522
-      glyph timeSig4 9.974,-1.000
-      glyph timeSig4 9.974,1.000
     note@-9 x=12.787 w=3.871
       glyph noteheadBlack 12.787,4.500
       line  12.387,3.000 -> 14.452,3.000 t=0.160
@@ -1496,15 +1489,6 @@ system 0 width=98.874 originY=0.000
       glyph repeatDots 95.133,1.976
       line  95.773,-2.000 -> 95.773,2.000 t=0.160
       line  96.503,-2.000 -> 96.503,2.000 t=0.500
-    clef x=3.226 w=3.103
-      glyph gClef 3.871,1.000
-    keySignature x=7.619 w=3.710
-      glyph accidentalSharp 7.619,-2.000
-      glyph accidentalSharp 8.942,-0.500
-      glyph accidentalSharp 10.265,-2.500
-    timeSignature x=12.619 w=1.522
-      glyph timeSig4 12.619,-1.000
-      glyph timeSig4 12.619,1.000
     note@-6 x=17.198 w=3.871
       glyph noteheadBlack 17.198,3.000
       line  16.798,3.000 -> 18.864,3.000 t=0.160
@@ -1774,15 +1758,6 @@ system 0 width=98.874 originY=0.000
       glyph repeatDots 95.133,1.976
       line  95.773,-2.000 -> 95.773,2.000 t=0.160
       line  96.503,-2.000 -> 96.503,2.000 t=0.500
-    clef x=3.226 w=3.103
-      glyph gClef 3.871,1.000
-    keySignature x=7.619 w=3.710
-      glyph accidentalSharp 7.619,-2.000
-      glyph accidentalSharp 8.942,-0.500
-      glyph accidentalSharp 10.265,-2.500
-    timeSignature x=12.619 w=1.522
-      glyph timeSig4 12.619,-1.000
-      glyph timeSig4 12.619,1.000
     note@-15 x=17.198 w=3.871
       glyph noteheadBlack 17.198,7.500
       line  16.798,3.000 -> 18.864,3.000 t=0.160
@@ -2123,11 +2098,6 @@ system 0 width=90.421 originY=0.000
       line  87.582,0.832 -> 87.582,-3.000 t=0.120
     bar x=88.357 w=0.160
       line  88.437,-2.000 -> 88.437,2.000 t=0.160
-    clef x=13.349 w=3.103
-      glyph gClef 13.994,1.000
-    timeSignature x=17.743 w=1.522
-      glyph timeSig4 17.743,-1.000
-      glyph timeSig4 17.743,1.000
     rest x=20.555 w=5.474
       glyph restQuarter 20.555,0.000
     note@-6 x=23.981 w=5.474
@@ -2423,13 +2393,6 @@ system 0 width=90.499 originY=0.000
       line  87.660,-3.168 -> 87.660,-6.500 t=0.120
     bar x=88.434 w=0.160
       line  88.514,-2.000 -> 88.514,2.000 t=0.160
-    clef x=3.226 w=3.103
-      glyph gClef 3.871,1.000
-    keySignature x=7.619 w=0.871
-      glyph accidentalFlat 7.619,0.000
-    timeSignature x=9.781 w=1.522
-      glyph timeSig3 9.914,-1.000
-      glyph timeSig4 9.781,1.000
     note@4 x=12.593 w=6.705
       glyph noteheadBlack 12.593,-2.000
       glyph augmentationDot 14.209,-2.500

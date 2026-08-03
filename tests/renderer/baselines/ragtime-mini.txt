@@ -61,15 +61,6 @@ system 0 width=90.323 originY=0.000
       line  84.948,-2.168 -> 84.948,-7.500 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-    clef x=3.226 w=3.103
-      glyph gClef 3.871,1.000
-    keySignature x=7.762 w=3.129
-      glyph accidentalFlat 7.762,0.000
-      glyph accidentalFlat 8.891,-1.500
-      glyph accidentalFlat 10.020,0.500
-    timeSignature x=12.181 w=1.522
-      glyph timeSig2 12.248,-1.000
-      glyph timeSig4 12.181,1.000
     rest x=14.993 w=7.742
     bar x=50.916 w=0.160
       line  50.996,-2.000 -> 50.996,2.000 t=0.160
@@ -155,30 +146,12 @@ system 0 width=90.323 originY=0.000
       glyph rest8th 79.277,0.000
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-    clef x=3.226 w=3.246
-      glyph fClef 3.871,-1.000
-    keySignature x=7.762 w=3.129
-      glyph accidentalFlat 7.762,1.000
-      glyph accidentalFlat 8.891,-0.500
-      glyph accidentalFlat 10.020,1.500
-    timeSignature x=12.181 w=1.522
-      glyph timeSig2 12.248,-1.000
-      glyph timeSig4 12.181,1.000
     rest x=14.993 w=7.742
     bar x=50.916 w=0.160
       line  50.996,-2.000 -> 50.996,2.000 t=0.160
     rest x=52.335 w=7.742
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-    clef x=3.226 w=3.246
-      glyph fClef 3.871,-1.000
-    keySignature x=7.762 w=3.129
-      glyph accidentalFlat 7.762,1.000
-      glyph accidentalFlat 8.891,-0.500
-      glyph accidentalFlat 10.020,1.500
-    timeSignature x=12.181 w=1.522
-      glyph timeSig2 12.248,-1.000
-      glyph timeSig4 12.181,1.000
     rest x=14.993 w=7.742
     bar x=50.916 w=0.160
       line  50.996,-2.000 -> 50.996,2.000 t=0.160

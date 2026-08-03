@@ -39,11 +39,6 @@ system 0 width=43.710 originY=0.000
       line  41.726,-2.000 -> 41.726,2.000 t=0.160
     voiceName x=1.935 w=0.000
       text  1.935,1.974 size=2.194 bold "Melody"
-    clef x=12.542 w=3.103
-      glyph gClef 13.188,1.000
-    timeSignature x=16.936 w=1.522
-      glyph timeSig4 16.936,-1.000
-      glyph timeSig4 16.936,1.000
     note@-6 x=19.748 w=5.474
       glyph noteheadBlack 19.748,3.000
       line  19.348,3.000 -> 21.414,3.000 t=0.160

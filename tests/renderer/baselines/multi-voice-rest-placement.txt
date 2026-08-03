@@ -44,8 +44,6 @@ system 0 width=90.323 originY=0.000
       glyph restQuarter 79.547,0.000
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-    clef x=1.935 w=3.103
-      glyph gClef 2.581,1.000
     note@-11 x=6.329 w=7.742
       glyph noteheadHalf 6.329,5.500
       line  5.929,3.000 -> 8.067,3.000 t=0.160

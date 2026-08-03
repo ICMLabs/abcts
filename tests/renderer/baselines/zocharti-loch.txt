@@ -79,15 +79,6 @@ system 0 width=90.323 originY=0.000
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
     voiceName x=1.935 w=0.000
       text  1.935,1.974 size=2.194 bold "Tenore II"
-    clef x=12.482 w=3.103
-      glyph gClef 13.127,1.000
-      glyph timeSig8 13.886,4.000 scale=0.667
-    keySignature x=17.018 w=2.000
-      glyph accidentalFlat 17.018,0.000
-      glyph accidentalFlat 18.147,-1.500
-    timeSignature x=20.308 w=1.522
-      glyph timeSig4 20.308,-1.000
-      glyph timeSig4 20.308,1.000
     note@-2 x=23.120 w=5.474
       glyph noteheadBlack 23.120,1.000
       line  23.120,1.168 -> 23.120,4.500 t=0.120
@@ -235,14 +226,6 @@ system 0 width=90.323 originY=0.000
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
     voiceName x=1.935 w=0.000
       text  1.935,1.974 size=2.194 bold "Basso II"
-    clef x=12.482 w=3.246
-      glyph fClef 13.127,-1.000
-    keySignature x=17.018 w=2.000
-      glyph accidentalFlat 17.018,1.000
-      glyph accidentalFlat 18.147,-0.500
-    timeSignature x=20.308 w=1.522
-      glyph timeSig4 20.308,-1.000
-      glyph timeSig4 20.308,1.000
     rest x=23.120 w=10.949
     bar x=38.919 w=0.160
       line  38.999,-2.000 -> 38.999,2.000 t=0.160
@@ -321,12 +304,6 @@ system 1 width=90.323 originY=44.566
       line  88.511,-2.000 -> 88.511,2.000 t=0.160
     voiceName x=1.935 w=0.000
       text  1.935,1.974 size=2.194 bold "T.II"
-    clef x=7.242 w=3.103
-      glyph gClef 7.887,1.000
-      glyph timeSig8 8.646,4.000 scale=0.667
-    keySignature x=11.778 w=2.000
-      glyph accidentalFlat 11.778,0.000
-      glyph accidentalFlat 12.907,-1.500
     rest x=15.068 w=10.949
       glyph restWhole 15.068,-1.000
     bar x=34.199 w=0.160
@@ -475,11 +452,6 @@ system 1 width=90.323 originY=44.566
       line  88.511,-2.000 -> 88.511,2.000 t=0.160
     voiceName x=1.935 w=0.000
       text  1.935,1.974 size=2.194 bold "B.II"
-    clef x=7.242 w=3.246
-      glyph fClef 7.887,-1.000
-    keySignature x=11.778 w=2.000
-      glyph accidentalFlat 11.778,1.000
-      glyph accidentalFlat 12.907,-0.500
     rest x=15.068 w=10.949
     bar x=34.199 w=0.160
       line  34.279,-2.000 -> 34.279,2.000 t=0.160
