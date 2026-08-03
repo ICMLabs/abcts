@@ -1019,10 +1019,18 @@ const CLEF_REFERENCE: Readonly<Record<ClefShape, number>> = {
   G: 32,
   F: 24,
   C: 28,
-  // Unpitched. Treated as a C clef on the middle line so notes land somewhere sane
-  // rather than at a wild offset; neither is a real pitch mapping.
-  percussion: 28,
-  none: 28,
+  // UNPITCHED CLEFS STILL MAP LIKE TREBLE — only the glyph is absent.
+  //
+  // abcjs's table gives `perc` and `none` `mid: 0`, the same as treble
+  // (`abc_parse_key_voice.js:36,42`), and `none` carries no `pitch` at all. Measured on
+  // its own output: `K:C perc` and `K:C none` both put `B4` 15.49px below the top staff
+  // line, exactly where `K:C` puts it. The whole visible difference between them and
+  // treble is the CLEF's own reserve — 13.7244 pitch against a bare staff's 10.
+  //
+  // Reading them as a C clef on the middle line — "so notes land somewhere sane" — put
+  // every note 3 staff spaces high, and the staff under it ~11.8px low in compensation.
+  percussion: 32,
+  none: 32,
 }
 
 /**

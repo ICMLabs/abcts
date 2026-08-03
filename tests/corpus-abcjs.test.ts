@@ -64,9 +64,11 @@ const CONTENT_GAPS: Readonly<Record<string, string>> = {
  * 174 ceilings is a table nobody reads — see the header.
  */
 const WITHIN: Readonly<Record<string, number>> = {
-  '0.05': 72,
-  '1': 83,
-  '5': 91,
+  // 72 / 83 / 91 before `clef=none` and `clef=perc` stopped being read as a C clef on the
+  // middle line. Nothing in the 41-fixture corpus uses either, so only this gate saw it.
+  '0.05': 75,
+  '1': 86,
+  '5': 93,
   '25': 116,
 }
 

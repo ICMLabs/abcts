@@ -196,8 +196,10 @@ const CLEF_NAMES: ReadonlyArray<readonly [string, ClefShape, number]> = [
   ['baritone', 'F', 3],
   ['mezzosoprano', 'C', 2],
   ['soprano', 'C', 1],
-  ['perc', 'percussion', 3],
-  ['none', 'none', 3],
+  // Line 2, like treble — see `CLEF_REFERENCE`. Neither draws a glyph, but both keep
+  // treble's pitch mapping, measured off abcjs's own output.
+  ['perc', 'percussion', 2],
+  ['none', 'none', 2],
 ]
 
 /**
