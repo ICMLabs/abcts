@@ -890,7 +890,22 @@ class VoiceBuilder {
     this.pendingPart = { label, range }
   }
 
-  private takeOpening(): {
+  /**
+   * The barline, part label and volta this measure OPENED with.
+   *
+   * Called at CLOSE, which is right for a barline and a volta — both were seen before the
+   * measure's events — and is a trap for a `P:`. A `P:` field read while a measure is
+   * still buffered belongs to the measure that FOLLOWS it, and a line-ending measure is
+   * not closed until the next music line arrives, so `frere-jacques`'s `P:A` — sitting
+   * between the last `+:` prose line and the first real bar — was swept into the prose
+   * measure and printed at the right-hand end of that system. abcjs prints it at the head
+   * of the next one.
+   *
+   * So the part label is kept pending unless it precedes what is being closed. The
+   * renderer's own `partIndex` handles a `P:` that lands BETWEEN two events of one
+   * measure, which is a different case and still reachable.
+   */
+  private takeOpening(lastEventStart: number | null): {
     openingBarline: Barline | null
     openingBarlineSourceRange: SourceRange | null
     partLabel: string | null
@@ -900,8 +915,13 @@ class VoiceBuilder {
   } {
     const pending = this.pendingOpening
     this.pendingOpening = null
-    const part = this.pendingPart
-    this.pendingPart = null
+    const part =
+      this.pendingPart !== null &&
+      lastEventStart !== null &&
+      this.pendingPart.range.start > lastEventStart
+        ? null
+        : this.pendingPart
+    if (part !== null) this.pendingPart = null
     const volta = this.pendingVolta
     this.pendingVolta = null
     return {
@@ -946,7 +966,7 @@ class VoiceBuilder {
       events: this.events,
       overlays: this.overlays,
       ...this.takeChanges(),
-      ...this.takeOpening(),
+      ...this.takeOpening(this.events[this.events.length - 1]?.sourceRange?.start ?? null),
       startsSystem: this.takeLineStart(),
       closingBarline: barline,
       sourceRange: sourceRange(this.measureStart ?? barlineRange.start, barlineRange.end),
@@ -975,7 +995,7 @@ class VoiceBuilder {
       events: this.events,
       overlays: this.overlays,
       ...this.takeChanges(),
-      ...this.takeOpening(),
+      ...this.takeOpening(last?.sourceRange?.start ?? null),
       startsSystem: this.takeLineStart(),
       closingBarline: null,
       sourceRange: sourceRange(this.measureStart ?? 0, last?.sourceRange?.end ?? 0),
@@ -1067,6 +1087,7 @@ class ScoreBuilder {
   staffGroups: StaffGroup[] = []
   /** `%%staffsep` / `%%sysstaffsep`, in PIXELS (directive points × 4/3). See `Score`. */
   staffSep: number | null = null
+  partsBox = false
   sysStaffSep: number | null = null
   /** `%%center` text, split by whether any music had been parsed when it was read. */
   textAbove: string[] = []
@@ -1185,6 +1206,7 @@ class ScoreBuilder {
       }),
       staves: this.resolvedStaves(),
       staffSep: this.staffSep,
+      partsBox: this.partsBox,
       sysStaffSep: this.sysStaffSep,
       textAbove: this.textAbove,
       textBelow: this.textBelow,
@@ -1410,6 +1432,12 @@ class Parser {
       const builder = this.ensureScore(start)
       if (staffSep[1] === 'staffsep') builder.staffSep = px
       else builder.sysStaffSep = px
+      return
+    }
+    // `%%partsbox` — a box round every `P:` label, and a taller lane to hold it.
+    const partsBox = /^partsbox(?:\s+(\d+))?/.exec(body)
+    if (partsBox !== null) {
+      this.ensureScore(start).partsBox = partsBox[1] !== '0'
       return
     }
     this.info(

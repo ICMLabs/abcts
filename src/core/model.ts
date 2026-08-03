@@ -640,6 +640,15 @@ export interface Score {
   /** `%%sysstaffsep` — the same minimum, but between staves WITHIN a system. Pixels, or null. */
   readonly sysStaffSep: number | null
   /**
+   * `%%partsbox` — draw a box round every `P:` label.
+   *
+   * It is not only decoration: a boxed font measures `height + padding * 4` and
+   * `width + padding * 4` (`write/helpers/get-text-size.js:46-48`), so the part's whole
+   * reserved lane grows with it. Probed on `frere-jacques`, `partHeightAbove` is 5.7187
+   * pitch without the directive and 7.7832 with it.
+   */
+  readonly partsBox: boolean
+  /**
    * `%%center` lines standing BEFORE any music — centred free text under the top-text
    * block. abcjs centres these on the STAFF width, not the paper width the title uses.
    */

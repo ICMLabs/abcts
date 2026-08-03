@@ -313,6 +313,13 @@ export const ENGRAVE = {
   aboveStackMargin: 1 * 0.5,
   chordHeightAbove: 4.779354838709677 * 0.5,
   partHeightAbove: 5.718709677419355 * 0.5,
+  /**
+   * `fontboxpadding` — the fraction of the font size a boxed font pads by, on each side.
+   * abcjs's default is 0.1 and the directive can change it (`get-font-and-attr.js:35`).
+   */
+  fontBoxPadding: 0.1,
+  /** Stroke of the rules `%%partsbox` draws — one pixel, as abcjs's `rect` emits. */
+  fontBoxRule: 1 / 7.75,
   tempoHeightAbove: 6 * 0.5,
   /** abcjs bumps the tempo's baseline 2px past the top it reserved (`draw/tempo.js:15`). */
   tempoDescenderBump: 2 / 7.75,
@@ -4964,6 +4971,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
             strict,
           ),
           strict,
+          score.partsBox,
         ),
         strict,
       )
@@ -5427,7 +5435,7 @@ function anchorAboveStaff<
     readonly elements: readonly LayoutElement[]
     readonly beams: readonly PlacedLine[]
   } & StaffFurniture,
->(parts: readonly T[], strict: boolean): T[] {
+>(parts: readonly T[], strict: boolean, partsBox = false): T[] {
   const isChord = (t: PlacedText): boolean => t.role === 'chord'
   const has = (fn: (el: LayoutElement) => boolean) => parts.some((p) => p.elements.some(fn))
   const chords = has((el) => el.texts.some(isChord))
@@ -5461,7 +5469,15 @@ function anchorAboveStaff<
     return top
   }
   const chordY = chords ? reserve(ENGRAVE.chordHeightAbove) + ENGRAVE.chordTextSize : null
-  const partY = partLabels ? reserve(ENGRAVE.partHeightAbove) + ENGRAVE.tempoTextSize : null
+  // A BOXED PART LABEL MEASURES TALLER, so its whole lane grows: `getTextSize` returns
+  // `height + padding * 4` for a boxed font (`helpers/get-text-size.js:46-48`), and
+  // `padding` is `font.size * fontboxpadding`, default 0.1 (`get-font-and-attr.js:35-36`).
+  // Probed on `frere-jacques`: `partHeightAbove` is 5.7187 pitch without `%%partsbox` and
+  // 7.7832 with it — 8px on a 20px font, which is exactly `padding * 4`.
+  const boxPad = partsBox ? ENGRAVE.tempoTextSize * ENGRAVE.fontBoxPadding : 0
+  const partY = partLabels
+    ? reserve(ENGRAVE.partHeightAbove + boxPad * 4) + ENGRAVE.tempoTextSize + boxPad
+    : null
   const tempoY = tempos
     ? reserve(ENGRAVE.tempoHeightAbove) + ENGRAVE.tempoTextSize + ENGRAVE.tempoDescenderBump
     : null
@@ -5482,7 +5498,10 @@ function anchorAboveStaff<
   return parts.map((part) => ({
     ...part,
     elements: part.elements.map((el) => {
-      if (el.type === 'part') return shiftBy(el, partShift)
+      if (el.type === 'part') {
+        const moved = shiftBy(el, partShift)
+        return partsBox ? { ...moved, lines: [...moved.lines, ...partBox(moved)] } : moved
+      }
       if (el.type === 'tempo') return shiftBy(el, tempoShift)
       if (!el.texts.some(isChord)) return el
       return {
@@ -5491,6 +5510,35 @@ function anchorAboveStaff<
       }
     }),
   }))
+}
+
+/**
+ * The four rules `%%partsbox` draws round a `P:` label.
+ *
+ * `renderText` emits `rect({ x: params.x - delta, y, width: size.width + padding * 2,
+ * height: size.height + padding * 2 })` (`draw/text.js:81`) — so the box is the MEASURED
+ * text plus one padding a side, where the reserved LANE is the text plus TWO. The
+ * baseline sits one font size below the box's top plus that same padding.
+ *
+ * ponytail: abcjs rounds all four to whole pixels; we do not, so an edge can land half a
+ * pixel off its. Sub-pixel, and rounding here would put a px-space conversion in geometry
+ * that is otherwise in staff spaces throughout.
+ */
+function partBox(el: LayoutElement): PlacedLine[] {
+  const t = el.texts[0]
+  if (t === undefined) return []
+  const pad = t.size * ENGRAVE.fontBoxPadding
+  const left = t.x - pad
+  const top = t.y - t.size - pad
+  const right = left + textWidth(t.text, t.size) + pad * 2
+  const bottom = top + ENGRAVE.partHeightAbove + pad * 2
+  const w = ENGRAVE.fontBoxRule
+  return [
+    { x1: left, y1: top, x2: right, y2: top, thickness: w },
+    { x1: left, y1: bottom, x2: right, y2: bottom, thickness: w },
+    { x1: left, y1: top, x2: left, y2: bottom, thickness: w },
+    { x1: right, y1: top, x2: right, y2: bottom, thickness: w },
+  ]
 }
 
 /**
