@@ -153,9 +153,9 @@ voices because they are ordinary zero-duration elements on one timeline.
 
 **The VERTICAL arc is OPEN** on `geometry/vertical`, branched from it and red BY DESIGN.
 `Docs/VERTICAL-ARC.md` is its working spec and `Docs/CHECKPOINT-2026-08-02d.md` the state.
-**16 of 29 fixtures are pixel-identical to abcjs on ALL FOUR axes at once** at a 0.05px
-threshold and **20 of 29** at 0.25px, from 0 at the start of that work. It is red on TWO
-gate items, both pre-existing.
+**20 of 29 fixtures are pixel-identical to abcjs on ALL FOUR axes at once** at a 0.05px
+threshold and **23 of 29** at 0.25px, from 0 at the start of that work. Page heights match
+abcjs to within 0.07px. It is red on TWO gate items, both pre-existing.
 
 THE IDEA THAT EXPLAINS MOST OF IT: **abcjs does not measure what it draws — it DECLARES a
 box and reserves that.** Clef, time signature, key signature, tempo, tuplet and dynamic all
@@ -181,11 +181,12 @@ axes behind the one you fixed rather than assuming they were passing.
 of them read. Our gate is the 41-fixture corpus plus hand-written suites. See the
 checkpoint's open-gap section before assuming a behaviour is covered.
 
-**THREE GATE NUMBERS ARE ARTEFACTS — do not chase any of them.** `ragtime-nightingale` dy
-58.1: two noteheads emitted in a different ORDER from abcjs's; drop that one pair and the
-spread is 5.4px. `vree-grace-notes` dx 32.5: the
-gate pairs the i-th notehead of each engine and abcjs emits a graced note's MAIN head before
-its graces where we emit them after; sorted by x its mains are exact. `little swallow` dx:
+**FOUR GATE NUMBERS ARE ARTEFACTS — do not chase any of them.** The gate pairs the i-th
+notehead of each engine, so a difference in EMISSION ORDER reads as a position error.
+`ragtime-nightingale` dy 58.1: two noteheads emitted in a different order; drop that one
+pair and the spread is 5.4px. `vree-grace-notes` dy 11.6 AND dx 32.5: abcjs emits a graced
+note's MAIN head before its graces where we emit them after; sorted by x, dy is 0.02 and
+dx a uniform 1.99, which is the grace glyph. `little swallow` dx:
 the harness that made the goldens has an ASCII-only width table with a flat `|| 8` fallback,
 so 73 of its 576 lyric characters — the Chinese — were measured at 8px each. That is a
 property of the GOLDEN, not of abcjs.

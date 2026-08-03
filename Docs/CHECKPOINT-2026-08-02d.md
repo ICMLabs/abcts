@@ -13,19 +13,25 @@ Supersedes `CHECKPOINT-2026-08-02c.md`. Read this, then `VERTICAL-ARC.md`, then
 | `geometry/horizontal` | closed, GREEN 505/505. Untouched. |
 | `geometry/vertical` | **THE OPEN ARC.** Red on **2** gate items, down from 5 — and NEITHER is from this session's work. |
 
-Per-axis over the 29 pixel-gated fixtures. The headline counts have not moved, because
-the threshold is 0.05px and this session's residuals land just above it; the MAGNITUDES
-moved a long way, so the 0.25px column is the one that shows the session:
+Per-axis over the 29 pixel-gated fixtures:
 
 | within | dy | dx | oy | ox | ALL FOUR |
 |---|---|---|---|---|---|
-| 0.05px | 21/29 | 23/29 | 20/29 | 23/29 | **16/29** |
-| 0.25px | 24/29 | 23/29 | 23/29 | 23/29 | **20/29** |
-| 1.0px | 24/29 | 23/29 | 28/29 | 25/29 | 22/29 |
+| 0.05px | 23/29 | 23/29 | 24/29 | 23/29 | **20/29** |
+| 0.25px | 25/29 | 23/29 | 26/29 | 23/29 | **23/29** |
 
-`ragtime-nightingale` dy 66.82 → 58.14, oy −3.80 → **−0.41**.
-`multi-voice-triplet-brackets` dy 4.05 → **0.17**, oy −1.62 → **−0.24**.
-Nothing else in the corpus moves — verified by measuring a clean tree.
+Session start was 16/29. **Only NINE fixtures are off any axis by more than 0.05px**, and
+three of those nine are gate artefacts rather than divergences.
+
+| fixture | before | after |
+|---|---|---|
+| `ragtime-nightingale` | dy 66.82, oy −3.80 | dy 58.13, oy **−0.54** |
+| `multi-voice-triplet-brackets` | dy 4.05, oy −1.62 | dy **0.01**, oy **−0.00** |
+| `ave-verum-corpus` | dy 2.39, oy −0.48 | **0.02 / 0.04** |
+| `multi-voice-rest-collision` | oy −0.37 | **−0.01** |
+| `score-reorder` | oy 0.61 | **−0.01** |
+
+And every fixture's PAGE HEIGHT now matches abcjs to within 0.07px, from 15px short.
 
 ---
 
@@ -52,7 +58,7 @@ different times, with different figures.** A tie sets `top/bottom = ±4 pitch` i
 
 ---
 
-## THE FIVE FINDINGS, with their citations
+## THE FINDINGS, with their citations
 
 | # | finding | source |
 |---|---|---|
@@ -61,6 +67,32 @@ different times, with different figures.** A tie sets `top/bottom = ±4 pitch` i
 | 3 | A tuplet inside a LONGER beam still gets a bracket | `layout/triplet.js:11` |
 | 4 | A tie or slur reserves a declared box, twice, on rules of its own | `tie-element.js:28-36` and `:228-251` |
 | 5 | A tuplet's low middle note counts `bottom - height`, and `height` defaults to **4** | `layout/triplet.js:56`, `relative-element.js:37` |
+| 6 | A curve hangs on **`pitches[0]`** — the chord's first pitch as WRITTEN, not its centre and not its lowest note | `parse/abc_parse_music.js:503-506` |
+| 7 | A beamed tuplet's number is a **SAMPLE** of the beam at an ASYMMETRIC midpoint, not the average of the two stem tips | `layout/triplet.js:15-16` |
+| 8 | A LINE reserves its endpoints, never its painted width — only glyphs pass a `thickness` | `relative-element.js:22-24` |
+| 9 | The page has a **bottom margin** as well as a top one | `draw/set-paper-size.js:3` |
+| 10 | A NOTEHEAD's declared box is **2.088774 pitches**, not 2 | `create-note-head.js:34`, `glyphs.js` `symbolHeightInPitches` |
+
+Six through ten, each one fixture's whole error:
+
+- **(6)** `el.pitches[0].startSlur` / `endSlur` and nothing else. Take it from the EVENT,
+  not from the drawn heads — `layoutNoteheads` sorts them so `[GCE]` and `[CEG]` engrave
+  alike, which is right for engraving and loses exactly the ordering this needs.
+- **(7)** `heightAtMidpoint(left, anchor2.x, beam)` with
+  `left = isAbove(beam) ? anchor1.x + anchor1.w : anchor1.x` — an above beam measures from
+  the FAR side of the first notehead to the NEAR side of the last. The two agree on a
+  level beam, which is why averaging looked right.
+- **(8)** `RelativeElement` widens by `thickness / 2` only when a `thickness` is PASSED,
+  and only noteheads, decorations, key and time signatures pass one. A barline never does:
+  probed, abcjs's is `bar@2..10`, flush with the staff. On a BASS staff the top staff line
+  IS the staff's top, so half a barline's stroke above it moved the whole drawing.
+- **(9)** We had `padding.top` and not `padding.bottom`. The page ended flush with the last
+  staff line and clipped its own stroke — which the viewBox test caught only once (8)
+  removed the slack that had been hiding it.
+- **(10)** `thickness: symbolHeightInPitches(c) * scale`, so half is **1.0443871** pitch.
+  **That 0.0444 is the tell all over abcjs's own numbers** — `a1bot=5.9556` for a note at
+  pitch 5, `mids=6.0444^3.9556`, `staff.bottom=-14.0444`, `yTextPos=27.0444`. Wherever a
+  declared box is read off a HEAD rather than a stem, a flat 1 is wrong.
 
 Three details inside (4), each of which the finding is wrong without:
 
@@ -80,9 +112,11 @@ Three details inside (4), each of which the finding is wrong without:
   `highestVert` IS the anchor pitch on every binding curve here, so the average is the
   pitch. Not reproduced, and recorded so nobody ports it twice.
 
-Also confirmed and used: **a notehead's declared box is its PITCH, not its outline** —
-`RelativeElement` sets `top = bottom = pitch` and only `pitch2`, `thickness` and
-`stemHeight` widen it (`relative-element.js:18-30`).
+Note (10) SUPERSEDES a reading taken earlier the same session — that a notehead's declared
+box is its bare pitch, on `RelativeElement`'s `top = bottom = pitch`
+(`relative-element.js:18-30`). That is the constructor's *starting* value; the very next
+lines widen it by `thickness / 2`, and `create-note-head.js` always passes one. Read the
+whole constructor before taking a default for the answer.
 
 ---
 
@@ -181,10 +215,12 @@ the record was left alone.
 
 ---
 
-## TWO GATE LIMITATIONS — unchanged, do not chase either
+## THE GATE'S OWN LIMITATIONS — do not chase either
 
-1. **`vree-grace-notes` dx 32.5 is a PAIRING ARTEFACT.** abcjs emits a graced note's MAIN
-   head before its graces where we emit them after. Sorted by x its mains are exact.
+1. **`vree-grace-notes` dx 32.5 AND dy 11.6 ARE THE SAME PAIRING ARTEFACT.** abcjs emits a
+   graced note's MAIN head before its graces where we emit them after. Sorted by x — valid
+   on a one-system fixture — dy is 0.02 and dx a uniform 1.99, the grace glyph. The `-c`
+   checkpoint listed only the dx; the dy is not a separate open item.
 2. **`little swallow` dx cannot reach zero against these goldens.** Their generator carries
    an ASCII-only width table with a flat `|| 8` fallback, so 73 of its 576 lyric characters
    — the Chinese — were measured at 8px each. A property of the GOLDEN, not of abcjs.
@@ -193,67 +229,56 @@ the record was left alone.
 
 ## WHAT IS LEFT, ranked
 
+Nine fixtures are off any axis by more than 0.05px, and three of the numbers are artefacts:
+
 | fixture | dy | dx | oy | ox | what it is |
 |---|---|---|---|---|---|
-| `ragtime-nightingale` | 58.14 | 69.82 | −0.41 | −1.16 | dy: check the pairing FIRST. dx: horizontal, untouched since that arc. |
-| `frere-jacques` | 22.35 | 22.15 | −12.54 | −3.63 | the source-line-wrap model conflict |
-| `vree-grace-notes` | 11.65 | 32.50 | 0.03 | −1.14 | dx is the pairing artefact; dy is open |
-| `little swallow` | 1.92 | 23.97 | −0.58 | −5.73 | dx is the golden limitation; dy/oy open |
+| `ragtime-nightingale` | 58.13 | 69.82 | −0.54 | −1.16 | dy is TWO MIS-PAIRED HEADS (below); dx is horizontal, untouched since that arc |
+| `frere-jacques` | 22.35 | 22.15 | −12.53 | −3.63 | the source-line-wrap model conflict — a design question |
+| `vree-grace-notes` | 11.64 | 32.50 | — | −1.14 | **BOTH numbers are the same pairing artefact.** Sorted by x — valid here, one system — dy is 0.02 and dx a uniform 1.99, which is the grace glyph. Its dy was listed as "open" in `-c`; it is not. |
+| `little swallow` | 1.92 | 23.97 | −0.58 | −5.73 | dx is the golden limitation. dy/oy is the LYRIC RESERVE — diagnosed below |
 | `zocharti-loch` | — | 5.35 | — | 0.69 | horizontal only |
 | `happy-birthday` | — | 3.85 | — | −0.49 | horizontal only |
-| `ave-verum-corpus` | 2.39 | — | −0.48 | — | **DIAGNOSED — see below** |
-| `score-reorder` | — | — | 0.61 | — | the whole drawing 0.62px low; extents match exactly, so it is the top-text block |
-| `multi-voice-rest-collision` | — | — | −0.37 | — | our tuplet's `yTextPos` is 0.093 pitch under abcjs's 16.5929 |
-| `multi-voice-triplet-brackets` | 0.17 | — | −0.24 | — | was 4.05 / −1.62 |
+| `multi-voice-lyrics-two-voices` | 0.07 | — | 0.05 | — | survives sorting, so a real 0.07px |
+| `two-voice-invention` | 0.07 | — | — | — | survives sorting |
+| `vree-sharps` | — | — | 0.07 | — | |
 
-### `ave-verum-corpus` — diagnosed, one step from closed
+### `little swallow` — diagnosed, and it is our formula not our ink
 
-Its organ staff reaches its bottom on a slur and nothing else. abcjs stops at **−4.0**,
-which is `min(1, 0) − 4` off the `setEndAnchor` reserve. Ours lands at −3.0 and is out by
-one pitch, because **the slur's anchors on a CHORD are not abcjs's**: it pairs pitch 1 to
-pitch 0 where we pair 1 to 1, and its second slur 1 to 2 where we pair 3 to 2.
+Its five staves are one system each with two verses of lyrics. abcjs's rule is uniform:
 
-Our anchor for a chord carries the chord's whole extent and its centre is the chord's
-middle; abcjs anchors a slur on one specific NOTEHEAD. Find which one it picks — it is set
-where `startSlur`/`endSlur` attach in `abstract-engraver.js` — and this fixture closes.
-That is a chord-anchor question, not a reserve one.
+```
+staff.bottom  =  ink  -  (lyricHeightBelow + 1)          # 11.1265 pitch on every staff
+lyric pitch   =  ink  -  spacing.vocal / STEP            # so the LYRIC follows the ink too
+```
 
----
+Its ink bottoms are −2.5 / −3.4747 / −3.0 / −3.4727 / −3.0 and its staff bottoms follow
+exactly. **Our ink agrees** — probed, staves 2 and 4 both bottom out at pitch −3.0, the
+same as abcjs. What does not agree is the reserve: ours is anchored on the DRAWN LYRIC
+BASELINE (`lyricBottom + lyricVoiceStep + spacePerStep - lyricInkGap`, a constant
+calibrated against three one-and-two-verse shapes), where abcjs's is anchored on the INK
+with the lane subtracted. So where two staves share an ink bottom abcjs gives them the
+same staff bottom and we give them −13.63 and −12.17.
 
-## AN OPEN GAP — abcjs's OWN TEST SUITE IS NOT PORTED
+The structural fix is abcjs's own form — ink minus `(lyricHeightBelow + margin)` — but
+`lyricHeightBelow` is a MEASURED multi-line text height (10.1265 pitch here) and the
+current constant was verified against abcjs's output on three shapes. Port the structure,
+then re-derive the constant; do not drop a new constant into the old form.
 
-Raised 2026-08-02 and worth a decision. `abcjs-6.6.3/tests/` holds **272 `it()` cases in
-30 `describe` blocks**, and abcts reads none of them. Everything we gate on comes from
-`Tools/abcjs-debug/` — 41 fixtures, their parse/element/SVG goldens — plus our own
-hand-written suites.
+### `ragtime-nightingale` dy is TWO MIS-PAIRED NOTEHEADS — measured, not guessed
 
-| directory | cases | what it covers |
-|---|---|---|
-| `tests/visual/` | 181 | slurs vs beams, decorations, directives, layout, wrap, transpose, tablature, titles, selection, chord grids, svg-per-line |
-| `tests/synth/` | 76 | flattener, MIDI, timing, synth options — abcts has no audio, so not applicable yet |
-| `tests/parse/` | 13 | ties/slurs, note ids, start chars, tunebook parsing, voices-array |
-| `tests/api/` | 2 | `tunebook_svg` |
-
-They are mocha/chai over a jsdom DOM and assert on `getBBox()` and on the
-`visualObj[0].lines[…].staffGroup` tree, so they are not runnable as-is — but the roughly
-190 non-synth cases are exactly the properties our fixture corpus does NOT gate. `slurs`
-alone asserts that a slur sits under the beam it passes, which is a claim about the
-geometry this arc keeps rediscovering by hand.
-
-Also unported and separately interesting: `src/test/abc_parser_lint.js` and
-`abc_vertical_lint.js`, which validate abcjs's parse tree and its laid-out output against
-a JSON schema. That is a shape check we could run over OUR parse output for free.
-
-Not a defect — the corpus is the gate by design and it is at 100% on structure — but
-"the 41 fixtures" and "abcjs's own idea of what to test" are not the same coverage, and
-the difference has never been written down. Decide whether to port the visual/parse cases
-as abcts tests (translating `getBBox` assertions onto `absolutePixels`) or to record that
-we deliberately do not.
+See the section above for the histogram. Every head but two lies in [−2, +4]; drop the one
+swapped pair and dy is **5.38**. Do not chase it as geometry.
 
 ---
 
 ## TRAPS PAID FOR THIS SESSION
 
+0. **READ THE WHOLE CONSTRUCTOR BEFORE TAKING A DEFAULT FOR THE ANSWER.**
+   `RelativeElement` opens with `top = bottom = pitch`, and that reading was written into
+   a comment mid-session — but the next lines widen it by `thickness / 2`, which
+   `create-note-head.js` always passes. The 0.0444 of a pitch that leaves is visible in
+   abcjs's own printed numbers, and it was on screen for two hours before it was read.
 1. **THE PHASE MATTERS AS MUCH AS THE FIGURE.** Ink, lane, then post-lane. The same box
    applied one phase early is a different number, and it looked like a wrong constant.
 2. **A FAILING ASSERTION HIDES THE ONES AFTER IT.** Two stale ceilings surfaced only when
