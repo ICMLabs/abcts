@@ -810,6 +810,7 @@ class VoiceBuilder {
   /** A mid-tune `K:`/`M:` applies to the measure it opens, so it pends until close. */
   private pendingKeyChange: KeySignature | null = null
   private pendingClefChange: Clef | null = null
+  private pendingTempoChange: Tempo | null = null
   private pendingKeyChangeRange: SourceRange | null = null
   private pendingMeterChange: Meter | null = null
   private pendingMeterChangeRange: SourceRange | null = null
@@ -852,6 +853,11 @@ class VoiceBuilder {
     this.pendingClefChange = clef
   }
 
+  /** A `Q:` after the first — printed where it stands. */
+  setTempoChange(tempo: Tempo | null): void {
+    this.pendingTempoChange = tempo
+  }
+
   setMeterChange(meter: Meter | null, range: SourceRange): void {
     this.pendingMeterChange = meter
     this.pendingMeterChangeRange = range
@@ -861,12 +867,14 @@ class VoiceBuilder {
     const changes = {
       keyChange: this.pendingKeyChange,
       clefChange: this.pendingClefChange,
+      tempoChange: this.pendingTempoChange,
       keyChangeSourceRange: this.pendingKeyChangeRange,
       meterChange: this.pendingMeterChange,
       meterChangeSourceRange: this.pendingMeterChangeRange,
     }
     this.pendingKeyChange = null
     this.pendingClefChange = null
+    this.pendingTempoChange = null
     this.pendingKeyChangeRange = null
     this.pendingMeterChange = null
     this.pendingMeterChangeRange = null
@@ -2108,7 +2116,12 @@ class Parser {
         // ponytail: so a second `Q:` is dropped rather than drawn as a tempo CHANGE in
         // place. No corpus fixture has two, and modelling one means a `tempoChange` on
         // Measure plus a renderer path with nothing to gate it.
+        // THE FIRST ONE ANYWHERE becomes the tune's, drawn at the head of system 1.
+        // EVERY LATER ONE is an ordinary element in its own voice's stream, printed where
+        // it stands — `synth-flattener-31` has four across three voices and abcjs draws
+        // all five marks.
         if (builder.tempo === null) builder.tempo = parseTempo(value)
+        else if (builder.bodyStarted) builder.voice.setTempoChange(parseTempo(value))
         return
       }
       case 'w': {

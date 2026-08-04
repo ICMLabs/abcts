@@ -111,9 +111,10 @@ const WITHIN: Readonly<Record<string, number>> = {
   // A DECORATION WRITTEN BEFORE A BARLINE ATTACHES TO THE BARLINE, at a fixed pitch 12.
   // THE MODE MAY BE ITS OWN TOKEN — `K:F# dor` and `K:D Dorian` are read across the space.
   // A MID-TUNE `[M:4/4]` PRINTS WHERE IT STANDS — a restated one prints nothing.
-  '0.05': 112,
-  '1': 128,
-  '5': 142,
+  // A `Q:` AFTER THE FIRST prints where it stands, on its own voice's staff.
+  '0.05': 114,
+  '1': 130,
+  '5': 144,
   '25': 169,
 }
 

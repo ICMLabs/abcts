@@ -676,6 +676,16 @@ export interface Measure {
    * normally written.
    */
   readonly closingBarlineDecorations?: readonly string[]
+  /**
+   * A `Q:` or `[Q:]` after the FIRST one, printed where it stands.
+   *
+   * The first `Q:` anywhere in the tune becomes `Score.tempo` and is drawn at the head of
+   * system 1 — abcjs's `metaText.tempo`, which is why `frere-jacques`'s line-21 `Q:`
+   * appears above music that precedes it. Every LATER one is an ordinary element in its
+   * own voice's stream, on its own staff: `synth-flattener-31` has four across three
+   * voices and abcjs draws all five marks.
+   */
+  readonly tempoChange?: Tempo | null
   readonly startsSystem: boolean
   /**
    * Free-text blocks and mid-tune subtitles standing between the PREVIOUS system and this

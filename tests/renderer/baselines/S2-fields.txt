@@ -53,7 +53,7 @@ system 0 width=57.324 originY=0.000
       line  54.436,-2.000 -> 54.436,2.000 t=0.160
       line  55.166,-2.000 -> 55.166,2.000 t=0.500
 tune 1
-bounds  width=90.323 height=55.782 top=-1.935
+bounds  width=90.323 height=58.647 top=-1.935
 systems 3
 system 0 width=90.323 originY=0.000
   staff 0 originY=16.465
@@ -115,8 +115,8 @@ system 1 width=90.323 originY=22.273
       text  56.260,0.000 size=2.065 ")"
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 2 width=31.733 originY=34.187
-  staff 0 originY=6.756
+system 2 width=31.733 originY=33.552
+  staff 0 originY=10.256
     staffline 0.000,2.000 -> 31.733,2.000 t=0.130
     staffline 0.000,1.000 -> 31.733,1.000 t=0.130
     staffline 0.000,0.000 -> 31.733,0.000 t=0.130
@@ -124,6 +124,8 @@ system 2 width=31.733 originY=34.187
     staffline 0.000,-2.000 -> 31.733,-2.000 t=0.130
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
+    tempo x=6.329 w=0.000
+      text  6.329,-7.417 size=2.581 bold "sostenuto"
     note@-6 x=6.329 w=5.474
       glyph noteheadBlack 6.329,3.000
       line  5.929,3.000 -> 7.995,3.000 t=0.160

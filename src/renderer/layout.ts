@@ -4402,13 +4402,24 @@ function layoutMeasure(
     fixed(meter.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
     x += meter.width + ENGRAVE.prefixGap
   }
+  // A `Q:` AFTER THE FIRST prints where it stands, on its OWN voice's staff — an ordinary
+  // element in that voice's stream. Zero width, like the tune's own mark.
+  const drawTempoChange = (): void => {
+    if (measure.tempoChange == null) return
+    const tempo = layoutTempo(x, measure.tempoChange, strict)
+    if (tempo === null) return
+    elements.push(tempo)
+    fixed(0, 0)
+  }
   if (keyChangeAt < openingBarAt) {
+    drawTempoChange()
     drawClefChange()
     drawKeyChange()
     drawMeterChange()
     drawOpeningBar()
   } else {
     drawOpeningBar()
+    drawTempoChange()
     drawClefChange()
     drawKeyChange()
     drawMeterChange()
