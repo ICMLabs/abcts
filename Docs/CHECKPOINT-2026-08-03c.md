@@ -97,26 +97,6 @@ ABC 2.1 §4.1, and it applies to every tune. The builder holding it looks EMPTY 
 no `T:`, no music — so `flush` dropped it whole and `%%stretchlast 1` written above `X:1`
 never reached the tune below it. `visual-wrap-02-stretchlast-1` dx 241.15 → 0.01.
 
----
-
-## THE HORIZONTAL MODEL IS A FAITHFUL PORT — the divergences are NUMBERS in it
-
-Worth knowing before touching it. `lineAt` reproduces `layoutStaffGroup` +
-`voice-elements.js` element for element: `nextx = x + spacing * sqrt(dur * 8)`,
-`minx = x + w (+ minspacing)`, `getNextX = max(minx, nextx)`, the `extraw` shift, the
-waiting-voice instalments, and `calcHorizontalSpacing`'s inversion over `spacingUnits`.
-
-So a horizontal divergence is almost never the loop. It is a `w`, an `extraw`, a
-`minspacing` or a duration — and the way to find it is to instrument
-`voice-elements.js`'s `layoutOneItem` to print `type / dur / w / extraw / minspacing / x`
-and compare item by item. Three of the four fixes above were found that way in one run each.
-
-**Our `units` are abcjs's × √2 and our `spacingScale` is its 30 ÷ √2** — the reference is
-1/16 where abcjs's is 1/8. The PRODUCT is what the solve uses, so both are consistent; do
-not "fix" one without the other.
-
----
-
 ### 15. `%%gchordfont`, and A THIRD GOLDEN LIMITATION
 
 The directive is a CHANGING font (`getChangingFont`, `abc_parse_directive.js:1019-1029`) —
@@ -148,6 +128,25 @@ ASCII-only CJK widths and `vree-grace-notes`'s emission order.
 `oy` −153.5 → −133.9 and has eighteen more fonts to go.
 
 ---
+
+
+---
+
+## THE HORIZONTAL MODEL IS A FAITHFUL PORT — the divergences are NUMBERS in it
+
+Worth knowing before touching it. `lineAt` reproduces `layoutStaffGroup` +
+`voice-elements.js` element for element: `nextx = x + spacing * sqrt(dur * 8)`,
+`minx = x + w (+ minspacing)`, `getNextX = max(minx, nextx)`, the `extraw` shift, the
+waiting-voice instalments, and `calcHorizontalSpacing`'s inversion over `spacingUnits`.
+
+So a horizontal divergence is almost never the loop. It is a `w`, an `extraw`, a
+`minspacing` or a duration — and the way to find it is to instrument
+`voice-elements.js`'s `layoutOneItem` to print `type / dur / w / extraw / minspacing / x`
+and compare item by item. Three of the four fixes above were found that way in one run each.
+
+**Our `units` are abcjs's × √2 and our `spacingScale` is its 30 ÷ √2** — the reference is
+1/16 where abcjs's is 1/8. The PRODUCT is what the solve uses, so both are consistent; do
+not "fix" one without the other.
 
 ## THE NEXT CLUSTER IS THE REST OF THE FONT DIRECTIVES
 
