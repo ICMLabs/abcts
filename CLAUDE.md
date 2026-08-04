@@ -4,9 +4,15 @@ You are developing abcts, a modern TypeScript ABC notation library
 and community successor to abcjs.
 
 ## First Step — Always
-Read `Docs/CHECKPOINT-2026-08-03b.md` first — it is the current state of play, the open
-decisions, and the known risks — and `Docs/HANDOFF-2026-08-03b.md` beside it for where to
-start and the session prompt. (`CHECKPOINT-2026-08-03.md` is superseded but remains the
+**THE STANDING ORDER IS 100% PARITY WITH ABCJS ON EVERY TUNE** — the 41-fixture corpus, the
+174-tune harvested corpus, Gonzato, and the audio feature set. Work until it is reached;
+checkpoint and hand off as you go so no context is lost.
+
+Read `Docs/CHECKPOINT-2026-08-03c.md` first — it is the current state of play, the open
+decisions, and the known risks — and `Docs/HANDOFF-2026-08-03c.md` beside it for where to
+start and the session prompt. (`CHECKPOINT-2026-08-03b.md` holds the lyric-ink fix, the
+tempo note, the two beam divergences and the ragtime verdict; `CHECKPOINT-2026-08-03.md` is
+superseded but remains the
 record of the declared-box list, the two corpora and the four gate artefacts; TWO of its
 statements are corrected in `-08-03b`. `CHECKPOINT-2026-08-02d.md`, `CHECKPOINT-2026-08-02c.md`, `CHECKPOINT-2026-08-02b.md`, `CHECKPOINT-2026-08-02.md`,
 `CHECKPOINT-2026-08-01.md`, `CHECKPOINT-2026-07-24.md`, `-07-22c.md`, `CHECKPOINT-2026-07-22b.md`, `-07-21.md`, `-07-19.md` and
@@ -155,7 +161,7 @@ pixel-parity gate included, ceilings re-recorded. The timeline is per LINE, as a
 voices because they are ordinary zero-duration elements on one timeline.
 
 **The VERTICAL arc is OPEN** on `geometry/vertical`, branched from it and red BY DESIGN.
-`Docs/VERTICAL-ARC.md` is its working spec and `Docs/CHECKPOINT-2026-08-03b.md` the state.
+`Docs/VERTICAL-ARC.md` is its working spec and `Docs/CHECKPOINT-2026-08-03c.md` the state.
 **21 of 29 fixtures are pixel-identical to abcjs on ALL FOUR axes at once** at a 0.05px
 threshold, from 0 at the start of that work; only EIGHT are off any axis and only FOUR off
 a vertical one. Page heights match abcjs to within 0.07px.
@@ -215,7 +221,7 @@ It has kept doing it — `clef=none` and `clef=perc` read as a C clef, `%%text` 
 nothing, `V:… merge` unimplemented, `bass,,` parsed as no clef, an empty implicit voice
 taking a staff, and both line-assignment rules were all found there, and only one of them
 is exercised by any of the 41. **START EVERY SESSION WITH
-`tests/corpus-abcjs-ranked.test.ts`** — that table, not the aggregate counts, is what
+`npx vitest run tests/corpus-abcjs-ranked.test.ts && cat /tmp/abcts-corpus-ranked.txt`** — that table, not the aggregate counts, is what
 names the next defect, and its DIRECTIVES column is what makes it actionable.
 
 **AND THE ALGORITHM IS IN ABCJS.** Read the named function, then finish with a probe: four
