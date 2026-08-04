@@ -6550,7 +6550,14 @@ function topTextBlock(
         anchor: 'end',
       })
     }
-    advance(Math.max(sizeOf('infofont'), sizeOf('composerfont')), boxOf('composerfont'))
+    // THE ROW ADVANCES BY WHICHEVER FIELD MOVES IT, not by the taller of the two.
+    // `addTextIf` measures `getTextSize.calc("A", font)` and moves by `round(height *
+    // 1.1)` — but the rhythm is given `noMove: !!(composer || origin)`
+    // (`top-text.js:36-39`), so when either is present the rhythm draws and moves nothing
+    // and `composerfont` alone sets the row. Taking the max spent `%%infofont Monaco 11
+    // box`'s 24px where abcjs spent `%%composerfont Arial 8 box`'s 19.
+    const rowFont: AbcFontType = composer !== '' || origin !== '' ? 'composerfont' : 'infofont'
+    advance(sizeOf(rowFont), boxOf(rowFont))
   }
 
   // `A:` — the author of the words. Its own row, right-aligned in `composerfont`, with NO
@@ -6641,6 +6648,13 @@ function appendFreeText(
   let y = from
   const sizeOf = (type: AbcFontType): number =>
     Math.round(((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / ABCJS_PX_PER_SPACE
+  /**
+   * A BOXED font measures `height + padding * 4`, and both of these rows move by their
+   * MEASURED height — `getTextSize.calc` in `subtitle.js:8` and `free-text.js:19`. Leaving
+   * it out cost a `%%text` + mid-tune `T:` between two systems 20.4px of gap.
+   */
+  const boxOf = (type: AbcFontType): number =>
+    fonts[type]?.box === true ? sizeOf(type) * ENGRAVE.fontBoxPadding * 4 : 0
   for (const block of blocks) {
     if (block.separator !== undefined) {
       // The RULE COSTS NO HEIGHT — `drawSeparator` paints at the cursor and moves nothing
@@ -6665,7 +6679,7 @@ function appendFreeText(
           anchor: 'middle',
         })
       }
-      y += goldenTextHeight(size)
+      y += goldenTextHeight(size) + boxOf('subtitlefont')
       continue
     }
     const textSize = sizeOf('textfont')
@@ -6682,7 +6696,10 @@ function appendFreeText(
         anchor: block.align === 'center' ? 'middle' : 'start',
       })
     })
-    y += goldenTextHeight(textSize) + (block.lines.length - 1) * ENGRAVE.freeTextLineStep
+    y +=
+      goldenTextHeight(textSize) +
+      boxOf('textfont') +
+      (block.lines.length - 1) * ENGRAVE.freeTextLineStep
   }
   return y
 }

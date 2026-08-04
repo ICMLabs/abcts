@@ -158,9 +158,17 @@ const WITHIN: Readonly<Record<string, number>> = {
   // open when the field was parsed, and again in the next system's prefix. Suppressing our
   // inline draw was half the rule; drawing it after the previous line's last barline is the
   // other half. `visual-selection-03`'s seven systems each sat 11.63px high without it.
+  // EVERY FONT SITE READS ITS OWN `%%<type>font`, and four of them are geometry:
+  // `measurefont` (the bar number), `annotationfont` (which abcjs picks over `gchordfont`
+  // for an annotation), `partsfont` (the `P:` lane) and `voicefont` (the left edge, plus
+  // the trailing "A" abcjs measures in the SAME font rather than as a constant).
+  // A ROW ADVANCES BY WHICHEVER FIELD MOVES IT: the rhythm is given `noMove` whenever a
+  // composer or origin is present, so `composerfont` alone sets that row and not the taller
+  // of the two. And a BOXED font's `padding * 4` is in every MEASURED height —
+  // `getTextSize.calc` adds it, so a mid-tune `%%text` and `T:` carry it too.
   '0.05': 135,
   '1': 143,
-  '5': 155,
+  '5': 156,
   '25': 171,
 }
 
