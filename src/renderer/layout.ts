@@ -4620,6 +4620,17 @@ function layoutMeasure(
   voltaAfter: string | null = null,
   /** The meter as this measure BEGINS — a restated one prints nothing. */
   meterInForce: Meter | null = null,
+  /**
+   * A clef change that arrives AFTER this measure's barline and before the next SYSTEM.
+   *
+   * A `K:C clef=treble+8` written on its own line between two music lines is appended to
+   * the voice stream that is still open — the previous line's — so abcjs draws it at the
+   * END of that line as well as reprinting it in the next system's prefix. Two clefs, one
+   * `K:`. Suppressing our inline draw was half of that rule and this is the other half:
+   * `visual-selection-03`'s seven systems each sat 11.63px high without it, exactly the
+   * octave marker's reserve.
+   */
+  trailingClef: Clef | null = null,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
   /**
@@ -4909,6 +4920,16 @@ function layoutMeasure(
       ENGRAVE.barClearance,
     )
     x += ENGRAVE.barGap
+  }
+
+  // …AND THE NEXT SYSTEM'S CLEF CHANGE, drawn after that barline. See `trailingClef`.
+  if (trailingClef !== null) {
+    const trailing = layoutClef(x, trailingClef, strict)
+    if (trailing !== null) {
+      elements.push(trailing)
+      fixed(trailing.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
+      x += trailing.width + ENGRAVE.prefixGap
+    }
   }
 
   // A repeat barline or a final ends the ending it sits in; a plain one does not.
@@ -5285,6 +5306,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         hasVocalsAt(measureIndex),
         (voice?.measures ?? [])[measureIndex + 1]?.volta ?? null,
         meterInForce,
+        (() => {
+          const next = (voice?.measures ?? [])[measureIndex + 1]
+          return next?.startsSystem === true ? (next.clefChange ?? null) : null
+        })(),
       )
       if (measure.keyChange !== null) keyInForce = measure.keyChange
       if (measure.meterChange != null) meterInForce = measure.meterChange

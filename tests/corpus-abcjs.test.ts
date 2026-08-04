@@ -154,9 +154,13 @@ const WITHIN: Readonly<Record<string, number>> = {
   // 13.72 — 10.5px on a plain treble tune. Only the FIRST voice advances the counter, an
   // empty measure does not, and an invisible barline is not a boundary for counting.
   // LEADING WHITESPACE IS NOT PART OF A DIRECTIVE'S NAME — `%% barnumbers 1`.
-  '0.05': 134,
-  '1': 142,
-  '5': 154,
+  // A `K:` CLEF CHANGE ON ITS OWN LINE PRINTS TWICE — once at the END of the line still
+  // open when the field was parsed, and again in the next system's prefix. Suppressing our
+  // inline draw was half the rule; drawing it after the previous line's last barline is the
+  // other half. `visual-selection-03`'s seven systems each sat 11.63px high without it.
+  '0.05': 135,
+  '1': 143,
+  '5': 155,
   '25': 171,
 }
 
