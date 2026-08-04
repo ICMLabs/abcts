@@ -30,7 +30,7 @@ The 41-fixture stragglers, all nine:
 
 | fixture | dy | dx | oy | ox | what |
 |---|---|---|---|---|---|
-| `little swallow` | 0.32 | 24.19 | 0.16 | −6.29 | dx is the goldens' ASCII width table — NOT chaseable |
+| `little swallow` | 0.32 | 24.19 | 0.16 | −6.29 | dx is the goldens' `\|\| 8` fallback — REACHABLE, see below |
 | `frere-jacques` | 0.00 | 22.64 | 0.00 | −3.53 | horizontal, and its `M:` arrives after prose (see below) |
 | `ragtime-nightingale` | 1.12 | 18.30 | −0.66 | −0.93 | was 58.13 / 53.56; the one red |
 | `vree-grace-notes` | 0.02 | 1.99 | 0.03 | −1.14 | was 11.64 / 32.50; the 1.99 is the grace glyph |
@@ -129,15 +129,61 @@ The note recording them even predicted the residual — "sorted by x, dx a unifo
 is the grace glyph" — and named the wrong owner. Five more harvested fixtures came off the
 table with it.
 
-**THREE GOLDEN LIMITATIONS ARE REAL, and all three were read out of `dump-svg.js` ITSELF:**
+**AND THE OTHER TWO ARE NOT "LIMITATIONS" EITHER — THEY ARE THE TARGET.** This document
+called them unchaseable for a day; that was a judgement, not a fact, and it was the WRONG
+judgement. **The goldens are what abcjs produces, and byte parity with them is the goal**, so
+whatever the generator's text metrics do is what we have to do.
 
-| | what the generator does |
-|---|---|
-| `little swallow`'s dx | ASCII-only width table with a flat `\|\| 8` fallback — 73 CJK characters measured at 8px |
-| any NON-DEFAULT font size's width | `calcWidth` maps every size onto one of six per-character tables; an 80pt chord is measured with the 27px title table |
-| `%%jazzchords`' oy | `getBBox` counts a chord's NESTED tspans as separate LINES: `h + (n-1) * fontSize * 1.2`, so `"x/C"` measures three lines high — 38.4px exactly |
+**THE DECIDING EVIDENCE IS `abcMusicKit` v1**, which ships in production and is byte-identical
+to these goldens. It reproduces the fallback ON PURPOSE, with the comment naming the source
+(`Sources/abcMusicKitRenderer/abcRenderer.swift:108-109`):
 
-Text HEIGHT is faithful at any size otherwise. Judge font work on the VERTICAL axes.
+```swift
+// Fallback 8px for missing chars matches dump-svg.js getBBox patch (|| 8)
+lineWidth += table[ch] ?? 8
+```
+
+So the shipping reference engine already made the opposite call to the one recorded here.
+
+### WHAT THE GENERATOR ACTUALLY MEASURES — `dump-svg.js:62-84`, and it is MECHANICAL
+
+`calcWidth` picks ONE of five per-character tables by SIZE, sums `widths[ch] || 8`, and takes
+the widest line:
+
+| size (px) | table it asks for | table it GETS |
+|---|---|---|
+| ≥ 27 | `titlefont` | **`repeatfont`** — the key does not exist, so it falls back to TNR **17px** |
+| ≥ 21 | `subtitlefont` | **`repeatfont`**, same |
+| ≥ 20 | `partsfont` | `partsfont` (TNR Bold 20, 95 chars) |
+| ≥ 19 | `measurefont` | `measurefont` — **31 characters only**; every letter past `C` falls to 8 |
+| ≥ 17 | `vocalfont` if bold, else `repeatfont` | as asked |
+| ≥ 16 | `gchordfont` | `gchordfont` (Helvetica 16, 101 chars) |
+| else | `repeatfont` | `repeatfont` |
+
+`dump-elements-char-widths.js` carries only those FIVE keys, all ASCII (95–101 characters
+each, `measurefont` 31), all WebKit-calibrated — the file's own comment says "WebKit
+calibrated 2026-04-03". Everything outside them — CJK, `è é â ç ê`, and every letter in
+`measurefont` past `C` — is **8**.
+
+So a 27px title is measured with 17px widths, and `little swallow`'s 73 Chinese characters
+are 8px each. **Both are reproducible exactly**: five tables, one size ladder, one `|| 8`.
+
+### WHAT IT COSTS, WHICH IS THE PART THAT NEEDS A DECISION
+
+Reproducing it makes our SVG match the goldens and makes our REAL output diverge from a
+browser's: CJK lyrics would be SPACED at 8px while DRAWN at ~17. **v1 ships exactly that**,
+and the mode split is where the two answers live — `abcjs-strict` reproduces abcjs, `abc2.1`
+and `extended` are the corrected ones. `textWidth` does not take `strict` today and 16 call
+sites would have to thread it, or the fallback becomes mode-gated at one place.
+
+### WHAT IS STILL GENUINELY OPEN
+
+`%%jazzchords`' `oy`: `getBBox` counts a chord's NESTED tspans as separate LINES,
+`h + (n-1) * fontSize * 1.2` (`dump-svg.js:120-124`), so `"x/C"` measures three lines high —
+38.4px exactly. Same status as the widths: reproducible, and a decision rather than a
+limitation.
+
+**Text HEIGHT for the seven default sizes is already faithful** (`goldenTextHeight`).
 
 ---
 
@@ -180,8 +226,8 @@ drawn at.
 ## WHAT IS LEFT
 
 ```
-499.38  dy= 40.8 dx=499.4 oy=  5.5 ox=113.3  visual-tablature-17-stretchlast   GOLDEN (dx)
- 38.37  dy=  0.0 dx=  0.1 oy=-38.4 ox= -0.1  visual-misc-03-jazzchords         GOLDEN
+499.38  dy= 40.8 dx=499.4 oy=  5.5 ox=113.3  visual-tablature-17-stretchlast   calcWidth
+ 38.37  dy=  0.0 dx=  0.1 oy=-38.4 ox= -0.1  visual-misc-03-jazzchords         getBBox tspans
  31.50  dy= 23.1 dx= 17.0 oy=-31.5 ox= -4.6  visual-options-01-fonts
  23.00  dy= 15.5 dx=  0.0 oy= 23.0 ox= -0.0  visual-layout-09-endings  [%%voicecolor]
  20.47  dy= 19.5 dx=  6.3 oy= 20.5 ox=  2.7  visual-selection-01 / visual-svg-per-line-01
@@ -192,8 +238,9 @@ drawn at.
  14.31  dy=  4.8 dx=  9.2 oy= 14.3 ox= -4.4  mouse-click-01 / visual-tablature-15
 ```
 
-**NOTHING ABOVE 40px IS OURS.** The tail below 10px is dominated by the systemic residual
-described next.
+The two worst are the generator's text metrics, and **both are reachable by porting
+`calcWidth`** — see THE EXPENSIVE LESSON. That is now the largest single item on the table
+by pixels, ahead of the systemic 0.03px by fixture count.
 
 ### THE SYSTEMIC 0.03px, and it is now the largest single item by fixture count
 

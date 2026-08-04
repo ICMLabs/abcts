@@ -249,12 +249,15 @@ conclusion: emitting them in abcjs's order took ragtime to dy 1.12 / dx 18.30 an
 `vree-grace-notes` to dy 0.02 / dx 1.99. **"The gate cannot see this" and "the golden is
 wrong" are different claims, and the second needs the golden opened.**
 
-**THREE GOLDEN LIMITATIONS ARE REAL, and all three were read out of `dump-svg.js` itself.**
-`little swallow` dx: the harness has an ASCII-only width table with a flat `|| 8` fallback,
-so 73 of its 576 lyric characters — the Chinese — were measured at 8px each. ANY
-NON-DEFAULT FONT SIZE's width: `calcWidth` maps every size onto one of six per-character
-tables. `%%jazzchords`' oy: `getBBox` counts a chord's nested tspans as separate LINES and
-adds `fontSize * 1.2` for each. Properties of the GOLDEN, not of abcjs.
+**AND THERE ARE NO "GOLDEN LIMITATIONS" — THE GOLDENS ARE THE TARGET.** Three more numbers
+were filed that way and all three are the generator's TEXT METRICS, which byte parity
+obliges us to reproduce: `calcWidth` picks one of five ASCII per-character tables by SIZE
+(three of its six brackets resolve to `repeatfont`, because their key does not exist) and
+falls back to a flat **8** for every character outside them, and `getBBox` counts a chord's
+NESTED tspans as separate lines. `abcMusicKit` v1 — production, byte-identical to these
+goldens — reproduces the fallback ON PURPOSE: `lineWidth += table[ch] ?? 8  // matches
+dump-svg.js getBBox patch (|| 8)`. Porting `calcWidth` is the top open item; the correct
+widths belong in `abc2.1`/`extended`, which is what the mode split is for.
 
 **PORT THE STRUCTURE, THEN THE CONSTANTS.** The costly divergences have all been
 architectural, not numeric; see the checkpoint's opening section before starting anything.
