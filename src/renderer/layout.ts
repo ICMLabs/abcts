@@ -4781,20 +4781,55 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   }
 
   // Does the tune SING? Dynamics stack above the staff if so, below if not — abcjs's
-  // `hasVocals` (`abstract-engraver.js:110`), which it reads per system but which never
-  // varies across a corpus tune's systems. Any note in any voice carrying a syllable or a
-  // held-melisma marker counts; a wordless `*` (`lyric: null, lyricMelisma: false`) does
+  // `hasVocals` (`abstract-engraver.js:110`). Any note in any voice carrying a syllable or
+  // a held-melisma marker counts; a wordless `*` (`lyric: null, lyricMelisma: false`) does
   // not, matching abcjs's test on `el.lyric`.
-  const hasVocals = voices.some((voice) =>
-    (voice?.measures ?? []).some((measure) =>
-      measure.events.some(
-        (event) =>
-          (event.type === 'note' || event.type === 'chord') &&
-          ((event.lyric !== null && event.lyric !== '') ||
-            event.extraVerses.some((v) => v !== null && v !== '')),
-      ),
-    ),
-  )
+  //
+  // IT IS PER SYSTEM AND MONOTONIC. `createABCLine` calls `containsLyrics(staffs)` at the
+  // head of every line, and that function only ever sets the flag TRUE — `reset()` clears
+  // it once per TUNE, not once per line. So a tune whose lyrics arrive on its second
+  // system engraves the FIRST with dynamics BELOW and everything after with them above.
+  //
+  // Nothing in the 41 fixtures does that and the note here used to say it never varies.
+  // `visual-selection-01` does: its `w:` follows the SECOND of two `[V: PianoRightHand]`
+  // lines, and putting system 1's dynamics above cost 27.11px — seven pitch, the lane —
+  // between its two staves.
+  const sings = (measure: Measure): boolean =>
+    measure.events.some(
+      (event) =>
+        (event.type === 'note' || event.type === 'chord') &&
+        ((event.lyric !== null && event.lyric !== '') ||
+          event.extraVerses.some((v) => v !== null && v !== '')),
+    )
+  /** Measure indices that open a system, taken from the measures themselves. */
+  const systemOpensAt = new Set<number>([0])
+  for (const voice of voices) {
+    ;(voice?.measures ?? []).forEach((m, i) => {
+      if (m.startsSystem) systemOpensAt.add(i)
+    })
+  }
+  /** The first measure index of the system that first sings; `Infinity` if none does. */
+  const firstSingingSystemAt = ((): number => {
+    let openedAt = 0
+    let answer = Number.POSITIVE_INFINITY
+    const columns = Math.max(0, ...voices.map((v) => v?.measures.length ?? 0))
+    for (let i = 0; i < columns; i++) {
+      if (systemOpensAt.has(i)) openedAt = i
+      if (
+        voices.some((v) => {
+          const m = v?.measures[i]
+          return m !== undefined && sings(m)
+        })
+      ) {
+        answer = openedAt
+        break
+      }
+    }
+    return answer
+  })()
+  const hasVocalsAt = (measureIndex: number): boolean => measureIndex >= firstSingingSystemAt
+  /** The tune sings SOMEWHERE — for the passes that are not per measure. */
+  const hasVocals = Number.isFinite(firstSingingSystemAt)
 
   const plans: VoicePlan[] = voices.map((voice, voiceIndex) => {
     // A voice's own `clef=` wins over the tune's `K:` clef; treble is the fallback.
@@ -4829,7 +4864,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         strict,
         stemForVoice(voiceIndex),
         keyInForce,
-        hasVocals,
+        hasVocalsAt(measureIndex),
         (voice?.measures ?? [])[measureIndex + 1]?.volta ?? null,
       )
       if (measure.keyChange !== null) keyInForce = measure.keyChange
@@ -5578,7 +5613,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         beams,
         curves: [],
         hasHairpin,
-        dynamicsAbove: hasVocals,
+        dynamicsAbove: hasVocalsAt(span.start),
         tupletReservesAbove: tuplets.reservesAbove,
         // Ties and slurs reserve on the same terms — a declared box, folded in here so
         // `verticalExtent` has one list of them. See `curveReserves`.

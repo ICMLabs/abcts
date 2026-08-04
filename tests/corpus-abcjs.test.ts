@@ -106,10 +106,12 @@ const WITHIN: Readonly<Record<string, number>> = {
   // `%%musicspace` — the gap before the FIRST staff group, in points times 4/3.
   // EXPLICIT KEY ACCIDENTALS — `K: C ^/f _/B _A ^D` prints them in the signature.
   // A MID-TUNE `K: octave=` is GLOBAL, and a voice with no `octave=` of its own follows it.
+  // `hasVocals` IS PER SYSTEM AND MONOTONIC — a tune whose lyrics arrive on its second
+  // system engraves the FIRST with dynamics BELOW.
   '0.05': 109,
   '1': 124,
   '5': 139,
-  '25': 167,
+  '25': 169,
 }
 
 const names = readdirSync(fixturesDir)
