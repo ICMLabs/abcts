@@ -1438,10 +1438,31 @@ describe('annotations', () => {
   it('puts `<` and `>` beside the note rather than above it', () => {
     const left = textsOf('"<cresc"C|')[0]
     const right = textsOf('">cresc"C|')[0]
-    // Staff height. `toBeCloseTo` because stepToY(0) is -0, which draws the same as 0.
-    expect(left?.y).toBeCloseTo(0)
-    expect(right?.y).toBeCloseTo(0)
+    // ON THE NOTE'S AVERAGE PITCH, not at staff height: abcjs builds both with
+    // `y = elem.averagepitch` (`add-chord.js:54,63`), which is also why neither takes a
+    // chord lane — `RelativeElement`'s `case "text"` reserves one only when the pitch is
+    // UNDEFINED. Middle C in the treble clef is 3 steps below the middle line, so `y` is 3
+    // in the y-down staff spaces the layout works in.
+    expect(left?.y).toBeCloseTo(3)
+    expect(right?.y).toBeCloseTo(3)
     expect(left?.x ?? 0).toBeLessThan(right?.x ?? 0)
+  })
+
+  it('reserves `width + 7` before a `<` and 4 either side of a `>`', () => {
+    // `roomTaken += chordWidth + 7; x = -roomTaken` and `roomTakenRight += 4;
+    // x = roomTakenRight` with `w = chordWidth + 4` (`add-chord.js:50-71`). Neither was
+    // reserved at all before: a bare `"<F"F` put the note 16.78px left of abcjs's, which
+    // is `F`'s 9.78 in the annotation font plus the 7.
+    const noteX = (abc: string) =>
+      (
+        layout(parse(`X:1\nL:1/4\nM:4/4\nK:C\n${abc}\n`).scores[0] as Score, {
+          systemWidth: 200,
+        }).systems[0]?.staves[0]?.elements ?? []
+      ).find((e) => e.type === 'note')?.left ?? 0
+    // The left annotation pushes its note right by exactly its own room.
+    expect(noteX('"<F"F G|') - noteX('F G|')).toBeCloseTo((9.7813 + 7) / 7.75, 3)
+    // A right annotation does not move the note it hangs off.
+    expect(noteX('">F"F G|')).toBeCloseTo(noteX('F G|'), 3)
   })
 })
 

@@ -591,6 +591,13 @@ export const ENGRAVE = {
    * (`set-upper-and-lower-elements.js:33-38`).
    */
   endingOverChordLane: 2,
+  /**
+   * A LEFT annotation's room before the note — `roomTaken += chordWidth + 7`
+   * (`add-chord.js:52`), in abcjs pixels.
+   */
+  leftAnnotationGap: 7 / 7.75,
+  /** A RIGHT annotation's, 4 either side — `roomTakenRight += 4` and `w = width + 4`. */
+  rightAnnotationGap: 4 / 7.75,
   /** abcjs's `margin` in `set-upper-and-lower-elements.js:102` — one pitch on every lane. */
   laneMargin: 1,
   voltaStep: 8,
@@ -1041,6 +1048,8 @@ const STAFF_HALF_HEIGHT = 2
 
 /** abcjs's staff space in pixels — the unit its published constants are given in. */
 const ABCJS_PX_PER_SPACE = 7.75
+/** abcjs's `spacing.STEP` — half a staff space, and the unit its PITCH is counted in. */
+const ABCJS_PITCH_PX = ABCJS_PX_PER_SPACE / 2
 
 /**
  * Text box estimate, in multiples of the font size — the renderer's CONTRACT for how
@@ -2358,7 +2367,18 @@ function layoutNoteheads(
 
   /** How far the note's attached text reaches either side of it — see `noteText`. */
   const textSpan = { left: 0, right: 0 }
-  const texts = event === null ? [] : noteText(event, headX, headInk, strict, textSpan)
+  const texts =
+    event === null
+      ? []
+      : noteText(
+          event,
+          headX,
+          headInk,
+          strict,
+          textSpan,
+          steps.reduce((a, b) => a + b, 0) / Math.max(1, steps.length),
+          lowest,
+        )
   if (event !== null && event.decorations.length > 0) {
     const decorated = decorationGlyphs(
       event.decorations,
@@ -2954,6 +2974,60 @@ let JAZZ_CHORDS = false
  * ponytail: one line, where abcjs splits on `\n` first. Our chord symbols carry no
  * newline; a multi-line one would need the loop.
  */
+/**
+ * A `"…"` annotation's PLACEMENT, and the coordinates of an absolute one.
+ *
+ * `letter_to_chord` (`abc_parse_music.js:598-652`) reads the leading character: `^` above,
+ * `_` below, `<` left, `>` right, `@` absolute. An `@` is followed by two floats separated
+ * by a comma, then optional whitespace, then the text — and every way of getting that
+ * wrong falls back to ABOVE with the `@` stripped and the rest printed verbatim, which is
+ * three separate `warn` branches saying the same thing.
+ */
+type Annotation =
+  | { where: 'above' | 'below' | 'left' | 'right'; text: string }
+  | {
+      where: 'relative'
+      text: string
+      dx: number
+      dy: number
+    }
+
+/**
+ * A pitched annotation reserves a POINT, not its letters.
+ *
+ * `RelativeElement`'s `top` and `bottom` are both the pitch it was given unless a
+ * `thickness` says otherwise (`relative-element.js:18-24`), and `add-chord.js` passes none
+ * for a left, right or absolute annotation. So `_addChild`'s `pushTop` sees the pitch
+ * itself — `"@1,1E"e` reserves at pitch 12.26, which the clef's 13.72 already covers, and
+ * the staff does not move at all. Reserving the text's ink box instead raised it 10.31px.
+ */
+const pointReserve = (y: number): readonly [number, number] => [y, y]
+
+const annotationOf = (raw: string): Annotation => {
+  const rest = raw.slice(1)
+  switch (raw[0]) {
+    case '_':
+      return { where: 'below', text: rest }
+    case '<':
+      return { where: 'left', text: rest }
+    case '>':
+      return { where: 'right', text: rest }
+    case '@': {
+      // `getFloat`, a literal comma, `getFloat`, then whitespace — abcjs's own order.
+      const m = /^(-?\d*\.?\d+),(-?\d*\.?\d+)\s*/.exec(rest)
+      if (m?.[1] === undefined || m[2] === undefined) return { where: 'above', text: rest }
+      return {
+        where: 'relative',
+        text: rest.slice(m[0].length),
+        dx: Number.parseFloat(m[1]),
+        dy: Number.parseFloat(m[2]),
+      }
+    }
+    default:
+      return { where: 'above', text: rest }
+  }
+}
+
 const chordParts = (chord: string): readonly [string, string, string] => {
   const m = /^([ABCDEFG][♯♭]?)?([^/]+)?(\/([ABCDEFG][#b♯♭]?))?/.exec(chord)
   if (m === null) return [chord, '', '']
@@ -3076,6 +3150,12 @@ function noteText(
    * extraw = 0` — the flag, and nothing from the text. They draw without occupying.
    */
   spans: { left: number; right: number } | null = null,
+  /**
+   * The note's MEAN staff step and its LOWEST — abcjs's `elem.averagepitch` and
+   * `elem.minpitch`, which are where a left, right or absolute annotation is pitched.
+   */
+  averageStep = 0,
+  minStep = 0,
 ): PlacedText[] {
   if (event.type === 'rest') return []
   const texts: PlacedText[] = []
@@ -3097,28 +3177,43 @@ function noteText(
       event.chordFont === null
         ? ENGRAVE.chordTextSize
         : Math.round((event.chordFont.size * 4) / 3) / 7.75
-    centred(event.chordSymbol, size, headWidth / 2, 'sans')
-    texts.push({
-      text: event.chordSymbol,
-      // The lane is only the origin: `anchorAboveStaff` moves the whole set onto the
-      // staff's music once the voices sharing it are known, exactly as lyrics are.
-      role: 'chord',
-      x: centre - textWidth(event.chordSymbol, size, 'sans') / 2,
-      y: stepToY(ENGRAVE.chordSymbolStep),
-      size,
-      bold: false,
-      italic: false,
-      ...(JAZZ_CHORDS ? { jazz: chordParts(event.chordSymbol) } : {}),
-      ...(event.chordFont?.box === true ? { box: true } : {}),
-    })
+    // EACH LINE IS ITS OWN CENTRED MARK, in REVERSE order — `chordString` splits on `\n`
+    // and walks `j` down from the last "because we place them from bottom to top"
+    // (`add-chord.js:39-41`). So `"D""G"d`, which the parser joined into one name, becomes
+    // two chord marks at one x; `placeInLane` cannot fit them side by side and opens a
+    // second lane, which is 18.52px of staff. Collapsing them to one line lost that on
+    // every fixture that stacks a chord.
+    for (const line of event.chordSymbol.split('\n').reverse()) {
+      if (line === '') continue
+      centred(line, size, headWidth / 2, 'sans')
+      texts.push({
+        text: line,
+        // The lane is only the origin: `anchorAboveStaff` moves the whole set onto the
+        // staff's music once the voices sharing it are known, exactly as lyrics are.
+        role: 'chord',
+        x: centre - textWidth(line, size, 'sans') / 2,
+        y: stepToY(ENGRAVE.chordSymbolStep),
+        size,
+        bold: false,
+        italic: false,
+        ...(JAZZ_CHORDS ? { jazz: chordParts(line) } : {}),
+        ...(event.chordFont?.box === true ? { box: true } : {}),
+      })
+    }
   }
 
-  // `"^text"` and `"_text"` — free annotations, which the parser separates from chord
-  // symbols by that leading char. It is placement, not content, so it is stripped here
-  // rather than printed. See `ENGRAVE.annotationAboveStep` for the stacking order.
-  const annotations = event.annotations.map((a) => ({ where: a[0] ?? '^', text: a.slice(1) }))
-  const above = annotations.filter((a) => a.where === '^' || a.where === '@')
-  const below = annotations.filter((a) => a.where === '_')
+  // `"^text"` / `"_text"` / `"<text"` / `">text"` / `"@x,y text"` — free annotations, which
+  // the parser separates from chord symbols by that leading char. It is placement, not
+  // content, so it is stripped here rather than printed.
+  //
+  // FOUR PLACEMENTS AND FOUR DIFFERENT RESERVES (`add-chord.js:50-104`), and the switch is
+  // what decides whether the mark takes a LANE at all: `RelativeElement`'s `case "text"`
+  // gives `chordHeightAbove` only when the pitch is UNDEFINED
+  // (`relative-element.js:68-75`). `above` and `below` pass no pitch and take the lane;
+  // `left`, `right` and `@` are pitched on the note and take none.
+  const annotations = event.annotations.map(annotationOf)
+  const above = annotations.filter((a) => a.where === 'above')
+  const below = annotations.filter((a) => a.where === 'below')
 
   above.forEach((a, index) => {
     const size = ENGRAVE.chordTextSize
@@ -3153,22 +3248,69 @@ function noteText(
     })
   })
 
-  // `"<text"` and `">text"` sit beside the note at staff height instead of above it.
-  // ponytail: `"@x,y text"` is free placement — its coordinates would need parsing, so it
-  // falls in with `^` above and prints them. No corpus fixture writes one.
+  // A LEFT ANNOTATION TAKES `width + 7` OF ROOM BEFORE THE NOTE, and a right one 4 either
+  // side of itself:
+  //
+  //     case "left":  roomTaken += chordWidth + 7; x = -roomTaken;
+  //                   abselem.addExtra(new RelativeElement(chord, x, chordWidth + 4, …))
+  //     case "right": roomTakenRight += 4; x = roomTakenRight;
+  //                   abselem.addRight(new RelativeElement(chord, x, chordWidth + 4, …))
+  //
+  // (`add-chord.js:50-71`). `addExtra` walks `extraw` back to `dx` and `addRight` walks
+  // `w` out to `dx + w`, so both are real spacing. We drew them at a fixed gap and
+  // reserved nothing at all: a bare `"<F"F` put the note 16.78px left of abcjs's, which is
+  // `F`'s 9.78 in the annotation font plus the 7.
+  //
+  // Both are pitched on the note's AVERAGE, which is also why neither takes a lane.
+  let roomTaken = 0
+  let roomTakenRight = 0
   for (const a of annotations) {
-    if (a.where !== '<' && a.where !== '>') continue
+    if (a.where !== 'left' && a.where !== 'right') continue
     const size = ENGRAVE.chordTextSize
+    const width = textWidth(a.text, size, 'sans')
+    if (a.where === 'left') {
+      roomTaken += width + ENGRAVE.leftAnnotationGap
+      if (spans !== null) spans.left = Math.max(spans.left, roomTaken)
+      texts.push({
+        text: a.text,
+        x: headX - roomTaken,
+        y: stepToY(averageStep),
+        size,
+        bold: false,
+        italic: false,
+        reserve: pointReserve(stepToY(averageStep)),
+      })
+    } else {
+      roomTakenRight += ENGRAVE.rightAnnotationGap
+      if (spans !== null)
+        spans.right = Math.max(spans.right, roomTakenRight + width + ENGRAVE.rightAnnotationGap)
+      texts.push({
+        text: a.text,
+        x: headX + roomTakenRight,
+        y: stepToY(averageStep),
+        size,
+        bold: false,
+        italic: false,
+        reserve: pointReserve(stepToY(averageStep)),
+      })
+    }
+  }
+
+  // `"@x,y text"` — ABSOLUTE placement, and it reserves NOTHING: abcjs gives it `w: 0` and
+  // a pitch of `elem.minpitch + (y + 3 * STEP) / STEP` (`add-chord.js:88-96`), so it takes
+  // no lane and no width. Ours put it in the chord lane and printed its coordinates —
+  // `"@1,1E"e` alone reserved 22.38px abcjs does not.
+  for (const a of annotations) {
+    if (a.where !== 'relative') continue
+    const y = stepToY(minStep + 3 + a.dy / ABCJS_PITCH_PX)
     texts.push({
       text: a.text,
-      x:
-        a.where === '<'
-          ? headX - textWidth(a.text, size, 'sans') - ENGRAVE.minColumnGap
-          : headX + headWidth + ENGRAVE.minColumnGap,
-      y: stepToY(0),
-      size,
+      x: headX + a.dx / ABCJS_PX_PER_SPACE,
+      y,
+      size: ENGRAVE.chordTextSize,
       bold: false,
       italic: false,
+      reserve: pointReserve(y),
     })
   }
 

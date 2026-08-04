@@ -131,9 +131,17 @@ const WITHIN: Readonly<Record<string, number>> = {
   // BOXED. `visual-tablature-17`'s five boxed `%%gchordfont` sizes were a ratio before.
   // A TUPLET'S BRACKET IS INK THE CHORD LANE SITS ON, since `layoutVoice` calls
   // `adjustRange` on every `TripletElem` before any lane is added.
-  '0.05': 129,
-  '1': 136,
-  '5': 148,
+  // AN ANNOTATION'S PLACEMENT DECIDES ITS RESERVE, and only two of the five take a lane:
+  // `RelativeElement`'s `case "text"` gives `chordHeightAbove` when the pitch is UNDEFINED
+  // (`relative-element.js:68-75`), which `above` and `below` are and `left`, `right` and
+  // `@x,y` are not. A LEFT one takes `width + 7` of room before the note and a RIGHT one 4
+  // either side (`add-chord.js:50-71`); an `@` takes none at all and reserves a POINT at
+  // `minpitch + (y + 3 * STEP) / STEP`.
+  // TWO CHORD SYMBOLS ON ONE NOTE STACK — `"D""G"d` is one name `D\nG` and each LINE is
+  // its own centred mark, so it opens a second chord LANE and 18.52px of staff.
+  '0.05': 130,
+  '1': 137,
+  '5': 149,
   '25': 170,
 }
 

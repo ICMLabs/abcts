@@ -2460,7 +2460,15 @@ class Parser {
             pending.annotations.push(decodeTextString(text))
             pending.annotationSourceRanges.push(range)
           } else {
-            pending.chordSymbol = prettifyChord(decodeTextString(text))
+            // TWO CHORD SYMBOLS ON ONE NOTE STACK, they do not replace each other:
+            // `if (el.chord[ci].position === ret[2]) el.chord[ci].name += "\n" + chordName`
+            // (`abc_parse_music.js:200-205`). `"D""G"d` is one chord named `D\nG`, and the
+            // engraver makes each LINE its own centred mark — so it takes two chord LANES
+            // and the staff is 18.52px taller. A `;` inside one means the same thing
+            // (`:198`).
+            const name = prettifyChord(decodeTextString(text)).replace(/;/g, '\n')
+            pending.chordSymbol =
+              pending.chordSymbol === null ? name : `${pending.chordSymbol}\n${name}`
             pending.chordSymbolSourceRange = range
           }
           i++
