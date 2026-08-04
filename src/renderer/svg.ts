@@ -239,7 +239,17 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
     attributes: string,
   ): string => {
     const ink = outline(name)
-    const total = (scale ?? 1) * ink.scale
+    // ABCJS NEVER APPLIES A GLYPH'S SCALE AT DRAW TIME, and says so in its own source:
+    // `printSymbol` takes `{scalex, scaley}` and passes NEITHER to `glyphs.printSymbol`,
+    // under the comment "TODO-PER: what happened to scalex, and scaley? That might have
+    // been a bug introduced in refactoring" (`draw/print-symbol.js:11`). So a grace
+    // notehead, a grace flag and a clef's octave `8` all DRAW at full size while their
+    // POSITIONS are computed from the scaled width — which is why the golden's grace path
+    // is byte-identical to its main head's, 10px to the left.
+    //
+    // Reproducing the bug is the point: it is 1.99px on every graced note, which is
+    // 0.4 of a notehead's ink centre, and it is `vree-grace-notes`' whole residual.
+    const total = strict ? ink.scale : (scale ?? 1) * ink.scale
     const scaled = total !== 1
     const transform = `translate(${num(x)},${num(y)})${scaled ? ` scale(${num(total)})` : ''}`
     if (!optimize) return `<path${attributes} transform="${transform}" d="${ink.path}"/>`

@@ -165,7 +165,7 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // dy 58.1 -> 1.12 and dx 53.56 -> 18.30 when the GRACE NOTES stopped being emitted
     // before their main head. Both were recorded for weeks as "two mis-paired noteheads,
     // do not chase" — the mis-pairing was ours, and it was the emission order.
-    'ragtime-nightingale': { heads: 2009, dy: 1.12, dx: 18.3, oy: -0.54, ox: -1.87 },
+    'ragtime-nightingale': { heads: 2009, dy: 1.12, dx: 16.43, oy: -0.54, ox: -1.87 },
     'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'score-reorder': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'simple-c': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
@@ -178,7 +178,10 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // dy 11.6 -> 0.02 and dx 32.5 -> 1.99, same cause. What is left is the grace glyph's
     // own width: a uniform 1.99 on the graces themselves, exactly as the note predicting
     // the "artefact" said it would be once the order was right.
-    'vree-grace-notes': { heads: 7, dy: 0.02, dx: 1.99, oy: 0.0, ox: -1.14 },
+    // dx 1.99 -> 0.0 and ox -1.14 -> 0.0 when strict stopped SCALING a grace glyph, which
+    // abcjs does not either: `printSymbol` takes `scalex`/`scaley` and passes neither on.
+    // At ZERO on all four axes.
+    'vree-grace-notes': { heads: 7, dy: 0.02, dx: 0.0, oy: 0.0, ox: 0.0 },
     // oy 0.06 -> 0.0: a sharp DECLARES 20.15 where its ink box is 20.19, and a key
     // signature of them was the extra 0.04px on top of the clef's systemic 0.03.
     'vree-sharps': { heads: 4, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },

@@ -169,8 +169,13 @@ const WITHIN: Readonly<Record<string, number>> = {
   // …AND THE BOX IS ON THE WIDTH TOO, which is a chord's `realWidth`: how far a centred
   // mark reaches either side of its note and where `placeInLane` puts its right edge.
   // `visual-tablature-17` boxes five `%%gchordfont` sizes and was 33.9px of dx out on it.
-  '0.05': 135,
-  '1': 143,
+  // AN ARPEGGIO IS A STACK reaching twice its own width back from the note, past the
+  // accidentals; a FINGERING DIGIT is a TEXT decoration, not a glyph; and ABCJS NEVER
+  // APPLIES A GLYPH'S SCALE AT DRAW TIME — `printSymbol` takes `scalex`/`scaley` and
+  // passes neither on, under its own "what happened to scalex, and scaley?" comment. So a
+  // grace notehead draws FULL SIZE while its position is computed from the scaled width.
+  '0.05': 137,
+  '1': 145,
   '5': 157,
   '25': 172,
 }
