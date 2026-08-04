@@ -6291,6 +6291,7 @@ function anchorAboveStaff<
 
   return parts.map((part) => ({
     ...part,
+    aboveStackPlaced: true,
     elements: part.elements.map((el) => {
       if (el.type === 'part') {
         const moved = shiftBy(el, partShift)
@@ -6405,6 +6406,17 @@ interface StaffFurniture {
   readonly hasHairpin?: boolean
   /** Which side the dynamics lane is on — hairpins share it. */
   readonly dynamicsAbove?: boolean
+  /**
+   * `anchorAboveStaff` HAS ALREADY SPENT THE ABOVE-STAFF LANES on this staff.
+   *
+   * Each lane is spent ONCE in abcjs — `setUpperAndLowerElements` walks `staff.top` up
+   * through lyric, chord, ending, dynamic, part and tempo in that order and every element
+   * it places is measured from the total. `anchorAboveStaff` reproduces that stack, and
+   * the element it places already sits above the lanes; re-deriving them here adds them a
+   * second time on top of it. Probed on `mouse-click-01`: adding a `w:` line flips the
+   * dynamics above and cost us 54.25px where abcjs spends 27.13 — exactly twice.
+   */
+  readonly aboveStackPlaced?: boolean
   /** abcjs's `endingHeightAbove` from a tuplet — see `layoutTuplets`. Never below. */
   readonly tupletReservesAbove?: boolean
   /** abcjs's declared box per tuplet — NOT the bracket's drawn lines. */
@@ -6723,8 +6735,13 @@ function verticalExtent(
       ` endAbove=${endingAbove} endBelow=${endingBelow}` +
       ` tuplets=${(furniture.tupletReserves ?? []).length}` +
       ` curves=${(furniture.curveReserves ?? []).length}`
+  // The ABOVE lanes are skipped once something has been placed on top of them — see
+  // `aboveStackPlaced`. `hasBlock` is the same rule for the title block, which is placed
+  // from a `musicTop` that already carries them.
+  const hasBlock = elements.some((el) => el.type === 'title')
+  const aboveSpent = hasBlock || furniture.aboveStackPlaced === true
   if (sawDynamicBelow) bottom += ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
-  if (sawDynamicAbove) top -= ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
+  if (sawDynamicAbove && !aboveSpent) top -= ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
   // THE LANE EXTENDS THE MUSIC, AND ONLY THE MUSIC — so not on a pass that is measuring a
   // top-text block as well.
   //
@@ -6736,7 +6753,10 @@ function verticalExtent(
   // -116.84. The block always wins that `min` when it is present — its offset is
   // `musicTop - musicSpace - blockHeight`, which is below `musicTop` by construction — so
   // skipping the lane here cannot change the answer, only stop it being counted twice.
-  const hasBlock = elements.some((el) => el.type === 'title')
+  // The ENDING lane is NOT gated on `aboveStackPlaced`: `anchorAboveStaff`'s ink call
+  // deliberately leaves it out (see the `voltaLines: []` note there), so the stack it
+  // placed sits BELOW it and this is the one place it is spent. `hasBlock` still gates it,
+  // for the title block, which is placed from a `musicTop` that does carry it.
   const lane = (pitch: number) => (pitch + ENGRAVE.laneMargin) * ENGRAVE.spacePerStep
   if (endingAbove > 0 && !hasBlock) top -= lane(endingAbove)
   if (endingBelow > 0 && !hasBlock) bottom += lane(endingBelow)
