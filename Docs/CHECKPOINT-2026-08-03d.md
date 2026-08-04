@@ -18,7 +18,7 @@ verdict and the beam findings, then `ARCHITECTURE.md`, then `CLAUDE.md`.
 | corpus | standing |
 |---|---|
 | 41-fixture | 20 of 29 are at ZERO on all four axes. Only `ragtime-nightingale`'s `oy` is a gate failure, and it is **0.646 against 0.59** — from 1.58. |
-| harvested (174) | within 0.05 / 1 / 5 / 25px: **109 / 124 / 139 / 169**, from 95 / 106 / 115 / 137. **65 of 174 still off some axis**, from 79. Nothing on the table is above 40px that is not a golden limitation. |
+| harvested (174) | within 0.05 / 1 / 5 / 25px: **112 / 128 / 142 / 169**, from 95 / 106 / 115 / 137. **62 of 174 still off some axis**, from 79. Nothing on the table is above 40px that is not a golden limitation. |
 | suite | 685 of 686. The one red is ragtime's `oy`, at **0.656** against 0.59 — from 1.58, and NOT raised. |
 
 The 41-fixture stragglers, every one named:
@@ -398,6 +398,43 @@ cost **27.11px — seven pitch, exactly the lane** — between its two staves.
 **What named it was reading the STAFF TOPLINES rather than the notehead average.** All four
 were out by 38.75 / 11.64 / 27.34 / 31.17: not a shift, a SPACING, and the intra-system gap
 was 97.08 against abcjs's 124.19.
+
+### 37. A DECORATION WRITTEN BEFORE A BARLINE ATTACHES TO THE BARLINE
+
+`createBarLine` ends `if (elem.decoration) this.decoration.createDecoration(voice,
+elem.decoration, 12, thick ? 3 : 1, abselem, 0, "down", 2, …)`
+(`abstract-engraver.js:1002`) — at a **fixed pitch 12**, not at any note's extent. Ours
+held every pending decoration for the NEXT note, so `CCCC!D.C.alcoda!|DDDD` put the mark
+over the D and the bar reserved nothing.
+
+Measured on a control pair: `CCCC!D.C.alcoda!|` costs abcjs **6.85px** and us 0, and
+`!D.C.!` costs the same. Pitch 12 is our step 6 and `decorationMinTop` clamps there anyway,
+so the existing stack takes it unchanged. `visual-misc-05` was `oy` 19.4 — five navigation
+marks, every one before a bar — and is gone.
+
+### 38. THE MODE MAY BE ITS OWN TOKEN — `K:F# dor`, `K:D Dorian`
+
+abcjs consumes the pitch and the accidental and THEN calls `getMode` on whatever is left,
+**across the space** (`abc_parse_key_voice.js:256-283`). We read the first whitespace token
+only, so `K:F# dor` was F# MAJOR — six sharps against dorian's four — and `K:D Dorian` was D
+major where it has no accidentals at all.
+
+**Matched on the FIRST THREE CHARACTERS**, exactly as `getMode` does, and never as a prefix
+of the whole word: `m` is minor only when it stands alone, so `middle=B`, `merge` and `mix`
+stay distinct — and that is also why `bass`, `none` and `perc` as a second token cannot be
+read as modes. Verified against abcjs on three control tunes, all within 0.03px.
+
+### 39. A MID-TUNE `[M:4/4]` PRINTS WHERE IT STANDS — AND TWO GUARDS
+
+An ordinary `staff-extra time-signature`, like the clef change beside it, and unlike the
+clef **not** reprinted at the head of later systems. We drew nothing at all.
+
+- A RESTATED meter prints nothing, exactly as a restated key does.
+- **AND NEITHER DOES THE FIRST METER A FREE-METER TUNE ACQUIRES**, which cost a gated
+  fixture before it was found. `frere-jacques`'s `M:4/4` sits on line 14, after the `+:`
+  prose that strict mode scans as MUSIC — so `score.meter` is NULL and measure 1 carries a
+  4/4 change. abcjs prints it on the system where the prose ends; we have no line for that
+  prose, so it would land 17.6px into the middle of system 1.
 
 ---
 
