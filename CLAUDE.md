@@ -8,9 +8,11 @@ and community successor to abcjs.
 174-tune harvested corpus, Gonzato, and the audio feature set. Work until it is reached;
 checkpoint and hand off as you go so no context is lost.
 
-Read `Docs/CHECKPOINT-2026-08-03c.md` first — it is the current state of play, the open
-decisions, and the known risks — and `Docs/HANDOFF-2026-08-03c.md` beside it for where to
-start and the session prompt. (`CHECKPOINT-2026-08-03b.md` holds the lyric-ink fix, the
+Read `Docs/CHECKPOINT-2026-08-03d.md` first — it is the current state of play, the open
+decisions, and the known risks — and `Docs/HANDOFF-2026-08-03d.md` beside it for where to
+start and the session prompt. (`CHECKPOINT-2026-08-03c.md` holds the accidental columns,
+the notehead rod, the multi-measure rest and `%%gchordfont`;
+`CHECKPOINT-2026-08-03b.md` holds the lyric-ink fix, the
 tempo note, the two beam divergences and the ragtime verdict; `CHECKPOINT-2026-08-03.md` is
 superseded but remains the
 record of the declared-box list, the two corpora and the four gate artefacts; TWO of its

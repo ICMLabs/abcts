@@ -1,0 +1,216 @@
+# abcts — Checkpoint, 2026-08-03d
+
+Supersedes `CHECKPOINT-2026-08-03c.md`, which stays as the record of the accidental columns,
+the notehead rod, the multi-measure rest, `%%staffwidth`, the file header and `%%gchordfont`.
+Nothing in it is corrected; **one of its statements is now closed** — ragtime's residual was
+NOT unreachable, and what closed most of it is named below.
+
+**THE STANDING ORDER IS 100% PARITY WITH ABCJS ON EVERY TUNE — the 41-fixture corpus, the
+174-tune harvested corpus, Gonzato, and the audio feature set. Work until it is reached.**
+
+Read this, then `HANDOFF-2026-08-03d.md`, then `-08-03c` and `-08-03b` for the ragtime
+verdict and the beam findings, then `ARCHITECTURE.md`, then `CLAUDE.md`.
+
+---
+
+## STATE
+
+| corpus | standing |
+|---|---|
+| 41-fixture | 20 of 29 are at ZERO on all four axes. Only `ragtime-nightingale`'s `oy` is a gate failure, and it is **0.646 against 0.59** — from 1.58. |
+| harvested (174) | within 0.05 / 1 / 5 / 25px: **101 / 115 / 125 / 144**, from 95 / 106 / 115 / 137. **73 of 174 still off some axis**, from 79. |
+| suite | 685 of 686. The one red is ragtime's `oy`, NOT raised. |
+
+The 41-fixture stragglers, every one named:
+
+| fixture | dy | dx | oy | ox | what |
+|---|---|---|---|---|---|
+| `ragtime-nightingale` | 58.13 | 53.56 | −0.65 | −1.69 | dy is the mis-paired pair; `oy` is the one red |
+| `vree-grace-notes` | 11.64 | 32.50 | 0.00 | −1.10 | grace EMISSION ORDER, an artefact |
+| `little swallow` | 0.32 | 24.19 | 0.16 | −6.29 | dx is the goldens' ASCII width table |
+| `frere-jacques` | 0.00 | 22.64 | 0.00 | −3.53 | horizontal |
+| `zocharti-loch` | 0.00 | 1.25 | 0.00 | −0.34 | horizontal |
+| `happy-birthday` | 0.00 | **0.23** | 0.00 | −0.49 | was 3.85 |
+| `multi-voice-lyrics-two-voices`, `two-voice-invention`, `vree-sharps` | ≤0.07 | 0 | ≤0.06 | 0 | sub-tenth |
+
+---
+
+## START HERE, EVERY SESSION
+
+```bash
+npx vitest run tests/corpus-abcjs-ranked.test.ts && cat /tmp/abcts-corpus-ranked.txt
+```
+
+**Every fix below came off that table**, and three of the seven came off the ITEM PROBE
+this session adds. Read the SHAPE: `dy 0.0` beside a large `dx` is horizontal; a large
+`|oy|` with `dy` near zero is one rigid term; a fixture with ONE paired notehead has no
+spread, so its `dy`/`dx` of 0.00 are arithmetic, not parity.
+
+---
+
+## THE TWO PROBES, AND WHAT THEY COST TO BUILD
+
+### 1. THE ITEM PROBE — the horizontal workhorse, now on BOTH sides
+
+`ABCTS_PROBE=1` prints `v / i / kind / dur / w / left / gap / er / x` per item **on the
+SOLVED pass only** (the solve runs `lineAt` up to eight times). Put it beside the same line
+from abcjs's own `layoutOneItem`:
+
+```js
+// voice-elements.js, right after `child.setX(x)`:
+if (process.env.ABCJS_PROBE) console.log('PROBE item v=' + voice.voicenumber + ' i=' + voice.i +
+  ' type=' + child.type + ' dur=' + child.duration + ' w=' + child.w.toFixed(3) +
+  ' extraw=' + child.extraw.toFixed(3) + ' minsp=' + child.minspacing +
+  ' er=' + er.toFixed(3) + ' x=' + x.toFixed(3));
+```
+
+```bash
+cd Code/abcMusicKit/Tools/abcjs-debug
+ABCJS_PROBE=1 node dump-svg.js --file X.abc --output /tmp/x.svg | grep '^PROBE item'
+git -C ../.. checkout -- Docs/References/abcjs/ && git -C ../.. status --short
+```
+
+**OUR `rod` CARRIES THE GAP WHERE ABCJS'S `w` DOES NOT** — 34.051 against its 24.051 plus
+`minspacing` 10. Compare the SUM. And **read the durations first**: two of this session's
+finds were a duration, not a width, and the widths beside them were already right.
+
+`console.log` is swallowed under vitest here, so a scratch driver has to capture it. There
+is no committed one — three lines of `console.log = …` in a throwaway test.
+
+### 2. THE CONTROLLED PAIR — `tests/controlled-pair.test.ts`, and it is COMMITTED now
+
+Reads `/tmp/abcts-probe/*.abc` beside abcjs's SVG for each and prints the four axes and
+both engines' staff-line y. A no-op when the directory is absent. Its whole point is
+SPLITTING A NUMBER: a ladder of eight tunes, each one field longer than the last, put
+`mouse-click-01`'s 99.6px into four separate causes in one run.
+
+---
+
+## WHAT LANDED
+
+### 16. A MID-TUNE `[K:]` RESERVES THE SAME DECLARED BOX THE OPENING SIGNATURE DOES
+
+`createKeySignature` is ONE function and abcjs calls it for a mid-tune `[K:]` too. A
+NATURAL's fudge is 0 and it is the tall glyph, so a change that cancels anything reserves
+well above the staff: `[K:Eb]` after `K:G` put abcjs's top line **8.34px below ours**. Our
+`layoutKeyChange` emitted its glyphs with no `reserve` at all. Closes
+`visual-tablature-21` and `visual-transpose-01`.
+
+### 17. `A:` AND A HEADER `P:` ARE ROWS OF THE TOP-TEXT BLOCK
+
+abcjs draws the author right-aligned in `composerfont` and the part ORDER left-aligned in
+`partsfont` (`top-text.js:68-77`), neither with a leading gap. Measured on a control pair:
+**23px and 24px**. We drew neither.
+
+### 18. EVERY `%%<type>font`, AND THREE THINGS ABOUT THEM
+
+`score.fonts` is a record keyed by type, with abcjs's eighteen defaults beside it
+(`ABC_FONT_DEFAULT_PT`). `barlabelfont` / `barnumberfont` / `barnumfont` are aliases of
+`measurefont`.
+
+- **A BARE `box` IS A WHOLE DIRECTIVE.** `%%partsfont box` names no face and no size —
+  abcjs keeps both from the current setting — and still costs 8px of lane, because a boxed
+  font measures `height + padding * 4`. `%%partsbox` is the SAME FLAG
+  (`abc_parse_directive.js:924` writes `multilineVars.partsfont.box`), so the existing
+  `partsBox` plumbing serves both.
+- **THE BLOCK'S LINE ADVANCE IS THE MEASURED HEIGHT, not a ratio.** `Math.round(size.height
+  * 1.1)` (`add-text-if.js:26`), where `size.height` comes from the golden's own table. The
+  two agree to a hundredth on every DEFAULT size and part company as soon as a directive
+  sets one the table does not list.
+- The eighteen defaults land on exactly SEVEN distinct pixel sizes, which is why
+  `GOLDEN_TEXT_HEIGHTS` has seven entries and covers every tune that sets no font.
+
+### 19. ONLY A HEADER `T:` IS A TOP-BLOCK SUBTITLE
+
+abcjs takes the title from `metaText.title` and then walks `lines` **while**
+`lines[index].subtitle` holds — LEADING subtitle lines only (`top-text.js:25-32`). A `T:`
+between two music lines is a subtitle LINE, drawn where it stands. Counting it in the block
+cost `mouse-click-01` 29.78px on every staff.
+
+### 20. A ZERO-DURATION NOTE SPACES AS A QUARTER
+
+`if (duration === 0) { zeroDuration = true; duration = 0.25; nostem = true; }`, with
+abcjs's own comment "zero duration will draw a quarter note head"
+(`abstract-engraver.js:791`). We had the head and the stemlessness and left the ADVANCE at
+zero, so every note after a `C0` sat on top of it. `parse-note-01` 63.2 → gone.
+
+### 21. A REST IS A ROD
+
+`getMinWidth` is `child.w` whatever the type, and a rest's `w` is its glyph — **7.534** for
+an eighth, 7.888 for a quarter, 11.250 for a half. Ours was a flat **0**, so a compressed
+line let the note after a rest slide onto it. Probed on `z A z2 B z4 C`: every x now agrees
+with abcjs to 0.001. `happy-birthday` dx 3.85 → 1.40.
+
+### 22. THE VOICE-OVERLAP RULE — and it was RAGTIME'S MISSING PARTNER
+
+`voice-elements.js:36-66`. A SOUNDING note in a voice that is not its staff's top voice,
+whose pitch range TOUCHES the top voice's simultaneous note (either end inside the other's
+range ± 1), is displaced right of it: `child.w = firstChildNoteWidth + child.w`, and the
+same is added to every relative child whose name is not an accidental. ONE exception — the
+same range AND the same head glyph share a notehead and nothing moves.
+
+It is the seconds rule applied BETWEEN voices. abcjs caches it (`child.adjustedWidth`) so
+it fires once however many times the solve re-lays the line out; reproduced that way,
+because the widened rod is an input to the next pass and re-applying it would compound.
+
+`visual-layout-04` 90.1 → 1.7. **And ragtime's `oy` 1.58 → 0.646, its `ox` −1.86 → −1.69.**
+The residual `-08-03b` called horizontal in origin was this, and the rest of that diagnosis
+stands.
+
+### 23. AN `&` OVERLAY'S PAD IS THE MEASURE'S OWN DURATION, NOT THE METER'S
+
+abcjs sums `durationThisBar` over the measure's notes — SPACERS EXCLUDED — and pushes one
+invisible rest of exactly that, `if (durationThisBar > 0)` (`tune-builder.js:572-575`). A
+pickup bar pads to the pickup: `synth-flattener-22`'s `B, |` padded to a whole where abcjs
+pads to a quarter, and the overlay voice then wanted a whole note's spring under a quarter.
+84.5 → gone.
+
+**And there is a SECOND rule in that function we do not reproduce**: for lines BEFORE the
+one carrying the `&`, abcjs mirrors the main voice NOTE FOR NOTE (`tune-builder.js:539-563`)
+rather than one rest per measure. The two agree when a measure holds one note, which is
+every case in the corpus so far. Read that loop before touching this again.
+
+### 24. A CHORD SYMBOL'S TYPOGRAPHY — `Bb` IS `B♭`, AND `♯` IS A FULL EM
+
+Six substitutions on every DEFAULT-position chord (`abc_parse_music.js:652-659`): the
+accidental after a root becomes its sign, and a trailing `o` / `0` / `^` becomes `°` / `ø`
+/ `∆`. An ANNOTATION is prose and is left alone — abcjs's own branch. `%%freegchord` turns
+it all off and is not parsed yet.
+
+**It is not decoration.** Calibrated WebKit advances at the 16px `gchordfont` put `♯` and
+`♭` at a FULL EM where `#` and `b` are 0.556, and a chord mark is CENTRED on its note, so
+half of every one of those goes into the horizontal spine.
+`visual-transpose-output-01` — twenty-five accidental-bearing chords — was **106.8 → 0.25**,
+and `happy-birthday` 1.40 → **0.23**.
+
+---
+
+## TRAPS ADDED THIS SESSION
+
+1. **`console.log` IS SWALLOWED UNDER VITEST HERE.** `ABCTS_PROBE=1 npx vitest run` prints
+   nothing at all; a driver has to capture `console.log` and write a file. Half an hour
+   went on believing the probe had not fired.
+2. **`cd` DOES NOT PERSIST BETWEEN Bash CALLS in this harness** — every path to
+   `../abcMusicKit` has to be absolute or inside one compound command.
+3. **A FIX THAT MOVES NO RATCHET COUNT CAN STILL BE THE RIGHT ONE.** The rest-rod change
+   left the four counts exactly where they were and took `happy-birthday`'s dx from 3.85 to
+   1.40. The counts are thresholds; a fixture that was 3.85px out and is now 1.40px out
+   crosses nothing.
+4. **A CORRECT ROW CAN MAKE A FIXTURE WORSE.** Adding the `A:` and `P:` rows took
+   `selection-01` from 51.6 to 98.6 — both numbers honest, because the block was ALREADY
+   47px short for two other reasons and the rows made the total visible rather than causing
+   it. Do not revert on the aggregate; split it.
+5. Everything in `-08-03c`'s and `-08-03b`'s trap lists still holds.
+
+---
+
+## VERIFY LOOP
+
+```bash
+cd Code/abcts
+npx tsc --noEmit
+npx vitest run          # 685/686; the ONLY expected failure is ragtime's oy at 0.646
+npx biome check src tests/corpus-abcjs.test.ts tests/pixel-parity.test.ts
+npm run baseline        # READ the diff, commit baselines with the code
+git -C ../abcMusicKit status --short   # MUST be empty — read it, do not test the exit code
+```
