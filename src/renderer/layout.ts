@@ -787,6 +787,8 @@ export interface LayoutElement {
    * last row's descender, so the block cannot be measured from its texts after the fact.
    */
   readonly blockHeight?: number
+  /** A MID-TUNE block: it sits straight on the music, spending no `musicSpace`. */
+  readonly blockAbutsMusic?: boolean
   /**
    * Absolute y of a block's TOP — its cursor origin, above the first line's ink.
    *
@@ -5204,26 +5206,45 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // The top text is a BLOCK — title, subtitles, composer row — with y relative to
       // its own top. `placed` moves it into position once the music's extent is known,
       // which is abcjs's sequence: block, then `spacing.music`, then the music.
-      const block =
+      // Blocks standing between the system above and this one — a `%%text`, a `%%center`
+      // or a mid-tune `T:`. They belong to the SYSTEM, so they are read off the first
+      // measure of the span whichever voice happened to claim them, and drawn on the
+      // first voice only.
+      const midTune =
+        systemIndex === 0 || voiceIndex !== 0
+          ? []
+          : plans.flatMap((p) => [...(p.measures[span.start]?.textBefore ?? [])])
+      const block: { texts: PlacedText[]; lines: PlacedLine[]; height: number } =
         systemIndex === 0 && voiceIndex === 0
-          ? topTextBlock(
-              score.metadata,
-              systemWidth - ENGRAVE.marginX * 2,
-              score.textAbove,
-              score.fonts,
-            )
-          : { texts: [], height: 0 }
+          ? {
+              lines: [],
+              ...topTextBlock(
+                score.metadata,
+                systemWidth - ENGRAVE.marginX * 2,
+                score.textAbove,
+                score.fonts,
+              ),
+            }
+          : midTune.length > 0
+            ? freeTextBlock(midTune, systemWidth - ENGRAVE.marginX * 2, score.fonts)
+            : { texts: [], lines: [], height: 0 }
+      const blockLines: readonly PlacedLine[] = block.lines
       const heading: LayoutElement[] =
-        block.texts.length === 0
+        block.texts.length === 0 && blockLines.length === 0
           ? []
           : [
               {
                 type: 'title',
+                // A MID-TUNE BLOCK SPENDS NO `musicSpace`. abcjs's `spacing.music` is
+                // spent once, before the first staff group (`draw.js:17`); a nonMusic line
+                // between two groups costs exactly its own rows. Measured on a control
+                // pair: a mid-tune `T:` costs 27.05px and nothing else moves.
+                blockAbutsMusic: systemIndex > 0,
                 x: 0,
                 width: 0,
                 staffSteps: [],
                 glyphs: [],
-                lines: [],
+                lines: blockLines,
                 texts: block.texts,
                 blockHeight: block.height,
               },
@@ -5563,10 +5584,11 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
               // The block's own height, not its last descender: abcjs advances by a
               // rounded line height per row and that trailing space is part of the block.
               const blockBottom = Math.max(...heading.map((el) => el.blockHeight ?? 0))
-              const offset = musicTop - ENGRAVE.musicSpace - blockBottom
+              const gap = heading.some((el) => el.blockAbutsMusic === true) ? 0 : ENGRAVE.musicSpace
+              const offset = musicTop - gap - blockBottom
               if (PROBE)
                 console.log(
-                  `BLOCK musicTop=${musicTop.toFixed(4)} (pitch ${(6 - 2 * musicTop).toFixed(4)}) blockH=${blockBottom.toFixed(4)} musicSpace=${ENGRAVE.musicSpace} offset=${offset.toFixed(4)}`,
+                  `BLOCK musicTop=${musicTop.toFixed(4)} (pitch ${(6 - 2 * musicTop).toFixed(4)}) topBy=${probeTop} flags=${probeFlags} blockH=${blockBottom.toFixed(4)} musicSpace=${ENGRAVE.musicSpace} offset=${offset.toFixed(4)}`,
                 )
               return [
                 ...heading.map((el) => ({
@@ -5656,10 +5678,19 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     const staves = system.staves
     const topLineOffset = (staves[0]?.originY ?? 0) - STAFF_HALF_HEIGHT
     const bottomLineOffset = (staves[staves.length - 1]?.originY ?? 0) + STAFF_HALF_HEIGHT
+    // A MID-TUNE BLOCK IS ADDITIVE TO THE SEPARATION, NOT ABSORBED BY IT. abcjs draws the
+    // nonMusic line first — `renderer.y` moves by its rows — and only then runs
+    // `addStaffPadding`, which measures `naturalSeparation` from the two groups' OWN
+    // overhangs (`draw.js:82-89`) and knows nothing about the cursor. So the minimum
+    // applies to the music, and the block goes on top of whatever it produces. Left in
+    // `topLineOffset` the block was swallowed whole and a mid-tune `T:` moved nothing.
+    const blockH = (staves[0]?.elements ?? [])
+      .filter((el) => el.type === 'title' && el.blockAbutsMusic === true)
+      .reduce((sum, el) => sum + (el.blockHeight ?? 0), 0)
     const originY =
       previousBottomLine === null
         ? cursor
-        : Math.max(cursor, previousBottomLine + interSystemSep - topLineOffset)
+        : Math.max(cursor, previousBottomLine + interSystemSep - topLineOffset + blockH)
 
     previousBottomLine = originY + bottomLineOffset
     cursor = originY + height + ENGRAVE.systemGap
@@ -5921,7 +5952,59 @@ function topTextBlock(
   // single `<text>` with a `tspan` per line and reserves one multi-line height. Measured,
   // each line past the first adds 25.2px — `1.2em` at 21px, the same `dy` a lyric verse
   // steps by, and NOT the 1.108 line height the first line takes.
-  for (const block of textAbove) {
+  y = appendFreeText(texts, textAbove, y, centre, fonts)
+
+  return { texts, height: y }
+}
+
+/**
+ * The free-text and subtitle rows, shared by the tune's own block and every mid-tune one.
+ *
+ * A MID-TUNE `T:` is a Subtitle element, not a FreeText: `spacing.subtitle` above it, one
+ * row in `subtitlefont`, and its own MEASURED height below with no `* 1.1`
+ * (`elements/subtitle.js`). Measured on a control pair it costs 27.05px where `%%text`
+ * costs 33.77 and `%%center` 23.27 — and those two cost the same mid-tune as at the head,
+ * because they are the same element in both places.
+ */
+function appendFreeText(
+  texts: PlacedText[],
+  blocks: readonly FreeTextBlock[],
+  from: number,
+  centre: number,
+  fonts: Score['fonts'],
+  /** `%%sep` rules, collected out — a block can carry ink as well as text. */
+  rules: { y: number; width: number }[] = [],
+): number {
+  let y = from
+  const sizeOf = (type: AbcFontType): number =>
+    Math.round(((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / ABCJS_PX_PER_SPACE
+  for (const block of blocks) {
+    if (block.separator !== undefined) {
+      // The RULE COSTS NO HEIGHT — `drawSeparator` paints at the cursor and moves nothing
+      // — so the line is worth exactly its two spaces. Points to staff spaces on the way.
+      y += block.separator.above / ABCJS_PX_PER_SPACE
+      rules.push({ y, width: block.separator.length / ABCJS_PX_PER_SPACE })
+      y += block.separator.below / ABCJS_PX_PER_SPACE
+      continue
+    }
+    if (block.role === 'subtitle') {
+      const size = sizeOf('subtitlefont')
+      y += ENGRAVE.subtitleSpace
+      for (const line of block.lines) {
+        texts.push({
+          text: line,
+          role: 'title',
+          x: centre,
+          y: y + size,
+          size,
+          bold: false,
+          italic: false,
+          anchor: 'middle',
+        })
+      }
+      y += goldenTextHeight(size)
+      continue
+    }
     const textSize = sizeOf('textfont')
     if (block.align === 'left') y += textSize / 2
     block.lines.forEach((line, index) => {
@@ -5938,8 +6021,27 @@ function topTextBlock(
     })
     y += goldenTextHeight(textSize) + (block.lines.length - 1) * ENGRAVE.freeTextLineStep
   }
+  return y
+}
 
-  return { texts, height: y }
+/** A system's own preceding blocks, with no title above them. */
+function freeTextBlock(
+  blocks: readonly FreeTextBlock[],
+  width: number,
+  fonts: Score['fonts'] = {},
+): { texts: PlacedText[]; lines: PlacedLine[]; height: number } {
+  const texts: PlacedText[] = []
+  const rules: { y: number; width: number }[] = []
+  const height = appendFreeText(texts, blocks, 0, width / 2, fonts, rules)
+  // Centred on the STAFF width, as `drawSeparator` centres it, and one pixel thick.
+  const lines: PlacedLine[] = rules.map((r) => ({
+    x1: (width - r.width) / 2,
+    y1: r.y,
+    x2: (width + r.width) / 2,
+    y2: r.y,
+    thickness: 1 / ABCJS_PX_PER_SPACE,
+  }))
+  return { texts, lines, height }
 }
 
 /**
@@ -6072,8 +6174,22 @@ function anchorAboveStaff<
     {
       tupletLines: parts.flatMap((p) => p.tupletLines ?? []),
       tupletTexts: parts.flatMap((p) => p.tupletTexts ?? []),
-      voltaLines: parts.flatMap((p) => p.voltaLines ?? []),
-      voltaTexts: parts.flatMap((p) => p.voltaTexts ?? []),
+      // NO VOLTA AND NO TUPLET LANE HERE — the ENDING lane is spent ONCE, at the end of
+      // the outer `verticalExtent`, and this call exists only to find the ink the stack
+      // sits on. The volta lines were in it and the tuplet's flag was not, so the two
+      // calls disagreed about what the lane already held: a volta arriving beside a
+      // tuplet jumped this number by the FULL 6 pitch where abcjs moves 1. That was
+      // 23.25px and all of `mouse-click-01`'s first staff.
+      //
+      // ponytail: so a tempo mark over a staff that also has a volta is DRAWN inside the
+      // ending lane rather than above it — abcjs's order is ending, part, tempo
+      // (`set-upper-and-lower-elements.js:33-49`) and ours reserves the tempo from the
+      // ink. The staff's total is right either way, because the lane goes on last; only
+      // the mark's own y differs, and no gate here can see it. Fixing it properly means
+      // moving the ending lane into `anchorAboveStaff`'s stack, which is where every
+      // other lane already lives.
+      voltaLines: [],
+      voltaTexts: [],
     },
   ).top
 

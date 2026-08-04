@@ -85,10 +85,14 @@ const WITHIN: Readonly<Record<string, number>> = {
   // An `&` overlay's PAD is the measure's own duration, not the meter's.
   // A CHORD SYMBOL'S TYPOGRAPHY: `Bb` is `B♭` and `C#` is `C♯`, and `♯` is a full em
   // where `#` is 0.556. `visual-transpose-output-01` 106.8 -> 0.25.
-  '0.05': 101,
-  '1': 115,
-  '5': 125,
-  '25': 144,
+  // MID-TUNE NON-MUSIC LINES: a `%%text`, `%%center`, `%%sep` or `T:` between two music
+  // lines is a LINE of its own, and its height is ADDITIVE to the staff separation.
+  // ONE ending lane, spent ONCE: `anchorAboveStaff`'s ink call had the volta's share of
+  // it and not the tuplet's, so the two disagreed about what the lane already held.
+  '0.05': 102,
+  '1': 116,
+  '5': 126,
+  '25': 146,
 }
 
 const names = readdirSync(fixturesDir)

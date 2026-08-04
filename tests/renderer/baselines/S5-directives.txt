@@ -165,7 +165,7 @@ system 5 width=54.511 originY=69.720
       line  51.624,-2.000 -> 51.624,2.000 t=0.160
       line  52.354,-2.000 -> 52.354,2.000 t=0.500
 tune 1
-bounds  width=97.147 height=60.171 top=-1.935
+bounds  width=97.147 height=64.529 top=-1.935
 systems 4
 system 0 width=97.045 originY=0.000
   staff 0 originY=13.099
@@ -319,7 +319,7 @@ system 0 width=97.045 originY=0.000
       line  94.157,-2.000 -> 94.157,2.000 t=0.160
       line  94.887,-2.000 -> 94.887,2.000 t=0.500
 system 1 width=97.147 originY=19.012
-  staff 0 originY=6.000
+  staff 0 originY=10.357
     staffline 0.000,2.000 -> 97.147,2.000 t=0.130
     staffline 0.000,1.000 -> 97.147,1.000 t=0.130
     staffline 0.000,0.000 -> 97.147,0.000 t=0.130
@@ -340,6 +340,8 @@ system 1 width=97.147 originY=19.012
     beam   66.017,-4.500 -> 67.508,-4.500 t=0.500
     beam   68.998,-4.750 -> 72.596,-5.250 t=0.500
     beam   71.106,-4.293 -> 72.596,-4.500 t=0.500
+    title x=0.000 w=0.000
+      text  38.941,-6.293 size=2.710 "This translates to:"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     note@-8,-4,-1,1,3 x=6.329 w=3.871
@@ -596,7 +598,7 @@ system 1 width=97.147 originY=19.012
     bar x=94.179 w=1.060
       line  94.259,-2.000 -> 94.259,2.000 t=0.160
       line  94.989,-2.000 -> 94.989,2.000 t=0.500
-system 2 width=97.147 originY=32.926
+system 2 width=97.147 originY=37.283
   staff 0 originY=4.000
     staffline 0.000,2.000 -> 97.147,2.000 t=0.130
     staffline 0.000,1.000 -> 97.147,1.000 t=0.130
@@ -649,7 +651,7 @@ system 2 width=97.147 originY=32.926
       line  88.274,-3.500 -> 88.274,0.250 t=0.120
     bar x=95.082 w=0.160
       line  95.162,-2.000 -> 95.162,2.000 t=0.160
-system 3 width=40.018 originY=44.973
+system 3 width=40.018 originY=49.330
   staff 0 originY=3.866
     staffline 0.000,2.000 -> 40.018,2.000 t=0.130
     staffline 0.000,1.000 -> 40.018,1.000 t=0.130

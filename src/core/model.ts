@@ -323,6 +323,20 @@ export interface FreeTextBlock {
    * `%%text` and `%%begintext` sit at the left margin, `anchor: "start"`.
    */
   readonly align: 'center' | 'left'
+  /**
+   * A mid-tune `T:` — a SUBTITLE line, not free text. It takes `subtitlefont` and abcjs's
+   * `spacing.subtitle` above it, and its own measured height below with no `* 1.1`
+   * (`elements/subtitle.js`). Measured on a control pair: 27.05px against `%%text`'s 33.77.
+   */
+  readonly role?: 'text' | 'subtitle' | 'separator'
+  /**
+   * `%%sep` — a horizontal rule, centred on the STAFF width, with a space above and below.
+   * All three in POINTS and each `Math.round`ed at parse (`tune-builder.js:309`); bare
+   * `%%sep` is 14 / 14 / 85 (`abc_parse_directive.js:883`). The rule itself costs no
+   * height at all — `drawSeparator` paints at `renderer.y` and moves nothing — so the
+   * line's whole cost is `above + below`, measured at 28 bare and 22 for `0.4cm` each way.
+   */
+  readonly separator?: { readonly above: number; readonly below: number; readonly length: number }
 }
 
 // ─── Tempo ───────────────────────────────────────────────────────────────────
@@ -615,6 +629,17 @@ export interface Measure {
    * break points are the author's and are recorded at parse, not recomputed at layout.
    */
   readonly startsSystem: boolean
+  /**
+   * Free-text blocks and mid-tune subtitles standing between the PREVIOUS system and this
+   * one. Empty for all but the first measure of a system, and empty on that one too
+   * unless something non-musical stood above it.
+   *
+   * abcjs models each as a LINE of its own (`engraver-controller.js:229-247`), drawn
+   * between the two staff groups and pushing everything below it down. Ours is the same
+   * top-text block the tune's own title uses, hung on the first staff of the system after
+   * it — which is what makes it enter `verticalExtent` rather than float over the page.
+   */
+  readonly textBefore?: readonly FreeTextBlock[]
   /**
    * A barline that OPENS this measure — a leading `|:` or `[|`, which belongs to the
    * measure after it rather than the one before. Distinct from `closingBarline` because

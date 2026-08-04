@@ -739,7 +739,11 @@ class VoiceBuilder {
   /** `s:` symbol lines, aligned to notes exactly as `w:` is. Non-strict modes only. */
   private readonly symbolLines: { start: number; syllables: Syllable[] }[] = []
 
-  constructor(readonly id: string) {}
+  constructor(
+    readonly id: string,
+    /** The score's shared box of blocks waiting for the next system — see `ScoreBuilder`. */
+    private readonly pendingTextBefore: { blocks: FreeTextBlock[] } = { blocks: [] },
+  ) {}
 
   setKeyChange(key: KeySignature, range: SourceRange): void {
     this.pendingKeyChange = key
@@ -1069,6 +1073,19 @@ class VoiceBuilder {
     return value
   }
 
+  /**
+   * The blocks waiting for this system, claimed by the FIRST measure that opens one.
+   *
+   * Returns nothing on every other measure, so the field stays absent rather than an
+   * empty array — a measure carrying `textBefore: []` would read as "there was text".
+   */
+  private takeTextBefore(startsSystem: boolean): { textBefore?: readonly FreeTextBlock[] } {
+    if (!startsSystem || this.pendingTextBefore.blocks.length === 0) return {}
+    const blocks = this.pendingTextBefore.blocks
+    this.pendingTextBefore.blocks = []
+    return { textBefore: blocks }
+  }
+
   closeMeasure(barline: Barline, barlineRange: SourceRange): void {
     // A barline with nothing before it (leading `|:`) opens rather than closes, so it is
     // held for the NEXT measure instead of being dropped. Dropping it lost a printed
@@ -1090,7 +1107,10 @@ class VoiceBuilder {
       overlays: this.overlays,
       ...this.takeChanges(),
       ...this.takeOpening(this.events[this.events.length - 1]?.sourceRange?.start ?? null),
-      startsSystem: this.takeLineStart(),
+      ...(() => {
+        const startsSystem = this.takeLineStart()
+        return { startsSystem, ...this.takeTextBefore(startsSystem) }
+      })(),
       closingBarline: barline,
       sourceRange: sourceRange(this.measureStart ?? barlineRange.start, barlineRange.end),
       closingBarlineSourceRange: barlineRange,
@@ -1119,7 +1139,10 @@ class VoiceBuilder {
       overlays: this.overlays,
       ...this.takeChanges(),
       ...this.takeOpening(last?.sourceRange?.start ?? null),
-      startsSystem: this.takeLineStart(),
+      ...(() => {
+        const startsSystem = this.takeLineStart()
+        return { startsSystem, ...this.takeTextBefore(startsSystem) }
+      })(),
       closingBarline: null,
       sourceRange: sourceRange(this.measureStart ?? 0, last?.sourceRange?.end ?? 0),
       closingBarlineSourceRange: null,
@@ -1278,6 +1301,16 @@ class ScoreBuilder {
   }
   private currentVoiceId = DEFAULT_VOICE_ID
 
+  /**
+   * Blocks read since the last music line — a `%%text`, a `%%center`, or a mid-tune `T:`.
+   *
+   * SHARED with every `VoiceBuilder`, because the blocks belong to the SYSTEM rather than
+   * to a voice and the voice the next line opens in is not known until its tokens are
+   * read. Whichever measure closes first with `startsSystem` takes them, and layout looks
+   * at the first measure of the span across all voices.
+   */
+  readonly pendingTextBefore: { blocks: FreeTextBlock[] } = { blocks: [] }
+
   constructor(readonly sourceStartOffset: number) {}
 
   /** The voice music currently lands in. Created on demand for tunes with no `V:` at all. */
@@ -1288,7 +1321,7 @@ class ScoreBuilder {
   voiceFor(id: string): VoiceBuilder {
     let builder = this.voices.get(id)
     if (!builder) {
-      builder = new VoiceBuilder(id)
+      builder = new VoiceBuilder(id, this.pendingTextBefore)
       this.voices.set(id, builder)
     }
     return builder
@@ -1647,7 +1680,14 @@ class Parser {
     // turns out to have music after it is dropped: mid-tune free text is still not drawn
     // (the `ponytail:` on `textBelow` says why), and it must not change the last line
     // either.
-    if (this.builder && this.builder.textBelow.length > 0) this.builder.textBelow = []
+    // A BLOCK WITH MUSIC AFTER IT IS A LINE OF ITS OWN. abcjs builds one `nonMusic` line
+    // per `%%text` / `%%center` / mid-tune `T:` and draws it between the two staff groups
+    // (`engraver-controller.js:229-247`), so everything below it moves down. It moves to
+    // the SYSTEM that follows, and only what is left when the tune ends stays `textBelow`.
+    if (this.builder && this.builder.textBelow.length > 0) {
+      this.builder.pendingTextBefore.blocks.push(...this.builder.textBelow)
+      this.builder.textBelow = []
+    }
     this.scanMusic(start, end, continued)
   }
 
@@ -1723,6 +1763,32 @@ class Parser {
       const builder = this.ensureScore(start)
       const target = builder.voice.isEmpty ? builder.textAbove : builder.textBelow
       target.push({ lines: [decodeTextString((freeText[1] ?? '').trim())], align: 'left' })
+      return
+    }
+    // `%%sep` — a horizontal rule as a LINE of its own, with a space above and below. All
+    // three numbers are POINTS, each `Math.round`ed (`tune-builder.js:309`), and a bare
+    // `%%sep` is 14 / 14 / 85. The rule costs no height: `drawSeparator` paints at the
+    // cursor and moves nothing, so the line is worth exactly `above + below`.
+    const sep = /^sep\b\s*(.*)$/.exec(body)
+    if (sep !== null) {
+      const args = (sep[1] ?? '').trim()
+      const measured = args === '' ? null : args.split(/\s+/).map(parseMeasurement)
+      const [above, below, length] =
+        measured === null || measured.length !== 3 || measured.some((n) => n === null)
+          ? [14, 14, 85]
+          : (measured as number[])
+      const builder = this.ensureScore(start)
+      const target = builder.voice.isEmpty ? builder.textAbove : builder.textBelow
+      target.push({
+        lines: [],
+        align: 'center',
+        role: 'separator',
+        separator: {
+          above: Math.round(above ?? 14),
+          below: Math.round(below ?? 14),
+          length: Math.round(length ?? 85),
+        },
+      })
       return
     }
     // `%%staffsep` / `%%sysstaffsep` — minimum staff separations, given in POINTS and
@@ -1838,10 +1904,17 @@ class Parser {
         // lines is a subtitle LINE, drawn where it stands, and putting it in the block
         // cost `mouse-click-01` 29.78px on every staff.
         //
-        // ponytail: the mid-tune one is DROPPED rather than drawn in place. Same gap as
-        // mid-tune free text and the same fix — a subtitle has to be a line in its own
-        // right before it can be placed.
-        if (!builder.bodyStarted) builder.titles.push(decodeTextString(value))
+        // A MID-TUNE `T:` IS A SUBTITLE LINE, drawn where it stands. It takes the same
+        // road as a mid-tune `%%text`: onto `textBelow`, then onto the next system.
+        if (builder.bodyStarted) {
+          builder.textBelow.push({
+            lines: [decodeTextString(value)],
+            align: 'center',
+            role: 'subtitle',
+          })
+        } else {
+          builder.titles.push(decodeTextString(value))
+        }
         return
       case 'C':
         builder.composer = decodeTextString(value)
@@ -2983,6 +3056,21 @@ function prettifyChord(chord: string): string {
     .replace(/^([ABCDEFG])([♯♭]?)o$/g, '$1$2°')
     .replace(/^([ABCDEFG])([♯♭]?)0([^A-Za-z])/g, '$1$2ø$3')
     .replace(/^([ABCDEFG])([♯♭]?)\^([^A-Za-z])/g, '$1$2∆$3')
+}
+
+/**
+ * `12`, `0.4cm`, `2in`, `30pt`, `30px` — a length in POINTS.
+ *
+ * `abc_tokenizer.js:776-781`: `pt` and `px` pass through, `cm` is `/2.54*72`, `in` is
+ * `*72`, and a bare number is already points. Anything else is not a measurement.
+ */
+function parseMeasurement(token: string): number | null {
+  const m = /^(-?\d+(?:\.\d+)?)(pt|px|cm|in)?$/.exec(token.trim())
+  if (!m?.[1]) return null
+  const value = Number.parseFloat(m[1])
+  if (m[2] === 'cm') return (value / 2.54) * 72
+  if (m[2] === 'in') return value * 72
+  return value
 }
 
 /** `abc_parse_directive.js:1039-1042` — all three route to `measurefont`. */
