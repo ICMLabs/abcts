@@ -238,15 +238,21 @@ instrumenting to see.
 is the ink under every one of `frere-jacques`'s staves and the next piece of vertical work;
 it will touch every decorated fixture, so measure them all on the same run.
 
-**FOUR GATE NUMBERS ARE ARTEFACTS — do not chase any of them.** The gate pairs the i-th
-notehead of each engine, so a difference in EMISSION ORDER reads as a position error.
-`ragtime-nightingale` dy 58.1: two noteheads emitted in a different order; drop that one
-pair and the spread is 5.4px. `vree-grace-notes` dy 11.6 AND dx 32.5: abcjs emits a graced
-note's MAIN head before its graces where we emit them after; sorted by x, dy is 0.02 and
-dx a uniform 1.99, which is the grace glyph. `little swallow` dx:
-the harness that made the goldens has an ASCII-only width table with a flat `|| 8` fallback,
-so 73 of its 576 lyric characters — the Chinese — were measured at 8px each. That is a
-property of the GOLDEN, not of abcjs.
+**THE GATE PAIRS THE i-TH NOTEHEAD OF EACH ENGINE, so a difference in EMISSION ORDER reads
+as a position error — AND THAT ORDER WAS OURS TO FIX.** For two days `ragtime-nightingale`'s
+dy 58.1 and `vree-grace-notes`' dy 11.6 / dx 32.5 were filed as unchaseable artefacts, with
+the note "abcjs emits a graced note's MAIN head before its graces where we emit them after;
+sorted by x, dy is 0.02 and dx a uniform 1.99". Every word of that was right except the
+conclusion: emitting them in abcjs's order took ragtime to dy 1.12 / dx 18.30 and
+`vree-grace-notes` to dy 0.02 / dx 1.99. **"The gate cannot see this" and "the golden is
+wrong" are different claims, and the second needs the golden opened.**
+
+**THREE GOLDEN LIMITATIONS ARE REAL, and all three were read out of `dump-svg.js` itself.**
+`little swallow` dx: the harness has an ASCII-only width table with a flat `|| 8` fallback,
+so 73 of its 576 lyric characters — the Chinese — were measured at 8px each. ANY
+NON-DEFAULT FONT SIZE's width: `calcWidth` maps every size onto one of six per-character
+tables. `%%jazzchords`' oy: `getBBox` counts a chord's nested tspans as separate LINES and
+adds `fontSize * 1.2` for each. Properties of the GOLDEN, not of abcjs.
 
 **PORT THE STRUCTURE, THEN THE CONSTANTS.** The costly divergences have all been
 architectural, not numeric; see the checkpoint's opening section before starting anything.

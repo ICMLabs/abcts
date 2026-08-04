@@ -18,17 +18,17 @@ verdict and the beam findings, then `ARCHITECTURE.md`, then `CLAUDE.md`.
 | corpus | standing |
 |---|---|
 | 41-fixture | 20 of 29 are at ZERO on all four axes. Only `ragtime-nightingale`'s `oy` is a gate failure, and it is **0.646 against 0.59** — from 1.58. |
-| harvested (174) | within 0.05 / 1 / 5 / 25px: **107 / 122 / 134 / 157**, from 95 / 106 / 115 / 137. **67 of 174 still off some axis**, from 79. |
+| harvested (174) | within 0.05 / 1 / 5 / 25px: **107 / 122 / 137 / 165**, from 95 / 106 / 115 / 137. **67 of 174 still off some axis**, from 79. |
 | suite | 685 of 686. The one red is ragtime's `oy`, at **0.656** against 0.59 — from 1.58, and NOT raised. |
 
 The 41-fixture stragglers, every one named:
 
 | fixture | dy | dx | oy | ox | what |
 |---|---|---|---|---|---|
-| `ragtime-nightingale` | 58.13 | 53.56 | −0.656 | −1.69 | dy is the mis-paired pair; `oy` is the one red |
-| `vree-grace-notes` | 11.64 | 32.50 | 0.00 | −1.10 | grace EMISSION ORDER, an artefact |
-| `little swallow` | 0.32 | 24.19 | 0.16 | −6.29 | dx is the goldens' ASCII width table |
-| `frere-jacques` | 0.00 | 22.64 | 0.00 | −3.53 | horizontal |
+| `little swallow` | 0.32 | 24.19 | 0.16 | −6.28 | dx is the goldens' ASCII width table |
+| `frere-jacques` | 0.03 | 22.64 | −0.02 | −3.52 | horizontal |
+| `ragtime-nightingale` | **1.12** | **18.30** | −0.66 | −0.93 | was 58.13 / 53.56; `oy` is the one red |
+| `vree-grace-notes` | **0.02** | **1.99** | 0.03 | −1.14 | was 11.64 / 32.50 — the grace glyph's own width |
 | `zocharti-loch` | 0.00 | 1.25 | 0.00 | −0.34 | horizontal |
 | `happy-birthday` | 0.00 | **0.23** | 0.00 | −0.49 | was 3.85 |
 | `multi-voice-lyrics-two-voices`, `two-voice-invention`, `vree-sharps` | ≤0.07 | 0 | ≤0.06 | 0 | sub-tenth |
@@ -307,6 +307,40 @@ chord lane over every jazz-chord tune we draw.
 
 Recorded like `little swallow`'s CJK widths, `vree-grace-notes`'s emission order and the
 non-default font sizes: **a property of the GOLDEN, not of abcjs.**
+
+### 32. GRACE NOTES ARE EMITTED AFTER THEIR MAIN HEAD — AND THAT WAS THE "ARTEFACT"
+
+**This closes two of the four gate artefacts the record has carried since 2026-08-02d, and
+both of them were OURS.**
+
+abcjs writes the MAIN notehead before the graces that precede it — a grace is an `extra`
+child and the head is a `head`. Probed on `{ab}c {d}e`, its noteheads come out at
+**75.14, 55.14, 65.14, 105.14, 95.14**: head, grace, grace, head, grace. We emitted them in
+playing order.
+
+The pixel gate pairs the i-th notehead of each engine, so that read as a POSITION ERROR on
+every graced fixture:
+
+| | before | after |
+|---|---|---|
+| `vree-grace-notes` | dy 11.64, dx 32.50 | **dy 0.02, dx 1.99** |
+| `ragtime-nightingale` | dy 58.13, dx 53.56, ox −1.69 | **dy 1.12, dx 18.30, ox −0.93** |
+
+Ragtime's dy of 58 has been "two mis-paired noteheads over a real spread of 5px, do not
+chase it as geometry" for two days, and `vree-grace-notes` has been a GOLDEN limitation for
+longer. **The mis-pairing was ours.** What is left on `vree-grace-notes` is a uniform 1.99
+— the grace glyph's own width — which is exactly what the note recording the artefact said
+the residual would be once the order was right. It said the right number and named the
+wrong owner.
+
+Five more fixtures came off the top of the ranked table with it: `synth-flattener-17` 82.2,
+`visual-transpose-output-04` 39.6 and `-03` 37.8, `visual-tablature-02` 32.0,
+`visual-parsing-01` 31.0, and `mouse-click-01` / `tablature-15`'s dy 12.6 → 0.0.
+
+**THE LESSON, and it is expensive: "the GATE cannot see this" and "the GOLDEN is wrong" are
+different claims, and the second needs the golden opened.** Three of the day's four
+"unchaseable" items are still unchaseable — the CJK widths, the non-default font sizes and
+`%%jazzchords` were all read out of `dump-svg.js` itself. This one never was.
 
 ---
 
