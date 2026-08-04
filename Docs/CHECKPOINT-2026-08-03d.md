@@ -18,14 +18,14 @@ verdict and the beam findings, then `ARCHITECTURE.md`, then `CLAUDE.md`.
 | corpus | standing |
 |---|---|
 | 41-fixture | 20 of 29 are at ZERO on all four axes. Only `ragtime-nightingale`'s `oy` is a gate failure, and it is **0.646 against 0.59** — from 1.58. |
-| harvested (174) | within 0.05 / 1 / 5 / 25px: **105 / 119 / 130 / 152**, from 95 / 106 / 115 / 137. **69 of 174 still off some axis**, from 79. |
-| suite | 685 of 686. The one red is ragtime's `oy`, NOT raised. |
+| harvested (174) | within 0.05 / 1 / 5 / 25px: **107 / 122 / 134 / 157**, from 95 / 106 / 115 / 137. **67 of 174 still off some axis**, from 79. |
+| suite | 685 of 686. The one red is ragtime's `oy`, at **0.656** against 0.59 — from 1.58, and NOT raised. |
 
 The 41-fixture stragglers, every one named:
 
 | fixture | dy | dx | oy | ox | what |
 |---|---|---|---|---|---|
-| `ragtime-nightingale` | 58.13 | 53.56 | −0.65 | −1.69 | dy is the mis-paired pair; `oy` is the one red |
+| `ragtime-nightingale` | 58.13 | 53.56 | −0.656 | −1.69 | dy is the mis-paired pair; `oy` is the one red |
 | `vree-grace-notes` | 11.64 | 32.50 | 0.00 | −1.10 | grace EMISSION ORDER, an artefact |
 | `little swallow` | 0.32 | 24.19 | 0.16 | −6.29 | dx is the goldens' ASCII width table |
 | `frere-jacques` | 0.00 | 22.64 | 0.00 | −3.53 | horizontal |
@@ -248,6 +248,45 @@ why the rule TESTS the token rather than counting.
 **AND `clef=perc` DRAWS.** `case 'perc': clef = "clefs.perc"` is 21px, 26 of prefix once the
 clef's own `dx = 5` is on it; we drew nothing and reserved nothing. `clef=none` really is
 nothing — `createClef` returns null, so there is no element and no width either.
+
+### 28. A MID-TUNE CLEF — `K:C clef=bass` and `[K: bass]`
+
+Three things, and the third is the one that showed:
+
+- **The clef in force ACCUMULATES, like the key.** `Measure.clefChange` is a delta and the
+  renderer is the consumer that walks it forward; every note after it is read against the
+  new clef. `visual-selection-03`'s seven lines each had their notes at the treble's
+  pitches.
+- **It PRINTS WHERE IT STANDS** — an ordinary zero-duration `staff-extra` before the
+  measure's notes — **and is REPRINTED at the head of every system after it.** abcjs
+  reprints the clef IN FORCE, not the one the voice was declared with.
+- **NOT BOTH.** A `K:` written on its own line above the music it governs OPENS a system,
+  so the prefix already has it. Drawing the inline one too put `visual-selection-03` 24px
+  wider than abcjs on every line.
+
+### 29. `[` BEFORE A DIGIT OR A QUOTE IS AN INVISIBLE BARLINE
+
+`if ((line[i] >= '1' && line[i] <= '9') || line[i] === '"') return {len: 1, token:
+"bar_invisible"}` (`abc_tokenizer.js:215-217`). That is how `[1 …` and `[2 …` write a repeat
+ending with no barline before it, and how `["D"…` opens one carrying a chord symbol. We
+lexed it as a chord that never closed: `visual-layout-09` had **seven noteheads stacked on
+one x** and was 496.9px of spread, the largest item on the table.
+
+An invisible bar draws NOTHING and takes a THIN bar's layout width — abcjs's `addRight(new
+RelativeElement(null, dx, 1, 2, { type: "none" }))` (`abstract-engraver.js:996-999`) differs
+from a thin bar's anchor only in the `type`.
+
+### 30. A BAR THAT STARTS AN ENDING GETS `minspacing += textWidth + 10`
+
+`abstract-engraver.js:1034-1041`, with abcjs's own comment "Give plenty of room for the
+ending number". Probed on `synth-timing-06`: its `|1` bar reports **`minsp = 28.5`** against
+a plain bar's 10, and 28.5 is 10 + 8.5 + 10.
+
+Two things about the 8.5. It is measured in **`repeatfont`** — 13pt, 17px — NOT in the
+`voltaTextSize` the bracket's number is DRAWN at; abcjs measures the reserve and the ink
+with different fonts and only the first is this. And it applies to **whichever bar the
+ending opens on**: the measure's own opening barline, or the PREVIOUS measure's closing one
+when the number follows a `:|`.
 
 ---
 
