@@ -2057,15 +2057,22 @@ describe('text metrics', () => {
   // note right by exactly it and every syllable, narrow or wide, ends up drawn at the same
   // absolute x. These tests used to compare that x and so measured a constant. `left` is
   // the quantity they were always about: does the estimate tell characters apart.
-  const leftOf = (text: string) => {
+  //
+  // THE MODE DECIDES WHICH METRIC. `abcjs-strict` measures with the golden generator's
+  // `calcWidth` — five ASCII tables and a flat 8 for everything else — because byte parity
+  // with the goldens is what strict is for. The real per-em tables are what `abc2.1` and
+  // `extended` keep, so the tests about REAL metrics ask for that mode.
+  const leftOf = (text: string, mode: CompatibilityMode = 'abc2.1') => {
     const staff = layout(parse(`X:1\nL:1/4\nK:C\nC|\nw:${text}\n`).scores[0] as Score, {
       systemWidth: 200,
+      mode,
     }).systems[0]?.staves[0]
     return (staff?.elements ?? []).find((e) => e.type === 'note')?.left ?? 0
   }
   const sizeOf = (text: string) => {
     const staff = layout(parse(`X:1\nL:1/4\nK:C\nC|\nw:${text}\n`).scores[0] as Score, {
       systemWidth: 200,
+      mode: 'abc2.1',
     }).systems[0]?.staves[0]
     return (staff?.elements ?? []).flatMap((e) => e.texts).find((x) => x.text === text)?.size ?? 1
   }
@@ -2074,12 +2081,15 @@ describe('text metrics', () => {
     // The whole point. The flat estimate this replaces measured these the same, with a
     // median error of 24% against real serif metrics over the corpus.
     expect(leftOf('WWWWW')).toBeGreaterThan(leftOf('iiiii'))
+    // …and strict tells them apart too: the golden's tables are per-character as well.
+    expect(leftOf('WWWWW', 'abcjs-strict')).toBeGreaterThan(leftOf('iiiii', 'abcjs-strict'))
   })
 
   it('treats CJK as full width', () => {
     // A range test, not a table entry — there are tens of thousands of them and they
-    // share one advance. The corpus's Chinese-lyric fixture was being measured at half
-    // its real width, which was the whole of the residual error after the table landed.
+    // share one advance. Correct, and NOT what abcjs's goldens say: the generator's tables
+    // are ASCII, so `小` measures the flat 8 there and a Chinese lyric is spaced NARROWER
+    // than it is drawn. Strict reproduces that; this is the corrected reading.
     expect(leftOf('小燕子')).toBeGreaterThan(leftOf('abc'))
   })
 
@@ -2090,6 +2100,15 @@ describe('text metrics', () => {
     // the centring. A lyric is set in abcjs's `vocalfont`, so it is the BOLD table's
     // fallback that applies, not the serif one's.
     expect(leftOf('ЖЖЖ') - leftOf('Ж')).toBeCloseTo(CHAR_ADVANCE_BOLD_FALLBACK * sizeOf('Ж'), 4)
+  })
+
+  it("strict measures an unlisted character as the golden's flat 8", () => {
+    // `dump-svg.js`'s `widths[ch] || 8`, which is what every SVG golden was measured with
+    // and therefore the parity target — see `goldenTextWidth`. Two extra Zhe cost 16px,
+    // halved by the centring. This is the rule that took `visual-tablature-17` from 499px
+    // out to 41 and `little swallow`'s dx from 24.2 to 21.7.
+    const two = leftOf('ЖЖЖ', 'abcjs-strict') - leftOf('Ж', 'abcjs-strict')
+    expect(two).toBeCloseTo((2 * 8) / 2 / 7.75, 4)
   })
 })
 
@@ -2251,11 +2270,16 @@ describe('drawing bounds include prose, not just music', () => {
   it('fits every text it draws', () => {
     // The general property, rather than the title case that exposed it: nothing the
     // renderer places may fall outside the box it reports.
+    //
+    // `abc2.1`, NOT strict. Strict measures with the golden generator's `calcWidth`, which
+    // is deliberately not what a browser draws — a 27px title is measured with 17px Times
+    // widths — so its declared box UNDER-reports on purpose and abcjs's own SVG has the
+    // same property. The invariant belongs to the modes whose metric is the real one.
     for (const abc of [
       'X:1\nT:A very considerably longer title than the music beneath it needs\nL:1/4\nK:C\nC|\n',
       'X:1\nT:T\nL:1/4\nK:C\nC|\nw:enormouslylongsyllable\n',
     ]) {
-      const d = doc(abc)
+      const d = layout(parse(abc).scores[0] as Score, { systemWidth: 20, mode: 'abc2.1' })
       const right = Math.max(
         0,
         ...d.systems.flatMap((s) =>

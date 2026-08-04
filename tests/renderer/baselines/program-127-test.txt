@@ -9,10 +9,10 @@ system 0 width=90.323 originY=0.000
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  41.873,-19.792 size=3.484 bold "Title"
-      text  37.225,-15.820 size=2.710 "Alternate Title"
-      text  41.211,-11.748 size=2.452 italic "Rhythm"
-      text  35.799,-11.748 size=2.452 italic "Composer (Origin)"
+      text  43.088,-19.792 size=3.484 bold "Title"
+      text  38.730,-15.820 size=2.710 "Alternate Title"
+      text  42.065,-11.748 size=2.452 italic "Rhythm"
+      text  36.510,-11.748 size=2.452 italic "Composer (Origin)"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -22,59 +22,59 @@ system 0 width=90.323 originY=0.000
       glyph noteheadBlack 9.141,-7.756 scale=0.750
       line  10.091,-7.881 -> 10.091,-9.631 t=0.120
       text  10.736,-7.417 size=2.581 "= 120"
-    note@-6 x=10.787 w=5.474
-      glyph noteheadBlack 10.787,3.000
-      line  10.387,3.000 -> 12.452,3.000 t=0.160
-      line  11.967,2.832 -> 11.967,-0.500 t=0.120
-      text  10.674,-4.692 size=2.065 "C"
+    note@-6 x=10.788 w=5.474
+      glyph noteheadBlack 10.788,3.000
+      line  10.388,3.000 -> 12.453,3.000 t=0.160
+      line  11.968,2.832 -> 11.968,-0.500 t=0.120
+      text  10.675,-4.692 size=2.065 "C"
       text  9.141,6.194 size=2.194 bold "Ly-"
-    note@-5 x=16.311 w=7.742
-      glyph noteheadHalf 16.311,2.500
-      line  17.491,2.332 -> 17.491,-1.000 t=0.120
-      text  14.606,6.194 size=2.194 bold "rics"
+    note@-5 x=16.312 w=7.742
+      glyph noteheadHalf 16.312,2.500
+      line  17.492,2.332 -> 17.492,-1.000 t=0.120
+      text  14.605,6.194 size=2.194 bold "rics"
     note@-4 x=24.125 w=5.474
       glyph noteheadBlack 24.125,2.000
       line  25.305,1.832 -> 25.305,-1.500 t=0.120
       text  23.028,6.194 size=2.194 bold "go"
-    bar x=29.650 w=0.160
-      line  29.730,-2.000 -> 29.730,2.000 t=0.160
-    note@-3 x=33.139 w=5.474
-      glyph noteheadBlack 33.139,1.500
-      line  34.319,1.332 -> 34.319,-2.000 t=0.120
+    bar x=29.649 w=0.160
+      line  29.729,-2.000 -> 29.729,2.000 t=0.160
+    note@-3 x=33.140 w=5.474
+      glyph noteheadBlack 33.140,1.500
+      line  34.320,1.332 -> 34.320,-2.000 t=0.120
       text  33.142,-4.692 size=2.065 "F"
-      text  31.069,6.194 size=2.194 bold "here"
+      text  31.068,6.194 size=2.194 bold "here"
     note@-2 x=38.664 w=9.482
       glyph noteheadHalf 38.664,1.000
-      glyph augmentationDot 40.352,0.500
+      glyph augmentationDot 40.353,0.500
       line  39.844,0.832 -> 39.844,-2.500 t=0.120
-      text  37.019,6.194 size=2.194 bold "one"
+      text  37.018,6.194 size=2.194 bold "one"
     bar x=48.233 w=0.160
       line  48.313,-2.000 -> 48.313,2.000 t=0.160
-    note@-1 x=51.298 w=5.474
-      glyph noteheadBlack 51.298,0.500
-      line  52.478,0.332 -> 52.478,-3.000 t=0.120
-      text  50.382,-4.692 size=2.065 "Am"
-      text  49.653,6.194 size=2.194 bold "syl-"
-    note@0 x=56.823 w=7.742
-      glyph noteheadHalf 56.823,0.000
-      line  56.823,0.168 -> 56.823,3.500 t=0.120
-      text  55.605,6.194 size=2.194 bold "la-"
-    note@1 x=64.636 w=5.474
-      glyph noteheadBlack 64.636,-0.500
-      line  64.636,-0.332 -> 64.636,3.000 t=0.120
-      text  63.235,6.194 size=2.194 bold "ble"
+    note@-1 x=51.300 w=5.474
+      glyph noteheadBlack 51.300,0.500
+      line  52.480,0.332 -> 52.480,-3.000 t=0.120
+      text  50.384,-4.692 size=2.065 "Am"
+      text  49.652,6.194 size=2.194 bold "syl-"
+    note@0 x=56.824 w=7.742
+      glyph noteheadHalf 56.824,0.000
+      line  56.824,0.168 -> 56.824,3.500 t=0.120
+      text  55.604,6.194 size=2.194 bold "la-"
+    note@1 x=64.637 w=5.474
+      glyph noteheadBlack 64.637,-0.500
+      line  64.637,-0.332 -> 64.637,3.000 t=0.120
+      text  63.233,6.194 size=2.194 bold "ble"
     bar x=70.161 w=0.160
       line  70.241,-2.000 -> 70.241,2.000 t=0.160
-    note@2 x=73.164 w=5.474
-      glyph noteheadBlack 73.164,-1.000
-      line  73.164,-0.832 -> 73.164,2.500 t=0.120
-      text  72.534,-4.692 size=2.065 "E7"
+    note@2 x=73.165 w=5.474
+      glyph noteheadBlack 73.165,-1.000
+      line  73.165,-0.832 -> 73.165,2.500 t=0.120
+      text  72.535,-4.692 size=2.065 "E7"
       text  71.580,6.194 size=2.194 bold "per"
-    note@3 x=78.689 w=9.482
-      glyph noteheadHalf 78.689,-1.500
-      glyph augmentationDot 80.377,-1.500
-      line  78.689,-1.332 -> 78.689,2.000 t=0.120
-      text  76.678,6.194 size=2.194 bold "note"
+    note@3 x=78.690 w=9.482
+      glyph noteheadHalf 78.690,-1.500
+      glyph augmentationDot 80.378,-1.500
+      line  78.690,-1.332 -> 78.690,2.000 t=0.120
+      text  76.677,6.194 size=2.194 bold "note"
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
 system 1 width=90.323 originY=31.181
@@ -86,58 +86,58 @@ system 1 width=90.323 originY=31.181
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
-    note@-6 x=7.791 w=5.474
-      glyph noteheadBlack 7.791,3.000
-      line  7.391,3.000 -> 9.457,3.000 t=0.160
-      line  8.971,2.832 -> 8.971,-0.500 t=0.120
-      text  7.679,-4.692 size=2.065 "C"
+    note@-6 x=7.793 w=5.474
+      glyph noteheadBlack 7.793,3.000
+      line  7.393,3.000 -> 9.459,3.000 t=0.160
+      line  8.973,2.832 -> 8.973,-0.500 t=0.120
+      text  7.680,-4.692 size=2.065 "C"
       text  6.329,6.194 size=2.194 bold "Se-"
-    note@-5 x=13.585 w=7.742
-      glyph noteheadHalf 13.585,2.500
-      line  14.765,2.332 -> 14.765,-1.000 t=0.120
+    note@-5 x=13.587 w=7.742
+      glyph noteheadHalf 13.587,2.500
+      line  14.767,2.332 -> 14.767,-1.000 t=0.120
       text  11.330,6.194 size=2.194 bold "cond"
     note@-4 x=21.780 w=5.474
       glyph noteheadBlack 21.780,2.000
       line  22.960,1.832 -> 22.960,-1.500 t=0.120
-      text  20.073,6.194 size=2.194 bold "line"
+      text  20.072,6.194 size=2.194 bold "line"
     bar x=27.574 w=0.160
       line  27.654,-2.000 -> 27.654,2.000 t=0.160
-    note@-3 x=29.907 w=5.474
-      glyph noteheadBlack 29.907,1.500
-      line  31.087,1.332 -> 31.087,-2.000 t=0.120
-      text  29.909,-4.692 size=2.065 "F"
+    note@-3 x=29.908 w=5.474
+      glyph noteheadBlack 29.908,1.500
+      line  31.088,1.332 -> 31.088,-2.000 t=0.120
+      text  29.910,-4.692 size=2.065 "F"
       text  28.993,6.194 size=2.194 bold "of"
-    note@-2 x=35.701 w=9.482
-      glyph noteheadHalf 35.701,1.000
-      glyph augmentationDot 37.389,0.500
-      line  36.881,0.832 -> 36.881,-2.500 t=0.120
-      text  34.483,6.194 size=2.194 bold "ly-"
+    note@-2 x=35.702 w=9.482
+      glyph noteheadHalf 35.702,1.000
+      glyph augmentationDot 37.390,0.500
+      line  36.882,0.832 -> 36.882,-2.500 t=0.120
+      text  34.482,6.194 size=2.194 bold "ly-"
     bar x=45.737 w=0.160
       line  45.817,-2.000 -> 45.817,2.000 t=0.160
-    note@-1 x=48.861 w=5.474
-      glyph noteheadBlack 48.861,0.500
-      line  50.041,0.332 -> 50.041,-3.000 t=0.120
-      text  47.946,-4.692 size=2.065 "Am"
+    note@-1 x=48.863 w=5.474
+      glyph noteheadBlack 48.863,0.500
+      line  50.043,0.332 -> 50.043,-3.000 t=0.120
+      text  47.947,-4.692 size=2.065 "Am"
       text  47.156,6.194 size=2.194 bold "rics"
-    note@0 x=54.655 w=7.742
-      glyph noteheadHalf 54.655,0.000
-      line  54.655,0.168 -> 54.655,3.500 t=0.120
+    note@0 x=54.656 w=7.742
+      glyph noteheadHalf 54.656,0.000
+      line  54.656,0.168 -> 54.656,3.500 t=0.120
       text  52.645,6.194 size=2.194 bold "goes"
-    note@1 x=62.849 w=5.474
-      glyph noteheadBlack 62.849,-0.500
-      line  62.849,-0.332 -> 62.849,3.000 t=0.120
+    note@1 x=62.850 w=5.474
+      glyph noteheadBlack 62.850,-0.500
+      line  62.850,-0.332 -> 62.850,3.000 t=0.120
       text  60.779,6.194 size=2.194 bold "here"
     bar x=68.644 w=0.160
       line  68.724,-2.000 -> 68.724,2.000 t=0.160
-    note@2 x=71.525 w=5.474
-      glyph noteheadBlack 71.525,-1.000
-      line  71.525,-0.832 -> 71.525,2.500 t=0.120
-      text  70.895,-4.692 size=2.065 "E7"
+    note@2 x=71.526 w=5.474
+      glyph noteheadBlack 71.526,-1.000
+      line  71.526,-0.832 -> 71.526,2.500 t=0.120
+      text  70.896,-4.692 size=2.065 "E7"
       text  70.063,6.194 size=2.194 bold "too"
-    note@3 x=77.319 w=9.482
-      glyph noteheadHalf 77.319,-1.500
-      glyph augmentationDot 79.007,-1.500
-      line  77.319,-1.332 -> 77.319,2.000 t=0.120
+    note@3 x=77.320 w=9.482
+      glyph noteheadHalf 77.320,-1.500
+      glyph augmentationDot 79.008,-1.500
+      line  77.320,-1.332 -> 77.320,2.000 t=0.120
     bar x=87.355 w=1.060
       line  87.435,-2.000 -> 87.435,2.000 t=0.160
       line  88.165,-2.000 -> 88.165,2.000 t=0.500

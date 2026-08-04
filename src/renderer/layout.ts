@@ -50,6 +50,13 @@ import {
 import { glyphsFor } from './glyph-table.js'
 import { ENGRAVING_DEFAULTS, GLYPHS, type GlyphName } from './glyphs.js'
 import {
+  GOLDEN_GCHORD,
+  GOLDEN_MEASURE,
+  GOLDEN_PARTS,
+  GOLDEN_REPEAT,
+  GOLDEN_VOCAL,
+} from './golden-widths.js'
+import {
   CHAR_ADVANCE,
   CHAR_ADVANCE_BOLD,
   CHAR_ADVANCE_BOLD_FALLBACK,
@@ -2875,7 +2882,64 @@ type Face = 'serif' | 'serifBold' | 'sans'
  * — but no longer a systematic one: the tables are real advances from the fonts abcjs
  * names, checked against widths probed out of its own `extraw`.
  */
-const textWidth = (text: string, size: number, face: Face = 'serif'): number => {
+const textWidth = (text: string, size: number, face: Face = 'serif'): number =>
+  STRICT_TEXT_METRICS ? goldenTextWidth(text, size, face) : realTextWidth(text, size, face)
+
+/**
+ * Which of the two the current render measures with — set once per render from the mode.
+ *
+ * ponytail: a module-level switch rather than a `strict` argument threaded through
+ * `textWidth`'s sixteen call sites, most of which do not have the mode in scope. Thread it
+ * properly if a caller ever needs both metrics in one render.
+ */
+let STRICT_TEXT_METRICS = true
+
+/**
+ * `dump-svg.js`'s `calcWidth`, which is what every SVG golden was measured with.
+ *
+ * Five ASCII tables chosen by SIZE ALONE — not by family — summed per character with a
+ * flat **8** for anything the table does not carry, widest line wins. Three of the six
+ * brackets ask for a key that does not exist in `dump-elements-char-widths.js`
+ * (`titlefont`, `subtitlefont`, and the bold arm below 17), so they fall through to
+ * `repeatfont`: a 27px title is measured with 17px Times widths.
+ *
+ * Byte parity with the goldens is the goal, so this is not a limitation to record — it is
+ * the target. `abcMusicKit` v1 ships the same fallback deliberately.
+ *
+ * Indexed by UTF-16 code UNIT, as the generator's `lines[li][i]` is: an astral character
+ * measures 8 twice, not once.
+ */
+const goldenTextWidth = (text: string, size: number, face: Face): number => {
+  if (text === '') return 0
+  const px = size * ABCJS_PX_PER_SPACE
+  const table =
+    px >= 27 || px >= 21
+      ? GOLDEN_REPEAT // asks for `titlefont` / `subtitlefont`; neither key exists
+      : px >= 20
+        ? GOLDEN_PARTS
+        : px >= 19
+          ? GOLDEN_MEASURE
+          : px >= 17
+            ? face === 'serifBold'
+              ? GOLDEN_VOCAL
+              : GOLDEN_REPEAT
+            : px >= 16
+              ? GOLDEN_GCHORD
+              : GOLDEN_REPEAT
+  let widest = 0
+  for (const line of text.split('\n')) {
+    let width = 0
+    for (let i = 0; i < line.length; i++) width += table[line[i] as string] ?? 8
+    if (width > widest) widest = width
+  }
+  return widest / ABCJS_PX_PER_SPACE
+}
+
+/**
+ * The REAL per-em metrics — what `abc2.1` and `extended` measure with, and what strict
+ * measured with until `calcWidth` was ported.
+ */
+const realTextWidth = (text: string, size: number, face: Face): number => {
   const table =
     face === 'serifBold' ? CHAR_ADVANCE_BOLD : face === 'sans' ? CHAR_ADVANCE_SANS : CHAR_ADVANCE
   const fallback =
@@ -4744,6 +4808,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   // may set it either way, but whether a melisma prints abcjs's literal `_` or an
   // extender is a question about which engine's behaviour is being reproduced.
   const strict = isStrict(options.mode ?? defaultMode)
+  STRICT_TEXT_METRICS = strict
   const { spacingScale } = PROFILES[profile]
   const voices = score.voices.length > 0 ? score.voices : [undefined]
 

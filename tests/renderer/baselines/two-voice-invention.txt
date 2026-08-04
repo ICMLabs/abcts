@@ -15,8 +15,8 @@ system 0 width=90.323 originY=0.000
     beam   57.462,-1.750 -> 60.222,-2.250 t=0.500
     tie  76.412,-1.300 -> 80.152,-1.300 bulge=-0.673
     title x=0.000 w=0.000
-      text  30.263,-14.193 size=3.484 bold "Two Voice Invention"
-      text  39.477,-9.992 size=2.452 italic "Test fixture"
+      text  35.776,-14.193 size=3.484 bold "Two Voice Invention"
+      text  39.177,-9.992 size=2.452 italic "Test fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.471 w=1.522

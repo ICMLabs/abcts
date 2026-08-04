@@ -112,7 +112,10 @@ const WITHIN: Readonly<Record<string, number>> = {
   // THE MODE MAY BE ITS OWN TOKEN — `K:F# dor` and `K:D Dorian` are read across the space.
   // A MID-TUNE `[M:4/4]` PRINTS WHERE IT STANDS — a restated one prints nothing.
   // A `Q:` AFTER THE FIRST prints where it stands, on its own voice's staff.
-  '0.05': 114,
+  // TEXT IS MEASURED WITH `dump-svg.js`'s `calcWidth` — five ASCII tables picked by SIZE
+  // alone and a flat 8 for every character outside them. `visual-tablature-17` was 499px
+  // out on that one rule.
+  '0.05': 115,
   '1': 130,
   '5': 144,
   '25': 169,

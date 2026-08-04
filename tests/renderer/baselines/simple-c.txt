@@ -9,7 +9,7 @@ system 0 width=56.420 originY=0.000
     staffline 0.000,-1.000 -> 56.420,-1.000 t=0.130
     staffline 0.000,-2.000 -> 56.420,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  21.677,-5.616 size=3.484 bold "Simple C"
+      text  24.093,-5.616 size=3.484 bold "Simple C"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
