@@ -4147,6 +4147,14 @@ interface Advance {
   readonly left: number
   /** A barline gets no left clearance when it follows a part label or a tempo mark. */
   readonly kind: 'bar' | 'part' | 'other'
+  /**
+   * What a SOUNDING note needs for the voice-overlap rule, and null for everything else —
+   * rests included, since abcjs tests `!child.abcelem.rest`.
+   *
+   * `low`/`high` are abcjs's `minpitch`/`maxpitch`, `width` its `heads[0].realWidth` and
+   * `head` the glyph the share-a-notehead exception compares. See `lineAt`.
+   */
+  readonly note?: { low: number; high: number; width: number; head: GlyphName } | null
 }
 
 /**
@@ -4336,12 +4344,24 @@ function layoutMeasure(
     // ADVANCE all come from 0.25. We had the head and the stem and left the advance at
     // zero, which put every note after a `C0` on top of it.
     const duration = ratToNumber(event.duration) || 0.25
+    // The voice-overlap rule reads the note's pitch range and its FIRST head. A rest is
+    // excluded at the source, as abcjs excludes it (`!child.abcelem.rest`).
+    const firstHead = el.type === 'note' ? el.glyphs.find((g) => g.role === 'notehead') : undefined
     advances.push({
       rod: el.rod ?? el.width,
       gap: ENGRAVE.noteRodGap,
       duration,
       left: el.left ?? 0,
       kind: 'other',
+      note:
+        firstHead === undefined || el.staffSteps.length === 0
+          ? null
+          : {
+              low: Math.min(...el.staffSteps),
+              high: Math.max(...el.staffSteps),
+              width: glyphsFor(strict).width(firstHead.name),
+              head: firstHead.name,
+            },
     })
     x += el.width
   }
@@ -4395,6 +4415,25 @@ const shiftElement = (el: LayoutElement, dx: number): LayoutElement => ({
   lines: el.lines.map((l) => ({ ...l, x1: l.x1 + dx, x2: l.x2 + dx })),
   texts: el.texts.map((t) => ({ ...t, x: t.x + dx })),
 })
+
+/**
+ * The DRAWN half of the voice-overlap rule: everything but the accidentals moves right.
+ *
+ * abcjs walks the element's relative children and adds `firstChildNoteWidth` to each
+ * `dx` whose name does not contain "accidental" (`voice-elements.js:56-62`), leaving the
+ * element's own x — and therefore the cursor, the `er` and every other voice — alone.
+ * So the head is displaced INSIDE its element, which is the whole point: two voices a
+ * second apart stay at the same musical time and stop sharing a column.
+ */
+const displaceHeads = (el: LayoutElement, dx: number): LayoutElement =>
+  dx === 0
+    ? el
+    : {
+        ...el,
+        glyphs: el.glyphs.map((g) => (g.name.startsWith('accidental') ? g : { ...g, x: g.x + dx })),
+        lines: el.lines.map((l) => ({ ...l, x1: l.x1 + dx, x2: l.x2 + dx })),
+        texts: el.texts.map((t) => ({ ...t, x: t.x + dx })),
+      }
 
 /**
  * The staff's own lines — five, or however many `V:… stafflines=` asked for.
@@ -4924,6 +4963,33 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     })
 
     /**
+     * THE VOICE-OVERLAP RULE — `layout/voice-elements.js:36-66`, run ONCE per element.
+     *
+     * A sounding note in a voice that is NOT its staff's top voice, whose pitch range
+     * touches the top voice's simultaneous note, is displaced to the RIGHT of it: abcjs
+     * sets `child.w = firstChildNoteWidth + child.w` and adds the same to every relative
+     * child whose name is not an accidental. It is the seconds rule, applied between
+     * voices rather than within a chord, and it is why `visual-layout-04`'s two-voice
+     * line is 258px wide in abcjs and was 197 here.
+     *
+     * TOUCHING, not crossing: either end of the child's range inside the first's ± 1.
+     * With ONE exception — if the two notes have the same range AND the same head glyph
+     * they share a notehead and nothing moves.
+     *
+     * It is cached in abcjs (`child.adjustedWidth`), so it happens once however many
+     * times the solve re-lays the line out. That matters: the widened rod is an input to
+     * the next pass, and re-applying it would compound.
+     */
+    const displaced = new Map<number, Map<number, number>>()
+    /** How far element `index` of `block` is displaced in voice `v`, in staff spaces. */
+    const displacementOf = (v: number, block: number, index: number): number => {
+      const line = lines[v]
+      if (line === undefined) return 0
+      const k = line.slots.findIndex((slot) => slot.block === block && slot.index === index)
+      return k < 0 ? 0 : (displaced.get(v)?.get(k) ?? 0)
+    }
+
+    /**
      * Lay the whole line out at one spacing factor, and report what abcjs's solve needs.
      *
      * `units` is abcjs's `spacingUnits`: the `sqrt(duration * 8)` of whichever voice pushed
@@ -4978,6 +5044,34 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           }
         }
         units += unit
+
+        // THE VOICE-OVERLAP RULE, before anything reads a rod — see `displaced` above.
+        // abcjs's `lastTopVoice` is the last voice with `voicenumber === 0` seen so far in
+        // this duration level, and `currentvoices` is in staff order, so for voice v that
+        // is its own staff's top voice — and only when that voice is at this level too.
+        for (const v of now) {
+          const top = (voicesOfStaff.find((m) => m.includes(v)) ?? [v])[0] ?? v
+          if (top === v || !now.includes(top)) continue
+          const k = i[v] ?? 0
+          const seen = displaced.get(v)
+          if (seen?.has(k) === true) continue
+          const mine = itemOf(v)?.note
+          const theirs = itemOf(top)?.note
+          if (!mine || !theirs) continue
+          const touches =
+            (mine.high <= theirs.high + 1 && mine.high >= theirs.low - 1) ||
+            (mine.low <= theirs.high + 1 && mine.low >= theirs.low - 1)
+          const shares =
+            mine.low === theirs.low && mine.high === theirs.high && mine.head === theirs.head
+          if (!touches || shares) continue
+          const line = lines[v]
+          const item = line?.items[k]
+          if (line === undefined || item === undefined) continue
+          line.items[k] = { ...item, rod: item.rod + theirs.width }
+          const row = seen ?? new Map<number, number>()
+          row.set(k, theirs.width)
+          displaced.set(v, row)
+        }
 
         /** Voices already placed in THIS pass — they follow the cursor if it moves again. */
         const done: number[] = []
@@ -5267,25 +5361,29 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             return (placedAt[index] ?? at) - at
           }
           block.elements.forEach((el, index) => {
-            elements.push(shiftElement(el, shiftOf(index)))
+            elements.push(
+              displaceHeads(shiftElement(el, shiftOf(index)), displacementOf(voiceIndex, i, index)),
+            )
           })
           for (const [group, members] of block.beams) {
             const shifted = members.map((m) => ({
               ...m,
               // A stem sits at its element's origin plus an offset within it, so it
-              // moves with the element rather than scaling on its own.
-              x: m.x + shiftOf(m.element),
+              // moves with the element rather than scaling on its own — and with its
+              // voice-overlap displacement, which moves the head the stem hangs off.
+              x: m.x + shiftOf(m.element) + displacementOf(voiceIndex, i, m.element),
               element: m.element + base,
             }))
             beamGroups.set(group, [...(beamGroups.get(group) ?? []), ...shifted])
           }
           for (const a of block.anchors) {
+            const away = displacementOf(voiceIndex, i, a.element)
             voiceAnchors[voiceIndex]?.push({
               ...a,
               system: systemIndex,
               element: a.element + base,
-              left: a.left + shiftOf(a.element),
-              right: a.right + shiftOf(a.element),
+              left: a.left + shiftOf(a.element) + away,
+              right: a.right + shiftOf(a.element) + away,
             })
           }
         }

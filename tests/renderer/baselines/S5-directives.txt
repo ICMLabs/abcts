@@ -745,8 +745,8 @@ system 0 width=90.323 originY=0.000
       glyph noteheadHalf 35.514,2.000
       line  35.514,2.168 -> 35.514,5.500 t=0.120
     note@0 x=49.409 w=7.742
-      glyph noteheadHalf 49.409,0.000
-      line  49.409,0.168 -> 49.409,3.500 t=0.120
+      glyph noteheadHalf 50.747,0.000
+      line  50.747,0.168 -> 50.747,3.500 t=0.120
     bar x=61.886 w=0.160
       line  61.966,-2.000 -> 61.966,2.000 t=0.160
     rest x=63.305 w=10.949

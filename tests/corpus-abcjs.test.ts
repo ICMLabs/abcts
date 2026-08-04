@@ -80,10 +80,12 @@ const WITHIN: Readonly<Record<string, number>> = {
   // top-block subtitle, which it never was — abcjs takes only LEADING subtitle lines.
   // A ZERO-DURATION NOTE SPACES AS A QUARTER — abcjs rewrites `duration` to 0.25 before
   // anything reads it, head, stem and advance alike.
-  '0.05': 97,
-  '1': 110,
-  '5': 119,
-  '25': 139,
+  // THE VOICE-OVERLAP RULE — a note in a non-top voice touching the top voice's is
+  // displaced right of it, and its element widens by that head. `visual-layout-04` 90.1 -> 1.7.
+  '0.05': 98,
+  '1': 111,
+  '5': 122,
+  '25': 140,
 }
 
 const names = readdirSync(fixturesDir)
