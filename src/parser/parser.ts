@@ -1317,6 +1317,7 @@ interface Formatting {
   staffSep: number | null
   musicSpace: number | null
   partsBox: boolean
+  jazzChords: boolean
   stretchLast: number | null
   staffWidth: number | null
   maxStaves: number | null
@@ -1376,6 +1377,7 @@ class ScoreBuilder {
   /** `%%musicspace` in PIXELS, or null for the engine default. */
   musicSpace: number | null = null
   partsBox = false
+  jazzChords = false
   stretchLast: number | null = null
   staffWidth: number | null = null
   maxStaves: number | null = null
@@ -1387,6 +1389,7 @@ class ScoreBuilder {
       staffSep: this.staffSep,
       musicSpace: this.musicSpace,
       partsBox: this.partsBox,
+      jazzChords: this.jazzChords,
       stretchLast: this.stretchLast,
       staffWidth: this.staffWidth,
       maxStaves: this.maxStaves,
@@ -1400,6 +1403,7 @@ class ScoreBuilder {
     this.staffSep = f.staffSep
     this.musicSpace = f.musicSpace
     this.partsBox = f.partsBox
+    this.jazzChords = f.jazzChords
     this.stretchLast = f.stretchLast
     this.staffWidth = f.staffWidth
     this.maxStaves = f.maxStaves
@@ -1585,6 +1589,7 @@ class ScoreBuilder {
       staffSep: this.staffSep,
       musicSpace: this.musicSpace,
       partsBox: this.partsBox,
+      jazzChords: this.jazzChords,
       stretchLast: this.stretchLast,
       staffWidth: this.staffWidth,
       maxStaves: this.maxStaves,
@@ -1988,6 +1993,13 @@ class Parser {
     const partsBox = /^partsbox(?:\s+(\d+))?/.exec(body)
     if (partsBox !== null) {
       this.ensureScore(start).partsBox = partsBox[1] !== '0'
+      return
+    }
+    // `%%jazzchords` — chord modifiers and bass notes as small sub/superscripts. A bare
+    // switch with no argument and no way back: `abc_parse_directive.js:791` only ever
+    // assigns `true`.
+    if (/^jazzchords\b/.test(body)) {
+      this.ensureScore(start).jazzChords = true
       return
     }
     this.info(

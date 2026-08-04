@@ -79,3 +79,34 @@ describe('output shape', () => {
     expect(checked).toBeGreaterThan(0)
   })
 })
+
+describe('%%jazzchords', () => {
+  // `translateChord` + `svg.js:198-211`. The four cases are the four branches: a modifier
+  // alone, a bass alone, both, and a chord that is nothing but a modifier.
+  const chordsOf = (abc: string) =>
+    [...svgFor(abc).matchAll(/<text[^>]*>(.*?)<\/text>/g)].map((m) => m[1])
+
+  it('nests the modifier and the bass as small tspans', () => {
+    const texts = chordsOf('X:1\n%%jazzchords\nK:C\n"C7"C "C/B"B "x"A "x/C"G "/E"E|\n')
+    expect(texts[0]).toContain('>C<tspan dy="-0.3em" style="font-size:0.7em">7</tspan>')
+    // A bass with no modifier before it drops 0.1em, not 0.4em.
+    expect(texts[1]).toContain('>C<tspan dy="0.1em" style="font-size:0.7em">/B</tspan>')
+    expect(texts[3]).toContain('<tspan dy="0.4em" style="font-size:0.7em">/C</tspan>')
+    expect(texts[4]).toContain('<tspan dy="0.1em" style="font-size:0.7em">/E</tspan>')
+  })
+
+  it('leaves a chord alone without the directive', () => {
+    expect(chordsOf('X:1\nK:C\n"C7"C|\n')[0]).toBe('C7')
+  })
+
+  it('reserves a whole line of height per nested tspan', () => {
+    // The reason this is geometry and not decoration: the golden generator counts nested
+    // tspans as LINES (`dump-svg.js:120-124`), so `"x/C"` measures three lines high and
+    // the chord lane grows by two of them — 38.4px, which is what `visual-misc-03` was out
+    // by until this landed.
+    const heightOf = (abc: string) => layout(parse(abc).scores[0] as Score).height
+    const plain = heightOf('X:1\n%%jazzchords\nK:C\n"C"C|\n')
+    const stacked = heightOf('X:1\n%%jazzchords\nK:C\n"x/C"C|\n')
+    expect(stacked - plain).toBeCloseTo((2 * 16 * 1.2) / 7.75, 3)
+  })
+})

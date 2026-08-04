@@ -852,6 +852,21 @@ export interface Score {
    */
   readonly partsBox: boolean
   /**
+   * `%%jazzchords` — set a chord symbol's modifier and bass note as small sub/superscripts.
+   *
+   * `translateChord` (`write/creation/translate-chord.js:12-34`) splits every chord into
+   * root, modifier and `/bass` and rejoins them round a `\x03` marker; `svg.js:198-211`
+   * then reads that marker and nests a `font-size:0.7em` tspan for each part present.
+   *
+   * It is not only cosmetic: the golden generator counts a text's NESTED tspans as
+   * separate LINES, `h + (n-1) * fontSize * 1.2` (`dump-svg.js:120-124`), so `"x/C"`
+   * measures three lines high and its chord lane reserves 38.4px more than a plain one.
+   *
+   * abcjs has no way to turn it off again — the directive only ever sets it TRUE
+   * (`abc_parse_directive.js:791`).
+   */
+  readonly jazzChords: boolean
+  /**
    * `%%stretchlast` — whether to justify the LAST music line, and how nearly full it has
    * to be first. `null` when the directive is absent, which is a different rule and not a
    * default: abcjs then falls back to "justify only if the line is at least 66% of the

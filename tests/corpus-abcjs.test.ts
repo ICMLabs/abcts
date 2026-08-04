@@ -115,10 +115,13 @@ const WITHIN: Readonly<Record<string, number>> = {
   // TEXT IS MEASURED WITH `dump-svg.js`'s `calcWidth` — five ASCII tables picked by SIZE
   // alone and a flat 8 for every character outside them. `visual-tablature-17` was 499px
   // out on that one rule.
+  // `%%jazzchords` SETS THE MODIFIER AND THE BASS AS NESTED TSPANS, and the generator
+  // counts each as a whole LINE of height — `"x/C"` measures three lines and its chord
+  // lane reserves 38.4px more. 38.37 -> 0.07 on that one rule.
   '0.05': 115,
-  '1': 130,
-  '5': 144,
-  '25': 169,
+  '1': 131,
+  '5': 145,
+  '25': 170,
 }
 
 const names = readdirSync(fixturesDir)

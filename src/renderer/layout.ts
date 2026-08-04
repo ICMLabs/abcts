@@ -530,6 +530,12 @@ export const ENGRAVE = {
   lyricTextSize: 17 / 7.75,
   chordTextSize: 16 / 7.75,
   /**
+   * `dy="1.2em"` — the step abcjs puts between the lines of one `<text>` (`svg.js:196`),
+   * and therefore what the golden generator adds per extra line when it measures one
+   * (`dump-svg.js:120-124`).
+   */
+  textLineStep: 1.2,
+  /**
    * A stem shortened to meet a beam never drops below this. *Behind Bars* keeps beamed
    * stems from collapsing to stubs. PROVISIONAL.
    */
@@ -787,6 +793,16 @@ export interface PlacedText {
    * only the top-text block centres a title or right-aligns a composer.
    */
   readonly anchor?: 'start' | 'middle' | 'end'
+  /**
+   * `%%jazzchords`' split of this chord symbol — root, modifier, `/bass`.
+   *
+   * Present only on a `chord` role under the directive, so an ANNOTATION never carries one:
+   * abcjs runs `translateChord` on chord symbols and skips annotations outright
+   * (`add-chord.js:45-46`). The modifier and the bass draw as `font-size:0.7em` tspans
+   * nested in the chord's own, and each one the generator sees adds a whole LINE to the
+   * measured height. See `Score.jazzChords`.
+   */
+  readonly jazz?: readonly [string, string, string]
 }
 
 export interface LayoutElement {
@@ -2894,6 +2910,26 @@ const textWidth = (text: string, size: number, face: Face = 'serif'): number =>
  */
 let STRICT_TEXT_METRICS = true
 
+/** `%%jazzchords` for the current render — same one-place switch, set beside it. */
+let JAZZ_CHORDS = false
+
+/**
+ * `translateChord`'s split of a chord symbol into root, modifier and `/bass`
+ * (`write/creation/translate-chord.js:12-34`).
+ *
+ * Every group is optional and the regex is unanchored at the tail, so it always matches —
+ * abcjs's `if (!reg) continue` is dead code. A chord it cannot read simply comes back as
+ * one modifier, which is what `"x"` does.
+ *
+ * ponytail: one line, where abcjs splits on `\n` first. Our chord symbols carry no
+ * newline; a multi-line one would need the loop.
+ */
+const chordParts = (chord: string): readonly [string, string, string] => {
+  const m = /^([ABCDEFG][♯♭]?)?([^/]+)?(\/([ABCDEFG][#b♯♭]?))?/.exec(chord)
+  if (m === null) return [chord, '', '']
+  return [m[1] ?? '', m[2] ?? '', m[4] === undefined ? '' : `/${m[4]}`]
+}
+
 /**
  * `dump-svg.js`'s `calcWidth`, which is what every SVG golden was measured with.
  *
@@ -3042,6 +3078,7 @@ function noteText(
       size,
       bold: false,
       italic: false,
+      ...(JAZZ_CHORDS ? { jazz: chordParts(event.chordSymbol) } : {}),
     })
   }
 
@@ -4809,6 +4846,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   // extender is a question about which engine's behaviour is being reproduced.
   const strict = isStrict(options.mode ?? defaultMode)
   STRICT_TEXT_METRICS = strict
+  JAZZ_CHORDS = score.jazzChords
   const { spacingScale } = PROFILES[profile]
   const voices = score.voices.length > 0 ? score.voices : [undefined]
 
@@ -6445,6 +6483,13 @@ function anchorAboveStaff<
   } & StaffFurniture,
 >(parts: readonly T[], strict: boolean, partsBox = false): T[] {
   const isChord = (t: PlacedText): boolean => t.role === 'chord'
+  /**
+   * How many non-empty tspans the golden generator sees in this chord — 1 plus one for
+   * each of the modifier and the bass note (`svg.js:198-211`). The outer tspan's
+   * `textContent` gathers its children, so it counts whenever the chord is not empty.
+   */
+  const jazzTspans = (t: PlacedText): number =>
+    t.jazz === undefined ? 1 : 1 + (t.jazz[1] === '' ? 0 : 1) + (t.jazz[2] === '' ? 0 : 1)
   const has = (fn: (el: LayoutElement) => boolean) => parts.some((p) => p.elements.some(fn))
   const chords = has((el) => el.texts.some(isChord))
   const partLabels = has((el) => el.type === 'part')
@@ -6548,7 +6593,23 @@ function anchorAboveStaff<
       p.elements.flatMap((el) => el.texts.filter((t) => t.role === 'chord').map((t) => t.size)),
     ),
   )
-  const chordBlock = ENGRAVE.chordHeightAbove * chordLanes * (chordSize / ENGRAVE.chordTextSize)
+  // …AND A JAZZ CHORD IS AS TALL AS ITS TSPANS. The generator counts a text's nested
+  // tspans as separate LINES — `h + (n-1) * fontSize * 1.2` (`dump-svg.js:120-124`) — and
+  // `getTextSize` measures the very markup `svg.js` will draw, so `"x/C"` comes back three
+  // lines high and the whole lane grows by 38.4px. The tallest chord on the staff sets it,
+  // which is `setLimit`'s `Math.max` over the voice's `chordHeightAbove`.
+  const extraLines = Math.max(
+    0,
+    ...parts.flatMap((p) =>
+      p.elements.flatMap(
+        (el) => el.texts.filter(isChord).map((t) => jazzTspans(t) - 1) as number[],
+      ),
+    ),
+  )
+  const chordBlock =
+    (ENGRAVE.chordHeightAbove * (chordSize / ENGRAVE.chordTextSize) +
+      extraLines * chordSize * ENGRAVE.textLineStep) *
+    chordLanes
   const chordY = chords ? reserve(chordBlock) + chordSize : null
 
   // A BOXED PART LABEL MEASURES TALLER, so its whole lane grows: `getTextSize` returns

@@ -110,6 +110,25 @@ const escapeAttr = (s: string): string =>
 const escapeText = (s: string): string =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
+/**
+ * `%%jazzchords`' markup for one chord — `svg.js:198-211`, verbatim.
+ *
+ * The root is the outer tspan's own text; the modifier and the bass note are nested
+ * `font-size:0.7em` tspans, raised and dropped. The bass's drop depends on whether a
+ * modifier preceded it: `0.4em` clear of a raised one, `0.1em` from the baseline.
+ */
+const jazzChordMarkup = (jazz: readonly [string, string, string], x: string): string => {
+  const [root, modifier, bass] = jazz
+  const small = (dy: string, text: string): string =>
+    `<tspan dy="${dy}" style="font-size:0.7em">${escapeText(text)}</tspan>`
+  return (
+    `<tspan x="${x}">${escapeText(root)}` +
+    `${modifier === '' ? '' : small('-0.3em', modifier)}` +
+    `${bass === '' ? '' : small(modifier === '' ? '0.1em' : '0.4em', bass)}` +
+    '</tspan>'
+  )
+}
+
 const num = (n: number): string => {
   const r = Math.round(n * 1000) / 1000
   return Object.is(r, -0) ? '0' : String(r)
@@ -361,7 +380,7 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
               `font-family="serif" font-size="${num(t.size)}"${style}` +
               // Only the top-text block sets one; the music's own text is all left-aligned.
               `${t.anchor === undefined || t.anchor === 'start' ? '' : ` text-anchor="${t.anchor}"`}` +
-              `>${escapeText(t.text)}</text>`,
+              `>${t.jazz === undefined ? escapeText(t.text) : jazzChordMarkup(t.jazz, num(t.x))}</text>`,
           )
         }
         if (abcjs) parts.push('</g>')
