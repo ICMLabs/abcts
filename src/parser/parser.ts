@@ -752,7 +752,17 @@ class VoiceBuilder {
    * is not empty.
    */
   explicit = false
-  octaveShift = 0
+  /**
+   * `V:… octave=n` — the voice's OWN shift, or null when it never set one.
+   *
+   * Null is load-bearing: abcjs reads `currentVoice.octave !== undefined ?
+   * currentVoice.octave : multilineVars.octave` PER NOTE
+   * (`abc_parse_music.js:1113`), so a voice with no `octave=` of its own follows the
+   * tune-level `K: octave=` — including one that arrives MID-TUNE.
+   */
+  octaveShift: number | null = null
+  /** The effective shift as each measure CLOSED, since the tune-level one can change. */
+  private readonly measureShifts: number[] = []
   /** `V:… stafflines=` with no `clef=` — see `Voice.staffLineOverride`. */
   staffLineOverride: number | null = null
   /** `V:… stems=up|down` — see `Voice.stemDirection`. */
@@ -807,7 +817,16 @@ class VoiceBuilder {
     readonly id: string,
     /** The score's shared box of blocks waiting for the next system — see `ScoreBuilder`. */
     private readonly pendingTextBefore: { blocks: FreeTextBlock[] } = { blocks: [] },
+    /** The tune-level `K: octave=`, shared and mutable — see `octaveShift`. */
+    private readonly keyOctave: { value: number } = { value: 0 },
   ) {}
+
+  /** What `octave=` is worth for a measure closing NOW. */
+  private takeOctave(): number {
+    const shift = this.octaveShift ?? this.keyOctave.value
+    this.measureShifts.push(shift)
+    return shift
+  }
 
   setKeyChange(key: KeySignature, range: SourceRange): void {
     this.pendingKeyChange = key
@@ -1180,6 +1199,7 @@ class VoiceBuilder {
       ...this.takeOpening(this.events[this.events.length - 1]?.sourceRange?.start ?? null),
       ...(() => {
         const startsSystem = this.takeLineStart()
+        this.takeOctave()
         return { startsSystem, ...this.takeTextBefore(startsSystem) }
       })(),
       closingBarline: barline,
@@ -1212,6 +1232,7 @@ class VoiceBuilder {
       ...this.takeOpening(last?.sourceRange?.start ?? null),
       ...(() => {
         const startsSystem = this.takeLineStart()
+        this.takeOctave()
         return { startsSystem, ...this.takeTextBefore(startsSystem) }
       })(),
       closingBarline: null,
@@ -1240,14 +1261,15 @@ class VoiceBuilder {
     //
     // ponytail: the voice's FINAL shift applies to all of its measures. A mid-body `V:`
     // that changes `octave=` partway would need this per-measure; none does.
-    const measures =
-      this.octaveShift === 0
-        ? this.measures
-        : this.measures.map((m) => shiftMeasure(m, this.octaveShift))
+    // PER MEASURE, because the tune-level `K: octave=` can change mid-tune and a voice
+    // with no `octave=` of its own follows it from that point.
+    const measures = this.measureShifts.some((n) => n !== 0)
+      ? this.measures.map((m, i) => shiftMeasure(m, this.measureShifts[i] ?? 0))
+      : this.measures
     // An `&` overlay is a voice, so it spans the whole tune — see `padOverlays`.
     return {
       id: this.id,
-      octaveShift: this.octaveShift,
+      octaveShift: this.octaveShift ?? this.keyOctave.value,
       clef: this.clef,
       staffLineOverride: this.staffLineOverride,
       stemDirection: this.stemDirection,
@@ -1386,6 +1408,11 @@ class ScoreBuilder {
    * at the first measure of the span across all voices.
    */
   readonly pendingTextBefore: { blocks: FreeTextBlock[] } = { blocks: [] }
+  /**
+   * The tune-level `K: octave=` — abcjs's `multilineVars.octave`, which is GLOBAL and can
+   * change mid-tune. A voice that set its own `octave=` ignores it.
+   */
+  readonly keyOctave = { value: 0 }
 
   constructor(readonly sourceStartOffset: number) {}
 
@@ -1397,7 +1424,7 @@ class ScoreBuilder {
   voiceFor(id: string): VoiceBuilder {
     let builder = this.voices.get(id)
     if (!builder) {
-      builder = new VoiceBuilder(id, this.pendingTextBefore)
+      builder = new VoiceBuilder(id, this.pendingTextBefore, this.keyOctave)
       this.voices.set(id, builder)
     }
     return builder
@@ -2137,6 +2164,12 @@ class Parser {
           // prints the new clef where it stands AND at the head of every system after it.
           const midClef = parseClef(value)
           if (midClef !== null) builder.voice.setClefChange(midClef)
+          // A MID-TUNE `K: octave=` is GLOBAL and takes effect from here. abcjs reads it
+          // per note as the fallback under the voice's own `octave=`, so `parse-note-id-01`
+          // — whose second half is written an octave lower on purpose — printed 27.1px
+          // (seven steps, one octave) below abcjs's.
+          const midOctave = octaveModifier(value)
+          if (midOctave !== null) builder.keyOctave.value = midOctave
           return
         }
         builder.key = parseKey(value)
@@ -2144,7 +2177,7 @@ class Parser {
         // `K:C bass` sets the tune's clef; a `V:… clef=` still overrides it per voice.
         builder.clef = clefWith(builder.clef, value)
         const keyOctave = octaveModifier(value)
-        if (keyOctave !== null) builder.voice.octaveShift = keyOctave
+        if (keyOctave !== null) builder.keyOctave.value = keyOctave
         builder.bodyStarted = true // K: ends the header.
         return
       }
