@@ -78,10 +78,12 @@ const WITHIN: Readonly<Record<string, number>> = {
   // of the top-text block, which abcjs draws and we did not; every `%%<type>font` parsed
   // and its size threaded through the block; and a mid-tune `T:` no longer counted as a
   // top-block subtitle, which it never was — abcjs takes only LEADING subtitle lines.
-  '0.05': 96,
-  '1': 109,
-  '5': 118,
-  '25': 138,
+  // A ZERO-DURATION NOTE SPACES AS A QUARTER — abcjs rewrites `duration` to 0.25 before
+  // anything reads it, head, stem and advance alike.
+  '0.05': 97,
+  '1': 110,
+  '5': 119,
+  '25': 139,
 }
 
 const names = readdirSync(fixturesDir)

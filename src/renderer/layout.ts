@@ -4325,7 +4325,12 @@ function layoutMeasure(
       })
     }
     elements.push(el)
-    const duration = ratToNumber(event.duration)
+    // A ZERO-DURATION NOTE SPACES AS A QUARTER. abcjs rewrites the duration before
+    // anything reads it — `if (duration === 0) { zeroDuration = true; duration = 0.25;
+    // nostem = true; }` (`abstract-engraver.js:791`) — so the head, the stem and the
+    // ADVANCE all come from 0.25. We had the head and the stem and left the advance at
+    // zero, which put every note after a `C0` on top of it.
+    const duration = ratToNumber(event.duration) || 0.25
     advances.push({
       rod: el.rod ?? el.width,
       gap: ENGRAVE.noteRodGap,
@@ -4995,6 +5000,13 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             }
           }
           at[v]?.push(x)
+          if (PROBE && probeFinalPass) {
+            const px = (n: number) => (n * 7.75).toFixed(3)
+            console.log(
+              `PROBE item v=${v} i=${k} kind=${item.kind} dur=${item.duration} w=${px(item.rod)}` +
+                ` left=${px(item.left)} gap=${px(item.gap)} er=${px(x - (minx[v] ?? 0))} x=${px(x)}`,
+            )
+          }
           done.push(v)
           unspent[v] = item.duration
           // The line's LAST element keeps its own width and loses its `minspacing`.
@@ -5070,7 +5082,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       }
       return factor
     })()
+    probeFinalPass = true
     const solved = lineAt(justify)
+    probeFinalPass = false
     // The ratchet. abcjs rounds to whole PIXELS before comparing, so a sub-pixel overrun
     // does not drag the page with it.
     const thisWidth = solved.width - leftEdge
@@ -6224,6 +6238,8 @@ const goldenTextHeight = (sizeInSpaces: number): number => {
 }
 
 const PROBE = process.env.ABCTS_PROBE !== undefined
+/** Item probes fire only on the SOLVED pass — the solve runs `lineAt` up to eight times. */
+let probeFinalPass = false
 let probeTop = ''
 let probeBottom = ''
 let probeFlags = ''
