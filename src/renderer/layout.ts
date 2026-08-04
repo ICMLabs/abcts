@@ -3017,6 +3017,18 @@ let STRICT_TEXT_METRICS = true
 let JAZZ_CHORDS = false
 
 /**
+ * A chord symbol's or annotation's MEASURED width — `getTextSize.calc`, box included.
+ *
+ * The `padding * 4` a boxed font adds goes on the WIDTH as well as the height
+ * (`helpers/get-text-size.js:46-48`), and that width is the mark's `realWidth`: it decides
+ * how far a centred chord reaches either side of its note and where `placeInLane` thinks
+ * its right edge is. `visual-tablature-17` boxes five `%%gchordfont` sizes and was 33.9px
+ * of dx out on this alone.
+ */
+const markWidth = (text: string, size: number, boxed: boolean): number =>
+  textWidth(text, size, 'sans') + (boxed ? size * ENGRAVE.fontBoxPadding * 4 : 0)
+
+/**
  * Every `%%<type>font` the tune set, for the current render — the same one-place switch.
  *
  * ponytail: a module-level map rather than a `fonts` argument threaded through the
@@ -3263,13 +3275,18 @@ function noteText(
     // every fixture that stacks a chord.
     for (const line of event.chordSymbol.split('\n').reverse()) {
       if (line === '') continue
-      centred(line, size, headWidth / 2, 'sans')
+      const boxed = event.chordFont?.box === true
+      const lineWidth = markWidth(line, size, boxed)
+      if (spans !== null) {
+        spans.left = Math.max(spans.left, lineWidth / 2)
+        spans.right = Math.max(spans.right, headWidth / 2 + lineWidth / 2)
+      }
       texts.push({
         text: line,
         // The lane is only the origin: `anchorAboveStaff` moves the whole set onto the
         // staff's music once the voices sharing it are known, exactly as lyrics are.
         role: 'chord',
-        x: centre - textWidth(line, size, 'sans') / 2,
+        x: centre - lineWidth / 2,
         y: stepToY(ENGRAVE.chordSymbolStep),
         size,
         bold: false,
@@ -6929,7 +6946,7 @@ function anchorAboveStaff<
     for (const el of part.elements) for (const t of el.texts) if (isChord(t)) marks.push(t)
     for (const t of marks) {
       const left = t.x
-      const right = left + textWidth(t.text, t.size, 'sans')
+      const right = left + markWidth(t.text, t.size, t.box === true)
       const lane = rightMost.findIndex((edge) => edge < left)
       if (lane >= 0) {
         rightMost[lane] = right

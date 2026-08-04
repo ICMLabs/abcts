@@ -166,10 +166,13 @@ const WITHIN: Readonly<Record<string, number>> = {
   // composer or origin is present, so `composerfont` alone sets that row and not the taller
   // of the two. And a BOXED font's `padding * 4` is in every MEASURED height —
   // `getTextSize.calc` adds it, so a mid-tune `%%text` and `T:` carry it too.
+  // …AND THE BOX IS ON THE WIDTH TOO, which is a chord's `realWidth`: how far a centred
+  // mark reaches either side of its note and where `placeInLane` puts its right edge.
+  // `visual-tablature-17` boxes five `%%gchordfont` sizes and was 33.9px of dx out on it.
   '0.05': 135,
   '1': 143,
-  '5': 156,
-  '25': 171,
+  '5': 157,
+  '25': 172,
 }
 
 const names = readdirSync(fixturesDir)
