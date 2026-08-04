@@ -1228,6 +1228,7 @@ class VoiceBuilder {
 /** The `%%` formatting a file header passes to every tune under it. */
 interface Formatting {
   staffSep: number | null
+  musicSpace: number | null
   partsBox: boolean
   stretchLast: number | null
   staffWidth: number | null
@@ -1285,6 +1286,8 @@ class ScoreBuilder {
   staffGroups: StaffGroup[] = []
   /** `%%staffsep` / `%%sysstaffsep`, in PIXELS (directive points × 4/3). See `Score`. */
   staffSep: number | null = null
+  /** `%%musicspace` in PIXELS, or null for the engine default. */
+  musicSpace: number | null = null
   partsBox = false
   stretchLast: number | null = null
   staffWidth: number | null = null
@@ -1295,6 +1298,7 @@ class ScoreBuilder {
   formatting(): Formatting {
     return {
       staffSep: this.staffSep,
+      musicSpace: this.musicSpace,
       partsBox: this.partsBox,
       stretchLast: this.stretchLast,
       staffWidth: this.staffWidth,
@@ -1307,6 +1311,7 @@ class ScoreBuilder {
 
   applyFormatting(f: Formatting): void {
     this.staffSep = f.staffSep
+    this.musicSpace = f.musicSpace
     this.partsBox = f.partsBox
     this.stretchLast = f.stretchLast
     this.staffWidth = f.staffWidth
@@ -1486,6 +1491,7 @@ class ScoreBuilder {
       }),
       staves: this.resolvedStaves(),
       staffSep: this.staffSep,
+      musicSpace: this.musicSpace,
       partsBox: this.partsBox,
       stretchLast: this.stretchLast,
       staffWidth: this.staffWidth,
@@ -1834,6 +1840,18 @@ class Parser {
       if (staffSep[1] === 'staffsep') builder.staffSep = px
       else builder.sysStaffSep = px
       return
+    }
+    // `%%musicspace` — the gap between the top text and the first staff, in POINTS and
+    // scaled by 4/3 like every other measurement (`write/renderer.js:155-156`). It is
+    // spent ONCE, before the first staff group, so `%%musicspace 0` closes that gap and
+    // nothing else moves. `visual-selection-01` sets it.
+    const musicSpace = /^musicspace\s+(\S+)\s*$/.exec(body)
+    if (musicSpace?.[1] !== undefined) {
+      const px = parseMeasurement(musicSpace[1])
+      if (px !== null) {
+        this.ensureScore(start).musicSpace = (px * 4) / 3
+        return
+      }
     }
     // `%%stretchlast` — bare or `true` is 1, `false` is 0, a number 0..1 is itself
     // (`abc_parse_directive.js:1294-1305`). Anything else abcjs rejects, so it stays null

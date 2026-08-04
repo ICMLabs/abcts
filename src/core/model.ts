@@ -798,6 +798,14 @@ export interface Score {
   /** `%%sysstaffsep` — the same minimum, but between staves WITHIN a system. Pixels, or null. */
   readonly sysStaffSep: number | null
   /**
+   * `%%musicspace` — the gap between the top text and the FIRST staff, in pixels.
+   *
+   * Spent once, before the first staff group (`write/draw/draw.js:17`), which is why a
+   * mid-tune block between two groups costs nothing extra. `null` takes the engine
+   * default; abcjs scales the directive's points by 4/3 (`write/renderer.js:155-156`).
+   */
+  readonly musicSpace: number | null
+  /**
    * `%%partsbox` — draw a box round every `P:` label.
    *
    * It is not only decoration: a boxed font measures `height + padding * 4` and

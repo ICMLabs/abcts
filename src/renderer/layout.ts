@@ -4647,6 +4647,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   // intra-staff gap (sysstaffsep 50 -> 66.67px), and abcjs honours both. The model carries
   // them already in pixels; here they become staff spaces like the rest of `ENGRAVE`.
   const interSystemSep = score.staffSep !== null ? score.staffSep / 7.75 : ENGRAVE.systemSeparation
+  /** `%%musicspace` — the gap before the FIRST staff group only, in staff spaces. */
+  const musicSpace = score.musicSpace !== null ? score.musicSpace / 7.75 : ENGRAVE.musicSpace
   const intraStaffSep =
     score.sysStaffSep !== null ? score.sysStaffSep / 7.75 : ENGRAVE.staffSeparation
 
@@ -5648,7 +5650,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     // rides `musicSpace` too high. Only system 0, and only when it has no heading — a
     // later system's spacing is the inter-system minimum, not this.
     const headingless = systemIndex === 0 && !merged[0]?.elements.some((el) => el.type === 'title')
-    let cursor = headingless ? ENGRAVE.musicSpace : 0
+    let cursor = headingless ? musicSpace : 0
     /** Bottom staff LINE of the staff placed before this one, in system coordinates. */
     let previousBottomLine: number | null = null
     const placed = merged.map((staff) => {
@@ -5665,11 +5667,11 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
               // The block's own height, not its last descender: abcjs advances by a
               // rounded line height per row and that trailing space is part of the block.
               const blockBottom = Math.max(...heading.map((el) => el.blockHeight ?? 0))
-              const gap = heading.some((el) => el.blockAbutsMusic === true) ? 0 : ENGRAVE.musicSpace
+              const gap = heading.some((el) => el.blockAbutsMusic === true) ? 0 : musicSpace
               const offset = musicTop - gap - blockBottom
               if (PROBE)
                 console.log(
-                  `BLOCK musicTop=${musicTop.toFixed(4)} (pitch ${(6 - 2 * musicTop).toFixed(4)}) topBy=${probeTop} flags=${probeFlags} blockH=${blockBottom.toFixed(4)} musicSpace=${ENGRAVE.musicSpace} offset=${offset.toFixed(4)}`,
+                  `BLOCK musicTop=${musicTop.toFixed(4)} (pitch ${(6 - 2 * musicTop).toFixed(4)}) topBy=${probeTop} flags=${probeFlags} blockH=${blockBottom.toFixed(4)} musicSpace=${musicSpace} offset=${offset.toFixed(4)}`,
                 )
               return [
                 ...heading.map((el) => ({

@@ -103,9 +103,10 @@ const WITHIN: Readonly<Record<string, number>> = {
   // GRACE NOTES ARE EMITTED AFTER THEIR MAIN HEAD, which is abcjs's document order. The
   // gate pairs the i-th notehead, so playing order read as a position error on every
   // graced fixture — and ragtime's dy 58.1, filed for weeks as unchaseable, was this.
-  '0.05': 107,
-  '1': 122,
-  '5': 137,
+  // `%%musicspace` — the gap before the FIRST staff group, in points times 4/3.
+  '0.05': 108,
+  '1': 123,
+  '5': 138,
   '25': 165,
 }
 
