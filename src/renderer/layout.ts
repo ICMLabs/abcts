@@ -64,7 +64,6 @@ import {
   CHAR_ADVANCE_SANS_FALLBACK,
   FALLBACK_ADVANCE,
 } from './text-metrics.js'
-import { VOICE_NAME_GAP_PX, voiceNameWidthPx } from './voice-name-metrics.js'
 
 // ─── Engine constants ────────────────────────────────────────────────────────
 // Engraving conventions, NOT font metadata. Sources noted; values marked PROVISIONAL
@@ -1834,7 +1833,9 @@ const layoutPart = (x: number, label: string): LayoutElement => ({
       text: label,
       x,
       y: stepToY(ENGRAVE.partStep),
-      size: ENGRAVE.tempoTextSize,
+      // `partsfont`, whatever the tune set — `%%partsfont sans-serif 29 box` is 26.45px of
+      // part lane over the 15pt default.
+      size: fontSizeOf('partsfont'),
       bold: true,
       italic: false,
     },
@@ -2503,16 +2504,16 @@ function layoutNoteheads(
  */
 function barNumberText(number: number, x: number): PlacedText {
   const text = String(number)
+  // MEASURED IN `measurefont`, whatever the tune set it to — `%%measurefont Helvetica 7
+  // box` measures 14.6px against the default's 21.06 and drops the reserve 1.68px.
   // abcjs PITCH -> our step: the bottom staff line is pitch 2 and our step -4, so a step
   // is `pitch - 6`. Its height is in PIXELS over `spacing.STEP`, which is `spaces x 2`.
-  const y = stepToY(
-    ENGRAVE.barNumberPitch + goldenTextHeight(ENGRAVE.barNumberSize) * 2 - ABCJS_PITCH_ORIGIN,
-  )
+  const y = stepToY(ENGRAVE.barNumberPitch + fontHeightOf('measurefont') * 2 - ABCJS_PITCH_ORIGIN)
   return {
     text,
     x,
     y,
-    size: ENGRAVE.barNumberSize,
+    size: fontSizeOf('measurefont'),
     bold: false,
     italic: true,
     anchor: 'middle',
@@ -3016,6 +3017,32 @@ let STRICT_TEXT_METRICS = true
 let JAZZ_CHORDS = false
 
 /**
+ * Every `%%<type>font` the tune set, for the current render — the same one-place switch.
+ *
+ * ponytail: a module-level map rather than a `fonts` argument threaded through the
+ * measure, note and bar builders. abcjs keeps it on the controller for the same reason.
+ */
+let SCORE_FONTS: Score['fonts'] = {}
+
+/** A `%%<type>font`'s size in staff spaces — `round(pt x 4 / 3)` px (`get-font-and-attr.js:29`). */
+const fontSizeOf = (type: AbcFontType): number =>
+  Math.round(((SCORE_FONTS[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / ABCJS_PX_PER_SPACE
+
+/**
+ * What `getTextSize.calc` returns as a `%%<type>font`'s HEIGHT, in staff spaces.
+ *
+ * The generator's size table with `size + 2` for anything unlisted, plus `padding * 4`
+ * when the font is BOXED (`helpers/get-text-size.js:46-48`).
+ */
+const fontHeightOf = (type: AbcFontType): number => {
+  const size = fontSizeOf(type)
+  return (
+    goldenTextHeight(size) +
+    (SCORE_FONTS[type]?.box === true ? size * ENGRAVE.fontBoxPadding * 4 : 0)
+  )
+}
+
+/**
  * `translateChord`'s split of a chord symbol into root, modifier and `/bass`
  * (`write/creation/translate-chord.js:12-34`).
  *
@@ -3267,7 +3294,11 @@ function noteText(
   const below = annotations.filter((a) => a.where === 'below')
 
   above.forEach((a, index) => {
-    const size = ENGRAVE.chordTextSize
+    // `annotationfont`, not the chord font — abcjs picks `font = isAnnotation ?
+    // 'annotationfont' : 'gchordfont'` (`add-chord.js:11-17`). They share a 12pt default,
+    // so a tune that sets neither is unmoved; `%%annotationfont Times-Roman 15 box` is
+    // 11.65px of chord lane.
+    const size = fontSizeOf('annotationfont')
     const lane =
       ENGRAVE.annotationAboveStep + (above.length - 1 - index) * ENGRAVE.annotationLineStep
     texts.push({
@@ -3285,6 +3316,7 @@ function noteText(
       size,
       bold: false,
       italic: false,
+      ...(SCORE_FONTS.annotationfont?.box === true ? { box: true } : {}),
       // AN ANNOTATION SHARES THE CHORD LANE. `RelativeElement` gives a `type: "text"`
       // with no pitch the very same `chordHeightAbove` a `type: "chord"` gets
       // (`relative-element.js:60-76`), and `setUpperAndLowerRelativeElements` handles
@@ -3296,7 +3328,7 @@ function noteText(
   })
 
   below.forEach((a, index) => {
-    const size = ENGRAVE.chordTextSize
+    const size = fontSizeOf('annotationfont')
     texts.push({
       text: a.text,
       // Left-justified, like the `above` case.
@@ -3326,7 +3358,7 @@ function noteText(
   let roomTakenRight = 0
   for (const a of annotations) {
     if (a.where !== 'left' && a.where !== 'right') continue
-    const size = ENGRAVE.chordTextSize
+    const size = fontSizeOf('annotationfont')
     const width = textWidth(a.text, size, 'sans')
     if (a.where === 'left') {
       roomTaken += width + ENGRAVE.leftAnnotationGap
@@ -3367,7 +3399,7 @@ function noteText(
       text: a.text,
       x: headX + a.dx / ABCJS_PX_PER_SPACE,
       y,
-      size: ENGRAVE.chordTextSize,
+      size: fontSizeOf('annotationfont'),
       bold: false,
       italic: false,
       reserve: pointReserve(y),
@@ -5122,6 +5154,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   const strict = isStrict(options.mode ?? defaultMode)
   STRICT_TEXT_METRICS = strict
   JAZZ_CHORDS = score.jazzChords
+  SCORE_FONTS = score.fonts
   const { spacingScale } = PROFILES[profile]
   const voices = score.voices.length > 0 ? score.voices : [undefined]
 
@@ -5394,13 +5427,32 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
    * old left edge to the pixel. Braces and brackets can widen it too, but no fixture pairs
    * a group connector with a name — ponytail: add their width here when one does.
    */
+  /**
+   * A voice label's width in STAFF SPACES, measured the way abcjs measures it.
+   *
+   * `getTextSize.calc(header, 'voicefont')` — so the golden's `calcWidth` at whatever size
+   * `%%voicefont` set, plus `padding * 4` for a BOXED font. The default resolves to Times
+   * New Roman Bold 17px, which is the table the old dedicated metrics file carried; a
+   * `%%voicefont Verdana 17 box` resolves to the 23px bracket, which asks for a key that
+   * does not exist and falls through to `repeatfont` — and then adds 9.2px of box, twice
+   * over once the trailing "A" is measured the same way. That was 18.40px of left edge.
+   */
+  const voiceNameWidth = (text: string): number => {
+    const size = fontSizeOf('voicefont')
+    const bold = score.fonts.voicefont === undefined || score.fonts.voicefont.bold
+    return (
+      textWidth(text, size, bold ? 'serifBold' : 'serif') +
+      (score.fonts.voicefont?.box === true ? size * ENGRAVE.fontBoxPadding * 4 : 0)
+    )
+  }
+
   const indentFor = (systemIndex: number): number => {
     const label = (plan: VoicePlan): string | null => (systemIndex === 0 ? plan.name : plan.subname)
     const widest = Math.max(
       0,
       ...plans.map((plan) => {
         const text = label(plan)
-        return text ? voiceNameWidthPx(text) : 0
+        return text ? voiceNameWidth(text) : 0
       }),
     )
     // A BRACE OR BRACKET MOVES THE LEFT EDGE, name or no name.
@@ -5415,7 +5467,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       ? ENGRAVE.connectorIndent
       : 0
     if (widest === 0) return connector
-    return connector + (widest + VOICE_NAME_GAP_PX) / 7.75
+    // …plus "the width of an A" in the SAME font, box padding and all — abcjs measures it
+    // with `getTextSize.calc("A", 'voicefont')` rather than taking a constant
+    // (`get-left-edge-of-staff.js:19-20`).
+    return connector + widest + voiceNameWidth('A')
   }
 
   /** How many measures the longest voice has — the span indices run over these. */
@@ -6899,9 +6954,19 @@ function anchorAboveStaff<
   // `padding` is `font.size * fontboxpadding`, default 0.1 (`get-font-and-attr.js:35-36`).
   // Probed on `frere-jacques`: `partHeightAbove` is 5.7187 pitch without `%%partsbox` and
   // 7.7832 with it — 8px on a 20px font, which is exactly `padding * 4`.
-  const boxPad = partsBox ? ENGRAVE.tempoTextSize * ENGRAVE.fontBoxPadding : 0
+  //
+  // …AND THE HEIGHT IS `partsfont`'s, not a constant. `RelativeElement` takes
+  // `partHeightAbove` from the measured text like every other lane
+  // (`relative-element.js:77`), so `%%partsfont sans-serif 29 box` reserves 26.45px more
+  // than the 15pt default. The default resolves to exactly the constant this replaces.
+  // The BOX comes from `partsBox`, not from `fontHeightOf`: `%%partsbox` sets it without
+  // touching the font at all, so the padding is added here and `goldenTextHeight` is asked
+  // for the bare height. Using `fontHeightOf` counted the box twice for `%%partsfont …
+  // box` and not at all for `%%partsbox` — 15.6px each way.
+  const partSize = fontSizeOf('partsfont')
+  const boxPad = partsBox ? partSize * ENGRAVE.fontBoxPadding : 0
   const partY = partLabels
-    ? reserve(ENGRAVE.partHeightAbove + boxPad * 4) + ENGRAVE.tempoTextSize + boxPad
+    ? reserve(goldenTextHeight(partSize) + boxPad * 4) + partSize + boxPad
     : null
   const tempoY = tempos
     ? reserve(ENGRAVE.tempoHeightAbove) + ENGRAVE.tempoTextSize + ENGRAVE.tempoDescenderBump
