@@ -592,6 +592,15 @@ export const ENGRAVE = {
    */
   endingOverChordLane: 2,
   /**
+   * `vert` in `addMeasureNumber` — the pitch a bar number's box starts from, before its
+   * own height is added (`abstract-engraver.js:952`). 11 on a barline; the 13.5 branch
+   * needs a number wider than 10px on a TREBLE CLEF element, which a barline never is.
+   * In our steps, which are abcjs's pitch.
+   */
+  barNumberPitch: 11,
+  /** `measurefont` — Times Italic 14pt, so `round(14 x 4/3)` = 19px. */
+  barNumberSize: 19 / 7.75,
+  /**
    * A LEFT annotation's room before the note — `roomTaken += chordWidth + 7`
    * (`add-chord.js:52`), in abcjs pixels.
    */
@@ -1050,6 +1059,8 @@ const STAFF_HALF_HEIGHT = 2
 const ABCJS_PX_PER_SPACE = 7.75
 /** abcjs's `spacing.STEP` — half a staff space, and the unit its PITCH is counted in. */
 const ABCJS_PITCH_PX = ABCJS_PX_PER_SPACE / 2
+/** abcjs counts PITCH from 2 at the bottom staff line where our steps count -4. */
+const ABCJS_PITCH_ORIGIN = 6
 
 /**
  * Text box estimate, in multiples of the font size — the renderer's CONTRACT for how
@@ -2484,6 +2495,31 @@ function layoutNoteheads(
  * Drawing them from parts rather than as six special cases means the spacing constants
  * (all from the font) apply uniformly.
  */
+/**
+ * The bar number drawn on a barline — `addMeasureNumber`, `abstract-engraver.js:945-953`.
+ *
+ * Centred on the barline (`anchor: "middle"` in `draw/relative.js:38-40`) and reserving a
+ * POINT at its pitch, since its `RelativeElement` is given no `thickness`.
+ */
+function barNumberText(number: number, x: number): PlacedText {
+  const text = String(number)
+  // abcjs PITCH -> our step: the bottom staff line is pitch 2 and our step -4, so a step
+  // is `pitch - 6`. Its height is in PIXELS over `spacing.STEP`, which is `spaces x 2`.
+  const y = stepToY(
+    ENGRAVE.barNumberPitch + goldenTextHeight(ENGRAVE.barNumberSize) * 2 - ABCJS_PITCH_ORIGIN,
+  )
+  return {
+    text,
+    x,
+    y,
+    size: ENGRAVE.barNumberSize,
+    bold: false,
+    italic: true,
+    anchor: 'middle',
+    reserve: [y, y],
+  }
+}
+
 function layoutBar(x: number, kind: Barline, strict = true): LayoutElement {
   const thin = ENGRAVING_DEFAULTS.thinBarlineThickness
   const thick = ENGRAVING_DEFAULTS.thickBarlineThickness
@@ -4840,13 +4876,30 @@ function layoutMeasure(
       barDecorations.length === 0
         ? null
         : decorationGlyphs(barDecorations, x, plain.width, 6, 6, false, 6, 2, strict, dynamicsAbove)
-    const bar =
+    const withMarks =
       marks === null
         ? plain
         : {
             ...plain,
             glyphs: [...plain.glyphs, ...marks.glyphs],
             texts: [...plain.texts, ...marks.texts],
+          }
+    // THE BAR NUMBER, and it is geometry before it is text.
+    //
+    // `addMeasureNumber` (`abstract-engraver.js:945-953`) measures the number in
+    // `measurefont`, puts it at pitch `vert + height / STEP` with `vert` 11 on a barline,
+    // and adds it with `addFixed` — so it goes through `_addChild`'s `pushTop` and enters
+    // the staff's ink. On a plain treble tune the clef's 13.72 loses to its 16.43, and
+    // that difference is the 10.5px every `%%barnumbers` fixture was out by.
+    //
+    // `vert` is 13.5 instead when the number is WIDER than 10px AND the element is the
+    // treble clef — a clef-only case, so a barline always takes the 11.
+    const bar =
+      measure.closingBarNumber === undefined
+        ? withMarks
+        : {
+            ...withMarks,
+            texts: [...withMarks.texts, barNumberText(measure.closingBarNumber, x)],
           }
     elements.push(bar)
     fixed(

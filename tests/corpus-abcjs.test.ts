@@ -148,10 +148,16 @@ const WITHIN: Readonly<Record<string, number>> = {
   // reached further left and opened chord LANES abcjs does not.
   // AN ADDITIVE METER IS DRAWN TERM BY TERM — `M:2+3/8` is the string `2+3` over `8`, one
   // glyph per character (`create-time-signature.js:17-27`), not the sum `5`. 17.08px.
-  '0.05': 131,
-  '1': 139,
-  '5': 151,
-  '25': 170,
+  // `%%barnumbers` / `%%measurenb` / `%%setbarnb` — and a bar number is GEOMETRY before it
+  // is text. `addMeasureNumber` puts it at pitch `vert + height / STEP` with `vert` 11 on a
+  // barline and adds it with `addFixed`, so it enters the staff's ink and beats the clef's
+  // 13.72 — 10.5px on a plain treble tune. Only the FIRST voice advances the counter, an
+  // empty measure does not, and an invisible barline is not a boundary for counting.
+  // LEADING WHITESPACE IS NOT PART OF A DIRECTIVE'S NAME — `%% barnumbers 1`.
+  '0.05': 134,
+  '1': 142,
+  '5': 154,
+  '25': 171,
 }
 
 const names = readdirSync(fixturesDir)

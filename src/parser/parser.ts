@@ -846,7 +846,38 @@ class VoiceBuilder {
     private readonly pendingTextBefore: { blocks: FreeTextBlock[] } = { blocks: [] },
     /** The tune-level `K: octave=`, shared and mutable — see `octaveShift`. */
     private readonly keyOctave: { value: number } = { value: 0 },
+    /**
+     * `%%barnumbers` / `%%measurenb` and the running count, shared across voices.
+     *
+     * abcjs keeps both on `multilineVars` and only the FIRST voice advances the counter
+     * (`abc_parse_music.js:296-301`) — every other voice's barlines see the same numbers
+     * without moving them. `every` is null while no directive has been seen; `%%setbarnb`
+     * writes `current` directly.
+     */
+    private readonly barNumbering: {
+      every: number | null
+      current: number
+      firstVoiceId: string | null
+    } = { every: null, current: 1, firstVoiceId: null },
   ) {}
+
+  /**
+   * The number to print on the barline now closing, or null.
+   *
+   * `if (bar.type !== 'bar_invisible' && multilineVars.measureNotEmpty) { if
+   * (isFirstVoice()) { currBarNumber++; if (barNumbers && currBarNumber % barNumbers ===
+   * 0) bar.barNumber = currBarNumber } }`. So the number belongs to the measure the
+   * barline OPENS, an empty measure does not advance it, and an invisible barline is not a
+   * measure boundary for counting at all.
+   */
+  private takeBarNumber(barline: Barline, empty: boolean): { closingBarNumber?: number } {
+    const n = this.barNumbering
+    if (n.firstVoiceId !== this.id) return {}
+    if (barline === 'invisible' || empty) return {}
+    n.current += 1
+    if (n.every === null || n.every === 0 || n.current % n.every !== 0) return {}
+    return { closingBarNumber: n.current }
+  }
 
   /** What `octave=` is worth for a measure closing NOW. */
   private takeOctave(): number {
@@ -1242,6 +1273,7 @@ class VoiceBuilder {
         return { startsSystem, ...this.takeTextBefore(startsSystem) }
       })(),
       closingBarline: barline,
+      ...this.takeBarNumber(barline, this.events.length === 0 && this.overlays.length === 0),
       ...(decorations.length > 0 ? { closingBarlineDecorations: [...decorations] } : {}),
       sourceRange: sourceRange(this.measureStart ?? barlineRange.start, barlineRange.end),
       closingBarlineSourceRange: barlineRange,
@@ -1465,10 +1497,18 @@ class ScoreBuilder {
     return this.voiceFor(this.currentVoiceId)
   }
 
+  /** `%%barnumbers` / `%%measurenb` / `%%setbarnb`, shared with every VoiceBuilder. */
+  readonly barNumbering: { every: number | null; current: number; firstVoiceId: string | null } = {
+    every: null,
+    current: 1,
+    firstVoiceId: null,
+  }
+
   voiceFor(id: string): VoiceBuilder {
     let builder = this.voices.get(id)
     if (!builder) {
-      builder = new VoiceBuilder(id, this.pendingTextBefore, this.keyOctave)
+      builder = new VoiceBuilder(id, this.pendingTextBefore, this.keyOctave, this.barNumbering)
+      this.barNumbering.firstVoiceId ??= id
       this.voices.set(id, builder)
     }
     return builder
@@ -1731,7 +1771,11 @@ class Parser {
       return
     }
     if (line.startsWith('%%')) {
-      this.applyDirective(line.slice(2), start, end)
+      // LEADING WHITESPACE IS NOT PART OF THE NAME. abcjs tokenizes the line and takes the
+      // first WORD as the command (`abc_parse_directive.js:44-49`), so `%% barnumbers 1`
+      // is the same directive as `%%barnumbers 1` — and `visual-tablature-04` writes it
+      // the first way. Trailing space is left alone: `%%text` can end in one meaningfully.
+      this.applyDirective(line.slice(2).replace(/^\s+/, ''), start, end)
       return
     }
     if (line.startsWith('%')) return // comment
@@ -2005,6 +2049,19 @@ class Parser {
     const partsBox = /^partsbox(?:\s+(\d+))?/.exec(body)
     if (partsBox !== null) {
       this.ensureScore(start).partsBox = partsBox[1] !== '0'
+      return
+    }
+    // `%%barnumbers N` / `%%measurenb N` — print a bar number every N bars. Two spellings
+    // of one directive (`abc_parse_directive.js:930-933`).
+    const barNumbers = /^(?:barnumbers|measurenb)\s+(-?\d+)/.exec(body)
+    if (barNumbers?.[1] !== undefined) {
+      this.ensureScore(start).barNumbering.every = Number.parseInt(barNumbers[1], 10)
+      return
+    }
+    // `%%setbarnb N` — set the running count immediately, so the NEXT barline reads N + 1.
+    const setBarNb = /^setbarnb\s+(\d+)/.exec(body)
+    if (setBarNb?.[1] !== undefined) {
+      this.ensureScore(start).barNumbering.current = Number.parseInt(setBarNb[1], 10)
       return
     }
     // `%%jazzchords` — chord modifiers and bass notes as small sub/superscripts. A bare

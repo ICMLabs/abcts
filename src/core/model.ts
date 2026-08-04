@@ -729,6 +729,17 @@ export interface Measure {
   readonly openingBarlineSourceRange: SourceRange | null
   /** `null` when the tune ends without a closing barline. */
   readonly closingBarline: Barline | null
+  /**
+   * `%%barnumbers N` — the bar number printed ON this measure's closing barline, which is
+   * the number of the measure that barline OPENS.
+   *
+   * abcjs advances `currBarNumber` at each visible barline of the FIRST voice and stamps
+   * `bar.barNumber` when `currBarNumber % barNumbers === 0`
+   * (`abc_parse_music.js:296-301`). It is geometry as well as text: the number is a POINT
+   * at pitch `vert + height / STEP` added by `addFixed`, so it enters the staff's ink and
+   * pushes its top past the clef's — 10.5px on a plain treble tune.
+   */
+  readonly closingBarNumber?: number
   readonly sourceRange: SourceRange | null
   readonly closingBarlineSourceRange: SourceRange | null
 }
