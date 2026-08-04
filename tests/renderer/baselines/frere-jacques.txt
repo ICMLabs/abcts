@@ -1,5 +1,5 @@
 tune 0
-bounds  width=90.483 height=79.363 top=-1.935
+bounds  width=90.489 height=79.363 top=-1.935
 systems 4
 system 0 width=90.323 originY=0.000
   staff 0 originY=25.500
@@ -161,16 +161,16 @@ system 2 width=90.323 originY=40.914
       text  78.906,5.694 size=2.194 bold "vous?"
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 3 width=90.483 originY=56.758
+system 3 width=90.489 originY=56.758
   staff 0 originY=12.303
-    staffline 0.000,2.000 -> 90.483,2.000 t=0.130
-    staffline 0.000,1.000 -> 90.483,1.000 t=0.130
-    staffline 0.000,0.000 -> 90.483,0.000 t=0.130
-    staffline 0.000,-1.000 -> 90.483,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 90.483,-2.000 t=0.130
-    beam   8.280,1.250 -> 18.048,1.750 t=0.500
-    beam   31.958,1.250 -> 35.621,0.750 t=0.500
-    beam   38.289,1.250 -> 41.426,1.750 t=0.500
+    staffline 0.000,2.000 -> 90.489,2.000 t=0.130
+    staffline 0.000,1.000 -> 90.489,1.000 t=0.130
+    staffline 0.000,0.000 -> 90.489,0.000 t=0.130
+    staffline 0.000,-1.000 -> 90.489,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 90.489,-2.000 t=0.130
+    beam   8.280,1.250 -> 18.096,1.750 t=0.500
+    beam   31.971,1.250 -> 35.634,0.750 t=0.500
+    beam   38.291,1.250 -> 41.513,1.750 t=0.500
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     part x=6.329 w=0.000
@@ -193,82 +193,82 @@ system 3 width=90.483 originY=56.758
     note@5 x=14.874 w=3.871
       glyph noteheadBlack 14.874,-2.500
       glyph articStaccatoAbove 15.271,-4.522
-      line  14.874,-2.332 -> 14.874,1.588 t=0.120
+      line  14.874,-2.332 -> 14.874,1.586 t=0.120
       text  13.655,5.694 size=2.194 bold "les"
-    note@4 x=18.048 w=3.871
-      glyph noteheadBlack 18.048,-2.000
-      glyph articStaccatoAbove 18.445,-4.022
-      line  18.048,-1.832 -> 18.048,1.750 t=0.120
-      text  16.221,5.694 size=2.194 bold "mâ-"
-    note@3 x=21.040 w=5.474
-      glyph noteheadBlack 21.040,-1.500
-      line  21.040,-1.332 -> 21.040,2.000 t=0.120
-      text  20.004,5.694 size=2.194 bold "ti-"
-    note@1 x=24.814 w=5.474
-      glyph noteheadBlack 24.814,-0.500
-      line  24.814,-0.332 -> 24.814,3.000 t=0.120
-      text  23.016,5.694 size=2.194 bold "nes,"
-    bar x=28.588 w=0.160
-      line  28.668,-2.000 -> 28.668,2.000 t=0.160
-    note@5 x=31.958 w=3.871
-      glyph noteheadBlack 31.958,-2.500
-      glyph articTenutoAbove 31.968,-4.522
-      line  31.958,-2.332 -> 31.958,1.250 t=0.120
-      text  30.007,5.694 size=2.194 bold "son-"
-    note@6 x=35.621 w=3.871
-      glyph noteheadBlack 35.621,-3.000
-      glyph articTenutoAbove 35.631,-5.022
-      line  35.221,-3.000 -> 37.286,-3.000 t=0.160
-      line  35.621,-2.832 -> 35.621,0.750 t=0.120
-      text  34.037,5.694 size=2.194 bold "nez"
-    note@5 x=38.289 w=3.871
-      glyph noteheadBlack 38.289,-2.500
-      glyph articTenutoAbove 38.300,-4.522
-      line  38.289,-2.332 -> 38.289,1.250 t=0.120
-      text  37.498,5.694 size=2.194 bold "le"
-    note@4 x=41.426 w=3.871
-      glyph noteheadBlack 41.426,-2.000
-      glyph articTenutoAbove 41.436,-4.022
-      line  41.426,-1.832 -> 41.426,1.750 t=0.120
-      text  39.598,5.694 size=2.194 bold "mâ-"
-    note@3 x=44.417 w=5.474
-      glyph noteheadBlack 44.417,-1.500
-      line  44.417,-1.332 -> 44.417,2.000 t=0.120
-      text  43.382,5.694 size=2.194 bold "ti-"
-    note@1 x=48.191 w=5.474
-      glyph noteheadBlack 48.191,-0.500
-      line  48.191,-0.332 -> 48.191,3.000 t=0.120
-      text  46.393,5.694 size=2.194 bold "nes,"
-    bar x=51.965 w=0.160
-      line  52.045,-2.000 -> 52.045,2.000 t=0.160
-    note@1 x=55.122 w=5.474
-      glyph noteheadBlack 55.122,-0.500
-      line  55.122,-0.332 -> 55.122,3.000 t=0.120
-      text  50.418,-5.847 size=2.065 "dolcemente"
-      text  53.385,5.694 size=2.194 bold "dig,"
-    note@-2 x=59.335 w=5.474
-      glyph noteheadBlack 59.335,1.000
-      line  60.515,0.832 -> 60.515,-2.500 t=0.120
-      text  56.988,5.694 size=2.194 bold "ding,"
-    note@1 x=64.403 w=7.742
-      glyph noteheadHalf 64.403,-0.500
-      line  64.403,-0.332 -> 64.403,3.000 t=0.120
-      text  61.812,5.694 size=2.194 bold "dong,"
-    bar x=69.740 w=0.160
-      line  69.820,-2.000 -> 69.820,2.000 t=0.160
-    note@1 x=72.897 w=5.474
-      glyph noteheadBlack 72.897,-0.500
-      line  72.897,-0.332 -> 72.897,3.000 t=0.120
-      text  71.160,5.694 size=2.194 bold "dig,"
-    note@-2 x=77.111 w=5.474
-      glyph noteheadBlack 77.111,1.000
-      line  78.291,0.832 -> 78.291,-2.500 t=0.120
-      text  74.763,5.694 size=2.194 bold "ding,"
-    note@1 x=82.178 w=7.742
-      glyph noteheadHalf 82.178,-0.500
-      line  82.178,-0.332 -> 82.178,3.000 t=0.120
-      text  79.587,5.694 size=2.194 bold "dong."
-      text  80.818,-4.000 size=2.065 italic "D.C."
-    bar x=87.515 w=1.060
-      line  87.595,-2.000 -> 87.595,2.000 t=0.160
-      line  88.325,-2.000 -> 88.325,2.000 t=0.500
+    note@4 x=18.096 w=3.871
+      glyph noteheadBlack 18.096,-2.000
+      glyph articStaccatoAbove 18.493,-4.022
+      line  18.096,-1.832 -> 18.096,1.750 t=0.120
+      text  16.268,5.694 size=2.194 bold "mâ-"
+    note@3 x=21.087 w=5.474
+      glyph noteheadBlack 21.087,-1.500
+      line  21.087,-1.332 -> 21.087,2.000 t=0.120
+      text  20.052,5.694 size=2.194 bold "ti-"
+    note@1 x=24.844 w=5.474
+      glyph noteheadBlack 24.844,-0.500
+      line  24.844,-0.332 -> 24.844,3.000 t=0.120
+      text  23.046,5.694 size=2.194 bold "nes,"
+    bar x=28.602 w=0.160
+      line  28.682,-2.000 -> 28.682,2.000 t=0.160
+    note@5 x=31.971 w=3.871
+      glyph noteheadBlack 31.971,-2.500
+      glyph articTenutoAbove 31.982,-4.522
+      line  31.971,-2.332 -> 31.971,1.250 t=0.120
+      text  30.021,5.694 size=2.194 bold "son-"
+    note@6 x=35.634 w=3.871
+      glyph noteheadBlack 35.634,-3.000
+      glyph articTenutoAbove 35.645,-5.022
+      line  35.234,-3.000 -> 37.300,-3.000 t=0.160
+      line  35.634,-2.832 -> 35.634,0.750 t=0.120
+      text  34.051,5.694 size=2.194 bold "nez"
+    note@5 x=38.291 w=3.871
+      glyph noteheadBlack 38.291,-2.500
+      glyph articTenutoAbove 38.302,-4.522
+      line  38.291,-2.332 -> 38.291,1.250 t=0.120
+      text  37.500,5.694 size=2.194 bold "le"
+    note@4 x=41.513 w=3.871
+      glyph noteheadBlack 41.513,-2.000
+      glyph articTenutoAbove 41.524,-4.022
+      line  41.513,-1.832 -> 41.513,1.750 t=0.120
+      text  39.686,5.694 size=2.194 bold "mâ-"
+    note@3 x=44.505 w=5.474
+      glyph noteheadBlack 44.505,-1.500
+      line  44.505,-1.332 -> 44.505,2.000 t=0.120
+      text  43.470,5.694 size=2.194 bold "ti-"
+    note@1 x=48.262 w=5.474
+      glyph noteheadBlack 48.262,-0.500
+      line  48.262,-0.332 -> 48.262,3.000 t=0.120
+      text  46.464,5.694 size=2.194 bold "nes,"
+    bar x=52.019 w=0.160
+      line  52.099,-2.000 -> 52.099,2.000 t=0.160
+    note@1 x=55.176 w=5.474
+      glyph noteheadBlack 55.176,-0.500
+      line  55.176,-0.332 -> 55.176,3.000 t=0.120
+      text  50.472,-5.847 size=2.065 "dolcemente"
+      text  53.439,5.694 size=2.194 bold "dig,"
+    note@-2 x=59.389 w=5.474
+      glyph noteheadBlack 59.389,1.000
+      line  60.569,0.832 -> 60.569,-2.500 t=0.120
+      text  57.042,5.694 size=2.194 bold "ding,"
+    note@1 x=64.457 w=7.742
+      glyph noteheadHalf 64.457,-0.500
+      line  64.457,-0.332 -> 64.457,3.000 t=0.120
+      text  61.866,5.694 size=2.194 bold "dong,"
+    bar x=69.770 w=0.160
+      line  69.850,-2.000 -> 69.850,2.000 t=0.160
+    note@1 x=72.927 w=5.474
+      glyph noteheadBlack 72.927,-0.500
+      line  72.927,-0.332 -> 72.927,3.000 t=0.120
+      text  71.190,5.694 size=2.194 bold "dig,"
+    note@-2 x=77.141 w=5.474
+      glyph noteheadBlack 77.141,1.000
+      line  78.321,0.832 -> 78.321,-2.500 t=0.120
+      text  74.793,5.694 size=2.194 bold "ding,"
+    note@1 x=82.208 w=7.742
+      glyph noteheadHalf 82.208,-0.500
+      line  82.208,-0.332 -> 82.208,3.000 t=0.120
+      text  79.617,5.694 size=2.194 bold "dong."
+      text  80.848,-4.000 size=2.065 italic "D.C."
+    bar x=87.522 w=1.060
+      line  87.602,-2.000 -> 87.602,2.000 t=0.160
+      line  88.332,-2.000 -> 88.332,2.000 t=0.500

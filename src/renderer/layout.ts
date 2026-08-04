@@ -2219,7 +2219,12 @@ function layoutNoteheads(
   // `max(|offsets|, dotWidth) + head.width` counted the notehead twice for every dotted
   // note: `happy-birthday`'s dotted eighth came out at 26.16px against abcjs's 18.44, and
   // the 6.7px went straight into the gap after it.
-  const headRight = Math.max(0, ...[...offsets.values()]) + head.width
+  //
+  // THE ACTIVE TABLE'S WIDTH, NOT BRAVURA'S. abcjs's `w` for `noteheads.quarter` is 9.81
+  // and Bravura's outline is 9.145 — 0.665px per note, which is nothing on a line with
+  // slack and the whole error on one without: it is a ROD, and a rod only shows when the
+  // spring has been squeezed under it. The flag beside it already read the active table.
+  const headRight = Math.max(0, ...[...offsets.values()]) + glyphsFor(strict).width(headName)
   const headLeft = -Math.min(0, ...[...offsets.values()])
   // A lyric or a chord symbol is CENTRED on the note and counts on BOTH sides. It is the
   // dominant term in sung music: `birth-` makes a 9.81px notehead occupy 21.28px each way.

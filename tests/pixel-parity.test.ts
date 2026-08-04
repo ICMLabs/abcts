@@ -131,12 +131,17 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     'brother-john-inline-voices': { heads: 64, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'center-text': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'chord-grid': { heads: 16, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
-    'frere-jacques': { heads: 45, dy: 0.0, dx: 22.15, oy: 0.0, ox: -3.6 },
+    // dx 22.15 -> 22.64 and `little swallow` 23.97 -> 24.19 when the notehead ROD became
+    // abcjs's 9.81 rather than Bravura's 9.145 outline. Sub-pixel movement on the two
+    // fixtures whose dx is dominated by a GOLDEN artefact — recorded rather than reverted,
+    // because the width is abcjs's own and the same change took ragtime 55.32 -> 53.56 and
+    // five more harvested fixtures inside their thresholds.
+    'frere-jacques': { heads: 45, dy: 0.0, dx: 22.64, oy: 0.0, ox: -3.53 },
     'full-song-template': { heads: 20, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'happy-birthday': { heads: 25, dy: 0.0, dx: 3.85, oy: 0.0, ox: -0.49 },
     // dy 1.92 -> 0.32 and oy -0.58 -> 0.16 when `anchorLyrics` stopped measuring its own
     // ink and took `verticalExtent`'s. dx/ox are the goldens' ASCII width table, not us.
-    'little swallow': { heads: 89, dy: 0.32, dx: 23.97, oy: 0.16, ox: -5.74 },
+    'little swallow': { heads: 89, dy: 0.32, dx: 24.19, oy: 0.16, ox: -6.29 },
     'multi-voice-lyrics-two-voices': { heads: 16, dy: 0.07, dx: 0.0, oy: 0.05, ox: 0.0 },
     'multi-voice-rest-collision': { heads: 7, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'multi-voice-rest-placement': { heads: 14, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
@@ -146,7 +151,7 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // dx 69.82 -> 55.32 when the accidental extents became abcjs's own numbers. Its `oy`
     // is the branch's one red and went 1.49 -> 1.58 on the same change — its residual is
     // horizontal in origin (see the checkpoint), so the two move together.
-    'ragtime-nightingale': { heads: 2009, dy: 58.1, dx: 55.32, oy: -0.54, ox: -1.65 },
+    'ragtime-nightingale': { heads: 2009, dy: 58.1, dx: 53.56, oy: -0.54, ox: -1.87 },
     'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'score-reorder': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'simple-c': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
