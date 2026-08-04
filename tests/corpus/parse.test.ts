@@ -75,6 +75,8 @@ describe('parse: simple-c', () => {
   it('builds the first note with an unresolved accidental', () => {
     expect(score.voices[0]?.measures[0]?.events[0]).toEqual({
       type: 'note',
+      // The `%%gchordfont` in force, null when the tune sets none — see `Note.chordFont`.
+      chordFont: null,
       // null accidental means "inherit from the key" — resolution is an engrave concern.
       pitch: { step: 'c', octave: 4, accidental: null },
       duration: rational(1, 4),

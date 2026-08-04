@@ -356,6 +356,14 @@ export interface Note {
   /** `"Am7"` printed above the staff, if one precedes this event. */
   readonly chordSymbol: string | null
   readonly chordSymbolSourceRange: SourceRange | null
+  /**
+   * The `%%gchordfont` in force where this event was written, or null while none has been.
+   *
+   * PER EVENT because abcjs makes it a CHANGING font (`abc_parse_directive.js:1019-1029`,
+   * `getChangingFont`) — `visual-tablature-17` sets it four times between music lines and
+   * each staff's chord symbols take the size in force above them.
+   */
+  readonly chordFont: LyricFont | null
   /** `!trill!`, `.` staccato, and the shorthand letters. */
   readonly decorations: readonly string[]
   /** Parallel to `decorations`. */
@@ -465,6 +473,14 @@ export interface Chord {
   /** `"Am7"` printed above the staff, if one precedes this event. */
   readonly chordSymbol: string | null
   readonly chordSymbolSourceRange: SourceRange | null
+  /**
+   * The `%%gchordfont` in force where this event was written, or null while none has been.
+   *
+   * PER EVENT because abcjs makes it a CHANGING font (`abc_parse_directive.js:1019-1029`,
+   * `getChangingFont`) — `visual-tablature-17` sets it four times between music lines and
+   * each staff's chord symbols take the size in force above them.
+   */
+  readonly chordFont: LyricFont | null
   /** `!trill!`, `.` staccato, and the shorthand letters. */
   readonly decorations: readonly string[]
   /** Parallel to `decorations`. */

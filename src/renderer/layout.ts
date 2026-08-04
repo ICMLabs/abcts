@@ -2872,7 +2872,14 @@ function noteText(
   }
 
   if (event.chordSymbol !== null && event.chordSymbol !== '') {
-    const size = ENGRAVE.chordTextSize
+    // `%%gchordfont`'s size, in POINTS, converted the way abcjs converts every font:
+    // `Math.round(size * 4 / 3)` (`get-font-and-attr.js:29`). Its default is Helvetica 12,
+    // which is the 16px `chordTextSize` already here, so a tune with no directive takes
+    // exactly the path it always did.
+    const size =
+      event.chordFont === null
+        ? ENGRAVE.chordTextSize
+        : Math.round((event.chordFont.size * 4) / 3) / 7.75
     centred(event.chordSymbol, size, headWidth / 2, 'sans')
     texts.push({
       text: event.chordSymbol,
@@ -5948,8 +5955,18 @@ function anchorAboveStaff<
     }
     if (marks.length > 0) chordLanes = rightMost.length
   }
-  const chordBlock = ENGRAVE.chordHeightAbove * chordLanes
-  const chordY = chords ? reserve(chordBlock) + ENGRAVE.chordTextSize : null
+  // THE LANE IS AS TALL AS THE FONT. `RelativeElement` takes `chordHeightAbove` straight
+  // from the text's measured height (`relative-element.js:60`), so `%%gchordfont Arial 80`
+  // reserves five times what the 12pt default does. The constant here IS the default's
+  // height, so scaling by the ratio of sizes is the same number wherever nothing changed.
+  const chordSize = Math.max(
+    ENGRAVE.chordTextSize,
+    ...parts.flatMap((p) =>
+      p.elements.flatMap((el) => el.texts.filter((t) => t.role === 'chord').map((t) => t.size)),
+    ),
+  )
+  const chordBlock = ENGRAVE.chordHeightAbove * chordLanes * (chordSize / ENGRAVE.chordTextSize)
+  const chordY = chords ? reserve(chordBlock) + chordSize : null
   // A BOXED PART LABEL MEASURES TALLER, so its whole lane grows: `getTextSize` returns
   // `height + padding * 4` for a boxed font (`helpers/get-text-size.js:46-48`), and
   // `padding` is `font.size * fontboxpadding`, default 0.1 (`get-font-and-attr.js:35-36`).

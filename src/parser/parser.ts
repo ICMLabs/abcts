@@ -1185,6 +1185,8 @@ class ScoreBuilder {
    * which is the only way to guarantee its geometry cannot drift.
    */
   vocalFont: LyricFont | null = null
+  /** The `%%gchordfont` in force — a CHANGING font, so it is stamped per event. */
+  chordFont: LyricFont | null = null
   keySourceRange: SourceRange | null = null
   meterSourceRange: SourceRange | null = null
   /** Declaration order is output order — a Map preserves insertion order. */
@@ -1646,6 +1648,15 @@ class Parser {
     // builder rather than applied to notes: the notes are already parsed by the time a
     // `w:` line below them is read, so a note-level stamp cannot carry this. It is
     // captured per SYLLABLE at the moment its line is parsed. See `parseLyricSyllables`.
+    // `%%gchordfont` — the chord-symbol font, and a CHANGING one: abcjs routes it through
+    // `getChangingFont` (`abc_parse_directive.js:1019-1029`) so a later occurrence applies
+    // from there on rather than to the whole tune. `visual-tablature-17` sets it four
+    // times between music lines and each staff takes the size above it.
+    const gchordfont = /^gchordfont\s+(.*)$/.exec(body)
+    if (gchordfont?.[1]) {
+      this.ensureScore(start).chordFont = parseFontSpec(gchordfont[1])
+      return
+    }
     const vocalfont = /^vocalfont\s+(.*)$/.exec(body)
     if (vocalfont?.[1]) {
       this.ensureScore(start).vocalFont = parseFontSpec(vocalfont[1])
@@ -2393,6 +2404,7 @@ class Parser {
 
     const note: Note = {
       type: 'note',
+      chordFont: builder.chordFont,
       pitch: head.pitch,
       duration,
       notatedDuration: duration,
@@ -2494,6 +2506,7 @@ class Parser {
     return {
       chord: {
         type: 'chord',
+        chordFont: builder.chordFont,
         pitches,
         duration,
         notatedDuration: duration,
@@ -2895,7 +2908,10 @@ function parseGracePitches(raw: string): { pitches: Pitch[]; slash: boolean } {
  * face, current size". It comes back as null and the caller keeps the size it had.
  */
 function parseFontSpec(spec: string): LyricFont {
-  const trimmed = spec.trim()
+  // `box` may follow the size — `%%gchordfont Arial 10 box`. abcjs accepts it on eleven of
+  // the font types (`fontTypeCanHaveBox`, `abc_parse_directive.js:60`) and it draws a frame
+  // rather than changing the face.
+  const trimmed = spec.trim().replace(/\s+box\s*$/i, '')
   const sizeMatch = /\s(\d+(?:\.\d+)?)\s*$/.exec(trimmed)
   const face = (sizeMatch ? trimmed.slice(0, sizeMatch.index) : trimmed).trim()
   return {
