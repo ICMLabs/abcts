@@ -83,10 +83,12 @@ const WITHIN: Readonly<Record<string, number>> = {
   // THE VOICE-OVERLAP RULE — a note in a non-top voice touching the top voice's is
   // displaced right of it, and its element widens by that head. `visual-layout-04` 90.1 -> 1.7.
   // An `&` overlay's PAD is the measure's own duration, not the meter's.
-  '0.05': 100,
-  '1': 113,
-  '5': 124,
-  '25': 141,
+  // A CHORD SYMBOL'S TYPOGRAPHY: `Bb` is `B♭` and `C#` is `C♯`, and `♯` is a full em
+  // where `#` is 0.556. `visual-transpose-output-01` 106.8 -> 0.25.
+  '0.05': 101,
+  '1': 115,
+  '5': 125,
+  '25': 144,
 }
 
 const names = readdirSync(fixturesDir)

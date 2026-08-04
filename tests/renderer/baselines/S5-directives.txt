@@ -950,7 +950,7 @@ system 1 width=90.400 originY=19.896
     note@2 x=11.170 w=7.742
       glyph noteheadHalf 11.170,-1.000
       line  11.170,-0.832 -> 11.170,2.500 t=0.120
-      text  10.576,-4.692 size=2.065 "Bb"
+      text  10.118,-4.692 size=2.065 "B♭"
       text  8.490,6.194 size=2.194 bold "mem-"
     note@2 x=19.543 w=5.474
       glyph noteheadBlack 19.543,-1.000
@@ -979,7 +979,7 @@ system 1 width=90.400 originY=19.896
       line  54.764,-2.000 -> 54.764,2.000 t=0.160
     note@-2 x=58.326 w=10.949
       glyph noteheadWhole 58.326,1.000
-      text  58.030,-4.692 size=2.065 "Eb"
+      text  57.572,-4.692 size=2.065 "E♭"
       text  55.555,6.194 size=2.194 bold "true._"
     bar x=70.169 w=0.160
       line  70.249,-2.000 -> 70.249,2.000 t=0.160

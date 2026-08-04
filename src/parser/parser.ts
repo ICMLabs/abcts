@@ -2216,7 +2216,7 @@ class Parser {
             pending.annotations.push(decodeTextString(text))
             pending.annotationSourceRanges.push(range)
           } else {
-            pending.chordSymbol = decodeTextString(text)
+            pending.chordSymbol = prettifyChord(decodeTextString(text))
             pending.chordSymbolSourceRange = range
           }
           i++
@@ -2963,6 +2963,28 @@ function parseGracePitches(raw: string): { pitches: Pitch[]; slash: boolean } {
  * A missing size is not an error — `%%vocalfont Times-Bold` is legal and means "that
  * face, current size". It comes back as null and the caller keeps the size it had.
  */
+/**
+ * A chord symbol's TYPOGRAPHY — abcjs's six substitutions (`abc_parse_music.js:652-659`).
+ *
+ * `Bb` becomes `B♭` and `C#` becomes `C♯`, and a diminished/half-diminished/major mark
+ * after the root becomes its own sign. It is not decoration: `♯` measures 16px in the
+ * gchordfont where `#` measures 8.91, so `visual-transpose-output-01` — twenty-five chord
+ * symbols, nearly all of them accidental-bearing — was 106.8px of horizontal spread.
+ *
+ * Only a DEFAULT-position chord: an annotation (`"^text"`, `"_text"`, …) is prose and is
+ * left alone, which is abcjs's own branch. `%%freegchord` turns it all off; the directive
+ * is not parsed here, so nothing reaches that switch yet.
+ */
+function prettifyChord(chord: string): string {
+  return chord
+    .replace(/([ABCDEFG0-9])b/g, '$1♭')
+    .replace(/([ABCDEFG0-9])#/g, '$1♯')
+    .replace(/^([ABCDEFG])([♯♭]?)o([^A-Za-z])/g, '$1$2°$3')
+    .replace(/^([ABCDEFG])([♯♭]?)o$/g, '$1$2°')
+    .replace(/^([ABCDEFG])([♯♭]?)0([^A-Za-z])/g, '$1$2ø$3')
+    .replace(/^([ABCDEFG])([♯♭]?)\^([^A-Za-z])/g, '$1$2∆$3')
+}
+
 /** `abc_parse_directive.js:1039-1042` — all three route to `measurefont`. */
 const FONT_ALIASES: Readonly<Record<string, string>> = {
   barlabelfont: 'measurefont',

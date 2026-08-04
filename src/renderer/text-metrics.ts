@@ -361,6 +361,12 @@ export const CHAR_ADVANCE_BOLD: Readonly<Record<string, number>> = {
   '¶': 0.54,
   '•': 0.3501,
   '·': 0.3335,
+  // The same signs at the 17px bold `vocalfont`: 8.5, 17 and 6.8125. `♯` is HALF what it
+  // is in the sans table and `♭` is a full em in both — the two glyphs fall back to
+  // different faces, and reproducing that is reproducing the measurement.
+  '♯': 0.5,
+  '♭': 1,
+  '°': 0.4007,
 }
 
 /** Mean advance of the LETTERS above, for a character the table does not carry. */
@@ -539,6 +545,14 @@ export const CHAR_ADVANCE_SANS: Readonly<Record<string, number>> = {
   '¶': 0.5371,
   '•': 0.3501,
   '·': 0.333,
+  // THE CHORD-SYMBOL SIGNS. abcjs rewrites `Bb` to `B♭` and `C#` to `C♯` in every
+  // default-position chord (`abc_parse_music.js:652-659`), so these are not exotic — they
+  // are what a chord symbol is actually made of, and `♯` is nearly TWICE `#`. Calibrated
+  // WebKit advances at the 16px `gchordfont`: 16, 16 and 6.4063 (the golden generator's
+  // own table, which is measured rather than derived and is the parity target here).
+  '♯': 1,
+  '♭': 1,
+  '°': 0.4004,
 }
 
 /** Mean advance of the LETTERS above, for a character the table does not carry. */
