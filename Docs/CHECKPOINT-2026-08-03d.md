@@ -18,7 +18,7 @@ verdict and the beam findings, then `ARCHITECTURE.md`, then `CLAUDE.md`.
 | corpus | standing |
 |---|---|
 | 41-fixture | 20 of 29 are at ZERO on all four axes. Only `ragtime-nightingale`'s `oy` is a gate failure, and it is **0.646 against 0.59** — from 1.58. |
-| harvested (174) | within 0.05 / 1 / 5 / 25px: **112 / 128 / 142 / 169**, from 95 / 106 / 115 / 137. **62 of 174 still off some axis**, from 79. Nothing on the table is above 40px that is not a golden limitation. |
+| harvested (174) | within 0.05 / 1 / 5 / 25px: **114 / 130 / 144 / 169**, from 95 / 106 / 115 / 137. **60 of 174 still off some axis**, from 79. Nothing on the table is above 40px that is not a golden limitation. |
 | suite | 685 of 686. The one red is ragtime's `oy`, at **0.656** against 0.59 — from 1.58, and NOT raised. |
 
 The 41-fixture stragglers, every one named:
@@ -435,6 +435,24 @@ clef **not** reprinted at the head of later systems. We drew nothing at all.
   prose that strict mode scans as MUSIC — so `score.meter` is NULL and measure 1 carries a
   4/4 change. abcjs prints it on the system where the prose ends; we have no line for that
   prose, so it would land 17.6px into the middle of system 1.
+
+### 40. A `Q:` AFTER THE FIRST PRINTS WHERE IT STANDS
+
+**The first `Q:` ANYWHERE in the tune becomes `Score.tempo`** and is drawn at the head of
+system 1 — abcjs's `metaText.tempo`, which is why `frere-jacques`'s line-21 `Q:` appears
+above music that PRECEDES it. **Every LATER one is an ordinary element in its own voice's
+stream, on its own staff.** We dropped them all on a "first one wins" rule that was only
+half the rule.
+
+`synth-flattener-31` has four across three voices and abcjs draws all five marks.
+Verified on a control pair that both the `[Q:1/4=90]` and the text-only `[Q:"sostenuto"]`
+forms now match to 0.03px — and that a mid-tune tempo costs the system below it NOTHING,
+because the lane is already there.
+
+**THE THREE MID-TUNE FIELDS ARE ONE PATTERN NOW** — clef (28), meter (39) and tempo (40)
+all arrive as a `Measure` delta, print where they stand, and differ only in what the system
+prefix reprints: the CLEF is reprinted at every system head (so the inline draw is
+suppressed on a measure that opens one), the METER and TEMPO are not.
 
 ---
 
