@@ -98,10 +98,12 @@ const WITHIN: Readonly<Record<string, number>> = {
   // `[` BEFORE A DIGIT OR A QUOTE IS AN INVISIBLE BARLINE — how `[1 …` writes a repeat
   // ending with no bar before it. Lexed as a chord, `visual-layout-09` stacked seven
   // noteheads on one x.
-  '0.05': 105,
-  '1': 119,
-  '5': 130,
-  '25': 155,
+  // A BAR THAT STARTS AN ENDING gets `minspacing += textWidth + 10`, measured in
+  // `repeatfont` — 28.5 against a plain bar's 10 for a `|1`.
+  '0.05': 107,
+  '1': 122,
+  '5': 134,
+  '25': 157,
 }
 
 const names = readdirSync(fixturesDir)

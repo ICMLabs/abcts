@@ -4179,6 +4179,24 @@ const barRod = (kind: Barline, el: LayoutElement, strict: boolean): number =>
   (strict ? (ENGRAVE.barLayoutWidth[kind] ?? el.width) : el.width) + ENGRAVE.prefixGap
 
 /**
+ * A BAR THAT STARTS AN ENDING GETS MORE `minspacing` — the label's width plus 10.
+ *
+ * `abselem.minspacing += textWidth + 10` with the comment "Give plenty of room for the
+ * ending number" (`abstract-engraver.js:1034-1041`), measured in `repeatfont`. Probed on
+ * `synth-timing-06`, whose `|1` bar reports `minsp = 28.5` against a plain bar's 10.
+ *
+ * It applies to whichever bar the ending opens on — the measure's own opening barline, or
+ * the PREVIOUS measure's closing one when the number follows a `:|`.
+ */
+const endingRoom = (label: string | null): number =>
+  label === null || label === ''
+    ? 0
+    : // MEASURED IN `repeatfont`, 13pt -> 17px — NOT in `voltaTextSize`, which is the size
+      // the bracket's number is DRAWN at. abcjs measures the reserve and the ink with two
+      // different fonts and only the first is this.
+      textWidth(label, 17 / 7.75) + 10 / 7.75
+
+/**
  * Lay out one measure at x = 0. Position within a system comes later, by translation,
  * which is what lets a measure be measured before anywhere is chosen to put it.
  */
@@ -4198,6 +4216,8 @@ function layoutMeasure(
   keyInForce: KeySignature | null = null,
   /** Dynamics above the staff when the tune sings, below otherwise. */
   dynamicsAbove = true,
+  /** The NEXT measure's volta label, if it opens one — see `endingRoom`. */
+  voltaAfter: string | null = null,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
   /**
@@ -4268,8 +4288,8 @@ function layoutMeasure(
     const bar = layoutBar(x, measure.openingBarline, strict)
     elements.push(bar)
     fixed(
-      barRod(measure.openingBarline, bar, strict),
-      ENGRAVE.prefixGap,
+      barRod(measure.openingBarline, bar, strict) + endingRoom(measure.volta),
+      ENGRAVE.prefixGap + endingRoom(measure.volta),
       'bar',
       ENGRAVE.barClearance,
     )
@@ -4407,8 +4427,8 @@ function layoutMeasure(
     const bar = layoutBar(x, measure.closingBarline, strict)
     elements.push(bar)
     fixed(
-      barRod(measure.closingBarline, bar, strict),
-      ENGRAVE.prefixGap,
+      barRod(measure.closingBarline, bar, strict) + endingRoom(voltaAfter),
+      ENGRAVE.prefixGap + endingRoom(voltaAfter),
       'bar',
       ENGRAVE.barClearance,
     )
@@ -4732,7 +4752,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     // of every system, not the one the voice was declared with.
     let clefInForce = clef
     const clefAtMeasure: Clef[] = []
-    const blocks = (voice?.measures ?? []).map((measure) => {
+    const blocks = (voice?.measures ?? []).map((measure, measureIndex) => {
       // A mid-tune clef prints at the START of its measure and governs it — abcjs's
       // `staff-extra clef` is emitted before the measure's notes, and everything after it
       // is read against the new clef.
@@ -4747,6 +4767,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         stemForVoice(voiceIndex),
         keyInForce,
         hasVocals,
+        (voice?.measures ?? [])[measureIndex + 1]?.volta ?? null,
       )
       if (measure.keyChange !== null) keyInForce = measure.keyChange
       return block
