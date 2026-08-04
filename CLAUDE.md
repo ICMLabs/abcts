@@ -8,9 +8,12 @@ and community successor to abcjs.
 174-tune harvested corpus, Gonzato, and the audio feature set. Work until it is reached;
 checkpoint and hand off as you go so no context is lost.
 
-Read `Docs/CHECKPOINT-2026-08-03d.md` first — it is the current state of play, the open
-decisions, and the known risks — and `Docs/HANDOFF-2026-08-03d.md` beside it for where to
-start and the session prompt. (`CHECKPOINT-2026-08-03c.md` holds the accidental columns,
+Read `Docs/CHECKPOINT-2026-08-04.md` first — it is the current state of play, the method,
+the open decisions and the known risks — and `Docs/HANDOFF-2026-08-04.md` beside it for
+where to start and the session prompt. **`Docs/CHECKPOINT-2026-08-03d.md` is the FINDINGS
+LEDGER, 16-40**: every rule ported on 2026-08-03/04 with its abcjs citation and its measured
+number. Read it when you need the WHY of a specific behaviour.
+(`CHECKPOINT-2026-08-03c.md` holds the accidental columns,
 the notehead rod, the multi-measure rest and `%%gchordfont`;
 `CHECKPOINT-2026-08-03b.md` holds the lyric-ink fix, the
 tempo note, the two beam divergences and the ragtime verdict; `CHECKPOINT-2026-08-03.md` is
@@ -131,11 +134,10 @@ backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
 **Every structural gate is at 100% with zero recorded divergences** — content, lyrics,
-beams, structure, source offsets. 499 tests. The work is now entirely GEOMETRIC and
-entirely strict-mode. On `main` the corpus median notehead distance from abcjs is
-**17.4px** with **21/29** fixtures within 25px; on the geometry branch it is **14.7px**
-with **27/29**, and **29/29** — all of them — within their pixel-parity ceiling. Both are
-**29/29** within 50px, systems matching 29/29.
+beams, structure, source offsets. The work is now entirely GEOMETRIC and entirely
+strict-mode, and it is being driven off the HARVESTED corpus's ranked table rather than the
+41 fixtures: the 41 were all chosen by the people who wrote the engine, and every defect
+found since 2026-08-03 came off the other 174.
 The remaining causes are named in the checkpoint's priority list.
 It is NOT a skyline: abcjs places most out-of-staff text at fixed distances from the staff,
 a finding that killed a skyline port — measure its OUTPUT before porting its SOURCE. It is
@@ -146,7 +148,7 @@ gate had been comparing abcjs's outline START against our glyph ORIGIN, a 4px bi
 
 
 **Structural parity is done: note content, lyrics, beams and render structure are all
-41/41 with zero recorded divergences.** 499 tests.
+41/41 with zero recorded divergences.** 686 tests on `geometry/vertical`.
 
 The work is now GEOMETRIC — does abcts put the ink where abcjs puts it. A pixel-parity
 gate (`tests/pixel-parity.test.ts`) resolves both engines' SVG to absolute pixels and
@@ -163,14 +165,15 @@ pixel-parity gate included, ceilings re-recorded. The timeline is per LINE, as a
 voices because they are ordinary zero-duration elements on one timeline.
 
 **The VERTICAL arc is OPEN** on `geometry/vertical`, branched from it and red BY DESIGN.
-`Docs/VERTICAL-ARC.md` is its working spec and `Docs/CHECKPOINT-2026-08-03c.md` the state.
-**21 of 29 fixtures are pixel-identical to abcjs on ALL FOUR axes at once** at a 0.05px
-threshold, from 0 at the start of that work; only EIGHT are off any axis and only FOUR off
-a vertical one. Page heights match abcjs to within 0.07px.
-`ragtime-nightingale` matches abcjs's own `staff.top`/`.bottom` on 40 of its 46 staves, and
-what is left on it is HORIZONTAL in origin — see the checkpoint before spending an axis on
-it. The harvested corpus is at 78 / 89 / 96 / 119 of 174 within 0.05 / 1 / 5 / 25px.
-**One red**, named in the checkpoint.
+`Docs/CHECKPOINT-2026-08-04.md` is the state; `Docs/VERTICAL-ARC.md` is the arc's original
+spec and its numbers are long superseded.
+
+**20 of 29 fixtures are pixel-identical to abcjs on ALL FOUR axes at once** at a 0.05px
+threshold, and the harvested corpus is at **114 / 130 / 144 / 169 of 174** within
+0.05 / 1 / 5 / 25px — 60 of 174 still off some axis. The suite is **685/686**, and the ONE
+red is `ragtime-nightingale`'s `oy` at 0.656 against an unraised 0.59, down from 1.58.
+NOTHING above 40px on the ranked table is ours: the two worst items left are both
+golden-generator limitations.
 
 `frere-jacques` is CLOSED vertically (dy 0.03, oy −0.02) and was never the "source-line-wrap
 model conflict" it was filed as for two weeks.
@@ -234,9 +237,8 @@ instrumenting to see.
 
 **A DECORATION IS STACKED BY ITS OWN GLYPH HEIGHT AND CENTRED ON THE RUNNING CURSOR** —
 `height = symbolHeightInPitches(symbol) + 1`, `y = cursor + height / 2`, `cursor += height`
-(`creation/decoration.js:154-165`). We step one staff position per decoration instead. It
-is the ink under every one of `frere-jacques`'s staves and the next piece of vertical work;
-it will touch every decorated fixture, so measure them all on the same run.
+(`creation/decoration.js:154-165`). Ported. **AND ONE WRITTEN BEFORE A BARLINE ATTACHES TO
+THE BARLINE**, at a fixed pitch 12 (`abstract-engraver.js:1002`) — not to the next note.
 
 **THE GATE PAIRS THE i-TH NOTEHEAD OF EACH ENGINE, so a difference in EMISSION ORDER reads
 as a position error — AND THAT ORDER WAS OURS TO FIX.** For two days `ragtime-nightingale`'s
@@ -327,8 +329,9 @@ feature-coverage gap, tracked separately and implemented not at all.
 ```
 We are continuing abcts development in the abcts repo (Code/abcts).
 
-Read Docs/CHECKPOINT-2026-08-03b.md first, and Docs/HANDOFF-2026-08-03b.md
-beside it. Then Docs/VERTICAL-ARC.md, then ARCHITECTURE.md, then this file.
+Read Docs/CHECKPOINT-2026-08-04.md first, and Docs/HANDOFF-2026-08-04.md
+beside it — then Docs/CHECKPOINT-2026-08-03d.md, which is the findings
+ledger, then ARCHITECTURE.md, then this file.
 
 THE RULE THAT MATTERS: port abcjs's STRUCTURE, then its constants.
 Reading abcjs gives you its numbers cheaply; the expensive divergences
@@ -348,23 +351,31 @@ a feedback loop for guesses it is the expensive mode.
 The bar is 100% parity with abcjs. A passing gate is not parity — the
 gate says "no worse than recorded"; parity means dy/dx/oy/ox at ZERO.
 
+AND "THE GATE CANNOT SEE THIS" IS NOT "THE GOLDEN IS WRONG". Two of the
+four recorded golden artefacts were OURS — the grace emission order —
+and had stood for two days across four documents. The second claim needs
+dump-svg.js opened.
+
 Confirm your lane with `git rev-parse --abbrev-ref HEAD`. `main` holds
-the merged vertical arc and is GREEN at 505/505 — keep it that way.
-`geometry/vertical` is the open arc, at 683/684.
+the merged vertical arc and is GREEN — keep it that way.
+`geometry/vertical` is the open arc, at 685/686.
 ```
 
 ### The open task, specifically
 ```
 Continue geometric parity in Code/abcts.
 
-Read Docs/CHECKPOINT-2026-08-03b.md and Docs/HANDOFF-2026-08-03b.md.
+Read Docs/CHECKPOINT-2026-08-04.md and Docs/HANDOFF-2026-08-04.md; the
+findings ledger is Docs/CHECKPOINT-2026-08-03d.md.
 
-The VERTICAL arc is open on `geometry/vertical`, 683/684 with one
-expected red. Start where the handoff says: ragtime's drift is TWO
-staves and closing them closes the red.
+The VERTICAL arc is open on `geometry/vertical`, 685/686 with one
+expected red — ragtime's oy at 0.656 against 0.59. Start where the
+handoff says: the systemic 0.03px gates more fixtures at the foot of the
+ranked table than any feature left on it.
 
-The method that closed the arc, unchanged: instrument abcjs to ANSWER A
-QUESTION, read the ground truth, restore. Port abcjs's STRUCTURE, then
-its constants — every win this session was a loop, and every constant
-came out of a probe after the loop around it was already abcjs's.
+The method, unchanged: instrument abcjs to ANSWER A QUESTION, read the
+ground truth, restore. Port abcjs's STRUCTURE, then its constants. And
+read the STAFF TOPLINES, not only the notehead average — four toplines
+out by 38.75/11.64/27.34/31.17 says SPACING, not a shift, and the gap it
+names is a lane.
 ```
