@@ -95,6 +95,7 @@ export type GlyphName =
   | 'restWhole'
   | 'restHalf'
   | 'restQuarter'
+  | 'restHBar'
   | 'rest8th'
   | 'rest16th'
   | 'timeSig0'
@@ -548,6 +549,22 @@ export const GLYPHS: Readonly<Record<GlyphName, Glyph>> = {
     width: 1.128,
     height: 0.576,
     advance: 1.132,
+    anchors: {},
+  },
+  /**
+   * MULTI-MEASURE REST. Bravura's `restHBar` is not extracted — this is abcjs's own box
+   * (`rests.multimeasure`, w 42 h 18 y -4) drawn as the plain thick bar the glyph is, so
+   * `.extended` has something to draw. STRICT never reaches it: `SMUFL_TO_ABCJS` maps the
+   * name and abcjs's real path wins.
+   */
+  restHBar: {
+    codepoint: 0xe4ee,
+    path: 'M0 -0.5161L5.4194 -0.5161L5.4194 0.5161L0 0.5161Z',
+    advance: 5.4194,
+    width: 5.4194,
+    height: 2.3226,
+    x: 0,
+    y: -0.5161,
     anchors: {},
   },
   restQuarter: {

@@ -123,11 +123,11 @@ export const SMUFL_TO_ABCJS: Readonly<Record<string, string>> = {
   segno: 'scripts.segno',
   coda: 'scripts.coda',
   breathMarkComma: 'scripts.comma',
+  restHBar: 'rests.multimeasure',
 }
 
 /** abcjs glyphs no SMuFL name above claims — its vocabulary, minus what we use. */
 export const UNMAPPED_ABCJS = [
-  'rests.multimeasure',
   'rests.32nd',
   'rests.64th',
   'rests.128th',

@@ -381,6 +381,12 @@ export interface Rest {
   readonly decorations: readonly string[]
   readonly decorationSourceRanges: readonly SourceRange[]
   readonly tuplet: TupletMark | null
+  /**
+   * How many BARS a `Z`/`X` stands for — the number printed over the multi-measure bar.
+   * Zero for every other rest. abcjs keeps it as `rest.text` and draws it at pitch 16
+   * (`abstract-engraver.js:596`).
+   */
+  readonly measureCount: number
   readonly sourceRange: SourceRange | null
 }
 

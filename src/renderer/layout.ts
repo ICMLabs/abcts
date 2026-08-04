@@ -1742,6 +1742,49 @@ function layoutRest(rest: Rest, advance: number, x: number, strict = true): Layo
   const spec = invisible || rest.kind === 'spacer' ? null : restGlyph(rest.notatedDuration)
 
   const glyphs: PlacedGlyph[] = []
+  const texts: PlacedText[] = []
+  // A MULTI-MEASURE REST IS A BAR AND A COUNT, both hung off one `mmWidth`.
+  //
+  // abcjs (`abstract-engraver.js:593-598`) puts the glyph at `dx = mmWidth`, declares it
+  // `mmWidth * 2` wide and pitch 7, and adds the count as a `multimeasure-text` at
+  // `dx = mmWidth`, width `mmWidth`, pitch 16 — where `mmWidth` is the glyph's own width,
+  // 42px. So the element reaches `3 x mmWidth` to the right of its origin and the bar
+  // itself starts one width in. Our pitch 7 and 16 are steps 1 and 10.
+  //
+  // Drawing nothing for it left `Z24` occupying a bare spring: `misc-01-barnumbers-1`'s
+  // one notehead sat 75.84px right of abcjs's, and the line was too short to reach the
+  // 66% fill that makes abcjs justify it at all.
+  if (rest.kind === 'multiMeasure' && rest.measureCount > 0) {
+    const mm = glyphsFor(strict).width('restHBar')
+    glyphs.push(glyphAt('restHBar', x + mm, 1))
+    texts.push({
+      text: String(rest.measureCount),
+      x: x + mm,
+      y: stepToY(10),
+      size: ENGRAVE.tempoTextSize,
+      bold: true,
+      italic: false,
+      anchor: 'middle',
+      // A POINT at its pitch: abcjs's `multimeasure-text` is a bare `RelativeElement` with
+      // no thickness, so `top === bottom === pitch` (`relative-element.js:18-21`).
+      reserve: [stepToY(10), stepToY(10)],
+    })
+    return {
+      type: 'rest',
+      x,
+      // `w = 126` measured, exactly `3 x mmWidth`: the glyph sits one width in and is two
+      // wide (`addHead(new RelativeElement(c, mmWidth, mmWidth * 2, 7))`).
+      width: Math.max(advance, 3 * mm + ENGRAVE.noteRodGap),
+      spring: advance,
+      // `minspacing: 1` like any note — abcjs adds it to `minx` on every element but the
+      // line's last (`voice-elements.js:74`).
+      rod: 3 * mm + ENGRAVE.noteRodGap,
+      staffSteps: [],
+      glyphs,
+      lines: [],
+      texts,
+    }
+  }
   if (spec) {
     glyphs.push(glyphAt(spec.name, x, spec.step))
     if (spec.dots > 0) {
@@ -1759,7 +1802,7 @@ function layoutRest(rest: Rest, advance: number, x: number, strict = true): Layo
     staffSteps: [],
     glyphs,
     lines: [],
-    texts: [],
+    texts,
   }
 }
 

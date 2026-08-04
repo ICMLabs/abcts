@@ -469,6 +469,7 @@ function padOverlays(measures: readonly Measure[], meter: Meter | null): Measure
         decorations: [],
         decorationSourceRanges: [],
         tuplet: null,
+        measureCount: 0,
         sourceRange: null,
       }
       return [rest]
@@ -2481,7 +2482,22 @@ class Parser {
     const length = this.readLength(tokens, index + 1)
     let last = token
     if (length.next > index + 1) last = tokens[length.next - 1] as Token
-    const duration = ratMul(builder.unitNoteLength, length.factor)
+    // A MULTI-MEASURE REST'S MULTIPLIER IS A COUNT TO PRINT, NOT A DURATION.
+    //
+    // `abc_parse_music.js:1214` reads `el.duration = num.num * tune.getBarLength()`, which
+    // predicts 24 for `Z24`. MEASURED at layout, abcjs's element carries `duration: 1`
+    // whatever the count and whatever the meter — probed on `Z24` with no `M:`, `Z2` in
+    // 3/4 and `Z5` in 2/4, all three a flat 1. So the spring is one whole note's worth and
+    // the multiplier only reaches `rest.text`.
+    //
+    // Reading it as `unitNoteLength x count` gave `Z24` a duration of 6 and a spring four
+    // times too long; reading the source literally gave 24 and one four times too long
+    // again in the other direction. The output settled it.
+    const multi = kind === 'multiMeasure' || kind === 'invisibleMultiMeasure'
+    const bars = multi
+      ? Math.max(1, Math.round(length.factor.numerator / length.factor.denominator))
+      : 0
+    const duration = multi ? rational(1, 1) : ratMul(builder.unitNoteLength, length.factor)
     return {
       rest: {
         type: 'rest',
@@ -2491,6 +2507,9 @@ class Parser {
         decorations: [], // filled in by emit()
         decorationSourceRanges: [],
         tuplet: null, // set by applyTuplet() on emit
+        // `Z4` is FOUR bars' rest — the multiplier counts measures, not note lengths, and
+        // a bare `Z` is one. Only a multi-measure rest carries it.
+        measureCount: bars,
         sourceRange: sourceRange(token.start, last.start + last.length),
       },
       next: length.next,
