@@ -31,6 +31,7 @@ import {
   isStrict,
   type KeySignature,
   type Measure,
+  type Meter,
   type Mode,
   type MusicEvent,
   type NoteStyle,
@@ -4279,6 +4280,8 @@ function layoutMeasure(
   dynamicsAbove = true,
   /** The NEXT measure's volta label, if it opens one — see `endingRoom`. */
   voltaAfter: string | null = null,
+  /** The meter as this measure BEGINS — a restated one prints nothing. */
+  meterInForce: Meter | null = null,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
   /**
@@ -4371,14 +4374,44 @@ function layoutMeasure(
     fixed(change.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
     x += change.width + ENGRAVE.prefixGap
   }
+  // A MID-TUNE `[M:4/4]` or `M:` PRINTS WHERE IT STANDS. abcjs builds an ordinary
+  // `staff-extra time-signature` for it, like the clef change beside it — and unlike the
+  // clef, it is NOT reprinted at the head of later systems, so there is no double to
+  // guard against: our prefix prints a meter only on system 0.
+  const drawMeterChange = (): void => {
+    if (measure.meterChange == null) return
+    // A RESTATED METER PRINTS NOTHING, exactly as a restated key does.
+    //
+    // AND NEITHER DOES THE FIRST ONE A FREE-METER TUNE ACQUIRES. `frere-jacques`'s
+    // `M:4/4` sits on line 14, after the `+:` prose that strict mode scans as MUSIC, so
+    // it arrives as a mid-tune change over a null header meter. abcjs prints it on the
+    // system where the prose ends; we have no line for that prose, so the change lands on
+    // measure 1 and would put a time signature 17.6px into the middle of system 1.
+    // Drawing nothing is the same answer our prefix already gave, and it keeps that
+    // fixture where it was — see the note on `bodyStarted` in `scanMusic`.
+    if (meterInForce === null) return
+    if (
+      meterInForce.numerator === measure.meterChange.numerator &&
+      meterInForce.denominator === measure.meterChange.denominator &&
+      meterInForce.symbol === measure.meterChange.symbol
+    ) {
+      return
+    }
+    const meter = layoutMeter(x, measure.meterChange.numerator, measure.meterChange.denominator)
+    elements.push(meter)
+    fixed(meter.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
+    x += meter.width + ENGRAVE.prefixGap
+  }
   if (keyChangeAt < openingBarAt) {
     drawClefChange()
     drawKeyChange()
+    drawMeterChange()
     drawOpeningBar()
   } else {
     drawOpeningBar()
     drawClefChange()
     drawKeyChange()
+    drawMeterChange()
   }
 
   for (const [eventIndex, event] of measure.events.entries()) {
@@ -4865,6 +4898,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     // has to be carried into the PREFIX too: abcjs reprints the current clef at the head
     // of every system, not the one the voice was declared with.
     let clefInForce = clef
+    let meterInForce = score.meter
     const clefAtMeasure: Clef[] = []
     const blocks = (voice?.measures ?? []).map((measure, measureIndex) => {
       // A mid-tune clef prints at the START of its measure and governs it — abcjs's
@@ -4882,8 +4916,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         keyInForce,
         hasVocalsAt(measureIndex),
         (voice?.measures ?? [])[measureIndex + 1]?.volta ?? null,
+        meterInForce,
       )
       if (measure.keyChange !== null) keyInForce = measure.keyChange
+      if (measure.meterChange != null) meterInForce = measure.meterChange
       return block
     })
 
