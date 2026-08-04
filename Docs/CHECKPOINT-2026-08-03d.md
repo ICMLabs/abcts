@@ -18,7 +18,7 @@ verdict and the beam findings, then `ARCHITECTURE.md`, then `CLAUDE.md`.
 | corpus | standing |
 |---|---|
 | 41-fixture | 20 of 29 are at ZERO on all four axes. Only `ragtime-nightingale`'s `oy` is a gate failure, and it is **0.646 against 0.59** — from 1.58. |
-| harvested (174) | within 0.05 / 1 / 5 / 25px: **101 / 115 / 125 / 144**, from 95 / 106 / 115 / 137. **73 of 174 still off some axis**, from 79. |
+| harvested (174) | within 0.05 / 1 / 5 / 25px: **105 / 119 / 130 / 152**, from 95 / 106 / 115 / 137. **69 of 174 still off some axis**, from 79. |
 | suite | 685 of 686. The one red is ragtime's `oy`, NOT raised. |
 
 The 41-fixture stragglers, every one named:
@@ -183,6 +183,72 @@ half of every one of those goes into the horizontal spine.
 `visual-transpose-output-01` — twenty-five accidental-bearing chords — was **106.8 → 0.25**,
 and `happy-birthday` 1.40 → **0.23**.
 
+### 25. MID-TUNE NON-MUSIC LINES — a `%%text`, `%%center`, `%%sep` or `T:` between two staves
+
+abcjs builds ONE `nonMusic` line per directive and draws it between the two staff groups
+(`engraver-controller.js:229-247`). They now ride to the system that follows on
+`Measure.textBefore` and hang on its first staff as the same block the tune's own title
+uses, so they enter `verticalExtent` rather than float over the page.
+
+Three things had to be right and each was measured on a control pair:
+
+- **A mid-tune block spends NO `musicSpace`.** `spacing.music` goes once, before the first
+  staff group (`draw.js:17`); a nonMusic line between two groups costs exactly its rows.
+  Mid-tune `T:` **27.05px**, `%%text` 33.77, `%%center` 23.27, bare `%%sep` 28.
+- **A mid-tune `T:` is a SUBTITLE element, not free text**: `spacing.subtitle` above, one
+  row in `subtitlefont`, and its own MEASURED height below with no `* 1.1`
+  (`elements/subtitle.js`).
+- **IT IS ADDITIVE TO THE STAFF SEPARATION, NOT ABSORBED BY IT.** abcjs moves `renderer.y`
+  by the rows and only THEN runs `addStaffPadding`, which reads `naturalSeparation` off the
+  two groups' own overhangs (`draw.js:82-89`) and knows nothing about the cursor. Left
+  inside `topLineOffset` the whole block was swallowed and a mid-tune `T:` moved nothing.
+
+`%%sep` is three POINT measurements, each `Math.round`ed, bare is 14 / 14 / 85, and **the
+RULE COSTS NO HEIGHT** — `drawSeparator` paints at the cursor and moves nothing.
+
+**AND A `T:` AFTER ALL THE MUSIC MOVES NOTHING.** `mouse-click-01`'s "Inserted subtitle"
+sits at y 630.21, below both systems: its `T:` is in the last VOICE of a system, not
+between systems.
+
+### 26. EACH ABOVE-STAFF LANE IS SPENT ONCE — the dynamic one was spent twice
+
+`setUpperAndLowerElements` walks `staff.top` up through lyric, chord, ending, dynamic, part
+and tempo IN THAT ORDER, and every element it places is measured from the running total.
+`anchorAboveStaff` reproduces that stack, so what it places already sits above the lanes —
+and `verticalExtent` then re-derived the dynamic lane from the elements and subtracted it a
+second time on top. Probed on `mouse-click-01`: a `w:` line flips the dynamics ABOVE and
+cost us **54.25px where abcjs spends 27.13**, exactly twice.
+
+**The ENDING lane is deliberately NOT gated the same way.** `anchorAboveStaff`'s ink call
+leaves it out, so the stack it places sits BELOW it and `verticalExtent` is the one place it
+is spent. Gating both ways was tried and put a tempo-and-volta staff 23.25px high — **the
+two lanes are in different phases and one gate cannot serve both.**
+
+And the same idea one level down: `anchorAboveStaff`'s ink call carried the VOLTA's share of
+the ending lane and not the TUPLET's, so the two calls disagreed about what the lane already
+held and a volta arriving beside a tuplet jumped it by the full 6 pitch where abcjs moves 1.
+
+### 27. THE `K:` FIELD'S FIRST TOKEN, AND FOUR THINGS THAT FALL OUT OF IT
+
+`parseKeyVoice` consumes the first token as the KEY and shifts it off before the modifier
+switch that reads clef names ever runs — but **only when it IS a key**: `HP`, `Hp`, `none`,
+or an UPPERCASE A..G. `getKeyPitch`'s lowercase cases are COMMENTED OUT
+(`abc_tokenizer.js:33-46`).
+
+| written | abcjs reads | cost of getting it wrong |
+|---|---|---|
+| `K:none` | the none KEY, treble clef | 34.05px of prefix, `visual-transpose-06` |
+| `K:C none` | C major, **NO clef element at all** | three `%%begintext` fixtures |
+| `K:cm` | no key found → C major, nothing printed | 34.3px, `synth-midi-02-staccato` |
+| `K: bass` | the BASS clef — `b` is not a key pitch | 105px, `parse-note-id-01` |
+
+The first attempt skipped the first word unconditionally and broke the last row, which is
+why the rule TESTS the token rather than counting.
+
+**AND `clef=perc` DRAWS.** `case 'perc': clef = "clefs.perc"` is 21px, 26 of prefix once the
+clef's own `dx = 5` is on it; we drew nothing and reserved nothing. `clef=none` really is
+nothing — `createClef` returns null, so there is no element and no width either.
+
 ---
 
 ## TRAPS ADDED THIS SESSION
@@ -200,7 +266,18 @@ and `happy-birthday` 1.40 → **0.23**.
    `selection-01` from 51.6 to 98.6 — both numbers honest, because the block was ALREADY
    47px short for two other reasons and the rows made the total visible rather than causing
    it. Do not revert on the aggregate; split it.
-5. Everything in `-08-03c`'s and `-08-03b`'s trap lists still holds.
+5. **A LADDER BEATS A HYPOTHESIS.** `mouse-click-01` was 99.6px out and every feature in it
+   measured clean ON ITS OWN. Nine control tunes, each one field longer than the last, split
+   it into four unrelated causes — the mid-tune `T:`, `%%sep`, the double dynamic lane and
+   the ending lane's two halves. None of them was guessable from the 99.6.
+6. **`cd` DOES NOT PERSIST**, and a `cd` inside a compound command leaves the shell
+   somewhere else for the NEXT call. Running `npx vitest` from `abcMusicKit/Tools/abcjs-debug`
+   silently runs THAT package's suite and leaves the last table in place, which reads as
+   "the change did nothing".
+7. **REGENERATING `glyphs.ts` DROPS GLYPHS.** `scripts/gen-glyphs.mjs`'s list is behind the
+   committed file — a full run wrote 108 glyphs where the file has 109 and lost `restHBar`.
+   Splice a single entry in by hand instead.
+8. Everything in `-08-03c`'s and `-08-03b`'s trap lists still holds.
 
 ---
 
