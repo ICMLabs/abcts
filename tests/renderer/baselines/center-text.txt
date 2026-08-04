@@ -10,7 +10,7 @@ system 0 width=90.323 originY=0.000
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     title x=0.000 w=0.000
       text  30.168,-12.562 size=3.484 bold "Center Directive Test"
-      text  39.204,-8.360 size=2.452 italic "Test Fixture"
+      text  39.204,-8.361 size=2.452 italic "Test Fixture"
       text  25.975,-5.135 size=2.710 "This is centered text above the tune"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000

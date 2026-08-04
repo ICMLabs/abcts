@@ -72,10 +72,16 @@ const WITHIN: Readonly<Record<string, number>> = {
   // voice `1` taking a staff on every system of a tune whose lines all begin `[V:…]`; and
   // the two line-assignment rules — a trailing `\` continuing the line, and a `[V:x]`
   // switch opening one only when x already has music.
-  '0.05': 95,
-  '1': 106,
-  '5': 115,
-  '25': 137,
+  //
+  // 2026-08-03c: a mid-tune `[K:]` reserving the SAME declared box the opening signature
+  // does (a natural's fudge is 0 and it is the tall glyph); the `A:` and header-`P:` rows
+  // of the top-text block, which abcjs draws and we did not; every `%%<type>font` parsed
+  // and its size threaded through the block; and a mid-tune `T:` no longer counted as a
+  // top-block subtitle, which it never was — abcjs takes only LEADING subtitle lines.
+  '0.05': 96,
+  '1': 109,
+  '5': 118,
+  '25': 138,
 }
 
 const names = readdirSync(fixturesDir)

@@ -15,6 +15,8 @@
  * the font, engraving conventions (stem length, spacing) live in ENGRAVE below.
  */
 import {
+  ABC_FONT_DEFAULT_PT,
+  type AbcFontType,
   Accidental,
   type Barline,
   type Clef,
@@ -1565,7 +1567,14 @@ function layoutKeyChange(
   const glyphs: PlacedGlyph[] = []
   let cursor = x
   const advance = (name: GlyphName, step: number): void => {
-    glyphs.push(glyphAt(name, cursor, step))
+    // The SAME declared box the opening signature reserves — `createKeySignature` is one
+    // function and abcjs calls it for a mid-tune `[K:]` too. A NATURAL's fudge is 0 and it
+    // is the tall glyph, so a change that cancels anything reserves well above the staff:
+    // `[K:Eb]` after `K:G` puts abcjs's top line 8.34px lower than ours did with none.
+    glyphs.push({
+      ...glyphAt(name, cursor, step),
+      reserve: keyAccidentalReserve(name, step, strict),
+    })
     cursor += glyphsFor(strict).advance(name) + ENGRAVE.keySignatureGap
   }
   for (const entry of cancelled) advance('accidentalNatural', entry.step)
@@ -5084,7 +5093,12 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // which is abcjs's sequence: block, then `spacing.music`, then the music.
       const block =
         systemIndex === 0 && voiceIndex === 0
-          ? topTextBlock(score.metadata, systemWidth - ENGRAVE.marginX * 2, score.textAbove)
+          ? topTextBlock(
+              score.metadata,
+              systemWidth - ENGRAVE.marginX * 2,
+              score.textAbove,
+              score.fonts,
+            )
           : { texts: [], height: 0 }
       const heading: LayoutElement[] =
         block.texts.length === 0
@@ -5634,18 +5648,30 @@ function topTextBlock(
   metadata: ScoreMetadata,
   width: number,
   textAbove: readonly FreeTextBlock[] = [],
+  fonts: Score['fonts'] = {},
 ): { texts: PlacedText[]; height: number } {
   const texts: PlacedText[] = []
   let y = 0
   // abcjs rounds each line advance to whole PIXELS before moving on, so a block's height
   // is not simply a sum of ems. Reproduced rather than smoothed.
-  const advance = (size: number): void => {
+  //
+  // The height is the MEASURED one — `Math.round(size.height * 1.1)` (`add-text-if.js:26`)
+  // — so it comes from the golden's own table, not from a ratio. The two agree to a
+  // hundredth on every DEFAULT size; they part company as soon as a `%%…font` sets one the
+  // table does not list, where the generator falls back to `size + 2`.
+  const advance = (size: number, extra = 0): void => {
     y +=
-      Math.round(size * ENGRAVE.textHeightRatio * ENGRAVE.lineSkipFactor * ABCJS_PX_PER_SPACE) /
+      Math.round((goldenTextHeight(size) + extra) * ENGRAVE.lineSkipFactor * ABCJS_PX_PER_SPACE) /
       ABCJS_PX_PER_SPACE
   }
+  const sizeOf = (type: AbcFontType): number =>
+    Math.round(((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / ABCJS_PX_PER_SPACE
+  /** A boxed font measures `height + padding * 4`, `padding = size * fontboxpadding`. */
+  const boxOf = (type: AbcFontType): number =>
+    fonts[type]?.box === true ? sizeOf(type) * ENGRAVE.fontBoxPadding * 4 : 0
   const centre = width / 2
 
+  const titleSize = sizeOf('titlefont')
   const [title, ...subtitles] = metadata.titles
   if (title !== undefined && title !== '') {
     y += ENGRAVE.titleSpace
@@ -5654,13 +5680,13 @@ function topTextBlock(
       role: 'title',
       x: centre,
       // abcjs writes the baseline one font size below the cursor (`text.js:30`).
-      y: y + ENGRAVE.titleTextSize,
-      size: ENGRAVE.titleTextSize,
+      y: y + titleSize,
+      size: titleSize,
       bold: true,
       italic: false,
       anchor: 'middle',
     })
-    advance(ENGRAVE.titleTextSize)
+    advance(titleSize, boxOf('titlefont'))
   }
 
   // Second and later `T:` fields are subtitles — abcm2ps's convention, and abcjs's.
@@ -5671,13 +5697,13 @@ function topTextBlock(
       text: subtitle,
       role: 'title',
       x: centre,
-      y: y + ENGRAVE.subtitleTextSize,
-      size: ENGRAVE.subtitleTextSize,
+      y: y + sizeOf('subtitlefont'),
+      size: sizeOf('subtitlefont'),
       bold: false,
       italic: false,
       anchor: 'middle',
     })
-    advance(ENGRAVE.subtitleTextSize)
+    advance(sizeOf('subtitlefont'), boxOf('subtitlefont'))
   }
 
   // ONE row carrying up to three fields: rhythm left, composer and origin right. They
@@ -5692,8 +5718,8 @@ function topTextBlock(
         text: rhythm,
         role: 'title',
         x: 0,
-        y: y + ENGRAVE.infoTextSize,
-        size: ENGRAVE.infoTextSize,
+        y: y + sizeOf('infofont'),
+        size: sizeOf('infofont'),
         bold: false,
         italic: true,
         anchor: 'start',
@@ -5706,14 +5732,48 @@ function topTextBlock(
         text: right,
         role: 'title',
         x: width,
-        y: y + ENGRAVE.composerTextSize,
-        size: ENGRAVE.composerTextSize,
+        y: y + sizeOf('composerfont'),
+        size: sizeOf('composerfont'),
         bold: false,
         italic: true,
         anchor: 'end',
       })
     }
-    advance(Math.max(ENGRAVE.infoTextSize, ENGRAVE.composerTextSize))
+    advance(Math.max(sizeOf('infofont'), sizeOf('composerfont')), boxOf('composerfont'))
+  }
+
+  // `A:` — the author of the words. Its own row, right-aligned in `composerfont`, with NO
+  // leading gap: abcjs spends `spacing.composer` only before the rhythm/composer row and
+  // writes this one bare (`top-text.js:68-71`). Measured on a control pair, exactly 23px.
+  const author = metadata.author ?? ''
+  if (author !== '') {
+    texts.push({
+      text: author,
+      role: 'title',
+      x: width,
+      y: y + sizeOf('composerfont'),
+      size: sizeOf('composerfont'),
+      bold: false,
+      italic: true,
+      anchor: 'end',
+    })
+    advance(sizeOf('composerfont'), boxOf('composerfont'))
+  }
+
+  // A HEADER `P:` — the part ORDER, left-aligned in `partsfont`, closing the block. 24px.
+  const partOrder = metadata.partOrder ?? ''
+  if (partOrder !== '') {
+    texts.push({
+      text: partOrder,
+      role: 'title',
+      x: 0,
+      y: y + sizeOf('partsfont'),
+      size: sizeOf('partsfont'),
+      bold: false,
+      italic: false,
+      anchor: 'start',
+    })
+    advance(sizeOf('partsfont'), boxOf('partsfont'))
   }
 
   // `%%center` lines standing before the music close the block. Centred like the title,
@@ -5745,22 +5805,21 @@ function topTextBlock(
   // each line past the first adds 25.2px — `1.2em` at 21px, the same `dy` a lyric verse
   // steps by, and NOT the 1.108 line height the first line takes.
   for (const block of textAbove) {
-    if (block.align === 'left') y += ENGRAVE.freeTextSize / 2
+    const textSize = sizeOf('textfont')
+    if (block.align === 'left') y += textSize / 2
     block.lines.forEach((line, index) => {
       texts.push({
         text: line,
         role: 'title',
         x: block.align === 'center' ? centre : 0,
-        y: y + ENGRAVE.freeTextSize + index * ENGRAVE.freeTextLineStep,
-        size: ENGRAVE.freeTextSize,
+        y: y + textSize + index * ENGRAVE.freeTextLineStep,
+        size: textSize,
         bold: false,
         italic: false,
         anchor: block.align === 'center' ? 'middle' : 'start',
       })
     })
-    y +=
-      ENGRAVE.freeTextSize * ENGRAVE.textHeightRatio +
-      (block.lines.length - 1) * ENGRAVE.freeTextLineStep
+    y += goldenTextHeight(textSize) + (block.lines.length - 1) * ENGRAVE.freeTextLineStep
   }
 
   return { texts, height: y }

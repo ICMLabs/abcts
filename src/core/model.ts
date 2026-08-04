@@ -230,6 +230,73 @@ export interface LyricFont {
   readonly size: number
   readonly bold: boolean
   readonly italic: boolean
+  /**
+   * `box` after the size — a frame round the text, on the eleven types abcjs allows it on
+   * (`fontTypeCanHaveBox`, `abc_parse_directive.js:60`).
+   *
+   * It is a LAYOUT term, not decoration: `getTextSize` returns `height + padding * 4` and
+   * `width + padding * 4` for a boxed font (`helpers/get-text-size.js:46-48`) with
+   * `padding = size * fontboxpadding` (default 0.1), so the row or lane grows with it.
+   * `%%partsfont box` costs a `P:` row 33px against the plain 24.
+   */
+  readonly box?: boolean
+}
+
+/**
+ * The font types abcjs names, each `%%<type>font`.
+ *
+ * CHANGING vs GLOBAL is abcjs's own split (`abc_parse_directive.js:1019-1037`): the first
+ * eleven can change mid-tune and belong on the element, the rest are tune-level. We record
+ * both here; only `vocalfont` and `gchordfont` are stamped per element so far, and the
+ * others take the last value, which is what a header-only directive means either way.
+ * `barlabelfont`, `barnumberfont` and `barnumfont` are aliases of `measurefont`.
+ */
+export type AbcFontType =
+  | 'gchordfont'
+  | 'partsfont'
+  | 'tripletfont'
+  | 'vocalfont'
+  | 'textfont'
+  | 'annotationfont'
+  | 'historyfont'
+  | 'infofont'
+  | 'measurefont'
+  | 'repeatfont'
+  | 'wordsfont'
+  | 'composerfont'
+  | 'subtitlefont'
+  | 'tempofont'
+  | 'titlefont'
+  | 'voicefont'
+  | 'footerfont'
+  | 'headerfont'
+
+/**
+ * abcjs's own defaults, in POINTS (`abc_parse_directive.js:21-42`).
+ *
+ * A size reaches the page as `round(pt * 4 / 3)` px (`get-font-and-attr.js:28`), and the
+ * eighteen defaults land on exactly seven distinct pixel sizes — which is why the golden
+ * generator's height table has seven entries and covers every tune that sets no font.
+ */
+export const ABC_FONT_DEFAULT_PT: Readonly<Record<AbcFontType, number>> = {
+  gchordfont: 12,
+  partsfont: 15,
+  tripletfont: 11,
+  vocalfont: 13,
+  textfont: 16,
+  annotationfont: 12,
+  historyfont: 16,
+  infofont: 14,
+  measurefont: 14,
+  repeatfont: 13,
+  wordsfont: 16,
+  composerfont: 14,
+  subtitlefont: 16,
+  tempofont: 15,
+  titlefont: 20,
+  voicefont: 13,
+  footerfont: 12,
+  headerfont: 12,
 }
 
 /**
@@ -609,6 +676,18 @@ export interface ScoreMetadata {
   readonly rhythm: string | null
   /** `O:` — where the tune comes from. Printed in the top-text block beside the composer. */
   readonly origin: string | null
+  /**
+   * `A:` — the author of the words. Its own row at the foot of the top-text block, drawn
+   * right-aligned in `composerfont` (`top-text.js:68-71`), and it costs 23px whether or
+   * not a composer row precedes it. Measured on a control pair.
+   */
+  readonly author: string | null
+  /**
+   * A HEADER `P:` — the part ORDER, `AABB`. A different field from the body `P:` that
+   * labels a part, and a different font: it closes the top-text block left-aligned in
+   * `partsfont` (`top-text.js:73-77`), for 24px.
+   */
+  readonly partOrder: string | null
 }
 
 /**
@@ -723,6 +802,12 @@ export interface Score {
    * property of the tune.
    */
   readonly textBelow: readonly FreeTextBlock[]
+  /**
+   * Every `%%<type>font` the tune set. Absent entries mean "abcjs's default", and the
+   * renderer answers those with its own constant rather than by computing a size that
+   * happens to equal it — the same load-bearing null `vocalFont` has.
+   */
+  readonly fonts: Readonly<Partial<Record<AbcFontType, LyricFont>>>
   readonly sourceStartOffset: number
   readonly keySourceRange: SourceRange | null
   readonly meterSourceRange: SourceRange | null

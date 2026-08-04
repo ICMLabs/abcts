@@ -21,6 +21,8 @@
  */
 
 import {
+  ABC_FONT_DEFAULT_PT,
+  type AbcFontType,
   Accidental,
   type Barline,
   type Chord,
@@ -1161,6 +1163,7 @@ interface Formatting {
   maxStaves: number | null
   sysStaffSep: number | null
   vocalFont: LyricFont | null
+  fonts: Partial<Record<AbcFontType, LyricFont>>
 }
 
 class ScoreBuilder {
@@ -1169,6 +1172,8 @@ class ScoreBuilder {
   composer: string | null = null
   rhythm: string | null = null
   origin: string | null = null
+  author: string | null = null
+  partOrder: string | null = null
   key: KeySignature = defaultKey()
   clef: Clef = defaultClef
   tempo: Tempo | null = null
@@ -1187,6 +1192,8 @@ class ScoreBuilder {
   vocalFont: LyricFont | null = null
   /** The `%%gchordfont` in force — a CHANGING font, so it is stamped per event. */
   chordFont: LyricFont | null = null
+  /** Every `%%<type>font` set so far. The renderer defaults an absent entry itself. */
+  fonts: Partial<Record<AbcFontType, LyricFont>> = {}
   keySourceRange: SourceRange | null = null
   meterSourceRange: SourceRange | null = null
   /** Declaration order is output order — a Map preserves insertion order. */
@@ -1223,6 +1230,7 @@ class ScoreBuilder {
       maxStaves: this.maxStaves,
       sysStaffSep: this.sysStaffSep,
       vocalFont: this.vocalFont,
+      fonts: this.fonts,
     }
   }
 
@@ -1234,6 +1242,7 @@ class ScoreBuilder {
     this.maxStaves = f.maxStaves
     this.sysStaffSep = f.sysStaffSep
     this.vocalFont = f.vocalFont
+    this.fonts = { ...f.fonts }
   }
   /** `%%center` text, split by whether any music had been parsed when it was read. */
   textAbove: FreeTextBlock[] = []
@@ -1378,6 +1387,8 @@ class ScoreBuilder {
       composer: this.composer,
       rhythm: this.rhythm,
       origin: this.origin,
+      author: this.author,
+      partOrder: this.partOrder,
     }
     return {
       metadata,
@@ -1401,6 +1412,7 @@ class ScoreBuilder {
       sysStaffSep: this.sysStaffSep,
       textAbove: this.textAbove,
       textBelow: this.textBelow,
+      fonts: this.fonts,
       sourceStartOffset: this.sourceStartOffset,
       keySourceRange: this.keySourceRange,
       meterSourceRange: this.meterSourceRange,
@@ -1652,15 +1664,29 @@ class Parser {
     // `getChangingFont` (`abc_parse_directive.js:1019-1029`) so a later occurrence applies
     // from there on rather than to the whole tune. `visual-tablature-17` sets it four
     // times between music lines and each staff takes the size above it.
-    const gchordfont = /^gchordfont\s+(.*)$/.exec(body)
-    if (gchordfont?.[1]) {
-      this.ensureScore(start).chordFont = parseFontSpec(gchordfont[1])
-      return
-    }
-    const vocalfont = /^vocalfont\s+(.*)$/.exec(body)
-    if (vocalfont?.[1]) {
-      this.ensureScore(start).vocalFont = parseFontSpec(vocalfont[1])
-      return
+    //
+    // EVERY font goes through the same door — abcjs's does too: `getFontAndAttr.calc`
+    // reads `formatting[type]` and nothing in the engraver knows a size any other way.
+    // `barlabelfont` / `barnumberfont` / `barnumfont` are aliases of `measurefont`
+    // (`abc_parse_directive.js:1039-1042`).
+    const fontDirective = /^(\w+font)\s+(.*)$/.exec(body)
+    if (fontDirective?.[1] && fontDirective[2]) {
+      const alias = fontDirective[1]
+      const type = (FONT_ALIASES[alias] ?? alias) as AbcFontType
+      if (type in ABC_FONT_DEFAULT_PT) {
+        const builder = this.ensureScore(start)
+        const font = parseFontSpec(fontDirective[2], ABC_FONT_DEFAULT_PT[type])
+        builder.fonts[type] = font
+        // The two that are also stamped PER ELEMENT, because they can change mid-tune and
+        // a fixture does change them between music lines.
+        if (type === 'gchordfont') builder.chordFont = font
+        if (type === 'vocalfont') builder.vocalFont = font
+        // `%%partsbox` and `%%partsfont … box` ARE THE SAME FLAG — the former is written
+        // `multilineVars.partsfont.box = multilineVars.partsBox`
+        // (`abc_parse_directive.js:924`). So the existing `partsBox` plumbing serves both.
+        if (type === 'partsfont' && font.box === true) builder.partsBox = true
+        return
+      }
     }
     // `%%center <text>` — one line of centred free text. abcjs builds it as a `FreeText`
     // with `anchor: 'middle'` at `width / 2` (`write/creation/elements/free-text.js`),
@@ -1792,7 +1818,16 @@ class Parser {
     const builder = this.ensureScore(start)
     switch (letter) {
       case 'T':
-        builder.titles.push(decodeTextString(value))
+        // ONLY A HEADER `T:` IS IN THE TOP-TEXT BLOCK. abcjs takes the title from
+        // `metaText.title` and then walks `lines` while `lines[index].subtitle` holds —
+        // LEADING subtitle lines only (`top-text.js:25-32`). A `T:` between two music
+        // lines is a subtitle LINE, drawn where it stands, and putting it in the block
+        // cost `mouse-click-01` 29.78px on every staff.
+        //
+        // ponytail: the mid-tune one is DROPPED rather than drawn in place. Same gap as
+        // mid-tune free text and the same fix — a subtitle has to be a line in its own
+        // right before it can be placed.
+        if (!builder.bodyStarted) builder.titles.push(decodeTextString(value))
         return
       case 'C':
         builder.composer = decodeTextString(value)
@@ -1802,6 +1837,10 @@ class Parser {
         return
       case 'O':
         builder.origin = decodeTextString(value)
+        return
+      // `A:` — the author of the words, a row of its own in `composerfont`.
+      case 'A':
+        builder.author = decodeTextString(value)
         return
       case 'M': {
         if (builder.bodyStarted) {
@@ -1825,9 +1864,12 @@ class Parser {
       }
       case 'P': {
         // A body `P:` labels the part that starts here. A header `P:` is a part ORDER,
-        // a different feature, and is still deferred.
+        // a different feature — it closes the top-text block in `partsfont` — and it is
+        // the LAST row abcjs writes there (`top-text.js:73-77`), for 24px.
         if (builder.bodyStarted && value.trim() !== '') {
           builder.voice.setPartLabel(value.trim(), range)
+        } else if (!builder.bodyStarted) {
+          builder.partOrder = decodeTextString(value)
         }
         return
       }
@@ -2907,18 +2949,31 @@ function parseGracePitches(raw: string): { pitches: Pitch[]; slash: boolean } {
  * A missing size is not an error — `%%vocalfont Times-Bold` is legal and means "that
  * face, current size". It comes back as null and the caller keeps the size it had.
  */
-function parseFontSpec(spec: string): LyricFont {
+/** `abc_parse_directive.js:1039-1042` — all three route to `measurefont`. */
+const FONT_ALIASES: Readonly<Record<string, string>> = {
+  barlabelfont: 'measurefont',
+  barnumberfont: 'measurefont',
+  barnumfont: 'measurefont',
+}
+
+function parseFontSpec(spec: string, defaultPt: number = DEFAULT_VOCALFONT_PT): LyricFont {
   // `box` may follow the size — `%%gchordfont Arial 10 box`. abcjs accepts it on eleven of
   // the font types (`fontTypeCanHaveBox`, `abc_parse_directive.js:60`) and it draws a frame
   // rather than changing the face.
-  const trimmed = spec.trim().replace(/\s+box\s*$/i, '')
-  const sizeMatch = /\s(\d+(?:\.\d+)?)\s*$/.exec(trimmed)
+  //
+  // A BARE `box` IS A WHOLE DIRECTIVE — `%%partsfont box` names no face and no size, and
+  // abcjs keeps both from the current setting (`getFontParameter`'s two `if (… === '')`
+  // tails). It still costs 8px of lane, which is what that fixture is for.
+  const boxed = /(^|\s)box\s*$/i.test(spec.trim())
+  const trimmed = spec.trim().replace(/(^|\s)box\s*$/i, '')
+  const sizeMatch = /(^|\s)(\d+(?:\.\d+)?)\s*$/.exec(trimmed)
   const face = (sizeMatch ? trimmed.slice(0, sizeMatch.index) : trimmed).trim()
   return {
     face,
-    size: sizeMatch?.[1] ? Number.parseFloat(sizeMatch[1]) : DEFAULT_VOCALFONT_PT,
+    size: sizeMatch?.[2] ? Number.parseFloat(sizeMatch[2]) : defaultPt,
     bold: /bold/i.test(face),
     italic: /italic|oblique/i.test(face),
+    box: boxed,
   }
 }
 
