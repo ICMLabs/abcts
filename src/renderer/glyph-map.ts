@@ -46,6 +46,10 @@ export const SMUFL_TO_ABCJS: Readonly<Record<string, string>> = {
   gClef: 'clefs.G',
   fClef: 'clefs.F',
   cClef: 'clefs.C',
+  // `clef=perc`. abcjs DRAWS it — `case 'perc': clef = "clefs.perc"`
+  // (`create-clef.js:26`) — and its 21px is 26 of prefix once the clef's own `dx = 5` is
+  // on it. Bravura has no entry here, so the other modes still draw nothing.
+  unpitchedPercussionClef1: 'clefs.perc',
 
   // Accidentals. `halfsharp`/`halfflat` are abcjs's quarter tones; it has no three-quarter
   // tone glyph at all, which is why those two SMuFL names are absent — see the header.
@@ -140,7 +144,6 @@ export const UNMAPPED_ABCJS = [
   'scripts.shortphrase',
   'flags.ugrace',
   'flags.dgrace',
-  'clefs.perc',
   'tab.big',
   'tab.tiny',
   'timesig.imperfectum',

@@ -1228,8 +1228,12 @@ const CLEF_GLYPHS: Readonly<Record<ClefShape, GlyphName | null>> = {
   G: 'gClef',
   F: 'fClef',
   C: 'cClef',
-  // ponytail: no percussion glyph extracted, and `clef=none` draws nothing by definition.
-  percussion: null,
+  // `clef=perc` DRAWS — `case 'perc': clef = "clefs.perc"` (`create-clef.js:26`) — and
+  // its 21px is 26 of prefix once the clef's own `dx = 5` is on it. We drew nothing and
+  // took no width: `visual-tablature-12` slid 36px left on that alone.
+  percussion: 'unpitchedPercussionClef1',
+  // `case 'none': return null` — abcjs builds NO clef element at all, so it takes no
+  // prefix width either (`create-clef.js:27`). Not "an element that draws nothing".
   none: null,
 }
 

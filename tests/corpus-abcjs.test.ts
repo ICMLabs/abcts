@@ -89,10 +89,14 @@ const WITHIN: Readonly<Record<string, number>> = {
   // lines is a LINE of its own, and its height is ADDITIVE to the staff separation.
   // ONE ending lane, spent ONCE: `anchorAboveStaff`'s ink call had the volta's share of
   // it and not the tuplet's, so the two disagreed about what the lane already held.
-  '0.05': 102,
-  '1': 116,
-  '5': 126,
-  '25': 146,
+  // THE FIRST TOKEN OF A `K:` IS THE KEY ONLY WHEN IT PARSES AS ONE, uppercase A..G,
+  // `HP`, `Hp` or `none` — so `K:none` keeps its treble clef, `K:C none` loses it, `K:cm`
+  // is C major with nothing printed, and `K: bass` is the bass clef. Plus `clef=perc`,
+  // which DRAWS and takes 26px of prefix where we drew and reserved nothing.
+  '0.05': 105,
+  '1': 119,
+  '5': 130,
+  '25': 152,
 }
 
 const names = readdirSync(fixturesDir)

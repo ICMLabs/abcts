@@ -122,8 +122,12 @@ function parseKey(content: string): KeySignature {
   // K: case in `field()` rather than here — this function returns the KEY alone.
   // ponytail: `transpose=` is parsed but its written half is unrealized.
   const spec = (content.split(/\s+/)[0] ?? '').trim()
-  const head = spec[0]?.toLowerCase()
-  if (!head || head < 'a' || head > 'g') return defaultKey()
+  // UPPERCASE ONLY. abcjs's `getKeyPitch` is a switch on `A`..`G` with the lowercase cases
+  // COMMENTED OUT (`abc_tokenizer.js:33-46`), so `K:cm` finds no key at all and the tune
+  // is C major with nothing printed — `synth-midi-02-staccato` is exactly that, and
+  // drawing C minor's three flats put every note in it 34.3px right of abcjs's.
+  const head = spec[0]
+  if (!head || head < 'A' || head > 'G') return defaultKey()
 
   let i = 1
   let accidental: Accidental = Accidental.natural
@@ -137,7 +141,11 @@ function parseKey(content: string): KeySignature {
 
   const rest = spec.slice(i).toLowerCase()
   const mode = MODES.find(([prefix]) => rest.startsWith(prefix))?.[1] ?? 'major'
-  return { tonic: { step: head as DiatonicStep, accidental }, mode, none: false }
+  return {
+    tonic: { step: head.toLowerCase() as DiatonicStep, accidental },
+    mode,
+    none: false,
+  }
 }
 
 function parseMeter(content: string): Meter | null {
@@ -245,7 +253,23 @@ export function parseClef(spec: string): Clef | null {
   // voice to treble. `abcjs-visual-layout-07`'s lower staff is written that way.
   //
   // Quoted strings go first so a `name="Bass line"` cannot name a clef.
-  for (const m of spec.replace(/"[^"]*"/g, ' ').matchAll(/(?:^|\s)([a-z]+)(\d?)([+-]8)?/gi)) {
+  //
+  // AND THE FIRST TOKEN IS NEVER A CLEF. `parseKeyVoice` consumes it as the KEY (or, on a
+  // `V:`, as the id) and SHIFTS IT OFF before the modifier switch that reads clef names
+  // ever runs (`abc_parse_key_voice.js:227-250,440-470`). That is the whole difference
+  // between `K:none` and `K:C none`: the first is the none KEY over a treble clef, the
+  // second is C major with no clef at all, and abcjs draws them 34.05px apart. Reading
+  // every word made both of them clef-less.
+  //
+  // "THE FIRST TOKEN" MEANS THE ONE `parseKeyVoice` ACTUALLY CONSUMED. It shifts the token
+  // off only when it IS a key — `HP`, `Hp`, `none`, or an UPPERCASE A..G — and leaves it
+  // in place otherwise. `K: bass` is the difference: `b` is not a key pitch to abcjs, so
+  // `bass` stays and is read as the clef. Skipping the first word unconditionally lost
+  // that and put `parse-note-id-01` 105px out.
+  const first = spec.trim().split(/\s+/)[0] ?? ''
+  const isKey = /^(HP|Hp|none$|[A-G])/.test(first)
+  const modifiers = spec.replace(/"[^"]*"/g, ' ').replace(isKey ? /^\s*\S+/ : /^$/, '')
+  for (const m of modifiers.matchAll(/(?:^|\s)([a-z]+)(\d?)([+-]8)?/gi)) {
     const clef = build(m[1] ?? '', m[2] ?? '', m[3] ?? '')
     if (clef) return clef
   }

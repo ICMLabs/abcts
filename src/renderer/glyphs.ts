@@ -66,6 +66,7 @@ export type GlyphName =
   | 'gClef'
   | 'fClef'
   | 'cClef'
+  | 'unpitchedPercussionClef1'
   | 'noteheadWhole'
   | 'noteheadHalf'
   | 'noteheadBlack'
@@ -228,6 +229,16 @@ export const GLYPHS: Readonly<Record<GlyphName, Glyph>> = {
     width: 2.796,
     height: 4.048,
     advance: 2.796,
+    anchors: {},
+  },
+  unpitchedPercussionClef1: {
+    path: 'M0.6400 0.9400L0.6400-0.9400C0.6400-0.9720 0.6160-1 0.5840-1L0.0560-1C0.0240-1 0-0.9720 0-0.9400L0 0.9400C0 0.9720 0.0240 1 0.0560 1L0.5840 1C0.6160 1 0.6400 0.9720 0.6400 0.9400M1.5280-0.9400C1.5280-0.9720 1.5040-1 1.4720-1L0.9440-1C0.9120-1 0.8880-0.9720 0.8880-0.9400L0.8880 0.9400C0.8880 0.9720 0.9120 1 0.9440 1L1.4720 1C1.5040 1 1.5280 0.9720 1.5280 0.9400',
+    codepoint: 0xe069,
+    x: 0,
+    y: -1,
+    width: 1.528,
+    height: 2,
+    advance: 1.528,
     anchors: {},
   },
   noteheadWhole: {
