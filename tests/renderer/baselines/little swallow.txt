@@ -1,8 +1,8 @@
 tune 0
-bounds  width=90.718 height=91.604 top=-1.935
+bounds  width=90.718 height=91.583 top=-1.935
 systems 5
 system 0 width=90.534 originY=0.000
-  staff 0 originY=21.704
+  staff 0 originY=21.700
     staffline 0.000,2.000 -> 90.534,2.000 t=0.130
     staffline 0.000,1.000 -> 90.534,1.000 t=0.130
     staffline 0.000,0.000 -> 90.534,0.000 t=0.130
@@ -21,10 +21,10 @@ system 0 width=90.534 originY=0.000
     slur  74.190,-1.800 -> 74.961,-1.300 bulge=-0.500
     slur  79.749,-0.300 -> 80.519,-1.300 bulge=-0.500
     title x=0.000 w=0.000
-      text  38.772,-17.245 size=3.484 bold "Little Swallow"
-      text  40.151,-13.273 size=2.710 "Xiǎo yàn zi"
-      text  43.719,-9.430 size=2.710 "小燕子"
-      text  41.567,-5.358 size=2.452 italic "(China)"
+      text  38.772,-17.240 size=3.484 bold "Little Swallow"
+      text  40.151,-13.269 size=2.710 "Xiǎo yàn zi"
+      text  43.719,-9.426 size=2.710 "小燕子"
+      text  41.567,-5.354 size=2.452 italic "(China)"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -126,8 +126,8 @@ system 0 width=90.534 originY=0.000
       text  82.337,9.076 size=2.194 bold "里，"
     bar x=88.470 w=0.160
       line  88.550,-2.000 -> 88.550,2.000 t=0.160
-system 1 width=90.646 originY=31.517
-  staff 0 originY=3.866
+system 1 width=90.646 originY=31.512
+  staff 0 originY=3.862
     staffline 0.000,2.000 -> 90.646,2.000 t=0.130
     staffline 0.000,1.000 -> 90.646,1.000 t=0.130
     staffline 0.000,0.000 -> 90.646,0.000 t=0.130
@@ -238,8 +238,8 @@ system 1 width=90.646 originY=31.517
       text  83.778,9.576 size=2.194 bold "天"
     bar x=88.581 w=0.160
       line  88.661,-2.000 -> 88.661,2.000 t=0.160
-system 2 width=90.681 originY=45.696
-  staff 0 originY=3.866
+system 2 width=90.681 originY=45.687
+  staff 0 originY=3.862
     staffline 0.000,2.000 -> 90.681,2.000 t=0.130
     staffline 0.000,1.000 -> 90.681,1.000 t=0.130
     staffline 0.000,0.000 -> 90.681,0.000 t=0.130
@@ -347,8 +347,8 @@ system 2 width=90.681 originY=45.696
       text  83.765,9.326 size=2.194 bold "里"
     bar x=88.616 w=0.160
       line  88.696,-2.000 -> 88.696,2.000 t=0.160
-system 3 width=90.718 originY=59.625
-  staff 0 originY=3.866
+system 3 width=90.718 originY=59.612
+  staff 0 originY=3.862
     staffline 0.000,2.000 -> 90.718,2.000 t=0.130
     staffline 0.000,1.000 -> 90.718,1.000 t=0.130
     staffline 0.000,0.000 -> 90.718,0.000 t=0.130
@@ -458,8 +458,8 @@ system 3 width=90.718 originY=59.625
       text  84.064,9.576 size=2.194 bold "了"
     bar x=88.653 w=0.160
       line  88.733,-2.000 -> 88.733,2.000 t=0.160
-system 4 width=90.660 originY=73.804
-  staff 0 originY=3.866
+system 4 width=90.660 originY=73.787
+  staff 0 originY=3.862
     staffline 0.000,2.000 -> 90.660,2.000 t=0.130
     staffline 0.000,1.000 -> 90.660,1.000 t=0.130
     staffline 0.000,0.000 -> 90.660,0.000 t=0.130

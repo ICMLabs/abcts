@@ -260,8 +260,8 @@ system 2 width=90.323 originY=31.145
       line  68.956,0.832 -> 68.956,-2.500 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 3 width=90.323 originY=43.461
-  staff 0 originY=3.866
+system 3 width=90.323 originY=43.465
+  staff 0 originY=3.862
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -425,8 +425,8 @@ system 8 width=90.323 originY=102.387
       line  68.956,0.832 -> 68.956,-2.500 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 9 width=90.323 originY=114.942
-  staff 0 originY=3.866
+system 9 width=90.323 originY=114.947
+  staff 0 originY=3.862
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -452,8 +452,8 @@ system 9 width=90.323 originY=114.942
       line  68.956,0.832 -> 68.956,-2.500 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 10 width=90.323 originY=126.856
-  staff 0 originY=3.866
+system 10 width=90.323 originY=126.860
+  staff 0 originY=3.862
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -479,8 +479,8 @@ system 10 width=90.323 originY=126.856
       line  68.956,0.832 -> 68.956,-2.500 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 11 width=90.323 originY=138.769
-  staff 0 originY=3.866
+system 11 width=90.323 originY=138.774
+  staff 0 originY=3.862
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -508,8 +508,8 @@ system 11 width=90.323 originY=138.769
       line  68.956,0.832 -> 68.956,-2.500 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 12 width=90.323 originY=150.683
-  staff 0 originY=3.866
+system 12 width=90.323 originY=150.687
+  staff 0 originY=3.862
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -619,17 +619,17 @@ system 15 width=30.291 originY=186.148
     bar x=28.227 w=0.160
       line  28.307,-2.000 -> 28.307,2.000 t=0.160
 tune 3
-bounds  width=90.323 height=17.946 top=-1.935
+bounds  width=90.323 height=17.942 top=-1.935
 systems 1
 system 0 width=90.323 originY=0.000
-  staff 0 originY=10.075
+  staff 0 originY=10.071
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  33.123,-5.616 size=3.484 bold "S1-4 Mark Decoration Test"
+      text  33.123,-5.612 size=3.484 bold "S1-4 Mark Decoration Test"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -734,8 +734,8 @@ system 0 width=90.323 originY=0.000
       line  78.546,-0.332 -> 78.546,3.000 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 1 width=54.511 originY=23.309
-  staff 0 originY=3.866
+system 1 width=54.511 originY=23.314
+  staff 0 originY=3.862
     staffline 0.000,2.000 -> 54.511,2.000 t=0.130
     staffline 0.000,1.000 -> 54.511,1.000 t=0.130
     staffline 0.000,0.000 -> 54.511,0.000 t=0.130

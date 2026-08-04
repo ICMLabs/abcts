@@ -1,16 +1,16 @@
 tune 0
-bounds  width=90.323 height=45.717 top=-1.935
+bounds  width=90.323 height=45.713 top=-1.935
 systems 3
 system 0 width=90.323 originY=0.000
-  staff 0 originY=14.019
+  staff 0 originY=14.014
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  31.325,-9.559 size=3.484 bold "S4-1 Bars Repeats and Endings"
-      text  30.644,-5.358 size=2.452 italic "Test - from Gonzato guide Ch.2"
+      text  31.325,-9.555 size=3.484 bold "S4-1 Bars Repeats and Endings"
+      text  30.644,-5.354 size=2.452 italic "Test - from Gonzato guide Ch.2"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -50,7 +50,7 @@ system 0 width=90.323 originY=0.000
       line  87.221,-2.000 -> 87.221,2.000 t=0.160
       line  87.951,-2.000 -> 87.951,2.000 t=0.500
 system 1 width=90.323 originY=19.066
-  staff 0 originY=6.866
+  staff 0 originY=6.862
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -117,7 +117,7 @@ system 1 width=90.323 originY=19.066
       line  87.951,-2.000 -> 87.951,2.000 t=0.160
       line  88.511,-2.000 -> 88.511,2.000 t=0.160
 system 2 width=57.221 originY=33.979
-  staff 0 originY=3.866
+  staff 0 originY=3.862
     staffline 0.000,2.000 -> 57.221,2.000 t=0.130
     staffline 0.000,1.000 -> 57.221,1.000 t=0.130
     staffline 0.000,0.000 -> 57.221,0.000 t=0.130
@@ -160,10 +160,10 @@ system 2 width=57.221 originY=33.979
       line  54.333,-2.000 -> 54.333,2.000 t=0.160
       line  55.063,-2.000 -> 55.063,2.000 t=0.500
 tune 1
-bounds  width=90.323 height=72.544 top=-1.935
+bounds  width=90.323 height=72.540 top=-1.935
 systems 5
 system 0 width=90.189 originY=0.000
-  staff 0 originY=17.019
+  staff 0 originY=17.014
     staffline 0.000,2.000 -> 90.189,2.000 t=0.130
     staffline 0.000,1.000 -> 90.189,1.000 t=0.130
     staffline 0.000,0.000 -> 90.189,0.000 t=0.130
@@ -177,8 +177,8 @@ system 0 width=90.189 originY=0.000
     voltatext 39.245,-2.700 "1"
     voltatext 66.627,-2.700 "2"
     title x=0.000 w=0.000
-      text  32.020,-12.559 size=3.484 bold "S4-2 Extended Volta Endings"
-      text  39.111,-8.358 size=2.452 italic "Test Fixture"
+      text  32.020,-12.555 size=3.484 bold "S4-2 Extended Volta Endings"
+      text  39.111,-8.354 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -234,7 +234,7 @@ system 0 width=90.189 originY=0.000
     bar x=88.125 w=0.160
       line  88.205,-2.000 -> 88.205,2.000 t=0.160
 system 1 width=90.323 originY=22.066
-  staff 0 originY=6.866
+  staff 0 originY=6.862
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -322,7 +322,7 @@ system 1 width=90.323 originY=22.066
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
 system 2 width=90.323 originY=33.979
-  staff 0 originY=6.866
+  staff 0 originY=6.862
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -386,7 +386,7 @@ system 2 width=90.323 originY=33.979
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
 system 3 width=90.323 originY=48.893
-  staff 0 originY=3.866
+  staff 0 originY=3.862
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -430,7 +430,7 @@ system 3 width=90.323 originY=48.893
       line  87.221,-2.000 -> 87.221,2.000 t=0.160
       line  87.951,-2.000 -> 87.951,2.000 t=0.500
 system 4 width=90.323 originY=57.806
-  staff 0 originY=6.866
+  staff 0 originY=6.862
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -498,17 +498,17 @@ system 4 width=90.323 originY=57.806
       line  87.435,-2.000 -> 87.435,2.000 t=0.160
       line  88.165,-2.000 -> 88.165,2.000 t=0.500
 tune 2
-bounds  width=90.323 height=17.446 top=-1.935
+bounds  width=90.323 height=17.442 top=-1.935
 systems 1
 system 0 width=90.323 originY=0.000
-  staff 0 originY=10.075
+  staff 0 originY=10.071
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  36.290,-5.616 size=3.484 bold "S4-3 Bars and Rests"
+      text  36.290,-5.612 size=3.484 bold "S4-3 Bars and Rests"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=2.387

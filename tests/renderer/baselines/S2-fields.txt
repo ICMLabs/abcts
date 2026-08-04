@@ -1,27 +1,27 @@
 tune 0
-bounds  width=57.324 height=29.232 top=-1.935
+bounds  width=57.324 height=29.228 top=-1.935
 systems 1
 system 0 width=57.324 originY=0.000
-  staff 0 originY=21.361
+  staff 0 originY=21.357
     staffline 0.000,2.000 -> 57.324,2.000 t=0.130
     staffline 0.000,1.000 -> 57.324,1.000 t=0.130
     staffline 0.000,0.000 -> 57.324,0.000 t=0.130
     staffline 0.000,-1.000 -> 57.324,-1.000 t=0.130
     staffline 0.000,-2.000 -> 57.324,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  15.982,-16.902 size=3.484 bold "S2-1 Title and Header Fields"
-      text  21.773,-12.930 size=2.710 "A Subtitle Here"
-      text  26.081,-8.858 size=2.452 italic "March"
-      text  12.079,-8.858 size=2.452 italic "John Composer (Country of Origin)"
+      text  15.982,-16.898 size=3.484 bold "S2-1 Title and Header Fields"
+      text  21.773,-12.926 size=2.710 "A Subtitle Here"
+      text  26.081,-8.854 size=2.452 italic "March"
+      text  12.079,-8.854 size=2.452 italic "John Composer (Country of Origin)"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
       glyph timeSig4 6.329,-1.000
       glyph timeSig4 6.329,1.000
     tempo x=9.141 w=0.000
-      glyph noteheadBlack 9.141,-4.866 scale=0.750
-      line  10.091,-4.991 -> 10.091,-6.741 t=0.120
-      text  10.736,-4.528 size=2.581 "= 120"
+      glyph noteheadBlack 9.141,-4.862 scale=0.750
+      line  10.091,-4.987 -> 10.091,-6.737 t=0.120
+      text  10.736,-4.523 size=2.581 "= 120"
     note@-6 x=9.141 w=5.474
       glyph noteheadBlack 9.141,3.000
       line  8.741,3.000 -> 10.807,3.000 t=0.160
@@ -53,24 +53,24 @@ system 0 width=57.324 originY=0.000
       line  54.436,-2.000 -> 54.436,2.000 t=0.160
       line  55.166,-2.000 -> 55.166,2.000 t=0.500
 tune 1
-bounds  width=90.323 height=58.647 top=-1.935
+bounds  width=90.323 height=58.634 top=-1.935
 systems 3
 system 0 width=90.323 originY=0.000
-  staff 0 originY=16.465
+  staff 0 originY=16.461
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  35.957,-12.006 size=3.484 bold "S2-2 Text Placement"
+      text  35.957,-12.002 size=3.484 bold "S2-2 Text Placement"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     tempo x=6.329 w=0.000
-      glyph noteheadBlack 20.238,-7.756 scale=0.750
-      line  21.188,-7.881 -> 21.188,-9.631 t=0.120
-      text  6.329,-7.417 size=2.581 bold "Dolcemente"
-      text  21.833,-7.417 size=2.581 "= 60"
+      glyph noteheadBlack 20.238,-7.752 scale=0.750
+      line  21.188,-7.877 -> 21.188,-9.627 t=0.120
+      text  6.329,-7.413 size=2.581 bold "Dolcemente"
+      text  21.833,-7.413 size=2.581 "= 60"
     note@-6 x=6.329 w=5.474
       glyph noteheadBlack 6.329,3.000
       line  5.929,3.000 -> 7.995,3.000 t=0.160
@@ -85,11 +85,11 @@ system 0 width=90.323 originY=0.000
     note@1 x=67.776 w=5.474
       glyph noteheadBlack 67.776,-0.500
       line  67.776,-0.332 -> 67.776,3.000 t=0.120
-      text  65.594,-4.692 size=2.065 "above"
+      text  65.594,-4.687 size=2.065 "above"
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 1 width=90.323 originY=22.273
-  staff 0 originY=6.756
+system 1 width=90.323 originY=22.269
+  staff 0 originY=6.752
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -110,13 +110,13 @@ system 1 width=90.323 originY=22.273
     note@-1 x=54.322 w=7.742
       glyph noteheadHalf 54.322,0.500
       line  55.502,0.332 -> 55.502,-3.000 t=0.120
-      text  47.752,-4.692 size=2.065 "around the note"
+      text  47.752,-4.687 size=2.065 "around the note"
       text  53.035,0.000 size=2.065 "("
       text  56.260,0.000 size=2.065 ")"
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 2 width=33.304 originY=33.552
-  staff 0 originY=10.256
+system 2 width=33.304 originY=33.543
+  staff 0 originY=10.252
     staffline 0.000,2.000 -> 33.304,2.000 t=0.130
     staffline 0.000,1.000 -> 33.304,1.000 t=0.130
     staffline 0.000,0.000 -> 33.304,0.000 t=0.130
@@ -125,7 +125,7 @@ system 2 width=33.304 originY=33.552
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     tempo x=6.329 w=0.000
-      text  6.329,-7.417 size=2.581 bold "sostenuto"
+      text  6.329,-7.413 size=2.581 bold "sostenuto"
     note@-6 x=6.329 w=5.474
       glyph noteheadBlack 6.329,3.000
       line  5.929,3.000 -> 7.995,3.000 t=0.160
@@ -142,21 +142,21 @@ system 2 width=33.304 originY=33.552
     note@1 x=22.752 w=5.474
       glyph noteheadBlack 22.752,-0.500
       line  22.752,-0.332 -> 22.752,3.000 t=0.120
-      text  15.402,-4.692 size=2.065 "-15,8.5 anywhere"
+      text  15.402,-4.687 size=2.065 "-15,8.5 anywhere"
     bar x=28.227 w=0.160
       line  28.307,-2.000 -> 28.307,2.000 t=0.160
 tune 2
-bounds  width=90.323 height=37.469 top=-1.935
+bounds  width=90.323 height=37.465 top=-1.935
 systems 2
 system 0 width=90.323 originY=0.000
-  staff 0 originY=10.075
+  staff 0 originY=10.071
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  36.017,-5.616 size=3.484 bold "S2-3 BeginText Test"
+      text  36.017,-5.612 size=3.484 bold "S2-3 BeginText Test"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -192,15 +192,15 @@ system 0 width=90.323 originY=0.000
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
 system 1 width=54.511 originY=18.123
-  staff 0 originY=11.475
+  staff 0 originY=11.471
     staffline 0.000,2.000 -> 54.511,2.000 t=0.130
     staffline 0.000,1.000 -> 54.511,1.000 t=0.130
     staffline 0.000,0.000 -> 54.511,0.000 t=0.130
     staffline 0.000,-1.000 -> 54.511,-1.000 t=0.130
     staffline 0.000,-2.000 -> 54.511,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  7.536,-7.411 size=2.710 "This is a text block between two music lines."
-      text  5.583,-4.159 size=2.710 "It spans multiple lines to test the block rendering."
+      text  7.536,-7.407 size=2.710 "This is a text block between two music lines."
+      text  5.583,-4.155 size=2.710 "It spans multiple lines to test the block rendering."
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     note@1 x=6.329 w=5.474

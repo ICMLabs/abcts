@@ -136,19 +136,23 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // fixtures whose dx is dominated by a GOLDEN artefact — recorded rather than reverted,
     // because the width is abcjs's own and the same change took ragtime 55.32 -> 53.56 and
     // five more harvested fixtures inside their thresholds.
-    'frere-jacques': { heads: 45, dy: 0.0, dx: 22.64, oy: 0.0, ox: -3.53 },
+    // dx 22.64 -> 21.81 on the declared-height fix.
+    'frere-jacques': { heads: 45, dy: 0.0, dx: 21.81, oy: 0.0, ox: -3.56 },
     'full-song-template': { heads: 20, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     // dx 3.85 -> 1.40 when a REST became a rod. abcjs's `getMinWidth` is `child.w`
     // whatever the type and a rest's `w` is its glyph — 7.534 for an eighth — where ours
     // was a flat 0, so a compressed line let the note after a rest slide onto it.
     // then 1.40 -> 0.23 when `Bb` became `B♭`: `♭` is a full em in the chord font where
     // `b` is 0.556, and the mark is CENTRED on the note, so half of that was horizontal.
-    'happy-birthday': { heads: 25, dy: 0.0, dx: 0.23, oy: 0.0, ox: -0.49 },
+    // dx 0.23 -> 0.12 and ox -0.49 -> 0.0 when every DECLARED box became abcjs's
+    // published `h` rather than the derived ink box.
+    'happy-birthday': { heads: 25, dy: 0.0, dx: 0.12, oy: 0.0, ox: 0.0 },
     // dy 1.92 -> 0.32 and oy -0.58 -> 0.16 when `anchorLyrics` stopped measuring its own
     // ink and took `verticalExtent`'s. dx/ox are the goldens' ASCII width table, not us.
     // dx 24.19 -> 21.69 when `calcWidth` landed: its 73 Chinese characters measure the
     // golden generator's flat 8 rather than a full em, which is what the goldens do.
-    'little swallow': { heads: 89, dy: 0.32, dx: 21.69, oy: 0.16, ox: -6.29 },
+    // dy 0.32 -> 0.21, oy 0.16 -> 0.06 and ox -6.29 -> -5.28 on the declared-height fix.
+    'little swallow': { heads: 89, dy: 0.21, dx: 21.69, oy: 0.06, ox: -5.28 },
     'multi-voice-lyrics-two-voices': { heads: 16, dy: 0.07, dx: 0.0, oy: 0.05, ox: 0.0 },
     'multi-voice-rest-collision': { heads: 7, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'multi-voice-rest-placement': { heads: 14, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
@@ -174,8 +178,10 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // dy 11.6 -> 0.02 and dx 32.5 -> 1.99, same cause. What is left is the grace glyph's
     // own width: a uniform 1.99 on the graces themselves, exactly as the note predicting
     // the "artefact" said it would be once the order was right.
-    'vree-grace-notes': { heads: 7, dy: 0.02, dx: 1.99, oy: 0.03, ox: -1.14 },
-    'vree-sharps': { heads: 4, dy: 0.0, dx: 0.0, oy: 0.06, ox: 0.0 },
+    'vree-grace-notes': { heads: 7, dy: 0.02, dx: 1.99, oy: 0.0, ox: -1.14 },
+    // oy 0.06 -> 0.0: a sharp DECLARES 20.15 where its ink box is 20.19, and a key
+    // signature of them was the extra 0.04px on top of the clef's systemic 0.03.
+    'vree-sharps': { heads: 4, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'vree-slurs-and-triplets': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'vree-ties-across-bars': { heads: 4, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     // dx 5.35 -> 1.25 on the accidental extents.

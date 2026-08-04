@@ -1,15 +1,15 @@
 tune 0
-bounds  width=43.710 height=20.946 top=-1.935
+bounds  width=43.710 height=20.942 top=-1.935
 systems 1
 system 0 width=43.710 originY=0.000
-  staff 0 originY=10.075
+  staff 0 originY=10.071
     staffline 0.000,2.000 -> 43.710,2.000 t=0.130
     staffline 0.000,1.000 -> 43.710,1.000 t=0.130
     staffline 0.000,0.000 -> 43.710,0.000 t=0.130
     staffline 0.000,-1.000 -> 43.710,-1.000 t=0.130
     staffline 0.000,-2.000 -> 43.710,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  13.199,-5.616 size=3.484 bold "Same Staff Reorder"
+      text  13.199,-5.612 size=3.484 bold "Same Staff Reorder"
     voiceName x=1.935 w=0.000
       text  1.935,-0.439 size=2.194 bold "Harmony"
     clef x=12.542 w=3.103

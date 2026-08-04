@@ -1,16 +1,16 @@
 tune 0
-bounds  width=57.324 height=21.890 top=-1.935
+bounds  width=57.324 height=21.885 top=-1.935
 systems 1
 system 0 width=57.324 originY=0.000
-  staff 0 originY=14.019
+  staff 0 originY=14.014
     staffline 0.000,2.000 -> 57.324,2.000 t=0.130
     staffline 0.000,1.000 -> 57.324,1.000 t=0.130
     staffline 0.000,0.000 -> 57.324,0.000 t=0.130
     staffline 0.000,-1.000 -> 57.324,-1.000 t=0.130
     staffline 0.000,-2.000 -> 57.324,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  20.458,-9.559 size=3.484 bold "S-missing-1 xstem"
-      text  22.678,-5.358 size=2.452 italic "Test Fixture"
+      text  20.458,-9.555 size=3.484 bold "S-missing-1 xstem"
+      text  22.678,-5.354 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -98,18 +98,18 @@ system 0 width=57.324 originY=0.000
       line  54.436,-2.000 -> 54.436,2.000 t=0.160
       line  55.166,-2.000 -> 55.166,2.000 t=0.500
 tune 2
-bounds  width=57.324 height=21.890 top=-1.935
+bounds  width=57.324 height=21.885 top=-1.935
 systems 1
 system 0 width=57.324 originY=0.000
-  staff 0 originY=14.019
+  staff 0 originY=14.014
     staffline 0.000,2.000 -> 57.324,2.000 t=0.130
     staffline 0.000,1.000 -> 57.324,1.000 t=0.130
     staffline 0.000,0.000 -> 57.324,0.000 t=0.130
     staffline 0.000,-1.000 -> 57.324,-1.000 t=0.130
     staffline 0.000,-2.000 -> 57.324,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  16.040,-9.559 size=3.484 bold "S-missing-3 Beam Tremolos"
-      text  22.678,-5.358 size=2.452 italic "Test Fixture"
+      text  16.040,-9.555 size=3.484 bold "S-missing-3 Beam Tremolos"
+      text  22.678,-5.354 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -154,18 +154,18 @@ system 0 width=57.324 originY=0.000
       line  54.436,-2.000 -> 54.436,2.000 t=0.160
       line  55.166,-2.000 -> 55.166,2.000 t=0.500
 tune 3
-bounds  width=90.323 height=22.339 top=-1.935
+bounds  width=90.323 height=22.335 top=-1.935
 systems 1
 system 0 width=90.323 originY=0.000
-  staff 0 originY=14.019
+  staff 0 originY=14.014
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  24.188,-9.559 size=3.484 bold "S-missing-4 Editorial and Courtesy Accidentals"
-      text  39.177,-5.358 size=2.452 italic "Test Fixture"
+      text  24.188,-9.555 size=3.484 bold "S-missing-4 Editorial and Courtesy Accidentals"
+      text  39.177,-5.354 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522

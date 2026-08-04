@@ -1,8 +1,8 @@
 tune 0
-bounds  width=90.323 height=53.940 top=-1.935
+bounds  width=90.323 height=53.936 top=-1.935
 systems 2
 system 0 width=90.323 originY=0.000
-  staff 0 originY=14.019
+  staff 0 originY=14.014
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -11,8 +11,8 @@ system 0 width=90.323 originY=0.000
     beam   63.525,3.250 -> 68.646,3.750 t=0.500
     beam   76.601,3.250 -> 81.723,3.750 t=0.500
     title x=0.000 w=0.000
-      text  34.342,-9.559 size=3.484 bold "Brother John - improved"
-      text  39.484,-5.358 size=2.452 italic "Traditional"
+      text  34.342,-9.555 size=3.484 bold "Brother John - improved"
+      text  39.484,-5.354 size=2.452 italic "Traditional"
     voiceName x=1.935 w=0.000
       text  1.935,0.768 size=2.194 bold "Soprano"
     clef x=12.665 w=3.103
@@ -113,7 +113,7 @@ system 0 width=90.323 originY=0.000
       line  87.024,1.332 -> 87.024,-2.000 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-  staff 1 originY=24.212
+  staff 1 originY=24.208
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -188,7 +188,7 @@ system 0 width=90.323 originY=0.000
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
 system 1 width=90.323 originY=32.259
-  staff 0 originY=3.866
+  staff 0 originY=3.862
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -236,7 +236,7 @@ system 1 width=90.323 originY=32.259
       glyph restWhole 71.870,-1.000
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-  staff 1 originY=14.060
+  staff 1 originY=14.056
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130

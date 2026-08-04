@@ -1,15 +1,15 @@
 tune 0
-bounds  width=26.561 height=17.446 top=-1.935
+bounds  width=26.561 height=17.442 top=-1.935
 systems 1
 system 0 width=26.561 originY=0.000
-  staff 0 originY=10.075
+  staff 0 originY=10.071
     staffline 0.000,2.000 -> 26.561,2.000 t=0.130
     staffline 0.000,1.000 -> 26.561,1.000 t=0.130
     staffline 0.000,0.000 -> 26.561,0.000 t=0.130
     staffline 0.000,-1.000 -> 26.561,-1.000 t=0.130
     staffline 0.000,-2.000 -> 26.561,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  8.497,-5.616 size=3.484 bold "Treble clef"
+      text  8.497,-5.612 size=3.484 bold "Treble clef"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522

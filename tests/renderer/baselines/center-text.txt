@@ -1,17 +1,17 @@
 tune 0
-bounds  width=90.323 height=24.892 top=-1.935
+bounds  width=90.323 height=24.888 top=-1.935
 systems 1
 system 0 width=90.323 originY=0.000
-  staff 0 originY=17.021
+  staff 0 originY=17.017
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  35.714,-12.562 size=3.484 bold "Center Directive Test"
-      text  39.177,-8.361 size=2.452 italic "Test Fixture"
-      text  29.621,-5.135 size=2.710 "This is centered text above the tune"
+      text  35.714,-12.558 size=3.484 bold "Center Directive Test"
+      text  39.177,-8.356 size=2.452 italic "Test Fixture"
+      text  29.621,-5.131 size=2.710 "This is centered text above the tune"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522

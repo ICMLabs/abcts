@@ -118,7 +118,11 @@ const WITHIN: Readonly<Record<string, number>> = {
   // `%%jazzchords` SETS THE MODIFIER AND THE BASS AS NESTED TSPANS, and the generator
   // counts each as a whole LINE of height — `"x/C"` measures three lines and its chord
   // lane reserves 38.4px more. 38.37 -> 0.07 on that one rule.
-  '0.05': 115,
+  // EVERY DECLARED BOX IS THE PUBLISHED `h`, NOT THE DERIVED INK BOX. The G clef declares
+  // 57.057px against an ink box of 57.09 and a sharp declares 20.15 against 20.19 — 0.03
+  // and 0.04px, a fiftieth of a staff space each, and between them the SYSTEMIC `oy` that
+  // sat under every fixture in this corpus. Eleven fixtures came off the table on it.
+  '0.05': 125,
   '1': 131,
   '5': 145,
   '25': 170,

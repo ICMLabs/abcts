@@ -1,15 +1,15 @@
 tune 0
-bounds  width=56.420 height=17.946 top=-1.935
+bounds  width=56.420 height=17.942 top=-1.935
 systems 1
 system 0 width=56.420 originY=0.000
-  staff 0 originY=10.075
+  staff 0 originY=10.071
     staffline 0.000,2.000 -> 56.420,2.000 t=0.130
     staffline 0.000,1.000 -> 56.420,1.000 t=0.130
     staffline 0.000,0.000 -> 56.420,0.000 t=0.130
     staffline 0.000,-1.000 -> 56.420,-1.000 t=0.130
     staffline 0.000,-2.000 -> 56.420,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  24.093,-5.616 size=3.484 bold "Simple C"
+      text  24.093,-5.612 size=3.484 bold "Simple C"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -45,17 +45,17 @@ system 0 width=56.420 originY=0.000
     bar x=54.356 w=0.160
       line  54.436,-2.000 -> 54.436,2.000 t=0.160
 tune 1
-bounds  width=90.323 height=17.473 top=-1.935
+bounds  width=90.323 height=17.469 top=-1.935
 systems 1
 system 0 width=90.323 originY=0.000
-  staff 0 originY=10.075
+  staff 0 originY=10.071
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  37.573,-5.616 size=3.484 bold "Twinkle Twinkle"
+      text  37.573,-5.612 size=3.484 bold "Twinkle Twinkle"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -115,17 +115,17 @@ system 0 width=90.323 originY=0.000
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
 tune 2
-bounds  width=60.098 height=17.946 top=-1.935
+bounds  width=60.098 height=17.942 top=-1.935
 systems 1
 system 0 width=60.098 originY=0.000
-  staff 0 originY=10.075
+  staff 0 originY=10.071
     staffline 0.000,2.000 -> 60.098,2.000 t=0.130
     staffline 0.000,1.000 -> 60.098,1.000 t=0.130
     staffline 0.000,0.000 -> 60.098,0.000 t=0.130
     staffline 0.000,-1.000 -> 60.098,-1.000 t=0.130
     staffline 0.000,-2.000 -> 60.098,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  26.605,-5.616 size=3.484 bold "D Scale"
+      text  26.605,-5.612 size=3.484 bold "D Scale"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=2.387

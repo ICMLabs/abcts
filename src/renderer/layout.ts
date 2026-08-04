@@ -1303,7 +1303,11 @@ function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null 
   // else, stems included. So that 0.0235 of a space was the whole vertical offset on eight
   // fixtures: they sat a uniform 0.184px high, staff lines and noteheads together.
   const clefBottom = 2 * clef.line + (CLEF_PITCH_OFFSET[clef.shape] ?? 0)
-  const clefTop = clefBottom + 2 * (glyphsFor(strict).get(name)?.height ?? 0)
+  // …AND THE HEIGHT IN THAT BOX IS THE PUBLISHED `h`, NOT THE INK BOX.
+  // `symbolHeightInPitches` reads `glyphs[symbol].h` (`glyphs.js:161-164`), which for the
+  // G clef is 57.057px against a derived ink box of 57.09 — 0.033px, a two-hundredth of a
+  // staff space, and the SYSTEMIC `oy` that every fixture in the harvested corpus carried.
+  const clefTop = clefBottom + 2 * (glyphsFor(strict).get(name)?.declaredHeight ?? 0)
   const glyphs: PlacedGlyph[] = [
     {
       ...glyphAt(name, x + ENGRAVE.clefIndent, step),
@@ -1393,11 +1397,11 @@ function digitGlyphs(
     // else above it that was the whole of the staff's top: `score-reorder`'s bass staff
     // sat 7.3px low against abcjs, which puts `staff.top` at exactly 10.0 there — the top
     // line, set by a barline, with the time signature under it.
-    const glyph = glyphsFor(strict).get(name) ?? GLYPHS[name]
+    const glyph = glyphsFor(strict).get(name) ?? bravuraDeclared(name)
     const y = stepToY(step)
     const placed: PlacedGlyph = {
       ...glyphAt(name, cursor, step),
-      reserve: [y - glyph.height / 2, y + glyph.height / 2],
+      reserve: [y - glyph.declaredHeight / 2, y + glyph.declaredHeight / 2],
     }
     cursor += glyphsFor(strict).advance(name)
     return placed
@@ -1509,6 +1513,18 @@ export function keyFifths(key: KeySignature): number {
  * octave to avoid ledger lines, and no single shift reproduces that. This formula puts
  * them an octave high. No corpus fixture uses a tenor key signature; fix it when one does.
  */
+/**
+ * Last-resort metrics for a glyph NEITHER table carries — zeros rather than a crash.
+ *
+ * Both tables already fall back to Bravura, so this only fires on a name that is in
+ * neither, which the glyph-map test asserts cannot happen. It exists so the reserve sites
+ * can read `declaredHeight` unconditionally.
+ */
+const bravuraDeclared = (name: GlyphName) => {
+  const g = GLYPHS[name]
+  return { height: g?.height ?? 0, declaredHeight: g?.height ?? 0 }
+}
+
 function keySignatureShift(clef: Clef): number {
   const delta = middleLineIndex(defaultClef) - middleLineIndex(clef)
   const wrapped = ((delta % 7) + 7) % 7
@@ -1529,10 +1545,12 @@ const KEY_ACCIDENTAL_FUDGE: Partial<Record<GlyphName, number>> = {
 }
 
 function keyAccidentalReserve(name: GlyphName, step: number, strict: boolean): [number, number] {
-  const glyph = glyphsFor(strict).get(name) ?? GLYPHS[name]
+  const glyph = glyphsFor(strict).get(name) ?? bravuraDeclared(name)
   const fudge = KEY_ACCIDENTAL_FUDGE[name] ?? 0
-  // `symbolHeightInPitches` is `h / STEP`, and our height is in staff spaces — twice that.
-  return [stepToY(step + 2 * glyph.height + fudge), stepToY(step + fudge)]
+  // `symbolHeightInPitches` is the PUBLISHED `h / STEP`, and ours is in staff spaces —
+  // twice that. The published figure, not the ink box: a sharp declares 20.15 against an
+  // ink box of 20.19, which is the extra 0.04px a sharp key signature was adding.
+  return [stepToY(step + 2 * glyph.declaredHeight + fudge), stepToY(step + fudge)]
 }
 
 function layoutKeySignature(
