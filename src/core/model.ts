@@ -124,9 +124,27 @@ export interface PitchClass {
  */
 export type Mode = 'major' | 'mixolydian' | 'dorian' | 'minor' | 'phrygian' | 'locrian' | 'lydian'
 
+/** One accidental written explicitly on a `K:` field, after the key and mode. */
+export interface KeyAccidental {
+  readonly step: DiatonicStep
+  /** In QUARTER tones, so a half-sharp is 1 and a sharp is 2 — see `KeySignature.extra`. */
+  readonly quarters: number
+}
+
 export interface KeySignature {
   readonly tonic: PitchClass
   readonly mode: Mode
+  /**
+   * `K: C ^/f _/B _A ^D` — accidentals written on the field itself, printed in the key
+   * signature after the mode's own and inherited by every note on those steps.
+   *
+   * abcjs reads them with `getKeyAccidentals2` (`abc_tokenizer.js:283-340`), which accepts
+   * `^`, `^^`, `^/`, `_`, `__`, `_/` and `=` before a note letter, and then REPLACES a
+   * standard accidental on the same letter or appends
+   * (`abc_parse_key_voice.js:320-350`). Held in QUARTER tones because the field can write
+   * quarter sharps and flats that `Accidental` cannot.
+   */
+  readonly extra?: readonly KeyAccidental[]
   /**
    * `K:none` — no key signature at all. Distinct from C major, which also alters nothing
    * but IS a key: a renderer draws nothing here, and no step is implicitly altered.

@@ -38,6 +38,7 @@ import {
   type FreeTextBlock,
   isCompoundMeter,
   isStrict,
+  type KeyAccidental,
   type KeySignature,
   type LyricFont,
   type Measure,
@@ -141,11 +142,47 @@ function parseKey(content: string): KeySignature {
 
   const rest = spec.slice(i).toLowerCase()
   const mode = MODES.find(([prefix]) => rest.startsWith(prefix))?.[1] ?? 'major'
+  const extra = parseKeyAccidentals(content)
   return {
     tonic: { step: head.toLowerCase() as DiatonicStep, accidental },
     mode,
     none: false,
+    ...(extra.length > 0 ? { extra } : {}),
   }
+}
+
+/**
+ * `^/f`, `_B`, `__A`, `=c` — accidentals written on a `K:` field after the key and mode.
+ *
+ * abcjs's `getKeyAccidentals2` (`abc_tokenizer.js:283-340`): `^` optionally doubled or
+ * followed by `/`, likewise `_`, or a bare `=`, then a note letter. In QUARTER tones,
+ * because the field can write a half-sharp that `Accidental` has no value for.
+ *
+ * Everything else on the field — `clef=`, `octave=`, `stafflines=` — carries no `^` or `_`
+ * before a letter, so a scan over the whole value cannot collide with it. `middle=` is the
+ * one to watch and it has none either.
+ */
+function parseKeyAccidentals(content: string): KeyAccidental[] {
+  const out: KeyAccidental[] = []
+  for (const m of content.matchAll(/(\^\^|\^\/|\^|__|_\/|_|=)([A-Ga-g])(?![A-Za-z=])/g)) {
+    const sign = m[1] ?? ''
+    const quarters =
+      sign === '^^'
+        ? 4
+        : sign === '^/'
+          ? 1
+          : sign === '^'
+            ? 2
+            : sign === '__'
+              ? -4
+              : sign === '_/'
+                ? -1
+                : sign === '_'
+                  ? -2
+                  : 0
+    out.push({ step: (m[2] ?? 'c').toLowerCase() as DiatonicStep, quarters })
+  }
+  return out
 }
 
 function parseMeter(content: string): Meter | null {

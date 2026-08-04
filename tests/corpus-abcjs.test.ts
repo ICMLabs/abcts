@@ -104,10 +104,11 @@ const WITHIN: Readonly<Record<string, number>> = {
   // gate pairs the i-th notehead, so playing order read as a position error on every
   // graced fixture — and ragtime's dy 58.1, filed for weeks as unchaseable, was this.
   // `%%musicspace` — the gap before the FIRST staff group, in points times 4/3.
+  // EXPLICIT KEY ACCIDENTALS — `K: C ^/f _/B _A ^D` prints them in the signature.
   '0.05': 108,
   '1': 123,
   '5': 138,
-  '25': 165,
+  '25': 166,
 }
 
 const names = readdirSync(fixturesDir)

@@ -1409,6 +1409,28 @@ function layoutMeter(x: number, numerator: number, denominator: number): LayoutE
  */
 const SHARP_STEPS = [4, 1, 5, 2, -1, 3, 0] as const
 const FLAT_STEPS = [0, 3, -1, 2, -2, 1, -3] as const
+/** The order the two signatures are written in — F C G D A E B, and its mirror. */
+const SHARP_ORDER: readonly DiatonicStep[] = ['f', 'c', 'g', 'd', 'a', 'e', 'b']
+const FLAT_ORDER: readonly DiatonicStep[] = ['b', 'e', 'a', 'd', 'g', 'c', 'f']
+/**
+ * Where a letter's key accidental sits, which depends on the SIGN: `g` is step 5 as a
+ * sharp and −2 as a flat, because the two signatures are written in opposite octaves.
+ */
+const keyStepOf = (letter: DiatonicStep, sharp: boolean): number =>
+  sharp
+    ? (SHARP_STEPS[SHARP_ORDER.indexOf(letter)] ?? 0)
+    : (FLAT_STEPS[FLAT_ORDER.indexOf(letter)] ?? 0)
+
+/** A `K:` field's explicit accidental, in QUARTER tones, to the glyph abcjs draws. */
+const KEY_ACCIDENTAL_GLYPH: Readonly<Record<number, GlyphName>> = {
+  [-4]: 'accidentalDoubleFlat',
+  [-2]: 'accidentalFlat',
+  [-1]: 'accidentalQuarterToneFlatStein',
+  [0]: 'accidentalNatural',
+  [1]: 'accidentalQuarterToneSharpStein',
+  [2]: 'accidentalSharp',
+  [4]: 'accidentalDoubleSharp',
+}
 
 /** Position on the circle of fifths for a natural step: F=-1, C=0, G=1, D=2 … */
 const NATURAL_FIFTHS: Readonly<Record<DiatonicStep, number>> = {
@@ -1496,30 +1518,53 @@ function layoutKeySignature(
   strict = true,
 ): LayoutElement | null {
   const fifths = keyFifths(key)
-  if (fifths === 0) return null // C major and K:none both draw nothing.
-
   const shift = keySignatureShift(clef)
   const sharps = fifths > 0
-  const steps = (sharps ? SHARP_STEPS : FLAT_STEPS)
-    .slice(0, Math.abs(fifths))
-    .map((step) => step + shift)
   const name: GlyphName = sharps ? 'accidentalSharp' : 'accidentalFlat'
-  const pitch = glyphsFor(strict).advance(name) + ENGRAVE.keySignatureGap
+  const written: { name: GlyphName; step: number; letter: DiatonicStep }[] = (
+    sharps ? SHARP_ORDER : FLAT_ORDER
+  )
+    .slice(0, Math.abs(fifths))
+    .map((letter) => ({ name, step: keyStepOf(letter, sharps) + shift, letter }))
+
+  // EXPLICIT ACCIDENTALS on the field REPLACE a standard one on the same letter, or are
+  // appended (`abc_parse_key_voice.js:320-350`). Their own position follows the accidental's
+  // SIGN, since a sharp and a flat sit an octave apart for several letters — `g` is step 5
+  // sharp and −2 flat.
+  for (const acc of key.extra ?? []) {
+    const glyph = KEY_ACCIDENTAL_GLYPH[acc.quarters] ?? 'accidentalNatural'
+    const entry = {
+      name: glyph,
+      step: keyStepOf(acc.step, acc.quarters > 0) + shift,
+      letter: acc.step,
+    }
+    const at = written.findIndex((w) => w.letter === acc.step)
+    if (at >= 0) written[at] = entry
+    else written.push(entry)
+  }
+  if (written.length === 0) return null // C major and K:none both draw nothing.
+
+  let cursor = x
+  const glyphs: PlacedGlyph[] = written.map((w) => {
+    const at = cursor
+    cursor += glyphsFor(strict).advance(w.name) + ENGRAVE.keySignatureGap
+    return {
+      ...glyphAt(w.name, at, w.step),
+      // A KEY-SIGNATURE ACCIDENTAL RESERVES A DECLARED BOX TOO — abcjs's
+      // `{ top: verticalPos + symbolHeightInPitches + fudge, bottom: verticalPos + fudge }`
+      // (`create-key-signature.js:25`), with `fudge` a per-accidental constant: -3 for a
+      // sharp, -1.2 for a flat. Its height is in PITCHES, which are our steps.
+      reserve: keyAccidentalReserve(w.name, w.step, strict),
+    }
+  })
 
   return {
     type: 'keySignature',
     x,
     // No trailing gap: the signature ends at the last glyph's ink.
-    width: steps.length * pitch - ENGRAVE.keySignatureGap,
+    width: cursor - x - ENGRAVE.keySignatureGap,
     staffSteps: [],
-    glyphs: steps.map((step, i) => ({
-      ...glyphAt(name, x + i * pitch, step),
-      // A KEY-SIGNATURE ACCIDENTAL RESERVES A DECLARED BOX TOO — abcjs's
-      // `{ top: verticalPos + symbolHeightInPitches + fudge, bottom: verticalPos + fudge }`
-      // (`create-key-signature.js:25`), with `fudge` a per-accidental constant: -3 for a
-      // sharp, -1.2 for a flat. Its height is in PITCHES, which are our steps.
-      reserve: keyAccidentalReserve(name, step, strict),
-    })),
+    glyphs,
     lines: [],
     texts: [],
   }
