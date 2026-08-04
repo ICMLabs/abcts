@@ -450,24 +450,38 @@ function shiftMeasure(measure: Measure, octaves: number): Measure {
  * Padding with an invisible rest changes nothing on the page — it draws nothing — but it
  * makes the overlay a voice rather than a fragment, which is what it is.
  */
-function padOverlays(measures: readonly Measure[], meter: Meter | null): Measure[] {
+function padOverlays(measures: readonly Measure[], _meter: Meter | null): Measure[] {
   const layers = Math.max(0, ...measures.map((m) => m.overlays.length))
   if (layers === 0) return [...measures]
-  // A measure's worth of silence. Without a meter there is no measure length to fill, so
-  // the padding is skipped rather than guessed at.
-  const full = meter === null ? null : measureDuration(meter)
-  if (full === null) return [...measures]
 
   return measures.map((measure) => {
     if (measure.overlays.length === layers) return measure
+    // THE PAD IS THE MEASURE'S OWN DURATION, NOT THE METER'S. abcjs sums
+    // `durationThisBar` over the measure's notes — SPACERS EXCLUDED — and pushes one
+    // invisible rest of exactly that, `if (durationThisBar > 0)`
+    // (`tune-builder.js:572-575`). A pickup bar therefore pads to the pickup, not to a
+    // full measure: `synth-flattener-22`'s `B, |` padded to 1 where abcjs pads to 0.25,
+    // and the overlay voice then wanted a whole note's spring under a quarter note.
+    const filled = measure.events.reduce(
+      (sum, event) =>
+        event.type === 'rest' && event.kind === 'spacer'
+          ? sum
+          : rational(
+              sum.numerator * event.duration.denominator +
+                event.duration.numerator * sum.denominator,
+              sum.denominator * event.duration.denominator,
+            ),
+      rational(0, 1),
+    )
+    if (filled.numerator === 0) return measure
     const padded = Array.from({ length: layers }, (_, i) => {
       const existing = measure.overlays[i]
       if (existing !== undefined && existing.length > 0) return existing
       const rest: Rest = {
         type: 'rest',
         kind: 'invisible',
-        duration: full,
-        notatedDuration: full,
+        duration: filled,
+        notatedDuration: filled,
         decorations: [],
         decorationSourceRanges: [],
         tuplet: null,
