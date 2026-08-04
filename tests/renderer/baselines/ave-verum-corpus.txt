@@ -55,11 +55,11 @@ system 0 width=90.323 originY=0.000
       line  74.958,0.332 -> 74.958,-3.000 t=0.120
       text  72.621,8.194 size=2.194 bold "A-"
     note@-2 x=77.398 w=5.474
-      glyph accidentalSharp 76.184,1.000
+      glyph accidentalSharp 76.076,1.000
       glyph noteheadBlack 77.398,1.000
       line  78.578,0.832 -> 78.578,-2.500 t=0.120
     note@-2 x=81.018 w=7.742
-      glyph accidentalNatural 80.171,1.000
+      glyph accidentalNatural 80.063,1.000
       glyph noteheadHalf 81.018,1.000
       line  82.198,0.832 -> 82.198,-2.500 t=0.120
       text  79.709,8.194 size=2.194 bold "ve,"
@@ -236,11 +236,11 @@ system 0 width=90.323 originY=0.000
       glyph noteheadBlack 73.778,0.500
       line  74.958,0.332 -> 74.958,-3.000 t=0.120
     note@-2 x=77.398 w=5.474
-      glyph accidentalSharp 76.184,1.000
+      glyph accidentalSharp 76.076,1.000
       glyph noteheadBlack 77.398,1.000
       line  78.578,0.832 -> 78.578,-2.500 t=0.120
     note@-2 x=81.018 w=5.474
-      glyph accidentalNatural 80.171,1.000
+      glyph accidentalNatural 80.063,1.000
       glyph noteheadBlack 81.018,1.000
       line  82.198,0.832 -> 82.198,-2.500 t=0.120
     note@-2 x=84.638 w=5.474

@@ -25,15 +25,15 @@ system 0 width=41.652 originY=0.000
       glyph noteheadBlack 16.787,0.000
       line  16.787,0.168 -> 16.787,3.500 t=0.120
     note@1 x=22.261 w=5.474
-      glyph accidentalSharp 21.046,-0.500
+      glyph accidentalSharp 20.938,-0.500
       glyph noteheadBlack 22.261,-0.500
       line  22.261,-0.332 -> 22.261,3.000 t=0.120
     note@2 x=27.735 w=5.474
-      glyph accidentalSharp 26.521,-1.000
+      glyph accidentalSharp 26.413,-1.000
       glyph noteheadBlack 27.735,-1.000
       line  27.735,-0.832 -> 27.735,2.500 t=0.120
     note@3 x=33.210 w=5.474
-      glyph accidentalSharp 31.995,-1.500
+      glyph accidentalSharp 31.887,-1.500
       glyph noteheadBlack 33.210,-1.500
       line  33.210,-1.332 -> 33.210,2.000 t=0.120
     bar x=38.684 w=1.060

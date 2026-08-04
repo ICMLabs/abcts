@@ -143,7 +143,10 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     'multi-voice-triplet-brackets': { heads: 45, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'program-127-test': { heads: 20, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'ragtime-mini': { heads: 30, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
-    'ragtime-nightingale': { heads: 2009, dy: 58.1, dx: 69.82, oy: -0.54, ox: -1.0 },
+    // dx 69.82 -> 55.32 when the accidental extents became abcjs's own numbers. Its `oy`
+    // is the branch's one red and went 1.49 -> 1.58 on the same change — its residual is
+    // horizontal in origin (see the checkpoint), so the two move together.
+    'ragtime-nightingale': { heads: 2009, dy: 58.1, dx: 55.32, oy: -0.54, ox: -1.65 },
     'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'score-reorder': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'simple-c': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
@@ -157,7 +160,8 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     'vree-sharps': { heads: 4, dy: 0.0, dx: 0.0, oy: 0.06, ox: 0.0 },
     'vree-slurs-and-triplets': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'vree-ties-across-bars': { heads: 4, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
-    'zocharti-loch': { heads: 64, dy: 0.0, dx: 5.35, oy: 0.0, ox: 0.69 },
+    // dx 5.35 -> 1.25 on the accidental extents.
+    'zocharti-loch': { heads: 64, dy: 0.0, dx: 1.25, oy: 0.0, ox: -0.34 },
   }
 
 /** Rounding slack, so a last-digit wobble is not a failure. */

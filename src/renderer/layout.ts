@@ -146,8 +146,14 @@ export const ENGRAVE = {
    * 3.35px narrow and pulled the music left with it.
    */
   keySignatureGap: 2 / 7.75,
-  /** Gap between an accidental and the notehead it alters. PROVISIONAL. */
-  accidentalGap: 0.15,
+  /**
+   * Between an accidental and whatever is to its right — `width + 2` in
+   * `create-note-head.js:95`, where the 2 is abcjs's flat gap and NOT a fraction of the
+   * glyph. Was 0.15 (1.16px) and provisional.
+   */
+  accidentalGap: 2 / 7.75,
+  /** Two accidentals this far apart in STEPS share a column (`create-note-head.js:87`). */
+  accidentalColumnSteps: 6,
   /** Gap from the notehead's right edge to the first augmentation dot. PROVISIONAL. */
   dotGap: 0.35,
   /** Spacing between successive dots on a double- or triple-dotted note. PROVISIONAL. */
@@ -2008,6 +2014,8 @@ function layoutNoteheads(
   // collide; with the heads at distinct steps they only collide for a cluster, and no
   // corpus fixture has one.
   const noteX = x + graceWidth
+  /** An accidental `place` units left of the notehead, in absolute x. */
+  const headXOf = (place: number): number => noteX + accidentalWidth - place
   // ponytail: `microtoneCents` is per-EVENT, not per-pitch, so a chord's microtone
   // applies to every altered head in it. `[^/G^/B]` is right; a chord mixing a microtone
   // with a plain accidental is not expressible. No fixture writes one, and fixing it
@@ -2020,26 +2028,58 @@ function layoutNoteheads(
     }))
     .filter((a): a is { glyph: GlyphName; step: number } => a.glyph !== null)
 
-  const accidentalWidth =
-    accidentals.length === 0
-      ? 0
-      : Math.max(...accidentals.map((a) => glyphsFor(strict).advance(a.glyph))) +
-        ENGRAVE.accidentalGap
+  // ACCIDENTALS STACK LEFTWARD IN COLUMNS, AND THE COLUMN IS REUSED SIX STEPS APART.
+  //
+  // abcjs's `createNoteHead` keeps a running `roomTaken` across a chord's pitches and
+  // places each accidental at `-roomTaken - (width + 2)`, unless an existing column holds
+  // a pitch at least 6 steps below, in which case it takes that column's x and adds
+  // nothing (`create-note-head.js:85-98`, `abstract-engraver.js:723,734`). Taking the
+  // widest accidental and one gap put a chord's second accidental on top of its first.
+  //
+  // THE DRAWN OFFSET AND THE LAYOUT EXTENT ARE NOT THE SAME NUMBER. The glyph sits at
+  // `width + 2`, but the element declares `extraw -= width / 2` on top of that
+  // (`:100`, `abstract-engraver.js:725`) — abcjs's own comment says "we need a little
+  // extra width if there is an accidental, but I'm not sure why it isn't the full width".
+  // So a sharp draws 10.25px left of its head and reserves 14.375. Conflating the two as
+  // one `accidentalGap` left every accidental note ~4.5px narrow, which on a COMPRESSED
+  // line is the whole error: `visual-transpose-02` solved to a spacing of 18.67px where
+  // abcjs's rods bottom out at 10.81 and its springs never bind at all.
+  const accidentalPlaces: number[] = []
+  let roomTaken = 0
+  let extraLeft = 0
+  {
+    /** `[pitch, place]` per open column — abcjs's `accidentalSlot`. */
+    const slots: { step: number; place: number }[] = []
+    for (const a of accidentals) {
+      const width = glyphsFor(strict).advance(a.glyph)
+      const slot = slots.find((s) => a.step - s.step >= ENGRAVE.accidentalColumnSteps)
+      if (slot) {
+        slot.step = a.step
+        accidentalPlaces.push(slot.place)
+      } else {
+        roomTaken += width + ENGRAVE.accidentalGap
+        slots.push({ step: a.step, place: roomTaken })
+        accidentalPlaces.push(roomTaken)
+      }
+      extraLeft += width / 2
+    }
+  }
+  const accidentalWidth = roomTaken
 
   // AN ACCIDENTAL DECLARES `pitch ± h / 2`, centred on the note it belongs to, and abcjs
   // passes that as an explicit `top`/`bottom` rather than letting the outline stand
   // (`create-note-head.js:99-100`) — the same escape the key signature takes two files
   // over. Its ink box is not centred on its origin, so reserving the outline reaches
   // higher than abcjs on any staff an accidental tops out.
-  for (const a of accidentals) {
-    const placed = glyphAt(a.glyph, noteX, a.step)
+  accidentals.forEach((a, index) => {
+    const placed = glyphAt(a.glyph, headXOf(accidentalPlaces[index] ?? 0), a.step)
     const half = (glyphsFor(strict).get(a.glyph)?.declaredHeight ?? 0) / 2
     glyphs.push({
       ...placed,
       role: 'accidental',
       reserve: [stepToY(a.step) - half, stepToY(a.step) + half],
     })
-  }
+  })
   const headX = noteX + accidentalWidth
 
   // A second cannot be printed on the same side of the stem — the noteheads would
@@ -2204,7 +2244,9 @@ function layoutNoteheads(
     width: Math.max(advance, ink),
     spring: advance,
     rod: ink,
-    left: Math.max(headX - x, textSpan.left, headLeft),
+    // abcjs's `-extraw`: the leftmost accidental's own offset PLUS the `width / 2` each
+    // one adds again — see the accidental block above.
+    left: Math.max(headX - x + extraLeft, textSpan.left, headLeft),
     staffSteps: steps,
     glyphs,
     lines,

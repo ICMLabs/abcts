@@ -1140,37 +1140,37 @@ system 2 width=90.731 originY=27.376
     bar x=88.666 w=0.160
       line  88.746,-2.000 -> 88.746,2.000 t=0.160
 tune 5
-bounds  width=90.400 height=23.830 top=-1.935
+bounds  width=90.532 height=23.830 top=-1.935
 systems 1
-system 0 width=90.400 originY=0.000
+system 0 width=90.532 originY=0.000
   staff 0 originY=14.209
-    staffline 0.000,2.000 -> 90.400,2.000 t=0.130
-    staffline 0.000,1.000 -> 90.400,1.000 t=0.130
-    staffline 0.000,0.000 -> 90.400,0.000 t=0.130
-    staffline 0.000,-1.000 -> 90.400,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 90.400,-2.000 t=0.130
-    beam   43.008,-4.250 -> 49.173,-3.250 t=0.500
-    beam   48.073,-2.678 -> 49.173,-2.500 t=0.500
-    beam   49.345,4.750 -> 51.256,4.250 t=0.500
-    beam   53.168,4.750 -> 59.202,4.250 t=0.500
-    beam   54.409,3.897 -> 55.509,3.806 t=0.500
-    beam   58.102,3.591 -> 59.202,3.500 t=0.500
-    beam   62.575,3.750 -> 66.459,3.750 t=0.500
-    beam   62.575,3.000 -> 66.459,3.000 t=0.500
-    beam   76.394,3.750 -> 81.441,3.750 t=0.500
-    beam   76.394,3.000 -> 81.441,3.000 t=0.500
-    volta  62.575,-4.000 -> 76.394,-4.000 t=0.160
-    volta  62.575,-4.000 -> 62.575,-2.600 t=0.160
-    volta  76.394,-4.000 -> 76.394,-2.600 t=0.160
-    volta  76.394,-4.000 -> 88.465,-4.000 t=0.160
-    volta  76.394,-4.000 -> 76.394,-2.600 t=0.160
-    volta  88.465,-4.000 -> 88.465,-2.600 t=0.160
-    voltatext 62.975,-2.700 "1"
-    voltatext 76.794,-2.700 "2"
-    tuplettext 64.757,6.010 size=1.400 "3"
-    tuplettext 79.158,6.010 size=1.400 "3"
+    staffline 0.000,2.000 -> 90.532,2.000 t=0.130
+    staffline 0.000,1.000 -> 90.532,1.000 t=0.130
+    staffline 0.000,0.000 -> 90.532,0.000 t=0.130
+    staffline 0.000,-1.000 -> 90.532,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 90.532,-2.000 t=0.130
+    beam   41.371,-4.250 -> 47.108,-3.250 t=0.500
+    beam   46.008,-2.692 -> 47.108,-2.500 t=0.500
+    beam   47.237,4.750 -> 49.008,4.250 t=0.500
+    beam   50.779,4.750 -> 56.478,4.250 t=0.500
+    beam   51.874,3.904 -> 52.974,3.807 t=0.500
+    beam   55.378,3.597 -> 56.478,3.500 t=0.500
+    beam   59.851,3.750 -> 63.735,3.750 t=0.500
+    beam   59.851,3.000 -> 63.735,3.000 t=0.500
+    beam   73.783,3.750 -> 81.917,3.750 t=0.500
+    beam   73.783,3.000 -> 81.917,3.000 t=0.500
+    volta  59.851,-4.000 -> 73.783,-4.000 t=0.160
+    volta  59.851,-4.000 -> 59.851,-2.600 t=0.160
+    volta  73.783,-4.000 -> 73.783,-2.600 t=0.160
+    volta  73.783,-4.000 -> 88.596,-4.000 t=0.160
+    volta  73.783,-4.000 -> 73.783,-2.600 t=0.160
+    volta  88.596,-4.000 -> 88.596,-2.600 t=0.160
+    voltatext 60.251,-2.700 "1"
+    voltatext 74.183,-2.700 "2"
+    tuplettext 62.033,6.010 size=1.400 "3"
+    tuplettext 78.090,6.010 size=1.400 "3"
     title x=0.000 w=0.000
-      text  11.813,-9.750 size=3.484 bold "S8-6 Chords, Unions, First and Second Endings"
+      text  11.878,-9.750 size=3.484 bold "S8-6 Chords, Unions, First and Second Endings"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=2.387
@@ -1188,149 +1188,149 @@ system 0 width=90.400 originY=0.000
       glyph noteheadHalf 16.707,1.500
       glyph noteheadHalf 16.707,0.500
       line  17.887,2.332 -> 17.887,-3.000 t=0.120
-    note@2,4,6 x=20.530 w=7.742
-      glyph noteheadHalf 20.530,-1.000
-      glyph noteheadHalf 20.530,-2.000
-      glyph noteheadHalf 20.530,-3.000
-      glyph ornamentTremblement 19.152,-4.260
-      line  20.130,-3.000 -> 22.268,-3.000 t=0.160
-      line  20.530,-2.832 -> 20.530,2.500 t=0.120
-    bar x=24.353 w=0.160
-      line  24.433,-2.000 -> 24.433,2.000 t=0.160
-    note@1,3 x=25.772 w=7.742
-      glyph noteheadHalf 25.772,-0.500
-      glyph noteheadHalf 25.772,-1.500
-      line  25.772,-1.332 -> 25.772,3.000 t=0.120
-    note@2,4 x=29.596 w=5.474
-      glyph noteheadBlack 29.596,-1.000
-      glyph noteheadBlack 29.596,-2.000
-      line  29.596,-1.832 -> 29.596,2.500 t=0.120
-    note@3,5 x=32.299 w=5.474
-      glyph noteheadBlack 32.299,-1.500
-      glyph noteheadBlack 32.299,-2.500
-      line  32.299,-2.332 -> 32.299,2.000 t=0.120
-    bar x=35.002 w=0.160
-      line  35.082,-2.000 -> 35.082,2.000 t=0.160
-    note@1,1 x=36.422 w=5.474
-      glyph noteheadBlack 36.422,-0.500
-      glyph noteheadBlack 36.422,-0.500
-      line  36.422,-0.332 -> 36.422,3.000 t=0.120
-    note@2,2 x=39.125 w=5.474
-      glyph noteheadBlack 39.125,-1.000
-      glyph noteheadBlack 39.125,-1.000
-      line  39.125,-0.832 -> 39.125,2.500 t=0.120
-    note@-3,-1 x=41.828 w=3.871
-      glyph noteheadBlack 41.828,1.500
-      glyph noteheadBlack 41.828,0.500
-      line  43.008,1.332 -> 43.008,-4.500 t=0.120
-    note@-2,0 x=43.740 w=3.871
-      glyph noteheadBlack 43.740,1.000
-      glyph noteheadBlack 43.740,0.000
-      line  44.920,0.832 -> 44.920,-4.190 t=0.120
-    note@-5,-3 x=45.652 w=4.741
-      glyph noteheadBlack 45.652,2.500
-      glyph noteheadBlack 45.652,1.500
-      glyph augmentationDot 47.267,2.500
-      glyph augmentationDot 47.267,1.500
-      line  46.832,2.332 -> 46.832,-3.880 t=0.120
-    note@-6,-4 x=47.993 w=2.737
-      glyph noteheadBlack 47.993,3.000
-      glyph noteheadBlack 47.993,2.000
-      line  47.593,3.000 -> 49.659,3.000 t=0.160
-      line  49.173,2.832 -> 49.173,-3.500 t=0.120
-    note@-2,3 x=49.345 w=3.871
-      glyph noteheadBlack 49.345,1.000
-      glyph noteheadBlack 49.345,-1.500
-      line  49.345,-1.332 -> 49.345,4.750 t=0.120
-    note@-1,3 x=51.256 w=3.871
-      glyph noteheadBlack 51.256,0.500
-      glyph noteheadBlack 51.256,-1.500
-      line  51.256,-1.332 -> 51.256,4.250 t=0.120
-    note@-2,3 x=53.168 w=4.741
-      glyph noteheadBlack 53.168,1.000
-      glyph noteheadBlack 53.168,-1.500
-      glyph augmentationDot 54.783,0.500
-      glyph augmentationDot 54.783,-1.500
-      line  53.168,-1.332 -> 53.168,4.750 t=0.120
-    note@-1,3 x=55.509 w=2.737
-      glyph noteheadBlack 55.509,0.500
-      glyph noteheadBlack 55.509,-1.500
-      glyph articStaccatoAbove 55.906,-3.522
-      line  55.509,-1.332 -> 55.509,4.556 t=0.120
-    note@0,3 x=56.861 w=4.741
-      glyph noteheadBlack 56.861,0.000
-      glyph noteheadBlack 56.861,-1.500
-      glyph augmentationDot 58.476,-0.500
-      glyph augmentationDot 58.476,-1.500
-      line  56.861,-1.332 -> 56.861,4.444 t=0.120
-    note@1,3 x=59.202 w=2.737
-      glyph noteheadBlack 59.202,-0.500
-      glyph noteheadBlack 59.202,-1.500
-      glyph articStaccatoAbove 59.599,-3.522
-      line  59.202,-1.332 -> 59.202,4.250 t=0.120
-    bar x=61.156 w=0.160
-      line  61.236,-2.000 -> 61.236,2.000 t=0.160
-    note@-1,2,4 x=62.575 w=2.235
-      glyph noteheadBlack 62.575,0.500
-      glyph noteheadBlack 62.575,-1.000
-      glyph noteheadBlack 62.575,-2.000
-      line  62.575,-1.832 -> 62.575,3.750 t=0.120
-    note@-1,3,4 x=65.150 w=2.235
-      glyph noteheadBlack 65.150,0.500
-      glyph noteheadBlack 63.884,-1.500
-      glyph noteheadBlack 65.150,-2.000
-      line  65.150,-1.832 -> 65.150,3.750 t=0.120
-    note@-1,1,5 x=66.459 w=2.235
-      glyph noteheadBlack 66.459,0.500
-      glyph noteheadBlack 66.459,-0.500
-      glyph noteheadBlack 66.459,-2.500
-      line  66.459,-2.332 -> 66.459,3.750 t=0.120
-    note@-6,-2,3 x=67.768 w=9.482
-      glyph noteheadHalf 67.768,3.000
-      glyph noteheadHalf 67.768,1.000
-      glyph noteheadHalf 67.768,-1.500
-      glyph augmentationDot 69.456,2.500
-      glyph augmentationDot 69.456,0.500
-      glyph augmentationDot 69.456,-1.500
-      line  67.368,3.000 -> 69.506,3.000 t=0.160
-      line  68.948,2.832 -> 68.948,-5.000 t=0.120
-    bar x=72.451 w=1.620
-      glyph repeatDots 72.451,1.976
-      line  73.091,-2.000 -> 73.091,2.000 t=0.160
-      line  73.821,-2.000 -> 73.821,2.000 t=0.500
-    note@-1,2,4 x=76.394 w=2.235
-      glyph accidentalNatural 75.547,-1.000
-      glyph noteheadBlack 76.394,0.500
-      glyph noteheadBlack 76.394,-1.000
-      glyph noteheadBlack 76.394,-2.000
-      line  76.394,-1.832 -> 76.394,3.750 t=0.120
-    note@-1,2,5 x=78.918 w=2.235
-      glyph accidentalSharp 77.703,0.500
-      glyph noteheadBlack 78.918,0.500
-      glyph noteheadBlack 78.918,-1.000
-      glyph noteheadBlack 78.918,-2.500
-      line  78.918,-2.332 -> 78.918,3.750 t=0.120
-    note@-1,1,5 x=81.441 w=2.235
-      glyph accidentalFlat 80.227,0.500
-      glyph accidentalFlat 80.227,-0.500
-      glyph accidentalSharp 80.227,-2.500
-      glyph noteheadBlack 81.441,0.500
-      glyph noteheadBlack 81.441,-0.500
-      glyph noteheadBlack 81.441,-2.500
-      line  81.441,-2.332 -> 81.441,3.750 t=0.120
-    note@1,3,5 x=82.750 w=9.482
-      glyph noteheadHalf 82.750,-0.500
-      glyph noteheadHalf 82.750,-1.500
-      glyph noteheadHalf 82.750,-2.500
-      glyph augmentationDot 84.438,-0.500
-      glyph augmentationDot 84.438,-1.500
-      glyph augmentationDot 84.438,-2.500
-      line  82.750,-2.332 -> 82.750,3.000 t=0.120
-    bar x=87.433 w=1.060
-      line  87.513,-2.000 -> 87.513,2.000 t=0.160
-      line  88.243,-2.000 -> 88.243,2.000 t=0.500
+    note@2,4,6 x=20.249 w=7.742
+      glyph noteheadHalf 20.249,-1.000
+      glyph noteheadHalf 20.249,-2.000
+      glyph noteheadHalf 20.249,-3.000
+      glyph ornamentTremblement 18.871,-4.260
+      line  19.849,-3.000 -> 21.987,-3.000 t=0.160
+      line  20.249,-2.832 -> 20.249,2.500 t=0.120
+    bar x=23.791 w=0.160
+      line  23.871,-2.000 -> 23.871,2.000 t=0.160
+    note@1,3 x=25.210 w=7.742
+      glyph noteheadHalf 25.210,-0.500
+      glyph noteheadHalf 25.210,-1.500
+      line  25.210,-1.332 -> 25.210,3.000 t=0.120
+    note@2,4 x=28.753 w=5.474
+      glyph noteheadBlack 28.753,-1.000
+      glyph noteheadBlack 28.753,-2.000
+      line  28.753,-1.832 -> 28.753,2.500 t=0.120
+    note@3,5 x=31.257 w=5.474
+      glyph noteheadBlack 31.257,-1.500
+      glyph noteheadBlack 31.257,-2.500
+      line  31.257,-2.332 -> 31.257,2.000 t=0.120
+    bar x=33.762 w=0.160
+      line  33.842,-2.000 -> 33.842,2.000 t=0.160
+    note@1,1 x=35.181 w=5.474
+      glyph noteheadBlack 35.181,-0.500
+      glyph noteheadBlack 35.181,-0.500
+      line  35.181,-0.332 -> 35.181,3.000 t=0.120
+    note@2,2 x=37.686 w=5.474
+      glyph noteheadBlack 37.686,-1.000
+      glyph noteheadBlack 37.686,-1.000
+      line  37.686,-0.832 -> 37.686,2.500 t=0.120
+    note@-3,-1 x=40.191 w=3.871
+      glyph noteheadBlack 40.191,1.500
+      glyph noteheadBlack 40.191,0.500
+      line  41.371,1.332 -> 41.371,-4.500 t=0.120
+    note@-2,0 x=41.962 w=3.871
+      glyph noteheadBlack 41.962,1.000
+      glyph noteheadBlack 41.962,0.000
+      line  43.142,0.832 -> 43.142,-4.191 t=0.120
+    note@-5,-3 x=43.733 w=4.741
+      glyph noteheadBlack 43.733,2.500
+      glyph noteheadBlack 43.733,1.500
+      glyph augmentationDot 45.349,2.500
+      glyph augmentationDot 45.349,1.500
+      line  44.913,2.332 -> 44.913,-3.883 t=0.120
+    note@-6,-4 x=45.928 w=2.737
+      glyph noteheadBlack 45.928,3.000
+      glyph noteheadBlack 45.928,2.000
+      line  45.528,3.000 -> 47.594,3.000 t=0.160
+      line  47.108,2.832 -> 47.108,-3.500 t=0.120
+    note@-2,3 x=47.237 w=3.871
+      glyph noteheadBlack 47.237,1.000
+      glyph noteheadBlack 47.237,-1.500
+      line  47.237,-1.332 -> 47.237,4.750 t=0.120
+    note@-1,3 x=49.008 w=3.871
+      glyph noteheadBlack 49.008,0.500
+      glyph noteheadBlack 49.008,-1.500
+      line  49.008,-1.332 -> 49.008,4.250 t=0.120
+    note@-2,3 x=50.779 w=4.741
+      glyph noteheadBlack 50.779,1.000
+      glyph noteheadBlack 50.779,-1.500
+      glyph augmentationDot 52.395,0.500
+      glyph augmentationDot 52.395,-1.500
+      line  50.779,-1.332 -> 50.779,4.750 t=0.120
+    note@-1,3 x=52.974 w=2.737
+      glyph noteheadBlack 52.974,0.500
+      glyph noteheadBlack 52.974,-1.500
+      glyph articStaccatoAbove 53.371,-3.522
+      line  52.974,-1.332 -> 52.974,4.557 t=0.120
+    note@0,3 x=54.283 w=4.741
+      glyph noteheadBlack 54.283,0.000
+      glyph noteheadBlack 54.283,-1.500
+      glyph augmentationDot 55.899,-0.500
+      glyph augmentationDot 55.899,-1.500
+      line  54.283,-1.332 -> 54.283,4.443 t=0.120
+    note@1,3 x=56.478 w=2.737
+      glyph noteheadBlack 56.478,-0.500
+      glyph noteheadBlack 56.478,-1.500
+      glyph articStaccatoAbove 56.875,-3.522
+      line  56.478,-1.332 -> 56.478,4.250 t=0.120
+    bar x=58.432 w=0.160
+      line  58.512,-2.000 -> 58.512,2.000 t=0.160
+    note@-1,2,4 x=59.851 w=2.235
+      glyph noteheadBlack 59.851,0.500
+      glyph noteheadBlack 59.851,-1.000
+      glyph noteheadBlack 59.851,-2.000
+      line  59.851,-1.832 -> 59.851,3.750 t=0.120
+    note@-1,3,4 x=62.426 w=2.235
+      glyph noteheadBlack 62.426,0.500
+      glyph noteheadBlack 61.160,-1.500
+      glyph noteheadBlack 62.426,-2.000
+      line  62.426,-1.832 -> 62.426,3.750 t=0.120
+    note@-1,1,5 x=63.735 w=2.235
+      glyph noteheadBlack 63.735,0.500
+      glyph noteheadBlack 63.735,-0.500
+      glyph noteheadBlack 63.735,-2.500
+      line  63.735,-2.332 -> 63.735,3.750 t=0.120
+    note@-6,-2,3 x=65.044 w=9.482
+      glyph noteheadHalf 65.044,3.000
+      glyph noteheadHalf 65.044,1.000
+      glyph noteheadHalf 65.044,-1.500
+      glyph augmentationDot 66.732,2.500
+      glyph augmentationDot 66.732,0.500
+      glyph augmentationDot 66.732,-1.500
+      line  64.644,3.000 -> 66.782,3.000 t=0.160
+      line  66.224,2.832 -> 66.224,-5.000 t=0.120
+    bar x=69.383 w=1.620
+      glyph repeatDots 69.383,1.976
+      line  70.023,-2.000 -> 70.023,2.000 t=0.160
+      line  70.753,-2.000 -> 70.753,2.000 t=0.500
+    note@-1,2,4 x=73.783 w=2.235
+      glyph accidentalNatural 72.828,-1.000
+      glyph noteheadBlack 73.783,0.500
+      glyph noteheadBlack 73.783,-1.000
+      glyph noteheadBlack 73.783,-2.000
+      line  73.783,-1.832 -> 73.783,3.750 t=0.120
+    note@-1,2,5 x=76.946 w=2.235
+      glyph accidentalSharp 75.624,0.500
+      glyph noteheadBlack 76.946,0.500
+      glyph noteheadBlack 76.946,-1.000
+      glyph noteheadBlack 76.946,-2.500
+      line  76.946,-2.332 -> 76.946,3.750 t=0.120
+    note@-1,1,5 x=81.917 w=2.235
+      glyph accidentalFlat 80.788,0.500
+      glyph accidentalFlat 79.659,-0.500
+      glyph accidentalSharp 80.788,-2.500
+      glyph noteheadBlack 81.917,0.500
+      glyph noteheadBlack 81.917,-0.500
+      glyph noteheadBlack 81.917,-2.500
+      line  81.917,-2.332 -> 81.917,3.750 t=0.120
+    note@1,3,5 x=83.226 w=9.482
+      glyph noteheadHalf 83.226,-0.500
+      glyph noteheadHalf 83.226,-1.500
+      glyph noteheadHalf 83.226,-2.500
+      glyph augmentationDot 84.914,-0.500
+      glyph augmentationDot 84.914,-1.500
+      glyph augmentationDot 84.914,-2.500
+      line  83.226,-2.332 -> 83.226,3.000 t=0.120
+    bar x=87.564 w=1.060
+      line  87.644,-2.000 -> 87.644,2.000 t=0.160
+      line  88.374,-2.000 -> 88.374,2.000 t=0.500
 tune 6
-bounds  width=92.443 height=30.860 top=-1.935
+bounds  width=93.649 height=30.860 top=-1.935
 systems 2
 system 0 width=90.384 originY=0.000
   staff 0 originY=10.075
@@ -1462,175 +1462,175 @@ system 0 width=90.384 originY=0.000
       line  84.909,-0.332 -> 84.909,3.000 t=0.120
     bar x=88.319 w=0.160
       line  88.399,-2.000 -> 88.399,2.000 t=0.160
-system 1 width=92.443 originY=15.288
+system 1 width=93.649 originY=15.288
   staff 0 originY=6.701
-    staffline 0.000,2.000 -> 92.443,2.000 t=0.130
-    staffline 0.000,1.000 -> 92.443,1.000 t=0.130
-    staffline 0.000,0.000 -> 92.443,0.000 t=0.130
-    staffline 0.000,-1.000 -> 92.443,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 92.443,-2.000 t=0.130
-    beam   28.051,3.250 -> 33.231,2.750 t=0.500
-    beam   28.051,2.500 -> 29.151,2.394 t=0.500
-    beam   39.297,2.750 -> 41.492,3.250 t=0.500
-    beam   40.392,2.249 -> 41.492,2.500 t=0.500
-    beam   47.852,-3.750 -> 50.451,-3.250 t=0.500
-    beam   47.852,-3.000 -> 48.952,-2.788 t=0.500
+    staffline 0.000,2.000 -> 93.649,2.000 t=0.130
+    staffline 0.000,1.000 -> 93.649,1.000 t=0.130
+    staffline 0.000,0.000 -> 93.649,0.000 t=0.130
+    staffline 0.000,-1.000 -> 93.649,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 93.649,-2.000 t=0.130
+    beam   28.692,3.250 -> 33.872,2.750 t=0.500
+    beam   28.692,2.500 -> 29.792,2.394 t=0.500
+    beam   39.938,2.750 -> 42.132,3.250 t=0.500
+    beam   41.032,2.249 -> 42.132,2.500 t=0.500
+    beam   48.492,-3.750 -> 51.092,-3.250 t=0.500
+    beam   48.492,-3.000 -> 49.592,-2.788 t=0.500
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=2.387
       glyph accidentalSharp 6.329,-2.000
       glyph accidentalSharp 7.652,-0.500
-    note@1 x=12.511 w=5.474
-      glyph noteheadBlack 10.007,0.500 scale=0.600
-      glyph accidentalSharp 11.297,-0.500
-      glyph noteheadBlack 12.511,-0.500
-      line  10.715,0.399 -> 10.715,-1.701 t=0.072
-      line  12.511,-0.332 -> 12.511,3.000 t=0.120
-    note@1 x=17.691 w=5.474
-      glyph noteheadBlack 13.820,-2.500 scale=0.600
-      glyph noteheadBlack 15.111,-0.500 scale=0.600
-      glyph noteheadBlack 16.401,-1.000 scale=0.600
-      glyph noteheadBlack 17.691,-0.500
-      line  14.528,-2.601 -> 14.528,-4.701 t=0.072
-      line  15.819,-0.601 -> 15.819,-2.701 t=0.072
-      line  17.109,-1.101 -> 17.109,-3.201 t=0.072
-      line  17.691,-0.332 -> 17.691,3.000 t=0.120
-    note@-1 x=25.452 w=5.474
-      glyph noteheadBlack 19.000,-2.500 scale=0.600
-      glyph noteheadBlack 20.291,0.500 scale=0.600
-      glyph noteheadBlack 21.581,1.000 scale=0.600
-      glyph noteheadBlack 22.871,0.500 scale=0.600
-      glyph noteheadBlack 24.162,1.000 scale=0.600
-      glyph noteheadBlack 25.452,0.500
-      line  19.708,-2.601 -> 19.708,-4.701 t=0.072
-      line  20.999,0.399 -> 20.999,-1.701 t=0.072
-      line  22.289,0.899 -> 22.289,-1.201 t=0.072
-      line  23.579,0.399 -> 23.579,-1.701 t=0.072
-      line  24.870,0.899 -> 24.870,-1.201 t=0.072
-      line  26.632,0.332 -> 26.632,-3.000 t=0.120
-    note@1 x=28.051 w=2.737
-      glyph noteheadBlack 26.761,-2.500 scale=0.600
-      glyph noteheadBlack 28.051,-0.500
-      line  27.469,-2.601 -> 27.469,-4.701 t=0.072
-      line  28.051,-0.332 -> 28.051,3.250 t=0.120
-    note@3 x=33.231 w=4.741
-      glyph noteheadBlack 29.360,1.000 scale=0.600
-      glyph noteheadBlack 30.651,-1.000 scale=0.600
-      glyph noteheadBlack 31.941,1.000 scale=0.600
-      glyph noteheadBlack 33.231,-1.500
-      glyph augmentationDot 34.847,-1.500
-      line  30.068,0.899 -> 30.068,-1.201 t=0.072
-      line  31.359,-1.101 -> 31.359,-3.201 t=0.072
-      line  32.649,0.899 -> 32.649,-1.201 t=0.072
-      line  33.231,-1.332 -> 33.231,2.750 t=0.120
-    note@2 x=39.297 w=4.741
-      glyph noteheadBlack 35.426,1.000 scale=0.600
-      glyph noteheadBlack 36.717,-1.000 scale=0.600
-      glyph noteheadBlack 38.007,-0.500 scale=0.600
-      glyph noteheadBlack 39.297,-1.000
-      glyph augmentationDot 40.913,-1.500
-      line  36.134,0.899 -> 36.134,-1.201 t=0.072
-      line  37.425,-1.101 -> 37.425,-3.201 t=0.072
-      line  38.715,-0.601 -> 38.715,-2.701 t=0.072
-      line  39.297,-0.832 -> 39.297,2.750 t=0.120
-    note@1 x=41.492 w=2.737
-      glyph noteheadBlack 41.492,-0.500
-      line  41.492,-0.332 -> 41.492,3.250 t=0.120
-    note@0 x=46.672 w=2.737
-      glyph noteheadBlack 42.801,-2.500 scale=0.600
-      glyph noteheadBlack 44.091,0.000 scale=0.600
-      glyph noteheadBlack 45.382,-1.000 scale=0.600
-      glyph noteheadBlack 46.672,0.000
-      line  43.509,-2.601 -> 43.509,-4.701 t=0.072
-      line  44.799,-0.101 -> 44.799,-2.201 t=0.072
-      line  46.090,-1.101 -> 46.090,-3.201 t=0.072
-      line  47.852,-0.168 -> 47.852,-4.000 t=0.120
-    note@-2 x=49.271 w=4.741
-      glyph noteheadBlack 47.981,-1.500 scale=0.600
-      glyph noteheadBlack 49.271,1.000
-      glyph augmentationDot 50.887,0.500
-      line  48.689,-1.601 -> 48.689,-3.701 t=0.072
-      line  50.451,0.832 -> 50.451,-3.500 t=0.120
-    bar x=52.111 w=0.160
-      line  52.191,-2.000 -> 52.191,2.000 t=0.160
-    note@-2,3 x=54.821 w=7.742
-      glyph noteheadBlack 53.531,1.000 scale=0.600
-      glyph noteheadHalf 54.821,1.000
-      glyph noteheadHalf 54.821,-1.500
-      line  54.239,0.899 -> 54.239,-1.201 t=0.072
-      line  54.821,-1.332 -> 54.821,4.500 t=0.120
-    note@-1,1 x=62.506 w=7.742
-      glyph noteheadBlack 56.130,1.500 scale=0.600
-      glyph noteheadBlack 57.420,1.000 scale=0.600
-      glyph noteheadBlack 58.711,0.500 scale=0.600
-      glyph noteheadBlack 60.001,0.000 scale=0.600
-      glyph accidentalSharp 61.291,-0.500
-      glyph noteheadHalf 62.506,0.500
-      glyph noteheadHalf 62.506,-0.500
-      line  56.838,1.399 -> 56.838,-0.701 t=0.072
-      line  58.128,0.899 -> 58.128,-1.201 t=0.072
-      line  59.419,0.399 -> 59.419,-1.701 t=0.072
-      line  60.709,-0.101 -> 60.709,-2.201 t=0.072
-      line  62.506,-0.332 -> 62.506,4.000 t=0.120
-    note@1,3 x=66.396 w=7.742
-      glyph noteheadBlack 63.815,-1.500 scale=0.600
-      glyph noteheadBlack 65.105,-2.000 scale=0.600
-      glyph noteheadHalf 66.396,-0.500
-      glyph noteheadHalf 66.396,-1.500
-      line  64.523,-1.601 -> 64.523,-3.701 t=0.072
-      line  65.813,-2.101 -> 65.813,-4.201 t=0.072
-      line  66.396,-1.332 -> 66.396,3.000 t=0.120
-    note@-5 x=88.350 w=7.742
-      glyph noteheadBlack 67.705,-4.500 scale=0.600
-      glyph noteheadBlack 68.995,-4.000 scale=0.600
-      glyph noteheadBlack 70.285,-3.500 scale=0.600
-      glyph noteheadBlack 71.576,-3.000 scale=0.600
-      glyph noteheadBlack 72.866,-2.500 scale=0.600
-      glyph noteheadBlack 74.156,-2.000 scale=0.600
-      glyph noteheadBlack 75.447,-1.500 scale=0.600
-      glyph noteheadBlack 76.737,-1.000 scale=0.600
-      glyph noteheadBlack 78.027,-0.500 scale=0.600
-      glyph noteheadBlack 79.318,0.000 scale=0.600
-      glyph noteheadBlack 80.608,0.500 scale=0.600
-      glyph noteheadBlack 81.898,-0.500 scale=0.600
-      glyph noteheadBlack 83.189,0.000 scale=0.600
-      glyph noteheadBlack 84.479,1.500 scale=0.600
-      glyph noteheadBlack 85.769,1.000 scale=0.600
-      glyph noteheadBlack 87.059,3.000 scale=0.600
-      glyph noteheadHalf 88.350,2.500
-      line  68.413,-4.601 -> 68.413,-6.701 t=0.072
-      line  69.703,-4.101 -> 69.703,-6.201 t=0.072
-      line  70.993,-3.601 -> 70.993,-5.701 t=0.072
-      line  72.284,-3.101 -> 72.284,-5.201 t=0.072
-      line  73.574,-2.601 -> 73.574,-4.701 t=0.072
-      line  74.864,-2.101 -> 74.864,-4.201 t=0.072
-      line  76.155,-1.601 -> 76.155,-3.701 t=0.072
-      line  77.445,-1.101 -> 77.445,-3.201 t=0.072
-      line  78.735,-0.601 -> 78.735,-2.701 t=0.072
-      line  80.026,-0.101 -> 80.026,-2.201 t=0.072
-      line  81.316,0.399 -> 81.316,-1.701 t=0.072
-      line  82.606,-0.601 -> 82.606,-2.701 t=0.072
-      line  83.897,-0.101 -> 83.897,-2.201 t=0.072
-      line  85.187,1.399 -> 85.187,-0.701 t=0.072
-      line  86.477,0.899 -> 86.477,-1.201 t=0.072
-      line  87.767,2.899 -> 87.767,0.799 t=0.072
-      line  89.530,2.332 -> 89.530,-1.000 t=0.120
-    bar x=90.379 w=0.160
-      line  90.459,-2.000 -> 90.459,2.000 t=0.160
+    note@1 x=13.152 w=5.474
+      glyph noteheadBlack 10.539,0.500 scale=0.600
+      glyph accidentalSharp 11.829,-0.500
+      glyph noteheadBlack 13.152,-0.500
+      line  11.247,0.399 -> 11.247,-1.701 t=0.072
+      line  13.152,-0.332 -> 13.152,3.000 t=0.120
+    note@1 x=18.332 w=5.474
+      glyph noteheadBlack 14.461,-2.500 scale=0.600
+      glyph noteheadBlack 15.751,-0.500 scale=0.600
+      glyph noteheadBlack 17.041,-1.000 scale=0.600
+      glyph noteheadBlack 18.332,-0.500
+      line  15.169,-2.601 -> 15.169,-4.701 t=0.072
+      line  16.459,-0.601 -> 16.459,-2.701 t=0.072
+      line  17.749,-1.101 -> 17.749,-3.201 t=0.072
+      line  18.332,-0.332 -> 18.332,3.000 t=0.120
+    note@-1 x=26.092 w=5.474
+      glyph noteheadBlack 19.641,-2.500 scale=0.600
+      glyph noteheadBlack 20.931,0.500 scale=0.600
+      glyph noteheadBlack 22.221,1.000 scale=0.600
+      glyph noteheadBlack 23.512,0.500 scale=0.600
+      glyph noteheadBlack 24.802,1.000 scale=0.600
+      glyph noteheadBlack 26.092,0.500
+      line  20.349,-2.601 -> 20.349,-4.701 t=0.072
+      line  21.639,0.399 -> 21.639,-1.701 t=0.072
+      line  22.929,0.899 -> 22.929,-1.201 t=0.072
+      line  24.220,0.399 -> 24.220,-1.701 t=0.072
+      line  25.510,0.899 -> 25.510,-1.201 t=0.072
+      line  27.272,0.332 -> 27.272,-3.000 t=0.120
+    note@1 x=28.692 w=2.737
+      glyph noteheadBlack 27.401,-2.500 scale=0.600
+      glyph noteheadBlack 28.692,-0.500
+      line  28.109,-2.601 -> 28.109,-4.701 t=0.072
+      line  28.692,-0.332 -> 28.692,3.250 t=0.120
+    note@3 x=33.872 w=4.741
+      glyph noteheadBlack 30.001,1.000 scale=0.600
+      glyph noteheadBlack 31.291,-1.000 scale=0.600
+      glyph noteheadBlack 32.581,1.000 scale=0.600
+      glyph noteheadBlack 33.872,-1.500
+      glyph augmentationDot 35.488,-1.500
+      line  30.709,0.899 -> 30.709,-1.201 t=0.072
+      line  31.999,-1.101 -> 31.999,-3.201 t=0.072
+      line  33.289,0.899 -> 33.289,-1.201 t=0.072
+      line  33.872,-1.332 -> 33.872,2.750 t=0.120
+    note@2 x=39.938 w=4.741
+      glyph noteheadBlack 36.067,1.000 scale=0.600
+      glyph noteheadBlack 37.357,-1.000 scale=0.600
+      glyph noteheadBlack 38.647,-0.500 scale=0.600
+      glyph noteheadBlack 39.938,-1.000
+      glyph augmentationDot 41.553,-1.500
+      line  36.775,0.899 -> 36.775,-1.201 t=0.072
+      line  38.065,-1.101 -> 38.065,-3.201 t=0.072
+      line  39.355,-0.601 -> 39.355,-2.701 t=0.072
+      line  39.938,-0.832 -> 39.938,2.750 t=0.120
+    note@1 x=42.132 w=2.737
+      glyph noteheadBlack 42.132,-0.500
+      line  42.132,-0.332 -> 42.132,3.250 t=0.120
+    note@0 x=47.312 w=2.737
+      glyph noteheadBlack 43.441,-2.500 scale=0.600
+      glyph noteheadBlack 44.732,0.000 scale=0.600
+      glyph noteheadBlack 46.022,-1.000 scale=0.600
+      glyph noteheadBlack 47.312,0.000
+      line  44.149,-2.601 -> 44.149,-4.701 t=0.072
+      line  45.440,-0.101 -> 45.440,-2.201 t=0.072
+      line  46.730,-1.101 -> 46.730,-3.201 t=0.072
+      line  48.492,-0.168 -> 48.492,-4.000 t=0.120
+    note@-2 x=49.912 w=4.741
+      glyph noteheadBlack 48.621,-1.500 scale=0.600
+      glyph noteheadBlack 49.912,1.000
+      glyph augmentationDot 51.528,0.500
+      line  49.329,-1.601 -> 49.329,-3.701 t=0.072
+      line  51.092,0.832 -> 51.092,-3.500 t=0.120
+    bar x=52.752 w=0.160
+      line  52.832,-2.000 -> 52.832,2.000 t=0.160
+    note@-2,3 x=55.461 w=7.742
+      glyph noteheadBlack 54.171,1.000 scale=0.600
+      glyph noteheadHalf 55.461,1.000
+      glyph noteheadHalf 55.461,-1.500
+      line  54.879,0.899 -> 54.879,-1.201 t=0.072
+      line  55.461,-1.332 -> 55.461,4.500 t=0.120
+    note@-1,1 x=63.787 w=7.742
+      glyph noteheadBlack 57.303,1.500 scale=0.600
+      glyph noteheadBlack 58.593,1.000 scale=0.600
+      glyph noteheadBlack 59.883,0.500 scale=0.600
+      glyph noteheadBlack 61.174,0.000 scale=0.600
+      glyph accidentalSharp 62.464,-0.500
+      glyph noteheadHalf 63.787,0.500
+      glyph noteheadHalf 63.787,-0.500
+      line  58.011,1.399 -> 58.011,-0.701 t=0.072
+      line  59.301,0.899 -> 59.301,-1.201 t=0.072
+      line  60.591,0.399 -> 60.591,-1.701 t=0.072
+      line  61.882,-0.101 -> 61.882,-2.201 t=0.072
+      line  63.787,-0.332 -> 63.787,4.000 t=0.120
+    note@1,3 x=67.676 w=7.742
+      glyph noteheadBlack 65.096,-1.500 scale=0.600
+      glyph noteheadBlack 66.386,-2.000 scale=0.600
+      glyph noteheadHalf 67.676,-0.500
+      glyph noteheadHalf 67.676,-1.500
+      line  65.804,-1.601 -> 65.804,-3.701 t=0.072
+      line  67.094,-2.101 -> 67.094,-4.201 t=0.072
+      line  67.676,-1.332 -> 67.676,3.000 t=0.120
+    note@-5 x=89.630 w=7.742
+      glyph noteheadBlack 68.985,-4.500 scale=0.600
+      glyph noteheadBlack 70.276,-4.000 scale=0.600
+      glyph noteheadBlack 71.566,-3.500 scale=0.600
+      glyph noteheadBlack 72.856,-3.000 scale=0.600
+      glyph noteheadBlack 74.147,-2.500 scale=0.600
+      glyph noteheadBlack 75.437,-2.000 scale=0.600
+      glyph noteheadBlack 76.727,-1.500 scale=0.600
+      glyph noteheadBlack 78.018,-1.000 scale=0.600
+      glyph noteheadBlack 79.308,-0.500 scale=0.600
+      glyph noteheadBlack 80.598,0.000 scale=0.600
+      glyph noteheadBlack 81.889,0.500 scale=0.600
+      glyph noteheadBlack 83.179,-0.500 scale=0.600
+      glyph noteheadBlack 84.469,0.000 scale=0.600
+      glyph noteheadBlack 85.759,1.500 scale=0.600
+      glyph noteheadBlack 87.050,1.000 scale=0.600
+      glyph noteheadBlack 88.340,3.000 scale=0.600
+      glyph noteheadHalf 89.630,2.500
+      line  69.693,-4.601 -> 69.693,-6.701 t=0.072
+      line  70.984,-4.101 -> 70.984,-6.201 t=0.072
+      line  72.274,-3.601 -> 72.274,-5.701 t=0.072
+      line  73.564,-3.101 -> 73.564,-5.201 t=0.072
+      line  74.855,-2.601 -> 74.855,-4.701 t=0.072
+      line  76.145,-2.101 -> 76.145,-4.201 t=0.072
+      line  77.435,-1.601 -> 77.435,-3.701 t=0.072
+      line  78.726,-1.101 -> 78.726,-3.201 t=0.072
+      line  80.016,-0.601 -> 80.016,-2.701 t=0.072
+      line  81.306,-0.101 -> 81.306,-2.201 t=0.072
+      line  82.597,0.399 -> 82.597,-1.701 t=0.072
+      line  83.887,-0.601 -> 83.887,-2.701 t=0.072
+      line  85.177,-0.101 -> 85.177,-2.201 t=0.072
+      line  86.467,1.399 -> 86.467,-0.701 t=0.072
+      line  87.758,0.899 -> 87.758,-1.201 t=0.072
+      line  89.048,2.899 -> 89.048,0.799 t=0.072
+      line  90.810,2.332 -> 90.810,-1.000 t=0.120
+    bar x=91.585 w=0.160
+      line  91.665,-2.000 -> 91.665,2.000 t=0.160
 tune 7
-bounds  width=90.392 height=33.191 top=-1.935
+bounds  width=90.395 height=33.191 top=-1.935
 systems 2
-system 0 width=90.392 originY=0.000
+system 0 width=90.395 originY=0.000
   staff 0 originY=11.341
-    staffline 0.000,2.000 -> 90.392,2.000 t=0.130
-    staffline 0.000,1.000 -> 90.392,1.000 t=0.130
-    staffline 0.000,0.000 -> 90.392,0.000 t=0.130
-    staffline 0.000,-1.000 -> 90.392,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 90.392,-2.000 t=0.130
-    beam   38.122,-2.750 -> 42.875,-3.250 t=0.500
-    beam   44.072,1.250 -> 48.825,1.750 t=0.500
+    staffline 0.000,2.000 -> 90.395,2.000 t=0.130
+    staffline 0.000,1.000 -> 90.395,1.000 t=0.130
+    staffline 0.000,0.000 -> 90.395,0.000 t=0.130
+    staffline 0.000,-1.000 -> 90.395,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 90.395,-2.000 t=0.130
+    beam   38.527,-2.750 -> 43.225,-3.250 t=0.500
+    beam   44.394,1.250 -> 49.091,1.750 t=0.500
     title x=0.000 w=0.000
-      text  10.852,-6.882 size=3.484 bold "S8-8 Key signature, Accidentals and Decorations"
+      text  10.854,-6.882 size=3.484 bold "S8-8 Key signature, Accidentals and Decorations"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=3.710
@@ -1640,136 +1640,136 @@ system 0 width=90.392 originY=0.000
     timeSignature x=11.329 w=1.522
       glyph timeSig4 11.329,-1.000
       glyph timeSig4 11.329,1.000
-    note@-6 x=15.356 w=5.474
-      glyph accidentalSharp 14.141,3.000
-      glyph noteheadBlack 15.356,3.000
-      line  14.956,3.000 -> 17.022,3.000 t=0.160
-      line  16.536,2.832 -> 16.536,-0.500 t=0.120
-    note@-6 x=18.717 w=5.474
-      glyph accidentalNatural 17.870,3.000
-      glyph noteheadBlack 18.717,3.000
-      line  18.317,3.000 -> 20.383,3.000 t=0.160
-      line  19.897,2.832 -> 19.897,-0.500 t=0.120
-    note@-6 x=22.078 w=5.474
-      glyph accidentalFlat 21.057,3.000
-      glyph noteheadBlack 22.078,3.000
-      line  21.678,3.000 -> 23.744,3.000 t=0.160
-      line  23.258,2.832 -> 23.258,-0.500 t=0.120
-    note@-2 x=25.439 w=5.474
-      glyph accidentalSharp 24.225,1.000
-      glyph noteheadBlack 25.439,1.000
-      line  26.619,0.832 -> 26.619,-2.500 t=0.120
-    note@-2 x=28.800 w=5.474
-      glyph accidentalNatural 27.954,1.000
-      glyph noteheadBlack 28.800,1.000
-      line  29.980,0.832 -> 29.980,-2.500 t=0.120
-    note@-2 x=32.161 w=5.474
-      glyph accidentalFlat 31.140,1.000
-      glyph noteheadBlack 32.161,1.000
-      line  33.341,0.832 -> 33.341,-2.500 t=0.120
-    bar x=35.522 w=0.160
-      line  35.602,-2.000 -> 35.602,2.000 t=0.160
-    note@-3 x=36.942 w=3.871
-      glyph noteheadBlack 36.942,1.500
-      glyph articStaccatoBelow 37.339,2.522
-      line  38.122,1.332 -> 38.122,-3.000 t=0.120
-    note@-2 x=39.318 w=3.871
-      glyph noteheadBlack 39.318,1.000
-      glyph articStaccatoBelow 39.716,2.022
-      line  40.498,0.832 -> 40.498,-3.250 t=0.120
-    note@-1 x=41.695 w=3.871
-      glyph noteheadBlack 41.695,0.500
-      glyph articStaccatoBelow 42.092,1.522
-      line  42.875,0.332 -> 42.875,-3.500 t=0.120
-    note@6 x=44.072 w=3.871
-      glyph noteheadBlack 44.072,-3.000
-      glyph ornamentMordent 43.693,-4.418
-      line  43.672,-3.000 -> 45.738,-3.000 t=0.160
-      line  44.072,-2.832 -> 44.072,1.250 t=0.120
-    note@5 x=46.448 w=3.871
-      glyph noteheadBlack 46.448,-2.500
-      glyph ornamentMordent 46.070,-3.918
-      line  46.448,-2.332 -> 46.448,1.500 t=0.120
-    note@4 x=48.825 w=3.871
-      glyph noteheadBlack 48.825,-2.000
-      glyph ornamentMordent 48.447,-3.896
-      line  48.825,-1.832 -> 48.825,1.750 t=0.120
-    note@1 x=51.202 w=5.474
-      glyph noteheadBlack 51.202,-0.500
-      glyph brassLiftShort 50.946,-4.180
-      line  51.202,-0.332 -> 51.202,3.000 t=0.120
-    note@1 x=54.563 w=5.474
-      glyph accidentalSharp 53.348,-0.500
-      glyph noteheadBlack 54.563,-0.500
-      glyph brassLiftShort 54.307,-4.180
-      line  54.563,-0.332 -> 54.563,3.000 t=0.120
-    note@1,4 x=57.924 w=5.474
-      glyph accidentalSharp 56.709,-2.000
-      glyph noteheadBlack 57.924,-0.500
-      glyph noteheadBlack 57.924,-2.000
-      glyph brassLiftShort 57.668,-4.180
-      line  57.924,-1.832 -> 57.924,3.000 t=0.120
-    note@1,5 x=61.285 w=5.474
-      glyph accidentalSharp 60.070,-2.500
-      glyph noteheadBlack 61.285,-0.500
-      glyph noteheadBlack 61.285,-2.500
-      glyph brassLiftShort 61.029,-4.202
-      line  61.285,-2.332 -> 61.285,3.000 t=0.120
-    bar x=64.646 w=0.160
-      line  64.726,-2.000 -> 64.726,2.000 t=0.160
-    note@3 x=67.356 w=5.474
-      glyph noteheadBlack 66.065,-2.000 scale=0.600
-      glyph noteheadBlack 67.356,-1.500
-      line  66.773,-2.101 -> 66.773,-4.201 t=0.072
-      line  67.356,-1.332 -> 67.356,2.000 t=0.120
-    note@-5 x=70.717 w=5.474
-      glyph noteheadBlack 69.426,3.000 scale=0.600
-      glyph noteheadBlack 70.717,2.500
-      line  70.134,2.899 -> 70.134,0.799 t=0.072
-      line  71.897,2.332 -> 71.897,-1.000 t=0.120
-    note@1 x=74.606 w=5.474
-      glyph noteheadBlack 72.026,-0.500 scale=0.600
-      glyph noteheadBlack 73.316,-1.000 scale=0.600
-      glyph noteheadBlack 74.606,-0.500
-      line  72.734,-0.601 -> 72.734,-2.701 t=0.072
-      line  74.024,-1.101 -> 74.024,-3.201 t=0.072
-      line  74.606,-0.332 -> 74.606,3.000 t=0.120
-    note@6 x=78.496 w=7.742
-      glyph noteheadBlack 75.916,2.000 scale=0.600
-      glyph noteheadBlack 77.206,-0.500 scale=0.600
-      glyph noteheadHalf 78.496,-3.000
-      line  76.624,1.899 -> 76.624,-0.201 t=0.072
-      line  77.914,-0.601 -> 77.914,-2.701 t=0.072
-      line  78.096,-3.000 -> 80.234,-3.000 t=0.160
-      line  78.496,-2.832 -> 78.496,0.500 t=0.120
-    note@2 x=84.966 w=5.474
-      glyph noteheadBlack 79.805,-1.000 scale=0.600
-      glyph noteheadBlack 81.096,-1.500 scale=0.600
-      glyph noteheadBlack 82.386,-1.000 scale=0.600
-      glyph noteheadBlack 83.676,-0.500 scale=0.600
-      glyph noteheadBlack 84.966,-1.000
-      line  80.513,-1.101 -> 80.513,-3.201 t=0.072
-      line  81.804,-1.601 -> 81.804,-3.701 t=0.072
-      line  83.094,-1.101 -> 83.094,-3.201 t=0.072
-      line  84.384,-0.601 -> 84.384,-2.701 t=0.072
-      line  84.966,-0.832 -> 84.966,2.500 t=0.120
-    bar x=88.328 w=0.160
-      line  88.408,-2.000 -> 88.408,2.000 t=0.160
-system 1 width=90.392 originY=15.812
+    note@-6 x=15.996 w=5.474
+      glyph accidentalSharp 14.674,3.000
+      glyph noteheadBlack 15.996,3.000
+      line  15.596,3.000 -> 17.662,3.000 t=0.160
+      line  17.176,2.832 -> 17.176,-0.500 t=0.120
+    note@-6 x=19.318 w=5.474
+      glyph accidentalNatural 18.363,3.000
+      glyph noteheadBlack 19.318,3.000
+      line  18.918,3.000 -> 20.984,3.000 t=0.160
+      line  20.498,2.832 -> 20.498,-0.500 t=0.120
+    note@-6 x=22.640 w=5.474
+      glyph accidentalFlat 21.511,3.000
+      glyph noteheadBlack 22.640,3.000
+      line  22.240,3.000 -> 24.306,3.000 t=0.160
+      line  23.820,2.832 -> 23.820,-0.500 t=0.120
+    note@-2 x=25.962 w=5.474
+      glyph accidentalSharp 24.639,1.000
+      glyph noteheadBlack 25.962,1.000
+      line  27.142,0.832 -> 27.142,-2.500 t=0.120
+    note@-2 x=29.284 w=5.474
+      glyph accidentalNatural 28.329,1.000
+      glyph noteheadBlack 29.284,1.000
+      line  30.464,0.832 -> 30.464,-2.500 t=0.120
+    note@-2 x=32.606 w=5.474
+      glyph accidentalFlat 31.477,1.000
+      glyph noteheadBlack 32.606,1.000
+      line  33.786,0.832 -> 33.786,-2.500 t=0.120
+    bar x=35.927 w=0.160
+      line  36.007,-2.000 -> 36.007,2.000 t=0.160
+    note@-3 x=37.347 w=3.871
+      glyph noteheadBlack 37.347,1.500
+      glyph articStaccatoBelow 37.744,2.522
+      line  38.527,1.332 -> 38.527,-3.000 t=0.120
+    note@-2 x=39.696 w=3.871
+      glyph noteheadBlack 39.696,1.000
+      glyph articStaccatoBelow 40.093,2.022
+      line  40.876,0.832 -> 40.876,-3.250 t=0.120
+    note@-1 x=42.045 w=3.871
+      glyph noteheadBlack 42.045,0.500
+      glyph articStaccatoBelow 42.442,1.522
+      line  43.225,0.332 -> 43.225,-3.500 t=0.120
+    note@6 x=44.394 w=3.871
+      glyph noteheadBlack 44.394,-3.000
+      glyph ornamentMordent 44.015,-4.418
+      line  43.994,-3.000 -> 46.059,-3.000 t=0.160
+      line  44.394,-2.832 -> 44.394,1.250 t=0.120
+    note@5 x=46.743 w=3.871
+      glyph noteheadBlack 46.743,-2.500
+      glyph ornamentMordent 46.364,-3.918
+      line  46.743,-2.332 -> 46.743,1.500 t=0.120
+    note@4 x=49.091 w=3.871
+      glyph noteheadBlack 49.091,-2.000
+      glyph ornamentMordent 48.713,-3.896
+      line  49.091,-1.832 -> 49.091,1.750 t=0.120
+    note@1 x=51.440 w=5.474
+      glyph noteheadBlack 51.440,-0.500
+      glyph brassLiftShort 51.184,-4.180
+      line  51.440,-0.332 -> 51.440,3.000 t=0.120
+    note@1 x=54.762 w=5.474
+      glyph accidentalSharp 53.440,-0.500
+      glyph noteheadBlack 54.762,-0.500
+      glyph brassLiftShort 54.506,-4.180
+      line  54.762,-0.332 -> 54.762,3.000 t=0.120
+    note@1,4 x=58.084 w=5.474
+      glyph accidentalSharp 56.762,-2.000
+      glyph noteheadBlack 58.084,-0.500
+      glyph noteheadBlack 58.084,-2.000
+      glyph brassLiftShort 57.828,-4.180
+      line  58.084,-1.832 -> 58.084,3.000 t=0.120
+    note@1,5 x=61.406 w=5.474
+      glyph accidentalSharp 60.083,-2.500
+      glyph noteheadBlack 61.406,-0.500
+      glyph noteheadBlack 61.406,-2.500
+      glyph brassLiftShort 61.150,-4.202
+      line  61.406,-2.332 -> 61.406,3.000 t=0.120
+    bar x=64.728 w=0.160
+      line  64.808,-2.000 -> 64.808,2.000 t=0.160
+    note@3 x=67.438 w=5.474
+      glyph noteheadBlack 66.147,-2.000 scale=0.600
+      glyph noteheadBlack 67.438,-1.500
+      line  66.855,-2.101 -> 66.855,-4.201 t=0.072
+      line  67.438,-1.332 -> 67.438,2.000 t=0.120
+    note@-5 x=70.759 w=5.474
+      glyph noteheadBlack 69.469,3.000 scale=0.600
+      glyph noteheadBlack 70.759,2.500
+      line  70.177,2.899 -> 70.177,0.799 t=0.072
+      line  71.939,2.332 -> 71.939,-1.000 t=0.120
+    note@1 x=74.649 w=5.474
+      glyph noteheadBlack 72.068,-0.500 scale=0.600
+      glyph noteheadBlack 73.359,-1.000 scale=0.600
+      glyph noteheadBlack 74.649,-0.500
+      line  72.776,-0.601 -> 72.776,-2.701 t=0.072
+      line  74.067,-1.101 -> 74.067,-3.201 t=0.072
+      line  74.649,-0.332 -> 74.649,3.000 t=0.120
+    note@6 x=78.539 w=7.742
+      glyph noteheadBlack 75.958,2.000 scale=0.600
+      glyph noteheadBlack 77.248,-0.500 scale=0.600
+      glyph noteheadHalf 78.539,-3.000
+      line  76.666,1.899 -> 76.666,-0.201 t=0.072
+      line  77.956,-0.601 -> 77.956,-2.701 t=0.072
+      line  78.139,-3.000 -> 80.277,-3.000 t=0.160
+      line  78.539,-2.832 -> 78.539,0.500 t=0.120
+    note@2 x=85.009 w=5.474
+      glyph noteheadBlack 79.848,-1.000 scale=0.600
+      glyph noteheadBlack 81.138,-1.500 scale=0.600
+      glyph noteheadBlack 82.428,-1.000 scale=0.600
+      glyph noteheadBlack 83.719,-0.500 scale=0.600
+      glyph noteheadBlack 85.009,-1.000
+      line  80.556,-1.101 -> 80.556,-3.201 t=0.072
+      line  81.846,-1.601 -> 81.846,-3.701 t=0.072
+      line  83.136,-1.101 -> 83.136,-3.201 t=0.072
+      line  84.427,-0.601 -> 84.427,-2.701 t=0.072
+      line  85.009,-0.832 -> 85.009,2.500 t=0.120
+    bar x=88.331 w=0.160
+      line  88.411,-2.000 -> 88.411,2.000 t=0.160
+system 1 width=90.395 originY=15.812
   staff 0 originY=10.008
-    staffline 0.000,2.000 -> 90.392,2.000 t=0.130
-    staffline 0.000,1.000 -> 90.392,1.000 t=0.130
-    staffline 0.000,0.000 -> 90.392,0.000 t=0.130
-    staffline 0.000,-1.000 -> 90.392,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 90.392,-2.000 t=0.130
-    beam   17.146,-0.250 -> 23.317,0.750 t=0.500
-    beam   34.029,0.750 -> 40.199,0.250 t=0.500
-    beam   68.364,1.750 -> 70.420,1.250 t=0.500
-    beam   72.477,0.750 -> 74.534,0.250 t=0.500
-    tie  15.718,-4.800 -> 16.846,-4.800 bulge=-0.500
-    slur  28.781,-4.300 -> 33.729,-4.300 bulge=-0.891
-    slur  69.844,-2.800 -> 70.120,-3.300 bulge=-0.500
-    slur  73.957,-3.800 -> 74.234,-4.300 bulge=-0.500
+    staffline 0.000,2.000 -> 90.395,2.000 t=0.130
+    staffline 0.000,1.000 -> 90.395,1.000 t=0.130
+    staffline 0.000,0.000 -> 90.395,0.000 t=0.130
+    staffline 0.000,-1.000 -> 90.395,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 90.395,-2.000 t=0.130
+    beam   17.147,-0.250 -> 23.317,0.750 t=0.500
+    beam   34.030,0.750 -> 40.201,0.250 t=0.500
+    beam   68.366,1.750 -> 70.423,1.250 t=0.500
+    beam   72.480,0.750 -> 74.537,0.250 t=0.500
+    tie  15.718,-4.800 -> 16.847,-4.800 bulge=-0.500
+    slur  28.781,-4.300 -> 33.730,-4.300 bulge=-0.891
+    slur  69.846,-2.800 -> 70.123,-3.300 bulge=-0.500
+    slur  73.960,-3.800 -> 74.237,-4.300 bulge=-0.500
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=3.710
@@ -1786,11 +1786,11 @@ system 1 width=90.392 originY=15.812
       line  13.838,-3.000 -> 15.904,-3.000 t=0.160
       line  13.838,-4.000 -> 15.904,-4.000 t=0.160
       line  14.238,-3.832 -> 14.238,0.000 t=0.120
-    note@8 x=17.146 w=3.871
-      glyph noteheadBlack 17.146,-4.000
-      line  16.746,-3.000 -> 18.812,-3.000 t=0.160
-      line  16.746,-4.000 -> 18.812,-4.000 t=0.160
-      line  17.146,-3.832 -> 17.146,-0.250 t=0.120
+    note@8 x=17.147 w=3.871
+      glyph noteheadBlack 17.147,-4.000
+      line  16.747,-3.000 -> 18.812,-3.000 t=0.160
+      line  16.747,-4.000 -> 18.812,-4.000 t=0.160
+      line  17.147,-3.832 -> 17.147,-0.250 t=0.120
     note@7 x=19.203 w=3.871
       glyph noteheadBlack 19.203,-3.500
       glyph ornamentMordent 18.825,-4.918
@@ -1798,112 +1798,112 @@ system 1 width=90.392 originY=15.812
       line  19.203,-3.332 -> 19.203,0.083 t=0.120
     note@8 x=21.260 w=3.871
       glyph noteheadBlack 21.260,-4.000
-      glyph ornamentMordent 20.881,-5.418
+      glyph ornamentMordent 20.882,-5.418
       line  20.860,-3.000 -> 22.926,-3.000 t=0.160
       line  20.860,-4.000 -> 22.926,-4.000 t=0.160
       line  21.260,-3.832 -> 21.260,0.417 t=0.120
     note@6 x=23.317 w=3.871
       glyph noteheadBlack 23.317,-3.000
-      glyph ornamentMordent 22.938,-4.418
-      line  22.917,-3.000 -> 24.982,-3.000 t=0.160
+      glyph ornamentMordent 22.939,-4.418
+      line  22.917,-3.000 -> 24.983,-3.000 t=0.160
       line  23.317,-2.832 -> 23.317,0.750 t=0.120
-    bar x=25.373 w=0.160
-      line  25.453,-2.000 -> 25.453,2.000 t=0.160
+    bar x=25.374 w=0.160
+      line  25.454,-2.000 -> 25.454,2.000 t=0.160
     note@7 x=26.793 w=10.949
       glyph noteheadWhole 26.793,-3.500
-      line  26.393,-3.000 -> 29.126,-3.000 t=0.160
-    bar x=32.610 w=0.160
-      line  32.690,-2.000 -> 32.690,2.000 t=0.160
-    note@7 x=34.029 w=3.871
-      glyph noteheadBlack 34.029,-3.500
-      line  33.629,-3.000 -> 35.695,-3.000 t=0.160
-      line  34.029,-3.332 -> 34.029,0.750 t=0.120
-    note@6 x=36.086 w=3.871
-      glyph noteheadBlack 36.086,-3.000
-      glyph articStaccatoAbove 36.483,-5.022
-      line  35.686,-3.000 -> 37.752,-3.000 t=0.160
-      line  36.086,-2.832 -> 36.086,0.583 t=0.120
-    note@7 x=38.143 w=3.871
-      glyph noteheadBlack 38.143,-3.500
-      glyph articStaccatoAbove 38.540,-5.522
-      line  37.743,-3.000 -> 39.808,-3.000 t=0.160
-      line  38.143,-3.332 -> 38.143,0.417 t=0.120
-    note@8 x=40.199 w=3.871
-      glyph noteheadBlack 40.199,-4.000
-      glyph articStaccatoAbove 40.596,-6.022
-      line  39.799,-3.000 -> 41.865,-3.000 t=0.160
-      line  39.799,-4.000 -> 41.865,-4.000 t=0.160
-      line  40.199,-3.832 -> 40.199,0.250 t=0.120
-    bar x=42.256 w=0.160
-      line  42.336,-2.000 -> 42.336,2.000 t=0.160
-    note@-1 x=43.675 w=5.474
-      glyph noteheadBlack 43.675,0.500
-      glyph ornamentTremblement 42.297,-3.738
-      line  44.855,0.332 -> 44.855,-3.000 t=0.120
-    note@5 x=46.584 w=5.474
-      glyph noteheadBlack 46.584,-2.500
-      glyph ornamentTremblement 45.206,-3.760
-      line  46.584,-2.332 -> 46.584,1.000 t=0.120
-    note@-1 x=49.493 w=5.474
-      glyph noteheadBlack 49.493,0.500
-      glyph ornamentTremblement 48.115,-3.738
-      line  50.673,0.332 -> 50.673,-3.000 t=0.120
-    note@5 x=52.401 w=5.474
-      glyph noteheadBlack 52.401,-2.500
-      glyph ornamentTremblement 51.023,-3.760
-      line  52.401,-2.332 -> 52.401,1.000 t=0.120
-    note@-1 x=55.310 w=5.474
-      glyph noteheadBlack 55.310,0.500
-      glyph ornamentMordent 54.931,-3.896
-      line  56.490,0.332 -> 56.490,-3.000 t=0.120
-    note@5 x=58.218 w=5.474
-      glyph noteheadBlack 58.218,-2.500
-      glyph ornamentMordent 57.840,-3.918
-      line  58.218,-2.332 -> 58.218,1.000 t=0.120
-    bar x=61.127 w=0.160
-      line  61.207,-2.000 -> 61.207,2.000 t=0.160
-    note@-1 x=62.546 w=5.474
-      glyph noteheadBlack 62.546,0.500
-      glyph articStaccatoBelow 62.944,1.522
-      line  63.726,0.332 -> 63.726,-3.000 t=0.120
-    note@5 x=65.455 w=5.474
-      glyph noteheadBlack 65.455,-2.500
-      glyph articStaccatoAbove 65.852,-4.522
-      line  65.455,-2.332 -> 65.455,1.000 t=0.120
-    note@4 x=68.364 w=3.871
-      glyph noteheadBlack 68.364,-2.000
-      glyph stringsDownBow 68.230,-3.895
-      line  68.364,-1.832 -> 68.364,1.750 t=0.120
-    note@5 x=70.420 w=3.871
-      glyph noteheadBlack 70.420,-2.500
-      line  70.420,-2.332 -> 70.420,1.250 t=0.120
-    note@6 x=72.477 w=3.871
-      glyph noteheadBlack 72.477,-3.000
-      glyph articStaccatoAbove 72.874,-5.022
-      glyph stringsUpBow 72.439,-6.279
-      line  72.077,-3.000 -> 74.143,-3.000 t=0.160
-      line  72.477,-2.832 -> 72.477,0.750 t=0.120
-    note@7 x=74.534 w=3.871
-      glyph noteheadBlack 74.534,-3.500
-      glyph articStaccatoAbove 74.931,-5.522
-      line  74.134,-3.000 -> 76.200,-3.000 t=0.160
-      line  74.534,-3.332 -> 74.534,0.250 t=0.120
-    bar x=76.590 w=0.160
-      line  76.670,-2.000 -> 76.670,2.000 t=0.160
-    note@1 x=78.010 w=7.742
-      glyph noteheadHalf 78.010,-0.500
-      glyph articStaccatoAbove 78.407,-2.022
-      glyph stringsUpBow 77.972,-4.257
-      glyph ornamentTremblement 76.632,-6.252
-      glyph ornamentTremblement 76.632,-7.728
-      glyph ornamentMordent 77.631,-9.362
-      line  78.010,-0.332 -> 78.010,3.000 t=0.120
-    note@5 x=82.123 w=10.949
-      glyph noteheadWhole 82.123,-2.500
-      glyph fermataAbove 81.693,-4.001
-    bar x=87.940 w=0.720
-      line  88.020,-2.000 -> 88.020,2.000 t=0.160
-      line  88.580,-2.000 -> 88.580,2.000 t=0.160
+      line  26.393,-3.000 -> 29.127,-3.000 t=0.160
+    bar x=32.611 w=0.160
+      line  32.691,-2.000 -> 32.691,2.000 t=0.160
+    note@7 x=34.030 w=3.871
+      glyph noteheadBlack 34.030,-3.500
+      line  33.630,-3.000 -> 35.696,-3.000 t=0.160
+      line  34.030,-3.332 -> 34.030,0.750 t=0.120
+    note@6 x=36.087 w=3.871
+      glyph noteheadBlack 36.087,-3.000
+      glyph articStaccatoAbove 36.484,-5.022
+      line  35.687,-3.000 -> 37.753,-3.000 t=0.160
+      line  36.087,-2.832 -> 36.087,0.583 t=0.120
+    note@7 x=38.144 w=3.871
+      glyph noteheadBlack 38.144,-3.500
+      glyph articStaccatoAbove 38.541,-5.522
+      line  37.744,-3.000 -> 39.810,-3.000 t=0.160
+      line  38.144,-3.332 -> 38.144,0.417 t=0.120
+    note@8 x=40.201 w=3.871
+      glyph noteheadBlack 40.201,-4.000
+      glyph articStaccatoAbove 40.598,-6.022
+      line  39.801,-3.000 -> 41.866,-3.000 t=0.160
+      line  39.801,-4.000 -> 41.866,-4.000 t=0.160
+      line  40.201,-3.832 -> 40.201,0.250 t=0.120
+    bar x=42.257 w=0.160
+      line  42.337,-2.000 -> 42.337,2.000 t=0.160
+    note@-1 x=43.677 w=5.474
+      glyph noteheadBlack 43.677,0.500
+      glyph ornamentTremblement 42.299,-3.738
+      line  44.857,0.332 -> 44.857,-3.000 t=0.120
+    note@5 x=46.585 w=5.474
+      glyph noteheadBlack 46.585,-2.500
+      glyph ornamentTremblement 45.207,-3.760
+      line  46.585,-2.332 -> 46.585,1.000 t=0.120
+    note@-1 x=49.494 w=5.474
+      glyph noteheadBlack 49.494,0.500
+      glyph ornamentTremblement 48.116,-3.738
+      line  50.674,0.332 -> 50.674,-3.000 t=0.120
+    note@5 x=52.403 w=5.474
+      glyph noteheadBlack 52.403,-2.500
+      glyph ornamentTremblement 51.025,-3.760
+      line  52.403,-2.332 -> 52.403,1.000 t=0.120
+    note@-1 x=55.312 w=5.474
+      glyph noteheadBlack 55.312,0.500
+      glyph ornamentMordent 54.933,-3.896
+      line  56.492,0.332 -> 56.492,-3.000 t=0.120
+    note@5 x=58.221 w=5.474
+      glyph noteheadBlack 58.221,-2.500
+      glyph ornamentMordent 57.842,-3.918
+      line  58.221,-2.332 -> 58.221,1.000 t=0.120
+    bar x=61.129 w=0.160
+      line  61.209,-2.000 -> 61.209,2.000 t=0.160
+    note@-1 x=62.549 w=5.474
+      glyph noteheadBlack 62.549,0.500
+      glyph articStaccatoBelow 62.946,1.522
+      line  63.729,0.332 -> 63.729,-3.000 t=0.120
+    note@5 x=65.457 w=5.474
+      glyph noteheadBlack 65.457,-2.500
+      glyph articStaccatoAbove 65.855,-4.522
+      line  65.457,-2.332 -> 65.457,1.000 t=0.120
+    note@4 x=68.366 w=3.871
+      glyph noteheadBlack 68.366,-2.000
+      glyph stringsDownBow 68.232,-3.895
+      line  68.366,-1.832 -> 68.366,1.750 t=0.120
+    note@5 x=70.423 w=3.871
+      glyph noteheadBlack 70.423,-2.500
+      line  70.423,-2.332 -> 70.423,1.250 t=0.120
+    note@6 x=72.480 w=3.871
+      glyph noteheadBlack 72.480,-3.000
+      glyph articStaccatoAbove 72.877,-5.022
+      glyph stringsUpBow 72.442,-6.279
+      line  72.080,-3.000 -> 74.146,-3.000 t=0.160
+      line  72.480,-2.832 -> 72.480,0.750 t=0.120
+    note@7 x=74.537 w=3.871
+      glyph noteheadBlack 74.537,-3.500
+      glyph articStaccatoAbove 74.934,-5.522
+      line  74.137,-3.000 -> 76.202,-3.000 t=0.160
+      line  74.537,-3.332 -> 74.537,0.250 t=0.120
+    bar x=76.593 w=0.160
+      line  76.673,-2.000 -> 76.673,2.000 t=0.160
+    note@1 x=78.013 w=7.742
+      glyph noteheadHalf 78.013,-0.500
+      glyph articStaccatoAbove 78.410,-2.022
+      glyph stringsUpBow 77.975,-4.257
+      glyph ornamentTremblement 76.635,-6.252
+      glyph ornamentTremblement 76.635,-7.728
+      glyph ornamentMordent 77.634,-9.362
+      line  78.013,-0.332 -> 78.013,3.000 t=0.120
+    note@5 x=82.126 w=10.949
+      glyph noteheadWhole 82.126,-2.500
+      glyph fermataAbove 81.696,-4.001
+    bar x=87.944 w=0.720
+      line  88.024,-2.000 -> 88.024,2.000 t=0.160
+      line  88.584,-2.000 -> 88.584,2.000 t=0.160
 tune 8
 bounds  width=90.357 height=23.945 top=-1.935
 systems 1
@@ -2416,17 +2416,17 @@ system 1 width=90.536 originY=19.102
       line  88.164,-2.000 -> 88.164,2.000 t=0.160
       line  88.724,-2.000 -> 88.724,2.000 t=0.160
 tune 10
-bounds  width=90.323 height=31.943 top=-1.935
+bounds  width=126.118 height=31.943 top=-1.935
 systems 2
-system 0 width=90.323 originY=0.000
+system 0 width=119.408 originY=0.000
   staff 0 originY=11.158
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.130
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.130
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.130
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
+    staffline 0.000,2.000 -> 119.408,2.000 t=0.130
+    staffline 0.000,1.000 -> 119.408,1.000 t=0.130
+    staffline 0.000,0.000 -> 119.408,0.000 t=0.130
+    staffline 0.000,-1.000 -> 119.408,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 119.408,-2.000 t=0.130
     title x=0.000 w=0.000
-      text  19.521,-6.699 size=3.484 bold "S8-11 Chords with many accidentals"
+      text  34.064,-6.699 size=3.484 bold "S8-11 Chords with many accidentals"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=1.065
@@ -2434,357 +2434,357 @@ system 0 width=90.323 originY=0.000
     timeSignature x=8.684 w=1.410
       glyph timeSig6 8.747,-1.000
       glyph timeSig8 8.684,1.000
-    note@1,2 x=12.650 w=3.871
-      glyph accidentalSharp 11.435,-0.500
-      glyph accidentalSharp 11.435,-1.000
-      glyph noteheadBlack 11.384,-0.500
-      glyph noteheadBlack 12.650,-1.000
-      glyph flag8thDown 12.650,3.000
-      line  12.650,-0.832 -> 12.650,3.000 t=0.120
-    note@1,3 x=16.731 w=3.871
-      glyph accidentalSharp 15.517,-0.500
-      glyph accidentalSharp 15.517,-1.500
-      glyph noteheadBlack 16.731,-0.500
-      glyph noteheadBlack 16.731,-1.500
-      glyph flag8thDown 16.731,3.000
-      line  16.731,-1.332 -> 16.731,3.000 t=0.120
-    note@1,4 x=20.813 w=3.871
-      glyph accidentalSharp 19.598,-0.500
-      glyph accidentalSharp 19.598,-2.000
-      glyph noteheadBlack 20.813,-0.500
-      glyph noteheadBlack 20.813,-2.000
-      glyph flag8thDown 20.813,3.000
-      line  20.813,-1.832 -> 20.813,3.000 t=0.120
-    note@1,5 x=24.895 w=3.871
-      glyph accidentalSharp 23.680,-0.500
-      glyph accidentalSharp 23.680,-2.500
-      glyph noteheadBlack 24.895,-0.500
-      glyph noteheadBlack 24.895,-2.500
-      glyph flag8thDown 24.895,3.000
-      line  24.895,-2.332 -> 24.895,3.000 t=0.120
-    note@1,6 x=28.976 w=3.871
-      glyph accidentalSharp 27.762,-0.500
-      glyph accidentalSharp 27.762,-3.000
-      glyph noteheadBlack 28.976,-0.500
-      glyph noteheadBlack 28.976,-3.000
-      glyph flag8thDown 28.976,3.000
-      line  28.576,-3.000 -> 30.642,-3.000 t=0.160
-      line  28.976,-2.832 -> 28.976,3.000 t=0.120
-    note@1,7 x=33.058 w=3.871
-      glyph accidentalSharp 31.843,-0.500
-      glyph accidentalSharp 31.843,-3.500
-      glyph noteheadBlack 33.058,-0.500
-      glyph noteheadBlack 33.058,-3.500
-      glyph flag8thDown 33.058,3.000
-      line  32.658,-3.000 -> 34.723,-3.000 t=0.160
-      line  33.058,-3.332 -> 33.058,3.000 t=0.120
-    bar x=37.139 w=0.160
-      line  37.219,-2.000 -> 37.219,2.000 t=0.160
-    note@-6,-5 x=39.773 w=3.871
-      glyph accidentalSharp 38.558,3.000
-      glyph accidentalSharp 38.558,2.500
-      glyph noteheadBlack 39.773,3.000
-      glyph noteheadBlack 41.039,2.500
-      glyph flag8thUp 40.953,-1.000
-      line  39.373,3.000 -> 41.439,3.000 t=0.160
-      line  40.953,2.832 -> 40.953,-1.000 t=0.120
-    note@-6,-4 x=43.854 w=3.871
-      glyph accidentalSharp 42.640,3.000
-      glyph accidentalSharp 42.640,2.000
-      glyph noteheadBlack 43.854,3.000
-      glyph noteheadBlack 43.854,2.000
-      glyph flag8thUp 45.034,-1.500
-      line  43.454,3.000 -> 45.520,3.000 t=0.160
-      line  45.034,2.832 -> 45.034,-1.500 t=0.120
-    note@-6,-3 x=47.936 w=3.871
-      glyph accidentalSharp 46.721,3.000
-      glyph accidentalSharp 46.721,1.500
-      glyph noteheadBlack 47.936,3.000
-      glyph noteheadBlack 47.936,1.500
-      glyph flag8thUp 49.116,-2.000
-      line  47.536,3.000 -> 49.602,3.000 t=0.160
-      line  49.116,2.832 -> 49.116,-2.000 t=0.120
-    note@-6,-2 x=52.018 w=3.871
-      glyph accidentalSharp 50.803,3.000
-      glyph accidentalSharp 50.803,1.000
-      glyph noteheadBlack 52.018,3.000
-      glyph noteheadBlack 52.018,1.000
-      glyph flag8thUp 53.198,-2.500
-      line  51.618,3.000 -> 53.683,3.000 t=0.160
-      line  53.198,2.832 -> 53.198,-2.500 t=0.120
-    note@-6,-1 x=56.099 w=3.871
-      glyph accidentalSharp 54.885,3.000
-      glyph accidentalSharp 54.885,0.500
-      glyph noteheadBlack 56.099,3.000
-      glyph noteheadBlack 56.099,0.500
-      glyph flag8thUp 57.279,-3.000
-      line  55.699,3.000 -> 57.765,3.000 t=0.160
-      line  57.279,2.832 -> 57.279,-3.000 t=0.120
-    note@-6,0 x=60.181 w=3.871
-      glyph accidentalSharp 58.966,3.000
-      glyph accidentalSharp 58.966,0.000
-      glyph noteheadBlack 60.181,3.000
-      glyph noteheadBlack 60.181,0.000
-      glyph flag8thUp 61.361,-3.500
-      line  59.781,3.000 -> 61.846,3.000 t=0.160
-      line  61.361,2.832 -> 61.361,-3.500 t=0.120
-    bar x=64.262 w=0.160
-      line  64.342,-2.000 -> 64.342,2.000 t=0.160
-    note@1,2,3 x=66.947 w=3.871
-      glyph accidentalSharp 65.733,-0.500
-      glyph accidentalSharp 65.733,-1.000
-      glyph accidentalSharp 65.733,-1.500
-      glyph noteheadBlack 66.947,-0.500
-      glyph noteheadBlack 65.681,-1.000
-      glyph noteheadBlack 66.947,-1.500
-      glyph flag8thDown 66.947,3.000
-      line  66.947,-1.332 -> 66.947,3.000 t=0.120
-    note@1,2,4 x=71.029 w=3.871
-      glyph accidentalSharp 69.814,-0.500
-      glyph accidentalSharp 69.814,-1.000
-      glyph accidentalSharp 69.814,-2.000
-      glyph noteheadBlack 69.763,-0.500
-      glyph noteheadBlack 71.029,-1.000
-      glyph noteheadBlack 71.029,-2.000
-      glyph flag8thDown 71.029,3.000
-      line  71.029,-1.832 -> 71.029,3.000 t=0.120
-    note@1,4,5 x=75.110 w=3.871
-      glyph accidentalSharp 73.896,-0.500
-      glyph accidentalSharp 73.896,-2.000
-      glyph accidentalSharp 73.896,-2.500
-      glyph noteheadBlack 75.110,-0.500
-      glyph noteheadBlack 73.844,-2.000
-      glyph noteheadBlack 75.110,-2.500
-      glyph flag8thDown 75.110,3.000
-      line  75.110,-2.332 -> 75.110,3.000 t=0.120
-    note@1,4,6 x=79.192 w=3.871
-      glyph accidentalSharp 77.977,-0.500
-      glyph accidentalSharp 77.977,-2.000
-      glyph accidentalSharp 77.977,-3.000
-      glyph noteheadBlack 79.192,-0.500
-      glyph noteheadBlack 79.192,-2.000
-      glyph noteheadBlack 79.192,-3.000
-      glyph flag8thDown 79.192,3.000
-      line  78.792,-3.000 -> 80.858,-3.000 t=0.160
-      line  79.192,-2.832 -> 79.192,3.000 t=0.120
-    note@1,2,4,5,6,7 x=83.273 w=3.871
-      glyph accidentalSharp 82.059,-0.500
-      glyph accidentalNatural 82.059,-1.000
-      glyph accidentalNatural 82.059,-2.000
-      glyph accidentalSharp 82.059,-2.500
-      glyph accidentalFlat 82.059,-3.000
-      glyph accidentalFlat 82.059,-3.500
-      glyph noteheadBlack 82.008,-0.500
-      glyph noteheadBlack 83.273,-1.000
-      glyph noteheadBlack 82.008,-2.000
-      glyph noteheadBlack 83.273,-2.500
-      glyph noteheadBlack 82.008,-3.000
-      glyph noteheadBlack 83.273,-3.500
-      glyph flag8thDown 83.273,3.000
-      line  81.608,-3.000 -> 83.673,-3.000 t=0.160
-      line  82.873,-3.000 -> 84.939,-3.000 t=0.160
-      line  83.273,-3.332 -> 83.273,3.000 t=0.120
-    bar x=87.355 w=1.060
-      line  87.435,-2.000 -> 87.435,2.000 t=0.160
-      line  88.165,-2.000 -> 88.165,2.000 t=0.500
-system 1 width=90.323 originY=16.623
+    note@1,2 x=15.094 w=3.871
+      glyph accidentalSharp 13.771,-0.500
+      glyph accidentalSharp 12.449,-1.000
+      glyph noteheadBlack 13.828,-0.500
+      glyph noteheadBlack 15.094,-1.000
+      glyph flag8thDown 15.094,3.000
+      line  15.094,-0.832 -> 15.094,3.000 t=0.120
+    note@1,3 x=20.113 w=3.871
+      glyph accidentalSharp 18.790,-0.500
+      glyph accidentalSharp 17.467,-1.500
+      glyph noteheadBlack 20.113,-0.500
+      glyph noteheadBlack 20.113,-1.500
+      glyph flag8thDown 20.113,3.000
+      line  20.113,-1.332 -> 20.113,3.000 t=0.120
+    note@1,4 x=25.131 w=3.871
+      glyph accidentalSharp 23.809,-0.500
+      glyph accidentalSharp 22.486,-2.000
+      glyph noteheadBlack 25.131,-0.500
+      glyph noteheadBlack 25.131,-2.000
+      glyph flag8thDown 25.131,3.000
+      line  25.131,-1.832 -> 25.131,3.000 t=0.120
+    note@1,5 x=30.150 w=3.871
+      glyph accidentalSharp 28.827,-0.500
+      glyph accidentalSharp 27.505,-2.500
+      glyph noteheadBlack 30.150,-0.500
+      glyph noteheadBlack 30.150,-2.500
+      glyph flag8thDown 30.150,3.000
+      line  30.150,-2.332 -> 30.150,3.000 t=0.120
+    note@1,6 x=35.169 w=3.871
+      glyph accidentalSharp 33.846,-0.500
+      glyph accidentalSharp 32.523,-3.000
+      glyph noteheadBlack 35.169,-0.500
+      glyph noteheadBlack 35.169,-3.000
+      glyph flag8thDown 35.169,3.000
+      line  34.769,-3.000 -> 36.834,-3.000 t=0.160
+      line  35.169,-2.832 -> 35.169,3.000 t=0.120
+    note@1,7 x=38.865 w=3.871
+      glyph accidentalSharp 37.542,-0.500
+      glyph accidentalSharp 37.542,-3.500
+      glyph noteheadBlack 38.865,-0.500
+      glyph noteheadBlack 38.865,-3.500
+      glyph flag8thDown 38.865,3.000
+      line  38.465,-3.000 -> 40.531,-3.000 t=0.160
+      line  38.865,-3.332 -> 38.865,3.000 t=0.120
+    bar x=40.819 w=0.160
+      line  40.899,-2.000 -> 40.899,2.000 t=0.160
+    note@-6,-5 x=45.948 w=3.871
+      glyph accidentalSharp 44.625,3.000
+      glyph accidentalSharp 43.303,2.500
+      glyph noteheadBlack 45.948,3.000
+      glyph noteheadBlack 47.214,2.500
+      glyph flag8thUp 47.128,-1.000
+      line  45.548,3.000 -> 47.614,3.000 t=0.160
+      line  47.128,2.832 -> 47.128,-1.000 t=0.120
+    note@-6,-4 x=52.233 w=3.871
+      glyph accidentalSharp 50.910,3.000
+      glyph accidentalSharp 49.587,2.000
+      glyph noteheadBlack 52.233,3.000
+      glyph noteheadBlack 52.233,2.000
+      glyph flag8thUp 53.413,-1.500
+      line  51.833,3.000 -> 53.898,3.000 t=0.160
+      line  53.413,2.832 -> 53.413,-1.500 t=0.120
+    note@-6,-3 x=58.115 w=3.871
+      glyph accidentalSharp 56.792,3.000
+      glyph accidentalSharp 55.470,1.500
+      glyph noteheadBlack 58.115,3.000
+      glyph noteheadBlack 58.115,1.500
+      glyph flag8thUp 59.295,-2.000
+      line  57.715,3.000 -> 59.781,3.000 t=0.160
+      line  59.295,2.832 -> 59.295,-2.000 t=0.120
+    note@-6,-2 x=63.997 w=3.871
+      glyph accidentalSharp 62.674,3.000
+      glyph accidentalSharp 61.352,1.000
+      glyph noteheadBlack 63.997,3.000
+      glyph noteheadBlack 63.997,1.000
+      glyph flag8thUp 65.177,-2.500
+      line  63.597,3.000 -> 65.663,3.000 t=0.160
+      line  65.177,2.832 -> 65.177,-2.500 t=0.120
+    note@-6,-1 x=69.879 w=3.871
+      glyph accidentalSharp 68.557,3.000
+      glyph accidentalSharp 67.234,0.500
+      glyph noteheadBlack 69.879,3.000
+      glyph noteheadBlack 69.879,0.500
+      glyph flag8thUp 71.059,-3.000
+      line  69.479,3.000 -> 71.545,3.000 t=0.160
+      line  71.059,2.832 -> 71.059,-3.000 t=0.120
+    note@-6,0 x=74.439 w=3.871
+      glyph accidentalSharp 73.116,3.000
+      glyph accidentalSharp 73.116,0.000
+      glyph noteheadBlack 74.439,3.000
+      glyph noteheadBlack 74.439,0.000
+      glyph flag8thUp 75.619,-3.500
+      line  74.039,3.000 -> 76.105,3.000 t=0.160
+      line  75.619,2.832 -> 75.619,-3.500 t=0.120
+    bar x=77.256 w=0.160
+      line  77.336,-2.000 -> 77.336,2.000 t=0.160
+    note@1,2,3 x=84.240 w=3.871
+      glyph accidentalSharp 82.918,-0.500
+      glyph accidentalSharp 81.595,-1.000
+      glyph accidentalSharp 80.273,-1.500
+      glyph noteheadBlack 84.240,-0.500
+      glyph noteheadBlack 82.974,-1.000
+      glyph noteheadBlack 84.240,-1.500
+      glyph flag8thDown 84.240,3.000
+      line  84.240,-1.332 -> 84.240,3.000 t=0.120
+    note@1,2,4 x=91.114 w=3.871
+      glyph accidentalSharp 89.791,-0.500
+      glyph accidentalSharp 88.469,-1.000
+      glyph accidentalSharp 87.146,-2.000
+      glyph noteheadBlack 89.848,-0.500
+      glyph noteheadBlack 91.114,-1.000
+      glyph noteheadBlack 91.114,-2.000
+      glyph flag8thDown 91.114,3.000
+      line  91.114,-1.832 -> 91.114,3.000 t=0.120
+    note@1,4,5 x=97.987 w=3.871
+      glyph accidentalSharp 96.665,-0.500
+      glyph accidentalSharp 95.342,-2.000
+      glyph accidentalSharp 94.020,-2.500
+      glyph noteheadBlack 97.987,-0.500
+      glyph noteheadBlack 96.722,-2.000
+      glyph noteheadBlack 97.987,-2.500
+      glyph flag8thDown 97.987,3.000
+      line  97.987,-2.332 -> 97.987,3.000 t=0.120
+    note@1,4,6 x=104.861 w=3.871
+      glyph accidentalSharp 103.538,-0.500
+      glyph accidentalSharp 102.216,-2.000
+      glyph accidentalSharp 100.893,-3.000
+      glyph noteheadBlack 104.861,-0.500
+      glyph noteheadBlack 104.861,-2.000
+      glyph noteheadBlack 104.861,-3.000
+      glyph flag8thDown 104.861,3.000
+      line  104.461,-3.000 -> 106.527,-3.000 t=0.160
+      line  104.861,-2.832 -> 104.861,3.000 t=0.120
+    note@1,2,4,5,6,7 x=114.486 w=3.871
+      glyph accidentalSharp 113.163,-0.500
+      glyph accidentalNatural 112.209,-1.000
+      glyph accidentalNatural 111.254,-2.000
+      glyph accidentalSharp 109.931,-2.500
+      glyph accidentalFlat 108.802,-3.000
+      glyph accidentalFlat 113.163,-3.500
+      glyph noteheadBlack 113.220,-0.500
+      glyph noteheadBlack 114.486,-1.000
+      glyph noteheadBlack 113.220,-2.000
+      glyph noteheadBlack 114.486,-2.500
+      glyph noteheadBlack 113.220,-3.000
+      glyph noteheadBlack 114.486,-3.500
+      glyph flag8thDown 114.486,3.000
+      line  112.820,-3.000 -> 114.886,-3.000 t=0.160
+      line  114.086,-3.000 -> 116.152,-3.000 t=0.160
+      line  114.486,-3.332 -> 114.486,3.000 t=0.120
+    bar x=116.440 w=1.060
+      line  116.520,-2.000 -> 116.520,2.000 t=0.160
+      line  117.250,-2.000 -> 117.250,2.000 t=0.500
+system 1 width=126.118 originY=16.623
   staff 0 originY=6.449
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.130
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.130
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.130
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.130
-    beam   67.704,4.250 -> 83.838,4.250 t=0.500
+    staffline 0.000,2.000 -> 126.118,2.000 t=0.130
+    staffline 0.000,1.000 -> 126.118,1.000 t=0.130
+    staffline 0.000,0.000 -> 126.118,0.000 t=0.130
+    staffline 0.000,-1.000 -> 126.118,-1.000 t=0.130
+    staffline 0.000,-2.000 -> 126.118,-2.000 t=0.130
+    beam   95.540,4.250 -> 121.712,4.250 t=0.500
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=1.065
       glyph accidentalSharp 6.329,-2.000
-    note@1,4,6 x=9.899 w=3.871
-      glyph accidentalSharp 8.684,-0.500
-      glyph accidentalSharp 8.684,-2.000
-      glyph accidentalSharp 8.684,-3.000
-      glyph noteheadBlack 9.899,-0.500
-      glyph noteheadBlack 9.899,-2.000
-      glyph noteheadBlack 9.899,-3.000
-      glyph flag8thDown 9.899,3.000
-      line  9.499,-3.000 -> 11.564,-3.000 t=0.160
-      line  9.899,-2.832 -> 9.899,3.000 t=0.120
-    note@1,4,7 x=13.932 w=3.871
-      glyph accidentalSharp 12.717,-0.500
-      glyph accidentalSharp 12.717,-2.000
-      glyph accidentalSharp 12.717,-3.500
-      glyph noteheadBlack 13.932,-0.500
-      glyph noteheadBlack 13.932,-2.000
-      glyph noteheadBlack 13.932,-3.500
-      glyph flag8thDown 13.932,3.000
-      line  13.532,-3.000 -> 15.598,-3.000 t=0.160
-      line  13.932,-3.332 -> 13.932,3.000 t=0.120
-    note@1,4,8 x=17.965 w=3.871
-      glyph accidentalSharp 16.751,-0.500
-      glyph accidentalSharp 16.751,-2.000
-      glyph accidentalSharp 16.751,-4.000
-      glyph noteheadBlack 17.965,-0.500
-      glyph noteheadBlack 17.965,-2.000
-      glyph noteheadBlack 17.965,-4.000
-      glyph flag8thDown 17.965,3.000
-      line  17.565,-3.000 -> 19.631,-3.000 t=0.160
-      line  17.565,-4.000 -> 19.631,-4.000 t=0.160
-      line  17.965,-3.832 -> 17.965,3.000 t=0.120
-    note@1,4,9 x=21.999 w=3.871
-      glyph accidentalSharp 20.784,-0.500
-      glyph accidentalSharp 20.784,-2.000
-      glyph accidentalSharp 20.784,-4.500
-      glyph noteheadBlack 21.999,-0.500
-      glyph noteheadBlack 21.999,-2.000
-      glyph noteheadBlack 21.999,-4.500
-      glyph flag8thDown 21.999,3.000
-      line  21.599,-3.000 -> 23.665,-3.000 t=0.160
-      line  21.599,-4.000 -> 23.665,-4.000 t=0.160
-      line  21.999,-4.332 -> 21.999,3.000 t=0.120
-    note@1,4,10 x=26.032 w=3.871
-      glyph accidentalSharp 24.818,-0.500
-      glyph accidentalSharp 24.818,-2.000
-      glyph accidentalSharp 24.818,-5.000
-      glyph noteheadBlack 26.032,-0.500
-      glyph noteheadBlack 26.032,-2.000
-      glyph noteheadBlack 26.032,-5.000
-      glyph flag8thDown 26.032,3.000
-      line  25.632,-3.000 -> 27.698,-3.000 t=0.160
-      line  25.632,-4.000 -> 27.698,-4.000 t=0.160
-      line  25.632,-5.000 -> 27.698,-5.000 t=0.160
-      line  26.032,-4.832 -> 26.032,3.000 t=0.120
-    bar x=30.066 w=0.160
-      line  30.146,-2.000 -> 30.146,2.000 t=0.160
-    note@1,3,4 x=32.751 w=3.871
-      glyph accidentalSharp 31.536,-0.500
-      glyph accidentalSharp 31.536,-1.500
-      glyph accidentalSharp 31.536,-2.000
-      glyph noteheadBlack 32.751,-0.500
-      glyph noteheadBlack 31.485,-1.500
-      glyph noteheadBlack 32.751,-2.000
-      glyph flag8thDown 32.751,3.000
-      line  32.751,-1.832 -> 32.751,3.000 t=0.120
-    note@1,4,5 x=36.784 w=3.871
-      glyph accidentalSharp 35.570,-0.500
-      glyph accidentalSharp 35.570,-2.000
-      glyph accidentalSharp 35.570,-2.500
-      glyph noteheadBlack 36.784,-0.500
-      glyph noteheadBlack 35.519,-2.000
-      glyph noteheadBlack 36.784,-2.500
-      glyph flag8thDown 36.784,3.000
-      line  36.784,-2.332 -> 36.784,3.000 t=0.120
-    note@1,5,6 x=40.818 w=3.871
-      glyph accidentalSharp 39.603,-0.500
-      glyph accidentalSharp 39.603,-2.500
-      glyph accidentalSharp 39.603,-3.000
-      glyph noteheadBlack 40.818,-0.500
-      glyph noteheadBlack 39.552,-2.500
-      glyph noteheadBlack 40.818,-3.000
-      glyph flag8thDown 40.818,3.000
-      line  40.418,-3.000 -> 42.484,-3.000 t=0.160
-      line  40.818,-2.832 -> 40.818,3.000 t=0.120
-    note@1,5,7 x=44.851 w=3.871
-      glyph accidentalSharp 43.637,-0.500
-      glyph accidentalSharp 43.637,-2.500
-      glyph accidentalSharp 43.637,-3.500
-      glyph noteheadBlack 44.851,-0.500
-      glyph noteheadBlack 44.851,-2.500
-      glyph noteheadBlack 44.851,-3.500
-      glyph flag8thDown 44.851,3.000
-      line  44.451,-3.000 -> 46.517,-3.000 t=0.160
-      line  44.851,-3.332 -> 44.851,3.000 t=0.120
-    bar x=48.885 w=0.160
-      line  48.965,-2.000 -> 48.965,2.000 t=0.160
-    note@1,2,8 x=51.570 w=3.871
-      glyph accidentalSharp 50.355,-0.500
-      glyph accidentalSharp 50.355,-1.000
-      glyph accidentalSharp 50.355,-4.000
-      glyph noteheadBlack 50.304,-0.500
-      glyph noteheadBlack 51.570,-1.000
-      glyph noteheadBlack 51.570,-4.000
-      glyph flag8thDown 51.570,3.000
-      line  51.170,-3.000 -> 53.236,-3.000 t=0.160
-      line  51.170,-4.000 -> 53.236,-4.000 t=0.160
-      line  51.570,-3.832 -> 51.570,3.000 t=0.120
-    note@1,3,8 x=55.603 w=3.871
-      glyph accidentalSharp 54.389,-0.500
-      glyph accidentalSharp 54.389,-1.500
-      glyph accidentalSharp 54.389,-4.000
-      glyph noteheadBlack 55.603,-0.500
-      glyph noteheadBlack 55.603,-1.500
-      glyph noteheadBlack 55.603,-4.000
-      glyph flag8thDown 55.603,3.000
-      line  55.203,-3.000 -> 57.269,-3.000 t=0.160
-      line  55.203,-4.000 -> 57.269,-4.000 t=0.160
-      line  55.603,-3.832 -> 55.603,3.000 t=0.120
-    note@-1,3,8 x=59.637 w=3.871
-      glyph accidentalSharp 58.422,0.500
-      glyph accidentalSharp 58.422,-1.500
-      glyph accidentalSharp 58.422,-4.000
-      glyph noteheadBlack 59.637,0.500
-      glyph noteheadBlack 59.637,-1.500
-      glyph noteheadBlack 59.637,-4.000
-      glyph flag8thDown 59.637,4.000
-      line  59.237,-3.000 -> 61.303,-3.000 t=0.160
-      line  59.237,-4.000 -> 61.303,-4.000 t=0.160
-      line  59.637,-3.832 -> 59.637,4.000 t=0.120
-    note@-2,3,8 x=63.670 w=3.871
-      glyph accidentalSharp 62.456,1.000
-      glyph accidentalSharp 62.456,-1.500
-      glyph accidentalSharp 62.456,-4.000
-      glyph noteheadBlack 63.670,1.000
-      glyph noteheadBlack 63.670,-1.500
-      glyph noteheadBlack 63.670,-4.000
-      glyph flag8thDown 63.670,4.500
-      line  63.270,-3.000 -> 65.336,-3.000 t=0.160
-      line  63.270,-4.000 -> 65.336,-4.000 t=0.160
-      line  63.670,-3.832 -> 63.670,4.500 t=0.120
-    note@1,3,5 x=67.704 w=3.871
-      glyph accidentalSharp 66.489,-0.500
-      glyph accidentalFlat 66.489,-1.500
-      glyph accidentalSharp 66.489,-2.500
-      glyph noteheadBlack 67.704,-0.500
-      glyph noteheadBlack 67.704,-1.500
-      glyph noteheadBlack 67.704,-2.500
-      line  67.704,-2.332 -> 67.704,4.250 t=0.120
-    note@1,4,5 x=71.737 w=3.871
-      glyph accidentalSharp 70.523,-0.500
-      glyph accidentalSharp 70.523,-2.000
-      glyph accidentalSharp 70.523,-2.500
-      glyph noteheadBlack 71.737,-0.500
-      glyph noteheadBlack 70.471,-2.000
-      glyph noteheadBlack 71.737,-2.500
-      line  71.737,-2.332 -> 71.737,4.250 t=0.120
-    note@1,5,6 x=75.771 w=3.871
-      glyph accidentalSharp 74.556,-0.500
-      glyph accidentalSharp 74.556,-2.500
-      glyph accidentalSharp 74.556,-3.000
-      glyph noteheadBlack 75.771,-0.500
-      glyph noteheadBlack 74.505,-2.500
-      glyph noteheadBlack 75.771,-3.000
-      line  75.371,-3.000 -> 77.436,-3.000 t=0.160
-      line  75.771,-2.832 -> 75.771,4.250 t=0.120
-    note@1,2,5 x=79.804 w=3.871
-      glyph accidentalSharp 78.590,-0.500
-      glyph accidentalSharp 78.590,-1.000
-      glyph accidentalSharp 78.590,-2.500
-      glyph noteheadBlack 78.538,-0.500
-      glyph noteheadBlack 79.804,-1.000
-      glyph noteheadBlack 79.804,-2.500
-      line  79.804,-2.332 -> 79.804,4.250 t=0.120
-    note@-2,3,8 x=83.838 w=3.871
-      glyph accidentalSharp 82.623,1.000
-      glyph accidentalSharp 82.623,-1.500
-      glyph accidentalSharp 82.623,-4.000
-      glyph noteheadBlack 83.838,1.000
-      glyph noteheadBlack 83.838,-1.500
-      glyph noteheadBlack 83.838,-4.000
-      line  83.438,-3.000 -> 85.503,-3.000 t=0.160
-      line  83.438,-4.000 -> 85.503,-4.000 t=0.160
-      line  83.838,-3.832 -> 83.838,4.250 t=0.120
-    bar x=87.871 w=0.720
-      line  87.951,-2.000 -> 87.951,2.000 t=0.160
-      line  88.511,-2.000 -> 88.511,2.000 t=0.160
+    note@1,4,6 x=14.249 w=3.871
+      glyph accidentalSharp 12.926,-0.500
+      glyph accidentalSharp 11.603,-2.000
+      glyph accidentalSharp 10.281,-3.000
+      glyph noteheadBlack 14.249,-0.500
+      glyph noteheadBlack 14.249,-2.000
+      glyph noteheadBlack 14.249,-3.000
+      glyph flag8thDown 14.249,3.000
+      line  13.849,-3.000 -> 15.914,-3.000 t=0.160
+      line  14.249,-2.832 -> 14.249,3.000 t=0.120
+    note@1,4,7 x=19.799 w=3.871
+      glyph accidentalSharp 18.477,-0.500
+      glyph accidentalSharp 17.154,-2.000
+      glyph accidentalSharp 18.477,-3.500
+      glyph noteheadBlack 19.799,-0.500
+      glyph noteheadBlack 19.799,-2.000
+      glyph noteheadBlack 19.799,-3.500
+      glyph flag8thDown 19.799,3.000
+      line  19.399,-3.000 -> 21.465,-3.000 t=0.160
+      line  19.799,-3.332 -> 19.799,3.000 t=0.120
+    note@1,4,8 x=25.350 w=3.871
+      glyph accidentalSharp 24.028,-0.500
+      glyph accidentalSharp 22.705,-2.000
+      glyph accidentalSharp 24.028,-4.000
+      glyph noteheadBlack 25.350,-0.500
+      glyph noteheadBlack 25.350,-2.000
+      glyph noteheadBlack 25.350,-4.000
+      glyph flag8thDown 25.350,3.000
+      line  24.950,-3.000 -> 27.016,-3.000 t=0.160
+      line  24.950,-4.000 -> 27.016,-4.000 t=0.160
+      line  25.350,-3.832 -> 25.350,3.000 t=0.120
+    note@1,4,9 x=30.901 w=3.871
+      glyph accidentalSharp 29.579,-0.500
+      glyph accidentalSharp 28.256,-2.000
+      glyph accidentalSharp 29.579,-4.500
+      glyph noteheadBlack 30.901,-0.500
+      glyph noteheadBlack 30.901,-2.000
+      glyph noteheadBlack 30.901,-4.500
+      glyph flag8thDown 30.901,3.000
+      line  30.501,-3.000 -> 32.567,-3.000 t=0.160
+      line  30.501,-4.000 -> 32.567,-4.000 t=0.160
+      line  30.901,-4.332 -> 30.901,3.000 t=0.120
+    note@1,4,10 x=36.452 w=3.871
+      glyph accidentalSharp 35.130,-0.500
+      glyph accidentalSharp 33.807,-2.000
+      glyph accidentalSharp 35.130,-5.000
+      glyph noteheadBlack 36.452,-0.500
+      glyph noteheadBlack 36.452,-2.000
+      glyph noteheadBlack 36.452,-5.000
+      glyph flag8thDown 36.452,3.000
+      line  36.052,-3.000 -> 38.118,-3.000 t=0.160
+      line  36.052,-4.000 -> 38.118,-4.000 t=0.160
+      line  36.052,-5.000 -> 38.118,-5.000 t=0.160
+      line  36.452,-4.832 -> 36.452,3.000 t=0.120
+    bar x=38.407 w=0.160
+      line  38.487,-2.000 -> 38.487,2.000 t=0.160
+    note@1,3,4 x=45.390 w=3.871
+      glyph accidentalSharp 44.068,-0.500
+      glyph accidentalSharp 42.745,-1.500
+      glyph accidentalSharp 41.423,-2.000
+      glyph noteheadBlack 45.390,-0.500
+      glyph noteheadBlack 44.125,-1.500
+      glyph noteheadBlack 45.390,-2.000
+      glyph flag8thDown 45.390,3.000
+      line  45.390,-1.832 -> 45.390,3.000 t=0.120
+    note@1,4,5 x=52.264 w=3.871
+      glyph accidentalSharp 50.941,-0.500
+      glyph accidentalSharp 49.619,-2.000
+      glyph accidentalSharp 48.296,-2.500
+      glyph noteheadBlack 52.264,-0.500
+      glyph noteheadBlack 50.998,-2.000
+      glyph noteheadBlack 52.264,-2.500
+      glyph flag8thDown 52.264,3.000
+      line  52.264,-2.332 -> 52.264,3.000 t=0.120
+    note@1,5,6 x=59.138 w=3.871
+      glyph accidentalSharp 57.815,-0.500
+      glyph accidentalSharp 56.492,-2.500
+      glyph accidentalSharp 55.170,-3.000
+      glyph noteheadBlack 59.138,-0.500
+      glyph noteheadBlack 57.872,-2.500
+      glyph noteheadBlack 59.138,-3.000
+      glyph flag8thDown 59.138,3.000
+      line  58.738,-3.000 -> 60.803,-3.000 t=0.160
+      line  59.138,-2.832 -> 59.138,3.000 t=0.120
+    note@1,5,7 x=64.689 w=3.871
+      glyph accidentalSharp 63.366,-0.500
+      glyph accidentalSharp 62.043,-2.500
+      glyph accidentalSharp 63.366,-3.500
+      glyph noteheadBlack 64.689,-0.500
+      glyph noteheadBlack 64.689,-2.500
+      glyph noteheadBlack 64.689,-3.500
+      glyph flag8thDown 64.689,3.000
+      line  64.289,-3.000 -> 66.354,-3.000 t=0.160
+      line  64.689,-3.332 -> 64.689,3.000 t=0.120
+    bar x=66.643 w=0.160
+      line  66.723,-2.000 -> 66.723,2.000 t=0.160
+    note@1,2,8 x=72.304 w=3.871
+      glyph accidentalSharp 70.981,-0.500
+      glyph accidentalSharp 69.659,-1.000
+      glyph accidentalSharp 70.981,-4.000
+      glyph noteheadBlack 71.038,-0.500
+      glyph noteheadBlack 72.304,-1.000
+      glyph noteheadBlack 72.304,-4.000
+      glyph flag8thDown 72.304,3.000
+      line  71.904,-3.000 -> 73.970,-3.000 t=0.160
+      line  71.904,-4.000 -> 73.970,-4.000 t=0.160
+      line  72.304,-3.832 -> 72.304,3.000 t=0.120
+    note@1,3,8 x=77.855 w=3.871
+      glyph accidentalSharp 76.532,-0.500
+      glyph accidentalSharp 75.210,-1.500
+      glyph accidentalSharp 76.532,-4.000
+      glyph noteheadBlack 77.855,-0.500
+      glyph noteheadBlack 77.855,-1.500
+      glyph noteheadBlack 77.855,-4.000
+      glyph flag8thDown 77.855,3.000
+      line  77.455,-3.000 -> 79.521,-3.000 t=0.160
+      line  77.455,-4.000 -> 79.521,-4.000 t=0.160
+      line  77.855,-3.832 -> 77.855,3.000 t=0.120
+    note@-1,3,8 x=83.406 w=3.871
+      glyph accidentalSharp 82.083,0.500
+      glyph accidentalSharp 80.761,-1.500
+      glyph accidentalSharp 82.083,-4.000
+      glyph noteheadBlack 83.406,0.500
+      glyph noteheadBlack 83.406,-1.500
+      glyph noteheadBlack 83.406,-4.000
+      glyph flag8thDown 83.406,4.000
+      line  83.006,-3.000 -> 85.072,-3.000 t=0.160
+      line  83.006,-4.000 -> 85.072,-4.000 t=0.160
+      line  83.406,-3.832 -> 83.406,4.000 t=0.120
+    note@-2,3,8 x=88.957 w=3.871
+      glyph accidentalSharp 87.634,1.000
+      glyph accidentalSharp 86.312,-1.500
+      glyph accidentalSharp 87.634,-4.000
+      glyph noteheadBlack 88.957,1.000
+      glyph noteheadBlack 88.957,-1.500
+      glyph noteheadBlack 88.957,-4.000
+      glyph flag8thDown 88.957,4.500
+      line  88.557,-3.000 -> 90.623,-3.000 t=0.160
+      line  88.557,-4.000 -> 90.623,-4.000 t=0.160
+      line  88.957,-3.832 -> 88.957,4.500 t=0.120
+    note@1,3,5 x=95.540 w=3.871
+      glyph accidentalSharp 94.218,-0.500
+      glyph accidentalFlat 93.089,-1.500
+      glyph accidentalSharp 91.766,-2.500
+      glyph noteheadBlack 95.540,-0.500
+      glyph noteheadBlack 95.540,-1.500
+      glyph noteheadBlack 95.540,-2.500
+      line  95.540,-2.332 -> 95.540,4.250 t=0.120
+    note@1,4,5 x=102.414 w=3.871
+      glyph accidentalSharp 101.091,-0.500
+      glyph accidentalSharp 99.769,-2.000
+      glyph accidentalSharp 98.446,-2.500
+      glyph noteheadBlack 102.414,-0.500
+      glyph noteheadBlack 101.148,-2.000
+      glyph noteheadBlack 102.414,-2.500
+      line  102.414,-2.332 -> 102.414,4.250 t=0.120
+    note@1,5,6 x=109.287 w=3.871
+      glyph accidentalSharp 107.965,-0.500
+      glyph accidentalSharp 106.642,-2.500
+      glyph accidentalSharp 105.319,-3.000
+      glyph noteheadBlack 109.287,-0.500
+      glyph noteheadBlack 108.021,-2.500
+      glyph noteheadBlack 109.287,-3.000
+      line  108.887,-3.000 -> 110.953,-3.000 t=0.160
+      line  109.287,-2.832 -> 109.287,4.250 t=0.120
+    note@1,2,5 x=116.161 w=3.871
+      glyph accidentalSharp 114.838,-0.500
+      glyph accidentalSharp 113.516,-1.000
+      glyph accidentalSharp 112.193,-2.500
+      glyph noteheadBlack 114.895,-0.500
+      glyph noteheadBlack 116.161,-1.000
+      glyph noteheadBlack 116.161,-2.500
+      line  116.161,-2.332 -> 116.161,4.250 t=0.120
+    note@-2,3,8 x=121.712 w=3.871
+      glyph accidentalSharp 120.389,1.000
+      glyph accidentalSharp 119.067,-1.500
+      glyph accidentalSharp 120.389,-4.000
+      glyph noteheadBlack 121.712,1.000
+      glyph noteheadBlack 121.712,-1.500
+      glyph noteheadBlack 121.712,-4.000
+      line  121.312,-3.000 -> 123.378,-3.000 t=0.160
+      line  121.312,-4.000 -> 123.378,-4.000 t=0.160
+      line  121.712,-3.832 -> 121.712,4.250 t=0.120
+    bar x=123.666 w=0.720
+      line  123.746,-2.000 -> 123.746,2.000 t=0.160
+      line  124.306,-2.000 -> 124.306,2.000 t=0.160
 tune 11
 bounds  width=90.664 height=37.748 top=-1.935
 systems 2

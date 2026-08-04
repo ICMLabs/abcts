@@ -72,10 +72,10 @@ const WITHIN: Readonly<Record<string, number>> = {
   // voice `1` taking a staff on every system of a tune whose lines all begin `[V:…]`; and
   // the two line-assignment rules — a trailing `\` continuing the line, and a `[V:x]`
   // switch opening one only when x already has music.
-  '0.05': 86,
-  '1': 97,
+  '0.05': 88,
+  '1': 99,
   '5': 106,
-  '25': 130,
+  '25': 133,
 }
 
 const names = readdirSync(fixturesDir)
