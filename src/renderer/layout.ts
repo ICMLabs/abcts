@@ -1802,12 +1802,17 @@ function layoutRest(rest: Rest, advance: number, x: number, strict = true): Layo
     }
   }
 
+  // A REST IS A ROD LIKE ANY NOTE. abcjs's `getMinWidth` is `child.w` whatever the type,
+  // and a rest's `w` is its glyph — an eighth rest reports 7.534 and pushes `minx` by
+  // that plus `minspacing`. We reported 0, so a compressed line let the note after a rest
+  // slide onto it: `visual-layout-04` put its `zA` 37.6px left of abcjs's.
+  const restInk = spec === null ? 0 : glyphsFor(strict).width(spec.name) + ENGRAVE.noteRodGap
   return {
     type: 'rest',
     x,
-    width: advance,
+    width: Math.max(advance, restInk),
     spring: advance,
-    rod: 0,
+    rod: restInk,
     staffSteps: [],
     glyphs,
     lines: [],

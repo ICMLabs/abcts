@@ -138,7 +138,10 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // five more harvested fixtures inside their thresholds.
     'frere-jacques': { heads: 45, dy: 0.0, dx: 22.64, oy: 0.0, ox: -3.53 },
     'full-song-template': { heads: 20, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
-    'happy-birthday': { heads: 25, dy: 0.0, dx: 3.85, oy: 0.0, ox: -0.49 },
+    // dx 3.85 -> 1.40 when a REST became a rod. abcjs's `getMinWidth` is `child.w`
+    // whatever the type and a rest's `w` is its glyph — 7.534 for an eighth — where ours
+    // was a flat 0, so a compressed line let the note after a rest slide onto it.
+    'happy-birthday': { heads: 25, dy: 0.0, dx: 1.4, oy: 0.0, ox: -0.49 },
     // dy 1.92 -> 0.32 and oy -0.58 -> 0.16 when `anchorLyrics` stopped measuring its own
     // ink and took `verticalExtent`'s. dx/ox are the goldens' ASCII width table, not us.
     'little swallow': { heads: 89, dy: 0.32, dx: 24.19, oy: 0.16, ox: -6.29 },
