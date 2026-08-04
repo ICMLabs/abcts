@@ -1152,6 +1152,17 @@ class VoiceBuilder {
   }
 }
 
+/** The `%%` formatting a file header passes to every tune under it. */
+interface Formatting {
+  staffSep: number | null
+  partsBox: boolean
+  stretchLast: number | null
+  staffWidth: number | null
+  maxStaves: number | null
+  sysStaffSep: number | null
+  vocalFont: LyricFont | null
+}
+
 class ScoreBuilder {
   tuneNumber: number | null = null
   titles: string[] = []
@@ -1199,6 +1210,29 @@ class ScoreBuilder {
   staffWidth: number | null = null
   maxStaves: number | null = null
   sysStaffSep: number | null = null
+
+  /** The file-header formatting this tune would pass on — see `Parser.fileDefaults`. */
+  formatting(): Formatting {
+    return {
+      staffSep: this.staffSep,
+      partsBox: this.partsBox,
+      stretchLast: this.stretchLast,
+      staffWidth: this.staffWidth,
+      maxStaves: this.maxStaves,
+      sysStaffSep: this.sysStaffSep,
+      vocalFont: this.vocalFont,
+    }
+  }
+
+  applyFormatting(f: Formatting): void {
+    this.staffSep = f.staffSep
+    this.partsBox = f.partsBox
+    this.stretchLast = f.stretchLast
+    this.staffWidth = f.staffWidth
+    this.maxStaves = f.maxStaves
+    this.sysStaffSep = f.sysStaffSep
+    this.vocalFont = f.vocalFont
+  }
   /** `%%center` text, split by whether any music had been parsed when it was read. */
   textAbove: FreeTextBlock[] = []
   textBelow: FreeTextBlock[] = []
@@ -1434,8 +1468,14 @@ class Parser {
     this.textBlock = []
   }
 
+  /** Formatting from `%%` directives standing before the first `X:` — see `applyField`. */
+  private fileDefaults: Formatting | null = null
+
   private ensureScore(at: number): ScoreBuilder {
-    if (!this.builder) this.builder = new ScoreBuilder(at)
+    if (!this.builder) {
+      this.builder = new ScoreBuilder(at)
+      if (this.fileDefaults) this.builder.applyFormatting(this.fileDefaults)
+    }
     return this.builder
   }
 
@@ -1727,6 +1767,11 @@ class Parser {
     const range = sourceRange(start, end)
 
     if (letter === 'X') {
+      // A `%%` DIRECTIVE BEFORE THE FIRST `X:` IS THE FILE HEADER and applies to every
+      // tune (ABC 2.1 §4.1). The builder holding it looks EMPTY — no `X:`, no `T:`, no
+      // music — so `flush` was dropping it and `%%stretchlast 1` written above `X:1`
+      // never reached the tune below it, which is 241px of `visual-wrap-02` on its own.
+      if (this.builder?.isEmpty === true) this.fileDefaults = this.builder.formatting()
       this.flush()
       const builder = this.ensureScore(start)
       builder.tuneNumber = Number.parseInt(value, 10) || null
