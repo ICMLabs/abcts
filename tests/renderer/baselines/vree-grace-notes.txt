@@ -16,23 +16,23 @@ system 0 width=32.090 originY=0.000
       glyph timeSig4 6.329,-1.000
       glyph timeSig4 6.329,1.000
     note@0 x=10.432 w=5.474
-      glyph noteheadBlack 9.141,-0.500 scale=0.600
       glyph noteheadBlack 10.432,0.000
+      glyph noteheadBlack 9.141,-0.500 scale=0.600
+      line  10.432,0.168 -> 10.432,3.500 t=0.120
       line  9.849,-0.601 -> 9.849,-2.701 t=0.072
       line  8.941,-1.600 -> 10.303,-2.800 t=0.168
-      line  10.432,0.168 -> 10.432,3.500 t=0.120
     note@-1 x=15.906 w=5.474
-      glyph noteheadBlack 14.616,1.000 scale=0.600
       glyph noteheadBlack 15.906,0.500
-      line  15.324,0.899 -> 15.324,-1.201 t=0.072
+      glyph noteheadBlack 14.616,1.000 scale=0.600
       line  17.086,0.332 -> 17.086,-3.000 t=0.120
+      line  15.324,0.899 -> 15.324,-1.201 t=0.072
     note@-2 x=21.381 w=7.742
+      glyph noteheadHalf 21.381,1.000
       glyph noteheadBlack 18.800,0.500 scale=0.600
       glyph noteheadBlack 20.090,0.000 scale=0.600
-      glyph noteheadHalf 21.381,1.000
+      line  22.561,0.832 -> 22.561,-2.500 t=0.120
       line  19.508,0.399 -> 19.508,-1.701 t=0.072
       line  20.798,-0.101 -> 20.798,-2.201 t=0.072
-      line  22.561,0.832 -> 22.561,-2.500 t=0.120
     bar x=29.123 w=1.060
       line  29.203,-2.000 -> 29.203,2.000 t=0.160
       line  29.933,-2.000 -> 29.933,2.000 t=0.500

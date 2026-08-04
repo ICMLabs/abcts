@@ -1084,12 +1084,12 @@ system 0 width=90.408 originY=0.000
       glyph noteheadBlack 78.061,0.500
       line  79.241,1.332 -> 79.241,-3.000 t=0.120
     note@-2 x=81.568 w=6.705
-      glyph noteheadBlack 80.278,1.000 scale=0.600
       glyph noteheadBlack 81.568,1.000
       glyph augmentationDot 83.184,0.500
+      glyph noteheadBlack 80.278,1.000 scale=0.600
+      line  82.748,0.832 -> 82.748,-2.500 t=0.120
       line  80.986,0.899 -> 80.986,-1.201 t=0.072
       line  80.078,-0.100 -> 81.439,-1.300 t=0.168
-      line  82.748,0.832 -> 82.748,-2.500 t=0.120
     note@0 x=85.863 w=3.871
       glyph noteheadBlack 85.863,0.000
       glyph flag8thDown 85.863,3.500

@@ -156,7 +156,10 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // dx 69.82 -> 55.32 when the accidental extents became abcjs's own numbers. Its `oy`
     // is the branch's one red and went 1.49 -> 1.58 on the same change — its residual is
     // horizontal in origin (see the checkpoint), so the two move together.
-    'ragtime-nightingale': { heads: 2009, dy: 58.1, dx: 53.56, oy: -0.54, ox: -1.87 },
+    // dy 58.1 -> 1.12 and dx 53.56 -> 18.30 when the GRACE NOTES stopped being emitted
+    // before their main head. Both were recorded for weeks as "two mis-paired noteheads,
+    // do not chase" — the mis-pairing was ours, and it was the emission order.
+    'ragtime-nightingale': { heads: 2009, dy: 1.12, dx: 18.3, oy: -0.54, ox: -1.87 },
     'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'score-reorder': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'simple-c': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
@@ -166,7 +169,10 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     'voice-middle-after-clef': { heads: 10, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'voice-octave-shift': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'vree-compound-meter': { heads: 12, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
-    'vree-grace-notes': { heads: 7, dy: 11.6, dx: 32.5, oy: 0.0, ox: -1.1 },
+    // dy 11.6 -> 0.02 and dx 32.5 -> 1.99, same cause. What is left is the grace glyph's
+    // own width: a uniform 1.99 on the graces themselves, exactly as the note predicting
+    // the "artefact" said it would be once the order was right.
+    'vree-grace-notes': { heads: 7, dy: 0.02, dx: 1.99, oy: 0.03, ox: -1.14 },
     'vree-sharps': { heads: 4, dy: 0.0, dx: 0.0, oy: 0.06, ox: 0.0 },
     'vree-slurs-and-triplets': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'vree-ties-across-bars': { heads: 4, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },

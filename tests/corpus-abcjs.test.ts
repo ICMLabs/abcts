@@ -100,10 +100,13 @@ const WITHIN: Readonly<Record<string, number>> = {
   // noteheads on one x.
   // A BAR THAT STARTS AN ENDING gets `minspacing += textWidth + 10`, measured in
   // `repeatfont` — 28.5 against a plain bar's 10 for a `|1`.
+  // GRACE NOTES ARE EMITTED AFTER THEIR MAIN HEAD, which is abcjs's document order. The
+  // gate pairs the i-th notehead, so playing order read as a position error on every
+  // graced fixture — and ragtime's dy 58.1, filed for weeks as unchaseable, was this.
   '0.05': 107,
   '1': 122,
-  '5': 134,
-  '25': 157,
+  '5': 137,
+  '25': 165,
 }
 
 const names = readdirSync(fixturesDir)

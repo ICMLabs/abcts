@@ -2029,6 +2029,15 @@ function layoutNoteheads(
   // Grace notes lead INTO the note, so they are laid out first and push everything else
   // right. Each is a small notehead with a small stem; an acciaccatura (`{/g}`) takes a
   // slash through the stems. *Behind Bars* draws them at about 60% and always stem-up.
+  //
+  // THEY ARE EMITTED LAST, THOUGH. abcjs writes the MAIN notehead before the graces that
+  // precede it — probed on `{ab}c {d}e`, whose noteheads come out at 75.14, 55.14, 65.14,
+  // 105.14, 95.14 — because a grace is an `extra` child and the head is a `head`. The
+  // pixel gate pairs the i-th notehead of each engine, so emitting them in playing order
+  // read as a position error on every graced fixture: `vree-grace-notes` dy 11.6 / dx 32.5
+  // is that and nothing else, and four harvested fixtures carry the same 11.6.
+  const graceGlyphs: PlacedGlyph[] = []
+  const graceLines: PlacedLine[] = []
   let graceWidth = 0
   if (event !== null && event.type !== 'rest' && event.graceNotes.length > 0) {
     const scale = ENGRAVE.graceScale
@@ -2037,12 +2046,18 @@ function layoutNoteheads(
 
     graceSteps.forEach((graceStep, i) => {
       const gx = x + i * ENGRAVE.graceAdvance
-      glyphs.push({ name: 'noteheadBlack', x: gx, y: stepToY(graceStep), scale, role: 'grace' })
+      graceGlyphs.push({
+        name: 'noteheadBlack',
+        x: gx,
+        y: stepToY(graceStep),
+        scale,
+        role: 'grace',
+      })
       // The stem attaches at the scaled anchor and runs a scaled length upward.
       const [ax, ay] = small.anchors.stemUpSE ?? [small.width, 0]
       const stemX = gx + ax * scale
       const base = stepToY(graceStep) + ay * scale
-      lines.push({
+      graceLines.push({
         x1: stemX,
         y1: base,
         x2: stemX,
@@ -2059,7 +2074,7 @@ function layoutNoteheads(
       // group as an acciaccatura however many notes it has.
       const firstStep = graceSteps[0] ?? 0
       const tipY = stepToY(firstStep) - ENGRAVE.stemLength * scale
-      lines.push({
+      graceLines.push({
         x1: x - 0.2,
         y1: tipY + 1.0,
         x2: x + ENGRAVE.graceAdvance * 0.9,
@@ -2318,8 +2333,9 @@ function layoutNoteheads(
     // one adds again — see the accidental block above.
     left: Math.max(headX - x + extraLeft, textSpan.left, headLeft),
     staffSteps: steps,
-    glyphs,
-    lines,
+    // The graces go on the END — abcjs's document order, see the grace block above.
+    glyphs: [...glyphs, ...graceGlyphs],
+    lines: [...lines, ...graceLines],
     texts,
   }
 }
