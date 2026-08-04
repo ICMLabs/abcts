@@ -274,7 +274,7 @@ system 3 width=90.323 originY=43.465
       line  7.509,0.832 -> 7.509,-2.500 t=0.120
     note@-2 x=26.811 w=5.474
       glyph noteheadBlack 26.811,1.000
-      glyph wiggleArpeggiatoUp 25.866,-1.375
+      glyph wiggleArpeggiatoUp 25.521,0.500
       line  27.991,0.832 -> 27.991,-2.500 t=0.120
     note@-2 x=47.294 w=5.474
       glyph noteheadBlack 47.294,1.000
@@ -313,8 +313,8 @@ system 4 width=90.323 originY=54.534
       line  68.956,0.832 -> 68.956,-2.500 t=0.120
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 5 width=90.323 originY=66.881
-  staff 0 originY=4.274
+system 5 width=90.323 originY=66.405
+  staff 0 originY=4.750
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -324,28 +324,28 @@ system 5 width=90.323 originY=66.881
       glyph gClef 2.581,1.000
     note@-2 x=6.329 w=5.474
       glyph noteheadBlack 6.329,1.000
-      glyph fingering0 6.489,-3.754
       line  7.509,0.832 -> 7.509,-2.500 t=0.120
+      text  6.345,-4.000 size=2.065 italic "0"
     note@-2 x=22.715 w=5.474
       glyph noteheadBlack 22.715,1.000
-      glyph fingering1 23.071,-3.758
       line  23.895,0.832 -> 23.895,-2.500 t=0.120
+      text  22.730,-4.000 size=2.065 italic "1"
     note@-2 x=39.101 w=5.474
       glyph noteheadBlack 39.101,1.000
-      glyph fingering2 39.287,-3.762
       line  40.281,0.832 -> 40.281,-2.500 t=0.120
+      text  39.116,-4.000 size=2.065 italic "2"
     note@-2 x=55.487 w=5.474
       glyph noteheadBlack 55.487,1.000
-      glyph fingering3 55.707,-3.754
       line  56.667,0.832 -> 56.667,-2.500 t=0.120
+      text  55.502,-4.000 size=2.065 italic "3"
     note@-2 x=71.872 w=5.474
       glyph noteheadBlack 71.872,1.000
-      glyph fingering4 72.070,-3.754
       line  73.052,0.832 -> 73.052,-2.500 t=0.120
+      text  71.888,-4.000 size=2.065 italic "4"
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
-system 6 width=90.323 originY=78.730
-  staff 0 originY=4.338
+system 6 width=90.323 originY=78.318
+  staff 0 originY=4.750
     staffline 0.000,2.000 -> 90.323,2.000 t=0.130
     staffline 0.000,1.000 -> 90.323,1.000 t=0.130
     staffline 0.000,0.000 -> 90.323,0.000 t=0.130
@@ -355,8 +355,8 @@ system 6 width=90.323 originY=78.730
       glyph gClef 2.581,1.000
     note@-2 x=6.329 w=5.474
       glyph noteheadBlack 6.329,1.000
-      glyph fingering5 6.549,-3.766
       line  7.509,0.832 -> 7.509,-2.500 t=0.120
+      text  6.345,-4.000 size=2.065 italic "5"
     note@-2 x=26.811 w=5.474
       glyph noteheadBlack 26.811,1.000
       glyph pluckedLeftHandPizzicato 26.857,-3.794

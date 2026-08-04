@@ -1778,10 +1778,23 @@ describe('decoration coverage', () => {
     expect(glyphsOf('!sfz!')).toEqual(['dynamicSforzando1'])
   })
 
-  it('draws fingerings as digits', () => {
-    expect(glyphsOf('!3!')).toEqual(['fingering3'])
-    expect(glyphsOf('!0!')).toEqual(['fingering0'])
-    expect(glyphsOf('!5!')).toEqual(['fingering5'])
+  it('draws fingerings as TEXT digits, not glyphs', () => {
+    // abcjs's decoration switch sends `"0"` through `"5"` to `textDecoration` beside
+    // `D.C.` and `D.S.` (`decoration.js:200-210`), so a fingering is a `<text>` stacked by
+    // the flat `textHeight: 5` and reserving the flat `thickness: 3` — not a SMuFL
+    // `fingering3` stacked by `symbolHeightInPitches + 1`. The glyph reserved 3.76px too
+    // little on `+1+B`. This is a test that asserted abcjs is wrong.
+    const decorationTexts = (dec: string) =>
+      (
+        layout(parse(`X:1\nL:1/4\nK:C\n${dec}F|\n`).scores[0] as Score, { systemWidth: 200 })
+          .systems[0]?.staves[0]?.elements ?? []
+      )
+        .flatMap((e) => e.texts)
+        .map((t) => t.text)
+    expect(glyphsOf('!3!')).toEqual([])
+    expect(decorationTexts('!3!')).toContain('3')
+    expect(decorationTexts('!0!')).toContain('0')
+    expect(decorationTexts('!5!')).toContain('5')
   })
 
   it('aliases `mordent` and `trillh` the way abcjs draws them', () => {

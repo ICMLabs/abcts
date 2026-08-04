@@ -2393,6 +2393,8 @@ function layoutNoteheads(
     }
   }
 
+  /** How far LEFT a decoration reaches past the note — an arpeggio, and only it. */
+  let decorationLeft = 0
   /** How far the note's attached text reaches either side of it — see `noteText`. */
   const textSpan = { left: 0, right: 0 }
   const texts =
@@ -2430,10 +2432,12 @@ function layoutNoteheads(
           .map((l) => -Math.max(l.y1, l.y2) / ENGRAVE.spacePerStep),
       ),
       strict,
+      roomTaken,
       dynamicsAbove,
     )
     glyphs.push(...decorated.glyphs)
     texts.push(...decorated.texts)
+    decorationLeft = decorated.leftReach
   }
 
   // The spring is the natural width, but ink is a rod: a displaced head or a dot column
@@ -2478,7 +2482,7 @@ function layoutNoteheads(
     rod: ink,
     // abcjs's `-extraw`: the leftmost accidental's own offset PLUS the `width / 2` each
     // one adds again — see the accidental block above.
-    left: Math.max(headX - x + extraLeft, textSpan.left, headLeft),
+    left: Math.max(headX - x + extraLeft, textSpan.left, headLeft, decorationLeft),
     staffSteps: steps,
     // The graces go on the END — abcjs's document order, see the grace block above.
     glyphs: [...glyphs, ...graceGlyphs],
@@ -2664,14 +2668,8 @@ const DECORATIONS: Readonly<
   sfz: { above: 'dynamicSforzando1', below: 'dynamicSforzando1', place: 'dynamic' },
 
   // ── Fingerings ─────────────────────────────────────────────────────────────
-  // abcjs draws `!3!` as a decoration digit above the staff, so these take the ornament
-  // lane rather than the dynamic one.
-  '0': { above: 'fingering0', below: 'fingering0', place: 'ornament' },
-  '1': { above: 'fingering1', below: 'fingering1', place: 'ornament' },
-  '2': { above: 'fingering2', below: 'fingering2', place: 'ornament' },
-  '3': { above: 'fingering3', below: 'fingering3', place: 'ornament' },
-  '4': { above: 'fingering4', below: 'fingering4', place: 'ornament' },
-  '5': { above: 'fingering5', below: 'fingering5', place: 'ornament' },
+  // `!0!` through `!5!` are in `DECORATION_TEXTS`, not here: abcjs draws them as TEXT
+  // (`decoration.js:200-210`) and they stack by the flat text height.
 
   // ── Aliases ────────────────────────────────────────────────────────────────
   // abcjs rewrites these to canonical names through `accentPseudonyms`; we keep the
@@ -2784,6 +2782,17 @@ const STRICT_UNDRAWN: ReadonlySet<string> = new Set(['invertedturn', 'invertedtu
 const ON_STAVE_LINE: ReadonlySet<number> = new Set([2, 4, 6, 8, 10])
 
 const DECORATION_TEXTS: Readonly<Record<string, string>> = {
+  // A FINGERING DIGIT IS TEXT, not a glyph. abcjs's switch sends `"0"` through `"5"` to
+  // `textDecoration` beside `D.C.` and `D.S.` (`decoration.js:200-210`), so a digit takes
+  // the flat `thickness: 3` / `textHeight: 5` those do and NOT
+  // `symbolHeightInPitches(glyph) + 1`. Drawing SMuFL's `fingering1` instead reserved
+  // 3.76px too little on `+1+`.
+  '0': '0',
+  '1': '1',
+  '2': '2',
+  '3': '3',
+  '4': '4',
+  '5': '5',
   'D.C.': 'D.C.',
   'D.S.': 'D.S.',
   fine: 'Fine',
@@ -2817,9 +2826,16 @@ function decorationGlyphs(
   elemBottomStep: number,
   /** `abcjs-strict` — suppresses the marks abcjs accepts but never paints. */
   strict: boolean,
+  /**
+   * `roomtaken` — how far the note's ACCIDENTALS already reach left of it
+   * (`abstract-engraver.js:842`). Only the arpeggio reads it, and it sits left of them.
+   */
+  roomTaken: number,
   /** Dynamics above the staff when the tune sings, below when it does not. */
   dynamicsAbove: boolean,
-): { glyphs: PlacedGlyph[]; texts: PlacedText[] } {
+): { glyphs: PlacedGlyph[]; texts: PlacedText[]; leftReach: number } {
+  /** How far LEFT of the note any decoration reaches — an arpeggio, and only it. */
+  let leftReach = 0
   const out: PlacedGlyph[] = []
   const texts: PlacedText[] = []
 
@@ -2927,10 +2943,35 @@ function decorationGlyphs(
     } else if (spec.place === 'stem') {
       // Centred on the stem's midpoint. An arpeggio instead sits just LEFT of the head,
       // which is where a rolled chord is read from.
-      const onStem =
-        name === 'arpeggio'
-          ? headX - glyphsFor(strict).width(glyph) - ENGRAVE.spannerGap
-          : headX + headWidth / 2 - glyphsFor(strict).width(glyph) / 2
+      // AN ARPEGGIO IS A STACK, and it reaches TWICE ITS OWN WIDTH back from the note.
+      //
+      //     for (var j = minpitch - 1; j <= maxpitch; j += 2)
+      //       abselem.addExtra(new RelativeElement("scripts.arpeggio",
+      //         -getSymbolWidth("scripts.arpeggio") * 2 - roomtaken, 0, j + 2,
+      //         { thickness: symbolHeightInPitches("scripts.arpeggio") }))
+      //
+      // (`decoration.js:279-297`). One glyph per two pitches from a pitch BELOW the lowest
+      // note to the highest, each declaring its own height about the pitch it sits on, and
+      // `addExtra` walks `extraw` back to that `dx` — 10px, which is what a bare
+      // `!arpeggio!A` was out by. We drew ONE, half a width to the left, reserving nothing.
+      if (name === 'arpeggio') {
+        const width = glyphsFor(strict).width(glyph)
+        const half = (table.get(glyph)?.declaredHeight ?? 0) / 2
+        const at = headX - 2 * width - roomTaken
+        for (let step = bottomStep - 1; step <= topStep; step += 2) {
+          const y = stepToY(step + 2)
+          out.push({
+            name: glyph,
+            x: at,
+            y,
+            role: 'decoration',
+            reserve: [y - half, y + half],
+          })
+        }
+        leftReach = Math.max(leftReach, 2 * width + roomTaken)
+        continue
+      }
+      const onStem = headX + headWidth / 2 - glyphsFor(strict).width(glyph) / 2
       const tip = stemUp
         ? Math.max(topStep, 4) + ENGRAVE.stemLength
         : Math.min(bottomStep, -4) - ENGRAVE.stemLength
@@ -2976,7 +3017,7 @@ function decorationGlyphs(
     above += ENGRAVE.decorationTextHeight
   }
 
-  return { glyphs: out, texts }
+  return { glyphs: out, texts, leftReach }
 }
 
 /**
@@ -4935,7 +4976,19 @@ function layoutMeasure(
     const marks =
       barDecorations.length === 0
         ? null
-        : decorationGlyphs(barDecorations, x, plain.width, 6, 6, false, 6, 2, strict, dynamicsAbove)
+        : decorationGlyphs(
+            barDecorations,
+            x,
+            plain.width,
+            6,
+            6,
+            false,
+            6,
+            2,
+            strict,
+            0,
+            dynamicsAbove,
+          )
     const withMarks =
       marks === null
         ? plain
