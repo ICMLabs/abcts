@@ -176,6 +176,8 @@ const defaultUnitLength = (meter: Meter | null): Rational =>
   meter && ratLt(measureDuration(meter), rational(3, 4)) ? rational(1, 16) : rational(1, 8)
 
 const BARLINES: Record<string, Barline> = {
+  '[': 'invisible',
+  '[|]': 'invisible',
   '|': 'thin',
   '||': 'double',
   '|]': 'final',

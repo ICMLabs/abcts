@@ -582,7 +582,20 @@ export interface SourceRange {
 
 export const sourceRange = (start: number, end: number): SourceRange => ({ start, end })
 
-export type Barline = 'thin' | 'double' | 'final' | 'repeatStart' | 'repeatEnd' | 'repeatBoth'
+/**
+ * `invisible` is abcjs's `bar_invisible` — `[|]`, and a bare `[` before a digit or a
+ * quote. It draws NOTHING and takes a thin bar's layout width: `addRight(new
+ * RelativeElement(null, dx, 1, 2, { type: "none" }))` (`abstract-engraver.js:996-999`),
+ * where a thin bar's own anchor differs only in `type: "bar"`.
+ */
+export type Barline =
+  | 'thin'
+  | 'double'
+  | 'final'
+  | 'repeatStart'
+  | 'repeatEnd'
+  | 'repeatBoth'
+  | 'invisible'
 
 export interface Measure {
   readonly events: readonly MusicEvent[]

@@ -225,6 +225,8 @@ export const ENGRAVE = {
     repeatStart: 16 / 7.75,
     repeatEnd: 14 / 7.75,
     repeatBoth: 22 / 7.75,
+    // An invisible bar reserves a thin bar's width and paints nothing.
+    invisible: 1 / 7.75,
   } as Record<Barline, number>,
   /**
    * LANES above and below the staff, in staff steps. The staff itself spans -4 to 4.
@@ -2367,6 +2369,9 @@ function layoutBar(x: number, kind: Barline, strict = true): LayoutElement {
   }
 
   switch (kind) {
+    case 'invisible':
+      // Draws nothing. Its width is the rod, which `barRod` takes from the table.
+      break
     case 'thin':
       rule(thin)
       break
