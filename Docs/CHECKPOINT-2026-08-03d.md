@@ -18,7 +18,7 @@ verdict and the beam findings, then `ARCHITECTURE.md`, then `CLAUDE.md`.
 | corpus | standing |
 |---|---|
 | 41-fixture | 20 of 29 are at ZERO on all four axes. Only `ragtime-nightingale`'s `oy` is a gate failure, and it is **0.646 against 0.59** — from 1.58. |
-| harvested (174) | within 0.05 / 1 / 5 / 25px: **107 / 122 / 137 / 165**, from 95 / 106 / 115 / 137. **67 of 174 still off some axis**, from 79. |
+| harvested (174) | within 0.05 / 1 / 5 / 25px: **108 / 123 / 138 / 166**, from 95 / 106 / 115 / 137. **66 of 174 still off some axis**, from 79. |
 | suite | 685 of 686. The one red is ragtime's `oy`, at **0.656** against 0.59 — from 1.58, and NOT raised. |
 
 The 41-fixture stragglers, every one named:
@@ -341,6 +341,31 @@ Five more fixtures came off the top of the ranked table with it: `synth-flattene
 different claims, and the second needs the golden opened.** Three of the day's four
 "unchaseable" items are still unchaseable — the CJK widths, the non-default font sizes and
 `%%jazzchords` were all read out of `dump-svg.js` itself. This one never was.
+
+### 33. `%%musicspace` — the gap before the FIRST staff group
+
+Points times 4/3 (`write/renderer.js:155-156`), spent once before the first staff group,
+which is why a mid-tune block between two groups costs nothing extra. `visual-selection-01`
+and `visual-svg-per-line-01` 36.7 → 29.2, and `visual-svg-01` closed.
+
+Four fixtures set it and **nothing else in either corpus sets any of the other eighteen
+one-parameter measurements** — `titlespace`, `topmargin`, `linesep` and the rest all parse
+through the same `oneParameterMeasurement` and none appears anywhere.
+
+### 34. EXPLICIT KEY ACCIDENTALS — `K: C ^/f _/B _A ^D`
+
+`getKeyAccidentals2` (`abc_tokenizer.js:283-340`) accepts `^`, `^^`, `^/`, `_`, `__`, `_/`
+and `=` before a note letter, and `parseKeyVoice` REPLACES a standard accidental on the same
+letter or appends (`abc_parse_key_voice.js:320-350`). Held in QUARTER tones on the model,
+because the field can write a half-sharp that `Accidental` has no value for.
+
+**The POSITION follows the SIGN, not the letter alone.** The sharp and flat signatures are
+written in opposite octaves, so `g` is step 5 as a sharp and −2 as a flat.
+`layoutKeySignature` now walks a written list rather than slicing one of two tables — which
+is also what lets a signature mix glyph WIDTHS, since a half-sharp is 5.25 where a sharp is
+8.25 and the old code multiplied ONE advance by the count.
+
+`synth-flattener-32` 40.4 → 5.9, `visual-transpose-05` 25.6 → 11.6.
 
 ---
 
