@@ -208,10 +208,17 @@ function parseMeter(content: string): Meter | null {
   const [top, bottom] = spec.split('/')
   const denominator = Number.parseInt(bottom ?? '', 10)
   if (!top || !Number.isFinite(denominator) || denominator <= 0) return null
-  // Additive meters (`3+2+2/8`) sum to a single numerator.
-  const numerator = top.split('+').reduce((sum, part) => sum + (Number.parseInt(part, 10) || 0), 0)
+  // Additive meters (`3+2+2/8`) sum for DURATION and are drawn term by term — see
+  // `Meter.numeratorParts`.
+  const parts = top.split('+').map((part) => Number.parseInt(part, 10) || 0)
+  const numerator = parts.reduce((sum, part) => sum + part, 0)
   if (numerator <= 0) return null
-  return { numerator, denominator, symbol: 'numeric' }
+  return {
+    numerator,
+    denominator,
+    symbol: 'numeric',
+    ...(parts.length > 1 ? { numeratorParts: parts } : {}),
+  }
 }
 
 function parseUnitLength(content: string): Rational | null {
@@ -561,6 +568,11 @@ function padOverlays(measures: readonly Measure[], _meter: Meter | null): Measur
         notatedDuration: filled,
         decorations: [],
         decorationSourceRanges: [],
+        chordSymbol: null,
+        chordSymbolSourceRange: null,
+        chordFont: null,
+        annotations: [],
+        annotationSourceRanges: [],
         tuplet: null,
         measureCount: 0,
         sourceRange: null,
@@ -2326,11 +2338,18 @@ class Parser {
       // A rest carries none of these — no ties, slurs, grace notes or chord symbols —
       // but it still consumes the pending state so they cannot leak past it.
       if (scaled.type === 'rest') {
-        // A rest carries decorations but no ties, slurs, grace notes or chord symbols.
+        // A rest carries decorations, a chord symbol and annotations — but no ties, slurs,
+        // grace notes or lyrics. abcjs attaches `elem.chord` to whatever event follows the
+        // `"…"`, rest included, and engraves it identically.
         voice().push({
           ...scaled,
           decorations: pending.decorations,
           decorationSourceRanges: pending.decorationSourceRanges,
+          chordSymbol: pending.chordSymbol,
+          chordSymbolSourceRange: pending.chordSymbolSourceRange,
+          chordFont: builder.chordFont,
+          annotations: pending.annotations,
+          annotationSourceRanges: pending.annotationSourceRanges,
         })
       } else {
         // Inline `!style=x!` wins for this note; otherwise the voice's standing style
@@ -2882,6 +2901,11 @@ class Parser {
         kind,
         decorations: [], // filled in by emit()
         decorationSourceRanges: [],
+        chordSymbol: null, // filled in by emit()
+        chordSymbolSourceRange: null,
+        chordFont: null,
+        annotations: [],
+        annotationSourceRanges: [],
         tuplet: null, // set by applyTuplet() on emit
         // `Z4` is FOUR bars' rest — the multiplier counts measures, not note lengths, and
         // a bare `Z` is one. Only a multi-measure rest carries it.

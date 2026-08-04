@@ -2217,11 +2217,11 @@ system 0 width=90.456 originY=0.000
     bar x=88.392 w=0.160
       line  88.472,-2.000 -> 88.472,2.000 t=0.160
 tune 6
-bounds  width=90.833 height=41.088 top=-1.935
+bounds  width=90.833 height=46.867 top=-1.935
 systems 1
 system 0 width=90.833 originY=0.000
-  connector brace -0.920,19.152 scale=3.646
-  staff 0 originY=21.152
+  connector brace -0.920,22.042 scale=4.371
+  staff 0 originY=24.042
     staffline 0.000,2.000 -> 90.833,2.000 t=0.130
     staffline 0.000,1.000 -> 90.833,1.000 t=0.130
     staffline 0.000,0.000 -> 90.833,0.000 t=0.130
@@ -2233,8 +2233,8 @@ system 0 width=90.833 originY=0.000
     beam   69.444,4.250 -> 70.839,4.750 t=0.500
     tie  65.861,-1.300 -> 67.540,-1.300 bulge=-0.500
     title x=0.000 w=0.000
-      text  38.163,-16.693 size=3.484 bold "S7-7 Organ Trio"
-      text  39.200,-12.492 size=2.452 italic "André Raison"
+      text  38.163,-19.583 size=3.484 bold "S7-7 Organ Trio"
+      text  39.200,-15.381 size=2.452 italic "André Raison"
     clef x=3.226 w=3.103
       glyph gClef 3.871,1.000
     keySignature x=7.619 w=0.871
@@ -2243,10 +2243,11 @@ system 0 width=90.833 originY=0.000
       glyph timeSig3 9.914,-1.000
       glyph timeSig4 9.781,1.000
     tempo x=12.593 w=0.000
-      glyph noteheadBlack 12.593,-8.500 scale=0.750
-      line  13.542,-8.625 -> 13.542,-10.375 t=0.120
-      text  14.188,-8.161 size=2.581 "= 92"
+      glyph noteheadBlack 12.593,-11.390 scale=0.750
+      line  13.542,-11.515 -> 13.542,-13.265 t=0.120
+      text  14.188,-11.051 size=2.581 "= 92"
     rest x=12.593 w=9.482
+      text  12.593,-8.325 size=2.065 "Positif"
     bar x=18.223 w=0.160
       line  18.303,-2.000 -> 18.303,2.000 t=0.160
     rest x=19.642 w=9.482
@@ -2469,7 +2470,7 @@ system 0 width=90.833 originY=0.000
       line  86.729,-0.332 -> 86.729,3.000 t=0.120
     bar x=88.769 w=0.160
       line  88.849,-2.000 -> 88.849,2.000 t=0.160
-  staff 1 originY=31.694
+  staff 1 originY=37.473
     staffline 0.000,2.000 -> 90.833,2.000 t=0.130
     staffline 0.000,1.000 -> 90.833,1.000 t=0.130
     staffline 0.000,0.000 -> 90.833,0.000 t=0.130
@@ -2487,6 +2488,7 @@ system 0 width=90.833 originY=0.000
     rest x=12.593 w=9.482
       glyph restHalf 12.593,0.000
       glyph augmentationDot 14.395,-0.500
+      text  12.593,-5.367 size=2.065 "Trompette"
     bar x=18.223 w=0.160
       line  18.303,-2.000 -> 18.303,2.000 t=0.160
     rest x=19.642 w=9.482

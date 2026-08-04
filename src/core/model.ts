@@ -222,6 +222,16 @@ export interface Meter {
   readonly numerator: number
   readonly denominator: number
   readonly symbol: MeterSymbol
+  /**
+   * `M:2+3/8` — the numerator as WRITTEN, so it can be drawn as `2+3` rather than `5`.
+   *
+   * Absent for a plain meter. abcjs keeps the whole string and lays out one glyph per
+   * character with a `+` between the terms, each `getSymbolWidth("+") + 2` wide
+   * (`create-time-signature.js:12-16`) — 17.08px more prefix than a single digit on
+   * `2+3/8`, which moves the music. `numerator` stays the SUM, since that is the bar's
+   * duration either way.
+   */
+  readonly numeratorParts?: readonly number[]
 }
 
 export const measureDuration = (m: Meter): Rational => rational(m.numerator, m.denominator)
@@ -487,6 +497,17 @@ export interface Rest {
    */
   readonly decorations: readonly string[]
   readonly decorationSourceRanges: readonly SourceRange[]
+  /**
+   * …AND A CHORD SYMBOL, which is NOT the same question. abcjs runs `addChord` over every
+   * abselem's `elem.chord` regardless of type (`abstract-engraver.js:853`), so `"Eb7"z`
+   * prints the chord over the rest and reserves the whole chord lane for it — 22.4px of
+   * staff on a tune that opens that way, and the mark itself lost outright before this.
+   */
+  readonly chordSymbol: string | null
+  readonly chordSymbolSourceRange: SourceRange | null
+  readonly chordFont: LyricFont | null
+  readonly annotations: readonly string[]
+  readonly annotationSourceRanges: readonly SourceRange[]
   readonly tuplet: TupletMark | null
   /**
    * How many BARS a `Z`/`X` stands for — the number printed over the multi-measure bar.

@@ -244,7 +244,7 @@ system 3 width=90.484 originY=56.758
     note@1 x=55.122 w=5.474
       glyph noteheadBlack 55.122,-0.500
       line  55.122,-0.332 -> 55.122,3.000 t=0.120
-      text  50.414,-5.847 size=2.065 "dolcemente"
+      text  55.122,-5.847 size=2.065 "dolcemente"
       text  53.383,5.694 size=2.194 bold "dig,"
     note@-2 x=59.340 w=5.474
       glyph noteheadBlack 59.340,1.000

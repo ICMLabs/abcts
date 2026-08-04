@@ -1429,9 +1429,18 @@ function digitGlyphs(
   })
 }
 
-function layoutMeter(x: number, numerator: number, denominator: number): LayoutElement {
-  const top = digitNames(numerator)
-  const bottom = digitNames(denominator)
+function layoutMeter(x: number, meter: Meter): LayoutElement {
+  // AN ADDITIVE METER IS DRAWN TERM BY TERM. abcjs keeps the numerator as the string it
+  // was written as — the golden's own `data-name="2+3"` — and lays out one glyph per
+  // character (`create-time-signature.js:17-27`). Summing to `5` cost `2+3/8` 17.08px of
+  // prefix and moved every note on the line.
+  const top =
+    meter.numeratorParts === undefined
+      ? digitNames(meter.numerator)
+      : meter.numeratorParts.flatMap((part, i) =>
+          i === 0 ? digitNames(part) : ['timeSigPlus' as GlyphName, ...digitNames(part)],
+        )
+  const bottom = digitNames(meter.denominator)
   const width = Math.max(totalAdvance(top), totalAdvance(bottom))
   const centre = x + width / 2
   // Numerator and denominator centre on steps +2 and -2 — symmetric about the middle
@@ -1867,7 +1876,13 @@ function layoutRest(rest: Rest, advance: number, x: number, strict = true): Layo
   const spec = invisible || rest.kind === 'spacer' ? null : restGlyph(rest.notatedDuration)
 
   const glyphs: PlacedGlyph[] = []
-  const texts: PlacedText[] = []
+  // A REST CARRIES ITS CHORD SYMBOL AND ANNOTATIONS. abcjs calls `addChord` on every
+  // abselem it builds, rest included (`abstract-engraver.js:853`), so `"Eb7"z` prints the
+  // chord and reserves the whole chord lane — 22.4px of staff on a tune that opens that
+  // way, and the mark itself was lost outright before this.
+  const textSpan = { left: 0, right: 0 }
+  const restWidth = spec === null ? 0 : glyphsFor(strict).width(spec.name)
+  const texts: PlacedText[] = noteText(rest, x, restWidth, strict, textSpan)
   // A MULTI-MEASURE REST IS A BAR AND A COUNT, both hung off one `mmWidth`.
   //
   // abcjs (`abstract-engraver.js:593-598`) puts the glyph at `dx = mmWidth`, declares it
@@ -1922,13 +1937,14 @@ function layoutRest(rest: Rest, advance: number, x: number, strict = true): Layo
   // and a rest's `w` is its glyph — an eighth rest reports 7.534 and pushes `minx` by
   // that plus `minspacing`. We reported 0, so a compressed line let the note after a rest
   // slide onto it: `visual-layout-04` put its `zA` 37.6px left of abcjs's.
-  const restInk = spec === null ? 0 : glyphsFor(strict).width(spec.name) + ENGRAVE.noteRodGap
+  const restInk = Math.max(spec === null ? 0 : restWidth + ENGRAVE.noteRodGap, textSpan.right)
   return {
     type: 'rest',
     x,
     width: Math.max(advance, restInk),
     spring: advance,
     rod: restInk,
+    left: textSpan.left,
     staffSteps: [],
     glyphs,
     lines: [],
@@ -3157,7 +3173,6 @@ function noteText(
   averageStep = 0,
   minStep = 0,
 ): PlacedText[] {
-  if (event.type === 'rest') return []
   const texts: PlacedText[] = []
   const centre = headX + headWidth / 2
   /** A text CENTRED on the note, `dx` from its x. Annotations do not call this. */
@@ -3221,7 +3236,15 @@ function noteText(
       ENGRAVE.annotationAboveStep + (above.length - 1 - index) * ENGRAVE.annotationLineStep
     texts.push({
       text: a.text,
-      x: centre - textWidth(a.text, size, 'sans') / 2,
+      // LEFT-JUSTIFIED AT THE ELEMENT, where a chord symbol is CENTRED on it. abcjs's
+      // annotation is `RelativeElement(chord, 0, 0, undefined, {realWidth})` — `dx` 0 —
+      // and `getChordDim` takes `offset = this.type === "chord" ? realWidth / 2 : 0`
+      // (`relative-element.js:96`), so its lane extent runs from the element's x rightward.
+      // The golden says the same in one attribute: `text-anchor="start"` on an annotation
+      // beside `text-anchor="middle"` on a chord. Centring ours reached further left than
+      // abcjs's and opened a second chord LANE that abcjs does not — 18.51px of staff on
+      // `"Ab"z"^break"c2`.
+      x: headX,
       y: stepToY(lane),
       size,
       bold: false,
@@ -3240,7 +3263,8 @@ function noteText(
     const size = ENGRAVE.chordTextSize
     texts.push({
       text: a.text,
-      x: centre - textWidth(a.text, size, 'sans') / 2,
+      // Left-justified, like the `above` case.
+      x: headX,
       y: stepToY(ENGRAVE.annotationBelowStep - index * ENGRAVE.annotationLineStep),
       size,
       bold: false,
@@ -3313,6 +3337,10 @@ function noteText(
       reserve: pointReserve(y),
     })
   }
+
+  // A REST STOPS HERE. It carries a chord symbol and annotations, which abcjs engraves
+  // over it like any other element, but no lyric — nothing sings a rest.
+  if (event.type === 'rest') return texts
 
   // Verse 1 comes from `lyric`; `extraVerses` holds 2..n, positionally, with a null
   // wherever a verse skips this note.
@@ -4671,7 +4699,7 @@ function layoutMeasure(
     ) {
       return
     }
-    const meter = layoutMeter(x, measure.meterChange.numerator, measure.meterChange.denominator)
+    const meter = layoutMeter(x, measure.meterChange)
     elements.push(meter)
     fixed(meter.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
     x += meter.width + ENGRAVE.prefixGap
@@ -5252,7 +5280,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       const keySig = layoutKeySignature(x, score.key, clef, strict)
       if (keySig !== null) push(keySig)
       if (withMeter && score.meter !== null) {
-        push(layoutMeter(x, score.meter.numerator, score.meter.denominator))
+        push(layoutMeter(x, score.meter))
       }
       // The tempo mark belongs to the TUNE — not to each system, and not to each voice.
       // It prints once: on the first system, above the top staff. Every staff still gets

@@ -139,9 +139,18 @@ const WITHIN: Readonly<Record<string, number>> = {
   // `minpitch + (y + 3 * STEP) / STEP`.
   // TWO CHORD SYMBOLS ON ONE NOTE STACK — `"D""G"d` is one name `D\nG` and each LINE is
   // its own centred mark, so it opens a second chord LANE and 18.52px of staff.
-  '0.05': 130,
-  '1': 137,
-  '5': 149,
+  // A REST CARRIES ITS CHORD SYMBOL AND ANNOTATIONS. abcjs runs `addChord` over every
+  // abselem regardless of type, so `"Eb7"z` prints the chord and reserves the whole chord
+  // lane. Ours dropped both at parse — the mark was LOST, not just mispositioned.
+  // AN ANNOTATION IS LEFT-JUSTIFIED AT ITS ELEMENT where a chord symbol is CENTRED on it:
+  // `getChordDim`'s `offset = type === "chord" ? realWidth / 2 : 0`, and the golden says
+  // the same in one attribute — `text-anchor="start"` against `"middle"`. Centring ours
+  // reached further left and opened chord LANES abcjs does not.
+  // AN ADDITIVE METER IS DRAWN TERM BY TERM — `M:2+3/8` is the string `2+3` over `8`, one
+  // glyph per character (`create-time-signature.js:17-27`), not the sum `5`. 17.08px.
+  '0.05': 131,
+  '1': 139,
+  '5': 151,
   '25': 170,
 }
 

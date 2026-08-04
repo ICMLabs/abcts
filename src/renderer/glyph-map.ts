@@ -89,6 +89,7 @@ export const SMUFL_TO_ABCJS: Readonly<Record<string, string>> = {
   timeSig7: '7',
   timeSig8: '8',
   timeSig9: '9',
+  timeSigPlus: '+',
   timeSigCommon: 'timesig.common',
   timeSigCutCommon: 'timesig.cut',
 
@@ -150,10 +151,9 @@ export const UNMAPPED_ABCJS = [
   'timesig.imperfectum2',
   'timesig.perfectum',
   'timesig.perfectum2',
-  // Text glyphs abcjs draws inline in chord symbols and annotations — a `+` for an
-  // added note, a `,` in a figured bass. abcts sets prose in <text>, so it has no
-  // outline for either and needs none.
-  '+',
+  // Text glyphs abcjs draws inline in chord symbols and annotations — a `,` in a figured
+  // bass. abcts sets prose in <text>, so it has no outline for it and needs none. (`+` is
+  // no longer here: an additive meter draws one, so it is mapped from `timeSigPlus`.)
   ',',
   'f',
   'm',

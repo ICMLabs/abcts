@@ -109,6 +109,7 @@ export type GlyphName =
   | 'timeSig7'
   | 'timeSig8'
   | 'timeSig9'
+  | 'timeSigPlus'
   | 'timeSigCommon'
   | 'timeSigCutCommon'
   | 'augmentationDot'
@@ -606,6 +607,23 @@ export const GLYPHS: Readonly<Record<GlyphName, Glyph>> = {
     width: 1.28,
     height: 2.716,
     advance: 1.28,
+    anchors: {},
+  },
+  /**
+   * The `+` between the terms of an additive meter — `M:2+3/8`.
+   *
+   * NOT from Bravura, and it carries no font licence: a plus sign is two rectangles, so
+   * this is authored here rather than copied. Sized to abcjs's own `+`, 7.507 x 7.515px
+   * at a 7.75px staff space, and centred on its pitch like the digits either side of it.
+   */
+  timeSigPlus: {
+    path: 'M0 -0.11L0.38 -0.11L0.38 -0.48L0.59 -0.48L0.59 -0.11L0.97 -0.11L0.97 0.11L0.59 0.11L0.59 0.48L0.38 0.48L0.38 0.11L0 0.11Z',
+    codepoint: 0xe08c,
+    x: 0,
+    y: -0.48,
+    width: 0.97,
+    height: 0.96,
+    advance: 0.97,
     anchors: {},
   },
   timeSig0: {

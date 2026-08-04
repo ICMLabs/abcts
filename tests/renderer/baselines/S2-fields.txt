@@ -75,7 +75,7 @@ system 0 width=90.323 originY=0.000
       glyph noteheadBlack 6.329,3.000
       line  5.929,3.000 -> 7.995,3.000 t=0.160
       line  7.509,2.832 -> 7.509,-0.500 t=0.120
-      text  4.262,5.585 size=2.065 "below"
+      text  6.329,5.585 size=2.065 "below"
     note@-4 x=26.811 w=5.474
       glyph noteheadBlack 26.811,2.000
       line  27.991,1.832 -> 27.991,-1.500 t=0.120
@@ -85,7 +85,7 @@ system 0 width=90.323 originY=0.000
     note@1 x=67.776 w=5.474
       glyph noteheadBlack 67.776,-0.500
       line  67.776,-0.332 -> 67.776,3.000 t=0.120
-      text  65.594,-4.687 size=2.065 "above"
+      text  67.776,-4.687 size=2.065 "above"
     bar x=88.258 w=0.160
       line  88.338,-2.000 -> 88.338,2.000 t=0.160
 system 1 width=90.323 originY=22.269
@@ -110,7 +110,7 @@ system 1 width=90.323 originY=22.269
     note@-1 x=55.839 w=7.742
       glyph noteheadHalf 55.839,0.500
       line  57.019,0.332 -> 57.019,-3.000 t=0.120
-      text  49.269,-4.687 size=2.065 "around the note"
+      text  55.839,-4.687 size=2.065 "around the note"
       text  54.248,0.500 size=2.065 "("
       text  56.355,0.500 size=2.065 ")"
     bar x=88.258 w=0.160
@@ -130,9 +130,9 @@ system 2 width=31.710 originY=33.572
       glyph noteheadBlack 6.329,3.000
       line  5.929,3.000 -> 7.995,3.000 t=0.160
       line  7.509,2.832 -> 7.509,-0.500 t=0.120
-      text  5.238,5.585 size=2.065 "one"
-      text  5.354,8.165 size=2.065 "two"
-      text  4.607,10.745 size=2.065 "three"
+      text  6.329,5.585 size=2.065 "one"
+      text  6.329,8.165 size=2.065 "two"
+      text  6.329,10.745 size=2.065 "three"
     note@-4 x=11.804 w=5.474
       glyph noteheadBlack 11.804,2.000
       line  12.984,1.832 -> 12.984,-1.500 t=0.120
