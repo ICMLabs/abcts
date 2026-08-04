@@ -1665,11 +1665,15 @@ class Parser {
         return
       }
     }
-    // `%%staffwidth` — the music area in pixels, the same quantity as the host's
-    // `staffwidth` render param.
+    // `%%staffwidth` IS IN POINTS, and the host's `staffwidth` param is in PIXELS.
+    // abcjs converts only the directive: `this.width = formatting.staffwidth * 1.33`
+    // with its own comment "the width is expressed in pt; convert to px"
+    // (`engraver-controller.js:208`), where the param goes straight into
+    // `staffwidthScreen` (`:55`). Reading the directive as pixels made
+    // `%%staffwidth 400` a 400px staff against abcjs's 532.
     const staffWidth = /^staffwidth\s+(\d+(?:\.\d+)?)\s*$/.exec(body)
     if (staffWidth?.[1] !== undefined) {
-      this.ensureScore(start).staffWidth = Number.parseFloat(staffWidth[1])
+      this.ensureScore(start).staffWidth = Number.parseFloat(staffWidth[1]) * 1.33
       return
     }
     // `%%maxStaves` — an incipit. abcjs matches the directive case-insensitively like
