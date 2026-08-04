@@ -288,6 +288,26 @@ with different fonts and only the first is this. And it applies to **whichever b
 ending opens on**: the measure's own opening barline, or the PREVIOUS measure's closing one
 when the number follows a `:|`.
 
+### 31. A FOURTH GOLDEN LIMITATION — `%%jazzchords`, and it is NOT chaseable
+
+`visual-misc-03-jazzchords` is `oy` −38.4 with `dx` 0.1, a rigid vertical term, and the
+whole of it is the generator.
+
+`translateChord` puts a `\x03` marker between a jazz chord's root, its modifier and its
+bass note (`translate-chord.js:30`), and `svg.js:198-216` splits on it into NESTED tspans
+at `0.7em`. The golden generator's `getBBox` then counts NON-EMPTY TSPANS and treats each
+as a LINE: `if (nonEmptyCount > 1) h = h + (nonEmptyCount - 1) * fontSize * 1.2`
+(`dump-svg.js:120-124`). So `"C7"` measures 18.52 + 19.2 and `"x/C"` measures 18.52 + 38.4
+— against a plain chord's 18.52 — and the chord LANE takes the widest.
+
+Worked through: 56.92 / 3.875 = 14.69 pitch against 4.78, a difference of 9.91 pitch =
+**38.4px**, which is the number exactly. A real browser's `getBBox` returns ONE line's
+height for nested tspans, because they ARE one line; reproducing this would put a triple
+chord lane over every jazz-chord tune we draw.
+
+Recorded like `little swallow`'s CJK widths, `vree-grace-notes`'s emission order and the
+non-default font sizes: **a property of the GOLDEN, not of abcjs.**
+
 ---
 
 ## TRAPS ADDED THIS SESSION
