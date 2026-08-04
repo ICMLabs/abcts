@@ -354,10 +354,10 @@ a feedback loop for guesses it is the expensive mode.
 The bar is 100% parity with abcjs. A passing gate is not parity — the
 gate says "no worse than recorded"; parity means dy/dx/oy/ox at ZERO.
 
-AND "THE GATE CANNOT SEE THIS" IS NOT "THE GOLDEN IS WRONG". Two of the
-four recorded golden artefacts were OURS — the grace emission order —
-and had stood for two days across four documents. The second claim needs
-dump-svg.js opened.
+AND "THE GATE CANNOT SEE THIS" IS NOT "THE GOLDEN IS WRONG", AND
+NEITHER OF THOSE IS "SO LEAVE IT". The goldens ARE the target: two of
+the four recorded golden artefacts were OURS, and the other two are the
+generator's text metrics, which byte parity obliges us to reproduce.
 
 Confirm your lane with `git rev-parse --abbrev-ref HEAD`. `main` holds
 the merged vertical arc and is GREEN — keep it that way.
