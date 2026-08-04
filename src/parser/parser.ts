@@ -746,6 +746,7 @@ class VoiceBuilder {
   meterForOverlays: Meter | null = null
   /** A mid-tune `K:`/`M:` applies to the measure it opens, so it pends until close. */
   private pendingKeyChange: KeySignature | null = null
+  private pendingClefChange: Clef | null = null
   private pendingKeyChangeRange: SourceRange | null = null
   private pendingMeterChange: Meter | null = null
   private pendingMeterChangeRange: SourceRange | null = null
@@ -774,6 +775,11 @@ class VoiceBuilder {
     this.pendingKeyChangeRange = range
   }
 
+  /** A mid-tune `K:… clef=` or `[K: bass]`. Delta, like the key change. */
+  setClefChange(clef: Clef): void {
+    this.pendingClefChange = clef
+  }
+
   setMeterChange(meter: Meter | null, range: SourceRange): void {
     this.pendingMeterChange = meter
     this.pendingMeterChangeRange = range
@@ -782,11 +788,13 @@ class VoiceBuilder {
   private takeChanges() {
     const changes = {
       keyChange: this.pendingKeyChange,
+      clefChange: this.pendingClefChange,
       keyChangeSourceRange: this.pendingKeyChangeRange,
       meterChange: this.pendingMeterChange,
       meterChangeSourceRange: this.pendingMeterChangeRange,
     }
     this.pendingKeyChange = null
+    this.pendingClefChange = null
     this.pendingKeyChangeRange = null
     this.pendingMeterChange = null
     this.pendingMeterChangeRange = null
@@ -2068,6 +2076,10 @@ class Parser {
           // falls back to C for anything that is not a key letter, so passing it
           // `style=harmonic` would silently transpose the rest of the tune to C major.
           if (hasKeySpec(value)) builder.voice.setKeyChange(parseKey(value), range)
+          // A MID-TUNE CLEF. `K:C clef=bass` and `[K: bass]` both land here, and abcjs
+          // prints the new clef where it stands AND at the head of every system after it.
+          const midClef = parseClef(value)
+          if (midClef !== null) builder.voice.setClefChange(midClef)
           return
         }
         builder.key = parseKey(value)

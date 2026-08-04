@@ -4270,11 +4270,28 @@ function layoutMeasure(
     )
     x += ENGRAVE.barGap
   }
+  // A MID-TUNE CLEF PRINTS WHERE IT STANDS, before the key change and before the
+  // measure's notes — abcjs builds it with `createClef` like any other, an ordinary
+  // zero-duration `staff-extra clef` on the voice's child list.
+  const drawClefChange = (): void => {
+    // NOT WHEN THE MEASURE OPENS A SYSTEM — the prefix already reprints the clef in force
+    // there, and abcjs prints exactly one. A `K:C clef=bass` written on its own line above
+    // the music it governs is that case, and drawing both put `visual-selection-03` 24px
+    // wider than abcjs on every line.
+    if (measure.clefChange == null || measure.startsSystem) return
+    const change = layoutClef(x, measure.clefChange, strict)
+    if (change === null) return
+    elements.push(change)
+    fixed(change.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
+    x += change.width + ENGRAVE.prefixGap
+  }
   if (keyChangeAt < openingBarAt) {
+    drawClefChange()
     drawKeyChange()
     drawOpeningBar()
   } else {
     drawOpeningBar()
+    drawClefChange()
     drawKeyChange()
   }
 
@@ -4488,7 +4505,11 @@ interface VoicePlan {
     withMeter: boolean,
     topStaff: boolean,
     indent: number,
+    /** Index of the system's first measure — the prefix prints the clef in force THERE. */
+    from?: number,
   ) => { elements: LayoutElement[]; advances: Advance[] }
+  /** The clef in force at measure `i`, after every `Measure.clefChange` before it. */
+  readonly clefAt: (i: number) => Clef
 }
 
 /**
@@ -4701,10 +4722,20 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     // deliberately keeps `score.key` as the header key and leaves accumulation to the
     // consumer — so the renderer is the consumer that has to do it.
     let keyInForce = score.key
+    // The clef in force, accumulated the same way — `Measure.clefChange` is a DELTA. It
+    // has to be carried into the PREFIX too: abcjs reprints the current clef at the head
+    // of every system, not the one the voice was declared with.
+    let clefInForce = clef
+    const clefAtMeasure: Clef[] = []
     const blocks = (voice?.measures ?? []).map((measure) => {
+      // A mid-tune clef prints at the START of its measure and governs it — abcjs's
+      // `staff-extra clef` is emitted before the measure's notes, and everything after it
+      // is read against the new clef.
+      if (measure.clefChange != null) clefInForce = measure.clefChange
+      clefAtMeasure.push(clefInForce)
       const block = layoutMeasure(
         measure,
-        clef,
+        clefInForce,
         directions,
         spacingScale,
         strict,
@@ -4725,7 +4756,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       withMeter: boolean,
       topStaff: boolean,
       indent: number,
+      /** The first measure of the system, so the prefix prints the clef in force there. */
+      from = 0,
     ): { elements: LayoutElement[]; advances: Advance[] } => {
+      const clef = clefAtMeasure[from] ?? clefInForce
       const elements: LayoutElement[] = []
       const advances: Advance[] = []
       // The voice-name reservation pushes the whole prefix — and the music after it —
@@ -4775,6 +4809,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       clef,
       blocks,
       measures: voice?.measures ?? [],
+      clefAt: (i: number): Clef => clefAtMeasure[i] ?? clef,
       name: voice?.name ?? null,
       subname: voice?.subname ?? null,
       prefix,
@@ -4949,7 +4984,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       (voicesOfStaff.find((m) => m.includes(v)) ?? [v])[0] === v
     const blank = { elements: [] as LayoutElement[], advances: [] as Advance[] }
     const heads = plans.map((plan, v) =>
-      leadsStaff(v) ? plan.prefix(withMeter, v === 0, indent) : blank,
+      leadsStaff(v) ? plan.prefix(withMeter, v === 0, indent, span.start) : blank,
     )
     const lines = plans.map((plan, v) => {
       const items: Advance[] = [...(heads[v]?.advances ?? [])]

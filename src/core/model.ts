@@ -628,6 +628,14 @@ export interface Measure {
    * to the page width, compressing when the line is long rather than wrapping it. So the
    * break points are the author's and are recorded at parse, not recomputed at layout.
    */
+  /**
+   * A mid-tune clef, from a `K:… clef=` or an inline `[K: bass]`. A DELTA like
+   * `keyChange`: null means "unchanged", and the consumer accumulates.
+   *
+   * abcjs reprints it at the head of every system after it, so the renderer has to carry
+   * it forward into the prefix as well as draw it where it stands.
+   */
+  readonly clefChange?: Clef | null
   readonly startsSystem: boolean
   /**
    * Free-text blocks and mid-tune subtitles standing between the PREVIOUS system and this

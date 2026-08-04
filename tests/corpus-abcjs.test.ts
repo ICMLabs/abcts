@@ -93,10 +93,12 @@ const WITHIN: Readonly<Record<string, number>> = {
   // `HP`, `Hp` or `none` — so `K:none` keeps its treble clef, `K:C none` loses it, `K:cm`
   // is C major with nothing printed, and `K: bass` is the bass clef. Plus `clef=perc`,
   // which DRAWS and takes 26px of prefix where we drew and reserved nothing.
+  // A MID-TUNE CLEF: `K:C clef=bass` and `[K: bass]` change the clef from there on, print
+  // where they stand, and are reprinted at the head of every system after.
   '0.05': 105,
   '1': 119,
   '5': 130,
-  '25': 152,
+  '25': 154,
 }
 
 const names = readdirSync(fixturesDir)
