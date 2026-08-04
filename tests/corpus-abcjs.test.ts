@@ -122,9 +122,18 @@ const WITHIN: Readonly<Record<string, number>> = {
   // 57.057px against an ink box of 57.09 and a sharp declares 20.15 against 20.19 — 0.03
   // and 0.04px, a fiftieth of a staff space each, and between them the SYSTEMIC `oy` that
   // sat under every fixture in this corpus. Eleven fixtures came off the table on it.
-  '0.05': 125,
-  '1': 131,
-  '5': 145,
+  // AN ENDING LANE OVER A CHORD LANE COSTS A FLAT 2 PITCH, margin included, instead of
+  // `endingHeightAbove + margin` (`set-upper-and-lower-elements.js:33-38`). A different
+  // BRANCH, not a scaling: 2 against a volta's 6 is 15.5px, which a ladder of five control
+  // tunes put on `"D7"…|1…` and on nothing simpler.
+  // A CHORD'S LANE IS ITS MEASURED HEIGHT — the golden's size table with `size + 2` for
+  // anything unlisted, a whole LINE per nested tspan, and `padding * 4` when the font is
+  // BOXED. `visual-tablature-17`'s five boxed `%%gchordfont` sizes were a ratio before.
+  // A TUPLET'S BRACKET IS INK THE CHORD LANE SITS ON, since `layoutVoice` calls
+  // `adjustRange` on every `TripletElem` before any lane is added.
+  '0.05': 129,
+  '1': 136,
+  '5': 148,
   '25': 170,
 }
 

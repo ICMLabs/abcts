@@ -585,6 +585,12 @@ export const ENGRAVE = {
    */
   noteheadHalfHeight: 2.088774193548387 / 4,
   voltaLane: 5,
+  /**
+   * What an ending lane costs when the staff ALSO has a chord lane — a flat 2 pitch with
+   * no margin, instead of `endingHeightAbove + margin`
+   * (`set-upper-and-lower-elements.js:33-38`).
+   */
+  endingOverChordLane: 2,
   /** abcjs's `margin` in `set-upper-and-lower-elements.js:102` — one pitch on every lane. */
   laneMargin: 1,
   voltaStep: 8,
@@ -803,6 +809,12 @@ export interface PlacedText {
    * measured height. See `Score.jazzChords`.
    */
   readonly jazz?: readonly [string, string, string]
+  /**
+   * `%%<type>font … box` — the text's own font is boxed, so `getTextSize` returns
+   * `height + padding * 4` for it (`helpers/get-text-size.js:46-48`). Carried on a chord
+   * symbol because its LANE is measured from that height.
+   */
+  readonly box?: boolean
 }
 
 export interface LayoutElement {
@@ -3097,6 +3109,7 @@ function noteText(
       bold: false,
       italic: false,
       ...(JAZZ_CHORDS ? { jazz: chordParts(event.chordSymbol) } : {}),
+      ...(event.chordFont?.box === true ? { box: true } : {}),
     })
   }
 
@@ -6544,6 +6557,13 @@ function anchorAboveStaff<
       // other lane already lives.
       voltaLines: [],
       voltaTexts: [],
+      // A TUPLET'S DECLARED BOX IS INK AND BELONGS HERE. `layoutVoice` calls
+      // `voice.adjustRange` on every `TripletElem` (`layout/voice.js:19-23`) BEFORE
+      // `setUpperAndLowerElements` runs, so abcjs's chord lane sits on top of the bracket
+      // like any other ink. Leaving it out put the lane under the bracket, and the outer
+      // pass then took the bracket instead — 0.779 pitch, `chordHeightAbove` minus the
+      // tuplet lane, on every staff carrying both.
+      tupletReserves: parts.flatMap((p) => p.tupletReserves ?? []),
     },
   ).top
 
@@ -6605,29 +6625,25 @@ function anchorAboveStaff<
   // from the text's measured height (`relative-element.js:60`), so `%%gchordfont Arial 80`
   // reserves five times what the 12pt default does. The constant here IS the default's
   // height, so scaling by the ratio of sizes is the same number wherever nothing changed.
-  const chordSize = Math.max(
-    ENGRAVE.chordTextSize,
-    ...parts.flatMap((p) =>
-      p.elements.flatMap((el) => el.texts.filter((t) => t.role === 'chord').map((t) => t.size)),
-    ),
-  )
-  // …AND A JAZZ CHORD IS AS TALL AS ITS TSPANS. The generator counts a text's nested
-  // tspans as separate LINES — `h + (n-1) * fontSize * 1.2` (`dump-svg.js:120-124`) — and
-  // `getTextSize` measures the very markup `svg.js` will draw, so `"x/C"` comes back three
-  // lines high and the whole lane grows by 38.4px. The tallest chord on the staff sets it,
-  // which is `setLimit`'s `Math.max` over the voice's `chordHeightAbove`.
-  const extraLines = Math.max(
-    0,
-    ...parts.flatMap((p) =>
-      p.elements.flatMap(
-        (el) => el.texts.filter(isChord).map((t) => jazzTspans(t) - 1) as number[],
-      ),
-    ),
-  )
+  // THE TALLEST CHORD ON THE STAFF SETS THE LANE — `setLimit`'s `Math.max` over the
+  // voice's `chordHeightAbove`, which `RelativeElement` takes straight from the text's
+  // MEASURED height (`relative-element.js:60`). Three terms go into that measure and all
+  // three are the golden generator's:
+  //
+  //   • the height for the size, from its table with `size + 2` for anything unlisted —
+  //     so `%%gchordfont Arial 80` resolves to 107px and reserves 109, not 80 x a ratio;
+  //   • one whole LINE per extra nested tspan, which is what `%%jazzchords` costs
+  //     (`dump-svg.js:120-124`);
+  //   • `padding * 4` for a BOXED font, `padding = size * fontboxpadding`
+  //     (`get-text-size.js:46-48`) — `visual-tablature-17` boxes five of them.
+  const chordHeightOf = (t: PlacedText): number =>
+    goldenTextHeight(t.size) +
+    (jazzTspans(t) - 1) * t.size * ENGRAVE.textLineStep +
+    (t.box === true ? t.size * ENGRAVE.fontBoxPadding * 4 : 0)
+  const chordTexts = parts.flatMap((p) => p.elements.flatMap((el) => el.texts.filter(isChord)))
+  const chordSize = Math.max(ENGRAVE.chordTextSize, ...chordTexts.map((t) => t.size))
   const chordBlock =
-    (ENGRAVE.chordHeightAbove * (chordSize / ENGRAVE.chordTextSize) +
-      extraLines * chordSize * ENGRAVE.textLineStep) *
-    chordLanes
+    Math.max(ENGRAVE.chordHeightAbove, ...chordTexts.map(chordHeightOf)) * chordLanes
   const chordY = chords ? reserve(chordBlock) + chordSize : null
 
   // A BOXED PART LABEL MEASURES TALLER, so its whole lane grows: `getTextSize` returns
@@ -6662,6 +6678,7 @@ function anchorAboveStaff<
   return parts.map((part) => ({
     ...part,
     aboveStackPlaced: true,
+    chordLaneAbove: chords,
     elements: part.elements.map((el) => {
       if (el.type === 'part') {
         const moved = shiftBy(el, partShift)
@@ -6787,6 +6804,11 @@ interface StaffFurniture {
    * dynamics above and cost us 54.25px where abcjs spends 27.13 — exactly twice.
    */
   readonly aboveStackPlaced?: boolean
+  /**
+   * Whether `anchorAboveStaff` reserved a CHORD lane on this staff — which changes what
+   * the ENDING lane after it costs. See `verticalExtent`.
+   */
+  readonly chordLaneAbove?: boolean
   /** abcjs's `endingHeightAbove` from a tuplet — see `layoutTuplets`. Never below. */
   readonly tupletReservesAbove?: boolean
   /** abcjs's declared box per tuplet — NOT the bracket's drawn lines. */
@@ -7127,8 +7149,23 @@ function verticalExtent(
   // deliberately leaves it out (see the `voltaLines: []` note there), so the stack it
   // placed sits BELOW it and this is the one place it is spent. `hasBlock` still gates it,
   // for the title block, which is placed from a `musicTop` that does carry it.
+  //
+  // AND AN ENDING OVER A CHORD LANE COSTS A FLAT 2 PITCH, margin included:
+  //
+  //     if (staff.specialY.endingHeightAbove) {
+  //       if (staff.specialY.chordHeightAbove) staff.top += 2;
+  //       else staff.top += staff.specialY.endingHeightAbove + margin;
+  //
+  // (`set-upper-and-lower-elements.js:33-38`). Not a scaling and not a max — a different
+  // branch, and 2 against a volta's 5 + 1 is four pitch, exactly the 15.49px a ladder of
+  // five control tunes put on `"D7"…|1…` and on nothing simpler. A tuplet's lane takes the
+  // same branch, since abcjs stores both in the one `endingHeightAbove`.
   const lane = (pitch: number) => (pitch + ENGRAVE.laneMargin) * ENGRAVE.spacePerStep
-  if (endingAbove > 0 && !hasBlock) top -= lane(endingAbove)
+  if (endingAbove > 0 && !hasBlock)
+    top -=
+      furniture.chordLaneAbove === true
+        ? ENGRAVE.endingOverChordLane * ENGRAVE.spacePerStep
+        : lane(endingAbove)
   if (endingBelow > 0 && !hasBlock) bottom += lane(endingBelow)
 
   // A TIE OR SLUR PUSHES THE LANES' RESULT — IT DOES NOT GO UNDER THEM.
