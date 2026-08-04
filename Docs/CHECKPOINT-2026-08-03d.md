@@ -18,7 +18,7 @@ verdict and the beam findings, then `ARCHITECTURE.md`, then `CLAUDE.md`.
 | corpus | standing |
 |---|---|
 | 41-fixture | 20 of 29 are at ZERO on all four axes. Only `ragtime-nightingale`'s `oy` is a gate failure, and it is **0.646 against 0.59** — from 1.58. |
-| harvested (174) | within 0.05 / 1 / 5 / 25px: **108 / 123 / 138 / 166**, from 95 / 106 / 115 / 137. **66 of 174 still off some axis**, from 79. |
+| harvested (174) | within 0.05 / 1 / 5 / 25px: **109 / 124 / 139 / 169**, from 95 / 106 / 115 / 137. **65 of 174 still off some axis**, from 79. Nothing on the table is above 40px that is not a golden limitation. |
 | suite | 685 of 686. The one red is ragtime's `oy`, at **0.656** against 0.59 — from 1.58, and NOT raised. |
 
 The 41-fixture stragglers, every one named:
@@ -366,6 +366,38 @@ is also what lets a signature mix glyph WIDTHS, since a half-sharp is 5.25 where
 8.25 and the old code multiplied ONE advance by the count.
 
 `synth-flattener-32` 40.4 → 5.9, `visual-transpose-05` 25.6 → 11.6.
+
+### 35. A MID-TUNE `K: octave=` IS GLOBAL, AND APPLIES PER MEASURE
+
+`abc_parse_music.js:1113` reads `el.pitch += 7 * (currentVoice.octave !== undefined ?
+currentVoice.octave : multilineVars.octave)` **per note**. So a voice's own `octave=` wins,
+a voice without one follows the tune-level `K: octave=`, and that fallback can change
+mid-tune.
+
+Three things we had wrong. A HEADER `K: octave=` set the CURRENT voice rather than the
+tune. A MID-TUNE one was dropped entirely — the mid-tune `K:` branch returns before the
+header branch reads it. And the shift was applied with the voice's FINAL value over all its
+measures, where it has to be recorded as each measure CLOSES.
+
+`VoiceBuilder.octaveShift` is now null when the voice never set one, which is the
+load-bearing distinction: **0 and "unset" choose different fallbacks.**
+`parse-note-id-01` was dy 27.1 — seven steps, exactly one octave — and is gone.
+
+### 36. `hasVocals` IS PER SYSTEM AND MONOTONIC, NOT PER TUNE
+
+`createABCLine` calls `containsLyrics(staffs)` at the head of EVERY line, and that function
+only ever sets the flag TRUE — `reset()` clears it once per TUNE, not once per line
+(`abstract-engraver.js:61,110-129`). So a tune whose lyrics arrive on its SECOND system
+engraves the first with dynamics BELOW and everything after with them above.
+
+Nothing in the 41 fixtures does that, and the note in `layout.ts` said outright that it
+"never varies across a corpus tune's systems". `visual-selection-01` varies: its `w:`
+follows the SECOND of two `[V: PianoRightHand]` lines, and putting system 1's dynamics above
+cost **27.11px — seven pitch, exactly the lane** — between its two staves.
+
+**What named it was reading the STAFF TOPLINES rather than the notehead average.** All four
+were out by 38.75 / 11.64 / 27.34 / 31.17: not a shift, a SPACING, and the intra-system gap
+was 97.08 against abcjs's 124.19.
 
 ---
 
