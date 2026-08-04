@@ -140,8 +140,22 @@ function parseKey(content: string): KeySignature {
     i++
   }
 
-  const rest = spec.slice(i).toLowerCase()
-  const mode = MODES.find(([prefix]) => rest.startsWith(prefix))?.[1] ?? 'major'
+  // THE MODE MAY BE ITS OWN TOKEN. `K:F# dor` is F# dorian — abcjs consumes the pitch and
+  // the accidental and THEN calls `getMode` on whatever is left, across the space
+  // (`abc_parse_key_voice.js:256-283`). Reading only the first token made it F# MAJOR:
+  // six sharps against dorian's four, and `visual-transpose-output-06`'s single note sat
+  // 20.5px right of abcjs's on two accidentals it should never have drawn.
+  //
+  // MATCHED ON THE FIRST THREE CHARACTERS, exactly as `getMode` does, and never as a
+  // prefix of the whole word: `m` is minor only when it stands alone, so `middle=B` and
+  // `merge` cannot be read as one.
+  const modeOf = (word: string): Mode | null => {
+    const w = word.toLowerCase()
+    return MODES.find(([prefix]) => prefix === (w.length === 1 ? w : w.slice(0, 3)))?.[1] ?? null
+  }
+  const rest = spec.slice(i)
+  const next = content.trim().split(/\s+/)[1] ?? ''
+  const mode = modeOf(rest) ?? (rest === '' ? modeOf(next) : null) ?? 'major'
   const extra = parseKeyAccidentals(content)
   return {
     tonic: { step: head.toLowerCase() as DiatonicStep, accidental },

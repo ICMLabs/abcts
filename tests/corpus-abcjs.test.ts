@@ -109,9 +109,10 @@ const WITHIN: Readonly<Record<string, number>> = {
   // `hasVocals` IS PER SYSTEM AND MONOTONIC — a tune whose lyrics arrive on its second
   // system engraves the FIRST with dynamics BELOW.
   // A DECORATION WRITTEN BEFORE A BARLINE ATTACHES TO THE BARLINE, at a fixed pitch 12.
-  '0.05': 110,
-  '1': 125,
-  '5': 140,
+  // THE MODE MAY BE ITS OWN TOKEN — `K:F# dor` and `K:D Dorian` are read across the space.
+  '0.05': 111,
+  '1': 127,
+  '5': 141,
   '25': 169,
 }
 
