@@ -117,7 +117,39 @@ not "fix" one without the other.
 
 ---
 
-## THE NEXT CLUSTER IS THE FONT DIRECTIVES
+### 15. `%%gchordfont`, and A THIRD GOLDEN LIMITATION
+
+The directive is a CHANGING font (`getChangingFont`, `abc_parse_directive.js:1019-1029`) —
+`visual-tablature-17` sets it four times between music lines — so it is stamped per EVENT,
+like the vocalfont. Size converts as every abcjs font does, `round(size * 4 / 3)`, and its
+default is Helvetica 12 = the 16px `chordTextSize` already in `ENGRAVE`, so a tune setting
+no font takes exactly the path it always did.
+
+**The lane is as tall as the font**: `RelativeElement` takes `chordHeightAbove` straight
+from the measured height (`relative-element.js:60`).
+
+**AND THE GOLDEN GENERATOR CANNOT MEASURE A NON-DEFAULT FONT'S WIDTH.**
+`dump-svg.js:63-85` maps every font SIZE onto one of six per-character tables — anything
+27px or larger is measured with the TITLE table — while its HEIGHT comes from
+`fontHeights[round(size)]` with a faithful `size + 2` fallback (`:50-58,105`). So:
+
+| | can we match it? |
+|---|---|
+| text HEIGHT, any size | YES — `goldenTextHeight` reproduces the table and the fallback |
+| text WIDTH, one of the seven default sizes | yes |
+| text WIDTH, any other size | **NO** — the golden measures 107px Arial with 27px widths |
+
+`visual-tablature-17-stretchlast`'s `dy` went 300.3 → 64.1 and its `dx` 47.2 → 425.5 on
+this, and that `dx` is NOT chaseable: its chord symbols are 10, 20, 40 and 80 POINT, three
+of the four outside the tables. The third such limitation, after `little swallow`'s
+ASCII-only CJK widths and `vree-grace-notes`'s emission order.
+
+**So the font work should be judged on the VERTICAL axes.** `visual-options-01-fonts` is
+`oy` −153.5 → −133.9 and has eighteen more fonts to go.
+
+---
+
+## THE NEXT CLUSTER IS THE REST OF THE FONT DIRECTIVES
 
 `%%gchordfont` and friends are parsed nowhere and drive four of the top ten:
 

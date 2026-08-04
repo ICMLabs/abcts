@@ -5967,6 +5967,7 @@ function anchorAboveStaff<
   )
   const chordBlock = ENGRAVE.chordHeightAbove * chordLanes * (chordSize / ENGRAVE.chordTextSize)
   const chordY = chords ? reserve(chordBlock) + chordSize : null
+
   // A BOXED PART LABEL MEASURES TALLER, so its whole lane grows: `getTextSize` returns
   // `height + padding * 4` for a boxed font (`helpers/get-text-size.js:46-48`), and
   // `padding` is `font.size * fontboxpadding`, default 0.1 (`get-font-and-attr.js:35-36`).
@@ -6135,6 +6136,34 @@ interface StaffFurniture {
  * Read ours from the STACKING LOOP and not from in here: `verticalExtent` also runs for
  * the top-text block, and mixing the two scrambles the staff order.
  */
+/**
+ * A text's HEIGHT as the golden generator measures it — `fontHeights[round(size)]` with
+ * `size + 2` for anything unlisted (`Tools/abcjs-debug/dump-svg.js:50-58,105`).
+ *
+ * The seven listed sizes are the seven abcjs font DEFAULTS, so a tune that sets no font
+ * only ever reaches them and this is exactly the constant it used to. A `%%gchordfont
+ * Arial 80` resolves to 107px, which is unlisted, and the generator falls back — so the
+ * lane it reserves is 109 and matching that is matching abcjs's own SVG.
+ *
+ * Its WIDTH cannot be matched the same way: `calcWidth` maps every size onto one of six
+ * per-character tables and an 80pt chord symbol is measured with the 27px title table.
+ * That is a property of the GOLDEN, like `little swallow`'s CJK, and is recorded in the
+ * checkpoint rather than reproduced.
+ */
+const GOLDEN_TEXT_HEIGHTS: Readonly<Record<number, number>> = {
+  15: 17.5,
+  16: 18.52,
+  17: 18.84,
+  19: 21.06,
+  20: 22.16,
+  21: 23.27,
+  27: 29.91,
+}
+const goldenTextHeight = (sizeInSpaces: number): number => {
+  const px = sizeInSpaces * 7.75
+  return (GOLDEN_TEXT_HEIGHTS[Math.round(px)] ?? px + 2) / 7.75
+}
+
 const PROBE = process.env.ABCTS_PROBE !== undefined
 let probeTop = ''
 let probeBottom = ''
