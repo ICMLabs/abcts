@@ -1176,7 +1176,12 @@ class VoiceBuilder {
     return { textBefore: blocks }
   }
 
-  closeMeasure(barline: Barline, barlineRange: SourceRange): void {
+  closeMeasure(
+    barline: Barline,
+    barlineRange: SourceRange,
+    /** Decorations still waiting when the bar arrived — they attach to IT. */
+    decorations: readonly string[] = [],
+  ): void {
     // A barline with nothing before it (leading `|:`) opens rather than closes, so it is
     // held for the NEXT measure instead of being dropped. Dropping it lost a printed
     // barline wherever a line ended `:|` and the next began `|:`, and lost the opening
@@ -1203,6 +1208,7 @@ class VoiceBuilder {
         return { startsSystem, ...this.takeTextBefore(startsSystem) }
       })(),
       closingBarline: barline,
+      ...(decorations.length > 0 ? { closingBarlineDecorations: [...decorations] } : {}),
       sourceRange: sourceRange(this.measureStart ?? barlineRange.start, barlineRange.end),
       closingBarlineSourceRange: barlineRange,
     })
@@ -2610,10 +2616,16 @@ class Parser {
         case 'barline': {
           closeBeamRun() // beams do not cross barlines; assign before the measure closes
           const text = this.src.slice(token.start, token.start + token.length)
+          // A DECORATION STILL WAITING WHEN THE BAR ARRIVES ATTACHES TO THE BAR — abcjs
+          // builds it in `createBarLine`, not on the next note (`abstract-engraver.js:1002`).
+          // Held for the NEXT note instead, `CCCC!D.C.alcoda!|DDDD` put the mark over the D.
           voice().closeMeasure(
             BARLINES[text] ?? 'thin',
             sourceRange(token.start, token.start + token.length),
+            pending.decorations,
           )
+          pending.decorations = []
+          pending.decorationSourceRanges = []
           i++
 
           // A digit straight after the barline opens a repeat ENDING — `|1`, `:|2`. The

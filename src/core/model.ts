@@ -667,6 +667,15 @@ export interface Measure {
    * it forward into the prefix as well as draw it where it stands.
    */
   readonly clefChange?: Clef | null
+  /**
+   * Decorations written immediately before this measure's CLOSING barline, which is what
+   * they attach to — `createBarLine` ends `if (elem.decoration)
+   * this.decoration.createDecoration(voice, elem.decoration, 12, thick ? 3 : 1, abselem,
+   * 0, "down", 2, …)` (`abstract-engraver.js:1002`), at a FIXED pitch 12 rather than any
+   * note's extent. `CCCC!D.C.alcoda!|` is that, and it is how a navigation mark is
+   * normally written.
+   */
+  readonly closingBarlineDecorations?: readonly string[]
   readonly startsSystem: boolean
   /**
    * Free-text blocks and mid-tune subtitles standing between the PREVIOUS system and this

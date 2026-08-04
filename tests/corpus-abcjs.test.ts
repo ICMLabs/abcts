@@ -108,9 +108,10 @@ const WITHIN: Readonly<Record<string, number>> = {
   // A MID-TUNE `K: octave=` is GLOBAL, and a voice with no `octave=` of its own follows it.
   // `hasVocals` IS PER SYSTEM AND MONOTONIC — a tune whose lyrics arrive on its second
   // system engraves the FIRST with dynamics BELOW.
-  '0.05': 109,
-  '1': 124,
-  '5': 139,
+  // A DECORATION WRITTEN BEFORE A BARLINE ATTACHES TO THE BARLINE, at a fixed pitch 12.
+  '0.05': 110,
+  '1': 125,
+  '5': 140,
   '25': 169,
 }
 

@@ -4485,7 +4485,23 @@ function layoutMeasure(
   const musicWidth = x
   if (measure.closingBarline !== null) {
     closingBarIndex = elements.length
-    const bar = layoutBar(x, measure.closingBarline, strict)
+    const plain = layoutBar(x, measure.closingBarline, strict)
+    // A DECORATION ON THE BAR starts its stack at a FIXED pitch 12, not at any note's
+    // extent — abcjs passes the literal 12 (`abstract-engraver.js:1002`). Pitch 12 is our
+    // step 6, and `decorationMinTop` clamps it there anyway.
+    const barDecorations = measure.closingBarlineDecorations ?? []
+    const marks =
+      barDecorations.length === 0
+        ? null
+        : decorationGlyphs(barDecorations, x, plain.width, 6, 6, false, 6, 2, strict, dynamicsAbove)
+    const bar =
+      marks === null
+        ? plain
+        : {
+            ...plain,
+            glyphs: [...plain.glyphs, ...marks.glyphs],
+            texts: [...plain.texts, ...marks.texts],
+          }
     elements.push(bar)
     fixed(
       barRod(measure.closingBarline, bar, strict) + endingRoom(voltaAfter),
