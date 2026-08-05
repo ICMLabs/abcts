@@ -241,9 +241,17 @@ const WITHIN: Readonly<Record<string, number>> = {
   // machinery, which leaves an unknown escape's backslash alone. `"C$1m$7\ntwo"` was one
   // line reading `C$1m$7ntwo`: one chord lane where abcjs takes two, and a mark four
   // characters too wide. All four of `visual-misc-06`'s axes were that one chord.
+  // A GRACE CARRIES ITS ACCIDENTAL — the ROOM was reserved and the GLYPH never drawn, a
+  // gap no gate could see because the notehead count is right either way and an accidental
+  // is not a notehead. It is also what the element reaches LEFT by: `extraw` is a running
+  // MIN over every `addExtra` child and `addCentered` mins a chord symbol's own
+  // `-width / 2` into the same number, so on `"Bb"{^C}B,4` the sharp's -16.95 beats the
+  // chord's -13.34. That is why it only ever showed where BOTH were present — four rungs
+  // of five were green — and why the ranked table's `[%%sep, %%text]` directives column
+  // named the wrong thing entirely.
   '0.05': 147,
   '1': 157,
-  '5': 168,
+  '5': 170,
   '25': 173,
 }
 

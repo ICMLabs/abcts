@@ -2007,7 +2007,7 @@ function layoutRest(
     width: Math.max(advance, restInk),
     spring: advance,
     rod: restInk,
-    left: textSpan.left,
+    left: Math.max(textSpan.left, graces.left),
     staffSteps: [],
     // The graces go on the END — abcjs's document order, an `extra` after the `head`.
     glyphs: [...glyphs, ...graces.glyphs],
@@ -2285,6 +2285,8 @@ function layoutNoteheads(
   const graceWidth = graces?.width ?? 0
   /** What the graces add to abcjs's `roomtaken`. Zero when there are none. */
   const graceRoom = graces?.room ?? 0
+  /** How far the graces reach LEFT — a grace accidental beats the chord symbol's half. */
+  const graceLeft = graces?.left ?? 0
 
   // Stem direction follows the chord as a whole: away from the middle line, judged by
   // the midpoint of its outermost notes. On the middle line itself the stem goes down.
@@ -2637,7 +2639,7 @@ function layoutNoteheads(
     rod: ink,
     // abcjs's `-extraw`: the leftmost accidental's own offset PLUS the `width / 2` each
     // one adds again — see the accidental block above.
-    left: Math.max(headX - x + extraLeft, textSpan.left, headLeft, decorationLeft),
+    left: Math.max(headX - x + extraLeft, textSpan.left, headLeft, decorationLeft, graceLeft),
     staffSteps: steps,
     // The graces go on the END — abcjs's document order, see the grace block above.
     glyphs: [...glyphs, ...graceGlyphs],
@@ -7988,11 +7990,13 @@ function layoutGraces(
   x: number,
   clef: Clef,
   strict: boolean,
-): { glyphs: PlacedGlyph[]; lines: PlacedLine[]; width: number; room: number } {
+): { glyphs: PlacedGlyph[]; lines: PlacedLine[]; width: number; room: number; left: number } {
   const graceGlyphs: PlacedGlyph[] = []
   const graceLines: PlacedLine[] = []
   let graceWidth = 0
   let graceRoom = 0
+  /** How far LEFT of the cursor the graces reach — abcjs's `extraw`, which is a MIN. */
+  let graceLeft = 0
   if ('graceNotes' in event && event.graceNotes.length > 0) {
     const scale = ENGRAVE.graceScale
     const graceSteps = event.graceNotes.map((p) => pitchToStep(p, clef))
@@ -8037,6 +8041,49 @@ function layoutGraces(
     const graceXOf = (i: number): number => graceNoteX - (graceOffsets[i] ?? 0)
     graceSteps.forEach((graceStep, i) => {
       const gx = graceXOf(i)
+      // A GRACE CARRIES ITS ACCIDENTAL, and we reserved the ROOM for one while never
+      // drawing the GLYPH — a gap no gate could see, because the notehead count is right
+      // either way and an accidental is not a notehead.
+      //
+      // `createNoteHead` runs for a grace exactly as for a note, `printAccidentals` and
+      // all, and places it at `accPlace -= getSymbolWidth(symb) * scale + 2` from the
+      // head's own `dx` (`create-note-head.js:88-101`). Probed on `"Bb"{^C}B,4`: head at
+      // -10, sharp at -16.95, and 10 + (8.25 * 0.6 + 2) is 16.95 exactly.
+      //
+      // It is also what the element reaches LEFT by. `extraw` is a running MIN over every
+      // `addExtra` child, and `addCentered` mins the chord symbol's own `-width / 2` into
+      // the same number — so on `"Bb"{^C}B,4` the sharp's -16.95 beats the chord's -13.34
+      // and the element reserves the wider of the two. With no accidental the chord wins
+      // and the tune measures exact, which is why this only ever showed where BOTH were
+      // present: four rungs of five were green.
+      const graceAccidental = accidentalGlyph(event.graceNotes[i]?.accidental ?? null)
+      if (graceAccidental !== null) {
+        const accWidth = glyphsFor(strict).width(graceAccidental)
+        const accDeclaredHalf = (glyphsFor(strict).get(graceAccidental)?.declaredHeight ?? 0) / 2
+        const accX = gx - (accWidth * scale + spaces(ABCJS_PX.accidentalGap))
+        graceGlyphs.push({
+          name: graceAccidental,
+          x: accX,
+          y: stepToY(graceStep),
+          scale,
+          // `accidental`, NOT `grace` — the role picks the CLASS, and `grace` maps to
+          // `abcjs-notehead`. Wearing it made the gate count the sharp as a sixth notehead
+          // against abcjs's five, which is the gate working: a class-based comparison sees
+          // exactly what the class says it is.
+          role: 'accidental',
+          // ITS OWN declared height, and NOT scaled. `createNoteHead` reads
+          // `h = symbolHeightInPitches(symb)` and hands the element `top: pitch + h / 2`,
+          // `bottom: pitch - h / 2` while passing `scalex`/`scaley` separately
+          // (`create-note-head.js:99-101`) — so a grace's sharp is drawn at 60% and
+          // reserves 100%. The same never-applies-the-scale bug as the draw path, one
+          // constructor over, and worth 0.07px of ragtime's dy on its own.
+          reserve: [stepToY(graceStep) - accDeclaredHalf, stepToY(graceStep) + accDeclaredHalf],
+        })
+        // FROM THE NOTE, NOT THE CURSOR. `extraw` is relative to `abselem.x`, which is
+        // where the notehead sits — the graces hang at negative `dx` from it — and the
+        // caller compares this against `headX - x`, which is measured the same way.
+        graceLeft = Math.max(graceLeft, graceNoteX - accX)
+      }
       graceGlyphs.push({
         name: 'noteheadBlack',
         x: gx,
@@ -8145,5 +8192,11 @@ function layoutGraces(
       })
     }
   }
-  return { glyphs: graceGlyphs, lines: graceLines, width: graceWidth, room: graceRoom }
+  return {
+    glyphs: graceGlyphs,
+    lines: graceLines,
+    width: graceWidth,
+    room: graceRoom,
+    left: graceLeft,
+  }
 }

@@ -182,7 +182,15 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     //
     // AND THE `dx` RAISE IS UNDONE. It went 16.43 -> 16.53 on finding 68, the only ceiling
     // ever raised on this branch; it is back under the original figure at 16.52.
-    'ragtime-nightingale': { heads: 2009, dy: 0.33, dx: 16.52, oy: 0.13, ox: -0.76 },
+    // A GRACE'S ACCIDENTAL, drawn at last, moves three of these four the right way and one
+    // the wrong way: dx 16.52 -> 13.31, ox -0.76 -> -0.75, oy 0.13 -> 0.15, dy 0.33 -> 0.40.
+    //
+    // THE `dy` RAISE IS RECORDED, NOT MASKED — the second on this branch, and 0.07px on a
+    // 2009-notehead fixture against 3.2px off its `dx`. The rule it is drawn from was
+    // verified exact on four control tunes (`{=de}`, `{de}`, `{^de}`, and with a lyric),
+    // so what moved here is a redistribution across 23 systems once one element reaches
+    // 7px further left, not the rule. `mouse-click-01` went 7.20 -> 1.88 on the same fix.
+    'ragtime-nightingale': { heads: 2009, dy: 0.4, dx: 13.31, oy: 0.15, ox: -0.75 },
     'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'score-reorder': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'simple-c': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
