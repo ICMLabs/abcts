@@ -170,7 +170,7 @@ voices because they are ordinary zero-duration elements on one timeline.
 spec and its numbers are long superseded.
 
 **24 of 29 fixtures are at ZERO on all four axes**, and the harvested corpus is at
-**139 / 153 / 165 / 172 of 174** within 0.05 / 1 / 5 / 25px — 35 of 174 still off some axis,
+**140 / 153 / 165 / 172 of 174** within 0.05 / 1 / 5 / 25px — 34 of 174 still off some axis,
 from 60 at the start of 2026-08-04. The suite is **691/692**, and the ONE red is
 `ragtime-nightingale`'s `oy` at 0.656 against an unraised 0.59, down from 1.58. **THERE ARE
 NO GOLDEN-GENERATOR LIMITATIONS LEFT**: all four that were filed as such are closed — two
@@ -268,6 +268,19 @@ one FEATURE longer than the last, and the rung where the number appears names th
 INTERACTION rather than the feature: `"D7"…|1…` needed five rungs to say "a chord AND an
 ending", which is a BRANCH in `set-upper-and-lower-elements.js` and invisible in either
 feature alone.
+
+**THE GOLDEN VARIABLES ARE IN `src/renderer/abcjs-constants.ts`**, grouped by the unit
+abcjs states each in — `ABCJS_PX`, `ABCJS_PITCH`, `ABCJS_RATIO` — with the unit system and
+its converters beside them. Anything NOT in that file is OUR engraving judgement and may be
+changed on its merits; a golden variable may only change if abcjs changes. `chordHeightAbove`
+is 4.78 PITCH, 2.39 spaces and 18.52px, and only one of those is right in any expression.
+
+**AND THE NEAR-MISSES WERE EMISSION, NOT ARITHMETIC.** Measured: raise the emission quantum
+and the residual collapses from 5.1e-3px to 1.5e-4 and stops — so our internal values agree
+with abcjs's to 1e-8 and there is no order-of-operations difference to hunt. What differs is
+WHERE the quantum is spent: abcjs writes one absolute pixel per element, we write a nested
+chain of four rounded numbers whose errors add. A glyph SCALE is a ratio, not a coordinate —
+rounding `1/7.75` to `0.129` was a relative error over a whole outline.
 
 **PORT THE STRUCTURE, THEN THE CONSTANTS.** The costly divergences have all been
 architectural, not numeric; see the checkpoint's opening section before starting anything.

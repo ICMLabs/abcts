@@ -2,7 +2,7 @@
 
 Supersedes `CHECKPOINT-2026-08-04b.md` for the STATE and the priority list; that document
 keeps findings 41–50, and `CHECKPOINT-2026-08-04.md` keeps THE METHOD and the expensive
-lesson. `CHECKPOINT-2026-08-03d.md` is the ledger for 16–40. This one carries **51–68**.
+lesson. `CHECKPOINT-2026-08-03d.md` is the ledger for 16–40. This one carries **51–70**.
 
 **THE STANDING ORDER IS 100% PARITY WITH ABCJS ON EVERY TUNE — the 41-fixture corpus, the
 174-tune harvested corpus, Gonzato, and the audio feature set. Work until it is reached.**
@@ -13,8 +13,8 @@ lesson. `CHECKPOINT-2026-08-03d.md` is the ledger for 16–40. This one carries 
 
 | corpus | standing |
 |---|---|
-| 41-fixture | **24 of 29 at ZERO on all four axes.** One gate failure, unchanged: `ragtime-nightingale`'s `oy` at **0.664** against 0.59. NOT raised. |
-| harvested (174) | within 0.05 / 1 / 5 / 25px: **139 / 153 / 165 / 172**, from 114 / 130 / 144 / 169 at the start of the day. **35 of 174 off some axis, from 60.** |
+| 41-fixture | **24 of 29 at ZERO on all four axes.** One gate failure, unchanged: `ragtime-nightingale`'s `oy` at **0.661** against 0.59. NOT raised. |
+| harvested (174) | within 0.05 / 1 / 5 / 25px: **140 / 153 / 165 / 172**, from 114 / 130 / 144 / 169 at the start of the day. **34 of 174 off some axis, from 60.** |
 | suite | **691 of 692.** The one red is ragtime's `oy`. Anything else failing is yours. |
 
 **Nothing above 17px is left on the ranked table**, the only item above 10 is a FEATURE
@@ -71,7 +71,7 @@ spacing, a constant one is an offset.
 
 ---
 
-## FINDINGS 51–68
+## FINDINGS 51–70
 
 ### 51. A REST CARRIES ITS CHORD SYMBOL AND ANNOTATIONS
 `addChord` runs over every abselem regardless of type (`abstract-engraver.js:853`), so
@@ -218,6 +218,86 @@ column on the next pitch RESETS the min and throws the previous subtraction away
 `[_d^f=b]` ends at `deepest - nat/2` and not at `deepest - (flat + sharp + nat)/2`.
 Summing cost **7.50px**, which is `(6.75 + 8.25) / 2` to the digit. Verified against abcjs's
 own probed `extraw`: −12.125, −23.125, −29.1 across the three pitches.
+
+### 69. THE NEAR-MISSES ARE EMISSION QUANTISATION, NOT ARITHMETIC ORDER — MEASURED
+
+Every residual read as exactly **0.01px**, which is not what floating-point drift looks
+like. It is not drift: `byClass` rounds BOTH engines to 2dp (`pixel-geometry.ts:279`), so a
+real 0.004 shows as 0.01 or 0.00 depending on which side of a boundary it falls. Unrounded,
+the residuals were 1e-3 to 5e-3.
+
+**THE DECISIVE EXPERIMENT** — raise the emission precision and see where it converges:
+
+| quantum | worst notehead residual |
+|---|---|
+| 1e-3 staff space (was) | 5.1e-3 px |
+| 1e-4 | 5.7e-4 px |
+| 1e-5 (now) | **1.5e-4 px** |
+| 1e-6 | 1.4e-4 px — no further gain |
+
+It COLLAPSES, so there is **no arithmetic order-of-operations difference**: our internal
+values already agree with abcjs's to 1e-8, which is double noise. That kills the standing
+suspicion that computing in staff spaces where abcjs computes in pixels was costing us
+accuracy. It is not, and now it is measured rather than assumed.
+
+**What it is instead is WHERE each engine spends its quantum.** abcjs writes one absolute
+pixel coordinate per element. We write a nested chain — system translate, staff translate,
+element offset, and a viewBox the host divides by — each quantised, with the errors ADDING.
+A thousandth of a space is 0.00775px and LOOKS finer than the 0.01px abcjs rounds its lines
+to; spent four times it is not. Cost of the change, measured on ragtime: 1.0% of bytes.
+
+**AND A GLYPH SCALE IS A RATIO, NOT A COORDINATE.** abcjs's outlines are in ITS pixels, so
+each is drawn at `1 / 7.75` = 0.12903225806451613 and `num` was writing `0.129`. A quarter
+of a per-mille — multiplied by every number in the path, which is 0.0012px on a clef.
+Scales emit at full precision now (`scaleNum`); rounding a scale like a coordinate turns an
+absolute error into a relative one.
+
+**A FLOOR OF 1.4e-4px REMAINS** on one notehead of `cd|`, and it is real rather than
+quantisation — it is the spring solve. A seventieth of abcjs's own rounding quantum.
+
+### 70. ABCJS ROUNDS ITS LINES AND NOT ITS GLYPHS
+
+`printLine` runs every staff line, ledger and bar coordinate through `roundNumber` —
+`parseFloat(x.toFixed(2))` — while a glyph path is translated by an unrounded number
+(`draw/print-line.js:7-10`, `draw/round-number.js`). That is why a notehead agrees to 1e-8
+and the top staff line to 0.002: **the 0.002 is ABCJS's quantisation, and our value is the
+exact one.**
+
+Reproducing it would mean rounding in PIXEL space, which our unit system deliberately does
+not have — our SVG is a viewBox the host scales. Recorded as a divergence rather than
+chased; it is an order of magnitude below the gate's own resolution.
+
+*(Its `dy` is also worth knowing: `printStaff` passes 0.35 and `printStaffLine` adds
+`renderer.lineThickness`, which is 0 by default — so an abcjs staff line is **0.7px** thick
+where ours is Bravura's 0.13 spaces = 1.0075px. The gate measures a line's CENTRE, so it
+has never seen this. It is a real visual difference and is NOT yet ported.)*
+
+---
+
+## THE GOLDEN VARIABLES ARE IN ONE FILE
+
+`src/renderer/abcjs-constants.ts`. Every number that comes FROM abcjs, grouped by the unit
+**abcjs** states it in, because that is the part that goes wrong:
+
+| group | what |
+|---|---|
+| `ABCJS_PX` | 37 figures abcjs writes as PIXELS — `paddingLeft` 15, `minSpacing` 10 (and a NOTE's 1), `clefIndent` 5, the six barline widths, `beamStemHeight` 36.67, the `spacing.*` gaps |
+| `ABCJS_PITCH` | 17 it writes in PITCH — `chordHeightAbove` 4.7794, `noteheadHeight` 2.0888, `decorationMinTop` 12, `laneMargin` 1, `voltaLane` 5 |
+| `ABCJS_RATIO` | 11 unitless — `fontBoxPadding` 0.1, `lineSkip` 1.1, `textLineStep` 1.2, `lastSystemFill` 0.66, `graceScale` 3/5 |
+
+plus the unit system (`STAFF_SPACE_PX`, `STEP_PX`, `PITCH_ORIGIN` and four converters),
+`GOLDEN_TEXT_HEIGHTS`, the clef-offset / key-accidental-fudge / percussion-name tables, and
+re-exports of `golden-widths.ts` and `ABC_FONT_DEFAULT_PT`.
+
+**ANYTHING NOT IN THAT FILE IS OURS** — *Behind Bars* stem lengths, slur bulge, dot
+spacing, the spacing curve, the fixed lanes. They stay in `ENGRAVE` and may be changed on
+their merits. A golden variable may only change if abcjs changes.
+
+`chordHeightAbove` is 4.78 PITCH, 2.39 spaces and 18.52px, and only one of those is right
+in any given expression — which is the whole reason the grouping is by unit and not by
+subject. Conversion happens at the point of use and each converter is a single operation,
+so `spaces(15)` is exactly `15 / 7.75`: **the extraction re-recorded 44 baseline files of
+geometry and changed ZERO lines.** That is the test that a constants refactor is honest.
 
 ---
 
