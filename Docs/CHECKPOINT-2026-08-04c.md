@@ -13,12 +13,19 @@ lesson. `CHECKPOINT-2026-08-03d.md` is the ledger for 16–40. This one carries 
 
 | corpus | standing |
 |---|---|
-| 41-fixture | **24 of 29 at ZERO on all four axes.** One gate failure, unchanged: `ragtime-nightingale`'s `oy` at **0.656** against 0.59. NOT raised. |
-| harvested (174) | within 0.05 / 1 / 5 / 25px: **138 / 149 / 161 / 172**, from 114 / 130 / 144 / 169 at the start of the day. **36 of 174 off some axis, from 60.** |
+| 41-fixture | **24 of 29 at ZERO on all four axes.** One gate failure, unchanged: `ragtime-nightingale`'s `oy` at **0.664** against 0.59. NOT raised. |
+| harvested (174) | within 0.05 / 1 / 5 / 25px: **139 / 153 / 165 / 172**, from 114 / 130 / 144 / 169 at the start of the day. **35 of 174 off some axis, from 60.** |
 | suite | **691 of 692.** The one red is ragtime's `oy`. Anything else failing is yours. |
 
-**Nothing above 17px is left on the ranked table**, and the only item above 12 is a
-FEATURE (`%%setfont`'s rich text) rather than a defect.
+**Nothing above 17px is left on the ranked table**, the only item above 10 is a FEATURE
+(`%%setfont`'s rich text), and the second is a MODEL DECISION already recorded (a grace
+note before a `y` spacer).
+
+**ONE CEILING WENT UP a tenth of a pixel** — ragtime's `dx`, 16.43 → 16.53, on finding 68.
+Recorded rather than masked: the port is exact on the case it was found on and verified
+against abcjs's own probed `extraw`, ragtime's `dx` is a SPREAD dominated by other causes,
+and the harvested corpus gained a fixture at 1px and another at 5px on the same change.
+That is the ONLY ceiling raised on this branch.
 
 The 41-fixture ceilings that moved on 2026-08-04 (all LOWERED, none raised):
 
@@ -168,39 +175,86 @@ And `V:… stem=up` is the same as `stems=up` — abcjs's switch takes both spel
 (`abc_parse_key_voice.js:717-718`) and our regex matched only the plural, which left
 `synth-flattener-28`'s percussion voice stemming by pitch: 11.63px of staff.
 
+### 65. A BEAM'S DIRECTION IS THE MEAN OF ITS NOTES' AVERAGE PITCHES, NOT ITS EXTREMES
+
+```js
+this.total = Math.round(this.total + abselem.abcelem.averagepitch)   // per element
+this.average = total / elems.length
+this.stemsUp = this.average < 6                                      // B, hardcoded
+```
+
+(`beam-element.js:54-66,89-98`). The RUNNING TOTAL IS ROUNDED at every add, which only shows
+on a chord and is reproduced because it is free to. We took whichever EXTREME lay further
+from the middle line; the two agree on a compact run and part the moment one note is an
+outlier. `"E"e"F"F"F#"^F"G"G` averages 4.75 and beams UP where its extremes are symmetric
+and beamed DOWN — **16.52px of staff**, since the stems then set the top. It needed a ladder
+down to PAIRS: every chord-and-note pair in that bar was exact alone.
+
+### 66. A PERCUSSION VOICE PRINTS NO ACCIDENTALS
+
+`createNote` passes `printAccidentals: !voice.isPercussion` (`abstract-engraver.js:723`), so
+`^c'` on a `clef=perc` staff draws its head and nothing else — the golden has no
+`accidentals.sharp` in it at all. Ours drew one and reserved its declared box: **7.18px**
+above a high note.
+
+### 67. `%%percmap` IS A NOTEHEAD DIRECTIVE AS WELL AS A SOUND ONE
+
+`%%percmap <abc-note> <drum-sound> [<note-head>]` keys on the note as the directive spells
+it, and the engraver looks a pitch up through `pitchesToPerc` — the accidental's first
+LETTER plus the vertical position, mapped back to an ABC spelling
+(`synth/pitches-to-perc.js`). That table has SIXTEEN entries and both double accidentals
+begin `d`, so a pitch outside `C`..`e'` or carrying a double takes the ordinary head. The
+head then goes through the same `chartable` `!style=x!` uses.
+
+### 68. `extraw` IS A RUNNING MIN WITH A SUBTRACTION BETWEEN THE STEPS, NOT A SUM
+
+```js
+addExtra(accidental at dx)   ->  if (dx < this.extraw) this.extraw = dx
+abselem.extraw -= ret.extraLeft                     // half the accidental's width
+```
+
+(`create-note-head.js:100-101`, `abstract-engraver.js:723-725`, **per pitch**). A deeper
+column on the next pitch RESETS the min and throws the previous subtraction away, so
+`[_d^f=b]` ends at `deepest - nat/2` and not at `deepest - (flat + sharp + nat)/2`.
+Summing cost **7.50px**, which is `(6.75 + 8.25) / 2` to the digit. Verified against abcjs's
+own probed `extraw`: −12.125, −23.125, −29.1 across the three pitches.
+
 ---
 
 ## WHAT IS LEFT, ranked
 
 ```
 16.92  dy= 0.0 dx=16.9 oy= -3.5 ox= 4.6  visual-misc-06        [%%setfont] — RICH TEXT
-11.56  dy= 0.0 dx= 0.9 oy=-11.6 ox=-0.5  visual-transpose-05   chord lanes, 21 symbols
-10.69  dy= 0.5 dx=10.7 oy=  6.8 ox= 0.8  synth-flattener-23    [%%percmap]
  9.60  dy= 0.0 dx= 0.0 oy= -9.6 ox=-0.0  visual-tablature-10   grace before a `y` spacer
- 7.51  dy= 0.0 dx= 7.5 oy=  0.0 ox= 3.4  visual-misc-13
- 7.21  dy= 0.0 dx= 7.2 oy= -0.0 ox=-4.3  mouse-click-01 / tablature-15
- 7.16  dy= 0.0 dx= 1.2 oy=  7.2 ox= 0.5  synth-flattener-24    [%%percmap]
+ 7.21  dy= 0.0 dx= 7.2 oy= -0.0 ox=-4.3  mouse-click-01 / tablature-15   [%%sep, %%text]
  6.67  dy= 4.0 dx= 6.7 oy=  1.0 ox= 2.0  visual-selection-01 / svg-per-line-01
- 6.21  dy= 0.0 dx= 0.0 oy=  6.2 ox=-0.0  synth-flattener-17    [MIDI grace notes]
+ 6.21  dy= 0.0 dx= 0.0 oy=  6.2 ox=-0.0  synth-flattener-17    A GRACE BEAM
  5.74  dy= 0.0 dx= 0.0 oy=  5.7 ox=-0.0  synth-flattener-32    quarter tones
+ 3.01  dy= 0.0 dx= 0.0 oy= -3.0 ox=-0.0  visual-tablature-17   [%%stretchlast]
+ 2.62  dy= 0.0 dx= 0.0 oy=  2.6 ox=-0.0  visual-tablature-02
+ 1.99  dy= 0.0 dx= 2.0 oy= -0.0 ox=-1.3  synth-flattener-09
 ```
 
 ### NEXT, in order
 
-1. **`%%setfont-N` and `$N` rich text** — the biggest single item and the only FEATURE left
-   above 12px. `parseFontChangeLine` (`abc_parse_directive.js:727-748`) splits a header
-   field on `$`, maps each `$N` to `multilineVars.setfont[N]`, and returns an ARRAY of
-   `{font, text}` phrases; `richText` (`elements/rich-text.js`) lays them out side by side
-   with `largestY` deciding the row height. `$$` is a literal `$`, protected through a
-   `\x03` swap. It runs on `T: C: O: A: P: H: N: W:` and `%%text` / `%%center` — and NOT on
-   chord symbols, which keep their `$` literally.
-2. **`visual-transpose-05`** — 21 chord symbols on one line, `oy` −11.6 and its controls all
-   exact one at a time. That is a LANE COUNT, so instrument `placeInLane` against
-   `getChordDim`'s edges rather than reading the source again.
-3. **`%%percmap`** — two `synth-flattener` fixtures that DRAW differently, not only sound so.
-4. **`visual-tablature-10`** — the grace before a `y` spacer. Now that `Rest` carries a chord
+1. **`%%setfont-N` and `$N` rich text** — the biggest single item and the only one above
+   10px. `parseFontChangeLine` (`abc_parse_directive.js:727-748`) splits a header field on
+   `$`, maps each `$N` to `multilineVars.setfont[N]`, and returns an ARRAY of `{font, text}`
+   phrases; `richText` (`elements/rich-text.js`) lays them out side by side with `largestY`
+   deciding the row height. `$$` is a literal `$`, protected through a `\x03` swap. It runs
+   on `T: C: O: A: P: H: N: W:` and `%%text` / `%%center` — and NOT on chord symbols, which
+   keep their `$` literally.
+2. **A GRACE GROUP OF MORE THAN ONE NOTE IS BEAMED**, and the beam sets the stems.
+   `addGraceNotes` builds a `BeamElem(round(stemHeight * 3.5/5), "grace", isBagpipes)`
+   whenever `gracenotes.length > 1` (`abstract-engraver.js:466-478`), a grace beam's `dy` is
+   `STEP * 0.4` (`layout/beam.js:calcDy`), and `forceup` is true for every grace. We draw
+   loose flagless stems of a fixed length — `{efg}ag` is **6.21px** and it is
+   `synth-flattener-17`'s whole residual. MEASURED on a ladder: one grace is exact, three
+   are not.
+3. **`visual-tablature-10`** — the grace before a `y` spacer. Now that `Rest` carries a chord
    symbol the same argument applies to `graceNotes`; this is a model decision, not a patch.
-5. **`mouse-click-01` / `tablature-15`** — 7.21 of dx, `%%sep` and `%%text` between systems.
+4. **`mouse-click-01` / `tablature-15`** — 7.21 of dx, `%%sep` and `%%text` between systems.
+5. **`synth-flattener-32`** — quarter tones, `oy` 5.74.
 6. Then Gonzato, then audio.
 
 ### STILL NEEDING A DECISION, NOT A COMMIT

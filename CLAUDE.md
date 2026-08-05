@@ -170,13 +170,13 @@ voices because they are ordinary zero-duration elements on one timeline.
 spec and its numbers are long superseded.
 
 **24 of 29 fixtures are at ZERO on all four axes**, and the harvested corpus is at
-**138 / 149 / 161 / 172 of 174** within 0.05 / 1 / 5 / 25px — 36 of 174 still off some axis,
+**139 / 153 / 165 / 172 of 174** within 0.05 / 1 / 5 / 25px — 35 of 174 still off some axis,
 from 60 at the start of 2026-08-04. The suite is **691/692**, and the ONE red is
 `ragtime-nightingale`'s `oy` at 0.656 against an unraised 0.59, down from 1.58. **THERE ARE
 NO GOLDEN-GENERATOR LIMITATIONS LEFT**: all four that were filed as such are closed — two
 were our own grace EMISSION ORDER, one the generator's text metrics (finding 41), and the
 fourth was abcjs never applying a glyph's SCALE at draw time (finding 62). Nothing above
-17px is left on the ranked table, and the only item above 12 is a FEATURE.
+17px is left on the ranked table, and the only item above 10 is a FEATURE.
 
 `frere-jacques` is CLOSED vertically (dy 0.03, oy −0.02) and was never the "source-line-wrap
 model conflict" it was filed as for two weeks.
