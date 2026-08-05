@@ -214,6 +214,15 @@ time signature, tempo, tuplet, dynamic, decoration and tie all reserve declared 
 and a BEAM reserves nothing at all. The clef is what sets a staff's top on a plain tune,
 not the stems.
 
+**AND `%%vocalfont` IS THE CASE THAT PROVES IT.** That row of the table read "parsed, NOT
+realized (abcjs never reads it)" until 2026-08-05, with a test asserting it. It came from
+reading the source — "abcjs stamps `el.fonts` and reads `.fonts` nowhere in its write
+phase" — and abcjs's own SVG denies it in one attribute: the same tune draws its lyric at
+`font-size="17"` with no directive, `13` under `%%vocalfont Helvetica 10.0`, `27` under
+`20.0`. What made the wrong reading survive is that its granularity is the music LINE, so a
+fixture whose music all precedes its directives — Gonzato's, the one the test used — draws
+every syllable at the default and looks like proof.
+
 **AND MEASURE THE OUTPUT — the source will lie to you.** Its sharper form, which cost a
 whole session: **A COUNT YOU CANNOT RE-DERIVE FROM THE OUTPUT IS NOT A MEASUREMENT.** And
 watch what the gate CANNOT see — abcjs classes only noteheads, ledgers, stems and the top
@@ -333,7 +342,7 @@ the other modes are correct:
 |---|---|---|
 | Melisma | prints abcjs's literal `_` | suppresses it, strokes an extender |
 | Three-quarter tones | draws NOTHING, as abcjs does | draws the three-quarter glyph |
-| `%%vocalfont` | parsed, NOT realized (abcjs never reads it) | realized, per lyric segment |
+| `%%vocalfont` | realized, per music LINE (abcjs's staff granularity) | realized, per lyric SEGMENT |
 | `+:` in a lyric continuation | abcjs's leak, reproduced | ABC 2.1 semantics |
 | `<defs>`/`<use>` | off, so markup stays abcjs-shaped | on, 0.34x the bytes |
 

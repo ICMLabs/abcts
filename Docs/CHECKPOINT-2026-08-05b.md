@@ -25,7 +25,7 @@ harmless, and left out — and that judgement was the whole remaining error. See
 |---|---|
 | suite | **699 of 699. NO REDS.** The branch has had one standing failure for weeks and it is closed. |
 | 41-fixture | **25 of 29 at ZERO on all four axes**, and `ragtime-nightingale`'s twelve staff boundaries all measure 0.0. |
-| harvested (174) | within 0.05 / 1 / 5 / 25px: **147 / 157 / 170 / 173**. **27 of 174 off some axis**, from 34 at the start of the day. |
+| harvested (174) | within 0.05 / 1 / 5 / 25px: **146 / 157 / 172 / 173**. **28 of 174 off some axis**, from 34 at the start of the day. |
 | CONTENT gaps | **one left** — `parse-book_parser-04-wed`'s leading-header split. |
 
 **ONE CEILING IS RAISED, AND IT IS RECORDED IN THE TEST.** ragtime's `dy`, 0.33 → 0.40 on
@@ -235,25 +235,65 @@ promptly counted six noteheads against abcjs's five.
 
 ---
 
+## FINDING 82 — `%%vocalfont` IS REALIZED, AND THE MODE-SPLIT ROW WAS REASONED
+
+`CLAUDE.md`'s table said "parsed, NOT realized (abcjs never reads it)" and a test asserted
+it. Both came from the SOURCE — "abcjs stamps `el.fonts` and reads `.fonts` nowhere in its
+write phase" — and its own SVG denies it in one attribute:
+
+| directive | drawn |
+|---|---|
+| none | `font-size="17" font-family="Times New Roman" font-weight="bold"` |
+| `%%vocalfont Helvetica 10.0` | `13` / `Helvetica` / `normal` |
+| `%%vocalfont Helvetica 20.0` | `27` / `Helvetica` / `normal` |
+
+**WHAT MADE THE WRONG READING SURVIVE IS THE GRANULARITY.** `%%vocalfont` is a CHANGING
+font: it always writes `multilineVars.vocalfont` and writes `tune.formatting` only in the
+header. The mid-tune value reaches the drawing through the STAFF — `params.vocalfont` on
+the `abcstaff`, applied by `getTextSize.updateFonts(abcstaff)` — so it takes effect from
+the NEXT music line. Gonzato's fixture, the one the test used, has all its music BEFORE all
+its directives, so abcjs draws every syllable at the default there however many
+`%%vocalfont` lines follow. A true observation on a fixture that cannot discriminate.
+
+The split is real but different: **strict takes the font its music LINE started with;
+`abc2.1`/`extended` take the one in force at that point in the source** (Gonzato §4.1.4,
+per SEGMENT).
+
+Three arithmetic corrections came with it, each its own trap:
+- **Points through `round(pt * 4/3)`, not a ratio of the default's already-rounded 17px.**
+  They agree at 13pt and nowhere else. A ratio anchored on a rounded value cannot
+  reproduce a rounding.
+- **The baseline sits one FONT SIZE below the lane top**, not a constant 17 below the ink.
+  17 is BOTH `spacing.vocal` and the default vocalfont's drawn size — two unrelated
+  quantities that happen to be equal, which is exactly the coincidence that hides a rule.
+- **`box` is not legal on every font.** `fontTypeCanHaveBox` lists eleven types and
+  `vocalfont` is not one, so `%%vocalfont … box` is a font with no box.
+
+---
+
 ## WHAT IS LEFT, ranked
 
 ```
- 6.65  dy= 3.8 dx= 6.7 oy=  0.9 ox= 2.1  visual-selection-01 / svg-per-line-01
  5.74  dy= 0.0 dx= 0.0 oy=  5.7 ox=-0.0  synth-flattener-32  quarter tones
+ 4.01  dy= 4.0 dx= 0.9 oy=  0.9 ox=-0.4  visual-selection-01 / svg-per-line-01
  3.00  dy= 0.0 dx= 0.0 oy= -3.0 ox= 0.0  visual-tablature-17 [stretchlast, gchordfont]
  2.63  dy= 0.0 dx= 0.0 oy=  2.6 ox= 0.0  visual-tablature-02
+ 2.01  dy= 2.0 dx= 0.0 oy=  1.0 ox= 0.0  visual-options-01-fonts
 ```
 
-**NOTHING ABOVE 6.65 IS LEFT**, and the top of the table is a two-fixture pair that is one
-fixture twice over.
+**NOTHING ABOVE 5.74 IS LEFT.** The table opens on a FEATURE (quarter tones) for the first
+time.
 
 ### NEXT, in order
 
 1. ~~**GRACE BEAMS**~~ — **DONE**, findings 74–77. ~~**`%%setfont` RICH TEXT**~~ — **DONE**,
    findings 78–80. All three came off the table.
-2. **`visual-selection-01` / `svg-per-line-01`, 6.65** — the same tune twice, and the only
-   thing left with a `dy` term (3.8).
-3. **THE FOUR REMAINING LINE WEIGHTS** — `beamSpacing`, `barlineSeparation` (asymmetric,
+2. **`synth-flattener-32`, 5.74** — quarter tones, a FEATURE, and now the top of the table.
+3. **`visual-selection-01` / `svg-per-line-01`, 4.01** — down from 6.65 and still carrying
+   the only `dy` term left (4.0). Its `%%vocalfont Helvetica 10.0` is a HEADER directive, so
+   the line-granularity rule does not explain the residual; measure the lyric lane against
+   the minimum staff separation, which is what absorbs a shrinking lane.
+4. **THE FOUR REMAINING LINE WEIGHTS** — `beamSpacing`, `barlineSeparation` (asymmetric,
    4.0 thick→thin and 3.4 the other way), `repeatBarlineDotSeparation`, and slur/tie
    endpoint+midpoint, which is a SHAPE port out of `draw/tie.js` and the largest.
    `beamedStem` came off this list this session.
