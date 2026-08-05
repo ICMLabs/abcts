@@ -346,6 +346,44 @@ fixture will tell you about something you were not looking for.
 
 ---
 
+## FINDING 87 — A BARLINE IS A CURSOR, NOT A SEPARATION
+
+The audit finding recorded that "the goldens are ASYMMETRIC: 4.0px thick→thin and 3.4 the
+other way, where ours is one constant". They are asymmetric because **abcjs has no such
+constant**. It walks a cursor (`abstract-engraver.js:985-1030`):
+
+```
+if (firstdots)  { dots at dx;           dx += 6 }
+if (firstthin)  { thin at dx }                      // no advance whatsoever
+if (thick)      { dx += 4; thick at dx; dx += 5 }
+if (secondthin) { dx += 3; thin at dx }
+if (seconddots) { dx += 3; dots at dx }
+```
+
+Every rule is placed by its LEFT EDGE and nothing advances past `firstthin`, so the gaps
+fall out of the arithmetic: thin→thick is `4 − 0.6 = 3.4`, thick→thin is `5 + 3 − 4 = 4.0`.
+A single separation cannot produce them in either direction. **The audit's two measured
+numbers were the OUTPUT of a rule, not the rule.**
+
+`beamSpacing` went with it, and its proof is the one this file prescribes for a constants
+move: a **ZERO-LINE baseline diff**. abcjs states a STEP between beam centres — `bary +
+sy * (index + 1)`, `sy = ±1.5` pitch — and Bravura's `beamThickness + beamSpacing` is
+`0.5 + 0.25 = 0.75` spaces, which is 1.5 pitch exactly. Right BY COINCIDENCE, the way
+`calcDy` returning `STEP` makes Bravura's beam thickness right by coincidence. **A
+coincidence is not a citation.**
+
+### AND A GATE THAT CAN SEE SEPARATION
+The thickness gate cannot: two rules of the right WEIGHT in the wrong PLACES passed every
+assertion in `line-weights.test.ts`. The new case reads the golden's gaps as
+`[4, 3.4, 4, 4, 3.4, 3.4, 3.4, 2.4]` and asserts ours equal.
+
+Adding it needed `PixelItem` to carry `data-name`. **abcjs classes almost nothing** — five
+names in a whole score — and gives a barline no class at all, only `data-name="bar"`; we
+emitted neither. So the representation was missing a whole HANDLE rather than an axis, and
+until it was added the question could not be put to either engine.
+
+---
+
 ## WHAT IS LEFT, ranked
 
 ```
