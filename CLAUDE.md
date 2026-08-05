@@ -8,12 +8,12 @@ and community successor to abcjs.
 174-tune harvested corpus, Gonzato, and the audio feature set. Work until it is reached;
 checkpoint and hand off as you go so no context is lost.
 
-Read `Docs/CHECKPOINT-2026-08-04b.md` first — it is the current state of play, findings
-41-50, and what is left — and `Docs/HANDOFF-2026-08-04b.md` beside it for where to start and
-the session prompt. `Docs/CHECKPOINT-2026-08-04.md` remains the record of THE METHOD and of
-the expensive lesson about "golden limitations"; **`Docs/CHECKPOINT-2026-08-03d.md` is the
-FINDINGS LEDGER, 16-40**: every rule ported on 2026-08-03/04 with its abcjs citation and its
-measured number. Read them when you need the WHY of a specific behaviour.
+Read `Docs/CHECKPOINT-2026-08-04c.md` first — it is the current state of play, findings
+51-64, THE METHOD that produced them, and what is left. `Docs/CHECKPOINT-2026-08-04b.md`
+holds findings 41-50, `Docs/CHECKPOINT-2026-08-04.md` the expensive lesson about "golden
+limitations", and **`Docs/CHECKPOINT-2026-08-03d.md` is the FINDINGS LEDGER, 16-40** —
+every rule with its abcjs citation and its measured number. Read them when you need the WHY
+of a specific behaviour. `Docs/HANDOFF-2026-08-04b.md` has the session prompt.
 (`CHECKPOINT-2026-08-03c.md` holds the accidental columns,
 the notehead rod, the multi-measure rest and `%%gchordfont`;
 `CHECKPOINT-2026-08-03b.md` holds the lyric-ink fix, the
@@ -169,12 +169,14 @@ voices because they are ordinary zero-duration elements on one timeline.
 `Docs/CHECKPOINT-2026-08-04.md` is the state; `Docs/VERTICAL-ARC.md` is the arc's original
 spec and its numbers are long superseded.
 
-The harvested corpus is at **131 / 139 / 151 / 170 of 174** within 0.05 / 1 / 5 / 25px —
-43 of 174 still off some axis, from 60 one session earlier. The suite is **691/692**, and
-the ONE red is `ragtime-nightingale`'s `oy` at 0.656 against an unraised 0.59, down from
-1.58. **THERE ARE NO GOLDEN-GENERATOR LIMITATIONS LEFT**: all four that were filed as such
-are closed, and two of them were the generator's own text metrics, which byte parity obliges
-us to reproduce (see finding 41).
+**24 of 29 fixtures are at ZERO on all four axes**, and the harvested corpus is at
+**138 / 149 / 161 / 172 of 174** within 0.05 / 1 / 5 / 25px — 36 of 174 still off some axis,
+from 60 at the start of 2026-08-04. The suite is **691/692**, and the ONE red is
+`ragtime-nightingale`'s `oy` at 0.656 against an unraised 0.59, down from 1.58. **THERE ARE
+NO GOLDEN-GENERATOR LIMITATIONS LEFT**: all four that were filed as such are closed — two
+were our own grace EMISSION ORDER, one the generator's text metrics (finding 41), and the
+fourth was abcjs never applying a glyph's SCALE at draw time (finding 62). Nothing above
+17px is left on the ranked table, and the only item above 12 is a FEATURE.
 
 `frere-jacques` is CLOSED vertically (dy 0.03, oy −0.02) and was never the "source-line-wrap
 model conflict" it was filed as for two weeks.
@@ -340,10 +342,10 @@ feature-coverage gap, tracked separately and implemented not at all.
 ```
 We are continuing abcts development in the abcts repo (Code/abcts).
 
-Read Docs/CHECKPOINT-2026-08-04b.md first, and Docs/HANDOFF-2026-08-04b.md
-beside it — then Docs/CHECKPOINT-2026-08-04.md for the METHOD, then
-Docs/CHECKPOINT-2026-08-03d.md, which is the findings ledger 16-40, then
-ARCHITECTURE.md, then this file.
+Read Docs/CHECKPOINT-2026-08-04c.md first, and Docs/HANDOFF-2026-08-04b.md
+beside it — then Docs/CHECKPOINT-2026-08-04b.md (findings 41-50), then
+Docs/CHECKPOINT-2026-08-03d.md (16-40), then ARCHITECTURE.md, then this
+file.
 
 THE RULE THAT MATTERS: port abcjs's STRUCTURE, then its constants.
 Reading abcjs gives you its numbers cheaply; the expensive divergences
@@ -377,13 +379,14 @@ the merged vertical arc and is GREEN — keep it that way.
 ```
 Continue geometric parity in Code/abcts.
 
-Read Docs/CHECKPOINT-2026-08-04b.md and Docs/HANDOFF-2026-08-04b.md; the
-findings ledgers are Docs/CHECKPOINT-2026-08-04b.md (41-50) and
+Read Docs/CHECKPOINT-2026-08-04c.md; the findings ledgers are that file
+(51-64), Docs/CHECKPOINT-2026-08-04b.md (41-50) and
 Docs/CHECKPOINT-2026-08-03d.md (16-40).
 
 The VERTICAL arc is open on `geometry/vertical`, 691/692 with one
 expected red — ragtime's oy at 0.656 against 0.59. Start where the
-handoff says: the remaining font SITES, which are the top of the table.
+checkpoint says: %%setfont's rich text, which is the top of the table
+and the only item above 12px.
 
 The method, unchanged: instrument abcjs to ANSWER A QUESTION, read the
 ground truth, restore. Port abcjs's STRUCTURE, then its constants. And
