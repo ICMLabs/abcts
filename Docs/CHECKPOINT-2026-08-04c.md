@@ -2,7 +2,7 @@
 
 Supersedes `CHECKPOINT-2026-08-04b.md` for the STATE and the priority list; that document
 keeps findings 41–50, and `CHECKPOINT-2026-08-04.md` keeps THE METHOD and the expensive
-lesson. `CHECKPOINT-2026-08-03d.md` is the ledger for 16–40. This one carries **51–64**.
+lesson. `CHECKPOINT-2026-08-03d.md` is the ledger for 16–40. This one carries **51–68**.
 
 **THE STANDING ORDER IS 100% PARITY WITH ABCJS ON EVERY TUNE — the 41-fixture corpus, the
 174-tune harvested corpus, Gonzato, and the audio feature set. Work until it is reached.**
@@ -40,7 +40,7 @@ The 41-fixture ceilings that moved on 2026-08-04 (all LOWERED, none raised):
 
 ---
 
-## THE METHOD, AND IT PRODUCED ALL TWENTY-FOUR OF TODAY'S FINDINGS
+## THE METHOD, AND IT PRODUCED ALL TWENTY-EIGHT OF TODAY'S FINDINGS
 
 **A LADDER OF CONTROL TUNES, THEN THE NAMED FUNCTION, THEN A PROBE.** Not one came off a
 diff. Written out because it is the whole of the day's technique:
@@ -71,7 +71,7 @@ spacing, a constant one is an offset.
 
 ---
 
-## FINDINGS 51–64
+## FINDINGS 51–68
 
 ### 51. A REST CARRIES ITS CHORD SYMBOL AND ANNOTATIONS
 `addChord` runs over every abselem regardless of type (`abstract-engraver.js:853`), so
