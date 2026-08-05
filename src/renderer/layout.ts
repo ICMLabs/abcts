@@ -624,14 +624,19 @@ export const ENGRAVE = {
    */
   voltaTextIndent: spaces(ABCJS_PX.voltaTextIndent),
   /**
-   * The bracket's rules carry no `stroke-width`, so they are SVG's default 1px.
+   * A rule abcjs strokes WITHOUT a `stroke-width`, so SVG's default 1px — the repeat
+   * ending's bracket, the triplet's bracket, the hairpin's lines.
    *
-   * PORTED — also lane-independent. Ours was `LINE_WEIGHTS.thinBarline`, 0.6px: the right
-   * weight for a barline, borrowed for a line abcjs does not draw with it. That is the
-   * audit finding's exact shape one lane over, and no gate could see it, because a
-   * repeat ending is not a notehead, not a stem and not classed `bar`.
+   * Both sites that now read this were borrowing a weight from somewhere else, and both
+   * were wrong in the same way. The ending used `LINE_WEIGHTS.thinBarline`, 0.6px: the
+   * right weight for a barline, on a line abcjs does not draw with it. The TRIPLET used
+   * `LINE_WEIGHTS.slurEndpoint`, which is **Bravura's `ENGRAVING_DEFAULTS`, reachable in
+   * `abcjs-strict`** — the audit finding's own class, and by the standing ruling a defect
+   * rather than a decision. `glyph-table.ts` said in as many words that the four
+   * slur/tie thicknesses were "still Bravura's in strict"; what nobody had noticed is
+   * that one of them is read for something that is not a curve at all.
    */
-  voltaRule: spaces(ABCJS_PX.voltaRule),
+  strokedPathRule: spaces(ABCJS_PX.strokedPathRule),
   /** Grace notes are drawn at this fraction of full size. *Behind Bars* ~60%. */
   graceScale: ABCJS_RATIO.graceScale,
   /**
@@ -3982,7 +3987,11 @@ function layoutSpanners(
   dynamicsAbove: boolean,
 ): PlacedLine[][] {
   const out: PlacedLine[][] = bounds.map(() => [])
-  const thickness = LINE_WEIGHTS.staffLine
+  // A third borrowed weight: this was `LINE_WEIGHTS.staffLine`, which is abcjs's 0.6px
+  // rule for a STAFF LINE. A hairpin and a glissando are `printPath` strokes with no
+  // `stroke-width` (`draw/crescendo.js:34`, `draw/glissando.js`), so they paint at SVG's
+  // default 1 like every other one.
+  const thickness = ENGRAVE.strokedPathRule
 
   /**
    * One hairpin piece: two strokes whose gap goes from `startGap` to `endGap`.
@@ -4689,7 +4698,7 @@ function layoutTuplets(
     // Bracket: a horizontal rule broken around the number, with a hook at each end
     // turning toward the notes.
     const gap = width / 2 + ENGRAVE.tupletNumberGap
-    const thickness = LINE_WEIGHTS.slurEndpoint
+    const thickness = ENGRAVE.strokedPathRule
     const hook = ENGRAVE.tupletHook * -direction
 
     // The rule runs from one end note's pitch to the other's, so it slopes with them.
@@ -6416,7 +6425,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       const closeVolta = (endX: number, hooked: boolean): void => {
         if (openVolta === null) return
         const y = stepToY(ENGRAVE.voltaStep)
-        const thickness = ENGRAVE.voltaRule
+        const thickness = ENGRAVE.strokedPathRule
         voltaLines.push({ x1: openVolta.startX, y1: y, x2: endX, y2: y, thickness })
         // The opening hook always turns down; the closing one only when the ending
         // really ends here rather than continuing onto the next system.

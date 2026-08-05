@@ -206,8 +206,16 @@ export const ABCJS_PX = {
   hairpinMouth: 8,
   /** `renderText`'s `x: linestartx + 5` (`draw/ending.js:41`). */
   voltaTextIndent: 5,
-  /** The ending rules' stroke: no `stroke-width` attribute, so SVG's default. */
-  voltaRule: 1,
+  /**
+   * A STROKED PATH THAT DECLARES NO `stroke-width`, so it paints at SVG's default of 1.
+   *
+   * abcjs's `printPath` passes `stroke` and never a width (`draw/print-path.js`), so every
+   * rule it draws that way is exactly 1px: a repeat ending's bracket and hooks
+   * (`draw/ending.js:46`), a triplet's bracket (`draw/triplet.js:42`), a hairpin's two
+   * lines (`draw/crescendo.js:34`). One figure, three constructions, and it is not
+   * ANYBODY'S engraving judgement — it is the absence of an attribute.
+   */
+  strokedPathRule: 1,
   /** The rule a boxed font draws round its text. */
   fontBoxRule: 1,
   /** A tempo mark's descender bump, measured off its own output. */

@@ -208,7 +208,15 @@ const ABCJS_WEIGHTS: LineWeights = {
   //
   // NOT YET PORTED, and still Bravura's in strict:
   //   slur/tie endpoint+midpoint  abcjs builds its own path in `draw/tie.js`; this is a
-  //                               shape difference, not one number
+  //                               shape difference, not one number. `curveToPath`'s strict
+  //                               branch reads NEITHER — it uses abcjs's flat
+  //                               `ABCJS_ARC.thickness` — so they reach no drawn curve.
+  //
+  // AND THEY REACHED SOMETHING THAT IS NOT A CURVE AT ALL. `slurEndpoint` was the TUPLET
+  // BRACKET's rule weight for months: a Bravura `ENGRAVING_DEFAULTS` figure, ungated, in
+  // `abcjs-strict` — the audit finding's own class. This comment said the four were still
+  // Bravura's and was read as harmless because the curve ignores them; nobody asked what
+  // ELSE read one. A constant is reachable by every caller, not by its name.
 }
 
 /** The line weights a render draws with. Strict gets abcjs's; everything else Bravura's. */
