@@ -19,6 +19,46 @@ harmless, and left out — and that judgement was the whole remaining error. See
 
 ---
 
+## ⚖️ THE QUESTION THAT SHOULD DRIVE THE NEXT SESSION (Lance, 2026-08-05)
+
+> **"We keep measuring differences to abcjs — when shouldn't we be using abcjs values?"**
+
+It is the right question and it has a number. **`ENGRAVE` holds 115 constants. 54 are
+sourced from `ABCJS_*`. 61 are OURS, and `abcjs-strict` reads all 61.**
+
+The strict path's DEFAULT is our engraving judgement and abcjs's figure is threaded in as
+the exception. It should be the reverse. Every leak found on 2026-08-05 is the same shape:
+
+| leak | what strict was reading |
+|---|---|
+| the audit finding | Bravura's `ENGRAVING_DEFAULTS`, 21 ungated sites |
+| finding 71 | Bravura's stem ANCHORS |
+| findings 84–85 | our own `Math.max(default, …)` floors, three of them |
+| findings 86–87 | our own meter digits, our own barline separation |
+| finding 88 | our own dot gap and dot spacing |
+
+None of these were found by reasoning about the architecture. Each was found because a
+fixture measured wrong and the trail led back to a constant nobody had asked "whose is
+this?" of. **That is the cost of the exception model: the leaks are only ever discovered
+one fixture at a time.**
+
+WHAT MEASURING IS LEGITIMATELY FOR, and the distinction matters:
+- **A COMPASS.** The ranked table is a search index over hundreds of rules — it says WHICH
+  one is wrong, which is not something reading abcjs can tell you.
+- **A PROOF.** Zero is how a port is known to have landed, and it is what caught three
+  cases where a careful source read predicted something abcjs's own SVG denies.
+- **NOT a source of numbers.** Choosing a value because it makes a delta smaller is the
+  failure mode. No fix on 2026-08-05 did that — every one is a ported construction — but
+  the architecture does not currently PREVENT it, and that is the real answer to the
+  question.
+
+The 49 bare literals in `ENGRAVE` are listed by `grep`; triage each into STRUCTURAL (a unit,
+a staff-line list — fine in strict), ABCJS-HAS-ITS-OWN (port and cite), or OURS BY POLICY
+(and then strict must not read it). `stemLength: 3.5` spaces is 7 pitch, which IS abcjs's
+`Math.round(70 * voiceScale) / 10` — the same number, uncited, and therefore unprotected.
+
+---
+
 ## STATE
 
 | corpus | standing |

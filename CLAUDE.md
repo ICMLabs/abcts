@@ -24,6 +24,14 @@ checkpoint and hand off as you go so no context is lost.
 > can express.** When something is invisible to every gate, ask what the gate's DATA MODEL
 > leaves out, not whether the number is small.
 
+> ⚖️ **AND THE ARCHITECTURAL FORM OF IT** (Lance, 2026-08-05): *"We keep measuring
+> differences to abcjs — when shouldn't we be using abcjs values?"* Measured: **`ENGRAVE`
+> holds 115 constants, 54 from `ABCJS_*` and 61 OURS — and strict reads all 61.** The
+> default in the strict path is our judgement and abcjs's is the exception, which is why
+> every leak is found one fixture at a time. Measuring is a COMPASS (which rule is wrong)
+> and a PROOF (that a port landed); it must never be a SOURCE OF NUMBERS. See
+> `CHECKPOINT-2026-08-05b.md`.
+
 > ⚖️ **AND THE RULING BEHIND THE RULING** (Lance, 2026-08-05): **abcjs is the MASTER
 > SOURCE. Any variability is likely due to not using the same SETTING as abcjs, or to
 > INFERRING an algorithm instead of analysing abcjs.** Finding 73 is what that costs when
