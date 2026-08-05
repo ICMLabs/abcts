@@ -899,6 +899,19 @@ export interface Score {
    */
   readonly jazzChords: boolean
   /**
+   * `%%percmap <abc-note> <drum-sound> [<note-head>]` — the NOTEHEAD a written pitch draws
+   * on a percussion staff, keyed by the note as the directive spells it (`D`, `^B`, `_c'`).
+   *
+   * abcjs stores the whole entry on `tune.formatting.percmap` and the engraver reads only
+   * `noteHead` (`abstract-engraver.js:681-688`), looking the pitch up through
+   * `pitchesToPerc` — the accidental's first letter plus the vertical position, mapped back
+   * to an ABC spelling (`synth/pitches-to-perc.js`). Out of that table's range, or on a
+   * double accidental, there is no entry and the head is the ordinary one.
+   *
+   * The `sound` half is audio and is not modelled here.
+   */
+  readonly percMap: Readonly<Record<string, string>>
+  /**
    * `%%stretchlast` — whether to justify the LAST music line, and how nearly full it has
    * to be first. `null` when the directive is absent, which is a different rule and not a
    * default: abcjs then falls back to "justify only if the line is at least 66% of the

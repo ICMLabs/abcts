@@ -188,9 +188,15 @@ const WITHIN: Readonly<Record<string, number>> = {
   // not whichever EXTREME lies further from it (`beam-element.js:54-66,89-98`). The two
   // agree on a compact run and part the moment one note is an outlier — `"E"e"F"F"F#"^F"G"G`
   // averages 4.75 and beams UP where its extremes are symmetric and beamed DOWN. 16.52px.
+  // A PERCUSSION VOICE PRINTS NO ACCIDENTALS — `createNote` passes
+  // `printAccidentals: !voice.isPercussion` (`abstract-engraver.js:723`), so `^c'` on a
+  // `clef=perc` staff draws its head and nothing else. Ours drew one and reserved its
+  // declared box: 7.18px of staff above a high note.
+  // `%%percmap <abc-note> <drum-sound> <note-head>` gives a written pitch its own HEAD on a
+  // percussion staff, looked up through `pitchesToPerc`'s sixteen-entry table.
   '0.05': 138,
-  '1': 150,
-  '5': 162,
+  '1': 152,
+  '5': 164,
   '25': 172,
 }
 

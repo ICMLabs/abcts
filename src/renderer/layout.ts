@@ -2005,10 +2005,80 @@ const STYLED_HEADS: Readonly<
   rhythm: { filled: 'noteheadSlashVerticalEnds', open: 'noteheadSlashVerticalEnds' },
 }
 
-/** The head a note actually draws, once its style has had a say. */
-function styledHead(base: GlyphName, event: MusicEvent | null): GlyphName {
-  if (event === null || event.type === 'rest' || event.style === 'normal') return base
-  const pair = STYLED_HEADS[event.style]
+/**
+ * `pitchesToPerc`'s table (`synth/pitches-to-perc.js:1-70`), by VERTICAL POSITION.
+ *
+ * Sixteen entries and no more: a pitch outside `C`..`e'` has no key at all, so `%%percmap`
+ * cannot reach it. The prefix is the accidental's — abcjs builds the key as the
+ * accidental's first LETTER plus the position, and both double accidentals begin `d`,
+ * which is in neither table. So a double-accidental note takes the ordinary head.
+ */
+const PERC_NOTE_NAMES: readonly string[] = [
+  'C',
+  'D',
+  'E',
+  'F',
+  'G',
+  'A',
+  'B',
+  'c',
+  'd',
+  'e',
+  'f',
+  'g',
+  'a',
+  'b',
+  "c'",
+  "d'",
+  "e'",
+]
+const PERC_ACCIDENTAL_PREFIX: Readonly<Record<number, string>> = {
+  [Accidental.flat]: '_',
+  [Accidental.natural]: '=',
+  [Accidental.sharp]: '^',
+}
+
+/** `%%percmap` for the current render — the same one-place switch as the fonts. */
+let PERC_MAP: Score['percMap'] = {}
+
+/** The `%%percmap` head for a written pitch on a PERCUSSION staff, or null. */
+function percHead(step: number, accidental: Accidental | null): NoteStyle | null {
+  const position = step + ABCJS_PITCH_ORIGIN
+  const name = PERC_NOTE_NAMES[position]
+  if (name === undefined) return null
+  const prefix = accidental === null ? '' : PERC_ACCIDENTAL_PREFIX[accidental]
+  if (prefix === undefined) return null // a double accidental has no key
+  const head = PERC_MAP[prefix + name]
+  return head !== undefined && head in STYLED_HEADS ? (head as NoteStyle) : null
+}
+
+/**
+ * The head a note actually draws, once its style has had a say.
+ *
+ * `%%percmap` is the OTHER source, and abcjs's `else if` is the order: an explicit
+ * `!style=x!` on the note wins, and only then does a percussion voice consult the map
+ * (`abstract-engraver.js:679-688`).
+ *
+ * ponytail: resolved from the FIRST pitch of a chord, because one head glyph serves the
+ * whole chord here — the same shape as the duration, which abcjs also takes from the first
+ * note. No corpus tune writes a percussion chord whose pitches map to different heads.
+ */
+function styledHead(
+  base: GlyphName,
+  event: MusicEvent | null,
+  percussion = false,
+  firstStep = 0,
+  firstAccidental: Accidental | null = null,
+): GlyphName {
+  if (event === null || event.type === 'rest') return base
+  const style =
+    event.style !== 'normal'
+      ? event.style
+      : percussion
+        ? percHead(firstStep, firstAccidental)
+        : null
+  if (style === null || style === 'normal') return base
+  const pair = STYLED_HEADS[style]
   return base === 'noteheadBlack' ? pair.filled : pair.open
 }
 
@@ -2157,7 +2227,13 @@ function layoutNoteheads(
 
   // The style picks the SHAPE; `spec` still decides filled-vs-open, dots, stem and flags,
   // so a harmonic eighth is a filled diamond with a flag.
-  const headName = styledHead(spec.head, event)
+  const headName = styledHead(
+    spec.head,
+    event,
+    clef.shape === 'percussion',
+    steps[0] ?? 0,
+    pitches[0]?.accidental ?? null,
+  )
   // The OUTLINE stays Bravura's — anchors are a property of the shape — while the
   // metrics come from the active table, so strict spaces at abcjs's widths.
   const head = GLYPHS[headName]
@@ -2250,12 +2326,20 @@ function layoutNoteheads(
   // with a plain accidental is not expressible. No fixture writes one, and fixing it
   // means moving the field onto Pitch.
   const cents = event === null || event.type === 'rest' ? 0 : event.microtoneCents
-  const accidentals = pitches
-    .map((p) => ({
-      glyph: microtoneAccidental(p.accidental, cents, strict),
-      step: pitchToStep(p, clef),
-    }))
-    .filter((a): a is { glyph: GlyphName; step: number } => a.glyph !== null)
+  // A PERCUSSION VOICE PRINTS NO ACCIDENTALS. `createNote` passes
+  // `printAccidentals: !voice.isPercussion` (`abstract-engraver.js:723`), so `^c'` on a
+  // `clef=perc` staff draws its head and nothing else — the golden has no
+  // `accidentals.sharp` in it at all. Ours drew one and reserved its declared box, which is
+  // 7.18px of staff above a high note.
+  const accidentals =
+    clef.shape === 'percussion'
+      ? []
+      : pitches
+          .map((p) => ({
+            glyph: microtoneAccidental(p.accidental, cents, strict),
+            step: pitchToStep(p, clef),
+          }))
+          .filter((a): a is { glyph: GlyphName; step: number } => a.glyph !== null)
 
   // ACCIDENTALS STACK LEFTWARD IN COLUMNS, AND THE COLUMN IS REUSED SIX STEPS APART.
   //
@@ -5275,6 +5359,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   STRICT_TEXT_METRICS = strict
   JAZZ_CHORDS = score.jazzChords
   SCORE_FONTS = score.fonts
+  PERC_MAP = score.percMap
   const { spacingScale } = PROFILES[profile]
   const voices = score.voices.length > 0 ? score.voices : [undefined]
 

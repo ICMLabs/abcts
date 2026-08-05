@@ -1365,6 +1365,7 @@ interface Formatting {
   musicSpace: number | null
   partsBox: boolean
   jazzChords: boolean
+  percMap: Record<string, string>
   stretchLast: number | null
   staffWidth: number | null
   maxStaves: number | null
@@ -1425,6 +1426,7 @@ class ScoreBuilder {
   musicSpace: number | null = null
   partsBox = false
   jazzChords = false
+  percMap: Record<string, string> = {}
   stretchLast: number | null = null
   staffWidth: number | null = null
   maxStaves: number | null = null
@@ -1437,6 +1439,7 @@ class ScoreBuilder {
       musicSpace: this.musicSpace,
       partsBox: this.partsBox,
       jazzChords: this.jazzChords,
+      percMap: this.percMap,
       stretchLast: this.stretchLast,
       staffWidth: this.staffWidth,
       maxStaves: this.maxStaves,
@@ -1451,6 +1454,7 @@ class ScoreBuilder {
     this.musicSpace = f.musicSpace
     this.partsBox = f.partsBox
     this.jazzChords = f.jazzChords
+    this.percMap = f.percMap
     this.stretchLast = f.stretchLast
     this.staffWidth = f.staffWidth
     this.maxStaves = f.maxStaves
@@ -1645,6 +1649,7 @@ class ScoreBuilder {
       musicSpace: this.musicSpace,
       partsBox: this.partsBox,
       jazzChords: this.jazzChords,
+      percMap: this.percMap,
       stretchLast: this.stretchLast,
       staffWidth: this.staffWidth,
       maxStaves: this.maxStaves,
@@ -2065,6 +2070,15 @@ class Parser {
     const setBarNb = /^setbarnb\s+(\d+)/.exec(body)
     if (setBarNb?.[1] !== undefined) {
       this.ensureScore(start).barNumbering.current = Number.parseInt(setBarNb[1], 10)
+      return
+    }
+    // `%%percmap <abc-note> <drum-sound> [<note-head>]` — the note head a written pitch
+    // draws on a percussion staff. Two or three whitespace-separated tokens; anything else
+    // is a warning and no entry (`abc_parse_directive.js:393-409`). Only the HEAD is
+    // modelled; the drum sound is audio.
+    const percMap = /^percmap\s+(\S+)\s+(\S+)(?:\s+(\S+))?\s*$/.exec(body)
+    if (percMap?.[1] !== undefined) {
+      if (percMap[3] !== undefined) this.ensureScore(start).percMap[percMap[1]] = percMap[3]
       return
     }
     // `%%jazzchords` — chord modifiers and bass notes as small sub/superscripts. A bare
