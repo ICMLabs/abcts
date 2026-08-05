@@ -16,8 +16,15 @@ golden-variables map, `-08-04c.md` findings 51–70 and the ladder method, `-08-
 | suite | **701 of 701. NO REDS.** |
 | harvested (174) | **18 of 174 off some axis**, UNMOVED — nothing this session touched a notehead. |
 | the ranked table | unchanged: nothing above 1.77px, not one `dy` term. |
-| `ENGRAVE` | **115 → 101 constants.** Bare literals 49 → **44**, of which **2 ported away** this session. |
+| `ENGRAVE` | **115 → 101 constants.** Bare literals 49 → **38**. |
+| the repeat ending | **ALL FIVE AXES CLOSED.** Both brackets span exactly abcjs's, on both ends. |
 | the audit finding | still closed. |
+
+**WHAT THE TRIAGE HAS PAID FOR SO FAR.** Fourteen dead constants deleted; a repeat ending
+corrected on five axes; a dotted REST's dot arithmetic fixed; three constants cited to their
+abcjs source with a zero-line baseline diff; and three defaulted parameters closed. Two of
+those — the rest's dots and the ending's rules — are defects no fixture and no gate had
+surfaced in months, which is the argument for auditing rather than hunting.
 
 ---
 
@@ -58,12 +65,16 @@ All measured against `S4-bars-repeats`' golden:
 
 | | abcjs | ours | status |
 |---|---|---|---|
-| end-hook drop | `height = 20` | 1.4 spaces = 10.85px | **blocked on the lane** |
+| end-hook drop | `height = 20` | 1.4 spaces = 10.85px | **PORTED** (was blocked on the lane) |
 | bracket rules | no `stroke-width`, so SVG's 1px | `thinBarline`, 0.6 | **PORTED** |
 | label indent | `linestartx + 5` | 0.4 spaces = 3.1px | **PORTED** |
-| label size | `repeatfont` 13pt → 17px | 1.3 spaces = 10.07px | **blocked on the lane** |
-| bracket pitch | stacked staff top, 29.93px above the top line | fixed lane, 15.5px | **open** |
-| bracket ends | the BARLINE RULES | the measure's first ink, +28.5px | **open** |
+| label size | `repeatfont` 13pt → 17px | 1.3 spaces = 10.07px | **PORTED** (was blocked on the lane) |
+| bracket pitch | stacked staff top, 29.93px above the top line | fixed lane, 15.5px | **PORTED** |
+| bracket ends | the BARLINE RULES | the measure's first ink, +28.5px | **PORTED** |
+
+**ALL FIVE ARE NOW CLOSED** — see findings 93 and 94 below. The 0.50px that remains on the
+bracket's pitch is not the ending at all: our staff's ink top reads 13.85 pitch where
+abcjs's dumped `staff.top` is 13.7244, and the bracket rides on it.
 
 **WHY IT WAS INVISIBLE, THREE TIMES OVER.** An ending is not a notehead, so `pixel-parity`
 never looks at it. It is not classed `stem`, `ledger` or `top-line`, so the thickness cases
@@ -71,7 +82,7 @@ never look at it. And abcjs draws the whole bracket as ONE `<path data-name="lin
 the barline-separation case cannot reach it either. Three gates, three different reasons,
 one blind spot.
 
-**AND ONLY TWO OF THE FIVE WERE PORTABLE, WHICH IS THE REAL FINDING.** abcjs's 20px hook
+**AND ONLY TWO OF THE FIVE WERE PORTABLE AT FIRST, WHICH IS THE REAL FINDING.** abcjs's 20px hook
 clears the staff only because abcjs's bracket sits 29.93px above the top line where ours
 sits 15.5. Drop the 20 into our lane and the hook ends **4.5px INSIDE the staff**, and
 `layout.test.ts`'s "clear of the music" says so instantly. **The two numbers were
@@ -81,7 +92,8 @@ either, and those landed.
 
 > **A CORRECT CONSTANT IS NOT ALWAYS AN IMPROVEMENT.** PORT THE STRUCTURE, THEN THE
 > CONSTANTS — stated in `CLAUDE.md` for months, and this is the first case where obeying
-> it meant deliberately NOT landing a figure that is certainly abcjs's.
+> it meant deliberately NOT landing a figure that is certainly abcjs's. Finding 93 landed
+> the structure and both figures went in behind it, unchanged, the same day.
 
 The lane is `set-upper-and-lower-elements.js:32-36`: the ending reserves
 `endingHeightAbove + margin`, or a flat 2 when a chord lane is present, and is DRAWN at the
@@ -106,9 +118,82 @@ missing a HANDLE rather than an axis, and until it is added the question cannot 
 either engine.** Adding `data-name` for these three is a precondition for triaging the six
 constants below them, not a follow-up to it.
 
+### FINDING 93 — THE ENDING DRAWS TWO PITCH BELOW THE LANE IT RESERVED
+
+`anchorVoltas` is a fourth anchoring pass beside `anchorLyrics`, `anchorAboveStaff` and
+`anchorBelowStaff`. The reserve was already right; only the drawing was a fixed lane.
+
+**AND THE `- 2` IS THE PART THAT HAD TO BE MEASURED.**
+
+```js
+positionY.endingHeightAbove = staff.top;      // :38
+...
+element.pitch = positionY.endingHeightAbove - 2;   // :201
+```
+
+Every OTHER lane in that file draws AT the top it reserved — `chordHeightAbove`,
+`partHeightAbove` and `tempoHeightAbove` are handed to their elements untouched — so the
+subtraction reads as a typo. Anchoring without it overshot by exactly 7.75px, two pitch. The
+`.elements.json` golden settles it in four numbers: `staff.top` 13.7244, `endingHeightAbove`
+5, margin 1, and a bracket drawn at pitch 17.724. **13.724 + 5 + 1 − 2, and no other reading
+of those numbers gives it.**
+
+**THE SHIFT CANNOT MOVE ANYTHING ELSE**, which is why it is a pass and not a refactor of the
+vertical stack. A volta's ink is deliberately outside the staff's extent — `verticalExtent`
+reads a volta line only through `flag()`, to learn which side it is on, and abcjs agrees.
+Measured: the baseline diff touches volta lines and volta texts and nothing else, across
+three fixtures.
+
+With the lane right, the hook and the label size landed — the two figures the previous
+commit had deliberately reverted.
+
+### FINDING 94 — AN ENDING HANGS ON A RULE, NOT ON A BAR AND NOT ON THE MUSIC
+
+`EndingElem(text, anchor, null)` captures whatever `anchor` the barline cursor is holding
+when `startEnding` fires — after the whole walk, so the LAST rule — and
+`partstartelem.anchor2 = anchor` fires on `endEnding`, which sits BETWEEN the thick and the
+second thin, so it is the thick where there is one and the first thin otherwise
+(`abstract-engraver.js:1017`, `:1040`). `drawEnding` opens at `anchor1.x + anchor1.w` and
+closes at `anchor2.x` — right edge one way, left edge the other.
+
+Three things had to be right and each was its own trap:
+
+- **The `w` is the ANCHOR's, not the painted thickness.** A thin rule is declared
+  `(null, dx, 1, 2, {linewidth: 0.6})` and a thick `(null, dx, 4, 2, {linewidth: 4})`; only
+  the thick pair agree, and an ending reads the declared one.
+- **The bar an ending opens on is usually the PREVIOUS measure's closer.** `startEnding` is
+  a property of the barline, and the bar carrying `|1` or `:|2` is the one that ENDS the
+  measure before. `endingRoom` had already reasoned exactly this way about `minspacing`.
+- **The two brackets of `|1 … :|2` do NOT abut.** Both hang on the same `:|`, on opposite
+  edges of its thick rule, so abcjs leaves exactly 4px — `[…472.18] [476.18…]` in its own
+  golden. **The eighth test in `layout.test.ts` found to be asserting abcjs is wrong.**
+
+**AND THE GATE HAD THE SAME REPRESENTATION PROBLEM ONE LEVEL DOWN.** Comparing bounding
+boxes made ours 0.5px wider, because abcjs's bracket is a stroked path whose box is its `d`
+coordinates while ours is a rect per stroke — so our 1px HOOK reaches half a pixel past
+where the bracket starts. The span is read off the horizontal rule now, which both engines
+express identically.
+
+### FINDING 95 — A DEFAULT PARAMETER IS THE LEAK, DISTILLED
+
+`dotGlyphs(count, x, step, taken, spacing = ENGRAVE.dotSpacing)`. The call site gated on
+strict passed abcjs's 5px; the call site that simply omitted the argument silently took our
+0.45 spaces. **That ungated caller is the dotted REST**, and finding 88 had ported the dot
+arithmetic for noteheads only.
+
+abcjs makes no such distinction: its rest branch ends in `createNoteHead(abselem, c,
+{verticalPos: restpitch}, {dot, scale})` (`abstract-engraver.js:600`), the same function
+noteheads go through, so `notehead.w + dotshiftx - 2 + 5 * dot` governs both. Ours put the
+dot 2.71px past the glyph against abcjs's 3, and stepped 3.49px against 5.
+
+No gate could see it — 0.29px on an augmentation dot moves nothing a notehead comparison
+looks at. `dotGlyphs`'s spacing, `naturalWidth`'s and `springForDuration`'s scale are all
+REQUIRED now: **a caller that must name the value cannot forget it**, which is the smallest
+available version of "strict should not be able to read ours".
+
 ---
 
-## THE TRIAGE TABLE — 44 live bare literals
+## THE TRIAGE TABLE — 38 live bare literals
 
 Work down this. **Evidence column matters**: `measured` means both engines' output was
 compared, `source` means abcjs's source was read and the prediction is NOT yet measured —
@@ -129,18 +214,21 @@ denies. Do not port a `source` row without measuring first.
 
 | constant | how |
 |---|---|
-| `spacingScale` | `PROFILES` supplies abcjs's 2.7372 in strict. **But the ENGRAVE value is still a DEFAULT PARAMETER on `naturalWidth`/`springForDuration`, so a caller that forgets gets ours silently. Make the parameter required — that is the leak class in one line.** |
-| `dotSpacing` | `strict ? spaces(ABCJS_PX.dotSpacing) : ENGRAVE.dotSpacing` at the drawing site (finding 88) |
+| `spacingScale` | `PROFILES` supplies abcjs's 2.7372 in strict, and the parameter is REQUIRED now so no caller can silently take ours. |
+| `dotGap`, `dotSpacing` | gated at BOTH drawing sites now — the notehead's since finding 88, the dotted rest's since finding 95. |
 | `curveMinBulge`, `curveMaxBulge`, `curveBulgeRatio` | `curveToPath`'s strict branch uses only `Math.sign(bulge)`; the magnitude is computed and discarded. Harmless, but it should not be computed at all. |
 
 ### ABCJS-HAS-ITS-OWN, AND THE NUMBER ALREADY AGREES — cite only, expect a ZERO-line baseline diff
 
-| constant | abcjs |
-|---|---|
-| `stemLength` 3.5 spaces | 7 pitch, `Math.round(70 * voiceScale) / 10`. Lance's worked example. `source` |
-| `lastSystemFill` 0.66 | the literal at `layout/layout.js:102`. `source`, and unambiguous |
-| `dynamicBelowReserve` 7 | `max(volumeHeightBelow, dynamicHeightBelow) + margin` = `max(6,6)+1`. `source` |
-| `annotationLineStep` 5.16 steps | 19.995px ≈ the 20 the comment already derives. `source` |
+| constant | abcjs | |
+|---|---|---|
+| `stemLength` 3.5 spaces | 7 pitch, `Math.round(70 * voiceScale) / 10` (`abstract-engraver.js:740`) | **CITED** |
+| `lastSystemFill` 0.66 | `ABCJS_RATIO.lastSystemFill`, which ALREADY EXISTED — a golden variable duplicated as a bare literal three hundred lines away | **CITED** |
+| `dynamicBelowReserve` 7 | `max(volumeHeightBelow, dynamicHeightBelow) + margin` = `max(6,6)+1` | **CITED** |
+| `annotationLineStep` 5.16 steps | 19.995px against the 20 the comment derives — and abcjs's real rule is `Math.round(height * 1.1)` over the ACTUAL annotation font, so a `%%annotationfont` moves it. Not a cite; a small port. | open |
+
+All three citations landed with a **ZERO-LINE baseline diff**, which is the proof this file
+prescribes.
 
 ### ABCJS-HAS-ITS-OWN, AND THE NUMBER DIFFERS — a port, and MEASURE FIRST
 
@@ -149,8 +237,8 @@ finding 92's handles exist.
 
 | constant | ours | abcjs | source |
 |---|---|---|---|
-| `voltaHook` | 10.85px | `height = 20` | `draw/ending.js:10` — **measured**, blocked on the lane |
-| `voltaTextSize` | 10.07px | `repeatfont` → 17px | `draw/ending.js:44` — **measured**, blocked on the lane |
+| ~~`voltaHook`~~ | — | `height = 20` | `draw/ending.js:10` — **PORTED**, finding 93 |
+| ~~`voltaTextSize`~~ | — | `repeatfont` → 17px | `draw/ending.js:44` — **PORTED**, finding 93 |
 | `tupletHook` | 0.6 spaces = 4.65px | `bracketHeight = ±5` | `draw/triplet.js:24` |
 | `tupletNumberGap` | 0.35 spaces = 2.71px each side | `gapWidth = 8` each side | `draw/triplet.js:35` |
 | `tupletTextSize` | 1.4 spaces = 10.85px | `tripletfont` 11pt → 15px | `abc_parse_directive.js:29` |
@@ -164,8 +252,10 @@ finding 92's handles exist.
 `annotationBelowStep`, `partStep`, `tempoStep`, `lyricStep`, `voltaStep`.
 
 These are one decision, not nine, and it is already documented at length in `ENGRAVE`
-itself. `anchorAboveStaff` and `anchorLyrics` have been migrating them into abcjs's stack
-one at a time; `voltaStep` is next and finding 91 is blocked on it.
+itself. `anchorLyrics`, `anchorAboveStaff`, `anchorBelowStaff` and now `anchorVoltas` have
+been migrating them into abcjs's stack one at a time — **`voltaStep` is done** (finding 93)
+and is now only the ORIGIN the shift is measured from, like `lyricStep` before it. The
+remaining lanes are the same job.
 
 ### ZERO, AND ZERO BECAUSE ABCJS HAS NO SUCH THING
 
@@ -192,17 +282,27 @@ keeping a non-zero value the constant no longer has.
 
 ### NEXT, in order
 
-1. **The ending LANE** — move `voltaStep` into `anchorAboveStaff`'s stack. It unblocks two
-   ported-and-waiting figures, and `layout.ts:7266` has been asking for it for months. Note
-   the trap recorded there: putting the volta lines into the INNER `verticalExtent` call is
-   what cost `mouse-click-01`'s first staff 23.25px.
-2. **The ending ENDS** — anchor on the barline rules. The barlines are already exact.
-3. **`data-name` for the triplet bracket, the hairpin and the brace** (finding 92), then
-   triage the six constants behind them.
-4. **The cite-only rows** — one commit, and the gate should show a ZERO-line baseline diff.
-5. **Make `spacingScale` a required parameter** so no caller can silently take ours.
-6. Then the slur/tie ENDPOINTS (`curveEndGap`), which `curveReserves` already derives a
-   second time — and then `visual-layout-04`, `visual-parsing-10`, Gonzato, audio.
+Items 1, 2, 4 and 5 of the previous list are DONE — findings 93, 94 and 95.
+
+1. **`data-name` for the triplet bracket, the hairpin and the brace** (finding 92), then
+   triage the six constants behind them. This is now the top item, and it is a
+   PRECONDITION: those six cannot be measured at all until the handles exist, and the
+   repeat ending is the proof of what that is worth — five defects, none of which any gate
+   could see, all of them closed within a day of the handle being added.
+2. **The slur/tie ENDPOINTS** (`curveEndGap`) — abcjs starts at `anchor.x + 6`, ends at
+   `+ 4`, lifts 1.2 pitch for a tie and 1.5 for a slur. `curveReserves` ALREADY derives
+   abcjs's `startY`/`endY` for the reserve, so the quantity is computed TWICE. That is the
+   lyric-reserve bug's shape, and finding 95 is the same species one size smaller.
+3. **`annotationLineStep`** — a small port, not a citation: abcjs advances by
+   `Math.round(height * 1.1)` over the actual annotation font.
+4. **The remaining fixed lanes** — the same migration `voltaStep` just went through.
+5. Then `visual-layout-04` at 1.77, `visual-parsing-10`, Gonzato, audio.
+
+**AND ONE THING THE ENDING WORK EXPOSED THAT IS NOT ABOUT ENDINGS.** Our staff ink top on
+`S4-bars-repeats` reads 13.85 pitch where abcjs's dumped `staff.top` is 13.7244 — 0.5px,
+carried by everything that hangs off the staff top. The `.elements.json` goldens carry
+`staff.top` for every staff of every fixture, so this is directly measurable across the
+corpus and has never been checked as its own axis.
 
 ---
 
