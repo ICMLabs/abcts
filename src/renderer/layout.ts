@@ -47,15 +47,29 @@ import {
   type Tempo,
   type Voice,
 } from '../core/model.js'
-import { glyphsFor } from './glyph-table.js'
-import { ENGRAVING_DEFAULTS, GLYPHS, type GlyphName } from './glyphs.js'
 import {
+  ABCJS_CLEF_OFFSET_PITCH,
+  ABCJS_KEY_ACCIDENTAL_FUDGE_PITCH,
+  ABCJS_PERC_NOTE_NAMES,
+  ABCJS_PITCH,
+  ABCJS_PX,
+  ABCJS_RATIO,
+  fontPixels,
   GOLDEN_GCHORD,
   GOLDEN_MEASURE,
   GOLDEN_PARTS,
   GOLDEN_REPEAT,
   GOLDEN_VOCAL,
-} from './golden-widths.js'
+  goldenTextHeight,
+  PITCH_ORIGIN,
+  STAFF_SPACE_PX,
+  STEP_PX,
+  spaces,
+  spacesOfPitch,
+  steps,
+} from './abcjs-constants.js'
+import { glyphsFor } from './glyph-table.js'
+import { ENGRAVING_DEFAULTS, GLYPHS, type GlyphName } from './glyphs.js'
 import {
   CHAR_ADVANCE,
   CHAR_ADVANCE_BOLD,
@@ -88,7 +102,7 @@ export const ENGRAVE = {
    * Reusing `stemLength` here — the unbeamed 7 — put every beam 2.5 steps too close to its
    * notes, which on ragtime is most of the corpus's remaining vertical error.
    */
-  beamStemHeight: Math.round((36.67 * 10) / 3.875) / 10,
+  beamStemHeight: Math.round((ABCJS_PX.beamStemHeight * 10) / STEP_PX) / 10,
   /** First ledger step beyond the staff; grows outward by 2. *Behind Bars*. */
   firstLedgerStep: 6,
   /** Ledger line overhang past the notehead each side. */
@@ -102,7 +116,7 @@ export const ENGRAVE = {
    * dropped `multi-voice-rest-placement` to a fill of 0.659 against the 0.66 threshold —
    * so it kept its natural width where abcjs justified it, by one thousandth.
    */
-  marginX: 15 / 7.75,
+  marginX: spaces(ABCJS_PX.paddingLeft),
   /**
    * Vertical padding above and below a staff's ink.
    *
@@ -123,14 +137,14 @@ export const ENGRAVE = {
    * `15 + 24.051 + 10` = 49.051 w 11.795, first note at `49.051 + 11.795 + 10` = 70.846.
    * Ours was one staff space, 7.75px, so every prefix ran short and took the music with it.
    */
-  prefixGap: 10 / 7.75,
+  prefixGap: spaces(ABCJS_PX.minSpacing),
   /**
    * A clef glyph sits this far INTO its element — abcjs's `var dx = 5` in `createClef`,
    * which is why its clef element is 24.051 wide against a 19.051 glyph. We drew the glyph
    * flush at the element's left and made the element glyph-wide, losing 5px before the
    * music on every staff.
    */
-  clefIndent: 5 / 7.75,
+  clefIndent: spaces(ABCJS_PX.clefIndent),
   /**
    * Gap a NOTE's rod adds beyond its own ink — abcjs's `minspacing`, and for a note that is
    * **1px**, not the 10 a bar or a staff-extra gets.
@@ -145,7 +159,7 @@ export const ENGRAVE = {
    * and binds on exactly the short dense notes where the rod starts to win: a 32nd's spring
    * is 15px against a ~20px rod.
    */
-  noteRodGap: 1 / 7.75,
+  noteRodGap: spaces(ABCJS_PX.noteMinSpacing),
   /**
    * Gap between adjacent accidentals in a key signature.
    *
@@ -154,15 +168,15 @@ export const ENGRAVE = {
    * each glyph 8.25 wide. Ours was 0.15 of a space, 1.16px, so a five-sharp signature ran
    * 3.35px narrow and pulled the music left with it.
    */
-  keySignatureGap: 2 / 7.75,
+  keySignatureGap: spaces(ABCJS_PX.keySignatureGap),
   /**
    * Between an accidental and whatever is to its right — `width + 2` in
    * `create-note-head.js:95`, where the 2 is abcjs's flat gap and NOT a fraction of the
    * glyph. Was 0.15 (1.16px) and provisional.
    */
-  accidentalGap: 2 / 7.75,
+  accidentalGap: spaces(ABCJS_PX.accidentalGap),
   /** Two accidentals this far apart in STEPS share a column (`create-note-head.js:87`). */
-  accidentalColumnSteps: 6,
+  accidentalColumnSteps: ABCJS_PITCH.accidentalColumnPitch,
   /** Gap from the notehead's right edge to the first augmentation dot. PROVISIONAL. */
   dotGap: 0.35,
   /** Spacing between successive dots on a double- or triple-dotted note. PROVISIONAL. */
@@ -199,7 +213,7 @@ export const ENGRAVE = {
    * everywhere EXCEPT across a barline — 53.4 against our 57.9. We were adding one space on
    * each side, 15.5px, where abcjs adds 11.0 once.
    */
-  barGap: 11 / 7.75,
+  barGap: spaces(ABCJS_PX.barGap),
   /**
    * What a barline occupies on the LAYOUT cursor, by kind — abcjs's `child.w`, which is
    * not its drawn thickness but a flat width per type. Read out of abcjs by probe, one
@@ -224,16 +238,16 @@ export const ENGRAVE = {
    * It only bites where the previous element's rod runs right up to the cursor, which is
    * a compressed line; a line with any slack in it never notices.
    */
-  barClearance: 5 / 7.75,
+  barClearance: spaces(ABCJS_PX.barClearance),
   barLayoutWidth: {
-    thin: 1 / 7.75,
-    double: 4 / 7.75,
-    final: 8 / 7.75,
-    repeatStart: 16 / 7.75,
-    repeatEnd: 14 / 7.75,
-    repeatBoth: 22 / 7.75,
+    thin: spaces(ABCJS_PX.barWidthThin),
+    double: spaces(ABCJS_PX.barWidthDouble),
+    final: spaces(ABCJS_PX.barWidthFinal),
+    repeatStart: spaces(ABCJS_PX.barWidthRepeatStart),
+    repeatEnd: spaces(ABCJS_PX.barWidthRepeatEnd),
+    repeatBoth: spaces(ABCJS_PX.barWidthRepeatBoth),
     // An invisible bar reserves a thin bar's width and paints nothing.
-    invisible: 1 / 7.75,
+    invisible: spaces(ABCJS_PX.barWidthThin),
   } as Record<Barline, number>,
   /**
    * LANES above and below the staff, in staff steps. The staff itself spans -4 to 4.
@@ -262,21 +276,21 @@ export const ENGRAVE = {
    * (`creation/decoration.js:13`). One pitch above the top staff line, so an ornament on
    * a low note still clears the staff.
    */
-  decorationMinTop: 12,
+  decorationMinTop: ABCJS_PITCH.decorationMinTop,
   /** `minBottom` — the floor `getPlacement('below')` clamps to (`decoration.js:14`). */
-  decorationMinBottom: 0,
+  decorationMinBottom: ABCJS_PITCH.decorationMinBottom,
   /** The pitch of padding each stacked decoration adds so nothing touches (`:154`). */
-  decorationPadding: 1,
+  decorationPadding: ABCJS_PITCH.decorationPadding,
   /** `textFudge` — how far a TEXT decoration sits above the stack cursor (`:149`). */
-  decorationTextFudge: 2,
+  decorationTextFudge: ABCJS_PITCH.decorationTextFudge,
   /** `textHeight` — the flat pitch a text decoration advances the cursor by (`:150`). */
-  decorationTextHeight: 5,
+  decorationTextHeight: ABCJS_PITCH.decorationTextHeight,
   /**
    * `thickness: 3` — a text decoration's DECLARED height in pitch (`decoration.js:151`),
    * with abcjs's own "TODO-PER: Get the height of the current font and use that" beside
    * it. It is not the font's height and reproducing the font's height is wrong.
    */
-  decorationTextThickness: 3,
+  decorationTextThickness: ABCJS_PITCH.decorationTextThickness,
   /**
    * Dynamics (`!p!`, `!mf!`) and hairpins go ABOVE the staff WHEN THE TUNE HAS LYRICS,
    * and below it otherwise — abcjs's rule, not a taste choice.
@@ -348,23 +362,23 @@ export const ENGRAVE = {
    * fixture in the corpus reports the same three. In its pitch units, halved here because
    * a step is half a staff space.
    */
-  aboveStackMargin: 1 * 0.5,
-  chordHeightAbove: 4.779354838709677 * 0.5,
-  partHeightAbove: 5.718709677419355 * 0.5,
+  aboveStackMargin: spacesOfPitch(ABCJS_PITCH.laneMargin),
+  chordHeightAbove: spacesOfPitch(ABCJS_PITCH.chordHeightAbove),
+  partHeightAbove: spacesOfPitch(ABCJS_PITCH.partHeightAbove),
   /**
    * `fontboxpadding` — the fraction of the font size a boxed font pads by, on each side.
    * abcjs's default is 0.1 and the directive can change it (`get-font-and-attr.js:35`).
    */
-  fontBoxPadding: 0.1,
+  fontBoxPadding: ABCJS_RATIO.fontBoxPadding,
   /** Stroke of the rules `%%partsbox` draws — one pixel, as abcjs's `rect` emits. */
-  fontBoxRule: 1 / 7.75,
-  tempoHeightAbove: 6 * 0.5,
+  fontBoxRule: spaces(ABCJS_PX.fontBoxRule),
+  tempoHeightAbove: spacesOfPitch(ABCJS_PITCH.tempoHeightAbove),
   /** abcjs bumps the tempo's baseline 2px past the top it reserved (`draw/tempo.js:15`). */
-  tempoDescenderBump: 2 / 7.75,
+  tempoDescenderBump: spaces(ABCJS_PX.tempoDescenderBump),
   /** `temposcale` — the beat-unit note is a miniature (`tempo-element.js:25`). */
-  tempoNoteScale: 0.75,
+  tempoNoteScale: ABCJS_RATIO.tempoNoteScale,
   /** `x += note.w + 5` between the beat-unit note and the rate (`draw/tempo.js:29`). */
-  tempoNoteGap: 5 / 7.75,
+  tempoNoteGap: spaces(ABCJS_PX.tempoNoteGap),
   /**
    * A tune's title sits above everything else it owns, in staff STEPS above the middle
    * line — so the gap to the top staff line is `titleStep / 2 - 2` spaces.
@@ -411,20 +425,20 @@ export const ENGRAVE = {
    * nearly cancels it. Reading that 3.3 as "abcjs does not offset here" is what left this
    * unfixed for two sessions.
    */
-  lyricInkGap: 17 / 7.75,
-  lyricVoiceStep: (17 * 1.108) / 7.75,
+  lyricInkGap: spaces(ABCJS_PX.lyricInkGap),
+  lyricVoiceStep: spaces(ABCJS_PX.lyricInkGap * ABCJS_RATIO.textHeight),
   /**
    * Verse to verse: abcjs stacks verses as `<tspan dy="1.2em">` inside ONE `<text>` per
    * note, so the step is 1.2 x the 17px vocal font = 20.4px, not the 21px an advance rule
    * would give. Read off its own goldens' markup, not inferred.
    */
-  lyricLineStep: (17 * 1.2) / 3.875,
+  lyricLineStep: steps(ABCJS_PX.lyricInkGap * ABCJS_RATIO.textLineStep),
   /**
    * How far a brace or bracket moves the staff's left edge — abcjs's
    * `BraceElem.getWidth()`, a flat 10 for both, with its own comment that the drawing
    * does not vary it.
    */
-  connectorIndent: 10 / 7.75,
+  connectorIndent: spaces(ABCJS_PX.connectorIndent),
   /** Clearance between a brace or bracket and the staff it joins. */
   connectorGap: 0.6,
   /** A bracket is a rule, and a heavy one. */
@@ -448,7 +462,7 @@ export const ENGRAVE = {
    * derived, and it matters twice over: the stack draws each item one FONT SIZE below the
    * top it reserved, so an undersized font lands the baseline high as well as small.
    */
-  tempoTextSize: 20 / 7.75,
+  tempoTextSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.partsfont)),
   /**
    * Top-text font sizes, in staff spaces.
    *
@@ -460,10 +474,10 @@ export const ENGRAVE = {
   // ROUNDED TO WHOLE PIXELS, as abcjs emits them: its title is `font-size="27"`, not
   // 26.67, its composer `19` not 18.67. The rounding is visible in the goldens and it
   // feeds the line advance below, where it is worth 4px on the first staff.
-  titleTextSize: Math.round((20 * 4) / 3) / 7.75,
-  subtitleTextSize: Math.round((16 * 4) / 3) / 7.75,
-  composerTextSize: Math.round((14 * 4) / 3) / 7.75,
-  infoTextSize: Math.round((14 * 4) / 3) / 7.75,
+  titleTextSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.titlefont)),
+  subtitleTextSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.subtitlefont)),
+  composerTextSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.composerfont)),
+  infoTextSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.infofont)),
   /**
    * Rendered text HEIGHT as a multiple of font size — a line of prose is taller than its
    * point size, and abcjs advances by the height, not the size.
@@ -476,13 +490,13 @@ export const ENGRAVE = {
    * `round(size * 1.1)` where abcjs advances by `round(size * 1.108 * 1.1)` — for a title
    * that is 29px against abcjs's 33, so the first staff of every tune sat 4px high.
    */
-  textHeightRatio: 1.108,
+  textHeightRatio: ABCJS_RATIO.textHeight,
   /**
    * Page margin above everything — abcjs's `padding.top`, 15px on screen
    * (`write/renderer.js:69`; print uses 38px, which is 1cm). We had none: our drawing
    * began at the top text's own ink, so every tune sat 15px higher than abcjs's.
    */
-  marginTop: 15 / 7.75,
+  marginTop: spaces(ABCJS_PX.paddingTop),
   /**
    * And BELOW everything — abcjs's `padding.bottom`, also 15px on screen, spent in
    * `(renderer.y + renderer.padding.bottom) * scale` (`draw/set-paper-size.js:3`).
@@ -491,13 +505,13 @@ export const ENGRAVE = {
    * and clipped its own stroke: `simple-c` came out 124.085px against abcjs's 139.052,
    * and every fixture was short by this exact 15.
    */
-  marginBottom: 15 / 7.75,
+  marginBottom: spaces(ABCJS_PX.paddingBottom),
   /** Space above the title, a subtitle, and the composer row (`renderer.js:94`). */
-  titleSpace: 7.56 / 7.75,
-  subtitleSpace: 3.78 / 7.75,
-  composerSpace: 7.56 / 7.75,
+  titleSpace: spaces(ABCJS_PX.titleSpace),
+  subtitleSpace: spaces(ABCJS_PX.subtitleSpace),
+  composerSpace: spaces(ABCJS_PX.composerSpace),
   /** Space between the top-text block and the top of the music (`renderer.js:101`). */
-  musicSpace: 7.56 / 7.75,
+  musicSpace: spaces(ABCJS_PX.musicSpace),
   /**
    * `%%center` free text — abcjs's `textfont`, 21px at its 7.75px staff space.
    *
@@ -507,18 +521,18 @@ export const ENGRAVE = {
    * is 114.68, and 114.68 = 82.12 + (23 - 19) + 7.56 + 21 exactly, where 23 is the
    * composer row's advance and 21 the free-text size.
    */
-  freeTextSize: 21 / 7.75,
+  freeTextSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.textfont)),
   /**
    * Line to line inside ONE `%%begintext` block — `1.2em` at the 21px `textfont`, the
    * `tspan dy` abcjs stacks a multi-line `<text>` by. Measured: a two-line block costs
    * 25.2px more than a one-line one, where the first line costs `21 x 1.108`.
    */
-  freeTextLineStep: (21 * 1.2) / 7.75,
-  freeTextSpace: 7.56 / 7.75,
+  freeTextLineStep: spaces(fontPixels(ABC_FONT_DEFAULT_PT.textfont) * ABCJS_RATIO.textLineStep),
+  freeTextSpace: spaces(ABCJS_PX.titleSpace),
   /** Gap from the last staff line down to a trailing `%%center` line's baseline. */
-  freeTextBelowSpace: 36.85 / 7.75,
+  freeTextBelowSpace: spaces(ABCJS_PX.freeTextBelowSpace),
   /** A text line advances by its height times this, rounded to whole pixels by abcjs. */
-  lineSkipFactor: 1.1,
+  lineSkipFactor: ABCJS_RATIO.lineSkip,
   /** Vertical gap between tunes in a tunebook — wider than between systems. */
   tuneGap: 6.0,
   /**
@@ -528,14 +542,14 @@ export const ENGRAVE = {
    * two thirds of abcjs's size. Same undersizing the title carried before `titleTextSize`
    * was derived; it makes every out-of-staff reserve too small as well as drawing small.
    */
-  lyricTextSize: 17 / 7.75,
-  chordTextSize: 16 / 7.75,
+  lyricTextSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.vocalfont)),
+  chordTextSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.gchordfont)),
   /**
    * `dy="1.2em"` — the step abcjs puts between the lines of one `<text>` (`svg.js:196`),
    * and therefore what the golden generator adds per extra line when it measures one
    * (`dump-svg.js:120-124`).
    */
-  textLineStep: 1.2,
+  textLineStep: ABCJS_RATIO.textLineStep,
   /**
    * A stem shortened to meet a beam never drops below this. *Behind Bars* keeps beamed
    * stems from collapsing to stubs. PROVISIONAL.
@@ -563,13 +577,13 @@ export const ENGRAVE = {
    *
    * One flat 5 for both cost every voltaed staff of `ragtime-nightingale` a pitch.
    */
-  tupletLane: 4,
+  tupletLane: ABCJS_PITCH.tupletLane,
   /**
    * `RelativeElement`'s default `height` — a flat 4 pitch when nothing declares one
    * (`relative-element.js:37`). A notehead never does, so this is what a notehead's
    * height IS wherever abcjs reads that field.
    */
-  relativeElementHeight: 4,
+  relativeElementHeight: ABCJS_PITCH.relativeElementHeight,
   /**
    * HALF A NOTEHEAD'S DECLARED BOX, in staff spaces.
    *
@@ -584,38 +598,38 @@ export const ENGRAVE = {
    * The other heads differ in the third decimal (half 2.0986, whole 2.0895, dbl 2.1019);
    * one figure covers them to 0.02px.
    */
-  noteheadHalfHeight: 2.088774193548387 / 4,
-  voltaLane: 5,
+  noteheadHalfHeight: ABCJS_PITCH.noteheadHeight / 4,
+  voltaLane: ABCJS_PITCH.voltaLane,
   /**
    * What an ending lane costs when the staff ALSO has a chord lane — a flat 2 pitch with
    * no margin, instead of `endingHeightAbove + margin`
    * (`set-upper-and-lower-elements.js:33-38`).
    */
-  endingOverChordLane: 2,
+  endingOverChordLane: ABCJS_PITCH.endingOverChordLane,
   /**
    * `vert` in `addMeasureNumber` — the pitch a bar number's box starts from, before its
    * own height is added (`abstract-engraver.js:952`). 11 on a barline; the 13.5 branch
    * needs a number wider than 10px on a TREBLE CLEF element, which a barline never is.
    * In our steps, which are abcjs's pitch.
    */
-  barNumberPitch: 11,
+  barNumberPitch: ABCJS_PITCH.barNumberPitch,
   /** `measurefont` — Times Italic 14pt, so `round(14 x 4/3)` = 19px. */
-  barNumberSize: 19 / 7.75,
+  barNumberSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.measurefont)),
   /**
    * A LEFT annotation's room before the note — `roomTaken += chordWidth + 7`
    * (`add-chord.js:52`), in abcjs pixels.
    */
-  leftAnnotationGap: 7 / 7.75,
+  leftAnnotationGap: spaces(ABCJS_PX.leftAnnotationGap),
   /** A RIGHT annotation's, 4 either side — `roomTakenRight += 4` and `w = width + 4`. */
-  rightAnnotationGap: 4 / 7.75,
+  rightAnnotationGap: spaces(ABCJS_PX.rightAnnotationGap),
   /** abcjs's `margin` in `set-upper-and-lower-elements.js:102` — one pitch on every lane. */
-  laneMargin: 1,
+  laneMargin: ABCJS_PITCH.laneMargin,
   voltaStep: 8,
   /** How far the volta bracket's end hooks turn down toward the staff. */
   voltaHook: 1.4,
   voltaTextSize: 1.3,
   /** Grace notes are drawn at this fraction of full size. *Behind Bars* ~60%. */
-  graceScale: 0.6,
+  graceScale: ABCJS_RATIO.graceScale,
   /**
    * Horizontal advance per grace note, before the note it decorates — a flat **10px**,
    * and the last grace's own step is the gap to the notehead, so there is no separate
@@ -624,9 +638,9 @@ export const ENGRAVE = {
    * Ours stepped 8.52px and then added 5.1px of gap, which put a single grace 3.6px too
    * far from its note and every grace of a group at the wrong pitch of the ladder.
    */
-  graceAdvance: 10 / 7.75,
+  graceAdvance: spaces(ABCJS_PX.graceAdvance),
   /** …and an ACCIDENTAL on a grace note adds 7 more (`abstract-engraver.js:484-486`). */
-  graceAccidentalRoom: 7 / 7.75,
+  graceAccidentalRoom: spaces(ABCJS_PX.graceAccidentalRoom),
   /** No gap: the last grace's own advance IS the distance to the notehead. */
   graceGap: 0,
   /** Length of the hook that resumes a curve at the start of the next system. */
@@ -646,7 +660,7 @@ export const ENGRAVE = {
    * targets exactly that. Ours was a round 90 spaces, 697.5px, which put the target 2.5px
    * short and compressed every justified line by that much.
    */
-  systemWidth: 700 / 7.75,
+  systemWidth: spaces(ABCJS_PX.systemWidth),
   /**
    * Vertical gap between stacked systems, on top of the ink.
    *
@@ -667,7 +681,7 @@ export const ENGRAVE = {
    * only when it falls short, so tall content takes the room it needs and no more.
    * abcMusicKit v1 implements exactly this in `addStaffPadding`.
    */
-  systemSeparation: 61.33 / 7.75,
+  systemSeparation: spaces(ABCJS_PX.systemSeparation),
   /**
    * How full a LAST system must already be before it is justified to the page.
    *
@@ -687,7 +701,7 @@ export const ENGRAVE = {
    * `systemStaffSeparation`, 48px (`write/renderer.js:109`). Tighter than between
    * systems, which is what makes the staves of one score read as belonging together.
    */
-  staffSeparation: 48 / 7.75,
+  staffSeparation: spaces(ABCJS_PX.staffSeparation),
 } as const
 
 // ─── Layout model ────────────────────────────────────────────────────────────
@@ -1059,11 +1073,6 @@ export const stepToY = (step: number): number => -step * ENGRAVE.spacePerStep
 const STAFF_HALF_HEIGHT = 2
 
 /** abcjs's staff space in pixels — the unit its published constants are given in. */
-const ABCJS_PX_PER_SPACE = 7.75
-/** abcjs's `spacing.STEP` — half a staff space, and the unit its PITCH is counted in. */
-const ABCJS_PITCH_PX = ABCJS_PX_PER_SPACE / 2
-/** abcjs counts PITCH from 2 at the bottom staff line where our steps count -4. */
-const ABCJS_PITCH_ORIGIN = 6
 
 /**
  * Text box estimate, in multiples of the font size — the renderer's CONTRACT for how
@@ -1306,13 +1315,6 @@ const CLEF_GLYPHS: Readonly<Record<ClefShape, GlyphName | null>> = {
  * and the octave marker below a `-8` clef is positioned off that declared bottom rather
  * than off any ink.
  */
-const CLEF_PITCH_OFFSET: Readonly<Record<ClefShape, number>> = {
-  G: -5,
-  C: -4,
-  F: -4,
-  percussion: -2,
-  none: 0,
-}
 
 /** abcjs draws the octave marker at two thirds size (`create-clef.js:39`). */
 const OCTAVE_MARKER_SCALE = 2 / 3
@@ -1337,7 +1339,7 @@ function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null 
   // probed on `simple-c`, where `staff.top` is raised to 13.7244 BY THE CLEF and by nothing
   // else, stems included. So that 0.0235 of a space was the whole vertical offset on eight
   // fixtures: they sat a uniform 0.184px high, staff lines and noteheads together.
-  const clefBottom = 2 * clef.line + (CLEF_PITCH_OFFSET[clef.shape] ?? 0)
+  const clefBottom = 2 * clef.line + (ABCJS_CLEF_OFFSET_PITCH[clef.shape] ?? 0)
   // …AND THE HEIGHT IN THAT BOX IS THE PUBLISHED `h`, NOT THE INK BOX.
   // `symbolHeightInPitches` reads `glyphs[symbol].h` (`glyphs.js:161-164`), which for the
   // G clef is 57.057px against a derived ink box of 57.09 — 0.033px, a two-hundredth of a
@@ -1582,15 +1584,10 @@ function keySignatureShift(clef: Clef): number {
  * fudge`, where the fudge is a constant per accidental (`create-key-signature.js:17-23`):
  * a sharp's box starts 3 pitches BELOW its line, a flat's 1.2. A pitch is one staff step.
  */
-const KEY_ACCIDENTAL_FUDGE: Partial<Record<GlyphName, number>> = {
-  accidentalSharp: -3,
-  accidentalFlat: -1.2,
-  accidentalNatural: 0,
-}
 
 function keyAccidentalReserve(name: GlyphName, step: number, strict: boolean): [number, number] {
   const glyph = glyphsFor(strict).get(name) ?? bravuraDeclared(name)
-  const fudge = KEY_ACCIDENTAL_FUDGE[name] ?? 0
+  const fudge = ABCJS_KEY_ACCIDENTAL_FUDGE_PITCH[name] ?? 0
   // `symbolHeightInPitches` is the PUBLISHED `h / STEP`, and ours is in staff spaces —
   // twice that. The published figure, not the ink box: a sharp declares 20.15 against an
   // ink box of 20.19, which is the extra 0.04px a sharp key signature was adding.
@@ -2013,25 +2010,6 @@ const STYLED_HEADS: Readonly<
  * accidental's first LETTER plus the position, and both double accidentals begin `d`,
  * which is in neither table. So a double-accidental note takes the ordinary head.
  */
-const PERC_NOTE_NAMES: readonly string[] = [
-  'C',
-  'D',
-  'E',
-  'F',
-  'G',
-  'A',
-  'B',
-  'c',
-  'd',
-  'e',
-  'f',
-  'g',
-  'a',
-  'b',
-  "c'",
-  "d'",
-  "e'",
-]
 const PERC_ACCIDENTAL_PREFIX: Readonly<Record<number, string>> = {
   [Accidental.flat]: '_',
   [Accidental.natural]: '=',
@@ -2043,8 +2021,8 @@ let PERC_MAP: Score['percMap'] = {}
 
 /** The `%%percmap` head for a written pitch on a PERCUSSION staff, or null. */
 function percHead(step: number, accidental: Accidental | null): NoteStyle | null {
-  const position = step + ABCJS_PITCH_ORIGIN
-  const name = PERC_NOTE_NAMES[position]
+  const position = step + PITCH_ORIGIN
+  const name = ABCJS_PERC_NOTE_NAMES[position]
   if (name === undefined) return null
   const prefix = accidental === null ? '' : PERC_ACCIDENTAL_PREFIX[accidental]
   if (prefix === undefined) return null // a double accidental has no key
@@ -2630,7 +2608,7 @@ function barNumberText(number: number, x: number): PlacedText {
   // box` measures 14.6px against the default's 21.06 and drops the reserve 1.68px.
   // abcjs PITCH -> our step: the bottom staff line is pitch 2 and our step -4, so a step
   // is `pitch - 6`. Its height is in PIXELS over `spacing.STEP`, which is `spaces x 2`.
-  const y = stepToY(ENGRAVE.barNumberPitch + fontHeightOf('measurefont') * 2 - ABCJS_PITCH_ORIGIN)
+  const y = stepToY(ENGRAVE.barNumberPitch + fontHeightOf('measurefont') * 2 - PITCH_ORIGIN)
   return {
     text,
     x,
@@ -3222,7 +3200,7 @@ let SCORE_FONTS: Score['fonts'] = {}
 
 /** A `%%<type>font`'s size in staff spaces — `round(pt x 4 / 3)` px (`get-font-and-attr.js:29`). */
 const fontSizeOf = (type: AbcFontType): number =>
-  Math.round(((SCORE_FONTS[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / ABCJS_PX_PER_SPACE
+  Math.round(((SCORE_FONTS[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / STAFF_SPACE_PX
 
 /**
  * What `getTextSize.calc` returns as a `%%<type>font`'s HEIGHT, in staff spaces.
@@ -3326,7 +3304,7 @@ const chordParts = (chord: string): readonly [string, string, string] => {
  */
 const goldenTextWidth = (text: string, size: number, face: Face): number => {
   if (text === '') return 0
-  const px = size * ABCJS_PX_PER_SPACE
+  const px = size * STAFF_SPACE_PX
   const table =
     px >= 27 || px >= 21
       ? GOLDEN_REPEAT // asks for `titlefont` / `subtitlefont`; neither key exists
@@ -3347,7 +3325,7 @@ const goldenTextWidth = (text: string, size: number, face: Face): number => {
     for (let i = 0; i < line.length; i++) width += table[line[i] as string] ?? 8
     if (width > widest) widest = width
   }
-  return widest / ABCJS_PX_PER_SPACE
+  return widest / STAFF_SPACE_PX
 }
 
 /**
@@ -3601,10 +3579,10 @@ function noteText(
   // `"@1,1E"e` alone reserved 22.38px abcjs does not.
   for (const a of annotations) {
     if (a.where !== 'relative') continue
-    const y = stepToY(minStep + 3 + a.dy / ABCJS_PITCH_PX)
+    const y = stepToY(minStep + 3 + a.dy / STEP_PX)
     texts.push({
       text: a.text,
-      x: headX + a.dx / ABCJS_PX_PER_SPACE,
+      x: headX + a.dx / STAFF_SPACE_PX,
       y,
       size: fontSizeOf('annotationfont'),
       bold: false,
@@ -6692,11 +6670,11 @@ function topTextBlock(
   // table does not list, where the generator falls back to `size + 2`.
   const advance = (size: number, extra = 0): void => {
     y +=
-      Math.round((goldenTextHeight(size) + extra) * ENGRAVE.lineSkipFactor * ABCJS_PX_PER_SPACE) /
-      ABCJS_PX_PER_SPACE
+      Math.round((goldenTextHeight(size) + extra) * ENGRAVE.lineSkipFactor * STAFF_SPACE_PX) /
+      STAFF_SPACE_PX
   }
   const sizeOf = (type: AbcFontType): number =>
-    Math.round(((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / ABCJS_PX_PER_SPACE
+    Math.round(((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / STAFF_SPACE_PX
   /** A boxed font measures `height + padding * 4`, `padding = size * fontboxpadding`. */
   const boxOf = (type: AbcFontType): number =>
     fonts[type]?.box === true ? sizeOf(type) * ENGRAVE.fontBoxPadding * 4 : 0
@@ -6867,7 +6845,7 @@ function appendFreeText(
 ): number {
   let y = from
   const sizeOf = (type: AbcFontType): number =>
-    Math.round(((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / ABCJS_PX_PER_SPACE
+    Math.round(((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / STAFF_SPACE_PX
   /**
    * A BOXED font measures `height + padding * 4`, and both of these rows move by their
    * MEASURED height — `getTextSize.calc` in `subtitle.js:8` and `free-text.js:19`. Leaving
@@ -6879,9 +6857,9 @@ function appendFreeText(
     if (block.separator !== undefined) {
       // The RULE COSTS NO HEIGHT — `drawSeparator` paints at the cursor and moves nothing
       // — so the line is worth exactly its two spaces. Points to staff spaces on the way.
-      y += block.separator.above / ABCJS_PX_PER_SPACE
-      rules.push({ y, width: block.separator.length / ABCJS_PX_PER_SPACE })
-      y += block.separator.below / ABCJS_PX_PER_SPACE
+      y += block.separator.above / STAFF_SPACE_PX
+      rules.push({ y, width: block.separator.length / STAFF_SPACE_PX })
+      y += block.separator.below / STAFF_SPACE_PX
       continue
     }
     if (block.role === 'subtitle') {
@@ -6939,7 +6917,7 @@ function freeTextBlock(
     y1: r.y,
     x2: (width + r.width) / 2,
     y2: r.y,
-    thickness: 1 / ABCJS_PX_PER_SPACE,
+    thickness: 1 / STAFF_SPACE_PX,
   }))
   return { texts, lines, height }
 }
@@ -7382,33 +7360,6 @@ interface StaffFurniture {
  * Read ours from the STACKING LOOP and not from in here: `verticalExtent` also runs for
  * the top-text block, and mixing the two scrambles the staff order.
  */
-/**
- * A text's HEIGHT as the golden generator measures it — `fontHeights[round(size)]` with
- * `size + 2` for anything unlisted (`Tools/abcjs-debug/dump-svg.js:50-58,105`).
- *
- * The seven listed sizes are the seven abcjs font DEFAULTS, so a tune that sets no font
- * only ever reaches them and this is exactly the constant it used to. A `%%gchordfont
- * Arial 80` resolves to 107px, which is unlisted, and the generator falls back — so the
- * lane it reserves is 109 and matching that is matching abcjs's own SVG.
- *
- * Its WIDTH cannot be matched the same way: `calcWidth` maps every size onto one of six
- * per-character tables and an 80pt chord symbol is measured with the 27px title table.
- * That is a property of the GOLDEN, like `little swallow`'s CJK, and is recorded in the
- * checkpoint rather than reproduced.
- */
-const GOLDEN_TEXT_HEIGHTS: Readonly<Record<number, number>> = {
-  15: 17.5,
-  16: 18.52,
-  17: 18.84,
-  19: 21.06,
-  20: 22.16,
-  21: 23.27,
-  27: 29.91,
-}
-const goldenTextHeight = (sizeInSpaces: number): number => {
-  const px = sizeInSpaces * 7.75
-  return (GOLDEN_TEXT_HEIGHTS[Math.round(px)] ?? px + 2) / 7.75
-}
 
 const PROBE = process.env.ABCTS_PROBE !== undefined
 /** Item probes fire only on the SOLVED pass — the solve runs `lineAt` up to eight times. */
@@ -7834,8 +7785,7 @@ function beamDirections(
       if (pitches.length === 0) continue
       // abcjs's `averagepitch`, in ITS pitch units so the rounding lands where its does.
       const average =
-        pitches.reduce((sum, p) => sum + pitchToStep(p, clef), 0) / pitches.length +
-        ABCJS_PITCH_ORIGIN
+        pitches.reduce((sum, p) => sum + pitchToStep(p, clef), 0) / pitches.length + PITCH_ORIGIN
       const seen = totals.get(event.beamGroup)
       if (seen === undefined) totals.set(event.beamGroup, { total: Math.round(average), count: 1 })
       else {
@@ -7849,7 +7799,7 @@ function beamDirections(
   // A beam cannot join opposed stems, so a forced voice's beams all point its way.
   const declared = voice?.stemDirection == null ? forced : voice.stemDirection === 'up'
   for (const [group, { total, count }] of totals) {
-    directions.set(group, declared ?? total / count < ABCJS_PITCH_ORIGIN)
+    directions.set(group, declared ?? total / count < PITCH_ORIGIN)
   }
   return directions
 }
