@@ -230,9 +230,20 @@ const WITHIN: Readonly<Record<string, number>> = {
   // closes its rest/note branch and THEN calls `addGraceNotes`. `(f3 {a})y` was a whole
   // notehead short — the last CONTENT gap but one — and the `25` bucket moved with it,
   // which no geometric fix had managed.
-  '0.05': 146,
-  '1': 156,
-  '5': 167,
+  // `%%setfont-N` AND `$N`, AND A ROW THAT CHANGES FONT MID-LINE ADVANCES BY A DIFFERENT
+  // RULE. `addTextIf` moves a plain row by `Math.round(size.height * 1.1)`; `richText`
+  // moves a phrase row by `largestY`, the tallest phrase's RAW height, with no 1.1 and no
+  // rounding — so a title row is 33 against 29.91 and a composer row 23 against 21.06.
+  // A phrase's own font is measured at its RAW size too: `getTextSize.calc` applies the
+  // `pt -> px` 4/3 only when handed a font by NAME, never when handed a font OBJECT, which
+  // is what a `%%setfont` is.
+  // AND `\n` IS A LINE BREAK INSIDE A QUOTED CHORD — `substInChord`, not the accent
+  // machinery, which leaves an unknown escape's backslash alone. `"C$1m$7\ntwo"` was one
+  // line reading `C$1m$7ntwo`: one chord lane where abcjs takes two, and a mark four
+  // characters too wide. All four of `visual-misc-06`'s axes were that one chord.
+  '0.05': 147,
+  '1': 157,
+  '5': 168,
   '25': 173,
 }
 

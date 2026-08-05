@@ -36,8 +36,10 @@ import {
   type MusicEvent,
   type NoteStyle,
   type Pitch,
+  plainText,
   type Rational,
   type Rest,
+  type RichText,
   rational,
   ratToNumber,
   type Score,
@@ -2267,7 +2269,6 @@ function layoutNoteheads(
   // The OUTLINE stays Bravura's — anchors are a property of the shape — while the
   // metrics come from the active table, so strict spaces at abcjs's widths.
   const head = GLYPHS[headName]
-  const headAdvance = glyphsFor(strict).advance(headName)
   const headInk = glyphsFor(strict).width(headName)
   const glyphs: PlacedGlyph[] = []
   const lines: PlacedLine[] = []
@@ -6795,6 +6796,38 @@ function topTextBlock(
       Math.round((goldenTextHeight(size) + extra) * ENGRAVE.lineSkipFactor * STAFF_SPACE_PX) /
       STAFF_SPACE_PX
   }
+  /**
+   * …AND A ROW THAT CHANGED FONT MID-LINE ADVANCES BY A DIFFERENT RULE ENTIRELY.
+   *
+   * `addTextIf` moves a plain row by `Math.round(size.height * 1.1)` (`add-text-if.js:26`).
+   * `richText` moves a phrase row by `largestY` — the tallest phrase's RAW height, with no
+   * 1.1 and no rounding (`rich-text.js:42-47`). Nothing reconciles the two, so every row
+   * carrying a `$N` is about 10% shorter than the same row without one:
+   *
+   *   title    29.91 -> round(32.901) = 33   vs  29.91   = 3.09px
+   *   composer 21.06 -> round(23.166) = 23   vs  21.06   = 1.94px
+   *
+   * Both figures are measured, and both are exact.
+   *
+   * AND A PHRASE'S OWN FONT IS MEASURED AT ITS RAW SIZE. `getTextSize.calc` applies the
+   * `pt -> px` 4/3 only when it is handed a font by NAME; handed a font OBJECT — which is
+   * what a `%%setfont` is — it builds the attrs straight from `type.size`
+   * (`get-text-size.js:24-43`). So `%%setfont-1 … 40` measures 40px where `%%titlefont 40`
+   * would measure 53. Probed on `%%setfont-1 cursive 40 bold`, whose row is 42 = 40 + 2.
+   */
+  const advanceRich = (value: RichText, defaultSize: number): void => {
+    let largest = goldenTextHeight(defaultSize)
+    for (const phrase of typeof value === 'string' ? [] : value) {
+      if (phrase.font === null) continue
+      largest = Math.max(largest, goldenTextHeight(phrase.font.size / STAFF_SPACE_PX))
+    }
+    y += largest
+  }
+  /** A row advances one way or the other — never both. */
+  const advanceText = (value: RichText, size: number, extra = 0): void => {
+    if (typeof value === 'string') advance(size, extra)
+    else advanceRich(value, size)
+  }
   const sizeOf = (type: AbcFontType): number =>
     Math.round(((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / STAFF_SPACE_PX
   /** A boxed font measures `height + padding * 4`, `padding = size * fontboxpadding`. */
@@ -6804,10 +6837,10 @@ function topTextBlock(
 
   const titleSize = sizeOf('titlefont')
   const [title, ...subtitles] = metadata.titles
-  if (title !== undefined && title !== '') {
+  if (title !== undefined && plainText(title) !== '') {
     y += ENGRAVE.titleSpace
     texts.push({
-      text: title,
+      text: plainText(title),
       role: 'title',
       x: centre,
       // abcjs writes the baseline one font size below the cursor (`text.js:30`).
@@ -6817,15 +6850,15 @@ function topTextBlock(
       italic: false,
       anchor: 'middle',
     })
-    advance(titleSize, boxOf('titlefont'))
+    advanceText(title, titleSize, boxOf('titlefont'))
   }
 
   // Second and later `T:` fields are subtitles — abcm2ps's convention, and abcjs's.
   for (const subtitle of subtitles) {
-    if (subtitle === '') continue
+    if (plainText(subtitle) === '') continue
     y += ENGRAVE.subtitleSpace
     texts.push({
-      text: subtitle,
+      text: plainText(subtitle),
       role: 'title',
       x: centre,
       y: y + sizeOf('subtitlefont'),
@@ -6834,14 +6867,17 @@ function topTextBlock(
       italic: false,
       anchor: 'middle',
     })
-    advance(sizeOf('subtitlefont'), boxOf('subtitlefont'))
+    advanceText(subtitle, sizeOf('subtitlefont'), boxOf('subtitlefont'))
   }
 
   // ONE row carrying up to three fields: rhythm left, composer and origin right. They
   // share a baseline, so the row advances once however many are present.
-  const rhythm = metadata.rhythm ?? ''
-  const composer = metadata.composer ?? ''
-  const origin = metadata.origin ?? ''
+  const rhythmRich = metadata.rhythm ?? ''
+  const composerRich = metadata.composer ?? ''
+  const originRich = metadata.origin ?? ''
+  const rhythm = plainText(rhythmRich)
+  const composer = plainText(composerRich)
+  const origin = plainText(originRich)
   if (rhythm !== '' || composer !== '' || origin !== '') {
     y += ENGRAVE.composerSpace
     if (rhythm !== '') {
@@ -6877,13 +6913,17 @@ function topTextBlock(
     // and `composerfont` alone sets the row. Taking the max spent `%%infofont Monaco 11
     // box`'s 24px where abcjs spent `%%composerfont Arial 8 box`'s 19.
     const rowFont: AbcFontType = composer !== '' || origin !== '' ? 'composerfont' : 'infofont'
-    advance(sizeOf(rowFont), boxOf(rowFont))
+    // …and the field that MOVES the row is the one whose rich-vs-plain rule applies.
+    const mover =
+      rowFont === 'composerfont' ? (composer !== '' ? composerRich : originRich) : rhythmRich
+    advanceText(mover, sizeOf(rowFont), boxOf(rowFont))
   }
 
   // `A:` — the author of the words. Its own row, right-aligned in `composerfont`, with NO
   // leading gap: abcjs spends `spacing.composer` only before the rhythm/composer row and
   // writes this one bare (`top-text.js:68-71`). Measured on a control pair, exactly 23px.
-  const author = metadata.author ?? ''
+  const authorRich = metadata.author ?? ''
+  const author = plainText(authorRich)
   if (author !== '') {
     texts.push({
       text: author,
@@ -6895,11 +6935,12 @@ function topTextBlock(
       italic: true,
       anchor: 'end',
     })
-    advance(sizeOf('composerfont'), boxOf('composerfont'))
+    advanceText(authorRich, sizeOf('composerfont'), boxOf('composerfont'))
   }
 
   // A HEADER `P:` — the part ORDER, left-aligned in `partsfont`, closing the block. 24px.
-  const partOrder = metadata.partOrder ?? ''
+  const partOrderRich = metadata.partOrder ?? ''
+  const partOrder = plainText(partOrderRich)
   if (partOrder !== '') {
     texts.push({
       text: partOrder,
@@ -6911,7 +6952,7 @@ function topTextBlock(
       italic: false,
       anchor: 'start',
     })
-    advance(sizeOf('partsfont'), boxOf('partsfont'))
+    advanceText(partOrderRich, sizeOf('partsfont'), boxOf('partsfont'))
   }
 
   // `%%center` lines standing before the music close the block. Centred like the title,
@@ -7643,7 +7684,6 @@ function verticalExtent(
       // DRAWN IN THE LAYOUT PHASE, so it never reached `staff.top` — see `noReserve`. A
       // beamed grace group's stems and its beam are the whole of this case.
       if (line.noReserve === true) continue
-      const half = line.thickness / 2
       // A STEM reserves one step below its low end — `bottom: p1 - 1` on the stem's
       // RelativeElement (`abstract-engraver.js:762`), `p1` being the low pitch. On an
       // up-stem that end is at the notehead and the head's own box swallows it; on a

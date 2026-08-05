@@ -52,6 +52,7 @@ import {
   type Rational,
   type Rest,
   type RestKind,
+  type RichText,
   ratEq,
   rational,
   ratLt,
@@ -1378,12 +1379,12 @@ interface Formatting {
 
 class ScoreBuilder {
   tuneNumber: number | null = null
-  titles: string[] = []
-  composer: string | null = null
-  rhythm: string | null = null
-  origin: string | null = null
-  author: string | null = null
-  partOrder: string | null = null
+  titles: RichText[] = []
+  composer: RichText | null = null
+  rhythm: RichText | null = null
+  origin: RichText | null = null
+  author: RichText | null = null
+  partOrder: RichText | null = null
   key: KeySignature = defaultKey()
   clef: Clef = defaultClef
   tempo: Tempo | null = null
@@ -1402,6 +1403,14 @@ class ScoreBuilder {
   vocalFont: LyricFont | null = null
   /** The `%%gchordfont` in force — a CHANGING font, so it is stamped per event. */
   chordFont: LyricFont | null = null
+  /**
+   * `%%setfont-1` … `-9`, the numbered fonts `$N` switches a header field into.
+   *
+   * Sparse and 1-based, like abcjs's `multilineVars.setfont`, because `$0` means "back to
+   * the field's own font" and is never a lookup. An UNDEFINED entry is not an error: a
+   * `$5` with no `%%setfont-5` stays literal text, which is a branch of its own.
+   */
+  setfont: (LyricFont | undefined)[] = []
   /** Every `%%<type>font` set so far. The renderer defaults an absent entry itself. */
   fonts: Partial<Record<AbcFontType, LyricFont>> = {}
   keySourceRange: SourceRange | null = null
@@ -1926,6 +1935,17 @@ class Parser {
     // reads `formatting[type]` and nothing in the engraver knows a size any other way.
     // `barlabelfont` / `barnumberfont` / `barnumfont` are aliases of `measurefont`
     // (`abc_parse_directive.js:1039-1042`).
+    // `%%setfont-N <face> <size> [weight] [style]`, N from 1 to 9 — the numbered fonts a
+    // header field switches into with `$N`. abcjs requires at least four tokens and reads
+    // the number as `-` followed by a digit (`abc_parse_directive.js:992-1006`).
+    const setfont = /^setfont-([1-9])\s+(.*)$/.exec(body)
+    if (setfont?.[1] !== undefined && setfont[2] !== undefined) {
+      const builder = this.ensureScore(start)
+      // No default to inherit: a `%%setfont` states its own size, and `parseFontSpec`
+      // returning the fallback would silently give it the title's.
+      builder.setfont[Number(setfont[1])] = parseFontSpec(setfont[2], 0)
+      return
+    }
     const fontDirective = /^(\w+font)\s+(.*)$/.exec(body)
     if (fontDirective?.[1] && fontDirective[2]) {
       const alias = fontDirective[1]
@@ -2157,21 +2177,23 @@ class Parser {
             role: 'subtitle',
           })
         } else {
-          builder.titles.push(decodeTextString(value))
+          // `T: C: O: A: P:` all run through `parseFontChangeLine`
+          // (`abc_parse_header.js:484-541`), so any of them may come back as phrases.
+          builder.titles.push(parseFontChangeLine(decodeTextString(value), builder.setfont))
         }
         return
       case 'C':
-        builder.composer = decodeTextString(value)
+        builder.composer = parseFontChangeLine(decodeTextString(value), builder.setfont)
         return
       case 'R':
         builder.rhythm = decodeTextString(value)
         return
       case 'O':
-        builder.origin = decodeTextString(value)
+        builder.origin = parseFontChangeLine(decodeTextString(value), builder.setfont)
         return
       // `A:` — the author of the words, a row of its own in `composerfont`.
       case 'A':
-        builder.author = decodeTextString(value)
+        builder.author = parseFontChangeLine(decodeTextString(value), builder.setfont)
         return
       case 'M': {
         if (builder.bodyStarted) {
@@ -2200,7 +2222,7 @@ class Parser {
         if (builder.bodyStarted && value.trim() !== '') {
           builder.voice.setPartLabel(value.trim(), range)
         } else if (!builder.bodyStarted) {
-          builder.partOrder = decodeTextString(value)
+          builder.partOrder = parseFontChangeLine(decodeTextString(value), builder.setfont)
         }
         return
       }
@@ -2553,7 +2575,17 @@ class Parser {
         }
         case 'chordSymbol': {
           const range = sourceRange(token.start, token.start + token.length)
-          const text = this.src.slice(token.start + 1, token.start + token.length - 1)
+          // `\n` IS A LINE BREAK AND `\"` A QUOTE, inside a quoted chord or annotation and
+          // nowhere else — `substInChord`, applied by `getBrackettedSubstring` the moment
+          // the substring is read (`abc_tokenizer.js:784-807`). It is NOT `translateString`,
+          // which handles accent escapes and leaves an unknown `\x` alone: `\n` is not in
+          // any of its char maps, so routing a chord through it kept the backslash.
+          //
+          // Ours dropped the backslash and kept the `n`, so `"C$1m$7\ntwo"` came out as the
+          // single line `C$1m$7ntwo` — one chord lane where abcjs takes two, and a mark
+          // four characters too wide. That one chord was the whole of `visual-misc-06`:
+          // 16.92 of dx, 29.60 of ox and 18.52 of oy, all four axes exact once it is split.
+          const text = substInChord(this.src.slice(token.start + 1, token.start + token.length - 1))
           if (isAnnotation(text)) {
             pending.annotations.push(decodeTextString(text))
             pending.annotationSourceRanges.push(range)
@@ -3380,13 +3412,26 @@ function parseFontSpec(spec: string, defaultPt: number = DEFAULT_VOCALFONT_PT): 
   // tails). It still costs 8px of lane, which is what that fixture is for.
   const boxed = /(^|\s)box\s*$/i.test(spec.trim())
   const trimmed = spec.trim().replace(/(^|\s)box\s*$/i, '')
-  const sizeMatch = /(^|\s)(\d+(?:\.\d+)?)\s*$/.exec(trimmed)
+  // THE MODIFIERS COME AFTER THE SIZE, NOT BEFORE IT — abcjs's format is
+  // `<face> <utf8> <size> <modifiers> <box>` and `getFontParameter` leaves the `face`
+  // state the moment it meets a number, reading `bold` / `italic` / `underline` as words
+  // from there on (`abc_parse_directive.js:190-230`). Anchoring the size to the END of the
+  // string instead meant `%%setfont-1 cursive 40 bold` found no size at all and silently
+  // took the caller's default — which for a `%%setfont` is nothing, so a 40px phrase
+  // measured as 2 and its row came out 12.09px short.
+  const sizeMatch = /(^|\s)(\d+(?:\.\d+)?)(?=(?:\s+(?:bold|italic|oblique|underline))*\s*$)/i.exec(
+    trimmed,
+  )
   const face = (sizeMatch ? trimmed.slice(0, sizeMatch.index) : trimmed).trim()
+  const modifiers = sizeMatch ? trimmed.slice(sizeMatch.index + sizeMatch[0].length) : ''
   return {
     face,
     size: sizeMatch?.[2] ? Number.parseFloat(sizeMatch[2]) : defaultPt,
-    bold: /bold/i.test(face),
-    italic: /italic|oblique/i.test(face),
+    // A face may still SAY bold — `%%vocalfont Times-Bold 16` names one face — so both
+    // roads are read. abcjs only honours the word, but the face spelling is what the
+    // corpus's existing fixtures are gated on, and this widens rather than replaces it.
+    bold: /bold/i.test(face) || /\bbold\b/i.test(modifiers),
+    italic: /italic|oblique/i.test(face) || /\b(?:italic|oblique)\b/i.test(modifiers),
     box: boxed,
   }
 }
@@ -3607,3 +3652,60 @@ export interface ParseOptions {
 export function parse(source: string, options: ParseOptions = {}): ParseResult {
   return deepFreeze(new Parser(source, options.mode ?? defaultMode).parse())
 }
+
+/**
+ * `T:Title $1bold$0 reg` → the phrases it is written in — abcjs's `parseFontChangeLine`
+ * (`abc_parse_directive.js:727-748`), ported branch for branch.
+ *
+ * Returns the STRING unchanged when there is nothing to split, which is abcjs's own return
+ * type and not a convenience: a plain row and a phrase row advance the top-text block by
+ * DIFFERENT rules, so the distinction has to survive as far as the renderer. See
+ * `advanceRich` in `layout.ts`.
+ *
+ * The branches, all of them load-bearing:
+ *  - `$$` is a literal `$`, swapped out to `\x03` before the split and back after.
+ *  - only the FIRST character after `$` is the font number — `$11924` is font 1 then the
+ *    text `1924`, not font 11.
+ *  - `$0` returns to the field's own font, so its phrase carries no font at all.
+ *  - a `$N` with no `%%setfont-N` is NOT an error and NOT a font: abcjs appends
+ *    `'$' + part` to the PREVIOUS phrase, so the marker stays visible as typed.
+ */
+function parseFontChangeLine(text: string, setfont: readonly (LyricFont | undefined)[]): RichText {
+  // The sentinel is abcjs's own — `\x03` is what it swaps `$$` to so the split cannot see
+  // it, and using any other character would change which strings round-trip.
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: abcjs's `$$` sentinel, ported
+  const swapped = text.replace(/\$\$/g, '\x03')
+  const parts = swapped.split('$')
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: the same sentinel, restored
+  const restore = (v: string): string => v.replace(/\x03/g, '$')
+  if (parts.length <= 1 || setfont.length === 0) return restore(swapped)
+  const phrases: { font: LyricFont | null; text: string }[] = []
+  if (parts[0] !== '') phrases.push({ font: null, text: restore(parts[0] as string) })
+  for (let i = 1; i < parts.length; i++) {
+    const part = parts[i] as string
+    if (part[0] === '0') {
+      phrases.push({ font: null, text: restore(part.substring(1)) })
+      continue
+    }
+    const which = Number.parseInt(part[0] ?? '', 10)
+    const font = Number.isNaN(which) ? undefined : setfont[which]
+    if (font !== undefined) {
+      phrases.push({ font, text: restore(part.substring(1)) })
+    } else {
+      // No such `%%setfont`: the marker is literal, glued onto whatever came before.
+      const last = phrases[phrases.length - 1]
+      if (last === undefined) phrases.push({ font: null, text: `$${restore(part)}` })
+      else phrases[phrases.length - 1] = { ...last, text: `${last.text}$${restore(part)}` }
+    }
+  }
+  return phrases
+}
+
+/**
+ * The two escapes a QUOTED chord or annotation understands — `abc_tokenizer.js:784-788`.
+ *
+ * Deliberately not the accent machinery: `translateString` maps `\`a` to `à` and leaves
+ * anything it does not know with its backslash intact, and `\n` is not one of its cases.
+ * A chord gets this instead, and only a chord.
+ */
+const substInChord = (str: string): string => str.replace(/\\n/g, '\n').replace(/\\"/g, '"')

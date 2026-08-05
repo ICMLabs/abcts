@@ -25,7 +25,7 @@
  * tomorrow, oddities included. Opt into corrections with `abcts` proper and mode
  * `abc2.1`.
  */
-import type { Score } from '../core/model.js'
+import { plainText, type Score } from '../core/model.js'
 import { parse } from '../parser/parser.js'
 import { STAFF_SPACE_PX } from '../renderer/abcjs-constants.js'
 import { layout } from '../renderer/layout.js'
@@ -95,7 +95,10 @@ export function renderAbc(target: Target, abc: string, params: AbcjsParams = {})
       ...(params.staffwidth === undefined ? {} : { pageWidth: params.staffwidth }),
     }),
     score,
-    metaText: score.metadata.titles[0] === undefined ? {} : { title: score.metadata.titles[0] },
+    // abcjs's `metaText.title` is a plain string even when the field changed font
+    // mid-line — the phrases are a LAYOUT structure, not part of the public shape.
+    metaText:
+      score.metadata.titles[0] === undefined ? {} : { title: plainText(score.metadata.titles[0]) },
   }))
 
   const element = resolve(target)

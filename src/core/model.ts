@@ -797,25 +797,51 @@ export interface Voice {
   readonly measures: readonly Measure[]
 }
 
+/**
+ * One run of text in ONE font, inside a header field that changed font mid-line.
+ *
+ * `$1` switches to `%%setfont-1` and `$0` switches back, so `T:Title $1bold$0 reg` is three
+ * phrases (`abc_parse_directive.js:727-748`). A `null` font means the field's own default.
+ */
+export interface RichPhrase {
+  readonly font: LyricFont | null
+  readonly text: string
+}
+
+/**
+ * A header field that may or may not have changed font part-way through.
+ *
+ * A UNION rather than always-an-array, because that is exactly what abcjs returns:
+ * `parseFontChangeLine` gives back the plain string when the line holds no `$N` — or when
+ * it does but no `%%setfont` defined that number — and an ARRAY of phrases otherwise. The
+ * distinction is not cosmetic. It selects a different ROW HEIGHT downstream, and the two
+ * differ by 10% and a rounding on every affected row. See `richTextRowHeight`.
+ */
+export type RichText = string | readonly RichPhrase[]
+
+/** The text of a rich field with its font changes flattened away. */
+export const plainText = (value: RichText | null): string =>
+  value === null ? '' : typeof value === 'string' ? value : value.map((p) => p.text).join('')
+
 export interface ScoreMetadata {
   readonly tuneNumber: number | null
-  readonly titles: readonly string[]
-  readonly composer: string | null
-  readonly rhythm: string | null
+  readonly titles: readonly RichText[]
+  readonly composer: RichText | null
+  readonly rhythm: RichText | null
   /** `O:` — where the tune comes from. Printed in the top-text block beside the composer. */
-  readonly origin: string | null
+  readonly origin: RichText | null
   /**
    * `A:` — the author of the words. Its own row at the foot of the top-text block, drawn
    * right-aligned in `composerfont` (`top-text.js:68-71`), and it costs 23px whether or
    * not a composer row precedes it. Measured on a control pair.
    */
-  readonly author: string | null
+  readonly author: RichText | null
   /**
    * A HEADER `P:` — the part ORDER, `AABB`. A different field from the body `P:` that
    * labels a part, and a different font: it closes the top-text block left-aligned in
    * `partsfont` (`top-text.js:73-77`), for 24px.
    */
-  readonly partOrder: string | null
+  readonly partOrder: RichText | null
 }
 
 /**
