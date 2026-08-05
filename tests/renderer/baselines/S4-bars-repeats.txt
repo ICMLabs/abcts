@@ -543,7 +543,7 @@ system 0 width=90.323 originY=0.000
       line  45.582,-2.000 -> 45.582,2.000 t=0.516
     rest x=47.131 w=9.482
       glyph restHalf 47.131,0.000
-      glyph augmentationDot 48.932,-0.500
+      glyph augmentationDot 48.969,-0.500
     bar x=54.279 w=3.110
       glyph repeatDots 54.279,1.976
       glyph repeatDots 56.988,1.976
@@ -554,7 +554,7 @@ system 0 width=90.323 originY=0.000
       glyph restQuarter 58.408,0.000
     rest x=62.534 w=6.705
       glyph restQuarter 62.534,0.000
-      glyph augmentationDot 63.902,-0.500
+      glyph augmentationDot 63.939,-0.500
     rest x=67.589 w=3.871
       glyph rest8th 67.589,0.000
     bar x=70.507 w=0.077

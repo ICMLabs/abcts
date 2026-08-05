@@ -347,6 +347,22 @@ export const ABCJS_PITCH = {
   decorationTextThickness: 3,
   /** `margin = 1` — one pitch between every lane (`set-upper-and-lower-elements.js:102`). */
   laneMargin: 1,
+  /**
+   * An UNBEAMED stem's length — `Math.round(70 * this.voiceScale) / 10`
+   * (`abstract-engraver.js:740`), so 7 at the default scale, measured from the note's own
+   * pitch rather than run up from a base. NOT the beamed one, which comes from
+   * `renderer.spacing.stemHeight` and is 9.5 — see `ENGRAVE.beamStemHeight`.
+   *
+   * Lance's worked example for the whole triage: `stemLength: 3.5` staff spaces IS this 7,
+   * the same number with no citation and therefore nothing to catch it drifting.
+   */
+  stemLength: 7,
+  /**
+   * `volumeHeightBelow` and `dynamicHeightBelow`, both 6 (`dynamic-decoration.js:8`,
+   * `crescendo-element.js:11`). A staff with both reserves `max(...) + margin` in one go
+   * (`set-upper-and-lower-elements.js:66`), which is why this is one figure and not two.
+   */
+  dynamicLane: 6,
   /** `chordHeightAbove`, from the 16px `gchordfont`'s measured height of 18.52px. */
   chordHeightAbove: 4.779354838709677,
   /** `partHeightAbove`, from the 20px `partsfont`'s 22.16px. */

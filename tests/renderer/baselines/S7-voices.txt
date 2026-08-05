@@ -670,7 +670,7 @@ system 0 width=90.231 originY=0.000
       line  78.585,5.333 -> 78.585,0.000 t=0.129
     rest x=81.647 w=3.352
       glyph rest16th 81.647,0.000
-      glyph augmentationDot 83.252,-0.500
+      glyph augmentationDot 83.289,-0.500
     note@-11 x=85.339 w=2.182
       glyph noteheadBlack 85.339,5.500
       glyph flag32ndUp 86.528,0.000
@@ -2476,23 +2476,23 @@ system 0 width=90.895 originY=0.000
       glyph timeSig4 9.781,1.000
     rest x=12.593 w=9.482
       glyph restHalf 12.593,0.000
-      glyph augmentationDot 14.395,-0.500
+      glyph augmentationDot 14.432,-0.500
       text  12.593,-5.367 size=2.065 "Trompette"
     bar x=18.255 w=0.077
       line  18.294,-2.000 -> 18.294,2.000 t=0.077
     rest x=19.674 w=9.482
       glyph restHalf 19.674,0.000
-      glyph augmentationDot 21.476,-0.500
+      glyph augmentationDot 21.513,-0.500
     bar x=26.088 w=0.077
       line  26.126,-2.000 -> 26.126,2.000 t=0.077
     rest x=27.507 w=9.482
       glyph restHalf 27.507,0.000
-      glyph augmentationDot 29.308,-0.500
+      glyph augmentationDot 29.346,-0.500
     bar x=33.955 w=0.077
       line  33.994,-2.000 -> 33.994,2.000 t=0.077
     rest x=35.374 w=9.482
       glyph restHalf 35.374,0.000
-      glyph augmentationDot 37.176,-0.500
+      glyph augmentationDot 37.213,-0.500
     bar x=41.787 w=2.335
       glyph repeatDots 43.723,1.976
       line  42.562,-2.000 -> 42.562,2.000 t=0.516

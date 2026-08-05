@@ -90,8 +90,16 @@ export const ENGRAVE = {
   staffLineSteps: [-4, -2, 0, 2, 4],
   /** A staff step is half a staff space. */
   spacePerStep: 0.5,
-  /** Standard stem length ≈ one octave. *Behind Bars* (Gould). */
-  stemLength: 3.5,
+  /**
+   * An UNBEAMED stem's length — abcjs's `Math.round(70 * voiceScale) / 10` = 7 pitch
+   * (`abstract-engraver.js:740`), which in staff spaces is the 3.5 this was.
+   *
+   * The SAME NUMBER it always held; only its provenance changed. It read "Standard stem
+   * length ≈ one octave, Behind Bars (Gould)" — a true statement about engraving that was
+   * not the reason the value was right, and strict had no way to tell an accident from a
+   * port. Lance's worked example for the whole `ENGRAVE` triage.
+   */
+  stemLength: spacesOfPitch(ABCJS_PITCH.stemLength),
   /**
    * How far a BEAM sits beyond its group's extreme note, in staff STEPS — abcjs's beamed
    * stem height, which is not the same constant as an unbeamed one's.
@@ -322,7 +330,7 @@ export const ENGRAVE = {
    * the music, and the room is a flat lane past it. A fixed lane for both, which is what
    * we had, gets neither right.
    */
-  dynamicBelowReserve: 7,
+  dynamicBelowReserve: ABCJS_PITCH.dynamicLane + ABCJS_PITCH.laneMargin,
   /**
    * `"^text"` above the staff and `"_text"` below.
    *
@@ -683,7 +691,7 @@ export const ENGRAVE = {
    * abcjs also exposes `%%stretchlast` to override it with a "lack" fraction. Not
    * implemented; no fixture sets it.
    */
-  lastSystemFill: 0.66,
+  lastSystemFill: ABCJS_RATIO.lastSystemFill,
   /** Vertical gap between staves WITHIN one system, on top of the minimum separation. */
   staffGap: 0,
   /**
@@ -1286,7 +1294,13 @@ function dotGlyphs(
   x: number,
   step: number,
   taken: Set<number>,
-  spacing: number = ENGRAVE.dotSpacing,
+  /**
+   * REQUIRED, not defaulted. It held `= ENGRAVE.dotSpacing`, and a default is exactly how
+   * `abcjs-strict` ends up reading one of OUR constants without anyone deciding it should:
+   * the notehead call site passed abcjs's gated value and the REST call site, which simply
+   * omitted the argument, did not. A caller that must name the value cannot forget.
+   */
+  spacing: number,
 ): PlacedGlyph[] {
   let dotStep = step % 2 === 0 ? step + 1 : step
   // ponytail: in a chord, two notes a second apart can want the same dot space — one is
@@ -1314,10 +1328,7 @@ function dotGlyphs(
  * implemented — every corpus fixture has something a quarter or shorter, so the cap
  * would never fire. Add it with the line's shortest note when a long-only tune appears.
  */
-export function naturalWidth(
-  duration: Rational,
-  spacingScale: number = ENGRAVE.spacingScale,
-): number {
+export function naturalWidth(duration: Rational, spacingScale: number): number {
   return springForDuration(ratToNumber(duration), spacingScale)
 }
 
@@ -1329,7 +1340,7 @@ export function naturalWidth(
  * (`othervoices[i].spacingduration -= spacingduration; updateNextX(...)`). The remainder is
  * arithmetic on durations already spent, not a notated value, so it arrives as a float.
  */
-export function springForDuration(d: number, spacingScale: number = ENGRAVE.spacingScale): number {
+export function springForDuration(d: number, spacingScale: number): number {
   if (!(d > 0)) return ENGRAVE.minColumnGap
   return Math.max(ENGRAVE.minColumnGap, spacingScale * Math.sqrt(d / ENGRAVE.spacingReference))
 }
@@ -2029,8 +2040,22 @@ function layoutRest(
   if (spec) {
     glyphs.push(glyphAt(spec.name, x, spec.step))
     if (spec.dots > 0) {
-      const dotX = x + glyphsFor(strict).width(spec.name) + ENGRAVE.dotGap
-      glyphs.push(...dotGlyphs(spec.dots, dotX, spec.step, new Set()))
+      // A DOTTED REST TAKES A NOTE'S DOT ARITHMETIC, because in abcjs it is literally the
+      // same call: the rest branch ends in `createNoteHead(abselem, c, {verticalPos:
+      // restpitch}, {dot, scale})` (`abstract-engraver.js:600`), so
+      // `notehead.w + dotshiftx - 2 + 5 * dot` (`create-note-head.js:50-53`) governs both.
+      //
+      // Finding 88 ported that for noteheads and stopped there, leaving this path on our
+      // own 0.35/0.45-space figures — 2.71 and 3.49px against abcjs's 3 and 5. Found by
+      // the triage rather than by a fixture: `dotGlyphs` took `ENGRAVE.dotSpacing` as a
+      // DEFAULT PARAMETER, so the gated call site passed abcjs's value and this one
+      // silently did not. That is the leak shape the whole audit is about, in one line.
+      const dotX =
+        x +
+        glyphsFor(strict).width(spec.name) +
+        (strict ? spaces(ABCJS_PX.dotOffset + ABCJS_PX.dotSpacing) : ENGRAVE.dotGap)
+      const step = strict ? spaces(ABCJS_PX.dotSpacing) : ENGRAVE.dotSpacing
+      glyphs.push(...dotGlyphs(spec.dots, dotX, spec.step, new Set(), step))
     }
   }
 

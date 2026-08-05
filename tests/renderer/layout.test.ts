@@ -23,6 +23,7 @@ import { parse } from '../../src/parser/parser.js'
 import { GLYPHS } from '../../src/renderer/glyphs.js'
 import {
   accidentalGlyph,
+  ENGRAVE,
   keyFifths,
   layout,
   layoutBook,
@@ -754,16 +755,20 @@ describe('spacing and justification', () => {
     // abcm2ps's measured duration→width curve is a pure √ — its per-halving increment
     // shrinks by ~1/√2 each step, steeper than log2. Taken from abcMusicKit2's
     // oracle-calibrated constant rather than invented.
-    expect(naturalWidth(rational(1, 16))).toBeCloseTo(3.25, 5)
-    expect(naturalWidth(rational(1, 4))).toBeCloseTo(6.5, 5)
-    expect(naturalWidth(rational(1, 1))).toBeCloseTo(13, 5)
+    // The scale is passed EXPLICITLY now — it used to default to `ENGRAVE.spacingScale`,
+    // and a default is how strict comes to read one of ours by accident. These figures are
+    // the STANDARD profile's; strict runs at abcjs's 2.7372, from `PROFILES`.
+    const std = ENGRAVE.spacingScale
+    expect(naturalWidth(rational(1, 16), std)).toBeCloseTo(3.25, 5)
+    expect(naturalWidth(rational(1, 4), std)).toBeCloseTo(6.5, 5)
+    expect(naturalWidth(rational(1, 1), std)).toBeCloseTo(13, 5)
     // Four times the duration, twice the width — at every scale.
-    expect(naturalWidth(rational(1, 2)) / naturalWidth(rational(1, 8))).toBeCloseTo(2, 5)
+    expect(naturalWidth(rational(1, 2), std) / naturalWidth(rational(1, 8), std)).toBeCloseTo(2, 5)
   })
 
   it('never lets a note fall below the rod floor', () => {
-    expect(naturalWidth(rational(1, 1024))).toBeGreaterThanOrEqual(0.6)
-    expect(naturalWidth(rational(0, 1))).toBeGreaterThanOrEqual(0.6)
+    expect(naturalWidth(rational(1, 1024), ENGRAVE.spacingScale)).toBeGreaterThanOrEqual(0.6)
+    expect(naturalWidth(rational(0, 1), ENGRAVE.spacingScale)).toBeGreaterThanOrEqual(0.6)
   })
 
   it('gives a longer note more room than a shorter one in the same bar', () => {
