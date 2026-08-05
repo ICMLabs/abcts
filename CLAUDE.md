@@ -39,9 +39,11 @@ checkpoint and hand off as you go so no context is lost.
 > "zero for the common case", left out — and that judgement was the entire remaining error
 > on `ragtime-nightingale`, the branch's one standing red. Port the quirk, then measure.
 
-Read `Docs/CHECKPOINT-2026-08-05b.md` first — the current state, and findings 71-73.
+Read `Docs/CHECKPOINT-2026-08-05b.md` first — the current state, findings 71-89, and
+**Lance's question about `ENGRAVE`, which is the next session's first job**.
 `Docs/CHECKPOINT-2026-08-05.md` is superseded for the state but keeps the line-weight audit
-finding and the golden-variables map. Then
+finding and the golden-variables map. `Docs/HANDOFF-2026-08-05b.md` has the session prompt.
+Then
 `Docs/CHECKPOINT-2026-08-04c.md` — it is the current state of play, findings
 51-64, THE METHOD that produced them, and what is left. `Docs/CHECKPOINT-2026-08-04b.md`
 holds findings 41-50, `Docs/CHECKPOINT-2026-08-04.md` the expensive lesson about "golden
@@ -183,8 +185,11 @@ gate had been comparing abcjs's outline START against our glyph ORIGIN, a 4px bi
 
 
 **Structural parity is done: note content, lyrics, beams and render structure are all
-41/41 with zero recorded divergences.** `geometry/vertical` is **699/699 with NO reds** and
-**no raised ceiling** — the last of both closed on 2026-08-05 (finding 73).
+41/41 with zero recorded divergences.** `geometry/vertical` is **700/700 with NO reds**,
+pushed, and the AUDIT FINDING IS CLOSED — no Bravura figure is reachable in strict. The
+harvested corpus is **18 of 174 off some axis**, from 34 at the start of 2026-08-05, with
+nothing above 1.77px and not one `dy` term left. ONE ceiling is raised, recorded in the
+test: `ragtime-nightingale`'s `dy` at 0.40.
 
 The work is now GEOMETRIC — does abcts put the ink where abcjs puts it. A pixel-parity
 gate (`tests/pixel-parity.test.ts`) resolves both engines' SVG to absolute pixels and
@@ -399,55 +404,56 @@ feature-coverage gap, tracked separately and implemented not at all.
 ```
 We are continuing abcts development in the abcts repo (Code/abcts).
 
-Read Docs/CHECKPOINT-2026-08-05.md first — its FIRST SECTION is an open
-audit finding and it is your first job — and Docs/HANDOFF-2026-08-05.md
-beside it. Then Docs/CHECKPOINT-2026-08-04c.md (findings 51-70 and the
-method), -08-04b.md (41-50), -08-03d.md (16-40), ARCHITECTURE.md, this file.
+Read Docs/CHECKPOINT-2026-08-05b.md first — its SECOND SECTION is Lance's
+question about `ENGRAVE` and it is your first job — and
+Docs/HANDOFF-2026-08-05b.md beside it. Then -08-05.md (the audit finding and the
+golden-variables map), -08-04c.md (findings 51-70 and the method), -08-04b.md
+(41-50), -08-03d.md (16-40), ARCHITECTURE.md, this file.
 
-THE RULE THAT MATTERS: port abcjs's STRUCTURE, then its constants.
-Reading abcjs gives you its numbers cheaply; the expensive divergences
-have all been architectural — one cursor vs per-measure columns, a
-spring/rod solve vs a width multiplier, ink-anchored lanes vs fixed
-ones. Dropping a correct constant into a different structure moves the
-output unpredictably. Before changing a constant, ask whether the
-surrounding LOOP is abcjs's; if not, fix that first.
+THE RULE THAT MATTERS: abcjs is the MASTER SOURCE. Any variability is likely a
+setting you did not copy or an algorithm you INFERRED instead of analysing. Port
+its STRUCTURE, then its constants — the expensive divergences have all been
+architectural, and a correct constant dropped into a different structure moves
+the output unpredictably.
 
-Work by INSTRUMENTING — env-guarded console.log in the vendored abcjs
-source, run its own dump-svg.js harness, then
-`git -C ../abcMusicKit checkout -- Docs/References/abcjs/` and verify
-clean. Instrument to ANSWER A QUESTION, not to see what happens: used
-that way it has killed three wrong hypotheses for one run each. Used as
-a feedback loop for guesses it is the expensive mode.
+AND STRICT SHOULD NOT BE READING OURS AT ALL. `ENGRAVE` holds 115 constants, 54
+from `ABCJS_*` and 61 ours, and `abcjs-strict` reads all 61. Every leak found on
+2026-08-05 was that: the default is our judgement and abcjs's is the exception,
+so leaks surface one fixture at a time. The triage is the first job.
 
-The bar is 100% parity with abcjs. A passing gate is not parity — the
-gate says "no worse than recorded"; parity means dy/dx/oy/ox at ZERO.
+Work by INSTRUMENTING — env-guarded console.log in the vendored abcjs source, run
+its own dump-svg.js harness, then `git -C ../abcMusicKit checkout --
+Docs/References/abcjs/` and READ the status. Instrument to ANSWER A QUESTION, not
+to see what happens.
 
-AND "THE GATE CANNOT SEE THIS" IS NOT "THE GOLDEN IS WRONG", AND
-NEITHER OF THOSE IS "SO LEAVE IT". The goldens ARE the target: two of
-the four recorded golden artefacts were OURS, and the other two are the
-generator's text metrics, which byte parity obliges us to reproduce.
+The bar is 100% parity. A passing gate is not parity — the gate says "no worse
+than recorded"; parity means dy/dx/oy/ox at ZERO.
 
-Confirm your lane with `git rev-parse --abbrev-ref HEAD`. `main` holds
-the merged vertical arc and is GREEN — keep it that way.
-`geometry/vertical` is the open arc, at 685/686.
+Confirm your lane with `git rev-parse --abbrev-ref HEAD`. `geometry/vertical` is
+the open arc, pushed and GREEN at 700/700.
 ```
 
 ### The open task, specifically
 ```
 Continue geometric parity in Code/abcts.
 
-Read Docs/CHECKPOINT-2026-08-05.md; the findings ledgers are
-Docs/CHECKPOINT-2026-08-04c.md (51-70), -08-04b.md (41-50) and
--08-03d.md (16-40).
+Read Docs/CHECKPOINT-2026-08-05b.md and Docs/HANDOFF-2026-08-05b.md; the earlier
+ledgers are -08-05.md, -08-04c.md (51-70), -08-04b.md (41-50), -08-03d.md (16-40).
 
-The VERTICAL arc is open on `geometry/vertical`, 691/692 with one
-expected red — ragtime's oy at 0.661 against 0.59. Start where the
-checkpoint says: the LINE WEIGHTS audit finding, which no gate can see
-and which needs a thickness probe written beside the fix.
+The branch is 700/700 with no reds and nothing above 1.77px on the ranked table.
+18 of 174 harvested fixtures are off some axis, from 34 at the start of
+2026-08-05, and not one carries a `dy` term any more.
 
-The method, unchanged: instrument abcjs to ANSWER A QUESTION, read the
-ground truth, restore. Port abcjs's STRUCTURE, then its constants. And
-read the STAFF TOPLINES, not only the notehead average — four toplines
-out by 38.75/11.64/27.34/31.17 says SPACING, not a shift, and the gap it
-names is a lane.
+START WITH THE AUDIT, NOT A FIXTURE: 61 of `ENGRAVE`'s 115 constants are ours and
+strict reads every one. Triage the 49 bare literals into STRUCTURAL,
+ABCJS-HAS-ITS-OWN (port and cite) and OURS BY POLICY (strict must not read it).
+The proof of an honest constants move is a baseline diff of ZERO lines.
+
+Then the slur/tie ENDPOINTS — and note `curveReserves` already derives the same
+`startY`/`endY` for the reserve, so the quantity is computed TWICE.
+
+The method, unchanged: a ladder of control tunes, then the named function, then a
+probe. Instrument abcjs to ANSWER A QUESTION, read the ground truth, restore.
+Read the SHAPE of the evidence — a floor spares every size above it, a prefix is
+`ox` with no `dx`, a step in the per-notehead table is one element too wide.
 ```

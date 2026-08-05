@@ -61,19 +61,19 @@ a staff-line list — fine in strict), ABCJS-HAS-ITS-OWN (port and cite), or OUR
 
 ## STATE
 
-| corpus | standing |
+| | standing |
 |---|---|
-| suite | **699 of 699. NO REDS.** The branch has had one standing failure for weeks and it is closed. |
-| 41-fixture | **26 of 29 at ZERO on all four axes** — `zocharti-loch` joined them on the meter glyph — and `ragtime-nightingale`'s twelve staff boundaries all measure 0.0. |
-| harvested (174) | within 0.05 / 1 / 5 / 25px: **156 / 168 / 173 / 173**. **18 of 174 off some axis**, from 34 at the start of the day. |
-| the ranked table | **NOTHING ABOVE 1.88px, AND NOT ONE `dy` TERM LEFT.** Every remaining entry is a `dx`/`ox` pair or a lone `oy`. `5` equals `25`: one fixture in 174 is outside five pixels and it is the tune-count mismatch, which has no geometry to measure. |
-| CONTENT gaps | **one left** — `parse-book_parser-04-wed`'s leading-header split. |
+| suite | **700 of 700. NO REDS.** The branch carried one standing failure for weeks; it closed this session. |
+| harvested (174) | within 0.05 / 1 / 5 / 25px: **156 / 169 / 173 / 173**. **18 of 174 off some axis**, from 34 at the start of the day. |
+| the ranked table | **NOTHING ABOVE 1.77px, AND NOT ONE `dy` TERM.** Every entry left is a `dx`/`ox` pair or a lone `oy`. |
+| `5` = `25` | Exactly ONE fixture in 174 is outside five pixels, and it is the tune-count mismatch, which has no geometry to measure. |
+| 41-fixture | Seven still carry a non-zero ceiling: `frere-jacques`, `happy-birthday`, `little swallow`, `multi-voice-lyrics-two-voices`, `ragtime-nightingale`, `two-voice-invention`, `vree-grace-notes`. Every other entry is 0 on all four axes. |
+| CONTENT gaps | **one** — `parse-book_parser-04-wed`'s leading-header split. |
+| the audit finding | **CLOSED.** No Bravura figure is reachable in `abcjs-strict`. |
 
-**ONE CEILING IS RAISED, AND IT IS RECORDED IN THE TEST.** ragtime's `dy`, 0.33 → 0.40 on
-finding 81 — 0.07px on a 2009-notehead fixture, against 3.2px off its own `dx` in the same
-commit and 5.3px off `mouse-click-01`. The rule behind it was verified exact on four
-control tunes, so what moved is a redistribution across 23 systems, not the rule.
-Its `dx` raise (16.43 → 16.53, finding 68) is long gone — 13.31 now.
+**ONE CEILING IS RAISED, AND IT IS RECORDED IN THE TEST.** `ragtime-nightingale`'s `dy`,
+0.33 → 0.40 on finding 81 — 0.07px on a 2009-notehead fixture, against 3.2px off its own
+`dx` in the same commit. `zocharti-loch`'s two came DOWN to zero on finding 86.
 
 ---
 
@@ -424,35 +424,74 @@ until it was added the question could not be put to either engine.
 
 ---
 
+## FINDING 88 — A DOT'S ARITHMETIC, AND TWO PORTS WHERE THERE LOOKED LIKE ONE
+
+`notehead.w + dotshiftx - 2 + 5 * dot` (`create-note-head.js:50-53`), stated from the
+head's ORIGIN rather than as a gap after its right edge. The first dot sits `w + 3` out and
+each further one 5px past it; ours used 2.71 and 3.49. Verified before touching anything:
+one dot lands at `headx + 12.81` and two at `+12.81` / `+17.81` on a 9.81px notehead.
+
+**AND THE ROD IS A SECOND PORT.** abcjs's dots are `addRight` children whose extent is
+`dx + getSymbolWidth("dots.dot")`, so what reaches past the notehead is the FURTHEST dot
+plus ONE dot's width. The first attempt used `count × spacing` and put 1.5px of phantom rod
+on every dotted note — **a control pair exact on all three rungs while the corpus went
+backwards.** A correct glyph POSITION and a correct element EXTENT are two ports, not one,
+and only the corpus can tell you the second one is wrong.
+
+---
+
+## FINDING 89 — THE AUDIT FINDING IS CLOSED, AND THE LAST ITEM WAS A MODEL
+
+`drawArc` (`draw/tie.js:57-102`) builds a slur or tie from the chord's UNIT VECTOR:
+
+```
+flatten = norm / 3.5                                control points, along the chord
+curve   = ±min(isTie ? 10 : 25, max(4, flatten))    bulge, PERPENDICULAR
+back edge = the same two controls displaced by thickness = 2, perpendicular
+```
+
+Three things differed and all three are visible: controls at `1 / 3.5` of the span rather
+than a third, a CLAMPED bulge rather than a ratio between our own two limits, and a
+perpendicular flat 2px rather than a vertical `midThickness`.
+
+**That flat 2 is why the four Bravura constants could not be ported one for one.** abcjs has
+no endpoint-versus-midpoint notion: its arc comes to a POINT at both ends, because the path
+returns through the same `x1,y1` it started from. `slurEndpoint`, `slurMidpoint`,
+`tieEndpoint` and `tieMidpoint` were not wrong NUMBERS — they were a different MODEL.
+
+**The ENDPOINTS are NOT ported.** abcjs starts a tie at `anchor.x + 6`, ends it at `+ 4`,
+and lifts both by `1.2` pitch (tie) or `1.5` (slur); ours uses the anchor's ink edge and
+`curveEndGap`. That is the next thing on this curve, and it is also one of the 61.
+
+---
+
 ## WHAT IS LEFT, ranked
 
 ```
- 1.88  dy= 0.0 dx= 1.9 oy=  0.0 ox=-1.0  mouse-click-01 / tablature-15
- 1.69  dy= 0.0 dx= 1.7 oy=  0.0 ox=-1.4  visual-layout-04   [score]
+ 1.77  dy= 0.0 dx= 1.8 oy=  0.0 ox=-1.5  visual-layout-04   [score]
+ 1.69  dy= 0.0 dx= 1.7 oy=  0.0 ox=-0.8  mouse-click-01 / tablature-15
  1.69  dy= 0.0 dx= 0.0 oy=  1.7 ox= 0.0  visual-parsing-10  [barnumbers, setbarnb]
- 1.09  dy= 0.0 dx= 1.1 oy=  0.0 ox=-0.7  visual-wrap-01
+ 0.94  dy= 0.0 dx= 0.9 oy=  0.0 ox=-0.2  visual-selection-01 / svg-per-line-01
 ```
 
-**NOTHING ABOVE 1.88px IS LEFT, AND NOT ONE `dy` TERM.** The vertical arc this branch is
-named for has no entry on the table at all: what remains is horizontal, plus one lone `oy`.
+**NOTHING ABOVE 1.77px, AND NOT ONE `dy` TERM.** The vertical arc this branch is named for
+has no entry on the table at all.
 
 ### NEXT, in order
 
-1. ~~**GRACE BEAMS**~~ — **DONE**, findings 74–77. ~~**`%%setfont` RICH TEXT**~~ — **DONE**,
-   findings 78–80. All three came off the table.
-2. **`mouse-click-01` / `tablature-15`, 1.88** — one tune twice, a `dx`/`ox` pair.
-3. **A CHORD SYMBOL WITH TWO BARS.** `"D"DEFG| DEFG |` is 1.99 of dx where the same tune
-   without the chord, and the same chord with one bar, are both exact. Isolated on a
-   control pair and NOT yet chased; it is what is left of `synth-flattener-09` after its
-   `M:C|` was fixed.
-4. **THE FOUR REMAINING LINE WEIGHTS** — `beamSpacing`, `barlineSeparation` (asymmetric,
-   4.0 thick→thin and 3.4 the other way), `repeatBarlineDotSeparation`, and slur/tie
-   endpoint+midpoint, which is a SHAPE port out of `draw/tie.js` and the largest.
-   `beamedStem` came off this list this session.
-3. **`%%setfont-N` / `$N` rich text** — the only measured item above 10px.
-   `parseFontChangeLine` (`abc_parse_directive.js:727-748`) + `richText`.
-4. `visual-tablature-10`'s grace before a `y` spacer; then `%%sep`/`%%text` between
-   systems; then Gonzato; then audio.
+1. **THE `ENGRAVE` TRIAGE — read the question at the top of this file first.** 61 of 115
+   constants are ours and strict reads every one. `grep` the 49 bare literals and sort each
+   into STRUCTURAL (a unit, a staff-line list — fine in strict), ABCJS-HAS-ITS-OWN (port and
+   cite), or OURS BY POLICY (and then strict must not read it). This is worth more than any
+   remaining fixture: it converts a search that runs one fixture at a time into an audit
+   that runs once.
+2. **The slur/tie ENDPOINTS**, which finding 89 deliberately left: `anchor.x + 6` / `+ 4`
+   and a lift of `1.2` pitch (tie) or `1.5` (slur), against our ink edge and `curveEndGap`.
+   The reserve path already computes abcjs's `startY`/`endY` in `curveReserves` — **the same
+   quantity is being derived twice**, which is the shape of the lyric-reserve bug.
+3. **`visual-layout-04`, 1.77** — `[score]`, a `dx`/`ox` pair, top of the table.
+4. **`visual-parsing-10`, 1.69** — the only lone `oy` left, `[barnumbers, setbarnb]`.
+5. Then Gonzato, then audio.
 
 ### STILL NEEDING A DECISION
 
