@@ -492,8 +492,8 @@ export interface Rest {
   readonly notatedDuration: Rational
   readonly kind: RestKind
   /**
-   * `!fermata!z4` is idiomatic, so a rest does carry decorations — but not ties, slurs,
-   * grace notes or lyrics, none of which apply to silence.
+   * `!fermata!z4` is idiomatic, so a rest does carry decorations — but not ties, slurs or
+   * lyrics, none of which apply to silence.
    */
   readonly decorations: readonly string[]
   readonly decorationSourceRanges: readonly SourceRange[]
@@ -508,6 +508,19 @@ export interface Rest {
   readonly chordFont: LyricFont | null
   readonly annotations: readonly string[]
   readonly annotationSourceRanges: readonly SourceRange[]
+  /**
+   * …AND ITS GRACE NOTES, for the same reason and by the same line. `createNote` calls
+   * `addGraceNotes` OUTSIDE its rest/note branch — `if (elem.gracenotes !== undefined)` at
+   * `abstract-engraver.js:834`, after both arms have run — so `{a}z` and `{a}y` engrave
+   * their graces exactly as `{a}c` does.
+   *
+   * This field's absence used to be justified here in so many words: "not ties, slurs,
+   * grace notes or lyrics, none of which apply to silence." Three of those four are right.
+   * The fourth was reasoned rather than measured, and abcjs draws the note: `(f3 {a})y`
+   * came out one notehead short and 9.6px high on every axis that reads the staff.
+   */
+  readonly graceNotes: readonly Pitch[]
+  readonly graceSlash: boolean
   readonly tuplet: TupletMark | null
   /**
    * How many BARS a `Z`/`X` stands for — the number printed over the multi-measure bar.

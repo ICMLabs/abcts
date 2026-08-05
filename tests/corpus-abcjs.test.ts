@@ -43,13 +43,12 @@ const goldenDir = join(base, 'golden')
  * Every one is a real gap found by this corpus and by nothing else in the repo.
  */
 const CONTENT_GAPS: Readonly<Record<string, string>> = {
-  // `(f3 {a})y` — the grace attaches to the `y` SPACER that follows it, and `Rest` has
-  // no `graceNotes` field, so the parser drops it. The model says so deliberately: "a
-  // rest does carry decorations — but not ties, slurs, grace notes or lyrics, none of
-  // which apply to silence". abcjs disagrees for a spacer, which is a layout device
-  // rather than silence, and draws the grace with its own stem, flag and ledger.
-  // A MODEL DECISION, not a mechanical fix — see the checkpoint.
-  'abcjs-visual-tablature-10-f3-a-y': 'a grace note before a `y` spacer is dropped at parse',
+  // CLOSED 2026-08-05: `(f3 {a})y`. This entry used to read "a MODEL DECISION, not a
+  // mechanical fix", on the grounds that a rest carries "not ties, slurs, grace notes or
+  // lyrics, none of which apply to silence". Three of those four are right. abcjs settles
+  // the fourth in one line: `createNote` closes its rest/note branch and THEN calls
+  // `addGraceNotes` (`abstract-engraver.js:834`), so a rest and a spacer engrave their
+  // graces exactly as a note does. There was no decision to make — only a line to read.
   // `%% example / T: wed / %%example / X:1` — a `T:` standing before any `X:`. abcjs
   // keeps the leading block as part of the first tune; we split it off as a tune of its
   // own, so the book has two where abcjs has one.
@@ -227,10 +226,14 @@ const WITHIN: Readonly<Record<string, number>> = {
   // and it is a PHASE difference, not a size one.
   // Plus `graceoffsets`, which is a BACKWARD walk: an accidental widens the gap before its
   // own grace, so `{e^fg}` is 7px wider than running forward at a flat 10 per note.
-  '0.05': 145,
-  '1': 155,
-  '5': 166,
-  '25': 172,
+  // AND A REST CARRIES ITS GRACES, by the line that gives it a chord symbol: `createNote`
+  // closes its rest/note branch and THEN calls `addGraceNotes`. `(f3 {a})y` was a whole
+  // notehead short — the last CONTENT gap but one — and the `25` bucket moved with it,
+  // which no geometric fix had managed.
+  '0.05': 146,
+  '1': 156,
+  '5': 167,
+  '25': 173,
 }
 
 const names = readdirSync(fixturesDir)

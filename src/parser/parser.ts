@@ -576,6 +576,8 @@ function padOverlays(measures: readonly Measure[], _meter: Meter | null): Measur
         chordFont: null,
         annotations: [],
         annotationSourceRanges: [],
+        graceNotes: [],
+        graceSlash: false,
         tuplet: null,
         measureCount: 0,
         sourceRange: null,
@@ -2409,14 +2411,17 @@ class Parser {
       const broken = voice().pendingBroken
       voice().lastBroken = broken !== null
       const scaled = applyTuplet(broken ? scaleEvent(event, broken) : event)
-      // A rest carries none of these — no ties, slurs, grace notes or chord symbols —
-      // but it still consumes the pending state so they cannot leak past it.
+      // A rest carries no ties and no slurs, but it still consumes the pending state so
+      // they cannot leak past it.
       if (scaled.type === 'rest') {
-        // A rest carries decorations, a chord symbol and annotations — but no ties, slurs,
-        // grace notes or lyrics. abcjs attaches `elem.chord` to whatever event follows the
-        // `"…"`, rest included, and engraves it identically.
+        // A rest carries decorations, a chord symbol, annotations AND GRACE NOTES — but no
+        // ties, slurs or lyrics. abcjs attaches `elem.chord` to whatever event follows the
+        // `"…"`, rest included, and calls `addGraceNotes` outside its rest/note branch
+        // entirely (`abstract-engraver.js:834`), so both engrave identically to a note's.
         voice().push({
           ...scaled,
+          graceNotes: pendingGrace,
+          graceSlash: pendingGraceSlash,
           decorations: pending.decorations,
           decorationSourceRanges: pending.decorationSourceRanges,
           chordSymbol: pending.chordSymbol,
@@ -2980,6 +2985,8 @@ class Parser {
         chordFont: null,
         annotations: [],
         annotationSourceRanges: [],
+        graceNotes: [],
+        graceSlash: false,
         tuplet: null, // set by applyTuplet() on emit
         // `Z4` is FOUR bars' rest — the multiplier counts measures, not note lengths, and
         // a bare `Z` is one. Only a multi-measure rest carries it.
