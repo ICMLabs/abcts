@@ -25,7 +25,8 @@ harmless, and left out — and that judgement was the whole remaining error. See
 |---|---|
 | suite | **699 of 699. NO REDS.** The branch has had one standing failure for weeks and it is closed. |
 | 41-fixture | **25 of 29 at ZERO on all four axes**, and `ragtime-nightingale`'s twelve staff boundaries all measure 0.0. |
-| harvested (174) | within 0.05 / 1 / 5 / 25px: **146 / 157 / 172 / 173**. **28 of 174 off some axis**, from 34 at the start of the day. |
+| harvested (174) | within 0.05 / 1 / 5 / 25px: **148 / 161 / 173 / 173**. **26 of 174 off some axis**, from 34 at the start of the day. |
+| the ranked table | **NOTHING ABOVE 3.00px.** `5` equals `25`: exactly ONE fixture in 174 is outside five pixels, and it is the tune-count mismatch that has no geometry to measure. |
 | CONTENT gaps | **one left** — `parse-book_parser-04-wed`'s leading-header split. |
 
 **ONE CEILING IS RAISED, AND IT IS RECORDED IN THE TEST.** ragtime's `dy`, 0.33 → 0.40 on
@@ -271,29 +272,51 @@ Three arithmetic corrections came with it, each its own trap:
 
 ---
 
+## FINDINGS 83–84 — TWO TABLE ENTRIES AND A CLAMP WEARING A MAXIMUM'S CLOTHES
+
+### 83. A QUARTER TONE IN A KEY SIGNATURE HAS A FUDGE OF ITS OWN
+`createKeySignature` switches on FIVE accidentals and ours knew three — `quartersharp` is
+−2.5 and `quarterflat` −1.2 (`create-key-signature.js:17-23`). Missing, they fell to the
+`?? 0` default, and 2.5 pitch of phantom staff was `synth-flattener-32`'s entire 5.74px.
+`K: C ^/f _/B _A ^D` is 5.74 and the same signature without the quarter tones is exact; one
+rung named it. abcjs DOES draw these — `accidentals.halfsharp` and `accidentals.halfflat`
+are in its own output — so the mode-split row about three-quarter tones is a different glyph
+and still stands.
+
+### 84. `Math.max(default, …sizes)` IS A FLOOR, NOT A MAXIMUM
+It reads as "the largest lyric font on this part". It is harmless for anything BIGGER than
+the default and silently wrong for anything smaller: `%%vocalfont Helvetica 10.0` draws at
+13px and had its baseline measured at 17, so the lane hung four pixels too low and every
+staff below it followed.
+
+**The tell was the shape of the evidence**: exact with NO `%%vocalfont`, exact with
+`%%vocalfont Helvetica 13.0` — the default SIZE under a different family — and wrong only at
+10.0. **A rule that is correct in one direction and wrong in the other is a clamp in a
+maximum's clothing.** Found by instrumenting OUR arithmetic rather than abcjs's: the lane,
+the height and the size all printed correctly and the baseline they were measured from did
+not. Four numbers on one line, three of them right.
+
+---
+
 ## WHAT IS LEFT, ranked
 
 ```
- 5.74  dy= 0.0 dx= 0.0 oy=  5.7 ox=-0.0  synth-flattener-32  quarter tones
- 4.01  dy= 4.0 dx= 0.9 oy=  0.9 ox=-0.4  visual-selection-01 / svg-per-line-01
  3.00  dy= 0.0 dx= 0.0 oy= -3.0 ox= 0.0  visual-tablature-17 [stretchlast, gchordfont]
- 2.63  dy= 0.0 dx= 0.0 oy=  2.6 ox= 0.0  visual-tablature-02
- 2.01  dy= 2.0 dx= 0.0 oy=  1.0 ox= 0.0  visual-options-01-fonts
+ 1.99  dy= 0.0 dx= 2.0 oy=  0.0 ox=-1.3  synth-flattener-09
+ 1.88  dy= 0.0 dx= 1.9 oy=  0.0 ox=-1.0  mouse-click-01 / tablature-15
+ 1.69  dy= 0.0 dx= 1.7 oy=  0.0 ox=-1.4  visual-layout-04   [score]
+ 1.69  dy= 0.0 dx= 0.0 oy=  1.7 ox= 0.0  visual-parsing-10  [barnumbers, setbarnb]
 ```
 
-**NOTHING ABOVE 5.74 IS LEFT.** The table opens on a FEATURE (quarter tones) for the first
-time.
+**NOTHING ABOVE 3.00px IS LEFT**, and only ONE item carries a `dy` term at all.
 
 ### NEXT, in order
 
 1. ~~**GRACE BEAMS**~~ — **DONE**, findings 74–77. ~~**`%%setfont` RICH TEXT**~~ — **DONE**,
    findings 78–80. All three came off the table.
-2. **`synth-flattener-32`, 5.74** — quarter tones, a FEATURE, and now the top of the table.
-3. **`visual-selection-01` / `svg-per-line-01`, 4.01** — down from 6.65 and still carrying
-   the only `dy` term left (4.0). Its `%%vocalfont Helvetica 10.0` is a HEADER directive, so
-   the line-granularity rule does not explain the residual; measure the lyric lane against
-   the minimum staff separation, which is what absorbs a shrinking lane.
-4. **THE FOUR REMAINING LINE WEIGHTS** — `beamSpacing`, `barlineSeparation` (asymmetric,
+2. **`visual-tablature-17`, 3.00** — `%%stretchlast` and `%%gchordfont`, a pure `oy`, and
+   the top of the table.
+3. **THE FOUR REMAINING LINE WEIGHTS** — `beamSpacing`, `barlineSeparation` (asymmetric,
    4.0 thick→thin and 3.4 the other way), `repeatBarlineDotSeparation`, and slur/tie
    endpoint+midpoint, which is a SHAPE port out of `draw/tie.js` and the largest.
    `beamedStem` came off this list this session.
