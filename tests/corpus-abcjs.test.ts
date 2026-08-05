@@ -198,7 +198,13 @@ const WITHIN: Readonly<Record<string, number>> = {
   // `addExtra` mins the accidental's dx into it and `extraw -= extraLeft` follows, PER
   // PITCH — so a deeper column on the next pitch resets the min and throws the previous
   // subtraction away. `[_d^f=b]` ends at `deepest - nat/2`, and summing cost 7.50px.
-  '0.05': 139,
+  // EMISSION PRECISION IS A PARITY TERM. Our coordinates are a nested chain — system
+  // translate, staff translate, element offset, viewBox — each quantised, with the errors
+  // ADDING, where abcjs writes one absolute pixel per element. A thousandth of a staff
+  // space put a notehead up to 5.1e-3px out; a hundred-thousandth reaches 1.5e-4, which is
+  // the floor. And a glyph SCALE is a ratio, not a coordinate: rounding `1 / 7.75` to
+  // `0.129` was a relative error over the whole outline.
+  '0.05': 140,
   '1': 153,
   '5': 165,
   '25': 172,

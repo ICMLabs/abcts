@@ -129,10 +129,41 @@ const jazzChordMarkup = (jazz: readonly [string, string, string], x: string): st
   )
 }
 
+/**
+ * THE EMISSION QUANTUM, in staff spaces — a hundred-thousandth, or 7.75e-5 of a pixel.
+ *
+ * Was a THOUSANDTH, which is 0.00775px and looks finer than the 0.01px abcjs itself
+ * rounds its lines to. It is not, because of WHERE each engine spends it: abcjs writes one
+ * absolute pixel coordinate per element, and we write a nested chain — a system translate,
+ * a staff translate, the element's own offset, and a viewBox the host divides by — each
+ * quantised, with the errors adding. Measured against abcjs's own output, a thousandth of
+ * a space put a notehead up to 5.1e-3px out; a hundred-thousandth reaches 1.5e-4, which is
+ * the floor (1e-6 gains nothing). At that point the residual is no longer ours.
+ *
+ * Five decimals rather than full precision because full precision writes seventeen digits
+ * for numbers like 4.838709677419355 and buys nothing measurable.
+ */
+const PRECISION = 100000
+
 const num = (n: number): string => {
-  const r = Math.round(n * 1000) / 1000
+  const r = Math.round(n * PRECISION) / PRECISION
   return Object.is(r, -0) ? '0' : String(r)
 }
+
+/**
+ * A SCALE is not a coordinate, and rounding it like one is a RELATIVE error.
+ *
+ * `num` quantises to a thousandth of a STAFF SPACE — 0.00775px, finer than the hundredth
+ * of a pixel abcjs writes, which is right for a position. A scale has no unit: the error
+ * it carries is multiplied by every number in the path it transforms. abcjs's outlines are
+ * in ITS pixels, so each one is drawn at `1 / 7.75` = 0.12903225806451613, and `num` made
+ * that `0.129` — a quarter of a per-mille, but applied to a 37px-tall clef it is 0.0012px
+ * and to a notehead's 6.09px offset another 0.0015.
+ *
+ * Emitted at full precision instead. Nothing downstream reads it as text, and an SVG
+ * `scale()` takes as many digits as it is given.
+ */
+const scaleNum = (n: number): string => (Object.is(n, -0) ? '0' : String(n))
 
 /**
  * A line is emitted as a filled rect rather than a stroked line: SVG strokes straddle
@@ -251,7 +282,7 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
     // 0.4 of a notehead's ink centre, and it is `vree-grace-notes`' whole residual.
     const total = strict ? ink.scale : (scale ?? 1) * ink.scale
     const scaled = total !== 1
-    const transform = `translate(${num(x)},${num(y)})${scaled ? ` scale(${num(total)})` : ''}`
+    const transform = `translate(${num(x)},${num(y)})${scaled ? ` scale(${scaleNum(total)})` : ''}`
     if (!optimize) return `<path${attributes} transform="${transform}" d="${ink.path}"/>`
     // A `<use>` takes a transform, so a scaled glyph dedupes like any other. It used to
     // fall back to an inline path when scaled, which was fine while only a stretched
