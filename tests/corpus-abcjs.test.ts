@@ -215,9 +215,21 @@ const WITHIN: Readonly<Record<string, number>> = {
   // line they define, so a purely horizontal error there is a vertical one on every slant.
   // A FLAG is a fourth: `headx + w - 0.6`, not the stem it hangs beside, and its `x` feeds
   // the element's ROD, so riding it on the stem moved noteheads.
-  '0.05': 143,
-  '1': 153,
-  '5': 165,
+  // A GRACE GROUP OF MORE THAN ONE IS BEAMED, AND A BEAMED GRACE RESERVES NOTHING. The
+  // three facts, each measured off a ladder of control tunes before any of it was written:
+  // the stem runs from the head's PITCH twice over (`+1/3 * gracescale` and
+  // `+7 * gracescale`) rather than a length up from its own base; the head reserves its
+  // DECLARED box times the grace scale, centred on the pitch; and a beamed group's stems
+  // and beam are built in `createStems` during LAYOUT, after `staff.top` has been taken, so
+  // they push `abselem.top` and never reach the staff. abcjs's top line is identical for
+  // `CD`, `{efg}CD` and `{ef}ag` — the G clef's 13.72 pitch sets it — while `{c''}CD` moves
+  // it 44.5px and `{c''d''}CD` only 34.5. TWO GRACES RESERVING LESS THAN ONE is the tell,
+  // and it is a PHASE difference, not a size one.
+  // Plus `graceoffsets`, which is a BACKWARD walk: an accidental widens the gap before its
+  // own grace, so `{e^fg}` is 7px wider than running forward at a flat 10 per note.
+  '0.05': 145,
+  '1': 155,
+  '5': 166,
   '25': 172,
 }
 

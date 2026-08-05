@@ -1088,7 +1088,7 @@ system 0 width=90.410 originY=0.000
       glyph augmentationDot 83.187,0.500
       glyph noteheadBlack 80.281,1.000 scale=0.600
       line  82.773,0.833 -> 82.773,-2.500 t=0.129
-      line  80.989,0.899 -> 80.989,-1.201 t=0.077
+      line  81.002,1.100 -> 81.002,-1.100 t=0.077
       line  80.081,-0.100 -> 81.442,-1.300 t=0.181
     note@0 x=85.866 w=3.871
       glyph noteheadBlack 85.866,0.000

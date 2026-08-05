@@ -296,6 +296,8 @@ export const ABCJS_RATIO = {
   graceScale: 3 / 5,
   /** `graceScaleStem`, "empirically found" (`abstract-engraver.js:468`). */
   graceStemScale: 3.5 / 5,
+  /** `calcDy` scales a GRACE beam to this — `dy = dy * 0.4` (`layout/beam.js:70`). */
+  graceBeamScale: 0.4,
   /** The octave marker's scale on a `clef=treble-8` (`create-clef.js:39`). */
   octaveMarkerScale: 2 / 3,
   /** A tempo's beat-unit note is drawn at this fraction. */

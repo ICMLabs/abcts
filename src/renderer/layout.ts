@@ -793,6 +793,17 @@ export interface PlacedLine {
   readonly role?: PartRole
   /** Set on a stem a BEAM retargets — see the stem case in `verticalExtent`. */
   readonly beamed?: boolean
+  /**
+   * Drawn but NOT counted in the staff's vertical extent.
+   *
+   * A PHASE distinction, not a drawing one. abcjs accumulates `staff.top` from the children
+   * an element has when the engraver builds it; anything added later, in the LAYOUT phase,
+   * pushes `abselem.top` and arrives too late to move the staff. A BEAMED grace group's
+   * stems are built in `createStems` and are exactly that — measured on `{efg}CD`, whose
+   * element top reaches pitch 16 while its staff top stays at the G clef's 13.72 and its
+   * top line does not move by a single pixel from the same tune with no graces at all.
+   */
+  readonly noReserve?: boolean
 }
 
 /**
@@ -2268,30 +2279,132 @@ function layoutNoteheads(
     const small = GLYPHS.noteheadBlack
     const graceSteps = event.graceNotes.map((p) => pitchToStep(p, clef))
 
+    // A GROUP OF MORE THAN ONE GRACE IS BEAMED, and that changes three things at once —
+    // `gracenotes.length > 1` builds a `BeamElem(round(stemHeight * 3.5/5), "grace",
+    // isBagpipes)` (`abstract-engraver.js:466-478`). The beam then owns the stem tops, the
+    // flag is suppressed (`flag = gracebeam ? null : uflags[3]`), and — the part that is
+    // worth more than the other two put together — THE STEMS STOP RESERVING, because
+    // `createStems` runs in the layout phase, after `staff.top` has been taken.
+    //
+    // A ladder of seven control tunes said so before any of it was written. abcjs's top
+    // line is IDENTICAL for `CD`, `{efg}CD` and `{ef}ag` — the G clef's declared 13.72
+    // pitch sets the staff top and nothing about a beamed grace ever beats it — while a
+    // SINGLE grace moves it, and `{c''}CD` moves it 44.5px against `{c''d''}CD`'s 34.5.
+    // Two graces reserving LESS than one is not a thing you would guess; it is the phase.
+    const beamedGraces = graceSteps.length > 1
+    /** Half the head's DECLARED height, unscaled — see the reserve below. */
+    const graceDeclaredHalf = (glyphsFor(strict).get('noteheadBlack')?.declaredHeight ?? 0) / 2
+    // `stemHeight = Math.round(this.stemHeight * graceScaleStem)` — 9.5 * 0.7 rounded, so
+    // a flat 7 PITCH, and the rounding is abcjs's (`abstract-engraver.js:469`).
+    const graceStemPitches = Math.round(ENGRAVE.beamStemHeight * ABCJS_RATIO.graceStemScale)
+    // WHERE EACH GRACE SITS IS A BACKWARD WALK, and an accidental widens the gap BEFORE
+    // its own grace rather than after it:
+    //
+    //     for (i = len-1; i >= 0; i--) { roomtaken += 10; graceoffsets[i] = roomtaken;
+    //                                    if (gracenotes[i].accidental) roomtaken += 7 }
+    //
+    // with `headx = -graceoffsets[i]` (`abstract-engraver.js:479-495`). Running forward at
+    // a flat 10 gives the same answer whenever nothing is altered — which is every rung of
+    // the ladder but one — and puts `{e^fg}` 7px out, the accidental's own room, because
+    // the offsets it feeds are the ones LEFT of it.
+    const graceOffsets: number[] = new Array(graceSteps.length)
+    let walk = 0
+    for (let i = graceSteps.length - 1; i >= 0; i--) {
+      walk += ENGRAVE.graceAdvance
+      graceOffsets[i] = walk
+      if (event.graceNotes[i]?.accidental != null) walk += ENGRAVE.graceAccidentalRoom
+    }
+    /** Abcjs's `abselem.x` in our frame: the graces hang LEFT of it. */
+    const graceNoteX = x + (graceOffsets[0] ?? 0)
+    const graceXOf = (i: number): number => graceNoteX - (graceOffsets[i] ?? 0)
     graceSteps.forEach((graceStep, i) => {
-      const gx = x + i * ENGRAVE.graceAdvance
+      const gx = graceXOf(i)
       graceGlyphs.push({
         name: 'noteheadBlack',
         x: gx,
         y: stepToY(graceStep),
         scale,
         role: 'grace',
+        // A DECLARED BOX, SCALED, AND CENTRED ON THE PITCH. `createNoteHead` hands the head
+        // `thickness: symbolHeightInPitches(c) * scale` and `RelativeElement` reserves
+        // `pitch ± thickness / 2` — the PUBLISHED `h`, 8.094, not the 8.13 ink box, and
+        // times the grace scale. Falling through to the ink box at full size over-reserved
+        // by 0.42 pitch, which is `{c''d''}CD`'s last 1.65px.
+        reserve: [
+          stepToY(graceStep) - graceDeclaredHalf * scale,
+          stepToY(graceStep) + graceDeclaredHalf * scale,
+        ],
       })
-      // The stem attaches at the scaled anchor and runs a scaled length upward.
-      const [ax, ay] = small.anchors.stemUpSE ?? [small.width, 0]
-      const stemX = gx + ax * scale
-      const base = stepToY(graceStep) + ay * scale
+      // THE STEM IS MEASURED FROM THE HEAD'S PITCH, NOT FROM ITS OWN BASE. abcjs writes
+      // `p1 = gracepitch + 1/3 * gracescale` and `p2 = gracepitch + 7 * gracescale`
+      // (`abstract-engraver.js:515-520`) — two independent offsets from the same pitch,
+      // where ours ran the length up from the base and so reached 0.2 pitch too far. That
+      // is the whole of `{c''}CD`'s 0.78px. `dx = grace.dx + grace.w` with `linewidth
+      // -0.6`, so the centre is 0.3px inside the head's right edge, and the 0.6 is NOT
+      // scaled by the grace scale — it is the beamed-stem weight, flat.
+      const weight = LINE_WEIGHTS.beamedStem
+      const stemX = gx + glyphsFor(strict).width('noteheadBlack') * scale - weight / 2
+      const headY = stepToY(graceStep)
       graceLines.push({
         x1: stemX,
-        y1: base,
+        y1: headY + (ENGRAVE.spacePerStep / 3) * scale,
         x2: stemX,
-        y2: base - ENGRAVE.stemLength * scale,
-        thickness: LINE_WEIGHTS.stem * scale,
+        y2: headY - graceStemPitches * scale * ENGRAVE.spacePerStep,
+        thickness: weight,
         role: 'stem',
+        ...(beamedGraces ? { noReserve: true, beamed: true } : {}),
       })
     })
 
-    graceWidth = graceSteps.length * ENGRAVE.graceAdvance + ENGRAVE.graceGap
+    if (beamedGraces) {
+      // `calcYPos` with `isGrace`, which is the same solve the main beam takes except that
+      // the too-high/too-low clamp is skipped: `pos = round(max(average + barpos, maxPitch
+      // + barminpos))` with `barpos = barminpos = stemHeight - 2`, and `forceup` is always
+      // true for a grace (`beam-element.js:22`), so it is always the ascending branch.
+      const barpos = graceStemPitches - 2
+      const average = graceSteps.reduce((a, b) => a + b, 0) / graceSteps.length
+      const extreme = Math.max(...graceSteps)
+      const pos = Math.round(Math.max(average + barpos, extreme + barpos))
+      // `calcSlant`, capped at half the stem count, with abcjs's `Math.floor` on both
+      // halves — negatives included.
+      const maxSlant = graceSteps.length / 2
+      const rawSlant = (graceSteps[0] ?? 0) - (graceSteps[graceSteps.length - 1] ?? 0)
+      const slant = Math.max(-maxSlant, Math.min(maxSlant, rawSlant))
+      const startStep = pos + Math.floor(slant / 2)
+      const endStep = pos + Math.floor(-slant / 2)
+      // `calcXPos` on the ascending branch: start inset by 0.6, end flush at the head's
+      // far edge. The grace path does NOT take finding 73's double-count — `createStems`
+      // guards that term on `!isGrace` and adds `elem.heads[0].dx` afterwards instead,
+      // which lands the sample and the quad at the same x.
+      const graceInk = glyphsFor(strict).width('noteheadBlack') * scale
+      const beamStartX = graceXOf(0) + graceInk - spaces(ABCJS_PX.flagStemInset)
+      const beamEndX = graceXOf(graceSteps.length - 1) + graceInk
+      const span = beamEndX - beamStartX
+      const startY = stepToY(startStep)
+      const endY = stepToY(endStep)
+      const yAt = (bx: number): number =>
+        span === 0 ? startY : startY + ((bx - beamStartX) / span) * (endY - startY)
+      // `calcDy` returns `STEP * 0.4` for a grace beam — under half the weight of a full
+      // one (`layout/beam.js:66-71`).
+      const thickness = LINE_WEIGHTS.beam * ABCJS_RATIO.graceBeamScale
+      for (let i = 0; i < graceLines.length; i++) {
+        const stem = graceLines[i]
+        if (stem === undefined || stem.role !== 'stem') continue
+        graceLines[i] = { ...stem, y2: yAt(graceXOf(i) + graceInk) }
+      }
+      graceLines.push({
+        x1: beamStartX,
+        y1: yAt(beamStartX) + thickness / 2,
+        x2: beamEndX,
+        y2: yAt(beamEndX) + thickness / 2,
+        thickness,
+        noReserve: true,
+      })
+    }
+
+    // The note sits at abcjs's `abselem.x`, which is the FIRST grace's offset past our
+    // cursor — `graceoffsets[0]`, accidental room included, not a flat 10 per grace.
+    graceWidth = (graceOffsets[0] ?? 0) + ENGRAVE.graceGap
     // A GRACE NOTE ADDS 10 TO `roomtaken`, and an accidental on it another 7
     // (`abstract-engraver.js:481-487`). Whatever comes after — the arpeggio, a LEFT
     // annotation — starts from the total, so it sits left of the graces rather than on
@@ -7670,6 +7783,9 @@ function verticalExtent(
       include(g.y + glyph.y, g.y + glyph.y + glyph.height)
     }
     for (const line of el.lines) {
+      // DRAWN IN THE LAYOUT PHASE, so it never reached `staff.top` — see `noReserve`. A
+      // beamed grace group's stems and its beam are the whole of this case.
+      if (line.noReserve === true) continue
       const half = line.thickness / 2
       // A STEM reserves one step below its low end — `bottom: p1 - 1` on the stem's
       // RelativeElement (`abstract-engraver.js:762`), `p1` being the low pitch. On an
