@@ -25,8 +25,8 @@ harmless, and left out — and that judgement was the whole remaining error. See
 |---|---|
 | suite | **699 of 699. NO REDS.** The branch has had one standing failure for weeks and it is closed. |
 | 41-fixture | **25 of 29 at ZERO on all four axes**, and `ragtime-nightingale`'s twelve staff boundaries all measure 0.0. |
-| harvested (174) | within 0.05 / 1 / 5 / 25px: **148 / 161 / 173 / 173**. **26 of 174 off some axis**, from 34 at the start of the day. |
-| the ranked table | **NOTHING ABOVE 3.00px.** `5` equals `25`: exactly ONE fixture in 174 is outside five pixels, and it is the tune-count mismatch that has no geometry to measure. |
+| harvested (174) | within 0.05 / 1 / 5 / 25px: **149 / 162 / 173 / 173**. **25 of 174 off some axis**, from 34 at the start of the day. |
+| the ranked table | **NOTHING ABOVE 1.99px, AND NOT ONE `dy` TERM LEFT.** Every remaining entry is a `dx`/`ox` pair or a lone `oy`. `5` equals `25`: one fixture in 174 is outside five pixels and it is the tune-count mismatch, which has no geometry to measure. |
 | CONTENT gaps | **one left** — `parse-book_parser-04-wed`'s leading-header split. |
 
 **ONE CEILING IS RAISED, AND IT IS RECORDED IN THE TEST.** ragtime's `dy`, 0.33 → 0.40 on
@@ -298,24 +298,50 @@ not. Four numbers on one line, three of them right.
 
 ---
 
+## FINDING 85 — `Math.max(default, …)` IS A CLAMP, AND IT BIT THREE TIMES
+
+The idiom reads as "the largest X present" and is a FLOOR. It is harmless for anything
+BIGGER than the default and silently wrong for anything smaller — so it survives every
+fixture that only ever goes up.
+
+| site | default | what a smaller font got |
+|---|---|---|
+| lyric baseline (`anchorLyrics`) | 17px | `%%vocalfont Helvetica 10.0` drew at 13, measured at 17 |
+| `chordSize` | 16px | `%%gchordfont Arial 10 box` drew at 13, measured at 16 |
+| `chordBlock` | 18.52px | the same lane, measured at the 12pt default's height |
+
+**THE SHAPE OF THE EVIDENCE IS THE TELL, and it named the third before the code was
+opened.** `visual-tablature-17` sets one font at FIVE sizes — 10, 20, 40, 80, 130 — and only
+the 10 was wrong. An arithmetic error does not spare four sizes out of five; a floor does,
+and only ever at the bottom. The same signature had already appeared one lane over: exact
+with no `%%vocalfont`, exact at the default SIZE under a different family, wrong only below.
+
+All three are now `length === 0 ? default : Math.max(...)`, which says what was meant and
+cannot clamp. **A sweep of the file found no others** — the two remaining
+`Math.max(ENGRAVE.…, …)` are `minColumnGap` and `curveMinBulge`, which are minimums on
+purpose.
+
+---
+
 ## WHAT IS LEFT, ranked
 
 ```
- 3.00  dy= 0.0 dx= 0.0 oy= -3.0 ox= 0.0  visual-tablature-17 [stretchlast, gchordfont]
  1.99  dy= 0.0 dx= 2.0 oy=  0.0 ox=-1.3  synth-flattener-09
  1.88  dy= 0.0 dx= 1.9 oy=  0.0 ox=-1.0  mouse-click-01 / tablature-15
  1.69  dy= 0.0 dx= 1.7 oy=  0.0 ox=-1.4  visual-layout-04   [score]
  1.69  dy= 0.0 dx= 0.0 oy=  1.7 ox= 0.0  visual-parsing-10  [barnumbers, setbarnb]
+ 1.24  dy= 0.0 dx= 1.2 oy=  0.0 ox=-0.4  parse-tie-slur-01  [staffwidth]
 ```
 
-**NOTHING ABOVE 3.00px IS LEFT**, and only ONE item carries a `dy` term at all.
+**NOTHING ABOVE 1.99px IS LEFT, AND NOT ONE `dy` TERM.** The vertical arc this branch is
+named for has no entry on the table at all: what remains is horizontal, plus three lone
+`oy` offsets.
 
 ### NEXT, in order
 
 1. ~~**GRACE BEAMS**~~ — **DONE**, findings 74–77. ~~**`%%setfont` RICH TEXT**~~ — **DONE**,
    findings 78–80. All three came off the table.
-2. **`visual-tablature-17`, 3.00** — `%%stretchlast` and `%%gchordfont`, a pure `oy`, and
-   the top of the table.
+2. **`synth-flattener-09`, 1.99** — a `dx`/`ox` pair and the top of the table.
 3. **THE FOUR REMAINING LINE WEIGHTS** — `beamSpacing`, `barlineSeparation` (asymmetric,
    4.0 thick→thin and 3.4 the other way), `repeatBarlineDotSeparation`, and slur/tie
    endpoint+midpoint, which is a SHAPE port out of `draw/tie.js` and the largest.
