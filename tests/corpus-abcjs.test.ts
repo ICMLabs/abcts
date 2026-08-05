@@ -267,9 +267,18 @@ const WITHIN: Readonly<Record<string, number>> = {
   // 0.05 — the last a pure 0.05px OFFSET sitting exactly on the bucket boundary, which is
   // why `0.05` goes DOWN by one here while `5` goes up by two. Recorded rather than
   // rounded away; both residuals are named and neither is masked.
-  '0.05': 146,
-  '1': 157,
-  '5': 172,
+  // A QUARTER TONE IN A KEY SIGNATURE HAS A FUDGE OF ITS OWN. `createKeySignature`
+  // switches on five accidentals and ours knew three: `quartersharp` is -2.5 and
+  // `quarterflat` -1.2 (`create-key-signature.js:17-23`). Missing, they fell to the `?? 0`
+  // default, and 2.5 pitch of phantom staff is `synth-flattener-32`'s entire 5.74px — its
+  // other three axes were already at zero, and `K: C _A ^D` with plain accidentals was
+  // exact beside it.
+  //
+  // `5` now equals `25`: ONE fixture in 174 is outside five pixels, and it is the tune-count
+  // mismatch that has no geometry to measure.
+  '0.05': 147,
+  '1': 158,
+  '5': 173,
   '25': 173,
 }
 

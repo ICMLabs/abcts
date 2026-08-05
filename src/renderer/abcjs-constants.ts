@@ -364,6 +364,13 @@ export const ABCJS_KEY_ACCIDENTAL_FUDGE_PITCH: Readonly<Record<string, number>> 
   accidentalSharp: -3,
   accidentalFlat: -1.2,
   accidentalNatural: 0,
+  // The QUARTER TONES, which a `K:` may write — `K: C ^/f _/B` is legal and abcjs draws
+  // both (`accidentals.halfsharp` and `accidentals.halfflat` appear in its own output).
+  // Missing here they fell to the `?? 0` default, and a fudge of 0 against the half
+  // sharp's -2.5 is 2.5 pitch of staff nobody asked for: `synth-flattener-32` was 5.74px
+  // on these two entries and NOTHING else, its every other axis already at zero.
+  accidentalQuarterToneSharpStein: -2.5,
+  accidentalQuarterToneFlatStein: -1.2,
 }
 
 /**
