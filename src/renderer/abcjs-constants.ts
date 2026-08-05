@@ -155,6 +155,15 @@ export const ABCJS_PX = {
   barGap: 11,
   /** Clearance a barline leaves before the music resumes. */
   barClearance: 5,
+  /**
+   * A barline rule's DECLARED width — its `RelativeElement` `w`, which is not what it
+   * paints. `new RelativeElement(null, dx, 1, 2, {linewidth: 0.6})` for a thin and
+   * `(null, dx, 4, 2, {linewidth: 4})` for a thick (`abstract-engraver.js:990`, `:1006`),
+   * so only the thick pair agree. Read by a repeat ending, which opens at the anchor's
+   * RIGHT edge — `anchor1.x + anchor1.w` — and so needs the declared one.
+   */
+  barAnchorThin: 1,
+  barAnchorThick: 4,
   /** Drawn widths per barline shape, measured off abcjs's own output. */
   barWidthThin: 1,
   barWidthDouble: 4,

@@ -910,6 +910,26 @@ export interface LayoutElement {
   readonly glyphs: readonly PlacedGlyph[]
   readonly lines: readonly PlacedLine[]
   readonly texts: readonly PlacedText[]
+  /**
+   * Where a REPEAT ENDING's bracket attaches to this barline, as offsets from `x`.
+   *
+   * abcjs hangs an `EndingElem` on a `RelativeElement` that the barline cursor happens to
+   * be holding — not on the bar element and not on the music. `EndingElem(text, anchor,
+   * null)` takes whatever `anchor` is when `startEnding` is seen, which is after the whole
+   * cursor walk, so it is the LAST rule; `partstartelem.anchor2 = anchor` fires on
+   * `endEnding`, which sits between the thick and the second thin, so it is the thick if
+   * there is one and the first thin otherwise (`abstract-engraver.js:1017`, `:1040`).
+   *
+   * `drawEnding` then opens at `anchor1.x + anchor1.w` and closes at `anchor2.x` — the
+   * right edge one way and the left edge the other, which is why the two offsets are not
+   * the same quantity (`draw/ending.js:13-22`).
+   *
+   * AND THE `w` IS THE ANCHOR'S, NOT THE RULE'S DRAWN THICKNESS. abcjs builds a thin rule
+   * as `new RelativeElement(null, dx, 1, 2, {linewidth: 0.6})` — declared width 1, painted
+   * 0.6 — and a thick one as `(null, dx, 4, 2, {linewidth: 4})`. Only the thick pair agree.
+   */
+  readonly endingStart?: number
+  readonly endingEnd?: number
 }
 
 /**
@@ -2723,8 +2743,19 @@ function layoutBar(x: number, kind: Barline, strict = true): LayoutElement {
   const glyphs: PlacedGlyph[] = []
   let cursor = x
 
+  /**
+   * The two anchors a repeat ending hangs on — see `LayoutElement.endingStart`.
+   *
+   * `anchor` tracks abcjs's variable of the same name: reassigned by every RULE and by
+   * nothing else, since its dots go in through `addRight` without touching it.
+   */
+  let anchorLeft: number | null = null
+  let anchorWidth = 0
+  /** …and a snapshot of it taken where `endEnding` fires, between thick and second thin. */
+  let endAnchorLeft: number | null = null
+
   /** A rule placed by its LEFT edge — the line itself carries its centre. */
-  const rule = (thickness: number, advance: boolean): void => {
+  const rule = (thickness: number, advance: boolean, anchorW: number): void => {
     lines.push({
       x1: cursor + thickness / 2,
       y1: stepToY(4),
@@ -2733,6 +2764,8 @@ function layoutBar(x: number, kind: Barline, strict = true): LayoutElement {
       thickness,
       role: 'bar',
     })
+    anchorLeft = cursor
+    anchorWidth = anchorW
     if (advance) cursor += thickness
   }
 
@@ -2767,15 +2800,19 @@ function layoutBar(x: number, kind: Barline, strict = true): LayoutElement {
       dots()
       cursor += spaces(ABCJS_PX.barlineAfterDots)
     }
-    if (firstThin) rule(thin, false)
+    if (firstThin) rule(thin, false, spaces(ABCJS_PX.barAnchorThin))
     if (hasThick) {
       cursor += spaces(ABCJS_PX.barlineBeforeThick)
-      rule(thick, false)
+      rule(thick, false, spaces(ABCJS_PX.barAnchorThick))
       cursor += spaces(ABCJS_PX.barlineAfterThick)
     }
+    // `if (this.partstartelem && elem.endEnding)` sits HERE, between the thick and the
+    // second thin (`abstract-engraver.js:1017`), so an ending closes on the thick when
+    // there is one and on the first thin otherwise — never on a `||`'s second rule.
+    endAnchorLeft = anchorLeft
     if (secondThin) {
       cursor += spaces(ABCJS_PX.barlineBeforeSecondThin)
-      rule(thin, false)
+      rule(thin, false, spaces(ABCJS_PX.barAnchorThin))
     }
     if (secondDots) {
       cursor += spaces(ABCJS_PX.barlineBeforeSecondDots)
@@ -2798,6 +2835,8 @@ function layoutBar(x: number, kind: Barline, strict = true): LayoutElement {
     glyphs,
     lines,
     texts: [],
+    ...(anchorLeft === null ? {} : { endingStart: anchorLeft + anchorWidth - x }),
+    ...(endAnchorLeft === null ? {} : { endingEnd: endAnchorLeft - x }),
   }
 }
 
@@ -4892,6 +4931,11 @@ interface MeasureBlock {
    * busy voice's, and the staves would stop lining up.
    */
   readonly closingBarIndex: number | null
+  /**
+   * Index of the barline that OPENS this measure, if it has one — the other half of the
+   * pair a repeat ending hangs on. See `LayoutElement.endingStart`.
+   */
+  readonly openingBarIndex: number | null
   /** Note anchors for slur and tie resolution, positioned LOCAL to this block. */
   readonly anchors: readonly NoteAnchor[]
   /** A repeat ending opening at this measure, and whether this measure closes it. */
@@ -5067,11 +5111,13 @@ function layoutMeasure(
     fixed(change.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
     x += change.width + ENGRAVE.prefixGap
   }
+  let openingBarIndex: number | null = null
   const drawOpeningBar = (): void => {
     // An opening `|:` or `[|` prints before the measure it belongs to, and is a SEPARATE
     // barline from the previous measure's closer.
     if (measure.openingBarline === null) return
     const bar = layoutBar(x, measure.openingBarline, strict)
+    openingBarIndex = elements.length
     elements.push(bar)
     fixed(
       barRod(measure.openingBarline, bar, strict) + endingRoom(measure.volta),
@@ -5331,6 +5377,7 @@ function layoutMeasure(
     beams,
     anchors,
     closingBarIndex,
+    openingBarIndex,
     musicWidth,
     volta: measure.volta,
     closesVolta,
@@ -6379,13 +6426,56 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         return solved.width
       }
 
+      /**
+       * Where a bracket attaches to measure `i`'s barline — abcjs hangs it on a RULE.
+       *
+       * See `LayoutElement.endingStart`. `which` picks the end: `endingStart` is the
+       * opening bar's last rule at its RIGHT edge, `endingEnd` the closing bar's
+       * endEnding-time rule at its LEFT.
+       */
+      const barAnchor = (
+        i: number,
+        bar: 'opening' | 'closing',
+        which: 'endingStart' | 'endingEnd',
+      ): number | null => {
+        const b = plan.blocks[i]
+        if (b === undefined) return null
+        const index = bar === 'opening' ? b.openingBarIndex : b.closingBarIndex
+        if (index === null) return null
+        const el = b.elements[index]
+        const offset = el?.[which]
+        if (el === undefined || offset === undefined) return null
+        return (blockX.get(i)?.[index] ?? el.x) + offset
+      }
+      /**
+       * …and THE BAR AN ENDING OPENS ON IS USUALLY THE PREVIOUS MEASURE'S CLOSER.
+       *
+       * `startEnding` is a property of the BARLINE in abcjs, and the barline carrying
+       * `|1` or `:|2` is the one that ENDS the measure before it — our model puts it there
+       * too, as `closingBarIndex`, and leaves the volta's own measure with no opening bar
+       * at all in both cases. `endingRoom` already reasons exactly this way about which bar
+       * gets the label's `minspacing`: "the measure's own opening barline, or the PREVIOUS
+       * measure's closing one when the number follows a `:|`".
+       *
+       * The opening bar is tried first all the same, for `|:1`-shaped input where the
+       * ending does open a measure of its own.
+       *
+       * Measured on `S4-bars-repeats`: abcjs opens ending 1 at 257.37, its plain `|`'s
+       * 256.37 plus a thin anchor's declared 1, and ending 2 at 476.18, the `:|`'s thick
+       * rule at 472.18 plus its declared 4.
+       */
+      const voltaStartOf = (i: number): number =>
+        barAnchor(i, 'opening', 'endingStart') ??
+        (i > 0 ? barAnchor(i - 1, 'closing', 'endingStart') : null) ??
+        startOf(i)
+
       for (let i = span.start; i < span.end; i++) {
         const block = plan.blocks[i]
         if (block !== undefined) {
           // A new ending closes whatever was open — `|1 … :|2` runs them back to back.
           if (block.volta !== null && drawsVoltas) {
-            closeVolta(startOf(i), true)
-            openVolta = { label: block.volta, startX: startOf(i) }
+            closeVolta(voltaStartOf(i), true)
+            openVolta = { label: block.volta, startX: voltaStartOf(i) }
           }
           const base = elements.length
           // Every element sits where the LINE's shared cursor put it: notes at the same
@@ -6435,7 +6525,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             })
           }
         }
-        if (block?.closesVolta) closeVolta(endOf(i), true)
+        if (block?.closesVolta) closeVolta(barAnchor(i, 'closing', 'endingEnd') ?? endOf(i), true)
       }
 
       const beams: PlacedLine[] = []

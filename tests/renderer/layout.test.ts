@@ -1371,12 +1371,18 @@ describe('repeat endings (voltas)', () => {
     expect(staff?.voltaLines).toHaveLength(6)
   })
 
-  it('starts a new ending where the previous one stops', () => {
-    // `|1 … :|2` runs them back to back, so ending 2 opens exactly where 1 closes.
+  it('leaves the shared barline between two endings', () => {
+    // NOT back to back, which is what this asserted for months and what abcjs's own
+    // output denies. Both brackets hang on the SAME `:|`, and on opposite edges of its
+    // THICK rule: `drawEnding` closes at `anchor2.x` and opens at `anchor1.x + anchor1.w`
+    // (`draw/ending.js:13-22`), and that anchor's declared `w` is 4. So the gap is exactly
+    // 4px — `[257.37..472.18] [476.18..681.00]` in `S4-bars-repeats`' golden.
+    //
+    // The eighth test in this suite found to have been asserting abcjs is wrong.
     const lines = staffOf('|:CDEF|1 GABc:|2 cBAG||')?.voltaLines ?? []
     const rules = lines.filter((l) => l.y1 === l.y2).sort((a, b) => a.x1 - b.x1)
     expect(rules).toHaveLength(2)
-    expect(rules[1]?.x1).toBeCloseTo(rules[0]?.x2 ?? 0, 1)
+    expect((rules[1]?.x1 ?? 0) - (rules[0]?.x2 ?? 0)).toBeCloseTo(4 / 7.75, 3)
   })
 
   it('sits above the staff, clear of the music', () => {

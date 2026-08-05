@@ -140,17 +140,20 @@ describe('line weights match abcjs in strict mode', () => {
   // The 0.50 that remains is not the ending at all: our staff's ink top reads 13.85 pitch
   // where abcjs's dumped `staff.top` is 13.7244, and the bracket simply rides on it.
   //
-  // ONE AXIS IS STILL OPEN, and it must only ever come DOWN:
-  //   left edge      28.50px — abcjs anchors the bracket on the BARLINE RULES,
-  //                            `anchor.x + anchor.w` to open and `anchor.x` to close
-  //                            (`draw/ending.js:13-22`, `abstract-engraver.js:1017/1040`),
-  //                            and we anchor it on the measure's first ink. The 28.5 is
-  //                            exactly the `textWidth + 10` the ending's own `minspacing`
-  //                            adds. Every barline in this fixture already matches abcjs to
-  //                            the hundredth of a pixel, so the rules are there to hang
-  //                            it on.
+  // THE ENDS ARE ANCHORED ON THE BARLINE RULES NOW, and they are exact on both brackets:
+  // `[257.37..472.18] [476.18..681.00]` in both engines. abcjs opens at
+  // `anchor1.x + anchor1.w` and closes at `anchor2.x` — the right edge one way and the left
+  // edge the other — where `anchor` is whichever RULE the barline cursor was holding
+  // (`draw/ending.js:13-22`, `abstract-engraver.js:1017/1040`). We anchored on the
+  // measure's first ink, a flat 28.5px out, which is exactly the `textWidth + 10` the
+  // ending's own `minspacing` adds.
+  //
+  // The 0.50px of bracket pitch that remains is NOT the ending: our staff's ink top reads
+  // 13.85 pitch where abcjs's dumped `staff.top` is 13.7244, and the bracket rides on it.
   it('a repeat ending', () => {
-    const ends = (svg: string): { hook: number; rule: number; left: number; top: number }[] => {
+    const ends = (
+      svg: string,
+    ): { hook: number; rule: number; left: number; right: number; top: number }[] => {
       const doc = absolutePixels(svg)
       const parts = doc.items.filter(
         (i) => (i.name === 'line' || i.cls.includes('ending')) && i.w !== undefined && i.h !== undefined,
@@ -160,9 +163,16 @@ describe('line weights match abcjs in strict mode', () => {
       // is the thinnest dimension present.
       const hook = Math.max(...parts.map((i) => i.h as number))
       const rule = Math.min(...parts.map((i) => Math.min(i.w as number, i.h as number)))
-      const left = Math.min(...parts.map((i) => i.x - (i.w as number) / 2))
+      // THE SPAN COMES OFF THE HORIZONTAL RULE, not off the union. abcjs's bracket is one
+      // stroked path whose box is its `d` coordinates, with no stroke width in it; ours is
+      // a rect per stroke, so a 1px-wide HOOK reaches half a pixel further left than the
+      // bracket actually starts. Taking the horizontal-dominant pieces asks both engines
+      // for the same quantity — the run between the two hooks.
+      const runs = parts.filter((i) => (i.w as number) > (i.h as number))
+      const left = Math.min(...runs.map((i) => i.x - (i.w as number) / 2))
+      const right = Math.max(...runs.map((i) => i.x + (i.w as number) / 2))
       const top = Math.min(...parts.map((i) => i.y - (i.h as number) / 2))
-      return [{ hook: r2(hook), rule: r2(rule), left: r2(left), top: r2(top) }]
+      return [{ hook: r2(hook), rule: r2(rule), left: r2(left), right: r2(right), top: r2(top) }]
     }
     const r2 = (n: number): number => Math.round(n * 100) / 100
     const theirs = ends(golden('S4-bars-repeats-tune0'))[0]
@@ -177,9 +187,11 @@ describe('line weights match abcjs in strict mode', () => {
     // read from the golden's attributes and asserted here on our side only.
     expect(ours.rule, 'bracket rule weight').toEqual(1)
     expect(ours.hook, 'end-hook drop').toEqual(theirs.hook)
-    // CEILINGS: still open, and they must only ever come DOWN.
+    expect(ours.left, 'bracket left edge').toEqual(theirs.left)
+    expect(ours.right, 'bracket right edge').toEqual(theirs.right)
+    // CEILING: still open, and it must only ever come DOWN. It is the staff's ink top
+    // rather than anything the ending does.
     expect(Math.abs(ours.top - theirs.top), 'bracket pitch').toBeLessThanOrEqual(0.5)
-    expect(Math.abs(ours.left - theirs.left), 'bracket left edge').toBeLessThanOrEqual(28.5)
   })
 
   it('the probe can fail — it is not measuring a constant', () => {
