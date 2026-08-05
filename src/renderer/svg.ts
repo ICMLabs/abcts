@@ -73,6 +73,12 @@ const ABCJS_CLASSES: Readonly<Record<string, string>> = {
   grace: 'abcjs-notehead',
   stem: 'abcjs-stem',
   ledger: 'abcjs-ledger',
+  // A DYNAMIC MARK IS CLASSED AND NAMED, and ours carried neither. abcjs's
+  // `createDecoration` routes `!p!`/`!mf!` through `decoration.js` with
+  // `classes.generate('decoration dynamics')`, which its own golden shows as
+  // `class="abcjs-decoration abcjs-dynamics …" data-name="dynamics"`. Finding 92: it is
+  // not a notehead and it had no handle, so no comparison could reach one.
+  dynamic: 'abcjs-decoration abcjs-dynamics',
 }
 
 /** abcjs's `data-name` hooks, which its interaction code keys on. */
@@ -83,6 +89,7 @@ const ABCJS_DATA_NAMES: Readonly<Record<string, string>> = {
   // (`abstract-engraver.js:992`). It is the only handle either engine offers on one, so
   // without it nothing downstream can ask a question about barlines at all.
   bar: 'bar',
+  dynamic: 'dynamics',
 }
 
 /**
@@ -371,14 +378,27 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
     )
     // Braces and brackets first: they belong to the SYSTEM, joining staves rather than
     // sitting on one, and they are drawn at the left edge outside the music area.
+    // A BRACKET'S STEM. abcjs classes it `abcjs-bracket` and names it `bracket`
+    // (`draw/brace.js`, via `classes.generate`), and we emitted neither — so no comparison
+    // could reach a bracket at all. Finding 92: the representation was missing a HANDLE.
     for (const line of system.connectorLines) {
-      parts.push(lineToRect(line, abcjs ? '' : ` class="${prefix}-staff"`))
+      parts.push(
+        lineToRect(
+          line,
+          abcjs ? ' class="abcjs-bracket" data-name="bracket"' : ` class="${prefix}-staff"`,
+        ),
+      )
     }
     for (const g of system.connectorGlyphs) {
       // A brace stretches VERTICALLY to span its staves — `scale(1,n)`, not a uniform
       // scale — so it cannot share a definition with an unstretched one and stays a path.
       const scale = g.scale === undefined || g.scale === 1 ? '' : ` scale(1,${num(g.scale)})`
-      const attr = abcjs ? '' : ` class="${prefix}-staff"`
+      // …and the same handle for the glyphs. abcjs draws a brace and a bracket as ONE path
+      // each, so a `brace` name covers the whole shape and `bracket` covers its two arms.
+      const named = g.name === 'brace' ? 'brace' : 'bracket'
+      const attr = abcjs
+        ? ` class="abcjs-${named}" data-name="${named}"`
+        : ` class="${prefix}-staff"`
       parts.push(
         scale === ''
           ? glyphMarkup(g.name, g.x, g.y, undefined, attr)
@@ -420,23 +440,46 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
             `y="${num(t.y)}" font-family="serif" font-size="${num(t.size)}">${escapeText(t.text)}</text>`,
         )
       }
+      // ABCJS CALLS IT A TRIPLET, whatever the number — `classes.generate('triplet ' +
+      // durationClass)` on the group and `data-name="triplet-bracket"` on the path
+      // (`draw/triplet.js:7-9`, `:42`). Ours said `abcjs-tuplet`, which is the right word
+      // for the concept and the wrong one for compat: a stylesheet written against abcjs
+      // selects `.abcjs-triplet`, and no comparison could match the bracket either.
       for (const line of staff.tupletLines) {
-        parts.push(lineToRect(line, abcjs ? ' class="abcjs-tuplet"' : ` class="${prefix}-tuplet"`))
+        parts.push(
+          lineToRect(
+            line,
+            abcjs
+              ? ' class="abcjs-triplet" data-name="triplet-bracket"'
+              : ` class="${prefix}-tuplet"`,
+          ),
+        )
       }
       // Never present in strict mode, where abcjs prints a literal `_` instead — so this
       // reuses abcjs's lyric class rather than inventing one it has no counterpart for.
       for (const line of staff.melismaLines) {
         parts.push(lineToRect(line, abcjs ? ' class="abcjs-lyric"' : ` class="${prefix}-lyric"`))
       }
-      // Hairpins and glissandi. abcjs paints these with no class of its own, so compat
-      // emits none either rather than inventing one a stylesheet could not know about.
+      // Hairpins and glissandi. THE COMMENT HERE USED TO SAY "abcjs paints these with no
+      // class of its own" — reasoned, never measured, and its own output denies it:
+      // `drawCrescendo` passes `classes.generate('dynamics decoration')` and
+      // `"data-name": "dynamics"` (`draw/crescendo.js:34`), which comes out as
+      // `class="abcjs-decoration abcjs-dynamics …" data-name="dynamics"`. A glissando is
+      // `data-name="glissando"` on the same footing.
       for (const line of staff.spannerLines) {
-        parts.push(lineToRect(line, abcjs ? '' : ` class="${prefix}-decoration"`))
+        const named = line.role === 'dynamic' ? 'dynamics' : 'glissando'
+        const cls = line.role === 'dynamic' ? 'abcjs-decoration abcjs-dynamics' : 'abcjs-glissando'
+        parts.push(
+          lineToRect(
+            line,
+            abcjs ? ` class="${cls}" data-name="${named}"` : ` class="${prefix}-decoration"`,
+          ),
+        )
       }
       for (const t of staff.tupletTexts) {
         const style = `${t.bold ? ' font-weight="bold"' : ''}${t.italic ? ' font-style="italic"' : ''}`
         parts.push(
-          `<text${abcjs ? ' class="abcjs-tuplet"' : ` class="${prefix}-tuplet"`} x="${num(t.x)}" ` +
+          `<text${abcjs ? ' class="abcjs-triplet"' : ` class="${prefix}-tuplet"`} x="${num(t.x)}" ` +
             `y="${num(t.y)}" font-family="serif" font-size="${num(t.size)}"${style}>${escapeText(t.text)}</text>`,
         )
       }
