@@ -24,7 +24,16 @@ checkpoint and hand off as you go so no context is lost.
 > can express.** When something is invisible to every gate, ask what the gate's DATA MODEL
 > leaves out, not whether the number is small.
 
-Read `Docs/CHECKPOINT-2026-08-05.md` first — the audit finding and the current state. Then
+> ⚖️ **AND THE RULING BEHIND THE RULING** (Lance, 2026-08-05): **abcjs is the MASTER
+> SOURCE. Any variability is likely due to not using the same SETTING as abcjs, or to
+> INFERRING an algorithm instead of analysing abcjs.** Finding 73 is what that costs when
+> ignored: `createStems` counts a beamed head's `dx` twice, the quirk was READ, judged
+> "zero for the common case", left out — and that judgement was the entire remaining error
+> on `ragtime-nightingale`, the branch's one standing red. Port the quirk, then measure.
+
+Read `Docs/CHECKPOINT-2026-08-05b.md` first — the current state, and findings 71-73.
+`Docs/CHECKPOINT-2026-08-05.md` is superseded for the state but keeps the line-weight audit
+finding and the golden-variables map. Then
 `Docs/CHECKPOINT-2026-08-04c.md` — it is the current state of play, findings
 51-64, THE METHOD that produced them, and what is left. `Docs/CHECKPOINT-2026-08-04b.md`
 holds findings 41-50, `Docs/CHECKPOINT-2026-08-04.md` the expensive lesson about "golden
@@ -166,7 +175,8 @@ gate had been comparing abcjs's outline START against our glyph ORIGIN, a 4px bi
 
 
 **Structural parity is done: note content, lyrics, beams and render structure are all
-41/41 with zero recorded divergences.** 686 tests on `geometry/vertical`.
+41/41 with zero recorded divergences.** `geometry/vertical` is **699/699 with NO reds** and
+**no raised ceiling** — the last of both closed on 2026-08-05 (finding 73).
 
 The work is now GEOMETRIC — does abcts put the ink where abcjs puts it. A pixel-parity
 gate (`tests/pixel-parity.test.ts`) resolves both engines' SVG to absolute pixels and
