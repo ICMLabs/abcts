@@ -221,8 +221,23 @@ abcMusicKit2's `SVGBackend` does. Rejected for the web: it needs a ~380KB woff2 
 the page, and a saved, pasted or mailed SVG renders as tofu without it. Self-contained
 output is worth more to a library than restyleable glyphs.
 
+**THE AUTHORISATION NEVER COVERED `abcjs-strict`.** *Clarified by Lance, 2026-08-05.*
+Strict exists to reproduce abcjs byte for byte, so it has NO latitude: every figure it
+draws with must be abcjs's. Bravura is for `abc2.1` and `extended`, which is where the
+flexibility lives. **Any Bravura input reachable in strict is a defect, not a decision.**
+
+Two consequences, both since acted on:
+- Glyph OUTLINES: `glyph-table.ts` gives strict abcjs's own outlines at abcjs's own
+  advances, and Bravura serves the other two modes.
+- LINE WEIGHTS: `ENGRAVING_DEFAULTS` below was read in strict at 21 ungated sites for
+  months — a thin barline at 1.24px where abcjs draws 0.600. Closed 2026-08-05 by
+  `lineWeightsFor(strict)`, with the numbers in `ABCJS_LINE_PX` and a gate in
+  `tests/line-weights.test.ts`. Five of the fourteen are still un-ported and flagged in
+  place; see `Docs/CHECKPOINT-2026-08-05.md`.
+
 **Metrics are not extracted.** `bravura_metadata.json` publishes bounding boxes, anchors
 and engraving defaults in staff spaces already, so only outlines need the font binary.
+Its ENGRAVING DEFAULTS are used for `abc2.1`/`extended` only — see the clarification above.
 That the two agree is a genuine cross-check and they do — the extracted `noteheadBlack`
 path spans exactly the published 1.18 × 1.0 box.
 

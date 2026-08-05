@@ -8,15 +8,21 @@ and community successor to abcjs.
 174-tune harvested corpus, Gonzato, and the audio feature set. Work until it is reached;
 checkpoint and hand off as you go so no context is lost.
 
-> 🔴 **OPEN AUDIT FINDING, and it is the first job of the next session.** `abcjs-strict`
-> draws **Bravura's line weights**, not abcjs's: `ENGRAVING_DEFAULTS`
-> (`src/renderer/glyphs.ts:45`) is Bravura's metadata, read at 22 sites in `layout.ts`,
-> **not one of them gated on `strict`**. Measured off abcjs's own goldens — thin barline
-> +107%, ledger +77%, staff line +44%, stem −7%. No gate can see it, because `pixel-parity`
-> compares glyph bounding-box CENTRES and a line's centre does not move when its thickness
-> does. The OUTLINE decision was authorised (2026-07-19, escalated, `ARCHITECTURE.md`); the
-> line weights were never part of it and have no record anywhere. See
-> `Docs/CHECKPOINT-2026-08-05.md`, first section.
+> ⚖️ **THE RULING THAT GOVERNS THE GLYPH/METRIC SPLIT** (Lance, 2026-08-05): the Bravura
+> authorisation **never covered `abcjs-strict`**. Strict reproduces abcjs byte for byte, so
+> it has NO latitude — every figure it draws with must be abcjs's. `abc2.1` and `extended`
+> are where the flexibility lives. **Any Bravura input reachable in strict is a defect, not
+> a decision.** The line weights were the first found and are closed
+> (`lineWeightsFor(strict)`); five remain un-ported and a second class — raw `GLYPHS[…]`
+> reads that bypass `glyphsFor(strict)` — is un-audited. See `Docs/CHECKPOINT-2026-08-05.md`.
+
+> ✅ **CLOSED AUDIT FINDING, kept because the LESSON transfers.**  Strict drew Bravura's line weights for
+> months — a thin barline at 1.24px against abcjs's 0.600 — and **no gate could see it**:
+> `pixel-parity` compares glyph bounding-box CENTRES, and a line's centre does not move when
+> its thickness changes. Neither gate was broken; both were blind to the same axis because
+> `PixelItem` carried only a centre. **A comparison can only catch what its representation
+> can express.** When something is invisible to every gate, ask what the gate's DATA MODEL
+> leaves out, not whether the number is small.
 
 Read `Docs/CHECKPOINT-2026-08-05.md` first — the audit finding and the current state. Then
 `Docs/CHECKPOINT-2026-08-04c.md` — it is the current state of play, findings

@@ -8,61 +8,59 @@ the ladder method; `-08-04b.md` keeps 41–50, `-08-04.md` the expensive lesson,
 
 ---
 
-## 🔴 AUDIT FINDING — START HERE. STRICT MODE DRAWS BRAVURA'S LINE WEIGHTS.
+## ✅ AUDIT FINDING — CLOSED. STRICT NOW DRAWS ABCJS'S LINE WEIGHTS.
 
-**Every line abcts draws in `abcjs-strict` is the wrong thickness**, by up to a factor of
-two, and no gate can see it.
+**THE RULING, and it is the general principle:** the Bravura authorisation **never covered
+`abcjs-strict`**. Strict exists to reproduce abcjs byte for byte, so it has NO latitude —
+every figure it draws with must be abcjs's. `abc2.1` and `extended` are where the
+flexibility lives. Recorded in `ARCHITECTURE.md` beside the original decision.
 
-`ENGRAVING_DEFAULTS` in `src/renderer/glyphs.ts:45-59` is **Bravura's** engraving metadata.
-It is read at **22 sites** in `layout.ts` and **not one of them is gated on `strict`**:
+`ENGRAVING_DEFAULTS` (Bravura's metadata) was read at **21 sites** in `layout.ts` with **not
+one gated on `strict`**, and had no record in `ARCHITECTURE.md` or any checkpoint — a
+leftover from when there was one glyph table and one mode, which the strict/Bravura split
+went in around and never reached.
 
-```bash
-grep -c "ENGRAVING_DEFAULTS" src/renderer/layout.ts        # 22
-grep -c "strict.*ENGRAVING_DEFAULTS" src/renderer/layout.ts # 0
-```
+Measured off abcjs's own goldens, because a `linewidth` is a `dx` handed to `printStem` and
+the emitted quad is the ground truth:
 
-Measured against abcjs's OWN goldens — not read from its source, measured off the emitted
-path geometry:
-
-| element | abcjs | ours | error | where abcjs says so |
+| element | abcjs | was (Bravura) | error | source |
 |---|---|---|---|---|
-| **thin barline** | **0.600 px** | 1.2400 px | **+107%** | measured, `simple-c.svg`; `linewidth: 0.6` at `abstract-engraver.js:992` |
-| **ledger line** | **0.700 px** | 1.2400 px | **+77%** | measured, `simple-c.svg` ledger path |
-| **staff line** | **0.700 px** | 1.0075 px | **+44%** | measured, `simple-c.svg`; `printStaff(…, dy = 0.35)` + `lineThickness` 0 |
-| **stem** | **1.000 px** | 0.9300 px | −7% | measured, `simple-c.svg` stem paths |
-| thick barline | 4 px | 3.8750 px | −3% | `linewidth: 4`, `abstract-engraver.js:1007` |
-| beam | 3.875 px | 3.8750 px | **0%** | `calcDy` returns `spacing.STEP` — a coincidence, and the only one that matches |
+| thin barline | **0.600 px** | 1.240 | **+107%** | `S4-bars-repeats-tune0.svg` |
+| ledger line | **0.700 px** | 1.240 | **+77%** | `simple-c.svg` |
+| ledger overhang | **2 px** each side | 3.100 | **+55%** | `symbolWidth + 4` at `dx = -2` |
+| staff line | **0.700 px** | 1.0075 | **+44%** | `simple-c.svg` |
+| stem | **1.000 px** | 0.930 | −7% | `simple-c.svg` |
+| thick barline | **4.000 px** | 3.875 | −3% | `S4-bars-repeats-tune0.svg` |
+| beam | 3.875 px | 3.875 | **0%** | `calcDy` returns `STEP` — a coincidence |
 
-**WHY NO GATE CAUGHT IT.** `pixel-parity` compares glyph bounding-box CENTRES, and a line's
-centre does not move when its thickness changes. `baseline.test.ts` records our own
-geometry, so it locked the wrong weights in. This is the same blind spot that once hid a
-missing tempo note under a green gate, and the same shape as the four "golden artefacts"
-that turned out to be ours.
+`lineWeightsFor(strict)` in `glyph-table.ts` is the gate — the same split
+`glyphsFor(strict)` already makes for outlines — and the numbers are `ABCJS_LINE_PX` in
+`abcjs-constants.ts`.
 
-### WAS THIS AUTHORISED? Partly — and the part that matters was not.
+**FIVE ARE NOT YET PORTED** and still take Bravura's in BOTH modes. Each says what to
+measure, flagged rather than guessed:
 
-- **Bravura as the glyph OUTLINE source: YES.** `ARCHITECTURE.md` §"Glyph source — inline
-  SVG paths", dated 2026-07-19, records it as escalated ("needs a human") and settled, with
-  the reasoning (self-contained SVG, no 380KB woff2). That decision stands.
-- **It was later narrowed:** `glyph-table.ts` gives `abcjs-strict` abcjs's OWN outlines at
-  abcjs's OWN advances, and Bravura only serves `abc2.1`/`extended`. So for glyph SHAPES in
-  strict we already do not use Bravura. `ARCHITECTURE.md:292` — "Bravura against abcjs's own
-  font is the intended difference" — describes the state BEFORE that narrowing and is now
-  stale for strict.
-- **Bravura's LINE WEIGHTS in strict: NO RECORD ANYWHERE.** Not in `ARCHITECTURE.md`, not in
-  any checkpoint, not in a code comment. `ENGRAVING_DEFAULTS` was wired up when there was
-  one glyph table and one mode, and the strict/Bravura split went in around it without ever
-  reaching the line weights. It is a leftover, not a decision.
+- `beamSpacing` — measure the gap between two beams of a 16th run.
+- `barlineSeparation` — the goldens are ASYMMETRIC: 4.0px thick→thin and 3.4 thin→thick,
+  where ours is one constant.
+- `repeatBarlineDotSeparation` — measure off a `|:`.
+- `slurEndpoint` / `slurMidpoint` / `tieEndpoint` / `tieMidpoint` — abcjs builds its own
+  path in `draw/tie.js`. A SHAPE difference, not one number, and the largest of the five.
 
-### WHAT TO DO
+### AND A GATE THAT CAN SEE IT — `tests/line-weights.test.ts`
 
-Port the six weights into `abcjs-constants.ts` as `ABCJS_PX` entries and gate the 22 sites
-on `strict`, exactly as `glyphsFor(strict)` already gates the outlines. `abc2.1` and
-`extended` keep Bravura's, which is what they are for.
+**Why it survived so long is the transferable part.** `pixel-parity` compares glyph
+bounding-box CENTRES, and a line's centre does not move when its thickness changes;
+`baseline.test.ts` records our OWN geometry, so it locked the wrong weights in. Neither gate
+was broken — both were blind to the same axis, because `PixelItem` carried only a centre.
 
-**It needs a probe that is not the pixel gate.** Compare emitted line THICKNESSES per class
-against the goldens' — the measurement in the table above, generalised. Add it as a gate in
-the same commit, or the next agent will re-lock the same blind spot.
+It now carries the BOX, and the new gate asserts **equality** per line class rather than a
+ceiling, because strict has no latitude. It has the same can-it-fail canary the pixel gate
+has, for the same reason.
+
+**The lesson to carry:** a comparison can only catch what its representation can express.
+When something is invisible to every gate, ask what the gate's data model leaves out — not
+whether the number is small.
 
 ---
 
@@ -72,7 +70,7 @@ the same commit, or the next agent will re-lock the same blind spot.
 |---|---|
 | 41-fixture | **24 of 29 at ZERO on all four axes.** One gate failure: `ragtime-nightingale`'s `oy` at **0.661** against 0.59. NOT raised. |
 | harvested (174) | within 0.05 / 1 / 5 / 25px: **140 / 153 / 165 / 172**, from 114 / 130 / 144 / 169 at the start of 2026-08-04. **34 of 174 off some axis, from 60.** |
-| suite | **691 of 692.** The one red is ragtime's `oy`. Anything else failing is yours. |
+| suite | **695 of 696.** The one red is ragtime's `oy`. Anything else failing is yours. |
 
 Nothing above 17px on the ranked table, and the only item above 10 is a FEATURE
 (`%%setfont`'s rich text).
@@ -156,7 +154,6 @@ Recorded as a divergence.
 ## WHAT IS LEFT, ranked
 
 ```
- —     THE LINE WEIGHTS. No number, because no gate measures them. See the audit above.
 16.91  dy= 0.0 dx=16.9 oy= -3.5 ox= 4.6  visual-misc-06      [%%setfont] — RICH TEXT
  9.60  dy= 0.0 dx= 0.0 oy= -9.6 ox=-0.0  visual-tablature-10 grace before a `y` spacer
  7.21  dy= 0.0 dx= 7.2 oy= -0.0 ox=-4.3  mouse-click-01 / tablature-15   [%%sep, %%text]
@@ -167,7 +164,9 @@ Recorded as a divergence.
 
 ### NEXT, in order
 
-1. **THE LINE WEIGHTS**, with a thickness gate beside them. See the audit.
+1. **THE FIVE REMAINING LINE WEIGHTS** — `beamSpacing`, `barlineSeparation` (asymmetric),
+   `repeatBarlineDotSeparation`, and the slur/tie thicknesses. `tests/line-weights.test.ts`
+   is where each new case goes; the four already there pass.
 2. **`%%setfont-N` and `$N` rich text** — the only measured item above 10px.
    `parseFontChangeLine` (`abc_parse_directive.js:727-748`) splits a header field on `$`,
    maps each `$N` to `multilineVars.setfont[N]` and returns an ARRAY of `{font, text}`
