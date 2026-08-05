@@ -7712,19 +7712,35 @@ function beamDirections(
    */
   forced: boolean | null = null,
 ): Map<number, boolean> {
-  const extremes = new Map<number, { min: number; max: number }>()
+  // A BEAM'S DIRECTION IS THE MEAN OF ITS NOTES' AVERAGE PITCHES, not its extremes.
+  //
+  //     this.total = Math.round(this.total + abselem.abcelem.averagepitch)   // per element
+  //     this.average = total / elems.length
+  //     this.stemsUp = this.average < 6                                       // B, hardcoded
+  //
+  // (`beam-element.js:54-66,89-98`). The RUNNING TOTAL IS ROUNDED at every add, which only
+  // shows on a chord — whose `averagepitch` is fractional — and is reproduced because it is
+  // free to.
+  //
+  // We took whichever EXTREME was further from the middle line, which agrees with the mean
+  // on a compact run and disagrees the moment one note is an outlier: `"E"e"F"F"F#"^F"G"G`
+  // averages 4.75 and beams UP where its extremes are symmetric about the line and beamed
+  // DOWN. That was 16.52px of staff, and all of `visual-transpose-05`.
+  const totals = new Map<number, { total: number; count: number }>()
   for (const measure of voice?.measures ?? []) {
     for (const event of measure.events) {
       if (event.type === 'rest' || event.beamGroup === null) continue
       const pitches = event.type === 'chord' ? event.pitches : [event.pitch]
-      for (const pitch of pitches) {
-        const step = pitchToStep(pitch, clef)
-        const seen = extremes.get(event.beamGroup)
-        if (seen === undefined) extremes.set(event.beamGroup, { min: step, max: step })
-        else {
-          seen.min = Math.min(seen.min, step)
-          seen.max = Math.max(seen.max, step)
-        }
+      if (pitches.length === 0) continue
+      // abcjs's `averagepitch`, in ITS pitch units so the rounding lands where its does.
+      const average =
+        pitches.reduce((sum, p) => sum + pitchToStep(p, clef), 0) / pitches.length +
+        ABCJS_PITCH_ORIGIN
+      const seen = totals.get(event.beamGroup)
+      if (seen === undefined) totals.set(event.beamGroup, { total: Math.round(average), count: 1 })
+      else {
+        seen.total = Math.round(seen.total + average)
+        seen.count += 1
       }
     }
   }
@@ -7732,13 +7748,8 @@ function beamDirections(
   const directions = new Map<number, boolean>()
   // A beam cannot join opposed stems, so a forced voice's beams all point its way.
   const declared = voice?.stemDirection == null ? forced : voice.stemDirection === 'up'
-  for (const [group, { min, max }] of extremes) {
-    if (declared !== null) {
-      directions.set(group, declared)
-      continue
-    }
-    // Whichever extreme is further from the middle line decides; ties go stem-down.
-    directions.set(group, Math.abs(min) > Math.abs(max) ? min < 0 : max < 0)
+  for (const [group, { total, count }] of totals) {
+    directions.set(group, declared ?? total / count < ABCJS_PITCH_ORIGIN)
   }
   return directions
 }

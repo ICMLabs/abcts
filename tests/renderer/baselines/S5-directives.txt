@@ -328,8 +328,8 @@ system 1 width=97.150 originY=19.012
     beam   7.509,-5.250 -> 13.832,-5.250 t=0.500
     beam   18.921,-5.250 -> 21.502,-5.250 t=0.500
     beam   20.402,-4.500 -> 21.502,-4.500 t=0.500
-    beam   27.943,-5.750 -> 30.923,-5.750 t=0.500
-    beam   27.943,-5.000 -> 29.433,-5.000 t=0.500
+    beam   26.763,5.750 -> 29.743,5.750 t=0.500
+    beam   26.763,5.000 -> 28.253,5.000 t=0.500
     beam   41.647,-2.750 -> 43.755,-3.250 t=0.500
     beam   48.035,-2.750 -> 50.143,-3.250 t=0.500
     beam   53.670,-5.250 -> 57.268,-5.750 t=0.500
@@ -425,19 +425,19 @@ system 1 width=97.150 originY=19.012
       glyph noteheadBlack 26.763,0.500
       glyph noteheadBlack 26.763,-1.000
       glyph noteheadBlack 26.763,-2.000
-      line  27.943,2.332 -> 27.943,-6.000 t=0.120
+      line  26.763,-1.832 -> 26.763,5.750 t=0.120
     note@-5,-1,2,4 x=28.253 w=2.737
       glyph noteheadBlack 28.253,2.500
       glyph noteheadBlack 28.253,0.500
       glyph noteheadBlack 28.253,-1.000
       glyph noteheadBlack 28.253,-2.000
-      line  29.433,2.332 -> 29.433,-6.000 t=0.120
+      line  28.253,-1.832 -> 28.253,5.750 t=0.120
     note@-5,-1,2,4 x=29.743 w=3.871
       glyph noteheadBlack 29.743,2.500
       glyph noteheadBlack 29.743,0.500
       glyph noteheadBlack 29.743,-1.000
       glyph noteheadBlack 29.743,-2.000
-      line  30.923,2.332 -> 30.923,-6.000 t=0.120
+      line  29.743,-1.832 -> 29.743,5.750 t=0.120
     note@-6,-4,-2,1,3 x=31.851 w=7.742
       glyph noteheadHalf 31.851,3.000
       glyph noteheadHalf 31.851,2.000

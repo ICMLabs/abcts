@@ -184,9 +184,13 @@ const WITHIN: Readonly<Record<string, number>> = {
   // AN INVERTED FERMATA HANGS UNDER THE NOTE whatever the tune says: abcjs's switch passes
   // the literal `'below'` where every other ornament passes `positioning` through
   // (`decoration.js:261-264`), and there is a `yPos.below` cursor for exactly that.
+  // A BEAM'S DIRECTION IS THE MEAN OF ITS NOTES' AVERAGE PITCHES against the middle line,
+  // not whichever EXTREME lies further from it (`beam-element.js:54-66,89-98`). The two
+  // agree on a compact run and part the moment one note is an outlier — `"E"e"F"F"F#"^F"G"G`
+  // averages 4.75 and beams UP where its extremes are symmetric and beamed DOWN. 16.52px.
   '0.05': 138,
-  '1': 149,
-  '5': 161,
+  '1': 150,
+  '5': 162,
   '25': 172,
 }
 
