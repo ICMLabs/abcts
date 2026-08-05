@@ -925,6 +925,17 @@ export interface StemInfo {
   readonly headX: number
   /** That head's ink width — abcjs's `furthestHead.w`. */
   readonly headWidth: number
+  /**
+   * That head's own `dx` WITHIN its element — a seconds displacement plus the voice-overlap
+   * shift — carried separately because `createStems` counts it TWICE.
+   *
+   * `dx = (asc ? furthestHead.w : 0); if (!isGrace) dx += furthestHead.dx; var x =
+   * furthestHead.x + dx` (`layout/beam.js:117-121`) — and `furthestHead.x` is already
+   * `parent.x + furthestHead.dx`, so the `x` handed to `getBarYAt` is one displacement
+   * further right than the stem it then draws. Zero on a plain note, and a whole notehead
+   * on a displaced one.
+   */
+  readonly headDx: number
   /** Staff step of the notehead furthest along the stem — where the tip is measured from. */
   readonly farStep: number
   /**
@@ -2537,6 +2548,7 @@ function layoutNoteheads(
         // `heads[len-1]` down — and `offsets` is what displaces it in a seconds chord.
         headX: headX + (offsets.get(up ? lowest : highest) ?? 0),
         headWidth: headInk,
+        headDx: baseShift,
         farStep: up ? highest : lowest,
         averageStep: steps.reduce((a, b) => a + b, 0) / steps.length,
         up,
@@ -4712,11 +4724,28 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
   for (const stem of group) {
     const element = elements[stem.element]
     if (!element) continue
-    // Sampled at the head's EDGE, not the stem's centre: `createStems` computes its own
-    // `x = furthestHead.x + (asc ? w : 0)` and hands THAT to `getBarYAt`, three tenths of a
-    // pixel from where it then draws the quad. On a slanted beam the two are different
-    // heights.
-    const beamY = yAt(up ? stem.headX + stem.headWidth : stem.headX) + stemEndOffset
+    // WHERE THE BEAM IS SAMPLED IS NOT WHERE THE STEM IS DRAWN, twice over.
+    //
+    // `createStems` builds `dx = (asc ? furthestHead.w : 0)`, adds `furthestHead.dx` to it,
+    // and then asks `getBarYAt` for the height at `furthestHead.x + dx`
+    // (`layout/beam.js:117-122`). Two things fall out of that and neither is guessable:
+    //
+    //   • the sample sits at the head's EDGE where the quad is drawn 0.3 inside it, so on
+    //     a slant the height solved for is not the height painted; and
+    //   • `furthestHead.x` ALREADY equals `parent.x + furthestHead.dx`, so adding `dx`
+    //     again counts the head's displacement TWICE.
+    //
+    // The second is zero on a plain note and a whole notehead — 9.81px — on a voice-overlap
+    // displacement, and it is not a rounding matter: it is the entire reason
+    // `ragtime-nightingale` sat 1.1px out on every staff from its ninth. One beamed
+    // down-stem on system 4 landed 0.30 pitch high, a below-slur anchored in that beam took
+    // the stem's bottom as its own endpoint, and `setUpperAndLowerVoiceElements` handed the
+    // slur's box straight to `staff.bottom` — which is the natural staff separation on the
+    // one system where `systemStaffSeparation` does not bind. Everything after it inherited
+    // the shift.
+    //
+    // This was measured, having first been REASONED AWAY as "zero for the common case".
+    const beamY = yAt(stem.headX + stem.headDx + (up ? stem.headWidth : 0)) + stemEndOffset
     const lines = element.lines.map((line) =>
       line.x1 === line.x2 && line.x1 === stem.x ? { ...line, y2: beamY, beamed: true } : line,
     )
@@ -6372,6 +6401,11 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
               // coordinates while `x` was absolute put `little swallow`'s noteheads 335px
               // out, because the beam's ends are measured from the head, not the stem.
               headX: m.headX + shiftOf(m.element) + displacementOf(voiceIndex, i, m.element),
+              // The voice-overlap shift is part of the HEAD's `dx`, not the element's —
+              // `voice-elements.js:56-62` adds it to each child's dx and leaves `parent.x`
+              // alone — so it joins the seconds displacement in the term `createStems`
+              // counts twice. `shiftOf` is the element moving and does NOT.
+              headDx: m.headDx + displacementOf(voiceIndex, i, m.element),
               element: m.element + base,
             }))
             beamGroups.set(group, [...(beamGroups.get(group) ?? []), ...shifted])

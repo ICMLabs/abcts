@@ -171,7 +171,18 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // `extraw`. Ragtime's dx is a SPREAD dominated by other causes and moved a tenth of a
     // pixel; the harvested corpus gained a fixture at 1px and another at 5px on the same
     // change.
-    'ragtime-nightingale': { heads: 2009, dy: 1.12, dx: 16.53, oy: -0.54, ox: -1.87 },
+    // dy 1.12 -> 0.33, oy -0.54 -> 0.13, ox -1.87 -> -0.76, and every one of its twelve
+    // staff boundaries now measures 0.0. It was the branch's one standing red, and the
+    // cause was a single beamed down-stem on system 4: `createStems` counts the head's own
+    // `dx` twice when it asks `getBarYAt` for the beam's height, which is zero on a plain
+    // note and a whole notehead on a voice-overlap displacement. That stem landed 0.30
+    // pitch high, a below-slur anchored in the beam took its bottom as an endpoint, and the
+    // slur's box became `staff.bottom` — the natural separation, on the one system where
+    // `systemStaffSeparation` does not bind. Every staff from the ninth inherited 1.1px.
+    //
+    // AND THE `dx` RAISE IS UNDONE. It went 16.43 -> 16.53 on finding 68, the only ceiling
+    // ever raised on this branch; it is back under the original figure at 16.52.
+    'ragtime-nightingale': { heads: 2009, dy: 0.33, dx: 16.52, oy: 0.13, ox: -0.76 },
     'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'score-reorder': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'simple-c': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
