@@ -280,8 +280,13 @@ const WITHIN: Readonly<Record<string, number>> = {
   // "the largest font on this part" and is a FLOOR: a `%%vocalfont` SMALLER than the
   // default drew at its own size and measured its baseline at 17. `visual-selection-01`'s
   // last 4.01px, and three more fixtures with it.
-  '0.05': 148,
-  '1': 161,
+  // …AND THE CHORD LANE HAD THE SAME CLAMP, TWICE. `chordSize` and `chordBlock` both read
+  // `Math.max(default, …)`, which is a floor: `%%gchordfont Arial 10 box` resolves to 13px
+  // and had its lane measured at the 12pt default's 16. Three pixels, and
+  // `visual-tablature-17`'s whole `oy` — while the same fixture's 20, 40, 80 and 130 were
+  // already exact, which is what a floor looks like and an arithmetic error does not.
+  '0.05': 149,
+  '1': 162,
   '5': 173,
   '25': 173,
 }

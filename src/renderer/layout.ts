@@ -7353,9 +7353,19 @@ function anchorAboveStaff<
     (jazzTspans(t) - 1) * t.size * ENGRAVE.textLineStep +
     (t.box === true ? t.size * ENGRAVE.fontBoxPadding * 4 : 0)
   const chordTexts = parts.flatMap((p) => p.elements.flatMap((el) => el.texts.filter(isChord)))
-  const chordSize = Math.max(ENGRAVE.chordTextSize, ...chordTexts.map((t) => t.size))
+  // …AND THE DEFAULT IS A FALLBACK, NOT A FLOOR. Both of these read as "the tallest chord
+  // on the staff" and were `Math.max(default, …)`, which is a clamp: harmless for any font
+  // BIGGER than the 12pt default and silently wrong for any smaller one.
+  // `%%gchordfont Arial 10 box` resolves to 13px and had its lane measured at 16 — three
+  // pixels of staff, which is `visual-tablature-17`'s whole `oy`. Every larger size in that
+  // fixture (20, 40, 80, 130) was already exact, which is the shape of a floor rather than
+  // an arithmetic error, and the same shape as the lyric baseline in finding 84.
+  const chordSize =
+    chordTexts.length === 0 ? ENGRAVE.chordTextSize : Math.max(...chordTexts.map((t) => t.size))
   const chordBlock =
-    Math.max(ENGRAVE.chordHeightAbove, ...chordTexts.map(chordHeightOf)) * chordLanes
+    (chordTexts.length === 0
+      ? ENGRAVE.chordHeightAbove
+      : Math.max(...chordTexts.map(chordHeightOf))) * chordLanes
   const chordY = chords ? reserve(chordBlock) + chordSize : null
 
   // A BOXED PART LABEL MEASURES TALLER, so its whole lane grows: `getTextSize` returns
