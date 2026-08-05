@@ -8,12 +8,23 @@ and community successor to abcjs.
 174-tune harvested corpus, Gonzato, and the audio feature set. Work until it is reached;
 checkpoint and hand off as you go so no context is lost.
 
-Read `Docs/CHECKPOINT-2026-08-04c.md` first — it is the current state of play, findings
+> 🔴 **OPEN AUDIT FINDING, and it is the first job of the next session.** `abcjs-strict`
+> draws **Bravura's line weights**, not abcjs's: `ENGRAVING_DEFAULTS`
+> (`src/renderer/glyphs.ts:45`) is Bravura's metadata, read at 22 sites in `layout.ts`,
+> **not one of them gated on `strict`**. Measured off abcjs's own goldens — thin barline
+> +107%, ledger +77%, staff line +44%, stem −7%. No gate can see it, because `pixel-parity`
+> compares glyph bounding-box CENTRES and a line's centre does not move when its thickness
+> does. The OUTLINE decision was authorised (2026-07-19, escalated, `ARCHITECTURE.md`); the
+> line weights were never part of it and have no record anywhere. See
+> `Docs/CHECKPOINT-2026-08-05.md`, first section.
+
+Read `Docs/CHECKPOINT-2026-08-05.md` first — the audit finding and the current state. Then
+`Docs/CHECKPOINT-2026-08-04c.md` — it is the current state of play, findings
 51-64, THE METHOD that produced them, and what is left. `Docs/CHECKPOINT-2026-08-04b.md`
 holds findings 41-50, `Docs/CHECKPOINT-2026-08-04.md` the expensive lesson about "golden
 limitations", and **`Docs/CHECKPOINT-2026-08-03d.md` is the FINDINGS LEDGER, 16-40** —
 every rule with its abcjs citation and its measured number. Read them when you need the WHY
-of a specific behaviour. `Docs/HANDOFF-2026-08-04b.md` has the session prompt.
+of a specific behaviour. `Docs/HANDOFF-2026-08-05.md` has the session prompt.
 (`CHECKPOINT-2026-08-03c.md` holds the accidental columns,
 the notehead rod, the multi-measure rest and `%%gchordfont`;
 `CHECKPOINT-2026-08-03b.md` holds the lyric-ink fix, the
@@ -355,10 +366,10 @@ feature-coverage gap, tracked separately and implemented not at all.
 ```
 We are continuing abcts development in the abcts repo (Code/abcts).
 
-Read Docs/CHECKPOINT-2026-08-04c.md first, and Docs/HANDOFF-2026-08-04b.md
-beside it — then Docs/CHECKPOINT-2026-08-04b.md (findings 41-50), then
-Docs/CHECKPOINT-2026-08-03d.md (16-40), then ARCHITECTURE.md, then this
-file.
+Read Docs/CHECKPOINT-2026-08-05.md first — its FIRST SECTION is an open
+audit finding and it is your first job — and Docs/HANDOFF-2026-08-05.md
+beside it. Then Docs/CHECKPOINT-2026-08-04c.md (findings 51-70 and the
+method), -08-04b.md (41-50), -08-03d.md (16-40), ARCHITECTURE.md, this file.
 
 THE RULE THAT MATTERS: port abcjs's STRUCTURE, then its constants.
 Reading abcjs gives you its numbers cheaply; the expensive divergences
@@ -392,14 +403,14 @@ the merged vertical arc and is GREEN — keep it that way.
 ```
 Continue geometric parity in Code/abcts.
 
-Read Docs/CHECKPOINT-2026-08-04c.md; the findings ledgers are that file
-(51-64), Docs/CHECKPOINT-2026-08-04b.md (41-50) and
-Docs/CHECKPOINT-2026-08-03d.md (16-40).
+Read Docs/CHECKPOINT-2026-08-05.md; the findings ledgers are
+Docs/CHECKPOINT-2026-08-04c.md (51-70), -08-04b.md (41-50) and
+-08-03d.md (16-40).
 
 The VERTICAL arc is open on `geometry/vertical`, 691/692 with one
-expected red — ragtime's oy at 0.656 against 0.59. Start where the
-checkpoint says: %%setfont's rich text, which is the top of the table
-and the only item above 12px.
+expected red — ragtime's oy at 0.661 against 0.59. Start where the
+checkpoint says: the LINE WEIGHTS audit finding, which no gate can see
+and which needs a thickness probe written beside the fix.
 
 The method, unchanged: instrument abcjs to ANSWER A QUESTION, read the
 ground truth, restore. Port abcjs's STRUCTURE, then its constants. And
