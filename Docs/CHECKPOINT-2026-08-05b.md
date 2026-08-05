@@ -25,7 +25,7 @@ harmless, and left out — and that judgement was the whole remaining error. See
 |---|---|
 | suite | **699 of 699. NO REDS.** The branch has had one standing failure for weeks and it is closed. |
 | 41-fixture | **25 of 29 at ZERO on all four axes**, and `ragtime-nightingale`'s twelve staff boundaries all measure 0.0. |
-| harvested (174) | within 0.05 / 1 / 5 / 25px: **146 / 156 / 167 / 173**. **28 of 174 off some axis**, from 34 at the start of the day. |
+| harvested (174) | within 0.05 / 1 / 5 / 25px: **147 / 157 / 168 / 173**. **27 of 174 off some axis**, from 34 at the start of the day. |
 | CONTENT gaps | **one left** — `parse-book_parser-04-wed`'s leading-header split. |
 
 **NO CEILING IS RAISED ON THIS BRANCH ANY MORE.** ragtime's `dx` was the only one ever
@@ -160,22 +160,69 @@ whole notehead short.
 
 ---
 
+## FINDINGS 78–80 — RICH TEXT, AND A CHORD'S NEWLINE
+
+### 78. A ROW THAT CHANGES FONT MID-LINE ADVANCES BY A DIFFERENT RULE
+`addTextIf` moves a plain row by `Math.round(size.height * 1.1)` (`add-text-if.js:26`);
+`richText` moves a phrase row by `largestY` — the tallest phrase's RAW height, no 1.1 and
+no rounding (`rich-text.js:42-47`). Nothing reconciles them:
+
+| row | plain | rich | Δ |
+|---|---|---|---|
+| title (29.91) | round(32.901) = **33** | **29.91** | 3.09px |
+| composer (21.06) | round(23.166) = **23** | **21.06** | 1.94px |
+
+That is why `RichText` is a UNION, `string | RichPhrase[]`, and not always an array: the
+distinction IS the height rule and it has to reach the renderer. abcjs's own
+`parseFontChangeLine` returns exactly that union.
+
+**AND A PHRASE'S FONT IS MEASURED AT ITS RAW SIZE.** `getTextSize.calc` applies the
+`pt -> px` 4/3 only when handed a font by NAME; handed a font OBJECT — which is what a
+`%%setfont` is — it reads `type.size` straight (`get-text-size.js:24-43`). `%%setfont-1 … 40`
+measures 40px where `%%titlefont 40` measures 53.
+
+### 79. THE FONT MODIFIERS COME AFTER THE SIZE
+`<face> <utf8> <size> <modifiers> <box>`, and `getFontParameter` leaves its `face` state the
+moment it meets a number (`abc_parse_directive.js:190-230`). Anchoring the size to the END
+of the string found none in `cursive 40 bold` and silently took the caller's default.
+
+### 80. `\n` IS A LINE BREAK INSIDE A QUOTED CHORD — AND IT IS A DIFFERENT DECODER
+`substInChord` maps `\n` to a newline and `\"` to a quote, applied by
+`getBrackettedSubstring` as the substring is read (`abc_tokenizer.js:784-807`). It is NOT
+`translateString`, which handles accent escapes and leaves an unknown `\x` with its
+backslash intact. Ours dropped the backslash and kept the `n`, so `"C$1m$7\ntwo"` was one
+line reading `C$1m$7ntwo` — one chord lane where abcjs takes two, and a mark four characters
+too wide.
+
+**THAT ONE CHORD WAS THE WHOLE OF A 16.91 FIXTURE.** Swapping it for a plain `"Cm"` took all
+four axes to 0.00 with every other field untouched, which is how something that looked like
+a font feature turned out to be a two-character escape. The ladder is what separated them:
+eleven rungs went green on finding 78 and one did not.
+
+**AND CHORDS, ANNOTATIONS AND LYRICS DO NOT GET `parseFontChangeLine`** — measured, not
+assumed. Their `$1` stays literal in both engines, and the four rungs covering them were
+exact before the work and after it.
+
+---
+
 ## WHAT IS LEFT, ranked
 
 ```
-16.91  dy= 0.0 dx=16.9 oy= -3.5 ox= 4.6  visual-misc-06      [%%setfont] — RICH TEXT
  7.20  dy= 0.0 dx= 7.2 oy= -0.0 ox=-4.3  mouse-click-01 / tablature-15   [%%sep, %%text]
  6.65  dy= 3.8 dx= 6.7 oy=  0.9 ox= 2.1  visual-selection-01 / svg-per-line-01
  5.74  dy= 0.0 dx= 0.0 oy=  5.7 ox=-0.0  synth-flattener-32  quarter tones
  3.00  dy= 0.0 dx= 0.0 oy= -3.0 ox= 0.0  visual-tablature-17 [stretchlast, gchordfont]
 ```
 
-Nothing above 17 and only ONE item above 10, and it is a FEATURE.
+**NOTHING ABOVE 7.20 IS LEFT**, and the top of the table is now a two-fixture pair.
 
 ### NEXT, in order
 
-1. ~~**GRACE BEAMS**~~ — **DONE**, see findings 74–77. Both grace items came off the table.
-2. **THE FOUR REMAINING LINE WEIGHTS** — `beamSpacing`, `barlineSeparation` (asymmetric,
+1. ~~**GRACE BEAMS**~~ — **DONE**, findings 74–77. ~~**`%%setfont` RICH TEXT**~~ — **DONE**,
+   findings 78–80. All three came off the table.
+2. **`mouse-click-01` / `tablature-15`, 7.20 of dx** — `%%sep` and `%%text` between
+   systems, and now the joint top of the table.
+3. **THE FOUR REMAINING LINE WEIGHTS** — `beamSpacing`, `barlineSeparation` (asymmetric,
    4.0 thick→thin and 3.4 the other way), `repeatBarlineDotSeparation`, and slur/tie
    endpoint+midpoint, which is a SHAPE port out of `draw/tie.js` and the largest.
    `beamedStem` came off this list this session.
