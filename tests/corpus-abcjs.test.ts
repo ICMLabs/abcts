@@ -292,8 +292,15 @@ const WITHIN: Readonly<Record<string, number>> = {
   // uniform on both, which is `ox` with no `dx` and the signature of a prefix rather than a
   // spacing rule. The same meters written as digits were exact throughout, which is what
   // said the arithmetic was fine and the GLYPH was missing.
+  // AN AUGMENTATION DOT HAS ITS OWN ARITHMETIC, and it is stated from the head's ORIGIN:
+  // `notehead.w + dotshiftx - 2 + 5 * dot` (`create-note-head.js:50-53`). So the first dot
+  // sits `w + 3` out and each further one 5px past it, where ours used a 0.35-space gap and
+  // a 0.45-space step — 2.71 and 3.49px against 3 and 5. And the ROD is the LAST dot's
+  // right edge plus one dot's width, not the count times the step: getting that wrong put
+  // 1.5px of phantom rod on every dotted note and cost `happy-birthday` 1.8px of spread
+  // before it was caught.
   '0.05': 156,
-  '1': 168,
+  '1': 169,
   '5': 173,
   '25': 173,
 }

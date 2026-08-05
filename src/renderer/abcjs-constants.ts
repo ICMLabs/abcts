@@ -122,6 +122,16 @@ export const ABCJS_PX = {
   /** `getSymbolWidth(symb) * scale + 2` before an accidental (`create-note-head.js:95`). */
   accidentalGap: 2,
   /**
+   * AN AUGMENTATION DOT'S OWN ARITHMETIC — `notehead.w + dotshiftx - 2 + 5 * dot`
+   * (`create-note-head.js:50-53`), where `dot` counts DOWN from the number of dots. So the
+   * first sits `w + 3` from the head's origin and each further one 5px past it.
+   *
+   * Verified against abcjs's own output: one dot lands at `headx + 12.81` and two at
+   * `+12.81` and `+17.81`, exactly 5 apart, on a 9.81px notehead.
+   */
+  dotOffset: -2,
+  dotSpacing: 5,
+  /**
    * A BARLINE'S CURSOR, and it is five hardcoded numbers rather than one separation
    * (`abstract-engraver.js:985-1030`). abcjs walks left to right:
    *

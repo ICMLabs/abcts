@@ -45,7 +45,7 @@ system 0 width=90.323 originY=0.000
       text  31.068,6.194 size=2.194 bold "here"
     note@-2 x=38.664 w=9.482
       glyph noteheadHalf 38.664,1.000
-      glyph augmentationDot 40.353,0.500
+      glyph augmentationDot 40.390,0.500
       line  39.938,0.833 -> 39.938,-2.500 t=0.129
       text  37.018,6.194 size=2.194 bold "one"
     bar x=48.233 w=0.077
@@ -72,7 +72,7 @@ system 0 width=90.323 originY=0.000
       text  71.580,6.194 size=2.194 bold "per"
     note@3 x=78.690 w=9.482
       glyph noteheadHalf 78.690,-1.500
-      glyph augmentationDot 80.378,-1.500
+      glyph augmentationDot 80.415,-1.500
       line  78.754,-1.333 -> 78.754,2.000 t=0.129
       text  76.677,6.194 size=2.194 bold "note"
     bar x=88.258 w=0.077
@@ -109,7 +109,7 @@ system 1 width=90.323 originY=31.178
       text  28.993,6.194 size=2.194 bold "of"
     note@-2 x=35.702 w=9.482
       glyph noteheadHalf 35.702,1.000
-      glyph augmentationDot 37.390,0.500
+      glyph augmentationDot 37.427,0.500
       line  36.975,0.833 -> 36.975,-2.500 t=0.129
       text  34.482,6.194 size=2.194 bold "ly-"
     bar x=45.737 w=0.077
@@ -136,7 +136,7 @@ system 1 width=90.323 originY=31.178
       text  70.063,6.194 size=2.194 bold "too"
     note@3 x=77.320 w=9.482
       glyph noteheadHalf 77.320,-1.500
-      glyph augmentationDot 79.008,-1.500
+      glyph augmentationDot 79.045,-1.500
       line  77.384,-1.333 -> 77.384,2.000 t=0.129
     bar x=87.355 w=1.239
       line  87.394,-2.000 -> 87.394,2.000 t=0.077

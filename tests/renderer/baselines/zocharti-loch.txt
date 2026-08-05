@@ -45,7 +45,7 @@ system 0 width=90.323 originY=0.000
       line  39.076,-2.000 -> 39.076,2.000 t=0.077
     note@4 x=40.457 w=9.482
       glyph noteheadHalf 40.457,-2.000
-      glyph augmentationDot 42.145,-2.500
+      glyph augmentationDot 42.182,-2.500
       line  41.730,-2.167 -> 41.730,-5.500 t=0.129
     note@3 x=52.274 w=5.474
       glyph noteheadBlack 52.274,-1.500
@@ -94,7 +94,7 @@ system 0 width=90.323 originY=0.000
       line  39.076,-2.000 -> 39.076,2.000 t=0.077
     note@2 x=40.457 w=9.482
       glyph noteheadHalf 40.457,-1.000
-      glyph augmentationDot 42.145,-1.500
+      glyph augmentationDot 42.182,-1.500
       line  40.521,-0.833 -> 40.521,2.500 t=0.129
     note@1 x=52.274 w=5.474
       glyph noteheadBlack 52.274,-0.500
@@ -275,7 +275,7 @@ system 1 width=90.323 originY=44.359
       line  54.423,-2.000 -> 54.423,2.000 t=0.077
     note@2 x=55.804 w=6.705
       glyph noteheadBlack 55.804,-1.000
-      glyph augmentationDot 57.420,-1.500
+      glyph augmentationDot 57.457,-1.500
       line  57.005,-1.167 -> 57.005,-4.500 t=0.129
     note@1 x=61.606 w=3.871
       glyph noteheadBlack 61.606,-0.500
@@ -294,7 +294,7 @@ system 1 width=90.323 originY=44.359
       line  76.431,-2.000 -> 76.431,2.000 t=0.077
     note@2 x=79.666 w=9.482
       glyph noteheadHalf 79.666,-1.000
-      glyph augmentationDot 81.354,-1.500
+      glyph augmentationDot 81.391,-1.500
       glyph fermataAbove 78.982,-5.478
       line  80.940,-1.167 -> 80.940,-4.500 t=0.129
     bar x=87.871 w=0.465
@@ -312,7 +312,7 @@ system 1 width=90.323 originY=44.359
       line  54.423,-2.000 -> 54.423,2.000 t=0.077
     note@0 x=55.804 w=6.705
       glyph noteheadBlack 55.804,0.000
-      glyph augmentationDot 57.420,-0.500
+      glyph augmentationDot 57.457,-0.500
       line  55.868,0.167 -> 55.868,3.500 t=0.129
     note@-1 x=61.606 w=3.871
       glyph noteheadBlack 61.606,0.500
@@ -328,7 +328,7 @@ system 1 width=90.323 originY=44.359
       line  76.431,-2.000 -> 76.431,2.000 t=0.077
     note@-1 x=79.666 w=9.482
       glyph noteheadHalf 79.666,0.500
-      glyph augmentationDot 81.354,0.500
+      glyph augmentationDot 81.391,0.500
       glyph fermataAbove 78.982,-3.978
       line  79.731,0.667 -> 79.731,4.000 t=0.129
     bar x=87.871 w=0.465
@@ -404,7 +404,7 @@ system 1 width=90.323 originY=44.359
       line  54.423,-2.000 -> 54.423,2.000 t=0.077
     note@17 x=55.804 w=6.705
       glyph noteheadBlack 55.804,-8.500
-      glyph augmentationDot 57.420,-8.500
+      glyph augmentationDot 57.457,-8.500
       line  55.546,-3.000 -> 57.328,-3.000 t=0.090
       line  55.546,-4.000 -> 57.328,-4.000 t=0.090
       line  55.546,-5.000 -> 57.328,-5.000 t=0.090
@@ -436,7 +436,7 @@ system 1 width=90.323 originY=44.359
     note@16 x=79.666 w=9.482
       glyph accidentalSharp 78.343,-8.000
       glyph noteheadHalf 79.666,-8.000
-      glyph augmentationDot 81.354,-8.500
+      glyph augmentationDot 81.391,-8.500
       glyph fermataAbove 78.982,-12.478
       line  79.408,-3.000 -> 81.262,-3.000 t=0.090
       line  79.408,-4.000 -> 81.262,-4.000 t=0.090
@@ -481,7 +481,7 @@ system 1 width=90.323 originY=44.359
       line  54.423,-2.000 -> 54.423,2.000 t=0.077
     note@15 x=55.804 w=6.705
       glyph noteheadBlack 55.804,-7.500
-      glyph augmentationDot 57.420,-7.500
+      glyph augmentationDot 57.457,-7.500
       line  55.546,-3.000 -> 57.328,-3.000 t=0.090
       line  55.546,-4.000 -> 57.328,-4.000 t=0.090
       line  55.546,-5.000 -> 57.328,-5.000 t=0.090
@@ -516,7 +516,7 @@ system 1 width=90.323 originY=44.359
       line  76.431,-2.000 -> 76.431,2.000 t=0.077
     note@14 x=79.666 w=9.482
       glyph noteheadHalf 79.666,-7.000
-      glyph augmentationDot 81.354,-7.500
+      glyph augmentationDot 81.391,-7.500
       glyph fermataAbove 78.982,-8.501
       line  79.408,-3.000 -> 81.262,-3.000 t=0.090
       line  79.408,-4.000 -> 81.262,-4.000 t=0.090

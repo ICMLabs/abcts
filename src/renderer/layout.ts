@@ -1271,7 +1271,13 @@ export function noteGlyph(notated: Rational): NoteGlyphSpec | null {
  * line, ±2 and ±4 the others) and odd steps are spaces, so the rule is simply: bump an
  * even step up by one.
  */
-function dotGlyphs(count: number, x: number, step: number, taken: Set<number>): PlacedGlyph[] {
+function dotGlyphs(
+  count: number,
+  x: number,
+  step: number,
+  taken: Set<number>,
+  spacing: number = ENGRAVE.dotSpacing,
+): PlacedGlyph[] {
   let dotStep = step % 2 === 0 ? step + 1 : step
   // ponytail: in a chord, two notes a second apart can want the same dot space — one is
   // on a line and bumps up onto its neighbour's. Moved up a space rather than solved
@@ -1281,7 +1287,7 @@ function dotGlyphs(count: number, x: number, step: number, taken: Set<number>): 
 
   const out: PlacedGlyph[] = []
   for (let i = 0; i < count; i++) {
-    out.push({ ...glyphAt('augmentationDot', x + i * ENGRAVE.dotSpacing, dotStep), role: 'dot' })
+    out.push({ ...glyphAt('augmentationDot', x + i * spacing, dotStep), role: 'dot' })
   }
   return out
 }
@@ -2446,10 +2452,25 @@ function layoutNoteheads(
   let dotWidth = 0
   if (spec.dots > 0) {
     const rightmost = headX + Math.max(0, ...[...offsets.values()]) + headInk
-    const dotX = rightmost + ENGRAVE.dotGap
+    // ABCJS'S OWN OFFSET, which is stated from the head's ORIGIN rather than as a gap after
+    // its right edge: `notehead.w + dotshiftx - 2 + 5 * dot` (`create-note-head.js:50-53`).
+    // Ours was a 0.35-space gap and a 0.45-space step — 2.71 and 3.49px against 3 and 5.
+    const dotStep = strict ? spaces(ABCJS_PX.dotSpacing) : ENGRAVE.dotSpacing
+    const dotX = strict
+      ? rightmost + spaces(ABCJS_PX.dotOffset + ABCJS_PX.dotSpacing)
+      : rightmost + ENGRAVE.dotGap
     const taken = new Set<number>()
-    for (const step of steps) glyphs.push(...dotGlyphs(spec.dots, dotX, step, taken))
-    dotWidth = dotX - headX + spec.dots * ENGRAVE.dotSpacing
+    for (const step of steps) glyphs.push(...dotGlyphs(spec.dots, dotX, step, taken, dotStep))
+    // THE ROD IS THE LAST DOT'S RIGHT EDGE, not a count times a spacing. abcjs's dots are
+    // `addRight` children whose extent is `dx + getSymbolWidth("dots.dot")`
+    // (`create-note-head.js:53`), so what reaches past the notehead is the FURTHEST dot
+    // plus one dot's width. Multiplying the count by the new 5px step instead put an extra
+    // 1.5px of rod on every dotted note and cost `happy-birthday` 1.8px of spread.
+    dotWidth =
+      dotX -
+      headX +
+      (spec.dots - 1) * dotStep +
+      (strict ? glyphsFor(strict).width('augmentationDot') : dotStep)
   }
 
   if (spec.stemmed) {

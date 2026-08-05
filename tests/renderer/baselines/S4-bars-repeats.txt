@@ -561,13 +561,13 @@ system 0 width=90.323 originY=0.000
       line  70.546,-2.000 -> 70.546,2.000 t=0.077
     note@4 x=71.926 w=6.705
       glyph noteheadBlack 71.926,-2.000
-      glyph augmentationDot 73.542,-2.500
+      glyph augmentationDot 73.579,-2.500
       line  71.991,-1.833 -> 71.991,1.500 t=0.129
     rest x=76.980 w=3.871
       glyph rest8th 76.980,0.000
     note@5 x=79.899 w=6.705
       glyph noteheadBlack 79.899,-2.500
-      glyph augmentationDot 81.514,-2.500
+      glyph augmentationDot 81.551,-2.500
       line  79.963,-2.333 -> 79.963,1.000 t=0.129
     rest x=84.953 w=3.871
       glyph rest8th 84.953,0.000

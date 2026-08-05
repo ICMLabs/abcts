@@ -24,7 +24,7 @@ system 0 width=90.551 originY=0.000
       text  22.073,-7.413 size=2.581 "= 120"
     note@-6 x=13.682 w=4.741
       glyph noteheadBlack 13.682,3.000
-      glyph augmentationDot 15.298,2.500
+      glyph augmentationDot 15.335,2.500
       glyph flag8thUp 14.870,-0.500
       line  13.424,3.000 -> 15.206,3.000 t=0.090
       line  14.883,2.833 -> 14.883,-0.500 t=0.129
@@ -55,7 +55,7 @@ system 0 width=90.551 originY=0.000
       line  36.575,-2.000 -> 36.575,2.000 t=0.077
     note@-4 x=39.938 w=6.705
       glyph noteheadBlack 39.938,2.000
-      glyph augmentationDot 41.554,1.500
+      glyph augmentationDot 41.591,1.500
       line  41.139,1.833 -> 41.139,-1.500 t=0.129
       text  39.825,-4.687 size=2.065 "C"
       text  37.956,5.716 size=2.194 bold "you,"
@@ -63,7 +63,7 @@ system 0 width=90.551 originY=0.000
       glyph rest8th 44.600,0.000
     note@-6 x=48.080 w=4.741
       glyph noteheadBlack 48.080,3.000
-      glyph augmentationDot 49.696,2.500
+      glyph augmentationDot 49.733,2.500
       glyph flag8thUp 49.269,-0.500
       line  47.822,3.000 -> 49.604,3.000 t=0.090
       line  49.282,2.833 -> 49.282,-0.500 t=0.129
@@ -94,7 +94,7 @@ system 0 width=90.551 originY=0.000
       line  70.974,-2.000 -> 70.974,2.000 t=0.077
     note@-3 x=74.337 w=6.705
       glyph noteheadBlack 74.337,1.500
-      glyph augmentationDot 75.952,1.500
+      glyph augmentationDot 75.989,1.500
       line  75.538,1.333 -> 75.538,-2.000 t=0.129
       text  74.338,-4.687 size=2.065 "F"
       text  72.355,5.716 size=2.194 bold "you,"
@@ -102,7 +102,7 @@ system 0 width=90.551 originY=0.000
       glyph rest8th 78.999,0.000
     note@-6 x=82.236 w=4.741
       glyph noteheadBlack 82.236,3.000
-      glyph augmentationDot 83.852,2.500
+      glyph augmentationDot 83.889,2.500
       glyph flag8thUp 83.424,-0.500
       line  81.978,3.000 -> 83.760,3.000 t=0.090
       line  83.437,2.833 -> 83.437,-0.500 t=0.129
@@ -155,7 +155,7 @@ system 1 width=90.551 originY=22.914
       glyph rest8th 41.178,0.000
     note@0 x=45.204 w=4.741
       glyph noteheadBlack 45.204,0.000
-      glyph augmentationDot 46.820,-0.500
+      glyph augmentationDot 46.857,-0.500
       glyph flag8thDown 45.204,3.500
       line  45.268,0.000 -> 45.268,3.500 t=0.129
       text  43.068,6.194 size=2.194 bold "hap-"
@@ -184,7 +184,7 @@ system 1 width=90.551 originY=22.914
       line  74.267,-2.000 -> 74.267,2.000 t=0.077
     note@-3 x=77.721 w=9.482
       glyph noteheadHalf 77.721,1.500
-      glyph augmentationDot 79.410,1.500
+      glyph augmentationDot 79.447,1.500
       line  78.995,1.333 -> 78.995,-2.000 t=0.129
       text  77.759,-4.687 size=2.065 "F"
       text  75.648,6.194 size=2.194 bold "you!"
