@@ -1,11 +1,11 @@
 tune 0
-bounds  width=90.323 height=59.703 top=-1.935
+bounds  width=90.323 height=59.705 top=-1.935
 systems 1
 system 0 width=90.323 originY=0.000
-  connector brace -0.920,41.332 scale=3.636
+  connector brace -0.920,41.334 scale=3.636
   connector bracketTop -0.600,15.514
-  connector bracketBottom -0.600,31.471
-  connector line -0.600,15.514 -> -0.600,31.471 t=0.500
+  connector bracketBottom -0.600,31.472
+  connector line -0.600,15.514 -> -0.600,31.472 t=0.500
   staff 0 originY=17.514
     staffline 0.000,2.000 -> 90.323,2.000 t=0.090
     staffline 0.000,1.000 -> 90.323,1.000 t=0.090
@@ -91,7 +91,7 @@ system 0 width=90.323 originY=0.000
       line  81.083,2.167 -> 81.083,5.500 t=0.129
     bar x=88.258 w=0.077
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
-  staff 1 originY=29.471
+  staff 1 originY=29.472
     staffline 0.000,2.000 -> 90.323,2.000 t=0.090
     staffline 0.000,1.000 -> 90.323,1.000 t=0.090
     staffline 0.000,0.000 -> 90.323,0.000 t=0.090
@@ -144,24 +144,24 @@ system 0 width=90.323 originY=0.000
     note@0 x=56.721 w=7.742
       glyph noteheadHalf 56.721,0.000
       line  56.786,0.167 -> 56.786,3.500 t=0.129
-      text  55.563,8.624 size=2.194 bold "A-"
+      text  55.563,8.625 size=2.194 bold "A-"
     note@0 x=63.961 w=7.742
       glyph noteheadHalf 63.961,0.000
       line  64.026,0.167 -> 64.026,3.500 t=0.129
-      text  62.652,8.624 size=2.194 bold "ve,"
+      text  62.652,8.625 size=2.194 bold "ve,"
     bar x=71.201 w=0.077
       line  71.240,-2.000 -> 71.240,2.000 t=0.077
     note@0 x=73.779 w=7.742
       glyph noteheadHalf 73.779,0.000
       line  73.843,0.167 -> 73.843,3.500 t=0.129
-      text  72.620,8.624 size=2.194 bold "A-"
+      text  72.620,8.625 size=2.194 bold "A-"
     note@0 x=81.018 w=7.742
       glyph noteheadHalf 81.018,0.000
       line  81.083,0.167 -> 81.083,3.500 t=0.129
-      text  79.709,8.624 size=2.194 bold "ve,"
+      text  79.709,8.625 size=2.194 bold "ve,"
     bar x=88.258 w=0.077
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
-  staff 2 originY=43.332
+  staff 2 originY=43.334
     staffline 0.000,2.000 -> 90.323,2.000 t=0.090
     staffline 0.000,1.000 -> 90.323,1.000 t=0.090
     staffline 0.000,0.000 -> 90.323,0.000 t=0.090
@@ -261,7 +261,7 @@ system 0 width=90.323 originY=0.000
       glyph noteheadWhole 73.779,2.000
     bar x=88.258 w=0.077
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
-  staff 3 originY=53.832
+  staff 3 originY=53.834
     staffline 0.000,2.000 -> 90.323,2.000 t=0.090
     staffline 0.000,1.000 -> 90.323,1.000 t=0.090
     staffline 0.000,0.000 -> 90.323,0.000 t=0.090

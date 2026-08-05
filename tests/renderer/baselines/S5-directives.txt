@@ -847,7 +847,7 @@ system 0 width=90.323 originY=0.000
     bar x=88.258 w=0.077
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
 tune 4
-bounds  width=90.401 height=37.445 top=-1.935
+bounds  width=90.401 height=37.446 top=-1.935
 systems 2
 system 0 width=90.401 originY=0.000
   staff 0 originY=12.961
@@ -937,7 +937,7 @@ system 0 width=90.401 originY=0.000
       text  83.402,6.194 size=2.194 bold "re-"
     bar x=88.336 w=0.077
       line  88.375,-2.000 -> 88.375,2.000 t=0.077
-system 1 width=90.401 originY=19.891
+system 1 width=90.401 originY=19.892
   staff 0 originY=6.752
     staffline 0.000,2.000 -> 90.401,2.000 t=0.090
     staffline 0.000,1.000 -> 90.401,1.000 t=0.090

@@ -1883,7 +1883,7 @@ system 0 width=45.377 originY=0.000
     bar x=26.690 w=0.077
       line  26.729,-2.000 -> 26.729,2.000 t=0.077
 tune 17
-bounds  width=90.551 height=40.467 top=-1.935
+bounds  width=90.551 height=40.468 top=-1.935
 systems 2
 system 0 width=90.551 originY=0.000
   staff 0 originY=16.461

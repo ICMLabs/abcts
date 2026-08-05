@@ -1,5 +1,5 @@
 tune 0
-bounds  width=90.484 height=79.363 top=-1.935
+bounds  width=90.484 height=79.364 top=-1.935
 systems 4
 system 0 width=90.323 originY=0.000
   staff 0 originY=25.500
@@ -161,7 +161,7 @@ system 2 width=90.323 originY=40.914
       text  78.911,5.694 size=2.194 bold "vous?"
     bar x=88.258 w=0.077
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
-system 3 width=90.484 originY=56.758
+system 3 width=90.484 originY=56.759
   staff 0 originY=12.303
     staffline 0.000,2.000 -> 90.484,2.000 t=0.090
     staffline 0.000,1.000 -> 90.484,1.000 t=0.090

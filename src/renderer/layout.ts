@@ -856,7 +856,8 @@ export interface PlacedText {
   /**
    * `%%<type>font … box` — the text's own font is boxed, so `getTextSize` returns
    * `height + padding * 4` for it (`helpers/get-text-size.js:46-48`). Carried on a chord
-   * symbol because its LANE is measured from that height.
+   * symbol because its LANE is measured from that height — and on a LYRIC for the same
+   * reason, since `%%vocalfont … box` widens the staff below it.
    */
   readonly box?: boolean
 }
@@ -3681,21 +3682,31 @@ function noteText(
   // on `lyricMelisma` in the model. A `%%vocalfont` between two `w:` lines under the same
   // music therefore styles verse 1 and not verse 2.
   //
-  // MODE-GATED, and this direction is deliberate: abcjs stamps `el.fonts` at parse time
-  // and never reads `.fonts` anywhere in its write phase, so its mid-tune vocalfont is
-  // parsed and never realized. Strict reproduces that by drawing every syllable in the
-  // default. Realizing it in strict would be an IMPROVEMENT, which is the one thing
-  // strict must not do.
+  // NO LONGER MODE-GATED — CORRECTED 2026-08-05, and the note that used to stand here was
+  // wrong. It read: "abcjs stamps `el.fonts` at parse time and never reads `.fonts`
+  // anywhere in its write phase, so its mid-tune vocalfont is parsed and never realized.
+  // Realizing it in strict would be an IMPROVEMENT, which is the one thing strict must not
+  // do." That was reasoned from the source and abcjs's own OUTPUT denies it.
+  //
+  // `addLyric` measures with `getTextSize.calc(lyricStr, 'vocalfont', "lyric")` and hands
+  // the element `dim: getTextSize.attr('vocalfont', "lyric")`
+  // (`abstract-engraver.js:769-778`) — the vocalfont, by name, for both the LANE and the
+  // drawn attrs. Its SVG says the same in one attribute: the same tune renders its lyric at
+  // `font-size="17" font-family="Times New Roman" font-weight="bold"` with no directive,
+  // `13` / `Helvetica` / `normal` under `%%vocalfont Helvetica 10.0`, and `27` under
+  // `%%vocalfont Helvetica 20.0`.
+  //
+  // So strict realizes it too, and this row of the mode-split table in CLAUDE.md is gone.
+  // POINTS THROUGH ABCJS'S OWN CONVERSION, not a ratio of the default's drawn size. The
+  // two agree at 13pt — `round(13 * 4/3)` is 17 and so is `17 * 13/13` — and part company
+  // everywhere else: 20pt is `round(26.67) = 27` where the ratio gives 26.15, and that
+  // 0.85px picks a different row of the golden's height table (29.91 against 28), which is
+  // the last 1.75px of `%%vocalfont Helvetica 20.0`. A ratio anchored on a value that is
+  // itself already rounded cannot reproduce a rounding.
   const lyricSize =
-    !strict && event.lyricFont !== null
-      ? // Ratio FIRST. `size / DEFAULT` is exactly 1 when they are equal, whatever the
-        // values, so `%%vocalfont Times-Bold` with no size lands on the default size
-        // exactly rather than a rounding step away from it. Multiplying first happens to
-        // be exact for 13 too, and would stop being so if either constant moved.
-        ENGRAVE.lyricTextSize * (event.lyricFont.size / DEFAULT_VOCALFONT_PT)
-      : ENGRAVE.lyricTextSize
-  const lyricBold = !strict && event.lyricFont !== null ? event.lyricFont.bold : true
-  const lyricItalic = !strict && event.lyricFont !== null ? event.lyricFont.italic : false
+    event.lyricFont !== null ? spaces(fontPixels(event.lyricFont.size)) : ENGRAVE.lyricTextSize
+  const lyricBold = event.lyricFont !== null ? event.lyricFont.bold : true
+  const lyricItalic = event.lyricFont !== null ? event.lyricFont.italic : false
   verses.forEach((verse, index) => {
     if (verse === null || verse === '') return
     // Verse 1 carries the font; later verses stay at the default until `extraVerses` can
@@ -7149,7 +7160,23 @@ function anchorLyrics<
   ).inkBottom
   const written = stepToY(ENGRAVE.lyricStep)
   return parts.map((part, voiceIndex) => {
-    const shift = inkBottom + ENGRAVE.lyricInkGap + voiceIndex * ENGRAVE.lyricVoiceStep - written
+    // THE BASELINE SITS ONE FONT SIZE BELOW THE LANE TOP, not a constant 17 below the ink.
+    // `renderText` adds `hash.font.size` to every non-centred text's y (`text.js:30`), and
+    // 17 is BOTH `spacing.vocal` and the default vocalfont's drawn size — two unrelated
+    // quantities that happen to be equal, which is precisely the coincidence that hides a
+    // rule. Measured on one tune at three sizes: baseline 105.61 at 17px, 101.61 at 13,
+    // 115.61 at 27 — moving by exactly the size delta each time.
+    const size = Math.max(
+      ENGRAVE.lyricTextSize,
+      ...part.elements.flatMap((el) => el.texts.filter(isLyric).map((t) => t.size)),
+    )
+    // The per-voice drop is the lyric block's own HEIGHT, and it must come from the same
+    // place the lane does — `goldenTextHeight`, the generator's table. `lyricVoiceStep` was
+    // `17 * 1.108 = 18.836` where the table says a flat `18.84`, and mixing the exact
+    // figure into the lane while leaving the approximation here put
+    // `visual-multi-voice-02` — four voices, two verses, no `%%vocalfont` at all — 0.05px
+    // out on nothing but the four-thousandths between them.
+    const shift = inkBottom + size + voiceIndex * goldenTextHeight(size) - written
     return {
       ...part,
       elements: part.elements.map((el) =>
@@ -7641,6 +7668,10 @@ function verticalExtent(
 
   /** LOWEST lyric baseline on the staff — the last verse of the lowest-offset voice. */
   let lyricBottom = Number.NEGATIVE_INFINITY
+  /** The tallest lyric font on the staff — the lane is measured in IT, not the default. */
+  let lyricLaneHeight = 0
+  /** …and its SIZE, which is what the baseline is measured from. See below. */
+  let lyricFontSize = 0
 
   for (const el of elements) {
     // A TEMPO MARK RESERVES A FLAT 6 PITCHES, not its ink.
@@ -7725,6 +7756,15 @@ function verticalExtent(
     for (const t of el.texts) {
       if (t.role === 'lyric') {
         lyricBottom = Math.max(lyricBottom, t.y)
+        // …AND THE HEIGHT IT RESERVES IS ITS OWN FONT'S, not the default's. `addLyric`
+        // measures `getTextSize.calc(lyricStr, 'vocalfont')`, so a `%%vocalfont` changes
+        // the LANE as well as the ink: at 20pt abcjs's next staff sits 7.5px lower than
+        // at the default, and at 10pt 3.85px higher — which was the whole of
+        // `visual-selection-01`'s dy.
+        // No box term: `vocalfont` is not in abcjs's `fontTypeCanHaveBox`
+        // (`abc_parse_directive.js:60`), so `%%vocalfont … box` never sets one.
+        lyricLaneHeight = Math.max(lyricLaneHeight, goldenTextHeight(t.size))
+        lyricFontSize = Math.max(lyricFontSize, t.size)
         continue
       }
       // OUT-OF-STAFF TEXT RESERVES ABCJS'S WAY: a full font size above the baseline and
@@ -7777,7 +7817,12 @@ function verticalExtent(
   if (Number.isFinite(lyricBottom)) {
     bottom = Math.max(
       bottom,
-      lyricBottom + ENGRAVE.lyricVoiceStep + ENGRAVE.spacePerStep - ENGRAVE.lyricInkGap,
+      // `height - size + STEP`, and the `- size` used to be a hard `- 17` because 17 is
+      // both `spacing.vocal` AND the default vocalfont's drawn size — two different
+      // quantities that happen to be equal, which is exactly the coincidence that hides a
+      // rule. abcjs draws the baseline one FONT SIZE below the lane top (`text.js:30`), so
+      // at 27px it sits 10px lower and the staff below it only 7.5px lower.
+      lyricBottom + lyricLaneHeight + ENGRAVE.spacePerStep - lyricFontSize,
     )
   }
 

@@ -1401,6 +1401,8 @@ class ScoreBuilder {
    * which is the only way to guarantee its geometry cannot drift.
    */
   vocalFont: LyricFont | null = null
+  /** …and the one the CURRENT music line started with, which is what a lyric draws in. */
+  lineVocalFont: LyricFont | null = null
   /** The `%%gchordfont` in force — a CHANGING font, so it is stamped per event. */
   chordFont: LyricFont | null = null
   /**
@@ -1952,7 +1954,15 @@ class Parser {
       const type = (FONT_ALIASES[alias] ?? alias) as AbcFontType
       if (type in ABC_FONT_DEFAULT_PT) {
         const builder = this.ensureScore(start)
-        const font = parseFontSpec(fontDirective[2], ABC_FONT_DEFAULT_PT[type])
+        // `box` IS NOT LEGAL ON EVERY FONT. abcjs allows it on eleven types and rejects it
+        // on the rest — `fontTypeCanHaveBox` (`abc_parse_directive.js:60`), which has no
+        // `vocalfont`, `tempofont`, `repeatfont`, `tripletfont` or `wordsfont` in it. So
+        // `%%vocalfont sans-serif 11 box` is a font with NO box, and honouring the word
+        // gave `visual-options-01-fonts` a lyric lane four paddings too tall the moment
+        // strict started realizing the directive at all.
+        const font = boxable(type)
+          ? parseFontSpec(fontDirective[2], ABC_FONT_DEFAULT_PT[type])
+          : { ...parseFontSpec(fontDirective[2], ABC_FONT_DEFAULT_PT[type]), box: false }
         builder.fonts[type] = font
         // The two that are also stamped PER ELEMENT, because they can change mid-tune and
         // a fixture does change them between music lines.
@@ -2140,7 +2150,18 @@ class Parser {
     const continues = /\\\s*$/.test(content)
     this.lyricContinues = continues
     const text = continues ? content.replace(/\\\s*$/, '') : content
-    return parseLyricSyllables(text, offset, this.mode, builder.vocalFont)
+    // AND THE MODE SPLIT IS REAL HERE, though not the one that used to be recorded.
+    // Strict takes the font its MUSIC LINE started with, because that is abcjs's staff-level
+    // granularity. `abc2.1` and `extended` take the one in force at this point in the
+    // source, which is Gonzato §4.1.4's per-SEGMENT reading and the standard's intent.
+    // What is NOT the split any more is "strict ignores `%%vocalfont` entirely" — abcjs
+    // realizes it, and its own SVG says so in one attribute.
+    return parseLyricSyllables(
+      text,
+      offset,
+      this.mode,
+      isStrict(this.mode) ? builder.lineVocalFont : builder.vocalFont,
+    )
   }
 
   private applyField(letter: string, content: string, start: number, end: number): void {
@@ -2360,7 +2381,23 @@ class Parser {
     // time signature is printed on system 3, so the `+:` prose on line 8 had already made
     // every later field a mid-tune one.
     builder.bodyStarted = true
-    if (!continued) builder.voice.beginMusicLine()
+    // THE VOCALFONT A LYRIC DRAWS IN IS THE ONE IN FORCE WHEN ITS MUSIC LINE BEGAN, not
+    // when its `w:` line was read. `%%vocalfont` is a CHANGING font
+    // (`abc_parse_directive.js:1022-1030`): it always writes `multilineVars.vocalfont`, and
+    // writes `tune.formatting` only in the header. The mid-tune value reaches the drawing
+    // through the STAFF — `params.vocalfont` on the `abcstaff`
+    // (`abc_parse_music.js:1000-1001`), applied by
+    // `staffgroup.getTextSize.updateFonts(abcstaff)` (`abstract-engraver.js:143`) — so its
+    // granularity is the music LINE, and it takes effect from the next one.
+    //
+    // Measured three ways on abcjs itself: a header `%%vocalfont Helvetica 24` draws every
+    // syllable at 32; the same directive between two music lines draws 17,17,17,17 then
+    // 32,32,32,32; and Gonzato's fixture, whose music all precedes its directives, draws
+    // every syllable at the DEFAULT 17 however many `%%vocalfont` lines follow.
+    if (!continued) {
+      builder.lineVocalFont = builder.vocalFont
+      builder.voice.beginMusicLine()
+    }
     // Re-read through the builder rather than capturing: an inline `[V:2]` mid-line
     // switches which voice subsequent events belong to.
     const voice = () => builder.voice
@@ -3709,3 +3746,23 @@ function parseFontChangeLine(text: string, setfont: readonly (LyricFont | undefi
  * A chord gets this instead, and only a chord.
  */
 const substInChord = (str: string): string => str.replace(/\\n/g, '\n').replace(/\\"/g, '"')
+
+/**
+ * The eleven font types abcjs lets `box` apply to — `fontTypeCanHaveBox`
+ * (`abc_parse_directive.js:60`). Anywhere else the word is an extra parameter it warns
+ * about and drops.
+ */
+const BOXABLE_FONTS: ReadonlySet<string> = new Set([
+  'gchordfont',
+  'measurefont',
+  'partsfont',
+  'annotationfont',
+  'composerfont',
+  'historyfont',
+  'infofont',
+  'subtitlefont',
+  'textfont',
+  'titlefont',
+  'voicefont',
+])
+const boxable = (type: string): boolean => BOXABLE_FONTS.has(type)

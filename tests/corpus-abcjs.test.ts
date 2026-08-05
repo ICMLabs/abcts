@@ -249,9 +249,27 @@ const WITHIN: Readonly<Record<string, number>> = {
   // chord's -13.34. That is why it only ever showed where BOTH were present — four rungs
   // of five were green — and why the ranked table's `[%%sep, %%text]` directives column
   // named the wrong thing entirely.
-  '0.05': 147,
+  // `%%vocalfont` IS REALIZED, AND STRICT REALIZES IT TOO — the mode-split row saying
+  // "abcjs parses it and never draws it" was reasoned from the source and its own SVG
+  // denies it: the same tune draws its lyric at `font-size="17"` with no directive, `13`
+  // under `%%vocalfont Helvetica 10.0` and `27` under `20.0`. Its granularity is the music
+  // LINE, because `%%vocalfont` is a CHANGING font that reaches the drawing through the
+  // STAFF (`params.vocalfont` -> `getTextSize.updateFonts(abcstaff)`), which is why Gonzato's
+  // fixture — all of its music BEFORE all of its directives — draws every syllable at the
+  // default however many `%%vocalfont` lines follow.
+  // The lane and the baseline both follow the font: the baseline sits one FONT SIZE below
+  // the lane top, and `17` was standing in for it because 17 is BOTH `spacing.vocal` and
+  // the default vocalfont's drawn size. And `box` is not legal on `vocalfont` at all —
+  // `fontTypeCanHaveBox` lists eleven types and that is not one of them.
+  //
+  // FOUR FIXTURES MOVED, NET −5.28px: `visual-selection-01` and `svg-per-line-01` 6.65 ->
+  // 4.01 each, `visual-options-01-fonts` 1.43 -> 2.01, and `visual-multi-voice-02` 0.00 ->
+  // 0.05 — the last a pure 0.05px OFFSET sitting exactly on the bucket boundary, which is
+  // why `0.05` goes DOWN by one here while `5` goes up by two. Recorded rather than
+  // rounded away; both residuals are named and neither is masked.
+  '0.05': 146,
   '1': 157,
-  '5': 170,
+  '5': 172,
   '25': 173,
 }
 

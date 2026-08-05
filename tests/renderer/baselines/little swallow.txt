@@ -1,5 +1,5 @@
 tune 0
-bounds  width=90.719 height=91.557 top=-1.935
+bounds  width=90.719 height=91.560 top=-1.935
 systems 5
 system 0 width=90.534 originY=0.000
   staff 0 originY=21.700
@@ -126,7 +126,7 @@ system 0 width=90.534 originY=0.000
       text  82.337,9.076 size=2.194 bold "里，"
     bar x=88.470 w=0.077
       line  88.508,-2.000 -> 88.508,2.000 t=0.077
-system 1 width=90.646 originY=31.512
+system 1 width=90.646 originY=31.513
   staff 0 originY=3.862
     staffline 0.000,2.000 -> 90.646,2.000 t=0.090
     staffline 0.000,1.000 -> 90.646,1.000 t=0.090
@@ -238,7 +238,7 @@ system 1 width=90.646 originY=31.512
       text  83.779,9.563 size=2.194 bold "天"
     bar x=88.582 w=0.077
       line  88.620,-2.000 -> 88.620,2.000 t=0.077
-system 2 width=90.681 originY=45.675
+system 2 width=90.681 originY=45.676
   staff 0 originY=3.862
     staffline 0.000,2.000 -> 90.681,2.000 t=0.090
     staffline 0.000,1.000 -> 90.681,1.000 t=0.090
@@ -347,7 +347,7 @@ system 2 width=90.681 originY=45.675
       text  83.766,9.326 size=2.194 bold "里"
     bar x=88.617 w=0.077
       line  88.656,-2.000 -> 88.656,2.000 t=0.077
-system 3 width=90.719 originY=59.600
+system 3 width=90.719 originY=59.601
   staff 0 originY=3.862
     staffline 0.000,2.000 -> 90.719,2.000 t=0.090
     staffline 0.000,1.000 -> 90.719,1.000 t=0.090
@@ -458,7 +458,7 @@ system 3 width=90.719 originY=59.600
       text  84.065,9.563 size=2.194 bold "了"
     bar x=88.654 w=0.077
       line  88.693,-2.000 -> 88.693,2.000 t=0.077
-system 4 width=90.661 originY=73.761
+system 4 width=90.661 originY=73.764
   staff 0 originY=3.862
     staffline 0.000,2.000 -> 90.661,2.000 t=0.090
     staffline 0.000,1.000 -> 90.661,1.000 t=0.090
