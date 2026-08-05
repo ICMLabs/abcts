@@ -354,6 +354,22 @@ export const ABCJS_PITCH = {
    * (`set-upper-and-lower-elements.js:33-38`).
    */
   endingOverChordLane: 2,
+  /**
+   * How far BELOW the lane's top the bracket is actually drawn.
+   *
+   * `element.pitch = positionY.endingHeightAbove - 2`
+   * (`set-upper-and-lower-elements.js:201`). The reserve and the drawing are NOT the same
+   * point, which is easy to miss because every other lane in that file draws AT the top it
+   * reserved — `positionY.chordHeightAbove`, `partHeightAbove` and `tempoHeightAbove` are
+   * all handed straight to their elements, and only the ending subtracts.
+   *
+   * MEASURED BEFORE IT WAS BELIEVED, which is the only reason it was found: reserving
+   * `voltaLane + laneMargin` and drawing at the result put the bracket 7.75px — exactly 2
+   * pitch — above abcjs's on `S4-bars-repeats`, whose golden draws it at pitch 17.724
+   * against a dumped `staff.top` of 13.7244 and an `endingHeightAbove` of 5. 13.724 + 5 + 1
+   * − 2 = 17.724, and no other reading of those four numbers gives it.
+   */
+  endingDrawDrop: 2,
   /** `vert` in `addMeasureNumber` on a barline (`abstract-engraver.js:952`). */
   barNumberPitch: 11,
   /** A `RelativeElement`'s default `height` when nothing declares one (`relative-element.js:37`). */

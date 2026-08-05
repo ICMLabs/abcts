@@ -128,26 +128,27 @@ describe('line weights match abcjs in strict mode', () => {
   //   label at `linestartx + 5`   | ours was 0.4 spaces, 3.1px
   //   label in `repeatfont`, 17px | ours was 1.3 spaces, 10.07px
   //
-  // ONLY THE BOTTOM TWO ARE PORTED, and the split is the finding. The hook and the label
-  // size are LANE-COUPLED: abcjs's 20px hook clears the staff only because abcjs's bracket
-  // sits 29.93px above the top line where ours sits 15.5, so porting the 20 on its own puts
-  // the hook 4.5px INSIDE the staff. The two numbers were compensating, which makes them
-  // one port rather than two. The indent and the rule weight are horizontal and scalar
-  // respectively, so no lane can affect them, and they land now.
+  // THE HOOK COULD ONLY LAND ONCE THE LANE DID, and that ordering is the durable lesson.
+  // abcjs's 20px hook clears the staff only because abcjs's bracket sits 29.93px above the
+  // top line where ours sat 15.5; ported on its own it put the hook 4.5px INSIDE the staff,
+  // and the "clear of the music" case in `layout.test.ts` said so at once. The two numbers
+  // were COMPENSATING, so they were one port rather than two — a correct constant is not
+  // always an improvement.
   //
-  // The rest are recorded as ceilings that must only ever come DOWN:
-  //   bracket pitch  14.44px — abcjs takes it off the stacked staff top
-  //                            (`set-upper-and-lower-elements.js:32-36`: the ending is
-  //                            drawn at the very top it just reserved) and we draw it in a
-  //                            fixed lane, `ENGRAVE.voltaStep`
+  // `anchorVoltas` hangs the bracket off the lane it already reserved, which took the
+  // bracket's pitch from 14.44px out to 0.50 and let the hook and the label size follow.
+  // The 0.50 that remains is not the ending at all: our staff's ink top reads 13.85 pitch
+  // where abcjs's dumped `staff.top` is 13.7244, and the bracket simply rides on it.
+  //
+  // ONE AXIS IS STILL OPEN, and it must only ever come DOWN:
   //   left edge      28.50px — abcjs anchors the bracket on the BARLINE RULES,
   //                            `anchor.x + anchor.w` to open and `anchor.x` to close
   //                            (`draw/ending.js:13-22`, `abstract-engraver.js:1017/1040`),
-  //                            and we anchor it on the measure's first ink. Every barline
-  //                            in this fixture already matches abcjs to the hundredth of a
-  //                            pixel, so the rules are there to be anchored on.
-  //   hook           9.15px  } both blocked on the pitch above
-  //   label size     6.93px  }
+  //                            and we anchor it on the measure's first ink. The 28.5 is
+  //                            exactly the `textWidth + 10` the ending's own `minspacing`
+  //                            adds. Every barline in this fixture already matches abcjs to
+  //                            the hundredth of a pixel, so the rules are there to hang
+  //                            it on.
   it('a repeat ending', () => {
     const ends = (svg: string): { hook: number; rule: number; left: number; top: number }[] => {
       const doc = absolutePixels(svg)
@@ -175,10 +176,10 @@ describe('line weights match abcjs in strict mode', () => {
     // representation that cannot express the quantity cannot be asked for it, so the 1 is
     // read from the golden's attributes and asserted here on our side only.
     expect(ours.rule, 'bracket rule weight').toEqual(1)
+    expect(ours.hook, 'end-hook drop').toEqual(theirs.hook)
     // CEILINGS: still open, and they must only ever come DOWN.
-    expect(Math.abs(ours.hook - theirs.hook), 'end-hook drop').toBeLessThanOrEqual(9.15)
+    expect(Math.abs(ours.top - theirs.top), 'bracket pitch').toBeLessThanOrEqual(0.5)
     expect(Math.abs(ours.left - theirs.left), 'bracket left edge').toBeLessThanOrEqual(28.5)
-    expect(Math.abs(ours.top - theirs.top), 'bracket pitch').toBeLessThanOrEqual(14.44)
   })
 
   it('the probe can fail — it is not measuring a constant', () => {

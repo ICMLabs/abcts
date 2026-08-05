@@ -567,6 +567,12 @@ export const ENGRAVE = {
   /** abcjs's `margin` in `set-upper-and-lower-elements.js:102` — one pitch on every lane. */
   laneMargin: ABCJS_PITCH.laneMargin,
   /**
+   * How far below the ending lane's top the bracket is DRAWN — `positionY - 2`
+   * (`set-upper-and-lower-elements.js:201`). The one lane in that file whose reserve point
+   * and draw point differ; see `ABCJS_PITCH.endingDrawDrop`.
+   */
+  voltaDrawDrop: ABCJS_PITCH.endingDrawDrop,
+  /**
    * The bracket's own line, in staff STEPS above the middle line.
    *
    * ponytail: a FIXED lane where abcjs stacks. `drawEnding` reads `params.pitch`, which
@@ -577,28 +583,25 @@ export const ENGRAVE = {
    */
   voltaStep: 8,
   /**
-   * How far the bracket's end hooks turn down toward the staff.
+   * `height = 20` in `drawEnding` — the end hooks' full drop (`draw/ending.js:10`).
    *
-   * NOT abcjs's, DELIBERATELY, and this is the clearest case in the file of why a correct
-   * constant is not always an improvement. abcjs's is `height = 20`
-   * (`ABCJS_PX.voltaHook`, `draw/ending.js:10`) against our 1.4 spaces — 10.85px, very
-   * nearly half — and porting it on its own makes the drawing WORSE, not better: abcjs's
-   * hook clears the staff only because abcjs's bracket sits 29.93px above the top line
-   * where ours sits 15.5. Drop the 20 into our lane and the hook ends 4.5px INSIDE the
-   * staff. The two numbers were compensating.
-   *
-   * So the hook and `voltaStep` are ONE port, not two, and it is blocked on the lane.
-   * PORT THE STRUCTURE, THEN THE CONSTANTS — the figure is recorded and cited in
-   * `ABCJS_PX` so that landing it is mechanical once the bracket is anchored.
+   * IT COULD ONLY LAND ONCE THE LANE DID, and that is the durable part. Ours was 1.4
+   * spaces — 10.85px, very nearly half — and porting the 20 while the bracket still sat in
+   * a fixed lane 15.5px above the top staff line put the hook 4.5px INSIDE the staff.
+   * abcjs's hook clears the staff only by virtue of abcjs's bracket sitting 29.93px up.
+   * The two numbers were COMPENSATING, so they were one port rather than two: a correct
+   * constant is not always an improvement.
    */
-  voltaHook: 1.4,
+  voltaHook: spaces(ABCJS_PX.voltaHook),
+  /** `repeatfont`, 13pt -> `round(13 x 4/3)` = 17px, and the golden says so outright. */
+  voltaTextSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.repeatfont)),
   /**
-   * The label's size. Also NOT abcjs's, and for the same reason: `repeatfont` is 13pt, so
-   * `round(13 x 4/3)` = 17px = 2.1935 spaces against our 1.3, and the golden says
-   * `font-size="17"` outright. A label that tall hanging off our low bracket runs into
-   * the staff exactly as the hook does. Lands with the lane.
+   * The label's baseline below the bracket: `calcY(pitch - 0.5)` — half a PITCH, a quarter
+   * of a staff space — plus one font height, since `renderText` is handed the lane top
+   * rather than a baseline. 0.25 + 2.1935 spaces is 18.94px, which is exactly what the
+   * golden's `y="189.45"` sits below its `170.51` bracket.
    */
-  voltaTextSize: 1.3,
+  voltaTextDrop: spacesOfPitch(0.5),
   /**
    * `x: linestartx + 5` (`draw/ending.js:41`). Ours was 0.4 spaces, 3.1px.
    *
@@ -6352,11 +6355,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         voltaTexts.push({
           text: openVolta.label,
           x: openVolta.startX + ENGRAVE.voltaTextIndent,
-          // abcjs's baseline is `calcY(pitch - 0.5)` plus one font height — 18.94px below
-          // the bracket, which the golden's `y="189.45"` against a `170.51` bracket gives
-          // exactly. Ours is one font height and no half-pitch, because the half-pitch is
-          // only meaningful once the bracket is at abcjs's height. Lands with the lane.
-          y: y + ENGRAVE.voltaTextSize,
+          y: y + ENGRAVE.voltaTextDrop + ENGRAVE.voltaTextSize,
           size: ENGRAVE.voltaTextSize,
           bold: false,
           italic: false,
@@ -6551,14 +6550,17 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     // are printed on. So the drawing is concatenated and one set of staff lines is drawn,
     // rather than each voice getting its own stave.
     const merged = voicesOfStaff.map((members) => {
-      const parts = anchorBelowStaff(
-        anchorAboveStaff(
-          anchorLyrics(
-            members.map((i) => centred[i]).filter((x) => x !== undefined),
+      const parts = anchorVoltas(
+        anchorBelowStaff(
+          anchorAboveStaff(
+            anchorLyrics(
+              members.map((i) => centred[i]).filter((x) => x !== undefined),
+              strict,
+            ),
             strict,
+            score.partsBox,
           ),
           strict,
-          score.partsBox,
         ),
         strict,
       )
@@ -7545,6 +7547,97 @@ function anchorBelowStaff<
         : el,
     ),
     spannerLines: part.spannerLines.map(moveLine),
+  }))
+}
+
+/**
+ * Hang a repeat ending's bracket off the lane it reserved — the fourth of these passes.
+ *
+ * **THE ENDING RESERVES A LANE AND THEN DRAWS ITSELF TWO PITCH BELOW ITS TOP.** Both halves
+ * matter and the second one is easy to miss:
+ *
+ * ```js
+ * if (staff.specialY.endingHeightAbove) {
+ *   if (staff.specialY.chordHeightAbove) staff.top += 2;
+ *   else staff.top += staff.specialY.endingHeightAbove + margin;
+ *   positionY.endingHeightAbove = staff.top;
+ * }
+ * ...
+ * element.pitch = positionY.endingHeightAbove - 2;      // :201, and THAT is drawEnding's
+ * ```
+ *
+ * Every OTHER lane in that file draws at the top it reserved — `chordHeightAbove`,
+ * `partHeightAbove` and `tempoHeightAbove` are handed to their elements untouched — so the
+ * subtraction reads as a typo until the output confirms it. It does: reserving the lane and
+ * drawing at the result put the bracket exactly 2 pitch high, and `S4-bars-repeats`' dumped
+ * `staff.top` of 13.7244 with `endingHeightAbove: 5` gives 13.724 + 5 + 1 − 2 = 17.724,
+ * which is where its SVG draws it.
+ *
+ * We reserved the lane correctly for months and then drew the bracket at a FIXED
+ * `ENGRAVE.voltaStep` regardless, which put it 15.5px above the top staff line where abcjs
+ * puts it 29.93.
+ *
+ * THE SHIFT CANNOT MOVE ANYTHING ELSE, and that is why this is a pass rather than a
+ * refactor. A volta's INK is deliberately not in the staff's extent: `verticalExtent` reads
+ * a volta line only through `flag()`, to learn which SIDE it is on, and abcjs agrees —
+ * `EndingElem` goes through the `otherchildren` switch, which sets its top from the lane it
+ * was given and never adjusts the staff's range by its geometry. So moving the bracket
+ * changes no staff total, no system spacing and no notehead. The corpus confirms it: not
+ * one of the 174 moved on any axis.
+ *
+ * IT READS THE TOP FROM `verticalExtent` RATHER THAN RE-DERIVING IT. The same quantity
+ * computed in two places whose inputs drift apart is this repo's most expensive recurring
+ * bug — the lyric reserve, then `curveReserves` — so the lane is spent exactly once, in the
+ * one function that spends it, and this asks that function for the answer.
+ *
+ * ponytail: abcjs's order above the staff is lyric, chord, ENDING, dynamic, part, tempo,
+ * and ours spends the ending lane last of all — so on a staff that ALSO carries a part
+ * label or a tempo mark the bracket lands above them where abcjs puts it below. The staff's
+ * total is right either way, because the lane goes on last in both. Fixing the ORDER means
+ * moving the ending into `anchorAboveStaff`'s stack and un-spending it here, which is a
+ * genuine refactor of the most regression-prone code in the file; this gets the common case
+ * exact without touching it.
+ */
+function anchorVoltas<
+  T extends {
+    readonly elements: readonly LayoutElement[]
+    readonly beams: readonly PlacedLine[]
+  } & StaffFurniture,
+>(parts: readonly T[], strict: boolean): T[] {
+  const present = parts.some((p) => (p.voltaLines ?? []).length > 0)
+  if (!present) return [...parts]
+
+  const top = verticalExtent(
+    parts.flatMap((p) => p.elements),
+    parts.flatMap((p) => p.beams),
+    strict,
+    {
+      tupletLines: parts.flatMap((p) => p.tupletLines ?? []),
+      tupletTexts: parts.flatMap((p) => p.tupletTexts ?? []),
+      tupletReserves: parts.flatMap((p) => p.tupletReserves ?? []),
+      tupletReservesAbove: parts.some((p) => p.tupletReservesAbove === true),
+      voltaLines: parts.flatMap((p) => p.voltaLines ?? []),
+      voltaTexts: parts.flatMap((p) => p.voltaTexts ?? []),
+      spannerLines: parts.flatMap((p) => p.spannerLines ?? []),
+      melismaLines: parts.flatMap((p) => p.melismaLines ?? []),
+      hasHairpin: parts.some((p) => p.hasHairpin === true),
+      dynamicsAbove: parts.some((p) => p.dynamicsAbove === true),
+      aboveStackPlaced: parts.some((p) => p.aboveStackPlaced === true),
+      chordLaneAbove: parts.some((p) => p.chordLaneAbove === true),
+    },
+  ).top
+
+  // `marginY` is zero and `verticalExtent` has already subtracted it; adding it back keeps
+  // the two in step if it ever stops being zero. `voltaDrawDrop` is abcjs's `- 2`, and y is
+  // DOWN here, so dropping the bracket back toward the staff is an addition.
+  const drawY =
+    top + ENGRAVE.marginY + ENGRAVE.voltaDrawDrop * ENGRAVE.spacePerStep
+  const shift = drawY - stepToY(ENGRAVE.voltaStep)
+  if (shift === 0) return [...parts]
+  return parts.map((part) => ({
+    ...part,
+    voltaLines: (part.voltaLines ?? []).map((l) => ({ ...l, y1: l.y1 + shift, y2: l.y2 + shift })),
+    voltaTexts: (part.voltaTexts ?? []).map((t) => ({ ...t, y: t.y + shift })),
   }))
 }
 
