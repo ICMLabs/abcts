@@ -24,9 +24,9 @@ harmless, and left out — and that judgement was the whole remaining error. See
 | corpus | standing |
 |---|---|
 | suite | **699 of 699. NO REDS.** The branch has had one standing failure for weeks and it is closed. |
-| 41-fixture | **25 of 29 at ZERO on all four axes**, and `ragtime-nightingale`'s twelve staff boundaries all measure 0.0. |
-| harvested (174) | within 0.05 / 1 / 5 / 25px: **149 / 162 / 173 / 173**. **25 of 174 off some axis**, from 34 at the start of the day. |
-| the ranked table | **NOTHING ABOVE 1.99px, AND NOT ONE `dy` TERM LEFT.** Every remaining entry is a `dx`/`ox` pair or a lone `oy`. `5` equals `25`: one fixture in 174 is outside five pixels and it is the tune-count mismatch, which has no geometry to measure. |
+| 41-fixture | **26 of 29 at ZERO on all four axes** — `zocharti-loch` joined them on the meter glyph — and `ragtime-nightingale`'s twelve staff boundaries all measure 0.0. |
+| harvested (174) | within 0.05 / 1 / 5 / 25px: **156 / 168 / 173 / 173**. **18 of 174 off some axis**, from 34 at the start of the day. |
+| the ranked table | **NOTHING ABOVE 1.88px, AND NOT ONE `dy` TERM LEFT.** Every remaining entry is a `dx`/`ox` pair or a lone `oy`. `5` equals `25`: one fixture in 174 is outside five pixels and it is the tune-count mismatch, which has no geometry to measure. |
 | CONTENT gaps | **one left** — `parse-book_parser-04-wed`'s leading-header split. |
 
 **ONE CEILING IS RAISED, AND IT IS RECORDED IN THE TEST.** ragtime's `dy`, 0.33 → 0.40 on
@@ -323,26 +323,51 @@ purpose.
 
 ---
 
+## FINDING 86 — `M:C` AND `M:C|` ARE ONE GLYPH, AND THE MODEL ALWAYS SAID SO
+
+`createTimeSignature` branches on `elem.type` and draws `timesig.common` or `timesig.cut`
+as a single glyph at pitch 6 with nothing beside it (`create-time-signature.js:35-40`). Our
+`layoutMeter` only ever drew digits, so `M:C` rendered as `4/4` and `M:C|` as `2/2` —
+correct arithmetic, wrong ink, and `Meter.symbol` has carried the distinction all along.
+
+**IT IS A PREFIX, WHICH IS BOTH WHY IT MATTERED AND HOW IT WAS FOUND.** Every note on every
+line moves with a prefix, so `M:C` measured 1.24px narrow and `M:C|` 2.27 — **uniform on
+both**. `ox` with no `dx` is the signature of a prefix rather than a spacing rule, and the
+same meters written as DIGITS were exact throughout: the arithmetic was fine and the GLYPH
+was missing.
+
+Seven fixtures came inside 0.05px and six more inside 1px on this one rule, and
+`zocharti-loch` became the 26th of 29 exact on all four axes.
+
+**AND IT WAS FOUND SIDEWAYS.** The ladder was chasing `synth-flattener-09`'s 1.99 of dx.
+The rung that removed its inline `[Q:]` did not move the number; the rung that changed its
+METER did — and that fixture opens `M:C|` incidentally. Vary one thing at a time and the
+fixture will tell you about something you were not looking for.
+
+---
+
 ## WHAT IS LEFT, ranked
 
 ```
- 1.99  dy= 0.0 dx= 2.0 oy=  0.0 ox=-1.3  synth-flattener-09
  1.88  dy= 0.0 dx= 1.9 oy=  0.0 ox=-1.0  mouse-click-01 / tablature-15
  1.69  dy= 0.0 dx= 1.7 oy=  0.0 ox=-1.4  visual-layout-04   [score]
  1.69  dy= 0.0 dx= 0.0 oy=  1.7 ox= 0.0  visual-parsing-10  [barnumbers, setbarnb]
- 1.24  dy= 0.0 dx= 1.2 oy=  0.0 ox=-0.4  parse-tie-slur-01  [staffwidth]
+ 1.09  dy= 0.0 dx= 1.1 oy=  0.0 ox=-0.7  visual-wrap-01
 ```
 
-**NOTHING ABOVE 1.99px IS LEFT, AND NOT ONE `dy` TERM.** The vertical arc this branch is
-named for has no entry on the table at all: what remains is horizontal, plus three lone
-`oy` offsets.
+**NOTHING ABOVE 1.88px IS LEFT, AND NOT ONE `dy` TERM.** The vertical arc this branch is
+named for has no entry on the table at all: what remains is horizontal, plus one lone `oy`.
 
 ### NEXT, in order
 
 1. ~~**GRACE BEAMS**~~ — **DONE**, findings 74–77. ~~**`%%setfont` RICH TEXT**~~ — **DONE**,
    findings 78–80. All three came off the table.
-2. **`synth-flattener-09`, 1.99** — a `dx`/`ox` pair and the top of the table.
-3. **THE FOUR REMAINING LINE WEIGHTS** — `beamSpacing`, `barlineSeparation` (asymmetric,
+2. **`mouse-click-01` / `tablature-15`, 1.88** — one tune twice, a `dx`/`ox` pair.
+3. **A CHORD SYMBOL WITH TWO BARS.** `"D"DEFG| DEFG |` is 1.99 of dx where the same tune
+   without the chord, and the same chord with one bar, are both exact. Isolated on a
+   control pair and NOT yet chased; it is what is left of `synth-flattener-09` after its
+   `M:C|` was fixed.
+4. **THE FOUR REMAINING LINE WEIGHTS** — `beamSpacing`, `barlineSeparation` (asymmetric,
    4.0 thick→thin and 3.4 the other way), `repeatBarlineDotSeparation`, and slur/tie
    endpoint+midpoint, which is a SHAPE port out of `draw/tie.js` and the largest.
    `beamedStem` came off this list this session.
