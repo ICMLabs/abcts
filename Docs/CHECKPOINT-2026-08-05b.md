@@ -25,12 +25,14 @@ harmless, and left out — and that judgement was the whole remaining error. See
 |---|---|
 | suite | **699 of 699. NO REDS.** The branch has had one standing failure for weeks and it is closed. |
 | 41-fixture | **25 of 29 at ZERO on all four axes**, and `ragtime-nightingale`'s twelve staff boundaries all measure 0.0. |
-| harvested (174) | within 0.05 / 1 / 5 / 25px: **147 / 157 / 168 / 173**. **27 of 174 off some axis**, from 34 at the start of the day. |
+| harvested (174) | within 0.05 / 1 / 5 / 25px: **147 / 157 / 170 / 173**. **27 of 174 off some axis**, from 34 at the start of the day. |
 | CONTENT gaps | **one left** — `parse-book_parser-04-wed`'s leading-header split. |
 
-**NO CEILING IS RAISED ON THIS BRANCH ANY MORE.** ragtime's `dx` was the only one ever
-raised (16.43 → 16.53, finding 68); it is back under the original at 16.52. Its other three
-axes came down with it: `dy` 1.12 → 0.33, `oy` −0.54 → 0.13, `ox` −1.87 → −0.76.
+**ONE CEILING IS RAISED, AND IT IS RECORDED IN THE TEST.** ragtime's `dy`, 0.33 → 0.40 on
+finding 81 — 0.07px on a 2009-notehead fixture, against 3.2px off its own `dx` in the same
+commit and 5.3px off `mouse-click-01`. The rule behind it was verified exact on four
+control tunes, so what moved is a redistribution across 23 systems, not the rule.
+Its `dx` raise (16.43 → 16.53, finding 68) is long gone — 13.31 now.
 
 ---
 
@@ -205,23 +207,52 @@ exact before the work and after it.
 
 ---
 
+## FINDING 81 — A GRACE CARRIES ITS ACCIDENTAL, AND `extraw` IS WHERE IT SHOWS
+
+We reserved the ROOM (`roomtaken += 7`) and never drew the GLYPH. No gate could see it: an
+accidental is not a notehead, so the count is right either way. `createNoteHead` runs for a
+grace exactly as for a note and places it at `accPlace -= getSymbolWidth(symb) * scale + 2`
+from the head's `dx` (`create-note-head.js:88-101`) — head at −10, sharp at −16.95, and
+`10 + (8.25 × 0.6 + 2)` is 16.95 exactly.
+
+**AND IT IS WHAT THE ELEMENT REACHES LEFT BY.** `extraw` is a running MIN over every
+`addExtra` child, and `addCentered` mins a chord symbol's own `−width / 2` into the SAME
+number. On `"Bb"{^C}B,4` the sharp's −16.95 beats the chord's −13.34; with no accidental the
+chord wins and the tune measures exact. **That is why it only showed where BOTH were
+present** — four rungs of five were green.
+
+**THE RANKED TABLE'S DIRECTIVES COLUMN NAMED THE WRONG THING.** It read
+`[%%sep, %%text]`; deleting both changed nothing, and so did deleting the subtitle, the
+parts box and the bar numbers. The PER-NOTEHEAD table is what named it — a clean STEP at
+one musical instant in all three voices, not a growth, so one element was 7px wider in
+abcjs. The directives column is a hint about what a fixture CONTAINS, never about what is
+wrong with it.
+
+Two abcjs bugs reproduced with it: the accidental reserves its own declared height
+UNSCALED while drawing at 60%, and it takes the `accidental` class rather than the grace's
+— our first attempt gave it `role: 'grace'`, which maps to `abcjs-notehead`, and the gate
+promptly counted six noteheads against abcjs's five.
+
+---
+
 ## WHAT IS LEFT, ranked
 
 ```
- 7.20  dy= 0.0 dx= 7.2 oy= -0.0 ox=-4.3  mouse-click-01 / tablature-15   [%%sep, %%text]
  6.65  dy= 3.8 dx= 6.7 oy=  0.9 ox= 2.1  visual-selection-01 / svg-per-line-01
  5.74  dy= 0.0 dx= 0.0 oy=  5.7 ox=-0.0  synth-flattener-32  quarter tones
  3.00  dy= 0.0 dx= 0.0 oy= -3.0 ox= 0.0  visual-tablature-17 [stretchlast, gchordfont]
+ 2.63  dy= 0.0 dx= 0.0 oy=  2.6 ox= 0.0  visual-tablature-02
 ```
 
-**NOTHING ABOVE 7.20 IS LEFT**, and the top of the table is now a two-fixture pair.
+**NOTHING ABOVE 6.65 IS LEFT**, and the top of the table is a two-fixture pair that is one
+fixture twice over.
 
 ### NEXT, in order
 
 1. ~~**GRACE BEAMS**~~ — **DONE**, findings 74–77. ~~**`%%setfont` RICH TEXT**~~ — **DONE**,
    findings 78–80. All three came off the table.
-2. **`mouse-click-01` / `tablature-15`, 7.20 of dx** — `%%sep` and `%%text` between
-   systems, and now the joint top of the table.
+2. **`visual-selection-01` / `svg-per-line-01`, 6.65** — the same tune twice, and the only
+   thing left with a `dy` term (3.8).
 3. **THE FOUR REMAINING LINE WEIGHTS** — `beamSpacing`, `barlineSeparation` (asymmetric,
    4.0 thick→thin and 3.4 the other way), `repeatBarlineDotSeparation`, and slur/tie
    endpoint+midpoint, which is a SHAPE port out of `draw/tie.js` and the largest.
