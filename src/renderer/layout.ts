@@ -623,6 +623,8 @@ export const ENGRAVE = {
    * far from its note and every grace of a group at the wrong pitch of the ladder.
    */
   graceAdvance: 10 / 7.75,
+  /** …and an ACCIDENTAL on a grace note adds 7 more (`abstract-engraver.js:484-486`). */
+  graceAccidentalRoom: 7 / 7.75,
   /** No gap: the last grace's own advance IS the distance to the notehead. */
   graceGap: 0,
   /** Length of the hook that resumes a curve at the start of the next system. */
@@ -2175,6 +2177,8 @@ function layoutNoteheads(
   const graceGlyphs: PlacedGlyph[] = []
   const graceLines: PlacedLine[] = []
   let graceWidth = 0
+  /** What the graces add to abcjs's `roomtaken` — see below. Zero when there are none. */
+  let graceRoom = 0
   if (event !== null && event.type !== 'rest' && event.graceNotes.length > 0) {
     const scale = ENGRAVE.graceScale
     const small = GLYPHS.noteheadBlack
@@ -2204,6 +2208,13 @@ function layoutNoteheads(
     })
 
     graceWidth = graceSteps.length * ENGRAVE.graceAdvance + ENGRAVE.graceGap
+    // A GRACE NOTE ADDS 10 TO `roomtaken`, and an accidental on it another 7
+    // (`abstract-engraver.js:481-487`). Whatever comes after — the arpeggio, a LEFT
+    // annotation — starts from the total, so it sits left of the graces rather than on
+    // them. `B"<2"{c}B` was 6.71px of dx out on the missing term.
+    graceRoom =
+      graceSteps.length * ENGRAVE.graceAdvance +
+      event.graceNotes.filter((p) => p.accidental !== null).length * ENGRAVE.graceAccidentalRoom
 
     if (event.graceSlash) {
       // One slash across the first grace note's stem, which is what marks the whole
@@ -2281,6 +2292,11 @@ function layoutNoteheads(
     }
   }
   const accidentalWidth = roomTaken
+  // `roomtaken += this.addGraceNotes(…, roomtaken)` (`abstract-engraver.js:834-836`), and
+  // `addGraceNotes` RETURNS the running total it was handed — so the accidental room is
+  // counted TWICE when there are graces. An abcjs bug, reproduced: everything placed after
+  // this point reads the doubled figure.
+  const roomAfterGraces = graceRoom === 0 ? roomTaken : roomTaken + roomTaken + graceRoom
 
   // AN ACCIDENTAL DECLARES `pitch ± h / 2`, centred on the note it belongs to, and abcjs
   // passes that as an explicit `top`/`bottom` rather than letting the outline stand
@@ -2408,6 +2424,7 @@ function layoutNoteheads(
           textSpan,
           steps.reduce((a, b) => a + b, 0) / Math.max(1, steps.length),
           lowest,
+          roomAfterGraces,
         )
   if (event !== null && event.decorations.length > 0) {
     const decorated = decorationGlyphs(
@@ -2432,7 +2449,7 @@ function layoutNoteheads(
           .map((l) => -Math.max(l.y1, l.y2) / ENGRAVE.spacePerStep),
       ),
       strict,
-      roomTaken,
+      roomAfterGraces,
       dynamicsAbove,
     )
     glyphs.push(...decorated.glyphs)
@@ -3288,6 +3305,12 @@ function noteText(
    */
   averageStep = 0,
   minStep = 0,
+  /**
+   * abcjs's `roomtaken` as `addChord` is reached — the accidentals plus the grace notes
+   * (`abstract-engraver.js:834-853`). A LEFT annotation accumulates ON TOP of it, so it
+   * sits left of everything already hanging off the note.
+   */
+  roomTakenBefore = 0,
 ): PlacedText[] {
   const texts: PlacedText[] = []
   const centre = headX + headWidth / 2
@@ -3412,7 +3435,7 @@ function noteText(
   // `F`'s 9.78 in the annotation font plus the 7.
   //
   // Both are pitched on the note's AVERAGE, which is also why neither takes a lane.
-  let roomTaken = 0
+  let roomTaken = roomTakenBefore
   let roomTakenRight = 0
   for (const a of annotations) {
     if (a.where !== 'left' && a.where !== 'right') continue

@@ -174,9 +174,13 @@ const WITHIN: Readonly<Record<string, number>> = {
   // APPLIES A GLYPH'S SCALE AT DRAW TIME — `printSymbol` takes `scalex`/`scaley` and
   // passes neither on, under its own "what happened to scalex, and scaley?" comment. So a
   // grace notehead draws FULL SIZE while its position is computed from the scaled width.
+  // A GRACE NOTE ADDS 10 TO `roomtaken` and an accidental on it 7 more, and everything
+  // placed AFTER the graces starts from that total — the arpeggio and a LEFT annotation
+  // both. `roomtaken += addGraceNotes(…, roomtaken)` also counts the accidental room
+  // TWICE, which is an abcjs bug and is reproduced.
   '0.05': 137,
-  '1': 145,
-  '5': 157,
+  '1': 147,
+  '5': 159,
   '25': 172,
 }
 
