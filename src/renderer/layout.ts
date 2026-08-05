@@ -1014,7 +1014,6 @@ export interface PlacedCurve {
   readonly y2: number
   /** Height of the arc at its midpoint. NEGATIVE arcs upward, matching y-down. */
   readonly bulge: number
-  readonly endThickness: number
   readonly midThickness: number
   /** A tie joins one pitch to itself; a slur spans a phrase. They differ in shape rules. */
   readonly kind: 'tie' | 'slur'
@@ -4202,7 +4201,8 @@ function buildCurve(
     x2,
     y2: edge(to),
     bulge: bulge * direction,
-    endThickness: kind === 'tie' ? LINE_WEIGHTS.tieEndpoint : LINE_WEIGHTS.slurEndpoint,
+    // No `endThickness`: it was written on every curve and read by NOTHING, and abcjs has
+    // no such notion anyway — its arc comes to a point at both ends. Finding 90's class.
     midThickness: kind === 'tie' ? LINE_WEIGHTS.tieMidpoint : LINE_WEIGHTS.slurMidpoint,
     kind,
   }

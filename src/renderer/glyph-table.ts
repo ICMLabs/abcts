@@ -25,7 +25,7 @@
  * approximate one, and the emitter can express the same thing with a transform.
  */
 import { type CompatibilityMode, isStrict } from '../core/model.js'
-import { ABCJS_LINE_PX, ABCJS_PITCH, spaces, spacesOfPitch } from './abcjs-constants.js'
+import { ABCJS_ARC, ABCJS_LINE_PX, ABCJS_PITCH, spaces, spacesOfPitch } from './abcjs-constants.js'
 import { SMUFL_TO_ABCJS } from './glyph-map.js'
 import { ENGRAVING_DEFAULTS, GLYPHS, type GlyphName } from './glyphs.js'
 import { ABCJS_GLYPHS, ABCJS_STAFF_SPACE } from './glyphs-abcjs.js'
@@ -152,7 +152,6 @@ export interface LineWeights {
   /** A BEAMED stem, which abcjs builds separately and thinner — see `ABCJS_LINE_PX`. */
   readonly beamedStem: number
   readonly beam: number
-  readonly beamSpacing: number
   /**
    * Centre-to-centre between stacked beams. abcjs states a STEP (1.5 pitch); Bravura states
    * a thickness plus a gap, and the two happen to agree exactly — see `ABCJS_PITCH.beamStep`.
@@ -162,11 +161,7 @@ export interface LineWeights {
   readonly ledgerExtension: number
   readonly thinBarline: number
   readonly thickBarline: number
-  readonly barlineSeparation: number
-  readonly repeatBarlineDotSeparation: number
-  readonly slurEndpoint: number
   readonly slurMidpoint: number
-  readonly tieEndpoint: number
   readonly tieMidpoint: number
 }
 
@@ -175,22 +170,28 @@ const BRAVURA_WEIGHTS: LineWeights = {
   stem: ENGRAVING_DEFAULTS.stemThickness,
   beamedStem: ENGRAVING_DEFAULTS.stemThickness,
   beam: ENGRAVING_DEFAULTS.beamThickness,
-  beamSpacing: ENGRAVING_DEFAULTS.beamSpacing,
   beamStep: ENGRAVING_DEFAULTS.beamThickness + ENGRAVING_DEFAULTS.beamSpacing,
   ledgerLine: ENGRAVING_DEFAULTS.legerLineThickness,
   ledgerExtension: ENGRAVING_DEFAULTS.legerLineExtension,
   thinBarline: ENGRAVING_DEFAULTS.thinBarlineThickness,
   thickBarline: ENGRAVING_DEFAULTS.thickBarlineThickness,
-  barlineSeparation: ENGRAVING_DEFAULTS.barlineSeparation,
-  repeatBarlineDotSeparation: ENGRAVING_DEFAULTS.repeatBarlineDotSeparation,
-  slurEndpoint: ENGRAVING_DEFAULTS.slurEndpointThickness,
   slurMidpoint: ENGRAVING_DEFAULTS.slurMidpointThickness,
-  tieEndpoint: ENGRAVING_DEFAULTS.tieEndpointThickness,
   tieMidpoint: ENGRAVING_DEFAULTS.tieMidpointThickness,
 }
 
+/**
+ * NO `...BRAVURA_WEIGHTS` SPREAD, DELIBERATELY — and that absence is the whole point.
+ *
+ * This object used to start with the spread and override the keys anyone had got round to
+ * porting. That is the exception model Lance's `ENGRAVE` question is about, in miniature:
+ * the DEFAULT was Bravura and abcjs's figure was the special case, so a key nobody had
+ * reached stayed Bravura's silently, in a mode whose entire purpose is to have no latitude.
+ * `slurEndpoint` sat there for months and turned out to be the TUPLET BRACKET's rule.
+ *
+ * Written out in full, `LineWeights` being all-required makes a missing override a COMPILE
+ * ERROR. That is a structural guarantee rather than a test, and it cannot rot.
+ */
 const ABCJS_WEIGHTS: LineWeights = {
-  ...BRAVURA_WEIGHTS,
   staffLine: spaces(ABCJS_LINE_PX.staffLine),
   stem: spaces(ABCJS_LINE_PX.stem),
   beamedStem: spaces(ABCJS_LINE_PX.beamedStem),
@@ -200,23 +201,15 @@ const ABCJS_WEIGHTS: LineWeights = {
   ledgerExtension: spaces(ABCJS_LINE_PX.ledgerExtension),
   thinBarline: spaces(ABCJS_LINE_PX.thinBarline),
   thickBarline: spaces(ABCJS_LINE_PX.thickBarline),
-  // `barlineSeparation` and `repeatBarlineDotSeparation` are no longer read at all in
-  // strict: abcjs has no such constants. Its barline is a CURSOR of five hardcoded numbers
-  // (`ABCJS_PX.barline*`), and the asymmetric gaps the audit finding measured — 4.0px
-  // thick->thin, 3.4 thin->thick — fall out of that arithmetic. They stay in this interface
-  // for the Bravura modes, which do state a separation.
+  // abcjs's arc is a FLAT `thickness = 2` all the way along and comes to a POINT at both
+  // ends, because the path returns through the same `x1,y1` it started from
+  // (`draw/tie.js:57-102`). So there is no endpoint-versus-midpoint notion to port — the
+  // endpoint keys are gone from the interface entirely and the midpoint is abcjs's 2.
   //
-  // NOT YET PORTED, and still Bravura's in strict:
-  //   slur/tie endpoint+midpoint  abcjs builds its own path in `draw/tie.js`; this is a
-  //                               shape difference, not one number. `curveToPath`'s strict
-  //                               branch reads NEITHER — it uses abcjs's flat
-  //                               `ABCJS_ARC.thickness` — so they reach no drawn curve.
-  //
-  // AND THEY REACHED SOMETHING THAT IS NOT A CURVE AT ALL. `slurEndpoint` was the TUPLET
-  // BRACKET's rule weight for months: a Bravura `ENGRAVING_DEFAULTS` figure, ungated, in
-  // `abcjs-strict` — the audit finding's own class. This comment said the four were still
-  // Bravura's and was read as harmless because the curve ignores them; nobody asked what
-  // ELSE read one. A constant is reachable by every caller, not by its name.
+  // `curveToPath`'s strict branch builds the shape from `ABCJS_ARC` and reads neither, so
+  // this changes no pixel; it stops the table from asserting something untrue.
+  slurMidpoint: spaces(ABCJS_ARC.thickness),
+  tieMidpoint: spaces(ABCJS_ARC.thickness),
 }
 
 /** The line weights a render draws with. Strict gets abcjs's; everything else Bravura's. */
