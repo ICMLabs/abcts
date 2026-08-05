@@ -191,6 +191,19 @@ export const ABCJS_PX = {
    * Ours used the thin barline's 0.6 — the right weight for a different line.
    */
   voltaHook: 20,
+  /**
+   * A TRIPLET BRACKET's end hooks — `bracketHeight = up ? 5 : -5`
+   * (`draw/triplet.js:24`), a flat pixel count like the volta's 20 beside it.
+   */
+  tupletHook: 5,
+  /**
+   * …and the GAP its broken line leaves for the number: `gapWidth = 8` measured from the
+   * bracket's MIDPOINT, each side (`draw/triplet.js:35`). Fixed, not a function of how
+   * wide the number is — `13` breaks the same gap as `3`.
+   */
+  tupletNumberGap: 8,
+  /** A HAIRPIN's full mouth at the open end — `height = 8` (`draw/crescendo.js:10`). */
+  hairpinMouth: 8,
   /** `renderText`'s `x: linestartx + 5` (`draw/ending.js:41`). */
   voltaTextIndent: 5,
   /** The ending rules' stroke: no `stroke-width` attribute, so SVG's default. */
@@ -395,6 +408,15 @@ export const ABCJS_PITCH = {
    * − 2 = 17.724, and no other reading of those four numbers gives it.
    */
   endingDrawDrop: 2,
+  /**
+   * A group BRACKET's stem — `xLineWidth = spacing.STEP * 0.75` (`draw/brace.js:20`), so
+   * 0.75 PITCH, which is 0.375 staff spaces. Ours was a flat 0.5 spaces.
+   *
+   * A LINE WEIGHT REACHABLE IN STRICT, which is the audit finding's own class — and one
+   * no gate could see, because a bracket had no class and no `data-name` in our output
+   * until finding 92.
+   */
+  bracketRule: 0.75,
   /** `vert` in `addMeasureNumber` on a barline (`abstract-engraver.js:952`). */
   barNumberPitch: 11,
   /** A `RelativeElement`'s default `height` when nothing declares one (`relative-element.js:37`). */

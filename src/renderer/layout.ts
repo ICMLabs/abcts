@@ -430,10 +430,16 @@ export const ENGRAVE = {
   connectorIndent: spaces(ABCJS_PX.connectorIndent),
   /** Clearance between a brace or bracket and the staff it joins. */
   connectorGap: 0.6,
-  /** A bracket is a rule, and a heavy one. */
-  bracketThickness: 0.5,
-  /** Mouth of a hairpin at its open end — abcjs paints 8px against a 7.75px space. */
-  hairpinMouth: 1.0,
+  /**
+   * A group BRACKET's stem — `xLineWidth = spacing.STEP * 0.75` (`draw/brace.js:20`).
+   *
+   * A LINE WEIGHT REACHABLE IN STRICT, so the audit finding's own class, and one no gate
+   * could see: a bracket carried no class and no `data-name` in our output until finding
+   * 92. Ours was a flat 0.5 spaces against abcjs's 0.375.
+   */
+  bracketThickness: spacesOfPitch(ABCJS_PITCH.bracketRule),
+  /** Mouth of a hairpin at its open end — `height = 8` (`draw/crescendo.js:10`). */
+  hairpinMouth: spaces(ABCJS_PX.hairpinMouth),
   /** Clearance either side of a glissando, so it does not touch the noteheads. */
   spannerGap: 0.3,
   /** Below this a hairpin is a smudge rather than a shape. */
@@ -515,8 +521,8 @@ export const ENGRAVE = {
   beamStubLength: 1.1,
   /** Half-gap the bracket leaves around its number. */
   tupletNumberGap: 0.35,
-  /** Length of the hook turning down from each end of a tuplet bracket. */
-  tupletHook: 0.6,
+  /** `bracketHeight = ±5` — the hook at each end (`draw/triplet.js:24`). Ours was 4.65px. */
+  tupletHook: spaces(ABCJS_PX.tupletHook),
   tupletTextSize: 1.4,
   /** Staff step for a repeat-ending bracket, above everything the staff itself draws. */
   /**

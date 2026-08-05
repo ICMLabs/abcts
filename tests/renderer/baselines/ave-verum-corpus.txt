@@ -5,7 +5,7 @@ system 0 width=90.323 originY=0.000
   connector brace -0.920,41.334 scale=3.636
   connector bracketTop -0.600,15.514
   connector bracketBottom -0.600,31.472
-  connector line -0.600,15.514 -> -0.600,31.472 t=0.500
+  connector line -0.600,15.514 -> -0.600,31.472 t=0.375
   staff 0 originY=17.514
     staffline 0.000,2.000 -> 90.323,2.000 t=0.090
     staffline 0.000,1.000 -> 90.323,1.000 t=0.090

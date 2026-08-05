@@ -194,6 +194,69 @@ describe('line weights match abcjs in strict mode', () => {
     expect(Math.abs(ours.top - theirs.top), 'bracket pitch').toBeLessThanOrEqual(0.5)
   })
 
+  // THE THREE CONSTRUCTIONS THAT HAD NO HANDLE AT ALL until finding 92 — a triplet
+  // bracket, a hairpin and a group bracket. A probe asking both engines for them returned
+  // abcjs's geometry and NOTHING from ours, because we emitted neither a class nor a
+  // `data-name` any comparison could match on. These are the figures that came out of them
+  // once the question could be put at all.
+  //
+  // Each is compared as a SCALAR against abcjs's own stated figure rather than against the
+  // golden's geometry, and for the reason the ending case gives one block up: abcjs draws
+  // each of these as one stroked path, so its box carries the shape and not the weight.
+  // Each case names WHICH axis of the vertical piece it wants. A hook and a rule are both
+  // upright rectangles, so `length` and `weight` are the two dimensions of the same shape
+  // and no heuristic can tell which one a number is meant to be — the first attempt tried
+  // "whichever of min and max is nearer the expectation" and cheerfully matched a 0.775px
+  // rule weight against a 5px hook.
+  const scalars: readonly {
+    fixture: string
+    tune: number
+    name: string
+    what: string
+    axis: 'length' | 'weight'
+    is: number
+  }[] = [
+    // `bracketHeight = ±5` (`draw/triplet.js:24`). Ours was 0.6 spaces, 4.65px.
+    {
+      fixture: 'S3-note-syntax',
+      tune: 6,
+      name: 'triplet-bracket',
+      what: 'a triplet hook',
+      axis: 'length',
+      is: 5,
+    },
+    // `xLineWidth = spacing.STEP * 0.75` (`draw/brace.js:20`) — 2.906px, and a LINE WEIGHT
+    // reachable in strict, which is the audit finding's own class. Ours was 0.5 spaces.
+    {
+      fixture: 'S7-voices',
+      tune: 5,
+      name: 'bracket',
+      what: 'a group bracket rule',
+      axis: 'weight',
+      is: 2.906,
+    },
+  ]
+  for (const { fixture, tune, name, what, axis, is } of scalars) {
+    it(what, () => {
+      const doc = absolutePixels(
+        renderAbc('paper', readFileSync(join(corpusDir, `${fixture}.abc`), 'utf-8'), {})[tune]
+          ?.svg ?? '',
+      )
+      // UPRIGHT pieces only — a triplet's horizontal run and a bracket's two arms are the
+      // same `data-name` and would otherwise be averaged in.
+      const hits = doc.items.filter(
+        (i) => i.name === name && i.w !== undefined && i.h !== undefined && (i.h as number) > (i.w as number),
+      )
+      expect(
+        hits.length,
+        `no upright ${what} in our output — the handle is missing again`,
+      ).toBeGreaterThan(0)
+      const got = hits.map((i) => (axis === 'length' ? (i.h as number) : (i.w as number)))
+      // Every one of them, so a single stray piece is a failure rather than an average.
+      for (const g of got) expect(Math.round(g * 1000) / 1000).toBeCloseTo(is, 2)
+    })
+  }
+
   it('the probe can fail — it is not measuring a constant', () => {
     // The canary the pixel gate has and this one needs for the same reason: a comparison
     // that returns the same number for everything reports coverage it does not have.

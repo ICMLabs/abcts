@@ -1279,7 +1279,7 @@ systems 1
 system 0 width=100.611 originY=0.000
   connector bracketTop -0.600,15.450
   connector bracketBottom -0.600,37.154
-  connector line -0.600,15.450 -> -0.600,37.154 t=0.500
+  connector line -0.600,15.450 -> -0.600,37.154 t=0.375
   staff 0 originY=17.450
     staffline 0.000,2.000 -> 100.611,2.000 t=0.090
     staffline 0.000,1.000 -> 100.611,1.000 t=0.090
@@ -1888,7 +1888,7 @@ systems 1
 system 0 width=90.454 originY=0.000
   connector bracketTop -0.600,15.870
   connector bracketBottom -0.600,41.926
-  connector line -0.600,15.870 -> -0.600,41.926 t=0.500
+  connector line -0.600,15.870 -> -0.600,41.926 t=0.375
   staff 0 originY=17.870
     staffline 0.000,2.000 -> 90.454,2.000 t=0.090
     staffline 0.000,1.000 -> 90.454,1.000 t=0.090
