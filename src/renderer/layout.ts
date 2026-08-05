@@ -7166,10 +7166,12 @@ function anchorLyrics<
     // quantities that happen to be equal, which is precisely the coincidence that hides a
     // rule. Measured on one tune at three sizes: baseline 105.61 at 17px, 101.61 at 13,
     // 115.61 at 27 — moving by exactly the size delta each time.
-    const size = Math.max(
-      ENGRAVE.lyricTextSize,
-      ...part.elements.flatMap((el) => el.texts.filter(isLyric).map((t) => t.size)),
-    )
+    // The LARGEST lyric font on this part, falling back to the default only when it has no
+    // lyrics at all. NOT `Math.max(default, …sizes)` — that is a FLOOR, and it silently
+    // pinned a smaller `%%vocalfont` at the default: `Helvetica 10.0` draws at 13px and
+    // measured its baseline at 17, which is `visual-selection-01`'s remaining 4.01px.
+    const sizes = part.elements.flatMap((el) => el.texts.filter(isLyric).map((t) => t.size))
+    const size = sizes.length === 0 ? ENGRAVE.lyricTextSize : Math.max(...sizes)
     // The per-voice drop is the lyric block's own HEIGHT, and it must come from the same
     // place the lane does — `goldenTextHeight`, the generator's table. `lyricVoiceStep` was
     // `17 * 1.108 = 18.836` where the table says a flat `18.84`, and mixing the exact
@@ -7822,6 +7824,7 @@ function verticalExtent(
       // quantities that happen to be equal, which is exactly the coincidence that hides a
       // rule. abcjs draws the baseline one FONT SIZE below the lane top (`text.js:30`), so
       // at 27px it sits 10px lower and the staff below it only 7.5px lower.
+      lyricBottom + lyricLaneHeight + ENGRAVE.spacePerStep - lyricFontSize,
       lyricBottom + lyricLaneHeight + ENGRAVE.spacePerStep - lyricFontSize,
     )
   }

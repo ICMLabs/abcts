@@ -276,8 +276,12 @@ const WITHIN: Readonly<Record<string, number>> = {
   //
   // `5` now equals `25`: ONE fixture in 174 is outside five pixels, and it is the tune-count
   // mismatch that has no geometry to measure.
-  '0.05': 147,
-  '1': 158,
+  // A LYRIC'S BASELINE FLOORED AT THE DEFAULT SIZE. `Math.max(default, …sizes)` reads as
+  // "the largest font on this part" and is a FLOOR: a `%%vocalfont` SMALLER than the
+  // default drew at its own size and measured its baseline at 17. `visual-selection-01`'s
+  // last 4.01px, and three more fixtures with it.
+  '0.05': 148,
+  '1': 161,
   '5': 173,
   '25': 173,
 }
