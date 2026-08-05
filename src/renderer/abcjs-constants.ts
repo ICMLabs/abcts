@@ -164,6 +164,28 @@ export const ABCJS_PX = {
   barWidthRepeatBoth: 22,
   /** `renderer.spacing.stemHeight` — 26.67 + 10, the BEAMED stem (`write/renderer.js:107`). */
   beamStemHeight: 36.67,
+  /**
+   * A REPEAT ENDING's bracket, all four figures from `drawEnding` (`draw/ending.js:8-46`)
+   * and every one confirmed against the `S4-bars-repeats` golden's own markup.
+   *
+   * The hook is `height = 20`, a flat pixel count that does not scale with anything:
+   * the golden's `|1` bracket runs `M 257.37 170.51 L 257.37 190.51`. Ours was
+   * `voltaHook: 1.4` staff spaces — 10.85px, very nearly half.
+   *
+   * The label sits `linestartx + 5` across and on the baseline `calcY(pitch - 0.5)` plus
+   * one font height, which is 18.94px below the bracket: the golden's text is at
+   * `x="262.37" y="189.45"` against a bracket at 257.37 / 170.51. It is drawn in
+   * `repeatfont` — 13pt, so `round(13 * 4/3)` = 17px, and the golden says `font-size="17"`
+   * in as many words. Ours drew it at `voltaTextSize: 1.3` spaces, 10.07px.
+   *
+   * The rules themselves carry NO `stroke-width`, so they are the SVG default of 1px.
+   * Ours used the thin barline's 0.6 — the right weight for a different line.
+   */
+  voltaHook: 20,
+  /** `renderText`'s `x: linestartx + 5` (`draw/ending.js:41`). */
+  voltaTextIndent: 5,
+  /** The ending rules' stroke: no `stroke-width` attribute, so SVG's default. */
+  voltaRule: 1,
   /** The rule a boxed font draws round its text. */
   fontBoxRule: 1,
   /** A tempo mark's descender bump, measured off its own output. */

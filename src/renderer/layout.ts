@@ -566,10 +566,55 @@ export const ENGRAVE = {
   rightAnnotationGap: spaces(ABCJS_PX.rightAnnotationGap),
   /** abcjs's `margin` in `set-upper-and-lower-elements.js:102` — one pitch on every lane. */
   laneMargin: ABCJS_PITCH.laneMargin,
+  /**
+   * The bracket's own line, in staff STEPS above the middle line.
+   *
+   * ponytail: a FIXED lane where abcjs stacks. `drawEnding` reads `params.pitch`, which
+   * `setUpperAndLowerElements` hands it off the running staff top — measured on
+   * `S4-bars-repeats`, abcjs's bracket sits 7.72 pitch above the top staff line and ours
+   * sits 4. `voltaLane` already reserves the room correctly; only the DRAWING is a lane.
+   * Anchoring it is the same shift `anchorAboveStaff` does for the other lanes.
+   */
   voltaStep: 8,
-  /** How far the volta bracket's end hooks turn down toward the staff. */
+  /**
+   * How far the bracket's end hooks turn down toward the staff.
+   *
+   * NOT abcjs's, DELIBERATELY, and this is the clearest case in the file of why a correct
+   * constant is not always an improvement. abcjs's is `height = 20`
+   * (`ABCJS_PX.voltaHook`, `draw/ending.js:10`) against our 1.4 spaces — 10.85px, very
+   * nearly half — and porting it on its own makes the drawing WORSE, not better: abcjs's
+   * hook clears the staff only because abcjs's bracket sits 29.93px above the top line
+   * where ours sits 15.5. Drop the 20 into our lane and the hook ends 4.5px INSIDE the
+   * staff. The two numbers were compensating.
+   *
+   * So the hook and `voltaStep` are ONE port, not two, and it is blocked on the lane.
+   * PORT THE STRUCTURE, THEN THE CONSTANTS — the figure is recorded and cited in
+   * `ABCJS_PX` so that landing it is mechanical once the bracket is anchored.
+   */
   voltaHook: 1.4,
+  /**
+   * The label's size. Also NOT abcjs's, and for the same reason: `repeatfont` is 13pt, so
+   * `round(13 x 4/3)` = 17px = 2.1935 spaces against our 1.3, and the golden says
+   * `font-size="17"` outright. A label that tall hanging off our low bracket runs into
+   * the staff exactly as the hook does. Lands with the lane.
+   */
   voltaTextSize: 1.3,
+  /**
+   * `x: linestartx + 5` (`draw/ending.js:41`). Ours was 0.4 spaces, 3.1px.
+   *
+   * PORTED, because it is the one figure of the four that the lane cannot affect: it is
+   * horizontal, and the bracket's left edge is where it is whatever height it sits at.
+   */
+  voltaTextIndent: spaces(ABCJS_PX.voltaTextIndent),
+  /**
+   * The bracket's rules carry no `stroke-width`, so they are SVG's default 1px.
+   *
+   * PORTED — also lane-independent. Ours was `LINE_WEIGHTS.thinBarline`, 0.6px: the right
+   * weight for a barline, borrowed for a line abcjs does not draw with it. That is the
+   * audit finding's exact shape one lane over, and no gate could see it, because a
+   * repeat ending is not a notehead, not a stem and not classed `bar`.
+   */
+  voltaRule: spaces(ABCJS_PX.voltaRule),
   /** Grace notes are drawn at this fraction of full size. *Behind Bars* ~60%. */
   graceScale: ABCJS_RATIO.graceScale,
   /**
@@ -6290,7 +6335,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       const closeVolta = (endX: number, hooked: boolean): void => {
         if (openVolta === null) return
         const y = stepToY(ENGRAVE.voltaStep)
-        const thickness = LINE_WEIGHTS.thinBarline
+        const thickness = ENGRAVE.voltaRule
         voltaLines.push({ x1: openVolta.startX, y1: y, x2: endX, y2: y, thickness })
         // The opening hook always turns down; the closing one only when the ending
         // really ends here rather than continuing onto the next system.
@@ -6306,7 +6351,11 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         }
         voltaTexts.push({
           text: openVolta.label,
-          x: openVolta.startX + 0.4,
+          x: openVolta.startX + ENGRAVE.voltaTextIndent,
+          // abcjs's baseline is `calcY(pitch - 0.5)` plus one font height — 18.94px below
+          // the bracket, which the golden's `y="189.45"` against a `170.51` bracket gives
+          // exactly. Ours is one font height and no half-pitch, because the half-pitch is
+          // only meaningful once the bracket is at abcjs's height. Lands with the lane.
           y: y + ENGRAVE.voltaTextSize,
           size: ENGRAVE.voltaTextSize,
           bold: false,

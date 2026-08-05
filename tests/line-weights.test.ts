@@ -115,6 +115,72 @@ describe('line weights match abcjs in strict mode', () => {
     expect(ours).toEqual(theirs)
   })
 
+  // A REPEAT ENDING IS INVISIBLE TO EVERY OTHER GATE, and it was wrong on four axes at once.
+  // It is not a notehead, so `pixel-parity` never looks at it; it is not classed `stem`,
+  // `ledger` or `top-line`, so the thickness cases above never look at it; and abcjs draws
+  // the whole bracket as ONE `<path>` with `data-name="line"`, so the barline case cannot
+  // reach it either. Four figures out of `drawEnding` (`draw/ending.js:8-46`), all measured
+  // against `S4-bars-repeats`' golden:
+  //
+  //   hook `height = 20`          | ours was 1.4 spaces, 10.85px — very nearly half
+  //   rules at SVG's default 1px  | ours was the thin barline's 0.6, a right weight
+  //                               |   borrowed for the wrong line
+  //   label at `linestartx + 5`   | ours was 0.4 spaces, 3.1px
+  //   label in `repeatfont`, 17px | ours was 1.3 spaces, 10.07px
+  //
+  // ONLY THE BOTTOM TWO ARE PORTED, and the split is the finding. The hook and the label
+  // size are LANE-COUPLED: abcjs's 20px hook clears the staff only because abcjs's bracket
+  // sits 29.93px above the top line where ours sits 15.5, so porting the 20 on its own puts
+  // the hook 4.5px INSIDE the staff. The two numbers were compensating, which makes them
+  // one port rather than two. The indent and the rule weight are horizontal and scalar
+  // respectively, so no lane can affect them, and they land now.
+  //
+  // The rest are recorded as ceilings that must only ever come DOWN:
+  //   bracket pitch  14.44px — abcjs takes it off the stacked staff top
+  //                            (`set-upper-and-lower-elements.js:32-36`: the ending is
+  //                            drawn at the very top it just reserved) and we draw it in a
+  //                            fixed lane, `ENGRAVE.voltaStep`
+  //   left edge      28.50px — abcjs anchors the bracket on the BARLINE RULES,
+  //                            `anchor.x + anchor.w` to open and `anchor.x` to close
+  //                            (`draw/ending.js:13-22`, `abstract-engraver.js:1017/1040`),
+  //                            and we anchor it on the measure's first ink. Every barline
+  //                            in this fixture already matches abcjs to the hundredth of a
+  //                            pixel, so the rules are there to be anchored on.
+  //   hook           9.15px  } both blocked on the pitch above
+  //   label size     6.93px  }
+  it('a repeat ending', () => {
+    const ends = (svg: string): { hook: number; rule: number; left: number; top: number }[] => {
+      const doc = absolutePixels(svg)
+      const parts = doc.items.filter(
+        (i) => (i.name === 'line' || i.cls.includes('ending')) && i.w !== undefined && i.h !== undefined,
+      )
+      // abcjs emits one path per bracket; we emit a rule per stroke. Either way the
+      // bracket's own box is the union, its hook is the tallest piece, and its rule weight
+      // is the thinnest dimension present.
+      const hook = Math.max(...parts.map((i) => i.h as number))
+      const rule = Math.min(...parts.map((i) => Math.min(i.w as number, i.h as number)))
+      const left = Math.min(...parts.map((i) => i.x - (i.w as number) / 2))
+      const top = Math.min(...parts.map((i) => i.y - (i.h as number) / 2))
+      return [{ hook: r2(hook), rule: r2(rule), left: r2(left), top: r2(top) }]
+    }
+    const r2 = (n: number): number => Math.round(n * 100) / 100
+    const theirs = ends(golden('S4-bars-repeats-tune0'))[0]
+    const ours = ends(render('S4-bars-repeats'))[0]
+    expect(theirs, 'no ending in the golden — the probe is measuring nothing').toBeDefined()
+    if (theirs === undefined || ours === undefined) return
+    // NOT compared against `theirs.rule`, and the reason is this file's own lesson one turn
+    // further on: abcjs draws the whole bracket as ONE stroked path, so its box's short
+    // axis is the hook's 20 and its stroke weight is not in the geometry AT ALL — the
+    // markup carries no `stroke-width`, which is what makes it SVG's default 1. A
+    // representation that cannot express the quantity cannot be asked for it, so the 1 is
+    // read from the golden's attributes and asserted here on our side only.
+    expect(ours.rule, 'bracket rule weight').toEqual(1)
+    // CEILINGS: still open, and they must only ever come DOWN.
+    expect(Math.abs(ours.hook - theirs.hook), 'end-hook drop').toBeLessThanOrEqual(9.15)
+    expect(Math.abs(ours.left - theirs.left), 'bracket left edge').toBeLessThanOrEqual(28.5)
+    expect(Math.abs(ours.top - theirs.top), 'bracket pitch').toBeLessThanOrEqual(14.44)
+  })
+
   it('the probe can fail — it is not measuring a constant', () => {
     // The canary the pixel gate has and this one needs for the same reason: a comparison
     // that returns the same number for everything reports coverage it does not have.
