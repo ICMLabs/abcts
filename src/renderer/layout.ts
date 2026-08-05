@@ -1477,7 +1477,28 @@ function digitGlyphs(
   })
 }
 
-function layoutMeter(x: number, meter: Meter): LayoutElement {
+function layoutMeter(x: number, meter: Meter, strict = true): LayoutElement {
+  // `M:C` AND `M:C|` ARE ONE GLYPH ON THE MIDDLE LINE, not the digits they stand for.
+  // `createTimeSignature` branches on `elem.type` and draws `timesig.common` or
+  // `timesig.cut` at pitch 6 with nothing else beside it
+  // (`create-time-signature.js:35-40`).
+  //
+  // We drew `4/4` and `2/2` instead, and the difference is a PREFIX WIDTH, so every note
+  // on every line moved with it: `M:C` measured 1.24px narrow and `M:C|` 2.27, uniform on
+  // both — `ox` without a `dx`, which is the signature of a prefix rather than a spacing
+  // rule. `M:2/2` and `M:4/4`, the same meters written as digits, were exact throughout.
+  if (meter.symbol !== 'numeric') {
+    const name: GlyphName = meter.symbol === 'cut' ? 'timeSigCutCommon' : 'timeSigCommon'
+    return {
+      type: 'timeSignature',
+      x,
+      width: glyphsFor(strict).advance(name),
+      staffSteps: [],
+      glyphs: [glyphAt(name, x, 0)],
+      lines: [],
+      texts: [],
+    }
+  }
   // AN ADDITIVE METER IS DRAWN TERM BY TERM. abcjs keeps the numerator as the string it
   // was written as — the golden's own `data-name="2+3"` — and lays out one glyph per
   // character (`create-time-signature.js:17-27`). Summing to `5` cost `2+3/8` 17.08px of
@@ -5089,7 +5110,7 @@ function layoutMeasure(
     ) {
       return
     }
-    const meter = layoutMeter(x, measure.meterChange)
+    const meter = layoutMeter(x, measure.meterChange, strict)
     elements.push(meter)
     fixed(meter.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
     x += meter.width + ENGRAVE.prefixGap
@@ -5716,7 +5737,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       const keySig = layoutKeySignature(x, score.key, clef, strict)
       if (keySig !== null) push(keySig)
       if (withMeter && score.meter !== null) {
-        push(layoutMeter(x, score.meter))
+        push(layoutMeter(x, score.meter, strict))
       }
       // The tempo mark belongs to the TUNE — not to each system, and not to each voice.
       // It prints once: on the first system, above the top staff. Every staff still gets

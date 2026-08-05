@@ -285,8 +285,15 @@ const WITHIN: Readonly<Record<string, number>> = {
   // and had its lane measured at the 12pt default's 16. Three pixels, and
   // `visual-tablature-17`'s whole `oy` — while the same fixture's 20, 40, 80 and 130 were
   // already exact, which is what a floor looks like and an arithmetic error does not.
-  '0.05': 149,
-  '1': 162,
+  // `M:C` AND `M:C|` ARE ONE GLYPH, not the digits they stand for. `createTimeSignature`
+  // branches on `elem.type` and draws `timesig.common` / `timesig.cut` at pitch 6
+  // (`create-time-signature.js:35-40`); we drew `4/4` and `2/2`. It is a PREFIX width, so
+  // every note on every line moved with it — `M:C` measured 1.24px narrow and `M:C|` 2.27,
+  // uniform on both, which is `ox` with no `dx` and the signature of a prefix rather than a
+  // spacing rule. The same meters written as digits were exact throughout, which is what
+  // said the arithmetic was fine and the GLYPH was missing.
+  '0.05': 156,
+  '1': 168,
   '5': 173,
   '25': 173,
 }

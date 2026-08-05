@@ -213,7 +213,10 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     'vree-slurs-and-triplets': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'vree-ties-across-bars': { heads: 4, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     // dx 5.35 -> 1.25 on the accidental extents.
-    'zocharti-loch': { heads: 64, dy: 0.0, dx: 1.25, oy: 0.0, ox: -0.34 },
+    // EXACT ON ALL FOUR — dx 1.25 -> 0.0 and ox -0.34 -> 0.0 when `M:C` started drawing
+    // `timesig.common` instead of the digits `4/4`. A one-glyph prefix, and the whole of
+    // this fixture's remaining horizontal error.
+    'zocharti-loch': { heads: 64, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
   }
 
 /** Rounding slack, so a last-digit wobble is not a failure. */
