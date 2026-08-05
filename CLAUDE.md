@@ -30,7 +30,19 @@ checkpoint and hand off as you go so no context is lost.
 > default in the strict path is our judgement and abcjs's is the exception, which is why
 > every leak is found one fixture at a time. Measuring is a COMPASS (which rule is wrong)
 > and a PROOF (that a port landed); it must never be a SOURCE OF NUMBERS. See
-> `CHECKPOINT-2026-08-05b.md`.
+> `CHECKPOINT-2026-08-05b.md`. **THE TRIAGE IS PARTLY DONE**: `ENGRAVE` is now 101
+> constants, fourteen having been read by NOTHING, and the 44 live bare literals are sorted
+> into a table in `CHECKPOINT-2026-08-05c.md`. Work down it; do not re-derive it. Each row
+> says whether its evidence is `measured` or `source`, and **a `source` row must be
+> measured before it is ported.**
+
+> ⚖️ **AND THE COROLLARY THE TRIAGE PRODUCED** (finding 91): **A CORRECT CONSTANT IS NOT
+> ALWAYS AN IMPROVEMENT.** abcjs's volta hook is 20px against our 10.85, certainly and
+> measurably — and porting it ALONE puts the hook 4.5px inside the staff, because abcjs's
+> hook clears the staff only by virtue of abcjs's bracket sitting 29.93px above the top
+> line where ours sits 15.5. The two numbers were COMPENSATING, which makes them one port
+> rather than two. PORT THE STRUCTURE, THEN THE CONSTANTS is stated below; this is the
+> first case where obeying it meant deliberately NOT landing a figure known to be abcjs's.
 
 > ⚖️ **AND THE RULING BEHIND THE RULING** (Lance, 2026-08-05): **abcjs is the MASTER
 > SOURCE. Any variability is likely due to not using the same SETTING as abcjs, or to
@@ -39,11 +51,12 @@ checkpoint and hand off as you go so no context is lost.
 > "zero for the common case", left out — and that judgement was the entire remaining error
 > on `ragtime-nightingale`, the branch's one standing red. Port the quirk, then measure.
 
-Read `Docs/CHECKPOINT-2026-08-05b.md` first — the current state, findings 71-89, and
-**Lance's question about `ENGRAVE`, which is the next session's first job**.
-`Docs/CHECKPOINT-2026-08-05.md` is superseded for the state but keeps the line-weight audit
-finding and the golden-variables map. `Docs/HANDOFF-2026-08-05b.md` has the session prompt.
-Then
+Read `Docs/CHECKPOINT-2026-08-05c.md` first — the current state, findings 90-92, and **the
+`ENGRAVE` TRIAGE TABLE, which is what the next session works down**.
+`Docs/HANDOFF-2026-08-05c.md` has the session prompt. `Docs/CHECKPOINT-2026-08-05b.md` is
+superseded for the state but keeps findings 71-89 and Lance's question in full;
+`Docs/CHECKPOINT-2026-08-05.md` keeps the line-weight audit finding and the
+golden-variables map. Then
 `Docs/CHECKPOINT-2026-08-04c.md` — it is the current state of play, findings
 51-64, THE METHOD that produced them, and what is left. `Docs/CHECKPOINT-2026-08-04b.md`
 holds findings 41-50, `Docs/CHECKPOINT-2026-08-04.md` the expensive lesson about "golden
@@ -185,7 +198,7 @@ gate had been comparing abcjs's outline START against our glyph ORIGIN, a 4px bi
 
 
 **Structural parity is done: note content, lyrics, beams and render structure are all
-41/41 with zero recorded divergences.** `geometry/vertical` is **700/700 with NO reds**,
+41/41 with zero recorded divergences.** `geometry/vertical` is **701/701 with NO reds**,
 pushed, and the AUDIT FINDING IS CLOSED — no Bravura figure is reachable in strict. The
 harvested corpus is **18 of 174 off some axis**, from 34 at the start of 2026-08-05, with
 nothing above 1.77px and not one `dy` term left. ONE ceiling is raised, recorded in the
@@ -404,11 +417,12 @@ feature-coverage gap, tracked separately and implemented not at all.
 ```
 We are continuing abcts development in the abcts repo (Code/abcts).
 
-Read Docs/CHECKPOINT-2026-08-05b.md first — its SECOND SECTION is Lance's
-question about `ENGRAVE` and it is your first job — and
-Docs/HANDOFF-2026-08-05b.md beside it. Then -08-05.md (the audit finding and the
-golden-variables map), -08-04c.md (findings 51-70 and the method), -08-04b.md
-(41-50), -08-03d.md (16-40), ARCHITECTURE.md, this file.
+Read Docs/CHECKPOINT-2026-08-05c.md first — its TRIAGE TABLE is the answer so
+far to Lance's `ENGRAVE` question and its "NEXT, in order" is your job — and
+Docs/HANDOFF-2026-08-05c.md beside it. Then -08-05b.md (findings 71-89),
+-08-05.md (the audit finding and the golden-variables map), -08-04c.md (findings
+51-70 and the method), -08-04b.md (41-50), -08-03d.md (16-40), ARCHITECTURE.md,
+this file.
 
 THE RULE THAT MATTERS: abcjs is the MASTER SOURCE. Any variability is likely a
 setting you did not copy or an algorithm you INFERRED instead of analysing. Port
@@ -416,10 +430,11 @@ its STRUCTURE, then its constants — the expensive divergences have all been
 architectural, and a correct constant dropped into a different structure moves
 the output unpredictably.
 
-AND STRICT SHOULD NOT BE READING OURS AT ALL. `ENGRAVE` holds 115 constants, 54
-from `ABCJS_*` and 61 ours, and `abcjs-strict` reads all 61. Every leak found on
-2026-08-05 was that: the default is our judgement and abcjs's is the exception,
-so leaks surface one fixture at a time. The triage is the first job.
+AND STRICT SHOULD NOT BE READING OURS AT ALL. The triage is PARTLY DONE:
+`ENGRAVE` is 101 constants now, fourteen having been read by nothing at all, and
+the 44 live bare literals are sorted into a table in -08-05c.md. Work down it,
+do not re-derive it, and MEASURE any row whose evidence says `source` before
+porting it.
 
 Work by INSTRUMENTING — env-guarded console.log in the vendored abcjs source, run
 its own dump-svg.js harness, then `git -C ../abcMusicKit checkout --
@@ -430,24 +445,27 @@ The bar is 100% parity. A passing gate is not parity — the gate says "no worse
 than recorded"; parity means dy/dx/oy/ox at ZERO.
 
 Confirm your lane with `git rev-parse --abbrev-ref HEAD`. `geometry/vertical` is
-the open arc, pushed and GREEN at 700/700.
+the open arc, GREEN at 701/701.
 ```
 
 ### The open task, specifically
 ```
 Continue geometric parity in Code/abcts.
 
-Read Docs/CHECKPOINT-2026-08-05b.md and Docs/HANDOFF-2026-08-05b.md; the earlier
-ledgers are -08-05.md, -08-04c.md (51-70), -08-04b.md (41-50), -08-03d.md (16-40).
+Read Docs/CHECKPOINT-2026-08-05c.md and Docs/HANDOFF-2026-08-05c.md; the earlier
+ledgers are -08-05b.md (71-89), -08-05.md, -08-04c.md (51-70), -08-04b.md
+(41-50), -08-03d.md (16-40).
 
-The branch is 700/700 with no reds and nothing above 1.77px on the ranked table.
+The branch is 701/701 with no reds and nothing above 1.77px on the ranked table.
 18 of 174 harvested fixtures are off some axis, from 34 at the start of
 2026-08-05, and not one carries a `dy` term any more.
 
-START WITH THE AUDIT, NOT A FIXTURE: 61 of `ENGRAVE`'s 115 constants are ours and
-strict reads every one. Triage the 49 bare literals into STRUCTURAL,
-ABCJS-HAS-ITS-OWN (port and cite) and OURS BY POLICY (strict must not read it).
-The proof of an honest constants move is a baseline diff of ZERO lines.
+START WITH THE ENDING LANE, item 1 of the triage table's "NEXT". It unblocks two
+figures that are measured, cited and deliberately NOT landed: abcjs's volta hook
+is 20px against our 10.85, and porting it ALONE puts the hook inside the staff,
+because the hook and the bracket's lane were compensating. A CORRECT CONSTANT IS
+NOT ALWAYS AN IMPROVEMENT. The proof of an honest constants move is still a
+baseline diff of ZERO lines.
 
 Then the slur/tie ENDPOINTS — and note `curveReserves` already derives the same
 `startY`/`endY` for the reserve, so the quantity is computed TWICE.
