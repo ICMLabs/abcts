@@ -68,8 +68,8 @@ import {
   spacesOfPitch,
   steps,
 } from './abcjs-constants.js'
-import { glyphsFor } from './glyph-table.js'
-import { ENGRAVING_DEFAULTS, GLYPHS, type GlyphName } from './glyphs.js'
+import { glyphsFor, lineWeightsFor } from './glyph-table.js'
+import { GLYPHS, type GlyphName } from './glyphs.js'
 import {
   CHAR_ADVANCE,
   CHAR_ADVANCE_BOLD,
@@ -105,8 +105,6 @@ export const ENGRAVE = {
   beamStemHeight: Math.round((ABCJS_PX.beamStemHeight * 10) / STEP_PX) / 10,
   /** First ledger step beyond the staff; grows outward by 2. *Behind Bars*. */
   firstLedgerStep: 6,
-  /** Ledger line overhang past the notehead each side. */
-  ledgerExtension: ENGRAVING_DEFAULTS.legerLineExtension,
   /**
    * Page margin left of the staff.
    *
@@ -1792,7 +1790,7 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
           y1: noteY - 0.25 * ENGRAVE.spacePerStep,
           x2: cursor + headAdvance,
           y2: noteY - 3.75 * ENGRAVE.spacePerStep,
-          thickness: ENGRAVING_DEFAULTS.stemThickness,
+          thickness: LINE_WEIGHTS.stem,
         })
       }
       // ponytail: no FLAG or DOT on the beat-unit note, so `Q:1/8=66` draws a bare stem
@@ -2134,15 +2132,18 @@ const FLAG_GLYPHS: readonly (readonly [GlyphName, GlyphName])[] = [
 /** Ledger lines for a note that sits beyond the staff. */
 function ledgerLines(step: number, x: number, headWidth: number): PlacedLine[] {
   const lines: PlacedLine[] = []
-  const x1 = x - ENGRAVE.ledgerExtension
-  const x2 = x + headWidth + ENGRAVE.ledgerExtension
+  // THE OVERHANG IS PER RENDER, so it is read here and not baked into `ENGRAVE`: abcjs
+  // gives a ledger `symbolWidth + 4` of width at `dx = -2` (`abstract-engraver.js:462`),
+  // which is 2px each side against Bravura's 0.4 of a space, 3.1px.
+  const x1 = x - LINE_WEIGHTS.ledgerExtension
+  const x2 = x + headWidth + LINE_WEIGHTS.ledgerExtension
   const push = (s: number) => {
     lines.push({
       x1,
       y1: stepToY(s),
       x2,
       y2: stepToY(s),
-      thickness: ENGRAVING_DEFAULTS.legerLineThickness,
+      thickness: LINE_WEIGHTS.ledgerLine,
       role: 'ledger',
     })
   }
@@ -2258,7 +2259,7 @@ function layoutNoteheads(
         y1: base,
         x2: stemX,
         y2: base - ENGRAVE.stemLength * scale,
-        thickness: ENGRAVING_DEFAULTS.stemThickness * scale,
+        thickness: LINE_WEIGHTS.stem * scale,
         role: 'stem',
       })
     })
@@ -2282,7 +2283,7 @@ function layoutNoteheads(
         y1: tipY + 1.0,
         x2: x + ENGRAVE.graceAdvance * 0.9,
         y2: tipY - 0.2,
-        thickness: ENGRAVING_DEFAULTS.stemThickness * 1.4,
+        thickness: LINE_WEIGHTS.stem * 1.4,
       })
     }
   }
@@ -2459,7 +2460,7 @@ function layoutNoteheads(
       y1: base,
       x2: stemX,
       y2: tip,
-      thickness: ENGRAVING_DEFAULTS.stemThickness,
+      thickness: LINE_WEIGHTS.stem,
       role: 'stem',
     })
 
@@ -2622,10 +2623,10 @@ function barNumberText(number: number, x: number): PlacedText {
 }
 
 function layoutBar(x: number, kind: Barline, strict = true): LayoutElement {
-  const thin = ENGRAVING_DEFAULTS.thinBarlineThickness
-  const thick = ENGRAVING_DEFAULTS.thickBarlineThickness
-  const gap = ENGRAVING_DEFAULTS.barlineSeparation
-  const dotGap = ENGRAVING_DEFAULTS.repeatBarlineDotSeparation
+  const thin = LINE_WEIGHTS.thinBarline
+  const thick = LINE_WEIGHTS.thickBarline
+  const gap = LINE_WEIGHTS.barlineSeparation
+  const dotGap = LINE_WEIGHTS.repeatBarlineDotSeparation
 
   const lines: PlacedLine[] = []
   const glyphs: PlacedGlyph[] = []
@@ -3177,6 +3178,17 @@ let STRICT_TEXT_METRICS = true
 
 /** `%%jazzchords` for the current render — same one-place switch, set beside it. */
 let JAZZ_CHORDS = false
+
+/**
+ * LINE WEIGHTS for the current render — abcjs's in strict, Bravura's otherwise.
+ *
+ * ponytail: a module-level switch, the fifth beside `STRICT_TEXT_METRICS`, `JAZZ_CHORDS`,
+ * `SCORE_FONTS` and `PERC_MAP`. Eight of the twenty-one sites are in functions with no
+ * `strict` in scope — `ledgerLines`, `layoutBeam`, `staffLinesFor`, `buildCurve` and the
+ * rest — and threading a boolean through eight signatures to reach a constant is a bigger
+ * change than the one it enables. abcjs keeps the same thing on its renderer.
+ */
+let LINE_WEIGHTS = lineWeightsFor(true)
 
 /**
  * A chord symbol's or annotation's MEASURED width — `getTextSize.calc`, box included.
@@ -3801,7 +3813,7 @@ function layoutSpanners(
   dynamicsAbove: boolean,
 ): PlacedLine[][] {
   const out: PlacedLine[][] = bounds.map(() => [])
-  const thickness = ENGRAVING_DEFAULTS.staffLineThickness
+  const thickness = LINE_WEIGHTS.staffLine
 
   /**
    * One hairpin piece: two strokes whose gap goes from `startGap` to `endGap`.
@@ -3936,7 +3948,7 @@ function layoutMelismas(
       y1: lyric.y,
       x2: to,
       y2: lyric.y,
-      thickness: ENGRAVING_DEFAULTS.staffLineThickness,
+      thickness: LINE_WEIGHTS.staffLine,
       role: 'lyric',
     })
   })
@@ -4012,14 +4024,8 @@ function buildCurve(
     x2,
     y2: edge(to),
     bulge: bulge * direction,
-    endThickness:
-      kind === 'tie'
-        ? ENGRAVING_DEFAULTS.tieEndpointThickness
-        : ENGRAVING_DEFAULTS.slurEndpointThickness,
-    midThickness:
-      kind === 'tie'
-        ? ENGRAVING_DEFAULTS.tieMidpointThickness
-        : ENGRAVING_DEFAULTS.slurMidpointThickness,
+    endThickness: kind === 'tie' ? LINE_WEIGHTS.tieEndpoint : LINE_WEIGHTS.slurEndpoint,
+    midThickness: kind === 'tie' ? LINE_WEIGHTS.tieMidpoint : LINE_WEIGHTS.slurMidpoint,
     kind,
   }
 }
@@ -4514,7 +4520,7 @@ function layoutTuplets(
     // Bracket: a horizontal rule broken around the number, with a hook at each end
     // turning toward the notes.
     const gap = width / 2 + ENGRAVE.tupletNumberGap
-    const thickness = ENGRAVING_DEFAULTS.slurEndpointThickness
+    const thickness = LINE_WEIGHTS.slurEndpoint
     const hook = ENGRAVE.tupletHook * -direction
 
     // The rule runs from one end note's pitch to the other's, so it slopes with them.
@@ -4628,9 +4634,9 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
   // stems actually end on, so an up-stem's second beam sits below its first.
   const beams: PlacedLine[] = []
   const maxLevel = Math.max(...group.map((stem) => stem.beams))
-  const thickness = ENGRAVING_DEFAULTS.beamThickness
+  const thickness = LINE_WEIGHTS.beam
   const inward = -direction
-  const step = (thickness + ENGRAVING_DEFAULTS.beamSpacing) * inward
+  const step = (thickness + LINE_WEIGHTS.beamSpacing) * inward
 
   for (let level = 0; level < maxLevel; level++) {
     // y here is the beam's CENTRE line; the emitted line carries its thickness.
@@ -5229,7 +5235,7 @@ const staffLinesFor = (width: number, count: number): PlacedLine[] => {
     y1: stepToY(step),
     x2: width,
     y2: stepToY(step),
-    thickness: ENGRAVING_DEFAULTS.staffLineThickness,
+    thickness: LINE_WEIGHTS.staffLine,
   })
   if (count === DEFAULT_STAFF_LINES) return ENGRAVE.staffLineSteps.map(rule)
   if (count <= 0) return []
@@ -5350,6 +5356,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   // extender is a question about which engine's behaviour is being reproduced.
   const strict = isStrict(options.mode ?? defaultMode)
   STRICT_TEXT_METRICS = strict
+  LINE_WEIGHTS = lineWeightsFor(strict)
   JAZZ_CHORDS = score.jazzChords
   SCORE_FONTS = score.fonts
   PERC_MAP = score.percMap
@@ -6181,7 +6188,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       const closeVolta = (endX: number, hooked: boolean): void => {
         if (openVolta === null) return
         const y = stepToY(ENGRAVE.voltaStep)
-        const thickness = ENGRAVING_DEFAULTS.thinBarlineThickness
+        const thickness = LINE_WEIGHTS.thinBarline
         voltaLines.push({ x1: openVolta.startX, y1: y, x2: endX, y2: y, thickness })
         // The opening hook always turns down; the closing one only when the ending
         // really ends here rather than continuing onto the next system.

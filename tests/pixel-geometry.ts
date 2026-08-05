@@ -22,6 +22,17 @@ export interface PixelItem {
   readonly cls: string
   readonly x: number
   readonly y: number
+  /**
+   * The element's BOX, in absolute pixels — absent where it has none (a `<text>`).
+   *
+   * Added 2026-08-05 with the line-weight gate, and the reason is worth keeping: for
+   * months this walk returned CENTRES only, and a line's centre does not move when its
+   * thickness changes. Every gate built on it was structurally unable to see that
+   * `abcjs-strict` was drawing Bravura's line weights — a thin barline at 1.24px against
+   * abcjs's 0.600. A comparison can only catch what its representation can express.
+   */
+  readonly w?: number
+  readonly h?: number
 }
 
 export interface PixelDoc {
@@ -47,7 +58,7 @@ export interface PixelDoc {
  * included rather than solved for — a Bézier's hull bounds its curve, both engines' hulls
  * are tight on these shapes, and the error is common to both sides anyway.
  */
-function pathBox(d: string): { x: number; y: number } | null {
+function pathBox(d: string): { x: number; y: number; w: number; h: number } | null {
   const tokens = d.match(/[MmCcLlHhVvSsQqTtAaZz]|-?\d*\.?\d+(?:e[-+]?\d+)?/gi)
   if (tokens === null) return null
   let x = 0
@@ -146,7 +157,7 @@ function pathBox(d: string): { x: number; y: number } | null {
     }
   }
   if (!Number.isFinite(minX) || !Number.isFinite(minY)) return null
-  return { x: (minX + maxX) / 2, y: (minY + maxY) / 2 }
+  return { x: (minX + maxX) / 2, y: (minY + maxY) / 2, w: maxX - minX, h: maxY - minY }
 }
 
 export function absolutePixels(svg: string): PixelDoc {
@@ -210,6 +221,8 @@ export function absolutePixels(svg: string): PixelDoc {
     const cls = /class="([^"]*)"/.exec(attrs)?.[1] ?? ''
     let lx: number | null = null
     let ly: number | null = null
+    let lw: number | null = null
+    let lh: number | null = null
     if (tag === 'path') {
       // The BOX CENTRE of the outline, whichever engine wrote it — see `pathBox`.
       //
@@ -226,6 +239,8 @@ export function absolutePixels(svg: string): PixelDoc {
       if (box !== null) {
         lx = box.x * scale
         ly = box.y * scale
+        lw = box.w * scale
+        lh = box.h * scale
       }
     } else if (tag === 'rect') {
       // CENTRE, like a path's box — abcts draws a staff line as a `<rect>` where abcjs
@@ -238,6 +253,8 @@ export function absolutePixels(svg: string): PixelDoc {
       if (x?.[1] !== undefined && y?.[1] !== undefined) {
         lx = +x[1] + (w?.[1] !== undefined ? +w[1] / 2 : 0)
         ly = +y[1] + (h?.[1] !== undefined ? +h[1] / 2 : 0)
+        lw = w?.[1] === undefined ? null : +w[1]
+        lh = h?.[1] === undefined ? null : +h[1]
       }
     } else if (tag === 'use') {
       // `<use href="#g0" x= y=>` — a browser resolves this to the referenced outline
@@ -267,7 +284,14 @@ export function absolutePixels(svg: string): PixelDoc {
       }
     }
     if (lx === null || ly === null) continue
-    out.push({ tag, cls, x: (here.x + lx - vx) * sx, y: (here.y + ly - vy) * sy })
+    out.push({
+      tag,
+      cls,
+      x: (here.x + lx - vx) * sx,
+      y: (here.y + ly - vy) * sy,
+      ...(lw === null ? {} : { w: lw * sx }),
+      ...(lh === null ? {} : { h: lh * sy }),
+    })
   }
   return { width: W, height: H, items: out }
 }

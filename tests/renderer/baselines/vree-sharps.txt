@@ -3,11 +3,11 @@ bounds  width=41.652 height=17.978 top=-1.935
 systems 1
 system 0 width=41.652 originY=0.000
   staff 0 originY=10.107
-    staffline 0.000,2.000 -> 41.652,2.000 t=0.130
-    staffline 0.000,1.000 -> 41.652,1.000 t=0.130
-    staffline 0.000,0.000 -> 41.652,0.000 t=0.130
-    staffline 0.000,-1.000 -> 41.652,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 41.652,-2.000 t=0.130
+    staffline 0.000,2.000 -> 41.652,2.000 t=0.090
+    staffline 0.000,1.000 -> 41.652,1.000 t=0.090
+    staffline 0.000,0.000 -> 41.652,0.000 t=0.090
+    staffline 0.000,-1.000 -> 41.652,-1.000 t=0.090
+    staffline 0.000,-2.000 -> 41.652,-2.000 t=0.090
     title x=0.000 w=0.000
       text  10.677,-5.648 size=3.484 bold "Key with Many Sharps"
     clef x=1.935 w=3.103
@@ -23,19 +23,19 @@ system 0 width=41.652 originY=0.000
       glyph timeSig4 13.974,1.000
     note@0 x=16.787 w=5.474
       glyph noteheadBlack 16.787,0.000
-      line  16.787,0.168 -> 16.787,3.500 t=0.120
+      line  16.787,0.168 -> 16.787,3.500 t=0.129
     note@1 x=22.261 w=5.474
       glyph accidentalSharp 20.938,-0.500
       glyph noteheadBlack 22.261,-0.500
-      line  22.261,-0.332 -> 22.261,3.000 t=0.120
+      line  22.261,-0.332 -> 22.261,3.000 t=0.129
     note@2 x=27.735 w=5.474
       glyph accidentalSharp 26.413,-1.000
       glyph noteheadBlack 27.735,-1.000
-      line  27.735,-0.832 -> 27.735,2.500 t=0.120
+      line  27.735,-0.832 -> 27.735,2.500 t=0.129
     note@3 x=33.210 w=5.474
       glyph accidentalSharp 31.887,-1.500
       glyph noteheadBlack 33.210,-1.500
-      line  33.210,-1.332 -> 33.210,2.000 t=0.120
-    bar x=38.684 w=1.060
-      line  38.764,-2.000 -> 38.764,2.000 t=0.160
-      line  39.494,-2.000 -> 39.494,2.000 t=0.500
+      line  33.210,-1.332 -> 33.210,2.000 t=0.129
+    bar x=38.684 w=0.994
+      line  38.723,-2.000 -> 38.723,2.000 t=0.077
+      line  39.420,-2.000 -> 39.420,2.000 t=0.516

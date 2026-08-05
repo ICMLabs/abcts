@@ -158,6 +158,52 @@ export const ABCJS_PX = {
   systemWidth: 700,
 } as const
 
+/**
+ * LINE WEIGHTS — abcjs's, in PIXELS, and the reason this section exists.
+ *
+ * `abcjs-strict` HAS NO LATITUDE: it exists to reproduce abcjs byte for byte, so every
+ * figure it draws with must be abcjs's. Bravura is authorised as a glyph OUTLINE source
+ * for `abc2.1`/`extended` and, before the split, for strict too — but it was NEVER
+ * authorised for strict, and its `ENGRAVING_DEFAULTS` (line thicknesses, extensions,
+ * separations) went on being read there at 21 sites with no `strict` gate at all. That is
+ * the audit finding of 2026-08-05, and these are its numbers.
+ *
+ * MEASURED off abcjs's own goldens rather than read out of its source, because a
+ * `linewidth` is a `dx` handed to `printStem` and the emitted quad is the ground truth:
+ *
+ *   staff line   `simple-c.svg`  77.9 - 77.2                    = 0.700
+ *   ledger       `simple-c.svg`  116.65 - 115.95                = 0.700
+ *   ledger width `simple-c.svg`  82.66 - 68.85 = 13.81, which is `symbolWidth + 4` on a
+ *                9.81 notehead with `dx = -2` — so 2px of overhang EACH SIDE
+ *   stem         `simple-c.svg`  80.66 - 79.66                  = 1.000
+ *   thin bar     `S4-bars-repeats-tune0.svg`                    = 0.600
+ *   thick bar    same                                           = 4.000
+ *
+ * The BEAM is the one that already agreed: `calcDy` returns `spacing.STEP`, which is
+ * 3.875px, and Bravura's 0.5 staff spaces is the same number. A coincidence, and the only
+ * one of the seven.
+ */
+export const ABCJS_LINE_PX = {
+  /** `printStaff(…, dy = 0.35)` + `lineThickness` 0, so 0.35 either side. */
+  staffLine: 0.7,
+  /** `printStaffLine(…, 0.35 + lineThickness)` for a ledger too (`draw/relative.js:66`). */
+  ledgerLine: 0.7,
+  /**
+   * How far a ledger overhangs its notehead EACH SIDE. `ledgerLines` builds
+   * `RelativeElement(null, ofs + dx, (symbolWidth + 4) * scale, …)` with `dx = -2`
+   * (`abstract-engraver.js:462`, called at `:849` with `-2, 1`) — 2px left, 2px right.
+   */
+  ledgerExtension: 2,
+  /** `var width = (dir === "down") ? 1 : -1` (`abstract-engraver.js:748`). */
+  stem: 1,
+  /** `linewidth: 0.6` (`abstract-engraver.js:992`). */
+  thinBarline: 0.6,
+  /** `linewidth: 4` (`abstract-engraver.js:1007`). */
+  thickBarline: 4,
+  /** `calcDy` returns `spacing.STEP` for a full-size beam (`layout/beam.js:66-70`). */
+  beam: STEP_PX,
+} as const
+
 // ─── Constants abcjs states in PITCH ─────────────────────────────────────────
 
 /**

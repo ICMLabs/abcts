@@ -25,8 +25,9 @@
  * approximate one, and the emitter can express the same thing with a transform.
  */
 import { type CompatibilityMode, isStrict } from '../core/model.js'
+import { ABCJS_LINE_PX, spaces } from './abcjs-constants.js'
 import { SMUFL_TO_ABCJS } from './glyph-map.js'
-import { GLYPHS, type GlyphName } from './glyphs.js'
+import { ENGRAVING_DEFAULTS, GLYPHS, type GlyphName } from './glyphs.js'
 import { ABCJS_GLYPHS, ABCJS_STAFF_SPACE } from './glyphs-abcjs.js'
 
 /** One glyph, as everything downstream of the table wants it. */
@@ -133,5 +134,72 @@ export const glyphTableFor = (mode: CompatibilityMode): GlyphTable =>
  * decision. A second parameter carrying the same bit would be two ways to say one thing.
  */
 export const glyphsFor = (strict: boolean): GlyphTable => (strict ? ABCJS : BRAVURA)
+
+/**
+ * LINE WEIGHTS for a render — abcjs's in strict, Bravura's everywhere else.
+ *
+ * The same split `glyphsFor` makes for outlines, and for the same reason: `abcjs-strict`
+ * has no latitude. Bravura's `ENGRAVING_DEFAULTS` was reaching strict at 21 ungated sites
+ * and drawing a thin barline at 1.24px where abcjs draws 0.600 — see `ABCJS_LINE_PX`.
+ *
+ * Five entries are NOT YET PORTED and still take Bravura's number in BOTH modes; each says
+ * what to measure. They are flagged rather than guessed because a wrong constant that
+ * looks decided is worse than one that says it is not.
+ */
+export interface LineWeights {
+  readonly staffLine: number
+  readonly stem: number
+  readonly beam: number
+  readonly beamSpacing: number
+  readonly ledgerLine: number
+  readonly ledgerExtension: number
+  readonly thinBarline: number
+  readonly thickBarline: number
+  readonly barlineSeparation: number
+  readonly repeatBarlineDotSeparation: number
+  readonly slurEndpoint: number
+  readonly slurMidpoint: number
+  readonly tieEndpoint: number
+  readonly tieMidpoint: number
+}
+
+const BRAVURA_WEIGHTS: LineWeights = {
+  staffLine: ENGRAVING_DEFAULTS.staffLineThickness,
+  stem: ENGRAVING_DEFAULTS.stemThickness,
+  beam: ENGRAVING_DEFAULTS.beamThickness,
+  beamSpacing: ENGRAVING_DEFAULTS.beamSpacing,
+  ledgerLine: ENGRAVING_DEFAULTS.legerLineThickness,
+  ledgerExtension: ENGRAVING_DEFAULTS.legerLineExtension,
+  thinBarline: ENGRAVING_DEFAULTS.thinBarlineThickness,
+  thickBarline: ENGRAVING_DEFAULTS.thickBarlineThickness,
+  barlineSeparation: ENGRAVING_DEFAULTS.barlineSeparation,
+  repeatBarlineDotSeparation: ENGRAVING_DEFAULTS.repeatBarlineDotSeparation,
+  slurEndpoint: ENGRAVING_DEFAULTS.slurEndpointThickness,
+  slurMidpoint: ENGRAVING_DEFAULTS.slurMidpointThickness,
+  tieEndpoint: ENGRAVING_DEFAULTS.tieEndpointThickness,
+  tieMidpoint: ENGRAVING_DEFAULTS.tieMidpointThickness,
+}
+
+const ABCJS_WEIGHTS: LineWeights = {
+  ...BRAVURA_WEIGHTS,
+  staffLine: spaces(ABCJS_LINE_PX.staffLine),
+  stem: spaces(ABCJS_LINE_PX.stem),
+  beam: spaces(ABCJS_LINE_PX.beam),
+  ledgerLine: spaces(ABCJS_LINE_PX.ledgerLine),
+  ledgerExtension: spaces(ABCJS_LINE_PX.ledgerExtension),
+  thinBarline: spaces(ABCJS_LINE_PX.thinBarline),
+  thickBarline: spaces(ABCJS_LINE_PX.thickBarline),
+  // NOT YET PORTED, and still Bravura's in strict:
+  //   beamSpacing                 measure the gap between two beams of a 16th run
+  //   barlineSeparation           4.0px thick->thin and 3.4 thin->thick in the goldens,
+  //                               which is asymmetric where ours is one constant
+  //   repeatBarlineDotSeparation  measure off a `|:` in S4-bars-repeats
+  //   slur/tie endpoint+midpoint  abcjs builds its own path in `draw/tie.js`; this is a
+  //                               shape difference, not one number
+}
+
+/** The line weights a render draws with. Strict gets abcjs's; everything else Bravura's. */
+export const lineWeightsFor = (strict: boolean): LineWeights =>
+  strict ? ABCJS_WEIGHTS : BRAVURA_WEIGHTS
 
 export { ABCJS as ABCJS_TABLE, BRAVURA as BRAVURA_TABLE }
