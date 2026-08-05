@@ -25,7 +25,8 @@ harmless, and left out — and that judgement was the whole remaining error. See
 |---|---|
 | suite | **699 of 699. NO REDS.** The branch has had one standing failure for weeks and it is closed. |
 | 41-fixture | **25 of 29 at ZERO on all four axes**, and `ragtime-nightingale`'s twelve staff boundaries all measure 0.0. |
-| harvested (174) | within 0.05 / 1 / 5 / 25px: **143 / 153 / 165 / 172**. **31 of 174 off some axis**, from 34. |
+| harvested (174) | within 0.05 / 1 / 5 / 25px: **146 / 156 / 167 / 173**. **28 of 174 off some axis**, from 34 at the start of the day. |
+| CONTENT gaps | **one left** — `parse-book_parser-04-wed`'s leading-header split. |
 
 **NO CEILING IS RAISED ON THIS BRANCH ANY MORE.** ragtime's `dx` was the only one ever
 raised (16.43 → 16.53, finding 68); it is back under the original at 16.52. Its other three
@@ -123,29 +124,58 @@ could see a stem at all, because a stem is not a notehead.
 
 ---
 
+## FINDINGS 74–77 — GRACE NOTES
+
+### 74. A GRACE GROUP OF MORE THAN ONE IS BEAMED
+`gracenotes.length > 1` builds `BeamElem(round(stemHeight * 3.5/5), "grace", isBagpipes)`
+(`abstract-engraver.js:466-478`), which suppresses the flag, owns the stem tops, and solves
+`calcYPos` with `isGrace` — the full-beam solve minus the too-high/too-low clamp, with
+`forceup` always true (`beam-element.js:22`). The beam's own weight is `STEP * 0.4`.
+
+### 75. AND A BEAMED GRACE RESERVES NOTHING — A PHASE DIFFERENCE
+Its stems are built in `createStems` during LAYOUT, after `staff.top` has been accumulated,
+so they push `abselem.top` and arrive too late to reach the staff. Instrumented: `{efg}CD`'s
+element top reaches pitch 16 while its staff top stays at the G clef's declared 13.72, and
+its top line does not move one pixel from the same tune with no graces.
+
+**THE TELL WAS TWO GRACES RESERVING LESS THAN ONE.** `{c''}CD` moves abcjs's top line
+44.5px; `{c''d''}CD` moves it 34.5. No size rule produces that — only the phase does. Same
+axis as the tie's `getYBounds` arriving after the lanes: **the same box in the wrong phase
+is a different number.**
+
+### 76. A GRACE STEM IS MEASURED FROM THE HEAD'S PITCH, TWICE
+`p1 = gracepitch + 1/3 * gracescale` and `p2 = gracepitch + 7 * gracescale` are two
+independent offsets from one pitch (`abstract-engraver.js:515-520`), not a length run up
+from the base. `dx = grace.dx + grace.w` with `linewidth -0.6`, and that 0.6 is NOT scaled.
+The head reserves its DECLARED box (8.094, not the 8.13 ink box) times the grace scale.
+And `graceoffsets` is a BACKWARD walk, so an accidental widens the gap BEFORE its own grace.
+
+### 77. A REST CARRIES ITS GRACES — THERE WAS NO MODEL DECISION TO MAKE
+`createNote` closes its rest/note branch and THEN calls `addGraceNotes`
+(`abstract-engraver.js:834`), so `{a}z` and `{a}y` engrave exactly as `{a}c`. This had been
+filed as a MODEL DECISION, justified inside `Rest` itself: "not ties, slurs, grace notes or
+lyrics, none of which apply to silence." Three of the four are right; the fourth was
+REASONING, and reasoning is the thing abcjs is the master source for. `(f3 {a})y` was a
+whole notehead short.
+
+---
+
 ## WHAT IS LEFT, ranked
 
 ```
 16.91  dy= 0.0 dx=16.9 oy= -3.5 ox= 4.6  visual-misc-06      [%%setfont] — RICH TEXT
- 9.59  dy= 0.0 dx= 0.0 oy= -9.6 ox=-0.0  visual-tablature-10 grace before a `y` spacer
  7.20  dy= 0.0 dx= 7.2 oy= -0.0 ox=-4.3  mouse-click-01 / tablature-15   [%%sep, %%text]
  6.65  dy= 3.8 dx= 6.7 oy=  0.9 ox= 2.1  visual-selection-01 / svg-per-line-01
- 6.22  dy= 0.0 dx= 0.0 oy=  6.2 ox=-0.0  synth-flattener-17  A GRACE BEAM
  5.74  dy= 0.0 dx= 0.0 oy=  5.7 ox=-0.0  synth-flattener-32  quarter tones
+ 3.00  dy= 0.0 dx= 0.0 oy= -3.0 ox= 0.0  visual-tablature-17 [stretchlast, gchordfont]
 ```
+
+Nothing above 17 and only ONE item above 10, and it is a FEATURE.
 
 ### NEXT, in order
 
-1. **GRACE BEAMS — and the ground is now prepared for them.** `addGraceNotes` builds a
-   `BeamElem(round(stemHeight * 3.5/5), "grace", isBagpipes)` whenever
-   `gracenotes.length > 1` (`abstract-engraver.js:466-478`). The grace path through
-   `createStems` is the branch this session did NOT take: `isGrace` is true when the elem
-   has no `addExtra`, the stem is attached to `mainNote` rather than the elem, `dx` gets
-   `elem.heads[0].dx` instead of `furthestHead.dx` — **so the double-count of finding 73
-   does not apply to graces, it is a different term** — and `calcDy` scales the beam to
-   `0.4`. `forceup` is always true and `calcYPos`'s too-high/too-low clamp is skipped for
-   grace. We draw loose flagless stems of fixed length. `{efg}ag` is 6.21px.
-2. **THE FIVE REMAINING LINE WEIGHTS** — `beamSpacing`, `barlineSeparation` (asymmetric,
+1. ~~**GRACE BEAMS**~~ — **DONE**, see findings 74–77. Both grace items came off the table.
+2. **THE FOUR REMAINING LINE WEIGHTS** — `beamSpacing`, `barlineSeparation` (asymmetric,
    4.0 thick→thin and 3.4 the other way), `repeatBarlineDotSeparation`, and slur/tie
    endpoint+midpoint, which is a SHAPE port out of `draw/tie.js` and the largest.
    `beamedStem` came off this list this session.
