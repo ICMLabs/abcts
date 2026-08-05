@@ -11,6 +11,7 @@
  */
 
 import { type CompatibilityMode, defaultMode, isStrict } from '../core/model.js'
+import { ABCJS_ARC, spaces } from './abcjs-constants.js'
 import { glyphsFor } from './glyph-table.js'
 import { GLYPHS, type GlyphName } from './glyphs.js'
 import type { Layout, PlacedCurve, PlacedLine } from './layout.js'
@@ -206,8 +207,54 @@ function lineToRect(line: PlacedLine, attr: string): string {
  * SMuFL's separate endpoint and midpoint thicknesses describe. Two cubics with control
  * points at the thirds give the shallow, even arc *Behind Bars* asks for.
  */
-function curveToPath(curve: PlacedCurve, attr: string): string {
+function curveToPath(curve: PlacedCurve, attr: string, strict: boolean): string {
   const { x1, y1, x2, y2, bulge } = curve
+  // ── ABCJS'S ARC, WHICH IS NOT A LENS ON THE THIRDS ─────────────────────────
+  //
+  // `drawArc` (`draw/tie.js:57-102`) builds the whole shape from the UNIT VECTOR between
+  // the endpoints, so every term is measured along the chord rather than along x:
+  //
+  //     flatten = norm / 3.5                       control points, along the chord
+  //     curve   = ±min(isTie ? 10 : 25, max(4, flatten))    bulge, PERPENDICULAR
+  //     c1 = (x1 + flatten*ux − curve*uy, y1 + flatten*uy + curve*ux)
+  //     c2 = (x2 − flatten*ux − curve*uy, y2 − flatten*uy + curve*ux)
+  //     back edge = the same two controls displaced by `thickness = 2` perpendicular
+  //
+  // THREE THINGS DIFFER FROM OURS AND ALL THREE ARE VISIBLE. Controls sit at `1 / 3.5` of
+  // the span, not a third. The bulge is CLAMPED — a tie at 10px, a slur at 25, with a floor
+  // of 4 — where ours is a ratio between its own two limits. And the second edge is offset
+  // PERPENDICULARLY by a flat 2px, where ours drops a vertical `midThickness`.
+  //
+  // That flat 2 is why the audit's `slurEndpoint` / `slurMidpoint` / `tieEndpoint` /
+  // `tieMidpoint` had no abcjs counterpart to port: abcjs has no endpoint-versus-midpoint
+  // notion at all. Its arc comes to a POINT at both ends, because the path returns through
+  // the same x1,y1 it started from, and is a flat 2px wide everywhere between. The four
+  // Bravura constants are not wrong numbers — they are the wrong MODEL, and strict now
+  // reads none of them.
+  if (strict) {
+    const dx = x2 - x1
+    const dy = y2 - y1
+    const norm = Math.hypot(dx, dy)
+    if (norm === 0) return ''
+    const ux = dx / norm
+    const uy = dy / norm
+    const flatten = norm / ABCJS_ARC.flattenDivisor
+    const cap = curve.kind === 'tie' ? ABCJS_ARC.tieMaxBulge : ABCJS_ARC.slurMaxBulge
+    // `bulge` carries our sign convention: negative is ABOVE, which is abcjs's `-1`.
+    const arc =
+      Math.sign(bulge) * Math.min(spaces(cap), Math.max(spaces(ABCJS_ARC.minBulge), flatten))
+    const t = spaces(ABCJS_ARC.thickness)
+    const c1x = x1 + flatten * ux - arc * uy
+    const c1y = y1 + flatten * uy + arc * ux
+    const c2x = x2 - flatten * ux - arc * uy
+    const c2y = y2 - flatten * uy + arc * ux
+    return (
+      `<path${attr} d="M${num(x1)},${num(y1)} ` +
+      `C${num(c1x)},${num(c1y)} ${num(c2x)},${num(c2y)} ${num(x2)},${num(y2)} ` +
+      `C${num(c2x - t * uy)},${num(c2y + t * ux)} ${num(c1x - t * uy)},${num(c1y + t * ux)} ` +
+      `${num(x1)},${num(y1)}Z"/>`
+    )
+  }
   const dx = x2 - x1
   // Control points at the thirds, pushed out by the bulge. The outer edge carries the
   // full arc; the inner edge falls short by the midpoint thickness, which opens the lens.
@@ -398,6 +445,7 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
           curveToPath(
             curve,
             abcjs ? ` class="abcjs-${curve.kind}"` : ` class="${prefix}-${curve.kind}"`,
+            strict,
           ),
         )
       }

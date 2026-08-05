@@ -244,6 +244,32 @@ export const ABCJS_LINE_PX = {
   beam: STEP_PX,
 } as const
 
+/**
+ * `drawArc`'s figures — the SHAPE of a slur or tie (`draw/tie.js:57-102`).
+ *
+ * Separate from `ABCJS_PX` because they are not lengths on the page: they are terms in a
+ * construction along the chord's unit vector, and only mean anything together.
+ */
+export const ABCJS_ARC = {
+  /** `flatten = norm / 3.5` — where the control points sit ALONG the chord. */
+  flattenDivisor: 3.5,
+  /** `Math.max(4, flatten)` — the bulge never goes below this. */
+  minBulge: 4,
+  /** `maxFlatten` for a TIE, which abcjs draws shallower than a slur. */
+  tieMaxBulge: 10,
+  /** …and for a SLUR. */
+  slurMaxBulge: 25,
+  /**
+   * `var thickness = 2` — flat, everywhere along the arc.
+   *
+   * abcjs has NO endpoint-versus-midpoint notion: its arc comes to a point at both ends
+   * because the path returns through the same `x1,y1` it started from, and is 2px wide
+   * between. Bravura's four `slur*`/`tie*` thicknesses are not wrong numbers, they are a
+   * different MODEL, which is why the audit finding could not port them one for one.
+   */
+  thickness: 2,
+} as const
+
 // ─── Constants abcjs states in PITCH ─────────────────────────────────────────
 
 /**
