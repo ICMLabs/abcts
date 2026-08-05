@@ -161,9 +161,9 @@ system 5 width=54.511 originY=69.720
       glyph noteheadBlack 46.069,3.000
       line  45.811,3.000 -> 47.593,3.000 t=0.090
       line  47.271,2.833 -> 47.271,-0.500 t=0.129
-    bar x=51.544 w=0.994
+    bar x=51.544 w=1.239
       line  51.582,-2.000 -> 51.582,2.000 t=0.077
-      line  52.279,-2.000 -> 52.279,2.000 t=0.516
+      line  52.318,-2.000 -> 52.318,2.000 t=0.516
 tune 1
 bounds  width=97.310 height=64.529 top=-1.935
 systems 4
@@ -314,9 +314,9 @@ system 0 width=97.208 originY=0.000
       glyph noteheadSlashVerticalEnds 90.031,0.000
     note@0 x=91.813 w=1.782
       glyph noteheadSlashVerticalEnds 91.813,0.000
-    bar x=94.240 w=0.994
+    bar x=94.240 w=1.239
       line  94.279,-2.000 -> 94.279,2.000 t=0.077
-      line  94.976,-2.000 -> 94.976,2.000 t=0.516
+      line  95.015,-2.000 -> 95.015,2.000 t=0.516
 system 1 width=97.310 originY=19.012
   staff 0 originY=10.357
     staffline 0.000,2.000 -> 97.310,2.000 t=0.090
@@ -594,9 +594,9 @@ system 1 width=97.310 originY=19.012
       glyph noteheadBlack 91.356,-1.500
       line  91.098,3.000 -> 92.880,3.000 t=0.090
       line  92.557,2.833 -> 92.557,-5.000 t=0.129
-    bar x=94.343 w=0.994
+    bar x=94.343 w=1.239
       line  94.381,-2.000 -> 94.381,2.000 t=0.077
-      line  95.078,-2.000 -> 95.078,2.000 t=0.516
+      line  95.117,-2.000 -> 95.117,2.000 t=0.516
 system 2 width=97.310 originY=37.283
   staff 0 originY=4.000
     staffline 0.000,2.000 -> 97.310,2.000 t=0.090
@@ -871,10 +871,10 @@ system 0 width=90.403 originY=0.000
       glyph noteheadBlack 18.908,0.500
       line  20.109,0.333 -> 20.109,-3.000 t=0.129
       text  16.713,6.194 size=2.194 bold "your"
-    bar x=22.479 w=1.714
-      glyph repeatDots 23.632,1.976
-      line  22.737,-2.000 -> 22.737,2.000 t=0.516
-      line  23.434,-2.000 -> 23.434,2.000 t=0.077
+    bar x=22.479 w=2.335
+      glyph repeatDots 24.414,1.976
+      line  23.253,-2.000 -> 23.253,2.000 t=0.516
+      line  24.066,-2.000 -> 24.066,2.000 t=0.077
     note@-2 x=27.783 w=7.742
       glyph noteheadHalf 27.783,1.000
       line  29.057,0.833 -> 29.057,-2.500 t=0.129

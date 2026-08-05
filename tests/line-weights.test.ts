@@ -86,6 +86,35 @@ describe('line weights match abcjs in strict mode', () => {
     })
   }
 
+  // SEPARATION IS A DIFFERENT AXIS FROM THICKNESS, and the thickness gate above cannot see
+  // it: two rules of the right weight in the wrong places pass every assertion in this file
+  // until this one. abcjs's barline cursor is FIVE hardcoded numbers rather than one
+  // separation (`abstract-engraver.js:985-1030`), so the gaps are asymmetric — thin→thick
+  // is `4 - 0.6` and thick→thin is `5 + 3 - 4` — and a single constant cannot produce them.
+  it('barline separations', () => {
+    const gaps = (svg: string): number[] => {
+      const doc = absolutePixels(svg)
+      const bars = doc.items
+        .filter((item) => item.name === 'bar' && item.w !== undefined)
+        .map((item) => ({ left: item.x - (item.w as number) / 2, w: item.w as number }))
+        .sort((a, b) => a.left - b.left)
+      const out: number[] = []
+      for (let i = 1; i < bars.length; i++) {
+        const prev = bars[i - 1]
+        const here = bars[i]
+        if (prev === undefined || here === undefined) continue
+        const gap = here.left - (prev.left + prev.w)
+        // Only pairs that belong to ONE barline; anything further apart is a whole measure.
+        if (gap >= 0 && gap < 6) out.push(Math.round(gap * 100) / 100)
+      }
+      return out
+    }
+    const theirs = gaps(golden('S4-bars-repeats-tune0'))
+    const ours = gaps(render('S4-bars-repeats'))
+    expect(theirs.length, 'no adjacent barline rules in the golden').toBeGreaterThan(0)
+    expect(ours).toEqual(theirs)
+  })
+
   it('the probe can fail — it is not measuring a constant', () => {
     // The canary the pixel gate has and this one needs for the same reason: a comparison
     // that returns the same number for everything reports coverage it does not have.

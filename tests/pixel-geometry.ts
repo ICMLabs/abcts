@@ -20,6 +20,8 @@
 export interface PixelItem {
   readonly tag: string
   readonly cls: string
+  /** abcjs's `data-name`, which tags things it gives no class — a barline above all. */
+  readonly name: string
   readonly x: number
   readonly y: number
   /**
@@ -219,6 +221,11 @@ export function absolutePixels(svg: string): PixelDoc {
     }
 
     const cls = /class="([^"]*)"/.exec(attrs)?.[1] ?? ''
+    // abcjs CLASSES almost nothing — five names in a whole score — but it tags far more
+    // with `data-name`, and a barline is one of the things that has the second and not the
+    // first. Without this a comparison simply cannot ask about barlines, which is the audit
+    // lesson one field over: a representation can only express what it carries.
+    const name = /data-name="([^"]*)"/.exec(attrs)?.[1] ?? ''
     let lx: number | null = null
     let ly: number | null = null
     let lw: number | null = null
@@ -287,6 +294,7 @@ export function absolutePixels(svg: string): PixelDoc {
     out.push({
       tag,
       cls,
+      name,
       x: (here.x + lx - vx) * sx,
       y: (here.y + ly - vy) * sy,
       ...(lw === null ? {} : { w: lw * sx }),

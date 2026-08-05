@@ -121,6 +121,26 @@ export const ABCJS_PX = {
   flagStemInset: 0.6,
   /** `getSymbolWidth(symb) * scale + 2` before an accidental (`create-note-head.js:95`). */
   accidentalGap: 2,
+  /**
+   * A BARLINE'S CURSOR, and it is five hardcoded numbers rather than one separation
+   * (`abstract-engraver.js:985-1030`). abcjs walks left to right:
+   *
+   *     if (firstdots)  { dots at dx;              dx += 6 }
+   *     if (firstthin)  { thin at dx }                        // no advance at all
+   *     if (thick)      { dx += 4; thick at dx;    dx += 5 }
+   *     if (secondthin) { dx += 3; thin at dx }
+   *     if (seconddots) { dx += 3; dots at dx }
+   *
+   * Every rule is placed by its LEFT EDGE, so the gaps between them are asymmetric and
+   * fall out of the arithmetic rather than being stated: thin→thick is `4 − 0.6 = 3.4`
+   * and thick→thin is `5 + 3 − 4 = 4.0`. Those are the two figures the audit finding
+   * recorded from the goldens, and this is where they come from.
+   */
+  barlineAfterDots: 6,
+  barlineBeforeThick: 4,
+  barlineAfterThick: 5,
+  barlineBeforeSecondThin: 3,
+  barlineBeforeSecondDots: 3,
   /** A bar's own width plus its `minspacing`: nothing follows it closer than this. */
   barGap: 11,
   /** Clearance a barline leaves before the music resumes. */
@@ -241,6 +261,19 @@ export const ABCJS_PITCH = {
   decorationPadding: 1,
   /** `textFudge` in `textDecoration` (`decoration.js:148`). */
   decorationTextFudge: 2,
+  /**
+   * How far each ADDITIONAL beam sits from the one before — `sy = (asc) ? -1.5 : 1.5` and
+   * `y = bary + sy * (index + 1)` (`layout/beam.js:180-186`). A step between CENTRES, not
+   * a gap between edges, which is the whole reason it is stated here rather than as a
+   * thickness plus a spacing.
+   *
+   * Bravura's `beamThickness + beamSpacing` is `0.5 + 0.25 = 0.75` staff spaces, which is
+   * 1.5 pitch EXACTLY — so this constant changes no pixel and its baseline diff is zero
+   * lines. That is the point: the number was already right by coincidence, the way
+   * `calcDy` returning `STEP` makes Bravura's beam thickness right by coincidence, and a
+   * coincidence is not a citation. Strict now says what abcjs says.
+   */
+  beamStep: 1.5,
   /** `textHeight` — what a text decoration advances the stack by (`decoration.js:149`). */
   decorationTextHeight: 5,
   /** `thickness: 3` — a text decoration's DECLARED box (`decoration.js:151`). */

@@ -78,6 +78,10 @@ const ABCJS_CLASSES: Readonly<Record<string, string>> = {
 const ABCJS_DATA_NAMES: Readonly<Record<string, string>> = {
   stem: 'stem',
   ledger: 'ledger',
+  // abcjs gives a barline NO class and a `data-name` — `printStem(…, null, "bar")`
+  // (`abstract-engraver.js:992`). It is the only handle either engine offers on one, so
+  // without it nothing downstream can ask a question about barlines at all.
+  bar: 'bar',
 }
 
 /**

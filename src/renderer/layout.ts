@@ -2707,24 +2707,22 @@ function barNumberText(number: number, x: number): PlacedText {
 function layoutBar(x: number, kind: Barline, strict = true): LayoutElement {
   const thin = LINE_WEIGHTS.thinBarline
   const thick = LINE_WEIGHTS.thickBarline
-  const gap = LINE_WEIGHTS.barlineSeparation
-  const dotGap = LINE_WEIGHTS.repeatBarlineDotSeparation
 
   const lines: PlacedLine[] = []
   const glyphs: PlacedGlyph[] = []
   let cursor = x
 
-  const rule = (thickness: number): void => {
-    // A rule is placed by its LEFT edge and the line is its centre, so the cursor
-    // advances by the full thickness and nothing overlaps.
+  /** A rule placed by its LEFT edge — the line itself carries its centre. */
+  const rule = (thickness: number, advance: boolean): void => {
     lines.push({
       x1: cursor + thickness / 2,
       y1: stepToY(4),
       x2: cursor + thickness / 2,
       y2: stepToY(-4),
       thickness,
+      role: 'bar',
     })
-    cursor += thickness
+    if (advance) cursor += thickness
   }
 
   const dots = (): void => {
@@ -2736,51 +2734,49 @@ function layoutBar(x: number, kind: Barline, strict = true): LayoutElement {
     // different SMuFL font with a different anchor still lands correctly.
     const glyph = glyphsFor(strict).get('repeatDots') ?? GLYPHS.repeatDots
     glyphs.push({ name: 'repeatDots', x: cursor, y: -(glyph.y + glyph.height / 2) })
-    cursor += glyph.width + dotGap
   }
 
-  switch (kind) {
-    case 'invisible':
-      // Draws nothing. Its width is the rod, which `barRod` takes from the table.
-      break
-    case 'thin':
-      rule(thin)
-      break
-    case 'double':
-      rule(thin)
-      cursor += gap
-      rule(thin)
-      break
-    case 'final':
-      rule(thin)
-      cursor += gap
-      rule(thick)
-      break
-    case 'repeatStart':
-      rule(thick)
-      cursor += gap
-      rule(thin)
-      cursor += dotGap
+  // WHICH PIECES A BARLINE HAS, exactly as abcjs decides them
+  // (`abstract-engraver.js:967-972`). Five independent booleans, not seven shapes.
+  const firstDots = kind === 'repeatEnd' || kind === 'repeatBoth'
+  const firstThin = kind !== 'repeatStart' && kind !== 'invisible'
+  const hasThick =
+    kind === 'repeatEnd' || kind === 'repeatBoth' || kind === 'repeatStart' || kind === 'final'
+  const secondThin = kind === 'repeatStart' || kind === 'double' || kind === 'repeatBoth'
+  const secondDots = kind === 'repeatStart' || kind === 'repeatBoth'
+
+  if (kind !== 'invisible') {
+    // THE CURSOR IS ABCJS'S, and it is five hardcoded numbers rather than one separation —
+    // see `ABCJS_PX.barline*`. Ours advanced by each rule's own thickness and then added a
+    // single `barlineSeparation` (Bravura's, in strict, which is the audit finding), which
+    // cannot produce an asymmetric gap at all. abcjs never advances past `firstthin`: the
+    // thick that follows is placed 4 from the SAME dx, so the gap between them is
+    // `4 − 0.6`, while the gap the other way is `5 + 3 − 4`.
+    if (firstDots) {
       dots()
-      break
-    case 'repeatEnd':
+      cursor += spaces(ABCJS_PX.barlineAfterDots)
+    }
+    if (firstThin) rule(thin, false)
+    if (hasThick) {
+      cursor += spaces(ABCJS_PX.barlineBeforeThick)
+      rule(thick, false)
+      cursor += spaces(ABCJS_PX.barlineAfterThick)
+    }
+    if (secondThin) {
+      cursor += spaces(ABCJS_PX.barlineBeforeSecondThin)
+      rule(thin, false)
+    }
+    if (secondDots) {
+      cursor += spaces(ABCJS_PX.barlineBeforeSecondDots)
       dots()
-      rule(thin)
-      cursor += gap
-      rule(thick)
-      break
-    case 'repeatBoth':
-      // One thick rule serving both directions, dots on each side — the standard
-      // back-to-back form, rather than two complete repeat signs jammed together.
-      dots()
-      rule(thin)
-      cursor += gap
-      rule(thick)
-      cursor += gap
-      rule(thin)
-      cursor += dotGap
-      dots()
-      break
+    }
+    // The last piece placed still occupies its own width, which abcjs gets from the
+    // element's `w` rather than from `dx`.
+    cursor += secondDots
+      ? (glyphsFor(strict).get('repeatDots')?.width ?? 0)
+      : secondThin || firstThin
+        ? thin
+        : thick
   }
 
   return {
@@ -4766,7 +4762,9 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
   const maxLevel = Math.max(...group.map((stem) => stem.beams))
   const thickness = LINE_WEIGHTS.beam
   const inward = -direction
-  const step = (thickness + LINE_WEIGHTS.beamSpacing) * inward
+  // A STEP BETWEEN CENTRES, which is how abcjs states it — `bary + sy * (index + 1)` with
+  // `sy = ±1.5` PITCH (`layout/beam.js:180-186`) — not a thickness plus a gap.
+  const step = LINE_WEIGHTS.beamStep * inward
 
   for (let level = 0; level < maxLevel; level++) {
     // y here is the beam's CENTRE line; the emitted line carries its thickness.
