@@ -916,6 +916,15 @@ export interface StemInfo {
   /** Index into the system's `elements`. */
   readonly element: number
   readonly x: number
+  /**
+   * Left edge of the FURTHEST head — `heads[0]` going up, `heads[len-1]` going down, which
+   * is abcjs's `furthestHead` (`layout/beam.js:113`). A beamed stem is not the unbeamed one
+   * with a new endpoint: `createStems` builds a fresh one off this head, so the beam pass
+   * needs the head, not the stem we drew before we knew.
+   */
+  readonly headX: number
+  /** That head's ink width — abcjs's `furthestHead.w`. */
+  readonly headWidth: number
   /** Staff step of the notehead furthest along the stem — where the tip is measured from. */
   readonly farStep: number
   /**
@@ -1784,13 +1793,20 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
         baseline - ENGRAVE.tempoTextSize - ENGRAVE.tempoDescenderBump + 5 * ENGRAVE.spacePerStep
       glyphs.push({ name: spec.head, x: cursor, y: noteY, scale: ENGRAVE.tempoNoteScale })
       if (spec.stemmed) {
+        // AND IT IS A THIN STEM, `linewidth: -0.6` (`tempo-element.js:56`) — the beamed
+        // weight, not the unbeamed 1. Hung off the head's right EDGE, so its centre is half
+        // a stem inside: abcjs's quad on `ragtime-nightingale` runs 122.96 to 123.56 where
+        // ours ran 123.06 to 124.06, wrong on both edges. Three fixtures showed a stem-set
+        // of `[1]` against abcjs's `[0.6, 1]` on nothing but this one line.
+        const weight = LINE_WEIGHTS.beamedStem
+        const stemX = cursor + headAdvance - weight / 2
         lines.push({
           role: 'stem',
-          x1: cursor + headAdvance,
+          x1: stemX,
           y1: noteY - 0.25 * ENGRAVE.spacePerStep,
-          x2: cursor + headAdvance,
+          x2: stemX,
           y2: noteY - 3.75 * ENGRAVE.spacePerStep,
-          thickness: LINE_WEIGHTS.stem,
+          thickness: weight,
         })
       }
       // ponytail: no FLAG or DOT on the beat-unit note, so `Q:1/8=66` draws a bare stem
@@ -2431,13 +2447,49 @@ function layoutNoteheads(
   }
 
   if (spec.stemmed) {
+    // WHERE A STEM ATTACHES — and the two engines answer differently.
+    //
+    // Bravura publishes ANCHORS (`stemUpSE`, `stemDownNW`): points on the outline where a
+    // stem of its own weight meets the shape. abcjs has no such notion. It hangs the quad
+    // off the notehead's declared EDGE — `dx = (dir === "down") ? 0 : heads[0].w` with
+    // `linewidth = ±1`, so the quad spans `[headx + w - 1, headx + w]` going up and
+    // `[headx, headx + 1]` going down (`abstract-engraver.js:747-762`,
+    // `draw/relative.js:63`, `draw/print-stem.js:32`). Its CENTRE — which is what a
+    // `PlacedLine` carries — is therefore half a stem inside that edge.
+    //
+    // Strict has no latitude, so it takes abcjs's. Measured on `simple-c`: Bravura's
+    // anchors put our stems 0.169px left of abcjs's going up and 0.494px going down, and
+    // NO GATE COULD SEE IT — `pixel-parity` reports a notehead's centre and stems are not
+    // noteheads, while `line-weights` reads only the THICKNESS of what it finds. The same
+    // blind spot as the weights themselves, one axis over: the leak was in the same
+    // `ENGRAVING_DEFAULTS`-shaped hole, reached through a Bravura ANCHOR rather than a
+    // Bravura thickness.
+    //
+    // AND A BEAMED STEM IS A DIFFERENT OBJECT, not this one with a new endpoint. abcjs
+    // throws the note's own stem away and builds a fresh one in `createStems`
+    // (`layout/beam.js:107-142`), THINNER — `lineWidth = ±0.6` against the unbeamed ±1 —
+    // and off a different oval delta (1/5, not 1/3). It also honours the head's own
+    // displacement, `dx += furthestHead.dx`, where the unbeamed stem reads `heads[0].w`
+    // alone and ignores it. Three differences, none of them guessable from the unbeamed
+    // case, so the two are built side by side here rather than one patched into the other.
+    const beamed = stemOut !== null
+    const weight = beamed ? LINE_WEIGHTS.beamedStem : LINE_WEIGHTS.stem
+    // The head the stem is BUILT from — its base. A displaced seconds head moves it, but
+    // only for a beamed stem.
+    const baseShift = beamed ? (offsets.get(up ? lowest : highest) ?? 0) : 0
     const anchor = up ? head.anchors.stemUpSE : head.anchors.stemDownNW
-    const [ax, ay] = anchor ?? [up ? headInk : 0, 0]
+    const [bravuraX, bravuraY] = anchor ?? [up ? headInk : 0, 0]
+    const ax = strict ? baseShift + (up ? headInk - weight / 2 : weight / 2) : bravuraX
+    // The near end sits a fraction of a PITCH inside the head — `minpitch + 1/3` going up
+    // and `maxpitch - 1/3` going down unbeamed, `± ovalDelta = 1/5` once beamed. Bravura's
+    // anchors say 0.168 spaces where a third of a pitch is 0.1667: a hundredth of a pixel
+    // apart, and strict takes abcjs's figure because "close enough" is not byte parity.
+    const ay = strict ? (up ? -1 : 1) * (ENGRAVE.spacePerStep / (beamed ? 5 : 3)) : bravuraY
     // headX, not x: an accidental shifts the noteheads, and the stem follows them.
     const stemX = headX + ax
     // The stem starts at the head nearest its own end and runs past the far one, so a
     // chord's stem spans the whole spread rather than one notehead's worth.
-    const base = stepToY(up ? lowest : highest) + ay
+    const nearRaw = stepToY(up ? lowest : highest) + ay
     const far = stepToY(up ? highest : lowest)
     // A STEM ON A NOTE FAR FROM THE MIDDLE LINE IS STRETCHED TO REACH IT — abcjs's own
     // words, `create-note-head.js:39`: "the stem will have been stretched to the middle
@@ -2452,15 +2504,27 @@ function layoutNoteheads(
     // notes it builds). A beamed stem is retargeted to the beam anyway, so extending it
     // first would be undone. `stems=down` bass voices therefore keep the plain length,
     // which is what makes ragtime's bass staves match abcjs to a tenth of a pitch.
+    //
+    // AND THE CLAMP IS ON BOTH ENDS, NOT ONLY THE FAR ONE. abcjs writes `p1` and `p2` and
+    // then clamps EACH to pitch 6 independently — `if (p1 > 6) p1 = 6`, `if (p2 < 6)
+    // p2 = 6` — so the end AT THE NOTEHEAD is pulled to the middle line too once it has
+    // crossed. It bites on the commonest case there is: a down-stem on the middle line,
+    // where `maxpitch - 1/3` sits a third of a pitch BELOW the line, so abcjs starts the
+    // stem at the notehead's centre instead. `simple-c`'s B is 27.130px of stem against
+    // our 25.823 for exactly that reason, and it is one note in eight of that fixture.
+    // A BEAMED stem is exempt on both ends — `createStems` has no clamp, and `forcedUp` is
+    // non-null inside a beam anyway, which is the same guard abcjs's `!stemdir` is.
     const plain = far + (up ? -ENGRAVE.stemLength : ENGRAVE.stemLength)
     const middle = stepToY(0)
     const tip = forcedUp !== null ? plain : up ? Math.min(plain, middle) : Math.max(plain, middle)
+    const base =
+      forcedUp !== null ? nearRaw : up ? Math.max(nearRaw, middle) : Math.min(nearRaw, middle)
     lines.push({
       x1: stemX,
       y1: base,
       x2: stemX,
       y2: tip,
-      thickness: LINE_WEIGHTS.stem,
+      thickness: weight,
       role: 'stem',
     })
 
@@ -2469,6 +2533,10 @@ function layoutNoteheads(
       // cannot carry both.
       stemOut.value = {
         x: stemX,
+        // The furthest head is the one the stem is BUILT from — `heads[0]` up,
+        // `heads[len-1]` down — and `offsets` is what displaces it in a seconds chord.
+        headX: headX + (offsets.get(up ? lowest : highest) ?? 0),
+        headWidth: headInk,
         farStep: up ? highest : lowest,
         averageStep: steps.reduce((a, b) => a + b, 0) / steps.length,
         up,
@@ -2485,7 +2553,14 @@ function layoutNoteheads(
       // correctly), but 9 are not, and every one of them printed as a 16th. A 32nd drawn
       // as a 16th is the wrong rhythm on the page, not a missing detail.
       const flag = FLAG_GLYPHS[Math.min(spec.flags, FLAG_GLYPHS.length - 1)]?.[up ? 0 : 1]
-      if (flag !== undefined) glyphs.push({ name: flag, x: stemX, y: tip, role: 'flag' })
+      // A FLAG IS NOT HUNG OFF THE STEM — abcjs gives it its own `xdelta`, `headx +
+      // notehead.w - 0.6` going up and a flat `headx` going down (`create-note-head.js:47`),
+      // where the stem's centre is `w - 0.5` and `headx + 0.5`. A tenth of a pixel apart,
+      // and it MOVES NOTEHEADS: the flag's `x` is a term in `flagInk`, which is a term in
+      // the element's rod. Riding it on `stemX` widened `happy-birthday`'s spread the
+      // moment the stem itself became abcjs's.
+      const flagX = strict ? headX + (up ? headInk - spaces(ABCJS_PX.flagStemInset) : 0) : stemX
+      if (flag !== undefined) glyphs.push({ name: flag, x: flagX, y: tip, role: 'flag' })
     }
   }
 
@@ -4602,12 +4677,29 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
         ` pos=${pos + 6} startY=${startStep + 6} endY=${endStep + 6}` +
         ` startX=${(first.x * 7.75).toFixed(3)} endX=${(last.x * 7.75).toFixed(3)}`,
     )
-  const span = last.x - first.x
+  // A BEAM'S ENDS ARE NOT ITS STEMS, and the two edges are not even symmetric. `calcXPos`
+  // (`layout/beam.js:74-82`) reads the FURTHEST heads and writes
+  //
+  //     asc :  [ startHead.x + w - 0.6 ,  endHead.x + w   ]
+  //     desc:  [ startHead.x           ,  endHead.x + 0.6 ]
+  //
+  // — the 0.6 comes off the START going up and goes onto the END coming down, so a beam
+  // overhangs by six tenths at one end and is inset by six tenths at the other. Ours ran
+  // stem-centre to stem-centre, which is neither.
+  //
+  // It matters twice over: the beam is DRAWN between these, and `getBarYAt` interpolates
+  // every stem's endpoint along the line they define. Get the ends wrong and a beam that
+  // slants delivers each stem to a slightly wrong height — which is how a purely
+  // horizontal correction to the stems moved `ragtime-nightingale`'s vertical offset.
+  const inset = spaces(ABCJS_PX.flagStemInset)
+  const beamStartX = up ? first.headX + first.headWidth - inset : first.headX
+  const beamEndX = up ? last.headX + last.headWidth : last.headX + inset
+  const span = beamEndX - beamStartX
   const startY = stepToY(startStep)
   const endY = stepToY(endStep)
 
   const yAt = (x: number): number =>
-    span === 0 ? startY : startY + ((x - first.x) / span) * (endY - startY)
+    span === 0 ? startY : startY + ((x - beamStartX) / span) * (endY - startY)
 
   // Retarget each stem to the beam.
   //
@@ -4620,7 +4712,11 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
   for (const stem of group) {
     const element = elements[stem.element]
     if (!element) continue
-    const beamY = yAt(stem.x) + stemEndOffset
+    // Sampled at the head's EDGE, not the stem's centre: `createStems` computes its own
+    // `x = furthestHead.x + (asc ? w : 0)` and hands THAT to `getBarYAt`, three tenths of a
+    // pixel from where it then draws the quad. On a slanted beam the two are different
+    // heights.
+    const beamY = yAt(up ? stem.headX + stem.headWidth : stem.headX) + stemEndOffset
     const lines = element.lines.map((line) =>
       line.x1 === line.x2 && line.x1 === stem.x ? { ...line, y2: beamY, beamed: true } : line,
     )
@@ -4646,15 +4742,26 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
 
     const flush = () => {
       if (runStart === null || runEnd === null) return
-      let x1 = runStart.x
-      let x2 = runEnd.x
+      // Level 0 is the main beam and takes `calcXPos`; a deeper one is an `auxBeam`, which
+      // is measured the same way except that a descending run ends flush at the head
+      // rather than 0.6 past it (`createAdditionalBeams`, `layout/beam.js:180-200`).
+      let x1 = up ? runStart.headX + runStart.headWidth - inset : runStart.headX
+      let x2 =
+        level === 0
+          ? up
+            ? runEnd.headX + runEnd.headWidth
+            : runEnd.headX + inset
+          : up
+            ? runEnd.headX + runEnd.headWidth
+            : runEnd.headX
       if (runStart === runEnd) {
         // A stub: point it back toward the previous note when there is one, so a lone
         // sixteenth in a run of eighths reads as belonging to what precedes it.
         const index = group.indexOf(runStart)
         const backward = index > 0
-        x1 = backward ? runStart.x - ENGRAVE.beamStubLength : runStart.x
-        x2 = backward ? runStart.x : runStart.x + ENGRAVE.beamStubLength
+        const at = up ? runStart.headX + runStart.headWidth : runStart.headX
+        x1 = backward ? at - ENGRAVE.beamStubLength : at
+        x2 = backward ? at : at + ENGRAVE.beamStubLength
       }
       beams.push({
         x1,
@@ -6261,6 +6368,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
               // moves with the element rather than scaling on its own — and with its
               // voice-overlap displacement, which moves the head the stem hangs off.
               x: m.x + shiftOf(m.element) + displacementOf(voiceIndex, i, m.element),
+              // …and the HEAD it hangs off moves with it. Leaving this in block-local
+              // coordinates while `x` was absolute put `little swallow`'s noteheads 335px
+              // out, because the beam's ends are measured from the head, not the stem.
+              headX: m.headX + shiftOf(m.element) + displacementOf(voiceIndex, i, m.element),
               element: m.element + base,
             }))
             beamGroups.set(group, [...(beamGroups.get(group) ?? []), ...shifted])

@@ -204,7 +204,18 @@ const WITHIN: Readonly<Record<string, number>> = {
   // space put a notehead up to 5.1e-3px out; a hundred-thousandth reaches 1.5e-4, which is
   // the floor. And a glyph SCALE is a ratio, not a coordinate: rounding `1 / 7.75` to
   // `0.129` was a relative error over the whole outline.
-  '0.05': 140,
+  // A STEM IS NOT ANCHORED TO THE FONT, and a BEAMED one is a different object entirely.
+  // abcjs hangs the quad off the notehead's declared EDGE — `heads[0].w` with `linewidth
+  // ±1` — where we took Bravura's `stemUpSE`/`stemDownNW` anchors, 0.169px out going up and
+  // 0.494 going down. Then `createStems` throws that stem away for anything beamed and
+  // builds its own: `±0.6` thick, `±1/5` of a pitch inside the head rather than `±1/3`, and
+  // honouring the head's displacement where the unbeamed one ignores it. The beam's ENDS
+  // are a third construction — `calcXPos` insets the start by 0.6 going up and extends the
+  // end by 0.6 coming down — and `getBarYAt` interpolates every stem's endpoint along the
+  // line they define, so a purely horizontal error there is a vertical one on every slant.
+  // A FLAG is a fourth: `headx + w - 0.6`, not the stem it hangs beside, and its `x` feeds
+  // the element's ROD, so riding it on the stem moved noteheads.
+  '0.05': 143,
   '1': 153,
   '5': 165,
   '25': 172,

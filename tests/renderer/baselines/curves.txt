@@ -19,16 +19,16 @@ system 0 width=32.975 originY=0.000
       glyph timeSig4 6.329,1.000
     note@-2 x=9.141 w=5.474
       glyph noteheadBlack 9.141,1.000
-      line  10.321,0.832 -> 10.321,-2.500 t=0.129
+      line  10.343,0.833 -> 10.343,-2.500 t=0.129
     note@-2 x=14.616 w=5.474
       glyph noteheadBlack 14.616,1.000
-      line  15.796,0.832 -> 15.796,-2.500 t=0.129
+      line  15.817,0.833 -> 15.817,-2.500 t=0.129
     note@-2 x=20.090 w=5.474
       glyph noteheadBlack 20.090,1.000
-      line  21.270,0.832 -> 21.270,-2.500 t=0.129
+      line  21.292,0.833 -> 21.292,-2.500 t=0.129
     note@-2 x=25.565 w=5.474
       glyph noteheadBlack 25.565,1.000
-      line  26.745,0.832 -> 26.745,-2.500 t=0.129
+      line  26.766,0.833 -> 26.766,-2.500 t=0.129
 tune 1
 bounds  width=32.975 height=17.442 top=-1.935
 systems 1
@@ -50,16 +50,16 @@ system 0 width=32.975 originY=0.000
       glyph timeSig4 6.329,1.000
     note@-2 x=9.141 w=5.474
       glyph noteheadBlack 9.141,1.000
-      line  10.321,0.832 -> 10.321,-2.500 t=0.129
+      line  10.343,0.833 -> 10.343,-2.500 t=0.129
     note@-2 x=14.616 w=5.474
       glyph noteheadBlack 14.616,1.000
-      line  15.796,0.832 -> 15.796,-2.500 t=0.129
+      line  15.817,0.833 -> 15.817,-2.500 t=0.129
     note@-2 x=20.090 w=5.474
       glyph noteheadBlack 20.090,1.000
-      line  21.270,0.832 -> 21.270,-2.500 t=0.129
+      line  21.292,0.833 -> 21.292,-2.500 t=0.129
     note@-2 x=25.565 w=5.474
       glyph noteheadBlack 25.565,1.000
-      line  26.745,0.832 -> 26.745,-2.500 t=0.129
+      line  26.766,0.833 -> 26.766,-2.500 t=0.129
 tune 2
 bounds  width=32.975 height=17.442 top=-1.935
 systems 1
@@ -81,16 +81,16 @@ system 0 width=32.975 originY=0.000
       glyph timeSig4 6.329,1.000
     note@-2 x=9.141 w=5.474
       glyph noteheadBlack 9.141,1.000
-      line  10.321,0.832 -> 10.321,-2.500 t=0.129
+      line  10.343,0.833 -> 10.343,-2.500 t=0.129
     note@-2 x=14.616 w=5.474
       glyph noteheadBlack 14.616,1.000
-      line  15.796,0.832 -> 15.796,-2.500 t=0.129
+      line  15.817,0.833 -> 15.817,-2.500 t=0.129
     note@-2 x=20.090 w=5.474
       glyph noteheadBlack 20.090,1.000
-      line  21.270,0.832 -> 21.270,-2.500 t=0.129
+      line  21.292,0.833 -> 21.292,-2.500 t=0.129
     note@-2 x=25.565 w=5.474
       glyph noteheadBlack 25.565,1.000
-      line  26.745,0.832 -> 26.745,-2.500 t=0.129
+      line  26.766,0.833 -> 26.766,-2.500 t=0.129
 tune 3
 bounds  width=32.975 height=17.465 top=-1.935
 systems 1
@@ -115,22 +115,22 @@ system 0 width=32.975 originY=0.000
       glyph noteheadBlack 10.407,2.500
       glyph noteheadBlack 9.141,1.000
       line  8.883,3.000 -> 10.665,3.000 t=0.090
-      line  10.321,2.832 -> 10.321,-2.500 t=0.129
+      line  10.343,2.833 -> 10.343,-2.500 t=0.129
     note@-6,-5,-2 x=14.616 w=5.474
       glyph noteheadBlack 14.616,3.000
       glyph noteheadBlack 15.882,2.500
       glyph noteheadBlack 14.616,1.000
       line  14.358,3.000 -> 16.140,3.000 t=0.090
-      line  15.796,2.832 -> 15.796,-2.500 t=0.129
+      line  15.817,2.833 -> 15.817,-2.500 t=0.129
     note@-6,-5,-2 x=20.090 w=5.474
       glyph noteheadBlack 20.090,3.000
       glyph noteheadBlack 21.356,2.500
       glyph noteheadBlack 20.090,1.000
       line  19.832,3.000 -> 21.614,3.000 t=0.090
-      line  21.270,2.832 -> 21.270,-2.500 t=0.129
+      line  21.292,2.833 -> 21.292,-2.500 t=0.129
     note@-2 x=25.565 w=5.474
       glyph noteheadBlack 25.565,1.000
-      line  26.745,0.832 -> 26.745,-2.500 t=0.129
+      line  26.766,0.833 -> 26.766,-2.500 t=0.129
 tune 4
 bounds  width=32.975 height=17.465 top=-1.935
 systems 1
@@ -155,19 +155,19 @@ system 0 width=32.975 originY=0.000
       glyph noteheadBlack 10.407,2.500
       glyph noteheadBlack 9.141,1.000
       line  8.883,3.000 -> 10.665,3.000 t=0.090
-      line  10.321,2.832 -> 10.321,-2.500 t=0.129
+      line  10.343,2.833 -> 10.343,-2.500 t=0.129
     note@-2 x=14.616 w=5.474
       glyph noteheadBlack 14.616,1.000
-      line  15.796,0.832 -> 15.796,-2.500 t=0.129
+      line  15.817,0.833 -> 15.817,-2.500 t=0.129
     note@-6,-5,-2 x=20.090 w=5.474
       glyph noteheadBlack 20.090,3.000
       glyph noteheadBlack 21.356,2.500
       glyph noteheadBlack 20.090,1.000
       line  19.832,3.000 -> 21.614,3.000 t=0.090
-      line  21.270,2.832 -> 21.270,-2.500 t=0.129
+      line  21.292,2.833 -> 21.292,-2.500 t=0.129
     note@-2 x=25.565 w=5.474
       glyph noteheadBlack 25.565,1.000
-      line  26.745,0.832 -> 26.745,-2.500 t=0.129
+      line  26.766,0.833 -> 26.766,-2.500 t=0.129
 tune 5
 bounds  width=37.885 height=17.442 top=-1.935
 systems 1
@@ -189,16 +189,16 @@ system 0 width=37.885 originY=0.000
       glyph timeSig4 6.329,1.000
     note@-2 x=9.141 w=5.474
       glyph noteheadBlack 9.141,1.000
-      line  10.321,0.832 -> 10.321,-2.500 t=0.129
+      line  10.343,0.833 -> 10.343,-2.500 t=0.129
     note@-2 x=14.616 w=5.474
       glyph noteheadBlack 14.616,1.000
-      line  15.796,0.832 -> 15.796,-2.500 t=0.129
+      line  15.817,0.833 -> 15.817,-2.500 t=0.129
     note@-2 x=20.090 w=5.474
       glyph noteheadBlack 20.090,1.000
-      line  21.270,0.832 -> 21.270,-2.500 t=0.129
+      line  21.292,0.833 -> 21.292,-2.500 t=0.129
     note@-2 x=25.565 w=5.474
       glyph noteheadBlack 25.565,1.000
-      line  26.745,0.832 -> 26.745,-2.500 t=0.129
+      line  26.766,0.833 -> 26.766,-2.500 t=0.129
 tune 6
 bounds  width=32.975 height=17.442 top=-1.935
 systems 1
@@ -220,13 +220,13 @@ system 0 width=32.975 originY=0.000
       glyph timeSig4 6.329,1.000
     note@-2 x=9.141 w=5.474
       glyph noteheadBlack 9.141,1.000
-      line  10.321,0.832 -> 10.321,-2.500 t=0.129
+      line  10.343,0.833 -> 10.343,-2.500 t=0.129
     note@-2 x=14.616 w=5.474
       glyph noteheadBlack 14.616,1.000
-      line  15.796,0.832 -> 15.796,-2.500 t=0.129
+      line  15.817,0.833 -> 15.817,-2.500 t=0.129
     note@-2 x=20.090 w=5.474
       glyph noteheadBlack 20.090,1.000
-      line  21.270,0.832 -> 21.270,-2.500 t=0.129
+      line  21.292,0.833 -> 21.292,-2.500 t=0.129
     note@-2 x=25.565 w=5.474
       glyph noteheadBlack 25.565,1.000
-      line  26.745,0.832 -> 26.745,-2.500 t=0.129
+      line  26.766,0.833 -> 26.766,-2.500 t=0.129

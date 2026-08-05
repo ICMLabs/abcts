@@ -23,19 +23,19 @@ system 0 width=41.652 originY=0.000
       glyph timeSig4 13.974,1.000
     note@0 x=16.787 w=5.474
       glyph noteheadBlack 16.787,0.000
-      line  16.787,0.168 -> 16.787,3.500 t=0.129
+      line  16.851,0.000 -> 16.851,3.500 t=0.129
     note@1 x=22.261 w=5.474
       glyph accidentalSharp 20.938,-0.500
       glyph noteheadBlack 22.261,-0.500
-      line  22.261,-0.332 -> 22.261,3.000 t=0.129
+      line  22.325,-0.333 -> 22.325,3.000 t=0.129
     note@2 x=27.735 w=5.474
       glyph accidentalSharp 26.413,-1.000
       glyph noteheadBlack 27.735,-1.000
-      line  27.735,-0.832 -> 27.735,2.500 t=0.129
+      line  27.800,-0.833 -> 27.800,2.500 t=0.129
     note@3 x=33.210 w=5.474
       glyph accidentalSharp 31.887,-1.500
       glyph noteheadBlack 33.210,-1.500
-      line  33.210,-1.332 -> 33.210,2.000 t=0.129
+      line  33.274,-1.333 -> 33.274,2.000 t=0.129
     bar x=38.684 w=0.994
       line  38.723,-2.000 -> 38.723,2.000 t=0.077
       line  39.420,-2.000 -> 39.420,2.000 t=0.516

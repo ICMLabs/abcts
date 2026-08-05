@@ -54,6 +54,21 @@ describe('line weights match abcjs in strict mode', () => {
     { fixture: 'simple-c', cls: 'top-line', what: 'staff line' },
     { fixture: 'simple-c', cls: 'ledger', what: 'ledger line' },
     { fixture: 'simple-c', cls: 'stem', what: 'stem' },
+    // NOT ONE STEM WEIGHT BUT THREE SOURCES OF TWO. `simple-c` has only unbeamed stems, so
+    // it reports `[1]` and cannot tell the axis apart from a constant. abcjs writes
+    // `linewidth: ±1` for an unbeamed stem (`abstract-engraver.js:748`) and `±0.6` for both
+    // a BEAMED one (`layout/beam.js:122`) and a tempo mark's beat-unit note
+    // (`tempo-element.js:56`) — so the set is the discriminator, and each fixture below
+    // holds a different mix of the two.
+    //
+    // All three were wrong when this case was written, and none of the existing gates could
+    // say so: a stem is not a notehead, so `pixel-parity` never looks at one, and the
+    // fixture the thickness gate did have has no beams and no `Q:`.
+    { fixture: 'two-voice-invention', cls: 'stem', what: 'beamed and unbeamed stems' },
+    // Beams AND a `Q:` — the tempo note is its only thin stem outside the beams.
+    { fixture: 'happy-birthday', cls: 'stem', what: "a tempo mark's beat-unit stem" },
+    // Every note beamed, so a stray unbeamed weight has nowhere to hide.
+    { fixture: 'ragtime-mini', cls: 'stem', what: 'an all-beamed tune' },
   ]
 
   for (const { fixture, cls, what } of CASES) {

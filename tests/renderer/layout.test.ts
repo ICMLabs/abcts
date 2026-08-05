@@ -466,8 +466,9 @@ describe('flags and beams', () => {
   const sys = (abc: string) => layout(parse(abc).scores[0] as Score).systems[0]?.staves[0]
   const notesOf = (abc: string) => (sys(abc)?.elements ?? []).filter((e) => e.type === 'note')
   const glyphNames = (abc: string) => notesOf(abc).flatMap((n) => n.glyphs.map((g) => g.name))
-  const stemOf = (el: { lines: readonly { x1: number; x2: number; y1: number; y2: number }[] }) =>
-    el.lines.find((l) => l.x1 === l.x2)
+  const stemOf = (el: {
+    lines: readonly { x1: number; x2: number; y1: number; y2: number; thickness?: number }[]
+  }) => el.lines.find((l) => l.x1 === l.x2)
 
   it('flags an unbeamed eighth and beams a beamed one — never both', () => {
     // A space breaks the beam in ABC, so `C C` is two unbeamed eighths and `CC` is a
@@ -509,8 +510,15 @@ describe('flags and beams', () => {
     for (const note of (system?.elements ?? []).filter((e) => e.type === 'note')) {
       const stem = stemOf(note)
       expect(stem).toBeDefined()
-      // The tip meets the beam's outer edge, within a rounding hair.
-      expect(Math.abs((stem?.y2 ?? 0) - (yAt(stem?.x1 ?? 0) - half))).toBeLessThan(0.001)
+      // …AT THE HEAD'S EDGE, WHICH IS NOT THE STEM'S CENTRE. `createStems` computes
+      // `x = furthestHead.x + (asc ? w : 0)` and hands that to `getBarYAt`, then draws the
+      // quad from the same edge INWARD by 0.6 — so the height it solves for is three tenths
+      // of a pixel along the beam from where the stem is painted. On a slant the two are
+      // different numbers, and this used to assert they were the same: it read 0.0033 staff
+      // spaces against a 0.001 tolerance the moment the sample point became abcjs's.
+      const up = (stem?.y2 ?? 0) < (stem?.y1 ?? 0)
+      const edge = (stem?.x1 ?? 0) + ((stem?.thickness ?? 0) / 2) * (up ? 1 : -1)
+      expect(Math.abs((stem?.y2 ?? 0) - (yAt(edge) - half))).toBeLessThan(0.001)
     }
   })
 

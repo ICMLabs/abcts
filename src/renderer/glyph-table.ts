@@ -149,6 +149,8 @@ export const glyphsFor = (strict: boolean): GlyphTable => (strict ? ABCJS : BRAV
 export interface LineWeights {
   readonly staffLine: number
   readonly stem: number
+  /** A BEAMED stem, which abcjs builds separately and thinner — see `ABCJS_LINE_PX`. */
+  readonly beamedStem: number
   readonly beam: number
   readonly beamSpacing: number
   readonly ledgerLine: number
@@ -166,6 +168,7 @@ export interface LineWeights {
 const BRAVURA_WEIGHTS: LineWeights = {
   staffLine: ENGRAVING_DEFAULTS.staffLineThickness,
   stem: ENGRAVING_DEFAULTS.stemThickness,
+  beamedStem: ENGRAVING_DEFAULTS.stemThickness,
   beam: ENGRAVING_DEFAULTS.beamThickness,
   beamSpacing: ENGRAVING_DEFAULTS.beamSpacing,
   ledgerLine: ENGRAVING_DEFAULTS.legerLineThickness,
@@ -184,6 +187,7 @@ const ABCJS_WEIGHTS: LineWeights = {
   ...BRAVURA_WEIGHTS,
   staffLine: spaces(ABCJS_LINE_PX.staffLine),
   stem: spaces(ABCJS_LINE_PX.stem),
+  beamedStem: spaces(ABCJS_LINE_PX.beamedStem),
   beam: spaces(ABCJS_LINE_PX.beam),
   ledgerLine: spaces(ABCJS_LINE_PX.ledgerLine),
   ledgerExtension: spaces(ABCJS_LINE_PX.ledgerExtension),

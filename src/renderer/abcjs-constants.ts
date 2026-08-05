@@ -107,6 +107,18 @@ export const ABCJS_PX = {
   clefIndent: 5,
   /** `getSymbolWidth(symbol) + 2` between key-signature accidentals (`create-key-signature.js:26`). */
   keySignatureGap: 2,
+  /**
+   * How far INSIDE the notehead's right edge an up-stem's FLAG hangs — `xdelta = headx +
+   * notehead.w - 0.6` (`create-note-head.js:47`), against `headx` flat going down.
+   *
+   * Not the same figure as the stem's own centre, which is `w - 0.5`, and the difference
+   * is not decorative: a flag's `x` feeds the element's ROD (`flagInk`), so hanging it off
+   * the stem instead moved every notehead after it. `happy-birthday`'s dx spread went 0.17
+   * to 0.18 on exactly that, which is how the two came to be told apart at all.
+   *
+   * `beam.js`'s `calcXPos` uses the same 0.6 for a beam's ends — see `layoutBeam`.
+   */
+  flagStemInset: 0.6,
   /** `getSymbolWidth(symb) * scale + 2` before an accidental (`create-note-head.js:95`). */
   accidentalGap: 2,
   /** A bar's own width plus its `minspacing`: nothing follows it closer than this. */
@@ -196,6 +208,14 @@ export const ABCJS_LINE_PX = {
   ledgerExtension: 2,
   /** `var width = (dir === "down") ? 1 : -1` (`abstract-engraver.js:748`). */
   stem: 1,
+  /**
+   * …and a BEAMED stem is a different figure: `lineWidth = (asc) ? -0.6 : 0.6`
+   * (`layout/beam.js:122`). A beamed note's stem is not the unbeamed one retargeted — it is
+   * built from scratch in `createStems`, thinner, and hung at `w - 0.3` / `+0.3` rather than
+   * `w - 0.5` / `+0.5`. `line-weights.test.ts` could not see it: its only fixture was
+   * `simple-c`, which has no beams.
+   */
+  beamedStem: 0.6,
   /** `linewidth: 0.6` (`abstract-engraver.js:992`). */
   thinBarline: 0.6,
   /** `linewidth: 4` (`abstract-engraver.js:1007`). */
