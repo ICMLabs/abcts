@@ -270,7 +270,6 @@ export const ENGRAVE = {
    * 20.8px is 5.37 steps above the top line, which is step 4.
    */
   chordSymbolStep: 9.37,
-  ornamentStep: 7,
   /**
    * `Decoration.minTop` — the floor the ornament stack starts from, in PITCH
    * (`creation/decoration.js:13`). One pitch above the top staff line, so an ornament on
@@ -379,24 +378,6 @@ export const ENGRAVE = {
   tempoNoteScale: ABCJS_RATIO.tempoNoteScale,
   /** `x += note.w + 5` between the beat-unit note and the rate (`draw/tempo.js:29`). */
   tempoNoteGap: spaces(ABCJS_PX.tempoNoteGap),
-  /**
-   * A tune's title sits above everything else it owns, in staff STEPS above the middle
-   * line — so the gap to the top staff line is `titleStep / 2 - 2` spaces.
-   *
-   * 19 leaves 58px there. abcjs leaves 27.6px: its title baseline lands at y 49.6 and
-   * its top staff line at 77.2, built from `padding.top` 15, `spacing.title` 7.56 and
-   * `spacing.music` 7.56 above the first staff (`write/renderer.js:94`). That 30px is
-   * the whole of the vertical offset every fixture's noteheads carry.
-   *
-   * MEASURED AND LEFT ALONE. Setting this to 11.12 makes the gap exactly abcjs's, but
-   * the 30px it was correcting turned out to be `marginY` — 31px of per-staff padding
-   * abcjs does not have — and removing that fixed the gap without touching this. Six
-   * fixtures went to a y offset of ~0.5px with `titleStep` untouched.
-   *
-   * Which is the lesson: the title was never mispositioned relative to the music. The
-   * MUSIC was carrying padding, and the title rode along on top of it.
-   */
-  titleStep: 19,
   /** First verse below the staff; further verses stack downward by `lyricLineStep`. */
   /**
    * Verse 1's baseline as WRITTEN — a provisional lane, 28.8px below the bottom staff
@@ -412,9 +393,10 @@ export const ENGRAVE = {
    *
    * abcjs resolves a lyric's pitch to `staff.bottom`, the ink bottom over every voice on
    * the staff (`set-upper-and-lower-elements.js:52-55`), and the k-th voice's lyrics one
-   * rendered lyric height lower than that (`:165-169`). Both constants below are its own
-   * 17px vocal font: the gap is the SVG baseline offset, the step is `17 x 1.108`, the
-   * same calibrated height ratio `textHeightRatio` carries.
+   * rendered lyric height lower than that (`:165-169`). The gap below is abcjs's own 17px
+   * vocal font, as the SVG baseline offset. (The per-voice step it once sat beside was a
+   * SECOND derivation of the same quantity; `anchorLyrics` computes it from the golden's
+   * text table instead, so the constant is gone.)
    *
    * MEASURED, on four independent points, exact to 0.01px:
    *   `ave-verum-corpus`  staff 0 ink bottom 8 steps below its bottom line, lyric 214.24
@@ -426,7 +408,6 @@ export const ENGRAVE = {
    * unfixed for two sessions.
    */
   lyricInkGap: spaces(ABCJS_PX.lyricInkGap),
-  lyricVoiceStep: spaces(ABCJS_PX.lyricInkGap * ABCJS_RATIO.textHeight),
   /**
    * Verse to verse: abcjs stacks verses as `<tspan dy="1.2em">` inside ONE `<text>` per
    * note, so the step is 1.2 x the 17px vocal font = 20.4px, not the 21px an advance rule
@@ -464,21 +445,6 @@ export const ENGRAVE = {
    */
   tempoTextSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.partsfont)),
   /**
-   * Top-text font sizes, in staff spaces.
-   *
-   * abcjs's defaults are in POINTS (`abc_parse_directive.js:25-38`), converted by 4/3 to
-   * pixels at a 7.75px staff space: title 20pt, subtitle 16pt, composer and info 14pt.
-   * `titleTextSize` was 2.4 — 18.6px against abcjs's 26.7 — so the title was undersized
-   * as well as mispositioned.
-   */
-  // ROUNDED TO WHOLE PIXELS, as abcjs emits them: its title is `font-size="27"`, not
-  // 26.67, its composer `19` not 18.67. The rounding is visible in the goldens and it
-  // feeds the line advance below, where it is worth 4px on the first staff.
-  titleTextSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.titlefont)),
-  subtitleTextSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.subtitlefont)),
-  composerTextSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.composerfont)),
-  infoTextSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.infofont)),
-  /**
    * Rendered text HEIGHT as a multiple of font size — a line of prose is taller than its
    * point size, and abcjs advances by the height, not the size.
    *
@@ -513,24 +479,11 @@ export const ENGRAVE = {
   /** Space between the top-text block and the top of the music (`renderer.js:101`). */
   musicSpace: spaces(ABCJS_PX.musicSpace),
   /**
-   * `%%center` free text — abcjs's `textfont`, 21px at its 7.75px staff space.
-   *
-   * `freeTextSpace` is the gap above such a line, and it is abcjs's standard 7.56 — the
-   * same unit as `titleSpace`, `composerSpace` and `musicSpace`. Derived, not guessed:
-   * abcjs's composer baseline in the `center-text` golden is 82.12 and its centred line's
-   * is 114.68, and 114.68 = 82.12 + (23 - 19) + 7.56 + 21 exactly, where 23 is the
-   * composer row's advance and 21 the free-text size.
-   */
-  freeTextSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.textfont)),
-  /**
    * Line to line inside ONE `%%begintext` block — `1.2em` at the 21px `textfont`, the
    * `tspan dy` abcjs stacks a multi-line `<text>` by. Measured: a two-line block costs
    * 25.2px more than a one-line one, where the first line costs `21 x 1.108`.
    */
   freeTextLineStep: spaces(fontPixels(ABC_FONT_DEFAULT_PT.textfont) * ABCJS_RATIO.textLineStep),
-  freeTextSpace: spaces(ABCJS_PX.titleSpace),
-  /** Gap from the last staff line down to a trailing `%%center` line's baseline. */
-  freeTextBelowSpace: spaces(ABCJS_PX.freeTextBelowSpace),
   /** A text line advances by its height times this, rounded to whole pixels by abcjs. */
   lineSkipFactor: ABCJS_RATIO.lineSkip,
   /** Vertical gap between tunes in a tunebook — wider than between systems. */
@@ -550,17 +503,8 @@ export const ENGRAVE = {
    * (`dump-svg.js:120-124`).
    */
   textLineStep: ABCJS_RATIO.textLineStep,
-  /**
-   * A stem shortened to meet a beam never drops below this. *Behind Bars* keeps beamed
-   * stems from collapsing to stubs. PROVISIONAL.
-   */
-  minStemLength: 2.5,
-  /** Maximum total vertical rise of a sloped beam across its span. *Behind Bars*. */
-  beamMaxRise: 2.0,
   /** Length of a secondary-beam stub on a note whose neighbours lack that level. */
   beamStubLength: 1.1,
-  /** Clearance from a tuplet's furthest note to its bracket or number. PROVISIONAL. */
-  tupletGap: 1.2,
   /** Half-gap the bracket leaves around its number. */
   tupletNumberGap: 0.35,
   /** Length of the hook turning down from each end of a tuplet bracket. */
@@ -613,8 +557,6 @@ export const ENGRAVE = {
    * In our steps, which are abcjs's pitch.
    */
   barNumberPitch: ABCJS_PITCH.barNumberPitch,
-  /** `measurefont` — Times Italic 14pt, so `round(14 x 4/3)` = 19px. */
-  barNumberSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.measurefont)),
   /**
    * A LEFT annotation's room before the note — `roomTaken += chordWidth + 7`
    * (`add-chord.js:52`), in abcjs pixels.
