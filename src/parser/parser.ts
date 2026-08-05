@@ -372,7 +372,10 @@ const voiceOptions = (spec: string): string =>
  * both, and its own test fixtures use the bare one (`V:1 up`, `V:2 merge down`).
  */
 function stemModifier(spec: string): 'up' | 'down' | null {
-  const explicit = /\bstems=(up|down)\b/i.exec(spec)
+  // `stem=` AND `stems=`. abcjs's switch takes both spellings
+  // (`abc_parse_key_voice.js:717-718`) and `synth-flattener-28` writes the singular —
+  // which left its percussion voice stemming by pitch, 11.63px of staff.
+  const explicit = /\bstems?=(up|down)\b/i.exec(spec)
   if (explicit?.[1] !== undefined) return explicit[1].toLowerCase() as 'up' | 'down'
   const bare = /\s(up|down)\s/i.exec(voiceOptions(spec))
   return bare?.[1] === undefined ? null : (bare[1].toLowerCase() as 'up' | 'down')

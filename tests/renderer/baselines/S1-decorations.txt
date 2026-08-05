@@ -305,7 +305,7 @@ system 4 width=90.323 originY=54.534
       line  27.991,0.832 -> 27.991,-2.500 t=0.120
     note@-2 x=47.294 w=5.474
       glyph noteheadBlack 47.294,1.000
-      glyph fermataBelow 46.610,-3.977
+      glyph fermataBelow 46.610,3.977
       line  48.474,0.832 -> 48.474,-2.500 t=0.120
     note@-2 x=67.776 w=5.474
       glyph noteheadBlack 67.776,1.000

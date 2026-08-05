@@ -263,6 +263,8 @@ export const ENGRAVE = {
    * a low note still clears the staff.
    */
   decorationMinTop: 12,
+  /** `minBottom` — the floor `getPlacement('below')` clamps to (`decoration.js:14`). */
+  decorationMinBottom: 0,
   /** The pitch of padding each stacked decoration adds so nothing touches (`:154`). */
   decorationPadding: 1,
   /** `textFudge` — how far a TEXT decoration sits above the stack cursor (`:149`). */
@@ -2648,7 +2650,13 @@ function layoutBar(x: number, kind: Barline, strict = true): LayoutElement {
 const DECORATIONS: Readonly<
   Record<
     string,
-    { above: GlyphName; below: GlyphName; place: 'articulation' | 'ornament' | 'dynamic' | 'stem' }
+    {
+      above: GlyphName
+      below: GlyphName
+      place: 'articulation' | 'ornament' | 'dynamic' | 'stem'
+      /** Hangs UNDER the note whatever the tune says — abcjs's `invertedfermata`, alone. */
+      forceBelow?: boolean
+    }
   >
 > = {
   staccato: { above: 'articStaccatoAbove', below: 'articStaccatoBelow', place: 'articulation' },
@@ -2722,7 +2730,12 @@ const DECORATIONS: Readonly<
   breath: { above: 'breathMarkComma', below: 'breathMarkComma', place: 'ornament' },
   pralltriller: { above: 'ornamentShortTrill', below: 'ornamentShortTrill', place: 'ornament' },
   // An inverted fermata is the below-facing design, which was already extracted.
-  invertedfermata: { above: 'fermataBelow', below: 'fermataBelow', place: 'ornament' },
+  invertedfermata: {
+    above: 'fermataBelow',
+    below: 'fermataBelow',
+    place: 'ornament',
+    forceBelow: true,
+  },
   // Stacked for the same reason (`decoration.js:229`).
   wedge: {
     above: 'articStaccatissimoAbove',
@@ -2935,6 +2948,13 @@ function decorationGlyphs(
   }
 
   let above = Math.max(closeY ?? topPitch, ENGRAVE.decorationMinTop)
+  // …AND THERE IS A CURSOR ON THE OTHER SIDE. `yPos` is an object with `above` and
+  // `below`, and `incrementPlacement` walks whichever one the placement names
+  // (`decoration.js:127-145`). Only `invertedfermata` reaches it here: abcjs's switch
+  // hands it the literal `'below'` while every other ornament passes `positioning`
+  // through (`decoration.js:261-264`), so the inverted fermata hangs UNDER the note
+  // however the tune is written. Stacking it above put `!invertedfermata!EF` 6.52px low.
+  let below = Math.min(toPitch(elemBottomStep), ENGRAVE.decorationMinBottom)
 
   for (const name of names) {
     if (strict && STRICT_UNDRAWN.has(name)) continue
@@ -2947,6 +2967,13 @@ function decorationGlyphs(
 
     if (spec.place === 'ornament') {
       const height = heightInPitches(glyph) + ENGRAVE.decorationPadding
+      if (spec.forceBelow === true) {
+        const y = stepToY(toStep(below - height / 2))
+        const half = (table.get(glyph)?.declaredHeight ?? 0) / 2
+        out.push({ name: glyph, x: centre, y, role: 'decoration', reserve: [y - half, y + half] })
+        below -= height
+        continue
+      }
       const y = stepToY(toStep(above + height / 2))
       // …and a STACKED one is given `thickness: symbolHeightInPitches(symbol)`
       // (`decoration.js:163`), so it reserves `pitch ± thickness / 2` — its DECLARED box,

@@ -178,9 +178,15 @@ const WITHIN: Readonly<Record<string, number>> = {
   // placed AFTER the graces starts from that total — the arpeggio and a LEFT annotation
   // both. `roomtaken += addGraceNotes(…, roomtaken)` also counts the accidental room
   // TWICE, which is an abcjs bug and is reproduced.
-  '0.05': 137,
-  '1': 147,
-  '5': 159,
+  // `V:… stem=up` IS THE SAME AS `stems=up` — abcjs's switch takes both spellings
+  // (`abc_parse_key_voice.js:717-718`) and we matched only the plural, which left a
+  // percussion voice stemming by pitch and its staff 11.63px short.
+  // AN INVERTED FERMATA HANGS UNDER THE NOTE whatever the tune says: abcjs's switch passes
+  // the literal `'below'` where every other ornament passes `positioning` through
+  // (`decoration.js:261-264`), and there is a `yPos.below` cursor for exactly that.
+  '0.05': 138,
+  '1': 149,
+  '5': 161,
   '25': 172,
 }
 
