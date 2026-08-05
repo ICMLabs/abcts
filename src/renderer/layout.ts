@@ -2374,9 +2374,24 @@ function layoutNoteheads(
         slots.push({ step: a.step, place: roomTaken })
         accidentalPlaces.push(roomTaken)
       }
-      extraLeft += width / 2
+      // `abselem.extraw` IS A RUNNING MIN WITH A SUBTRACTION BETWEEN THE STEPS, and the
+      // order is what makes it not a sum:
+      //
+      //     addExtra(accidental at dx)   ->  if (dx < extraw) extraw = dx
+      //     abselem.extraw -= ret.extraLeft                  // half the accidental's width
+      //
+      // (`create-note-head.js:100-101`, `abstract-engraver.js:723-725`, per PITCH). A
+      // deeper column on the next pitch RESETS the min and throws the previous
+      // subtraction away, so `[_d^f=b]` ends at `deepest - nat/2` and not at
+      // `deepest - (flat + sharp + nat)/2`. Accumulating cost 7.50px, which is exactly
+      // `(6.75 + 8.25) / 2` — the two subtractions the min swallowed.
+      const place = accidentalPlaces[accidentalPlaces.length - 1] ?? 0
+      extraLeft = Math.max(extraLeft, place) + width / 2
     }
   }
+  // `extraLeft` came out of that loop as the FULL reach left of the head, columns and all
+  // — it is `-extraw`. What the element wants is the part BEYOND the columns.
+  extraLeft = Math.max(0, extraLeft - roomTaken)
   const accidentalWidth = roomTaken
   // `roomtaken += this.addGraceNotes(…, roomtaken)` (`abstract-engraver.js:834-836`), and
   // `addGraceNotes` RETURNS the running total it was handed — so the accidental room is

@@ -194,9 +194,13 @@ const WITHIN: Readonly<Record<string, number>> = {
   // declared box: 7.18px of staff above a high note.
   // `%%percmap <abc-note> <drum-sound> <note-head>` gives a written pitch its own HEAD on a
   // percussion staff, looked up through `pitchesToPerc`'s sixteen-entry table.
-  '0.05': 138,
-  '1': 152,
-  '5': 164,
+  // `abselem.extraw` IS A RUNNING MIN WITH A SUBTRACTION BETWEEN THE STEPS, not a sum:
+  // `addExtra` mins the accidental's dx into it and `extraw -= extraLeft` follows, PER
+  // PITCH — so a deeper column on the next pitch resets the min and throws the previous
+  // subtraction away. `[_d^f=b]` ends at `deepest - nat/2`, and summing cost 7.50px.
+  '0.05': 139,
+  '1': 153,
+  '5': 165,
   '25': 172,
 }
 

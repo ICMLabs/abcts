@@ -165,7 +165,13 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // dy 58.1 -> 1.12 and dx 53.56 -> 18.30 when the GRACE NOTES stopped being emitted
     // before their main head. Both were recorded for weeks as "two mis-paired noteheads,
     // do not chase" — the mis-pairing was ours, and it was the emission order.
-    'ragtime-nightingale': { heads: 2009, dy: 1.12, dx: 16.43, oy: -0.54, ox: -1.87 },
+    // dx 16.43 -> 16.53 when `extraw` became abcjs's RUNNING MIN rather than a sum of half
+    // widths. RECORDED, not masked: the port is exact on a three-accidental chord — 7.50px,
+    // which is `(6.75 + 8.25) / 2` to the digit — and verified against abcjs's own probed
+    // `extraw`. Ragtime's dx is a SPREAD dominated by other causes and moved a tenth of a
+    // pixel; the harvested corpus gained a fixture at 1px and another at 5px on the same
+    // change.
+    'ragtime-nightingale': { heads: 2009, dy: 1.12, dx: 16.53, oy: -0.54, ox: -1.87 },
     'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'score-reorder': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'simple-c': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
