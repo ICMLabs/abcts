@@ -8,7 +8,7 @@ system 0 width=37.694 originY=0.000
     staffline 0.000,0.000 -> 37.694,0.000 t=0.090
     staffline 0.000,-1.000 -> 37.694,-1.000 t=0.090
     staffline 0.000,-2.000 -> 37.694,-2.000 t=0.090
-    tie  10.621,1.300 -> 15.735,1.300 bulge=0.920
+    tie  10.707,1.300 -> 15.735,1.300 bulge=0.905
     title x=0.000 w=0.000
       text  11.348,-5.612 size=3.484 bold "Ties Across Bars"
     clef x=1.935 w=3.103

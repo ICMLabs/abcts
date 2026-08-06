@@ -5262,7 +5262,12 @@ function layoutMeasure(
     // the head right, and a slur springing from the accidental would start in mid-air.
     const heads = el.glyphs.filter((g) => g.name.startsWith('notehead'))
     if (heads.length > 0) {
-      const width = GLYPHS[heads[0]?.name ?? 'noteheadBlack'].width
+      // THE ACTIVE TABLE'S WIDTH, not Bravura's. This anchor is where a slur or tie
+      // STARTS, and abcjs's noteheads are wider than Bravura's by 0.67px on a black head,
+      // 1.22 on a half and 1.90 on a whole — the very difference `glyph-table.ts` opens by
+      // warning about ("that is not a rounding difference; it moves notes"). The metric
+      // twenty lines up already reads `glyphsFor(strict)`; this one did not.
+      const width = glyphsFor(strict).width(heads[0]?.name ?? 'noteheadBlack')
       const first =
         event.type === 'note' ? event.pitch : event.type === 'chord' ? event.pitches[0] : undefined
       anchors.push({
@@ -5283,8 +5288,12 @@ function layoutMeasure(
       // Rests get an anchor too — not for curves, which skip them, but because a tuplet
       // can contain one (`(3cz` and `(3z` are both in the corpus) and its bracket has to
       // span the rest like any other member.
+      // …and the same for a REST, whose box a tuplet bracket has to span. abcjs's half rest
+      // is 2.51px wider than Bravura's and its quarter rest 0.45px narrower, so this is
+      // not a small constant bias — it changes sign with the glyph.
       const glyph = el.glyphs[0]
-      const ink = glyph === undefined ? undefined : GLYPHS[glyph.name]
+      const table = glyphsFor(strict)
+      const ink = glyph === undefined ? undefined : (table.get(glyph.name) ?? GLYPHS[glyph.name])
       anchors.push({
         system: 0,
         element: elements.length,
