@@ -4664,11 +4664,24 @@ function layoutTuplets(
       group === null
         ? []
         : anchors.filter((a) => a.event.type !== 'rest' && a.event.beamGroup === group)
+    // ABCJS NEVER LOOKS AT THE MIDDLE MEMBERS. `hasBeam` is `anchor1.parent.beam &&
+    // anchor1.parent.beam === anchor2.parent.beam`, re-cleared only when that beam's OWN
+    // first and last are not the tuplet's ends (`layout/triplet.js:6-11`). Ours also
+    // required every member to carry the group and none to be a rest; dropped, so the
+    // test is abcjs's. It changed nothing on any fixture, which is itself the finding —
+    //
+    // THE DIVERGENCE IS ONE LEVEL DOWN, IN THE BEAMING. `(6cegczg` and `(3czg` are
+    // BEAMED by abcjs and BRACKETED here, and relaxing this test did not move them
+    // because `inGroup` does not span them either: OUR BEAM GROUP BREAKS AT A REST AND
+    // ABCJS'S DOES NOT. abcjs's own `hasBeam` for `(6cegczg` is true, which means its
+    // first `c` and last `g` share one beam across the `z`.
+    //
+    // The tell is a COUNT, not a coordinate: abcjs draws THREE triplet-bracket paths in
+    // `S3-note-syntax` tune 6 and we draw fourteen pieces. Fixing it means changing beam
+    // GROUPING, which moves real beams on every tune with a rest inside one — a slice of
+    // its own, and the two numbers it would settle are 4.91px in x and 38.8 in y.
     const beamed =
-      group !== null &&
-      members.every((m) => m.event.type !== 'rest' && m.event.beamGroup === group) &&
-      inGroup[0] === first &&
-      inGroup[inGroup.length - 1] === last
+      group !== null && inGroup[0] === first && inGroup[inGroup.length - 1] === last
 
     // WHERE THE BRACKET GOES IS abcjs'S ARITHMETIC, per END NOTE and in PITCH
     // (`layout/triplet.js:29-64`):
