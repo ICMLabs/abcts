@@ -445,8 +445,27 @@ Findings 93-102. Items 1-3 of the previous list are DONE; what is left:
    and we run the same float through `springForDuration`. Note that `minColumnGap` is OURS
    and IS read there in strict — a floor abcjs does not have on its spring, only on its rod.
 
-   The first barline is already -0.96 out, which places at least two of the four steps in
-   bar 1.
+   **AND THE FIRST DIVERGENCE IS AT THE REST.** Listing every ITEM rather than every
+   notehead puts it within one element:
+
+   ```
+   abcjs                    ours
+   F         96.96          notehead  96.96      <- exact
+   stem     110.14          stem     109.57      <- -0.57 starts here
+   rests.8th 113.16         path     112.60
+   F        114.57          notehead 114.01
+   ```
+
+   Everything left of x=110 is exact in both engines and everything right of it carries
+   the first step. The `z` in voice S's `G4 zA G2` is the element concerned, and the
+   first barline is already -0.96 out, so at least two of the four steps are in bar 1.
+
+   So the question is not "why is this line 1.77px narrow" but "why is ONE eighth REST
+   0.57px early, and which three elements after it lose 0.40 each". Start by dumping the
+   rod and spring our layout gives that rest against `sqrt(spacingduration * 8) * spacing`,
+   remembering that abcjs floors its SPRING on nothing — `minColumnGap` is ours, it is read
+   in `springForDuration` in strict, and a waiting voice's remainder is exactly where a
+   small spring would meet it.
 
 6. Then `visual-parsing-10` at 1.69 (the only lone `oy` left), Gonzato, audio.
 
