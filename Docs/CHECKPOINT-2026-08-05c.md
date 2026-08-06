@@ -13,18 +13,25 @@ golden-variables map, `-08-04c.md` findings 51–70 and the ladder method, `-08-
 
 | | standing |
 |---|---|
-| suite | **701 of 701. NO REDS.** |
+| suite | **703 of 703. NO REDS.** |
 | harvested (174) | **18 of 174 off some axis**, UNMOVED — nothing this session touched a notehead. |
 | the ranked table | unchanged: nothing above 1.77px, not one `dy` term. |
 | `ENGRAVE` | **115 → 101 constants.** Bare literals 49 → **38**. |
 | the repeat ending | **ALL FIVE AXES CLOSED.** Both brackets span exactly abcjs's, on both ends. |
 | the audit finding | **RE-OPENED AND CLOSED PROPERLY.** It was not closed; see findings 96-98. Both un-audited classes are now done, and the first is enforced by the TYPE SYSTEM. |
 
-**WHAT THE TRIAGE HAS PAID FOR SO FAR.** Fourteen dead constants deleted; a repeat ending
-corrected on five axes; a dotted REST's dot arithmetic fixed; three constants cited to their
-abcjs source with a zero-line baseline diff; and three defaulted parameters closed. Two of
-those — the rest's dots and the ending's rules — are defects no fixture and no gate had
-surfaced in months, which is the argument for auditing rather than hunting.
+**WHAT THE TRIAGE HAS PAID FOR.** Fourteen dead constants deleted, and five more once the
+dead FIELD keeping them alive was found. A repeat ending corrected on five axes. A dotted
+REST's dot arithmetic. Three constants cited with a zero-line baseline diff and three
+defaulted parameters closed. Handles for five constructions no comparison could reach at
+all, and three of their constants ported the same hour. **A Bravura figure still reachable
+in `abcjs-strict`, in the class a previous session had declared closed** — plus two more in
+raw glyph reads, up to 2.51px and changing sign with the glyph. And the curve endpoints
+finding 89 left.
+
+Not one of these came from a fixture or a ranked-table entry. **That is the argument for
+auditing rather than hunting**, and it is also why the ranked table has not moved: it pairs
+NOTEHEADS, and almost nothing found this way is one.
 
 ---
 
@@ -261,6 +268,30 @@ the documented fallback for a name in neither table; the `head` at 2344 feeds
 `glyphsFor(strict).get(…) ?? GLYPHS[…]` fallbacks; and `GLYPHS.brace` has no abcjs
 counterpart, because abcjs builds its brace as a parameterised curve rather than a glyph.
 
+### FINDING 99 — THE CURVE ENDPOINTS, AND THE ASYMMETRY IS THE TELL
+
+Finding 89 ported `drawArc`'s SHAPE and deliberately left its ends. abcjs measures both
+from the ANCHOR and never from the ink:
+
+```js
+x1 = roundNumber(x1 + 6)                    // draw/tie.js:60
+x2 = roundNumber(x2 + 4)                    // :61
+pitch1/2 = pitch ± (isTie ? 1.2 : 1.5)      // :58, 62-63
+```
+
+`calcX` sets `startX = anchor1.x`, `endX = anchor2.x` (`tie-element.js:118-140`) — an
+anchor being the notehead's own `RelativeElement`, so its x is the head's left edge and its
+pitch the head's pitch.
+
+Ours sprang from the ink EDGE plus one symmetric `curveEndGap`. **6 at one end and 4 at the
+other is not a clearance, it is two hardcoded numbers** — and a clearance is exactly the
+shape our model had, which is why it never looked wrong.
+
+The lift is the same thing one axis over: `1.2`/`1.5` are PITCH off the notehead's own
+pitch, so abcjs's curve leaves every note at the same distance whatever the glyph's ink box
+is. Ours moved with the ink — and after finding 98 it would have moved with the GLYPH TABLE
+too, since abcjs's noteheads are up to 1.90px wider than Bravura's.
+
 ---
 
 ## THE TRIAGE TABLE — 38 live bare literals
@@ -352,21 +383,31 @@ keeping a non-zero value the constant no longer has.
 
 ### NEXT, in order
 
-Items 1, 2, 4 and 5 of the previous list are DONE — findings 93, 94 and 95.
+**EVERYTHING ON THE PREVIOUS LIST IS DONE** — findings 93-99. What remains:
 
-1. **`data-name` for the triplet bracket, the hairpin and the brace** (finding 92), then
-   triage the six constants behind them. This is now the top item, and it is a
-   PRECONDITION: those six cannot be measured at all until the handles exist, and the
-   repeat ending is the proof of what that is worth — five defects, none of which any gate
-   could see, all of them closed within a day of the handle being added.
-2. **The slur/tie ENDPOINTS** (`curveEndGap`) — abcjs starts at `anchor.x + 6`, ends at
-   `+ 4`, lifts 1.2 pitch for a tie and 1.5 for a slur. `curveReserves` ALREADY derives
-   abcjs's `startY`/`endY` for the reserve, so the quantity is computed TWICE. That is the
-   lyric-reserve bug's shape, and finding 95 is the same species one size smaller.
-3. **`annotationLineStep`** — a small port, not a citation: abcjs advances by
-   `Math.round(height * 1.1)` over the actual annotation font.
-4. **The remaining fixed lanes** — the same migration `voltaStep` just went through.
-5. Then `visual-layout-04` at 1.77, `visual-parsing-10`, Gonzato, audio.
+1. **THE QUANTITY THAT IS STILL COMPUTED TWICE.** `curveReserves` derives abcjs's
+   `startY`/`endY` for the RESERVE — including the `parent.fixed.b` branch for an end
+   anchored inside a beam — and `buildCurve` now derives them again, separately, for the
+   DRAWING. Finding 99 made the second one abcjs's; it did not merge them. **The same
+   number in two places whose inputs can drift apart is this repo's most expensive
+   recurring bug** (the lyric reserve, then finding 95's default parameter). Still missing
+   with it: abcjs's `fudgeY = params.fixedY ? 1.5 : 0`, applied to BOTH ends before
+   `drawArc` (`draw/tie.js:17`), which is the beam-anchored case.
+2. **`annotationLineStep`** — a small port, not a citation: abcjs advances by
+   `Math.round(height * 1.1)` over the ACTUAL annotation font, so `%%annotationfont` moves
+   it and a constant cannot.
+3. **`tupletNumberGap`** — `gapWidth = 8` from the bracket's MIDPOINT, fixed
+   (`draw/triplet.js:35`): abcjs breaks the same gap for `13` as for `3`, ours is relative
+   to the number's width. Structure, not a constant. `tupletTextSize` goes with it
+   (`tripletfont` 11pt -> 15px against our 1.4 spaces), and so does abcjs's own
+   "HACK: … it is too high in all cases so we fudge it by subtracting 1".
+4. **The remaining fixed lanes** — the migration `voltaStep` went through in finding 93,
+   with `anchorVoltas` as the model. Check FIRST that the lane's ink is outside the staff
+   extent, which is what made the volta safe.
+5. **The staff INK TOP**, never checked as its own axis — 13.85 pitch against abcjs's
+   dumped 13.7244 on `S4-bars-repeats`. The `.elements.json` goldens carry `staff.top` for
+   every staff of every fixture, so it is measurable across the whole corpus today.
+6. Then `visual-layout-04` at 1.77, `visual-parsing-10`, Gonzato, audio.
 
 **AND ONE THING THE ENDING WORK EXPOSED THAT IS NOT ABOUT ENDINGS.** Our staff ink top on
 `S4-bars-repeats` reads 13.85 pitch where abcjs's dumped `staff.top` is 13.7244 — 0.5px,
