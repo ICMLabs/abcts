@@ -6398,6 +6398,35 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     // abcjs justifies it unconditionally — its last-line guard tests the last LINE, not
     // the last STAFF line. `center-text` sat 219px out on exactly this.
     const isLast = systemIndex === spans.length - 1 && score.textBelow.length === 0
+    /**
+     * THE LAST SPACING abcjs COMPUTES IS THROWN AWAY, and reproducing that is the point.
+     *
+     *     var newspace = space;                                  // 30
+     *     for (var it = 0; it < 8; it++) {
+     *       var ret = layoutStaffGroup(newspace, …);             // LAYOUT at newspace
+     *       newspace = calcHorizontalSpacing(…, ret.spacingUnits, …);
+     *       if (newspace === null) break;
+     *     }
+     *
+     * (`layout/layout.js:68-75`.) Eight LAYOUTS, and the `newspace` computed after the
+     * eighth is never laid out with — the loop simply ends. So abcjs renders at the
+     * spacing that produced its eighth layout, not at the ninth it just solved for.
+     *
+     * Ours ran eight `lineAt` calls and then rendered with the factor computed after the
+     * last of them: NINE layouts, one refinement further in. Instrumented on
+     * `visual-layout-04`, abcjs's own trace never converges at all —
+     *
+     *     layout 1 at 30.000 -> width 964.55   layout 5 at 14.238 -> 705.80
+     *     layout 2 at 20.018 -> width 772.65   layout 6 at 13.496 -> 700.84
+     *     layout 3 at 16.888 -> width 731.17   layout 7 at 12.930 -> 698.34
+     *     layout 4 at 15.240 -> width 713.05   layout 8 at 12.454 -> 696.24
+     *                                                  ...and 12.053 is DISCARDED
+     *
+     * — it stops 11px short of its own 685 target after using every iteration it has. The
+     * extra refinement therefore makes the line NARROWER than abcjs's, which is why every
+     * notehead sat left of abcjs's and why the error is a STAIRCASE: a spring-dominated
+     * bar carries the difference and a rod-dominated one holds it constant.
+     */
     const justify = ((): number => {
       let factor = 1
       for (let pass = 0; pass < 8; pass += 1) {
@@ -6420,6 +6449,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         }
         if (Math.abs(target - width) < 2 / 7.75) break
         if (units <= 0) break
+        // The EIGHTH layout is the last one abcjs performs, so the spacing solved from it
+        // is discarded and this one stands.
+        if (pass === 7) break
         const springs = units * spacingScale
         factor = (target - (width - factor * springs)) / springs
       }

@@ -299,8 +299,19 @@ const WITHIN: Readonly<Record<string, number>> = {
   // right edge plus one dot's width, not the count times the step: getting that wrong put
   // 1.5px of phantom rod on every dotted note and cost `happy-birthday` 1.8px of spread
   // before it was caught.
-  '0.05': 156,
-  '1': 169,
+  //
+  // 2026-08-06, and it moved SEVEN fixtures at once — the largest single step of the arc.
+  // abcjs performs EIGHT layouts and throws away the spacing it solves from the eighth
+  // (`layout/layout.js:68-75`): the loop simply ends, so it renders at the spacing that
+  // produced its last layout rather than at the one it just computed. Instrumented, its
+  // own trace never converges at all — eight passes taking 964.55px down to 696.24
+  // against a 685 target, with 12.053 discarded and 12.454 standing. We ran the same
+  // eight passes and then rendered with the ninth value, one refinement further in, which
+  // made every line slightly NARROWER than abcjs's. `visual-layout-04`, `mouse-click-01`,
+  // `tablature-15`, `selection-01`, `svg-per-line-01`, `transpose-05` and `wrap-01` all
+  // went exact on it.
+  '0.05': 163,
+  '1': 172,
   '5': 173,
   '25': 173,
 }
