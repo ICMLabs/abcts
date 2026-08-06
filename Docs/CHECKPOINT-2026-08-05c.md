@@ -422,5 +422,31 @@ Findings 93-102. Items 1-3 of the previous list are DONE; what is left:
    glyph with `scale(1,n)`. Ours also sits at a NEGATIVE x on `S7-voices` where abcjs's is
    at 20.25, which is a separate question about the connector indent.
 
-5. Then `visual-layout-04` at 1.77, `visual-parsing-10` at 1.69, Gonzato, audio.
+5. **`visual-layout-04`, 1.77 — MEASURED, and it is a STAIRCASE, not a spacing law.**
+   Pairing the two engines' 61 noteheads gives exactly five plateaux and nothing else:
+
+   ```
+   heads  0-2    dx  0.00
+   head   3      dx -0.57
+   heads  4-12   dx -0.97      (a step of -0.40)
+   heads 13-18   dx -1.37      (-0.40)
+   heads 19-60   dx -1.77      (-0.40)
+   ```
+
+   Every `dy` is 0.00 and the last plateau covers **42 of the 61 heads** — so four
+   ELEMENTS are too narrow, by 0.57 and then 0.40 three times, all of them inside the
+   first two bars, and nothing after that drifts at all. Per this file's own heuristic a
+   clean step is one element too wide or narrow; a spacing-law difference would GROW.
+
+   The fixture is two voices on ONE staff (`%%score (S A)`, `stem=up`/`stem=down`) with
+   different rhythms — `G4 zA G2` against `F2 F2 F2 F2` — so the suspects are the
+   voice-overlap widening in `voice-elements.js:33-62` and the REMAINDER spring, where
+   abcjs recomputes a waiting voice's expectation from `spacingduration -= spacingduration`
+   and we run the same float through `springForDuration`. Note that `minColumnGap` is OURS
+   and IS read there in strict — a floor abcjs does not have on its spring, only on its rod.
+
+   The first barline is already -0.96 out, which places at least two of the four steps in
+   bar 1.
+
+6. Then `visual-parsing-10` at 1.69 (the only lone `oy` left), Gonzato, audio.
 
