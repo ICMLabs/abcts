@@ -54,6 +54,16 @@ checkpoint and hand off as you go so no context is lost.
 > rather than two. PORT THE STRUCTURE, THEN THE CONSTANTS is stated below; this is the
 > first case where obeying it meant deliberately NOT landing a figure known to be abcjs's.
 
+> ⚖️ **AND WHAT IT MEANS IN PRACTICE** (Lance, 2026-08-06): *"It seems you're doing more
+> inferring rather than looking at abcjs constants and algorithms?"* It was right, and
+> acting on it produced the two largest steps of the whole arc within an hour. Measuring
+> said `visual-layout-04` was "a staircase, so four elements are too narrow" — a true
+> observation and the wrong conclusion; instrumenting abcjs showed every element width
+> already matched to the third decimal and the error was in the SOLVE. **A MEASUREMENT CAN
+> ONLY RANK HYPOTHESES YOU ALREADY HAVE; THE SOURCE IS WHERE THE HYPOTHESIS COMES FROM.**
+> The harness for instrumenting abcjs — in a SCRATCHPAD COPY, never in `../abcMusicKit` —
+> is written out in `Docs/CHECKPOINT-2026-08-06.md`.
+
 > ⚖️ **AND THE RULING BEHIND THE RULING** (Lance, 2026-08-05): **abcjs is the MASTER
 > SOURCE. Any variability is likely due to not using the same SETTING as abcjs, or to
 > INFERRING an algorithm instead of analysing abcjs.** Finding 73 is what that costs when
@@ -61,9 +71,11 @@ checkpoint and hand off as you go so no context is lost.
 > "zero for the common case", left out — and that judgement was the entire remaining error
 > on `ragtime-nightingale`, the branch's one standing red. Port the quirk, then measure.
 
-Read `Docs/CHECKPOINT-2026-08-05c.md` first — the current state, findings 90-92, and **the
-`ENGRAVE` TRIAGE TABLE, which is what the next session works down**.
-`Docs/HANDOFF-2026-08-05c.md` has the session prompt. `Docs/CHECKPOINT-2026-08-05b.md` is
+Read `Docs/CHECKPOINT-2026-08-06.md` first — the current state, findings 104-105, and
+**THE HARNESS: how to instrument abcjs in a scratchpad copy**, which is the section that
+matters most. `Docs/HANDOFF-2026-08-06.md` has the session prompt.
+`Docs/CHECKPOINT-2026-08-05c.md` is superseded for the state but keeps findings 90-103 and
+**the `ENGRAVE` TRIAGE TABLE**. `Docs/CHECKPOINT-2026-08-05b.md` is
 superseded for the state but keeps findings 71-89 and Lance's question in full;
 `Docs/CHECKPOINT-2026-08-05.md` keeps the line-weight audit finding and the
 golden-variables map. Then
@@ -208,11 +220,15 @@ gate had been comparing abcjs's outline START against our glyph ORIGIN, a 4px bi
 
 
 **Structural parity is done: note content, lyrics, beams and render structure are all
-41/41 with zero recorded divergences.** `geometry/vertical` is **701/701 with NO reds**,
+41/41 with zero recorded divergences.** `geometry/vertical` is **703/703 with NO reds**,
+and the harvested corpus is **10 of 174 off some axis with NOTHING ABOVE 0.93px** — every
+measurable fixture within one pixel.
 pushed, and the AUDIT FINDING IS CLOSED — no Bravura figure is reachable in strict. The
-harvested corpus is **18 of 174 off some axis**, from 34 at the start of 2026-08-05, with
-nothing above 1.77px and not one `dy` term left. ONE ceiling is raised, recorded in the
-test: `ragtime-nightingale`'s `dy` at 0.40.
+harvested corpus is **10 of 174 off some axis**, from 34 at the start of 2026-08-05, with
+**nothing above 0.93px** and every measurable fixture inside one pixel. Two ceilings are
+raised, both recorded in the
+test: `ragtime-nightingale`'s `dy` at 0.40, and the repeat ending's bracket PITCH at 0.50 —
+which is the staff ink top rather than anything the ending does.
 
 The work is now GEOMETRIC — does abcts put the ink where abcjs puts it. A pixel-parity
 gate (`tests/pixel-parity.test.ts`) resolves both engines' SVG to absolute pixels and
@@ -427,9 +443,10 @@ feature-coverage gap, tracked separately and implemented not at all.
 ```
 We are continuing abcts development in the abcts repo (Code/abcts).
 
-Read Docs/CHECKPOINT-2026-08-05c.md first — its TRIAGE TABLE is the answer so
-far to Lance's `ENGRAVE` question and its "NEXT, in order" is your job — and
-Docs/HANDOFF-2026-08-05c.md beside it. Then -08-05b.md (findings 71-89),
+Read Docs/CHECKPOINT-2026-08-06.md first — the state, findings 104-105, and THE
+HARNESS for instrumenting abcjs, which is the section that matters most; its
+"NEXT, in order" is your job. Then Docs/HANDOFF-2026-08-06.md beside it, then
+-08-05c.md (findings 90-103 and the ENGRAVE triage table), -08-05b.md (71-89),
 -08-05.md (the audit finding and the golden-variables map), -08-04c.md (findings
 51-70 and the method), -08-04b.md (41-50), -08-03d.md (16-40), ARCHITECTURE.md,
 this file.
@@ -455,27 +472,33 @@ The bar is 100% parity. A passing gate is not parity — the gate says "no worse
 than recorded"; parity means dy/dx/oy/ox at ZERO.
 
 Confirm your lane with `git rev-parse --abbrev-ref HEAD`. `geometry/vertical` is
-the open arc, GREEN at 701/701.
+the open arc, GREEN at 703/703.
 ```
 
 ### The open task, specifically
 ```
 Continue geometric parity in Code/abcts.
 
-Read Docs/CHECKPOINT-2026-08-05c.md and Docs/HANDOFF-2026-08-05c.md; the earlier
+Read Docs/CHECKPOINT-2026-08-06.md and Docs/HANDOFF-2026-08-06.md; the earlier
 ledgers are -08-05b.md (71-89), -08-05.md, -08-04c.md (51-70), -08-04b.md
 (41-50), -08-03d.md (16-40).
 
-The branch is 701/701 with no reds and nothing above 1.77px on the ranked table.
-18 of 174 harvested fixtures are off some axis, from 34 at the start of
-2026-08-05, and not one carries a `dy` term any more.
+The branch is 703/703 with no reds and NOTHING ABOVE 0.93px on the ranked table.
+10 of 174 harvested fixtures are off some axis, from 34 at the start of
+2026-08-05, and within 1px is 173 of 173 — every measurable fixture. So what is
+left is sub-pixel, except for one CONTENT gap.
 
-START WITH THE ENDING LANE, item 1 of the triage table's "NEXT". It unblocks two
-figures that are measured, cited and deliberately NOT landed: abcjs's volta hook
-is 20px against our 10.85, and porting it ALONE puts the hook inside the staff,
-because the hook and the bracket's lane were compensating. A CORRECT CONSTANT IS
-NOT ALWAYS AN IMPROVEMENT. The proof of an honest constants move is still a
-baseline diff of ZERO lines.
+READ ABCJS'S ALGORITHM; DO NOT INFER IT FROM MEASUREMENTS. Lance's correction of
+2026-08-06, and it produced the two largest steps of the arc within an hour —
+abcjs performs EIGHT layouts and DISCARDS the spacing it solves from the eighth,
+and a multi-measure rest advances the bar counter by its whole count. Stand up
+THE HARNESS from the checkpoint (a scratchpad copy of abcjs, env-guarded logs,
+`node dump-svg.js --file …`) before forming a theory. A MEASUREMENT CAN ONLY
+RANK HYPOTHESES YOU ALREADY HAVE.
+
+START WITH `transpose-output-03` and `-04` at 0.93, the top of the table and a
+matched pair: a SPREAD with almost no prefix shift. Dump abcjs's per-element
+widths and diff against ours — that one comparison settled finding 104.
 
 Then the slur/tie ENDPOINTS — and note `curveReserves` already derives the same
 `startY`/`endY` for the reserve, so the quantity is computed TWICE.
