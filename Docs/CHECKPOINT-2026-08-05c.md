@@ -385,14 +385,24 @@ keeping a non-zero value the constant no longer has.
 
 Findings 93-102. Items 1-3 of the previous list are DONE; what is left:
 
-1. **THE BEAMED TRIPLET'S `yTextPos`** — one port, and the constants are already sitting in
-   `ABCJS_PITCH` marked "not wired up". abcjs takes
-   `heightAtMidpoint(left, anchor2.x, beam)` with `left` shifted by `anchor1.w` when the
-   beam is above, then adds `isAbove(beam) ? 3 : -2` (`layout/triplet.js:16-17`); we take
-   the beam's own y and add nothing. The number's SIZE, ANCHOR and GAP are already abcjs's,
-   and it now carries `data-name`, so this is measurable in a fifteen-line probe.
-   **Adding the `3 / -2` alone moved one number of six and by the wrong amount** — the
-   whole branch goes together.
+1. **A BEAM DOES NOT BREAK AT A REST IN ABCJS, AND IT DOES HERE.** This is what the beamed
+   triplet's `yTextPos` turned out to be, chased to the bottom:
+
+   - `beamY` ALREADY ports `heightAtMidpoint` and the `isAbove(beam) ? 3 : -2` clearance —
+     the previous checkpoint's "not wired up" note was wrong and I had double-counted it;
+   - the number's midpoint was the only placement defect, and is fixed (`beamMidX`);
+   - the tuplet's `hasBeam` test is now abcjs's exactly, and relaxing it changed NOTHING;
+   - because `(6cegczg` and `(3czg` are beamed by abcjs and bracketed here, and our beam
+     GROUP does not span them. abcjs's `hasBeam` being true for `(6cegczg` means its first
+     `c` and last `g` share one beam across the `z`.
+
+   **THE TELL WAS A COUNT, NOT A COORDINATE**: abcjs draws THREE triplet-bracket paths in
+   `S3-note-syntax` tune 6 and we draw fourteen pieces. The two numbers' 4.91px of x would
+   have led to the placement code, where nothing is wrong. That handle exists only because
+   finding 92 gave the bracket a `data-name`.
+
+   The fix is in beam GROUPING and moves real beams on every tune with a rest inside one —
+   a slice of its own. It settles the two numbers, 4.91px in x and 38.8 in y.
 
 2. **THE REMAINING FIXED LANES** — `chordSymbolStep`, `dynamicAboveStep`,
    `dynamicBelowStep`, `annotationAboveStep`, `annotationBelowStep`, `partStep`,
