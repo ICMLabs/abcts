@@ -476,10 +476,19 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
           ),
         )
       }
+      // THE NUMBER CARRIES NO CLASS, and that is abcjs's choice rather than an omission:
+      // `drawTriplet` passes `noClass: true` and `name: "" + params.number`
+      // (`draw/triplet.js:11`), so its golden emits `data-name="3"` and nothing else. The
+      // BRACKET beside it is classed `abcjs-triplet` through the group. Giving the number
+      // that class too — which this did until now — invented a hook abcjs does not offer
+      // and still left it unmatchable, since a comparison keyed on `data-name` found
+      // nothing.
       for (const t of staff.tupletTexts) {
         const style = `${t.bold ? ' font-weight="bold"' : ''}${t.italic ? ' font-style="italic"' : ''}`
+        const anchor = t.anchor === undefined ? '' : ` text-anchor="${t.anchor}"`
         parts.push(
-          `<text${abcjs ? ' class="abcjs-triplet"' : ` class="${prefix}-tuplet"`} x="${num(t.x)}" ` +
+          `<text${abcjs ? ` data-name="${escapeText(t.text)}"` : ` class="${prefix}-tuplet"`}` +
+            `${anchor} x="${num(t.x)}" ` +
             `y="${num(t.y)}" font-family="serif" font-size="${num(t.size)}"${style}>${escapeText(t.text)}</text>`,
         )
       }

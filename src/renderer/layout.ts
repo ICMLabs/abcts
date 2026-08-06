@@ -527,11 +527,14 @@ export const ENGRAVE = {
   textLineStep: ABCJS_RATIO.textLineStep,
   /** Length of a secondary-beam stub on a note whose neighbours lack that level. */
   beamStubLength: 1.1,
-  /** Half-gap the bracket leaves around its number. */
-  tupletNumberGap: 0.35,
+  /** `gapWidth = 8` each side of the bracket's MIDPOINT — FIXED, not the number's width. */
+  tupletNumberGap: spaces(ABCJS_PX.tupletNumberGap),
   /** `bracketHeight = ±5` — the hook at each end (`draw/triplet.js:24`). Ours was 4.65px. */
   tupletHook: spaces(ABCJS_PX.tupletHook),
-  tupletTextSize: 1.4,
+  /** `tripletfont` — Times italic 11pt, so `round(11 x 4/3)` = 15px. Ours was 10.85. */
+  tupletTextSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.tripletfont)),
+  /** `calcY(yTextPos - 1)` — see `ABCJS_PITCH.tupletTextDrop`. */
+  tupletTextDrop: spacesOfPitch(ABCJS_PITCH.tupletTextDrop),
   /** Staff step for a repeat-ending bracket, above everything the staff itself draws. */
   /**
    * `endingHeightAbove` — the lane a tuplet or a volta reserves beyond the top note, in
@@ -4761,13 +4764,22 @@ function layoutTuplets(
 
     const label = String(number)
     const size = ENGRAVE.tupletTextSize
-    const width = textWidth(label, size)
     const centre = (first.left + last.right) / 2
 
     texts.push({
       text: label,
-      x: centre - width / 2,
-      // Text hangs from its baseline, so a bracket ABOVE needs the number lifted clear.
+      // CENTRED ON `xTextPos`, as abcjs's `anchor: "middle"` says (`draw/triplet.js:11`).
+      // Ours start-anchored at `centre - width / 2`, which is the same point only when our
+      // text metrics agree with the browser's — an approximation with no reason to exist
+      // once the emitter can say `text-anchor`.
+      x: centre,
+      anchor: 'middle',
+      // STILL OURS, AND DELIBERATELY — see `ENGRAVE.tupletTextDrop` for the measurement.
+      // abcjs's baseline is `calcY(yTextPos - 1)` flat, with no font height added because
+      // `centerVertically` suppresses it (`draw/text.js:30-31`). Porting that rule alone
+      // does NOT converge, because our `yTextPos` is not abcjs's for a BEAMED triplet:
+      // it adds `isAbove(beam) ? 3 : -2` off `heightAtMidpoint` (`layout/triplet.js:16-17`)
+      // where we take the beam's own y. Correct rule, wrong input — the volta hook again.
       y: up ? y - size * 0.1 : y + size * 0.9,
       size,
       bold: false,
@@ -4780,7 +4792,10 @@ function layoutTuplets(
 
     // Bracket: a horizontal rule broken around the number, with a hook at each end
     // turning toward the notes.
-    const gap = width / 2 + ENGRAVE.tupletNumberGap
+    // A FIXED gap either side of the MIDPOINT, not one that grows with the number:
+    // `leftEndX = midX - gapWidth`, `rightStartX = midX + gapWidth` with `gapWidth = 8`
+    // (`draw/triplet.js:33-40`). abcjs breaks the same 16px for `13` as for `3`.
+    const gap = ENGRAVE.tupletNumberGap
     const thickness = ENGRAVE.strokedPathRule
     const hook = ENGRAVE.tupletHook * -direction
 

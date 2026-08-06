@@ -197,9 +197,11 @@ export const ABCJS_PX = {
    */
   tupletHook: 5,
   /**
-   * …and the GAP its broken line leaves for the number: `gapWidth = 8` measured from the
-   * bracket's MIDPOINT, each side (`draw/triplet.js:35`). Fixed, not a function of how
-   * wide the number is — `13` breaks the same gap as `3`.
+   * The GAP a triplet's broken bracket leaves for its number — `gapWidth = 8`, each side
+   * of the bracket's MIDPOINT (`draw/triplet.js:35`).
+   *
+   * FIXED, and that is the difference that matters: abcjs breaks the same gap for `13` as
+   * for `3`, where ours was `width / 2 + tupletNumberGap` and moved with the number.
    */
   tupletNumberGap: 8,
   /** A HAIRPIN's full mouth at the open end — `height = 8` (`draw/crescendo.js:10`). */
@@ -411,6 +413,32 @@ export const ABCJS_PITCH = {
   voltaLane: 5,
   /** …and for a TUPLET, which shares the field (`triplet-element.js:25`). */
   tupletLane: 4,
+  /**
+   * How far BELOW `yTextPos` the triplet's number is drawn — `calcY(params.yTextPos - 1)`,
+   * carrying abcjs's own "HACK: adjust the position of '3'. It is too high in all cases so
+   * we fudge it by subtracting 1 here" (`draw/triplet.js:11`).
+   *
+   * And it is the BASELINE, not a top: `renderText` adds `font.size` to `y` only when
+   * `centerVertically` is FALSE (`draw/text.js:30-31`), and the triplet number passes it
+   * true. So there is no font height to add, which is what made ours a heuristic.
+   */
+  tupletTextDrop: 1,
+  /**
+   * A BEAMED triplet's number sits clear of the beam — `yTextPos += isAbove(beam) ? 3 : -2`
+   * (`layout/triplet.js:17`), with abcjs's own "This creates some space between the beam
+   * and the number" beside it. Asymmetric, like the barline cursor's five numbers.
+   *
+   * An UNBEAMED one takes no such term: `yTextPos = startNote + (endNote - startNote) / 2`
+   * (`:74`), the plain midpoint, which is what we already had.
+   *
+   * NOT WIRED UP, and recorded here rather than applied. Adding it moved one number of six
+   * and by the wrong amount, which says our `yTextPos` differs from abcjs's by more than
+   * this term: abcjs measures `heightAtMidpoint(left, anchor2.x, beam)` — the beam's height
+   * at the midpoint, with `left` itself shifted by `anchor1.w` when the beam is above —
+   * where we take the beam's own y. The whole beamed branch has to be ported together.
+   */
+  tupletBeamClearAbove: 3,
+  tupletBeamClearBelow: 2,
   /**
    * What an ending lane costs when the staff ALSO has a chord lane — a flat 2, margin
    * included, and a different BRANCH rather than a scaling
