@@ -4138,6 +4138,24 @@ function layoutMelismas(
 
 /** Where a curve can attach to a note, recorded during layout. */
 interface NoteAnchor {
+  /**
+   * `calcSlurY`'s answer for this end, RESOLVED ONCE — the element's own box over its
+   * fixed children, which on a beamed note is where the beam retargeted the stem, and the
+   * position in the beam that decides whether the branch applies at all.
+   *
+   * MUTABLE, DELIBERATELY, and it is the smallest honest merge available. The quantity is
+   * abcjs's `parent.fixed` and it needs the FINAL elements, so it can only be resolved in
+   * the per-system pass where `curveReserves` runs. `layoutCurves` runs at tune level with
+   * anchors and system bounds and no elements — but the anchors are the same OBJECTS
+   * (`systemAnchors` is a `.filter()` of `voiceAnchors[v]`), so resolving here and reading
+   * there is one derivation rather than two.
+   *
+   * The alternative was `buildCurve` deriving it a second time from data it does not have,
+   * which is the lyric-reserve bug's exact shape: one number computed in two places whose
+   * inputs drift apart. See `slurEndY`.
+   */
+  slurFixed?: { top: number; bottom: number }
+  beamPos?: 'none' | 'first' | 'last' | 'middle'
   /** Left and right edges of the notehead, and its vertical extremes. */
   readonly left: number
   readonly right: number
@@ -4176,6 +4194,33 @@ interface NoteAnchor {
  * and it is also what keeps the curve clear of the stems and beams. When the two ends
  * disagree about stem direction the curve goes above, which is the usual tie-break.
  */
+/**
+ * `calcSlurY`'s `startY`/`endY` for one end of a SLUR — the one derivation, read by both
+ * the reserve and the drawing.
+ *
+ * A BEAMED end is pinned to `parent.fixed.t` / `.b` rather than to its notehead, when it
+ * is beamed and not the LAST in that beam (a start) or the FIRST (an end)
+ * (`tie-element.js:165-190`, inside the `scalex === 1` non-grace guard). Everything else
+ * takes the anchor's own pitch.
+ *
+ * TIES DO NOT COME HERE, and that is not an omission. `draw/tie.js`'s `layout()` decides
+ * `isTie` at DRAW time and calls `calcTieY`, which is `anchor.pitch` flat — so a tie's
+ * drawn y is the plain pitch whatever its beam does. Only the RESERVE treats every curve
+ * as a slur, because `getYBounds` runs before anything sets `isTie` and `TieElem`'s
+ * constructor never reads it. abcjs's own bug, reproduced on both sides.
+ *
+ * Falls back to the pitch when the anchor was never resolved — `curveReserves` stamps
+ * every anchor of every system it is given, so that is a curve whose end is off-system.
+ */
+function slurEndY(a: NoteAnchor, above: boolean, isStart: boolean): number {
+  const pos = a.beamPos ?? 'none'
+  const fixed = a.slurFixed
+  if (fixed !== undefined && pos !== 'none' && (isStart ? pos !== 'last' : pos !== 'first')) {
+    return above ? fixed.top : fixed.bottom
+  }
+  return a.pitchY
+}
+
 function buildCurve(
   from: NoteAnchor,
   to: NoteAnchor,
@@ -4200,9 +4245,15 @@ function buildCurve(
   const lift = spacesOfPitch(kind === 'tie' ? ABCJS_ARC.tieLift : ABCJS_ARC.slurLift)
   const x1 = strict ? from.left + spaces(ABCJS_ARC.startOffset) : from.right + ENGRAVE.curveEndGap
   const x2 = strict ? to.left + spaces(ABCJS_ARC.endOffset) : to.left - ENGRAVE.curveEndGap
-  const edge = (a: NoteAnchor) =>
+  // A SLUR'S END IS `calcSlurY`'s, WHICH IS NOT ALWAYS THE NOTEHEAD'S PITCH — a beamed end
+  // that is not the last (start) or first (end) of its beam is pinned to the beam-retargeted
+  // stem instead. `slurEndY` is that rule, and `curveReserves` resolves its input; a TIE
+  // takes `calcTieY`, which is the plain pitch, so it does not come here.
+  const endY = (a: NoteAnchor, isStart: boolean) =>
+    kind === 'tie' ? a.pitchY : slurEndY(a, above, isStart)
+  const edge = (a: NoteAnchor, isStart: boolean) =>
     strict
-      ? a.pitchY + direction * lift
+      ? endY(a, isStart) + direction * lift
       : (above ? a.top : a.bottom) + direction * ENGRAVE.curveEndGap
 
   const span = Math.max(0, x2 - x1)
@@ -4213,9 +4264,9 @@ function buildCurve(
 
   return {
     x1,
-    y1: edge(from),
+    y1: edge(from, true),
     x2,
-    y2: edge(to),
+    y2: edge(to, false),
     bulge: bulge * direction,
     // No `endThickness`: it was written on every curve and read by NOTHING, and abcjs has
     // no such notion anyway — its arc comes to a point at both ends. Finding 90's class.
@@ -4431,14 +4482,14 @@ function curveReserves(
    * on an up-stem note, is not reproduced. Probed, `highestVert` IS the anchor pitch on
    * every binding curve here, so the average is the pitch and the branch is a no-op.
    */
-  const endAt = (a: NoteAnchor, above: boolean, isStart: boolean): number => {
-    const pos = beamPos(a)
-    if (pos !== 'none' && (isStart ? pos !== 'last' : pos !== 'first')) {
-      const fixed = fixedOf(a)
-      return above ? fixed.top : fixed.bottom
-    }
-    return centre(a)
+  // RESOLVED ONCE, onto the anchor, so the DRAWING can read the same answer — see
+  // `NoteAnchor.slurFixed` and `slurEndY`. This is the only place with the final elements.
+  for (const a of anchors) {
+    a.beamPos = beamPos(a)
+    a.slurFixed = fixedOf(a)
   }
+  const endAt = (a: NoteAnchor, above: boolean, isStart: boolean): number =>
+    slurEndY(a, above, isStart)
   const add = (from: NoteAnchor, to: NoteAnchor): void => {
     const above = curveIsAbove(from, to, voicePos)
     // abcjs's `Math.min` over PITCHES is our `Math.max` over y — the lower end on screen.
