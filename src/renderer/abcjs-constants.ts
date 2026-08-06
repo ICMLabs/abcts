@@ -330,6 +330,23 @@ export const ABCJS_ARC = {
    * different MODEL, which is why the audit finding could not port them one for one.
    */
   thickness: 2,
+  /**
+   * THE ENDPOINTS, which finding 89 ported the SHAPE without.
+   *
+   * `x1 = roundNumber(x1 + 6)` and `x2 = roundNumber(x2 + 4)` (`draw/tie.js:60-61`) —
+   * asymmetric, and stated from the ANCHOR's own x rather than from its ink. `calcX` sets
+   * `startX = anchor1.x` and `endX = anchor2.x` (`tie-element.js:118-140`), and an
+   * anchor is the notehead's `RelativeElement`, so its x is the head's left edge.
+   */
+  startOffset: 6,
+  endOffset: 4,
+  /**
+   * …and the LIFT off the anchor's pitch: `spacing = isTie ? 1.2 : 1.5`, applied as
+   * `pitch ± spacing` by `above` (`draw/tie.js:58, 62-63`). In PITCH, off the notehead's
+   * own pitch — NOT a clearance measured from the ink box, which is what ours was.
+   */
+  tieLift: 1.2,
+  slurLift: 1.5,
 } as const
 
 // ─── Constants abcjs states in PITCH ─────────────────────────────────────────

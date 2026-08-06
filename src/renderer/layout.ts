@@ -50,6 +50,7 @@ import {
   type Voice,
 } from '../core/model.js'
 import {
+  ABCJS_ARC,
   ABCJS_CLEF_OFFSET_PITCH,
   ABCJS_KEY_ACCIDENTAL_FUDGE_PITCH,
   ABCJS_PERC_NOTE_NAMES,
@@ -4181,13 +4182,28 @@ function buildCurve(
   kind: 'tie' | 'slur',
   /** The voice's index on its staff, or −1 when it has that staff to itself. */
   voicePos: number,
+  strict: boolean,
 ): PlacedCurve {
   const above = curveIsAbove(from, to, voicePos)
   const direction = above ? -1 : 1
 
-  const x1 = from.right + ENGRAVE.curveEndGap
-  const x2 = to.left - ENGRAVE.curveEndGap
-  const edge = (a: NoteAnchor) => (above ? a.top : a.bottom) + direction * ENGRAVE.curveEndGap
+  // ── THE ENDPOINTS, which finding 89 left when it ported the arc's SHAPE ──────
+  //
+  // abcjs measures both from the ANCHOR, never from the ink: `x1 + 6` and `x2 + 4`
+  // (`draw/tie.js:60-61`) off `anchor.x`, which `calcX` sets to the notehead's own x
+  // (`tie-element.js:118-140`), and the y off the anchor's PITCH by a flat `1.2` for a tie
+  // or `1.5` for a slur (`:58, 62-63`).
+  //
+  // Ours sprang from the ink EDGE — `from.right`, `to.left`, and the ink top or bottom —
+  // plus one symmetric `curveEndGap`. Three differences, and the asymmetry is the tell:
+  // 6 one end and 4 the other is not a clearance, it is two hardcoded numbers.
+  const lift = spacesOfPitch(kind === 'tie' ? ABCJS_ARC.tieLift : ABCJS_ARC.slurLift)
+  const x1 = strict ? from.left + spaces(ABCJS_ARC.startOffset) : from.right + ENGRAVE.curveEndGap
+  const x2 = strict ? to.left + spaces(ABCJS_ARC.endOffset) : to.left - ENGRAVE.curveEndGap
+  const edge = (a: NoteAnchor) =>
+    strict
+      ? a.pitchY + direction * lift
+      : (above ? a.top : a.bottom) + direction * ENGRAVE.curveEndGap
 
   const span = Math.max(0, x2 - x1)
   const bulge = Math.min(
@@ -4242,6 +4258,7 @@ function curveIsAbove(from: NoteAnchor, to: NoteAnchor, voicePos: number): boole
  * only a system break drops one.
  */
 function layoutCurves(
+  strict: boolean,
   anchors: readonly NoteAnchor[],
   /**
    * Where each system's music starts and ends. A split curve runs to the right edge of
@@ -4267,7 +4284,7 @@ function layoutCurves(
    */
   const emit = (from: NoteAnchor, to: NoteAnchor, kind: 'tie' | 'slur'): void => {
     if (from.system === to.system) {
-      curves[from.system]?.push(buildCurve(from, to, kind, voicePos))
+      curves[from.system]?.push(buildCurve(from, to, kind, voicePos, strict))
       return
     }
     const start = bounds[from.system]
@@ -4278,7 +4295,7 @@ function layoutCurves(
     // system would aim at a pitch the reader cannot see, and the two halves would tilt
     // in unrelated directions.
     curves[from.system]?.push(
-      buildCurve(from, { ...from, left: start.right, right: start.right }, kind, voicePos),
+      buildCurve(from, { ...from, left: start.right, right: start.right }, kind, voicePos, strict),
     )
     // The continuation resumes after the new system's clef and key — starting at the
     // system's left edge drew it straight through the clef, where it was invisible.
@@ -4291,7 +4308,7 @@ function layoutCurves(
     const resume = Math.max(end.left, to.left - ENGRAVE.curveContinuation)
     if (to.left - resume >= ENGRAVE.curveEndGap * 2) {
       curves[to.system]?.push(
-        buildCurve({ ...to, left: resume, right: resume }, to, kind, voicePos),
+        buildCurve({ ...to, left: resume, right: resume }, to, kind, voicePos, strict),
       )
     }
   }
@@ -6815,7 +6832,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     right: system.width - ENGRAVE.marginX,
   }))
   const curvesBySystem = voiceAnchors.map((anchors, v) =>
-    layoutCurves(anchors, systemBounds, voicePosOf(v)),
+    layoutCurves(strict, anchors, systemBounds, voicePosOf(v)),
   )
   // Hairpins need the same treatment and for the same reason. Resolved per system, they
   // lost HALF the hairpins in S1-decorations tune 2 — it wraps to six systems and the

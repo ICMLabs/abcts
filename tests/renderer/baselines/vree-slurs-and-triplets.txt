@@ -13,7 +13,7 @@ system 0 width=56.578 originY=0.000
     tupletline 32.458,4.000 -> 32.458,4.645 t=0.129
     tupletline 42.664,4.500 -> 42.664,5.145 t=0.129
     tuplettext 37.013,5.510 size=1.400 "3"
-    slur  10.707,1.300 -> 25.265,3.300 bulge=2.200
+    slur  9.916,1.250 -> 26.081,3.250 bulge=2.200
     title x=0.000 w=0.000
       text  20.483,-8.112 size=3.484 bold "Slurs and Triplets"
     clef x=1.935 w=3.103
