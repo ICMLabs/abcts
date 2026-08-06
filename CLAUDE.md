@@ -12,9 +12,19 @@ checkpoint and hand off as you go so no context is lost.
 > authorisation **never covered `abcjs-strict`**. Strict reproduces abcjs byte for byte, so
 > it has NO latitude — every figure it draws with must be abcjs's. `abc2.1` and `extended`
 > are where the flexibility lives. **Any Bravura input reachable in strict is a defect, not
-> a decision.** The line weights were the first found and are closed
-> (`lineWeightsFor(strict)`); five remain un-ported and a second class — raw `GLYPHS[…]`
-> reads that bypass `glyphsFor(strict)` — is un-audited. See `Docs/CHECKPOINT-2026-08-05.md`.
+> a decision.**
+>
+> **BOTH CLASSES ARE NOW CLOSED, AND THE FIRST ONE HAD TO BE CLOSED TWICE.** The line
+> weights were declared closed on 2026-08-05 and were not: `ABCJS_WEIGHTS` began with a
+> `...BRAVURA_WEIGHTS` spread, so every key nobody had reached stayed Bravura's silently,
+> and `slurEndpoint` — one of four the file itself flagged as "still Bravura's in strict" —
+> turned out to be the TUPLET BRACKET's rule weight. The flag was read as harmless because
+> the CURVE ignores those four; nobody asked what else read one. **A constant is reachable
+> by every caller, not by its name.** The spread is gone, so a missing override is now a
+> COMPILE ERROR. The second class — raw `GLYPHS[…]` reads bypassing `glyphsFor(strict)` —
+> is audited: six sites, two leaks (a curve anchor's notehead width and a rest's ink box,
+> up to 2.51px and changing sign with the glyph), four legitimate and now checked rather
+> than assumed. See `Docs/CHECKPOINT-2026-08-05c.md`, findings 96-98.
 
 > ✅ **CLOSED AUDIT FINDING, kept because the LESSON transfers.**  Strict drew Bravura's line weights for
 > months — a thin barline at 1.24px against abcjs's 0.600 — and **no gate could see it**:

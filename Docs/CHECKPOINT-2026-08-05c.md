@@ -18,7 +18,7 @@ golden-variables map, `-08-04c.md` findings 51–70 and the ladder method, `-08-
 | the ranked table | unchanged: nothing above 1.77px, not one `dy` term. |
 | `ENGRAVE` | **115 → 101 constants.** Bare literals 49 → **38**. |
 | the repeat ending | **ALL FIVE AXES CLOSED.** Both brackets span exactly abcjs's, on both ends. |
-| the audit finding | still closed. |
+| the audit finding | **RE-OPENED AND CLOSED PROPERLY.** It was not closed; see findings 96-98. Both un-audited classes are now done, and the first is enforced by the TYPE SYSTEM. |
 
 **WHAT THE TRIAGE HAS PAID FOR SO FAR.** Fourteen dead constants deleted; a repeat ending
 corrected on five axes; a dotted REST's dot arithmetic fixed; three constants cited to their
@@ -190,6 +190,76 @@ No gate could see it — 0.29px on an augmentation dot moves nothing a notehead 
 looks at. `dotGlyphs`'s spacing, `naturalWidth`'s and `springForDuration`'s scale are all
 REQUIRED now: **a caller that must name the value cannot forget it**, which is the smallest
 available version of "strict should not be able to read ours".
+
+### FINDING 96 — THE AUDIT FINDING WAS NOT CLOSED, AND THE REASON GENERALISES
+
+Three constructions were borrowing a line weight from somewhere else, and one was
+borrowing it from **Bravura, ungated, in `abcjs-strict`**:
+
+| | was reading | which is |
+|---|---|---|
+| triplet bracket | `LINE_WEIGHTS.slurEndpoint` | **BRAVURA `ENGRAVING_DEFAULTS`** |
+| hairpin / glissando | `LINE_WEIGHTS.staffLine` | abcjs's, for a staff line |
+| repeat ending | `LINE_WEIGHTS.thinBarline` | abcjs's, for a barline |
+
+abcjs draws all three with `printPath` and NO `stroke-width`, so they paint at SVG's
+default 1px. **That is not anybody's engraving judgement — it is the absence of an
+attribute** — so it is one constant, `strokedPathRule`, and all three read it now.
+
+**`glyph-table.ts` SAID SO IN AS MANY WORDS** — "NOT YET PORTED, and still Bravura's in
+strict: slur/tie endpoint+midpoint" — and it was read as harmless because `curveToPath`'s
+strict branch ignores those four in favour of `ABCJS_ARC.thickness`. Nobody asked what ELSE
+read one. **A CONSTANT IS REACHABLE BY EVERY CALLER, NOT BY ITS NAME.** Checking that the
+curve had stopped reading `slurEndpoint` is not the same as checking that `slurEndpoint`
+had stopped being read.
+
+And no gate could see it for the reason this audit keeps producing: a tuplet bracket had no
+class and no `data-name` until finding 92, one commit earlier. **The line-weight gate that
+exists precisely to catch this could not name the element.** The audit closed the sites it
+could SEE, and the sites it could see were the ones with handles.
+
+### FINDING 97 — DELETE THE SPREAD, AND THE COMPILER BECOMES THE AUDIT
+
+`ABCJS_WEIGHTS` began `{ ...BRAVURA_WEIGHTS, /* overrides */ }`. That is Lance's `ENGRAVE`
+question in miniature and with the same answer: **the DEFAULT was Bravura and abcjs's
+figure was the exception**, so an un-reached key stayed Bravura's silently, in the one mode
+whose entire purpose is to have no latitude.
+
+Written out in full, `LineWeights` being all-required makes a missing override a **compile
+error** — a structural guarantee rather than a comment, and it cannot rot. Re-auditing now
+reports 11 keys, 11 strict overrides, none Bravura.
+
+**FIVE KEYS WERE DEAD** and are gone from the interface: `beamSpacing`,
+`barlineSeparation`, `repeatBarlineDotSeparation` (abcjs has no such constants and nothing
+read them), and `slurEndpoint` / `tieEndpoint`, which existed only to feed
+`PlacedCurve.endThickness` — **a field written on every curve and read by NOTHING**. That
+is finding 90's class again, and it is why "is this read at all?" has to come before "whose
+is this?": the Bravura leak of finding 96 was a key that existed only to feed a dead field.
+
+### FINDING 98 — THE SECOND UN-AUDITED CLASS, AND A BIAS THAT CHANGES SIGN
+
+Six raw `GLYPHS[…]` reads bypass `glyphsFor(strict)`. Two were leaks:
+
+    layout.ts:5265   a slur or tie's ANCHOR took Bravura's notehead width
+    layout.ts:5287   a REST's ink box, which is what a tuplet bracket spans
+
+    noteheadBlack  1.1800 -> 1.2658  +0.67px      restHalf     1.1280 -> 1.4516  +2.51px
+    noteheadHalf   1.1800 -> 1.3381  +1.22px      restQuarter  1.0760 -> 1.0178  -0.45px
+    noteheadWhole  1.6880 -> 1.9335  +1.90px
+
+The rest is the sharper case: **the bias changes SIGN with the glyph**, so no single
+correction could ever have absorbed it.
+
+**WHAT MADE IT SURVIVE IS THAT ITS NEIGHBOUR IS RIGHT.** Twenty lines above 5265, `headInk`
+reads `glyphsFor(strict).width(headName)` under a comment explaining that the outline stays
+Bravura's while the metrics come from the active table. The anchor site does the same job on
+the same glyph and simply never got the same treatment.
+
+The other four are legitimate and are now CHECKED rather than assumed: `bravuraDeclared` is
+the documented fallback for a name in neither table; the `head` at 2344 feeds
+`head.anchors`, read only through `strict ? … : bravuraX/bravuraY`; two are
+`glyphsFor(strict).get(…) ?? GLYPHS[…]` fallbacks; and `GLYPHS.brace` has no abcjs
+counterpart, because abcjs builds its brace as a parameterised curve rather than a glyph.
 
 ---
 
