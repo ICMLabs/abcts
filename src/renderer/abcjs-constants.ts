@@ -467,6 +467,21 @@ export const ABCJS_RATIO = {
   lineSkip: 1.1,
   /** `dy="1.2em"` between the lines of one `<text>` (`svg.js:196`). */
   textLineStep: 1.2,
+  /**
+   * ONE LANE TO THE NEXT above or below the staff, as a multiple of the item's OWN font
+   * size — `draw/text.js:13-15` offsets each lane down from the top of the block by
+   * `fontSize * 1.25`, so the item packed FIRST is drawn highest.
+   *
+   * MEASURED, because the source alone cannot discriminate it: at abcjs's 16px annotation
+   * font, `fontSize * 1.25` and `round(height * 1.1)` both give exactly 20, and ours was
+   * the flat 20. `stacked-annotations`' golden settles which by SHAPE rather than by
+   * value — `"^Allegro""^con brio"` draws at y 79.12 and 99.12, and `"_p""_dolce"` at
+   * 177.26 and 197.26, first-written topmost on both sides.
+   *
+   * It is a RATIO and not a constant, which is the whole point: `%%annotationfont` and
+   * `%%gchordfont` change the size, and a flat 20 cannot follow.
+   */
+  laneLineStep: 1.25,
   /** The height ratio a `%%vocalfont` verse steps by. */
   textHeight: 1.108,
   /** `stretchlast`'s default: justify a last line already 66% full (`layout/layout.js:102`). */

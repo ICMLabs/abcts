@@ -53,7 +53,7 @@ system 0 width=57.324 originY=0.000
       line  54.395,-2.000 -> 54.395,2.000 t=0.077
       line  55.130,-2.000 -> 55.130,2.000 t=0.516
 tune 1
-bounds  width=90.323 height=55.773 top=-1.935
+bounds  width=90.323 height=55.775 top=-1.935
 systems 3
 system 0 width=90.323 originY=0.000
   staff 0 originY=16.461
@@ -131,8 +131,8 @@ system 2 width=31.710 originY=33.572
       line  6.071,3.000 -> 7.853,3.000 t=0.090
       line  7.530,2.833 -> 7.530,-0.500 t=0.129
       text  6.329,5.585 size=2.065 "one"
-      text  6.329,8.165 size=2.065 "two"
-      text  6.329,10.745 size=2.065 "three"
+      text  6.329,8.166 size=2.065 "two"
+      text  6.329,10.746 size=2.065 "three"
     note@-4 x=11.804 w=5.474
       glyph noteheadBlack 11.804,2.000
       line  13.005,1.833 -> 13.005,-1.500 t=0.129

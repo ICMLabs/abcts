@@ -335,10 +335,16 @@ export const ENGRAVE = {
   /**
    * `"^text"` above the staff and `"_text"` below.
    *
-   * abcjs joins same-position annotations into ONE multi-line block, so the first one
-   * written becomes the top line. Above the staff that puts it furthest out; below, it
-   * puts it nearest. Stacking outward in reverse above and in written order below
-   * reproduces both without special-casing either.
+   * THE FIRST ONE WRITTEN IS THE TOP LINE, on BOTH sides — measured, not reasoned.
+   * `stacked-annotations`' golden draws `"^Allegro""^con brio"` at y 79.12 and 99.12 and
+   * `"_p""_dolce"` at 177.26 and 197.26. Above the staff that puts the first furthest out;
+   * below, it puts it nearest. Stacking outward in reverse above and in written order
+   * below reproduces both without special-casing either.
+   *
+   * The comment here used to say abcjs joins same-position annotations into ONE
+   * multi-line block. It does not — its golden emits a separate
+   * `<text data-name="annotation">` per mark. The CONCLUSION was right and the mechanism
+   * was not, which is the reason it went unchecked for so long.
    *
    * ponytail: the above lane can reach `partStep` once three annotations stack, and the
    * below lane can reach `lyricStep` at two. No fixture combines them, and the real fix is
@@ -348,12 +354,13 @@ export const ENGRAVE = {
   /** 27.8px below the BOTTOM line (step -4) in `stacked-annotations`. */
   annotationBelowStep: -11.17,
   /**
-   * One text line to the next, out of staff: 20px, which is `round(height x 1.1)` for
-   * abcjs's 16px annotation font — the same advance rule the top-text block uses. Ours
-   * was 2.5 steps, 9.7px, so three stacked annotations occupied half the room abcjs
-   * gives them.
+   * GONE — it was a flat 20px where abcjs's rule is `fontSize * 1.25`
+   * (`ABCJS_RATIO.laneLineStep`, `draw/text.js:13-15`). The two agree exactly at the 12pt
+   * default and nowhere else, so `%%annotationfont Times-Roman 15` moved abcjs's stack
+   * and not ours. Both annotation sites and the CHORD lane now scale with the mark's own
+   * size; the chord lane had the same defect written as a bare `1.25` against the
+   * DEFAULT size rather than the text's.
    */
-  annotationLineStep: 5.16,
   partStep: 10,
   tempoStep: 14,
   /**
@@ -3660,8 +3667,13 @@ function noteText(
     // so a tune that sets neither is unmoved; `%%annotationfont Times-Roman 15 box` is
     // 11.65px of chord lane.
     const size = fontSizeOf('annotationfont')
+    // ONE LANE PER ITEM'S OWN FONT SIZE — `fontSize * 1.25` (`draw/text.js:13-15`), the
+    // same rule the chord lanes use, not a flat step. The two agree at the 12pt default
+    // and nowhere else, so `%%annotationfont Times-Roman 15` moved abcjs's stack and not
+    // ours.
     const lane =
-      ENGRAVE.annotationAboveStep + (above.length - 1 - index) * ENGRAVE.annotationLineStep
+      ENGRAVE.annotationAboveStep +
+      ((above.length - 1 - index) * size * ABCJS_RATIO.laneLineStep) / ENGRAVE.spacePerStep
     texts.push({
       text: a.text,
       // LEFT-JUSTIFIED AT THE ELEMENT, where a chord symbol is CENTRED on it. abcjs's
@@ -3694,7 +3706,10 @@ function noteText(
       text: a.text,
       // Left-justified, like the `above` case.
       x: headX,
-      y: stepToY(ENGRAVE.annotationBelowStep - index * ENGRAVE.annotationLineStep),
+      y: stepToY(
+        ENGRAVE.annotationBelowStep -
+          (index * size * ABCJS_RATIO.laneLineStep) / ENGRAVE.spacePerStep,
+      ),
       size,
       bold: false,
       italic: false,
@@ -7643,7 +7658,10 @@ function anchorAboveStaff<
   /** A chord or annotation is placed ABSOLUTELY in its lane, not shifted from where it
    * was drawn: the two kinds start from different steps, so one shift cannot serve both. */
   const chordAt = (t: PlacedText): number =>
-    (chordY ?? 0) + (laneOf.get(t) ?? 0) * ENGRAVE.chordTextSize * 1.25
+    // THE MARK'S OWN SIZE, not the default's. This read `ENGRAVE.chordTextSize`, so a
+    // `%%gchordfont` at any size other than the 12pt default stacked its second lane at
+    // the default's step — the same defect the annotation lane had one function over.
+    (chordY ?? 0) + (laneOf.get(t) ?? 0) * t.size * ABCJS_RATIO.laneLineStep
   const partShift = partY === null ? 0 : partY - stepToY(ENGRAVE.partStep)
   const tempoShift = tempoY === null ? 0 : tempoY - stepToY(ENGRAVE.tempoStep)
 

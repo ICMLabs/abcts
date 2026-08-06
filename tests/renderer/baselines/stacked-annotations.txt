@@ -24,7 +24,7 @@ system 0 width=28.759 originY=0.000
       glyph flag8thUp 11.389,-1.000
       line  11.401,2.333 -> 11.401,-1.000 t=0.129
       text  10.200,5.585 size=2.065 "p"
-      text  10.200,8.165 size=2.065 "dolce"
+      text  10.200,8.166 size=2.065 "dolce"
     bar x=14.071 w=0.077
       line  14.110,-2.000 -> 14.110,2.000 t=0.077
     note@-4 x=15.490 w=3.871
