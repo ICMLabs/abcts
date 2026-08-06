@@ -310,8 +310,18 @@ const WITHIN: Readonly<Record<string, number>> = {
   // made every line slightly NARROWER than abcjs's. `visual-layout-04`, `mouse-click-01`,
   // `tablature-15`, `selection-01`, `svg-per-line-01`, `transpose-05` and `wrap-01` all
   // went exact on it.
-  '0.05': 163,
-  '1': 172,
+  //
+  // …and the same day, `Z24`. A MULTI-MEASURE REST ADVANCES THE BAR COUNTER BY ITS WHOLE
+  // COUNT — `currBarNumber += core.rest.text - 1` (`abc_parse_music.js:512`), the minus
+  // one being the barline that closes the rest's own measure. Ours counted `Z24` as one
+  // measure, so `%%barnumbers 5` printed a number where abcjs prints none and the reserve
+  // for it pushed the whole staff down 1.68px. Instrumented: abcjs reaches `curr=47` at
+  // the first barline where we reached 24.
+  //
+  // **`1: 173` IS EVERY MEASURABLE FIXTURE** — the 174th is the leading-header tune-count
+  // mismatch, which has no geometry to compare.
+  '0.05': 164,
+  '1': 173,
   '5': 173,
   '25': 173,
 }

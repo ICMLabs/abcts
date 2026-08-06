@@ -1524,6 +1524,25 @@ class ScoreBuilder {
     firstVoiceId: null,
   }
 
+  /**
+   * A MULTI-MEASURE REST ADVANCES THE BAR COUNTER BY ITS WHOLE COUNT.
+   *
+   *     if (core.rest.type === 'multimeasure' && isFirstVoice())
+   *       multilineVars.currBarNumber += core.rest.text - 1
+   *
+   * (`abc_parse_music.js:512-513`, with abcjs's own "The minus one is because the measure
+   * with the rest is already counted once normally" beside it — the barline that closes
+   * the rest's own measure does the last increment.)
+   *
+   * Ours counted `Z24` as ONE measure, so every bar number after a multi-measure rest was
+   * 23 too low and `%%barnumbers 5` printed one where abcjs prints none. Instrumented on
+   * `visual-parsing-10`: abcjs reaches `curr=47` at the first barline where we reached 24.
+   */
+  countMultiMeasureRest(bars: number): void {
+    if (this.barNumbering.firstVoiceId !== this.currentVoiceId) return
+    this.barNumbering.current += bars - 1
+  }
+
   voiceFor(id: string): VoiceBuilder {
     let builder = this.voices.get(id)
     if (!builder) {
@@ -3041,6 +3060,8 @@ class Parser {
       ? Math.max(1, Math.round(length.factor.numerator / length.factor.denominator))
       : 0
     const duration = multi ? rational(1, 1) : ratMul(builder.unitNoteLength, length.factor)
+    // `Z4` is four measures of the bar counter, not one — see `countMultiMeasureRest`.
+    if (multi) builder.countMultiMeasureRest(bars)
     return {
       rest: {
         type: 'rest',
