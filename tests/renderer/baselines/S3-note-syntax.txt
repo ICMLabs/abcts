@@ -910,7 +910,7 @@ system 0 width=90.323 originY=0.000
     tupletline 76.946,5.521 -> 83.035,5.521 t=0.129
     tupletline 68.793,5.521 -> 68.793,6.166 t=0.129
     tupletline 83.035,5.521 -> 83.035,6.166 t=0.129
-    tuplettext 16.263,5.745 size=1.935 "3"
+    tuplettext 15.630,5.745 size=1.935 "3"
     tuplettext 53.367,7.263 size=1.935 "6"
     tuplettext 75.914,7.263 size=1.935 "3"
     title x=0.000 w=0.000

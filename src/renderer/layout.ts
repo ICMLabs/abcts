@@ -4692,6 +4692,22 @@ function layoutTuplets(
     /** A BEAMED tuplet has no bracket: its number rides the BEAM, 3 pitches clear above
      * it or 2 below (`layout/triplet.js:15-21`). Nothing of the end-note arithmetic below
      * applies — using it put `multi-voice-triplet-brackets` 24 pitch out. */
+    /**
+     * `xAtMidpoint(left, anchor2.x)` for a BEAMED tuplet — where the beam is sampled AND
+     * where the number is centred, which abcjs computes once and uses for both
+     * (`layout/triplet.js:16-18`).
+     *
+     * The span is NOT symmetric: `left = isAbove(beam) ? anchor1.x + anchor1.w : anchor1.x`
+     * and the far end is `anchor2.x` with no `w`. An UNBEAMED tuplet uses a different
+     * midpoint entirely — `anchor1.x + (anchor2.x + anchor2.w - anchor1.x) / 2` (`:75`),
+     * first notehead's LEFT to last notehead's RIGHT — which is what `centre` is, and why
+     * the bracketed cases already matched abcjs's x exactly while the beamed ones sat
+     * 4.9px right.
+     */
+    const beamMidX = (): number => {
+      const leftX = up ? first.right : first.left
+      return leftX + (last.left - leftX) / 2
+    }
     const beamY = (): number => {
       const tipOf = (a: NoteAnchor): { x: number; y: number } | null => {
         const stem = elements[a.element]?.lines.find((l) => l.role === 'stem')
@@ -4709,8 +4725,7 @@ function layoutTuplets(
       // the sample lands off the midpoint of the two stem tips. The two agree on a level
       // beam, which is why averaging looked right: `multi-voice-rest-collision` is
       // sloped, and its `yTextPos` came out 16.5 against abcjs's 16.5929.
-      const leftX = up ? first.right : first.left
-      const midX = leftX + (last.left - leftX) / 2
+      const midX = beamMidX()
       const span = b.x - a.x
       const y = span === 0 ? a.y : a.y + ((b.y - a.y) * (midX - a.x)) / span
       return y + (up ? -3 : 2) * ENGRAVE.spacePerStep
@@ -4772,7 +4787,9 @@ function layoutTuplets(
       // Ours start-anchored at `centre - width / 2`, which is the same point only when our
       // text metrics agree with the browser's — an approximation with no reason to exist
       // once the emitter can say `text-anchor`.
-      x: centre,
+      //
+      // AND A BEAMED TUPLET'S MIDPOINT IS NOT THE BRACKETED ONE'S — see `beamMidX`.
+      x: beamed ? beamMidX() : centre,
       anchor: 'middle',
       // STILL OURS, AND DELIBERATELY — see `ENGRAVE.tupletTextDrop` for the measurement.
       // abcjs's baseline is `calcY(yTextPos - 1)` flat, with no font height added because
