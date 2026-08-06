@@ -383,98 +383,34 @@ keeping a non-zero value the constant no longer has.
 
 ### NEXT, in order
 
-**EVERYTHING ON THE PREVIOUS LIST IS DONE** — findings 93-99. What remains:
+Findings 93-102. Items 1-3 of the previous list are DONE; what is left:
 
-1. **A SLUR WHOSE END IS MID-BEAM IS DRAWN AT THE WRONG HEIGHT** — and the investigation
-   is done, so this is a port rather than a hunt. Three things were established and each
-   removes work:
+1. **THE BEAMED TRIPLET'S `yTextPos`** — one port, and the constants are already sitting in
+   `ABCJS_PITCH` marked "not wired up". abcjs takes
+   `heightAtMidpoint(left, anchor2.x, beam)` with `left` shifted by `anchor1.w` when the
+   beam is above, then adds `isAbove(beam) ? 3 : -2` (`layout/triplet.js:16-17`); we take
+   the beam's own y and add nothing. The number's SIZE, ANCHOR and GAP are already abcjs's,
+   and it now carries `data-name`, so this is measurable in a fifteen-line probe.
+   **Adding the `3 / -2` alone moved one number of six and by the wrong amount** — the
+   whole branch goes together.
 
-   - **`fudgeY` IS A RED HERRING.** `draw/tie.js:18` adds `1.5` when `params.fixedY`, and
-     the ONLY thing that ever sets it is `decoration.js:58`, a `TieElem` built between two
-     blank anchors for a decoration. It never touches an ordinary tie or slur. Do not port
-     it with the endpoints.
-   - **TIES ARE ALREADY RIGHT.** `layout()` (`draw/tie.js:32-53`) computes `isTie` at DRAW
-     time and calls `calcTieY` for a tie — which is just `anchor.pitch`, exactly what
-     finding 99 landed. Only `calcSlurY` has the beam branch.
-   - **SO THE DEFECT IS SLURS ONLY**, on an end that is beamed and not the last (start) or
-     first (end) in its beam: `calcSlurY` pins to `parent.fixed.t/.b`
-     (`tie-element.js:165-190`). `curveReserves.endAt` ALREADY ports that rule exactly —
-     for the RESERVE. `buildCurve` uses the plain anchor pitch for the DRAWING.
+2. **THE REMAINING FIXED LANES** — `chordSymbolStep`, `dynamicAboveStep`,
+   `dynamicBelowStep`, `annotationAboveStep`, `annotationBelowStep`, `partStep`,
+   `tempoStep`, `lyricStep`. One decision, not eight. `anchorVoltas` (finding 93) is the
+   model: resolve in the pass that has the final elements, shift furniture only, and CHECK
+   FIRST that the lane's ink is outside the staff extent — that property is what made the
+   volta safe and it does not hold everywhere.
 
-   **The same number in two places whose inputs can drift apart is this repo's most
-   expensive recurring bug** (the lyric reserve, then finding 95's default parameter), so
-   the fix is to have ONE `endAt` and call it from both.
+3. **THE STAFF INK TOP**, never checked as its own axis: 13.85 pitch against abcjs's dumped
+   13.7244 on `S4-bars-repeats`. Half a pixel, carried by everything that hangs off the
+   staff top — including the repeat ending's one remaining ceiling. The `.elements.json`
+   goldens carry `staff.top` for every staff of every fixture, so the whole corpus is
+   measurable today with no new machinery.
 
-   **WHAT BLOCKS IT, precisely.** `endAt` needs `fixedOf`, which reads
-   `elements[a.element].lines` — the beam-retargeted stems. `curveReserves` runs PER SYSTEM
-   at `layout.ts:6619` and has them; `layoutCurves` runs at TUNE level at `:6835` and has
-   only anchors and system bounds. The anchors are the same OBJECT references
-   (`systemAnchors` is a `.filter()` of `voiceAnchors[v]`), so stamping the resolved
-   `fixed` box and beam position onto the anchor in the per-system pass would reach the
-   tune-level one — that is the smallest available merge. Measure `ragtime-nightingale`
-   and `vree-slurs-and-triplets`, which are where beamed slur ends live.
-2. **`annotationLineStep`** — a small port, not a citation: abcjs advances by
-   `Math.round(height * 1.1)` over the ACTUAL annotation font, so `%%annotationfont` moves
-   it and a constant cannot.
-3. **THE TUPLET NUMBER IS ONE CONSTRUCTION, NOT FOUR CONSTANTS** — and that is the volta
-   lesson, so do not port `tupletTextSize` on its own:
+4. **THE BRACE** is a construction, not a constant: abcjs builds it as a `curvyPath` of two
+   cubics parameterised by the span (`draw/brace.js:51-64`) where we stretch a Bravura
+   glyph with `scale(1,n)`. Ours also sits at a NEGATIVE x on `S7-voices` where abcjs's is
+   at 20.25, which is a separate question about the connector indent.
 
-   - size: `tripletfont` 11pt -> `round(11 * 4/3)` = 15px, against our 1.4 spaces (10.85);
-   - gap: `gapWidth = 8` from the bracket's MIDPOINT, FIXED (`draw/triplet.js:35`) — abcjs
-     breaks the same gap for `13` as for `3`, where ours is `width / 2 + tupletNumberGap`
-     and therefore moves with the size;
-   - vertical: `calcY(yTextPos - 1)` with `centerVertically: true`, carrying abcjs's own
-     "HACK: adjust the position of 3. It is too high in all cases so we fudge it by
-     subtracting 1" (`draw/triplet.js:11`) — where ours is `y ± size * 0.1/0.9`, a
-     heuristic that also moves with the size.
+5. Then `visual-layout-04` at 1.77, `visual-parsing-10` at 1.69, Gonzato, audio.
 
-   Two of the three move with the size, so changing the size alone moves the number twice
-   and the bracket's break once. Port them together.
-
-   **AND IT NEEDS A HANDLE FIRST.** abcjs passes `noClass: true` for this text, so unlike
-   the bracket beside it the number carries NO class — only `data-name="3"`, the digits
-   themselves. Finding 92 gave the BRACKET a handle and not the NUMBER; a comparison
-   still cannot reach it.
-4. **The remaining fixed lanes** — the migration `voltaStep` went through in finding 93,
-   with `anchorVoltas` as the model. Check FIRST that the lane's ink is outside the staff
-   extent, which is what made the volta safe.
-5. **The staff INK TOP**, never checked as its own axis — 13.85 pitch against abcjs's
-   dumped 13.7244 on `S4-bars-repeats`. The `.elements.json` goldens carry `staff.top` for
-   every staff of every fixture, so it is measurable across the whole corpus today.
-6. Then `visual-layout-04` at 1.77, `visual-parsing-10`, Gonzato, audio.
-
-**AND ONE THING THE ENDING WORK EXPOSED THAT IS NOT ABOUT ENDINGS.** Our staff ink top on
-`S4-bars-repeats` reads 13.85 pitch where abcjs's dumped `staff.top` is 13.7244 — 0.5px,
-carried by everything that hangs off the staff top. The `.elements.json` goldens carry
-`staff.top` for every staff of every fixture, so this is directly measurable across the
-corpus and has never been checked as its own axis.
-
----
-
-## VERIFY LOOP — and the trap that bit TWICE this session
-
-```bash
-cd /Users/lrettberg/ICMLabs/Code/abcts
-git rev-parse --abbrev-ref HEAD       # geometry/vertical
-npx tsc --noEmit
-npx vitest run                        # 701/701
-npx biome check src                   # `src` alone: `src tests` has 20 PRE-EXISTING errors
-npm run baseline                      # READ the diff
-git -C ../abcMusicKit status --short  # MUST be empty — read it, do not test the exit code
-```
-
-**`cd` DOES NOT PERSIST, AND A `cd` INSIDE A COMPOUND COMMAND LEAVES THE SHELL THERE.** The
-handoff warns about this and it still cost two runs — and once it did something worse than
-waste a run: a heredoc meant for `tests/` **wrote a probe file into the read-only vendored
-abcjs tree**, because the previous command had ended in `cd …/abcjs-6.6.3`. Removed, and
-`git -C ../abcMusicKit status --short` verified empty. **Put the absolute
-`cd /Users/lrettberg/ICMLabs/Code/abcts &&` in front of EVERY command, not just the vitest
-ones** — the danger is not only reading the wrong package, it is writing to the wrong repo.
-
-The sibling repo is now **completely clean**; the untracked `TempFileHeaderFieldsProbe.swift`
-the previous handoff mentioned is gone.
-
-**AND VITEST SWALLOWS `console.log` ON A PASSING TEST** — write to a file. Every measurement
-in this checkpoint came from a throwaway `tests/zz-probe.test.ts` writing to `/tmp`, deleted
-after use. That pattern is worth keeping: it reaches `absolutePixels` and both engines'
-output in about fifteen lines.
