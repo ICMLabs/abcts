@@ -385,22 +385,56 @@ keeping a non-zero value the constant no longer has.
 
 **EVERYTHING ON THE PREVIOUS LIST IS DONE** — findings 93-99. What remains:
 
-1. **THE QUANTITY THAT IS STILL COMPUTED TWICE.** `curveReserves` derives abcjs's
-   `startY`/`endY` for the RESERVE — including the `parent.fixed.b` branch for an end
-   anchored inside a beam — and `buildCurve` now derives them again, separately, for the
-   DRAWING. Finding 99 made the second one abcjs's; it did not merge them. **The same
-   number in two places whose inputs can drift apart is this repo's most expensive
-   recurring bug** (the lyric reserve, then finding 95's default parameter). Still missing
-   with it: abcjs's `fudgeY = params.fixedY ? 1.5 : 0`, applied to BOTH ends before
-   `drawArc` (`draw/tie.js:17`), which is the beam-anchored case.
+1. **A SLUR WHOSE END IS MID-BEAM IS DRAWN AT THE WRONG HEIGHT** — and the investigation
+   is done, so this is a port rather than a hunt. Three things were established and each
+   removes work:
+
+   - **`fudgeY` IS A RED HERRING.** `draw/tie.js:18` adds `1.5` when `params.fixedY`, and
+     the ONLY thing that ever sets it is `decoration.js:58`, a `TieElem` built between two
+     blank anchors for a decoration. It never touches an ordinary tie or slur. Do not port
+     it with the endpoints.
+   - **TIES ARE ALREADY RIGHT.** `layout()` (`draw/tie.js:32-53`) computes `isTie` at DRAW
+     time and calls `calcTieY` for a tie — which is just `anchor.pitch`, exactly what
+     finding 99 landed. Only `calcSlurY` has the beam branch.
+   - **SO THE DEFECT IS SLURS ONLY**, on an end that is beamed and not the last (start) or
+     first (end) in its beam: `calcSlurY` pins to `parent.fixed.t/.b`
+     (`tie-element.js:165-190`). `curveReserves.endAt` ALREADY ports that rule exactly —
+     for the RESERVE. `buildCurve` uses the plain anchor pitch for the DRAWING.
+
+   **The same number in two places whose inputs can drift apart is this repo's most
+   expensive recurring bug** (the lyric reserve, then finding 95's default parameter), so
+   the fix is to have ONE `endAt` and call it from both.
+
+   **WHAT BLOCKS IT, precisely.** `endAt` needs `fixedOf`, which reads
+   `elements[a.element].lines` — the beam-retargeted stems. `curveReserves` runs PER SYSTEM
+   at `layout.ts:6619` and has them; `layoutCurves` runs at TUNE level at `:6835` and has
+   only anchors and system bounds. The anchors are the same OBJECT references
+   (`systemAnchors` is a `.filter()` of `voiceAnchors[v]`), so stamping the resolved
+   `fixed` box and beam position onto the anchor in the per-system pass would reach the
+   tune-level one — that is the smallest available merge. Measure `ragtime-nightingale`
+   and `vree-slurs-and-triplets`, which are where beamed slur ends live.
 2. **`annotationLineStep`** — a small port, not a citation: abcjs advances by
    `Math.round(height * 1.1)` over the ACTUAL annotation font, so `%%annotationfont` moves
    it and a constant cannot.
-3. **`tupletNumberGap`** — `gapWidth = 8` from the bracket's MIDPOINT, fixed
-   (`draw/triplet.js:35`): abcjs breaks the same gap for `13` as for `3`, ours is relative
-   to the number's width. Structure, not a constant. `tupletTextSize` goes with it
-   (`tripletfont` 11pt -> 15px against our 1.4 spaces), and so does abcjs's own
-   "HACK: … it is too high in all cases so we fudge it by subtracting 1".
+3. **THE TUPLET NUMBER IS ONE CONSTRUCTION, NOT FOUR CONSTANTS** — and that is the volta
+   lesson, so do not port `tupletTextSize` on its own:
+
+   - size: `tripletfont` 11pt -> `round(11 * 4/3)` = 15px, against our 1.4 spaces (10.85);
+   - gap: `gapWidth = 8` from the bracket's MIDPOINT, FIXED (`draw/triplet.js:35`) — abcjs
+     breaks the same gap for `13` as for `3`, where ours is `width / 2 + tupletNumberGap`
+     and therefore moves with the size;
+   - vertical: `calcY(yTextPos - 1)` with `centerVertically: true`, carrying abcjs's own
+     "HACK: adjust the position of 3. It is too high in all cases so we fudge it by
+     subtracting 1" (`draw/triplet.js:11`) — where ours is `y ± size * 0.1/0.9`, a
+     heuristic that also moves with the size.
+
+   Two of the three move with the size, so changing the size alone moves the number twice
+   and the bracket's break once. Port them together.
+
+   **AND IT NEEDS A HANDLE FIRST.** abcjs passes `noClass: true` for this text, so unlike
+   the bracket beside it the number carries NO class — only `data-name="3"`, the digits
+   themselves. Finding 92 gave the BRACKET a handle and not the NUMBER; a comparison
+   still cannot reach it.
 4. **The remaining fixed lanes** — the migration `voltaStep` went through in finding 93,
    with `anchorVoltas` as the model. Check FIRST that the lane's ink is outside the staff
    extent, which is what made the volta safe.
