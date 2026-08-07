@@ -44,12 +44,12 @@ drove the rest of the session.
 
 | | at the session's start | now |
 |---|---|---|
-| suite | 703 | **887. NO REDS.** |
+| suite | 703 | **888. NO REDS.** |
 | pixel gate | 29 fixtures, 2,696 heads | **119 tunes, 5,105 heads** |
 | pixel ranked table | *did not exist* | **19 of 119 off some axis, eight of them the whole-note OUTLINE and not work** |
 | harvested (174) | 0 of 174 off | **0 of 174 off** |
 | 41-fixture | one above 0.02 | one above 0.02 |
-| ceilings | — | **ten LOWERED, ONE raised** (`S5-directives-tune1`'s `ox`, finding 129, recorded with its reason) |
+| ceilings | — | **twelve LOWERED.** One was raised mid-session (129) and CLOSED by the next finding (130) |
 
 `npx vitest run tests/pixel-parity.test.ts && cat /tmp/abcts-pixel-ranked.txt` is the new
 first command of a session, beside the harvested one.
@@ -194,6 +194,56 @@ glyph-for-glyph on a control before it touched the fixture — ten heads, same n
 boxes, dy 0.00, where four had been a whole glyph wrong. What grew is a MEAN over a system
 whose remaining error is a RAMP this change does not touch. Closing the ramp takes both down.
 
+## FINDING 130 — AN INLINE `[M:]` AT THE HEAD OF A LINE DRAWS AT THE END OF THE PREVIOUS ONE
+
+Finding 125's mechanism, reached through the OTHER arm of the header parser:
+
+```js
+case "[M:":
+  var meter = this.setMeter(…)
+  if (tuneBuilder.hasBeginMusic() && meter)
+    tuneBuilder.appendStartingElement('meter', startChar, endChar, meter)
+  else multilineVars.meter = meter
+```
+
+(`abc_parse_header.js:356-362`.) Music has begun, so it appends — and `startNewLine` has not
+fired yet, so the element lands on the PREVIOUS line.
+
+**AND THE TWO `M:` FORMS PART ON THE OTHER HALF**, which is what makes this a MODEL change
+and not a renderer one. The inline arm never fills `multilineVars.meter`, so the next line's
+prefix prints NOTHING; a standalone `M:` line fills it and the next `startNewLine` consumes
+it into that line's PREFIX — finding 121, already right. Measured on a pair of controls,
+`M:3/4` and `[M:3/4]` at the same point in the same tune:
+
+```
+standalone   line 0 ends with its notes;  line 1 opens `clef 15, timeSig 49.05 w=11.79`
+inline       line 0 ends `timeSig 673.20 w=11.79`;  line 1 opens with the CLEF ALONE
+```
+
+**THE FIRST ATTEMPT FIRED ON BOTH FORMS AND THE RATCHET CAUGHT IT** — `frere-jacques` went
+straight back to the 21.80px finding 121 had closed, and `S8-layout-tune2` from exact to
+23.04. Nothing downstream could tell the forms apart, so `Measure` now carries
+`meterChangeInline`; the parser has always known, having two entry points for it.
+
+**AND A RESTATED INLINE METER STILL DRAWS**, for the same reason a restated key does (127):
+nothing on that path compares meters. `[M:C]` under `M:C` is exactly what `S5-directives`
+X:502 writes, and abcjs puts `timeSig w=13.04` at x 671.96 for it.
+
+dx 24.27 → 1.19 and ox 1.94 → −0.03. Its element x's now match abcjs's final solve pass
+EXACTLY across the whole system, trailing time signature included.
+
+**AND THIS IS WHY FINDING 129'S RAISE WAS RECORDED RATHER THAN ARGUED AWAY.** That `ox` 1.79
+→ 1.94 was a mean over exactly this ramp; closing the ramp took it to −0.03. A recorded raise
+that names what it is waiting on is a lead. A reverted correct change is nothing.
+
+**AND READING AN INTERMEDIATE SOLVE PASS COST AN HOUR.** The `voice-elements.js` probe fires
+on EVERY `setX`, and abcjs's solve runs the line several times — the second block is not the
+answer, the LAST one is. Two intermediate passes read as real numbers and disagreed with the
+golden by amounts that looked like findings. **Anchor the probe on a figure you can also read
+out of the SVG** — here, the first notehead's x — before trusting any of it.
+
+---
+
 ## AND ONE ROW OF THE TABLE IS NOT WORK AT ALL
 
 The eight `ox = 0.18` rows — `clefs-tune0` through `-tune6` and `S6-keys-tune0` — are tunes
@@ -231,7 +281,7 @@ Nothing regressed by any amount at any point. Every ceiling that moved went DOWN
 
 ```
 19 of 119 tunes are off some axis by 0.05px or more
-    24.27  dy=0.03 dx=24.27 oy=0.00 ox=1.94   188 heads  S5-directives-tune1
+      1.19  dy=0.03 dx=1.19  oy=0.00 ox=-0.03   188 heads  S5-directives-tune1
     23.66  dy=8.37 dx=23.66 oy=4.73 ox=-0.64   46 heads  S8-layout-tune11
     12.13  dy=0.04 dx=12.13 oy=0.01 ox=0.02  2009 heads  ragtime-nightingale
      8.25  dy=0.00 dx=8.25 oy=0.00 ox=3.58     99 heads  S8-layout-tune6
