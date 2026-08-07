@@ -44,7 +44,7 @@ drove the rest of the session.
 
 | | at the session's start | now |
 |---|---|---|
-| suite | 703 | **888. NO REDS.** |
+| suite | 703 | **889. NO REDS.** |
 | pixel gate | 29 fixtures, 2,696 heads | **119 tunes, 5,105 heads** |
 | pixel ranked table | *did not exist* | **19 of 119 off some axis, eight of them the whole-note OUTLINE and not work** |
 | harvested (174) | 0 of 174 off | **0 of 174 off** |
@@ -241,6 +241,41 @@ on EVERY `setX`, and abcjs's solve runs the line several times — the second bl
 answer, the LAST one is. Two intermediate passes read as real numbers and disagreed with the
 golden by amounts that looked like findings. **Anchor the probe on a figure you can also read
 out of the SVG** — here, the first notehead's x — before trusting any of it.
+
+---
+
+## FINDING 131 — THE PREFIX CANCELS THE KEY IN FORCE, NOT THE PREVIOUS LINE'S KEY
+
+abcjs's naturals are `impliedNaturals`, and `parseKey` computes them from the old key AT THE
+MOMENT OF THE CHANGE (`abc_parse_key_voice.js:295-311`). Reading the previous LINE's key
+instead is the same number whenever every change starts a line — **which is every fixture
+finding 124 was measured on** — and a different one the moment a MID-line `[K:]` sits between
+the two.
+
+`S8-layout` X:812 is that tune: `K:G`, a mid-line `[K:Bb]`, then a standalone `K:Gb`. Gb
+carries both of Bb's flats, so nothing is cancelled and abcjs draws no natural; against G,
+still the previous line's key, we cancelled its F#.
+
+**AND A NATURAL IS THE TALL ACCIDENTAL**, which is why one wrong glyph was worth 8.37px on
+every notehead of the system. It DECLARES a box up to pitch 15.88 against the clef's 13.72,
+so it raised the chord lane, then the ending lane sitting on top of that, and the staff with
+them. dy 8.37 → 0.01, oy 4.73 → 0.00.
+
+**PROVING THE LANES WERE RIGHT IS WHAT MADE IT FINDABLE.** The shape said "staff extent", and
+the staff had both a chord lane and a volta ending — the one combination with a special rule
+(`endingOverChordLane`, a flat 2). Instrumenting abcjs's own `staff.top` on three controls
+settled it in one run:
+
+```
+                        abcjs      = ink + lanes
+  chords + ending       21.5037    = 13.7244 + (4.7794 + 1) + 2
+  ending only           19.7244    = 13.7244 + (5 + 1)
+  chords only           19.5037    = 13.7244 + (4.7794 + 1)
+```
+
+and ours matched all three at 0.00. So the 2.1595 pitch had to be INK, and our own extent
+probe named it: a `keySignature accidentalNatural` reserving to 15.8839 on a system abcjs
+tops out at the clef. **Rule out the mechanism you suspect before hunting inside it.**
 
 ---
 
