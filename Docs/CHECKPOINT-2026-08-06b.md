@@ -332,7 +332,62 @@ not "empty" — `isEmpty` also wanted no `T:` and no music. **The `CONTENT_GAPS`
 described the symptom and guessed the cause backwards**, the second allowlist on this branch
 written from a plausible reading rather than from the source.
 
-### 6. Then Gonzato, then audio.
+### 6. THE 41-FIXTURE CORPUS — where the work moved to, and it is MEASURED
+
+With both harvested tables empty, the 41 are the only corpus with anything left. Measured
+fresh (not read off the ceilings, which say only "no worse than"):
+
+```
+34 of the 41 are at EXACT ZERO on all four axes.
+   21.80  dy=0.03 dx=21.80 oy=-0.02 ox=-3.56  frere-jacques        (45 heads)
+   21.70  dy=0.01 dx=21.70 oy= 0.01 ox=-5.27  little swallow       (89 heads)
+   13.32  dy=0.24 dx=13.32 oy= 0.05 ox=-0.76  ragtime-nightingale  (2009 heads)
+   ≤0.02  everything else
+```
+
+**MEASURE BEFORE AND AFTER, NOT AGAINST THE CEILING.** Several fixtures recorded at `0.0`
+measure 0.01–0.03 today and have for some time; `EPSILON` is 0.05, so the gate never said
+so. Running the corpus at the session's first commit and again at its last is what
+established that this session's changes only ever improved it — six fixtures better, none
+worse. The recorded numbers alone cannot tell you that.
+
+#### `frere-jacques`, dx 21.80 — CHASED TO THE PARSER, not started
+
+**ONLY SYSTEM 3 IS OFF.** Systems 1, 2 and 4 are exact to 0.00; heads 13–26 run from
+−21.80 monotonically up to −2.71, which is a line that starts 21.8px left and whose springs
+absorb it. 21.8 = a time signature's 11.795 plus its 10 of `minspacing`.
+
+**abcjs DRAWS A TIME SIGNATURE ON SYSTEM 3 AND WE DRAW NONE AT ALL.** Probed: abcjs's line
+dump reads `l=3 meter={4/4}` with l=1, 2, 4 undefined, and its system-3 prefix is
+`clef(24.051) + time-signature(11.795) + part(0)` → first note at 86.651 against our 64.85,
+which is exactly clef-only. Its own SVG has one `staff-extra time-signature`, at y 390 —
+system 3's staff, not system 1's.
+
+**THE ROOT IS `+:` IN STRICT.** Bisecting the header one field at a time: `score.meter`
+survives `T: T: H: O: C: N: S:` and becomes **null at the first `+:`**. That is not a bug in
+the bisect — it is the recorded rule biting. abcjs does not implement `+:` at all and lexes
+the continuation as MUSIC (13 of its 45 "notes" here are the words of "+:belongs to their
+respective owners"), which strict reproduces. So the header ENDS at that line and the
+`M:4/4` four lines below it is no longer a header field. abcjs still finds a meter to draw
+and puts it on the second music line; we lose it outright.
+
+Ruled out by a ladder of controls, all of which put the meter on system 0 in BOTH engines:
+`P:` labels, a `Q:` after `K:`, `V:1 clef=treble` before `K:`, and each of `H: S: U:
+%%partsbox G: Z: N:` added singly.
+
+#### `little swallow`, dx 21.70 — NOT the same cause
+
+We DO have its meter. The spread is INSIDE system 1 (~19.5 of the 21.7) and shrinks across
+systems 2 and 3; and it is not a prefix shift, because head 0 is −15.87 where heads 1 and 2
+are −20.73 — our first gap is 4.86 SMALLER than abcjs's before the rest of the line runs
+long. It is the corpus's CJK-lyric fixture, and a lyric's width feeds the element rod.
+
+#### `ragtime-nightingale`, dx 13.32
+
+Improved this session on `dy` (0.44 → 0.24) and `oy` (0.16 → 0.05) without being worked on.
+Its `dx` is unchanged and is the oldest number on this list.
+
+### 7. Then Gonzato, then audio.
 
 ---
 
