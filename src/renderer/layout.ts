@@ -2518,8 +2518,70 @@ function layoutNoteheads(
   // one `accidentalGap` left every accidental note ~4.5px narrow, which on a COMPRESSED
   // line is the whole error: `visual-transpose-02` solved to a spacing of 18.67px where
   // abcjs's rods bottom out at 10.81 and its springs never bind at all.
+  // A second cannot be printed on the same side of the stem — the noteheads would
+  // overlap — so the offending head moves across it. *Behind Bars*. Working from the
+  // stem side outward keeps a cluster alternating rather than every head shifting.
+  //
+  // A UNISON IS DISPLACED TOO, AND BY ONE PIXEL LESS. abcjs's test is `delta <= 1`, not
+  // `=== 1` — it marks a unison `printer_shift: "same"` and a second `"different"`
+  // (`abstract-engraver.js:654-655`) — and the two spend that distinction one file over:
+  //
+  //     var adjust = (pitchelem.printer_shift === "same") ? 1 : 0
+  //     shiftheadx = (dir === "down") ? -getSymbolWidth(c) * scale + adjust
+  //                                   :  getSymbolWidth(c) * scale - adjust
+  //
+  // (`create-note-head.js:30-32`.) So a unison's two heads overlap by a pixel where a
+  // second's sit edge to edge. Reading `=== 1` left `[cc]` and `[dd]` undisplaced
+  // entirely — `S8-layout` X:806 is named "Chords, Unions, …" and is the only fixture in
+  // either corpus that writes one.
+  //
+  // INDEXED BY POSITION, NOT BY STEP, and that is what makes a unison expressible at all.
+  // A `Map<step, dx>` has ONE entry for `[cc]`'s two heads, so both landed on the same x
+  // whatever the rule above said — the second `set` overwrote the first. A comparison, or
+  // a placement, can only express what its representation can hold.
+  const offsetAt: number[] = steps.map(() => 0)
+  {
+    let previous: number | null = null
+    let shifted = false
+    for (let k = 0; k < steps.length; k++) {
+      // Walk from the STEM side outward: the bottom head up, or the top head down.
+      const position = up ? k : steps.length - 1 - k
+      const step = steps[position] ?? 0
+      const delta = previous === null ? Number.POSITIVE_INFINITY : Math.abs(step - previous)
+      shifted = delta <= 1 && !shifted
+      // With an up stem the displaced head goes right of it; with a down stem, left.
+      const reach = headInk - (delta === 0 ? spaces(1) : 0)
+      offsetAt[position] = shifted ? (up ? reach : -reach) : 0
+      previous = step
+    }
+  }
+  /** Does a head sit LEFT of the stem — the case abcjs starts the accidentals clear of. */
+  const displacedLeft = offsetAt.some((dx) => dx < 0)
+  /** The head the stem is built from: the bottom one with an up stem, the top with a down. */
+  const stemHeadOffset = offsetAt[up ? 0 : steps.length - 1] ?? 0
+
   const accidentalPlaces: number[] = []
-  let roomTaken = 0
+  // A DOWN-STEMMED CHORD WITH A DISPLACED HEAD STARTS ITS ACCIDENTALS A NOTEHEAD FURTHER
+  // LEFT, and the displacement pass is what sets that up — it runs BEFORE the accidental
+  // loop and assigns, rather than adds, into the very same running total:
+  //
+  //     if (delta <= 1 && !prev.printer_shift) {
+  //       …
+  //       if (dir === "down") roomTaken    = glyphs.getSymbolWidth(noteSymbol) + 2
+  //       else                dotshiftx    = glyphs.getSymbolWidth(noteSymbol) + 2
+  //     }
+  //
+  // (`abstract-engraver.js:649-664`.) 9.81 + 2 = 11.81, and it has to be there because the
+  // displaced head occupies exactly the strip the first accidental column would have.
+  // The UP-stem arm spends the same figure on `dotshiftx` instead — the head goes to the
+  // RIGHT of the stem there, so it widens the element rather than its left reach.
+  //
+  // Measured on `S8-layout` X:811 "Chords with many accidentals": abcjs probes `[^c^d]` at
+  // `extraw = -36.44` against `[^c^e]`'s -24.63, and the gap between them is 11.81 exactly.
+  // Ours started every chord at 0, so each chord holding a second came out one column
+  // narrow and the deficit ACCUMULATED — a perfect staircase, -11.81 per such chord, out
+  // to -82.67 by the end of the tune with `dy` flat at 0.00 the whole way.
+  let roomTaken = !up && displacedLeft ? headInk + ENGRAVE.accidentalGap : 0
   let extraLeft = 0
   {
     /** `[pitch, place]` per open column — abcjs's `accidentalSlot`. */
@@ -2576,20 +2638,6 @@ function layoutNoteheads(
   })
   const headX = noteX + accidentalWidth
 
-  // A second cannot be printed on the same side of the stem — the noteheads would
-  // overlap — so the offending head moves across it. *Behind Bars*. Working from the
-  // stem side outward keeps a cluster alternating rather than every head shifting.
-  const ordered = up ? steps : [...steps].reverse()
-  const offsets = new Map<number, number>()
-  let previous: number | null = null
-  let shifted = false
-  for (const step of ordered) {
-    shifted = previous !== null && Math.abs(step - previous) === 1 ? !shifted : false
-    // With an up stem the displaced head goes right of it; with a down stem, left.
-    offsets.set(step, shifted ? (up ? headInk : -headInk) : 0)
-    previous = step
-  }
-
   // A NOTEHEAD RESERVES ITS DECLARED BOX, CENTRED ON THE PITCH — `pitch ± thickness / 2`
   // from `thickness: symbolHeightInPitches(c) * scale` (`create-note-head.js:34`,
   // `relative-element.js:22-24`) — and not the glyph's INK box, which is what the scan
@@ -2601,7 +2649,7 @@ function layoutNoteheads(
   // of `synth-flattener-23`'s remaining `oy`.
   const headDeclaredHalf = (glyphsFor(strict).get(headName)?.declaredHeight ?? 0) / 2
   for (const [position, step] of steps.entries()) {
-    const dx = offsets.get(step) ?? 0
+    const dx = offsetAt[position] ?? 0
     const y = stepToY(step)
     glyphs.push({
       ...glyphAt(headName, headX + dx, step),
@@ -2617,7 +2665,7 @@ function layoutNoteheads(
   // rather than stepping in and out with each displaced notehead.
   let dotWidth = 0
   if (spec.dots > 0) {
-    const rightmost = headX + Math.max(0, ...[...offsets.values()]) + headInk
+    const rightmost = headX + Math.max(0, ...offsetAt) + headInk
     // ABCJS'S OWN OFFSET, which is stated from the head's ORIGIN rather than as a gap after
     // its right edge: `notehead.w + dotshiftx - 2 + 5 * dot` (`create-note-head.js:50-53`).
     // Ours was a 0.35-space gap and a 0.45-space step — 2.71 and 3.49px against 3 and 5.
@@ -2669,7 +2717,7 @@ function layoutNoteheads(
     const weight = beamed ? LINE_WEIGHTS.beamedStem : LINE_WEIGHTS.stem
     // The head the stem is BUILT from — its base. A displaced seconds head moves it, but
     // only for a beamed stem.
-    const baseShift = beamed ? (offsets.get(up ? lowest : highest) ?? 0) : 0
+    const baseShift = beamed ? stemHeadOffset : 0
     const anchor = up ? head.anchors.stemUpSE : head.anchors.stemDownNW
     const [bravuraX, bravuraY] = anchor ?? [up ? headInk : 0, 0]
     const ax = strict ? baseShift + (up ? headInk - weight / 2 : weight / 2) : bravuraX
@@ -2728,7 +2776,7 @@ function layoutNoteheads(
         x: stemX,
         // The furthest head is the one the stem is BUILT from — `heads[0]` up,
         // `heads[len-1]` down — and `offsets` is what displaces it in a seconds chord.
-        headX: headX + (offsets.get(up ? lowest : highest) ?? 0),
+        headX: headX + stemHeadOffset,
         headWidth: headInk,
         headDx: baseShift,
         farStep: up ? highest : lowest,
@@ -2860,8 +2908,8 @@ function layoutNoteheads(
   // and Bravura's outline is 9.145 — 0.665px per note, which is nothing on a line with
   // slack and the whole error on one without: it is a ROD, and a rod only shows when the
   // spring has been squeezed under it. The flag beside it already read the active table.
-  const headRight = Math.max(0, ...[...offsets.values()]) + glyphsFor(strict).width(headName)
-  const headLeft = -Math.min(0, ...[...offsets.values()])
+  const headRight = Math.max(0, ...offsetAt) + glyphsFor(strict).width(headName)
+  const headLeft = -Math.min(0, ...offsetAt)
   // A lyric or a chord symbol is CENTRED on the note and counts on BOTH sides. It is the
   // dominant term in sung music: `birth-` makes a 9.81px notehead occupy 21.28px each way.
   //

@@ -208,7 +208,9 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // verified exact on four control tunes (`{=de}`, `{de}`, `{^de}`, and with a lyric),
     // so what moved here is a redistribution across 23 systems once one element reaches
     // 7px further left, not the rule. `mouse-click-01` went 7.20 -> 1.88 on the same fix.
-    'ragtime-nightingale': { heads: 2009, dy: 0.25, dx: 12.13, oy: 0.05, ox: 0.12 },
+    // dy 0.25 -> 0.04, oy 0.05 -> 0.01 and ox 0.12 -> 0.02 on the accidental-room rule.
+    // `dx` did not move: its 12.13 is the cancellation line, not this.
+    'ragtime-nightingale': { heads: 2009, dy: 0.04, dx: 12.13, oy: 0.01, ox: 0.02 },
     'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'score-reorder': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'simple-c': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
@@ -296,12 +298,18 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     'S8-layout-tune2': { heads: 40, dy: 0.01, dx: 0, oy: -0.01, ox: 0 },
     'S8-layout-tune3': { heads: 31, dy: 0, dx: 0.01, oy: 0, ox: 0 },
     'S8-layout-tune4': { heads: 90, dy: 0, dx: 0, oy: 0, ox: 0 },
-    'S8-layout-tune5': { heads: 60, dy: 0.01, dx: 11.81, oy: 0, ox: -1.56 },
+    // dx 11.81 -> 6.20 and ox -1.56 -> 1.07 on the same rule plus the UNISON half of it.
+    // `[cc]` and `[dd]` were drawn as one head on top of another, because the displacement
+    // map was keyed by STEP and a unison is two heads at one step.
+    'S8-layout-tune5': { heads: 60, dy: 0.01, dx: 6.2, oy: 0, ox: 1.07 },
     'S8-layout-tune6': { heads: 99, dy: 0, dx: 8.25, oy: 0, ox: 3.58 },
     'S8-layout-tune7': { heads: 58, dy: 2.66, dx: 0, oy: 1.67, ox: 0 },
     'S8-layout-tune8': { heads: 28, dy: 0.01, dx: 0, oy: 0, ox: 0 },
     'S8-layout-tune9': { heads: 66, dy: 0, dx: 0, oy: 0, ox: 0 },
-    'S8-layout-tune10': { heads: 96, dy: 0, dx: 82.67, oy: 0, ox: -31.37 },
+    // dx 82.67 -> 0.0 and ox -31.37 -> 0.0. EXACT ON ALL FOUR. A down-stemmed chord with a
+    // displaced head starts its accidentals a notehead further left, and this tune is
+    // twelve bars of nothing else — the deficit was a perfect 11.81px staircase.
+    'S8-layout-tune10': { heads: 96, dy: 0, dx: 0.0, oy: 0, ox: 0.0 },
     'S8-layout-tune11': { heads: 46, dy: 8.37, dx: 23.66, oy: 4.73, ox: -0.64 },
     'clefs-tune0': { heads: 1, dy: 0, dx: 0, oy: 0, ox: 0.18 },
     'clefs-tune1': { heads: 1, dy: 0, dx: 0, oy: -0.03, ox: 0.18 },
