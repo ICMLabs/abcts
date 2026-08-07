@@ -436,10 +436,35 @@ free. dx 13.31 → 12.13, ox −0.75 → 0.12.
 2026-08-06 correction restated: the `ox` improvement proved the direction, and no amount of
 staring at `dx` would have produced `impliedNaturals`.
 
-Still open on it: `dy` 0.25 and `dx` 12.13. And our SVG emits a key-signature GROUP where
-abcjs emits none — `S6-keys` counts 5/11/7 against the golden's 4/12/8, `createKeySignature`
-returning `null` for an empty accidental list (`create-key-signature.js:9`) — but its
-noteheads are exact, so nothing moves on it.
+#### …AND THE CANCELLATION LINE IS PINNED BUT NOT PORTED — start here
+
+The one-line rule above is right; WHICH line is off by one in a case the controls found.
+abcjs's own per-line key data, three controls:
+
+```
+[K:C] at the START of a music line   l0 Eb   l1 C+nat   l2 C      l3 C
+[K:C] MID-line                       l0 Eb   l1 Eb      l2 C+nat  l3 C
+standalone `K:C` between lines       l0 Eb   l1 C+nat   l2 C
+```
+
+**A `[K:]` BEFORE ANY MUSIC ON ITS LINE BELONGS TO THAT LINE'S PREFIX**, not to the line
+after — and the mechanism is the one already met twice today: `startNewLine` fires LAZILY,
+when the line's first music element is appended, so an inline field parsed before it is
+absorbed into the line's own `params`. Rows 1 and 3 are therefore the same case. Row 2 is
+what we implement for every case.
+
+Ours on row 1: prefix Eb plus an inline 3-natural change, then C+nat on the NEXT line. abcjs:
+C+nat in the prefix and nothing after. The pieces to fold: a change whose
+`keyChangeSourceRange` precedes every event of a system-starting measure should become that
+system's prefix key AND suppress the inline draw. `drawKeyChange` already orders the change
+against the events, so the test is in hand.
+
+Also open on ragtime: `dy` 0.25, and `dx` 12.13 — whose largest single band jumps 10.33
+between two adjacent heads at golden x 323.1 and 442.9 on the y≈4600 system, so it is ONE
+element's width and not a spread. And our SVG emits a key-signature GROUP where abcjs emits
+none (`S6-keys` 5/11/7 against the golden's 4/12/8; `createKeySignature` returns `null` for
+an empty accidental list, `create-key-signature.js:9`) — its noteheads are exact, so nothing
+moves on it.
 
 ### 7. Then Gonzato, then audio.
 
