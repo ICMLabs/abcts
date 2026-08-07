@@ -5426,6 +5426,42 @@ const EMPTY_BAR_EVENT: Rest = {
   sourceRange: null,
 }
 
+/**
+ * Does this measure's key change LEAD its system — i.e. stand before all of its music?
+ *
+ * `startNewLine` fires LAZILY. `parseMusicLine` consumes every inline field at the head of
+ * a source line first and only calls it once it is "past the inline statements"
+ * (`abc_parse_music.js:152-156`), so a `[K:]` written before the line's first note or bar
+ * is already in `multilineVars.key` when `params.key` is stamped — and the line's PREFIX
+ * shows the new key, with the `impliedNaturals` cancelling the old one.
+ *
+ * A leading BARLINE fires it too, which is why the opening barline is part of the test:
+ * `|[K:C]CDEF` reaches the `else` branch at the `|` and the change lands inline.
+ *
+ * The element itself is not lost. `appendStartingElement` runs while `tune.lineNum` is
+ * still the PREVIOUS line, finds a note in that line's voice and PUSHES the signature onto
+ * its end (`tune-builder.js:270-280`) — so abcjs draws the cancellation twice, once after
+ * the previous system's last barline and once in the next system's prefix. Measured on
+ * three controls: `[K:C]` opening a music line and a standalone `K:C` between two lines
+ * both give `keySignature x=664.80 w=20.20 [nB ne nA]` at the end of the line before, and
+ * the same element again at 49.05 in the next line's prefix. A MID-line `[K:C]` does
+ * neither — it draws where it stands and the NEXT line's prefix carries the naturals,
+ * which is the case we already had right.
+ *
+ * NOTE this is exact only because a system IS a source line here: there is no re-wrapping
+ * pass, so `startsSystem` and abcjs's `startNewLine` are the same event.
+ */
+const keyChangeLeadsLine = (measure: Measure | undefined): boolean => {
+  if (measure === undefined || !measure.startsSystem || measure.keyChange === null) return false
+  const at = measure.keyChangeSourceRange?.start
+  if (at == null) return false
+  const firstEvent = Math.min(
+    measure.openingBarlineSourceRange?.start ?? Number.POSITIVE_INFINITY,
+    ...measure.events.map((e) => e.sourceRange?.start ?? Number.POSITIVE_INFINITY),
+  )
+  return at < firstEvent
+}
+
 const barRod = (kind: Barline, el: LayoutElement, strict: boolean): number =>
   (strict ? (ENGRAVE.barLayoutWidth[kind] ?? el.width) : el.width) + ENGRAVE.prefixGap
 
@@ -5488,6 +5524,13 @@ function layoutMeasure(
    * reads it, and only together with the stem direction.
    */
   sharedStaff = false,
+  /**
+   * A key change that arrives after this measure's barline and LEADS the next system —
+   * the exact analogue of `trailingClef`, and it comes from the same mechanism.
+   *
+   * `[from, to]`, because a change cannot be drawn from the new key alone.
+   */
+  trailingKey: readonly [KeySignature, KeySignature] | null = null,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
   /**
@@ -5545,6 +5588,9 @@ function layoutMeasure(
   const openingBarAt = measure.openingBarlineSourceRange?.start ?? Number.POSITIVE_INFINITY
   const drawKeyChange = (): void => {
     if (measure.keyChange === null || keyInForce === null) return
+    // NOT WHEN IT LEADS THE SYSTEM — the prefix already carries it, and the previous
+    // system's `trailingKey` already drew it. See `keyChangeLeadsLine`.
+    if (keyChangeLeadsLine(measure)) return
     const change = layoutKeyChange(x, keyInForce, measure.keyChange, clef, strict)
     if (change === null) return
     elements.push(change)
@@ -5837,6 +5883,16 @@ function layoutMeasure(
   // …AND THE NEXT SYSTEM'S CLEF CHANGE, drawn after that barline. See `trailingClef`.
   if (trailingClef !== null) {
     const trailing = layoutClef(x, trailingClef, strict)
+    if (trailing !== null) {
+      elements.push(trailing)
+      fixed(trailing.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
+      x += trailing.width + ENGRAVE.prefixGap
+    }
+  }
+
+  // …AND THE NEXT SYSTEM'S KEY CHANGE with it. See `trailingKey` and `keyChangeLeadsLine`.
+  if (trailingKey !== null) {
+    const trailing = layoutKeyChange(x, trailingKey[0], trailingKey[1], clef, strict)
     if (trailing !== null) {
       elements.push(trailing)
       fixed(trailing.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
@@ -6239,7 +6295,11 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       clefAtMeasure.push(clefInForce)
       if (measure.startsSystem) {
         keyAtPreviousLine = keyAtLineStart
-        keyAtLineStart = keyInForce
+        // A change that LEADS the line is already in `multilineVars.key` when abcjs stamps
+        // `params.key`, so the prefix shows the NEW key. See `keyChangeLeadsLine`.
+        keyAtLineStart = keyChangeLeadsLine(measure)
+          ? (measure.keyChange ?? keyInForce)
+          : keyInForce
       }
       keyAtMeasure.push(keyAtLineStart)
       keyBeforeLine.push(keyAtPreviousLine)
@@ -6259,6 +6319,14 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           return next?.startsSystem === true ? (next.clefChange ?? null) : null
         })(),
         (voicesOfStaff.find((m) => m.includes(voiceIndex))?.length ?? 1) > 1,
+        (() => {
+          const next = (voice?.measures ?? [])[measureIndex + 1]
+          if (!keyChangeLeadsLine(next) || next?.keyChange == null) return null
+          // The key as THIS measure ends is what the cancellation is measured against, and
+          // `keyInForce` is still that: `measure.keyChange` is applied below.
+          const from = measure.keyChange ?? keyInForce
+          return from === null ? null : ([from, next.keyChange] as const)
+        })(),
       )
       if (measure.keyChange !== null) keyInForce = measure.keyChange
       if (measure.meterChange != null) meterInForce = measure.meterChange

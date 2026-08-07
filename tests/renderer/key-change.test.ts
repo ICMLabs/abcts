@@ -102,6 +102,57 @@ describe('mid-tune key changes', () => {
     expect(seq(after).join(' ')).toContain('bar keySignature')
   })
 
+  it('gives a line-leading key change to the PREFIX, and draws it twice', () => {
+    // `startNewLine` fires LAZILY — after the head of a source line's inline fields — so a
+    // `[K:]` written before the line's first note is already in `multilineVars.key` when
+    // `params.key` is stamped, and the line's PREFIX shows the new key. The element itself
+    // is appended to the line still open, so abcjs draws the cancellation TWICE: once at
+    // the end of the previous system and once in the next system's prefix.
+    //
+    // Measured against abcjs 6.6.3 on this exact tune — three controls, `[K:C]` opening a
+    // line, `[K:C]` mid-line, and a standalone `K:C`. abcjs's laid-out elements:
+    //
+    //   line 0  clef 15, keySignature 49.05 [fB fe fA], … bar 653.80,
+    //           keySignature 664.80 w=20.20 [nB ne nA]     <- the trailing draw
+    //   line 1  clef 15, keySignature 49.05 w=20.20 [nB ne nA]   <- the prefix
+    //   line 2  clef 15, no keySignature at all
+    //
+    // A MID-line change is the case we already had right: its line keeps the OLD prefix
+    // and the cancellation appears in the NEXT line's, which is what row two asserts.
+    const perSystem = (src: string): string[] => {
+      const score = parse(src).scores[0]
+      if (score === undefined) throw new Error('did not parse')
+      return layout(score).systems.map((system) =>
+        (system.staves[0]?.voices[0] ?? [])
+          .filter((element) => element.type === 'keySignature')
+          .map((element) =>
+            element.glyphs.map((g) => g.name.replace('accidental', '')[0] ?? '?').join(''),
+          )
+          .join(' '),
+      )
+    }
+    const body = 'CDEF|GABc|\n'
+    // `F` = Flat, `N` = Natural. Line 0 opens with Eb's three flats and ends with the
+    // three cancelling naturals; line 1's prefix repeats them; lines 2-3 draw nothing.
+    expect(perSystem(`X:1\nL:1/4\nK:Eb\n${body}[K:C]${body}${body}${body}`)).toEqual([
+      'FFF NNN',
+      'NNN',
+      '',
+      '',
+    ])
+    // A standalone `K:C` between two lines is the SAME case — it is parsed before the next
+    // line's first note just as the inline form is.
+    expect(perSystem(`X:1\nL:1/4\nK:Eb\n${body}K:C\n${body}${body}`)).toEqual(['FFF NNN', 'NNN', ''])
+    // …and a MID-line change is not: it draws where it stands, its own line keeps Eb, and
+    // the naturals reach the next line's prefix.
+    expect(perSystem(`X:1\nL:1/4\nK:Eb\n${body}CDEF|[K:C]GABc|\n${body}${body}`)).toEqual([
+      'FFF',
+      'FFF NNN',
+      'NNN',
+      '',
+    ])
+  })
+
   it('treats a mode change with the same signature as no change', () => {
     // K:G and K:Em are one signature. A reader sees no accidental move, so neither
     // should the page — this is why the guard compares FIFTHS, not the key object.
