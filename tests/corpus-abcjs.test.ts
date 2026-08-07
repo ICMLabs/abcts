@@ -341,7 +341,14 @@ const WITHIN: Readonly<Record<string, number>> = {
   // through `decorationMinTop`'s clamp of 12, which is why one tune of a transposed pair
   // showed it and the other could not: 11.2 clamps to 12 and 12.2 does not. 0.775px under
   // every notehead on `transpose-output-04`, and both of that pair are now exact.
-  '0.05': 166,
+  //
+  // A REST'S CHORD SYMBOL IS CENTRED ON THE ELEMENT, NOT ON THE REST GLYPH. `createNote`
+  // declares `symbolWidth = 0` and assigns it only in the NOTE arm
+  // (`abstract-engraver.js:784, 827`), so the `noteheadWidth` reaching `addChord` on a rest
+  // is a flat zero and `addCentered` gets `dx = 0` where a note gets half a head. abcjs's
+  // own SVG centres `"Eb7"z`'s chord at 109.84 — the rest's x — and probes the element at
+  // `w = 17.789`, exactly half the chord. 0.53px under every notehead after it.
+  '0.05': 167,
   '1': 173,
   '5': 173,
   '25': 173,

@@ -2015,7 +2015,15 @@ function layoutRest(
   // way, and the mark itself was lost outright before this.
   const textSpan = { left: 0, right: 0 }
   const restWidth = spec === null ? 0 : glyphsFor(strict).width(spec.name)
-  const texts: PlacedText[] = noteText(rest, x, restWidth, strict, textSpan)
+  // …AND IT IS CENTRED ON THE ELEMENT, NOT ON THE REST GLYPH. `createNote` declares
+  // `symbolWidth = 0` and assigns it only in the NOTE arm — `symbolWidth = ret2.symbolWidth`
+  // (`abstract-engraver.js:784, 827`) — so the `noteheadWidth` reaching `addChord` on a
+  // rest is a flat zero, and `addCentered` gets `dx = 0` where a note gets half a head.
+  // Both the drawn x and the reserve follow: abcjs's own SVG centres `"Eb7"z`'s chord at
+  // 109.84, the rest's own x, and probes the element at `w = 17.789`, exactly half the
+  // chord. Passing the rest's width made ours half a rest glyph wider — 0.53px under every
+  // notehead after it on `synth-flattener-14`.
+  const texts: PlacedText[] = noteText(rest, x, 0, strict, textSpan)
   // A MULTI-MEASURE REST IS A BAR AND A COUNT, both hung off one `mmWidth`.
   //
   // abcjs (`abstract-engraver.js:593-598`) puts the glyph at `dx = mmWidth`, declares it
