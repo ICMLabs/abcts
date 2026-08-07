@@ -153,15 +153,27 @@ describe('mid-tune key changes', () => {
     ])
   })
 
-  it('treats a mode change with the same signature as no change', () => {
-    // K:G and K:Em are one signature. A reader sees no accidental move, so neither
-    // should the page — this is why the guard compares FIFTHS, not the key object.
+  it('REDRAWS a mode change that keeps the same signature, as abcjs does', () => {
+    // THIS TEST USED TO ASSERT THE OPPOSITE, and its reason was our engraving judgement
+    // rather than abcjs: "K:G and K:Em are one signature, a reader sees no accidental
+    // move, so neither should the page." abcjs's own SVG denies it. Probed on this exact
+    // tune, it lays out TWO key signatures — the prefix at x=49.05 and the change at
+    // x=248.01, both `w = 8.25`, one sharp each.
+    //
+    // Its parser appends the element on `result.foundKey && hasBeginMusic()` alone and
+    // never compares keys; the only suppression is `createKeySignature` returning null on
+    // an EMPTY accidental list. Strict reproduces abcjs, so it redraws.
     const src = 'X:1\nL:1/4\nK:G\nGABc|[K:Em]GABc|\n'
     const score = parse(src).scores[0]
     if (score === undefined) throw new Error('did not parse')
     const sigs = layout(score)
       .systems.flatMap((system) => system.staves[0]?.voices[0] ?? [])
       .filter((element) => element.type === 'keySignature')
-    expect(sigs).toHaveLength(1) // the opening prefix only
+    expect(sigs).toHaveLength(2)
+    // One sharp each, and no cancelling natural — nothing is being left.
+    expect(sigs.map((s) => s.glyphs.map((g) => g.name))).toEqual([
+      ['accidentalSharp'],
+      ['accidentalSharp'],
+    ])
   })
 })

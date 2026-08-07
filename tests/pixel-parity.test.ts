@@ -284,7 +284,10 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     'S6-keys-tune0': { heads: 1, dy: 0, dx: 0, oy: 0, ox: 0.18 },
     'S6-keys-tune1': { heads: 48, dy: 0.01, dx: 0, oy: 0, ox: 0 },
     'S6-keys-tune2': { heads: 28, dy: 0, dx: 0, oy: 0, ox: 0 },
-    'S6-keys-tune3': { heads: 48, dy: 0, dx: 24.93, oy: 0, ox: 2.08 },
+    // dx 24.93 -> 0.01 and ox 2.08 -> 0.0 when the "same signature prints nothing" guard
+    // went. `K:A Mixolydian` -> `K:E Dorian` is two sharps to two sharps and abcjs
+    // reprints all of it; the 18.50px it reserved came back as a 3.56px-per-note ramp.
+    'S6-keys-tune3': { heads: 48, dy: 0, dx: 0.01, oy: 0, ox: 0.0 },
     'S6-keys-tune4': { heads: 31, dy: 0, dx: 0.01, oy: 0, ox: 0 },
     'S7-voices-tune0': { heads: 51, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S7-voices-tune1': { heads: 62, dy: 0, dx: 0, oy: 0, ox: 0 },

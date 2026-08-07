@@ -1788,17 +1788,30 @@ function layoutKeyChange(
   clef: Clef,
   strict = true,
 ): LayoutElement | null {
-  // A `K:` that restates the key in force prints NOTHING. This is not an optimisation —
-  // it is the difference between correct and a duplicated key signature in the middle of
-  // a bar. Three fixtures reach it and none of them is about key changes: a per-voice
-  // `K:G clef=treble` on each of two voices makes the second one a "change" from G to G
-  // (`multi-voice-rest-collision`), and `clefs` restates the key per voice the same way.
+  // THERE IS NO "SAME SIGNATURE, PRINT NOTHING" TEST IN ABCJS, and the one that used to
+  // stand here was our own engraving judgement wearing a citation.
   //
-  // Compared on FIFTHS, not on the key object: `K:G` and `K:Em` are the same signature in
-  // different modes, and a reader sees no accidental change between them, so neither
-  // should the page.
-  if (keyFifths(from) === keyFifths(to)) return null
-
+  // It read: "`K:G` and `K:Em` are the same signature in different modes, and a reader
+  // sees no accidental change between them, so neither should the page." That is sound
+  // engraving and abcjs's own SVG denies it — `K:G\nGABc|[K:Em]GABc|` draws TWO
+  // signatures, the prefix at 49.05 and the change at 248.01, both `w = 8.25`. Its parser
+  // appends the element on the strength of `result.foundKey && hasBeginMusic()` alone
+  // (`abc_parse_header.js:430-434`) and never compares keys; the only thing that
+  // suppresses a draw is `createKeySignature` returning null for an EMPTY accidental list
+  // (`create-key-signature.js:9`), which the `cancelled`/`incoming` test below is.
+  //
+  // WHAT THE GUARD WAS ACTUALLY COMPENSATING FOR is a modelling difference, and it is
+  // handled where it belongs. A per-voice `K:G clef=treble` on each of two voices made the
+  // second a "change" from G to G — but in abcjs that `K:` reaches `appendStartingElement`
+  // with the voice's own child list EMPTY, so it falls past both arms of the scan and
+  // assigns `staff[staffNum].key` instead of pushing an element (`tune-builder.js:270-292`).
+  // It is the voice's KEY, not a change, and `keyChangeLeadsLine` is the same test.
+  // Measured on that control: abcjs draws one key signature, not two.
+  //
+  // Cost of the wrong reading: `S6-keys` X:604 changes `K:A Mixolydian` to `K:E Dorian`,
+  // two sharps to two sharps, and abcjs reprints all of it — 18.50px of fixed width at the
+  // end of that system, which justification then spread over eight noteheads as a clean
+  // 3.56px-per-note ramp out to dx 24.93.
   const shift = keySignatureShift(clef)
   const stepsFor = (key: KeySignature): { step: number; sharp: boolean }[] => {
     const fifths = keyFifths(key)
