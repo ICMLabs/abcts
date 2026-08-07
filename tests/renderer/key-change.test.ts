@@ -201,6 +201,19 @@ describe('mid-tune key changes', () => {
       'timeSigCommon',
       'timeSigCommon',
     ])
+
+    // AND THE THIRD CASE: a standalone `M:` after a `\` CONTINUATION draws WHERE IT
+    // STANDS, mid-system. The discriminator is which of abcjs's two parsers ever sees the
+    // field — a `M:` on a fresh line is taken by the HEADER parser and only fills
+    // `multilineVars.meter`, its `letter_to_body_header` arm never reached (probed, and
+    // silent); after a `\` the line goes to `parseMusicLine`, which DOES reach that arm and
+    // runs `appendStartingElement` on a voice that already holds notes.
+    //
+    // One system, both meters on it, and the 3/4 is NOT in a prefix anywhere.
+    expect(meters(`${head.replace('GABc|\n', 'GABc|\\\n')}M:3/4\n${tail}`)).toEqual([
+      ['timeSigCommon', 'timeSig3+timeSig4'],
+      [],
+    ])
   })
 
   it('cancels the key IN FORCE, not the previous LINE\'s key', () => {

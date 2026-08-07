@@ -2381,8 +2381,27 @@ class Parser {
         return
       case 'M': {
         if (builder.bodyStarted) {
-          if (inline) builder.voice.setMeterChange(parseMeter(value), range, true)
-          else builder.voice.setMeterForNextLine(parseMeter(value), range)
+          // A STANDALONE `M:` ON A CONTINUED LINE DRAWS WHERE IT STANDS, and that is a
+          // THIRD case rather than a variant of either other one.
+          //
+          // The discriminator is which of abcjs's two parsers ever sees the field. A `M:`
+          // on a fresh line is taken by the HEADER parser, which only fills
+          // `multilineVars.meter` for the next `startNewLine` — its `letter_to_body_header`
+          // arm is never reached, probed and confirmed silent. After a `\` continuation the
+          // line is fed to `parseMusicLine` instead, which DOES reach that arm, and it runs
+          // `appendStartingElement('meter', …)` on a line whose voice already holds notes —
+          // so the meter is pushed onto the end of the music so far, mid-system.
+          //
+          // Measured on `S8-layout` X:812, whose `"Em"ABc def |\` is followed by `M: 9/8`:
+          // abcjs draws `timeSignature x=207.51 w=10.93` straight after that bar at 196.51.
+          // Ours parked it for the next line, where the tune's own `M: 6/8` overwrote it,
+          // and the 9/8 was lost outright — 20.12px of every notehead on the system.
+          //
+          // `this.lineContinued` still holds the PREVIOUS line's flag here: a field line
+          // returns from `parseLine` before the music path reassigns it.
+          if (inline || this.lineContinued || this.continueAll) {
+            builder.voice.setMeterChange(parseMeter(value), range, inline)
+          } else builder.voice.setMeterForNextLine(parseMeter(value), range)
           return
         }
         builder.meter = parseMeter(value)

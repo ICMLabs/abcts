@@ -325,20 +325,18 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // displaced head starts its accidentals a notehead further left, and this tune is
     // twelve bars of nothing else — the deficit was a perfect 11.81px staircase.
     'S8-layout-tune10': { heads: 96, dy: 0, dx: 0.0, oy: 0, ox: 0.0 },
-    // dy 8.37 -> 0.01, oy 4.73 -> 0.00 and dx 23.66 -> 20.12 when the prefix started
-    // cancelling the key IN FORCE rather than the previous LINE's key. X:812 is `K:G`,
-    // then a mid-line `[K:Bb]`, then a standalone `K:Gb`: Gb cancels nothing from Bb and
-    // abcjs draws no natural, but against G we cancelled its F#. A NATURAL declares a box
-    // to pitch 15.88 against the clef's 13.72, so it raised the chord lane, the ending
-    // lane on top of it, and every notehead on the system with them.
+    // EXACT ON ALL FOUR, and it took two findings. First the prefix started cancelling the
+    // key IN FORCE rather than the previous LINE's key — `K:Gb` after a mid-line `[K:Bb]`
+    // cancels nothing, where against G it cancelled an F#, and a NATURAL declares a box to
+    // pitch 15.88 against the clef's 13.72, so one wrong glyph raised the chord lane, the
+    // ending lane above it and the whole staff: dy 8.37 -> 0.01, oy 4.73 -> 0.00.
+    // Then the standalone `M: 9/8` after a `\` continuation started drawing where it
+    // stands: dx 20.12 -> 0.00, ox -3.16 -> 0.00.
     //
-    // `ox` -0.64 -> -3.16 IS A RECORDED RAISE, the second of that shape and for the same
-    // reason as the first (see `S5-directives-tune1`): it is a MEAN over the one thing
-    // left on this tune, a -20.12px step at the `M: 9/8` that follows a `\` line
-    // continuation on system 0. Every notehead moved the right way or not at all; the mean
-    // moved because the spread it averages did. The first such raise closed itself when
-    // its ramp closed, one commit later.
-    'S8-layout-tune11': { heads: 46, dy: 0.01, dx: 20.12, oy: 0.0, ox: -3.16 },
+    // AND THE `ox` RAISE THE MIDDLE STATE CARRIED IS GONE — the second of that shape to
+    // close itself one commit later. Both were means over a spread that had not been
+    // fixed yet, and in both cases the entry named what it was waiting on.
+    'S8-layout-tune11': { heads: 46, dy: 0.01, dx: 0.0, oy: 0.0, ox: 0.0 },
     'clefs-tune0': { heads: 1, dy: 0, dx: 0, oy: 0, ox: 0.18 },
     'clefs-tune1': { heads: 1, dy: 0, dx: 0, oy: -0.03, ox: 0.18 },
     'clefs-tune2': { heads: 1, dy: 0, dx: 0, oy: -0.03, ox: 0.18 },
