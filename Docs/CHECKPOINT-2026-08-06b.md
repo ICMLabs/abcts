@@ -351,6 +351,21 @@ so. Running the corpus at the session's first commit and again at its last is wh
 established that this session's changes only ever improved it — six fixtures better, none
 worse. The recorded numbers alone cannot tell you that.
 
+#### ~~`frere-jacques`~~ and ~~`little swallow`~~ — BOTH CLOSED 2026-08-07
+
+Three rules, all three of which had been recorded as known and set aside:
+
+- **A standalone `M:` belongs to the next LINE**, not to the measure still open
+  (`abc_parse_music.js:984-993`). The whole 21.80.
+- **`[|` is `bar_thick_thin`, not `bar_thin_thin`** — 13px against 4, and a thick rule
+  first (`abstract-engraver.js:974-977`). 9px of `little swallow`'s opening prefix, and
+  `ENGRAVE`'s own comment had called it "a model question, not a spacing one".
+- **abcjs's escape table is a FIXED MAP, not a combining-mark rule** — `\va` is not in it,
+  so abcjs prints `Xi\vao` literally and MEASURES six characters where ABC 2.1 §8.2 gives
+  four. 47.25px of lyric against 33.52, halved onto a centred note. The remaining 6.87.
+
+Kept below for the method, which is the reusable part.
+
 #### `frere-jacques`, dx 21.80 — CHASED TO THE PARSER, not started
 
 **ONLY SYSTEM 3 IS OFF.** Systems 1, 2 and 4 are exact to 0.00; heads 13–26 run from
@@ -382,10 +397,29 @@ systems 2 and 3; and it is not a prefix shift, because head 0 is −15.87 where 
 are −20.73 — our first gap is 4.86 SMALLER than abcjs's before the rest of the line runs
 long. It is the corpus's CJK-lyric fixture, and a lyric's width feeds the element rod.
 
-#### `ragtime-nightingale`, dx 13.32
+#### `ragtime-nightingale`, dx 13.31 — THE LAST ONE, and half of it is measured
 
-Improved this session on `dy` (0.44 → 0.24) and `oy` (0.16 → 0.05) without being worked on.
-Its `dx` is unchanged and is the oldest number on this list.
+**THE PREFIX REPRINTS `score.key`, THE HEADER KEY, WHERE ABCJS REPRINTS THE KEY IN FORCE.**
+`layoutKeySignature(x, score.key, clef, strict)` in `prefix()`, beside a `clefAtMeasure`
+that does accumulate. ragtime opens `K:Eb` and changes to `[K:Ab]` and back repeatedly, so
+its later systems want FOUR flats and get three: abcjs's key element probes at `w = 33`
+with flats at 0, 8.75, 17.5 and 26.25 against our 24.25 — one accidental's 6.75 plus its 2
+of gap, which is the 8.75 those systems' first noteheads are out by.
+
+**TRIED AND REVERTED, WITH THE NUMBERS.** Recording `keyAtMeasure` alongside `clefAtMeasure`
+and reading it in the prefix moves `ox` from **−0.75 to +0.03** — the systematic shift is
+gone, which is proof the rule is right — but `dx` from **13.31 to 14.18**, so the ratchet
+refuses it and a ceiling may not be raised to let it through.
+
+What the extra spread is: **we then draw 18 four-flat key signatures against abcjs's 14**,
+and 55 key signatures in all against the golden's 50. So some systems get the new key where
+abcjs keeps the old. The obvious candidate — abcjs stamping `params.key` once per SOURCE
+LINE and `wrap_lines` copying it into each system it splits into, so a mid-line `[K:]` does
+not reach the wrapped continuation — was implemented and **changed nothing**, because
+ragtime's systems already ARE its source lines. So that is ruled out and the cause is
+elsewhere: find which four of our signatures abcjs does not draw before re-landing this.
+
+Its `dy` improved 0.44 → 0.24 and `oy` 0.16 → 0.05 this session without being worked on.
 
 ### 7. Then Gonzato, then audio.
 
