@@ -210,7 +210,13 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // 7px further left, not the rule. `mouse-click-01` went 7.20 -> 1.88 on the same fix.
     // dy 0.25 -> 0.04, oy 0.05 -> 0.01 and ox 0.12 -> 0.02 on the accidental-room rule.
     // `dx` did not move: its 12.13 is the cancellation line, not this.
-    'ragtime-nightingale': { heads: 2009, dy: 0.04, dx: 12.13, oy: 0.01, ox: 0.02 },
+    // dx 12.13 -> 1.58, dy 0.04 -> 0.01, oy 0.01 -> 0.00 when the ending's `minspacing`
+    // stopped being charged to EVERY voice's barline. abcjs charges the one that carries
+    // the volta: of the five barlines at one x on system 17, ONE has `minsp=28.50` and the
+    // other four have the plain 10.00. It is not a wash, because the left-ink rule is a
+    // SHORTFALL — abcjs's other voices keep 18.50 of slack after their bar, which absorbs
+    // the 12.13 of accidental ink on the chord after it; ours had spent that slack.
+    'ragtime-nightingale': { heads: 2009, dy: 0.01, dx: 1.58, oy: 0.0, ox: 0.03 },
     'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'score-reorder': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'simple-c': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },

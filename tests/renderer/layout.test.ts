@@ -1947,6 +1947,36 @@ describe('ornaments and techniques', () => {
     }
   })
 
+  it('charges an ending\'s extra minspacing to ONE voice, not to every barline', () => {
+    // abcjs adds `minspacing += textWidth + 10` in `createBarLine`, which runs where the
+    // ENDING element is created — and a volta belongs to the first voice of the first
+    // staff, not to every voice whose bar falls under the `|1`. Its own probe on
+    // `ragtime-nightingale`'s system 17: of the five barlines at one x, ONE carries
+    // `minsp=28.50` and the other four the plain 10.00.
+    //
+    // Charging every voice is NOT a wash, because the left-ink rule is a SHORTFALL and not
+    // an addition — `if (er < extraWidth) x += extraWidth - er`
+    // (`layout/voice-elements.js:66-72`). abcjs's other voices keep 18.50 of slack after
+    // their bar, which absorbs the 12.13 of accidental ink on the chord that follows; ours
+    // had spent that slack on the ending, so the same accidental pushed the shared cursor
+    // 12.13 further right. That was the whole of ragtime's dx, on 2009 noteheads.
+    // The note straight after the ending's barline carries an accidental in the SECOND
+    // voice only. With the room charged once, the slack after that voice's bar absorbs it
+    // and nothing moves; charged twice, the accidental pushes the shared cursor.
+    const withAcc =
+      'X:1\nM:2/4\nL:1/8\n%%score (a b)\nV:a\nK:C\nCDEF|1 GABc:|2 GABc|\nV:b\nK:C\nCDEF|1 _GABc:|2 GABc|\n'
+    const plain = withAcc.replace('_GABc', 'GABc')
+    const firstNoteAfterEnding = (src: string): number => {
+      const score = parse(src).scores[0] as Score
+      const voice = layout(score).systems[0]?.staves[0]?.voices[0] ?? []
+      const bar = voice.findIndex((e) => e.type === 'bar')
+      const after = voice.slice(bar + 1).find((e) => e.type === 'note')
+      if (after === undefined) throw new Error('no note after the ending bar')
+      return after.x
+    }
+    expect(firstNoteAfterEnding(withAcc)).toBeCloseTo(firstNoteAfterEnding(plain), 6)
+  })
+
   it('draws `!slide!` as a CURVE at the note, and reserves nothing above', () => {
     // abcjs builds two ZERO-WIDTH blanks below and left of the head and ties them:
     //

@@ -6488,7 +6488,20 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         stemForVoice(voiceIndex),
         keyInForce,
         hasVocalsAt(measureIndex),
-        (voice?.measures ?? [])[measureIndex + 1]?.volta ?? null,
+        // ONLY THE VOICE THAT CARRIES THE ENDING PAYS FOR IT. abcjs adds
+        // `minspacing += textWidth + 10` in `createBarLine`, which runs where the ending
+        // element is created — and a volta belongs to the FIRST voice of the first staff,
+        // not to every voice whose bar happens to fall under the `|1`. Its own probe says
+        // so: of the five barlines at one x on `ragtime-nightingale`'s system 17, ONE has
+        // `minsp=28.50` and the other four have the plain 10.00.
+        //
+        // Charging every voice is not a wash, because the LEFT-INK rule is a shortfall and
+        // not an addition — `if (er < extraWidth) x += extraWidth - er`
+        // (`layout/voice-elements.js:66-72`). abcjs's other voices keep 18.50 of slack
+        // after their bar, which absorbs the 12.13 of accidental ink on the chord that
+        // follows; ours had spent that slack on the ending, so the same accidental pushed
+        // the shared cursor 12.13 further right. That was the WHOLE of ragtime's dx.
+        voiceIndex === 0 ? ((voice?.measures ?? [])[measureIndex + 1]?.volta ?? null) : null,
         meterInForce,
         (() => {
           const next = (voice?.measures ?? [])[measureIndex + 1]
