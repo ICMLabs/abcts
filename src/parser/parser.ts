@@ -2275,7 +2275,21 @@ class Parser {
       // tune (ABC 2.1 §4.1). The builder holding it looks EMPTY — no `X:`, no `T:`, no
       // music — so `flush` was dropping it and `%%stretchlast 1` written above `X:1`
       // never reached the tune below it, which is 241px of `visual-wrap-02` on its own.
-      if (this.builder?.isEmpty === true) this.fileDefaults = this.builder.formatting()
+      //
+      // …AND IT IS THE WHOLE LEADING CHUNK THAT GOES, not just an empty one. abcjs splits
+      // the book on `"\nX:"` and, when that gives more than one piece and the first does
+      // not itself start with `X:`, SHIFTS IT OFF — keeping only its `%%` lines, which it
+      // prepends to every tune (`abc_parse_book.js:12-33`, its own "assume the top of the
+      // file is intertune"). Everything else in it is DISCARDED, `T:` included.
+      //
+      // `isEmpty` alone was not that test: it wants no `X:`, no `T:` AND no music, so
+      // `%% example / T: wed / %%example / X:1` kept its leading block as a TUNE and we
+      // rendered two where abcjs renders one. A builder still holding no `X:` when an
+      // `X:` arrives IS the leading chunk, whatever else it has collected.
+      if (this.builder !== null && this.builder.tuneNumber === null) {
+        this.fileDefaults = this.builder.formatting()
+        this.builder = null
+      }
       this.flush()
       const builder = this.ensureScore(start)
       builder.tuneNumber = Number.parseInt(value, 10) || null

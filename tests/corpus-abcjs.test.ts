@@ -49,10 +49,19 @@ const CONTENT_GAPS: Readonly<Record<string, string>> = {
   // the fourth in one line: `createNote` closes its rest/note branch and THEN calls
   // `addGraceNotes` (`abstract-engraver.js:834`), so a rest and a spacer engrave their
   // graces exactly as a note does. There was no decision to make — only a line to read.
-  // `%% example / T: wed / %%example / X:1` — a `T:` standing before any `X:`. abcjs
-  // keeps the leading block as part of the first tune; we split it off as a tune of its
-  // own, so the book has two where abcjs has one.
-  'abcjs-parse-book_parser-04-wed': 'a header block before the first X: splits the book',
+  // CLOSED 2026-08-07: `%% example / T: wed / %%example / X:1`. This entry described the
+  // symptom and guessed the cause — "abcjs keeps the leading block as part of the first
+  // tune" — and abcjs does the opposite. `bookParser` splits on `"\nX:"` and, when that
+  // gives more than one piece and the first does not itself start with `X:`, SHIFTS IT
+  // OFF, keeping only its `%%` lines to prepend to every tune
+  // (`abc_parse_book.js:12-33`, its own comment: "assume the top of the file is
+  // intertune"). Everything else in it is DISCARDED, `T:` included. We already had the
+  // `%%`-only half; what we lacked was that the test is "no `X:` yet", not "empty" —
+  // `isEmpty` also wants no `T:` and no music, so a leading block with a title became a
+  // tune of its own.
+  //
+  // THE LIST IS EMPTY, AND IT IS THE FIRST TIME. Every fixture of the harvested corpus
+  // now agrees with abcjs on note content as well as on all four geometric axes.
 }
 
 /**
@@ -384,13 +393,20 @@ const WITHIN: Readonly<Record<string, number>> = {
   // 11.88px up and 9.6 down around a declared ±10.72, so it read 3.066 pitch above its
   // anchor against abcjs's 2.766.
   //
-  // **`0.05: 173` IS EVERY MEASURABLE FIXTURE.** The ranked table has no geometry left on
-  // it at all — the 174th entry is the leading-header tune-count mismatch, which has none
-  // to compare.
-  '0.05': 173,
-  '1': 173,
-  '5': 173,
-  '25': 173,
+  // A LEADING CHUNK BEFORE THE FIRST `X:` IS NOT A TUNE. `bookParser` splits on `"\nX:"`
+  // and shifts the first piece off when it does not start with `X:`, keeping only its
+  // `%%` lines (`abc_parse_book.js:12-33`). That was the last CONTENT gap, and closing it
+  // made the 174th fixture measurable for the first time.
+  //
+  // **174 OF 174, ON EVERY THRESHOLD.** The whole harvested corpus agrees with abcjs on
+  // note content and on all four geometric axes to within 0.05px. The ranked table is
+  // EMPTY — it prints no rows at all — so it can no longer name anything, and the gates
+  // that remain are regression nets rather than instruments. See
+  // `Docs/CHECKPOINT-2026-08-06b.md` for what that means for finding the next defect.
+  '0.05': 174,
+  '1': 174,
+  '5': 174,
+  '25': 174,
 }
 
 const names = readdirSync(fixturesDir)
