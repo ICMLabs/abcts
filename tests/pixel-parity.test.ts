@@ -120,6 +120,24 @@ import { corpusDir, goldensDir, loadCorpus } from './corpus/corpus.js'
 import { absolutePixels, byClass } from './pixel-geometry.js'
 
 /**
+ * THE 89 `-tuneN` ROWS ARE A GOLDEN SURFACE THIS GATE READ NOTHING OF UNTIL 2026-08-07.
+ *
+ * It enumerated `<name>.svg`, which only a SINGLE-TUNE fixture has — so 29 of the 41 were
+ * measured and the twelve multi-tune ones were not measured at all, though abcjs's own
+ * per-tune goldens (`<name>-tune0.svg`, `-tune1.svg`, …) had been sitting beside them the
+ * whole time. That is 89 more tunes, and every mid-tune key change in the corpus lives in
+ * one of them (`key-change.test.ts` says why, and had to hand-roll its own comparison for
+ * exactly this reason).
+ *
+ * All 89 match abcjs on notehead COUNT on the first run. Twelve differ on position, and
+ * they are the ranked list the checkpoint said no gate could produce any more — `S8-layout`
+ * X:810 at dx 82.67 being the largest number left anywhere in either corpus.
+ *
+ * The `-classes-tuneN` and `-print-tuneN` families are the same tunes rendered with
+ * `add_classes` / `print`, so they are deliberately NOT enumerated: they would triple the
+ * row count and measure the same geometry three times.
+ */
+/**
  * Per fixture: how many noteheads abcjs draws, and the current position spreads.
  *
  * `heads` is asserted exactly. `dy`/`dx` are ceilings — the measured value must not
@@ -217,6 +235,98 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // `timesig.common` instead of the digits `4/4`. A one-glyph prefix, and the whole of
     // this fixture's remaining horizontal error.
     'zocharti-loch': { heads: 64, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+
+    // ── THE MULTI-TUNE FIXTURES, per tune. See the note above the table. ──────────
+    'S1-decorations-tune0': { heads: 16, dy: 0, dx: 0.01, oy: 0, ox: 0 },
+    'S1-decorations-tune1': { heads: 11, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S1-decorations-tune2': { heads: 64, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S1-decorations-tune3': { heads: 13, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S1-decorations-tune4': { heads: 16, dy: 0, dx: 0.01, oy: 9.67, ox: 0 },
+    'S2-fields-tune0': { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S2-fields-tune1': { heads: 11, dy: 4.68, dx: 0, oy: -2.98, ox: 0 },
+    'S2-fields-tune2': { heads: 16, dy: 0, dx: 0.01, oy: 0, ox: 0 },
+    'S3-note-syntax-tune0': { heads: 28, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune1': { heads: 43, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune2': { heads: 21, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune3': { heads: 11, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune4': { heads: 43, dy: 0.01, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune5': { heads: 27, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune6': { heads: 23, dy: 0, dx: 0.01, oy: 0, ox: 0 },
+    'S3-note-syntax-tune7': { heads: 29, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune8': { heads: 66, dy: 0.01, dx: 0.01, oy: 0, ox: 0 },
+    'S3-note-syntax-tune9': { heads: 8, dy: 0.01, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune10': { heads: 14, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune11': { heads: 7, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune12': { heads: 16, dy: 0, dx: 0.18, oy: 0, ox: 0.02 },
+    'S3-note-syntax-tune13': { heads: 0, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune14': { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune15': { heads: 4, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune16': { heads: 4, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune17': { heads: 25, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune18': { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune19': { heads: 12, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune20': { heads: 12, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune21': { heads: 5, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune22': { heads: 40, dy: 0, dx: 0.01, oy: 0, ox: 0 },
+    'S3-note-syntax-tune23': { heads: 29, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune24': { heads: 64, dy: 0, dx: 6.24, oy: 0, ox: 0.11 },
+    'S4-bars-repeats-tune0': { heads: 28, dy: 0, dx: 0.01, oy: 0, ox: 0 },
+    'S4-bars-repeats-tune1': { heads: 60, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S4-bars-repeats-tune2': { heads: 2, dy: 0, dx: 1.17, oy: 0, ox: 1.8 },
+    'S5-directives-tune0': { heads: 28, dy: 0, dx: 0.01, oy: 0, ox: 0 },
+    'S5-directives-tune1': { heads: 188, dy: 0.52, dx: 24.72, oy: 0.03, ox: 1.79 },
+    'S5-directives-tune2': { heads: 7, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S5-directives-tune3': { heads: 16, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S5-directives-tune4': { heads: 22, dy: 0, dx: 3.88, oy: 0, ox: 0.17 },
+    'S5-directives-tune5': { heads: 22, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S6-keys-tune0': { heads: 1, dy: 0, dx: 0, oy: 0, ox: 0.18 },
+    'S6-keys-tune1': { heads: 48, dy: 0.01, dx: 0, oy: 0, ox: 0 },
+    'S6-keys-tune2': { heads: 28, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S6-keys-tune3': { heads: 48, dy: 0, dx: 24.93, oy: 0, ox: 2.08 },
+    'S6-keys-tune4': { heads: 31, dy: 0, dx: 0.01, oy: 0, ox: 0 },
+    'S7-voices-tune0': { heads: 51, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S7-voices-tune1': { heads: 62, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S7-voices-tune2': { heads: 47, dy: 0.01, dx: 0, oy: 0, ox: 0 },
+    'S7-voices-tune3': { heads: 66, dy: 0.01, dx: 0, oy: 0, ox: 0 },
+    'S7-voices-tune4': { heads: 84, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S7-voices-tune5': { heads: 52, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S7-voices-tune6': { heads: 71, dy: 0.01, dx: 0, oy: 0, ox: 0 },
+    'S8-layout-tune0': { heads: 45, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S8-layout-tune1': { heads: 16, dy: 0, dx: 0.01, oy: 0, ox: 0 },
+    'S8-layout-tune2': { heads: 40, dy: 0.01, dx: 0, oy: -0.01, ox: 0 },
+    'S8-layout-tune3': { heads: 31, dy: 0, dx: 0.01, oy: 0, ox: 0 },
+    'S8-layout-tune4': { heads: 90, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S8-layout-tune5': { heads: 60, dy: 0.01, dx: 11.81, oy: 0, ox: -1.56 },
+    'S8-layout-tune6': { heads: 99, dy: 0, dx: 8.25, oy: 0, ox: 3.58 },
+    'S8-layout-tune7': { heads: 58, dy: 2.66, dx: 0, oy: 1.67, ox: 0 },
+    'S8-layout-tune8': { heads: 28, dy: 0.01, dx: 0, oy: 0, ox: 0 },
+    'S8-layout-tune9': { heads: 66, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S8-layout-tune10': { heads: 96, dy: 0, dx: 82.67, oy: 0, ox: -31.37 },
+    'S8-layout-tune11': { heads: 46, dy: 8.37, dx: 23.66, oy: 4.73, ox: -0.64 },
+    'clefs-tune0': { heads: 1, dy: 0, dx: 0, oy: 0, ox: 0.18 },
+    'clefs-tune1': { heads: 1, dy: 0, dx: 0, oy: -0.03, ox: 0.18 },
+    'clefs-tune2': { heads: 1, dy: 0, dx: 0, oy: -0.03, ox: 0.18 },
+    'clefs-tune3': { heads: 1, dy: 0, dx: 0, oy: -0.03, ox: 0.18 },
+    'clefs-tune4': { heads: 1, dy: 0, dx: 0, oy: -0.03, ox: 0.18 },
+    'clefs-tune5': { heads: 1, dy: 0, dx: 0, oy: -0.01, ox: 0.18 },
+    'clefs-tune6': { heads: 1, dy: 0, dx: 0, oy: -0.01, ox: 0.18 },
+    'clefs-tune7': { heads: 36, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'curves-tune0': { heads: 4, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'curves-tune1': { heads: 4, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'curves-tune2': { heads: 4, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'curves-tune3': { heads: 10, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'curves-tune4': { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'curves-tune5': { heads: 4, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'curves-tune6': { heads: 4, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'missing-decorations-tune0': { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'missing-decorations-tune1': { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'missing-decorations-tune2': { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'missing-decorations-tune3': { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'missing-decorations-tune4': { heads: 24, dy: 0, dx: 0.01, oy: 0, ox: 0 },
+    'missing-decorations-tune5': { heads: 8, dy: 0, dx: 0.01, oy: 0, ox: 0 },
+    'tunebook-3-tune0': { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'tunebook-3-tune1': { heads: 14, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'tunebook-3-tune2': { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
   }
 
 /** Rounding slack, so a last-digit wobble is not a failure. */
@@ -243,11 +353,36 @@ interface Measured {
   ox: number
 }
 
-function measure(name: string): Measured {
-  const abc = readFileSync(join(corpusDir, `${name}.abc`), 'utf-8')
-  const golden = absolutePixels(readFileSync(join(goldensDir, `${name}.svg`), 'utf-8'))
+/**
+ * One row of the table: a golden SVG and the tune of the fixture it was rendered from.
+ *
+ * A single-tune fixture has `<name>.svg` and is tune 0. A multi-tune one has no
+ * `<name>.svg` at all — its goldens are `<name>-tune0.svg`, `-tune1.svg`, … — which is why
+ * twelve fixtures and 89 tunes went unmeasured until 2026-08-07. The KEY is the golden's
+ * own basename, so the two families share one table.
+ */
+interface Target {
+  readonly key: string
+  readonly fixture: string
+  readonly tune: number
+}
+
+const targetsOf = (fixture: string): Target[] => {
+  if (existsSync(join(goldensDir, `${fixture}.svg`))) {
+    return [{ key: fixture, fixture, tune: 0 }]
+  }
+  const found: Target[] = []
+  for (let tune = 0; existsSync(join(goldensDir, `${fixture}-tune${tune}.svg`)); tune++) {
+    found.push({ key: `${fixture}-tune${tune}`, fixture, tune })
+  }
+  return found
+}
+
+function measure(target: Target): Measured {
+  const abc = readFileSync(join(corpusDir, `${target.fixture}.abc`), 'utf-8')
+  const golden = absolutePixels(readFileSync(join(goldensDir, `${target.key}.svg`), 'utf-8'))
   const rendered = renderAbc('paper', abc, {})
-  const svg = rendered[0]?.svg ?? ''
+  const svg = rendered[target.tune]?.svg ?? ''
   const ours = absolutePixels(svg)
   const goldenHeads = byClass(golden, 'notehead')
   const ourHeads = byClass(ours, 'notehead')
@@ -283,14 +418,16 @@ const median = (values: number[]): number => {
  * Per fixture, not pooled per note: `ragtime-nightingale` holds 2009 of the corpus's
  * 2696 noteheads, so a pooled median is simply its median and hides everything else.
  */
-function fixtureMedianDistance(name: string): number {
+function fixtureMedianDistance(target: Target): number {
   const golden = byClass(
-    absolutePixels(readFileSync(join(goldensDir, `${name}.svg`), 'utf-8')),
+    absolutePixels(readFileSync(join(goldensDir, `${target.key}.svg`), 'utf-8')),
     'notehead',
   )
   const ours = byClass(
     absolutePixels(
-      renderAbc('paper', readFileSync(join(corpusDir, `${name}.abc`), 'utf-8'), {})[0]?.svg ?? '',
+      renderAbc('paper', readFileSync(join(corpusDir, `${target.fixture}.abc`), 'utf-8'), {})[
+        target.tune
+      ]?.svg ?? '',
     ),
     'notehead',
   )
@@ -306,9 +443,7 @@ function fixtureMedianDistance(name: string): number {
 }
 
 describe('pixel parity vs abcjs rendered SVG', () => {
-  const withGoldens = loadCorpus()
-    .map((entry) => entry.name)
-    .filter((name) => existsSync(join(goldensDir, `${name}.svg`)))
+  const withGoldens = loadCorpus().flatMap((entry) => targetsOf(entry.name))
 
   it('the gate reads real goldens and can tell positions apart', () => {
     // A gate that cannot fail reports coverage it does not have — the fuzz suite that
@@ -324,27 +459,30 @@ describe('pixel parity vs abcjs rendered SVG', () => {
     // that went to 0.00 in the same session. `ragtime-nightingale` is the last one left,
     // and when its 13.31 closes this check needs a different shape — a synthetic pair,
     // not a fixture, since by then there may be none that differ.
-    const simple = measure('simple-c')
+    const simple = measure({ key: 'simple-c', fixture: 'simple-c', tune: 0 })
     expect(simple.goldenHeads).toBe(8)
     // Not `toBe(0)`: the resolved coordinates carry float noise, and a `0.0` in the
     // table means "a pure constant offset", not "exactly zero to the last bit".
     expect(simple.dx).toBeLessThan(EPSILON)
     expect(simple.dy).toBeLessThan(EPSILON)
     // …and a comparison returning 0 for everything would fail here.
-    expect(measure('ragtime-nightingale').dx).toBeGreaterThan(1)
+    expect(
+      measure({ key: 'ragtime-nightingale', fixture: 'ragtime-nightingale', tune: 0 }).dx,
+    ).toBeGreaterThan(1)
   })
 
   it('every fixture with an SVG golden is accounted for', () => {
     // Adding a golden without a row here would otherwise be silently unmeasured.
-    expect(withGoldens.filter((name) => EXPECTED[name] === undefined)).toEqual([])
-    expect(Object.keys(EXPECTED).filter((name) => !withGoldens.includes(name))).toEqual([])
+    const keys = withGoldens.map((target) => target.key)
+    expect(keys.filter((key) => EXPECTED[key] === undefined)).toEqual([])
+    expect(Object.keys(EXPECTED).filter((key) => !keys.includes(key))).toEqual([])
   })
 
   describe('notehead count is exact', () => {
-    for (const name of withGoldens) {
-      it(`${name}`, () => {
-        const { goldenHeads, ourHeads } = measure(name)
-        expect(goldenHeads).toBe(EXPECTED[name]?.heads)
+    for (const target of withGoldens) {
+      it(`${target.key}`, () => {
+        const { goldenHeads, ourHeads } = measure(target)
+        expect(goldenHeads).toBe(EXPECTED[target.key]?.heads)
         // The real parity statement: same notes, same count, drawn by both engines.
         expect(ourHeads).toBe(goldenHeads)
       })
@@ -352,11 +490,12 @@ describe('pixel parity vs abcjs rendered SVG', () => {
   })
 
   describe('position spread does not widen', () => {
-    for (const name of withGoldens) {
+    for (const target of withGoldens) {
+      const name = target.key
       it(`${name}`, () => {
         const expected = EXPECTED[name]
         if (expected === undefined) throw new Error(`${name} has no recorded ceiling`)
-        const { dy, dx, oy, ox } = measure(name)
+        const { dy, dx, oy, ox } = measure(target)
         expect(dy, `${name} dySpread widened`).toBeLessThanOrEqual(expected.dy + EPSILON)
         expect(dx, `${name} dxSpread widened`).toBeLessThanOrEqual(expected.dx + EPSILON)
         // OFFSET as well as spread. A drawing uniformly 100px left of abcjs's scores a
@@ -389,7 +528,7 @@ describe('pixel parity vs abcjs rendered SVG', () => {
   // medians, which is the number the checkpoint tracks.
   it('records its geometry for the parity tracker', () => {
     const perFixture = withGoldens
-      .map((name) => ({ name, median: fixtureMedianDistance(name) }))
+      .map((target) => ({ name: target.key, median: fixtureMedianDistance(target) }))
       .sort((a, b) => b.median - a.median)
     const within = (px: number) => perFixture.filter((f) => f.median <= px).length
     writeFileSync(
