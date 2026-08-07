@@ -3223,7 +3223,10 @@ const DECORATIONS: Readonly<
   // The glyph is core's own choice from SMuFL, as everywhere else: what is reproduced is
   // abcjs's decision to MARK the note, not the shape of its private font.
   roll: { above: 'ornamentTremblement', below: 'ornamentTremblement', place: 'ornament' },
-  slide: { above: 'brassLiftShort', below: 'brassLiftShort', place: 'ornament' },
+  // `slide` IS NOT HERE. abcjs draws it as a small TIE between two zero-width blanks at
+  // the note (`decoration.js:51-59`), reserving nothing above — see `layoutCurves`. It sat
+  // here as an above-stacked `brassLiftShort` and pushed `S1-decorations` X:105 a uniform
+  // 9.67px down.
   breath: { above: 'breathMarkComma', below: 'breathMarkComma', place: 'ornament' },
   pralltriller: { above: 'ornamentShortTrill', below: 'ornamentShortTrill', place: 'ornament' },
   // An inverted fermata is the below-facing design, which was already extracted.
@@ -4661,6 +4664,39 @@ function layoutCurves(
     if (event.tiedToNext) {
       const next = anchors[i + 1]
       if (next !== undefined) emit(anchor, next, 'tie')
+    }
+
+    // `!slide!` IS A CURVE AT THE NOTE, NOT A GLYPH ABOVE THE STAFF.
+    //
+    //     var yPos2 = abselem.heads[0].pitch - 2
+    //     var blank1 = new RelativeElement("", -roomtaken - 15, 0, yPos2 - 1)
+    //     var blank2 = new RelativeElement("", -roomtaken -  5, 0, yPos2 + 1)
+    //     voice.addOther(new TieElem({ anchor1: blank1, anchor2: blank2, fixedY: true }))
+    //
+    // (`decoration.js:51-59`.) Two ZERO-WIDTH blanks below and left of the head, and a
+    // tie between them — so it reserves NOTHING above, and it reaches the page through
+    // `addOther`, which is the one route the structural gate is blind to. We had it in
+    // `DECORATIONS` as an above-stacked `brassLiftShort`, a reading taken from abcjs's
+    // SVG back when `addOther` made it "look unsupported", and it pushed the whole first
+    // staff down: `S1-decorations` X:105 sat a uniform 9.67px below abcjs on every one of
+    // its 16 noteheads with dx at exactly 0.00.
+    //
+    // Endpoints read off abcjs's own path for `!slide!C`, which is
+    // `M 61.85 158.49 C … 69.85 150.74 …` against a notehead centred at (75.78, 146.85):
+    // 8px wide, 2 pitch tall, and `fixedY` means the anchors' own pitches with none of a
+    // tie's 1.2 lift.
+    if (event.decorations.includes('slide')) {
+      const x1 = anchor.left - spaces(15) + spaces(ABCJS_ARC.startOffset)
+      const x2 = anchor.left - spaces(5) + spaces(ABCJS_ARC.endOffset)
+      curves[anchor.system]?.push({
+        x1,
+        y1: anchor.pitchY + spacesOfPitch(3),
+        x2,
+        y2: anchor.pitchY + spacesOfPitch(1),
+        bulge: -Math.max(ENGRAVE.curveMinBulge, (x2 - x1) * ENGRAVE.curveBulgeRatio),
+        midThickness: LINE_WEIGHTS.tieMidpoint,
+        kind: 'tie',
+      })
     }
   })
 

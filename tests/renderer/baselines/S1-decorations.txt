@@ -376,11 +376,11 @@ system 7 width=90.323 originY=89.718
     staffline 0.000,0.000 -> 90.323,0.000 t=0.090
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    tie  5.168,2.500 -> 6.200,1.500 bulge=-0.500
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     note@-2 x=6.329 w=5.474
       glyph noteheadBlack 6.329,1.000
-      glyph brassLiftShort 6.073,-4.180
       line  7.530,0.833 -> 7.530,-2.500 t=0.129
     note@-2 x=26.811 w=5.474
       glyph noteheadBlack 26.811,1.000
@@ -683,18 +683,20 @@ system 0 width=90.323 originY=0.000
       line  87.394,-2.000 -> 87.394,2.000 t=0.077
       line  88.129,-2.000 -> 88.129,2.000 t=0.516
 tune 4
-bounds  width=90.323 height=34.569 top=-1.935
+bounds  width=90.323 height=33.321 top=-1.935
 systems 2
 system 0 width=90.323 originY=0.000
-  staff 0 originY=15.262
+  staff 0 originY=14.014
     staffline 0.000,2.000 -> 90.323,2.000 t=0.090
     staffline 0.000,1.000 -> 90.323,1.000 t=0.090
     staffline 0.000,0.000 -> 90.323,0.000 t=0.090
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    tie  7.980,4.500 -> 9.012,3.500 bulge=-0.500
+    tie  57.960,2.000 -> 58.993,1.000 bulge=-0.500
     title x=0.000 w=0.000
-      text  36.259,-10.803 size=3.484 bold "S1-5 Glissando Test"
-      text  39.177,-6.602 size=2.452 italic "Test Fixture"
+      text  36.259,-9.555 size=3.484 bold "S1-5 Glissando Test"
+      text  39.177,-5.354 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -702,7 +704,6 @@ system 0 width=90.323 originY=0.000
       glyph timeSig4 6.329,1.000
     note@-6 x=9.141 w=5.474
       glyph noteheadBlack 9.141,3.000
-      glyph brassLiftShort 8.885,-4.180
       line  8.883,3.000 -> 10.665,3.000 t=0.090
       line  10.343,2.833 -> 10.343,-0.500 t=0.129
     note@-5 x=18.854 w=5.474
@@ -721,7 +722,6 @@ system 0 width=90.323 originY=0.000
       line  50.611,0.833 -> 50.611,-2.500 t=0.129
     note@-1 x=59.122 w=5.474
       glyph noteheadBlack 59.122,0.500
-      glyph brassLiftShort 58.866,-4.180
       line  60.323,0.333 -> 60.323,-3.000 t=0.129
     note@0 x=68.834 w=5.474
       glyph noteheadBlack 68.834,0.000
@@ -731,7 +731,7 @@ system 0 width=90.323 originY=0.000
       line  78.610,-0.333 -> 78.610,3.000 t=0.129
     bar x=88.258 w=0.077
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
-system 1 width=54.511 originY=23.314
+system 1 width=54.511 originY=22.066
   staff 0 originY=3.862
     staffline 0.000,2.000 -> 54.511,2.000 t=0.090
     staffline 0.000,1.000 -> 54.511,1.000 t=0.090

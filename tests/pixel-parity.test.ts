@@ -243,7 +243,9 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     'S1-decorations-tune1': { heads: 11, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S1-decorations-tune2': { heads: 64, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S1-decorations-tune3': { heads: 13, dy: 0, dx: 0, oy: 0, ox: 0 },
-    'S1-decorations-tune4': { heads: 16, dy: 0, dx: 0.01, oy: 9.67, ox: 0 },
+    // oy 9.67 -> 0.00. EXACT. `!slide!` is a curve at the note in abcjs, not a glyph
+    // above the staff, so it reserves nothing — this tune's whole error was that reserve.
+    'S1-decorations-tune4': { heads: 16, dy: 0, dx: 0.01, oy: 0.0, ox: 0 },
     'S2-fields-tune0': { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S2-fields-tune1': { heads: 11, dy: 4.68, dx: 0, oy: -2.98, ox: 0 },
     'S2-fields-tune2': { heads: 16, dy: 0, dx: 0.01, oy: 0, ox: 0 },
@@ -306,7 +308,8 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // map was keyed by STEP and a unison is two heads at one step.
     'S8-layout-tune5': { heads: 60, dy: 0.01, dx: 6.2, oy: 0, ox: 1.07 },
     'S8-layout-tune6': { heads: 99, dy: 0, dx: 8.25, oy: 0, ox: 3.58 },
-    'S8-layout-tune7': { heads: 58, dy: 2.66, dx: 0, oy: 1.67, ox: 0 },
+    // oy 1.67 -> 1.14 on the `!slide!` rule; its `dy` 2.66 is something else.
+    'S8-layout-tune7': { heads: 58, dy: 2.66, dx: 0, oy: 1.14, ox: 0 },
     'S8-layout-tune8': { heads: 28, dy: 0.01, dx: 0, oy: 0, ox: 0 },
     'S8-layout-tune9': { heads: 66, dy: 0, dx: 0, oy: 0, ox: 0 },
     // dx 82.67 -> 0.0 and ox -31.37 -> 0.0. EXACT ON ALL FOUR. A down-stemmed chord with a

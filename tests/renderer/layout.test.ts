@@ -1106,17 +1106,20 @@ describe('grace notes, chord symbols, lyrics and decorations', () => {
     // Still partial, and still the same principle: an unmapped mark gets NO glyph rather
     // than a near-enough one, because a wrong symbol is worse than an absent one.
     //
-    // `!roll!` and `!slide!` used to be the examples here and now draw their own glyphs —
-    // the roll a tremblement, the slide a lift. What remains unmapped is a different
-    // shape of problem: navigation words like `D.C.` are TEXT, and `xstem` is a stem
-    // instruction with no symbol at all.
+    // `!roll!` used to be an example here and now draws its own glyph, a tremblement.
+    // `!slide!` was the other, drawing a brass lift, and it draws NO GLYPH now on purpose:
+    // abcjs makes it a small TIE between two zero-width blanks at the note
+    // (`decoration.js:51-59`), so it belongs to the curves and not to this table. What
+    // remains unmapped is a different shape of problem: navigation words like `D.C.` are
+    // TEXT, and `xstem` is a stem instruction with no symbol at all.
     const named = (abc: string) =>
       (notesOf(abc)[0]?.glyphs ?? []).map((g) => g.name).filter((n) => !n.startsWith('notehead'))
     expect(named('!trill!G|')).toEqual(['ornamentTrill'])
     expect(named('!fermata!G|')).toEqual(['fermataAbove'])
     expect(named('!upbow!G|')).toEqual(['stringsUpBow'])
     expect(named('!roll!G|')).toEqual(['ornamentTremblement'])
-    expect(named('!slide!G|')).toEqual(['brassLiftShort'])
+    // A curve, not a glyph — see 'draws `!slide!` as a curve at the note'.
+    expect(named('!slide!G|')).toEqual([])
     // Unmapped: no glyph, and emphatically not a wrong one.
     expect(named('!D.C.!G|')).toEqual([])
     expect(named('!xstem!G|')).toEqual([])
@@ -1928,9 +1931,10 @@ describe('ornaments and techniques', () => {
     // Checked against abcjs's RENDERED SVG, not its element dump. The dump misses
     // anything attached through addOther, which made `slide` and `breath` look
     // unsupported on the first pass — the same blind spot that nearly lost the dynamics.
+    // `slide` is NOT in this list: abcjs paints it, but as a TIE through `addOther`, not
+    // as a glyph. Its own test is below.
     for (const name of [
       'roll',
-      'slide',
       'breath',
       'wedge',
       'open',
@@ -1941,6 +1945,38 @@ describe('ornaments and techniques', () => {
     ]) {
       expect(glyphsOf(`!${name}!`), `!${name}! should draw`).toHaveLength(1)
     }
+  })
+
+  it('draws `!slide!` as a CURVE at the note, and reserves nothing above', () => {
+    // abcjs builds two ZERO-WIDTH blanks below and left of the head and ties them:
+    //
+    //     var yPos2 = abselem.heads[0].pitch - 2
+    //     var blank1 = new RelativeElement("", -roomtaken - 15, 0, yPos2 - 1)
+    //     var blank2 = new RelativeElement("", -roomtaken -  5, 0, yPos2 + 1)
+    //     voice.addOther(new TieElem({ anchor1: blank1, anchor2: blank2, fixedY: true }))
+    //
+    // (`decoration.js:51-59`.) It reaches the page through `addOther`, the one route the
+    // structural gate cannot see, which is why it was read as an above-stacked glyph and
+    // pushed `S1-decorations` X:105 a uniform 9.67px down.
+    //
+    // The figures below are abcjs's own path for `!slide!C`, measured:
+    // `M 61.85 158.49 C … 69.85 150.74 …` against a notehead centred at (75.78, 146.85).
+    const score = parse('X:1\nT:t\nC:c\nM:4/4\nL:1/4\nK:C\n!slide!C D E F|\n')
+      .scores[0] as Score
+    const staff = layout(score).systems[0]?.staves[0]
+    expect(staff?.curves).toHaveLength(1)
+    const curve = staff?.curves[0]
+    const head = (staff?.elements ?? [])
+      .flatMap((e) => e.glyphs)
+      .find((g) => g.role === 'notehead')
+    if (curve === undefined || head === undefined) throw new Error('nothing drawn')
+    // 8px wide — abcjs's blanks are 10px apart and its tie adds 6 at the start, 4 at the
+    // end — and 2 pitch tall, ending 1 pitch below the head. `fixedY` means the anchors'
+    // own pitches, with none of a tie's 1.2 lift.
+    expect((curve.x2 - curve.x1) * 7.75).toBeCloseTo(8, 1)
+    expect((curve.y1 - curve.y2) * 7.75).toBeCloseTo(7.75, 1)
+    expect((curve.y2 - head.y) * 7.75).toBeCloseTo(3.875, 1)
+    expect(curve.x1).toBeLessThan(head.x)
   })
 
   it('draws NOTHING for the inverted turns in strict, as abcjs does', () => {
