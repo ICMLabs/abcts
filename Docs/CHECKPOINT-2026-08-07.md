@@ -49,7 +49,7 @@ drove the rest of the session.
 | pixel ranked table | *did not exist* | **19 of 119 off some axis, eight of them the whole-note OUTLINE and not work** |
 | harvested (174) | 0 of 174 off | **0 of 174 off** |
 | 41-fixture | one above 0.02 | one above 0.02 |
-| ceilings | — | **twelve LOWERED.** One was raised mid-session (129) and CLOSED by the next finding (130) |
+| ceilings | — | **fourteen LOWERED.** TWO were raised mid-session (129, 131) and each was CLOSED by the finding after it (130, 132) |
 
 `npx vitest run tests/pixel-parity.test.ts && cat /tmp/abcts-pixel-ranked.txt` is the new
 first command of a session, beside the harvested one.
@@ -276,6 +276,46 @@ settled it in one run:
 and ours matched all three at 0.00. So the 2.1595 pitch had to be INK, and our own extent
 probe named it: a `keySignature accidentalNatural` reserving to 15.8839 on a system abcjs
 tops out at the clef. **Rule out the mechanism you suspect before hunting inside it.**
+
+---
+
+## FINDING 132 — A STANDALONE `M:` ON A CONTINUED LINE DRAWS WHERE IT STANDS
+
+The THIRD case for `M:`, and it is not a variant of either other one. **The discriminator is
+which of abcjs's two parsers ever sees the field**, which is why reading
+`letter_to_body_header` alone could never have settled it:
+
+```
+fresh line     the HEADER parser takes it and only fills `multilineVars.meter` for the
+               next `startNewLine`. `letter_to_body_header`'s "M:" arm is NEVER REACHED —
+               instrumented, and silent on that control.
+after a `\`    the line goes to `parseMusicLine`, which DOES reach that arm and runs
+               `appendStartingElement('meter', …)` on a voice that already holds notes.
+```
+
+So the three routes are:
+
+| written as | drawn |
+|---|---|
+| standalone `M:` on its own line | the NEXT line's prefix |
+| inline `[M:]` at the head of one | the PREVIOUS line's end |
+| standalone `M:` after a `\` | INLINE, where it stands |
+
+`S8-layout` X:812 writes `"Em"ABc def |\` then `M: 9/8`, and abcjs draws `timeSignature
+x=207.51 w=10.93` straight after that bar at 196.51. Ours parked it for the next line, where
+the tune's own `M: 6/8` overwrote it — **the 9/8 was lost outright**, and the parsed model
+showed no `meterChange` on that measure at all. dx 20.12 → 0.00, ox −3.16 → 0.00, and the
+tune is EXACT on all four.
+
+`this.lineContinued` already holds the PREVIOUS line's flag inside `applyField`, because a
+field line returns from `parseLine` before the music path reassigns it. No new state.
+
+**AND THE SECOND RECORDED RAISE CLOSED ITSELF, ONE COMMIT LATER, EXACTLY AS THE FIRST DID.**
+Both were `ox` — a MEAN over a spread that had not been fixed yet — and both entries named
+what they were waiting on. Two for two is the argument for recording a raise with its reason
+rather than reverting a change that measures correct on every other axis. **The test is
+whether every notehead moved the right way or not at all; if one moved the wrong way, it is a
+regression and the rule stands.**
 
 ---
 
