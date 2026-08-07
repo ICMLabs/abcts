@@ -167,6 +167,45 @@ the head, and `fixedY` means the anchors' own pitches with none of a tie's 1.2 l
 `!glissando(!` measured 0.00 / 9.67 / 0.00 against abcjs. The tune has both decorations and
 the glissando was the likelier suspect.
 
+## FINDING 129 — AN EXPLICIT `!style=normal!` MUST OVERRIDE THE VOICE'S `style=rhythm`
+
+`resolveStyle` returned `'normal'` for BOTH "no inline style" and an explicit
+`!style=normal!`, so the caller's `inline === 'normal' ? voice().noteStyle : inline` handed
+the voice's `rhythm` straight back. `U:n=!style=normal!` then `nG` — which is how a
+rhythm-notation voice writes a note that keeps its real head — drew a slash.
+
+**FOURTH TIME ON THIS BRANCH THAT A REPRESENTATION, NOT A RULE, WAS THE DEFECT**, after
+`PixelItem` carrying only a centre, `beamLinks` comparing physical neighbours, and the
+seconds map keyed by step (126). All four were expressible only by widening the type.
+
+abcjs honours it per PITCH: *"There is a style for the whole group of pitches, but there
+could also be an override for a particular pitch"*, `c = chartable[elem.pitches[p].style]
+[-durlog]` (`abstract-engraver.js:677-680`).
+
+**AND EVERY STYLE HAS A `nostem` ENTRY, which is a THIRD glyph and not a repeat of the
+quarter.** `if (zeroDuration) noteSymbol = chartable[style].nostem` (`:642-646`), and for
+`rhythm` that is `noteheads.slash.nostem` — its own glyph at `w 12.81, h 15.63` against
+`.slash.quarter`'s 9.00 x 13.00. `B0` in a rhythm voice drew the quarter slash. The other
+three styles repeat their single glyph, so only `rhythm` needs the field.
+
+**AND ITS `ox` RAISE IS THE THIRD ON THIS BRANCH, RECORDED RATHER THAN MASKED.** dy 0.52 →
+0.03, oy 0.03 → 0.00 and dx 24.72 → 24.27, against ox 1.79 → 1.94. The rule was verified
+glyph-for-glyph on a control before it touched the fixture — ten heads, same names, same
+boxes, dy 0.00, where four had been a whole glyph wrong. What grew is a MEAN over a system
+whose remaining error is a RAMP this change does not touch. Closing the ramp takes both down.
+
+## AND ONE ROW OF THE TABLE IS NOT WORK AT ALL
+
+The eight `ox = 0.18` rows — `clefs-tune0` through `-tune6` and `S6-keys-tune0` — are tunes
+whose entire content is `G8`, and the figure is the WHOLE NOTEHEAD's OUTLINE: abcjs's inks
+16.83px wide against Bravura's 15.03, and the two are not left-aligned. Positions are
+compared as bounding-box CENTRES, so no placement rule can remove it, and this file's header
+puts outlines out of scope in its second paragraph.
+
+Asserted at 0.18 rather than written down in prose, so a real regression on those tunes still
+fails while an intended difference stops reading as a defect. **A ranked table needs a way to
+say "measured, and not a defect", or its tail fills with work nobody should do.**
+
 ---
 
 ## WHAT MOVED, MEASURED BEFORE AND AFTER OVER ALL 119 TARGETS
