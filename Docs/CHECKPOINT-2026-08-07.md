@@ -44,12 +44,12 @@ drove the rest of the session.
 
 | | at the session's start | now |
 |---|---|---|
-| suite | 703 | **886. NO REDS.** |
+| suite | 703 | **887. NO REDS.** |
 | pixel gate | 29 fixtures, 2,696 heads | **119 tunes, 5,105 heads** |
-| pixel ranked table | *did not exist* | **19 of 119 off some axis** |
+| pixel ranked table | *did not exist* | **19 of 119 off some axis, eight of them the whole-note OUTLINE and not work** |
 | harvested (174) | 0 of 174 off | **0 of 174 off** |
 | 41-fixture | one above 0.02 | one above 0.02 |
-| ceilings | — | **eight LOWERED, none raised** |
+| ceilings | — | **ten LOWERED, ONE raised** (`S5-directives-tune1`'s `ox`, finding 129, recorded with its reason) |
 
 `npx vitest run tests/pixel-parity.test.ts && cat /tmp/abcts-pixel-ranked.txt` is the new
 first command of a session, beside the harvested one.
@@ -231,7 +231,7 @@ Nothing regressed by any amount at any point. Every ceiling that moved went DOWN
 
 ```
 19 of 119 tunes are off some axis by 0.05px or more
-    24.72  dy=0.52 dx=24.72 oy=0.03 ox=1.79   188 heads  S5-directives-tune1
+    24.27  dy=0.03 dx=24.27 oy=0.00 ox=1.94   188 heads  S5-directives-tune1
     23.66  dy=8.37 dx=23.66 oy=4.73 ox=-0.64   46 heads  S8-layout-tune11
     12.13  dy=0.04 dx=12.13 oy=0.01 ox=0.02  2009 heads  ragtime-nightingale
      8.25  dy=0.00 dx=8.25 oy=0.00 ox=3.58     99 heads  S8-layout-tune6
@@ -242,20 +242,22 @@ Nothing regressed by any amount at any point. Every ceiling that moved went DOWN
      2.66  dy=2.66 dx=0.00 oy=1.14 ox=0.00     58 heads  S8-layout-tune7
      1.80  dy=0.00 dx=1.17 oy=0.00 ox=1.80      2 heads  S4-bars-repeats-tune2
      0.18  dy=0.00 dx=0.18 oy=0.00 ox=0.02     16 heads  S3-note-syntax-tune12
-     0.18  ox=0.18 on seven ONE-NOTEHEAD tunes — six `clefs`, one `S6-keys`
+     0.18  ox=0.18 on eight ONE-NOTEHEAD `G8` tunes — the OUTLINE, NOT WORK. See above.
 ```
 
-### 1. `S5-directives-tune1`, dx 24.72 — TWO causes, and only system 0 is off
+### 1. `S5-directives-tune1`, dx 24.27 — its `dy` is CLOSED (129); the SYSTEM-0 RAMP remains
 
 X:502 "Alternate Note Heads": `style=rhythm`, `U:n=!style=normal!`, `[K:style=x]`,
 `!style=harmonic!`, `B0` zero-duration notes. Systems 1–4 are inside 0.5px; the whole spread
 is system 0, where dx ramps 0 → 23.06 with plateaus at bar boundaries.
 
-**AND ITS `dy` 0.52 IS A SEPARATE, CLEANER THING.** Every head abcjs draws at gy 117.02 is
-exact; every head it draws at 116.50 / 120.38 / 124.25 / 135.88 / 139.75 is +0.51. Those are
-the `n` (normal) heads inside a rhythm-style voice — so a ROUND head in a `style=rhythm`
-voice sits half a pixel low for us while the slash heads are exact. One glyph's vertical
-reference, and it is measured on 188 noteheads. **Do this half first; it is separable.**
+**ITS `dy` 0.52 WAS A SEPARATE, CLEANER THING AND IS NOW 0.03** — finding 129, which was
+exactly the "do this half first" the earlier draft of this section recommended. What is left
+is the ramp: UNEQUAL steps (1.35 per note across the first four, then plateaus, then 0.6,
+then 1.9 across the `B0`s), which is a SPRING difference and not a missing fixed element at
+one place. Zero-duration spacing is ruled out — `layoutMeasure` has taken
+`ratToNumber(duration) || 0.25` since finding 105, and the `ponytail:` note at `noteGlyph`
+saying otherwise is stale.
 
 ### 2. `S8-layout-tune11`, dy 8.37 / dx 23.66 / oy 4.73 — X:812
 
