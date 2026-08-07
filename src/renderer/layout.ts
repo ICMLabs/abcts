@@ -2675,16 +2675,31 @@ function layoutNoteheads(
       up,
       // abcjs's `abselem.top` / `.bottom`: the notehead's DECLARED box widened by the
       // stem it just drew. `pushTop`/`pushBottom` over the element's children.
+      //
+      // …AND THE GRACE NOTES' STEMS ARE AMONG THOSE CHILDREN. `createDecoration` is
+      // passed `abselem.top` (`abstract-engraver.js:842`), and `addGraceNotes` has
+      // already run four lines above it, so an UNBEAMED grace's stem and flag are on the
+      // element and set that top. Probed on `{c}+1+B`: `abselem.top = 11.2`, which is the
+      // grace's flag and its stem exactly, against the main head's 7.04.
+      //
+      // A BEAMED group is the exception, and it is the same phase argument that keeps one
+      // out of the staff extent: `createStems` builds those stems during LAYOUT, long
+      // after `createNote` read this top. `noReserve` is the flag we already carry for it.
+      //
+      // It bites only through `decorationMinTop`'s clamp of 12, which is why one tune of a
+      // transposed pair can show it and the other cannot: `{c}+1+B` reaches 11.2 and
+      // clamps to 12, `{d}+1+c` reaches 12.2 and keeps it. 0.2 pitch — 0.775px — under
+      // every notehead on `transpose-output-04`.
       Math.max(
         highest + ENGRAVE.noteheadHalfHeight / ENGRAVE.spacePerStep,
-        ...lines
-          .filter((l) => l.role === 'stem')
+        ...[...lines, ...graceLines]
+          .filter((l) => l.role === 'stem' && l.noReserve !== true)
           .map((l) => -Math.min(l.y1, l.y2) / ENGRAVE.spacePerStep),
       ),
       Math.min(
         lowest - ENGRAVE.noteheadHalfHeight / ENGRAVE.spacePerStep,
-        ...lines
-          .filter((l) => l.role === 'stem')
+        ...[...lines, ...graceLines]
+          .filter((l) => l.role === 'stem' && l.noReserve !== true)
           .map((l) => -Math.max(l.y1, l.y2) / ENGRAVE.spacePerStep),
       ),
       strict,

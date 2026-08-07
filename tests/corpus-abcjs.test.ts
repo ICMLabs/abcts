@@ -331,7 +331,17 @@ const WITHIN: Readonly<Record<string, number>> = {
   // and carrying it to the next note put our mark 15.8px right of abcjs's and every
   // notehead on the line 0.93px out. `transpose-output-03` went exact; `-04` kept only
   // its `oy`.
-  '0.05': 165,
+  //
+  // …AND A NOTE'S GRACE STEMS ARE PART OF THE `abselem.top` A DECORATION STACKS ON.
+  // `createDecoration` is handed `abselem.top` (`abstract-engraver.js:842`) with
+  // `addGraceNotes` already run four lines above it, so an UNBEAMED grace's stem and flag
+  // set that top: `{c}+1+B` probes at 11.2, the grace's flag exactly, against the main
+  // head's 7.04. A BEAMED group is the exception by the same phase argument that keeps it
+  // out of the staff extent — `createStems` builds those during layout. It bites only
+  // through `decorationMinTop`'s clamp of 12, which is why one tune of a transposed pair
+  // showed it and the other could not: 11.2 clamps to 12 and 12.2 does not. 0.775px under
+  // every notehead on `transpose-output-04`, and both of that pair are now exact.
+  '0.05': 166,
   '1': 173,
   '5': 173,
   '25': 173,
