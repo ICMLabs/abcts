@@ -146,14 +146,14 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // `b` is 0.556, and the mark is CENTRED on the note, so half of that was horizontal.
     // dx 0.23 -> 0.12 and ox -0.49 -> 0.0 when every DECLARED box became abcjs's
     // published `h` rather than the derived ink box.
-    'happy-birthday': { heads: 25, dy: 0.0, dx: 0.12, oy: 0.0, ox: 0.0 },
+    'happy-birthday': { heads: 25, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     // dy 1.92 -> 0.32 and oy -0.58 -> 0.16 when `anchorLyrics` stopped measuring its own
     // ink and took `verticalExtent`'s. dx/ox are the goldens' ASCII width table, not us.
     // dx 24.19 -> 21.69 when `calcWidth` landed: its 73 Chinese characters measure the
     // golden generator's flat 8 rather than a full em, which is what the goldens do.
     // dy 0.32 -> 0.21, oy 0.16 -> 0.06 and ox -6.29 -> -5.28 on the declared-height fix.
-    'little swallow': { heads: 89, dy: 0.21, dx: 21.69, oy: 0.06, ox: -5.28 },
-    'multi-voice-lyrics-two-voices': { heads: 16, dy: 0.07, dx: 0.0, oy: 0.05, ox: 0.0 },
+    'little swallow': { heads: 89, dy: 0.01, dx: 21.69, oy: 0.01, ox: -5.27 },
+    'multi-voice-lyrics-two-voices': { heads: 16, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'multi-voice-rest-collision': { heads: 7, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'multi-voice-rest-placement': { heads: 14, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'multi-voice-triplet-brackets': { heads: 45, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
@@ -190,13 +190,13 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // verified exact on four control tunes (`{=de}`, `{de}`, `{^de}`, and with a lyric),
     // so what moved here is a redistribution across 23 systems once one element reaches
     // 7px further left, not the rule. `mouse-click-01` went 7.20 -> 1.88 on the same fix.
-    'ragtime-nightingale': { heads: 2009, dy: 0.4, dx: 13.31, oy: 0.15, ox: -0.75 },
+    'ragtime-nightingale': { heads: 2009, dy: 0.24, dx: 13.31, oy: 0.05, ox: -0.75 },
     'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'score-reorder': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'simple-c': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'stacked-annotations': { heads: 4, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     twinkle: { heads: 14, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
-    'two-voice-invention': { heads: 74, dy: 0.07, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'two-voice-invention': { heads: 74, dy: 0.01, dx: 0.0, oy: 0.0, ox: 0.0 },
     'voice-middle-after-clef': { heads: 10, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'voice-octave-shift': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'vree-compound-meter': { heads: 12, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
@@ -206,7 +206,7 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // dx 1.99 -> 0.0 and ox -1.14 -> 0.0 when strict stopped SCALING a grace glyph, which
     // abcjs does not either: `printSymbol` takes `scalex`/`scaley` and passes neither on.
     // At ZERO on all four axes.
-    'vree-grace-notes': { heads: 7, dy: 0.02, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'vree-grace-notes': { heads: 7, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     // oy 0.06 -> 0.0: a sharp DECLARES 20.15 where its ink box is 20.19, and a key
     // signature of them was the extra 0.04px on top of the clef's systemic 0.03.
     'vree-sharps': { heads: 4, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
@@ -220,6 +220,13 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
   }
 
 /** Rounding slack, so a last-digit wobble is not a failure. */
+/**
+ * THE SLACK THIS GATE ALLOWS, AND IT IS NOT NOTHING. At 0.05px it can hide a fixture
+ * drifting off EXACT ZERO — six of the 41 sat between 0.01 and 0.04 on some axis through
+ * 2026-08-06 without any ceiling moving. Measuring the corpus at the session's first commit
+ * and again at its last is what settles which way a change went; the recorded numbers alone
+ * cannot, because they only ever say "no worse than".
+ */
 const EPSILON = 0.05
 
 interface Measured {
