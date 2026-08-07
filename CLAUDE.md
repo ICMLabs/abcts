@@ -78,8 +78,19 @@ checkpoint and hand off as you go so no context is lost.
 > `impliedNaturals`, three lines of source, dx → 12.13. **A measurement can only rank
 > hypotheses you already have.**
 
-> 🏁 **THE RANKED TABLE IS EMPTY — 0 of 174 rows** (2026-08-07), and **36 of the 41 are at
-> EXACT ZERO**. All 174 fixtures of the harvested corpus agree with abcjs on note content
+> 🔎 **AND THE GATE WAS READING 29 OF THE 41 FIXTURES** (2026-08-07). `pixel-parity`
+> enumerated `<name>.svg`, which only a SINGLE-TUNE fixture has — a multi-tune fixture's
+> goldens are `<name>-tune0.svg`, `-tune1.svg`, … — so twelve fixtures and **89 tunes** went
+> unmeasured with abcjs's own per-tune SVGs sitting in the same directory since April. All 89
+> matched on notehead COUNT on the first run; twelve differed on POSITION, and that list is
+> what four findings closed. **A GATE'S REACH IS A PROPERTY OF ITS ENUMERATION, NOT OF ITS
+> COMPARISON** — every axis of that one was sound, and no number it printed could have
+> revealed the hole, because the fixtures it skipped had no rows to be missing from. Before
+> concluding a gate is exhausted, ask what evidence EXISTS, not what the evidence says.
+> It writes `/tmp/abcts-pixel-ranked.txt` now, beside the harvested table.
+
+> 🏁 **THE HARVESTED RANKED TABLE IS EMPTY — 0 of 174 rows** (2026-08-07), and **36 of the 41
+> are at EXACT ZERO**. All 174 fixtures of the harvested corpus agree with abcjs on note content
 > AND on all four geometric axes to within 0.05px, and `CONTENT_GAPS` is empty for the
 > first time. **So neither the table nor the content gate can name anything any more, and
 > every remaining gate is blind to what is left** —
@@ -90,9 +101,12 @@ checkpoint and hand off as you go so no context is lost.
 > corpus — without the control it would have landed under a green ratchet, because the
 > fixture it was aimed at moved the right way for the wrong reason.
 
-Read `Docs/CHECKPOINT-2026-08-06b.md` first — the current state, findings 106-124, and
-**THE GATES CANNOT SEE WHAT IS LEFT**, which is the section that decides the work now.
-`Docs/HANDOFF-2026-08-06b.md` has the session prompt. `Docs/CHECKPOINT-2026-08-06.md` is
+Read `Docs/CHECKPOINT-2026-08-07.md` first — the current state, findings 125-128, and above
+all **THE GATE WAS READING 29 OF THE 41 FIXTURES**, which is the section that decides the
+work now. `Docs/HANDOFF-2026-08-07.md` has the session prompt.
+`Docs/CHECKPOINT-2026-08-06b.md` is superseded for the state but keeps findings 106-124 and
+**THE GATES CANNOT SEE WHAT IS LEFT** — read that section knowing its central claim was
+answered by widening a gate, not by working around it. `Docs/CHECKPOINT-2026-08-06.md` is
 superseded for the state but keeps findings 104-105 and **THE HARNESS: how to instrument
 abcjs in a scratchpad copy**, which is still the first tool to reach for.
 `Docs/CHECKPOINT-2026-08-05c.md` is superseded for the state but keeps findings 90-103 and
@@ -241,7 +255,7 @@ gate had been comparing abcjs's outline START against our glyph ORIGIN, a 4px bi
 
 
 **Structural parity is done: note content, lyrics, beams and render structure are all
-41/41 with zero recorded divergences.** `geometry/vertical` is **703/703 with NO reds**,
+41/41 with zero recorded divergences.** `geometry/vertical` is **886/886 with NO reds**,
 and the harvested corpus's ranked table is **EMPTY** — 174 of 174 fixtures exact on every
 axis to within 0.05px, with no content gaps left either. **36 of the 41 are at exact zero**;
 `ragtime-nightingale` alone is above 0.02.
@@ -338,7 +352,8 @@ engine.
 It has kept doing it — `clef=none` and `clef=perc` read as a C clef, `%%text` reserving
 nothing, `V:… merge` unimplemented, `bass,,` parsed as no clef, an empty implicit voice
 taking a staff, and both line-assignment rules were all found there, and only one of them
-is exercised by any of the 41. **START EVERY SESSION WITH
+is exercised by any of the 41. **START EVERY SESSION WITH BOTH TABLES —
+`npx vitest run tests/pixel-parity.test.ts && cat /tmp/abcts-pixel-ranked.txt` and
 `npx vitest run tests/corpus-abcjs-ranked.test.ts && cat /tmp/abcts-corpus-ranked.txt`** — that table, not the aggregate counts, is what
 names the next defect, and its DIRECTIVES column is what makes it actionable.
 
