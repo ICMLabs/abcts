@@ -362,6 +362,14 @@ export const ABCJS_ARC = {
 export const ABCJS_PITCH = {
   /** `Decoration.minTop` — the floor an ornament stack starts from (`decoration.js:13`). */
   decorationMinTop: 12,
+  /**
+   * `restpitch` — where a rest sits, and where it reserves from
+   * (`abstract-engraver.js:544-551`). The default is the space above the middle line; a
+   * voice SHARING a staff moves four pitch either way, up or down with its stems.
+   */
+  restPitch: 7,
+  restPitchUp: 11,
+  restPitchDown: 3,
   /** `Decoration.minBottom` — the same on the other side (`decoration.js:14`). */
   decorationMinBottom: 0,
   /**

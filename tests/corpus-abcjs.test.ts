@@ -374,7 +374,20 @@ const WITHIN: Readonly<Record<string, number>> = {
   // pitch -3 — neither figure the stem's real end, and no matching term on the ABOVE side,
   // which takes `abselem.top` raw. Ours read the real beamed stem on both sides, which is
   // 0.175px of staff wherever a `!invertedfermata!` hangs off that cursor.
-  '0.05': 172,
+  //
+  // A REST MOVES OFF THE MIDDLE LINE WHEN IT SHARES A STAFF, and reserves its DECLARED box
+  // like a notehead. `if (isMultiVoice) { if (stemdir === 'down') restpitch = 3; if
+  // (stemdir === 'up') restpitch = 11 }` from a default 7 (`abstract-engraver.js:544-551`),
+  // and `restpitch` is one variable: `createNoteHead(abselem, c, { verticalPos: restpitch
+  // })` both draws the glyph and centres the `pitch ± thickness / 2` box on it. Ours drew
+  // every rest on the default line and reserved the glyph's INK box — `rests.quarter` inks
+  // 11.88px up and 9.6 down around a declared ±10.72, so it read 3.066 pitch above its
+  // anchor against abcjs's 2.766.
+  //
+  // **`0.05: 173` IS EVERY MEASURABLE FIXTURE.** The ranked table has no geometry left on
+  // it at all — the 174th entry is the leading-header tune-count mismatch, which has none
+  // to compare.
+  '0.05': 173,
   '1': 173,
   '5': 173,
   '25': 173,

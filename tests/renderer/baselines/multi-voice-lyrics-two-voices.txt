@@ -28,7 +28,7 @@ system 0 width=90.323 originY=0.000
       line  22.631,-3.600 -> 22.631,-7.500 t=0.077
       text  20.672,11.694 size=2.194 bold "B"
     rest x=32.874 w=5.474
-      glyph restQuarter 32.874,0.000
+      glyph restQuarter 32.874,-2.000
     note@4 x=49.096 w=3.871
       glyph noteheadBlack 49.096,-2.000
       line  50.323,-2.100 -> 50.323,-6.503 t=0.077
@@ -91,7 +91,7 @@ system 1 width=35.313 originY=27.334
       line  11.914,-3.600 -> 11.914,-7.500 t=0.077
       text  10.076,11.694 size=2.194 bold "b"
     rest x=14.558 w=5.474
-      glyph restQuarter 14.558,0.000
+      glyph restQuarter 14.558,-2.000
     note@4 x=20.032 w=3.871
       glyph noteheadBlack 20.032,-2.000
       line  21.260,-2.100 -> 21.260,-6.510 t=0.077

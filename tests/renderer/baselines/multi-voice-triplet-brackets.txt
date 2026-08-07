@@ -77,7 +77,7 @@ system 0 width=90.323 originY=0.000
       glyph noteheadBlack 57.443,1.000
       line  58.644,0.833 -> 58.644,-2.500 t=0.129
     rest x=60.512 w=4.470
-      glyph restQuarter 60.512,0.000
+      glyph restQuarter 60.512,-2.000
     note@-1 x=63.580 w=4.470
       glyph noteheadBlack 63.580,0.500
       line  64.782,0.333 -> 64.782,-3.000 t=0.129
@@ -91,7 +91,7 @@ system 0 width=90.323 originY=0.000
       glyph noteheadBlack 72.786,0.500
       line  73.987,0.333 -> 73.987,-3.000 t=0.129
     rest x=75.855 w=4.470
-      glyph restQuarter 75.855,0.000
+      glyph restQuarter 75.855,-2.000
     note@1 x=79.052 w=4.470
       glyph noteheadBlack 79.052,-0.500
       line  80.254,-0.667 -> 80.254,-4.000 t=0.129
@@ -117,7 +117,7 @@ system 0 width=90.323 originY=0.000
       glyph noteheadBlack 12.466,1.000
       line  12.531,1.167 -> 12.531,4.500 t=0.129
     rest x=15.535 w=4.470
-      glyph restQuarter 15.535,0.000
+      glyph restQuarter 15.535,2.000
     note@-1 x=18.604 w=4.470
       glyph noteheadBlack 18.604,0.500
       line  18.668,0.667 -> 18.668,4.000 t=0.129
@@ -131,7 +131,7 @@ system 0 width=90.323 originY=0.000
       glyph noteheadBlack 27.809,0.500
       line  27.874,0.667 -> 27.874,4.000 t=0.129
     rest x=30.878 w=4.470
-      glyph restQuarter 30.878,0.000
+      glyph restQuarter 30.878,2.000
     note@1 x=33.946 w=4.470
       glyph noteheadBlack 33.946,-0.500
       line  34.011,-0.333 -> 34.011,3.000 t=0.129

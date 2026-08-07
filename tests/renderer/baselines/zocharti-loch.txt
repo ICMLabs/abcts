@@ -1,5 +1,5 @@
 tune 0
-bounds  width=90.323 height=77.148 top=-1.935
+bounds  width=90.323 height=77.820 top=-1.935
 systems 2
 system 0 width=90.323 originY=0.000
   staff 0 originY=19.652
@@ -73,7 +73,7 @@ system 0 width=90.323 originY=0.000
       glyph noteheadBlack 80.380,-0.500
       line  81.581,-0.667 -> 81.581,-4.000 t=0.129
     rest x=84.319 w=5.474
-      glyph restQuarter 84.319,0.000
+      glyph restQuarter 84.319,-2.000
     bar x=88.258 w=0.077
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
     voiceName x=1.935 w=0.000
@@ -122,7 +122,7 @@ system 0 width=90.323 originY=0.000
       glyph noteheadBlack 80.380,0.500
       line  80.444,0.667 -> 80.444,4.000 t=0.129
     rest x=84.319 w=5.474
-      glyph restQuarter 84.319,0.000
+      glyph restQuarter 84.319,2.000
     bar x=88.258 w=0.077
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
   staff 1 originY=38.652
@@ -141,11 +141,11 @@ system 0 width=90.323 originY=0.000
     timeSignature x=20.308 w=1.682
       glyph timeSigCommon 20.308,0.000
     rest x=23.281 w=10.949
-      glyph restWhole 23.281,-1.000
+      glyph restWhole 23.281,-3.000
     bar x=39.037 w=0.077
       line  39.076,-2.000 -> 39.076,2.000 t=0.077
     rest x=40.457 w=5.474
-      glyph restQuarter 40.457,0.000
+      glyph restQuarter 40.457,-2.000
     note@16 x=44.396 w=5.474
       glyph noteheadBlack 44.396,-8.000
       line  44.138,-3.000 -> 45.920,-3.000 t=0.090
@@ -187,9 +187,9 @@ system 0 width=90.323 originY=0.000
       line  57.375,-9.000 -> 59.157,-9.000 t=0.090
       line  58.834,-9.667 -> 58.834,-13.000 t=0.129
     rest x=61.572 w=5.474
-      glyph restQuarter 61.572,0.000
+      glyph restQuarter 61.572,-2.000
     rest x=65.511 w=5.474
-      glyph restQuarter 65.511,0.000
+      glyph restQuarter 65.511,-2.000
     note@15 x=69.450 w=5.474
       glyph noteheadBlack 69.450,-7.500
       line  69.192,-3.000 -> 70.974,-3.000 t=0.090
@@ -219,7 +219,7 @@ system 0 width=90.323 originY=0.000
       line  80.122,-8.000 -> 81.904,-8.000 t=0.090
       line  81.581,-8.167 -> 81.581,-11.500 t=0.129
     rest x=84.319 w=5.474
-      glyph restQuarter 84.319,0.000
+      glyph restQuarter 84.319,-2.000
     bar x=88.258 w=0.077
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
     voiceName x=1.935 w=0.000
@@ -303,11 +303,11 @@ system 1 width=90.323 originY=44.359
     voiceName x=1.935 w=0.000
       text  1.935,1.974 size=2.194 bold "T.II"
     rest x=15.068 w=10.949
-      glyph restWhole 15.068,-1.000
+      glyph restWhole 15.068,1.000
     bar x=34.017 w=0.077
       line  34.055,-2.000 -> 34.055,2.000 t=0.077
     rest x=35.436 w=10.949
-      glyph restWhole 35.436,-1.000
+      glyph restWhole 35.436,1.000
     bar x=54.385 w=0.077
       line  54.423,-2.000 -> 54.423,2.000 t=0.077
     note@0 x=55.804 w=6.705
@@ -454,7 +454,7 @@ system 1 width=90.323 originY=44.359
     bar x=34.017 w=0.077
       line  34.055,-2.000 -> 34.055,2.000 t=0.077
     rest x=35.436 w=5.474
-      glyph restQuarter 35.436,0.000
+      glyph restQuarter 35.436,2.000
     note@12 x=40.173 w=5.474
       glyph noteheadBlack 40.173,-6.000
       line  39.915,-3.000 -> 41.697,-3.000 t=0.090

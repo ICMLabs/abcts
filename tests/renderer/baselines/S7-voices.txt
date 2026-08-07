@@ -1432,7 +1432,7 @@ system 0 width=100.611 originY=0.000
       text  90.787,10.436 size=2.194 bold "let."
       text  89.446,13.068 size=2.194 bold "hloar."
     rest x=95.123 w=3.871
-      glyph rest8th 95.123,0.000
+      glyph rest8th 95.123,-2.000
     bar x=96.869 w=2.013
       glyph repeatDots 96.869,1.976
       line  97.682,-2.000 -> 97.682,2.000 t=0.077
@@ -1543,7 +1543,7 @@ system 0 width=100.611 originY=0.000
       line  91.962,4.000 -> 93.816,4.000 t=0.090
       line  92.284,4.167 -> 92.284,7.500 t=0.129
     rest x=95.123 w=3.871
-      glyph rest8th 95.123,0.000
+      glyph rest8th 95.123,2.000
     bar x=96.869 w=2.013
       glyph repeatDots 96.869,1.976
       line  97.682,-2.000 -> 97.682,2.000 t=0.077
@@ -1701,7 +1701,7 @@ system 0 width=100.611 originY=0.000
       line  91.962,5.000 -> 93.816,5.000 t=0.090
       line  93.493,5.333 -> 93.493,2.000 t=0.129
     rest x=95.123 w=3.871
-      glyph rest8th 95.123,0.000
+      glyph rest8th 95.123,-2.000
     bar x=96.869 w=2.013
       glyph repeatDots 96.869,1.976
       line  97.682,-2.000 -> 97.682,2.000 t=0.077
@@ -1877,7 +1877,7 @@ system 0 width=100.611 originY=0.000
       line  91.962,7.000 -> 93.816,7.000 t=0.090
       line  92.284,7.667 -> 92.284,11.000 t=0.129
     rest x=95.123 w=3.871
-      glyph rest8th 95.123,0.000
+      glyph rest8th 95.123,2.000
     bar x=96.869 w=2.013
       glyph repeatDots 96.869,1.976
       line  97.682,-2.000 -> 97.682,2.000 t=0.077
@@ -1984,7 +1984,7 @@ system 0 width=90.454 originY=0.000
     timeSignature x=17.190 w=1.682
       glyph timeSigCommon 17.190,0.000
     rest x=20.163 w=5.474
-      glyph restQuarter 20.163,0.000
+      glyph restQuarter 20.163,-2.000
     note@-4 x=23.561 w=5.474
       glyph noteheadBlack 23.561,2.000
       line  24.762,1.833 -> 24.762,-1.500 t=0.129
@@ -2045,7 +2045,7 @@ system 0 width=90.454 originY=0.000
     bar x=88.389 w=0.077
       line  88.428,-2.000 -> 88.428,2.000 t=0.077
     rest x=20.163 w=5.474
-      glyph restQuarter 20.163,0.000
+      glyph restQuarter 20.163,2.000
     note@-6 x=23.561 w=5.474
       glyph noteheadBlack 23.561,3.000
       line  23.302,3.000 -> 25.084,3.000 t=0.090

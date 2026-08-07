@@ -105,7 +105,7 @@ system 0 width=90.336 originY=0.000
       glyph noteheadBlack 74.542,-2.500
       line  75.743,0.833 -> 75.743,-6.000 t=0.129
     rest x=79.119 w=2.737
-      glyph rest16th 79.119,0.000
+      glyph rest16th 79.119,-2.000
     note@-2 x=81.407 w=2.737
       glyph noteheadBlack 81.407,1.000
       line  82.634,0.900 -> 82.634,-6.500 t=0.077
@@ -223,7 +223,7 @@ system 0 width=90.336 originY=0.000
       line  44.023,-3.000 -> 45.805,-3.000 t=0.090
       line  44.320,-3.400 -> 44.320,2.246 t=0.077
     rest x=48.858 w=3.871
-      glyph rest8th 48.858,0.000
+      glyph rest8th 48.858,2.000
     bar x=53.434 w=0.077
       line  53.473,-2.000 -> 53.473,2.000 t=0.077
     note@4,6 x=54.854 w=4.741
@@ -574,7 +574,7 @@ system 1 width=90.394 originY=46.754
       line  80.892,-3.000 -> 82.674,-3.000 t=0.090
       line  81.215,-3.333 -> 81.215,2.000 t=0.129
     rest x=84.124 w=3.871
-      glyph rest8th 84.124,0.000
+      glyph rest8th 84.124,2.000
     bar x=88.329 w=0.077
       line  88.368,-2.000 -> 88.368,2.000 t=0.077
     bar x=3.871 w=2.335
@@ -1201,7 +1201,7 @@ system 3 width=90.375 originY=112.596
       line  80.336,-3.000 -> 82.118,-3.000 t=0.090
       line  80.659,-3.333 -> 80.659,2.000 t=0.129
     rest x=83.791 w=3.871
-      glyph rest8th 83.791,0.000
+      glyph rest8th 83.791,2.000
     bar x=88.311 w=0.077
       line  88.349,-2.000 -> 88.349,2.000 t=0.077
     rest x=12.181 w=7.742
@@ -1853,7 +1853,7 @@ system 5 width=90.416 originY=171.942
       line  24.015,3.000 -> 25.797,3.000 t=0.090
       line  24.311,-0.400 -> 24.311,6.743 t=0.077
     rest x=28.112 w=3.871
-      glyph rest8th 28.112,0.000
+      glyph rest8th 28.112,2.000
     bar x=32.072 w=2.335
       glyph repeatDots 34.008,1.976
       line  32.847,-2.000 -> 32.847,2.000 t=0.516
@@ -2381,7 +2381,7 @@ system 7 width=90.386 originY=241.862
       glyph flag8thUp 13.369,-6.000
       line  13.382,0.833 -> 13.382,-6.000 t=0.129
     rest x=15.268 w=3.871
-      glyph rest8th 15.268,0.000
+      glyph rest8th 15.268,-2.000
     note@12 x=21.441 w=2.737
       glyph noteheadBlack 21.441,-6.000
       line  21.183,-3.000 -> 22.965,-3.000 t=0.090
@@ -2585,7 +2585,7 @@ system 7 width=90.386 originY=241.862
     rest x=12.181 w=3.871
     rest x=15.268 w=3.871
     rest x=21.441 w=5.474
-      glyph restQuarter 21.441,0.000
+      glyph restQuarter 21.441,2.000
     bar x=30.172 w=0.077
       line  30.210,-2.000 -> 30.210,2.000 t=0.077
     rest x=33.243 w=7.742
@@ -2629,7 +2629,7 @@ system 7 width=90.386 originY=241.862
       line  19.640,-8.000 -> 21.422,-8.000 t=0.090
       line  19.937,-8.400 -> 19.937,-0.250 t=0.077
     rest x=21.441 w=5.474
-      glyph restQuarter 21.441,0.000
+      glyph restQuarter 21.441,2.000
     bar x=30.172 w=0.077
       line  30.210,-2.000 -> 30.210,2.000 t=0.077
     note@-5,2 x=33.243 w=3.871
@@ -2878,7 +2878,7 @@ system 8 width=90.460 originY=274.203
       line  64.391,-4.000 -> 66.172,-4.000 t=0.090
       line  65.876,-1.100 -> 65.876,-9.000 t=0.077
     rest x=67.309 w=5.474
-      glyph restQuarter 67.309,0.000
+      glyph restQuarter 67.309,-2.000
     bar x=71.410 w=0.077
       line  71.449,-2.000 -> 71.449,2.000 t=0.077
     note@0,2,7 x=74.394 w=2.737
@@ -3023,7 +3023,7 @@ system 8 width=90.460 originY=274.203
       line  61.692,-5.000 -> 63.474,-5.000 t=0.090
       line  61.989,-4.900 -> 61.989,4.259 t=0.077
     rest x=67.309 w=5.474
-      glyph restQuarter 67.309,0.000
+      glyph restQuarter 67.309,2.000
     bar x=71.410 w=0.077
       line  71.449,-2.000 -> 71.449,2.000 t=0.077
     note@-12,-5 x=74.394 w=3.871
@@ -3348,7 +3348,7 @@ system 9 width=90.403 originY=306.816
       line  22.844,3.000 -> 24.626,3.000 t=0.090
       line  23.167,-0.333 -> 23.167,6.500 t=0.129
     rest x=27.221 w=3.871
-      glyph rest8th 27.221,0.000
+      glyph rest8th 27.221,2.000
     bar x=31.340 w=2.013
       glyph repeatDots 31.340,1.976
       line  32.153,-2.000 -> 32.153,2.000 t=0.077
@@ -3608,7 +3608,7 @@ system 10 width=90.384 originY=346.070
       line  40.318,-3.000 -> 42.100,-3.000 t=0.090
       line  40.641,-3.333 -> 40.641,2.000 t=0.129
     rest x=43.698 w=3.871
-      glyph rest8th 43.698,0.000
+      glyph rest8th 43.698,2.000
     bar x=48.112 w=0.077
       line  48.150,-2.000 -> 48.150,2.000 t=0.077
     note@-4,3 x=50.834 w=3.871
@@ -4239,7 +4239,7 @@ system 12 width=90.575 originY=410.242
       line  39.780,-3.000 -> 41.562,-3.000 t=0.090
       line  40.102,-3.333 -> 40.102,2.000 t=0.129
     rest x=43.090 w=3.871
-      glyph rest8th 43.090,0.000
+      glyph rest8th 43.090,2.000
     bar x=47.406 w=0.077
       line  47.445,-2.000 -> 47.445,2.000 t=0.077
     note@-4,3 x=50.129 w=3.871
@@ -4673,7 +4673,7 @@ system 13 width=90.436 originY=437.094
       line  37.972,3.000 -> 39.754,3.000 t=0.090
       line  38.295,-0.333 -> 38.295,6.500 t=0.129
     rest x=40.889 w=3.871
-      glyph rest8th 40.889,0.000
+      glyph rest8th 40.889,2.000
     bar x=45.999 w=2.335
       glyph repeatDots 47.934,1.976
       line  46.773,-2.000 -> 46.773,2.000 t=0.516
@@ -5564,7 +5564,7 @@ system 15 width=90.428 originY=511.704
       glyph flag8thDown 40.914,3.000
       line  40.979,-1.333 -> 40.979,3.000 t=0.129
     rest x=43.964 w=3.871
-      glyph rest8th 43.964,0.000
+      glyph rest8th 43.964,2.000
     bar x=49.525 w=0.077
       line  49.564,-2.000 -> 49.564,2.000 t=0.077
     note@-10,-3 x=50.945 w=3.871
@@ -6173,7 +6173,7 @@ system 17 width=90.392 originY=577.423
       line  56.490,-3.000 -> 58.272,-3.000 t=0.090
       line  57.950,0.333 -> 57.950,-6.500 t=0.129
     rest x=59.798 w=3.871
-      glyph rest8th 59.798,0.000
+      glyph rest8th 59.798,-2.000
     note@-1,1,3,6 x=62.848 w=3.871
       glyph noteheadBlack 62.848,0.500
       glyph noteheadBlack 62.848,-0.500
@@ -6183,7 +6183,7 @@ system 17 width=90.392 originY=577.423
       line  62.590,-3.000 -> 64.372,-3.000 t=0.090
       line  64.049,0.333 -> 64.049,-6.500 t=0.129
     rest x=65.898 w=3.871
-      glyph rest8th 65.898,0.000
+      glyph rest8th 65.898,-2.000
     bar x=68.948 w=0.465
       line  68.986,-2.000 -> 68.986,2.000 t=0.077
       line  69.374,-2.000 -> 69.374,2.000 t=0.077
@@ -6317,7 +6317,7 @@ system 17 width=90.392 originY=577.423
       line  40.831,-5.000 -> 42.613,-5.000 t=0.090
       line  41.153,-4.833 -> 41.153,1.000 t=0.129
     rest x=44.139 w=3.871
-      glyph rest8th 44.139,0.000
+      glyph rest8th 44.139,2.000
     bar x=49.700 w=2.013
       glyph repeatDots 49.700,1.976
       line  50.513,-2.000 -> 50.513,2.000 t=0.077
@@ -6329,7 +6329,7 @@ system 17 width=90.392 originY=577.423
       glyph flag8thDown 56.749,5.000
       line  56.813,-1.833 -> 56.813,5.000 t=0.129
     rest x=59.798 w=3.871
-      glyph rest8th 59.798,0.000
+      glyph rest8th 59.798,2.000
     note@-10,-3 x=62.848 w=3.871
       glyph noteheadBlack 62.848,5.000
       glyph noteheadBlack 62.848,1.500
@@ -6339,7 +6339,7 @@ system 17 width=90.392 originY=577.423
       line  62.590,5.000 -> 64.372,5.000 t=0.090
       line  62.913,1.667 -> 62.913,8.500 t=0.129
     rest x=65.898 w=3.871
-      glyph rest8th 65.898,0.000
+      glyph rest8th 65.898,2.000
     bar x=68.948 w=0.465
       line  68.986,-2.000 -> 68.986,2.000 t=0.077
       line  69.374,-2.000 -> 69.374,2.000 t=0.077
@@ -6355,9 +6355,9 @@ system 17 width=90.392 originY=577.423
       line  75.870,-3.000 -> 77.652,-3.000 t=0.090
       line  76.193,-3.333 -> 76.193,1.000 t=0.129
     rest x=79.178 w=3.871
-      glyph rest8th 79.178,0.000
+      glyph rest8th 79.178,2.000
     rest x=82.228 w=5.474
-      glyph restQuarter 82.228,0.000
+      glyph restQuarter 82.228,2.000
     bar x=88.328 w=0.077
       line  88.366,-2.000 -> 88.366,2.000 t=0.077
     rest x=12.181 w=7.742
@@ -6433,7 +6433,7 @@ system 18 width=90.411 originY=614.952
       glyph accidentalFlat 10.020,0.500
     rest x=12.181 w=5.474
     rest x=17.018 w=3.871
-      glyph rest8th 17.018,0.000
+      glyph rest8th 17.018,-2.000
     note@1 x=20.438 w=2.235
       glyph noteheadBlack 20.438,-0.500
       line  21.665,-0.600 -> 21.665,-5.510 t=0.077
@@ -6500,9 +6500,9 @@ system 18 width=90.411 originY=614.952
       line  50.555,-3.000 -> 52.337,-3.000 t=0.090
       line  52.015,-1.167 -> 52.015,-6.500 t=0.129
     rest x=54.763 w=3.161
-      glyph rest8th 54.763,0.000
+      glyph rest8th 54.763,-2.000
     rest x=57.555 w=2.737
-      glyph rest16th 57.555,0.000
+      glyph rest16th 57.555,-2.000
     note@0,7 x=59.974 w=2.737
       glyph noteheadBlack 59.974,0.000
       glyph noteheadBlack 59.974,-3.500
@@ -6618,7 +6618,7 @@ system 18 width=90.411 originY=614.952
       glyph accidentalFlat 8.891,-0.500
       glyph accidentalFlat 10.020,1.500
     rest x=12.181 w=5.474
-      glyph restQuarter 12.181,0.000
+      glyph restQuarter 12.181,2.000
     note@-9,-2 x=17.018 w=5.474
       glyph noteheadBlack 17.018,4.500
       glyph noteheadBlack 17.018,1.000
@@ -6629,11 +6629,11 @@ system 18 width=90.411 originY=614.952
     bar x=26.428 w=0.077
       line  26.466,-2.000 -> 26.466,2.000 t=0.077
     rest x=27.847 w=7.742
-      glyph restHalf 27.847,0.000
+      glyph restHalf 27.847,2.000
     bar x=46.601 w=0.077
       line  46.640,-2.000 -> 46.640,2.000 t=0.077
     rest x=48.021 w=3.871
-      glyph rest8th 48.021,0.000
+      glyph rest8th 48.021,2.000
     note@-9,-2 x=52.788 w=5.474
       glyph noteheadBlack 52.788,4.500
       glyph noteheadBlack 52.788,1.000
@@ -6642,7 +6642,7 @@ system 18 width=90.411 originY=614.952
       line  52.530,4.000 -> 54.312,4.000 t=0.090
       line  52.853,1.167 -> 52.853,8.000 t=0.129
     rest x=63.020 w=3.871
-      glyph rest8th 63.020,0.000
+      glyph rest8th 63.020,2.000
     bar x=67.857 w=0.465
       line  67.896,-2.000 -> 67.896,2.000 t=0.077
       line  68.283,-2.000 -> 68.283,2.000 t=0.077
@@ -7204,7 +7204,7 @@ system 20 width=90.432 originY=684.283
       glyph flag8thUp 54.002,-6.000
       line  54.015,0.833 -> 54.015,-6.000 t=0.129
     rest x=55.827 w=3.871
-      glyph rest8th 55.827,0.000
+      glyph rest8th 55.827,-2.000
     note@12 x=61.855 w=2.737
       glyph noteheadBlack 61.855,-6.000
       line  61.597,-3.000 -> 63.379,-3.000 t=0.090
@@ -7351,7 +7351,7 @@ system 20 width=90.432 originY=684.283
     rest x=52.814 w=3.871
     rest x=55.827 w=3.871
     rest x=61.855 w=5.474
-      glyph restQuarter 61.855,0.000
+      glyph restQuarter 61.855,2.000
     bar x=70.379 w=0.077
       line  70.417,-2.000 -> 70.417,2.000 t=0.077
     note@-5,2 x=73.450 w=3.871
@@ -7433,7 +7433,7 @@ system 20 width=90.432 originY=684.283
       line  60.090,-8.000 -> 61.872,-8.000 t=0.090
       line  60.387,-8.400 -> 60.387,-0.250 t=0.077
     rest x=61.855 w=5.474
-      glyph restQuarter 61.855,0.000
+      glyph restQuarter 61.855,2.000
     bar x=70.379 w=0.077
       line  70.417,-2.000 -> 70.417,2.000 t=0.077
     rest x=73.450 w=7.742
@@ -7968,7 +7968,7 @@ system 22 width=90.323 originY=749.244
       line  76.665,-5.000 -> 78.447,-5.000 t=0.090
       line  78.125,-1.667 -> 78.125,-8.500 t=0.129
     rest x=82.139 w=3.871
-      glyph rest8th 82.139,0.000
+      glyph rest8th 82.139,-2.000
     bar x=87.355 w=1.239
       line  87.394,-2.000 -> 87.394,2.000 t=0.077
       line  88.129,-2.000 -> 88.129,2.000 t=0.516
@@ -8074,7 +8074,7 @@ system 22 width=90.323 originY=749.244
       line  76.665,3.000 -> 78.447,3.000 t=0.090
       line  76.988,-0.333 -> 76.988,6.500 t=0.129
     rest x=82.139 w=3.871
-      glyph rest8th 82.139,0.000
+      glyph rest8th 82.139,2.000
     bar x=87.355 w=1.239
       line  87.394,-2.000 -> 87.394,2.000 t=0.077
       line  88.129,-2.000 -> 88.129,2.000 t=0.516

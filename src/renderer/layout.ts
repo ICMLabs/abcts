@@ -1993,12 +1993,38 @@ function restGlyph(notated: Rational): { name: GlyphName; step: number; dots: nu
   return { name, step: 0, dots }
 }
 
+/**
+ * A REST MOVES OFF THE MIDDLE LINE WHEN IT SHARES A STAFF.
+ *
+ *     if (isMultiVoice) {
+ *       if (stemdir === "down") restpitch = 3;
+ *       if (stemdir === "up")   restpitch = 11;
+ *     }
+ *
+ * (`abstract-engraver.js:549-551`, from a default `restpitch = 7`.) `isMultiVoice` is
+ * `voice.voicetotal > 1` — this VOICE'S staff carries more than one — and `stemdir` is the
+ * same direction `stemForVoice` models, which abcjs's tune-builder back-fills onto a
+ * shared staff's voices exactly as it honours a declared `V:… stems=`. The two conditions
+ * are separate: a lone voice with `stems=up` has a direction and no shift.
+ *
+ * Four pitch either way, and it moves the DRAWN rest as well as the box it reserves —
+ * `createNoteHead(abselem, c, { verticalPos: restpitch })` is the same variable.
+ */
+const restPitchShift = (stemUp: boolean | null): number =>
+  stemUp === null ? 0 : stemUp ? ABCJS_PITCH.restPitchUp - ABCJS_PITCH.restPitch : ABCJS_PITCH.restPitchDown - ABCJS_PITCH.restPitch
+
 function layoutRest(
   rest: Rest,
   advance: number,
   x: number,
   strict = true,
   clef: Clef = defaultClef,
+  /**
+   * The stem direction of a voice SHARING its staff — abcjs's `stemdir` where
+   * `isMultiVoice` also holds. `null` on a staff this voice has to itself, which is the
+   * case abcjs leaves at the default `restpitch`. See `restPitchShift`.
+   */
+  sharedStaffStem: boolean | null = null,
 ): LayoutElement {
   // A REST CARRIES ITS GRACES, by the same line that gives it a chord symbol: `createNote`
   // closes its rest/note branch and THEN calls `addGraceNotes`
@@ -2070,7 +2096,26 @@ function layoutRest(
     }
   }
   if (spec) {
-    glyphs.push(glyphAt(spec.name, x, spec.step))
+    // abcjs's `restpitch`, which is BOTH where the glyph is drawn and the pitch its
+    // declared box is centred on — one variable through `createNoteHead`'s `verticalPos`.
+    // Its default is 7 and our own anchor step already draws there (measured: our rest ink
+    // sits 14.360px below the top staff line against abcjs's 14.362), so the shift is
+    // applied as a DELTA rather than by re-deriving the anchor.
+    const shift = restPitchShift(sharedStaffStem)
+    // A REST RESERVES ITS DECLARED BOX, like a notehead: `thickness:
+    // symbolHeightInPitches(c)` on its `RelativeElement`, so `pitch ± thickness / 2`
+    // (`create-note-head.js:33-35`, `relative-element.js:22-24`). Falling through to the
+    // glyph's INK box read `rests.quarter` as 3.066 pitch above its anchor against a
+    // declared 2.766 — and asymmetrically, since that glyph inks 11.88px up and 9.6 down
+    // around a declared ±10.72.
+    const restHalf = (glyphsFor(strict).get(spec.name)?.declaredHeight ?? 0) / 2
+    glyphs.push({
+      ...glyphAt(spec.name, x, spec.step + shift),
+      reserve: [
+        stepToY(ABCJS_PITCH.restPitch + shift - PITCH_ORIGIN) - restHalf,
+        stepToY(ABCJS_PITCH.restPitch + shift - PITCH_ORIGIN) + restHalf,
+      ],
+    })
     if (spec.dots > 0) {
       // A DOTTED REST TAKES A NOTE'S DOT ARITHMETIC, because in abcjs it is literally the
       // same call: the rest branch ends in `createNoteHead(abselem, c, {verticalPos:
@@ -2087,7 +2132,7 @@ function layoutRest(
         glyphsFor(strict).width(spec.name) +
         (strict ? spaces(ABCJS_PX.dotOffset + ABCJS_PX.dotSpacing) : ENGRAVE.dotGap)
       const step = strict ? spaces(ABCJS_PX.dotSpacing) : ENGRAVE.dotSpacing
-      glyphs.push(...dotGlyphs(spec.dots, dotX, spec.step, new Set(), step))
+      glyphs.push(...dotGlyphs(spec.dots, dotX, spec.step + restPitchShift(sharedStaffStem), new Set(), step))
     }
   }
 
@@ -5323,6 +5368,12 @@ function layoutMeasure(
    * octave marker's reserve.
    */
   trailingClef: Clef | null = null,
+  /**
+   * Does this voice SHARE its staff — abcjs's `voice.voicetotal > 1`, which it hands
+   * `addRestToAbsElement` as `isMultiVoice` (`abstract-engraver.js:542`). Only a rest
+   * reads it, and only together with the stem direction.
+   */
+  sharedStaff = false,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
   /**
@@ -5486,6 +5537,7 @@ function layoutMeasure(
       strict,
       voiceStem,
       dynamicsAbove,
+      sharedStaff,
     )
     if (el === null) continue
     if (group !== null && stemOut?.value) {
@@ -6058,6 +6110,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           const next = (voice?.measures ?? [])[measureIndex + 1]
           return next?.startsSystem === true ? (next.clefChange ?? null) : null
         })(),
+        (voicesOfStaff.find((m) => m.includes(voiceIndex))?.length ?? 1) > 1,
       )
       if (measure.keyChange !== null) keyInForce = measure.keyChange
       if (measure.meterChange != null) meterInForce = measure.meterChange
@@ -8488,6 +8541,8 @@ function layoutEvent(
   voiceStem: boolean | null = null,
   /** Dynamics above the staff when the tune sings, below otherwise. */
   dynamicsAbove = true,
+  /** abcjs's `isMultiVoice` — this voice shares its staff. Only a rest reads it. */
+  sharedStaff = false,
 ): LayoutElement | null {
   const advance = naturalWidth(event.duration, spacingScale)
   // The beam's direction wins over the voice convention: a beam cannot join opposed stems,
@@ -8521,7 +8576,7 @@ function layoutEvent(
       dynamicsAbove,
     )
   }
-  return layoutRest(event, advance, x, strict, clef)
+  return layoutRest(event, advance, x, strict, clef, sharedStaff ? voiceStem : null)
 }
 
 /**
