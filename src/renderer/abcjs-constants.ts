@@ -364,6 +364,17 @@ export const ABCJS_PITCH = {
   decorationMinTop: 12,
   /** `Decoration.minBottom` — the same on the other side (`decoration.js:14`). */
   decorationMinBottom: 0,
+  /**
+   * WHAT A BEAMED NOTE'S DOWN-STEM IS WORTH TO A DECORATION BEFORE IT EXISTS.
+   *
+   * `createBeam` passes `nostem`, so a beamed note builds no stem child and its
+   * `abselem.bottom` is the heads alone. abcjs guesses the rest in one line —
+   * `var bottom = nostem && dir !== 'up' ? Math.min(-3, abselem.bottom - 6) : abselem.bottom`
+   * (`abstract-engraver.js:841`) — a flat 6-pitch drop, floored at pitch −3. Neither
+   * figure is the stem's real end, and there is no matching term on the ABOVE side.
+   */
+  beamedDecorationDrop: 6,
+  beamedDecorationFloor: -3,
   /** `symbolHeightInPitches(symbol) + 1` — the 1 is "a little padding" (`decoration.js:160`). */
   decorationPadding: 1,
   /** `textFudge` in `textDecoration` (`decoration.js:148`). */

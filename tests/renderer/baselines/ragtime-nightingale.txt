@@ -6129,7 +6129,7 @@ system 17 width=90.392 originY=577.423
       line  33.460,0.400 -> 33.460,-8.007 t=0.077
     note@3 x=36.437 w=3.871
       glyph noteheadBlack 36.437,-1.500
-      glyph ornamentTrill 35.868,-6.314
+      glyph ornamentTrill 35.868,-4.314
       line  37.664,-1.600 -> 37.664,-8.414 t=0.077
     note@10 x=41.089 w=3.871
       glyph noteheadBlack 41.089,-5.000

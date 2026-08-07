@@ -1683,15 +1683,15 @@ system 0 width=90.478 originY=0.000
       line  35.637,-2.000 -> 35.637,2.000 t=0.077
     note@-3 x=37.018 w=3.871
       glyph noteheadBlack 37.018,1.500
-      glyph articStaccatoBelow 37.415,2.522
+      glyph articStaccatoBelow 37.415,3.022
       line  38.245,1.400 -> 38.245,-3.008 t=0.077
     note@-2 x=39.308 w=3.871
       glyph noteheadBlack 39.308,1.000
-      glyph articStaccatoBelow 39.705,2.022
+      glyph articStaccatoBelow 39.705,2.522
       line  40.535,0.900 -> 40.535,-3.254 t=0.077
     note@-1 x=41.598 w=3.871
       glyph noteheadBlack 41.598,0.500
-      glyph articStaccatoBelow 41.995,1.522
+      glyph articStaccatoBelow 41.995,2.022
       line  42.825,0.400 -> 42.825,-3.500 t=0.077
     note@6 x=43.888 w=3.871
       glyph noteheadBlack 43.888,-3.000

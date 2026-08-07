@@ -367,7 +367,14 @@ const WITHIN: Readonly<Record<string, number>> = {
   // Together they took four fixtures off the table at once: both `percmap` ones,
   // `visual-wrap-04` and `visual-multi-voice-02`. Only two entries are left with any
   // geometry, and neither is above 0.18px.
-  '0.05': 171,
+  //
+  // A BEAMED NOTE HAS NO STEM YET WHEN ITS DECORATIONS ARE PLACED, and abcjs guesses the
+  // one it will get: `var bottom = nostem && dir !== 'up' ? Math.min(-3, abselem.bottom -
+  // 6) : abselem.bottom` (`abstract-engraver.js:841`). A flat 6-pitch drop with a FLOOR at
+  // pitch -3 — neither figure the stem's real end, and no matching term on the ABOVE side,
+  // which takes `abselem.top` raw. Ours read the real beamed stem on both sides, which is
+  // 0.175px of staff wherever a `!invertedfermata!` hangs off that cursor.
+  '0.05': 172,
   '1': 173,
   '5': 173,
   '25': 173,

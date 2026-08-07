@@ -287,6 +287,9 @@ export const ENGRAVE = {
   decorationMinTop: ABCJS_PITCH.decorationMinTop,
   /** `minBottom` — the floor `getPlacement('below')` clamps to (`decoration.js:14`). */
   decorationMinBottom: ABCJS_PITCH.decorationMinBottom,
+  /** The stem a BEAMED note has not built yet, guessed at (`abstract-engraver.js:841`). */
+  beamedDecorationDrop: ABCJS_PITCH.beamedDecorationDrop,
+  beamedDecorationFloor: ABCJS_PITCH.beamedDecorationFloor,
   /** The pitch of padding each stacked decoration adds so nothing touches (`:154`). */
   decorationPadding: ABCJS_PITCH.decorationPadding,
   /** `textFudge` — how far a TEXT decoration sits above the stack cursor (`:149`). */
@@ -2686,6 +2689,36 @@ function layoutNoteheads(
           lowest,
           roomAfterGraces,
         )
+  // A BEAMED NOTE HAS NO STEM YET WHEN ITS DECORATIONS ARE PLACED, and abcjs approximates
+  // the one it will get rather than waiting for it.
+  //
+  // `createBeam` passes `nostem` for every note it takes over, so `createNote` builds no
+  // stem child and `abselem.top`/`.bottom` are the heads' declared boxes alone. abcjs then
+  // writes ONE line for the below side (`abstract-engraver.js:841`):
+  //
+  //     var bottom = nostem && dir !== 'up' ? Math.min(-3, abselem.bottom - 6) : abselem.bottom
+  //
+  // A flat 6-pitch drop with a FLOOR at pitch −3 — not the stem's real end, which is not
+  // known yet, and not the note's own bottom either. Probed on `decorations-01`: a beamed
+  // down-stemmed head at pitch −2 gives `min(-3, -9.0444) = -9.0444`, while one at pitch 7
+  // gives `min(-3, -0.0444) = -3` and the floor is what bites. There is no matching term
+  // on the ABOVE side — that one takes `abselem.top` raw, which for a beamed note is the
+  // heads and nothing else.
+  //
+  // Ours read the real beamed stem on both sides. It was 0.175px of staff on
+  // `decorations-01`, whose `!invertedfermata!` hangs off exactly this cursor.
+  const beamedNote = stemOut !== null
+  const decorationStems = [
+    // The note's OWN stem is not a child yet when it is beamed, so it is out of both sides.
+    ...(beamedNote ? [] : lines),
+    // A GRACE's stem is, beamed or not — `addGraceNotes` runs before this and only its own
+    // beamed group is deferred, which `noReserve` already says.
+    ...graceLines,
+  ].filter((l) => l.role === 'stem' && l.noReserve !== true)
+  const decorationBelowBase = Math.min(
+    lowest - ENGRAVE.noteheadHalfHeight / ENGRAVE.spacePerStep,
+    ...decorationStems.map((l) => -Math.max(l.y1, l.y2) / ENGRAVE.spacePerStep),
+  )
   if (event !== null && event.decorations.length > 0) {
     const decorated = decorationGlyphs(
       event.decorations,
@@ -2713,16 +2746,10 @@ function layoutNoteheads(
       // every notehead on `transpose-output-04`.
       Math.max(
         highest + ENGRAVE.noteheadHalfHeight / ENGRAVE.spacePerStep,
-        ...[...lines, ...graceLines]
-          .filter((l) => l.role === 'stem' && l.noReserve !== true)
-          .map((l) => -Math.min(l.y1, l.y2) / ENGRAVE.spacePerStep),
+        ...decorationStems.map((l) => -Math.min(l.y1, l.y2) / ENGRAVE.spacePerStep),
       ),
-      Math.min(
-        lowest - ENGRAVE.noteheadHalfHeight / ENGRAVE.spacePerStep,
-        ...[...lines, ...graceLines]
-          .filter((l) => l.role === 'stem' && l.noReserve !== true)
-          .map((l) => -Math.max(l.y1, l.y2) / ENGRAVE.spacePerStep),
-      ),
+      decorationBelowBase,
+      beamedNote && !up,
       strict,
       roomAfterGraces,
       dynamicsAbove,
@@ -3142,6 +3169,17 @@ function decorationGlyphs(
   elemTopStep: number,
   /** `abselem.bottom` in staff steps — the other end of the same extent. */
   elemBottomStep: number,
+  /**
+   * The note is BEAMED and its stems go DOWN, so `abselem.bottom` above has no stem in it
+   * and abcjs substitutes a guess for the one it has not built yet:
+   *
+   *     var bottom = nostem && dir !== 'up' ? Math.min(-3, abselem.bottom - 6) : abselem.bottom
+   *
+   * (`abstract-engraver.js:841`.) Applied HERE rather than at the call site because both
+   * figures are in abcjs PITCH and the call site works in staff steps — the six between
+   * the two origins and the six of the drop are different sixes.
+   */
+  beamedDown: boolean,
   /** `abcjs-strict` — suppresses the marks abcjs accepts but never paints. */
   strict: boolean,
   /**
@@ -3184,6 +3222,13 @@ function decorationGlyphs(
   /** abcjs works in pitch and we work in staff steps; they differ by the staff's middle. */
   const toPitch = (step: number): number => step + 6
   const toStep = (pitch: number): number => pitch - 6
+  /** abcjs's `bottom` — `abselem.bottom`, or the beamed down-stem it has yet to build. */
+  const bottomPitch = beamedDown
+    ? Math.min(
+        ENGRAVE.beamedDecorationFloor,
+        toPitch(elemBottomStep) - ENGRAVE.beamedDecorationDrop,
+      )
+    : toPitch(elemBottomStep)
   // ── CLOSE DECORATIONS FIRST, AND THEY SET WHERE THE STACK STARTS ────────────
   //
   // `createDecoration` runs `closeDecoration` over the whole list before
@@ -3212,7 +3257,7 @@ function decorationGlyphs(
       closeY === undefined
         ? artAbove
           ? topPitch + 2
-          : toPitch(elemBottomStep) - 2
+          : bottomPitch - 2
         : artAbove
           ? closeY + 2
           : closeY - 2
@@ -3242,7 +3287,7 @@ function decorationGlyphs(
   // hands it the literal `'below'` while every other ornament passes `positioning`
   // through (`decoration.js:261-264`), so the inverted fermata hangs UNDER the note
   // however the tune is written. Stacking it above put `!invertedfermata!EF` 6.52px low.
-  let below = Math.min(toPitch(elemBottomStep), ENGRAVE.decorationMinBottom)
+  let below = Math.min(bottomPitch, ENGRAVE.decorationMinBottom)
 
   for (const name of names) {
     if (strict && STRICT_UNDRAWN.has(name)) continue
@@ -5553,6 +5598,8 @@ function layoutMeasure(
             false,
             6,
             2,
+            // A barline is not beamed, so abcjs's `nostem` guess cannot apply to one.
+            false,
             strict,
             0,
             dynamicsAbove,
