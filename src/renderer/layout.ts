@@ -5160,6 +5160,32 @@ interface Advance {
  * nothing to do with how thick the rules are drawn. The other modes measure the glyph
  * they actually draw, which is the honest answer once byte-parity is not the point.
  */
+/**
+ * The carrier for a chord symbol written before a barline, so it can go through the very
+ * same `noteText` a note's does — which is not a convenience, it is what abcjs does: the
+ * bar's abselem reaches `addChord` by the identical call, differing only in `noteheadWidth
+ * = 0`. Typed as a REST because a barline has no lyric and `noteText` returns before the
+ * verse block on one, which is also true of abcjs's bar element.
+ */
+const EMPTY_BAR_EVENT: Rest = {
+  type: 'rest',
+  duration: rational(0),
+  notatedDuration: rational(0),
+  kind: 'invisible',
+  decorations: [],
+  decorationSourceRanges: [],
+  chordSymbol: null,
+  chordSymbolSourceRange: null,
+  chordFont: null,
+  annotations: [],
+  annotationSourceRanges: [],
+  graceNotes: [],
+  graceSlash: false,
+  tuplet: null,
+  measureCount: 0,
+  sourceRange: null,
+}
+
 const barRod = (kind: Barline, el: LayoutElement, strict: boolean): number =>
   (strict ? (ENGRAVE.barLayoutWidth[kind] ?? el.width) : el.width) + ENGRAVE.prefixGap
 
@@ -5513,19 +5539,46 @@ function layoutMeasure(
     //
     // `vert` is 13.5 instead when the number is WIDER than 10px AND the element is the
     // treble clef — a clef-only case, so a barline always takes the 11.
-    const bar =
+    const numbered =
       measure.closingBarNumber === undefined
         ? withMarks
         : {
             ...withMarks,
             texts: [...withMarks.texts, barNumberText(measure.closingBarNumber, x)],
           }
+    // A CHORD SYMBOL OR ANNOTATION WRITTEN BEFORE THE BAR BELONGS TO THE BAR, and abcjs
+    // engraves it with the SAME `addChord` a note gets — `addChord(getTextSize, abselem,
+    // elem, 0, 0, 0, false, germanAlphabet)` (`abstract-engraver.js:1047-1049`). The
+    // `noteheadWidth` of 0 is what centres the mark on the barline instead of on a head,
+    // and `addCentered` then gives the bar `w = max(w, chordWidth / 2)` and `extraw =
+    // min(extraw, -chordWidth / 2)`, which is why `"D"|` widens a barline abcjs measures
+    // at 5.781 against a bare one's 1.
+    const barSpan = { left: 0, right: 0 }
+    const barChordTexts =
+      measure.closingBarlineChord === undefined && measure.closingBarlineAnnotations === undefined
+        ? []
+        : noteText(
+            {
+              ...EMPTY_BAR_EVENT,
+              chordSymbol: measure.closingBarlineChord ?? null,
+              annotations: measure.closingBarlineAnnotations ?? [],
+            },
+            x,
+            0,
+            strict,
+            barSpan,
+          )
+    const bar =
+      barChordTexts.length === 0
+        ? numbered
+        : { ...numbered, texts: [...numbered.texts, ...barChordTexts] }
     elements.push(bar)
     fixed(
-      barRod(measure.closingBarline, bar, strict) + endingRoom(voltaAfter),
+      Math.max(barRod(measure.closingBarline, bar, strict), barSpan.right + ENGRAVE.prefixGap) +
+        endingRoom(voltaAfter),
       ENGRAVE.prefixGap + endingRoom(voltaAfter),
       'bar',
-      ENGRAVE.barClearance,
+      Math.max(ENGRAVE.barClearance, barSpan.left),
     )
     x += ENGRAVE.barGap
   }

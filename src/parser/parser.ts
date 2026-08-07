@@ -1247,12 +1247,25 @@ class VoiceBuilder {
     return { textBefore: blocks }
   }
 
+  /**
+   * Returns `false` when the barline OPENED a measure instead of closing one, so the
+   * caller knows its pending chord was not consumed and must stay on the next note.
+   */
   closeMeasure(
     barline: Barline,
     barlineRange: SourceRange,
     /** Decorations still waiting when the bar arrived — they attach to IT. */
     decorations: readonly string[] = [],
-  ): void {
+    /**
+     * A chord symbol and annotations still waiting when the bar arrived, which attach to
+     * IT and not to the next note — `if (el.chord !== undefined) bar.chord = el.chord`
+     * followed by `el = {}` (`abc_parse_music.js:288-289, 305`). abcjs then engraves them
+     * with the very same `addChord` a note gets, at `noteheadWidth = 0`
+     * (`abstract-engraver.js:1047-1049`), so `"D"|` centres the chord ON the barline.
+     */
+    chordSymbol: string | null = null,
+    annotations: readonly string[] = [],
+  ): boolean {
     // A barline with nothing before it (leading `|:`) opens rather than closes, so it is
     // held for the NEXT measure instead of being dropped. Dropping it lost a printed
     // barline wherever a line ended `:|` and the next began `|:`, and lost the opening
@@ -1266,7 +1279,7 @@ class VoiceBuilder {
       // Two openers in a row keep the first; `[|` then `|:` prints both, but nothing in
       // the corpus does it and one slot is enough until something does.
       this.pendingOpening ??= { barline, range: barlineRange }
-      return
+      return false
     }
     this.measures.push({
       events: this.events,
@@ -1281,6 +1294,8 @@ class VoiceBuilder {
       closingBarline: barline,
       ...this.takeBarNumber(barline, this.events.length === 0 && this.overlays.length === 0),
       ...(decorations.length > 0 ? { closingBarlineDecorations: [...decorations] } : {}),
+      ...(chordSymbol === null ? {} : { closingBarlineChord: chordSymbol }),
+      ...(annotations.length > 0 ? { closingBarlineAnnotations: [...annotations] } : {}),
       sourceRange: sourceRange(this.measureStart ?? barlineRange.start, barlineRange.end),
       closingBarlineSourceRange: barlineRange,
     })
@@ -1288,6 +1303,7 @@ class VoiceBuilder {
     this.overlays = []
     this.overlayIndex = null
     this.measureStart = null
+    return true
   }
 
   /**
@@ -2852,13 +2868,28 @@ class Parser {
           // A DECORATION STILL WAITING WHEN THE BAR ARRIVES ATTACHES TO THE BAR — abcjs
           // builds it in `createBarLine`, not on the next note (`abstract-engraver.js:1002`).
           // Held for the NEXT note instead, `CCCC!D.C.alcoda!|DDDD` put the mark over the D.
-          voice().closeMeasure(
+          // …AND SO DOES A CHORD SYMBOL OR AN ANNOTATION, by the two lines after it:
+          // `if (el.chord !== undefined) bar.chord = el.chord`, then `el = {}` clears the
+          // pending set (`abc_parse_music.js:288-289, 305`). `"D"|` centres the chord on
+          // the BARLINE — golden `transpose-output-03` draws it at x 491.73 against a bar
+          // at 491.734 — where we carried it to the next note, 15.8px right of abcjs.
+          // A barline that OPENS a measure keeps nothing: `closeMeasure` returns false
+          // there, and the chord stays pending for the next note rather than being lost.
+          const closed = voice().closeMeasure(
             BARLINES[text] ?? 'thin',
             sourceRange(token.start, token.start + token.length),
             pending.decorations,
+            pending.chordSymbol,
+            pending.annotations,
           )
           pending.decorations = []
           pending.decorationSourceRanges = []
+          if (closed) {
+            pending.chordSymbol = null
+            pending.chordSymbolSourceRange = null
+            pending.annotations = []
+            pending.annotationSourceRanges = []
+          }
           i++
 
           // A digit straight after the barline opens a repeat ENDING — `|1`, `:|2`. The

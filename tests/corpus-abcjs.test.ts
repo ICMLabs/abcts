@@ -320,7 +320,18 @@ const WITHIN: Readonly<Record<string, number>> = {
   //
   // **`1: 173` IS EVERY MEASURABLE FIXTURE** — the 174th is the leading-header tune-count
   // mismatch, which has no geometry to compare.
-  '0.05': 164,
+  //
+  // A CHORD SYMBOL WRITTEN BEFORE A BARLINE BELONGS TO THE BARLINE, exactly as a
+  // decoration does and by the two lines after it: `if (el.chord !== undefined) bar.chord
+  // = el.chord`, then `el = {}` (`abc_parse_music.js:288-289, 305`). `createBarLine` ends
+  // by running the same `addChord` a note gets at `noteheadWidth = 0`
+  // (`abstract-engraver.js:1047-1049`), so the mark is CENTRED on the bar and
+  // `addCentered` gives it `w = chordWidth / 2` against a bare barline's 1 — abcjs
+  // measures `"D"|` at 5.781. `"D"|` is how a downbeat chord change is normally written,
+  // and carrying it to the next note put our mark 15.8px right of abcjs's and every
+  // notehead on the line 0.93px out. `transpose-output-03` went exact; `-04` kept only
+  // its `oy`.
+  '0.05': 165,
   '1': 173,
   '5': 173,
   '25': 173,

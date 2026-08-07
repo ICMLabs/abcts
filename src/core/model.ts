@@ -711,6 +711,21 @@ export interface Measure {
    */
   readonly closingBarlineDecorations?: readonly string[]
   /**
+   * …AND SO DO A CHORD SYMBOL AND ANNOTATIONS WRITTEN THERE, by the two lines after the
+   * decoration transfer: `if (el.chord !== undefined) bar.chord = el.chord`, then `el =
+   * {}` (`abc_parse_music.js:288-289, 305`). `createBarLine` ends by running the very
+   * same `addChord` a note gets, at `roomTaken = 0` and `noteheadWidth = 0`
+   * (`abstract-engraver.js:1047-1049`), so the mark is CENTRED on the barline itself and
+   * `addCentered` gives the bar `w = chordWidth / 2` and `extraw = -chordWidth / 2` —
+   * real spacing, over the flat `-5` a bare barline declares.
+   *
+   * `"D"|` is how a chord change on the downbeat is normally written, so this is not an
+   * edge case: carrying it to the next note put our mark 15.8px right of abcjs's and
+   * spread every notehead on the line by 0.93px.
+   */
+  readonly closingBarlineChord?: string
+  readonly closingBarlineAnnotations?: readonly string[]
+  /**
    * A `Q:` or `[Q:]` after the FIRST one, printed where it stands.
    *
    * The first `Q:` anywhere in the tune becomes `Score.tempo` and is drawn at the head of
