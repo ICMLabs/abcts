@@ -2238,14 +2238,28 @@ function layoutRest(
  * at every one (`abstract-engraver.js:36-41`), so those three map to themselves. Only
  * `rhythm` splits, and its split — `noteheads.slash.whole` for a whole or half,
  * `.slash.quarter` for a quarter and shorter — is exactly this `open`/`filled` line.
+ *
+ * AND EVERY STYLE HAS A `nostem` ENTRY, which is a THIRD glyph rather than a repeat of the
+ * quarter. A ZERO-DURATION note takes it — `if (zeroDuration) noteSymbol =
+ * chartable[style].nostem` (`abstract-engraver.js:642-646`) — and for `rhythm` that is
+ * `noteheads.slash.nostem`, a glyph of its own at `w 12.81, h 15.63` against
+ * `.slash.quarter`'s 9.00 x 13.00. For the other three it repeats their single glyph, so
+ * only `rhythm` needs the field; the rest fall back to `filled`.
  */
 const STYLED_HEADS: Readonly<
-  Record<Exclude<NoteStyle, 'normal'>, { readonly filled: GlyphName; readonly open: GlyphName }>
+  Record<
+    Exclude<NoteStyle, 'normal'>,
+    { readonly filled: GlyphName; readonly open: GlyphName; readonly nostem?: GlyphName }
+  >
 > = {
   harmonic: { filled: 'noteheadDiamondBlack', open: 'noteheadDiamondWhite' },
   x: { filled: 'noteheadXBlack', open: 'noteheadXBlack' },
   triangle: { filled: 'noteheadTriangleUpBlack', open: 'noteheadTriangleUpWhite' },
-  rhythm: { filled: 'noteheadSlashHorizontalEnds', open: 'noteheadSlashWhiteWhole' },
+  rhythm: {
+    filled: 'noteheadSlashHorizontalEnds',
+    open: 'noteheadSlashWhiteWhole',
+    nostem: 'noteheadSlashVerticalEnds',
+  },
 }
 
 /**
@@ -2303,6 +2317,9 @@ function styledHead(
         : null
   if (style === null || style === 'normal') return base
   const pair = STYLED_HEADS[style]
+  // `noteGlyph` gives a zero-duration note a stemless `noteheadBlack`, which is abcjs's
+  // `chartable.note.nostem`. Under a style it takes that style's own `nostem` entry.
+  if (event.duration.numerator === 0 && pair.nostem !== undefined) return pair.nostem
   return base === 'noteheadBlack' ? pair.filled : pair.open
 }
 

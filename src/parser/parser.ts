@@ -2671,7 +2671,7 @@ class Parser {
         // Inline `!style=x!` wins for this note; otherwise the voice's standing style
         // from `K: style=` applies.
         const inline = resolveStyle(pending)
-        const style = inline === 'normal' ? voice().noteStyle : inline
+        const style = inline ?? voice().noteStyle
         const attached: Note | Chord = {
           ...scaled,
           ...pending,
@@ -3805,8 +3805,18 @@ const NOTE_STYLES: readonly NoteStyle[] = ['normal', 'x', 'harmonic', 'triangle'
  * record it as one. Pulls any `style=` entries out of the pending decoration list and
  * returns the resulting style, mirroring v2's resolveStyle.
  */
-function resolveStyle(attachments: Attachments): NoteStyle {
-  let style: NoteStyle = 'normal'
+function resolveStyle(attachments: Attachments): NoteStyle | null {
+  // NULL FOR ABSENT, NOT `'normal'`. An explicit `!style=normal!` is how a rhythm-notation
+  // voice writes a note that keeps its real head — `U:n=!style=normal!` then `nG` — and
+  // abcjs honours it per PITCH: "There is a style for the whole group of pitches, but there
+  // could also be an override for a particular pitch", `c = chartable[elem.pitches[p].style]
+  // [-durlog]` (`abstract-engraver.js:677-680`).
+  //
+  // Returning `'normal'` for both cases made the override indistinguishable from its
+  // absence, so the caller's `inline === 'normal' ? voice().noteStyle : inline` handed the
+  // voice's `rhythm` straight back and `nG` drew a slash. FOURTH time on this branch that a
+  // representation, not a rule, was the defect.
+  let style: NoteStyle | null = null
   const keep: string[] = []
   const keepRanges: SourceRange[] = []
   attachments.decorations.forEach((decoration, index) => {

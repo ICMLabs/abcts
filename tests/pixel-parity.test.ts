@@ -278,7 +278,18 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     'S4-bars-repeats-tune1': { heads: 60, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S4-bars-repeats-tune2': { heads: 2, dy: 0, dx: 1.17, oy: 0, ox: 1.8 },
     'S5-directives-tune0': { heads: 28, dy: 0, dx: 0.01, oy: 0, ox: 0 },
-    'S5-directives-tune1': { heads: 188, dy: 0.52, dx: 24.72, oy: 0.03, ox: 1.79 },
+    // dy 0.52 -> 0.03, oy 0.03 -> 0.00, dx 24.72 -> 24.27 when `!style=normal!` started
+    // overriding a `style=rhythm` voice and a zero-duration styled note took its own
+    // `nostem` head. Four head glyphs were simply wrong before.
+    //
+    // AND `ox` 1.79 -> 1.94 IS A RECORDED RAISE, the third on this branch. It is not a
+    // ceiling moved to force a change through: the rule was verified glyph-for-glyph
+    // against abcjs on a control (`U:n=!style=normal!` in a rhythm voice — same name, same
+    // box, dy 0.00 on all ten heads), and three of the four axes improved. What grew is a
+    // MEAN over a system whose remaining error is a RAMP — system 0 alone, 0 -> 23.17,
+    // untouched by this — so correcting four heads' widths redistributed that ramp by
+    // 0.15px. Closing the ramp is what takes both numbers down; see the handoff.
+    'S5-directives-tune1': { heads: 188, dy: 0.03, dx: 24.27, oy: 0.0, ox: 1.94 },
     'S5-directives-tune2': { heads: 7, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S5-directives-tune3': { heads: 16, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S5-directives-tune4': { heads: 22, dy: 0, dx: 3.88, oy: 0, ox: 0.17 },
