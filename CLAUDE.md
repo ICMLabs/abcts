@@ -71,9 +71,22 @@ checkpoint and hand off as you go so no context is lost.
 > "zero for the common case", left out — and that judgement was the entire remaining error
 > on `ragtime-nightingale`, the branch's one standing red. Port the quirk, then measure.
 
-Read `Docs/CHECKPOINT-2026-08-06.md` first — the current state, findings 104-105, and
-**THE HARNESS: how to instrument abcjs in a scratchpad copy**, which is the section that
-matters most. `Docs/HANDOFF-2026-08-06.md` has the session prompt.
+> 🏁 **THE RANKED TABLE HAS NO GEOMETRY LEFT ON IT** (2026-08-06, second session). All
+> 173 measurable fixtures of the harvested corpus are exact on all four axes to within
+> 0.05px; the 174th is a tune-count mismatch with no geometry to compare. **So the table
+> can no longer name the next defect, and every remaining gate is blind to what is left** —
+> the pixel gate sees only what abcjs classes a NOTEHEAD, the baselines say CHANGED and
+> never WRONG, the structural gate misses everything added via `addOther`. Findings now
+> come from READING abcjs, and **a CONTROL TUNE is the proof**: finding 111 was written,
+> measured 6 pitch wrong on a four-bar control, and fixed before it ever reached the
+> corpus — without the control it would have landed under a green ratchet, because the
+> fixture it was aimed at moved the right way for the wrong reason.
+
+Read `Docs/CHECKPOINT-2026-08-06b.md` first — the current state, findings 106-112, and
+**THE GATES CANNOT SEE WHAT IS LEFT**, which is the section that decides the work now.
+`Docs/HANDOFF-2026-08-06b.md` has the session prompt. `Docs/CHECKPOINT-2026-08-06.md` is
+superseded for the state but keeps findings 104-105 and **THE HARNESS: how to instrument
+abcjs in a scratchpad copy**, which is still the first tool to reach for.
 `Docs/CHECKPOINT-2026-08-05c.md` is superseded for the state but keeps findings 90-103 and
 **the `ENGRAVE` TRIAGE TABLE**. `Docs/CHECKPOINT-2026-08-05b.md` is
 superseded for the state but keeps findings 71-89 and Lance's question in full;
@@ -221,8 +234,8 @@ gate had been comparing abcjs's outline START against our glyph ORIGIN, a 4px bi
 
 **Structural parity is done: note content, lyrics, beams and render structure are all
 41/41 with zero recorded divergences.** `geometry/vertical` is **703/703 with NO reds**,
-and the harvested corpus is **10 of 174 off some axis with NOTHING ABOVE 0.93px** — every
-measurable fixture within one pixel.
+and the harvested corpus's ranked table **has no geometry on it at all** — 173 of 173
+measurable fixtures exact on every axis to within 0.05px, the 174th a tune-count mismatch.
 pushed, and the AUDIT FINDING IS CLOSED — no Bravura figure is reachable in strict. The
 harvested corpus is **10 of 174 off some axis**, from 34 at the start of 2026-08-05, with
 **nothing above 0.93px** and every measurable fixture inside one pixel. Two ceilings are
@@ -443,33 +456,26 @@ feature-coverage gap, tracked separately and implemented not at all.
 ```
 We are continuing abcts development in the abcts repo (Code/abcts).
 
-Read Docs/CHECKPOINT-2026-08-06.md first — the state, findings 104-105, and THE
-HARNESS for instrumenting abcjs, which is the section that matters most; its
-"NEXT, in order" is your job. Then Docs/HANDOFF-2026-08-06.md beside it, then
--08-05c.md (findings 90-103 and the ENGRAVE triage table), -08-05b.md (71-89),
--08-05.md (the audit finding and the golden-variables map), -08-04c.md (findings
-51-70 and the method), -08-04b.md (41-50), -08-03d.md (16-40), ARCHITECTURE.md,
-this file.
+Read Docs/CHECKPOINT-2026-08-06b.md first — the state, findings 106-112, and above
+all THE GATES CANNOT SEE WHAT IS LEFT; its "WHAT IS LEFT" is your job. Then
+Docs/HANDOFF-2026-08-06b.md beside it, then -08-06.md for THE HARNESS, -08-05c.md
+(findings 90-103 and the ENGRAVE triage table), -08-05b.md (71-89), -08-05.md,
+-08-04c.md (51-70 and the method), -08-04b.md (41-50), -08-03d.md (16-40),
+ARCHITECTURE.md, this file.
 
 THE RULE THAT MATTERS: abcjs is the MASTER SOURCE. Any variability is likely a
 setting you did not copy or an algorithm you INFERRED instead of analysing. Port
-its STRUCTURE, then its constants — the expensive divergences have all been
-architectural, and a correct constant dropped into a different structure moves
-the output unpredictably.
+its STRUCTURE, then its constants.
 
-AND STRICT SHOULD NOT BE READING OURS AT ALL. The triage is PARTLY DONE:
-`ENGRAVE` is 101 constants now, fourteen having been read by nothing at all, and
-the 44 live bare literals are sorted into a table in -08-05c.md. Work down it,
-do not re-derive it, and MEASURE any row whose evidence says `source` before
-porting it.
+AND THE RANKED TABLE IS EXHAUSTED, so it cannot name the next defect any more.
+Read abcjs, form ONE hypothesis, and prove it on a CONTROL TUNE before touching a
+fixture — the gates are blind to everything left, and a fixture can move the right
+way for the wrong reason.
 
-Work by INSTRUMENTING — env-guarded console.log in the vendored abcjs source, run
-its own dump-svg.js harness, then `git -C ../abcMusicKit checkout --
-Docs/References/abcjs/` and READ the status. Instrument to ANSWER A QUESTION, not
-to see what happens.
+Work by INSTRUMENTING a scratchpad copy of abcjs — never ../abcMusicKit, another
+agent works there. Instrument to ANSWER A QUESTION, not to see what happens.
 
-The bar is 100% parity. A passing gate is not parity — the gate says "no worse
-than recorded"; parity means dy/dx/oy/ox at ZERO.
+The bar is 100% parity. A passing gate is not parity.
 
 Confirm your lane with `git rev-parse --abbrev-ref HEAD`. `geometry/vertical` is
 the open arc, GREEN at 703/703.
@@ -479,32 +485,22 @@ the open arc, GREEN at 703/703.
 ```
 Continue geometric parity in Code/abcts.
 
-Read Docs/CHECKPOINT-2026-08-06.md and Docs/HANDOFF-2026-08-06.md; the earlier
-ledgers are -08-05b.md (71-89), -08-05.md, -08-04c.md (51-70), -08-04b.md
-(41-50), -08-03d.md (16-40).
+Read Docs/CHECKPOINT-2026-08-06b.md and Docs/HANDOFF-2026-08-06b.md; -08-06.md has
+THE HARNESS and the earlier ledgers are -08-05c.md (90-103), -08-05b.md (71-89),
+-08-05.md, -08-04c.md (51-70), -08-04b.md (41-50), -08-03d.md (16-40).
 
-The branch is 703/703 with no reds and NOTHING ABOVE 0.93px on the ranked table.
-10 of 174 harvested fixtures are off some axis, from 34 at the start of
-2026-08-05, and within 1px is 173 of 173 — every measurable fixture. So what is
-left is sub-pixel, except for one CONTENT gap.
+The branch is 703/703 with no reds and THE RANKED TABLE HAS NO GEOMETRY ON IT.
 
-READ ABCJS'S ALGORITHM; DO NOT INFER IT FROM MEASUREMENTS. Lance's correction of
-2026-08-06, and it produced the two largest steps of the arc within an hour —
-abcjs performs EIGHT layouts and DISCARDS the spacing it solves from the eighth,
-and a multi-measure rest advances the bar counter by its whole count. Stand up
-THE HARNESS from the checkpoint (a scratchpad copy of abcjs, env-guarded logs,
-`node dump-svg.js --file …`) before forming a theory. A MEASUREMENT CAN ONLY
-RANK HYPOTHESES YOU ALREADY HAVE.
+START WITH `fixVoiceCollisions` (layout/layout.js:140-188, called from :49) — the
+only thing left with a measured number. A pass over TIME SLOTS, after layout, that
+pushes a rest clear of the other voice's nearest note by 2 pitch, moving `top`,
+`bottom` AND `children[0].pitch` together. On `multi-voice-rest-placement` two of
+four rests are exact and two are 26.39px and 10.89px out. NO GATE CAN SEE IT —
+rests carry no class in the pixel gate — so measure against the golden SVG.
 
-START WITH `transpose-output-03` and `-04` at 0.93, the top of the table and a
-matched pair: a SPREAD with almost no prefix shift. Dump abcjs's per-element
-widths and diff against ours — that one comparison settled finding 104.
+Then the beam-across-a-rest slice, which changes beam GROUPING and is the largest
+behavioural difference left.
 
-Then the slur/tie ENDPOINTS — and note `curveReserves` already derives the same
-`startY`/`endY` for the reserve, so the quantity is computed TWICE.
-
-The method, unchanged: a ladder of control tunes, then the named function, then a
-probe. Instrument abcjs to ANSWER A QUESTION, read the ground truth, restore.
-Read the SHAPE of the evidence — a floor spares every size above it, a prefix is
-`ox` with no `dx`, a step in the per-notehead table is one element too wide.
+The method: read the named function, build a LADDER of control tunes, then probe.
+A control tune is the proof, not the fixture.
 ```
