@@ -92,7 +92,7 @@ system 0 width=32.975 originY=0.000
       glyph noteheadBlack 25.565,1.000
       line  26.766,0.833 -> 26.766,-2.500 t=0.129
 tune 3
-bounds  width=32.975 height=17.465 top=-1.935
+bounds  width=32.975 height=17.464 top=-1.935
 systems 1
 system 0 width=32.975 originY=0.000
   staff 0 originY=10.071
@@ -132,7 +132,7 @@ system 0 width=32.975 originY=0.000
       glyph noteheadBlack 25.565,1.000
       line  26.766,0.833 -> 26.766,-2.500 t=0.129
 tune 4
-bounds  width=32.975 height=17.465 top=-1.935
+bounds  width=32.975 height=17.464 top=-1.935
 systems 1
 system 0 width=32.975 originY=0.000
   staff 0 originY=10.071

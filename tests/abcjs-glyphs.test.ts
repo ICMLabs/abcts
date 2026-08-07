@@ -42,7 +42,11 @@ const drawnPaths = (svg: string): { cls: string; d: string }[] =>
 
 describe('the generated abcjs glyph table', () => {
   it('has abcjs 6.6.3 full complement', () => {
-    expect(Object.keys(ABCJS_GLYPHS).length).toBe(91)
+    // 95, not 91: abcjs closes its table literal and then adds four more by assignment
+    // under "Custom characters that weren't generated from the font" — the styled
+    // noteheads, which are exactly what `%%percmap` and `V:… style=` reach. The generator
+    // sliced to the literal's `};` and dropped all four silently.
+    expect(Object.keys(ABCJS_GLYPHS).length).toBe(95)
   })
 
   it('reproduces the outlines abcjs actually drew, verbatim', () => {

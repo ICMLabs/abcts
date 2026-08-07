@@ -18,17 +18,17 @@ system 0 width=26.561 originY=0.000
     note@-2 x=9.141 w=15.484
       glyph noteheadWhole 9.141,1.000
 tune 1
-bounds  width=26.703 height=17.606 top=-1.935
+bounds  width=26.703 height=17.602 top=-1.935
 systems 1
 system 0 width=26.703 originY=0.000
-  staff 0 originY=11.735
+  staff 0 originY=11.731
     staffline 0.000,2.000 -> 26.703,2.000 t=0.090
     staffline 0.000,1.000 -> 26.703,1.000 t=0.090
     staffline 0.000,0.000 -> 26.703,0.000 t=0.090
     staffline 0.000,-1.000 -> 26.703,-1.000 t=0.090
     staffline 0.000,-2.000 -> 26.703,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  9.359,-7.276 size=3.484 bold "Bass clef"
+      text  9.359,-7.272 size=3.484 bold "Bass clef"
     clef x=1.935 w=3.246
       glyph fClef 2.581,-1.000
     timeSignature x=6.471 w=1.522
@@ -40,17 +40,17 @@ system 0 width=26.703 originY=0.000
       line  9.026,-4.000 -> 11.475,-4.000 t=0.090
       line  9.026,-5.000 -> 11.475,-5.000 t=0.090
 tune 2
-bounds  width=26.703 height=16.606 top=-1.935
+bounds  width=26.703 height=16.602 top=-1.935
 systems 1
 system 0 width=26.703 originY=0.000
-  staff 0 originY=10.735
+  staff 0 originY=10.731
     staffline 0.000,2.000 -> 26.703,2.000 t=0.090
     staffline 0.000,1.000 -> 26.703,1.000 t=0.090
     staffline 0.000,0.000 -> 26.703,0.000 t=0.090
     staffline 0.000,-1.000 -> 26.703,-1.000 t=0.090
     staffline 0.000,-2.000 -> 26.703,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  7.653,-6.276 size=3.484 bold "Baritone clef"
+      text  7.653,-6.272 size=3.484 bold "Baritone clef"
     clef x=1.935 w=3.246
       glyph fClef 2.581,0.000
     timeSignature x=6.471 w=1.522
@@ -61,17 +61,17 @@ system 0 width=26.703 originY=0.000
       line  9.026,-3.000 -> 11.475,-3.000 t=0.090
       line  9.026,-4.000 -> 11.475,-4.000 t=0.090
 tune 3
-bounds  width=26.723 height=15.606 top=-1.935
+bounds  width=26.723 height=15.602 top=-1.935
 systems 1
 system 0 width=26.723 originY=0.000
-  staff 0 originY=9.735
+  staff 0 originY=9.731
     staffline 0.000,2.000 -> 26.723,2.000 t=0.090
     staffline 0.000,1.000 -> 26.723,1.000 t=0.090
     staffline 0.000,0.000 -> 26.723,0.000 t=0.090
     staffline 0.000,-1.000 -> 26.723,-1.000 t=0.090
     staffline 0.000,-2.000 -> 26.723,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  8.822,-5.276 size=3.484 bold "Tenor clef"
+      text  8.822,-5.272 size=3.484 bold "Tenor clef"
     clef x=1.935 w=3.266
       glyph cClef 2.581,-1.000
     timeSignature x=6.492 w=1.522
@@ -81,17 +81,17 @@ system 0 width=26.723 originY=0.000
       glyph noteheadWhole 9.304,-3.000
       line  9.046,-3.000 -> 11.495,-3.000 t=0.090
 tune 4
-bounds  width=26.723 height=14.606 top=-1.935
+bounds  width=26.723 height=14.602 top=-1.935
 systems 1
 system 0 width=26.723 originY=0.000
-  staff 0 originY=8.735
+  staff 0 originY=8.731
     staffline 0.000,2.000 -> 26.723,2.000 t=0.090
     staffline 0.000,1.000 -> 26.723,1.000 t=0.090
     staffline 0.000,0.000 -> 26.723,0.000 t=0.090
     staffline 0.000,-1.000 -> 26.723,-1.000 t=0.090
     staffline 0.000,-2.000 -> 26.723,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  9.491,-4.276 size=3.484 bold "Alto clef"
+      text  9.491,-4.272 size=3.484 bold "Alto clef"
     clef x=1.935 w=3.266
       glyph cClef 2.581,0.000
     timeSignature x=6.492 w=1.522
@@ -138,17 +138,17 @@ system 0 width=26.723 originY=0.000
     note@0 x=9.304 w=15.484
       glyph noteheadWhole 9.304,0.000
 tune 7
-bounds  width=110.661 height=25.996 top=-1.935
+bounds  width=110.661 height=25.992 top=-1.935
 systems 1
 system 0 width=110.661 originY=0.000
-  staff 0 originY=18.125
+  staff 0 originY=18.121
     staffline 0.000,2.000 -> 110.661,2.000 t=0.090
     staffline 0.000,1.000 -> 110.661,1.000 t=0.090
     staffline 0.000,0.000 -> 110.661,0.000 t=0.090
     staffline 0.000,-1.000 -> 110.661,-1.000 t=0.090
     staffline 0.000,-2.000 -> 110.661,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  49.388,-13.666 size=3.484 bold "Change Clefs"
+      text  49.388,-13.662 size=3.484 bold "Change Clefs"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=3.710
@@ -168,7 +168,7 @@ system 0 width=110.661 originY=0.000
       glyph noteheadBlack 21.274,3.000
       line  21.016,3.000 -> 22.798,3.000 t=0.090
       line  22.475,2.833 -> 22.475,-0.500 t=0.129
-      text  21.103,-9.852 size=2.065 "G"
+      text  21.103,-9.847 size=2.065 "G"
     note@-5 x=22.839 w=5.474
       glyph noteheadBlack 22.839,2.500
       line  24.041,2.333 -> 24.041,-1.000 t=0.129
@@ -218,7 +218,7 @@ system 0 width=110.661 originY=0.000
       glyph noteheadBlack 54.878,-3.000
       line  54.620,-3.000 -> 56.402,-3.000 t=0.090
       line  54.942,-2.833 -> 54.942,0.500 t=0.129
-      text  53.790,-9.852 size=2.065 "B♭"
+      text  53.790,-9.847 size=2.065 "B♭"
     note@7 x=57.361 w=5.474
       glyph noteheadBlack 57.361,-3.500
       line  57.102,-3.000 -> 58.884,-3.000 t=0.090
@@ -307,7 +307,7 @@ system 0 width=110.661 originY=0.000
     note@0 x=88.175 w=5.474
       glyph noteheadBlack 88.175,0.000
       line  88.240,0.000 -> 88.240,3.500 t=0.129
-      text  87.202,-9.852 size=2.065 "Dm"
+      text  87.202,-9.847 size=2.065 "Dm"
     note@1 x=90.543 w=5.474
       glyph noteheadBlack 90.543,-0.500
       line  90.608,-0.333 -> 90.608,3.000 t=0.129

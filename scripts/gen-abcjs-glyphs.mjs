@@ -31,11 +31,27 @@ const SOURCE = `${config.abcjsRef ?? '../abcMusicKit/Docs/References/abcjs/abcjs
 
 // The module exports helpers; the table itself is the `glyphs` local. Re-read the file
 // and evaluate just the object literal rather than reaching into module internals.
+//
+// …AND THE ASSIGNMENTS AFTER IT. abcjs closes the literal and then adds four more under
+// its own comment "Custom characters that weren't generated from the font":
+// `noteheads.slash.whole`, `.slash.quarter`, `.harmonic.quarter` and `.triangle.quarter`
+// — every STYLED notehead, which is exactly the set `%%percmap` and `V:… style=` reach.
+// Slicing to the literal's `};` dropped all four silently, and a name missing from this
+// table falls through to Bravura in strict, which the Bravura ruling makes a defect. The
+// tell was `noteheads.triangle.quarter` reserving 2.32258 pitch in abcjs against the
+// 2.0888 our fallback used.
 const text = readFileSync(SOURCE, 'utf-8')
 const start = text.indexOf('var glyphs =')
 const end = text.indexOf('\n};', start)
 if (start === -1 || end === -1) throw new Error('could not locate the glyph table')
-const table = eval(`(${text.slice(text.indexOf('{', start), end + 2)})`)
+// Everything from the literal to the first statement that is neither the table nor an
+// addition to it — abcjs's own `var pathClone`.
+const tail = text.indexOf('var pathClone', end)
+if (tail === -1) throw new Error('could not locate the end of the glyph additions')
+const table = eval(
+  `(function () { var glyphs = ${text.slice(text.indexOf('{', start), end + 2)}\n` +
+    `${text.slice(end + 3, tail)}\nreturn glyphs })()`,
+)
 
 /**
  * abcjs stores each outline as segment arrays — `[['M', 4.83, -14.97], ['c', …]]`. The

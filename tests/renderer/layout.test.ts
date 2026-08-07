@@ -1612,6 +1612,10 @@ describe('styled noteheads', () => {
   it('draws the four shapes abcjs draws', () => {
     // Verified against abcjs 6.6.3's element dump: harmonic is a diamond, `x` is its
     // `noteheads.indeterminate`, rhythm a slash, triangle a triangle.
+    //
+    // The rhythm slash is the QUARTER one because abcjs keys that style by durlog:
+    // `noteheads.slash.whole` at 0 and 1, `.slash.quarter` from 2 down
+    // (`abstract-engraver.js:38`). `L:1/4` puts every note here on the second.
     expect(
       headsOf(
         'X:1\nL:1/4\nK:C\nC !style=harmonic! D !style=x! E !style=triangle! F !style=rhythm! G|\n',
@@ -1621,7 +1625,7 @@ describe('styled noteheads', () => {
       'noteheadDiamondBlack',
       'noteheadXBlack',
       'noteheadTriangleUpBlack',
-      'noteheadSlashVerticalEnds',
+      'noteheadSlashHorizontalEnds',
     ])
   })
 
@@ -1652,8 +1656,8 @@ describe('styled noteheads', () => {
 
   it('applies a header `K:C treble style=rhythm` to the whole tune', () => {
     expect(headsOf('X:1\nL:1/4\nK:C treble style=rhythm\nC D|\n')).toEqual([
-      'noteheadSlashVerticalEnds',
-      'noteheadSlashVerticalEnds',
+      'noteheadSlashHorizontalEnds',
+      'noteheadSlashHorizontalEnds',
     ])
   })
 
@@ -1667,9 +1671,9 @@ describe('styled noteheads', () => {
 
   it('lets an inline !style=! override the standing style for one note', () => {
     expect(headsOf('X:1\nM:4/4\nL:1/4\nK:C style=rhythm\nC !style=harmonic!D C|\n')).toEqual([
-      'noteheadSlashVerticalEnds',
+      'noteheadSlashHorizontalEnds',
       'noteheadDiamondBlack',
-      'noteheadSlashVerticalEnds',
+      'noteheadSlashHorizontalEnds',
     ])
   })
 })

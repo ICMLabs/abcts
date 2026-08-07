@@ -2132,9 +2132,10 @@ function layoutRest(
  * `filled` and `open` follow the DURATION, because a styled note is still a quarter or a
  * half — the style picks the shape, the duration picks whether it is filled.
  *
- * ponytail: abcjs has one glyph for `x` and one for rhythm whatever the duration
- * (`noteheads.indeterminate`, `noteheads.slash.quarter`), so both map to themselves here.
- * A half-note rhythm slash is its own SMuFL glyph if a fixture ever needs one.
+ * abcjs keys each style by DURLOG and gives `x`, `harmonic` and `triangle` the same glyph
+ * at every one (`abstract-engraver.js:36-41`), so those three map to themselves. Only
+ * `rhythm` splits, and its split — `noteheads.slash.whole` for a whole or half,
+ * `.slash.quarter` for a quarter and shorter — is exactly this `open`/`filled` line.
  */
 const STYLED_HEADS: Readonly<
   Record<Exclude<NoteStyle, 'normal'>, { readonly filled: GlyphName; readonly open: GlyphName }>
@@ -2142,7 +2143,7 @@ const STYLED_HEADS: Readonly<
   harmonic: { filled: 'noteheadDiamondBlack', open: 'noteheadDiamondWhite' },
   x: { filled: 'noteheadXBlack', open: 'noteheadXBlack' },
   triangle: { filled: 'noteheadTriangleUpBlack', open: 'noteheadTriangleUpWhite' },
-  rhythm: { filled: 'noteheadSlashVerticalEnds', open: 'noteheadSlashVerticalEnds' },
+  rhythm: { filled: 'noteheadSlashHorizontalEnds', open: 'noteheadSlashWhiteWhole' },
 }
 
 /**
@@ -2500,11 +2501,23 @@ function layoutNoteheads(
     previous = step
   }
 
+  // A NOTEHEAD RESERVES ITS DECLARED BOX, CENTRED ON THE PITCH — `pitch ± thickness / 2`
+  // from `thickness: symbolHeightInPitches(c) * scale` (`create-note-head.js:34`,
+  // `relative-element.js:22-24`) — and not the glyph's INK box, which is what the scan
+  // falls back to when no `reserve` is set. The two are near enough for the ROUND heads
+  // that nothing showed it (`noteheads.quarter` inks [-4.08, +4.05] against a declared
+  // ±4.047, a third of a tenth of a pixel), and they part on the STYLED ones: the
+  // triangle inks [-5, +4] against a declared ±4.5, so its reserve was half a pixel too
+  // tall on the top side and half too short on the bottom. That asymmetry was the whole
+  // of `synth-flattener-23`'s remaining `oy`.
+  const headDeclaredHalf = (glyphsFor(strict).get(headName)?.declaredHeight ?? 0) / 2
   for (const [position, step] of steps.entries()) {
     const dx = offsets.get(step) ?? 0
+    const y = stepToY(step)
     glyphs.push({
       ...glyphAt(headName, headX + dx, step),
       role: 'notehead',
+      reserve: [y - headDeclaredHalf, y + headDeclaredHalf],
       // `steps` is sorted ascending, so the index IS the chord position from the bottom.
       ...(steps.length > 1 ? { chordPos: position + 1 } : {}),
     })

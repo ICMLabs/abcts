@@ -348,7 +348,26 @@ const WITHIN: Readonly<Record<string, number>> = {
   // is a flat zero and `addCentered` gets `dx = 0` where a note gets half a head. abcjs's
   // own SVG centres `"Eb7"z`'s chord at 109.84 — the rest's x — and probes the element at
   // `w = 17.789`, exactly half the chord. 0.53px under every notehead after it.
-  '0.05': 167,
+  //
+  // FOUR OF ABCJS'S NOTEHEADS WERE NEVER IN OUR COPY OF ITS GLYPH TABLE, and a name it
+  // does not hold falls through to Bravura in strict — the defect class the Bravura
+  // ruling closes. Not abcjs's absence but our GENERATOR's: abcjs closes its table
+  // literal and then adds `noteheads.slash.whole`, `.slash.quarter`, `.harmonic.quarter`
+  // and `.triangle.quarter` by assignment under "Custom characters that weren't generated
+  // from the font", and the generator sliced to the literal's `};`. Those four are every
+  // STYLED head — exactly what `%%percmap` and `V:… style=` reach.
+  //
+  // …AND A NOTEHEAD RESERVES ITS DECLARED BOX CENTRED ON THE PITCH, `pitch ± thickness/2`
+  // from `symbolHeightInPitches` (`create-note-head.js:34`), not the glyph's INK box,
+  // which is what the scan falls back to when no reserve is set. The round heads hid it —
+  // `noteheads.quarter` inks [-4.08, +4.05] against a declared ±4.047 — and the styled
+  // ones do not: the triangle inks [-5, +4] against ±4.5, half a pixel of reserve too
+  // tall on one side and too short on the other.
+  //
+  // Together they took four fixtures off the table at once: both `percmap` ones,
+  // `visual-wrap-04` and `visual-multi-voice-02`. Only two entries are left with any
+  // geometry, and neither is above 0.18px.
+  '0.05': 171,
   '1': 173,
   '5': 173,
   '25': 173,

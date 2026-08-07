@@ -41,6 +41,22 @@ export const SMUFL_TO_ABCJS: Readonly<Record<string, string>> = {
   noteheadBlack: 'noteheads.quarter',
   noteheadXBlack: 'noteheads.indeterminate',
   noteheadSlashVerticalEnds: 'noteheads.slash.nostem',
+  noteheadSlashWhiteWhole: 'noteheads.slash.whole',
+  noteheadSlashHorizontalEnds: 'noteheads.slash.quarter',
+  // THE STYLED HEADS — `V:… style=` and `%%percmap`'s third field. abcjs keeps ONE glyph
+  // per style whatever the duration (`abstract-engraver.js:36-41`: every durlog key of
+  // `triangle` and of `harmonic` is the same `.quarter`), so the filled and open SMuFL
+  // names both land on it. Only `rhythm` splits, and by durlog rather than by fill.
+  //
+  // They were absent because the GENERATOR could not see them, not because abcjs lacks
+  // them: abcjs adds these four by assignment after its table literal, under "Custom
+  // characters that weren't generated from the font". A name missing here falls through
+  // to Bravura in strict — the defect class the Bravura ruling closes — and the triangle
+  // was 0.117 pitch of reserve out because of it.
+  noteheadTriangleUpBlack: 'noteheads.triangle.quarter',
+  noteheadTriangleUpWhite: 'noteheads.triangle.quarter',
+  noteheadDiamondBlack: 'noteheads.harmonic.quarter',
+  noteheadDiamondWhite: 'noteheads.harmonic.quarter',
 
   // Clefs
   gClef: 'clefs.G',

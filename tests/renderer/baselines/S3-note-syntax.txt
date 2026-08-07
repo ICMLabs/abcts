@@ -1,8 +1,8 @@
 tune 0
-bounds  width=90.323 height=29.072 top=-1.935
+bounds  width=90.323 height=29.068 top=-1.935
 systems 1
 system 0 width=90.323 originY=0.000
-  staff 0 originY=18.179
+  staff 0 originY=18.174
     staffline 0.000,2.000 -> 90.323,2.000 t=0.090
     staffline 0.000,1.000 -> 90.323,1.000 t=0.090
     staffline 0.000,0.000 -> 90.323,0.000 t=0.090
@@ -13,8 +13,8 @@ system 0 width=90.323 originY=0.000
     beam   54.240,3.750 -> 70.165,2.250 t=0.500
     beam   76.790,-0.250 -> 84.791,-0.250 t=0.500
     title x=0.000 w=0.000
-      text  32.543,-13.719 size=3.484 bold "S3-1 Scales and Pitch Range"
-      text  30.644,-9.518 size=2.452 italic "Test - from Gonzato guide Ch.2"
+      text  32.543,-13.715 size=3.484 bold "S3-1 Scales and Pitch Range"
+      text  30.644,-9.514 size=2.452 italic "Test - from Gonzato guide Ch.2"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -394,7 +394,7 @@ system 3 width=57.333 originY=45.893
       line  54.404,-2.000 -> 54.404,2.000 t=0.077
       line  55.139,-2.000 -> 55.139,2.000 t=0.516
 tune 2
-bounds  width=90.391 height=33.322 top=-1.935
+bounds  width=90.391 height=33.321 top=-1.935
 systems 2
 system 0 width=90.391 originY=0.000
   staff 0 originY=14.014
@@ -514,7 +514,7 @@ system 1 width=36.214 originY=22.066
       line  33.285,-2.000 -> 33.285,2.000 t=0.077
       line  34.021,-2.000 -> 34.021,2.000 t=0.516
 tune 3
-bounds  width=90.227 height=33.322 top=-1.935
+bounds  width=90.227 height=33.321 top=-1.935
 systems 2
 system 0 width=90.227 originY=0.000
   staff 0 originY=14.014
@@ -621,7 +621,7 @@ system 1 width=90.184 originY=20.928
       line  87.255,-2.000 -> 87.255,2.000 t=0.077
       line  87.990,-2.000 -> 87.990,2.000 t=0.516
 tune 4
-bounds  width=90.323 height=33.963 top=-1.935
+bounds  width=90.323 height=33.961 top=-1.935
 systems 2
 system 0 width=90.323 originY=0.000
   staff 0 originY=14.652
@@ -1484,7 +1484,7 @@ system 0 width=90.206 originY=0.000
       line  87.277,-2.000 -> 87.277,2.000 t=0.077
       line  88.013,-2.000 -> 88.013,2.000 t=0.516
 tune 10
-bounds  width=90.323 height=17.469 top=-1.935
+bounds  width=90.323 height=17.467 top=-1.935
 systems 1
 system 0 width=90.323 originY=0.000
   staff 0 originY=10.071
@@ -1781,17 +1781,17 @@ system 0 width=58.485 originY=0.000
     bar x=56.420 w=0.077
       line  56.459,-2.000 -> 56.459,2.000 t=0.077
 tune 15
-bounds  width=36.236 height=21.629 top=-1.935
+bounds  width=36.236 height=21.624 top=-1.935
 systems 1
 system 0 width=36.236 originY=0.000
-  staff 0 originY=10.735
+  staff 0 originY=10.731
     staffline 0.000,2.000 -> 36.236,2.000 t=0.090
     staffline 0.000,1.000 -> 36.236,1.000 t=0.090
     staffline 0.000,0.000 -> 36.236,0.000 t=0.090
     staffline 0.000,-1.000 -> 36.236,-1.000 t=0.090
     staffline 0.000,-2.000 -> 36.236,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  1.935,-6.276 size=3.484 bold "S3-16 Pitches and Octaves - Octaves"
+      text  1.935,-6.272 size=3.484 bold "S3-16 Pitches and Octaves - Octaves"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -1821,7 +1821,7 @@ system 0 width=36.236 originY=0.000
     bar x=33.104 w=0.077
       line  33.142,-2.000 -> 33.142,2.000 t=0.077
 tune 16
-bounds  width=45.377 height=24.465 top=-1.935
+bounds  width=45.377 height=24.464 top=-1.935
 systems 1
 system 0 width=45.377 originY=0.000
   staff 0 originY=10.071
@@ -2593,7 +2593,7 @@ system 1 width=90.323 originY=18.123
       line  87.394,-2.000 -> 87.394,2.000 t=0.077
       line  88.129,-2.000 -> 88.129,2.000 t=0.516
 tune 24
-bounds  width=90.414 height=63.238 top=-1.935
+bounds  width=90.414 height=63.237 top=-1.935
 systems 4
 system 0 width=90.323 originY=0.000
   staff 0 originY=16.904
@@ -2683,7 +2683,7 @@ system 0 width=90.323 originY=0.000
       line  85.050,1.333 -> 85.050,-2.000 t=0.129
     bar x=88.258 w=0.077
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
-system 1 width=90.323 originY=22.427
+system 1 width=90.323 originY=22.426
   staff 0 originY=6.752
     staffline 0.000,2.000 -> 90.323,2.000 t=0.090
     staffline 0.000,1.000 -> 90.323,1.000 t=0.090
@@ -2764,7 +2764,7 @@ system 1 width=90.323 originY=22.427
       line  85.154,0.333 -> 85.154,-3.000 t=0.129
     bar x=88.258 w=0.077
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
-system 2 width=90.344 originY=35.628
+system 2 width=90.344 originY=35.627
   staff 0 originY=6.752
     staffline 0.000,2.000 -> 90.344,2.000 t=0.090
     staffline 0.000,1.000 -> 90.344,1.000 t=0.090
@@ -2839,7 +2839,7 @@ system 2 width=90.344 originY=35.628
       line  85.350,3.833 -> 85.350,0.000 t=0.129
     bar x=88.279 w=0.077
       line  88.318,-2.000 -> 88.318,2.000 t=0.077
-system 3 width=90.414 originY=47.593
+system 3 width=90.414 originY=47.592
   staff 0 originY=6.752
     staffline 0.000,2.000 -> 90.414,2.000 t=0.090
     staffline 0.000,1.000 -> 90.414,1.000 t=0.090
