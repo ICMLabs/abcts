@@ -152,7 +152,7 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // dx 24.19 -> 21.69 when `calcWidth` landed: its 73 Chinese characters measure the
     // golden generator's flat 8 rather than a full em, which is what the goldens do.
     // dy 0.32 -> 0.21, oy 0.16 -> 0.06 and ox -6.29 -> -5.28 on the declared-height fix.
-    'little swallow': { heads: 89, dy: 0.01, dx: 21.69, oy: 0.01, ox: -5.27 },
+    'little swallow': { heads: 89, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'multi-voice-lyrics-two-voices': { heads: 16, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'multi-voice-rest-collision': { heads: 7, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'multi-voice-rest-placement': { heads: 14, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
@@ -320,9 +320,10 @@ describe('pixel parity vs abcjs rendered SVG', () => {
     // now the ZERO end of the check.
     //
     // The non-zero end was `frere-jacques` until 2026-08-07, when its 21.80 went to 0.00
-    // and this canary failed BEFORE its own ceiling did. That is the check working: a
-    // fixture named here has to be one that is still off, so it moves as parity does.
-    // `little swallow` is the largest left.
+    // and this canary failed BEFORE its own ceiling did. It moved to `little swallow`, and
+    // that went to 0.00 in the same session. `ragtime-nightingale` is the last one left,
+    // and when its 13.31 closes this check needs a different shape — a synthetic pair,
+    // not a fixture, since by then there may be none that differ.
     const simple = measure('simple-c')
     expect(simple.goldenHeads).toBe(8)
     // Not `toBe(0)`: the resolved coordinates carry float noise, and a `0.0` in the
@@ -330,7 +331,7 @@ describe('pixel parity vs abcjs rendered SVG', () => {
     expect(simple.dx).toBeLessThan(EPSILON)
     expect(simple.dy).toBeLessThan(EPSILON)
     // …and a comparison returning 0 for everything would fail here.
-    expect(measure('little swallow').dx).toBeGreaterThan(1)
+    expect(measure('ragtime-nightingale').dx).toBeGreaterThan(1)
   })
 
   it('every fixture with an SVG golden is accounted for', () => {

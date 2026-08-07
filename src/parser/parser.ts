@@ -68,7 +68,7 @@ import {
   type Voice,
 } from '../core/model.js'
 import { Lexer, type Token } from './lexer.js'
-import { decodeTextString } from './text.js'
+import { decodeTextString, setAbcjsEscapes } from './text.js'
 
 /**
  * Both branches carry everything.
@@ -240,7 +240,7 @@ const BARLINES: Record<string, Barline> = {
   '|': 'thin',
   '||': 'double',
   '|]': 'final',
-  '[|': 'double',
+  '[|': 'thickThin',
   '|:': 'repeatStart',
   ':|': 'repeatEnd',
   '::': 'repeatBoth',
@@ -3883,7 +3883,13 @@ export interface ParseOptions {
 }
 
 export function parse(source: string, options: ParseOptions = {}): ParseResult {
-  return deepFreeze(new Parser(source, options.mode ?? defaultMode).parse())
+  const mode = options.mode ?? defaultMode
+  // WHICH ESCAPE TABLE THE TEXT DECODER READS — abcjs's fixed map in strict, ABC 2.1's
+  // generic combining marks everywhere else. Set here rather than threaded through the
+  // fourteen `decodeTextString` call sites, which is the shape `JAZZ_CHORDS` and
+  // `PERC_MAP` already take in the renderer. See `setAbcjsEscapes`.
+  setAbcjsEscapes(isStrict(mode))
+  return deepFreeze(new Parser(source, mode).parse())
 }
 
 /**

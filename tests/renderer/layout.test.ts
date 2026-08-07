@@ -427,9 +427,18 @@ describe('barlines that open a measure', () => {
   it('keeps a leading barline instead of dropping it', () => {
     // `little swallow` opens with `[|` before any note. The parser recognised this case
     // and discarded the barline, so core drew nothing where abcjs draws a bar.
+    //
+    // AND `[|` IS `thickThin`, NOT `double`. abcjs keeps `bar_thick_thin` and
+    // `bar_thin_thin` apart — 13px against 4px, and a thick rule first instead of a thin
+    // one (`abstract-engraver.js:974-977`). Folding them cost `little swallow` 9px of its
+    // opening prefix, which the pixel gate saw as 21.69 of dx spread.
     expect(typesOf('X:1\nL:1/4\nK:C\n[|CDEF|\n')).toContain('bar')
     expect(
       parse('X:1\nL:1/4\nK:C\n[|CDEF|\n').scores[0]?.voices[0]?.measures[0]?.openingBarline,
+    ).toBe('thickThin')
+    // `||` keeps `double`, which is the other half of the distinction.
+    expect(
+      parse('X:1\nL:1/4\nK:C\nCDEF||\n').scores[0]?.voices[0]?.measures[0]?.closingBarline,
     ).toBe('double')
   })
 

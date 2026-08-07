@@ -167,6 +167,12 @@ export const ABCJS_PX = {
   /** Drawn widths per barline shape, measured off abcjs's own output. */
   barWidthThin: 1,
   barWidthDouble: 4,
+  /**
+   * `[|` — `bar_thick_thin`, which walks the cursor `dx += 4; thick(w 4); dx += 5` and
+   * then `dx += 3; thin(w 1)`, so its declared width is `max(4 + 4, 12 + 1) = 13`. Probed:
+   * abcjs reports the element at `w = 13` with children `bar@4/w4, bar@12/w1`.
+   */
+  barWidthThickThin: 13,
   barWidthFinal: 8,
   barWidthRepeatStart: 16,
   barWidthRepeatEnd: 14,

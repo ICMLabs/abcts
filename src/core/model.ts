@@ -643,6 +643,15 @@ export const sourceRange = (start: number, end: number): SourceRange => ({ start
 export type Barline =
   | 'thin'
   | 'double'
+  /**
+   * `[|` — a THICK rule then a thin one, which abcjs keeps apart from `||`:
+   * `bar_thick_thin` sets `firstthin` false and `thick` true where `bar_thin_thin` does
+   * the opposite (`abstract-engraver.js:974-977`). The two are 13px and 4px wide, and
+   * folding `[|` into `double` was 9px of every line that opens with one — the whole of
+   * `little swallow`'s prefix gap. Recorded in `ENGRAVE.barLayoutWidth`'s own comment as
+   * "a model question, not a spacing one" before it was one.
+   */
+  | 'thickThin'
   | 'final'
   | 'repeatStart'
   | 'repeatEnd'

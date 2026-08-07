@@ -251,6 +251,7 @@ export const ENGRAVE = {
   barLayoutWidth: {
     thin: spaces(ABCJS_PX.barWidthThin),
     double: spaces(ABCJS_PX.barWidthDouble),
+    thickThin: spaces(ABCJS_PX.barWidthThickThin),
     final: spaces(ABCJS_PX.barWidthFinal),
     repeatStart: spaces(ABCJS_PX.barWidthRepeatStart),
     repeatEnd: spaces(ABCJS_PX.barWidthRepeatEnd),
@@ -3007,10 +3008,15 @@ function layoutBar(x: number, kind: Barline, strict = true): LayoutElement {
   // WHICH PIECES A BARLINE HAS, exactly as abcjs decides them
   // (`abstract-engraver.js:967-972`). Five independent booleans, not seven shapes.
   const firstDots = kind === 'repeatEnd' || kind === 'repeatBoth'
-  const firstThin = kind !== 'repeatStart' && kind !== 'invisible'
+  const firstThin = kind !== 'repeatStart' && kind !== 'invisible' && kind !== 'thickThin'
   const hasThick =
-    kind === 'repeatEnd' || kind === 'repeatBoth' || kind === 'repeatStart' || kind === 'final'
-  const secondThin = kind === 'repeatStart' || kind === 'double' || kind === 'repeatBoth'
+    kind === 'repeatEnd' ||
+    kind === 'repeatBoth' ||
+    kind === 'repeatStart' ||
+    kind === 'final' ||
+    kind === 'thickThin'
+  const secondThin =
+    kind === 'repeatStart' || kind === 'double' || kind === 'repeatBoth' || kind === 'thickThin'
   const secondDots = kind === 'repeatStart' || kind === 'repeatBoth'
 
   if (kind !== 'invisible') {
