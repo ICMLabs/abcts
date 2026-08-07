@@ -558,4 +558,33 @@ describe('pixel parity vs abcjs rendered SVG', () => {
     expect(perFixture.length).toBe(withGoldens.length)
     expect(perFixture.every((f) => Number.isFinite(f.median))).toBe(true)
   })
+
+  /**
+   * THE RANKED TABLE, the way `corpus-abcjs-ranked` writes one for the harvested corpus.
+   *
+   * The recorded ceilings above only ever say "no worse than", so reading them tells you
+   * what a fixture was, not what it is. This measures all four axes fresh and writes them
+   * sorted, largest first — which is the thing to open at the start of a session, and the
+   * thing to diff between a session's first commit and its last.
+   */
+  it('writes the ranked table', () => {
+    const rows = withGoldens
+      .map((target) => ({ key: target.key, ...measure(target) }))
+      .map((r) => ({ ...r, worst: Math.max(r.dy, r.dx, Math.abs(r.oy), Math.abs(r.ox)) }))
+      .sort((a, b) => b.worst - a.worst)
+    const off = rows.filter((r) => r.worst >= EPSILON)
+    writeFileSync(
+      '/tmp/abcts-pixel-ranked.txt',
+      `${off.length} of ${rows.length} tunes are off some axis by ${EPSILON}px or more\n${off
+        .map(
+          (r) =>
+            `${r.worst.toFixed(2).padStart(9)}  dy=${r.dy.toFixed(2)} dx=${r.dx.toFixed(2)} ` +
+            `oy=${r.oy.toFixed(2)} ox=${r.ox.toFixed(2)}  ${r.goldenHeads} heads  ${r.key}`,
+        )
+        .join('\n')}\n`,
+    )
+    // Same canary as everything else here: a table that can only ever come out empty is
+    // not measuring. Every notehead COUNT, on the other hand, is a flat assertion.
+    expect(rows.every((r) => r.ourHeads === r.goldenHeads)).toBe(true)
+  })
 })
