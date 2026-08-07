@@ -203,6 +203,33 @@ describe('mid-tune key changes', () => {
     ])
   })
 
+  it('cancels the key IN FORCE, not the previous LINE\'s key', () => {
+    // abcjs's naturals are `impliedNaturals`, which `parseKey` computes from the old key AT
+    // THE MOMENT OF THE CHANGE (`abc_parse_key_voice.js:295-311`). Reading the previous
+    // LINE's key instead is the same number whenever every change starts a line — which is
+    // every fixture finding 124 was measured on — and a different one the moment a MID-line
+    // `[K:]` sits between the two.
+    //
+    // `S8-layout` X:812 is that tune, and this is its shape: `K:G`, a mid-line `[K:Bb]`,
+    // then a standalone `K:Gb`. Gb carries both of Bb's flats, so nothing is cancelled and
+    // abcjs draws no natural. Against G, still the previous line's key, we cancelled its F#.
+    //
+    // It was worth 8.37px on every notehead of that system, because a NATURAL is the tall
+    // accidental: it declares a box up to pitch 15.88 against the clef's 13.72, which
+    // raised the chord lane and then the ending lane sitting on top of it.
+    const src = 'X:1\nL:1/4\nK:G\nGABc|[K:Bb]GABc|\nK:Gb\nGABc|GABc|\n'
+    const score = parse(src).scores[0]
+    if (score === undefined) throw new Error('did not parse')
+    const prefixes = layout(score).systems.map((system) =>
+      (system.staves[0]?.voices[0] ?? [])
+        .filter((element) => element.type === 'keySignature')
+        .map((element) => element.glyphs.map((g) => g.name.replace('accidental', '')).join(',')),
+    )
+    // System 1's prefix is Gb's six flats and NO natural.
+    expect(prefixes[1]?.[0]).toBe('Flat,Flat,Flat,Flat,Flat,Flat')
+    expect(prefixes[1]?.[0]).not.toContain('Natural')
+  })
+
   it('REDRAWS a mode change that keeps the same signature, as abcjs does', () => {
     // THIS TEST USED TO ASSERT THE OPPOSITE, and its reason was our engraving judgement
     // rather than abcjs: "K:G and K:Em are one signature, a reader sees no accidental

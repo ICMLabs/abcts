@@ -6458,12 +6458,24 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       if (measure.clefChange != null) clefInForce = measure.clefChange
       clefAtMeasure.push(clefInForce)
       if (measure.startsSystem) {
-        keyAtPreviousLine = keyAtLineStart
+        const leads = keyChangeLeadsLine(measure)
+        // WHAT THE PREFIX CANCELS IS THE KEY IN FORCE AT THE CHANGE, NOT THE PREVIOUS
+        // LINE'S KEY. abcjs's naturals are `impliedNaturals`, which `parseKey` computes
+        // from the old key AT THE MOMENT OF THE CHANGE (`abc_parse_key_voice.js:295-311`).
+        // Reading the previous LINE's key instead is the same number whenever every change
+        // starts a line — which is every fixture finding 124 was measured on — and a
+        // different one as soon as a MID-line `[K:]` sits between the two.
+        //
+        // `S8-layout` X:812 is that tune: `K:G`, then a mid-line `[K:Bb]`, then a
+        // standalone `K:Gb`. Gb cancels nothing from Bb, and abcjs draws no natural — but
+        // against the previous LINE's key, still G, we cancelled its F# and drew one. A
+        // NATURAL is the tall accidental and DECLARES a box up to pitch 15.88 against the
+        // clef's 13.72, so it raised the chord lane, and the ending lane on top of that,
+        // and put every notehead on the system 8.37px low.
+        keyAtPreviousLine = leads ? keyInForce : keyAtLineStart
         // A change that LEADS the line is already in `multilineVars.key` when abcjs stamps
         // `params.key`, so the prefix shows the NEW key. See `keyChangeLeadsLine`.
-        keyAtLineStart = keyChangeLeadsLine(measure)
-          ? (measure.keyChange ?? keyInForce)
-          : keyInForce
+        keyAtLineStart = leads ? (measure.keyChange ?? keyInForce) : keyInForce
       }
       keyAtMeasure.push(keyAtLineStart)
       keyBeforeLine.push(keyAtPreviousLine)
