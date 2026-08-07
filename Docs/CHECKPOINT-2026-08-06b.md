@@ -38,7 +38,7 @@ it — see WHAT IS LEFT.
 
 ## THE METHOD, and it did not vary once
 
-Every one of findings 106–111 came out of the same loop, and none could have been guessed
+Every one of findings 106–119 came out of the same loop, and none could have been guessed
 from a diff:
 
 1. `npx vitest run tests/corpus-abcjs-ranked.test.ts && cat /tmp/abcts-corpus-ranked.txt`
@@ -49,10 +49,16 @@ from a diff:
 4. Read the named function.
 5. Port the structure, then the constants.
 
-**A CONTROL TUNE IS THE PROOF, NOT THE FIXTURE.** Finding 110 was written, measured 6 pitch
+**A CONTROL TUNE IS THE PROOF, NOT THE FIXTURE.** Finding 111 was written, measured 6 pitch
 wrong on a four-bar control, and fixed before it ever touched the corpus. Without it the
 error would have landed under a green ratchet — the fixture it was aimed at moved the right
 way for the wrong reason.
+
+**AND FROM 113 ONWARD THE TABLE WAS ALREADY EMPTY.** Step 1 stopped naming anything, and
+every finding after it came from step 4 first: read the named function, form ONE hypothesis,
+prove it on a control. Seven landed that way in one stretch, and three of them —
+`%%barnumbers 0`, the bar-number baseline, the bar-number transfer — are not exercised by a
+single fixture in either corpus.
 
 ---
 
@@ -191,42 +197,125 @@ rest ink sits 14.360px below the top staff line against abcjs's 14.362.
 
 ---
 
-## WHAT IS LEFT, and none of it is on the ranked table
+## FINDINGS 113–119 — EVERYTHING BELOW HERE WAS FOUND WITH THE TABLE ALREADY EMPTY
 
-### 1. `fixVoiceCollisions` — MEASURED, NAMED, NOT IMPLEMENTED
+Not one of them could have been named by a gate. Each came from reading abcjs and was
+proved on a CONTROL TUNE before it touched a fixture.
 
-`layout/layout.js:140-188`, called from `:49`. A pass over TIME SLOTS, after layout: where a
-slot holds a real rest in the first voice and a non-rest in the last (or the mirror), it
-pushes the rest clear of the other voice's nearest note and gives 2 pitch of room, moving
-the element's `top`, `bottom` and its first child's `pitch` together.
+### 113 — `fixVoiceCollisions`: A REST GETS OUT OF THE OTHER VOICE'S WAY
 
-Measured on `multi-voice-rest-placement` against abcjs's own golden: of its four rests, two
-now land on abcjs's y exactly (finding 112) and **two are still off — 26.39px and 10.89px**,
-which is this pass. `multi-voice-rest-collision` is the second fixture aimed at it.
+`layout/layout.js:140-188`, run from `:49` over TIME SLOTS after layout and after the lanes
+are stacked — and deliberately not followed by a second lane pass, abcjs's own
+`//setUpperAndLowerElements(…)` being commented out on the next line. So the moved rest
+changes the staff extent and the staff-to-staff spacing, and does NOT move the lanes.
 
-**NO GATE CAN SEE IT.** Rests carry no class in the pixel gate, and the notehead-pairing
-table cannot reach them. The baselines are the only witness, and they only say "changed".
+Slots are bucketed by X rather than by time, and that is the same partition on one staff:
+every voice is laid out against ONE cursor, co-timed elements land at the same x by
+construction, `shiftRight` carries the whole slot when one needs room, and the cursor only
+moves forward. It needs no `duration` on `LayoutElement`, which nothing else wants.
 
-### 2. A BEAM DOES NOT BREAK AT A REST IN ABCJS, AND IT DOES HERE
+Against abcjs's own goldens, all rests within 0.003px: `multi-voice-rest-placement` 4 of 4
+(two were 26.39px and 10.89px out), `multi-voice-rest-collision` 1 of 1.
 
-Unchanged from the last checkpoint. `(6cegczg` and `(3czg` are beamed by abcjs and bracketed
-by us; the tell is a COUNT — abcjs draws three triplet-bracket paths in `S3-note-syntax`
-tune 6 where we draw fourteen pieces. Fixing it changes beam GROUPING and moves real beams on
-every tune with a rest inside one, so it is a slice of its own. It settles the two tuplet
-numbers still off, 4.91px in x and 38.8 in y.
+### 114 — …AND A REST THAT EXACTLY FILLS ITS MEASURE BECOMES A WHOLE REST
 
-### 3. TWO RULES READ BUT STILL NOT CHECKED
+The rule filed unchecked on 2026-08-06, and finding 113 is what forced it:
 
-Carried from the last checkpoint, neither exercised by anything red:
+```js
+if (this.measureLength === duration && type !== 'invisible' && type !== 'spacer' &&
+    type.indexOf('multimeasure') < 0) elem.rest.type = 'whole'
+```
 
-- **A rest that exactly fills a measure becomes a WHOLE rest**, whatever its written
-  duration — `if (this.measureLength === duration && type !== 'invisible' && type !==
-  'spacer' && type.indexOf('multimeasure') < 0) elem.rest.type = 'whole'`
-  (`abstract-engraver.js:811`). Do we?
-- **`%%barnumbers 0` puts the number on the STAFF, not a barline**
-  (`abc_parse_music.js:1036`), which reaches `addMeasureNumber(barNumber, clef)` — and THAT
-  is the path where `abselem.isClef` shifts the number right by half its width and the
-  `vert = 13.5` branch can fire.
+(`abstract-engraver.js:811-813`.) It reaches THREE places: `case "whole"` draws
+`chartable.rest[0]`, it sets `dot = 0` so a dotted rest filling its bar loses its dots, and
+**`fixVoiceCollisions` weeds on `rest.type === 'rest'` EXACTLY** — so a whole rest never
+gets out of anyone's way. Without it `zocharti-loch`'s `z8` moved 2.51px abcjs does not move
+it, and our pass evaluated three slots where abcjs evaluates one.
+
+**abcjs's own slot dump is what named it**: `note/whole[rests.whole]`, not `note/rest`.
+
+### 115 — A BAR NUMBER'S BASELINE IS ONE FONT SIZE BELOW THE POINT IT RESERVES
+
+`renderText` ends `if (!params.centerVertically) hash.attr.y += hash.font.size`
+(`draw/text.js:29-30`) and the `barNumber` case passes no `centerVertically`. Its
+RelativeElement carries no `thickness`, so what it reserves is a POINT — which the staff
+extent already had right — and only the drawn text moves. We drew it AT the point: **24.94px
+above the top staff line against abcjs's 5.93**, on every bar number there has ever been.
+
+### 116 — A BAR NUMBER ON THE LAST BARLINE OF A LINE MOVES TO THE NEXT LINE'S STAFF
+
+`tune-builder.js:137-143`, under abcjs's comment *"Don't hang a bar number on the last bar
+line: it should go on the next line."* With no next line it is DELETED, which is why a tune
+ending `…|` prints nothing there. It runs in `cleanUp` per line, so it applies to EVERY
+`%%barnumbers N`.
+
+### 117 — `%%barnumbers 0` PUTS THE NUMBER ON THE STAFF, NOT ON A BARLINE
+
+`abc_parse_music.js:1036-1038` → `addMeasureNumber(abcstaff.barNumber, clef)`
+(`abstract-engraver.js:161`). **That is the only path on which `abselem.isClef` shifts the
+number right by half its width and the `vert = 13.5` branch can fire**; on a barline neither
+can. And the two mechanisms MEET — finding 116 hands its number to the same staff slot.
+
+Measured, every number and x identical to abcjs:
+
+```
+%%barnumbers 1, one line     2, 3                            (we drew 2, 3, 4)
+%%barnumbers 1, two lines    2 @371.92, 3 @19.75 ON THE CLEF, 4 @218.76
+%%barnumbers 0, three lines  3 @19.75, 5 @19.75, both on the clef  (we drew none)
+```
+
+### 118 — A BEAM DOES NOT BREAK AT A REST, AND THE GATE COULD NOT SAY SO
+
+```js
+} else if (hashParams.rest === undefined) {   // a short note, not about to end the beam
+  if (tune.potentialStartBeam === undefined) { …start here… }
+  else { tune.potentialEndBeam = hashParams }  // continue the beaming
+}
+```
+
+(`tune-builder.js:195-203`.) A short REST reaching that branch **falls off the END of the
+chain**: neither made `potentialEndBeam` nor allowed to close the run, so the beam SPANS it
+and its last member stays the last NOTE. Only an explicit break stops it, and that is the
+branch above — a space sets `end_beam`, and on a rest it takes `endBeamLast` where on a note
+it takes `endBeamHere`.
+
+**AND `beamLinks` COULD NOT EXPRESS THE DIFFERENCE.** It compared each event with the one
+PHYSICALLY before it and mapped a rest to `null`, so `run === runs[i-1]` was false on either
+side of a rest whatever its neighbours were — a beam spanning one and two beams broken by
+one read IDENTICALLY. Comparing against the previous event IN A RUN makes it expressible,
+and with that it fails on three of the 41 under the old behaviour and passes under the new.
+**A comparison can only catch what its representation can express**, for the second time on
+this branch.
+
+The proof is a COUNT abcjs's SVG gives directly: which notes carry a FLAG. On
+`cegczg|czg cz|c z c z` ours now matches abcjs element for element on x and on flags.
+
+### 119 — AND THE TUPLET NUMBER FOLLOWED IT, both halves
+
+Two rules previously READ and left out, both because the input was not abcjs's quantity:
+
+- **The baseline is `calcY(yTextPos - 1)`, flat, with no font height** —
+  `centerVertically: true` suppresses the `+= font.size` (`draw/triplet.js:11`). The `- 1`
+  is abcjs's own fudge: *"HACK: adjust the position of '3'. It is too high in all cases."*
+- **`heightAtMidpoint` samples the BEAM, not the stems that end on it** — `beam.beams[0]`'s
+  own `startY`/`endY` (`layout/triplet.js:110-116`). A `PlacedLine` carries the beam's
+  CENTRE and abcjs's `startY` is the edge the stems end on, half a thickness back out.
+  Undone from the line's OWN thickness rather than by repeating `layoutBeam`'s constant.
+
+Neither was portable until 118 landed. `(6cegczg (3czg` now matches abcjs on both axes to
+the hundredth, and every tuplet number of `multi-voice-triplet-brackets` sits at ONE constant
+offset per staff from abcjs's — 127.353..127.362 and 268.962, which is the staff origin and
+nothing else. **The checkpoint's two open numbers, 4.91px in x and 38.8 in y, are closed.**
+
+---
+
+## WHAT IS LEFT
+
+### 1. ~~`fixVoiceCollisions`~~ — DONE, finding 113
+
+### 2. ~~The beam across a rest~~ — DONE, finding 118, and the tuplet number with it (119)
+
+### 3. ~~The two rules read but not checked~~ — DONE, findings 114 and 117
 
 ### 4. THE REMAINING FIXED LANES
 
