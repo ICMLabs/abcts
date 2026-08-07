@@ -71,10 +71,11 @@ checkpoint and hand off as you go so no context is lost.
 > "zero for the common case", left out — and that judgement was the entire remaining error
 > on `ragtime-nightingale`, the branch's one standing red. Port the quirk, then measure.
 
-> 🏁 **THE RANKED TABLE HAS NO GEOMETRY LEFT ON IT** (2026-08-06, second session). All
-> 173 measurable fixtures of the harvested corpus are exact on all four axes to within
-> 0.05px; the 174th is a tune-count mismatch with no geometry to compare. **So the table
-> can no longer name the next defect, and every remaining gate is blind to what is left** —
+> 🏁 **THE RANKED TABLE IS EMPTY — 0 of 174 rows** (2026-08-07). All 174 fixtures of the
+> harvested corpus agree with abcjs on note content AND on all four geometric axes to
+> within 0.05px, and `CONTENT_GAPS` is empty for the first time. **So neither the table nor
+> the content gate can name anything any more, and every remaining gate is blind to what is
+> left** —
 > the pixel gate sees only what abcjs classes a NOTEHEAD, the baselines say CHANGED and
 > never WRONG, the structural gate misses everything added via `addOther`. Findings now
 > come from READING abcjs, and **a CONTROL TUNE is the proof**: finding 111 was written,
@@ -234,8 +235,8 @@ gate had been comparing abcjs's outline START against our glyph ORIGIN, a 4px bi
 
 **Structural parity is done: note content, lyrics, beams and render structure are all
 41/41 with zero recorded divergences.** `geometry/vertical` is **703/703 with NO reds**,
-and the harvested corpus's ranked table **has no geometry on it at all** — 173 of 173
-measurable fixtures exact on every axis to within 0.05px, the 174th a tune-count mismatch.
+and the harvested corpus's ranked table is **EMPTY** — 174 of 174 fixtures exact on every
+axis to within 0.05px, with no content gaps left either.
 pushed, and the AUDIT FINDING IS CLOSED — no Bravura figure is reachable in strict. The
 harvested corpus is **10 of 174 off some axis**, from 34 at the start of 2026-08-05, with
 **nothing above 0.93px** and every measurable fixture inside one pixel. Two ceilings are

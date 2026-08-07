@@ -10,29 +10,29 @@ and the ladder method, `-08-04b.md` 41–50, `-08-03d.md` the ledger 16–40.
 
 ---
 
-## 🏁 THE RANKED TABLE HAS NO GEOMETRY LEFT ON IT
+## 🏁 THE RANKED TABLE IS EMPTY
 
 ```
-1 of 174 fixtures are off some axis by 0.05px or more
-   ------  TUNE COUNT 2 vs 1  abcjs-parse-book_parser-04-wed
+0 of 174 fixtures are off some axis by 0.05px or more
 ```
 
-That is the whole table. The one entry is the leading-header tune-count mismatch, which has
-no geometry to compare. **Every measurable fixture in the harvested corpus is exact on all
-four axes to within 0.05px** — from 10 of 174 at the start of this session, 18 that morning
-and 34 on 2026-08-04.
+That is the whole file. Not a single row. **Every fixture of the harvested corpus agrees
+with abcjs on note content AND on all four geometric axes to within 0.05px** — from 10 of
+174 off at the start of this session, 18 that morning, 34 on 2026-08-04.
 
 | | standing |
 |---|---|
 | suite | **703 of 703. NO REDS.** |
-| harvested (174) | within 0.05 / 1 / 5 / 25px: **173 / 173 / 173 / 173** |
+| harvested (174) | within 0.05 / 1 / 5 / 25px: **174 / 174 / 174 / 174** |
 | 41-fixture | staff spacing 72 of 73 boundaries exact |
-| CONTENT gaps | **one** — `parse-book_parser-04-wed`'s leading-header split |
+| CONTENT gaps | **NONE.** `CONTENT_GAPS` is empty for the first time |
 | ceilings raised | still two, both recorded: `ragtime-nightingale`'s `dy` 0.40, the repeat ending's bracket PITCH 0.50 |
 
-**A CLEAN TABLE IS NOT THE END OF THE WORK.** What it means is that the notehead-pairing
-gate can no longer name the next defect. Everything below that is still open is invisible to
-it — see WHAT IS LEFT.
+**AN EMPTY TABLE IS NOT THE END OF THE WORK.** What it means is that the notehead-pairing
+gate can no longer name ANYTHING, and neither can the content gate. Both are regression nets
+now, not instruments. Findings 113–119 were all made with the table already empty, and three
+of them are exercised by no fixture in either corpus. Everything still open is invisible to
+every gate — see WHAT IS LEFT and, before it, **THE GATES CANNOT SEE WHAT IS LEFT**.
 
 ---
 
@@ -324,9 +324,13 @@ nothing else. **The checkpoint's two open numbers, 4.91px in x and 38.8 in y, ar
 `anchorVoltas` (finding 93) is the model: resolve in the pass that has the final elements,
 shift furniture only, and **check first that the lane's ink is outside the staff extent**.
 
-### 5. THE LEADING-HEADER SPLIT — the last CONTENT gap
+### 5. ~~The leading-header split~~ — DONE, finding 120
 
-`parse-book_parser-04-wed`, 2 tunes against 1.
+`bookParser` splits on `"\nX:"` and SHIFTS OFF the first piece when it does not start with
+`X:`, keeping only its `%%` lines (`abc_parse_book.js:12-33`). The test is "no `X:` yet",
+not "empty" — `isEmpty` also wanted no `T:` and no music. **The `CONTENT_GAPS` entry
+described the symptom and guessed the cause backwards**, the second allowlist on this branch
+written from a plausible reading rather than from the source.
 
 ### 6. Then Gonzato, then audio.
 
