@@ -295,9 +295,25 @@ interface GoldenNote {
   end: number
 }
 
-/** Which beam run each event belongs to, as a link-to-previous flag per event. */
+/**
+ * Which beam run each event belongs to, as a link-to-previous flag per event.
+ *
+ * THE PREVIOUS EVENT IS THE PREVIOUS ONE IN A RUN, NOT THE PREVIOUS ONE ON THE LINE, and
+ * that is not a refinement — it is what makes a beam SPANNING A REST expressible at all.
+ * abcjs never ends a beam on a short rest with no explicit break: the rest is neither made
+ * `potentialEndBeam` nor allowed to close the run (`tune-builder.js:195-203`), so the beam
+ * simply runs over it. We broke on every rest and this comparison could not see it — both
+ * engines put `null` at the rest, and `run === runs[i - 1]` is false on either side of a
+ * `null` whatever the two neighbours are. A COMPARISON CAN ONLY CATCH WHAT ITS
+ * REPRESENTATION CAN EXPRESS, and this one erased the difference before comparing.
+ */
 const beamLinks = (runs: (number | null)[]): boolean[] =>
-  runs.map((run, i) => i > 0 && run !== null && run === runs[i - 1])
+  runs.map((run, i) => {
+    if (run === null) return false
+    let j = i - 1
+    while (j >= 0 && runs[j] === null) j -= 1
+    return j >= 0 && run === runs[j]
+  })
 
 function ourBeams(abc: string): boolean[] {
   const result = parse(abc)

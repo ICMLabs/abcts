@@ -891,31 +891,24 @@ system 1 width=90.323 originY=22.188
       line  87.394,-2.000 -> 87.394,2.000 t=0.077
       line  88.129,-2.000 -> 88.129,2.000 t=0.516
 tune 6
-bounds  width=90.323 height=37.906 top=-1.935
+bounds  width=90.323 height=33.890 top=-1.935
 systems 2
 system 0 width=90.323 originY=0.000
-  staff 0 originY=16.514
+  staff 0 originY=14.014
     staffline 0.000,2.000 -> 90.323,2.000 t=0.090
     staffline 0.000,1.000 -> 90.323,1.000 t=0.090
     staffline 0.000,0.000 -> 90.323,0.000 t=0.090
     staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
     staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
     beam   9.141,3.250 -> 22.196,2.750 t=0.500
-    beam   41.264,2.750 -> 55.106,2.750 t=0.500
-    tupletline 41.264,5.521 -> 52.335,5.521 t=0.129
-    tupletline 54.400,5.521 -> 65.470,5.521 t=0.129
-    tupletline 41.264,5.521 -> 41.264,6.166 t=0.129
-    tupletline 65.470,5.521 -> 65.470,6.166 t=0.129
-    tupletline 68.793,5.521 -> 74.882,5.521 t=0.129
-    tupletline 76.946,5.521 -> 83.035,5.521 t=0.129
-    tupletline 68.793,5.521 -> 68.793,6.166 t=0.129
-    tupletline 83.035,5.521 -> 83.035,6.166 t=0.129
+    beam   41.264,3.750 -> 64.282,2.250 t=0.500
+    beam   68.793,3.250 -> 81.847,2.750 t=0.500
     tuplettext 15.630,5.745 size=1.935 "3"
-    tuplettext 53.367,7.263 size=1.935 "6"
-    tuplettext 75.914,7.263 size=1.935 "3"
+    tuplettext 52.735,5.747 size=1.935 "6"
+    tuplettext 75.281,5.745 size=1.935 "3"
     title x=0.000 w=0.000
-      text  39.521,-12.055 size=3.484 bold "S3-7 Tuplets"
-      text  30.644,-7.854 size=2.452 italic "Test - from Gonzato guide Ch.2"
+      text  39.521,-9.555 size=3.484 bold "S3-7 Tuplets"
+      text  30.644,-5.354 size=2.452 italic "Test - from Gonzato guide Ch.2"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -937,35 +930,32 @@ system 0 width=90.323 originY=0.000
       line  39.884,-2.000 -> 39.884,2.000 t=0.077
     note@1 x=41.264 w=2.235
       glyph noteheadBlack 41.264,-0.500
-      line  41.303,-0.400 -> 41.303,2.750 t=0.077
+      line  41.303,-0.400 -> 41.303,3.750 t=0.077
     note@3 x=45.853 w=2.235
       glyph noteheadBlack 45.853,-1.500
-      line  45.891,-1.400 -> 45.891,2.750 t=0.077
+      line  45.891,-1.400 -> 45.891,3.451 t=0.077
     note@5 x=50.441 w=2.235
       glyph noteheadBlack 50.441,-2.500
-      line  50.479,-2.400 -> 50.479,2.750 t=0.077
+      line  50.479,-2.400 -> 50.479,3.152 t=0.077
     note@1 x=55.029 w=2.235
       glyph noteheadBlack 55.029,-0.500
-      line  55.067,-0.400 -> 55.067,2.750 t=0.077
+      line  55.067,-0.400 -> 55.067,2.853 t=0.077
     rest x=59.617 w=2.235
       glyph rest8th 59.617,0.000
     note@5 x=64.205 w=2.235
       glyph noteheadBlack 64.205,-2.500
-      glyph flag8thDown 64.205,1.000
-      line  64.269,-2.333 -> 64.269,1.000 t=0.129
+      line  64.243,-2.400 -> 64.243,2.255 t=0.077
     note@1 x=68.793 w=3.161
       glyph noteheadBlack 68.793,-0.500
-      glyph flag8thDown 68.793,3.000
-      line  68.857,-0.333 -> 68.857,3.000 t=0.129
+      line  68.831,-0.400 -> 68.831,3.250 t=0.077
     rest x=75.281 w=3.161
       glyph rest8th 75.281,0.000
     note@5 x=81.770 w=3.161
       glyph noteheadBlack 81.770,-2.500
-      glyph flag8thDown 81.770,1.000
-      line  81.834,-2.333 -> 81.834,1.000 t=0.129
+      line  81.808,-2.400 -> 81.808,2.753 t=0.077
     bar x=88.258 w=0.077
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
-system 1 width=58.461 originY=23.035
+system 1 width=58.461 originY=19.019
   staff 0 originY=7.250
     staffline 0.000,2.000 -> 58.461,2.000 t=0.090
     staffline 0.000,1.000 -> 58.461,1.000 t=0.090

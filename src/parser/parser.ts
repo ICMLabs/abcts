@@ -2553,11 +2553,33 @@ class Parser {
     }
     const beamAfterEmit = (): void => {
       const last = voice().last
-      if (last && last.type !== 'rest' && ratLt(last.notatedDuration, rational(1, 4))) {
-        beamRun.push(voice().lastIndex)
-      } else {
+      if (last === undefined || last === null) {
         closeBeamRun()
+        return
       }
+      // A NOTE LONGER THAN AN EIGHTH ENDS THE BEAM WHATEVER IT IS — abcjs tests the
+      // duration first and unconditionally: `if (dur >= 0.25) endBeamLast(tune)`
+      // (`tune-builder.js:186-187`), rest or note alike.
+      if (!ratLt(last.notatedDuration, rational(1, 4))) {
+        closeBeamRun()
+        return
+      }
+      // A SHORT REST DOES NOT BREAK THE BEAM, AND DOES NOT JOIN IT EITHER.
+      //
+      // abcjs's chain ends `else if (hashParams.rest === undefined) { …start or extend… }`
+      // (`tune-builder.js:195-203`), so a rest that reaches it falls off the end: it is
+      // neither made `potentialEndBeam` nor allowed to close the run, and the beam simply
+      // SPANS it. The beam's last member stays the last NOTE.
+      //
+      // Only an explicit break stops it, and that is the branch above this one: a space
+      // sets `end_beam`, and on a REST it takes `endBeamLast` — the beam ends on the note
+      // BEFORE it — where on a note it takes `endBeamHere` and the note itself closes it.
+      // Both are already ours, through `closeBeamRun` at the whitespace case.
+      //
+      // We broke on every rest, so `(6cegczg` came out as two beamed pairs and a bracket
+      // in fourteen pieces where abcjs draws one beam and three bracket paths.
+      if (last.type === 'rest') return
+      beamRun.push(voice().lastIndex)
     }
 
     /**

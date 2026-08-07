@@ -2071,7 +2071,7 @@ system 0 width=90.367 originY=0.000
       line  87.438,-2.000 -> 87.438,2.000 t=0.077
       line  88.173,-2.000 -> 88.173,2.000 t=0.516
 tune 9
-bounds  width=90.467 height=36.463 top=-1.935
+bounds  width=90.467 height=36.442 top=-1.935
 systems 2
 system 0 width=90.332 originY=0.000
   staff 0 originY=12.571
@@ -2086,6 +2086,7 @@ system 0 width=90.332 originY=0.000
     beam   27.874,3.250 -> 30.228,2.750 t=0.500
     beam   34.037,3.250 -> 35.724,2.750 t=0.500
     beam   34.037,2.500 -> 35.646,2.023 t=0.500
+    beam   37.256,2.750 -> 41.886,2.750 t=0.500
     beam   44.085,3.250 -> 50.365,2.250 t=0.500
     beam   46.873,2.056 -> 50.288,1.512 t=0.500
     beam   57.645,2.750 -> 62.275,2.250 t=0.500
@@ -2104,10 +2105,6 @@ system 0 width=90.332 originY=0.000
     tupletline 35.702,5.500 -> 36.912,5.500 t=0.129
     tupletline 32.427,5.500 -> 32.427,6.145 t=0.129
     tupletline 36.912,5.500 -> 36.912,6.145 t=0.129
-    tupletline 37.256,5.521 -> 39.133,5.521 t=0.129
-    tupletline 41.197,5.521 -> 43.074,5.521 t=0.129
-    tupletline 37.256,5.521 -> 37.256,6.166 t=0.129
-    tupletline 43.074,5.521 -> 43.074,6.166 t=0.129
     tupletline 46.873,5.500 -> 49.029,5.500 t=0.129
     tupletline 51.094,5.500 -> 53.250,5.500 t=0.129
     tupletline 46.873,5.500 -> 46.873,6.145 t=0.129
@@ -2120,7 +2117,7 @@ system 0 width=90.332 originY=0.000
     tuplettext 21.162,7.242 size=1.935 "3"
     tuplettext 28.507,7.242 size=1.935 "3"
     tuplettext 34.669,7.242 size=1.935 "3"
-    tuplettext 40.165,7.263 size=1.935 "3"
+    tuplettext 39.532,5.492 size=1.935 "3"
     tuplettext 50.061,7.242 size=1.935 "4"
     tuplettext 59.921,5.250 size=1.935 "3"
     tuplettext 68.803,5.992 size=1.935 "3"
@@ -2174,14 +2171,12 @@ system 0 width=90.332 originY=0.000
       line  35.685,-0.900 -> 35.685,2.773 t=0.077
     note@1 x=37.256 w=3.161
       glyph noteheadBlack 37.256,-0.500
-      glyph flag8thDown 37.256,3.000
-      line  37.320,-0.333 -> 37.320,3.000 t=0.129
+      line  37.295,-0.400 -> 37.295,2.750 t=0.077
     rest x=39.532 w=3.161
       glyph rest8th 39.532,0.000
     note@1 x=41.809 w=3.161
       glyph noteheadBlack 41.809,-0.500
-      glyph flag8thDown 41.809,3.000
-      line  41.873,-0.333 -> 41.873,3.000 t=0.129
+      line  41.847,-0.400 -> 41.847,2.750 t=0.077
     note@1 x=44.085 w=3.871
       glyph noteheadBlack 44.085,-0.500
       line  44.124,-0.400 -> 44.124,3.250 t=0.077
@@ -2239,7 +2234,7 @@ system 0 width=90.332 originY=0.000
       line  86.029,-1.400 -> 86.029,2.242 t=0.077
     bar x=88.267 w=0.077
       line  88.306,-2.000 -> 88.306,2.000 t=0.077
-system 1 width=90.467 originY=19.092
+system 1 width=90.467 originY=19.071
   staff 0 originY=7.000
     staffline 0.000,2.000 -> 90.467,2.000 t=0.090
     staffline 0.000,1.000 -> 90.467,1.000 t=0.090
