@@ -570,6 +570,39 @@ describe('pixel parity vs abcjs rendered SVG', () => {
    * sorted, largest first — which is the thing to open at the start of a session, and the
    * thing to diff between a session's first commit and its last.
    */
+  /**
+   * THE SEVEN `ox = 0.18` ROWS ARE THE GLYPH OUTLINE, AND THEY ARE NOT WORK.
+   *
+   * Every one is a tune whose whole content is `G8` — six of `clefs`, one of `S6-keys` —
+   * and the number is the WHOLE NOTEHEAD's outline, which this file's header puts out of
+   * scope in its second paragraph. Measured on `clefs-tune0`: abcjs's head inks 16.83px
+   * wide, Bravura's 15.03, and the two are not left-aligned either. Positions are compared
+   * as bounding-box CENTRES (see `pathBox`), so two differently shaped glyphs at the same
+   * origin score a difference no placement rule can remove.
+   *
+   * It is asserted rather than written in prose so that a real regression on those tunes
+   * still fails: if the figure ever moves off 0.18, something other than the outline did it.
+   */
+  it('the one-notehead whole-note tunes differ only by the glyph outline', () => {
+    for (const key of [
+      'clefs-tune0',
+      'clefs-tune1',
+      'clefs-tune2',
+      'clefs-tune3',
+      'clefs-tune4',
+      'clefs-tune5',
+      'clefs-tune6',
+      'S6-keys-tune0',
+    ]) {
+      const target = withGoldens.find((t) => t.key === key)
+      if (target === undefined) throw new Error(`${key} is not measured`)
+      const { dx, ox, goldenHeads } = measure(target)
+      expect(goldenHeads, key).toBe(1)
+      expect(dx, `${key} dx`).toBeLessThan(EPSILON)
+      expect(ox, `${key} ox`).toBeCloseTo(0.18, 2)
+    }
+  })
+
   it('writes the ranked table', () => {
     const rows = withGoldens
       .map((target) => ({ key: target.key, ...measure(target) }))
