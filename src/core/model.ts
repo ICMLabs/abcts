@@ -675,6 +675,25 @@ export interface Measure {
   readonly meterChange: Meter | null
   readonly meterChangeSourceRange: SourceRange | null
   /**
+   * Was this meter written INLINE (`[M:]`) rather than as a standalone `M:` line?
+   *
+   * The two take different routes in abcjs and land in different places, so a renderer
+   * that cannot tell them apart draws one of them wrong. `letter_to_inline_header`'s
+   * `"[M:"` arm appends a `meter` element and leaves `multilineVars.meter` alone;
+   * `setMeter` on a standalone `M:` line sets `multilineVars.meter`, which the next
+   * `startNewLine` consumes into that line's `params.meter` and prints in its PREFIX.
+   *
+   * Measured on a pair of controls, `M:3/4` and `[M:3/4]` at the same point in the same
+   * tune:
+   *
+   *   standalone  line 0 ends with its notes; line 1 opens `clef 15, timeSig 49.05 w=11.79`
+   *   inline      line 0 ends `timeSig 673.20 w=11.79`; line 1 opens with the CLEF ALONE
+   *
+   * Absent (or false) means the standalone form. See `meterChangeLeadsLine` in the
+   * renderer, which is the only thing that reads it.
+   */
+  readonly meterChangeInline?: boolean
+  /**
    * A repeat ending (volta) starting at this measure — the `1` in `|1`, or `1,2`.
    *
    * ABC writes the number after the barline that opens the ending, and the ending runs

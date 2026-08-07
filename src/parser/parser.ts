@@ -930,10 +930,13 @@ class VoiceBuilder {
     this.pendingTempoChange = tempo
   }
 
-  setMeterChange(meter: Meter | null, range: SourceRange): void {
+  setMeterChange(meter: Meter | null, range: SourceRange, inline = false): void {
     this.pendingMeterChange = meter
     this.pendingMeterChangeRange = range
+    this.pendingMeterChangeInline = inline
   }
+
+  private pendingMeterChangeInline = false
 
   /**
    * A STANDALONE `M:` LINE BELONGS TO THE NEXT LINE, NOT TO THE MEASURE STILL OPEN.
@@ -966,6 +969,7 @@ class VoiceBuilder {
       keyChangeSourceRange: this.pendingKeyChangeRange,
       meterChange: this.pendingMeterChange,
       meterChangeSourceRange: this.pendingMeterChangeRange,
+      ...(this.pendingMeterChangeInline ? { meterChangeInline: true } : {}),
     }
     this.pendingKeyChange = null
     this.pendingClefChange = null
@@ -973,6 +977,7 @@ class VoiceBuilder {
     this.pendingKeyChangeRange = null
     this.pendingMeterChange = null
     this.pendingMeterChangeRange = null
+    this.pendingMeterChangeInline = false
     return changes
   }
 
@@ -1029,6 +1034,9 @@ class VoiceBuilder {
     if (this.meterForNextLine !== null) {
       this.pendingMeterChange = this.meterForNextLine.meter
       this.pendingMeterChangeRange = this.meterForNextLine.range
+      // The standalone form, by construction — this is abcjs's `startNewLine` consuming
+      // `multilineVars.meter`, which the inline arm never fills.
+      this.pendingMeterChangeInline = false
       this.meterForNextLine = null
     }
   }
@@ -2373,7 +2381,7 @@ class Parser {
         return
       case 'M': {
         if (builder.bodyStarted) {
-          if (inline) builder.voice.setMeterChange(parseMeter(value), range)
+          if (inline) builder.voice.setMeterChange(parseMeter(value), range, true)
           else builder.voice.setMeterForNextLine(parseMeter(value), range)
           return
         }

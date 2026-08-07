@@ -5565,15 +5565,49 @@ const EMPTY_BAR_EVENT: Rest = {
  * NOTE this is exact only because a system IS a source line here: there is no re-wrapping
  * pass, so `startsSystem` and abcjs's `startNewLine` are the same event.
  */
+/** Where the music of a system-starting measure begins, in source offsets. */
+const musicStartsAt = (measure: Measure): number =>
+  Math.min(
+    measure.openingBarlineSourceRange?.start ?? Number.POSITIVE_INFINITY,
+    ...measure.events.map((e) => e.sourceRange?.start ?? Number.POSITIVE_INFINITY),
+  )
+
 const keyChangeLeadsLine = (measure: Measure | undefined): boolean => {
   if (measure === undefined || !measure.startsSystem || measure.keyChange === null) return false
   const at = measure.keyChangeSourceRange?.start
   if (at == null) return false
-  const firstEvent = Math.min(
-    measure.openingBarlineSourceRange?.start ?? Number.POSITIVE_INFINITY,
-    ...measure.events.map((e) => e.sourceRange?.start ?? Number.POSITIVE_INFINITY),
-  )
-  return at < firstEvent
+  return at < musicStartsAt(measure)
+}
+
+/**
+ * The same rule for an inline `[M:]`, and abcjs reaches it by the same two lines:
+ *
+ *     case "[M:":
+ *       var meter = this.setMeter(…)
+ *       if (tuneBuilder.hasBeginMusic() && meter)
+ *         tuneBuilder.appendStartingElement('meter', startChar, endChar, meter)
+ *       else multilineVars.meter = meter
+ *
+ * (`abc_parse_header.js:356-362`.) Music HAS begun, so it appends — and `startNewLine` has
+ * not fired yet, so the element lands on the PREVIOUS line, exactly as a line-leading key
+ * change does (finding 125).
+ *
+ * IT PARTS FROM THE KEY IN THE OTHER HALF. That arm does NOT set `multilineVars.meter`, so
+ * the next line's `params.meter` stays empty and its prefix prints NOTHING — where a key
+ * change is stamped onto the line and reprinted. Measured on `S5-directives` X:502: abcjs
+ * ends line 0 with `timeSignature x=673.49 w=13.04` and opens line 1 with the clef alone,
+ * its first note at 49.05.
+ */
+const meterChangeLeadsLine = (measure: Measure | undefined): boolean => {
+  if (measure === undefined || !measure.startsSystem || measure.meterChange == null) return false
+  // ONLY THE INLINE FORM. A standalone `M:` line goes the OTHER way — into
+  // `multilineVars.meter`, then the next line's `params.meter` and its PREFIX — which is
+  // finding 121 and was already right. Firing on both put `frere-jacques` back to the
+  // 21.80 that finding closed, and `S8-layout-tune2` from exact to 23.04.
+  if (measure.meterChangeInline !== true) return false
+  const at = measure.meterChangeSourceRange?.start
+  if (at == null) return false
+  return at < musicStartsAt(measure)
 }
 
 const barRod = (kind: Barline, el: LayoutElement, strict: boolean): number =>
@@ -5645,6 +5679,8 @@ function layoutMeasure(
    * `[from, to]`, because a change cannot be drawn from the new key alone.
    */
   trailingKey: readonly [KeySignature, KeySignature] | null = null,
+  /** A meter that arrives after this measure's barline and LEADS the next system. */
+  trailingMeter: Meter | null = null,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
   /**
@@ -5748,6 +5784,9 @@ function layoutMeasure(
   // guard against: our prefix prints a meter only on system 0.
   const drawMeterChange = (): void => {
     if (measure.meterChange == null) return
+    // NOT WHEN IT LEADS THE SYSTEM — the previous system's `trailingMeter` drew it, and
+    // unlike a key change it is NOT reprinted in this line's prefix either.
+    if (meterChangeLeadsLine(measure)) return
     // A RESTATED METER PRINTS NOTHING, exactly as a restated key does.
     //
     // THE `meterInForce === null` GUARD IS GONE, and it was masking a real one. It read
@@ -6012,6 +6051,17 @@ function layoutMeasure(
       fixed(trailing.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
       x += trailing.width + ENGRAVE.prefixGap
     }
+  }
+
+  // …AND ITS METER, which is drawn EVEN WHEN IT RESTATES THE ONE IN FORCE. `[M:C]` under
+  // `M:C` is exactly what `S5-directives` X:502 writes, and abcjs draws it: nothing on this
+  // path compares meters, the same way nothing compares keys (finding 127). The
+  // restated-meter guard lives on the INLINE path and stays there.
+  if (trailingMeter !== null) {
+    const trailing = layoutMeter(x, trailingMeter, strict)
+    elements.push(trailing)
+    fixed(trailing.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
+    x += trailing.width + ENGRAVE.prefixGap
   }
 
   // A repeat barline or a final ends the ending it sits in; a plain one does not.
@@ -6440,6 +6490,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           // `keyInForce` is still that: `measure.keyChange` is applied below.
           const from = measure.keyChange ?? keyInForce
           return from === null ? null : ([from, next.keyChange] as const)
+        })(),
+        (() => {
+          const next = (voice?.measures ?? [])[measureIndex + 1]
+          return meterChangeLeadsLine(next) ? (next?.meterChange ?? null) : null
         })(),
       )
       if (measure.keyChange !== null) keyInForce = measure.keyChange

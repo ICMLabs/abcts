@@ -153,6 +153,56 @@ describe('mid-tune key changes', () => {
     ])
   })
 
+  it('an inline `[M:]` at the head of a line draws at the END of the previous one', () => {
+    // The same lazy `startNewLine` as a line-leading key change, reached through the OTHER
+    // arm of the header parser — and the two arms part on where the meter ends up:
+    //
+    //   letter_to_inline_header  "[M:"  appends a `meter` element and leaves
+    //                                   `multilineVars.meter` alone
+    //   a standalone `M:` line          sets `multilineVars.meter`, which the next
+    //                                   `startNewLine` consumes into that line's PREFIX
+    //
+    // Measured on this pair, `M:3/4` and `[M:3/4]` at the same point in the same tune:
+    //
+    //   standalone  line 0 ends with its notes; line 1 opens `clef 15, timeSig 49.05`
+    //   inline      line 0 ends `timeSig 673.20 w=11.79`; line 1 opens with the CLEF ALONE
+    //
+    // Getting it wrong in EITHER direction is measurable: firing on both forms put
+    // `frere-jacques` back to the 21.80px that finding 121 closed, and firing on neither
+    // left `S5-directives` X:502 with 23px of missing fixed width, which justification
+    // spread over 35 noteheads as a ramp.
+    const meters = (src: string): string[][] => {
+      const score = parse(src).scores[0]
+      if (score === undefined) throw new Error('did not parse')
+      return layout(score).systems.map((system) =>
+        (system.staves[0]?.voices[0] ?? [])
+          .filter((element) => element.type === 'timeSignature')
+          .map((element) => element.glyphs.map((g) => g.name).join('+')),
+      )
+    }
+    const head = 'X:1\nM:C\nL:1/4\nK:C\nCDEF|GABc|\n'
+    const tail = 'CDE|FGA|\nCDE|FGA|\n'
+    // Inline: line 0 carries BOTH its own meter and the trailing 3/4; line 1 carries none.
+    expect(meters(`${head}[M:3/4]${tail}`)).toEqual([
+      ['timeSigCommon', 'timeSig3+timeSig4'],
+      [],
+      [],
+    ])
+    // Standalone: line 0 keeps only its own, and the 3/4 opens line 1.
+    expect(meters(`${head}M:3/4\n${tail}`)).toEqual([
+      ['timeSigCommon'],
+      ['timeSig3+timeSig4'],
+      [],
+    ])
+    // AND A RESTATED INLINE METER STILL DRAWS, for the same reason a restated key does
+    // (see the mode-change test): nothing on this path compares meters. abcjs puts
+    // `timeSig w=13.04` at x 671.96 on line 0 of `[M:C]` under `M:C`.
+    expect(meters(`${head}[M:C]CDEF|GABc|\nCDEF|GABc|\n`)[0]).toEqual([
+      'timeSigCommon',
+      'timeSigCommon',
+    ])
+  })
+
   it('REDRAWS a mode change that keeps the same signature, as abcjs does', () => {
     // THIS TEST USED TO ASSERT THE OPPOSITE, and its reason was our engraving judgement
     // rather than abcjs: "K:G and K:Em are one signature, a reader sees no accidental
