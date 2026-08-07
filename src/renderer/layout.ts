@@ -6205,12 +6205,44 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     let clefInForce = clef
     let meterInForce = score.meter
     const clefAtMeasure: Clef[] = []
+    /**
+     * THE PREFIX REPRINTS THE KEY IN FORCE, AND ON ONE LINE IT ALSO CANCELS THE OLD ONE.
+     *
+     * abcjs stamps `params.key` at every `startNewLine`, so a system's prefix shows the key
+     * as that LINE opened — not `score.key`, which is what we read. `ragtime-nightingale`
+     * changes `[K:Ab]`/`[K:Eb]` repeatedly and its later systems want FOUR flats: abcjs's
+     * key element probes at `w = 33` with flats at 0, 8.75, 17.5 and 26.25 against our
+     * three-flat 24.25.
+     *
+     * …AND `impliedNaturals` IS THE OTHER HALF. On a key CHANGE `parseKey` walks the old
+     * key's accidentals and pushes a NATURAL for every note the new key does not carry
+     * (`abc_parse_key_voice.js:295-311`); `startNewLine` copies that list onto the line's
+     * key (`abc_parse_music.js:964-965`) and then DELETES it (`:1041-1042`), so exactly ONE
+     * line cancels and every line after it shows the plain key. Read straight off abcjs's
+     * own data: its line 18 carries `fB fe fA nd` where 14-17 carry `fB fe fA fd` and
+     * 19-22 carry `fB fe fA`.
+     *
+     * Reprinting the key WITHOUT the cancellation was measured and refused by the ratchet —
+     * `ox` -0.75 -> 0.03 but `dx` 13.31 -> 14.18 — which is what the missing natural's
+     * 6.75 plus its 2 of gap is worth on the one line that needs it.
+     */
+    const keyAtMeasure: KeySignature[] = []
+    /** The key the PREVIOUS line opened with, which is what this line's prefix cancels. */
+    const keyBeforeLine: KeySignature[] = []
+    let keyAtLineStart = score.key
+    let keyAtPreviousLine = score.key
     const blocks = (voice?.measures ?? []).map((measure, measureIndex) => {
       // A mid-tune clef prints at the START of its measure and governs it — abcjs's
       // `staff-extra clef` is emitted before the measure's notes, and everything after it
       // is read against the new clef.
       if (measure.clefChange != null) clefInForce = measure.clefChange
       clefAtMeasure.push(clefInForce)
+      if (measure.startsSystem) {
+        keyAtPreviousLine = keyAtLineStart
+        keyAtLineStart = keyInForce
+      }
+      keyAtMeasure.push(keyAtLineStart)
+      keyBeforeLine.push(keyAtPreviousLine)
       const block = layoutMeasure(
         measure,
         clefInForce,
@@ -6288,7 +6320,13 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
               ],
             }
       if (clefElement !== null) push(clefElement)
-      const keySig = layoutKeySignature(x, score.key, clef, strict)
+      // `layoutKeyChange` is the same pairing a mid-tune `[K:]` uses, and it already emits
+      // the naturals for what is being left — which is exactly `impliedNaturals`. Using it
+      // whenever the line's key differs from the previous line's gives abcjs's "one line
+      // only" for free, because the line after that compares equal.
+      const lineKey = keyAtMeasure[from] ?? score.key
+      const beforeKey = keyBeforeLine[from] ?? score.key
+      const keySig = layoutKeyChange(x, beforeKey, lineKey, clef, strict) ?? layoutKeySignature(x, lineKey, clef, strict)
       if (keySig !== null) push(keySig)
       if (withMeter && score.meter !== null) {
         push(layoutMeter(x, score.meter, strict))

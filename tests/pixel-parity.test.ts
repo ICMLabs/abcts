@@ -190,7 +190,7 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // verified exact on four control tunes (`{=de}`, `{de}`, `{^de}`, and with a lyric),
     // so what moved here is a redistribution across 23 systems once one element reaches
     // 7px further left, not the rule. `mouse-click-01` went 7.20 -> 1.88 on the same fix.
-    'ragtime-nightingale': { heads: 2009, dy: 0.24, dx: 13.31, oy: 0.05, ox: -0.75 },
+    'ragtime-nightingale': { heads: 2009, dy: 0.25, dx: 12.13, oy: 0.05, ox: 0.12 },
     'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'score-reorder': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'simple-c': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
