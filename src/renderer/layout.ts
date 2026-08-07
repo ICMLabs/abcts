@@ -4755,6 +4755,14 @@ function curveReserves(
 function layoutTuplets(
   anchors: readonly NoteAnchor[],
   elements: readonly LayoutElement[],
+  /**
+   * The drawn beams, because a BEAMED tuplet's number is measured off the BEAM and not off
+   * the stem that ends on it: `heightAtMidpoint` samples `beam.beams[0]` — the beam's own
+   * `startY`/`endY` (`layout/triplet.js:110-116`). Our stems are retargeted to
+   * `beamLine + stemEndOffset`, so reading a stem tip is half a beam's thickness out on
+   * the down side, which is 0.49 pitch of the tuplet number's y.
+   */
+  beamLines: readonly PlacedLine[] = [],
 ): {
   lines: PlacedLine[]
   texts: PlacedText[]
@@ -4935,8 +4943,32 @@ function layoutTuplets(
       // beam, which is why averaging looked right: `multi-voice-rest-collision` is
       // sloped, and its `yTextPos` came out 16.5 against abcjs's 16.5929.
       const midX = beamMidX()
+      // …AND IT SAMPLES THE BEAM, NOT THE STEMS THAT END ON IT. `heightAtMidpoint` reads
+      // `beam.beams[0]` — the beam's own `startY`/`endY` (`layout/triplet.js:110-116`).
+      // Our stems are retargeted to `beamLine + stemEndOffset`, which is half a beam's
+      // thickness on the down side, so the tip is not the line: 0.49 pitch of the tuplet
+      // number's y, and the last of it. The stem tips remain the FALLBACK for a group
+      // whose beam is not in this list.
+      const onBeam = beamLines.find(
+        (l) => Math.min(l.x1, l.x2) <= a.x + 1e-9 && Math.max(l.x1, l.x2) >= b.x - 1e-9,
+      )
       const span = b.x - a.x
-      const y = span === 0 ? a.y : a.y + ((b.y - a.y) * (midX - a.x)) / span
+      // A `PlacedLine` carries its beam's CENTRE and its thickness; abcjs's `startY` is the
+      // edge the STEMS end on, which is half a thickness back out. Level 0's own offset is
+      // `inward * thickness / 2` in `layoutBeam`, and `inward` is toward the noteheads —
+      // so undoing it is `-thickness / 2` for a beam above and `+thickness / 2` for one
+      // below. Reconstructed from the line's own thickness rather than by repeating the
+      // constant, which is the shape that let two copies of one number drift before.
+      const y =
+        onBeam !== undefined
+          ? (onBeam.x2 === onBeam.x1
+              ? onBeam.y1
+              : onBeam.y1 +
+                ((onBeam.y2 - onBeam.y1) * (midX - onBeam.x1)) / (onBeam.x2 - onBeam.x1)) +
+            (up ? -1 : 1) * ((onBeam.thickness ?? 0) / 2)
+          : span === 0
+            ? a.y
+            : a.y + ((b.y - a.y) * (midX - a.x)) / span
       return y + (up ? -3 : 2) * ENGRAVE.spacePerStep
     }
     let startNote = endPitch(firstExtent)
@@ -5000,13 +5032,19 @@ function layoutTuplets(
       // AND A BEAMED TUPLET'S MIDPOINT IS NOT THE BRACKETED ONE'S — see `beamMidX`.
       x: beamed ? beamMidX() : centre,
       anchor: 'middle',
-      // STILL OURS, AND DELIBERATELY — see `ENGRAVE.tupletTextDrop` for the measurement.
-      // abcjs's baseline is `calcY(yTextPos - 1)` flat, with no font height added because
-      // `centerVertically` suppresses it (`draw/text.js:30-31`). Porting that rule alone
-      // does NOT converge, because our `yTextPos` is not abcjs's for a BEAMED triplet:
-      // it adds `isAbove(beam) ? 3 : -2` off `heightAtMidpoint` (`layout/triplet.js:16-17`)
-      // where we take the beam's own y. Correct rule, wrong input — the volta hook again.
-      y: up ? y - size * 0.1 : y + size * 0.9,
+      // ABCJS'S BASELINE IS `calcY(yTextPos - 1)`, FLAT, in both directions and with no
+      // font height added — `centerVertically: true` suppresses the `+= hash.font.size`
+      // (`draw/triplet.js:11`, `draw/text.js:29-30`). The `- 1` is abcjs's own fudge, in
+      // its own words: "HACK: adjust the position of '3'. It is too high in all cases so
+      // we fudge it by subtracting 1 here."
+      //
+      // IT IS PORTABLE ONLY NOW. This was recorded as a correct rule with a wrong input:
+      // our `yTextPos` was not abcjs's for a BEAMED triplet, because our beam GROUP broke
+      // at a rest and abcjs's does not, so `(6cegczg` was bracketed here and beamed there
+      // and the two `yTextPos` were not the same quantity. With the beaming fixed, ours
+      // and abcjs's tuplet numbers land on the same x to the hundredth, and this closes
+      // the y. The volta hook again, and this time both halves are in place.
+      y: y + ENGRAVE.tupletTextDrop,
       size,
       bold: false,
       italic: true,
@@ -7034,7 +7072,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         return kind === 'crescendo' || kind === 'diminuendo'
       }
       const hasHairpin = systemAnchors.some((a) => a.event.decorations.some(isHairpin))
-      const tuplets = layoutTuplets(systemAnchors, elements)
+      const tuplets = layoutTuplets(systemAnchors, elements, beams)
       const curves = curveReserves(systemAnchors, elements, voicePosOf(voiceIndex))
       // Melismas resolve here for the same reason tuplets do, and must run AFTER the
       // elements are final: in strict mode this rewrites the syllable's text in place.

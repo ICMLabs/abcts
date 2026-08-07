@@ -553,8 +553,8 @@ system 0 width=90.480 originY=0.000
     beam   66.568,1.000 -> 67.668,1.000 t=0.500
     beam   74.998,-1.250 -> 79.108,-1.750 t=0.500
     beam   79.859,1.750 -> 86.354,0.750 t=0.500
-    tuplettext 76.459,-3.376 size=1.935 "3"
-    tuplettext 83.068,4.004 size=1.935 "4"
+    tuplettext 76.459,-2.678 size=1.935 "3"
+    tuplettext 83.068,3.006 size=1.935 "4"
     title x=0.000 w=0.000
       text  24.271,-12.215 size=3.484 bold "S8-4 Short and Long Notes, Beams and Tuplets"
       text  43.175,-8.014 size=2.452 italic "Trad"
@@ -1142,7 +1142,7 @@ system 2 width=90.734 originY=27.376
     bar x=88.670 w=0.077
       line  88.709,-2.000 -> 88.709,2.000 t=0.077
 tune 5
-bounds  width=90.497 height=23.830 top=-1.935
+bounds  width=90.497 height=24.080 top=-1.935
 systems 1
 system 0 width=90.497 originY=0.000
   staff 0 originY=14.209
@@ -1169,8 +1169,8 @@ system 0 width=90.497 originY=0.000
     volta  88.045,-4.000 -> 88.045,-1.419 t=0.129
     voltatext 55.567,-1.556 "1"
     voltatext 70.215,-1.556 "2"
-    tuplettext 60.627,6.492 size=1.935 "3"
-    tuplettext 78.486,6.492 size=1.935 "3"
+    tuplettext 60.627,5.500 size=1.935 "3"
+    tuplettext 78.486,5.500 size=1.935 "3"
     title x=0.000 w=0.000
       text  24.215,-9.750 size=3.484 bold "S8-6 Chords, Unions, First and Second Endings"
     clef x=1.935 w=3.103
@@ -1936,9 +1936,9 @@ system 0 width=90.367 originY=0.000
     beam   41.014,-1.750 -> 42.861,-2.250 t=0.500
     beam   43.365,2.250 -> 48.752,1.250 t=0.500
     beam   54.637,2.750 -> 57.604,2.250 t=0.500
-    tuplettext 28.084,4.755 size=1.935 "3"
-    tuplettext 32.419,3.492 size=1.935 "3"
-    tuplettext 56.082,5.255 size=1.935 "3"
+    tuplettext 28.084,3.757 size=1.935 "3"
+    tuplettext 32.419,2.500 size=1.935 "3"
+    tuplettext 56.082,4.257 size=1.935 "3"
     slur  20.334,4.272 -> 25.385,2.772 bulge=0.909
     slur  27.413,-2.772 -> 30.045,-3.772 bulge=-0.500
     slur  31.748,-3.772 -> 34.380,-3.772 bulge=-0.500
@@ -2113,16 +2113,16 @@ system 0 width=90.332 originY=0.000
     tupletline 69.835,4.250 -> 71.712,4.000 t=0.129
     tupletline 65.894,4.500 -> 65.894,5.145 t=0.129
     tupletline 71.712,4.000 -> 71.712,4.645 t=0.129
-    tuplettext 11.578,5.750 size=1.935 "3"
-    tuplettext 21.162,7.242 size=1.935 "3"
-    tuplettext 28.507,7.242 size=1.935 "3"
-    tuplettext 34.669,7.242 size=1.935 "3"
-    tuplettext 39.532,5.492 size=1.935 "3"
-    tuplettext 50.061,7.242 size=1.935 "4"
-    tuplettext 59.921,5.250 size=1.935 "3"
-    tuplettext 68.803,5.992 size=1.935 "3"
-    tuplettext 76.747,5.504 size=1.935 "3"
-    tuplettext 83.714,4.734 size=1.935 "3"
+    tuplettext 11.578,4.754 size=1.935 "3"
+    tuplettext 21.162,6.000 size=1.935 "3"
+    tuplettext 28.507,6.000 size=1.935 "3"
+    tuplettext 34.669,6.000 size=1.935 "3"
+    tuplettext 39.532,4.500 size=1.935 "3"
+    tuplettext 50.061,6.000 size=1.935 "4"
+    tuplettext 59.921,4.254 size=1.935 "3"
+    tuplettext 68.803,4.750 size=1.935 "3"
+    tuplettext 76.747,4.506 size=1.935 "3"
+    tuplettext 83.714,3.746 size=1.935 "3"
     tie  54.476,-1.600 -> 58.161,-1.600 bulge=-0.663
     title x=0.000 w=0.000
       text  33.553,-8.112 size=3.484 bold "S8-10 Strange tuplet cases"
@@ -2283,14 +2283,14 @@ system 1 width=90.467 originY=19.071
     tupletline 83.315,5.500 -> 84.621,5.500 t=0.129
     tupletline 79.944,5.500 -> 79.944,6.145 t=0.129
     tupletline 84.621,5.500 -> 84.621,6.145 t=0.129
-    tuplettext 10.373,-3.694 size=1.935 "3"
-    tuplettext 20.607,-4.194 size=1.935 "3"
-    tuplettext 34.593,7.242 size=1.935 "5"
-    tuplettext 46.843,4.506 size=1.935 "5"
-    tuplettext 57.207,7.242 size=1.935 "6"
-    tuplettext 65.564,7.242 size=1.935 "6"
-    tuplettext 74.211,7.242 size=1.935 "3"
-    tuplettext 82.282,7.242 size=1.935 "3"
+    tuplettext 10.373,-3.000 size=1.935 "3"
+    tuplettext 20.607,-3.500 size=1.935 "3"
+    tuplettext 34.593,6.000 size=1.935 "5"
+    tuplettext 46.843,3.507 size=1.935 "5"
+    tuplettext 57.207,6.000 size=1.935 "6"
+    tuplettext 65.564,6.000 size=1.935 "6"
+    tuplettext 74.211,6.000 size=1.935 "3"
+    tuplettext 82.282,6.000 size=1.935 "3"
     tie  28.991,-2.100 -> 31.687,-2.100 bulge=-0.500
     tie  41.873,-2.100 -> 44.570,-2.100 bulge=-0.500
     tie  77.764,-3.100 -> 80.460,-3.100 bulge=-0.500
