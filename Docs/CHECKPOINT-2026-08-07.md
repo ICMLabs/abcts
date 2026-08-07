@@ -44,12 +44,12 @@ drove the rest of the session.
 
 | | at the session's start | now |
 |---|---|---|
-| suite | 703 | **889. NO REDS.** |
+| suite | 703 | **890. NO REDS.** |
 | pixel gate | 29 fixtures, 2,696 heads | **119 tunes, 5,105 heads** |
 | pixel ranked table | *did not exist* | **19 of 119 off some axis, eight of them the whole-note OUTLINE and not work** |
 | harvested (174) | 0 of 174 off | **0 of 174 off** |
 | 41-fixture | one above 0.02 | one above 0.02 |
-| ceilings | — | **fourteen LOWERED.** TWO were raised mid-session (129, 131) and each was CLOSED by the finding after it (130, 132) |
+| ceilings | — | **fifteen LOWERED.** TWO were raised mid-session (129, 131) and each was CLOSED by the finding after it (130, 132) |
 
 `npx vitest run tests/pixel-parity.test.ts && cat /tmp/abcts-pixel-ranked.txt` is the new
 first command of a session, beside the harvested one.
@@ -319,6 +319,44 @@ regression and the rule stands.**
 
 ---
 
+## FINDING 133 — AN ENDING'S EXTRA `minspacing` IS CHARGED TO ONE VOICE, NOT EVERY BARLINE
+
+abcjs adds `minspacing += textWidth + 10` in `createBarLine`, which runs where the ENDING
+element is created — and a volta belongs to the **first voice of the first staff**, not to
+every voice whose bar falls under the `|1`. Its own probe says so: of the FIVE barlines at
+one x on `ragtime-nightingale`'s system 17, ONE carries `minsp=28.50` and the other four the
+plain 10.00.
+
+**AND CHARGING EVERY VOICE IS NOT A WASH**, which is the part that made this cost 12.13px
+rather than nothing. The left-ink rule is a SHORTFALL, not an addition:
+
+```js
+var extraWidth = getExtraWidth(child, pad)
+if (er < extraWidth) x += extraWidth - er
+```
+
+(`layout/voice-elements.js:66-72`, and we already had it, correctly.) abcjs's other voices
+keep 18.50 of slack after their bar, and the chord that follows hangs 12.13 of accidental ink
+to its left — which FITS inside the slack, so nothing moves. Ours had spent that slack on the
+ending, leaving `room = 0`, so the same accidental pushed the shared cursor 12.13 right.
+
+dx 12.13 → **1.58**, dy 0.04 → 0.01, oy 0.01 → 0.00. The oldest number on the table, and the
+last one above 8.25, on a 2009-notehead fixture.
+
+**AND THE SHAPE LIED TWICE.** The per-notehead diff showed a drift to −5.35 then a jump to
++6.78, so the handoff recorded "ONE element between golden x 384.5 and 442.9 is 12.13 too
+wide". It was not an element's width at all — both engines put the barline at the SAME offset
+from the note before it (15.81). It was the SLACK AFTER that barline, in a voice on the OTHER
+STAFF, spent on an ending that voice does not own.
+
+What turned it round was finding the same number on both sides: `extraw=-12.13` in abcjs's
+probe and `left=12.13` in ours, identical. That ruled the accidental itself out and moved the
+question from "what is too wide" to "what was supposed to absorb it". **When both engines
+agree on a quantity that is still 12px apart on the page, stop measuring the quantity and
+start measuring what consumes it.**
+
+---
+
 ## AND ONE ROW OF THE TABLE IS NOT WORK AT ALL
 
 The eight `ox = 0.18` rows — `clefs-tune0` through `-tune6` and `S6-keys-tune0` — are tunes
@@ -358,7 +396,6 @@ Nothing regressed by any amount at any point. Every ceiling that moved went DOWN
 19 of 119 tunes are off some axis by 0.05px or more
       1.19  dy=0.03 dx=1.19  oy=0.00 ox=-0.03   188 heads  S5-directives-tune1
     23.66  dy=8.37 dx=23.66 oy=4.73 ox=-0.64   46 heads  S8-layout-tune11
-    12.13  dy=0.04 dx=12.13 oy=0.01 ox=0.02  2009 heads  ragtime-nightingale
      8.25  dy=0.00 dx=8.25 oy=0.00 ox=3.58     99 heads  S8-layout-tune6
      6.24  dy=0.00 dx=6.24 oy=0.00 ox=0.11     64 heads  S3-note-syntax-tune24
      6.20  dy=0.01 dx=6.20 oy=0.00 ox=1.07     60 heads  S8-layout-tune5
@@ -390,10 +427,7 @@ saying otherwise is stale.
 extent, and the two moved together when `S8-layout-tune10`'s accidental room landed, so they
 are not independent of what is already fixed. Re-measure the SHAPE before hypothesising.
 
-### 3. `ragtime-nightingale`, dx 12.13 — the oldest number on the list
-
-Its `dy`/`oy`/`ox` are now 0.04 / 0.01 / 0.02 — effectively closed. `dx` did not move on any
-of this session's four findings. `-08-06b` §"…AND THE CANCELLATION LINE IS PINNED" is now
+### 3. ~~`ragtime-nightingale`~~ — 12.13 → 1.58, finding 133. Effectively closed. `-08-06b` §"…AND THE CANCELLATION LINE IS PINNED" is now
 DONE (finding 125) and did not touch it, so **that section's remaining note is the live
 one**: the largest single band jumps 10.33 between two adjacent heads at golden x 323.1 and
 442.9 on the y≈4600 system — ONE element's width, not a spread.
