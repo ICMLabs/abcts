@@ -71,11 +71,18 @@ checkpoint and hand off as you go so no context is lost.
 > "zero for the common case", left out — and that judgement was the entire remaining error
 > on `ragtime-nightingale`, the branch's one standing red. Port the quirk, then measure.
 
-> 🏁 **THE RANKED TABLE IS EMPTY — 0 of 174 rows** (2026-08-07). All 174 fixtures of the
-> harvested corpus agree with abcjs on note content AND on all four geometric axes to
-> within 0.05px, and `CONTENT_GAPS` is empty for the first time. **So neither the table nor
-> the content gate can name anything any more, and every remaining gate is blind to what is
-> left** —
+> ⚖️ **AND HE HAD TO SAY IT AGAIN** (Lance, 2026-08-07): *"remember that abcjs code has the
+> answers."* What it cost to ignore, in one sitting: reprinting the key in force made
+> `ragtime-nightingale` WORSE (dx 13.31 → 14.18), so I GUESSED at why, implemented the
+> guess, and it changed nothing at all. Reading `parseKey` gave it in one pass —
+> `impliedNaturals`, three lines of source, dx → 12.13. **A measurement can only rank
+> hypotheses you already have.**
+
+> 🏁 **THE RANKED TABLE IS EMPTY — 0 of 174 rows** (2026-08-07), and **36 of the 41 are at
+> EXACT ZERO**. All 174 fixtures of the harvested corpus agree with abcjs on note content
+> AND on all four geometric axes to within 0.05px, and `CONTENT_GAPS` is empty for the
+> first time. **So neither the table nor the content gate can name anything any more, and
+> every remaining gate is blind to what is left** —
 > the pixel gate sees only what abcjs classes a NOTEHEAD, the baselines say CHANGED and
 > never WRONG, the structural gate misses everything added via `addOther`. Findings now
 > come from READING abcjs, and **a CONTROL TUNE is the proof**: finding 111 was written,
@@ -83,7 +90,7 @@ checkpoint and hand off as you go so no context is lost.
 > corpus — without the control it would have landed under a green ratchet, because the
 > fixture it was aimed at moved the right way for the wrong reason.
 
-Read `Docs/CHECKPOINT-2026-08-06b.md` first — the current state, findings 106-112, and
+Read `Docs/CHECKPOINT-2026-08-06b.md` first — the current state, findings 106-124, and
 **THE GATES CANNOT SEE WHAT IS LEFT**, which is the section that decides the work now.
 `Docs/HANDOFF-2026-08-06b.md` has the session prompt. `Docs/CHECKPOINT-2026-08-06.md` is
 superseded for the state but keeps findings 104-105 and **THE HARNESS: how to instrument
@@ -236,7 +243,8 @@ gate had been comparing abcjs's outline START against our glyph ORIGIN, a 4px bi
 **Structural parity is done: note content, lyrics, beams and render structure are all
 41/41 with zero recorded divergences.** `geometry/vertical` is **703/703 with NO reds**,
 and the harvested corpus's ranked table is **EMPTY** — 174 of 174 fixtures exact on every
-axis to within 0.05px, with no content gaps left either.
+axis to within 0.05px, with no content gaps left either. **36 of the 41 are at exact zero**;
+`ragtime-nightingale` alone is above 0.02.
 pushed, and the AUDIT FINDING IS CLOSED — no Bravura figure is reachable in strict. The
 harvested corpus is **10 of 174 off some axis**, from 34 at the start of 2026-08-05, with
 **nothing above 0.93px** and every measurable fixture inside one pixel. Two ceilings are
@@ -457,24 +465,23 @@ feature-coverage gap, tracked separately and implemented not at all.
 ```
 We are continuing abcts development in the abcts repo (Code/abcts).
 
-Read Docs/CHECKPOINT-2026-08-06b.md first — the state, findings 106-112, and above
+Read Docs/CHECKPOINT-2026-08-06b.md first — the state, findings 106-124, and above
 all THE GATES CANNOT SEE WHAT IS LEFT; its "WHAT IS LEFT" is your job. Then
-Docs/HANDOFF-2026-08-06b.md beside it, then -08-06.md for THE HARNESS, -08-05c.md
-(findings 90-103 and the ENGRAVE triage table), -08-05b.md (71-89), -08-05.md,
--08-04c.md (51-70 and the method), -08-04b.md (41-50), -08-03d.md (16-40),
-ARCHITECTURE.md, this file.
+Docs/HANDOFF-2026-08-06b.md, then -08-06.md for THE HARNESS, -08-05c.md (90-103
+and the ENGRAVE triage table), -08-05b.md (71-89), -08-05.md, -08-04c.md (51-70
+and the ladder method), -08-04b.md (41-50), -08-03d.md (16-40), ARCHITECTURE.md,
+this file.
 
-THE RULE THAT MATTERS: abcjs is the MASTER SOURCE. Any variability is likely a
-setting you did not copy or an algorithm you INFERRED instead of analysing. Port
-its STRUCTURE, then its constants.
+READ ABCJS'S CODE. IT HAS THE ANSWERS. Lance has said it twice; the second time
+cost a revert and a wasted implementation of a guess. Port its STRUCTURE, then its
+constants.
 
-AND THE RANKED TABLE IS EXHAUSTED, so it cannot name the next defect any more.
-Read abcjs, form ONE hypothesis, and prove it on a CONTROL TUNE before touching a
-fixture — the gates are blind to everything left, and a fixture can move the right
-way for the wrong reason.
+AND NO GATE CAN NAME THE NEXT DEFECT ANY MORE — the harvested table is empty and
+36 of the 41 are at exact zero. Read abcjs, form ONE hypothesis, and prove it on a
+CONTROL TUNE before touching a fixture.
 
-Work by INSTRUMENTING a scratchpad copy of abcjs — never ../abcMusicKit, another
-agent works there. Instrument to ANSWER A QUESTION, not to see what happens.
+Instrument a SCRATCHPAD COPY of abcjs — never ../abcMusicKit, another agent works
+there and it is dirty. Instrument to ANSWER A QUESTION, not to see what happens.
 
 The bar is 100% parity. A passing gate is not parity.
 
@@ -490,17 +497,24 @@ Read Docs/CHECKPOINT-2026-08-06b.md and Docs/HANDOFF-2026-08-06b.md; -08-06.md h
 THE HARNESS and the earlier ledgers are -08-05c.md (90-103), -08-05b.md (71-89),
 -08-05.md, -08-04c.md (51-70), -08-04b.md (41-50), -08-03d.md (16-40).
 
-The branch is 703/703 with no reds and THE RANKED TABLE HAS NO GEOMETRY ON IT.
+703/703. The harvested table is EMPTY and 36 of the 41 are at EXACT ZERO.
 
-START WITH `fixVoiceCollisions` (layout/layout.js:140-188, called from :49) — the
-only thing left with a measured number. A pass over TIME SLOTS, after layout, that
-pushes a rest clear of the other voice's nearest note by 2 pitch, moving `top`,
-`bottom` AND `children[0].pitch` together. On `multi-voice-rest-placement` two of
-four rests are exact and two are 26.39px and 10.89px out. NO GATE CAN SEE IT —
-rests carry no class in the pixel gate — so measure against the golden SVG.
+START WITH THE CANCELLATION LINE — pinned by three controls, not ported. abcjs's
+own per-line key data:
 
-Then the beam-across-a-rest slice, which changes beam GROUPING and is the largest
-behavioural difference left.
+  [K:C] at the START of a line   l0 Eb  l1 C+nat  l2 C      l3 C
+  [K:C] MID-line                 l0 Eb  l1 Eb     l2 C+nat  l3 C
+  standalone K:C between lines   l0 Eb  l1 C+nat  l2 C
+
+A [K:] before any music on its line belongs to THAT LINE'S PREFIX, because
+startNewLine fires LAZILY — when the first music element is appended. That same
+lazy-line mechanism drives the standalone M: and the bar-number transfer. Fold a
+change whose keyChangeSourceRange precedes every event of a system-starting
+measure into the prefix, and suppress the inline draw.
+
+Then ragtime-nightingale's dx 12.13, whose largest band JUMPS 10.33 between two
+adjacent heads (golden x 323.1 and 442.9, the y≈4600 system) — ONE element's
+width, not a spread. Then its dy 0.25, the fixed lanes, Gonzato, audio.
 
 The method: read the named function, build a LADDER of control tunes, then probe.
 A control tune is the proof, not the fixture.

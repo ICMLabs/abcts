@@ -1,4 +1,4 @@
-# abcts — Checkpoint, 2026-08-06 (second session of the day)
+# abcts — Checkpoint, 2026-08-06/07
 
 Supersedes `CHECKPOINT-2026-08-06.md` for the STATE. That file keeps findings 104–105 and
 **THE HARNESS**, which is still the most reusable thing written down and was used for every
@@ -28,9 +28,15 @@ with abcjs on note content AND on all four geometric axes to within 0.05px** —
 |---|---|
 | suite | **703 of 703. NO REDS.** |
 | harvested (174) | within 0.05 / 1 / 5 / 25px: **174 / 174 / 174 / 174** |
-| 41-fixture | staff spacing 72 of 73 boundaries exact |
+| 41-fixture | **36 of 41 at EXACT ZERO.** One is above 0.02: `ragtime-nightingale`, dy 0.25 / dx 12.13 |
 | CONTENT gaps | **NONE.** `CONTENT_GAPS` is empty for the first time |
-| ceilings raised | still two, both recorded: `ragtime-nightingale`'s `dy` 0.40, the repeat ending's bracket PITCH 0.50 |
+| ceilings | LOWERED nine times this session, raised none. `ragtime`'s `dy` 0.40 → 0.25 and `dx` 13.31 → 12.13; the repeat ending's bracket PITCH 0.50 is the one standing raise |
+
+**AND THE GATE ASKED FOR THREE OF THOSE LOWERINGS ITSELF** — `dxSpread improved to 0.0 —
+lower the ceiling`. Its canary (`the gate reads real goldens and can tell positions apart`)
+had to be re-pointed TWICE in one session as the fixture it named went exact, first
+`frere-jacques`, then `little swallow`. It now names `ragtime-nightingale`, and the comment
+says what to do when that closes: a synthetic pair, not a fixture.
 
 **AN EMPTY TABLE IS NOT THE END OF THE WORK.** What it means is that the notehead-pairing
 gate can no longer name ANYTHING, and neither can the content gate. Both are regression nets
@@ -42,7 +48,7 @@ every gate — see WHAT IS LEFT and, before it, **THE GATES CANNOT SEE WHAT IS L
 
 ## THE METHOD, and it did not vary once
 
-Every one of findings 106–119 came out of the same loop, and none could have been guessed
+Every one of findings 106–124 came out of the same loop, and none could have been guessed
 from a diff:
 
 1. `npx vitest run tests/corpus-abcjs-ranked.test.ts && cat /tmp/abcts-corpus-ranked.txt`
@@ -310,6 +316,75 @@ Neither was portable until 118 landed. `(6cegczg (3czg` now matches abcjs on bot
 the hundredth, and every tuplet number of `multi-voice-triplet-brackets` sits at ONE constant
 offset per staff from abcjs's — 127.353..127.362 and 268.962, which is the staff origin and
 nothing else. **The checkpoint's two open numbers, 4.91px in x and 38.8 in y, are closed.**
+
+---
+
+## FINDINGS 120–124 — the 41-fixture corpus, and the last three big numbers
+
+### 120 — A LEADING CHUNK BEFORE THE FIRST `X:` IS NOT A TUNE
+
+`bookParser` splits on `"\nX:"` and SHIFTS OFF the first piece when it does not start with
+`X:`, keeping only its `%%` lines (`abc_parse_book.js:12-33`). The test is "no `X:` yet",
+not "empty" — `isEmpty` also wanted no `T:` and no music. **The `CONTENT_GAPS` entry
+described the symptom and guessed the cause BACKWARDS**, the second allowlist on this branch
+written from a plausible reading rather than from the source. It was the last content gap.
+
+### 121 — A STANDALONE `M:` BELONGS TO THE NEXT LINE, NOT THE MEASURE STILL OPEN
+
+abcjs holds it in `multilineVars.meter` and the next `startNewLine` consumes it into
+`params.meter`, which becomes that LINE's staff meter and prints in its prefix
+(`abc_parse_music.js:984-993`). An INLINE `[M:]` prints where it stands. Measured on a pair
+of controls — 49.051 after the next system's clef against 413.48 mid-line — and ours already
+matched BOTH. The two only part when a measure is still OPEN as the `M:` is read.
+
+`frere-jacques` is that case and it was the whole 21.80px: its `M:4/4` sits four lines below
+the `+:` prose that strict scans as MUSIC (abcjs's `default: return {regular: true}` for an
+unknown field letter, `abc_parse_header.js:561`), so the change landed on the prose's own
+measure. **A renderer guard was masking it** with a comment that read like a rule — "neither
+does the first one a free-meter tune acquires" — and was a description of the symptom.
+
+### 122 — `[|` IS `bar_thick_thin`, NOT `bar_thin_thin`
+
+13px against 4, and a thick rule FIRST (`abstract-engraver.js:974-977`). Probed: `w = 13`
+with children `bar@4/w4, bar@12/w1`. `ENGRAVE`'s own comment had called this "a model
+question, not a spacing one"; it was a model question AND nine pixels of every line that
+opens with one.
+
+### 123 — ABCJS'S ESCAPE TABLE IS A FIXED MAP, NOT A COMBINING-MARK RULE
+
+`translateString` looks a two-character sequence up in `charMap` (`abc_tokenizer.js:525-546`)
+and, on failing that and the octal and accidental maps, **puts the backslash back and keeps
+the piece**. Its caron pairs are `vs vS vz vZ` and no others, so `\va` is not in it: abcjs
+prints `Xi\vao` literally where ABC 2.1 §8.2's generic rule gives `Xiǎo`. Its own SVG
+settles it — `little swallow`'s first lyric tspan reads `Xi\vao` and its third reads `yàn`,
+because `` \` `` IS in the map.
+
+**It is not only text: abcjs measures what it prints.** Six characters are 47.25px of lyric
+against four at 33.52, and a lyric is CENTRED on its note. Ported behind a mode switch
+`parse()` sets, with all 98 of abcjs's octal codes.
+
+### 124 — THE PREFIX REPRINTS THE KEY IN FORCE, AND ON ONE LINE IT CANCELS THE OLD ONE
+
+**The finding that cost a revert, and the reason is Lance's correction restated.**
+`startNewLine` stamps `params.key` on every line, so a system's prefix shows the key as that
+LINE opened — not `score.key`, which is what `prefix()` read, beside a `clefAtMeasure` that
+already accumulated.
+
+Reprinting it ALONE took `ox` from −0.75 to +0.03 and `dx` from 13.31 to **14.18** — worse,
+so the ratchet refused it. What followed was a GUESS (`wrap_lines` copies the line's key, so
+a mid-line `[K:]` misses the wrapped continuation); it was implemented and changed NOTHING,
+because ragtime's systems already are its source lines.
+
+Reading `parseKey` gave it in one pass: on a change it pushes a NATURAL for every note the
+old key had and the new one lacks (`abc_parse_key_voice.js:295-311`), `startNewLine` copies
+that list onto the line's key (`abc_parse_music.js:964-965`) and then DELETES it
+(`:1041-1042`) — so exactly ONE line cancels. abcjs's own per-line data says it plainly.
+`layoutKeyChange` is the same pairing a mid-tune `[K:]` uses and already emits those
+naturals, so comparing each line's key with the PREVIOUS line's gives the one-line rule for
+free. dx 13.31 → 12.13, ox −0.75 → 0.12.
+
+**A MEASUREMENT RANKED THE HYPOTHESES AND THE SOURCE SUPPLIED THE RIGHT ONE.** No amount of
+staring at `dx` would have produced `impliedNaturals`.
 
 ---
 
