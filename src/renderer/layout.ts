@@ -939,6 +939,13 @@ export interface LayoutElement {
    * upper notehead of every chord unverified while the suite reported MATCH — the exact
    * shape of the blind spot the parser audit found.
    */
+  /**
+   * abcjs's `rest.type === 'rest'` — an ORDINARY rest, which is narrower than "a rest".
+   * `fixVoiceCollisions` weeds on exactly this, so it excludes the invisible ones AND a
+   * measure-filling rest, which `createNote` has already retyped `whole`
+   * (`abstract-engraver.js:811-813`), AND a multi-measure one. Absent on anything else.
+   */
+  readonly plainRest?: boolean
   readonly staffSteps: readonly number[]
   readonly glyphs: readonly PlacedGlyph[]
   readonly lines: readonly PlacedLine[]
@@ -2025,6 +2032,15 @@ function layoutRest(
    * case abcjs leaves at the default `restpitch`. See `restPitchShift`.
    */
   sharedStaffStem: boolean | null = null,
+  /**
+   * `measureLength` — `meter.num / meter.den` (`abstract-engraver.js:173`). A rest exactly
+   * this long is retyped; see `fillsMeasure`.
+   *
+   * abcjs reads the meter of the LINE, set once in `createABCStaff`; ours is the meter as
+   * this MEASURE begins. The two part only on a mid-line `[M:]`, which nothing in either
+   * corpus writes.
+   */
+  measureLength: number | null = null,
 ): LayoutElement {
   // A REST CARRIES ITS GRACES, by the same line that gives it a chord symbol: `createNote`
   // closes its rest/note branch and THEN calls `addGraceNotes`
@@ -2035,7 +2051,26 @@ function layoutRest(
   // `x` and `y` occupy horizontal space but print nothing; a spacer prints nothing and
   // is not even a rest musically. Both still advance, so following notes stay put.
   const invisible = rest.kind === 'invisible' || rest.kind === 'invisibleMultiMeasure'
-  const spec = invisible || rest.kind === 'spacer' ? null : restGlyph(rest.notatedDuration)
+  // A REST THAT EXACTLY FILLS ITS MEASURE BECOMES A WHOLE REST, whatever it was written as:
+  //
+  //     if (this.measureLength === duration && elem.rest.type !== 'invisible' &&
+  //         elem.rest.type !== 'spacer' && elem.rest.type.indexOf('multimeasure') < 0)
+  //       elem.rest.type = 'whole'
+  //
+  // (`abstract-engraver.js:811-813`.) The retype is not cosmetic — it reaches three places.
+  // `case "whole"` draws `chartable.rest[0]` and sets `dot = 0`, so a dotted rest filling
+  // its bar loses its dots; and `fixVoiceCollisions` weeds on `rest.type === 'rest'`, so a
+  // whole rest never gets out of another voice's way. `zocharti-loch`'s `z8` in `M:C` is
+  // that case, and treating it as an ordinary rest moved it 2.51px abcjs does not.
+  const fillsMeasure =
+    !invisible &&
+    rest.kind !== 'spacer' &&
+    rest.measureCount === 0 &&
+    measureLength !== null &&
+    ratToNumber(rest.notatedDuration) === measureLength
+  const written = invisible || rest.kind === 'spacer' ? null : restGlyph(rest.notatedDuration)
+  const spec =
+    written !== null && fillsMeasure ? { name: 'restWhole' as GlyphName, step: 2, dots: 0 } : written
 
   const glyphs: PlacedGlyph[] = []
   // A REST CARRIES ITS CHORD SYMBOL AND ANNOTATIONS. abcjs calls `addChord` on every
@@ -2148,6 +2183,8 @@ function layoutRest(
     spring: advance,
     rod: restInk,
     left: Math.max(textSpan.left, graces.left),
+    // abcjs's `rest.type === 'rest'` after `createNote` has had its say — see `plainRest`.
+    plainRest: !invisible && rest.kind !== 'spacer' && rest.measureCount === 0 && !fillsMeasure,
     staffSteps: [],
     // The graces go on the END — abcjs's document order, an `extra` after the `head`.
     glyphs: [...glyphs, ...graces.glyphs],
@@ -5538,6 +5575,7 @@ function layoutMeasure(
       voiceStem,
       dynamicsAbove,
       sharedStaff,
+      meterInForce === null ? null : meterInForce.numerator / meterInForce.denominator,
     )
     if (el === null) continue
     if (group !== null && stemOut?.value) {
@@ -7055,10 +7093,17 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       const first = parts[0]
       if (first === undefined) return centred[0] as (typeof centred)[number]
       if (parts.length === 1) return { ...first, voices: [first.elements] }
+      // …AND ONLY NOW DO THE RESTS GET OUT OF EACH OTHER'S WAY. abcjs runs
+      // `fixVoiceCollisions` after the lanes are stacked and does not restack them, so this
+      // has to come after every `anchor*` above it and before the extent is taken.
+      const fixed = fixRestCollisions(
+        parts.map((p) => p.elements),
+        strict,
+      )
       return {
         ...first,
-        voices: parts.map((p) => p.elements),
-        elements: parts.flatMap((p) => p.elements),
+        voices: fixed,
+        elements: fixed.flat(),
         beams: parts.flatMap((p) => p.beams),
         tupletLines: parts.flatMap((p) => p.tupletLines),
         tupletTexts: parts.flatMap((p) => p.tupletTexts),
@@ -8089,6 +8134,136 @@ function anchorBelowStaff<
  * genuine refactor of the most regression-prone code in the file; this gets the common case
  * exact without touching it.
  */
+/**
+ * A REST GETS OUT OF THE OTHER VOICE'S WAY — abcjs's `fixVoiceCollisions`.
+ *
+ * `layout/layout.js:140-188`, run from `:49` over the whole tune AFTER `layoutVoice` and
+ * `setUpperAndLowerElements`, and deliberately not followed by a second lane pass (abcjs's
+ * own `//setUpperAndLowerElements(…)` on the next line is commented out). So the moved rest
+ * changes the staff's extent and therefore the staff-to-staff spacing, and does NOT move
+ * the lanes that were already stacked. This runs in the same place for the same reason.
+ *
+ *     if (isRealRest && !slot[lastIndex].abcelem.rest) {          // rest in the FIRST voice
+ *       var distance1 = restTop.bottom - closeTop(slot[lastIndex])
+ *       distance1 -= 2                                           // room between them
+ *       if (distance1 < 0) …move the rest UP by -distance1
+ *     } else if (isRealRest2 && !slot[0].abcelem.rest) {          // rest in the LAST voice
+ *       var distance2 = restBottom.top - closeBottom(slot[0])
+ *       distance2 += 2
+ *       if (distance2 > 0) …move the rest DOWN by distance2
+ *     }
+ *
+ * Both directions are away from the other voice, and the 2 is abcjs's stated clearance.
+ * Only the FIRST and LAST voices of a slot are considered — abcjs's own comment says a
+ * third voice will "get sloppy" — and an invisible rest is weeded out by
+ * `rest.type === 'rest'`.
+ *
+ * Probed on `multi-voice-rest-placement`, whose four rests are two hits and two misses:
+ *
+ *     T500   BOTREST  restTop 5.766  otherBottom  0.956  distance2  6.810  -> moves
+ *     T750   BOTREST  restTop 5.766  otherBottom  7.956  distance2 -0.190  -> does not
+ *     T1500  TOPREST  restBot 8.234  otherTop     9.044  distance1 -2.810  -> moves
+ *     T2000  TOPREST  restBot 8.234  otherTop     6.044  distance1  0.190  -> does not
+ *
+ * and 6.810 and 2.810 pitch are exactly the 26.39px and 10.89px those two rests were out
+ * by against abcjs's own golden.
+ *
+ * THE SLOTS ARE BUCKETED BY X, NOT BY TIME. abcjs walks each voice's children accumulating
+ * `duration` and keys on `'T' + round(time * 1000)`. On one staff that is the same
+ * partition: every voice of a system is laid out against ONE cursor, co-timed elements are
+ * placed at the same x by construction, and `shiftRight` carries the whole slot together
+ * whenever one of them needs more room — so same time implies same x, and the cursor only
+ * moves forward, so same x implies same time. Bucketing by x needs no duration on
+ * `LayoutElement`, which nothing else wants.
+ *
+ * ponytail: `closeTop`/`closeBottom` are read over GLYPHS and LINES here, where abcjs reads
+ * every child except a `chord` (above) or a `lyric` (below) — so an ANNOTATION on the other
+ * voice's note would pull abcjs's `closeTop` up to the annotation lane and ours would not.
+ * Nothing in either corpus writes one on a colliding note; widen it if something does.
+ */
+function fixRestCollisions(
+  voices: readonly (readonly LayoutElement[])[],
+  strict: boolean,
+): LayoutElement[][] {
+  const out = voices.map((v) => [...v])
+  if (out.length < 2) return out
+
+  /** The near edge of an element's ink, in y. Skips the lanes, as abcjs's helpers do. */
+  const edge = (el: LayoutElement, side: 'top' | 'bottom'): number => {
+    const ys: number[] = []
+    for (const g of el.glyphs) {
+      if (g.reserve !== undefined) ys.push(g.reserve[side === 'top' ? 0 : 1])
+      else {
+        const glyph = glyphsFor(strict).get(g.name) ?? GLYPHS[g.name]
+        ys.push(side === 'top' ? g.y + glyph.y : g.y + glyph.y + glyph.height)
+      }
+    }
+    for (const l of el.lines) ys.push(side === 'top' ? Math.min(l.y1, l.y2) : Math.max(l.y1, l.y2))
+    if (ys.length === 0) return side === 'top' ? stepToY(4) : stepToY(-4)
+    return side === 'top' ? Math.min(...ys) : Math.max(...ys)
+  }
+  // `rest.type === 'rest'` EXACTLY, which is narrower than "a rest that draws something".
+  // It excludes the invisible ones, as abcjs's comment says, and ALSO `whole` and
+  // `multimeasure` — a measure-filling rest is retyped before this pass ever runs and so
+  // never gets out of anyone's way. `zocharti-loch` is the fixture that proves it: without
+  // this its `z8` moved 2.51px abcjs does not move it.
+  const drawnRest = (el: LayoutElement): boolean => el.type === 'rest' && el.plainRest === true
+  const timed = (el: LayoutElement): boolean => el.type === 'note' || el.type === 'rest'
+
+  const slots = new Map<number, { voice: number; index: number }[]>()
+  out.forEach((elements, voice) => {
+    elements.forEach((el, index) => {
+      if (!timed(el)) return
+      const at = slots.get(el.x) ?? []
+      at.push({ voice, index })
+      slots.set(el.x, at)
+    })
+  })
+
+  /** Move the rest glyph — abcjs shifts `children[0]` and the element's own extent, alone. */
+  const shift = (voice: number, index: number, dy: number): void => {
+    const row = out[voice]
+    const el = row?.[index]
+    const head = el?.glyphs[0]
+    if (row === undefined || el === undefined || head === undefined) return
+    row[index] = {
+      ...el,
+      glyphs: [
+        {
+          ...head,
+          y: head.y + dy,
+          ...(head.reserve === undefined
+            ? {}
+            : { reserve: [head.reserve[0] + dy, head.reserve[1] + dy] as [number, number] }),
+        },
+        ...el.glyphs.slice(1),
+      ],
+    }
+  }
+
+  for (const at of slots.values()) {
+    if (at.length < 2) continue
+    const first = at[0]
+    const last = at[at.length - 1]
+    if (first === undefined || last === undefined) continue
+    const firstEl = out[first.voice]?.[first.index]
+    const lastEl = out[last.voice]?.[last.index]
+    if (firstEl === undefined || lastEl === undefined) continue
+
+    if (drawnRest(firstEl) && lastEl.type !== 'rest') {
+      // `distance1 = restTop.bottom - closeTop(other) - 2`, in PITCH, and negative means
+      // they overlap. In y — where down is positive and a pitch is `spacePerStep` — the
+      // same quantity is the gap itself, so no conversion is needed either way.
+      const dy = edge(lastEl, 'top') - edge(firstEl, 'bottom') - 2 * ENGRAVE.spacePerStep
+      if (dy < 0) shift(first.voice, first.index, dy)
+    } else if (drawnRest(lastEl) && firstEl.type !== 'rest') {
+      const dy = edge(firstEl, 'bottom') - edge(lastEl, 'top') + 2 * ENGRAVE.spacePerStep
+      if (dy > 0) shift(last.voice, last.index, dy)
+    }
+  }
+  return out
+}
+
 function anchorVoltas<
   T extends {
     readonly elements: readonly LayoutElement[]
@@ -8543,6 +8718,8 @@ function layoutEvent(
   dynamicsAbove = true,
   /** abcjs's `isMultiVoice` — this voice shares its staff. Only a rest reads it. */
   sharedStaff = false,
+  /** abcjs's `measureLength` — a rest exactly this long becomes a WHOLE rest. */
+  measureLength: number | null = null,
 ): LayoutElement | null {
   const advance = naturalWidth(event.duration, spacingScale)
   // The beam's direction wins over the voice convention: a beam cannot join opposed stems,
@@ -8576,7 +8753,7 @@ function layoutEvent(
       dynamicsAbove,
     )
   }
-  return layoutRest(event, advance, x, strict, clef, sharedStaff ? voiceStem : null)
+  return layoutRest(event, advance, x, strict, clef, sharedStaff ? voiceStem : null, measureLength)
 }
 
 /**
