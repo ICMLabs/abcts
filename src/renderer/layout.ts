@@ -585,6 +585,9 @@ export const ENGRAVE = {
    * In our steps, which are abcjs's pitch.
    */
   barNumberPitch: ABCJS_PITCH.barNumberPitch,
+  /** …and on a treble CLEF carrying a wide number — `%%barnumbers 0` alone reaches it. */
+  barNumberClefPitch: ABCJS_PITCH.barNumberClefPitch,
+  barNumberClefWide: ABCJS_PITCH.barNumberClefWide,
   /**
    * A LEFT annotation's room before the note — `roomTaken += chordWidth + 7`
    * (`add-chord.js:52`), in abcjs pixels.
@@ -2907,18 +2910,48 @@ function layoutNoteheads(
  * Centred on the barline (`anchor: "middle"` in `draw/relative.js:38-40`) and reserving a
  * POINT at its pitch, since its `RelativeElement` is given no `thickness`.
  */
-function barNumberText(number: number, x: number): PlacedText {
+function barNumberText(
+  number: number,
+  x: number,
+  /**
+   * The element it hangs on is a CLEF, which only `%%barnumbers 0` makes possible
+   * (`abstract-engraver.js:161` against `:296`). Two things change with it:
+   *
+   *     if (abselem.isClef) dx += measureNumDim.width / 2
+   *     var vert = measureNumDim.width > 10 && abselem.abcelem.type === "treble" ? 13.5 : 11
+   *
+   * The `dx` is abcjs's own workaround for a centred number overhanging the staff's left
+   * edge — "an easy way to let it be centered but move it over, too" — and the 13.5 clears
+   * the treble clef's top, which is the only clef tall enough to reach it.
+   */
+  onClef: { treble: boolean } | null = null,
+): PlacedText {
   const text = String(number)
   // MEASURED IN `measurefont`, whatever the tune set it to — `%%measurefont Helvetica 7
   // box` measures 14.6px against the default's 21.06 and drops the reserve 1.68px.
   // abcjs PITCH -> our step: the bottom staff line is pitch 2 and our step -4, so a step
   // is `pitch - 6`. Its height is in PIXELS over `spacing.STEP`, which is `spaces x 2`.
-  const y = stepToY(ENGRAVE.barNumberPitch + fontHeightOf('measurefont') * 2 - PITCH_ORIGIN)
+  const width = textWidth(text, fontSizeOf('measurefont'), 'serif')
+  const pitch =
+    onClef?.treble === true && width * STAFF_SPACE_PX > ENGRAVE.barNumberClefWide
+      ? ENGRAVE.barNumberClefPitch
+      : ENGRAVE.barNumberPitch
+  const y = stepToY(pitch + fontHeightOf('measurefont') * 2 - PITCH_ORIGIN)
+  // THE POINT IS THE RESERVE; THE BASELINE IS ONE FONT SIZE BELOW IT. `renderText` ends
+  // `if (!params.centerVertically) hash.attr.y += hash.font.size` (`draw/text.js:29-30`),
+  // and the `barNumber` case passes no `centerVertically` (`draw/relative.js:38-39`). Its
+  // RelativeElement carries no `thickness`, so what it reserves is a POINT at that pitch —
+  // which is what the staff extent already took — and only the drawn baseline moves.
+  //
+  // We drew it AT the point, which put every bar number 19px above where abcjs puts it,
+  // clear of the staff instead of just above it. NO GATE COULD SEE IT: the pixel gate
+  // classes noteheads, ledgers, stems and the top staff line, and a bar number is text.
+  const size = fontSizeOf('measurefont')
   return {
     text,
-    x,
-    y,
-    size: fontSizeOf('measurefont'),
+    x: onClef === null ? x : x + width / 2,
+    y: y + size,
+    size,
     bold: false,
     italic: true,
     anchor: 'middle',
@@ -6192,7 +6225,23 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         x += el.width + ENGRAVE.prefixGap
       }
 
-      const clefElement = layoutClef(x, clef, strict)
+      // `%%barnumbers 0` PRINTS ITS NUMBER ON THE CLEF, and that is the only path on which
+      // `addMeasureNumber` ever sees one: `createABCStaff` calls it with the clef element
+      // (`abstract-engraver.js:161`) where every other setting calls it with a barline
+      // (`abc_parse_music.js:296-301`). The parser has already applied abcjs's two guards —
+      // first voice, and not the first system.
+      const systemNumber = (voice?.measures ?? [])[from]?.systemBarNumber
+      const bare = layoutClef(x, clef, strict)
+      const clefElement =
+        bare === null || systemNumber === undefined
+          ? bare
+          : {
+              ...bare,
+              texts: [
+                ...bare.texts,
+                barNumberText(systemNumber, x, { treble: clef.shape === 'G' }),
+              ],
+            }
       if (clefElement !== null) push(clefElement)
       const keySig = layoutKeySignature(x, score.key, clef, strict)
       if (keySig !== null) push(keySig)

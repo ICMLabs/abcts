@@ -768,6 +768,16 @@ export interface Measure {
    * pushes its top past the clef's — 10.5px on a plain treble tune.
    */
   readonly closingBarNumber?: number
+  /**
+   * `%%barnumbers 0` — the number printed on this system's CLEF rather than on a barline,
+   * which is a different mechanism and not a special case of `closingBarNumber`. abcjs
+   * hangs it on the STAFF at `startNewLine` (`abc_parse_music.js:1036`) and
+   * `createABCStaff` hands it to `addMeasureNumber(abcstaff.barNumber, clef)` — the only
+   * path where `abselem.isClef` shifts the number right by half its width and the
+   * `vert = 13.5` branch can fire. Absent on the first system, as abcjs's
+   * `currBarNumber !== 1` says.
+   */
+  readonly systemBarNumber?: number
   readonly sourceRange: SourceRange | null
   readonly closingBarlineSourceRange: SourceRange | null
 }

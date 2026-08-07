@@ -491,6 +491,19 @@ export const ABCJS_PITCH = {
   bracketRule: 0.75,
   /** `vert` in `addMeasureNumber` on a barline (`abstract-engraver.js:952`). */
   barNumberPitch: 11,
+  /**
+   * …AND 13.5 INSTEAD, on a TREBLE CLEF carrying a number wider than 10px:
+   *
+   *     var vert = measureNumDim.width > 10 && abselem.abcelem.type === "treble" ? 13.5 : 11
+   *
+   * (`abstract-engraver.js:955`, under abcjs's own comment "Change 13 to 13.5 since
+   * previously bar numbers were very slightly overlapping the top of the clef".) Only
+   * `%%barnumbers 0` can reach it — every other setting puts the number on a BARLINE, and
+   * a barline is never a clef.
+   */
+  barNumberClefPitch: 13.5,
+  /** The width above which that branch takes the taller of the two. */
+  barNumberClefWide: 10,
   /** A `RelativeElement`'s default `height` when nothing declares one (`relative-element.js:37`). */
   relativeElementHeight: 4,
   /**

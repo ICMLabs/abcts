@@ -885,6 +885,29 @@ class VoiceBuilder {
     return { closingBarNumber: n.current }
   }
 
+  /**
+   * `%%barnumbers 0` — THE NUMBER GOES ON THE STAFF, not on a barline.
+   *
+   *     if (multilineVars.barNumbers === 0 && isFirstVoice() && multilineVars.currBarNumber !== 1)
+   *       params.barNumber = multilineVars.currBarNumber;
+   *     tuneBuilder.startNewLine(params);
+   *
+   * (`abc_parse_music.js:1036-1038`.) A different mechanism from every other
+   * `%%barnumbers N`, not a special case of one: `startNewLine` hangs it on the STAFF, and
+   * `createABCStaff` passes it to `addMeasureNumber(abcstaff.barNumber, clef)` with the
+   * CLEF as the element (`abstract-engraver.js:161`) — the only path on which
+   * `abselem.isClef` and the `vert = 13.5` branch can fire at all.
+   *
+   * It is the number of the measure ABOUT to start, and `barNumbering.current` already IS
+   * abcjs's `currBarNumber` — both start at 1 and both count the measure a barline OPENS —
+   * so the guard is abcjs's own `!== 1` and the value needs no arithmetic.
+   */
+  private takeSystemBarNumber(startsSystem: boolean): { systemBarNumber?: number } {
+    const n = this.barNumbering
+    if (!startsSystem || n.every !== 0 || n.firstVoiceId !== this.id || n.current === 1) return {}
+    return { systemBarNumber: n.current }
+  }
+
   /** What `octave=` is worth for a measure closing NOW. */
   private takeOctave(): number {
     const shift = this.octaveShift ?? this.keyOctave.value
@@ -1289,7 +1312,11 @@ class VoiceBuilder {
       ...(() => {
         const startsSystem = this.takeLineStart()
         this.takeOctave()
-        return { startsSystem, ...this.takeTextBefore(startsSystem) }
+        return {
+          startsSystem,
+          ...this.takeSystemBarNumber(startsSystem),
+          ...this.takeTextBefore(startsSystem),
+        }
       })(),
       closingBarline: barline,
       ...this.takeBarNumber(barline, this.events.length === 0 && this.overlays.length === 0),
@@ -1327,7 +1354,11 @@ class VoiceBuilder {
       ...(() => {
         const startsSystem = this.takeLineStart()
         this.takeOctave()
-        return { startsSystem, ...this.takeTextBefore(startsSystem) }
+        return {
+          startsSystem,
+          ...this.takeSystemBarNumber(startsSystem),
+          ...this.takeTextBefore(startsSystem),
+        }
       })(),
       closingBarline: null,
       sourceRange: sourceRange(this.measureStart ?? 0, last?.sourceRange?.end ?? 0),
@@ -1369,13 +1400,49 @@ class VoiceBuilder {
       stemDirection: this.stemDirection,
       name: this.name,
       subname: this.subname,
-      measures: padOverlays(measures, this.meterForOverlays),
+      measures: padOverlays(moveTrailingBarNumbers(measures), this.meterForOverlays),
     }
   }
 
   get isEmpty(): boolean {
     return this.measures.length === 0 && this.events.length === 0 && this.overlays.length === 0
   }
+}
+
+/**
+ * A BAR NUMBER ON THE LAST BARLINE OF A SOURCE LINE MOVES TO THE NEXT LINE'S STAFF.
+ *
+ *     if (voice.length > 0 && voice[voice.length - 1].barNumber) {
+ *       // Don't hang a bar number on the last bar line: it should go on the next line.
+ *       var nextLine = getNextMusicLine(tune.lines, i);
+ *       if (nextLine)
+ *         nextLine.staff[0].barNumber = voice[voice.length - 1].barNumber;
+ *       delete voice[voice.length - 1].barNumber;
+ *     }
+ *
+ * (`tune-builder.js:137-143`, abcjs's own comment.) It runs per LINE in `cleanUp`, so it
+ * applies to EVERY `%%barnumbers N` and not only to 0 — the two mechanisms meet here, and
+ * `startNewLine`'s is just the other way a staff comes to carry one. With no next line the
+ * number is DELETED, which is why a tune ending `…|` prints no number on its final barline.
+ *
+ * Measured on `%%barnumbers 1` over two source lines of two bars: abcjs draws `2` on the
+ * first line's inner barline, `3` on the SECOND LINE'S CLEF, `4` on its inner barline, and
+ * nothing at all for 5. We drew 2, 3, 4 and 5 on the four barlines.
+ */
+function moveTrailingBarNumbers(measures: readonly Measure[]): Measure[] {
+  if (!measures.some((m) => m.closingBarNumber !== undefined)) return [...measures]
+  const out = measures.map((m) => ({ ...m }))
+  for (let i = 0; i < out.length; i += 1) {
+    const measure = out[i]
+    if (measure?.closingBarNumber === undefined) continue
+    const next = out[i + 1]
+    // The last measure of a source line is the one whose successor OPENS one.
+    if (next !== undefined && !next.startsSystem) continue
+    const moved = measure.closingBarNumber
+    delete (measure as { closingBarNumber?: number }).closingBarNumber
+    if (next !== undefined) (next as { systemBarNumber?: number }).systemBarNumber = moved
+  }
+  return out
 }
 
 /** The `%%` formatting a file header passes to every tune under it. */
