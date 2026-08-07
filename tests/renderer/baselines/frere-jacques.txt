@@ -80,13 +80,13 @@ system 1 width=90.323 originY=29.408
     note@3 x=74.711 w=3.871
       glyph noteheadBlack 74.711,-1.500
       line  74.749,-1.400 -> 74.749,2.253 t=0.077
-system 2 width=90.323 originY=40.914
+system 2 width=90.371 originY=40.914
   staff 0 originY=9.414
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.090
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.090
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.090
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    staffline 0.000,2.000 -> 90.371,2.000 t=0.090
+    staffline 0.000,1.000 -> 90.371,1.000 t=0.090
+    staffline 0.000,0.000 -> 90.371,0.000 t=0.090
+    staffline 0.000,-1.000 -> 90.371,-1.000 t=0.090
+    staffline 0.000,-2.000 -> 90.371,-2.000 t=0.090
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     part x=6.329 w=0.000
@@ -95,72 +95,75 @@ system 2 width=90.323 originY=40.914
       line  6.071,-9.414 -> 6.071,-6.038 t=0.129
       line  8.452,-9.414 -> 8.452,-6.038 t=0.129
       text  6.329,-6.575 size=2.581 bold "A"
-    note@1 x=8.368 w=5.474
-      glyph noteheadBlack 8.368,-0.500
-      line  8.433,-0.333 -> 8.433,3.000 t=0.129
-      text  6.329,5.694 size=2.194 bold "Frè-"
-    note@2 x=13.081 w=5.474
-      glyph noteheadBlack 13.081,-1.000
-      line  13.145,-0.833 -> 13.145,2.500 t=0.129
-      text  12.107,5.694 size=2.194 bold "re"
-    note@3 x=17.793 w=5.474
-      glyph noteheadBlack 17.793,-1.500
-      line  17.857,-1.333 -> 17.857,2.000 t=0.129
-      text  15.843,5.694 size=2.194 bold "Jac-"
-    note@1 x=22.505 w=5.474
-      glyph noteheadBlack 22.505,-0.500
-      line  22.569,-0.333 -> 22.569,3.000 t=0.129
-      text  20.094,5.694 size=2.194 bold "ques,"
-    bar x=27.217 w=0.077
-      line  27.255,-2.000 -> 27.255,2.000 t=0.077
-    note@1 x=30.371 w=5.474
-      glyph noteheadBlack 30.371,-0.500
-      line  30.435,-0.333 -> 30.435,3.000 t=0.129
-      text  28.636,5.694 size=2.194 bold "fré-"
-    note@2 x=35.083 w=5.474
-      glyph noteheadBlack 35.083,-1.000
-      line  35.148,-0.833 -> 35.148,2.500 t=0.129
-      text  34.109,5.694 size=2.194 bold "re"
-    note@3 x=39.795 w=5.474
-      glyph noteheadBlack 39.795,-1.500
-      line  39.860,-1.333 -> 39.860,2.000 t=0.129
-      text  37.845,5.694 size=2.194 bold "Jac-"
-    note@1 x=44.507 w=5.474
-      glyph noteheadBlack 44.507,-0.500
-      line  44.572,-0.333 -> 44.572,3.000 t=0.129
-      text  42.097,5.694 size=2.194 bold "ques,"
-    bar x=49.219 w=0.077
-      line  49.258,-2.000 -> 49.258,2.000 t=0.077
-    note@3 x=52.651 w=5.474
-      glyph noteheadBlack 52.651,-1.500
-      line  52.715,-1.333 -> 52.715,2.000 t=0.129
-      text  50.639,5.694 size=2.194 bold "dor-"
-    note@4 x=57.363 w=5.474
-      glyph noteheadBlack 57.363,-2.000
-      line  57.427,-1.833 -> 57.427,1.500 t=0.129
-      text  55.475,5.694 size=2.194 bold "mez"
-    note@5 x=62.075 w=7.742
-      glyph noteheadHalf 62.075,-2.500
-      glyph articAccentAbove 61.794,-5.022
-      line  62.139,-2.333 -> 62.139,1.000 t=0.129
-      text  59.391,5.694 size=2.194 bold "vous?"
-    bar x=68.739 w=0.077
-      line  68.777,-2.000 -> 68.777,2.000 t=0.077
-    note@3 x=72.170 w=5.474
-      glyph noteheadBlack 72.170,-1.500
-      line  72.235,-1.333 -> 72.235,2.000 t=0.129
-      text  70.158,5.694 size=2.194 bold "dor-"
-    note@4 x=76.882 w=5.474
-      glyph noteheadBlack 76.882,-2.000
-      line  76.947,-1.833 -> 76.947,1.500 t=0.129
-      text  74.994,5.694 size=2.194 bold "mez"
-    note@5 x=81.594 w=7.742
-      glyph noteheadHalf 81.594,-2.500
-      glyph articAccentAbove 81.313,-5.022
-      line  81.659,-2.333 -> 81.659,1.000 t=0.129
-      text  78.911,5.694 size=2.194 bold "vous?"
-    bar x=88.258 w=0.077
-      line  88.297,-2.000 -> 88.297,2.000 t=0.077
+    timeSignature x=6.329 w=1.522
+      glyph timeSig4 6.329,-1.000
+      glyph timeSig4 6.329,1.000
+    note@1 x=11.181 w=5.474
+      glyph noteheadBlack 11.181,-0.500
+      line  11.245,-0.333 -> 11.245,3.000 t=0.129
+      text  9.141,5.694 size=2.194 bold "Frè-"
+    note@2 x=15.679 w=5.474
+      glyph noteheadBlack 15.679,-1.000
+      line  15.744,-0.833 -> 15.744,2.500 t=0.129
+      text  14.705,5.694 size=2.194 bold "re"
+    note@3 x=20.177 w=5.474
+      glyph noteheadBlack 20.177,-1.500
+      line  20.242,-1.333 -> 20.242,2.000 t=0.129
+      text  18.228,5.694 size=2.194 bold "Jac-"
+    note@1 x=24.676 w=5.474
+      glyph noteheadBlack 24.676,-0.500
+      line  24.740,-0.333 -> 24.740,3.000 t=0.129
+      text  22.266,5.694 size=2.194 bold "ques,"
+    bar x=29.174 w=0.077
+      line  29.213,-2.000 -> 29.213,2.000 t=0.077
+    note@1 x=32.328 w=5.474
+      glyph noteheadBlack 32.328,-0.500
+      line  32.393,-0.333 -> 32.393,3.000 t=0.129
+      text  30.594,5.694 size=2.194 bold "fré-"
+    note@2 x=36.827 w=5.474
+      glyph noteheadBlack 36.827,-1.000
+      line  36.891,-0.833 -> 36.891,2.500 t=0.129
+      text  35.853,5.694 size=2.194 bold "re"
+    note@3 x=41.325 w=5.474
+      glyph noteheadBlack 41.325,-1.500
+      line  41.390,-1.333 -> 41.390,2.000 t=0.129
+      text  39.376,5.694 size=2.194 bold "Jac-"
+    note@1 x=45.824 w=5.474
+      glyph noteheadBlack 45.824,-0.500
+      line  45.888,-0.333 -> 45.888,3.000 t=0.129
+      text  43.413,5.694 size=2.194 bold "ques,"
+    bar x=50.322 w=0.077
+      line  50.361,-2.000 -> 50.361,2.000 t=0.077
+    note@3 x=53.753 w=5.474
+      glyph noteheadBlack 53.753,-1.500
+      line  53.818,-1.333 -> 53.818,2.000 t=0.129
+      text  51.741,5.694 size=2.194 bold "dor-"
+    note@4 x=58.252 w=5.474
+      glyph noteheadBlack 58.252,-2.000
+      line  58.316,-1.833 -> 58.316,1.500 t=0.129
+      text  56.364,5.694 size=2.194 bold "mez"
+    note@5 x=62.952 w=7.742
+      glyph noteheadHalf 62.952,-2.500
+      glyph articAccentAbove 62.671,-5.022
+      line  63.017,-2.333 -> 63.017,1.000 t=0.129
+      text  60.269,5.694 size=2.194 bold "vous?"
+    bar x=69.314 w=0.077
+      line  69.353,-2.000 -> 69.353,2.000 t=0.077
+    note@3 x=72.745 w=5.474
+      glyph noteheadBlack 72.745,-1.500
+      line  72.810,-1.333 -> 72.810,2.000 t=0.129
+      text  70.733,5.694 size=2.194 bold "dor-"
+    note@4 x=77.244 w=5.474
+      glyph noteheadBlack 77.244,-2.000
+      line  77.308,-1.833 -> 77.308,1.500 t=0.129
+      text  75.356,5.694 size=2.194 bold "mez"
+    note@5 x=81.944 w=7.742
+      glyph noteheadHalf 81.944,-2.500
+      glyph articAccentAbove 81.664,-5.022
+      line  82.009,-2.333 -> 82.009,1.000 t=0.129
+      text  79.261,5.694 size=2.194 bold "vous?"
+    bar x=88.306 w=0.077
+      line  88.345,-2.000 -> 88.345,2.000 t=0.077
 system 3 width=90.484 originY=56.759
   staff 0 originY=12.303
     staffline 0.000,2.000 -> 90.484,2.000 t=0.090

@@ -935,6 +935,29 @@ class VoiceBuilder {
     this.pendingMeterChangeRange = range
   }
 
+  /**
+   * A STANDALONE `M:` LINE BELONGS TO THE NEXT LINE, NOT TO THE MEASURE STILL OPEN.
+   *
+   * abcjs holds it in `multilineVars.meter` and the next `startNewLine` consumes it into
+   * `params.meter`, which becomes that LINE's staff meter and prints in its prefix
+   * (`abc_parse_music.js:984-993`). An INLINE `[M:]` takes a different route entirely and
+   * prints where it stands — measured on a pair of controls, abcjs draws the standalone
+   * one at x 49.051 (straight after the clef of the next system) and the inline one at
+   * 413.48 (mid-line), and ours already matched both.
+   *
+   * The two only part when a measure is still OPEN as the `M:` is read, because then
+   * `takeChanges` hands it to that measure instead of the next line's first. That is
+   * `frere-jacques`: its `M:4/4` sits four lines below the `+:` prose that strict scans as
+   * MUSIC, so the change landed on the prose's own measure — a line abcjs had already
+   * started and could not put a meter on. abcjs's next `startNewLine` is the `V:1` line,
+   * which merges with the `P:A` music, so its meter prints at the head of THAT system.
+   */
+  setMeterForNextLine(meter: Meter | null, range: SourceRange): void {
+    this.meterForNextLine = { meter, range }
+  }
+
+  private meterForNextLine: { meter: Meter | null; range: SourceRange } | null = null
+
   private takeChanges() {
     const changes = {
       keyChange: this.pendingKeyChange,
@@ -999,6 +1022,15 @@ class VoiceBuilder {
     this.closeUnterminatedMeasure()
     this.pendingLineStart = true
     this.wroteSinceLineStart = false
+    // …AND THIS IS WHERE A STANDALONE `M:` LANDS — abcjs's `startNewLine` consuming
+    // `multilineVars.meter`. See `setMeterForNextLine`. It is promoted AFTER
+    // `closeUnterminatedMeasure`, so the measure this line opens gets it and the one it
+    // closes does not.
+    if (this.meterForNextLine !== null) {
+      this.pendingMeterChange = this.meterForNextLine.meter
+      this.pendingMeterChangeRange = this.meterForNextLine.range
+      this.meterForNextLine = null
+    }
   }
 
   /**
@@ -2266,7 +2298,14 @@ class Parser {
     )
   }
 
-  private applyField(letter: string, content: string, start: number, end: number): void {
+  private applyField(
+    letter: string,
+    content: string,
+    start: number,
+    end: number,
+    /** `[M:3/4]` written INSIDE a music line, which prints where it stands. */
+    inline = false,
+  ): void {
     const value = content.trim()
     const range = sourceRange(start, end)
 
@@ -2334,7 +2373,8 @@ class Parser {
         return
       case 'M': {
         if (builder.bodyStarted) {
-          builder.voice.setMeterChange(parseMeter(value), range)
+          if (inline) builder.voice.setMeterChange(parseMeter(value), range)
+          else builder.voice.setMeterForNextLine(parseMeter(value), range)
           return
         }
         builder.meter = parseMeter(value)
@@ -2960,6 +3000,7 @@ class Parser {
               text.slice(2),
               token.start,
               token.start + token.length,
+              true,
             )
           }
           i++

@@ -5584,15 +5584,16 @@ function layoutMeasure(
     if (measure.meterChange == null) return
     // A RESTATED METER PRINTS NOTHING, exactly as a restated key does.
     //
-    // AND NEITHER DOES THE FIRST ONE A FREE-METER TUNE ACQUIRES. `frere-jacques`'s
-    // `M:4/4` sits on line 14, after the `+:` prose that strict mode scans as MUSIC, so
-    // it arrives as a mid-tune change over a null header meter. abcjs prints it on the
-    // system where the prose ends; we have no line for that prose, so the change lands on
-    // measure 1 and would put a time signature 17.6px into the middle of system 1.
-    // Drawing nothing is the same answer our prefix already gave, and it keeps that
-    // fixture where it was — see the note on `bodyStarted` in `scanMusic`.
-    if (meterInForce === null) return
+    // THE `meterInForce === null` GUARD IS GONE, and it was masking a real one. It read
+    // "neither does the first one a free-meter tune acquires", on the grounds that
+    // `frere-jacques`'s change landed on measure 1 and would print 17.6px into the middle
+    // of a system. That was true of where the change LANDED, not of what abcjs draws:
+    // abcjs prints it at the HEAD of the next system, and the change was on the wrong
+    // measure because a standalone `M:` belongs to the next LINE and we gave it to the
+    // measure still open. Fixed in the parser (`setMeterForNextLine`), the change now
+    // starts a system and prints in its prefix, which is where abcjs has it.
     if (
+      meterInForce !== null &&
       meterInForce.numerator === measure.meterChange.numerator &&
       meterInForce.denominator === measure.meterChange.denominator &&
       meterInForce.symbol === measure.meterChange.symbol

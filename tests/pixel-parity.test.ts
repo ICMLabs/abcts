@@ -137,7 +137,7 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // because the width is abcjs's own and the same change took ragtime 55.32 -> 53.56 and
     // five more harvested fixtures inside their thresholds.
     // dx 22.64 -> 21.81 on the declared-height fix.
-    'frere-jacques': { heads: 45, dy: 0.0, dx: 21.81, oy: 0.0, ox: -3.56 },
+    'frere-jacques': { heads: 45, dy: 0.02, dx: 0.02, oy: -0.01, ox: 0.0 },
     'full-song-template': { heads: 20, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     // dx 3.85 -> 1.40 when a REST became a rod. abcjs's `getMinWidth` is `child.w`
     // whatever the type and a rest's `w` is its glyph — 7.534 for an eighth — where ours
@@ -317,8 +317,12 @@ describe('pixel parity vs abcjs rendered SVG', () => {
     //
     // It used to name only `simple-c`, on the grounds that it had a known non-zero dx
     // spread. It no longer does — the horizontal arc took it to exact — so that half is
-    // now the ZERO end of the check and `frere-jacques`, which abcjs wraps differently,
-    // is the non-zero end.
+    // now the ZERO end of the check.
+    //
+    // The non-zero end was `frere-jacques` until 2026-08-07, when its 21.80 went to 0.00
+    // and this canary failed BEFORE its own ceiling did. That is the check working: a
+    // fixture named here has to be one that is still off, so it moves as parity does.
+    // `little swallow` is the largest left.
     const simple = measure('simple-c')
     expect(simple.goldenHeads).toBe(8)
     // Not `toBe(0)`: the resolved coordinates carry float noise, and a `0.0` in the
@@ -326,7 +330,7 @@ describe('pixel parity vs abcjs rendered SVG', () => {
     expect(simple.dx).toBeLessThan(EPSILON)
     expect(simple.dy).toBeLessThan(EPSILON)
     // …and a comparison returning 0 for everything would fail here.
-    expect(measure('frere-jacques').dx).toBeGreaterThan(1)
+    expect(measure('little swallow').dx).toBeGreaterThan(1)
   })
 
   it('every fixture with an SVG golden is accounted for', () => {
