@@ -16,6 +16,10 @@ and the ladder method, `-08-04b.md` 41–50, `-08-03d.md` the ledger 16–40.
 0 of 174 fixtures are off some axis by 0.05px or more
 ```
 
+**AND 36 OF THE 41 ARE AT EXACT ZERO** as of 2026-08-07, with only
+`ragtime-nightingale` above 0.02 — `frere-jacques` (21.80) and `little swallow` (21.70)
+both closed. See WHAT IS LEFT §6.
+
 That is the whole file. Not a single row. **Every fixture of the harvested corpus agrees
 with abcjs on note content AND on all four geometric axes to within 0.05px** — from 10 of
 174 off at the start of this session, 18 that morning, 34 on 2026-08-04.
@@ -397,29 +401,45 @@ systems 2 and 3; and it is not a prefix shift, because head 0 is −15.87 where 
 are −20.73 — our first gap is 4.86 SMALLER than abcjs's before the rest of the line runs
 long. It is the corpus's CJK-lyric fixture, and a lyric's width feeds the element rod.
 
-#### `ragtime-nightingale`, dx 13.31 — THE LAST ONE, and half of it is measured
+#### `ragtime-nightingale` — dx 13.31 -> 12.13, and the lesson is Lance's again
 
-**THE PREFIX REPRINTS `score.key`, THE HEADER KEY, WHERE ABCJS REPRINTS THE KEY IN FORCE.**
-`layoutKeySignature(x, score.key, clef, strict)` in `prefix()`, beside a `clefAtMeasure`
-that does accumulate. ragtime opens `K:Eb` and changes to `[K:Ab]` and back repeatedly, so
-its later systems want FOUR flats and get three: abcjs's key element probes at `w = 33`
-with flats at 0, 8.75, 17.5 and 26.25 against our 24.25 — one accidental's 6.75 plus its 2
-of gap, which is the 8.75 those systems' first noteheads are out by.
+**THE PREFIX REPRINTED `score.key`, THE HEADER KEY, WHERE ABCJS REPRINTS THE KEY IN FORCE**
+— beside a `clefAtMeasure` that already accumulated. `startNewLine` stamps `params.key` on
+every line. ragtime changes `[K:Ab]`/`[K:Eb]` repeatedly, so its later systems want four
+flats: abcjs's key element probes at `w = 33` against our three-flat 24.25, and 8.75 is what
+those systems' noteheads were out by.
 
-**TRIED AND REVERTED, WITH THE NUMBERS.** Recording `keyAtMeasure` alongside `clefAtMeasure`
-and reading it in the prefix moves `ox` from **−0.75 to +0.03** — the systematic shift is
-gone, which is proof the rule is right — but `dx` from **13.31 to 14.18**, so the ratchet
-refuses it and a ceiling may not be raised to let it through.
+**THE FIRST ATTEMPT GUESSED AND THE RATCHET REFUSED IT.** Reprinting the key in force alone
+took `ox` from −0.75 to +0.03 and `dx` from 13.31 to **14.18** — worse, so it could not
+land. The guess that followed was "abcjs stamps the key per SOURCE LINE and `wrap_lines`
+copies it, so a mid-line `[K:]` misses the wrapped continuation"; it was implemented and
+changed NOTHING, because ragtime's systems already are its source lines.
 
-What the extra spread is: **we then draw 18 four-flat key signatures against abcjs's 14**,
-and 55 key signatures in all against the golden's 50. So some systems get the new key where
-abcjs keeps the old. The obvious candidate — abcjs stamping `params.key` once per SOURCE
-LINE and `wrap_lines` copying it into each system it splits into, so a mid-line `[K:]` does
-not reach the wrapped continuation — was implemented and **changed nothing**, because
-ragtime's systems already ARE its source lines. So that is ruled out and the cause is
-elsewhere: find which four of our signatures abcjs does not draw before re-landing this.
+**READING ABCJS GAVE THE ANSWER IN ONE PASS.** `parseKey` walks the OLD key's accidentals on
+a change and pushes a NATURAL for every note the new key does not carry
+(`abc_parse_key_voice.js:295-311`); `startNewLine` copies that list onto the line's key
+(`abc_parse_music.js:964-965`) and then DELETES it (`:1041-1042`). Exactly ONE line cancels.
+Printing abcjs's own per-line key list shows it directly:
 
-Its `dy` improved 0.44 → 0.24 and `oy` 0.16 → 0.05 this session without being worked on.
+```
+lines 0-13   fB fe fA
+lines 14-17  fB fe fA fd
+line  18     fB fe fA nd      <- the cancellation, on one line only
+lines 19-22  fB fe fA
+```
+
+`layoutKeyChange` is the same pairing a mid-tune `[K:]` already uses and it emits those
+naturals, so comparing each line's key with the PREVIOUS line's gives the one-line rule for
+free. dx 13.31 → 12.13, ox −0.75 → 0.12.
+
+**A MEASUREMENT RANKED THE HYPOTHESES AND THE SOURCE SUPPLIED THE RIGHT ONE**, which is the
+2026-08-06 correction restated: the `ox` improvement proved the direction, and no amount of
+staring at `dx` would have produced `impliedNaturals`.
+
+Still open on it: `dy` 0.25 and `dx` 12.13. And our SVG emits a key-signature GROUP where
+abcjs emits none — `S6-keys` counts 5/11/7 against the golden's 4/12/8, `createKeySignature`
+returning `null` for an empty accidental list (`create-key-signature.js:9`) — but its
+noteheads are exact, so nothing moves on it.
 
 ### 7. Then Gonzato, then audio.
 
