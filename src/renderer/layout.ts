@@ -2092,6 +2092,8 @@ function layoutRest(
     written !== null && fillsMeasure ? { name: 'restWhole' as GlyphName, step: 2, dots: 0 } : written
 
   const glyphs: PlacedGlyph[] = []
+  /** How far the augmentation dots reach past the element's x — 0 when there are none. */
+  let dotRight = 0
   // A REST CARRIES ITS CHORD SYMBOL AND ANNOTATIONS. abcjs calls `addChord` on every
   // abselem it builds, rest included (`abstract-engraver.js:853`), so `"Eb7"z` prints the
   // chord and reserves the whole chord lane — 22.4px of staff on a tune that opens that
@@ -2187,6 +2189,19 @@ function layoutRest(
         (strict ? spaces(ABCJS_PX.dotOffset + ABCJS_PX.dotSpacing) : ENGRAVE.dotGap)
       const step = strict ? spaces(ABCJS_PX.dotSpacing) : ENGRAVE.dotSpacing
       glyphs.push(...dotGlyphs(spec.dots, dotX, spec.step + restPitchShift(sharedStaffStem), new Set(), step))
+      // …AND THE DOT WIDENS THE ELEMENT, exactly as it does on a note. It is an `addRight`
+      // child, so `w = max(w, dx + getSymbolWidth("dots.dot"))` — abcjs probes a dotted
+      // quarter rest at `w = 14.338` against the plain one's 7.888, and the 6.45 between
+      // them is the 3 the dot sits past the glyph plus the dot's own 3.45.
+      //
+      // The DOT was drawn and its ROD was not: the note path spends `dotWidth` and this
+      // one only ever knew `restWidth`. `S4-bars-repeats` X:403 is eleven rests and two
+      // notes, and one dotted rest 6.45 narrow moved both heads.
+      dotRight =
+        dotX -
+        x +
+        (spec.dots - 1) * step +
+        (strict ? glyphsFor(strict).width('augmentationDot') : step)
     }
   }
 
@@ -2194,7 +2209,11 @@ function layoutRest(
   // and a rest's `w` is its glyph — an eighth rest reports 7.534 and pushes `minx` by
   // that plus `minspacing`. We reported 0, so a compressed line let the note after a rest
   // slide onto it: `visual-layout-04` put its `zA` 37.6px left of abcjs's.
-  const restInk = Math.max(spec === null ? 0 : restWidth + ENGRAVE.noteRodGap, textSpan.right)
+  const restInk = Math.max(
+    spec === null ? 0 : restWidth + ENGRAVE.noteRodGap,
+    dotRight === 0 ? 0 : dotRight + ENGRAVE.noteRodGap,
+    textSpan.right,
+  )
   return {
     type: 'rest',
     x,

@@ -3261,7 +3261,35 @@ class Parser {
     const bars = multi
       ? Math.max(1, Math.round(length.factor.numerator / length.factor.denominator))
       : 0
-    const duration = multi ? rational(1, 1) : ratMul(builder.unitNoteLength, length.factor)
+    let duration = multi ? rational(1, 1) : ratMul(builder.unitNoteLength, length.factor)
+    // A REST OF EXACTLY ONE WHOLE NOTE TAKES THE MEASURE'S DURATION, and this is a PARSER
+    // rule, not the engraver's:
+    //
+    //     if (el.rest && el.rest.type === 'rest' && el.duration === 1 &&
+    //         durationOfMeasure(multilineVars) <= 1) {
+    //       el.rest.type = 'whole';
+    //       el.duration = durationOfMeasure(multilineVars);
+    //     }
+    //
+    // (`abc_parse_music.js:549-555`.) Its test is `duration === 1`, where the engraver's
+    // is `measureLength === duration` (`abstract-engraver.js:812`) — two different rules
+    // that agree in 4/4 and part company everywhere else. `z4` in `M:6/8 L:1/4` is one
+    // whole note in a three-quarter bar: abcjs gives it duration 0.75 and a WHOLE rest
+    // glyph, and its own probe reads `dur=0.75 elemdur=0.75`. Ours sprang it as a whole
+    // note, 7.35px wider than abcjs's on the one bar and carried down the system.
+    //
+    // `durationOfMeasure` reads `origMeter` — the HEADER `M:` — and returns 1 when there
+    // is none (`:743-751`), which is `builder.meter`: a mid-tune `M:` goes to
+    // `setMeterChange` and never touches it.
+    const barLength = builder.meter === null ? rational(1, 1) : measureDuration(builder.meter)
+    if (
+      !multi &&
+      kind === 'normal' &&
+      ratEq(duration, rational(1, 1)) &&
+      !ratLt(rational(1, 1), barLength)
+    ) {
+      duration = barLength
+    }
     // `Z4` is four measures of the bar counter, not one — see `countMultiMeasureRest`.
     if (multi) builder.countMultiMeasureRest(bars)
     return {

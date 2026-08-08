@@ -293,7 +293,11 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     'S3-note-syntax-tune24': { heads: 64, dy: 0, dx: 0.0, oy: 0, ox: 0.0 },
     'S4-bars-repeats-tune0': { heads: 28, dy: 0, dx: 0.01, oy: 0, ox: 0 },
     'S4-bars-repeats-tune1': { heads: 60, dy: 0, dx: 0, oy: 0, ox: 0 },
-    'S4-bars-repeats-tune2': { heads: 2, dy: 0, dx: 1.17, oy: 0, ox: 1.8 },
+    // dx 1.17 -> 0.0 and ox 1.80 -> 0.0. EXACT ON ALL FOUR. `z4` in `M:6/8` is a WHOLE
+    // rest whose duration abcjs's PARSER rewrites to the measure's — 0.75, not 1 — so its
+    // spring is a dotted half's, not a whole note's. A second fix in the same tune: a
+    // dotted REST's dot widens the element, which only the note path knew.
+    'S4-bars-repeats-tune2': { heads: 2, dy: 0, dx: 0.0, oy: 0, ox: 0.0 },
     'S5-directives-tune0': { heads: 28, dy: 0, dx: 0.01, oy: 0, ox: 0 },
     // dy 0.52 -> 0.03 and oy 0.03 -> 0.00 when `!style=normal!` started overriding a
     // `style=rhythm` voice and a zero-duration styled note took its own `nostem` head —
