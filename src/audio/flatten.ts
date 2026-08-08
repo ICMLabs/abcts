@@ -40,6 +40,7 @@ import {
   type Tempo,
   type Voice,
 } from '../core/model.js'
+import { ABCJS_PERC_NOTE_NAMES } from '../renderer/abcjs-constants.js'
 import { type ChordOptions, ChordTrack } from './chord-track.js'
 
 /** One `{cmd: 'note'}` row, exactly as abcjs's flattener emits it. */
@@ -99,6 +100,10 @@ export interface MidiDirectives extends ChordOptions {
 }
 
 const MICRO = 1000000
+
+/** abcjs's `PERCUSSION_PROGRAM` — GM has 128 melodic programs, so this is "the drum kit". */
+const PERCUSSION_PROGRAM = 128
+const PERCUSSION_CHANNEL = 10
 
 /** abcjs's `scale` — semitones above the tonic for each diatonic step. */
 const SEMITONES = [0, 2, 4, 5, 7, 9, 11]
@@ -689,19 +694,33 @@ export function flattenAudio(
   let program = Math.trunc(options.program ?? 0)
   let channel = Math.trunc(options.channel ?? 0)
   let transposeGlobal = Math.trunc(options.midiTranspose ?? 0)
+  /** `channelExplicitlySet` — a tune that named a channel or program keeps what it asked. */
+  let channelExplicit = false
   // `%%MIDI program 4` sets the instrument; `%%MIDI program 2 4` sets channel AND
   // instrument, in that order (`abc_midi_sequencer.js:73-79`).
   const declared = midi.program ?? []
-  if (declared.length === 1) program = declared[0] as number
-  else if (declared.length > 1) {
+  if (declared.length === 1) {
+    program = declared[0] as number
+    channelExplicit = true
+  } else if (declared.length > 1) {
     channel = declared[0] as number
     program = declared[1] as number
+    channelExplicit = true
   }
-  if (midi.channel !== undefined && midi.channel.length > 0) channel = midi.channel[0] as number
+  if (midi.channel !== undefined && midi.channel.length > 0) {
+    channel = midi.channel[0] as number
+    channelExplicit = true
+  }
+  // CHANNEL 10 IS PERCUSSION, and abcjs decides that in the sequencer's own preamble:
+  // `if (channel === 10) program = PERCUSSION_PROGRAM` (`abc_midi_sequencer.js:40-41`),
+  // twice — once for the option and once after `%%MIDI channel` has been read.
+  if (channel === PERCUSSION_CHANNEL) program = PERCUSSION_PROGRAM
   if (midi.transpose !== undefined && midi.transpose.length > 0) {
     transposeGlobal = midi.transpose[0] as number
   }
 
+  const percMap = score.percMap ?? {}
+  const drumMap = score.drumMap ?? {}
   const pickupLength = pickupLengthOf(score)
   const tracks: MidiEvent[][] = []
   const startMeter = score.meter ?? { numerator: 4, denominator: 4, symbol: 'numeric' as const }
@@ -716,14 +735,34 @@ export function flattenAudio(
     const voiceOff =
       options.voicesOff === true ||
       (Array.isArray(options.voicesOff) && options.voicesOff.includes(voiceIndex))
+    /**
+     * A PERCUSSION CLEF REWRITES THE PROGRAM AND SUPPRESSES THE KEY, and abcjs does both in
+     * one `if`:
+     *
+     *     if (staff.clef && staff.clef.type === 'perc' && !channelExplicitlySet) {
+     *       for (…) if (voices[v][cl].el_type === 'instrument') voices[v][cl].program = 128
+     *     } else if (staff.key) { addKey(voices[voiceNumber], staff.key) }
+     *
+     * (`abc_midi_sequencer.js:175-181`.) The `else` is the part that is easy to miss: a
+     * percussion staff never gets a key element at all, so its written accidentals are the
+     * only ones that apply. And `!channelExplicitlySet` means a tune that said
+     * `%%MIDI channel`/`program` keeps what it asked for.
+     */
+    const clef = voice.clef ?? score.clef
+    const percussion = clef.shape === 'percussion'
+    const voiceProgram = percussion && !channelExplicit ? PERCUSSION_PROGRAM : program
     // abcjs seeds every track with a program event whose channel is the VOICE INDEX, then
     // lets an explicit `%%MIDI channel` walk back and overwrite it (`setChannel`).
     const track: MidiEvent[] = [
-      { cmd: 'program', channel: channel !== 0 ? channel : voiceIndex, instrument: program },
+      {
+        cmd: 'program',
+        channel: channel !== 0 ? channel : voiceIndex,
+        instrument: voiceProgram,
+      },
     ]
-    if (instrument === undefined) instrument = program
+    if (instrument === undefined) instrument = voiceProgram
 
-    let accidentals = keyAccidentals(score.key)
+    let accidentals = percussion ? [0, 0, 0, 0, 0, 0, 0] : keyAccidentals(score.key)
     let barAccidentals = new Map<string, number>()
     let meter: Meter = score.meter ?? { numerator: 4, denominator: 4, symbol: 'numeric' }
     let lastBarTime = 0
@@ -734,6 +773,7 @@ export function flattenAudio(
     chordTrack.setLastBarTime(0)
     chordTrack.setMeter({ num: meter.numerator, den: meter.denominator })
 
+    const transposeOf = transposeOfFactory(transposeGlobal)
     const timed = sequenceVoice(voice, score, startingTempo)
     /** The running stress table — abcjs's `currentVolume`, seeded at the default triple. */
     let stress: [number, number, number] = [105, 95, 85]
@@ -764,7 +804,7 @@ export function flattenAudio(
       } else if (decorations.includes('crescendo)') || decorations.includes('diminuendo)')) {
         hairpin = 0
       }
-      if (item.key !== currentKey) {
+      if (item.key !== currentKey && !percussion) {
         currentKey = item.key
         accidentals = keyAccidentals(item.key)
       }
@@ -808,8 +848,85 @@ export function flattenAudio(
           : [item.event.pitch]
       const mods = noteModifications(decorations, volume)
       slurCount += slurStartsOf(item.event)
+
+      /**
+       * GRACE NOTES TAKE HALF THE MAIN NOTE, and the main note gives it up.
+       *
+       *     var multiplier = companionDuration/2 / graceDuration
+       *     …
+       *     if (elem.gracenotes) { p.duration = p.duration / 2; p.start = p.start + p.duration }
+       *
+       * (`abc_midi_flattener.js:691-714, 591-594`.) So the graces fill the FIRST half of the
+       * written note and the note itself sounds for the second — it is not an ornament
+       * stolen from the beat before. The velocity is `velocity * 2/3` ROUNDED, "to make the
+       * graces a little quieter", and it is the beat-stress velocity: `findNoteModifications`
+       * has not run yet, so an `!accent!` on the note does NOT reach its graces.
+       *
+       * They are written BEFORE the main note in the track, which is why emission order
+       * matters here as much as it did for the renderer's notehead pairing.
+       *
+       * ponytail: the multiplier NORMALISES, so for graces of equal written length only the
+       * COUNT survives — which is every grace in the corpus and all four here. Our model
+       * keeps `graceNotes` as bare pitches with no durations, so an unequal group like
+       * `{a2b}` would divide evenly where abcjs would not. The ranked table will say so if
+       * a fixture ever writes one.
+       */
+      const graces = item.event.graceNotes
+      let mainStart = start
+      let mainDuration = realDuration
+      if (graces.length > 0) {
+        const each = realDuration / 2 / graces.length
+        const graceVolume = Math.round(volume * (2 / 3))
+        let at = start
+        for (const g of graces) {
+          const mappedGrace = percussion ? drumMap[writtenName(g)] : undefined
+          const raw =
+            mappedGrace ?? midiPitchOf(g, accidentals, barAccidentals, null) + transposeOf(item)
+          const sound =
+            mappedGrace === undefined && voiceProgram === PERCUSSION_PROGRAM
+              ? percMap[percKey(g)]?.sound
+              : undefined
+          const resolved = sound === undefined ? adjustForMicroTone(raw) : { pitch: sound }
+          track.push({
+            cmd: 'note',
+            pitch: resolved.pitch,
+            volume: graceVolume,
+            start: at,
+            duration: each,
+            gap: 0,
+            instrument: voiceProgram,
+            style: 'grace',
+            ...('cents' in resolved && resolved.cents !== undefined
+              ? { cents: resolved.cents }
+              : {}),
+          })
+          at += each
+        }
+        mainDuration = realDuration / 2
+        mainStart = start + mainDuration
+      }
+
       for (const written of pitches) {
-        const transpose = item.clefTranspose !== 0 ? item.clefTranspose : transposeGlobal
+        const transpose = transposeOf(item)
+        // `%%MIDI drummap B 38` — the PARSER stamps this onto the note in abcjs
+        // (`abc_parse_music.js:1127-1134`) and `adjustPitch` then returns it OUTRIGHT:
+        // `if (note.midipitch !== undefined) return note.midipitch` — no key signature, no
+        // bar accidental, no transpose. Keyed on the written LETTER plus any accidental
+        // prefix, which is `line[index]` at the moment the pitch is read, so the octave
+        // marks that follow are not part of the key.
+        const mapped = percussion ? drumMap[writtenName(written)] : undefined
+        if (mapped !== undefined) {
+          track.push({
+            cmd: 'note',
+            pitch: mapped,
+            volume: mods.velocity ?? volume,
+            start: mainStart,
+            duration: mainDuration,
+            instrument: voiceProgram,
+            ...endTypeAndGap(mods.endType, slurCount, mainDuration, startingTempo),
+          })
+          continue
+        }
         // `V:… octave=` IS ALREADY IN THE PITCH — in BOTH engines — and the model's comment
         // says otherwise. Measured: `V:2 octave=-2` parses `B` as octave 2 while also
         // reporting `octaveShift: -2`, and abcjs's own answer for the same voice under a
@@ -819,15 +936,32 @@ export function flattenAudio(
         // low — 23 against 47.
         const raw =
           midiPitchOf(written, accidentals, barAccidentals, quarterAlter(item.event)) + transpose
-        const { pitch, cents } = adjustForMicroTone(raw)
+        /**
+         * `%%percmap` REPLACES THE PITCH OUTRIGHT, once the voice is on the drum kit.
+         *
+         *     if (currentInstrument === drumInstrument && percmap) {
+         *       var name = pitchesToPerc(note)
+         *       if (name && percmap[name]) actualPitch = percmap[name].sound
+         *     }
+         *
+         * (`abc_midi_flattener.js:584-588`.) The gate is the INSTRUMENT, not the clef — a
+         * `%%MIDI program 128` reaches it just as a `K:… perc` does — and the lookup is by
+         * vertical position, so it is the written place on the staff that names the drum.
+         */
+        const percussionSound =
+          voiceProgram === PERCUSSION_PROGRAM ? percMap[percKey(written)]?.sound : undefined
+        const { pitch, cents } =
+          percussionSound === undefined
+            ? adjustForMicroTone(raw)
+            : { pitch: percussionSound, cents: undefined }
         const event: MidiNote = {
           cmd: 'note',
           pitch,
           volume: mods.velocity ?? volume,
-          start,
-          duration: realDuration,
-          instrument: program,
-          ...endTypeAndGap(mods.endType, slurCount, realDuration, startingTempo),
+          start: mainStart,
+          duration: mainDuration,
+          instrument: voiceProgram,
+          ...endTypeAndGap(mods.endType, slurCount, mainDuration, startingTempo),
           ...(cents === undefined ? {} : { cents }),
         }
         track.push(event)
@@ -850,6 +984,53 @@ export function flattenAudio(
 
 const chordSymbolOf = (event: MusicEvent): string | null => event.chordSymbol
 const annotationsOf = (event: MusicEvent): readonly string[] => event.annotations
+
+/**
+ * The `%%MIDI drummap` key — the note's written LETTER with any accidental in front.
+ *
+ * abcjs builds it as `accMap[el.accidental] + line[index]`, the raw source character at the
+ * pitch, so `B,` and `B` share the key `B`: the octave marks come after and are not read.
+ * Case carries the octave — uppercase to C4, lowercase from C5.
+ */
+function writtenName(pitch: { step: string; octave: number; accidental: number | null }): string {
+  const letter = pitch.octave <= 4 ? pitch.step.toUpperCase() : pitch.step
+  const prefix =
+    pitch.accidental === null
+      ? ''
+      : (({ 1: '^', '-1': '_', 0: '=', 2: '^^', '-2': '__' } as Record<string, string>)[
+          String(pitch.accidental)
+        ] ?? '')
+  return prefix + letter
+}
+
+/**
+ * The `%%percmap` key — abcjs's `pitchesToPerc`, which is a VERTICAL POSITION lookup and
+ * not a pitch one.
+ *
+ *     var pitch = (pitchObj.accidental ? pitchObj.accidental[0] : 'x') + pitchObj.verticalPos
+ *     return pitchMap[pitch]
+ *
+ * (`synth/pitches-to-perc.js`.) Seventeen positions, `C` to `e'`, so anything outside that
+ * range has no key at all — and the prefix is the accidental's FIRST LETTER, which makes
+ * both double accidentals `d` and therefore unmappable too. The table is already ported for
+ * the engraver, which reads the same map for `%%percmap`'s note-head half.
+ */
+function percKey(pitch: { step: string; octave: number; accidental: number | null }): string {
+  const position = (pitch.octave - 4) * 7 + stepIndex(pitch.step as never)
+  const name = ABCJS_PERC_NOTE_NAMES[position]
+  if (name === undefined) return ''
+  const prefix =
+    pitch.accidental === null
+      ? ''
+      : ({ 1: '^', '-1': '_', 0: '=' } as Record<string, string>)[String(pitch.accidental)]
+  return prefix === undefined ? '' : prefix + name
+}
+
+/** The transpose in force — the clef's if it states one, else the global `%%MIDI`. */
+const transposeOfFactory =
+  (global: number) =>
+  (item: Timed): number =>
+    item.clefTranspose !== 0 ? item.clefTranspose : global
 
 /** A microtone's alteration in abcjs's units — `^/` is +0.25, `_3/2` is -0.75. */
 function quarterAlter(event: MusicEvent): number | null {

@@ -520,7 +520,42 @@ function fixtureMedianDistance(target: Target): number {
 }
 
 describe('pixel parity vs abcjs rendered SVG', () => {
-  const withGoldens = loadCorpus().flatMap((entry) => targetsOf(entry.name))
+  /**
+   * ⚠️ THE ORACLE MOVED UNDER US — abcjs **6.7.0**, 2026-08-08 14:07.
+   *
+   * The whole of `../abcMusicKit/Tools/abcjs-debug/golden/` — all 505 files — was
+   * regenerated from abcjs 6.7.0 by another agent bringing Music Studio onto that release.
+   * `abcjs-strict` is defined against **6.6.3** and the flip is DEFERRED by decision
+   * (Lance, 2026-08-08: "I will notify you when we need to make abcts flip to parity on
+   * 6.7.0"), so these are not defects and must not be chased.
+   *
+   * PROVEN, not assumed, on `center-text`:
+   *
+   *     abcjs 6.6.3, rendered from the pinned source   top staff line y = 131.03
+   *     the regenerated golden                         top staff line y = 192.36
+   *
+   * — 61.33px, exactly the `oy` every one of these reports. And the CONTROL agrees: the
+   * 174-fixture harvested corpus lives in THIS repo, was generated from 6.6.3, and is still
+   * at 0 of 174. The oracle moved; the engine did not.
+   *
+   * The other 110 targets still agree with both versions and go on gating normally. DELETE
+   * THIS LIST AT THE FLIP — it is a statement about which abcjs the goldens came from, not
+   * a ceiling, and re-recording the numbers instead would bake 6.7.0 into a 6.6.3 engine.
+   */
+  const ORACLE_REGENERATED_FROM_670: readonly string[] = [
+    'S2-fields-tune0',
+    'S5-directives-tune5',
+    'S7-voices-tune4',
+    'S8-layout-tune8',
+    'center-text',
+    'frere-jacques',
+    'full-song-template',
+    'little swallow',
+    'program-127-test',
+  ]
+  const withGoldens = loadCorpus()
+    .flatMap((entry) => targetsOf(entry.name))
+    .filter((target) => !ORACLE_REGENERATED_FROM_670.includes(target.key))
 
   it('the gate reads real goldens and can tell positions apart', () => {
     // A gate that cannot fail reports coverage it does not have — the fuzz suite that
@@ -562,7 +597,14 @@ describe('pixel parity vs abcjs rendered SVG', () => {
     // Adding a golden without a row here would otherwise be silently unmeasured.
     const keys = withGoldens.map((target) => target.key)
     expect(keys.filter((key) => EXPECTED[key] === undefined)).toEqual([])
-    expect(Object.keys(EXPECTED).filter((key) => !keys.includes(key))).toEqual([])
+    // The quarantined targets KEEP their recorded rows. Deleting them would lose the
+    // 6.6.3 figures this engine is still measured against, and the flip is meant to be a
+    // deletion of the quarantine list, not an archaeology exercise.
+    expect(
+      Object.keys(EXPECTED).filter(
+        (key) => !keys.includes(key) && !ORACLE_REGENERATED_FROM_670.includes(key),
+      ),
+    ).toEqual([])
   })
 
   describe('notehead count is exact', () => {
@@ -728,10 +770,7 @@ describe('pixel parity vs abcjs rendered SVG', () => {
         'top-line',
       )
       expect(ours.length, `${target.key} staff count`).toBe(golden.length)
-      const worst = Math.max(
-        0,
-        ...golden.map((g, i) => Math.abs((ours[i]?.x ?? 0) - g.x)),
-      )
+      const worst = Math.max(0, ...golden.map((g, i) => Math.abs((ours[i]?.x ?? 0) - g.x)))
       if (worst >= EPSILON) off.push(`${target.key} ${worst.toFixed(2)}`)
     }
     // EMPTY. All twenty targets this gate opened with are closed.
