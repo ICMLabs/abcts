@@ -85,6 +85,7 @@ const PASSING: readonly string[] = [
   'flatten-tempo-change',
   'flatten-tempo-change2',
   'flatten-tempo-override',
+  'flatten-transpose',
   'flatten-treble-8',
   'flatten-triplet-chords',
   'flatten-trill-test',

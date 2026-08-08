@@ -852,6 +852,8 @@ class VoiceBuilder {
    * tune-level `K: octave=` — including one that arrives MID-TUNE.
    */
   octaveShift: number | null = null
+  /** `V:… transpose=n` — semitones, sounding only. See `Voice.transpose`. */
+  transpose = 0
   /** The effective shift as each measure CLOSED, since the tune-level one can change. */
   private readonly measureShifts: number[] = []
   /** `V:… stafflines=` with no `clef=` — see `Voice.staffLineOverride`. */
@@ -1556,6 +1558,7 @@ class VoiceBuilder {
     return {
       id: this.id,
       octaveShift: this.octaveShift ?? this.keyOctave.value,
+      transpose: this.transpose,
       clef: this.clef,
       staffLineOverride: this.staffLineOverride,
       stemDirection: this.stemDirection,
@@ -2721,6 +2724,12 @@ class Parser {
         if (builder.bodyStarted) builder.selectVoice(id)
         const octave = octaveModifier(value)
         if (octave !== null) builder.voiceFor(id).octaveShift = octave
+        // `V:… transpose=-2` — SOUNDING only, and abcjs takes the sign from the token
+        // rather than from a `+`: `tokens[0].intt` after the `=`.
+        const shift = /\btranspose=\s*(-?\d+)/.exec(value)
+        if (shift?.[1] !== undefined) {
+          builder.voiceFor(id).transpose = Number.parseInt(shift[1], 10)
+        }
         const voiceClef = parseClef(value)
         if (voiceClef !== null) builder.voiceFor(id).clef = voiceClef
         const bare = bareStaffLines(value)

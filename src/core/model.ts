@@ -831,6 +831,20 @@ export interface Voice {
    * shift into its pitch numbers instead, so any comparison against it must add it back.
    */
   readonly octaveShift: number
+  /**
+   * `V:… transpose=n` — semitones, SOUNDING ONLY. Nothing on the page moves.
+   *
+   * abcjs hangs it on the CLEF (`multilineVars.clef.transpose`, copied from
+   * `currentVoice.transpose`) and the renderer never reads it: `src/write/` has zero
+   * references and only `src/synth/` uses it. It lives on the voice here because a `V:`
+   * may declare one with no `clef=` beside it, and putting it on the tune's shared clef
+   * would leak it to every other voice.
+   *
+   * It is a SEMITONE count, unlike `octaveShift`, and the clef's own `+8`/`-8` OVERRIDES
+   * it rather than adding: abcjs pushes both as `transpose` elements in that order and the
+   * flattener's `case "transpose"` assigns.
+   */
+  readonly transpose: number
   /** `V:… clef=`. `null` means this voice takes the tune's clef from `Score.clef`. */
   readonly clef: Clef | null
   /**

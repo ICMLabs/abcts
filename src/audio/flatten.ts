@@ -529,6 +529,12 @@ function sequenceVoice(voice: Voice, score: Score, startingTempo: number): Timed
       if (clef.octaveShift !== 0) {
         clefTranspose = clef.octaveShift * 12
         clefOctaveActive = true
+      } else if (voice.transpose !== 0) {
+        // `V:… transpose=` is pushed as its own `transpose` element BEFORE the `±8` arm
+        // and clears `clefTransposeActive` (`abc_midi_sequencer.js:190-193`), so a clef
+        // octave beats it and a plain clef does not cancel it.
+        clefTranspose = voice.transpose
+        clefOctaveActive = false
       } else if (clefOctaveActive) {
         clefTranspose = 0
         clefOctaveActive = false
@@ -1146,6 +1152,11 @@ export function flattenAudio(
       if (item.barStart) barAccidentals = new Map()
       const start = item.time / MICRO
       chordTrack.setTempoChangeFactor(item.factor)
+      // THE CHORD TRACK IS TRANSPOSED WITH THE VOICE. abcjs pairs every
+      // `transpose = element.transpose` with a `chordTrack.setTranspose(transpose)`, so a
+      // `V:1 transpose=-2` moves its `"Em"` too — the chord track was two semitones above
+      // the voice it belongs to on `flatten-transpose`.
+      chordTrack.setTranspose(transposeOf(item))
       if (item.kind === 'midi') {
         for (const { cmd, params } of item.midi ?? []) {
           // The CHORD commands, which abcjs funnels through one `chordTrack.paramChange`.
