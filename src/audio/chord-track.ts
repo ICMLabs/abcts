@@ -259,8 +259,8 @@ export class ChordTrack {
   private chordInstrument: number
   private bassOctaveShift: number
   private chordOctaveShift: number
-  private readonly boomVolume: number
-  private readonly chickVolume: number
+  private boomVolume: number
+  private chickVolume: number
   private override: readonly string[] | undefined
 
   constructor(
@@ -314,6 +314,13 @@ export class ChordTrack {
   setChordProg(program: number, octaveShift = 0): void {
     this.chordInstrument = program
     this.chordOctaveShift = octaveShift
+  }
+  /** `%%MIDI bassvol` / `chordvol` mid-tune — abcjs's `paramChange` reads `element.param`. */
+  setBassVol(volume: number): void {
+    this.boomVolume = volume
+  }
+  setChordVol(volume: number): void {
+    this.chickVolume = volume
   }
 
   /** A bar closed: lay the measure's chords onto the meter's pattern. */

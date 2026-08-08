@@ -1092,7 +1092,33 @@ export function flattenAudio(
       chordTrack.setTempoChangeFactor(item.factor)
       if (item.kind === 'midi') {
         for (const { cmd, params } of item.midi ?? []) {
+          // The CHORD commands, which abcjs funnels through one `chordTrack.paramChange`.
+          // `%%MIDI gchord` with NO argument cancels the override rather than setting an
+          // empty one — "skips gchord elements that don't have pattern strings" — and
+          // `cancel-gchord` is that tune: two identical bars, the second on the meter's
+          // own pattern.
           switch (cmd) {
+            case 'gchord':
+              chordTrack.setGChord(typeof params[0] === 'string' ? params[0] : undefined)
+              continue
+            case 'gchordon':
+              chordTrack.gChordOn(false)
+              continue
+            case 'gchordoff':
+              chordTrack.gChordOn(true)
+              continue
+            case 'bassprog':
+              chordTrack.setBassProg(params[0] as number, (params[1] as number | undefined) ?? 0)
+              continue
+            case 'chordprog':
+              chordTrack.setChordProg(params[0] as number, (params[1] as number | undefined) ?? 0)
+              continue
+            case 'bassvol':
+              chordTrack.setBassVol(params[0] as number)
+              continue
+            case 'chordvol':
+              chordTrack.setChordVol(params[0] as number)
+              continue
             case 'drumon':
               drumOn = true
               break

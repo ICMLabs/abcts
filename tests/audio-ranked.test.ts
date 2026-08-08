@@ -53,8 +53,11 @@ const CASES: Case[] = readdirSync(dir)
  */
 const PASSING: readonly string[] = [
   'flatten-all-time-sigs',
+  'cancel-gchord',
   'flatten-chord-params',
+  'flatten-chord-arpeggio',
   'flatten-chord-swing',
+  'flatten-change-gchord',
   'flatten-dynamics',
   'flatten-dynamics2',
   'flatten-dynamics3',
@@ -73,6 +76,7 @@ const PASSING: readonly string[] = [
   'flatten-perc-map-high-c',
   'flatten-pickup-overlay',
   'flatten-perc-map',
+  'flatten-power-chord',
   'flatten-quarter-tone',
   'flatten-regular-tie',
   'flatten-six-huit',
