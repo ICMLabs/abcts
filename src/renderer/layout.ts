@@ -30,6 +30,7 @@ import {
   type FreeTextBlock,
   isStrict,
   type KeySignature,
+  keyFifths,
   type Measure,
   type Meter,
   type Mode,
@@ -1639,43 +1640,6 @@ const KEY_ACCIDENTAL_GLYPH: Readonly<Record<number, GlyphName>> = {
   [4]: 'accidentalDoubleSharp',
 }
 
-/** Position on the circle of fifths for a natural step: F=-1, C=0, G=1, D=2 … */
-const NATURAL_FIFTHS: Readonly<Record<DiatonicStep, number>> = {
-  f: -1,
-  c: 0,
-  g: 1,
-  d: 2,
-  a: 3,
-  e: 4,
-  b: 5,
-}
-
-/** How far each mode sits from major on the circle. D dorian has no accidentals, so -2. */
-const MODE_FIFTHS: Readonly<Record<Mode, number>> = {
-  lydian: 1,
-  major: 0,
-  mixolydian: -1,
-  dorian: -2,
-  minor: -3,
-  phrygian: -4,
-  locrian: -5,
-}
-
-/**
- * Signed accidental count for a key: positive is that many sharps, negative that many
- * flats. Derived from the circle of fifths rather than a lookup table of key names,
- * which is abcMusicKit2's approach and the reason `KeySignature` stores a tonic and a
- * mode instead of an accidental list.
- */
-export function keyFifths(key: KeySignature): number {
-  if (key.none) return 0
-  // Each sharp on the tonic moves it seven places round the circle: C→C# is 0→7.
-  const fifths = NATURAL_FIFTHS[key.tonic.step] + 7 * key.tonic.accidental + MODE_FIFTHS[key.mode]
-  // Beyond ±7 the signature would need double accidentals. Real ABC does reach K:A#
-  // (10 sharps); clamping draws seven rather than indexing off the end of the table.
-  return Math.max(-7, Math.min(7, fifths))
-}
-
 /**
  * How far a key signature's accidentals shift for a clef, in staff steps.
  *
@@ -2062,7 +2026,11 @@ function restGlyph(notated: Rational): { name: GlyphName; step: number; dots: nu
  * `createNoteHead(abselem, c, { verticalPos: restpitch })` is the same variable.
  */
 const restPitchShift = (stemUp: boolean | null): number =>
-  stemUp === null ? 0 : stemUp ? ABCJS_PITCH.restPitchUp - ABCJS_PITCH.restPitch : ABCJS_PITCH.restPitchDown - ABCJS_PITCH.restPitch
+  stemUp === null
+    ? 0
+    : stemUp
+      ? ABCJS_PITCH.restPitchUp - ABCJS_PITCH.restPitch
+      : ABCJS_PITCH.restPitchDown - ABCJS_PITCH.restPitch
 
 function layoutRest(
   rest: Rest,
@@ -2114,7 +2082,9 @@ function layoutRest(
     ratToNumber(rest.notatedDuration) === measureLength
   const written = invisible || rest.kind === 'spacer' ? null : restGlyph(rest.notatedDuration)
   const spec =
-    written !== null && fillsMeasure ? { name: 'restWhole' as GlyphName, step: 2, dots: 0 } : written
+    written !== null && fillsMeasure
+      ? { name: 'restWhole' as GlyphName, step: 2, dots: 0 }
+      : written
 
   const glyphs: PlacedGlyph[] = []
   /** How far the augmentation dots reach past the element's x — 0 when there are none. */
@@ -2213,7 +2183,9 @@ function layoutRest(
         glyphsFor(strict).width(spec.name) +
         (strict ? spaces(ABCJS_PX.dotOffset + ABCJS_PX.dotSpacing) : ENGRAVE.dotGap)
       const step = strict ? spaces(ABCJS_PX.dotSpacing) : ENGRAVE.dotSpacing
-      glyphs.push(...dotGlyphs(spec.dots, dotX, spec.step + restPitchShift(sharedStaffStem), new Set(), step))
+      glyphs.push(
+        ...dotGlyphs(spec.dots, dotX, spec.step + restPitchShift(sharedStaffStem), new Set(), step),
+      )
       // …AND THE DOT WIDENS THE ELEMENT, exactly as it does on a note. It is an `addRight`
       // child, so `w = max(w, dx + getSymbolWidth("dots.dot"))` — abcjs probes a dotted
       // quarter rest at `w = 14.338` against the plain one's 7.888, and the 6.45 between
@@ -4219,8 +4191,7 @@ function noteText(
     // -17.242, and the gap is exactly half the 8.5 the golden's vocalfont table gives
     // `_`. One number computed in two places whose inputs had drifted — the third time on
     // this branch, after the lyric reserve and `curveReserves`.
-    const verse =
-      strict && index === 0 && event.lyricMelismaStart ? `${raw}_` : raw
+    const verse = strict && index === 0 && event.lyricMelismaStart ? `${raw}_` : raw
     centred(verse, size, 0, 'serifBold')
     texts.push({
       text: verse,
@@ -4816,8 +4787,7 @@ function layoutCurves(
     // curve is below.
     const gs = anchor.graceSlur
     if (gs !== undefined) {
-      const x1 =
-        gs.graceX - spaces(ABCJS_ARC.graceStartInset) + spaces(ABCJS_ARC.startOffset)
+      const x1 = gs.graceX - spaces(ABCJS_ARC.graceStartInset) + spaces(ABCJS_ARC.startOffset)
       const x2 = gs.headX + spaces(ABCJS_ARC.endOffset)
       const lift = spacesOfPitch(ABCJS_ARC.slurLift)
       curves[anchor.system]?.push({
@@ -5192,8 +5162,7 @@ function layoutTuplets(
     // `S3-note-syntax` tune 6 and we draw fourteen pieces. Fixing it means changing beam
     // GROUPING, which moves real beams on every tune with a rest inside one — a slice of
     // its own, and the two numbers it would settle are 4.91px in x and 38.8 in y.
-    const beamed =
-      group !== null && inGroup[0] === first && inGroup[inGroup.length - 1] === last
+    const beamed = group !== null && inGroup[0] === first && inGroup[inGroup.length - 1] === last
 
     // WHERE THE BRACKET GOES IS abcjs'S ARITHMETIC, per END NOTE and in PITCH
     // (`layout/triplet.js:29-64`):
@@ -6788,7 +6757,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // only" for free, because the line after that compares equal.
       const lineKey = keyAtMeasure[from] ?? score.key
       const beforeKey = keyBeforeLine[from] ?? score.key
-      const keySig = layoutKeyChange(x, beforeKey, lineKey, clef, strict) ?? layoutKeySignature(x, lineKey, clef, strict)
+      const keySig =
+        layoutKeyChange(x, beforeKey, lineKey, clef, strict) ??
+        layoutKeySignature(x, lineKey, clef, strict)
       if (keySig !== null) push(keySig)
       if (withMeter && score.meter !== null) {
         push(layoutMeter(x, score.meter, strict))
@@ -7674,14 +7645,14 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         anchorBelowStaff(
           anchorAboveStaff(
             anchorDynamicsAbove(
-            anchorChordsBelow(
-              anchorLyrics(
-                members.map((i) => centred[i]).filter((x) => x !== undefined),
+              anchorChordsBelow(
+                anchorLyrics(
+                  members.map((i) => centred[i]).filter((x) => x !== undefined),
+                  strict,
+                ),
                 strict,
               ),
               strict,
-            ),
-            strict,
             ),
             strict,
             score.partsBox,
@@ -7788,11 +7759,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         elements: positioned,
         // `startx` .. `w`: the music's own span. `width` is the SYSTEM's, which carries
         // the right margin and any prose overhanging it — see `staffLinesFor`.
-        staffLines: staffLinesFor(
-          ENGRAVE.marginX + indent,
-          solved.width,
-          staff.staffLineCount,
-        ),
+        staffLines: staffLinesFor(ENGRAVE.marginX + indent, solved.width, staff.staffLineCount),
         originY,
       }
     })
@@ -8671,7 +8638,6 @@ function aboveLadder<
     ? reserve(ENGRAVE.tempoHeightAbove) + ENGRAVE.tempoTextSize + ENGRAVE.tempoDescenderBump
     : null
 
-
   return { chordY, endingY, dynamicY, partY, tempoY, laneOf }
 }
 
@@ -8880,8 +8846,7 @@ function anchorChordsBelow<
   }
 
   const marks = parts.flatMap((p) => p.elements.flatMap((el) => el.texts.filter(isBelow)))
-  const block =
-    Math.max(...marks.map(chordHeightOf)) * lanes + ENGRAVE.aboveStackMargin
+  const block = Math.max(...marks.map(chordHeightOf)) * lanes + ENGRAVE.aboveStackMargin
   const reserve: readonly [number, number] = [inkBottom, inkBottom + block]
   return parts.map((part) => ({
     ...part,
@@ -8897,9 +8862,7 @@ function anchorChordsBelow<
                     // (`draw/text.js:13-15, 28-30`) — abcjs's universal text rule and the
                     // same lane step the above side uses.
                     y:
-                      inkBottom +
-                      t.size +
-                      (laneOf.get(t) ?? 0) * t.size * ABCJS_RATIO.laneLineStep,
+                      inkBottom + t.size + (laneOf.get(t) ?? 0) * t.size * ABCJS_RATIO.laneLineStep,
                     reserve,
                   }
                 : t,
@@ -9240,8 +9203,7 @@ function anchorVoltas<
   // `marginY` is zero and `verticalExtent` has already subtracted it; adding it back keeps
   // the two in step if it ever stops being zero. `voltaDrawDrop` is abcjs's `- 2`, and y is
   // DOWN here, so dropping the bracket back toward the staff is an addition.
-  const drawY =
-    top + ENGRAVE.marginY + ENGRAVE.voltaDrawDrop * ENGRAVE.spacePerStep
+  const drawY = top + ENGRAVE.marginY + ENGRAVE.voltaDrawDrop * ENGRAVE.spacePerStep
   const shift = drawY - stepToY(ENGRAVE.voltaStep)
   if (shift === 0) return [...parts]
   return parts.map((part) => ({

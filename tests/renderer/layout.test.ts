@@ -18,13 +18,13 @@ import {
   type Mode,
   rational,
   type Score,
+  keyFifths,
 } from '../../src/core/model.js'
 import { parse } from '../../src/parser/parser.js'
 import { GLYPHS } from '../../src/renderer/glyphs.js'
 import {
   accidentalGlyph,
   ENGRAVE,
-  keyFifths,
   layout,
   layoutBook,
   middleLineIndex,
@@ -1956,7 +1956,7 @@ describe('ornaments and techniques', () => {
     }
   })
 
-  it('charges an ending\'s extra minspacing to ONE voice, not to every barline', () => {
+  it("charges an ending's extra minspacing to ONE voice, not to every barline", () => {
     // abcjs adds `minspacing += textWidth + 10` in `createBarLine`, which runs where the
     // ENDING element is created — and a volta belongs to the first voice of the first
     // staff, not to every voice whose bar falls under the `|1`. Its own probe on
@@ -2000,14 +2000,11 @@ describe('ornaments and techniques', () => {
     //
     // The figures below are abcjs's own path for `!slide!C`, measured:
     // `M 61.85 158.49 C … 69.85 150.74 …` against a notehead centred at (75.78, 146.85).
-    const score = parse('X:1\nT:t\nC:c\nM:4/4\nL:1/4\nK:C\n!slide!C D E F|\n')
-      .scores[0] as Score
+    const score = parse('X:1\nT:t\nC:c\nM:4/4\nL:1/4\nK:C\n!slide!C D E F|\n').scores[0] as Score
     const staff = layout(score).systems[0]?.staves[0]
     expect(staff?.curves).toHaveLength(1)
     const curve = staff?.curves[0]
-    const head = (staff?.elements ?? [])
-      .flatMap((e) => e.glyphs)
-      .find((g) => g.role === 'notehead')
+    const head = (staff?.elements ?? []).flatMap((e) => e.glyphs).find((g) => g.role === 'notehead')
     if (curve === undefined || head === undefined) throw new Error('nothing drawn')
     // 8px wide — abcjs's blanks are 10px apart and its tie adds 6 at the start, 4 at the
     // end — and 2 pitch tall, ending 1 pitch below the head. `fixedY` means the anchors'

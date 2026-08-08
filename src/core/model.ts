@@ -1067,3 +1067,40 @@ export interface Diagnostic {
   readonly message: string
   readonly range: SourceRange | null
 }
+
+/** Position on the circle of fifths for a natural step: F=-1, C=0, G=1, D=2 … */
+const NATURAL_FIFTHS: Readonly<Record<DiatonicStep, number>> = {
+  f: -1,
+  c: 0,
+  g: 1,
+  d: 2,
+  a: 3,
+  e: 4,
+  b: 5,
+}
+
+/** How far each mode sits from major on the circle. D dorian has no accidentals, so -2. */
+const MODE_FIFTHS: Readonly<Record<Mode, number>> = {
+  lydian: 1,
+  major: 0,
+  mixolydian: -1,
+  dorian: -2,
+  minor: -3,
+  phrygian: -4,
+  locrian: -5,
+}
+
+/**
+ * Signed accidental count for a key: positive is that many sharps, negative that many
+ * flats. Derived from the circle of fifths rather than a lookup table of key names,
+ * which is abcMusicKit2's approach and the reason `KeySignature` stores a tonic and a
+ * mode instead of an accidental list.
+ */
+export function keyFifths(key: KeySignature): number {
+  if (key.none) return 0
+  // Each sharp on the tonic moves it seven places round the circle: C→C# is 0→7.
+  const fifths = NATURAL_FIFTHS[key.tonic.step] + 7 * key.tonic.accidental + MODE_FIFTHS[key.mode]
+  // Beyond ±7 the signature would need double accidentals. Real ABC does reach K:A#
+  // (10 sharps); clamping draws seven rather than indexing off the end of the table.
+  return Math.max(-7, Math.min(7, fifths))
+}
