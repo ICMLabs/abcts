@@ -36,6 +36,7 @@ import {
   ratToNumber,
   type Score,
   stepIndex,
+  type Tempo,
   type Voice,
 } from '../core/model.js'
 
@@ -248,6 +249,8 @@ interface Timed {
   readonly meter: Meter | null
   /** Sounding duration in whole notes, with a tie's continuation already folded in. */
   readonly duration: number
+  /** `startingTempo / qpm` in force here — a `[Q:]` stretches durations, not the tempo. */
+  readonly factor: number
   /** A tie's continuation, silenced: it was folded into the note that opened the tie. */
   readonly tiedOver: boolean
 }
@@ -265,9 +268,17 @@ interface Timed {
  * sequencer's job in abcjs (`repeats.js`, and the overlay voices it appends), both need
  * the ranked table to steer them, and neither can be tested before the table exists.
  */
-function sequenceVoice(voice: Voice, score: Score): Timed[] {
+function sequenceVoice(voice: Voice, score: Score, startingTempo: number): Timed[] {
   const out: Timed[] = []
   let time = 0
+  /**
+   * THE TEMPO CHANGE SCALES THE CLOCK, NOT THE NOTE. abcjs never restates the tempo — it
+   * keeps the FIRST one and stretches every later duration by `startingTempo / qpm`, in
+   * both `preProcess` and `flatten` (`abc_midi_flattener.js:148-151, 271`). So a
+   * `[Q:1/4=129]` under a 180 default makes every quarter last `0.25 * 180/129`, and the
+   * reported `tempo` stays 180.
+   */
+  let tempoFactor = 1
   let line = -1
   let key = score.key
   let meter = score.meter
@@ -277,6 +288,10 @@ function sequenceVoice(voice: Voice, score: Score): Timed[] {
 
   for (const measure of voice.measures) {
     if (measure.startsSystem || line < 0) line += 1
+    if (measure.tempoChange != null) {
+      const qpm = qpmOfTempo(measure.tempoChange, meter)
+      tempoFactor = qpm > 0 ? startingTempo / qpm : 1
+    }
     if (measure.keyChange !== null) key = measure.keyChange
     if (measure.meterChange !== null) meter = measure.meterChange
     let first = true
@@ -315,10 +330,11 @@ function sequenceVoice(voice: Voice, score: Score): Timed[] {
         key,
         meter,
         duration: dur,
+        factor: tempoFactor,
         tiedOver,
       })
       durations.push(tiedOver ? 0 : dur)
-      time += Math.round(dur * MICRO)
+      time += Math.round(dur * tempoFactor * MICRO)
       first = false
     }
     out.push({
@@ -331,6 +347,7 @@ function sequenceVoice(voice: Voice, score: Score): Timed[] {
       key,
       meter,
       duration: 0,
+      factor: tempoFactor,
       tiedOver: false,
     })
     durations.push(0)
@@ -339,13 +356,25 @@ function sequenceVoice(voice: Voice, score: Score): Timed[] {
 }
 
 /** abcjs's `interpretTempo`: `Q:` is stated at some beat, the sequencer wants another. */
+function qpmOfTempo(tempo: Tempo, meter: Meter | null): number {
+  const unit: Rational | null = tempo.beatUnit
+  const duration = unit === null ? 0.25 : ratToNumber(unit)
+  return (duration * (tempo.bpm ?? 60)) / beatLengthOf(meter)
+}
+
+/**
+ * The tune's qpm — and an INLINE `[Q:]` does not supply one.
+ *
+ * abcjs reads `abctune.metaText.tempo`, which only the FIELD parser writes; an inline
+ * `[Q:]` becomes an element in the stream and never reaches it. Measured on a control
+ * pair: `[Q:1/4=129]CDEF` reports `tempo: 180` from `setUpAudio` and draws the mark
+ * anyway; `Q:1/4=129` reports 129.
+ */
 function qpmOf(score: Score, options: AudioOptions): number {
   if (options.qpm !== undefined) return Math.trunc(options.qpm)
   const tempo = score.tempo
-  if (tempo !== null && tempo.bpm !== null) {
-    const unit: Rational | null = tempo.beatUnit
-    const duration = unit === null ? 0.25 : ratToNumber(unit)
-    return (duration * tempo.bpm) / beatLengthOf(score.meter)
+  if (tempo !== null && tempo.bpm !== null && score.tempoInline !== true) {
+    return qpmOfTempo(tempo, score.meter)
   }
   return options.defaultQpm ?? 180
 }
@@ -419,7 +448,7 @@ export function flattenAudio(
     let slurCount = 0
     const transpose = transposeGlobal + voice.octaveShift * 12
 
-    const timed = sequenceVoice(voice, score)
+    const timed = sequenceVoice(voice, score, startingTempo)
     /** The running stress table — abcjs's `currentVolume`, seeded at the default triple. */
     let stress: [number, number, number] = [105, 95, 85]
     /** Per-note increment while a hairpin is open; 0 when none is. */
@@ -459,7 +488,7 @@ export function flattenAudio(
         lastBarTime = item.time / MICRO
       }
       const start = item.time / MICRO
-      const realDuration = Math.round(item.duration * MICRO) / MICRO
+      const realDuration = Math.round(item.duration * item.factor * MICRO) / MICRO
       totalDuration = Math.max(totalDuration, start + realDuration)
       if (item.event === null || item.event.type === 'rest' || item.tiedOver) continue
 

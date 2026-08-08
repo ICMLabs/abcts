@@ -1558,6 +1558,8 @@ class ScoreBuilder {
   key: KeySignature = defaultKey()
   clef: Clef = defaultClef
   tempo: Tempo | null = null
+  /** The tune's `Q:` was written INLINE — drawn, but not the audio clock's. */
+  tempoInline = false
   meter: Meter | null = null
   unitNoteLength: Rational = rational(1, 8)
   unitExplicit = false
@@ -1839,6 +1841,7 @@ class ScoreBuilder {
       clef: this.clef,
       meter: this.meter,
       tempo: resolveBeatUnit(this.tempo, this.meter),
+      tempoInline: this.tempoInline,
       unitNoteLength: this.unitNoteLength,
       voices: this.orderedVoices().map((v) => {
         // The meter lives on the score, and a voice needs it to pad an empty overlay
@@ -2493,8 +2496,20 @@ class Parser {
         // EVERY LATER ONE is an ordinary element in its own voice's stream, printed where
         // it stands — `synth-flattener-31` has four across three voices and abcjs draws
         // all five marks.
-        if (builder.tempo === null) builder.tempo = parseTempo(value)
-        else if (builder.bodyStarted) builder.voice.setTempoChange(parseTempo(value))
+        //
+        // …AND AN INLINE `[Q:]` IS THE TUNE'S TEMPO FOR THE PAGE AND NOT FOR THE CLOCK.
+        // Measured on a control pair rather than read: abcjs DRAWS a head tempo mark for
+        // `[Q:1/4=129]CDEF` — `data-name="tempo"` is in its SVG — and its `setUpAudio`
+        // reports `tempo: 180`, the default, where the standalone `Q:1/4=129` form reports
+        // 129. `metaText.tempo` is set by the FIELD parser and an inline field never
+        // reaches it, so the mark is drawn from the element and the clock never hears it.
+        // It still changes the tempo where it stands, so it is recorded as a change too —
+        // `tempoInline` is what lets audio take the one and not the other.
+        if (builder.tempo === null) {
+          builder.tempo = parseTempo(value)
+          builder.tempoInline = inline
+          if (inline && builder.bodyStarted) builder.voice.setTempoChange(parseTempo(value))
+        } else if (builder.bodyStarted) builder.voice.setTempoChange(parseTempo(value))
         return
       }
       case 'w': {

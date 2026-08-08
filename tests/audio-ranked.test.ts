@@ -57,6 +57,7 @@ const PASSING: readonly string[] = [
   'flatten-dynamics3',
   'flatten-long-tie',
   'flatten-no-chord-voice',
+  'flatten-tempo-change2',
   'flatten-tempo-override',
   'volume-crash',
 ]

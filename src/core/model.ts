@@ -942,6 +942,16 @@ export interface Score {
    * is mid-tune, so a mid-tune `Q:` lands here rather than on a Measure. First one wins.
    */
   readonly tempo: Tempo | null
+  /**
+   * The tune's `Q:` was written INLINE (`[Q:1/4=129]`) rather than as a field.
+   *
+   * abcjs DRAWS the mark either way — its SVG carries a `data-name="tempo"` for the inline
+   * form — but only the FIELD form reaches `metaText.tempo`, which is what its audio reads.
+   * Measured on a control pair: `[Q:1/4=129]CDEF` reports `tempo: 180` from `setUpAudio`
+   * where `Q:1/4=129` reports 129. So the page and the clock disagree on purpose, and this
+   * is what lets each take its own.
+   */
+  readonly tempoInline?: boolean
   readonly unitNoteLength: Rational
   readonly voices: readonly Voice[]
   /**
