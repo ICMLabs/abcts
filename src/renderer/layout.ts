@@ -4536,6 +4536,12 @@ interface NoteAnchor {
    * inputs drift apart. See `slurEndY`.
    */
   slurFixed?: { top: number; bottom: number }
+  /**
+   * The two ends of this note's GRACE SLUR, resolved where the elements are — the same
+   * merge `slurFixed` makes and for the same reason. `layoutCurves` has anchors and no
+   * elements, and the grace head is a glyph on the element.
+   */
+  graceSlur?: { graceX: number; graceY: number; headX: number }
   beamPos?: 'none' | 'first' | 'last' | 'middle'
   /** Left and right edges of the notehead, and its vertical extremes. */
   readonly left: number
@@ -4782,6 +4788,37 @@ function layoutCurves(
     // `M 61.85 158.49 C … 69.85 150.74 …` against a notehead centred at (75.78, 146.85):
     // 8px wide, 2 pitch tall, and `fixedY` means the anchors' own pitches with none of a
     // tie's 1.2 lift.
+    // THE GRACE SLUR, DRAWN. Its reserve is in `curveReserves`; this is the arc, and it
+    // is built here rather than through `buildCurve` because two of that function's three
+    // decisions are made for it: `calcSlurDirection` opens `if (this.isGrace) this.above =
+    // false`, and `calcSlurY`'s beam-retargeting block is guarded on
+    // `anchor1.scalex === 1`, which a 0.6-scaled grace head fails — so BOTH ends are the
+    // plain pitch even when the main note is mid-beam (`tie-element.js:96-98, 163-202`).
+    //
+    // `calcX` pulls the grace end back 3 and `drawArc` adds the usual 6 and 4
+    // (`:118-122`, `draw/tie.js:60-61`), and the 1.5-pitch slur lift goes DOWN because the
+    // curve is below.
+    const gs = anchor.graceSlur
+    if (gs !== undefined) {
+      const x1 =
+        gs.graceX - spaces(ABCJS_ARC.graceStartInset) + spaces(ABCJS_ARC.startOffset)
+      const x2 = gs.headX + spaces(ABCJS_ARC.endOffset)
+      const lift = spacesOfPitch(ABCJS_ARC.slurLift)
+      curves[anchor.system]?.push({
+        x1,
+        y1: gs.graceY + lift,
+        x2,
+        y2: anchor.pitchY + lift,
+        // Below, so the arc bows DOWNWARD — `buildCurve`'s `direction` is +1 there.
+        bulge: Math.min(
+          ENGRAVE.curveMaxBulge,
+          Math.max(ENGRAVE.curveMinBulge, Math.max(0, x2 - x1) * ENGRAVE.curveBulgeRatio),
+        ),
+        midThickness: LINE_WEIGHTS.slurMidpoint,
+        kind: 'slur',
+      })
+    }
+
     if (event.decorations.includes('slide')) {
       const x1 = anchor.left - spaces(15) + spaces(ABCJS_ARC.startOffset)
       const x2 = anchor.left - spaces(5) + spaces(ABCJS_ARC.endOffset)
@@ -4948,6 +4985,13 @@ function curveReserves(
     // abcjs's `Math.min` over PITCHES is our `Math.max` over y, as above.
     const y = Math.max(head.y, centre(a))
     reserves.push({ top: y, bottom: y + three })
+    // …and the DRAWING's two ends, resolved here because this is where the elements are.
+    // `anchor2` is the MAIN notehead, which is not `a.left`: that is a min over every head
+    // on the element and the grace heads are in it.
+    const main = elements[a.element]?.glyphs.find(
+      (g) => g.role !== 'grace' && g.name.startsWith('notehead'),
+    )
+    if (main !== undefined) a.graceSlur = { graceX: head.x, graceY: head.y, headX: main.x }
   }
   anchors.forEach((anchor, i) => {
     if (anchor.event.type === 'rest') return

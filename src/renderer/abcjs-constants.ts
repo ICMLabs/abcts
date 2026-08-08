@@ -346,6 +346,13 @@ export const ABCJS_ARC = {
    * `startX = anchor1.x` and `endX = anchor2.x` (`tie-element.js:118-140`), and an
    * anchor is the notehead's `RelativeElement`, so its x is the head's left edge.
    */
+  /**
+   * A GRACE ANCHOR PULLS ITS END BACK 3px, and it is the only thing `calcX` special-cases:
+   * `if (this.anchor1.scalex < 1) this.startX -= 3` — "this is a grace note, don't offset
+   * the tie as much" (`tie-element.js:120-122`). It composes with `startOffset`, so a
+   * grace slur springs 3px right of the grace head where an ordinary one springs 6.
+   */
+  graceStartInset: 3,
   startOffset: 6,
   endOffset: 4,
   /**
