@@ -4921,6 +4921,34 @@ function curveReserves(
       bottom: Math.max(centre(from), centre(to)) + four,
     })
   }
+  // A GRACE GROUP CARRIES ITS OWN SLUR, and it is the only curve abcjs builds without the
+  // source asking for one:
+  //
+  //     var isInvisibleRest = elem.rest && (elem.rest.type === "spacer" || elem.rest.type === "invisible");
+  //     if (i === 0 && !isBagpipes && this.graceSlurs && !isInvisibleRest)
+  //       voice.addOther(new TieElem({ anchor1: grace, anchor2: notehead, isGrace: true }))
+  //
+  // (`abstract-engraver.js:528-533`, inside `addGraceNotes`' forward loop — so ONE per
+  // group, from the FIRST grace to the main head, and `graceSlurs` defaults true.)
+  //
+  // ITS GEOMETRY IS THE SIMPLEST OF ANY CURVE, because two branches switch themselves off:
+  // `calcSlurDirection` opens `if (this.isGrace) this.above = false`, so a grace slur is
+  // ALWAYS BELOW; and `calcSlurY`'s beam-retargeting arm is guarded on
+  // `anchor1.scalex === 1`, which a 0.6-scaled grace head fails (`tie-element.js:96-98,
+  // 180`). Both ends are the plain pitch.
+  //
+  // Verified on a ladder of seven controls against abcjs's own `staff.bottom`; only
+  // `{C}D` binds, at -3.0000, and `min(pitch 0, pitch 1) - 3` is exactly that.
+  for (const a of anchors) {
+    if (!('graceNotes' in a.event) || a.event.graceNotes.length === 0) continue
+    if (a.event.type === 'rest' && (a.event.kind === 'invisible' || a.event.kind === 'spacer'))
+      continue
+    const head = elements[a.element]?.glyphs.find((g) => g.role === 'grace')
+    if (head === undefined) continue
+    // abcjs's `Math.min` over PITCHES is our `Math.max` over y, as above.
+    const y = Math.max(head.y, centre(a))
+    reserves.push({ top: y, bottom: y + three })
+  }
   anchors.forEach((anchor, i) => {
     if (anchor.event.type === 'rest') return
     for (let n = 0; n < anchor.event.slurEnds; n++) {

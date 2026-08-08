@@ -1167,7 +1167,7 @@ system 1 width=90.323 originY=22.066
       line  87.394,-2.000 -> 87.394,2.000 t=0.077
       line  88.129,-2.000 -> 88.129,2.000 t=0.516
 tune 8
-bounds  width=90.323 height=46.373 top=-1.935
+bounds  width=90.323 height=47.350 top=-1.935
 systems 3
 system 0 width=90.323 originY=0.000
   staff 0 originY=15.152

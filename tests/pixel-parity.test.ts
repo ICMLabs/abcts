@@ -358,16 +358,10 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // and an accidental, of which this tune has two — `{A}^c2` and `{FGAB}[^c4A4]`.
     'S8-layout-tune6': { heads: 99, dy: 0, dx: 0.0, oy: 0, ox: 0.0 },
     // oy 1.67 -> 1.14 on the `!slide!` rule; its `dy` 2.66 is something else.
-    // dy 2.66 -> 0.23 and oy 1.14 -> -0.10. `~` and `R` are abcjs's `scripts.roll`, 6.125px
-    // tall, and we measured Bravura's `ornamentTremblement` at 7.564 — 0.3714 pitch per
-    // decoration through `symbolHeightInPitches(symbol) + 1`, twice on the same note.
-    //
-    // WHAT IS LEFT IS 0.0581 PITCH OF STAFF 0, and it is a GRACE SLUR: abcjs hangs a
-    // `TieElem` under every grace group (`abstract-engraver.js:530-533`), whose
-    // `getYBounds` box then pushes the staff. `{f}e {C}D {cd}c {E^c}a2 {dedc}d` alone
-    // measures -3.0000 against our -1.2000; on the whole tune the low `^C=C_C` bar covers
-    // all but this. We neither draw nor reserve one — see the handoff.
-    'S8-layout-tune7': { heads: 58, dy: 0.23, dx: 0, oy: -0.1, ox: 0 },
+    // EXACT ON ALL FOUR, and it took three findings: `scripts.roll`'s height (139), then
+    // the GRACE SLUR, which abcjs hangs under every grace group and we had never built at
+    // all. `{f}e {C}D {cd}c {E^c}a2 {dedc}d` measured -3.0000 against our -1.2000.
+    'S8-layout-tune7': { heads: 58, dy: 0.0, dx: 0, oy: 0.0, ox: 0 },
     'S8-layout-tune8': { heads: 28, dy: 0.01, dx: 0, oy: 0, ox: 0 },
     'S8-layout-tune9': { heads: 66, dy: 0, dx: 0, oy: 0, ox: 0 },
     // dx 82.67 -> 0.0 and ox -31.37 -> 0.0. EXACT ON ALL FOUR. A down-stemmed chord with a
