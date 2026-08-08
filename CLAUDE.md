@@ -113,8 +113,24 @@ checkpoint and hand off as you go so no context is lost.
 > has to RULE OUT THE WRONG GLYPH FIRST, because once written it is the reason the row
 > stops being read. The pixel table went from eleven rows to two on that one finding.
 
-Read `Docs/CHECKPOINT-2026-08-07b.md` first — the state and findings 134-142.
-`Docs/HANDOFF-2026-08-07b.md` has the session prompt. `Docs/CHECKPOINT-2026-08-07.md` is
+> ⚖️ **THE ARC DECISION** (Lance, 2026-08-08): *"Defer Gonzato and focus on the remaining
+> geometric tail and audio."* **GONZATO IS DEFERRED** — it has sat in the standing order's
+> tail since 2026-08-04 with no fixture, no gate and no owner, it is a COVERAGE question
+> rather than a geometry one, and it is the only part of the order whose INPUTS are not
+> already in this repo. **AUDIO IS THE ARC**, and its corpus and oracle are already here:
+> 61 of the 174 harvested fixtures ARE abcjs's own synth tests, and `flattener.test.js` is
+> 8,203 lines of expected event lists written as JSON literals. The implementation is
+> genuinely absent — no `src/midi/`, no `src/synth/`, `%%MIDI` in the parser ZERO times —
+> so **the first commit of that arc is the HARVESTER, not the flattener.** The parity
+> surface is EVENT GENERATION (`abc_midi_flattener.js`, `abc_midi_sequencer.js`,
+> `chord-track.js`); soundfonts and WebAudio are host playback and out of scope, the same
+> split the renderer makes between geometry and glyph outlines. See
+> `Docs/CHECKPOINT-2026-08-08.md`.
+
+Read `Docs/CHECKPOINT-2026-08-08.md` first — the state, the ARC DECISION and the audio
+sizing. `Docs/HANDOFF-2026-08-08.md` has the session prompt.
+`Docs/CHECKPOINT-2026-08-07b.md` is superseded for the state but keeps findings 134-146.
+`Docs/CHECKPOINT-2026-08-07.md` is
 superseded for the state but keeps findings 125-133 and **THE GATE WAS READING 29 OF THE 41
 FIXTURES**, which is the section that made 2026-08-07b possible. `Docs/CHECKPOINT-2026-08-06b.md` is superseded for the state but keeps findings 106-124 and
 **THE GATES CANNOT SEE WHAT IS LEFT** — read that section knowing its central claim was
@@ -252,6 +268,15 @@ abcjs source are all reached by sibling path and stay in that repo. Keep it that
 backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
+**THE GEOMETRIC ARC IS DONE.** 891/891, both ranked tables EMPTY — 0 of 119 pixel targets
+and 0 of 174 harvested fixtures off any axis by 0.05px — corpus median notehead distance
+0.0px, and three gates green. What is left in geometry is a 0.26px staff line on one tune
+and ONE refactor: abcjs spends every above lane in one loop (chord, ending, dynamic, part,
+tempo) where we spend them in four places. The staff's TOTAL is right either way, so no
+gate can see it; what differs is which lane a mark lands in when a staff carries two.
+Three `ponytail:` notes wait on it and nothing in either corpus combines the lanes, so it
+needs a control ladder built first. **Then AUDIO — see the arc decision above.**
+
 **Every structural gate is at 100% with zero recorded divergences** — content, lyrics,
 beams, structure, source offsets. The work is now entirely GEOMETRIC and entirely
 strict-mode, and it is being driven off the HARVESTED corpus's ranked table rather than the
