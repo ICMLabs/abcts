@@ -1275,13 +1275,13 @@ system 0 width=90.412 originY=0.000
     bar x=88.347 w=0.077
       line  88.386,-2.000 -> 88.386,2.000 t=0.077
 tune 4
-bounds  width=100.611 height=51.767 top=-1.935
+bounds  width=100.611 height=59.680 top=-1.935
 systems 1
 system 0 width=100.611 originY=0.000
-  connector bracketTop -0.600,15.450
-  connector bracketBottom -0.600,37.154
-  connector line -0.600,15.450 -> -0.600,37.154 t=0.375
-  staff 0 originY=17.450
+  connector bracketTop -0.600,23.363
+  connector bracketBottom -0.600,45.067
+  connector line -0.600,23.363 -> -0.600,45.067 t=0.375
+  staff 0 originY=25.363
     staffline 3.226,2.000 -> 98.676,2.000 t=0.090
     staffline 3.226,1.000 -> 98.676,1.000 t=0.090
     staffline 3.226,0.000 -> 98.676,0.000 t=0.090
@@ -1549,7 +1549,7 @@ system 0 width=100.611 originY=0.000
       glyph repeatDots 96.869,1.976
       line  97.682,-2.000 -> 97.682,2.000 t=0.077
       line  98.418,-2.000 -> 98.418,2.000 t=0.516
-  staff 1 originY=35.154
+  staff 1 originY=43.067
     staffline 3.226,2.000 -> 98.676,2.000 t=0.090
     staffline 3.226,1.000 -> 98.676,1.000 t=0.090
     staffline 3.226,0.000 -> 98.676,0.000 t=0.090

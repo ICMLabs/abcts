@@ -263,6 +263,20 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // carried the whole tune's two later systems with it.
     'S2-fields-tune1': { heads: 11, dy: 0.0, dx: 0, oy: 0.0, ox: 0 },
     'S2-fields-tune2': { heads: 16, dy: 0, dx: 0.01, oy: 0, ox: 0 },
+    /**
+     * NEW WITH abcjs 6.7.0, both harvested into the corpus on 2026-08-08.
+     *
+     * `twinkle` is exact. `extra-class` carries `-3.88` — one PITCH, uniform, with `dy`,
+     * `dx` and `ox` all zero, so our whole system sits one decoration lane too high. Its
+     * tune is `!class=alice!A!class=bob!!>!T[dfa]` with a `w:` line: a chord carrying BOTH
+     * an accent and a trill, which nothing else in either corpus does. `!class=…!` itself
+     * is accounted for — abcjs sets `el.extraClass` and never pushes it into
+     * `el.decoration` (`abc_parse_music.js:229`), and ours now does the same, verified by
+     * parse. So the residual is the two-decoration STACK on a chord, and it is a TARGET,
+     * not a tolerance. Recorded rather than left to widen silently.
+     */
+    'extra-class': { heads: 4, dy: 0.01, dx: 0.0, oy: -3.88, ox: 0.0 },
+    twinkle: { heads: 14, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S3-note-syntax-tune0': { heads: 28, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S3-note-syntax-tune1': { heads: 43, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S3-note-syntax-tune2': { heads: 21, dy: 0, dx: 0, oy: 0, ox: 0 },
@@ -542,17 +556,7 @@ describe('pixel parity vs abcjs rendered SVG', () => {
    * THIS LIST AT THE FLIP — it is a statement about which abcjs the goldens came from, not
    * a ceiling, and re-recording the numbers instead would bake 6.7.0 into a 6.6.3 engine.
    */
-  const ORACLE_REGENERATED_FROM_670: readonly string[] = [
-    'S2-fields-tune0',
-    'S5-directives-tune5',
-    'S7-voices-tune4',
-    'S8-layout-tune8',
-    'center-text',
-    'frere-jacques',
-    'full-song-template',
-    'little swallow',
-    'program-127-test',
-  ]
+  const ORACLE_REGENERATED_FROM_670: readonly string[] = []
   const withGoldens = loadCorpus()
     .flatMap((entry) => targetsOf(entry.name))
     .filter((target) => !ORACLE_REGENERATED_FROM_670.includes(target.key))

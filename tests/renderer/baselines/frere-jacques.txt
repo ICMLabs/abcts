@@ -1,8 +1,8 @@
 tune 0
-bounds  width=90.484 height=79.364 top=-1.935
+bounds  width=90.484 height=87.278 top=-1.935
 systems 4
 system 0 width=90.323 originY=0.000
-  staff 0 originY=25.500
+  staff 0 originY=33.414
     staffline 1.935,2.000 -> 88.387,2.000 t=0.090
     staffline 1.935,1.000 -> 88.387,1.000 t=0.090
     staffline 1.935,0.000 -> 88.387,0.000 t=0.090
@@ -51,7 +51,7 @@ system 0 width=90.323 originY=0.000
       glyph ornamentTrill 77.561,-4.314
       glyph ornamentTrill 77.561,-6.942
       line  78.169,-1.400 -> 78.169,1.750 t=0.077
-system 1 width=90.323 originY=29.408
+system 1 width=90.323 originY=37.322
   staff 0 originY=8.005
     staffline 1.935,2.000 -> 88.387,2.000 t=0.090
     staffline 1.935,1.000 -> 88.387,1.000 t=0.090
@@ -80,7 +80,7 @@ system 1 width=90.323 originY=29.408
     note@3 x=74.711 w=3.871
       glyph noteheadBlack 74.711,-1.500
       line  74.749,-1.400 -> 74.749,2.253 t=0.077
-system 2 width=90.371 originY=40.914
+system 2 width=90.371 originY=48.827
   staff 0 originY=9.414
     staffline 1.935,2.000 -> 88.435,2.000 t=0.090
     staffline 1.935,1.000 -> 88.435,1.000 t=0.090
@@ -164,7 +164,7 @@ system 2 width=90.371 originY=40.914
       text  79.261,5.694 size=2.194 bold "vous?"
     bar x=88.306 w=0.077
       line  88.345,-2.000 -> 88.345,2.000 t=0.077
-system 3 width=90.484 originY=56.759
+system 3 width=90.484 originY=64.672
   staff 0 originY=12.303
     staffline 1.935,2.000 -> 88.549,2.000 t=0.090
     staffline 1.935,1.000 -> 88.549,1.000 t=0.090

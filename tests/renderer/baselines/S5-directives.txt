@@ -993,10 +993,10 @@ system 1 width=90.403 originY=19.892
     bar x=88.338 w=0.077
       line  88.377,-2.000 -> 88.377,2.000 t=0.077
 tune 5
-bounds  width=90.323 height=32.199 top=-1.935
+bounds  width=90.323 height=40.113 top=-1.935
 systems 1
 system 0 width=90.323 originY=0.000
-  staff 0 originY=21.306
+  staff 0 originY=29.220
     staffline 1.935,2.000 -> 88.387,2.000 t=0.090
     staffline 1.935,1.000 -> 88.387,1.000 t=0.090
     staffline 1.935,0.000 -> 88.387,0.000 t=0.090

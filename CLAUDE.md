@@ -519,9 +519,26 @@ SVG, glyph outlines excepted), structure catches WRONG (vs abcjs's laid-out elem
 baselines catch CHANGED (vs committed geometry). Re-record with `npm run baseline`, but
 READ the diff and commit baselines with the code change.
 
+> 🔀 **THE TARGET IS abcjs 6.7.0 AS OF 2026-08-08** (Lance's authorisation, the same day).
+> 6.7.0 shipped while this arc was running and another agent regenerated the sibling
+> corpus's 505 goldens from it mid-session; the in-repo 174-fixture corpus was then
+> regenerated too, `abcts.config.json`'s `abcjsRef` moved, and the engine was brought onto
+> it. **The whole geometric difference between 6.6.3 and 6.7.0 was ONE BRANCH** —
+> `draw.js` now moves down by `spacing.staffSeparation` (61.33px) when a non-music line
+> precedes the first staff, which is a `%%text`/`%%begintext` block OR a second `T:`. Every
+> one of the 13 fixtures that moved did so by exactly `oy = -61.33` with `dy`, `dx` and
+> `ox` at 0.00. Two smaller things came with it: `!class=name!` is `el.extraClass` and NOT
+> a decoration (`abc_parse_music.js:229`), and `flattener.test.js` plus
+> `creation/glyphs.js` are BYTE-IDENTICAL between the versions — so the audio oracle and
+> both glyph tables needed no regeneration at all. `abcjs-6.6.3` is still vendored beside
+> `6.7.0` and the sibling `dump-svg.js` takes `ABCJS_VERSION`, which is how the two were
+> measured against each other.
+
 ## Parity targets, by mode
-`abcjs-strict` is measured against **abcjs 6.6.3 itself** — its parse trees, element dumps
-and SVG goldens. 100% is the bar; a divergence is a defect, not a tolerance.
+`abcjs-strict` is measured against **abcjs 6.7.0 itself** — its parse trees, element dumps
+and SVG goldens. 100% is the bar; a divergence is a defect, not a tolerance. It was 6.6.3
+until 2026-08-08; every citation written before that date names a 6.6.3 line number, and
+the two trees are both vendored, so a stale citation can be checked rather than guessed at.
 
 `abc2.1` and `extended` are measured against the OTHER engines, since abcjs is wrong or
 absent for much of what they cover. Golden sets exist in `../abcMusicKit` (v1),

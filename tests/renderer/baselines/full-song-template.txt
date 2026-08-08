@@ -1,8 +1,8 @@
 tune 0
-bounds  width=90.402 height=57.355 top=-1.935
+bounds  width=90.402 height=65.269 top=-1.935
 systems 2
 system 0 width=90.402 originY=0.000
-  staff 0 originY=27.606
+  staff 0 originY=35.520
     staffline 1.935,2.000 -> 88.467,2.000 t=0.090
     staffline 1.935,1.000 -> 88.467,1.000 t=0.090
     staffline 1.935,0.000 -> 88.467,0.000 t=0.090
@@ -89,7 +89,7 @@ system 0 width=90.402 originY=0.000
       text  77.147,8.826 size=2.194 bold "like"
     bar x=88.338 w=0.077
       line  88.377,-2.000 -> 88.377,2.000 t=0.077
-system 1 width=90.402 originY=37.169
+system 1 width=90.402 originY=45.083
   staff 0 originY=6.752
     staffline 1.935,2.000 -> 88.467,2.000 t=0.090
     staffline 1.935,1.000 -> 88.467,1.000 t=0.090

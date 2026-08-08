@@ -3097,6 +3097,26 @@ class Parser {
           // ABCJS_LEGAL_ACCENTS. The shorthand path below is deliberately not filtered,
           // because abcjs does not filter it either.
           const name = this.src.slice(token.start + 1, token.start + token.length - 1)
+          // `!class=name!` IS NOT A DECORATION — new in abcjs 6.7.0, and handled in the
+          // same `if` as `!style=…!`, one arm along:
+          //
+          //     if (ret[1].indexOf("style=") === 0) el.style = ret[1].substring(6)
+          //     else if (ret[1].indexOf("class=") === 0) el.extraClass = ret[1].substring(6)
+          //     else { … el.decoration.push(ret[1]) }
+          //
+          // (`abc_parse_music.js:227-231`.) It is styling only: an arbitrary CSS class on
+          // the element group, engraving nothing. Ours pushed it into `decorations`, where
+          // it took a slot on the stacking cursor and moved the notes 3.88px — one pitch,
+          // the height of a decoration lane.
+          //
+          // ponytail: the class is DROPPED rather than carried through to the markup.
+          // abcjs emits it on the group only under `add_classes`, and the `-classes`
+          // goldens are not gated here; `extra-class`'s own header says that is the golden
+          // which would witness it.
+          if (name.startsWith('class=')) {
+            i++
+            break
+          }
           if (!isStrict(this.mode) || ABCJS_KNOWN_DECORATIONS.has(decorationLookupName(name))) {
             pending.decorations.push(name)
             pending.decorationSourceRanges.push(

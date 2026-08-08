@@ -1,0 +1,26 @@
+tune 0
+bounds  width=20.433 height=19.427 top=-1.935
+systems 1
+system 0 width=20.433 originY=0.000
+  staff 0 originY=8.375
+    staffline 1.935,2.000 -> 18.498,2.000 t=0.090
+    staffline 1.935,1.000 -> 18.498,1.000 t=0.090
+    staffline 1.935,0.000 -> 18.498,0.000 t=0.090
+    staffline 1.935,-1.000 -> 18.498,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 18.498,-2.000 t=0.090
+    beam   9.011,4.250 -> 14.704,3.750 t=0.500
+    clef x=1.935 w=3.103
+      glyph gClef 2.581,1.000
+    note@-1 x=9.011 w=3.871
+      glyph noteheadBlack 9.011,0.500
+      line  9.049,0.600 -> 9.049,4.250 t=0.077
+      text  6.329,6.444 size=2.194 bold "Carol"
+    note@2,4,6 x=14.627 w=3.871
+      glyph noteheadBlack 14.627,-1.000
+      glyph noteheadBlack 14.627,-2.000
+      glyph noteheadBlack 14.627,-3.000
+      glyph articAccentAbove 14.346,-5.022
+      glyph ornamentTrill 14.058,-6.336
+      line  14.368,-3.000 -> 16.150,-3.000 t=0.090
+      line  14.665,-2.900 -> 14.665,3.757 t=0.077
+      text  11.821,6.444 size=2.194 bold "David"

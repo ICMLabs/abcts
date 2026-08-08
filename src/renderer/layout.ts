@@ -7701,7 +7701,36 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     // rides `musicSpace` too high. Only system 0, and only when it has no heading — a
     // later system's spacing is the inter-system minimum, not this.
     const headingless = systemIndex === 0 && !merged[0]?.elements.some((el) => el.type === 'title')
-    let cursor = headingless ? musicSpace : 0
+    /**
+     * A NON-MUSIC LINE BEFORE THE FIRST STAFF COSTS A WHOLE STAFF SEPARATION — new in
+     * abcjs **6.7.0**, and it is the entire geometric difference between 6.6.3 and 6.7.0
+     * as far as this engine is concerned.
+     *
+     *     if (staffgroups.length >= 1)
+     *       addStaffPadding(renderer, renderer.spacing.staffSeparation, …);
+     *     else if (line > 0) // This happens if there is non-music stuff before the first staff line
+     *       renderer.moveY(renderer.spacing.staffSeparation)
+     *
+     * (`write/draw/draw.js:46-49`; `staffSeparation` defaults to **61.33** at
+     * `renderer.js:105`, or `%%staffsep * 4/3`.) The `else` arm is the new one: before it,
+     * a `%%text` or `%%begintext` standing ahead of the music cost nothing at all.
+     *
+     * MEASURED BEFORE IT WAS PORTED. Regenerating the 174-fixture corpus from 6.7.0 moved
+     * exactly 13 fixtures, every one of them by `oy = -61.33` with `dy`, `dx` and `ox` at
+     * 0.00 — a rigid shift and nothing else. 61.33 is the constant to the hundredth.
+     *
+     * The condition is abcjs's `line > 0` on `abcTune.lines`, which is TRUE only when a
+     * non-music LINE precedes the first staff. A title is not one: it is drawn from
+     * `metaText` before the loop, which is why most of the corpus never moved.
+     */
+    // …AND A SUBTITLE IS ONE OF THEM. abcjs's first `T:` is the TITLE and is drawn from
+    // `metaText` before the loop; every later `T:` becomes a `{subtitle}` LINE in
+    // `abcTune.lines`, which is what makes `line > 0` true. Six of the thirteen were
+    // exactly that and nothing else — `T:First` / `T:Second` over four notes moves 61.33px
+    // in 6.7.0 and moved nothing in 6.6.3.
+    const nonMusicBeforeMusic =
+      systemIndex === 0 && (score.textAbove.length > 0 || score.metadata.titles.length > 1)
+    let cursor = (headingless ? musicSpace : 0) + (nonMusicBeforeMusic ? interSystemSep : 0)
     /** Bottom staff LINE of the staff placed before this one, in system coordinates. */
     let previousBottomLine: number | null = null
     const placed = merged.map((staff) => {
