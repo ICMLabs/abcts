@@ -101,10 +101,22 @@ checkpoint and hand off as you go so no context is lost.
 > corpus — without the control it would have landed under a green ratchet, because the
 > fixture it was aimed at moved the right way for the wrong reason.
 
-Read `Docs/CHECKPOINT-2026-08-07.md` first — the current state, findings 125-128, and above
-all **THE GATE WAS READING 29 OF THE 41 FIXTURES**, which is the section that decides the
-work now. `Docs/HANDOFF-2026-08-07.md` has the session prompt.
-`Docs/CHECKPOINT-2026-08-06b.md` is superseded for the state but keeps findings 106-124 and
+> 🔎 **AND THE TAIL OF THE TABLE WAS NEVER "NOT WORK"** (2026-08-07b). Nine of its
+> eighteen rows sat behind an asserted `ox = 0.18` and a paragraph explaining that no
+> placement rule could remove it: *"abcjs's head inks 16.83px wide, Bravura's 15.03, and
+> the two are not left-aligned either."* Every clause true. Each of those tunes is `G8`
+> under `L:1/4` — TWO whole notes — and abcjs's `chartable.note[-durlog]` lands on
+> `noteheads.dbl`, a BREVE, where we drew a semibreve. **The 16.83 cited as the evidence is
+> `noteheads.dbl`'s own published width, to the hundredth.** A bounding-box centre cannot
+> tell a wrong glyph from a differently shaped one. A ranked table does need a way to say
+> "measured, and not a defect" or its tail fills with work nobody should do — but the note
+> has to RULE OUT THE WRONG GLYPH FIRST, because once written it is the reason the row
+> stops being read. The pixel table went from eleven rows to two on that one finding.
+
+Read `Docs/CHECKPOINT-2026-08-07b.md` first — the state and findings 134-142.
+`Docs/HANDOFF-2026-08-07b.md` has the session prompt. `Docs/CHECKPOINT-2026-08-07.md` is
+superseded for the state but keeps findings 125-133 and **THE GATE WAS READING 29 OF THE 41
+FIXTURES**, which is the section that made 2026-08-07b possible. `Docs/CHECKPOINT-2026-08-06b.md` is superseded for the state but keeps findings 106-124 and
 **THE GATES CANNOT SEE WHAT IS LEFT** — read that section knowing its central claim was
 answered by widening a gate, not by working around it. `Docs/CHECKPOINT-2026-08-06.md` is
 superseded for the state but keeps findings 104-105 and **THE HARNESS: how to instrument
@@ -255,10 +267,11 @@ gate had been comparing abcjs's outline START against our glyph ORIGIN, a 4px bi
 
 
 **Structural parity is done: note content, lyrics, beams and render structure are all
-41/41 with zero recorded divergences.** `geometry/vertical` is **886/886 with NO reds**,
-and the harvested corpus's ranked table is **EMPTY** — 174 of 174 fixtures exact on every
-axis to within 0.05px, with no content gaps left either. **36 of the 41 are at exact zero**;
-`ragtime-nightingale` alone is above 0.02.
+41/41 with zero recorded divergences.** `geometry/vertical` is **890/890 with NO reds**, and
+BOTH ranked tables are essentially empty: the harvested one is **0 of 174** and the pixel one
+**1 of 119** — `S8-layout-tune7` at 0.23px, whose cause is named (the GRACE SLUR, a feature
+never implemented, which neither gate can see). `ragtime-nightingale` — 2009 noteheads, the
+corpus's largest fixture — is EXACT on all four axes.
 pushed, and the AUDIT FINDING IS CLOSED — no Bravura figure is reachable in strict. The
 harvested corpus is **10 of 174 off some axis**, from 34 at the start of 2026-08-05, with
 **nothing above 0.93px** and every measurable fixture inside one pixel. Two ceilings are

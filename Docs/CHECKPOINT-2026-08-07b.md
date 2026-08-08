@@ -1,0 +1,365 @@
+# abcts — Checkpoint, 2026-08-07b
+
+Supersedes `CHECKPOINT-2026-08-07.md` for the STATE. That file keeps findings 125–133 and
+**THE GATE WAS READING 29 OF THE 41 FIXTURES**, which is the section that made this session
+possible. `-08-06b.md` keeps 106–124, `-08-06.md` **THE HARNESS** and 104–105, `-08-05c.md`
+90–103 and the `ENGRAVE` triage table, `-08-05b.md` 71–89, `-08-04c.md` 51–70 and the ladder
+method, `-08-04b.md` 41–50, `-08-03d.md` the ledger 16–40.
+
+**THE STANDING ORDER IS 100% PARITY WITH ABCJS ON EVERY TUNE.**
+
+---
+
+## 🔎 THE HEADLINE: THE PIXEL TABLE IS DOWN TO ONE ROW, AND THE TAIL WAS NEVER "NOT WORK"
+
+| | at the session's start | now |
+|---|---|---|
+| suite | 890 | **890. NO REDS.** |
+| pixel ranked table | 18 of 119, "TEN live rows, nothing above 8.25" | **ONE of 119.** `S8-layout-tune7` at 0.23 |
+| harvested (174) | 0 of 174 | **0 of 174** |
+| ceilings | — | **thirteen LOWERED, none raised** |
+| Bravura glyphs | 112 | 113 — the BREVE |
+
+Nine of the eighteen rows were the block this file's predecessor called *"the whole-note
+OUTLINE and not work"*, asserted at `ox = 0.18` with a paragraph explaining why no placement
+rule could remove it. **Every clause of that paragraph was true and the conclusion was
+wrong** — see finding 141. Eight more closed on ordinary findings.
+
+---
+
+## FINDING 134 — A GRACE DEEPER THAN AN ACCIDENTAL THROWS THE ACCIDENTAL'S HALF-WIDTH AWAY
+
+`abselem.extraw` is a MIN over siblings, and the two writes that touch it are ordered:
+
+```js
+abselem.addExtra(accidental at accPlace)   // if (dx < extraw) extraw = dx
+abselem.extraw -= ret.extraLeft            // half the accidental's width
+…
+addGraceNotes(…)                           // addExtra again — a MIN, which RESETS it
+```
+
+(`create-note-head.js:101`, `abstract-engraver.js:723-725, 834-836`,
+`absolute-element.js:97`.) A grace group always reaches further left than the accidental
+column — its walk starts AT the accidental room and adds 10 per grace — so the `-=` between
+the two steps is thrown away entirely.
+
+We summed it: `headX - x + extraLeft`. A flat **4.125px** on any note carrying BOTH a grace
+group and an accidental, and nothing anywhere else.
+
+`S8-layout` X:807 is 99 heads in three runs of dx 0.00 / 4.12 / 8.25 with **zero spread
+inside each run** and `dy` flat at 0.00 — a pure ORIGIN step, twice. The steps fall at
+`{A}^c2` and `{FGAB}[^c4A4]`, the tune's only two such notes. **The handoff's shape table
+called it right and its guess at the cause did not**: it read "a step at the `\` join" and
+recorded a dead hypothesis about a running `roomtaken`. The step is at the second element of
+line 4, not at the join.
+
+## FINDING 135 — `translateChord` RUNS ON EVERY CHORD SYMBOL AND DROPS WHAT IT CANNOT READ
+
+`add-chord.js:44-45` calls it for anything that is not an annotation, with no `%%jazzchords`
+test — that flag only chooses whether the marker between the pieces is `\x03` or `""`. With
+an empty marker it LOOKS like an identity and is not, because the string is REBUILT:
+
+```js
+let reg = chord.match(/^([ABCDEFG][♯♭]?)?([^\/]+)?(\/([ABCDEFG][#b♯♭]?))?/)
+lines[i] = [reg[1] || "", reg[2] || "", reg[4] ? "/" + reg[4] : ""].join(marker)
+```
+
+`"C6/9"` takes root `C`, modifier `6`, then fails `[ABCDEFG][#b♯♭]?` on `9` — abcjs prints
+`C6`. `"C/E"`, `"D/F#"`, `"G/B"` and `"Am/C"` all keep their bass, which is why a system with
+four slash chords in it hid this until the digit one.
+
+## FINDING 136 — `roomtaken` IS AN ORIGIN, NOT A CHILD
+
+`extraw` only moves under `addExtra` / `addHead` / `addCentered`, so it measures the leftmost
+thing actually ADDED. `roomtaken` is a separate figure saying where the NEXT thing to the
+left should START, and the displacement pass seeds it before the accidental loop:
+
+```js
+if (dir === "down") roomTaken = glyphs.getSymbolWidth(noteSymbol) + 2   // 11.81
+```
+
+With no accidental and no grace, nothing is ever added out there and the element's whole left
+reach is the displaced head's own `shiftheadx` — 8.81 for a unison. Charging the seed made
+every chord holding a second or a unison **3.00px too wide**.
+
+Two terms now, each guarded by whether its own child exists:
+
+```ts
+accidentals.length === 0 ? 0 : accidentalWidth + extraLeft
+graceWidth      === 0 ? 0 : graceWidth + accidentalWidth
+```
+
+`S8-layout-tune5` and **`ragtime-nightingale`** both went EXACT on it — 2009 noteheads, the
+corpus's largest fixture and the oldest number on the table.
+
+**AND THE CANARY HAD TO CHANGE SHAPE, exactly as the test file predicted.** "The gate can
+tell positions apart" asserted ragtime's dx exceeded 1px. Its non-zero end is now a
+deliberate MISMATCH — our `simple-c` render against ragtime's golden — which no fix can
+close. `tunebook-3-tune0` was tried first and does NOT work: eight quarter notes at
+`simple-c`'s own spacing, so the SPREAD is 0.00. **Two different tunes are not automatically
+two different geometries.**
+
+## FINDING 137 — A BELOW ANNOTATION TAKES A LANE OFF THE STAFF'S BOTTOM
+
+The mirror of `anchorAboveStaff`'s chord lane:
+
+```js
+if (staff.specialY.chordHeightBelow) {
+  positionY.chordHeightBelow = staff.bottom;      // where the mark is DRAWN
+  var hgt = staff.specialY.chordHeightBelow;
+  if (staff.specialY.chordLines.below) hgt *= staff.specialY.chordLines.below;
+  staff.bottom -= (hgt + margin);                 // what the staff RESERVES
+}
+```
+
+(`set-upper-and-lower-elements.js:56-61`.) A ladder of four controls on `CEGc`, ink bottom
+−1.0444, against abcjs's instrumented `staff.bottom`:
+
+```
+plain              -1.0444   -1.0444    exact
+"_below"           -6.8237   -5.6159    1.2078 pitch out = 4.68px
+"_below" "_two"   -11.6031  -10.7772    0.8259 pitch out
+"_Wwwwwwwwwwwwww"  -6.8237   -5.6159    LENGTH IRRELEVANT — a FIXED lane
+```
+
+**The fourth rung names the mechanism**: fourteen characters reserve exactly what six do, so
+nothing there is measuring ink.
+
+The margin is BEYOND the drawn box on this side where above it lands inside, so the block is
+spent explicitly as a `reserve` on the texts; they carry a POINT reserve until the pass runs.
+
+**AND THE LANE ORDER HAD TO BE MEASURED.** Three source reads predict the below side is
+upside down from the above one — `setLaneForChord` walks children BACKWARD for
+`chordHeightBelow` and `setLane`'s `invertLane` has its below arm commented out. Instrumenting
+`placeInLane` on `"_p""_dolce"C|` says the opposite:
+
+```
+PROBE lane "p"     -> FIT 0   left=49.05 right=57.96
+PROBE lane "dolce" -> NEW 1   left=49.05 right=87.33
+```
+
+and the SVG agrees, `p` at y 95.79 against `dolce` at 115.79. The reversal was written and
+an existing unit test caught it.
+
+## FINDING 138 — A MELISMA'S `_` IS PART OF THE SYLLABLE ABCJS MEASURES
+
+`addLyric` runs `getTextSize.calc(lyricStr, …)` on the whole string and hands the result to
+`addCentered`, which takes `extraw = -w / 2` (`abstract-engraver.js:769-778`). In strict the
+underscore IS that string — the golden draws one tspan reading `true._`.
+
+We appended it in `layoutMelismas`, after the element's spans were taken: it measured `true.`
+and drew `true._`. **ONE NUMBER COMPUTED IN TWO PLACES WHOSE INPUTS HAD DRIFTED**, the third
+time on this branch after the lyric reserve and `curveReserves`. Both probes:
+
+```
+abcjs   w=21.492  extraw=-21.492
+ours    w=20.828  left= 17.242
+```
+
+and 4.25 is half the 8.5 the golden vocalfont table gives `_`.
+
+## FINDING 139 — `~` AND `R` ARE ABCJS'S `scripts.roll`, 6.125px TALL
+
+The last Bravura metric reachable in strict on the decoration path. `scripts.roll` sat in
+`UNMAPPED_ABCJS`, whose own first paragraph says an absence there is usually the parity
+behaviour — **it is not here.** abcjs HAS the glyph; what it lacks is a SMuFL name that
+claims it, and a decoration is stacked by `symbolHeightInPitches(symbol) + 1`
+(`decoration.js:154-165`), so Bravura's `ornamentTremblement` at 7.564 cost 0.3714 pitch each.
+
+A ladder of six bars put it on ONE bar, then a ladder of eight put it on the glyph:
+
+```
+c2       13.7966  13.7966     exact
+uc2      16.5279  16.5279     exact          — upbow is mapped
+uRc2     19.1085  19.4799     +0.3714        — R is not
+uR~c2    21.6892  22.4319     +0.7427        — and neither is ~
+uR~Mc2   25.2729  26.0156     +0.7427        — mordent adds the same to both
+```
+
+The glyph's x moves 1.27 with it, which is also abcjs's: `symbolDecoration` places a
+non-centre-aligned symbol at `width / 2 - getSymbolWidth(symbol) / 2`, and `getSymbolAlign`
+returns "left" for `scripts.roll` **by name**.
+
+## FINDING 140 — A REST OF EXACTLY ONE WHOLE NOTE TAKES ITS MEASURE'S DURATION
+
+A PARSER rule, and NOT the engraver's:
+
+```js
+if (el.rest && el.rest.type === 'rest' && el.duration === 1 &&
+    durationOfMeasure(multilineVars) <= 1) {
+  el.rest.type = 'whole';
+  el.duration = durationOfMeasure(multilineVars);
+}
+```
+
+(`abc_parse_music.js:549-555`.) Its test is `duration === 1`; the engraver's whole-rest rule
+is `measureLength === duration` (`abstract-engraver.js:812`). **Two different rules that
+agree in 4/4 and part company everywhere else** — we had only the second. `z4` in
+`M:6/8 L:1/4` is one whole note in a three-quarter bar, and abcjs's probe reads `dur=0.75`.
+
+`durationOfMeasure` reads `origMeter`, the HEADER `M:`, and returns 1 when there is none —
+which is `builder.meter` exactly: a mid-tune `M:` goes to `setMeterChange` and never touches
+it.
+
+**AND A DOTTED REST'S DOT WIDENS THE ELEMENT.** The dot was drawn and its rod was not:
+`restInk` only ever knew the glyph. abcjs probes a dotted quarter rest at `w = 14.338`
+against the plain 7.888. It moved NOTHING measurable — the line had slack — so it is landed
+on abcjs's own probe rather than on a fixture.
+
+---
+
+## FINDING 141 — `G8` IS A BREVE, AND NINE "NOT WORK" ROWS WERE A WRONG NOTE VALUE
+
+The table's tail carried eight `ox = 0.18` rows plus `S3-note-syntax-tune12`'s `dx`, asserted
+with this explanation:
+
+> "abcjs's head inks 16.83px wide, Bravura's 15.03, and the two are not left-aligned either.
+> Positions are compared as bounding-box CENTRES, so two differently shaped glyphs at the
+> same origin score a difference no placement rule can remove."
+
+Every clause true. Each of those tunes is `G8` under `L:1/4` — **TWO whole notes** — and
+abcjs indexes `chartable.note[-durlog]` with `durlog = Math.floor(Math.log2(duration))`, so
+it lands on `noteheads.dbl`, a BREVE. We drew a semibreve. **The 16.83 quoted as the evidence
+is `noteheads.dbl`'s own `w`, to the hundredth**; nobody asked whose glyph it was.
+
+**A BOUNDING-BOX CENTRE CANNOT TELL A WRONG GLYPH FROM A DIFFERENTLY SHAPED ONE.** A ranked
+table does need a way to say "measured, and not a defect" or its tail fills with work nobody
+should do — but the note has to rule the first case out before it is written, because once
+written it is the reason the row stops being read.
+
+Three parts: `noteheadDoubleWhole` added to the generator and regenerated (113 glyphs),
+mapped to `noteheads.dbl` and removed from `UNMAPPED_ABCJS`, and `noteGlyph` returns it for a
+base of 2 or more. **Eleven rows became two.**
+
+## FINDING 142 — `K: style=` TAKES EFFECT FROM THE NEXT LINE
+
+The style reaches the drawing as an ELEMENT appended by `createVoice` —
+`if (params.style) self.appendElement('style', null, null, {head: params.style})`
+(`tune-builder.js:963-971`) — and `createVoice` runs from `startNewLine`. `parseKey` sets
+`multilineVars.style` where the field stands and **nothing reads it there**, so the
+granularity is the music LINE, exactly as `%%vocalfont`'s is.
+
+Measured, because the source reads as "applies from here" and the two forms differ. On
+`GAB2 !style=harmonic![gb]4|GAB2 [K: style=harmonic]gbgb|` abcjs draws the `[gb]` as DIAMONDS
+and the four `gbgb` after the `[K:]` as ORDINARY OVAL HEADS — same path data as the `G A B`
+before them, `w = 9.810` each against the diamond's 7.500. **The decoration form
+`!style=harmonic!` is per NOTE and immediate; the field form is per LINE.**
+
+The element x's already matched to the third decimal, which is what said the defect was the
+GLYPH and not the spacing: 1.18 is half the 2.31 between the two heads' inked widths.
+
+A field at the HEAD of a line still applies to that line, because `startNewLine` fires lazily
+once `parseMusicLine` is past the leading inline statements — the same mechanism as findings
+125 and 130. So the test is `appendedSinceLineStart`, and a BARLINE sets it as well as a note.
+
+---
+
+## WHAT MOVED, MEASURED BEFORE AND AFTER OVER ALL 119 TARGETS
+
+Nothing regressed by any amount at any point. Every ceiling that moved went DOWN.
+
+| target | was | now |
+|---|---|---|
+| `S8-layout-tune6` | dx 8.25 ox 3.58 | **0.00 — exact on all four** |
+| `S3-note-syntax-tune24` | dx 6.24 ox 0.11 | **0.00 — exact** |
+| `S8-layout-tune5` | dx 6.20 ox 1.07 | **0.00 — exact** |
+| `ragtime-nightingale` | dx 1.58 ox 0.03 | **0.00 — exact, 2009 heads** |
+| `S2-fields-tune1` | dy 4.68 oy −2.98 | **0.00 — exact** |
+| `S5-directives-tune4` | dx 3.88 ox 0.17 | **0.00 — exact** |
+| `S4-bars-repeats-tune2` | dx 1.17 ox 1.80 | **0.00 — exact** |
+| `S5-directives-tune1` | dx 1.19 dy 0.03 | **0.00 — exact** |
+| `S3-note-syntax-tune12` + eight `G8` tunes | 0.18 | **0.00 — exact** |
+| `S8-layout-tune7` | dy 2.66 oy 1.14 | dy 0.23 oy −0.10 |
+
+---
+
+## WHAT IS LEFT
+
+```
+1 of 119 tunes are off some axis by 0.05px or more
+     0.23  dy=0.23 dx=0.00 oy=-0.10 ox=0.00  58 heads  S8-layout-tune7
+```
+
+### 1. THE GRACE SLUR — a feature we have never had
+
+abcjs hangs a `TieElem` under every grace group unless bagpipes:
+
+```js
+if (i === 0 && !isBagpipes && this.graceSlurs && !isInvisibleRest)
+  voice.addOther(new TieElem({ anchor1: grace, anchor2: notehead, isGrace: true }))
+```
+
+(`abstract-engraver.js:530-533`), and its `getYBounds` box pushes the staff through the
+`TieElem` arm of `setUpperAndLowerVoiceElements`. Measured on the bar alone:
+
+```
+{f}e {C}D {cd}c {E^c}a2 {dedc}d      abcjs bottom -3.0000   ours -1.2000
+```
+
+On the whole tune the low `^C=C_C` bar covers all but 0.0581 pitch of it, which is the 0.23.
+
+**NOTHING IN EITHER GATE CAN SEE THE MISSING CURVE** — the pixel gate counts noteheads and
+the structural one misses everything added by `addOther`. `curveReserves` handles
+`slurStarts` / `slurEnds` / `tiedToNext` and knows nothing about graces; `grep -rn graceSlur
+src/` returns nothing at all.
+
+### 2. `(b4` — a second, smaller curve divergence on the same tune
+
+Found by the same six-bar ladder and not chased: abcjs's staff top for the bar `(b4` alone is
+16.0000 against our 14.0448. It does not reach the fixture because bar 6 dominates.
+
+### 3. THE REMAINING FIXED LANES, then Gonzato, then audio
+
+`dynamicAboveStep`, `dynamicBelowStep`, `annotationAboveStep`, `partStep`, `tempoStep`,
+`lyricStep`. `anchorChordsBelow` (137) is now the second model beside `anchorVoltas`.
+
+### 4. AND ONE THING MEASURED AND NOT CHASED, carried from the last handoff
+
+**Our staff LINES are 40px longer than abcjs's**, and no gate can see it. On
+`ragtime-nightingale` every staff line resolves to `x=350.05 w=700.10` for us against abcjs's
+`x=355.05 w=660.10`. abcjs draws from `getLeftEdgeOfStaff` to the staff group's right edge
+(`draw/staff-group.js:92`); ours spans the whole page width.
+
+---
+
+## THE METHOD, and the two things this session added
+
+1. `npx vitest run tests/pixel-parity.test.ts && cat /tmp/abcts-pixel-ranked.txt`
+2. `npx vitest run tests/corpus-abcjs-ranked.test.ts && cat /tmp/abcts-corpus-ranked.txt`
+3. Per-notehead diff of the top entry — **read the SHAPE**.
+4. Instrument abcjs in the scratchpad copy to answer ONE question.
+5. Read the named function.
+6. Port the structure, then the constants.
+7. **Prove it on a CONTROL TUNE**, and prefer a LADDER.
+
+**ADDED: A LADDER OF BARS, THEN A LADDER INSIDE THE BAR.** Finding 139 took two — six
+controls, one per bar of the system, put a 2.66px error on `uR~M.c2  Hg4`; eight more, one
+per decoration, put it on `R` and `~` and named the glyph. Neither ladder alone would have
+done it, and no diff could have.
+
+**ADDED: A "NOT A DEFECT" NOTE MUST RULE OUT THE WRONG GLYPH FIRST.** Finding 141. The
+evidence that justified nine rows of silence was the wrong glyph's own published width.
+
+---
+
+## VERIFY LOOP
+
+```bash
+cd /Users/lrettberg/ICMLabs/Code/abcts
+git rev-parse --abbrev-ref HEAD       # geometry/vertical
+npx tsc --noEmit
+npx vitest run                        # 890/890
+npx biome check src                   # NOT clean — 1 error, 4 warnings, all PRE-EXISTING
+npm run baseline                      # READ the diff, and MEASURE anything that moved
+git status --short                    # DELETE tests/zz-probe.test.ts before committing
+```
+
+**`../abcMusicKit` IS DIRTY AND IT IS NOT US.** Never commit or revert there.
+
+**`cd` DOES NOT PERSIST, and a `cd` inside a compound command leaves the shell there** — it
+happened four times this session, every time after a `cd /tmp/abcts-probe/abcjs-probe`. Put
+the absolute `cd /Users/lrettberg/ICMLabs/Code/abcts &&` in front of every command.
+**vitest SWALLOWS console.log on a passing test** — `--disableConsoleIntercept`.
+
+The probe test file used all session is kept at `/tmp/abcts-probe/zz-probe.test.ts`; copy it
+to `tests/zz-probe.test.ts` to use it and **delete it before committing**.
