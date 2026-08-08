@@ -18,6 +18,7 @@ method, `-08-04b.md` 41–50, `-08-03d.md` the ledger 16–40.
 | pixel ranked table | 18 of 119, "TEN live rows, nothing above 8.25" | **0 of 119** |
 | harvested (174) | 0 of 174 | **0 of 174** |
 | ceilings | — | **fourteen LOWERED, none raised** |
+| gates | 2 ranked tables | **3** — the staff-line extent gate is new, and it opened with 20 targets |
 | Bravura glyphs | 112 | 113 — the BREVE |
 
 Nine of the eighteen rows were the block this file's predecessor called *"the whole-note
@@ -321,6 +322,49 @@ min over every head on the element and the grace heads are in it. Both ends are 
 `curveReserves`, where the elements are, and stamped on the anchor: the same merge
 `slurFixed` makes.
 
+## FINDING 144 — A THIRD GATE: THE STAFF LINES' OWN LENGTH
+
+The two ranked tables were empty, so this is the first finding that had to build its own
+instrument. Nothing could see the axis — the pixel gate compares NOTEHEADS, the line-weight
+gate reads a rule's THICKNESS, the baselines say CHANGED and never WRONG. The line weights'
+lesson, a second time: **a comparison can only catch what its representation can express.**
+
+`draws its staff lines the length abcjs draws them` compares the top line's resolved
+bounding-box centre per target. The last handoff recorded ONE fixture off. **It was TWENTY**,
+and they sorted into abcjs's two terms exactly: a flat **5.00** wherever there is a BRACE
+(`setBraceLocation` adds its own 10px width, so the centre moves 5), and **40–46** wherever
+there is a VOICE HEADER (the widest `voicefont` string plus the width of an "A").
+
+Nineteen closed on one line. abcjs draws from `staffGroup.startx` to `staffGroup.w` —
+`getLeftEdgeOfStaff` and `totalWidth + leftEdge` (`draw/staff-group.js:92`,
+`layout/layout-in-grid.js:13-14`) — so the left end clears the voice headers and the brace
+and the right end stops at the LAST ELEMENT, not at the page margin and not at a title
+overhanging it. `staffLinesFor` took `0` to `width` and was wrong at both ends.
+
+**AND THE TWO ERRORS CANCELLED ON MOST OF THE CORPUS.** Where `leftEdge` is just `marginX`
+and the system width is just `musicWidth`, `0 → marginX + solvedWidth` has the same CENTRE
+as `marginX → solvedWidth`. 21 of the 41 agreed, and the defect only surfaced on a brace, a
+voice name, or prose wider than the music. Every one of the 41 baselines moved and nothing
+in them but `staffline` rows did.
+
+## FINDING 145 — AN UNCLOSED SLUR STILL RESERVES
+
+`voice.addOther(this)` runs where the `(` is seen, so a `TieElem` whose `)` never arrives is
+on the voice like any other. `getYBounds` falls past its two-anchor arm to
+`else if (this.anchor1) this.startY = this.endY = this.anchor1.pitch`
+(`tie-element.js:203-206`) and takes the flat 3. Ours dropped it — `open.pop()` is only read
+on a matching `slurEnds`.
+
+```
+b4          14.0448   14.0448     exact — the notehead's own ink
+(b4         16.0000   14.0448     ← 13 + 3, and we reserved nothing
+(b4 b4)     17.0000   17.0000     exact — a closed slur was always right
+```
+
+**Its INK box is NOT taken**, and that is the part worth writing down: `this.top =
+max(anchor1.pitch, anchor2.pitch) + 4` is set in `setEndAnchor`, which never runs. The two
+boxes a curve declares are spent in different places and only one of them exists here.
+
 ---
 
 ## WHAT IS LEFT — AND NO GATE CAN NAME IT ANY MORE
@@ -334,33 +378,50 @@ Every fixture in both corpora agrees with abcjs on all four geometric axes to wi
 **So findings now come only from READING abcjs and proving on a control**, and the two
 things already measured and not chased are the place to start.
 
-### 1. THE STAFF LINES — A THIRD GATE, BUILT, AND IT NAMES TWENTY TARGETS
+### 1. AN ABOVE DYNAMIC IS DRAWN AT A FIXED STEP — measured, not fixed
 
-Nothing measured this axis: the pixel gate compares NOTEHEADS, the line-weight gate reads a
-rule's THICKNESS, the baselines say CHANGED and never WRONG. **A comparison can only catch
-what its representation can express** — the line weights' lesson, a second time.
+**Its staff EXTENT is exact and its own y is ~29px out**, which is why nothing has ever
+seen it: the pixel gate compares noteheads, and a dynamic is not one.
 
-`draws its staff lines the length abcjs draws them` compares the top line's resolved
-bounding-box centre per target. The previous handoff recorded ONE fixture off. It is twenty,
-and they sort into abcjs's two terms exactly: a flat **5.00** wherever there is a BRACE (its
-own width is 10px, so the centre moves 5), and **40–46** wherever there is a VOICE HEADER
-(the widest `voicefont` string plus the width of an "A"). `two-voice-invention` is two
-staves with NEITHER and is exact.
+`ENGRAVE.dynamicAboveStep: 19.5` is the last lane constant that does not cancel. `partStep`,
+`tempoStep`, `lyricStep`, `annotationAboveStep` and `dynamicBelowStep` are all reference
+points their anchor pass shifts FROM — `anchorAboveStaff`, `anchorLyrics` and
+`anchorBelowStaff` between them place chord symbols, annotations, part labels, tempo marks,
+lyrics and BELOW dynamics on the music's own ink. Nothing places an ABOVE dynamic.
 
-**THE NUMBER THE FIX NEEDS ALREADY EXISTS.** All twenty are exact on all four notehead axes,
-so the MUSIC already sits at the right edge: `const leftEdge = ENGRAVE.marginX + indent`,
-whose own comment says "abcjs's `getLeftEdgeOfStaff`". Only `staffLinesFor(width, count)` is
-wrong — `x1: 0, x2: width` where abcjs draws `startx` to `startx + totalWidth`. `leftEdge`
-lives inside the solver and the call site is in the system-placement pass, so carrying it
-out is the whole of the work.
+A ladder of four controls, all with a `w:` line so abcjs puts dynamics above (`hasVocals`,
+`decoration.js:379`):
 
-### 2. `(b4` — AN UNCLOSED SLUR STILL RESERVES
+```
+                staff top          top line y        the MARK
+  CDEF          13.7244  exact     64.12  exact      —
+  !mf!CDEF      20.7244  exact     64.12  exact      abcjs path starts y 29.15, ours y -0.07
+  !mf!c'DEF     22.0444  exact     69.23  exact      abcjs path starts y 29.15, ours y  5.05
+  c'DEF         15.0444  exact     69.23  exact      —
+```
 
-Turned up by finding 139's six-bar ladder and not chased. abcjs's staff top for the bar
-`(b4` alone is 16.0000 against our 14.0448: `b` is pitch 13, and `getYBounds` with only
-`anchor1` gives `startY = endY = anchor1.pitch` and then `top = bottom + 3` — 16 exactly.
-Our `curveReserves` drops a slur whose `)` never arrives. It does not reach any fixture,
-because in the real tune the slur closes two bars later.
+**Ours is a CONSTANT 64.18px above the top line and abcjs's is not** — abcjs's mark stays at
+the same absolute y while the staff moves down under it, which is what pinning to the top of
+the reserved lane looks like. On the second rung ours lands at y ≈ 0 and is clipped off the
+page.
+
+`set-upper-and-lower-elements.js:39-46` is the rule: the lane goes on `staff.top`, then
+`positionY.dynamicHeightAbove = staff.top` and the mark draws there.
+
+**THE FIX IS THE ORDERING, NOT THE ARITHMETIC.** abcjs stacks above in the order chord,
+ending, dynamic, part, tempo. Ours spends chord/part/tempo in `anchorAboveStaff` and the
+ending and dynamic lanes in `verticalExtent` — so the staff's TOTAL is right either way and
+only the mark's own y is wrong. `anchorBelowStaff` is the model for the cheap version (it
+takes `verticalExtent(...).bottom` minus its own lane and shifts); the honest version moves
+both lanes into `anchorAboveStaff`'s stack, which that function's own `ponytail:` note has
+been asking for since finding 93.
+
+### 2. `S3-note-syntax-tune13`'s LAST 0.26px OF STAFF LINE
+
+The staff-line gate opened with twenty targets and nineteen closed. What is left is 0.26px
+of centre — 0.52 of span — on a tune that is nothing but rests: our right end is half a
+pixel short of abcjs's `staffGroup.w`. Every notehead is exact and both ranked tables are
+empty, which puts it on the justification TARGET at the right edge. Unexamined.
 
 ### 3. THE REMAINING FIXED LANES, then Gonzato, then audio
 

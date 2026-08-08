@@ -270,9 +270,14 @@ gate had been comparing abcjs's outline START against our glyph ORIGIN, a 4px bi
 41/41 with zero recorded divergences.** `geometry/vertical` is **890/890 with NO reds**, and
 **BOTH ranked tables are EMPTY** — 0 of 119 pixel targets and 0 of 174 harvested fixtures off
 any axis by 0.05px or more. `ragtime-nightingale` — 2009 noteheads, the corpus's largest
-fixture — is EXACT on all four. **So no gate can name the next defect**, and the two things
-already MEASURED and not chased are where to start: the staff-line width (which needs a gate
-of its own before it is touched) and the unclosed-slur reserve. See the handoff.
+fixture — is EXACT on all four. **So no gate can name the next defect** — and when that happened the answer
+was to BUILD ONE: `draws its staff lines the length abcjs draws them` measures an axis
+nothing could express, opened with TWENTY targets where the handoff had recorded one, and
+nineteen closed on a single line. The two errors had been CANCELLING on 21 of the 41
+fixtures, which is why no number ever moved. **When every gate is quiet, ask what none of
+them can represent.** What is left is measured and named in the handoff: an ABOVE dynamic
+drawn at a fixed step (its staff extent exact, its own y ~29px out and clipped off the page)
+and 0.26px of one staff line.
 pushed, and the AUDIT FINDING IS CLOSED — no Bravura figure is reachable in strict. The
 harvested corpus is **10 of 174 off some axis**, from 34 at the start of 2026-08-05, with
 **nothing above 0.93px** and every measurable fixture inside one pixel. Two ceilings are
