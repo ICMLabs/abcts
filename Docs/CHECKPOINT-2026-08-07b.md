@@ -334,18 +334,25 @@ Every fixture in both corpora agrees with abcjs on all four geometric axes to wi
 **So findings now come only from READING abcjs and proving on a control**, and the two
 things already measured and not chased are the place to start.
 
-### 1. OUR STAFF LINES ARE 40px LONGER THAN ABCJS'S — measured, not started
+### 1. THE STAFF LINES — A THIRD GATE, BUILT, AND IT NAMES TWENTY TARGETS
 
-No gate can see it: the pixel gate compares noteheads, the line-weight gate reads THICKNESS
-only, and the baselines say CHANGED and never WRONG. On `ragtime-nightingale` every staff
-line resolves to `x=350.05 w=700.10` for us against abcjs's `x=355.05 w=660.10` — ours spans
-0 → 700.1 where abcjs's spans 25 → 685.1.
+Nothing measured this axis: the pixel gate compares NOTEHEADS, the line-weight gate reads a
+rule's THICKNESS, the baselines say CHANGED and never WRONG. **A comparison can only catch
+what its representation can express** — the line weights' lesson, a second time.
 
-abcjs draws from `params.startx` to `params.w` (`draw/staff-group.js:92` → `draw/staff.js`),
-where `startx` is `getLeftEdgeOfStaff` — `padding.left` plus the voice-name and brace
-reservation — and `w` is the staff group's right edge. Ours appears to span the whole page.
-**It needs a gate of its own before it is fixed**, since nothing existing would catch a
-regression.
+`draws its staff lines the length abcjs draws them` compares the top line's resolved
+bounding-box centre per target. The previous handoff recorded ONE fixture off. It is twenty,
+and they sort into abcjs's two terms exactly: a flat **5.00** wherever there is a BRACE (its
+own width is 10px, so the centre moves 5), and **40–46** wherever there is a VOICE HEADER
+(the widest `voicefont` string plus the width of an "A"). `two-voice-invention` is two
+staves with NEITHER and is exact.
+
+**THE NUMBER THE FIX NEEDS ALREADY EXISTS.** All twenty are exact on all four notehead axes,
+so the MUSIC already sits at the right edge: `const leftEdge = ENGRAVE.marginX + indent`,
+whose own comment says "abcjs's `getLeftEdgeOfStaff`". Only `staffLinesFor(width, count)` is
+wrong — `x1: 0, x2: width` where abcjs draws `startx` to `startx + totalWidth`. `leftEdge`
+lives inside the solver and the call site is in the system-placement pass, so carrying it
+out is the whole of the work.
 
 ### 2. `(b4` — AN UNCLOSED SLUR STILL RESERVES
 

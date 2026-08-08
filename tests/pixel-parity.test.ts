@@ -684,6 +684,90 @@ describe('pixel parity vs abcjs rendered SVG', () => {
     }
   })
 
+  /**
+   * THE STAFF LINES' HORIZONTAL EXTENT, which NOTHING measured until now.
+   *
+   * The pixel gate compares NOTEHEADS, the line-weight gate reads a rule's THICKNESS, and
+   * the baselines say CHANGED and never WRONG — so a staff line drawn to the wrong length
+   * was invisible to every axis this repo has. It is the same blind spot the line weights
+   * sat in for months, and the same lesson: **a comparison can only catch what its
+   * representation can express.**
+   *
+   * abcjs draws from `staffGroup.startx` to `staffGroup.w` (`draw/staff-group.js:92` →
+   * `draw/staff.js`), where `startx` is `getLeftEdgeOfStaff` — `padding.left`, plus the
+   * widest voice header, plus the brace's or bracket's own width — and `w` is
+   * `totalWidth + leftEdge` (`layout/layout-in-grid.js:13-14`).
+   *
+   * Compared as the top line's bounding-box CENTRE, which is what `byClass` gives and is
+   * enough: a span differing at either end moves it. 40 of the 41 fixtures agree exactly.
+   *
+   * TWENTY DO NOT, and they sort into abcjs's two terms exactly:
+   *
+   *   • a flat **5.00** — every `S7-voices` tune, both ragtimes — is a BRACE, whose own
+   *     width `setBraceLocation` adds to the left edge, 10px of it, so the centre moves 5;
+   *   • **40–46** — `ave-verum-corpus`, `zocharti-loch`, `score-reorder`,
+   *     `brother-john-inline-voices` — is a VOICE HEADER, the widest `voicefont` string
+   *     plus the width of an "A".
+   *
+   * `two-voice-invention` is two staves with NEITHER and is exact, which is what puts this
+   * on `getLeftEdgeOfStaff` rather than on multi-staff layout. On `ragtime-nightingale`
+   * ours spans 0 → 700.10 against abcjs's 25 → 685.10.
+   *
+   * THE NOTEHEADS ON ALL TWENTY ARE EXACT, so the MUSIC already sits at the right edge —
+   * `leftEdge = ENGRAVE.marginX + indent` in the solver, which IS `getLeftEdgeOfStaff`.
+   * Only `staffLinesFor(width, …)` is wrong: it draws every rule from 0 to the system
+   * width where abcjs draws `startx` to `startx + totalWidth`.
+   *
+   * Recorded rather than fixed, exactly as a ceiling is: the list cannot now grow while it
+   * is being closed, and it FAILS if it shrinks. See the handoff.
+   */
+  it('draws its staff lines the length abcjs draws them', () => {
+    const off: string[] = []
+    for (const target of withGoldens) {
+      const golden = byClass(
+        absolutePixels(readFileSync(join(goldensDir, `${target.key}.svg`), 'utf-8')),
+        'top-line',
+      )
+      const ours = byClass(
+        absolutePixels(
+          renderAbc('paper', readFileSync(join(corpusDir, `${target.fixture}.abc`), 'utf-8'), {})[
+            target.tune
+          ]?.svg ?? '',
+        ),
+        'top-line',
+      )
+      expect(ours.length, `${target.key} staff count`).toBe(golden.length)
+      const worst = Math.max(
+        0,
+        ...golden.map((g, i) => Math.abs((ours[i]?.x ?? 0) - g.x)),
+      )
+      if (worst >= EPSILON) off.push(`${target.key} ${worst.toFixed(2)}`)
+    }
+    // THE KNOWN FAILURES, with their exact figures. A ceiling, not a tolerance.
+    expect(off).toEqual([
+      'S2-fields-tune1 5.50',
+      'S3-note-syntax-tune13 0.26',
+      'S3-note-syntax-tune15 4.13',
+      'S3-note-syntax-tune16 64.42',
+      'S7-voices-tune0 5.00',
+      'S7-voices-tune1 5.00',
+      'S7-voices-tune2 5.00',
+      'S7-voices-tune3 5.01',
+      'S7-voices-tune4 5.00',
+      'S7-voices-tune5 42.08',
+      'S7-voices-tune6 5.01',
+      'ave-verum-corpus 41.87',
+      'brother-john-inline-voices 41.58',
+      'curves-tune5 19.02',
+      'ragtime-mini 5.00',
+      'ragtime-nightingale 5.01',
+      'score-reorder-shared 41.09',
+      'score-reorder 45.36',
+      'stacked-annotations 13.41',
+      'zocharti-loch 40.87',
+    ])
+  })
+
   it('writes the ranked table', () => {
     const rows = withGoldens
       .map((target) => ({ key: target.key, ...measure(target) }))
