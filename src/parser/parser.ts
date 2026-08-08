@@ -3068,6 +3068,12 @@ class Parser {
           // zero-pitch chord into the stream.
           if (built.chord.pitches.length > 0) {
             voice().noteMeasureStart(token.start)
+            // AFTER whatever was written before the `[` — abcjs pushes onto the same
+            // `el.decoration` the outer ones are already on, so the order is source order.
+            for (const d of built.innerDecorations) {
+              pending.decorations.push(d)
+              pending.decorationSourceRanges.push(sourceRange(token.start, token.start + 1))
+            }
             emit(built.chord)
           }
           i = built.next
@@ -3471,12 +3477,28 @@ class Parser {
     tokens: readonly Token[],
     index: number,
     builder: ScoreBuilder,
-  ): { chord: Chord; next: number } {
+  ): { chord: Chord; next: number; innerDecorations: string[] } {
     const open = tokens[index] as Token
     const pitches: Pitch[] = []
     const innerMultipliers: Rational[] = []
     let accidental: Accidental | null = null
     let i = index + 1
+    /**
+     * A DECORATION INSIDE A CHORD MODIFIES THE WHOLE CHORD, and its POSITION is data.
+     *
+     * abcjs pushes it onto `el.decoration` — the chord's own list, "if we found a
+     * decoration above, it modifies the entire chord" (`abc_parse_music.js:356-363`) —
+     * with only `style=` going to the individual pitch. So `[!pppp!c!ffff!D]` is one chord
+     * carrying two dynamics, and the flattener then zips that list against the SORTED
+     * pitches by index: decoration 0 sets the volume of the lowest note. `volume-in-chords`
+     * is that tune and nothing else in either corpus writes one.
+     *
+     * Held back until a note actually follows, because abcjs keeps the accent only inside
+     * `if (chordNote !== null && chordNote.pitch !== undefined)` — a trailing `[ce!p!]`
+     * fails its `getCoreNote` and the accent is discarded.
+     */
+    const innerDecorations: string[] = []
+    let pendingInner: string[] = []
 
     while (i < tokens.length && (tokens[i] as Token).kind !== 'closeBracket') {
       const token = tokens[i] as Token
@@ -3490,11 +3512,15 @@ class Parser {
         const length = this.readLength(tokens, head.next)
         pitches.push(head.pitch)
         innerMultipliers.push(length.factor)
+        innerDecorations.push(...pendingInner)
+        pendingInner = []
         accidental = null
         i = length.next
         continue
       }
-      i++ // ponytail: decorations and chord symbols inside `[…]` are skipped for now.
+      const decoration = this.chordDecoration(token, builder)
+      if (decoration !== null) pendingInner.push(decoration)
+      i++ // ponytail: chord symbols inside `[…]` are still skipped.
     }
     if ((tokens[i] as Token | undefined)?.kind === 'closeBracket') i++
 
@@ -3537,7 +3563,26 @@ class Parser {
         sourceRange: sourceRange(open.start, last.start + last.length),
       },
       next: post.next,
+      innerDecorations,
     }
+  }
+
+  /** The decoration a token inside `[…]` names, or `null` if it names none. */
+  private chordDecoration(token: Token, builder: ScoreBuilder): string | null {
+    if (token.kind === 'decoration') {
+      const name = this.src.slice(token.start + 1, token.start + token.length - 1)
+      // `style=` goes on the individual PITCH and `class=` on the element group — abcjs
+      // excludes both from `el.decoration` by the same test it uses outside a chord.
+      if (name.startsWith('style=') || name.startsWith('class=')) return null
+      if (isStrict(this.mode) && !ABCJS_KNOWN_DECORATIONS.has(decorationLookupName(name))) {
+        return null
+      }
+      return name
+    }
+    if (token.kind === 'unknown') {
+      return builder.userSymbols.get(token.aux) ?? DECORATION_SHORTHAND[token.aux] ?? null
+    }
+    return null
   }
 
   private buildRest(

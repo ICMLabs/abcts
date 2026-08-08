@@ -1122,6 +1122,8 @@ export function flattenAudio(
     let stress: [number, number, number] = [105, 95, 85]
     /** Per-note increment while a hairpin is open; 0 when none is. */
     let hairpin = 0
+    /** `volumesPerNotePitch` — one stress table per pitch of a chord. Empty when none. */
+    let perPitch: readonly (readonly [number, number, number])[] = []
     let currentKey = score.key
     for (const [index, item] of timed.entries()) {
       const decorations = item.decorations.map(canonical)
@@ -1138,6 +1140,23 @@ export function flattenAudio(
       const named = DYNAMIC_ORDER.find((d) => decorations.includes(d))
       if (named !== undefined) {
         stress = [...(DYNAMIC_VOLUMES[named] as readonly [number, number, number])]
+        /**
+         * A CHORD CAN CARRY ONE DYNAMIC PER NOTE — `volumesPerNotePitch`.
+         *
+         * `setDynamics` rebuilds it whenever a dynamic is seen at all, from the element's
+         * decorations filtered to the ones that ARE dynamics
+         * (`abc_midi_sequencer.js:458-468`), and `writeNote` then looks it up BY PITCH
+         * INDEX: `if (!ret.velocity && elem.decoration.length > i) processVolume(…, i)`.
+         * So the list is zipped against the SORTED pitches positionally — decoration 0
+         * belongs to the lowest note, whatever it was written next to. `[!pppp!c!ffff!D]`
+         * plays its D at 10 and its c at 125, which reads backwards until you know that.
+         *
+         * It is NOT moved by a hairpin: only the plain table is, because abcjs rebuilds
+         * this one solely at a dynamic.
+         */
+        perPitch = decorations
+          .filter((d) => DYNAMIC_VOLUMES[d] !== undefined)
+          .map((d) => DYNAMIC_VOLUMES[d] as readonly [number, number, number])
         hairpin = 0
       }
       if (decorations.includes('crescendo(')) {
@@ -1309,8 +1328,23 @@ export function flattenAudio(
         mainStart = start + mainDuration
       }
 
-      for (const written of pitches) {
+      for (const [pitchIndex, written] of pitches.entries()) {
         const transpose = transposeOf(item)
+        // The per-pitch volume, and abcjs's guard is on the DECORATION count rather than
+        // on `volumesPerNotePitch`'s: `elem.decoration.length > i` decides whether to
+        // recompute, `volumesPerNotePitch.length >= i+1` decides whether the recomputation
+        // uses a different table. An accent (`ret.velocity`) suppresses the whole path.
+        const pitchVolume =
+          mods.velocity === undefined && decorations.length > pitchIndex
+            ? stressVolume(
+                start,
+                lastBarTime,
+                meter,
+                pickupLength,
+                voiceOff,
+                perPitch[pitchIndex] ?? stress,
+              )
+            : (mods.velocity ?? volume)
         // `%%MIDI drummap B 38` — the PARSER stamps this onto the note in abcjs
         // (`abc_parse_music.js:1127-1134`) and `adjustPitch` then returns it OUTRIGHT:
         // `if (note.midipitch !== undefined) return note.midipitch` — no key signature, no
@@ -1322,7 +1356,7 @@ export function flattenAudio(
           const drum: MidiNote = {
             cmd: 'note',
             pitch: mapped,
-            volume: mods.velocity ?? volume,
+            volume: pitchVolume,
             start: mainStart,
             duration: mainDuration,
             instrument: voiceProgram,
@@ -1362,7 +1396,7 @@ export function flattenAudio(
         const event: MidiNote = {
           cmd: 'note',
           pitch,
-          volume: mods.velocity ?? volume,
+          volume: pitchVolume,
           start: mainStart,
           duration: mainDuration,
           instrument: voiceProgram,

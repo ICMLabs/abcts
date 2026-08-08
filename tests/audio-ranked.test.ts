@@ -98,6 +98,7 @@ const PASSING: readonly string[] = [
   'overlay-repeat',
   'repeat-3',
   'volume-crash',
+  'volume-in-chords',
 ]
 
 interface Diff {
