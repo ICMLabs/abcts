@@ -365,6 +365,40 @@ b4          14.0448   14.0448     exact — the notehead's own ink
 max(anchor1.pitch, anchor2.pitch) + 4` is set in `setEndAnchor`, which never runs. The two
 boxes a curve declares are spent in different places and only one of them exists here.
 
+## FINDING 146 — AN ABOVE DYNAMIC SITS ON THE LANE, NOT AT A FIXED STEP
+
+The last lane constant nothing shifted from. Four controls, all with a `w:` line so abcjs
+raises dynamics (`hasVocals`, `decoration.js:379`): the staff EXTENT was exact on every one
+— which is why no gate could see it. The staff reserved the right room and drew the mark a
+CONSTANT 64.18px above the top line, where abcjs's stays at the same ABSOLUTE y while the
+staff moves down under it. On `!mf!CDEF` ours landed at y ≈ 0, clipped off the page.
+
+**THE TWO SIDES DRAW AT OPPOSITE EDGES OF THEIR OWN LANE**, which is why it is a separate
+pass and not a branch of `anchorBelowStaff`:
+
+```js
+// above — incTop, so the mark is at the top AFTER the increment
+staff.top += height + margin;  positionY.dynamicHeightAbove = staff.top;
+// below — the mark is at the bottom BEFORE it
+positionY.volumeHeightBelow = staff.bottom;  staff.bottom -= (height + margin);
+```
+
+**AND THE ONE BASELINE THAT MOVED WAS THE FIXTURE THE CONSTANT WAS FITTED TO.**
+`multi-voice-lyrics-two-voices`, whose `ENGRAVE` comment reads "60px above the top line, box
+centre 35.9". It moved ONTO the rule. abcjs's path start minus our bbox centre — the only
+quantity comparable across the two, since abcjs composes `p` and `mf` from letter glyphs
+where we draw Bravura's precomposed ones:
+
+```
+                    old      new
+controls (mf)      29.20    10.71
+this fixture (p)   -4.65     8.85
+```
+
+**The old constant disagreed with itself by 34px between two fixtures**; the new derivation
+agrees to within the two glyphs' own shapes. A constant fitted to one fixture reads as
+measured and is not — the same shape as finding 141's "not work" note.
+
 ---
 
 ## WHAT IS LEFT — AND NO GATE CAN NAME IT ANY MORE
@@ -378,55 +412,25 @@ Every fixture in both corpora agrees with abcjs on all four geometric axes to wi
 **So findings now come only from READING abcjs and proving on a control**, and the two
 things already measured and not chased are the place to start.
 
-### 1. AN ABOVE DYNAMIC IS DRAWN AT A FIXED STEP — measured, not fixed
-
-**Its staff EXTENT is exact and its own y is ~29px out**, which is why nothing has ever
-seen it: the pixel gate compares noteheads, and a dynamic is not one.
-
-`ENGRAVE.dynamicAboveStep: 19.5` is the last lane constant that does not cancel. `partStep`,
-`tempoStep`, `lyricStep`, `annotationAboveStep` and `dynamicBelowStep` are all reference
-points their anchor pass shifts FROM — `anchorAboveStaff`, `anchorLyrics` and
-`anchorBelowStaff` between them place chord symbols, annotations, part labels, tempo marks,
-lyrics and BELOW dynamics on the music's own ink. Nothing places an ABOVE dynamic.
-
-A ladder of four controls, all with a `w:` line so abcjs puts dynamics above (`hasVocals`,
-`decoration.js:379`):
-
-```
-                staff top          top line y        the MARK
-  CDEF          13.7244  exact     64.12  exact      —
-  !mf!CDEF      20.7244  exact     64.12  exact      abcjs path starts y 29.15, ours y -0.07
-  !mf!c'DEF     22.0444  exact     69.23  exact      abcjs path starts y 29.15, ours y  5.05
-  c'DEF         15.0444  exact     69.23  exact      —
-```
-
-**Ours is a CONSTANT 64.18px above the top line and abcjs's is not** — abcjs's mark stays at
-the same absolute y while the staff moves down under it, which is what pinning to the top of
-the reserved lane looks like. On the second rung ours lands at y ≈ 0 and is clipped off the
-page.
-
-`set-upper-and-lower-elements.js:39-46` is the rule: the lane goes on `staff.top`, then
-`positionY.dynamicHeightAbove = staff.top` and the mark draws there.
-
-**THE FIX IS THE ORDERING, NOT THE ARITHMETIC.** abcjs stacks above in the order chord,
-ending, dynamic, part, tempo. Ours spends chord/part/tempo in `anchorAboveStaff` and the
-ending and dynamic lanes in `verticalExtent` — so the staff's TOTAL is right either way and
-only the mark's own y is wrong. `anchorBelowStaff` is the model for the cheap version (it
-takes `verticalExtent(...).bottom` minus its own lane and shifts); the honest version moves
-both lanes into `anchorAboveStaff`'s stack, which that function's own `ponytail:` note has
-been asking for since finding 93.
-
-### 2. `S3-note-syntax-tune13`'s LAST 0.26px OF STAFF LINE
+### 1. `S3-note-syntax-tune13`'s LAST 0.26px OF STAFF LINE
 
 The staff-line gate opened with twenty targets and nineteen closed. What is left is 0.26px
 of centre — 0.52 of span — on a tune that is nothing but rests: our right end is half a
 pixel short of abcjs's `staffGroup.w`. Every notehead is exact and both ranked tables are
 empty, which puts it on the justification TARGET at the right edge. Unexamined.
 
-### 3. THE REMAINING FIXED LANES, then Gonzato, then audio
+### 2. THE FIXED LANES ARE DONE — then Gonzato, then audio
 
-`dynamicAboveStep`, `dynamicBelowStep`, `annotationAboveStep`, `partStep`, `tempoStep`,
-`lyricStep`. `anchorChordsBelow` (137) is now the second model beside `anchorVoltas`.
+`dynamicAboveStep` was the last one nothing shifted from (146). Every remaining `*Step`
+constant is a reference point its anchor pass shifts FROM and cancels:
+`anchorLyrics`, `anchorAboveStaff`, `anchorChordsBelow`, `anchorDynamicsAbove`,
+`anchorBelowStaff`, `anchorVoltas` — six passes, each re-deriving the ink.
+
+**THAT is the next structural job**: abcjs spends every above lane in ONE loop, in the order
+chord, ending, dynamic, part, tempo, and we spend them in four places. The staff's TOTAL is
+right either way, so no gate can see it; what differs is which lane a mark lands in when a
+staff carries two of them. `anchorAboveStaff`'s own `ponytail:` note has asked for it since
+finding 93 and finding 146 added the third caller waiting on it.
 
 ---
 
