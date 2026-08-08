@@ -228,6 +228,188 @@ function keyAccidentals(key: KeySignature): number[] {
   return out
 }
 
+/**
+ * THE REPEAT RESOLVER — abcjs's `synth/repeats.js`, in MEASURES rather than elements.
+ *
+ * Two passes. The first records only the INTERESTING bars into `sections`, seeded with a
+ * `startRepeat` at -1 so a `:|` with no `|:` before it repeats from the start of the tune.
+ * The second folds those into `{common, endings[]}` spans and emits them.
+ *
+ * THE EMIT RULE IS THREE CASES and they are not the same shape: no `endings` at all copies
+ * the common span ONCE; an EMPTY `endings` copies it TWICE — that is a plain `|: … :|`;
+ * a non-empty `endings` copies the common span and then that ending, once per ending.
+ *
+ * AND THE `endings` ARRAY IS SPARSE, indexed by the ENDING NUMBER rather than packed. That
+ * is what makes `|1,3` and `|2,4` interleave: `|1,3` fills slots 1 and 3 with the same span
+ * and `|2,4` fills 2 and 4, so walking the array in index order gives the four passes in the
+ * right order. Packing it would give 1,3,2,4.
+ *
+ * TWO `:|` IN A ROW is a notation error and abcjs recovers by pretending there was a
+ * `startRepeat` immediately before the second — `no-start-repeat-repeat` is that tune.
+ */
+interface Section {
+  readonly type: 'startRepeat' | 'endRepeat' | 'startEnding'
+  readonly index: number
+  readonly endings?: readonly number[]
+}
+
+/** `"1"`, `"1,3"`, `"1-3"` — anything that is not a number at all is skipped. */
+function endingNumbers(volta: string): number[] {
+  const nums: number[] = []
+  if (volta.includes(',')) {
+    for (const part of volta.split(',')) {
+      const n = Number.parseInt(part, 10)
+      if (n > 0) nums.push(n)
+    }
+  } else if (volta.indexOf('-') > 0) {
+    const [a, b] = volta.split('-')
+    const from = Number.parseInt(a ?? '', 10)
+    const to = Number.parseInt(b ?? '', 10)
+    for (let i = from; i <= to; i += 1) if (i > 0) nums.push(i)
+  } else {
+    const n = Number.parseInt(volta, 10)
+    if (n > 0) nums.push(n)
+  }
+  return nums
+}
+
+function resolveRepeats<
+  M extends {
+    readonly openingBarline: unknown
+    readonly closingBarline: unknown
+    readonly volta: string | null
+  },
+>(measures: readonly M[]): readonly M[] {
+  // INDEXED BY BARLINE, NOT BY MEASURE, and that is the whole of the translation. abcjs
+  // records a bar ELEMENT's position; bar k sits between measure k-1 and measure k, so a
+  // section that STARTS there starts at measure k and one that ENDS there ends at k-1. One
+  // bar is a `::` — an end AND a start — which is exactly why abcjs handles them in that
+  // order on a single element, and why iterating measures instead of bars puts a volta's
+  // `startEnding` after the `endRepeat` of the same measure and unrolls the wrong span.
+  const lastIndex = measures.length - 1
+  const sections: Section[] = [{ type: 'startRepeat', index: 0 }]
+  for (let k = 1; k <= measures.length; k += 1) {
+    const before = measures[k - 1]
+    const after = measures[k]
+    const closes = before?.closingBarline === 'repeatEnd' || before?.closingBarline === 'repeatBoth'
+    const opens = after?.openingBarline === 'repeatStart' || after?.openingBarline === 'repeatBoth'
+    if (closes) {
+      // Two `:|` in a row is a notation error; abcjs recovers by pretending there was a
+      // `startRepeat` right before the second. `no-start-repeat-repeat` is that tune.
+      const last = sections[sections.length - 1]
+      if (last !== undefined && last.type === 'endRepeat') {
+        sections.push({ type: 'startRepeat', index: last.index })
+      }
+      sections.push({ type: 'endRepeat', index: k })
+    }
+    if (opens) sections.push({ type: 'startRepeat', index: k })
+    if (after?.volta != null) {
+      const endings = endingNumbers(after.volta)
+      if (endings.length > 0) sections.push({ type: 'startEnding', index: k, endings })
+    }
+  }
+
+  const lastSection = sections[sections.length - 1]
+  if (
+    lastSection !== undefined &&
+    lastSection.type !== 'startRepeat' &&
+    lastSection.index <= lastIndex
+  ) {
+    sections.push({ type: 'startRepeat', index: lastSection.index })
+  }
+  if (sections.length < 2) return measures
+
+  interface Repeat {
+    common: { start: number; end?: number }
+    endings?: ({ start: number; end?: number } | undefined)[]
+  }
+  const instructions: Repeat[] = []
+  let current: Repeat | null = null
+  sections.forEach((section, i) => {
+    switch (section.type) {
+      case 'startRepeat': {
+        if (current !== null) {
+          if (current.common.end === undefined) current.common.end = section.index - 1
+          for (const e of current.endings ?? []) {
+            if (e !== undefined && e.end === undefined && e.start !== section.index) {
+              e.end = section.index - 1
+            }
+          }
+          // A trailing `:|` after endings means one more bare pass of the common span.
+          if (
+            sections[i - 1]?.type === 'endRepeat' &&
+            current.endings !== undefined &&
+            current.endings.length > 0
+          ) {
+            current.endings[current.endings.length] = { start: -1, end: -1 }
+          }
+          instructions.push(current)
+          let lastUsed = current.common.end ?? -1
+          for (const e of current.endings ?? []) {
+            if (e !== undefined) lastUsed = Math.max(lastUsed, e.end ?? -1)
+          }
+          if (lastUsed < section.index - 1) {
+            instructions.push({ common: { start: lastUsed + 1, end: section.index - 1 } })
+          }
+        }
+        current = { common: { start: section.index } }
+        break
+      }
+      case 'startEnding': {
+        if (current !== null) {
+          if (current.common.end === undefined) current.common.end = section.index - 1
+          if (current.endings === undefined) current.endings = []
+          for (const n of section.endings ?? []) current.endings[n] = { start: section.index }
+        }
+        break
+      }
+      case 'endRepeat': {
+        if (current !== null) {
+          if (current.endings === undefined) current.endings = []
+          if (current.endings.length > 0) {
+            for (const e of current.endings) {
+              if (e !== undefined && e.end === undefined) e.end = section.index - 1
+            }
+          }
+          if (current.common.end === undefined) current.common.end = section.index - 1
+        }
+        break
+      }
+    }
+  })
+  if (current !== null) {
+    const c = current as Repeat
+    if (c.common.end === undefined) c.common.end = lastIndex
+    for (const e of c.endings ?? []) {
+      if (e !== undefined && e.end === undefined) e.end = lastIndex
+    }
+    instructions.push(c)
+  }
+
+  const out: M[] = []
+  const span = (from: number, to: number): void => {
+    for (let i = Math.max(0, from); i <= to; i += 1) {
+      const m = measures[i]
+      if (m !== undefined) out.push(m)
+    }
+  }
+  for (const r of instructions) {
+    const end = r.common.end ?? lastIndex
+    if (r.endings === undefined) span(r.common.start, end)
+    else if (r.endings.length === 0) {
+      span(r.common.start, end)
+      span(r.common.start, end)
+    } else {
+      for (const ending of r.endings) {
+        if (ending === undefined) continue
+        span(r.common.start, end)
+        if (ending.start >= 0) span(ending.start, ending.end ?? lastIndex)
+      }
+    }
+  }
+  return out
+}
+
 interface Timed {
   /**
    * `bar` rows carry NO event and exist only so a decoration written before a barline can
@@ -317,7 +499,7 @@ function sequenceVoice(voice: Voice, score: Score, startingTempo: number): Timed
   const ties = new Map<string, number>()
   const durations: number[] = []
 
-  for (const measure of voice.measures) {
+  for (const measure of resolveRepeats(voice.measures)) {
     if (measure.startsSystem || line < 0) line += 1
     const clef = measure.clefChange ?? (line === 0 ? (voice.clef ?? score.clef) : null)
     if (clef != null) {

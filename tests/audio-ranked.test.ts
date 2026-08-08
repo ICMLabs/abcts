@@ -67,6 +67,7 @@ const PASSING: readonly string[] = [
   'flatten-multi-measure-rest',
   'flatten-no-chord-voice',
   'flatten-quarter-tone',
+  'flatten-regular-tie',
   'flatten-six-huit',
   'flatten-tempo-change',
   'flatten-tempo-change2',
@@ -74,6 +75,10 @@ const PASSING: readonly string[] = [
   'flatten-treble-8',
   'flatten-twelve-eight',
   'ignore-alternate-chord',
+  'no-start-repeat-part',
+  'no-start-repeat-repeat',
+  'no-start-repeat-title',
+  'repeat-3',
   'volume-crash',
 ]
 
