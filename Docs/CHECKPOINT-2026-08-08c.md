@@ -13,9 +13,9 @@ HARNESS**. Earlier ledgers as listed there.
 
 | axis | standing |
 |---|---|
-| suite | **943 of 943. NO REDS.** |
-| **audio ranked table** | **37 of 54 differ** — from 54 of 54 when it opened |
-| **audio PASSING** | **17** and ratcheted |
+| suite | **949 of 949. NO REDS.** |
+| **audio ranked table** | **31 of 54 differ** — from 54 of 54 when it opened |
+| **audio PASSING** | **23** and ratcheted |
 | pixel ranked table | **0 of 119** |
 | harvested ranked table | **0 of 174** |
 | staff-line gate | **0 of 41** |
@@ -137,21 +137,36 @@ comment says it is not. Reading both put a voice an octave and a half low.
 ## WHAT THE TABLE SAYS NOW, and it is the work list
 
 ```
- 9 cases   1 tracks vs 2      %%MIDI gchord / drum with no chord symbol in the tune
- 4 cases   instrument 0 vs N  %%MIDI program / percmap — the parser reads %%MIDI ZERO times
- 5 cases   missing / wrong    repeats are not unrolled
- 2 cases   1 tracks vs 3      `&` overlay voices are not split out
- 1 case    cents:-50          a quarter tone is a PITCH BEND, not a fractional pitch
- 1 case    style:"grace"      grace notes
- 1 case    style:"decoration" trills, mordents, turns and rolls become note runs
+ 6 cases   repeats            `:|`, `|1`/`|2` are not unrolled — the biggest single block
+ 4 cases   1 tracks vs 3/2    `&` overlay voices are not split into their own voices
+ 3 cases   instrument 0/128   `%%MIDI drummap` + `%%percmap` — the percussion track
+ 2 cases   1 tracks vs 2      the DRUM track (`%%MIDI drum`), which does not exist at all
+ 3 cases   style:"decoration" trills, mordents, turns and rolls become RUNS of 1/32 notes
+ 2 cases   style:"grace"      grace notes
+ 1 case    mid-tune %%MIDI    `Measure.midiCommands` is parsed but the flattener ignores it
  1 case    volume per pitch   per-note dynamics inside a chord (`volumesPerNotePitch`)
 ```
 
-**`%%MIDI` IN THE PARSER IS THE BIGGEST SINGLE UNBLOCK** — it appears in the parser exactly
-zero times, and it gates 13 of the 37. `program`, `channel`, `transpose`, `gchord`, `drum`,
-`drummap`, `bassprog`, `chordprog`, `bassvol`, `chordvol`, `percmap`. The flattener and the
-chord track already take them as inputs (`MidiDirectives`, `ChordOptions`); nothing fills
-them in.
+### THE REPEAT RESOLVER, written down so it is not re-derived
+
+`repeats.js` is a two-pass algorithm and the second pass is short. Pass one records only the
+INTERESTING bars into `sections`, seeded with `{type:'startRepeat', index:-1}`:
+
+- `|:` or `::` → `startRepeat`
+- `:|` or `::` → `endRepeat`, **and if the previous section is already an `endRepeat`,
+  a synthetic `startRepeat` is pushed first at the same index** — two `:|` in a row is a
+  notation error and this is the recovery. `no-start-repeat-repeat` is that case.
+- `|1` / `|2` / `|1,3` / `|1-3` → `startEnding` with the parsed numbers
+
+Pass two folds those into `repeatInstructions`, each `{common:{start,end}, endings?:[]}`,
+and emits: no `endings` → copy the common span ONCE; `endings` present but EMPTY → copy it
+TWICE (a plain repeat); `endings` non-empty → for each ending in turn, copy the common span
+then that ending. A trailing `endRepeat` after endings appends one more bare common pass.
+The array is SPARSE — `endings[section.endings[e]]` is indexed by the ENDING NUMBER — so
+`|1,3` and `|2,4` interleave correctly and the empty slots are skipped.
+
+`no-start-repeat-part` and `-title` are the same shape: a `:|` with no `|:`, where the
+repeat runs from the tune's start because `sections` was seeded at -1.
 
 ---
 
@@ -172,10 +187,10 @@ them in.
 ## RE-VERIFIED AT THIS COMMIT
 
 ```
-HEAD                02e7dba   working tree clean
+HEAD                0ab08f7   working tree clean
 npx tsc --noEmit    clean
-npx vitest run      943 / 943
-audio ranked        37 of 54,  PASSING 17
+npx vitest run      949 / 949
+audio ranked        31 of 54,  PASSING 23
 pixel ranked        0 of 119
 harvested ranked    0 of 174
 staff-line gate     0 of 41
