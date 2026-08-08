@@ -9,13 +9,13 @@ HARNESS**. Earlier ledgers as listed there.
 
 ---
 
-## 🔎 THE HEADLINE: GEOMETRY IS DONE. AUDIO EXISTS, HAS A GATE, AND IS AT 23 OF 54.
+## 🔎 THE HEADLINE: GEOMETRY IS DONE. AUDIO EXISTS, HAS A GATE, AND IS AT 28 OF 54.
 
 | axis | standing |
 |---|---|
-| suite | **949 of 949. NO REDS.** |
-| **audio ranked table** | **31 of 54 differ** — from 54 of 54 when it opened |
-| **audio PASSING** | **23** and ratcheted |
+| suite | **954 of 954. NO REDS.** |
+| **audio ranked table** | **26 of 54 differ** — from 54 of 54 when it opened |
+| **audio PASSING** | **28** and ratcheted |
 | pixel ranked table | **0 of 119** |
 | harvested ranked table | **0 of 174** |
 | staff-line gate | **0 of 41** |
@@ -145,17 +145,16 @@ comment says it is not. Reading both put a voice an octave and a half low.
 ## WHAT THE TABLE SAYS NOW, and it is the work list
 
 ```
- 6 cases   repeats            `:|`, `|1`/`|2` are not unrolled — the biggest single block
  4 cases   1 tracks vs 3/2    `&` overlay voices are not split into their own voices
  3 cases   instrument 0/128   `%%MIDI drummap` + `%%percmap` — the percussion track
  2 cases   1 tracks vs 2      the DRUM track (`%%MIDI drum`), which does not exist at all
  3 cases   style:"decoration" trills, mordents, turns and rolls become RUNS of 1/32 notes
  2 cases   style:"grace"      grace notes
- 1 case    mid-tune %%MIDI    `Measure.midiCommands` is parsed but the flattener ignores it
+ 2 cases   mid-tune %%MIDI    `Measure.midiCommands` is parsed; the flattener ignores it
  1 case    volume per pitch   per-note dynamics inside a chord (`volumesPerNotePitch`)
 ```
 
-### THE REPEAT RESOLVER, written down so it is not re-derived
+### THE REPEAT RESOLVER — PORTED, and this is what the translation cost
 
 `repeats.js` is a two-pass algorithm and the second pass is short. Pass one records only the
 INTERESTING bars into `sections`, seeded with `{type:'startRepeat', index:-1}`:
@@ -174,7 +173,15 @@ The array is SPARSE — `endings[section.endings[e]]` is indexed by the ENDING N
 `|1,3` and `|2,4` interleave correctly and the empty slots are skipped.
 
 `no-start-repeat-part` and `-title` are the same shape: a `:|` with no `|:`, where the
-repeat runs from the tune's start because `sections` was seeded at -1.
+repeat runs from the tune's start because `sections` is seeded with a `startRepeat` at the
+opening bar.
+
+**AND IT IS INDEXED BY BARLINE, NOT BY MEASURE.** abcjs records a bar ELEMENT's position;
+bar k sits between measure k-1 and measure k, so a section that STARTS there starts at
+measure k and one that ENDS there ends at k-1. Indexing by MEASURE put a volta's
+`startEnding` AFTER the `endRepeat` of the same measure — the volta bar OPENS the measure
+and the `:|` CLOSES it, and one `::` is both — and `repeat-3` unrolled `C D D` where abcjs
+gives `C D C E C F`.
 
 ---
 
@@ -195,10 +202,10 @@ repeat runs from the tune's start because `sections` was seeded at -1.
 ## RE-VERIFIED AT THIS COMMIT
 
 ```
-HEAD                0ab08f7   working tree clean
+HEAD                2f19793   working tree clean
 npx tsc --noEmit    clean
-npx vitest run      949 / 949
-audio ranked        31 of 54,  PASSING 23
+npx vitest run      954 / 954
+audio ranked        26 of 54,  PASSING 28
 pixel ranked        0 of 119
 harvested ranked    0 of 174
 staff-line gate     0 of 41
