@@ -942,6 +942,22 @@ export interface StaffGroup {
 /** Where a staff sits in a run of grouped staves. */
 export type StaffConnector = 'start' | 'continue' | 'end'
 
+/**
+ * One `%%percmap <abc-note> <drum-sound> [<note-head>]` entry, as abcjs stores it.
+ *
+ * BOTH halves are needed and they serve different engines: `noteHead` is what the engraver
+ * draws (`abstract-engraver.js:681-688`) and `sound` is the GM percussion pitch the
+ * flattener plays (`writeNote`, via `pitches-to-perc.js`). abcjs keeps them in one object
+ * on `tune.formatting.percmap` and so does this.
+ *
+ * The sound is either a MIDI number in 35–81 or one of abcjs's 47 drum names, resolved as
+ * `drumNames.indexOf(name) + 35` (`abc_parse_directive.js:393-409`).
+ */
+export interface PercMapEntry {
+  readonly sound: number
+  readonly noteHead?: string
+}
+
 export interface Score {
   readonly metadata: ScoreMetadata
   readonly key: KeySignature
@@ -1027,7 +1043,16 @@ export interface Score {
    */
   /** `%%MIDI` written before the first note — the tune's own audio settings. */
   readonly midi?: Readonly<Record<string, readonly (string | number)[]>>
-  readonly percMap: Readonly<Record<string, string>>
+  readonly percMap: Readonly<Record<string, PercMapEntry>>
+  /**
+   * `%%MIDI drummap <abc-note> <midi>` — the written LETTER to a GM percussion pitch.
+   *
+   * abcjs stamps the result onto the note at PARSE time (`abc_parse_music.js:1127-1134`),
+   * keyed by the raw source character plus any accidental prefix, and only on a percussion
+   * clef. `adjustPitch` then returns that pitch outright — no key signature, no transpose.
+   * Kept as a map rather than baked onto the note because the renderer has no use for it.
+   */
+  readonly drumMap?: Readonly<Record<string, number>>
   /**
    * `%%stretchlast` — whether to justify the LAST music line, and how nearly full it has
    * to be first. `null` when the directive is absent, which is a different rule and not a

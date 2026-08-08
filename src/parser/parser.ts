@@ -48,6 +48,7 @@ import {
   measureDuration,
   type Note,
   type NoteStyle,
+  type PercMapEntry,
   type Pitch,
   type Rational,
   type Rest,
@@ -87,6 +88,64 @@ export type ParseResult = {
   readonly scores: readonly Score[]
   readonly diagnostics: readonly Diagnostic[]
 } & ({ readonly ok: true } | { readonly ok: false; readonly errors: readonly Diagnostic[] })
+
+/**
+ * abcjs's `drumNames` — General MIDI percussion 35 to 81, in order, one name per pitch.
+ *
+ * `%%percmap D bass-drum-1` resolves by POSITION: `drumNames.indexOf(name) + 35`
+ * (`abc_parse_directive.js:343-406`). The list IS the mapping; there is no table of
+ * name→number anywhere in abcjs, which is why the order is load-bearing and the entries
+ * are reproduced verbatim rather than sorted or de-duplicated.
+ */
+const DRUM_NAMES: readonly string[] = [
+  'acoustic-bass-drum',
+  'bass-drum-1',
+  'side-stick',
+  'acoustic-snare',
+  'hand-clap',
+  'electric-snare',
+  'low-floor-tom',
+  'closed-hi-hat',
+  'high-floor-tom',
+  'pedal-hi-hat',
+  'low-tom',
+  'open-hi-hat',
+  'low-mid-tom',
+  'hi-mid-tom',
+  'crash-cymbal-1',
+  'high-tom',
+  'ride-cymbal-1',
+  'chinese-cymbal',
+  'ride-bell',
+  'tambourine',
+  'splash-cymbal',
+  'cowbell',
+  'crash-cymbal-2',
+  'vibraslap',
+  'ride-cymbal-2',
+  'hi-bongo',
+  'low-bongo',
+  'mute-hi-conga',
+  'open-hi-conga',
+  'low-conga',
+  'high-timbale',
+  'low-timbale',
+  'high-agogo',
+  'low-agogo',
+  'cabasa',
+  'maracas',
+  'short-whistle',
+  'long-whistle',
+  'short-guiro',
+  'long-guiro',
+  'claves',
+  'hi-wood-block',
+  'low-wood-block',
+  'mute-cuica',
+  'open-cuica',
+  'mute-triangle',
+  'open-triangle',
+]
 
 // ─── Field parsing ───────────────────────────────────────────────────────────
 
@@ -1553,7 +1612,8 @@ interface Formatting {
   musicSpace: number | null
   partsBox: boolean
   jazzChords: boolean
-  percMap: Record<string, string>
+  percMap: Record<string, PercMapEntry>
+  drumMap?: Record<string, number>
   midi?: Record<string, readonly (string | number)[]>
   stretchLast: number | null
   staffWidth: number | null
@@ -1629,7 +1689,9 @@ class ScoreBuilder {
   musicSpace: number | null = null
   partsBox = false
   jazzChords = false
-  percMap: Record<string, string> = {}
+  percMap: Record<string, PercMapEntry> = {}
+  /** `%%MIDI drummap <abc-note> <midi>` — accumulated, one key per directive line. */
+  drumMap: Record<string, number> = {}
   /** `%%MIDI` written before the first note — the tune's own audio settings. */
   midi: Record<string, readonly (string | number)[]> = {}
   stretchLast: number | null = null
@@ -1645,6 +1707,7 @@ class ScoreBuilder {
       partsBox: this.partsBox,
       jazzChords: this.jazzChords,
       percMap: this.percMap,
+      drumMap: this.drumMap,
       midi: this.midi,
       stretchLast: this.stretchLast,
       staffWidth: this.staffWidth,
@@ -1661,6 +1724,8 @@ class ScoreBuilder {
     this.partsBox = f.partsBox
     this.jazzChords = f.jazzChords
     this.percMap = f.percMap
+    if (f.drumMap !== undefined) this.drumMap = f.drumMap
+    if (f.midi !== undefined) this.midi = f.midi
     this.stretchLast = f.stretchLast
     this.staffWidth = f.staffWidth
     this.maxStaves = f.maxStaves
@@ -1876,6 +1941,7 @@ class ScoreBuilder {
       partsBox: this.partsBox,
       jazzChords: this.jazzChords,
       percMap: this.percMap,
+      drumMap: this.drumMap,
       midi: this.midi,
       stretchLast: this.stretchLast,
       staffWidth: this.staffWidth,
@@ -1964,8 +2030,9 @@ class Parser {
     return this.builder
   }
 
-  private processLine(start: number, end: number): void {
-    const line = this.src.slice(start, end).replace(/\r$/, '')
+  private processLine(start: number, endIn: number): void {
+    let end = endIn
+    let line = this.src.slice(start, end).replace(/\r$/, '')
 
     // A `%%begintext` block runs to `%%endtext`. Its content lines carry no `%%` prefix,
     // so they must be claimed here — otherwise ordinary English prose parses as music and
@@ -2014,6 +2081,40 @@ class Parser {
       return
     }
     if (line.startsWith('%')) return // comment
+
+    /**
+     * A `%` ENDS THE LINE, wherever it is — and abcjs does it before anything else looks.
+     *
+     *     var i = line.indexOf('%');
+     *     if (i >= 0) line = line.substring(0, i);
+     *     line = line.replace(/\s+$/, '');
+     *
+     * (`abc_parse.js:408-411`, after the `%%` test and before every field and music
+     * handler; `abc_parse_music.js:141` repeats the guard as a belt.) Unconditional: no
+     * escape, no quoting awareness, so `T:100\% Amazing` really does become `T:100` and
+     * `C2 "Play 100\% awesomely"G4 E2 C2|` really does become one note. That is abcjs
+     * 6.6.3's answer, measured — its own SVG draws a single notehead — and ABC 2.1's `\%`
+     * escape is simply not implemented there.
+     *
+     * WE DID NOT TRUNCATE AT ALL, and it took a fixture with a trailing comment to show it:
+     * `C2 G4| % comment` parsed the `c` and the `e` of "comment" as two more notes. Nothing
+     * in either corpus had one — `ragtime-nightingale` writes `| %4` on every line and got
+     * away with it only because a digit is not a note letter.
+     *
+     * ponytail: non-strict stops at the first UNESCAPED `%` but does not yet UNESCAPE the
+     * `\%` it keeps, so `abc2.1` prints the backslash. Fixing that means rewriting the text
+     * after every field and music handler has taken its source offsets, which is a bigger
+     * change than the one this corrects.
+     */
+    const comment = isStrict(this.mode) ? line.indexOf('%') : line.search(/(?<!\\)%/)
+    if (comment >= 0) {
+      // THE END OFFSET MOVES WITH THE TEXT. `scanMusic` takes OFFSETS and re-lexes from the
+      // source, so truncating only the local string left the music path reading the comment
+      // anyway — the control still parsed `% comment` as two notes.
+      end = start + comment
+      line = line.slice(0, comment).replace(/\s+$/, '')
+      if (line.length === 0) return
+    }
 
     // A `w:` line ending in `\` continues onto a later line, and what counts as "later"
     // is where abcjs and ABC 2.1 part company. MEASURED against abcjs 6.6.3 on Gonzato
@@ -2324,7 +2425,22 @@ class Parser {
     // modelled; the drum sound is audio.
     const percMap = /^percmap\s+(\S+)\s+(\S+)(?:\s+(\S+))?\s*$/.exec(body)
     if (percMap?.[1] !== undefined) {
-      if (percMap[3] !== undefined) this.ensureScore(start).percMap[percMap[1]] = percMap[3]
+      // THE SOUND IS A NUMBER **OR** A NAME, and abcjs resolves the name by POSITION in a
+      // 47-entry list starting at GM 35: `drumNames.indexOf(tokens[1].toLowerCase()) + 35`
+      // (`abc_parse_directive.js:398-406`). A number outside 35–81 is retried as a name,
+      // and an unresolvable one drops the whole entry rather than defaulting.
+      const raw = percMap[2] ?? ''
+      const asNumber = Number.parseInt(raw, 10)
+      const sound =
+        Number.isNaN(asNumber) || asNumber < 35 || asNumber > 81
+          ? DRUM_NAMES.indexOf(raw.toLowerCase()) + 35
+          : asNumber
+      if (sound >= 35 && sound <= 81) {
+        this.ensureScore(start).percMap[percMap[1]] = {
+          sound,
+          ...(percMap[3] === undefined ? {} : { noteHead: percMap[3] }),
+        }
+      }
       return
     }
     /**
@@ -2355,6 +2471,14 @@ class Parser {
         .filter((t) => t !== '')
         .map((t) => (/^-?\d+$/.test(t) ? Number.parseInt(t, 10) : t))
       const builder = this.ensureScore(start)
+      // `drummap` ACCUMULATES where every other command replaces — abcjs builds
+      // `tune.formatting.midi.drummap` as an OBJECT keyed by the written note
+      // (`abc_parse_directive.js:592-600`), so a tune declares one line per drum. Storing
+      // it as an array like the rest would keep only the last.
+      if (cmd === 'drummap' && typeof params[0] === 'string' && typeof params[1] === 'number') {
+        builder.drumMap[params[0]] = params[1]
+        return
+      }
       if (builder.musicStarted) builder.voice.addMidiCommand(cmd, params)
       else builder.midi[cmd] = params
       return

@@ -2304,7 +2304,7 @@ function percHead(step: number, accidental: Accidental | null): NoteStyle | null
   if (name === undefined) return null
   const prefix = accidental === null ? '' : PERC_ACCIDENTAL_PREFIX[accidental]
   if (prefix === undefined) return null // a double accidental has no key
-  const head = PERC_MAP[prefix + name]
+  const head = PERC_MAP[prefix + name]?.noteHead
   return head !== undefined && head in STYLED_HEADS ? (head as NoteStyle) : null
 }
 

@@ -44,7 +44,12 @@ import { writeFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { parse } from '../../src/parser/parser.js'
 import { layout } from '../../src/renderer/layout.js'
-import { type GoldenLayoutElement, goldenLayoutElements, loadCorpus } from '../corpus/corpus.js'
+import {
+  type GoldenLayoutElement,
+  goldenLayoutElements,
+  loadCorpus,
+  withGolden,
+} from '../corpus/corpus.js'
 
 /**
  * Fixtures whose element sequence core reproduces today, subject to the blind spots above.
@@ -184,8 +189,26 @@ function coreSequence(abc: string): string[] {
 const goldenSequence = (name: string): string[] => goldenLayoutElements(name).map(describeGolden)
 
 describe('structural render parity vs abcjs layout', () => {
-  const corpus = loadCorpus()
+  // ONLY THE FIXTURES THAT HAVE A LAYOUT GOLDEN, and the skipped ones are NAMED.
+  //
+  // The corpus lives in a sibling repo another agent maintains, and a fixture can land
+  // there before its goldens do — four did, mid-session on 2026-08-08. This gate's whole
+  // point is that adding a fixture FAILS until someone decides whether it is renderable or
+  // a known divergence, "silence would otherwise read as coverage" — but that decision
+  // cannot be made against a golden that does not exist, and the gate crashed on `ENOENT`
+  // rather than reporting anything. Skipping loudly keeps both properties.
+  const all = loadCorpus()
+  const { cases: corpus, skipped: ungoldened } = withGolden(all, '.elements.json')
   const byName = new Map(corpus.map((c) => [c.name, c]))
+
+  it('says which fixtures have no layout golden to compare against', () => {
+    // Not an assertion about the count — a REPORT. It fails only if the list stops being
+    // readable, and it exists so an ungoldened fixture is never invisible.
+    expect(Array.isArray(ungoldened)).toBe(true)
+    if (ungoldened.length > 0) {
+      writeFileSync('/tmp/abcts-ungoldened.txt', `${ungoldened.join('\n')}\n`)
+    }
+  })
 
   describe('the gate itself', () => {
     // The parser phase shipped a fuzz suite whose expectation never ran: it passed while

@@ -22,6 +22,35 @@ export interface CorpusCase {
   readonly goldens: readonly string[]
 }
 
+/**
+ * A GATE'S REACH IS A PROPERTY OF ITS ENUMERATION — and this is the mirror of the 2026-08-07
+ * finding, which was the same sentence the other way round.
+ *
+ * There the pixel gate enumerated `<name>.svg`, so twelve multi-tune fixtures went silently
+ * unmeasured. Here two gates enumerate FIXTURES and then read GOLDENS, so a fixture arriving
+ * WITHOUT goldens does not go unmeasured — it throws `ENOENT` and takes the suite red. The
+ * corpus lives in a sibling repo that another agent maintains, and four fixtures landed in it
+ * mid-session with no goldens beside them.
+ *
+ * A fixture with no golden cannot be compared against abcjs, so a parity gate must skip it —
+ * but LOUDLY. `skipped` is returned rather than filtered away silently, because "we compared
+ * everything" and "we compared everything we had a golden for" are different claims and the
+ * second one has to be said out loud. The baseline gate still covers them: it compares our
+ * output against our own committed snapshot and needs no golden at all.
+ */
+export function withGolden(
+  corpus: readonly CorpusCase[],
+  suffix: string,
+): { cases: CorpusCase[]; skipped: string[] } {
+  const cases: CorpusCase[] = []
+  const skipped: string[] = []
+  for (const c of corpus) {
+    if (c.goldens.includes(`${c.name}${suffix}`)) cases.push(c)
+    else skipped.push(c.name)
+  }
+  return { cases, skipped }
+}
+
 // A golden belongs to a fixture when the character right after the stem separates it
 // from a variant (`-tune0.svg`) or an extension (`.parse.json`, `.svg`, `.mid`).
 const ownsGolden = (stem: string, golden: string): boolean =>

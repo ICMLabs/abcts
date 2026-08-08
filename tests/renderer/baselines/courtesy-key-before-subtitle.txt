@@ -1,0 +1,75 @@
+tune 0
+bounds  width=90.323 height=45.339 top=-1.935
+systems 3
+system 0 width=90.323 originY=0.000
+  staff 0 originY=10.651
+    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
+    title x=0.000 w=0.000
+      text  42.845,-6.192 size=3.484 bold "Main"
+    clef x=1.935 w=3.103
+      glyph gClef 2.581,1.000
+    keySignature x=6.329 w=3.129
+      glyph accidentalFlat 6.329,0.000
+      glyph accidentalFlat 7.458,-1.500
+      glyph accidentalFlat 8.587,0.500
+    timeSignature x=10.749 w=1.522
+      glyph timeSig3 10.881,-1.000
+      glyph timeSig4 10.749,1.000
+    note@-2 x=13.561 w=3.871
+      glyph noteheadBlack 13.561,1.000
+      glyph flag8thUp 14.749,-2.500
+      line  14.762,0.833 -> 14.762,-2.500 t=0.129
+    bar x=84.187 w=0.077
+      line  84.226,-2.000 -> 84.226,2.000 t=0.077
+    keySignature x=85.606 w=2.781
+      glyph accidentalNatural 85.606,-1.500
+      glyph accidentalNatural 86.561,0.500
+      glyph accidentalFlat 87.516,0.000
+system 1 width=90.323 originY=18.123
+  staff 0 originY=4.442
+    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
+    clef x=1.935 w=3.103
+      glyph gClef 2.581,1.000
+    keySignature x=6.329 w=2.781
+      glyph accidentalNatural 6.329,-1.500
+      glyph accidentalNatural 7.284,0.500
+      glyph accidentalFlat 8.239,0.000
+    note@0 x=10.400 w=3.871
+      glyph noteheadBlack 10.400,0.000
+      glyph flag8thDown 10.400,3.500
+      line  10.465,0.000 -> 10.465,3.500 t=0.129
+    bar x=83.626 w=0.077
+      line  83.665,-2.000 -> 83.665,2.000 t=0.077
+    keySignature x=85.045 w=3.342
+      glyph accidentalNatural 85.045,0.000
+      glyph accidentalSharp 86.000,-2.000
+      glyph accidentalSharp 87.323,-0.500
+system 2 width=16.897 originY=30.616
+  staff 0 originY=7.353
+    staffline 1.935,2.000 -> 14.961,2.000 t=0.090
+    staffline 1.935,1.000 -> 14.961,1.000 t=0.090
+    staffline 1.935,0.000 -> 14.961,0.000 t=0.090
+    staffline 1.935,-1.000 -> 14.961,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 14.961,-2.000 t=0.090
+    title x=0.000 w=0.000
+      text  6.741,-4.155 size=2.710 "Sub"
+    clef x=1.935 w=3.103
+      glyph gClef 2.581,1.000
+    keySignature x=6.329 w=3.342
+      glyph accidentalNatural 6.329,0.000
+      glyph accidentalSharp 7.284,-2.000
+      glyph accidentalSharp 8.607,-0.500
+    note@2 x=10.961 w=3.871
+      glyph noteheadBlack 10.961,-1.000
+      glyph flag8thDown 10.961,2.500
+      line  11.026,-0.833 -> 11.026,2.500 t=0.129
+    bar x=14.832 w=0.077
+      line  14.871,-2.000 -> 14.871,2.000 t=0.077
