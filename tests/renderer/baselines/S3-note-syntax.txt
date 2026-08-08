@@ -1678,17 +1678,17 @@ system 0 width=90.342 originY=0.000
     bar x=88.277 w=0.077
       line  88.316,-2.000 -> 88.316,2.000 t=0.077
 tune 13
-bounds  width=90.323 height=17.442 top=-1.935
+bounds  width=90.391 height=17.442 top=-1.935
 systems 1
-system 0 width=90.323 originY=0.000
+system 0 width=90.391 originY=0.000
   staff 0 originY=10.071
-    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
-    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
-    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
-    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
-    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
+    staffline 1.935,2.000 -> 88.456,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.456,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.456,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.456,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.456,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  39.886,-5.612 size=3.484 bold "S3-14 Rests"
+      text  39.920,-5.612 size=3.484 bold "S3-14 Rests"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -1696,40 +1696,44 @@ system 0 width=90.323 originY=0.000
       glyph timeSig4 6.329,1.000
     rest x=9.141 w=15.484
       glyph restWhole 9.141,-1.000
-    bar x=20.835 w=0.077
-      line  20.874,-2.000 -> 20.874,2.000 t=0.077
-    rest x=22.254 w=15.484
-      glyph restWhole 22.254,-1.000
-    bar x=33.948 w=0.077
-      line  33.987,-2.000 -> 33.987,2.000 t=0.077
-    rest x=35.367 w=10.949
-      glyph restWhole 35.367,-1.000
-    rest x=43.636 w=10.949
-      glyph restWhole 43.636,-1.000
-    bar x=51.905 w=0.077
-      line  51.943,-2.000 -> 51.943,2.000 t=0.077
-    rest x=53.324 w=7.742
-      glyph restHalf 53.324,0.000
-    rest x=59.171 w=7.742
-      glyph restHalf 59.171,0.000
-    rest x=65.018 w=5.474
-      glyph restQuarter 65.018,0.000
-    rest x=69.152 w=5.474
-      glyph restQuarter 69.152,0.000
-    rest x=73.286 w=3.871
-      glyph rest8th 73.286,0.000
-    rest x=76.210 w=3.871
-      glyph rest8th 76.210,0.000
-    rest x=79.133 w=2.737
-      glyph rest16th 79.133,0.000
-    rest x=81.200 w=2.737
-      glyph rest16th 81.200,0.000
-    rest x=83.267 w=1.935
-    rest x=84.729 w=1.935
-    rest x=86.191 w=1.369
-    rest x=87.224 w=1.369
-    bar x=88.258 w=0.077
-      line  88.297,-2.000 -> 88.297,2.000 t=0.077
+    bar x=20.458 w=0.077
+      line  20.497,-2.000 -> 20.497,2.000 t=0.077
+    rest x=21.878 w=15.484
+      glyph restWhole 21.878,-1.000
+    bar x=33.195 w=0.077
+      line  33.233,-2.000 -> 33.233,2.000 t=0.077
+    rest x=34.614 w=10.949
+      glyph restWhole 34.614,-1.000
+    rest x=42.616 w=10.949
+      glyph restWhole 42.616,-1.000
+    bar x=50.619 w=0.077
+      line  50.657,-2.000 -> 50.657,2.000 t=0.077
+    rest x=52.038 w=7.742
+      glyph restHalf 52.038,0.000
+    rest x=57.696 w=7.742
+      glyph restHalf 57.696,0.000
+    rest x=63.355 w=5.474
+      glyph restQuarter 63.355,0.000
+    rest x=67.356 w=5.474
+      glyph restQuarter 67.356,0.000
+    rest x=71.357 w=3.871
+      glyph rest8th 71.357,0.000
+    rest x=74.187 w=3.871
+      glyph rest8th 74.187,0.000
+    rest x=77.016 w=2.737
+      glyph rest16th 77.016,0.000
+    rest x=79.016 w=2.737
+      glyph rest16th 79.016,0.000
+    rest x=81.017 w=1.935
+      glyph rest32nd 81.017,0.000
+    rest x=82.613 w=1.935
+      glyph rest32nd 82.613,0.000
+    rest x=84.210 w=1.736
+      glyph rest64th 84.210,0.000
+    rest x=85.946 w=1.736
+      glyph rest64th 85.946,0.000
+    bar x=88.327 w=0.077
+      line  88.366,-2.000 -> 88.366,2.000 t=0.077
 tune 14
 bounds  width=58.485 height=17.942 top=-1.935
 systems 1

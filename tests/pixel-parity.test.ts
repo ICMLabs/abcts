@@ -734,15 +734,18 @@ describe('pixel parity vs abcjs rendered SVG', () => {
       )
       if (worst >= EPSILON) off.push(`${target.key} ${worst.toFixed(2)}`)
     }
-    // THE ONE KNOWN FAILURE, and its exact figure. A ceiling, not a tolerance.
+    // EMPTY. All twenty targets this gate opened with are closed.
     //
-    // NINETEEN of the twenty this gate opened with closed on one line — `staffLinesFor`
-    // taking `startx` and `w` instead of `0` and the system width. What is left is 0.26px
-    // of CENTRE, so 0.52 of span, on a tune that is nothing but rests: our right end is
-    // half a pixel short of abcjs's `staffGroup.w`. Every notehead on it is exact, and
-    // both ranked tables stay empty, so it is the justification TARGET at the right edge
-    // and not a placement. Unexamined.
-    expect(off).toEqual(['S3-note-syntax-tune13 0.26'])
+    // Nineteen went on one line — `staffLinesFor` taking `startx` and `w` instead of `0`
+    // and the system width. The twentieth was `S3-note-syntax-tune13` at 0.26px of CENTRE,
+    // filed as "the justification TARGET at the right edge, unexamined", and it was neither
+    // a target nor a justification bug: **`restGlyph` stopped at the 16th rest** where
+    // abcjs's `chartable.rest` runs to the 128th, so the tune's `z/8` and `z/16` drew
+    // NOTHING and reserved NO width. At the solved spacing abcjs's 11.373px 32nd-rest rod
+    // beats its spring and pins the line 0.53px wider; ours had no rod, so the line solved
+    // to exactly the 685 target. A rest is not a notehead, so no pixel row could ever have
+    // carried it — the missing WIDTH is what leaked into an axis something measured.
+    expect(off).toEqual([])
   })
 
   it('writes the ranked table', () => {

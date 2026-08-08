@@ -2026,6 +2026,15 @@ function restGlyph(notated: Rational): { name: GlyphName; step: number; dots: nu
     2: 'restQuarter',
     3: 'rest8th',
     4: 'rest16th',
+    // abcjs's `chartable.rest` runs to SEVEN — `{5: "rests.32nd", 6: "rests.64th",
+    // 7: "rests.128th"}` (`creation/abstract-engraver.js:36`) — and this table stopped at
+    // four, so a 32nd rest or shorter drew NOTHING and reserved NO width. Invisible to
+    // every gate: a rest is not a notehead, so the pixel table cannot see it, and the
+    // staff-line gate only caught it because the missing 11.373px rod let the line solve
+    // 0.53px narrower than abcjs's on the one fixture that is nothing but rests.
+    5: 'rest32nd',
+    6: 'rest64th',
+    7: 'rest128th',
   }
   const name = byLog[log]
   if (!name) return null

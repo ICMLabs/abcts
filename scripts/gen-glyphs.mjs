@@ -101,6 +101,9 @@ const GLYPHS = [
   'restHBar',
   'rest8th',
   'rest16th',
+  'rest32nd',
+  'rest64th',
+  'rest128th',
   // Time signatures
   'timeSig0',
   'timeSig1',

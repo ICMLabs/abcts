@@ -86,6 +86,9 @@ export const SMUFL_TO_ABCJS: Readonly<Record<string, string>> = {
   restQuarter: 'rests.quarter',
   rest8th: 'rests.8th',
   rest16th: 'rests.16th',
+  rest32nd: 'rests.32nd',
+  rest64th: 'rests.64th',
+  rest128th: 'rests.128th',
 
   // Flags
   flag8thUp: 'flags.u8th',
@@ -162,9 +165,6 @@ export const SMUFL_TO_ABCJS: Readonly<Record<string, string>> = {
 
 /** abcjs glyphs no SMuFL name above claims — its vocabulary, minus what we use. */
 export const UNMAPPED_ABCJS = [
-  'rests.32nd',
-  'rests.64th',
-  'rests.128th',
   'scripts.stopped',
   'scripts.wedge',
   'scripts.longphrase',
