@@ -319,9 +319,14 @@ export const ENGRAVE = {
    * (box centre 35.9, top line 95.8). `dynamicBelowStep` −10.96 is 27px below the bottom
    * line, off `two-voice-invention` (box centre 201.7, bottom line 174.7).
    *
-   * ponytail: two FIXED lanes where abcjs stacks against the ink. `hasVocals` is read
-   * tune-wide, not per system — the corpus never varies lyrics across a tune's systems, so
-   * the two agree; a per-system read is the faithful version if one ever does.
+   * NEITHER IS A LANE ANY MORE — both are the ORIGIN a shift is measured from.
+   * `anchorDynamicsAbove` moves the above mark onto `aboveLadder`'s dynamic rung and
+   * `anchorBelowStaff` the below one onto the staff's ink, so these two numbers only have
+   * to be the step the mark was drawn at, not where it ends up.
+   *
+   * ponytail: `hasVocals` is read tune-wide, not per system — the corpus never varies
+   * lyrics across a tune's systems, so the two agree; a per-system read is the faithful
+   * version if one ever does.
    */
   dynamicAboveStep: 19.5,
   dynamicBelowStep: -10.96,
@@ -607,11 +612,9 @@ export const ENGRAVE = {
   /**
    * The bracket's own line, in staff STEPS above the middle line.
    *
-   * ponytail: a FIXED lane where abcjs stacks. `drawEnding` reads `params.pitch`, which
-   * `setUpperAndLowerElements` hands it off the running staff top — measured on
-   * `S4-bars-repeats`, abcjs's bracket sits 7.72 pitch above the top staff line and ours
-   * sits 4. `voltaLane` already reserves the room correctly; only the DRAWING is a lane.
-   * Anchoring it is the same shift `anchorAboveStaff` does for the other lanes.
+   * The ORIGIN a shift is measured from, not where the bracket lands: `anchorVoltas` moves
+   * it onto `aboveLadder`'s ending rung, which is abcjs's `positionY.endingHeightAbove` off
+   * the running staff top (`drawEnding` reads `params.pitch`).
    */
   voltaStep: 8,
   /**
@@ -8411,47 +8414,109 @@ const chordHeightOf = (t: PlacedText): number =>
  * Each item is drawn one FONT SIZE below the top it reserved, which is abcjs's universal
  * text rule (`text.js:30-31`), plus the tempo's own 2px bump (`draw/tempo.js:15`).
  */
-function anchorAboveStaff<
+/**
+ * THE ABOVE-STAFF LADDER — abcjs's `setUpperAndLowerElements` above chain, spent ONCE.
+ *
+ *     incTop(staff, positionY, 'lyricHeightAbove');
+ *     incTop(staff, positionY, 'chordHeightAbove', staff.specialY.chordLines.above);
+ *     if (staff.specialY.endingHeightAbove) { … positionY.endingHeightAbove = staff.top; }
+ *     if (dynamicHeightAbove && volumeHeightAbove) { … } else { incTop(dynamic); incTop(volume); }
+ *     incTop(staff, positionY, 'partHeightAbove');
+ *     incTop(staff, positionY, 'tempoHeightAbove');
+ *
+ * (`layout/set-upper-and-lower-elements.js:31-49`.) One loop, one running `staff.top`, and
+ * every mark drawn at the rung the walk was standing on when it reached that mark's class.
+ *
+ * WE SPENT THEM IN FOUR PLACES, and the staff's TOTAL was right either way — `verticalExtent`
+ * sums the same terms whatever order it adds them in, and both ranked tables proved it. What
+ * differed is WHICH RUNG a mark landed on when a staff carries two lanes, and no gate this
+ * repo has could express that: the pixel table sees noteheads, the harvested table sees the
+ * same, the staff-line gate sees a horizontal span. It took a LADDER OF CONTROLS, one tune
+ * per pair of lanes, measured against abcjs's own `positionY` — eleven tunes, of which five
+ * disagreed and none of which is in either corpus:
+ *
+ *     control            mark        abcjs      ours (before)
+ *     volta + tempo      tempo       -51.63     -28.37    the tempo sat INSIDE the ending lane
+ *     volta + part       part        -52.53     -29.29    likewise
+ *     volta + dynamic    ending      -19.81     -46.94    the ending rode the dynamic's lane
+ *     part  + dynamic    dynamic     -39.25     -74.50    the dynamic rode the part's
+ *     chord + dynamic    chord       -29.64     -56.77    the chord rode the dynamic's
+ *
+ * (px above the top staff line.) All eleven agree on the staff's own EXTENT — the top line
+ * is within 0.01px on every one — which is exactly why nothing ever moved. A LANE ORDER IS
+ * INVISIBLE TO A SUM.
+ *
+ * The rungs come back as absolute y and each pass takes its own: `anchorAboveStaff` the
+ * chord, part and tempo, `anchorDynamicsAbove` the dynamic, `anchorVoltas` the ending.
+ */
+interface AboveLadder {
+  readonly chordY: number | null
+  readonly endingY: number | null
+  readonly dynamicY: number | null
+  readonly partY: number | null
+  readonly tempoY: number | null
+  /** Packed lane index per chord/annotation — `setLaneForChord`'s answer. */
+  readonly laneOf: ReadonlyMap<PlacedText, number>
+}
+
+const isChordText = (t: PlacedText): boolean => t.role === 'chord'
+
+function aboveLadder<
   T extends {
     readonly elements: readonly LayoutElement[]
     readonly beams: readonly PlacedLine[]
   } & StaffFurniture,
->(parts: readonly T[], strict: boolean, partsBox = false): T[] {
-  const isChord = (t: PlacedText): boolean => t.role === 'chord'
+>(parts: readonly T[], strict: boolean, partsBox = false): AboveLadder {
+  // `partsBox` only widens the PART rung and everything above it, so the two callers that
+  // read a rung below the part — the ending's and the dynamic's — may leave it off.
+  const isChord = isChordText
   const has = (fn: (el: LayoutElement) => boolean) => parts.some((p) => p.elements.some(fn))
   const chords = has((el) => el.texts.some(isChord))
   const partLabels = has((el) => el.type === 'part')
   const tempos = has((el) => el.type === 'tempo')
-  if (!chords && !partLabels && !tempos) return [...parts]
+  // The dynamics lane is a FLAT reserve whichever mark claims it — a `!mf!`, a hairpin, or
+  // both, since abcjs takes `max(dynamicHeightAbove, volumeHeightAbove) + margin` when the
+  // two coincide and they are the same 6 pitch. A hairpin is read from the furniture flags
+  // rather than from `spannerLines`, which is still empty when this first runs.
+  const dynamicAbove =
+    has((el) => el.glyphs.some((g) => g.role === 'dynamic' && g.y < 0)) ||
+    (parts.some((p) => p.hasHairpin === true) && parts.some((p) => p.dynamicsAbove === true))
+  const voltaAbove = parts.some(
+    (p) =>
+      (p.voltaLines ?? []).some((l) => (l.y1 + l.y2) / 2 < 0) ||
+      (p.voltaTexts ?? []).some((t) => t.y < 0),
+  )
+  const endingPitch = Math.max(
+    voltaAbove ? ENGRAVE.voltaLane : 0,
+    parts.some((p) => p.tupletReservesAbove === true) ? ENGRAVE.tupletLane : 0,
+  )
 
-  // The MUSIC's ink — the stack itself taken out, or each item would reserve room above
-  // the lane the previous one is still sitting in and the staff would grow every pass.
-  // The top-text block goes too: it is not music and has not been placed yet.
+  // The MUSIC's ink — every lane of the stack taken out, or each rung would reserve room
+  // above the lane the previous one is still sitting in and the staff would grow every pass.
+  // The top-text block goes too: it is not music and has not been placed yet. A DYNAMIC's
+  // glyph goes with them, and that omission was the chord-plus-dynamic row of the table
+  // above: `verticalExtent` flags an above dynamic and spends its flat lane, so leaving the
+  // glyph in made this ink 27.13px higher than the music and every rung rode along.
   const inkTop = verticalExtent(
     parts.flatMap((p) =>
       p.elements
         .filter((el) => el.type !== 'title' && el.type !== 'part' && el.type !== 'tempo')
-        .map((el) => ({ ...el, texts: el.texts.filter((t) => !isChord(t)) })),
+        .map((el) => ({
+          ...el,
+          texts: el.texts.filter((t) => !isChord(t)),
+          glyphs: el.glyphs.filter((g) => !(g.role === 'dynamic' && g.y < 0)),
+        })),
     ),
     parts.flatMap((p) => p.beams),
     strict,
     {
       tupletLines: parts.flatMap((p) => p.tupletLines ?? []),
       tupletTexts: parts.flatMap((p) => p.tupletTexts ?? []),
-      // NO VOLTA AND NO TUPLET LANE HERE — the ENDING lane is spent ONCE, at the end of
-      // the outer `verticalExtent`, and this call exists only to find the ink the stack
-      // sits on. The volta lines were in it and the tuplet's flag was not, so the two
-      // calls disagreed about what the lane already held: a volta arriving beside a
-      // tuplet jumped this number by the FULL 6 pitch where abcjs moves 1. That was
-      // 23.25px and all of `mouse-click-01`'s first staff.
-      //
-      // ponytail: so a tempo mark over a staff that also has a volta is DRAWN inside the
-      // ending lane rather than above it — abcjs's order is ending, part, tempo
-      // (`set-upper-and-lower-elements.js:33-49`) and ours reserves the tempo from the
-      // ink. The staff's total is right either way, because the lane goes on last; only
-      // the mark's own y differs, and no gate here can see it. Fixing it properly means
-      // moving the ending lane into `anchorAboveStaff`'s stack, which is where every
-      // other lane already lives.
+      // NO VOLTA AND NO TUPLET LANE HERE — this call finds the INK the ladder stands on,
+      // and every lane is spent by the walk below. The volta lines were in it and the
+      // tuplet's flag was not, so the two disagreed about what the lane already held: a
+      // volta arriving beside a tuplet jumped this number by the FULL 6 pitch where abcjs
+      // moves 1. That was 23.25px and all of `mouse-click-01`'s first staff.
       voltaLines: [],
       voltaTexts: [],
       // A TUPLET'S DECLARED BOX IS INK AND BELONGS HERE. `layoutVoice` calls
@@ -8466,10 +8531,13 @@ function anchorAboveStaff<
 
   // y is DOWN, so reserving room above walks it negative.
   let top = inkTop
-  const reserve = (height: number): number => {
-    top -= height + ENGRAVE.aboveStackMargin
+  /** A lane whose margin is already inside the figure — the ending's and the dynamics'. */
+  const spend = (height: number): number => {
+    top -= height
     return top
   }
+  /** abcjs's `incTop`: `staff.top += height + margin`, and the mark goes at the result. */
+  const reserve = (height: number): number => spend(height + ENGRAVE.aboveStackMargin)
   // ── CHORD SYMBOLS AND ANNOTATIONS SHARE A LANE, AND THE LANE COUNT IS PACKED ─
   //
   // `setLaneForChord` (`layout/voice.js:70-101`) walks a voice's items left to right and
@@ -8549,6 +8617,33 @@ function anchorAboveStaff<
       : Math.max(...chordTexts.map(chordHeightOf))) * chordLanes
   const chordY = chords ? reserve(chordBlock) + chordSize : null
 
+  /**
+   * AND AN ENDING OVER A CHORD LANE COSTS A FLAT 2 PITCH, margin included:
+   *
+   *     if (staff.specialY.endingHeightAbove) {
+   *       if (staff.specialY.chordHeightAbove) staff.top += 2;
+   *       else staff.top += staff.specialY.endingHeightAbove + margin;
+   *
+   * (`set-upper-and-lower-elements.js:33-38`). Not a scaling and not a max — a different
+   * branch, and 2 against a volta's 5 + 1 is four pitch, exactly the 15.49px a ladder of
+   * five control tunes put on `"D7"…|1…` and on nothing simpler. A tuplet's lane takes the
+   * same branch, since abcjs stores both in the one `endingHeightAbove`.
+   */
+  const endingY =
+    endingPitch > 0
+      ? spend(
+          (chords ? ENGRAVE.endingOverChordLane : endingPitch + ENGRAVE.laneMargin) *
+            ENGRAVE.spacePerStep,
+        )
+      : null
+  /**
+   * A FLAT LANE, never the mark's own box — `DynamicDecoration` declares
+   * `volumeHeightAbove = 6` and `CrescendoElem` `dynamicHeightAbove = 6`
+   * (`dynamic-decoration.js:8`, `crescendo-element.js:9`), and the margin lands INSIDE the
+   * lane on this side because `incTop` adds it before recording the position.
+   */
+  const dynamicY = dynamicAbove ? spend(ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep) : null
+
   // A BOXED PART LABEL MEASURES TALLER, so its whole lane grows: `getTextSize` returns
   // `height + padding * 4` for a boxed font (`helpers/get-text-size.js:46-48`), and
   // `padding` is `font.size * fontboxpadding`, default 0.1 (`get-font-and-attr.js:35-36`).
@@ -8572,6 +8667,30 @@ function anchorAboveStaff<
     ? reserve(ENGRAVE.tempoHeightAbove) + ENGRAVE.tempoTextSize + ENGRAVE.tempoDescenderBump
     : null
 
+
+  return { chordY, endingY, dynamicY, partY, tempoY, laneOf }
+}
+
+/**
+ * Place the chord, part and tempo marks on the rungs `aboveLadder` resolved.
+ *
+ * Each item is drawn one FONT SIZE below the top it reserved, which is abcjs's universal
+ * text rule (`text.js:30-31`), plus the tempo's own 2px bump (`draw/tempo.js:15`).
+ */
+function anchorAboveStaff<
+  T extends {
+    readonly elements: readonly LayoutElement[]
+    readonly beams: readonly PlacedLine[]
+  } & StaffFurniture,
+>(parts: readonly T[], strict: boolean, partsBox = false): T[] {
+  const isChord = isChordText
+  const has = (fn: (el: LayoutElement) => boolean) => parts.some((p) => p.elements.some(fn))
+  const chords = has((el) => el.texts.some(isChord))
+  const partLabels = has((el) => el.type === 'part')
+  const tempos = has((el) => el.type === 'tempo')
+  if (!chords && !partLabels && !tempos) return [...parts]
+  const { chordY, partY, tempoY, laneOf } = aboveLadder(parts, strict, partsBox)
+
   // A uniform shift per item, so a tempo mark's beat-unit glyph and its stem ride along
   // with the `= 120` they belong to rather than being re-derived.
   const shiftBy = (el: LayoutElement, shift: number): LayoutElement => ({
@@ -8593,7 +8712,13 @@ function anchorAboveStaff<
 
   return parts.map((part) => ({
     ...part,
-    aboveStackPlaced: true,
+    // A PART OR TEMPO MARK IS OUTSIDE BOTH LANES, so its own placed box already carries
+    // them and `verticalExtent` must not add either a second time. A CHORD is INSIDE both,
+    // so a staff with a chord and nothing else above it still owes them — which is why this
+    // is the two outer rungs and not "the stack ran". Measured: gating on `chords` too left
+    // a chord-plus-dynamic staff 27.13px short and gating on neither left a volta-plus-tempo
+    // staff 23.25px tall.
+    aboveStackPlaced: partLabels || tempos,
     chordLaneAbove: chords,
     elements: part.elements.map((el) => {
       if (el.type === 'part') {
@@ -8810,12 +8935,10 @@ function anchorChordsBelow<
  * own box is never ink — `verticalExtent` reads it only as the `sawDynamicAbove` flag and
  * reserves a flat lane instead.
  *
- * ponytail: abcjs's above order is chord, ending, DYNAMIC, part, tempo, and this places the
- * dynamic on the music with the chord lane not yet spent — so a staff carrying both would
- * put them in the same place. No corpus tune does: abcjs only puts dynamics above when the
- * tune SINGS, and a singing staff takes the lyric lane below rather than a chord lane
- * above. The real fix is the one `anchorAboveStaff`'s ending-lane note has asked for since
- * finding 93 — one stack, spent once, instead of four passes each re-deriving the ink.
+ * THE RUNG COMES FROM `aboveLadder` — third of five, above the chord and the ending and
+ * below the part and the tempo. It used to be the whole stack's outer edge, which is right
+ * only on a staff that carries no other above lane; `tests/above-lane-order.test.ts` is the
+ * ladder of controls that measured the four cases where it is not.
  */
 function anchorDynamicsAbove<
   T extends {
@@ -8830,19 +8953,11 @@ function anchorDynamicsAbove<
     parts.some((p) => p.spannerLines.some((l) => isDyn(l.role, l.y1)))
   if (!present) return [...parts]
 
-  // The lane's OUTER edge, which `verticalExtent` has already walked `top` out to.
-  const laneTop = verticalExtent(
-    parts.flatMap((p) => p.elements.filter((el) => el.type !== 'title')),
-    parts.flatMap((p) => p.beams),
-    strict,
-    {
-      tupletLines: parts.flatMap((p) => p.tupletLines ?? []),
-      tupletTexts: parts.flatMap((p) => p.tupletTexts ?? []),
-      tupletReserves: parts.flatMap((p) => p.tupletReserves ?? []),
-      voltaLines: parts.flatMap((p) => p.voltaLines ?? []),
-      voltaTexts: parts.flatMap((p) => p.voltaTexts ?? []),
-    },
-  ).top
+  // THE DYNAMIC'S OWN RUNG — third of five, above the chord and the ending and below the
+  // part and the tempo. It used to be the whole stack's outer edge, which is right only on
+  // a staff carrying no other above lane; `aboveLadder` walks abcjs's order instead.
+  const laneTop = aboveLadder(parts, strict, false).dynamicY
+  if (laneTop === null) return [...parts]
 
   const shift = laneTop - stepToY(ENGRAVE.dynamicAboveStep)
   const moveLine = (l: PlacedLine): PlacedLine =>
@@ -9110,25 +9225,13 @@ function anchorVoltas<
   const present = parts.some((p) => (p.voltaLines ?? []).length > 0)
   if (!present) return [...parts]
 
-  const top = verticalExtent(
-    parts.flatMap((p) => p.elements),
-    parts.flatMap((p) => p.beams),
-    strict,
-    {
-      tupletLines: parts.flatMap((p) => p.tupletLines ?? []),
-      tupletTexts: parts.flatMap((p) => p.tupletTexts ?? []),
-      tupletReserves: parts.flatMap((p) => p.tupletReserves ?? []),
-      tupletReservesAbove: parts.some((p) => p.tupletReservesAbove === true),
-      voltaLines: parts.flatMap((p) => p.voltaLines ?? []),
-      voltaTexts: parts.flatMap((p) => p.voltaTexts ?? []),
-      spannerLines: parts.flatMap((p) => p.spannerLines ?? []),
-      melismaLines: parts.flatMap((p) => p.melismaLines ?? []),
-      hasHairpin: parts.some((p) => p.hasHairpin === true),
-      dynamicsAbove: parts.some((p) => p.dynamicsAbove === true),
-      aboveStackPlaced: parts.some((p) => p.aboveStackPlaced === true),
-      chordLaneAbove: parts.some((p) => p.chordLaneAbove === true),
-    },
-  ).top
+  // THE ENDING'S OWN RUNG — second of five, straight above the chord lane and BELOW the
+  // dynamic, the part and the tempo. It used to be the whole stack's outer edge, so a
+  // volta on a staff that also carried a dynamic or a part label was pushed out past it:
+  // measured against abcjs's `positionY`, its `|1` sat 27.13px too high on a `!mf!` staff
+  // and 26.04px on a `P:A` one, while the staff's extent was exact on both.
+  const top = aboveLadder(parts, strict, false).endingY
+  if (top === null) return [...parts]
 
   // `marginY` is zero and `verticalExtent` has already subtracted it; adding it back keeps
   // the two in step if it ever stops being zero. `voltaDrawDrop` is abcjs's `- 2`, and y is
@@ -9498,10 +9601,13 @@ function verticalExtent(
   // -116.84. The block always wins that `min` when it is present — its offset is
   // `musicTop - musicSpace - blockHeight`, which is below `musicTop` by construction — so
   // skipping the lane here cannot change the answer, only stop it being counted twice.
-  // The ENDING lane is NOT gated on `aboveStackPlaced`: `anchorAboveStaff`'s ink call
-  // deliberately leaves it out (see the `voltaLines: []` note there), so the stack it
-  // placed sits BELOW it and this is the one place it is spent. `hasBlock` still gates it,
-  // for the title block, which is placed from a `musicTop` that does carry it.
+  // THE ENDING LANE IS GATED THE SAME WAY, and it did not used to be. Until the above
+  // ladder landed, `anchorAboveStaff` stacked the part and tempo on the raw ink and the
+  // ending lane went on top of them, so this was the one place it was spent. abcjs's order
+  // is chord, ending, dynamic, part, tempo — the part and the tempo are OUTSIDE it — so a
+  // placed part or tempo box now carries this lane already and adding it here counted it
+  // twice: 23.25px on a control with a volta and a `Q:`. `hasBlock` still gates it too, for
+  // the title block, which is placed from a `musicTop` that does carry it.
   //
   // AND AN ENDING OVER A CHORD LANE COSTS A FLAT 2 PITCH, margin included:
   //
@@ -9514,7 +9620,7 @@ function verticalExtent(
   // five control tunes put on `"D7"…|1…` and on nothing simpler. A tuplet's lane takes the
   // same branch, since abcjs stores both in the one `endingHeightAbove`.
   const lane = (pitch: number) => (pitch + ENGRAVE.laneMargin) * ENGRAVE.spacePerStep
-  if (endingAbove > 0 && !hasBlock)
+  if (endingAbove > 0 && !hasBlock && !aboveSpent)
     top -=
       furniture.chordLaneAbove === true
         ? ENGRAVE.endingOverChordLane * ENGRAVE.spacePerStep
