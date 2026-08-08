@@ -637,18 +637,18 @@ system 2 width=90.671 originY=37.256
       glyph noteheadBlack 54.481,0.000
       line  54.545,0.000 -> 54.545,3.500 t=0.129
     note@5 x=63.394 w=3.871
-      glyph noteheadDiamondBlack 63.394,-2.500
+      glyph noteheadBlack 63.394,-2.500
       line  63.433,-2.400 -> 63.433,1.250 t=0.077
     note@7 x=69.697 w=3.871
-      glyph noteheadDiamondBlack 69.697,-3.500
-      line  69.439,-3.000 -> 70.923,-3.000 t=0.090
+      glyph noteheadBlack 69.697,-3.500
+      line  69.439,-3.000 -> 71.221,-3.000 t=0.090
       line  69.736,-3.400 -> 69.736,0.918 t=0.077
     note@5 x=76.001 w=3.871
-      glyph noteheadDiamondBlack 76.001,-2.500
+      glyph noteheadBlack 76.001,-2.500
       line  76.039,-2.400 -> 76.039,0.586 t=0.077
     note@7 x=82.304 w=3.871
-      glyph noteheadDiamondBlack 82.304,-3.500
-      line  82.045,-3.000 -> 83.529,-3.000 t=0.090
+      glyph noteheadBlack 82.304,-3.500
+      line  82.045,-3.000 -> 83.827,-3.000 t=0.090
       line  82.342,-3.400 -> 82.342,0.254 t=0.077
     bar x=88.607 w=0.077
       line  88.645,-2.000 -> 88.645,2.000 t=0.077

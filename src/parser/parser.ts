@@ -998,6 +998,7 @@ class VoiceBuilder {
 
   push(event: MusicEvent): void {
     this.target.push(event)
+    this.appendedSinceLineStart = true
     // Lyrics align to the primary melody only: overlay notes do not advance the counter,
     // since an overlay plus lyrics is otherwise ambiguous. Rests bear no lyric.
     if (this.overlayIndex === null && event.type !== 'rest') this.noteCounter += 1
@@ -1021,12 +1022,54 @@ class VoiceBuilder {
    */
   /** Whether this voice has closed a measure since it last opened a line. */
   private wroteSinceLineStart = false
+  /**
+   * Whether anything at all has been appended since this line opened — abcjs's test for
+   * whether `startNewLine` has FIRED yet. It fires lazily, once `parseMusicLine` is past
+   * the inline statements at the head of the line (`abc_parse_music.js:152-156`), so a
+   * field written before the first note or bar is still ahead of it. See `noteStyle`.
+   */
+  private appendedSinceLineStart = false
+  /**
+   * A `style=` that arrived MID-LINE and therefore belongs to the NEXT one. See the `K:`
+   * arm of `applyField`; the mechanism is `meterForNextLine`'s exactly.
+   */
+  private styleForNextLine: NoteStyle | null = null
+
+  /**
+   * `K: style=` / `[K: style=]` — WHEN it takes effect, which is not where it stands.
+   *
+   * `parseKey` sets `multilineVars.style` immediately, but nothing reads it there: the
+   * style reaches the drawing as an ELEMENT, appended by `createVoice` —
+   * `if (params.style) self.appendElement('style', null, null, {head: params.style})`
+   * (`tune-builder.js:963-971`) — and `createVoice` runs from `startNewLine`. So the
+   * granularity is the music LINE, exactly as `%%vocalfont`'s is.
+   *
+   * MEASURED, because the source alone reads as "applies from here". On
+   * `GAB2 !style=harmonic![gb]4|GAB2 [K: style=harmonic]gbgb|` abcjs draws the `[gb]` as
+   * DIAMONDS and the four `gbgb` after the `[K:]` as ORDINARY OVAL HEADS — same path data
+   * as the `G`, `A`, `B` before them, and its element probe reads `w = 9.810` for each
+   * against the diamond's 7.500. The decoration form `!style=harmonic!` is per note and
+   * immediate; the field form is not.
+   *
+   * A field at the HEAD of a line still applies to that line, because `startNewLine` has
+   * not fired yet — the same lazy-line mechanism as findings 125 and 130.
+   */
+  setNoteStyle(style: NoteStyle, inline: boolean): void {
+    if (inline && this.appendedSinceLineStart) this.styleForNextLine = style
+    else this.noteStyle = style
+  }
 
   beginMusicLine(): void {
     this.lineNoteStart = this.noteCounter
     this.closeUnterminatedMeasure()
     this.pendingLineStart = true
     this.wroteSinceLineStart = false
+    this.appendedSinceLineStart = false
+    // abcjs's `createVoice` reading `multilineVars.style` — see `setNoteStyle`.
+    if (this.styleForNextLine !== null) {
+      this.noteStyle = this.styleForNextLine
+      this.styleForNextLine = null
+    }
     // …AND THIS IS WHERE A STANDALONE `M:` LANDS — abcjs's `startNewLine` consuming
     // `multilineVars.meter`. See `setMeterForNextLine`. It is promoted AFTER
     // `closeUnterminatedMeasure`, so the measure this line opens gets it and the one it
@@ -1329,6 +1372,10 @@ class VoiceBuilder {
     chordSymbol: string | null = null,
     annotations: readonly string[] = [],
   ): boolean {
+    // A BARLINE FIRES `startNewLine` TOO, which is why this is not gated on notes — see
+    // `appendedSinceLineStart`. `closeUnterminatedMeasure` runs from `beginMusicLine`
+    // BEFORE that flag is reset, so a line-ending measure cannot set it for the next line.
+    this.appendedSinceLineStart = true
     // A barline with nothing before it (leading `|:`) opens rather than closes, so it is
     // held for the NEXT measure instead of being dropped. Dropping it lost a printed
     // barline wherever a line ended `:|` and the next began `|:`, and lost the opening
@@ -2513,7 +2560,7 @@ class Parser {
         // until the next one — `[K: style=harmonic]`, then `[K: style=normal]` to end it.
         // It is voice state, not a property of the K: field.
         const keyStyle = styleModifier(value)
-        if (keyStyle !== null) builder.voice.noteStyle = keyStyle
+        if (keyStyle !== null) builder.voice.setNoteStyle(keyStyle, inline)
         if (builder.bodyStarted) {
           // A style-only K: must not touch the key. `parseKey` reads the first token and
           // falls back to C for anything that is not a key letter, so passing it

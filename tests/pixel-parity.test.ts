@@ -310,7 +310,12 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // THE `ox` RAISE THIS ENTRY CARRIED FOR ONE COMMIT IS GONE. It was 1.79 -> 1.94, a
     // mean over exactly that ramp, and closing the ramp took it to -0.03. Which is what
     // the raise predicted, and the reason it was recorded rather than argued away.
-    'S5-directives-tune1': { heads: 188, dy: 0.03, dx: 1.19, oy: 0.0, ox: -0.03 },
+    // dx 1.19 -> 0.0 and dy 0.03 -> 0.0. EXACT ON ALL FOUR, and it took four findings:
+    // 129 (`!style=normal!` overriding the voice), 130 (an inline `[M:]` at a line head),
+    // and now the LINE granularity of `K: style=`. A mid-line `[K: style=harmonic]` does
+    // not change the rest of its own line — `createVoice` appends the style element from
+    // `startNewLine`, so it takes effect from the next one.
+    'S5-directives-tune1': { heads: 188, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'S5-directives-tune2': { heads: 7, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S5-directives-tune3': { heads: 16, dy: 0, dx: 0, oy: 0, ox: 0 },
     // dx 3.88 -> 0.0 and ox 0.17 -> 0.0. EXACT ON ALL FOUR. The melisma `_` is part of the
