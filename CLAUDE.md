@@ -127,8 +127,24 @@ checkpoint and hand off as you go so no context is lost.
 > split the renderer makes between geometry and glyph outlines. See
 > `Docs/CHECKPOINT-2026-08-08.md`.
 
-Read `Docs/CHECKPOINT-2026-08-08.md` first — the state, the ARC DECISION and the audio
-sizing. `Docs/HANDOFF-2026-08-08.md` has the session prompt.
+> 🔎 **AND THE GEOMETRIC TAIL CLOSED ON FOUR FINDINGS, none of which any gate could
+> state** (2026-08-08b). A rest shorter than a 16th drew NOTHING and reserved NOTHING —
+> `restGlyph` stopped at four where abcjs's `chartable.rest` runs to seven — and it was
+> reached only through a SECOND-ORDER effect, the missing 11.373px rod letting one line
+> solve 0.53px narrow. The above lanes are ONE walk in abcjs's order and we spent them in
+> four places: **A LANE ORDER IS INVISIBLE TO A SUM**, so the staff's total was right
+> either way and five of eleven controls were out by up to 27.13px. And `printSymbol`
+> never draws at `calcY(offset)` — it draws at `calcY(offset + getYCorr(symbol))`, a
+> 30-row per-glyph table that **never enters a RESERVE**, so every extent agreed while
+> twenty glyphs sat up to three pitch off. **THE SIGN OF AN ERROR IS EVIDENCE**: the
+> dynamics were named by being wrong in the SAME direction above and below the staff, the
+> `getYCorr` table by two fermatas being wrong by one pitch in OPPOSITE directions. Two
+> new gates, both ladders of controls, one variable per rung. See
+> `Docs/CHECKPOINT-2026-08-08b.md`.
+
+Read `Docs/CHECKPOINT-2026-08-08b.md` first — the state and findings 147-150. Then
+`Docs/CHECKPOINT-2026-08-08.md`, which keeps the ARC DECISION and the audio sizing and is
+still exactly right. `Docs/HANDOFF-2026-08-08b.md` has the session prompt.
 `Docs/CHECKPOINT-2026-08-07b.md` is superseded for the state but keeps findings 134-146.
 `Docs/CHECKPOINT-2026-08-07.md` is
 superseded for the state but keeps findings 125-133 and **THE GATE WAS READING 29 OF THE 41
@@ -268,14 +284,15 @@ abcjs source are all reached by sibling path and stay in that repo. Keep it that
 backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
-**THE GEOMETRIC ARC IS DONE.** 891/891, both ranked tables EMPTY — 0 of 119 pixel targets
-and 0 of 174 harvested fixtures off any axis by 0.05px — corpus median notehead distance
-0.0px, and three gates green. What is left in geometry is a 0.26px staff line on one tune
-and ONE refactor: abcjs spends every above lane in one loop (chord, ending, dynamic, part,
-tempo) where we spend them in four places. The staff's TOTAL is right either way, so no
-gate can see it; what differs is which lane a mark lands in when a staff carries two.
-Three `ponytail:` notes wait on it and nothing in either corpus combines the lanes, so it
-needs a control ladder built first. **Then AUDIO — see the arc decision above.**
+**GEOMETRY IS DONE. AUDIO IS THE ARC.** 925/925 with no reds; **five gates, and the three
+that can rank are all EMPTY** — 0 of 119 pixel targets, 0 of 174 harvested fixtures, 0 of
+41 staff-line spans. The two new ones are ladders of controls rather than corpora:
+`tests/above-lane-order.test.ts` (12 tunes, one per PAIR of above lanes) and
+`tests/glyph-ycorr.test.ts` (20 tunes, one per GLYPH). Nothing in either corpus exercises
+what they cover, which is why they had to be built before their defects could be stated.
+
+The audio arc's first commit is the HARVESTER, not the flattener — see the arc decision
+above and `Docs/HANDOFF-2026-08-08b.md`.
 
 **Every structural gate is at 100% with zero recorded divergences** — content, lyrics,
 beams, structure, source offsets. The work is now entirely GEOMETRIC and entirely
