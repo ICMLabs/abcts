@@ -3495,7 +3495,8 @@ function decorationGlyphs(
   let closeY: number | undefined
   for (const name of names) {
     if (strict && STRICT_UNDRAWN.has(name)) continue
-    if (DECORATIONS[name]?.place !== 'articulation') continue
+    const spec = DECORATIONS[name]
+    if (spec?.place !== 'articulation') continue
     closeY =
       closeY === undefined
         ? artAbove
@@ -3504,11 +3505,26 @@ function decorationGlyphs(
         : artAbove
           ? closeY + 2
           : closeY - 2
-    if (name === 'accent') closeY += artAbove ? 1 : -1
+    // AN ACCENT IS RECOGNISED BY ITS GLYPH, NOT BY ITS NAME, and that is the whole of
+    // `extra-class`'s 3.88px. abcjs canonicalises `>`, `<` and `emphasis` to `accent` in
+    // the PARSER (`accentPseudonyms`); ours keeps the source spelling and resolves it in
+    // the table above, so every alias already DREW the sforzato — and then failed
+    // `name === 'accent'`, took the stave-line arm instead, and landed one pitch low.
+    //
+    // Measured on a ladder before it was touched: `!>!d`, `!>!f`, `!>!a` and `!>![dfa]`
+    // are all exactly one pitch out and `.` and `!tenuto!` on the same chord are exact,
+    // which is what said this was the ACCENT rather than a chord or a decoration STACK —
+    // the reading recorded in the checkpoint, and wrong. A ladder ranks hypotheses; only
+    // the rung that moves names the variable.
+    //
+    // Keyed on the GLYPH because that is the discriminator that cannot go stale: abcjs's
+    // own line is `if (decoration[i] === "accent") symbol = "scripts.sforzato"`, so the
+    // sforzato IS the accent and no other decoration draws one. A fourth spelling added
+    // to the alias table gets the rule for free.
+    const isAccent = spec.above === 'articAccentAbove'
+    if (isAccent) closeY += artAbove ? 1 : -1
     else if (ON_STAVE_LINE.has(closeY)) closeY += artAbove ? 1 : -1
     if (topPitch > 9) closeY += 1
-    const spec = DECORATIONS[name]
-    if (spec === undefined) continue
     const glyph = artAbove ? spec.above : spec.below
     const y = stepToY(toStep(closeY))
     // A CLOSE decoration is given no `thickness`, so its declared box is a POINT at its

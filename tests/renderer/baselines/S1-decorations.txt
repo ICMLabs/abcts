@@ -276,7 +276,7 @@ system 3 width=90.323 originY=43.465
       line  28.013,0.833 -> 28.013,-2.500 t=0.129
     note@-2 x=47.294 w=5.474
       glyph noteheadBlack 47.294,1.000
-      glyph articAccentBelow 47.013,2.022
+      glyph articAccentBelow 47.013,2.522
       line  48.495,0.833 -> 48.495,-2.500 t=0.129
     note@-2 x=67.776 w=5.474
       glyph noteheadBlack 67.776,1.000
@@ -295,7 +295,7 @@ system 4 width=90.323 originY=54.534
       glyph gClef 2.581,1.000
     note@-2 x=6.329 w=5.474
       glyph noteheadBlack 6.329,1.000
-      glyph articAccentBelow 6.048,2.022
+      glyph articAccentBelow 6.048,2.522
       line  7.530,0.833 -> 7.530,-2.500 t=0.129
     note@-2 x=26.811 w=5.474
       glyph noteheadBlack 26.811,1.000

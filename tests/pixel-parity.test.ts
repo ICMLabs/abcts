@@ -264,18 +264,26 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     'S2-fields-tune1': { heads: 11, dy: 0.0, dx: 0, oy: 0.0, ox: 0 },
     'S2-fields-tune2': { heads: 16, dy: 0, dx: 0.01, oy: 0, ox: 0 },
     /**
-     * NEW WITH abcjs 6.7.0, both harvested into the corpus on 2026-08-08.
+     * NEW WITH abcjs 6.7.0, both harvested into the corpus on 2026-08-08. **oy -3.88 → 0.00
+     * on 2026-08-08e, and THE TABLE'S OWN NOTE HAD NAMED THE WRONG CAUSE.**
      *
-     * `twinkle` is exact. `extra-class` carries `-3.88` — one PITCH, uniform, with `dy`,
-     * `dx` and `ox` all zero, so our whole system sits one decoration lane too high. Its
-     * tune is `!class=alice!A!class=bob!!>!T[dfa]` with a `w:` line: a chord carrying BOTH
-     * an accent and a trill, which nothing else in either corpus does. `!class=…!` itself
-     * is accounted for — abcjs sets `el.extraClass` and never pushes it into
-     * `el.decoration` (`abc_parse_music.js:229`), and ours now does the same, verified by
-     * parse. So the residual is the two-decoration STACK on a chord, and it is a TARGET,
-     * not a tolerance. Recorded rather than left to widen silently.
+     * It read: "a chord carrying BOTH an accent and a trill, which nothing else in either
+     * corpus does… the residual is the two-decoration STACK on a chord." Every clause of
+     * that was an inference from the tune's text, and a ladder denied it in one run —
+     * `!>!d`, `!>!f`, `!>!a` and `!>![dfa]` are all out by exactly one pitch, and `.` and
+     * `!tenuto!` on the same chord are exact. Not a chord. Not a stack. THE ACCENT.
+     *
+     * abcjs canonicalises `>`, `<` and `emphasis` to `accent` in the PARSER
+     * (`accentPseudonyms`); we keep the source spelling and resolve it in the renderer's
+     * alias table, so `!>!` already DREW the sforzato and then failed the placement rule's
+     * `name === 'accent'` test, took the stave-line arm instead of "always three pitches
+     * away", and landed one pitch low. Keyed on the GLYPH now, which cannot go stale.
+     *
+     * **A NOTE THAT NAMES A CAUSE IS THE REASON THE ROW STOPS BEING READ** — the same
+     * lesson as the `G8` breve, and the same fix: rule the cause OUT on a control before
+     * writing it down.
      */
-    'extra-class': { heads: 4, dy: 0.01, dx: 0.0, oy: -3.88, ox: 0.0 },
+    'extra-class': { heads: 4, dy: 0.01, dx: 0.0, oy: 0.0, ox: 0.0 },
     'S3-note-syntax-tune0': { heads: 28, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S3-note-syntax-tune1': { heads: 43, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S3-note-syntax-tune2': { heads: 21, dy: 0, dx: 0, oy: 0, ox: 0 },

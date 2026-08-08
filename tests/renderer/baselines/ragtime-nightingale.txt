@@ -8073,13 +8073,13 @@ system 22 width=90.323 originY=749.211
     note@-2,5 x=71.708 w=3.871
       glyph noteheadBlack 71.708,1.000
       glyph noteheadBlack 71.708,-2.500
-      glyph articAccentAbove 71.427,-4.522
+      glyph articAccentAbove 71.427,-5.022
       line  71.746,-2.400 -> 71.746,4.743 t=0.077
     note@-6,1 x=76.923 w=3.871
       glyph noteheadBlack 76.923,3.000
       glyph noteheadBlack 76.923,-0.500
       glyph flag8thDown 76.923,6.500
-      glyph articAccentAbove 76.642,-2.022
+      glyph articAccentAbove 76.642,-2.522
       line  76.665,3.000 -> 78.447,3.000 t=0.090
       line  76.988,-0.333 -> 76.988,6.500 t=0.129
     rest x=82.139 w=3.871
