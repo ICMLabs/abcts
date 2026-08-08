@@ -6278,12 +6278,25 @@ const displaceHeads = (el: LayoutElement, dx: number): LayoutElement =>
  * so a `stafflines=1` treble staff still puts every pitch where a treble staff would and
  * simply hides four of its lines. Ledger lines follow from the same unchanged pitches, as
  * they do in abcjs.
+ *
+ * ── AND IT SPANS THE MUSIC, NOT THE PAGE ─────────────────────────────────────
+ * abcjs draws every rule from `staffGroup.startx` to `staffGroup.w`, which are
+ * `getLeftEdgeOfStaff` and `totalWidth + leftEdge` (`draw/staff-group.js:92` →
+ * `draw/staff.js`, `layout/layout-in-grid.js:13-14`). So the left end clears the voice
+ * headers and the brace, and the right end stops at the last element — NOT at the page's
+ * right margin and NOT at a title that overhangs it.
+ *
+ * This took `0` to `width` and was wrong at both ends by exactly those two terms: 25px of
+ * left edge and 15px of right margin on `ragtime-nightingale`, whose lines ran 0 → 700.10
+ * against abcjs's 25 → 685.10. It cancelled on any tune where `leftEdge` is just `marginX`
+ * AND `width` is just `musicWidth`, which is 21 of the 41 fixtures — so the two errors
+ * hid each other on the majority and no gate could see either.
  */
-const staffLinesFor = (width: number, count: number): PlacedLine[] => {
+const staffLinesFor = (left: number, right: number, count: number): PlacedLine[] => {
   const rule = (step: number): PlacedLine => ({
-    x1: 0,
+    x1: left,
     y1: stepToY(step),
-    x2: width,
+    x2: right,
     y2: stepToY(step),
     thickness: LINE_WEIGHTS.staffLine,
   })
@@ -7734,7 +7747,13 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       return {
         ...staff,
         elements: positioned,
-        staffLines: staffLinesFor(width, staff.staffLineCount),
+        // `startx` .. `w`: the music's own span. `width` is the SYSTEM's, which carries
+        // the right margin and any prose overhanging it — see `staffLinesFor`.
+        staffLines: staffLinesFor(
+          ENGRAVE.marginX + indent,
+          solved.width,
+          staff.staffLineCount,
+        ),
         originY,
       }
     })

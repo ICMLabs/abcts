@@ -3,11 +3,11 @@ bounds  width=43.710 height=20.942 top=-1.935
 systems 1
 system 0 width=43.710 originY=0.000
   staff 0 originY=10.071
-    staffline 0.000,2.000 -> 43.710,2.000 t=0.090
-    staffline 0.000,1.000 -> 43.710,1.000 t=0.090
-    staffline 0.000,0.000 -> 43.710,0.000 t=0.090
-    staffline 0.000,-1.000 -> 43.710,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 43.710,-2.000 t=0.090
+    staffline 12.542,2.000 -> 41.775,2.000 t=0.090
+    staffline 12.542,1.000 -> 41.775,1.000 t=0.090
+    staffline 12.542,0.000 -> 41.775,0.000 t=0.090
+    staffline 12.542,-1.000 -> 41.775,-1.000 t=0.090
+    staffline 12.542,-2.000 -> 41.775,-2.000 t=0.090
     title x=0.000 w=0.000
       text  13.199,-5.612 size=3.484 bold "Same Staff Reorder"
     voiceName x=1.935 w=0.000

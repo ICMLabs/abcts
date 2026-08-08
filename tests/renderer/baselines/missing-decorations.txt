@@ -3,11 +3,11 @@ bounds  width=57.324 height=21.885 top=-1.935
 systems 1
 system 0 width=57.324 originY=0.000
   staff 0 originY=14.014
-    staffline 0.000,2.000 -> 57.324,2.000 t=0.090
-    staffline 0.000,1.000 -> 57.324,1.000 t=0.090
-    staffline 0.000,0.000 -> 57.324,0.000 t=0.090
-    staffline 0.000,-1.000 -> 57.324,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 57.324,-2.000 t=0.090
+    staffline 1.935,2.000 -> 55.388,2.000 t=0.090
+    staffline 1.935,1.000 -> 55.388,1.000 t=0.090
+    staffline 1.935,0.000 -> 55.388,0.000 t=0.090
+    staffline 1.935,-1.000 -> 55.388,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 55.388,-2.000 t=0.090
     title x=0.000 w=0.000
       text  20.458,-9.555 size=3.484 bold "S-missing-1 xstem"
       text  22.678,-5.354 size=2.452 italic "Test Fixture"
@@ -51,11 +51,11 @@ bounds  width=57.324 height=23.401 top=-1.935
 systems 1
 system 0 width=57.324 originY=0.000
   staff 0 originY=15.530
-    staffline 0.000,2.000 -> 57.324,2.000 t=0.090
-    staffline 0.000,1.000 -> 57.324,1.000 t=0.090
-    staffline 0.000,0.000 -> 57.324,0.000 t=0.090
-    staffline 0.000,-1.000 -> 57.324,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 57.324,-2.000 t=0.090
+    staffline 1.935,2.000 -> 55.388,2.000 t=0.090
+    staffline 1.935,1.000 -> 55.388,1.000 t=0.090
+    staffline 1.935,0.000 -> 55.388,0.000 t=0.090
+    staffline 1.935,-1.000 -> 55.388,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 55.388,-2.000 t=0.090
     title x=0.000 w=0.000
       text  20.944,-11.071 size=3.484 bold "S-missing-2 trillh"
       text  22.678,-6.869 size=2.452 italic "Test Fixture"
@@ -102,11 +102,11 @@ bounds  width=57.324 height=21.885 top=-1.935
 systems 1
 system 0 width=57.324 originY=0.000
   staff 0 originY=14.014
-    staffline 0.000,2.000 -> 57.324,2.000 t=0.090
-    staffline 0.000,1.000 -> 57.324,1.000 t=0.090
-    staffline 0.000,0.000 -> 57.324,0.000 t=0.090
-    staffline 0.000,-1.000 -> 57.324,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 57.324,-2.000 t=0.090
+    staffline 1.935,2.000 -> 55.388,2.000 t=0.090
+    staffline 1.935,1.000 -> 55.388,1.000 t=0.090
+    staffline 1.935,0.000 -> 55.388,0.000 t=0.090
+    staffline 1.935,-1.000 -> 55.388,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 55.388,-2.000 t=0.090
     title x=0.000 w=0.000
       text  16.040,-9.555 size=3.484 bold "S-missing-3 Beam Tremolos"
       text  22.678,-5.354 size=2.452 italic "Test Fixture"
@@ -158,11 +158,11 @@ bounds  width=90.323 height=22.335 top=-1.935
 systems 1
 system 0 width=90.323 originY=0.000
   staff 0 originY=14.014
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.090
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.090
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.090
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
       text  24.188,-9.555 size=3.484 bold "S-missing-4 Editorial and Courtesy Accidentals"
       text  39.177,-5.354 size=2.452 italic "Test Fixture"
@@ -210,11 +210,11 @@ bounds  width=90.323 height=48.004 top=-1.935
 systems 3
 system 0 width=90.323 originY=0.000
   staff 0 originY=16.306
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.090
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.090
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.090
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
       text  25.105,-11.847 size=3.484 bold "S-missing-5 Dal Segno / Da Capo Navigation"
       text  39.177,-7.645 size=2.452 italic "Test Fixture"
@@ -256,11 +256,11 @@ system 0 width=90.323 originY=0.000
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
 system 1 width=90.323 originY=22.252
   staff 0 originY=5.968
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.090
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.090
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.090
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     note@-6 x=6.329 w=5.474
@@ -296,11 +296,11 @@ system 1 width=90.323 originY=22.252
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
 system 2 width=54.511 originY=35.383
   staff 0 originY=4.750
-    staffline 0.000,2.000 -> 54.511,2.000 t=0.090
-    staffline 0.000,1.000 -> 54.511,1.000 t=0.090
-    staffline 0.000,0.000 -> 54.511,0.000 t=0.090
-    staffline 0.000,-1.000 -> 54.511,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 54.511,-2.000 t=0.090
+    staffline 1.935,2.000 -> 52.576,2.000 t=0.090
+    staffline 1.935,1.000 -> 52.576,1.000 t=0.090
+    staffline 1.935,0.000 -> 52.576,0.000 t=0.090
+    staffline 1.935,-1.000 -> 52.576,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 52.576,-2.000 t=0.090
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     note@-6 x=6.329 w=5.474
@@ -340,11 +340,11 @@ bounds  width=58.888 height=23.401 top=-1.935
 systems 1
 system 0 width=58.888 originY=0.000
   staff 0 originY=15.530
-    staffline 0.000,2.000 -> 58.888,2.000 t=0.090
-    staffline 0.000,1.000 -> 58.888,1.000 t=0.090
-    staffline 0.000,0.000 -> 58.888,0.000 t=0.090
-    staffline 0.000,-1.000 -> 58.888,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 58.888,-2.000 t=0.090
+    staffline 1.935,2.000 -> 56.953,2.000 t=0.090
+    staffline 1.935,1.000 -> 56.953,1.000 t=0.090
+    staffline 1.935,0.000 -> 56.953,0.000 t=0.090
+    staffline 1.935,-1.000 -> 56.953,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 56.953,-2.000 t=0.090
     title x=0.000 w=0.000
       text  13.714,-11.071 size=3.484 bold "S-missing-6 Combined Decorations"
       text  23.460,-6.869 size=2.452 italic "Test Fixture"

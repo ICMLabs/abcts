@@ -701,25 +701,16 @@ describe('pixel parity vs abcjs rendered SVG', () => {
    * Compared as the top line's bounding-box CENTRE, which is what `byClass` gives and is
    * enough: a span differing at either end moves it. 40 of the 41 fixtures agree exactly.
    *
-   * TWENTY DO NOT, and they sort into abcjs's two terms exactly:
+   * IT OPENED WITH TWENTY, and they sorted into abcjs's two terms exactly: a flat **5.00**
+   * wherever there is a BRACE (`setBraceLocation` adds its own 10px width, so the centre
+   * moves 5), and **40–46** wherever there is a VOICE HEADER (the widest `voicefont`
+   * string plus the width of an "A"). `two-voice-invention` is two staves with NEITHER and
+   * was exact, which is what put it on `getLeftEdgeOfStaff` rather than on multi-staff
+   * layout. On `ragtime-nightingale` ours spanned 0 → 700.10 against abcjs's 25 → 685.10.
    *
-   *   • a flat **5.00** — every `S7-voices` tune, both ragtimes — is a BRACE, whose own
-   *     width `setBraceLocation` adds to the left edge, 10px of it, so the centre moves 5;
-   *   • **40–46** — `ave-verum-corpus`, `zocharti-loch`, `score-reorder`,
-   *     `brother-john-inline-voices` — is a VOICE HEADER, the widest `voicefont` string
-   *     plus the width of an "A".
-   *
-   * `two-voice-invention` is two staves with NEITHER and is exact, which is what puts this
-   * on `getLeftEdgeOfStaff` rather than on multi-staff layout. On `ragtime-nightingale`
-   * ours spans 0 → 700.10 against abcjs's 25 → 685.10.
-   *
-   * THE NOTEHEADS ON ALL TWENTY ARE EXACT, so the MUSIC already sits at the right edge —
-   * `leftEdge = ENGRAVE.marginX + indent` in the solver, which IS `getLeftEdgeOfStaff`.
-   * Only `staffLinesFor(width, …)` is wrong: it draws every rule from 0 to the system
-   * width where abcjs draws `startx` to `startx + totalWidth`.
-   *
-   * Recorded rather than fixed, exactly as a ceiling is: the list cannot now grow while it
-   * is being closed, and it FAILS if it shrinks. See the handoff.
+   * Nineteen closed on one line — `staffLinesFor` taking `startx` and `w`. The two errors
+   * CANCELLED on any tune where `leftEdge` is just `marginX` and the system width is just
+   * `musicWidth`, which is most of the corpus, and that is why nothing caught either.
    */
   it('draws its staff lines the length abcjs draws them', () => {
     const off: string[] = []
@@ -743,29 +734,15 @@ describe('pixel parity vs abcjs rendered SVG', () => {
       )
       if (worst >= EPSILON) off.push(`${target.key} ${worst.toFixed(2)}`)
     }
-    // THE KNOWN FAILURES, with their exact figures. A ceiling, not a tolerance.
-    expect(off).toEqual([
-      'S2-fields-tune1 5.50',
-      'S3-note-syntax-tune13 0.26',
-      'S3-note-syntax-tune15 4.13',
-      'S3-note-syntax-tune16 64.42',
-      'S7-voices-tune0 5.00',
-      'S7-voices-tune1 5.00',
-      'S7-voices-tune2 5.00',
-      'S7-voices-tune3 5.01',
-      'S7-voices-tune4 5.00',
-      'S7-voices-tune5 42.08',
-      'S7-voices-tune6 5.01',
-      'ave-verum-corpus 41.87',
-      'brother-john-inline-voices 41.58',
-      'curves-tune5 19.02',
-      'ragtime-mini 5.00',
-      'ragtime-nightingale 5.01',
-      'score-reorder-shared 41.09',
-      'score-reorder 45.36',
-      'stacked-annotations 13.41',
-      'zocharti-loch 40.87',
-    ])
+    // THE ONE KNOWN FAILURE, and its exact figure. A ceiling, not a tolerance.
+    //
+    // NINETEEN of the twenty this gate opened with closed on one line — `staffLinesFor`
+    // taking `startx` and `w` instead of `0` and the system width. What is left is 0.26px
+    // of CENTRE, so 0.52 of span, on a tune that is nothing but rests: our right end is
+    // half a pixel short of abcjs's `staffGroup.w`. Every notehead on it is exact, and
+    // both ranked tables stay empty, so it is the justification TARGET at the right edge
+    // and not a placement. Unexamined.
+    expect(off).toEqual(['S3-note-syntax-tune13 0.26'])
   })
 
   it('writes the ranked table', () => {

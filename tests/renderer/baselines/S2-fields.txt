@@ -3,11 +3,11 @@ bounds  width=57.324 height=29.228 top=-1.935
 systems 1
 system 0 width=57.324 originY=0.000
   staff 0 originY=21.357
-    staffline 0.000,2.000 -> 57.324,2.000 t=0.090
-    staffline 0.000,1.000 -> 57.324,1.000 t=0.090
-    staffline 0.000,0.000 -> 57.324,0.000 t=0.090
-    staffline 0.000,-1.000 -> 57.324,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 57.324,-2.000 t=0.090
+    staffline 1.935,2.000 -> 55.388,2.000 t=0.090
+    staffline 1.935,1.000 -> 55.388,1.000 t=0.090
+    staffline 1.935,0.000 -> 55.388,0.000 t=0.090
+    staffline 1.935,-1.000 -> 55.388,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 55.388,-2.000 t=0.090
     title x=0.000 w=0.000
       text  15.982,-16.898 size=3.484 bold "S2-1 Title and Header Fields"
       text  21.773,-12.926 size=2.710 "A Subtitle Here"
@@ -57,11 +57,11 @@ bounds  width=90.323 height=56.600 top=-1.935
 systems 3
 system 0 width=90.323 originY=0.000
   staff 0 originY=16.461
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.090
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.090
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.090
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
       text  35.957,-12.002 size=3.484 bold "S2-2 Text Placement"
     clef x=1.935 w=3.103
@@ -90,11 +90,11 @@ system 0 width=90.323 originY=0.000
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
 system 1 width=90.323 originY=22.873
   staff 0 originY=6.752
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.090
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.090
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.090
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     note@-1 x=9.990 w=5.474
@@ -117,11 +117,11 @@ system 1 width=90.323 originY=22.873
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
 system 2 width=31.710 originY=34.176
   staff 0 originY=7.362
-    staffline 0.000,2.000 -> 31.710,2.000 t=0.090
-    staffline 0.000,1.000 -> 31.710,1.000 t=0.090
-    staffline 0.000,0.000 -> 31.710,0.000 t=0.090
-    staffline 0.000,-1.000 -> 31.710,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 31.710,-2.000 t=0.090
+    staffline 1.935,2.000 -> 28.356,2.000 t=0.090
+    staffline 1.935,1.000 -> 28.356,1.000 t=0.090
+    staffline 1.935,0.000 -> 28.356,0.000 t=0.090
+    staffline 1.935,-1.000 -> 28.356,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 28.356,-2.000 t=0.090
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     tempo x=6.329 w=0.000
@@ -150,11 +150,11 @@ bounds  width=90.323 height=37.465 top=-1.935
 systems 2
 system 0 width=90.323 originY=0.000
   staff 0 originY=10.071
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.090
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.090
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.090
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
       text  36.017,-5.612 size=3.484 bold "S2-3 BeginText Test"
     clef x=1.935 w=3.103
@@ -193,11 +193,11 @@ system 0 width=90.323 originY=0.000
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
 system 1 width=54.511 originY=18.123
   staff 0 originY=11.471
-    staffline 0.000,2.000 -> 54.511,2.000 t=0.090
-    staffline 0.000,1.000 -> 54.511,1.000 t=0.090
-    staffline 0.000,0.000 -> 54.511,0.000 t=0.090
-    staffline 0.000,-1.000 -> 54.511,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 54.511,-2.000 t=0.090
+    staffline 1.935,2.000 -> 52.576,2.000 t=0.090
+    staffline 1.935,1.000 -> 52.576,1.000 t=0.090
+    staffline 1.935,0.000 -> 52.576,0.000 t=0.090
+    staffline 1.935,-1.000 -> 52.576,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 52.576,-2.000 t=0.090
     title x=0.000 w=0.000
       text  7.536,-7.407 size=2.710 "This is a text block between two music lines."
       text  5.583,-4.155 size=2.710 "It spans multiple lines to test the block rendering."

@@ -3,11 +3,11 @@ bounds  width=56.420 height=17.942 top=-1.935
 systems 1
 system 0 width=56.420 originY=0.000
   staff 0 originY=10.071
-    staffline 0.000,2.000 -> 56.420,2.000 t=0.090
-    staffline 0.000,1.000 -> 56.420,1.000 t=0.090
-    staffline 0.000,0.000 -> 56.420,0.000 t=0.090
-    staffline 0.000,-1.000 -> 56.420,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 56.420,-2.000 t=0.090
+    staffline 1.935,2.000 -> 54.485,2.000 t=0.090
+    staffline 1.935,1.000 -> 54.485,1.000 t=0.090
+    staffline 1.935,0.000 -> 54.485,0.000 t=0.090
+    staffline 1.935,-1.000 -> 54.485,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 54.485,-2.000 t=0.090
     title x=0.000 w=0.000
       text  24.093,-5.612 size=3.484 bold "Simple C"
     clef x=1.935 w=3.103
@@ -49,11 +49,11 @@ bounds  width=90.323 height=17.467 top=-1.935
 systems 1
 system 0 width=90.323 originY=0.000
   staff 0 originY=10.071
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.090
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.090
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.090
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
       text  37.573,-5.612 size=3.484 bold "Twinkle Twinkle"
     clef x=1.935 w=3.103
@@ -119,11 +119,11 @@ bounds  width=60.098 height=17.942 top=-1.935
 systems 1
 system 0 width=60.098 originY=0.000
   staff 0 originY=10.071
-    staffline 0.000,2.000 -> 60.098,2.000 t=0.090
-    staffline 0.000,1.000 -> 60.098,1.000 t=0.090
-    staffline 0.000,0.000 -> 60.098,0.000 t=0.090
-    staffline 0.000,-1.000 -> 60.098,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 60.098,-2.000 t=0.090
+    staffline 1.935,2.000 -> 58.162,2.000 t=0.090
+    staffline 1.935,1.000 -> 58.162,1.000 t=0.090
+    staffline 1.935,0.000 -> 58.162,0.000 t=0.090
+    staffline 1.935,-1.000 -> 58.162,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 58.162,-2.000 t=0.090
     title x=0.000 w=0.000
       text  26.605,-5.612 size=3.484 bold "D Scale"
     clef x=1.935 w=3.103

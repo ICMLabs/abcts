@@ -3,11 +3,11 @@ bounds  width=26.561 height=17.442 top=-1.935
 systems 1
 system 0 width=26.561 originY=0.000
   staff 0 originY=10.071
-    staffline 0.000,2.000 -> 26.561,2.000 t=0.090
-    staffline 0.000,1.000 -> 26.561,1.000 t=0.090
-    staffline 0.000,0.000 -> 26.561,0.000 t=0.090
-    staffline 0.000,-1.000 -> 26.561,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 26.561,-2.000 t=0.090
+    staffline 1.935,2.000 -> 24.625,2.000 t=0.090
+    staffline 1.935,1.000 -> 24.625,1.000 t=0.090
+    staffline 1.935,0.000 -> 24.625,0.000 t=0.090
+    staffline 1.935,-1.000 -> 24.625,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 24.625,-2.000 t=0.090
     title x=0.000 w=0.000
       text  10.201,-5.612 size=3.484 bold "S6-1 C"
     clef x=1.935 w=3.103
@@ -22,11 +22,11 @@ bounds  width=129.869 height=22.412 top=-1.935
 systems 1
 system 0 width=129.869 originY=0.000
   staff 0 originY=14.541
-    staffline 0.000,2.000 -> 129.869,2.000 t=0.090
-    staffline 0.000,1.000 -> 129.869,1.000 t=0.090
-    staffline 0.000,0.000 -> 129.869,0.000 t=0.090
-    staffline 0.000,-1.000 -> 129.869,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 129.869,-2.000 t=0.090
+    staffline 1.935,2.000 -> 127.933,2.000 t=0.090
+    staffline 1.935,1.000 -> 127.933,1.000 t=0.090
+    staffline 1.935,0.000 -> 127.933,0.000 t=0.090
+    staffline 1.935,-1.000 -> 127.933,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 127.933,-2.000 t=0.090
     title x=0.000 w=0.000
       text  55.395,-10.081 size=3.484 bold "S6-2 Change Key Sig"
     clef x=1.935 w=3.103
@@ -231,11 +231,11 @@ bounds  width=90.323 height=92.867 top=-1.935
 systems 7
 system 0 width=90.323 originY=0.000
   staff 0 originY=14.014
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.090
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.090
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.090
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
       text  36.078,-9.555 size=3.484 bold "S6-3 Key Signatures"
       text  30.644,-5.354 size=2.452 italic "Test - from Gonzato guide Ch.2"
@@ -263,11 +263,11 @@ system 0 width=90.323 originY=0.000
       glyph accidentalSharp 87.323,-2.000
 system 1 width=90.323 originY=22.066
   staff 0 originY=3.862
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.090
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.090
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.090
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=1.065
@@ -291,11 +291,11 @@ system 1 width=90.323 originY=22.066
       glyph accidentalSharp 87.323,-0.500
 system 2 width=90.323 originY=32.900
   staff 0 originY=4.942
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.090
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.090
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.090
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=2.387
@@ -322,11 +322,11 @@ system 2 width=90.323 originY=32.900
       glyph accidentalFlat 87.516,0.000
 system 3 width=90.323 originY=44.813
   staff 0 originY=4.942
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.090
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.090
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.090
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=2.781
@@ -353,11 +353,11 @@ system 3 width=90.323 originY=44.813
       glyph accidentalFlat 87.516,-1.500
 system 4 width=90.323 originY=57.227
   staff 0 originY=4.442
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.090
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.090
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.090
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=2.000
@@ -384,11 +384,11 @@ system 4 width=90.323 originY=57.227
       glyph accidentalNatural 87.690,-1.500
 system 5 width=90.323 originY=69.140
   staff 0 originY=4.442
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.090
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.090
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.090
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=1.652
@@ -412,11 +412,11 @@ system 5 width=90.323 originY=69.140
       glyph accidentalFlat 87.516,0.000
 system 6 width=33.356 originY=81.634
   staff 0 originY=3.862
-    staffline 0.000,2.000 -> 33.356,2.000 t=0.090
-    staffline 0.000,1.000 -> 33.356,1.000 t=0.090
-    staffline 0.000,0.000 -> 33.356,0.000 t=0.090
-    staffline 0.000,-1.000 -> 33.356,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 33.356,-2.000 t=0.090
+    staffline 1.935,2.000 -> 31.420,2.000 t=0.090
+    staffline 1.935,1.000 -> 31.420,1.000 t=0.090
+    staffline 1.935,0.000 -> 31.420,0.000 t=0.090
+    staffline 1.935,-1.000 -> 31.420,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 31.420,-2.000 t=0.090
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=0.871
@@ -441,11 +441,11 @@ bounds  width=90.323 height=81.453 top=-1.935
 systems 6
 system 0 width=90.323 originY=0.000
   staff 0 originY=14.014
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.090
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.090
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.090
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
       text  32.938,-9.555 size=3.484 bold "S6-4 Modal Key Signatures"
       text  39.177,-5.354 size=2.452 italic "Test Fixture"
@@ -487,11 +487,11 @@ system 0 width=90.323 originY=0.000
       glyph accidentalSharp 87.323,-0.500
 system 1 width=90.323 originY=22.066
   staff 0 originY=3.862
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.090
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.090
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.090
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=2.387
@@ -531,11 +531,11 @@ system 1 width=90.323 originY=22.066
       glyph accidentalSharp 87.323,-0.500
 system 2 width=90.323 originY=32.900
   staff 0 originY=4.942
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.090
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.090
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.090
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=2.387
@@ -575,11 +575,11 @@ system 2 width=90.323 originY=32.900
       glyph accidentalFlat 87.516,0.000
 system 3 width=90.323 originY=44.813
   staff 0 originY=4.942
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.090
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.090
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.090
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=2.781
@@ -618,11 +618,11 @@ system 3 width=90.323 originY=44.813
       glyph accidentalNatural 87.690,0.000
 system 4 width=90.323 originY=57.806
   staff 0 originY=3.862
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.090
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.090
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.090
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=0.697
@@ -657,11 +657,11 @@ system 4 width=90.323 originY=57.806
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
 system 5 width=54.511 originY=69.720
   staff 0 originY=3.862
-    staffline 0.000,2.000 -> 54.511,2.000 t=0.090
-    staffline 0.000,1.000 -> 54.511,1.000 t=0.090
-    staffline 0.000,0.000 -> 54.511,0.000 t=0.090
-    staffline 0.000,-1.000 -> 54.511,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 54.511,-2.000 t=0.090
+    staffline 1.935,2.000 -> 52.576,2.000 t=0.090
+    staffline 1.935,1.000 -> 52.576,1.000 t=0.090
+    staffline 1.935,0.000 -> 52.576,0.000 t=0.090
+    staffline 1.935,-1.000 -> 52.576,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 52.576,-2.000 t=0.090
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     note@-5 x=6.329 w=5.474
@@ -698,11 +698,11 @@ bounds  width=90.323 height=57.626 top=-1.935
 systems 4
 system 0 width=90.323 originY=0.000
   staff 0 originY=14.014
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.090
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.090
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.090
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
       text  34.129,-9.555 size=3.484 bold "S6-5 Double Accidentals"
       text  39.177,-5.354 size=2.452 italic "Test Fixture"
@@ -744,11 +744,11 @@ system 0 width=90.323 originY=0.000
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
 system 1 width=90.323 originY=22.066
   staff 0 originY=3.862
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.090
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.090
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.090
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     note@-6 x=8.184 w=5.474
@@ -794,11 +794,11 @@ system 1 width=90.323 originY=22.066
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
 system 2 width=90.323 originY=33.842
   staff 0 originY=4.000
-    staffline 0.000,2.000 -> 90.323,2.000 t=0.090
-    staffline 0.000,1.000 -> 90.323,1.000 t=0.090
-    staffline 0.000,0.000 -> 90.323,0.000 t=0.090
-    staffline 0.000,-1.000 -> 90.323,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 90.323,-2.000 t=0.090
+    staffline 1.935,2.000 -> 88.387,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.387,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.387,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     note@-6,-5 x=8.126 w=5.474
@@ -826,11 +826,11 @@ system 2 width=90.323 originY=33.842
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
 system 3 width=54.405 originY=45.893
   staff 0 originY=3.862
-    staffline 0.000,2.000 -> 54.405,2.000 t=0.090
-    staffline 0.000,1.000 -> 54.405,1.000 t=0.090
-    staffline 0.000,0.000 -> 54.405,0.000 t=0.090
-    staffline 0.000,-1.000 -> 54.405,-1.000 t=0.090
-    staffline 0.000,-2.000 -> 54.405,-2.000 t=0.090
+    staffline 1.935,2.000 -> 52.469,2.000 t=0.090
+    staffline 1.935,1.000 -> 52.469,1.000 t=0.090
+    staffline 1.935,0.000 -> 52.469,0.000 t=0.090
+    staffline 1.935,-1.000 -> 52.469,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 52.469,-2.000 t=0.090
     tie  8.900,2.100 -> 14.116,2.100 bulge=0.939
     tie  19.849,-0.600 -> 25.065,-0.600 bulge=-0.939
     clef x=1.935 w=3.103
