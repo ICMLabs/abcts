@@ -157,6 +157,29 @@ the first commit of that arc is the harvester, not the flattener.
 
 ---
 
+## RE-VERIFIED AT THE MERGE, on the mainline
+
+Every figure in the table above was re-run on `main` after the merge, not carried over from
+the branch:
+
+```
+HEAD                403cb8a   working tree clean
+npx tsc --noEmit    clean
+npx vitest run      891 / 891
+pixel ranked        0 of 119
+harvested ranked    0 of 174
+staff-line gate     0 failures     (its one recorded target is asserted, not open)
+```
+
+**THE THREE-ITEM WORK ORDER, in order, and none of it is guesswork:**
+
+1. `S3-note-syntax-tune13`'s last 0.26px of staff line — the third gate's only target.
+2. The ABOVE-LANE ORDER refactor — build the control ladder FIRST, no corpus tune combines
+   the lanes, and three `ponytail:` notes wait on it.
+3. AUDIO — and the first commit of that arc is the HARVESTER, not the flattener.
+
+---
+
 ## VERIFY LOOP
 
 ```bash
