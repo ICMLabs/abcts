@@ -216,7 +216,11 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // other four have the plain 10.00. It is not a wash, because the left-ink rule is a
     // SHORTFALL — abcjs's other voices keep 18.50 of slack after their bar, which absorbs
     // the 12.13 of accidental ink on the chord after it; ours had spent that slack.
-    'ragtime-nightingale': { heads: 2009, dy: 0.01, dx: 1.58, oy: 0.0, ox: 0.03 },
+    // dx 1.58 -> 0.0, ox 0.03 -> 0.0. EXACT ON ALL FOUR, on the corpus's largest fixture,
+    // and it closed on the SAME rule as `S8-layout-tune5`: `roomtaken` is an ORIGIN, not a
+    // child, so a down-stemmed displaced head's 11.81 seed reserves nothing on its own —
+    // `extraw` sees only the head's own 8.81 `shiftheadx`.
+    'ragtime-nightingale': { heads: 2009, dy: 0.01, dx: 0.0, oy: 0.0, ox: 0.0 },
     'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'score-reorder': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
     'simple-c': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
@@ -324,7 +328,10 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // dx 11.81 -> 6.20 and ox -1.56 -> 1.07 on the same rule plus the UNISON half of it.
     // `[cc]` and `[dd]` were drawn as one head on top of another, because the displacement
     // map was keyed by STEP and a unison is two heads at one step.
-    'S8-layout-tune5': { heads: 60, dy: 0.01, dx: 6.2, oy: 0, ox: 1.07 },
+    // dx 6.20 -> 0.0 and ox 1.07 -> 0.0. EXACT ON ALL FOUR. `[cc]` and `[dd]` were each
+    // 3.00px too wide — the gap between the displaced head's 8.81 `shiftheadx` and the
+    // 11.81 it seeds `roomtaken` with. Only the first is a child of the element.
+    'S8-layout-tune5': { heads: 60, dy: 0.01, dx: 0.0, oy: 0, ox: 0.0 },
     // dx 8.25 -> 0.0 and ox 3.58 -> 0.0. EXACT ON ALL FOUR. `abselem.extraw` is a MIN over
     // siblings and the accidental's `extraw -= extraLeft` runs BEFORE the graces' own
     // `addExtra` resets it, so a grace deeper than the accidental throws that half-width
@@ -503,10 +510,19 @@ describe('pixel parity vs abcjs rendered SVG', () => {
     // now the ZERO end of the check.
     //
     // The non-zero end was `frere-jacques` until 2026-08-07, when its 21.80 went to 0.00
-    // and this canary failed BEFORE its own ceiling did. It moved to `little swallow`, and
-    // that went to 0.00 in the same session. `ragtime-nightingale` is the last one left,
-    // and when its 13.31 closes this check needs a different shape — a synthetic pair,
-    // not a fixture, since by then there may be none that differ.
+    // and this canary failed BEFORE its own ceiling did. It moved to `little swallow`,
+    // then to `ragtime-nightingale`, and both closed inside two sessions. This file
+    // predicted the ending: "when its 13.31 closes this check needs a different shape — a
+    // SYNTHETIC PAIR, not a fixture, since by then there may be none that differ."
+    //
+    // So the non-zero end is now a DELIBERATE MISMATCH: our `simple-c` render measured
+    // against `ragtime-nightingale`'s golden, which `measure` pairs head-for-head over the
+    // first eight. It is the real comparison on real goldens — it simply has no reason to
+    // agree, and it cannot close. A canary a fix can extinguish is a ceiling in disguise.
+    //
+    // `tunebook-3-tune0` was tried first and is NOT usable: eight quarter notes at the
+    // same spacing as `simple-c`'s, so the dx SPREAD is 0.00 and only the mean differs.
+    // Two different tunes are not automatically two different geometries.
     const simple = measure({ key: 'simple-c', fixture: 'simple-c', tune: 0 })
     expect(simple.goldenHeads).toBe(8)
     // Not `toBe(0)`: the resolved coordinates carry float noise, and a `0.0` in the
@@ -514,9 +530,10 @@ describe('pixel parity vs abcjs rendered SVG', () => {
     expect(simple.dx).toBeLessThan(EPSILON)
     expect(simple.dy).toBeLessThan(EPSILON)
     // …and a comparison returning 0 for everything would fail here.
-    expect(
-      measure({ key: 'ragtime-nightingale', fixture: 'ragtime-nightingale', tune: 0 }).dx,
-    ).toBeGreaterThan(1)
+    const mismatched = measure({ key: 'ragtime-nightingale', fixture: 'simple-c', tune: 0 })
+    expect(mismatched.ourHeads).toBe(8)
+    expect(mismatched.dx).toBeGreaterThan(1)
+    expect(mismatched.dy).toBeGreaterThan(1)
   })
 
   it('every fixture with an SVG golden is accounted for', () => {

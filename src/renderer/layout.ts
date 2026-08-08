@@ -2974,9 +2974,16 @@ function layoutNoteheads(
     //   accidental term   `accidentalWidth + extraLeft`  — the columns plus half the
     //                                                      leftmost glyph
     //   grace term        `headX - x`                    — the columns plus `graceoffsets[0]`
+    // AND `roomTaken` IS AN ORIGIN, NOT A CHILD. `extraw` only ever sees things that were
+    // actually added — an accidental, a grace, a displaced head — so the 11.81 a
+    // down-stemmed displaced head SEEDS `roomtaken` with reserves nothing by itself
+    // (`abstract-engraver.js:649-664` sets it; only `addExtra`/`addHead` move `extraw`).
+    // The head's own `shiftheadx` is 8.81 — `-getSymbolWidth(c) * scale + adjust`, the
+    // unison's 1px shorter — and that is the whole left reach of `[cc]`. Charging the seed
+    // as well put every unison chord 3.00px too wide, which `S8-layout` X:806 pays twice.
     left: Math.max(
-      headX - x,
-      accidentalWidth + extraLeft,
+      accidentals.length === 0 ? 0 : accidentalWidth + extraLeft,
+      graceWidth === 0 ? 0 : graceWidth + accidentalWidth,
       textSpan.left,
       headLeft,
       decorationLeft,
