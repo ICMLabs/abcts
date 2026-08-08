@@ -142,9 +142,23 @@ checkpoint and hand off as you go so no context is lost.
 > new gates, both ladders of controls, one variable per rung. See
 > `Docs/CHECKPOINT-2026-08-08b.md`.
 
-Read `Docs/CHECKPOINT-2026-08-08b.md` first — the state and findings 147-150. Then
-`Docs/CHECKPOINT-2026-08-08.md`, which keeps the ARC DECISION and the audio sizing and is
-still exactly right. `Docs/HANDOFF-2026-08-08b.md` has the session prompt.
+> 🎵 **AND THE AUDIO ARC IS RUNNING** (2026-08-08c). The oracle landed before a line of the
+> flattener: 54 cases and 1,930 expected events harvested out of `flattener.test.js` by
+> EVALUATING it with `describe`/`it`/`doFlattenTest` replaced. Then the ranked table, which
+> opened at 54 of 54 and names the FIRST differing event per case. Then
+> `src/audio/flatten.ts` and `src/audio/chord-track.ts`, which run over the PARSE TREE and
+> not the laid-out one, so audio does not depend on the renderer. **37 of 54, PASSING 17.**
+> A `"C"` above the staff is a whole VOICE and sounds nowhere near where it is written; a
+> DYNAMIC is a stress table rather than a volume, and abcjs's own table is unreachable past
+> `f`; a hairpin's search is scoped to the SOURCE LINE and its close lands on the BARLINE; a
+> SPACER sounds nothing, takes no time, and still counts; an inline `[Q:]` is the page's
+> tempo and not the clock's. **`%%MIDI` appears in the parser ZERO times and gates 13 of the
+> remaining 37** — it is the next thing to build. See `Docs/CHECKPOINT-2026-08-08c.md`.
+
+Read `Docs/CHECKPOINT-2026-08-08c.md` first — the audio arc, its gate and its work list.
+Then `Docs/HANDOFF-2026-08-08c.md` for the session prompt, and
+`Docs/CHECKPOINT-2026-08-08b.md` for findings 147-150 and the geometric tail, which is
+CLOSED. `Docs/CHECKPOINT-2026-08-08.md` keeps the ARC DECISION.
 `Docs/CHECKPOINT-2026-08-07b.md` is superseded for the state but keeps findings 134-146.
 `Docs/CHECKPOINT-2026-08-07.md` is
 superseded for the state but keeps findings 125-133 and **THE GATE WAS READING 29 OF THE 41
@@ -291,8 +305,10 @@ that can rank are all EMPTY** — 0 of 119 pixel targets, 0 of 174 harvested fix
 `tests/glyph-ycorr.test.ts` (20 tunes, one per GLYPH). Nothing in either corpus exercises
 what they cover, which is why they had to be built before their defects could be stated.
 
-The audio arc's first commit is the HARVESTER, not the flattener — see the arc decision
-above and `Docs/HANDOFF-2026-08-08b.md`.
+**AUDIO IS UNDER WAY**: `tests/corpus-audio/` holds the oracle, `tests/audio-ranked.test.ts`
+is the third ranked table, and `src/audio/` is the flattener and the chord track. 37 of 54
+cases differ and 17 are ratcheted into `PASSING`. `%%MIDI` in the parser is the next thing
+to build and gates 13 of the 37 — see `Docs/HANDOFF-2026-08-08c.md`.
 
 **Every structural gate is at 100% with zero recorded divergences** — content, lyrics,
 beams, structure, source offsets. The work is now entirely GEOMETRIC and entirely
