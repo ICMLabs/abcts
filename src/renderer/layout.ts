@@ -7657,12 +7657,15 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       const parts = anchorVoltas(
         anchorBelowStaff(
           anchorAboveStaff(
+            anchorDynamicsAbove(
             anchorChordsBelow(
               anchorLyrics(
                 members.map((i) => centred[i]).filter((x) => x !== undefined),
                 strict,
               ),
               strict,
+            ),
+            strict,
             ),
             strict,
             score.partsBox,
@@ -8766,6 +8769,86 @@ function anchorChordsBelow<
           }
         : el,
     ),
+  }))
+}
+
+/**
+ * Hang the ABOVE-staff dynamics and hairpins off the lane the staff reserved for them.
+ *
+ * The mirror of `anchorBelowStaff`, and it has to be a separate pass because the two sides
+ * draw at opposite edges of their own lane:
+ *
+ * ```js
+ * // above — incTop, so the mark is at the top AFTER the increment
+ * staff.top += height + margin;  positionY.dynamicHeightAbove = staff.top;
+ * // below — the mark is at the bottom BEFORE it
+ * positionY.volumeHeightBelow = staff.bottom;  staff.bottom -= (height + margin);
+ * ```
+ *
+ * (`set-upper-and-lower-elements.js:39-46, 63-70`.) So above the margin lands INSIDE the
+ * mark's own lane and below it lands beyond it — the same asymmetry `anchorChordsBelow`
+ * had to spend explicitly. `verticalExtent` has already put the lane on `top`, so the mark
+ * goes straight there; the below pass has to take its own lane back off `bottom` first.
+ *
+ * `ENGRAVE.dynamicAboveStep` was the LAST lane constant nothing shifted from. Measured on
+ * four controls, all with a `w:` line so abcjs puts dynamics above (`hasVocals`,
+ * `decoration.js:379`): the staff EXTENT was already exact on every one, and the mark sat a
+ * CONSTANT 64.18px above the top line where abcjs's tracks the lane — on `!mf!CDEF` that
+ * put ours at y ≈ 0, clipped off the page.
+ *
+ * RUNS BEFORE `anchorAboveStaff`, because `verticalExtent` stops applying the above lanes
+ * once `aboveStackPlaced` is set. Moving the glyph cannot change any extent: a dynamic's
+ * own box is never ink — `verticalExtent` reads it only as the `sawDynamicAbove` flag and
+ * reserves a flat lane instead.
+ *
+ * ponytail: abcjs's above order is chord, ending, DYNAMIC, part, tempo, and this places the
+ * dynamic on the music with the chord lane not yet spent — so a staff carrying both would
+ * put them in the same place. No corpus tune does: abcjs only puts dynamics above when the
+ * tune SINGS, and a singing staff takes the lyric lane below rather than a chord lane
+ * above. The real fix is the one `anchorAboveStaff`'s ending-lane note has asked for since
+ * finding 93 — one stack, spent once, instead of four passes each re-deriving the ink.
+ */
+function anchorDynamicsAbove<
+  T extends {
+    readonly elements: readonly LayoutElement[]
+    readonly beams: readonly PlacedLine[]
+    readonly spannerLines: readonly PlacedLine[]
+  } & StaffFurniture,
+>(parts: readonly T[], strict: boolean): T[] {
+  const isDyn = (r: PartRole | undefined, y: number): boolean => r === 'dynamic' && y < 0
+  const present =
+    parts.some((p) => p.elements.some((el) => el.glyphs.some((g) => isDyn(g.role, g.y)))) ||
+    parts.some((p) => p.spannerLines.some((l) => isDyn(l.role, l.y1)))
+  if (!present) return [...parts]
+
+  // The lane's OUTER edge, which `verticalExtent` has already walked `top` out to.
+  const laneTop = verticalExtent(
+    parts.flatMap((p) => p.elements.filter((el) => el.type !== 'title')),
+    parts.flatMap((p) => p.beams),
+    strict,
+    {
+      tupletLines: parts.flatMap((p) => p.tupletLines ?? []),
+      tupletTexts: parts.flatMap((p) => p.tupletTexts ?? []),
+      tupletReserves: parts.flatMap((p) => p.tupletReserves ?? []),
+      voltaLines: parts.flatMap((p) => p.voltaLines ?? []),
+      voltaTexts: parts.flatMap((p) => p.voltaTexts ?? []),
+    },
+  ).top
+
+  const shift = laneTop - stepToY(ENGRAVE.dynamicAboveStep)
+  const moveLine = (l: PlacedLine): PlacedLine =>
+    isDyn(l.role, l.y1) ? { ...l, y1: l.y1 + shift, y2: l.y2 + shift } : l
+  return parts.map((part) => ({
+    ...part,
+    elements: part.elements.map((el) =>
+      el.glyphs.some((g) => isDyn(g.role, g.y))
+        ? {
+            ...el,
+            glyphs: el.glyphs.map((g) => (isDyn(g.role, g.y) ? { ...g, y: g.y + shift } : g)),
+          }
+        : el,
+    ),
+    spannerLines: part.spannerLines.map(moveLine),
   }))
 }
 
