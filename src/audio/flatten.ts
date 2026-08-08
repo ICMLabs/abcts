@@ -1344,6 +1344,11 @@ export function flattenAudio(
         // AND THE DRUM IS WRITTEN BEFORE `lastBarTime` MOVES, on voice 0 only, so it fills
         // the measure that just ended.
         if (voiceIndex === 0) writeDrum(meter, lastBarTime, item.factor)
+        // "Decide whether there are rhythm heads each measure" — the flag is per BAR, and
+        // abcjs resets it on every voice despite the `if (i === 0)` above it reading as
+        // though it guarded both statements. Its indentation says one thing and its braces
+        // another; the braces win.
+        chordTrack.setRhythmHead(false)
         lastBarTime = start
         chordTrack.setLastBarTime(lastBarTime)
         continue
@@ -1432,6 +1437,28 @@ export function flattenAudio(
         }
         mainDuration = realDuration / 2
         mainStart = start + mainDuration
+      }
+
+      // A RHYTHM HEAD PLAYS THE CHORD, NOT THE NOTE. `!style=rhythm!B` is a slash head, so
+      // abcjs swaps the whole pitch list for the last chord's CHICK
+      // (`abc_midi_flattener.js:563-565`) — at the melody's own volume, duration and
+      // instrument, and with no key signature or transpose applied, because each pitch
+      // arrives with `actualPitch` already set. Written after the graces because that is
+      // where abcjs does it, and the graces still play their own notes.
+      if (item.event.style === 'rhythm') {
+        for (const pitch of chordTrack.setRhythmHead(true)) {
+          track.push({
+            cmd: 'note',
+            pitch,
+            volume: mods.velocity ?? volume,
+            start: mainStart,
+            duration: mainDuration,
+            instrument: voiceProgram,
+            ...endTypeAndGap(mods.endType, slurCount, mainDuration, startingTempo),
+          })
+        }
+        slurCount -= slurEndsOf(item.event)
+        continue
       }
 
       for (const [pitchIndex, written] of pitches.entries()) {

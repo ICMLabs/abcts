@@ -297,8 +297,18 @@ export class ChordTrack {
   setTranspose(transpose: number): void {
     this.transpose = transpose
   }
-  setRhythmHead(isRhythmHead: boolean): void {
+  /**
+   * `!style=rhythm!B` — the note plays the LAST CHORD instead of its own pitch.
+   *
+   * Returns that chord's CHICK, which the flattener uses in place of `elem.pitches`
+   * (`abc_midi_flattener.js:563-565`, `chord-track.js:71-84`): a slash-head is a strum, so
+   * `"C"…!style=rhythm!B` sounds C-E-G at the melody's own volume and instrument. The flag
+   * it also sets is what makes the chord track SIT OUT that measure — the melody is
+   * carrying the rhythm, so playing it twice would double it. Reset at every bar.
+   */
+  setRhythmHead(isRhythmHead: boolean): readonly number[] {
     this.rhythmHead = isRhythmHead
+    return isRhythmHead ? (this.last?.chick ?? []) : []
   }
   /** `%%MIDI gchordoff` / `gchordon`. */
   gChordOn(tacet: boolean): void {
