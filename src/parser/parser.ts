@@ -14,8 +14,8 @@
  * `clef=` / `octave=` / `middle=` / `stafflines=` / `style=` modifiers on both `K:` and
  * `V:`.
  * ponytail: DEFERRED — part ORDER (a header `P:ABAB`, which is a different thing from the
- * body `P:` label), symbol lines (`s:`), the written half of `transpose=`, and most `%%`
- * directives.
+ * body `P:` label), symbol lines (`s:`), a `transpose=` written on `K:` rather than `V:`,
+ * and most `%%` directives.
  * Each is a separate step driven by the corpus fixture that needs it; the lexer
  * already tokenizes all of them, so the work is parser-side only.
  */
@@ -182,7 +182,13 @@ function parseKey(content: string): KeySignature {
   if (/^none\b/i.test(content.trim())) return { ...defaultKey(), none: true }
   // `clef=`, `octave=`, `middle=` and `stafflines=` also ride on K:, and are read by the
   // K: case in `field()` rather than here — this function returns the KEY alone.
-  // ponytail: `transpose=` is parsed but its written half is unrealized.
+  // `transpose=` is SOUNDING-ONLY and rides on `V:` — see `Voice.transpose`. abcjs's
+  // renderer never reads it either, so no "written half" is owed; this line used to call
+  // it unrealized, which reads as work outstanding where there is none.
+  //
+  // ponytail: a `transpose=` written on `K:` rather than `V:` is not read. abcjs accepts
+  // both — the modifier switch is shared (`abc_parse_key_voice.js:411`) — and no fixture
+  // in either corpus and no audio case writes the K: form, so it has no oracle yet.
   const spec = (content.split(/\s+/)[0] ?? '').trim()
   // UPPERCASE ONLY. abcjs's `getKeyPitch` is a switch on `A`..`G` with the lowercase cases
   // COMMENTED OUT (`abc_tokenizer.js:33-46`), so `K:cm` finds no key at all and the tune
@@ -2682,9 +2688,10 @@ class Parser {
         //
         // First one wins, matching abcjs's `if (!tune.metaText.tempo)`.
         //
-        // ponytail: so a second `Q:` is dropped rather than drawn as a tempo CHANGE in
-        // place. No corpus fixture has two, and modelling one means a `tempoChange` on
-        // Measure plus a renderer path with nothing to gate it.
+        // A SECOND `Q:` IS NOT DROPPED, and that deferral is closed — the two paragraphs
+        // below are what closed it. This used to read "a second `Q:` is dropped rather
+        // than drawn as a tempo CHANGE in place… modelling one means a `tempoChange` on
+        // Measure plus a renderer path with nothing to gate it." Both exist.
         // THE FIRST ONE ANYWHERE becomes the tune's, drawn at the head of system 1.
         // EVERY LATER ONE is an ordinary element in its own voice's stream, printed where
         // it stands — `synth-flattener-31` has four across three voices and abcjs draws
@@ -2714,8 +2721,9 @@ class Parser {
       case 'V': {
         // `V:1 clef=treble name="..."` — the id is the first token; the rest is voice
         // configuration. `clef=`, `octave=`, `middle=`, `stafflines=`, `name=`, `subname=`
-        // and `style=` are read; ponytail: `transpose=` is parsed but its WRITTEN half is
-        // unrealized, which is why `middle=` guards on it.
+        // `style=` and `transpose=` are read. `transpose=` is SOUNDING-ONLY — abcjs's
+        // renderer has zero references to it — which is why `middle=` guards on its
+        // PRESENCE rather than combining with it.
         const id = value.split(/\s+/)[0]
         if (!id) return
         // In the header a `V:` only DECLARES. Only a `V:` in the body switches the

@@ -488,9 +488,9 @@ interface Timed {
  * = null`). So a tie makes ONE longer event, not two joined ones, and three notes tied
  * together make one event of the whole length.
  *
- * ponytail: repeats are not unrolled and `&` overlays are not split out. Both are the
- * sequencer's job in abcjs (`repeats.js`, and the overlay voices it appends), both need
- * the ranked table to steer them, and neither can be tested before the table exists.
+ * The repeats ARE unrolled here (`resolveRepeats`) and the `&` overlays are split out
+ * before this runs (`overlayVoices`). This note used to defer both, on the grounds that
+ * neither could be steered before the ranked table existed. It existed; they were.
  */
 /**
  * THE WRITTEN TIMELINE — every event's duration and its position in the SOURCE, before a

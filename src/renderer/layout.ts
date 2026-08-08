@@ -1912,13 +1912,46 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
           thickness: weight,
         })
       }
-      // ponytail: no FLAG or DOT on the beat-unit note, so `Q:1/8=66` draws a bare stem
-      // where abcjs draws an eighth. Probed on `S7-voices`, ready to land: abcjs adds a
-      // second scaled symbol at `dx = headAdvance - 0.6px` and pitch `noteY + 5.25`, and
-      // the element's width becomes `dx + flagWidth` (`flags.u8th` w 6.692 unscaled) so
-      // the rate moves right with it. `tempo-element.js:32-49` also maps `3/8`, `3/16`
-      // and `3/32` to a DOT. No pixel-gated fixture has a non-quarter `Q:` — S7-voices is
-      // baseline-only — so it lands blind until one does.
+      /**
+       * ponytail: no FLAG or DOT on the beat-unit note, so `Q:1/8=66` draws a bare stem
+       * where abcjs draws an eighth.
+       *
+       * IT NO LONGER HAS TO LAND BLIND. This note used to end "no pixel-gated fixture has
+       * a non-quarter `Q:` — S7-voices is baseline-only — so it lands blind until one
+       * does", and that was true of the CORPUS and false of the oracle: abcjs renders any
+       * tune on demand. Measured 2026-08-08e off its own SVG, `Q:<unit>=66` over nine
+       * units, resolved to absolute pixels on both sides:
+       *
+       *   unit    tempo glyphs                      rate x   Δ from the quarter
+       *   1/4     noteheads.quarter                 137.08   —
+       *   1/8     + flags.u8th                      141.49   +4.41
+       *   1/16    + flags.u16th                     141.49   +4.41
+       *   1/32    + flags.u32nd                     141.50   +4.42
+       *   3/8     + dots.dot                        143.53   +6.45
+       *   3/16    + flags.u8th + dots.dot           143.53   +6.45
+       *   1/2     noteheads.half                    137.50   —
+       *   3/4     + dots.dot                        143.95   +6.45
+       *   1       (no note at all — `duration` absent)
+       *
+       * THE HEAD AND STEM DO NOT MOVE: every row above puts them at exactly the quarter's
+       * coordinates, so the flag and the dot are additive and only the RATE's x follows.
+       * Resolved centres, relative to the tempo head: flag `+4.762, -9.034`; dot
+       * `+7.147, -3.875` — and that -3.875 is HALF A STAFF SPACE, which is our own
+       * `dotGlyphs` rule (a head on an even step takes its dot one step up) rather than a
+       * figure of abcjs's own.
+       *
+       * `noteGlyph` already returns the `flags` and `dots` counts and this builder throws
+       * both away; the port is `create-note-head.js:47`'s `headx + notehead.w - 0.6` at
+       * `tempoNoteScale`, with the flag at the stem TIP. Note abcjs's own table
+       * (`tempo-element.js:32-49`) maps `<= 3/32` to `flags.u16nd`, which is not a glyph
+       * that exists — a typo, and it therefore draws nothing there.
+       *
+       * The reason it is still open is that NO GATE CAN SEE IT: the pixel gate compares
+       * elements classed `abcjs-notehead`, and abcjs gives the tempo group's glyphs a
+       * `data-name` and no class at all. Widening the gate to compare the tempo mark's
+       * PARTS — which glyphs, how many — is outline-independent and is the piece to build
+       * first, because it is what makes the landing checkable rather than asserted.
+       */
       cursor += headAdvance + ENGRAVE.tempoNoteGap
     }
     texts.push({
