@@ -52,9 +52,13 @@ const CASES: Case[] = readdirSync(dir)
  * remove one to make a change pass — that is the same rule as never raising a ceiling.
  */
 const PASSING: readonly string[] = [
+  'flatten-dynamics',
+  'flatten-dynamics2',
+  'flatten-dynamics3',
   'flatten-long-tie',
   'flatten-no-chord-voice',
   'flatten-tempo-override',
+  'volume-crash',
 ]
 
 interface Diff {

@@ -98,6 +98,56 @@ const MICRO = 1000000
 /** abcjs's `scale` — semitones above the tonic for each diatonic step. */
 const SEMITONES = [0, 2, 4, 5, 7, 9, 11]
 
+/**
+ * abcjs's `accentPseudonyms` and `accentDynamicPseudonyms` (`parse/abc_parse_settings.js`).
+ *
+ * abcjs canonicalises a decoration IN THE PARSER; our parser keeps the source spelling, so
+ * the audio side resolves it. Both are defensible and this is where the difference is paid.
+ */
+const DECORATION_ALIAS: Readonly<Record<string, string>> = {
+  '<': 'accent',
+  '>': 'accent',
+  tr: 'trill',
+  plus: '+',
+  emphasis: 'accent',
+  '^': 'umarcato',
+  marcato: 'umarcato',
+  '<(': 'crescendo(',
+  '<)': 'crescendo)',
+  '>(': 'diminuendo(',
+  '>)': 'diminuendo)',
+}
+
+const canonical = (d: string): string => DECORATION_ALIAS[d] ?? d
+
+/**
+ * A DYNAMIC IS A STRESS TABLE, not a volume. abcjs's `setDynamics` replaces the three
+ * beat-stress figures outright — bar-first, on-beat, off-beat — so `!p!` makes the whole
+ * passage quieter WITHOUT flattening its accents (`abc_midi_sequencer.js:422-433`).
+ *
+ * Tested one way round only, so the ORDER of the tests is load-bearing: abcjs asks for
+ * `pppp` first and `ffff` last, but its `ff`/`fff`/`ffff` arms are unreachable — `f` is
+ * tested before them and `indexOf('f')` matches nothing else in the list, so `!ff!` takes
+ * the `f` row. Reproduced, because a strict-mode engine reproduces the bug: `flatten-
+ * dynamics3` expects 105/95/80 where `!ffff!` is written.
+ */
+const DYNAMIC_ORDER = ['pppp', 'ppp', 'pp', 'p', 'mp', 'mf', 'f', 'ff', 'fff', 'ffff']
+const DYNAMIC_VOLUMES: Readonly<Record<string, readonly [number, number, number]>> = {
+  pppp: [15, 10, 5],
+  ppp: [30, 20, 10],
+  pp: [45, 35, 20],
+  p: [60, 50, 35],
+  mp: [75, 65, 50],
+  mf: [90, 80, 65],
+  f: [105, 95, 80],
+  ff: [120, 110, 95],
+  fff: [127, 125, 110],
+  ffff: [127, 125, 110],
+}
+
+/** `crescendoSize` — how far a hairpin moves the stress table, before it is divided up. */
+const CRESCENDO_SIZE = 50
+
 /** The order sharps and flats are added to a key signature. */
 const SHARP_ORDER = [3, 0, 4, 1, 5, 2, 6] // f c g d a e b
 const FLAT_ORDER = [6, 2, 5, 1, 4, 0, 3] // b e a d g c f
@@ -166,7 +216,30 @@ function keyAccidentals(key: KeySignature): number[] {
 }
 
 interface Timed {
-  readonly event: MusicEvent
+  /**
+   * `bar` rows carry NO event and exist only so a decoration written before a barline can
+   * still be found. abcjs's `numNotesToDecoration` walks every element and tests
+   * `voice[i].decoration` on all of them, counting only the notes — so a `!<)!` written at
+   * the end of a bar, which BOTH engines attach to the barline rather than to the next
+   * note, still closes the hairpin. Probed on `flatten-dynamics2`: abcjs logs
+   * `["crescendo)"] el bar`. Leave the bars out and the search runs off the end of the
+   * tune, `floor(50 / 51)` is 0, and the whole crescendo is flat.
+   */
+  readonly kind: 'note' | 'bar'
+  /**
+   * The SOURCE LINE this row is on, and it is load-bearing for hairpins.
+   *
+   * abcjs sequences line by line — its `voice` is `abcLine.staff[j].voices[v]` — so
+   * `numNotesToDecoration` and `endingVolume` can only see the line they were called on.
+   * Measured on `flatten-dynamics`: a `!diminuendo(!` in the last bar of one line reaches
+   * its `!diminuendo)!` but NOT the `!pppp!` two elements later, because that is the first
+   * note of the next line and simply is not in the array. Searching the whole tune found
+   * it, took the target from 76 to 15 and the step from -8 to -16, and put every note of
+   * the passage 8 too quiet.
+   */
+  readonly line: number
+  readonly decorations: readonly string[]
+  readonly event: MusicEvent | null
   /** Whole notes × 1,000,000, accumulated as an integer exactly as abcjs does. */
   readonly time: number
   /** True on the first event of a measure — where the beat-stress clock restarts. */
@@ -195,6 +268,7 @@ interface Timed {
 function sequenceVoice(voice: Voice, score: Score): Timed[] {
   const out: Timed[] = []
   let time = 0
+  let line = -1
   let key = score.key
   let meter = score.meter
   /** Open ties, keyed by written pitch, holding the index into `out` that owns them. */
@@ -202,11 +276,24 @@ function sequenceVoice(voice: Voice, score: Score): Timed[] {
   const durations: number[] = []
 
   for (const measure of voice.measures) {
+    if (measure.startsSystem || line < 0) line += 1
     if (measure.keyChange !== null) key = measure.keyChange
     if (measure.meterChange !== null) meter = measure.meterChange
     let first = true
     for (const event of measure.events) {
-      const dur = ratToNumber(event.duration)
+      // A SPACER SOUNDS NOTHING, TAKES NO TIME — AND STILL COUNTS.
+      //
+      // `y` is skipped where the sequence is BUILT — `if (!elem.rest || elem.rest.type
+      // !== 'spacer')` (`abc_midi_sequencer.js:246`) — so it neither sounds nor advances
+      // the clock, and letting it take its written duration put every note after
+      // `!<)!y!ffff!B` a quarter late. But `setDynamics(elem)` is called on the line ABOVE
+      // that guard, and `numNotesToDecoration` walks the RAW voice where the spacer is
+      // still an `el_type: "note"` — so a hairpin written on a `y` closes there and the
+      // spacer is one of the notes the step is divided by. Dropping it outright made
+      // `flatten-dynamics3`'s crescendo run to the end of the line instead of to the `y`,
+      // 28 per note against 14.
+      const spacer = event.type === 'rest' && event.kind === 'spacer'
+      const dur = spacer ? 0 : ratToNumber(event.duration)
       let tiedOver = false
       if (event.type === 'note') {
         const name = `${event.pitch.step}${event.pitch.octave}`
@@ -218,11 +305,35 @@ function sequenceVoice(voice: Voice, score: Score): Timed[] {
         }
         if (event.tiedToNext) ties.set(name, tiedOver ? (open as number) : out.length)
       }
-      out.push({ event, time, barStart: first, key, meter, duration: dur, tiedOver })
+      out.push({
+        kind: 'note',
+        line,
+        decorations: event.decorations,
+        event,
+        time,
+        barStart: first,
+        key,
+        meter,
+        duration: dur,
+        tiedOver,
+      })
       durations.push(tiedOver ? 0 : dur)
       time += Math.round(dur * MICRO)
       first = false
     }
+    out.push({
+      kind: 'bar',
+      line,
+      decorations: measure.closingBarlineDecorations ?? [],
+      event: null,
+      time,
+      barStart: false,
+      key,
+      meter,
+      duration: 0,
+      tiedOver: false,
+    })
+    durations.push(0)
   }
   return out.map((t, i) => ({ ...t, duration: durations[i] ?? t.duration }))
 }
@@ -309,8 +420,35 @@ export function flattenAudio(
     const transpose = transposeGlobal + voice.octaveShift * 12
 
     const timed = sequenceVoice(voice, score)
+    /** The running stress table — abcjs's `currentVolume`, seeded at the default triple. */
+    let stress: [number, number, number] = [105, 95, 85]
+    /** Per-note increment while a hairpin is open; 0 when none is. */
+    let hairpin = 0
     let currentKey = score.key
-    for (const item of timed) {
+    for (const [index, item] of timed.entries()) {
+      const decorations = item.decorations.map(canonical)
+      // THE HAIRPIN MOVES FIRST AND THE DYNAMIC OVERRIDES IT, which is abcjs's order in
+      // its own loop: the crescendo increment is applied at the top of the `note` arm and
+      // `setDynamics` is called immediately after (`abc_midi_sequencer.js:229-245`).
+      //
+      // AND ONLY IN THE `note` ARM. A bar row is here so the hairpin's CLOSE can be found
+      // on it; letting one step the volume as well put every bar of `flatten-dynamics2`
+      // four louder than abcjs's.
+      if (item.kind === 'note' && hairpin !== 0) {
+        stress = [stress[0] + hairpin, stress[1] + hairpin, stress[2] + hairpin]
+      }
+      const named = DYNAMIC_ORDER.find((d) => decorations.includes(d))
+      if (named !== undefined) {
+        stress = [...(DYNAMIC_VOLUMES[named] as readonly [number, number, number])]
+        hairpin = 0
+      }
+      if (decorations.includes('crescendo(')) {
+        hairpin = hairpinStep(timed, index, stress[0], 'crescendo)', CRESCENDO_SIZE)
+      } else if (decorations.includes('diminuendo(')) {
+        hairpin = hairpinStep(timed, index, stress[0], 'diminuendo)', -CRESCENDO_SIZE)
+      } else if (decorations.includes('crescendo)') || decorations.includes('diminuendo)')) {
+        hairpin = 0
+      }
       if (item.key !== currentKey) {
         currentKey = item.key
         accidentals = keyAccidentals(item.key)
@@ -323,11 +461,11 @@ export function flattenAudio(
       const start = item.time / MICRO
       const realDuration = Math.round(item.duration * MICRO) / MICRO
       totalDuration = Math.max(totalDuration, start + realDuration)
-      if (item.event.type === 'rest' || item.tiedOver) continue
+      if (item.event === null || item.event.type === 'rest' || item.tiedOver) continue
 
-      const volume = stressVolume(start, lastBarTime, meter, pickupLength, voiceOff)
+      const volume = stressVolume(start, lastBarTime, meter, pickupLength, voiceOff, stress)
       const pitches = item.event.type === 'chord' ? item.event.pitches : [item.event.pitch]
-      const mods = noteModifications(item.event.decorations, volume)
+      const mods = noteModifications(decorations, volume)
       slurCount += slurStartsOf(item.event)
       for (const written of pitches) {
         const pitch = midiPitchOf(written, accidentals, barAccidentals) + transpose
@@ -375,12 +513,58 @@ function stressVolume(
   meter: Meter,
   pickupLength: number,
   voiceOff: boolean,
+  stress: readonly [number, number, number],
 ): number {
   if (voiceOff) return 0
-  if (pickupLength > start) return 85
+  const clamp = (v: number) => Math.max(0, Math.min(127, v))
+  if (pickupLength > start) return clamp(stress[2])
   const barBeat = (start - lastBarTime) / beatFractionOf(meter)
-  if (barBeat === 0) return 105
-  return Number.isInteger(barBeat) ? 95 : 85
+  if (barBeat === 0) return clamp(stress[0])
+  return clamp(Number.isInteger(barBeat) ? stress[1] : stress[2])
+}
+
+/**
+ * `numNotesToDecoration` and `endingVolume`, folded into the one number they produce.
+ *
+ * The hairpin's total travel is divided by how many NOTES are under it and floored, so a
+ * crescendo over three notes steps by 16 and not by 16.67. If a named dynamic sits within
+ * TWO events of the close, abcjs takes that as the destination instead of the flat 50
+ * (`endingVolume`, "If we have a volume within a couple notes of the end then assume that
+ * is the destination").
+ */
+function hairpinStep(
+  timed: readonly Timed[],
+  index: number,
+  from: number,
+  close: string,
+  size: number,
+): number {
+  const line = timed[index]?.line
+  let notes = 0
+  let end = timed.length
+  for (let i = index + 1; i < timed.length && timed[i]?.line === line; i += 1) {
+    if (timed[i]?.kind === 'note') notes += 1
+    if ((timed[i]?.decorations ?? []).map(canonical).includes(close)) {
+      end = i
+      break
+    }
+  }
+  let target = size > 0 ? Math.min(127, from + size) : Math.max(15, from + size)
+  // `endingVolume` — "If we have a volume within a couple notes of the end then assume
+  // that is the destination." Three ELEMENTS, not three notes, and it starts one past the
+  // close.
+  for (let i = end + 1; i < Math.min(timed.length, end + 4); i += 1) {
+    if (timed[i]?.line !== line) break
+    if (timed[i]?.kind !== 'note') continue
+    const named = DYNAMIC_ORDER.find((d) =>
+      (timed[i]?.decorations ?? []).map(canonical).includes(d),
+    )
+    if (named !== undefined) {
+      target = (DYNAMIC_VOLUMES[named] as readonly number[])[0] as number
+      break
+    }
+  }
+  return notes > 0 ? Math.floor((target - from) / notes) : 0
 }
 
 /** abcjs's `findNoteModifications`, minus the ornament rewrites — see the note below. */
