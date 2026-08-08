@@ -596,9 +596,16 @@ export function flattenAudio(
       }
       const realDuration = Math.round(item.duration * item.factor * MICRO) / MICRO
       totalDuration = Math.max(totalDuration, start + realDuration)
+      // A REST CARRIES ITS CHORD SYMBOL, and so does the silent half of a tie. abcjs's
+      // `writeNote` runs `chordTrack.processChord(elem)` before it looks at the pitches at
+      // all, and its `el_type: "note"` covers rests — so `"C"z4|` is a whole bar of chord
+      // track over silence, which is most of `flatten-all-time-sigs`. Skipping the event
+      // first left eight cases with no chord track to compare.
+      if (item.event !== null) {
+        chordTrack.processChord(chordSymbolOf(item.event), annotationsOf(item.event), start)
+      }
       if (item.event === null || item.event.type === 'rest' || item.tiedOver) continue
 
-      chordTrack.processChord(chordSymbolOf(item.event), annotationsOf(item.event), start)
       const volume = stressVolume(start, lastBarTime, meter, pickupLength, voiceOff, stress)
       // A CHORD SOUNDS FROM THE BOTTOM UP, whatever order it was written in. abcjs's parser
       // sorts `elem.pitches`, so `[cD]` emits D and then c; ours keeps the source order, so
