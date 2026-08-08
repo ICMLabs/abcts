@@ -87,6 +87,8 @@ export interface AudioOptions {
   readonly midiTranspose?: number
   /** Every voice, or the listed voice indices, silenced to volume 0 rather than dropped. */
   readonly voicesOff?: boolean | readonly number[]
+  /** `chordsOff` — the guitar-chord track is suppressed entirely, symbols and all. */
+  readonly chordsOff?: boolean
 }
 
 /** `%%MIDI` settings gathered off the tune — abcjs's `tune.formatting.midi`. */
@@ -480,7 +482,7 @@ export function flattenAudio(
   const pickupLength = pickupLengthOf(score)
   const tracks: MidiEvent[][] = []
   const startMeter = score.meter ?? { numerator: 4, denominator: 4, symbol: 'numeric' as const }
-  const chordTrack = new ChordTrack(score.voices.length, false, midi, {
+  const chordTrack = new ChordTrack(score.voices.length, options.chordsOff === true, midi, {
     num: startMeter.numerator,
     den: startMeter.denominator,
   })

@@ -37,9 +37,15 @@ export interface ChordEvent {
   readonly channel?: number
 }
 
+/**
+ * A `break` — `"n.c."`, `%%MIDI gchordoff`, `chordsOff` — is `{ chick: [] }` with NO boom
+ * at all, and the absence is what silences it: `resolvePitch` pushes `currentChord.boom`
+ * unread, and `writeNote` skips an undefined pitch. Giving the break a boom of 0 wrote a
+ * track full of MIDI note 0 and `chordTrackEmpty` then reported the track as present.
+ */
 interface Interpreted {
-  readonly boom: number
-  readonly boom2: number
+  readonly boom?: number
+  readonly boom2?: number
   readonly chick: readonly number[]
 }
 
@@ -361,7 +367,7 @@ export class ChordTrack {
   private interpretChord(nameIn: string): Interpreted | undefined {
     let name = nameIn
     if (name.length === 0) return undefined
-    if (name === 'break') return { boom: 0, boom2: 0, chick: [] }
+    if (name === 'break') return { chick: [] }
     let root = name.substring(0, 1)
     if (root === '(') {
       name = name.substring(1, name.length - 1)
@@ -534,8 +540,11 @@ function resolvePitch(
 ): number[] {
   const out: number[] = []
   if (chord === undefined) return out
-  if (type.includes('boom')) out.push(firstBoom ? chord.boom : chord.boom2)
-  else if (newBass) out.push(chord.boom)
+  const push = (n: number | undefined): void => {
+    if (n !== undefined) out.push(n)
+  }
+  if (type.includes('boom')) push(firstBoom ? chord.boom : chord.boom2)
+  else if (newBass) push(chord.boom)
   if (type.includes('chick')) for (const n of chord.chick) out.push(n)
   const at = (index: number): number => {
     // An arpeggio note keeps climbing in octaves when the chord runs out of notes.
