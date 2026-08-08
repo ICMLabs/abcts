@@ -302,7 +302,16 @@ function resolveRepeats<
     const before = measures[k - 1]
     const after = measures[k]
     const closes = before?.closingBarline === 'repeatEnd' || before?.closingBarline === 'repeatBoth'
-    const opens = after?.openingBarline === 'repeatStart' || after?.openingBarline === 'repeatBoth'
+    // A `|:` WRITTEN AFTER A MEASURE IS THAT MEASURE'S CLOSING BARLINE IN OUR MODEL, and
+    // it still OPENS a repeat. Only a `|:` at the head of a source line becomes the next
+    // measure's `openingBarline`; `D4 |: E4` puts it on `D4`'s close, so testing
+    // `openingBarline` alone missed it entirely and `flatten-rep-and-over` repeated
+    // `D E F` where abcjs repeats `E F`. One bar element in abcjs, two fields here.
+    const opens =
+      after?.openingBarline === 'repeatStart' ||
+      after?.openingBarline === 'repeatBoth' ||
+      before?.closingBarline === 'repeatStart' ||
+      before?.closingBarline === 'repeatBoth'
     if (closes) {
       // Two `:|` in a row is a notation error; abcjs recovers by pretending there was a
       // `startRepeat` right before the second. `no-start-repeat-repeat` is that tune.
