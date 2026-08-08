@@ -9,7 +9,7 @@ HARNESS**. Earlier ledgers as listed there.
 
 ---
 
-## 🔎 THE HEADLINE: GEOMETRY IS DONE. AUDIO EXISTS, HAS A GATE, AND IS AT 17 OF 54.
+## 🔎 THE HEADLINE: GEOMETRY IS DONE. AUDIO EXISTS, HAS A GATE, AND IS AT 23 OF 54.
 
 | axis | standing |
 |---|---|
@@ -128,6 +128,14 @@ comment says it is not. Reading both put a voice an octave and a half low.
 
 ### Smaller, and each one a row of the table
 
+- A QUARTER TONE IS A WHOLE PITCH AND A PITCH BEND — `{pitch: 71, cents: -50}`, never
+  `70.5`. abcjs decides which way by testing the pitch's decimal AS A STRING for `.25` or
+  `.75`, which is why its quarter tone is 0.25 and not 0.5: the fraction is a MARKER, and
+  0.5 would put a half-sharp above C and a half-flat below D on the same 60.5.
+- A REST CARRIES ITS CHORD SYMBOL, and so does the silenced half of a tie —
+  `chordTrack.processChord` runs before `writeNote` looks at a pitch. Four cases.
+- `%%MIDI` SPLITS BY POSITION, not by header: `hasBeginMusic()` is a MUSIC LINE, which `K:`
+  alone does not start. `%%MIDI program 3` on the line after `K:C` is a TUNE setting.
 - A CHORD SOUNDS FROM THE BOTTOM UP — abcjs sorts `elem.pitches`, so `[cD]` emits D then c.
 - A MULTI-MEASURE REST IS AS LONG AS IT SAYS — `Z4` is four bars, written as one.
 - `chordsOff` has to be plumbed, or `%%score`'s voices get a track they should not have.
