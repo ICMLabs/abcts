@@ -160,25 +160,38 @@ describe('above-lane order vs abcjs', () => {
   }
 
   /**
-   * THE DYNAMIC IS ASSERTED AS A DELTA, and that is a statement about the glyph, not a
-   * weaker test.
+   * THE DYNAMIC IS ASSERTED TWICE — its DELTA between lanes exactly, and its absolute
+   * position to within the two fonts' outlines.
    *
-   * abcjs draws `mf` as two of its own outlines, `m` and `f`; abcts draws Bravura's single
-   * `dynamicMF`. The two fonts anchor that shape differently, so our mark sits a CONSTANT
-   * 15.13px above abcjs's — on the below side as well as the above one, which is what
-   * proves it is the outline and not the lane. Glyph outlines are out of scope by standing
-   * policy; where the glyph is PLACED is not, and a delta between two controls cancels the
-   * outline exactly and leaves the placement.
+   * The ladder measured our `mf` a constant 15.13px above abcjs's on the ABOVE side and
+   * 15.14px above it on the BELOW side. Same sign both ways, which is what said it was a
+   * missing OFFSET rather than an outline — an outline difference flips sign with the side.
+   * abcjs's `printSymbol` draws at `calcY(offset + getYCorr(symbol))`, and `getYCorr`
+   * returns -4 for every one of `f m p s z` (`creation/glyphs.js:200-205`): four pitch, two
+   * staff spaces, 15.5px. Ported.
+   *
+   * What is left is 0.37px, still constant and still the same sign both ways — Bravura's
+   * precomposed `dynamicMF` against abcjs's `m` and `f` set side by side, measured as box
+   * centres. That is the outline, which is out of scope; the delta assertion cancels it.
    */
+  const OUTLINE_RESIDUAL = 0.5
+
+  it("draws the dynamic where abcjs's printSymbol draws it", () => {
+    for (const control of CONTROLS) {
+      if (control.dynamic === undefined) continue
+      const got = measure(control.abc).dynamic
+      expect(got, `${control.name} draws a dynamic`).not.toBeNull()
+      expect(Math.abs((got ?? 0) - control.dynamic), control.name).toBeLessThan(OUTLINE_RESIDUAL)
+    }
+  })
+
   it("moves the dynamic between lanes exactly as abcjs's does", () => {
     const base = CONTROLS.find((c) => c.name === 'dynamic above')
     if (base === undefined) throw new Error('missing baseline control')
     const ourBase = measure(base.abc).dynamic ?? 0
     for (const control of CONTROLS) {
       if (control.dynamic === undefined) continue
-      const got = measure(control.abc).dynamic
-      expect(got, `${control.name} draws a dynamic`).not.toBeNull()
-      const ours = (got ?? 0) - ourBase
+      const ours = (measure(control.abc).dynamic ?? 0) - ourBase
       const theirs = control.dynamic - (base.dynamic ?? 0)
       expect(Math.abs(ours - theirs), `${control.name} delta`).toBeLessThan(EPSILON)
     }

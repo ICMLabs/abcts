@@ -369,7 +369,7 @@ system 1 width=90.394 originY=46.754
       glyph noteheadHalf 18.092,1.000
       glyph noteheadHalf 18.092,-0.500
       glyph noteheadHalf 18.092,-1.500
-      glyph dynamicMP 16.992,5.750
+      glyph dynamicMP 16.992,7.750
       line  18.157,-1.333 -> 18.157,4.500 t=0.129
     bar x=33.648 w=0.077
       line  33.686,-2.000 -> 33.686,2.000 t=0.077
@@ -3191,7 +3191,7 @@ system 9 width=90.403 originY=306.811
       glyph noteheadHalf 54.597,1.000
       glyph noteheadHalf 54.597,-0.500
       glyph noteheadHalf 54.597,-1.500
-      glyph dynamicMP 53.497,5.247
+      glyph dynamicMP 53.497,7.247
       line  54.661,-1.333 -> 54.661,4.500 t=0.129
     bar x=69.806 w=0.077
       line  69.845,-2.000 -> 69.845,2.000 t=0.077
@@ -4548,7 +4548,7 @@ system 13 width=90.436 originY=437.088
       glyph accidentalFlat 52.741,-1.000
     note@3 x=54.902 w=3.871
       glyph noteheadBlack 54.902,-1.500
-      glyph dynamicMP 53.802,3.500
+      glyph dynamicMP 53.802,5.500
       line  54.941,-1.400 -> 54.941,2.250 t=0.077
     note@4 x=58.662 w=3.871
       glyph noteheadBlack 58.662,-2.000
@@ -6200,7 +6200,7 @@ system 17 width=90.389 originY=577.418
       glyph accidentalFlat 73.844,0.500
     note@0 x=76.005 w=3.871
       glyph noteheadBlack 76.005,0.000
-      glyph dynamicMF 74.919,4.250
+      glyph dynamicMF 74.919,6.250
       line  77.232,-0.100 -> 77.232,-5.512 t=0.077
     note@4 x=79.085 w=3.871
       glyph noteheadBlack 79.085,-2.000
@@ -6514,7 +6514,7 @@ system 18 width=90.428 originY=614.946
     note@0,7 x=60.272 w=2.737
       glyph noteheadBlack 60.272,0.000
       glyph noteheadBlack 60.272,-3.500
-      glyph dynamicFF 59.372,6.500
+      glyph dynamicFF 59.372,8.500
       line  60.014,-3.000 -> 61.796,-3.000 t=0.090
       line  61.499,-0.100 -> 61.499,-7.500 t=0.077
     note@-1,6 x=63.318 w=2.737

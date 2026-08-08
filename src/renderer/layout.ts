@@ -3634,7 +3634,28 @@ function decorationGlyphs(
       // `dynamic`, not `decoration`: the below-side ones are re-anchored on the staff's ink
       // by `anchorBelowStaff`, and they have to be findable. Markup-neutral — neither
       // `ABCJS_CLASSES` nor `ABCJS_DATA_NAMES` carries either name.
-      out.push({ name: glyph, x: centre, y: stepToY(lane), role: 'dynamic' })
+      //
+      // AND IT IS DRAWN FOUR PITCH BELOW THE PITCH IT WAS GIVEN. `printSymbol` does not
+      // draw at `calcY(offset)` — it draws at `calcY(offset + getYCorr(symbol))`, and
+      // `getYCorr` returns **-4** for every one of `f m p s z`, the five letters abcjs
+      // spells its whole dynamic set out of (`creation/glyphs.js:200-205`,
+      // `draw/print-symbol.js:22`). That is 2 staff spaces, 15.5px, and it is a PLACEMENT
+      // rule rather than a font difference: the control ladder measured our `mf` a
+      // constant 15.13px above abcjs's on the ABOVE side and the same 15.14px above it on
+      // the BELOW side, which is the shape of a missing offset and not of an outline —
+      // an outline difference would have flipped sign with the side. The 0.4px left over
+      // is the outline, and it is Bravura's precomposed `dynamicMF` against abcjs's `m`
+      // and `f` set side by side.
+      //
+      // The lane anchors ride along untouched: both measure their shift from
+      // `stepToY(lane)`, so a glyph authored four steps below it lands four steps below
+      // wherever the lane goes.
+      out.push({
+        name: glyph,
+        x: centre,
+        y: stepToY(lane - ABCJS_PITCH.dynamicYCorr),
+        role: 'dynamic',
+      })
     }
   }
 

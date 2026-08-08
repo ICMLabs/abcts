@@ -420,6 +420,13 @@ export const ABCJS_PITCH = {
   /** `margin = 1` — one pitch between every lane (`set-upper-and-lower-elements.js:102`). */
   laneMargin: 1,
   /**
+   * `getYCorr('f' | 'm' | 'p' | 's' | 'z')` — the four pitch abcjs drops every dynamic
+   * letter below the pitch it was handed (`creation/glyphs.js:200-205`, applied at
+   * `draw/print-symbol.js:22` and `:33`). Positive here and subtracted at the call, since
+   * abcjs adds a negative correction to the offset.
+   */
+  dynamicYCorr: 4,
+  /**
    * An UNBEAMED stem's length — `Math.round(70 * this.voiceScale) / 10`
    * (`abstract-engraver.js:740`), so 7 at the default scale, measured from the note's own
    * pitch rather than run up from a base. NOT the beamed one, which comes from

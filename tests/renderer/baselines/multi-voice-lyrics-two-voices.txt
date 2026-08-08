@@ -17,7 +17,7 @@ system 0 width=90.323 originY=0.000
       glyph timeSig4 6.329,1.000
     note@8 x=9.934 w=3.871
       glyph noteheadBlack 9.934,-4.000
-      glyph dynamicPiano 9.614,-11.497
+      glyph dynamicPiano 9.614,-9.497
       line  9.676,-3.000 -> 11.458,-3.000 t=0.090
       line  9.676,-4.000 -> 11.458,-4.000 t=0.090
       line  11.161,-4.100 -> 11.161,-7.997 t=0.077
@@ -46,7 +46,7 @@ system 0 width=90.323 originY=0.000
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
     note@-11 x=9.934 w=5.474
       glyph noteheadBlack 9.934,5.500
-      glyph dynamicPiano 9.614,-11.497
+      glyph dynamicPiano 9.614,-9.497
       line  9.676,3.000 -> 11.458,3.000 t=0.090
       line  9.676,4.000 -> 11.458,4.000 t=0.090
       line  9.676,5.000 -> 11.458,5.000 t=0.090
@@ -80,7 +80,7 @@ system 1 width=35.313 originY=27.334
       glyph gClef 2.581,1.000
     note@8 x=6.816 w=3.871
       glyph noteheadBlack 6.816,-4.000
-      glyph dynamicPiano 6.496,-11.490
+      glyph dynamicPiano 6.496,-9.490
       line  6.558,-3.000 -> 8.340,-3.000 t=0.090
       line  6.558,-4.000 -> 8.340,-4.000 t=0.090
       line  8.043,-4.100 -> 8.043,-7.990 t=0.077
@@ -109,7 +109,7 @@ system 1 width=35.313 originY=27.334
       line  33.288,-2.000 -> 33.288,2.000 t=0.077
     note@-11 x=6.816 w=5.474
       glyph noteheadBlack 6.816,5.500
-      glyph dynamicPiano 6.496,-11.490
+      glyph dynamicPiano 6.496,-9.490
       line  6.558,3.000 -> 8.340,3.000 t=0.090
       line  6.558,4.000 -> 8.340,4.000 t=0.090
       line  6.558,5.000 -> 8.340,5.000 t=0.090
