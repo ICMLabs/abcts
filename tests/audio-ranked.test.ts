@@ -52,6 +52,7 @@ const CASES: Case[] = readdirSync(dir)
  * remove one to make a change pass — that is the same rule as never raising a ceiling.
  */
 const PASSING: readonly string[] = [
+  'bass-and-chord-octave',
   'flatten-all-time-sigs',
   'cancel-gchord',
   'flatten-chord-params',
@@ -85,6 +86,7 @@ const PASSING: readonly string[] = [
   'flatten-tempo-change2',
   'flatten-tempo-override',
   'flatten-treble-8',
+  'flatten-triplet-chords',
   'flatten-trill-test',
   'flatten-twelve-eight',
   'ignore-alternate-chord',

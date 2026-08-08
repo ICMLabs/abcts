@@ -2470,6 +2470,17 @@ class Parser {
         .split(/\s+/)
         .filter((t) => t !== '')
         .map((t) => (/^-?\d+$/.test(t) ? Number.parseInt(t, 10) : t))
+      // `%%MIDI bassprog 10 octave=-1` — the octave arrives as a NUMBER, not as the token.
+      // abcjs's `midiCmdParam1Integer1OptionalString` arm strips `octave=`, parses what is
+      // left and CLAMPS it to [-1, 3] (`abc_parse_directive.js:686-716`), so the flattener
+      // reads `params[1]` as a plain octave count. Keeping the raw string meant the chord
+      // track's `bassprog?.length === 2` test never fired and both shifts stayed 0.
+      if (cmd === 'bassprog' || cmd === 'chordprog') {
+        const octave = typeof params[1] === 'string' ? /^octave=(-?\d+)$/.exec(params[1]) : null
+        if (octave?.[1] !== undefined) {
+          params[1] = Math.max(-1, Math.min(3, Number.parseInt(octave[1], 10)))
+        }
+      }
       const builder = this.ensureScore(start)
       // `drummap` ACCUMULATES where every other command replaces — abcjs builds
       // `tune.formatting.midi.drummap` as an OBJECT keyed by the written note

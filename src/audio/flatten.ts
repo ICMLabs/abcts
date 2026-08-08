@@ -514,6 +514,10 @@ function sequenceVoice(voice: Voice, score: Score, startingTempo: number): Timed
   let line = -1
   let key = score.key
   let meter = score.meter
+  /** The tuplet group being spent, and abcjs's two running figures for it. */
+  let tripletGroup: number | null = null
+  let tripletTotal = 0
+  let tripletCount = 0
   /** Open ties, keyed by written pitch, holding the index into `out` that owns them. */
   const ties = new Map<string, number>()
   const durations: number[] = []
@@ -555,7 +559,7 @@ function sequenceVoice(voice: Voice, score: Score, startingTempo: number): Timed
       durations.push(0)
     }
     let first = true
-    for (const event of measure.events) {
+    for (const [eventIndex, event] of measure.events.entries()) {
       // A SPACER SOUNDS NOTHING, TAKES NO TIME — AND STILL COUNTS.
       //
       // `y` is skipped where the sequence is BUILT — `if (!elem.rest || elem.rest.type
@@ -577,7 +581,44 @@ function sequenceVoice(voice: Voice, score: Score, startingTempo: number): Timed
         (event.kind === 'multiMeasure' || event.kind === 'invisibleMultiMeasure')
           ? (event.measureCount ?? 1)
           : 1
-      const dur = spacer ? 0 : ratToNumber(event.duration) * bars
+      /**
+       * A TRIPLET'S LAST NOTE IS THE REMAINDER, NOT A THIRD — and that is the whole of the
+       * `0.083333` vs `0.083334` on the table.
+       *
+       * abcjs rounds every duration to a MILLIONTH, so three notes of `1/6` come to
+       * `0.500001` and the bar drifts. Its answer (`abc_midi_sequencer.js:253-277`) is to
+       * work out the group's total ONCE at the opening note —
+       * `startTriplet * tripletMultiplier * elem.duration` — accumulate the rounded
+       * durations as it goes, and give the LAST note whatever is left:
+       * `round(tripletDurationTotal - tripletDurationCount)`. So the group is exact and one
+       * note of it is a millionth off, rather than the group being three millionths off.
+       *
+       * WHICH note is short depends on the fraction: `(3 C2` under `L:1/8` gives 0.166667
+       * twice and 0.166666 last, and `(3 C` gives 0.083333 twice and 0.083334 last.
+       *
+       * ponytail: `(p:q:r` with `p !== r` takes a different total in abcjs — the sum of the
+       * first `r` written durations — and our model does not record `r`. Nothing in the
+       * corpus writes one; the table will say so if anything does.
+       */
+      const tuplet = event.tuplet
+      let dur = spacer ? 0 : ratToNumber(event.duration) * bars
+      if (tuplet !== null) {
+        const round6 = (x: number): number => Math.round(x * MICRO) / MICRO
+        if (tuplet.group !== tripletGroup) {
+          tripletGroup = tuplet.group
+          const written = ratToNumber(event.notatedDuration)
+          const multiplier = written === 0 ? 1 : ratToNumber(event.duration) / written
+          tripletTotal = tuplet.number * multiplier * written
+          dur = round6(dur)
+          tripletCount = dur
+        } else if (measure.events[eventIndex + 1]?.tuplet?.group === tuplet.group) {
+          dur = round6(dur)
+          tripletCount += dur
+        } else {
+          dur = round6(tripletTotal - tripletCount)
+          tripletGroup = null
+        }
+      }
       let tiedOver = false
       if (event.type === 'note') {
         const name = `${event.pitch.step}${event.pitch.octave}`
@@ -840,9 +881,24 @@ function pickupLengthOf(score: Score): number {
     // everything it counted. `flatten-treble-8` is six notes over six lines and not one
     // `|`, so abcjs's pickup is 0.75 and every note in it takes the weak-beat volume;
     // stopping at the first measure gave 0.125 and the third note came out on-beat.
-    if (measure.closingBarline !== null) return pickup
+    if (measure.closingBarline !== null) return clampPickup(pickup, barLength)
   }
-  return pickup
+  return clampPickup(pickup, barLength)
+}
+
+/**
+ * "If computed pickup length is very close to 0 or the bar length, we assume that we
+ * actually have a full bar and hence no pickup" (`data/abc_tune.js:140-142`) — and it is
+ * not defensive, it is LOad-BEARING.
+ *
+ * `flatten-triplet-chords` opens with two triplets of `1/6`, and six of those in floating
+ * point come to 0.9999999999999999. The `pickup >= barLength` subtraction therefore never
+ * fires, the whole first bar reads as a pickup, and every note in it takes the weak-beat 85
+ * where abcjs plays the downbeat at 105. The clamp is the only thing standing between a
+ * repeating fraction and a wrong volume on the first note of a tune.
+ */
+function clampPickup(pickup: number, barLength: number): number {
+  return pickup < 1e-8 || barLength - pickup < 1e-8 ? 0 : pickup
 }
 
 /**
