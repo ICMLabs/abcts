@@ -11,7 +11,8 @@
  */
 
 import { type CompatibilityMode, defaultMode, isStrict } from '../core/model.js'
-import { ABCJS_ARC, spaces } from './abcjs-constants.js'
+import { ABCJS_ARC, ABCJS_YCORR, spaces } from './abcjs-constants.js'
+import { SMUFL_TO_ABCJS } from './glyph-map.js'
 import { glyphsFor } from './glyph-table.js'
 import { GLYPHS, type GlyphName } from './glyphs.js'
 import type { Layout, PlacedCurve, PlacedLine } from './layout.js'
@@ -328,6 +329,32 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
     attributes: string,
   ): string => {
     const ink = outline(name)
+    /**
+     * `getYCorr`, and it belongs HERE because abcjs applies it here and only here.
+     *
+     *     ycorr = glyphs.getYCorr(symbol);
+     *     glyphs.printSymbol(x, renderer.calcY(offset + ycorr), symbol, …)
+     *
+     * (`draw/print-symbol.js:22`, `:33`.) A per-glyph alignment fix-up for abcjs's own
+     * font, spent at DRAW time and never in a reserve — which is why the layout must not
+     * carry it and why no extent gate could ever have seen it missing. Measured on one
+     * control per glyph: ten of them, exact to the hundredth of a pixel, and the two
+     * fermatas disagreeing by one pitch in OPPOSITE directions is what named it.
+     *
+     * Strict only, because the correction is a property of abcjs's outlines: Bravura's are
+     * authored against one baseline and need none. The dynamics are the exception on both
+     * counts — SMuFL precomposes `mf` where abcjs sets an `m` and an `f` side by side, so
+     * there is no abcjs name to look up, and every letter abcjs spells the set out of
+     * carries the same -4. A pitch is half a staff space, and y runs DOWN.
+     */
+    const corrected =
+      y -
+      0.5 *
+        (strict
+          ? name.startsWith('dynamic')
+            ? (ABCJS_YCORR.f ?? 0)
+            : (ABCJS_YCORR[SMUFL_TO_ABCJS[name] ?? ''] ?? 0)
+          : 0)
     // ABCJS NEVER APPLIES A GLYPH'S SCALE AT DRAW TIME, and says so in its own source:
     // `printSymbol` takes `{scalex, scaley}` and passes NEITHER to `glyphs.printSymbol`,
     // under the comment "TODO-PER: what happened to scalex, and scaley? That might have
@@ -340,7 +367,7 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
     // 0.4 of a notehead's ink centre, and it is `vree-grace-notes`' whole residual.
     const total = strict ? ink.scale : (scale ?? 1) * ink.scale
     const scaled = total !== 1
-    const transform = `translate(${num(x)},${num(y)})${scaled ? ` scale(${scaleNum(total)})` : ''}`
+    const transform = `translate(${num(x)},${num(corrected)})${scaled ? ` scale(${scaleNum(total)})` : ''}`
     if (!optimize) return `<path${attributes} transform="${transform}" d="${ink.path}"/>`
     // A `<use>` takes a transform, so a scaled glyph dedupes like any other. It used to
     // fall back to an inline path when scaled, which was fine while only a stretched
@@ -348,7 +375,7 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
     // since those are in ITS pixels and every one of them carries a scale.
     return scaled
       ? `<use${attributes} href="#${defId(name)}" transform="${transform}"/>`
-      : `<use${attributes} href="#${defId(name)}" x="${num(x)}" y="${num(y)}"/>`
+      : `<use${attributes} href="#${defId(name)}" x="${num(x)}" y="${num(corrected)}"/>`
   }
 
   /**

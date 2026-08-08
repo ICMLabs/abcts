@@ -420,13 +420,6 @@ export const ABCJS_PITCH = {
   /** `margin = 1` — one pitch between every lane (`set-upper-and-lower-elements.js:102`). */
   laneMargin: 1,
   /**
-   * `getYCorr('f' | 'm' | 'p' | 's' | 'z')` — the four pitch abcjs drops every dynamic
-   * letter below the pitch it was handed (`creation/glyphs.js:200-205`, applied at
-   * `draw/print-symbol.js:22` and `:33`). Positive here and subtracted at the call, since
-   * abcjs adds a negative correction to the offset.
-   */
-  dynamicYCorr: 4,
-  /**
    * An UNBEAMED stem's length — `Math.round(70 * this.voiceScale) / 10`
    * (`abstract-engraver.js:740`), so 7 at the default scale, measured from the note's own
    * pitch rather than run up from a base. NOT the beamed one, which comes from
@@ -687,3 +680,67 @@ export const ABCJS_PERC_NOTE_NAMES: readonly string[] = [
  * font of its own.
  */
 export { ABC_FONT_DEFAULT_PT as ABCJS_FONT_DEFAULT_PT } from '../core/model.js'
+
+/**
+ * `getYCorr` — the pitch abcjs shifts a glyph by at DRAW TIME, and nowhere else.
+ *
+ *     ycorr = glyphs.getYCorr(symbol);
+ *     el = glyphs.printSymbol(x + dx, renderer.calcY(offset + ycorr), s, …);
+ *
+ * (`draw/print-symbol.js:22` and `:33`; the table is `creation/glyphs.js:174-219`.) It is
+ * a per-glyph ALIGNMENT fix-up for abcjs's own font — the outlines are not all authored
+ * against the same baseline — and it never touches a reserve: `RelativeElement` takes its
+ * `top`/`bottom` from the uncorrected pitch, so a staff's extent is the same either way.
+ * Which is exactly why nothing could see this: the pixel gate compares NOTEHEADS, whose
+ * correction is 0, and every gate that compares an extent is looking at a number the
+ * correction never enters.
+ *
+ * Measured on one control per glyph, single mark per tune so nothing stacks — the
+ * agreement is to the hundredth of a pixel on all ten:
+ *
+ *     scripts.ufermata  -1     scripts.trill    -2     flags.u32nd  +1     '3' / '4'  -2
+ *     scripts.dfermata  +1     scripts.upbow    -2     flags.d32nd  -1
+ *     scripts.roll      -1     scripts.downbow  -2     flags.u64th  +3
+ *                                                      flags.d64th  -2
+ *
+ * THE REST ROWS ARE DELIBERATELY ABSENT, and it is not an oversight. `restGlyph` returns
+ * abcjs's DRAWN pitch rather than its anchor — `restpitch` 7 plus the correction, folded
+ * into one step — and the augmentation dots hang off that same step. Measured on a dotted
+ * control: `dots.dot` 11.61, `rests.half` 13.16, `rests.quarter` 14.36, ours identical to
+ * the hundredth. Adding the rows here would move both by a pitch. The same goes for
+ * `rests.multimeasure`, whose correction is 0 anyway.
+ *
+ * Nor is `timesig.common` / `timesig.cut` listed: abcjs returns 0 for both, which is what
+ * an absent key already means.
+ */
+export const ABCJS_YCORR: Readonly<Record<string, number>> = {
+  '0': -2,
+  '1': -2,
+  '2': -2,
+  '3': -2,
+  '4': -2,
+  '5': -2,
+  '6': -2,
+  '7': -2,
+  '8': -2,
+  '9': -2,
+  '+': -2,
+  'flags.d32nd': -1,
+  'flags.d64th': -2,
+  'flags.u32nd': 1,
+  'flags.u64th': 3,
+  f: -4,
+  m: -4,
+  p: -4,
+  s: -4,
+  z: -4,
+  'scripts.trill': -2,
+  'scripts.upbow': -2,
+  'scripts.downbow': -2,
+  'scripts.ufermata': -1,
+  'scripts.wedge': -1,
+  'scripts.roll': -1,
+  'scripts.shortphrase': -1,
+  'scripts.longphrase': -1,
+  'scripts.dfermata': 1,
+}

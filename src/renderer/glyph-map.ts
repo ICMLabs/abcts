@@ -160,16 +160,28 @@ export const SMUFL_TO_ABCJS: Readonly<Record<string, string>> = {
   segno: 'scripts.segno',
   coda: 'scripts.coda',
   breathMarkComma: 'scripts.comma',
+
+  // ── The five abcjs kept out of SMuFL's vocabulary, and they are not out of it ──
+  //
+  // These sat in `UNMAPPED_ABCJS` under "abcjs glyphs no SMuFL name above claims", which
+  // was read as a statement about SMuFL and is a statement about this table: SMuFL names
+  // all five, we already draw all five, and the names were simply never joined up. So
+  // strict drew BRAVURA outlines for `!wedge!`, `!shortphrase!`, `!mediumphrase!` and
+  // `!longphrase!` — the exact class of leak the Bravura ruling calls a defect — and the
+  // mark landed up to 11.66px off abcjs's, measured one decoration per control tune.
+  //
+  // `scripts.stopped` is abcjs's `+`, which we draw as `brassMuteClosed`.
+  articStaccatissimoAbove: 'scripts.wedge',
+  articStaccatissimoBelow: 'scripts.wedge',
+  breathMarkTick: 'scripts.shortphrase',
+  caesuraShort: 'scripts.mediumphrase',
+  caesura: 'scripts.longphrase',
   restHBar: 'rests.multimeasure',
 }
 
 /** abcjs glyphs no SMuFL name above claims — its vocabulary, minus what we use. */
 export const UNMAPPED_ABCJS = [
   'scripts.stopped',
-  'scripts.wedge',
-  'scripts.longphrase',
-  'scripts.mediumphrase',
-  'scripts.shortphrase',
   'flags.ugrace',
   'flags.dgrace',
   'tab.big',

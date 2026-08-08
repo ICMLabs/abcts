@@ -28,7 +28,7 @@ system 0 width=90.323 originY=0.000
       text  10.878,-5.661 size=2.581 "= 100"
     note@-6 x=9.284 w=3.871
       glyph noteheadBlack 9.284,3.000
-      glyph dynamicMP 8.184,11.274
+      glyph dynamicMP 8.184,9.274
       line  9.026,3.000 -> 10.807,3.000 t=0.090
       line  10.511,2.900 -> 10.511,-2.009 t=0.077
     note@-5 x=12.044 w=3.871
