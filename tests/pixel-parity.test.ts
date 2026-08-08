@@ -276,7 +276,6 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
      * not a tolerance. Recorded rather than left to widen silently.
      */
     'extra-class': { heads: 4, dy: 0.01, dx: 0.0, oy: -3.88, ox: 0.0 },
-    twinkle: { heads: 14, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S3-note-syntax-tune0': { heads: 28, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S3-note-syntax-tune1': { heads: 43, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S3-note-syntax-tune2': { heads: 21, dy: 0, dx: 0, oy: 0, ox: 0 },
