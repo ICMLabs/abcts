@@ -9,6 +9,55 @@ HARNESS**. Earlier ledgers as listed there.
 
 ---
 
+## 🔀 THE TARGET IS abcjs 6.7.0 AS OF 2026-08-08 (Lance's authorisation, same day)
+
+6.7.0 shipped mid-arc. Another agent regenerated the sibling corpus's 505 goldens from it;
+the in-repo 174-fixture corpus was then regenerated too, `abcts.config.json`'s `abcjsRef`
+moved, and the engine was brought onto it.
+
+**MEASURED BEFORE ANYTHING WAS PORTED, which is what made it a one-line job rather than a
+project.** Regenerating the 174 goldens changed **166 of 178 FILES** but moved only
+**THIRTEEN fixtures** on any geometric axis — every one by exactly `oy = -61.33`, with
+`dy`, `dx` and `ox` at 0.00. A rigid shift and nothing else. 61.33 is
+`spacing.staffSeparation`'s default to the hundredth.
+
+The cause is one new `else` arm in `draw.js`:
+
+```js
+if (staffgroups.length >= 1)
+  addStaffPadding(renderer, renderer.spacing.staffSeparation, …);
+else if (line > 0) // This happens if there is non-music stuff before the first staff line
+  renderer.moveY(renderer.spacing.staffSeparation)
+```
+
+A non-music LINE before the first staff now costs a whole staff separation; before, nothing.
+**TWO things make `line > 0` true and the second is the one that is easy to miss:** a
+`%%text`/`%%begintext` block, OR **a second `T:`** — abcjs's first `T:` is the title, drawn
+from `metaText` before the loop, while every later one becomes a `{subtitle}` LINE. Seven of
+the thirteen were the first case, six the second.
+
+`!class=name!` came with it: abcjs sets `el.extraClass` and never pushes it into
+`el.decoration` (`abc_parse_music.js:229`), in the same `if` as `!style=…!` one arm along.
+
+**AND WHAT DID NOT MOVE MATTERS AS MUCH.** `tests/synth/flattener.test.js` and
+`write/creation/glyphs.js` are **BYTE-IDENTICAL** between the versions, so the audio oracle
+and both glyph tables needed no regeneration — the 54 audio cases and every ratcheted pass
+are untouched. The synth surface changed in two places, neither reachable by any test:
+`chord-track.js` accepts `♭`/`♯` spellings and `repeats.js` swaps `startEnding` /
+`startRepeat` on a bar that is both.
+
+**`abcjs-6.6.3` STAYS VENDORED beside `6.7.0`**, and the sibling `dump-svg.js` takes
+`ABCJS_VERSION` — that is how the two were measured against each other, and how any citation
+written before 2026-08-08 (they all name 6.6.3 line numbers) can be checked rather than
+guessed at.
+
+**ONE TARGET IS OPEN FROM IT.** `extra-class`, a new 6.7.0 fixture, sits at `oy = -3.88` —
+one PITCH, uniform. Its tune is `!class=alice!A!class=bob!!>!T[dfa]`: a chord carrying BOTH
+an accent and a trill, which nothing else in either corpus does. `!class=…!` is accounted
+for and verified by parse, so the residual is the two-decoration STACK on a chord.
+
+---
+
 ## 🔎 THE HEADLINE: GEOMETRY IS DONE. AUDIO EXISTS, HAS A GATE, AND IS AT 28 OF 54.
 
 | axis | standing |
@@ -16,8 +65,8 @@ HARNESS**. Earlier ledgers as listed there.
 | suite | **954 of 954. NO REDS.** |
 | **audio ranked table** | **26 of 54 differ** — from 54 of 54 when it opened |
 | **audio PASSING** | **28** and ratcheted |
-| pixel ranked table | **0 of 119** |
-| harvested ranked table | **0 of 174** |
+| pixel ranked table | **1 of 120** — `extra-class`, recorded and named |
+| harvested ranked table | **0 of 174** — against the **6.7.0** oracle |
 | staff-line gate | **0 of 41** |
 | above-lane gate | 12 controls |
 | ycorr gate | 20 controls |
