@@ -5006,6 +5006,26 @@ function curveReserves(
       if (next !== undefined) add(anchor, next)
     }
   })
+  // AN UNCLOSED SLUR STILL RESERVES. `voice.addOther(this)` runs where the `(` is seen, so
+  // a `TieElem` whose `)` never arrives is on the voice like any other, and `getYBounds`
+  // falls to `else if (this.anchor1) this.startY = this.endY = this.anchor1.pitch`
+  // (`tie-element.js:203-206`) before the flat 3 (`:240-252`).
+  //
+  // Measured on three controls, abcjs against ours:
+  //
+  //     b4          14.0448   14.0448     exact — the notehead's own ink
+  //     (b4         16.0000   14.0448     ← 13 + 3, and we reserved nothing at all
+  //     (b4 b4)     17.0000   17.0000     exact — a closed slur was always right
+  //
+  // Its INK box is NOT taken: `this.top = max(anchor1.pitch, anchor2.pitch) + 4` is set in
+  // `setEndAnchor`, which never runs. So the post-lane reserve and nothing else.
+  for (const start of open) {
+    const a = anchors[start]
+    if (a === undefined) continue
+    const above = curveIsAbove(a, a, voicePos)
+    const y = endAt(a, above, true)
+    reserves.push(above ? { top: y - three, bottom: y } : { top: y, bottom: y + three })
+  }
   return { ink, post: reserves }
 }
 
