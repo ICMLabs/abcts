@@ -25,8 +25,9 @@
  * tomorrow, oddities included. Opt into corrections with `abcts` proper and mode
  * `abc2.1`.
  */
-import type { Score } from '../core/model.js'
+import { plainText, type Score } from '../core/model.js'
 import { parse } from '../parser/parser.js'
+import { STAFF_SPACE_PX } from '../renderer/abcjs-constants.js'
 import { layout } from '../renderer/layout.js'
 import { toSVG } from '../renderer/svg.js'
 
@@ -61,9 +62,6 @@ export interface TuneObject {
   readonly metaText: { readonly title?: string }
 }
 
-/** abcjs's staff space: its STEP constant is half of one. */
-const ABCJS_STAFF_SPACE = 7.75
-
 type Target = string | { innerHTML: string } | null | undefined
 
 function resolve(target: Target): { innerHTML: string } | null {
@@ -83,10 +81,10 @@ function resolve(target: Target): { innerHTML: string } | null {
  */
 export function renderAbc(target: Target, abc: string, params: AbcjsParams = {}): TuneObject[] {
   const result = parse(abc, { mode: 'abcjs-strict' })
-  const staffSpace = ABCJS_STAFF_SPACE * (params.scale ?? 1)
+  const staffSpace = STAFF_SPACE_PX * (params.scale ?? 1)
   // abcjs's staffwidth is the music area in pixels; core's systemWidth is in staff spaces.
   const systemWidth =
-    params.staffwidth === undefined ? undefined : params.staffwidth / ABCJS_STAFF_SPACE
+    params.staffwidth === undefined ? undefined : params.staffwidth / STAFF_SPACE_PX
 
   const tunes = result.scores.map((score) => ({
     svg: toSVG(layout(score, { mode: 'abcjs-strict', ...(systemWidth ? { systemWidth } : {}) }), {
@@ -97,7 +95,10 @@ export function renderAbc(target: Target, abc: string, params: AbcjsParams = {})
       ...(params.staffwidth === undefined ? {} : { pageWidth: params.staffwidth }),
     }),
     score,
-    metaText: score.metadata.titles[0] === undefined ? {} : { title: score.metadata.titles[0] },
+    // abcjs's `metaText.title` is a plain string even when the field changed font
+    // mid-line — the phrases are a LAYOUT structure, not part of the public shape.
+    metaText:
+      score.metadata.titles[0] === undefined ? {} : { title: plainText(score.metadata.titles[0]) },
   }))
 
   const element = resolve(target)

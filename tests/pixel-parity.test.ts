@@ -120,6 +120,24 @@ import { corpusDir, goldensDir, loadCorpus } from './corpus/corpus.js'
 import { absolutePixels, byClass } from './pixel-geometry.js'
 
 /**
+ * THE 89 `-tuneN` ROWS ARE A GOLDEN SURFACE THIS GATE READ NOTHING OF UNTIL 2026-08-07.
+ *
+ * It enumerated `<name>.svg`, which only a SINGLE-TUNE fixture has — so 29 of the 41 were
+ * measured and the twelve multi-tune ones were not measured at all, though abcjs's own
+ * per-tune goldens (`<name>-tune0.svg`, `-tune1.svg`, …) had been sitting beside them the
+ * whole time. That is 89 more tunes, and every mid-tune key change in the corpus lives in
+ * one of them (`key-change.test.ts` says why, and had to hand-roll its own comparison for
+ * exactly this reason).
+ *
+ * All 89 match abcjs on notehead COUNT on the first run. Twelve differ on position, and
+ * they are the ranked list the checkpoint said no gate could produce any more — `S8-layout`
+ * X:810 at dx 82.67 being the largest number left anywhere in either corpus.
+ *
+ * The `-classes-tuneN` and `-print-tuneN` families are the same tunes rendered with
+ * `add_classes` / `print`, so they are deliberately NOT enumerated: they would triple the
+ * row count and measure the same geometry three times.
+ */
+/**
  * Per fixture: how many noteheads abcjs draws, and the current position spreads.
  *
  * `heads` is asserted exactly. `dy`/`dx` are ceilings — the measured value must not
@@ -127,38 +145,275 @@ import { absolutePixels, byClass } from './pixel-geometry.js'
  */
 const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: number; ox: number }> =
   {
-    'ave-verum-corpus': { heads: 55, dy: 2.4, dx: 29.3, oy: -2.7, ox: -17.2 },
-    'brother-john-inline-voices': { heads: 64, dy: 0.0, dx: 16.7, oy: -0.2, ox: -13.7 },
-    'center-text': { heads: 8, dy: 0.0, dx: 3.9, oy: 10.1, ox: -9.4 },
-    'chord-grid': { heads: 16, dy: 0.0, dx: 7.0, oy: -0.2, ox: -16.7 },
-    'frere-jacques': { heads: 45, dy: 22.1, dx: 41.8, oy: -5.4, ox: -18.8 },
-    'full-song-template': { heads: 20, dy: 0.2, dx: 19.8, oy: 6.6, ox: -20.4 },
-    'happy-birthday': { heads: 25, dy: 0.2, dx: 36.6, oy: 6.6, ox: -27.3 },
-    'little swallow': { heads: 89, dy: 5.3, dx: 47.5, oy: 2.5, ox: -27.1 },
-    'multi-voice-lyrics-two-voices': { heads: 16, dy: 5.0, dx: 52.4, oy: -7.6, ox: -9.2 },
-    'multi-voice-rest-collision': { heads: 7, dy: 0.0, dx: 4.5, oy: -13.9, ox: -8.5 },
-    'multi-voice-rest-placement': { heads: 14, dy: 0.0, dx: 19.8, oy: -0.0, ox: -13.1 },
-    'multi-voice-triplet-brackets': { heads: 45, dy: 14.1, dx: 110.2, oy: -2.9, ox: -9.6 },
-    'program-127-test': { heads: 20, dy: 0.2, dx: 14.3, oy: 6.6, ox: -18.3 },
-    'ragtime-mini': { heads: 30, dy: 0.0, dx: 19.9, oy: -2.0, ox: -17.7 },
-    'ragtime-nightingale': { heads: 2009, dy: 58.1, dx: 99.5, oy: 7.0, ox: -19.7 },
-    'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0, oy: -0.2, ox: -9.5 },
-    'score-reorder': { heads: 8, dy: 0.0, dx: 0.0, oy: 7.3, ox: -9.5 },
-    'simple-c': { heads: 8, dy: 0.0, dx: 4.5, oy: -0.2, ox: -7.3 },
-    'stacked-annotations': { heads: 4, dy: 0.0, dx: 4.5, oy: 0.0, ox: -5.0 },
-    twinkle: { heads: 14, dy: 0.0, dx: 5.7, oy: -0.2, ox: -12.5 },
-    'two-voice-invention': { heads: 74, dy: 0.3, dx: 23.1, oy: 7.0, ox: -15.1 },
-    'voice-middle-after-clef': { heads: 10, dy: 0.0, dx: 79.0, oy: -0.2, ox: -21.4 },
-    'voice-octave-shift': { heads: 8, dy: 0.0, dx: 0.0, oy: -0.2, ox: -9.5 },
-    'vree-compound-meter': { heads: 12, dy: 0.0, dx: 5.3, oy: 0.0, ox: -9.2 },
-    'vree-grace-notes': { heads: 7, dy: 11.6, dx: 32.7, oy: -0.2, ox: -6.1 },
-    'vree-sharps': { heads: 4, dy: 0.0, dx: 9.4, oy: 0.5, ox: -8.0 },
-    'vree-slurs-and-triplets': { heads: 8, dy: 0.0, dx: 4.5, oy: -19.6, ox: -7.2 },
-    'vree-ties-across-bars': { heads: 4, dy: 0.0, dx: 4.5, oy: -0.2, ox: -6.1 },
-    'zocharti-loch': { heads: 64, dy: 0.0, dx: 48.9, oy: 6.9, ox: -9.4 },
+    'ave-verum-corpus': { heads: 55, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'brother-john-inline-voices': { heads: 64, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'center-text': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'chord-grid': { heads: 16, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    // dx 22.15 -> 22.64 and `little swallow` 23.97 -> 24.19 when the notehead ROD became
+    // abcjs's 9.81 rather than Bravura's 9.145 outline. Sub-pixel movement on the two
+    // fixtures whose dx is dominated by a GOLDEN artefact — recorded rather than reverted,
+    // because the width is abcjs's own and the same change took ragtime 55.32 -> 53.56 and
+    // five more harvested fixtures inside their thresholds.
+    // dx 22.64 -> 21.81 on the declared-height fix.
+    'frere-jacques': { heads: 45, dy: 0.02, dx: 0.02, oy: -0.01, ox: 0.0 },
+    'full-song-template': { heads: 20, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    // dx 3.85 -> 1.40 when a REST became a rod. abcjs's `getMinWidth` is `child.w`
+    // whatever the type and a rest's `w` is its glyph — 7.534 for an eighth — where ours
+    // was a flat 0, so a compressed line let the note after a rest slide onto it.
+    // then 1.40 -> 0.23 when `Bb` became `B♭`: `♭` is a full em in the chord font where
+    // `b` is 0.556, and the mark is CENTRED on the note, so half of that was horizontal.
+    // dx 0.23 -> 0.12 and ox -0.49 -> 0.0 when every DECLARED box became abcjs's
+    // published `h` rather than the derived ink box.
+    'happy-birthday': { heads: 25, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    // dy 1.92 -> 0.32 and oy -0.58 -> 0.16 when `anchorLyrics` stopped measuring its own
+    // ink and took `verticalExtent`'s. dx/ox are the goldens' ASCII width table, not us.
+    // dx 24.19 -> 21.69 when `calcWidth` landed: its 73 Chinese characters measure the
+    // golden generator's flat 8 rather than a full em, which is what the goldens do.
+    // dy 0.32 -> 0.21, oy 0.16 -> 0.06 and ox -6.29 -> -5.28 on the declared-height fix.
+    'little swallow': { heads: 89, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'multi-voice-lyrics-two-voices': { heads: 16, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'multi-voice-rest-collision': { heads: 7, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'multi-voice-rest-placement': { heads: 14, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'multi-voice-triplet-brackets': { heads: 45, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'program-127-test': { heads: 20, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'ragtime-mini': { heads: 30, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    // dx 69.82 -> 55.32 when the accidental extents became abcjs's own numbers. Its `oy`
+    // is the branch's one red and went 1.49 -> 1.58 on the same change — its residual is
+    // horizontal in origin (see the checkpoint), so the two move together.
+    // dy 58.1 -> 1.12 and dx 53.56 -> 18.30 when the GRACE NOTES stopped being emitted
+    // before their main head. Both were recorded for weeks as "two mis-paired noteheads,
+    // do not chase" — the mis-pairing was ours, and it was the emission order.
+    // dx 16.43 -> 16.53 when `extraw` became abcjs's RUNNING MIN rather than a sum of half
+    // widths. RECORDED, not masked: the port is exact on a three-accidental chord — 7.50px,
+    // which is `(6.75 + 8.25) / 2` to the digit — and verified against abcjs's own probed
+    // `extraw`. Ragtime's dx is a SPREAD dominated by other causes and moved a tenth of a
+    // pixel; the harvested corpus gained a fixture at 1px and another at 5px on the same
+    // change.
+    // dy 1.12 -> 0.33, oy -0.54 -> 0.13, ox -1.87 -> -0.76, and every one of its twelve
+    // staff boundaries now measures 0.0. It was the branch's one standing red, and the
+    // cause was a single beamed down-stem on system 4: `createStems` counts the head's own
+    // `dx` twice when it asks `getBarYAt` for the beam's height, which is zero on a plain
+    // note and a whole notehead on a voice-overlap displacement. That stem landed 0.30
+    // pitch high, a below-slur anchored in the beam took its bottom as an endpoint, and the
+    // slur's box became `staff.bottom` — the natural separation, on the one system where
+    // `systemStaffSeparation` does not bind. Every staff from the ninth inherited 1.1px.
+    //
+    // AND THE `dx` RAISE IS UNDONE. It went 16.43 -> 16.53 on finding 68, the only ceiling
+    // ever raised on this branch; it is back under the original figure at 16.52.
+    // A GRACE'S ACCIDENTAL, drawn at last, moves three of these four the right way and one
+    // the wrong way: dx 16.52 -> 13.31, ox -0.76 -> -0.75, oy 0.13 -> 0.15, dy 0.33 -> 0.40.
+    //
+    // THE `dy` RAISE IS RECORDED, NOT MASKED — the second on this branch, and 0.07px on a
+    // 2009-notehead fixture against 3.2px off its `dx`. The rule it is drawn from was
+    // verified exact on four control tunes (`{=de}`, `{de}`, `{^de}`, and with a lyric),
+    // so what moved here is a redistribution across 23 systems once one element reaches
+    // 7px further left, not the rule. `mouse-click-01` went 7.20 -> 1.88 on the same fix.
+    // dy 0.25 -> 0.04, oy 0.05 -> 0.01 and ox 0.12 -> 0.02 on the accidental-room rule.
+    // `dx` did not move: its 12.13 is the cancellation line, not this.
+    // dx 12.13 -> 1.58, dy 0.04 -> 0.01, oy 0.01 -> 0.00 when the ending's `minspacing`
+    // stopped being charged to EVERY voice's barline. abcjs charges the one that carries
+    // the volta: of the five barlines at one x on system 17, ONE has `minsp=28.50` and the
+    // other four have the plain 10.00. It is not a wash, because the left-ink rule is a
+    // SHORTFALL — abcjs's other voices keep 18.50 of slack after their bar, which absorbs
+    // the 12.13 of accidental ink on the chord after it; ours had spent that slack.
+    // dx 1.58 -> 0.0, ox 0.03 -> 0.0. EXACT ON ALL FOUR, on the corpus's largest fixture,
+    // and it closed on the SAME rule as `S8-layout-tune5`: `roomtaken` is an ORIGIN, not a
+    // child, so a down-stemmed displaced head's 11.81 seed reserves nothing on its own —
+    // `extraw` sees only the head's own 8.81 `shiftheadx`.
+    'ragtime-nightingale': { heads: 2009, dy: 0.01, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'score-reorder-shared': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'score-reorder': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'simple-c': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'stacked-annotations': { heads: 4, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    twinkle: { heads: 14, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'two-voice-invention': { heads: 74, dy: 0.01, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'voice-middle-after-clef': { heads: 10, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'voice-octave-shift': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'vree-compound-meter': { heads: 12, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    // dy 11.6 -> 0.02 and dx 32.5 -> 1.99, same cause. What is left is the grace glyph's
+    // own width: a uniform 1.99 on the graces themselves, exactly as the note predicting
+    // the "artefact" said it would be once the order was right.
+    // dx 1.99 -> 0.0 and ox -1.14 -> 0.0 when strict stopped SCALING a grace glyph, which
+    // abcjs does not either: `printSymbol` takes `scalex`/`scaley` and passes neither on.
+    // At ZERO on all four axes.
+    'vree-grace-notes': { heads: 7, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    // oy 0.06 -> 0.0: a sharp DECLARES 20.15 where its ink box is 20.19, and a key
+    // signature of them was the extra 0.04px on top of the clef's systemic 0.03.
+    'vree-sharps': { heads: 4, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'vree-slurs-and-triplets': { heads: 8, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'vree-ties-across-bars': { heads: 4, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    // dx 5.35 -> 1.25 on the accidental extents.
+    // EXACT ON ALL FOUR — dx 1.25 -> 0.0 and ox -0.34 -> 0.0 when `M:C` started drawing
+    // `timesig.common` instead of the digits `4/4`. A one-glyph prefix, and the whole of
+    // this fixture's remaining horizontal error.
+    'zocharti-loch': { heads: 64, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+
+    // ── THE MULTI-TUNE FIXTURES, per tune. See the note above the table. ──────────
+    'S1-decorations-tune0': { heads: 16, dy: 0, dx: 0.01, oy: 0, ox: 0 },
+    'S1-decorations-tune1': { heads: 11, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S1-decorations-tune2': { heads: 64, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S1-decorations-tune3': { heads: 13, dy: 0, dx: 0, oy: 0, ox: 0 },
+    // oy 9.67 -> 0.00. EXACT. `!slide!` is a curve at the note in abcjs, not a glyph
+    // above the staff, so it reserves nothing — this tune's whole error was that reserve.
+    'S1-decorations-tune4': { heads: 16, dy: 0, dx: 0.01, oy: 0.0, ox: 0 },
+    'S2-fields-tune0': { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
+    // dy 4.68 -> 0.0 and oy -2.98 -> 0.0. EXACT ON ALL FOUR. A `"_below"` annotation takes
+    // a LANE off the staff's bottom ink — `chordHeightBelow * lanes + margin` — where we
+    // drew it at a fixed step and reserved its own ink box. 1.2078 pitch on staff 0, which
+    // carried the whole tune's two later systems with it.
+    'S2-fields-tune1': { heads: 11, dy: 0.0, dx: 0, oy: 0.0, ox: 0 },
+    'S2-fields-tune2': { heads: 16, dy: 0, dx: 0.01, oy: 0, ox: 0 },
+    'S3-note-syntax-tune0': { heads: 28, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune1': { heads: 43, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune2': { heads: 21, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune3': { heads: 11, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune4': { heads: 43, dy: 0.01, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune5': { heads: 27, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune6': { heads: 23, dy: 0, dx: 0.01, oy: 0, ox: 0 },
+    'S3-note-syntax-tune7': { heads: 29, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune8': { heads: 66, dy: 0.01, dx: 0.01, oy: 0, ox: 0 },
+    'S3-note-syntax-tune9': { heads: 8, dy: 0.01, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune10': { heads: 14, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune11': { heads: 7, dy: 0, dx: 0, oy: 0, ox: 0 },
+    // dx 0.18 -> 0.0. Its two `G8` bars are BREVES, and we drew semibreves — see the
+    // `G8` test below, which used to assert the difference as an irreducible outline.
+    'S3-note-syntax-tune12': { heads: 16, dy: 0, dx: 0.0, oy: 0, ox: 0.0 },
+    'S3-note-syntax-tune13': { heads: 0, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune14': { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune15': { heads: 4, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune16': { heads: 4, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune17': { heads: 25, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune18': { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune19': { heads: 12, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune20': { heads: 12, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune21': { heads: 5, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S3-note-syntax-tune22': { heads: 40, dy: 0, dx: 0.01, oy: 0, ox: 0 },
+    'S3-note-syntax-tune23': { heads: 29, dy: 0, dx: 0, oy: 0, ox: 0 },
+    // dx 6.24 -> 0.0 and ox 0.11 -> 0.0. EXACT ON ALL FOUR. `translateChord` runs on every
+    // chord symbol, not only under `%%jazzchords`, and it REBUILDS the string from three
+    // regex groups — so `"C6/9"` prints as `C6`, the `/9` failing `[ABCDEFG][#b♯♭]?`.
+    'S3-note-syntax-tune24': { heads: 64, dy: 0, dx: 0.0, oy: 0, ox: 0.0 },
+    'S4-bars-repeats-tune0': { heads: 28, dy: 0, dx: 0.01, oy: 0, ox: 0 },
+    'S4-bars-repeats-tune1': { heads: 60, dy: 0, dx: 0, oy: 0, ox: 0 },
+    // dx 1.17 -> 0.0 and ox 1.80 -> 0.0. EXACT ON ALL FOUR. `z4` in `M:6/8` is a WHOLE
+    // rest whose duration abcjs's PARSER rewrites to the measure's — 0.75, not 1 — so its
+    // spring is a dotted half's, not a whole note's. A second fix in the same tune: a
+    // dotted REST's dot widens the element, which only the note path knew.
+    'S4-bars-repeats-tune2': { heads: 2, dy: 0, dx: 0.0, oy: 0, ox: 0.0 },
+    'S5-directives-tune0': { heads: 28, dy: 0, dx: 0.01, oy: 0, ox: 0 },
+    // dy 0.52 -> 0.03 and oy 0.03 -> 0.00 when `!style=normal!` started overriding a
+    // `style=rhythm` voice and a zero-duration styled note took its own `nostem` head —
+    // four head glyphs were simply wrong. Then dx 24.27 -> 1.19 and ox 1.94 -> -0.03 when
+    // an inline `[M:]` at the head of a line started drawing at the END of the previous
+    // system. That 23px of fixed width was the whole ramp.
+    //
+    // THE `ox` RAISE THIS ENTRY CARRIED FOR ONE COMMIT IS GONE. It was 1.79 -> 1.94, a
+    // mean over exactly that ramp, and closing the ramp took it to -0.03. Which is what
+    // the raise predicted, and the reason it was recorded rather than argued away.
+    // dx 1.19 -> 0.0 and dy 0.03 -> 0.0. EXACT ON ALL FOUR, and it took four findings:
+    // 129 (`!style=normal!` overriding the voice), 130 (an inline `[M:]` at a line head),
+    // and now the LINE granularity of `K: style=`. A mid-line `[K: style=harmonic]` does
+    // not change the rest of its own line — `createVoice` appends the style element from
+    // `startNewLine`, so it takes effect from the next one.
+    'S5-directives-tune1': { heads: 188, dy: 0.0, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'S5-directives-tune2': { heads: 7, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S5-directives-tune3': { heads: 16, dy: 0, dx: 0, oy: 0, ox: 0 },
+    // dx 3.88 -> 0.0 and ox 0.17 -> 0.0. EXACT ON ALL FOUR. The melisma `_` is part of the
+    // syllable abcjs MEASURES, not something appended after the element's spans are taken:
+    // `true._` reserves 21.492 each side where `true.` reserves 17.242, and the 8.5
+    // between them is the golden vocalfont table's width for `_`.
+    'S5-directives-tune4': { heads: 22, dy: 0, dx: 0.0, oy: 0, ox: 0.0 },
+    'S5-directives-tune5': { heads: 22, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S6-keys-tune0': { heads: 1, dy: 0, dx: 0, oy: 0, ox: 0.0 },
+    'S6-keys-tune1': { heads: 48, dy: 0.01, dx: 0, oy: 0, ox: 0 },
+    'S6-keys-tune2': { heads: 28, dy: 0, dx: 0, oy: 0, ox: 0 },
+    // dx 24.93 -> 0.01 and ox 2.08 -> 0.0 when the "same signature prints nothing" guard
+    // went. `K:A Mixolydian` -> `K:E Dorian` is two sharps to two sharps and abcjs
+    // reprints all of it; the 18.50px it reserved came back as a 3.56px-per-note ramp.
+    'S6-keys-tune3': { heads: 48, dy: 0, dx: 0.01, oy: 0, ox: 0.0 },
+    'S6-keys-tune4': { heads: 31, dy: 0, dx: 0.01, oy: 0, ox: 0 },
+    'S7-voices-tune0': { heads: 51, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S7-voices-tune1': { heads: 62, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S7-voices-tune2': { heads: 47, dy: 0.01, dx: 0, oy: 0, ox: 0 },
+    'S7-voices-tune3': { heads: 66, dy: 0.01, dx: 0, oy: 0, ox: 0 },
+    'S7-voices-tune4': { heads: 84, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S7-voices-tune5': { heads: 52, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S7-voices-tune6': { heads: 71, dy: 0.01, dx: 0, oy: 0, ox: 0 },
+    'S8-layout-tune0': { heads: 45, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'S8-layout-tune1': { heads: 16, dy: 0, dx: 0.01, oy: 0, ox: 0 },
+    'S8-layout-tune2': { heads: 40, dy: 0.01, dx: 0, oy: -0.01, ox: 0 },
+    'S8-layout-tune3': { heads: 31, dy: 0, dx: 0.01, oy: 0, ox: 0 },
+    'S8-layout-tune4': { heads: 90, dy: 0, dx: 0, oy: 0, ox: 0 },
+    // dx 11.81 -> 6.20 and ox -1.56 -> 1.07 on the same rule plus the UNISON half of it.
+    // `[cc]` and `[dd]` were drawn as one head on top of another, because the displacement
+    // map was keyed by STEP and a unison is two heads at one step.
+    // dx 6.20 -> 0.0 and ox 1.07 -> 0.0. EXACT ON ALL FOUR. `[cc]` and `[dd]` were each
+    // 3.00px too wide — the gap between the displaced head's 8.81 `shiftheadx` and the
+    // 11.81 it seeds `roomtaken` with. Only the first is a child of the element.
+    'S8-layout-tune5': { heads: 60, dy: 0.01, dx: 0.0, oy: 0, ox: 0.0 },
+    // dx 8.25 -> 0.0 and ox 3.58 -> 0.0. EXACT ON ALL FOUR. `abselem.extraw` is a MIN over
+    // siblings and the accidental's `extraw -= extraLeft` runs BEFORE the graces' own
+    // `addExtra` resets it, so a grace deeper than the accidental throws that half-width
+    // away. We were adding it on top: exactly 4.125px per note carrying BOTH a grace group
+    // and an accidental, of which this tune has two — `{A}^c2` and `{FGAB}[^c4A4]`.
+    'S8-layout-tune6': { heads: 99, dy: 0, dx: 0.0, oy: 0, ox: 0.0 },
+    // oy 1.67 -> 1.14 on the `!slide!` rule; its `dy` 2.66 is something else.
+    // EXACT ON ALL FOUR, and it took three findings: `scripts.roll`'s height (139), then
+    // the GRACE SLUR, which abcjs hangs under every grace group and we had never built at
+    // all. `{f}e {C}D {cd}c {E^c}a2 {dedc}d` measured -3.0000 against our -1.2000.
+    'S8-layout-tune7': { heads: 58, dy: 0.0, dx: 0, oy: 0.0, ox: 0 },
+    'S8-layout-tune8': { heads: 28, dy: 0.01, dx: 0, oy: 0, ox: 0 },
+    'S8-layout-tune9': { heads: 66, dy: 0, dx: 0, oy: 0, ox: 0 },
+    // dx 82.67 -> 0.0 and ox -31.37 -> 0.0. EXACT ON ALL FOUR. A down-stemmed chord with a
+    // displaced head starts its accidentals a notehead further left, and this tune is
+    // twelve bars of nothing else — the deficit was a perfect 11.81px staircase.
+    'S8-layout-tune10': { heads: 96, dy: 0, dx: 0.0, oy: 0, ox: 0.0 },
+    // EXACT ON ALL FOUR, and it took two findings. First the prefix started cancelling the
+    // key IN FORCE rather than the previous LINE's key — `K:Gb` after a mid-line `[K:Bb]`
+    // cancels nothing, where against G it cancelled an F#, and a NATURAL declares a box to
+    // pitch 15.88 against the clef's 13.72, so one wrong glyph raised the chord lane, the
+    // ending lane above it and the whole staff: dy 8.37 -> 0.01, oy 4.73 -> 0.00.
+    // Then the standalone `M: 9/8` after a `\` continuation started drawing where it
+    // stands: dx 20.12 -> 0.00, ox -3.16 -> 0.00.
+    //
+    // AND THE `ox` RAISE THE MIDDLE STATE CARRIED IS GONE — the second of that shape to
+    // close itself one commit later. Both were means over a spread that had not been
+    // fixed yet, and in both cases the entry named what it was waiting on.
+    'S8-layout-tune11': { heads: 46, dy: 0.01, dx: 0.0, oy: 0.0, ox: 0.0 },
+    'clefs-tune0': { heads: 1, dy: 0, dx: 0, oy: 0, ox: 0.0 },
+    'clefs-tune1': { heads: 1, dy: 0, dx: 0, oy: -0.03, ox: 0.0 },
+    'clefs-tune2': { heads: 1, dy: 0, dx: 0, oy: -0.03, ox: 0.0 },
+    'clefs-tune3': { heads: 1, dy: 0, dx: 0, oy: -0.03, ox: 0.0 },
+    'clefs-tune4': { heads: 1, dy: 0, dx: 0, oy: -0.03, ox: 0.0 },
+    'clefs-tune5': { heads: 1, dy: 0, dx: 0, oy: -0.01, ox: 0.0 },
+    'clefs-tune6': { heads: 1, dy: 0, dx: 0, oy: -0.01, ox: 0.0 },
+    'clefs-tune7': { heads: 36, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'curves-tune0': { heads: 4, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'curves-tune1': { heads: 4, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'curves-tune2': { heads: 4, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'curves-tune3': { heads: 10, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'curves-tune4': { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'curves-tune5': { heads: 4, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'curves-tune6': { heads: 4, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'missing-decorations-tune0': { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'missing-decorations-tune1': { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'missing-decorations-tune2': { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'missing-decorations-tune3': { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'missing-decorations-tune4': { heads: 24, dy: 0, dx: 0.01, oy: 0, ox: 0 },
+    'missing-decorations-tune5': { heads: 8, dy: 0, dx: 0.01, oy: 0, ox: 0 },
+    'tunebook-3-tune0': { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'tunebook-3-tune1': { heads: 14, dy: 0, dx: 0, oy: 0, ox: 0 },
+    'tunebook-3-tune2': { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
   }
 
 /** Rounding slack, so a last-digit wobble is not a failure. */
+/**
+ * THE SLACK THIS GATE ALLOWS, AND IT IS NOT NOTHING. At 0.05px it can hide a fixture
+ * drifting off EXACT ZERO — six of the 41 sat between 0.01 and 0.04 on some axis through
+ * 2026-08-06 without any ceiling moving. Measuring the corpus at the session's first commit
+ * and again at its last is what settles which way a change went; the recorded numbers alone
+ * cannot, because they only ever say "no worse than".
+ */
 const EPSILON = 0.05
 
 interface Measured {
@@ -175,11 +430,36 @@ interface Measured {
   ox: number
 }
 
-function measure(name: string): Measured {
-  const abc = readFileSync(join(corpusDir, `${name}.abc`), 'utf-8')
-  const golden = absolutePixels(readFileSync(join(goldensDir, `${name}.svg`), 'utf-8'))
+/**
+ * One row of the table: a golden SVG and the tune of the fixture it was rendered from.
+ *
+ * A single-tune fixture has `<name>.svg` and is tune 0. A multi-tune one has no
+ * `<name>.svg` at all — its goldens are `<name>-tune0.svg`, `-tune1.svg`, … — which is why
+ * twelve fixtures and 89 tunes went unmeasured until 2026-08-07. The KEY is the golden's
+ * own basename, so the two families share one table.
+ */
+interface Target {
+  readonly key: string
+  readonly fixture: string
+  readonly tune: number
+}
+
+const targetsOf = (fixture: string): Target[] => {
+  if (existsSync(join(goldensDir, `${fixture}.svg`))) {
+    return [{ key: fixture, fixture, tune: 0 }]
+  }
+  const found: Target[] = []
+  for (let tune = 0; existsSync(join(goldensDir, `${fixture}-tune${tune}.svg`)); tune++) {
+    found.push({ key: `${fixture}-tune${tune}`, fixture, tune })
+  }
+  return found
+}
+
+function measure(target: Target): Measured {
+  const abc = readFileSync(join(corpusDir, `${target.fixture}.abc`), 'utf-8')
+  const golden = absolutePixels(readFileSync(join(goldensDir, `${target.key}.svg`), 'utf-8'))
   const rendered = renderAbc('paper', abc, {})
-  const svg = rendered[0]?.svg ?? ''
+  const svg = rendered[target.tune]?.svg ?? ''
   const ours = absolutePixels(svg)
   const goldenHeads = byClass(golden, 'notehead')
   const ourHeads = byClass(ours, 'notehead')
@@ -215,14 +495,16 @@ const median = (values: number[]): number => {
  * Per fixture, not pooled per note: `ragtime-nightingale` holds 2009 of the corpus's
  * 2696 noteheads, so a pooled median is simply its median and hides everything else.
  */
-function fixtureMedianDistance(name: string): number {
+function fixtureMedianDistance(target: Target): number {
   const golden = byClass(
-    absolutePixels(readFileSync(join(goldensDir, `${name}.svg`), 'utf-8')),
+    absolutePixels(readFileSync(join(goldensDir, `${target.key}.svg`), 'utf-8')),
     'notehead',
   )
   const ours = byClass(
     absolutePixels(
-      renderAbc('paper', readFileSync(join(corpusDir, `${name}.abc`), 'utf-8'), {})[0]?.svg ?? '',
+      renderAbc('paper', readFileSync(join(corpusDir, `${target.fixture}.abc`), 'utf-8'), {})[
+        target.tune
+      ]?.svg ?? '',
     ),
     'notehead',
   )
@@ -238,33 +520,56 @@ function fixtureMedianDistance(name: string): number {
 }
 
 describe('pixel parity vs abcjs rendered SVG', () => {
-  const withGoldens = loadCorpus()
-    .map((entry) => entry.name)
-    .filter((name) => existsSync(join(goldensDir, `${name}.svg`)))
+  const withGoldens = loadCorpus().flatMap((entry) => targetsOf(entry.name))
 
   it('the gate reads real goldens and can tell positions apart', () => {
     // A gate that cannot fail reports coverage it does not have — the fuzz suite that
-    // passed while three crashes were live. `simple-c` has a known non-zero dx spread,
-    // so a comparison returning 0 for everything would fail here.
-    const simple = measure('simple-c')
+    // passed while three crashes were live. This canary needs BOTH outcomes to be
+    // reachable, so it names a fixture at parity and one that is not.
+    //
+    // It used to name only `simple-c`, on the grounds that it had a known non-zero dx
+    // spread. It no longer does — the horizontal arc took it to exact — so that half is
+    // now the ZERO end of the check.
+    //
+    // The non-zero end was `frere-jacques` until 2026-08-07, when its 21.80 went to 0.00
+    // and this canary failed BEFORE its own ceiling did. It moved to `little swallow`,
+    // then to `ragtime-nightingale`, and both closed inside two sessions. This file
+    // predicted the ending: "when its 13.31 closes this check needs a different shape — a
+    // SYNTHETIC PAIR, not a fixture, since by then there may be none that differ."
+    //
+    // So the non-zero end is now a DELIBERATE MISMATCH: our `simple-c` render measured
+    // against `ragtime-nightingale`'s golden, which `measure` pairs head-for-head over the
+    // first eight. It is the real comparison on real goldens — it simply has no reason to
+    // agree, and it cannot close. A canary a fix can extinguish is a ceiling in disguise.
+    //
+    // `tunebook-3-tune0` was tried first and is NOT usable: eight quarter notes at the
+    // same spacing as `simple-c`'s, so the dx SPREAD is 0.00 and only the mean differs.
+    // Two different tunes are not automatically two different geometries.
+    const simple = measure({ key: 'simple-c', fixture: 'simple-c', tune: 0 })
     expect(simple.goldenHeads).toBe(8)
-    expect(simple.dx).toBeGreaterThan(1)
     // Not `toBe(0)`: the resolved coordinates carry float noise, and a `0.0` in the
     // table means "a pure constant offset", not "exactly zero to the last bit".
+    expect(simple.dx).toBeLessThan(EPSILON)
     expect(simple.dy).toBeLessThan(EPSILON)
+    // …and a comparison returning 0 for everything would fail here.
+    const mismatched = measure({ key: 'ragtime-nightingale', fixture: 'simple-c', tune: 0 })
+    expect(mismatched.ourHeads).toBe(8)
+    expect(mismatched.dx).toBeGreaterThan(1)
+    expect(mismatched.dy).toBeGreaterThan(1)
   })
 
   it('every fixture with an SVG golden is accounted for', () => {
     // Adding a golden without a row here would otherwise be silently unmeasured.
-    expect(withGoldens.filter((name) => EXPECTED[name] === undefined)).toEqual([])
-    expect(Object.keys(EXPECTED).filter((name) => !withGoldens.includes(name))).toEqual([])
+    const keys = withGoldens.map((target) => target.key)
+    expect(keys.filter((key) => EXPECTED[key] === undefined)).toEqual([])
+    expect(Object.keys(EXPECTED).filter((key) => !keys.includes(key))).toEqual([])
   })
 
   describe('notehead count is exact', () => {
-    for (const name of withGoldens) {
-      it(`${name}`, () => {
-        const { goldenHeads, ourHeads } = measure(name)
-        expect(goldenHeads).toBe(EXPECTED[name]?.heads)
+    for (const target of withGoldens) {
+      it(`${target.key}`, () => {
+        const { goldenHeads, ourHeads } = measure(target)
+        expect(goldenHeads).toBe(EXPECTED[target.key]?.heads)
         // The real parity statement: same notes, same count, drawn by both engines.
         expect(ourHeads).toBe(goldenHeads)
       })
@@ -272,11 +577,12 @@ describe('pixel parity vs abcjs rendered SVG', () => {
   })
 
   describe('position spread does not widen', () => {
-    for (const name of withGoldens) {
+    for (const target of withGoldens) {
+      const name = target.key
       it(`${name}`, () => {
         const expected = EXPECTED[name]
         if (expected === undefined) throw new Error(`${name} has no recorded ceiling`)
-        const { dy, dx, oy, ox } = measure(name)
+        const { dy, dx, oy, ox } = measure(target)
         expect(dy, `${name} dySpread widened`).toBeLessThanOrEqual(expected.dy + EPSILON)
         expect(dx, `${name} dxSpread widened`).toBeLessThanOrEqual(expected.dx + EPSILON)
         // OFFSET as well as spread. A drawing uniformly 100px left of abcjs's scores a
@@ -309,7 +615,7 @@ describe('pixel parity vs abcjs rendered SVG', () => {
   // medians, which is the number the checkpoint tracks.
   it('records its geometry for the parity tracker', () => {
     const perFixture = withGoldens
-      .map((name) => ({ name, median: fixtureMedianDistance(name) }))
+      .map((target) => ({ name: target.key, median: fixtureMedianDistance(target) }))
       .sort((a, b) => b.median - a.median)
     const within = (px: number) => perFixture.filter((f) => f.median <= px).length
     writeFileSync(
@@ -327,5 +633,136 @@ describe('pixel parity vs abcjs rendered SVG', () => {
     // of the axis is that it is not yet at parity, so a zero here means it measured nothing.
     expect(perFixture.length).toBe(withGoldens.length)
     expect(perFixture.every((f) => Number.isFinite(f.median))).toBe(true)
+  })
+
+  /**
+   * THE RANKED TABLE, the way `corpus-abcjs-ranked` writes one for the harvested corpus.
+   *
+   * The recorded ceilings above only ever say "no worse than", so reading them tells you
+   * what a fixture was, not what it is. This measures all four axes fresh and writes them
+   * sorted, largest first — which is the thing to open at the start of a session, and the
+   * thing to diff between a session's first commit and its last.
+   */
+  /**
+   * THE EIGHT `ox = 0.18` ROWS WERE NOT THE OUTLINE. THEY WERE THE WRONG NOTE.
+   *
+   * This block used to assert 0.18 on every one-notehead `G8` tune and explain that the
+   * figure was irreducible: "abcjs's head inks 16.83px wide, Bravura's 15.03, and the two
+   * are not left-aligned either. Positions are compared as bounding-box CENTRES, so two
+   * differently shaped glyphs at the same origin score a difference no placement rule can
+   * remove." Every clause of that was true and the conclusion was wrong.
+   *
+   * `G8` under `L:1/4` is TWO whole notes, and abcjs's `chartable.note[-durlog]` lands on
+   * `noteheads.dbl` — a BREVE. We drew a semibreve. The 16.83 quoted as evidence is
+   * `noteheads.dbl`'s own `w`, to the hundredth; nobody looked up whose glyph it was.
+   *
+   * A bounding-box centre cannot tell a wrong glyph from a differently shaped one, so
+   * "measured, and not a defect" has to rule the first out before it is written down —
+   * otherwise the row stops being read and the note becomes the reason it stays. Nine
+   * tunes closed the moment the breve was drawn.
+   *
+   * Kept, and asserted at ZERO, because these are the corpus's only breves.
+   */
+  it('the one-notehead `G8` tunes draw a breve, exactly where abcjs draws one', () => {
+    for (const key of [
+      'clefs-tune0',
+      'clefs-tune1',
+      'clefs-tune2',
+      'clefs-tune3',
+      'clefs-tune4',
+      'clefs-tune5',
+      'clefs-tune6',
+      'S6-keys-tune0',
+    ]) {
+      const target = withGoldens.find((t) => t.key === key)
+      if (target === undefined) throw new Error(`${key} is not measured`)
+      const { dx, ox, oy, goldenHeads } = measure(target)
+      expect(goldenHeads, key).toBe(1)
+      expect(dx, `${key} dx`).toBeLessThan(EPSILON)
+      expect(Math.abs(ox), `${key} ox`).toBeLessThan(EPSILON)
+      expect(Math.abs(oy), `${key} oy`).toBeLessThan(EPSILON)
+    }
+  })
+
+  /**
+   * THE STAFF LINES' HORIZONTAL EXTENT, which NOTHING measured until now.
+   *
+   * The pixel gate compares NOTEHEADS, the line-weight gate reads a rule's THICKNESS, and
+   * the baselines say CHANGED and never WRONG — so a staff line drawn to the wrong length
+   * was invisible to every axis this repo has. It is the same blind spot the line weights
+   * sat in for months, and the same lesson: **a comparison can only catch what its
+   * representation can express.**
+   *
+   * abcjs draws from `staffGroup.startx` to `staffGroup.w` (`draw/staff-group.js:92` →
+   * `draw/staff.js`), where `startx` is `getLeftEdgeOfStaff` — `padding.left`, plus the
+   * widest voice header, plus the brace's or bracket's own width — and `w` is
+   * `totalWidth + leftEdge` (`layout/layout-in-grid.js:13-14`).
+   *
+   * Compared as the top line's bounding-box CENTRE, which is what `byClass` gives and is
+   * enough: a span differing at either end moves it. 40 of the 41 fixtures agree exactly.
+   *
+   * IT OPENED WITH TWENTY, and they sorted into abcjs's two terms exactly: a flat **5.00**
+   * wherever there is a BRACE (`setBraceLocation` adds its own 10px width, so the centre
+   * moves 5), and **40–46** wherever there is a VOICE HEADER (the widest `voicefont`
+   * string plus the width of an "A"). `two-voice-invention` is two staves with NEITHER and
+   * was exact, which is what put it on `getLeftEdgeOfStaff` rather than on multi-staff
+   * layout. On `ragtime-nightingale` ours spanned 0 → 700.10 against abcjs's 25 → 685.10.
+   *
+   * Nineteen closed on one line — `staffLinesFor` taking `startx` and `w`. The two errors
+   * CANCELLED on any tune where `leftEdge` is just `marginX` and the system width is just
+   * `musicWidth`, which is most of the corpus, and that is why nothing caught either.
+   */
+  it('draws its staff lines the length abcjs draws them', () => {
+    const off: string[] = []
+    for (const target of withGoldens) {
+      const golden = byClass(
+        absolutePixels(readFileSync(join(goldensDir, `${target.key}.svg`), 'utf-8')),
+        'top-line',
+      )
+      const ours = byClass(
+        absolutePixels(
+          renderAbc('paper', readFileSync(join(corpusDir, `${target.fixture}.abc`), 'utf-8'), {})[
+            target.tune
+          ]?.svg ?? '',
+        ),
+        'top-line',
+      )
+      expect(ours.length, `${target.key} staff count`).toBe(golden.length)
+      const worst = Math.max(
+        0,
+        ...golden.map((g, i) => Math.abs((ours[i]?.x ?? 0) - g.x)),
+      )
+      if (worst >= EPSILON) off.push(`${target.key} ${worst.toFixed(2)}`)
+    }
+    // THE ONE KNOWN FAILURE, and its exact figure. A ceiling, not a tolerance.
+    //
+    // NINETEEN of the twenty this gate opened with closed on one line — `staffLinesFor`
+    // taking `startx` and `w` instead of `0` and the system width. What is left is 0.26px
+    // of CENTRE, so 0.52 of span, on a tune that is nothing but rests: our right end is
+    // half a pixel short of abcjs's `staffGroup.w`. Every notehead on it is exact, and
+    // both ranked tables stay empty, so it is the justification TARGET at the right edge
+    // and not a placement. Unexamined.
+    expect(off).toEqual(['S3-note-syntax-tune13 0.26'])
+  })
+
+  it('writes the ranked table', () => {
+    const rows = withGoldens
+      .map((target) => ({ key: target.key, ...measure(target) }))
+      .map((r) => ({ ...r, worst: Math.max(r.dy, r.dx, Math.abs(r.oy), Math.abs(r.ox)) }))
+      .sort((a, b) => b.worst - a.worst)
+    const off = rows.filter((r) => r.worst >= EPSILON)
+    writeFileSync(
+      '/tmp/abcts-pixel-ranked.txt',
+      `${off.length} of ${rows.length} tunes are off some axis by ${EPSILON}px or more\n${off
+        .map(
+          (r) =>
+            `${r.worst.toFixed(2).padStart(9)}  dy=${r.dy.toFixed(2)} dx=${r.dx.toFixed(2)} ` +
+            `oy=${r.oy.toFixed(2)} ox=${r.ox.toFixed(2)}  ${r.goldenHeads} heads  ${r.key}`,
+        )
+        .join('\n')}\n`,
+    )
+    // Same canary as everything else here: a table that can only ever come out empty is
+    // not measuring. Every notehead COUNT, on the other hand, is a flat assertion.
+    expect(rows.every((r) => r.ourHeads === r.goldenHeads)).toBe(true)
   })
 })

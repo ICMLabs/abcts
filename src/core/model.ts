@@ -124,9 +124,27 @@ export interface PitchClass {
  */
 export type Mode = 'major' | 'mixolydian' | 'dorian' | 'minor' | 'phrygian' | 'locrian' | 'lydian'
 
+/** One accidental written explicitly on a `K:` field, after the key and mode. */
+export interface KeyAccidental {
+  readonly step: DiatonicStep
+  /** In QUARTER tones, so a half-sharp is 1 and a sharp is 2 — see `KeySignature.extra`. */
+  readonly quarters: number
+}
+
 export interface KeySignature {
   readonly tonic: PitchClass
   readonly mode: Mode
+  /**
+   * `K: C ^/f _/B _A ^D` — accidentals written on the field itself, printed in the key
+   * signature after the mode's own and inherited by every note on those steps.
+   *
+   * abcjs reads them with `getKeyAccidentals2` (`abc_tokenizer.js:283-340`), which accepts
+   * `^`, `^^`, `^/`, `_`, `__`, `_/` and `=` before a note letter, and then REPLACES a
+   * standard accidental on the same letter or appends
+   * (`abc_parse_key_voice.js:320-350`). Held in QUARTER tones because the field can write
+   * quarter sharps and flats that `Accidental` cannot.
+   */
+  readonly extra?: readonly KeyAccidental[]
   /**
    * `K:none` — no key signature at all. Distinct from C major, which also alters nothing
    * but IS a key: a renderer draws nothing here, and no step is implicitly altered.
@@ -204,6 +222,16 @@ export interface Meter {
   readonly numerator: number
   readonly denominator: number
   readonly symbol: MeterSymbol
+  /**
+   * `M:2+3/8` — the numerator as WRITTEN, so it can be drawn as `2+3` rather than `5`.
+   *
+   * Absent for a plain meter. abcjs keeps the whole string and lays out one glyph per
+   * character with a `+` between the terms, each `getSymbolWidth("+") + 2` wide
+   * (`create-time-signature.js:12-16`) — 17.08px more prefix than a single digit on
+   * `2+3/8`, which moves the music. `numerator` stays the SUM, since that is the bar's
+   * duration either way.
+   */
+  readonly numeratorParts?: readonly number[]
 }
 
 export const measureDuration = (m: Meter): Rational => rational(m.numerator, m.denominator)
@@ -230,6 +258,73 @@ export interface LyricFont {
   readonly size: number
   readonly bold: boolean
   readonly italic: boolean
+  /**
+   * `box` after the size — a frame round the text, on the eleven types abcjs allows it on
+   * (`fontTypeCanHaveBox`, `abc_parse_directive.js:60`).
+   *
+   * It is a LAYOUT term, not decoration: `getTextSize` returns `height + padding * 4` and
+   * `width + padding * 4` for a boxed font (`helpers/get-text-size.js:46-48`) with
+   * `padding = size * fontboxpadding` (default 0.1), so the row or lane grows with it.
+   * `%%partsfont box` costs a `P:` row 33px against the plain 24.
+   */
+  readonly box?: boolean
+}
+
+/**
+ * The font types abcjs names, each `%%<type>font`.
+ *
+ * CHANGING vs GLOBAL is abcjs's own split (`abc_parse_directive.js:1019-1037`): the first
+ * eleven can change mid-tune and belong on the element, the rest are tune-level. We record
+ * both here; only `vocalfont` and `gchordfont` are stamped per element so far, and the
+ * others take the last value, which is what a header-only directive means either way.
+ * `barlabelfont`, `barnumberfont` and `barnumfont` are aliases of `measurefont`.
+ */
+export type AbcFontType =
+  | 'gchordfont'
+  | 'partsfont'
+  | 'tripletfont'
+  | 'vocalfont'
+  | 'textfont'
+  | 'annotationfont'
+  | 'historyfont'
+  | 'infofont'
+  | 'measurefont'
+  | 'repeatfont'
+  | 'wordsfont'
+  | 'composerfont'
+  | 'subtitlefont'
+  | 'tempofont'
+  | 'titlefont'
+  | 'voicefont'
+  | 'footerfont'
+  | 'headerfont'
+
+/**
+ * abcjs's own defaults, in POINTS (`abc_parse_directive.js:21-42`).
+ *
+ * A size reaches the page as `round(pt * 4 / 3)` px (`get-font-and-attr.js:28`), and the
+ * eighteen defaults land on exactly seven distinct pixel sizes — which is why the golden
+ * generator's height table has seven entries and covers every tune that sets no font.
+ */
+export const ABC_FONT_DEFAULT_PT: Readonly<Record<AbcFontType, number>> = {
+  gchordfont: 12,
+  partsfont: 15,
+  tripletfont: 11,
+  vocalfont: 13,
+  textfont: 16,
+  annotationfont: 12,
+  historyfont: 16,
+  infofont: 14,
+  measurefont: 14,
+  repeatfont: 13,
+  wordsfont: 16,
+  composerfont: 14,
+  subtitlefont: 16,
+  tempofont: 15,
+  titlefont: 20,
+  voicefont: 13,
+  footerfont: 12,
+  headerfont: 12,
 }
 
 /**
@@ -246,6 +341,31 @@ export interface LyricFont {
  * leak shows up as sub-pixel drift that only a snapshot suite catches.
  */
 export const DEFAULT_VOCALFONT_PT = 13
+
+/** One `%%center`, `%%text`, or `%%begintext` … `%%endtext` block. */
+export interface FreeTextBlock {
+  /** One entry per line. A `%%begintext` block is the only one that holds more than one. */
+  readonly lines: readonly string[]
+  /**
+   * `%%center` centres on the STAFF width — 335, not the paper's 350 the title uses.
+   * `%%text` and `%%begintext` sit at the left margin, `anchor: "start"`.
+   */
+  readonly align: 'center' | 'left'
+  /**
+   * A mid-tune `T:` — a SUBTITLE line, not free text. It takes `subtitlefont` and abcjs's
+   * `spacing.subtitle` above it, and its own measured height below with no `* 1.1`
+   * (`elements/subtitle.js`). Measured on a control pair: 27.05px against `%%text`'s 33.77.
+   */
+  readonly role?: 'text' | 'subtitle' | 'separator'
+  /**
+   * `%%sep` — a horizontal rule, centred on the STAFF width, with a space above and below.
+   * All three in POINTS and each `Math.round`ed at parse (`tune-builder.js:309`); bare
+   * `%%sep` is 14 / 14 / 85 (`abc_parse_directive.js:883`). The rule itself costs no
+   * height at all — `drawSeparator` paints at `renderer.y` and moves nothing — so the
+   * line's whole cost is `above + below`, measured at 28 bare and 22 for `0.4cm` each way.
+   */
+  readonly separator?: { readonly above: number; readonly below: number; readonly length: number }
+}
 
 // ─── Tempo ───────────────────────────────────────────────────────────────────
 
@@ -345,6 +465,14 @@ export interface Note {
   /** `"Am7"` printed above the staff, if one precedes this event. */
   readonly chordSymbol: string | null
   readonly chordSymbolSourceRange: SourceRange | null
+  /**
+   * The `%%gchordfont` in force where this event was written, or null while none has been.
+   *
+   * PER EVENT because abcjs makes it a CHANGING font (`abc_parse_directive.js:1019-1029`,
+   * `getChangingFont`) — `visual-tablature-17` sets it four times between music lines and
+   * each staff's chord symbols take the size in force above them.
+   */
+  readonly chordFont: LyricFont | null
   /** `!trill!`, `.` staccato, and the shorthand letters. */
   readonly decorations: readonly string[]
   /** Parallel to `decorations`. */
@@ -364,12 +492,42 @@ export interface Rest {
   readonly notatedDuration: Rational
   readonly kind: RestKind
   /**
-   * `!fermata!z4` is idiomatic, so a rest does carry decorations — but not ties, slurs,
-   * grace notes or lyrics, none of which apply to silence.
+   * `!fermata!z4` is idiomatic, so a rest does carry decorations — but not ties, slurs or
+   * lyrics, none of which apply to silence.
    */
   readonly decorations: readonly string[]
   readonly decorationSourceRanges: readonly SourceRange[]
+  /**
+   * …AND A CHORD SYMBOL, which is NOT the same question. abcjs runs `addChord` over every
+   * abselem's `elem.chord` regardless of type (`abstract-engraver.js:853`), so `"Eb7"z`
+   * prints the chord over the rest and reserves the whole chord lane for it — 22.4px of
+   * staff on a tune that opens that way, and the mark itself lost outright before this.
+   */
+  readonly chordSymbol: string | null
+  readonly chordSymbolSourceRange: SourceRange | null
+  readonly chordFont: LyricFont | null
+  readonly annotations: readonly string[]
+  readonly annotationSourceRanges: readonly SourceRange[]
+  /**
+   * …AND ITS GRACE NOTES, for the same reason and by the same line. `createNote` calls
+   * `addGraceNotes` OUTSIDE its rest/note branch — `if (elem.gracenotes !== undefined)` at
+   * `abstract-engraver.js:834`, after both arms have run — so `{a}z` and `{a}y` engrave
+   * their graces exactly as `{a}c` does.
+   *
+   * This field's absence used to be justified here in so many words: "not ties, slurs,
+   * grace notes or lyrics, none of which apply to silence." Three of those four are right.
+   * The fourth was reasoned rather than measured, and abcjs draws the note: `(f3 {a})y`
+   * came out one notehead short and 9.6px high on every axis that reads the staff.
+   */
+  readonly graceNotes: readonly Pitch[]
+  readonly graceSlash: boolean
   readonly tuplet: TupletMark | null
+  /**
+   * How many BARS a `Z`/`X` stands for — the number printed over the multi-measure bar.
+   * Zero for every other rest. abcjs keeps it as `rest.text` and draws it at pitch 16
+   * (`abstract-engraver.js:596`).
+   */
+  readonly measureCount: number
   readonly sourceRange: SourceRange | null
 }
 
@@ -448,6 +606,14 @@ export interface Chord {
   /** `"Am7"` printed above the staff, if one precedes this event. */
   readonly chordSymbol: string | null
   readonly chordSymbolSourceRange: SourceRange | null
+  /**
+   * The `%%gchordfont` in force where this event was written, or null while none has been.
+   *
+   * PER EVENT because abcjs makes it a CHANGING font (`abc_parse_directive.js:1019-1029`,
+   * `getChangingFont`) — `visual-tablature-17` sets it four times between music lines and
+   * each staff's chord symbols take the size in force above them.
+   */
+  readonly chordFont: LyricFont | null
   /** `!trill!`, `.` staccato, and the shorthand letters. */
   readonly decorations: readonly string[]
   /** Parallel to `decorations`. */
@@ -468,7 +634,29 @@ export interface SourceRange {
 
 export const sourceRange = (start: number, end: number): SourceRange => ({ start, end })
 
-export type Barline = 'thin' | 'double' | 'final' | 'repeatStart' | 'repeatEnd' | 'repeatBoth'
+/**
+ * `invisible` is abcjs's `bar_invisible` — `[|]`, and a bare `[` before a digit or a
+ * quote. It draws NOTHING and takes a thin bar's layout width: `addRight(new
+ * RelativeElement(null, dx, 1, 2, { type: "none" }))` (`abstract-engraver.js:996-999`),
+ * where a thin bar's own anchor differs only in `type: "bar"`.
+ */
+export type Barline =
+  | 'thin'
+  | 'double'
+  /**
+   * `[|` — a THICK rule then a thin one, which abcjs keeps apart from `||`:
+   * `bar_thick_thin` sets `firstthin` false and `thick` true where `bar_thin_thin` does
+   * the opposite (`abstract-engraver.js:974-977`). The two are 13px and 4px wide, and
+   * folding `[|` into `double` was 9px of every line that opens with one — the whole of
+   * `little swallow`'s prefix gap. Recorded in `ENGRAVE.barLayoutWidth`'s own comment as
+   * "a model question, not a spacing one" before it was one.
+   */
+  | 'thickThin'
+  | 'final'
+  | 'repeatStart'
+  | 'repeatEnd'
+  | 'repeatBoth'
+  | 'invisible'
 
 export interface Measure {
   readonly events: readonly MusicEvent[]
@@ -486,6 +674,25 @@ export interface Measure {
   /** A mid-tune `M:` taking effect at this measure. */
   readonly meterChange: Meter | null
   readonly meterChangeSourceRange: SourceRange | null
+  /**
+   * Was this meter written INLINE (`[M:]`) rather than as a standalone `M:` line?
+   *
+   * The two take different routes in abcjs and land in different places, so a renderer
+   * that cannot tell them apart draws one of them wrong. `letter_to_inline_header`'s
+   * `"[M:"` arm appends a `meter` element and leaves `multilineVars.meter` alone;
+   * `setMeter` on a standalone `M:` line sets `multilineVars.meter`, which the next
+   * `startNewLine` consumes into that line's `params.meter` and prints in its PREFIX.
+   *
+   * Measured on a pair of controls, `M:3/4` and `[M:3/4]` at the same point in the same
+   * tune:
+   *
+   *   standalone  line 0 ends with its notes; line 1 opens `clef 15, timeSig 49.05 w=11.79`
+   *   inline      line 0 ends `timeSig 673.20 w=11.79`; line 1 opens with the CLEF ALONE
+   *
+   * Absent (or false) means the standalone form. See `meterChangeLeadsLine` in the
+   * renderer, which is the only thing that reads it.
+   */
+  readonly meterChangeInline?: boolean
   /**
    * A repeat ending (volta) starting at this measure — the `1` in `|1`, or `1,2`.
    *
@@ -514,7 +721,60 @@ export interface Measure {
    * to the page width, compressing when the line is long rather than wrapping it. So the
    * break points are the author's and are recorded at parse, not recomputed at layout.
    */
+  /**
+   * A mid-tune clef, from a `K:… clef=` or an inline `[K: bass]`. A DELTA like
+   * `keyChange`: null means "unchanged", and the consumer accumulates.
+   *
+   * abcjs reprints it at the head of every system after it, so the renderer has to carry
+   * it forward into the prefix as well as draw it where it stands.
+   */
+  readonly clefChange?: Clef | null
+  /**
+   * Decorations written immediately before this measure's CLOSING barline, which is what
+   * they attach to — `createBarLine` ends `if (elem.decoration)
+   * this.decoration.createDecoration(voice, elem.decoration, 12, thick ? 3 : 1, abselem,
+   * 0, "down", 2, …)` (`abstract-engraver.js:1002`), at a FIXED pitch 12 rather than any
+   * note's extent. `CCCC!D.C.alcoda!|` is that, and it is how a navigation mark is
+   * normally written.
+   */
+  readonly closingBarlineDecorations?: readonly string[]
+  /**
+   * …AND SO DO A CHORD SYMBOL AND ANNOTATIONS WRITTEN THERE, by the two lines after the
+   * decoration transfer: `if (el.chord !== undefined) bar.chord = el.chord`, then `el =
+   * {}` (`abc_parse_music.js:288-289, 305`). `createBarLine` ends by running the very
+   * same `addChord` a note gets, at `roomTaken = 0` and `noteheadWidth = 0`
+   * (`abstract-engraver.js:1047-1049`), so the mark is CENTRED on the barline itself and
+   * `addCentered` gives the bar `w = chordWidth / 2` and `extraw = -chordWidth / 2` —
+   * real spacing, over the flat `-5` a bare barline declares.
+   *
+   * `"D"|` is how a chord change on the downbeat is normally written, so this is not an
+   * edge case: carrying it to the next note put our mark 15.8px right of abcjs's and
+   * spread every notehead on the line by 0.93px.
+   */
+  readonly closingBarlineChord?: string
+  readonly closingBarlineAnnotations?: readonly string[]
+  /**
+   * A `Q:` or `[Q:]` after the FIRST one, printed where it stands.
+   *
+   * The first `Q:` anywhere in the tune becomes `Score.tempo` and is drawn at the head of
+   * system 1 — abcjs's `metaText.tempo`, which is why `frere-jacques`'s line-21 `Q:`
+   * appears above music that precedes it. Every LATER one is an ordinary element in its
+   * own voice's stream, on its own staff: `synth-flattener-31` has four across three
+   * voices and abcjs draws all five marks.
+   */
+  readonly tempoChange?: Tempo | null
   readonly startsSystem: boolean
+  /**
+   * Free-text blocks and mid-tune subtitles standing between the PREVIOUS system and this
+   * one. Empty for all but the first measure of a system, and empty on that one too
+   * unless something non-musical stood above it.
+   *
+   * abcjs models each as a LINE of its own (`engraver-controller.js:229-247`), drawn
+   * between the two staff groups and pushing everything below it down. Ours is the same
+   * top-text block the tune's own title uses, hung on the first staff of the system after
+   * it — which is what makes it enter `verticalExtent` rather than float over the page.
+   */
+  readonly textBefore?: readonly FreeTextBlock[]
   /**
    * A barline that OPENS this measure — a leading `|:` or `[|`, which belongs to the
    * measure after it rather than the one before. Distinct from `closingBarline` because
@@ -525,6 +785,27 @@ export interface Measure {
   readonly openingBarlineSourceRange: SourceRange | null
   /** `null` when the tune ends without a closing barline. */
   readonly closingBarline: Barline | null
+  /**
+   * `%%barnumbers N` — the bar number printed ON this measure's closing barline, which is
+   * the number of the measure that barline OPENS.
+   *
+   * abcjs advances `currBarNumber` at each visible barline of the FIRST voice and stamps
+   * `bar.barNumber` when `currBarNumber % barNumbers === 0`
+   * (`abc_parse_music.js:296-301`). It is geometry as well as text: the number is a POINT
+   * at pitch `vert + height / STEP` added by `addFixed`, so it enters the staff's ink and
+   * pushes its top past the clef's — 10.5px on a plain treble tune.
+   */
+  readonly closingBarNumber?: number
+  /**
+   * `%%barnumbers 0` — the number printed on this system's CLEF rather than on a barline,
+   * which is a different mechanism and not a special case of `closingBarNumber`. abcjs
+   * hangs it on the STAFF at `startNewLine` (`abc_parse_music.js:1036`) and
+   * `createABCStaff` hands it to `addMeasureNumber(abcstaff.barNumber, clef)` — the only
+   * path where `abselem.isClef` shifts the number right by half its width and the
+   * `vert = 13.5` branch can fire. Absent on the first system, as abcjs's
+   * `currBarNumber !== 1` says.
+   */
+  readonly systemBarNumber?: number
   readonly sourceRange: SourceRange | null
   readonly closingBarlineSourceRange: SourceRange | null
 }
@@ -569,13 +850,51 @@ export interface Voice {
   readonly measures: readonly Measure[]
 }
 
+/**
+ * One run of text in ONE font, inside a header field that changed font mid-line.
+ *
+ * `$1` switches to `%%setfont-1` and `$0` switches back, so `T:Title $1bold$0 reg` is three
+ * phrases (`abc_parse_directive.js:727-748`). A `null` font means the field's own default.
+ */
+export interface RichPhrase {
+  readonly font: LyricFont | null
+  readonly text: string
+}
+
+/**
+ * A header field that may or may not have changed font part-way through.
+ *
+ * A UNION rather than always-an-array, because that is exactly what abcjs returns:
+ * `parseFontChangeLine` gives back the plain string when the line holds no `$N` — or when
+ * it does but no `%%setfont` defined that number — and an ARRAY of phrases otherwise. The
+ * distinction is not cosmetic. It selects a different ROW HEIGHT downstream, and the two
+ * differ by 10% and a rounding on every affected row. See `richTextRowHeight`.
+ */
+export type RichText = string | readonly RichPhrase[]
+
+/** The text of a rich field with its font changes flattened away. */
+export const plainText = (value: RichText | null): string =>
+  value === null ? '' : typeof value === 'string' ? value : value.map((p) => p.text).join('')
+
 export interface ScoreMetadata {
   readonly tuneNumber: number | null
-  readonly titles: readonly string[]
-  readonly composer: string | null
-  readonly rhythm: string | null
+  readonly titles: readonly RichText[]
+  readonly composer: RichText | null
+  readonly rhythm: RichText | null
   /** `O:` — where the tune comes from. Printed in the top-text block beside the composer. */
-  readonly origin: string | null
+  readonly origin: RichText | null
+  /**
+   * `A:` — the author of the words. Its own row at the foot of the top-text block, drawn
+   * right-aligned in `composerfont` (`top-text.js:68-71`), and it costs 23px whether or
+   * not a composer row precedes it. Measured on a control pair.
+   */
+  readonly author: RichText | null
+  /**
+   * A HEADER `P:` — the part ORDER, `AABB`. A different field from the body `P:` that
+   * labels a part, and a different font: it closes the top-text block left-aligned in
+   * `partsfont` (`top-text.js:73-77`), for 24px.
+   */
+  readonly partOrder: RichText | null
 }
 
 /**
@@ -640,19 +959,98 @@ export interface Score {
   /** `%%sysstaffsep` — the same minimum, but between staves WITHIN a system. Pixels, or null. */
   readonly sysStaffSep: number | null
   /**
-   * `%%center` lines standing BEFORE any music — centred free text under the top-text
-   * block. abcjs centres these on the STAFF width, not the paper width the title uses.
-   */
-  readonly textAbove: readonly string[]
-  /**
-   * `%%center` lines standing AFTER the music. As well as being drawn, these make the last
-   * music line no longer the LAST line, so abcjs justifies it like any other.
+   * `%%musicspace` — the gap between the top text and the FIRST staff, in pixels.
    *
-   * ponytail: `%%center` BETWEEN two music lines lands here too. No fixture does it, and
+   * Spent once, before the first staff group (`write/draw/draw.js:17`), which is why a
+   * mid-tune block between two groups costs nothing extra. `null` takes the engine
+   * default; abcjs scales the directive's points by 4/3 (`write/renderer.js:155-156`).
+   */
+  readonly musicSpace: number | null
+  /**
+   * `%%partsbox` — draw a box round every `P:` label.
+   *
+   * It is not only decoration: a boxed font measures `height + padding * 4` and
+   * `width + padding * 4` (`write/helpers/get-text-size.js:46-48`), so the part's whole
+   * reserved lane grows with it. Probed on `frere-jacques`, `partHeightAbove` is 5.7187
+   * pitch without the directive and 7.7832 with it.
+   */
+  readonly partsBox: boolean
+  /**
+   * `%%jazzchords` — set a chord symbol's modifier and bass note as small sub/superscripts.
+   *
+   * `translateChord` (`write/creation/translate-chord.js:12-34`) splits every chord into
+   * root, modifier and `/bass` and rejoins them round a `\x03` marker; `svg.js:198-211`
+   * then reads that marker and nests a `font-size:0.7em` tspan for each part present.
+   *
+   * It is not only cosmetic: the golden generator counts a text's NESTED tspans as
+   * separate LINES, `h + (n-1) * fontSize * 1.2` (`dump-svg.js:120-124`), so `"x/C"`
+   * measures three lines high and its chord lane reserves 38.4px more than a plain one.
+   *
+   * abcjs has no way to turn it off again — the directive only ever sets it TRUE
+   * (`abc_parse_directive.js:791`).
+   */
+  readonly jazzChords: boolean
+  /**
+   * `%%percmap <abc-note> <drum-sound> [<note-head>]` — the NOTEHEAD a written pitch draws
+   * on a percussion staff, keyed by the note as the directive spells it (`D`, `^B`, `_c'`).
+   *
+   * abcjs stores the whole entry on `tune.formatting.percmap` and the engraver reads only
+   * `noteHead` (`abstract-engraver.js:681-688`), looking the pitch up through
+   * `pitchesToPerc` — the accidental's first letter plus the vertical position, mapped back
+   * to an ABC spelling (`synth/pitches-to-perc.js`). Out of that table's range, or on a
+   * double accidental, there is no entry and the head is the ordinary one.
+   *
+   * The `sound` half is audio and is not modelled here.
+   */
+  readonly percMap: Readonly<Record<string, string>>
+  /**
+   * `%%stretchlast` — whether to justify the LAST music line, and how nearly full it has
+   * to be first. `null` when the directive is absent, which is a different rule and not a
+   * default: abcjs then falls back to "justify only if the line is at least 66% of the
+   * page", kept "for backward compatibility. The break isn't quite the same for some
+   * reason" (`write/layout/layout.js:100-102`).
+   *
+   * With a value, the test is on how much the line LACKS:
+   * `stretch = 1 - (lineWidth + padding) / targetWidth < stretchlast`
+   * (`:104-107`). Bare `%%stretchlast` and `true` are 1, `false` is 0, and a number 0..1
+   * is itself (`abc_parse_directive.js:1294-1305`).
+   */
+  readonly stretchLast: number | null
+  /** `%%staffwidth` — the music area in PIXELS, or `null` for the engine default. */
+  readonly staffWidth: number | null
+  /**
+   * `%%maxStaves` — an INCIPIT: draw at most this many staff lines and stop.
+   *
+   * abcjs counts them as it draws and `break`s past the limit
+   * (`write/draw/draw.js:33-38`), so the rest of the tune is laid out and never painted.
+   */
+  readonly maxStaves: number | null
+  /**
+   * Free-text blocks standing BEFORE any music, in source order — one per `%%center`,
+   * one per `%%text`, and ONE per `%%begintext` … `%%endtext` however many lines it holds.
+   *
+   * abcjs builds one `FreeText` per directive (`creation/elements/free-text.js`) and the
+   * two spellings differ in more than alignment: `%%center` emits its row bare, `%%text`
+   * spends `{ move: fontSize / 2 }` first. Measured on abcjs's own output with a control
+   * pair — `%%center A` costs 23.27px and `%%text A` costs 33.77, and their rows sit
+   * exactly that 10.5 apart.
+   */
+  readonly textAbove: readonly FreeTextBlock[]
+  /**
+   * The same standing AFTER the music. As well as being drawn, these make the last music
+   * line no longer the LAST line, so abcjs justifies it like any other.
+   *
+   * ponytail: free text BETWEEN two music lines lands here too. No fixture does it, and
    * placing it properly needs free text to be a line in its own right rather than a
    * property of the tune.
    */
-  readonly textBelow: readonly string[]
+  readonly textBelow: readonly FreeTextBlock[]
+  /**
+   * Every `%%<type>font` the tune set. Absent entries mean "abcjs's default", and the
+   * renderer answers those with its own constant rather than by computing a size that
+   * happens to equal it — the same load-bearing null `vocalFont` has.
+   */
+  readonly fonts: Readonly<Partial<Record<AbcFontType, LyricFont>>>
   readonly sourceStartOffset: number
   readonly keySourceRange: SourceRange | null
   readonly meterSourceRange: SourceRange | null

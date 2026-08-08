@@ -11,6 +11,7 @@
  */
 
 import { type CompatibilityMode, defaultMode, isStrict } from '../core/model.js'
+import { ABCJS_ARC, spaces } from './abcjs-constants.js'
 import { glyphsFor } from './glyph-table.js'
 import { GLYPHS, type GlyphName } from './glyphs.js'
 import type { Layout, PlacedCurve, PlacedLine } from './layout.js'
@@ -72,12 +73,23 @@ const ABCJS_CLASSES: Readonly<Record<string, string>> = {
   grace: 'abcjs-notehead',
   stem: 'abcjs-stem',
   ledger: 'abcjs-ledger',
+  // A DYNAMIC MARK IS CLASSED AND NAMED, and ours carried neither. abcjs's
+  // `createDecoration` routes `!p!`/`!mf!` through `decoration.js` with
+  // `classes.generate('decoration dynamics')`, which its own golden shows as
+  // `class="abcjs-decoration abcjs-dynamics …" data-name="dynamics"`. Finding 92: it is
+  // not a notehead and it had no handle, so no comparison could reach one.
+  dynamic: 'abcjs-decoration abcjs-dynamics',
 }
 
 /** abcjs's `data-name` hooks, which its interaction code keys on. */
 const ABCJS_DATA_NAMES: Readonly<Record<string, string>> = {
   stem: 'stem',
   ledger: 'ledger',
+  // abcjs gives a barline NO class and a `data-name` — `printStem(…, null, "bar")`
+  // (`abstract-engraver.js:992`). It is the only handle either engine offers on one, so
+  // without it nothing downstream can ask a question about barlines at all.
+  bar: 'bar',
+  dynamic: 'dynamics',
 }
 
 /**
@@ -110,10 +122,60 @@ const escapeAttr = (s: string): string =>
 const escapeText = (s: string): string =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
+/**
+ * `%%jazzchords`' markup for one chord — `svg.js:198-211`, verbatim.
+ *
+ * The root is the outer tspan's own text; the modifier and the bass note are nested
+ * `font-size:0.7em` tspans, raised and dropped. The bass's drop depends on whether a
+ * modifier preceded it: `0.4em` clear of a raised one, `0.1em` from the baseline.
+ */
+const jazzChordMarkup = (jazz: readonly [string, string, string], x: string): string => {
+  const [root, modifier, bass] = jazz
+  const small = (dy: string, text: string): string =>
+    `<tspan dy="${dy}" style="font-size:0.7em">${escapeText(text)}</tspan>`
+  return (
+    `<tspan x="${x}">${escapeText(root)}` +
+    `${modifier === '' ? '' : small('-0.3em', modifier)}` +
+    `${bass === '' ? '' : small(modifier === '' ? '0.1em' : '0.4em', bass)}` +
+    '</tspan>'
+  )
+}
+
+/**
+ * THE EMISSION QUANTUM, in staff spaces — a hundred-thousandth, or 7.75e-5 of a pixel.
+ *
+ * Was a THOUSANDTH, which is 0.00775px and looks finer than the 0.01px abcjs itself
+ * rounds its lines to. It is not, because of WHERE each engine spends it: abcjs writes one
+ * absolute pixel coordinate per element, and we write a nested chain — a system translate,
+ * a staff translate, the element's own offset, and a viewBox the host divides by — each
+ * quantised, with the errors adding. Measured against abcjs's own output, a thousandth of
+ * a space put a notehead up to 5.1e-3px out; a hundred-thousandth reaches 1.5e-4, which is
+ * the floor (1e-6 gains nothing). At that point the residual is no longer ours.
+ *
+ * Five decimals rather than full precision because full precision writes seventeen digits
+ * for numbers like 4.838709677419355 and buys nothing measurable.
+ */
+const PRECISION = 100000
+
 const num = (n: number): string => {
-  const r = Math.round(n * 1000) / 1000
+  const r = Math.round(n * PRECISION) / PRECISION
   return Object.is(r, -0) ? '0' : String(r)
 }
+
+/**
+ * A SCALE is not a coordinate, and rounding it like one is a RELATIVE error.
+ *
+ * `num` quantises to a thousandth of a STAFF SPACE — 0.00775px, finer than the hundredth
+ * of a pixel abcjs writes, which is right for a position. A scale has no unit: the error
+ * it carries is multiplied by every number in the path it transforms. abcjs's outlines are
+ * in ITS pixels, so each one is drawn at `1 / 7.75` = 0.12903225806451613, and `num` made
+ * that `0.129` — a quarter of a per-mille, but applied to a 37px-tall clef it is 0.0012px
+ * and to a notehead's 6.09px offset another 0.0015.
+ *
+ * Emitted at full precision instead. Nothing downstream reads it as text, and an SVG
+ * `scale()` takes as many digits as it is given.
+ */
+const scaleNum = (n: number): string => (Object.is(n, -0) ? '0' : String(n))
 
 /**
  * A line is emitted as a filled rect rather than a stroked line: SVG strokes straddle
@@ -152,8 +214,54 @@ function lineToRect(line: PlacedLine, attr: string): string {
  * SMuFL's separate endpoint and midpoint thicknesses describe. Two cubics with control
  * points at the thirds give the shallow, even arc *Behind Bars* asks for.
  */
-function curveToPath(curve: PlacedCurve, attr: string): string {
+function curveToPath(curve: PlacedCurve, attr: string, strict: boolean): string {
   const { x1, y1, x2, y2, bulge } = curve
+  // ── ABCJS'S ARC, WHICH IS NOT A LENS ON THE THIRDS ─────────────────────────
+  //
+  // `drawArc` (`draw/tie.js:57-102`) builds the whole shape from the UNIT VECTOR between
+  // the endpoints, so every term is measured along the chord rather than along x:
+  //
+  //     flatten = norm / 3.5                       control points, along the chord
+  //     curve   = ±min(isTie ? 10 : 25, max(4, flatten))    bulge, PERPENDICULAR
+  //     c1 = (x1 + flatten*ux − curve*uy, y1 + flatten*uy + curve*ux)
+  //     c2 = (x2 − flatten*ux − curve*uy, y2 − flatten*uy + curve*ux)
+  //     back edge = the same two controls displaced by `thickness = 2` perpendicular
+  //
+  // THREE THINGS DIFFER FROM OURS AND ALL THREE ARE VISIBLE. Controls sit at `1 / 3.5` of
+  // the span, not a third. The bulge is CLAMPED — a tie at 10px, a slur at 25, with a floor
+  // of 4 — where ours is a ratio between its own two limits. And the second edge is offset
+  // PERPENDICULARLY by a flat 2px, where ours drops a vertical `midThickness`.
+  //
+  // That flat 2 is why the audit's `slurEndpoint` / `slurMidpoint` / `tieEndpoint` /
+  // `tieMidpoint` had no abcjs counterpart to port: abcjs has no endpoint-versus-midpoint
+  // notion at all. Its arc comes to a POINT at both ends, because the path returns through
+  // the same x1,y1 it started from, and is a flat 2px wide everywhere between. The four
+  // Bravura constants are not wrong numbers — they are the wrong MODEL, and strict now
+  // reads none of them.
+  if (strict) {
+    const dx = x2 - x1
+    const dy = y2 - y1
+    const norm = Math.hypot(dx, dy)
+    if (norm === 0) return ''
+    const ux = dx / norm
+    const uy = dy / norm
+    const flatten = norm / ABCJS_ARC.flattenDivisor
+    const cap = curve.kind === 'tie' ? ABCJS_ARC.tieMaxBulge : ABCJS_ARC.slurMaxBulge
+    // `bulge` carries our sign convention: negative is ABOVE, which is abcjs's `-1`.
+    const arc =
+      Math.sign(bulge) * Math.min(spaces(cap), Math.max(spaces(ABCJS_ARC.minBulge), flatten))
+    const t = spaces(ABCJS_ARC.thickness)
+    const c1x = x1 + flatten * ux - arc * uy
+    const c1y = y1 + flatten * uy + arc * ux
+    const c2x = x2 - flatten * ux - arc * uy
+    const c2y = y2 - flatten * uy + arc * ux
+    return (
+      `<path${attr} d="M${num(x1)},${num(y1)} ` +
+      `C${num(c1x)},${num(c1y)} ${num(c2x)},${num(c2y)} ${num(x2)},${num(y2)} ` +
+      `C${num(c2x - t * uy)},${num(c2y + t * ux)} ${num(c1x - t * uy)},${num(c1y + t * ux)} ` +
+      `${num(x1)},${num(y1)}Z"/>`
+    )
+  }
   const dx = x2 - x1
   // Control points at the thirds, pushed out by the bulge. The outer edge carries the
   // full arc; the inner edge falls short by the midpoint thickness, which opens the lens.
@@ -220,9 +328,19 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
     attributes: string,
   ): string => {
     const ink = outline(name)
-    const total = (scale ?? 1) * ink.scale
+    // ABCJS NEVER APPLIES A GLYPH'S SCALE AT DRAW TIME, and says so in its own source:
+    // `printSymbol` takes `{scalex, scaley}` and passes NEITHER to `glyphs.printSymbol`,
+    // under the comment "TODO-PER: what happened to scalex, and scaley? That might have
+    // been a bug introduced in refactoring" (`draw/print-symbol.js:11`). So a grace
+    // notehead, a grace flag and a clef's octave `8` all DRAW at full size while their
+    // POSITIONS are computed from the scaled width — which is why the golden's grace path
+    // is byte-identical to its main head's, 10px to the left.
+    //
+    // Reproducing the bug is the point: it is 1.99px on every graced note, which is
+    // 0.4 of a notehead's ink centre, and it is `vree-grace-notes`' whole residual.
+    const total = strict ? ink.scale : (scale ?? 1) * ink.scale
     const scaled = total !== 1
-    const transform = `translate(${num(x)},${num(y)})${scaled ? ` scale(${num(total)})` : ''}`
+    const transform = `translate(${num(x)},${num(y)})${scaled ? ` scale(${scaleNum(total)})` : ''}`
     if (!optimize) return `<path${attributes} transform="${transform}" d="${ink.path}"/>`
     // A `<use>` takes a transform, so a scaled glyph dedupes like any other. It used to
     // fall back to an inline path when scaled, which was fine while only a stretched
@@ -260,14 +378,27 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
     )
     // Braces and brackets first: they belong to the SYSTEM, joining staves rather than
     // sitting on one, and they are drawn at the left edge outside the music area.
+    // A BRACKET'S STEM. abcjs classes it `abcjs-bracket` and names it `bracket`
+    // (`draw/brace.js`, via `classes.generate`), and we emitted neither — so no comparison
+    // could reach a bracket at all. Finding 92: the representation was missing a HANDLE.
     for (const line of system.connectorLines) {
-      parts.push(lineToRect(line, abcjs ? '' : ` class="${prefix}-staff"`))
+      parts.push(
+        lineToRect(
+          line,
+          abcjs ? ' class="abcjs-bracket" data-name="bracket"' : ` class="${prefix}-staff"`,
+        ),
+      )
     }
     for (const g of system.connectorGlyphs) {
       // A brace stretches VERTICALLY to span its staves — `scale(1,n)`, not a uniform
       // scale — so it cannot share a definition with an unstretched one and stays a path.
       const scale = g.scale === undefined || g.scale === 1 ? '' : ` scale(1,${num(g.scale)})`
-      const attr = abcjs ? '' : ` class="${prefix}-staff"`
+      // …and the same handle for the glyphs. abcjs draws a brace and a bracket as ONE path
+      // each, so a `brace` name covers the whole shape and `bracket` covers its two arms.
+      const named = g.name === 'brace' ? 'brace' : 'bracket'
+      const attr = abcjs
+        ? ` class="abcjs-${named}" data-name="${named}"`
+        : ` class="${prefix}-staff"`
       parts.push(
         scale === ''
           ? glyphMarkup(g.name, g.x, g.y, undefined, attr)
@@ -309,23 +440,55 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
             `y="${num(t.y)}" font-family="serif" font-size="${num(t.size)}">${escapeText(t.text)}</text>`,
         )
       }
+      // ABCJS CALLS IT A TRIPLET, whatever the number — `classes.generate('triplet ' +
+      // durationClass)` on the group and `data-name="triplet-bracket"` on the path
+      // (`draw/triplet.js:7-9`, `:42`). Ours said `abcjs-tuplet`, which is the right word
+      // for the concept and the wrong one for compat: a stylesheet written against abcjs
+      // selects `.abcjs-triplet`, and no comparison could match the bracket either.
       for (const line of staff.tupletLines) {
-        parts.push(lineToRect(line, abcjs ? ' class="abcjs-tuplet"' : ` class="${prefix}-tuplet"`))
+        parts.push(
+          lineToRect(
+            line,
+            abcjs
+              ? ' class="abcjs-triplet" data-name="triplet-bracket"'
+              : ` class="${prefix}-tuplet"`,
+          ),
+        )
       }
       // Never present in strict mode, where abcjs prints a literal `_` instead — so this
       // reuses abcjs's lyric class rather than inventing one it has no counterpart for.
       for (const line of staff.melismaLines) {
         parts.push(lineToRect(line, abcjs ? ' class="abcjs-lyric"' : ` class="${prefix}-lyric"`))
       }
-      // Hairpins and glissandi. abcjs paints these with no class of its own, so compat
-      // emits none either rather than inventing one a stylesheet could not know about.
+      // Hairpins and glissandi. THE COMMENT HERE USED TO SAY "abcjs paints these with no
+      // class of its own" — reasoned, never measured, and its own output denies it:
+      // `drawCrescendo` passes `classes.generate('dynamics decoration')` and
+      // `"data-name": "dynamics"` (`draw/crescendo.js:34`), which comes out as
+      // `class="abcjs-decoration abcjs-dynamics …" data-name="dynamics"`. A glissando is
+      // `data-name="glissando"` on the same footing.
       for (const line of staff.spannerLines) {
-        parts.push(lineToRect(line, abcjs ? '' : ` class="${prefix}-decoration"`))
+        const named = line.role === 'dynamic' ? 'dynamics' : 'glissando'
+        const cls = line.role === 'dynamic' ? 'abcjs-decoration abcjs-dynamics' : 'abcjs-glissando'
+        parts.push(
+          lineToRect(
+            line,
+            abcjs ? ` class="${cls}" data-name="${named}"` : ` class="${prefix}-decoration"`,
+          ),
+        )
       }
+      // THE NUMBER CARRIES NO CLASS, and that is abcjs's choice rather than an omission:
+      // `drawTriplet` passes `noClass: true` and `name: "" + params.number`
+      // (`draw/triplet.js:11`), so its golden emits `data-name="3"` and nothing else. The
+      // BRACKET beside it is classed `abcjs-triplet` through the group. Giving the number
+      // that class too — which this did until now — invented a hook abcjs does not offer
+      // and still left it unmatchable, since a comparison keyed on `data-name` found
+      // nothing.
       for (const t of staff.tupletTexts) {
         const style = `${t.bold ? ' font-weight="bold"' : ''}${t.italic ? ' font-style="italic"' : ''}`
+        const anchor = t.anchor === undefined ? '' : ` text-anchor="${t.anchor}"`
         parts.push(
-          `<text${abcjs ? ' class="abcjs-tuplet"' : ` class="${prefix}-tuplet"`} x="${num(t.x)}" ` +
+          `<text${abcjs ? ` data-name="${escapeText(t.text)}"` : ` class="${prefix}-tuplet"`}` +
+            `${anchor} x="${num(t.x)}" ` +
             `y="${num(t.y)}" font-family="serif" font-size="${num(t.size)}"${style}>${escapeText(t.text)}</text>`,
         )
       }
@@ -334,6 +497,7 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
           curveToPath(
             curve,
             abcjs ? ` class="abcjs-${curve.kind}"` : ` class="${prefix}-${curve.kind}"`,
+            strict,
           ),
         )
       }
@@ -361,7 +525,7 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
               `font-family="serif" font-size="${num(t.size)}"${style}` +
               // Only the top-text block sets one; the music's own text is all left-aligned.
               `${t.anchor === undefined || t.anchor === 'start' ? '' : ` text-anchor="${t.anchor}"`}` +
-              `>${escapeText(t.text)}</text>`,
+              `>${t.jazz === undefined ? escapeText(t.text) : jazzChordMarkup(t.jazz, num(t.x))}</text>`,
           )
         }
         if (abcjs) parts.push('</g>')

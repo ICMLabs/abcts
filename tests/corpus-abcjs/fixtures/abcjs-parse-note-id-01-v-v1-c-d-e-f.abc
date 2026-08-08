@@ -1,0 +1,11 @@
+X:1
+K: bass
+[V:v1] C,D,E,F, |
+[V:v2 octave=-1] CDEF |
+[V:v3 octave=-2] cdef |
+[V:v4 octave=1] C,,D,,E,,F,, |
+K: octave=1
+[V:v1] C,,D,,E,,F,,|
+[V:v2] CDEF |
+[V:v3] cdef |
+[V:v4 octave=0] C,D,E,F, |

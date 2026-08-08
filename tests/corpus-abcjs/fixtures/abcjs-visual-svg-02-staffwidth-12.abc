@@ -1,0 +1,6 @@
+X:1
+L:1/4
+%%staffwidth 12
+%%musicspace 0
+K:C clef=none stafflines=0
+[M:2/4]y[M:3/4]y[M:4/4]

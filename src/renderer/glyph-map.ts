@@ -36,16 +36,39 @@
  */
 export const SMUFL_TO_ABCJS: Readonly<Record<string, string>> = {
   // Noteheads
+  // A BREVE — `chartable.note[-1]`, which abcjs reaches for any note two whole notes
+  // long. `G8` under `L:1/4` is one, and every `clefs` fixture is exactly that.
+  noteheadDoubleWhole: 'noteheads.dbl',
   noteheadWhole: 'noteheads.whole',
   noteheadHalf: 'noteheads.half',
   noteheadBlack: 'noteheads.quarter',
   noteheadXBlack: 'noteheads.indeterminate',
   noteheadSlashVerticalEnds: 'noteheads.slash.nostem',
+  noteheadSlashWhiteWhole: 'noteheads.slash.whole',
+  noteheadSlashHorizontalEnds: 'noteheads.slash.quarter',
+  // THE STYLED HEADS — `V:… style=` and `%%percmap`'s third field. abcjs keeps ONE glyph
+  // per style whatever the duration (`abstract-engraver.js:36-41`: every durlog key of
+  // `triangle` and of `harmonic` is the same `.quarter`), so the filled and open SMuFL
+  // names both land on it. Only `rhythm` splits, and by durlog rather than by fill.
+  //
+  // They were absent because the GENERATOR could not see them, not because abcjs lacks
+  // them: abcjs adds these four by assignment after its table literal, under "Custom
+  // characters that weren't generated from the font". A name missing here falls through
+  // to Bravura in strict — the defect class the Bravura ruling closes — and the triangle
+  // was 0.117 pitch of reserve out because of it.
+  noteheadTriangleUpBlack: 'noteheads.triangle.quarter',
+  noteheadTriangleUpWhite: 'noteheads.triangle.quarter',
+  noteheadDiamondBlack: 'noteheads.harmonic.quarter',
+  noteheadDiamondWhite: 'noteheads.harmonic.quarter',
 
   // Clefs
   gClef: 'clefs.G',
   fClef: 'clefs.F',
   cClef: 'clefs.C',
+  // `clef=perc`. abcjs DRAWS it — `case 'perc': clef = "clefs.perc"`
+  // (`create-clef.js:26`) — and its 21px is 26 of prefix once the clef's own `dx = 5` is
+  // on it. Bravura has no entry here, so the other modes still draw nothing.
+  unpitchedPercussionClef1: 'clefs.perc',
 
   // Accidentals. `halfsharp`/`halfflat` are abcjs's quarter tones; it has no three-quarter
   // tone glyph at all, which is why those two SMuFL names are absent — see the header.
@@ -85,6 +108,7 @@ export const SMUFL_TO_ABCJS: Readonly<Record<string, string>> = {
   timeSig7: '7',
   timeSig8: '8',
   timeSig9: '9',
+  timeSigPlus: '+',
   timeSigCommon: 'timesig.common',
   timeSigCutCommon: 'timesig.cut',
 
@@ -106,6 +130,16 @@ export const SMUFL_TO_ABCJS: Readonly<Record<string, string>> = {
 
   // Ornaments
   ornamentTrill: 'scripts.trill',
+  // THE IRISH ROLL, and it was the last Bravura metric reachable in strict on the
+  // decoration path. abcjs's `scripts.roll` is 6.125px tall against Bravura's
+  // `ornamentTremblement` at 7.564, and a decoration is stacked by
+  // `symbolHeightInPitches(symbol) + 1` — so every `~` or `R` cost 0.3714 pitch too much
+  // and the two of them together carried a whole system 2.66px down.
+  //
+  // It sat in `UNMAPPED_ABCJS` because no SMuFL name CLAIMS abcjs's roll — the list's own
+  // first paragraph says an absence there is usually the parity behaviour. It is not here:
+  // abcjs draws a mark, we draw a mark, and the only question was whose metrics measure it.
+  ornamentTremblement: 'scripts.roll',
   ornamentMordent: 'scripts.mordent',
   ornamentShortTrill: 'scripts.prall',
   ornamentTurn: 'scripts.turn',
@@ -123,34 +157,30 @@ export const SMUFL_TO_ABCJS: Readonly<Record<string, string>> = {
   segno: 'scripts.segno',
   coda: 'scripts.coda',
   breathMarkComma: 'scripts.comma',
+  restHBar: 'rests.multimeasure',
 }
 
 /** abcjs glyphs no SMuFL name above claims — its vocabulary, minus what we use. */
 export const UNMAPPED_ABCJS = [
-  'rests.multimeasure',
   'rests.32nd',
   'rests.64th',
   'rests.128th',
-  'noteheads.dbl',
   'scripts.stopped',
-  'scripts.roll',
   'scripts.wedge',
   'scripts.longphrase',
   'scripts.mediumphrase',
   'scripts.shortphrase',
   'flags.ugrace',
   'flags.dgrace',
-  'clefs.perc',
   'tab.big',
   'tab.tiny',
   'timesig.imperfectum',
   'timesig.imperfectum2',
   'timesig.perfectum',
   'timesig.perfectum2',
-  // Text glyphs abcjs draws inline in chord symbols and annotations — a `+` for an
-  // added note, a `,` in a figured bass. abcts sets prose in <text>, so it has no
-  // outline for either and needs none.
-  '+',
+  // Text glyphs abcjs draws inline in chord symbols and annotations — a `,` in a figured
+  // bass. abcts sets prose in <text>, so it has no outline for it and needs none. (`+` is
+  // no longer here: an additive meter draws one, so it is mapped from `timeSigPlus`.)
   ',',
   'f',
   'm',

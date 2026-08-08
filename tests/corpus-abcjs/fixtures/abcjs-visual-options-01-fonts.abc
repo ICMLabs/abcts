@@ -1,0 +1,45 @@
+X:1
+%%gchordfont Arial 25 box
+%%annotationfont Times-Roman 15 box
+%%composerfont Arial 8 box
+%%footerfont Tahoma 8 box
+%%headerfont Geneva 15 box
+%%historyfont Palatino 9 box
+%%infofont Monaco 11 box
+%%measurefont Helvetica 7 box
+%%partsfont sans-serif 29 box
+%%repeatfont Helvetica 13 box
+%%subtitlefont Arial 17 box
+%%tempofont serif 19 box
+%%textfont Verdana 21 box
+%%titlefont cursive 23 box
+%%tripletfont cursive 39 box
+%%voicefont Verdana 17 box
+%%vocalfont sans-serif 11 box
+%%wordsfont Georgia 13 box
+%%header The header
+%%footer The footer
+%%measurenb 1
+T:fonts
+T:changing all fonts
+C:composer
+A:author
+R:hopping
+H:History
+N:The notes
+O:Origin
+S:source
+P:Part Order
+L:1/4
+Q:"This is" 1/4=190 "Fast"
+W:The extra verses
+W:The extra verses - line 2
+K:C
+P:Part
+V:1 name=voice
+|1"C"CE"^No Chord"Gc:|(3aaaa|
+w:words to this tune, words to this tune,
+%%text extra text
+T:Another Subtitle
+|GGGG|AAAA|]
+%%text more extra text

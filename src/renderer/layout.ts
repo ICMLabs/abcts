@@ -15,6 +15,8 @@
  * the font, engraving conventions (stem length, spacing) live in ENGRAVE below.
  */
 import {
+  ABC_FONT_DEFAULT_PT,
+  type AbcFontType,
   Accidental,
   type Barline,
   type Clef,
@@ -25,15 +27,19 @@ import {
   type DiatonicStep,
   defaultClef,
   defaultMode,
+  type FreeTextBlock,
   isStrict,
   type KeySignature,
   type Measure,
+  type Meter,
   type Mode,
   type MusicEvent,
   type NoteStyle,
   type Pitch,
+  plainText,
   type Rational,
   type Rest,
+  type RichText,
   rational,
   ratToNumber,
   type Score,
@@ -43,10 +49,38 @@ import {
   type Tempo,
   type Voice,
 } from '../core/model.js'
-import { glyphsFor } from './glyph-table.js'
-import { ENGRAVING_DEFAULTS, GLYPHS, type GlyphName } from './glyphs.js'
-import { CHAR_ADVANCE, FALLBACK_ADVANCE } from './text-metrics.js'
-import { VOICE_NAME_GAP_PX, voiceNameWidthPx } from './voice-name-metrics.js'
+import {
+  ABCJS_ARC,
+  ABCJS_CLEF_OFFSET_PITCH,
+  ABCJS_KEY_ACCIDENTAL_FUDGE_PITCH,
+  ABCJS_PERC_NOTE_NAMES,
+  ABCJS_PITCH,
+  ABCJS_PX,
+  ABCJS_RATIO,
+  fontPixels,
+  GOLDEN_GCHORD,
+  GOLDEN_MEASURE,
+  GOLDEN_PARTS,
+  GOLDEN_REPEAT,
+  GOLDEN_VOCAL,
+  goldenTextHeight,
+  PITCH_ORIGIN,
+  STAFF_SPACE_PX,
+  STEP_PX,
+  spaces,
+  spacesOfPitch,
+  steps,
+} from './abcjs-constants.js'
+import { glyphsFor, lineWeightsFor } from './glyph-table.js'
+import { GLYPHS, type GlyphName } from './glyphs.js'
+import {
+  CHAR_ADVANCE,
+  CHAR_ADVANCE_BOLD,
+  CHAR_ADVANCE_BOLD_FALLBACK,
+  CHAR_ADVANCE_SANS,
+  CHAR_ADVANCE_SANS_FALLBACK,
+  FALLBACK_ADVANCE,
+} from './text-metrics.js'
 
 // ─── Engine constants ────────────────────────────────────────────────────────
 // Engraving conventions, NOT font metadata. Sources noted; values marked PROVISIONAL
@@ -57,8 +91,16 @@ export const ENGRAVE = {
   staffLineSteps: [-4, -2, 0, 2, 4],
   /** A staff step is half a staff space. */
   spacePerStep: 0.5,
-  /** Standard stem length ≈ one octave. *Behind Bars* (Gould). */
-  stemLength: 3.5,
+  /**
+   * An UNBEAMED stem's length — abcjs's `Math.round(70 * voiceScale) / 10` = 7 pitch
+   * (`abstract-engraver.js:740`), which in staff spaces is the 3.5 this was.
+   *
+   * The SAME NUMBER it always held; only its provenance changed. It read "Standard stem
+   * length ≈ one octave, Behind Bars (Gould)" — a true statement about engraving that was
+   * not the reason the value was right, and strict had no way to tell an accident from a
+   * port. Lance's worked example for the whole `ENGRAVE` triage.
+   */
+  stemLength: spacesOfPitch(ABCJS_PITCH.stemLength),
   /**
    * How far a BEAM sits beyond its group's extreme note, in staff STEPS — abcjs's beamed
    * stem height, which is not the same constant as an unbeamed one's.
@@ -71,11 +113,9 @@ export const ENGRAVE = {
    * Reusing `stemLength` here — the unbeamed 7 — put every beam 2.5 steps too close to its
    * notes, which on ragtime is most of the corpus's remaining vertical error.
    */
-  beamStemHeight: Math.round((36.67 * 10) / 3.875) / 10,
+  beamStemHeight: Math.round((ABCJS_PX.beamStemHeight * 10) / STEP_PX) / 10,
   /** First ledger step beyond the staff; grows outward by 2. *Behind Bars*. */
   firstLedgerStep: 6,
-  /** Ledger line overhang past the notehead each side. */
-  ledgerExtension: ENGRAVING_DEFAULTS.legerLineExtension,
   /**
    * Page margin left of the staff.
    *
@@ -85,7 +125,7 @@ export const ENGRAVE = {
    * dropped `multi-voice-rest-placement` to a fill of 0.659 against the 0.66 threshold —
    * so it kept its natural width where abcjs justified it, by one thousandth.
    */
-  marginX: 15 / 7.75,
+  marginX: spaces(ABCJS_PX.paddingLeft),
   /**
    * Vertical padding above and below a staff's ink.
    *
@@ -97,17 +137,55 @@ export const ENGRAVE = {
    * it. Was 4.0 — 31px on each side of every staff.
    */
   marginY: 0,
-  /** Gap after a clef or meter before the next element. PROVISIONAL. */
-  prefixGap: 1.0,
   /**
-   * Gap between adjacent accidentals in a key signature. Bravura's advance width for a
-   * sharp equals its ink width exactly, so laying them out on advance alone butts them
-   * edge to edge — and a sharp is 2.8 staff spaces tall, so neighbours at different
-   * heights visibly interpenetrate. Engraving sets them close but clear. PROVISIONAL.
+   * Gap after a clef, key signature or meter before the next element.
+   *
+   * abcjs's `minspacing`, a flat 10px on every `AbsoluteElement` (`absolute-element.js`,
+   * and visible as `minSpacing: 10` in its element dumps). Instrumenting its own layout on
+   * `simple-c` shows the chain exactly: clef at 15 (`padding.left`) w 24.051, meter at
+   * `15 + 24.051 + 10` = 49.051 w 11.795, first note at `49.051 + 11.795 + 10` = 70.846.
+   * Ours was one staff space, 7.75px, so every prefix ran short and took the music with it.
    */
-  keySignatureGap: 0.15,
-  /** Gap between an accidental and the notehead it alters. PROVISIONAL. */
-  accidentalGap: 0.15,
+  prefixGap: spaces(ABCJS_PX.minSpacing),
+  /**
+   * A clef glyph sits this far INTO its element — abcjs's `var dx = 5` in `createClef`,
+   * which is why its clef element is 24.051 wide against a 19.051 glyph. We drew the glyph
+   * flush at the element's left and made the element glyph-wide, losing 5px before the
+   * music on every staff.
+   */
+  clefIndent: spaces(ABCJS_PX.clefIndent),
+  /**
+   * Gap a NOTE's rod adds beyond its own ink — abcjs's `minspacing`, and for a note that is
+   * **1px**, not the 10 a bar or a staff-extra gets.
+   *
+   * `new AbsoluteElement(elem, durationForSpacing, 1, absType, …)` for a note
+   * (`abstract-engraver.js:808`) against `new AbsoluteElement(elem, 0, 10, 'bar', …)` at
+   * `:959` and 10 for every `staff-extra`. The rod itself is `getMinWidth(child)`, which is
+   * simply `child.w` (`layout/voice-elements.js`), and the layout takes
+   * `x = max(x + rod + minspacing, x + spacing * sqrt(dur * 8))` — whichever is larger.
+   *
+   * Ours added `minColumnGap`, 0.6 of a space = 4.65px, which is nearly five times abcjs's
+   * and binds on exactly the short dense notes where the rod starts to win: a 32nd's spring
+   * is 15px against a ~20px rod.
+   */
+  noteRodGap: spaces(ABCJS_PX.noteMinSpacing),
+  /**
+   * Gap between adjacent accidentals in a key signature.
+   *
+   * abcjs steps by `getSymbolWidth(symbol) + 2` (`create-key-signature.js:26`) — a flat 2px,
+   * which its own element dump confirms: five sharps at dx 0, 10.25, 20.5, 30.75, 41 with
+   * each glyph 8.25 wide. Ours was 0.15 of a space, 1.16px, so a five-sharp signature ran
+   * 3.35px narrow and pulled the music left with it.
+   */
+  keySignatureGap: spaces(ABCJS_PX.keySignatureGap),
+  /**
+   * Between an accidental and whatever is to its right — `width + 2` in
+   * `create-note-head.js:95`, where the 2 is abcjs's flat gap and NOT a fraction of the
+   * glyph. Was 0.15 (1.16px) and provisional.
+   */
+  accidentalGap: spaces(ABCJS_PX.accidentalGap),
+  /** Two accidentals this far apart in STEPS share a column (`create-note-head.js:87`). */
+  accidentalColumnSteps: ABCJS_PITCH.accidentalColumnPitch,
   /** Gap from the notehead's right edge to the first augmentation dot. PROVISIONAL. */
   dotGap: 0.35,
   /** Spacing between successive dots on a double- or triple-dotted note. PROVISIONAL. */
@@ -132,8 +210,55 @@ export const ENGRAVE = {
   spacingReference: 1 / 16,
   /** Hard minimum gap between adjacent columns — the rod floor beneath the springs. */
   minColumnGap: 0.6,
-  /** Space either side of a barline. PROVISIONAL. */
-  barGap: 1.0,
+  /**
+   * Space AFTER a barline, before the next element. Nothing goes before it.
+   *
+   * abcjs's bar is `new AbsoluteElement(elem, 0, 10, 'bar', …)` (`abstract-engraver.js:959`)
+   * — width 1, `minspacing` 10 — and it has ZERO duration, so its spring is nothing and its
+   * rod always wins: the next element sits 11px past it. Nothing is inserted before it
+   * either; the preceding note's own advance puts it there.
+   *
+   * Measured on `simple-c`, whose note-to-note gaps already matched abcjs exactly at 42.4px
+   * everywhere EXCEPT across a barline — 53.4 against our 57.9. We were adding one space on
+   * each side, 15.5px, where abcjs adds 11.0 once.
+   */
+  barGap: spaces(ABCJS_PX.barGap),
+  /**
+   * What a barline occupies on the LAYOUT cursor, by kind — abcjs's `child.w`, which is
+   * not its drawn thickness but a flat width per type. Read out of abcjs by probe, one
+   * measure per kind:
+   *
+   * ```
+   * |  1     ||  4     |]  8     |:  16     :|  14     ::  22     [|  13
+   * ```
+   *
+   * The rod is this plus the flat 10 of `minspacing`, which is where the familiar 11 for
+   * a plain barline comes from. Using one flat 11 for every kind puts a final `|]` 7px
+   * narrow, and because a line's LAST element keeps its width and loses its `minspacing`
+   * that 7px lands entirely in the justification's constant term: on
+   * `vree-compound-meter` it stretched every gap by 0.58px, a drift that reached 6.4px by
+   * the twelfth note.
+   *
+   * `[|` is not here because the parser folds it into `double`, where abcjs keeps them
+   * apart at 13 and 4 — a model question, not a spacing one.
+   */
+  /**
+   * Room a barline wants to its LEFT — abcjs's `extraw = -5` on every bar, flat.
+   * It only bites where the previous element's rod runs right up to the cursor, which is
+   * a compressed line; a line with any slack in it never notices.
+   */
+  barClearance: spaces(ABCJS_PX.barClearance),
+  barLayoutWidth: {
+    thin: spaces(ABCJS_PX.barWidthThin),
+    double: spaces(ABCJS_PX.barWidthDouble),
+    thickThin: spaces(ABCJS_PX.barWidthThickThin),
+    final: spaces(ABCJS_PX.barWidthFinal),
+    repeatStart: spaces(ABCJS_PX.barWidthRepeatStart),
+    repeatEnd: spaces(ABCJS_PX.barWidthRepeatEnd),
+    repeatBoth: spaces(ABCJS_PX.barWidthRepeatBoth),
+    // An invisible bar reserves a thin bar's width and paints nothing.
+    invisible: spaces(ABCJS_PX.barWidthThin),
+  } as Record<Barline, number>,
   /**
    * LANES above and below the staff, in staff steps. The staff itself spans -4 to 4.
    *
@@ -155,7 +280,29 @@ export const ENGRAVE = {
    * 20.8px is 5.37 steps above the top line, which is step 4.
    */
   chordSymbolStep: 9.37,
-  ornamentStep: 7,
+  /**
+   * `Decoration.minTop` — the floor the ornament stack starts from, in PITCH
+   * (`creation/decoration.js:13`). One pitch above the top staff line, so an ornament on
+   * a low note still clears the staff.
+   */
+  decorationMinTop: ABCJS_PITCH.decorationMinTop,
+  /** `minBottom` — the floor `getPlacement('below')` clamps to (`decoration.js:14`). */
+  decorationMinBottom: ABCJS_PITCH.decorationMinBottom,
+  /** The stem a BEAMED note has not built yet, guessed at (`abstract-engraver.js:841`). */
+  beamedDecorationDrop: ABCJS_PITCH.beamedDecorationDrop,
+  beamedDecorationFloor: ABCJS_PITCH.beamedDecorationFloor,
+  /** The pitch of padding each stacked decoration adds so nothing touches (`:154`). */
+  decorationPadding: ABCJS_PITCH.decorationPadding,
+  /** `textFudge` — how far a TEXT decoration sits above the stack cursor (`:149`). */
+  decorationTextFudge: ABCJS_PITCH.decorationTextFudge,
+  /** `textHeight` — the flat pitch a text decoration advances the cursor by (`:150`). */
+  decorationTextHeight: ABCJS_PITCH.decorationTextHeight,
+  /**
+   * `thickness: 3` — a text decoration's DECLARED height in pitch (`decoration.js:151`),
+   * with abcjs's own "TODO-PER: Get the height of the current font and use that" beside
+   * it. It is not the font's height and reproducing the font's height is wrong.
+   */
+  decorationTextThickness: ABCJS_PITCH.decorationTextThickness,
   /**
    * Dynamics (`!p!`, `!mf!`) and hairpins go ABOVE the staff WHEN THE TUNE HAS LYRICS,
    * and below it otherwise — abcjs's rule, not a taste choice.
@@ -188,14 +335,20 @@ export const ENGRAVE = {
    * the music, and the room is a flat lane past it. A fixed lane for both, which is what
    * we had, gets neither right.
    */
-  dynamicBelowReserve: 7,
+  dynamicBelowReserve: ABCJS_PITCH.dynamicLane + ABCJS_PITCH.laneMargin,
   /**
    * `"^text"` above the staff and `"_text"` below.
    *
-   * abcjs joins same-position annotations into ONE multi-line block, so the first one
-   * written becomes the top line. Above the staff that puts it furthest out; below, it
-   * puts it nearest. Stacking outward in reverse above and in written order below
-   * reproduces both without special-casing either.
+   * THE FIRST ONE WRITTEN IS THE TOP LINE, on BOTH sides — measured, not reasoned.
+   * `stacked-annotations`' golden draws `"^Allegro""^con brio"` at y 79.12 and 99.12 and
+   * `"_p""_dolce"` at 177.26 and 197.26. Above the staff that puts the first furthest out;
+   * below, it puts it nearest. Stacking outward in reverse above and in written order
+   * below reproduces both without special-casing either.
+   *
+   * The comment here used to say abcjs joins same-position annotations into ONE
+   * multi-line block. It does not — its golden emits a separate
+   * `<text data-name="annotation">` per mark. The CONCLUSION was right and the mechanism
+   * was not, which is the reason it went unchecked for so long.
    *
    * ponytail: the above lane can reach `partStep` once three annotations stack, and the
    * below lane can reach `lyricStep` at two. No fixture combines them, and the real fix is
@@ -205,12 +358,13 @@ export const ENGRAVE = {
   /** 27.8px below the BOTTOM line (step -4) in `stacked-annotations`. */
   annotationBelowStep: -11.17,
   /**
-   * One text line to the next, out of staff: 20px, which is `round(height x 1.1)` for
-   * abcjs's 16px annotation font — the same advance rule the top-text block uses. Ours
-   * was 2.5 steps, 9.7px, so three stacked annotations occupied half the room abcjs
-   * gives them.
+   * GONE — it was a flat 20px where abcjs's rule is `fontSize * 1.25`
+   * (`ABCJS_RATIO.laneLineStep`, `draw/text.js:13-15`). The two agree exactly at the 12pt
+   * default and nowhere else, so `%%annotationfont Times-Roman 15` moved abcjs's stack
+   * and not ours. Both annotation sites and the CHORD lane now scale with the mark's own
+   * size; the chord lane had the same defect written as a bare `1.25` against the
+   * DEFAULT size rather than the text's.
    */
-  annotationLineStep: 5.16,
   partStep: 10,
   tempoStep: 14,
   /**
@@ -227,30 +381,23 @@ export const ENGRAVE = {
    * fixture in the corpus reports the same three. In its pitch units, halved here because
    * a step is half a staff space.
    */
-  aboveStackMargin: 1 * 0.5,
-  chordHeightAbove: 4.779354838709677 * 0.5,
-  partHeightAbove: 5.718709677419355 * 0.5,
-  tempoHeightAbove: 6 * 0.5,
-  /** abcjs bumps the tempo's baseline 2px past the top it reserved (`draw/tempo.js:15`). */
-  tempoDescenderBump: 2 / 7.75,
+  aboveStackMargin: spacesOfPitch(ABCJS_PITCH.laneMargin),
+  chordHeightAbove: spacesOfPitch(ABCJS_PITCH.chordHeightAbove),
+  partHeightAbove: spacesOfPitch(ABCJS_PITCH.partHeightAbove),
   /**
-   * A tune's title sits above everything else it owns, in staff STEPS above the middle
-   * line — so the gap to the top staff line is `titleStep / 2 - 2` spaces.
-   *
-   * 19 leaves 58px there. abcjs leaves 27.6px: its title baseline lands at y 49.6 and
-   * its top staff line at 77.2, built from `padding.top` 15, `spacing.title` 7.56 and
-   * `spacing.music` 7.56 above the first staff (`write/renderer.js:94`). That 30px is
-   * the whole of the vertical offset every fixture's noteheads carry.
-   *
-   * MEASURED AND LEFT ALONE. Setting this to 11.12 makes the gap exactly abcjs's, but
-   * the 30px it was correcting turned out to be `marginY` — 31px of per-staff padding
-   * abcjs does not have — and removing that fixed the gap without touching this. Six
-   * fixtures went to a y offset of ~0.5px with `titleStep` untouched.
-   *
-   * Which is the lesson: the title was never mispositioned relative to the music. The
-   * MUSIC was carrying padding, and the title rode along on top of it.
+   * `fontboxpadding` — the fraction of the font size a boxed font pads by, on each side.
+   * abcjs's default is 0.1 and the directive can change it (`get-font-and-attr.js:35`).
    */
-  titleStep: 19,
+  fontBoxPadding: ABCJS_RATIO.fontBoxPadding,
+  /** Stroke of the rules `%%partsbox` draws — one pixel, as abcjs's `rect` emits. */
+  fontBoxRule: spaces(ABCJS_PX.fontBoxRule),
+  tempoHeightAbove: spacesOfPitch(ABCJS_PITCH.tempoHeightAbove),
+  /** abcjs bumps the tempo's baseline 2px past the top it reserved (`draw/tempo.js:15`). */
+  tempoDescenderBump: spaces(ABCJS_PX.tempoDescenderBump),
+  /** `temposcale` — the beat-unit note is a miniature (`tempo-element.js:25`). */
+  tempoNoteScale: ABCJS_RATIO.tempoNoteScale,
+  /** `x += note.w + 5` between the beat-unit note and the rate (`draw/tempo.js:29`). */
+  tempoNoteGap: spaces(ABCJS_PX.tempoNoteGap),
   /** First verse below the staff; further verses stack downward by `lyricLineStep`. */
   /**
    * Verse 1's baseline as WRITTEN — a provisional lane, 28.8px below the bottom staff
@@ -266,9 +413,10 @@ export const ENGRAVE = {
    *
    * abcjs resolves a lyric's pitch to `staff.bottom`, the ink bottom over every voice on
    * the staff (`set-upper-and-lower-elements.js:52-55`), and the k-th voice's lyrics one
-   * rendered lyric height lower than that (`:165-169`). Both constants below are its own
-   * 17px vocal font: the gap is the SVG baseline offset, the step is `17 x 1.108`, the
-   * same calibrated height ratio `textHeightRatio` carries.
+   * rendered lyric height lower than that (`:165-169`). The gap below is abcjs's own 17px
+   * vocal font, as the SVG baseline offset. (The per-voice step it once sat beside was a
+   * SECOND derivation of the same quantity; `anchorLyrics` computes it from the golden's
+   * text table instead, so the constant is gone.)
    *
    * MEASURED, on four independent points, exact to 0.01px:
    *   `ave-verum-corpus`  staff 0 ink bottom 8 steps below its bottom line, lyric 214.24
@@ -279,20 +427,31 @@ export const ENGRAVE = {
    * nearly cancels it. Reading that 3.3 as "abcjs does not offset here" is what left this
    * unfixed for two sessions.
    */
-  lyricInkGap: 17 / 7.75,
-  lyricVoiceStep: (17 * 1.108) / 7.75,
+  lyricInkGap: spaces(ABCJS_PX.lyricInkGap),
   /**
    * Verse to verse: abcjs stacks verses as `<tspan dy="1.2em">` inside ONE `<text>` per
    * note, so the step is 1.2 x the 17px vocal font = 20.4px, not the 21px an advance rule
    * would give. Read off its own goldens' markup, not inferred.
    */
-  lyricLineStep: (17 * 1.2) / 3.875,
+  lyricLineStep: steps(ABCJS_PX.lyricInkGap * ABCJS_RATIO.textLineStep),
+  /**
+   * How far a brace or bracket moves the staff's left edge — abcjs's
+   * `BraceElem.getWidth()`, a flat 10 for both, with its own comment that the drawing
+   * does not vary it.
+   */
+  connectorIndent: spaces(ABCJS_PX.connectorIndent),
   /** Clearance between a brace or bracket and the staff it joins. */
   connectorGap: 0.6,
-  /** A bracket is a rule, and a heavy one. */
-  bracketThickness: 0.5,
-  /** Mouth of a hairpin at its open end — abcjs paints 8px against a 7.75px space. */
-  hairpinMouth: 1.0,
+  /**
+   * A group BRACKET's stem — `xLineWidth = spacing.STEP * 0.75` (`draw/brace.js:20`).
+   *
+   * A LINE WEIGHT REACHABLE IN STRICT, so the audit finding's own class, and one no gate
+   * could see: a bracket carried no class and no `data-name` in our output until finding
+   * 92. Ours was a flat 0.5 spaces against abcjs's 0.375.
+   */
+  bracketThickness: spacesOfPitch(ABCJS_PITCH.bracketRule),
+  /** Mouth of a hairpin at its open end — `height = 8` (`draw/crescendo.js:10`). */
+  hairpinMouth: spaces(ABCJS_PX.hairpinMouth),
   /** Clearance either side of a glissando, so it does not touch the noteheads. */
   spannerGap: 0.3,
   /** Below this a hairpin is a smudge rather than a shape. */
@@ -310,22 +469,7 @@ export const ENGRAVE = {
    * derived, and it matters twice over: the stack draws each item one FONT SIZE below the
    * top it reserved, so an undersized font lands the baseline high as well as small.
    */
-  tempoTextSize: 20 / 7.75,
-  /**
-   * Top-text font sizes, in staff spaces.
-   *
-   * abcjs's defaults are in POINTS (`abc_parse_directive.js:25-38`), converted by 4/3 to
-   * pixels at a 7.75px staff space: title 20pt, subtitle 16pt, composer and info 14pt.
-   * `titleTextSize` was 2.4 — 18.6px against abcjs's 26.7 — so the title was undersized
-   * as well as mispositioned.
-   */
-  // ROUNDED TO WHOLE PIXELS, as abcjs emits them: its title is `font-size="27"`, not
-  // 26.67, its composer `19` not 18.67. The rounding is visible in the goldens and it
-  // feeds the line advance below, where it is worth 4px on the first staff.
-  titleTextSize: Math.round((20 * 4) / 3) / 7.75,
-  subtitleTextSize: Math.round((16 * 4) / 3) / 7.75,
-  composerTextSize: Math.round((14 * 4) / 3) / 7.75,
-  infoTextSize: Math.round((14 * 4) / 3) / 7.75,
+  tempoTextSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.partsfont)),
   /**
    * Rendered text HEIGHT as a multiple of font size — a line of prose is taller than its
    * point size, and abcjs advances by the height, not the size.
@@ -338,34 +482,36 @@ export const ENGRAVE = {
    * `round(size * 1.1)` where abcjs advances by `round(size * 1.108 * 1.1)` — for a title
    * that is 29px against abcjs's 33, so the first staff of every tune sat 4px high.
    */
-  textHeightRatio: 1.108,
+  textHeightRatio: ABCJS_RATIO.textHeight,
   /**
    * Page margin above everything — abcjs's `padding.top`, 15px on screen
    * (`write/renderer.js:69`; print uses 38px, which is 1cm). We had none: our drawing
    * began at the top text's own ink, so every tune sat 15px higher than abcjs's.
    */
-  marginTop: 15 / 7.75,
-  /** Space above the title, a subtitle, and the composer row (`renderer.js:94`). */
-  titleSpace: 7.56 / 7.75,
-  subtitleSpace: 3.78 / 7.75,
-  composerSpace: 7.56 / 7.75,
-  /** Space between the top-text block and the top of the music (`renderer.js:101`). */
-  musicSpace: 7.56 / 7.75,
+  marginTop: spaces(ABCJS_PX.paddingTop),
   /**
-   * `%%center` free text — abcjs's `textfont`, 21px at its 7.75px staff space.
+   * And BELOW everything — abcjs's `padding.bottom`, also 15px on screen, spent in
+   * `(renderer.y + renderer.padding.bottom) * scale` (`draw/set-paper-size.js:3`).
    *
-   * `freeTextSpace` is the gap above such a line, and it is abcjs's standard 7.56 — the
-   * same unit as `titleSpace`, `composerSpace` and `musicSpace`. Derived, not guessed:
-   * abcjs's composer baseline in the `center-text` golden is 82.12 and its centred line's
-   * is 114.68, and 114.68 = 82.12 + (23 - 19) + 7.56 + 21 exactly, where 23 is the
-   * composer row's advance and 21 the free-text size.
+   * We had the top and not the bottom, so the page ended flush with the last staff line
+   * and clipped its own stroke: `simple-c` came out 124.085px against abcjs's 139.052,
+   * and every fixture was short by this exact 15.
    */
-  freeTextSize: 21 / 7.75,
-  freeTextSpace: 7.56 / 7.75,
-  /** Gap from the last staff line down to a trailing `%%center` line's baseline. */
-  freeTextBelowSpace: 36.85 / 7.75,
+  marginBottom: spaces(ABCJS_PX.paddingBottom),
+  /** Space above the title, a subtitle, and the composer row (`renderer.js:94`). */
+  titleSpace: spaces(ABCJS_PX.titleSpace),
+  subtitleSpace: spaces(ABCJS_PX.subtitleSpace),
+  composerSpace: spaces(ABCJS_PX.composerSpace),
+  /** Space between the top-text block and the top of the music (`renderer.js:101`). */
+  musicSpace: spaces(ABCJS_PX.musicSpace),
+  /**
+   * Line to line inside ONE `%%begintext` block — `1.2em` at the 21px `textfont`, the
+   * `tspan dy` abcjs stacks a multi-line `<text>` by. Measured: a two-line block costs
+   * 25.2px more than a one-line one, where the first line costs `21 x 1.108`.
+   */
+  freeTextLineStep: spaces(fontPixels(ABC_FONT_DEFAULT_PT.textfont) * ABCJS_RATIO.textLineStep),
   /** A text line advances by its height times this, rounded to whole pixels by abcjs. */
-  lineSkipFactor: 1.1,
+  lineSkipFactor: ABCJS_RATIO.lineSkip,
   /** Vertical gap between tunes in a tunebook — wider than between systems. */
   tuneGap: 6.0,
   /**
@@ -375,42 +521,155 @@ export const ENGRAVE = {
    * two thirds of abcjs's size. Same undersizing the title carried before `titleTextSize`
    * was derived; it makes every out-of-staff reserve too small as well as drawing small.
    */
-  lyricTextSize: 17 / 7.75,
-  chordTextSize: 16 / 7.75,
+  lyricTextSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.vocalfont)),
+  chordTextSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.gchordfont)),
   /**
-   * A stem shortened to meet a beam never drops below this. *Behind Bars* keeps beamed
-   * stems from collapsing to stubs. PROVISIONAL.
+   * `dy="1.2em"` — the step abcjs puts between the lines of one `<text>` (`svg.js:196`),
+   * and therefore what the golden generator adds per extra line when it measures one
+   * (`dump-svg.js:120-124`).
    */
-  minStemLength: 2.5,
-  /** Maximum total vertical rise of a sloped beam across its span. *Behind Bars*. */
-  beamMaxRise: 2.0,
+  textLineStep: ABCJS_RATIO.textLineStep,
   /** Length of a secondary-beam stub on a note whose neighbours lack that level. */
   beamStubLength: 1.1,
-  /** Clearance from a tuplet's furthest note to its bracket or number. PROVISIONAL. */
-  tupletGap: 1.2,
-  /** Half-gap the bracket leaves around its number. */
-  tupletNumberGap: 0.35,
-  /** Length of the hook turning down from each end of a tuplet bracket. */
-  tupletHook: 0.6,
-  tupletTextSize: 1.4,
+  /** `gapWidth = 8` each side of the bracket's MIDPOINT — FIXED, not the number's width. */
+  tupletNumberGap: spaces(ABCJS_PX.tupletNumberGap),
+  /** `bracketHeight = ±5` — the hook at each end (`draw/triplet.js:24`). Ours was 4.65px. */
+  tupletHook: spaces(ABCJS_PX.tupletHook),
+  /** `tripletfont` — Times italic 11pt, so `round(11 x 4/3)` = 15px. Ours was 10.85. */
+  tupletTextSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.tripletfont)),
+  /** `calcY(yTextPos - 1)` — see `ABCJS_PITCH.tupletTextDrop`. */
+  tupletTextDrop: spacesOfPitch(ABCJS_PITCH.tupletTextDrop),
   /** Staff step for a repeat-ending bracket, above everything the staff itself draws. */
   /**
-   * Fixed lane a tuplet bracket or volta ending reserves beyond the top/bottom note —
-   * abcjs's `endingHeightAbove`, 4 pitch + 1 margin = 5 pitch, which at 0.5 space/pitch is
-   * 2.5 staff-spaces. The bracket is DRAWN where its geometry puts it and overhangs this
+   * `endingHeightAbove` — the lane a tuplet or a volta reserves beyond the top note, in
+   * pitch, before abcjs adds its 1-pitch margin (`set-upper-and-lower-elements.js:37`).
+   * A TUPLET declares 4 (`triplet-element.js:25`) and a VOLTA declares 5
+   * (`ending-element.js:8`); a staff carrying both keeps the larger, since `setLimit`
+   * takes the max. The bracket is DRAWN where its geometry puts it and overhangs this
    * lane; only the lane is reserved. See `verticalExtent`.
+   *
+   * One flat 5 for both cost every voltaed staff of `ragtime-nightingale` a pitch.
    */
-  endingLane: 5 * 0.5,
+  tupletLane: ABCJS_PITCH.tupletLane,
+  /**
+   * `RelativeElement`'s default `height` — a flat 4 pitch when nothing declares one
+   * (`relative-element.js:37`). A notehead never does, so this is what a notehead's
+   * height IS wherever abcjs reads that field.
+   */
+  relativeElementHeight: ABCJS_PITCH.relativeElementHeight,
+  /**
+   * HALF A NOTEHEAD'S DECLARED BOX, in staff spaces.
+   *
+   * `create-note-head.js:34` passes `thickness: symbolHeightInPitches(c) * scale`, and
+   * `RelativeElement` turns that into `top = pitch + thickness/2`,
+   * `bottom = pitch - thickness/2` (`relative-element.js:22-24`). For
+   * `noteheads.quarter` that is **2.088774 pitches**, so half of it is 1.0443871 pitch —
+   * NOT the 1 pitch a notehead looks like it is. The 0.0444 that difference leaves shows
+   * up in every one of abcjs's own numbers: `a1bot=5.9556` for a note at pitch 5,
+   * `mids=6.0444^3.9556`, `staff.bottom=-14.0444`.
+   *
+   * The other heads differ in the third decimal (half 2.0986, whole 2.0895, dbl 2.1019);
+   * one figure covers them to 0.02px.
+   */
+  noteheadHalfHeight: ABCJS_PITCH.noteheadHeight / 4,
+  voltaLane: ABCJS_PITCH.voltaLane,
+  /**
+   * What an ending lane costs when the staff ALSO has a chord lane — a flat 2 pitch with
+   * no margin, instead of `endingHeightAbove + margin`
+   * (`set-upper-and-lower-elements.js:33-38`).
+   */
+  endingOverChordLane: ABCJS_PITCH.endingOverChordLane,
+  /**
+   * `vert` in `addMeasureNumber` — the pitch a bar number's box starts from, before its
+   * own height is added (`abstract-engraver.js:952`). 11 on a barline; the 13.5 branch
+   * needs a number wider than 10px on a TREBLE CLEF element, which a barline never is.
+   * In our steps, which are abcjs's pitch.
+   */
+  barNumberPitch: ABCJS_PITCH.barNumberPitch,
+  /** …and on a treble CLEF carrying a wide number — `%%barnumbers 0` alone reaches it. */
+  barNumberClefPitch: ABCJS_PITCH.barNumberClefPitch,
+  barNumberClefWide: ABCJS_PITCH.barNumberClefWide,
+  /**
+   * A LEFT annotation's room before the note — `roomTaken += chordWidth + 7`
+   * (`add-chord.js:52`), in abcjs pixels.
+   */
+  leftAnnotationGap: spaces(ABCJS_PX.leftAnnotationGap),
+  /** A RIGHT annotation's, 4 either side — `roomTakenRight += 4` and `w = width + 4`. */
+  rightAnnotationGap: spaces(ABCJS_PX.rightAnnotationGap),
+  /** abcjs's `margin` in `set-upper-and-lower-elements.js:102` — one pitch on every lane. */
+  laneMargin: ABCJS_PITCH.laneMargin,
+  /**
+   * How far below the ending lane's top the bracket is DRAWN — `positionY - 2`
+   * (`set-upper-and-lower-elements.js:201`). The one lane in that file whose reserve point
+   * and draw point differ; see `ABCJS_PITCH.endingDrawDrop`.
+   */
+  voltaDrawDrop: ABCJS_PITCH.endingDrawDrop,
+  /**
+   * The bracket's own line, in staff STEPS above the middle line.
+   *
+   * ponytail: a FIXED lane where abcjs stacks. `drawEnding` reads `params.pitch`, which
+   * `setUpperAndLowerElements` hands it off the running staff top — measured on
+   * `S4-bars-repeats`, abcjs's bracket sits 7.72 pitch above the top staff line and ours
+   * sits 4. `voltaLane` already reserves the room correctly; only the DRAWING is a lane.
+   * Anchoring it is the same shift `anchorAboveStaff` does for the other lanes.
+   */
   voltaStep: 8,
-  /** How far the volta bracket's end hooks turn down toward the staff. */
-  voltaHook: 1.4,
-  voltaTextSize: 1.3,
+  /**
+   * `height = 20` in `drawEnding` — the end hooks' full drop (`draw/ending.js:10`).
+   *
+   * IT COULD ONLY LAND ONCE THE LANE DID, and that is the durable part. Ours was 1.4
+   * spaces — 10.85px, very nearly half — and porting the 20 while the bracket still sat in
+   * a fixed lane 15.5px above the top staff line put the hook 4.5px INSIDE the staff.
+   * abcjs's hook clears the staff only by virtue of abcjs's bracket sitting 29.93px up.
+   * The two numbers were COMPENSATING, so they were one port rather than two: a correct
+   * constant is not always an improvement.
+   */
+  voltaHook: spaces(ABCJS_PX.voltaHook),
+  /** `repeatfont`, 13pt -> `round(13 x 4/3)` = 17px, and the golden says so outright. */
+  voltaTextSize: spaces(fontPixels(ABC_FONT_DEFAULT_PT.repeatfont)),
+  /**
+   * The label's baseline below the bracket: `calcY(pitch - 0.5)` — half a PITCH, a quarter
+   * of a staff space — plus one font height, since `renderText` is handed the lane top
+   * rather than a baseline. 0.25 + 2.1935 spaces is 18.94px, which is exactly what the
+   * golden's `y="189.45"` sits below its `170.51` bracket.
+   */
+  voltaTextDrop: spacesOfPitch(0.5),
+  /**
+   * `x: linestartx + 5` (`draw/ending.js:41`). Ours was 0.4 spaces, 3.1px.
+   *
+   * PORTED, because it is the one figure of the four that the lane cannot affect: it is
+   * horizontal, and the bracket's left edge is where it is whatever height it sits at.
+   */
+  voltaTextIndent: spaces(ABCJS_PX.voltaTextIndent),
+  /**
+   * A rule abcjs strokes WITHOUT a `stroke-width`, so SVG's default 1px — the repeat
+   * ending's bracket, the triplet's bracket, the hairpin's lines.
+   *
+   * Both sites that now read this were borrowing a weight from somewhere else, and both
+   * were wrong in the same way. The ending used `LINE_WEIGHTS.thinBarline`, 0.6px: the
+   * right weight for a barline, on a line abcjs does not draw with it. The TRIPLET used
+   * `LINE_WEIGHTS.slurEndpoint`, which is **Bravura's `ENGRAVING_DEFAULTS`, reachable in
+   * `abcjs-strict`** — the audit finding's own class, and by the standing ruling a defect
+   * rather than a decision. `glyph-table.ts` said in as many words that the four
+   * slur/tie thicknesses were "still Bravura's in strict"; what nobody had noticed is
+   * that one of them is read for something that is not a curve at all.
+   */
+  strokedPathRule: spaces(ABCJS_PX.strokedPathRule),
   /** Grace notes are drawn at this fraction of full size. *Behind Bars* ~60%. */
-  graceScale: 0.6,
-  /** Horizontal advance per grace note, before the note it decorates. */
-  graceAdvance: 1.1,
-  /** Gap between the last grace note and the notehead it leads into. */
-  graceGap: 0.4,
+  graceScale: ABCJS_RATIO.graceScale,
+  /**
+   * Horizontal advance per grace note, before the note it decorates — a flat **10px**,
+   * and the last grace's own step is the gap to the notehead, so there is no separate
+   * one. abcjs records the whole group as `extraw`: probed on `C{ABc}G/4 D2`, a note with
+   * three graces reads `extraw = -30` exactly, and `w` unchanged at the notehead alone.
+   * Ours stepped 8.52px and then added 5.1px of gap, which put a single grace 3.6px too
+   * far from its note and every grace of a group at the wrong pitch of the ladder.
+   */
+  graceAdvance: spaces(ABCJS_PX.graceAdvance),
+  /** …and an ACCIDENTAL on a grace note adds 7 more (`abstract-engraver.js:484-486`). */
+  graceAccidentalRoom: spaces(ABCJS_PX.graceAccidentalRoom),
+  /** No gap: the last grace's own advance IS the distance to the notehead. */
+  graceGap: 0,
   /** Length of the hook that resumes a curve at the start of the next system. */
   curveContinuation: 2.0,
   /** How far a slur or tie endpoint sits clear of the notehead it springs from. */
@@ -421,10 +680,14 @@ export const ENGRAVE = {
   curveMinBulge: 0.5,
   curveMaxBulge: 2.2,
   /**
-   * Width a system may reach before it wraps, in staff spaces. Roughly a page width at a
-   * typical staff size; a host that knows its viewport should pass `systemWidth`.
+   * Page width, in staff spaces — the span a system is justified into.
+   *
+   * abcjs's is `padding.left + staffwidth + padding.right` = 15 + 670 + 15 = **700px**
+   * (`renderer.js:69-72`, `staffwidthScreen`), so the music ends at 685 and its own solver
+   * targets exactly that. Ours was a round 90 spaces, 697.5px, which put the target 2.5px
+   * short and compressed every justified line by that much.
    */
-  systemWidth: 90,
+  systemWidth: spaces(ABCJS_PX.systemWidth),
   /**
    * Vertical gap between stacked systems, on top of the ink.
    *
@@ -445,7 +708,7 @@ export const ENGRAVE = {
    * only when it falls short, so tall content takes the room it needs and no more.
    * abcMusicKit v1 implements exactly this in `addStaffPadding`.
    */
-  systemSeparation: 61.33 / 7.75,
+  systemSeparation: spaces(ABCJS_PX.systemSeparation),
   /**
    * How full a LAST system must already be before it is justified to the page.
    *
@@ -457,7 +720,7 @@ export const ENGRAVE = {
    * abcjs also exposes `%%stretchlast` to override it with a "lack" fraction. Not
    * implemented; no fixture sets it.
    */
-  lastSystemFill: 0.66,
+  lastSystemFill: ABCJS_RATIO.lastSystemFill,
   /** Vertical gap between staves WITHIN one system, on top of the minimum separation. */
   staffGap: 0,
   /**
@@ -465,7 +728,7 @@ export const ENGRAVE = {
    * `systemStaffSeparation`, 48px (`write/renderer.js:109`). Tighter than between
    * systems, which is what makes the staves of one score read as belonging together.
    */
-  staffSeparation: 48 / 7.75,
+  staffSeparation: spaces(ABCJS_PX.staffSeparation),
 } as const
 
 // ─── Layout model ────────────────────────────────────────────────────────────
@@ -509,6 +772,8 @@ export type PartRole =
   | 'text'
   | 'lyric'
   | 'chord'
+  /** A chord symbol or annotation on the BELOW side — its own lane, off `staff.bottom`. */
+  | 'chordBelow'
   | 'dynamic'
   | 'title'
 
@@ -559,6 +824,17 @@ export interface PlacedLine {
   readonly role?: PartRole
   /** Set on a stem a BEAM retargets — see the stem case in `verticalExtent`. */
   readonly beamed?: boolean
+  /**
+   * Drawn but NOT counted in the staff's vertical extent.
+   *
+   * A PHASE distinction, not a drawing one. abcjs accumulates `staff.top` from the children
+   * an element has when the engraver builds it; anything added later, in the LAYOUT phase,
+   * pushes `abselem.top` and arrives too late to move the staff. A BEAMED grace group's
+   * stems are built in `createStems` and are exactly that — measured on `{efg}CD`, whose
+   * element top reaches pitch 16 while its staff top stays at the G clef's 13.72 and its
+   * top line does not move by a single pixel from the same tune with no graces at all.
+   */
+  readonly noReserve?: boolean
 }
 
 /**
@@ -574,6 +850,16 @@ export interface PlacedText {
   readonly text: string
   /** What this text is. Absent means it inherits its element's kind. */
   readonly role?: PartRole
+  /**
+   * Vertical extent this text DECLARES, replacing the box its font size implies — the
+   * same escape a glyph has. `[top, bottom]` in staff spaces.
+   *
+   * A text DECORATION is the case: abcjs gives `D.C.` and its like a flat
+   * `thickness: 3` (`decoration.js:151`), so it reserves `pitch ± 1.5` and not the font
+   * size its letters occupy. Reserving the letters put `frere-jacques`'s last staff 2.08
+   * pitch high.
+   */
+  readonly reserve?: readonly [number, number]
   readonly x: number
   /** Baseline y, staff spaces. */
   readonly y: number
@@ -586,6 +872,23 @@ export interface PlacedText {
    * only the top-text block centres a title or right-aligns a composer.
    */
   readonly anchor?: 'start' | 'middle' | 'end'
+  /**
+   * `%%jazzchords`' split of this chord symbol — root, modifier, `/bass`.
+   *
+   * Present only on a `chord` role under the directive, so an ANNOTATION never carries one:
+   * abcjs runs `translateChord` on chord symbols and skips annotations outright
+   * (`add-chord.js:45-46`). The modifier and the bass draw as `font-size:0.7em` tspans
+   * nested in the chord's own, and each one the generator sees adds a whole LINE to the
+   * measured height. See `Score.jazzChords`.
+   */
+  readonly jazz?: readonly [string, string, string]
+  /**
+   * `%%<type>font … box` — the text's own font is boxed, so `getTextSize` returns
+   * `height + padding * 4` for it (`helpers/get-text-size.js:46-48`). Carried on a chord
+   * symbol because its LANE is measured from that height — and on a LYRIC for the same
+   * reason, since `%%vocalfont … box` widens the staff below it.
+   */
+  readonly box?: boolean
 }
 
 export interface LayoutElement {
@@ -596,6 +899,8 @@ export interface LayoutElement {
    * last row's descender, so the block cannot be measured from its texts after the fact.
    */
   readonly blockHeight?: number
+  /** A MID-TUNE block: it sits straight on the music, spending no `musicSpace`. */
+  readonly blockAbutsMusic?: boolean
   /**
    * Absolute y of a block's TOP — its cursor origin, above the first line's ink.
    *
@@ -608,6 +913,30 @@ export interface LayoutElement {
   readonly x: number
   readonly width: number
   /**
+   * The two halves `width` is the maximum of, for an element that stretches.
+   *
+   * abcjs advances by `max(rod, spacing * sqrt(duration * 8))` — a ROD, the element's own
+   * ink plus its `minspacing`, and a SPRING, the duration advance
+   * (`layout/voice-elements.js`: `x = Math.max(voice.minx, voice.nextx)`). Justification
+   * scales the spring and leaves the rod alone, which is why a line cannot be stretched by
+   * multiplying it: the winner can change as the factor moves, so the total width is
+   * piecewise-linear in the factor and abcjs re-solves it up to 8 times.
+   *
+   * Absent on anything that does not stretch — a barline, a clef, a key signature. Those
+   * are all rod, and `width` is it.
+   */
+  readonly spring?: number
+  readonly rod?: number
+  /**
+   * How far the element's ink reaches LEFT of its own x — abcjs's `-child.extraw`.
+   *
+   * An accidental, a grace group or a barline's clearance sits before the thing that
+   * names the element, and none of it advances the cursor: the gap the spring already
+   * opened absorbs it. It pushes only when there is not enough room, which is abcjs's
+   * `if (er < extraWidth) x += extraWidth - er`.
+   */
+  readonly left?: number
+  /**
    * Staff steps of every notehead, ascending — 0 is the middle line, positive upward.
    * Empty for anything unpitched.
    *
@@ -616,10 +945,37 @@ export interface LayoutElement {
    * upper notehead of every chord unverified while the suite reported MATCH — the exact
    * shape of the blind spot the parser audit found.
    */
+  /**
+   * abcjs's `rest.type === 'rest'` — an ORDINARY rest, which is narrower than "a rest".
+   * `fixVoiceCollisions` weeds on exactly this, so it excludes the invisible ones AND a
+   * measure-filling rest, which `createNote` has already retyped `whole`
+   * (`abstract-engraver.js:811-813`), AND a multi-measure one. Absent on anything else.
+   */
+  readonly plainRest?: boolean
   readonly staffSteps: readonly number[]
   readonly glyphs: readonly PlacedGlyph[]
   readonly lines: readonly PlacedLine[]
   readonly texts: readonly PlacedText[]
+  /**
+   * Where a REPEAT ENDING's bracket attaches to this barline, as offsets from `x`.
+   *
+   * abcjs hangs an `EndingElem` on a `RelativeElement` that the barline cursor happens to
+   * be holding — not on the bar element and not on the music. `EndingElem(text, anchor,
+   * null)` takes whatever `anchor` is when `startEnding` is seen, which is after the whole
+   * cursor walk, so it is the LAST rule; `partstartelem.anchor2 = anchor` fires on
+   * `endEnding`, which sits between the thick and the second thin, so it is the thick if
+   * there is one and the first thin otherwise (`abstract-engraver.js:1017`, `:1040`).
+   *
+   * `drawEnding` then opens at `anchor1.x + anchor1.w` and closes at `anchor2.x` — the
+   * right edge one way and the left edge the other, which is why the two offsets are not
+   * the same quantity (`draw/ending.js:13-22`).
+   *
+   * AND THE `w` IS THE ANCHOR'S, NOT THE RULE'S DRAWN THICKNESS. abcjs builds a thin rule
+   * as `new RelativeElement(null, dx, 1, 2, {linewidth: 0.6})` — declared width 1, painted
+   * 0.6 — and a thick one as `(null, dx, 4, 2, {linewidth: 4})`. Only the thick pair agree.
+   */
+  readonly endingStart?: number
+  readonly endingEnd?: number
 }
 
 /**
@@ -630,6 +986,26 @@ export interface StemInfo {
   /** Index into the system's `elements`. */
   readonly element: number
   readonly x: number
+  /**
+   * Left edge of the FURTHEST head — `heads[0]` going up, `heads[len-1]` going down, which
+   * is abcjs's `furthestHead` (`layout/beam.js:113`). A beamed stem is not the unbeamed one
+   * with a new endpoint: `createStems` builds a fresh one off this head, so the beam pass
+   * needs the head, not the stem we drew before we knew.
+   */
+  readonly headX: number
+  /** That head's ink width — abcjs's `furthestHead.w`. */
+  readonly headWidth: number
+  /**
+   * That head's own `dx` WITHIN its element — a seconds displacement plus the voice-overlap
+   * shift — carried separately because `createStems` counts it TWICE.
+   *
+   * `dx = (asc ? furthestHead.w : 0); if (!isGrace) dx += furthestHead.dx; var x =
+   * furthestHead.x + dx` (`layout/beam.js:117-121`) — and `furthestHead.x` is already
+   * `parent.x + furthestHead.dx`, so the `x` handed to `getBarYAt` is one displacement
+   * further right than the stem it then draws. Zero on a plain note, and a whole notehead
+   * on a displaced one.
+   */
+  readonly headDx: number
   /** Staff step of the notehead furthest along the stem — where the tip is measured from. */
   readonly farStep: number
   /**
@@ -665,7 +1041,6 @@ export interface PlacedCurve {
   readonly y2: number
   /** Height of the arc at its midpoint. NEGATIVE arcs upward, matching y-down. */
   readonly bulge: number
-  readonly endThickness: number
   readonly midThickness: number
   /** A tie joins one pitch to itself; a slur spans a phrase. They differ in shape rules. */
   readonly kind: 'tie' | 'slur'
@@ -710,6 +1085,19 @@ export interface LayoutStaff {
    * notehead to another and is resolved once every member's position is known.
    */
   readonly curves: readonly PlacedCurve[]
+  /**
+   * Whether a tuplet on this staff reserves abcjs's ending lane ABOVE it — declared by
+   * `layoutTuplets` from abcjs's own rule, never from where the bracket was drawn.
+   */
+  /** A hairpin on this staff — see `StaffFurniture.hasHairpin`. */
+  readonly hasHairpin: boolean
+  /** Which side the dynamics lane is on. */
+  readonly dynamicsAbove: boolean
+  readonly tupletReservesAbove: boolean
+  /** abcjs's declared box per tuplet on this staff — see `layoutTuplets`. */
+  readonly tupletReserves: readonly { top: number; bottom: number }[]
+  /** abcjs's declared box per tie and slur — see `curveReserves`. */
+  readonly curveReserves: readonly { top: number; bottom: number }[]
   /** Tuplet brackets, and the numbers that go with them. Also span elements. */
   readonly tupletLines: readonly PlacedLine[]
   readonly tupletTexts: readonly PlacedText[]
@@ -772,7 +1160,6 @@ export const stepToY = (step: number): number => -step * ENGRAVE.spacePerStep
 const STAFF_HALF_HEIGHT = 2
 
 /** abcjs's staff space in pixels — the unit its published constants are given in. */
-const ABCJS_PX_PER_SPACE = 7.75
 
 /**
  * Text box estimate, in multiples of the font size — the renderer's CONTRACT for how
@@ -806,10 +1193,18 @@ const CLEF_REFERENCE: Readonly<Record<ClefShape, number>> = {
   G: 32,
   F: 24,
   C: 28,
-  // Unpitched. Treated as a C clef on the middle line so notes land somewhere sane
-  // rather than at a wild offset; neither is a real pitch mapping.
-  percussion: 28,
-  none: 28,
+  // UNPITCHED CLEFS STILL MAP LIKE TREBLE — only the glyph is absent.
+  //
+  // abcjs's table gives `perc` and `none` `mid: 0`, the same as treble
+  // (`abc_parse_key_voice.js:36,42`), and `none` carries no `pitch` at all. Measured on
+  // its own output: `K:C perc` and `K:C none` both put `B4` 15.49px below the top staff
+  // line, exactly where `K:C` puts it. The whole visible difference between them and
+  // treble is the CLEF's own reserve — 13.7244 pitch against a bare staff's 10.
+  //
+  // Reading them as a C clef on the middle line — "so notes land somewhere sane" — put
+  // every note 3 staff spaces high, and the staff under it ~11.8px low in compensation.
+  percussion: 32,
+  none: 32,
 }
 
 /**
@@ -892,12 +1287,40 @@ function splitDots(notated: Rational): { base: Rational; dots: number } | null {
  * because the staff position is still right.
  */
 export function noteGlyph(notated: Rational): NoteGlyphSpec | null {
+  // A ZERO-LENGTH NOTE IS A STEMLESS QUARTER HEAD, and it has to be tested BEFORE
+  // `splitDots`, which rejects a zero numerator as a duration no notehead can write.
+  //
+  // `C0` is legal ABC and abcjs keeps it:
+  // `if (duration === 0) { zeroDuration = true; duration = 0.25; nostem = true; }`, with
+  // its own comment "zero duration will draw a quarter note head"
+  // (`abstract-engraver.js:790-791`), and then `chartable[style].nostem`, which for a
+  // plain note is `noteheads.quarter` (`:36`). We drew nothing at all, so half the notes
+  // in abcjs's own `parse/note.test.js` fixture never reached the page.
+  //
+  // ponytail: abcjs also SPACES it as a quarter, by rewriting `duration` before spacing
+  // runs. Ours still spaces it at zero — the head is content, the advance is geometry,
+  // and no fixture measures the second yet.
+  if (notated.numerator === 0) return { head: 'noteheadBlack', stemmed: false, flags: 0, dots: 0 }
+
   const split = splitDots(notated)
   if (split === null) return null
   const { base, dots } = split
 
   const whole = ratToNumber(base)
   if (!(whole > 0)) return null
+  // A BREVE IS ITS OWN NOTEHEAD, and we drew a semibreve for one. abcjs indexes
+  // `chartable.note[-durlog]` with `durlog = Math.floor(Math.log2(duration))`
+  // (`abstract-engraver.js:36, 793`), so a duration of 2 lands on `noteheads.dbl` — a
+  // different note VALUE, not a different outline for the same one.
+  //
+  // Every `clefs` fixture is `G8` under `L:1/4`, which is two whole notes. Eight rows of
+  // the pixel table read `ox = 0.18` on those and were written off as "the whole
+  // notehead's OUTLINE, and not work" — the figure that justified it, abcjs's head inking
+  // "16.83px wide", is `noteheads.dbl`'s `w` to the hundredth. The gate was right and the
+  // diagnosis was wrong: a bounding-box centre cannot tell a wrong glyph from a differently
+  // shaped one, and "measured, and not a defect" needs the two ruled apart before it is
+  // written down.
+  if (whole >= 2) return { head: 'noteheadDoubleWhole', stemmed: false, flags: 0, dots }
   if (whole >= 1) return { head: 'noteheadWhole', stemmed: false, flags: 0, dots }
 
   // 1/2 → 1, 1/4 → 2, 1/8 → 3 …
@@ -916,7 +1339,19 @@ export function noteGlyph(notated: Rational): NoteGlyphSpec | null {
  * line, ±2 and ±4 the others) and odd steps are spaces, so the rule is simply: bump an
  * even step up by one.
  */
-function dotGlyphs(count: number, x: number, step: number, taken: Set<number>): PlacedGlyph[] {
+function dotGlyphs(
+  count: number,
+  x: number,
+  step: number,
+  taken: Set<number>,
+  /**
+   * REQUIRED, not defaulted. It held `= ENGRAVE.dotSpacing`, and a default is exactly how
+   * `abcjs-strict` ends up reading one of OUR constants without anyone deciding it should:
+   * the notehead call site passed abcjs's gated value and the REST call site, which simply
+   * omitted the argument, did not. A caller that must name the value cannot forget.
+   */
+  spacing: number,
+): PlacedGlyph[] {
   let dotStep = step % 2 === 0 ? step + 1 : step
   // ponytail: in a chord, two notes a second apart can want the same dot space — one is
   // on a line and bumps up onto its neighbour's. Moved up a space rather than solved
@@ -926,7 +1361,7 @@ function dotGlyphs(count: number, x: number, step: number, taken: Set<number>): 
 
   const out: PlacedGlyph[] = []
   for (let i = 0; i < count; i++) {
-    out.push({ ...glyphAt('augmentationDot', x + i * ENGRAVE.dotSpacing, dotStep), role: 'dot' })
+    out.push({ ...glyphAt('augmentationDot', x + i * spacing, dotStep), role: 'dot' })
   }
   return out
 }
@@ -943,11 +1378,19 @@ function dotGlyphs(count: number, x: number, step: number, taken: Set<number>): 
  * implemented — every corpus fixture has something a quarter or shorter, so the cap
  * would never fire. Add it with the line's shortest note when a long-only tune appears.
  */
-export function naturalWidth(
-  duration: Rational,
-  spacingScale: number = ENGRAVE.spacingScale,
-): number {
-  const d = ratToNumber(duration)
+export function naturalWidth(duration: Rational, spacingScale: number): number {
+  return springForDuration(ratToNumber(duration), spacingScale)
+}
+
+/**
+ * The same curve from a plain number, for a duration that is no longer a written note's.
+ *
+ * A voice waiting through another's shorter notes has only PART of its duration left to
+ * spend, and abcjs recomputes its expectation from that remainder
+ * (`othervoices[i].spacingduration -= spacingduration; updateNextX(...)`). The remainder is
+ * arithmetic on durations already spent, not a notated value, so it arrives as a float.
+ */
+export function springForDuration(d: number, spacingScale: number): number {
   if (!(d > 0)) return ENGRAVE.minColumnGap
   return Math.max(ENGRAVE.minColumnGap, spacingScale * Math.sqrt(d / ENGRAVE.spacingReference))
 }
@@ -964,8 +1407,12 @@ const CLEF_GLYPHS: Readonly<Record<ClefShape, GlyphName | null>> = {
   G: 'gClef',
   F: 'fClef',
   C: 'cClef',
-  // ponytail: no percussion glyph extracted, and `clef=none` draws nothing by definition.
-  percussion: null,
+  // `clef=perc` DRAWS — `case 'perc': clef = "clefs.perc"` (`create-clef.js:26`) — and
+  // its 21px is 26 of prefix once the clef's own `dx = 5` is on it. We drew nothing and
+  // took no width: `visual-tablature-12` slid 36px left on that alone.
+  percussion: 'unpitchedPercussionClef1',
+  // `case 'none': return null` — abcjs builds NO clef element at all, so it takes no
+  // prefix width either (`create-clef.js:27`). Not "an element that draws nothing".
   none: null,
 }
 
@@ -977,13 +1424,6 @@ const CLEF_GLYPHS: Readonly<Record<ClefShape, GlyphName | null>> = {
  * and the octave marker below a `-8` clef is positioned off that declared bottom rather
  * than off any ink.
  */
-const CLEF_PITCH_OFFSET: Readonly<Record<ClefShape, number>> = {
-  G: -5,
-  C: -4,
-  F: -4,
-  percussion: -2,
-  none: 0,
-}
 
 /** abcjs draws the octave marker at two thirds size (`create-clef.js:39`). */
 const OCTAVE_MARKER_SCALE = 2 / 3
@@ -994,7 +1434,32 @@ function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null 
   // Every SMuFL clef's origin sits on the line it marks, so the glyph goes exactly where
   // the clef's line is — no per-clef offsets. Line n is (n - 3) * 2 steps from the middle.
   const step = (clef.line - 3) * 2
-  const glyphs = [glyphAt(name, x, step)]
+  /** abcjs PITCH -> our y. The bottom staff line is pitch 2, and a pitch is half a step. */
+  const pitchStep = (pitch: number): number => stepToY(pitch - 6)
+  // THE CLEF RESERVES A DECLARED BOX, NOT ITS INK.
+  //
+  // `createClef` hands the clef's RelativeElement `{ top: height + clefPos + ofs, bottom:
+  // clefPos + ofs }` with `ofs` a hardcoded per-clef constant — −5 for G, −4 for C and F,
+  // −2 for perc (`create-clef.js:37,62-70`). That is NOT the glyph's box: for the treble
+  // clef it comes to 14.7244 + 4 − 5 = 13.7244 pitch, where the outline's own top is
+  // 4.8387 spaces above the G line, 0.0235 of a space less.
+  //
+  // And the clef is what sets the staff's top on any tune with nothing above the staff —
+  // probed on `simple-c`, where `staff.top` is raised to 13.7244 BY THE CLEF and by nothing
+  // else, stems included. So that 0.0235 of a space was the whole vertical offset on eight
+  // fixtures: they sat a uniform 0.184px high, staff lines and noteheads together.
+  const clefBottom = 2 * clef.line + (ABCJS_CLEF_OFFSET_PITCH[clef.shape] ?? 0)
+  // …AND THE HEIGHT IN THAT BOX IS THE PUBLISHED `h`, NOT THE INK BOX.
+  // `symbolHeightInPitches` reads `glyphs[symbol].h` (`glyphs.js:161-164`), which for the
+  // G clef is 57.057px against a derived ink box of 57.09 — 0.033px, a two-hundredth of a
+  // staff space, and the SYSTEMIC `oy` that every fixture in the harvested corpus carried.
+  const clefTop = clefBottom + 2 * (glyphsFor(strict).get(name)?.declaredHeight ?? 0)
+  const glyphs: PlacedGlyph[] = [
+    {
+      ...glyphAt(name, x + ENGRAVE.clefIndent, step),
+      reserve: [pitchStep(clefTop), pitchStep(clefBottom)],
+    },
+  ]
 
   // `clef=treble-8` and friends: a small `8` under (or over) the clef.
   //
@@ -1005,9 +1470,6 @@ function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null 
   // three under it down to five — a reserve that does not bracket its own ink, which is
   // why it is declared rather than measured. See `PlacedGlyph.reserve`.
   if (clef.octaveShift !== 0) {
-    const pitchStep = (pitch: number): number => stepToY(pitch - 6)
-    const clefBottom = 2 * clef.line + (CLEF_PITCH_OFFSET[clef.shape] ?? 0)
-    const clefTop = clefBottom + 2 * (glyphsFor(strict).get(name)?.height ?? 0)
     const up = clef.octaveShift > 0
     const anchor = up ? clefTop + 3 : clefBottom - 3
     // `bass-8` hugs the clef instead of hanging off it — abcjs's own exception (`:45-48`).
@@ -1017,7 +1479,7 @@ function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null 
     const adjust = bassEight ? 0 : (glyphsFor(strict).advance(name) - width) / 2
     glyphs.push({
       name: 'timeSig8',
-      x: x + adjust,
+      x: x + ENGRAVE.clefIndent + adjust,
       y: pitchStep(drawPitch),
       scale: OCTAVE_MARKER_SCALE,
       role: 'clef',
@@ -1031,7 +1493,7 @@ function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null 
     x,
     // The octave marker does NOT widen the clef: abcjs fixes the element at `w: 10` and
     // adds the `8` inside it (`create-clef.js:11`), so the music behind it does not move.
-    width: glyphsFor(strict).advance(name),
+    width: ENGRAVE.clefIndent + glyphsFor(strict).advance(name),
     staffSteps: [],
     glyphs,
     lines: [],
@@ -1070,15 +1532,61 @@ function digitGlyphs(
 ): PlacedGlyph[] {
   let cursor = centre - totalAdvance(names) / 2
   return names.map((name) => {
-    const placed = glyphAt(name, cursor, step)
+    // A TIME-SIGNATURE DIGIT RESERVES A BOX CENTRED ON ITS PITCH, not its ink.
+    //
+    // abcjs builds it as `RelativeElement(num, x, w, 8, { thickness:
+    // symbolHeightInPitches(num[0]) })` (`create-time-signature.js:25`), and `thickness`
+    // means `top = pitch + t/2, bottom = pitch - t/2` (`relative-element.js:22`). So the
+    // digit reserves half its height either side of the pitch it sits on and no more.
+    //
+    // Our ink box reached 7.31px ABOVE the top staff line, and on a staff with nothing
+    // else above it that was the whole of the staff's top: `score-reorder`'s bass staff
+    // sat 7.3px low against abcjs, which puts `staff.top` at exactly 10.0 there — the top
+    // line, set by a barline, with the time signature under it.
+    const glyph = glyphsFor(strict).get(name) ?? bravuraDeclared(name)
+    const y = stepToY(step)
+    const placed: PlacedGlyph = {
+      ...glyphAt(name, cursor, step),
+      reserve: [y - glyph.declaredHeight / 2, y + glyph.declaredHeight / 2],
+    }
     cursor += glyphsFor(strict).advance(name)
     return placed
   })
 }
 
-function layoutMeter(x: number, numerator: number, denominator: number): LayoutElement {
-  const top = digitNames(numerator)
-  const bottom = digitNames(denominator)
+function layoutMeter(x: number, meter: Meter, strict = true): LayoutElement {
+  // `M:C` AND `M:C|` ARE ONE GLYPH ON THE MIDDLE LINE, not the digits they stand for.
+  // `createTimeSignature` branches on `elem.type` and draws `timesig.common` or
+  // `timesig.cut` at pitch 6 with nothing else beside it
+  // (`create-time-signature.js:35-40`).
+  //
+  // We drew `4/4` and `2/2` instead, and the difference is a PREFIX WIDTH, so every note
+  // on every line moved with it: `M:C` measured 1.24px narrow and `M:C|` 2.27, uniform on
+  // both — `ox` without a `dx`, which is the signature of a prefix rather than a spacing
+  // rule. `M:2/2` and `M:4/4`, the same meters written as digits, were exact throughout.
+  if (meter.symbol !== 'numeric') {
+    const name: GlyphName = meter.symbol === 'cut' ? 'timeSigCutCommon' : 'timeSigCommon'
+    return {
+      type: 'timeSignature',
+      x,
+      width: glyphsFor(strict).advance(name),
+      staffSteps: [],
+      glyphs: [glyphAt(name, x, 0)],
+      lines: [],
+      texts: [],
+    }
+  }
+  // AN ADDITIVE METER IS DRAWN TERM BY TERM. abcjs keeps the numerator as the string it
+  // was written as — the golden's own `data-name="2+3"` — and lays out one glyph per
+  // character (`create-time-signature.js:17-27`). Summing to `5` cost `2+3/8` 17.08px of
+  // prefix and moved every note on the line.
+  const top =
+    meter.numeratorParts === undefined
+      ? digitNames(meter.numerator)
+      : meter.numeratorParts.flatMap((part, i) =>
+          i === 0 ? digitNames(part) : ['timeSigPlus' as GlyphName, ...digitNames(part)],
+        )
+  const bottom = digitNames(meter.denominator)
   const width = Math.max(totalAdvance(top), totalAdvance(bottom))
   const centre = x + width / 2
   // Numerator and denominator centre on steps +2 and -2 — symmetric about the middle
@@ -1105,6 +1613,28 @@ function layoutMeter(x: number, numerator: number, denominator: number): LayoutE
  */
 const SHARP_STEPS = [4, 1, 5, 2, -1, 3, 0] as const
 const FLAT_STEPS = [0, 3, -1, 2, -2, 1, -3] as const
+/** The order the two signatures are written in — F C G D A E B, and its mirror. */
+const SHARP_ORDER: readonly DiatonicStep[] = ['f', 'c', 'g', 'd', 'a', 'e', 'b']
+const FLAT_ORDER: readonly DiatonicStep[] = ['b', 'e', 'a', 'd', 'g', 'c', 'f']
+/**
+ * Where a letter's key accidental sits, which depends on the SIGN: `g` is step 5 as a
+ * sharp and −2 as a flat, because the two signatures are written in opposite octaves.
+ */
+const keyStepOf = (letter: DiatonicStep, sharp: boolean): number =>
+  sharp
+    ? (SHARP_STEPS[SHARP_ORDER.indexOf(letter)] ?? 0)
+    : (FLAT_STEPS[FLAT_ORDER.indexOf(letter)] ?? 0)
+
+/** A `K:` field's explicit accidental, in QUARTER tones, to the glyph abcjs draws. */
+const KEY_ACCIDENTAL_GLYPH: Readonly<Record<number, GlyphName>> = {
+  [-4]: 'accidentalDoubleFlat',
+  [-2]: 'accidentalFlat',
+  [-1]: 'accidentalQuarterToneFlatStein',
+  [0]: 'accidentalNatural',
+  [1]: 'accidentalQuarterToneSharpStein',
+  [2]: 'accidentalSharp',
+  [4]: 'accidentalDoubleSharp',
+}
 
 /** Position on the circle of fifths for a natural step: F=-1, C=0, G=1, D=2 … */
 const NATURAL_FIFTHS: Readonly<Record<DiatonicStep, number>> = {
@@ -1159,10 +1689,39 @@ export function keyFifths(key: KeySignature): number {
  * octave to avoid ledger lines, and no single shift reproduces that. This formula puts
  * them an octave high. No corpus fixture uses a tenor key signature; fix it when one does.
  */
+/**
+ * Last-resort metrics for a glyph NEITHER table carries — zeros rather than a crash.
+ *
+ * Both tables already fall back to Bravura, so this only fires on a name that is in
+ * neither, which the glyph-map test asserts cannot happen. It exists so the reserve sites
+ * can read `declaredHeight` unconditionally.
+ */
+const bravuraDeclared = (name: GlyphName) => {
+  const g = GLYPHS[name]
+  return { height: g?.height ?? 0, declaredHeight: g?.height ?? 0 }
+}
+
 function keySignatureShift(clef: Clef): number {
   const delta = middleLineIndex(defaultClef) - middleLineIndex(clef)
   const wrapped = ((delta % 7) + 7) % 7
   return wrapped > 3 ? wrapped - 7 : wrapped
+}
+
+/**
+ * The box a key-signature accidental reserves — abcjs's, not its ink.
+ *
+ * `top = verticalPos + symbolHeightInPitches(symbol) + fudge`, `bottom = verticalPos +
+ * fudge`, where the fudge is a constant per accidental (`create-key-signature.js:17-23`):
+ * a sharp's box starts 3 pitches BELOW its line, a flat's 1.2. A pitch is one staff step.
+ */
+
+function keyAccidentalReserve(name: GlyphName, step: number, strict: boolean): [number, number] {
+  const glyph = glyphsFor(strict).get(name) ?? bravuraDeclared(name)
+  const fudge = ABCJS_KEY_ACCIDENTAL_FUDGE_PITCH[name] ?? 0
+  // `symbolHeightInPitches` is the PUBLISHED `h / STEP`, and ours is in staff spaces —
+  // twice that. The published figure, not the ink box: a sharp declares 20.15 against an
+  // ink box of 20.19, which is the extra 0.04px a sharp key signature was adding.
+  return [stepToY(step + 2 * glyph.declaredHeight + fudge), stepToY(step + fudge)]
 }
 
 function layoutKeySignature(
@@ -1172,23 +1731,53 @@ function layoutKeySignature(
   strict = true,
 ): LayoutElement | null {
   const fifths = keyFifths(key)
-  if (fifths === 0) return null // C major and K:none both draw nothing.
-
   const shift = keySignatureShift(clef)
   const sharps = fifths > 0
-  const steps = (sharps ? SHARP_STEPS : FLAT_STEPS)
-    .slice(0, Math.abs(fifths))
-    .map((step) => step + shift)
   const name: GlyphName = sharps ? 'accidentalSharp' : 'accidentalFlat'
-  const pitch = glyphsFor(strict).advance(name) + ENGRAVE.keySignatureGap
+  const written: { name: GlyphName; step: number; letter: DiatonicStep }[] = (
+    sharps ? SHARP_ORDER : FLAT_ORDER
+  )
+    .slice(0, Math.abs(fifths))
+    .map((letter) => ({ name, step: keyStepOf(letter, sharps) + shift, letter }))
+
+  // EXPLICIT ACCIDENTALS on the field REPLACE a standard one on the same letter, or are
+  // appended (`abc_parse_key_voice.js:320-350`). Their own position follows the accidental's
+  // SIGN, since a sharp and a flat sit an octave apart for several letters — `g` is step 5
+  // sharp and −2 flat.
+  for (const acc of key.extra ?? []) {
+    const glyph = KEY_ACCIDENTAL_GLYPH[acc.quarters] ?? 'accidentalNatural'
+    const entry = {
+      name: glyph,
+      step: keyStepOf(acc.step, acc.quarters > 0) + shift,
+      letter: acc.step,
+    }
+    const at = written.findIndex((w) => w.letter === acc.step)
+    if (at >= 0) written[at] = entry
+    else written.push(entry)
+  }
+  if (written.length === 0) return null // C major and K:none both draw nothing.
+
+  let cursor = x
+  const glyphs: PlacedGlyph[] = written.map((w) => {
+    const at = cursor
+    cursor += glyphsFor(strict).advance(w.name) + ENGRAVE.keySignatureGap
+    return {
+      ...glyphAt(w.name, at, w.step),
+      // A KEY-SIGNATURE ACCIDENTAL RESERVES A DECLARED BOX TOO — abcjs's
+      // `{ top: verticalPos + symbolHeightInPitches + fudge, bottom: verticalPos + fudge }`
+      // (`create-key-signature.js:25`), with `fudge` a per-accidental constant: -3 for a
+      // sharp, -1.2 for a flat. Its height is in PITCHES, which are our steps.
+      reserve: keyAccidentalReserve(w.name, w.step, strict),
+    }
+  })
 
   return {
     type: 'keySignature',
     x,
     // No trailing gap: the signature ends at the last glyph's ink.
-    width: steps.length * pitch - ENGRAVE.keySignatureGap,
+    width: cursor - x - ENGRAVE.keySignatureGap,
     staffSteps: [],
-    glyphs: steps.map((step, i) => glyphAt(name, x + i * pitch, step)),
+    glyphs,
     lines: [],
     texts: [],
   }
@@ -1214,17 +1803,30 @@ function layoutKeyChange(
   clef: Clef,
   strict = true,
 ): LayoutElement | null {
-  // A `K:` that restates the key in force prints NOTHING. This is not an optimisation —
-  // it is the difference between correct and a duplicated key signature in the middle of
-  // a bar. Three fixtures reach it and none of them is about key changes: a per-voice
-  // `K:G clef=treble` on each of two voices makes the second one a "change" from G to G
-  // (`multi-voice-rest-collision`), and `clefs` restates the key per voice the same way.
+  // THERE IS NO "SAME SIGNATURE, PRINT NOTHING" TEST IN ABCJS, and the one that used to
+  // stand here was our own engraving judgement wearing a citation.
   //
-  // Compared on FIFTHS, not on the key object: `K:G` and `K:Em` are the same signature in
-  // different modes, and a reader sees no accidental change between them, so neither
-  // should the page.
-  if (keyFifths(from) === keyFifths(to)) return null
-
+  // It read: "`K:G` and `K:Em` are the same signature in different modes, and a reader
+  // sees no accidental change between them, so neither should the page." That is sound
+  // engraving and abcjs's own SVG denies it — `K:G\nGABc|[K:Em]GABc|` draws TWO
+  // signatures, the prefix at 49.05 and the change at 248.01, both `w = 8.25`. Its parser
+  // appends the element on the strength of `result.foundKey && hasBeginMusic()` alone
+  // (`abc_parse_header.js:430-434`) and never compares keys; the only thing that
+  // suppresses a draw is `createKeySignature` returning null for an EMPTY accidental list
+  // (`create-key-signature.js:9`), which the `cancelled`/`incoming` test below is.
+  //
+  // WHAT THE GUARD WAS ACTUALLY COMPENSATING FOR is a modelling difference, and it is
+  // handled where it belongs. A per-voice `K:G clef=treble` on each of two voices made the
+  // second a "change" from G to G — but in abcjs that `K:` reaches `appendStartingElement`
+  // with the voice's own child list EMPTY, so it falls past both arms of the scan and
+  // assigns `staff[staffNum].key` instead of pushing an element (`tune-builder.js:270-292`).
+  // It is the voice's KEY, not a change, and `keyChangeLeadsLine` is the same test.
+  // Measured on that control: abcjs draws one key signature, not two.
+  //
+  // Cost of the wrong reading: `S6-keys` X:604 changes `K:A Mixolydian` to `K:E Dorian`,
+  // two sharps to two sharps, and abcjs reprints all of it — 18.50px of fixed width at the
+  // end of that system, which justification then spread over eight noteheads as a clean
+  // 3.56px-per-note ramp out to dx 24.93.
   const shift = keySignatureShift(clef)
   const stepsFor = (key: KeySignature): { step: number; sharp: boolean }[] => {
     const fifths = keyFifths(key)
@@ -1244,7 +1846,14 @@ function layoutKeyChange(
   const glyphs: PlacedGlyph[] = []
   let cursor = x
   const advance = (name: GlyphName, step: number): void => {
-    glyphs.push(glyphAt(name, cursor, step))
+    // The SAME declared box the opening signature reserves — `createKeySignature` is one
+    // function and abcjs calls it for a mid-tune `[K:]` too. A NATURAL's fudge is 0 and it
+    // is the tall glyph, so a change that cancels anything reserves well above the staff:
+    // `[K:Eb]` after `K:G` puts abcjs's top line 8.34px lower than ours did with none.
+    glyphs.push({
+      ...glyphAt(name, cursor, step),
+      reserve: keyAccidentalReserve(name, step, strict),
+    })
     cursor += glyphsFor(strict).advance(name) + ENGRAVE.keySignatureGap
   }
   for (const entry of cancelled) advance('accidentalNatural', entry.step)
@@ -1295,30 +1904,55 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
     // Real per-character metrics, like everything else that measures text. This kept the
     // flat half-em-per-character estimate after `textWidth` replaced it everywhere else —
     // a stale ponytail that was still running, not just still written.
-    cursor += textWidth(tempo.text, ENGRAVE.tempoTextSize) + 1
+    cursor += textWidth(tempo.text, ENGRAVE.tempoTextSize, 'serifBold') + 1
   }
 
   if (tempo.bpm !== null) {
-    // The beat unit is drawn as a real note — a quarter note for `1/4=120`.
+    // THE BEAT-UNIT NOTE IS A 0.75-SCALE MINIATURE FIVE PITCHES BELOW THE RESERVED TOP,
+    // and its stem is a flat 3.5 pitch — not the note geometry the staff uses.
+    //
+    // abcjs builds it in `tempo-element.js:24-59`: `temposcale = 0.75` on the head, a stem
+    // from `1/3 * scale` to `5 * scale` — 0.25 to 3.75 pitch above the head — hung off
+    // `tempoNote.dx + tempoNote.w`, the scaled head's right edge, and an advance of
+    // `note.w + 5` before the rate (`draw/tempo.js:29`). The head's own pitch is
+    // `element.pitch - totalHeightInPitches + 1` (`set-upper-and-lower-elements.js:209`),
+    // which is five pitch below the top the mark reserved — the same point
+    // `verticalExtent` reads back off this baseline.
+    //
+    // Measured against abcjs's own SVG on `ragtime-nightingale`, all four to 0.01px: head
+    // centre 2.625px above the rate's baseline, stem spanning y 98.52 to 112.09, its left
+    // edge at 122.96, and the rate at x 128.56.
     const spec = tempo.beatUnit === null ? null : noteGlyph(tempo.beatUnit)
     if (spec !== null) {
-      // Anchors are Bravura's alone — abcjs's table has none, and a stem attachment is
-      // a property of the OUTLINE, so it stays with the font that defines it. Only the
-      // advance comes from the active table.
-      const head = GLYPHS[spec.head]
-      const headAdvance = glyphsFor(strict).advance(spec.head)
-      glyphs.push({ name: spec.head, x: cursor, y: baseline })
+      const headAdvance = glyphsFor(strict).advance(spec.head) * ENGRAVE.tempoNoteScale
+      const noteY =
+        baseline - ENGRAVE.tempoTextSize - ENGRAVE.tempoDescenderBump + 5 * ENGRAVE.spacePerStep
+      glyphs.push({ name: spec.head, x: cursor, y: noteY, scale: ENGRAVE.tempoNoteScale })
       if (spec.stemmed) {
-        const [ax, ay] = head.anchors.stemUpSE ?? [head.width, 0]
+        // AND IT IS A THIN STEM, `linewidth: -0.6` (`tempo-element.js:56`) — the beamed
+        // weight, not the unbeamed 1. Hung off the head's right EDGE, so its centre is half
+        // a stem inside: abcjs's quad on `ragtime-nightingale` runs 122.96 to 123.56 where
+        // ours ran 123.06 to 124.06, wrong on both edges. Three fixtures showed a stem-set
+        // of `[1]` against abcjs's `[0.6, 1]` on nothing but this one line.
+        const weight = LINE_WEIGHTS.beamedStem
+        const stemX = cursor + headAdvance - weight / 2
         lines.push({
-          x1: cursor + ax,
-          y1: baseline + ay,
-          x2: cursor + ax,
-          y2: baseline + ay - ENGRAVE.stemLength,
-          thickness: ENGRAVING_DEFAULTS.stemThickness,
+          role: 'stem',
+          x1: stemX,
+          y1: noteY - 0.25 * ENGRAVE.spacePerStep,
+          x2: stemX,
+          y2: noteY - 3.75 * ENGRAVE.spacePerStep,
+          thickness: weight,
         })
       }
-      cursor += headAdvance + 0.3
+      // ponytail: no FLAG or DOT on the beat-unit note, so `Q:1/8=66` draws a bare stem
+      // where abcjs draws an eighth. Probed on `S7-voices`, ready to land: abcjs adds a
+      // second scaled symbol at `dx = headAdvance - 0.6px` and pitch `noteY + 5.25`, and
+      // the element's width becomes `dx + flagWidth` (`flags.u8th` w 6.692 unscaled) so
+      // the rate moves right with it. `tempo-element.js:32-49` also maps `3/8`, `3/16`
+      // and `3/32` to a DOT. No pixel-gated fixture has a non-quarter `Q:` — S7-voices is
+      // baseline-only — so it lands blind until one does.
+      cursor += headAdvance + ENGRAVE.tempoNoteGap
     }
     texts.push({
       text: `= ${tempo.bpm}`,
@@ -1350,7 +1984,9 @@ const layoutPart = (x: number, label: string): LayoutElement => ({
       text: label,
       x,
       y: stepToY(ENGRAVE.partStep),
-      size: ENGRAVE.tempoTextSize,
+      // `partsfont`, whatever the tune set — `%%partsfont sans-serif 29 box` is 26.45px of
+      // part lane over the 15pt default.
+      size: fontSizeOf('partsfont'),
       bold: true,
       italic: false,
     },
@@ -1396,29 +2032,215 @@ function restGlyph(notated: Rational): { name: GlyphName; step: number; dots: nu
   return { name, step: 0, dots }
 }
 
-function layoutRest(rest: Rest, advance: number, x: number, strict = true): LayoutElement {
+/**
+ * A REST MOVES OFF THE MIDDLE LINE WHEN IT SHARES A STAFF.
+ *
+ *     if (isMultiVoice) {
+ *       if (stemdir === "down") restpitch = 3;
+ *       if (stemdir === "up")   restpitch = 11;
+ *     }
+ *
+ * (`abstract-engraver.js:549-551`, from a default `restpitch = 7`.) `isMultiVoice` is
+ * `voice.voicetotal > 1` — this VOICE'S staff carries more than one — and `stemdir` is the
+ * same direction `stemForVoice` models, which abcjs's tune-builder back-fills onto a
+ * shared staff's voices exactly as it honours a declared `V:… stems=`. The two conditions
+ * are separate: a lone voice with `stems=up` has a direction and no shift.
+ *
+ * Four pitch either way, and it moves the DRAWN rest as well as the box it reserves —
+ * `createNoteHead(abselem, c, { verticalPos: restpitch })` is the same variable.
+ */
+const restPitchShift = (stemUp: boolean | null): number =>
+  stemUp === null ? 0 : stemUp ? ABCJS_PITCH.restPitchUp - ABCJS_PITCH.restPitch : ABCJS_PITCH.restPitchDown - ABCJS_PITCH.restPitch
+
+function layoutRest(
+  rest: Rest,
+  advance: number,
+  x: number,
+  strict = true,
+  clef: Clef = defaultClef,
+  /**
+   * The stem direction of a voice SHARING its staff — abcjs's `stemdir` where
+   * `isMultiVoice` also holds. `null` on a staff this voice has to itself, which is the
+   * case abcjs leaves at the default `restpitch`. See `restPitchShift`.
+   */
+  sharedStaffStem: boolean | null = null,
+  /**
+   * `measureLength` — `meter.num / meter.den` (`abstract-engraver.js:173`). A rest exactly
+   * this long is retyped; see `fillsMeasure`.
+   *
+   * abcjs reads the meter of the LINE, set once in `createABCStaff`; ours is the meter as
+   * this MEASURE begins. The two part only on a mid-line `[M:]`, which nothing in either
+   * corpus writes.
+   */
+  measureLength: number | null = null,
+): LayoutElement {
+  // A REST CARRIES ITS GRACES, by the same line that gives it a chord symbol: `createNote`
+  // closes its rest/note branch and THEN calls `addGraceNotes`
+  // (`abstract-engraver.js:834`). They hang LEFT and push the rest right, exactly as on a
+  // note. `(f3 {a})y` was a notehead short of abcjs and 9.6px high on nothing else.
+  const graces = layoutGraces(rest, x, clef, strict)
+  x += graces.width
   // `x` and `y` occupy horizontal space but print nothing; a spacer prints nothing and
   // is not even a rest musically. Both still advance, so following notes stay put.
   const invisible = rest.kind === 'invisible' || rest.kind === 'invisibleMultiMeasure'
-  const spec = invisible || rest.kind === 'spacer' ? null : restGlyph(rest.notatedDuration)
+  // A REST THAT EXACTLY FILLS ITS MEASURE BECOMES A WHOLE REST, whatever it was written as:
+  //
+  //     if (this.measureLength === duration && elem.rest.type !== 'invisible' &&
+  //         elem.rest.type !== 'spacer' && elem.rest.type.indexOf('multimeasure') < 0)
+  //       elem.rest.type = 'whole'
+  //
+  // (`abstract-engraver.js:811-813`.) The retype is not cosmetic — it reaches three places.
+  // `case "whole"` draws `chartable.rest[0]` and sets `dot = 0`, so a dotted rest filling
+  // its bar loses its dots; and `fixVoiceCollisions` weeds on `rest.type === 'rest'`, so a
+  // whole rest never gets out of another voice's way. `zocharti-loch`'s `z8` in `M:C` is
+  // that case, and treating it as an ordinary rest moved it 2.51px abcjs does not.
+  const fillsMeasure =
+    !invisible &&
+    rest.kind !== 'spacer' &&
+    rest.measureCount === 0 &&
+    measureLength !== null &&
+    ratToNumber(rest.notatedDuration) === measureLength
+  const written = invisible || rest.kind === 'spacer' ? null : restGlyph(rest.notatedDuration)
+  const spec =
+    written !== null && fillsMeasure ? { name: 'restWhole' as GlyphName, step: 2, dots: 0 } : written
 
   const glyphs: PlacedGlyph[] = []
+  /** How far the augmentation dots reach past the element's x — 0 when there are none. */
+  let dotRight = 0
+  // A REST CARRIES ITS CHORD SYMBOL AND ANNOTATIONS. abcjs calls `addChord` on every
+  // abselem it builds, rest included (`abstract-engraver.js:853`), so `"Eb7"z` prints the
+  // chord and reserves the whole chord lane — 22.4px of staff on a tune that opens that
+  // way, and the mark itself was lost outright before this.
+  const textSpan = { left: 0, right: 0 }
+  const restWidth = spec === null ? 0 : glyphsFor(strict).width(spec.name)
+  // …AND IT IS CENTRED ON THE ELEMENT, NOT ON THE REST GLYPH. `createNote` declares
+  // `symbolWidth = 0` and assigns it only in the NOTE arm — `symbolWidth = ret2.symbolWidth`
+  // (`abstract-engraver.js:784, 827`) — so the `noteheadWidth` reaching `addChord` on a
+  // rest is a flat zero, and `addCentered` gets `dx = 0` where a note gets half a head.
+  // Both the drawn x and the reserve follow: abcjs's own SVG centres `"Eb7"z`'s chord at
+  // 109.84, the rest's own x, and probes the element at `w = 17.789`, exactly half the
+  // chord. Passing the rest's width made ours half a rest glyph wider — 0.53px under every
+  // notehead after it on `synth-flattener-14`.
+  const texts: PlacedText[] = noteText(rest, x, 0, strict, textSpan)
+  // A MULTI-MEASURE REST IS A BAR AND A COUNT, both hung off one `mmWidth`.
+  //
+  // abcjs (`abstract-engraver.js:593-598`) puts the glyph at `dx = mmWidth`, declares it
+  // `mmWidth * 2` wide and pitch 7, and adds the count as a `multimeasure-text` at
+  // `dx = mmWidth`, width `mmWidth`, pitch 16 — where `mmWidth` is the glyph's own width,
+  // 42px. So the element reaches `3 x mmWidth` to the right of its origin and the bar
+  // itself starts one width in. Our pitch 7 and 16 are steps 1 and 10.
+  //
+  // Drawing nothing for it left `Z24` occupying a bare spring: `misc-01-barnumbers-1`'s
+  // one notehead sat 75.84px right of abcjs's, and the line was too short to reach the
+  // 66% fill that makes abcjs justify it at all.
+  if (rest.kind === 'multiMeasure' && rest.measureCount > 0) {
+    const mm = glyphsFor(strict).width('restHBar')
+    glyphs.push(glyphAt('restHBar', x + mm, 1))
+    texts.push({
+      text: String(rest.measureCount),
+      x: x + mm,
+      y: stepToY(10),
+      size: ENGRAVE.tempoTextSize,
+      bold: true,
+      italic: false,
+      anchor: 'middle',
+      // A POINT at its pitch: abcjs's `multimeasure-text` is a bare `RelativeElement` with
+      // no thickness, so `top === bottom === pitch` (`relative-element.js:18-21`).
+      reserve: [stepToY(10), stepToY(10)],
+    })
+    return {
+      type: 'rest',
+      x,
+      // `w = 126` measured, exactly `3 x mmWidth`: the glyph sits one width in and is two
+      // wide (`addHead(new RelativeElement(c, mmWidth, mmWidth * 2, 7))`).
+      width: Math.max(advance, 3 * mm + ENGRAVE.noteRodGap),
+      spring: advance,
+      // `minspacing: 1` like any note — abcjs adds it to `minx` on every element but the
+      // line's last (`voice-elements.js:74`).
+      rod: 3 * mm + ENGRAVE.noteRodGap,
+      staffSteps: [],
+      glyphs: [...glyphs, ...graces.glyphs],
+      lines: graces.lines,
+      texts,
+    }
+  }
   if (spec) {
-    glyphs.push(glyphAt(spec.name, x, spec.step))
+    // abcjs's `restpitch`, which is BOTH where the glyph is drawn and the pitch its
+    // declared box is centred on — one variable through `createNoteHead`'s `verticalPos`.
+    // Its default is 7 and our own anchor step already draws there (measured: our rest ink
+    // sits 14.360px below the top staff line against abcjs's 14.362), so the shift is
+    // applied as a DELTA rather than by re-deriving the anchor.
+    const shift = restPitchShift(sharedStaffStem)
+    // A REST RESERVES ITS DECLARED BOX, like a notehead: `thickness:
+    // symbolHeightInPitches(c)` on its `RelativeElement`, so `pitch ± thickness / 2`
+    // (`create-note-head.js:33-35`, `relative-element.js:22-24`). Falling through to the
+    // glyph's INK box read `rests.quarter` as 3.066 pitch above its anchor against a
+    // declared 2.766 — and asymmetrically, since that glyph inks 11.88px up and 9.6 down
+    // around a declared ±10.72.
+    const restHalf = (glyphsFor(strict).get(spec.name)?.declaredHeight ?? 0) / 2
+    glyphs.push({
+      ...glyphAt(spec.name, x, spec.step + shift),
+      reserve: [
+        stepToY(ABCJS_PITCH.restPitch + shift - PITCH_ORIGIN) - restHalf,
+        stepToY(ABCJS_PITCH.restPitch + shift - PITCH_ORIGIN) + restHalf,
+      ],
+    })
     if (spec.dots > 0) {
-      const dotX = x + glyphsFor(strict).width(spec.name) + ENGRAVE.dotGap
-      glyphs.push(...dotGlyphs(spec.dots, dotX, spec.step, new Set()))
+      // A DOTTED REST TAKES A NOTE'S DOT ARITHMETIC, because in abcjs it is literally the
+      // same call: the rest branch ends in `createNoteHead(abselem, c, {verticalPos:
+      // restpitch}, {dot, scale})` (`abstract-engraver.js:600`), so
+      // `notehead.w + dotshiftx - 2 + 5 * dot` (`create-note-head.js:50-53`) governs both.
+      //
+      // Finding 88 ported that for noteheads and stopped there, leaving this path on our
+      // own 0.35/0.45-space figures — 2.71 and 3.49px against abcjs's 3 and 5. Found by
+      // the triage rather than by a fixture: `dotGlyphs` took `ENGRAVE.dotSpacing` as a
+      // DEFAULT PARAMETER, so the gated call site passed abcjs's value and this one
+      // silently did not. That is the leak shape the whole audit is about, in one line.
+      const dotX =
+        x +
+        glyphsFor(strict).width(spec.name) +
+        (strict ? spaces(ABCJS_PX.dotOffset + ABCJS_PX.dotSpacing) : ENGRAVE.dotGap)
+      const step = strict ? spaces(ABCJS_PX.dotSpacing) : ENGRAVE.dotSpacing
+      glyphs.push(...dotGlyphs(spec.dots, dotX, spec.step + restPitchShift(sharedStaffStem), new Set(), step))
+      // …AND THE DOT WIDENS THE ELEMENT, exactly as it does on a note. It is an `addRight`
+      // child, so `w = max(w, dx + getSymbolWidth("dots.dot"))` — abcjs probes a dotted
+      // quarter rest at `w = 14.338` against the plain one's 7.888, and the 6.45 between
+      // them is the 3 the dot sits past the glyph plus the dot's own 3.45.
+      //
+      // The DOT was drawn and its ROD was not: the note path spends `dotWidth` and this
+      // one only ever knew `restWidth`. `S4-bars-repeats` X:403 is eleven rests and two
+      // notes, and one dotted rest 6.45 narrow moved both heads.
+      dotRight =
+        dotX -
+        x +
+        (spec.dots - 1) * step +
+        (strict ? glyphsFor(strict).width('augmentationDot') : step)
     }
   }
 
+  // A REST IS A ROD LIKE ANY NOTE. abcjs's `getMinWidth` is `child.w` whatever the type,
+  // and a rest's `w` is its glyph — an eighth rest reports 7.534 and pushes `minx` by
+  // that plus `minspacing`. We reported 0, so a compressed line let the note after a rest
+  // slide onto it: `visual-layout-04` put its `zA` 37.6px left of abcjs's.
+  const restInk = Math.max(
+    spec === null ? 0 : restWidth + ENGRAVE.noteRodGap,
+    dotRight === 0 ? 0 : dotRight + ENGRAVE.noteRodGap,
+    textSpan.right,
+  )
   return {
     type: 'rest',
     x,
-    width: advance,
+    width: Math.max(advance, restInk),
+    spring: advance,
+    rod: restInk,
+    left: Math.max(textSpan.left, graces.left),
+    // abcjs's `rest.type === 'rest'` after `createNote` has had its say — see `plainRest`.
+    plainRest: !invisible && rest.kind !== 'spacer' && rest.measureCount === 0 && !fillsMeasure,
     staffSteps: [],
-    glyphs,
-    lines: [],
-    texts: [],
+    // The graces go on the END — abcjs's document order, an `extra` after the `head`.
+    glyphs: [...glyphs, ...graces.glyphs],
+    lines: graces.lines,
+    texts,
   }
 }
 
@@ -1446,23 +2268,92 @@ function layoutRest(rest: Rest, advance: number, x: number, strict = true): Layo
  * `filled` and `open` follow the DURATION, because a styled note is still a quarter or a
  * half — the style picks the shape, the duration picks whether it is filled.
  *
- * ponytail: abcjs has one glyph for `x` and one for rhythm whatever the duration
- * (`noteheads.indeterminate`, `noteheads.slash.quarter`), so both map to themselves here.
- * A half-note rhythm slash is its own SMuFL glyph if a fixture ever needs one.
+ * abcjs keys each style by DURLOG and gives `x`, `harmonic` and `triangle` the same glyph
+ * at every one (`abstract-engraver.js:36-41`), so those three map to themselves. Only
+ * `rhythm` splits, and its split — `noteheads.slash.whole` for a whole or half,
+ * `.slash.quarter` for a quarter and shorter — is exactly this `open`/`filled` line.
+ *
+ * AND EVERY STYLE HAS A `nostem` ENTRY, which is a THIRD glyph rather than a repeat of the
+ * quarter. A ZERO-DURATION note takes it — `if (zeroDuration) noteSymbol =
+ * chartable[style].nostem` (`abstract-engraver.js:642-646`) — and for `rhythm` that is
+ * `noteheads.slash.nostem`, a glyph of its own at `w 12.81, h 15.63` against
+ * `.slash.quarter`'s 9.00 x 13.00. For the other three it repeats their single glyph, so
+ * only `rhythm` needs the field; the rest fall back to `filled`.
  */
 const STYLED_HEADS: Readonly<
-  Record<Exclude<NoteStyle, 'normal'>, { readonly filled: GlyphName; readonly open: GlyphName }>
+  Record<
+    Exclude<NoteStyle, 'normal'>,
+    { readonly filled: GlyphName; readonly open: GlyphName; readonly nostem?: GlyphName }
+  >
 > = {
   harmonic: { filled: 'noteheadDiamondBlack', open: 'noteheadDiamondWhite' },
   x: { filled: 'noteheadXBlack', open: 'noteheadXBlack' },
   triangle: { filled: 'noteheadTriangleUpBlack', open: 'noteheadTriangleUpWhite' },
-  rhythm: { filled: 'noteheadSlashVerticalEnds', open: 'noteheadSlashVerticalEnds' },
+  rhythm: {
+    filled: 'noteheadSlashHorizontalEnds',
+    open: 'noteheadSlashWhiteWhole',
+    nostem: 'noteheadSlashVerticalEnds',
+  },
 }
 
-/** The head a note actually draws, once its style has had a say. */
-function styledHead(base: GlyphName, event: MusicEvent | null): GlyphName {
-  if (event === null || event.type === 'rest' || event.style === 'normal') return base
-  const pair = STYLED_HEADS[event.style]
+/**
+ * `pitchesToPerc`'s table (`synth/pitches-to-perc.js:1-70`), by VERTICAL POSITION.
+ *
+ * Sixteen entries and no more: a pitch outside `C`..`e'` has no key at all, so `%%percmap`
+ * cannot reach it. The prefix is the accidental's — abcjs builds the key as the
+ * accidental's first LETTER plus the position, and both double accidentals begin `d`,
+ * which is in neither table. So a double-accidental note takes the ordinary head.
+ */
+const PERC_ACCIDENTAL_PREFIX: Readonly<Record<number, string>> = {
+  [Accidental.flat]: '_',
+  [Accidental.natural]: '=',
+  [Accidental.sharp]: '^',
+}
+
+/** `%%percmap` for the current render — the same one-place switch as the fonts. */
+let PERC_MAP: Score['percMap'] = {}
+
+/** The `%%percmap` head for a written pitch on a PERCUSSION staff, or null. */
+function percHead(step: number, accidental: Accidental | null): NoteStyle | null {
+  const position = step + PITCH_ORIGIN
+  const name = ABCJS_PERC_NOTE_NAMES[position]
+  if (name === undefined) return null
+  const prefix = accidental === null ? '' : PERC_ACCIDENTAL_PREFIX[accidental]
+  if (prefix === undefined) return null // a double accidental has no key
+  const head = PERC_MAP[prefix + name]
+  return head !== undefined && head in STYLED_HEADS ? (head as NoteStyle) : null
+}
+
+/**
+ * The head a note actually draws, once its style has had a say.
+ *
+ * `%%percmap` is the OTHER source, and abcjs's `else if` is the order: an explicit
+ * `!style=x!` on the note wins, and only then does a percussion voice consult the map
+ * (`abstract-engraver.js:679-688`).
+ *
+ * ponytail: resolved from the FIRST pitch of a chord, because one head glyph serves the
+ * whole chord here — the same shape as the duration, which abcjs also takes from the first
+ * note. No corpus tune writes a percussion chord whose pitches map to different heads.
+ */
+function styledHead(
+  base: GlyphName,
+  event: MusicEvent | null,
+  percussion = false,
+  firstStep = 0,
+  firstAccidental: Accidental | null = null,
+): GlyphName {
+  if (event === null || event.type === 'rest') return base
+  const style =
+    event.style !== 'normal'
+      ? event.style
+      : percussion
+        ? percHead(firstStep, firstAccidental)
+        : null
+  if (style === null || style === 'normal') return base
+  const pair = STYLED_HEADS[style]
+  // `noteGlyph` gives a zero-duration note a stemless `noteheadBlack`, which is abcjs's
+  // `chartable.note.nostem`. Under a style it takes that style's own `nostem` entry.
+  if (event.duration.numerator === 0 && pair.nostem !== undefined) return pair.nostem
   return base === 'noteheadBlack' ? pair.filled : pair.open
 }
 
@@ -1540,15 +2431,18 @@ const FLAG_GLYPHS: readonly (readonly [GlyphName, GlyphName])[] = [
 /** Ledger lines for a note that sits beyond the staff. */
 function ledgerLines(step: number, x: number, headWidth: number): PlacedLine[] {
   const lines: PlacedLine[] = []
-  const x1 = x - ENGRAVE.ledgerExtension
-  const x2 = x + headWidth + ENGRAVE.ledgerExtension
+  // THE OVERHANG IS PER RENDER, so it is read here and not baked into `ENGRAVE`: abcjs
+  // gives a ledger `symbolWidth + 4` of width at `dx = -2` (`abstract-engraver.js:462`),
+  // which is 2px each side against Bravura's 0.4 of a space, 3.1px.
+  const x1 = x - LINE_WEIGHTS.ledgerExtension
+  const x2 = x + headWidth + LINE_WEIGHTS.ledgerExtension
   const push = (s: number) => {
     lines.push({
       x1,
       y1: stepToY(s),
       x2,
       y2: stepToY(s),
-      thickness: ENGRAVING_DEFAULTS.legerLineThickness,
+      thickness: LINE_WEIGHTS.ledgerLine,
       role: 'ledger',
     })
   }
@@ -1596,62 +2490,49 @@ function layoutNoteheads(
   if (spec === null || steps.length === 0) {
     // Unsupported duration — see noteGlyph. Emit the position with no ink rather than
     // the wrong notehead, so the gap is visible in output and in the gate.
-    return { type: 'note', x, width: advance, staffSteps: steps, glyphs: [], lines: [], texts: [] }
+    return {
+      type: 'note',
+      x,
+      width: advance,
+      spring: advance,
+      rod: 0,
+      staffSteps: steps,
+      glyphs: [],
+      lines: [],
+      texts: [],
+    }
   }
 
   // The style picks the SHAPE; `spec` still decides filled-vs-open, dots, stem and flags,
   // so a harmonic eighth is a filled diamond with a flag.
-  const headName = styledHead(spec.head, event)
+  const headName = styledHead(
+    spec.head,
+    event,
+    clef.shape === 'percussion',
+    steps[0] ?? 0,
+    pitches[0]?.accidental ?? null,
+  )
   // The OUTLINE stays Bravura's — anchors are a property of the shape — while the
   // metrics come from the active table, so strict spaces at abcjs's widths.
   const head = GLYPHS[headName]
-  const headAdvance = glyphsFor(strict).advance(headName)
   const headInk = glyphsFor(strict).width(headName)
   const glyphs: PlacedGlyph[] = []
   const lines: PlacedLine[] = []
 
   // Grace notes lead INTO the note, so they are laid out first and push everything else
-  // right. Each is a small notehead with a small stem; an acciaccatura (`{/g}`) takes a
-  // slash through the stems. *Behind Bars* draws them at about 60% and always stem-up.
-  let graceWidth = 0
-  if (event !== null && event.type !== 'rest' && event.graceNotes.length > 0) {
-    const scale = ENGRAVE.graceScale
-    const small = GLYPHS.noteheadBlack
-    const graceSteps = event.graceNotes.map((p) => pitchToStep(p, clef))
-
-    graceSteps.forEach((graceStep, i) => {
-      const gx = x + i * ENGRAVE.graceAdvance
-      glyphs.push({ name: 'noteheadBlack', x: gx, y: stepToY(graceStep), scale, role: 'grace' })
-      // The stem attaches at the scaled anchor and runs a scaled length upward.
-      const [ax, ay] = small.anchors.stemUpSE ?? [small.width, 0]
-      const stemX = gx + ax * scale
-      const base = stepToY(graceStep) + ay * scale
-      lines.push({
-        x1: stemX,
-        y1: base,
-        x2: stemX,
-        y2: base - ENGRAVE.stemLength * scale,
-        thickness: ENGRAVING_DEFAULTS.stemThickness * scale,
-        role: 'stem',
-      })
-    })
-
-    graceWidth = graceSteps.length * ENGRAVE.graceAdvance + ENGRAVE.graceGap
-
-    if (event.graceSlash) {
-      // One slash across the first grace note's stem, which is what marks the whole
-      // group as an acciaccatura however many notes it has.
-      const firstStep = graceSteps[0] ?? 0
-      const tipY = stepToY(firstStep) - ENGRAVE.stemLength * scale
-      lines.push({
-        x1: x - 0.2,
-        y1: tipY + 1.0,
-        x2: x + ENGRAVE.graceAdvance * 0.9,
-        y2: tipY - 0.2,
-        thickness: ENGRAVING_DEFAULTS.stemThickness * 1.4,
-      })
-    }
-  }
+  // right. THEY ARE EMITTED LAST, THOUGH: abcjs writes the MAIN notehead before the graces
+  // that precede it — probed on `{ab}c {d}e`, whose noteheads come out at 75.14, 55.14,
+  // 65.14, 105.14, 95.14 — because a grace is an `extra` child and the head is a `head`.
+  // The pixel gate pairs the i-th notehead of each engine, so emitting them in playing
+  // order read as a position error on every graced fixture.
+  const graces = event === null ? null : layoutGraces(event, x, clef, strict)
+  const graceGlyphs = graces?.glyphs ?? []
+  const graceLines = graces?.lines ?? []
+  const graceWidth = graces?.width ?? 0
+  /** What the graces add to abcjs's `roomtaken`. Zero when there are none. */
+  const graceRoom = graces?.room ?? 0
+  /** How far the graces reach LEFT — a grace accidental beats the chord symbol's half. */
+  const graceLeft = graces?.left ?? 0
 
   // Stem direction follows the chord as a whole: away from the middle line, judged by
   // the midpoint of its outermost notes. On the middle line itself the stem goes down.
@@ -1663,47 +2544,181 @@ function layoutNoteheads(
   // collide; with the heads at distinct steps they only collide for a cluster, and no
   // corpus fixture has one.
   const noteX = x + graceWidth
+  /** An accidental `place` units left of the notehead, in absolute x. */
+  const headXOf = (place: number): number => noteX + accidentalWidth - place
   // ponytail: `microtoneCents` is per-EVENT, not per-pitch, so a chord's microtone
   // applies to every altered head in it. `[^/G^/B]` is right; a chord mixing a microtone
   // with a plain accidental is not expressible. No fixture writes one, and fixing it
   // means moving the field onto Pitch.
   const cents = event === null || event.type === 'rest' ? 0 : event.microtoneCents
-  const accidentals = pitches
-    .map((p) => ({
-      glyph: microtoneAccidental(p.accidental, cents, strict),
-      step: pitchToStep(p, clef),
-    }))
-    .filter((a): a is { glyph: GlyphName; step: number } => a.glyph !== null)
+  // A PERCUSSION VOICE PRINTS NO ACCIDENTALS. `createNote` passes
+  // `printAccidentals: !voice.isPercussion` (`abstract-engraver.js:723`), so `^c'` on a
+  // `clef=perc` staff draws its head and nothing else — the golden has no
+  // `accidentals.sharp` in it at all. Ours drew one and reserved its declared box, which is
+  // 7.18px of staff above a high note.
+  const accidentals =
+    clef.shape === 'percussion'
+      ? []
+      : pitches
+          .map((p) => ({
+            glyph: microtoneAccidental(p.accidental, cents, strict),
+            step: pitchToStep(p, clef),
+          }))
+          .filter((a): a is { glyph: GlyphName; step: number } => a.glyph !== null)
 
-  const accidentalWidth =
-    accidentals.length === 0
-      ? 0
-      : Math.max(...accidentals.map((a) => glyphsFor(strict).advance(a.glyph))) +
-        ENGRAVE.accidentalGap
-
-  for (const a of accidentals)
-    glyphs.push({ ...glyphAt(a.glyph, noteX, a.step), role: 'accidental' })
-  const headX = noteX + accidentalWidth
-
+  // ACCIDENTALS STACK LEFTWARD IN COLUMNS, AND THE COLUMN IS REUSED SIX STEPS APART.
+  //
+  // abcjs's `createNoteHead` keeps a running `roomTaken` across a chord's pitches and
+  // places each accidental at `-roomTaken - (width + 2)`, unless an existing column holds
+  // a pitch at least 6 steps below, in which case it takes that column's x and adds
+  // nothing (`create-note-head.js:85-98`, `abstract-engraver.js:723,734`). Taking the
+  // widest accidental and one gap put a chord's second accidental on top of its first.
+  //
+  // THE DRAWN OFFSET AND THE LAYOUT EXTENT ARE NOT THE SAME NUMBER. The glyph sits at
+  // `width + 2`, but the element declares `extraw -= width / 2` on top of that
+  // (`:100`, `abstract-engraver.js:725`) — abcjs's own comment says "we need a little
+  // extra width if there is an accidental, but I'm not sure why it isn't the full width".
+  // So a sharp draws 10.25px left of its head and reserves 14.375. Conflating the two as
+  // one `accidentalGap` left every accidental note ~4.5px narrow, which on a COMPRESSED
+  // line is the whole error: `visual-transpose-02` solved to a spacing of 18.67px where
+  // abcjs's rods bottom out at 10.81 and its springs never bind at all.
   // A second cannot be printed on the same side of the stem — the noteheads would
   // overlap — so the offending head moves across it. *Behind Bars*. Working from the
   // stem side outward keeps a cluster alternating rather than every head shifting.
-  const ordered = up ? steps : [...steps].reverse()
-  const offsets = new Map<number, number>()
-  let previous: number | null = null
-  let shifted = false
-  for (const step of ordered) {
-    shifted = previous !== null && Math.abs(step - previous) === 1 ? !shifted : false
-    // With an up stem the displaced head goes right of it; with a down stem, left.
-    offsets.set(step, shifted ? (up ? headInk : -headInk) : 0)
-    previous = step
+  //
+  // A UNISON IS DISPLACED TOO, AND BY ONE PIXEL LESS. abcjs's test is `delta <= 1`, not
+  // `=== 1` — it marks a unison `printer_shift: "same"` and a second `"different"`
+  // (`abstract-engraver.js:654-655`) — and the two spend that distinction one file over:
+  //
+  //     var adjust = (pitchelem.printer_shift === "same") ? 1 : 0
+  //     shiftheadx = (dir === "down") ? -getSymbolWidth(c) * scale + adjust
+  //                                   :  getSymbolWidth(c) * scale - adjust
+  //
+  // (`create-note-head.js:30-32`.) So a unison's two heads overlap by a pixel where a
+  // second's sit edge to edge. Reading `=== 1` left `[cc]` and `[dd]` undisplaced
+  // entirely — `S8-layout` X:806 is named "Chords, Unions, …" and is the only fixture in
+  // either corpus that writes one.
+  //
+  // INDEXED BY POSITION, NOT BY STEP, and that is what makes a unison expressible at all.
+  // A `Map<step, dx>` has ONE entry for `[cc]`'s two heads, so both landed on the same x
+  // whatever the rule above said — the second `set` overwrote the first. A comparison, or
+  // a placement, can only express what its representation can hold.
+  const offsetAt: number[] = steps.map(() => 0)
+  {
+    let previous: number | null = null
+    let shifted = false
+    for (let k = 0; k < steps.length; k++) {
+      // Walk from the STEM side outward: the bottom head up, or the top head down.
+      const position = up ? k : steps.length - 1 - k
+      const step = steps[position] ?? 0
+      const delta = previous === null ? Number.POSITIVE_INFINITY : Math.abs(step - previous)
+      shifted = delta <= 1 && !shifted
+      // With an up stem the displaced head goes right of it; with a down stem, left.
+      const reach = headInk - (delta === 0 ? spaces(1) : 0)
+      offsetAt[position] = shifted ? (up ? reach : -reach) : 0
+      previous = step
+    }
   }
+  /** Does a head sit LEFT of the stem — the case abcjs starts the accidentals clear of. */
+  const displacedLeft = offsetAt.some((dx) => dx < 0)
+  /** The head the stem is built from: the bottom one with an up stem, the top with a down. */
+  const stemHeadOffset = offsetAt[up ? 0 : steps.length - 1] ?? 0
 
+  const accidentalPlaces: number[] = []
+  // A DOWN-STEMMED CHORD WITH A DISPLACED HEAD STARTS ITS ACCIDENTALS A NOTEHEAD FURTHER
+  // LEFT, and the displacement pass is what sets that up — it runs BEFORE the accidental
+  // loop and assigns, rather than adds, into the very same running total:
+  //
+  //     if (delta <= 1 && !prev.printer_shift) {
+  //       …
+  //       if (dir === "down") roomTaken    = glyphs.getSymbolWidth(noteSymbol) + 2
+  //       else                dotshiftx    = glyphs.getSymbolWidth(noteSymbol) + 2
+  //     }
+  //
+  // (`abstract-engraver.js:649-664`.) 9.81 + 2 = 11.81, and it has to be there because the
+  // displaced head occupies exactly the strip the first accidental column would have.
+  // The UP-stem arm spends the same figure on `dotshiftx` instead — the head goes to the
+  // RIGHT of the stem there, so it widens the element rather than its left reach.
+  //
+  // Measured on `S8-layout` X:811 "Chords with many accidentals": abcjs probes `[^c^d]` at
+  // `extraw = -36.44` against `[^c^e]`'s -24.63, and the gap between them is 11.81 exactly.
+  // Ours started every chord at 0, so each chord holding a second came out one column
+  // narrow and the deficit ACCUMULATED — a perfect staircase, -11.81 per such chord, out
+  // to -82.67 by the end of the tune with `dy` flat at 0.00 the whole way.
+  let roomTaken = !up && displacedLeft ? headInk + ENGRAVE.accidentalGap : 0
+  let extraLeft = 0
+  {
+    /** `[pitch, place]` per open column — abcjs's `accidentalSlot`. */
+    const slots: { step: number; place: number }[] = []
+    for (const a of accidentals) {
+      const width = glyphsFor(strict).advance(a.glyph)
+      const slot = slots.find((s) => a.step - s.step >= ENGRAVE.accidentalColumnSteps)
+      if (slot) {
+        slot.step = a.step
+        accidentalPlaces.push(slot.place)
+      } else {
+        roomTaken += width + ENGRAVE.accidentalGap
+        slots.push({ step: a.step, place: roomTaken })
+        accidentalPlaces.push(roomTaken)
+      }
+      // `abselem.extraw` IS A RUNNING MIN WITH A SUBTRACTION BETWEEN THE STEPS, and the
+      // order is what makes it not a sum:
+      //
+      //     addExtra(accidental at dx)   ->  if (dx < extraw) extraw = dx
+      //     abselem.extraw -= ret.extraLeft                  // half the accidental's width
+      //
+      // (`create-note-head.js:100-101`, `abstract-engraver.js:723-725`, per PITCH). A
+      // deeper column on the next pitch RESETS the min and throws the previous
+      // subtraction away, so `[_d^f=b]` ends at `deepest - nat/2` and not at
+      // `deepest - (flat + sharp + nat)/2`. Accumulating cost 7.50px, which is exactly
+      // `(6.75 + 8.25) / 2` — the two subtractions the min swallowed.
+      const place = accidentalPlaces[accidentalPlaces.length - 1] ?? 0
+      extraLeft = Math.max(extraLeft, place) + width / 2
+    }
+  }
+  // `extraLeft` came out of that loop as the FULL reach left of the head, columns and all
+  // — it is `-extraw`. What the element wants is the part BEYOND the columns.
+  extraLeft = Math.max(0, extraLeft - roomTaken)
+  const accidentalWidth = roomTaken
+  // `roomtaken += this.addGraceNotes(…, roomtaken)` (`abstract-engraver.js:834-836`), and
+  // `addGraceNotes` RETURNS the running total it was handed — so the accidental room is
+  // counted TWICE when there are graces. An abcjs bug, reproduced: everything placed after
+  // this point reads the doubled figure.
+  const roomAfterGraces = graceRoom === 0 ? roomTaken : roomTaken + roomTaken + graceRoom
+
+  // AN ACCIDENTAL DECLARES `pitch ± h / 2`, centred on the note it belongs to, and abcjs
+  // passes that as an explicit `top`/`bottom` rather than letting the outline stand
+  // (`create-note-head.js:99-100`) — the same escape the key signature takes two files
+  // over. Its ink box is not centred on its origin, so reserving the outline reaches
+  // higher than abcjs on any staff an accidental tops out.
+  accidentals.forEach((a, index) => {
+    const placed = glyphAt(a.glyph, headXOf(accidentalPlaces[index] ?? 0), a.step)
+    const half = (glyphsFor(strict).get(a.glyph)?.declaredHeight ?? 0) / 2
+    glyphs.push({
+      ...placed,
+      role: 'accidental',
+      reserve: [stepToY(a.step) - half, stepToY(a.step) + half],
+    })
+  })
+  const headX = noteX + accidentalWidth
+
+  // A NOTEHEAD RESERVES ITS DECLARED BOX, CENTRED ON THE PITCH — `pitch ± thickness / 2`
+  // from `thickness: symbolHeightInPitches(c) * scale` (`create-note-head.js:34`,
+  // `relative-element.js:22-24`) — and not the glyph's INK box, which is what the scan
+  // falls back to when no `reserve` is set. The two are near enough for the ROUND heads
+  // that nothing showed it (`noteheads.quarter` inks [-4.08, +4.05] against a declared
+  // ±4.047, a third of a tenth of a pixel), and they part on the STYLED ones: the
+  // triangle inks [-5, +4] against a declared ±4.5, so its reserve was half a pixel too
+  // tall on the top side and half too short on the bottom. That asymmetry was the whole
+  // of `synth-flattener-23`'s remaining `oy`.
+  const headDeclaredHalf = (glyphsFor(strict).get(headName)?.declaredHeight ?? 0) / 2
   for (const [position, step] of steps.entries()) {
-    const dx = offsets.get(step) ?? 0
+    const dx = offsetAt[position] ?? 0
+    const y = stepToY(step)
     glyphs.push({
       ...glyphAt(headName, headX + dx, step),
       role: 'notehead',
+      reserve: [y - headDeclaredHalf, y + headDeclaredHalf],
       // `steps` is sorted ascending, so the index IS the chord position from the bottom.
       ...(steps.length > 1 ? { chordPos: position + 1 } : {}),
     })
@@ -1714,21 +2729,72 @@ function layoutNoteheads(
   // rather than stepping in and out with each displaced notehead.
   let dotWidth = 0
   if (spec.dots > 0) {
-    const rightmost = headX + Math.max(0, ...[...offsets.values()]) + headInk
-    const dotX = rightmost + ENGRAVE.dotGap
+    const rightmost = headX + Math.max(0, ...offsetAt) + headInk
+    // ABCJS'S OWN OFFSET, which is stated from the head's ORIGIN rather than as a gap after
+    // its right edge: `notehead.w + dotshiftx - 2 + 5 * dot` (`create-note-head.js:50-53`).
+    // Ours was a 0.35-space gap and a 0.45-space step — 2.71 and 3.49px against 3 and 5.
+    const dotStep = strict ? spaces(ABCJS_PX.dotSpacing) : ENGRAVE.dotSpacing
+    const dotX = strict
+      ? rightmost + spaces(ABCJS_PX.dotOffset + ABCJS_PX.dotSpacing)
+      : rightmost + ENGRAVE.dotGap
     const taken = new Set<number>()
-    for (const step of steps) glyphs.push(...dotGlyphs(spec.dots, dotX, step, taken))
-    dotWidth = dotX - headX + spec.dots * ENGRAVE.dotSpacing
+    for (const step of steps) glyphs.push(...dotGlyphs(spec.dots, dotX, step, taken, dotStep))
+    // THE ROD IS THE LAST DOT'S RIGHT EDGE, not a count times a spacing. abcjs's dots are
+    // `addRight` children whose extent is `dx + getSymbolWidth("dots.dot")`
+    // (`create-note-head.js:53`), so what reaches past the notehead is the FURTHEST dot
+    // plus one dot's width. Multiplying the count by the new 5px step instead put an extra
+    // 1.5px of rod on every dotted note and cost `happy-birthday` 1.8px of spread.
+    dotWidth =
+      dotX -
+      headX +
+      (spec.dots - 1) * dotStep +
+      (strict ? glyphsFor(strict).width('augmentationDot') : dotStep)
   }
 
   if (spec.stemmed) {
+    // WHERE A STEM ATTACHES — and the two engines answer differently.
+    //
+    // Bravura publishes ANCHORS (`stemUpSE`, `stemDownNW`): points on the outline where a
+    // stem of its own weight meets the shape. abcjs has no such notion. It hangs the quad
+    // off the notehead's declared EDGE — `dx = (dir === "down") ? 0 : heads[0].w` with
+    // `linewidth = ±1`, so the quad spans `[headx + w - 1, headx + w]` going up and
+    // `[headx, headx + 1]` going down (`abstract-engraver.js:747-762`,
+    // `draw/relative.js:63`, `draw/print-stem.js:32`). Its CENTRE — which is what a
+    // `PlacedLine` carries — is therefore half a stem inside that edge.
+    //
+    // Strict has no latitude, so it takes abcjs's. Measured on `simple-c`: Bravura's
+    // anchors put our stems 0.169px left of abcjs's going up and 0.494px going down, and
+    // NO GATE COULD SEE IT — `pixel-parity` reports a notehead's centre and stems are not
+    // noteheads, while `line-weights` reads only the THICKNESS of what it finds. The same
+    // blind spot as the weights themselves, one axis over: the leak was in the same
+    // `ENGRAVING_DEFAULTS`-shaped hole, reached through a Bravura ANCHOR rather than a
+    // Bravura thickness.
+    //
+    // AND A BEAMED STEM IS A DIFFERENT OBJECT, not this one with a new endpoint. abcjs
+    // throws the note's own stem away and builds a fresh one in `createStems`
+    // (`layout/beam.js:107-142`), THINNER — `lineWidth = ±0.6` against the unbeamed ±1 —
+    // and off a different oval delta (1/5, not 1/3). It also honours the head's own
+    // displacement, `dx += furthestHead.dx`, where the unbeamed stem reads `heads[0].w`
+    // alone and ignores it. Three differences, none of them guessable from the unbeamed
+    // case, so the two are built side by side here rather than one patched into the other.
+    const beamed = stemOut !== null
+    const weight = beamed ? LINE_WEIGHTS.beamedStem : LINE_WEIGHTS.stem
+    // The head the stem is BUILT from — its base. A displaced seconds head moves it, but
+    // only for a beamed stem.
+    const baseShift = beamed ? stemHeadOffset : 0
     const anchor = up ? head.anchors.stemUpSE : head.anchors.stemDownNW
-    const [ax, ay] = anchor ?? [up ? headInk : 0, 0]
+    const [bravuraX, bravuraY] = anchor ?? [up ? headInk : 0, 0]
+    const ax = strict ? baseShift + (up ? headInk - weight / 2 : weight / 2) : bravuraX
+    // The near end sits a fraction of a PITCH inside the head — `minpitch + 1/3` going up
+    // and `maxpitch - 1/3` going down unbeamed, `± ovalDelta = 1/5` once beamed. Bravura's
+    // anchors say 0.168 spaces where a third of a pitch is 0.1667: a hundredth of a pixel
+    // apart, and strict takes abcjs's figure because "close enough" is not byte parity.
+    const ay = strict ? (up ? -1 : 1) * (ENGRAVE.spacePerStep / (beamed ? 5 : 3)) : bravuraY
     // headX, not x: an accidental shifts the noteheads, and the stem follows them.
     const stemX = headX + ax
     // The stem starts at the head nearest its own end and runs past the far one, so a
     // chord's stem spans the whole spread rather than one notehead's worth.
-    const base = stepToY(up ? lowest : highest) + ay
+    const nearRaw = stepToY(up ? lowest : highest) + ay
     const far = stepToY(up ? highest : lowest)
     // A STEM ON A NOTE FAR FROM THE MIDDLE LINE IS STRETCHED TO REACH IT — abcjs's own
     // words, `create-note-head.js:39`: "the stem will have been stretched to the middle
@@ -1743,15 +2809,27 @@ function layoutNoteheads(
     // notes it builds). A beamed stem is retargeted to the beam anyway, so extending it
     // first would be undone. `stems=down` bass voices therefore keep the plain length,
     // which is what makes ragtime's bass staves match abcjs to a tenth of a pitch.
+    //
+    // AND THE CLAMP IS ON BOTH ENDS, NOT ONLY THE FAR ONE. abcjs writes `p1` and `p2` and
+    // then clamps EACH to pitch 6 independently — `if (p1 > 6) p1 = 6`, `if (p2 < 6)
+    // p2 = 6` — so the end AT THE NOTEHEAD is pulled to the middle line too once it has
+    // crossed. It bites on the commonest case there is: a down-stem on the middle line,
+    // where `maxpitch - 1/3` sits a third of a pitch BELOW the line, so abcjs starts the
+    // stem at the notehead's centre instead. `simple-c`'s B is 27.130px of stem against
+    // our 25.823 for exactly that reason, and it is one note in eight of that fixture.
+    // A BEAMED stem is exempt on both ends — `createStems` has no clamp, and `forcedUp` is
+    // non-null inside a beam anyway, which is the same guard abcjs's `!stemdir` is.
     const plain = far + (up ? -ENGRAVE.stemLength : ENGRAVE.stemLength)
     const middle = stepToY(0)
     const tip = forcedUp !== null ? plain : up ? Math.min(plain, middle) : Math.max(plain, middle)
+    const base =
+      forcedUp !== null ? nearRaw : up ? Math.max(nearRaw, middle) : Math.min(nearRaw, middle)
     lines.push({
       x1: stemX,
       y1: base,
       x2: stemX,
       y2: tip,
-      thickness: ENGRAVING_DEFAULTS.stemThickness,
+      thickness: weight,
       role: 'stem',
     })
 
@@ -1760,6 +2838,11 @@ function layoutNoteheads(
       // cannot carry both.
       stemOut.value = {
         x: stemX,
+        // The furthest head is the one the stem is BUILT from — `heads[0]` up,
+        // `heads[len-1]` down — and `offsets` is what displaces it in a seconds chord.
+        headX: headX + stemHeadOffset,
+        headWidth: headInk,
+        headDx: baseShift,
         farStep: up ? highest : lowest,
         averageStep: steps.reduce((a, b) => a + b, 0) / steps.length,
         up,
@@ -1776,41 +2859,174 @@ function layoutNoteheads(
       // correctly), but 9 are not, and every one of them printed as a 16th. A 32nd drawn
       // as a 16th is the wrong rhythm on the page, not a missing detail.
       const flag = FLAG_GLYPHS[Math.min(spec.flags, FLAG_GLYPHS.length - 1)]?.[up ? 0 : 1]
-      if (flag !== undefined) glyphs.push({ name: flag, x: stemX, y: tip, role: 'flag' })
+      // A FLAG IS NOT HUNG OFF THE STEM — abcjs gives it its own `xdelta`, `headx +
+      // notehead.w - 0.6` going up and a flat `headx` going down (`create-note-head.js:47`),
+      // where the stem's centre is `w - 0.5` and `headx + 0.5`. A tenth of a pixel apart,
+      // and it MOVES NOTEHEADS: the flag's `x` is a term in `flagInk`, which is a term in
+      // the element's rod. Riding it on `stemX` widened `happy-birthday`'s spread the
+      // moment the stem itself became abcjs's.
+      const flagX = strict ? headX + (up ? headInk - spaces(ABCJS_PX.flagStemInset) : 0) : stemX
+      if (flag !== undefined) glyphs.push({ name: flag, x: flagX, y: tip, role: 'flag' })
     }
   }
 
-  const texts = event === null ? [] : noteText(event, headX, headInk, strict)
-  if (event !== null && event.type !== 'rest') {
-    texts.push(...decorationTexts(event.decorations, headX, head.width))
-  }
+  /** How far LEFT a decoration reaches past the note — an arpeggio, and only it. */
+  let decorationLeft = 0
+  /** How far the note's attached text reaches either side of it — see `noteText`. */
+  const textSpan = { left: 0, right: 0 }
+  const texts =
+    event === null
+      ? []
+      : noteText(
+          event,
+          headX,
+          headInk,
+          strict,
+          textSpan,
+          steps.reduce((a, b) => a + b, 0) / Math.max(1, steps.length),
+          lowest,
+          roomAfterGraces,
+        )
+  // A BEAMED NOTE HAS NO STEM YET WHEN ITS DECORATIONS ARE PLACED, and abcjs approximates
+  // the one it will get rather than waiting for it.
+  //
+  // `createBeam` passes `nostem` for every note it takes over, so `createNote` builds no
+  // stem child and `abselem.top`/`.bottom` are the heads' declared boxes alone. abcjs then
+  // writes ONE line for the below side (`abstract-engraver.js:841`):
+  //
+  //     var bottom = nostem && dir !== 'up' ? Math.min(-3, abselem.bottom - 6) : abselem.bottom
+  //
+  // A flat 6-pitch drop with a FLOOR at pitch −3 — not the stem's real end, which is not
+  // known yet, and not the note's own bottom either. Probed on `decorations-01`: a beamed
+  // down-stemmed head at pitch −2 gives `min(-3, -9.0444) = -9.0444`, while one at pitch 7
+  // gives `min(-3, -0.0444) = -3` and the floor is what bites. There is no matching term
+  // on the ABOVE side — that one takes `abselem.top` raw, which for a beamed note is the
+  // heads and nothing else.
+  //
+  // Ours read the real beamed stem on both sides. It was 0.175px of staff on
+  // `decorations-01`, whose `!invertedfermata!` hangs off exactly this cursor.
+  const beamedNote = stemOut !== null
+  const decorationStems = [
+    // The note's OWN stem is not a child yet when it is beamed, so it is out of both sides.
+    ...(beamedNote ? [] : lines),
+    // A GRACE's stem is, beamed or not — `addGraceNotes` runs before this and only its own
+    // beamed group is deferred, which `noReserve` already says.
+    ...graceLines,
+  ].filter((l) => l.role === 'stem' && l.noReserve !== true)
+  const decorationBelowBase = Math.min(
+    lowest - ENGRAVE.noteheadHalfHeight / ENGRAVE.spacePerStep,
+    ...decorationStems.map((l) => -Math.max(l.y1, l.y2) / ENGRAVE.spacePerStep),
+  )
   if (event !== null && event.decorations.length > 0) {
-    glyphs.push(
-      ...decorationGlyphs(
-        event.decorations,
-        headX,
-        head.width,
-        highest,
-        lowest,
-        up,
-        strict,
-        dynamicsAbove,
+    const decorated = decorationGlyphs(
+      event.decorations,
+      headX,
+      head.width,
+      highest,
+      lowest,
+      up,
+      // abcjs's `abselem.top` / `.bottom`: the notehead's DECLARED box widened by the
+      // stem it just drew. `pushTop`/`pushBottom` over the element's children.
+      //
+      // …AND THE GRACE NOTES' STEMS ARE AMONG THOSE CHILDREN. `createDecoration` is
+      // passed `abselem.top` (`abstract-engraver.js:842`), and `addGraceNotes` has
+      // already run four lines above it, so an UNBEAMED grace's stem and flag are on the
+      // element and set that top. Probed on `{c}+1+B`: `abselem.top = 11.2`, which is the
+      // grace's flag and its stem exactly, against the main head's 7.04.
+      //
+      // A BEAMED group is the exception, and it is the same phase argument that keeps one
+      // out of the staff extent: `createStems` builds those stems during LAYOUT, long
+      // after `createNote` read this top. `noReserve` is the flag we already carry for it.
+      //
+      // It bites only through `decorationMinTop`'s clamp of 12, which is why one tune of a
+      // transposed pair can show it and the other cannot: `{c}+1+B` reaches 11.2 and
+      // clamps to 12, `{d}+1+c` reaches 12.2 and keeps it. 0.2 pitch — 0.775px — under
+      // every notehead on `transpose-output-04`.
+      Math.max(
+        highest + ENGRAVE.noteheadHalfHeight / ENGRAVE.spacePerStep,
+        ...decorationStems.map((l) => -Math.min(l.y1, l.y2) / ENGRAVE.spacePerStep),
       ),
+      decorationBelowBase,
+      beamedNote && !up,
+      strict,
+      roomAfterGraces,
+      dynamicsAbove,
     )
+    glyphs.push(...decorated.glyphs)
+    texts.push(...decorated.texts)
+    decorationLeft = decorated.leftReach
   }
 
-  // The spring is the natural width, but ink is a rod: an accidental, a displaced head
-  // or a dot column must never be crushed by a short duration, so the element is at
-  // least as wide as what it draws plus the minimum gap.
-  const spread = Math.max(0, ...[...offsets.values()].map(Math.abs), dotWidth)
-  const ink = graceWidth + accidentalWidth + spread + head.width + ENGRAVE.minColumnGap
+  // The spring is the natural width, but ink is a rod: a displaced head or a dot column
+  // must never be crushed by a short duration, so the element is at least as wide as what
+  // it draws to the RIGHT of the notehead, plus the minimum gap.
+  // RIGHT and LEFT are measured separately, as abcjs measures them: `addRight` takes
+  // `w = max(w, dx + w)` and `addHead` takes `extraw = min(extraw, dx)`. A displaced head
+  // reaches right by its own width and left by its offset, and those are not the same
+  // number. `dotWidth` is ALREADY a full extent from the notehead's origin, so the old
+  // `max(|offsets|, dotWidth) + head.width` counted the notehead twice for every dotted
+  // note: `happy-birthday`'s dotted eighth came out at 26.16px against abcjs's 18.44, and
+  // the 6.7px went straight into the gap after it.
+  //
+  // THE ACTIVE TABLE'S WIDTH, NOT BRAVURA'S. abcjs's `w` for `noteheads.quarter` is 9.81
+  // and Bravura's outline is 9.145 — 0.665px per note, which is nothing on a line with
+  // slack and the whole error on one without: it is a ROD, and a rod only shows when the
+  // spring has been squeezed under it. The flag beside it already read the active table.
+  const headRight = Math.max(0, ...offsetAt) + glyphsFor(strict).width(headName)
+  const headLeft = -Math.min(0, ...offsetAt)
+  // A lyric or a chord symbol is CENTRED on the note and counts on BOTH sides. It is the
+  // dominant term in sung music: `birth-` makes a 9.81px notehead occupy 21.28px each way.
+  //
+  // An unbeamed FLAG counts too — abcjs reads `flags.u8th` at `dx = 9.21, w = 6.69`, so an
+  // eighth's rod is 15.90 where its notehead alone is 9.81. A beamed note has no flag and
+  // stays at its notehead.
+  const flagInk = glyphs
+    .filter((g) => g.role === 'flag')
+    .map((g) => g.x - headX + glyphsFor(strict).width(g.name))
+  const ink = Math.max(headRight, dotWidth, textSpan.right, ...flagInk) + ENGRAVE.noteRodGap
   return {
     type: 'note',
-    x,
+    // THE ELEMENT IS ITS NOTEHEAD. Grace notes and accidentals hang LEFT of it and cost
+    // the cursor nothing — abcjs's `w` for `^c` is 9.810, the notehead alone, with the
+    // accidental recorded as `extraw = -14.375` and no part of the rod (probed on
+    // `vree-sharps`). It only pushes when there is not enough room already, which the
+    // spring nearly always provides: measured gaps there are a flat 42.43px, exactly the
+    // quarter-note spring, with the sharps sitting inside it. Anchoring at the accidental
+    // instead put every note after the first 9.4px right.
+    x: headX,
     width: Math.max(advance, ink),
+    spring: advance,
+    rod: ink,
+    // abcjs's `-extraw`, and it is a MIN OVER SIBLINGS, never a sum. The accidental's
+    // `extraw -= extraLeft` runs BEFORE the graces' `addExtra`, and that `addExtra` is
+    // `if (dx < extraw) extraw = dx` (`abstract-engraver.js:723-725, 834-836`,
+    // `absolute-element.js:97`) — so a grace deeper than the accidental RESETS the min
+    // and throws the half-width away. Adding it on top made every graced note whose head
+    // carries an accidental reserve 4.125px too much: `S8-layout` X:807 stepped exactly
+    // once per such note, at `{A}^c2` and `{FGAB}[^c4A4]` and nowhere else.
+    //
+    //   accidental term   `accidentalWidth + extraLeft`  — the columns plus half the
+    //                                                      leftmost glyph
+    //   grace term        `headX - x`                    — the columns plus `graceoffsets[0]`
+    // AND `roomTaken` IS AN ORIGIN, NOT A CHILD. `extraw` only ever sees things that were
+    // actually added — an accidental, a grace, a displaced head — so the 11.81 a
+    // down-stemmed displaced head SEEDS `roomtaken` with reserves nothing by itself
+    // (`abstract-engraver.js:649-664` sets it; only `addExtra`/`addHead` move `extraw`).
+    // The head's own `shiftheadx` is 8.81 — `-getSymbolWidth(c) * scale + adjust`, the
+    // unison's 1px shorter — and that is the whole left reach of `[cc]`. Charging the seed
+    // as well put every unison chord 3.00px too wide, which `S8-layout` X:806 pays twice.
+    left: Math.max(
+      accidentals.length === 0 ? 0 : accidentalWidth + extraLeft,
+      graceWidth === 0 ? 0 : graceWidth + accidentalWidth,
+      textSpan.left,
+      headLeft,
+      decorationLeft,
+      graceLeft,
+    ),
     staffSteps: steps,
-    glyphs,
-    lines,
+    // The graces go on the END — abcjs's document order, see the grace block above.
+    glyphs: [...glyphs, ...graceGlyphs],
+    lines: [...lines, ...graceLines],
     texts,
   }
 }
@@ -1824,27 +3040,93 @@ function layoutNoteheads(
  * Drawing them from parts rather than as six special cases means the spacing constants
  * (all from the font) apply uniformly.
  */
+/**
+ * The bar number drawn on a barline — `addMeasureNumber`, `abstract-engraver.js:945-953`.
+ *
+ * Centred on the barline (`anchor: "middle"` in `draw/relative.js:38-40`) and reserving a
+ * POINT at its pitch, since its `RelativeElement` is given no `thickness`.
+ */
+function barNumberText(
+  number: number,
+  x: number,
+  /**
+   * The element it hangs on is a CLEF, which only `%%barnumbers 0` makes possible
+   * (`abstract-engraver.js:161` against `:296`). Two things change with it:
+   *
+   *     if (abselem.isClef) dx += measureNumDim.width / 2
+   *     var vert = measureNumDim.width > 10 && abselem.abcelem.type === "treble" ? 13.5 : 11
+   *
+   * The `dx` is abcjs's own workaround for a centred number overhanging the staff's left
+   * edge — "an easy way to let it be centered but move it over, too" — and the 13.5 clears
+   * the treble clef's top, which is the only clef tall enough to reach it.
+   */
+  onClef: { treble: boolean } | null = null,
+): PlacedText {
+  const text = String(number)
+  // MEASURED IN `measurefont`, whatever the tune set it to — `%%measurefont Helvetica 7
+  // box` measures 14.6px against the default's 21.06 and drops the reserve 1.68px.
+  // abcjs PITCH -> our step: the bottom staff line is pitch 2 and our step -4, so a step
+  // is `pitch - 6`. Its height is in PIXELS over `spacing.STEP`, which is `spaces x 2`.
+  const width = textWidth(text, fontSizeOf('measurefont'), 'serif')
+  const pitch =
+    onClef?.treble === true && width * STAFF_SPACE_PX > ENGRAVE.barNumberClefWide
+      ? ENGRAVE.barNumberClefPitch
+      : ENGRAVE.barNumberPitch
+  const y = stepToY(pitch + fontHeightOf('measurefont') * 2 - PITCH_ORIGIN)
+  // THE POINT IS THE RESERVE; THE BASELINE IS ONE FONT SIZE BELOW IT. `renderText` ends
+  // `if (!params.centerVertically) hash.attr.y += hash.font.size` (`draw/text.js:29-30`),
+  // and the `barNumber` case passes no `centerVertically` (`draw/relative.js:38-39`). Its
+  // RelativeElement carries no `thickness`, so what it reserves is a POINT at that pitch —
+  // which is what the staff extent already took — and only the drawn baseline moves.
+  //
+  // We drew it AT the point, which put every bar number 19px above where abcjs puts it,
+  // clear of the staff instead of just above it. NO GATE COULD SEE IT: the pixel gate
+  // classes noteheads, ledgers, stems and the top staff line, and a bar number is text.
+  const size = fontSizeOf('measurefont')
+  return {
+    text,
+    x: onClef === null ? x : x + width / 2,
+    y: y + size,
+    size,
+    bold: false,
+    italic: true,
+    anchor: 'middle',
+    reserve: [y, y],
+  }
+}
+
 function layoutBar(x: number, kind: Barline, strict = true): LayoutElement {
-  const thin = ENGRAVING_DEFAULTS.thinBarlineThickness
-  const thick = ENGRAVING_DEFAULTS.thickBarlineThickness
-  const gap = ENGRAVING_DEFAULTS.barlineSeparation
-  const dotGap = ENGRAVING_DEFAULTS.repeatBarlineDotSeparation
+  const thin = LINE_WEIGHTS.thinBarline
+  const thick = LINE_WEIGHTS.thickBarline
 
   const lines: PlacedLine[] = []
   const glyphs: PlacedGlyph[] = []
   let cursor = x
 
-  const rule = (thickness: number): void => {
-    // A rule is placed by its LEFT edge and the line is its centre, so the cursor
-    // advances by the full thickness and nothing overlaps.
+  /**
+   * The two anchors a repeat ending hangs on — see `LayoutElement.endingStart`.
+   *
+   * `anchor` tracks abcjs's variable of the same name: reassigned by every RULE and by
+   * nothing else, since its dots go in through `addRight` without touching it.
+   */
+  let anchorLeft: number | null = null
+  let anchorWidth = 0
+  /** …and a snapshot of it taken where `endEnding` fires, between thick and second thin. */
+  let endAnchorLeft: number | null = null
+
+  /** A rule placed by its LEFT edge — the line itself carries its centre. */
+  const rule = (thickness: number, advance: boolean, anchorW: number): void => {
     lines.push({
       x1: cursor + thickness / 2,
       y1: stepToY(4),
       x2: cursor + thickness / 2,
       y2: stepToY(-4),
       thickness,
+      role: 'bar',
     })
-    cursor += thickness
+    anchorLeft = cursor
+    anchorWidth = anchorW
+    if (advance) cursor += thickness
   }
 
   const dots = (): void => {
@@ -1856,48 +3138,58 @@ function layoutBar(x: number, kind: Barline, strict = true): LayoutElement {
     // different SMuFL font with a different anchor still lands correctly.
     const glyph = glyphsFor(strict).get('repeatDots') ?? GLYPHS.repeatDots
     glyphs.push({ name: 'repeatDots', x: cursor, y: -(glyph.y + glyph.height / 2) })
-    cursor += glyph.width + dotGap
   }
 
-  switch (kind) {
-    case 'thin':
-      rule(thin)
-      break
-    case 'double':
-      rule(thin)
-      cursor += gap
-      rule(thin)
-      break
-    case 'final':
-      rule(thin)
-      cursor += gap
-      rule(thick)
-      break
-    case 'repeatStart':
-      rule(thick)
-      cursor += gap
-      rule(thin)
-      cursor += dotGap
+  // WHICH PIECES A BARLINE HAS, exactly as abcjs decides them
+  // (`abstract-engraver.js:967-972`). Five independent booleans, not seven shapes.
+  const firstDots = kind === 'repeatEnd' || kind === 'repeatBoth'
+  const firstThin = kind !== 'repeatStart' && kind !== 'invisible' && kind !== 'thickThin'
+  const hasThick =
+    kind === 'repeatEnd' ||
+    kind === 'repeatBoth' ||
+    kind === 'repeatStart' ||
+    kind === 'final' ||
+    kind === 'thickThin'
+  const secondThin =
+    kind === 'repeatStart' || kind === 'double' || kind === 'repeatBoth' || kind === 'thickThin'
+  const secondDots = kind === 'repeatStart' || kind === 'repeatBoth'
+
+  if (kind !== 'invisible') {
+    // THE CURSOR IS ABCJS'S, and it is five hardcoded numbers rather than one separation —
+    // see `ABCJS_PX.barline*`. Ours advanced by each rule's own thickness and then added a
+    // single `barlineSeparation` (Bravura's, in strict, which is the audit finding), which
+    // cannot produce an asymmetric gap at all. abcjs never advances past `firstthin`: the
+    // thick that follows is placed 4 from the SAME dx, so the gap between them is
+    // `4 − 0.6`, while the gap the other way is `5 + 3 − 4`.
+    if (firstDots) {
       dots()
-      break
-    case 'repeatEnd':
+      cursor += spaces(ABCJS_PX.barlineAfterDots)
+    }
+    if (firstThin) rule(thin, false, spaces(ABCJS_PX.barAnchorThin))
+    if (hasThick) {
+      cursor += spaces(ABCJS_PX.barlineBeforeThick)
+      rule(thick, false, spaces(ABCJS_PX.barAnchorThick))
+      cursor += spaces(ABCJS_PX.barlineAfterThick)
+    }
+    // `if (this.partstartelem && elem.endEnding)` sits HERE, between the thick and the
+    // second thin (`abstract-engraver.js:1017`), so an ending closes on the thick when
+    // there is one and on the first thin otherwise — never on a `||`'s second rule.
+    endAnchorLeft = anchorLeft
+    if (secondThin) {
+      cursor += spaces(ABCJS_PX.barlineBeforeSecondThin)
+      rule(thin, false, spaces(ABCJS_PX.barAnchorThin))
+    }
+    if (secondDots) {
+      cursor += spaces(ABCJS_PX.barlineBeforeSecondDots)
       dots()
-      rule(thin)
-      cursor += gap
-      rule(thick)
-      break
-    case 'repeatBoth':
-      // One thick rule serving both directions, dots on each side — the standard
-      // back-to-back form, rather than two complete repeat signs jammed together.
-      dots()
-      rule(thin)
-      cursor += gap
-      rule(thick)
-      cursor += gap
-      rule(thin)
-      cursor += dotGap
-      dots()
-      break
+    }
+    // The last piece placed still occupies its own width, which abcjs gets from the
+    // element's `w` rather than from `dx`.
+    cursor += secondDots
+      ? (glyphsFor(strict).get('repeatDots')?.width ?? 0)
+      : secondThin || firstThin
+        ? thin
+        : thick
   }
 
   return {
@@ -1908,6 +3200,8 @@ function layoutBar(x: number, kind: Barline, strict = true): LayoutElement {
     glyphs,
     lines,
     texts: [],
+    ...(anchorLeft === null ? {} : { endingStart: anchorLeft + anchorWidth - x }),
+    ...(endAnchorLeft === null ? {} : { endingEnd: endAnchorLeft - x }),
   }
 }
 
@@ -1927,13 +3221,21 @@ function layoutBar(x: number, kind: Barline, strict = true): LayoutElement {
 const DECORATIONS: Readonly<
   Record<
     string,
-    { above: GlyphName; below: GlyphName; place: 'articulation' | 'ornament' | 'dynamic' | 'stem' }
+    {
+      above: GlyphName
+      below: GlyphName
+      place: 'articulation' | 'ornament' | 'dynamic' | 'stem'
+      /** Hangs UNDER the note whatever the tune says — abcjs's `invertedfermata`, alone. */
+      forceBelow?: boolean
+    }
   >
 > = {
   staccato: { above: 'articStaccatoAbove', below: 'articStaccatoBelow', place: 'articulation' },
   accent: { above: 'articAccentAbove', below: 'articAccentBelow', place: 'articulation' },
   tenuto: { above: 'articTenutoAbove', below: 'articTenutoBelow', place: 'articulation' },
-  marcato: { above: 'articMarcatoAbove', below: 'articMarcatoBelow', place: 'articulation' },
+  // `marcato` is in abcjs's STACKED list (`scripts.umarcato`), not its close one — that
+  // holds only staccato, tenuto and accent (`decoration.js:19`).
+  marcato: { above: 'articMarcatoAbove', below: 'articMarcatoBelow', place: 'ornament' },
   fermata: { above: 'fermataAbove', below: 'fermataBelow', place: 'ornament' },
   trill: { above: 'ornamentTrill', below: 'ornamentTrill', place: 'ornament' },
   // ABC's `M` is the mordent with the vertical stroke; `P` is the one without, which
@@ -1962,14 +3264,8 @@ const DECORATIONS: Readonly<
   sfz: { above: 'dynamicSforzando1', below: 'dynamicSforzando1', place: 'dynamic' },
 
   // ── Fingerings ─────────────────────────────────────────────────────────────
-  // abcjs draws `!3!` as a decoration digit above the staff, so these take the ornament
-  // lane rather than the dynamic one.
-  '0': { above: 'fingering0', below: 'fingering0', place: 'ornament' },
-  '1': { above: 'fingering1', below: 'fingering1', place: 'ornament' },
-  '2': { above: 'fingering2', below: 'fingering2', place: 'ornament' },
-  '3': { above: 'fingering3', below: 'fingering3', place: 'ornament' },
-  '4': { above: 'fingering4', below: 'fingering4', place: 'ornament' },
-  '5': { above: 'fingering5', below: 'fingering5', place: 'ornament' },
+  // `!0!` through `!5!` are in `DECORATION_TEXTS`, not here: abcjs draws them as TEXT
+  // (`decoration.js:200-210`) and they stack by the flat text height.
 
   // ── Aliases ────────────────────────────────────────────────────────────────
   // abcjs rewrites these to canonical names through `accentPseudonyms`; we keep the
@@ -1980,8 +3276,13 @@ const DECORATIONS: Readonly<
   '>': { above: 'articAccentAbove', below: 'articAccentBelow', place: 'articulation' },
   '<': { above: 'articAccentAbove', below: 'articAccentBelow', place: 'articulation' },
   emphasis: { above: 'articAccentAbove', below: 'articAccentBelow', place: 'articulation' },
-  '^': { above: 'articMarcatoAbove', below: 'articMarcatoBelow', place: 'articulation' },
-  umarcato: { above: 'articMarcatoAbove', below: 'articMarcatoBelow', place: 'articulation' },
+  // STACKED, like their `marcato` synonym above — abcjs's close list is only staccato,
+  // tenuto and accent (`decoration.js:19-20`), and `umarcato` sits in the long
+  // `symbolDecoration` case list beside `marcato` (`:255`). Left on the close path these
+  // reserved a POINT at their pitch where abcjs reserves `cursor + h + 0.5`, which is
+  // `ragtime-nightingale`'s staff 37 and 2.23px of its page drift.
+  '^': { above: 'articMarcatoAbove', below: 'articMarcatoBelow', place: 'ornament' },
+  umarcato: { above: 'articMarcatoAbove', below: 'articMarcatoBelow', place: 'ornament' },
   tr: { above: 'ornamentTrill', below: 'ornamentTrill', place: 'ornament' },
   // abcjs draws `!mordent!` and `!trillh!` with the same glyphs as `!lowermordent!` and
   // `!trill!` — its scripts.mordent and scripts.trill respectively.
@@ -1996,15 +3297,24 @@ const DECORATIONS: Readonly<
   // The glyph is core's own choice from SMuFL, as everywhere else: what is reproduced is
   // abcjs's decision to MARK the note, not the shape of its private font.
   roll: { above: 'ornamentTremblement', below: 'ornamentTremblement', place: 'ornament' },
-  slide: { above: 'brassLiftShort', below: 'brassLiftShort', place: 'ornament' },
+  // `slide` IS NOT HERE. abcjs draws it as a small TIE between two zero-width blanks at
+  // the note (`decoration.js:51-59`), reserving nothing above — see `layoutCurves`. It sat
+  // here as an above-stacked `brassLiftShort` and pushed `S1-decorations` X:105 a uniform
+  // 9.67px down.
   breath: { above: 'breathMarkComma', below: 'breathMarkComma', place: 'ornament' },
   pralltriller: { above: 'ornamentShortTrill', below: 'ornamentShortTrill', place: 'ornament' },
   // An inverted fermata is the below-facing design, which was already extracted.
-  invertedfermata: { above: 'fermataBelow', below: 'fermataBelow', place: 'ornament' },
+  invertedfermata: {
+    above: 'fermataBelow',
+    below: 'fermataBelow',
+    place: 'ornament',
+    forceBelow: true,
+  },
+  // Stacked for the same reason (`decoration.js:229`).
   wedge: {
     above: 'articStaccatissimoAbove',
     below: 'articStaccatissimoBelow',
-    place: 'articulation',
+    place: 'ornament',
   },
   open: { above: 'brassMuteOpen', below: 'brassMuteOpen', place: 'ornament' },
   thumb: { above: 'stringsThumbPosition', below: 'stringsThumbPosition', place: 'ornament' },
@@ -2072,7 +3382,21 @@ const STRICT_UNDRAWN: ReadonlySet<string> = new Set(['invertedturn', 'invertedtu
  * SVG. The display spelling is conventional engraving (`D.C. al Fine`), not the ABC
  * token, because the token is an identifier and the page wants prose.
  */
+/** Pitches a stave line sits on, which a close decoration is never left sitting on. */
+const ON_STAVE_LINE: ReadonlySet<number> = new Set([2, 4, 6, 8, 10])
+
 const DECORATION_TEXTS: Readonly<Record<string, string>> = {
+  // A FINGERING DIGIT IS TEXT, not a glyph. abcjs's switch sends `"0"` through `"5"` to
+  // `textDecoration` beside `D.C.` and `D.S.` (`decoration.js:200-210`), so a digit takes
+  // the flat `thickness: 3` / `textHeight: 5` those do and NOT
+  // `symbolHeightInPitches(glyph) + 1`. Drawing SMuFL's `fingering1` instead reserved
+  // 3.76px too little on `+1+`.
+  '0': '0',
+  '1': '1',
+  '2': '2',
+  '3': '3',
+  '4': '4',
+  '5': '5',
   'D.C.': 'D.C.',
   'D.S.': 'D.S.',
   fine: 'Fine',
@@ -2080,31 +3404,6 @@ const DECORATION_TEXTS: Readonly<Record<string, string>> = {
   'D.C.alfine': 'D.C. al Fine',
   'D.S.alcoda': 'D.S. al Coda',
   'D.S.alfine': 'D.S. al Fine',
-}
-
-/**
- * Words a note carries — the navigation directions above.
- *
- * Italic and in the part lane, well clear of the ornament stack, because these address
- * the PLAYER rather than marking the note: they are read at a glance while navigating,
- * not while reading pitch. Stacked so two on one note cannot overprint.
- */
-function decorationTexts(names: readonly string[], headX: number, headWidth: number): PlacedText[] {
-  const out: PlacedText[] = []
-  const size = ENGRAVE.chordTextSize
-  for (const name of names) {
-    const text = DECORATION_TEXTS[name]
-    if (text === undefined) continue
-    out.push({
-      text,
-      x: headX + headWidth / 2 - textWidth(text, size) / 2,
-      y: stepToY(ENGRAVE.partStep - out.length * ENGRAVE.annotationLineStep),
-      size,
-      bold: false,
-      italic: true,
-    })
-  }
-  return out
 }
 
 /**
@@ -2121,38 +3420,194 @@ function decorationGlyphs(
   topStep: number,
   bottomStep: number,
   stemUp: boolean,
+  /**
+   * `abselem.top` in STAFF STEPS — the element's own extent, STEM INCLUDED, which is what
+   * abcjs hands `createDecoration` as its starting pitch (`abstract-engraver.js:842`).
+   * Not the notehead's top: a long stem is what an ornament has to clear.
+   */
+  elemTopStep: number,
+  /** `abselem.bottom` in staff steps — the other end of the same extent. */
+  elemBottomStep: number,
+  /**
+   * The note is BEAMED and its stems go DOWN, so `abselem.bottom` above has no stem in it
+   * and abcjs substitutes a guess for the one it has not built yet:
+   *
+   *     var bottom = nostem && dir !== 'up' ? Math.min(-3, abselem.bottom - 6) : abselem.bottom
+   *
+   * (`abstract-engraver.js:841`.) Applied HERE rather than at the call site because both
+   * figures are in abcjs PITCH and the call site works in staff steps — the six between
+   * the two origins and the six of the drop are different sixes.
+   */
+  beamedDown: boolean,
   /** `abcjs-strict` — suppresses the marks abcjs accepts but never paints. */
   strict: boolean,
+  /**
+   * `roomtaken` — how far the note's ACCIDENTALS already reach left of it
+   * (`abstract-engraver.js:842`). Only the arpeggio reads it, and it sits left of them.
+   */
+  roomTaken: number,
   /** Dynamics above the staff when the tune sings, below when it does not. */
   dynamicsAbove: boolean,
-): PlacedGlyph[] {
+): { glyphs: PlacedGlyph[]; texts: PlacedText[]; leftReach: number } {
+  /** How far LEFT of the note any decoration reaches — an arpeggio, and only it. */
+  let leftReach = 0
   const out: PlacedGlyph[] = []
-  // Away from the stem, and never inside the staff for a note that sits in it.
+  const texts: PlacedText[] = []
+
+  // ── THE ORNAMENT STACK IS abcjs's, AND IT IS NOT A FIXED STEP ───────────────
+  //
+  // `stackedDecoration` walks a cursor in PITCH (`creation/decoration.js:154-165`):
+  //
+  //     var height = glyphs.symbolHeightInPitches(symbol) + 1;  // a pitch of padding
+  //     var y = getPlacement(placement);                        // the running cursor
+  //     y = y + height / 2;                                     // CENTRE it on the step
+  //     … new RelativeElement(symbol, …, y, …)
+  //     incrementPlacement(placement, height);                  // cursor += height
+  //
+  // Three things at once: each glyph advances the cursor by its OWN declared height plus
+  // a pitch of padding, it is CENTRED on the space it takes rather than sitting on the
+  // cursor, and the cursor starts at the note's own top — `Math.max(yPos.above, minTop)`
+  // with `minTop = 12` (`decoration.js:13,389`), which is one pitch above the top staff
+  // line.
+  //
+  // Ours stepped a flat 2 pitch per ornament from a fixed lane, so a trill landed at
+  // pitch 15 where abcjs puts it at 19.88 and a note reaching above the staff had its
+  // ornaments sitting in its own ink. Probed on `frere-jacques`, whose every staff top is
+  // an ornament: 19.8832, 16.0493 and 16.0444 against our 15, 13 and 14.
+  const table = glyphsFor(strict)
+  /** abcjs's `symbolHeightInPitches` — the PUBLISHED height, in pitch. */
+  const heightInPitches = (g: GlyphName): number =>
+    (table.get(g)?.declaredHeight ?? 0) / ENGRAVE.spacePerStep
+  /** abcjs works in pitch and we work in staff steps; they differ by the staff's middle. */
+  const toPitch = (step: number): number => step + 6
+  const toStep = (pitch: number): number => pitch - 6
+  /** abcjs's `bottom` — `abselem.bottom`, or the beamed down-stem it has yet to build. */
+  const bottomPitch = beamedDown
+    ? Math.min(
+        ENGRAVE.beamedDecorationFloor,
+        toPitch(elemBottomStep) - ENGRAVE.beamedDecorationDrop,
+      )
+    : toPitch(elemBottomStep)
+  // ── CLOSE DECORATIONS FIRST, AND THEY SET WHERE THE STACK STARTS ────────────
+  //
+  // `createDecoration` runs `closeDecoration` over the whole list before
+  // `stackedDecoration` sees any of it (`decoration.js:386-391`), and hands the stack the
+  // last close decoration's pitch as its floor. So the two are ORDERED PASSES, not one
+  // walk — an ornament written before a staccato still stacks above it.
+  //
+  // The close rule itself (`decoration.js:17-47`), which is fussier than it looks:
+  //
+  //     yPos = first ? (dir === 'down' ? pitch + 2 : minPitch - 2)
+  //                  : (dir === 'down' ? yPos + 2  : yPos - 2)
+  //     accent:  yPos += dir === 'up' ? -1 : +1      // always three pitches away
+  //     others:  if yPos is ON A STAVE LINE (2,4,6,8,10), step it one further
+  //     if (pitch > 9) yPos++                        // "take up some room of those above"
+  //
+  // `pitch` is `abselem.top` and `minPitch` its bottom, both DECLARED. Worked on
+  // `frere-jacques`: top 12.0493 → 14.0493 → accent → 15.0493 → above 9 → **16.0493**,
+  // which is abcjs's number to the digit.
   const artAbove = !stemUp
-  let artStep = artAbove ? Math.max(topStep, 4) + 2 : Math.min(bottomStep, -4) - 2
-  let ornamentStep = ENGRAVE.ornamentStep
+  const topPitch = toPitch(elemTopStep)
+  let closeY: number | undefined
+  for (const name of names) {
+    if (strict && STRICT_UNDRAWN.has(name)) continue
+    if (DECORATIONS[name]?.place !== 'articulation') continue
+    closeY =
+      closeY === undefined
+        ? artAbove
+          ? topPitch + 2
+          : bottomPitch - 2
+        : artAbove
+          ? closeY + 2
+          : closeY - 2
+    if (name === 'accent') closeY += artAbove ? 1 : -1
+    else if (ON_STAVE_LINE.has(closeY)) closeY += artAbove ? 1 : -1
+    if (topPitch > 9) closeY += 1
+    const spec = DECORATIONS[name]
+    if (spec === undefined) continue
+    const glyph = artAbove ? spec.above : spec.below
+    const y = stepToY(toStep(closeY))
+    // A CLOSE decoration is given no `thickness`, so its declared box is a POINT at its
+    // own pitch — `new RelativeElement(symbol, deltaX, width, yPos)` with no options
+    // (`decoration.js:47`). Probed: abcjs's `scripts.sforzato` reports `top === pitch`.
+    out.push({
+      name: glyph,
+      x: headX + headWidth / 2 - table.width(glyph) / 2,
+      y,
+      role: 'decoration',
+      reserve: [y, y],
+    })
+  }
+
+  let above = Math.max(closeY ?? topPitch, ENGRAVE.decorationMinTop)
+  // …AND THERE IS A CURSOR ON THE OTHER SIDE. `yPos` is an object with `above` and
+  // `below`, and `incrementPlacement` walks whichever one the placement names
+  // (`decoration.js:127-145`). Only `invertedfermata` reaches it here: abcjs's switch
+  // hands it the literal `'below'` while every other ornament passes `positioning`
+  // through (`decoration.js:261-264`), so the inverted fermata hangs UNDER the note
+  // however the tune is written. Stacking it above put `!invertedfermata!EF` 6.52px low.
+  let below = Math.min(bottomPitch, ENGRAVE.decorationMinBottom)
 
   for (const name of names) {
     if (strict && STRICT_UNDRAWN.has(name)) continue
     const spec = DECORATIONS[name]
     if (spec === undefined) continue // unmapped — counted by the test, never guessed at
+    if (spec.place === 'articulation') continue // already placed, above
 
-    const glyph = spec.place === 'articulation' ? (artAbove ? spec.above : spec.below) : spec.above
-    const centre = headX + headWidth / 2 - glyphsFor(strict).width(glyph) / 2
+    const glyph = spec.above
+    const centre = headX + headWidth / 2 - table.width(glyph) / 2
 
-    if (spec.place === 'articulation') {
-      out.push({ name: glyph, x: centre, y: stepToY(artStep), role: 'decoration' })
-      artStep += artAbove ? 2 : -2
-    } else if (spec.place === 'ornament') {
-      out.push({ name: glyph, x: centre, y: stepToY(ornamentStep), role: 'decoration' })
-      ornamentStep += 2
+    if (spec.place === 'ornament') {
+      const height = heightInPitches(glyph) + ENGRAVE.decorationPadding
+      if (spec.forceBelow === true) {
+        const y = stepToY(toStep(below - height / 2))
+        const half = (table.get(glyph)?.declaredHeight ?? 0) / 2
+        out.push({ name: glyph, x: centre, y, role: 'decoration', reserve: [y - half, y + half] })
+        below -= height
+        continue
+      }
+      const y = stepToY(toStep(above + height / 2))
+      // …and a STACKED one is given `thickness: symbolHeightInPitches(symbol)`
+      // (`decoration.js:163`), so it reserves `pitch ± thickness / 2` — its DECLARED box,
+      // centred on where it sits. Its ink box is not centred on the glyph origin at all:
+      // `scripts.trill` paints 2.09 spaces above its origin and 0.04 below, so reserving
+      // the outline put `multi-voice-triplet-brackets` 1.31 pitch high on the staff whose
+      // only ornament is a `T`.
+      const half = (table.get(glyph)?.declaredHeight ?? 0) / 2
+      out.push({ name: glyph, x: centre, y, role: 'decoration', reserve: [y - half, y + half] })
+      above += height
     } else if (spec.place === 'stem') {
       // Centred on the stem's midpoint. An arpeggio instead sits just LEFT of the head,
       // which is where a rolled chord is read from.
-      const onStem =
-        name === 'arpeggio'
-          ? headX - glyphsFor(strict).width(glyph) - ENGRAVE.spannerGap
-          : headX + headWidth / 2 - glyphsFor(strict).width(glyph) / 2
+      // AN ARPEGGIO IS A STACK, and it reaches TWICE ITS OWN WIDTH back from the note.
+      //
+      //     for (var j = minpitch - 1; j <= maxpitch; j += 2)
+      //       abselem.addExtra(new RelativeElement("scripts.arpeggio",
+      //         -getSymbolWidth("scripts.arpeggio") * 2 - roomtaken, 0, j + 2,
+      //         { thickness: symbolHeightInPitches("scripts.arpeggio") }))
+      //
+      // (`decoration.js:279-297`). One glyph per two pitches from a pitch BELOW the lowest
+      // note to the highest, each declaring its own height about the pitch it sits on, and
+      // `addExtra` walks `extraw` back to that `dx` — 10px, which is what a bare
+      // `!arpeggio!A` was out by. We drew ONE, half a width to the left, reserving nothing.
+      if (name === 'arpeggio') {
+        const width = glyphsFor(strict).width(glyph)
+        const half = (table.get(glyph)?.declaredHeight ?? 0) / 2
+        const at = headX - 2 * width - roomTaken
+        for (let step = bottomStep - 1; step <= topStep; step += 2) {
+          const y = stepToY(step + 2)
+          out.push({
+            name: glyph,
+            x: at,
+            y,
+            role: 'decoration',
+            reserve: [y - half, y + half],
+          })
+        }
+        leftReach = Math.max(leftReach, 2 * width + roomTaken)
+        continue
+      }
+      const onStem = headX + headWidth / 2 - glyphsFor(strict).width(glyph) / 2
       const tip = stemUp
         ? Math.max(topStep, 4) + ENGRAVE.stemLength
         : Math.min(bottomStep, -4) - ENGRAVE.stemLength
@@ -2170,8 +3625,46 @@ function decorationGlyphs(
       out.push({ name: glyph, x: centre, y: stepToY(lane), role: 'dynamic' })
     }
   }
-  return out
+
+  // A TEXT DECORATION STACKS ON THE SAME CURSOR AS THE SYMBOLS. `D.C.`, `Fine` and the
+  // fingering digits go through `textDecoration` (`decoration.js:147-153`), which takes
+  // the running `yPos.above` exactly as `symbolDecoration` does, places the text a flat
+  // `textFudge = 2` pitch above it, and advances by a flat `textHeight = 5`. One list,
+  // one cursor, dispatched by name.
+  //
+  // Ours drew them at a fixed part-lane step instead, so `frere-jacques`'s `!D.C.!` sat
+  // 4.09 pitch above where abcjs puts it and took the staff's ink with it.
+  for (const name of names) {
+    if (strict && STRICT_UNDRAWN.has(name)) continue
+    const text = DECORATION_TEXTS[name]
+    if (text === undefined) continue
+    const size = ENGRAVE.chordTextSize
+    const y = stepToY(toStep(above + ENGRAVE.decorationTextFudge))
+    const half = (ENGRAVE.decorationTextThickness * ENGRAVE.spacePerStep) / 2
+    texts.push({
+      text,
+      x: headX + headWidth / 2 - textWidth(text, size) / 2,
+      y,
+      size,
+      bold: false,
+      italic: true,
+      reserve: [y - half, y + half],
+    })
+    above += ENGRAVE.decorationTextHeight
+  }
+
+  return { glyphs: out, texts, leftReach }
 }
+
+/**
+ * Which of abcjs's faces a run of text is set in — and therefore measured in.
+ *
+ * abcjs names a font per role (`parse/abc_parse_directive.js:20-42`) and they are not all
+ * the same family: a lyric is Times New Roman BOLD, a chord symbol is Helvetica. The
+ * difference is not cosmetic here, because a lyric's width is half of its note's rod on
+ * each side — measuring bold text with regular metrics ran every sung fixture 13% narrow.
+ */
+type Face = 'serif' | 'serifBold' | 'sans'
 
 /**
  * Width of a run of text, in staff spaces.
@@ -2179,13 +3672,203 @@ function decorationGlyphs(
  * Per-character advances rather than one number per character. The flat estimate this
  * replaces measured `iiiii` and `WWWWW` the same, with a median error of 8.9% against
  * real serif metrics over the corpus and a worst case of +77% — on the short narrow
- * syllables lyrics are actually made of. Still an ESTIMATE: the output asks for
- * `font-family="serif"` and the viewer supplies the font, so no table can be exact.
+ * syllables lyrics are actually made of.
+ *
+ * Still an estimate — the output asks for a font FAMILY and the viewer supplies the face
+ * — but no longer a systematic one: the tables are real advances from the fonts abcjs
+ * names, checked against widths probed out of its own `extraw`.
  */
-const textWidth = (text: string, size: number): number => {
+const textWidth = (text: string, size: number, face: Face = 'serif'): number =>
+  STRICT_TEXT_METRICS ? goldenTextWidth(text, size, face) : realTextWidth(text, size, face)
+
+/**
+ * Which of the two the current render measures with — set once per render from the mode.
+ *
+ * ponytail: a module-level switch rather than a `strict` argument threaded through
+ * `textWidth`'s sixteen call sites, most of which do not have the mode in scope. Thread it
+ * properly if a caller ever needs both metrics in one render.
+ */
+let STRICT_TEXT_METRICS = true
+
+/** `%%jazzchords` for the current render — same one-place switch, set beside it. */
+let JAZZ_CHORDS = false
+
+/**
+ * LINE WEIGHTS for the current render — abcjs's in strict, Bravura's otherwise.
+ *
+ * ponytail: a module-level switch, the fifth beside `STRICT_TEXT_METRICS`, `JAZZ_CHORDS`,
+ * `SCORE_FONTS` and `PERC_MAP`. Eight of the twenty-one sites are in functions with no
+ * `strict` in scope — `ledgerLines`, `layoutBeam`, `staffLinesFor`, `buildCurve` and the
+ * rest — and threading a boolean through eight signatures to reach a constant is a bigger
+ * change than the one it enables. abcjs keeps the same thing on its renderer.
+ */
+let LINE_WEIGHTS = lineWeightsFor(true)
+
+/**
+ * A chord symbol's or annotation's MEASURED width — `getTextSize.calc`, box included.
+ *
+ * The `padding * 4` a boxed font adds goes on the WIDTH as well as the height
+ * (`helpers/get-text-size.js:46-48`), and that width is the mark's `realWidth`: it decides
+ * how far a centred chord reaches either side of its note and where `placeInLane` thinks
+ * its right edge is. `visual-tablature-17` boxes five `%%gchordfont` sizes and was 33.9px
+ * of dx out on this alone.
+ */
+const markWidth = (text: string, size: number, boxed: boolean): number =>
+  textWidth(text, size, 'sans') + (boxed ? size * ENGRAVE.fontBoxPadding * 4 : 0)
+
+/**
+ * Every `%%<type>font` the tune set, for the current render — the same one-place switch.
+ *
+ * ponytail: a module-level map rather than a `fonts` argument threaded through the
+ * measure, note and bar builders. abcjs keeps it on the controller for the same reason.
+ */
+let SCORE_FONTS: Score['fonts'] = {}
+
+/** A `%%<type>font`'s size in staff spaces — `round(pt x 4 / 3)` px (`get-font-and-attr.js:29`). */
+const fontSizeOf = (type: AbcFontType): number =>
+  Math.round(((SCORE_FONTS[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / STAFF_SPACE_PX
+
+/**
+ * What `getTextSize.calc` returns as a `%%<type>font`'s HEIGHT, in staff spaces.
+ *
+ * The generator's size table with `size + 2` for anything unlisted, plus `padding * 4`
+ * when the font is BOXED (`helpers/get-text-size.js:46-48`).
+ */
+const fontHeightOf = (type: AbcFontType): number => {
+  const size = fontSizeOf(type)
+  return (
+    goldenTextHeight(size) +
+    (SCORE_FONTS[type]?.box === true ? size * ENGRAVE.fontBoxPadding * 4 : 0)
+  )
+}
+
+/**
+ * `translateChord`'s split of a chord symbol into root, modifier and `/bass`
+ * (`write/creation/translate-chord.js:12-34`).
+ *
+ * Every group is optional and the regex is unanchored at the tail, so it always matches —
+ * abcjs's `if (!reg) continue` is dead code. A chord it cannot read simply comes back as
+ * one modifier, which is what `"x"` does.
+ *
+ * ponytail: one line, where abcjs splits on `\n` first. Our chord symbols carry no
+ * newline; a multi-line one would need the loop.
+ */
+/**
+ * A `"…"` annotation's PLACEMENT, and the coordinates of an absolute one.
+ *
+ * `letter_to_chord` (`abc_parse_music.js:598-652`) reads the leading character: `^` above,
+ * `_` below, `<` left, `>` right, `@` absolute. An `@` is followed by two floats separated
+ * by a comma, then optional whitespace, then the text — and every way of getting that
+ * wrong falls back to ABOVE with the `@` stripped and the rest printed verbatim, which is
+ * three separate `warn` branches saying the same thing.
+ */
+type Annotation =
+  | { where: 'above' | 'below' | 'left' | 'right'; text: string }
+  | {
+      where: 'relative'
+      text: string
+      dx: number
+      dy: number
+    }
+
+/**
+ * A pitched annotation reserves a POINT, not its letters.
+ *
+ * `RelativeElement`'s `top` and `bottom` are both the pitch it was given unless a
+ * `thickness` says otherwise (`relative-element.js:18-24`), and `add-chord.js` passes none
+ * for a left, right or absolute annotation. So `_addChild`'s `pushTop` sees the pitch
+ * itself — `"@1,1E"e` reserves at pitch 12.26, which the clef's 13.72 already covers, and
+ * the staff does not move at all. Reserving the text's ink box instead raised it 10.31px.
+ */
+const pointReserve = (y: number): readonly [number, number] => [y, y]
+
+const annotationOf = (raw: string): Annotation => {
+  const rest = raw.slice(1)
+  switch (raw[0]) {
+    case '_':
+      return { where: 'below', text: rest }
+    case '<':
+      return { where: 'left', text: rest }
+    case '>':
+      return { where: 'right', text: rest }
+    case '@': {
+      // `getFloat`, a literal comma, `getFloat`, then whitespace — abcjs's own order.
+      const m = /^(-?\d*\.?\d+),(-?\d*\.?\d+)\s*/.exec(rest)
+      if (m?.[1] === undefined || m[2] === undefined) return { where: 'above', text: rest }
+      return {
+        where: 'relative',
+        text: rest.slice(m[0].length),
+        dx: Number.parseFloat(m[1]),
+        dy: Number.parseFloat(m[2]),
+      }
+    }
+    default:
+      return { where: 'above', text: rest }
+  }
+}
+
+const chordParts = (chord: string): readonly [string, string, string] => {
+  const m = /^([ABCDEFG][♯♭]?)?([^/]+)?(\/([ABCDEFG][#b♯♭]?))?/.exec(chord)
+  if (m === null) return [chord, '', '']
+  return [m[1] ?? '', m[2] ?? '', m[4] === undefined ? '' : `/${m[4]}`]
+}
+
+/**
+ * `dump-svg.js`'s `calcWidth`, which is what every SVG golden was measured with.
+ *
+ * Five ASCII tables chosen by SIZE ALONE — not by family — summed per character with a
+ * flat **8** for anything the table does not carry, widest line wins. Three of the six
+ * brackets ask for a key that does not exist in `dump-elements-char-widths.js`
+ * (`titlefont`, `subtitlefont`, and the bold arm below 17), so they fall through to
+ * `repeatfont`: a 27px title is measured with 17px Times widths.
+ *
+ * Byte parity with the goldens is the goal, so this is not a limitation to record — it is
+ * the target. `abcMusicKit` v1 ships the same fallback deliberately.
+ *
+ * Indexed by UTF-16 code UNIT, as the generator's `lines[li][i]` is: an astral character
+ * measures 8 twice, not once.
+ */
+const goldenTextWidth = (text: string, size: number, face: Face): number => {
+  if (text === '') return 0
+  const px = size * STAFF_SPACE_PX
+  const table =
+    px >= 27 || px >= 21
+      ? GOLDEN_REPEAT // asks for `titlefont` / `subtitlefont`; neither key exists
+      : px >= 20
+        ? GOLDEN_PARTS
+        : px >= 19
+          ? GOLDEN_MEASURE
+          : px >= 17
+            ? face === 'serifBold'
+              ? GOLDEN_VOCAL
+              : GOLDEN_REPEAT
+            : px >= 16
+              ? GOLDEN_GCHORD
+              : GOLDEN_REPEAT
+  let widest = 0
+  for (const line of text.split('\n')) {
+    let width = 0
+    for (let i = 0; i < line.length; i++) width += table[line[i] as string] ?? 8
+    if (width > widest) widest = width
+  }
+  return widest / STAFF_SPACE_PX
+}
+
+/**
+ * The REAL per-em metrics — what `abc2.1` and `extended` measure with, and what strict
+ * measured with until `calcWidth` was ported.
+ */
+const realTextWidth = (text: string, size: number, face: Face): number => {
+  const table =
+    face === 'serifBold' ? CHAR_ADVANCE_BOLD : face === 'sans' ? CHAR_ADVANCE_SANS : CHAR_ADVANCE
+  const fallback =
+    face === 'serifBold'
+      ? CHAR_ADVANCE_BOLD_FALLBACK
+      : face === 'sans'
+        ? CHAR_ADVANCE_SANS_FALLBACK
+        : FALLBACK_ADVANCE
   let em = 0
-  for (const ch of text)
-    em += CHAR_ADVANCE[ch] ?? (isFullWidth(ch) ? FULL_WIDTH_ADVANCE : FALLBACK_ADVANCE)
+  for (const ch of text) em += table[ch] ?? (isFullWidth(ch) ? FULL_WIDTH_ADVANCE : fallback)
   return em * size
 }
 
@@ -2226,77 +3909,244 @@ function noteText(
   headWidth: number,
   /** `abcjs-strict` — gates whether `%%vocalfont` is realized. See the verses block. */
   strict = true,
+  /**
+   * Out-param: how far the note's CENTRED text reaches each side of the element's x.
+   *
+   * abcjs's `addCentered` (`creation/elements/absolute-element.js`), verbatim:
+   *
+   *     var half = elem.w / 2;
+   *     if (-half < this.extraw) this.extraw = -half;      // LEFT: half, dx ignored
+   *     if (elem.dx + half > this.w) this.w = elem.dx + half;   // RIGHT: dx + half
+   *
+   * so a lyric and a chord symbol both widen the note AND reach back before it, and the
+   * two sides are not symmetric because the left one drops `dx`. The two differ in where
+   * they are anchored, which the probes give directly: a lyric has `dx = 0` and a chord
+   * symbol `dx = 4.91`, half a notehead — `Hap-` reads `w = 18.438, extraw = -18.438`
+   * while `Amaj7` reads `w = 27.593, extraw = -22.688` off a 45.38px string.
+   *
+   * ANNOTATIONS ARE NOT IN THIS. abcjs gives `"^Allegro"` a RelativeElement of `w = 0`:
+   * probed on `stacked-annotations`, four annotated notes all read `w = 15.902,
+   * extraw = 0` — the flag, and nothing from the text. They draw without occupying.
+   */
+  spans: { left: number; right: number } | null = null,
+  /**
+   * The note's MEAN staff step and its LOWEST — abcjs's `elem.averagepitch` and
+   * `elem.minpitch`, which are where a left, right or absolute annotation is pitched.
+   */
+  averageStep = 0,
+  minStep = 0,
+  /**
+   * abcjs's `roomtaken` as `addChord` is reached — the accidentals plus the grace notes
+   * (`abstract-engraver.js:834-853`). A LEFT annotation accumulates ON TOP of it, so it
+   * sits left of everything already hanging off the note.
+   */
+  roomTakenBefore = 0,
 ): PlacedText[] {
-  if (event.type === 'rest') return []
   const texts: PlacedText[] = []
   const centre = headX + headWidth / 2
-
-  if (event.chordSymbol !== null && event.chordSymbol !== '') {
-    const size = ENGRAVE.chordTextSize
-    texts.push({
-      text: event.chordSymbol,
-      // The lane is only the origin: `anchorAboveStaff` moves the whole set onto the
-      // staff's music once the voices sharing it are known, exactly as lyrics are.
-      role: 'chord',
-      x: centre - textWidth(event.chordSymbol, size) / 2,
-      y: stepToY(ENGRAVE.chordSymbolStep),
-      size,
-      bold: false,
-      italic: false,
-    })
+  /** A text CENTRED on the note, `dx` from its x. Annotations do not call this. */
+  const centred = (text: string, size: number, dx: number, face: Face): void => {
+    if (spans === null) return
+    const half = textWidth(text, size, face) / 2
+    spans.left = Math.max(spans.left, half)
+    spans.right = Math.max(spans.right, dx + half)
   }
 
-  // `"^text"` and `"_text"` — free annotations, which the parser separates from chord
-  // symbols by that leading char. It is placement, not content, so it is stripped here
-  // rather than printed. See `ENGRAVE.annotationAboveStep` for the stacking order.
-  const annotations = event.annotations.map((a) => ({ where: a[0] ?? '^', text: a.slice(1) }))
-  const above = annotations.filter((a) => a.where === '^' || a.where === '@')
-  const below = annotations.filter((a) => a.where === '_')
+  if (event.chordSymbol !== null && event.chordSymbol !== '') {
+    // `%%gchordfont`'s size, in POINTS, converted the way abcjs converts every font:
+    // `Math.round(size * 4 / 3)` (`get-font-and-attr.js:29`). Its default is Helvetica 12,
+    // which is the 16px `chordTextSize` already here, so a tune with no directive takes
+    // exactly the path it always did.
+    const size =
+      event.chordFont === null
+        ? ENGRAVE.chordTextSize
+        : Math.round((event.chordFont.size * 4) / 3) / 7.75
+    // EACH LINE IS ITS OWN CENTRED MARK, in REVERSE order — `chordString` splits on `\n`
+    // and walks `j` down from the last "because we place them from bottom to top"
+    // (`add-chord.js:39-41`). So `"D""G"d`, which the parser joined into one name, becomes
+    // two chord marks at one x; `placeInLane` cannot fit them side by side and opens a
+    // second lane, which is 18.52px of staff. Collapsing them to one line lost that on
+    // every fixture that stacks a chord.
+    for (const raw of event.chordSymbol.split('\n').reverse()) {
+      if (raw === '') continue
+      // `translateChord` RUNS ON EVERY CHORD SYMBOL, not just under `%%jazzchords`
+      // (`add-chord.js:44-45` — the only guard is `!isAnnotation`). Without the markers it
+      // looks like an identity, and it is not: the string is REBUILT from three regex
+      // groups, so anything the tail group cannot read is DROPPED. `"C6/9"` matches root
+      // `C`, modifier `6`, and then `(\/([ABCDEFG][#b♯♭]?))?` fails on `/9` and matches
+      // empty — abcjs prints `C6`. `"C/E"`, `"D/F#"` and `"Am/C"` all keep their bass and
+      // are exact, which is why only the digit one showed.
+      const parts = chordParts(raw)
+      const line = parts.join('')
+      const boxed = event.chordFont?.box === true
+      const lineWidth = markWidth(line, size, boxed)
+      if (spans !== null) {
+        spans.left = Math.max(spans.left, lineWidth / 2)
+        spans.right = Math.max(spans.right, headWidth / 2 + lineWidth / 2)
+      }
+      texts.push({
+        text: line,
+        // The lane is only the origin: `anchorAboveStaff` moves the whole set onto the
+        // staff's music once the voices sharing it are known, exactly as lyrics are.
+        role: 'chord',
+        x: centre - lineWidth / 2,
+        y: stepToY(ENGRAVE.chordSymbolStep),
+        size,
+        bold: false,
+        italic: false,
+        ...(JAZZ_CHORDS ? { jazz: parts } : {}),
+        ...(event.chordFont?.box === true ? { box: true } : {}),
+      })
+    }
+  }
+
+  // `"^text"` / `"_text"` / `"<text"` / `">text"` / `"@x,y text"` — free annotations, which
+  // the parser separates from chord symbols by that leading char. It is placement, not
+  // content, so it is stripped here rather than printed.
+  //
+  // FOUR PLACEMENTS AND FOUR DIFFERENT RESERVES (`add-chord.js:50-104`), and the switch is
+  // what decides whether the mark takes a LANE at all: `RelativeElement`'s `case "text"`
+  // gives `chordHeightAbove` only when the pitch is UNDEFINED
+  // (`relative-element.js:68-75`). `above` and `below` pass no pitch and take the lane;
+  // `left`, `right` and `@` are pitched on the note and take none.
+  const annotations = event.annotations.map(annotationOf)
+  const above = annotations.filter((a) => a.where === 'above')
+  const below = annotations.filter((a) => a.where === 'below')
 
   above.forEach((a, index) => {
-    const size = ENGRAVE.chordTextSize
+    // `annotationfont`, not the chord font — abcjs picks `font = isAnnotation ?
+    // 'annotationfont' : 'gchordfont'` (`add-chord.js:11-17`). They share a 12pt default,
+    // so a tune that sets neither is unmoved; `%%annotationfont Times-Roman 15 box` is
+    // 11.65px of chord lane.
+    const size = fontSizeOf('annotationfont')
+    // ONE LANE PER ITEM'S OWN FONT SIZE — `fontSize * 1.25` (`draw/text.js:13-15`), the
+    // same rule the chord lanes use, not a flat step. The two agree at the 12pt default
+    // and nowhere else, so `%%annotationfont Times-Roman 15` moved abcjs's stack and not
+    // ours.
     const lane =
-      ENGRAVE.annotationAboveStep + (above.length - 1 - index) * ENGRAVE.annotationLineStep
+      ENGRAVE.annotationAboveStep +
+      ((above.length - 1 - index) * size * ABCJS_RATIO.laneLineStep) / ENGRAVE.spacePerStep
     texts.push({
       text: a.text,
-      x: centre - textWidth(a.text, size) / 2,
+      // LEFT-JUSTIFIED AT THE ELEMENT, where a chord symbol is CENTRED on it. abcjs's
+      // annotation is `RelativeElement(chord, 0, 0, undefined, {realWidth})` — `dx` 0 —
+      // and `getChordDim` takes `offset = this.type === "chord" ? realWidth / 2 : 0`
+      // (`relative-element.js:96`), so its lane extent runs from the element's x rightward.
+      // The golden says the same in one attribute: `text-anchor="start"` on an annotation
+      // beside `text-anchor="middle"` on a chord. Centring ours reached further left than
+      // abcjs's and opened a second chord LANE that abcjs does not — 18.51px of staff on
+      // `"Ab"z"^break"c2`.
+      x: headX,
       y: stepToY(lane),
       size,
       bold: false,
       italic: false,
+      ...(SCORE_FONTS.annotationfont?.box === true ? { box: true } : {}),
+      // AN ANNOTATION SHARES THE CHORD LANE. `RelativeElement` gives a `type: "text"`
+      // with no pitch the very same `chordHeightAbove` a `type: "chord"` gets
+      // (`relative-element.js:60-76`), and `setUpperAndLowerRelativeElements` handles
+      // both in one `case "text": case "chord":`. Ours drew them at a fixed step with no
+      // role, so `anchorAboveStaff` never saw them, reserved nothing, and let their ink
+      // set the staff's top instead — the whole of `frere-jacques`'s last residual.
+      role: 'chord',
     })
   })
 
-  below.forEach((a, index) => {
-    const size = ENGRAVE.chordTextSize
+  below.forEach((a) => {
+    const size = fontSizeOf('annotationfont')
+    // A BELOW ANNOTATION TAKES A LANE ON THE STAFF'S BOTTOM INK, exactly as an above one
+    // takes one on its top: `RelativeElement`'s `case "text"` with no pitch sets
+    // `chordHeightBelow` when `position === 'below'` (`relative-element.js:70-75`), and
+    // `set-upper-and-lower-elements.js:56-61` spends it as `chordHeightBelow * lanes +
+    // margin` off `staff.bottom`. `anchorChordsBelow` is where that happens.
+    //
+    // Drawn at the STAFF for now, with a POINT reserve, so nothing it does before that
+    // pass runs can reach the extent — the mirror of what a left/right annotation does,
+    // and the reason the lane can be spent exactly once.
+    const y = stepToY(-4)
     texts.push({
       text: a.text,
-      x: centre - textWidth(a.text, size) / 2,
-      y: stepToY(ENGRAVE.annotationBelowStep - index * ENGRAVE.annotationLineStep),
+      // Left-justified, like the `above` case.
+      x: headX,
+      y,
       size,
       bold: false,
       italic: false,
+      role: 'chordBelow',
+      reserve: pointReserve(y),
+      ...(SCORE_FONTS.annotationfont?.box === true ? { box: true } : {}),
     })
   })
 
-  // `"<text"` and `">text"` sit beside the note at staff height instead of above it.
-  // ponytail: `"@x,y text"` is free placement — its coordinates would need parsing, so it
-  // falls in with `^` above and prints them. No corpus fixture writes one.
+  // A LEFT ANNOTATION TAKES `width + 7` OF ROOM BEFORE THE NOTE, and a right one 4 either
+  // side of itself:
+  //
+  //     case "left":  roomTaken += chordWidth + 7; x = -roomTaken;
+  //                   abselem.addExtra(new RelativeElement(chord, x, chordWidth + 4, …))
+  //     case "right": roomTakenRight += 4; x = roomTakenRight;
+  //                   abselem.addRight(new RelativeElement(chord, x, chordWidth + 4, …))
+  //
+  // (`add-chord.js:50-71`). `addExtra` walks `extraw` back to `dx` and `addRight` walks
+  // `w` out to `dx + w`, so both are real spacing. We drew them at a fixed gap and
+  // reserved nothing at all: a bare `"<F"F` put the note 16.78px left of abcjs's, which is
+  // `F`'s 9.78 in the annotation font plus the 7.
+  //
+  // Both are pitched on the note's AVERAGE, which is also why neither takes a lane.
+  let roomTaken = roomTakenBefore
+  let roomTakenRight = 0
   for (const a of annotations) {
-    if (a.where !== '<' && a.where !== '>') continue
-    const size = ENGRAVE.chordTextSize
+    if (a.where !== 'left' && a.where !== 'right') continue
+    const size = fontSizeOf('annotationfont')
+    const width = textWidth(a.text, size, 'sans')
+    if (a.where === 'left') {
+      roomTaken += width + ENGRAVE.leftAnnotationGap
+      if (spans !== null) spans.left = Math.max(spans.left, roomTaken)
+      texts.push({
+        text: a.text,
+        x: headX - roomTaken,
+        y: stepToY(averageStep),
+        size,
+        bold: false,
+        italic: false,
+        reserve: pointReserve(stepToY(averageStep)),
+      })
+    } else {
+      roomTakenRight += ENGRAVE.rightAnnotationGap
+      if (spans !== null)
+        spans.right = Math.max(spans.right, roomTakenRight + width + ENGRAVE.rightAnnotationGap)
+      texts.push({
+        text: a.text,
+        x: headX + roomTakenRight,
+        y: stepToY(averageStep),
+        size,
+        bold: false,
+        italic: false,
+        reserve: pointReserve(stepToY(averageStep)),
+      })
+    }
+  }
+
+  // `"@x,y text"` — ABSOLUTE placement, and it reserves NOTHING: abcjs gives it `w: 0` and
+  // a pitch of `elem.minpitch + (y + 3 * STEP) / STEP` (`add-chord.js:88-96`), so it takes
+  // no lane and no width. Ours put it in the chord lane and printed its coordinates —
+  // `"@1,1E"e` alone reserved 22.38px abcjs does not.
+  for (const a of annotations) {
+    if (a.where !== 'relative') continue
+    const y = stepToY(minStep + 3 + a.dy / STEP_PX)
     texts.push({
       text: a.text,
-      x:
-        a.where === '<'
-          ? headX - textWidth(a.text, size) - ENGRAVE.minColumnGap
-          : headX + headWidth + ENGRAVE.minColumnGap,
-      y: stepToY(0),
-      size,
+      x: headX + a.dx / STAFF_SPACE_PX,
+      y,
+      size: fontSizeOf('annotationfont'),
       bold: false,
       italic: false,
+      reserve: pointReserve(y),
     })
   }
+
+  // A REST STOPS HERE. It carries a chord symbol and annotations, which abcjs engraves
+  // over it like any other element, but no lyric — nothing sings a rest.
+  if (event.type === 'rest') return texts
 
   // Verse 1 comes from `lyric`; `extraVerses` holds 2..n, positionally, with a null
   // wherever a verse skips this note.
@@ -2312,26 +4162,50 @@ function noteText(
   // on `lyricMelisma` in the model. A `%%vocalfont` between two `w:` lines under the same
   // music therefore styles verse 1 and not verse 2.
   //
-  // MODE-GATED, and this direction is deliberate: abcjs stamps `el.fonts` at parse time
-  // and never reads `.fonts` anywhere in its write phase, so its mid-tune vocalfont is
-  // parsed and never realized. Strict reproduces that by drawing every syllable in the
-  // default. Realizing it in strict would be an IMPROVEMENT, which is the one thing
-  // strict must not do.
+  // NO LONGER MODE-GATED — CORRECTED 2026-08-05, and the note that used to stand here was
+  // wrong. It read: "abcjs stamps `el.fonts` at parse time and never reads `.fonts`
+  // anywhere in its write phase, so its mid-tune vocalfont is parsed and never realized.
+  // Realizing it in strict would be an IMPROVEMENT, which is the one thing strict must not
+  // do." That was reasoned from the source and abcjs's own OUTPUT denies it.
+  //
+  // `addLyric` measures with `getTextSize.calc(lyricStr, 'vocalfont', "lyric")` and hands
+  // the element `dim: getTextSize.attr('vocalfont', "lyric")`
+  // (`abstract-engraver.js:769-778`) — the vocalfont, by name, for both the LANE and the
+  // drawn attrs. Its SVG says the same in one attribute: the same tune renders its lyric at
+  // `font-size="17" font-family="Times New Roman" font-weight="bold"` with no directive,
+  // `13` / `Helvetica` / `normal` under `%%vocalfont Helvetica 10.0`, and `27` under
+  // `%%vocalfont Helvetica 20.0`.
+  //
+  // So strict realizes it too, and this row of the mode-split table in CLAUDE.md is gone.
+  // POINTS THROUGH ABCJS'S OWN CONVERSION, not a ratio of the default's drawn size. The
+  // two agree at 13pt — `round(13 * 4/3)` is 17 and so is `17 * 13/13` — and part company
+  // everywhere else: 20pt is `round(26.67) = 27` where the ratio gives 26.15, and that
+  // 0.85px picks a different row of the golden's height table (29.91 against 28), which is
+  // the last 1.75px of `%%vocalfont Helvetica 20.0`. A ratio anchored on a value that is
+  // itself already rounded cannot reproduce a rounding.
   const lyricSize =
-    !strict && event.lyricFont !== null
-      ? // Ratio FIRST. `size / DEFAULT` is exactly 1 when they are equal, whatever the
-        // values, so `%%vocalfont Times-Bold` with no size lands on the default size
-        // exactly rather than a rounding step away from it. Multiplying first happens to
-        // be exact for 13 too, and would stop being so if either constant moved.
-        ENGRAVE.lyricTextSize * (event.lyricFont.size / DEFAULT_VOCALFONT_PT)
-      : ENGRAVE.lyricTextSize
-  const lyricBold = !strict && event.lyricFont !== null ? event.lyricFont.bold : false
-  const lyricItalic = !strict && event.lyricFont !== null ? event.lyricFont.italic : false
-  verses.forEach((verse, index) => {
-    if (verse === null || verse === '') return
+    event.lyricFont !== null ? spaces(fontPixels(event.lyricFont.size)) : ENGRAVE.lyricTextSize
+  const lyricBold = event.lyricFont !== null ? event.lyricFont.bold : true
+  const lyricItalic = event.lyricFont !== null ? event.lyricFont.italic : false
+  verses.forEach((raw, index) => {
+    if (raw === null || raw === '') return
     // Verse 1 carries the font; later verses stay at the default until `extraVerses` can
     // hold one of their own.
     const size = index === 0 ? lyricSize : ENGRAVE.lyricTextSize
+    // THE MELISMA `_` IS PART OF THE SYLLABLE, SO IT IS PART OF THE MEASUREMENT.
+    //
+    // In strict abcjs prints the underscore as literal text, and `addLyric` measures the
+    // whole `lyricStr` — `getTextSize.calc(lyricStr, 'vocalfont', "lyric")` — before
+    // handing it to `addCentered`, which takes `extraw = -w / 2`
+    // (`abstract-engraver.js:769-778`). Appending it in `layoutMelismas`, AFTER this
+    // element's spans were taken, measured `true.` and drew `true._`: abcjs's own probe
+    // reads `extraw = -21.492` on `S5-directives` X:505's `"Eb"G4-` where ours read
+    // -17.242, and the gap is exactly half the 8.5 the golden's vocalfont table gives
+    // `_`. One number computed in two places whose inputs had drifted — the third time on
+    // this branch, after the lyric reserve and `curveReserves`.
+    const verse =
+      strict && index === 0 && event.lyricMelismaStart ? `${raw}_` : raw
+    centred(verse, size, 0, 'serifBold')
     texts.push({
       text: verse,
       // Tagged so the melisma pass can find the syllable it must extend from. Matching
@@ -2341,10 +4215,17 @@ function noteText(
       // bigger. A font that draws large and measures at the default width is how lyrics
       // end up overlapping — the centring here and the melisma extender's start both
       // read this width.
-      x: centre - textWidth(verse, size) / 2,
+      // CENTRED ON THE ELEMENT'S x, which is the notehead's LEFT edge, not its middle —
+      // abcjs's lyric RelativeElement has `dx = 0` and the golden agrees to the pixel:
+      // `text-anchor="middle" x="106.03"` under a note placed at 106.03.
+      x: headX - textWidth(verse, size, 'serifBold') / 2,
       y: stepToY(ENGRAVE.lyricStep - index * ENGRAVE.lyricLineStep),
       size,
-      bold: index === 0 ? lyricBold : false,
+      // BOLD BY DEFAULT — abcjs's `vocalfont` is Times New Roman 13pt **bold**
+      // (`parse/abc_parse_directive.js:30`) and its goldens draw every syllable with
+      // `font-weight="bold"`. `%%vocalfont` can still turn it off in the modes that read
+      // the directive at all.
+      bold: index === 0 ? lyricBold : true,
       italic: index === 0 ? lyricItalic : false,
     })
   })
@@ -2496,7 +4377,11 @@ function layoutSpanners(
   dynamicsAbove: boolean,
 ): PlacedLine[][] {
   const out: PlacedLine[][] = bounds.map(() => [])
-  const thickness = ENGRAVING_DEFAULTS.staffLineThickness
+  // A third borrowed weight: this was `LINE_WEIGHTS.staffLine`, which is abcjs's 0.6px
+  // rule for a STAFF LINE. A hairpin and a glissando are `printPath` strokes with no
+  // `stroke-width` (`draw/crescendo.js:34`, `draw/glissando.js`), so they paint at SVG's
+  // default 1 like every other one.
+  const thickness = ENGRAVE.strokedPathRule
 
   /**
    * One hairpin piece: two strokes whose gap goes from `startGap` to `endGap`.
@@ -2592,20 +4477,11 @@ function layoutMelismas(
     const lyric = lyricIndex < 0 ? undefined : element?.texts[lyricIndex]
     if (element === undefined || lyric === undefined) return
 
-    if (strict) {
-      // One text, as abcjs emits it. Appending widens the string by the underscore, so
-      // the pair re-centres by half that — the syllable itself shifts left, which is
-      // what centring "sing_" rather than "sing" does.
-      const widened = `${lyric.text}_`
-      const texts = [...element.texts]
-      texts[lyricIndex] = {
-        ...lyric,
-        text: widened,
-        x: lyric.x - textWidth('_', lyric.size) / 2,
-      }
-      elements[start.element] = { ...element, texts }
-      return
-    }
+    // STRICT HAS NOTHING TO DO HERE. abcjs's underscore is literal text inside the
+    // syllable, so `noteText` builds it into the string and the element measures and
+    // centres it in one place. This pass used to append it afterwards, which drew the
+    // right glyph off the wrong width — see the note there.
+    if (strict) return
 
     // Only the LINE needs the far end, which is why the search sits below the strict
     // branch rather than above it. The two modes wrap differently — strict renders at
@@ -2622,7 +4498,7 @@ function layoutMelismas(
     }
     if (last === null) return
 
-    const from = lyric.x + textWidth(lyric.text, lyric.size) + ENGRAVE.melismaGap
+    const from = lyric.x + textWidth(lyric.text, lyric.size, 'serifBold') + ENGRAVE.melismaGap
     const to = last.right + ENGRAVE.melismaGap
     // A run so tight that the line would be a speck reads as a smudge; drop it instead.
     if (to - from < ENGRAVE.melismaMinLength) return
@@ -2631,7 +4507,7 @@ function layoutMelismas(
       y1: lyric.y,
       x2: to,
       y2: lyric.y,
-      thickness: ENGRAVING_DEFAULTS.staffLineThickness,
+      thickness: LINE_WEIGHTS.staffLine,
       role: 'lyric',
     })
   })
@@ -2643,11 +4519,46 @@ function layoutMelismas(
 
 /** Where a curve can attach to a note, recorded during layout. */
 interface NoteAnchor {
+  /**
+   * `calcSlurY`'s answer for this end, RESOLVED ONCE — the element's own box over its
+   * fixed children, which on a beamed note is where the beam retargeted the stem, and the
+   * position in the beam that decides whether the branch applies at all.
+   *
+   * MUTABLE, DELIBERATELY, and it is the smallest honest merge available. The quantity is
+   * abcjs's `parent.fixed` and it needs the FINAL elements, so it can only be resolved in
+   * the per-system pass where `curveReserves` runs. `layoutCurves` runs at tune level with
+   * anchors and system bounds and no elements — but the anchors are the same OBJECTS
+   * (`systemAnchors` is a `.filter()` of `voiceAnchors[v]`), so resolving here and reading
+   * there is one derivation rather than two.
+   *
+   * The alternative was `buildCurve` deriving it a second time from data it does not have,
+   * which is the lyric-reserve bug's exact shape: one number computed in two places whose
+   * inputs drift apart. See `slurEndY`.
+   */
+  slurFixed?: { top: number; bottom: number }
+  /**
+   * The two ends of this note's GRACE SLUR, resolved where the elements are — the same
+   * merge `slurFixed` makes and for the same reason. `layoutCurves` has anchors and no
+   * elements, and the grace head is a glyph on the element.
+   */
+  graceSlur?: { graceX: number; graceY: number; headX: number }
+  beamPos?: 'none' | 'first' | 'last' | 'middle'
   /** Left and right edges of the notehead, and its vertical extremes. */
   readonly left: number
   readonly right: number
   readonly top: number
   readonly bottom: number
+  /**
+   * `anchor.pitch` AS ABCJS MEANS IT — the FIRST pitch of the chord as the source wrote
+   * it, not the chord's middle and not its lowest note. A slur or tie is hung on
+   * `el.pitches[0]` and on nothing else (`parse/abc_parse_music.js:503-506`), so that one
+   * notehead is what every curve reserve is measured from. `ave-verum-corpus`'s organ
+   * staff pairs pitch 1 to pitch 0 on that rule where the chord's centre pairs 1 to 1.
+   *
+   * Taken from the EVENT rather than the drawn heads, which `layoutNoteheads` sorts by
+   * pitch so that `[GCE]` and `[CEG]` engrave alike.
+   */
+  readonly pitchY: number
   readonly stemUp: boolean
   /** The source event, so ties and slurs can be matched to what the music said. */
   readonly event: MusicEvent
@@ -2670,14 +4581,67 @@ interface NoteAnchor {
  * and it is also what keeps the curve clear of the stems and beams. When the two ends
  * disagree about stem direction the curve goes above, which is the usual tie-break.
  */
-function buildCurve(from: NoteAnchor, to: NoteAnchor, kind: 'tie' | 'slur'): PlacedCurve {
-  // Opposite the stems: an up-stem note carries its slur below the notehead.
-  const above = !(from.stemUp && to.stemUp)
+/**
+ * `calcSlurY`'s `startY`/`endY` for one end of a SLUR — the one derivation, read by both
+ * the reserve and the drawing.
+ *
+ * A BEAMED end is pinned to `parent.fixed.t` / `.b` rather than to its notehead, when it
+ * is beamed and not the LAST in that beam (a start) or the FIRST (an end)
+ * (`tie-element.js:165-190`, inside the `scalex === 1` non-grace guard). Everything else
+ * takes the anchor's own pitch.
+ *
+ * TIES DO NOT COME HERE, and that is not an omission. `draw/tie.js`'s `layout()` decides
+ * `isTie` at DRAW time and calls `calcTieY`, which is `anchor.pitch` flat — so a tie's
+ * drawn y is the plain pitch whatever its beam does. Only the RESERVE treats every curve
+ * as a slur, because `getYBounds` runs before anything sets `isTie` and `TieElem`'s
+ * constructor never reads it. abcjs's own bug, reproduced on both sides.
+ *
+ * Falls back to the pitch when the anchor was never resolved — `curveReserves` stamps
+ * every anchor of every system it is given, so that is a curve whose end is off-system.
+ */
+function slurEndY(a: NoteAnchor, above: boolean, isStart: boolean): number {
+  const pos = a.beamPos ?? 'none'
+  const fixed = a.slurFixed
+  if (fixed !== undefined && pos !== 'none' && (isStart ? pos !== 'last' : pos !== 'first')) {
+    return above ? fixed.top : fixed.bottom
+  }
+  return a.pitchY
+}
+
+function buildCurve(
+  from: NoteAnchor,
+  to: NoteAnchor,
+  kind: 'tie' | 'slur',
+  /** The voice's index on its staff, or −1 when it has that staff to itself. */
+  voicePos: number,
+  strict: boolean,
+): PlacedCurve {
+  const above = curveIsAbove(from, to, voicePos)
   const direction = above ? -1 : 1
 
-  const x1 = from.right + ENGRAVE.curveEndGap
-  const x2 = to.left - ENGRAVE.curveEndGap
-  const edge = (a: NoteAnchor) => (above ? a.top : a.bottom) + direction * ENGRAVE.curveEndGap
+  // ── THE ENDPOINTS, which finding 89 left when it ported the arc's SHAPE ──────
+  //
+  // abcjs measures both from the ANCHOR, never from the ink: `x1 + 6` and `x2 + 4`
+  // (`draw/tie.js:60-61`) off `anchor.x`, which `calcX` sets to the notehead's own x
+  // (`tie-element.js:118-140`), and the y off the anchor's PITCH by a flat `1.2` for a tie
+  // or `1.5` for a slur (`:58, 62-63`).
+  //
+  // Ours sprang from the ink EDGE — `from.right`, `to.left`, and the ink top or bottom —
+  // plus one symmetric `curveEndGap`. Three differences, and the asymmetry is the tell:
+  // 6 one end and 4 the other is not a clearance, it is two hardcoded numbers.
+  const lift = spacesOfPitch(kind === 'tie' ? ABCJS_ARC.tieLift : ABCJS_ARC.slurLift)
+  const x1 = strict ? from.left + spaces(ABCJS_ARC.startOffset) : from.right + ENGRAVE.curveEndGap
+  const x2 = strict ? to.left + spaces(ABCJS_ARC.endOffset) : to.left - ENGRAVE.curveEndGap
+  // A SLUR'S END IS `calcSlurY`'s, WHICH IS NOT ALWAYS THE NOTEHEAD'S PITCH — a beamed end
+  // that is not the last (start) or first (end) of its beam is pinned to the beam-retargeted
+  // stem instead. `slurEndY` is that rule, and `curveReserves` resolves its input; a TIE
+  // takes `calcTieY`, which is the plain pitch, so it does not come here.
+  const endY = (a: NoteAnchor, isStart: boolean) =>
+    kind === 'tie' ? a.pitchY : slurEndY(a, above, isStart)
+  const edge = (a: NoteAnchor, isStart: boolean) =>
+    strict
+      ? endY(a, isStart) + direction * lift
+      : (above ? a.top : a.bottom) + direction * ENGRAVE.curveEndGap
 
   const span = Math.max(0, x2 - x1)
   const bulge = Math.min(
@@ -2687,20 +4651,35 @@ function buildCurve(from: NoteAnchor, to: NoteAnchor, kind: 'tie' | 'slur'): Pla
 
   return {
     x1,
-    y1: edge(from),
+    y1: edge(from, true),
     x2,
-    y2: edge(to),
+    y2: edge(to, false),
     bulge: bulge * direction,
-    endThickness:
-      kind === 'tie'
-        ? ENGRAVING_DEFAULTS.tieEndpointThickness
-        : ENGRAVING_DEFAULTS.slurEndpointThickness,
-    midThickness:
-      kind === 'tie'
-        ? ENGRAVING_DEFAULTS.tieMidpointThickness
-        : ENGRAVING_DEFAULTS.slurMidpointThickness,
+    // No `endThickness`: it was written on every curve and read by NOTHING, and abcjs has
+    // no such notion anyway — its arc comes to a point at both ends. Finding 90's class.
+    midThickness: kind === 'tie' ? LINE_WEIGHTS.tieMidpoint : LINE_WEIGHTS.slurMidpoint,
     kind,
   }
+}
+
+/**
+ * Which side of the notes a tie or slur sits on.
+ *
+ * ON A SHARED STAFF THE VOICE DECIDES, and the stems do not come into it:
+ * `calcSlurDirection` / `calcTieDirection` short-circuit on `voiceNumber === 0` -> above,
+ * `> 0` -> below, and only a voice with the staff to itself
+ * (`voicetotal < 2 ? -1 : voicenumber`, `abstract-engraver.js:235`) reaches the stem
+ * rules. Reading the stems for every voice put `ragtime-nightingale`'s upper-voice slurs
+ * BELOW, where abcjs draws them above — and, because a beamed end is pinned to the beam,
+ * that is the difference between reserving nothing and reserving 2.43 pitch.
+ *
+ * The stem rules themselves differ between the two, and this keeps our one-line
+ * approximation of them: a curve goes opposite the stems, above when they disagree.
+ */
+function curveIsAbove(from: NoteAnchor, to: NoteAnchor, voicePos: number): boolean {
+  if (voicePos === 0) return true
+  if (voicePos > 0) return false
+  return !(from.stemUp && to.stemUp)
 }
 
 /**
@@ -2717,12 +4696,15 @@ function buildCurve(from: NoteAnchor, to: NoteAnchor, kind: 'tie' | 'slur'): Pla
  * only a system break drops one.
  */
 function layoutCurves(
+  strict: boolean,
   anchors: readonly NoteAnchor[],
   /**
    * Where each system's music starts and ends. A split curve runs to the right edge of
    * the system it leaves and resumes after the clef and key of the one it enters.
    */
   bounds: readonly { left: number; right: number }[],
+  /** The voice's index on its staff, or −1 when it has that staff to itself. */
+  voicePos: number,
 ): PlacedCurve[][] {
   const curves: PlacedCurve[][] = bounds.map(() => [])
   const open: number[] = []
@@ -2740,7 +4722,7 @@ function layoutCurves(
    */
   const emit = (from: NoteAnchor, to: NoteAnchor, kind: 'tie' | 'slur'): void => {
     if (from.system === to.system) {
-      curves[from.system]?.push(buildCurve(from, to, kind))
+      curves[from.system]?.push(buildCurve(from, to, kind, voicePos, strict))
       return
     }
     const start = bounds[from.system]
@@ -2751,7 +4733,7 @@ function layoutCurves(
     // system would aim at a pitch the reader cannot see, and the two halves would tilt
     // in unrelated directions.
     curves[from.system]?.push(
-      buildCurve(from, { ...from, left: start.right, right: start.right }, kind),
+      buildCurve(from, { ...from, left: start.right, right: start.right }, kind, voicePos, strict),
     )
     // The continuation resumes after the new system's clef and key — starting at the
     // system's left edge drew it straight through the clef, where it was invisible.
@@ -2763,7 +4745,9 @@ function layoutCurves(
     // doing that means feeding the curve back into spacing, which is a slice of its own.
     const resume = Math.max(end.left, to.left - ENGRAVE.curveContinuation)
     if (to.left - resume >= ENGRAVE.curveEndGap * 2) {
-      curves[to.system]?.push(buildCurve({ ...to, left: resume, right: resume }, to, kind))
+      curves[to.system]?.push(
+        buildCurve({ ...to, left: resume, right: resume }, to, kind, voicePos, strict),
+      )
     }
   }
 
@@ -2784,9 +4768,265 @@ function layoutCurves(
       const next = anchors[i + 1]
       if (next !== undefined) emit(anchor, next, 'tie')
     }
+
+    // `!slide!` IS A CURVE AT THE NOTE, NOT A GLYPH ABOVE THE STAFF.
+    //
+    //     var yPos2 = abselem.heads[0].pitch - 2
+    //     var blank1 = new RelativeElement("", -roomtaken - 15, 0, yPos2 - 1)
+    //     var blank2 = new RelativeElement("", -roomtaken -  5, 0, yPos2 + 1)
+    //     voice.addOther(new TieElem({ anchor1: blank1, anchor2: blank2, fixedY: true }))
+    //
+    // (`decoration.js:51-59`.) Two ZERO-WIDTH blanks below and left of the head, and a
+    // tie between them — so it reserves NOTHING above, and it reaches the page through
+    // `addOther`, which is the one route the structural gate is blind to. We had it in
+    // `DECORATIONS` as an above-stacked `brassLiftShort`, a reading taken from abcjs's
+    // SVG back when `addOther` made it "look unsupported", and it pushed the whole first
+    // staff down: `S1-decorations` X:105 sat a uniform 9.67px below abcjs on every one of
+    // its 16 noteheads with dx at exactly 0.00.
+    //
+    // Endpoints read off abcjs's own path for `!slide!C`, which is
+    // `M 61.85 158.49 C … 69.85 150.74 …` against a notehead centred at (75.78, 146.85):
+    // 8px wide, 2 pitch tall, and `fixedY` means the anchors' own pitches with none of a
+    // tie's 1.2 lift.
+    // THE GRACE SLUR, DRAWN. Its reserve is in `curveReserves`; this is the arc, and it
+    // is built here rather than through `buildCurve` because two of that function's three
+    // decisions are made for it: `calcSlurDirection` opens `if (this.isGrace) this.above =
+    // false`, and `calcSlurY`'s beam-retargeting block is guarded on
+    // `anchor1.scalex === 1`, which a 0.6-scaled grace head fails — so BOTH ends are the
+    // plain pitch even when the main note is mid-beam (`tie-element.js:96-98, 163-202`).
+    //
+    // `calcX` pulls the grace end back 3 and `drawArc` adds the usual 6 and 4
+    // (`:118-122`, `draw/tie.js:60-61`), and the 1.5-pitch slur lift goes DOWN because the
+    // curve is below.
+    const gs = anchor.graceSlur
+    if (gs !== undefined) {
+      const x1 =
+        gs.graceX - spaces(ABCJS_ARC.graceStartInset) + spaces(ABCJS_ARC.startOffset)
+      const x2 = gs.headX + spaces(ABCJS_ARC.endOffset)
+      const lift = spacesOfPitch(ABCJS_ARC.slurLift)
+      curves[anchor.system]?.push({
+        x1,
+        y1: gs.graceY + lift,
+        x2,
+        y2: anchor.pitchY + lift,
+        // Below, so the arc bows DOWNWARD — `buildCurve`'s `direction` is +1 there.
+        bulge: Math.min(
+          ENGRAVE.curveMaxBulge,
+          Math.max(ENGRAVE.curveMinBulge, Math.max(0, x2 - x1) * ENGRAVE.curveBulgeRatio),
+        ),
+        midThickness: LINE_WEIGHTS.slurMidpoint,
+        kind: 'slur',
+      })
+    }
+
+    if (event.decorations.includes('slide')) {
+      const x1 = anchor.left - spaces(15) + spaces(ABCJS_ARC.startOffset)
+      const x2 = anchor.left - spaces(5) + spaces(ABCJS_ARC.endOffset)
+      curves[anchor.system]?.push({
+        x1,
+        y1: anchor.pitchY + spacesOfPitch(3),
+        x2,
+        y2: anchor.pitchY + spacesOfPitch(1),
+        bulge: -Math.max(ENGRAVE.curveMinBulge, (x2 - x1) * ENGRAVE.curveBulgeRatio),
+        midThickness: LINE_WEIGHTS.tieMidpoint,
+        kind: 'tie',
+      })
+    }
   })
 
   return curves
+}
+
+/**
+ * What each tie and slur RESERVES on its staff — a flat 3-pitch box, not its arc.
+ *
+ * `setUpperAndLowerVoiceElements` gives `TieElem` a case of its own
+ * (`set-upper-and-lower-elements.js:139-146`) and grows the staff's range by
+ * `getYBounds()`, which is declared rather than measured
+ * (`creation/elements/tie-element.js:228-251`):
+ *
+ *     above: bottom = min(startY, endY);  top = bottom + 3
+ *     below: top    = min(startY, endY);  bottom = top - 3
+ *
+ * — in PITCH, off the anchors, with abcjs's own "it's hard to tell how far the arc is,
+ * so I'm just using 3 as the max" beside it. Both bounds then go through `max` AND `min`,
+ * so the staff covers the whole box. A below slur is therefore three pitch under its
+ * LOWER anchor whatever the curve draws, and that was 9 of `ragtime-nightingale`'s staves
+ * sitting 1.0 to 2.6 pitch short at the bottom.
+ *
+ * Paired over ONE system's anchors, because that is the set of `TieElem`s abcjs has in
+ * the voice when it measures. Like the hairpin lane this cannot read `curves` — those
+ * resolve after packing, when the extent is long decided.
+ *
+ * ponytail: `startY`/`endY` are the anchor pitches, which is `calcSlurY`'s `else` branch.
+ * An ABOVE slur between two up-stem notes reads the middle of the stem instead; that
+ * side is inside the notes' own ink in every corpus fixture, so it never binds.
+ */
+function curveReserves(
+  anchors: readonly NoteAnchor[],
+  elements: readonly LayoutElement[],
+  voicePos: number,
+): { ink: { top: number; bottom: number }[]; post: { top: number; bottom: number }[] } {
+  const reserves: { top: number; bottom: number }[] = []
+  /**
+   * The EARLIER of a curve's two reserves — a flat 4 pitch either side of its anchors,
+   * set the moment the closing note is known:
+   *
+   *     this.top    = Math.max(anchor1.pitch, anchor2.pitch) + 4
+   *     this.bottom = Math.min(anchor1.pitch, anchor2.pitch) - 4
+   *
+   * with abcjs's own "we don't really have enough info to know what the vertical extent
+   * is yet… this will just give it enough room on either side" beside it
+   * (`tie-element.js:28-36`). `voice.addOther` runs `setRange` on it, so unlike the
+   * `getYBounds` box this one is INK, and every lane then stacks on top of it.
+   * `ave-verum-corpus`'s tenor staff reaches its bottom on nothing else.
+   */
+  const ink: { top: number; bottom: number }[] = []
+  const four = 4 * ENGRAVE.spacePerStep
+  const open: number[] = []
+  const centre = (a: NoteAnchor) => a.pitchY
+  /**
+   * `parent.fixed` — the element's OWN box over its fixed children, so on a beamed note
+   * the beam-retargeted stem end, and on the other side the notehead's. Not the stem
+   * alone: reading only the stem left four staves half a pitch out either way.
+   */
+  const fixedOf = (a: NoteAnchor): { top: number; bottom: number } => {
+    // A NOTEHEAD's declared box is `pitch ± thickness / 2` and the thickness is the
+    // glyph's own height in pitches — see `ENGRAVE.noteheadHalfHeight`. `a.top`/`a.bottom`
+    // carry half a space of curve padding, so that comes off before the real half goes on.
+    let top = a.top + ENGRAVE.spacePerStep - ENGRAVE.noteheadHalfHeight
+    let bottom = a.bottom - ENGRAVE.spacePerStep + ENGRAVE.noteheadHalfHeight
+    for (const line of elements[a.element]?.lines ?? []) {
+      top = Math.min(top, line.y1, line.y2)
+      bottom = Math.max(bottom, line.y1, line.y2)
+    }
+    return { top, bottom }
+  }
+  const three = 3 * ENGRAVE.spacePerStep
+  /** Position in its own beam group, so the mid-beam rules below can be applied. */
+  const beamPos = (a: NoteAnchor): 'none' | 'first' | 'last' | 'middle' => {
+    const group = a.event.type === 'rest' ? null : a.event.beamGroup
+    if (group === null) return 'none'
+    const members = anchors.filter((b) => b.event.type !== 'rest' && b.event.beamGroup === group)
+    if (members.length < 2) return 'none'
+    if (members[0] === a) return 'first'
+    if (members[members.length - 1] === a) return 'last'
+    return 'middle'
+  }
+  /**
+   * `calcSlurY`'s `startY`/`endY` for one end, in our y.
+   *
+   * A BEAMED end is pinned to `parent.fixed.t` / `.b` rather than to its notehead —
+   * TIES INCLUDED. `getYBounds` branches on `this.isTie`, and nothing sets that before
+   * layout: `TieElem`'s constructor never reads `options.isTie`, and only `draw/tie.js`
+   * assigns it, at draw time. So every curve takes `calcSlurY` here whatever it is —
+   * abcjs's own bug, and excluding real ties from the rule undid the whole finding.
+   * The rule proper:
+   * `hasBeam1 && !isLastInBeam` for the start, `hasBeam2 && !isFirstInBeam` for the end
+   * (`tie-element.js`, inside the `scalex === 1` non-grace guard). `fixed` is the
+   * element's own extent over its fixed children, so on the beam side that is where the
+   * beam retargeted the stem. EVERY curve that binds a staff in `ragtime-nightingale`
+   * takes this branch — its fractional `startY` against an integer anchor pitch is the
+   * tell — and reading the notehead instead reserved nothing at all.
+   *
+   * ponytail: `(highestVert + pitch) / 2`, the half-way-up-the-stem case for an above end
+   * on an up-stem note, is not reproduced. Probed, `highestVert` IS the anchor pitch on
+   * every binding curve here, so the average is the pitch and the branch is a no-op.
+   */
+  // RESOLVED ONCE, onto the anchor, so the DRAWING can read the same answer — see
+  // `NoteAnchor.slurFixed` and `slurEndY`. This is the only place with the final elements.
+  for (const a of anchors) {
+    a.beamPos = beamPos(a)
+    a.slurFixed = fixedOf(a)
+  }
+  const endAt = (a: NoteAnchor, above: boolean, isStart: boolean): number =>
+    slurEndY(a, above, isStart)
+  const add = (from: NoteAnchor, to: NoteAnchor): void => {
+    const above = curveIsAbove(from, to, voicePos)
+    // abcjs's `Math.min` over PITCHES is our `Math.max` over y — the lower end on screen.
+    const y = Math.max(endAt(from, above, true), endAt(to, above, false))
+    if (process.env.ABCTS_CURVE) {
+      const p = (v: number) => (6 - 2 * v).toFixed(4)
+      const dump = (a: NoteAnchor) =>
+        `${a.left.toFixed(2)}@${p(centre(a))} pos=${beamPos(a)} el=${a.element}` +
+        ` fixed.b=${p(fixedOf(a).bottom)} lines=[${(elements[a.element]?.lines ?? []).map((l) => `${l.role ?? '?'}:${p(l.y1)}..${p(l.y2)}`).join(' ')}]`
+      console.log(`CURVE above=${above} res=${p(y + three)} | a1 ${dump(from)} | a2 ${dump(to)}`)
+    }
+    reserves.push(above ? { top: y - three, bottom: y } : { top: y, bottom: y + three })
+    ink.push({
+      top: Math.min(centre(from), centre(to)) - four,
+      bottom: Math.max(centre(from), centre(to)) + four,
+    })
+  }
+  // A GRACE GROUP CARRIES ITS OWN SLUR, and it is the only curve abcjs builds without the
+  // source asking for one:
+  //
+  //     var isInvisibleRest = elem.rest && (elem.rest.type === "spacer" || elem.rest.type === "invisible");
+  //     if (i === 0 && !isBagpipes && this.graceSlurs && !isInvisibleRest)
+  //       voice.addOther(new TieElem({ anchor1: grace, anchor2: notehead, isGrace: true }))
+  //
+  // (`abstract-engraver.js:528-533`, inside `addGraceNotes`' forward loop — so ONE per
+  // group, from the FIRST grace to the main head, and `graceSlurs` defaults true.)
+  //
+  // ITS GEOMETRY IS THE SIMPLEST OF ANY CURVE, because two branches switch themselves off:
+  // `calcSlurDirection` opens `if (this.isGrace) this.above = false`, so a grace slur is
+  // ALWAYS BELOW; and `calcSlurY`'s beam-retargeting arm is guarded on
+  // `anchor1.scalex === 1`, which a 0.6-scaled grace head fails (`tie-element.js:96-98,
+  // 180`). Both ends are the plain pitch.
+  //
+  // Verified on a ladder of seven controls against abcjs's own `staff.bottom`; only
+  // `{C}D` binds, at -3.0000, and `min(pitch 0, pitch 1) - 3` is exactly that.
+  for (const a of anchors) {
+    if (!('graceNotes' in a.event) || a.event.graceNotes.length === 0) continue
+    if (a.event.type === 'rest' && (a.event.kind === 'invisible' || a.event.kind === 'spacer'))
+      continue
+    const head = elements[a.element]?.glyphs.find((g) => g.role === 'grace')
+    if (head === undefined) continue
+    // abcjs's `Math.min` over PITCHES is our `Math.max` over y, as above.
+    const y = Math.max(head.y, centre(a))
+    reserves.push({ top: y, bottom: y + three })
+    // …and the DRAWING's two ends, resolved here because this is where the elements are.
+    // `anchor2` is the MAIN notehead, which is not `a.left`: that is a min over every head
+    // on the element and the grace heads are in it.
+    const main = elements[a.element]?.glyphs.find(
+      (g) => g.role !== 'grace' && g.name.startsWith('notehead'),
+    )
+    if (main !== undefined) a.graceSlur = { graceX: head.x, graceY: head.y, headX: main.x }
+  }
+  anchors.forEach((anchor, i) => {
+    if (anchor.event.type === 'rest') return
+    for (let n = 0; n < anchor.event.slurEnds; n++) {
+      const start = open.pop()
+      const from = start === undefined ? undefined : anchors[start]
+      if (from !== undefined) add(from, anchor)
+    }
+    for (let n = 0; n < anchor.event.slurStarts; n++) open.push(i)
+    if (anchor.event.tiedToNext) {
+      const next = anchors[i + 1]
+      if (next !== undefined) add(anchor, next)
+    }
+  })
+  // AN UNCLOSED SLUR STILL RESERVES. `voice.addOther(this)` runs where the `(` is seen, so
+  // a `TieElem` whose `)` never arrives is on the voice like any other, and `getYBounds`
+  // falls to `else if (this.anchor1) this.startY = this.endY = this.anchor1.pitch`
+  // (`tie-element.js:203-206`) before the flat 3 (`:240-252`).
+  //
+  // Measured on three controls, abcjs against ours:
+  //
+  //     b4          14.0448   14.0448     exact — the notehead's own ink
+  //     (b4         16.0000   14.0448     ← 13 + 3, and we reserved nothing at all
+  //     (b4 b4)     17.0000   17.0000     exact — a closed slur was always right
+  //
+  // Its INK box is NOT taken: `this.top = max(anchor1.pitch, anchor2.pitch) + 4` is set in
+  // `setEndAnchor`, which never runs. So the post-lane reserve and nothing else.
+  for (const start of open) {
+    const a = anchors[start]
+    if (a === undefined) continue
+    const above = curveIsAbove(a, a, voicePos)
+    const y = endAt(a, above, true)
+    reserves.push(above ? { top: y - three, bottom: y } : { top: y, bottom: y + three })
+  }
+  return { ink, post: reserves }
 }
 
 // ─── Tuplets ─────────────────────────────────────────────────────────────────
@@ -2807,28 +5047,73 @@ function layoutCurves(
 function layoutTuplets(
   anchors: readonly NoteAnchor[],
   elements: readonly LayoutElement[],
-): { lines: PlacedLine[]; texts: PlacedText[] } {
-  /** Full vertical ink of a member, stems and beams included. */
+  /**
+   * The drawn beams, because a BEAMED tuplet's number is measured off the BEAM and not off
+   * the stem that ends on it: `heightAtMidpoint` samples `beam.beams[0]` — the beam's own
+   * `startY`/`endY` (`layout/triplet.js:110-116`). Our stems are retargeted to
+   * `beamLine + stemEndOffset`, so reading a stem tip is half a beam's thickness out on
+   * the down side, which is 0.49 pitch of the tuplet number's y.
+   */
+  beamLines: readonly PlacedLine[] = [],
+): {
+  lines: PlacedLine[]
+  texts: PlacedText[]
+  reservesAbove: boolean
+  /** abcjs's declared `[top, bottom]` per tuplet, in our y — see `reserves` below. */
+  reserves: { top: number; bottom: number }[]
+} {
+  /**
+   * A member's extent AS abcjs DECLARES IT — not as it paints.
+   *
+   * abcjs's `anchor1.parent.top` is the AbsoluteElement's top, a max over its children's
+   * DECLARED tops, and a notehead's is its PITCH — the centre of the head, with no ink
+   * around it. A stem contributes its endpoint. Measuring the outline instead runs every
+   * head 1 pitch high (half a space), which is enough to fire the high-middle-note
+   * override in `layoutTriplet` where abcjs's does not: on
+   * `multi-voice-triplet-brackets` that turned a bracket at 18/15 into one at 19/19.
+   *
+   * `NoteAnchor` pads the head box by half a space on each side for curve endpoints, so
+   * that padding comes back off here.
+   */
   const extentOf = (anchor: NoteAnchor): { top: number; bottom: number } => {
     const el = elements[anchor.element]
-    if (el === undefined) return { top: anchor.top, bottom: anchor.bottom }
-    let top = anchor.top
-    let bottom = anchor.bottom
-    for (const line of el.lines) {
+    let top = anchor.top + ENGRAVE.spacePerStep - ENGRAVE.noteheadHalfHeight
+    let bottom = anchor.bottom - ENGRAVE.spacePerStep + ENGRAVE.noteheadHalfHeight
+    for (const line of el?.lines ?? []) {
       top = Math.min(top, line.y1, line.y2)
-      bottom = Math.max(bottom, line.y1, line.y2)
-    }
-    for (const g of el.glyphs) {
-      const glyph = GLYPHS[g.name]
-      const scale = g.scale ?? 1
-      top = Math.min(top, g.y + glyph.y * scale)
-      bottom = Math.max(bottom, g.y + (glyph.y + glyph.height) * scale)
+      // An UNBEAMED stem declares one pitch past its low end — `bottom: p1 - 1`
+      // (`abstract-engraver.js:762`) — and `abselem.bottom` carries it, so the bracket
+      // arithmetic that reads `anchor.parent.bottom` gets it too. `multi-voice-triplet-
+      // brackets` sat exactly that pitch short at the bottom of its first system.
+      const extra = line.role === 'stem' && line.beamed !== true ? ENGRAVE.spacePerStep : 0
+      bottom = Math.max(bottom, line.y1 + extra, line.y2 + extra)
     }
     return { top, bottom }
   }
 
   const lines: PlacedLine[] = []
   const texts: PlacedText[] = []
+  /**
+   * Whether ANY tuplet on this staff reserves the ending lane — and abcjs reserves it
+   * ABOVE whichever side it then draws the bracket on.
+   *
+   * `TripletElem.setCloseAnchor`: `if (!this.anchor1.parent.beam || this.anchor1.stemDir
+   * === 'up') this.endingHeightAbove = 4` (`elements/triplet-element.js:22-25`). There is
+   * no `endingHeightBelow` anywhere in abcjs — `positionY` has no such field — so an
+   * unbeamed triplet reserves 4 pitches ABOVE the staff even when its bracket hangs
+   * below. `vree-slurs-and-triplets` is exactly that case: abcjs draws its `3` under the
+   * staff, at y 149.24 against a bottom line at 127.9, and still reserves above, which
+   * put its whole drawing 19.35px lower than ours. Deriving the side from where the
+   * bracket is DRAWN is the reasonable reading and it is not abcjs's.
+   */
+  let reservesAbove = false
+  /**
+   * What each tuplet contributes to the staff's range — abcjs's `element.top = yTextPos +
+   * 1; element.bottom = yTextPos - 2` (`layout/triplet.js:20-21,73-74`), a small box in
+   * PITCH around where the NUMBER sits, and not the bracket's drawn lines at all. `y` is
+   * our equivalent of `yTextPos`, so +1 pitch up is half a space and -2 pitch down is one.
+   */
+  const reserves: { top: number; bottom: number }[] = []
 
   // Members of one tuplet are contiguous, so grouping by id preserves their order.
   const groups = new Map<number, NoteAnchor[]>()
@@ -2852,50 +5137,232 @@ function layoutTuplets(
     // pass has usually forced them to agree anyway.
     const up = members.filter((m) => m.stemUp).length * 2 >= members.length
     const direction = up ? -1 : 1
-
-    // Clear of the furthest extent any member reaches, so the bracket never collides.
-    const extents = members.map(extentOf)
-    const edge = up
-      ? Math.min(...extents.map((e) => e.top))
-      : Math.max(...extents.map((e) => e.bottom))
-    const y = edge + direction * ENGRAVE.tupletGap
+    // abcjs's reserve rule, off the FIRST member only — not the majority, and not the
+    // side the bracket lands on. Its `anchor1.parent.beam` is whether that note is drawn
+    // into a beam, which our stem line records.
+    const firstBeamed =
+      elements[first.element]?.lines.some((l) => l.role === 'stem' && l.beamed === true) ?? false
+    if (!firstBeamed || first.stemUp) reservesAbove = true
 
     // A tuplet entirely inside ONE beam group needs no bracket: the beam already says
-    // where it starts and stops.
+    // where it starts and stops. abcjs decides the same way and then takes a COMPLETELY
+    // DIFFERENT y for it, so this has to come first.
+    //
+    // …and the beam must be the tuplet EXACTLY. abcjs re-checks that the group's first
+    // and last notes are the beam's own first and last —
+    // `beam.elems[0] !== anchor1.parent || beam.elems[len-1] !== anchor2.parent` clears
+    // `hasBeam` again (`layout/triplet.js:11`, with `(3 dcdcc` named in its comment). A
+    // triplet living INSIDE a longer beam still gets a bracket, and reading the beam's y
+    // for it put one of `ragtime-nightingale`'s staves 8 pitch shallow at the bottom.
+    const group =
+      first.event.type === 'rest' || last.event.type === 'rest' ? null : first.event.beamGroup
+    const inGroup =
+      group === null
+        ? []
+        : anchors.filter((a) => a.event.type !== 'rest' && a.event.beamGroup === group)
+    // ABCJS NEVER LOOKS AT THE MIDDLE MEMBERS. `hasBeam` is `anchor1.parent.beam &&
+    // anchor1.parent.beam === anchor2.parent.beam`, re-cleared only when that beam's OWN
+    // first and last are not the tuplet's ends (`layout/triplet.js:6-11`). Ours also
+    // required every member to carry the group and none to be a rest; dropped, so the
+    // test is abcjs's. It changed nothing on any fixture, which is itself the finding —
+    //
+    // THE DIVERGENCE IS ONE LEVEL DOWN, IN THE BEAMING. `(6cegczg` and `(3czg` are
+    // BEAMED by abcjs and BRACKETED here, and relaxing this test did not move them
+    // because `inGroup` does not span them either: OUR BEAM GROUP BREAKS AT A REST AND
+    // ABCJS'S DOES NOT. abcjs's own `hasBeam` for `(6cegczg` is true, which means its
+    // first `c` and last `g` share one beam across the `z`.
+    //
+    // The tell is a COUNT, not a coordinate: abcjs draws THREE triplet-bracket paths in
+    // `S3-note-syntax` tune 6 and we draw fourteen pieces. Fixing it means changing beam
+    // GROUPING, which moves real beams on every tune with a rest inside one — a slice of
+    // its own, and the two numbers it would settle are 4.91px in x and 38.8 in y.
     const beamed =
-      members.every((m) => m.event.type !== 'rest' && m.event.beamGroup !== null) &&
-      new Set(members.map((m) => (m.event.type === 'rest' ? null : m.event.beamGroup))).size === 1
+      group !== null && inGroup[0] === first && inGroup[inGroup.length - 1] === last
+
+    // WHERE THE BRACKET GOES IS abcjs'S ARITHMETIC, per END NOTE and in PITCH
+    // (`layout/triplet.js:29-64`):
+    //
+    //     up:   note = max(anchor.parent.top, 9) + 4      // never below the 'a' line
+    //     down: note = min(anchor.parent.bottom, 0) - 2   // never above the 'C' line
+    //
+    // taken at the FIRST and LAST member separately, so the bracket may SLOPE; then a
+    // really high (or low) middle note flattens it clear of itself. We cleared the
+    // furthest extent of ANY member by one flat gap, which is a different line whenever
+    // the ends differ, and 1.4 to 2.0 pitch out on `multi-voice-triplet-brackets`.
+    const extents = members.map(extentOf)
+    /** abcjs pitch from our y in staff spaces — pitch 0 is middle C, 2 the bottom line. */
+    const pitchOf = (y: number): number => 6 - 2 * y
+    const yOfPitch = (pitch: number): number => stepToY(pitch - 6)
+    const endPitch = (e: { top: number; bottom: number }): number =>
+      up ? Math.max(pitchOf(e.top), 9) + 4 : Math.min(pitchOf(e.bottom), 0) - 2
+    const firstExtent = extents[0]
+    const lastExtent = extents[extents.length - 1]
+    if (firstExtent === undefined || lastExtent === undefined) continue
+    /** A BEAMED tuplet has no bracket: its number rides the BEAM, 3 pitches clear above
+     * it or 2 below (`layout/triplet.js:15-21`). Nothing of the end-note arithmetic below
+     * applies — using it put `multi-voice-triplet-brackets` 24 pitch out. */
+    /**
+     * `xAtMidpoint(left, anchor2.x)` for a BEAMED tuplet — where the beam is sampled AND
+     * where the number is centred, which abcjs computes once and uses for both
+     * (`layout/triplet.js:16-18`).
+     *
+     * The span is NOT symmetric: `left = isAbove(beam) ? anchor1.x + anchor1.w : anchor1.x`
+     * and the far end is `anchor2.x` with no `w`. An UNBEAMED tuplet uses a different
+     * midpoint entirely — `anchor1.x + (anchor2.x + anchor2.w - anchor1.x) / 2` (`:75`),
+     * first notehead's LEFT to last notehead's RIGHT — which is what `centre` is, and why
+     * the bracketed cases already matched abcjs's x exactly while the beamed ones sat
+     * 4.9px right.
+     */
+    const beamMidX = (): number => {
+      const leftX = up ? first.right : first.left
+      return leftX + (last.left - leftX) / 2
+    }
+    const beamY = (): number => {
+      const tipOf = (a: NoteAnchor): { x: number; y: number } | null => {
+        const stem = elements[a.element]?.lines.find((l) => l.role === 'stem')
+        if (stem === undefined) return null
+        return { x: stem.x1, y: up ? Math.min(stem.y1, stem.y2) : Math.max(stem.y1, stem.y2) }
+      }
+      const a = tipOf(first)
+      const b = tipOf(last)
+      if (a === null || b === null) return (a ?? b)?.y ?? 0
+      // THE BEAM IS SAMPLED AT AN x MIDPOINT, NOT AVERAGED OVER ITS ENDS — and the span
+      // it is sampled over is NOT symmetric: `heightAtMidpoint(left, anchor2.x, beam)`
+      // with `left = isAbove(beam) ? anchor1.x + anchor1.w : anchor1.x`
+      // (`layout/triplet.js:15-16`). An ABOVE beam starts measuring from the far side of
+      // the first notehead and stops at the near side of the last, so on a sloped beam
+      // the sample lands off the midpoint of the two stem tips. The two agree on a level
+      // beam, which is why averaging looked right: `multi-voice-rest-collision` is
+      // sloped, and its `yTextPos` came out 16.5 against abcjs's 16.5929.
+      const midX = beamMidX()
+      // …AND IT SAMPLES THE BEAM, NOT THE STEMS THAT END ON IT. `heightAtMidpoint` reads
+      // `beam.beams[0]` — the beam's own `startY`/`endY` (`layout/triplet.js:110-116`).
+      // Our stems are retargeted to `beamLine + stemEndOffset`, which is half a beam's
+      // thickness on the down side, so the tip is not the line: 0.49 pitch of the tuplet
+      // number's y, and the last of it. The stem tips remain the FALLBACK for a group
+      // whose beam is not in this list.
+      const onBeam = beamLines.find(
+        (l) => Math.min(l.x1, l.x2) <= a.x + 1e-9 && Math.max(l.x1, l.x2) >= b.x - 1e-9,
+      )
+      const span = b.x - a.x
+      // A `PlacedLine` carries its beam's CENTRE and its thickness; abcjs's `startY` is the
+      // edge the STEMS end on, which is half a thickness back out. Level 0's own offset is
+      // `inward * thickness / 2` in `layoutBeam`, and `inward` is toward the noteheads —
+      // so undoing it is `-thickness / 2` for a beam above and `+thickness / 2` for one
+      // below. Reconstructed from the line's own thickness rather than by repeating the
+      // constant, which is the shape that let two copies of one number drift before.
+      const y =
+        onBeam !== undefined
+          ? (onBeam.x2 === onBeam.x1
+              ? onBeam.y1
+              : onBeam.y1 +
+                ((onBeam.y2 - onBeam.y1) * (midX - onBeam.x1)) / (onBeam.x2 - onBeam.x1)) +
+            (up ? -1 : 1) * ((onBeam.thickness ?? 0) / 2)
+          : span === 0
+            ? a.y
+            : a.y + ((b.y - a.y) * (midX - a.x)) / span
+      return y + (up ? -3 : 2) * ENGRAVE.spacePerStep
+    }
+    let startNote = endPitch(firstExtent)
+    let endNote = endPitch(lastExtent)
+    // A rest at either end makes the bracket horizontal.
+    if (first.event.type === 'rest' && last.event.type !== 'rest') startNote = endNote
+    else if (last.event.type === 'rest' && first.event.type !== 'rest') endNote = startNote
+    // THE MIDDLE NOTES ARE MEASURED AS NOTEHEADS, THE ENDS AS WHOLE ELEMENTS.
+    //
+    // `middleElems` holds RELATIVE elements — abcjs pushes the notehead, which is why the
+    // down branch can ask for its `.height` (`layout/triplet.js:56`, a RelativeElement
+    // property). So a middle note contributes its HEAD's box and not its stem tip, where
+    // `anchor1.parent.top` at the ends is the whole note. Probed on the same triplet:
+    // abcjs reads a middle of 6.04 where our stem-tip reading said 12.00, and the six
+    // pitches of difference fired the flattening override abcjs never reaches.
+    const middle = members.slice(1, -1).map((m) => ({
+      // A middle member contributes its NOTEHEAD's declared box — `pitch ± thickness/2`,
+      // see `ENGRAVE.noteheadHalfHeight` — not the anchor's curve-padded one. That
+      // 0.0444 of a pitch is what `multi-voice-triplet-brackets` was out by at both ends.
+      top: m.top + ENGRAVE.spacePerStep - ENGRAVE.noteheadHalfHeight,
+      bottom: m.bottom - ENGRAVE.spacePerStep + ENGRAVE.noteheadHalfHeight,
+    }))
+    if (middle.length > 0) {
+      if (up) {
+        const highest = Math.max(0, ...middle.map((e) => pitchOf(e.top))) + 4
+        if (highest > startNote || highest > endNote) {
+          startNote = highest + 3
+          endNote = highest + 3
+        }
+      } else {
+        // A LOW MIDDLE NOTE COUNTS ITS OWN HEIGHT AS WELL AS ITS POSITION:
+        // `min(middleElems[i].bottom - middleElems[i].height)`, and `height` is
+        // `RelativeElement`'s DEFAULT 4 (`relative-element.js:37`) for a notehead — a flat
+        // figure, like everything else abcjs declares. The recorded ponytail note said no
+        // corpus fixture had a low middle note that binds; `multi-voice-triplet-brackets`
+        // does, and without the height its bracket sat 4 pitch high.
+        const lowest =
+          Math.min(0, ...middle.map((e) => pitchOf(e.bottom) - ENGRAVE.relativeElementHeight)) - 3
+        if (lowest < startNote && lowest < endNote) {
+          startNote = Math.min(lowest, startNote) - 2
+          endNote = Math.min(lowest, endNote) - 2
+        }
+      }
+    }
+    const yStart = beamed ? beamY() : yOfPitch(startNote)
+    const yEnd = beamed ? beamY() : yOfPitch(endNote)
+    /** abcjs's `yTextPos` — the bracket's midpoint, and what its declared box hangs off. */
+    const y = beamed ? beamY() : yOfPitch(startNote + (endNote - startNote) / 2)
 
     const label = String(number)
     const size = ENGRAVE.tupletTextSize
-    const width = textWidth(label, size)
     const centre = (first.left + last.right) / 2
 
     texts.push({
       text: label,
-      x: centre - width / 2,
-      // Text hangs from its baseline, so a bracket ABOVE needs the number lifted clear.
-      y: up ? y - size * 0.1 : y + size * 0.9,
+      // CENTRED ON `xTextPos`, as abcjs's `anchor: "middle"` says (`draw/triplet.js:11`).
+      // Ours start-anchored at `centre - width / 2`, which is the same point only when our
+      // text metrics agree with the browser's — an approximation with no reason to exist
+      // once the emitter can say `text-anchor`.
+      //
+      // AND A BEAMED TUPLET'S MIDPOINT IS NOT THE BRACKETED ONE'S — see `beamMidX`.
+      x: beamed ? beamMidX() : centre,
+      anchor: 'middle',
+      // ABCJS'S BASELINE IS `calcY(yTextPos - 1)`, FLAT, in both directions and with no
+      // font height added — `centerVertically: true` suppresses the `+= hash.font.size`
+      // (`draw/triplet.js:11`, `draw/text.js:29-30`). The `- 1` is abcjs's own fudge, in
+      // its own words: "HACK: adjust the position of '3'. It is too high in all cases so
+      // we fudge it by subtracting 1 here."
+      //
+      // IT IS PORTABLE ONLY NOW. This was recorded as a correct rule with a wrong input:
+      // our `yTextPos` was not abcjs's for a BEAMED triplet, because our beam GROUP broke
+      // at a rest and abcjs's does not, so `(6cegczg` was bracketed here and beamed there
+      // and the two `yTextPos` were not the same quantity. With the beaming fixed, ours
+      // and abcjs's tuplet numbers land on the same x to the hundredth, and this closes
+      // the y. The volta hook again, and this time both halves are in place.
+      y: y + ENGRAVE.tupletTextDrop,
       size,
       bold: false,
       italic: true,
     })
 
+    reserves.push({ top: y - ENGRAVE.spacePerStep, bottom: y + 2 * ENGRAVE.spacePerStep })
+
     if (beamed) continue
 
     // Bracket: a horizontal rule broken around the number, with a hook at each end
     // turning toward the notes.
-    const gap = width / 2 + ENGRAVE.tupletNumberGap
-    const thickness = ENGRAVING_DEFAULTS.slurEndpointThickness
+    // A FIXED gap either side of the MIDPOINT, not one that grows with the number:
+    // `leftEndX = midX - gapWidth`, `rightStartX = midX + gapWidth` with `gapWidth = 8`
+    // (`draw/triplet.js:33-40`). abcjs breaks the same 16px for `13` as for `3`.
+    const gap = ENGRAVE.tupletNumberGap
+    const thickness = ENGRAVE.strokedPathRule
     const hook = ENGRAVE.tupletHook * -direction
 
-    lines.push({ x1: first.left, y1: y, x2: centre - gap, y2: y, thickness })
-    lines.push({ x1: centre + gap, y1: y, x2: last.right, y2: y, thickness })
-    lines.push({ x1: first.left, y1: y, x2: first.left, y2: y - hook, thickness })
-    lines.push({ x1: last.right, y1: y, x2: last.right, y2: y - hook, thickness })
+    // The rule runs from one end note's pitch to the other's, so it slopes with them.
+    lines.push({ x1: first.left, y1: yStart, x2: centre - gap, y2: y, thickness })
+    lines.push({ x1: centre + gap, y1: y, x2: last.right, y2: yEnd, thickness })
+    lines.push({ x1: first.left, y1: yStart, x2: first.left, y2: yStart - hook, thickness })
+    lines.push({ x1: last.right, y1: yEnd, x2: last.right, y2: yEnd - hook, thickness })
   }
 
-  return { lines, texts }
+  return { lines, texts, reservesAbove, reserves }
 }
 
 // ─── Beams ───────────────────────────────────────────────────────────────────
@@ -2959,12 +5426,37 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
     endStep = 0
   }
 
-  const span = last.x - first.x
+  if (PROBE)
+    console.log(
+      `BEAM up=${up} n=${group.length} avg=${(group.reduce((a, g) => a + g.averageStep, 0) / group.length + 6).toFixed(4)}` +
+        ` min=${Math.min(...group.map((g) => g.farStep)) + 6} max=${Math.max(...group.map((g) => g.farStep)) + 6}` +
+        ` barpos=${barpos} firstAvg=${first.averageStep + 6} lastAvg=${last.averageStep + 6}` +
+        ` pos=${pos + 6} startY=${startStep + 6} endY=${endStep + 6}` +
+        ` startX=${(first.x * 7.75).toFixed(3)} endX=${(last.x * 7.75).toFixed(3)}`,
+    )
+  // A BEAM'S ENDS ARE NOT ITS STEMS, and the two edges are not even symmetric. `calcXPos`
+  // (`layout/beam.js:74-82`) reads the FURTHEST heads and writes
+  //
+  //     asc :  [ startHead.x + w - 0.6 ,  endHead.x + w   ]
+  //     desc:  [ startHead.x           ,  endHead.x + 0.6 ]
+  //
+  // — the 0.6 comes off the START going up and goes onto the END coming down, so a beam
+  // overhangs by six tenths at one end and is inset by six tenths at the other. Ours ran
+  // stem-centre to stem-centre, which is neither.
+  //
+  // It matters twice over: the beam is DRAWN between these, and `getBarYAt` interpolates
+  // every stem's endpoint along the line they define. Get the ends wrong and a beam that
+  // slants delivers each stem to a slightly wrong height — which is how a purely
+  // horizontal correction to the stems moved `ragtime-nightingale`'s vertical offset.
+  const inset = spaces(ABCJS_PX.flagStemInset)
+  const beamStartX = up ? first.headX + first.headWidth - inset : first.headX
+  const beamEndX = up ? last.headX + last.headWidth : last.headX + inset
+  const span = beamEndX - beamStartX
   const startY = stepToY(startStep)
   const endY = stepToY(endStep)
 
   const yAt = (x: number): number =>
-    span === 0 ? startY : startY + ((x - first.x) / span) * (endY - startY)
+    span === 0 ? startY : startY + ((x - beamStartX) / span) * (endY - startY)
 
   // Retarget each stem to the beam.
   //
@@ -2977,7 +5469,28 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
   for (const stem of group) {
     const element = elements[stem.element]
     if (!element) continue
-    const beamY = yAt(stem.x) + stemEndOffset
+    // WHERE THE BEAM IS SAMPLED IS NOT WHERE THE STEM IS DRAWN, twice over.
+    //
+    // `createStems` builds `dx = (asc ? furthestHead.w : 0)`, adds `furthestHead.dx` to it,
+    // and then asks `getBarYAt` for the height at `furthestHead.x + dx`
+    // (`layout/beam.js:117-122`). Two things fall out of that and neither is guessable:
+    //
+    //   • the sample sits at the head's EDGE where the quad is drawn 0.3 inside it, so on
+    //     a slant the height solved for is not the height painted; and
+    //   • `furthestHead.x` ALREADY equals `parent.x + furthestHead.dx`, so adding `dx`
+    //     again counts the head's displacement TWICE.
+    //
+    // The second is zero on a plain note and a whole notehead — 9.81px — on a voice-overlap
+    // displacement, and it is not a rounding matter: it is the entire reason
+    // `ragtime-nightingale` sat 1.1px out on every staff from its ninth. One beamed
+    // down-stem on system 4 landed 0.30 pitch high, a below-slur anchored in that beam took
+    // the stem's bottom as its own endpoint, and `setUpperAndLowerVoiceElements` handed the
+    // slur's box straight to `staff.bottom` — which is the natural staff separation on the
+    // one system where `systemStaffSeparation` does not bind. Everything after it inherited
+    // the shift.
+    //
+    // This was measured, having first been REASONED AWAY as "zero for the common case".
+    const beamY = yAt(stem.headX + stem.headDx + (up ? stem.headWidth : 0)) + stemEndOffset
     const lines = element.lines.map((line) =>
       line.x1 === line.x2 && line.x1 === stem.x ? { ...line, y2: beamY, beamed: true } : line,
     )
@@ -2991,9 +5504,11 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
   // stems actually end on, so an up-stem's second beam sits below its first.
   const beams: PlacedLine[] = []
   const maxLevel = Math.max(...group.map((stem) => stem.beams))
-  const thickness = ENGRAVING_DEFAULTS.beamThickness
+  const thickness = LINE_WEIGHTS.beam
   const inward = -direction
-  const step = (thickness + ENGRAVING_DEFAULTS.beamSpacing) * inward
+  // A STEP BETWEEN CENTRES, which is how abcjs states it — `bary + sy * (index + 1)` with
+  // `sy = ±1.5` PITCH (`layout/beam.js:180-186`) — not a thickness plus a gap.
+  const step = LINE_WEIGHTS.beamStep * inward
 
   for (let level = 0; level < maxLevel; level++) {
     // y here is the beam's CENTRE line; the emitted line carries its thickness.
@@ -3003,15 +5518,26 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
 
     const flush = () => {
       if (runStart === null || runEnd === null) return
-      let x1 = runStart.x
-      let x2 = runEnd.x
+      // Level 0 is the main beam and takes `calcXPos`; a deeper one is an `auxBeam`, which
+      // is measured the same way except that a descending run ends flush at the head
+      // rather than 0.6 past it (`createAdditionalBeams`, `layout/beam.js:180-200`).
+      let x1 = up ? runStart.headX + runStart.headWidth - inset : runStart.headX
+      let x2 =
+        level === 0
+          ? up
+            ? runEnd.headX + runEnd.headWidth
+            : runEnd.headX + inset
+          : up
+            ? runEnd.headX + runEnd.headWidth
+            : runEnd.headX
       if (runStart === runEnd) {
         // A stub: point it back toward the previous note when there is one, so a lone
         // sixteenth in a run of eighths reads as belonging to what precedes it.
         const index = group.indexOf(runStart)
         const backward = index > 0
-        x1 = backward ? runStart.x - ENGRAVE.beamStubLength : runStart.x
-        x2 = backward ? runStart.x : runStart.x + ENGRAVE.beamStubLength
+        const at = up ? runStart.headX + runStart.headWidth : runStart.headX
+        x1 = backward ? at - ENGRAVE.beamStubLength : at
+        x2 = backward ? at : at + ENGRAVE.beamStubLength
       }
       beams.push({
         x1,
@@ -3099,6 +5625,11 @@ interface MeasureBlock {
    * busy voice's, and the staves would stop lining up.
    */
   readonly closingBarIndex: number | null
+  /**
+   * Index of the barline that OPENS this measure, if it has one — the other half of the
+   * pair a repeat ending hangs on. See `LayoutElement.endingStart`.
+   */
+  readonly openingBarIndex: number | null
   /** Note anchors for slur and tie resolution, positioned LOCAL to this block. */
   readonly anchors: readonly NoteAnchor[]
   /** A repeat ending opening at this measure, and whether this measure closes it. */
@@ -3112,7 +5643,165 @@ interface MeasureBlock {
    * justified, so this is the span the stretch factor applies to.
    */
   readonly musicWidth: number
+  /**
+   * Per element: the ROD it advances x by and its duration — abcjs's `getMinWidth(child) +
+   * child.minspacing` and `child.duration`. Musical time is NOT recorded here: the cursor
+   * accumulates it as abcjs's `voice.durationindex` does, per voice and across the whole
+   * LINE, so a bar of 1.0 in one voice and 1.5 in another simply drift apart.
+   */
+  readonly advances: readonly Advance[]
 }
+
+/**
+ * One step of a voice's cursor.
+ *
+ * `rod` is the whole of `getMinWidth(child) + child.minspacing`; `gap` is the `minspacing`
+ * part of it alone, kept apart because **a line's last element does not get its
+ * `minspacing`** (`if (voice.i !== voice.children.length - 1) voice.minx += child.minspacing`,
+ * `layout/voice-elements.js`). The spring is not stored — it is `sqrt(duration)`, and the
+ * cursor recomputes it at whatever factor the solve has reached.
+ */
+interface Advance {
+  readonly rod: number
+  readonly gap: number
+  readonly duration: number
+  /** Ink reaching LEFT of the element's own x — abcjs's `-child.extraw`. */
+  readonly left: number
+  /** A barline gets no left clearance when it follows a part label or a tempo mark. */
+  readonly kind: 'bar' | 'part' | 'other'
+  /**
+   * What a SOUNDING note needs for the voice-overlap rule, and null for everything else —
+   * rests included, since abcjs tests `!child.abcelem.rest`.
+   *
+   * `low`/`high` are abcjs's `minpitch`/`maxpitch`, `width` its `heads[0].realWidth` and
+   * `head` the glyph the share-a-notehead exception compares. See `lineAt`.
+   */
+  readonly note?: { low: number; high: number; width: number; head: GlyphName } | null
+}
+
+/**
+ * How far a barline pushes the cursor: its own layout width plus the flat `minspacing`.
+ *
+ * Strict takes the width from abcjs's table, because that number is abcjs's and has
+ * nothing to do with how thick the rules are drawn. The other modes measure the glyph
+ * they actually draw, which is the honest answer once byte-parity is not the point.
+ */
+/**
+ * The carrier for a chord symbol written before a barline, so it can go through the very
+ * same `noteText` a note's does — which is not a convenience, it is what abcjs does: the
+ * bar's abselem reaches `addChord` by the identical call, differing only in `noteheadWidth
+ * = 0`. Typed as a REST because a barline has no lyric and `noteText` returns before the
+ * verse block on one, which is also true of abcjs's bar element.
+ */
+const EMPTY_BAR_EVENT: Rest = {
+  type: 'rest',
+  duration: rational(0),
+  notatedDuration: rational(0),
+  kind: 'invisible',
+  decorations: [],
+  decorationSourceRanges: [],
+  chordSymbol: null,
+  chordSymbolSourceRange: null,
+  chordFont: null,
+  annotations: [],
+  annotationSourceRanges: [],
+  graceNotes: [],
+  graceSlash: false,
+  tuplet: null,
+  measureCount: 0,
+  sourceRange: null,
+}
+
+/**
+ * Does this measure's key change LEAD its system — i.e. stand before all of its music?
+ *
+ * `startNewLine` fires LAZILY. `parseMusicLine` consumes every inline field at the head of
+ * a source line first and only calls it once it is "past the inline statements"
+ * (`abc_parse_music.js:152-156`), so a `[K:]` written before the line's first note or bar
+ * is already in `multilineVars.key` when `params.key` is stamped — and the line's PREFIX
+ * shows the new key, with the `impliedNaturals` cancelling the old one.
+ *
+ * A leading BARLINE fires it too, which is why the opening barline is part of the test:
+ * `|[K:C]CDEF` reaches the `else` branch at the `|` and the change lands inline.
+ *
+ * The element itself is not lost. `appendStartingElement` runs while `tune.lineNum` is
+ * still the PREVIOUS line, finds a note in that line's voice and PUSHES the signature onto
+ * its end (`tune-builder.js:270-280`) — so abcjs draws the cancellation twice, once after
+ * the previous system's last barline and once in the next system's prefix. Measured on
+ * three controls: `[K:C]` opening a music line and a standalone `K:C` between two lines
+ * both give `keySignature x=664.80 w=20.20 [nB ne nA]` at the end of the line before, and
+ * the same element again at 49.05 in the next line's prefix. A MID-line `[K:C]` does
+ * neither — it draws where it stands and the NEXT line's prefix carries the naturals,
+ * which is the case we already had right.
+ *
+ * NOTE this is exact only because a system IS a source line here: there is no re-wrapping
+ * pass, so `startsSystem` and abcjs's `startNewLine` are the same event.
+ */
+/** Where the music of a system-starting measure begins, in source offsets. */
+const musicStartsAt = (measure: Measure): number =>
+  Math.min(
+    measure.openingBarlineSourceRange?.start ?? Number.POSITIVE_INFINITY,
+    ...measure.events.map((e) => e.sourceRange?.start ?? Number.POSITIVE_INFINITY),
+  )
+
+const keyChangeLeadsLine = (measure: Measure | undefined): boolean => {
+  if (measure === undefined || !measure.startsSystem || measure.keyChange === null) return false
+  const at = measure.keyChangeSourceRange?.start
+  if (at == null) return false
+  return at < musicStartsAt(measure)
+}
+
+/**
+ * The same rule for an inline `[M:]`, and abcjs reaches it by the same two lines:
+ *
+ *     case "[M:":
+ *       var meter = this.setMeter(…)
+ *       if (tuneBuilder.hasBeginMusic() && meter)
+ *         tuneBuilder.appendStartingElement('meter', startChar, endChar, meter)
+ *       else multilineVars.meter = meter
+ *
+ * (`abc_parse_header.js:356-362`.) Music HAS begun, so it appends — and `startNewLine` has
+ * not fired yet, so the element lands on the PREVIOUS line, exactly as a line-leading key
+ * change does (finding 125).
+ *
+ * IT PARTS FROM THE KEY IN THE OTHER HALF. That arm does NOT set `multilineVars.meter`, so
+ * the next line's `params.meter` stays empty and its prefix prints NOTHING — where a key
+ * change is stamped onto the line and reprinted. Measured on `S5-directives` X:502: abcjs
+ * ends line 0 with `timeSignature x=673.49 w=13.04` and opens line 1 with the clef alone,
+ * its first note at 49.05.
+ */
+const meterChangeLeadsLine = (measure: Measure | undefined): boolean => {
+  if (measure === undefined || !measure.startsSystem || measure.meterChange == null) return false
+  // ONLY THE INLINE FORM. A standalone `M:` line goes the OTHER way — into
+  // `multilineVars.meter`, then the next line's `params.meter` and its PREFIX — which is
+  // finding 121 and was already right. Firing on both put `frere-jacques` back to the
+  // 21.80 that finding closed, and `S8-layout-tune2` from exact to 23.04.
+  if (measure.meterChangeInline !== true) return false
+  const at = measure.meterChangeSourceRange?.start
+  if (at == null) return false
+  return at < musicStartsAt(measure)
+}
+
+const barRod = (kind: Barline, el: LayoutElement, strict: boolean): number =>
+  (strict ? (ENGRAVE.barLayoutWidth[kind] ?? el.width) : el.width) + ENGRAVE.prefixGap
+
+/**
+ * A BAR THAT STARTS AN ENDING GETS MORE `minspacing` — the label's width plus 10.
+ *
+ * `abselem.minspacing += textWidth + 10` with the comment "Give plenty of room for the
+ * ending number" (`abstract-engraver.js:1034-1041`), measured in `repeatfont`. Probed on
+ * `synth-timing-06`, whose `|1` bar reports `minsp = 28.5` against a plain bar's 10.
+ *
+ * It applies to whichever bar the ending opens on — the measure's own opening barline, or
+ * the PREVIOUS measure's closing one when the number follows a `:|`.
+ */
+const endingRoom = (label: string | null): number =>
+  label === null || label === ''
+    ? 0
+    : // MEASURED IN `repeatfont`, 13pt -> 17px — NOT in `voltaTextSize`, which is the size
+      // the bracket's number is DRAWN at. abcjs measures the reserve and the ink with two
+      // different fonts and only the first is this.
+      textWidth(label, 17 / 7.75) + 10 / 7.75
 
 /**
  * Lay out one measure at x = 0. Position within a system comes later, by translation,
@@ -3134,8 +5823,51 @@ function layoutMeasure(
   keyInForce: KeySignature | null = null,
   /** Dynamics above the staff when the tune sings, below otherwise. */
   dynamicsAbove = true,
+  /** The NEXT measure's volta label, if it opens one — see `endingRoom`. */
+  voltaAfter: string | null = null,
+  /** The meter as this measure BEGINS — a restated one prints nothing. */
+  meterInForce: Meter | null = null,
+  /**
+   * A clef change that arrives AFTER this measure's barline and before the next SYSTEM.
+   *
+   * A `K:C clef=treble+8` written on its own line between two music lines is appended to
+   * the voice stream that is still open — the previous line's — so abcjs draws it at the
+   * END of that line as well as reprinting it in the next system's prefix. Two clefs, one
+   * `K:`. Suppressing our inline draw was half of that rule and this is the other half:
+   * `visual-selection-03`'s seven systems each sat 11.63px high without it, exactly the
+   * octave marker's reserve.
+   */
+  trailingClef: Clef | null = null,
+  /**
+   * Does this voice SHARE its staff — abcjs's `voice.voicetotal > 1`, which it hands
+   * `addRestToAbsElement` as `isMultiVoice` (`abstract-engraver.js:542`). Only a rest
+   * reads it, and only together with the stem direction.
+   */
+  sharedStaff = false,
+  /**
+   * A key change that arrives after this measure's barline and LEADS the next system —
+   * the exact analogue of `trailingClef`, and it comes from the same mechanism.
+   *
+   * `[from, to]`, because a change cannot be drawn from the new key alone.
+   */
+  trailingKey: readonly [KeySignature, KeySignature] | null = null,
+  /** A meter that arrives after this measure's barline and LEADS the next system. */
+  trailingMeter: Meter | null = null,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
+  /**
+   * What each element ADVANCES x by, split into rod and spring — parallel to `elements`.
+   *
+   * Recorded rather than re-derived because an element's `width` is not what moves the
+   * cursor: a barline advances by its gap and not its glyph, a part label advances by
+   * nothing at all. Justification has to re-run this sum at a new spring factor, so the
+   * split has to survive the measure.
+   */
+  const advances: Advance[] = []
+  /** A zero-duration element: a bar, a key change, a part label. */
+  const fixed = (rod: number, gap: number, kind: Advance['kind'] = 'other', left = 0): void => {
+    advances.push({ rod, gap, duration: 0, left, kind })
+  }
   const beams = new Map<number, StemInfo[]>()
   const anchors: NoteAnchor[] = []
   let x = 0
@@ -3156,7 +5888,10 @@ function layoutMeasure(
       : measure.events.findIndex(
           (e) => (e.sourceRange?.start ?? Number.POSITIVE_INFINITY) >= partAfter,
         )
-  if (measure.partLabel !== null && partIndex === 0) elements.push(layoutPart(x, measure.partLabel))
+  if (measure.partLabel !== null && partIndex === 0) {
+    elements.push(layoutPart(x, measure.partLabel))
+    fixed(0, 0, 'part')
+  }
 
   // A mid-tune `K:` and the barline that opens the measure print in SOURCE ORDER.
   //
@@ -3175,30 +5910,105 @@ function layoutMeasure(
   const openingBarAt = measure.openingBarlineSourceRange?.start ?? Number.POSITIVE_INFINITY
   const drawKeyChange = (): void => {
     if (measure.keyChange === null || keyInForce === null) return
+    // NOT WHEN IT LEADS THE SYSTEM — the prefix already carries it, and the previous
+    // system's `trailingKey` already drew it. See `keyChangeLeadsLine`.
+    if (keyChangeLeadsLine(measure)) return
     const change = layoutKeyChange(x, keyInForce, measure.keyChange, clef, strict)
     if (change === null) return
     elements.push(change)
+    fixed(change.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
     x += change.width + ENGRAVE.prefixGap
   }
+  let openingBarIndex: number | null = null
   const drawOpeningBar = (): void => {
     // An opening `|:` or `[|` prints before the measure it belongs to, and is a SEPARATE
     // barline from the previous measure's closer.
     if (measure.openingBarline === null) return
-    x += ENGRAVE.barGap
-    elements.push(layoutBar(x, measure.openingBarline, strict))
+    const bar = layoutBar(x, measure.openingBarline, strict)
+    openingBarIndex = elements.length
+    elements.push(bar)
+    fixed(
+      barRod(measure.openingBarline, bar, strict) + endingRoom(measure.volta),
+      ENGRAVE.prefixGap + endingRoom(measure.volta),
+      'bar',
+      ENGRAVE.barClearance,
+    )
     x += ENGRAVE.barGap
   }
+  // A MID-TUNE CLEF PRINTS WHERE IT STANDS, before the key change and before the
+  // measure's notes — abcjs builds it with `createClef` like any other, an ordinary
+  // zero-duration `staff-extra clef` on the voice's child list.
+  const drawClefChange = (): void => {
+    // NOT WHEN THE MEASURE OPENS A SYSTEM — the prefix already reprints the clef in force
+    // there, and abcjs prints exactly one. A `K:C clef=bass` written on its own line above
+    // the music it governs is that case, and drawing both put `visual-selection-03` 24px
+    // wider than abcjs on every line.
+    if (measure.clefChange == null || measure.startsSystem) return
+    const change = layoutClef(x, measure.clefChange, strict)
+    if (change === null) return
+    elements.push(change)
+    fixed(change.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
+    x += change.width + ENGRAVE.prefixGap
+  }
+  // A MID-TUNE `[M:4/4]` or `M:` PRINTS WHERE IT STANDS. abcjs builds an ordinary
+  // `staff-extra time-signature` for it, like the clef change beside it — and unlike the
+  // clef, it is NOT reprinted at the head of later systems, so there is no double to
+  // guard against: our prefix prints a meter only on system 0.
+  const drawMeterChange = (): void => {
+    if (measure.meterChange == null) return
+    // NOT WHEN IT LEADS THE SYSTEM — the previous system's `trailingMeter` drew it, and
+    // unlike a key change it is NOT reprinted in this line's prefix either.
+    if (meterChangeLeadsLine(measure)) return
+    // A RESTATED METER PRINTS NOTHING, exactly as a restated key does.
+    //
+    // THE `meterInForce === null` GUARD IS GONE, and it was masking a real one. It read
+    // "neither does the first one a free-meter tune acquires", on the grounds that
+    // `frere-jacques`'s change landed on measure 1 and would print 17.6px into the middle
+    // of a system. That was true of where the change LANDED, not of what abcjs draws:
+    // abcjs prints it at the HEAD of the next system, and the change was on the wrong
+    // measure because a standalone `M:` belongs to the next LINE and we gave it to the
+    // measure still open. Fixed in the parser (`setMeterForNextLine`), the change now
+    // starts a system and prints in its prefix, which is where abcjs has it.
+    if (
+      meterInForce !== null &&
+      meterInForce.numerator === measure.meterChange.numerator &&
+      meterInForce.denominator === measure.meterChange.denominator &&
+      meterInForce.symbol === measure.meterChange.symbol
+    ) {
+      return
+    }
+    const meter = layoutMeter(x, measure.meterChange, strict)
+    elements.push(meter)
+    fixed(meter.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
+    x += meter.width + ENGRAVE.prefixGap
+  }
+  // A `Q:` AFTER THE FIRST prints where it stands, on its OWN voice's staff — an ordinary
+  // element in that voice's stream. Zero width, like the tune's own mark.
+  const drawTempoChange = (): void => {
+    if (measure.tempoChange == null) return
+    const tempo = layoutTempo(x, measure.tempoChange, strict)
+    if (tempo === null) return
+    elements.push(tempo)
+    fixed(0, 0)
+  }
   if (keyChangeAt < openingBarAt) {
+    drawTempoChange()
+    drawClefChange()
     drawKeyChange()
+    drawMeterChange()
     drawOpeningBar()
   } else {
     drawOpeningBar()
+    drawTempoChange()
+    drawClefChange()
     drawKeyChange()
+    drawMeterChange()
   }
 
   for (const [eventIndex, event] of measure.events.entries()) {
     if (measure.partLabel !== null && eventIndex === partIndex && partIndex > 0) {
       elements.push(layoutPart(x, measure.partLabel))
+      fixed(0, 0, 'part')
     }
     const group = event.type === 'rest' ? null : event.beamGroup
     const stemOut: { value: Omit<StemInfo, 'element'> | null } | null =
@@ -3213,6 +6023,8 @@ function layoutMeasure(
       strict,
       voiceStem,
       dynamicsAbove,
+      sharedStaff,
+      meterInForce === null ? null : meterInForce.numerator / meterInForce.denominator,
     )
     if (el === null) continue
     if (group !== null && stemOut?.value) {
@@ -3224,7 +6036,14 @@ function layoutMeasure(
     // the head right, and a slur springing from the accidental would start in mid-air.
     const heads = el.glyphs.filter((g) => g.name.startsWith('notehead'))
     if (heads.length > 0) {
-      const width = GLYPHS[heads[0]?.name ?? 'noteheadBlack'].width
+      // THE ACTIVE TABLE'S WIDTH, not Bravura's. This anchor is where a slur or tie
+      // STARTS, and abcjs's noteheads are wider than Bravura's by 0.67px on a black head,
+      // 1.22 on a half and 1.90 on a whole — the very difference `glyph-table.ts` opens by
+      // warning about ("that is not a rounding difference; it moves notes"). The metric
+      // twenty lines up already reads `glyphsFor(strict)`; this one did not.
+      const width = glyphsFor(strict).width(heads[0]?.name ?? 'noteheadBlack')
+      const first =
+        event.type === 'note' ? event.pitch : event.type === 'chord' ? event.pitches[0] : undefined
       anchors.push({
         system: 0, // filled in when the block is placed into a system
         element: elements.length,
@@ -3232,6 +6051,10 @@ function layoutMeasure(
         right: Math.max(...heads.map((h) => h.x)) + width,
         top: Math.min(...heads.map((h) => h.y)) - 0.5,
         bottom: Math.max(...heads.map((h) => h.y)) + 0.5,
+        pitchY:
+          first === undefined
+            ? (Math.min(...heads.map((h) => h.y)) + Math.max(...heads.map((h) => h.y))) / 2
+            : stepToY(pitchToStep(first, clef)),
         stemUp: el.lines.some((l) => l.x1 === l.x2 && l.y2 < l.y1),
         event,
       })
@@ -3239,8 +6062,12 @@ function layoutMeasure(
       // Rests get an anchor too — not for curves, which skip them, but because a tuplet
       // can contain one (`(3cz` and `(3z` are both in the corpus) and its bracket has to
       // span the rest like any other member.
+      // …and the same for a REST, whose box a tuplet bracket has to span. abcjs's half rest
+      // is 2.51px wider than Bravura's and its quarter rest 0.45px narrower, so this is
+      // not a small constant bias — it changes sign with the glyph.
       const glyph = el.glyphs[0]
-      const ink = glyph === undefined ? undefined : GLYPHS[glyph.name]
+      const table = glyphsFor(strict)
+      const ink = glyph === undefined ? undefined : (table.get(glyph.name) ?? GLYPHS[glyph.name])
       anchors.push({
         system: 0,
         element: elements.length,
@@ -3248,25 +6075,165 @@ function layoutMeasure(
         right: el.x + (ink?.width ?? el.width),
         top: (glyph?.y ?? 0) + (ink?.y ?? 0),
         bottom: (glyph?.y ?? 0) + (ink?.y ?? 0) + (ink?.height ?? 0),
+        // A rest is never a curve anchor; only a tuplet reads this one.
+        pitchY: (glyph?.y ?? 0) + (ink?.y ?? 0) + (ink?.height ?? 0) / 2,
         stemUp: false,
         event,
       })
     }
     elements.push(el)
+    // A ZERO-DURATION NOTE SPACES AS A QUARTER. abcjs rewrites the duration before
+    // anything reads it — `if (duration === 0) { zeroDuration = true; duration = 0.25;
+    // nostem = true; }` (`abstract-engraver.js:791`) — so the head, the stem and the
+    // ADVANCE all come from 0.25. We had the head and the stem and left the advance at
+    // zero, which put every note after a `C0` on top of it.
+    const duration = ratToNumber(event.duration) || 0.25
+    // The voice-overlap rule reads the note's pitch range and its FIRST head. A rest is
+    // excluded at the source, as abcjs excludes it (`!child.abcelem.rest`).
+    const firstHead = el.type === 'note' ? el.glyphs.find((g) => g.role === 'notehead') : undefined
+    advances.push({
+      rod: el.rod ?? el.width,
+      gap: ENGRAVE.noteRodGap,
+      duration,
+      left: el.left ?? 0,
+      kind: 'other',
+      note:
+        firstHead === undefined || el.staffSteps.length === 0
+          ? null
+          : {
+              low: Math.min(...el.staffSteps),
+              high: Math.max(...el.staffSteps),
+              width: glyphsFor(strict).width(firstHead.name),
+              head: firstHead.name,
+            },
+    })
     x += el.width
   }
 
   // Every event preceded the `P:` — the label belongs after them, before the barline.
-  if (measure.partLabel !== null && partIndex === -1)
+  if (measure.partLabel !== null && partIndex === -1) {
     elements.push(layoutPart(x, measure.partLabel))
+    fixed(0, 0, 'part')
+  }
 
   let closingBarIndex: number | null = null
   const musicWidth = x
   if (measure.closingBarline !== null) {
-    x += ENGRAVE.barGap
     closingBarIndex = elements.length
-    elements.push(layoutBar(x, measure.closingBarline, strict))
+    const plain = layoutBar(x, measure.closingBarline, strict)
+    // A DECORATION ON THE BAR starts its stack at a FIXED pitch 12, not at any note's
+    // extent — abcjs passes the literal 12 (`abstract-engraver.js:1002`). Pitch 12 is our
+    // step 6, and `decorationMinTop` clamps it there anyway.
+    const barDecorations = measure.closingBarlineDecorations ?? []
+    const marks =
+      barDecorations.length === 0
+        ? null
+        : decorationGlyphs(
+            barDecorations,
+            x,
+            plain.width,
+            6,
+            6,
+            false,
+            6,
+            2,
+            // A barline is not beamed, so abcjs's `nostem` guess cannot apply to one.
+            false,
+            strict,
+            0,
+            dynamicsAbove,
+          )
+    const withMarks =
+      marks === null
+        ? plain
+        : {
+            ...plain,
+            glyphs: [...plain.glyphs, ...marks.glyphs],
+            texts: [...plain.texts, ...marks.texts],
+          }
+    // THE BAR NUMBER, and it is geometry before it is text.
+    //
+    // `addMeasureNumber` (`abstract-engraver.js:945-953`) measures the number in
+    // `measurefont`, puts it at pitch `vert + height / STEP` with `vert` 11 on a barline,
+    // and adds it with `addFixed` — so it goes through `_addChild`'s `pushTop` and enters
+    // the staff's ink. On a plain treble tune the clef's 13.72 loses to its 16.43, and
+    // that difference is the 10.5px every `%%barnumbers` fixture was out by.
+    //
+    // `vert` is 13.5 instead when the number is WIDER than 10px AND the element is the
+    // treble clef — a clef-only case, so a barline always takes the 11.
+    const numbered =
+      measure.closingBarNumber === undefined
+        ? withMarks
+        : {
+            ...withMarks,
+            texts: [...withMarks.texts, barNumberText(measure.closingBarNumber, x)],
+          }
+    // A CHORD SYMBOL OR ANNOTATION WRITTEN BEFORE THE BAR BELONGS TO THE BAR, and abcjs
+    // engraves it with the SAME `addChord` a note gets — `addChord(getTextSize, abselem,
+    // elem, 0, 0, 0, false, germanAlphabet)` (`abstract-engraver.js:1047-1049`). The
+    // `noteheadWidth` of 0 is what centres the mark on the barline instead of on a head,
+    // and `addCentered` then gives the bar `w = max(w, chordWidth / 2)` and `extraw =
+    // min(extraw, -chordWidth / 2)`, which is why `"D"|` widens a barline abcjs measures
+    // at 5.781 against a bare one's 1.
+    const barSpan = { left: 0, right: 0 }
+    const barChordTexts =
+      measure.closingBarlineChord === undefined && measure.closingBarlineAnnotations === undefined
+        ? []
+        : noteText(
+            {
+              ...EMPTY_BAR_EVENT,
+              chordSymbol: measure.closingBarlineChord ?? null,
+              annotations: measure.closingBarlineAnnotations ?? [],
+            },
+            x,
+            0,
+            strict,
+            barSpan,
+          )
+    const bar =
+      barChordTexts.length === 0
+        ? numbered
+        : { ...numbered, texts: [...numbered.texts, ...barChordTexts] }
+    elements.push(bar)
+    fixed(
+      Math.max(barRod(measure.closingBarline, bar, strict), barSpan.right + ENGRAVE.prefixGap) +
+        endingRoom(voltaAfter),
+      ENGRAVE.prefixGap + endingRoom(voltaAfter),
+      'bar',
+      Math.max(ENGRAVE.barClearance, barSpan.left),
+    )
     x += ENGRAVE.barGap
+  }
+
+  // …AND THE NEXT SYSTEM'S CLEF CHANGE, drawn after that barline. See `trailingClef`.
+  if (trailingClef !== null) {
+    const trailing = layoutClef(x, trailingClef, strict)
+    if (trailing !== null) {
+      elements.push(trailing)
+      fixed(trailing.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
+      x += trailing.width + ENGRAVE.prefixGap
+    }
+  }
+
+  // …AND THE NEXT SYSTEM'S KEY CHANGE with it. See `trailingKey` and `keyChangeLeadsLine`.
+  if (trailingKey !== null) {
+    const trailing = layoutKeyChange(x, trailingKey[0], trailingKey[1], clef, strict)
+    if (trailing !== null) {
+      elements.push(trailing)
+      fixed(trailing.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
+      x += trailing.width + ENGRAVE.prefixGap
+    }
+  }
+
+  // …AND ITS METER, which is drawn EVEN WHEN IT RESTATES THE ONE IN FORCE. `[M:C]` under
+  // `M:C` is exactly what `S5-directives` X:502 writes, and abcjs draws it: nothing on this
+  // path compares meters, the same way nothing compares keys (finding 127). The
+  // restated-meter guard lives on the INLINE path and stays there.
+  if (trailingMeter !== null) {
+    const trailing = layoutMeter(x, trailingMeter, strict)
+    elements.push(trailing)
+    fixed(trailing.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
+    x += trailing.width + ENGRAVE.prefixGap
   }
 
   // A repeat barline or a final ends the ending it sits in; a plain one does not.
@@ -3278,10 +6245,12 @@ function layoutMeasure(
 
   return {
     elements,
+    advances,
     width: x,
     beams,
     anchors,
     closingBarIndex,
+    openingBarIndex,
     musicWidth,
     volta: measure.volta,
     closesVolta,
@@ -3298,6 +6267,25 @@ const shiftElement = (el: LayoutElement, dx: number): LayoutElement => ({
 })
 
 /**
+ * The DRAWN half of the voice-overlap rule: everything but the accidentals moves right.
+ *
+ * abcjs walks the element's relative children and adds `firstChildNoteWidth` to each
+ * `dx` whose name does not contain "accidental" (`voice-elements.js:56-62`), leaving the
+ * element's own x — and therefore the cursor, the `er` and every other voice — alone.
+ * So the head is displaced INSIDE its element, which is the whole point: two voices a
+ * second apart stay at the same musical time and stop sharing a column.
+ */
+const displaceHeads = (el: LayoutElement, dx: number): LayoutElement =>
+  dx === 0
+    ? el
+    : {
+        ...el,
+        glyphs: el.glyphs.map((g) => (g.name.startsWith('accidental') ? g : { ...g, x: g.x + dx })),
+        lines: el.lines.map((l) => ({ ...l, x1: l.x1 + dx, x2: l.x2 + dx })),
+        texts: el.texts.map((t) => ({ ...t, x: t.x + dx })),
+      }
+
+/**
  * The staff's own lines — five, or however many `V:… stafflines=` asked for.
  *
  * Source: `write/draw/staff.js`. Lines are counted UP from the bottom line, `pitch =
@@ -3310,14 +6298,27 @@ const shiftElement = (el: LayoutElement, dx: number): LayoutElement => ({
  * so a `stafflines=1` treble staff still puts every pitch where a treble staff would and
  * simply hides four of its lines. Ledger lines follow from the same unchanged pitches, as
  * they do in abcjs.
+ *
+ * ── AND IT SPANS THE MUSIC, NOT THE PAGE ─────────────────────────────────────
+ * abcjs draws every rule from `staffGroup.startx` to `staffGroup.w`, which are
+ * `getLeftEdgeOfStaff` and `totalWidth + leftEdge` (`draw/staff-group.js:92` →
+ * `draw/staff.js`, `layout/layout-in-grid.js:13-14`). So the left end clears the voice
+ * headers and the brace, and the right end stops at the last element — NOT at the page's
+ * right margin and NOT at a title that overhangs it.
+ *
+ * This took `0` to `width` and was wrong at both ends by exactly those two terms: 25px of
+ * left edge and 15px of right margin on `ragtime-nightingale`, whose lines ran 0 → 700.10
+ * against abcjs's 25 → 685.10. It cancelled on any tune where `leftEdge` is just `marginX`
+ * AND `width` is just `musicWidth`, which is 21 of the 41 fixtures — so the two errors
+ * hid each other on the majority and no gate could see either.
  */
-const staffLinesFor = (width: number, count: number): PlacedLine[] => {
+const staffLinesFor = (left: number, right: number, count: number): PlacedLine[] => {
   const rule = (step: number): PlacedLine => ({
-    x1: 0,
+    x1: left,
     y1: stepToY(step),
-    x2: width,
+    x2: right,
     y2: stepToY(step),
-    thickness: ENGRAVING_DEFAULTS.staffLineThickness,
+    thickness: LINE_WEIGHTS.staffLine,
   })
   if (count === DEFAULT_STAFF_LINES) return ENGRAVE.staffLineSteps.map(rule)
   if (count <= 0) return []
@@ -3344,7 +6345,11 @@ interface VoicePlan {
     withMeter: boolean,
     topStaff: boolean,
     indent: number,
-  ) => { elements: LayoutElement[]; width: number }
+    /** Index of the system's first measure — the prefix prints the clef in force THERE. */
+    from?: number,
+  ) => { elements: LayoutElement[]; advances: Advance[] }
+  /** The clef in force at measure `i`, after every `Measure.clefChange` before it. */
+  readonly clefAt: (i: number) => Clef
 }
 
 /**
@@ -3354,8 +6359,78 @@ interface VoicePlan {
  * voices by column, so bar 3 begins at the same x on every staff — without that the
  * staves drift apart and the score stops being readable as one thing.
  */
-export function layout(score: Score, options: LayoutOptions = {}): Layout {
-  const systemWidth = options.systemWidth ?? ENGRAVE.systemWidth
+/**
+ * `&` OVERLAY LAYERS BECOME VOICES ON THE SAME STAFF, which is what they are.
+ *
+ * `G8 & C4 D4` is one voice carrying two simultaneous lines, and the parser reads it that
+ * way — `measure.overlays` is a parallel stream per layer. Nothing downstream looked at
+ * it, so every layer but the first went undrawn: four fixtures in abcjs's own test suite
+ * lose most of their notes, and nothing in the 41-fixture corpus uses `&` at all, which
+ * is why it went unnoticed.
+ *
+ * Expanding here rather than in the parser keeps the MODEL honest — an overlay is a
+ * property of the measure it was written in, and flattening it away would lose that — and
+ * lets the renderer reuse everything it already does for two voices sharing a staff:
+ * stem-direction convention, the shared prefix, the union of reserves.
+ *
+ * A layer inherits its parent's clef and stems but not its NAME: `V:1 name="Melody"` puts
+ * one label beside the staff, not one per layer. It keeps the parent's barlines and
+ * volta, exactly as a second `V:` on a shared staff does — they draw at the same x.
+ */
+function expandOverlays(score: Score): Score {
+  const layersOf = (voice: Score['voices'][number]): number =>
+    Math.max(0, ...voice.measures.map((m) => m.overlays.length))
+  if (score.voices.every((v) => layersOf(v) === 0)) return score
+
+  const voices: Score['voices'][number][] = []
+  /** Parent voice id → the ids of its layers, in order. */
+  const layerIds = new Map<string, string[]>()
+  for (const voice of score.voices) {
+    voices.push({ ...voice, measures: voice.measures.map((m) => ({ ...m, overlays: [] })) })
+    const ids: string[] = []
+    for (let layer = 0; layer < layersOf(voice); layer++) {
+      // `$` cannot appear in an ABC voice id, so a synthetic id can never collide with a
+      // declared one.
+      const id = `${voice.id}$${layer + 1}`
+      ids.push(id)
+      voices.push({
+        ...voice,
+        id,
+        name: null,
+        subname: null,
+        measures: voice.measures.map((m) => ({
+          ...m,
+          events: m.overlays[layer] ?? [],
+          overlays: [],
+        })),
+      })
+    }
+    if (ids.length > 0) layerIds.set(voice.id, ids)
+  }
+
+  const withLayers = (ids: readonly string[]): string[] =>
+    ids.flatMap((id) => [id, ...(layerIds.get(id) ?? [])])
+  const staves =
+    score.staves.length > 0
+      ? score.staves.map((g) => ({ ...g, voiceIds: withLayers(g.voiceIds) }))
+      : // No `%%score`, so every voice had a staff of its own — and its layers join it.
+        score.voices.map((v) => ({
+          voiceIds: withLayers([v.id]),
+          brace: null,
+          bracket: null,
+          connectBarLines: null,
+        }))
+  return { ...score, voices, staves }
+}
+
+export function layout(input: Score, options: LayoutOptions = {}): Layout {
+  const score = expandOverlays(input)
+  // `%%staffwidth` names the same quantity as the host's `staffwidth` param; the
+  // DIRECTIVE wins, because it is the tune saying how wide it wants to be.
+  const systemWidth =
+    score.staffWidth !== null
+      ? score.staffWidth / 7.75 + 2 * ENGRAVE.marginX
+      : (options.systemWidth ?? ENGRAVE.systemWidth)
   // The mode picks the look; `profile` can still override it explicitly.
   const profile: RenderProfile =
     options.profile ?? (isStrict(options.mode ?? defaultMode) ? 'abcjs' : 'standard')
@@ -3363,6 +6438,11 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
   // may set it either way, but whether a melisma prints abcjs's literal `_` or an
   // extender is a question about which engine's behaviour is being reproduced.
   const strict = isStrict(options.mode ?? defaultMode)
+  STRICT_TEXT_METRICS = strict
+  LINE_WEIGHTS = lineWeightsFor(strict)
+  JAZZ_CHORDS = score.jazzChords
+  SCORE_FONTS = score.fonts
+  PERC_MAP = score.percMap
   const { spacingScale } = PROFILES[profile]
   const voices = score.voices.length > 0 ? score.voices : [undefined]
 
@@ -3371,6 +6451,8 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
   // intra-staff gap (sysstaffsep 50 -> 66.67px), and abcjs honours both. The model carries
   // them already in pixels; here they become staff spaces like the rest of `ENGRAVE`.
   const interSystemSep = score.staffSep !== null ? score.staffSep / 7.75 : ENGRAVE.systemSeparation
+  /** `%%musicspace` — the gap before the FIRST staff group only, in staff spaces. */
+  const musicSpace = score.musicSpace !== null ? score.musicSpace / 7.75 : ENGRAVE.musicSpace
   const intraStaffSep =
     score.sysStaffSep !== null ? score.sysStaffSep / 7.75 : ENGRAVE.staffSeparation
 
@@ -3392,6 +6474,17 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
           group.voiceIds.map((id) => voices.findIndex((v) => v?.id === id)).filter((i) => i >= 0),
         )
       : voices.map((_, i) => [i])
+
+  /**
+   * A voice's index on its staff, or −1 when it has that staff to itself.
+   *
+   * abcjs's `voice.voicetotal < 2 ? -1 : voice.voicenumber` (`abstract-engraver.js:235`),
+   * which is what decides a slur's side on a shared staff — see `curveIsAbove`.
+   */
+  const voicePosOf = (v: number): number => {
+    const members = voicesOfStaff.find((m) => m.includes(v))
+    return members === undefined || members.length < 2 ? -1 : members.indexOf(v)
+  }
 
   /**
    * Stem direction by a voice's POSITION on its staff, not by its pitch.
@@ -3447,20 +6540,55 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
   }
 
   // Does the tune SING? Dynamics stack above the staff if so, below if not — abcjs's
-  // `hasVocals` (`abstract-engraver.js:110`), which it reads per system but which never
-  // varies across a corpus tune's systems. Any note in any voice carrying a syllable or a
-  // held-melisma marker counts; a wordless `*` (`lyric: null, lyricMelisma: false`) does
+  // `hasVocals` (`abstract-engraver.js:110`). Any note in any voice carrying a syllable or
+  // a held-melisma marker counts; a wordless `*` (`lyric: null, lyricMelisma: false`) does
   // not, matching abcjs's test on `el.lyric`.
-  const hasVocals = voices.some((voice) =>
-    (voice?.measures ?? []).some((measure) =>
-      measure.events.some(
-        (event) =>
-          (event.type === 'note' || event.type === 'chord') &&
-          ((event.lyric !== null && event.lyric !== '') ||
-            event.extraVerses.some((v) => v !== null && v !== '')),
-      ),
-    ),
-  )
+  //
+  // IT IS PER SYSTEM AND MONOTONIC. `createABCLine` calls `containsLyrics(staffs)` at the
+  // head of every line, and that function only ever sets the flag TRUE — `reset()` clears
+  // it once per TUNE, not once per line. So a tune whose lyrics arrive on its second
+  // system engraves the FIRST with dynamics BELOW and everything after with them above.
+  //
+  // Nothing in the 41 fixtures does that and the note here used to say it never varies.
+  // `visual-selection-01` does: its `w:` follows the SECOND of two `[V: PianoRightHand]`
+  // lines, and putting system 1's dynamics above cost 27.11px — seven pitch, the lane —
+  // between its two staves.
+  const sings = (measure: Measure): boolean =>
+    measure.events.some(
+      (event) =>
+        (event.type === 'note' || event.type === 'chord') &&
+        ((event.lyric !== null && event.lyric !== '') ||
+          event.extraVerses.some((v) => v !== null && v !== '')),
+    )
+  /** Measure indices that open a system, taken from the measures themselves. */
+  const systemOpensAt = new Set<number>([0])
+  for (const voice of voices) {
+    ;(voice?.measures ?? []).forEach((m, i) => {
+      if (m.startsSystem) systemOpensAt.add(i)
+    })
+  }
+  /** The first measure index of the system that first sings; `Infinity` if none does. */
+  const firstSingingSystemAt = ((): number => {
+    let openedAt = 0
+    let answer = Number.POSITIVE_INFINITY
+    const columns = Math.max(0, ...voices.map((v) => v?.measures.length ?? 0))
+    for (let i = 0; i < columns; i++) {
+      if (systemOpensAt.has(i)) openedAt = i
+      if (
+        voices.some((v) => {
+          const m = v?.measures[i]
+          return m !== undefined && sings(m)
+        })
+      ) {
+        answer = openedAt
+        break
+      }
+    }
+    return answer
+  })()
+  const hasVocalsAt = (measureIndex: number): boolean => measureIndex >= firstSingingSystemAt
+  /** The tune sings SOMEWHERE — for the passes that are not per measure. */
+  const hasVocals = Number.isFinite(firstSingingSystemAt)
 
   const plans: VoicePlan[] = voices.map((voice, voiceIndex) => {
     // A voice's own `clef=` wins over the tune's `K:` clef; treble is the fallback.
@@ -3476,18 +6604,110 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     // deliberately keeps `score.key` as the header key and leaves accumulation to the
     // consumer — so the renderer is the consumer that has to do it.
     let keyInForce = score.key
-    const blocks = (voice?.measures ?? []).map((measure) => {
+    // The clef in force, accumulated the same way — `Measure.clefChange` is a DELTA. It
+    // has to be carried into the PREFIX too: abcjs reprints the current clef at the head
+    // of every system, not the one the voice was declared with.
+    let clefInForce = clef
+    let meterInForce = score.meter
+    const clefAtMeasure: Clef[] = []
+    /**
+     * THE PREFIX REPRINTS THE KEY IN FORCE, AND ON ONE LINE IT ALSO CANCELS THE OLD ONE.
+     *
+     * abcjs stamps `params.key` at every `startNewLine`, so a system's prefix shows the key
+     * as that LINE opened — not `score.key`, which is what we read. `ragtime-nightingale`
+     * changes `[K:Ab]`/`[K:Eb]` repeatedly and its later systems want FOUR flats: abcjs's
+     * key element probes at `w = 33` with flats at 0, 8.75, 17.5 and 26.25 against our
+     * three-flat 24.25.
+     *
+     * …AND `impliedNaturals` IS THE OTHER HALF. On a key CHANGE `parseKey` walks the old
+     * key's accidentals and pushes a NATURAL for every note the new key does not carry
+     * (`abc_parse_key_voice.js:295-311`); `startNewLine` copies that list onto the line's
+     * key (`abc_parse_music.js:964-965`) and then DELETES it (`:1041-1042`), so exactly ONE
+     * line cancels and every line after it shows the plain key. Read straight off abcjs's
+     * own data: its line 18 carries `fB fe fA nd` where 14-17 carry `fB fe fA fd` and
+     * 19-22 carry `fB fe fA`.
+     *
+     * Reprinting the key WITHOUT the cancellation was measured and refused by the ratchet —
+     * `ox` -0.75 -> 0.03 but `dx` 13.31 -> 14.18 — which is what the missing natural's
+     * 6.75 plus its 2 of gap is worth on the one line that needs it.
+     */
+    const keyAtMeasure: KeySignature[] = []
+    /** The key the PREVIOUS line opened with, which is what this line's prefix cancels. */
+    const keyBeforeLine: KeySignature[] = []
+    let keyAtLineStart = score.key
+    let keyAtPreviousLine = score.key
+    const blocks = (voice?.measures ?? []).map((measure, measureIndex) => {
+      // A mid-tune clef prints at the START of its measure and governs it — abcjs's
+      // `staff-extra clef` is emitted before the measure's notes, and everything after it
+      // is read against the new clef.
+      if (measure.clefChange != null) clefInForce = measure.clefChange
+      clefAtMeasure.push(clefInForce)
+      if (measure.startsSystem) {
+        const leads = keyChangeLeadsLine(measure)
+        // WHAT THE PREFIX CANCELS IS THE KEY IN FORCE AT THE CHANGE, NOT THE PREVIOUS
+        // LINE'S KEY. abcjs's naturals are `impliedNaturals`, which `parseKey` computes
+        // from the old key AT THE MOMENT OF THE CHANGE (`abc_parse_key_voice.js:295-311`).
+        // Reading the previous LINE's key instead is the same number whenever every change
+        // starts a line — which is every fixture finding 124 was measured on — and a
+        // different one as soon as a MID-line `[K:]` sits between the two.
+        //
+        // `S8-layout` X:812 is that tune: `K:G`, then a mid-line `[K:Bb]`, then a
+        // standalone `K:Gb`. Gb cancels nothing from Bb, and abcjs draws no natural — but
+        // against the previous LINE's key, still G, we cancelled its F# and drew one. A
+        // NATURAL is the tall accidental and DECLARES a box up to pitch 15.88 against the
+        // clef's 13.72, so it raised the chord lane, and the ending lane on top of that,
+        // and put every notehead on the system 8.37px low.
+        keyAtPreviousLine = leads ? keyInForce : keyAtLineStart
+        // A change that LEADS the line is already in `multilineVars.key` when abcjs stamps
+        // `params.key`, so the prefix shows the NEW key. See `keyChangeLeadsLine`.
+        keyAtLineStart = leads ? (measure.keyChange ?? keyInForce) : keyInForce
+      }
+      keyAtMeasure.push(keyAtLineStart)
+      keyBeforeLine.push(keyAtPreviousLine)
       const block = layoutMeasure(
         measure,
-        clef,
+        clefInForce,
         directions,
         spacingScale,
         strict,
         stemForVoice(voiceIndex),
         keyInForce,
-        hasVocals,
+        hasVocalsAt(measureIndex),
+        // ONLY THE VOICE THAT CARRIES THE ENDING PAYS FOR IT. abcjs adds
+        // `minspacing += textWidth + 10` in `createBarLine`, which runs where the ending
+        // element is created — and a volta belongs to the FIRST voice of the first staff,
+        // not to every voice whose bar happens to fall under the `|1`. Its own probe says
+        // so: of the five barlines at one x on `ragtime-nightingale`'s system 17, ONE has
+        // `minsp=28.50` and the other four have the plain 10.00.
+        //
+        // Charging every voice is not a wash, because the LEFT-INK rule is a shortfall and
+        // not an addition — `if (er < extraWidth) x += extraWidth - er`
+        // (`layout/voice-elements.js:66-72`). abcjs's other voices keep 18.50 of slack
+        // after their bar, which absorbs the 12.13 of accidental ink on the chord that
+        // follows; ours had spent that slack on the ending, so the same accidental pushed
+        // the shared cursor 12.13 further right. That was the WHOLE of ragtime's dx.
+        voiceIndex === 0 ? ((voice?.measures ?? [])[measureIndex + 1]?.volta ?? null) : null,
+        meterInForce,
+        (() => {
+          const next = (voice?.measures ?? [])[measureIndex + 1]
+          return next?.startsSystem === true ? (next.clefChange ?? null) : null
+        })(),
+        (voicesOfStaff.find((m) => m.includes(voiceIndex))?.length ?? 1) > 1,
+        (() => {
+          const next = (voice?.measures ?? [])[measureIndex + 1]
+          if (!keyChangeLeadsLine(next) || next?.keyChange == null) return null
+          // The key as THIS measure ends is what the cancellation is measured against, and
+          // `keyInForce` is still that: `measure.keyChange` is applied below.
+          const from = measure.keyChange ?? keyInForce
+          return from === null ? null : ([from, next.keyChange] as const)
+        })(),
+        (() => {
+          const next = (voice?.measures ?? [])[measureIndex + 1]
+          return meterChangeLeadsLine(next) ? (next?.meterChange ?? null) : null
+        })(),
       )
       if (measure.keyChange !== null) keyInForce = measure.keyChange
+      if (measure.meterChange != null) meterInForce = measure.meterChange
       return block
     })
 
@@ -3500,26 +6720,62 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       withMeter: boolean,
       topStaff: boolean,
       indent: number,
-    ): { elements: LayoutElement[]; width: number } => {
+      /** The first measure of the system, so the prefix prints the clef in force there. */
+      from = 0,
+    ): { elements: LayoutElement[]; advances: Advance[] } => {
+      const clef = clefAtMeasure[from] ?? clefInForce
       const elements: LayoutElement[] = []
+      const advances: Advance[] = []
       // The voice-name reservation pushes the whole prefix — and the music after it —
       // right, exactly as abcjs's `getLeftEdgeOfStaff` moves `staffGroup.startx`.
+      //
+      // These are abcjs's `staff-extra` children: ordinary zero-duration elements on the
+      // voice's own child list, laid out through the SAME shared cursor as the music. So a
+      // treble clef against a bass clef does not give the two staves different prefix
+      // widths — the cursor takes the wider ONE ELEMENT AT A TIME and both time signatures
+      // land on the same x. Summing each voice's prefix and taking the widest total is a
+      // different number whenever the two voices' prefixes differ in shape.
       let x = ENGRAVE.marginX + indent
+      const push = (el: LayoutElement): void => {
+        elements.push(el)
+        advances.push({
+          rod: el.width + ENGRAVE.prefixGap,
+          gap: ENGRAVE.prefixGap,
+          duration: 0,
+          left: 0,
+          kind: 'other',
+        })
+        x += el.width + ENGRAVE.prefixGap
+      }
 
-      const clefElement = layoutClef(x, clef, strict)
-      if (clefElement !== null) {
-        elements.push(clefElement)
-        x += clefElement.width + ENGRAVE.prefixGap
-      }
-      const keySig = layoutKeySignature(x, score.key, clef, strict)
-      if (keySig !== null) {
-        elements.push(keySig)
-        x += keySig.width + ENGRAVE.prefixGap
-      }
+      // `%%barnumbers 0` PRINTS ITS NUMBER ON THE CLEF, and that is the only path on which
+      // `addMeasureNumber` ever sees one: `createABCStaff` calls it with the clef element
+      // (`abstract-engraver.js:161`) where every other setting calls it with a barline
+      // (`abc_parse_music.js:296-301`). The parser has already applied abcjs's two guards —
+      // first voice, and not the first system.
+      const systemNumber = (voice?.measures ?? [])[from]?.systemBarNumber
+      const bare = layoutClef(x, clef, strict)
+      const clefElement =
+        bare === null || systemNumber === undefined
+          ? bare
+          : {
+              ...bare,
+              texts: [
+                ...bare.texts,
+                barNumberText(systemNumber, x, { treble: clef.shape === 'G' }),
+              ],
+            }
+      if (clefElement !== null) push(clefElement)
+      // `layoutKeyChange` is the same pairing a mid-tune `[K:]` uses, and it already emits
+      // the naturals for what is being left — which is exactly `impliedNaturals`. Using it
+      // whenever the line's key differs from the previous line's gives abcjs's "one line
+      // only" for free, because the line after that compares equal.
+      const lineKey = keyAtMeasure[from] ?? score.key
+      const beforeKey = keyBeforeLine[from] ?? score.key
+      const keySig = layoutKeyChange(x, beforeKey, lineKey, clef, strict) ?? layoutKeySignature(x, lineKey, clef, strict)
+      if (keySig !== null) push(keySig)
       if (withMeter && score.meter !== null) {
-        const meter = layoutMeter(x, score.meter.numerator, score.meter.denominator)
-        elements.push(meter)
-        x += meter.width + ENGRAVE.prefixGap
+        push(layoutMeter(x, score.meter, strict))
       }
       // The tempo mark belongs to the TUNE — not to each system, and not to each voice.
       // It prints once: on the first system, above the top staff. Every staff still gets
@@ -3527,15 +6783,19 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       // Zero width, so it does not advance the cursor.
       if (withMeter && topStaff && score.tempo !== null) {
         const tempo = layoutTempo(x, score.tempo, strict)
-        if (tempo !== null) elements.push(tempo)
+        if (tempo !== null) {
+          elements.push(tempo)
+          advances.push({ rod: 0, gap: 0, duration: 0, left: 0, kind: 'other' })
+        }
       }
-      return { elements, width: x }
+      return { elements, advances }
     }
 
     return {
       clef,
       blocks,
       measures: voice?.measures ?? [],
+      clefAt: (i: number): Clef => clefAtMeasure[i] ?? clef,
       name: voice?.name ?? null,
       subname: voice?.subname ?? null,
       prefix,
@@ -3551,31 +6811,55 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
    * old left edge to the pixel. Braces and brackets can widen it too, but no fixture pairs
    * a group connector with a name — ponytail: add their width here when one does.
    */
+  /**
+   * A voice label's width in STAFF SPACES, measured the way abcjs measures it.
+   *
+   * `getTextSize.calc(header, 'voicefont')` — so the golden's `calcWidth` at whatever size
+   * `%%voicefont` set, plus `padding * 4` for a BOXED font. The default resolves to Times
+   * New Roman Bold 17px, which is the table the old dedicated metrics file carried; a
+   * `%%voicefont Verdana 17 box` resolves to the 23px bracket, which asks for a key that
+   * does not exist and falls through to `repeatfont` — and then adds 9.2px of box, twice
+   * over once the trailing "A" is measured the same way. That was 18.40px of left edge.
+   */
+  const voiceNameWidth = (text: string): number => {
+    const size = fontSizeOf('voicefont')
+    const bold = score.fonts.voicefont === undefined || score.fonts.voicefont.bold
+    return (
+      textWidth(text, size, bold ? 'serifBold' : 'serif') +
+      (score.fonts.voicefont?.box === true ? size * ENGRAVE.fontBoxPadding * 4 : 0)
+    )
+  }
+
   const indentFor = (systemIndex: number): number => {
     const label = (plan: VoicePlan): string | null => (systemIndex === 0 ? plan.name : plan.subname)
     const widest = Math.max(
       0,
       ...plans.map((plan) => {
         const text = label(plan)
-        return text ? voiceNameWidthPx(text) : 0
+        return text ? voiceNameWidth(text) : 0
       }),
     )
-    if (widest === 0) return 0
-    return (widest + VOICE_NAME_GAP_PX) / 7.75
+    // A BRACE OR BRACKET MOVES THE LEFT EDGE, name or no name.
+    //
+    // `getLeftEdgeOfStaff` ends `return x + ofs`, where `ofs` is the widest connector's
+    // `getWidth()` — a flat 10 for both, with abcjs's own note that its drawing does not
+    // vary. The "width of an A" of trailing space is NOT part of it: that is added only
+    // when there is a header to clear, so an unnamed grand staff takes exactly the 10.
+    // Probed on `ragtime-mini`, which has `%%score { ( 4 5 ) | ( 1 2 3 ) }` and no names:
+    // `leftEdge = 25.000` against a bare tune's 15.
+    const connector = score.staves.some((group) => group.brace !== null || group.bracket !== null)
+      ? ENGRAVE.connectorIndent
+      : 0
+    if (widest === 0) return connector
+    // …plus "the width of an A" in the SAME font, box padding and all — abcjs measures it
+    // with `getTextSize.calc("A", 'voicefont')` rather than taking a constant
+    // (`get-left-edge-of-staff.js:19-20`).
+    return connector + widest + voiceNameWidth('A')
   }
 
-  // Measures align across voices: column i is as wide as the widest voice's bar i. A
-  // voice that runs short simply contributes nothing to the columns past its end.
+  /** How many measures the longest voice has — the span indices run over these. */
   const columns = Math.max(0, ...plans.map((plan) => plan.blocks.length))
-  const columnWidths = Array.from({ length: columns }, (_, i) =>
-    Math.max(0, ...plans.map((plan) => plan.blocks[i]?.width ?? 0)),
-  )
 
-  // Every staff in a system shares one prefix width, or the columns would not line up.
-  const headWidth = (withMeter: boolean, indent: number): number =>
-    Math.max(0, ...plans.map((plan) => plan.prefix(withMeter, false, indent).width))
-
-  // Pack columns into systems, breaking before the column that would overflow.
   /**
    * Systems follow the SOURCE, not a width packer.
    *
@@ -3614,70 +6898,384 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
   // Anchors for every note of every voice, tagged with the system it landed in. A slur
   // or tie can span a break, so pairing them needs the whole tune, not one system.
   const voiceAnchors: NoteAnchor[][] = plans.map(() => [])
+  /**
+   * Where the MUSIC starts on each system, past the clef and key — the left clamp for a
+   * slur continued from the system above. With one cursor per line there is no shared
+   * prefix width to read this off, so each system records where its first music element
+   * actually landed.
+   */
+  const musicLeft: number[] = []
+  /**
+   * THE PAGE TARGET GROWS TO THE WIDEST LINE SO FAR, and later lines justify to the new
+   * width rather than to the page.
+   *
+   * abcjs's `layout()`: `if (Math.round(thisWidth) > Math.round(maxWidth)) maxWidth =
+   * thisWidth`, where `thisWidth` is what `setXSpacing` returns for the line just solved
+   * and `maxWidth` is what the next line is told to fill. A line that cannot compress to
+   * the page — its rods already exceed it — therefore widens the page for everything
+   * after it. Probed on `happy-birthday`: line 1 stops at 686.771 against a 685 target
+   * (inside abcjs's own 2px tolerance) and line 2 is then justified to 686.771, not 685.
+   *
+   * `expandToWidest` would re-run the earlier lines at the final width; abcjs leaves it
+   * off by default and so do we, which is why this is a forward-only ratchet.
+   */
+  let pageWidth = systemWidth - 2 * ENGRAVE.marginX
 
   const systems: LayoutSystem[] = spans.map((span, systemIndex) => {
     const withMeter = systemIndex === 0
     const indent = indentFor(systemIndex)
-    const head = headWidth(withMeter, indent)
 
     /**
-     * Justify the system to the page: every column stretches by a common factor so the
-     * right edges line up, which is what makes a page of music look like a page rather
-     * than a ragged list.
+     * ONE CURSOR ACROSS EVERY VOICE, FOR THE WHOLE LINE — abcjs's `layoutStaffGroup`.
      *
-     * The LAST system is left alone — a final line holding one bar would otherwise be
-     * stretched across the whole page. And a system that would need more than
-     * `maxJustifyStretch` is left short for the same reason, per *Behind Bars*.
+     * There are no columns here and there is no per-measure reconciliation. abcjs walks a
+     * single cursor along one timeline per LINE: each pass takes the voices whose next
+     * element sits at the smallest pending musical time, moves the cursor to the furthest
+     * right any of them wants to be, places them all THERE, and tells every voice still
+     * waiting that some of its time has been spent without it.
+     *
+     * Two consequences the per-column model could not have, and both are load-bearing:
+     *
+     * 1. **Barlines are not aligned.** They are ordinary zero-duration elements on the
+     *    timeline. `voice-middle-after-clef` writes a bar of 1.0 against a bar of 1.5 and
+     *    abcjs simply lets the two voices' bars fall where their own time says — measure 2
+     *    starts at 207.1 on one staff and 278.1 on the other. A column model force-aligns
+     *    them because a column IS a measure, and that fixture sat at exactly 79.0px of
+     *    spread through every change of the arc.
+     * 2. **A FINISHED voice still pushes the cursor.** `getDurationIndex` on an exhausted
+     *    voice reads `children[i]` as undefined and so returns `durationindex - 5e-7`,
+     *    which lands it in `currentvoices` on every remaining pass; `layoutOneItem` places
+     *    nothing, but the isolation loop above it has already taken its `getNextX`. Its
+     *    last element's rod therefore keeps shunting the other voices right after it has
+     *    stopped having anything to say. Measured, not read: on `voice-middle-after-clef`
+     *    the shorter voice's final `|]` at 332.917 pushes the longer voice's next note to
+     *    340.917, exactly its own 8px width.
+     *
+     * THE WAITING VOICES ARE THE TRICK, and leaving them out is what made the first
+     * attempt at a shared cursor worse than none:
+     *
+     *     // if a voice had planned to use up 5 spacing units but is not in line to be laid
+     *     // out at this duration level - where we've used 2 spacing units - then we must
+     *     // use up 3 spacing units, not 5
+     *     othervoices[i].spacingduration -= spacingduration
+     *     updateNextX(x, spacing, othervoices[i])
+     *
+     * A half note does not push the cursor its full width at once; it gives up its width in
+     * instalments as another voice's shorter notes go by. The recompute is
+     * `sqrt(remaining)`, NOT a proportional share.
      */
-    const natural = columnWidths.slice(span.start, span.end).reduce((sum, w) => sum + w, 0)
-    const available = systemWidth - head - ENGRAVE.marginX
+    /** abcjs's `epsilon` — durations are floats and are compared, never equated. */
+    const EPSILON = 1e-7
+    /**
+     * A zero-duration element is fractionally EARLIER than a note at the same time, so a
+     * clef, key, meter, bar or part label is laid out before the other voices' notes reach
+     * it (`getDurationIndex`, `layout/staff-group.js`).
+     */
+    const BEFORE = 5e-7
+    /** Where the staff's music starts — abcjs's `getLeftEdgeOfStaff`. */
+    const leftEdge = ENGRAVE.marginX + indent
+
+    /**
+     * Every element of one voice on this line, prefix included, in cursor order.
+     *
+     * ONLY THE FIRST VOICE OF A STAFF CARRIES THE STAFF-EXTRAS. abcjs hangs the clef, key
+     * and meter off the staff's first voice and gives the others none at all — probed on
+     * `multi-voice-lyrics-two-voices`, where the second voice's `i=0` is a NOTE and its
+     * `minx` is still 15, the bare left edge.
+     *
+     * That is not cosmetic, because `minx` is what `er` is measured from. Giving the second
+     * voice its own clef left it with `er = 3.77` where abcjs has 61.99, so its lyric's
+     * 11.34px of left extent triggered a shift abcjs never makes — and `shiftRight` then
+     * dragged the whole time slot, and the rest of the line, 7.56px right.
+     */
+    const leadsStaff = (v: number): boolean =>
+      (voicesOfStaff.find((m) => m.includes(v)) ?? [v])[0] === v
+    const blank = { elements: [] as LayoutElement[], advances: [] as Advance[] }
+    const heads = plans.map((plan, v) =>
+      leadsStaff(v) ? plan.prefix(withMeter, v === 0, indent, span.start) : blank,
+    )
+    const lines = plans.map((plan, v) => {
+      const items: Advance[] = [...(heads[v]?.advances ?? [])]
+      /** Where item `k` belongs: the prefix (`block: -1`) or element `index` of `block`. */
+      const slots: { block: number; index: number }[] = (heads[v]?.advances ?? []).map(
+        (_, index) => ({ block: -1, index }),
+      )
+      for (let i = span.start; i < span.end; i++) {
+        const block = plan.blocks[i]
+        if (block === undefined) continue
+        block.advances.forEach((a, index) => {
+          items.push(a)
+          slots.push({ block: i, index })
+        })
+      }
+      return { items, slots }
+    })
+
+    /**
+     * THE VOICE-OVERLAP RULE — `layout/voice-elements.js:36-66`, run ONCE per element.
+     *
+     * A sounding note in a voice that is NOT its staff's top voice, whose pitch range
+     * touches the top voice's simultaneous note, is displaced to the RIGHT of it: abcjs
+     * sets `child.w = firstChildNoteWidth + child.w` and adds the same to every relative
+     * child whose name is not an accidental. It is the seconds rule, applied between
+     * voices rather than within a chord, and it is why `visual-layout-04`'s two-voice
+     * line is 258px wide in abcjs and was 197 here.
+     *
+     * TOUCHING, not crossing: either end of the child's range inside the first's ± 1.
+     * With ONE exception — if the two notes have the same range AND the same head glyph
+     * they share a notehead and nothing moves.
+     *
+     * It is cached in abcjs (`child.adjustedWidth`), so it happens once however many
+     * times the solve re-lays the line out. That matters: the widened rod is an input to
+     * the next pass, and re-applying it would compound.
+     */
+    const displaced = new Map<number, Map<number, number>>()
+    /** How far element `index` of `block` is displaced in voice `v`, in staff spaces. */
+    const displacementOf = (v: number, block: number, index: number): number => {
+      const line = lines[v]
+      if (line === undefined) return 0
+      const k = line.slots.findIndex((slot) => slot.block === block && slot.index === index)
+      return k < 0 ? 0 : (displaced.get(v)?.get(k) ?? 0)
+    }
+
+    /**
+     * Lay the whole line out at one spacing factor, and report what abcjs's solve needs.
+     *
+     * `units` is abcjs's `spacingUnits`: the `sqrt(duration * 8)` of whichever voice pushed
+     * the cursor, summed over every pass. It is the part of the line's width that scales
+     * with the factor, and the solve inverts on it directly — no piecewise search, because
+     * the rods that won are already accounted for in `width - units * spacing`.
+     */
+    const lineAt = (factor: number): { at: number[][]; width: number; units: number } => {
+      const n = lines.length
+      const i = new Array<number>(n).fill(0)
+      const durationIndex = new Array<number>(n).fill(0)
+      const minx = new Array<number>(n).fill(leftEdge)
+      const nextx = new Array<number>(n).fill(leftEdge)
+      const unspent = new Array<number>(n).fill(0)
+      const at: number[][] = lines.map(() => [])
+      /** abcjs's `getSpacingUnits` — NO floor, and zero for a zero-duration element. */
+      const unitsOf = (d: number): number => (d > 0 ? Math.sqrt(d / ENGRAVE.spacingReference) : 0)
+      const spring = (d: number): number => factor * spacingScale * unitsOf(d)
+      const itemOf = (v: number): Advance | undefined => lines[v]?.items[i[v] ?? 0]
+      const ended = (v: number): boolean => itemOf(v) === undefined
+      const nextXOf = (v: number): number => Math.max(minx[v] ?? 0, nextx[v] ?? 0)
+      /** Time this voice is pending at — earlier by a hair when its next element is fixed. */
+      const timeOf = (v: number): number =>
+        (durationIndex[v] ?? 0) - ((itemOf(v)?.duration ?? 0) > 0 ? 0 : BEFORE)
+
+      let x = leftEdge
+      let units = 0
+      // Bounded rather than `while (!finished)`: every pass advances at least one voice, so
+      // the element count is the ceiling and a bug cannot hang the renderer.
+      const passes = lines.reduce((sum, line) => sum + line.items.length, 0)
+      for (let pass = 0; pass < passes; pass += 1) {
+        // The smallest pending time among the voices that still have something to place.
+        // ENDED VOICES ARE EXCLUDED HERE and included in the isolation below — abcjs's own
+        // asymmetry, and what stops an exhausted short voice pinning the cursor forever.
+        let current = Number.POSITIVE_INFINITY
+        for (let v = 0; v < n; v += 1) if (!ended(v)) current = Math.min(current, timeOf(v))
+        if (!Number.isFinite(current)) break
+
+        const now: number[] = []
+        const waiting: number[] = []
+        for (let v = 0; v < n; v += 1) (timeOf(v) - current > EPSILON ? waiting : now).push(v)
+
+        // The cursor goes to the furthest right any of them wants to be, and the voice that
+        // pushed it there is the one whose spent time the others have to account for.
+        let unit = 0
+        let spent = 0
+        for (const v of now) {
+          if (nextXOf(v) > x) {
+            x = nextXOf(v)
+            unit = unitsOf(unspent[v] ?? 0)
+            spent = unspent[v] ?? 0
+          }
+        }
+        units += unit
+
+        // THE VOICE-OVERLAP RULE, before anything reads a rod — see `displaced` above.
+        // abcjs's `lastTopVoice` is the last voice with `voicenumber === 0` seen so far in
+        // this duration level, and `currentvoices` is in staff order, so for voice v that
+        // is its own staff's top voice — and only when that voice is at this level too.
+        for (const v of now) {
+          const top = (voicesOfStaff.find((m) => m.includes(v)) ?? [v])[0] ?? v
+          if (top === v || !now.includes(top)) continue
+          const k = i[v] ?? 0
+          const seen = displaced.get(v)
+          if (seen?.has(k) === true) continue
+          const mine = itemOf(v)?.note
+          const theirs = itemOf(top)?.note
+          if (!mine || !theirs) continue
+          const touches =
+            (mine.high <= theirs.high + 1 && mine.high >= theirs.low - 1) ||
+            (mine.low <= theirs.high + 1 && mine.low >= theirs.low - 1)
+          const shares =
+            mine.low === theirs.low && mine.high === theirs.high && mine.head === theirs.head
+          if (!touches || shares) continue
+          const line = lines[v]
+          const item = line?.items[k]
+          if (line === undefined || item === undefined) continue
+          line.items[k] = { ...item, rod: item.rod + theirs.width }
+          const row = seen ?? new Map<number, number>()
+          row.set(k, theirs.width)
+          displaced.set(v, row)
+        }
+
+        /** Voices already placed in THIS pass — they follow the cursor if it moves again. */
+        const done: number[] = []
+        for (const v of now) {
+          const item = itemOf(v)
+          if (item === undefined) continue // exhausted: it moved the cursor and nothing else
+          const k = i[v] ?? 0
+          // Ink hanging LEFT of the element pushes the cursor only when the gap already
+          // opened is too small to hold it — `if (er < extraWidth) x += extraWidth - er`
+          // (`layout/voice-elements.js`). An accidental normally sits inside the spring
+          // and costs nothing. abcjs's one exception: a barline straight after a part
+          // label does not shift, because the label has no width of its own to clear.
+          const room = x - (minx[v] ?? 0)
+          const shifts = k === 0 || item.kind !== 'bar' || lines[v]?.items[k - 1]?.kind !== 'part'
+          if (shifts && room < item.left) {
+            // Everything already placed at this time slot moves with the cursor —
+            // abcjs's `shiftRight`, which carries each voice's own expectations along.
+            const dx = item.left - room
+            x += dx
+            for (const w of done) {
+              const row = at[w]
+              if (row !== undefined && row.length > 0) row[row.length - 1] = x
+              minx[w] = (minx[w] ?? 0) + dx
+              nextx[w] = (nextx[w] ?? 0) + dx
+            }
+          }
+          at[v]?.push(x)
+          if (PROBE && probeFinalPass) {
+            const px = (n: number) => (n * 7.75).toFixed(3)
+            console.log(
+              `PROBE item v=${v} i=${k} kind=${item.kind} dur=${item.duration} w=${px(item.rod)}` +
+                ` left=${px(item.left)} gap=${px(item.gap)} er=${px(x - (minx[v] ?? 0))} x=${px(x)}`,
+            )
+          }
+          done.push(v)
+          unspent[v] = item.duration
+          // The line's LAST element keeps its own width and loses its `minspacing`.
+          const last = k === (lines[v]?.items.length ?? 0) - 1
+          minx[v] = x + item.rod - (last ? item.gap : 0)
+          nextx[v] = x + spring(item.duration)
+          durationIndex[v] = (durationIndex[v] ?? 0) + item.duration
+          i[v] = k + 1
+        }
+        for (const v of waiting) {
+          unspent[v] = (unspent[v] ?? 0) - spent
+          nextx[v] = x + spring(unspent[v] ?? 0)
+        }
+      }
+
+      // The line ends where the last thing placed still needs room.
+      let unit = 0
+      for (let v = 0; v < n; v += 1) {
+        if (nextXOf(v) > x) {
+          x = nextXOf(v)
+          unit = unitsOf(unspent[v] ?? 0)
+        }
+      }
+      return { at, width: x, units: units + unit }
+    }
+
+    /**
+     * THE SOLVE — abcjs's `setXSpacing` / `calcHorizontalSpacing` (`layout/layout.js`).
+     *
+     * Justification scales the SPRINGS and leaves the RODS where they are, and the springs
+     * are exactly `units * spacing` — so `constSpace = width - units * spacing` is
+     * everything that will not move, and one division gives the spacing that hits the
+     * target. It still iterates, because which rods win changes as the spacing does; abcjs
+     * re-lays out up to 8 times and stops within 2px.
+     *
+     * ponytail: abcjs's ABSOLUTE guard — `if (spacing * minSpace > 50) spacing = 50/minSpace`
+     * — is NOT reproduced, and this closes that long-standing open item rather than
+     * deferring it again. `minSpace` is `min` over every pass of the pushing voice's spacing
+     * units, and the FIRST pass always contributes zero: every voice starts at `leftEdge`,
+     * so no voice's `getNextX` is greater than the cursor and `spacingunit` stays 0.
+     * Measured on `voice-middle-after-clef`: `minSpace=0`. `spacing * 0 > 50` is never true,
+     * so the guard is inert in abcjs itself and implementing it would be a divergence.
+     */
+    const target = pageWidth + ENGRAVE.marginX
     // Trailing `%%center` text means the music is no longer the LAST LINE of the tune, so
     // abcjs justifies it unconditionally — its last-line guard tests the last LINE, not
     // the last STAFF line. `center-text` sat 219px out on exactly this.
     const isLast = systemIndex === spans.length - 1 && score.textBelow.length === 0
-    // The last system is stretched only when it is ALREADY most of the way across.
-    //
-    // "Never stretch the last system" was too blunt and was the single largest source of
-    // horizontal divergence from abcjs — bigger than line breaking. abcjs's rule is in
-    // `write/layout/layout.js:99`: a last line under `LAST_SYSTEM_FILL` of the target is
-    // left at its natural width, and anything above it is justified like any other. Every
-    // single-tune fixture is a last system, so we justified NONE of them where abcjs
-    // justified most: `vree-compound-meter` sat 183px out, `center-text` 219px.
-    //
-    // `simple-c` is the case that makes the threshold visible rather than arbitrary — it
-    // fills about 60% and NEITHER engine stretches it, which is why its notes already
-    // matched to the pixel while its neighbours did not.
-    // The margin counts: abcjs compares `staffGroup.w` — which starts at its left
-    // padding — against the target, so leaving it out understates the fill and suppresses
-    // justification on lines that sit just under the threshold.
-    const fill = (natural + head + ENGRAVE.marginX) / systemWidth
-    const stretchLast = fill >= ENGRAVE.lastSystemFill
-    const wanted = natural > 0 ? available / natural : 1
-    // COMPRESSION IS UNCONDITIONAL, and it is what makes source-line breaking work at
-    // all: a line longer than the page is squeezed to fit, never wrapped. abcjs's
-    // `calcHorizontalSpacing` computes one spacing that serves both directions, and its
-    // last-line guard only ever suppresses STRETCHING — a last line that is too long has
-    // `lineWidth / targetWidth > 1`, sails past the 0.66 test, and gets compressed like
-    // any other. Without this half, replacing the width packer just let long lines
-    // overflow the page.
-    // NO RATIO CAP on a non-last line. abcjs's `calcHorizontalSpacing`
-    // (`write/layout/layout.js:99`) justifies every line that is not the last one, however
-    // far it has to stretch — its only guard is an ABSOLUTE one on the resulting spacing,
-    // not a ratio. `maxJustifyStretch` was a *Behind Bars* judgement abcjs does not share,
-    // and it left `frere-jacques`'s two short prose-derived systems at a quarter of the
-    // page where abcjs fills it.
-    //
-    // ponytail: abcjs's ABSOLUTE guard is not reproduced — `if (spacing * minSpace > 50)
-    // spacing = 50 / minSpace`, which caps the stretched spring of the shortest note.
-    // Modelling it needs abcjs's spacing-unit accounting (`sqrt(duration * 8)` summed per
-    // layout step, with rods excluded), and our column model has no equivalent of
-    // `spacingUnits`: measuring the cap off element ORIGINS instead includes the rod and
-    // binds far too early — it pulled `frere-jacques` from a 42px spread back to 280px and
-    // `multi-voice-lyrics-two-voices` from 51 to 223. Uncapped matches abcjs on all 29
-    // pixel-gated fixtures; what it costs is that an ungated sparse line (`S3-note-syntax`
-    // has a two-note system) stretches across the page where abcjs would hold it in.
-    // Reinstate this together with a real spring/rod split, not before.
-    const justify = wanted < 1 ? wanted : !isLast || stretchLast ? wanted : 1
+    /**
+     * THE LAST SPACING abcjs COMPUTES IS THROWN AWAY, and reproducing that is the point.
+     *
+     *     var newspace = space;                                  // 30
+     *     for (var it = 0; it < 8; it++) {
+     *       var ret = layoutStaffGroup(newspace, …);             // LAYOUT at newspace
+     *       newspace = calcHorizontalSpacing(…, ret.spacingUnits, …);
+     *       if (newspace === null) break;
+     *     }
+     *
+     * (`layout/layout.js:68-75`.) Eight LAYOUTS, and the `newspace` computed after the
+     * eighth is never laid out with — the loop simply ends. So abcjs renders at the
+     * spacing that produced its eighth layout, not at the ninth it just solved for.
+     *
+     * Ours ran eight `lineAt` calls and then rendered with the factor computed after the
+     * last of them: NINE layouts, one refinement further in. Instrumented on
+     * `visual-layout-04`, abcjs's own trace never converges at all —
+     *
+     *     layout 1 at 30.000 -> width 964.55   layout 5 at 14.238 -> 705.80
+     *     layout 2 at 20.018 -> width 772.65   layout 6 at 13.496 -> 700.84
+     *     layout 3 at 16.888 -> width 731.17   layout 7 at 12.930 -> 698.34
+     *     layout 4 at 15.240 -> width 713.05   layout 8 at 12.454 -> 696.24
+     *                                                  ...and 12.053 is DISCARDED
+     *
+     * — it stops 11px short of its own 685 target after using every iteration it has. The
+     * extra refinement therefore makes the line NARROWER than abcjs's, which is why every
+     * notehead sat left of abcjs's and why the error is a STAIRCASE: a spring-dominated
+     * bar carries the difference and a rod-dominated one holds it constant.
+     */
+    const justify = ((): number => {
+      let factor = 1
+      for (let pass = 0; pass < 8; pass += 1) {
+        const { width, units } = lineAt(factor)
+        // A last line under `LAST_SYSTEM_FILL` of the page is left at its natural width;
+        // above it, it is justified like any other. "Never stretch the last system" was too
+        // blunt and was the single largest source of horizontal divergence from abcjs —
+        // every single-tune fixture is a last system. COMPRESSION is unconditional: a line
+        // longer than the page has `width / target > 1`, sails past this test and is
+        // squeezed, which is what makes source-line breaking work without a width packer.
+        // `%%stretchlast` REPLACES the 66% rule rather than tuning it. With no directive
+        // abcjs keeps its backward-compatible "at least 66% of the page" test; with one,
+        // it asks how much the line LACKS and stretches only if that is under the value
+        // (`layout.js:100-107`). `padding` there is left PLUS right, both of which are our
+        // `marginX`.
+        if (isLast) {
+          if (score.stretchLast === null) {
+            if (width / target < ENGRAVE.lastSystemFill) break
+          } else if (!(1 - (width + 2 * ENGRAVE.marginX) / target < score.stretchLast)) break
+        }
+        if (Math.abs(target - width) < 2 / 7.75) break
+        if (units <= 0) break
+        // The EIGHTH layout is the last one abcjs performs, so the spacing solved from it
+        // is discarded and this one stands.
+        if (pass === 7) break
+        const springs = units * spacingScale
+        factor = (target - (width - factor * springs)) / springs
+      }
+      return factor
+    })()
+    probeFinalPass = true
+    const solved = lineAt(justify)
+    probeFinalPass = false
+    // The ratchet. abcjs rounds to whole PIXELS before comparing, so a sub-pixel overrun
+    // does not drag the page with it.
+    const thisWidth = solved.width - leftEdge
+    if (Math.round(thisWidth * 7.75) > Math.round(pageWidth * 7.75)) pageWidth = thisWidth
+    musicLeft[systemIndex] = Math.min(
+      ...lines.map((line, v) => {
+        const first = line.slots.findIndex((slot) => slot.block >= 0)
+        return first < 0 ? Number.POSITIVE_INFINITY : (solved.at[v]?.[first] ?? leftEdge)
+      }),
+      systemWidth,
+    )
 
     const staves: LayoutStaff[] = plans.map((plan, voiceIndex) => {
       // The title heads the tune: first system, top staff, and inside the layout so the
@@ -3687,21 +7285,45 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       // The top text is a BLOCK — title, subtitles, composer row — with y relative to
       // its own top. `placed` moves it into position once the music's extent is known,
       // which is abcjs's sequence: block, then `spacing.music`, then the music.
-      const block =
+      // Blocks standing between the system above and this one — a `%%text`, a `%%center`
+      // or a mid-tune `T:`. They belong to the SYSTEM, so they are read off the first
+      // measure of the span whichever voice happened to claim them, and drawn on the
+      // first voice only.
+      const midTune =
+        systemIndex === 0 || voiceIndex !== 0
+          ? []
+          : plans.flatMap((p) => [...(p.measures[span.start]?.textBefore ?? [])])
+      const block: { texts: PlacedText[]; lines: PlacedLine[]; height: number } =
         systemIndex === 0 && voiceIndex === 0
-          ? topTextBlock(score.metadata, systemWidth - ENGRAVE.marginX * 2, score.textAbove)
-          : { texts: [], height: 0 }
+          ? {
+              lines: [],
+              ...topTextBlock(
+                score.metadata,
+                systemWidth - ENGRAVE.marginX * 2,
+                score.textAbove,
+                score.fonts,
+              ),
+            }
+          : midTune.length > 0
+            ? freeTextBlock(midTune, systemWidth - ENGRAVE.marginX * 2, score.fonts)
+            : { texts: [], lines: [], height: 0 }
+      const blockLines: readonly PlacedLine[] = block.lines
       const heading: LayoutElement[] =
-        block.texts.length === 0
+        block.texts.length === 0 && blockLines.length === 0
           ? []
           : [
               {
                 type: 'title',
+                // A MID-TUNE BLOCK SPENDS NO `musicSpace`. abcjs's `spacing.music` is
+                // spent once, before the first staff group (`draw.js:17`); a nonMusic line
+                // between two groups costs exactly its own rows. Measured on a control
+                // pair: a mid-tune `T:` costs 27.05px and nothing else moves.
+                blockAbutsMusic: systemIndex > 0,
                 x: 0,
                 width: 0,
                 staffSteps: [],
                 glyphs: [],
-                lines: [],
+                lines: blockLines,
                 texts: block.texts,
                 blockHeight: block.height,
               },
@@ -3730,14 +7352,41 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
           ],
         })
       }
+      // Where the cursor put every one of this voice's elements, split back out by the
+      // slot each item came from.
+      const line = lines[voiceIndex]
+      const xs = solved.at[voiceIndex] ?? []
+      const prefixX: number[] = []
+      const blockX = new Map<number, number[]>()
+      line?.slots.forEach((slot, k) => {
+        const x = xs[k]
+        if (x === undefined) return
+        if (slot.block < 0) prefixX[slot.index] = x
+        else {
+          const row = blockX.get(slot.block) ?? []
+          row[slot.index] = x
+          blockX.set(slot.block, row)
+        }
+      })
       const elements: LayoutElement[] = [
         ...heading,
         ...nameElements,
-        ...plan.prefix(withMeter, voiceIndex === 0, indent).elements,
+        // The prefix rides the same cursor as the music, so its elements move with it.
+        ...(heads[voiceIndex]?.elements ?? []).map((el, index) =>
+          shiftElement(el, (prefixX[index] ?? el.x) - el.x),
+        ),
       ]
       const beamGroups = new Map<number, StemInfo[]>()
       const voltaLines: PlacedLine[] = []
       const voltaTexts: PlacedText[] = []
+      // ONE volta bracket per SYSTEM, on the first voice of the first staff — abcjs's
+      // `elem.startEnding && isFirstStaff && voice.voicenumber === 0`
+      // (`abstract-engraver.js:1034-1037`, comment: "only put the first & second ending
+      // marks on the first staff"). Every voice carries the `|1`/`|2` barline, so drawing
+      // per voice put FIVE brackets on `ragtime-nightingale` where abcjs draws one — 15
+      // `1` labels against its 3 — and, worse, reserved the ending lane on the BASS staff
+      // too, which pushed it 6 pitch clear of the treble on every voltaed system.
+      const drawsVoltas = voiceIndex === voicesOfStaff[0]?.[0]
       /** The repeat ending currently open, and where its bracket started. */
       let openVolta: { label: string; startX: number } | null = null
 
@@ -3750,7 +7399,7 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       const closeVolta = (endX: number, hooked: boolean): void => {
         if (openVolta === null) return
         const y = stepToY(ENGRAVE.voltaStep)
-        const thickness = ENGRAVING_DEFAULTS.thinBarlineThickness
+        const thickness = ENGRAVE.strokedPathRule
         voltaLines.push({ x1: openVolta.startX, y1: y, x2: endX, y2: y, thickness })
         // The opening hook always turns down; the closing one only when the ending
         // really ends here rather than continuing onto the next system.
@@ -3766,8 +7415,8 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         }
         voltaTexts.push({
           text: openVolta.label,
-          x: openVolta.startX + 0.4,
-          y: y + ENGRAVE.voltaTextSize,
+          x: openVolta.startX + ENGRAVE.voltaTextIndent,
+          y: y + ENGRAVE.voltaTextDrop + ENGRAVE.voltaTextSize,
           size: ENGRAVE.voltaTextSize,
           bold: false,
           italic: false,
@@ -3775,59 +7424,122 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         openVolta = null
       }
 
-      let x = head
+      // Where this voice's measure `i` begins and ends on the line — a volta bracket spans
+      // measures, and with no columns left there is no shared edge to read it off.
+      const startOf = (i: number): number => blockX.get(i)?.find((v) => v !== undefined) ?? leftEdge
+      /**
+       * Where measure `i`'s bracket stops: at the start of the next measure that has any
+       * ink, so `|1 … :|2` runs its two endings back to back with no gap between them.
+       * A column model got this for free — both ends were the same column edge.
+       */
+      const endOf = (i: number): number => {
+        for (let j = i + 1; j < span.end; j++) {
+          const next = blockX.get(j)?.find((v) => v !== undefined)
+          if (next !== undefined) return next
+        }
+        return solved.width
+      }
+
+      /**
+       * Where a bracket attaches to measure `i`'s barline — abcjs hangs it on a RULE.
+       *
+       * See `LayoutElement.endingStart`. `which` picks the end: `endingStart` is the
+       * opening bar's last rule at its RIGHT edge, `endingEnd` the closing bar's
+       * endEnding-time rule at its LEFT.
+       */
+      const barAnchor = (
+        i: number,
+        bar: 'opening' | 'closing',
+        which: 'endingStart' | 'endingEnd',
+      ): number | null => {
+        const b = plan.blocks[i]
+        if (b === undefined) return null
+        const index = bar === 'opening' ? b.openingBarIndex : b.closingBarIndex
+        if (index === null) return null
+        const el = b.elements[index]
+        const offset = el?.[which]
+        if (el === undefined || offset === undefined) return null
+        return (blockX.get(i)?.[index] ?? el.x) + offset
+      }
+      /**
+       * …and THE BAR AN ENDING OPENS ON IS USUALLY THE PREVIOUS MEASURE'S CLOSER.
+       *
+       * `startEnding` is a property of the BARLINE in abcjs, and the barline carrying
+       * `|1` or `:|2` is the one that ENDS the measure before it — our model puts it there
+       * too, as `closingBarIndex`, and leaves the volta's own measure with no opening bar
+       * at all in both cases. `endingRoom` already reasons exactly this way about which bar
+       * gets the label's `minspacing`: "the measure's own opening barline, or the PREVIOUS
+       * measure's closing one when the number follows a `:|`".
+       *
+       * The opening bar is tried first all the same, for `|:1`-shaped input where the
+       * ending does open a measure of its own.
+       *
+       * Measured on `S4-bars-repeats`: abcjs opens ending 1 at 257.37, its plain `|`'s
+       * 256.37 plus a thin anchor's declared 1, and ending 2 at 476.18, the `:|`'s thick
+       * rule at 472.18 plus its declared 4.
+       */
+      const voltaStartOf = (i: number): number =>
+        barAnchor(i, 'opening', 'endingStart') ??
+        (i > 0 ? barAnchor(i - 1, 'closing', 'endingStart') : null) ??
+        startOf(i)
 
       for (let i = span.start; i < span.end; i++) {
         const block = plan.blocks[i]
         if (block !== undefined) {
           // A new ending closes whatever was open — `|1 … :|2` runs them back to back.
-          if (block.volta !== null) {
-            closeVolta(x, true)
-            openVolta = { label: block.volta, startX: x }
+          if (block.volta !== null && drawsVoltas) {
+            closeVolta(voltaStartOf(i), true)
+            openVolta = { label: block.volta, startX: voltaStartOf(i) }
           }
           const base = elements.length
-          // JUSTIFY the measure into its column. Scaling each element's ORIGIN by the
-          // stretch factor distributes the slack between the notes in proportion to the
-          // space each already occupies — which is exactly what stretching springs of
-          // different natural widths by a common factor does. Internal geometry is
-          // untouched, because `shiftElement` translates a whole element: an accidental
-          // stays the same distance from its notehead however far the measure stretches.
-          // Only the music stretches; the closing barline is a rod that keeps its
-          // distance from the column edge, so barlines stay aligned across staves.
-          const column = (columnWidths[i] ?? 0) * justify
-          const barSpace = block.width - block.musicWidth
-          const stretch =
-            block.musicWidth > 0 ? Math.max(0, column - barSpace) / block.musicWidth : 1
+          // Every element sits where the LINE's shared cursor put it: notes at the same
+          // musical time land on the same x however differently the voices are written, and
+          // a barline is one more entry on that timeline rather than a column edge. Internal
+          // geometry is untouched — `shiftElement` translates a whole element, so an
+          // accidental keeps its distance from its notehead however far the line stretches.
+          const placedAt = blockX.get(i) ?? []
+          /** How far element `index` moved — beams and anchors ride with their element. */
+          const shiftOf = (index: number): number => {
+            const at = block.elements[index]?.x ?? 0
+            return (placedAt[index] ?? at) - at
+          }
           block.elements.forEach((el, index) => {
-            const dx =
-              index === block.closingBarIndex
-                ? x + column - barSpace + ENGRAVE.barGap - el.x
-                : x + el.x * (stretch - 1)
-            elements.push(shiftElement(el, dx))
+            elements.push(
+              displaceHeads(shiftElement(el, shiftOf(index)), displacementOf(voiceIndex, i, index)),
+            )
           })
           for (const [group, members] of block.beams) {
             const shifted = members.map((m) => ({
               ...m,
               // A stem sits at its element's origin plus an offset within it, so it
-              // moves with the element rather than scaling on its own.
-              x: m.x * stretch + x,
+              // moves with the element rather than scaling on its own — and with its
+              // voice-overlap displacement, which moves the head the stem hangs off.
+              x: m.x + shiftOf(m.element) + displacementOf(voiceIndex, i, m.element),
+              // …and the HEAD it hangs off moves with it. Leaving this in block-local
+              // coordinates while `x` was absolute put `little swallow`'s noteheads 335px
+              // out, because the beam's ends are measured from the head, not the stem.
+              headX: m.headX + shiftOf(m.element) + displacementOf(voiceIndex, i, m.element),
+              // The voice-overlap shift is part of the HEAD's `dx`, not the element's —
+              // `voice-elements.js:56-62` adds it to each child's dx and leaves `parent.x`
+              // alone — so it joins the seconds displacement in the term `createStems`
+              // counts twice. `shiftOf` is the element moving and does NOT.
+              headDx: m.headDx + displacementOf(voiceIndex, i, m.element),
               element: m.element + base,
             }))
             beamGroups.set(group, [...(beamGroups.get(group) ?? []), ...shifted])
           }
           for (const a of block.anchors) {
+            const away = displacementOf(voiceIndex, i, a.element)
             voiceAnchors[voiceIndex]?.push({
               ...a,
               system: systemIndex,
               element: a.element + base,
-              left: a.left * stretch + x,
-              right: a.right * stretch + x,
+              left: a.left + shiftOf(a.element) + away,
+              right: a.right + shiftOf(a.element) + away,
             })
           }
         }
-        // Advance by the COLUMN, not the block, so every staff stays in step.
-        x += (columnWidths[i] ?? 0) * justify
-        if (block?.closesVolta) closeVolta(x, true)
+        if (block?.closesVolta) closeVolta(barAnchor(i, 'closing', 'endingEnd') ?? endOf(i), true)
       }
 
       const beams: PlacedLine[] = []
@@ -3839,14 +7551,20 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       // every system's anchors, which only exist once the whole tune is packed. Filled
       // in by the pass below.
       // An ending still open at the end of a system runs off it, unhooked.
-      closeVolta(x, false)
+      closeVolta(solved.width, false)
 
       // Tuplets resolve here — unlike curves they never span a system, because a beam
       // and a barline both break them long before a line break can.
       const systemAnchors = (voiceAnchors[voiceIndex] ?? []).filter(
         (anchor) => anchor.system === systemIndex,
       )
-      const tuplets = layoutTuplets(systemAnchors, elements)
+      const isHairpin = (name: string): boolean => {
+        const kind = SPANNER_OPEN[name] ?? SPANNER_CLOSE[name]
+        return kind === 'crescendo' || kind === 'diminuendo'
+      }
+      const hasHairpin = systemAnchors.some((a) => a.event.decorations.some(isHairpin))
+      const tuplets = layoutTuplets(systemAnchors, elements, beams)
+      const curves = curveReserves(systemAnchors, elements, voicePosOf(voiceIndex))
       // Melismas resolve here for the same reason tuplets do, and must run AFTER the
       // elements are final: in strict mode this rewrites the syllable's text in place.
       const melismaLines = layoutMelismas(systemAnchors, elements, strict)
@@ -3862,6 +7580,13 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
         staffLines: [],
         beams,
         curves: [],
+        hasHairpin,
+        dynamicsAbove: hasVocalsAt(span.start),
+        tupletReservesAbove: tuplets.reservesAbove,
+        // Ties and slurs reserve on the same terms — a declared box, folded in here so
+        // `verticalExtent` has one list of them. See `curveReserves`.
+        tupletReserves: [...tuplets.reserves, ...curves.ink],
+        curveReserves: curves.post,
         tupletLines: tuplets.lines,
         tupletTexts: tuplets.texts,
         voltaLines,
@@ -3874,7 +7599,9 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       }
     })
 
-    const musicWidth = head + natural * justify + ENGRAVE.marginX
+    // The line's own solved width — abcjs's `staffGroup.w`, which is absolute and already
+    // carries the left edge — plus the right margin.
+    const musicWidth = solved.width + ENGRAVE.marginX
 
     /**
      * The drawing has to fit its PROSE too, not just its music.
@@ -3927,11 +7654,21 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     // are printed on. So the drawing is concatenated and one set of staff lines is drawn,
     // rather than each voice getting its own stave.
     const merged = voicesOfStaff.map((members) => {
-      const parts = anchorBelowStaff(
-        anchorAboveStaff(
-          anchorLyrics(
-            members.map((i) => centred[i]).filter((x) => x !== undefined),
+      const parts = anchorVoltas(
+        anchorBelowStaff(
+          anchorAboveStaff(
+            anchorDynamicsAbove(
+            anchorChordsBelow(
+              anchorLyrics(
+                members.map((i) => centred[i]).filter((x) => x !== undefined),
+                strict,
+              ),
+              strict,
+            ),
             strict,
+            ),
+            strict,
+            score.partsBox,
           ),
           strict,
         ),
@@ -3940,13 +7677,27 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       const first = parts[0]
       if (first === undefined) return centred[0] as (typeof centred)[number]
       if (parts.length === 1) return { ...first, voices: [first.elements] }
+      // …AND ONLY NOW DO THE RESTS GET OUT OF EACH OTHER'S WAY. abcjs runs
+      // `fixVoiceCollisions` after the lanes are stacked and does not restack them, so this
+      // has to come after every `anchor*` above it and before the extent is taken.
+      const fixed = fixRestCollisions(
+        parts.map((p) => p.elements),
+        strict,
+      )
       return {
         ...first,
-        voices: parts.map((p) => p.elements),
-        elements: parts.flatMap((p) => p.elements),
+        voices: fixed,
+        elements: fixed.flat(),
         beams: parts.flatMap((p) => p.beams),
         tupletLines: parts.flatMap((p) => p.tupletLines),
         tupletTexts: parts.flatMap((p) => p.tupletTexts),
+        // The staff's reserves are the union of its voices', not the first voice's. A
+        // spread alone kept only voice one's, so a hairpin or a tuplet on the lower voice
+        // of a shared staff reserved nothing at all.
+        tupletReserves: parts.flatMap((p) => p.tupletReserves),
+        curveReserves: parts.flatMap((p) => p.curveReserves),
+        tupletReservesAbove: parts.some((p) => p.tupletReservesAbove),
+        hasHairpin: parts.some((p) => p.hasHairpin),
         voltaLines: parts.flatMap((p) => p.voltaLines),
         voltaTexts: parts.flatMap((p) => p.voltaTexts),
         melismaLines: parts.flatMap((p) => p.melismaLines),
@@ -3962,9 +7713,8 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     // TITLE-LESS one has no heading to fold it into, so without this the whole system
     // rides `musicSpace` too high. Only system 0, and only when it has no heading — a
     // later system's spacing is the inter-system minimum, not this.
-    const headingless =
-      systemIndex === 0 && !merged[0]?.elements.some((el) => el.type === 'title')
-    let cursor = headingless ? ENGRAVE.musicSpace : 0
+    const headingless = systemIndex === 0 && !merged[0]?.elements.some((el) => el.type === 'title')
+    let cursor = headingless ? musicSpace : 0
     /** Bottom staff LINE of the staff placed before this one, in system coordinates. */
     let previousBottomLine: number | null = null
     const placed = merged.map((staff) => {
@@ -3981,7 +7731,12 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
               // The block's own height, not its last descender: abcjs advances by a
               // rounded line height per row and that trailing space is part of the block.
               const blockBottom = Math.max(...heading.map((el) => el.blockHeight ?? 0))
-              const offset = musicTop - ENGRAVE.musicSpace - blockBottom
+              const gap = heading.some((el) => el.blockAbutsMusic === true) ? 0 : musicSpace
+              const offset = musicTop - gap - blockBottom
+              if (PROBE)
+                console.log(
+                  `BLOCK musicTop=${musicTop.toFixed(4)} (pitch ${(6 - 2 * musicTop).toFixed(4)}) topBy=${probeTop} flags=${probeFlags} blockH=${blockBottom.toFixed(4)} musicSpace=${musicSpace} offset=${offset.toFixed(4)}`,
+                )
               return [
                 ...heading.map((el) => ({
                   ...el,
@@ -3992,6 +7747,14 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
               ]
             })()
       const extent = verticalExtent(positioned, staff.beams, strict, staff)
+      if (PROBE) {
+        // abcjs pitch = 6 - 2 * ourY(spaces); its `top` is our MIN y and vice versa.
+        const pitch = (y: number) => (6 - 2 * y).toFixed(4)
+        console.log(
+          `PROBE staff ${systemIndex} top=${pitch(extent.top)} bottom=${pitch(extent.bottom)}` +
+            `  topBy=${probeTop}  bottomBy=${probeBottom}  flags=${probeFlags}`,
+        )
+      }
       const stacked = cursor - extent.top
       // The separation is a minimum LINE-to-LINE distance, which is what abcjs measures:
       // `draw.js:86-89` works from each staff's overhang past its own outer lines, so
@@ -4007,7 +7770,13 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
       return {
         ...staff,
         elements: positioned,
-        staffLines: staffLinesFor(width, staff.staffLineCount),
+        // `startx` .. `w`: the music's own span. `width` is the SYSTEM's, which carries
+        // the right margin and any prose overhanging it — see `staffLinesFor`.
+        staffLines: staffLinesFor(
+          ENGRAVE.marginX + indent,
+          solved.width,
+          staff.staffLineCount,
+        ),
         originY,
       }
     })
@@ -4026,10 +7795,12 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
   // tune and hand each system its share.
   // Music starts after the widest prefix on the system and ends at its right margin.
   const systemBounds = systems.map((system, i) => ({
-    left: headWidth(i === 0, indentFor(i)),
+    left: musicLeft[i] ?? ENGRAVE.marginX + indentFor(i),
     right: system.width - ENGRAVE.marginX,
   }))
-  const curvesBySystem = voiceAnchors.map((anchors) => layoutCurves(anchors, systemBounds))
+  const curvesBySystem = voiceAnchors.map((anchors, v) =>
+    layoutCurves(strict, anchors, systemBounds, voicePosOf(v)),
+  )
   // Hairpins need the same treatment and for the same reason. Resolved per system, they
   // lost HALF the hairpins in S1-decorations tune 2 — it wraps to six systems and the
   // pairs straddle the breaks.
@@ -4060,24 +7831,40 @@ export function layout(score: Score, options: LayoutOptions = {}): Layout {
     const staves = system.staves
     const topLineOffset = (staves[0]?.originY ?? 0) - STAFF_HALF_HEIGHT
     const bottomLineOffset = (staves[staves.length - 1]?.originY ?? 0) + STAFF_HALF_HEIGHT
+    // A MID-TUNE BLOCK IS ADDITIVE TO THE SEPARATION, NOT ABSORBED BY IT. abcjs draws the
+    // nonMusic line first — `renderer.y` moves by its rows — and only then runs
+    // `addStaffPadding`, which measures `naturalSeparation` from the two groups' OWN
+    // overhangs (`draw.js:82-89`) and knows nothing about the cursor. So the minimum
+    // applies to the music, and the block goes on top of whatever it produces. Left in
+    // `topLineOffset` the block was swallowed whole and a mid-tune `T:` moved nothing.
+    const blockH = (staves[0]?.elements ?? [])
+      .filter((el) => el.type === 'title' && el.blockAbutsMusic === true)
+      .reduce((sum, el) => sum + (el.blockHeight ?? 0), 0)
     const originY =
       previousBottomLine === null
         ? cursor
-        : Math.max(cursor, previousBottomLine + interSystemSep - topLineOffset)
+        : Math.max(cursor, previousBottomLine + interSystemSep - topLineOffset + blockH)
 
     previousBottomLine = originY + bottomLineOffset
     cursor = originY + height + ENGRAVE.systemGap
     return { ...system, originY }
   })
 
+  // `%%maxStaves` — an INCIPIT. abcjs lays the whole tune out and simply stops drawing
+  // past the limit (`draw/draw.js:33-38`), so the systems that survive are placed exactly
+  // as they would be without the directive.
+  const shown = score.maxStaves === null ? placed : placed.slice(0, score.maxStaves)
+  const last = shown[shown.length - 1]
+  const bottom = last === undefined ? 0 : last.originY + systemHeight(last, strict)
+
   return {
-    systems: placed,
-    width: Math.max(0, ...placed.map((s) => s.width)),
+    systems: shown,
+    width: Math.max(0, ...shown.map((s) => s.width)),
     // `cursor` has one trailing gap on it, added after the last system. abcjs opens with
     // `moveY(padding.top)` before drawing anything (`draw.js:14`), so the page begins
     // ABOVE the ink — expressed as a negative viewBox top rather than by shifting every
     // system, which would put the same constant in two places.
-    height: Math.max(0, cursor - ENGRAVE.systemGap) + ENGRAVE.marginTop,
+    height: bottom + ENGRAVE.marginTop + ENGRAVE.marginBottom,
     top: -ENGRAVE.marginTop,
   }
 }
@@ -4111,7 +7898,14 @@ export function layoutBook(scores: readonly Score[], options: LayoutOptions = {}
   // abcjs opens with `moveY(padding.top)` before anything is drawn (`draw.js:14`), so
   // the page begins ABOVE the ink. Expressed as a negative viewBox top rather than by
   // shifting every system, which would put the same constant in two places.
-  return { systems, width, height: cursor + ENGRAVE.marginTop, top: -ENGRAVE.marginTop }
+  //
+  // AND IT CLOSES WITH `padding.bottom` — see `ENGRAVE.marginBottom`.
+  return {
+    systems,
+    width,
+    height: cursor + ENGRAVE.marginTop + ENGRAVE.marginBottom,
+    top: -ENGRAVE.marginTop,
+  }
 }
 
 /** A system's full vertical extent, from the top of its first staff's content down. */
@@ -4154,58 +7948,105 @@ function systemHeight(system: LayoutSystem, strict = true): number {
 function topTextBlock(
   metadata: ScoreMetadata,
   width: number,
-  textAbove: readonly string[] = [],
+  textAbove: readonly FreeTextBlock[] = [],
+  fonts: Score['fonts'] = {},
 ): { texts: PlacedText[]; height: number } {
   const texts: PlacedText[] = []
   let y = 0
   // abcjs rounds each line advance to whole PIXELS before moving on, so a block's height
   // is not simply a sum of ems. Reproduced rather than smoothed.
-  const advance = (size: number): void => {
+  //
+  // The height is the MEASURED one — `Math.round(size.height * 1.1)` (`add-text-if.js:26`)
+  // — so it comes from the golden's own table, not from a ratio. The two agree to a
+  // hundredth on every DEFAULT size; they part company as soon as a `%%…font` sets one the
+  // table does not list, where the generator falls back to `size + 2`.
+  const advance = (size: number, extra = 0): void => {
     y +=
-      Math.round(size * ENGRAVE.textHeightRatio * ENGRAVE.lineSkipFactor * ABCJS_PX_PER_SPACE) /
-      ABCJS_PX_PER_SPACE
+      Math.round((goldenTextHeight(size) + extra) * ENGRAVE.lineSkipFactor * STAFF_SPACE_PX) /
+      STAFF_SPACE_PX
   }
+  /**
+   * …AND A ROW THAT CHANGED FONT MID-LINE ADVANCES BY A DIFFERENT RULE ENTIRELY.
+   *
+   * `addTextIf` moves a plain row by `Math.round(size.height * 1.1)` (`add-text-if.js:26`).
+   * `richText` moves a phrase row by `largestY` — the tallest phrase's RAW height, with no
+   * 1.1 and no rounding (`rich-text.js:42-47`). Nothing reconciles the two, so every row
+   * carrying a `$N` is about 10% shorter than the same row without one:
+   *
+   *   title    29.91 -> round(32.901) = 33   vs  29.91   = 3.09px
+   *   composer 21.06 -> round(23.166) = 23   vs  21.06   = 1.94px
+   *
+   * Both figures are measured, and both are exact.
+   *
+   * AND A PHRASE'S OWN FONT IS MEASURED AT ITS RAW SIZE. `getTextSize.calc` applies the
+   * `pt -> px` 4/3 only when it is handed a font by NAME; handed a font OBJECT — which is
+   * what a `%%setfont` is — it builds the attrs straight from `type.size`
+   * (`get-text-size.js:24-43`). So `%%setfont-1 … 40` measures 40px where `%%titlefont 40`
+   * would measure 53. Probed on `%%setfont-1 cursive 40 bold`, whose row is 42 = 40 + 2.
+   */
+  const advanceRich = (value: RichText, defaultSize: number): void => {
+    let largest = goldenTextHeight(defaultSize)
+    for (const phrase of typeof value === 'string' ? [] : value) {
+      if (phrase.font === null) continue
+      largest = Math.max(largest, goldenTextHeight(phrase.font.size / STAFF_SPACE_PX))
+    }
+    y += largest
+  }
+  /** A row advances one way or the other — never both. */
+  const advanceText = (value: RichText, size: number, extra = 0): void => {
+    if (typeof value === 'string') advance(size, extra)
+    else advanceRich(value, size)
+  }
+  const sizeOf = (type: AbcFontType): number =>
+    Math.round(((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / STAFF_SPACE_PX
+  /** A boxed font measures `height + padding * 4`, `padding = size * fontboxpadding`. */
+  const boxOf = (type: AbcFontType): number =>
+    fonts[type]?.box === true ? sizeOf(type) * ENGRAVE.fontBoxPadding * 4 : 0
   const centre = width / 2
 
+  const titleSize = sizeOf('titlefont')
   const [title, ...subtitles] = metadata.titles
-  if (title !== undefined && title !== '') {
+  if (title !== undefined && plainText(title) !== '') {
     y += ENGRAVE.titleSpace
     texts.push({
-      text: title,
+      text: plainText(title),
       role: 'title',
       x: centre,
       // abcjs writes the baseline one font size below the cursor (`text.js:30`).
-      y: y + ENGRAVE.titleTextSize,
-      size: ENGRAVE.titleTextSize,
+      y: y + titleSize,
+      size: titleSize,
       bold: true,
       italic: false,
       anchor: 'middle',
     })
-    advance(ENGRAVE.titleTextSize)
+    advanceText(title, titleSize, boxOf('titlefont'))
   }
 
   // Second and later `T:` fields are subtitles — abcm2ps's convention, and abcjs's.
   for (const subtitle of subtitles) {
-    if (subtitle === '') continue
+    if (plainText(subtitle) === '') continue
     y += ENGRAVE.subtitleSpace
     texts.push({
-      text: subtitle,
+      text: plainText(subtitle),
       role: 'title',
       x: centre,
-      y: y + ENGRAVE.subtitleTextSize,
-      size: ENGRAVE.subtitleTextSize,
+      y: y + sizeOf('subtitlefont'),
+      size: sizeOf('subtitlefont'),
       bold: false,
       italic: false,
       anchor: 'middle',
     })
-    advance(ENGRAVE.subtitleTextSize)
+    advanceText(subtitle, sizeOf('subtitlefont'), boxOf('subtitlefont'))
   }
 
   // ONE row carrying up to three fields: rhythm left, composer and origin right. They
   // share a baseline, so the row advances once however many are present.
-  const rhythm = metadata.rhythm ?? ''
-  const composer = metadata.composer ?? ''
-  const origin = metadata.origin ?? ''
+  const rhythmRich = metadata.rhythm ?? ''
+  const composerRich = metadata.composer ?? ''
+  const originRich = metadata.origin ?? ''
+  const rhythm = plainText(rhythmRich)
+  const composer = plainText(composerRich)
+  const origin = plainText(originRich)
   if (rhythm !== '' || composer !== '' || origin !== '') {
     y += ENGRAVE.composerSpace
     if (rhythm !== '') {
@@ -4213,8 +8054,8 @@ function topTextBlock(
         text: rhythm,
         role: 'title',
         x: 0,
-        y: y + ENGRAVE.infoTextSize,
-        size: ENGRAVE.infoTextSize,
+        y: y + sizeOf('infofont'),
+        size: sizeOf('infofont'),
         bold: false,
         italic: true,
         anchor: 'start',
@@ -4227,34 +8068,190 @@ function topTextBlock(
         text: right,
         role: 'title',
         x: width,
-        y: y + ENGRAVE.composerTextSize,
-        size: ENGRAVE.composerTextSize,
+        y: y + sizeOf('composerfont'),
+        size: sizeOf('composerfont'),
         bold: false,
         italic: true,
         anchor: 'end',
       })
     }
-    advance(Math.max(ENGRAVE.infoTextSize, ENGRAVE.composerTextSize))
+    // THE ROW ADVANCES BY WHICHEVER FIELD MOVES IT, not by the taller of the two.
+    // `addTextIf` measures `getTextSize.calc("A", font)` and moves by `round(height *
+    // 1.1)` — but the rhythm is given `noMove: !!(composer || origin)`
+    // (`top-text.js:36-39`), so when either is present the rhythm draws and moves nothing
+    // and `composerfont` alone sets the row. Taking the max spent `%%infofont Monaco 11
+    // box`'s 24px where abcjs spent `%%composerfont Arial 8 box`'s 19.
+    const rowFont: AbcFontType = composer !== '' || origin !== '' ? 'composerfont' : 'infofont'
+    // …and the field that MOVES the row is the one whose rich-vs-plain rule applies.
+    const mover =
+      rowFont === 'composerfont' ? (composer !== '' ? composerRich : originRich) : rhythmRich
+    advanceText(mover, sizeOf(rowFont), boxOf(rowFont))
+  }
+
+  // `A:` — the author of the words. Its own row, right-aligned in `composerfont`, with NO
+  // leading gap: abcjs spends `spacing.composer` only before the rhythm/composer row and
+  // writes this one bare (`top-text.js:68-71`). Measured on a control pair, exactly 23px.
+  const authorRich = metadata.author ?? ''
+  const author = plainText(authorRich)
+  if (author !== '') {
+    texts.push({
+      text: author,
+      role: 'title',
+      x: width,
+      y: y + sizeOf('composerfont'),
+      size: sizeOf('composerfont'),
+      bold: false,
+      italic: true,
+      anchor: 'end',
+    })
+    advanceText(authorRich, sizeOf('composerfont'), boxOf('composerfont'))
+  }
+
+  // A HEADER `P:` — the part ORDER, left-aligned in `partsfont`, closing the block. 24px.
+  const partOrderRich = metadata.partOrder ?? ''
+  const partOrder = plainText(partOrderRich)
+  if (partOrder !== '') {
+    texts.push({
+      text: partOrder,
+      role: 'title',
+      x: 0,
+      y: y + sizeOf('partsfont'),
+      size: sizeOf('partsfont'),
+      bold: false,
+      italic: false,
+      anchor: 'start',
+    })
+    advanceText(partOrderRich, sizeOf('partsfont'), boxOf('partsfont'))
   }
 
   // `%%center` lines standing before the music close the block. Centred like the title,
   // but on the STAFF width rather than the paper width — which is the width passed here.
-  for (const line of textAbove) {
-    y += ENGRAVE.freeTextSpace
-    texts.push({
-      text: line,
-      role: 'title',
-      x: centre,
-      y: y + ENGRAVE.freeTextSize,
-      size: ENGRAVE.freeTextSize,
-      bold: false,
-      italic: false,
-      anchor: 'middle',
-    })
-    advance(ENGRAVE.freeTextSize)
-  }
+  //
+  // TWO THINGS DIFFER FROM A TITLE ROW, and both are abcjs's:
+  //
+  // 1. NO LEADING GAP HERE. abcjs's own gap before a `%%center` is `spacing.music`, spent
+  //    by `draw.js:17` BEFORE the row and never again after it — the centered text ends
+  //    exactly where the staff group begins. We place the block `musicSpace` above the
+  //    music, so that same 7.56 is already accounted for on the other side; adding one
+  //    here too spent it twice.
+  // 2. NO LINE-SKIP. `FreeText` pushes `{ move: size.height }` bare
+  //    (`elements/free-text.js:38`), where `addTextIf` — the title, subtitle and composer
+  //    path — pushes `Math.round(size.height * 1.1)` (`add-text-if.js:26-27`). At the
+  //    21px `textfont` that is 23.27 against our 26.
+  //
+  // Together they put `center-text` 10.32px low.
+  //
+  // `%%text` and `%%begintext` differ from `%%center` in exactly two ways, both measured
+  // off abcjs with a control pair on one tune: they sit at the LEFT margin with
+  // `anchor: "start"`, and they spend `{ move: hash.attr['font-size'] / 2 }` before the
+  // row (`free-text.js:12`) where the centred branch pushes its row bare (`:38`).
+  // `%%center A` costs 23.27px, `%%text A` costs 33.77, and their rows sit that same
+  // 10.5 apart — one half of the 21px `textfont`.
+  //
+  // A `%%begintext` block is ONE element however many lines it holds: abcjs draws it as a
+  // single `<text>` with a `tspan` per line and reserves one multi-line height. Measured,
+  // each line past the first adds 25.2px — `1.2em` at 21px, the same `dy` a lyric verse
+  // steps by, and NOT the 1.108 line height the first line takes.
+  y = appendFreeText(texts, textAbove, y, centre, fonts)
 
   return { texts, height: y }
+}
+
+/**
+ * The free-text and subtitle rows, shared by the tune's own block and every mid-tune one.
+ *
+ * A MID-TUNE `T:` is a Subtitle element, not a FreeText: `spacing.subtitle` above it, one
+ * row in `subtitlefont`, and its own MEASURED height below with no `* 1.1`
+ * (`elements/subtitle.js`). Measured on a control pair it costs 27.05px where `%%text`
+ * costs 33.77 and `%%center` 23.27 — and those two cost the same mid-tune as at the head,
+ * because they are the same element in both places.
+ */
+function appendFreeText(
+  texts: PlacedText[],
+  blocks: readonly FreeTextBlock[],
+  from: number,
+  centre: number,
+  fonts: Score['fonts'],
+  /** `%%sep` rules, collected out — a block can carry ink as well as text. */
+  rules: { y: number; width: number }[] = [],
+): number {
+  let y = from
+  const sizeOf = (type: AbcFontType): number =>
+    Math.round(((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / STAFF_SPACE_PX
+  /**
+   * A BOXED font measures `height + padding * 4`, and both of these rows move by their
+   * MEASURED height — `getTextSize.calc` in `subtitle.js:8` and `free-text.js:19`. Leaving
+   * it out cost a `%%text` + mid-tune `T:` between two systems 20.4px of gap.
+   */
+  const boxOf = (type: AbcFontType): number =>
+    fonts[type]?.box === true ? sizeOf(type) * ENGRAVE.fontBoxPadding * 4 : 0
+  for (const block of blocks) {
+    if (block.separator !== undefined) {
+      // The RULE COSTS NO HEIGHT — `drawSeparator` paints at the cursor and moves nothing
+      // — so the line is worth exactly its two spaces. Points to staff spaces on the way.
+      y += block.separator.above / STAFF_SPACE_PX
+      rules.push({ y, width: block.separator.length / STAFF_SPACE_PX })
+      y += block.separator.below / STAFF_SPACE_PX
+      continue
+    }
+    if (block.role === 'subtitle') {
+      const size = sizeOf('subtitlefont')
+      y += ENGRAVE.subtitleSpace
+      for (const line of block.lines) {
+        texts.push({
+          text: line,
+          role: 'title',
+          x: centre,
+          y: y + size,
+          size,
+          bold: false,
+          italic: false,
+          anchor: 'middle',
+        })
+      }
+      y += goldenTextHeight(size) + boxOf('subtitlefont')
+      continue
+    }
+    const textSize = sizeOf('textfont')
+    if (block.align === 'left') y += textSize / 2
+    block.lines.forEach((line, index) => {
+      texts.push({
+        text: line,
+        role: 'title',
+        x: block.align === 'center' ? centre : 0,
+        y: y + textSize + index * ENGRAVE.freeTextLineStep,
+        size: textSize,
+        bold: false,
+        italic: false,
+        anchor: block.align === 'center' ? 'middle' : 'start',
+      })
+    })
+    y +=
+      goldenTextHeight(textSize) +
+      boxOf('textfont') +
+      (block.lines.length - 1) * ENGRAVE.freeTextLineStep
+  }
+  return y
+}
+
+/** A system's own preceding blocks, with no title above them. */
+function freeTextBlock(
+  blocks: readonly FreeTextBlock[],
+  width: number,
+  fonts: Score['fonts'] = {},
+): { texts: PlacedText[]; lines: PlacedLine[]; height: number } {
+  const texts: PlacedText[] = []
+  const rules: { y: number; width: number }[] = []
+  const height = appendFreeText(texts, blocks, 0, width / 2, fonts, rules)
+  // Centred on the STAFF width, as `drawSeparator` centres it, and one pixel thick.
+  const lines: PlacedLine[] = rules.map((r) => ({
+    x1: (width - r.width) / 2,
+    y1: r.y,
+    x2: (width + r.width) / 2,
+    y2: r.y,
+    thickness: 1 / STAFF_SPACE_PX,
+  }))
+  return { texts, lines, height }
 }
 
 /**
@@ -4290,29 +8287,54 @@ function anchorLyrics<
 >(parts: readonly T[], strict: boolean): T[] {
   const isLyric = (t: PlacedText): boolean => t.role === 'lyric'
   if (!parts.some((p) => p.elements.some((el) => el.texts.some(isLyric)))) return [...parts]
-  // The MUSIC's ink, with the lyrics themselves taken out — including them would let the
-  // block push the anchor it hangs from further down, one staff at a time. The top-text
-  // block goes too: it is not music, and it has not been moved into place yet, so a
-  // four-row heading measured as ink 96px BELOW the staff and dragged the lyrics after it.
+  // THE ANCHOR IS THE SAME INK THE RESERVE IS TAKEN FROM, and it has to be the SAME
+  // NUMBER, not a second measurement of it. abcjs runs both off one value — `staff.bottom`
+  // at `set-upper-and-lower-elements.js:51`, before the lyric, chord and dynamic lanes and
+  // before the `TieElem` push: it draws at that ink (`:244`) and subtracts from it (`:54`).
+  //
+  // Measuring it again here drifted, because this call passed a hand-picked subset of the
+  // furniture — no tuplet boxes — and applied lanes the lyric phase has not reached yet.
+  // Probed on `little swallow`, abcjs subtracts a flat 11.1265 pitch from all five staves,
+  // where we subtracted 11.13 / 11.13 / 10.63 / 11.13 / 9.17: the two that drifted are the
+  // two carrying the most furniture. So take `inkBottom` from `verticalExtent` itself.
+  //
+  // The top-text block still goes: it is not music, and it has not been moved into place
+  // yet, so a four-row heading measured as ink 96px BELOW the staff and dragged the lyrics
+  // after it. The lyrics themselves need no stripping — `verticalExtent` routes a lyric
+  // text to `lyricBottom` and never to the ink.
   const inkBottom = verticalExtent(
-    parts.flatMap((p) =>
-      p.elements
-        .filter((el) => el.type !== 'title')
-        .map((el) => ({ ...el, texts: el.texts.filter((t) => !isLyric(t)) })),
-    ),
+    parts.flatMap((p) => p.elements.filter((el) => el.type !== 'title')),
     parts.flatMap((p) => p.beams),
     strict,
     {
+      tupletReserves: parts.flatMap((p) => p.tupletReserves ?? []),
       tupletLines: parts.flatMap((p) => p.tupletLines ?? []),
       tupletTexts: parts.flatMap((p) => p.tupletTexts ?? []),
       voltaLines: parts.flatMap((p) => p.voltaLines ?? []),
       voltaTexts: parts.flatMap((p) => p.voltaTexts ?? []),
     },
-  ).bottom
+  ).inkBottom
   const written = stepToY(ENGRAVE.lyricStep)
   return parts.map((part, voiceIndex) => {
-    const shift =
-      inkBottom + ENGRAVE.lyricInkGap + voiceIndex * ENGRAVE.lyricVoiceStep - written
+    // THE BASELINE SITS ONE FONT SIZE BELOW THE LANE TOP, not a constant 17 below the ink.
+    // `renderText` adds `hash.font.size` to every non-centred text's y (`text.js:30`), and
+    // 17 is BOTH `spacing.vocal` and the default vocalfont's drawn size — two unrelated
+    // quantities that happen to be equal, which is precisely the coincidence that hides a
+    // rule. Measured on one tune at three sizes: baseline 105.61 at 17px, 101.61 at 13,
+    // 115.61 at 27 — moving by exactly the size delta each time.
+    // The LARGEST lyric font on this part, falling back to the default only when it has no
+    // lyrics at all. NOT `Math.max(default, …sizes)` — that is a FLOOR, and it silently
+    // pinned a smaller `%%vocalfont` at the default: `Helvetica 10.0` draws at 13px and
+    // measured its baseline at 17, which is `visual-selection-01`'s remaining 4.01px.
+    const sizes = part.elements.flatMap((el) => el.texts.filter(isLyric).map((t) => t.size))
+    const size = sizes.length === 0 ? ENGRAVE.lyricTextSize : Math.max(...sizes)
+    // The per-voice drop is the lyric block's own HEIGHT, and it must come from the same
+    // place the lane does — `goldenTextHeight`, the generator's table. `lyricVoiceStep` was
+    // `17 * 1.108 = 18.836` where the table says a flat `18.84`, and mixing the exact
+    // figure into the lane while leaving the approximation here put
+    // `visual-multi-voice-02` — four voices, two verses, no `%%vocalfont` at all — 0.05px
+    // out on nothing but the four-thousandths between them.
+    const shift = inkBottom + size + voiceIndex * goldenTextHeight(size) - written
     return {
       ...part,
       elements: part.elements.map((el) =>
@@ -4326,6 +8348,33 @@ function anchorLyrics<
     }
   })
 }
+
+/**
+ * How many non-empty tspans the golden generator sees in this chord — 1 plus one for
+ * each of the modifier and the bass note (`svg.js:198-211`). The outer tspan's
+ * `textContent` gathers its children, so it counts whenever the chord is not empty.
+ */
+const jazzTspans = (t: PlacedText): number =>
+  t.jazz === undefined ? 1 : 1 + (t.jazz[1] === '' ? 0 : 1) + (t.jazz[2] === '' ? 0 : 1)
+
+/**
+ * The height a chord symbol or annotation reserves in its lane, ABOVE or BELOW.
+ *
+ * `RelativeElement` takes both `chordHeightAbove` and `chordHeightBelow` from the same
+ * measured text height (`relative-element.js:60-75`), so the two sides share this. Three
+ * terms, all the golden generator's:
+ *
+ *   • the height for the size, from its table with `size + 2` for anything unlisted —
+ *     so `%%gchordfont Arial 80` resolves to 107px and reserves 109, not 80 x a ratio;
+ *   • one whole LINE per extra nested tspan, which is what `%%jazzchords` costs
+ *     (`dump-svg.js:120-124`);
+ *   • `padding * 4` for a BOXED font, `padding = size * fontboxpadding`
+ *     (`get-text-size.js:46-48`) — `visual-tablature-17` boxes five of them.
+ */
+const chordHeightOf = (t: PlacedText): number =>
+  goldenTextHeight(t.size) +
+  (jazzTspans(t) - 1) * t.size * ENGRAVE.textLineStep +
+  (t.box === true ? t.size * ENGRAVE.fontBoxPadding * 4 : 0)
 
 /**
  * Stack the above-staff furniture on the staff's music, once its voices are known.
@@ -4358,7 +8407,7 @@ function anchorAboveStaff<
     readonly elements: readonly LayoutElement[]
     readonly beams: readonly PlacedLine[]
   } & StaffFurniture,
->(parts: readonly T[], strict: boolean): T[] {
+>(parts: readonly T[], strict: boolean, partsBox = false): T[] {
   const isChord = (t: PlacedText): boolean => t.role === 'chord'
   const has = (fn: (el: LayoutElement) => boolean) => parts.some((p) => p.elements.some(fn))
   const chords = has((el) => el.texts.some(isChord))
@@ -4380,8 +8429,29 @@ function anchorAboveStaff<
     {
       tupletLines: parts.flatMap((p) => p.tupletLines ?? []),
       tupletTexts: parts.flatMap((p) => p.tupletTexts ?? []),
-      voltaLines: parts.flatMap((p) => p.voltaLines ?? []),
-      voltaTexts: parts.flatMap((p) => p.voltaTexts ?? []),
+      // NO VOLTA AND NO TUPLET LANE HERE — the ENDING lane is spent ONCE, at the end of
+      // the outer `verticalExtent`, and this call exists only to find the ink the stack
+      // sits on. The volta lines were in it and the tuplet's flag was not, so the two
+      // calls disagreed about what the lane already held: a volta arriving beside a
+      // tuplet jumped this number by the FULL 6 pitch where abcjs moves 1. That was
+      // 23.25px and all of `mouse-click-01`'s first staff.
+      //
+      // ponytail: so a tempo mark over a staff that also has a volta is DRAWN inside the
+      // ending lane rather than above it — abcjs's order is ending, part, tempo
+      // (`set-upper-and-lower-elements.js:33-49`) and ours reserves the tempo from the
+      // ink. The staff's total is right either way, because the lane goes on last; only
+      // the mark's own y differs, and no gate here can see it. Fixing it properly means
+      // moving the ending lane into `anchorAboveStaff`'s stack, which is where every
+      // other lane already lives.
+      voltaLines: [],
+      voltaTexts: [],
+      // A TUPLET'S DECLARED BOX IS INK AND BELONGS HERE. `layoutVoice` calls
+      // `voice.adjustRange` on every `TripletElem` (`layout/voice.js:19-23`) BEFORE
+      // `setUpperAndLowerElements` runs, so abcjs's chord lane sits on top of the bracket
+      // like any other ink. Leaving it out put the lane under the bracket, and the outer
+      // pass then took the bracket instead — 0.779 pitch, `chordHeightAbove` minus the
+      // tuplet lane, on every staff carrying both.
+      tupletReserves: parts.flatMap((p) => p.tupletReserves ?? []),
     },
   ).top
 
@@ -4391,8 +8461,104 @@ function anchorAboveStaff<
     top -= height + ENGRAVE.aboveStackMargin
     return top
   }
-  const chordY = chords ? reserve(ENGRAVE.chordHeightAbove) + ENGRAVE.chordTextSize : null
-  const partY = partLabels ? reserve(ENGRAVE.partHeightAbove) + ENGRAVE.tempoTextSize : null
+  // ── CHORD SYMBOLS AND ANNOTATIONS SHARE A LANE, AND THE LANE COUNT IS PACKED ─
+  //
+  // `setLaneForChord` (`layout/voice.js:70-101`) walks a voice's items left to right and
+  // drops each into the FIRST lane whose right edge clears its left one, opening a new
+  // lane when none does — so two marks that would touch stack, and two that would not sit
+  // side by side in lane 0. `placeInLane` is that loop; the count comes back as
+  // `staff.specialY.chordLines.above` and MULTIPLIES the reserve through `incTop`'s
+  // `count` argument.
+  //
+  // The reserve is `chordHeightAbove * lanes + margin`, and the height in that product is
+  // the PLAIN measured one. `putChordInLane` does rewrite an item's own
+  // `chordHeightAbove` to `height * 1.25 * lane`, but that happens in `layoutVoice`, long
+  // after `setLimit` fixed the staff's `specialY` at engrave time — so the rewrite never
+  // reaches the reserve. Probed rather than read: `stacked-annotations` reports
+  // `chordHeightAbove: 4.7794` with `chordLines.above: 2`, not the 5.97 the rewrite would
+  // give. Reading the source alone gets this wrong twice over.
+  //
+  // `draw/text.js:13-15` then offsets each lane DOWN from the top of the block by
+  // `fontSize * 1.25`, so lane 0 is the topmost and the item packed FIRST is drawn
+  // highest.
+  //
+  // NOT what `setLane`'s `invertLane` reads as it does, and the SVG settles it: abcjs
+  // draws `"^Allegro""^con brio"` with Allegro at y 79.12 and con brio at 99.12, exactly
+  // one `fontSize * 1.25` apart, first-written on top. Composing `invertLane` with the
+  // draw offset predicts the opposite. Measure the output before trusting a chain of
+  // three source reads.
+  const laneOf = new Map<PlacedText, number>()
+  let chordLanes = 1
+  for (const part of parts) {
+    // Per VOICE, as abcjs runs it — and the staff keeps the LAST voice's count, because
+    // `voice.staff.specialY.chordLines = setLaneForChord(...)` assigns rather than maxes.
+    const rightMost: number[] = [0]
+    const marks: PlacedText[] = []
+    for (const el of part.elements) for (const t of el.texts) if (isChord(t)) marks.push(t)
+    for (const t of marks) {
+      const left = t.x
+      const right = left + markWidth(t.text, t.size, t.box === true)
+      const lane = rightMost.findIndex((edge) => edge < left)
+      if (lane >= 0) {
+        rightMost[lane] = right
+        laneOf.set(t, lane)
+      } else {
+        rightMost.push(right)
+        laneOf.set(t, rightMost.length - 1)
+      }
+    }
+    if (marks.length > 0) chordLanes = rightMost.length
+  }
+  // THE LANE IS AS TALL AS THE FONT. `RelativeElement` takes `chordHeightAbove` straight
+  // from the text's measured height (`relative-element.js:60`), so `%%gchordfont Arial 80`
+  // reserves five times what the 12pt default does. The constant here IS the default's
+  // height, so scaling by the ratio of sizes is the same number wherever nothing changed.
+  // THE TALLEST CHORD ON THE STAFF SETS THE LANE — `setLimit`'s `Math.max` over the
+  // voice's `chordHeightAbove`, which `RelativeElement` takes straight from the text's
+  // MEASURED height (`relative-element.js:60`). Three terms go into that measure and all
+  // three are the golden generator's:
+  //
+  //   • the height for the size, from its table with `size + 2` for anything unlisted —
+  //     so `%%gchordfont Arial 80` resolves to 107px and reserves 109, not 80 x a ratio;
+  //   • one whole LINE per extra nested tspan, which is what `%%jazzchords` costs
+  //     (`dump-svg.js:120-124`);
+  //   • `padding * 4` for a BOXED font, `padding = size * fontboxpadding`
+  //     (`get-text-size.js:46-48`) — `visual-tablature-17` boxes five of them.
+  const chordTexts = parts.flatMap((p) => p.elements.flatMap((el) => el.texts.filter(isChord)))
+  // …AND THE DEFAULT IS A FALLBACK, NOT A FLOOR. Both of these read as "the tallest chord
+  // on the staff" and were `Math.max(default, …)`, which is a clamp: harmless for any font
+  // BIGGER than the 12pt default and silently wrong for any smaller one.
+  // `%%gchordfont Arial 10 box` resolves to 13px and had its lane measured at 16 — three
+  // pixels of staff, which is `visual-tablature-17`'s whole `oy`. Every larger size in that
+  // fixture (20, 40, 80, 130) was already exact, which is the shape of a floor rather than
+  // an arithmetic error, and the same shape as the lyric baseline in finding 84.
+  const chordSize =
+    chordTexts.length === 0 ? ENGRAVE.chordTextSize : Math.max(...chordTexts.map((t) => t.size))
+  const chordBlock =
+    (chordTexts.length === 0
+      ? ENGRAVE.chordHeightAbove
+      : Math.max(...chordTexts.map(chordHeightOf))) * chordLanes
+  const chordY = chords ? reserve(chordBlock) + chordSize : null
+
+  // A BOXED PART LABEL MEASURES TALLER, so its whole lane grows: `getTextSize` returns
+  // `height + padding * 4` for a boxed font (`helpers/get-text-size.js:46-48`), and
+  // `padding` is `font.size * fontboxpadding`, default 0.1 (`get-font-and-attr.js:35-36`).
+  // Probed on `frere-jacques`: `partHeightAbove` is 5.7187 pitch without `%%partsbox` and
+  // 7.7832 with it — 8px on a 20px font, which is exactly `padding * 4`.
+  //
+  // …AND THE HEIGHT IS `partsfont`'s, not a constant. `RelativeElement` takes
+  // `partHeightAbove` from the measured text like every other lane
+  // (`relative-element.js:77`), so `%%partsfont sans-serif 29 box` reserves 26.45px more
+  // than the 15pt default. The default resolves to exactly the constant this replaces.
+  // The BOX comes from `partsBox`, not from `fontHeightOf`: `%%partsbox` sets it without
+  // touching the font at all, so the padding is added here and `goldenTextHeight` is asked
+  // for the bare height. Using `fontHeightOf` counted the box twice for `%%partsfont …
+  // box` and not at all for `%%partsbox` — 15.6px each way.
+  const partSize = fontSizeOf('partsfont')
+  const boxPad = partsBox ? partSize * ENGRAVE.fontBoxPadding : 0
+  const partY = partLabels
+    ? reserve(goldenTextHeight(partSize) + boxPad * 4) + partSize + boxPad
+    : null
   const tempoY = tempos
     ? reserve(ENGRAVE.tempoHeightAbove) + ENGRAVE.tempoTextSize + ENGRAVE.tempoDescenderBump
     : null
@@ -4406,21 +8572,283 @@ function anchorAboveStaff<
     texts: el.texts.map((t) => ({ ...t, y: t.y + shift })),
   })
 
-  const chordShift = chordY === null ? 0 : chordY - stepToY(ENGRAVE.chordSymbolStep)
+  /** A chord or annotation is placed ABSOLUTELY in its lane, not shifted from where it
+   * was drawn: the two kinds start from different steps, so one shift cannot serve both. */
+  const chordAt = (t: PlacedText): number =>
+    // THE MARK'S OWN SIZE, not the default's. This read `ENGRAVE.chordTextSize`, so a
+    // `%%gchordfont` at any size other than the 12pt default stacked its second lane at
+    // the default's step — the same defect the annotation lane had one function over.
+    (chordY ?? 0) + (laneOf.get(t) ?? 0) * t.size * ABCJS_RATIO.laneLineStep
   const partShift = partY === null ? 0 : partY - stepToY(ENGRAVE.partStep)
   const tempoShift = tempoY === null ? 0 : tempoY - stepToY(ENGRAVE.tempoStep)
 
   return parts.map((part) => ({
     ...part,
+    aboveStackPlaced: true,
+    chordLaneAbove: chords,
     elements: part.elements.map((el) => {
-      if (el.type === 'part') return shiftBy(el, partShift)
+      if (el.type === 'part') {
+        const moved = shiftBy(el, partShift)
+        return partsBox ? { ...moved, lines: [...moved.lines, ...partBox(moved)] } : moved
+      }
       if (el.type === 'tempo') return shiftBy(el, tempoShift)
       if (!el.texts.some(isChord)) return el
       return {
         ...el,
-        texts: el.texts.map((t) => (isChord(t) ? { ...t, y: t.y + chordShift } : t)),
+        texts: el.texts.map((t) => (isChord(t) ? { ...t, y: chordAt(t) } : t)),
       }
     }),
+  }))
+}
+
+/**
+ * The four rules `%%partsbox` draws round a `P:` label.
+ *
+ * `renderText` emits `rect({ x: params.x - delta, y, width: size.width + padding * 2,
+ * height: size.height + padding * 2 })` (`draw/text.js:81`) — so the box is the MEASURED
+ * text plus one padding a side, where the reserved LANE is the text plus TWO. The
+ * baseline sits one font size below the box's top plus that same padding.
+ *
+ * ponytail: abcjs rounds all four to whole pixels; we do not, so an edge can land half a
+ * pixel off its. Sub-pixel, and rounding here would put a px-space conversion in geometry
+ * that is otherwise in staff spaces throughout.
+ */
+function partBox(el: LayoutElement): PlacedLine[] {
+  const t = el.texts[0]
+  if (t === undefined) return []
+  const pad = t.size * ENGRAVE.fontBoxPadding
+  const left = t.x - pad
+  const top = t.y - t.size - pad
+  const right = left + textWidth(t.text, t.size) + pad * 2
+  const bottom = top + ENGRAVE.partHeightAbove + pad * 2
+  const w = ENGRAVE.fontBoxRule
+  return [
+    { x1: left, y1: top, x2: right, y2: top, thickness: w },
+    { x1: left, y1: bottom, x2: right, y2: bottom, thickness: w },
+    { x1: left, y1: top, x2: left, y2: bottom, thickness: w },
+    { x1: right, y1: top, x2: right, y2: bottom, thickness: w },
+  ]
+}
+
+/**
+ * Stack the BELOW-staff chord symbols and annotations on the staff's music.
+ *
+ * The exact mirror of `anchorAboveStaff`'s chord lane, and the same shape of defect it
+ * fixed on the other side: we drew a `"_below"` at a fixed `annotationBelowStep` and let
+ * its own ink set the staff's bottom, where abcjs stacks it on the music and reserves a
+ * LANE past it.
+ *
+ * ```js
+ * if (staff.specialY.chordHeightBelow) {
+ *   positionY.chordHeightBelow = staff.bottom;          // where the mark is DRAWN
+ *   var hgt = staff.specialY.chordHeightBelow;
+ *   if (staff.specialY.chordLines.below) hgt *= staff.specialY.chordLines.below;
+ *   staff.bottom -= (hgt + margin);                     // what the staff RESERVES
+ * }
+ * ```
+ *
+ * (`set-upper-and-lower-elements.js:56-61`.) Two numbers off one anchor, and the margin is
+ * BEYOND the drawn box rather than inside it — which is why the ink alone cannot stand in
+ * for the reserve here the way it can above, where `reserve()` walks past the margin
+ * before the baseline is taken. So the block is spent explicitly, as a `reserve` on the
+ * texts themselves.
+ *
+ * Ladder of four controls against abcjs's own instrumented `staff.bottom`, all on `CEGc`
+ * whose ink bottom is -1.0444:
+ *
+ * ```
+ *   plain                     -1.0444    -1.0444    ours exact
+ *   "_below"                  -6.8237    -5.6159    1.2078 pitch out  = 4.68px
+ *   "_below" "_two"          -11.6031   -10.7772    0.8259 pitch out
+ *   "_Wwwwwwwwwwwwww"         -6.8237    -5.6159    LENGTH IS IRRELEVANT — a fixed lane
+ * ```
+ *
+ * The fourth rung is the one that names the mechanism: fourteen characters reserve exactly
+ * what six do, so nothing here is measuring the ink.
+ *
+ * LANE ORDER IS THE FIRST-WRITTEN NEAREST THE STAFF, and a chain of three source reads
+ * predicts the opposite. `setLaneForChord` walks a note's children FORWARD for
+ * `chordHeightAbove` and BACKWARD for `chordHeightBelow` (`layout/voice.js:86-97`), and
+ * `setLane`'s `invertLane` — which flips the above indexes — has its below arm COMMENTED
+ * OUT (`:118-121`), so the backward walk should leave the LAST-written in lane 0.
+ * Instrumenting `placeInLane` on `"_p""_dolce"C|` says otherwise:
+ *
+ * ```
+ *   PROBE lane "p"     -> FIT 0   left=49.05 right=57.96
+ *   PROBE lane "dolce" -> NEW 1   left=49.05 right=87.33
+ * ```
+ *
+ * and its SVG agrees — `p` at y 95.79 against `dolce` at 115.79. The two sides come out
+ * the SAME way up, because whatever order a below annotation reaches `children` in
+ * cancels the backward walk. Measure the output before trusting the source on order;
+ * `anchorAboveStaff` carries the same warning for the same reason.
+ *
+ * ponytail: anchored on the music ink, so a staff carrying BOTH lyrics and a below
+ * annotation would put the mark inside the lyric block — abcjs's below chain is lyric,
+ * then chord, then dynamics. No fixture in either corpus writes both, and the honest fix
+ * is the same refactor `anchorAboveStaff`'s ending-lane note already asks for: one stack,
+ * spent once, instead of three passes each re-deriving the ink.
+ */
+function anchorChordsBelow<
+  T extends {
+    readonly elements: readonly LayoutElement[]
+    readonly beams: readonly PlacedLine[]
+  } & StaffFurniture,
+>(parts: readonly T[], strict: boolean): T[] {
+  const isBelow = (t: PlacedText): boolean => t.role === 'chordBelow'
+  if (!parts.some((p) => p.elements.some((el) => el.texts.some(isBelow)))) return [...parts]
+
+  // The MUSIC's ink. The below marks are already POINT-reserved at the staff line, so
+  // nothing they do reaches this — the same guarantee `anchorAboveStaff` gets by
+  // filtering them out of its own call.
+  const inkBottom = verticalExtent(
+    parts.flatMap((p) => p.elements.filter((el) => el.type !== 'title')),
+    parts.flatMap((p) => p.beams),
+    strict,
+    {
+      tupletReserves: parts.flatMap((p) => p.tupletReserves ?? []),
+      tupletLines: parts.flatMap((p) => p.tupletLines ?? []),
+      tupletTexts: parts.flatMap((p) => p.tupletTexts ?? []),
+      voltaLines: parts.flatMap((p) => p.voltaLines ?? []),
+      voltaTexts: parts.flatMap((p) => p.voltaTexts ?? []),
+    },
+  ).inkBottom
+
+  // `placeInLane`, below arm: each note's marks in REVERSE, into the first lane whose
+  // right edge clears this one's left.
+  const laneOf = new Map<PlacedText, number>()
+  let lanes = 1
+  for (const part of parts) {
+    const rightMost: number[] = [0]
+    let any = false
+    for (const el of part.elements) {
+      for (const t of el.texts.filter(isBelow)) {
+        any = true
+        const left = t.x
+        const right = left + markWidth(t.text, t.size, t.box === true)
+        const lane = rightMost.findIndex((edge) => edge < left)
+        if (lane >= 0) {
+          rightMost[lane] = right
+          laneOf.set(t, lane)
+        } else {
+          rightMost.push(right)
+          laneOf.set(t, rightMost.length - 1)
+        }
+      }
+    }
+    // Per VOICE, and the staff keeps the LAST voice's count — `voice.staff.specialY.
+    // chordLines = setLaneForChord(...)` assigns rather than maxes, as above.
+    if (any) lanes = rightMost.length
+  }
+
+  const marks = parts.flatMap((p) => p.elements.flatMap((el) => el.texts.filter(isBelow)))
+  const block =
+    Math.max(...marks.map(chordHeightOf)) * lanes + ENGRAVE.aboveStackMargin
+  const reserve: readonly [number, number] = [inkBottom, inkBottom + block]
+  return parts.map((part) => ({
+    ...part,
+    elements: part.elements.map((el) =>
+      el.texts.some(isBelow)
+        ? {
+            ...el,
+            texts: el.texts.map((t) =>
+              isBelow(t)
+                ? {
+                    ...t,
+                    // Drawn one font size below the anchor, plus `size * 1.25` per lane
+                    // (`draw/text.js:13-15, 28-30`) — abcjs's universal text rule and the
+                    // same lane step the above side uses.
+                    y:
+                      inkBottom +
+                      t.size +
+                      (laneOf.get(t) ?? 0) * t.size * ABCJS_RATIO.laneLineStep,
+                    reserve,
+                  }
+                : t,
+            ),
+          }
+        : el,
+    ),
+  }))
+}
+
+/**
+ * Hang the ABOVE-staff dynamics and hairpins off the lane the staff reserved for them.
+ *
+ * The mirror of `anchorBelowStaff`, and it has to be a separate pass because the two sides
+ * draw at opposite edges of their own lane:
+ *
+ * ```js
+ * // above — incTop, so the mark is at the top AFTER the increment
+ * staff.top += height + margin;  positionY.dynamicHeightAbove = staff.top;
+ * // below — the mark is at the bottom BEFORE it
+ * positionY.volumeHeightBelow = staff.bottom;  staff.bottom -= (height + margin);
+ * ```
+ *
+ * (`set-upper-and-lower-elements.js:39-46, 63-70`.) So above the margin lands INSIDE the
+ * mark's own lane and below it lands beyond it — the same asymmetry `anchorChordsBelow`
+ * had to spend explicitly. `verticalExtent` has already put the lane on `top`, so the mark
+ * goes straight there; the below pass has to take its own lane back off `bottom` first.
+ *
+ * `ENGRAVE.dynamicAboveStep` was the LAST lane constant nothing shifted from. Measured on
+ * four controls, all with a `w:` line so abcjs puts dynamics above (`hasVocals`,
+ * `decoration.js:379`): the staff EXTENT was already exact on every one, and the mark sat a
+ * CONSTANT 64.18px above the top line where abcjs's tracks the lane — on `!mf!CDEF` that
+ * put ours at y ≈ 0, clipped off the page.
+ *
+ * RUNS BEFORE `anchorAboveStaff`, because `verticalExtent` stops applying the above lanes
+ * once `aboveStackPlaced` is set. Moving the glyph cannot change any extent: a dynamic's
+ * own box is never ink — `verticalExtent` reads it only as the `sawDynamicAbove` flag and
+ * reserves a flat lane instead.
+ *
+ * ponytail: abcjs's above order is chord, ending, DYNAMIC, part, tempo, and this places the
+ * dynamic on the music with the chord lane not yet spent — so a staff carrying both would
+ * put them in the same place. No corpus tune does: abcjs only puts dynamics above when the
+ * tune SINGS, and a singing staff takes the lyric lane below rather than a chord lane
+ * above. The real fix is the one `anchorAboveStaff`'s ending-lane note has asked for since
+ * finding 93 — one stack, spent once, instead of four passes each re-deriving the ink.
+ */
+function anchorDynamicsAbove<
+  T extends {
+    readonly elements: readonly LayoutElement[]
+    readonly beams: readonly PlacedLine[]
+    readonly spannerLines: readonly PlacedLine[]
+  } & StaffFurniture,
+>(parts: readonly T[], strict: boolean): T[] {
+  const isDyn = (r: PartRole | undefined, y: number): boolean => r === 'dynamic' && y < 0
+  const present =
+    parts.some((p) => p.elements.some((el) => el.glyphs.some((g) => isDyn(g.role, g.y)))) ||
+    parts.some((p) => p.spannerLines.some((l) => isDyn(l.role, l.y1)))
+  if (!present) return [...parts]
+
+  // The lane's OUTER edge, which `verticalExtent` has already walked `top` out to.
+  const laneTop = verticalExtent(
+    parts.flatMap((p) => p.elements.filter((el) => el.type !== 'title')),
+    parts.flatMap((p) => p.beams),
+    strict,
+    {
+      tupletLines: parts.flatMap((p) => p.tupletLines ?? []),
+      tupletTexts: parts.flatMap((p) => p.tupletTexts ?? []),
+      tupletReserves: parts.flatMap((p) => p.tupletReserves ?? []),
+      voltaLines: parts.flatMap((p) => p.voltaLines ?? []),
+      voltaTexts: parts.flatMap((p) => p.voltaTexts ?? []),
+    },
+  ).top
+
+  const shift = laneTop - stepToY(ENGRAVE.dynamicAboveStep)
+  const moveLine = (l: PlacedLine): PlacedLine =>
+    isDyn(l.role, l.y1) ? { ...l, y1: l.y1 + shift, y2: l.y2 + shift } : l
+  return parts.map((part) => ({
+    ...part,
+    elements: part.elements.map((el) =>
+      el.glyphs.some((g) => isDyn(g.role, g.y))
+        ? {
+            ...el,
+            glyphs: el.glyphs.map((g) => (isDyn(g.role, g.y) ? { ...g, y: g.y + shift } : g)),
+          }
+        : el,
+    ),
+    spannerLines: part.spannerLines.map(moveLine),
   }))
 }
 
@@ -4466,7 +8894,8 @@ function anchorBelowStaff<
         voltaLines: parts.flatMap((p) => p.voltaLines ?? []),
         voltaTexts: parts.flatMap((p) => p.voltaTexts ?? []),
       },
-    ).bottom - ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
+    ).bottom -
+    ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
 
   const shift = inkBottom - stepToY(ENGRAVE.dynamicBelowStep)
   const moveLine = (l: PlacedLine): PlacedLine =>
@@ -4485,7 +8914,257 @@ function anchorBelowStaff<
   }))
 }
 
+/**
+ * Hang a repeat ending's bracket off the lane it reserved — the fourth of these passes.
+ *
+ * **THE ENDING RESERVES A LANE AND THEN DRAWS ITSELF TWO PITCH BELOW ITS TOP.** Both halves
+ * matter and the second one is easy to miss:
+ *
+ * ```js
+ * if (staff.specialY.endingHeightAbove) {
+ *   if (staff.specialY.chordHeightAbove) staff.top += 2;
+ *   else staff.top += staff.specialY.endingHeightAbove + margin;
+ *   positionY.endingHeightAbove = staff.top;
+ * }
+ * ...
+ * element.pitch = positionY.endingHeightAbove - 2;      // :201, and THAT is drawEnding's
+ * ```
+ *
+ * Every OTHER lane in that file draws at the top it reserved — `chordHeightAbove`,
+ * `partHeightAbove` and `tempoHeightAbove` are handed to their elements untouched — so the
+ * subtraction reads as a typo until the output confirms it. It does: reserving the lane and
+ * drawing at the result put the bracket exactly 2 pitch high, and `S4-bars-repeats`' dumped
+ * `staff.top` of 13.7244 with `endingHeightAbove: 5` gives 13.724 + 5 + 1 − 2 = 17.724,
+ * which is where its SVG draws it.
+ *
+ * We reserved the lane correctly for months and then drew the bracket at a FIXED
+ * `ENGRAVE.voltaStep` regardless, which put it 15.5px above the top staff line where abcjs
+ * puts it 29.93.
+ *
+ * THE SHIFT CANNOT MOVE ANYTHING ELSE, and that is why this is a pass rather than a
+ * refactor. A volta's INK is deliberately not in the staff's extent: `verticalExtent` reads
+ * a volta line only through `flag()`, to learn which SIDE it is on, and abcjs agrees —
+ * `EndingElem` goes through the `otherchildren` switch, which sets its top from the lane it
+ * was given and never adjusts the staff's range by its geometry. So moving the bracket
+ * changes no staff total, no system spacing and no notehead. The corpus confirms it: not
+ * one of the 174 moved on any axis.
+ *
+ * IT READS THE TOP FROM `verticalExtent` RATHER THAN RE-DERIVING IT. The same quantity
+ * computed in two places whose inputs drift apart is this repo's most expensive recurring
+ * bug — the lyric reserve, then `curveReserves` — so the lane is spent exactly once, in the
+ * one function that spends it, and this asks that function for the answer.
+ *
+ * ponytail: abcjs's order above the staff is lyric, chord, ENDING, dynamic, part, tempo,
+ * and ours spends the ending lane last of all — so on a staff that ALSO carries a part
+ * label or a tempo mark the bracket lands above them where abcjs puts it below. The staff's
+ * total is right either way, because the lane goes on last in both. Fixing the ORDER means
+ * moving the ending into `anchorAboveStaff`'s stack and un-spending it here, which is a
+ * genuine refactor of the most regression-prone code in the file; this gets the common case
+ * exact without touching it.
+ */
+/**
+ * A REST GETS OUT OF THE OTHER VOICE'S WAY — abcjs's `fixVoiceCollisions`.
+ *
+ * `layout/layout.js:140-188`, run from `:49` over the whole tune AFTER `layoutVoice` and
+ * `setUpperAndLowerElements`, and deliberately not followed by a second lane pass (abcjs's
+ * own `//setUpperAndLowerElements(…)` on the next line is commented out). So the moved rest
+ * changes the staff's extent and therefore the staff-to-staff spacing, and does NOT move
+ * the lanes that were already stacked. This runs in the same place for the same reason.
+ *
+ *     if (isRealRest && !slot[lastIndex].abcelem.rest) {          // rest in the FIRST voice
+ *       var distance1 = restTop.bottom - closeTop(slot[lastIndex])
+ *       distance1 -= 2                                           // room between them
+ *       if (distance1 < 0) …move the rest UP by -distance1
+ *     } else if (isRealRest2 && !slot[0].abcelem.rest) {          // rest in the LAST voice
+ *       var distance2 = restBottom.top - closeBottom(slot[0])
+ *       distance2 += 2
+ *       if (distance2 > 0) …move the rest DOWN by distance2
+ *     }
+ *
+ * Both directions are away from the other voice, and the 2 is abcjs's stated clearance.
+ * Only the FIRST and LAST voices of a slot are considered — abcjs's own comment says a
+ * third voice will "get sloppy" — and an invisible rest is weeded out by
+ * `rest.type === 'rest'`.
+ *
+ * Probed on `multi-voice-rest-placement`, whose four rests are two hits and two misses:
+ *
+ *     T500   BOTREST  restTop 5.766  otherBottom  0.956  distance2  6.810  -> moves
+ *     T750   BOTREST  restTop 5.766  otherBottom  7.956  distance2 -0.190  -> does not
+ *     T1500  TOPREST  restBot 8.234  otherTop     9.044  distance1 -2.810  -> moves
+ *     T2000  TOPREST  restBot 8.234  otherTop     6.044  distance1  0.190  -> does not
+ *
+ * and 6.810 and 2.810 pitch are exactly the 26.39px and 10.89px those two rests were out
+ * by against abcjs's own golden.
+ *
+ * THE SLOTS ARE BUCKETED BY X, NOT BY TIME. abcjs walks each voice's children accumulating
+ * `duration` and keys on `'T' + round(time * 1000)`. On one staff that is the same
+ * partition: every voice of a system is laid out against ONE cursor, co-timed elements are
+ * placed at the same x by construction, and `shiftRight` carries the whole slot together
+ * whenever one of them needs more room — so same time implies same x, and the cursor only
+ * moves forward, so same x implies same time. Bucketing by x needs no duration on
+ * `LayoutElement`, which nothing else wants.
+ *
+ * ponytail: `closeTop`/`closeBottom` are read over GLYPHS and LINES here, where abcjs reads
+ * every child except a `chord` (above) or a `lyric` (below) — so an ANNOTATION on the other
+ * voice's note would pull abcjs's `closeTop` up to the annotation lane and ours would not.
+ * Nothing in either corpus writes one on a colliding note; widen it if something does.
+ */
+function fixRestCollisions(
+  voices: readonly (readonly LayoutElement[])[],
+  strict: boolean,
+): LayoutElement[][] {
+  const out = voices.map((v) => [...v])
+  if (out.length < 2) return out
+
+  /** The near edge of an element's ink, in y. Skips the lanes, as abcjs's helpers do. */
+  const edge = (el: LayoutElement, side: 'top' | 'bottom'): number => {
+    const ys: number[] = []
+    for (const g of el.glyphs) {
+      if (g.reserve !== undefined) ys.push(g.reserve[side === 'top' ? 0 : 1])
+      else {
+        const glyph = glyphsFor(strict).get(g.name) ?? GLYPHS[g.name]
+        ys.push(side === 'top' ? g.y + glyph.y : g.y + glyph.y + glyph.height)
+      }
+    }
+    for (const l of el.lines) ys.push(side === 'top' ? Math.min(l.y1, l.y2) : Math.max(l.y1, l.y2))
+    if (ys.length === 0) return side === 'top' ? stepToY(4) : stepToY(-4)
+    return side === 'top' ? Math.min(...ys) : Math.max(...ys)
+  }
+  // `rest.type === 'rest'` EXACTLY, which is narrower than "a rest that draws something".
+  // It excludes the invisible ones, as abcjs's comment says, and ALSO `whole` and
+  // `multimeasure` — a measure-filling rest is retyped before this pass ever runs and so
+  // never gets out of anyone's way. `zocharti-loch` is the fixture that proves it: without
+  // this its `z8` moved 2.51px abcjs does not move it.
+  const drawnRest = (el: LayoutElement): boolean => el.type === 'rest' && el.plainRest === true
+  const timed = (el: LayoutElement): boolean => el.type === 'note' || el.type === 'rest'
+
+  const slots = new Map<number, { voice: number; index: number }[]>()
+  out.forEach((elements, voice) => {
+    elements.forEach((el, index) => {
+      if (!timed(el)) return
+      const at = slots.get(el.x) ?? []
+      at.push({ voice, index })
+      slots.set(el.x, at)
+    })
+  })
+
+  /** Move the rest glyph — abcjs shifts `children[0]` and the element's own extent, alone. */
+  const shift = (voice: number, index: number, dy: number): void => {
+    const row = out[voice]
+    const el = row?.[index]
+    const head = el?.glyphs[0]
+    if (row === undefined || el === undefined || head === undefined) return
+    row[index] = {
+      ...el,
+      glyphs: [
+        {
+          ...head,
+          y: head.y + dy,
+          ...(head.reserve === undefined
+            ? {}
+            : { reserve: [head.reserve[0] + dy, head.reserve[1] + dy] as [number, number] }),
+        },
+        ...el.glyphs.slice(1),
+      ],
+    }
+  }
+
+  for (const at of slots.values()) {
+    if (at.length < 2) continue
+    const first = at[0]
+    const last = at[at.length - 1]
+    if (first === undefined || last === undefined) continue
+    const firstEl = out[first.voice]?.[first.index]
+    const lastEl = out[last.voice]?.[last.index]
+    if (firstEl === undefined || lastEl === undefined) continue
+
+    if (drawnRest(firstEl) && lastEl.type !== 'rest') {
+      // `distance1 = restTop.bottom - closeTop(other) - 2`, in PITCH, and negative means
+      // they overlap. In y — where down is positive and a pitch is `spacePerStep` — the
+      // same quantity is the gap itself, so no conversion is needed either way.
+      const dy = edge(lastEl, 'top') - edge(firstEl, 'bottom') - 2 * ENGRAVE.spacePerStep
+      if (dy < 0) shift(first.voice, first.index, dy)
+    } else if (drawnRest(lastEl) && firstEl.type !== 'rest') {
+      const dy = edge(firstEl, 'bottom') - edge(lastEl, 'top') + 2 * ENGRAVE.spacePerStep
+      if (dy > 0) shift(last.voice, last.index, dy)
+    }
+  }
+  return out
+}
+
+function anchorVoltas<
+  T extends {
+    readonly elements: readonly LayoutElement[]
+    readonly beams: readonly PlacedLine[]
+  } & StaffFurniture,
+>(parts: readonly T[], strict: boolean): T[] {
+  const present = parts.some((p) => (p.voltaLines ?? []).length > 0)
+  if (!present) return [...parts]
+
+  const top = verticalExtent(
+    parts.flatMap((p) => p.elements),
+    parts.flatMap((p) => p.beams),
+    strict,
+    {
+      tupletLines: parts.flatMap((p) => p.tupletLines ?? []),
+      tupletTexts: parts.flatMap((p) => p.tupletTexts ?? []),
+      tupletReserves: parts.flatMap((p) => p.tupletReserves ?? []),
+      tupletReservesAbove: parts.some((p) => p.tupletReservesAbove === true),
+      voltaLines: parts.flatMap((p) => p.voltaLines ?? []),
+      voltaTexts: parts.flatMap((p) => p.voltaTexts ?? []),
+      spannerLines: parts.flatMap((p) => p.spannerLines ?? []),
+      melismaLines: parts.flatMap((p) => p.melismaLines ?? []),
+      hasHairpin: parts.some((p) => p.hasHairpin === true),
+      dynamicsAbove: parts.some((p) => p.dynamicsAbove === true),
+      aboveStackPlaced: parts.some((p) => p.aboveStackPlaced === true),
+      chordLaneAbove: parts.some((p) => p.chordLaneAbove === true),
+    },
+  ).top
+
+  // `marginY` is zero and `verticalExtent` has already subtracted it; adding it back keeps
+  // the two in step if it ever stops being zero. `voltaDrawDrop` is abcjs's `- 2`, and y is
+  // DOWN here, so dropping the bracket back toward the staff is an addition.
+  const drawY =
+    top + ENGRAVE.marginY + ENGRAVE.voltaDrawDrop * ENGRAVE.spacePerStep
+  const shift = drawY - stepToY(ENGRAVE.voltaStep)
+  if (shift === 0) return [...parts]
+  return parts.map((part) => ({
+    ...part,
+    voltaLines: (part.voltaLines ?? []).map((l) => ({ ...l, y1: l.y1 + shift, y2: l.y2 + shift })),
+    voltaTexts: (part.voltaTexts ?? []).map((t) => ({ ...t, y: t.y + shift })),
+  }))
+}
+
 interface StaffFurniture {
+  /**
+   * A hairpin somewhere on this staff, taken from the EVENTS rather than from the drawn
+   * lines — see the note where it is consumed.
+   */
+  readonly hasHairpin?: boolean
+  /** Which side the dynamics lane is on — hairpins share it. */
+  readonly dynamicsAbove?: boolean
+  /**
+   * `anchorAboveStaff` HAS ALREADY SPENT THE ABOVE-STAFF LANES on this staff.
+   *
+   * Each lane is spent ONCE in abcjs — `setUpperAndLowerElements` walks `staff.top` up
+   * through lyric, chord, ending, dynamic, part and tempo in that order and every element
+   * it places is measured from the total. `anchorAboveStaff` reproduces that stack, and
+   * the element it places already sits above the lanes; re-deriving them here adds them a
+   * second time on top of it. Probed on `mouse-click-01`: adding a `w:` line flips the
+   * dynamics above and cost us 54.25px where abcjs spends 27.13 — exactly twice.
+   */
+  readonly aboveStackPlaced?: boolean
+  /**
+   * Whether `anchorAboveStaff` reserved a CHORD lane on this staff — which changes what
+   * the ENDING lane after it costs. See `verticalExtent`.
+   */
+  readonly chordLaneAbove?: boolean
+  /** abcjs's `endingHeightAbove` from a tuplet — see `layoutTuplets`. Never below. */
+  readonly tupletReservesAbove?: boolean
+  /** abcjs's declared box per tuplet — NOT the bracket's drawn lines. */
+  readonly tupletReserves?: readonly { top: number; bottom: number }[]
+  /** abcjs's declared box per tie and slur, applied AFTER the lanes. */
+  readonly curveReserves?: readonly { top: number; bottom: number }[]
   readonly tupletLines?: readonly PlacedLine[]
   readonly tupletTexts?: readonly PlacedText[]
   readonly voltaLines?: readonly PlacedLine[]
@@ -4494,16 +9173,41 @@ interface StaffFurniture {
   readonly spannerLines?: readonly PlacedLine[]
 }
 
+/**
+ * WHO SET THIS STAFF'S EXTENT — the probe that named the beam, the volta lane and the
+ * curve box, each in one run. `ABCTS_PROBE=1` makes the staff-origin call in the stacking
+ * loop print its own `top`/`bottom` in abcjs PITCH (`6 - 2 * y`) beside the source line
+ * that last raised each, ready to sit next to abcjs's `staff.top`/`.bottom`.
+ *
+ * Read ours from the STACKING LOOP and not from in here: `verticalExtent` also runs for
+ * the top-text block, and mixing the two scrambles the staff order.
+ */
+
+const PROBE = process.env.ABCTS_PROBE !== undefined
+/** Item probes fire only on the SOLVED pass — the solve runs `lineAt` up to eight times. */
+let probeFinalPass = false
+let probeTop = ''
+let probeBottom = ''
+let probeFlags = ''
+
 function verticalExtent(
   elements: readonly LayoutElement[],
   beams: readonly PlacedLine[] = [],
   strict = true,
   furniture: StaffFurniture = {},
-): { top: number; bottom: number } {
+): { top: number; bottom: number; inkBottom: number } {
   // The staff itself is always present, spanning steps 4 to -4.
   let top = stepToY(4)
   let bottom = stepToY(-4)
   const include = (a: number, b: number) => {
+    if (PROBE) {
+      const who = (new Error().stack ?? '')
+        .split('\n')[2]
+        ?.trim()
+        .replace(/.*layout\.ts:/, 'L')
+      if (a < top) probeTop = `${who} ${a.toFixed(4)}`
+      if (b > bottom) probeBottom = `${who} ${b.toFixed(4)}`
+    }
     top = Math.min(top, a)
     bottom = Math.max(bottom, b)
   }
@@ -4515,18 +9219,57 @@ function verticalExtent(
   // `multi-voice-triplet-brackets` is the highest note (26.0) with `endingHeightAbove: 4`,
   // not the bracket that sits well above it. So these are gathered as ABOVE/BELOW flags and
   // the lane is applied after the note extent is known; their real y is ignored here.
-  let endingAbove = false
-  let endingBelow = false
+  /** `endingHeightAbove` in PITCH — 0 for none, 4 for a tuplet, 5 for a volta. */
+  let endingAbove = 0
+  let endingBelow = 0
   /** Any dynamic or hairpin on the BELOW side, which reserves a flat lane past the ink. */
   let sawDynamicBelow = false
+  /**
+   * The same on the ABOVE side, which kept its own drawn box until now.
+   *
+   * abcjs reserves a FLAT lane there too: `DynamicDecoration` sets `volumeHeightAbove = 6`
+   * and `CrescendoElem` `dynamicHeightAbove = 6`, and when both are present
+   * `set-upper-and-lower-elements.js:39-42` adds `max(...) + margin` — 7 pitch — above the
+   * staff's ink without going through `incTop` at all. Probed on
+   * `multi-voice-lyrics-two-voices`: its ink tops out at 21.993 on a note and `staff.top`
+   * lands at 28.993, exactly 7 higher, with no lane logged. Measuring the `p` glyph's own
+   * box instead left both its staves 1.30 pitch short.
+   */
+  let sawDynamicAbove = false
+  // A HAIRPIN RESERVES THE DYNAMICS LANE LIKE ANY OTHER DYNAMIC, and it has to be taken
+  // from the music rather than from `spannerLines`: hairpins can span a system break, so
+  // they are resolved after packing and that array is still empty here. abcjs reserves for
+  // them all the same (`CrescendoElem.dynamicHeightAbove`, `crescendo-element.js:9`).
+  // Probed on `ragtime-nightingale`, whose `!<(!` staves read `staff.bottom = -20.000`
+  // against our -13.000 — a flat 7 pitch, exactly the lane.
+  if (furniture.hasHairpin === true) {
+    if (furniture.dynamicsAbove === true) sawDynamicAbove = true
+    else sawDynamicBelow = true
+  }
   const flag = (y: number) => {
-    if (y < 0) endingAbove = true
-    else endingBelow = true
+    if (y < 0) endingAbove = Math.max(endingAbove, ENGRAVE.voltaLane)
+    else endingBelow = Math.max(endingBelow, ENGRAVE.voltaLane)
   }
-  for (const line of [...(furniture.tupletLines ?? []), ...(furniture.voltaLines ?? [])]) {
-    flag((line.y1 + line.y2) / 2)
-  }
-  for (const t of [...(furniture.tupletTexts ?? []), ...(furniture.voltaTexts ?? [])]) flag(t.y)
+  // A TUPLET COUNTS TWICE: its BRACKET'S INK, and then the lane ON TOP OF THAT.
+  //
+  // `layoutVoice` calls `voice.adjustRange(child)` on every `TripletElem` (`layout/voice.js:19-23`),
+  // so the drawn bracket enters the staff's range like any other ink — and THEN
+  // `setUpperAndLowerElements` adds `endingHeightAbove + margin` above the result. Probed on
+  // `multi-voice-rest-collision`, the chain is explicit: clef 13.7244 -> a note 13.9879 ->
+  // TripletElem 17.5929 -> +5 = 22.5929.
+  //
+  // We reserved the lane and ignored the ink, on the reading that `multi-voice-triplet-brackets`
+  // has `staff.top` at its highest NOTE rather than at its bracket. That is true there and it
+  // is not the rule — the bracket simply did not out-reach the notes in that fixture. Here it
+  // does, by 3.59 pitch, and that was the whole of that fixture's 13.93px offset.
+  //
+  // A VOLTA is NOT the same: `EndingElem` goes through the `otherchildren` switch, which sets
+  // its top from the lane it was given and never adjusts the staff's range by its ink.
+  if (furniture.tupletReservesAbove === true)
+    endingAbove = Math.max(endingAbove, ENGRAVE.tupletLane)
+  for (const r of furniture.tupletReserves ?? []) include(r.top, r.bottom)
+  for (const line of furniture.voltaLines ?? []) flag((line.y1 + line.y2) / 2)
+  for (const t of furniture.voltaTexts ?? []) flag(t.y)
   // Melisma extenders and hairpins/glissandi keep their actual geometry — they sit in the
   // lyric and dynamic lanes, not the ending lane.
   for (const line of [...(furniture.melismaLines ?? []), ...(furniture.spannerLines ?? [])]) {
@@ -4544,23 +9287,53 @@ function verticalExtent(
     include(Math.min(line.y1, line.y2) - half, Math.max(line.y1, line.y2) + half)
   }
 
-  for (const beam of beams) {
-    const half = beam.thickness / 2
-    include(Math.min(beam.y1, beam.y2) - half, Math.max(beam.y1, beam.y2) + half)
-  }
+  // A BEAM DOES NOT COUNT TOWARD THE STAFF'S EXTENT. A `BeamElem` lives in
+  // `voice.otherchildren`, and `setUpperAndLowerVoiceElements` switches only on
+  // Crescendo, Dynamic, Ending and Tie — a beam is none of those, so abcjs never adds one.
+  // The STEMS carry it instead: they end on the beam, and their endpoints are in the range.
+  //
+  // Ours added half a beam thickness past the stem tip — a flat 0.50 pitch — which is
+  // exactly the `dBot = -0.50` that sat on 23 of `ragtime-nightingale`'s 46 staves.
+  // ponytail: the loop is gone rather than guarded, since nothing else read it.
 
   /** LOWEST lyric baseline on the staff — the last verse of the lowest-offset voice. */
   let lyricBottom = Number.NEGATIVE_INFINITY
+  /** The tallest lyric font on the staff — the lane is measured in IT, not the default. */
+  let lyricLaneHeight = 0
+  /** …and its SIZE, which is what the baseline is measured from. See below. */
+  let lyricFontSize = 0
 
   for (const el of elements) {
+    // A TEMPO MARK RESERVES A FLAT 6 PITCHES, not its ink.
+    //
+    // abcjs's `TempoElement` sets `totalHeightInPitches = 6` and `tempoHeightAbove` to the
+    // same 6 (`creation/elements/tempo-element.js:12-13`) — a constant, whatever the mark
+    // says and however far the beat-unit note's stem reaches above it. The staff's top then
+    // becomes exactly the point that reserve started from (`set-upper-and-lower-elements.js:206`).
+    //
+    // Ours measured the drawn mark instead, and its little up-stem stuck 6.9px past the
+    // reserve. That is a rigid shift of the whole drawing: every fixture with a `Q:` — six
+    // of them — sat 6.89 to 6.94px below abcjs on EVERY staff, with their staff-to-staff
+    // spacing already exact.
+    //
+    // The baseline is one font size plus abcjs's 2px bump below the top it reserved, which
+    // is how `anchorAboveStaff` placed it, so reading the box back off the baseline gets
+    // the reserve without threading it through.
+    if (el.type === 'tempo' && el.texts.length > 0) {
+      const baseline = Math.min(...el.texts.map((t) => t.y))
+      const declaredTop = baseline - ENGRAVE.tempoTextSize - ENGRAVE.tempoDescenderBump
+      include(declaredTop, declaredTop + ENGRAVE.tempoHeightAbove)
+      continue
+    }
     for (const g of el.glyphs) {
       // The ACTIVE table's box: abcjs's clef reaches 4.84 staff spaces above its origin
       // where Bravura's reaches 4.39, and that difference is space reserved above the
       // staff — visible as the last of the vertical offset on a title-only tune.
       // Only the BELOW side is re-anchored and lane-reserved. An ABOVE dynamic keeps its
       // own box in the ink scan, which is what it had before and what its fixtures expect.
-      if (g.role === 'dynamic' && g.y > 0) {
-        sawDynamicBelow = true
+      if (g.role === 'dynamic') {
+        if (g.y > 0) sawDynamicBelow = true
+        else sawDynamicAbove = true
         continue
       }
       if (g.reserve !== undefined) {
@@ -4571,7 +9344,9 @@ function verticalExtent(
       include(g.y + glyph.y, g.y + glyph.y + glyph.height)
     }
     for (const line of el.lines) {
-      const half = line.thickness / 2
+      // DRAWN IN THE LAYOUT PHASE, so it never reached `staff.top` — see `noReserve`. A
+      // beamed grace group's stems and its beam are the whole of this case.
+      if (line.noReserve === true) continue
       // A STEM reserves one step below its low end — `bottom: p1 - 1` on the stem's
       // RelativeElement (`abstract-engraver.js:762`), `p1` being the low pitch. On an
       // up-stem that end is at the notehead and the head's own box swallows it; on a
@@ -4595,13 +9370,31 @@ function verticalExtent(
         include(Math.min(line.y1, line.y2), low + (line.beamed === true ? 0 : ENGRAVE.spacePerStep))
         continue
       }
-      include(Math.min(line.y1, line.y2) - half, Math.max(line.y1, line.y2) + half)
+      // A LINE RESERVES ITS ENDPOINTS AND NOT ITS PAINTED WIDTH. `RelativeElement` widens
+      // `top`/`bottom` by `thickness / 2` only when a `thickness` is PASSED, and the only
+      // things that pass one are glyphs declaring their own height in pitches — noteheads,
+      // decorations, key and time signatures (`relative-element.js:22-24`). A barline
+      // never does: probed, abcjs's is `bar@2..10`, flush with the staff.
+      //
+      // Ours widened every line by half its stroke, and on a bass-clef staff whose top is
+      // the staff line itself that put the whole drawing 0.62px low — the barline's 0.16
+      // stroke, half of it, reaching 0.16 pitch above the top line.
+      include(Math.min(line.y1, line.y2), Math.max(line.y1, line.y2))
     }
     // No text metrics available, so bound the box by the font size: ascenders reach
     // roughly 0.8 of it above the baseline and descenders 0.25 below.
     for (const t of el.texts) {
       if (t.role === 'lyric') {
         lyricBottom = Math.max(lyricBottom, t.y)
+        // …AND THE HEIGHT IT RESERVES IS ITS OWN FONT'S, not the default's. `addLyric`
+        // measures `getTextSize.calc(lyricStr, 'vocalfont')`, so a `%%vocalfont` changes
+        // the LANE as well as the ink: at 20pt abcjs's next staff sits 7.5px lower than
+        // at the default, and at 10pt 3.85px higher — which was the whole of
+        // `visual-selection-01`'s dy.
+        // No box term: `vocalfont` is not in abcjs's `fontTypeCanHaveBox`
+        // (`abc_parse_directive.js:60`), so `%%vocalfont … box` never sets one.
+        lyricLaneHeight = Math.max(lyricLaneHeight, goldenTextHeight(t.size))
+        lyricFontSize = Math.max(lyricFontSize, t.size)
         continue
       }
       // OUT-OF-STAFF TEXT RESERVES ABCJS'S WAY: a full font size above the baseline and
@@ -4612,6 +9405,10 @@ function verticalExtent(
       //
       // The 0.8/0.25 estimate is kept for the TITLE block, where it was measured and where
       // raising the ascent to 1.0 is recorded as moving every drawing 3.7px down.
+      if (t.reserve !== undefined) {
+        include(t.reserve[0], t.reserve[1])
+        continue
+      }
       const ascent = el.type === 'title' ? TEXT_ASCENT : 1
       const descent = el.type === 'title' ? TEXT_DESCENT : ENGRAVE.textHeightRatio - 1
       include(t.y - t.size * ascent, t.y + t.size * descent)
@@ -4641,26 +9438,97 @@ function verticalExtent(
   // that dump's `getBBox` stub returns a single line's height where the SVG generator's
   // measures every tspan (`dump-svg.js:120-124`). The dump is the wrong oracle for this
   // one field, and believing it cost `little swallow` 19px a system.
+  /**
+   * The ink the lyric block hangs from and is subtracted from — abcjs's `staff.bottom` at
+   * `set-upper-and-lower-elements.js:51`, before the lyric, chord and dynamic lanes and
+   * before the `TieElem` push. `anchorLyrics` reads this rather than measuring its own.
+   */
+  const inkBottom = bottom
   if (Number.isFinite(lyricBottom)) {
     bottom = Math.max(
       bottom,
-      lyricBottom + ENGRAVE.lyricVoiceStep + ENGRAVE.spacePerStep - ENGRAVE.lyricInkGap,
+      // `height - size + STEP`, and the `- size` used to be a hard `- 17` because 17 is
+      // both `spacing.vocal` AND the default vocalfont's drawn size — two different
+      // quantities that happen to be equal, which is exactly the coincidence that hides a
+      // rule. abcjs draws the baseline one FONT SIZE below the lane top (`text.js:30`), so
+      // at 27px it sits 10px lower and the staff below it only 7.5px lower.
+      lyricBottom + lyricLaneHeight + ENGRAVE.spacePerStep - lyricFontSize,
+      lyricBottom + lyricLaneHeight + ENGRAVE.spacePerStep - lyricFontSize,
     )
   }
 
   // Apply the tuplet/volta ending lane now that `top`/`bottom` are the NOTE extent: a fixed
-  // 5 pitch (`ENGRAVE.endingLane`) beyond the note on whichever side an ending sits, never
+  // `endingHeightAbove + 1` beyond the note on whichever side an ending sits, never
   // the bracket's real height. See the ABOVE/BELOW gather at the top of this function.
   // Dynamics: a flat lane past the music, never their own drawn box.
   // ponytail: a staff whose only below-dynamic is a HAIRPIN reserves nothing, because
   // hairpins resolve after packing and `spannerLines` is still empty here. abcjs does
   // reserve for them (`dynamicHeightBelow`, `crescendo-element.js:11`). Taking presence
   // from the model instead was tried and made the corpus much worse — see the checkpoint.
+  if (PROBE)
+    probeFlags =
+      `dynBelow=${sawDynamicBelow} dynAbove=${sawDynamicAbove}` +
+      ` endAbove=${endingAbove} endBelow=${endingBelow}` +
+      ` tuplets=${(furniture.tupletReserves ?? []).length}` +
+      ` curves=${(furniture.curveReserves ?? []).length}`
+  // The ABOVE lanes are skipped once something has been placed on top of them — see
+  // `aboveStackPlaced`. `hasBlock` is the same rule for the title block, which is placed
+  // from a `musicTop` that already carries them.
+  const hasBlock = elements.some((el) => el.type === 'title')
+  const aboveSpent = hasBlock || furniture.aboveStackPlaced === true
   if (sawDynamicBelow) bottom += ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
-  if (endingAbove) top = Math.min(top, top - ENGRAVE.endingLane)
-  if (endingBelow) bottom = Math.max(bottom, bottom + ENGRAVE.endingLane)
+  if (sawDynamicAbove && !aboveSpent) top -= ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
+  // THE LANE EXTENDS THE MUSIC, AND ONLY THE MUSIC — so not on a pass that is measuring a
+  // top-text block as well.
+  //
+  // `verticalExtent` runs twice per staff: once over the music alone, to decide where the
+  // title block goes, and once over both, to set the staff's origin. Applying the lane on
+  // the second pass adds it to a total that already carries it, because the block was
+  // placed `musicSpace` above a `musicTop` that had it. Probed on
+  // `vree-slurs-and-triplets`: three applications, the last two both taking -97.46 to
+  // -116.84. The block always wins that `min` when it is present — its offset is
+  // `musicTop - musicSpace - blockHeight`, which is below `musicTop` by construction — so
+  // skipping the lane here cannot change the answer, only stop it being counted twice.
+  // The ENDING lane is NOT gated on `aboveStackPlaced`: `anchorAboveStaff`'s ink call
+  // deliberately leaves it out (see the `voltaLines: []` note there), so the stack it
+  // placed sits BELOW it and this is the one place it is spent. `hasBlock` still gates it,
+  // for the title block, which is placed from a `musicTop` that does carry it.
+  //
+  // AND AN ENDING OVER A CHORD LANE COSTS A FLAT 2 PITCH, margin included:
+  //
+  //     if (staff.specialY.endingHeightAbove) {
+  //       if (staff.specialY.chordHeightAbove) staff.top += 2;
+  //       else staff.top += staff.specialY.endingHeightAbove + margin;
+  //
+  // (`set-upper-and-lower-elements.js:33-38`). Not a scaling and not a max — a different
+  // branch, and 2 against a volta's 5 + 1 is four pitch, exactly the 15.49px a ladder of
+  // five control tunes put on `"D7"…|1…` and on nothing simpler. A tuplet's lane takes the
+  // same branch, since abcjs stores both in the one `endingHeightAbove`.
+  const lane = (pitch: number) => (pitch + ENGRAVE.laneMargin) * ENGRAVE.spacePerStep
+  if (endingAbove > 0 && !hasBlock)
+    top -=
+      furniture.chordLaneAbove === true
+        ? ENGRAVE.endingOverChordLane * ENGRAVE.spacePerStep
+        : lane(endingAbove)
+  if (endingBelow > 0 && !hasBlock) bottom += lane(endingBelow)
 
-  return { top: top - ENGRAVE.marginY, bottom: bottom + ENGRAVE.marginY }
+  // A TIE OR SLUR PUSHES THE LANES' RESULT — IT DOES NOT GO UNDER THEM.
+  //
+  // `setUpperAndLowerElements` runs every lane onto `staff.top`/`.bottom` FIRST and only
+  // then loops the voices, where the `TieElem` case takes `max`/`min` against what the
+  // lanes already produced. So a curve that reaches less far than the lane contributes
+  // nothing at all, where a tuplet's box — which enters through `layoutVoice`'s
+  // `adjustRange`, before any of this — is ink the lane then sits on top of.
+  //
+  // Counting curves as ink instead put five of `ragtime-nightingale`'s staves 1.2 to 2.6
+  // pitch out, always on a staff that also had a lane, and always by the amount the curve
+  // poked past the music underneath it.
+  for (const r of furniture.curveReserves ?? []) {
+    top = Math.min(top, r.top)
+    bottom = Math.max(bottom, r.bottom)
+  }
+
+  return { top: top - ENGRAVE.marginY, bottom: bottom + ENGRAVE.marginY, inkBottom }
 }
 
 function layoutEvent(
@@ -4676,6 +9544,10 @@ function layoutEvent(
   voiceStem: boolean | null = null,
   /** Dynamics above the staff when the tune sings, below otherwise. */
   dynamicsAbove = true,
+  /** abcjs's `isMultiVoice` — this voice shares its staff. Only a rest reads it. */
+  sharedStaff = false,
+  /** abcjs's `measureLength` — a rest exactly this long becomes a WHOLE rest. */
+  measureLength: number | null = null,
 ): LayoutElement | null {
   const advance = naturalWidth(event.duration, spacingScale)
   // The beam's direction wins over the voice convention: a beam cannot join opposed stems,
@@ -4709,7 +9581,7 @@ function layoutEvent(
       dynamicsAbove,
     )
   }
-  return layoutRest(event, advance, x, strict)
+  return layoutRest(event, advance, x, strict, clef, sharedStaff ? voiceStem : null, measureLength)
 }
 
 /**
@@ -4738,19 +9610,34 @@ function beamDirections(
    */
   forced: boolean | null = null,
 ): Map<number, boolean> {
-  const extremes = new Map<number, { min: number; max: number }>()
+  // A BEAM'S DIRECTION IS THE MEAN OF ITS NOTES' AVERAGE PITCHES, not its extremes.
+  //
+  //     this.total = Math.round(this.total + abselem.abcelem.averagepitch)   // per element
+  //     this.average = total / elems.length
+  //     this.stemsUp = this.average < 6                                       // B, hardcoded
+  //
+  // (`beam-element.js:54-66,89-98`). The RUNNING TOTAL IS ROUNDED at every add, which only
+  // shows on a chord — whose `averagepitch` is fractional — and is reproduced because it is
+  // free to.
+  //
+  // We took whichever EXTREME was further from the middle line, which agrees with the mean
+  // on a compact run and disagrees the moment one note is an outlier: `"E"e"F"F"F#"^F"G"G`
+  // averages 4.75 and beams UP where its extremes are symmetric about the line and beamed
+  // DOWN. That was 16.52px of staff, and all of `visual-transpose-05`.
+  const totals = new Map<number, { total: number; count: number }>()
   for (const measure of voice?.measures ?? []) {
     for (const event of measure.events) {
       if (event.type === 'rest' || event.beamGroup === null) continue
       const pitches = event.type === 'chord' ? event.pitches : [event.pitch]
-      for (const pitch of pitches) {
-        const step = pitchToStep(pitch, clef)
-        const seen = extremes.get(event.beamGroup)
-        if (seen === undefined) extremes.set(event.beamGroup, { min: step, max: step })
-        else {
-          seen.min = Math.min(seen.min, step)
-          seen.max = Math.max(seen.max, step)
-        }
+      if (pitches.length === 0) continue
+      // abcjs's `averagepitch`, in ITS pitch units so the rounding lands where its does.
+      const average =
+        pitches.reduce((sum, p) => sum + pitchToStep(p, clef), 0) / pitches.length + PITCH_ORIGIN
+      const seen = totals.get(event.beamGroup)
+      if (seen === undefined) totals.set(event.beamGroup, { total: Math.round(average), count: 1 })
+      else {
+        seen.total = Math.round(seen.total + average)
+        seen.count += 1
       }
     }
   }
@@ -4758,15 +9645,238 @@ function beamDirections(
   const directions = new Map<number, boolean>()
   // A beam cannot join opposed stems, so a forced voice's beams all point its way.
   const declared = voice?.stemDirection == null ? forced : voice.stemDirection === 'up'
-  for (const [group, { min, max }] of extremes) {
-    if (declared !== null) {
-      directions.set(group, declared)
-      continue
-    }
-    // Whichever extreme is further from the middle line decides; ties go stem-down.
-    directions.set(group, Math.abs(min) > Math.abs(max) ? min < 0 : max < 0)
+  for (const [group, { total, count }] of totals) {
+    directions.set(group, declared ?? total / count < PITCH_ORIGIN)
   }
   return directions
 }
 
+/**
+ * The GRACE NOTES before an event — heads, stems, an acciaccatura slash, and a beam when
+ * there is more than one.
+ *
+ * A FUNCTION RATHER THAN A BLOCK INSIDE THE NOTE LAYOUT, because abcjs does not put it
+ * inside one either: `createNote` closes its rest/note branch and THEN calls
+ * `addGraceNotes` (`abstract-engraver.js:834`), so `{a}z` and `{a}y` engrave their graces
+ * exactly as `{a}c` does. Ours lived in the notehead path and was gated on
+ * `type !== 'rest'`, which cost `(f3 {a})y` a whole notehead and 9.6px of staff.
+ *
+ * Returns what the caller needs to place everything after it: the ink, the WIDTH the note
+ * itself is pushed right by (abcjs's `graceoffsets[0]`), and the ROOM the graces add to
+ * `roomtaken`, which is a different number whenever one of them carries an accidental.
+ */
+function layoutGraces(
+  event: MusicEvent,
+  x: number,
+  clef: Clef,
+  strict: boolean,
+): { glyphs: PlacedGlyph[]; lines: PlacedLine[]; width: number; room: number; left: number } {
+  const graceGlyphs: PlacedGlyph[] = []
+  const graceLines: PlacedLine[] = []
+  let graceWidth = 0
+  let graceRoom = 0
+  /** How far LEFT of the cursor the graces reach — abcjs's `extraw`, which is a MIN. */
+  let graceLeft = 0
+  if ('graceNotes' in event && event.graceNotes.length > 0) {
+    const scale = ENGRAVE.graceScale
+    const graceSteps = event.graceNotes.map((p) => pitchToStep(p, clef))
 
+    // A GROUP OF MORE THAN ONE GRACE IS BEAMED, and that changes three things at once —
+    // `gracenotes.length > 1` builds a `BeamElem(round(stemHeight * 3.5/5), "grace",
+    // isBagpipes)` (`abstract-engraver.js:466-478`). The beam then owns the stem tops, the
+    // flag is suppressed (`flag = gracebeam ? null : uflags[3]`), and — the part that is
+    // worth more than the other two put together — THE STEMS STOP RESERVING, because
+    // `createStems` runs in the layout phase, after `staff.top` has been taken.
+    //
+    // A ladder of seven control tunes said so before any of it was written. abcjs's top
+    // line is IDENTICAL for `CD`, `{efg}CD` and `{ef}ag` — the G clef's declared 13.72
+    // pitch sets the staff top and nothing about a beamed grace ever beats it — while a
+    // SINGLE grace moves it, and `{c''}CD` moves it 44.5px against `{c''d''}CD`'s 34.5.
+    // Two graces reserving LESS than one is not a thing you would guess; it is the phase.
+    const beamedGraces = graceSteps.length > 1
+    /** Half the head's DECLARED height, unscaled — see the reserve below. */
+    const graceDeclaredHalf = (glyphsFor(strict).get('noteheadBlack')?.declaredHeight ?? 0) / 2
+    // `stemHeight = Math.round(this.stemHeight * graceScaleStem)` — 9.5 * 0.7 rounded, so
+    // a flat 7 PITCH, and the rounding is abcjs's (`abstract-engraver.js:469`).
+    const graceStemPitches = Math.round(ENGRAVE.beamStemHeight * ABCJS_RATIO.graceStemScale)
+    // WHERE EACH GRACE SITS IS A BACKWARD WALK, and an accidental widens the gap BEFORE
+    // its own grace rather than after it:
+    //
+    //     for (i = len-1; i >= 0; i--) { roomtaken += 10; graceoffsets[i] = roomtaken;
+    //                                    if (gracenotes[i].accidental) roomtaken += 7 }
+    //
+    // with `headx = -graceoffsets[i]` (`abstract-engraver.js:479-495`). Running forward at
+    // a flat 10 gives the same answer whenever nothing is altered — which is every rung of
+    // the ladder but one — and puts `{e^fg}` 7px out, the accidental's own room, because
+    // the offsets it feeds are the ones LEFT of it.
+    const graceOffsets: number[] = new Array(graceSteps.length)
+    let walk = 0
+    for (let i = graceSteps.length - 1; i >= 0; i--) {
+      walk += ENGRAVE.graceAdvance
+      graceOffsets[i] = walk
+      if (event.graceNotes[i]?.accidental != null) walk += ENGRAVE.graceAccidentalRoom
+    }
+    /** Abcjs's `abselem.x` in our frame: the graces hang LEFT of it. */
+    const graceNoteX = x + (graceOffsets[0] ?? 0)
+    const graceXOf = (i: number): number => graceNoteX - (graceOffsets[i] ?? 0)
+    graceSteps.forEach((graceStep, i) => {
+      const gx = graceXOf(i)
+      // A GRACE CARRIES ITS ACCIDENTAL, and we reserved the ROOM for one while never
+      // drawing the GLYPH — a gap no gate could see, because the notehead count is right
+      // either way and an accidental is not a notehead.
+      //
+      // `createNoteHead` runs for a grace exactly as for a note, `printAccidentals` and
+      // all, and places it at `accPlace -= getSymbolWidth(symb) * scale + 2` from the
+      // head's own `dx` (`create-note-head.js:88-101`). Probed on `"Bb"{^C}B,4`: head at
+      // -10, sharp at -16.95, and 10 + (8.25 * 0.6 + 2) is 16.95 exactly.
+      //
+      // It is also what the element reaches LEFT by. `extraw` is a running MIN over every
+      // `addExtra` child, and `addCentered` mins the chord symbol's own `-width / 2` into
+      // the same number — so on `"Bb"{^C}B,4` the sharp's -16.95 beats the chord's -13.34
+      // and the element reserves the wider of the two. With no accidental the chord wins
+      // and the tune measures exact, which is why this only ever showed where BOTH were
+      // present: four rungs of five were green.
+      const graceAccidental = accidentalGlyph(event.graceNotes[i]?.accidental ?? null)
+      if (graceAccidental !== null) {
+        const accWidth = glyphsFor(strict).width(graceAccidental)
+        const accDeclaredHalf = (glyphsFor(strict).get(graceAccidental)?.declaredHeight ?? 0) / 2
+        const accX = gx - (accWidth * scale + spaces(ABCJS_PX.accidentalGap))
+        graceGlyphs.push({
+          name: graceAccidental,
+          x: accX,
+          y: stepToY(graceStep),
+          scale,
+          // `accidental`, NOT `grace` — the role picks the CLASS, and `grace` maps to
+          // `abcjs-notehead`. Wearing it made the gate count the sharp as a sixth notehead
+          // against abcjs's five, which is the gate working: a class-based comparison sees
+          // exactly what the class says it is.
+          role: 'accidental',
+          // ITS OWN declared height, and NOT scaled. `createNoteHead` reads
+          // `h = symbolHeightInPitches(symb)` and hands the element `top: pitch + h / 2`,
+          // `bottom: pitch - h / 2` while passing `scalex`/`scaley` separately
+          // (`create-note-head.js:99-101`) — so a grace's sharp is drawn at 60% and
+          // reserves 100%. The same never-applies-the-scale bug as the draw path, one
+          // constructor over, and worth 0.07px of ragtime's dy on its own.
+          reserve: [stepToY(graceStep) - accDeclaredHalf, stepToY(graceStep) + accDeclaredHalf],
+        })
+        // FROM THE NOTE, NOT THE CURSOR. `extraw` is relative to `abselem.x`, which is
+        // where the notehead sits — the graces hang at negative `dx` from it — and the
+        // caller compares this against `headX - x`, which is measured the same way.
+        graceLeft = Math.max(graceLeft, graceNoteX - accX)
+      }
+      graceGlyphs.push({
+        name: 'noteheadBlack',
+        x: gx,
+        y: stepToY(graceStep),
+        scale,
+        role: 'grace',
+        // A DECLARED BOX, SCALED, AND CENTRED ON THE PITCH. `createNoteHead` hands the head
+        // `thickness: symbolHeightInPitches(c) * scale` and `RelativeElement` reserves
+        // `pitch ± thickness / 2` — the PUBLISHED `h`, 8.094, not the 8.13 ink box, and
+        // times the grace scale. Falling through to the ink box at full size over-reserved
+        // by 0.42 pitch, which is `{c''d''}CD`'s last 1.65px.
+        reserve: [
+          stepToY(graceStep) - graceDeclaredHalf * scale,
+          stepToY(graceStep) + graceDeclaredHalf * scale,
+        ],
+      })
+      // THE STEM IS MEASURED FROM THE HEAD'S PITCH, NOT FROM ITS OWN BASE. abcjs writes
+      // `p1 = gracepitch + 1/3 * gracescale` and `p2 = gracepitch + 7 * gracescale`
+      // (`abstract-engraver.js:515-520`) — two independent offsets from the same pitch,
+      // where ours ran the length up from the base and so reached 0.2 pitch too far. That
+      // is the whole of `{c''}CD`'s 0.78px. `dx = grace.dx + grace.w` with `linewidth
+      // -0.6`, so the centre is 0.3px inside the head's right edge, and the 0.6 is NOT
+      // scaled by the grace scale — it is the beamed-stem weight, flat.
+      const weight = LINE_WEIGHTS.beamedStem
+      const stemX = gx + glyphsFor(strict).width('noteheadBlack') * scale - weight / 2
+      const headY = stepToY(graceStep)
+      graceLines.push({
+        x1: stemX,
+        y1: headY + (ENGRAVE.spacePerStep / 3) * scale,
+        x2: stemX,
+        y2: headY - graceStemPitches * scale * ENGRAVE.spacePerStep,
+        thickness: weight,
+        role: 'stem',
+        ...(beamedGraces ? { noReserve: true, beamed: true } : {}),
+      })
+    })
+
+    if (beamedGraces) {
+      // `calcYPos` with `isGrace`, which is the same solve the main beam takes except that
+      // the too-high/too-low clamp is skipped: `pos = round(max(average + barpos, maxPitch
+      // + barminpos))` with `barpos = barminpos = stemHeight - 2`, and `forceup` is always
+      // true for a grace (`beam-element.js:22`), so it is always the ascending branch.
+      const barpos = graceStemPitches - 2
+      const average = graceSteps.reduce((a, b) => a + b, 0) / graceSteps.length
+      const extreme = Math.max(...graceSteps)
+      const pos = Math.round(Math.max(average + barpos, extreme + barpos))
+      // `calcSlant`, capped at half the stem count, with abcjs's `Math.floor` on both
+      // halves — negatives included.
+      const maxSlant = graceSteps.length / 2
+      const rawSlant = (graceSteps[0] ?? 0) - (graceSteps[graceSteps.length - 1] ?? 0)
+      const slant = Math.max(-maxSlant, Math.min(maxSlant, rawSlant))
+      const startStep = pos + Math.floor(slant / 2)
+      const endStep = pos + Math.floor(-slant / 2)
+      // `calcXPos` on the ascending branch: start inset by 0.6, end flush at the head's
+      // far edge. The grace path does NOT take finding 73's double-count — `createStems`
+      // guards that term on `!isGrace` and adds `elem.heads[0].dx` afterwards instead,
+      // which lands the sample and the quad at the same x.
+      const graceInk = glyphsFor(strict).width('noteheadBlack') * scale
+      const beamStartX = graceXOf(0) + graceInk - spaces(ABCJS_PX.flagStemInset)
+      const beamEndX = graceXOf(graceSteps.length - 1) + graceInk
+      const span = beamEndX - beamStartX
+      const startY = stepToY(startStep)
+      const endY = stepToY(endStep)
+      const yAt = (bx: number): number =>
+        span === 0 ? startY : startY + ((bx - beamStartX) / span) * (endY - startY)
+      // `calcDy` returns `STEP * 0.4` for a grace beam — under half the weight of a full
+      // one (`layout/beam.js:66-71`).
+      const thickness = LINE_WEIGHTS.beam * ABCJS_RATIO.graceBeamScale
+      for (let i = 0; i < graceLines.length; i++) {
+        const stem = graceLines[i]
+        if (stem === undefined || stem.role !== 'stem') continue
+        graceLines[i] = { ...stem, y2: yAt(graceXOf(i) + graceInk) }
+      }
+      graceLines.push({
+        x1: beamStartX,
+        y1: yAt(beamStartX) + thickness / 2,
+        x2: beamEndX,
+        y2: yAt(beamEndX) + thickness / 2,
+        thickness,
+        noReserve: true,
+      })
+    }
+
+    // The note sits at abcjs's `abselem.x`, which is the FIRST grace's offset past our
+    // cursor — `graceoffsets[0]`, accidental room included, not a flat 10 per grace.
+    graceWidth = (graceOffsets[0] ?? 0) + ENGRAVE.graceGap
+    // A GRACE NOTE ADDS 10 TO `roomtaken`, and an accidental on it another 7
+    // (`abstract-engraver.js:481-487`). Whatever comes after — the arpeggio, a LEFT
+    // annotation — starts from the total, so it sits left of the graces rather than on
+    // them. `B"<2"{c}B` was 6.71px of dx out on the missing term.
+    graceRoom =
+      graceSteps.length * ENGRAVE.graceAdvance +
+      event.graceNotes.filter((p) => p.accidental !== null).length * ENGRAVE.graceAccidentalRoom
+
+    if (event.graceSlash) {
+      // One slash across the first grace note's stem, which is what marks the whole
+      // group as an acciaccatura however many notes it has.
+      const firstStep = graceSteps[0] ?? 0
+      const tipY = stepToY(firstStep) - ENGRAVE.stemLength * scale
+      graceLines.push({
+        x1: x - 0.2,
+        y1: tipY + 1.0,
+        x2: x + ENGRAVE.graceAdvance * 0.9,
+        y2: tipY - 0.2,
+        thickness: LINE_WEIGHTS.stem * 1.4,
+      })
+    }
+  }
+  return {
+    glyphs: graceGlyphs,
+    lines: graceLines,
+    width: graceWidth,
+    room: graceRoom,
+    left: graceLeft,
+  }
+}

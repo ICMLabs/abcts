@@ -241,3 +241,48 @@ recompute `nextx = x + naturalWidth(remaining)`. The recompute is non-linear —
 the advance evenly across the onsets it spans.
 
 That is the whole of what is left on this axis.
+
+---
+
+## THE ARC IS CLOSED — per line, and green
+
+Read `CHECKPOINT-2026-08-02b.md` for the full account. In summary, the last structural
+piece named above ("ONE CURSOR ACROSS VOICES", then "per LINE rather than per column") is
+done, and it took the branch from red-by-design to **505/505 with the ceilings re-recorded**.
+
+| | arc start | after the shared cursor | now |
+|---|---|---|---|
+| dx exactly zero | 3/29 | 8/29 | **22/29** |
+| ox exactly zero | 0/29 | 8/29 | **22/29** |
+| dx median | +16.70 | +9.41 | **+0.01** |
+| ox median | −9.60 | −1.37 | **−0.00** |
+| notehead distance median | — | 10.20 | **5.59** |
+
+`voice-middle-after-clef`, stuck at exactly 79.0 through every change of this arc, is 0.0.
+`multi-voice-triplet-brackets` went 110.4 → 0.0.
+
+What the per-line port turned out to require, none of it visible from the column model:
+
+1. Barlines are NOT aligned across voices — they are zero-duration elements on one timeline.
+2. A FINISHED voice still pushes the cursor, through `getDurationIndex`'s undefined-child
+   branch.
+3. The staff prefix rides the same cursor, one element at a time.
+4. A note is anchored at its NOTEHEAD; accidentals and graces hang left as `extraw`.
+5. A lyric or chord symbol is half its width on EACH side of the note (`addCentered`) —
+   annotations are `w = 0` and occupy nothing.
+6. Text has to be measured in the face abcjs names, at its real scale.
+
+### The absolute stretch guard — CLOSED, as "do not implement"
+
+The item this document opened by listing as unblocked is inert in abcjs. `minSpace` is a min
+over every pass of the pushing voice's spacing units and the first pass always contributes
+zero, because every voice starts at `leftEdge` and no `getNextX` beats the cursor. Probed:
+`minSpace = 0`, so `spacing * minSpace > 50` never fires. Reproducing it would be a
+divergence.
+
+### What is left is not structural on this axis
+
+`ragtime-nightingale` 72.4 (whose `dy` is 58.1 — the vertical is the bigger term there),
+`little swallow` 24.0 (Chinese lyric metrics), `frere-jacques` 22.2 (abcjs wraps a source
+line; the known model conflict), then 7.6, 5.4 and 3.9. And `vree-grace-notes`' 32.5 is a
+GATE ARTEFACT — see the checkpoint.

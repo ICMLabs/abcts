@@ -1,65 +1,65 @@
 tune 0
-bounds  width=45.597 height=24.809 top=-1.935
+bounds  width=44.951 height=25.796 top=-1.935
 systems 1
-system 0 width=45.597 originY=0.000
-  staff 0 originY=9.152
-    staffline 0.000,2.000 -> 45.597,2.000 t=0.130
-    staffline 0.000,1.000 -> 45.597,1.000 t=0.130
-    staffline 0.000,0.000 -> 45.597,0.000 t=0.130
-    staffline 0.000,-1.000 -> 45.597,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 45.597,-2.000 t=0.130
+system 0 width=44.951 originY=0.000
+  staff 0 originY=8.209
+    staffline 13.641,2.000 -> 43.016,2.000 t=0.090
+    staffline 13.641,1.000 -> 43.016,1.000 t=0.090
+    staffline 13.641,0.000 -> 43.016,0.000 t=0.090
+    staffline 13.641,-1.000 -> 43.016,-1.000 t=0.090
+    staffline 13.641,-2.000 -> 43.016,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  14.355,-4.693 size=3.484 bold "Reorder Test"
+      text  16.777,-3.750 size=3.484 bold "Reorder Test"
     voiceName x=1.935 w=0.000
       text  1.935,0.768 size=2.194 bold "V2-bottom"
-    clef x=13.641 w=2.600
-      glyph fClef 13.641,-1.000
-    timeSignature x=17.242 w=1.522
-      glyph timeSig4 17.242,-1.000
-      glyph timeSig4 17.242,1.000
-    note@-8 x=19.763 w=5.474
-      glyph noteheadBlack 19.763,4.000
-      line  19.363,3.000 -> 21.429,3.000 t=0.160
-      line  19.363,4.000 -> 21.429,4.000 t=0.160
-      line  20.943,3.832 -> 20.943,0.000 t=0.120
-    note@-7 x=25.238 w=5.474
-      glyph noteheadBlack 25.238,3.500
-      line  24.838,3.000 -> 26.904,3.000 t=0.160
-      line  26.418,3.332 -> 26.418,0.000 t=0.120
-    note@-6 x=30.712 w=5.474
-      glyph noteheadBlack 30.712,3.000
-      line  30.312,3.000 -> 32.378,3.000 t=0.160
-      line  31.892,2.832 -> 31.892,-0.500 t=0.120
-    note@-5 x=36.187 w=5.474
-      glyph noteheadBlack 36.187,2.500
-      line  37.367,2.332 -> 37.367,-1.000 t=0.120
-    bar x=42.661 w=0.160
-      line  42.741,-2.000 -> 42.741,2.000 t=0.160
-  staff 1 originY=19.346
-    staffline 0.000,2.000 -> 45.597,2.000 t=0.130
-    staffline 0.000,1.000 -> 45.597,1.000 t=0.130
-    staffline 0.000,0.000 -> 45.597,0.000 t=0.130
-    staffline 0.000,-1.000 -> 45.597,-1.000 t=0.130
-    staffline 0.000,-2.000 -> 45.597,-2.000 t=0.130
+    clef x=13.641 w=3.246
+      glyph fClef 14.286,-1.000
+    timeSignature x=18.177 w=1.522
+      glyph timeSig4 18.177,-1.000
+      glyph timeSig4 18.177,1.000
+    note@-8 x=20.989 w=5.474
+      glyph noteheadBlack 20.989,4.000
+      line  20.731,3.000 -> 22.513,3.000 t=0.090
+      line  20.731,4.000 -> 22.513,4.000 t=0.090
+      line  22.191,3.833 -> 22.191,0.000 t=0.129
+    note@-7 x=26.464 w=5.474
+      glyph noteheadBlack 26.464,3.500
+      line  26.206,3.000 -> 27.988,3.000 t=0.090
+      line  27.665,3.333 -> 27.665,0.000 t=0.129
+    note@-6 x=31.938 w=5.474
+      glyph noteheadBlack 31.938,3.000
+      line  31.680,3.000 -> 33.462,3.000 t=0.090
+      line  33.139,2.833 -> 33.139,-0.500 t=0.129
+    note@-5 x=37.412 w=5.474
+      glyph noteheadBlack 37.412,2.500
+      line  38.614,2.333 -> 38.614,-1.000 t=0.129
+    bar x=42.887 w=0.077
+      line  42.926,-2.000 -> 42.926,2.000 t=0.077
+  staff 1 originY=18.403
+    staffline 13.641,2.000 -> 43.016,2.000 t=0.090
+    staffline 13.641,1.000 -> 43.016,1.000 t=0.090
+    staffline 13.641,0.000 -> 43.016,0.000 t=0.090
+    staffline 13.641,-1.000 -> 43.016,-1.000 t=0.090
+    staffline 13.641,-2.000 -> 43.016,-2.000 t=0.090
     voiceName x=1.935 w=0.000
       text  1.935,0.768 size=2.194 bold "V1-top"
-    clef x=13.641 w=2.458
-      glyph gClef 13.641,1.000
-    timeSignature x=17.099 w=1.522
-      glyph timeSig4 17.099,-1.000
-      glyph timeSig4 17.099,1.000
-    note@-6 x=19.763 w=5.474
-      glyph noteheadBlack 19.763,3.000
-      line  19.363,3.000 -> 21.429,3.000 t=0.160
-      line  20.943,2.832 -> 20.943,-0.500 t=0.120
-    note@-5 x=25.238 w=5.474
-      glyph noteheadBlack 25.238,2.500
-      line  26.418,2.332 -> 26.418,-1.000 t=0.120
-    note@-4 x=30.712 w=5.474
-      glyph noteheadBlack 30.712,2.000
-      line  31.892,1.832 -> 31.892,-1.500 t=0.120
-    note@-3 x=36.187 w=5.474
-      glyph noteheadBlack 36.187,1.500
-      line  37.367,1.332 -> 37.367,-2.000 t=0.120
-    bar x=42.661 w=0.160
-      line  42.741,-2.000 -> 42.741,2.000 t=0.160
+    clef x=13.641 w=3.103
+      glyph gClef 14.286,1.000
+    timeSignature x=18.177 w=1.522
+      glyph timeSig4 18.177,-1.000
+      glyph timeSig4 18.177,1.000
+    note@-6 x=20.989 w=5.474
+      glyph noteheadBlack 20.989,3.000
+      line  20.731,3.000 -> 22.513,3.000 t=0.090
+      line  22.191,2.833 -> 22.191,-0.500 t=0.129
+    note@-5 x=26.464 w=5.474
+      glyph noteheadBlack 26.464,2.500
+      line  27.665,2.333 -> 27.665,-1.000 t=0.129
+    note@-4 x=31.938 w=5.474
+      glyph noteheadBlack 31.938,2.000
+      line  33.139,1.833 -> 33.139,-1.500 t=0.129
+    note@-3 x=37.412 w=5.474
+      glyph noteheadBlack 37.412,1.500
+      line  38.614,1.333 -> 38.614,-2.000 t=0.129
+    bar x=42.887 w=0.077
+      line  42.926,-2.000 -> 42.926,2.000 t=0.077

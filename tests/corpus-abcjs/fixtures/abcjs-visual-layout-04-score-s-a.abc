@@ -1,0 +1,9 @@
+X:1
+L:1/8
+M:4/4
+%%score (S A)
+V:S clef=treble middle=B stem=up
+V:A clef=treble middle=B stem=down
+K:C
+[V:S]G4 zA G2 | GG GG GG GG | G/G/G/G/   [GB]/G/[cG]/G/   G/G/G/G/   G/G/G/G/ | C6 ||
+[V:A]F2 F2 F2 F2 | FF EF FE FC | F/C/D/A,/   F/F/F/F/   [DF]/F/[FD]/F/   F/F/F/F/ | _B,6 ||

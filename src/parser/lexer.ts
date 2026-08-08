@@ -114,6 +114,17 @@ export class Lexer {
       return token('barline', i - start)
     }
 
+    // `[` BEFORE A DIGIT OR A QUOTE IS AN INVISIBLE BARLINE, one character long —
+    // `if ((line[i] >= '1' && line[i] <= '9') || line[i] === '"') return {len: 1, token:
+    // "bar_invisible"}` (`abc_tokenizer.js:215-217`). That is how `[1 …` and `[2 …` write
+    // a repeat ending with no barline before it, and how `["D"…` opens one carrying a
+    // chord. Lexed as a chord instead, the whole ending ran together at one x:
+    // `visual-layout-09` had seven noteheads stacked on the same 82.5.
+    if (c === '[' && (src[start + 1] ?? '') >= '1' && (src[start + 1] ?? '') <= '9') {
+      return token('barline', 1)
+    }
+    if (c === '[' && src[start + 1] === '"') return token('barline', 1)
+
     // `[K:C]` is an inline field; a bare `[` opens a chord.
     if (c === '[') {
       if (start + 2 < src.length && src[start + 2] === ':') {

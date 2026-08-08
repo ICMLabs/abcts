@@ -1,0 +1,10 @@
+X:5
+L:1/8
+%%staves {RH LH}
+V: RH clef=treble
+V: LH clef=bass
+K:C
+[V: RH]
+|: c
+[V: LH]
+|: G,

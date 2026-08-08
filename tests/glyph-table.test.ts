@@ -61,8 +61,14 @@ describe('glyph table selection', () => {
     // Not a compromise — the parity behaviour. Anything reaching for a glyph abcjs lacks
     // is already outside what abcjs can express, so Bravura's is strictly better than a
     // blank, and the spacing stays consistent with the shape actually drawn.
+    //
+    // EVERY NAME HERE MUST BE ONE ABCJS GENUINELY LACKS, and `noteheadDiamondBlack` was
+    // not: abcjs has `noteheads.harmonic.quarter` and our generator could not see it,
+    // because abcjs adds four styled heads by ASSIGNMENT after its table literal. This
+    // list asserted the fallback and so froze the defect in place — a fallback test is
+    // only meaningful if the absence it names is real.
     for (const name of [
-      'noteheadDiamondBlack',
+      'ornamentTurnInverted',
       'accidentalThreeQuarterTonesSharpStein',
       'tremolo1',
     ] as GlyphName[]) {

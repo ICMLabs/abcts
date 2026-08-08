@@ -102,15 +102,168 @@ describe('mid-tune key changes', () => {
     expect(seq(after).join(' ')).toContain('bar keySignature')
   })
 
-  it('treats a mode change with the same signature as no change', () => {
-    // K:G and K:Em are one signature. A reader sees no accidental move, so neither
-    // should the page — this is why the guard compares FIFTHS, not the key object.
+  it('gives a line-leading key change to the PREFIX, and draws it twice', () => {
+    // `startNewLine` fires LAZILY — after the head of a source line's inline fields — so a
+    // `[K:]` written before the line's first note is already in `multilineVars.key` when
+    // `params.key` is stamped, and the line's PREFIX shows the new key. The element itself
+    // is appended to the line still open, so abcjs draws the cancellation TWICE: once at
+    // the end of the previous system and once in the next system's prefix.
+    //
+    // Measured against abcjs 6.6.3 on this exact tune — three controls, `[K:C]` opening a
+    // line, `[K:C]` mid-line, and a standalone `K:C`. abcjs's laid-out elements:
+    //
+    //   line 0  clef 15, keySignature 49.05 [fB fe fA], … bar 653.80,
+    //           keySignature 664.80 w=20.20 [nB ne nA]     <- the trailing draw
+    //   line 1  clef 15, keySignature 49.05 w=20.20 [nB ne nA]   <- the prefix
+    //   line 2  clef 15, no keySignature at all
+    //
+    // A MID-line change is the case we already had right: its line keeps the OLD prefix
+    // and the cancellation appears in the NEXT line's, which is what row two asserts.
+    const perSystem = (src: string): string[] => {
+      const score = parse(src).scores[0]
+      if (score === undefined) throw new Error('did not parse')
+      return layout(score).systems.map((system) =>
+        (system.staves[0]?.voices[0] ?? [])
+          .filter((element) => element.type === 'keySignature')
+          .map((element) =>
+            element.glyphs.map((g) => g.name.replace('accidental', '')[0] ?? '?').join(''),
+          )
+          .join(' '),
+      )
+    }
+    const body = 'CDEF|GABc|\n'
+    // `F` = Flat, `N` = Natural. Line 0 opens with Eb's three flats and ends with the
+    // three cancelling naturals; line 1's prefix repeats them; lines 2-3 draw nothing.
+    expect(perSystem(`X:1\nL:1/4\nK:Eb\n${body}[K:C]${body}${body}${body}`)).toEqual([
+      'FFF NNN',
+      'NNN',
+      '',
+      '',
+    ])
+    // A standalone `K:C` between two lines is the SAME case — it is parsed before the next
+    // line's first note just as the inline form is.
+    expect(perSystem(`X:1\nL:1/4\nK:Eb\n${body}K:C\n${body}${body}`)).toEqual(['FFF NNN', 'NNN', ''])
+    // …and a MID-line change is not: it draws where it stands, its own line keeps Eb, and
+    // the naturals reach the next line's prefix.
+    expect(perSystem(`X:1\nL:1/4\nK:Eb\n${body}CDEF|[K:C]GABc|\n${body}${body}`)).toEqual([
+      'FFF',
+      'FFF NNN',
+      'NNN',
+      '',
+    ])
+  })
+
+  it('an inline `[M:]` at the head of a line draws at the END of the previous one', () => {
+    // The same lazy `startNewLine` as a line-leading key change, reached through the OTHER
+    // arm of the header parser — and the two arms part on where the meter ends up:
+    //
+    //   letter_to_inline_header  "[M:"  appends a `meter` element and leaves
+    //                                   `multilineVars.meter` alone
+    //   a standalone `M:` line          sets `multilineVars.meter`, which the next
+    //                                   `startNewLine` consumes into that line's PREFIX
+    //
+    // Measured on this pair, `M:3/4` and `[M:3/4]` at the same point in the same tune:
+    //
+    //   standalone  line 0 ends with its notes; line 1 opens `clef 15, timeSig 49.05`
+    //   inline      line 0 ends `timeSig 673.20 w=11.79`; line 1 opens with the CLEF ALONE
+    //
+    // Getting it wrong in EITHER direction is measurable: firing on both forms put
+    // `frere-jacques` back to the 21.80px that finding 121 closed, and firing on neither
+    // left `S5-directives` X:502 with 23px of missing fixed width, which justification
+    // spread over 35 noteheads as a ramp.
+    const meters = (src: string): string[][] => {
+      const score = parse(src).scores[0]
+      if (score === undefined) throw new Error('did not parse')
+      return layout(score).systems.map((system) =>
+        (system.staves[0]?.voices[0] ?? [])
+          .filter((element) => element.type === 'timeSignature')
+          .map((element) => element.glyphs.map((g) => g.name).join('+')),
+      )
+    }
+    const head = 'X:1\nM:C\nL:1/4\nK:C\nCDEF|GABc|\n'
+    const tail = 'CDE|FGA|\nCDE|FGA|\n'
+    // Inline: line 0 carries BOTH its own meter and the trailing 3/4; line 1 carries none.
+    expect(meters(`${head}[M:3/4]${tail}`)).toEqual([
+      ['timeSigCommon', 'timeSig3+timeSig4'],
+      [],
+      [],
+    ])
+    // Standalone: line 0 keeps only its own, and the 3/4 opens line 1.
+    expect(meters(`${head}M:3/4\n${tail}`)).toEqual([
+      ['timeSigCommon'],
+      ['timeSig3+timeSig4'],
+      [],
+    ])
+    // AND A RESTATED INLINE METER STILL DRAWS, for the same reason a restated key does
+    // (see the mode-change test): nothing on this path compares meters. abcjs puts
+    // `timeSig w=13.04` at x 671.96 on line 0 of `[M:C]` under `M:C`.
+    expect(meters(`${head}[M:C]CDEF|GABc|\nCDEF|GABc|\n`)[0]).toEqual([
+      'timeSigCommon',
+      'timeSigCommon',
+    ])
+
+    // AND THE THIRD CASE: a standalone `M:` after a `\` CONTINUATION draws WHERE IT
+    // STANDS, mid-system. The discriminator is which of abcjs's two parsers ever sees the
+    // field — a `M:` on a fresh line is taken by the HEADER parser and only fills
+    // `multilineVars.meter`, its `letter_to_body_header` arm never reached (probed, and
+    // silent); after a `\` the line goes to `parseMusicLine`, which DOES reach that arm and
+    // runs `appendStartingElement` on a voice that already holds notes.
+    //
+    // One system, both meters on it, and the 3/4 is NOT in a prefix anywhere.
+    expect(meters(`${head.replace('GABc|\n', 'GABc|\\\n')}M:3/4\n${tail}`)).toEqual([
+      ['timeSigCommon', 'timeSig3+timeSig4'],
+      [],
+    ])
+  })
+
+  it('cancels the key IN FORCE, not the previous LINE\'s key', () => {
+    // abcjs's naturals are `impliedNaturals`, which `parseKey` computes from the old key AT
+    // THE MOMENT OF THE CHANGE (`abc_parse_key_voice.js:295-311`). Reading the previous
+    // LINE's key instead is the same number whenever every change starts a line — which is
+    // every fixture finding 124 was measured on — and a different one the moment a MID-line
+    // `[K:]` sits between the two.
+    //
+    // `S8-layout` X:812 is that tune, and this is its shape: `K:G`, a mid-line `[K:Bb]`,
+    // then a standalone `K:Gb`. Gb carries both of Bb's flats, so nothing is cancelled and
+    // abcjs draws no natural. Against G, still the previous line's key, we cancelled its F#.
+    //
+    // It was worth 8.37px on every notehead of that system, because a NATURAL is the tall
+    // accidental: it declares a box up to pitch 15.88 against the clef's 13.72, which
+    // raised the chord lane and then the ending lane sitting on top of it.
+    const src = 'X:1\nL:1/4\nK:G\nGABc|[K:Bb]GABc|\nK:Gb\nGABc|GABc|\n'
+    const score = parse(src).scores[0]
+    if (score === undefined) throw new Error('did not parse')
+    const prefixes = layout(score).systems.map((system) =>
+      (system.staves[0]?.voices[0] ?? [])
+        .filter((element) => element.type === 'keySignature')
+        .map((element) => element.glyphs.map((g) => g.name.replace('accidental', '')).join(',')),
+    )
+    // System 1's prefix is Gb's six flats and NO natural.
+    expect(prefixes[1]?.[0]).toBe('Flat,Flat,Flat,Flat,Flat,Flat')
+    expect(prefixes[1]?.[0]).not.toContain('Natural')
+  })
+
+  it('REDRAWS a mode change that keeps the same signature, as abcjs does', () => {
+    // THIS TEST USED TO ASSERT THE OPPOSITE, and its reason was our engraving judgement
+    // rather than abcjs: "K:G and K:Em are one signature, a reader sees no accidental
+    // move, so neither should the page." abcjs's own SVG denies it. Probed on this exact
+    // tune, it lays out TWO key signatures — the prefix at x=49.05 and the change at
+    // x=248.01, both `w = 8.25`, one sharp each.
+    //
+    // Its parser appends the element on `result.foundKey && hasBeginMusic()` alone and
+    // never compares keys; the only suppression is `createKeySignature` returning null on
+    // an EMPTY accidental list. Strict reproduces abcjs, so it redraws.
     const src = 'X:1\nL:1/4\nK:G\nGABc|[K:Em]GABc|\n'
     const score = parse(src).scores[0]
     if (score === undefined) throw new Error('did not parse')
     const sigs = layout(score)
       .systems.flatMap((system) => system.staves[0]?.voices[0] ?? [])
       .filter((element) => element.type === 'keySignature')
-    expect(sigs).toHaveLength(1) // the opening prefix only
+    expect(sigs).toHaveLength(2)
+    // One sharp each, and no cancelling natural — nothing is being left.
+    expect(sigs.map((s) => s.glyphs.map((g) => g.name))).toEqual([
+      ['accidentalSharp'],
+      ['accidentalSharp'],
+    ])
   })
 })

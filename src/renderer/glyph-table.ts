@@ -25,8 +25,9 @@
  * approximate one, and the emitter can express the same thing with a transform.
  */
 import { type CompatibilityMode, isStrict } from '../core/model.js'
+import { ABCJS_ARC, ABCJS_LINE_PX, ABCJS_PITCH, spaces, spacesOfPitch } from './abcjs-constants.js'
 import { SMUFL_TO_ABCJS } from './glyph-map.js'
-import { GLYPHS, type GlyphName } from './glyphs.js'
+import { ENGRAVING_DEFAULTS, GLYPHS, type GlyphName } from './glyphs.js'
 import { ABCJS_GLYPHS, ABCJS_STAFF_SPACE } from './glyphs-abcjs.js'
 
 /** One glyph, as everything downstream of the table wants it. */
@@ -41,6 +42,14 @@ export interface ResolvedGlyph {
   readonly height: number
   /** Ink box top relative to the draw origin, STAFF SPACES — negative is above. */
   readonly y: number
+  /**
+   * The height abcjs DECLARES for this glyph, staff spaces — its published `h`, which is
+   * what `symbolHeightInPitches` divides by `STEP` and what every reserve and decoration
+   * stack is measured in. NOT the derived ink box: the two differ (`noteheads.quarter`
+   * publishes 8.094 against an ink box of 8.13), and abcjs never consults the ink box.
+   * Bravura has no published figure, so its ink height stands in.
+   */
+  readonly declaredHeight: number
   /**
    * How many units of `path` make one staff space — 1 for Bravura, 7.75 for abcjs.
    *
@@ -70,6 +79,7 @@ const bravuraEntry = (name: GlyphName): ResolvedGlyph | undefined => {
     width: glyph.width,
     height: glyph.height,
     y: glyph.y,
+    declaredHeight: glyph.height,
     unitsPerSpace: 1,
   }
 }
@@ -103,6 +113,7 @@ const ABCJS: GlyphTable = {
       // offset, and a glyph cannot be placed vertically without one. See the generator.
       height: glyph.boxHeight / ABCJS_STAFF_SPACE,
       y: glyph.y / ABCJS_STAFF_SPACE,
+      declaredHeight: glyph.h / ABCJS_STAFF_SPACE,
       unitsPerSpace: ABCJS_STAFF_SPACE,
     }
   },
@@ -123,5 +134,86 @@ export const glyphTableFor = (mode: CompatibilityMode): GlyphTable =>
  * decision. A second parameter carrying the same bit would be two ways to say one thing.
  */
 export const glyphsFor = (strict: boolean): GlyphTable => (strict ? ABCJS : BRAVURA)
+
+/**
+ * LINE WEIGHTS for a render — abcjs's in strict, Bravura's everywhere else.
+ *
+ * The same split `glyphsFor` makes for outlines, and for the same reason: `abcjs-strict`
+ * has no latitude. Bravura's `ENGRAVING_DEFAULTS` was reaching strict at 21 ungated sites
+ * and drawing a thin barline at 1.24px where abcjs draws 0.600 — see `ABCJS_LINE_PX`.
+ *
+ * Two entries are NOT YET PORTED and still take Bravura's number in BOTH modes; each says
+ * what to measure. They are flagged rather than guessed because a wrong constant that
+ * looks decided is worse than one that says it is not.
+ */
+export interface LineWeights {
+  readonly staffLine: number
+  readonly stem: number
+  /** A BEAMED stem, which abcjs builds separately and thinner — see `ABCJS_LINE_PX`. */
+  readonly beamedStem: number
+  readonly beam: number
+  /**
+   * Centre-to-centre between stacked beams. abcjs states a STEP (1.5 pitch); Bravura states
+   * a thickness plus a gap, and the two happen to agree exactly — see `ABCJS_PITCH.beamStep`.
+   */
+  readonly beamStep: number
+  readonly ledgerLine: number
+  readonly ledgerExtension: number
+  readonly thinBarline: number
+  readonly thickBarline: number
+  readonly slurMidpoint: number
+  readonly tieMidpoint: number
+}
+
+const BRAVURA_WEIGHTS: LineWeights = {
+  staffLine: ENGRAVING_DEFAULTS.staffLineThickness,
+  stem: ENGRAVING_DEFAULTS.stemThickness,
+  beamedStem: ENGRAVING_DEFAULTS.stemThickness,
+  beam: ENGRAVING_DEFAULTS.beamThickness,
+  beamStep: ENGRAVING_DEFAULTS.beamThickness + ENGRAVING_DEFAULTS.beamSpacing,
+  ledgerLine: ENGRAVING_DEFAULTS.legerLineThickness,
+  ledgerExtension: ENGRAVING_DEFAULTS.legerLineExtension,
+  thinBarline: ENGRAVING_DEFAULTS.thinBarlineThickness,
+  thickBarline: ENGRAVING_DEFAULTS.thickBarlineThickness,
+  slurMidpoint: ENGRAVING_DEFAULTS.slurMidpointThickness,
+  tieMidpoint: ENGRAVING_DEFAULTS.tieMidpointThickness,
+}
+
+/**
+ * NO `...BRAVURA_WEIGHTS` SPREAD, DELIBERATELY — and that absence is the whole point.
+ *
+ * This object used to start with the spread and override the keys anyone had got round to
+ * porting. That is the exception model Lance's `ENGRAVE` question is about, in miniature:
+ * the DEFAULT was Bravura and abcjs's figure was the special case, so a key nobody had
+ * reached stayed Bravura's silently, in a mode whose entire purpose is to have no latitude.
+ * `slurEndpoint` sat there for months and turned out to be the TUPLET BRACKET's rule.
+ *
+ * Written out in full, `LineWeights` being all-required makes a missing override a COMPILE
+ * ERROR. That is a structural guarantee rather than a test, and it cannot rot.
+ */
+const ABCJS_WEIGHTS: LineWeights = {
+  staffLine: spaces(ABCJS_LINE_PX.staffLine),
+  stem: spaces(ABCJS_LINE_PX.stem),
+  beamedStem: spaces(ABCJS_LINE_PX.beamedStem),
+  beam: spaces(ABCJS_LINE_PX.beam),
+  beamStep: spacesOfPitch(ABCJS_PITCH.beamStep),
+  ledgerLine: spaces(ABCJS_LINE_PX.ledgerLine),
+  ledgerExtension: spaces(ABCJS_LINE_PX.ledgerExtension),
+  thinBarline: spaces(ABCJS_LINE_PX.thinBarline),
+  thickBarline: spaces(ABCJS_LINE_PX.thickBarline),
+  // abcjs's arc is a FLAT `thickness = 2` all the way along and comes to a POINT at both
+  // ends, because the path returns through the same `x1,y1` it started from
+  // (`draw/tie.js:57-102`). So there is no endpoint-versus-midpoint notion to port — the
+  // endpoint keys are gone from the interface entirely and the midpoint is abcjs's 2.
+  //
+  // `curveToPath`'s strict branch builds the shape from `ABCJS_ARC` and reads neither, so
+  // this changes no pixel; it stops the table from asserting something untrue.
+  slurMidpoint: spaces(ABCJS_ARC.thickness),
+  tieMidpoint: spaces(ABCJS_ARC.thickness),
+}
+
+/** The line weights a render draws with. Strict gets abcjs's; everything else Bravura's. */
+export const lineWeightsFor = (strict: boolean): LineWeights =>
+  strict ? ABCJS_WEIGHTS : BRAVURA_WEIGHTS
 
 export { ABCJS as ABCJS_TABLE, BRAVURA as BRAVURA_TABLE }

@@ -17,12 +17,27 @@
  * WHY MEASURED AND NOT LOOKED UP. Typing AFM numbers from memory is the kind of thing
  * that reads as authoritative and is quietly wrong. These come out of a real font file.
  *
- * SOURCE FONT. Georgia, because opentype.js cannot read a `.ttc` collection and Times
- * ships as one on macOS. The RELATIVE proportions are what this is for — `i` narrow, `W`
- * wide — and those are consistent across serif faces; the absolute scale is normalised
- * below. The rendered output asks for `font-family="serif"`, which resolves to whatever
- * the viewer has, so any table here is an estimate of a family rather than a measurement
- * of the font that will actually paint. It is a much better estimate than one number.
+ * SOURCE FONTS — THE ONES abcjs NAMES, AND NO LONGER NORMALISED.
+ *
+ * This used to measure Georgia and rescale it to a mean letter advance of 0.5 em, on the
+ * grounds that opentype.js cannot read a `.ttc` and Times ships as one. Times New Roman
+ * ships as a plain `.ttf` on this machine, so that reason had lapsed — and the absolute
+ * scale stopped being cosmetic the moment a lyric's width became part of its note's ROD.
+ *
+ * abcjs's own defaults (`parse/abc_parse_directive.js:20-42`) are the specification:
+ *
+ *   vocalfont       "Times New Roman" 13pt BOLD    lyrics
+ *   gchordfont      Helvetica         12pt         chord symbols
+ *   annotationfont  Helvetica         12pt         annotations
+ *   titlefont etc.  "Times New Roman"              prose
+ *
+ * and the abcjs goldens were measured against real browser metrics for exactly those. The
+ * check, against widths read out of abcjs's `extraw` by probe: `Hap-` 36.875 against Times
+ * New Roman Bold's 36.84, `birth-` 42.563 against 42.50, `Amaj7` 45.38 against Arial's
+ * 45.35. Normalised Georgia had them a uniform 13% narrow.
+ *
+ * Arial stands in for Helvetica, which is `.ttc`-only here. The two are metrically
+ * compatible by design and the numbers above are the proof, not the claim.
  *
  * LICENSING. This emits ADVANCE WIDTHS — a table of numbers measured from a font, not any
  * part of its outlines, and nothing here lets anyone reconstruct a glyph. That is
@@ -37,7 +52,20 @@ import opentype from 'opentype.js'
 const here = dirname(fileURLToPath(import.meta.url))
 const root = resolve(here, '..')
 
-const FONT = '/System/Library/Fonts/Supplemental/Georgia.ttf'
+const FONTS = {
+  CHAR_ADVANCE: {
+    file: '/System/Library/Fonts/Supplemental/Times New Roman.ttf',
+    what: 'serif, regular — titles, prose, anything with no font of its own',
+  },
+  CHAR_ADVANCE_BOLD: {
+    file: '/System/Library/Fonts/Supplemental/Times New Roman Bold.ttf',
+    what: "serif, bold — abcjs's `vocalfont`, so every lyric, and `tempofont`",
+  },
+  CHAR_ADVANCE_SANS: {
+    file: '/System/Library/Fonts/Supplemental/Arial.ttf',
+    what: "sans — abcjs's `gchordfont` and `annotationfont`, i.e. Helvetica's metrics",
+  },
+}
 const OUT = resolve(root, 'src/renderer/text-metrics.ts')
 
 /**
@@ -54,71 +82,72 @@ const CHARS = [
   ...'©…–—‘’“”†‡§¶•·',
 ]
 
-const font = opentype.parse(readFileSync(FONT).buffer)
 const round = (n) => Number(n.toFixed(4))
 
-/**
- * Target mean advance per letter, in em.
- *
- * The flat estimate this replaces used 0.5, and 0.5 is about right for Times — which is
- * what `font-family="serif"` resolves to on most systems. Georgia is a screen face and
- * runs wider (0.59), so its raw advances would scale every string ~18% up and trade one
- * systematic error for another.
- *
- * So the table is NORMALISED to this mean: Georgia supplies the relative proportions,
- * which is the part that was actually broken, while the overall scale stays where it was
- * calibrated. Fixing the proportions was the point; re-scaling everything was not.
- */
-const TARGET_MEAN_LETTER = 0.5
-
-const raw = {}
-let sum = 0
-let counted = 0
-for (const ch of CHARS) {
-  const w = font.getAdvanceWidth(ch, 1000) / 1000
-  if (!Number.isFinite(w) || w <= 0) continue
-  raw[ch] = w
-  // Averaged over LETTERS only — folding in space and punctuation would drag the mean
-  // well below a realistic character.
-  if (/[a-zA-Z]/.test(ch)) {
-    sum += w
-    counted += 1
+/** One face: its advances in em, and the mean LETTER advance as the unknown-char fallback. */
+function measure(file) {
+  const font = opentype.parse(readFileSync(file).buffer)
+  const widths = {}
+  let sum = 0
+  let counted = 0
+  for (const ch of CHARS) {
+    const w = font.getAdvanceWidth(ch, 1000) / 1000
+    if (!Number.isFinite(w) || w <= 0) continue
+    widths[ch] = round(w)
+    // Averaged over LETTERS only — folding in space and punctuation would drag the mean
+    // well below a realistic character.
+    if (/[a-zA-Z]/.test(ch)) {
+      sum += w
+      counted += 1
+    }
   }
+  return { widths, fallback: round(sum / counted) }
 }
-const scale = TARGET_MEAN_LETTER / (sum / counted)
-const widths = Object.fromEntries(Object.entries(raw).map(([ch, w]) => [ch, round(w * scale)]))
-const fallback = round(TARGET_MEAN_LETTER)
 
-const entries = Object.entries(widths)
-  .map(([ch, w]) => `  ${JSON.stringify(ch)}: ${w},`)
-  .join('\n')
+const tables = Object.entries(FONTS).map(([name, { file, what }]) => {
+  const { widths, fallback } = measure(file)
+  const entries = Object.entries(widths)
+    .map(([ch, w]) => `  ${JSON.stringify(ch)}: ${w},`)
+    .join('\n')
+  return { name, what, count: Object.keys(widths).length, fallback, entries }
+})
 
 const ts = `// GENERATED by scripts/gen-text-metrics.mjs — DO NOT EDIT.
 // Regenerate: node scripts/gen-text-metrics.mjs
 //
-// Per-character advance widths in EM, for prose set in \`font-family="serif"\`.
-// ${Object.keys(widths).length} characters, normalised to a mean letter advance of
-// ${TARGET_MEAN_LETTER} em. Unknown characters use \`FALLBACK_ADVANCE\`.
+// Per-character advance widths in EM, one table per face abcjs names in its font
+// defaults. REAL advances, not normalised: a lyric's width is part of its note's rod, so
+// the absolute scale decides where the music goes and not just where the text sits.
 //
 // These are measurements — a table of numbers — not font outlines. Nothing here
 // reproduces any part of a typeface, so unlike \`glyphs.ts\` this file carries no font
-// licence. See the generator for why the numbers come from a real font rather than from
-// a remembered AFM table.
+// licence. See the generator for which font stands for which of abcjs's, and for the
+// probe numbers that check each one.
 
-/** Advance width in em for one character, at font-size 1. */
-export const CHAR_ADVANCE: Readonly<Record<string, number>> = {
-${entries}
+${tables
+  .map(
+    (t) => `/**
+ * Advance width in em for one character, at font-size 1 — ${t.what}.
+ */
+export const ${t.name}: Readonly<Record<string, number>> = {
+${t.entries}
 }
 
+/** Mean advance of the LETTERS above, for a character the table does not carry. */
+export const ${t.name}_FALLBACK = ${t.fallback}
+`,
+  )
+  .join('\n')}
 /**
- * Width for a character the table does not carry — the mean advance of the LETTERS in it.
+ * The default fallback — the serif one, for callers that name no face.
  *
  * Letters only: folding in space and punctuation would pull this well below a realistic
  * unknown character, which is likelier to be a letter in some script than a comma.
  */
-export const FALLBACK_ADVANCE = ${fallback}
+export const FALLBACK_ADVANCE = ${tables[0].fallback}
 `
 
 writeFileSync(OUT, ts)
-console.log(`gen-text-metrics: wrote ${Object.keys(widths).length} advances → ${OUT}`)
-console.log(`  fallback (mean letter advance) = ${fallback} em`)
+for (const t of tables)
+  console.log(`gen-text-metrics: ${t.name} — ${t.count} advances, fallback ${t.fallback}`)
+console.log(`  → ${OUT}`)

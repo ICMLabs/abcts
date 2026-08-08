@@ -47,7 +47,13 @@ const GLYPHS = [
   'gClef',
   'fClef',
   'cClef',
+  // `clef=perc`, which abcjs DRAWS. Absent from this list until 2026-08-06, so a
+  // regeneration would have deleted it from the table it is mapped in.
+  'unpitchedPercussionClef1',
   // Noteheads
+  // A BREVE. abcjs's `chartable.note[-1]` is `noteheads.dbl` and it reaches it for any
+  // note two whole notes long — `G8` under `L:1/4`, which is what every `clefs` tune is.
+  'noteheadDoubleWhole',
   'noteheadWhole',
   'noteheadHalf',
   'noteheadBlack',
@@ -59,6 +65,12 @@ const GLYPHS = [
   'noteheadXBlack',
   'noteheadTriangleUpBlack',
   'noteheadTriangleUpWhite',
+  // …and the rhythm slash splits by DURATION, not by fill: abcjs keys it by durlog —
+  // `noteheads.slash.whole` for a whole or half, `.slash.quarter` for a quarter and
+  // shorter, `.slash.nostem` when there is no stem (`abstract-engraver.js:38`). Three
+  // glyphs, so three SMuFL names.
+  'noteheadSlashWhiteWhole',
+  'noteheadSlashHorizontalEnds',
   'noteheadSlashVerticalEnds',
   // Flags
   'flag8thUp',
@@ -86,6 +98,7 @@ const GLYPHS = [
   'restWhole',
   'restHalf',
   'restQuarter',
+  'restHBar',
   'rest8th',
   'rest16th',
   // Time signatures
@@ -99,6 +112,8 @@ const GLYPHS = [
   'timeSig7',
   'timeSig8',
   'timeSig9',
+  // An additive meter draws one — `M:2+3/8` is the string `2+3` over `8`.
+  'timeSigPlus',
   'timeSigCommon',
   'timeSigCutCommon',
   // Augmentation

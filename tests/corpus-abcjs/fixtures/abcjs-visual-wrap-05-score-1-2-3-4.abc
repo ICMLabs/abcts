@@ -1,0 +1,17 @@
+X:0
+%%score { ( 1 2 ) | ( 3 4 ) }
+L:1/4
+M:4/4
+K:Bb
+V:1 treble
+V:2 treble
+V:3 bass
+V:4 bass
+V:1
+G A B G | ^F A G B | A G F2 |]
+V:2
+D F F E | D ^F G =F | F B,/C/ D2 |]
+V:3
+B, C D C/B,/ | A, D B, D | D G,/A,/ B,2 |] 
+V:4
+G, F, B,, C, | D, D, G, B,,/C,/ | D, E, B,,2 |]

@@ -23,6 +23,7 @@ import { parse } from '../../src/parser/parser.js'
 import { GLYPHS } from '../../src/renderer/glyphs.js'
 import {
   accidentalGlyph,
+  ENGRAVE,
   keyFifths,
   layout,
   layoutBook,
@@ -31,7 +32,11 @@ import {
   noteGlyph,
   TEXT_ASCENT,
 } from '../../src/renderer/layout.js'
-import { CHAR_ADVANCE, FALLBACK_ADVANCE } from '../../src/renderer/text-metrics.js'
+import {
+  CHAR_ADVANCE,
+  CHAR_ADVANCE_BOLD_FALLBACK,
+  FALLBACK_ADVANCE,
+} from '../../src/renderer/text-metrics.js'
 
 /** Mirrors the renderer's own measure, for asserting that nothing falls outside bounds. */
 const textWidthOf = (text: string, size: number): number => {
@@ -153,7 +158,13 @@ describe('clefs', () => {
   })
 
   it('reads clef= on a voice', () => {
-    expect(clefOf('X:1\nV:1 clef=bass\nK:C\nC|\n')).toEqual({ shape: 'F', line: 4, octaveShift: 0, middleOverride: null, staffLines: 5 })
+    expect(clefOf('X:1\nV:1 clef=bass\nK:C\nC|\n')).toEqual({
+      shape: 'F',
+      line: 4,
+      octaveShift: 0,
+      middleOverride: null,
+      staffLines: 5,
+    })
   })
 
   it('takes the trailing digit as the staff line, which is how ABC spells three clefs', () => {
@@ -217,10 +228,18 @@ describe('clefs', () => {
 
   it('puts the middle line where each clef says it is', () => {
     // Treble B4 = 34, bass D3 = 22, alto C4 = 28, tenor A3 = 26.
-    expect(middleLineIndex({ shape: 'G', line: 2, octaveShift: 0, middleOverride: null, staffLines: 5 })).toBe(34)
-    expect(middleLineIndex({ shape: 'F', line: 4, octaveShift: 0, middleOverride: null, staffLines: 5 })).toBe(22)
-    expect(middleLineIndex({ shape: 'C', line: 3, octaveShift: 0, middleOverride: null, staffLines: 5 })).toBe(28)
-    expect(middleLineIndex({ shape: 'C', line: 4, octaveShift: 0, middleOverride: null, staffLines: 5 })).toBe(26)
+    expect(
+      middleLineIndex({ shape: 'G', line: 2, octaveShift: 0, middleOverride: null, staffLines: 5 }),
+    ).toBe(34)
+    expect(
+      middleLineIndex({ shape: 'F', line: 4, octaveShift: 0, middleOverride: null, staffLines: 5 }),
+    ).toBe(22)
+    expect(
+      middleLineIndex({ shape: 'C', line: 3, octaveShift: 0, middleOverride: null, staffLines: 5 }),
+    ).toBe(28)
+    expect(
+      middleLineIndex({ shape: 'C', line: 4, octaveShift: 0, middleOverride: null, staffLines: 5 }),
+    ).toBe(26)
   })
 
   it('puts a bass voice where abcjs puts it, which the treble assumption did not', () => {
@@ -244,7 +263,9 @@ describe('clefs', () => {
     expect(clefOf("X:1\nV:1 clef=treble m=d'\nK:C\nC|\n")?.middleOverride).toBe(43)
     // Skipped where `transpose=` is also present — the two interact and written transpose
     // is not realized yet, so honouring `middle=` alone would move the voice wrongly.
-    expect(clefOf('X:1\nV:1 clef=bass middle=d transpose=-24\nK:C\nC|\n')?.middleOverride).toBeNull()
+    expect(
+      clefOf('X:1\nV:1 clef=bass middle=d transpose=-24\nK:C\nC|\n')?.middleOverride,
+    ).toBeNull()
   })
 })
 
@@ -271,8 +292,23 @@ describe('tempo', () => {
     })
   })
 
+  it('gives a bare rate the METER’s beat unit, not the L: one', () => {
+    // abcjs defers a unit-less `Q:` and finishes it with `1 / meter.denominator`
+    // (`abc_parse_header.js:139-150`), with its `default_length` alternative commented out
+    // beside it. `ragtime-nightingale` is `M:2/4 L:1/4 Q:80` and abcjs draws a QUARTER.
+    const withMeter = (m: string, q: string) =>
+      parse(`X:1\nM:${m}\nL:1/4\n${q}\nK:C\nC|\n`).scores[0]?.tempo ?? null
+    expect(withMeter('6/8', 'Q:120')).toEqual({ beatUnit: rational(1, 8), bpm: 120, text: null })
+    // No `M:` at all falls back to a quarter, as abcjs's `var dur = 1/4` does.
+    expect(parse('X:1\nQ:120\nK:C\nC|\n').scores[0]?.tempo).toEqual({
+      beatUnit: rational(1, 4),
+      bpm: 120,
+      text: null,
+    })
+  })
+
   it('reads the legacy bare rate without taking a digit out of the text', () => {
-    expect(tempoOf('Q:120')).toEqual({ beatUnit: null, bpm: 120, text: null })
+    expect(tempoOf('Q:120')).toEqual({ beatUnit: rational(1, 4), bpm: 120, text: null })
     expect(tempoOf('Q:"Tempo di Marcia 2"')).toEqual({
       beatUnit: null,
       bpm: null,
@@ -391,9 +427,18 @@ describe('barlines that open a measure', () => {
   it('keeps a leading barline instead of dropping it', () => {
     // `little swallow` opens with `[|` before any note. The parser recognised this case
     // and discarded the barline, so core drew nothing where abcjs draws a bar.
+    //
+    // AND `[|` IS `thickThin`, NOT `double`. abcjs keeps `bar_thick_thin` and
+    // `bar_thin_thin` apart — 13px against 4px, and a thick rule first instead of a thin
+    // one (`abstract-engraver.js:974-977`). Folding them cost `little swallow` 9px of its
+    // opening prefix, which the pixel gate saw as 21.69 of dx spread.
     expect(typesOf('X:1\nL:1/4\nK:C\n[|CDEF|\n')).toContain('bar')
     expect(
       parse('X:1\nL:1/4\nK:C\n[|CDEF|\n').scores[0]?.voices[0]?.measures[0]?.openingBarline,
+    ).toBe('thickThin')
+    // `||` keeps `double`, which is the other half of the distinction.
+    expect(
+      parse('X:1\nL:1/4\nK:C\nCDEF||\n').scores[0]?.voices[0]?.measures[0]?.closingBarline,
     ).toBe('double')
   })
 
@@ -431,8 +476,9 @@ describe('flags and beams', () => {
   const sys = (abc: string) => layout(parse(abc).scores[0] as Score).systems[0]?.staves[0]
   const notesOf = (abc: string) => (sys(abc)?.elements ?? []).filter((e) => e.type === 'note')
   const glyphNames = (abc: string) => notesOf(abc).flatMap((n) => n.glyphs.map((g) => g.name))
-  const stemOf = (el: { lines: readonly { x1: number; x2: number; y1: number; y2: number }[] }) =>
-    el.lines.find((l) => l.x1 === l.x2)
+  const stemOf = (el: {
+    lines: readonly { x1: number; x2: number; y1: number; y2: number; thickness?: number }[]
+  }) => el.lines.find((l) => l.x1 === l.x2)
 
   it('flags an unbeamed eighth and beams a beamed one — never both', () => {
     // A space breaks the beam in ABC, so `C C` is two unbeamed eighths and `CC` is a
@@ -474,8 +520,15 @@ describe('flags and beams', () => {
     for (const note of (system?.elements ?? []).filter((e) => e.type === 'note')) {
       const stem = stemOf(note)
       expect(stem).toBeDefined()
-      // The tip meets the beam's outer edge, within a rounding hair.
-      expect(Math.abs((stem?.y2 ?? 0) - (yAt(stem?.x1 ?? 0) - half))).toBeLessThan(0.001)
+      // …AT THE HEAD'S EDGE, WHICH IS NOT THE STEM'S CENTRE. `createStems` computes
+      // `x = furthestHead.x + (asc ? w : 0)` and hands that to `getBarYAt`, then draws the
+      // quad from the same edge INWARD by 0.6 — so the height it solves for is three tenths
+      // of a pixel along the beam from where the stem is painted. On a slant the two are
+      // different numbers, and this used to assert they were the same: it read 0.0033 staff
+      // spaces against a 0.001 tolerance the moment the sample point became abcjs's.
+      const up = (stem?.y2 ?? 0) < (stem?.y1 ?? 0)
+      const edge = (stem?.x1 ?? 0) + ((stem?.thickness ?? 0) / 2) * (up ? 1 : -1)
+      expect(Math.abs((stem?.y2 ?? 0) - (yAt(edge) - half))).toBeLessThan(0.001)
     }
   })
 
@@ -677,7 +730,12 @@ C,D,E,F,|G,A,B,C|
     const barsOf = (i: number) =>
       (doc.systems[0]?.staves[i]?.elements ?? []).filter((e) => e.type === 'bar').map((e) => e.x)
     expect(barsOf(0).length).toBeGreaterThan(0)
-    expect(barsOf(1)).toEqual(barsOf(0))
+    expect(barsOf(1).length).toBe(barsOf(0).length)
+    // To the pixel, not to the bit: the claim is that the staves line up, and the two
+    // voices reach the same column by different sums, so the last float digit can differ.
+    barsOf(1).forEach((x, i) => {
+      expect(x).toBeCloseTo(barsOf(0)[i] as number, 6)
+    })
   })
 
   it('stacks staves within a system without overlapping', () => {
@@ -706,16 +764,20 @@ describe('spacing and justification', () => {
     // abcm2ps's measured duration→width curve is a pure √ — its per-halving increment
     // shrinks by ~1/√2 each step, steeper than log2. Taken from abcMusicKit2's
     // oracle-calibrated constant rather than invented.
-    expect(naturalWidth(rational(1, 16))).toBeCloseTo(3.25, 5)
-    expect(naturalWidth(rational(1, 4))).toBeCloseTo(6.5, 5)
-    expect(naturalWidth(rational(1, 1))).toBeCloseTo(13, 5)
+    // The scale is passed EXPLICITLY now — it used to default to `ENGRAVE.spacingScale`,
+    // and a default is how strict comes to read one of ours by accident. These figures are
+    // the STANDARD profile's; strict runs at abcjs's 2.7372, from `PROFILES`.
+    const std = ENGRAVE.spacingScale
+    expect(naturalWidth(rational(1, 16), std)).toBeCloseTo(3.25, 5)
+    expect(naturalWidth(rational(1, 4), std)).toBeCloseTo(6.5, 5)
+    expect(naturalWidth(rational(1, 1), std)).toBeCloseTo(13, 5)
     // Four times the duration, twice the width — at every scale.
-    expect(naturalWidth(rational(1, 2)) / naturalWidth(rational(1, 8))).toBeCloseTo(2, 5)
+    expect(naturalWidth(rational(1, 2), std) / naturalWidth(rational(1, 8), std)).toBeCloseTo(2, 5)
   })
 
   it('never lets a note fall below the rod floor', () => {
-    expect(naturalWidth(rational(1, 1024))).toBeGreaterThanOrEqual(0.6)
-    expect(naturalWidth(rational(0, 1))).toBeGreaterThanOrEqual(0.6)
+    expect(naturalWidth(rational(1, 1024), ENGRAVE.spacingScale)).toBeGreaterThanOrEqual(0.6)
+    expect(naturalWidth(rational(0, 1), ENGRAVE.spacingScale)).toBeGreaterThanOrEqual(0.6)
   })
 
   it('gives a longer note more room than a shorter one in the same bar', () => {
@@ -771,7 +833,16 @@ describe('spacing and justification', () => {
     // Including the last, HERE, because every line of this tune is the same length and
     // the last one is therefore as full as the rest. See the next test for the case that
     // makes the rule visible.
-    for (const w of doc.systems.map((s) => s.width)) expect(w).toBeCloseTo(90, 5)
+    // THE FULL PAGE WIDTH. A line's final barline takes its own 1px and not the 10 of
+    // `minspacing` — abcjs skips it on the last element of a voice
+    // (`layout/voice-elements.js`) — and that now happens INSIDE the cursor, where the
+    // element is placed, rather than as a correction to the finished total. So the solve
+    // stretches until the line really does end on the target and the page comes out whole,
+    // which is abcjs's own arithmetic: `staffGroup.w` reaches `width + padding.left` and
+    // the page is that plus `padding.right`. Every system does it equally, which is what
+    // "the same width" is really claiming.
+    const target = 90
+    for (const w of doc.systems.map((s) => s.width)) expect(w).toBeCloseTo(target, 5)
   })
 
   it('leaves a SHORT last system at its natural width', () => {
@@ -783,7 +854,8 @@ describe('spacing and justification', () => {
     const doc = layout(parse(abc).scores[0] as Score, { systemWidth: 90 })
     const widths = doc.systems.map((s) => s.width)
     expect(widths).toHaveLength(4)
-    for (const w of widths.slice(0, -1)) expect(w).toBeCloseTo(90, 5)
+    const target = 90 // see the note above
+    for (const w of widths.slice(0, -1)) expect(w).toBeCloseTo(target, 5)
     expect(widths[widths.length - 1]).toBeLessThan(45)
   })
 
@@ -985,13 +1057,17 @@ describe('grace notes, chord symbols, lyrics and decorations', () => {
     for (const g of graces) expect(g.x).toBeLessThan(main?.x ?? 0)
   })
 
-  it('widens a SHORT note to make room for its grace notes', () => {
-    // Grace notes are ink, so they push the rod out — but only when the rod exceeds the
-    // spring. On a half note they fit inside the width its duration already buys, and
-    // the note does not widen at all; that is correct, not a missing feature.
-    const short = (abc: string) => notesOf(abc)[0]?.width ?? 0
-    expect(short('{ABc}G/4|')).toBeGreaterThan(short('G/4|'))
-    expect(short('{AB}G2|')).toBe(short('G2|'))
+  it('hangs grace notes LEFT of the note, out of its width', () => {
+    // Grace notes reach back into the gap the previous note's spring already opened, and
+    // cost the cursor nothing while they fit in it. abcjs records exactly that: probed on
+    // `C{ABc}G/4 D2`, the graced note has `w = 15.903` — no larger for the graces — and
+    // `extraw = -30`, ten pixels per grace, all of it to the LEFT.
+    const first = (abc: string) => notesOf(abc)[0]
+    expect(first('{ABc}G/4|')?.left ?? 0).toBeGreaterThan(0)
+    expect(first('G/4|')?.left ?? 0).toBe(0)
+    // The width is the note's own, graces or not.
+    expect(first('{ABc}G/4|')?.width).toBe(first('G/4|')?.width)
+    expect(first('{AB}G2|')?.width).toBe(first('G2|')?.width)
   })
 
   it('slashes an acciaccatura and not an appoggiatura', () => {
@@ -1030,17 +1106,20 @@ describe('grace notes, chord symbols, lyrics and decorations', () => {
     // Still partial, and still the same principle: an unmapped mark gets NO glyph rather
     // than a near-enough one, because a wrong symbol is worse than an absent one.
     //
-    // `!roll!` and `!slide!` used to be the examples here and now draw their own glyphs —
-    // the roll a tremblement, the slide a lift. What remains unmapped is a different
-    // shape of problem: navigation words like `D.C.` are TEXT, and `xstem` is a stem
-    // instruction with no symbol at all.
+    // `!roll!` used to be an example here and now draws its own glyph, a tremblement.
+    // `!slide!` was the other, drawing a brass lift, and it draws NO GLYPH now on purpose:
+    // abcjs makes it a small TIE between two zero-width blanks at the note
+    // (`decoration.js:51-59`), so it belongs to the curves and not to this table. What
+    // remains unmapped is a different shape of problem: navigation words like `D.C.` are
+    // TEXT, and `xstem` is a stem instruction with no symbol at all.
     const named = (abc: string) =>
       (notesOf(abc)[0]?.glyphs ?? []).map((g) => g.name).filter((n) => !n.startsWith('notehead'))
     expect(named('!trill!G|')).toEqual(['ornamentTrill'])
     expect(named('!fermata!G|')).toEqual(['fermataAbove'])
     expect(named('!upbow!G|')).toEqual(['stringsUpBow'])
     expect(named('!roll!G|')).toEqual(['ornamentTremblement'])
-    expect(named('!slide!G|')).toEqual(['brassLiftShort'])
+    // A curve, not a glyph — see 'draws `!slide!` as a curve at the note'.
+    expect(named('!slide!G|')).toEqual([])
     // Unmapped: no glyph, and emphatically not a wrong one.
     expect(named('!D.C.!G|')).toEqual([])
     expect(named('!xstem!G|')).toEqual([])
@@ -1154,10 +1233,19 @@ describe('noteGlyph', () => {
     // `G8` at L:1/4 is 2/1 — undotted and twice a whole note. Testing (numerator + 1)
     // for a power of two calls 3/8 dotted and 2/1 unwritable, which broke every long
     // note in the corpus. Only the odd part can carry dots.
-    expect(noteGlyph(rational(2, 1))).toMatchObject({ head: 'noteheadWhole', dots: 0 })
-    expect(noteGlyph(rational(4, 1))).toMatchObject({ head: 'noteheadWhole', dots: 0 })
-    expect(noteGlyph(rational(3, 1))).toMatchObject({ head: 'noteheadWhole', dots: 1 })
-    expect(noteGlyph(rational(6, 1))).toMatchObject({ head: 'noteheadWhole', dots: 1 })
+    //
+    // AND TWICE A WHOLE NOTE IS A BREVE, not a semibreve. `chartable.note[-durlog]` with
+    // `durlog = Math.floor(Math.log2(duration))` puts 2/1 and 3/1 on `noteheads.dbl`
+    // (`abstract-engraver.js:36, 793`). This asserted `noteheadWhole` for both and nine
+    // rows of the pixel table were spent explaining the difference as an outline.
+    expect(noteGlyph(rational(2, 1))).toMatchObject({ head: 'noteheadDoubleWhole', dots: 0 })
+    expect(noteGlyph(rational(3, 1))).toMatchObject({ head: 'noteheadDoubleWhole', dots: 1 })
+    // ponytail: abcjs draws NOTHING past a breve — `durlog` reaches 2 and
+    // `chartable.note[-2]` is undefined, so `createNoteHead` builds a headless element.
+    // Reproducing a vanishing notehead needs a fixture that writes one, and neither
+    // corpus does; a breve is the nearest thing that is still a note.
+    expect(noteGlyph(rational(4, 1))).toMatchObject({ head: 'noteheadDoubleWhole', dots: 0 })
+    expect(noteGlyph(rational(6, 1))).toMatchObject({ head: 'noteheadDoubleWhole', dots: 1 })
   })
 
   it('still refuses a duration no notehead and dots can write', () => {
@@ -1165,7 +1253,19 @@ describe('noteGlyph', () => {
     // because the staff position stays right.
     expect(noteGlyph(rational(1, 6))).toBeNull() // triplet eighth — but see below
     expect(noteGlyph(rational(5, 8))).toBeNull()
-    expect(noteGlyph(rational(0, 1))).toBeNull()
+  })
+
+  it('draws a ZERO-length note as a stemless quarter head, as abcjs does', () => {
+    // `C0` is legal ABC. This used to return null and the note vanished — abcjs keeps it:
+    // `if (duration === 0) { zeroDuration = true; duration = 0.25; nostem = true; }`
+    // (`abstract-engraver.js:790-791`) and then `chartable[style].nostem`, which is
+    // `noteheads.quarter`. Its own `parse/note.test.js` asserts the durations survive.
+    expect(noteGlyph(rational(0, 1))).toEqual({
+      head: 'noteheadBlack',
+      stemmed: false,
+      flags: 0,
+      dots: 0,
+    })
   })
 
   it('never sees a tuplet ratio, because notatedDuration excludes it by contract', () => {
@@ -1297,12 +1397,18 @@ describe('repeat endings (voltas)', () => {
     expect(staff?.voltaLines).toHaveLength(6)
   })
 
-  it('starts a new ending where the previous one stops', () => {
-    // `|1 … :|2` runs them back to back, so ending 2 opens exactly where 1 closes.
+  it('leaves the shared barline between two endings', () => {
+    // NOT back to back, which is what this asserted for months and what abcjs's own
+    // output denies. Both brackets hang on the SAME `:|`, and on opposite edges of its
+    // THICK rule: `drawEnding` closes at `anchor2.x` and opens at `anchor1.x + anchor1.w`
+    // (`draw/ending.js:13-22`), and that anchor's declared `w` is 4. So the gap is exactly
+    // 4px — `[257.37..472.18] [476.18..681.00]` in `S4-bars-repeats`' golden.
+    //
+    // The eighth test in this suite found to have been asserting abcjs is wrong.
     const lines = staffOf('|:CDEF|1 GABc:|2 cBAG||')?.voltaLines ?? []
     const rules = lines.filter((l) => l.y1 === l.y2).sort((a, b) => a.x1 - b.x1)
     expect(rules).toHaveLength(2)
-    expect(rules[1]?.x1).toBeCloseTo(rules[0]?.x2 ?? 0, 1)
+    expect((rules[1]?.x1 ?? 0) - (rules[0]?.x2 ?? 0)).toBeCloseTo(4 / 7.75, 3)
   })
 
   it('sits above the staff, clear of the music', () => {
@@ -1330,14 +1436,22 @@ describe('annotations', () => {
     expect(textsOf('"_p"C|').map((t) => t.text)).toEqual(['p'])
   })
 
-  it('is not confused with a chord symbol', () => {
-    // Same `"…"` syntax and the same parser field; only the leading char separates them.
-    // A chord symbol sits in its own lane, so the two must not land on the same line.
+  it("SHARES a chord symbol's lane, which is what abcjs does", () => {
+    // This used to assert the opposite — "a chord symbol sits in its own lane, so the two
+    // must not land on the same line". abcjs disagrees, and the SVG is the evidence:
+    // `"Am7"C` and `"^Am7"C` both draw at y 38.56. `RelativeElement` gives a `type:
+    // "text"` with no pitch the very same `chordHeightAbove` a `type: "chord"` gets
+    // (`relative-element.js:60-76`), and `setUpperAndLowerRelativeElements` handles both
+    // in one `case "text": case "chord":`.
+    //
+    // What still separates them is ALIGNMENT — a chord is centred on the notehead and an
+    // annotation is left-justified — and lane PACKING, which pushes the second of two
+    // overlapping marks onto its own line.
     const chord = textsOf('"Am7"C|')[0]
     const annotation = textsOf('"^Am7"C|')[0]
     expect(chord?.text).toBe('Am7')
     expect(annotation?.text).toBe('Am7')
-    expect(chord?.y).not.toBe(annotation?.y)
+    expect(chord?.y).toBe(annotation?.y)
   })
 
   it('stacks above the staff with the first one written on top', () => {
@@ -1364,10 +1478,31 @@ describe('annotations', () => {
   it('puts `<` and `>` beside the note rather than above it', () => {
     const left = textsOf('"<cresc"C|')[0]
     const right = textsOf('">cresc"C|')[0]
-    // Staff height. `toBeCloseTo` because stepToY(0) is -0, which draws the same as 0.
-    expect(left?.y).toBeCloseTo(0)
-    expect(right?.y).toBeCloseTo(0)
+    // ON THE NOTE'S AVERAGE PITCH, not at staff height: abcjs builds both with
+    // `y = elem.averagepitch` (`add-chord.js:54,63`), which is also why neither takes a
+    // chord lane — `RelativeElement`'s `case "text"` reserves one only when the pitch is
+    // UNDEFINED. Middle C in the treble clef is 3 steps below the middle line, so `y` is 3
+    // in the y-down staff spaces the layout works in.
+    expect(left?.y).toBeCloseTo(3)
+    expect(right?.y).toBeCloseTo(3)
     expect(left?.x ?? 0).toBeLessThan(right?.x ?? 0)
+  })
+
+  it('reserves `width + 7` before a `<` and 4 either side of a `>`', () => {
+    // `roomTaken += chordWidth + 7; x = -roomTaken` and `roomTakenRight += 4;
+    // x = roomTakenRight` with `w = chordWidth + 4` (`add-chord.js:50-71`). Neither was
+    // reserved at all before: a bare `"<F"F` put the note 16.78px left of abcjs's, which
+    // is `F`'s 9.78 in the annotation font plus the 7.
+    const noteX = (abc: string) =>
+      (
+        layout(parse(`X:1\nL:1/4\nM:4/4\nK:C\n${abc}\n`).scores[0] as Score, {
+          systemWidth: 200,
+        }).systems[0]?.staves[0]?.elements ?? []
+      ).find((e) => e.type === 'note')?.left ?? 0
+    // The left annotation pushes its note right by exactly its own room.
+    expect(noteX('"<F"F G|') - noteX('F G|')).toBeCloseTo((9.7813 + 7) / 7.75, 3)
+    // A right annotation does not move the note it hangs off.
+    expect(noteX('">F"F G|')).toBeCloseTo(noteX('F G|'), 3)
   })
 })
 
@@ -1498,6 +1633,10 @@ describe('styled noteheads', () => {
   it('draws the four shapes abcjs draws', () => {
     // Verified against abcjs 6.6.3's element dump: harmonic is a diamond, `x` is its
     // `noteheads.indeterminate`, rhythm a slash, triangle a triangle.
+    //
+    // The rhythm slash is the QUARTER one because abcjs keys that style by durlog:
+    // `noteheads.slash.whole` at 0 and 1, `.slash.quarter` from 2 down
+    // (`abstract-engraver.js:38`). `L:1/4` puts every note here on the second.
     expect(
       headsOf(
         'X:1\nL:1/4\nK:C\nC !style=harmonic! D !style=x! E !style=triangle! F !style=rhythm! G|\n',
@@ -1507,7 +1646,7 @@ describe('styled noteheads', () => {
       'noteheadDiamondBlack',
       'noteheadXBlack',
       'noteheadTriangleUpBlack',
-      'noteheadSlashVerticalEnds',
+      'noteheadSlashHorizontalEnds',
     ])
   })
 
@@ -1538,8 +1677,8 @@ describe('styled noteheads', () => {
 
   it('applies a header `K:C treble style=rhythm` to the whole tune', () => {
     expect(headsOf('X:1\nL:1/4\nK:C treble style=rhythm\nC D|\n')).toEqual([
-      'noteheadSlashVerticalEnds',
-      'noteheadSlashVerticalEnds',
+      'noteheadSlashHorizontalEnds',
+      'noteheadSlashHorizontalEnds',
     ])
   })
 
@@ -1553,9 +1692,9 @@ describe('styled noteheads', () => {
 
   it('lets an inline !style=! override the standing style for one note', () => {
     expect(headsOf('X:1\nM:4/4\nL:1/4\nK:C style=rhythm\nC !style=harmonic!D C|\n')).toEqual([
-      'noteheadSlashVerticalEnds',
+      'noteheadSlashHorizontalEnds',
       'noteheadDiamondBlack',
-      'noteheadSlashVerticalEnds',
+      'noteheadSlashHorizontalEnds',
     ])
   })
 })
@@ -1664,11 +1803,13 @@ describe('decoration coverage', () => {
     // model keeps the source spelling. abcjs rewrites them via accentPseudonyms; we alias
     // instead. Verified against 6.6.3: `!>!` and `!emphasis!` draw its sforzato (the
     // accent wedge), `!^!` its umarcato, `!tr!` its trill.
-    // Below, not Above: a lone middle-C takes an up stem, and articulations sit opposite
-    // the stem. The point here is that a glyph appears at all.
+    // Below, not Above, for the two ACCENTS: a lone middle-C takes an up stem and a close
+    // decoration sits opposite it. `!^!` is not a close decoration — abcjs stacks it, and
+    // `symbolList` is placement-independent, so it draws `scripts.umarcato` either way.
+    // Measured: `!^!C !^!c` renders two `scripts.umarcato` and no `dmarcato`.
     expect(glyphsOf('!>!')).toEqual(['articAccentBelow'])
     expect(glyphsOf('!emphasis!')).toEqual(['articAccentBelow'])
-    expect(glyphsOf('!^!')).toEqual(['articMarcatoBelow'])
+    expect(glyphsOf('!^!')).toEqual(['articMarcatoAbove'])
     expect(glyphsOf('!tr!')).toEqual(['ornamentTrill'])
   })
 
@@ -1681,10 +1822,23 @@ describe('decoration coverage', () => {
     expect(glyphsOf('!sfz!')).toEqual(['dynamicSforzando1'])
   })
 
-  it('draws fingerings as digits', () => {
-    expect(glyphsOf('!3!')).toEqual(['fingering3'])
-    expect(glyphsOf('!0!')).toEqual(['fingering0'])
-    expect(glyphsOf('!5!')).toEqual(['fingering5'])
+  it('draws fingerings as TEXT digits, not glyphs', () => {
+    // abcjs's decoration switch sends `"0"` through `"5"` to `textDecoration` beside
+    // `D.C.` and `D.S.` (`decoration.js:200-210`), so a fingering is a `<text>` stacked by
+    // the flat `textHeight: 5` and reserving the flat `thickness: 3` — not a SMuFL
+    // `fingering3` stacked by `symbolHeightInPitches + 1`. The glyph reserved 3.76px too
+    // little on `+1+B`. This is a test that asserted abcjs is wrong.
+    const decorationTexts = (dec: string) =>
+      (
+        layout(parse(`X:1\nL:1/4\nK:C\n${dec}F|\n`).scores[0] as Score, { systemWidth: 200 })
+          .systems[0]?.staves[0]?.elements ?? []
+      )
+        .flatMap((e) => e.texts)
+        .map((t) => t.text)
+    expect(glyphsOf('!3!')).toEqual([])
+    expect(decorationTexts('!3!')).toContain('3')
+    expect(decorationTexts('!0!')).toContain('0')
+    expect(decorationTexts('!5!')).toContain('5')
   })
 
   it('aliases `mordent` and `trillh` the way abcjs draws them', () => {
@@ -1786,9 +1940,10 @@ describe('ornaments and techniques', () => {
     // Checked against abcjs's RENDERED SVG, not its element dump. The dump misses
     // anything attached through addOther, which made `slide` and `breath` look
     // unsupported on the first pass — the same blind spot that nearly lost the dynamics.
+    // `slide` is NOT in this list: abcjs paints it, but as a TIE through `addOther`, not
+    // as a glyph. Its own test is below.
     for (const name of [
       'roll',
-      'slide',
       'breath',
       'wedge',
       'open',
@@ -1799,6 +1954,68 @@ describe('ornaments and techniques', () => {
     ]) {
       expect(glyphsOf(`!${name}!`), `!${name}! should draw`).toHaveLength(1)
     }
+  })
+
+  it('charges an ending\'s extra minspacing to ONE voice, not to every barline', () => {
+    // abcjs adds `minspacing += textWidth + 10` in `createBarLine`, which runs where the
+    // ENDING element is created — and a volta belongs to the first voice of the first
+    // staff, not to every voice whose bar falls under the `|1`. Its own probe on
+    // `ragtime-nightingale`'s system 17: of the five barlines at one x, ONE carries
+    // `minsp=28.50` and the other four the plain 10.00.
+    //
+    // Charging every voice is NOT a wash, because the left-ink rule is a SHORTFALL and not
+    // an addition — `if (er < extraWidth) x += extraWidth - er`
+    // (`layout/voice-elements.js:66-72`). abcjs's other voices keep 18.50 of slack after
+    // their bar, which absorbs the 12.13 of accidental ink on the chord that follows; ours
+    // had spent that slack on the ending, so the same accidental pushed the shared cursor
+    // 12.13 further right. That was the whole of ragtime's dx, on 2009 noteheads.
+    // The note straight after the ending's barline carries an accidental in the SECOND
+    // voice only. With the room charged once, the slack after that voice's bar absorbs it
+    // and nothing moves; charged twice, the accidental pushes the shared cursor.
+    const withAcc =
+      'X:1\nM:2/4\nL:1/8\n%%score (a b)\nV:a\nK:C\nCDEF|1 GABc:|2 GABc|\nV:b\nK:C\nCDEF|1 _GABc:|2 GABc|\n'
+    const plain = withAcc.replace('_GABc', 'GABc')
+    const firstNoteAfterEnding = (src: string): number => {
+      const score = parse(src).scores[0] as Score
+      const voice = layout(score).systems[0]?.staves[0]?.voices[0] ?? []
+      const bar = voice.findIndex((e) => e.type === 'bar')
+      const after = voice.slice(bar + 1).find((e) => e.type === 'note')
+      if (after === undefined) throw new Error('no note after the ending bar')
+      return after.x
+    }
+    expect(firstNoteAfterEnding(withAcc)).toBeCloseTo(firstNoteAfterEnding(plain), 6)
+  })
+
+  it('draws `!slide!` as a CURVE at the note, and reserves nothing above', () => {
+    // abcjs builds two ZERO-WIDTH blanks below and left of the head and ties them:
+    //
+    //     var yPos2 = abselem.heads[0].pitch - 2
+    //     var blank1 = new RelativeElement("", -roomtaken - 15, 0, yPos2 - 1)
+    //     var blank2 = new RelativeElement("", -roomtaken -  5, 0, yPos2 + 1)
+    //     voice.addOther(new TieElem({ anchor1: blank1, anchor2: blank2, fixedY: true }))
+    //
+    // (`decoration.js:51-59`.) It reaches the page through `addOther`, the one route the
+    // structural gate cannot see, which is why it was read as an above-stacked glyph and
+    // pushed `S1-decorations` X:105 a uniform 9.67px down.
+    //
+    // The figures below are abcjs's own path for `!slide!C`, measured:
+    // `M 61.85 158.49 C … 69.85 150.74 …` against a notehead centred at (75.78, 146.85).
+    const score = parse('X:1\nT:t\nC:c\nM:4/4\nL:1/4\nK:C\n!slide!C D E F|\n')
+      .scores[0] as Score
+    const staff = layout(score).systems[0]?.staves[0]
+    expect(staff?.curves).toHaveLength(1)
+    const curve = staff?.curves[0]
+    const head = (staff?.elements ?? [])
+      .flatMap((e) => e.glyphs)
+      .find((g) => g.role === 'notehead')
+    if (curve === undefined || head === undefined) throw new Error('nothing drawn')
+    // 8px wide — abcjs's blanks are 10px apart and its tie adds 6 at the start, 4 at the
+    // end — and 2 pitch tall, ending 1 pitch below the head. `fixedY` means the anchors'
+    // own pitches, with none of a tie's 1.2 lift.
+    expect((curve.x2 - curve.x1) * 7.75).toBeCloseTo(8, 1)
+    expect((curve.y1 - curve.y2) * 7.75).toBeCloseTo(7.75, 1)
+    expect((curve.y2 - head.y) * 7.75).toBeCloseTo(3.875, 1)
+    expect(curve.x1).toBeLessThan(head.x)
   })
 
   it('draws NOTHING for the inverted turns in strict, as abcjs does', () => {
@@ -1973,50 +2190,66 @@ describe('tremolo, phrases and technique', () => {
 })
 
 describe('text metrics', () => {
-  const centreOf = (text: string) => {
+  // READ OFF THE NOTE'S LEFT EXTENT, not the drawn x of the text.
+  //
+  // A lyric is centred on its note and reaches half its width back before it, which is
+  // abcjs's `addCentered`. At the START of a line that half is the only thing between the
+  // note and the cursor, so abcjs's `if (er < extraWidth) x += extraWidth - er` shifts the
+  // note right by exactly it and every syllable, narrow or wide, ends up drawn at the same
+  // absolute x. These tests used to compare that x and so measured a constant. `left` is
+  // the quantity they were always about: does the estimate tell characters apart.
+  //
+  // THE MODE DECIDES WHICH METRIC. `abcjs-strict` measures with the golden generator's
+  // `calcWidth` — five ASCII tables and a flat 8 for everything else — because byte parity
+  // with the goldens is what strict is for. The real per-em tables are what `abc2.1` and
+  // `extended` keep, so the tests about REAL metrics ask for that mode.
+  const leftOf = (text: string, mode: CompatibilityMode = 'abc2.1') => {
     const staff = layout(parse(`X:1\nL:1/4\nK:C\nC|\nw:${text}\n`).scores[0] as Score, {
       systemWidth: 200,
+      mode,
     }).systems[0]?.staves[0]
-    const t = (staff?.elements ?? []).flatMap((e) => e.texts).find((x) => x.text === text)
-    return t
+    return (staff?.elements ?? []).find((e) => e.type === 'note')?.left ?? 0
+  }
+  const sizeOf = (text: string) => {
+    const staff = layout(parse(`X:1\nL:1/4\nK:C\nC|\nw:${text}\n`).scores[0] as Score, {
+      systemWidth: 200,
+      mode: 'abc2.1',
+    }).systems[0]?.staves[0]
+    return (staff?.elements ?? []).flatMap((e) => e.texts).find((x) => x.text === text)?.size ?? 1
   }
 
   it('measures narrow and wide characters differently', () => {
     // The whole point. The flat estimate this replaces measured these the same, with a
     // median error of 24% against real serif metrics over the corpus.
-    const narrow = centreOf('iiiii')
-    const wide = centreOf('WWWWW')
-    expect(narrow).toBeDefined()
-    expect(wide).toBeDefined()
-    // Centred, so a wider string starts further LEFT of the same notehead.
-    expect(wide?.x ?? 0).toBeLessThan(narrow?.x ?? 0)
+    expect(leftOf('WWWWW')).toBeGreaterThan(leftOf('iiiii'))
+    // …and strict tells them apart too: the golden's tables are per-character as well.
+    expect(leftOf('WWWWW', 'abcjs-strict')).toBeGreaterThan(leftOf('iiiii', 'abcjs-strict'))
   })
 
   it('treats CJK as full width', () => {
     // A range test, not a table entry — there are tens of thousands of them and they
-    // share one advance. The corpus's Chinese-lyric fixture was being measured at half
-    // its real width, which was the whole of the residual error after the table landed.
-    const cjk = centreOf('小燕子')
-    const latin = centreOf('abc')
-    expect(cjk).toBeDefined()
-    // Three full-width characters are about twice three Latin letters, so they start
-    // markedly further left when centred on the same note.
-    expect(cjk?.x ?? 0).toBeLessThan(latin?.x ?? 0)
+    // share one advance. Correct, and NOT what abcjs's goldens say: the generator's tables
+    // are ASCII, so `小` measures the flat 8 there and a Chinese lyric is spaced NARROWER
+    // than it is drawn. Strict reproduces that; this is the corrected reading.
+    expect(leftOf('小燕子')).toBeGreaterThan(leftOf('abc'))
   })
 
   it('falls back for a character the table lacks, rather than measuring zero', () => {
     // A zero-width fallback would centre an unknown string on the wrong point and, worse,
     // look plausible. Cyrillic Zhe is not in the table, so each one should cost exactly
-    // FALLBACK_ADVANCE — measured as the shift between one and three of them, since
-    // centring moves the start by half the added width.
-    const one = centreOf('Ж')
-    const three = centreOf('ЖЖЖ')
-    expect(one).toBeDefined()
-    expect(three).toBeDefined()
-    const size = one?.size ?? 1
-    // Two extra characters widen the string by 2 × fallback, so the centred start moves
-    // left by one fallback's worth.
-    expect((one?.x ?? 0) - (three?.x ?? 0)).toBeCloseTo(FALLBACK_ADVANCE * size, 4)
+    // the fallback — measured as the difference between one and three of them, halved by
+    // the centring. A lyric is set in abcjs's `vocalfont`, so it is the BOLD table's
+    // fallback that applies, not the serif one's.
+    expect(leftOf('ЖЖЖ') - leftOf('Ж')).toBeCloseTo(CHAR_ADVANCE_BOLD_FALLBACK * sizeOf('Ж'), 4)
+  })
+
+  it("strict measures an unlisted character as the golden's flat 8", () => {
+    // `dump-svg.js`'s `widths[ch] || 8`, which is what every SVG golden was measured with
+    // and therefore the parity target — see `goldenTextWidth`. Two extra Zhe cost 16px,
+    // halved by the centring. This is the rule that took `visual-tablature-17` from 499px
+    // out to 41 and `little swallow`'s dx from 24.2 to 21.7.
+    const two = leftOf('ЖЖЖ', 'abcjs-strict') - leftOf('Ж', 'abcjs-strict')
+    expect(two).toBeCloseTo((2 * 8) / 2 / 7.75, 4)
   })
 })
 
@@ -2178,11 +2411,16 @@ describe('drawing bounds include prose, not just music', () => {
   it('fits every text it draws', () => {
     // The general property, rather than the title case that exposed it: nothing the
     // renderer places may fall outside the box it reports.
+    //
+    // `abc2.1`, NOT strict. Strict measures with the golden generator's `calcWidth`, which
+    // is deliberately not what a browser draws — a 27px title is measured with 17px Times
+    // widths — so its declared box UNDER-reports on purpose and abcjs's own SVG has the
+    // same property. The invariant belongs to the modes whose metric is the real one.
     for (const abc of [
       'X:1\nT:A very considerably longer title than the music beneath it needs\nL:1/4\nK:C\nC|\n',
       'X:1\nT:T\nL:1/4\nK:C\nC|\nw:enormouslylongsyllable\n',
     ]) {
-      const d = doc(abc)
+      const d = layout(parse(abc).scores[0] as Score, { systemWidth: 20, mode: 'abc2.1' })
       const right = Math.max(
         0,
         ...d.systems.flatMap((s) =>
