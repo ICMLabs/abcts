@@ -10,14 +10,14 @@ method, `-08-04b.md` 41–50, `-08-03d.md` the ledger 16–40.
 
 ---
 
-## 🔎 THE HEADLINE: THE PIXEL TABLE IS DOWN TO ONE ROW, AND THE TAIL WAS NEVER "NOT WORK"
+## 🔎 THE HEADLINE: BOTH RANKED TABLES ARE EMPTY, AND THE TAIL WAS NEVER "NOT WORK"
 
 | | at the session's start | now |
 |---|---|---|
 | suite | 890 | **890. NO REDS.** |
-| pixel ranked table | 18 of 119, "TEN live rows, nothing above 8.25" | **ONE of 119.** `S8-layout-tune7` at 0.23 |
+| pixel ranked table | 18 of 119, "TEN live rows, nothing above 8.25" | **0 of 119** |
 | harvested (174) | 0 of 174 | **0 of 174** |
-| ceilings | — | **thirteen LOWERED, none raised** |
+| ceilings | — | **fourteen LOWERED, none raised** |
 | Bravura glyphs | 112 | 113 — the BREVE |
 
 Nine of the eighteen rows were the block this file's predecessor called *"the whole-note
@@ -269,56 +269,96 @@ Nothing regressed by any amount at any point. Every ceiling that moved went DOWN
 | `S4-bars-repeats-tune2` | dx 1.17 ox 1.80 | **0.00 — exact** |
 | `S5-directives-tune1` | dx 1.19 dy 0.03 | **0.00 — exact** |
 | `S3-note-syntax-tune12` + eight `G8` tunes | 0.18 | **0.00 — exact** |
-| `S8-layout-tune7` | dy 2.66 oy 1.14 | dy 0.23 oy −0.10 |
+| `S8-layout-tune7` | dy 2.66 oy 1.14 | **0.00 — exact** |
 
 ---
 
-## WHAT IS LEFT
+## FINDING 143 — A GRACE GROUP CARRIES ITS OWN SLUR, AND WE HAD NEVER BUILT ONE
 
-```
-1 of 119 tunes are off some axis by 0.05px or more
-     0.23  dy=0.23 dx=0.00 oy=-0.10 ox=0.00  58 heads  S8-layout-tune7
-```
-
-### 1. THE GRACE SLUR — a feature we have never had
-
-abcjs hangs a `TieElem` under every grace group unless bagpipes:
+The only curve abcjs makes without the source asking for one:
 
 ```js
+var isInvisibleRest = elem.rest && (elem.rest.type === "spacer" || elem.rest.type === "invisible");
 if (i === 0 && !isBagpipes && this.graceSlurs && !isInvisibleRest)
   voice.addOther(new TieElem({ anchor1: grace, anchor2: notehead, isGrace: true }))
 ```
 
-(`abstract-engraver.js:530-533`), and its `getYBounds` box pushes the staff through the
-`TieElem` arm of `setUpperAndLowerVoiceElements`. Measured on the bar alone:
+(`abstract-engraver.js:528-533`, inside `addGraceNotes`' forward loop — ONE per group, first
+grace to main head, `graceSlurs` default true.) `grep -rn graceSlur src/` returned NOTHING;
+`curveReserves` knew `slurStarts`, `slurEnds` and `tiedToNext` and nothing about graces.
+
+**ITS GEOMETRY IS THE SIMPLEST OF ANY CURVE, because two branches switch themselves off.**
+`calcSlurDirection` opens `if (this.isGrace) this.above = false`, so it is ALWAYS BELOW; and
+`calcSlurY`'s beam-retargeting block is guarded on `anchor1.scalex === 1`, which a
+0.6-scaled grace head fails — **so both ends are the plain pitch even when the main note is
+mid-beam** (`tie-element.js:96-98, 163-202`). The reserve is `min(pitch) - 3`.
+
+A ladder of seven controls against abcjs's own `staff.bottom`, and only one binds:
 
 ```
-{f}e {C}D {cd}c {E^c}a2 {dedc}d      abcjs bottom -3.0000   ours -1.2000
+e          -1.0000  -1.0000
+{f}e       -1.0000  -1.0000     grace ABOVE the note — reserves past the staff
+{cd}c      -1.0000  -1.0000
+{dedc}d    -1.0000  -1.0000
+{C}D       -3.0000  -1.2000     ← the one, and min(0, 1) - 3 is exactly -3
+{f}y       -1.0000  -1.0000     invisible rest — abcjs SKIPS the slur
+{f}z       -1.0000  -1.0000     ordinary rest — it does NOT, and it still clears
 ```
 
-On the whole tune the low `^C=C_C` bar covers all but 0.0581 pitch of it, which is the 0.23.
+**AND IT IS DRAWN, at abcjs's own coordinates.** Three offsets: `calcX` pulls the GRACE end
+back 3 — the only thing it special-cases — then `drawArc` adds the usual 6 and 4, and the
+1.5-pitch slur lift goes DOWN. Verified against abcjs's own path on `{C}D`:
 
-**NOTHING IN EITHER GATE CAN SEE THE MISSING CURVE** — the pixel gate counts noteheads and
-the structural one misses everything added by `addOther`. `curveReserves` handles
-`slurStarts` / `slurEnds` / `tiedToNext` and knows nothing about graces; `grep -rn graceSlur
-src/` returns nothing at all.
+```
+abcjs   M 75.09 81.55 C 79.56 84.22 84.27 82.56 86.09 77.68 …   centre (80.590, 81.895)
+ours                                                            centre (80.590, 81.890)
+```
 
-### 2. `(b4` — a second, smaller curve divergence on the same tune
+with both engines' noteheads at (87.02, 71.85) and (77.02, 75.73).
 
-Found by the same six-bar ladder and not chased: abcjs's staff top for the bar `(b4` alone is
-16.0000 against our 14.0448. It does not reach the fixture because bar 6 dominates.
+**`anchor2` IS THE MAIN NOTEHEAD AND THAT IS NOT `anchor.left`** — our anchor's `left` is a
+min over every head on the element and the grace heads are in it. Both ends are resolved in
+`curveReserves`, where the elements are, and stamped on the anchor: the same merge
+`slurFixed` makes.
+
+---
+
+## WHAT IS LEFT — AND NO GATE CAN NAME IT ANY MORE
+
+```
+0 of 119 tunes are off some axis by 0.05px or more
+0 of 174 fixtures are off some axis by 0.05px or more
+```
+
+Every fixture in both corpora agrees with abcjs on all four geometric axes to within 0.05px.
+**So findings now come only from READING abcjs and proving on a control**, and the two
+things already measured and not chased are the place to start.
+
+### 1. OUR STAFF LINES ARE 40px LONGER THAN ABCJS'S — measured, not started
+
+No gate can see it: the pixel gate compares noteheads, the line-weight gate reads THICKNESS
+only, and the baselines say CHANGED and never WRONG. On `ragtime-nightingale` every staff
+line resolves to `x=350.05 w=700.10` for us against abcjs's `x=355.05 w=660.10` — ours spans
+0 → 700.1 where abcjs's spans 25 → 685.1.
+
+abcjs draws from `params.startx` to `params.w` (`draw/staff-group.js:92` → `draw/staff.js`),
+where `startx` is `getLeftEdgeOfStaff` — `padding.left` plus the voice-name and brace
+reservation — and `w` is the staff group's right edge. Ours appears to span the whole page.
+**It needs a gate of its own before it is fixed**, since nothing existing would catch a
+regression.
+
+### 2. `(b4` — AN UNCLOSED SLUR STILL RESERVES
+
+Turned up by finding 139's six-bar ladder and not chased. abcjs's staff top for the bar
+`(b4` alone is 16.0000 against our 14.0448: `b` is pitch 13, and `getYBounds` with only
+`anchor1` gives `startY = endY = anchor1.pitch` and then `top = bottom + 3` — 16 exactly.
+Our `curveReserves` drops a slur whose `)` never arrives. It does not reach any fixture,
+because in the real tune the slur closes two bars later.
 
 ### 3. THE REMAINING FIXED LANES, then Gonzato, then audio
 
 `dynamicAboveStep`, `dynamicBelowStep`, `annotationAboveStep`, `partStep`, `tempoStep`,
 `lyricStep`. `anchorChordsBelow` (137) is now the second model beside `anchorVoltas`.
-
-### 4. AND ONE THING MEASURED AND NOT CHASED, carried from the last handoff
-
-**Our staff LINES are 40px longer than abcjs's**, and no gate can see it. On
-`ragtime-nightingale` every staff line resolves to `x=350.05 w=700.10` for us against abcjs's
-`x=355.05 w=660.10`. abcjs draws from `getLeftEdgeOfStaff` to the staff group's right edge
-(`draw/staff-group.js:92`); ours spans the whole page width.
 
 ---
 

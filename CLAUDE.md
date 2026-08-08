@@ -268,10 +268,11 @@ gate had been comparing abcjs's outline START against our glyph ORIGIN, a 4px bi
 
 **Structural parity is done: note content, lyrics, beams and render structure are all
 41/41 with zero recorded divergences.** `geometry/vertical` is **890/890 with NO reds**, and
-BOTH ranked tables are essentially empty: the harvested one is **0 of 174** and the pixel one
-**1 of 119** — `S8-layout-tune7` at 0.23px, whose cause is named (the GRACE SLUR, a feature
-never implemented, which neither gate can see). `ragtime-nightingale` — 2009 noteheads, the
-corpus's largest fixture — is EXACT on all four axes.
+**BOTH ranked tables are EMPTY** — 0 of 119 pixel targets and 0 of 174 harvested fixtures off
+any axis by 0.05px or more. `ragtime-nightingale` — 2009 noteheads, the corpus's largest
+fixture — is EXACT on all four. **So no gate can name the next defect**, and the two things
+already MEASURED and not chased are where to start: the staff-line width (which needs a gate
+of its own before it is touched) and the unclosed-slur reserve. See the handoff.
 pushed, and the AUDIT FINDING IS CLOSED — no Bravura figure is reachable in strict. The
 harvested corpus is **10 of 174 off some axis**, from 34 at the start of 2026-08-05, with
 **nothing above 0.93px** and every measurable fixture inside one pixel. Two ceilings are
