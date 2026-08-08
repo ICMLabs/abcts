@@ -257,7 +257,11 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // above the staff, so it reserves nothing — this tune's whole error was that reserve.
     'S1-decorations-tune4': { heads: 16, dy: 0, dx: 0.01, oy: 0.0, ox: 0 },
     'S2-fields-tune0': { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
-    'S2-fields-tune1': { heads: 11, dy: 4.68, dx: 0, oy: -2.98, ox: 0 },
+    // dy 4.68 -> 0.0 and oy -2.98 -> 0.0. EXACT ON ALL FOUR. A `"_below"` annotation takes
+    // a LANE off the staff's bottom ink — `chordHeightBelow * lanes + margin` — where we
+    // drew it at a fixed step and reserved its own ink box. 1.2078 pitch on staff 0, which
+    // carried the whole tune's two later systems with it.
+    'S2-fields-tune1': { heads: 11, dy: 0.0, dx: 0, oy: 0.0, ox: 0 },
     'S2-fields-tune2': { heads: 16, dy: 0, dx: 0.01, oy: 0, ox: 0 },
     'S3-note-syntax-tune0': { heads: 28, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S3-note-syntax-tune1': { heads: 43, dy: 0, dx: 0, oy: 0, ox: 0 },

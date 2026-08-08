@@ -772,6 +772,8 @@ export type PartRole =
   | 'text'
   | 'lyric'
   | 'chord'
+  /** A chord symbol or annotation on the BELOW side — its own lane, off `staff.bottom`. */
+  | 'chordBelow'
   | 'dynamic'
   | 'title'
 
@@ -4018,19 +4020,29 @@ function noteText(
     })
   })
 
-  below.forEach((a, index) => {
+  below.forEach((a) => {
     const size = fontSizeOf('annotationfont')
+    // A BELOW ANNOTATION TAKES A LANE ON THE STAFF'S BOTTOM INK, exactly as an above one
+    // takes one on its top: `RelativeElement`'s `case "text"` with no pitch sets
+    // `chordHeightBelow` when `position === 'below'` (`relative-element.js:70-75`), and
+    // `set-upper-and-lower-elements.js:56-61` spends it as `chordHeightBelow * lanes +
+    // margin` off `staff.bottom`. `anchorChordsBelow` is where that happens.
+    //
+    // Drawn at the STAFF for now, with a POINT reserve, so nothing it does before that
+    // pass runs can reach the extent — the mirror of what a left/right annotation does,
+    // and the reason the lane can be spent exactly once.
+    const y = stepToY(-4)
     texts.push({
       text: a.text,
       // Left-justified, like the `above` case.
       x: headX,
-      y: stepToY(
-        ENGRAVE.annotationBelowStep -
-          (index * size * ABCJS_RATIO.laneLineStep) / ENGRAVE.spacePerStep,
-      ),
+      y,
       size,
       bold: false,
       italic: false,
+      role: 'chordBelow',
+      reserve: pointReserve(y),
+      ...(SCORE_FONTS.annotationfont?.box === true ? { box: true } : {}),
     })
   })
 
@@ -7504,8 +7516,11 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       const parts = anchorVoltas(
         anchorBelowStaff(
           anchorAboveStaff(
-            anchorLyrics(
-              members.map((i) => centred[i]).filter((x) => x !== undefined),
+            anchorChordsBelow(
+              anchorLyrics(
+                members.map((i) => centred[i]).filter((x) => x !== undefined),
+                strict,
+              ),
               strict,
             ),
             strict,
@@ -8185,6 +8200,33 @@ function anchorLyrics<
 }
 
 /**
+ * How many non-empty tspans the golden generator sees in this chord — 1 plus one for
+ * each of the modifier and the bass note (`svg.js:198-211`). The outer tspan's
+ * `textContent` gathers its children, so it counts whenever the chord is not empty.
+ */
+const jazzTspans = (t: PlacedText): number =>
+  t.jazz === undefined ? 1 : 1 + (t.jazz[1] === '' ? 0 : 1) + (t.jazz[2] === '' ? 0 : 1)
+
+/**
+ * The height a chord symbol or annotation reserves in its lane, ABOVE or BELOW.
+ *
+ * `RelativeElement` takes both `chordHeightAbove` and `chordHeightBelow` from the same
+ * measured text height (`relative-element.js:60-75`), so the two sides share this. Three
+ * terms, all the golden generator's:
+ *
+ *   • the height for the size, from its table with `size + 2` for anything unlisted —
+ *     so `%%gchordfont Arial 80` resolves to 107px and reserves 109, not 80 x a ratio;
+ *   • one whole LINE per extra nested tspan, which is what `%%jazzchords` costs
+ *     (`dump-svg.js:120-124`);
+ *   • `padding * 4` for a BOXED font, `padding = size * fontboxpadding`
+ *     (`get-text-size.js:46-48`) — `visual-tablature-17` boxes five of them.
+ */
+const chordHeightOf = (t: PlacedText): number =>
+  goldenTextHeight(t.size) +
+  (jazzTspans(t) - 1) * t.size * ENGRAVE.textLineStep +
+  (t.box === true ? t.size * ENGRAVE.fontBoxPadding * 4 : 0)
+
+/**
  * Stack the above-staff furniture on the staff's music, once its voices are known.
  *
  * The mirror of `anchorLyrics`, and the same lesson from the other side: abcjs does NOT
@@ -8217,13 +8259,6 @@ function anchorAboveStaff<
   } & StaffFurniture,
 >(parts: readonly T[], strict: boolean, partsBox = false): T[] {
   const isChord = (t: PlacedText): boolean => t.role === 'chord'
-  /**
-   * How many non-empty tspans the golden generator sees in this chord — 1 plus one for
-   * each of the modifier and the bass note (`svg.js:198-211`). The outer tspan's
-   * `textContent` gathers its children, so it counts whenever the chord is not empty.
-   */
-  const jazzTspans = (t: PlacedText): number =>
-    t.jazz === undefined ? 1 : 1 + (t.jazz[1] === '' ? 0 : 1) + (t.jazz[2] === '' ? 0 : 1)
   const has = (fn: (el: LayoutElement) => boolean) => parts.some((p) => p.elements.some(fn))
   const chords = has((el) => el.texts.some(isChord))
   const partLabels = has((el) => el.type === 'part')
@@ -8339,10 +8374,6 @@ function anchorAboveStaff<
   //     (`dump-svg.js:120-124`);
   //   • `padding * 4` for a BOXED font, `padding = size * fontboxpadding`
   //     (`get-text-size.js:46-48`) — `visual-tablature-17` boxes five of them.
-  const chordHeightOf = (t: PlacedText): number =>
-    goldenTextHeight(t.size) +
-    (jazzTspans(t) - 1) * t.size * ENGRAVE.textLineStep +
-    (t.box === true ? t.size * ENGRAVE.fontBoxPadding * 4 : 0)
   const chordTexts = parts.flatMap((p) => p.elements.flatMap((el) => el.texts.filter(isChord)))
   // …AND THE DEFAULT IS A FALLBACK, NOT A FLOOR. Both of these read as "the tallest chord
   // on the staff" and were `Math.max(default, …)`, which is a clamp: harmless for any font
@@ -8447,6 +8478,148 @@ function partBox(el: LayoutElement): PlacedLine[] {
     { x1: left, y1: top, x2: left, y2: bottom, thickness: w },
     { x1: right, y1: top, x2: right, y2: bottom, thickness: w },
   ]
+}
+
+/**
+ * Stack the BELOW-staff chord symbols and annotations on the staff's music.
+ *
+ * The exact mirror of `anchorAboveStaff`'s chord lane, and the same shape of defect it
+ * fixed on the other side: we drew a `"_below"` at a fixed `annotationBelowStep` and let
+ * its own ink set the staff's bottom, where abcjs stacks it on the music and reserves a
+ * LANE past it.
+ *
+ * ```js
+ * if (staff.specialY.chordHeightBelow) {
+ *   positionY.chordHeightBelow = staff.bottom;          // where the mark is DRAWN
+ *   var hgt = staff.specialY.chordHeightBelow;
+ *   if (staff.specialY.chordLines.below) hgt *= staff.specialY.chordLines.below;
+ *   staff.bottom -= (hgt + margin);                     // what the staff RESERVES
+ * }
+ * ```
+ *
+ * (`set-upper-and-lower-elements.js:56-61`.) Two numbers off one anchor, and the margin is
+ * BEYOND the drawn box rather than inside it — which is why the ink alone cannot stand in
+ * for the reserve here the way it can above, where `reserve()` walks past the margin
+ * before the baseline is taken. So the block is spent explicitly, as a `reserve` on the
+ * texts themselves.
+ *
+ * Ladder of four controls against abcjs's own instrumented `staff.bottom`, all on `CEGc`
+ * whose ink bottom is -1.0444:
+ *
+ * ```
+ *   plain                     -1.0444    -1.0444    ours exact
+ *   "_below"                  -6.8237    -5.6159    1.2078 pitch out  = 4.68px
+ *   "_below" "_two"          -11.6031   -10.7772    0.8259 pitch out
+ *   "_Wwwwwwwwwwwwww"         -6.8237    -5.6159    LENGTH IS IRRELEVANT — a fixed lane
+ * ```
+ *
+ * The fourth rung is the one that names the mechanism: fourteen characters reserve exactly
+ * what six do, so nothing here is measuring the ink.
+ *
+ * LANE ORDER IS THE FIRST-WRITTEN NEAREST THE STAFF, and a chain of three source reads
+ * predicts the opposite. `setLaneForChord` walks a note's children FORWARD for
+ * `chordHeightAbove` and BACKWARD for `chordHeightBelow` (`layout/voice.js:86-97`), and
+ * `setLane`'s `invertLane` — which flips the above indexes — has its below arm COMMENTED
+ * OUT (`:118-121`), so the backward walk should leave the LAST-written in lane 0.
+ * Instrumenting `placeInLane` on `"_p""_dolce"C|` says otherwise:
+ *
+ * ```
+ *   PROBE lane "p"     -> FIT 0   left=49.05 right=57.96
+ *   PROBE lane "dolce" -> NEW 1   left=49.05 right=87.33
+ * ```
+ *
+ * and its SVG agrees — `p` at y 95.79 against `dolce` at 115.79. The two sides come out
+ * the SAME way up, because whatever order a below annotation reaches `children` in
+ * cancels the backward walk. Measure the output before trusting the source on order;
+ * `anchorAboveStaff` carries the same warning for the same reason.
+ *
+ * ponytail: anchored on the music ink, so a staff carrying BOTH lyrics and a below
+ * annotation would put the mark inside the lyric block — abcjs's below chain is lyric,
+ * then chord, then dynamics. No fixture in either corpus writes both, and the honest fix
+ * is the same refactor `anchorAboveStaff`'s ending-lane note already asks for: one stack,
+ * spent once, instead of three passes each re-deriving the ink.
+ */
+function anchorChordsBelow<
+  T extends {
+    readonly elements: readonly LayoutElement[]
+    readonly beams: readonly PlacedLine[]
+  } & StaffFurniture,
+>(parts: readonly T[], strict: boolean): T[] {
+  const isBelow = (t: PlacedText): boolean => t.role === 'chordBelow'
+  if (!parts.some((p) => p.elements.some((el) => el.texts.some(isBelow)))) return [...parts]
+
+  // The MUSIC's ink. The below marks are already POINT-reserved at the staff line, so
+  // nothing they do reaches this — the same guarantee `anchorAboveStaff` gets by
+  // filtering them out of its own call.
+  const inkBottom = verticalExtent(
+    parts.flatMap((p) => p.elements.filter((el) => el.type !== 'title')),
+    parts.flatMap((p) => p.beams),
+    strict,
+    {
+      tupletReserves: parts.flatMap((p) => p.tupletReserves ?? []),
+      tupletLines: parts.flatMap((p) => p.tupletLines ?? []),
+      tupletTexts: parts.flatMap((p) => p.tupletTexts ?? []),
+      voltaLines: parts.flatMap((p) => p.voltaLines ?? []),
+      voltaTexts: parts.flatMap((p) => p.voltaTexts ?? []),
+    },
+  ).inkBottom
+
+  // `placeInLane`, below arm: each note's marks in REVERSE, into the first lane whose
+  // right edge clears this one's left.
+  const laneOf = new Map<PlacedText, number>()
+  let lanes = 1
+  for (const part of parts) {
+    const rightMost: number[] = [0]
+    let any = false
+    for (const el of part.elements) {
+      for (const t of el.texts.filter(isBelow)) {
+        any = true
+        const left = t.x
+        const right = left + markWidth(t.text, t.size, t.box === true)
+        const lane = rightMost.findIndex((edge) => edge < left)
+        if (lane >= 0) {
+          rightMost[lane] = right
+          laneOf.set(t, lane)
+        } else {
+          rightMost.push(right)
+          laneOf.set(t, rightMost.length - 1)
+        }
+      }
+    }
+    // Per VOICE, and the staff keeps the LAST voice's count — `voice.staff.specialY.
+    // chordLines = setLaneForChord(...)` assigns rather than maxes, as above.
+    if (any) lanes = rightMost.length
+  }
+
+  const marks = parts.flatMap((p) => p.elements.flatMap((el) => el.texts.filter(isBelow)))
+  const block =
+    Math.max(...marks.map(chordHeightOf)) * lanes + ENGRAVE.aboveStackMargin
+  const reserve: readonly [number, number] = [inkBottom, inkBottom + block]
+  return parts.map((part) => ({
+    ...part,
+    elements: part.elements.map((el) =>
+      el.texts.some(isBelow)
+        ? {
+            ...el,
+            texts: el.texts.map((t) =>
+              isBelow(t)
+                ? {
+                    ...t,
+                    // Drawn one font size below the anchor, plus `size * 1.25` per lane
+                    // (`draw/text.js:13-15, 28-30`) — abcjs's universal text rule and the
+                    // same lane step the above side uses.
+                    y:
+                      inkBottom +
+                      t.size +
+                      (laneOf.get(t) ?? 0) * t.size * ABCJS_RATIO.laneLineStep,
+                    reserve,
+                  }
+                : t,
+            ),
+          }
+        : el,
+    ),
+  }))
 }
 
 /**
