@@ -735,6 +735,57 @@ function alignDrumToMeter(def: DrumDefinition, drumBars: number, meter: Meter): 
   for (const p of def.pattern) p.len /= factor
 }
 
+/**
+ * `&` OVERLAY VOICES — each layer is a WHOLE VOICE of its own, with a track of its own.
+ *
+ * abcjs does this in the PARSER, not the sequencer: `resolveOverlays`
+ * (`parse/tune-builder.js:513-640`) rewrites the tune before anything sees it, and it runs
+ * in a `while` loop because one pass splits one LEVEL — `A & B & C` needs two.
+ *
+ * THE PART THAT MATTERS IS THE PADDING, because that is what puts an overlay in TIME — an
+ * overlay voice runs from bar one whether or not it sings there, so everything it does not
+ * cover is an INVISIBLE REST of that bar's own length. `C4 | D4 |` then `G4 & E4 |` sounds
+ * its `E4` at time 2, not at time 0.
+ *
+ * **AND OUR PARSER ALREADY DOES IT.** `padOverlays` was written for the BEAM gate — an
+ * overlay that existed only where it sang left a fixture two elements short — and it is
+ * abcjs's rule to the letter, spacers excluded and a pickup padded to the pickup rather
+ * than to a full bar. So this is a REGROUPING, not a port: every layer already has one
+ * event per measure, and all this does is read the layers out sideways as voices.
+ *
+ * The synthetic voice keeps the SAME measure objects for their barlines, so
+ * `resolveRepeats` unrolls it identically — which is what `overlay-repeat` and
+ * `flatten-rep-and-over` are.
+ *
+ * ONE THING IS DELIBERATELY DROPPED: abcjs strips `startEnding`/`endEnding` from the
+ * overlay voice "so they are not repeated". Those are VOLTAS, and a volta left on both
+ * voices would unroll them differently.
+ *
+ * ponytail: appended after ALL main voices, in (voice, layer) order. abcjs appends per
+ * STAFF — `staff.voices.push(ov.voice)` — so a two-staff tune where only the second staff
+ * has an overlay numbers its tracks differently from this. Nothing in the corpus does it,
+ * and the ranked table will say so if anything ever does.
+ */
+function overlayVoices(voices: readonly Voice[]): Voice[] {
+  const out: Voice[] = []
+  for (const voice of voices) {
+    const depth = voice.measures.reduce((n, m) => Math.max(n, m.overlays.length), 0)
+    for (let layer = 0; layer < depth; layer += 1) {
+      out.push({
+        ...voice,
+        id: `${voice.id}&${layer + 1}`,
+        measures: voice.measures.map((m) => ({
+          ...m,
+          volta: null,
+          events: m.overlays[layer] ?? [],
+          overlays: [],
+        })),
+      })
+    }
+  }
+  return out
+}
+
 /** abcjs's `interpretTempo`: `Q:` is stated at some beat, the sequencer wants another. */
 function qpmOfTempo(tempo: Tempo, meter: Meter | null): number {
   const unit: Rational | null = tempo.beatUnit
@@ -773,6 +824,13 @@ function pickupLengthOf(score: Score): number {
   const barLength = score.meter === null ? 1 : score.meter.numerator / score.meter.denominator
   let pickup = 0
   for (const measure of voice.measures) {
+    // …AND AN OPENING BARLINE IS A BAR ELEMENT TOO. abcjs's voice is a flat stream, so a
+    // tune written `|:e2|` has a `bar` as its very FIRST element and `computePickupLength`
+    // returns 0 before it counts a note. Ours splits the same `|:` off as the next
+    // measure's `openingBarline`, which is a different place to look and was not looked
+    // at: `overlay-repeat` counted its `e2` as a 0.25 pickup and played the whole first
+    // bar at the weak-beat 85 where abcjs plays it at 105.
+    if (measure.openingBarline !== null) return pickup
     for (const event of measure.events) {
       if (!(event.type === 'rest' && event.kind === 'spacer')) pickup += ratToNumber(event.duration)
       if (pickup >= barLength) pickup -= barLength
@@ -868,8 +926,12 @@ export function flattenAudio(
   const drumMap = score.drumMap ?? {}
   const pickupLength = pickupLengthOf(score)
   const tracks: MidiEvent[][] = []
+  // The overlay voices are REAL voices by the time abcjs's flattener runs — the parser put
+  // them there — so everything downstream counts them: the chord track's channel, the drum
+  // track's, and `voicesOff`'s indices.
+  const allVoices: readonly Voice[] = [...score.voices, ...overlayVoices(score.voices)]
   const startMeter = score.meter ?? { numerator: 4, denominator: 4, symbol: 'numeric' as const }
-  const chordTrack = new ChordTrack(score.voices.length, options.chordsOff === true, midi, {
+  const chordTrack = new ChordTrack(allVoices.length, options.chordsOff === true, midi, {
     num: startMeter.numerator,
     den: startMeter.denominator,
   })
@@ -917,7 +979,7 @@ export function flattenAudio(
       if (totalDuration < meter.numerator / meter.denominator) return
       drumTrack.push({
         cmd: 'program',
-        channel: score.voices.length + 1,
+        channel: allVoices.length + 1,
         instrument: PERCUSSION_PROGRAM,
       })
     }
@@ -940,7 +1002,7 @@ export function flattenAudio(
     }
   }
 
-  score.voices.forEach((voice, voiceIndex) => {
+  allVoices.forEach((voice, voiceIndex) => {
     const voiceOff =
       options.voicesOff === true ||
       (Array.isArray(options.voicesOff) && options.voicesOff.includes(voiceIndex))

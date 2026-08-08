@@ -68,7 +68,9 @@ const PASSING: readonly string[] = [
   'flatten-midi-options',
   'flatten-multi-measure-rest',
   'flatten-no-chord-voice',
+  'flatten-overlay',
   'flatten-perc-map-high-c',
+  'flatten-pickup-overlay',
   'flatten-perc-map',
   'flatten-quarter-tone',
   'flatten-regular-tie',
@@ -83,6 +85,7 @@ const PASSING: readonly string[] = [
   'no-start-repeat-part',
   'no-start-repeat-repeat',
   'no-start-repeat-title',
+  'overlay-repeat',
   'repeat-3',
   'volume-crash',
 ]
