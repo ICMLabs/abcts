@@ -60,6 +60,7 @@ const PASSING: readonly string[] = [
   'flatten-long-tie',
   'flatten-meter-change',
   'flatten-mid-measure',
+  'flatten-midi-options',
   'flatten-multi-measure-rest',
   'flatten-no-chord-voice',
   'flatten-six-huit',

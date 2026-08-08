@@ -457,11 +457,44 @@ function pickupLengthOf(score: Score): number {
   return pickup
 }
 
+/**
+ * `%%MIDI` as the sequencer reads it — abcjs's `abctune.formatting.midi`, whose values are
+ * flat arrays of number-or-string. `program 4` and `program 2 4` differ by LENGTH.
+ */
+function midiOf(score: Score): MidiDirectives {
+  const raw = score.midi ?? {}
+  const nums = (key: string): readonly number[] | undefined => {
+    const v = raw[key]
+    return v === undefined ? undefined : v.filter((x): x is number => typeof x === 'number')
+  }
+  const strs = (key: string): readonly string[] | undefined => {
+    const v = raw[key]
+    return v === undefined ? undefined : v.filter((x): x is string => typeof x === 'string')
+  }
+  const out: Record<string, readonly number[] | readonly string[]> = {}
+  for (const key of [
+    'program',
+    'channel',
+    'transpose',
+    'bassprog',
+    'chordprog',
+    'bassvol',
+    'chordvol',
+  ]) {
+    const v = nums(key)
+    if (v !== undefined) out[key] = v
+  }
+  const g = strs('gchord')
+  if (g !== undefined) out.gchord = g
+  return out as MidiDirectives
+}
+
 export function flattenAudio(
   score: Score,
   options: AudioOptions = {},
-  midi: MidiDirectives = {},
+  midiIn?: MidiDirectives,
 ): FlatAudio {
+  const midi = midiIn ?? midiOf(score)
   const startingTempo = qpmOf(score, options)
   let program = Math.trunc(options.program ?? 0)
   let channel = Math.trunc(options.channel ?? 0)

@@ -829,6 +829,7 @@ class VoiceBuilder {
   private pendingKeyChange: KeySignature | null = null
   private pendingClefChange: Clef | null = null
   private pendingTempoChange: Tempo | null = null
+  private pendingMidi: { cmd: string; params: readonly (string | number)[] }[] = []
   private pendingKeyChangeRange: SourceRange | null = null
   private pendingMeterChange: Meter | null = null
   private pendingMeterChangeRange: SourceRange | null = null
@@ -925,6 +926,18 @@ class VoiceBuilder {
     this.pendingClefChange = clef
   }
 
+  /**
+   * A `%%MIDI` written INSIDE the music — an element in the stream, not a tune setting.
+   *
+   * Attached to the measure being built, which is where the next `closeMeasure` will
+   * carry it. abcjs appends it at the exact element position; a measure is close enough
+   * for everything the flattener does with one (`gchord`, `drum`, `bassprog` and the
+   * volume commands all take effect from a bar boundary either way).
+   */
+  addMidiCommand(cmd: string, params: readonly (string | number)[]): void {
+    this.pendingMidi.push({ cmd, params })
+  }
+
   /** A `Q:` after the first — printed where it stands. */
   setTempoChange(tempo: Tempo | null): void {
     this.pendingTempoChange = tempo
@@ -966,6 +979,7 @@ class VoiceBuilder {
       keyChange: this.pendingKeyChange,
       clefChange: this.pendingClefChange,
       tempoChange: this.pendingTempoChange,
+      ...(this.pendingMidi.length > 0 ? { midiCommands: this.pendingMidi } : {}),
       keyChangeSourceRange: this.pendingKeyChangeRange,
       meterChange: this.pendingMeterChange,
       meterChangeSourceRange: this.pendingMeterChangeRange,
@@ -974,6 +988,7 @@ class VoiceBuilder {
     this.pendingKeyChange = null
     this.pendingClefChange = null
     this.pendingTempoChange = null
+    this.pendingMidi = []
     this.pendingKeyChangeRange = null
     this.pendingMeterChange = null
     this.pendingMeterChangeRange = null
@@ -1539,6 +1554,7 @@ interface Formatting {
   partsBox: boolean
   jazzChords: boolean
   percMap: Record<string, string>
+  midi?: Record<string, readonly (string | number)[]>
   stretchLast: number | null
   staffWidth: number | null
   maxStaves: number | null
@@ -1564,6 +1580,8 @@ class ScoreBuilder {
   unitNoteLength: Rational = rational(1, 8)
   unitExplicit = false
   bodyStarted = false
+  /** abcjs's `hasBeginMusic()` — a MUSIC LINE has been read, which `K:` alone does not do. */
+  musicStarted = false
   /**
    * The `%%vocalfont` in force, or null while none has been seen.
    *
@@ -1612,6 +1630,8 @@ class ScoreBuilder {
   partsBox = false
   jazzChords = false
   percMap: Record<string, string> = {}
+  /** `%%MIDI` written before the first note — the tune's own audio settings. */
+  midi: Record<string, readonly (string | number)[]> = {}
   stretchLast: number | null = null
   staffWidth: number | null = null
   maxStaves: number | null = null
@@ -1625,6 +1645,7 @@ class ScoreBuilder {
       partsBox: this.partsBox,
       jazzChords: this.jazzChords,
       percMap: this.percMap,
+      midi: this.midi,
       stretchLast: this.stretchLast,
       staffWidth: this.staffWidth,
       maxStaves: this.maxStaves,
@@ -1855,6 +1876,7 @@ class ScoreBuilder {
       partsBox: this.partsBox,
       jazzChords: this.jazzChords,
       percMap: this.percMap,
+      midi: this.midi,
       stretchLast: this.stretchLast,
       staffWidth: this.staffWidth,
       maxStaves: this.maxStaves,
@@ -2305,6 +2327,38 @@ class Parser {
       if (percMap[3] !== undefined) this.ensureScore(start).percMap[percMap[1]] = percMap[3]
       return
     }
+    /**
+     * `%%MIDI <cmd> [params…]` — the audio directives, and WHERE they land is the point.
+     *
+     *     if (tuneBuilder.hasBeginMusic())
+     *       tuneBuilder.appendElement('midi', -1, -1, { cmd, params });
+     *     else
+     *       tune.formatting['midi'][cmd] = params;
+     *
+     * (`abc_parse_directive.js:718-724`.) Before the first note it is a TUNE setting the
+     * sequencer reads once; after it, an ELEMENT in the stream taking effect where it
+     * stands. `%%MIDI program 40` in the header sets the instrument for the whole tune;
+     * `%%MIDI gchord fzczfzcz` mid-tune changes the strum pattern from that bar on, and
+     * `flatten-change-gchord` is exactly that case.
+     *
+     * The parameters are kept as an ARRAY of number-or-string, which is abcjs's own shape
+     * — `midi_params` — and is what lets `program 4` and `program 2 4` be told apart by
+     * LENGTH rather than by a schema. Its per-command arity table is not reproduced: it
+     * only ever produces warnings, and a consumer that reads `params[0]` when the command
+     * takes one number is already tolerant of a wrong count.
+     */
+    const midiDirective = /^MIDI\s+(\S+)\s*(.*)$/.exec(body)
+    if (midiDirective?.[1] !== undefined) {
+      const cmd = midiDirective[1]
+      const params: (string | number)[] = (midiDirective[2] ?? '')
+        .split(/\s+/)
+        .filter((t) => t !== '')
+        .map((t) => (/^-?\d+$/.test(t) ? Number.parseInt(t, 10) : t))
+      const builder = this.ensureScore(start)
+      if (builder.musicStarted) builder.voice.addMidiCommand(cmd, params)
+      else builder.midi[cmd] = params
+      return
+    }
     // `%%jazzchords` — chord modifiers and bass notes as small sub/superscripts. A bare
     // switch with no argument and no way back: `abc_parse_directive.js:791` only ever
     // assigns `true`.
@@ -2626,6 +2680,12 @@ class Parser {
     // time signature is printed on system 3, so the `+:` prose on line 8 had already made
     // every later field a mid-tune one.
     builder.bodyStarted = true
+    // …AND `musicStarted` IS THE NARROWER ONE. `bodyStarted` is also set by `K:`, which
+    // ends the HEADER; abcjs's `hasBeginMusic()` asks whether a MUSIC LINE has been read,
+    // and that is a different moment. `%%MIDI program 3` written on the line after `K:C`
+    // and before the first note is a TUNE setting to abcjs and a mid-tune element to
+    // anything that reads `bodyStarted` — `flatten-decorations` is exactly that shape.
+    builder.musicStarted = true
     // THE VOCALFONT A LYRIC DRAWS IN IS THE ONE IN FORCE WHEN ITS MUSIC LINE BEGAN, not
     // when its `w:` line was read. `%%vocalfont` is a CHANGING font
     // (`abc_parse_directive.js:1022-1030`): it always writes `multilineVars.vocalfont`, and

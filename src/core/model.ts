@@ -763,6 +763,19 @@ export interface Measure {
    * voices and abcjs draws all five marks.
    */
   readonly tempoChange?: Tempo | null
+  /**
+   * `%%MIDI` directives written inside the music, taking effect from this measure.
+   *
+   * abcjs splits them by POSITION: before the first note a `%%MIDI` is a tune setting on
+   * `formatting.midi`, after it an ELEMENT in the stream (`abc_parse_directive.js:718-724`).
+   * `%%MIDI program 40` in the header is the first kind; `%%MIDI gchord fzczfzcz` mid-tune
+   * is the second. Params keep abcjs's own shape — a flat array of number-or-string — which
+   * is what lets `program 4` and `program 2 4` be told apart by LENGTH.
+   */
+  readonly midiCommands?: readonly {
+    readonly cmd: string
+    readonly params: readonly (string | number)[]
+  }[]
   readonly startsSystem: boolean
   /**
    * Free-text blocks and mid-tune subtitles standing between the PREVIOUS system and this
@@ -1012,6 +1025,8 @@ export interface Score {
    *
    * The `sound` half is audio and is not modelled here.
    */
+  /** `%%MIDI` written before the first note — the tune's own audio settings. */
+  readonly midi?: Readonly<Record<string, readonly (string | number)[]>>
   readonly percMap: Readonly<Record<string, string>>
   /**
    * `%%stretchlast` — whether to justify the LAST music line, and how nearly full it has
