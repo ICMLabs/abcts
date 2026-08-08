@@ -210,12 +210,20 @@ function keyAccidentals(key: KeySignature): number[] {
     const step = order[i]
     if (step !== undefined) out[step] = fifths >= 0 ? 1 : -1
   }
-  // `K:… ^f _b` and the like WIN over the signature they follow, and a quarter-tone
-  // accidental carries its quarter through — abcjs stores the key's extras in the same
-  // array the notes read.
+  // `K:… ^f _b` and the like ADD to the signature they follow — abcjs's `setKeySignature`
+  // does `accidentals[note] += d`, not `=`. And a QUARTER tone is **0.25**, not 0.5:
+  // `switch (acc.acc) { case "quarterflat": d = -0.25; case "quartersharp": d = 0.25 }`
+  // (`abc_midi_flattener.js:676-682`). That looks like a bug — a quarter tone is half a
+  // semitone, not a quarter — and it is not: the fraction is a MARKER. `adjustForMicroTone`
+  // tests the pitch's decimal for `.25` or `.75` and turns it into a whole pitch plus a
+  // ±50-cent bend, and only 0.25 lands unambiguously on one or the other. A 0.5 would put a
+  // half-sharp above C and a half-flat below D on the same 60.5 and lose the direction.
   for (const extra of key.extra ?? []) {
     const step = stepIndex(extra.step)
-    if (step >= 0) out[step] = extra.quarters / 2
+    if (step >= 0) {
+      out[step] =
+        (out[step] ?? 0) + (extra.quarters % 2 === 0 ? extra.quarters / 2 : extra.quarters / 4)
+    }
   }
   return out
 }
@@ -627,7 +635,9 @@ export function flattenAudio(
         // spent once, in the pitch, and `octave=` is NOT one of the things that becomes a
         // `transpose` element. Reading it here as well put the voice an octave and a half
         // low — 23 against 47.
-        const pitch = midiPitchOf(written, accidentals, barAccidentals) + transpose
+        const raw =
+          midiPitchOf(written, accidentals, barAccidentals, quarterAlter(item.event)) + transpose
+        const { pitch, cents } = adjustForMicroTone(raw)
         const event: MidiNote = {
           cmd: 'note',
           pitch,
@@ -636,6 +646,7 @@ export function flattenAudio(
           duration: realDuration,
           instrument: program,
           ...endTypeAndGap(mods.endType, slurCount, realDuration, startingTempo),
+          ...(cents === undefined ? {} : { cents }),
         }
         track.push(event)
       }
@@ -657,6 +668,12 @@ export function flattenAudio(
 
 const chordSymbolOf = (event: MusicEvent): string | null => event.chordSymbol
 const annotationsOf = (event: MusicEvent): readonly string[] => event.annotations
+
+/** A microtone's alteration in abcjs's units — `^/` is +0.25, `_3/2` is -0.75. */
+function quarterAlter(event: MusicEvent): number | null {
+  const cents = event.type === 'rest' ? 0 : event.microtoneCents
+  return cents === 0 ? null : cents / 200
+}
 
 /** `startSlur`/`endSlur` counts, which a chord carries on its own events. */
 const slurStartsOf = (event: MusicEvent): number =>
@@ -784,11 +801,34 @@ function midiPitchOf(
   pitch: { step: string; octave: number; accidental: number | null },
   accidentals: readonly number[],
   barAccidentals: Map<string, number>,
+  quarter: number | null = null,
 ): number {
   const step = stepIndex(pitch.step as never)
   const name = `${pitch.step}${pitch.octave}`
-  if (pitch.accidental !== null) barAccidentals.set(name, pitch.accidental)
+  // A QUARTER-TONE ACCIDENTAL IS 0.25, NOT THE PRINTED SIGN. Our model keeps the drawn
+  // accidental and records the sounding deviation beside it in `microtoneCents`; abcjs has
+  // one number and marks the fraction. Passing the printed sharp through here would sound
+  // `^/G` a full semitone up and then bend it further.
+  if (quarter !== null) barAccidentals.set(name, quarter)
+  else if (pitch.accidental !== null) barAccidentals.set(name, pitch.accidental)
   const base = (pitch.octave - 4) * 12 + (SEMITONES[step] ?? 0) + 60
   const alter = barAccidentals.get(name) ?? accidentals[step] ?? 0
   return base + alter
+}
+
+/**
+ * abcjs's `adjustForMicroTone` — a quarter tone is a WHOLE pitch plus a PITCH BEND.
+ *
+ *     if (pitch.indexOf(".75") >= 0) { pitch = Math.round(pitch); cents = -50 }
+ *     else if (pitch.indexOf(".25") >= 0) { pitch = Math.round(pitch); cents = 50 }
+ *
+ * (`abc_midi_flattener.js:735-747`, and yes it tests the decimal as a STRING.) A synth is
+ * handed an integer note and a detune, never a fractional MIDI pitch, so `70.5` is not a
+ * near miss — it is the wrong KIND of answer.
+ */
+function adjustForMicroTone(pitch: number): { pitch: number; cents?: number } {
+  const text = String(pitch)
+  if (text.includes('.75')) return { pitch: Math.round(pitch), cents: -50 }
+  if (text.includes('.25')) return { pitch: Math.round(pitch), cents: 50 }
+  return { pitch }
 }

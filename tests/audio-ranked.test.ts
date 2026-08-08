@@ -66,6 +66,7 @@ const PASSING: readonly string[] = [
   'flatten-midi-options',
   'flatten-multi-measure-rest',
   'flatten-no-chord-voice',
+  'flatten-quarter-tone',
   'flatten-six-huit',
   'flatten-tempo-change',
   'flatten-tempo-change2',
@@ -81,6 +82,19 @@ interface Diff {
   readonly matched: number
   readonly where: string
 }
+
+/**
+ * Key ORDER is not part of the contract, and abcjs's own goldens disagree with themselves
+ * about it: `cents` lands before `gap` on one event and after it on another, because
+ * `adjustForMicroTone` adds one key and the articulation switch adds the other. Compared by
+ * value, sorted.
+ */
+const canonical = (event: unknown): string =>
+  JSON.stringify(
+    Object.fromEntries(
+      Object.entries(event as Record<string, unknown>).sort(([a], [b]) => (a < b ? -1 : 1)),
+    ),
+  )
 
 /** The first difference, in abcjs's own reading order: header, then track by track. */
 function firstDifference(
@@ -104,7 +118,7 @@ function firstDifference(
       if (gotEvent === undefined) {
         return { matched, where: `trk ${t} ev ${e} missing, want ${JSON.stringify(wantEvent)}` }
       }
-      if (JSON.stringify(gotEvent) !== JSON.stringify(wantEvent)) {
+      if (canonical(gotEvent) !== canonical(wantEvent)) {
         return {
           matched,
           where: `trk ${t} ev ${e}\n      got  ${JSON.stringify(gotEvent)}\n      want ${JSON.stringify(wantEvent)}`,
