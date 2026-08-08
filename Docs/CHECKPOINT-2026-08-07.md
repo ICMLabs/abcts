@@ -46,7 +46,7 @@ drove the rest of the session.
 |---|---|---|
 | suite | 703 | **890. NO REDS.** |
 | pixel gate | 29 fixtures, 2,696 heads | **119 tunes, 5,105 heads** |
-| pixel ranked table | *did not exist* | **19 of 119 off some axis, eight of them the whole-note OUTLINE and not work** |
+| pixel ranked table | *did not exist* | **18 of 119 off some axis, eight of them the whole-note OUTLINE and not work. TEN live rows, nothing above 8.25** |
 | harvested (174) | 0 of 174 off | **0 of 174 off** |
 | 41-fixture | one above 0.02 | one above 0.02 |
 | ceilings | — | **fifteen LOWERED.** TWO were raised mid-session (129, 131) and each was CLOSED by the finding after it (130, 132) |
