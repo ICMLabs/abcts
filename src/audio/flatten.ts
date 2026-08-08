@@ -27,6 +27,7 @@
  * is `0.083334`, which is a rounded integer accumulator and not a rational. Reproducing
  * the accumulator is the only way to reproduce those figures, so it is reproduced exactly.
  */
+
 import {
   type KeySignature,
   keyFifths,
@@ -39,6 +40,7 @@ import {
   type Tempo,
   type Voice,
 } from '../core/model.js'
+import { type ChordOptions, ChordTrack } from './chord-track.js'
 
 /** One `{cmd: 'note'}` row, exactly as abcjs's flattener emits it. */
 export interface MidiNote {
@@ -88,7 +90,7 @@ export interface AudioOptions {
 }
 
 /** `%%MIDI` settings gathered off the tune — abcjs's `tune.formatting.midi`. */
-export interface MidiDirectives {
+export interface MidiDirectives extends ChordOptions {
   readonly program?: readonly number[]
   readonly channel?: readonly number[]
   readonly transpose?: readonly number[]
@@ -427,6 +429,11 @@ export function flattenAudio(
 
   const pickupLength = pickupLengthOf(score)
   const tracks: MidiEvent[][] = []
+  const startMeter = score.meter ?? { numerator: 4, denominator: 4, symbol: 'numeric' as const }
+  const chordTrack = new ChordTrack(score.voices.length, false, midi, {
+    num: startMeter.numerator,
+    den: startMeter.denominator,
+  })
   let instrument: number | undefined
   let totalDuration = 0
 
@@ -447,6 +454,9 @@ export function flattenAudio(
     let lastBarTime = 0
     let slurCount = 0
     const transpose = transposeGlobal + voice.octaveShift * 12
+    chordTrack.setTranspose(0)
+    chordTrack.setLastBarTime(0)
+    chordTrack.setMeter({ num: meter.numerator, den: meter.denominator })
 
     const timed = sequenceVoice(voice, score, startingTempo)
     /** The running stress table — abcjs's `currentVolume`, seeded at the default triple. */
@@ -482,16 +492,27 @@ export function flattenAudio(
         currentKey = item.key
         accidentals = keyAccidentals(item.key)
       }
-      if (item.meter !== null) meter = item.meter
-      if (item.barStart) {
-        barAccidentals = new Map()
-        lastBarTime = item.time / MICRO
+      if (item.meter !== null && item.meter !== meter) {
+        meter = item.meter
+        chordTrack.setMeter({ num: meter.numerator, den: meter.denominator })
       }
+      if (item.barStart) barAccidentals = new Map()
       const start = item.time / MICRO
+      chordTrack.setTempoChangeFactor(item.factor)
+      if (item.kind === 'bar') {
+        // The bar CLOSES here: the measure's chords are laid onto the meter's pattern and
+        // only then does `lastBarTime` move on, which is the order abcjs's own `case "bar"`
+        // arm takes (`abc_midi_flattener.js:157-165`).
+        chordTrack.barEnd(start)
+        lastBarTime = start
+        chordTrack.setLastBarTime(lastBarTime)
+        continue
+      }
       const realDuration = Math.round(item.duration * item.factor * MICRO) / MICRO
       totalDuration = Math.max(totalDuration, start + realDuration)
       if (item.event === null || item.event.type === 'rest' || item.tiedOver) continue
 
+      chordTrack.processChord(chordSymbolOf(item.event), annotationsOf(item.event), start)
       const volume = stressVolume(start, lastBarTime, meter, pickupLength, voiceOff, stress)
       const pitches = item.event.type === 'chord' ? item.event.pitches : [item.event.pitch]
       const mods = noteModifications(decorations, volume)
@@ -512,7 +533,10 @@ export function flattenAudio(
       slurCount -= slurEndsOf(item.event)
     }
     tracks.push(track)
+    chordTrack.finish()
   })
+
+  chordTrack.addTrack(tracks as never)
 
   return {
     tempo: startingTempo,
@@ -521,6 +545,9 @@ export function flattenAudio(
     tracks,
   }
 }
+
+const chordSymbolOf = (event: MusicEvent): string | null => event.chordSymbol
+const annotationsOf = (event: MusicEvent): readonly string[] => event.annotations
 
 /** `startSlur`/`endSlur` counts, which a chord carries on its own events. */
 const slurStartsOf = (event: MusicEvent): number =>

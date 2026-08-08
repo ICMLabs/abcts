@@ -18,10 +18,10 @@
  * Nothing here asserts a tolerance, because an event list has none — a pitch is right or
  * it is not.
  */
-import { readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { type MidiEvent, flattenAudio } from '../src/audio/flatten.js'
+import { flattenAudio, type MidiEvent } from '../src/audio/flatten.js'
 import { parse } from '../src/parser/parser.js'
 
 const dir = join(import.meta.dirname, 'corpus-audio')
@@ -55,10 +55,16 @@ const PASSING: readonly string[] = [
   'flatten-dynamics',
   'flatten-dynamics2',
   'flatten-dynamics3',
+  'flatten-end-chord',
+  'flatten-jig-chords',
   'flatten-long-tie',
-  'flatten-no-chord-voice',
+  'flatten-meter-change',
+  'flatten-mid-measure',
+  'flatten-six-huit',
+  'flatten-tempo-change',
   'flatten-tempo-change2',
   'flatten-tempo-override',
+  'flatten-twelve-eight',
   'volume-crash',
 ]
 
