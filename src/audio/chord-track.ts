@@ -72,6 +72,10 @@ const BASSES: Readonly<Record<string, number>> = {
 
 const BREAK_SYNONYMS = ['break', '(break)', 'no chord', 'n.c.', 'tacet']
 
+/** `"^break"` → `break`. ABC's five annotation positions, stripped as abcjs's parser does. */
+const annotationName = (text: string): string =>
+  '^_<>@'.includes(text[0] ?? '') ? text.slice(1) : text
+
 /**
  * abcjs's `chordIntervals`, verbatim — semitones above the root for every modifier it
  * knows. An unknown modifier falls back to a major triad, except that anything starting
@@ -375,7 +379,12 @@ export class ChordTrack {
     if (this.finished) return null
     if (name !== null && name.length > 0) return name
     for (const a of annotations) {
-      if (BREAK_SYNONYMS.includes(a.toLowerCase())) return 'break'
+      // THE POSITION CHARACTER IS NOT PART OF THE NAME. abcjs splits `"^break"` into
+      // `{position: 'above', name: 'break'}` in the parser and matches `ch.name` against
+      // the synonyms; ours keeps the source spelling, so `^break` matched nothing and the
+      // whole of `flatten-break`'s second bar kept strumming an A chord through a rest
+      // that abcjs leaves silent.
+      if (BREAK_SYNONYMS.includes(annotationName(a).toLowerCase())) return 'break'
     }
     return null
   }
