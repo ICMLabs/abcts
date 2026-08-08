@@ -292,7 +292,7 @@ gate had been comparing abcjs's outline START against our glyph ORIGIN, a 4px bi
 
 
 **Structural parity is done: note content, lyrics, beams and render structure are all
-41/41 with zero recorded divergences.** `geometry/vertical` is **890/890 with NO reds**, and
+41/41 with zero recorded divergences.** `main` is **891/891 with NO reds**, and
 **BOTH ranked tables are EMPTY** — 0 of 119 pixel targets and 0 of 174 harvested fixtures off
 any axis by 0.05px or more. `ragtime-nightingale` — 2009 noteheads, the corpus's largest
 fixture — is EXACT on all four. **So no gate can name the next defect** — and when that happened the answer
@@ -324,7 +324,9 @@ pixel-parity gate included, ceilings re-recorded. The timeline is per LINE, as a
 `layoutStaffGroup` is: no columns, no per-measure reconciliation, barlines unaligned across
 voices because they are ordinary zero-duration elements on one timeline.
 
-**The VERTICAL arc is OPEN** on `geometry/vertical`, branched from it and red BY DESIGN.
+**The VERTICAL arc is CLOSED AND MERGED** — it went to `main` on 2026-08-08 at 891/891 with
+both ranked tables empty, and work continues on the MAINLINE. `geometry/vertical` is kept as
+the rollback point.
 `Docs/CHECKPOINT-2026-08-04.md` is the state; `Docs/VERTICAL-ARC.md` is the arc's original
 spec and its numbers are long superseded.
 
@@ -544,8 +546,8 @@ there and it is dirty. Instrument to ANSWER A QUESTION, not to see what happens.
 
 The bar is 100% parity. A passing gate is not parity.
 
-Confirm your lane with `git rev-parse --abbrev-ref HEAD`. `geometry/vertical` is
-the open arc, GREEN at 703/703.
+Confirm your lane with `git rev-parse --abbrev-ref HEAD`. It is `main`: the
+geometry arc merged on 2026-08-08 and the mainline is GREEN at 891/891.
 ```
 
 ### The open task, specifically

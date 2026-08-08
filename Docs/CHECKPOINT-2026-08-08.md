@@ -6,6 +6,14 @@ findings 134–146 and the method; `-08-06.md` keeps **THE HARNESS**; `-08-07.md
 
 **THE STANDING ORDER IS 100% PARITY WITH ABCJS ON EVERY TUNE.**
 
+**AND THE ARC IS MERGED.** `geometry/vertical` went to `main` on 2026-08-08 — 259 commits,
+891/891, both ranked tables empty — and work continues on the MAINLINE from here. The branch
+is kept as the rollback point. Both merge conflicts were DOCS: `CLAUDE.md`, whose every
+main-side idea was already in the branch or superseded by it (one actively WRONG — it
+directed instrumenting `../abcMusicKit`'s vendored abcjs, which this arc replaced with a
+scratchpad copy), and `Docs/HORIZONTAL-ARC.md`, an add/add of one document whose branch copy
+is a strict superset. No source conflicted.
+
 ---
 
 ## 🔎 THE HEADLINE: THE GEOMETRIC ARC IS DONE. THE NEXT ARC IS AUDIO.
@@ -153,7 +161,7 @@ the first commit of that arc is the harvester, not the flattener.
 
 ```bash
 cd /Users/lrettberg/ICMLabs/Code/abcts
-git rev-parse --abbrev-ref HEAD       # geometry/vertical
+git rev-parse --abbrev-ref HEAD       # main — the geometry arc MERGED 2026-08-08
 npx tsc --noEmit
 npx vitest run                        # 891/891
 npx biome check src                   # NOT clean — 1 error, 4 warnings, all PRE-EXISTING
