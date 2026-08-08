@@ -97,6 +97,11 @@ export interface MidiDirectives extends ChordOptions {
   readonly program?: readonly number[]
   readonly channel?: readonly number[]
   readonly transpose?: readonly number[]
+  /** `%%MIDI drum dddd 76 77 77 77 50 50 50 50` — MIXED, so it is kept raw. */
+  readonly drum?: readonly (string | number)[]
+  /** Present-or-absent, and abcjs tests it as `if (globals.drumon)` — `[]` is truthy. */
+  readonly drumon?: readonly (string | number)[]
+  readonly drumbars?: readonly (string | number)[]
 }
 
 const MICRO = 1000000
@@ -425,7 +430,16 @@ interface Timed {
    * `["crescendo)"] el bar`. Leave the bars out and the search runs off the end of the
    * tune, `floor(50 / 51)` is 0, and the whole crescendo is flat.
    */
-  readonly kind: 'note' | 'bar'
+  readonly kind: 'note' | 'bar' | 'midi'
+  /**
+   * A `%%MIDI` written inside the music, standing at the head of the measure it was
+   * written in — abcjs's own `el_type: 'midi'` element, at its position in the stream.
+   *
+   * Its own ROW rather than a field on the first note, because a measure need not have
+   * one: `%%MIDI drumoff` on a line of its own, between two music lines, has to take
+   * effect whether or not anything sounds after it.
+   */
+  readonly midi?: readonly { readonly cmd: string; readonly params: readonly (string | number)[] }[]
   /**
    * The SOURCE LINE this row is on, and it is load-bearing for hairpins.
    *
@@ -522,6 +536,24 @@ function sequenceVoice(voice: Voice, score: Score, startingTempo: number): Timed
     }
     if (measure.keyChange !== null) key = measure.keyChange
     if (measure.meterChange !== null) meter = measure.meterChange
+    if (measure.midiCommands !== undefined) {
+      out.push({
+        kind: 'midi',
+        line,
+        decorations: [],
+        event: null,
+        time,
+        barStart: false,
+        key,
+        meter,
+        duration: 0,
+        factor: tempoFactor,
+        clefTranspose,
+        tiedOver: false,
+        midi: measure.midiCommands,
+      })
+      durations.push(0)
+    }
     let first = true
     for (const event of measure.events) {
       // A SPACER SOUNDS NOTHING, TAKES NO TIME — AND STILL COUNTS.
@@ -598,6 +630,109 @@ function sequenceVoice(voice: Voice, score: Score, startingTempo: number): Timed
     durations.push(0)
   }
   return out.map((t, i) => ({ ...t, duration: durations[i] ?? t.duration }))
+}
+
+/**
+ * THE DRUM TRACK — `%%MIDI drum`, and abcjs is DELIBERATELY BRITTLE about it.
+ *
+ * "Be very strict with the drum definition. If anything is not perfect, just turn the drums
+ * off" (`abc_midi_flattener.js:760`). Three separate ways to fail closed, and each returns
+ * the same `{on: false}` rather than a warning:
+ *
+ * - a pattern that does not START with `d` or `z`;
+ * - a length suffix containing anything but `/` and digits;
+ * - **and the arithmetic one** — `params.pattern.length !== totalPlay * 2 + 1`. The array is
+ *   the pattern string, then one PITCH per `d`, then one VELOCITY per `d`, so `dddd` needs
+ *   exactly eight numbers after it. Nine turns the drums off entirely.
+ *
+ * The parse is a small state machine over the string: a `d` or `z` opens an event, anything
+ * else extends the one open. `d2` is two beats, `d/` is half of one (a bare slash reads as
+ * `/2`), `d/4` a quarter. The lengths come out RELATIVE — `alignDrumToMeter` is what scales
+ * them onto real time.
+ */
+interface DrumEvent {
+  len: number
+  readonly pitch: number | null
+  readonly velocity?: number
+}
+interface DrumDefinition {
+  readonly on: boolean
+  readonly pattern: DrumEvent[]
+}
+
+const DRUM_OFF: DrumDefinition = { on: false, pattern: [] }
+
+function normalizeDrumDefinition(
+  params: readonly (string | number)[],
+  on: boolean,
+  beatLength: number,
+): DrumDefinition {
+  const str = params[0]
+  if (params.length === 0 || !on || typeof str !== 'string') return DRUM_OFF
+
+  const events: string[] = []
+  let event = ''
+  let totalPlay = 0
+  for (const ch of str) {
+    if (ch === 'd') totalPlay += 1
+    if (ch === 'd' || ch === 'z') {
+      if (event.length !== 0) {
+        events.push(event)
+        event = ch
+      } else event += ch
+    } else {
+      // The string has to OPEN with a `d` or a `z`; a length suffix with nothing to
+      // lengthen is one of the three ways abcjs fails closed.
+      if (event.length === 0) return DRUM_OFF
+      event += ch
+    }
+  }
+  if (event.length !== 0) events.push(event)
+  if (params.length !== totalPlay * 2 + 1) return DRUM_OFF
+
+  const pattern: DrumEvent[] = []
+  let playCount = 0
+  for (const e of events) {
+    let len = 1
+    let div = false
+    let num = 0
+    for (const ch of e.slice(1)) {
+      if (ch === '/') {
+        if (num !== 0) len *= num
+        num = 0
+        div = true
+      } else if (ch >= '0' && ch <= '9') {
+        num = num * 10 + Number(ch)
+      } else return DRUM_OFF
+    }
+    if (div) len /= num === 0 ? 2 : num
+    else if (num !== 0) len *= num
+    if (e[0] === 'd') {
+      pattern.push({
+        len: len * beatLength,
+        pitch: params[1 + playCount] as number,
+        velocity: params[1 + playCount + totalPlay] as number,
+      })
+      playCount += 1
+    } else pattern.push({ len: len * beatLength, pitch: null })
+  }
+  return { on: true, pattern }
+}
+
+/**
+ * `alignDrumToMeter` — the pattern's lengths are RELATIVE and this is what makes them time.
+ *
+ * Whatever the pattern adds up to, it is scaled to cover exactly `drumBars` measures of the
+ * meter in force. So `dddd` and `dddddddd` both fill one 4/4 bar, at quarters and at
+ * eighths. Called again on every meter change, and it is idempotent: after the first pass
+ * the total already IS `drumBars * measuresPerBeat`, so the factor comes out 1.
+ */
+function alignDrumToMeter(def: DrumDefinition, drumBars: number, meter: Meter): void {
+  if (def.pattern.length === 0) return
+  const total = def.pattern.reduce((sum, p) => sum + p.len, 0)
+  const factor = total / drumBars / (meter.numerator / meter.denominator)
+  if (factor === 0) return
+  for (const p of def.pattern) p.len /= factor
 }
 
 /** abcjs's `interpretTempo`: `Q:` is stated at some beat, the sequencer wants another. */
@@ -681,7 +816,17 @@ function midiOf(score: Score): MidiDirectives {
   }
   const g = strs('gchord')
   if (g !== undefined) out.gchord = g
-  return out as MidiDirectives
+  // The drum keys are MIXED — `["dddd", 76, 77, …]` is a pattern string followed by
+  // pitches and velocities — so filtering by type would destroy them. Kept verbatim, and
+  // `drumon` matters by its PRESENCE: abcjs tests `if (globals.drumon)` and an empty array
+  // is truthy, which is how `%%MIDI drumon` with no argument turns the drums on.
+  const raw2 = raw as Record<string, readonly (string | number)[] | undefined>
+  const passthrough: Record<string, readonly (string | number)[]> = {}
+  for (const key of ['drum', 'drumon', 'drumbars']) {
+    const v = raw2[key]
+    if (v !== undefined) passthrough[key] = v
+  }
+  return { ...out, ...passthrough } as MidiDirectives
 }
 
 export function flattenAudio(
@@ -730,6 +875,70 @@ export function flattenAudio(
   })
   let instrument: number | undefined
   let totalDuration = 0
+
+  /**
+   * THE DRUM TRACK'S STATE, which is the whole tune's and not any voice's.
+   *
+   * abcjs pushes every `drum` element into **voices[0]** — a `[I:MIDI drumon]` written on
+   * voice 3 lands on voice 0's stream — and writes the track on voice 0 only, "so that it
+   * is not duplicated". So the definition is tune-wide and the writes are voice-0-wide.
+   *
+   * `drumOn` is NOT implied by a pattern: `drumOn = drumPattern !== ""` is computed from
+   * the OPTIONS before the tune's own `%%MIDI` is read, and the header's `drum` only sets
+   * the pattern (`abc_midi_sequencer.js:86-92`). A tune that writes `%%MIDI drum …` and
+   * never `drumon` gets silence.
+   */
+  let drumPattern: readonly (string | number)[] = midi.drum ?? []
+  let drumBars = typeof midi.drumbars?.[0] === 'number' ? (midi.drumbars[0] as number) : 1
+  let drumOn = midi.drumon !== undefined
+  let drumDefinition: DrumDefinition = DRUM_OFF
+  const drumTrack: MidiEvent[] = []
+  const setDrum = (on: boolean, meter: Meter): void => {
+    drumDefinition = normalizeDrumDefinition(drumPattern, on, beatFractionOf(meter))
+    alignDrumToMeter(drumDefinition, drumBars, meter)
+  }
+  // The FIRST line of the FIRST voice gets the element, after its key and meter and before
+  // a note of it (`abc_midi_sequencer.js:186-189`), so it is in force from time zero.
+  if (drumOn) setDrum(true, startMeter)
+
+  /**
+   * `writeDrum` — one measure of the pattern, at every BAR of voice 0, and it writes the
+   * measure that has just ENDED (`start = lastBarTime`).
+   *
+   * TWO GUARDS, and they are not the same guard. Before the track exists,
+   * `lastEventTime < measureLen` returns without writing: that is how a PICKUP delays the
+   * first hit, because the bar closing a lead-in has not yet reached a whole measure of
+   * music. Once the track exists, `!drumDefinition.on` returns instead — a `drumoff` stops
+   * the hits without closing the track, so a later `drumon` resumes into the same one.
+   */
+  const writeDrum = (meter: Meter, lastBarTime: number, factor: number): void => {
+    if (drumTrack.length === 0 && !drumDefinition.on) return
+    if (drumTrack.length === 0) {
+      if (totalDuration < meter.numerator / meter.denominator) return
+      drumTrack.push({
+        cmd: 'program',
+        channel: score.voices.length + 1,
+        instrument: PERCUSSION_PROGRAM,
+      })
+    }
+    if (!drumDefinition.on) return
+    let start = lastBarTime
+    for (const p of drumDefinition.pattern) {
+      const len = Math.round(p.len * factor * MICRO) / MICRO
+      if (p.pitch !== null && p.pitch !== 0) {
+        drumTrack.push({
+          cmd: 'note',
+          pitch: p.pitch,
+          volume: p.velocity as number,
+          start,
+          duration: len,
+          gap: 0,
+          instrument: PERCUSSION_PROGRAM,
+        })
+      }
+      start += len
+    }
+  }
 
   score.voices.forEach((voice, voiceIndex) => {
     const voiceOff =
@@ -811,15 +1020,44 @@ export function flattenAudio(
       if (item.meter !== null && item.meter !== meter) {
         meter = item.meter
         chordTrack.setMeter({ num: meter.numerator, den: meter.denominator })
+        // A METER CHANGE RE-SCALES A PATTERN ALREADY IN FORCE — abcjs's `case "meter"`
+        // calls `alignDrumToMeter()` as its last act, so `dddd` under a new 3/4 covers
+        // three beats rather than running past the bar.
+        alignDrumToMeter(drumDefinition, drumBars, meter)
       }
       if (item.barStart) barAccidentals = new Map()
       const start = item.time / MICRO
       chordTrack.setTempoChangeFactor(item.factor)
+      if (item.kind === 'midi') {
+        for (const { cmd, params } of item.midi ?? []) {
+          switch (cmd) {
+            case 'drumon':
+              drumOn = true
+              break
+            case 'drumoff':
+              drumOn = false
+              break
+            case 'drum':
+              drumPattern = params
+              break
+            case 'drumbars':
+              drumBars = typeof params[0] === 'number' ? params[0] : 1
+              break
+            default:
+              continue
+          }
+          setDrum(drumOn, meter)
+        }
+        continue
+      }
       if (item.kind === 'bar') {
         // The bar CLOSES here: the measure's chords are laid onto the meter's pattern and
         // only then does `lastBarTime` move on, which is the order abcjs's own `case "bar"`
         // arm takes (`abc_midi_flattener.js:157-165`).
         chordTrack.barEnd(start)
+        // AND THE DRUM IS WRITTEN BEFORE `lastBarTime` MOVES, on voice 0 only, so it fills
+        // the measure that just ended.
+        if (voiceIndex === 0) writeDrum(meter, lastBarTime, item.factor)
         lastBarTime = start
         chordTrack.setLastBarTime(lastBarTime)
         continue
@@ -973,6 +1211,9 @@ export function flattenAudio(
   })
 
   chordTrack.addTrack(tracks as never)
+  // The drum track goes LAST, after the chord track — abcjs's own order at the foot of
+  // `flatten()`, and it is why `flatten-drum` reports two tracks rather than three.
+  if (drumTrack.length > 0) tracks.push(drumTrack)
 
   return {
     tempo: startingTempo,

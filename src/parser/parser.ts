@@ -2736,6 +2736,24 @@ class Parser {
         else builder.voice.addSymbolLine(tokens)
         return
       }
+      /**
+       * `[I:MIDI drumon]` — an INLINE instruction is a directive, in every mode.
+       *
+       * abcjs routes it unconditionally: `case "[I:": parseDirective.addDirective(…)`
+       * (`abc_parse_header.js:353`), in the same switch as `[M:` and `[K:`. Nothing here
+       * reached it — an inline field only dispatches on its LETTER and there was no `I`
+       * arm — so `flatten-drum`'s `|[I:MIDI drumon]z4|` was silently dropped and the drum
+       * track stayed off for the whole of its third line.
+       *
+       * Deliberately INLINE ONLY. A full-line `I:` is the mode-gated case above, whose
+       * reasoning is about `+:` continuations and is not this question; abcjs's
+       * `letter_to_body_header` does handle one, and strict's dropping it is a separate
+       * open divergence with no case behind it yet.
+       */
+      case 'I': {
+        if (inline) this.applyDirective(value, start, end)
+        return
+      }
       case 'U': {
         // `U:t = !tenuto!` — a single character standing for a decoration. The definition
         // is normally `!name!`; the delimiters are stripped so it joins the same namespace
