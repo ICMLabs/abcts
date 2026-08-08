@@ -2963,9 +2963,25 @@ function layoutNoteheads(
     width: Math.max(advance, ink),
     spring: advance,
     rod: ink,
-    // abcjs's `-extraw`: the leftmost accidental's own offset PLUS the `width / 2` each
-    // one adds again — see the accidental block above.
-    left: Math.max(headX - x + extraLeft, textSpan.left, headLeft, decorationLeft, graceLeft),
+    // abcjs's `-extraw`, and it is a MIN OVER SIBLINGS, never a sum. The accidental's
+    // `extraw -= extraLeft` runs BEFORE the graces' `addExtra`, and that `addExtra` is
+    // `if (dx < extraw) extraw = dx` (`abstract-engraver.js:723-725, 834-836`,
+    // `absolute-element.js:97`) — so a grace deeper than the accidental RESETS the min
+    // and throws the half-width away. Adding it on top made every graced note whose head
+    // carries an accidental reserve 4.125px too much: `S8-layout` X:807 stepped exactly
+    // once per such note, at `{A}^c2` and `{FGAB}[^c4A4]` and nowhere else.
+    //
+    //   accidental term   `accidentalWidth + extraLeft`  — the columns plus half the
+    //                                                      leftmost glyph
+    //   grace term        `headX - x`                    — the columns plus `graceoffsets[0]`
+    left: Math.max(
+      headX - x,
+      accidentalWidth + extraLeft,
+      textSpan.left,
+      headLeft,
+      decorationLeft,
+      graceLeft,
+    ),
     staffSteps: steps,
     // The graces go on the END — abcjs's document order, see the grace block above.
     glyphs: [...glyphs, ...graceGlyphs],

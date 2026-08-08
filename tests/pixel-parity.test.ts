@@ -322,7 +322,12 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // `[cc]` and `[dd]` were drawn as one head on top of another, because the displacement
     // map was keyed by STEP and a unison is two heads at one step.
     'S8-layout-tune5': { heads: 60, dy: 0.01, dx: 6.2, oy: 0, ox: 1.07 },
-    'S8-layout-tune6': { heads: 99, dy: 0, dx: 8.25, oy: 0, ox: 3.58 },
+    // dx 8.25 -> 0.0 and ox 3.58 -> 0.0. EXACT ON ALL FOUR. `abselem.extraw` is a MIN over
+    // siblings and the accidental's `extraw -= extraLeft` runs BEFORE the graces' own
+    // `addExtra` resets it, so a grace deeper than the accidental throws that half-width
+    // away. We were adding it on top: exactly 4.125px per note carrying BOTH a grace group
+    // and an accidental, of which this tune has two — `{A}^c2` and `{FGAB}[^c4A4]`.
+    'S8-layout-tune6': { heads: 99, dy: 0, dx: 0.0, oy: 0, ox: 0.0 },
     // oy 1.67 -> 1.14 on the `!slide!` rule; its `dy` 2.66 is something else.
     'S8-layout-tune7': { heads: 58, dy: 2.66, dx: 0, oy: 1.14, ox: 0 },
     'S8-layout-tune8': { heads: 28, dy: 0.01, dx: 0, oy: 0, ox: 0 },
