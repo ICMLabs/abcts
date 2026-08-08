@@ -155,7 +155,28 @@ checkpoint and hand off as you go so no context is lost.
 > tempo and not the clock's. **`%%MIDI` appears in the parser ZERO times and gates 13 of the
 > remaining 37** — it is the next thing to build. See `Docs/CHECKPOINT-2026-08-08c.md`.
 
-Read `Docs/CHECKPOINT-2026-08-08c.md` first — the audio arc, its gate and its work list.
+> ⏳ **THE OPTIMISATION PASS IS DEFERRED, and the reasoning is recorded so it is not
+> re-argued** (2026-08-08). Measured: `layout.ts` is 9,992 lines and **49% COMMENT**, and
+> those comments ARE the finding ledger — 150 findings with citations, several recording
+> things got wrong twice before the note existed. 220 tunes render in **151ms, 0.7ms
+> each**, and the dominant cost — nine layout passes per line — is MANDATED by finding 104,
+> so **there is no performance work to do and a perf pass is pure risk**. The real cruft is
+> structural (one 10k-line file) and the moment is the phase boundary AFTER audio reaches
+> 54/54, because the geometry gates are already maximal and waiting does not improve them.
+> The invariant to hold such a pass to: **NO BASELINE MAY MOVE** — if one does, that is a
+> behaviour change, revert it rather than re-record it. `tests/bench.test.ts` holds the
+> before-number. Full reasoning and the ordered plan are in `Docs/CHECKPOINT-2026-08-08d.md`.
+
+> 🖥️ **RUN EVERY COMMAND FROM `/Users/lrettberg/ICMLabs/Code/abcts`.** `cd` does not persist
+> between tool calls, and the workspace ROOT has its own vitest reach: run from there and it
+> collects every test in every sibling repo — abcjs's own included — and prints a wall of
+> failures that are nothing to do with this one. It bit twice on 2026-08-08. And run
+> `npx tsc --noEmit` BEFORE `git commit`, not alongside it: a duplicate object key shipped
+> that day because vitest passed and the typecheck came back after the push.
+
+Read `Docs/CHECKPOINT-2026-08-08d.md` first — the state, the 6.7.0 flip, the audio work
+list and why the optimisation pass is deferred. `Docs/HANDOFF-2026-08-08d.md` has the
+session prompt. `Docs/CHECKPOINT-2026-08-08c.md` keeps the audio arc's findings in full.
 Then `Docs/HANDOFF-2026-08-08c.md` for the session prompt, and
 `Docs/CHECKPOINT-2026-08-08b.md` for findings 147-150 and the geometric tail, which is
 CLOSED. `Docs/CHECKPOINT-2026-08-08.md` keeps the ARC DECISION.
@@ -306,9 +327,9 @@ that can rank are all EMPTY** — 0 of 119 pixel targets, 0 of 174 harvested fix
 what they cover, which is why they had to be built before their defects could be stated.
 
 **AUDIO IS UNDER WAY**: `tests/corpus-audio/` holds the oracle, `tests/audio-ranked.test.ts`
-is the third ranked table, and `src/audio/` is the flattener and the chord track. 37 of 54
-cases differ and 17 are ratcheted into `PASSING`. `%%MIDI` in the parser is the next thing
-to build and gates 13 of the 37 — see `Docs/HANDOFF-2026-08-08c.md`.
+is the third ranked table, and `src/audio/` is the flattener and the chord track. **23 of 54
+cases differ and 31 are ratcheted into `PASSING`.** The drum track is next and its algorithm
+is already written out — see `Docs/HANDOFF-2026-08-08d.md`.
 
 **Every structural gate is at 100% with zero recorded divergences** — content, lyrics,
 beams, structure, source offsets. The work is now entirely GEOMETRIC and entirely
