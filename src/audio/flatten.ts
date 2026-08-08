@@ -253,6 +253,8 @@ interface Timed {
   readonly duration: number
   /** `startingTempo / qpm` in force here — a `[Q:]` stretches durations, not the tempo. */
   readonly factor: number
+  /** Semitones the CLEF adds, which replaces the voice's transpose rather than adding. */
+  readonly clefTranspose: number
   /** A tie's continuation, silenced: it was folded into the note that opened the tie. */
   readonly tiedOver: boolean
 }
@@ -281,6 +283,23 @@ function sequenceVoice(voice: Voice, score: Score, startingTempo: number): Timed
    * reported `tempo` stays 180.
    */
   let tempoFactor = 1
+  /**
+   * THE CLEF'S OCTAVE REPLACES THE VOICE'S TRANSPOSE, it does not add to it.
+   *
+   *     if (staff.clef.transpose) { push transpose: clef.transpose; active = false }
+   *     if (clef.type has "-8") { push transpose: -12; active = true }
+   *     else if (has "+8")      { push transpose:  12; active = true }
+   *     else if (active)        { push transpose:   0; active = false }
+   *
+   * (`abc_midi_sequencer.js:190-211`.) They are separate `transpose` ELEMENTS and the
+   * flattener's `case "transpose"` ASSIGNS — so a `clef=bass+8` on a voice declared
+   * `octave=-2` sounds at +12, not at -12, and the `octave=` is simply overwritten for
+   * that line. The `else if (active)` arm is what cancels a `+8` when a later line goes
+   * back to a plain clef, and it cannot fire on a line whose clef carries its own
+   * transpose, because that arm already cleared the flag.
+   */
+  let clefTranspose = 0
+  let clefOctaveActive = false
   let line = -1
   let key = score.key
   let meter = score.meter
@@ -290,6 +309,16 @@ function sequenceVoice(voice: Voice, score: Score, startingTempo: number): Timed
 
   for (const measure of voice.measures) {
     if (measure.startsSystem || line < 0) line += 1
+    const clef = measure.clefChange ?? (line === 0 ? (voice.clef ?? score.clef) : null)
+    if (clef != null) {
+      if (clef.octaveShift !== 0) {
+        clefTranspose = clef.octaveShift * 12
+        clefOctaveActive = true
+      } else if (clefOctaveActive) {
+        clefTranspose = 0
+        clefOctaveActive = false
+      }
+    }
     if (measure.tempoChange != null) {
       const qpm = qpmOfTempo(measure.tempoChange, meter)
       tempoFactor = qpm > 0 ? startingTempo / qpm : 1
@@ -310,7 +339,16 @@ function sequenceVoice(voice: Voice, score: Score, startingTempo: number): Timed
       // `flatten-dynamics3`'s crescendo run to the end of the line instead of to the `y`,
       // 28 per note against 14.
       const spacer = event.type === 'rest' && event.kind === 'spacer'
-      const dur = spacer ? 0 : ratToNumber(event.duration)
+      // A MULTI-MEASURE REST IS AS LONG AS IT SAYS. `Z4` is four BARS of silence, and its
+      // written duration is one bar — abcjs multiplies by `measureLength` where we carried
+      // the single bar through, so everything after it on `flatten-multi-measure-rest` ran
+      // three whole notes early.
+      const bars =
+        event.type === 'rest' &&
+        (event.kind === 'multiMeasure' || event.kind === 'invisibleMultiMeasure')
+          ? (event.measureCount ?? 1)
+          : 1
+      const dur = spacer ? 0 : ratToNumber(event.duration) * bars
       let tiedOver = false
       if (event.type === 'note') {
         const name = `${event.pitch.step}${event.pitch.octave}`
@@ -333,12 +371,19 @@ function sequenceVoice(voice: Voice, score: Score, startingTempo: number): Timed
         meter,
         duration: dur,
         factor: tempoFactor,
+        clefTranspose,
         tiedOver,
       })
       durations.push(tiedOver ? 0 : dur)
       time += Math.round(dur * tempoFactor * MICRO)
       first = false
     }
+    // A MEASURE BOUNDARY IS NOT ALWAYS A BARLINE. Our model closes a measure at a line
+    // break whether or not a `|` was written; abcjs's voice carries a `bar` element only
+    // where one actually is. Emitting one either way restarted the beat-stress clock at
+    // every line end — `flatten-treble-8` writes one note per line with no barlines at all
+    // and every one of them came out at the bar-first 105 instead of 85.
+    if (measure.closingBarline === null) continue
     out.push({
       kind: 'bar',
       line,
@@ -350,6 +395,7 @@ function sequenceVoice(voice: Voice, score: Score, startingTempo: number): Timed
       meter,
       duration: 0,
       factor: tempoFactor,
+      clefTranspose,
       tiedOver: false,
     })
     durations.push(0)
@@ -399,8 +445,12 @@ function pickupLengthOf(score: Score): number {
       if (!(event.type === 'rest' && event.kind === 'spacer')) pickup += ratToNumber(event.duration)
       if (pickup >= barLength) pickup -= barLength
     }
-    // The measure boundary IS the barline abcjs stops at.
-    return pickup
+    // IT STOPS AT A BARLINE, NOT AT A MEASURE. `computePickupLength` returns the moment it
+    // meets a `bar` ELEMENT, and a tune with no barlines at all runs to the end and returns
+    // everything it counted. `flatten-treble-8` is six notes over six lines and not one
+    // `|`, so abcjs's pickup is 0.75 and every note in it takes the weak-beat volume;
+    // stopping at the first measure gave 0.125 and the third note came out on-beat.
+    if (measure.closingBarline !== null) return pickup
   }
   return pickup
 }
@@ -453,7 +503,8 @@ export function flattenAudio(
     let meter: Meter = score.meter ?? { numerator: 4, denominator: 4, symbol: 'numeric' }
     let lastBarTime = 0
     let slurCount = 0
-    const transpose = transposeGlobal + voice.octaveShift * 12
+    // The clef's transpose REPLACES the running one rather than adding, so the global
+    // `%%MIDI transpose` only survives where no clef states one.
     chordTrack.setTranspose(0)
     chordTrack.setLastBarTime(0)
     chordTrack.setMeter({ num: meter.numerator, den: meter.denominator })
@@ -514,10 +565,26 @@ export function flattenAudio(
 
       chordTrack.processChord(chordSymbolOf(item.event), annotationsOf(item.event), start)
       const volume = stressVolume(start, lastBarTime, meter, pickupLength, voiceOff, stress)
-      const pitches = item.event.type === 'chord' ? item.event.pitches : [item.event.pitch]
+      // A CHORD SOUNDS FROM THE BOTTOM UP, whatever order it was written in. abcjs's parser
+      // sorts `elem.pitches`, so `[cD]` emits D and then c; ours keeps the source order, so
+      // the sort is here. `volume-in-chords` is the whole of it: pitch 62 where we had 72.
+      const pitches =
+        item.event.type === 'chord'
+          ? [...item.event.pitches].sort(
+              (a, b) => a.octave * 7 + stepIndex(a.step) - (b.octave * 7 + stepIndex(b.step)),
+            )
+          : [item.event.pitch]
       const mods = noteModifications(decorations, volume)
       slurCount += slurStartsOf(item.event)
       for (const written of pitches) {
+        const transpose = item.clefTranspose !== 0 ? item.clefTranspose : transposeGlobal
+        // `V:… octave=` IS ALREADY IN THE PITCH — in BOTH engines — and the model's comment
+        // says otherwise. Measured: `V:2 octave=-2` parses `B` as octave 2 while also
+        // reporting `octaveShift: -2`, and abcjs's own answer for the same voice under a
+        // plain bass clef is 47, the shifted pitch with no transpose at all. So the shift is
+        // spent once, in the pitch, and `octave=` is NOT one of the things that becomes a
+        // `transpose` element. Reading it here as well put the voice an octave and a half
+        // low — 23 against 47.
         const pitch = midiPitchOf(written, accidentals, barAccidentals) + transpose
         const event: MidiNote = {
           cmd: 'note',
