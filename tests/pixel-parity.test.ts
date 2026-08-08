@@ -307,7 +307,11 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     'S5-directives-tune1': { heads: 188, dy: 0.03, dx: 1.19, oy: 0.0, ox: -0.03 },
     'S5-directives-tune2': { heads: 7, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S5-directives-tune3': { heads: 16, dy: 0, dx: 0, oy: 0, ox: 0 },
-    'S5-directives-tune4': { heads: 22, dy: 0, dx: 3.88, oy: 0, ox: 0.17 },
+    // dx 3.88 -> 0.0 and ox 0.17 -> 0.0. EXACT ON ALL FOUR. The melisma `_` is part of the
+    // syllable abcjs MEASURES, not something appended after the element's spans are taken:
+    // `true._` reserves 21.492 each side where `true.` reserves 17.242, and the 8.5
+    // between them is the golden vocalfont table's width for `_`.
+    'S5-directives-tune4': { heads: 22, dy: 0, dx: 0.0, oy: 0, ox: 0.0 },
     'S5-directives-tune5': { heads: 22, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S6-keys-tune0': { heads: 1, dy: 0, dx: 0, oy: 0, ox: 0.18 },
     'S6-keys-tune1': { heads: 48, dy: 0.01, dx: 0, oy: 0, ox: 0 },

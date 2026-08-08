@@ -4155,11 +4155,24 @@ function noteText(
     event.lyricFont !== null ? spaces(fontPixels(event.lyricFont.size)) : ENGRAVE.lyricTextSize
   const lyricBold = event.lyricFont !== null ? event.lyricFont.bold : true
   const lyricItalic = event.lyricFont !== null ? event.lyricFont.italic : false
-  verses.forEach((verse, index) => {
-    if (verse === null || verse === '') return
+  verses.forEach((raw, index) => {
+    if (raw === null || raw === '') return
     // Verse 1 carries the font; later verses stay at the default until `extraVerses` can
     // hold one of their own.
     const size = index === 0 ? lyricSize : ENGRAVE.lyricTextSize
+    // THE MELISMA `_` IS PART OF THE SYLLABLE, SO IT IS PART OF THE MEASUREMENT.
+    //
+    // In strict abcjs prints the underscore as literal text, and `addLyric` measures the
+    // whole `lyricStr` — `getTextSize.calc(lyricStr, 'vocalfont', "lyric")` — before
+    // handing it to `addCentered`, which takes `extraw = -w / 2`
+    // (`abstract-engraver.js:769-778`). Appending it in `layoutMelismas`, AFTER this
+    // element's spans were taken, measured `true.` and drew `true._`: abcjs's own probe
+    // reads `extraw = -21.492` on `S5-directives` X:505's `"Eb"G4-` where ours read
+    // -17.242, and the gap is exactly half the 8.5 the golden's vocalfont table gives
+    // `_`. One number computed in two places whose inputs had drifted — the third time on
+    // this branch, after the lyric reserve and `curveReserves`.
+    const verse =
+      strict && index === 0 && event.lyricMelismaStart ? `${raw}_` : raw
     centred(verse, size, 0, 'serifBold')
     texts.push({
       text: verse,
@@ -4432,20 +4445,11 @@ function layoutMelismas(
     const lyric = lyricIndex < 0 ? undefined : element?.texts[lyricIndex]
     if (element === undefined || lyric === undefined) return
 
-    if (strict) {
-      // One text, as abcjs emits it. Appending widens the string by the underscore, so
-      // the pair re-centres by half that — the syllable itself shifts left, which is
-      // what centring "sing_" rather than "sing" does.
-      const widened = `${lyric.text}_`
-      const texts = [...element.texts]
-      texts[lyricIndex] = {
-        ...lyric,
-        text: widened,
-        x: lyric.x - textWidth('_', lyric.size, 'serifBold') / 2,
-      }
-      elements[start.element] = { ...element, texts }
-      return
-    }
+    // STRICT HAS NOTHING TO DO HERE. abcjs's underscore is literal text inside the
+    // syllable, so `noteText` builds it into the string and the element measures and
+    // centres it in one place. This pass used to append it afterwards, which drew the
+    // right glyph off the wrong width — see the note there.
+    if (strict) return
 
     // Only the LINE needs the far end, which is why the search sits below the strict
     // branch rather than above it. The two modes wrap differently — strict renders at

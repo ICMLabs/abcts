@@ -944,7 +944,7 @@ system 1 width=90.403 originY=19.892
     staffline 0.000,0.000 -> 90.403,0.000 t=0.090
     staffline 0.000,-1.000 -> 90.403,-1.000 t=0.090
     staffline 0.000,-2.000 -> 90.403,-2.000 t=0.090
-    tie  59.104,0.400 -> 72.107,0.400 bulge=-2.200
+    tie  59.331,0.400 -> 72.240,0.400 bulge=-2.200
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=0.871
@@ -954,42 +954,42 @@ system 1 width=90.403 originY=19.892
       line  11.236,-0.833 -> 11.236,2.500 t=0.129
       text  10.120,-4.687 size=2.065 "B♭"
       text  8.490,6.194 size=2.194 bold "mem-"
-    note@2 x=19.545 w=5.474
-      glyph noteheadBlack 19.545,-1.000
-      line  19.610,-0.833 -> 19.610,2.500 t=0.129
-      text  17.961,6.194 size=2.194 bold "ber"
-    note@1 x=25.466 w=5.474
-      glyph noteheadBlack 25.466,-0.500
-      line  25.531,-0.333 -> 25.531,3.000 t=0.129
-      text  24.123,6.194 size=2.194 bold "I'll"
-    bar x=31.387 w=0.077
-      line  31.426,-2.000 -> 31.426,2.000 t=0.077
-    note@0 x=34.470 w=7.742
-      glyph noteheadHalf 34.470,0.000
-      line  34.535,0.000 -> 34.535,3.500 t=0.129
-      text  33.476,-4.687 size=2.065 "Gm"
-      text  33.250,6.194 size=2.194 bold "al-"
-    note@-2 x=42.844 w=5.474
-      glyph noteheadBlack 42.844,1.000
-      line  44.045,0.833 -> 44.045,-2.500 t=0.129
-      text  40.527,6.194 size=2.194 bold "ways"
-    note@-3 x=48.765 w=5.474
-      glyph noteheadBlack 48.765,1.500
-      line  49.966,1.333 -> 49.966,-2.000 t=0.129
-      text  47.667,6.194 size=2.194 bold "be"
-    bar x=54.686 w=0.077
-      line  54.724,-2.000 -> 54.724,2.000 t=0.077
-    note@-2 x=58.330 w=10.949
-      glyph noteheadWhole 58.330,1.000
-      text  57.576,-4.687 size=2.065 "E♭"
-      text  55.556,6.194 size=2.194 bold "true._"
-    bar x=70.172 w=0.077
-      line  70.210,-2.000 -> 70.210,2.000 t=0.077
-    note@-2 x=71.591 w=7.742
-      glyph noteheadHalf 71.591,1.000
-      line  72.865,0.833 -> 72.865,-2.500 t=0.129
-    rest x=79.965 w=7.742
-      glyph restHalf 79.965,0.000
+    note@2 x=19.479 w=5.474
+      glyph noteheadBlack 19.479,-1.000
+      line  19.543,-0.833 -> 19.543,2.500 t=0.129
+      text  17.894,6.194 size=2.194 bold "ber"
+    note@1 x=25.353 w=5.474
+      glyph noteheadBlack 25.353,-0.500
+      line  25.417,-0.333 -> 25.417,3.000 t=0.129
+      text  24.009,6.194 size=2.194 bold "I'll"
+    bar x=31.227 w=0.077
+      line  31.265,-2.000 -> 31.265,2.000 t=0.077
+    note@0 x=34.309 w=7.742
+      glyph noteheadHalf 34.309,0.000
+      line  34.374,0.000 -> 34.374,3.500 t=0.129
+      text  33.315,-4.687 size=2.065 "Gm"
+      text  33.090,6.194 size=2.194 bold "al-"
+    note@-2 x=42.616 w=5.474
+      glyph noteheadBlack 42.616,1.000
+      line  43.818,0.833 -> 43.818,-2.500 t=0.129
+      text  40.300,6.194 size=2.194 bold "ways"
+    note@-3 x=48.490 w=5.474
+      glyph noteheadBlack 48.490,1.500
+      line  49.692,1.333 -> 49.692,-2.000 t=0.129
+      text  47.393,6.194 size=2.194 bold "be"
+    bar x=54.364 w=0.077
+      line  54.403,-2.000 -> 54.403,2.000 t=0.077
+    note@-2 x=58.557 w=10.949
+      glyph noteheadWhole 58.557,1.000
+      text  57.803,-4.687 size=2.065 "E♭"
+      text  55.784,6.194 size=2.194 bold "true._"
+    bar x=70.305 w=0.077
+      line  70.343,-2.000 -> 70.343,2.000 t=0.077
+    note@-2 x=71.724 w=7.742
+      glyph noteheadHalf 71.724,1.000
+      line  72.998,0.833 -> 72.998,-2.500 t=0.129
+    rest x=80.031 w=7.742
+      glyph restHalf 80.031,0.000
     bar x=88.338 w=0.077
       line  88.377,-2.000 -> 88.377,2.000 t=0.077
 tune 5
