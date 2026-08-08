@@ -155,8 +155,30 @@ checkpoint and hand off as you go so no context is lost.
 > tempo and not the clock's. **`%%MIDI` appears in the parser ZERO times and gates 13 of the
 > remaining 37** — it is the next thing to build. See `Docs/CHECKPOINT-2026-08-08c.md`.
 
-> ⏳ **THE OPTIMISATION PASS IS DEFERRED, and the reasoning is recorded so it is not
-> re-argued** (2026-08-08). Measured: `layout.ts` is 9,992 lines and **49% COMMENT**, and
+> ✅ **AND THE AUDIO ARC IS CLOSED — 0 of 54** (2026-08-08e), from 23 of 54 differing.
+> Thirteen findings, every one a read of a named abcjs function. THE DRUM TRACK is
+> deliberately brittle — three ways to fail closed, and its two guards are not the same
+> guard: `lastEventTime < measureLen` is how a PICKUP delays the first hit, `!drum.on` is
+> how a `drumoff` stops the hits without closing the track. AN ORNAMENT REPLACES THE NOTE
+> rather than decorating it, so a trilled staccato gets no gap at all. A TRIPLET'S LAST
+> NOTE IS THE REMAINDER, because abcjs rounds to a millionth and makes the GROUP exact
+> instead of the notes. A TEMPO CHANGE IN ANY VOICE APPLIES TO EVERY VOICE, keyed by
+> WRITTEN POSITION — which is also why a `:|` back to the head restores the opening tempo.
+> A CHORD CAN CARRY ONE DYNAMIC PER NOTE and the list is zipped against the SORTED pitches,
+> so decoration 0 belongs to the LOWEST note whatever it was written beside. And the last
+> row of the table was one character: `"^break"` is `{position, name}` in abcjs and we were
+> matching the source spelling.
+>
+> **AND THE ANSWER WAS IN THIS REPO TWICE.** `&` overlay padding — the thing that puts an
+> overlay in TIME — was already implemented by `padOverlays`, written months earlier for
+> the BEAM gate, and I wrote it a second time before measuring that it existed. Three more
+> findings were inputs the parser was silently DROPPING with a `ponytail:` marker sitting on
+> the line: grace-note lengths, decorations inside a chord, `V:… transpose=`. Read the
+> named abcjs function — and then grep this repo for the rule before porting it.
+> See `Docs/CHECKPOINT-2026-08-08e.md`.
+
+> ⏳ **THE OPTIMISATION PASS WAS DEFERRED, the reasoning is recorded so it is not re-argued,
+> AND THE BOUNDARY IT WAITED FOR HAS NOW BEEN REACHED** (2026-08-08). Measured: `layout.ts` is 9,992 lines and **49% COMMENT**, and
 > those comments ARE the finding ledger — 150 findings with citations, several recording
 > things got wrong twice before the note existed. 220 tunes render in **151ms, 0.7ms
 > each**, and the dominant cost — nine layout passes per line — is MANDATED by finding 104,
@@ -174,9 +196,12 @@ checkpoint and hand off as you go so no context is lost.
 > `npx tsc --noEmit` BEFORE `git commit`, not alongside it: a duplicate object key shipped
 > that day because vitest passed and the typecheck came back after the push.
 
-Read `Docs/CHECKPOINT-2026-08-08d.md` first — the state, the 6.7.0 flip, the audio work
-list and why the optimisation pass is deferred. `Docs/HANDOFF-2026-08-08d.md` has the
-session prompt. `Docs/CHECKPOINT-2026-08-08c.md` keeps the audio arc's findings in full.
+Read `Docs/CHECKPOINT-2026-08-08e.md` first — the state, the audio arc's thirteen findings
+and **WHAT IS LEFT**. `Docs/HANDOFF-2026-08-08e.md` has the session prompt.
+`Docs/CHECKPOINT-2026-08-08d.md` is superseded for the state but keeps the 6.7.0 flip and
+**the terms the optimisation pass must be held to**, which is the live phase — read it
+rather than re-deriving it. `Docs/HANDOFF-2026-08-08d.md` has that session's prompt.
+`Docs/CHECKPOINT-2026-08-08c.md` keeps the audio arc's first findings.
 Then `Docs/HANDOFF-2026-08-08c.md` for the session prompt, and
 `Docs/CHECKPOINT-2026-08-08b.md` for findings 147-150 and the geometric tail, which is
 CLOSED. `Docs/CHECKPOINT-2026-08-08.md` keeps the ARC DECISION.
@@ -319,17 +344,19 @@ abcjs source are all reached by sibling path and stay in that repo. Keep it that
 backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
-**GEOMETRY IS DONE. AUDIO IS THE ARC.** 925/925 with no reds; **five gates, and the three
-that can rank are all EMPTY** — 0 of 119 pixel targets, 0 of 174 harvested fixtures, 0 of
-41 staff-line spans. The two new ones are ladders of controls rather than corpora:
-`tests/above-lane-order.test.ts` (12 tunes, one per PAIR of above lanes) and
+**GEOMETRY IS DONE. AUDIO IS DONE. THE PHASE IS THE STRUCTURAL PASS.** 989/989 with no
+reds; **seven gates, and ALL THREE RANKED TABLES ARE REGRESSION NETS** — 0 of 54 audio
+cases, 0 of 174 harvested fixtures, and 1 of 120 pixel targets, that one being
+`extra-class`, recorded and named. Two of the seven are ladders of controls rather than
+corpora: `tests/above-lane-order.test.ts` (12 tunes, one per PAIR of above lanes) and
 `tests/glyph-ycorr.test.ts` (20 tunes, one per GLYPH). Nothing in either corpus exercises
 what they cover, which is why they had to be built before their defects could be stated.
 
-**AUDIO IS UNDER WAY**: `tests/corpus-audio/` holds the oracle, `tests/audio-ranked.test.ts`
-is the third ranked table, and `src/audio/` is the flattener and the chord track. **23 of 54
-cases differ and 31 are ratcheted into `PASSING`.** The drum track is next and its algorithm
-is already written out — see `Docs/HANDOFF-2026-08-08d.md`.
+**SO NO GATE CAN NAME THE NEXT DEFECT.** That has happened twice on this branch and the
+answer both times was to BUILD ONE that expresses an axis none of the others can. The two
+oracles still unharvested are named in `CHECKPOINT-2026-08-08e.md`'s WHAT IS LEFT:
+`timing.test.js`'s `setTiming`, which gates the audio↔geometry JOIN, and `midi.test.js`'s
+MIDI FILE writer.
 
 **Every structural gate is at 100% with zero recorded divergences** — content, lyrics,
 beams, structure, source offsets. The work is now entirely GEOMETRIC and entirely
