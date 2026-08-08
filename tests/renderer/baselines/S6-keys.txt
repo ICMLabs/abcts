@@ -16,7 +16,7 @@ system 0 width=26.561 originY=0.000
       glyph timeSig8 6.385,-1.000
       glyph timeSig4 6.329,1.000
     note@-2 x=9.141 w=15.484
-      glyph noteheadWhole 9.141,1.000
+      glyph noteheadDoubleWhole 9.141,1.000
 tune 1
 bounds  width=129.869 height=22.412 top=-1.935
 systems 1

@@ -275,7 +275,9 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     'S3-note-syntax-tune9': { heads: 8, dy: 0.01, dx: 0, oy: 0, ox: 0 },
     'S3-note-syntax-tune10': { heads: 14, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S3-note-syntax-tune11': { heads: 7, dy: 0, dx: 0, oy: 0, ox: 0 },
-    'S3-note-syntax-tune12': { heads: 16, dy: 0, dx: 0.18, oy: 0, ox: 0.02 },
+    // dx 0.18 -> 0.0. Its two `G8` bars are BREVES, and we drew semibreves — see the
+    // `G8` test below, which used to assert the difference as an irreducible outline.
+    'S3-note-syntax-tune12': { heads: 16, dy: 0, dx: 0.0, oy: 0, ox: 0.0 },
     'S3-note-syntax-tune13': { heads: 0, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S3-note-syntax-tune14': { heads: 8, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S3-note-syntax-tune15': { heads: 4, dy: 0, dx: 0, oy: 0, ox: 0 },
@@ -317,7 +319,7 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // between them is the golden vocalfont table's width for `_`.
     'S5-directives-tune4': { heads: 22, dy: 0, dx: 0.0, oy: 0, ox: 0.0 },
     'S5-directives-tune5': { heads: 22, dy: 0, dx: 0, oy: 0, ox: 0 },
-    'S6-keys-tune0': { heads: 1, dy: 0, dx: 0, oy: 0, ox: 0.18 },
+    'S6-keys-tune0': { heads: 1, dy: 0, dx: 0, oy: 0, ox: 0.0 },
     'S6-keys-tune1': { heads: 48, dy: 0.01, dx: 0, oy: 0, ox: 0 },
     'S6-keys-tune2': { heads: 28, dy: 0, dx: 0, oy: 0, ox: 0 },
     // dx 24.93 -> 0.01 and ox 2.08 -> 0.0 when the "same signature prints nothing" guard
@@ -379,13 +381,13 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     // close itself one commit later. Both were means over a spread that had not been
     // fixed yet, and in both cases the entry named what it was waiting on.
     'S8-layout-tune11': { heads: 46, dy: 0.01, dx: 0.0, oy: 0.0, ox: 0.0 },
-    'clefs-tune0': { heads: 1, dy: 0, dx: 0, oy: 0, ox: 0.18 },
-    'clefs-tune1': { heads: 1, dy: 0, dx: 0, oy: -0.03, ox: 0.18 },
-    'clefs-tune2': { heads: 1, dy: 0, dx: 0, oy: -0.03, ox: 0.18 },
-    'clefs-tune3': { heads: 1, dy: 0, dx: 0, oy: -0.03, ox: 0.18 },
-    'clefs-tune4': { heads: 1, dy: 0, dx: 0, oy: -0.03, ox: 0.18 },
-    'clefs-tune5': { heads: 1, dy: 0, dx: 0, oy: -0.01, ox: 0.18 },
-    'clefs-tune6': { heads: 1, dy: 0, dx: 0, oy: -0.01, ox: 0.18 },
+    'clefs-tune0': { heads: 1, dy: 0, dx: 0, oy: 0, ox: 0.0 },
+    'clefs-tune1': { heads: 1, dy: 0, dx: 0, oy: -0.03, ox: 0.0 },
+    'clefs-tune2': { heads: 1, dy: 0, dx: 0, oy: -0.03, ox: 0.0 },
+    'clefs-tune3': { heads: 1, dy: 0, dx: 0, oy: -0.03, ox: 0.0 },
+    'clefs-tune4': { heads: 1, dy: 0, dx: 0, oy: -0.03, ox: 0.0 },
+    'clefs-tune5': { heads: 1, dy: 0, dx: 0, oy: -0.01, ox: 0.0 },
+    'clefs-tune6': { heads: 1, dy: 0, dx: 0, oy: -0.01, ox: 0.0 },
     'clefs-tune7': { heads: 36, dy: 0, dx: 0, oy: 0, ox: 0 },
     'curves-tune0': { heads: 4, dy: 0, dx: 0, oy: 0, ox: 0 },
     'curves-tune1': { heads: 4, dy: 0, dx: 0, oy: 0, ox: 0 },
@@ -643,19 +645,26 @@ describe('pixel parity vs abcjs rendered SVG', () => {
    * thing to diff between a session's first commit and its last.
    */
   /**
-   * THE SEVEN `ox = 0.18` ROWS ARE THE GLYPH OUTLINE, AND THEY ARE NOT WORK.
+   * THE EIGHT `ox = 0.18` ROWS WERE NOT THE OUTLINE. THEY WERE THE WRONG NOTE.
    *
-   * Every one is a tune whose whole content is `G8` — six of `clefs`, one of `S6-keys` —
-   * and the number is the WHOLE NOTEHEAD's outline, which this file's header puts out of
-   * scope in its second paragraph. Measured on `clefs-tune0`: abcjs's head inks 16.83px
-   * wide, Bravura's 15.03, and the two are not left-aligned either. Positions are compared
-   * as bounding-box CENTRES (see `pathBox`), so two differently shaped glyphs at the same
-   * origin score a difference no placement rule can remove.
+   * This block used to assert 0.18 on every one-notehead `G8` tune and explain that the
+   * figure was irreducible: "abcjs's head inks 16.83px wide, Bravura's 15.03, and the two
+   * are not left-aligned either. Positions are compared as bounding-box CENTRES, so two
+   * differently shaped glyphs at the same origin score a difference no placement rule can
+   * remove." Every clause of that was true and the conclusion was wrong.
    *
-   * It is asserted rather than written in prose so that a real regression on those tunes
-   * still fails: if the figure ever moves off 0.18, something other than the outline did it.
+   * `G8` under `L:1/4` is TWO whole notes, and abcjs's `chartable.note[-durlog]` lands on
+   * `noteheads.dbl` — a BREVE. We drew a semibreve. The 16.83 quoted as evidence is
+   * `noteheads.dbl`'s own `w`, to the hundredth; nobody looked up whose glyph it was.
+   *
+   * A bounding-box centre cannot tell a wrong glyph from a differently shaped one, so
+   * "measured, and not a defect" has to rule the first out before it is written down —
+   * otherwise the row stops being read and the note becomes the reason it stays. Nine
+   * tunes closed the moment the breve was drawn.
+   *
+   * Kept, and asserted at ZERO, because these are the corpus's only breves.
    */
-  it('the one-notehead whole-note tunes differ only by the glyph outline', () => {
+  it('the one-notehead `G8` tunes draw a breve, exactly where abcjs draws one', () => {
     for (const key of [
       'clefs-tune0',
       'clefs-tune1',
@@ -668,10 +677,11 @@ describe('pixel parity vs abcjs rendered SVG', () => {
     ]) {
       const target = withGoldens.find((t) => t.key === key)
       if (target === undefined) throw new Error(`${key} is not measured`)
-      const { dx, ox, goldenHeads } = measure(target)
+      const { dx, ox, oy, goldenHeads } = measure(target)
       expect(goldenHeads, key).toBe(1)
       expect(dx, `${key} dx`).toBeLessThan(EPSILON)
-      expect(ox, `${key} ox`).toBeCloseTo(0.18, 2)
+      expect(Math.abs(ox), `${key} ox`).toBeLessThan(EPSILON)
+      expect(Math.abs(oy), `${key} oy`).toBeLessThan(EPSILON)
     }
   })
 

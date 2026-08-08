@@ -1233,10 +1233,19 @@ describe('noteGlyph', () => {
     // `G8` at L:1/4 is 2/1 — undotted and twice a whole note. Testing (numerator + 1)
     // for a power of two calls 3/8 dotted and 2/1 unwritable, which broke every long
     // note in the corpus. Only the odd part can carry dots.
-    expect(noteGlyph(rational(2, 1))).toMatchObject({ head: 'noteheadWhole', dots: 0 })
-    expect(noteGlyph(rational(4, 1))).toMatchObject({ head: 'noteheadWhole', dots: 0 })
-    expect(noteGlyph(rational(3, 1))).toMatchObject({ head: 'noteheadWhole', dots: 1 })
-    expect(noteGlyph(rational(6, 1))).toMatchObject({ head: 'noteheadWhole', dots: 1 })
+    //
+    // AND TWICE A WHOLE NOTE IS A BREVE, not a semibreve. `chartable.note[-durlog]` with
+    // `durlog = Math.floor(Math.log2(duration))` puts 2/1 and 3/1 on `noteheads.dbl`
+    // (`abstract-engraver.js:36, 793`). This asserted `noteheadWhole` for both and nine
+    // rows of the pixel table were spent explaining the difference as an outline.
+    expect(noteGlyph(rational(2, 1))).toMatchObject({ head: 'noteheadDoubleWhole', dots: 0 })
+    expect(noteGlyph(rational(3, 1))).toMatchObject({ head: 'noteheadDoubleWhole', dots: 1 })
+    // ponytail: abcjs draws NOTHING past a breve — `durlog` reaches 2 and
+    // `chartable.note[-2]` is undefined, so `createNoteHead` builds a headless element.
+    // Reproducing a vanishing notehead needs a fixture that writes one, and neither
+    // corpus does; a breve is the nearest thing that is still a note.
+    expect(noteGlyph(rational(4, 1))).toMatchObject({ head: 'noteheadDoubleWhole', dots: 0 })
+    expect(noteGlyph(rational(6, 1))).toMatchObject({ head: 'noteheadDoubleWhole', dots: 1 })
   })
 
   it('still refuses a duration no notehead and dots can write', () => {

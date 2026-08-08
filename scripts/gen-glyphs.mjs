@@ -51,6 +51,9 @@ const GLYPHS = [
   // regeneration would have deleted it from the table it is mapped in.
   'unpitchedPercussionClef1',
   // Noteheads
+  // A BREVE. abcjs's `chartable.note[-1]` is `noteheads.dbl` and it reaches it for any
+  // note two whole notes long — `G8` under `L:1/4`, which is what every `clefs` tune is.
+  'noteheadDoubleWhole',
   'noteheadWhole',
   'noteheadHalf',
   'noteheadBlack',

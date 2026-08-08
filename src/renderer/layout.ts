@@ -1308,6 +1308,19 @@ export function noteGlyph(notated: Rational): NoteGlyphSpec | null {
 
   const whole = ratToNumber(base)
   if (!(whole > 0)) return null
+  // A BREVE IS ITS OWN NOTEHEAD, and we drew a semibreve for one. abcjs indexes
+  // `chartable.note[-durlog]` with `durlog = Math.floor(Math.log2(duration))`
+  // (`abstract-engraver.js:36, 793`), so a duration of 2 lands on `noteheads.dbl` — a
+  // different note VALUE, not a different outline for the same one.
+  //
+  // Every `clefs` fixture is `G8` under `L:1/4`, which is two whole notes. Eight rows of
+  // the pixel table read `ox = 0.18` on those and were written off as "the whole
+  // notehead's OUTLINE, and not work" — the figure that justified it, abcjs's head inking
+  // "16.83px wide", is `noteheads.dbl`'s `w` to the hundredth. The gate was right and the
+  // diagnosis was wrong: a bounding-box centre cannot tell a wrong glyph from a differently
+  // shaped one, and "measured, and not a defect" needs the two ruled apart before it is
+  // written down.
+  if (whole >= 2) return { head: 'noteheadDoubleWhole', stemmed: false, flags: 0, dots }
   if (whole >= 1) return { head: 'noteheadWhole', stemmed: false, flags: 0, dots }
 
   // 1/2 → 1, 1/4 → 2, 1/8 → 3 …

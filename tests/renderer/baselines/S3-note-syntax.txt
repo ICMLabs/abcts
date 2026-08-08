@@ -1618,11 +1618,11 @@ system 0 width=90.342 originY=0.000
       glyph timeSig8 6.385,-1.000
       glyph timeSig4 6.329,1.000
     note@-2 x=9.141 w=15.484
-      glyph noteheadWhole 9.141,1.000
+      glyph noteheadDoubleWhole 9.141,1.000
     bar x=20.618 w=0.077
       line  20.657,-2.000 -> 20.657,2.000 t=0.077
     note@-2 x=22.038 w=15.484
-      glyph noteheadWhole 22.038,1.000
+      glyph noteheadDoubleWhole 22.038,1.000
     bar x=33.515 w=0.077
       line  33.553,-2.000 -> 33.553,2.000 t=0.077
     note@-2 x=34.934 w=10.949

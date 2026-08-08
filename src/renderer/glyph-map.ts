@@ -36,6 +36,9 @@
  */
 export const SMUFL_TO_ABCJS: Readonly<Record<string, string>> = {
   // Noteheads
+  // A BREVE — `chartable.note[-1]`, which abcjs reaches for any note two whole notes
+  // long. `G8` under `L:1/4` is one, and every `clefs` fixture is exactly that.
+  noteheadDoubleWhole: 'noteheads.dbl',
   noteheadWhole: 'noteheads.whole',
   noteheadHalf: 'noteheads.half',
   noteheadBlack: 'noteheads.quarter',
@@ -162,7 +165,6 @@ export const UNMAPPED_ABCJS = [
   'rests.32nd',
   'rests.64th',
   'rests.128th',
-  'noteheads.dbl',
   'scripts.stopped',
   'scripts.wedge',
   'scripts.longphrase',
