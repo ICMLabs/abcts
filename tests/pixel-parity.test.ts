@@ -279,7 +279,10 @@ const EXPECTED: Record<string, { heads: number; dy: number; dx: number; oy: numb
     'S3-note-syntax-tune21': { heads: 5, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S3-note-syntax-tune22': { heads: 40, dy: 0, dx: 0.01, oy: 0, ox: 0 },
     'S3-note-syntax-tune23': { heads: 29, dy: 0, dx: 0, oy: 0, ox: 0 },
-    'S3-note-syntax-tune24': { heads: 64, dy: 0, dx: 6.24, oy: 0, ox: 0.11 },
+    // dx 6.24 -> 0.0 and ox 0.11 -> 0.0. EXACT ON ALL FOUR. `translateChord` runs on every
+    // chord symbol, not only under `%%jazzchords`, and it REBUILDS the string from three
+    // regex groups — so `"C6/9"` prints as `C6`, the `/9` failing `[ABCDEFG][#b♯♭]?`.
+    'S3-note-syntax-tune24': { heads: 64, dy: 0, dx: 0.0, oy: 0, ox: 0.0 },
     'S4-bars-repeats-tune0': { heads: 28, dy: 0, dx: 0.01, oy: 0, ox: 0 },
     'S4-bars-repeats-tune1': { heads: 60, dy: 0, dx: 0, oy: 0, ox: 0 },
     'S4-bars-repeats-tune2': { heads: 2, dy: 0, dx: 1.17, oy: 0, ox: 1.8 },

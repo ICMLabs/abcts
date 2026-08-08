@@ -3926,8 +3926,17 @@ function noteText(
     // two chord marks at one x; `placeInLane` cannot fit them side by side and opens a
     // second lane, which is 18.52px of staff. Collapsing them to one line lost that on
     // every fixture that stacks a chord.
-    for (const line of event.chordSymbol.split('\n').reverse()) {
-      if (line === '') continue
+    for (const raw of event.chordSymbol.split('\n').reverse()) {
+      if (raw === '') continue
+      // `translateChord` RUNS ON EVERY CHORD SYMBOL, not just under `%%jazzchords`
+      // (`add-chord.js:44-45` — the only guard is `!isAnnotation`). Without the markers it
+      // looks like an identity, and it is not: the string is REBUILT from three regex
+      // groups, so anything the tail group cannot read is DROPPED. `"C6/9"` matches root
+      // `C`, modifier `6`, and then `(\/([ABCDEFG][#b♯♭]?))?` fails on `/9` and matches
+      // empty — abcjs prints `C6`. `"C/E"`, `"D/F#"` and `"Am/C"` all keep their bass and
+      // are exact, which is why only the digit one showed.
+      const parts = chordParts(raw)
+      const line = parts.join('')
       const boxed = event.chordFont?.box === true
       const lineWidth = markWidth(line, size, boxed)
       if (spans !== null) {
@@ -3944,7 +3953,7 @@ function noteText(
         size,
         bold: false,
         italic: false,
-        ...(JAZZ_CHORDS ? { jazz: chordParts(line) } : {}),
+        ...(JAZZ_CHORDS ? { jazz: parts } : {}),
         ...(event.chordFont?.box === true ? { box: true } : {}),
       })
     }
