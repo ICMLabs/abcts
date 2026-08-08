@@ -1269,8 +1269,8 @@ system 0 width=90.323 originY=0.000
       glyph restHalf 82.143,0.000
     bar x=88.258 w=0.077
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
-system 1 width=90.323 originY=22.840
-  staff 0 originY=4.226
+system 1 width=90.323 originY=23.025
+  staff 0 originY=4.040
     staffline 0.000,2.000 -> 90.323,2.000 t=0.090
     staffline 0.000,1.000 -> 90.323,1.000 t=0.090
     staffline 0.000,0.000 -> 90.323,0.000 t=0.090
@@ -1280,7 +1280,7 @@ system 1 width=90.323 originY=22.840
       glyph gClef 2.581,1.000
     note@1 x=6.329 w=7.742
       glyph noteheadHalf 6.329,-0.500
-      glyph ornamentTremblement 4.951,-3.738
+      glyph ornamentTremblement 6.221,-3.645
       line  6.394,-0.333 -> 6.394,3.000 t=0.129
     note@1 x=20.947 w=5.474
       glyph noteheadBlack 20.947,-0.500

@@ -127,6 +127,16 @@ export const SMUFL_TO_ABCJS: Readonly<Record<string, string>> = {
 
   // Ornaments
   ornamentTrill: 'scripts.trill',
+  // THE IRISH ROLL, and it was the last Bravura metric reachable in strict on the
+  // decoration path. abcjs's `scripts.roll` is 6.125px tall against Bravura's
+  // `ornamentTremblement` at 7.564, and a decoration is stacked by
+  // `symbolHeightInPitches(symbol) + 1` — so every `~` or `R` cost 0.3714 pitch too much
+  // and the two of them together carried a whole system 2.66px down.
+  //
+  // It sat in `UNMAPPED_ABCJS` because no SMuFL name CLAIMS abcjs's roll — the list's own
+  // first paragraph says an absence there is usually the parity behaviour. It is not here:
+  // abcjs draws a mark, we draw a mark, and the only question was whose metrics measure it.
+  ornamentTremblement: 'scripts.roll',
   ornamentMordent: 'scripts.mordent',
   ornamentShortTrill: 'scripts.prall',
   ornamentTurn: 'scripts.turn',
@@ -154,7 +164,6 @@ export const UNMAPPED_ABCJS = [
   'rests.128th',
   'noteheads.dbl',
   'scripts.stopped',
-  'scripts.roll',
   'scripts.wedge',
   'scripts.longphrase',
   'scripts.mediumphrase',
