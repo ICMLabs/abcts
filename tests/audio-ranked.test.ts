@@ -76,6 +76,7 @@ const PASSING: readonly string[] = [
   'flatten-overlay',
   'flatten-perc-map-high-c',
   'flatten-pickup-overlay',
+  'flatten-octave-clefs',
   'flatten-perc-map',
   'flatten-power-chord',
   'flatten-quarter-tone',

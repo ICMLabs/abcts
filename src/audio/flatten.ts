@@ -512,6 +512,7 @@ function sequenceVoice(voice: Voice, score: Score, startingTempo: number): Timed
   let clefTranspose = 0
   let clefOctaveActive = false
   let line = -1
+  let firstMeasure = true
   let key = score.key
   let meter = score.meter
   /** The tuplet group being spent, and abcjs's two running figures for it. */
@@ -524,7 +525,16 @@ function sequenceVoice(voice: Voice, score: Score, startingTempo: number): Timed
 
   for (const measure of resolveRepeats(voice.measures)) {
     if (measure.startsSystem || line < 0) line += 1
-    const clef = measure.clefChange ?? (line === 0 ? (voice.clef ?? score.clef) : null)
+    // THE DECLARED CLEF ARRIVES ONCE, NOT ON EVERY MEASURE OF LINE ONE. This read
+    // `line === 0`, which is true for every measure of the first source line, so a
+    // measure with no `[K:]` of its own re-applied the DEFAULT treble and cancelled the
+    // octave a mid-line clef change had set. `flatten-octave-clefs` writes all five of its
+    // bars on one line: `[K: treble-8]G8|` sounded an octave down and the very next bar,
+    // which inherits it, did not — three notes a whole octave high, under a green gate for
+    // every axis but the pitch. abcjs re-pushes the STAFF clef per line and a mid-line
+    // `[K: clef=]` updates `multilineVars.clef`, so the octave carries.
+    const clef = measure.clefChange ?? (firstMeasure ? (voice.clef ?? score.clef) : null)
+    firstMeasure = false
     if (clef != null) {
       if (clef.octaveShift !== 0) {
         clefTranspose = clef.octaveShift * 12
