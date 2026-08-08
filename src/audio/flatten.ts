@@ -492,7 +492,147 @@ interface Timed {
  * sequencer's job in abcjs (`repeats.js`, and the overlay voices it appends), both need
  * the ranked table to steer them, and neither can be tested before the table exists.
  */
-function sequenceVoice(voice: Voice, score: Score, startingTempo: number): Timed[] {
+/**
+ * THE WRITTEN TIMELINE — every event's duration and its position in the SOURCE, before a
+ * repeat is unrolled and before any tempo is applied.
+ *
+ * abcjs's `durationCounter[voiceNumber]`, and it exists for one reason: it is the KEY a
+ * tempo change is filed under. `insertTempoChanges` matches a note to a change by
+ * `el.timing`, so the position has to be the one the note was WRITTEN at — a note reached
+ * for the second time through a repeat carries its first pass's timing, which is how a
+ * `:|` back to the head restores the opening tempo.
+ *
+ * Keyed by the measure OBJECT, which survives `resolveRepeats` unchanged: the same measure
+ * met twice looks up the same original position, exactly as abcjs's copied elements carry
+ * their original `timing`.
+ */
+interface WrittenTimeline {
+  readonly durationsOf: Map<object, number[]>
+  readonly positionOf: Map<object, number>
+}
+
+function writtenTimeline(voice: Voice): WrittenTimeline {
+  const durationsOf = new Map<object, number[]>()
+  const positionOf = new Map<object, number>()
+  let written = 0
+  let tripletGroup: number | null = null
+  let tripletTotal = 0
+  let tripletCount = 0
+  const round6 = (x: number): number => Math.round(x * MICRO) / MICRO
+
+  for (const measure of voice.measures) {
+    positionOf.set(measure, written)
+    const durations: number[] = []
+    for (const [index, event] of measure.events.entries()) {
+      // A SPACER SOUNDS NOTHING, TAKES NO TIME — AND STILL COUNTS.
+      //
+      // `y` is skipped where the sequence is BUILT — `if (!elem.rest || elem.rest.type
+      // !== 'spacer')` (`abc_midi_sequencer.js:246`) — so it neither sounds nor advances
+      // the clock, and letting it take its written duration put every note after
+      // `!<)!y!ffff!B` a quarter late. But `setDynamics(elem)` is called on the line ABOVE
+      // that guard, and `numNotesToDecoration` walks the RAW voice where the spacer is
+      // still an `el_type: "note"` — so a hairpin written on a `y` closes there and the
+      // spacer is one of the notes the step is divided by. Dropping it outright made
+      // `flatten-dynamics3`'s crescendo run to the end of the line instead of to the `y`,
+      // 28 per note against 14.
+      const spacer = event.type === 'rest' && event.kind === 'spacer'
+      // A MULTI-MEASURE REST IS AS LONG AS IT SAYS. `Z4` is four BARS of silence, and its
+      // written duration is one bar — abcjs multiplies by `measureLength` where we carried
+      // the single bar through, so everything after it on `flatten-multi-measure-rest` ran
+      // three whole notes early.
+      const bars =
+        event.type === 'rest' &&
+        (event.kind === 'multiMeasure' || event.kind === 'invisibleMultiMeasure')
+          ? (event.measureCount ?? 1)
+          : 1
+      /**
+       * A TRIPLET'S LAST NOTE IS THE REMAINDER, NOT A THIRD — and that is the whole of the
+       * `0.083333` vs `0.083334` on the table.
+       *
+       * abcjs rounds every duration to a MILLIONTH, so three notes of `1/6` come to
+       * `0.500001` and the bar drifts. Its answer (`abc_midi_sequencer.js:253-277`) is to
+       * work out the group's total ONCE at the opening note —
+       * `startTriplet * tripletMultiplier * elem.duration` — accumulate the rounded
+       * durations as it goes, and give the LAST note whatever is left. So the group is
+       * exact and one note of it is a millionth off, rather than the group being three
+       * millionths off. WHICH note is short depends on the fraction: `(3 C2` under `L:1/8`
+       * gives 0.166667 twice and 0.166666 last, and `(3 C` gives 0.083333 twice and
+       * 0.083334 last.
+       *
+       * ponytail: `(p:q:r` with `p !== r` takes a different total in abcjs — the sum of the
+       * first `r` written durations — and our model does not record `r`. Nothing in the
+       * corpus writes one; the table will say so if anything does.
+       */
+      const tuplet = event.tuplet
+      let dur = spacer ? 0 : ratToNumber(event.duration) * bars
+      if (tuplet !== null) {
+        if (tuplet.group !== tripletGroup) {
+          tripletGroup = tuplet.group
+          const notated = ratToNumber(event.notatedDuration)
+          const multiplier = notated === 0 ? 1 : ratToNumber(event.duration) / notated
+          tripletTotal = tuplet.number * multiplier * notated
+          dur = round6(dur)
+          tripletCount = dur
+        } else if (measure.events[index + 1]?.tuplet?.group === tuplet.group) {
+          dur = round6(dur)
+          tripletCount += dur
+        } else {
+          dur = round6(tripletTotal - tripletCount)
+          tripletGroup = null
+        }
+      }
+      durations.push(dur)
+      written += dur
+    }
+    durationsOf.set(measure, durations)
+  }
+  return { durationsOf, positionOf }
+}
+
+/**
+ * A TEMPO CHANGE IN ANY VOICE APPLIES TO EVERY VOICE, and that is a whole pass of its own.
+ *
+ * `insertTempoChanges` (`abc_midi_sequencer.js:569-592`) collects every `[Q:]` in the tune
+ * into one table keyed by WRITTEN POSITION, then walks each voice and splices a `tempo`
+ * element into it at every element whose `timing` matches. Its own comment says why it
+ * cannot be done inline: "all the elements in all the voices need to be created first."
+ *
+ * `flatten-tempo-3-voices` is three voices changing tempo at four different bars, and the
+ * top voice — which writes exactly ONE `[Q:]` of its own — takes all four.
+ *
+ * TWO CONSEQUENCES that only fall out of the position keying:
+ *
+ * - the table is seeded with `{0: <tune qpm>}`, so a `:|` back to the head meets position 0
+ *   again and RESTORES the opening tempo. abcjs says so where it seeds `lastTempo`: "don't
+ *   insert redundant changes… this happens normally when repeating from the beginning".
+ * - a change is filed under a position, not a voice, so two voices changing at the same
+ *   position leave whichever was written LAST in force for all of them.
+ */
+function collectTempoChanges(
+  voices: readonly Voice[],
+  score: Score,
+  startingTempo: number,
+): Map<number, number> {
+  const changes = new Map<number, number>([[0, startingTempo]])
+  for (const voice of voices) {
+    const { positionOf } = writtenTimeline(voice)
+    let meter = score.meter
+    for (const measure of voice.measures) {
+      if (measure.meterChange !== null) meter = measure.meterChange
+      if (measure.tempoChange == null) continue
+      const qpm = qpmOfTempo(measure.tempoChange, meter)
+      changes.set(positionOf.get(measure) ?? 0, qpm)
+    }
+  }
+  return changes
+}
+
+function sequenceVoice(
+  voice: Voice,
+  score: Score,
+  startingTempo: number,
+  tempoChanges: Map<number, number>,
+): Timed[] {
   const out: Timed[] = []
   let time = 0
   /**
@@ -524,15 +664,20 @@ function sequenceVoice(voice: Voice, score: Score, startingTempo: number): Timed
   let firstMeasure = true
   let key = score.key
   let meter = score.meter
-  /** The tuplet group being spent, and abcjs's two running figures for it. */
-  let tripletGroup: number | null = null
-  let tripletTotal = 0
-  let tripletCount = 0
+  /**
+   * `lastTempo` — abcjs's guard against a redundant change. A tempo is only applied when
+   * it DIFFERS from the one already running, which is what makes a repeat back to the head
+   * restore the opening tempo rather than being a no-op at an already-changed position.
+   */
+  let lastTempo = startingTempo
+  const { durationsOf, positionOf } = writtenTimeline(voice)
   /** Open ties, keyed by written pitch, holding the index into `out` that owns them. */
   const ties = new Map<string, number>()
   const durations: number[] = []
 
   for (const measure of resolveRepeats(voice.measures)) {
+    const measureDurations = durationsOf.get(measure) ?? []
+    let written = positionOf.get(measure) ?? 0
     if (measure.startsSystem || line < 0) line += 1
     // THE DECLARED CLEF ARRIVES ONCE, NOT ON EVERY MEASURE OF LINE ONE. This read
     // `line === 0`, which is true for every measure of the first source line, so a
@@ -559,10 +704,6 @@ function sequenceVoice(voice: Voice, score: Score, startingTempo: number): Timed
         clefOctaveActive = false
       }
     }
-    if (measure.tempoChange != null) {
-      const qpm = qpmOfTempo(measure.tempoChange, meter)
-      tempoFactor = qpm > 0 ? startingTempo / qpm : 1
-    }
     if (measure.keyChange !== null) key = measure.keyChange
     if (measure.meterChange !== null) meter = measure.meterChange
     if (measure.midiCommands !== undefined) {
@@ -585,65 +726,16 @@ function sequenceVoice(voice: Voice, score: Score, startingTempo: number): Timed
     }
     let first = true
     for (const [eventIndex, event] of measure.events.entries()) {
-      // A SPACER SOUNDS NOTHING, TAKES NO TIME — AND STILL COUNTS.
-      //
-      // `y` is skipped where the sequence is BUILT — `if (!elem.rest || elem.rest.type
-      // !== 'spacer')` (`abc_midi_sequencer.js:246`) — so it neither sounds nor advances
-      // the clock, and letting it take its written duration put every note after
-      // `!<)!y!ffff!B` a quarter late. But `setDynamics(elem)` is called on the line ABOVE
-      // that guard, and `numNotesToDecoration` walks the RAW voice where the spacer is
-      // still an `el_type: "note"` — so a hairpin written on a `y` closes there and the
-      // spacer is one of the notes the step is divided by. Dropping it outright made
-      // `flatten-dynamics3`'s crescendo run to the end of the line instead of to the `y`,
-      // 28 per note against 14.
-      const spacer = event.type === 'rest' && event.kind === 'spacer'
-      // A MULTI-MEASURE REST IS AS LONG AS IT SAYS. `Z4` is four BARS of silence, and its
-      // written duration is one bar — abcjs multiplies by `measureLength` where we carried
-      // the single bar through, so everything after it on `flatten-multi-measure-rest` ran
-      // three whole notes early.
-      const bars =
-        event.type === 'rest' &&
-        (event.kind === 'multiMeasure' || event.kind === 'invisibleMultiMeasure')
-          ? (event.measureCount ?? 1)
-          : 1
-      /**
-       * A TRIPLET'S LAST NOTE IS THE REMAINDER, NOT A THIRD — and that is the whole of the
-       * `0.083333` vs `0.083334` on the table.
-       *
-       * abcjs rounds every duration to a MILLIONTH, so three notes of `1/6` come to
-       * `0.500001` and the bar drifts. Its answer (`abc_midi_sequencer.js:253-277`) is to
-       * work out the group's total ONCE at the opening note —
-       * `startTriplet * tripletMultiplier * elem.duration` — accumulate the rounded
-       * durations as it goes, and give the LAST note whatever is left:
-       * `round(tripletDurationTotal - tripletDurationCount)`. So the group is exact and one
-       * note of it is a millionth off, rather than the group being three millionths off.
-       *
-       * WHICH note is short depends on the fraction: `(3 C2` under `L:1/8` gives 0.166667
-       * twice and 0.166666 last, and `(3 C` gives 0.083333 twice and 0.083334 last.
-       *
-       * ponytail: `(p:q:r` with `p !== r` takes a different total in abcjs — the sum of the
-       * first `r` written durations — and our model does not record `r`. Nothing in the
-       * corpus writes one; the table will say so if anything does.
-       */
-      const tuplet = event.tuplet
-      let dur = spacer ? 0 : ratToNumber(event.duration) * bars
-      if (tuplet !== null) {
-        const round6 = (x: number): number => Math.round(x * MICRO) / MICRO
-        if (tuplet.group !== tripletGroup) {
-          tripletGroup = tuplet.group
-          const written = ratToNumber(event.notatedDuration)
-          const multiplier = written === 0 ? 1 : ratToNumber(event.duration) / written
-          tripletTotal = tuplet.number * multiplier * written
-          dur = round6(dur)
-          tripletCount = dur
-        } else if (measure.events[eventIndex + 1]?.tuplet?.group === tuplet.group) {
-          dur = round6(dur)
-          tripletCount += dur
-        } else {
-          dur = round6(tripletTotal - tripletCount)
-          tripletGroup = null
-        }
+      // THE TEMPO IN FORCE IS LOOKED UP BY WRITTEN POSITION, not carried from the measure.
+      // Every voice's `[Q:]` is in the same table, so this note may be re-timed by a change
+      // written three staves below it — see `collectTempoChanges`.
+      const change = tempoChanges.get(written)
+      if (change !== undefined && change !== lastTempo) {
+        lastTempo = change
+        tempoFactor = change > 0 ? startingTempo / change : 1
       }
+      const dur = measureDurations[eventIndex] ?? 0
+      written += dur
       let tiedOver = false
       if (event.type === 'note') {
         const name = `${event.pitch.step}${event.pitch.octave}`
@@ -1018,6 +1110,7 @@ export function flattenAudio(
   })
   let instrument: number | undefined
   let totalDuration = 0
+  const tempoChanges = collectTempoChanges(allVoices, score, startingTempo)
 
   /**
    * THE DRUM TRACK'S STATE, which is the whole tune's and not any voice's.
@@ -1126,7 +1219,7 @@ export function flattenAudio(
     chordTrack.setMeter({ num: meter.numerator, den: meter.denominator })
 
     const transposeOf = transposeOfFactory(transposeGlobal)
-    const timed = sequenceVoice(voice, score, startingTempo)
+    const timed = sequenceVoice(voice, score, startingTempo, tempoChanges)
     /** The running stress table — abcjs's `currentVolume`, seeded at the default triple. */
     let stress: [number, number, number] = [105, 95, 85]
     /** Per-note increment while a hairpin is open; 0 when none is. */
