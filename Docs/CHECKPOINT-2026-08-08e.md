@@ -18,14 +18,14 @@ keeps the ARC DECISION; `-08-07b.md` keeps 134–146 and the method; `-08-06.md`
 | suite | **989 of 989. NO REDS.** |
 | **audio ranked table** | **0 of 54.** PASSING is all 54 — the ratchet and the table now say the same thing |
 | harvested ranked table | **0 of 174** — against the 6.7.0 oracle |
-| pixel ranked table | **1 of 120** — `extra-class`, recorded and named, and it is the ONE open parity target |
+| pixel ranked table | **0 of 120** — `extra-class` closed; see THE ACCENT below |
 | staff-line gate | 0 of 41 |
 | above-lane gate / ycorr gate | 12 + 20 controls |
 | render benchmark | 220 tunes, ~1.1ms each — recorded, asserts no time |
 | gates | **7** |
 
-**ALL THREE RANKED TABLES ARE REGRESSION NETS NOW.** None of them can name the next
-defect. That has happened twice before on this branch and the answer both times was to
+**ALL THREE RANKED TABLES ARE EMPTY, AND THEREFORE REGRESSION NETS.** None of them can
+name the next defect. That has happened twice before on this branch and the answer both times was to
 BUILD A GATE that could express what the others could not — `draws its staff lines the
 length abcjs draws them`, then the above-lane and `getYCorr` ladders. It is the answer
 again if a new arc is wanted: see **WHAT IS LEFT**.
@@ -210,6 +210,63 @@ wrote 37 chord events where abcjs writes 22. One character, two cases, the last 
 
 ---
 
+## 🎯 AND THE LAST GEOMETRIC TARGET WAS AN ACCENT, IN EVERY TUNE THAT HAS ONE
+
+`extra-class`'s `oy = -3.88` is closed and **the pixel table is EMPTY: 0 of 120**.
+
+abcjs canonicalises `>`, `<` and `emphasis` to `accent` in the PARSER
+(`accentPseudonyms`). We keep the source spelling and resolve it in the renderer's alias
+table — so `!>!` already DREW the sforzato, and then failed `closeDecoration`'s
+`name === 'accent'` test, took the stave-line arm instead of "always three pitches away",
+and landed one pitch low. Keyed on the GLYPH now: abcjs's own line is
+`if (decoration[i] === "accent") symbol = "scripts.sforzato"`, so the sforzato IS the
+accent and a fourth spelling gets the rule for free.
+
+**AND THE TABLE'S OWN NOTE HAD NAMED THE WRONG CAUSE.** It read: *"a chord carrying BOTH
+an accent and a trill, which nothing else in either corpus does… the residual is the
+two-decoration STACK on a chord."* Every clause was an inference from the tune's TEXT — it
+was a new 6.7.0 `!class=` fixture, so the unusual thing about it was assumed to be the
+cause. A ladder denied it in one run: `!>!d`, `!>!f`, `!>!a` and `!>![dfa]` are all out by
+exactly one pitch, and `.` and `!tenuto!` on the same chord are exact. Not a chord, not a
+stack, not `!class=`. The accent, everywhere.
+
+Same shape as the `G8` breve, and the same lesson: **A NOTE THAT NAMES A CAUSE IS THE
+REASON THE ROW STOPS BEING READ.** Rule the cause OUT on a control before writing it down.
+
+Three baselines moved — `S1-decorations`, `extra-class`, `ragtime-nightingale` — each
+accent one pitch further from its note, and both independent gates say the move is right.
+
+---
+
+## 🧹 THE PONYTAIL LEDGER, TRIAGED — 55 markers, four of them LIES
+
+Step 1 of the structural pass, done. The first pass is the one that matters: a marker
+claiming work is undone when it is done will make a future session redo it.
+
+**FOUR WERE STALE and are gone** — the flattener's "repeats are not unrolled and `&`
+overlays are not split out"; "a second `Q:` is dropped… modelling one means a
+`tempoChange` on Measure plus a renderer path with nothing to gate it", sitting directly
+above two paragraphs describing exactly that; and two claiming `transpose=` has an
+unrealized WRITTEN half, which it does not owe.
+
+**ONE REAL GAP FELL OUT OF IT**: `transpose=` written on `K:` rather than `V:`. abcjs's
+modifier switch is shared (`abc_parse_key_voice.js:411`) and takes both. Recorded as a
+deferral with its citation rather than implemented against no oracle.
+
+**AND THE TEMPO FLAG/DOT IS MEASURED NOW.** Its marker ended "no pixel-gated fixture has a
+non-quarter `Q:` … so it lands blind until one does" — true of the CORPUS and false of the
+ORACLE, because abcjs renders any tune on demand. Nine units measured off its own SVG and
+written into the comment: the head and stem do NOT move, the flag and the dot are purely
+additive, only the rate's x follows (+4.41 for a flag, +6.45 for a dot), and the dot's
+−3.875 is half a staff space — our own `dotGlyphs` rule rather than a figure of abcjs's.
+
+It stays open for the RIGHT reason, now stated: **no gate can see it.** The pixel gate
+compares elements classed `abcjs-notehead`; abcjs gives the tempo group's glyphs a
+`data-name` and no class at all. Widening the gate to compare the mark's PARTS — which
+glyphs, how many — is outline-independent and is the piece to build FIRST.
+
+---
+
 ## WHAT IS LEFT
 
 ### 1. THE OPTIMISATION PASS — this is the phase boundary, and it is NOW
@@ -220,21 +277,18 @@ MANDATED by finding 104), the real cruft is structural, and `layout.ts` is 49% C
 whose comments ARE the finding ledger. The test for any deletion: *could a future session
 re-derive this finding without the comment?* If no, it stays.
 
-Order: (1) harvest the `ponytail:` ledger and triage; (2) split `layout.ts` along its seams
-— glyph metrics, horizontal solve, vertical lanes, curves, text — mechanically; (3) close
-the `ENGRAVE` bare-literal table, already half-triaged; (4) the 5 module-level mutables *if*
-they are a real hazard for repeated renders.
+Order: **(1) harvest the `ponytail:` ledger and triage — DONE, see above**; (2) split
+`layout.ts` along its seams — glyph metrics, horizontal solve, vertical lanes, curves,
+text — mechanically; (3) close the `ENGRAVE` bare-literal table, already half-triaged;
+(4) the 5 module-level mutables *if* they are a real hazard for repeated renders.
 
 **THE INVARIANT: NO BASELINE MAY MOVE.** If one does, that is a behaviour change — revert
 it, do not re-record it.
 
-### 2. `extra-class` — the ONE open parity target
+### 2. THE TEMPO MARK'S FLAG AND DOT — the only NAMED parity defect left
 
-`oy = -3.88`, one PITCH, uniform, `dy`/`dx`/`ox` at zero. Its tune is
-`!class=alice!A!class=bob!!>!T[dfa]`: a chord carrying BOTH an accent and a trill, which
-nothing else in either corpus does. `!class=…!` is accounted for and verified by parse, so
-the residual is the two-decoration STACK on a chord. Unchanged by this session's chord-inner
-decoration work — both of its decorations are written OUTSIDE the `[`.
+Measured and written into `layout.ts`'s own comment; see the ledger section above. Build
+the PARTS gate before landing it, because nothing can currently see it.
 
 ### 3. AFTER THE FLATTENER — two more oracles, both sitting in abcjs's tests
 
@@ -270,12 +324,12 @@ Both are harvestable the way `flattener.test.js` was: EVALUATE the test file wit
 ## RE-VERIFIED AT THIS COMMIT
 
 ```
-HEAD                3c354bd   working tree clean
+working tree clean
 npx tsc --noEmit    clean
 npx vitest run      989 / 989
 audio ranked        0 of 54     PASSING 54
 harvested ranked    0 of 174    (6.7.0 oracle)
-pixel ranked        1 of 120    (`extra-class`, recorded)
+pixel ranked        0 of 120    ALL THREE TABLES EMPTY
 npx biome check src NOT clean — same rows as before this session, all pre-existing
 ```
 

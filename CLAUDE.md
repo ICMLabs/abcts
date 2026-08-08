@@ -175,6 +175,17 @@ checkpoint and hand off as you go so no context is lost.
 > findings were inputs the parser was silently DROPPING with a `ponytail:` marker sitting on
 > the line: grace-note lengths, decorations inside a chord, `V:… transpose=`. Read the
 > named abcjs function — and then grep this repo for the rule before porting it.
+> **AND THE LAST GEOMETRIC TARGET WAS AN ACCENT, IN EVERY TUNE THAT HAS ONE.**
+> `extra-class` sat at one pitch out with a note reading "a chord carrying BOTH an accent
+> and a trill… the residual is the two-decoration STACK on a chord" — every clause an
+> inference from the tune's TEXT, because it was a new 6.7.0 `!class=` fixture and the
+> unusual thing about it was assumed to be the cause. A LADDER denied it in one run:
+> `!>!d`, `!>!f`, `!>!a` and `!>![dfa]` are all out by exactly one pitch and `.` and
+> `!tenuto!` on the same chord are exact. abcjs canonicalises `>`, `<` and `emphasis` to
+> `accent` in the PARSER; we keep the source spelling, so `!>!` already DREW the sforzato
+> and then failed `closeDecoration`'s `name === 'accent'` test. Keyed on the GLYPH now.
+> Same lesson as the `G8` breve: **A NOTE THAT NAMES A CAUSE IS THE REASON THE ROW STOPS
+> BEING READ** — rule the cause OUT on a control before writing it down.
 > See `Docs/CHECKPOINT-2026-08-08e.md`.
 
 > ⏳ **THE OPTIMISATION PASS WAS DEFERRED, the reasoning is recorded so it is not re-argued,
@@ -345,9 +356,8 @@ backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
 **GEOMETRY IS DONE. AUDIO IS DONE. THE PHASE IS THE STRUCTURAL PASS.** 989/989 with no
-reds; **seven gates, and ALL THREE RANKED TABLES ARE REGRESSION NETS** — 0 of 54 audio
-cases, 0 of 174 harvested fixtures, and 1 of 120 pixel targets, that one being
-`extra-class`, recorded and named. Two of the seven are ladders of controls rather than
+reds; **seven gates, and ALL THREE RANKED TABLES ARE EMPTY** — 0 of 54 audio cases, 0 of
+174 harvested fixtures, 0 of 120 pixel targets. Two of the seven are ladders of controls rather than
 corpora: `tests/above-lane-order.test.ts` (12 tunes, one per PAIR of above lanes) and
 `tests/glyph-ycorr.test.ts` (20 tunes, one per GLYPH). Nothing in either corpus exercises
 what they cover, which is why they had to be built before their defects could be stated.
