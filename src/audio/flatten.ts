@@ -1216,7 +1216,7 @@ export function flattenAudio(
         // marks that follow are not part of the key.
         const mapped = percussion ? drumMap[writtenName(written)] : undefined
         if (mapped !== undefined) {
-          track.push({
+          const drum: MidiNote = {
             cmd: 'note',
             pitch: mapped,
             volume: mods.velocity ?? volume,
@@ -1224,7 +1224,9 @@ export function flattenAudio(
             duration: mainDuration,
             instrument: voiceProgram,
             ...endTypeAndGap(mods.endType, slurCount, mainDuration, startingTempo),
-          })
+          }
+          if (mods.ornament !== undefined) doModifiedNotes(mods.ornament, drum, item.factor, track)
+          else track.push(drum)
           continue
         }
         // `V:… octave=` IS ALREADY IN THE PITCH — in BOTH engines — and the model's comment
@@ -1264,7 +1266,11 @@ export function flattenAudio(
           ...endTypeAndGap(mods.endType, slurCount, mainDuration, startingTempo),
           ...(cents === undefined ? {} : { cents }),
         }
-        track.push(event)
+        // AN ORNAMENT REPLACES THE NOTE RATHER THAN DECORATING IT — abcjs's own
+        // `if (ret.noteModification) doModifiedNotes(…) else { …articulation…; push }`,
+        // so the run inherits the pitch, volume and instrument and nothing else.
+        if (mods.ornament !== undefined) doModifiedNotes(mods.ornament, event, item.factor, track)
+        else track.push(event)
       }
       slurCount -= slurEndsOf(item.event)
     }
@@ -1415,18 +1421,123 @@ function hairpinStep(
   return notes > 0 ? Math.floor((target - from) / notes) : 0
 }
 
-/** abcjs's `findNoteModifications`, minus the ornament rewrites — see the note below. */
+/**
+ * abcjs's `findNoteModifications` — three unrelated things off one decoration list.
+ *
+ * The ORNAMENTS are the third, and they do not modify the note: they REPLACE it. When
+ * `noteModification` is set, `writeNote` calls `doModifiedNotes` INSTEAD of pushing the
+ * note, so an ornamented note never reaches the articulation switch and gets no `endType`
+ * and no `gap` of its own — a `!staccato!!trill!C` is a trill and nothing else.
+ *
+ * `uppermordent` resolves to `pralltriller` — the two are the same sound and abcjs writes
+ * that mapping out rather than aliasing the name.
+ */
+const ORNAMENTS: Readonly<Record<string, string>> = {
+  trill: 'trill',
+  trillh: 'trillh',
+  lowermordent: 'lowermordent',
+  uppermordent: 'pralltriller',
+  pralltriller: 'pralltriller',
+  mordent: 'mordent',
+  turn: 'turn',
+  roll: 'roll',
+}
+
 function noteModifications(
   decorations: readonly string[],
   velocity: number,
-): { endType?: string; velocity?: number } {
-  const out: { endType?: string; velocity?: number } = {}
+): { endType?: string; velocity?: number; ornament?: string } {
+  const out: { endType?: string; velocity?: number; ornament?: string } = {}
   for (const d of decorations) {
     if (d === 'staccato') out.endType = 'staccato'
     else if (d === 'tenuto') out.endType = 'tenuto'
     else if (d === 'accent') out.velocity = Math.min(127, velocity * 1.5)
+    else if (ORNAMENTS[d] !== undefined) out.ornament = ORNAMENTS[d]
   }
   return out
+}
+
+/**
+ * `doModifiedNotes` — an ornament is a RUN of 1/32 notes, and the run overruns the note.
+ *
+ * The unit is a flat `durationRounded(1/32)` for every ornament but the turn, which takes a
+ * QUARTER of the note however long that is. Two shapes:
+ *
+ * - a LOOP (`trill`, `trillh`, `roll`) runs `while (runningDuration > 0)`, so the last note
+ *   of the run is a whole 1/32 even when only a sliver of the written duration is left —
+ *   the sounding total therefore rounds UP to the next 1/32 and does not equal the note;
+ * - a FIXED shape (`mordent`, `pralltriller`) writes two 1/32s and then gives the REST of
+ *   the duration to a third note, which is the only one of the three with no
+ *   `style: 'decoration'` on it.
+ *
+ * A `roll` steps by `shortestNote * 2` while writing notes of `shortestNote`, so it is a
+ * repeated note with a silence of its own length between each — half as many notes as a
+ * trill of the same length, not a run of the same density.
+ */
+function doModifiedNotes(
+  ornament: string,
+  base: MidiNote,
+  factor: number,
+  out: MidiEvent[],
+): void {
+  const unit = Math.round((1 / 32) * factor * MICRO) / MICRO
+  let start = base.start
+  let left = base.duration
+  const push = (pitch: number, duration: number, decoration = true): void => {
+    out.push({
+      cmd: 'note',
+      pitch,
+      volume: base.volume,
+      start,
+      duration,
+      gap: 0,
+      instrument: base.instrument,
+      ...(decoration ? { style: 'decoration' } : {}),
+    })
+  }
+  switch (ornament) {
+    case 'trill':
+    case 'trillh': {
+      const step = ornament === 'trill' ? 2 : 1
+      let note = step
+      while (left > 0) {
+        push(base.pitch + note, unit)
+        note = note === step ? 0 : step
+        left -= unit
+        start += unit
+      }
+      break
+    }
+    case 'pralltriller':
+    case 'mordent':
+    case 'lowermordent': {
+      const away = ornament === 'pralltriller' ? 2 : -2
+      push(base.pitch, unit)
+      left -= unit
+      start += unit
+      push(base.pitch + away, unit)
+      left -= unit
+      start += unit
+      push(base.pitch, left, false)
+      break
+    }
+    case 'turn': {
+      const quarter = base.duration / 4
+      for (const offset of [2, 0, -1, 0]) {
+        push(base.pitch + offset, quarter)
+        start += quarter
+      }
+      break
+    }
+    case 'roll': {
+      while (left > 0) {
+        push(base.pitch, unit)
+        left -= unit * 2
+        start += unit * 2
+      }
+      break
+    }
+  }
 }
 
 /**
