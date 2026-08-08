@@ -411,7 +411,7 @@ export interface Note {
   readonly slurStarts: number
   readonly slurEnds: number
   /** `{gfe}` ornament pitches played before this event; empty means none. */
-  readonly graceNotes: readonly Pitch[]
+  readonly graceNotes: readonly GracePitch[]
   /** `{/g}` — an acciaccatura, drawn with a slash through the stem. */
   readonly graceSlash: boolean
   /** Shared id across a beamed run; null when this event beams with nothing. */
@@ -484,6 +484,22 @@ export interface Note {
   readonly sourceRange: SourceRange
 }
 
+/**
+ * A grace note — a pitch plus the LENGTH it was written with.
+ *
+ * `{B2c/d/}` is three graces of 2, 1/2 and 1/2, and abcjs spends them proportionally:
+ * `multiplier = companionDuration / 2 / graceDuration` over their SUM, then each grace
+ * takes `its own duration × multiplier` (`abc_midi_flattener.js:691-714`). Because the
+ * multiplier normalises, only the RATIOS matter and the unit note length cancels — which
+ * is why this is a bare multiplier and not a duration.
+ *
+ * `1` when the grace wrote no length at all, which is every grace in the corpus but one.
+ * The engraver does not read it: abcjs draws every grace as the same small head.
+ */
+export interface GracePitch extends Pitch {
+  readonly length: Rational
+}
+
 export type RestKind = 'normal' | 'invisible' | 'multiMeasure' | 'invisibleMultiMeasure' | 'spacer'
 
 export interface Rest {
@@ -519,7 +535,7 @@ export interface Rest {
    * The fourth was reasoned rather than measured, and abcjs draws the note: `(f3 {a})y`
    * came out one notehead short and 9.6px high on every axis that reads the staff.
    */
-  readonly graceNotes: readonly Pitch[]
+  readonly graceNotes: readonly GracePitch[]
   readonly graceSlash: boolean
   readonly tuplet: TupletMark | null
   /**
@@ -550,7 +566,7 @@ export interface Chord {
   readonly slurStarts: number
   readonly slurEnds: number
   /** `{gfe}` ornament pitches played before this event; empty means none. */
-  readonly graceNotes: readonly Pitch[]
+  readonly graceNotes: readonly GracePitch[]
   /** `{/g}` — an acciaccatura, drawn with a slash through the stem. */
   readonly graceSlash: boolean
   /** Shared id across a beamed run; null when this event beams with nothing. */

@@ -65,6 +65,7 @@ const PASSING: readonly string[] = [
   'flatten-decorations',
   'flatten-drum',
   'flatten-end-chord',
+  'flatten-grace',
   'flatten-jig-chords',
   'flatten-long-tie',
   'flatten-meter-change',

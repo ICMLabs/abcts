@@ -1296,20 +1296,24 @@ export function flattenAudio(
        * They are written BEFORE the main note in the track, which is why emission order
        * matters here as much as it did for the renderer's notehead pairing.
        *
-       * ponytail: the multiplier NORMALISES, so for graces of equal written length only the
-       * COUNT survives — which is every grace in the corpus and all four here. Our model
-       * keeps `graceNotes` as bare pitches with no durations, so an unequal group like
-       * `{a2b}` would divide evenly where abcjs would not. The ranked table will say so if
-       * a fixture ever writes one.
+       * AND THE LENGTHS INSIDE THE GROUP ARE SPENT PROPORTIONALLY, not evenly. The
+       * multiplier is `companionDuration / 2` over the graces' SUM, and each grace then
+       * takes its own length times that — so `{B2c/d/}` gives the B four times what each
+       * of the others gets. Because the multiplier normalises, only the RATIOS matter and
+       * the unit note length cancels out. This note used to say the count was all that
+       * survived and that the table would speak up if a fixture ever wrote an unequal
+       * group; `flatten-grace`'s fourth bar is one, and it did.
        */
       const graces = item.event.graceNotes
       let mainStart = start
       let mainDuration = realDuration
       if (graces.length > 0) {
-        const each = realDuration / 2 / graces.length
+        const graceTotal = graces.reduce((sum, g) => sum + ratToNumber(g.length), 0)
+        const multiplier = graceTotal === 0 ? 0 : realDuration / 2 / graceTotal
         const graceVolume = Math.round(volume * (2 / 3))
         let at = start
         for (const g of graces) {
+          const each = ratToNumber(g.length) * multiplier
           const mappedGrace = percussion ? drumMap[writtenName(g)] : undefined
           const raw =
             mappedGrace ?? midiPitchOf(g, accidentals, barAccidentals, null) + transposeOf(item)

@@ -36,6 +36,7 @@ import {
   defaultClef,
   defaultMode,
   type FreeTextBlock,
+  type GracePitch,
   isCompoundMeter,
   isStrict,
   type KeyAccidental,
@@ -571,7 +572,7 @@ function resolveBeatUnit(tempo: Tempo | null, meter: Meter | null): Tempo | null
 
 /** Move every written pitch in a measure by whole octaves — `V:… octave=±n`. */
 function shiftMeasure(measure: Measure, octaves: number): Measure {
-  const move = (pitch: Pitch): Pitch => ({ ...pitch, octave: pitch.octave + octaves })
+  const move = <P extends Pitch>(pitch: P): P => ({ ...pitch, octave: pitch.octave + octaves })
   const shift = (event: MusicEvent): MusicEvent => {
     if (event.type === 'rest') return event
     if (event.type === 'note') {
@@ -2903,7 +2904,7 @@ class Parser {
     let pending = noAttachments()
     /** `(` opens a slur on the NEXT event; `)` closes on the PREVIOUS one. */
     let pendingSlurStarts = 0
-    let pendingGrace: Pitch[] = []
+    let pendingGrace: GracePitch[] = []
     let pendingGraceSlash = false
 
     // ABC beaming: adjacent notes shorter than a quarter beam together. A space,
@@ -3951,14 +3952,30 @@ function defaultTupletQ(p: number, compound: boolean): number {
  * rather than tokens — a grace group is a self-contained span with its own accidentals
  * and octave marks, and never carries durations.
  */
-function parseGracePitches(raw: string): { pitches: Pitch[]; slash: boolean } {
+/**
+ * `2`, `/`, `/2`, `3/2` — the same length grammar every note uses, and the same defaults:
+ * a bare `/` is `/2`, a bare number is a multiplier, `1` when nothing is written.
+ */
+function graceLength(text: string): Rational {
+  if (text === '') return rational(1)
+  const m = /^(\d*)(?:(\/+)(\d*))?$/.exec(text)
+  if (!m) return rational(1)
+  const numerator = m[1] === '' || m[1] === undefined ? 1 : Number.parseInt(m[1], 10)
+  if (m[2] === undefined) return rational(numerator)
+  // `//` halves twice, as it does on a note.
+  const denominator =
+    m[3] === '' || m[3] === undefined ? 2 ** m[2].length : Number.parseInt(m[3], 10)
+  return denominator === 0 ? rational(numerator) : rational(numerator, denominator)
+}
+
+function parseGracePitches(raw: string): { pitches: GracePitch[]; slash: boolean } {
   let text = raw
   let slash = false
   if (text.startsWith('/')) {
     slash = true
     text = text.slice(1)
   }
-  const pitches: Pitch[] = []
+  const pitches: GracePitch[] = []
   let i = 0
   while (i < text.length) {
     let accidental: Accidental | null = null
@@ -3977,8 +3994,19 @@ function parseGracePitches(raw: string): { pitches: Pitch[]; slash: boolean } {
       octave += text[i] === "'" ? 1 : -1
       i++
     }
-    while (i < text.length && /[0-9/]/.test(text[i] as string)) i++ // lengths are ignored
-    pitches.push({ step: letter.toLowerCase() as DiatonicStep, octave, accidental })
+    // A GRACE'S LENGTH IS NOT DECORATIVE — it was skipped here as "lengths are ignored",
+    // and it is what abcjs divides the half-note by. `{B2c/d/}` is 2, 1/2 and 1/2, and the
+    // B gets four times what each of the others does; ignoring the lengths split the half
+    // evenly and made it 0.041666 against abcjs's 0.083333. Only the RATIO survives, since
+    // the multiplier normalises over their sum, so the unit note length never enters.
+    const lengthStart = i
+    while (i < text.length && /[0-9/]/.test(text[i] as string)) i++
+    pitches.push({
+      step: letter.toLowerCase() as DiatonicStep,
+      octave,
+      accidental,
+      length: graceLength(text.slice(lengthStart, i)),
+    })
   }
   return { pitches, slash }
 }
