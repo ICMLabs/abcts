@@ -1,0 +1,81 @@
+{
+  "name": "flatten-treble+8",
+  "source": "tests/synth/flattener.test.js",
+  "abc": "K:C\nV:1\nV:2 octave=-2\n[V:1][K:C clef=treble] B\n[V:2][K:C clef=bass] B\n[V:1][K:C clef=treble+8] B\n[V:2][K:C clef=bass+8] B\n[V:1][K:C clef=treble] B\n[V:2][K:C clef=bass] B\n",
+  "options": null,
+  "expected": {
+    "tempo": 180,
+    "instrument": 0,
+    "tracks": [
+      [
+        {
+          "cmd": "program",
+          "channel": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 71,
+          "volume": 85,
+          "start": 0,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 83,
+          "volume": 85,
+          "start": 0.125,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 71,
+          "volume": 85,
+          "start": 0.25,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        }
+      ],
+      [
+        {
+          "cmd": "program",
+          "channel": 1,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 47,
+          "volume": 85,
+          "start": 0,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 59,
+          "volume": 85,
+          "start": 0.125,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 47,
+          "volume": 85,
+          "start": 0.25,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        }
+      ]
+    ],
+    "totalDuration": 0.375
+  }
+}

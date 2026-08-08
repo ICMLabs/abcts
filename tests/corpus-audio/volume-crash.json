@@ -1,0 +1,29 @@
+{
+  "name": "volume-crash",
+  "source": "tests/synth/flattener.test.js",
+  "abc": "X:11\nM:4/4\nL:1/8\nK:C\n!segno!!f!d2\n",
+  "options": null,
+  "expected": {
+    "tempo": 180,
+    "instrument": 0,
+    "tracks": [
+      [
+        {
+          "cmd": "program",
+          "channel": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 74,
+          "volume": 80,
+          "start": 0,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        }
+      ]
+    ],
+    "totalDuration": 0.25
+  }
+}

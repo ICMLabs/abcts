@@ -1,0 +1,657 @@
+{
+  "name": "flatten-drum",
+  "source": "tests/synth/flattener.test.js",
+  "abc": "X:1\nT: metronome\nL:1/4\nQ:1/4=60\n%%MIDI drum dddd 76 77 77 77 50 50 50 50\nN:The drum beat should start on the first full measure.\nN:The drum beat should drop out in the second line.\nN:The drum beat pattern should change for the third line.\nK:A\nV:1\n%%MIDI drumon\ne|a/g/ f/e/ c3/2 B/|Azzz|z4|z/c/ z/d/ z/e/ z/f/|\n%%MIDI drumoff\n|a/g/ f/e/ c3/2 B/|Azzz|[I:MIDI drumon]z4|z/c/ z/d/ z/e/ z/f/|\n%%MIDI drum d2z/d/d 35 38 38 100 50 50\n|a/g/ f/e/ c3/2 B/|Azzz|z4|z/c/ z/d/ z/e/ z/f/|\n",
+  "options": null,
+  "expected": {
+    "tempo": 60,
+    "instrument": 0,
+    "totalDuration": 12.25,
+    "tracks": [
+      [
+        {
+          "cmd": "program",
+          "channel": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 76,
+          "volume": 85,
+          "start": 0,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 81,
+          "volume": 105,
+          "start": 0.25,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 80,
+          "volume": 85,
+          "start": 0.375,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 78,
+          "volume": 95,
+          "start": 0.5,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 76,
+          "volume": 85,
+          "start": 0.625,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 73,
+          "volume": 95,
+          "start": 0.75,
+          "duration": 0.375,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 71,
+          "volume": 85,
+          "start": 1.125,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 69,
+          "volume": 105,
+          "start": 1.25,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 73,
+          "volume": 85,
+          "start": 3.375,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 74,
+          "volume": 85,
+          "start": 3.625,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 76,
+          "volume": 85,
+          "start": 3.875,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 78,
+          "volume": 85,
+          "start": 4.125,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 81,
+          "volume": 105,
+          "start": 4.25,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 80,
+          "volume": 85,
+          "start": 4.375,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 78,
+          "volume": 95,
+          "start": 4.5,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 76,
+          "volume": 85,
+          "start": 4.625,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 73,
+          "volume": 95,
+          "start": 4.75,
+          "duration": 0.375,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 71,
+          "volume": 85,
+          "start": 5.125,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 69,
+          "volume": 105,
+          "start": 5.25,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 73,
+          "volume": 85,
+          "start": 7.375,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 74,
+          "volume": 85,
+          "start": 7.625,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 76,
+          "volume": 85,
+          "start": 7.875,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 78,
+          "volume": 85,
+          "start": 8.125,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 81,
+          "volume": 105,
+          "start": 8.25,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 80,
+          "volume": 85,
+          "start": 8.375,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 78,
+          "volume": 95,
+          "start": 8.5,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 76,
+          "volume": 85,
+          "start": 8.625,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 73,
+          "volume": 95,
+          "start": 8.75,
+          "duration": 0.375,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 71,
+          "volume": 85,
+          "start": 9.125,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 69,
+          "volume": 105,
+          "start": 9.25,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 73,
+          "volume": 85,
+          "start": 11.375,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 74,
+          "volume": 85,
+          "start": 11.625,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 76,
+          "volume": 85,
+          "start": 11.875,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 78,
+          "volume": 85,
+          "start": 12.125,
+          "duration": 0.125,
+          "instrument": 0,
+          "gap": 0
+        }
+      ],
+      [
+        {
+          "cmd": "program",
+          "channel": 2,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 76,
+          "volume": 50,
+          "start": 0.25,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 77,
+          "volume": 50,
+          "start": 0.5,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 77,
+          "volume": 50,
+          "start": 0.75,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 77,
+          "volume": 50,
+          "start": 1,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 76,
+          "volume": 50,
+          "start": 1.25,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 77,
+          "volume": 50,
+          "start": 1.5,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 77,
+          "volume": 50,
+          "start": 1.75,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 77,
+          "volume": 50,
+          "start": 2,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 76,
+          "volume": 50,
+          "start": 2.25,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 77,
+          "volume": 50,
+          "start": 2.5,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 77,
+          "volume": 50,
+          "start": 2.75,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 77,
+          "volume": 50,
+          "start": 3,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 76,
+          "volume": 50,
+          "start": 3.25,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 77,
+          "volume": 50,
+          "start": 3.5,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 77,
+          "volume": 50,
+          "start": 3.75,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 77,
+          "volume": 50,
+          "start": 4,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 76,
+          "volume": 50,
+          "start": 6.25,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 77,
+          "volume": 50,
+          "start": 6.5,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 77,
+          "volume": 50,
+          "start": 6.75,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 77,
+          "volume": 50,
+          "start": 7,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 76,
+          "volume": 50,
+          "start": 7.25,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 77,
+          "volume": 50,
+          "start": 7.5,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 77,
+          "volume": 50,
+          "start": 7.75,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 77,
+          "volume": 50,
+          "start": 8,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 35,
+          "volume": 100,
+          "start": 8.25,
+          "duration": 0.5,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 38,
+          "volume": 50,
+          "start": 8.875,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 38,
+          "volume": 50,
+          "start": 9,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 35,
+          "volume": 100,
+          "start": 9.25,
+          "duration": 0.5,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 38,
+          "volume": 50,
+          "start": 9.875,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 38,
+          "volume": 50,
+          "start": 10,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 35,
+          "volume": 100,
+          "start": 10.25,
+          "duration": 0.5,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 38,
+          "volume": 50,
+          "start": 10.875,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 38,
+          "volume": 50,
+          "start": 11,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 35,
+          "volume": 100,
+          "start": 11.25,
+          "duration": 0.5,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 38,
+          "volume": 50,
+          "start": 11.875,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 38,
+          "volume": 50,
+          "start": 12,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 128
+        }
+      ]
+    ]
+  }
+}

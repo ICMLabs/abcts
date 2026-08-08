@@ -1,0 +1,171 @@
+{
+  "name": "flatten-tempo-change",
+  "source": "tests/synth/flattener.test.js",
+  "abc": "X:1\nL:1/4\nM:C|\nQ:1/2=60\nK:D\n\"D\"DEFG| [Q:1/2=90] DEFG |\n",
+  "options": null,
+  "expected": {
+    "tempo": 60,
+    "instrument": 0,
+    "totalDuration": 1.666668,
+    "tracks": [
+      [
+        {
+          "cmd": "program",
+          "channel": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 62,
+          "volume": 105,
+          "start": 0,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 64,
+          "volume": 85,
+          "start": 0.25,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 66,
+          "volume": 95,
+          "start": 0.5,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 67,
+          "volume": 85,
+          "start": 0.75,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 62,
+          "volume": 105,
+          "start": 1,
+          "duration": 0.166667,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 64,
+          "volume": 85,
+          "start": 1.166667,
+          "duration": 0.166667,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 66,
+          "volume": 85,
+          "start": 1.333334,
+          "duration": 0.166667,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 67,
+          "volume": 85,
+          "start": 1.500001,
+          "duration": 0.166667,
+          "instrument": 0,
+          "gap": 0
+        }
+      ],
+      [
+        {
+          "cmd": "program",
+          "channel": 1,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 38,
+          "volume": 64,
+          "start": 0,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 50,
+          "volume": 48,
+          "start": 0.5,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 54,
+          "volume": 48,
+          "start": 0.5,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 57,
+          "volume": 48,
+          "start": 0.5,
+          "duration": 0.25,
+          "gap": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 38,
+          "volume": 64,
+          "start": 1,
+          "duration": 0.166667,
+          "gap": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 50,
+          "volume": 48,
+          "start": 1.333332,
+          "duration": 0.166667,
+          "gap": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 54,
+          "volume": 48,
+          "start": 1.333332,
+          "duration": 0.166667,
+          "gap": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 57,
+          "volume": 48,
+          "start": 1.333332,
+          "duration": 0.166667,
+          "gap": 0,
+          "instrument": 0
+        }
+      ]
+    ]
+  }
+}

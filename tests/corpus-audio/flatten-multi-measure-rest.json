@@ -1,0 +1,92 @@
+{
+  "name": "flatten-multi-measure-rest",
+  "source": "tests/synth/flattener.test.js",
+  "abc": "X:1\nM:4/4\nL:1/4\nQ:1/4=130\nK:Bb\ncdef|Z4|fedc|\n",
+  "options": null,
+  "expected": {
+    "tempo": 130,
+    "instrument": 0,
+    "totalDuration": 6,
+    "tracks": [
+      [
+        {
+          "cmd": "program",
+          "channel": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 72,
+          "volume": 105,
+          "start": 0,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 74,
+          "volume": 95,
+          "start": 0.25,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 75,
+          "volume": 95,
+          "start": 0.5,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 77,
+          "volume": 95,
+          "start": 0.75,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 77,
+          "volume": 105,
+          "start": 5,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 75,
+          "volume": 95,
+          "start": 5.25,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 74,
+          "volume": 95,
+          "start": 5.5,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 72,
+          "volume": 95,
+          "start": 5.75,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        }
+      ]
+    ]
+  }
+}

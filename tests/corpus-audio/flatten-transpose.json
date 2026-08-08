@@ -1,0 +1,221 @@
+{
+  "name": "flatten-transpose",
+  "source": "tests/synth/flattener.test.js",
+  "abc": "X: 1\nM: 4/4\nL: 1/4\nK: Em\nV: 1 transpose=-2\n\"Em\"EGAB|\nV: 2\n\"Em\"EGAB|\nV: 3 transpose=4\n\"Em\"EGAB|\n",
+  "options": null,
+  "expected": {
+    "tempo": 180,
+    "instrument": 0,
+    "totalDuration": 1,
+    "tracks": [
+      [
+        {
+          "cmd": "program",
+          "channel": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 62,
+          "volume": 105,
+          "start": 0,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 65,
+          "volume": 95,
+          "start": 0.25,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 67,
+          "volume": 95,
+          "start": 0.5,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 69,
+          "volume": 95,
+          "start": 0.75,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        }
+      ],
+      [
+        {
+          "cmd": "program",
+          "channel": 1,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 64,
+          "volume": 105,
+          "start": 0,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 67,
+          "volume": 95,
+          "start": 0.25,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 69,
+          "volume": 95,
+          "start": 0.5,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 71,
+          "volume": 95,
+          "start": 0.75,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        }
+      ],
+      [
+        {
+          "cmd": "program",
+          "channel": 2,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 68,
+          "volume": 105,
+          "start": 0,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 71,
+          "volume": 95,
+          "start": 0.25,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 73,
+          "volume": 95,
+          "start": 0.5,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 75,
+          "volume": 95,
+          "start": 0.75,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        }
+      ],
+      [
+        {
+          "cmd": "program",
+          "channel": 3,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 38,
+          "volume": 64,
+          "start": 0,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 50,
+          "volume": 48,
+          "start": 0.25,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 53,
+          "volume": 48,
+          "start": 0.25,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 57,
+          "volume": 48,
+          "start": 0.25,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 33,
+          "volume": 64,
+          "start": 0.5,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 50,
+          "volume": 48,
+          "start": 0.75,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 53,
+          "volume": 48,
+          "start": 0.75,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 57,
+          "volume": 48,
+          "start": 0.75,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 0
+        }
+      ]
+    ]
+  }
+}

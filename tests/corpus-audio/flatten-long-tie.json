@@ -1,0 +1,38 @@
+{
+  "name": "flatten-long-tie",
+  "source": "tests/synth/flattener.test.js",
+  "abc": "X:1\nL:1/4\nQ:80\nK:A\ncd-d2-|d2-dz|\n",
+  "options": null,
+  "expected": {
+    "tempo": 80,
+    "instrument": 0,
+    "totalDuration": 2,
+    "tracks": [
+      [
+        {
+          "cmd": "program",
+          "channel": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 73,
+          "volume": 105,
+          "start": 0,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 74,
+          "volume": 95,
+          "start": 0.25,
+          "duration": 1.5,
+          "instrument": 0,
+          "gap": 0
+        }
+      ]
+    ]
+  }
+}

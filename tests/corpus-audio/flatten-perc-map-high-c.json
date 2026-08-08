@@ -1,0 +1,65 @@
+{
+  "name": "flatten-perc-map-high-c",
+  "source": "tests/synth/flattener.test.js",
+  "abc": "X:1\n%%percmap ^c' high-tom  x\n%%percmap c' high-tom  x\n%%percmap b high-tom  x\n%%percmap C high-tom  x\nQ:1/4=50\nK:C perc\nb c' C ^c' C \n",
+  "options": null,
+  "expected": {
+    "tempo": 50,
+    "instrument": 128,
+    "totalDuration": 0.625,
+    "tracks": [
+      [
+        {
+          "cmd": "program",
+          "channel": 0,
+          "instrument": 128
+        },
+        {
+          "cmd": "note",
+          "pitch": 50,
+          "volume": 85,
+          "start": 0,
+          "duration": 0.125,
+          "instrument": 128,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 50,
+          "volume": 85,
+          "start": 0.125,
+          "duration": 0.125,
+          "instrument": 128,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 50,
+          "volume": 85,
+          "start": 0.25,
+          "duration": 0.125,
+          "instrument": 128,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 50,
+          "volume": 85,
+          "start": 0.375,
+          "duration": 0.125,
+          "instrument": 128,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 50,
+          "volume": 85,
+          "start": 0.5,
+          "duration": 0.125,
+          "instrument": 128,
+          "gap": 0
+        }
+      ]
+    ]
+  }
+}

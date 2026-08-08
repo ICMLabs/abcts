@@ -1,0 +1,56 @@
+{
+  "name": "flatten-midi-options",
+  "source": "tests/synth/flattener.test.js",
+  "abc": "X:1\n%%MIDI program 40\n%%MIDI channel 4\n%%MIDI transpose -2\nL:1/4\nQ:1/4=40\nK:A\nABcd|\n",
+  "options": null,
+  "expected": {
+    "tempo": 40,
+    "instrument": 40,
+    "totalDuration": 1,
+    "tracks": [
+      [
+        {
+          "cmd": "program",
+          "channel": 4,
+          "instrument": 40
+        },
+        {
+          "cmd": "note",
+          "pitch": 67,
+          "volume": 105,
+          "start": 0,
+          "duration": 0.25,
+          "instrument": 40,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 69,
+          "volume": 95,
+          "start": 0.25,
+          "duration": 0.25,
+          "instrument": 40,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 71,
+          "volume": 95,
+          "start": 0.5,
+          "duration": 0.25,
+          "instrument": 40,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 72,
+          "volume": 95,
+          "start": 0.75,
+          "duration": 0.25,
+          "instrument": 40,
+          "gap": 0
+        }
+      ]
+    ]
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "name": "flatten-no-chord-voice",
+  "source": "tests/synth/flattener.test.js",
+  "abc": "X: 1\nM: 4/4\n%%score (S A) (T B)\nV:S clef=treble middle=B stem=up\nV:A clef=treble middle=B stem=down\nV:T clef=bass,, stem=up\nV:B clef=bass,, stem=down\nL: 1/4\nK: C\nV: S\n|\"Am\"e4 |\nV: A\n|E4 |\nV: T\n|B,4 |\nV: B\n|E,4 |\n",
+  "options": {
+    "chordsOff": true
+  },
+  "expected": {
+    "tempo": 180,
+    "instrument": 0,
+    "tracks": [
+      [
+        {
+          "cmd": "program",
+          "channel": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 76,
+          "volume": 105,
+          "start": 0,
+          "duration": 1,
+          "instrument": 0,
+          "gap": 0
+        }
+      ],
+      [
+        {
+          "cmd": "program",
+          "channel": 1,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 64,
+          "volume": 105,
+          "start": 0,
+          "duration": 1,
+          "instrument": 0,
+          "gap": 0
+        }
+      ],
+      [
+        {
+          "cmd": "program",
+          "channel": 2,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 59,
+          "volume": 105,
+          "start": 0,
+          "duration": 1,
+          "instrument": 0,
+          "gap": 0
+        }
+      ],
+      [
+        {
+          "cmd": "program",
+          "channel": 3,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 52,
+          "volume": 105,
+          "start": 0,
+          "duration": 1,
+          "instrument": 0,
+          "gap": 0
+        }
+      ]
+    ],
+    "totalDuration": 1
+  }
+}

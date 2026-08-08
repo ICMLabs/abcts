@@ -1,0 +1,129 @@
+{
+  "name": "flatten-octave-clefs",
+  "source": "tests/synth/flattener.test.js",
+  "abc": "X:1\nM:4/4\nK:C\n[K: treble+8]{B}A4 [CE^F]4 | [K: treble-8]G8| G,2B,2 c'2e'2 | [K: bass-8]C8| [K: bass+8]B,8|\n",
+  "options": null,
+  "expected": {
+    "tempo": 180,
+    "instrument": 0,
+    "totalDuration": 5,
+    "tracks": [
+      [
+        {
+          "cmd": "program",
+          "channel": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 83,
+          "volume": 70,
+          "start": 0,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0,
+          "style": "grace"
+        },
+        {
+          "cmd": "note",
+          "pitch": 81,
+          "volume": 105,
+          "start": 0.25,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 72,
+          "volume": 95,
+          "start": 0.5,
+          "duration": 0.5,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 76,
+          "volume": 95,
+          "start": 0.5,
+          "duration": 0.5,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 78,
+          "volume": 95,
+          "start": 0.5,
+          "duration": 0.5,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 55,
+          "volume": 105,
+          "start": 1,
+          "duration": 1,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 43,
+          "volume": 105,
+          "start": 2,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 47,
+          "volume": 95,
+          "start": 2.25,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 72,
+          "volume": 95,
+          "start": 2.5,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 76,
+          "volume": 95,
+          "start": 2.75,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 48,
+          "volume": 105,
+          "start": 3,
+          "duration": 1,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 71,
+          "volume": 105,
+          "start": 4,
+          "duration": 1,
+          "instrument": 0,
+          "gap": 0
+        }
+      ]
+    ]
+  }
+}

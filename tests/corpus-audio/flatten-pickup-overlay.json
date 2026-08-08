@@ -1,0 +1,90 @@
+{
+  "name": "flatten-pickup-overlay",
+  "source": "tests/synth/flattener.test.js",
+  "abc": "X:1\nM: 4/4\nL: 1/4\nK:C\nB, | C4 | D4 |\nG4 & E4 | A4 & F4 |\n",
+  "options": null,
+  "expected": {
+    "tempo": 180,
+    "instrument": 0,
+    "tracks": [
+      [
+        {
+          "cmd": "program",
+          "channel": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 59,
+          "volume": 85,
+          "start": 0,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 60,
+          "volume": 105,
+          "start": 0.25,
+          "duration": 1,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 62,
+          "volume": 105,
+          "start": 1.25,
+          "duration": 1,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 67,
+          "volume": 105,
+          "start": 2.25,
+          "duration": 1,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 69,
+          "volume": 105,
+          "start": 3.25,
+          "duration": 1,
+          "instrument": 0,
+          "gap": 0
+        }
+      ],
+      [
+        {
+          "cmd": "program",
+          "channel": 1,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 64,
+          "volume": 105,
+          "start": 2.25,
+          "duration": 1,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 65,
+          "volume": 105,
+          "start": 3.25,
+          "duration": 1,
+          "instrument": 0,
+          "gap": 0
+        }
+      ]
+    ],
+    "totalDuration": 4.25
+  }
+}

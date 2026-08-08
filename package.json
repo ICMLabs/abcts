@@ -43,7 +43,8 @@
     "glyphs:abcjs": "node scripts/gen-abcjs-glyphs.mjs",
     "metrics": "node scripts/gen-text-metrics.mjs",
     "harvest": "node scripts/harvest-abcjs-tests.mjs",
-    "harvest:goldens": "node scripts/harvest-abcjs-goldens.mjs"
+    "harvest:goldens": "node scripts/harvest-abcjs-goldens.mjs",
+    "harvest:audio": "node scripts/harvest-abcjs-audio.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.4",

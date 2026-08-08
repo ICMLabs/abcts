@@ -1,0 +1,58 @@
+{
+  "name": "flatten-tempo-override",
+  "source": "tests/synth/flattener.test.js",
+  "abc": "X:1\nT:tempo-override\nL:1/4\nQ:1/4=150\nM:4/4\nK:G\nC D E F|\n",
+  "options": {
+    "qpm": 60
+  },
+  "expected": {
+    "tempo": 60,
+    "instrument": 0,
+    "tracks": [
+      [
+        {
+          "cmd": "program",
+          "channel": 0,
+          "instrument": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 60,
+          "volume": 105,
+          "start": 0,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 62,
+          "volume": 95,
+          "start": 0.25,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 64,
+          "volume": 95,
+          "start": 0.5,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 66,
+          "volume": 95,
+          "start": 0.75,
+          "duration": 0.25,
+          "instrument": 0,
+          "gap": 0
+        }
+      ]
+    ],
+    "totalDuration": 1
+  }
+}
