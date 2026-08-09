@@ -90,6 +90,27 @@ export interface AudioOptions {
   readonly voicesOff?: boolean | readonly number[]
   /** `chordsOff` — the guitar-chord track is suppressed entirely, symbols and all. */
   readonly chordsOff?: boolean
+  /**
+   * A CHORD'S PITCHES IN SOURCE ORDER RATHER THAN SORTED — and this is not a preference,
+   * it is which abcjs ENTRY POINT is being reproduced.
+   *
+   * `[cD]` sounds D then c and `[gF]` sounds 42 then 36 — low-then-high in the first and
+   * high-then-low in the second — and for a long time only the first was known, recorded
+   * here as "abcjs sorts `elem.pitches`". **It is the ENGRAVER that sorts them, not the
+   * parser**, because a chord's noteheads have to stack in pitch order to be drawn.
+   *
+   * So the order depends on whether the tune was LAID OUT. `flattener.test.js` calls
+   * `renderAbc` and then `setUpAudio`, so its 54 cases are sorted; `getMidiFile` on a STRING
+   * goes through `renderEngine(callback, "*", …)`, which parses without engraving, so its
+   * chords keep source order. Both oracles are right about their own path, and `midi-drums`
+   * is where they disagree — measured by instrumenting `abc_midi_create.js`, whose own
+   * `setUpAudio` returns `[[42,0],[36,0]]` where a RENDERED dump of the same tune returns
+   * `[36, 42]`.
+   *
+   * Default false: ours is the laid-out answer, because that is what the 54 audio cases
+   * assert and what a host playing a rendered score wants. `midiFile()` sets it.
+   */
+  readonly chordsInSourceOrder?: boolean
 }
 
 /** `%%MIDI` settings gathered off the tune — abcjs's `tune.formatting.midi`. */
@@ -1370,13 +1391,28 @@ export function flattenAudio(
       // sorts `elem.pitches`, so `[cD]` emits D and then c; ours keeps the source order, so
       // the sort is here. `volume-in-chords` is the whole of it: pitch 62 where we had 72.
       const pitches =
-        item.event.type === 'chord'
-          ? [...item.event.pitches].sort(
-              (a, b) => a.octave * 7 + stepIndex(a.step) - (b.octave * 7 + stepIndex(b.step)),
-            )
-          : [item.event.pitch]
+        item.event.type !== 'chord'
+          ? [item.event.pitch]
+          : options.chordsInSourceOrder === true
+            ? item.event.pitches
+            : [...item.event.pitches].sort(
+                (a, b) => a.octave * 7 + stepIndex(a.step) - (b.octave * 7 + stepIndex(b.step)),
+              )
       const mods = noteModifications(decorations, volume)
+      /**
+       * A NOTE THAT CLOSES A SLUR IS NOT ITSELF SLURRED, and both counts move BEFORE this
+       * note's articulation is decided.
+       *
+       * abcjs does the two together inside the pitch loop and reads `slurCount` after —
+       * `if (note.startSlur) slurCount += …; if (note.endSlur) slurCount -= …;` then
+       * `if (slurCount > 0) p.endType = 'tenuto'` (`abc_midi_flattener.js:580-604`). We
+       * added before the loop and subtracted after it, which made the CLOSING note tenuto
+       * too: `(ef)` gave `f` the -0.001s overlap it should not have, and its note-off
+       * landed two ticks late. Invisible to the event table — a `gap` of -0.001 on the last
+       * note of a slur was in `flatten-*`'s goldens nowhere — and one byte in the MIDI file.
+       */
       slurCount += slurStartsOf(item.event)
+      slurCount -= slurEndsOf(item.event)
 
       /**
        * GRACE NOTES TAKE HALF THE MAIN NOTE, and the main note gives it up.
@@ -1457,7 +1493,6 @@ export function flattenAudio(
             ...endTypeAndGap(mods.endType, slurCount, mainDuration, startingTempo),
           })
         }
-        slurCount -= slurEndsOf(item.event)
         continue
       }
 
@@ -1542,7 +1577,19 @@ export function flattenAudio(
         if (mods.ornament !== undefined) doModifiedNotes(mods.ornament, event, item.factor, track)
         else track.push(event)
       }
-      slurCount -= slurEndsOf(item.event)
+    }
+    /**
+     * THE TRACK NAME IS UNSHIFTED, not appended — `%FF%03` in a MIDI file, and abcjs puts
+     * it at the FRONT of the finished track (`abc_midi_flattener.js:228`) even though the
+     * `name` element that carries it is the first thing it reads.
+     *
+     * Found by the MIDI-FILE oracle and not by the event table: `cmd: 'text'` has been a
+     * type in this file since it was written and nothing ever produced one, because not one
+     * of `tests/corpus-audio`'s 54 cases declares `V:… name=`. A second surface over the
+     * same data is worth having precisely for this.
+     */
+    if (voice.name !== null && voice.name !== '') {
+      track.unshift({ cmd: 'text', type: 'name', text: voice.name })
     }
     tracks.push(track)
     chordTrack.finish()
