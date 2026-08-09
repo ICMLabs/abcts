@@ -22,7 +22,8 @@ keeps the ARC DECISION; `-08-07b.md` keeps 134–146 and the method; `-08-06.md`
 | staff-line gate | 0 of 41 |
 | above-lane gate / ycorr gate | 12 + 20 controls |
 | render benchmark | 220 tunes, ~1.1ms each — recorded, asserts no time |
-| gates | **7** |
+| tempo-parts gate | 8 controls — NEW, and it named six defective rungs on its first run |
+| gates | **8** |
 
 **ALL THREE RANKED TABLES ARE EMPTY, AND THEREFORE REGRESSION NETS.** None of them can
 name the next defect. That has happened twice before on this branch and the answer both times was to
@@ -285,10 +286,8 @@ text — mechanically; (3) close the `ENGRAVE` bare-literal table, already half-
 **THE INVARIANT: NO BASELINE MAY MOVE.** If one does, that is a behaviour change — revert
 it, do not re-record it.
 
-### 2. THE TEMPO MARK'S FLAG AND DOT — the only NAMED parity defect left
-
-Measured and written into `layout.ts`'s own comment; see the ledger section above. Build
-the PARTS gate before landing it, because nothing can currently see it.
+### 2. ~~THE TEMPO MARK'S FLAG AND DOT~~ — CLOSED, see above. **No named parity defect is
+open.**
 
 ### 3. AFTER THE FLATTENER — two more oracles, both sitting in abcjs's tests
 

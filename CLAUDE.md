@@ -355,12 +355,16 @@ abcjs source are all reached by sibling path and stay in that repo. Keep it that
 backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
-**GEOMETRY IS DONE. AUDIO IS DONE. THE PHASE IS THE STRUCTURAL PASS.** 989/989 with no
-reds; **seven gates, and ALL THREE RANKED TABLES ARE EMPTY** — 0 of 54 audio cases, 0 of
-174 harvested fixtures, 0 of 120 pixel targets. Two of the seven are ladders of controls rather than
+**GEOMETRY IS DONE. AUDIO IS DONE. NO NAMED PARITY DEFECT IS OPEN.** 998/998 with no
+reds; **eight gates, and ALL THREE RANKED TABLES ARE EMPTY** — 0 of 54 audio cases, 0 of
+174 harvested fixtures, 0 of 120 pixel targets. Three of the eight are ladders of controls rather than
 corpora: `tests/above-lane-order.test.ts` (12 tunes, one per PAIR of above lanes) and
-`tests/glyph-ycorr.test.ts` (20 tunes, one per GLYPH). Nothing in either corpus exercises
-what they cover, which is why they had to be built before their defects could be stated.
+`tests/glyph-ycorr.test.ts` (20 tunes, one per GLYPH), and now
+`tests/tempo-parts.test.ts` (8 tunes, one per `Q:` beat unit). Nothing in either corpus
+exercises what they cover, which is why each had to be built before its defects could be
+stated — the newest opened naming SIX, and what it measures is WHICH GLYPHS a mark is made
+of, because abcjs classes only `abcjs-notehead` and its TEMPO notehead is not one, so no
+row for a tempo mark has ever existed in any table.
 
 **SO NO GATE CAN NAME THE NEXT DEFECT.** That has happened twice on this branch and the
 answer both times was to BUILD ONE that expresses an axis none of the others can. The two
