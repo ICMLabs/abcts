@@ -188,6 +188,34 @@ checkpoint and hand off as you go so no context is lost.
 > BEING READ** — rule the cause OUT on a control before writing it down.
 > See `Docs/CHECKPOINT-2026-08-08e.md`.
 
+> 📼 **THE MIDI FILE IS BYTE-EXACT, AND IT FOUND THREE FLATTENER BUGS** (2026-08-09).
+> `src/audio/midi-file.ts` + `tests/corpus-midi/`, ported from `abc_midi_create.js` and
+> `abc_midi_renderer.js`. It is the ONLY comparison here with no tolerance and no excluded
+> axis — every other one declares what it ignores — and it **re-derives the flattener's
+> answer a different way**, which is the whole argument for it: a surface that agrees by
+> construction is worth less than one that could disagree, and this one disagreed three
+> times with the event table green. **THE TRACK NAME** (`cmd: 'text'` was a type nothing
+> ever produced, because no audio case declares a named voice); **THE CHORD SORT BELONGS TO
+> THE ENGRAVER, NOT THE PARSER** — `[cD]` sounds D-then-c and `[gF]` sounds 42-then-36,
+> because noteheads must STACK in pitch order to be drawn, so `flattener.test.js` (renders
+> first) and `getMidiFile` on a string (never engraves) are BOTH right about their own
+> entry point; and **A NOTE THAT CLOSES A SLUR IS NOT ITSELF SLURRED**, worth one byte.
+> Four abcjs quirks reproduced on purpose, listed in the file.
+
+> 🔍 **AND THE HARVESTER NAMED A FILE WHERE IT SHOULD HAVE NAMED A SHAPE** (2026-08-09).
+> An audit of abcjs's 30 test files, classified by ASSERTION TARGET rather than by file
+> because most files mix both kinds. `synth/options.test.js` declares its own
+> `doFlattenTest(abc, expected, options)` — the same helper, the same answer — and was
+> missed for the whole audio arc because the harvest targeted `flattener.test.js` BY NAME.
+> It is the only place in abcjs's suite exercising HOST-supplied options rather than the
+> tune's own `%%MIDI`, so it is worth more per case than anything in the 8,203-line file
+> beside it. And one earlier reading is corrected: `visual/svg.test.js` and
+> `svg-per-line.test.js` assert the SVG DOM CONTRACT, not the internal tree — eight portable
+> cases nearly written off. Four pasteable briefs for the sibling engines are in
+> `Docs/BRIEF-abcjs-tests-*.md`; **provenance was checked rather than assumed**, and v1's
+> `MIDIWriter.swift` turning out to be clean-room-from-spec rather than an abcjs port made
+> the MIDI byte quirks a POLICY question there instead of a bug list.
+
 > ⏳ **THE OPTIMISATION PASS WAS DEFERRED, the reasoning is recorded so it is not re-argued,
 > AND THE BOUNDARY IT WAITED FOR HAS NOW BEEN REACHED** (2026-08-08). Measured: `layout.ts` is 9,992 lines and **49% COMMENT**, and
 > those comments ARE the finding ledger — 150 findings with citations, several recording
@@ -207,8 +235,10 @@ checkpoint and hand off as you go so no context is lost.
 > `npx tsc --noEmit` BEFORE `git commit`, not alongside it: a duplicate object key shipped
 > that day because vitest passed and the typecheck came back after the push.
 
-Read `Docs/CHECKPOINT-2026-08-08e.md` first — the state, the audio arc's thirteen findings
-and **WHAT IS LEFT**. `Docs/HANDOFF-2026-08-08e.md` has the session prompt.
+Read `Docs/CHECKPOINT-2026-08-09.md` first — the state, the tempo gate, the byte-exact MIDI
+file, the audit of abcjs's own test suite, and **WHAT IS LEFT**.
+`Docs/HANDOFF-2026-08-09.md` has the session prompt. `Docs/CHECKPOINT-2026-08-08e.md` is
+superseded for the state but keeps the audio arc's THIRTEEN FINDINGS and **the accent**.
 `Docs/CHECKPOINT-2026-08-08d.md` is superseded for the state but keeps the 6.7.0 flip and
 **the terms the optimisation pass must be held to**, which is the live phase — read it
 rather than re-deriving it. `Docs/HANDOFF-2026-08-08d.md` has that session's prompt.
@@ -355,9 +385,10 @@ abcjs source are all reached by sibling path and stay in that repo. Keep it that
 backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
-**GEOMETRY IS DONE. AUDIO IS DONE. THE MIDI FILE IS BYTE-EXACT.** 1003/1003 with no
-reds; **nine gates, and ALL FOUR RANKED TABLES ARE EMPTY** — 0 of 3 MIDI files, 0 of 54 audio cases, 0 of
-174 harvested fixtures, 0 of 120 pixel targets. Three of the nine are ladders of controls rather than
+**GEOMETRY IS DONE. AUDIO IS ALL BUT DONE. THE MIDI FILE IS BYTE-EXACT.** 1008/1008 with no
+reds; **nine gates and four ranked tables** — 0 of 3 MIDI files, 0 of 174 harvested
+fixtures, 0 of 120 pixel targets, and **2 of 61 audio cases**, both the HOST-supplied drum
+options and the only named defect left in the engine. Three of the nine are ladders of controls rather than
 corpora: `tests/above-lane-order.test.ts` (12 tunes, one per PAIR of above lanes) and
 `tests/glyph-ycorr.test.ts` (20 tunes, one per GLYPH), and now
 `tests/tempo-parts.test.ts` (8 tunes, one per `Q:` beat unit). Nothing in either corpus
