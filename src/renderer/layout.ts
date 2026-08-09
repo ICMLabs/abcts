@@ -1913,14 +1913,13 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
         })
       }
       /**
-       * ponytail: no FLAG or DOT on the beat-unit note, so `Q:1/8=66` draws a bare stem
-       * where abcjs draws an eighth.
+       * THE BEAT-UNIT NOTE TAKES ITS FLAG AND ITS DOT, and for months it took neither.
        *
-       * IT NO LONGER HAS TO LAND BLIND. This note used to end "no pixel-gated fixture has
-       * a non-quarter `Q:` — S7-voices is baseline-only — so it lands blind until one
-       * does", and that was true of the CORPUS and false of the oracle: abcjs renders any
-       * tune on demand. Measured 2026-08-08e off its own SVG, `Q:<unit>=66` over nine
-       * units, resolved to absolute pixels on both sides:
+       * `Q:1/8=66` drew a bare stem where abcjs draws an eighth, and the note here used to
+       * end "no pixel-gated fixture has a non-quarter `Q:` … so it lands blind until one
+       * does". That was true of the CORPUS and false of the ORACLE — abcjs renders any tune
+       * on demand — and it was the reason this sat open, not the reason it was hard.
+       * Measured off abcjs 6.7.0's own SVG, `Q:<unit>=66`:
        *
        *   unit    tempo glyphs                      rate x   Δ from the quarter
        *   1/4     noteheads.quarter                 137.08   —
@@ -1931,28 +1930,56 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
        *   3/16    + flags.u8th + dots.dot           143.53   +6.45
        *   1/2     noteheads.half                    137.50   —
        *   3/4     + dots.dot                        143.95   +6.45
-       *   1       (no note at all — `duration` absent)
        *
-       * THE HEAD AND STEM DO NOT MOVE: every row above puts them at exactly the quarter's
-       * coordinates, so the flag and the dot are additive and only the RATE's x follows.
-       * Resolved centres, relative to the tempo head: flag `+4.762, -9.034`; dot
-       * `+7.147, -3.875` — and that -3.875 is HALF A STAFF SPACE, which is our own
-       * `dotGlyphs` rule (a head on an even step takes its dot one step up) rather than a
-       * figure of abcjs's own.
+       * THE HEAD AND STEM DO NOT MOVE — every row puts them at the quarter's own
+       * coordinates to the hundredth, so both parts are purely ADDITIVE and only the rate's
+       * x follows. That is `tests/tempo-parts.test.ts`, the ladder that had to exist before
+       * this could land: `pixel-parity` compares elements classed `abcjs-notehead`, and
+       * abcjs's tempo notehead carries a `data-name` and NO class, so no table in the repo
+       * has ever had a row for one.
        *
-       * `noteGlyph` already returns the `flags` and `dots` counts and this builder throws
-       * both away; the port is `create-note-head.js:47`'s `headx + notehead.w - 0.6` at
-       * `tempoNoteScale`, with the flag at the stem TIP. Note abcjs's own table
-       * (`tempo-element.js:32-49`) maps `<= 3/32` to `flags.u16nd`, which is not a glyph
-       * that exists — a typo, and it therefore draws nothing there.
+       * `createNoteHead` does all of it in abcjs — the tempo note goes through the SAME
+       * routine an ordinary note does, at `scale: 0.75` (`tempo-element.js:48`) — so these
+       * are the note path's own figures and the two now read the same constants:
        *
-       * The reason it is still open is that NO GATE CAN SEE IT: the pixel gate compares
-       * elements classed `abcjs-notehead`, and abcjs gives the tempo group's glyphs a
-       * `data-name` and no class at all. Widening the gate to compare the tempo mark's
-       * PARTS — which glyphs, how many — is outline-independent and is the piece to build
-       * first, because it is what makes the landing checkable rather than asserted.
+       *     flag  x = headx + notehead.w - 0.6      pitch = pitch + 7 * scale
+       *     dot   x = notehead.w - 2 + 5 * dot      pitch = pitch + (1 - |pitch| % 2)
+       *
+       * (`create-note-head.js:47-54`.) The `-0.6` and the `-2 + 5*dot` are UNSCALED px
+       * either side of an already-scaled `notehead.w`, which is why the scale multiplies the
+       * advance alone. The dot's pitch comes out at exactly +1 because the tempo head sits
+       * at `verticalPos: 0` — an even pitch takes its dot a step up, which is `dotGlyphs`'s
+       * rule reached from abcjs's side.
+       *
+       * ponytail: abcjs's own table maps a `3/32` beat unit to `flags.u16nd`
+       * (`tempo-element.js:35`), which is NOT A GLYPH THAT EXISTS — a typo for `u16th`, so
+       * abcjs silently draws no flag there. Not reproduced: it would mean dropping a flag we
+       * can draw, and `noteGlyph` never produces that shape anyway. It belongs in
+       * `ABCJS-DIFFERENCES.md` if a tune ever writes one.
        */
-      cursor += headAdvance + ENGRAVE.tempoNoteGap
+      let right = headAdvance
+      if (spec.flags > 0) {
+        const flag = FLAG_GLYPHS[Math.min(spec.flags, FLAG_GLYPHS.length - 1)]?.[0]
+        if (flag !== undefined) {
+          const flagX = cursor + headAdvance - spaces(ABCJS_PX.flagStemInset)
+          glyphs.push({
+            name: flag,
+            x: flagX,
+            y: noteY - 7 * ENGRAVE.tempoNoteScale * ENGRAVE.spacePerStep,
+            scale: ENGRAVE.tempoNoteScale,
+          })
+          const flagWidth = glyphsFor(strict).advance(flag) * ENGRAVE.tempoNoteScale
+          right = Math.max(right, flagX - cursor + flagWidth)
+        }
+      }
+      // The dots count DOWN, so the FIRST written is the furthest right — abcjs's own
+      // `for (; dot > 0; dot--)`, which puts one at `w + 3` and two at `w + 8` and `w + 3`.
+      for (let d = spec.dots; d > 0; d -= 1) {
+        const dotX = cursor + headAdvance + spaces(ABCJS_PX.dotOffset + ABCJS_PX.dotSpacing * d)
+        glyphs.push({ name: 'augmentationDot', x: dotX, y: noteY - ENGRAVE.spacePerStep })
+        right = Math.max(right, dotX - cursor + glyphsFor(strict).width('augmentationDot'))
+      }
+      cursor += right + ENGRAVE.tempoNoteGap
     }
     texts.push({
       text: `= ${tempo.bpm}`,
