@@ -50,8 +50,19 @@ export interface AbcjsParams {
  *
  * ponytail: abcjs's tune object also carries audio and timing methods (`setUpAudio`,
  * `millisecondsPerMeasure`, `getTotalTime`) and an `engraver` for its drag interaction.
- * None of that exists in abcts yet, so none of it is faked — a stub returning plausible
- * numbers would be worse than an absent method, which at least fails loudly.
+ * None of them is faked — a stub returning plausible numbers would be worse than an absent
+ * method, which at least fails loudly.
+ *
+ * **THE AUDIO HALF OF THAT IS NO LONGER A CAPABILITY GAP.** `setUpAudio`'s answer exists —
+ * `src/audio/flatten.ts`, at 0 of 54 against abcjs's own event lists — and so does
+ * `abcjs.synth.getMidiFile`'s, byte-exact in `src/audio/midi-file.ts`. What is missing is
+ * the WIRING, and it is an API decision rather than an implementation one: neither is on
+ * `src/index.ts`'s curated surface yet, and ARCHITECTURE.md governs what goes there. Hang
+ * them here and they become part of the drop-in contract, which is what `compat` is for —
+ * flag it before doing it.
+ *
+ * `millisecondsPerMeasure` and `getTotalTime` are still genuinely absent, and both belong
+ * with `setTiming`, the audio↔geometry JOIN nothing measures yet.
  */
 export interface TuneObject {
   /** The rendered markup, also injected into the target when there is a DOM. */

@@ -355,9 +355,9 @@ abcjs source are all reached by sibling path and stay in that repo. Keep it that
 backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
-**GEOMETRY IS DONE. AUDIO IS DONE. NO NAMED PARITY DEFECT IS OPEN.** 998/998 with no
-reds; **eight gates, and ALL THREE RANKED TABLES ARE EMPTY** — 0 of 54 audio cases, 0 of
-174 harvested fixtures, 0 of 120 pixel targets. Three of the eight are ladders of controls rather than
+**GEOMETRY IS DONE. AUDIO IS DONE. THE MIDI FILE IS BYTE-EXACT.** 1003/1003 with no
+reds; **nine gates, and ALL FOUR RANKED TABLES ARE EMPTY** — 0 of 3 MIDI files, 0 of 54 audio cases, 0 of
+174 harvested fixtures, 0 of 120 pixel targets. Three of the nine are ladders of controls rather than
 corpora: `tests/above-lane-order.test.ts` (12 tunes, one per PAIR of above lanes) and
 `tests/glyph-ycorr.test.ts` (20 tunes, one per GLYPH), and now
 `tests/tempo-parts.test.ts` (8 tunes, one per `Q:` beat unit). Nothing in either corpus

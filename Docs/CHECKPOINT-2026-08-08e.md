@@ -23,7 +23,8 @@ keeps the ARC DECISION; `-08-07b.md` keeps 134–146 and the method; `-08-06.md`
 | above-lane gate / ycorr gate | 12 + 20 controls |
 | render benchmark | 220 tunes, ~1.1ms each — recorded, asserts no time |
 | tempo-parts gate | 8 controls — NEW, and it named six defective rungs on its first run |
-| gates | **8** |
+| **midi-file ranked table** | **0 of 3 — BYTE-EXACT.** NEW, and it found three flattener bugs |
+| gates | **9** |
 
 **ALL THREE RANKED TABLES ARE EMPTY, AND THEREFORE REGRESSION NETS.** None of them can
 name the next defect. That has happened twice before on this branch and the answer both times was to
@@ -289,16 +290,49 @@ it, do not re-record it.
 ### 2. ~~THE TEMPO MARK'S FLAG AND DOT~~ — CLOSED, see above. **No named parity defect is
 open.**
 
-### 3. AFTER THE FLATTENER — two more oracles, both sitting in abcjs's tests
+### 3. AFTER THE FLATTENER — one oracle harvested, one left
 
-- `timing.test.js`'s `setTiming` — the event list joined to rendered geometry. Its rows
-  carry `line`, `left` and `endX` beside the pitches, so it gates the audio↔geometry
-  JOIN, which nothing does today.
-- `midi.test.js`'s MIDI FILE writer (`abc_midi_renderer.js`, `get-midi-file.js`) — a second
-  surface on top of the event list, compared as a serialized `data:` URI.
+**THE MIDI FILE IS DONE AND BYTE-EXACT** (`tests/corpus-midi/`, `src/audio/midi-file.ts`,
+`tests/midi-file-ranked.test.ts`). It is the only comparison in the repo with NO tolerance
+and no excluded axis, and it earned that reputation immediately — three findings, every one
+invisible to the 54-case event table:
 
-Both are harvestable the way `flattener.test.js` was: EVALUATE the test file with
-`describe`/`it`/the assert helper replaced. `npm run harvest:audio` is the pattern.
+- **THE TRACK NAME.** `%FF%03` carries `V:… name=`, unshifted to the FRONT of the finished
+  track. `cmd: 'text'` had been a type in `flatten.ts` since it was written and nothing ever
+  produced one, because not one audio case declares a named voice.
+- **THE CHORD SORT BELONGS TO THE ENGRAVER, NOT THE PARSER.** `[cD]` sounds D then c and
+  `[gF]` sounds 42 then 36; only the first was known, recorded as "abcjs sorts
+  `elem.pitches`". A chord's noteheads have to STACK in pitch order to be drawn, so the
+  LAYOUT sorts them — `flattener.test.js` renders before calling `setUpAudio`, while
+  `getMidiFile` on a string goes through `renderEngine(callback, "*", …)` and never
+  engraves. Both oracles are right about their own ENTRY POINT. Now an option, defaulting
+  to the laid-out answer.
+- **A NOTE THAT CLOSES A SLUR IS NOT ITSELF SLURRED.** abcjs moves both slur counts before
+  reading them; we added before the pitch loop and subtracted after, so `(ef)` gave `f` an
+  overlap it should not have. One byte.
+
+Four abcjs quirks are reproduced on purpose and written out in the file: the program change
+is always on channel 0 whatever `%%MIDI channel` said, a pitch is not zero-padded, the
+instrument LEAKS into the next track, and an empty-but-present key still writes a key
+signature — which is why `K:cm` emits one.
+
+### 3b. THE ONE ORACLE STILL UNHARVESTED
+
+`timing.test.js`'s `setTiming` — the event list joined to rendered geometry, which nothing
+measures. Its rows carry `line`, `left` and `endX` beside the pitches, and `doTimingTest`
+writes `currentTrackMilliseconds` back onto the DRAWN elements, so a note reached twice
+through a repeat carries `[3000, 9000]`. That is the playback cursor's data, and it is also
+where `millisecondsPerMeasure` and `getTotalTime` belong.
+
+Harvest it the way `flattener.test.js` and `midi.test.js` were: EVALUATE the test file with
+`describe`/`it`/the assert helper replaced. `npm run harvest:midi` is the smaller pattern —
+it stubs three functions and checks a SENTINEL reached the assertion, so it cannot harvest
+the wrong side of a comparison.
+
+**AND THE COMPAT WIRING IS AN API DECISION, NOT AN IMPLEMENTATION ONE.** `setUpAudio`'s
+answer exists and `getMidiFile`'s is byte-exact, but neither is on `src/index.ts`'s curated
+surface and ARCHITECTURE.md governs what goes there. `compat/index.ts` says so where the
+methods would hang. Flag it before doing it.
 
 ### 4. KNOWN OPEN DIVERGENCES, small and named
 
