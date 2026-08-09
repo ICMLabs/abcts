@@ -334,6 +334,35 @@ answer exists and `getMidiFile`'s is byte-exact, but neither is on `src/index.ts
 surface and ARCHITECTURE.md governs what goes there. `compat/index.ts` says so where the
 methods would hang. Flag it before doing it.
 
+### 3c. THE AUDIT OF abcjs's `tests/` FOLDER (2026-08-09)
+
+Thirty test files. `harvest-abcjs-tests.mjs` took INPUTS from 24 of them; the ASSERTIONS
+were declared unportable because they read the internal `visualObj` tree. **That is true of
+the VISUAL suite and not of everything** — the harvester named a FILE where it should have
+named a SHAPE. What is portable, ranked by value over cost:
+
+| source | it() | asserts | status |
+|---|---|---|---|
+| `synth/options.test.js` | 7 | `doFlattenTest` — same shape | **HARVESTED.** 5 green, 2 name the drum-intro gap |
+| `synth/timing.test.js` | 16 | `currentTrackMilliseconds`, `noteTimings` | the audio↔geometry JOIN — §3b |
+| `visual/chord-grid.test.js` | 24 | `visualObj[0].chordGrid`, a plain JSON array | **A WHOLE FEATURE WE DO NOT HAVE** |
+| `synth/synth.test.js` | 4 | `midiBuffer.flattened.tracks[0]` | same event shape; includes `drum-intro` |
+| `parse/start-char.test.js` | 1 | `charPos` of slurs | cheap; source offsets |
+| `visual/wrap.test.js` | 9 | `lineBreaks`, `explanation` | the wrap DECISION, not its geometry |
+
+**`chordGrid` is the largest single gap.** `renderAbc(…, { chordGrid: "withMusic" })` makes
+abcjs publish a structured chord chart — `[{type:'part', name, lines:[[{chord:[…],
+annotations, hasStartRepeat}]]}]` — and 24 real tunes assert it. We have no such feature and
+no such option; the string `chord-grid` in `layout.ts` is a FIXTURE NAME, not this.
+
+**NOT worth porting**, and each for a stated reason: `parse/voices-array.test.js` carries
+abcjs's own comment "this is currently a known bug so the test is expected to fail at the
+moment"; `api/tunebook_svg.test.js` asserts that `renderAbc` forwards params to
+`renderEngine`, which is wiring and not behaviour; and the rest of `visual/*` asserts
+`visualObj[0].lines`/`topText`/`bottomText`, the laid-out tree — for which our pixel and
+harvested tables are a STRONGER check, comparing whole-SVG geometry against abcjs's own
+output rather than a handful of properties.
+
 ### 4. KNOWN OPEN DIVERGENCES, small and named
 
 - **A full-line `I:` in strict is dropped.** abcjs's `letter_to_body_header` handles one
@@ -348,8 +377,11 @@ methods would hang. Flag it before doing it.
 - Overlay voices are appended after ALL main voices, in (voice, layer) order. abcjs appends
   per STAFF, so a two-staff tune where only the second staff has an overlay would number
   its tracks differently.
-- `options.drum` / `drumBars` / `drumIntro` / `drumOff` — the HOST-supplied drum options —
-  are not implemented; only the tune's own `%%MIDI` is. No case passes them.
+- `options.drum` / `drumBars` / `drumIntro` / `drumOff` — the HOST-supplied drum options.
+  **Two cases now DO pass them** (`options-all-midi-options-1` and `-2`), and they are the
+  only two rows on the audio table. `drumIntro` is the count-in:
+  `abc_midi_sequencer.js:510-537` splices whole measures of rests onto the front of every
+  voice and subtracts the pickup from the last of them.
 - GONZATO is deferred by decision.
 
 ---
