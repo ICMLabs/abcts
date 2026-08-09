@@ -44,43 +44,78 @@ import { fileURLToPath } from 'node:url'
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const config = JSON.parse(readFileSync(join(root, 'abcts.config.json'), 'utf-8'))
 const abcjs = join(root, config.abcjsRef ?? '../abcMusicKit/Docs/References/abcjs/abcjs-6.6.3')
-const SOURCE = join(abcjs, 'tests/synth/flattener.test.js')
+/**
+ * TWO SOURCE FILES, and the second was missed for a session because the harvester named one.
+ *
+ * `options.test.js` declares its OWN `doFlattenTest(abc, expected, options)` — the same
+ * helper, the same three arguments, the same `{tempo, instrument, totalDuration, tracks}`
+ * answer — and its single `it()` runs seven of them. It is the only place in abcjs's suite
+ * that exercises the HOST-supplied options (`drum`, `drumBars`, `drumIntro`, `chordsOff`,
+ * `voicesOff`, `program`, `qpm`, `midiTranspose`) rather than the tune's own `%%MIDI`, so
+ * it is worth more per case than anything in the 8,203-line file beside it.
+ *
+ * Each file's slugs are prefixed with its own name where they would collide; nothing does
+ * yet, and `it("all-MIDI-options")` runs seven cases under one name, so those are numbered.
+ */
+const SOURCES = [
+  { path: 'tests/synth/flattener.test.js', prefix: '' },
+  { path: 'tests/synth/options.test.js', prefix: 'options-' },
+]
 const outDir = join(root, 'tests', 'corpus-audio')
 
 const dry = process.argv.includes('--dry')
 
-const text = readFileSync(SOURCE, 'utf-8')
-// Everything up to the helpers. `doFlattenTest` is a top-level function DECLARATION, so it
-// hoists over any binding of the same name in the same scope — cutting it out is what lets
-// ours be the one that runs.
-const cut = text.indexOf('\nfunction doFlattenTest(')
-if (cut === -1) throw new Error('could not find the end of the describe block')
-
 const cases = []
 /**
- * `doTimingObjTest` is the file's OTHER helper — two cases — and it is not this surface:
- * it asserts `setTiming()`'s output, whose rows carry `line`, `left` and `endX` alongside
- * the pitches. That is the event list joined to the RENDERED geometry, which belongs to a
- * later gate. Stubbed so the eval reaches the end of the file rather than skipped silently.
+ * `doTimingObjTest` is `flattener.test.js`'s OTHER helper — two cases — and it is not this
+ * surface: it asserts `setTiming()`'s output, whose rows carry `line`, `left` and `endX`
+ * alongside the pitches. That is the event list joined to the RENDERED geometry, which
+ * belongs to a later gate. Stubbed so the eval reaches the end of the file rather than
+ * skipping it silently.
  */
 const skipped = []
-let current = null
-// biome-ignore lint/security/noGlobalEval: vendored, version-pinned source, already
-// `require`d by the golden generator. The stubs are what make it inert.
-const run = eval(
-  `(function (describe, it, doFlattenTest, doTimingObjTest) {\n${text.slice(0, cut)}\n})`,
-)
-run(
-  (_name, fn) => fn(),
-  (name, fn) => {
-    current = name
-    fn()
-  },
-  (abc, expected, options) => {
-    cases.push({ name: current, abc, options: options ?? null, expected })
-  },
-  () => skipped.push(current),
-)
+const counts = []
+
+for (const source of SOURCES) {
+  const text = readFileSync(join(abcjs, source.path), 'utf-8')
+  // Everything up to the helpers. `doFlattenTest` is a top-level function DECLARATION, so
+  // it hoists over any binding of the same name in the same scope — cutting it out is what
+  // lets ours be the one that runs.
+  const cut = text.indexOf('\nfunction doFlattenTest(')
+  if (cut === -1) throw new Error(`${source.path}: could not find the end of the describe block`)
+
+  let current = null
+  let nth = 0
+  const before = cases.length
+  // biome-ignore lint/security/noGlobalEval: vendored, version-pinned source, already
+  // `require`d by the golden generator. The stubs are what make it inert.
+  const run = eval(
+    `(function (describe, it, doFlattenTest, doTimingObjTest) {\n${text.slice(0, cut)}\n})`,
+  )
+  run(
+    (_name, fn) => fn(),
+    (name, fn) => {
+      current = name
+      nth = 0
+      fn()
+    },
+    (abc, expected, options) => {
+      nth += 1
+      cases.push({
+        // ONE `it()`, SEVEN CASES in `options.test.js`, so the name alone is not a key.
+        // Numbered only where it has to be, so `flattener.test.js`'s slugs are untouched
+        // and its 54 ratcheted names keep working.
+        name: `${source.prefix}${current}`,
+        ordinal: nth,
+        abc,
+        options: options ?? null,
+        expected,
+      })
+    },
+    () => skipped.push(current),
+  )
+  counts.push(`${cases.length - before} from ${source.path}`)
+}
 
 /** Filename-safe, and the `it()` name is already unique and descriptive in this file. */
 const slug = (name) =>
@@ -90,14 +125,24 @@ const slug = (name) =>
     .replace(/^-|-$/g, '')
 
 const names = new Set()
+const repeated = new Set()
 for (const c of cases) {
-  c.slug = slug(c.name)
-  if (names.has(c.slug)) throw new Error(`duplicate case name ${c.slug}`)
-  names.add(c.slug)
+  const base = slug(c.name)
+  if (names.has(base)) repeated.add(base)
+  names.add(base)
+}
+for (const c of cases) {
+  const base = slug(c.name)
+  c.slug = repeated.has(base) ? `${base}-${c.ordinal}` : base
+}
+const final = new Set()
+for (const c of cases) {
+  if (final.has(c.slug)) throw new Error(`duplicate case name ${c.slug}`)
+  final.add(c.slug)
 }
 
 console.log(
-  `${cases.length} flattener cases from tests/synth/flattener.test.js` +
+  `${cases.length} flattener cases (${counts.join(', ')})` +
     (skipped.length > 0
       ? ` (${skipped.length} setTiming cases skipped: ${skipped.join(', ')})`
       : ''),

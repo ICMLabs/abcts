@@ -91,6 +91,20 @@ export interface AudioOptions {
   /** `chordsOff` — the guitar-chord track is suppressed entirely, symbols and all. */
   readonly chordsOff?: boolean
   /**
+   * THE CHORD-TRACK SETTINGS, SUPPLIED BY THE HOST rather than by the tune.
+   *
+   * abcjs folds them into `midiOptions` at the top of `flatten()` — `if (options.bassprog
+   * !== undefined && !midiOptions.bassprog) midiOptions.bassprog = [options.bassprog]`
+   * (`abc_midi_flattener.js:95-105`) — so a `%%MIDI bassprog` in the tune WINS and the
+   * option is only a default. Five of them, and they are scalars where the `%%MIDI` form is
+   * an array, which is what the wrapping is for.
+   */
+  readonly bassprog?: number
+  readonly bassvol?: number
+  readonly chordprog?: number
+  readonly chordvol?: number
+  readonly gchord?: string
+  /**
    * A CHORD'S PITCHES IN SOURCE ORDER RATHER THAN SORTED — and this is not a preference,
    * it is which abcjs ENTRY POINT is being reproduced.
    *
@@ -1086,7 +1100,27 @@ export function flattenAudio(
   options: AudioOptions = {},
   midiIn?: MidiDirectives,
 ): FlatAudio {
-  const midi = midiIn ?? midiOf(score)
+  const parsed = midiIn ?? midiOf(score)
+  // THE TUNE'S OWN `%%MIDI` WINS over the host's option — abcjs tests
+  // `!midiOptions.<key>` before filling one in, so these are defaults and not overrides.
+  const midi: MidiDirectives = {
+    ...parsed,
+    ...(options.bassprog !== undefined && parsed.bassprog === undefined
+      ? { bassprog: [options.bassprog] }
+      : {}),
+    ...(options.bassvol !== undefined && parsed.bassvol === undefined
+      ? { bassvol: [options.bassvol] }
+      : {}),
+    ...(options.chordprog !== undefined && parsed.chordprog === undefined
+      ? { chordprog: [options.chordprog] }
+      : {}),
+    ...(options.chordvol !== undefined && parsed.chordvol === undefined
+      ? { chordvol: [options.chordvol] }
+      : {}),
+    ...(options.gchord !== undefined && parsed.gchord === undefined
+      ? { gchord: [options.gchord] }
+      : {}),
+  }
   const startingTempo = qpmOf(score, options)
   let program = Math.trunc(options.program ?? 0)
   let channel = Math.trunc(options.channel ?? 0)

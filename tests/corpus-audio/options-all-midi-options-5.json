@@ -1,0 +1,251 @@
+{
+  "name": "options-all-MIDI-options",
+  "source": "tests/synth/flattener.test.js",
+  "abc": "M:4/4\nL:1/4\nK:Dm\n\"Dm\"DFAd|\"A7\"Aceg||\n",
+  "options": {
+    "program": 11,
+    "channel": 2,
+    "bassprog": 20,
+    "bassvol": 21,
+    "chordprog": 30,
+    "chordvol": 31,
+    "gchord": "fHIHfhih"
+  },
+  "expected": {
+    "tempo": 180,
+    "instrument": 11,
+    "tracks": [
+      [
+        {
+          "cmd": "program",
+          "channel": 2,
+          "instrument": 11
+        },
+        {
+          "cmd": "note",
+          "pitch": 62,
+          "volume": 105,
+          "start": 0,
+          "duration": 0.25,
+          "instrument": 11,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 65,
+          "volume": 95,
+          "start": 0.25,
+          "duration": 0.25,
+          "instrument": 11,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 69,
+          "volume": 95,
+          "start": 0.5,
+          "duration": 0.25,
+          "instrument": 11,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 74,
+          "volume": 95,
+          "start": 0.75,
+          "duration": 0.25,
+          "instrument": 11,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 69,
+          "volume": 105,
+          "start": 1,
+          "duration": 0.25,
+          "instrument": 11,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 72,
+          "volume": 95,
+          "start": 1.25,
+          "duration": 0.25,
+          "instrument": 11,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 76,
+          "volume": 95,
+          "start": 1.5,
+          "duration": 0.25,
+          "instrument": 11,
+          "gap": 0
+        },
+        {
+          "cmd": "note",
+          "pitch": 79,
+          "volume": 95,
+          "start": 1.75,
+          "duration": 0.25,
+          "instrument": 11,
+          "gap": 0
+        }
+      ],
+      [
+        {
+          "cmd": "program",
+          "channel": 1,
+          "instrument": 30
+        },
+        {
+          "cmd": "note",
+          "pitch": 38,
+          "volume": 21,
+          "start": 0,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 20
+        },
+        {
+          "cmd": "note",
+          "pitch": 53,
+          "volume": 31,
+          "start": 0.125,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 30
+        },
+        {
+          "cmd": "note",
+          "pitch": 57,
+          "volume": 31,
+          "start": 0.25,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 30
+        },
+        {
+          "cmd": "note",
+          "pitch": 53,
+          "volume": 31,
+          "start": 0.375,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 30
+        },
+        {
+          "cmd": "note",
+          "pitch": 33,
+          "volume": 21,
+          "start": 0.5,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 20
+        },
+        {
+          "cmd": "note",
+          "pitch": 65,
+          "volume": 31,
+          "start": 0.625,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 30
+        },
+        {
+          "cmd": "note",
+          "pitch": 69,
+          "volume": 31,
+          "start": 0.75,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 30
+        },
+        {
+          "cmd": "note",
+          "pitch": 65,
+          "volume": 31,
+          "start": 0.875,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 30
+        },
+        {
+          "cmd": "note",
+          "pitch": 33,
+          "volume": 21,
+          "start": 1,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 20
+        },
+        {
+          "cmd": "note",
+          "pitch": 49,
+          "volume": 31,
+          "start": 1.125,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 30
+        },
+        {
+          "cmd": "note",
+          "pitch": 52,
+          "volume": 31,
+          "start": 1.25,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 30
+        },
+        {
+          "cmd": "note",
+          "pitch": 49,
+          "volume": 31,
+          "start": 1.375,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 30
+        },
+        {
+          "cmd": "note",
+          "pitch": 28,
+          "volume": 21,
+          "start": 1.5,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 20
+        },
+        {
+          "cmd": "note",
+          "pitch": 61,
+          "volume": 31,
+          "start": 1.625,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 30
+        },
+        {
+          "cmd": "note",
+          "pitch": 64,
+          "volume": 31,
+          "start": 1.75,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 30
+        },
+        {
+          "cmd": "note",
+          "pitch": 61,
+          "volume": 31,
+          "start": 1.875,
+          "duration": 0.125,
+          "gap": 0,
+          "instrument": 30
+        }
+      ]
+    ],
+    "totalDuration": 2
+  }
+}
