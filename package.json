@@ -44,6 +44,7 @@
     "metrics": "node scripts/gen-text-metrics.mjs",
     "harvest": "node scripts/harvest-abcjs-tests.mjs",
     "harvest:goldens": "node scripts/harvest-abcjs-goldens.mjs",
+    "harvest:midi": "node scripts/harvest-abcjs-midi.mjs",
     "harvest:audio": "node scripts/harvest-abcjs-audio.mjs"
   },
   "devDependencies": {
