@@ -125,7 +125,12 @@ things easy to port "corrected" by accident.
     low — on EVERY accent.
     CHECK: `!>!f` and `!accent!f` — same y?
 
- 9. MIDI WRITER QUIRKS (abc_midi_renderer.js / abc_midi_create.js), all deliberate:
+ 9. THE MIDI FILE IS A POLICY QUESTION FOR v1, NOT A BUG. MIDIWriter.swift says
+    "Clean room implementation from the MIDI 1.0 specification" — it is NOT ported from
+    abcjs's abc_midi_renderer.js, unlike the three files above it. So it will NOT reproduce
+    abcjs's four deliberate quirks, and that may be correct. DECIDE whether abcjsStrict owes
+    byte parity on the MIDI FILE, or whether the file is outside the strict contract and
+    only the EVENT LIST is in it. abcjs's quirks, for the record:
     - the program change is ALWAYS on channel 0 ("%00%C0" hard-coded), so a tune on
       %%MIDI channel 4 emits its program on %C0 and its notes on %94;
     - the instrument LEAKS into the next track — startTrack re-emits whatever was last set;
@@ -134,6 +139,8 @@ things easy to port "corrected" by accident.
     - a pitch is not zero-padded — "%" + pitch.toString(16);
     - note placement is a map keyed by TIME, so two notes starting together cost one delta
       and a staccato gap shortens the note-off without moving the next note-on.
+    Note abcMusicKitCpp's src/smf.h is a direct port of MIDIWriter.swift, so whatever is
+    decided here applies there too.
 
 10. THE TEMPO MARK'S BEAT-UNIT NOTE TAKES A FLAG AND A DOT, and they are purely ADDITIVE —
     the head and stem do not move, only the rate's x follows. abcjs runs the tempo note
@@ -142,6 +149,16 @@ things easy to port "corrected" by accident.
     dot x = notehead.w - 2 + 5*dot, pitch + (1 - |pitch| % 2). Measured off abcjs's SVG:
     +4.41px on the rate for a flag, +6.45 for a dot.
     CHECK: Q:1/8=66 — is there a flag, or a bare stem?
+
+WHERE EACH FINDING LANDS — v1's synth files carry their provenance in their headers, and
+it decides how to read this list:
+  MIDIFlattener.swift  "Ported from abcjs src/synth/abc_midi_flattener.js"  → 1, 2, 6, 9
+  MIDISequencer.swift  "Ported from abcjs src/synth/abc_midi_sequencer.js"  → 3, 4, 5, 7
+  ChordTrack.swift     "Ported from abcjs src/synth/chord-track.js"         → chord track
+  MIDIWriter.swift     "Clean room ... from the MIDI 1.0 specification"     → 9 (policy)
+  SyncMap.swift        no abcjs counterpart                                 → timing.test.js
+The first three are ports, so anything abcjs does wrong they must do wrong identically —
+these are the ones easy to "correct" by accident. The fourth is deliberately not a port.
 
 METHOD: measure, do not reason. Instrument a SCRATCHPAD COPY of abcjs, never the vendored
 tree. Three of the findings above were reached by printing what abcjs actually emits after
