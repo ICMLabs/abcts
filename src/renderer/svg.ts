@@ -1011,13 +1011,23 @@ const glyphDefs = new Map<GlyphName, string>()
         // A STEM PRECEDES A LEDGER — `abselem.addRight(stem)` runs after every pitch and the
         // ledgers follow it (`abstract-engraver.js:762`). Ours built the ledgers inside the
         // head loop, so they came first.
+        // A GRACE's stem is written after every grace HEAD — see `PlacedLine.graceStem` —
+        // so it is held back past the trailing glyphs entirely.
+        const isGraceLine = (l: (typeof el.lines)[number]): boolean =>
+          l.graceStem === true || l.graceIndex !== undefined
+        const own = abcjs ? el.lines.filter((l) => !isGraceLine(l)) : el.lines
+        const graceStems = abcjs ? el.lines.filter((l) => l.graceStem === true) : []
+        // A grace's LEDGERS follow its OWN head — see `PlacedLine.graceIndex`.
+        const graceLedgers = abcjs
+          ? el.lines.filter((l) => l.graceStem !== true && l.graceIndex !== undefined)
+          : []
         const ordered = abcjs
           ? [
-              ...el.lines.filter((l) => l.role === 'stem' && l.beamed !== true),
-              ...el.lines.filter((l) => l.role !== 'stem'),
-              ...el.lines.filter((l) => l.role === 'stem' && l.beamed === true),
+              ...own.filter((l) => l.role === 'stem' && l.beamed !== true),
+              ...own.filter((l) => l.role !== 'stem'),
+              ...own.filter((l) => l.role === 'stem' && l.beamed === true),
             ]
-          : el.lines
+          : own
         for (const line of ordered) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
         // …and everything the engraver added AFTER the rules — decorations, graces.
         for (const g of el.glyphs.slice(pitchEnd)) {
@@ -1032,7 +1042,12 @@ const glyphDefs = new Map<GlyphName, string>()
               g.dataName,
             ),
           )
+          if (g.graceIndex === undefined) continue
+          for (const line of graceLedgers.filter((l) => l.graceIndex === g.graceIndex)) {
+            parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+          }
         }
+        for (const line of graceStems) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
         // Prose is a real <text> in a generic family, unlike musical glyphs, which are
         // paths so the SVG stays self-contained. A missing serif face falls back to
         // another serif; a missing Bravura falls back to nothing legible. See layout.ts.

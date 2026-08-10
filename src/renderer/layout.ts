@@ -793,6 +793,8 @@ export interface PlacedGlyph {
    * appended, rewritten by transposition (`abc_parse_music.js:1113-1147`).
    */
   readonly dataName?: string
+  /** Which grace of the group this head belongs to — its ledgers follow it. */
+  readonly graceIndex?: number
   /**
    * **A MULTI-CHARACTER SYMBOL IS ONE GROUP.** `printSymbol` branches on
    * `symbol.length > 1 && symbol.indexOf(".") < 0` and opens
@@ -848,6 +850,10 @@ export interface PlacedLine {
   readonly role?: PartRole
   /** A beam's own duration, for its class — see `layoutBeam`. */
   readonly durationClass?: number
+  /** A GRACE's stem — written after every grace head, not with the main note's rules. */
+  readonly graceStem?: boolean
+  /** Which grace of the group this belongs to, so a ledger follows its OWN head. */
+  readonly graceIndex?: number
   /**
    * Set on a stem a BEAM retargets — see the stem case in `verticalExtent`, and the
    * EMISSION ORDER: an unbeamed stem is `addRight` right after the pitch loop and lands
@@ -10593,6 +10599,8 @@ function layoutGraces(
 ): { glyphs: PlacedGlyph[]; lines: PlacedLine[]; width: number; room: number; left: number } {
   const graceGlyphs: PlacedGlyph[] = []
   const graceLines: PlacedLine[] = []
+  /** A grace's own ledgers — merged in only after the beam pass, which walks by index. */
+  const graceLedgers: PlacedLine[] = []
   let graceWidth = 0
   let graceRoom = 0
   /** How far LEFT of the cursor the graces reach — abcjs's `extraw`, which is a MIN. */
@@ -10690,6 +10698,13 @@ function layoutGraces(
         y: stepToY(graceStep),
         scale,
         role: 'grace',
+        // A GRACE HEAD IS NAMED WITH ITS WRITTEN NOTE, like any other notehead —
+        // `createNoteHead` is the same constructor (`create-note-head.js:34`), so abcjs's
+        // own contract reads `g`, `a`, `b` where ours read `noteheads.quarter`.
+        graceIndex: i,
+        ...(event.graceNotes[i] === undefined
+          ? {}
+          : { dataName: writtenNote(event.graceNotes[i]) }),
         // A DECLARED BOX, SCALED, AND CENTRED ON THE PITCH. `createNoteHead` hands the head
         // `thickness: symbolHeightInPitches(c) * scale` and `RelativeElement` reserves
         // `pitch ± thickness / 2` — the PUBLISHED `h`, 8.094, not the 8.13 ink box, and
@@ -10700,6 +10715,24 @@ function layoutGraces(
           stepToY(graceStep) + graceDeclaredHalf * scale,
         ],
       })
+      /**
+       * **A GRACE GETS LEDGER LINES LIKE ANY OTHER HEAD, and we drew none at all.**
+       * `addGraceNotes` runs `ledgerLines(abselem, …, scale)` for every grace
+       * (`abstract-engraver.js:446-462`), so `{gab}c4|` has one under `a` and one under
+       * `b` in abcjs's own contract. They are written straight after their OWN head, which
+       * is what `graceIndex` carries.
+       */
+      // COLLECTED SEPARATELY, and merged only after the grace beam has retargeted the
+      // stems: that pass walks `graceLines` BY INDEX — `graceLines[i] = {...stem, y2:
+      // yAt(graceXOf(i) + graceInk)}` — and assumes every entry is a stem. Pushing the
+      // ledgers into it moved every grace stem, which the baselines caught.
+      for (const line of ledgerLines(
+        graceStep,
+        gx,
+        glyphsFor(strict).width('noteheadBlack') * scale,
+      )) {
+        graceLedgers.push({ ...line, graceIndex: i, noReserve: true })
+      }
       // THE STEM IS MEASURED FROM THE HEAD'S PITCH, NOT FROM ITS OWN BASE. abcjs writes
       // `p1 = gracepitch + 1/3 * gracescale` and `p2 = gracepitch + 7 * gracescale`
       // (`abstract-engraver.js:515-520`) — two independent offsets from the same pitch,
@@ -10717,6 +10750,12 @@ function layoutGraces(
         y2: headY - graceStemPitches * scale * ENGRAVE.spacePerStep,
         thickness: weight,
         role: 'stem',
+        // A GRACE'S STEM IS WRITTEN AFTER EVERY GRACE HEAD, not before them. abcjs's own
+        // contract for `{gab}c4|` reads `c, g, a, ledger, b, ledger, stem, stem, stem` —
+        // the heads come from `addGraceNotes` and the stems from the grace beam pass that
+        // follows it.
+        graceStem: true,
+        graceIndex: i,
         ...(beamedGraces ? { noReserve: true, beamed: true } : {}),
       })
     })
@@ -10794,7 +10833,7 @@ function layoutGraces(
   }
   return {
     glyphs: graceGlyphs,
-    lines: graceLines,
+    lines: [...graceLines, ...graceLedgers],
     width: graceWidth,
     room: graceRoom,
     left: graceLeft,
