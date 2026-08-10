@@ -322,7 +322,12 @@ checkpoint and hand off as you go so no context is lost.
 > `npx tsc --noEmit` BEFORE `git commit`, not alongside it: a duplicate object key shipped
 > that day because vitest passed and the typecheck came back after the push.
 
-Read `Docs/CHECKPOINT-2026-08-09b.md` first — the state, the count-in ladder, the chord
+Read `Docs/CHECKPOINT-2026-08-10.md` first — the state, the SVG byte arc, and **§4, a real
+defect that is NOT fixed and whose failed attempt is written out with the measurement so it
+is not repeated**. `Docs/HANDOFF-2026-08-10.md` has the session prompt.
+`Docs/CHECKPOINT-2026-08-09b.md` is superseded for the state but keeps the count-in ladder,
+the chord grid, `setTiming`, the third audio surface and the decoration-x finding.
+Then read `Docs/CHECKPOINT-2026-08-09b.md` — the state, the count-in ladder, the chord
 grid, **the decoration-x finding**, and **WHAT IS LEFT**.
 `Docs/HANDOFF-2026-08-09b.md` has the session prompt.
 `Docs/CHECKPOINT-2026-08-09.md` is superseded for the state but keeps the tempo gate, the
@@ -475,8 +480,8 @@ abcjs source are all reached by sibling path and stay in that repo. Keep it that
 backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
-**GEOMETRY, AUDIO, THE MIDI FILE, THE CHORD GRID AND THE TIMING CLOCK ARE ALL AT ZERO.** 1126/1126 with no
-reds; **sixteen gates and EIGHT ranked tables** — 0 of 72 audio cases, 0 of 38 note timings,
+**AUDIO IS BYTE-EQUAL AND THE SVG IS THE ARC.** 1127/1127 with no
+reds; **seventeen gates and NINE ranked tables** — 0 of 72 audio cases, 0 of 38 note timings,
 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
 **1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
 **25 of 25 DOM-contract cases — 86 of 694 ROWS, from 0 — which is the OPEN ARC** — the oracle lands before the
