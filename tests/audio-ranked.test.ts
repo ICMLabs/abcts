@@ -103,6 +103,8 @@ const PASSING: readonly string[] = [
   'no-start-repeat-repeat',
   'no-start-repeat-title',
   'overlay-repeat',
+  'options-all-midi-options-1',
+  'options-all-midi-options-2',
   'options-all-midi-options-3',
   'options-all-midi-options-4',
   'options-all-midi-options-5',

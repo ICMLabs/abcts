@@ -105,6 +105,26 @@ export interface AudioOptions {
   readonly chordvol?: number
   readonly gchord?: string
   /**
+   * THE DRUM TRACK, SUPPLIED BY THE HOST — and unlike the chord settings above, the tune's
+   * `%%MIDI` does not merely default them, it REPLACES them: the sequencer reads
+   * `options.drum` into `drumPattern` and then overwrites it wholesale with
+   * `if (globals.drum) drumPattern = globals.drum` (`abc_midi_sequencer.js:28-31, 86-92`).
+   *
+   * `drum` is one space-separated string here where `%%MIDI drum` is already an array, and
+   * abcjs splits it and NEVER PARSES THE TOKENS — so a host-supplied pattern writes its
+   * pitch and volume out as STRINGS, `"pitch":"76"`, where the tune's own writes numbers.
+   *
+   * `drumOn` is the one thing a pattern DOES imply here: `drumOn = drumPattern !== ""` is
+   * computed off the option, before the tune is read. A tune that writes `%%MIDI drum …`
+   * and no `drumon` is silent; a host that passes `drum` is not.
+   */
+  readonly drum?: string
+  readonly drumBars?: number
+  /** The COUNT-IN, in whole measures. See `spliceDrumIntro`. */
+  readonly drumIntro?: number
+  /** The drums stop once the count-in is over. Nothing in `%%MIDI` corresponds to it. */
+  readonly drumOff?: boolean
+  /**
    * A CHORD'S PITCHES IN SOURCE ORDER RATHER THAN SORTED — and this is not a preference,
    * it is which abcjs ENTRY POINT is being reproduced.
    *
@@ -929,6 +949,66 @@ function alignDrumToMeter(def: DrumDefinition, drumBars: number, meter: Meter): 
 }
 
 /**
+ * `drumIntro` — THE COUNT-IN, AND ABCJS MAKES IT BY REWRITING THE MUSIC, not by moving a
+ * clock. `abc_midi_sequencer.js:510-537` splices whole measures of rests onto the FRONT of
+ * every voice, so everything downstream — `lastBarTime`, the chord track's bar boundaries,
+ * `totalDuration`, and above all the drum's own "have we reached a full measure yet" guard —
+ * shifts by construction rather than by a correction anyone has to remember to apply.
+ *
+ * Reproduced the same way: prepend the rows, shift the rest. Three details are abcjs's:
+ *
+ * - **The insertion point is the first NOTE**, not the head of the voice, so a `%%MIDI`
+ *   written in the header still runs before the count-in.
+ * - **The pickup comes out of the LAST intro measure**, and that measure gets no barline of
+ *   its own — the pickup's own bar closes it. Without that the downbeat lands off the bar.
+ * - **`drumOff` is a `drum` element spliced in after the rests**, which is why the intro
+ *   still sounds: the bar that closes it is written before the element that turns it off.
+ */
+function spliceDrumIntro(
+  timed: readonly Timed[],
+  intro: number,
+  measureLength: number,
+  pickup: number,
+  drumOff: boolean,
+): Timed[] {
+  const at = timed.findIndex((t) => t.kind === 'note')
+  if (at < 0) return [...timed]
+  const seed = timed[at] as Timed
+  const row = (kind: Timed['kind'], time: number, duration: number): Timed => ({
+    kind,
+    line: -1,
+    decorations: [],
+    event: null,
+    time,
+    barStart: true,
+    key: seed.key,
+    meter: null,
+    duration,
+    factor: 1,
+    clefTranspose: 0,
+    tiedOver: false,
+  })
+  const rows: Timed[] = []
+  let time = 0
+  for (let w = 0; w < intro; w += 1) {
+    const last = pickup !== 0 && w === intro - 1
+    const length = last ? measureLength - pickup : measureLength
+    rows.push(row('note', Math.round(time * MICRO), length))
+    time += length
+    if (!last) rows.push(row('bar', Math.round(time * MICRO), 0))
+  }
+  if (drumOff) {
+    rows.push({ ...row('midi', Math.round(time * MICRO), 0), midi: [{ cmd: 'drumoff', params: [] }] })
+  }
+  const shift = Math.round(time * MICRO)
+  return [
+    ...timed.slice(0, at),
+    ...rows,
+    ...timed.slice(at).map((t) => ({ ...t, time: t.time + shift })),
+  ]
+}
+
+/**
  * `&` OVERLAY VOICES — each layer is a WHOLE VOICE of its own, with a track of its own.
  *
  * abcjs does this in the PARSER, not the sequencer: `resolveOverlays`
@@ -1179,9 +1259,30 @@ export function flattenAudio(
    * the pattern (`abc_midi_sequencer.js:86-92`). A tune that writes `%%MIDI drum …` and
    * never `drumon` gets silence.
    */
-  let drumPattern: readonly (string | number)[] = midi.drum ?? []
-  let drumBars = typeof midi.drumbars?.[0] === 'number' ? (midi.drumbars[0] as number) : 1
-  let drumOn = midi.drumon !== undefined
+  let drumPattern: readonly (string | number)[] =
+    midi.drum ?? (options.drum !== undefined && options.drum !== '' ? options.drum.split(' ') : [])
+  let drumBars =
+    typeof midi.drumbars?.[0] === 'number'
+      ? (midi.drumbars[0] as number)
+      : Math.trunc(options.drumBars ?? 1)
+  let drumOn = (options.drum ?? '') !== '' || midi.drumon !== undefined
+  const drumIntro = Math.trunc(options.drumIntro ?? 0)
+  /**
+   * THE COUNT-IN'S MEASURE IS THE TUNE'S LAST METER, NOT ITS FIRST — and that is a quirk
+   * rather than a choice. `measureLength` is a sequencer-global that `interpretMeter`
+   * overwrites at every `M:` it meets (`abc_midi_sequencer.js:625-652`), and the intro is
+   * spliced after ALL the voices are built (`:510`), so whatever the last meter change left
+   * behind is what the rests are cut to. A tune that ends in 3/4 gets a 3/4 count-in.
+   *
+   * ponytail: read voice-major where abcjs reads line-major, so a tune whose LAST line
+   * changes meter on voice 0 and not on voice 1 differs. Nothing states one anywhere.
+   */
+  const introMeter =
+    allVoices
+      .flatMap((v) => v.measures.map((m) => m.meterChange))
+      .filter((m): m is Meter => m !== null)
+      .pop() ?? startMeter
+  const introMeasureLength = introMeter.numerator / introMeter.denominator
   let drumDefinition: DrumDefinition = DRUM_OFF
   const drumTrack: MidiEvent[] = []
   const setDrum = (on: boolean, meter: Meter): void => {
@@ -1274,7 +1375,20 @@ export function flattenAudio(
     chordTrack.setMeter({ num: meter.numerator, den: meter.denominator })
 
     const transposeOf = transposeOfFactory(transposeGlobal)
-    const timed = sequenceVoice(voice, score, startingTempo, tempoChanges)
+    const sequenced = sequenceVoice(voice, score, startingTempo, tempoChanges)
+    // The count-in goes onto EVERY voice; the `drumOff` element that follows it goes onto
+    // one, because abcjs clears `drumOffAfterIntro` the first time it splices one in and
+    // the drum state is the tune's rather than the voice's either way.
+    const timed =
+      drumIntro > 0
+        ? spliceDrumIntro(
+            sequenced,
+            drumIntro,
+            introMeasureLength,
+            pickupLength,
+            options.drumOff === true && voiceIndex === 0,
+          )
+        : sequenced
     /** The running stress table — abcjs's `currentVolume`, seeded at the default triple. */
     let stress: [number, number, number] = [105, 95, 85]
     /** Per-note increment while a hairpin is open; 0 when none is. */
