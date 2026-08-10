@@ -30,7 +30,7 @@ reproduce goes in `Docs/ABCJS-DIFFERENCES.md` with its evidence and its slug goe
 | chord grid | `chord-grid-ranked` | 0 of 23 |
 | harvested geometry | `corpus-abcjs-ranked` | 0 of 174 |
 | pixel geometry | `pixel-parity` | 0 of 120 |
-| DOM contract | `dom-contract` | **22 of 25 cases** (from 25), **246 of 648 rows** (from 86) — three slugs RATCHETED |
+| DOM contract | `dom-contract` | **22 of 25 cases** (from 25), **248 of 648 rows** (from 86) — three slugs RATCHETED |
 | **SVG bytes** | **`svg-bytes`** | **171 of 171 — best 5186, median 174** (from 651 / 162) |
 
 **Suite 1130 of 1130. NO REDS. `npx tsc --noEmit` clean.**
@@ -39,7 +39,7 @@ reproduce goes in `Docs/ABCJS-DIFFERENCES.md` with its evidence and its slug goe
 
 ## 1. THE HEIGHT IS BLOCKING 109 OF THE 171 ROWS — READ THIS FIRST
 
-`svg-bytes`'s median is **174** and its masked median is **1087**. The gap is one
+`svg-bytes`'s median is **174** and its masked median is **1097**. The gap is one
 attribute: **109 of the 171 fixtures first differ on the root's `height`**, and every one
 of those differences is one or two ULPs in either direction —
 
@@ -66,6 +66,15 @@ single highest-yield item on the board: **109 rows are invisible behind it.**
 checkpoint) runs the same comparison with `height="…"` masked in BOTH strings and writes
 `/tmp/probe-noheight.txt`. That is what named every family below. **It is a PROBE, not a
 gate** — nothing in `tests/` may grow that mask.
+
+**AND WITH THE HEIGHT MASKED, ALMOST EVERYTHING LEFT IS THE SAME PROBLEM.** The masked
+table's largest families are now `M 57.840999999999994` against `M 57.841` and a `clefs.G`
+whose y differs in the last digit — the HORIZONTAL and VERTICAL halves of one thing. The
+mechanism is visible in one line: `flagX = headX + headInk - spaces(ABCJS_PX.flagStemInset)`
+divides an abcjs pixel by 7.75 and the emitter multiplies it back. **Every abcjs constant
+that enters as `px / 7.75` and leaves as `* 7.75` loses bits on the round trip.** Closing it
+means the strict path holding pixels, which is the structural pass — see
+`CHECKPOINT-2026-08-08d.md` for the terms it must be held to.
 
 ---
 
@@ -182,7 +191,8 @@ regression, so read the diff before touching the gate.
 1. **THE ROOT'S `height` — 109 of 171 rows.** §1. Accumulate the vertical cursor in
    PIXELS. Highest yield on the board by a wide margin, and everything behind it is
    currently unmeasurable by the real gate.
-2. **THE ORDER INSIDE A NOTE GROUP — ~20 rows, and the whole rule is MEASURED.**
+2. ~~**THE ORDER INSIDE A NOTE GROUP**~~ — **CLOSED.** Kept because the rule is worth
+   having written down:
    `createNoteHead` builds the notehead but does NOT add it: it `addRight`s the FLAG, then
    the DOTS, then `addExtra`s the ACCIDENTAL, and only when it RETURNS does the caller
    `abselem.addHead(noteHead)` (`create-note-head.js:20-70`, `abstract-engraver.js:722-733`).
@@ -201,10 +211,10 @@ regression, so read the diff before touching the gate.
    emits `F, flags.u8th, A` — head, flag, head — which is what made this look like an
    exception to a rule about flags and is in fact the rule itself.
 
-   Ours pushes every accidental, then every head, then the dots, then the flag (which is
-   computed late, at `layout.ts:3008`, because it needs the stem tip). The cheapest honest
-   shape is probably an ORDER KEY per glyph — `(headPosition, flag|dot|accidental|head)` —
-   and one stable sort at the end of `layoutNote`, since the flag cannot move earlier.
+   The three collect rather than push and one assembly pass runs where the flag used to,
+   because the flag hangs off the STEM TIP and cannot be known until every head is placed.
+   **The baselines moved as a pure PERMUTATION** — every removed line was also an added
+   one, checked rather than assumed, so nothing moved and only the order did.
 3. **A STEM AND A LEDGER ARE DIFFERENT EMITTERS.** A stem is `printStem`'s form —
    `d="M x y1L x y2L x2 y2L x2 y1z"`, no separators between commands, NO `stroke`/`fill`
    inside a group, `class` BEFORE `data-name` (`draw/print-stem.js:32-42`) — where a ledger
@@ -243,7 +253,7 @@ chord-grid ranked   0 of 23
 midi ranked         0 of 3       BYTE-EXACT
 harvested ranked    0 of 174
 pixel ranked        0 of 120
-DOM contract        22 of 25     (246 of 648 rows, from 86)
+DOM contract        22 of 25     (248 of 648 rows, from 86)
                     PASSING ratchet: dom-ledger, svg-12-8-group, svg-single-note
 npx biome check src NOT clean — same rows as before, all pre-existing
 ```

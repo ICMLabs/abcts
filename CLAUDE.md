@@ -361,7 +361,7 @@ checkpoint and hand off as you go so no context is lost.
 > SYMBOL is one `<g data-name="12">` with UNNAMED children, and the numerator is the
 > string AS WRITTEN (`data-name="2+3"`, not `5`); and a top-text row carries its own class.
 >
-> **AND THE ORDER INSIDE A NOTE GROUP IS MEASURED AND NOT YET IMPLEMENTED**:
+> **AND THE ORDER INSIDE A NOTE GROUP IS CLOSED**:
 > `createNoteHead` adds the FLAG, then the DOTS, then the ACCIDENTAL, and only when it
 > RETURNS does the caller `addHead` — so one pitch emits `flag, dots, accidental, head`,
 > then `stem`, then `ledger`. **AND THE FLAG BELONGS TO THE STEMMED HEAD OF A CHORD**
@@ -373,8 +373,14 @@ checkpoint and hand off as you go so no context is lost.
 > direction because abcjs accumulates `renderer.y` in PIXELS and we accumulate it in staff
 > spaces and multiply at the end. Rewriting only the LAST step was measured and moved 69
 > exact rows to 70, so the noise is spread through the whole accumulation. Masking `height`
-> in a PROBE (recipe in `Docs/HANDOFF-2026-08-10b.md`) puts the median at 1087 and names
-> every remaining family. Nothing in `tests/` may grow that mask.
+> in a PROBE (recipe in `Docs/HANDOFF-2026-08-10b.md`) puts the median at 1097 — and with
+> it masked, **almost everything left is the SAME problem**: `M 57.840999999999994` against
+> `M 57.841`, and a `clefs.G` whose y differs in the last digit. One line shows the
+> mechanism — `flagX = headX + headInk - spaces(ABCJS_PX.flagStemInset)` divides an abcjs
+> pixel by 7.75 and the emitter multiplies it back. **Every abcjs constant that enters as
+> `px / 7.75` and leaves as `* 7.75` loses bits on the round trip**, so the strict path
+> holding PIXELS is the one change that closes the tail. Nothing in `tests/` may grow that
+> mask.
 
 Read `Docs/CHECKPOINT-2026-08-10b.md` first — the state and WHAT IS LEFT, with the height
 named as the one thing that unblocks the rest. `Docs/HANDOFF-2026-08-10b.md` has the
@@ -540,7 +546,7 @@ backup remote is not a licence to vendor someone else's tree into this one.
 reds; **seventeen gates and NINE ranked tables** — 0 of 72 audio cases, 0 of 38 note timings,
 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
 **1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
-**22 of 25 DOM-contract cases — 246 of 648 ROWS, from 0, with three slugs RATCHETED** — and **the SVG BYTE TABLE is
+**22 of 25 DOM-contract cases — 248 of 648 ROWS, from 0, with three slugs RATCHETED** — and **the SVG BYTE TABLE is
 THE OPEN ARC**, 171 of 171 at best 5186 / median 174, with 109 of those rows blocked behind
 the root's `height`. The oracle lands before the
 implementation here, as it did for audio and the chord grid, and a table that opens at every
