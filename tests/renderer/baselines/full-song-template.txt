@@ -50,8 +50,8 @@ system 0 width=130.704 originY=0.000
       text  32.176,6.194 size=2.194 bold "the"
       text  31.203,8.826 size=2.194 bold "more"
     note@-2 x=39.114 w=9.482
-      glyph noteheadHalf 39.114,1.000
       glyph augmentationDot 40.839,0.500
+      glyph noteheadHalf 39.114,1.000
       line  40.388,0.833 -> 40.388,-2.500 t=0.129
       text  37.347,6.194 size=2.194 bold "act-"
       text  37.226,8.826 size=2.194 bold "ver-"
@@ -82,8 +82,8 @@ system 0 width=130.704 originY=0.000
       text  72.285,6.194 size=2.194 bold "go"
       text  71.674,8.826 size=2.194 bold "you"
     note@3 x=78.856 w=9.482
-      glyph noteheadHalf 78.856,-1.500
       glyph augmentationDot 80.581,-1.500
+      glyph noteheadHalf 78.856,-1.500
       line  78.920,-1.333 -> 78.920,2.000 t=0.129
       text  76.784,6.194 size=2.194 bold "here"
       text  77.147,8.826 size=2.194 bold "like"
@@ -124,8 +124,8 @@ system 1 width=90.402 originY=45.083
       text  29.938,6.194 size=2.194 bold "a"
       text  29.085,8.826 size=2.194 bold "for"
     note@-2 x=36.127 w=9.482
-      glyph noteheadHalf 36.127,1.000
       glyph augmentationDot 37.853,0.500
+      glyph noteheadHalf 36.127,1.000
       line  37.401,0.833 -> 37.401,-2.500 t=0.129
       text  33.598,6.194 size=2.194 bold "scale."
       text  34.664,8.826 size=2.194 bold "the"
@@ -156,8 +156,8 @@ system 1 width=90.402 originY=45.083
       text  69.583,6.194 size=2.194 bold "notes"
       text  70.376,8.826 size=2.194 bold "Ta-"
     note@3 x=77.664 w=9.482
-      glyph noteheadHalf 77.664,-1.500
       glyph augmentationDot 79.389,-1.500
+      glyph noteheadHalf 77.664,-1.500
       line  77.728,-1.333 -> 77.728,2.000 t=0.129
       text  74.859,6.194 size=2.194 bold "work!"
       text  76.138,8.826 size=2.194 bold "da!"

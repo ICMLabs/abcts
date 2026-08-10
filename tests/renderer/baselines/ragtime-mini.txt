@@ -42,8 +42,8 @@ system 0 width=90.323 originY=0.000
       glyph noteheadBlack 61.316,-0.500
       line  62.543,1.400 -> 62.543,-6.075 t=0.077
     note@-2,0,5 x=65.806 w=2.737
-      glyph accidentalNatural 64.852,0.000
       glyph noteheadBlack 65.806,1.000
+      glyph accidentalNatural 64.852,0.000
       glyph noteheadBlack 65.806,0.000
       glyph noteheadBlack 65.806,-2.500
       line  67.033,0.900 -> 67.033,-6.360 t=0.077

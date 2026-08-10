@@ -802,14 +802,14 @@ system 2 width=90.323 originY=33.842
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     note@-6,-5 x=8.126 w=5.474
-      glyph accidentalDoubleSharp 6.842,2.500
       glyph noteheadBlack 8.126,3.000
+      glyph accidentalDoubleSharp 6.842,2.500
       glyph noteheadBlack 9.392,2.500
       line  7.868,3.000 -> 9.650,3.000 t=0.090
       line  9.327,2.833 -> 9.327,-1.000 t=0.129
     note@-4,0 x=28.159 w=5.474
-      glyph accidentalDoubleFlat 26.340,0.000
       glyph noteheadBlack 28.159,2.000
+      glyph accidentalDoubleFlat 26.340,0.000
       glyph noteheadBlack 28.159,0.000
       line  29.360,1.833 -> 29.360,-3.500 t=0.129
     note@-3,-1 x=48.192 w=5.474

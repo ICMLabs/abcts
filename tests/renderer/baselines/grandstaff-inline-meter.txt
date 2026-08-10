@@ -62,23 +62,23 @@ system 0 width=90.323 originY=0.000
     bar x=77.455 w=0.077
       line  77.494,-2.000 -> 77.494,2.000 t=0.077
     note@-6 x=10.574 w=6.705
-      glyph noteheadBlack 10.574,3.000
       glyph augmentationDot 12.227,2.500
+      glyph noteheadBlack 10.574,3.000
       line  10.316,3.000 -> 12.098,3.000 t=0.090
       line  10.638,3.167 -> 10.638,6.500 t=0.129
     note@-5 x=26.585 w=6.705
-      glyph noteheadBlack 26.585,2.500
       glyph augmentationDot 28.237,2.500
+      glyph noteheadBlack 26.585,2.500
       line  26.649,2.667 -> 26.649,6.000 t=0.129
     bar x=42.595 w=0.077
       line  42.634,-2.000 -> 42.634,2.000 t=0.077
     note@-4 x=44.015 w=6.705
-      glyph noteheadBlack 44.015,2.000
       glyph augmentationDot 45.668,1.500
+      glyph noteheadBlack 44.015,2.000
       line  44.079,2.167 -> 44.079,5.500 t=0.129
     note@-3 x=61.445 w=6.705
-      glyph noteheadBlack 61.445,1.500
       glyph augmentationDot 63.098,1.500
+      glyph noteheadBlack 61.445,1.500
       line  61.509,1.667 -> 61.509,5.000 t=0.129
     bar x=77.455 w=0.077
       line  77.494,-2.000 -> 77.494,2.000 t=0.077
@@ -178,23 +178,23 @@ system 1 width=90.323 originY=32.209
     bar x=69.437 w=0.077
       line  69.476,-2.000 -> 69.476,2.000 t=0.077
     note@-6 x=10.432 w=6.705
-      glyph noteheadBlack 10.432,3.000
       glyph augmentationDot 12.085,2.500
+      glyph noteheadBlack 10.432,3.000
       line  10.174,3.000 -> 11.956,3.000 t=0.090
       line  10.496,3.167 -> 10.496,6.500 t=0.129
     note@-5 x=26.856 w=6.705
-      glyph noteheadBlack 26.856,2.500
       glyph augmentationDot 28.509,2.500
+      glyph noteheadBlack 26.856,2.500
       line  26.920,2.667 -> 26.920,6.000 t=0.129
     bar x=44.699 w=0.077
       line  44.738,-2.000 -> 44.738,2.000 t=0.077
     note@-4 x=46.119 w=6.705
-      glyph noteheadBlack 46.119,2.000
       glyph augmentationDot 47.772,1.500
+      glyph noteheadBlack 46.119,2.000
       line  46.183,2.167 -> 46.183,5.500 t=0.129
     note@-3 x=63.962 w=6.705
-      glyph noteheadBlack 63.962,1.500
       glyph augmentationDot 65.615,1.500
+      glyph noteheadBlack 63.962,1.500
       line  64.027,1.667 -> 64.027,5.000 t=0.129
     bar x=77.180 w=0.077
       line  77.218,-2.000 -> 77.218,2.000 t=0.077

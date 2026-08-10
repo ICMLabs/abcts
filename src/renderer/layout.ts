@@ -2829,13 +2829,35 @@ function layoutNoteheads(
   // (`create-note-head.js:99-100`) — the same escape the key signature takes two files
   // over. Its ink box is not centred on its origin, so reserving the outline reaches
   // higher than abcjs on any staff an accidental tops out.
+  /**
+   * **abcjs EMITS ONE PITCH AT A TIME, AND THE HEAD COMES LAST.** `createNoteHead` builds
+   * the notehead but does NOT add it: it `addRight`s the FLAG, then the DOTS, then
+   * `addExtra`s the ACCIDENTAL, and only when it RETURNS does the caller run
+   * `abselem.addHead(noteHead)` (`create-note-head.js:20-70`,
+   * `abstract-engraver.js:722-733`). So one pitch draws
+   *
+   *     flag  →  dots  →  accidental  →  head
+   *
+   * — verified against `abcjs-visual-layout-04`'s golden, whose note group reads
+   * `dots.dot, accidentals.flat, _B,, abcjs-stem, ledger`.
+   *
+   * These three collect rather than push, and `emitHeads` below assembles them once the
+   * flag is known — it cannot be known earlier, because it hangs off the stem tip.
+   */
+  const pendingAccidentals: { glyph: PlacedGlyph; step: number }[] = []
+  const pendingHeads: PlacedGlyph[] = []
+  const pendingDots = new Map<number, PlacedGlyph[]>()
+  let pendingFlag: PlacedGlyph | undefined
   accidentals.forEach((a, index) => {
     const placed = glyphAt(a.glyph, headXOf(accidentalPlaces[index] ?? 0), a.step)
     const half = (glyphsFor(strict).get(a.glyph)?.declaredHeight ?? 0) / 2
-    glyphs.push({
-      ...placed,
-      role: 'accidental',
-      reserve: [stepToY(a.step) - half, stepToY(a.step) + half],
+    pendingAccidentals.push({
+      glyph: {
+        ...placed,
+        role: 'accidental',
+        reserve: [stepToY(a.step) - half, stepToY(a.step) + half],
+      },
+      step: a.step,
     })
   })
   const headX = noteX + accidentalWidth
@@ -2853,7 +2875,7 @@ function layoutNoteheads(
   for (const [position, step] of steps.entries()) {
     const dx = offsetAt[position] ?? 0
     const y = stepToY(step)
-    glyphs.push({
+    pendingHeads.push({
       ...glyphAt(headName, headX + dx, step),
       role: 'notehead',
       ...(stepped[position] === undefined ? {} : { dataName: writtenNote(stepped[position].pitch) }),
@@ -2877,7 +2899,8 @@ function layoutNoteheads(
       ? rightmost + spaces(ABCJS_PX.dotOffset + ABCJS_PX.dotSpacing)
       : rightmost + ENGRAVE.dotGap
     const taken = new Set<number>()
-    for (const step of steps) glyphs.push(...dotGlyphs(spec.dots, dotX, step, taken, dotStep))
+    for (const step of steps)
+      pendingDots.set(step, dotGlyphs(spec.dots, dotX, step, taken, dotStep))
     // THE ROD IS THE LAST DOT'S RIGHT EDGE, not a count times a spacing. abcjs's dots are
     // `addRight` children whose extent is `dx + getSymbolWidth("dots.dot")`
     // (`create-note-head.js:53`), so what reaches past the notehead is the FURTHEST dot
@@ -3005,8 +3028,35 @@ function layoutNoteheads(
       // the element's rod. Riding it on `stemX` widened `happy-birthday`'s spread the
       // moment the stem itself became abcjs's.
       const flagX = strict ? headX + (up ? headInk - spaces(ABCJS_PX.flagStemInset) : 0) : stemX
-      if (flag !== undefined) glyphs.push({ name: flag, x: flagX, y: tip, role: 'flag' })
+      if (flag !== undefined) pendingFlag = { name: flag, x: flagX, y: tip, role: 'flag' }
     }
+  }
+
+  /**
+   * The pitches, in abcjs's own emission order — see `pendingAccidentals`.
+   *
+   * **THE FLAG BELONGS TO THE STEMMED HEAD OF A CHORD, NOT TO THE ELEMENT.**
+   * `abstract-engraver.js:671-675` sets `flag = null` when
+   * `(dir === "down" && p !== 0) || (dir === "up" && p !== pp - 1)`, so an up-stemmed
+   * `[FA]` emits `F, flags.u8th, A` — head, flag, head. That reads as an exception to a
+   * rule about flags and is the rule itself.
+   */
+  {
+    const stemmedHead = up ? pendingHeads.length - 1 : 0
+    const unused = [...pendingAccidentals]
+    for (const [position, head] of pendingHeads.entries()) {
+      if (position === stemmedHead && pendingFlag !== undefined) glyphs.push(pendingFlag)
+      glyphs.push(...(pendingDots.get(steps[position] ?? 0) ?? []))
+      const i = unused.findIndex((a) => a.step === steps[position])
+      if (i >= 0) glyphs.push(...unused.splice(i, 1).map((a) => a.glyph))
+      glyphs.push(head)
+    }
+    // An accidental with no head to belong to cannot happen from the parser, but dropping
+    // one would be a silent loss rather than a wrong order.
+    glyphs.push(...unused.map((a) => a.glyph))
+    // …and a flag with no head at all — a stemless chord cannot have one, but a rest can
+    // reach here through the same path.
+    if (pendingHeads.length === 0 && pendingFlag !== undefined) glyphs.push(pendingFlag)
   }
 
   /** How far LEFT a decoration reaches past the note — an arpeggio, and only it. */

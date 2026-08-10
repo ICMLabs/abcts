@@ -20,8 +20,8 @@ system 0 width=90.323 originY=0.000
       glyph timeSig3 10.881,-1.000
       glyph timeSig4 10.749,1.000
     note@-2 x=13.561 w=3.871
-      glyph noteheadBlack 13.561,1.000
       glyph flag8thUp 14.749,-2.500
+      glyph noteheadBlack 13.561,1.000
       line  14.762,0.833 -> 14.762,-2.500 t=0.129
     bar x=84.187 w=0.077
       line  84.226,-2.000 -> 84.226,2.000 t=0.077
@@ -43,8 +43,8 @@ system 1 width=90.323 originY=18.123
       glyph accidentalNatural 7.284,0.500
       glyph accidentalFlat 8.239,0.000
     note@0 x=10.400 w=3.871
-      glyph noteheadBlack 10.400,0.000
       glyph flag8thDown 10.400,3.500
+      glyph noteheadBlack 10.400,0.000
       line  10.465,0.000 -> 10.465,3.500 t=0.129
     bar x=83.626 w=0.077
       line  83.665,-2.000 -> 83.665,2.000 t=0.077
@@ -68,8 +68,8 @@ system 2 width=46.869 originY=30.616
       glyph accidentalSharp 7.284,-2.000
       glyph accidentalSharp 8.607,-0.500
     note@2 x=10.961 w=3.871
-      glyph noteheadBlack 10.961,-1.000
       glyph flag8thDown 10.961,2.500
+      glyph noteheadBlack 10.961,-1.000
       line  11.026,-0.833 -> 11.026,2.500 t=0.129
     bar x=14.832 w=0.077
       line  14.871,-2.000 -> 14.871,2.000 t=0.077
