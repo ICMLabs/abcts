@@ -100,9 +100,15 @@ function resolve(target: Target): { innerHTML: string } | null {
 export function renderAbc(target: Target, abc: string, params: AbcjsParams = {}): TuneObject[] {
   const result = parse(abc, { mode: 'abcjs-strict' })
   const staffSpace = STAFF_SPACE_PX * (params.scale ?? 1)
-  // abcjs's staffwidth is the music area in pixels; core's systemWidth is in staff spaces.
+  // abcjs's staffwidth is the MUSIC AREA in pixels; core's `systemWidth` is the PAGE in
+  // staff spaces — `%%staffwidth` maps `staffWidth / 7.75 + 2 * marginX` and the engine
+  // default is 700 for abcjs's 670. Dropping the padding here made every justified line
+  // 30px narrow (`L 655` where abcjs writes `L 685`) and it was invisible to every
+  // geometry gate, because they all render with NO staffwidth and take the default.
   const systemWidth =
-    params.staffwidth === undefined ? undefined : params.staffwidth / STAFF_SPACE_PX
+    params.staffwidth === undefined
+      ? undefined
+      : (params.staffwidth + SCREEN_PADDING * 2) / STAFF_SPACE_PX
 
   const tunes = result.scores.map((score) => ({
     svg: toSVG(layout(score, { mode: 'abcjs-strict', ...(systemWidth ? { systemWidth } : {}) }), {
