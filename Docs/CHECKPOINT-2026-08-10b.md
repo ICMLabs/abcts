@@ -30,10 +30,10 @@ reproduce goes in `Docs/ABCJS-DIFFERENCES.md` with its evidence and its slug goe
 | chord grid | `chord-grid-ranked` | 0 of 23 |
 | harvested geometry | `corpus-abcjs-ranked` | 0 of 174 |
 | pixel geometry | `pixel-parity` | 0 of 120 |
-| DOM contract | `dom-contract` | **22 of 25 cases** (from 25), **248 of 648 rows** (from 86) — three slugs RATCHETED |
+| DOM contract | `dom-contract` | **14 of 25 cases** (from 25), **219 of 427 rows** — ELEVEN slugs RATCHETED |
 | **SVG bytes** | **`svg-bytes`** | **164 of 171 — SEVEN BYTE-EXACT AND RATCHETED**; best 5186, median 179 (from 171 of 171 at 651 / 162) |
 
-**Suite 1137 of 1137. NO REDS. `npx tsc --noEmit` clean.**
+**Suite 1145 of 1145. NO REDS. `npx tsc --noEmit` clean.**
 
 ---
 
@@ -115,7 +115,7 @@ nothing in `tests/` may grow that mask.**
 
 ## 2. WHAT CLOSED, AND WHY EACH WAS INVISIBLE
 
-Twenty-five landings, every one a read of a named abcjs function.
+Twenty-seven landings, every one a read of a named abcjs function.
 
 - **`staffwidth` is the MUSIC area; the page is it plus abcjs's 15px margins.** compat
   mapped `renderAbc(…, {staffwidth: 670})` straight onto core's `systemWidth`, which is
@@ -220,6 +220,14 @@ Twenty-five landings, every one a read of a named abcjs function.
   AFTER (`draw/draw.js:44-52`), so the slack falls below. Ours anchored from the music
   BELOW, which is right for the head block and 31.4px low here. **The total is identical
   either way, so no height moved and no gate could see it.**
+- **THE ORDER INSIDE AN ELEMENT GROUP IS THE ENGRAVER'S ADD ORDER** —
+  `[flag, dots, accidental, head]` per pitch, then the RULES, then everything added after
+  them. And the rules are not one block: an UNBEAMED stem is `addRight` right after the
+  pitch loop (`abstract-engraver.js:762`) and lands BEFORE the ledgers, a BEAMED one comes
+  from the beam pass and lands AFTER. abcjs's own contract shows both, `C, ledger, stem`
+  against `_B,, stem, ledger`. **The ratchet caught a regression the ranked count hid**:
+  splitting the run also broke a time signature's `<g data-name="12">`, and `svg-12-8-group`
+  failed the same run that took the aggregate from 22 differing to 15.
 - **`data-index` is an index into the SELECTABLES, not into the children.**
   `Selectables.add` writes `{selectable: false, "data-index": elements.length}` and only
   after `canSelect`, which with no `selectTypes` admits `el_type 'note'` alone
@@ -364,11 +372,20 @@ regression, so read the diff before touching the gate.
    `drawBeam`'s single concatenated `M…L…L…L…z` path with `class="abcjs-beam-elem
    abcjs-d0-25"` (`draw/beam.js:34-43`). Ours are a `<path class="abcjs-tie">` and a
    `<polygon>`.
-8. **`oneSvgPerLine` / `responsive` / `scale`** — five cases in `svg-per-line.test.js`.
-9. **`el-four-endings`** — `|1,3 … :|2,4 …`. A DECISION, not a bug fix.
-10. **The geometry half of the timing join** — `left`, `endX`, `top`, `height` on every
+8. **THE PER-PART CLASSES ARE NOT ONE RULE.** A BEAM's comes from
+   `classes.generate('beam-elem ' + durationClass)` (`draw/beam.js:24-25`), so under
+   `add_classes` it is `abcjs-beam-elem abcjs-d0-125 abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0`
+   and WITHOUT it an empty `class=""` — ours writes a literal `abcjs-beam` either way. A
+   LEDGER is the same shape and abcjs's no-`add_classes` golden gives it NO class at all,
+   where a STEM's `abcjs-stem` is a LITERAL passed straight to `printStem` and survives. So
+   some part classes are literals and some route through the counter, and we treat them all
+   as literals. Two rows of `dom-beam` and an attribute on every beam and ledger of the byte
+   table.
+9. **`oneSvgPerLine` / `responsive` / `scale`** — five cases in `svg-per-line.test.js`.
+10. **`el-four-endings`** — `|1,3 … :|2,4 …`. A DECISION, not a bug fix.
+11. **The geometry half of the timing join** — `left`, `endX`, `top`, `height` on every
    `noteTimings` row. A gate to BUILD.
-11. **The structural pass** — terms in `CHECKPOINT-2026-08-08d.md`, not to be re-argued.
+12. **The structural pass** — terms in `CHECKPOINT-2026-08-08d.md`, not to be re-argued.
 
 ---
 
@@ -377,7 +394,7 @@ regression, so read the diff before touching the gate.
 ```
 working tree clean
 npx tsc --noEmit    clean
-npx vitest run      1137 / 1137
+npx vitest run      1145 / 1145
 svg bytes           164 of 171   best 5186, median 179   (masked-height median 1241, max EXACT)
                     PASSING ratchet: 7 slugs, the first this table has ever held
 heights             80 exact / 86 ULP-only / 2 structural (3.875px, both the same)
@@ -388,8 +405,8 @@ chord-grid ranked   0 of 23
 midi ranked         0 of 3       BYTE-EXACT
 harvested ranked    0 of 174
 pixel ranked        0 of 120
-DOM contract        22 of 25     (248 of 648 rows, from 86)
-                    PASSING ratchet: dom-ledger, svg-12-8-group, svg-single-note
+DOM contract        14 of 25     (219 of 427 rows)
+                    PASSING ratchet: 11 slugs
 npx biome check src NOT clean — same rows as before, all pre-existing
 ```
 
