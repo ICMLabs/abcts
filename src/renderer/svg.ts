@@ -655,7 +655,7 @@ const glyphDefs = new Map<GlyphName, string>()
   /** abcjs's `Selectables.elements.length` — one counter for the whole drawing. */
   let selectableIndex = 0
 
-  for (const system of doc.systems) {
+  for (const [systemIndex, system] of doc.systems.entries()) {
     // The system's own origin, flattened into every coordinate under it.
     if (abcjs) oy = (system.originY + OY) * PX
     /**
@@ -702,7 +702,15 @@ const glyphDefs = new Map<GlyphName, string>()
           for (const line of el.lines) block.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
         }
       }
-      if (block.length > 0) parts.push(`<g>${block.join('')}</g>`)
+      // …and under `add_classes` the group is named: `abcjs-meta-top` for the tune's own
+      // header block, `abcjs-non-music` for a mid-tune one (`draw/draw.js:11-12`, `:55`).
+      if (block.length > 0) {
+        const klass =
+          options.addClasses === true
+            ? ` class="${systemIndex === 0 ? 'abcjs-meta-top' : 'abcjs-non-music'}"`
+            : ''
+        parts.push(`<g${klass}>${block.join('')}</g>`)
+      }
     }
 
     // `abcjs-staff-wrapper abcjs-l{n}` wraps a whole music LINE (`draw/draw.js:40-42`),
