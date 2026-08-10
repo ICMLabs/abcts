@@ -62,8 +62,23 @@ const CASES: Case[] = readdirSync(fixtures)
  */
 const DIVERGENT: readonly string[] = []
 
-/** Slugs that are byte-exact and must stay so. Grows, never shrinks. */
-const PASSING: readonly string[] = []
+/**
+ * Slugs that are BYTE-EXACT and must stay so. Grows, never shrinks.
+ *
+ * The first seven arrived together, and six of them are the same finding: **a line with no
+ * note and no barline is DELETED** (`tune-builder.js:29-61`, `:888-894`), so a tune with a
+ * header and no music draws no staff at all — abcjs's golden for `X:43\nT: example` is 694
+ * bytes holding a title and nothing else.
+ */
+const PASSING: readonly string[] = [
+  'abcjs-parse-book_parser-01-example',
+  'abcjs-parse-book_parser-02-tune',
+  'abcjs-parse-book_parser-04-wed',
+  'abcjs-parse-book_parser-06-a',
+  'abcjs-parse-book_parser-07-a',
+  'abcjs-visual-misc-14-tune',
+  'abcjs-visual-transpose-output-02-transpose-output',
+]
 
 interface Diff {
   /** Bytes that matched before the first difference — bigger is closer. */

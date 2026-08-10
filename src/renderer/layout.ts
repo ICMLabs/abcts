@@ -1199,6 +1199,12 @@ export interface Layout {
   readonly height: number
   /** y of the topmost content — the SVG backend translates by this. */
   readonly top: number
+  /**
+   * The title block for a tune with NO MUSIC AT ALL, which has no staff to hang it on.
+   * Absent whenever there is a system — the block rides the first staff then, so that its
+   * height is part of the extent rather than sitting above y = 0 and being clipped.
+   */
+  readonly topText?: readonly PlacedText[]
 }
 
 /**
@@ -7219,7 +7225,34 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     start = i
   }
   if (columns > 0) spans.push({ start, end: columns })
-  if (spans.length === 0) spans.push({ start: 0, end: 0 })
+
+  /**
+   * **A LINE WITH NO NOTE AND NO BARLINE IS DELETED.** `cleanUp` drops any `tune.lines[i]`
+   * whose every voice fails `containsNotes`, and that test is
+   * `el_type === 'note' || el_type === 'bar'` (`tune-builder.js:29-61`, `:888-894`). A
+   * clef, a key and a meter are not enough to keep a line alive.
+   *
+   * So a tune with a header and no music draws NO STAFF AT ALL: abcjs's golden for
+   * `X:43\nT: example` is 694 bytes and holds the title and nothing else. We drew an
+   * empty five-line stave under it — 57.06px of page on five fixtures, and 31px on a
+   * `K:none clef=perc` header with no body.
+   *
+   * **NO GATE COULD SEE IT.** `pixel-parity` and the harvested table pair NOTEHEADS, and
+   * a tune with no notes has none to pair; `dom-contract`'s cases all have music. It
+   * showed on the byte table, as the root's `height`.
+   */
+  const spansWithInk = spans.filter(({ start: from, end: to }) =>
+    plans.some((plan) =>
+      plan.measures
+        .slice(from, to)
+        .some(
+          (m) =>
+            m.events.length > 0 || m.openingBarline !== null || m.closingBarline !== null,
+        ),
+    ),
+  )
+  spans.length = 0
+  spans.push(...spansWithInk)
 
   // Anchors for every note of every voice, tagged with the system it landed in. A slur
   // or tie can span a break, so pairing them needs the whole tune, not one system.
@@ -8208,8 +8241,25 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   const last = shown[shown.length - 1]
   const bottom = last === undefined ? 0 : last.originY + systemHeight(last, strict)
 
+  /**
+   * **A TUNE WITH NO MUSIC STILL DRAWS ITS TITLE.** `draw()` runs `nonMusic(topText)` and
+   * spends `spacing.music` BEFORE it looks at a single line (`draw/draw.js:12-18`), so
+   * `X:43\nT: example` renders 78.12px of page holding a title and no staff, and a bare
+   * `X:43\nT:` renders 37.56 — the two margins and the music gap, with nothing between.
+   *
+   * The block normally rides on the first staff of the first system, because added after
+   * the fact it would sit above y = 0 and be clipped. With no system there is no staff to
+   * ride, so it comes back on the document; the emitter writes it into the same
+   * `abcjs-meta-top` group either way.
+   */
+  const stafflessBlock =
+    shown.length > 0
+      ? undefined
+      : topTextBlock(score.metadata, systemWidth - ENGRAVE.marginX * 2, score.textAbove, score.fonts)
+
   return {
     systems: shown,
+    ...(stafflessBlock === undefined ? {} : { topText: stafflessBlock.texts }),
     width: Math.max(0, ...shown.map((s) => s.width)),
     /**
      * **THE PAGE IS THE REQUESTED WIDTH OR THE WIDEST LINE, WHICHEVER IS BIGGER** — and
@@ -8226,7 +8276,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     // `moveY(padding.top)` before drawing anything (`draw.js:14`), so the page begins
     // ABOVE the ink — expressed as a negative viewBox top rather than by shifting every
     // system, which would put the same constant in two places.
-    height: bottom + ENGRAVE.marginTop + ENGRAVE.marginBottom,
+    height:
+      (stafflessBlock === undefined ? bottom : stafflessBlock.height + musicSpace) +
+      ENGRAVE.marginTop +
+      ENGRAVE.marginBottom,
     top: -ENGRAVE.marginTop,
   }
 }

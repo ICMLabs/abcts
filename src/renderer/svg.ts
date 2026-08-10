@@ -671,6 +671,33 @@ const glyphDefs = new Map<GlyphName, string>()
   /** abcjs's `Selectables.elements.length` — one counter for the whole drawing. */
   let selectableIndex = 0
 
+  /**
+   * A TUNE WITH NO MUSIC still writes its title, in the same `abcjs-meta-top` group a
+   * tune with a staff writes it in — `draw()` runs `nonMusic(topText)` before it looks at
+   * a line at all (`draw/draw.js:12-17`). `doc.topText` is set only in that case; see
+   * `layout.ts`.
+   */
+  if (abcjs && doc.topText !== undefined && doc.topText.length > 0) {
+    oy = OY * PX
+    const block = doc.topText.map((t) =>
+      abcjsText(
+        num(t.x * PX),
+        num(t.y * PX + oy),
+        num(t.size * PX),
+        'Times New Roman',
+        t.italic === true,
+        t.bold === true,
+        t.anchor ?? 'start',
+        t.dataName ?? '',
+        escapeText(t.text),
+        options.addClasses === true && t.dataName !== undefined
+          ? (ABCJS_TEXT_CLASSES[t.dataName] ?? '')
+          : '',
+      ),
+    )
+    parts.push(`<g${options.addClasses === true ? ' class="abcjs-meta-top"' : ''}>${block.join('')}</g>`)
+  }
+
   for (const [systemIndex, system] of doc.systems.entries()) {
     // The system's own origin, flattened into every coordinate under it.
     if (abcjs) oy = (system.originY + OY) * PX
