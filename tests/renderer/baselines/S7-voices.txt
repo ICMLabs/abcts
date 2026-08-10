@@ -1,7 +1,7 @@
 tune 0
-bounds  width=90.323 height=40.579 top=-1.935
+bounds  width=100.226 height=40.579 top=-1.935
 systems 1
-system 0 width=90.323 originY=0.000
+system 0 width=100.226 originY=0.000
   connector brace -0.920,15.514 scale=3.559
   staff 0 originY=17.514
     staffline 3.226,2.000 -> 88.387,2.000 t=0.090
@@ -17,8 +17,8 @@ system 0 width=90.323 originY=0.000
     tie  47.879,4.100 -> 50.047,4.100 bulge=0.500
     tie  63.856,2.100 -> 66.025,2.100 bulge=0.500
     title x=0.000 w=0.000
-      text  35.134,-13.055 size=3.484 "S7-1 Piano Two Voice"
-      text  40.210,-8.854 size=2.452 italic "Elton John"
+      text  45.161,-13.055 size=3.484 "S7-1 Piano Two Voice"
+      text  88.387,-8.854 size=2.452 italic "Elton John"
     clef x=3.226 w=3.103
       glyph gClef 3.871,1.000
     timeSignature x=7.619 w=1.682
@@ -308,9 +308,9 @@ system 0 width=90.323 originY=0.000
     bar x=88.258 w=0.077
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
 tune 1
-bounds  width=90.231 height=50.023 top=-1.935
+bounds  width=106.046 height=50.023 top=-1.935
 systems 1
-system 0 width=90.231 originY=0.000
+system 0 width=106.046 originY=0.000
   connector brace -0.920,16.402 scale=4.952
   staff 0 originY=18.402
     staffline 3.226,2.000 -> 88.295,2.000 t=0.090
@@ -331,8 +331,8 @@ system 0 width=90.231 originY=0.000
     tie  54.452,4.100 -> 60.223,4.100 bulge=1.039
     slur  72.129,4.250 -> 77.900,3.750 bulge=1.039
     title x=0.000 w=0.000
-      text  33.136,-13.943 size=3.484 "S7-2 Piano Dense Notation"
-      text  37.253,-9.742 size=2.452 italic "L. van Beethoven"
+      text  45.161,-13.943 size=3.484 "S7-2 Piano Dense Notation"
+      text  88.387,-9.742 size=2.452 italic "L. van Beethoven"
     clef x=3.226 w=3.103
       glyph gClef 3.871,1.000
     keySignature x=7.619 w=3.129
@@ -682,9 +682,9 @@ system 0 width=90.231 originY=0.000
     bar x=88.166 w=0.077
       line  88.205,-2.000 -> 88.205,2.000 t=0.077
 tune 2
-bounds  width=90.323 height=39.739 top=-1.935
+bounds  width=98.821 height=39.739 top=-1.935
 systems 1
-system 0 width=90.323 originY=0.000
+system 0 width=98.821 originY=0.000
   connector brace -0.920,16.652 scale=3.559
   staff 0 originY=18.652
     staffline 3.226,2.000 -> 88.387,2.000 t=0.090
@@ -703,8 +703,8 @@ system 0 width=90.323 originY=0.000
     beam   53.533,-3.750 -> 67.078,-4.750 t=0.500
     beam   71.490,-3.750 -> 85.035,-4.750 t=0.500
     title x=0.000 w=0.000
-      text  31.843,-14.193 size=3.484 "S7-3 Counterpoint Two Voice"
-      text  40.912,-9.992 size=2.452 italic "J.S. Bach"
+      text  45.161,-14.193 size=3.484 "S7-3 Counterpoint Two Voice"
+      text  88.387,-9.992 size=2.452 italic "J.S. Bach"
     clef x=3.226 w=3.103
       glyph gClef 3.871,1.000
     keySignature x=7.619 w=3.129
@@ -963,9 +963,9 @@ system 0 width=90.323 originY=0.000
     bar x=88.258 w=0.077
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
 tune 3
-bounds  width=90.412 height=44.135 top=-1.935
+bounds  width=98.581 height=44.135 top=-1.935
 systems 1
-system 0 width=90.412 originY=0.000
+system 0 width=98.581 originY=0.000
   connector brace -0.920,16.152 scale=4.040
   staff 0 originY=18.152
     staffline 3.226,2.000 -> 88.476,2.000 t=0.090
@@ -983,8 +983,8 @@ system 0 width=90.412 originY=0.000
     slur  53.939,-0.250 -> 71.218,-4.250 bulge=-2.200
     slur  80.687,1.750 -> 82.106,1.750 bulge=0.500
     title x=0.000 w=0.000
-      text  34.631,-13.693 size=3.484 "S7-4 Three Voice Piano"
-      text  41.077,-9.492 size=2.452 italic "Schumann"
+      text  45.161,-13.693 size=3.484 "S7-4 Three Voice Piano"
+      text  88.387,-9.492 size=2.452 italic "Schumann"
     clef x=3.226 w=3.103
       glyph gClef 3.871,1.000
     keySignature x=7.619 w=1.065
@@ -1299,8 +1299,8 @@ system 0 width=100.611 originY=0.000
     slur  50.893,1.750 -> 53.233,0.750 bulge=-0.500
     slur  50.893,4.250 -> 53.233,4.750 bulge=0.500
     title x=0.000 w=0.000
-      text  41.891,-12.991 size=3.484 "S7-5 SATB Choral"
-      text  41.374,-9.019 size=2.710 "(Mor Fawr Wyt Ti!)"
+      text  45.161,-12.991 size=3.484 "S7-5 SATB Choral"
+      text  45.161,-9.019 size=2.710 "(Mor Fawr Wyt Ti!)"
     clef x=3.226 w=3.103
       glyph gClef 3.871,1.000
     keySignature x=7.619 w=3.710
@@ -1885,9 +1885,9 @@ system 0 width=100.611 originY=0.000
       line  97.682,-2.000 -> 97.682,2.000 t=0.077
       line  98.418,-2.000 -> 98.418,2.000 t=0.516
 tune 5
-bounds  width=90.454 height=53.819 top=-1.935
+bounds  width=111.161 height=53.819 top=-1.935
 systems 1
-system 0 width=90.454 originY=0.000
+system 0 width=111.161 originY=0.000
   connector bracketTop -0.600,15.870
   connector bracketBottom -0.600,41.926
   connector line -0.600,15.870 -> -0.600,41.926 t=0.375
@@ -1901,8 +1901,8 @@ system 0 width=90.454 originY=0.000
     beam   48.594,2.000 -> 50.293,2.000 t=0.500
     beam   55.385,2.000 -> 56.485,2.000 t=0.500
     title x=0.000 w=0.000
-      text  34.895,-13.411 size=3.484 "S7-6 Organ Four Voice"
-      text  34.808,-9.209 size=2.452 italic "Johann Nicolaus Hanff"
+      text  45.161,-13.411 size=3.484 "S7-6 Organ Four Voice"
+      text  88.387,-9.209 size=2.452 italic "Johann Nicolaus Hanff"
     voiceName x=1.935 w=0.000
       text  1.935,0.768 size=2.194 bold "Rückpos"
     clef x=12.796 w=3.103
@@ -2208,9 +2208,9 @@ system 0 width=90.454 originY=0.000
     bar x=88.389 w=0.077
       line  88.428,-2.000 -> 88.428,2.000 t=0.077
 tune 6
-bounds  width=91.031 height=46.867 top=-1.935
+bounds  width=102.756 height=46.867 top=-1.935
 systems 1
-system 0 width=91.031 originY=0.000
+system 0 width=102.756 originY=0.000
   connector brace -0.920,22.042 scale=4.371
   staff 0 originY=24.042
     staffline 3.226,2.000 -> 89.095,2.000 t=0.090
@@ -2224,8 +2224,8 @@ system 0 width=91.031 originY=0.000
     beam   69.597,4.250 -> 71.070,4.750 t=0.500
     tie  65.306,-1.100 -> 68.507,-1.100 bulge=-0.576
     title x=0.000 w=0.000
-      text  38.261,-19.583 size=3.484 "S7-7 Organ Trio"
-      text  39.299,-15.381 size=2.452 italic "André Raison"
+      text  45.161,-19.583 size=3.484 "S7-7 Organ Trio"
+      text  88.387,-15.381 size=2.452 italic "André Raison"
     clef x=3.226 w=3.103
       glyph gClef 3.871,1.000
     keySignature x=7.619 w=0.871

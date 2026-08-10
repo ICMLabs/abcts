@@ -1,7 +1,7 @@
 tune 0
-bounds  width=32.975 height=17.442 top=-1.935
+bounds  width=48.987 height=17.442 top=-1.935
 systems 1
-system 0 width=32.975 originY=0.000
+system 0 width=48.987 originY=0.000
   staff 0 originY=10.071
     staffline 1.935,2.000 -> 31.039,2.000 t=0.090
     staffline 1.935,1.000 -> 31.039,1.000 t=0.090
@@ -11,7 +11,7 @@ system 0 width=32.975 originY=0.000
     tie  9.916,1.600 -> 15.132,1.600 bulge=0.939
     tie  20.864,1.600 -> 26.081,1.600 bulge=0.939
     title x=0.000 w=0.000
-      text  14.597,-5.612 size=3.484 "Ties"
+      text  45.161,-5.612 size=3.484 "Ties"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -30,9 +30,9 @@ system 0 width=32.975 originY=0.000
       glyph noteheadBlack 25.565,1.000
       line  26.766,0.833 -> 26.766,-2.500 t=0.129
 tune 1
-bounds  width=32.975 height=17.442 top=-1.935
+bounds  width=49.355 height=17.442 top=-1.935
 systems 1
-system 0 width=32.975 originY=0.000
+system 0 width=49.355 originY=0.000
   staff 0 originY=10.071
     staffline 1.935,2.000 -> 31.039,2.000 t=0.090
     staffline 1.935,1.000 -> 31.039,1.000 t=0.090
@@ -42,7 +42,7 @@ system 0 width=32.975 originY=0.000
     slur  9.916,1.750 -> 15.132,1.750 bulge=0.939
     slur  20.864,1.750 -> 26.081,1.750 bulge=0.939
     title x=0.000 w=0.000
-      text  14.229,-5.612 size=3.484 "Slurs"
+      text  45.161,-5.612 size=3.484 "Slurs"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -61,9 +61,9 @@ system 0 width=32.975 originY=0.000
       glyph noteheadBlack 25.565,1.000
       line  26.766,0.833 -> 26.766,-2.500 t=0.129
 tune 2
-bounds  width=32.975 height=17.442 top=-1.935
+bounds  width=52.676 height=17.442 top=-1.935
 systems 1
-system 0 width=32.975 originY=0.000
+system 0 width=52.676 originY=0.000
   staff 0 originY=10.071
     staffline 1.935,2.000 -> 31.039,2.000 t=0.090
     staffline 1.935,1.000 -> 31.039,1.000 t=0.090
@@ -73,7 +73,7 @@ system 0 width=32.975 originY=0.000
     slur  9.916,1.750 -> 15.132,1.750 bulge=0.939
     slur  9.916,1.750 -> 26.081,1.750 bulge=2.200
     title x=0.000 w=0.000
-      text  10.908,-5.612 size=3.484 "Nested Slurs"
+      text  45.161,-5.612 size=3.484 "Nested Slurs"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -92,9 +92,9 @@ system 0 width=32.975 originY=0.000
       glyph noteheadBlack 25.565,1.000
       line  26.766,0.833 -> 26.766,-2.500 t=0.129
 tune 3
-bounds  width=32.975 height=17.464 top=-1.935
+bounds  width=58.161 height=17.464 top=-1.935
 systems 1
-system 0 width=32.975 originY=0.000
+system 0 width=58.161 originY=0.000
   staff 0 originY=10.071
     staffline 1.935,2.000 -> 31.039,2.000 t=0.090
     staffline 1.935,1.000 -> 31.039,1.000 t=0.090
@@ -104,7 +104,7 @@ system 0 width=32.975 originY=0.000
     slur  9.916,1.750 -> 15.132,1.750 bulge=0.939
     slur  20.864,1.750 -> 26.081,1.750 bulge=0.939
     title x=0.000 w=0.000
-      text  5.423,-5.612 size=3.484 "Slurs over Stacked Notes"
+      text  45.161,-5.612 size=3.484 "Slurs over Stacked Notes"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -132,9 +132,9 @@ system 0 width=32.975 originY=0.000
       glyph noteheadBlack 25.565,1.000
       line  26.766,0.833 -> 26.766,-2.500 t=0.129
 tune 4
-bounds  width=32.975 height=17.464 top=-1.935
+bounds  width=61.299 height=17.464 top=-1.935
 systems 1
-system 0 width=32.975 originY=0.000
+system 0 width=61.299 originY=0.000
   staff 0 originY=10.071
     staffline 1.935,2.000 -> 31.039,2.000 t=0.090
     staffline 1.935,1.000 -> 31.039,1.000 t=0.090
@@ -144,7 +144,7 @@ system 0 width=32.975 originY=0.000
     slur  9.916,1.750 -> 15.132,1.750 bulge=0.939
     slur  9.916,1.750 -> 26.081,1.750 bulge=2.200
     title x=0.000 w=0.000
-      text  2.285,-5.612 size=3.484 "Nested slurs over Stacked Notes"
+      text  45.161,-5.612 size=3.484 "Nested slurs over Stacked Notes"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -169,9 +169,9 @@ system 0 width=32.975 originY=0.000
       glyph noteheadBlack 25.565,1.000
       line  26.766,0.833 -> 26.766,-2.500 t=0.129
 tune 5
-bounds  width=37.885 height=17.442 top=-1.935
+bounds  width=64.104 height=17.442 top=-1.935
 systems 1
-system 0 width=37.885 originY=0.000
+system 0 width=64.104 originY=0.000
   staff 0 originY=10.071
     staffline 1.935,2.000 -> 31.039,2.000 t=0.090
     staffline 1.935,1.000 -> 31.039,1.000 t=0.090
@@ -181,7 +181,7 @@ system 0 width=37.885 originY=0.000
     slur  9.916,1.750 -> 15.132,1.750 bulge=0.939
     slur  15.390,1.750 -> 26.081,1.750 bulge=1.924
     title x=0.000 w=0.000
-      text  1.935,-5.612 size=3.484 "Slurs starting and ending on same note"
+      text  45.161,-5.612 size=3.484 "Slurs starting and ending on same note"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -200,9 +200,9 @@ system 0 width=37.885 originY=0.000
       glyph noteheadBlack 25.565,1.000
       line  26.766,0.833 -> 26.766,-2.500 t=0.129
 tune 6
-bounds  width=32.975 height=17.442 top=-1.935
+bounds  width=53.560 height=17.442 top=-1.935
 systems 1
-system 0 width=32.975 originY=0.000
+system 0 width=53.560 originY=0.000
   staff 0 originY=10.071
     staffline 1.935,2.000 -> 31.039,2.000 t=0.090
     staffline 1.935,1.000 -> 31.039,1.000 t=0.090
@@ -212,7 +212,7 @@ system 0 width=32.975 originY=0.000
     tie  9.916,1.600 -> 15.132,1.600 bulge=0.939
     slur  9.916,1.750 -> 26.081,1.750 bulge=2.200
     title x=0.000 w=0.000
-      text  10.024,-5.612 size=3.484 "Tie within slur"
+      text  45.161,-5.612 size=3.484 "Tie within slur"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522

@@ -2389,20 +2389,16 @@ describe('drawing bounds include prose, not just music', () => {
   })
 
   it('leaves the width alone when the music is the wider thing', () => {
-    // Its own page width rather than the shared 20-space one the title tests use: at 20
-    // the music no longer overflows, it COMPRESSES to fit, so the drawing would be
-    // exactly 20 wide and the comparison would say nothing about which is wider.
-    const wide = layout(
-      parse('X:1\nT:A\nM:4/4\nL:1/4\nK:C\nCDEF|GABc|defg|\n').scores[0] as Score,
-      { systemWidth: 200 },
-    )
-    expect(wide.width).toBeGreaterThan(30)
+    // REWRITTEN. The title is centred on the PAPER now, as abcjs centres it
+    // (`top-text.js:20`), so it always reaches half the page and a comparison at a WIDE
+    // page says only that half a wide page beats a short bar. At 20 the music fills the
+    // page and the title's reach — half of it plus one character — does not.
+    const at20 = (abc: string): number =>
+      layout(parse(abc).scores[0] as Score, { systemWidth: 20 }).width
+    const wide = at20('X:1\nT:A\nM:4/4\nL:1/4\nK:C\nCDEF|GABc|defg|\n')
+    expect(wide).toBeGreaterThan(15)
     // And the one-character title is not what set it.
-    expect(wide.width).toBeGreaterThan(
-      layout(parse('X:1\nT:A\nM:4/4\nL:1/4\nK:C\nC|\n').scores[0] as Score, {
-        systemWidth: 200,
-      }).width,
-    )
+    expect(wide).toBeGreaterThan(at20('X:1\nT:A\nM:4/4\nL:1/4\nK:C\nC|\n'))
   })
 
   it('fits every text it draws', () => {
@@ -2422,7 +2418,18 @@ describe('drawing bounds include prose, not just music', () => {
         0,
         ...d.systems.flatMap((s) =>
           s.staves.flatMap((st) =>
-            st.elements.flatMap((e) => e.texts.map((t) => t.x + textWidthOf(t.text, t.size))),
+            // ANCHOR-AWARE: a `middle`-anchored row reaches half its width past its x, not
+            // all of it. The title used to be placed by its LEFT edge and is placed
+            // absolutely now, as abcjs places it, so `x + width` over-reports it by half.
+            st.elements.flatMap((e) =>
+              e.texts.map(
+                (t) =>
+                  t.x +
+                  (t.anchor === 'middle'
+                    ? textWidthOf(t.text, t.size) / 2
+                    : textWidthOf(t.text, t.size)),
+              ),
+            ),
           ),
         ),
       )

@@ -1,7 +1,7 @@
 tune 0
-bounds  width=26.561 height=17.442 top=-1.935
+bounds  width=51.880 height=17.442 top=-1.935
 systems 1
-system 0 width=26.561 originY=0.000
+system 0 width=51.880 originY=0.000
   staff 0 originY=10.071
     staffline 1.935,2.000 -> 24.625,2.000 t=0.090
     staffline 1.935,1.000 -> 24.625,1.000 t=0.090
@@ -9,7 +9,7 @@ system 0 width=26.561 originY=0.000
     staffline 1.935,-1.000 -> 24.625,-1.000 t=0.090
     staffline 1.935,-2.000 -> 24.625,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  8.497,-5.612 size=3.484 "Treble clef"
+      text  45.161,-5.612 size=3.484 "Treble clef"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -18,9 +18,9 @@ system 0 width=26.561 originY=0.000
     note@-2 x=9.141 w=15.484
       glyph noteheadDoubleWhole 9.141,1.000
 tune 1
-bounds  width=26.703 height=17.605 top=-1.935
+bounds  width=51.090 height=17.605 top=-1.935
 systems 1
-system 0 width=26.703 originY=0.000
+system 0 width=51.090 originY=0.000
   staff 0 originY=11.735
     staffline 1.935,2.000 -> 24.768,2.000 t=0.090
     staffline 1.935,1.000 -> 24.768,1.000 t=0.090
@@ -28,7 +28,7 @@ system 0 width=26.703 originY=0.000
     staffline 1.935,-1.000 -> 24.768,-1.000 t=0.090
     staffline 1.935,-2.000 -> 24.768,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  9.359,-7.275 size=3.484 "Bass clef"
+      text  45.161,-7.275 size=3.484 "Bass clef"
     clef x=1.935 w=3.246
       glyph fClef 2.581,-1.000
     timeSignature x=6.471 w=1.522
@@ -40,9 +40,9 @@ system 0 width=26.703 originY=0.000
       line  9.026,-4.000 -> 11.713,-4.000 t=0.090
       line  9.026,-5.000 -> 11.713,-5.000 t=0.090
 tune 2
-bounds  width=26.703 height=16.605 top=-1.935
+bounds  width=52.795 height=16.605 top=-1.935
 systems 1
-system 0 width=26.703 originY=0.000
+system 0 width=52.795 originY=0.000
   staff 0 originY=10.735
     staffline 1.935,2.000 -> 24.768,2.000 t=0.090
     staffline 1.935,1.000 -> 24.768,1.000 t=0.090
@@ -50,7 +50,7 @@ system 0 width=26.703 originY=0.000
     staffline 1.935,-1.000 -> 24.768,-1.000 t=0.090
     staffline 1.935,-2.000 -> 24.768,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  7.653,-6.275 size=3.484 "Baritone clef"
+      text  45.161,-6.275 size=3.484 "Baritone clef"
     clef x=1.935 w=3.246
       glyph fClef 2.581,0.000
     timeSignature x=6.471 w=1.522
@@ -61,9 +61,9 @@ system 0 width=26.703 originY=0.000
       line  9.026,-3.000 -> 11.713,-3.000 t=0.090
       line  9.026,-4.000 -> 11.713,-4.000 t=0.090
 tune 3
-bounds  width=26.723 height=15.605 top=-1.935
+bounds  width=51.636 height=15.605 top=-1.935
 systems 1
-system 0 width=26.723 originY=0.000
+system 0 width=51.636 originY=0.000
   staff 0 originY=9.735
     staffline 1.935,2.000 -> 24.788,2.000 t=0.090
     staffline 1.935,1.000 -> 24.788,1.000 t=0.090
@@ -71,7 +71,7 @@ system 0 width=26.723 originY=0.000
     staffline 1.935,-1.000 -> 24.788,-1.000 t=0.090
     staffline 1.935,-2.000 -> 24.788,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  8.822,-5.275 size=3.484 "Tenor clef"
+      text  45.161,-5.275 size=3.484 "Tenor clef"
     clef x=1.935 w=3.266
       glyph cClef 2.581,-1.000
     timeSignature x=6.492 w=1.522
@@ -81,9 +81,9 @@ system 0 width=26.723 originY=0.000
       glyph noteheadDoubleWhole 9.304,-3.000
       line  9.046,-3.000 -> 11.734,-3.000 t=0.090
 tune 4
-bounds  width=26.723 height=14.605 top=-1.935
+bounds  width=50.968 height=14.605 top=-1.935
 systems 1
-system 0 width=26.723 originY=0.000
+system 0 width=50.968 originY=0.000
   staff 0 originY=8.735
     staffline 1.935,2.000 -> 24.788,2.000 t=0.090
     staffline 1.935,1.000 -> 24.788,1.000 t=0.090
@@ -91,7 +91,7 @@ system 0 width=26.723 originY=0.000
     staffline 1.935,-1.000 -> 24.788,-1.000 t=0.090
     staffline 1.935,-2.000 -> 24.788,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  9.491,-4.275 size=3.484 "Alto clef"
+      text  45.161,-4.275 size=3.484 "Alto clef"
     clef x=1.935 w=3.266
       glyph cClef 2.581,0.000
     timeSignature x=6.492 w=1.522
@@ -100,9 +100,9 @@ system 0 width=26.723 originY=0.000
     note@4 x=9.304 w=15.484
       glyph noteheadDoubleWhole 9.304,-2.000
 tune 5
-bounds  width=26.723 height=15.080 top=-1.935
+bounds  width=55.356 height=15.080 top=-1.935
 systems 1
-system 0 width=26.723 originY=0.000
+system 0 width=55.356 originY=0.000
   staff 0 originY=8.209
     staffline 1.935,2.000 -> 24.788,2.000 t=0.090
     staffline 1.935,1.000 -> 24.788,1.000 t=0.090
@@ -110,7 +110,7 @@ system 0 width=26.723 originY=0.000
     staffline 1.935,-1.000 -> 24.788,-1.000 t=0.090
     staffline 1.935,-2.000 -> 24.788,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  5.103,-3.750 size=3.484 "Messosoprano clef"
+      text  45.161,-3.750 size=3.484 "Messosoprano clef"
     clef x=1.935 w=3.266
       glyph cClef 2.581,1.000
     timeSignature x=6.492 w=1.522
@@ -119,9 +119,9 @@ system 0 width=26.723 originY=0.000
     note@2 x=9.304 w=15.484
       glyph noteheadDoubleWhole 9.304,-1.000
 tune 6
-bounds  width=26.723 height=16.080 top=-1.935
+bounds  width=52.673 height=16.080 top=-1.935
 systems 1
-system 0 width=26.723 originY=0.000
+system 0 width=52.673 originY=0.000
   staff 0 originY=8.209
     staffline 1.935,2.000 -> 24.788,2.000 t=0.090
     staffline 1.935,1.000 -> 24.788,1.000 t=0.090
@@ -129,7 +129,7 @@ system 0 width=26.723 originY=0.000
     staffline 1.935,-1.000 -> 24.788,-1.000 t=0.090
     staffline 1.935,-2.000 -> 24.788,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  7.785,-3.750 size=3.484 "Soprano clef"
+      text  45.161,-3.750 size=3.484 "Soprano clef"
     clef x=1.935 w=3.266
       glyph cClef 2.581,2.000
     timeSignature x=6.492 w=1.522
@@ -148,7 +148,7 @@ system 0 width=105.661 originY=0.000
     staffline 1.935,-1.000 -> 103.725,-1.000 t=0.090
     staffline 1.935,-2.000 -> 103.725,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  46.888,-13.662 size=3.484 "Change Clefs"
+      text  45.161,-13.662 size=3.484 "Change Clefs"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=2.974

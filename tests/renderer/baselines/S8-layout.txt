@@ -1,7 +1,7 @@
 tune 0
-bounds  width=90.323 height=34.687 top=-1.935
+bounds  width=119.357 height=34.687 top=-1.935
 systems 2
-system 0 width=90.323 originY=0.000
+system 0 width=119.357 originY=0.000
   staff 0 originY=15.152
     staffline 1.935,2.000 -> 88.387,2.000 t=0.090
     staffline 1.935,1.000 -> 88.387,1.000 t=0.090
@@ -15,8 +15,8 @@ system 0 width=90.323 originY=0.000
     beam   64.020,-1.750 -> 74.386,-2.750 t=0.500
     beam   82.588,-3.250 -> 86.095,-3.750 t=0.500
     title x=0.000 w=0.000
-      text  33.489,-10.693 size=3.484 "S8-1 Beams and Grouping"
-      text  30.644,-6.492 size=2.452 italic "Test - from Gonzato guide Ch.2"
+      text  45.161,-10.693 size=3.484 "S8-1 Beams and Grouping"
+      text  88.387,-6.492 size=2.452 italic "Test - from Gonzato guide Ch.2"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -196,9 +196,9 @@ system 1 width=90.323 originY=22.066
       line  87.394,-2.000 -> 87.394,2.000 t=0.077
       line  88.129,-2.000 -> 88.129,2.000 t=0.516
 tune 1
-bounds  width=90.323 height=56.626 top=-1.935
+bounds  width=119.357 height=56.626 top=-1.935
 systems 4
-system 0 width=90.323 originY=0.000
+system 0 width=119.357 originY=0.000
   staff 0 originY=14.014
     staffline 1.935,2.000 -> 88.387,2.000 t=0.090
     staffline 1.935,1.000 -> 88.387,1.000 t=0.090
@@ -206,8 +206,8 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  40.496,-9.555 size=3.484 "S8-2 Clefs"
-      text  30.644,-5.354 size=2.452 italic "Test - from Gonzato guide Ch.2"
+      text  45.161,-9.555 size=3.484 "S8-2 Clefs"
+      text  88.387,-5.354 size=2.452 italic "Test - from Gonzato guide Ch.2"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -305,9 +305,9 @@ system 3 width=31.357 originY=46.733
       line  28.428,-2.000 -> 28.428,2.000 t=0.077
       line  29.163,-2.000 -> 29.163,2.000 t=0.516
 tune 2
-bounds  width=90.323 height=82.113 top=-1.935
+bounds  width=119.357 height=82.113 top=-1.935
 systems 6
-system 0 width=90.323 originY=0.000
+system 0 width=119.357 originY=0.000
   staff 0 originY=15.152
     staffline 1.935,2.000 -> 88.387,2.000 t=0.090
     staffline 1.935,1.000 -> 88.387,1.000 t=0.090
@@ -317,8 +317,8 @@ system 0 width=90.323 originY=0.000
     beam   10.330,-1.750 -> 40.076,-2.750 t=0.500
     beam   49.888,-3.750 -> 79.634,-4.750 t=0.500
     title x=0.000 w=0.000
-      text  35.589,-10.693 size=3.484 "S8-3 Time Signatures"
-      text  30.644,-6.492 size=2.452 italic "Test - from Gonzato guide Ch.2"
+      text  45.161,-10.693 size=3.484 "S8-3 Time Signatures"
+      text  88.387,-6.492 size=2.452 italic "Test - from Gonzato guide Ch.2"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -530,9 +530,9 @@ system 5 width=43.237 originY=69.720
       line  40.308,-2.000 -> 40.308,2.000 t=0.077
       line  41.044,-2.000 -> 41.044,2.000 t=0.516
 tune 3
-bounds  width=90.480 height=24.199 top=-1.935
+bounds  width=94.452 height=24.199 top=-1.935
 systems 1
-system 0 width=90.480 originY=0.000
+system 0 width=94.452 originY=0.000
   staff 0 originY=16.674
     staffline 1.935,2.000 -> 88.544,2.000 t=0.090
     staffline 1.935,1.000 -> 88.544,1.000 t=0.090
@@ -556,8 +556,8 @@ system 0 width=90.480 originY=0.000
     tuplettext 76.459,-2.678 size=1.935 "3"
     tuplettext 83.068,3.006 size=1.935 "4"
     title x=0.000 w=0.000
-      text  24.271,-12.215 size=3.484 "S8-4 Short and Long Notes, Beams and Tuplets"
-      text  43.175,-8.014 size=2.452 italic "Trad"
+      text  45.161,-12.215 size=3.484 "S8-4 Short and Long Notes, Beams and Tuplets"
+      text  88.387,-8.014 size=2.452 italic "Trad"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.682
@@ -709,7 +709,7 @@ system 0 width=90.328 originY=0.000
     beam   84.087,-1.500 -> 87.490,-1.500 t=0.500
     beam   84.087,-0.750 -> 87.490,-0.750 t=0.500
     title x=0.000 w=0.000
-      text  35.045,-5.612 size=3.484 "S8-5 Horizontal beams"
+      text  45.161,-5.612 size=3.484 "S8-5 Horizontal beams"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.410
@@ -1172,7 +1172,7 @@ system 0 width=90.439 originY=0.000
     tuplettext 60.977,5.500 size=1.935 "3"
     tuplettext 78.632,5.500 size=1.935 "3"
     title x=0.000 w=0.000
-      text  24.186,-9.750 size=3.484 "S8-6 Chords, Unions, First and Second Endings"
+      text  45.161,-9.750 size=3.484 "S8-6 Chords, Unions, First and Second Endings"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=2.387
@@ -1360,7 +1360,7 @@ system 0 width=90.391 originY=0.000
     slur  80.772,1.250 -> 82.192,0.250 bulge=0.500
     slur  84.098,0.750 -> 85.517,0.250 bulge=0.500
     title x=0.000 w=0.000
-      text  37.912,-5.612 size=3.484 "S8-7 Gracenotes"
+      text  45.161,-5.612 size=3.484 "S8-7 Gracenotes"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=2.387
@@ -1678,7 +1678,7 @@ system 0 width=90.478 originY=0.000
     slur  75.450,2.750 -> 79.063,-2.250 bulge=0.650
     slur  80.401,-0.250 -> 85.692,-0.250 bulge=0.952
     title x=0.000 w=0.000
-      text  23.603,-6.814 size=3.484 "S8-8 Key signature, Accidentals and Decorations"
+      text  45.161,-6.814 size=3.484 "S8-8 Key signature, Accidentals and Decorations"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=3.710
@@ -1984,8 +1984,8 @@ system 0 width=90.370 originY=0.000
     slur  74.920,-1.250 -> 78.129,-2.250 bulge=-0.578
     slur  78.387,-2.250 -> 83.015,-3.750 bulge=-0.833
     title x=0.000 w=0.000
-      text  36.557,-10.592 size=3.484 "S8-9 Slurs and Ties"
-      text  24.543,-6.621 size=2.710 "Title with funny chars like \\005 Çéñô Àçäßö © …"
+      text  45.161,-10.592 size=3.484 "S8-9 Slurs and Ties"
+      text  45.161,-6.621 size=2.710 "Title with funny chars like \\005 Çéñô Àçäßö © …"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=6.516
@@ -2156,7 +2156,7 @@ system 0 width=90.332 originY=0.000
     tuplettext 83.714,3.746 size=1.935 "3"
     tie  54.476,-1.600 -> 58.161,-1.600 bulge=-0.663
     title x=0.000 w=0.000
-      text  33.553,-8.112 size=3.484 "S8-10 Strange tuplet cases"
+      text  45.161,-8.112 size=3.484 "S8-10 Strange tuplet cases"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.682
@@ -2466,7 +2466,7 @@ system 0 width=116.757 originY=0.000
     staffline 1.935,-1.000 -> 114.822,-1.000 t=0.090
     staffline 1.935,-2.000 -> 114.822,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  42.225,-6.699 size=3.484 "S8-11 Chords with many accidentals"
+      text  45.161,-6.699 size=3.484 "S8-11 Chords with many accidentals"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=1.065
@@ -2842,7 +2842,7 @@ system 0 width=90.457 originY=0.000
     beam   45.764,-3.250 -> 49.878,-3.750 t=0.500
     tie  75.651,-2.100 -> 89.037,-2.100 bulge=-2.200
     title x=0.000 w=0.000
-      text  20.479,-9.581 size=3.484 "S8-12 Changing Time or Key Signatures, Guitar Chords"
+      text  45.161,-9.581 size=3.484 "S8-12 Changing Time or Key Signatures, Guitar Chords"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=1.065

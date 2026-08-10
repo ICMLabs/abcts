@@ -1,7 +1,7 @@
 tune 0
-bounds  width=90.323 height=59.703 top=-1.935
+bounds  width=101.498 height=59.703 top=-1.935
 systems 1
-system 0 width=90.323 originY=0.000
+system 0 width=101.498 originY=0.000
   connector brace -0.920,41.332 scale=3.636
   connector bracketTop -0.600,15.514
   connector bracketBottom -0.600,31.470
@@ -15,8 +15,8 @@ system 0 width=90.323 originY=0.000
     slur  64.735,-1.750 -> 68.097,0.750 bulge=-0.605
     slur  74.553,-0.250 -> 77.915,0.250 bulge=-0.605
     title x=0.000 w=0.000
-      text  36.568,-13.055 size=3.484 "Ave Verum Corpus"
-      text  39.574,-8.854 size=2.452 italic "W. A. Mozart"
+      text  45.161,-13.055 size=3.484 "Ave Verum Corpus"
+      text  88.387,-8.854 size=2.452 italic "W. A. Mozart"
     voiceName x=1.935 w=0.000
       text  1.935,-0.439 size=2.194 bold "Soprano"
     clef x=12.740 w=3.103

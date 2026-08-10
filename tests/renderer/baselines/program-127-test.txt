@@ -1,7 +1,7 @@
 tune 0
-bounds  width=90.323 height=56.645 top=-1.935
+bounds  width=107.625 height=56.645 top=-1.935
 systems 2
-system 0 width=90.323 originY=0.000
+system 0 width=107.625 originY=0.000
   staff 0 originY=32.160
     staffline 1.935,2.000 -> 88.387,2.000 t=0.090
     staffline 1.935,1.000 -> 88.387,1.000 t=0.090
@@ -9,10 +9,10 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  43.088,-19.787 size=3.484 "Title"
-      text  38.730,-15.816 size=2.710 "Alternate Title"
-      text  42.065,-11.743 size=2.452 italic "Rhythm"
-      text  36.510,-11.743 size=2.452 italic "Composer (Origin)"
+      text  45.161,-19.787 size=3.484 "Title"
+      text  45.161,-15.816 size=2.710 "Alternate Title"
+      text  1.935,-11.743 size=2.452 italic "Rhythm"
+      text  88.387,-11.743 size=2.452 italic "Composer (Origin)"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522

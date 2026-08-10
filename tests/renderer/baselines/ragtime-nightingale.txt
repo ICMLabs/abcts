@@ -1,7 +1,7 @@
 tune 0
-bounds  width=90.575 height=785.185 top=-1.935
+bounds  width=101.258 height=785.185 top=-1.935
 systems 23
-system 0 width=90.336 originY=0.000
+system 0 width=101.258 originY=0.000
   connector brace -0.920,19.152 scale=4.163
   staff 0 originY=21.152
     staffline 3.226,2.000 -> 88.401,2.000 t=0.090
@@ -24,8 +24,8 @@ system 0 width=90.336 originY=0.000
     tie  62.493,-2.100 -> 64.523,-2.100 bulge=-0.500
     tie  62.493,2.100 -> 64.523,2.100 bulge=0.500
     title x=0.000 w=0.000
-      text  35.994,-16.693 size=3.484 "Ragtime Nightingale"
-      text  39.700,-12.492 size=2.452 italic "Joseph Lamb"
+      text  45.161,-16.693 size=3.484 "Ragtime Nightingale"
+      text  88.387,-12.492 size=2.452 italic "Joseph Lamb"
     clef x=3.226 w=3.103
       glyph gClef 3.871,1.000
     keySignature x=7.762 w=3.129

@@ -1,7 +1,7 @@
 tune 0
-bounds  width=90.323 height=77.820 top=-1.935
+bounds  width=120.321 height=77.820 top=-1.935
 systems 2
-system 0 width=90.323 originY=0.000
+system 0 width=120.321 originY=0.000
   staff 0 originY=19.652
     staffline 12.482,2.000 -> 88.387,2.000 t=0.090
     staffline 12.482,1.000 -> 88.387,1.000 t=0.090
@@ -13,8 +13,8 @@ system 0 width=90.323 originY=0.000
     slur  24.055,1.750 -> 35.614,-0.750 bulge=2.081
     slur  58.407,0.750 -> 66.027,0.750 bulge=1.372
     title x=0.000 w=0.000
-      text  38.915,-15.193 size=3.484 "Zocharti Loch"
-      text  30.162,-10.992 size=2.452 italic "Louis Lewandowski (1821-1894)"
+      text  45.161,-15.193 size=3.484 "Zocharti Loch"
+      text  88.387,-10.992 size=2.452 italic "Louis Lewandowski (1821-1894)"
     voiceName x=1.935 w=0.000
       text  1.935,-0.439 size=2.194 bold "Tenore I"
     clef x=12.482 w=3.103

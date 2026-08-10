@@ -1,7 +1,7 @@
 tune 0
-bounds  width=57.324 height=37.142 top=-1.935
+bounds  width=123.488 height=37.142 top=-1.935
 systems 1
-system 0 width=57.324 originY=0.000
+system 0 width=123.488 originY=0.000
   staff 0 originY=29.271
     staffline 1.935,2.000 -> 55.388,2.000 t=0.090
     staffline 1.935,1.000 -> 55.388,1.000 t=0.090
@@ -9,10 +9,10 @@ system 0 width=57.324 originY=0.000
     staffline 1.935,-1.000 -> 55.388,-1.000 t=0.090
     staffline 1.935,-2.000 -> 55.388,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  15.982,-16.898 size=3.484 "S2-1 Title and Header Fields"
-      text  21.773,-12.926 size=2.710 "A Subtitle Here"
-      text  26.081,-8.854 size=2.452 italic "March"
-      text  12.079,-8.854 size=2.452 italic "John Composer (Country of Origin)"
+      text  45.161,-16.898 size=3.484 "S2-1 Title and Header Fields"
+      text  45.161,-12.926 size=2.710 "A Subtitle Here"
+      text  1.935,-8.854 size=2.452 italic "March"
+      text  88.387,-8.854 size=2.452 italic "John Composer (Country of Origin)"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -63,7 +63,7 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  35.957,-12.002 size=3.484 "S2-2 Text Placement"
+      text  45.161,-12.002 size=3.484 "S2-2 Text Placement"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     tempo x=6.329 w=0.000
@@ -156,7 +156,7 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  36.017,-5.612 size=3.484 "S2-3 BeginText Test"
+      text  45.161,-5.612 size=3.484 "S2-3 BeginText Test"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -199,8 +199,8 @@ system 1 width=54.511 originY=18.123
     staffline 1.935,-1.000 -> 52.576,-1.000 t=0.090
     staffline 1.935,-2.000 -> 52.576,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  7.536,-7.407 size=2.710 "This is a text block between two music lines."
-      text  5.583,-4.155 size=2.710 "It spans multiple lines to test the block rendering."
+      text  0.000,-7.407 size=2.710 "This is a text block between two music lines."
+      text  0.000,-4.155 size=2.710 "It spans multiple lines to test the block rendering."
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     note@1 x=6.329 w=5.474

@@ -856,6 +856,13 @@ export interface PlacedText {
   /** What this text is. Absent means it inherits its element's kind. */
   readonly role?: PartRole
   /**
+   * abcjs's `data-name` for this row — `title`, `subtitle`, `composer`, `author`,
+   * `rhythm`, `part-order`, `free-text`, `header`. Its `addTextIf`/`richText` take a
+   * `name` per row (`top-text.js`, `free-text.js:11`) and every top-text row carries one,
+   * where `role` here is a single `title` for the whole block.
+   */
+  readonly dataName?: string
+  /**
    * Vertical extent this text DECLARES, replacing the box its font size implies — the
    * same escape a glyph has. `[top, bottom]` in staff spaces.
    *
@@ -7830,35 +7837,26 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       0,
       ...staves.flatMap((staff) =>
         staff.elements.flatMap((el) =>
-          el.texts.map((t) =>
-            el.type === 'title'
-              ? textWidth_(t) + 2 * ENGRAVE.marginX
-              : t.x + textWidth_(t) + ENGRAVE.marginX,
+          // A ROW'S RIGHT EDGE DEPENDS ON ITS ANCHOR. Every row is placed absolutely now,
+          // including the title, so a `middle`-anchored one reaches half its width past
+          // its x rather than all of it. The title used to be a special case here because
+          // it was the one row placed LATER, against the finished system.
+          el.texts.map(
+            (t) =>
+              t.x +
+              (t.anchor === 'middle' ? textWidth_(t) / 2 : textWidth_(t)) +
+              ENGRAVE.marginX,
           ),
         ),
       ),
     )
     const width = Math.max(musicWidth, proseWidth)
 
-    // The title centres on the finished system, whose width is only known now.
-    const centred = staves.map((staff, staffIndex) =>
-      staffIndex !== 0
-        ? staff
-        : {
-            ...staff,
-            elements: staff.elements.map((el) =>
-              el.type !== 'title'
-                ? el
-                : {
-                    ...el,
-                    texts: el.texts.map((t) => ({
-                      ...t,
-                      x: Math.max(0, (width - textWidth(t.text, t.size)) / 2),
-                    })),
-                  },
-            ),
-          },
-    )
+    // NO RE-CENTRING. The block placed each row against the PAPER when it was built, which
+    // is what abcjs does and where it does it (`top-text.js:20`); this used to overwrite
+    // that with `(width - textWidth) / 2` — a LEFT-EDGE formula on a `middle`-anchored row,
+    // against the finished system's own width. See `topTextBlock`.
+    const centred = staves
 
     // MERGE the voices that share a staff. Everything above is built per voice, because
     // beams, stems and lyrics are a voice's own; what is shared is the five lines they
@@ -8252,7 +8250,18 @@ function topTextBlock(
   /** A boxed font measures `height + padding * 4`, `padding = size * fontboxpadding`. */
   const boxOf = (type: AbcFontType): number =>
     fonts[type]?.box === true ? sizeOf(type) * ENGRAVE.fontBoxPadding * 4 : 0
-  const centre = width / 2
+  /**
+   * **THE TITLE IS CENTRED ON THE PAPER, AND ABSOLUTELY** — `tLeft = paddingLeft +
+   * width / 2` (`top-text.js:20`), where `width` is abcjs's `this.width`, the STAFF width.
+   * A 670 staff on a 700 page puts every title at x=350 whatever the music under it is.
+   *
+   * It was `width / 2` here and then OVERWRITTEN downstream by the finished system's own
+   * `(width - textWidth) / 2` — a left-edge formula applied to a `middle` anchor, on a
+   * width that was the music's rather than the page's. A short titled tune came out at
+   * 123.08. **No pixel gate compares text POSITION** — they pair noteheads — so it was
+   * wrong on every titled tune in the repo and only the byte table could say so.
+   */
+  const centre = ENGRAVE.marginX + width / 2
 
   const titleSize = sizeOf('titlefont')
   const [title, ...subtitles] = metadata.titles
@@ -8261,6 +8270,7 @@ function topTextBlock(
     texts.push({
       text: plainText(title),
       role: 'title',
+      dataName: 'title',
       x: centre,
       // abcjs writes the baseline one font size below the cursor (`text.js:30`).
       y: y + titleSize,
@@ -8291,6 +8301,7 @@ function topTextBlock(
     texts.push({
       text: plainText(subtitle),
       role: 'title',
+      dataName: 'subtitle',
       x: centre,
       y: y + sizeOf('subtitlefont'),
       size: sizeOf('subtitlefont'),
@@ -8315,7 +8326,8 @@ function topTextBlock(
       texts.push({
         text: rhythm,
         role: 'title',
-        x: 0,
+        dataName: 'rhythm',
+        x: ENGRAVE.marginX,
         y: y + sizeOf('infofont'),
         size: sizeOf('infofont'),
         bold: false,
@@ -8329,7 +8341,8 @@ function topTextBlock(
       texts.push({
         text: right,
         role: 'title',
-        x: width,
+        dataName: 'composer',
+        x: ENGRAVE.marginX + width,
         y: y + sizeOf('composerfont'),
         size: sizeOf('composerfont'),
         bold: false,
@@ -8359,7 +8372,8 @@ function topTextBlock(
     texts.push({
       text: author,
       role: 'title',
-      x: width,
+      dataName: 'author',
+      x: ENGRAVE.marginX + width,
       y: y + sizeOf('composerfont'),
       size: sizeOf('composerfont'),
       bold: false,
@@ -8376,7 +8390,8 @@ function topTextBlock(
     texts.push({
       text: partOrder,
       role: 'title',
-      x: 0,
+      dataName: 'part-order',
+      x: ENGRAVE.marginX,
       y: y + sizeOf('partsfont'),
       size: sizeOf('partsfont'),
       bold: false,
@@ -8414,7 +8429,10 @@ function topTextBlock(
   // single `<text>` with a `tspan` per line and reserves one multi-line height. Measured,
   // each line past the first adds 25.2px — `1.2em` at 21px, the same `dy` a lyric verse
   // steps by, and NOT the 1.108 line height the first line takes.
-  y = appendFreeText(texts, textAbove, y, centre, fonts)
+  // …AND `%%center` IS THE ONE ROW THAT IS NOT PAPER-CENTRED. `FreeText` puts it at
+  // `width / 2` with no `paddingLeft` at all (`free-text.js:37`), so it lands on 335 where
+  // the title lands on 350 — a 15px difference the model's own comment already recorded.
+  y = appendFreeText(texts, textAbove, y, width / 2, fonts)
 
   return { texts, height: y }
 }

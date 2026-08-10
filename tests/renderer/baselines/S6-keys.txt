@@ -1,7 +1,7 @@
 tune 0
-bounds  width=26.561 height=17.442 top=-1.935
+bounds  width=50.176 height=17.442 top=-1.935
 systems 1
-system 0 width=26.561 originY=0.000
+system 0 width=50.176 originY=0.000
   staff 0 originY=10.071
     staffline 1.935,2.000 -> 24.625,2.000 t=0.090
     staffline 1.935,1.000 -> 24.625,1.000 t=0.090
@@ -9,7 +9,7 @@ system 0 width=26.561 originY=0.000
     staffline 1.935,-1.000 -> 24.625,-1.000 t=0.090
     staffline 1.935,-2.000 -> 24.625,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  10.201,-5.612 size=3.484 "S6-1 C"
+      text  45.161,-5.612 size=3.484 "S6-1 C"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -28,7 +28,7 @@ system 0 width=129.869 originY=0.000
     staffline 1.935,-1.000 -> 127.933,-1.000 t=0.090
     staffline 1.935,-2.000 -> 127.933,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  55.395,-10.081 size=3.484 "S6-2 Change Key Sig"
+      text  45.161,-10.081 size=3.484 "S6-2 Change Key Sig"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=2.974
@@ -227,9 +227,9 @@ system 0 width=129.869 originY=0.000
     bar x=127.804 w=0.077
       line  127.843,-2.000 -> 127.843,2.000 t=0.077
 tune 2
-bounds  width=90.323 height=92.867 top=-1.935
+bounds  width=119.357 height=92.867 top=-1.935
 systems 7
-system 0 width=90.323 originY=0.000
+system 0 width=119.357 originY=0.000
   staff 0 originY=14.014
     staffline 1.935,2.000 -> 88.387,2.000 t=0.090
     staffline 1.935,1.000 -> 88.387,1.000 t=0.090
@@ -237,8 +237,8 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  36.078,-9.555 size=3.484 "S6-3 Key Signatures"
-      text  30.644,-5.354 size=2.452 italic "Test - from Gonzato guide Ch.2"
+      text  45.161,-9.555 size=3.484 "S6-3 Key Signatures"
+      text  88.387,-5.354 size=2.452 italic "Test - from Gonzato guide Ch.2"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -437,9 +437,9 @@ system 6 width=33.356 originY=81.634
       line  30.427,-2.000 -> 30.427,2.000 t=0.077
       line  31.162,-2.000 -> 31.162,2.000 t=0.516
 tune 3
-bounds  width=90.323 height=81.453 top=-1.935
+bounds  width=102.290 height=81.453 top=-1.935
 systems 6
-system 0 width=90.323 originY=0.000
+system 0 width=102.290 originY=0.000
   staff 0 originY=14.014
     staffline 1.935,2.000 -> 88.387,2.000 t=0.090
     staffline 1.935,1.000 -> 88.387,1.000 t=0.090
@@ -447,8 +447,8 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  32.938,-9.555 size=3.484 "S6-4 Modal Key Signatures"
-      text  39.177,-5.354 size=2.452 italic "Test Fixture"
+      text  45.161,-9.555 size=3.484 "S6-4 Modal Key Signatures"
+      text  88.387,-5.354 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -694,9 +694,9 @@ system 5 width=54.511 originY=69.720
       line  51.582,-2.000 -> 51.582,2.000 t=0.077
       line  52.318,-2.000 -> 52.318,2.000 t=0.516
 tune 4
-bounds  width=90.323 height=57.626 top=-1.935
+bounds  width=102.290 height=57.626 top=-1.935
 systems 4
-system 0 width=90.323 originY=0.000
+system 0 width=102.290 originY=0.000
   staff 0 originY=14.014
     staffline 1.935,2.000 -> 88.387,2.000 t=0.090
     staffline 1.935,1.000 -> 88.387,1.000 t=0.090
@@ -704,8 +704,8 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  34.129,-9.555 size=3.484 "S6-5 Double Accidentals"
-      text  39.177,-5.354 size=2.452 italic "Test Fixture"
+      text  45.161,-9.555 size=3.484 "S6-5 Double Accidentals"
+      text  88.387,-5.354 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522

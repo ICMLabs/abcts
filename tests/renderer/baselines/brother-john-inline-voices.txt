@@ -1,7 +1,7 @@
 tune 0
-bounds  width=90.323 height=53.932 top=-1.935
+bounds  width=101.677 height=53.932 top=-1.935
 systems 2
-system 0 width=90.323 originY=0.000
+system 0 width=101.677 originY=0.000
   staff 0 originY=14.014
     staffline 12.665,2.000 -> 88.387,2.000 t=0.090
     staffline 12.665,1.000 -> 88.387,1.000 t=0.090
@@ -11,8 +11,8 @@ system 0 width=90.323 originY=0.000
     beam   63.525,3.250 -> 68.724,3.750 t=0.500
     beam   76.601,3.250 -> 81.800,3.750 t=0.500
     title x=0.000 w=0.000
-      text  34.342,-9.555 size=3.484 "Brother John - improved"
-      text  39.484,-5.354 size=2.452 italic "Traditional"
+      text  45.161,-9.555 size=3.484 "Brother John - improved"
+      text  88.387,-5.354 size=2.452 italic "Traditional"
     voiceName x=1.935 w=0.000
       text  1.935,0.768 size=2.194 bold "Soprano"
     clef x=12.665 w=3.103

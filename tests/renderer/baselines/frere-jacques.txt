@@ -1,7 +1,7 @@
 tune 0
-bounds  width=90.484 height=87.278 top=-1.935
+bounds  width=172.641 height=87.278 top=-1.935
 systems 4
-system 0 width=90.323 originY=0.000
+system 0 width=172.641 originY=0.000
   staff 0 originY=33.414
     staffline 1.935,2.000 -> 88.387,2.000 t=0.090
     staffline 1.935,1.000 -> 88.387,1.000 t=0.090
@@ -11,9 +11,9 @@ system 0 width=90.323 originY=0.000
     beam   6.329,2.250 -> 57.693,3.250 t=0.500
     beam   67.873,1.750 -> 78.207,1.750 t=0.500
     title x=0.000 w=0.000
-      text  39.129,-21.041 size=3.484 "Frère Jacques"
-      text  38.304,-17.069 size=2.710 "(French rhyme)"
-      text  4.002,-12.997 size=2.452 italic "attr. to Jean-Philippe Rameau (1683 - 1764) (arr. S. Di Mico for educational purposes)"
+      text  45.161,-21.041 size=3.484 "Frère Jacques"
+      text  45.161,-17.069 size=2.710 "(French rhyme)"
+      text  88.387,-12.997 size=2.452 italic "attr. to Jean-Philippe Rameau (1683 - 1764) (arr. S. Di Mico for educational purposes)"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     tempo x=6.329 w=0.000

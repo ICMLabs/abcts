@@ -689,7 +689,10 @@ const glyphDefs = new Map<GlyphName, string>()
                 t.italic === true,
                 t.bold === true,
                 t.anchor ?? 'start',
-                ABCJS_DATA_NAMES.text ?? '',
+                // abcjs names EVERY top-text row — `title`, `subtitle`, `composer`,
+                // `free-text` — from the `name` its `addTextIf`/`richText` call passes.
+                // This read a `text` key that was never in the table, so it was always ''.
+                t.dataName ?? '',
                 escapeText(t.text),
               ),
             )

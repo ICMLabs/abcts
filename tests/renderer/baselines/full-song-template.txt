@@ -1,7 +1,7 @@
 tune 0
-bounds  width=90.402 height=65.269 top=-1.935
+bounds  width=130.704 height=65.269 top=-1.935
 systems 2
-system 0 width=90.402 originY=0.000
+system 0 width=130.704 originY=0.000
   staff 0 originY=35.520
     staffline 1.935,2.000 -> 88.467,2.000 t=0.090
     staffline 1.935,1.000 -> 88.467,1.000 t=0.090
@@ -9,10 +9,10 @@ system 0 width=90.402 originY=0.000
     staffline 1.935,-1.000 -> 88.467,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.467,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  34.807,-23.147 size=3.484 "TITLE OF THE SONG"
-      text  35.419,-19.175 size=2.710 "ALTERNATE TITLE"
-      text  34.565,-15.103 size=2.452 italic "RHYTHM, E.G. JIG, WALTZ"
-      text  25.011,-15.103 size=2.452 italic "COMPOSER/SONGWRITER (ORIGIN/GEOGRAPHIC)"
+      text  45.161,-23.147 size=3.484 "TITLE OF THE SONG"
+      text  45.161,-19.175 size=2.710 "ALTERNATE TITLE"
+      text  1.935,-15.103 size=2.452 italic "RHYTHM, E.G. JIG, WALTZ"
+      text  88.387,-15.103 size=2.452 italic "COMPOSER/SONGWRITER (ORIGIN/GEOGRAPHIC)"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522

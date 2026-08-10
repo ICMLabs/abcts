@@ -1,7 +1,7 @@
 tune 0
-bounds  width=90.323 height=81.453 top=-1.935
+bounds  width=102.290 height=81.453 top=-1.935
 systems 6
-system 0 width=90.323 originY=0.000
+system 0 width=102.290 originY=0.000
   staff 0 originY=14.014
     staffline 1.935,2.000 -> 88.387,2.000 t=0.090
     staffline 1.935,1.000 -> 88.387,1.000 t=0.090
@@ -9,8 +9,8 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  37.722,-9.555 size=3.484 "S5-1 Note Styles"
-      text  39.177,-5.354 size=2.452 italic "Test Fixture"
+      text  45.161,-9.555 size=3.484 "S5-1 Note Styles"
+      text  88.387,-5.354 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -190,7 +190,7 @@ system 0 width=90.519 originY=0.000
     beam   66.705,-3.250 -> 69.363,-3.750 t=0.500
     beam   67.995,-2.743 -> 69.363,-3.000 t=0.500
     title x=0.000 w=0.000
-      text  33.405,-8.639 size=3.484 "S5-2 Alternate Note Heads"
+      text  45.161,-8.639 size=3.484 "S5-2 Alternate Note Heads"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.682
@@ -342,7 +342,7 @@ system 1 width=90.671 originY=19.012
     beam   64.585,-4.750 -> 67.958,-5.250 t=0.500
     beam   66.486,-4.282 -> 67.958,-4.500 t=0.500
     title x=0.000 w=0.000
-      text  37.530,-6.293 size=2.710 "This translates to:"
+      text  0.000,-6.293 size=2.710 "This translates to:"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     note@-8,-4,-1,1,3 x=6.329 w=3.871
@@ -713,7 +713,7 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  37.115,-5.612 size=3.484 "S5-3 Overlay Test"
+      text  45.161,-5.612 size=3.484 "S5-3 Overlay Test"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -756,9 +756,9 @@ system 0 width=90.323 originY=0.000
     bar x=88.258 w=0.077
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
 tune 3
-bounds  width=90.323 height=24.816 top=-1.935
+bounds  width=119.357 height=24.816 top=-1.935
 systems 1
-system 0 width=90.323 originY=0.000
+system 0 width=119.357 originY=0.000
   staff 0 originY=14.014
     staffline 1.935,2.000 -> 88.387,2.000 t=0.090
     staffline 1.935,1.000 -> 88.387,1.000 t=0.090
@@ -766,8 +766,8 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  40.009,-9.555 size=3.484 "S5-4 Lyrics"
-      text  30.644,-5.354 size=2.452 italic "Test - from Gonzato guide Ch.2"
+      text  45.161,-9.555 size=3.484 "S5-4 Lyrics"
+      text  88.387,-5.354 size=2.452 italic "Test - from Gonzato guide Ch.2"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -858,7 +858,7 @@ system 0 width=90.403 originY=0.000
     staffline 1.935,-1.000 -> 88.467,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.467,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  39.806,-8.502 size=3.484 "S5-5 Vocals"
+      text  45.161,-8.502 size=3.484 "S5-5 Vocals"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=0.871
@@ -1003,9 +1003,9 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  40.436,-16.847 size=3.484 "S5-6 Scale"
-      text  39.584,-12.875 size=2.710 "Second Title"
-      text  40.375,-9.033 size=2.710 "Third Title"
+      text  45.161,-16.847 size=3.484 "S5-6 Scale"
+      text  45.161,-12.875 size=2.710 "Second Title"
+      text  45.161,-9.033 size=2.710 "Third Title"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.682
