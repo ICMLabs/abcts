@@ -8762,6 +8762,13 @@ function bottomTextBlock(
   let y = 0
   const sizeOf = (type: AbcFontType): number =>
     Math.round(((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / STAFF_SPACE_PX
+  /**
+   * A BOXED FONT MEASURES `height + padding * 4`, and `getTextSize.calc` returns that
+   * boxed height to every caller — the bottom block's rows as much as the top block's.
+   * `%%historyfont Palatino 9 box` is not a decoration; it changes the advance.
+   */
+  const boxOf = (type: AbcFontType): number =>
+    fonts[type]?.box === true ? sizeOf(type) * ENGRAVE.fontBoxPadding * 4 : 0
   /** `addTextIf`: one row, then `round(height * 1.1 * lines)` — one rounding for all. */
   const addText = (
     value: RichText,
@@ -8769,6 +8776,7 @@ function bottomTextBlock(
     size: number,
     dataName: string,
     middle: boolean,
+    box = 0,
   ): void => {
     const text = plainText(value)
     /**
@@ -8779,7 +8787,7 @@ function bottomTextBlock(
      * abcjs's own 49.27 between the two verse lines of `visual-selection-01`.
      */
     if (text === '' && extra.length === 0) {
-      y += goldenTextHeight(size)
+      y += goldenTextHeight(size) + box
       return
     }
     texts.push({
@@ -8795,10 +8803,15 @@ function bottomTextBlock(
       anchor: 'start',
     })
     y +=
-      Math.round(goldenTextHeight(size) * ENGRAVE.lineSkipFactor * (1 + extra.length) * STAFF_SPACE_PX) /
-      STAFF_SPACE_PX
+      Math.round(
+        (goldenTextHeight(size) + box) *
+          ENGRAVE.lineSkipFactor *
+          (1 + extra.length) *
+          STAFF_SPACE_PX,
+      ) / STAFF_SPACE_PX
   }
   const history = sizeOf('historyfont')
+  const historyBox = boxOf('historyfont')
 
   // `W:` — a whole verse under the tune, one row per line, in `wordsfont`. The array
   // branch of `addMultiLine`, which closes with one more `size.height` of its own.
@@ -8813,7 +8826,7 @@ function bottomTextBlock(
 
   const single = (value: RichText | null, prefix: string): void => {
     if (value === null || plainText(value) === '') return
-    addText(prefix + plainText(value), [], history, 'description', false)
+    addText(prefix + plainText(value), [], history, 'description', false, historyBox)
   }
   const multi = (value: readonly RichText[], preface: string): void => {
     if (value.length === 0) return
@@ -8822,7 +8835,7 @@ function bottomTextBlock(
     // its share of the one rounded advance.
     const all = value.map(plainText)
     if (all.every((t) => t === '')) return
-    addText(preface, all, history, 'description', true)
+    addText(preface, all, history, 'description', true, historyBox)
   }
 
   single(metadata.book, 'Book: ')
