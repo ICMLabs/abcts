@@ -115,7 +115,7 @@ nothing in `tests/` may grow that mask.**
 
 ## 2. WHAT CLOSED, AND WHY EACH WAS INVISIBLE
 
-Thirty-one landings, every one a read of a named abcjs function.
+Thirty-three landings, every one a read of a named abcjs function.
 
 - **`staffwidth` is the MUSIC area; the page is it plus abcjs's 15px margins.** compat
   mapped `renderAbc(…, {staffwidth: 670})` straight onto core's `systemWidth`, which is
@@ -237,6 +237,15 @@ Thirty-one landings, every one a read of a named abcjs function.
   lazy-line mechanism the key change takes. `meterChangeLeadsLine` hands such a change to
   the PREVIOUS measure, and the first line has none, so it was dropped outright:
   `[M:2/4]CD|` drew no time signature at all.
+- **A `%%sep` RULE IS ITS OWN EMITTER, and a trailing one was dropped on the floor.**
+  `appendFreeText` collects the rule into a `rules` array the TRAILING call never passed, so
+  a `%%sep` at the end of a tune reserved its two spaces and drew nothing. And
+  `drawSeparator` shares nothing with `printLine` (`draw/separator.js`): the cursor rounded
+  to a WHOLE PIXEL, a rect from `y` to `y + 1`, FIVE points closing back to the start,
+  `fill="rgba(0,0,0,255)"` with `stroke="rgba(0,0,0,0)"`, and a `defined-text` class. Its
+  markup is byte-identical now. **The "0.15px block-top residual" recorded beside it was
+  the half-pixel of a thickness that should not have existed** — a placement reading of a
+  markup defect.
 - **`data-index` is an index into the SELECTABLES, not into the children.**
   `Selectables.add` writes `{selectable: false, "data-index": elements.length}` and only
   after `canSelect`, which with no `selectTypes` admits `el_type 'note'` alone
@@ -296,11 +305,9 @@ regression, so read the diff before touching the gate.
    IT IS NOT** — a subtitle between voice lines of the FIRST system, of the LAST system, a
    mid-tune `%%sep` and a trailing `%%sep` are all EXACT on height. Do not re-measure those.
 
-   **AND TWO SMALLER THINGS FELL OUT AND ONE IS STILL OPEN.** A mid-tune block is drawn at
-   the TOP of the gap now, exact on the subtitle rung — but the `%%sep` rung's rule lands at
-   130.85 against 131, so the block top is 0.15 out on that tune where the subtitle rung is
-   exact: it is the PREVIOUS system's bottom extent, not the block. And a TRAILING `%%sep`
-   draws no rule at all, though its space is reserved.
+   **AND THE `%%sep` RESIDUALS THAT SAT BESIDE IT ARE CLOSED** — see the ledger. The
+   "0.15px block-top" reading was wrong: it was a half-pixel of a thickness that should not
+   have existed, because `drawSeparator` is its own emitter.
 2. **THE ROOT'S `height`'s ULP HALF — 86 rows — AND `abcMusicKit` v1 HAS ALREADY ANSWERED
    THE ARCHITECTURAL QUESTION** (Lance, 2026-08-10b: *"v1 port from js encountered similar
    rounding issue — so v1 may have the solution used to get to byte parity to js"*). It did,
