@@ -588,7 +588,7 @@ backup remote is not a licence to vendor someone else's tree into this one.
 reds; **seventeen gates and NINE ranked tables** — 0 of 72 audio cases, 0 of 38 note timings,
 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
 **1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
-**14 of 25 DOM-contract cases — 219 of 427 ROWS with ELEVEN slugs RATCHETED** — and
+**13 of 25 DOM-contract cases — 184 of 390 ROWS with TWELVE slugs RATCHETED** — and
 **164 of 171 SVG-byte fixtures, SEVEN of them EXACT and ratcheted** — and **the SVG BYTE TABLE is
 THE OPEN ARC**, 171 of 171 at best 5186 / median 174, with 109 of those rows blocked behind
 the root's `height`. The oracle lands before the

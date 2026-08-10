@@ -30,10 +30,10 @@ reproduce goes in `Docs/ABCJS-DIFFERENCES.md` with its evidence and its slug goe
 | chord grid | `chord-grid-ranked` | 0 of 23 |
 | harvested geometry | `corpus-abcjs-ranked` | 0 of 174 |
 | pixel geometry | `pixel-parity` | 0 of 120 |
-| DOM contract | `dom-contract` | **14 of 25 cases** (from 25), **219 of 427 rows** — ELEVEN slugs RATCHETED |
+| DOM contract | `dom-contract` | **13 of 25 cases** (from 25), **184 of 390 rows** — TWELVE slugs RATCHETED |
 | **SVG bytes** | **`svg-bytes`** | **164 of 171 — SEVEN BYTE-EXACT AND RATCHETED**; best 5186, median 179 (from 171 of 171 at 651 / 162) |
 
-**Suite 1145 of 1145. NO REDS. `npx tsc --noEmit` clean.**
+**Suite 1146 of 1146. NO REDS. `npx tsc --noEmit` clean.**
 
 ---
 
@@ -115,7 +115,7 @@ nothing in `tests/` may grow that mask.**
 
 ## 2. WHAT CLOSED, AND WHY EACH WAS INVISIBLE
 
-Twenty-seven landings, every one a read of a named abcjs function.
+Thirty landings, every one a read of a named abcjs function.
 
 - **`staffwidth` is the MUSIC area; the page is it plus abcjs's 15px margins.** compat
   mapped `renderAbc(…, {staffwidth: 670})` straight onto core's `systemWidth`, which is
@@ -228,6 +228,11 @@ Twenty-seven landings, every one a read of a named abcjs function.
   against `_B,, stem, ledger`. **The ratchet caught a regression the ranked count hid**:
   splitting the run also broke a time signature's `<g data-name="12">`, and `svg-12-8-group`
   failed the same run that took the aggregate from 22 differing to 15.
+- **A BEAM'S CLASS IS GENERATED** and the measure counter RESETS before it —
+  `classes.startMeasure()` runs ahead of the beams and sets the counter to 0 rather than
+  opening the next measure (`draw/voice.js:50`, `helpers/classes.js:44-46`), so every beam is
+  `m0 mm0` whatever bar it is in. **AND AN EMPTY STAFF-LINES GROUP IS DELETED** like every
+  other empty group.
 - **`data-index` is an index into the SELECTABLES, not into the children.**
   `Selectables.add` writes `{selectable: false, "data-index": elements.length}` and only
   after `canSelect`, which with no `selectTypes` admits `el_type 'note'` alone
@@ -372,20 +377,22 @@ regression, so read the diff before touching the gate.
    `drawBeam`'s single concatenated `M…L…L…L…z` path with `class="abcjs-beam-elem
    abcjs-d0-25"` (`draw/beam.js:34-43`). Ours are a `<path class="abcjs-tie">` and a
    `<polygon>`.
-8. **THE PER-PART CLASSES ARE NOT ONE RULE.** A BEAM's comes from
-   `classes.generate('beam-elem ' + durationClass)` (`draw/beam.js:24-25`), so under
-   `add_classes` it is `abcjs-beam-elem abcjs-d0-125 abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0`
-   and WITHOUT it an empty `class=""` — ours writes a literal `abcjs-beam` either way. A
-   LEDGER is the same shape and abcjs's no-`add_classes` golden gives it NO class at all,
-   where a STEM's `abcjs-stem` is a LITERAL passed straight to `printStem` and survives. So
-   some part classes are literals and some route through the counter, and we treat them all
-   as literals. Two rows of `dom-beam` and an attribute on every beam and ledger of the byte
-   table.
-9. **`oneSvgPerLine` / `responsive` / `scale`** — five cases in `svg-per-line.test.js`.
-10. **`el-four-endings`** — `|1,3 … :|2,4 …`. A DECISION, not a bug fix.
-11. **The geometry half of the timing join** — `left`, `endX`, `top`, `height` on every
+8. ~~**THE PER-PART CLASSES**~~ — **CLOSED, and one half of it was a WRONG READING.** Only
+   the BEAM's is generated (`classes.generate('beam-elem ' + durationClass)`,
+   `draw/beam.js:24-25`), which gives an EMPTY `class=""` without `add_classes` because
+   abcjs passes `''` and `svg.js`'s path sets the attribute anyway. A LEDGER's is a LITERAL
+   after all — `printStaffLine(…, "abcjs-ledger", "ledger", …)` (`draw/relative.js:66`) —
+   and the previous note called it generated from reading a classless golden path and
+   ASSUMING it was the ledger. **A path with no class is not evidence about which element it
+   is.**
+9. **A DEFAULT 4/4 PREFIX METER IS DRAWN WHERE abcjs DRAWS NONE.** `svg-time-sig-list` has
+   no header `M:` and three inline ones; abcjs's first figure is the `2` of `[M:2/4]` and
+   ours is the `4` of a 4/4 we invent.
+10. **`oneSvgPerLine` / `responsive` / `scale`** — five cases in `svg-per-line.test.js`.
+11. **`el-four-endings`** — `|1,3 … :|2,4 …`. A DECISION, not a bug fix.
+12. **The geometry half of the timing join** — `left`, `endX`, `top`, `height` on every
    `noteTimings` row. A gate to BUILD.
-12. **The structural pass** — terms in `CHECKPOINT-2026-08-08d.md`, not to be re-argued.
+13. **The structural pass** — terms in `CHECKPOINT-2026-08-08d.md`, not to be re-argued.
 
 ---
 
@@ -394,7 +401,7 @@ regression, so read the diff before touching the gate.
 ```
 working tree clean
 npx tsc --noEmit    clean
-npx vitest run      1145 / 1145
+npx vitest run      1146 / 1146
 svg bytes           164 of 171   best 5186, median 179   (masked-height median 1241, max EXACT)
                     PASSING ratchet: 7 slugs, the first this table has ever held
 heights             80 exact / 86 ULP-only / 2 structural (3.875px, both the same)
@@ -405,8 +412,8 @@ chord-grid ranked   0 of 23
 midi ranked         0 of 3       BYTE-EXACT
 harvested ranked    0 of 174
 pixel ranked        0 of 120
-DOM contract        14 of 25     (219 of 427 rows)
-                    PASSING ratchet: 11 slugs
+DOM contract        13 of 25     (184 of 390 rows)
+                    PASSING ratchet: 12 slugs
 npx biome check src NOT clean — same rows as before, all pre-existing
 ```
 
