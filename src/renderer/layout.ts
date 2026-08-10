@@ -899,6 +899,19 @@ export interface PlacedText {
 export interface LayoutElement {
   readonly type: ElementType
   /**
+   * `durationClass` and abcjs's own PITCH NUMBERS, carried for the `add_classes` markup and
+   * for nothing else — `klass += ' d' + Math.round(durationClass*1000)/1000` then one
+   * `' p' + pitch` per pitch (`write/draw/absolute.js:31-40`).
+   *
+   * They are on the ELEMENT rather than derived in the writer because neither can be
+   * recovered from the drawing: `durationClass` is the SOUNDING duration (a triplet eighth
+   * is 1/12, not 1/8, and nothing drawn says so), and abcjs's pitch is ABSOLUTE — 0 is
+   * middle C whatever the clef — where a glyph's y is a staff POSITION and would need the
+   * clef read back out of it.
+   */
+  readonly durationClass?: number
+  readonly abcjsPitches?: readonly number[]
+  /**
    * Total height, for an element that is a BLOCK rather than a mark — only the top text.
    * abcjs advances its cursor by a rounded line height per row, which is more than the
    * last row's descender, so the block cannot be measured from its texts after the fact.
@@ -2274,6 +2287,7 @@ function layoutRest(
   )
   return {
     type: 'rest',
+    durationClass: ratToNumber(rest.duration),
     x,
     width: Math.max(advance, restInk),
     spring: advance,
@@ -3034,6 +3048,10 @@ function layoutNoteheads(
   const ink = Math.max(headRight, dotWidth, textSpan.right, ...flagInk) + ENGRAVE.noteRodGap
   return {
     type: 'note',
+    // abcjs's `d` and `p` classes; see `LayoutElement.durationClass`.
+    durationClass: event === null ? 0 : ratToNumber(event.duration),
+    // `pitch` 0 is MIDDLE C in abcjs, so the octave offset comes back off.
+    abcjsPitches: pitches.map((p) => diatonicIndex(p) - 7 * 4),
     // THE ELEMENT IS ITS NOTEHEAD. Grace notes and accidentals hang LEFT of it and cost
     // the cursor nothing — abcjs's `w` for `^c` is 9.810, the notehead alone, with the
     // accidental recorded as `extraw = -14.375` and no part of the rod (probed on

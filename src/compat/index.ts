@@ -101,6 +101,8 @@ export function renderAbc(target: Target, abc: string, params: AbcjsParams = {})
     svg: toSVG(layout(score, { mode: 'abcjs-strict', ...(systemWidth ? { systemWidth } : {}) }), {
       staffSpace,
       classes: 'abcjs',
+      // abcjs emits its per-element class scheme only when the host asks for it.
+      ...(params.add_classes === true ? { addClasses: true } : {}),
       // Pad to the requested page width, as abcjs does, so the element occupies the
       // same space in the page whatever the music's own width.
       ...(params.staffwidth === undefined ? {} : { pageWidth: params.staffwidth }),

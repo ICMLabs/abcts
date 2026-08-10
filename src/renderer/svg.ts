@@ -32,6 +32,14 @@ export interface RenderOptions {
    */
   readonly classes?: 'abcts' | 'abcjs'
   /**
+   * abcjs's `add_classes` — the per-element `l`/`m`/`mm`/`v`/`n` class scheme and the
+   * `staff-wrapper`/`staff` groups, which abcjs emits ONLY when a host asks for them
+   * (`Classes.shouldAddClasses`). The per-PART names (`abcjs-notehead`, `abcjs-stem`) are
+   * not gated on it here and never were: they are the hooks a stylesheet needs whatever
+   * the host asked for, and they cost a word each. This scheme costs a line each.
+   */
+  readonly addClasses?: boolean
+  /**
    * Force the drawing's width in pixels, rather than fitting the content.
    *
    * abcjs pads its SVG to the requested page width even when the music is narrower —
@@ -276,6 +284,90 @@ function curveToPath(curve: PlacedCurve, attr: string, strict: boolean): string 
   return `<path${attr} d="M${num(x1)},${num(y1)} ${outer} ${back}Z"/>`
 }
 
+
+/**
+ * abcjs's `Classes.generate` — the `add_classes` class string, ported from
+ * `write/helpers/classes.js`.
+ *
+ * It is a STATEFUL COUNTER walked in draw order, not a property of any element, which is
+ * why it lives in the writer: `l` is the line, `m` the measure within it, `mm` the measure
+ * within the TUNE, `v` the voice, and `n` the note within the measure — and `n` is added
+ * only for a class naming a note, a rest or a lyric.
+ *
+ * `mm` is the one that cannot be guessed from a single tune: it is
+ * `sum(measureTotalPerLine[0 … line-1]) + measureNumber`, and `measureTotalPerLine` is
+ * written by `newMeasure()` at the END of a line rather than counted as it goes.
+ */
+class Classes {
+  constructor(private readonly on: boolean) {}
+  private line: number | null = null
+  private voice: number | null = null
+  private measure: number | null = null
+  private note: number | null = null
+  private readonly perLine: number[] = []
+
+  incrLine(): void {
+    this.line = this.line === null ? 0 : this.line + 1
+    this.voice = null
+    this.measure = null
+    this.note = null
+  }
+  incrVoice(): void {
+    this.voice = this.voice === null ? 0 : this.voice + 1
+    this.measure = null
+    this.note = null
+  }
+  newMeasure(): void {
+    // `if (this.measureNumber)` — a FALSY test, so a line whose measure counter is still 0
+    // records nothing. That is abcjs's own line and it is why `mm` can lag.
+    if (this.measure && this.line !== null) this.perLine[this.line] = this.measure
+    this.measure = null
+    this.note = null
+  }
+  startMeasure(): void {
+    this.measure = 0
+    this.note = 0
+  }
+  incrMeasure(): void {
+    this.measure = (this.measure ?? 0) + 1
+    this.note = 0
+  }
+  isInMeasure(): boolean {
+    return this.measure !== null
+  }
+  incrNote(): void {
+    this.note = (this.note ?? 0) + 1
+  }
+  private measureTotal(): number {
+    let total = 0
+    for (let i = 0; i < (this.line ?? 0); i += 1) total += this.perLine[i] ?? 0
+    if (this.measure) total += this.measure
+    return total
+  }
+  generate(c: string): string {
+    if (!this.on) return ''
+    const ret: string[] = []
+    if (c.length > 0) ret.push(c)
+    if (this.line !== null) ret.push(`l${this.line}`)
+    if (this.measure !== null) ret.push(`m${this.measure}`)
+    // "measureNumber is null between measures so this is still the test for measureTotal"
+    if (this.measure !== null) ret.push(`mm${this.measureTotal()}`)
+    if (this.voice !== null) ret.push(`v${this.voice}`)
+    if (
+      (c.includes('note') || c.includes('rest') || c.includes('lyric')) &&
+      this.note !== null
+    ) {
+      ret.push(`n${this.note}`)
+    }
+    return ret
+      .join(' ')
+      .split(' ')
+      .filter((x) => x.length > 0)
+      .map((x) => (x.startsWith('abcjs-') ? x : `abcjs-${x}`))
+      .join(' ')
+  }
+}
+
 export function toSVG(doc: Layout, options: RenderOptions = {}): string {
   const scale = options.staffSpace ?? 8
   const prefix = options.className ?? 'abcts'
@@ -302,7 +394,9 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
    * hashing kilobytes of path data per glyph to discover that would cost more than it
    * saves.
    */
-  const glyphDefs = new Map<GlyphName, string>()
+  const attrIfAny = (cls: string): string => (cls ? ` class="${cls}"` : '')
+
+const glyphDefs = new Map<GlyphName, string>()
   const defId = (name: GlyphName): string => {
     let id = glyphDefs.get(name)
     if (id === undefined) {
@@ -395,13 +489,20 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
   }
 
   const parts: string[] = []
+  /** abcjs's running counters. Inert unless `add_classes` asked for the markup. */
+  const classes = new Classes(options.addClasses === true)
 
   for (const system of doc.systems) {
+    // `abcjs-staff-wrapper abcjs-l{n}` wraps a whole music LINE (`draw/draw.js:40-42`),
+    // and it is the outermost thing in abcjs's output — our very first contract row
+    // differed on depth because it was missing.
+    if (abcjs) classes.incrLine()
     // Each system is laid out in its own space and placed by translation, so nothing
     // inside it depends on how many systems precede it. Staves nest the same way, one
     // per voice, because a staff step means a different pitch under a different clef.
     parts.push(
-      `<g${abcjs ? '' : ` class="${prefix}-system"`} transform="translate(0,${num(system.originY)})">`,
+      `<g${abcjs ? attrIfAny(classes.generate('staff-wrapper')) : ` class="${prefix}-system"`}` +
+        ` transform="translate(0,${num(system.originY)})">`,
     )
     // Braces and brackets first: they belong to the SYSTEM, joining staves rather than
     // sitting on one, and they are drawn at the left edge outside the music area.
@@ -433,9 +534,29 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
       )
     }
     for (const staff of system.staves) {
+      let staffGroup = ''
       parts.push(
         `<g${abcjs ? '' : ` class="${prefix}-staff-group"`} transform="translate(0,${num(staff.originY)})">`,
       )
+      // `incrVoice()` then `newMeasure()` then the staff lines — abcjs's own order
+      // (`draw/staff-group.js:80-91`), which is why the staff's class carries `l` and `v`
+      // but no `m`/`mm`: the measure counter is null across that call.
+      if (abcjs) {
+        classes.incrVoice()
+        classes.newMeasure()
+        // The staff-lines group exists ONLY under `add_classes`; without it abcjs draws
+        // the lines straight into the wrapper, and an empty `<g>` would be a row of its own
+        // on the contract table.
+        staffGroup = classes.generate('staff')
+        if (staffGroup) parts.push(`<g class="${staffGroup}">`)
+        // …AND THE MEASURE COUNTER IS ALREADY 0 BY THE TIME THE PREFIX IS DRAWN.
+        // `draw/voice.js:31` reads as though a `staff-extra` cannot open a measure —
+        // `if (child.type !== 'staff-extra' && !isInMeasure()) startMeasure()` — but
+        // abcjs's own OUTPUT gives the clef `abcjs-m0 abcjs-mm0`, so something upstream
+        // has already started it. Measured rather than reasoned: the source lies here,
+        // and the goldens are the target.
+        classes.startMeasure()
+      }
       // abcjs classes only the TOP staff line; the other four carry no class at all.
       //
       // Found by the LOWEST y rather than by index. `staffLines[0]` is the BOTTOM line —
@@ -455,6 +576,7 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
           : ` class="${prefix}-staff"`
         parts.push(lineToRect(line, attr))
       })
+      if (staffGroup) parts.push('</g>')
       for (const beam of staff.beams) {
         parts.push(lineToRect(beam, abcjs ? ' class="abcjs-beam"' : ` class="${prefix}-beam"`))
       }
@@ -529,12 +651,35 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
         )
       }
 
+      // `foundNote` — a barline before any note does not advance the measure counter.
+      let foundNote = false
       staff.elements.forEach((el, index) => {
         // abcjs wraps each element in a group carrying its kind and index, which is what
         // its interaction code walks. Core's own naming needs no wrapper.
         if (abcjs) {
           const name = ABCJS_ELEMENT_NAMES[el.type] ?? el.type
-          parts.push(`<g data-name="${name}" data-index="${index}">`)
+          // `if (child.type !== 'staff-extra' && !isInMeasure()) startMeasure()`
+          // (`draw/voice.js:31-34`) — a prefix element does not open a measure.
+          const isExtra = name.startsWith('staff-extra')
+          const justStarted = !isExtra && !classes.isInMeasure()
+          if (justStarted) classes.startMeasure()
+          // `klass = params.type`, then ` d{durationClass}` with `.` → `-`, then one
+          // ` p{pitch}` per pitch, for a note or a rest only
+          // (`draw/absolute.js:31-40`).
+          let klass = name
+          if (el.type === 'note' || el.type === 'rest') {
+            klass += ` d${Math.round((el.durationClass ?? 0) * 1000) / 1000}`.replace(/\./g, '-')
+            for (const p of el.abcjsPitches ?? []) klass += ` p${p}`
+          }
+          const gcls = classes.generate(klass)
+          parts.push(
+            `<g${gcls ? ` class="${gcls}"` : ''} data-name="${name}" data-index="${index}">`,
+          )
+          if (el.type === 'note' || (el.type === 'rest' && el.plainRest !== false)) {
+            classes.incrNote()
+          }
+          if (el.type === 'bar' && !justStarted && foundNote) classes.incrMeasure()
+          if (el.type === 'note' || el.type === 'rest') foundNote = true
         }
         for (const line of el.lines) parts.push(lineToRect(line, attrs(el.type, line.role)))
         for (const g of el.glyphs) {
@@ -573,6 +718,12 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
 
   return (
     `<svg xmlns="http://www.w3.org/2000/svg"${abcjs ? '' : ` class="${escapeAttr(prefix)}"`} ` +
+    // abcjs SETS `fill` ON THE `<svg>` ITSELF and wraps nothing round the music, so its
+    // outermost child is the staff-wrapper. Ours carried an extra `<g fill>`, which put
+    // every element ONE DEPTH deeper than abcjs's and made the very first contract row
+    // differ — a difference no positional gate could express, since a group with no
+    // transform moves nothing.
+    `${abcjs ? 'fill="currentColor" ' : ''}` +
     `width="${num(w)}" height="${num(h)}" viewBox="${viewBox}">` +
     // Built while walking the music, so it can only be serialised now that the walk is
     // done — which is why `parts` is assembled first and the document assembled last.
@@ -581,7 +732,7 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
       : `<defs>${[...glyphDefs]
           .map(([name, id]) => `<path id="${id}" d="${outline(name).path}"/>`)
           .join('')}</defs>`) +
-    `<g fill="currentColor">${parts.join('')}</g>` +
+    (abcjs ? parts.join('') : `<g fill="currentColor">${parts.join('')}</g>`) +
     `</svg>`
   )
 }

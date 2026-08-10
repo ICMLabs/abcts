@@ -13,7 +13,15 @@
  * cases were nearly written off as unportable.
  *
  * **WHAT IS COMPARED**: every element carrying a `class` or a `data-name`, in document
- * order, with its DEPTH — so grouping is part of the contract and not just membership.
+ * order, with its CONTRACT DEPTH — how many CLASSED-OR-NAMED ancestors it has, so grouping
+ * is part of the contract and not just membership.
+ *
+ * Depth is counted over CONTRACT elements rather than raw nesting because raw nesting would
+ * measure POSITIONING: abcjs draws at absolute coordinates and we place each system and
+ * staff with a `<g transform>`, so a group that moves things is a level in one engine and
+ * not the other. Same class of choice as `<rect>`-versus-`<path>`. What this preserves is
+ * what a host actually walks — `closest('.abcjs-note')`, ancestor selectors, and the
+ * grouping of parts inside their element.
  * **The tag name is NOT**: a staff line is a `<path>` in abcjs and a `<rect>` here, a
  * drawing choice the pixel gate already proves equivalent, and folding it in would drown
  * the axis this gate exists for.
@@ -53,24 +61,25 @@ const PASSING: readonly string[] = []
  */
 function contractOf(svg: string): Row[] {
   const rows: Row[] = []
-  let depth = -1
+  /** One entry per open element: does it count toward contract depth? */
+  const stack: boolean[] = []
+  const depth = (): number => stack.filter(Boolean).length
   for (const m of svg.matchAll(/<(\/?)([a-zA-Z]+)([^>]*?)(\/?)>/g)) {
     const [, closing, tag, attrs, selfClose] = m
-    if (tag === 'svg' || tag === 'style' || tag === 'title') {
-      if (closing === '' && selfClose === '') depth += tag === 'svg' ? 1 : 0
-      else if (closing === '/' && tag === 'svg') depth -= 1
+    if (tag === 'svg' || tag === 'style' || tag === 'title' || tag === 'defs') {
+      if (closing === '/' && tag !== 'svg') stack.pop()
+      else if (closing === '' && selfClose === '' && tag !== 'svg') stack.push(false)
       continue
     }
     if (closing === '/') {
-      depth -= 1
+      stack.pop()
       continue
     }
     const klass = /\sclass="([^"]*)"/.exec(attrs ?? '')?.[1] ?? null
     const name = /\sdata-name="([^"]*)"/.exec(attrs ?? '')?.[1] ?? null
-    if (klass !== null || name !== null) {
-      rows.push({ depth, class: klass === '' ? null : klass, name })
-    }
-    if (selfClose === '') depth += 1
+    const counts = klass !== null || name !== null
+    if (counts) rows.push({ depth: depth(), class: klass === '' ? null : klass, name })
+    if (selfClose === '') stack.push(counts)
   }
   return rows
 }

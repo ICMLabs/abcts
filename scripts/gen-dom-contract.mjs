@@ -95,14 +95,28 @@ for (const [slug, abc] of TUNES) {
 }
 console.log(`${TUNES.length} DOM-contract cases written to tests/corpus-dom/`)
 
-/** Every element carrying a class or a data-name, in document order, with its depth. */
+/**
+ * Every element carrying a class or a data-name, in document order, with its CONTRACT
+ * DEPTH — how many CLASSED-OR-NAMED ancestors it has, not how many elements.
+ *
+ * Counting raw nesting would measure our POSITIONING, not the contract: abcjs draws at
+ * absolute coordinates and we place each system and staff with a `<g transform>`, so an
+ * unclassed group that moves things is an extra level in one engine and not the other.
+ * That is the same class of drawing choice as `<rect>`-versus-`<path>`, which the pixel
+ * gate already proves equivalent, and a gate that folded it in would report it on every
+ * row and drown the axis.
+ *
+ * What contract depth DOES preserve is what a host walks: `closest('.abcjs-note')`,
+ * ancestor selectors, and the grouping of parts inside their element.
+ */
 function contractOf(root) {
   const rows = []
   const walk = (el, depth) => {
     const klass = el.getAttribute('class')
     const name = el.getAttribute('data-name')
-    if (klass || name) rows.push({ depth, class: klass || null, name: name || null })
-    for (const child of el.children) walk(child, depth + 1)
+    const counts = !!(klass || name)
+    if (counts) rows.push({ depth, class: klass || null, name: name || null })
+    for (const child of el.children) walk(child, counts ? depth + 1 : depth)
   }
   for (const child of root.children) walk(child, 0)
   return rows
