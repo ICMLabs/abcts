@@ -4337,6 +4337,11 @@ function noteText(
         // The lane is only the origin: `anchorAboveStaff` moves the whole set onto the
         // staff's music once the voices sharing it are known, exactly as lyrics are.
         role: 'chord',
+        // `type: "chord"` in abcjs, drawn by `relative.js`'s own case with
+        // `classes.generate("chord")` and `name: "chord"`. An ANNOTATION shares the lane
+        // and the role and is a DIFFERENT element — `type: "text"`, `name: "annotation"`
+        // — so the two are told apart here rather than at the emitter.
+        dataName: 'chord',
         x: centre - lineWidth / 2,
         y: stepToY(ENGRAVE.chordSymbolStep),
         size,
@@ -4397,6 +4402,7 @@ function noteText(
       // role, so `anchorAboveStaff` never saw them, reserved nothing, and let their ink
       // set the staff's top instead — the whole of `frere-jacques`'s last residual.
       role: 'chord',
+      dataName: 'annotation',
     })
   })
 
@@ -4421,6 +4427,7 @@ function noteText(
       bold: false,
       italic: false,
       role: 'chordBelow',
+      dataName: 'annotation',
       reserve: pointReserve(y),
       ...(SCORE_FONTS.annotationfont?.box === true ? { box: true } : {}),
     })
@@ -4558,6 +4565,7 @@ function noteText(
       // Tagged so the melisma pass can find the syllable it must extend from. Matching
       // on the y lane instead would couple that pass to this one's lane arithmetic.
       role: 'lyric',
+      dataName: 'lyric',
       // MEASUREMENT follows the same `size`, so a bigger font both draws and occupies
       // bigger. A font that draws large and measures at the default width is how lyrics
       // end up overlapping — the centring here and the melisma extender's start both

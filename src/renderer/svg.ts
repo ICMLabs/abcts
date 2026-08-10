@@ -96,6 +96,13 @@ const ABCJS_CLASSES: Readonly<Record<string, string>> = {
   dynamic: 'abcjs-decoration abcjs-dynamics',
 }
 
+/**
+ * The music's own texts that carry a generated class and name themselves after it
+ * (`draw/relative.js:41-52`). The key is BOTH the class stem and the `data-name`, which is
+ * why one set covers both.
+ */
+const MUSIC_TEXT_NAMES: ReadonlySet<string> = new Set(['lyric', 'chord', 'annotation'])
+
 /** abcjs's `data-name` hooks, which its interaction code keys on. */
 const ABCJS_DATA_NAMES: Readonly<Record<string, string>> = {
   stem: 'stem',
@@ -1009,7 +1016,16 @@ const glyphDefs = new Map<GlyphName, string>()
               ` data-name="${escapeAttr(t.text)}"`
             : isBarNumber
               ? `${attrIfAny(classes.generate('bar-number'))} data-name="bar-number"`
-              : attrs(el.type, 'text')
+              /**
+               * **A LYRIC, A CHORD SYMBOL AND AN ANNOTATION EACH NAME THEMSELVES** —
+               * `relative.js:41-52` gives all three `klass: classes.generate(<name>)` and
+               * the same string as `name`. The `n` counter joins only the lyric's, because
+               * `generate` appends it for a key containing `note`, `rest` or `lyric`
+               * (`helpers/classes.js:90`). Ours wrote neither the class nor the name.
+               */
+              : abcjs && MUSIC_TEXT_NAMES.has(t.dataName ?? '')
+                ? `${attrIfAny(classes.generate(t.dataName ?? ''))} data-name="${t.dataName}"`
+                : attrs(el.type, 'text')
           textParts.push({
             role: t.role,
             s:
