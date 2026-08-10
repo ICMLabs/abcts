@@ -253,7 +253,13 @@ describe('line weights match abcjs in strict mode', () => {
       ).toBeGreaterThan(0)
       const got = hits.map((i) => (axis === 'length' ? (i.h as number) : (i.w as number)))
       // Every one of them, so a single stray piece is a failure rather than an average.
-      for (const g of got) expect(Math.round(g * 1000) / 1000).toBeCloseTo(is, 2)
+      //
+      // **abcjs ROUNDS EVERY PATH COORDINATE TO TWO DECIMALS** (`roundNumber`), and compat
+      // now does too. So a rule of declared weight 2.906 is DRAWN 2.9 or 2.91 depending on
+      // where it sits — by abcjs exactly as much as by us — and a comparison against the
+      // DECLARED figure has to allow that: two edges, each rounded, is up to 0.01. This is
+      // quantisation in the shared output format, not a tolerance on the constant.
+      for (const g of got) expect(Math.abs(g - is), `${what} drawn ${g}, declared ${is}`).toBeLessThanOrEqual(0.011)
     })
   }
 

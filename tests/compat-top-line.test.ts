@@ -24,7 +24,10 @@ describe('compat DOM: abcjs-top-line', () => {
 
   it('sits on the highest of the five staff lines', () => {
     const doc = absolutePixels(svg())
-    const staffLines = doc.items.filter((i) => i.tag === 'rect')
+    // A LINE IS A `<path>` IN abcjs MODE NOW, not a `<rect>` — abcjs builds a closed
+    // four-point polygon for every rule it draws, and compat reproduces it byte for byte.
+    // A staff line is the full-width, hairline-high one.
+    const staffLines = doc.items.filter((i) => (i.h ?? 0) < 2 && (i.w ?? 0) > (i.h ?? 0) * 20)
     expect(staffLines.length).toBeGreaterThanOrEqual(5)
     const classed = staffLines.filter((i) => i.cls.includes('abcjs-top-line'))
     expect(classed).toHaveLength(1)
@@ -35,7 +38,7 @@ describe('compat DOM: abcjs-top-line', () => {
 
   it('leaves the other four unclassed, as abcjs does', () => {
     const doc = absolutePixels(svg())
-    const rects = doc.items.filter((i) => i.tag === 'rect')
-    expect(rects.filter((i) => i.cls === '').length).toBeGreaterThanOrEqual(4)
+    const lines = doc.items.filter((i) => (i.h ?? 0) < 2 && (i.w ?? 0) > (i.h ?? 0) * 20)
+    expect(lines.filter((i) => i.cls === '').length).toBeGreaterThanOrEqual(4)
   })
 })

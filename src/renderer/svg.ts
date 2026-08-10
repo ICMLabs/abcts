@@ -172,6 +172,16 @@ const jazzChordMarkup = (jazz: readonly [string, string, string], x: string): st
  */
 const PRECISION = 100000
 
+/**
+ * `roundNumber` — abcjs rounds every coordinate it writes into path data to TWO DECIMALS
+ * (`write/svg.js`), which is why its staff line ends at `193.9` where the arithmetic gives
+ * 193.90447. The root's width and height are the exception and go out raw.
+ */
+const round2 = (n: number): string => {
+  const r = Math.round(n * 100) / 100
+  return Object.is(r, -0) ? '0' : String(r)
+}
+
 const num = (n: number): string => {
   const r = Math.round(n * PRECISION) / PRECISION
   return Object.is(r, -0) ? '0' : String(r)
@@ -198,7 +208,7 @@ const scaleNum = (n: number): string => (Object.is(n, -0) ? '0' : String(n))
  * engraving means, but stroke rendering also picks up linecap and antialiasing
  * differences between renderers. A rect is unambiguous.
  */
-function lineToRect(line: PlacedLine, attr: string): string {
+function lineToRect(line: PlacedLine, attr: string, asPath = false): string {
   // A SLOPED line — only a beam is — is neither a horizontal nor a vertical rect. Drawn
   // as a parallelogram with vertical ends, which is how beams are cut in engraving, and
   // which a rect would silently render as a vertical bar.
@@ -218,6 +228,22 @@ function lineToRect(line: PlacedLine, attr: string): string {
   const y = horizontal ? line.y1 - line.thickness / 2 : Math.min(line.y1, line.y2)
   const w = horizontal ? Math.abs(line.x2 - line.x1) : line.thickness
   const h = horizontal ? line.thickness : Math.abs(line.y2 - line.y1)
+  /**
+   * **A LINE IS A CLOSED PATH IN ABCJS, NOT A `<rect>`** — `printStem` and `printStaff`
+   * both build `M x y L x2 y L x2 y2 L x y2 z` and fill it (`write/draw/*`), so a staff
+   * line, a stem, a ledger and a beam are all four-point polygons.
+   *
+   * The attribute ORDER is abcjs's too — `d`, `stroke`, `fill`, then the class — and the
+   * tag is written open-and-close rather than self-closing, which is what a browser's
+   * serializer does to an element it built. Both are bytes.
+   */
+  if (asPath) {
+    return (
+      `<path d="M ${round2(x)} ${round2(y)} L ${round2(x + w)} ${round2(y)} ` +
+      `L ${round2(x + w)} ${round2(y + h)} L ${round2(x)} ${round2(y + h)} z" ` +
+      `stroke="none" fill="currentColor"${attr}></path>`
+    )
+  }
   return `<rect${attr} x="${num(x)}" y="${num(y)}" width="${num(w)}" height="${num(h)}"/>`
 }
 
@@ -591,6 +617,7 @@ const glyphDefs = new Map<GlyphName, string>()
         lineToRect(
           TL(line),
           abcjs ? ' class="abcjs-bracket" data-name="bracket"' : ` class="${prefix}-staff"`,
+          abcjs,
         ),
       )
     }
@@ -648,25 +675,29 @@ const glyphDefs = new Map<GlyphName, string>()
       // y is down and the array runs upward — so keying on index 0 put `abcjs-top-line`
       // on the bottom line, four staff spaces from where a stylesheet targeting it would
       // expect. Silent, because the class was present and the count was right.
-      const topLine = staff.staffLines.reduce(
-        (best, line, i) =>
-          line.y1 < (staff.staffLines[best]?.y1 ?? Number.POSITIVE_INFINITY) ? i : best,
+      const ordered = abcjs ? [...staff.staffLines].reverse() : staff.staffLines
+      const topLine = ordered.reduce(
+        (best, line, i) => (line.y1 < (ordered[best]?.y1 ?? Number.POSITIVE_INFINITY) ? i : best),
         0,
       )
-      staff.staffLines.forEach((line, i) => {
+      // **TOP-DOWN.** `staffLines[0]` is the BOTTOM line here — y is down and the array runs
+      // upward — and abcjs's `printStaff` writes from the top. A pure ORDER difference,
+      // invisible to every gate that compares positions and worth 31px of apparent offset
+      // when the first line of each engine's output was read side by side.
+      ordered.forEach((line, i) => {
         const attr = abcjs
           ? i === topLine
             ? ' class="abcjs-top-line"'
             : ''
           : ` class="${prefix}-staff"`
-        parts.push(lineToRect(TL(line), attr))
+        parts.push(lineToRect(TL(line), attr, abcjs))
       })
       if (staffGroup) parts.push('</g>')
       for (const beam of staff.beams) {
-        parts.push(lineToRect(TL(beam), abcjs ? ' class="abcjs-beam"' : ` class="${prefix}-beam"`))
+        parts.push(lineToRect(TL(beam), abcjs ? ' class="abcjs-beam"' : ` class="${prefix}-beam"`, abcjs))
       }
       for (const line of staff.voltaLines) {
-        parts.push(lineToRect(TL(line), abcjs ? ' class="abcjs-ending"' : ` class="${prefix}-volta"`))
+        parts.push(lineToRect(TL(line), abcjs ? ' class="abcjs-ending"' : ` class="${prefix}-volta"`, abcjs))
       }
       for (const t of staff.voltaTexts) {
         parts.push(
@@ -686,13 +717,14 @@ const glyphDefs = new Map<GlyphName, string>()
             abcjs
               ? ' class="abcjs-triplet" data-name="triplet-bracket"'
               : ` class="${prefix}-tuplet"`,
+            abcjs,
           ),
         )
       }
       // Never present in strict mode, where abcjs prints a literal `_` instead — so this
       // reuses abcjs's lyric class rather than inventing one it has no counterpart for.
       for (const line of staff.melismaLines) {
-        parts.push(lineToRect(TL(line), abcjs ? ' class="abcjs-lyric"' : ` class="${prefix}-lyric"`))
+        parts.push(lineToRect(TL(line), abcjs ? ' class="abcjs-lyric"' : ` class="${prefix}-lyric"`, abcjs))
       }
       // Hairpins and glissandi. THE COMMENT HERE USED TO SAY "abcjs paints these with no
       // class of its own" — reasoned, never measured, and its own output denies it:
@@ -707,6 +739,7 @@ const glyphDefs = new Map<GlyphName, string>()
           lineToRect(
             TL(line),
             abcjs ? ` class="${cls}" data-name="${named}"` : ` class="${prefix}-decoration"`,
+            abcjs,
           ),
         )
       }
@@ -767,7 +800,7 @@ const glyphDefs = new Map<GlyphName, string>()
           if (el.type === 'bar' && !justStarted && foundNote) classes.incrMeasure()
           if (el.type === 'note' || el.type === 'rest') foundNote = true
         }
-        for (const line of el.lines) parts.push(lineToRect(TL(line), attrs(el.type, line.role)))
+        for (const line of el.lines) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
         for (const g of el.glyphs) {
           // The glyph path is authored at the origin, so a placement is all that is needed.
           parts.push(glyphMarkup(g.name, g.x, g.y, g.scale, attrs(el.type, g.role, g.chordPos)))

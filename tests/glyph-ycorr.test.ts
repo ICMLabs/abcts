@@ -45,7 +45,15 @@ function glyphsAfterClef(abc: string): number[] {
   const doc = absolutePixels(renderAbc('paper', abc, {})[0]?.svg ?? '')
   const top = doc.items.find((i) => i.cls.includes('top-line'))?.y ?? 0
   return doc.items
-    .filter((i) => i.tag === 'path' && i.cls === '')
+    // A STAFF LINE IS AN UNCLASSED `<path>` NOW — abcjs writes every rule as a closed
+    // four-point polygon and compat reproduces it, so "unclassed path" no longer means
+    // "a glyph". The four unclassed lines are full-width hairlines; a glyph never is.
+    // EVERY RULE abcjs DRAWS IS A `<path>` NOW — a staff line, a stem, a barline — so
+    // "unclassed path" no longer means "a glyph". A staff line is a HAIRLINE and a glyph
+    // never is; a barline carries `data-name="bar"` and a glyph in these controls carries
+    // none. Both tests are on the DRAWING rather than on our own naming, which is what
+    // kept this ladder honest when the markup changed under it.
+    .filter((i) => i.tag === 'path' && i.cls === '' && i.name === '' && (i.h ?? 0) >= 2)
     .slice(1)
     .map((i) => i.y - top)
 }
