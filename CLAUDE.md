@@ -225,6 +225,20 @@ checkpoint and hand off as you go so no context is lost.
 > `scripts/gen-audio-controls.mjs` rendered them — including `measureLength` being the tune's
 > LAST `M:`, not its first.
 
+> ⏱️ **`setTiming` IS IN — 0 of 38 — AND THE HARVESTED CORPUS COULD NOT DEFEND ITS OWN CODE**
+> (2026-08-09b). `src/audio/timing.ts`, the TIME half of the audio↔geometry join, ported
+> from `abc_tune.js`'s `setupEvents`. It re-derives what the flattener already answers a
+> DIFFERENT way — the flattener resolves repeats by REWRITING the voice, `setupEvents` by
+> REPLAYING elements in place — which is the same argument the MIDI file was built on.
+> abcjs's twelve warp cases are two 4/4 tunes with no pickup, one voice and no mid-tune
+> tempo, so **deleting `startingDelay -= getPickupLength()` outright left the table at 0 of
+> 13**: a line no case can reach is a line no gate can defend. Twenty-five controls closed
+> it and named a defect on their first run — `|1` is ONE element in abcjs and two in our
+> model, and `startEnding === '1'` is what stops the replay before the first ending.
+> **AND WHAT IT DOES NOT PROVE IS WRITTEN DOWN**: `left`, `endX`, `top` and `height` are on
+> every row abcjs publishes and its own suite asserts none of them, so this is the CLOCK and
+> not the join.
+
 > 📐 **EVERY DECORATION IN THE REPO WAS UP TO 10.83px LEFT, AND A CANARY FOUND IT**
 > (2026-08-09b). Not a search — the control written to prove the opening-barline transfer
 > needed a boring rung showing the same coda on a NOTE, and the boring rung disagreed with
@@ -428,10 +442,10 @@ abcjs source are all reached by sibling path and stay in that repo. Keep it that
 backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
-**GEOMETRY, AUDIO, THE MIDI FILE AND THE CHORD GRID ARE ALL AT ZERO.** 1065/1065 with no
-reds; **eleven gates and FIVE ranked tables, every one of them empty** — 0 of 72 audio
-cases, 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel
-targets. **No table can name a defect, and that is the normal condition here rather than a
+**GEOMETRY, AUDIO, THE MIDI FILE, THE CHORD GRID AND THE TIMING CLOCK ARE ALL AT ZERO.** 1112/1112 with no
+reds; **thirteen gates and SIX ranked tables, every one of them empty** — 0 of 72 audio
+cases, 0 of 38 note timings, 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested
+fixtures, 0 of 120 pixel targets. **No table can name a defect, and that is the normal condition here rather than a
 milestone** — the last four findings all came from building a gate that expresses an axis
 none of the others can, or from rendering a control abcjs's own suite does not contain.
 

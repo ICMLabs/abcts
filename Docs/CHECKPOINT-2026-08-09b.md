@@ -16,13 +16,14 @@ work list for what is left.
 
 | axis | standing |
 |---|---|
-| suite | **1073 of 1073. NO REDS.** |
+| suite | **1112 of 1112. NO REDS.** |
 | **audio ranked table** | **0 of 72** — was 2 of 61; the corpus GREW by 11 controls |
 | **chord-grid ranked table** | **0 of 23** — NEW, and the feature is new with it |
 | midi-file ranked table | **0 of 3 — BYTE-EXACT** |
 | harvested ranked table | 0 of 174 |
 | pixel ranked table | 0 of 120 |
-| gates | **12** (27 test files) |
+| **timing ranked table** | **0 of 38** — NEW (13 harvested + 25 controls) |
+| gates | **13** (29 test files) |
 
 **THERE IS NO NAMED DEFECT LEFT ON ANY TABLE.** The engine's last one — the host drum
 options — closed first thing this session.
@@ -185,39 +186,27 @@ used to be a sentence in a handoff.
 
 ## WHAT IS LEFT
 
-### 1. `setTiming` — **HARVESTED; the implementation is what is left**
+### 1. `setTiming` — **DONE for the TIME half; the GEOMETRY half has no oracle**
 
-`tests/corpus-timing/`, 19 cases, `npm run harvest:timing`. Four of them — the crash
-regressions — are live in `tests/timing-creation.test.ts`. The other fifteen wait on the
-engine, and this is the source map:
+`src/audio/timing.ts`, 0 of 38. Two things are recorded rather than assumed:
 
-```
-abc_tune.js:584  setTiming(bpm, measuresOfDelay)
-                   getBpm(tempo)            :563   — 180 default, 120 on compound meter
-                   getBeatLength()          :96    — multiplier / meter.den
-                   getBarLength()           :146
-                   getPickupLength()
-                   startingDelay = measureLength / beatLength * measuresOfDelay
-                                     / beatsPerSecond, LESS the pickup
-                   warp = bpm / naturalBpm, and ONLY when the tune states a `Q:`
-abc_tune.js:438  setupEvents(startingDelay, timeDivider, startingBpm, warp)
-                   makeVoicesArray(), then per element `addElementToEvents`
-                   tempoLocations[measure] re-divides the clock mid-walk
-                   **its own repeat unrolling** — replays elements
-                     startingRepeatElem … endingRepeatElem IN PLACE, and
-                     `startEnding === '1'` is what skips the first ending
-                   makeSortedArray -> one row per distinct millisecond, all voices
-                   push({type: 'end', milliseconds: maxVoiceTimeMilliseconds})
-                   addUsefulCallbackInfo stamps millisecondsPerMeasure on every row
-```
+- **`left` / `endX` / `top` / `height` are on every row abcjs publishes and its own
+  `timing.test.js` asserts NONE of them.** A green timing table is the CLOCK, not the
+  audio↔geometry join. Building that half needs an oracle first, and there is none in
+  abcjs's suite — a control ladder against its rendered SVG is the only route.
+- **`doTimingTest`'s two `elements` cases are a THIRD surface** and are still unread:
+  `currentTrackMilliseconds` and `midiPitches` are stamped back onto the drawn elements by
+  the FLATTENER (`abc_midi_flattener.js:530-540`), not by `setupEvents`. A note reached
+  twice through a repeat carries `[3000, 9000]` — an array where a once-played note carries
+  a number, which is the shape to reproduce.
 
-**The repeat unrolling is a SECOND, DIFFERENT answer to a question the sequencer already
-answers** — that is the whole reason this surface is worth building, and it is the same
-argument the MIDI file won on.
-
-**And `left` / `endX` / `top` / `height` have NO oracle here.** They are on every row and
-abcjs's own file asserts none of them, so the geometry half of the join is unmeasured even
-after this lands. Do not mistake a green timing table for a green join.
+**AND THE HARVESTED CORPUS COULD NOT DEFEND ITS OWN CODE**: its twelve warp cases are two
+4/4 tunes with no pickup, one voice and no mid-tune tempo, so deleting
+`startingDelay -= getPickupLength()` outright left the table at 0 of 13. The 25 controls in
+`tests/corpus-timing-controls/` are what close that, and `repeat-endings` named a real
+defect on its first run — `|1` is ONE element in abcjs and two in our model, the same split
+the chord grid hit, load-bearing here because `startEnding === '1'` is what stops the replay
+before the first ending.
 
 ### 2. The SVG DOM contract — `visual/svg.test.js` and `svg-per-line.test.js`
 
@@ -258,8 +247,9 @@ first.
 ```
 working tree clean
 npx tsc --noEmit    clean
-npx vitest run      1073 / 1073
+npx vitest run      1112 / 1112
 audio ranked        0 of 72
+timing ranked       0 of 38
 chord-grid ranked   0 of 23
 midi ranked         0 of 3     BYTE-EXACT
 harvested ranked    0 of 174
