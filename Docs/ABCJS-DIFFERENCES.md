@@ -43,26 +43,42 @@ abcjs's** — absolute pixels, no `viewBox`, no `transform` anywhere, one bare `
 The whole suite is green across that change (1127/1127), which is the proof it is right:
 every pixel gate measures pixels, and they see the same pixels they saw before.
 
-What is left, in the order the byte table hits it:
+What is left, in the order the byte table hits it. **Best case 587 bytes in, median 162**,
+from 10 when the table opened:
 
-1. **The top text comes FIRST in abcjs's body.** `<g><text stroke="none" font-size="27" …>`
-   where we draw the brace first.
-2. **A line is a CLOSED PATH, not a `<rect>`.** `<path d="M 15 63.77 L 685 63.77 L 685 64.47
-   L 15 64.47 z" stroke="none" fill="currentColor" class=…></path>` — note the attribute
-   order and the explicit close tag, which is what a browser's serializer writes.
-3. **A ~31px VERTICAL ORIGIN DIFFERENCE, and this one is a real defect rather than a markup
-   one.** Our staff line lands at y 67.642 where abcjs puts it at 36.64 on
-   `parse-note-01`. **Every pixel gate in this repo is blind to it**: `pixel-parity`
-   measures relative to the TOP LINE, so a uniform page offset cancels exactly. It took an
-   absolute-coordinate comparison to see at all — the same lesson as the line weights and
-   the decoration x, and the third time a whole axis turned out to be unrepresented.
-4. **`height="292.14200000000005"` against abcjs's `292.142`** — floating-point noise from
+1. **`font-weight="bold"` on the title where abcjs writes `normal`** — and this is a
+   possible REAL defect rather than a markup one. abcjs's default `titlefont` is Times New
+   Roman 20 and is not bold. **No gate here compares text WEIGHT** — the pixel tables
+   measure positions — so if our layout is flagging the title bold, it has been drawing a
+   heavier title than abcjs all along. Named by the byte table, not yet chased.
+2. **The two-decimal rounding is not universal.** abcjs rounds path coordinates
+   (`roundNumber`) and writes the root's `width`/`height` raw; a `<text>`'s `x`/`y` and a
+   `<tspan>`'s follow their own rule, which is unmeasured.
+3. **`height="292.14200000000005"` against abcjs's `292.142`** — floating-point noise from
    our multiply. NOT a formatting rule: abcjs writes `1081.3299999999997` on another
    fixture, so matching means matching the arithmetic ORDER, which is the emission-quantum
    problem the geometry arc already knows by name.
+4. **Curves, beams and glyph paths** — a tie is `<path class="abcjs-tie" d="M60.83225,…">`
+   here and a differently-formatted `d` there; a beam is still a `<polygon>`.
 5. **Per-glyph `data-name`** — `clefs.G`, `accidentals.flat`, `dots.dot`, `rests.half`, a
    bare digit for a time-signature figure, and the WRITTEN NOTE NAME (`C`, `c`, `C,`) on a
    notehead. Tracked separately by `tests/dom-contract.test.ts`.
+
+### Closed on the way here
+
+Absolute pixels and no `viewBox`; no `transform` anywhere; the root element attribute for
+attribute including the title in `aria-label` and `<title>`; the page being the staff width
+plus abcjs's 15px margins; **staff lines TOP-DOWN**; every rule a CLOSED PATH with abcjs's
+attribute order and an explicit close tag; abcjs's two-decimal path rounding; the top text
+first and outside the line group; the staff-lines group and abcjs's element-group
+attributes; and abcjs's nine-attribute `<text>` with its `<tspan>`.
+
+**A CORRECTION WORTH KEEPING.** A "~31px vertical origin difference, a real defect no pixel
+gate could see" was recorded here and was wrong: the heights matched to the byte and our top
+line was already at 36.642. abcjs writes its staff lines top-down and we wrote them
+bottom-up, so comparing the FIRST path of each engine compared different lines. Reading two
+different rules and calling the difference an origin is exactly the mistake this file exists
+to prevent — measure the output, and be sure it is the same thing being measured.
 
 **None of these is a ruled divergence.** `tests/svg-bytes.test.ts`'s `DIVERGENT` list is
 empty and stays empty until something is written up HERE with its evidence — a slug in that
