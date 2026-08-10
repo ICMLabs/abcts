@@ -8233,7 +8233,19 @@ function topTextBlock(
       // abcjs writes the baseline one font size below the cursor (`text.js:30`).
       y: y + titleSize,
       size: titleSize,
-      bold: true,
+      /**
+       * **NOT BOLD.** abcjs's default `titlefont` is
+       * `{face: "Times New Roman", size: 20, weight: "normal", style: "normal"}`
+       * (`abc_parse_directive.js:38`) and its own SVG writes `font-weight="normal"` on the
+       * title. We drew it bold.
+       *
+       * NO GATE HERE COULD SEE IT: the pixel tables compare POSITIONS, and the golden
+       * width tables `calcWidth` measures with are keyed by font SIZE alone — a bold title
+       * and a normal one measure the same and land in the same place. It took a byte
+       * comparison of the markup, where `font-weight` is an attribute rather than a
+       * consequence.
+       */
+      bold: false,
       italic: false,
       anchor: 'middle',
     })

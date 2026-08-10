@@ -11,7 +11,7 @@ system 0 width=32.975 originY=0.000
     tie  9.916,1.600 -> 15.132,1.600 bulge=0.939
     tie  20.864,1.600 -> 26.081,1.600 bulge=0.939
     title x=0.000 w=0.000
-      text  14.597,-5.612 size=3.484 bold "Ties"
+      text  14.597,-5.612 size=3.484 "Ties"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -42,7 +42,7 @@ system 0 width=32.975 originY=0.000
     slur  9.916,1.750 -> 15.132,1.750 bulge=0.939
     slur  20.864,1.750 -> 26.081,1.750 bulge=0.939
     title x=0.000 w=0.000
-      text  14.229,-5.612 size=3.484 bold "Slurs"
+      text  14.229,-5.612 size=3.484 "Slurs"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -73,7 +73,7 @@ system 0 width=32.975 originY=0.000
     slur  9.916,1.750 -> 15.132,1.750 bulge=0.939
     slur  9.916,1.750 -> 26.081,1.750 bulge=2.200
     title x=0.000 w=0.000
-      text  10.908,-5.612 size=3.484 bold "Nested Slurs"
+      text  10.908,-5.612 size=3.484 "Nested Slurs"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -104,7 +104,7 @@ system 0 width=32.975 originY=0.000
     slur  9.916,1.750 -> 15.132,1.750 bulge=0.939
     slur  20.864,1.750 -> 26.081,1.750 bulge=0.939
     title x=0.000 w=0.000
-      text  5.423,-5.612 size=3.484 bold "Slurs over Stacked Notes"
+      text  5.423,-5.612 size=3.484 "Slurs over Stacked Notes"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -144,7 +144,7 @@ system 0 width=32.975 originY=0.000
     slur  9.916,1.750 -> 15.132,1.750 bulge=0.939
     slur  9.916,1.750 -> 26.081,1.750 bulge=2.200
     title x=0.000 w=0.000
-      text  2.285,-5.612 size=3.484 bold "Nested slurs over Stacked Notes"
+      text  2.285,-5.612 size=3.484 "Nested slurs over Stacked Notes"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -181,7 +181,7 @@ system 0 width=37.885 originY=0.000
     slur  9.916,1.750 -> 15.132,1.750 bulge=0.939
     slur  15.390,1.750 -> 26.081,1.750 bulge=1.924
     title x=0.000 w=0.000
-      text  1.935,-5.612 size=3.484 bold "Slurs starting and ending on same note"
+      text  1.935,-5.612 size=3.484 "Slurs starting and ending on same note"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -212,7 +212,7 @@ system 0 width=32.975 originY=0.000
     tie  9.916,1.600 -> 15.132,1.600 bulge=0.939
     slur  9.916,1.750 -> 26.081,1.750 bulge=2.200
     title x=0.000 w=0.000
-      text  10.024,-5.612 size=3.484 bold "Tie within slur"
+      text  10.024,-5.612 size=3.484 "Tie within slur"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522

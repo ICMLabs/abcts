@@ -9,7 +9,7 @@ system 0 width=57.324 originY=0.000
     staffline 1.935,-1.000 -> 55.388,-1.000 t=0.090
     staffline 1.935,-2.000 -> 55.388,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  20.458,-9.555 size=3.484 bold "S-missing-1 xstem"
+      text  20.458,-9.555 size=3.484 "S-missing-1 xstem"
       text  22.678,-5.354 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
@@ -57,7 +57,7 @@ system 0 width=57.324 originY=0.000
     staffline 1.935,-1.000 -> 55.388,-1.000 t=0.090
     staffline 1.935,-2.000 -> 55.388,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  20.944,-11.071 size=3.484 bold "S-missing-2 trillh"
+      text  20.944,-11.071 size=3.484 "S-missing-2 trillh"
       text  22.678,-6.869 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
@@ -108,7 +108,7 @@ system 0 width=57.324 originY=0.000
     staffline 1.935,-1.000 -> 55.388,-1.000 t=0.090
     staffline 1.935,-2.000 -> 55.388,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  16.040,-9.555 size=3.484 bold "S-missing-3 Beam Tremolos"
+      text  16.040,-9.555 size=3.484 "S-missing-3 Beam Tremolos"
       text  22.678,-5.354 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
@@ -164,7 +164,7 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  24.188,-9.555 size=3.484 bold "S-missing-4 Editorial and Courtesy Accidentals"
+      text  24.188,-9.555 size=3.484 "S-missing-4 Editorial and Courtesy Accidentals"
       text  39.177,-5.354 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
@@ -216,7 +216,7 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  25.105,-11.847 size=3.484 bold "S-missing-5 Dal Segno / Da Capo Navigation"
+      text  25.105,-11.847 size=3.484 "S-missing-5 Dal Segno / Da Capo Navigation"
       text  39.177,-7.645 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
@@ -346,7 +346,7 @@ system 0 width=58.930 originY=0.000
     staffline 1.935,-1.000 -> 56.953,-1.000 t=0.090
     staffline 1.935,-2.000 -> 56.953,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  13.735,-11.071 size=3.484 bold "S-missing-6 Combined Decorations"
+      text  13.735,-11.071 size=3.484 "S-missing-6 Combined Decorations"
       text  23.481,-6.869 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000

@@ -21,7 +21,7 @@ system 0 width=90.541 originY=0.000
     slur  74.111,-2.272 -> 76.171,-1.772 bulge=-0.500
     slur  79.438,-0.772 -> 81.498,-1.772 bulge=-0.500
     title x=0.000 w=0.000
-      text  38.776,-17.240 size=3.484 bold "Little Swallow"
+      text  38.776,-17.240 size=3.484 "Little Swallow"
       text  39.330,-13.269 size=2.710 "Xi\\vao yàn zi"
       text  43.722,-9.426 size=2.710 "小燕子"
       text  41.571,-5.354 size=2.452 italic "(China)"

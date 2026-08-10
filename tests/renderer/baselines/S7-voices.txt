@@ -17,7 +17,7 @@ system 0 width=90.323 originY=0.000
     tie  47.879,4.100 -> 50.047,4.100 bulge=0.500
     tie  63.856,2.100 -> 66.025,2.100 bulge=0.500
     title x=0.000 w=0.000
-      text  35.134,-13.055 size=3.484 bold "S7-1 Piano Two Voice"
+      text  35.134,-13.055 size=3.484 "S7-1 Piano Two Voice"
       text  40.210,-8.854 size=2.452 italic "Elton John"
     clef x=3.226 w=3.103
       glyph gClef 3.871,1.000
@@ -331,7 +331,7 @@ system 0 width=90.231 originY=0.000
     tie  54.452,4.100 -> 60.223,4.100 bulge=1.039
     slur  72.129,4.250 -> 77.900,3.750 bulge=1.039
     title x=0.000 w=0.000
-      text  33.136,-13.943 size=3.484 bold "S7-2 Piano Dense Notation"
+      text  33.136,-13.943 size=3.484 "S7-2 Piano Dense Notation"
       text  37.253,-9.742 size=2.452 italic "L. van Beethoven"
     clef x=3.226 w=3.103
       glyph gClef 3.871,1.000
@@ -703,7 +703,7 @@ system 0 width=90.323 originY=0.000
     beam   53.533,-3.750 -> 67.078,-4.750 t=0.500
     beam   71.490,-3.750 -> 85.035,-4.750 t=0.500
     title x=0.000 w=0.000
-      text  31.843,-14.193 size=3.484 bold "S7-3 Counterpoint Two Voice"
+      text  31.843,-14.193 size=3.484 "S7-3 Counterpoint Two Voice"
       text  40.912,-9.992 size=2.452 italic "J.S. Bach"
     clef x=3.226 w=3.103
       glyph gClef 3.871,1.000
@@ -983,7 +983,7 @@ system 0 width=90.412 originY=0.000
     slur  53.939,-0.250 -> 71.218,-4.250 bulge=-2.200
     slur  80.687,1.750 -> 82.106,1.750 bulge=0.500
     title x=0.000 w=0.000
-      text  34.631,-13.693 size=3.484 bold "S7-4 Three Voice Piano"
+      text  34.631,-13.693 size=3.484 "S7-4 Three Voice Piano"
       text  41.077,-9.492 size=2.452 italic "Schumann"
     clef x=3.226 w=3.103
       glyph gClef 3.871,1.000
@@ -1299,7 +1299,7 @@ system 0 width=100.611 originY=0.000
     slur  50.893,1.750 -> 53.233,0.750 bulge=-0.500
     slur  50.893,4.250 -> 53.233,4.750 bulge=0.500
     title x=0.000 w=0.000
-      text  41.891,-12.991 size=3.484 bold "S7-5 SATB Choral"
+      text  41.891,-12.991 size=3.484 "S7-5 SATB Choral"
       text  41.374,-9.019 size=2.710 "(Mor Fawr Wyt Ti!)"
     clef x=3.226 w=3.103
       glyph gClef 3.871,1.000
@@ -1901,7 +1901,7 @@ system 0 width=90.454 originY=0.000
     beam   48.594,2.000 -> 50.293,2.000 t=0.500
     beam   55.385,2.000 -> 56.485,2.000 t=0.500
     title x=0.000 w=0.000
-      text  34.895,-13.411 size=3.484 bold "S7-6 Organ Four Voice"
+      text  34.895,-13.411 size=3.484 "S7-6 Organ Four Voice"
       text  34.808,-9.209 size=2.452 italic "Johann Nicolaus Hanff"
     voiceName x=1.935 w=0.000
       text  1.935,0.768 size=2.194 bold "Rückpos"
@@ -2224,7 +2224,7 @@ system 0 width=91.031 originY=0.000
     beam   69.597,4.250 -> 71.070,4.750 t=0.500
     tie  65.306,-1.100 -> 68.507,-1.100 bulge=-0.576
     title x=0.000 w=0.000
-      text  38.261,-19.583 size=3.484 bold "S7-7 Organ Trio"
+      text  38.261,-19.583 size=3.484 "S7-7 Organ Trio"
       text  39.299,-15.381 size=2.452 italic "André Raison"
     clef x=3.226 w=3.103
       glyph gClef 3.871,1.000

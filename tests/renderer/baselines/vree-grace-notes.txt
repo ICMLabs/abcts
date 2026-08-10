@@ -12,7 +12,7 @@ system 0 width=32.090 originY=0.000
     slur  15.003,1.750 -> 16.422,1.250 bulge=0.500
     slur  19.187,1.250 -> 21.897,1.750 bulge=0.500
     title x=0.000 w=0.000
-      text  10.591,-5.612 size=3.484 bold "Grace Notes"
+      text  10.591,-5.612 size=3.484 "Grace Notes"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522

@@ -11,7 +11,7 @@ system 0 width=90.323 originY=0.000
     beam   63.525,3.250 -> 68.724,3.750 t=0.500
     beam   76.601,3.250 -> 81.800,3.750 t=0.500
     title x=0.000 w=0.000
-      text  34.342,-9.555 size=3.484 bold "Brother John - improved"
+      text  34.342,-9.555 size=3.484 "Brother John - improved"
       text  39.484,-5.354 size=2.452 italic "Traditional"
     voiceName x=1.935 w=0.000
       text  1.935,0.768 size=2.194 bold "Soprano"

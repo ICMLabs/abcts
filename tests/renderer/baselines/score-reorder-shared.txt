@@ -9,7 +9,7 @@ system 0 width=43.710 originY=0.000
     staffline 12.542,-1.000 -> 41.775,-1.000 t=0.090
     staffline 12.542,-2.000 -> 41.775,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  13.199,-5.612 size=3.484 bold "Same Staff Reorder"
+      text  13.199,-5.612 size=3.484 "Same Staff Reorder"
     voiceName x=1.935 w=0.000
       text  1.935,-0.439 size=2.194 bold "Harmony"
     clef x=12.542 w=3.103

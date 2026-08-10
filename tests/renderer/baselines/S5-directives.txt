@@ -9,7 +9,7 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  37.722,-9.555 size=3.484 bold "S5-1 Note Styles"
+      text  37.722,-9.555 size=3.484 "S5-1 Note Styles"
       text  39.177,-5.354 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
@@ -190,7 +190,7 @@ system 0 width=90.519 originY=0.000
     beam   66.705,-3.250 -> 69.363,-3.750 t=0.500
     beam   67.995,-2.743 -> 69.363,-3.000 t=0.500
     title x=0.000 w=0.000
-      text  33.405,-8.639 size=3.484 bold "S5-2 Alternate Note Heads"
+      text  33.405,-8.639 size=3.484 "S5-2 Alternate Note Heads"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.682
@@ -713,7 +713,7 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  37.115,-5.612 size=3.484 bold "S5-3 Overlay Test"
+      text  37.115,-5.612 size=3.484 "S5-3 Overlay Test"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -766,7 +766,7 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  40.009,-9.555 size=3.484 bold "S5-4 Lyrics"
+      text  40.009,-9.555 size=3.484 "S5-4 Lyrics"
       text  30.644,-5.354 size=2.452 italic "Test - from Gonzato guide Ch.2"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
@@ -858,7 +858,7 @@ system 0 width=90.403 originY=0.000
     staffline 1.935,-1.000 -> 88.467,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.467,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  39.806,-8.502 size=3.484 bold "S5-5 Vocals"
+      text  39.806,-8.502 size=3.484 "S5-5 Vocals"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=0.871
@@ -1003,7 +1003,7 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  40.436,-16.847 size=3.484 bold "S5-6 Scale"
+      text  40.436,-16.847 size=3.484 "S5-6 Scale"
       text  39.584,-12.875 size=2.710 "Second Title"
       text  40.375,-9.033 size=2.710 "Third Title"
     clef x=1.935 w=3.103

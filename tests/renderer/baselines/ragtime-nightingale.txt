@@ -24,7 +24,7 @@ system 0 width=90.336 originY=0.000
     tie  62.493,-2.100 -> 64.523,-2.100 bulge=-0.500
     tie  62.493,2.100 -> 64.523,2.100 bulge=0.500
     title x=0.000 w=0.000
-      text  35.994,-16.693 size=3.484 bold "Ragtime Nightingale"
+      text  35.994,-16.693 size=3.484 "Ragtime Nightingale"
       text  39.700,-12.492 size=2.452 italic "Joseph Lamb"
     clef x=3.226 w=3.103
       glyph gClef 3.871,1.000

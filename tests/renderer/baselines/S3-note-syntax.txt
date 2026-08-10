@@ -13,7 +13,7 @@ system 0 width=90.323 originY=0.000
     beam   54.240,3.750 -> 70.165,2.250 t=0.500
     beam   76.790,-0.250 -> 84.791,-0.250 t=0.500
     title x=0.000 w=0.000
-      text  32.543,-13.715 size=3.484 bold "S3-1 Scales and Pitch Range"
+      text  32.543,-13.715 size=3.484 "S3-1 Scales and Pitch Range"
       text  30.644,-9.514 size=2.452 italic "Test - from Gonzato guide Ch.2"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
@@ -165,7 +165,7 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  30.502,-9.555 size=3.484 bold "S3-2 Accidentals and Microtones"
+      text  30.502,-9.555 size=3.484 "S3-2 Accidentals and Microtones"
       text  30.644,-5.354 size=2.452 italic "Test - from Gonzato guide Ch.2"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
@@ -405,7 +405,7 @@ system 0 width=90.391 originY=0.000
     staffline 1.935,-2.000 -> 88.456,-2.000 t=0.090
     beam   53.178,-2.250 -> 56.870,-2.250 t=0.500
     title x=0.000 w=0.000
-      text  36.112,-9.555 size=3.484 bold "S3-3 Note Durations"
+      text  36.112,-9.555 size=3.484 "S3-3 Note Durations"
       text  30.679,-5.354 size=2.452 italic "Test - from Gonzato guide Ch.2"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
@@ -524,7 +524,7 @@ system 0 width=90.227 originY=0.000
     staffline 1.935,-1.000 -> 88.292,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.292,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  34.719,-9.555 size=3.484 bold "S3-4 Rests and Spacing"
+      text  34.719,-9.555 size=3.484 "S3-4 Rests and Spacing"
       text  30.596,-5.354 size=2.452 italic "Test - from Gonzato guide Ch.2"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
@@ -631,7 +631,7 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  33.913,-10.193 size=3.484 bold "S3-5 Chords and Unisons"
+      text  33.913,-10.193 size=3.484 "S3-5 Chords and Unisons"
       text  30.644,-5.992 size=2.452 italic "Test - from Gonzato guide Ch.2"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
@@ -757,7 +757,7 @@ system 0 width=90.323 originY=0.000
     beam   53.693,-3.750 -> 56.247,-3.250 t=0.500
     beam   53.693,-3.000 -> 56.247,-2.500 t=0.500
     title x=0.000 w=0.000
-      text  31.568,-9.678 size=3.484 bold "S3-6 Broken Rhythm and Dots"
+      text  31.568,-9.678 size=3.484 "S3-6 Broken Rhythm and Dots"
       text  30.644,-5.476 size=2.452 italic "Test - from Gonzato guide Ch.2"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
@@ -907,7 +907,7 @@ system 0 width=90.323 originY=0.000
     tuplettext 52.735,4.753 size=1.935 "6"
     tuplettext 75.281,4.751 size=1.935 "3"
     title x=0.000 w=0.000
-      text  39.521,-9.555 size=3.484 bold "S3-7 Tuplets"
+      text  39.521,-9.555 size=3.484 "S3-7 Tuplets"
       text  30.644,-5.354 size=2.452 italic "Test - from Gonzato guide Ch.2"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
@@ -1036,7 +1036,7 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  32.117,-12.445 size=3.484 bold "S3-8 Accompaniment Chords"
+      text  32.117,-12.445 size=3.484 "S3-8 Accompaniment Chords"
       text  30.644,-8.243 size=2.452 italic "Test - from Gonzato guide Ch.2"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
@@ -1186,7 +1186,7 @@ system 0 width=90.323 originY=0.000
     slur  63.155,0.772 -> 72.068,4.272 bulge=1.604
     tie  72.326,3.600 -> 76.545,3.600 bulge=0.759
     title x=0.000 w=0.000
-      text  28.671,-10.693 size=3.484 bold "S3-9 Ties Slurs Staccato Grace Notes"
+      text  28.671,-10.693 size=3.484 "S3-9 Ties Slurs Staccato Grace Notes"
       text  30.644,-6.492 size=2.452 italic "Test - from Gonzato guide Ch.2"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
@@ -1439,7 +1439,7 @@ system 0 width=90.206 originY=0.000
     staffline 1.935,-1.000 -> 88.271,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.271,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  32.969,-10.693 size=3.484 bold "S3-10 Multi-Measure Rests"
+      text  32.969,-10.693 size=3.484 "S3-10 Multi-Measure Rests"
       text  30.586,-6.492 size=2.452 italic "Test - from Gonzato guide Ch.2"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
@@ -1492,7 +1492,7 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  34.676,-5.612 size=3.484 bold "S3-11 Twinkle Twinkle"
+      text  34.676,-5.612 size=3.484 "S3-11 Twinkle Twinkle"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -1562,7 +1562,7 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  35.742,-5.612 size=3.484 bold "S3-12 Rests and Bars"
+      text  35.742,-5.612 size=3.484 "S3-12 Rests and Bars"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=2.387
@@ -1619,7 +1619,7 @@ system 0 width=90.342 originY=0.000
     beam   83.161,-1.250 -> 87.503,-1.250 t=0.500
     beam   86.031,-0.500 -> 87.503,-0.500 t=0.500
     title x=0.000 w=0.000
-      text  35.233,-5.612 size=3.484 bold "S3-13 Basic Durations"
+      text  35.233,-5.612 size=3.484 "S3-13 Basic Durations"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -1688,7 +1688,7 @@ system 0 width=90.391 originY=0.000
     staffline 1.935,-1.000 -> 88.456,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.456,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  39.920,-5.612 size=3.484 bold "S3-14 Rests"
+      text  39.920,-5.612 size=3.484 "S3-14 Rests"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -1745,7 +1745,7 @@ system 0 width=58.485 originY=0.000
     staffline 1.935,-1.000 -> 56.550,-1.000 t=0.090
     staffline 1.935,-2.000 -> 56.550,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  3.154,-5.612 size=3.484 bold "S3-15 Pitches and Octaves - C Major Scale - Quarter Notes"
+      text  3.154,-5.612 size=3.484 "S3-15 Pitches and Octaves - C Major Scale - Quarter Notes"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -1793,7 +1793,7 @@ system 0 width=36.236 originY=0.000
     staffline 1.935,-1.000 -> 33.233,-1.000 t=0.090
     staffline 1.935,-2.000 -> 33.233,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  1.935,-6.272 size=3.484 bold "S3-16 Pitches and Octaves - Octaves"
+      text  1.935,-6.272 size=3.484 "S3-16 Pitches and Octaves - Octaves"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -1834,7 +1834,7 @@ system 0 width=45.377 originY=0.000
     staffline 1.935,-2.000 -> 26.819,-2.000 t=0.090
     beam   12.394,0.250 -> 24.085,0.250 t=0.500
     title x=0.000 w=0.000
-      text  1.935,-5.612 size=3.484 bold "S3-17 Pitches and Octaves - Low Ledger Lines"
+      text  1.935,-5.612 size=3.484 "S3-17 Pitches and Octaves - Low Ledger Lines"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -1895,7 +1895,7 @@ system 0 width=90.551 originY=0.000
     staffline 1.935,-1.000 -> 88.616,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.616,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  29.915,-12.002 size=3.484 bold "S3-18 Happy Birthday with chords"
+      text  29.915,-12.002 size=3.484 "S3-18 Happy Birthday with chords"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=0.871
@@ -2092,7 +2092,7 @@ system 0 width=34.265 originY=0.000
     slur  20.477,0.750 -> 21.897,0.750 bulge=0.500
     slur  25.952,-0.250 -> 27.371,-0.750 bulge=0.500
     title x=0.000 w=0.000
-      text  6.130,-5.612 size=3.484 bold "S3-19 Single Grace Note"
+      text  6.130,-5.612 size=3.484 "S3-19 Single Grace Note"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -2133,7 +2133,7 @@ system 0 width=35.555 originY=0.000
     slur  20.477,0.250 -> 23.187,0.250 bulge=0.500
     slur  25.952,-0.250 -> 28.661,-0.250 bulge=0.500
     title x=0.000 w=0.000
-      text  6.351,-5.612 size=3.484 bold "S3-20 Double Grace Note"
+      text  6.351,-5.612 size=3.484 "S3-20 Double Grace Note"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -2186,7 +2186,7 @@ system 0 width=35.555 originY=0.000
     slur  20.477,0.250 -> 23.187,-0.750 bulge=0.500
     slur  25.952,-0.250 -> 28.661,0.750 bulge=0.500
     title x=0.000 w=0.000
-      text  12.623,-5.612 size=3.484 bold "S3-21 Slurs"
+      text  12.623,-5.612 size=3.484 "S3-21 Slurs"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -2236,7 +2236,7 @@ system 0 width=21.713 originY=0.000
     staffline 1.935,-2.000 -> 19.777,-2.000 t=0.090
     slur  9.529,1.250 -> 14.819,1.250 bulge=0.952
     title x=0.000 w=0.000
-      text  6.251,-5.612 size=3.484 bold "S3-22 Birl"
+      text  6.251,-5.612 size=3.484 "S3-22 Birl"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -2267,7 +2267,7 @@ system 0 width=90.323 originY=0.000
     tie  9.916,3.600 -> 19.370,3.600 bulge=1.702
     tie  50.184,2.100 -> 59.638,2.100 bulge=1.702
     title x=0.000 w=0.000
-      text  32.724,-9.555 size=3.484 bold "S3-23 Dotted Ties and Slurs"
+      text  32.724,-9.555 size=3.484 "S3-23 Dotted Ties and Slurs"
       text  39.177,-5.354 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
@@ -2479,7 +2479,7 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  34.464,-8.502 size=3.484 bold "S3-24 Chord Break Test"
+      text  34.464,-8.502 size=3.484 "S3-24 Chord Break Test"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.682
@@ -2618,7 +2618,7 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  28.977,-12.445 size=3.484 bold "S3-25 Slash Chords and Jazz Chords"
+      text  28.977,-12.445 size=3.484 "S3-25 Slash Chords and Jazz Chords"
       text  39.177,-8.243 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000

@@ -15,7 +15,7 @@ system 0 width=90.323 originY=0.000
     slur  64.735,-1.750 -> 68.097,0.750 bulge=-0.605
     slur  74.553,-0.250 -> 77.915,0.250 bulge=-0.605
     title x=0.000 w=0.000
-      text  36.568,-13.055 size=3.484 bold "Ave Verum Corpus"
+      text  36.568,-13.055 size=3.484 "Ave Verum Corpus"
       text  39.574,-8.854 size=2.452 italic "W. A. Mozart"
     voiceName x=1.935 w=0.000
       text  1.935,-0.439 size=2.194 bold "Soprano"

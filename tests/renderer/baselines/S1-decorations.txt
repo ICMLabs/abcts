@@ -9,7 +9,7 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  37.511,-11.071 size=3.484 bold "S1-1 Decorations"
+      text  37.511,-11.071 size=3.484 "S1-1 Decorations"
       text  30.644,-6.869 size=2.452 italic "Test - from Gonzato guide Ch.2"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
@@ -110,7 +110,7 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  32.726,-7.903 size=3.484 bold "S1-2 Shorthand Decorations"
+      text  32.726,-7.903 size=3.484 "S1-2 Shorthand Decorations"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.682
@@ -187,7 +187,7 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  35.834,-7.127 size=3.484 bold "S1-3 All Decorations"
+      text  35.834,-7.127 size=3.484 "S1-3 All Decorations"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.682
@@ -627,7 +627,7 @@ system 0 width=90.323 originY=0.000
     staffline 1.935,-1.000 -> 88.387,-1.000 t=0.090
     staffline 1.935,-2.000 -> 88.387,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  33.123,-5.612 size=3.484 bold "S1-4 Mark Decoration Test"
+      text  33.123,-5.612 size=3.484 "S1-4 Mark Decoration Test"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.682
@@ -695,7 +695,7 @@ system 0 width=90.323 originY=0.000
     tie  7.980,4.500 -> 9.012,3.500 bulge=-0.500
     tie  57.960,2.000 -> 58.993,1.000 bulge=-0.500
     title x=0.000 w=0.000
-      text  36.259,-9.555 size=3.484 bold "S1-5 Glissando Test"
+      text  36.259,-9.555 size=3.484 "S1-5 Glissando Test"
       text  39.177,-5.354 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000

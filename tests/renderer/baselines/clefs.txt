@@ -9,7 +9,7 @@ system 0 width=26.561 originY=0.000
     staffline 1.935,-1.000 -> 24.625,-1.000 t=0.090
     staffline 1.935,-2.000 -> 24.625,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  8.497,-5.612 size=3.484 bold "Treble clef"
+      text  8.497,-5.612 size=3.484 "Treble clef"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -28,7 +28,7 @@ system 0 width=26.703 originY=0.000
     staffline 1.935,-1.000 -> 24.768,-1.000 t=0.090
     staffline 1.935,-2.000 -> 24.768,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  9.359,-7.275 size=3.484 bold "Bass clef"
+      text  9.359,-7.275 size=3.484 "Bass clef"
     clef x=1.935 w=3.246
       glyph fClef 2.581,-1.000
     timeSignature x=6.471 w=1.522
@@ -50,7 +50,7 @@ system 0 width=26.703 originY=0.000
     staffline 1.935,-1.000 -> 24.768,-1.000 t=0.090
     staffline 1.935,-2.000 -> 24.768,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  7.653,-6.275 size=3.484 bold "Baritone clef"
+      text  7.653,-6.275 size=3.484 "Baritone clef"
     clef x=1.935 w=3.246
       glyph fClef 2.581,0.000
     timeSignature x=6.471 w=1.522
@@ -71,7 +71,7 @@ system 0 width=26.723 originY=0.000
     staffline 1.935,-1.000 -> 24.788,-1.000 t=0.090
     staffline 1.935,-2.000 -> 24.788,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  8.822,-5.275 size=3.484 bold "Tenor clef"
+      text  8.822,-5.275 size=3.484 "Tenor clef"
     clef x=1.935 w=3.266
       glyph cClef 2.581,-1.000
     timeSignature x=6.492 w=1.522
@@ -91,7 +91,7 @@ system 0 width=26.723 originY=0.000
     staffline 1.935,-1.000 -> 24.788,-1.000 t=0.090
     staffline 1.935,-2.000 -> 24.788,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  9.491,-4.275 size=3.484 bold "Alto clef"
+      text  9.491,-4.275 size=3.484 "Alto clef"
     clef x=1.935 w=3.266
       glyph cClef 2.581,0.000
     timeSignature x=6.492 w=1.522
@@ -110,7 +110,7 @@ system 0 width=26.723 originY=0.000
     staffline 1.935,-1.000 -> 24.788,-1.000 t=0.090
     staffline 1.935,-2.000 -> 24.788,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  5.103,-3.750 size=3.484 bold "Messosoprano clef"
+      text  5.103,-3.750 size=3.484 "Messosoprano clef"
     clef x=1.935 w=3.266
       glyph cClef 2.581,1.000
     timeSignature x=6.492 w=1.522
@@ -129,7 +129,7 @@ system 0 width=26.723 originY=0.000
     staffline 1.935,-1.000 -> 24.788,-1.000 t=0.090
     staffline 1.935,-2.000 -> 24.788,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  7.785,-3.750 size=3.484 bold "Soprano clef"
+      text  7.785,-3.750 size=3.484 "Soprano clef"
     clef x=1.935 w=3.266
       glyph cClef 2.581,2.000
     timeSignature x=6.492 w=1.522
@@ -148,7 +148,7 @@ system 0 width=105.661 originY=0.000
     staffline 1.935,-1.000 -> 103.725,-1.000 t=0.090
     staffline 1.935,-2.000 -> 103.725,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  46.888,-13.662 size=3.484 bold "Change Clefs"
+      text  46.888,-13.662 size=3.484 "Change Clefs"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=2.974
