@@ -16,15 +16,16 @@ work list for what is left.
 
 | axis | standing |
 |---|---|
-| suite | **1125 of 1125. NO REDS.** |
+| suite | **1126 of 1126. NO REDS.** |
 | **audio ranked table** | **0 of 72** — was 2 of 61; the corpus GREW by 11 controls |
 | **chord-grid ranked table** | **0 of 23** — NEW, and the feature is new with it |
 | midi-file ranked table | **0 of 3 — BYTE-EXACT** |
 | harvested ranked table | 0 of 174 |
 | pixel ranked table | 0 of 120 |
 | **timing ranked table** | **0 of 38** — NEW (13 harvested + 25 controls) |
-| **element-timing ranked table** | **1 of 13** — NEW; the one open row in the engine |
-| gates | **15** (31 test files) |
+| **element-timing ranked table** | **1 of 13** — abcjs's own quirk, §7 |
+| **DOM-contract ranked table** | **25 of 25** — NEW, and opening at every case IS the point |
+| gates | **16** (32 test files) |
 
 **ONE NAMED ROW LEFT ON ANY TABLE**, and it is abcjs being idiosyncratic rather than us
 being wrong — see §7. The engine's last ordinary defect, the host drum options, closed
@@ -222,6 +223,51 @@ a decision, not a bug fix.
 
 ---
 
+## 8. THE SVG DOM CONTRACT — the eighth table, opening at 25 of 25, **which is the point**
+
+`tests/corpus-dom/` (25 cases, `npm run gen:dom-contract`) + `tests/dom-contract.test.ts`.
+The oracle lands before a line of the implementation, as it did for audio, the MIDI file and
+the chord grid — and a table that opens at every case is the same signal 54 of 54 was.
+
+**THE AXIS HAD NO INSTRUMENT AND COULD NOT HAVE HAD ONE.** `pixel-parity` and the harvested
+table resolve both SVGs to ABSOLUTE PIXELS and compare positions — they throw the markup
+away on purpose, because that is how they see past `<rect>`-versus-`<path>` and
+Bravura-versus-abcjs outlines. The structural gate compares abcjs's LAID-OUT ELEMENTS, its
+internal tree rather than its output. So the thing a drop-in replacement is actually judged
+on — does `querySelector('[data-name="note"]')` find a note, and is it inside the group a
+host expects — has never been measured, and `abcts/compat` promises it in as many words.
+
+Compared: `class`, `data-name` and **DEPTH**, so grouping is part of the contract. NOT
+compared: the tag name — a staff line is a `<path>` in abcjs and a `<rect>` here, which the
+pixel gate already proves equivalent, and folding it in would drown the axis.
+
+**THE GAP IS BOUNDED AND NAMED**, which is what the table is for. We already emit
+`abcjs-top-line`, `abcjs-ledger`, `abcjs-stem`, `abcjs-notehead` and the `data-name` groups.
+Three things are missing:
+
+1. **The wrappers.** abcjs nests `<g class="abcjs-staff-wrapper abcjs-l0">` →
+   `<g class="abcjs-staff abcjs-l0 abcjs-v0">` holding the five staff lines, with every
+   element group a SIBLING of that inner group rather than a child. Ours has no wrappers at
+   all, so the very first row differs on depth.
+2. **The per-element class scheme.** `abcjs-note abcjs-d0-25 abcjs-p0 abcjs-l0 abcjs-m0
+   abcjs-mm0 abcjs-v0 abcjs-n0` — kind, duration (`.` → `-`), pitch, line, measure, ?, voice
+   and note index. A staff-extra takes the same set less `d`/`p`/`n`. **Read
+   `src/write/classes.js` for the generator rather than inferring it from the goldens** —
+   the `mm` component in particular is not guessable from one tune.
+3. **The note group's child ORDER.** abcjs writes notehead, stem, ledger; we write ledger,
+   stem, notehead. Cheap, but check `glyph-ycorr`'s positional `slice(1)` before moving it.
+
+Three of the tunes are `visual/svg.test.js`'s own; twenty-two are controls, one feature each,
+because that file covers a clef, a time signature and a note and nothing else — and a
+contract is exactly the kind of thing that holds for what someone tested and lapses for what
+they did not.
+
+**`svg-per-line.test.js`'s five cases are NOT in this corpus**: they assert a COUNT of
+`<svg>` elements under `oneSvgPerLine` / `responsive` / `scale`, which are FEATURES compat
+does not implement. That is a separate gap and a larger one.
+
+---
+
 ## WHAT IS LEFT
 
 ### 1. `setTiming` — **DONE for the TIME half; the GEOMETRY half has no oracle**
@@ -246,11 +292,10 @@ defect on its first run — `|1` is ONE element in abcjs and two in our model, t
 the chord grid hit, load-bearing here because `startEnding === '1'` is what stops the replay
 before the first ending.
 
-### 2. The SVG DOM contract — `visual/svg.test.js` and `svg-per-line.test.js`
+### 2. THE DOM CONTRACT — the open arc, 25 of 25
 
-Eight portable cases, corrected into the audit on 2026-08-09: they assert
-`[data-name=…]` presence and group structure, which the geometry gates do not cover and
-`abcts/compat` explicitly promises.
+§8 has the three missing pieces and where to read them. **This is the only table with real
+work behind it.**
 
 ### 3. `dynamicPiano` and the rest of the dynamic glyphs
 
@@ -285,10 +330,11 @@ first.
 ```
 working tree clean
 npx tsc --noEmit    clean
-npx vitest run      1125 / 1125
+npx vitest run      1126 / 1126
 audio ranked        0 of 72
 timing ranked       0 of 38
 element timings     1 of 13   (`el-four-endings`, abcjs's own quirk)
+DOM contract       25 of 25   THE OPEN ARC
 chord-grid ranked   0 of 23
 midi ranked         0 of 3     BYTE-EXACT
 harvested ranked    0 of 174

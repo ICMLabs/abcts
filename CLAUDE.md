@@ -225,6 +225,20 @@ checkpoint and hand off as you go so no context is lost.
 > `scripts/gen-audio-controls.mjs` rendered them — including `measureLength` being the tune's
 > LAST `M:`, not its first.
 
+> 🏷️ **THE SVG DOM CONTRACT HAD NO INSTRUMENT AND COULD NOT HAVE HAD ONE** (2026-08-09b).
+> `pixel-parity` and the harvested table resolve both SVGs to ABSOLUTE PIXELS and compare
+> positions — they throw the markup away ON PURPOSE, because that is how they see past
+> `<rect>`-versus-`<path>` and Bravura-versus-abcjs outlines. The structural gate compares
+> abcjs's LAID-OUT ELEMENTS, its internal tree rather than its output. So the thing a
+> drop-in replacement is actually judged on — does `querySelector('[data-name="note"]')`
+> find a note, and is it inside the group a host expects — had never been measured, and
+> `abcts/compat` promises it in as many words. `tests/dom-contract.test.ts` compares
+> `class`, `data-name` and **DEPTH** over 25 tunes and opens at 25 of 25, **which is the
+> point**. The gap is bounded and named in `CHECKPOINT-2026-08-09b` §8 — the
+> `abcjs-staff-wrapper` nesting, abcjs's per-element class scheme, and the note group's
+> child order. Read `src/write/classes.js` for the generator; the `mm` component is not
+> guessable from one tune.
+
 > 🔁 **A REPEAT'S LAST ENDING WAS PLAYED TWICE, AND ONLY A THIRD SURFACE COULD SEE IT**
 > (2026-08-09b). `currentTrackMilliseconds` is what the FLATTENER writes back onto the
 > source (`abc_midi_flattener.js:526-546`) — the event table says what sounds, `setTiming`
@@ -456,11 +470,13 @@ abcjs source are all reached by sibling path and stay in that repo. Keep it that
 backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
-**GEOMETRY, AUDIO, THE MIDI FILE, THE CHORD GRID AND THE TIMING CLOCK ARE ALL AT ZERO.** 1125/1125 with no
-reds; **fifteen gates and SEVEN ranked tables** — 0 of 72 audio cases, 0 of 38 note timings,
+**GEOMETRY, AUDIO, THE MIDI FILE, THE CHORD GRID AND THE TIMING CLOCK ARE ALL AT ZERO.** 1126/1126 with no
+reds; **sixteen gates and EIGHT ranked tables** — 0 of 72 audio cases, 0 of 38 note timings,
 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
-and **1 of 13 element timings**, which is the only named row in the engine and is abcjs
-being idiosyncratic rather than us being wrong. **No table can name a defect, and that is the normal condition here rather than a
+**1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
+**25 of 25 DOM-contract cases, which is the OPEN ARC** — the oracle lands before the
+implementation here, as it did for audio and the chord grid, and a table that opens at every
+case is the same signal 54 of 54 was. **No table can name a defect, and that is the normal condition here rather than a
 milestone** — the last four findings all came from building a gate that expresses an axis
 none of the others can, or from rendering a control abcjs's own suite does not contain.
 
