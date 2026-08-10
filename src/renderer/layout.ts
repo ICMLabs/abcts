@@ -880,6 +880,15 @@ export interface PlacedText {
    */
   readonly dataName?: string
   /**
+   * Extra lines of the SAME `<text>`, each a `<tspan dy="1.2em">`. abcjs's `addTextIf`
+   * takes a string with `\n` in it and emits ONE element (`add-text-if.js:20-33`), which
+   * is how `N:` and `H:` print — its own golden reads
+   * `<tspan x="15">Notes:</tspan><tspan x="15" dy="1.2em">…`.
+   */
+  readonly extraLines?: readonly string[]
+  /** `dominant-baseline="middle"`, which abcjs sets on the bottom block's multi-line rows. */
+  readonly middleBaseline?: boolean
+  /**
    * Vertical extent this text DECLARES, replacing the box its font size implies — the
    * same escape a glyph has. `[top, bottom]` in staff spaces.
    *
@@ -1205,6 +1214,11 @@ export interface Layout {
    * height is part of the extent rather than sitting above y = 0 and being clipped.
    */
   readonly topText?: readonly PlacedText[]
+  /**
+   * `W:`, `B:`, `S:`, `D:`, `N:`, `Z:`, `H:` — abcjs's `BottomText`, drawn under the last
+   * staff in its own `abcjs-meta-bottom` group. y is already in the document's frame.
+   */
+  readonly bottomText?: readonly PlacedText[]
 }
 
 /**
@@ -8271,9 +8285,22 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       ? undefined
       : topTextBlock(score.metadata, systemWidth - ENGRAVE.marginX * 2, score.textAbove, score.fonts)
 
+  /**
+   * The bottom block — `W:`, `B:`, `S:`, `D:`, `N:`, `Z:`, `H:` — with `draw()`'s bare
+   * `moveY(24)` above it (`draw/draw.js:66`). Its y is in the same frame as the music, so
+   * the emitter writes it with the same origin as everything else.
+   */
+  const bottomBlock = bottomTextBlock(score.metadata, score.fonts)
+  const bottomStart = bottom + spaces(ABCJS_PX.bottomTextGap)
+  const bottomText =
+    bottomBlock.texts.length === 0
+      ? undefined
+      : bottomBlock.texts.map((t) => ({ ...t, y: t.y + bottomStart }))
+
   return {
     systems: shown,
     ...(stafflessBlock === undefined ? {} : { topText: stafflessBlock.texts }),
+    ...(bottomText === undefined ? {} : { bottomText }),
     width: Math.max(0, ...shown.map((s) => s.width)),
     /**
      * **THE PAGE IS THE REQUESTED WIDTH OR THE WIDEST LINE, WHICHEVER IS BIGGER** — and
@@ -8292,6 +8319,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     // system, which would put the same constant in two places.
     height:
       (stafflessBlock === undefined ? bottom : stafflessBlock.height + musicSpace) +
+      (bottomText === undefined ? 0 : spaces(ABCJS_PX.bottomTextGap) + bottomBlock.height) +
       ENGRAVE.marginTop +
       ENGRAVE.marginBottom,
     top: -ENGRAVE.marginTop,
@@ -8699,6 +8727,114 @@ function appendFreeText(
 }
 
 /** A system's own preceding blocks, with no title above them. */
+/**
+ * **THE BOTTOM-TEXT BLOCK** — `creation/elements/bottom-text.js`, in its order.
+ *
+ * `W:` unaligned words first, then `"Book: "`, `"Source: "`, `"Discography: "`,
+ * `"Notes:"`, `"Transcription: "`, `"History:"`. Every prefix is a literal English string
+ * in abcjs's source and is reproduced as one; the fields are drawn left-aligned at
+ * `paddingLeft` in `historyfont`, and the words in `wordsfont`.
+ *
+ * ── TWO SHAPES, AND `simplifyMetaText` PICKS BETWEEN THEM ────────────────────
+ * `notes` and `history` are joined into ONE STRING by `\n` when every line of them is
+ * plain text (`tune-builder.js:477-482`), so they draw as a SINGLE `<text>` whose extra
+ * lines are `<tspan dy="1.2em">` — measured on `synth-flattener-07-metronome`, whose three
+ * `N:` lines come out as one element with four tspans. `addTextIf` then advances by
+ * `Math.round(size.height * 1.1 * numLines)` (`add-text-if.js:29-31`), ONE rounding for
+ * the whole block rather than one per line: 24 + round(23.27 * 1.1 * 4) = 126, exactly the
+ * page that fixture was short.
+ *
+ * `unalignedWords` is NOT joined, so it takes the array branch — one row per verse line.
+ *
+ * `spacing.words` and `spacing.info` are both 0 (`renderer.js:99`, `:114`), so neither
+ * contributes; the only gap is `draw()`'s bare `moveY(24)` above the whole block, which is
+ * spent by the caller. "Empirically discovered. What variable should this be?"
+ * (`draw/draw.js:66`.)
+ *
+ * ponytail: `%%abc-copyright`, `%%abc-creator` and `%%abc-edited-by` have their own rows
+ * in `extraText` and are not parsed here yet — no fixture in either corpus sets one.
+ */
+function bottomTextBlock(
+  metadata: ScoreMetadata,
+  fonts: Score['fonts'] = {},
+): { texts: PlacedText[]; height: number } {
+  const texts: PlacedText[] = []
+  let y = 0
+  const sizeOf = (type: AbcFontType): number =>
+    Math.round(((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / STAFF_SPACE_PX
+  /** `addTextIf`: one row, then `round(height * 1.1 * lines)` — one rounding for all. */
+  const addText = (
+    value: RichText,
+    extra: readonly string[],
+    size: number,
+    dataName: string,
+    middle: boolean,
+  ): void => {
+    const text = plainText(value)
+    /**
+     * **AN EMPTY LINE IS A ROW OF ITS OWN, AND IT ADVANCES BY A DIFFERENT RULE.**
+     * `richText` pushes a bare `{move: space.height}` for `''` (`rich-text.js:5-7`) — the
+     * RAW height, with no `* 1.1` and no rounding — where a row with text moves by
+     * `round(height * 1.1)`. `W:`/`W:`/`W:` therefore steps 26 then 23.27, which is
+     * abcjs's own 49.27 between the two verse lines of `visual-selection-01`.
+     */
+    if (text === '' && extra.length === 0) {
+      y += goldenTextHeight(size)
+      return
+    }
+    texts.push({
+      text,
+      role: 'title',
+      dataName,
+      ...(extra.length > 0 ? { extraLines: extra, middleBaseline: middle } : {}),
+      x: ENGRAVE.marginX,
+      y: y + size,
+      size,
+      bold: false,
+      italic: false,
+      anchor: 'start',
+    })
+    y +=
+      Math.round(goldenTextHeight(size) * ENGRAVE.lineSkipFactor * (1 + extra.length) * STAFF_SPACE_PX) /
+      STAFF_SPACE_PX
+  }
+  const history = sizeOf('historyfont')
+
+  // `W:` — a whole verse under the tune, one row per line, in `wordsfont`. The array
+  // branch of `addMultiLine`, which closes with one more `size.height` of its own.
+  if (metadata.unalignedWords.length > 0) {
+    const words = sizeOf('wordsfont')
+    // …AND `addMultiLine`'S ARRAY BRANCH CLOSES WITH `{move: size.height}` OF ITS OWN
+    // (`bottom-text.js:62`), which `unalignedWords` then follows with a SECOND
+    // `{move: space.height}` (`:20`). Two raw heights, not one.
+    for (const line of metadata.unalignedWords) addText(line, [], words, 'unalignedWords', false)
+    y += 2 * goldenTextHeight(words)
+  }
+
+  const single = (value: RichText | null, prefix: string): void => {
+    if (value === null || plainText(value) === '') return
+    addText(prefix + plainText(value), [], history, 'description', false)
+  }
+  const multi = (value: readonly RichText[], preface: string): void => {
+    if (value.length === 0) return
+    // BLANK LINES ARE KEPT. `simplifyMetaText` joins the entries with `\n` and `addTextIf`
+    // counts `text.split("\n").length`, so an empty `H:` is a line of the block and costs
+    // its share of the one rounded advance.
+    const all = value.map(plainText)
+    if (all.every((t) => t === '')) return
+    addText(preface, all, history, 'description', true)
+  }
+
+  single(metadata.book, 'Book: ')
+  single(metadata.source, 'Source: ')
+  single(metadata.discography, 'Discography: ')
+  multi(metadata.notes, 'Notes:')
+  single(metadata.transcription, 'Transcription: ')
+  multi(metadata.history, 'History:')
+
+  return { texts, height: y }
+}
+
 function freeTextBlock(
   blocks: readonly FreeTextBlock[],
   width: number,

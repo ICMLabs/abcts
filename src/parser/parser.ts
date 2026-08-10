@@ -1669,6 +1669,14 @@ class ScoreBuilder {
   origin: RichText | null = null
   author: RichText | null = null
   partOrder: RichText | null = null
+  // The bottom-text fields — see `ScoreMetadata`. `N:`, `H:` and `W:` accumulate.
+  book: RichText | null = null
+  source: RichText | null = null
+  discography: RichText | null = null
+  transcription: RichText | null = null
+  notes: RichText[] = []
+  history: RichText[] = []
+  unalignedWords: RichText[] = []
   key: KeySignature = defaultKey()
   clef: Clef = defaultClef
   tempo: Tempo | null = null
@@ -1958,6 +1966,13 @@ class ScoreBuilder {
       origin: this.origin,
       author: this.author,
       partOrder: this.partOrder,
+      book: this.book,
+      source: this.source,
+      discography: this.discography,
+      transcription: this.transcription,
+      notes: this.notes,
+      history: this.history,
+      unalignedWords: this.unalignedWords,
     }
     return {
       metadata,
@@ -2659,6 +2674,35 @@ class Parser {
       // `A:` — the author of the words, a row of its own in `composerfont`.
       case 'A':
         builder.author = parseFontChangeLine(decodeTextString(value), builder.setfont)
+        return
+      /**
+       * **THE BOTTOM-TEXT FIELDS** — `abc_parse_header.js:464-503`'s `metaTextHeaders`.
+       * `N:`, `H:` and `W:` are the multi-line ones and ACCUMULATE, one entry per field
+       * line; the rest are single and the last one written wins.
+       *
+       * `W:` is the UNALIGNED words — a whole verse printed under the tune — and is a
+       * different field from `w:`, the aligned lyric that sits under its own notes.
+       */
+      case 'B':
+        builder.book = parseFontChangeLine(decodeTextString(value), builder.setfont)
+        return
+      case 'S':
+        builder.source = parseFontChangeLine(decodeTextString(value), builder.setfont)
+        return
+      case 'D':
+        builder.discography = parseFontChangeLine(decodeTextString(value), builder.setfont)
+        return
+      case 'Z':
+        builder.transcription = parseFontChangeLine(decodeTextString(value), builder.setfont)
+        return
+      case 'N':
+        builder.notes.push(parseFontChangeLine(decodeTextString(value), builder.setfont))
+        return
+      case 'H':
+        builder.history.push(parseFontChangeLine(decodeTextString(value), builder.setfont))
+        return
+      case 'W':
+        builder.unalignedWords.push(parseFontChangeLine(decodeTextString(value), builder.setfont))
         return
       case 'M': {
         if (builder.bodyStarted) {

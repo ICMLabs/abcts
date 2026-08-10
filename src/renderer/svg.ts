@@ -460,11 +460,18 @@ const abcjsText = (
   body: string,
   /** abcjs's own class for the row, empty unless `add_classes` asked for it. */
   klass = '',
+  /** Extra lines of the SAME element — one `<tspan dy="1.2em">` each. */
+  extra: readonly string[] = [],
+  /** `dominant-baseline="middle"`, which the bottom block's multi-line rows carry. */
+  middle = false,
 ): string =>
   `<text stroke="none" font-size="${size}" font-style="${italic ? 'italic' : 'normal'}" ` +
   `font-family="${family}" font-weight="${bold ? 'bold' : 'normal'}" text-decoration="none" ` +
-  `class="${klass}" text-anchor="${anchor}" x="${x}" y="${y}"${name ? ` data-name="${name}"` : ''}>` +
-  `<tspan x="${x}">${body}</tspan></text>`
+  `class="${klass}" text-anchor="${anchor}"${middle ? ' dominant-baseline="middle"' : ''}` +
+  ` x="${x}" y="${y}"${name ? ` data-name="${name}"` : ''}>` +
+  `<tspan x="${x}">${body}</tspan>` +
+  extra.map((line) => `<tspan x="${x}" dy="1.2em">${line}</tspan>`).join('') +
+  '</text>'
 
 /**
  * A top-text row's `data-name` → the class abcjs puts beside it, under `add_classes`.
@@ -742,6 +749,8 @@ const glyphDefs = new Map<GlyphName, string>()
                 options.addClasses === true && t.dataName !== undefined
                   ? (ABCJS_TEXT_CLASSES[t.dataName] ?? '')
                   : '',
+                (t.extraLines ?? []).map(escapeText),
+                t.middleBaseline === true,
               ),
             )
           }
@@ -1055,6 +1064,36 @@ const glyphDefs = new Map<GlyphName, string>()
    * it. So `%%staffwidth 5` gives 44.985 and a tune too wide for 670 gives 752.491 —
    * neither expressible by the host, which is why `options.pageWidth` is core-only now.
    */
+  /**
+   * **THE BOTTOM BLOCK CLOSES THE DRAWING** — `draw()` runs it after every line, in its own
+   * group (`abcjs-meta-bottom` under `add_classes`) and after a bare `moveY(24)`
+   * (`draw/draw.js:64-72`). Its y already carries that gap; see `layout.ts`.
+   */
+  if (abcjs && doc.bottomText !== undefined && doc.bottomText.length > 0) {
+    oy = OY * PX
+    const block = doc.bottomText.map((t) =>
+      abcjsText(
+        num(t.x * PX),
+        num(t.y * PX + oy),
+        num(t.size * PX),
+        'Times New Roman',
+        t.italic === true,
+        t.bold === true,
+        t.anchor ?? 'start',
+        t.dataName ?? '',
+        escapeText(t.text),
+        options.addClasses === true && t.dataName !== undefined
+          ? (ABCJS_TEXT_CLASSES[t.dataName] ?? '')
+          : '',
+        (t.extraLines ?? []).map(escapeText),
+        t.middleBaseline === true,
+      ),
+    )
+    parts.push(
+      `<g${options.addClasses === true ? ' class="abcjs-meta-bottom"' : ''}>${block.join('')}</g>`,
+    )
+  }
+
   const w = abcjs ? doc.pageWidth * scale : (options.pageWidth ?? doc.width * scale)
   const h = doc.height * scale
   // The viewBox must widen with the page, or forcing the width would just scale the

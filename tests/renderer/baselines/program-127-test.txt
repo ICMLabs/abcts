@@ -1,5 +1,5 @@
 tune 0
-bounds  width=107.625 height=56.645 top=-1.935
+bounds  width=107.625 height=73.032 top=-1.935
 systems 2
 system 0 width=107.625 originY=0.000
   staff 0 originY=32.160

@@ -957,6 +957,24 @@ export interface ScoreMetadata {
    * `partsfont` (`top-text.js:73-77`), for 24px.
    */
   readonly partOrder: RichText | null
+  /**
+   * **THE BOTTOM-TEXT FIELDS.** abcjs draws these BELOW the last staff, in the order
+   * `BottomText` lists them and each with its literal English prefix
+   * (`creation/elements/bottom-text.js`): `W:` unaligned words first, then
+   * `"Book: "`, `"Source: "`, `"Discography: "`, `"Notes:"`, `"Transcription: "`,
+   * `"History:"`.
+   *
+   * `N:`, `H:` and `W:` are MULTI-LINE — `addMetaTextArray` accumulates one entry per
+   * field line (`abc_parse_header.js:484-503`), and `H:` keeps swallowing following lines
+   * until one of them looks like a field. The rest are single.
+   */
+  readonly book: RichText | null
+  readonly source: RichText | null
+  readonly discography: RichText | null
+  readonly transcription: RichText | null
+  readonly notes: readonly RichText[]
+  readonly history: readonly RichText[]
+  readonly unalignedWords: readonly RichText[]
 }
 
 /**

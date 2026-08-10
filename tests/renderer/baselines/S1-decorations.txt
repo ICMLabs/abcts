@@ -100,7 +100,7 @@ system 1 width=54.511 originY=21.290
       line  51.582,-2.000 -> 51.582,2.000 t=0.077
       line  52.318,-2.000 -> 52.318,2.000 t=0.516
 tune 1
-bounds  width=90.323 height=21.256 top=-1.935
+bounds  width=90.323 height=30.933 top=-1.935
 systems 1
 system 0 width=90.323 originY=0.000
   staff 0 originY=12.363
@@ -177,7 +177,7 @@ system 0 width=90.323 originY=0.000
     bar x=88.258 w=0.077
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
 tune 2
-bounds  width=90.323 height=198.901 top=-1.935
+bounds  width=90.323 height=208.579 top=-1.935
 systems 16
 system 0 width=90.323 originY=0.000
   staff 0 originY=11.587

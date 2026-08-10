@@ -267,6 +267,12 @@ export const ABCJS_PX = {
   staffSeparation: 48,
   /** `staffwidthScreen` — the music area, not the SVG (`write/renderer.js`). */
   systemWidth: 700,
+  /**
+   * The gap above the BOTTOM text block. `draw()` spends it bare, with abcjs's own comment
+   * beside it: "TODO-PER: Empirically discovered. What variable should this be?"
+   * (`draw/draw.js:66`).
+   */
+  bottomTextGap: 24,
 } as const
 
 /**
