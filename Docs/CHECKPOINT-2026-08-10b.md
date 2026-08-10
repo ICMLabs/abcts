@@ -80,6 +80,19 @@ accumulate the same quantity in STAFF SPACES and multiply by 7.75 at the end.
 `(height - 2 * marginY) * 7.75 + 30`, or with `15 + 15` — took 69 of 171 exact to **70**.
 The noise is spread through the whole accumulation, not concentrated in the margins.
 
+**AND abcjs ITSELF IS RUNNABLE — THIS IS THE HARNESS, AND IT WORKS TODAY.** From
+`../abcMusicKit/Tools/abcjs-debug` (jsdom is installed there):
+
+```bash
+cd /Users/lrettberg/ICMLabs/Code/abcMusicKit/Tools/abcjs-debug
+node dump-svg.js --file /tmp/ladder/rung.abc --output /tmp/ladder/rung.svg
+```
+
+It renders at `{ staffwidth: 670 }` — the goldens' own params — so a control rendered this
+way is directly comparable with `renderAbc(abc, {staffwidth: 670})`. **A LADDER OF CONTROLS
+THROUGH BOTH ENGINES IS NOW A FIVE-MINUTE OPERATION**, and it is what named the tie finding
+below in one run after a fixture NAME had pointed at the wrong feature for a session.
+
 **TWO PROBES, and the handoff carries both recipes.** `/tmp/probe4.mjs` runs the byte
 comparison with `height="…"` masked in BOTH strings and writes `/tmp/probe-noheight.txt` —
 that is what named every markup family closed here. `/tmp/probe9.mjs` splits the heights
@@ -235,11 +248,27 @@ regression, so read the diff before touching the gate.
      exactly as abcjs's do, so it is not the bottom block. One `<text>` is still missing
      from both (31 against 32) and it is the `%%sep` rule: abcjs draws a 170px-wide rule
      for `%%sep 0.4cm 0.4cm 6cm` and ours is 211.57 wide at a different y.
-   - `synth-timing-10-stretchlast-1` — 7.75px, exactly one staff space, and **it is below
-     the LAST staff**: every staff line of both systems matches to the hundredth
-     (36.64 … 75.39, 128.97 … 159.97) and abcjs reserves 7.75 more under the last one. The
-     tune ends `D4 F2-F2 |` — a tie whose second end is the end of the TUNE. Measure what a
-     tie to nowhere reserves before assuming it is `%%stretchlast`.
+   - `synth-timing-10-stretchlast-1` — 7.75px, exactly one staff space, and **A LADDER
+     NAMED IT IN ONE RUN.** Six controls through abcjs itself, one variable per rung:
+
+     ```
+     tie-none    C4 D4|  / D4 F2F2 |     abcjs 186.947    ours 186.947
+     tie-mid     C4 D4|  / D4 F2-F2 |    abcjs 186.947    ours 186.947
+     tie-end     C4 D4|  / D4 F2 F2- |   abcjs 186.947    ours 186.947
+     tie-break   C4 D4-| / D4 F2F2 |     abcjs 194.697    ours 186.947   <-- 7.75
+     stretch     %%stretchlast 1         abcjs 186.947    ours 186.947
+     both        break + stretch         abcjs 194.697    ours 186.947
+     ```
+
+     **A TIE THAT CROSSES A SYSTEM BREAK RESERVES 7.75px AND NOTHING ELSE DOES** — not a
+     mid-bar tie, not a tie at the end of the tune, not `%%stretchlast`, which the fixture's
+     name had made the obvious suspect and which costs nothing at all. abcjs splits such a
+     tie into TWO `TieElem`s, one per line, each with a null anchor; `setEndAnchor` gives
+     the anchored end `pitch ± 4` and `getYBounds` a 3-pitch box round the arc
+     (`creation/elements/tie-element.js:25-38`, `:228-252`). Our curves reach
+     `verticalExtent` not at all, which is why we spend nothing.
+
+     **AND THE LADDER WAS RUN THROUGH abcjs ITSELF** — see THE HARNESS below.
    - `visual-tablature-20-score-1-2` and `visual-transpose-05` — 1e-11 relative, which is
      the ULP family wearing a slightly bigger number.
 2. ~~**`BottomText`**~~ — **LANDED.** `creation/elements/bottom-text.js` was the whole spec

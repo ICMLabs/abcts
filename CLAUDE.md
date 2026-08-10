@@ -378,6 +378,14 @@ checkpoint and hand off as you go so no context is lost.
 > DRAWS**, because `draw()` runs `nonMusic(topText)` and spends `spacing.music` before it
 > looks at a line.
 >
+> 🔬 **AND abcjs ITSELF IS RUNNABLE — `node dump-svg.js --file x.abc --output x.svg` from
+> `../abcMusicKit/Tools/abcjs-debug`, at the goldens' own `{staffwidth: 670}`.** A LADDER
+> OF CONTROLS THROUGH BOTH ENGINES IS A FIVE-MINUTE OPERATION, and one such ladder named
+> the last structural height in a single run: **a tie that CROSSES A SYSTEM BREAK reserves
+> 7.75px and nothing else does** — not a mid-bar tie, not a tie at the end of the tune, and
+> not `%%stretchlast`, which the fixture's NAME had made the obvious suspect and which
+> costs nothing at all. **A FIXTURE NAME IS NOT EVIDENCE.**
+>
 > ⚖️ **AND THE HEIGHT IS THREE PROBLEMS, NOT ONE.** Measured: **80 of 171 exact, 85 by pure
 > ULP noise, 4 STRUCTURALLY** — and the four are down to 3.875px and 7.75px residuals, each
 > one measured to its cause. THE 13 ARE WORTH MORE THAN THE 82 — they are
