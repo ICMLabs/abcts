@@ -38,24 +38,28 @@ different order moves nothing. A byte string has no such latitude.
 
 ### The blockers, measured rather than estimated
 
-Every fixture now agrees with abcjs to **byte ~153**, which is the whole root element: no
-`xmlns`, `xmlns:xlink` instead, `role`, `fill`, `stroke`, `aria-label` carrying the tune's
-title, the padded page width, the raw-float height, abcjs's `<style>` text and its `<title>`.
-What differs at byte 153 is one attribute, and it is the same one on all 171:
+**The root element is byte-identical on all 171 fixtures, and the coordinate system is now
+abcjs's** — absolute pixels, no `viewBox`, no `transform` anywhere, one bare `<g>` per line.
+The whole suite is green across that change (1127/1127), which is the proof it is right:
+every pixel gate measures pixels, and they see the same pixels they saw before.
 
-1. **`viewBox`.** abcjs draws in ABSOLUTE PIXELS and writes none. We draw in STAFF SPACES
-   and let the `viewBox` convert — so this attribute is not the difference, it is the
-   SYMPTOM of it: every coordinate in the body differs too. Removing it alone took 196 tests
-   red in one run, because `tests/pixel-geometry.ts` reads it to resolve our coordinates and
-   every geometry gate is built on that. The fix is to emit absolute pixels throughout, and
-   then the attribute and the scaling go together.
-2. **`<rect>` for lines where abcjs writes `<path>`** — staff lines, stems, ledgers, beams.
-   `pixel-parity` normalises the two and proves them equivalent in POSITION, which is why
-   this survived.
-3. **Element ORDER inside a note group** — abcjs writes notehead, stem, ledger; we write
-   ledger, stem, notehead.
-4. **The top text comes FIRST in abcjs's body**, before any staff; ours draws the music
-   first on some fixtures.
+What is left, in the order the byte table hits it:
+
+1. **The top text comes FIRST in abcjs's body.** `<g><text stroke="none" font-size="27" …>`
+   where we draw the brace first.
+2. **A line is a CLOSED PATH, not a `<rect>`.** `<path d="M 15 63.77 L 685 63.77 L 685 64.47
+   L 15 64.47 z" stroke="none" fill="currentColor" class=…></path>` — note the attribute
+   order and the explicit close tag, which is what a browser's serializer writes.
+3. **A ~31px VERTICAL ORIGIN DIFFERENCE, and this one is a real defect rather than a markup
+   one.** Our staff line lands at y 67.642 where abcjs puts it at 36.64 on
+   `parse-note-01`. **Every pixel gate in this repo is blind to it**: `pixel-parity`
+   measures relative to the TOP LINE, so a uniform page offset cancels exactly. It took an
+   absolute-coordinate comparison to see at all — the same lesson as the line weights and
+   the decoration x, and the third time a whole axis turned out to be unrepresented.
+4. **`height="292.14200000000005"` against abcjs's `292.142`** — floating-point noise from
+   our multiply. NOT a formatting rule: abcjs writes `1081.3299999999997` on another
+   fixture, so matching means matching the arithmetic ORDER, which is the emission-quantum
+   problem the geometry arc already knows by name.
 5. **Per-glyph `data-name`** — `clefs.G`, `accidentals.flat`, `dots.dot`, `rests.half`, a
    bare digit for a time-signature figure, and the WRITTEN NOTE NAME (`C`, `c`, `C,`) on a
    notehead. Tracked separately by `tests/dom-contract.test.ts`.
