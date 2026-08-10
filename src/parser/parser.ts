@@ -2001,7 +2001,11 @@ class ScoreBuilder {
       maxStaves: this.maxStaves,
       sysStaffSep: this.sysStaffSep,
       textAbove: this.textAbove,
-      textBelow: this.textBelow,
+      // …AND THE BLOCKS STILL WAITING FOR A SYSTEM THAT NEVER CAME. A mid-tune `T:` or
+      // `%%text` moves to `pendingTextBefore` at the next system start; when the tune ends
+      // before one, it sat there and was DRAWN NOWHERE. `visual-mouse-click-01`'s
+      // `T:Inserted subtitle` vanished outright, and so did 23.175px of page.
+      textBelow: [...this.textBelow, ...this.pendingTextBefore.blocks],
       fonts: this.fonts,
       sourceStartOffset: this.sourceStartOffset,
       keySourceRange: this.keySourceRange,

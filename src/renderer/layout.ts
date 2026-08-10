@@ -8290,12 +8290,31 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
    * `moveY(24)` above it (`draw/draw.js:66`). Its y is in the same frame as the music, so
    * the emitter writes it with the same origin as everything else.
    */
+  /**
+   * **A BLOCK WITH NO SYSTEM AFTER IT WAS BEING DROPPED.** `score.textBelow` holds exactly
+   * what the tune ended with — a trailing `%%text`, a `%%center`, a mid-tune `T:` that no
+   * music follows — and it was read in ONE place, the last-line justification test, and
+   * DRAWN NOWHERE. `visual-mouse-click-01`'s `T:Inserted subtitle` simply vanished, taking
+   * two `<text>` elements and 23.175px of page with it.
+   *
+   * abcjs has no such hole: a nonMusic line is a line like any other and `draw()` runs it
+   * wherever it stands (`draw/draw.js:52-58`), costing exactly its own rows.
+   */
+  const trailing: PlacedText[] = []
+  const trailingHeight =
+    score.textBelow.length === 0
+      ? 0
+      : appendFreeText(trailing, score.textBelow, 0, (systemWidth - ENGRAVE.marginX * 2) / 2, score.fonts)
+
   const bottomBlock = bottomTextBlock(score.metadata, score.fonts)
-  const bottomStart = bottom + spaces(ABCJS_PX.bottomTextGap)
+  const bottomStart = bottom + trailingHeight + spaces(ABCJS_PX.bottomTextGap)
   const bottomText =
-    bottomBlock.texts.length === 0
+    bottomBlock.texts.length === 0 && trailing.length === 0
       ? undefined
-      : bottomBlock.texts.map((t) => ({ ...t, y: t.y + bottomStart }))
+      : [
+          ...trailing.map((t) => ({ ...t, y: t.y + bottom })),
+          ...bottomBlock.texts.map((t) => ({ ...t, y: t.y + bottomStart })),
+        ]
 
   return {
     systems: shown,
@@ -8319,7 +8338,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     // system, which would put the same constant in two places.
     height:
       (stafflessBlock === undefined ? bottom : stafflessBlock.height + musicSpace) +
-      (bottomText === undefined ? 0 : spaces(ABCJS_PX.bottomTextGap) + bottomBlock.height) +
+      trailingHeight +
+      (bottomBlock.texts.length === 0 ? 0 : spaces(ABCJS_PX.bottomTextGap) + bottomBlock.height) +
       ENGRAVE.marginTop +
       ENGRAVE.marginBottom,
     top: -ENGRAVE.marginTop,
