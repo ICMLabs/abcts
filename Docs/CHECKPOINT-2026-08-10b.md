@@ -45,8 +45,8 @@ defect. **It is three**, and the split is measured (`/tmp/probe9.mjs`, recipe be
 
 ```
 80 of 171   EXACT
-84 of 171   differ by pure ULP noise — relative error under 1e-12
- 7 of 171   differ by more, and 2 of those are 1e-11 relative — so FIVE are structural
+85 of 171   differ by pure ULP noise — relative error under 1e-12
+ 6 of 171   differ by more, and 2 of those are 1e-11 relative — so FOUR are structural
 ```
 
 **THE STRUCTURAL ONES ARE WORTH MORE THAN THE 82.** They are real vertical defects that no gate in this
@@ -90,7 +90,7 @@ nothing in `tests/` may grow that mask.**
 
 ## 2. WHAT CLOSED, AND WHY EACH WAS INVISIBLE
 
-Fifteen landings, every one a read of a named abcjs function.
+Seventeen landings, every one a read of a named abcjs function.
 
 - **`staffwidth` is the MUSIC area; the page is it plus abcjs's 15px margins.** compat
   mapped `renderAbc(…, {staffwidth: 670})` straight onto core's `systemWidth`, which is
@@ -166,7 +166,14 @@ Fifteen landings, every one a read of a named abcjs function.
   than assumed, from the golden's three `abcjs-top-line` paths.
 - **`BottomText` — `W:`, `B:`, `S:`, `D:`, `N:`, `Z:`, `H:`** — an entire missing feature
   and the largest structural height gaps in the corpus. See WHAT IS LEFT item 2 for the
-  rules, which are the parts worth keeping.
+  rules, which are the parts worth keeping. **A BOXED FONT MEASURES HIGHER HERE TOO**:
+  `getTextSize.calc` returns `height + padding * 4` to every caller, and the bottom block
+  was the one that did not apply it.
+- **A BLOCK WITH NO SYSTEM AFTER IT WAS DRAWN NOWHERE.** `score.textBelow` holds exactly
+  what a tune ended with — a trailing `%%text`, a `%%center`, a mid-tune `T:` — and it was
+  read in ONE place, the last-line justification test, and drawn in none. A mid-tune block
+  moves to `pendingTextBefore` at the next system start, so when the tune ends before one
+  it sat there instead and `finish()` never looked. TWO holes, one shape.
 - **`data-index` is an index into the SELECTABLES, not into the children.**
   `Selectables.add` writes `{selectable: false, "data-index": elements.length}` and only
   after `canSelect`, which with no `selectTypes` admits `el_type 'note'` alone
@@ -219,17 +226,20 @@ regression, so read the diff before touching the gate.
 
 ## WHAT IS LEFT, IN YIELD ORDER
 
-1. **THE FIVE STRUCTURAL HEIGHTS, all measured and none of them a whole feature:**
-   - `visual-mouse-click-01` and `visual-tablature-15` — 23.175px SHORT, and **it is not
-     the bottom block**: `visual-selection-01` carries the same `W:`/`H:`/`S:` fields and
-     is exact, and this one's four bottom rows step 49.27 / 72.54 / 26 exactly as abcjs's
-     do. The difference is above them, in the music.
-   - `visual-options-01-fonts` — 81.2px short. Every font in it is set `box`, and a boxed
-     font measures `height + padding * 4` (`ENGRAVE.fontBoxPadding`); the top block already
-     applies that and the bottom one does not. It also sets `%%header`/`%%footer`, which
-     `TopText`/`BottomText` draw only when `isPrint`.
-   - `synth-timing-10-stretchlast-1` — 7.75px, exactly one staff space, on a two-line tune
-     with `%%stretchlast 1` and a tie across the break.
+1. **THE FOUR STRUCTURAL HEIGHTS, each measured down to its residual:**
+   - `visual-mouse-click-01` and `visual-tablature-15` — **3.875px TALL**, exactly one
+     PITCH, down from 23.175 SHORT. What closed was the dropped trailing block; what is
+     left is the gap a TRAILING subtitle spends. `appendFreeText` gives it the same leading
+     gap a mid-tune one gets and abcjs apparently does not — measure `Subtitle`'s rows for
+     a line with no music after it. Their bottom rows already step 49.27 / 72.54 / 26
+     exactly as abcjs's do, so it is not the bottom block. One `<text>` is still missing
+     from both (31 against 32) and it is the `%%sep` rule: abcjs draws a 170px-wide rule
+     for `%%sep 0.4cm 0.4cm 6cm` and ours is 211.57 wide at a different y.
+   - `synth-timing-10-stretchlast-1` — 7.75px, exactly one staff space, and **it is below
+     the LAST staff**: every staff line of both systems matches to the hundredth
+     (36.64 … 75.39, 128.97 … 159.97) and abcjs reserves 7.75 more under the last one. The
+     tune ends `D4 F2-F2 |` — a tie whose second end is the end of the TUNE. Measure what a
+     tie to nowhere reserves before assuming it is `%%stretchlast`.
    - `visual-tablature-20-score-1-2` and `visual-transpose-05` — 1e-11 relative, which is
      the ULP family wearing a slightly bigger number.
 2. ~~**`BottomText`**~~ — **LANDED.** `creation/elements/bottom-text.js` was the whole spec
@@ -306,7 +316,7 @@ npx tsc --noEmit    clean
 npx vitest run      1137 / 1137
 svg bytes           164 of 171   best 5186, median 178   (masked-height median 1241, max EXACT)
                     PASSING ratchet: 7 slugs, the first this table has ever held
-heights             80 exact / 84 ULP-only / 5 structural
+heights             80 exact / 85 ULP-only / 4 structural
 audio ranked        0 of 72
 timing ranked       0 of 38
 element timings     1 of 13

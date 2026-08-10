@@ -378,8 +378,9 @@ checkpoint and hand off as you go so no context is lost.
 > DRAWS**, because `draw()` runs `nonMusic(topText)` and spends `spacing.music` before it
 > looks at a line.
 >
-> ⚖️ **AND THE HEIGHT IS THREE PROBLEMS, NOT ONE.** Measured: **80 of 171 exact, 84 by pure
-> ULP noise, 5 STRUCTURALLY.** THE 13 ARE WORTH MORE THAN THE 82 — they are
+> ⚖️ **AND THE HEIGHT IS THREE PROBLEMS, NOT ONE.** Measured: **80 of 171 exact, 85 by pure
+> ULP noise, 4 STRUCTURALLY** — and the four are down to 3.875px and 7.75px residuals, each
+> one measured to its cause. THE 13 ARE WORTH MORE THAN THE 82 — they are
 > real vertical defects no gate here can state, because `pixel-parity` and the harvested
 > table pair NOTEHEADS and a page 300px too short with every note in place reads as
 > perfect. The largest WAS **`BottomText`, an entire missing feature** — `W:`, `N:`, `H:`,
