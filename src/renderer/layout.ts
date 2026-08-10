@@ -7158,8 +7158,26 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         layoutKeyChange(x, beforeKey, lineKey, clef, strict) ??
         layoutKeySignature(x, lineKey, clef, strict)
       if (keySig !== null) push(keySig)
-      if (withMeter && score.meter !== null) {
-        push(layoutMeter(x, score.meter, strict))
+      /**
+       * **AN INLINE `[M:]` BEFORE ANY MUSIC ON THE FIRST LINE IS THAT LINE'S PREFIX.**
+       *
+       * `meterChangeLeadsLine` already hands such a change to the PREVIOUS measure, so it
+       * draws at the end of the line above and the next line's prefix prints nothing —
+       * which is abcjs's behaviour and finding 125. The first line has no line above, and
+       * the meter was simply DROPPED: `[M:2/4]CD|` drew no time signature at all where
+       * abcjs's own output opens `staff-extra time-signature 2 4`.
+       *
+       * It is the same lazy-line mechanism the key change takes: the field is appended to a
+       * voice that is still empty, so it becomes a STARTING element rather than a mid-line
+       * one.
+       */
+      const leading =
+        from === 0 && meterChangeLeadsLine((voice?.measures ?? [])[0])
+          ? ((voice?.measures ?? [])[0]?.meterChange ?? null)
+          : null
+      const prefixMeter = leading ?? (withMeter ? score.meter : null)
+      if (prefixMeter !== null) {
+        push(layoutMeter(x, prefixMeter, strict))
       }
       // The tempo mark belongs to the TUNE — not to each system, and not to each voice.
       // It prints once: on the first system, above the top staff. Every staff still gets

@@ -18,7 +18,7 @@ system 0 width=90.323 originY=0.000
     clef x=3.226 w=3.103
       glyph gClef 3.871,1.000
     timeSignature x=7.762 w=1.522
-      glyph timeSig4 7.762,-1.000
+      glyph timeSig3 7.895,-1.000
       glyph timeSig4 7.762,1.000
     note@-6 x=10.574 w=3.871
       glyph noteheadBlack 10.574,3.000
