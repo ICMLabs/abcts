@@ -7122,6 +7122,12 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
    * off by default and so do we, which is why this is a forward-only ratchet.
    */
   let pageWidth = systemWidth - 2 * ENGRAVE.marginX
+  /**
+   * …and whether it ever fired, because `(w - 2m) + 2m` is not `w` in floating point:
+   * `%%staffwidth 200` came back 296.00000000000006 against abcjs's 296. When the ratchet
+   * is quiet the page IS `systemWidth`, exactly as it was handed in.
+   */
+  let pageRatcheted = false
 
   const systems: LayoutSystem[] = spans.map((span, systemIndex) => {
     const withMeter = systemIndex === 0
@@ -7470,7 +7476,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     // The ratchet. abcjs rounds to whole PIXELS before comparing, so a sub-pixel overrun
     // does not drag the page with it.
     const thisWidth = solved.width - leftEdge
-    if (Math.round(thisWidth * 7.75) > Math.round(pageWidth * 7.75)) pageWidth = thisWidth
+    if (Math.round(thisWidth * 7.75) > Math.round(pageWidth * 7.75)) {
+      pageWidth = thisWidth
+      pageRatcheted = true
+    }
     musicLeft[systemIndex] = Math.min(
       ...lines.map((line, v) => {
         const first = line.slots.findIndex((slot) => slot.block >= 0)
@@ -8097,7 +8106,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
      * neither expressible as a host-supplied constant, and the byte table is the only gate
      * that could see it, since a page too narrow moves no ink.
      */
-    pageWidth: pageWidth + 2 * ENGRAVE.marginX,
+    pageWidth: pageRatcheted ? pageWidth + 2 * ENGRAVE.marginX : systemWidth,
     // `cursor` has one trailing gap on it, added after the last system. abcjs opens with
     // `moveY(padding.top)` before drawing anything (`draw.js:14`), so the page begins
     // ABOVE the ink — expressed as a negative viewBox top rather than by shifting every

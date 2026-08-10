@@ -2631,16 +2631,20 @@ class Parser {
         //
         // A MID-TUNE `T:` IS A SUBTITLE LINE, drawn where it stands. It takes the same
         // road as a mid-tune `%%text`: onto `textBelow`, then onto the next system.
+        // `theReverser` runs on EVERY `T:`, before `setTitle` decides which it is
+        // (`abc_parse_header.js:543`).
         if (builder.bodyStarted) {
           builder.textBelow.push({
-            lines: [decodeTextString(value)],
+            lines: [theReverser(decodeTextString(value))],
             align: 'center',
             role: 'subtitle',
           })
         } else {
           // `T: C: O: A: P:` all run through `parseFontChangeLine`
           // (`abc_parse_header.js:484-541`), so any of them may come back as phrases.
-          builder.titles.push(parseFontChangeLine(decodeTextString(value), builder.setfont))
+          builder.titles.push(
+            parseFontChangeLine(theReverser(decodeTextString(value)), builder.setfont),
+          )
         }
         return
       case 'C':
@@ -4388,6 +4392,41 @@ export function parse(source: string, options: ParseOptions = {}): ParseResult {
  *  - a `$N` with no `%%setfont-N` is NOT an error and NOT a font: abcjs appends
  *    `'$' + part` to the PREVIOUS phrase, so the marker stays visible as typed.
  */
+/**
+ * **A TRAILING ARTICLE IS MOVED TO THE FRONT** — `T:Transformed, A` is titled
+ * `A Transformed`. abcjs's `theReverser` (`abc_tokenizer.js:679-720`), applied to every
+ * `T:` before `setTitle` decides whether it is the title or a subtitle.
+ *
+ * Eleven patterns tried IN ORDER, first match wins, each anchored at the end. A leading
+ * `N.` track number is lifted off first and put back in front of the result, so
+ * `1. Chanter, Le` becomes `1. Le Chanter`.
+ */
+const ARTICLE_PATTERNS: readonly (readonly [RegExp, string])[] = [
+  [/,\s*The$/, 'The '],
+  [/,\s*the$/, 'the '],
+  [/,\s*A$/, 'A '],
+  [/,\s*a$/, 'a '],
+  [/,\s*An$/, 'An '],
+  [/,\s*an$/, 'an '],
+  [/,\s*Da$/, 'Da '],
+  [/,\s*La$/, 'La '],
+  [/,\s*Le$/, 'Le '],
+  [/,\s*Les$/, 'Les '],
+  [/,\s*Ye$/, 'Ye '],
+]
+
+function theReverser(str: string): string {
+  for (const [pattern, replace] of ARTICLE_PATTERNS) {
+    const match = pattern.exec(str)
+    if (match === null) continue
+    const number = /^(\d+)\./.exec(str)?.[1]
+    const body = number === undefined ? str : str.replace(`${number}.`, '').trim()
+    const result = replace + body.substring(0, body.length - match[0].length)
+    return number === undefined ? result : `${number}. ${result}`
+  }
+  return str
+}
+
 function parseFontChangeLine(text: string, setfont: readonly (LyricFont | undefined)[]): RichText {
   // The sentinel is abcjs's own — `\x03` is what it swaps `$$` to so the split cannot see
   // it, and using any other character would change which strings round-trip.
