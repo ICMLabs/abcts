@@ -801,6 +801,79 @@ const glyphDefs = new Map<GlyphName, string>()
         parts.push(lineToRect(TL(line), attr, abcjs))
       })
       if (abcjs) parts.push('</g>')
+      // `foundNote` — a barline before any note does not advance the measure counter.
+      let foundNote = false
+      staff.elements.forEach((el, index) => {
+        // Already written above, ahead of the braces. See the hoist.
+        if (abcjs && el.blockHeight !== undefined) return
+        // abcjs wraps each element in a group carrying its kind and index, which is what
+        // its interaction code walks. Core's own naming needs no wrapper.
+        if (abcjs) {
+          const name = ABCJS_ELEMENT_NAMES[el.type] ?? el.type
+          // `if (child.type !== 'staff-extra' && !isInMeasure()) startMeasure()`
+          // (`draw/voice.js:31-34`) — a prefix element does not open a measure.
+          const isExtra = name.startsWith('staff-extra')
+          const justStarted = !isExtra && !classes.isInMeasure()
+          if (justStarted) classes.startMeasure()
+          // `klass = params.type`, then ` d{durationClass}` with `.` → `-`, then one
+          // ` p{pitch}` per pitch, for a note or a rest only
+          // (`draw/absolute.js:31-40`).
+          let klass = name
+          if (el.type === 'note' || el.type === 'rest') {
+            klass += ` d${Math.round((el.durationClass ?? 0) * 1000) / 1000}`.replace(/\./g, '-')
+            for (const p of el.abcjsPitches ?? []) klass += ` p${p}`
+          }
+          const gcls = classes.generate(klass)
+          // abcjs's own attribute order on an element group: `fill`, `stroke`, the class
+          // when there is one, then `data-name` — and a NOTE carries `selectable` and
+          // `data-index` where a staff-extra carries neither.
+          parts.push(
+            `<g fill="currentColor" stroke="none"${gcls ? ` class="${gcls}"` : ''}` +
+              ` data-name="${name}"${isExtra ? '' : ` selectable="false" data-index="${index}"`}>`,
+          )
+          if (el.type === 'note' || (el.type === 'rest' && el.plainRest !== false)) {
+            classes.incrNote()
+          }
+          if (el.type === 'bar' && !justStarted && foundNote) classes.incrMeasure()
+          if (el.type === 'note' || el.type === 'rest') foundNote = true
+        }
+        for (const line of el.lines) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+        for (const g of el.glyphs) {
+          // The glyph path is authored at the origin, so a placement is all that is needed.
+          parts.push(
+            glyphMarkup(g.name, g.x, g.y, g.scale, attrs(el.type, g.role, g.chordPos), g.role),
+          )
+        }
+        // Prose is a real <text> in a generic family, unlike musical glyphs, which are
+        // paths so the SVG stays self-contained. A missing serif face falls back to
+        // another serif; a missing Bravura falls back to nothing legible. See layout.ts.
+        for (const t of el.texts) {
+          const style =
+            (t.bold ? ' font-weight="bold"' : '') + (t.italic ? ' font-style="italic"' : '')
+          parts.push(
+            `<text${attrs(el.type, 'text')} x="${num(t.x * PX)}" y="${num(t.y * PX + oy)}" ` +
+              `font-family="serif" font-size="${num(t.size * PX)}"${style}` +
+              // Only the top-text block sets one; the music's own text is all left-aligned.
+              `${t.anchor === undefined || t.anchor === 'start' ? '' : ` text-anchor="${t.anchor}"`}` +
+              `>${t.jazz === undefined ? escapeText(t.text) : jazzChordMarkup(t.jazz, num(t.x * PX))}</text>`,
+          )
+        }
+        if (abcjs) parts.push('</g>')
+      })
+      /**
+       * **abcjs DRAWS THE MUSIC FIRST, THEN THE BEAMS, THEN EVERYTHING ELSE** — and we
+       * drew all of it before the first notehead.
+       *
+       * `drawVoice` walks `params.children` (the absolute elements), then
+       * `params.beams` — "beams must be drawn first for proper printing of triplets,
+       * slurs and ties" — then `params.otherchildren`, whose switch runs glissando,
+       * crescendo, dynamics, triplet, ending and tie (`draw/voice.js:25-90`). So a beam
+       * or a tie sits AFTER the group of the note it belongs to, not before it.
+       *
+       * 48 rows of the byte table first differed exactly here, on a `<polygon>` where
+       * abcjs's next byte opens the following note's `<g>`. No positional gate could see
+       * it: document order is not a coordinate.
+       */
       for (const beam of staff.beams) {
         parts.push(lineToRect(TL(beam), abcjs ? ' class="abcjs-beam"' : ` class="${prefix}-beam"`, abcjs))
       }
@@ -878,65 +951,6 @@ const glyphDefs = new Map<GlyphName, string>()
         )
       }
 
-      // `foundNote` — a barline before any note does not advance the measure counter.
-      let foundNote = false
-      staff.elements.forEach((el, index) => {
-        // Already written above, ahead of the braces. See the hoist.
-        if (abcjs && el.blockHeight !== undefined) return
-        // abcjs wraps each element in a group carrying its kind and index, which is what
-        // its interaction code walks. Core's own naming needs no wrapper.
-        if (abcjs) {
-          const name = ABCJS_ELEMENT_NAMES[el.type] ?? el.type
-          // `if (child.type !== 'staff-extra' && !isInMeasure()) startMeasure()`
-          // (`draw/voice.js:31-34`) — a prefix element does not open a measure.
-          const isExtra = name.startsWith('staff-extra')
-          const justStarted = !isExtra && !classes.isInMeasure()
-          if (justStarted) classes.startMeasure()
-          // `klass = params.type`, then ` d{durationClass}` with `.` → `-`, then one
-          // ` p{pitch}` per pitch, for a note or a rest only
-          // (`draw/absolute.js:31-40`).
-          let klass = name
-          if (el.type === 'note' || el.type === 'rest') {
-            klass += ` d${Math.round((el.durationClass ?? 0) * 1000) / 1000}`.replace(/\./g, '-')
-            for (const p of el.abcjsPitches ?? []) klass += ` p${p}`
-          }
-          const gcls = classes.generate(klass)
-          // abcjs's own attribute order on an element group: `fill`, `stroke`, the class
-          // when there is one, then `data-name` — and a NOTE carries `selectable` and
-          // `data-index` where a staff-extra carries neither.
-          parts.push(
-            `<g fill="currentColor" stroke="none"${gcls ? ` class="${gcls}"` : ''}` +
-              ` data-name="${name}"${isExtra ? '' : ` selectable="false" data-index="${index}"`}>`,
-          )
-          if (el.type === 'note' || (el.type === 'rest' && el.plainRest !== false)) {
-            classes.incrNote()
-          }
-          if (el.type === 'bar' && !justStarted && foundNote) classes.incrMeasure()
-          if (el.type === 'note' || el.type === 'rest') foundNote = true
-        }
-        for (const line of el.lines) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
-        for (const g of el.glyphs) {
-          // The glyph path is authored at the origin, so a placement is all that is needed.
-          parts.push(
-            glyphMarkup(g.name, g.x, g.y, g.scale, attrs(el.type, g.role, g.chordPos), g.role),
-          )
-        }
-        // Prose is a real <text> in a generic family, unlike musical glyphs, which are
-        // paths so the SVG stays self-contained. A missing serif face falls back to
-        // another serif; a missing Bravura falls back to nothing legible. See layout.ts.
-        for (const t of el.texts) {
-          const style =
-            (t.bold ? ' font-weight="bold"' : '') + (t.italic ? ' font-style="italic"' : '')
-          parts.push(
-            `<text${attrs(el.type, 'text')} x="${num(t.x * PX)}" y="${num(t.y * PX + oy)}" ` +
-              `font-family="serif" font-size="${num(t.size * PX)}"${style}` +
-              // Only the top-text block sets one; the music's own text is all left-aligned.
-              `${t.anchor === undefined || t.anchor === 'start' ? '' : ` text-anchor="${t.anchor}"`}` +
-              `>${t.jazz === undefined ? escapeText(t.text) : jazzChordMarkup(t.jazz, num(t.x * PX))}</text>`,
-          )
-        }
-        if (abcjs) parts.push('</g>')
-      })
       if (!abcjs) parts.push('</g>')
     }
     parts.push('</g>')
