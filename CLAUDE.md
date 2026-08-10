@@ -723,6 +723,26 @@ READ the diff and commit baselines with the code change.
 > `6.7.0` and the sibling `dump-svg.js` takes `ABCJS_VERSION`, which is how the two were
 > measured against each other.
 
+> 🎯 **THE GOAL, IN LANCE'S WORDS (2026-08-09b): abcts exists to build an abcjs-modern whose
+> output — the SVG FILE and the AUDIO — is 100% BYTE-EQUAL to abcjs 6.7.0.** A tolerance is
+> therefore not a compromise to be balanced against effort; it is a defect that has not been
+> written down yet. Anything we decline to reproduce goes in `Docs/ABCJS-DIFFERENCES.md`
+> with its evidence, and its slug goes in `svg-bytes.test.ts`'s `DIVERGENT` list — a slug
+> there without an entry in the doc is a tolerance wearing a disguise.
+>
+> **AUDIO IS THERE**: the MIDI file is byte-exact (0 of 3), the event list 0 of 72, the
+> timings 0 of 38. **THE SVG IS THE OPEN ARC**: `tests/svg-bytes.test.ts` is the only gate
+> in this repo with NO tolerance, and it exists because the others each declare what they
+> ignore — notehead centres, 0.05px, classed ancestors — and TOGETHER THEY LET A MARKUP
+> DIFFERENCE LIVE FOREVER. A `<rect>` where abcjs writes a `<path>` moves nothing; a
+> `<g transform>` where abcjs writes absolute coordinates moves nothing; an attribute in a
+> different order moves nothing. The root element is now byte-identical on all 171 fixtures
+> and the FIRST difference is one attribute, the same one on every row: **the `viewBox`**.
+> abcjs draws in ABSOLUTE PIXELS and writes none; we draw in STAFF SPACES and let the
+> viewBox convert, so it is the SYMPTOM rather than the difference. Removing it alone took
+> 196 tests red — `tests/pixel-geometry.ts` reads it and every geometry gate is built on
+> that — so absolute pixels throughout is the next arc, and the two go together.
+
 ## Parity targets, by mode
 `abcjs-strict` is measured against **abcjs 6.7.0 itself** — its parse trees, element dumps
 and SVG goldens. 100% is the bar; a divergence is a defect, not a tolerance. It was 6.6.3
