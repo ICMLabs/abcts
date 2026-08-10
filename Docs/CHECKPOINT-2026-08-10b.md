@@ -30,7 +30,7 @@ reproduce goes in `Docs/ABCJS-DIFFERENCES.md` with its evidence and its slug goe
 | chord grid | `chord-grid-ranked` | 0 of 23 |
 | harvested geometry | `corpus-abcjs-ranked` | 0 of 174 |
 | pixel geometry | `pixel-parity` | 0 of 120 |
-| DOM contract | `dom-contract` | **13 of 25 cases** (from 25), **184 of 390 rows** — TWELVE slugs RATCHETED |
+| DOM contract | `dom-contract` | **12 of 25 cases** (from 25) — THIRTEEN slugs RATCHETED |
 | **SVG bytes** | **`svg-bytes`** | **164 of 171 — SEVEN BYTE-EXACT AND RATCHETED**; best 5186, median 179 (from 171 of 171 at 651 / 162) |
 
 **Suite 1146 of 1146. NO REDS. `npx tsc --noEmit` clean.**
@@ -115,7 +115,7 @@ nothing in `tests/` may grow that mask.**
 
 ## 2. WHAT CLOSED, AND WHY EACH WAS INVISIBLE
 
-Thirty-three landings, every one a read of a named abcjs function.
+Thirty-four landings, every one a read of a named abcjs function.
 
 - **`staffwidth` is the MUSIC area; the page is it plus abcjs's 15px margins.** compat
   mapped `renderAbc(…, {staffwidth: 670})` straight onto core's `systemWidth`, which is
@@ -246,6 +246,10 @@ Thirty-three landings, every one a read of a named abcjs function.
   markup is byte-identical now. **The "0.15px block-top residual" recorded beside it was
   the half-pixel of a thickness that should not have existed** — a placement reading of a
   markup defect.
+- **A `P:` LABEL NAMES ITSELF AND CARRIES ITS GROUP'S COUNTERS TWICE** — the key once and
+  the counters twice, because `renderText` is handed an already-generated class and appends
+  (`draw/relative.js:58`). Ours wrote neither the name nor the class. The first attempt
+  doubled the WHOLE string and the contract said so in one run.
 - **`data-index` is an index into the SELECTABLES, not into the children.**
   `Selectables.add` writes `{selectable: false, "data-index": elements.length}` and only
   after `canSelect`, which with no `selectTypes` admits `el_type 'note'` alone
@@ -396,7 +400,20 @@ regression, so read the diff before touching the gate.
    and the previous note called it generated from reading a classless golden path and
    ASSUMING it was the ledger. **A path with no class is not evidence about which element it
    is.**
-9. **A MEASURE CAN CARRY ONLY ONE `meterChange`, AND `svg-time-sig-list` NEEDS THREE.**
+9. **A GRACE GROUP'S INTERNAL ORDER — `dom-grace`, 10 of 22 rows.** MEASURED from abcjs's
+   own contract for `{gab}c4|`:
+
+   ```
+   c (main head)  →  g  →  a, ledger  →  b, ledger  →  stem, stem, stem
+   ```
+
+   So `addGraceNotes` runs AFTER the pitch loop and after the stem
+   (`abstract-engraver.js:834-836`), each grace contributes its head and then its OWN
+   ledgers, and the three grace STEMS come last, from the grace beam pass. Ours emits the
+   main head, then every LINE (all the grace ledgers and stems), then every grace head —
+   so a stem stands where abcjs's first grace does. Matching it needs a per-grace sort key
+   on both channels, the same shape as the pitch run in `layoutNote`.
+10. **A MEASURE CAN CARRY ONLY ONE `meterChange`, AND `svg-time-sig-list` NEEDS THREE.**
    `[M:2/4]y[M:3/4]y[M:4/4]` has no barline in it, so all three changes belong to ONE
    measure and `Measure.meterChange` keeps the last. abcjs draws all three, each as its own
    `staff-extra time-signature` — **a `y` SPACER does not open a measure**, so every one of
@@ -406,11 +423,11 @@ regression, so read the diff before touching the gate.
    `M:` at all draws no meter in either engine, and `M:4/4` and `M:C` were already exact.
    What was actually broken is now fixed — an inline `[M:]` before any music on the FIRST
    line is that line's prefix, and it used to be dropped outright.)
-10. **`oneSvgPerLine` / `responsive` / `scale`** — five cases in `svg-per-line.test.js`.
-11. **`el-four-endings`** — `|1,3 … :|2,4 …`. A DECISION, not a bug fix.
-12. **The geometry half of the timing join** — `left`, `endX`, `top`, `height` on every
+11. **`oneSvgPerLine` / `responsive` / `scale`** — five cases in `svg-per-line.test.js`.
+12. **`el-four-endings`** — `|1,3 … :|2,4 …`. A DECISION, not a bug fix.
+13. **The geometry half of the timing join** — `left`, `endX`, `top`, `height` on every
    `noteTimings` row. A gate to BUILD.
-13. **The structural pass** — terms in `CHECKPOINT-2026-08-08d.md`, not to be re-argued.
+14. **The structural pass** — terms in `CHECKPOINT-2026-08-08d.md`, not to be re-argued.
 
 ---
 
@@ -430,8 +447,8 @@ chord-grid ranked   0 of 23
 midi ranked         0 of 3       BYTE-EXACT
 harvested ranked    0 of 174
 pixel ranked        0 of 120
-DOM contract        13 of 25     (184 of 390 rows)
-                    PASSING ratchet: 12 slugs
+DOM contract        12 of 25
+                    PASSING ratchet: 13 slugs
 npx biome check src NOT clean — same rows as before, all pre-existing
 ```
 
