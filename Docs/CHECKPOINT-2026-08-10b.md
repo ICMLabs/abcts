@@ -31,17 +31,38 @@ reproduce goes in `Docs/ABCJS-DIFFERENCES.md` with its evidence and its slug goe
 | harvested geometry | `corpus-abcjs-ranked` | 0 of 174 |
 | pixel geometry | `pixel-parity` | 0 of 120 |
 | DOM contract | `dom-contract` | **22 of 25 cases** (from 25), **248 of 648 rows** (from 86) — three slugs RATCHETED |
-| **SVG bytes** | **`svg-bytes`** | **171 of 171 — best 5186, median 174** (from 651 / 162) |
+| **SVG bytes** | **`svg-bytes`** | **164 of 171 — SEVEN BYTE-EXACT AND RATCHETED**; best 5186, median 175 (from 171 of 171 at 651 / 162) |
 
-**Suite 1130 of 1130. NO REDS. `npx tsc --noEmit` clean.**
+**Suite 1137 of 1137. NO REDS. `npx tsc --noEmit` clean.**
 
 ---
 
-## 1. THE HEIGHT IS BLOCKING 109 OF THE 171 ROWS — READ THIS FIRST
+## 1. THE HEIGHT IS THREE PROBLEMS, NOT ONE — MEASURED
 
-`svg-bytes`'s median is **174** and its masked median is **1097**. The gap is one
-attribute: **109 of the 171 fixtures first differ on the root's `height`**, and every one
-of those differences is one or two ULPs in either direction —
+`svg-bytes`'s median is **175** and its masked median is **1241**, with the max EXACT. Most
+rows still first differ on the root's `height`, and the temptation is to read that as one
+defect. **It is three**, and the split is measured (`/tmp/probe9.mjs`, recipe below):
+
+```
+76 of 171   EXACT
+82 of 171   differ by pure ULP noise — relative error under 1e-12
+13 of 171   differ STRUCTURALLY, by 8 to 297 px
+```
+
+**THE 13 ARE WORTH MORE THAN THE 82.** They are real vertical defects that no gate in this
+repo can state — `pixel-parity` and the harvested table pair NOTEHEADS, so a page that is
+300px too short with every note in the right place reads as perfect. One of them has
+already closed and took SEVEN fixtures to byte-exact with it (§2). The rest are named in
+WHAT IS LEFT.
+
+The 82 are the `px / 7.75` round trip, and one line shows the mechanism:
+`flagX = headX + headInk - spaces(ABCJS_PX.flagStemInset)` divides an abcjs pixel by 7.75
+and the emitter multiplies it back. **Every abcjs constant that enters as `px / 7.75` and
+leaves as `* 7.75` loses bits**, and the same is true of every glyph coordinate — so the
+horizontal tail and the vertical one are ONE defect, closed by the strict path holding
+pixels. That is the structural pass; see `CHECKPOINT-2026-08-08d.md` for its terms.
+
+The ULP differences look like this, in both directions —
 
 ```
 got  height="227.68050000000002"      want height="227.6805"
@@ -54,33 +75,21 @@ got  height="505.5102030764843"       want height="505.51020307648423"
 and closes with `h = y + padding.bottom` (`draw/draw.js`, `draw/set-paper-size.js:3`). We
 accumulate the same quantity in STAFF SPACES and multiply by 7.75 at the end.
 
-**MEASURED, so this is not re-derived**: rewriting only the LAST step in pixels —
-`(height - 2 * marginY) * 7.75 + 30`, or with `15 + 15` — takes 69 of 171 exact to **70**.
+**MEASURED, so the shortcut is not repeated**: rewriting only the LAST step in pixels —
+`(height - 2 * marginY) * 7.75 + 30`, or with `15 + 15` — took 69 of 171 exact to **70**.
 The noise is spread through the whole accumulation, not concentrated in the margins.
 
-So this is the VERTICAL half of the emission-quantum problem the horizontal arc already
-knows by name, and closing it means carrying the vertical cursor in pixels. It is the
-single highest-yield item on the board: **109 rows are invisible behind it.**
-
-**To see past it while working on anything else**, `/tmp/probe4.mjs` (recreate from this
-checkpoint) runs the same comparison with `height="…"` masked in BOTH strings and writes
-`/tmp/probe-noheight.txt`. That is what named every family below. **It is a PROBE, not a
-gate** — nothing in `tests/` may grow that mask.
-
-**AND WITH THE HEIGHT MASKED, ALMOST EVERYTHING LEFT IS THE SAME PROBLEM.** The masked
-table's largest families are now `M 57.840999999999994` against `M 57.841` and a `clefs.G`
-whose y differs in the last digit — the HORIZONTAL and VERTICAL halves of one thing. The
-mechanism is visible in one line: `flagX = headX + headInk - spaces(ABCJS_PX.flagStemInset)`
-divides an abcjs pixel by 7.75 and the emitter multiplies it back. **Every abcjs constant
-that enters as `px / 7.75` and leaves as `* 7.75` loses bits on the round trip.** Closing it
-means the strict path holding pixels, which is the structural pass — see
-`CHECKPOINT-2026-08-08d.md` for the terms it must be held to.
+**TWO PROBES, and the handoff carries both recipes.** `/tmp/probe4.mjs` runs the byte
+comparison with `height="…"` masked in BOTH strings and writes `/tmp/probe-noheight.txt` —
+that is what named every markup family closed here. `/tmp/probe9.mjs` splits the heights
+into exact / ULP / structural, which is what found the deleted line. **Both are PROBES —
+nothing in `tests/` may grow that mask.**
 
 ---
 
 ## 2. WHAT CLOSED, AND WHY EACH WAS INVISIBLE
 
-Twelve landings, every one a read of a named abcjs function.
+Thirteen landings, every one a read of a named abcjs function.
 
 - **`staffwidth` is the MUSIC area; the page is it plus abcjs's 15px margins.** compat
   mapped `renderAbc(…, {staffwidth: 670})` straight onto core's `systemWidth`, which is
@@ -136,6 +145,17 @@ Twelve landings, every one a read of a named abcjs function.
 - **A top-text row carries its class** under `add_classes` — `abcjs-title`,
   `abcjs-text abcjs-subtitle`, `abcjs-composer` — literal in `top-text.js` rather than run
   through `classes.generate`, so no line or measure suffix joins them.
+- **A LINE WITH NO NOTE AND NO BARLINE IS DELETED — and this is what took the first seven
+  fixtures to BYTE-EXACT.** `cleanUp` drops any `tune.lines[i]` whose every voice fails
+  `containsNotes`, and that test is `el_type === 'note' || el_type === 'bar'`
+  (`tune-builder.js:29-61`, `:888-894`) — a clef, a key and a meter are not enough. So a
+  tune with a header and no music draws NO STAFF AT ALL: abcjs's golden for
+  `X:43\nT: example` is 694 bytes holding a title and nothing else, and we drew an empty
+  five-line stave under it. **AND THE TITLE STILL DRAWS**, because `draw()` runs
+  `nonMusic(topText)` and spends `spacing.music` before it looks at a line
+  (`draw/draw.js:12-18`) — a bare `X:43\nT:` is 37.56, the two margins and the music gap
+  with nothing between. **NO GATE COULD SEE IT**: the pixel tables pair NOTEHEADS and these
+  tunes have none.
 - **`data-index` is an index into the SELECTABLES, not into the children.**
   `Selectables.add` writes `{selectable: false, "data-index": elements.length}` and only
   after `canSelect`, which with no `selectTypes` admits `el_type 'note'` alone
@@ -188,10 +208,26 @@ regression, so read the diff before touching the gate.
 
 ## WHAT IS LEFT, IN YIELD ORDER
 
-1. **THE ROOT'S `height` — 109 of 171 rows.** §1. Accumulate the vertical cursor in
-   PIXELS. Highest yield on the board by a wide margin, and everything behind it is
-   currently unmeasurable by the real gate.
-2. ~~**THE ORDER INSIDE A NOTE GROUP**~~ — **CLOSED.** Kept because the rule is worth
+1. **`BottomText` IS AN ENTIRE MISSING FEATURE — the largest structural height gaps, up to
+   297px, and it is unparsed, unlaid-out and unemitted.** `creation/elements/bottom-text.js`
+   is the whole spec and it is short:
+   - `W:` **unaligned words** — `spacing.words`, then the block in `wordsfont`, then one
+     more `getTextSize.calc("i", 'wordsfont')` height.
+   - `B:`, `S:`, `D:` — ONE line each in `historyfont`, PREFIXED with `"Book: "`,
+     `"Source: "`, `"Discography: "`.
+   - `N:` and `H:` — MULTI-line, prefaced `"Notes:"` and `"History:"`, in `historyfont`,
+     each a group with `spacing.info` above and `size.height` below.
+   - `Z:`, `%%abc-copyright`, `%%abc-creator`, `%%abc-edited-by` — one line each, prefixed
+     `"Transcription: "`, `"Copyright: "`, `"Creator: "`, `"Edited By: "`.
+   - the footer, PRINT ONLY, three cells at `paddingLeft`, `+ width/2`, `+ width`.
+
+   `draw()` spends a bare `moveY(24)` before the whole block — "Empirically discovered.
+   What variable should this be?" (`draw/draw.js:66`) — and wraps it in
+   `abcjs-meta-bottom`. **None of these fields is on `ScoreMetadata` yet**, so this is three
+   layers: parse, lay out, emit.
+2. **THE ROOT'S `height`'s ULP HALF — 82 rows.** §1. Accumulate the vertical cursor in
+   PIXELS, which is the same change that closes the glyph-coordinate tail.
+3. ~~**THE ORDER INSIDE A NOTE GROUP**~~ — **CLOSED.** Kept because the rule is worth
    having written down:
    `createNoteHead` builds the notehead but does NOT add it: it `addRight`s the FLAG, then
    the DOTS, then `addExtra`s the ACCIDENTAL, and only when it RETURNS does the caller
@@ -215,18 +251,18 @@ regression, so read the diff before touching the gate.
    because the flag hangs off the STEM TIP and cannot be known until every head is placed.
    **The baselines moved as a pure PERMUTATION** — every removed line was also an added
    one, checked rather than assumed, so nothing moved and only the order did.
-3. **A STEM AND A LEDGER ARE DIFFERENT EMITTERS.** A stem is `printStem`'s form —
+4. **A STEM AND A LEDGER ARE DIFFERENT EMITTERS.** A stem is `printStem`'s form —
    `d="M x y1L x y2L x2 y2L x2 y1z"`, no separators between commands, NO `stroke`/`fill`
    inside a group, `class` BEFORE `data-name` (`draw/print-stem.js:32-42`) — where a ledger
    and a staff line are `printLine`'s, with spaces and `data-name` BEFORE `class`
    (`draw/print-line.js:30-35`). Ours writes one form for all three. **The stem's `x` and
    `x + dx` are the head's EDGES and `dx` carries the stem's SIDE**, which `PlacedLine`
    does not record — a down-stem writes the right edge first.
-4. **Glyph coordinate noise — ~22 rows.** `M 54.78099999999999` against
+5. **Glyph coordinate noise.** `M 54.78099999999999` against
    `M 54.781000000000006`, and a `clefs.G` whose Y differs in the last digit. Same
    emission-quantum family as the height, and the clef rows are the VERTICAL half of it,
    so §1 may close them too.
-5. **A tie/slur is `drawArc`'s TWO-CUBIC closed path** with `data-name="tie"`/`"slur"`
+6. **A tie/slur is `drawArc`'s TWO-CUBIC closed path** with `data-name="tie"`/`"slur"`
    and a `class` from the anchors' measure/note counters (`draw/tie.js:57-102`); a beam is
    `drawBeam`'s single concatenated `M…L…L…L…z` path with `class="abcjs-beam-elem
    abcjs-d0-25"` (`draw/beam.js:34-43`). Ours are a `<path class="abcjs-tie">` and a
@@ -244,8 +280,10 @@ regression, so read the diff before touching the gate.
 ```
 working tree clean
 npx tsc --noEmit    clean
-npx vitest run      1130 / 1130
-svg bytes           171 of 171   best 5186, median 174   (masked-height median 1087)
+npx vitest run      1137 / 1137
+svg bytes           164 of 171   best 5186, median 175   (masked-height median 1241, max EXACT)
+                    PASSING ratchet: 7 slugs, the first this table has ever held
+heights             76 exact / 82 ULP-only / 13 structural
 audio ranked        0 of 72
 timing ranked       0 of 38
 element timings     1 of 13

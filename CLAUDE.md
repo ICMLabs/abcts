@@ -368,19 +368,28 @@ checkpoint and hand off as you go so no context is lost.
 > (`abstract-engraver.js:671-675`), which is why an up-stemmed `[FA]` reads
 > `F, flags.u8th, A` and looked like an exception to a rule about flags.
 >
-> **WHAT IS LEFT IS ONE THING FIRST**: `svg-bytes` is at best 5186, median 174 — and **109
-> of the 171 fixtures first differ on the root's `height`**, one or two ULPs in either
-> direction because abcjs accumulates `renderer.y` in PIXELS and we accumulate it in staff
-> spaces and multiply at the end. Rewriting only the LAST step was measured and moved 69
-> exact rows to 70, so the noise is spread through the whole accumulation. Masking `height`
-> in a PROBE (recipe in `Docs/HANDOFF-2026-08-10b.md`) puts the median at 1097 — and with
-> it masked, **almost everything left is the SAME problem**: `M 57.840999999999994` against
-> `M 57.841`, and a `clefs.G` whose y differs in the last digit. One line shows the
-> mechanism — `flagX = headX + headInk - spaces(ABCJS_PX.flagStemInset)` divides an abcjs
-> pixel by 7.75 and the emitter multiplies it back. **Every abcjs constant that enters as
-> `px / 7.75` and leaves as `* 7.75` loses bits on the round trip**, so the strict path
-> holding PIXELS is the one change that closes the tail. Nothing in `tests/` may grow that
-> mask.
+> ✅ **AND THE BYTE TABLE HAS ITS FIRST SEVEN EXACT FIXTURES — 164 of 171** (2026-08-10b),
+> from 171 of 171 at byte 10 when it opened. Six of the seven are ONE finding: **a line
+> with no note and no barline is DELETED** — `cleanUp` drops any `tune.lines[i]` whose
+> every voice fails `containsNotes`, and that test is `el_type === 'note' || 'bar'`
+> (`tune-builder.js:29-61`, `:888-894`), so a clef, a key and a meter are not enough. A
+> tune with a header and no music draws NO STAFF AT ALL; abcjs's golden for
+> `X:43\nT: example` is 694 bytes holding a title and nothing else. **AND THE TITLE STILL
+> DRAWS**, because `draw()` runs `nonMusic(topText)` and spends `spacing.music` before it
+> looks at a line.
+>
+> ⚖️ **AND THE HEIGHT IS THREE PROBLEMS, NOT ONE.** Measured: **76 of 171 exact, 82 by pure
+> ULP noise, 13 STRUCTURALLY by 8 to 297px.** THE 13 ARE WORTH MORE THAN THE 82 — they are
+> real vertical defects no gate here can state, because `pixel-parity` and the harvested
+> table pair NOTEHEADS and a page 300px too short with every note in place reads as
+> perfect. The largest is **`BottomText`, an ENTIRE MISSING FEATURE** — `W:`, `N:`, `H:`,
+> `B:`, `S:`, `D:`, `Z:`, the copyright trio and the print footer, unparsed, unlaid-out and
+> unemitted; `creation/elements/bottom-text.js` is the whole short spec. The 82 are the
+> `px / 7.75` ROUND TRIP — `flagX = headX + headInk - spaces(ABCJS_PX.flagStemInset)`
+> divides an abcjs pixel by 7.75 and the emitter multiplies it back, and every glyph
+> coordinate does the same, so the vertical tail and the horizontal one are ONE defect.
+> **A reading of a single aggregate number would have called all 109 rows one bug**; the
+> classifier probe (recipe in `Docs/HANDOFF-2026-08-10b.md`) is what split them.
 
 Read `Docs/CHECKPOINT-2026-08-10b.md` first — the state and WHAT IS LEFT, with the height
 named as the one thing that unblocks the rest. `Docs/HANDOFF-2026-08-10b.md` has the
@@ -546,7 +555,8 @@ backup remote is not a licence to vendor someone else's tree into this one.
 reds; **seventeen gates and NINE ranked tables** — 0 of 72 audio cases, 0 of 38 note timings,
 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
 **1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
-**22 of 25 DOM-contract cases — 248 of 648 ROWS, from 0, with three slugs RATCHETED** — and **the SVG BYTE TABLE is
+**22 of 25 DOM-contract cases — 248 of 648 ROWS with three slugs RATCHETED** — and
+**164 of 171 SVG-byte fixtures, SEVEN of them EXACT and ratcheted** — and **the SVG BYTE TABLE is
 THE OPEN ARC**, 171 of 171 at best 5186 / median 174, with 109 of those rows blocked behind
 the root's `height`. The oracle lands before the
 implementation here, as it did for audio and the chord grid, and a table that opens at every
