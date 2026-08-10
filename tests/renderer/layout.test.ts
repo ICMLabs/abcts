@@ -877,7 +877,9 @@ describe('barline shapes', () => {
 
   const shape = (bar: { lines: readonly { thickness: number }[]; glyphs: readonly unknown[] }) => ({
     rules: bar.lines.map((l) => (l.thickness > 0.3 ? 'thick' : 'thin')),
-    dots: bar.glyphs.length,
+    // TWO GLYPHS PER DOT COLUMN — abcjs draws `dots.dot` at pitch 7 and again at 5
+    // (`abstract-engraver.js:986-987`), not one combined `repeatDots`.
+    dots: bar.glyphs.length / 2,
   })
 
   it('draws each shape from its own parts', () => {
@@ -919,18 +921,20 @@ describe('barline shapes', () => {
   })
 
   it('straddles the middle line with the repeat dots', () => {
-    // SMuFL anchors repeatDots at the BOTTOM staff line — its ink sits ~2 spaces above
-    // its origin — so placing it at step 0 puts the dots up by the top line. Centred
-    // from the bounding box, so a font with a different anchor still lands right.
-    const dots = barsOf('X:1\nL:1/4\nK:C\n|:C:|\n')[0]?.glyphs[0]
-    expect(dots?.name).toBe('repeatDots')
-    const glyph = GLYPHS.repeatDots
-    const inkTop = (dots?.y ?? 0) + glyph.y
-    const inkBottom = inkTop + glyph.height
-    // The ink is centred on the middle line, one dot either side.
-    expect((inkTop + inkBottom) / 2).toBeCloseTo(0, 5)
-    expect(inkTop).toBeLessThan(0)
-    expect(inkBottom).toBeGreaterThan(0)
+    /**
+     * REWRITTEN, and the old shape was the defect. Strict draws TWO `dots.dot` at abcjs's
+     * own pitches 7 and 5 — `addRight(new RelativeElement("dots.dot", dx, 1, 7))` and the
+     * same at 5 (`abstract-engraver.js:986-987`) — not ONE combined Bravura `repeatDots`.
+     * That glyph is not in abcjs's table at all, so it fell through to Bravura's and the
+     * emitter wrote `scale(7.75)` on it: a Bravura figure reachable in strict.
+     */
+    const dots = barsOf('X:1\nL:1/4\nK:C\n|:C:|\n')[0]?.glyphs ?? []
+    expect(dots.map((g) => g.name)).toEqual(['augmentationDot', 'augmentationDot'])
+    // One space either side of the middle line, and symmetric about it.
+    const ys = dots.map((g) => g.y)
+    expect((ys[0] ?? 0) + (ys[1] ?? 0)).toBeCloseTo(0, 5)
+    expect(Math.min(...ys)).toBeLessThan(0)
+    expect(Math.max(...ys)).toBeGreaterThan(0)
   })
 
   it('spans the staff, whatever the shape', () => {

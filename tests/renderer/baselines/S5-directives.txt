@@ -874,7 +874,8 @@ system 0 width=90.403 originY=0.000
       line  20.109,0.333 -> 20.109,-3.000 t=0.129
       text  16.713,6.194 size=2.194 bold "your"
     bar x=22.479 w=2.335
-      glyph repeatDots 24.414,1.976
+      glyph augmentationDot 24.414,-0.500
+      glyph augmentationDot 24.414,0.500
       line  23.253,-2.000 -> 23.253,2.000 t=0.516
       line  24.066,-2.000 -> 24.066,2.000 t=0.077
     note@-2 x=27.783 w=7.742

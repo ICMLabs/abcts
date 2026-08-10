@@ -190,7 +190,8 @@ system 1 width=90.323 originY=35.588
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     bar x=7.117 w=2.335
-      glyph repeatDots 9.052,1.976
+      glyph augmentationDot 9.052,-0.500
+      glyph augmentationDot 9.052,0.500
       line  7.891,-2.000 -> 7.891,2.000 t=0.516
       line  8.704,-2.000 -> 8.704,2.000 t=0.077
     note@1 x=10.471 w=3.871
@@ -285,7 +286,8 @@ system 1 width=90.323 originY=35.588
     rest x=82.827 w=5.474
       glyph restQuarter 82.827,0.000
     bar x=86.581 w=2.013
-      glyph repeatDots 86.581,1.976
+      glyph augmentationDot 86.581,-0.500
+      glyph augmentationDot 86.581,0.500
       line  87.394,-2.000 -> 87.394,2.000 t=0.077
       line  88.129,-2.000 -> 88.129,2.000 t=0.516
   staff 1 originY=20.022
@@ -298,7 +300,8 @@ system 1 width=90.323 originY=35.588
     clef x=1.935 w=3.246
       glyph fClef 2.581,-1.000
     bar x=7.117 w=2.335
-      glyph repeatDots 9.052,1.976
+      glyph augmentationDot 9.052,-0.500
+      glyph augmentationDot 9.052,0.500
       line  7.891,-2.000 -> 7.891,2.000 t=0.516
       line  8.704,-2.000 -> 8.704,2.000 t=0.077
     note@13 x=10.471 w=5.474
@@ -438,6 +441,7 @@ system 1 width=90.323 originY=35.588
     rest x=82.827 w=5.474
       glyph restQuarter 82.827,0.000
     bar x=86.581 w=2.013
-      glyph repeatDots 86.581,1.976
+      glyph augmentationDot 86.581,-0.500
+      glyph augmentationDot 86.581,0.500
       line  87.394,-2.000 -> 87.394,2.000 t=0.077
       line  88.129,-2.000 -> 88.129,2.000 t=0.516

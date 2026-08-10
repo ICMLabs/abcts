@@ -1182,7 +1182,8 @@ system 0 width=90.439 originY=0.000
       glyph timeSig9 10.069,-1.000
       glyph timeSig8 10.007,1.000
     bar x=13.352 w=2.335
-      glyph repeatDots 15.287,1.976
+      glyph augmentationDot 15.287,-0.500
+      glyph augmentationDot 15.287,0.500
       line  14.126,-2.000 -> 14.126,2.000 t=0.516
       line  14.939,-2.000 -> 14.939,2.000 t=0.077
     note@-5,-3,-1 x=16.707 w=7.742
@@ -1297,7 +1298,8 @@ system 0 width=90.439 originY=0.000
       line  64.142,3.000 -> 65.996,3.000 t=0.090
       line  65.674,2.833 -> 65.674,-5.000 t=0.129
     bar x=67.909 w=2.013
-      glyph repeatDots 67.909,1.976
+      glyph augmentationDot 67.909,-0.500
+      glyph augmentationDot 67.909,0.500
       line  68.722,-2.000 -> 68.722,2.000 t=0.077
       line  69.458,-2.000 -> 69.458,2.000 t=0.516
     note@-1,2,4 x=74.696 w=2.235
@@ -3058,7 +3060,8 @@ system 1 width=90.569 originY=18.563
       glyph noteheadHalf 57.749,-1.500
       line  57.814,-1.333 -> 57.814,2.000 t=0.129
     bar x=61.282 w=2.013
-      glyph repeatDots 61.282,1.976
+      glyph augmentationDot 61.282,-0.500
+      glyph augmentationDot 61.282,0.500
       line  62.094,-2.000 -> 62.094,2.000 t=0.077
       line  62.830,-2.000 -> 62.830,2.000 t=0.516
     note@5 x=67.569 w=3.871

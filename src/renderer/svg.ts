@@ -1025,8 +1025,12 @@ const glyphDefs = new Map<GlyphName, string>()
         // Only a NOTE or a REST has rules between its glyphs; a clef, a key and a time
         // signature are glyphs alone, and splitting their run broke the `<g data-name="12">`
         // a multi-character figure is wrapped in — which the PASSING ratchet caught.
+        // A BAR INTERLEAVES its rules and its dot columns — see `PlacedGlyph.afterLine` —
+        // so it takes its own merge below and has no pitch run at all.
         const pitchEnd =
-          abcjs && (el.type === 'note' || el.type === 'rest')
+          abcjs && el.type === 'bar'
+            ? 0
+            : abcjs && (el.type === 'note' || el.type === 'rest')
           ? (() => {
               let i = 0
               while (i < el.glyphs.length && PITCH_ROLES.includes(el.glyphs[i]?.role ?? '')) i += 1
@@ -1078,6 +1082,38 @@ const glyphDefs = new Map<GlyphName, string>()
               ...own.filter((l) => l.role === 'stem' && l.beamed === true),
             ]
           : own
+        /**
+         * **A BARLINE'S DOT COLUMNS INTERLEAVE WITH ITS RULES.** abcjs's contract shows a
+         * repeat END as `dots.dot, dots.dot, bar, bar` and a repeat START as
+         * `bar, bar, dots.dot, dots.dot` — the leading column is added before the rules and
+         * the trailing one after. `afterLine` carries how many rules precede each dot.
+         */
+        if (abcjs && el.type === 'bar') {
+          let li = 0
+          for (const g of el.glyphs) {
+            while (li < ordered.length && li < (g.afterLine ?? 0)) {
+              const line = ordered[li++]
+              if (line !== undefined) {
+                parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+              }
+            }
+            parts.push(
+              glyphMarkup(g.name, g.x, g.y, g.scale, attrs(el.type, g.role, g.chordPos), g.role, g.dataName),
+            )
+          }
+          while (li < ordered.length) {
+            const line = ordered[li++]
+            if (line !== undefined) {
+              parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+            }
+          }
+          if (barTexts) {
+            // already emitted above
+          }
+          advance()
+          parts.push('</g>')
+          return
+        }
         for (const line of ordered) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
         // …and everything the engraver added AFTER the rules — decorations, graces.
         for (const g of el.glyphs.slice(pitchEnd)) {

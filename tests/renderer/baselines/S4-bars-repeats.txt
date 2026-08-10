@@ -30,7 +30,8 @@ system 0 width=119.357 originY=0.000
       glyph noteheadBlack 36.923,1.500
       line  38.124,1.333 -> 38.124,-2.000 t=0.129
     bar x=46.184 w=2.335
-      glyph repeatDots 48.119,1.976
+      glyph augmentationDot 48.119,-0.500
+      glyph augmentationDot 48.119,0.500
       line  46.958,-2.000 -> 46.958,2.000 t=0.516
       line  47.771,-2.000 -> 47.771,2.000 t=0.077
     note@-2 x=49.538 w=5.474
@@ -46,7 +47,8 @@ system 0 width=119.357 originY=0.000
       glyph noteheadBlack 77.320,-0.500
       line  77.385,-0.333 -> 77.385,3.000 t=0.129
     bar x=86.581 w=2.013
-      glyph repeatDots 86.581,1.976
+      glyph augmentationDot 86.581,-0.500
+      glyph augmentationDot 86.581,0.500
       line  87.394,-2.000 -> 87.394,2.000 t=0.077
       line  88.129,-2.000 -> 88.129,2.000 t=0.516
 system 1 width=90.323 originY=19.066
@@ -67,7 +69,8 @@ system 1 width=90.323 originY=19.066
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     bar x=6.974 w=2.335
-      glyph repeatDots 8.910,1.976
+      glyph augmentationDot 8.910,-0.500
+      glyph augmentationDot 8.910,0.500
       line  7.749,-2.000 -> 7.749,2.000 t=0.516
       line  8.561,-2.000 -> 8.561,2.000 t=0.077
     note@-6 x=10.329 w=5.474
@@ -98,7 +101,8 @@ system 1 width=90.323 originY=19.066
       glyph noteheadBlack 53.949,-0.500
       line  54.013,-0.333 -> 54.013,3.000 t=0.129
     bar x=59.637 w=2.013
-      glyph repeatDots 59.637,1.976
+      glyph augmentationDot 59.637,-0.500
+      glyph augmentationDot 59.637,0.500
       line  60.450,-2.000 -> 60.450,2.000 t=0.077
       line  61.185,-2.000 -> 61.185,2.000 t=0.516
     note@1 x=65.120 w=5.474
@@ -139,8 +143,10 @@ system 2 width=57.221 originY=33.979
       glyph noteheadBlack 22.752,1.500
       line  23.954,1.333 -> 23.954,-2.000 t=0.129
     bar x=28.227 w=3.110
-      glyph repeatDots 28.227,1.976
-      glyph repeatDots 30.936,1.976
+      glyph augmentationDot 28.227,-0.500
+      glyph augmentationDot 28.227,0.500
+      glyph augmentationDot 30.936,-0.500
+      glyph augmentationDot 30.936,0.500
       line  29.040,-2.000 -> 29.040,2.000 t=0.077
       line  29.775,-2.000 -> 29.775,2.000 t=0.516
       line  30.588,-2.000 -> 30.588,2.000 t=0.077
@@ -185,7 +191,8 @@ system 0 width=102.290 originY=0.000
       glyph timeSig4 6.329,-1.000
       glyph timeSig4 6.329,1.000
     bar x=9.787 w=2.335
-      glyph repeatDots 11.722,1.976
+      glyph augmentationDot 11.722,-0.500
+      glyph augmentationDot 11.722,0.500
       line  10.561,-2.000 -> 10.561,2.000 t=0.516
       line  11.374,-2.000 -> 11.374,2.000 t=0.077
     note@-6 x=13.141 w=5.474
@@ -216,7 +223,8 @@ system 0 width=102.290 originY=0.000
       glyph noteheadBlack 55.269,-0.500
       line  55.333,-0.333 -> 55.333,3.000 t=0.129
     bar x=60.743 w=2.013
-      glyph repeatDots 60.743,1.976
+      glyph augmentationDot 60.743,-0.500
+      glyph augmentationDot 60.743,0.500
       line  61.556,-2.000 -> 61.556,2.000 t=0.077
       line  62.291,-2.000 -> 62.291,2.000 t=0.516
     note@1 x=66.227 w=5.474
@@ -254,7 +262,8 @@ system 1 width=90.323 originY=22.066
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     bar x=6.974 w=2.335
-      glyph repeatDots 8.910,1.976
+      glyph augmentationDot 8.910,-0.500
+      glyph augmentationDot 8.910,0.500
       line  7.749,-2.000 -> 7.749,2.000 t=0.516
       line  8.561,-2.000 -> 8.561,2.000 t=0.077
     note@-6 x=10.329 w=5.474
@@ -286,7 +295,8 @@ system 1 width=90.323 originY=22.066
       line  41.508,3.000 -> 43.290,3.000 t=0.090
       line  42.967,2.833 -> 42.967,-0.500 t=0.129
     bar x=45.713 w=2.013
-      glyph repeatDots 45.713,1.976
+      glyph augmentationDot 45.713,-0.500
+      glyph augmentationDot 45.713,0.500
       line  46.526,-2.000 -> 46.526,2.000 t=0.077
       line  47.261,-2.000 -> 47.261,2.000 t=0.516
     note@-6 x=51.197 w=5.474
@@ -303,7 +313,8 @@ system 1 width=90.323 originY=22.066
       glyph noteheadBlack 63.038,1.500
       line  64.240,1.333 -> 64.240,-2.000 t=0.129
     bar x=66.986 w=2.013
-      glyph repeatDots 66.986,1.976
+      glyph augmentationDot 66.986,-0.500
+      glyph augmentationDot 66.986,0.500
       line  67.798,-2.000 -> 67.798,2.000 t=0.077
       line  68.534,-2.000 -> 68.534,2.000 t=0.516
     note@-3 x=72.469 w=5.474
@@ -338,7 +349,8 @@ system 2 width=90.323 originY=33.979
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     bar x=6.974 w=2.335
-      glyph repeatDots 8.910,1.976
+      glyph augmentationDot 8.910,-0.500
+      glyph augmentationDot 8.910,0.500
       line  7.749,-2.000 -> 7.749,2.000 t=0.516
       line  8.561,-2.000 -> 8.561,2.000 t=0.077
     note@-2 x=10.329 w=5.474
@@ -368,7 +380,8 @@ system 2 width=90.323 originY=33.979
       glyph noteheadBlack 53.901,0.500
       line  55.102,0.333 -> 55.102,-3.000 t=0.129
     bar x=59.346 w=2.013
-      glyph repeatDots 59.346,1.976
+      glyph augmentationDot 59.346,-0.500
+      glyph augmentationDot 59.346,0.500
       line  60.159,-2.000 -> 60.159,2.000 t=0.077
       line  60.895,-2.000 -> 60.895,2.000 t=0.516
     note@-1 x=66.475 w=5.474
@@ -395,7 +408,8 @@ system 3 width=90.323 originY=48.893
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     bar x=6.974 w=2.335
-      glyph repeatDots 8.910,1.976
+      glyph augmentationDot 8.910,-0.500
+      glyph augmentationDot 8.910,0.500
       line  7.749,-2.000 -> 7.749,2.000 t=0.516
       line  8.561,-2.000 -> 8.561,2.000 t=0.077
     note@-6 x=10.329 w=5.474
@@ -426,7 +440,8 @@ system 3 width=90.323 originY=48.893
       glyph noteheadBlack 77.227,-0.500
       line  77.291,-0.333 -> 77.291,3.000 t=0.129
     bar x=86.581 w=2.013
-      glyph repeatDots 86.581,1.976
+      glyph augmentationDot 86.581,-0.500
+      glyph augmentationDot 86.581,0.500
       line  87.394,-2.000 -> 87.394,2.000 t=0.077
       line  88.129,-2.000 -> 88.129,2.000 t=0.516
 system 4 width=90.323 originY=57.806
@@ -447,7 +462,8 @@ system 4 width=90.323 originY=57.806
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     bar x=6.974 w=2.335
-      glyph repeatDots 8.910,1.976
+      glyph augmentationDot 8.910,-0.500
+      glyph augmentationDot 8.910,0.500
       line  7.749,-2.000 -> 7.749,2.000 t=0.516
       line  8.561,-2.000 -> 8.561,2.000 t=0.077
     note@1 x=10.329 w=5.474
@@ -478,7 +494,8 @@ system 4 width=90.323 originY=57.806
       line  53.390,3.000 -> 55.172,3.000 t=0.090
       line  54.849,2.833 -> 54.849,-0.500 t=0.129
     bar x=59.293 w=2.013
-      glyph repeatDots 59.293,1.976
+      glyph augmentationDot 59.293,-0.500
+      glyph augmentationDot 59.293,0.500
       line  60.105,-2.000 -> 60.105,2.000 t=0.077
       line  60.841,-2.000 -> 60.841,2.000 t=0.516
     note@-6 x=64.776 w=5.474
@@ -528,7 +545,8 @@ system 0 width=90.323 originY=0.000
     rest x=25.783 w=7.742
       glyph restHalf 25.783,0.000
     bar x=31.614 w=2.335
-      glyph repeatDots 33.549,1.976
+      glyph augmentationDot 33.549,-0.500
+      glyph augmentationDot 33.549,0.500
       line  32.388,-2.000 -> 32.388,2.000 t=0.516
       line  33.201,-2.000 -> 33.201,2.000 t=0.077
     rest x=34.969 w=5.474
@@ -538,14 +556,17 @@ system 0 width=90.323 originY=0.000
     rest x=42.007 w=2.737
       glyph rest16th 42.007,0.000
     bar x=44.068 w=2.013
-      glyph repeatDots 44.068,1.976
+      glyph augmentationDot 44.068,-0.500
+      glyph augmentationDot 44.068,0.500
       line  44.881,-2.000 -> 44.881,2.000 t=0.077
       line  45.616,-2.000 -> 45.616,2.000 t=0.516
     rest x=47.165 w=9.482
       glyph restWhole 47.165,-1.000
     bar x=54.306 w=3.110
-      glyph repeatDots 54.306,1.976
-      glyph repeatDots 57.015,1.976
+      glyph augmentationDot 54.306,-0.500
+      glyph augmentationDot 54.306,0.500
+      glyph augmentationDot 57.015,-0.500
+      glyph augmentationDot 57.015,0.500
       line  55.119,-2.000 -> 55.119,2.000 t=0.077
       line  55.854,-2.000 -> 55.854,2.000 t=0.516
       line  56.667,-2.000 -> 56.667,2.000 t=0.077

@@ -796,6 +796,11 @@ export interface PlacedGlyph {
   /** Which grace of the group this head belongs to — its ledgers follow it. */
   readonly graceIndex?: number
   /**
+   * How many of the element's LINES precede this glyph. Set on a barline's repeat dots,
+   * whose column sits before the rules on a repeat END and after them on a repeat START.
+   */
+  readonly afterLine?: number
+  /**
    * **A MULTI-CHARACTER SYMBOL IS ONE GROUP.** `printSymbol` branches on
    * `symbol.length > 1 && symbol.indexOf(".") < 0` and opens
    * `<g data-name="{name}">` round one path PER CHARACTER, none of which is named
@@ -3378,6 +3383,33 @@ function layoutBar(x: number, kind: Barline, strict = true): LayoutElement {
     // ~1.98 spaces ABOVE its origin — so placing it at step 0 puts the dots up near the
     // top line. Centring from the bounding box rather than hardcoding the offset means a
     // different SMuFL font with a different anchor still lands correctly.
+    if (strict) {
+      /**
+       * **abcjs DRAWS TWO `dots.dot`, NOT ONE `repeatDots`** —
+       * `abselem.addRight(new RelativeElement("dots.dot", dx, 1, 7))` and the same at pitch
+       * 5 (`abstract-engraver.js:986-987`). Its own contract for `|:` reads
+       * `bar, bar, dots.dot, dots.dot`.
+       *
+       * AND `repeatDots` IS NOT IN ABCJS'S TABLE AT ALL, so `outline()` fell through to
+       * BRAVURA'S and the emitter wrote `scale(7.75)` on it — a Bravura figure reachable in
+       * strict, which is the class the 2026-08-05 audit closed and this one had slipped
+       * past because no gate reads a barline's glyphs.
+       *
+       * The pitches are abcjs's: 7 and 5, one space either side of the middle line, which
+       * are our steps +1 and -1.
+       */
+      // **WHICH SIDE OF THE RULES THIS DOT COLUMN IS ON.** abcjs's contract shows a repeat
+      // END as `dots.dot, dots.dot, bar, bar` and a repeat START as `bar, bar, dots.dot,
+      // dots.dot` — the engraver adds the leading column before the rules and the trailing
+      // one after, so the two channels INTERLEAVE. `afterLine` is how many rules precede
+      // this glyph, which is all the emitter needs to merge them.
+      glyphs.push({ name: 'augmentationDot', x: cursor, y: stepToY(1), afterLine: lines.length })
+      glyphs.push({ name: 'augmentationDot', x: cursor, y: stepToY(-1), afterLine: lines.length })
+      return
+    }
+    // Bravura's own combined glyph, anchored at the BOTTOM staff line rather than the
+    // middle — its ink sits ~1.98 spaces ABOVE its origin, so it is centred from the
+    // bounding box rather than by a hardcoded offset.
     const glyph = glyphsFor(strict).get('repeatDots') ?? GLYPHS.repeatDots
     glyphs.push({ name: 'repeatDots', x: cursor, y: -(glyph.y + glyph.height / 2) })
   }
