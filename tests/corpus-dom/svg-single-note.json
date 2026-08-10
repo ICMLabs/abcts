@@ -1,0 +1,31 @@
+{
+ "name": "svg-single-note",
+ "abc": "X:1\nL:1/4\n%%staffwidth 5\n%%musicspace 0\nK:C clef=none\nV:all stem=up\nB4\n",
+ "contract": [
+  {
+   "depth": 0,
+   "class": "abcjs-staff-wrapper abcjs-l0",
+   "name": null
+  },
+  {
+   "depth": 1,
+   "class": "abcjs-staff abcjs-l0 abcjs-v0",
+   "name": null
+  },
+  {
+   "depth": 2,
+   "class": "abcjs-top-line",
+   "name": null
+  },
+  {
+   "depth": 1,
+   "class": "abcjs-note abcjs-d1 abcjs-p6 abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0 abcjs-n0",
+   "name": "note"
+  },
+  {
+   "depth": 2,
+   "class": "abcjs-notehead",
+   "name": "B"
+  }
+ ]
+}

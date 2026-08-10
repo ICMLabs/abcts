@@ -1,0 +1,151 @@
+{
+ "name": "dom-clef-change",
+ "abc": "X:1\nL:1/4\nM:4/4\nK:C\nCDEF|[K:bass]C,4|\n",
+ "contract": [
+  {
+   "depth": 0,
+   "class": "abcjs-staff-wrapper abcjs-l0",
+   "name": null
+  },
+  {
+   "depth": 1,
+   "class": "abcjs-staff abcjs-l0 abcjs-v0",
+   "name": null
+  },
+  {
+   "depth": 2,
+   "class": "abcjs-top-line",
+   "name": null
+  },
+  {
+   "depth": 1,
+   "class": "abcjs-staff-extra abcjs-clef abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0",
+   "name": "staff-extra clef"
+  },
+  {
+   "depth": 2,
+   "class": null,
+   "name": "clefs.G"
+  },
+  {
+   "depth": 1,
+   "class": "abcjs-staff-extra abcjs-time-signature abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0",
+   "name": "staff-extra time-signature"
+  },
+  {
+   "depth": 2,
+   "class": null,
+   "name": "4"
+  },
+  {
+   "depth": 2,
+   "class": null,
+   "name": "4"
+  },
+  {
+   "depth": 1,
+   "class": "abcjs-note abcjs-d0-25 abcjs-p0 abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0 abcjs-n0",
+   "name": "note"
+  },
+  {
+   "depth": 2,
+   "class": "abcjs-notehead",
+   "name": "C"
+  },
+  {
+   "depth": 2,
+   "class": "abcjs-stem",
+   "name": "stem"
+  },
+  {
+   "depth": 2,
+   "class": "abcjs-ledger",
+   "name": "ledger"
+  },
+  {
+   "depth": 1,
+   "class": "abcjs-note abcjs-d0-25 abcjs-p1 abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0 abcjs-n1",
+   "name": "note"
+  },
+  {
+   "depth": 2,
+   "class": "abcjs-notehead",
+   "name": "D"
+  },
+  {
+   "depth": 2,
+   "class": "abcjs-stem",
+   "name": "stem"
+  },
+  {
+   "depth": 1,
+   "class": "abcjs-note abcjs-d0-25 abcjs-p2 abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0 abcjs-n2",
+   "name": "note"
+  },
+  {
+   "depth": 2,
+   "class": "abcjs-notehead",
+   "name": "E"
+  },
+  {
+   "depth": 2,
+   "class": "abcjs-stem",
+   "name": "stem"
+  },
+  {
+   "depth": 1,
+   "class": "abcjs-note abcjs-d0-25 abcjs-p3 abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0 abcjs-n3",
+   "name": "note"
+  },
+  {
+   "depth": 2,
+   "class": "abcjs-notehead",
+   "name": "F"
+  },
+  {
+   "depth": 2,
+   "class": "abcjs-stem",
+   "name": "stem"
+  },
+  {
+   "depth": 1,
+   "class": "abcjs-bar abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0",
+   "name": "bar"
+  },
+  {
+   "depth": 2,
+   "class": null,
+   "name": "bar"
+  },
+  {
+   "depth": 1,
+   "class": "abcjs-staff-extra abcjs-clef abcjs-l0 abcjs-m1 abcjs-mm1 abcjs-v0",
+   "name": "staff-extra clef"
+  },
+  {
+   "depth": 2,
+   "class": null,
+   "name": "clefs.F"
+  },
+  {
+   "depth": 1,
+   "class": "abcjs-note abcjs-d1 abcjs-p-7 abcjs-l0 abcjs-m1 abcjs-mm1 abcjs-v0 abcjs-n0",
+   "name": "note"
+  },
+  {
+   "depth": 2,
+   "class": "abcjs-notehead",
+   "name": "C,"
+  },
+  {
+   "depth": 1,
+   "class": "abcjs-bar abcjs-l0 abcjs-m1 abcjs-mm1 abcjs-v0",
+   "name": "bar"
+  },
+  {
+   "depth": 2,
+   "class": null,
+   "name": "bar"
+  }
+ ]
+}

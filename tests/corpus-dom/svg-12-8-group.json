@@ -1,0 +1,46 @@
+{
+ "name": "svg-12-8-group",
+ "abc": "X:1\nL:1/4\nM:12/8\nK:C clef=none\nA4\n",
+ "contract": [
+  {
+   "depth": 0,
+   "class": "abcjs-staff-wrapper abcjs-l0",
+   "name": null
+  },
+  {
+   "depth": 1,
+   "class": "abcjs-staff abcjs-l0 abcjs-v0",
+   "name": null
+  },
+  {
+   "depth": 2,
+   "class": "abcjs-top-line",
+   "name": null
+  },
+  {
+   "depth": 1,
+   "class": "abcjs-staff-extra abcjs-time-signature abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0",
+   "name": "staff-extra time-signature"
+  },
+  {
+   "depth": 2,
+   "class": null,
+   "name": "12"
+  },
+  {
+   "depth": 2,
+   "class": null,
+   "name": "8"
+  },
+  {
+   "depth": 1,
+   "class": "abcjs-note abcjs-d1 abcjs-p5 abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0 abcjs-n0",
+   "name": "note"
+  },
+  {
+   "depth": 2,
+   "class": "abcjs-notehead",
+   "name": "A"
+  }
+ ]
+}
