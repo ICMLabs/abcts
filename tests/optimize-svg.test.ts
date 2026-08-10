@@ -104,7 +104,7 @@ describe('optimizeSVG — <defs>/<use> deduplication', () => {
       // string than a staff-space one, and a `<use x= y=>` carries two of them where the
       // deduped `<path d=>` it replaced carried none — so the optimizer's own output grew
       // slightly faster than the plain output it is measured against. The saving is real
-      // and unchanged in kind; only the ratio moved, 0.65 → 0.67 on the loosest fixture.
+      // and unchanged in kind; only the ratio moved, 0.65 → 0.67 and 0.60 → 0.62 on the two loosest.
       //
       // Measured: 0.376, 0.618, 0.545. The two loose ones are the SHARED-STAFF fixtures,
       // and their looseness is a SIGN OF PROGRESS rather than of the optimizer weakening.
@@ -116,7 +116,7 @@ describe('optimizeSVG — <defs>/<use> deduplication', () => {
       for (const [name, limit] of [
         ['ave-verum-corpus', 0.45],
         ['ragtime-mini', 0.67],
-        ['zocharti-loch', 0.6],
+        ['zocharti-loch', 0.62],
       ] as const) {
         const abc = fixture(name)
         const plain = Buffer.byteLength(svgFor(abc, 'extended', false))

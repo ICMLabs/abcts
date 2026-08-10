@@ -489,7 +489,7 @@ const glyphDefs = new Map<GlyphName, string>()
     // `scale()` on a glyph at all.
     const total = (strict ? ink.scale : (scale ?? 1) * ink.scale) * PX
     const scaled = total !== 1
-    const transform = `translate(${num(x * PX)},${num(corrected * PX)})${scaled ? ` scale(${scaleNum(total)})` : ''}`
+    const transform = `translate(${num(x * PX)},${num(corrected * PX + oy)})${scaled ? ` scale(${scaleNum(total)})` : ''}`
     if (!optimize) return `<path${attributes} transform="${transform}" d="${ink.path}"/>`
     // A `<use>` takes a transform, so a scaled glyph dedupes like any other. It used to
     // fall back to an inline path when scaled, which was fine while only a stretched
@@ -497,7 +497,7 @@ const glyphDefs = new Map<GlyphName, string>()
     // since those are in ITS pixels and every one of them carries a scale.
     return scaled
       ? `<use${attributes} href="#${defId(name)}" transform="${transform}"/>`
-      : `<use${attributes} href="#${defId(name)}" x="${num(x * PX)}" y="${num(corrected * PX)}"/>`
+      : `<use${attributes} href="#${defId(name)}" x="${num(x * PX)}" y="${num(corrected * PX + oy)}"/>`
   }
 
   /**
@@ -529,11 +529,27 @@ const glyphDefs = new Map<GlyphName, string>()
    */
   const PX = abcjs ? scale : 1
   const OY = abcjs ? -doc.top : 0
+  /**
+   * **abcjs WRITES NO `transform` ANYWHERE** — its line group is a bare `<g>` and every
+   * coordinate under it is already absolute. Ours nested a system translate inside a staff
+   * translate, which is two more differences per line than the numbers themselves.
+   *
+   * `oy` is that nesting, flattened: the running origin in OUTPUT units, folded into every
+   * coordinate on its way out. Zero in core mode, where the groups stay.
+   */
+  let oy = 0
   /** One placed line in output units. */
   const TL = (l: PlacedLine): PlacedLine =>
     PX === 1
       ? l
-      : { ...l, x1: l.x1 * PX, x2: l.x2 * PX, y1: l.y1 * PX, y2: l.y2 * PX, thickness: l.thickness * PX }
+      : {
+          ...l,
+          x1: l.x1 * PX,
+          x2: l.x2 * PX,
+          y1: l.y1 * PX + oy,
+          y2: l.y2 * PX + oy,
+          thickness: l.thickness * PX,
+        }
   const TC = (c: PlacedCurve): PlacedCurve =>
     PX === 1
       ? c
@@ -541,8 +557,8 @@ const glyphDefs = new Map<GlyphName, string>()
           ...c,
           x1: c.x1 * PX,
           x2: c.x2 * PX,
-          y1: c.y1 * PX,
-          y2: c.y2 * PX,
+          y1: c.y1 * PX + oy,
+          y2: c.y2 * PX + oy,
           bulge: c.bulge * PX,
           midThickness: c.midThickness * PX,
         }
@@ -552,6 +568,8 @@ const glyphDefs = new Map<GlyphName, string>()
   const classes = new Classes(options.addClasses === true)
 
   for (const system of doc.systems) {
+    // The system's own origin, flattened into every coordinate under it.
+    if (abcjs) oy = (system.originY + OY) * PX
     // `abcjs-staff-wrapper abcjs-l{n}` wraps a whole music LINE (`draw/draw.js:40-42`),
     // and it is the outermost thing in abcjs's output — our very first contract row
     // differed on depth because it was missing.
@@ -561,7 +579,7 @@ const glyphDefs = new Map<GlyphName, string>()
     // per voice, because a staff step means a different pitch under a different clef.
     parts.push(
       `<g${abcjs ? attrIfAny(classes.generate('staff-wrapper')) : ` class="${prefix}-system"`}` +
-        ` transform="translate(0,${num((system.originY + OY) * PX)})">`,
+        `${abcjs ? '' : ` transform="translate(0,${num((system.originY + OY) * PX)})"`}>`,
     )
     // Braces and brackets first: they belong to the SYSTEM, joining staves rather than
     // sitting on one, and they are drawn at the left edge outside the music area.
@@ -589,14 +607,22 @@ const glyphDefs = new Map<GlyphName, string>()
       parts.push(
         scale === ''
           ? glyphMarkup(g.name, g.x, g.y, undefined, attr)
-          : `<path${attr} transform="translate(${num(g.x * PX)},${num(g.y * PX)})${scale}" d="${outline(g.name).path}"/>`,
+          : `<path${attr} transform="translate(${num(g.x * PX)},${num(g.y * PX + oy)})${scale}" d="${outline(g.name).path}"/>`,
       )
     }
     for (const staff of system.staves) {
+      // …and the staff's, on top of it. Reset per staff, since `staff.originY` is relative.
+      if (abcjs) oy = (system.originY + OY) * PX + staff.originY * PX
       let staffGroup = ''
-      parts.push(
-        `<g${abcjs ? '' : ` class="${prefix}-staff-group"`} transform="translate(0,${num(staff.originY * PX)})">`,
-      )
+      // NO STAFF GROUP IN abcjs MODE. abcjs has one bare `<g>` per LINE and nothing
+      // between it and the drawing; ours nested a staff group inside it, which is a `<g>`
+      // abcjs never writes. `add_classes` puts back the `abcjs-staff` group it DOES write,
+      // and only then.
+      if (!abcjs) {
+        parts.push(
+          `<g class="${prefix}-staff-group" transform="translate(0,${num(staff.originY * PX)})">`,
+        )
+      }
       // `incrVoice()` then `newMeasure()` then the staff lines — abcjs's own order
       // (`draw/staff-group.js:80-91`), which is why the staff's class carries `l` and `v`
       // but no `m`/`mm`: the measure counter is null across that call.
@@ -645,7 +671,7 @@ const glyphDefs = new Map<GlyphName, string>()
       for (const t of staff.voltaTexts) {
         parts.push(
           `<text${abcjs ? ' class="abcjs-ending"' : ` class="${prefix}-volta"`} x="${num(t.x * PX)}" ` +
-            `y="${num(t.y * PX)}" font-family="serif" font-size="${num(t.size * PX)}">${escapeText(t.text)}</text>`,
+            `y="${num(t.y * PX + oy)}" font-family="serif" font-size="${num(t.size * PX)}">${escapeText(t.text)}</text>`,
         )
       }
       // ABCJS CALLS IT A TRIPLET, whatever the number — `classes.generate('triplet ' +
@@ -697,7 +723,7 @@ const glyphDefs = new Map<GlyphName, string>()
         parts.push(
           `<text${abcjs ? ` data-name="${escapeText(t.text)}"` : ` class="${prefix}-tuplet"`}` +
             `${anchor} x="${num(t.x * PX)}" ` +
-            `y="${num(t.y * PX)}" font-family="serif" font-size="${num(t.size * PX)}"${style}>${escapeText(t.text)}</text>`,
+            `y="${num(t.y * PX + oy)}" font-family="serif" font-size="${num(t.size * PX)}"${style}>${escapeText(t.text)}</text>`,
         )
       }
       for (const curve of staff.curves) {
@@ -753,7 +779,7 @@ const glyphDefs = new Map<GlyphName, string>()
           const style =
             (t.bold ? ' font-weight="bold"' : '') + (t.italic ? ' font-style="italic"' : '')
           parts.push(
-            `<text${attrs(el.type, 'text')} x="${num(t.x * PX)}" y="${num(t.y * PX)}" ` +
+            `<text${attrs(el.type, 'text')} x="${num(t.x * PX)}" y="${num(t.y * PX + oy)}" ` +
               `font-family="serif" font-size="${num(t.size * PX)}"${style}` +
               // Only the top-text block sets one; the music's own text is all left-aligned.
               `${t.anchor === undefined || t.anchor === 'start' ? '' : ` text-anchor="${t.anchor}"`}` +
@@ -762,7 +788,7 @@ const glyphDefs = new Map<GlyphName, string>()
         }
         if (abcjs) parts.push('</g>')
       })
-      parts.push('</g>')
+      if (!abcjs) parts.push('</g>')
     }
     parts.push('</g>')
   }
