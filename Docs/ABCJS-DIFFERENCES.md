@@ -38,48 +38,55 @@ different order moves nothing. A byte string has no such latitude.
 
 ### The blockers, measured rather than estimated
 
-**The root element is byte-identical on all 171 fixtures, and the coordinate system is now
-abcjs's** — absolute pixels, no `viewBox`, no `transform` anywhere, one bare `<g>` per line.
-The whole suite is green across that change (1127/1127), which is the proof it is right:
-every pixel gate measures pixels, and they see the same pixels they saw before.
+**The document's FRAME is abcjs's now** — the root element attribute for attribute, the
+page width, the group nesting, the drawing ORDER, and every glyph in absolute coordinates
+with abcjs's own name on it. **Best case 5186 bytes in, median 174**, from 10 when the
+table opened.
 
-What is left, in the order the byte table hits it. **Best case 651 bytes in, median 162**,
-from 10 when the table opened:
+What is left, in the order the byte table hits it:
 
-1. **THE TITLE IS CENTRED ON THE WRONG WIDTH — a real defect.** abcjs puts it at the
-   PAPER's centre, x=350 on a 700px page, and the rule is already written down in the model:
-   "`%%center` centres on the STAFF width — 335, not the paper's 350 the title uses". We
-   emit x=123.08 for a short titled tune, which is neither — the block is centred on the
-   system's own width. **No pixel gate compares text POSITION**, because those pair
-   noteheads, so this has been wrong on every titled tune.
-
-   (Its sibling, `font-weight="bold"` on the title, is FIXED: abcjs's default `titlefont`
-   is Times New Roman 20 weight `normal` and we drew every title bold. Invisible to every
-   gate — the pixel tables compare positions and `calcWidth`'s tables are keyed by font
-   SIZE alone, so a bold title and a normal one measure the same and land in the same
-   place. Fourth axis to turn out unrepresented, after the line weights, the decoration x
-   and the DOM contract.)
-2. **The two-decimal rounding is not universal.** abcjs rounds path coordinates
-   (`roundNumber`) and writes the root's `width`/`height` raw; a `<text>`'s `x`/`y` and a
-   `<tspan>`'s follow their own rule, which is unmeasured.
-3. **`height="292.14200000000005"` against abcjs's `292.142`** — floating-point noise from
-   our multiply. NOT a formatting rule: abcjs writes `1081.3299999999997` on another
-   fixture, so matching means matching the arithmetic ORDER, which is the emission-quantum
-   problem the geometry arc already knows by name.
-4. **Curves, beams and glyph paths** — a tie is `<path class="abcjs-tie" d="M60.83225,…">`
-   here and a differently-formatted `d` there; a beam is still a `<polygon>`.
-5. **Per-glyph `data-name`** — `clefs.G`, `accidentals.flat`, `dots.dot`, `rests.half`, a
-   bare digit for a time-signature figure, and the WRITTEN NOTE NAME (`C`, `c`, `C,`) on a
-   notehead. Tracked separately by `tests/dom-contract.test.ts`.
+1. **THE ROOT'S `height`, on 109 of the 171 fixtures.** One or two ULPs, in both
+   directions — `227.68050000000002` against `227.6805`, `176.0775` against
+   `176.07750000000001`. abcjs accumulates `renderer.y` in PIXELS and closes with
+   `y + padding.bottom`; we accumulate the same quantity in staff spaces and multiply by
+   7.75 at the end. Rewriting only the last step was measured and moved 69 exact rows to
+   70, so the noise is spread through the whole accumulation. It is the vertical half of
+   the emission-quantum problem the horizontal arc already knows by name, and **109 rows
+   are unmeasurable behind it**.
+2. **The order and form of an element group's children.** A FLAG precedes its notehead on
+   a single note and sits BETWEEN the heads of a chord, so it is the engraver's add order
+   rather than a rule about flags. A STEM is `printStem`'s form — no separators between
+   path commands, no `stroke`/`fill` inside a group, `class` before `data-name` — where a
+   ledger and a staff line are `printLine`'s, with spaces and `data-name` before `class`.
+   And a stem's two x values are the head's EDGES, in an order that carries which SIDE the
+   stem is on.
+3. **Glyph coordinate noise** — `M 54.78099999999999` against `M 54.781000000000006`, the
+   same family as the height.
+4. **A notehead's `data-name` is the WRITTEN NOTE** — `C`, `c`, `C,`, with its accidental
+   prefixed and rewritten by transposition. A parser value the layout does not carry, so
+   it is left UNNAMED rather than wrongly named. Tracked by `tests/dom-contract.test.ts`,
+   which is at 208 of 694 rows.
+5. **A multi-digit time signature is ONE group** — `<g data-name="12">` with unnamed
+   per-character paths, where a single digit is a bare `data-name="3"` path.
+6. **Curves and beams** — a tie is `drawArc`'s two-cubic closed path with
+   `data-name="tie"` and a class built from its anchors' measure/note counters; a beam is
+   `drawBeam`'s single concatenated path. Ours are a classed `<path>` and a `<polygon>`.
 
 ### Closed on the way here
 
-Absolute pixels and no `viewBox`; no `transform` anywhere; the root element attribute for
-attribute including the title in `aria-label` and `<title>`; the page being the staff width
-plus abcjs's 15px margins; **staff lines TOP-DOWN**; every rule a CLOSED PATH with abcjs's
-attribute order and an explicit close tag; abcjs's two-decimal path rounding; the top text
-first and outside the line group; the staff-lines group and abcjs's element-group
-attributes; and abcjs's nine-attribute `<text>` with its `<tspan>`.
+Absolute pixels and no `viewBox`; no `transform` anywhere, on a group OR on a glyph; the
+root element attribute for attribute; **the page being `maxwidth + padding`**, which is the
+requested staff width raised by any line too stiff to compress and replaced outright by a
+`%%staffwidth`; staff lines TOP-DOWN; every rule a closed path with abcjs's attribute order
+and an explicit close tag; abcjs's two-decimal path rounding; **the meta-top group, which
+is abcjs's outer `<g>` and is DELETED when empty**; the staff-lines group; abcjs's
+nine-attribute `<text>` with its `<tspan>`; **the top-text block placed absolutely on the
+PAPER** — title at `paddingLeft + width/2`, composer at `paddingLeft + width`, `%%center`
+at `width/2` with no padding at all — and not bold; **`theReverser`**, which moves a
+trailing article to the front of a title; **every glyph's coordinates baked into its first
+`M`** with abcjs's own raw formatting, its `data-name`, and no separator between path
+commands; **abcjs's drawing ORDER** — music, then beams, then everything else; and
+**`data-index` counting SELECTABLES**, which admits a note and a rest and nothing else.
 
 **A CORRECTION WORTH KEEPING.** A "~31px vertical origin difference, a real defect no pixel
 gate could see" was recorded here and was wrong: the heights matched to the byte and our top
@@ -87,6 +94,12 @@ line was already at 36.642. abcjs writes its staff lines top-down and we wrote t
 bottom-up, so comparing the FIRST path of each engine compared different lines. Reading two
 different rules and calling the difference an origin is exactly the mistake this file exists
 to prevent — measure the output, and be sure it is the same thing being measured.
+
+**AND A SECOND ONE.** The title's centre was recorded as a defect whose one-line fix "the
+arithmetic said must work" changed nothing at all. The arithmetic was right and the fix was
+in the wrong place: the value it computed was overwritten four hundred lines later by a
+left-edge formula applied to a middle-anchored row. **When a change to an input moves
+nothing, the output is not reading that input.**
 
 **None of these is a ruled divergence.** `tests/svg-bytes.test.ts`'s `DIVERGENT` list is
 empty and stays empty until something is written up HERE with its evidence — a slug in that

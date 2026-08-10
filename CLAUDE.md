@@ -322,9 +322,50 @@ checkpoint and hand off as you go so no context is lost.
 > `npx tsc --noEmit` BEFORE `git commit`, not alongside it: a duplicate object key shipped
 > that day because vitest passed and the typecheck came back after the push.
 
-Read `Docs/CHECKPOINT-2026-08-10.md` first — the state, the SVG byte arc, and **§4, a real
-defect that is NOT fixed and whose failed attempt is written out with the measurement so it
-is not repeated**. `Docs/HANDOFF-2026-08-10.md` has the session prompt.
+> 🖼️ **THE SVG'S FRAME IS ABCJS'S NOW, AND THE HEIGHT IS BLOCKING 109 OF 171 ROWS**
+> (2026-08-10b). Nine landings, every one a read of a named abcjs function: `staffwidth` is
+> the MUSIC area so the page is it plus abcjs's 15px margins (42 rows drew `L 655` where
+> abcjs writes `L 685`, and **no geometry gate could see it — they all render with NO
+> staffwidth and take the default, which was already right**); the outer `<g>` is not
+> abcjs's at all but its `abcjs-meta-top`, **which is DELETED when empty**
+> (`svg.js:364-372`); the page is `maxwidth + padding` and not a host constant; a trailing
+> article moves to the front of a title (`theReverser`); **a glyph carries ABSOLUTE
+> coordinates baked into its first `M` and its own `data-name`, with no separator between
+> path commands** (`creation/glyphs.js:132-142` — raw JS arithmetic AND raw JS formatting,
+> so `num()` must not touch it); **abcjs draws the music FIRST, then the beams, then
+> everything else** (`draw/voice.js:25-90`, 48 rows, and **document order is not a
+> coordinate so no gate in this repo could express it**); and **`data-index` counts
+> SELECTABLES**, which with no `selectTypes` admits `el_type 'note'` alone — so a note and
+> a rest carry it and a barline, a clef and a key signature carry NEITHER attribute.
+>
+> **AND §4 OF THE PREVIOUS CHECKPOINT IS CLOSED.** abcjs places the whole top-text block
+> absolutely on the PAPER — title at `paddingLeft + width/2` (350 on a 700px page),
+> composer at `paddingLeft + width`, `%%center` at `width/2` with NO padding (335). We
+> centred it on its own width and then OVERWROTE that four hundred lines later with the
+> finished system's `(width - textWidth) / 2`, a LEFT-EDGE formula on a `middle`-anchored
+> row. The recorded failed attempt changed the WIDTH handed to `topTextBlock` and moved
+> nothing, because the value it computed was thrown away. **WHEN A CHANGE TO AN INPUT MOVES
+> NOTHING, THE OUTPUT IS NOT READING THAT INPUT.**
+>
+> **AND TWO GATES WERE READING THE MARKUP THEY WERE MEASURING.** `glyph-ycorr` filtered
+> glyphs as "a `<path>` with no `data-name`" and `compat`'s density test read
+> `transform="translate(` — both true only of OUR output, and both broke the moment the
+> markup got CLOSER to abcjs's. Same shape as the `viewBox` removal that took 196 tests
+> red. **A gate built on our own markup fails when we succeed**; the failure is the signal.
+>
+> **WHAT IS LEFT IS ONE THING FIRST**: `svg-bytes` is at best 5186, median 174 — and **109
+> of the 171 fixtures first differ on the root's `height`**, one or two ULPs in either
+> direction because abcjs accumulates `renderer.y` in PIXELS and we accumulate it in staff
+> spaces and multiply at the end. Rewriting only the LAST step was measured and moved 69
+> exact rows to 70, so the noise is spread through the whole accumulation. Masking `height`
+> in a PROBE (recipe in `Docs/HANDOFF-2026-08-10b.md`) puts the median at 1087 and names
+> every remaining family. Nothing in `tests/` may grow that mask.
+
+Read `Docs/CHECKPOINT-2026-08-10b.md` first — the state and WHAT IS LEFT, with the height
+named as the one thing that unblocks the rest. `Docs/HANDOFF-2026-08-10b.md` has the
+session prompt and the masked-height probe.
+`Docs/CHECKPOINT-2026-08-10.md` is superseded for the state; its **§4 IS CLOSED** and
+`-08-10b.md`'s §3 records both the fix and why its earlier attempt moved nothing.
 `Docs/CHECKPOINT-2026-08-09b.md` is superseded for the state but keeps the count-in ladder,
 the chord grid, `setTiming`, the third audio surface and the decoration-x finding.
 Then read `Docs/CHECKPOINT-2026-08-09b.md` — the state, the count-in ladder, the chord
@@ -484,7 +525,9 @@ backup remote is not a licence to vendor someone else's tree into this one.
 reds; **seventeen gates and NINE ranked tables** — 0 of 72 audio cases, 0 of 38 note timings,
 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
 **1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
-**25 of 25 DOM-contract cases — 86 of 694 ROWS, from 0 — which is the OPEN ARC** — the oracle lands before the
+**25 of 25 DOM-contract cases — 208 of 694 ROWS, from 0** — and **the SVG BYTE TABLE is
+THE OPEN ARC**, 171 of 171 at best 5186 / median 174, with 109 of those rows blocked behind
+the root's `height`. The oracle lands before the
 implementation here, as it did for audio and the chord grid, and a table that opens at every
 case is the same signal 54 of 54 was. **No table can name a defect, and that is the normal condition here rather than a
 milestone** — the last four findings all came from building a gate that expresses an axis
