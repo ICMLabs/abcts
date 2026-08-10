@@ -925,15 +925,35 @@ const glyphDefs = new Map<GlyphName, string>()
           if (el.type === 'bar' && !justStarted && foundNote) classes.incrMeasure()
           if (el.type === 'note' || el.type === 'rest') foundNote = true
         }
-        // **THE GLYPHS COME FIRST INSIDE AN ELEMENT GROUP.** abcjs walks
-        // `params.children` in the order the engraver added them, which for a note is
-        // notehead, stem, ledger (`draw/absolute.js:11-30`) — its own golden reads
-        // `<path data-name="C">…<path class="abcjs-stem">…<path class="abcjs-ledger">`.
-        // We wrote every rule first, so the stem opened every note group.
-        // A MULTI-CHARACTER SYMBOL IS ONE GROUP with UNNAMED children — see
-        // `PlacedGlyph.group`. Consecutive glyphs sharing the string are wrapped together.
+        /**
+         * **THE ORDER INSIDE AN ELEMENT GROUP IS THE ENGRAVER'S ADD ORDER**, and for a note
+         * that is, measured against abcjs's own goldens:
+         *
+         *     [flag, dots, accidental, head] per pitch  ->  stem  ->  ledger  ->  decoration
+         *
+         * `dots.dot, accidentals.flat, _B,, abcjs-stem, ledger` on `visual-layout-04`, and
+         * `e, abcjs-stem, scripts.trill` on `synth-flattener-11`. The per-pitch run is
+         * assembled in `layoutNote`; the split here is what puts the RULES between it and
+         * everything the engraver added after them. We wrote every glyph and then every
+         * rule, so a fermata preceded its own stem.
+         *
+         * A MULTI-CHARACTER SYMBOL IS ONE GROUP with UNNAMED children — see
+         * `PlacedGlyph.group`. Consecutive glyphs sharing the string are wrapped together.
+         */
+        const PITCH_ROLES = ['flag', 'dot', 'accidental', 'notehead']
+        // Only a NOTE or a REST has rules between its glyphs; a clef, a key and a time
+        // signature are glyphs alone, and splitting their run broke the `<g data-name="12">`
+        // a multi-character figure is wrapped in — which the PASSING ratchet caught.
+        const pitchEnd =
+          abcjs && (el.type === 'note' || el.type === 'rest')
+          ? (() => {
+              let i = 0
+              while (i < el.glyphs.length && PITCH_ROLES.includes(el.glyphs[i]?.role ?? '')) i += 1
+              return i
+            })()
+          : el.glyphs.length
         let openGlyphGroup: string | null = null
-        for (const g of el.glyphs) {
+        for (const g of el.glyphs.slice(0, pitchEnd)) {
           const group = abcjs ? (g.group ?? null) : null
           if (group !== openGlyphGroup) {
             if (openGlyphGroup !== null) parts.push('</g>')
@@ -957,7 +977,30 @@ const glyphDefs = new Map<GlyphName, string>()
           )
         }
         if (openGlyphGroup !== null) parts.push('</g>')
-        for (const line of el.lines) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+        // A STEM PRECEDES A LEDGER — `abselem.addRight(stem)` runs after every pitch and the
+        // ledgers follow it (`abstract-engraver.js:762`). Ours built the ledgers inside the
+        // head loop, so they came first.
+        const ordered = abcjs
+          ? [
+              ...el.lines.filter((l) => l.role === 'stem'),
+              ...el.lines.filter((l) => l.role !== 'stem'),
+            ]
+          : el.lines
+        for (const line of ordered) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+        // …and everything the engraver added AFTER the rules — decorations, graces.
+        for (const g of el.glyphs.slice(pitchEnd)) {
+          parts.push(
+            glyphMarkup(
+              g.name,
+              g.x,
+              g.y,
+              g.scale,
+              attrs(el.type, g.role, g.chordPos),
+              g.role,
+              g.dataName,
+            ),
+          )
+        }
         // Prose is a real <text> in a generic family, unlike musical glyphs, which are
         // paths so the SVG stays self-contained. A missing serif face falls back to
         // another serif; a missing Bravura falls back to nothing legible. See layout.ts.
