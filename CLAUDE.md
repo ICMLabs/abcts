@@ -424,7 +424,38 @@ checkpoint and hand off as you go so no context is lost.
 > **A reading of a single aggregate number would have called all 109 rows one bug**; the
 > classifier probe (recipe in `Docs/HANDOFF-2026-08-10b.md`) is what split them.
 
-Read `Docs/CHECKPOINT-2026-08-10b.md` first — the state and WHAT IS LEFT, with the height
+> 🏁 **THE BYTE TABLE HAS PASSING SLUGS AND THE DOM CONTRACT IS THE INSTRUMENT**
+> (2026-08-10c). Both open tables started that day at EVERY case and neither does now:
+> `svg-bytes` **164 of 171 with SEVEN byte-exact slugs** (from 171/171 at best 651, median
+> 162 — now best 5186, median 179) and `dom-contract` **11 of 25 with FOURTEEN** (from 25/25
+> at 86 of 694 rows). Forty-one landings, and the ones whose LESSON transfers:
+>
+> - **A LINE WITH NO NOTE AND NO BARLINE IS DELETED** (`containsNotes` tests
+>   `el_type === 'note' || 'bar'`), so a tune with a header and no music draws NO STAFF —
+>   this took the first seven fixtures to byte-exact.
+> - **TWO `dots.dot`, NOT ONE BRAVURA `repeatDots`** — that glyph is not in abcjs's table,
+>   so it fell through to Bravura's with `scale(7.75)` on it. **A BRAVURA FIGURE REACHABLE
+>   IN STRICT, the class the 2026-08-05 audit closed**, surviving because no POSITIONAL gate
+>   reads a barline's glyphs. The DOM contract is what could see it.
+> - **THE COUNTERS ADVANCE AFTER THE ELEMENT IS DRAWN** (`draw/voice.js:41-46`), so a child
+>   generated inside an element sees the counters the group was named with.
+> - **THE PASSING RATCHET CAUGHT A REGRESSION THE COUNT HID**: one change took the aggregate
+>   from 22 differing cases to 15 and broke a ratcheted slug in the SAME RUN.
+> - **READ THE BASELINE DIFF'S SHAPE**: a new feature only ADDS and a reorder is a pure
+>   PERMUTATION; REMOVALS in either case mean something broke. That caught a grace-stem
+>   regression inside a grace-ledger fix.
+> - **A FIXTURE'S NAME IS NOT EVIDENCE** — `stretchlast-1`'s defect had nothing to do with
+>   `%%stretchlast`; it was a tie crossing a system break.
+>
+> **AND THE HARNESS IS BIGGER**: `ABCJS_VERSION=6.7.0 node dump-svg.js` AND
+> `dump-elements.js` from `../abcMusicKit/Tools/abcjs-debug`, both at the goldens' own
+> `{staffwidth: 670}`. **`ABCJS_VERSION` IS NOT OPTIONAL — it defaults to 6.6.3** and a run
+> without it accused the 6.7.0 branch we already port of a defect it does not have.
+> `dump-elements.js` publishes abcjs's own `staff.top`/`bottom`.
+
+Read `Docs/CHECKPOINT-2026-08-10c.md` first — the state and WHAT IS LEFT, whose item 1 is
+measured and unimplemented. `Docs/HANDOFF-2026-08-10c.md` has the session prompt and both
+probe recipes. Then read `Docs/CHECKPOINT-2026-08-10b.md` — the state and WHAT IS LEFT, with the height
 named as the one thing that unblocks the rest. `Docs/HANDOFF-2026-08-10b.md` has the
 session prompt and the masked-height probe.
 `Docs/CHECKPOINT-2026-08-10.md` is superseded for the state; its **§4 IS CLOSED** and
