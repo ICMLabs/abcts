@@ -1032,8 +1032,30 @@ const glyphDefs = new Map<GlyphName, string>()
        * abcjs's next byte opens the following note's `<g>`. No positional gate could see
        * it: document order is not a coordinate.
        */
+      // `classes.startMeasure()` runs before the beams and again before the otherchildren
+      // (`draw/voice.js:50`, `:59`), and it RESETS the counter to 0 rather than opening the
+      // next measure (`helpers/classes.js:44-46`). So every beam is `m0 mm0` whatever bar
+      // it is in — ours carried the running count.
+      if (abcjs) classes.startMeasure()
       for (const beam of staff.beams) {
-        parts.push(lineToRect(TL(beam), abcjs ? ' class="abcjs-beam"' : ` class="${prefix}-beam"`, abcjs))
+        /**
+         * **A BEAM'S CLASS IS GENERATED, NOT LITERAL** —
+         * `classes.generate('beam-elem ' + durationClass)` with `.` → `-`
+         * (`draw/beam.js:24-25`), so `add_classes` gives
+         * `abcjs-beam-elem abcjs-d0-125 abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0` and without it
+         * an EMPTY `class=""` — abcjs passes `''` and `svg.js`'s path sets the attribute
+         * anyway, because `'' !== undefined`. Ours wrote a literal `abcjs-beam`, which is a
+         * class abcjs does not have at all.
+         */
+        const beamClass = abcjs
+          ? ` class="${classes.generate(
+              `beam-elem d${Math.round((beam.durationClass ?? 0) * 1000) / 1000}`.replace(
+                /\./g,
+                '-',
+              ),
+            )}"`
+          : ` class="${prefix}-beam"`
+        parts.push(lineToRect(TL(beam), beamClass, abcjs))
       }
       for (const line of staff.voltaLines) {
         parts.push(lineToRect(TL(line), abcjs ? ' class="abcjs-ending"' : ` class="${prefix}-volta"`, abcjs))

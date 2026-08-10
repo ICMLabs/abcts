@@ -844,6 +844,8 @@ export interface PlacedLine {
   readonly thickness: number
   /** What this line is. Absent means it inherits its element's kind. */
   readonly role?: PartRole
+  /** A beam's own duration, for its class — see `layoutBeam`. */
+  readonly durationClass?: number
   /**
    * Set on a stem a BEAM retargets — see the stem case in `verticalExtent`, and the
    * EMISSION ORDER: an unbeamed stem is `addRight` right after the pitch loop and lands
@@ -5697,6 +5699,7 @@ function layoutTuplets(
  * Returns the beam rectangles. Stems are rewritten in place in `elements`.
  */
 function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): PlacedLine[] {
+  const firstDuration = elements[group[0]?.element ?? -1]?.durationClass
   const first = group[0]
   const last = group[group.length - 1]
   if (!first || !last || group.length < 2) return []
@@ -5862,6 +5865,11 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
         x2,
         y2: yAt(x2) + offset,
         thickness,
+        // A BEAM'S CLASS CARRIES ITS DURATION, and the duration is the FIRST element's —
+        // `this.duration = firstElement.duration * tripletMultiplier`, rounded to a
+        // thousandth (`elements/beam-element.js:31-36`). `classes.generate('beam-elem ' +
+        // durationClass)` then makes `abcjs-beam-elem abcjs-d0-125 …` (`draw/beam.js:24`).
+        ...(firstDuration === undefined ? {} : { durationClass: firstDuration }),
       })
       runStart = null
       runEnd = null
