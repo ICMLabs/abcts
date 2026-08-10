@@ -627,19 +627,25 @@ const glyphDefs = new Map<GlyphName, string>()
      * (`draw/draw.js`). Ours hung the block on the first staff, so a brace was written
      * ahead of the title on every grand-staff fixture.
      *
-     * OUTSIDE the line group as well as before it: abcjs writes `<g><text …>` straight
-     * under the outer group, and only then opens the line's own `<g>`.
+     * IT IS ITS OWN GROUP, AND A SIBLING OF THE LINE'S — `draw.js:12-17` opens a group
+     * (`abcjs-meta-top` under `add_classes`, bare without), runs `nonMusic`, and CLOSES it
+     * before the first staff-wrapper. Ours wrapped the whole drawing in one plain `<g>`
+     * instead and never closed it, so every fixture carried one `<g>` too many and a
+     * titled one had its text inside the wrapper rather than beside it.
+     *
+     * **AND AN EMPTY GROUP IS DELETED.** `Svg.closeGroup` removes a group whose children
+     * are none — "all the elements were invisible" (`svg.js:364-372`) — which is why a
+     * titleless tune's first child is the staff-wrapper and not an empty `<g></g>`.
      */
     if (abcjs) {
+      const block: string[] = []
       const first = system.staves[0]
       if (first !== undefined) {
         oy = (system.originY + OY) * PX + first.originY * PX
         for (const el of first.elements) {
           if (el.blockHeight === undefined) continue
           for (const t of el.texts) {
-            const style =
-              (t.bold ? ' font-weight="bold"' : '') + (t.italic ? ' font-style="italic"' : '')
-            parts.push(
+            block.push(
               abcjsText(
                 num(t.x * PX),
                 num(t.y * PX + oy),
@@ -653,9 +659,10 @@ const glyphDefs = new Map<GlyphName, string>()
               ),
             )
           }
-          for (const line of el.lines) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+          for (const line of el.lines) block.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
         }
       }
+      if (block.length > 0) parts.push(`<g>${block.join('')}</g>`)
     }
 
     // `abcjs-staff-wrapper abcjs-l{n}` wraps a whole music LINE (`draw/draw.js:40-42`),
@@ -895,7 +902,14 @@ const glyphDefs = new Map<GlyphName, string>()
     parts.push('</g>')
   }
 
-  const w = options.pageWidth ?? doc.width * scale
+  /**
+   * **THE PAGE IS `doc.pageWidth`, NOT THE INK AND NOT A HOST CONSTANT.** abcjs sizes the
+   * root from `maxwidth + padding.left + padding.right` (`draw/set-paper-size.js:2`), and
+   * `maxwidth` is the requested staff width raised by any line too stiff to compress to
+   * it. So `%%staffwidth 5` gives 44.985 and a tune too wide for 670 gives 752.491 —
+   * neither expressible by the host, which is why `options.pageWidth` is core-only now.
+   */
+  const w = abcjs ? doc.pageWidth * scale : (options.pageWidth ?? doc.width * scale)
   const h = doc.height * scale
   // The viewBox must widen with the page, or forcing the width would just scale the
   // music up to fill it instead of leaving the margin abcjs leaves.
@@ -948,11 +962,12 @@ const glyphDefs = new Map<GlyphName, string>()
         : `<defs>${[...glyphDefs]
             .map(([name, id]) => `<path id="${id}" d="${outline(name).path}"/>`)
             .join('')}</defs>`) +
-      // ONE PLAIN `<g>` WRAPS THE WHOLE DRAWING, with no attributes at all — abcjs's
-      // `fill` lives on the `<svg>` and this group carries nothing. Removing it entirely
-      // for the DOM contract was right about DEPTH (contract depth skips unclassed
-      // groups) and wrong about BYTES.
-      `<g>${parts.join('')}</g>` +
+      // NO WRAPPER ROUND THE WHOLE DRAWING. abcjs's `fill` lives on the `<svg>` and its
+      // outermost children are SIBLINGS: the meta-top group, then one staff-wrapper per
+      // line, then the meta-bottom group. The `<g>` that used to be here was read as
+      // abcjs's outer group and is in fact its `abcjs-meta-top`, which now sits with the
+      // top text that fills it.
+      parts.join('') +
       '</svg>'
     )
   }

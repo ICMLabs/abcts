@@ -120,14 +120,11 @@ export function renderAbc(target: Target, abc: string, params: AbcjsParams = {})
       ...(score.metadata.titles[0] === undefined
         ? {}
         : { title: plainText(score.metadata.titles[0]) }),
-      // Pad to the requested page width, as abcjs does, so the element occupies the
-      // same space in the page whatever the music's own width.
-      // THE PAGE IS THE STAFF PLUS abcjs'S PADDING — 15 either side on screen
-      // (`write/renderer.js:69-72`), so a 670 staffwidth is a 700px page. We padded to the
-      // staff width itself, which is 30px narrower than every golden.
-      ...(params.staffwidth === undefined
-        ? {}
-        : { pageWidth: params.staffwidth + SCREEN_PADDING * 2 }),
+      // NO `pageWidth` HERE. The page is `layout()`'s own ratchet — the staff width plus
+      // abcjs's 15px either side (`write/renderer.js:69-72`), raised by any line too stiff
+      // to compress to it and REPLACED outright by a `%%staffwidth`, which the host cannot
+      // know. Forcing it to `staffwidth + 30` wrote `width="700"` where abcjs writes 296
+      // for `%%staffwidth 200` and 752.491 for a tune that overflows.
     }),
     score,
     // abcjs's `metaText.title` is a plain string even when the field changed font

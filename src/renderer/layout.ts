@@ -1166,6 +1166,12 @@ export interface Layout {
   readonly systems: readonly LayoutSystem[]
   /** Bounding box in staff spaces; the SVG backend applies the scale. */
   readonly width: number
+  /**
+   * The PAGE, which is the requested staff width plus both margins, raised by any line
+   * too stiff to compress to it — abcjs's `maxwidth + padding` (`set-paper-size.js:2`).
+   * Never smaller than the requested width, so it is not the same as `width`.
+   */
+  readonly pageWidth: number
   readonly height: number
   /** y of the topmost content — the SVG backend translates by this. */
   readonly top: number
@@ -6620,7 +6626,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   // DIRECTIVE wins, because it is the tune saying how wide it wants to be.
   const systemWidth =
     score.staffWidth !== null
-      ? score.staffWidth / 7.75 + 2 * ENGRAVE.marginX
+      ? // ONE DIVISION, NOT TWO ADDITIONS. `w / 7.75 + 2 * (15 / 7.75)` re-multiplied by
+        // 7.75 gives 295.99999999999994 where abcjs writes 296; `(w + 30) / 7.75` gives
+        // 296 exactly, because the round trip is a single operation and its inverse.
+        (score.staffWidth + 2 * ABCJS_PX.paddingLeft) / 7.75
       : (options.systemWidth ?? ENGRAVE.systemWidth)
   // The mode picks the look; `profile` can still override it explicitly.
   const profile: RenderProfile =
@@ -8078,6 +8087,17 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   return {
     systems: shown,
     width: Math.max(0, ...shown.map((s) => s.width)),
+    /**
+     * **THE PAGE IS THE REQUESTED WIDTH OR THE WIDEST LINE, WHICHEVER IS BIGGER** — and
+     * that is NOT `width`, which is the ink's own bound and what the core viewBox is built
+     * on. abcjs sizes its root from `maxwidth + padding.left + padding.right`
+     * (`draw/set-paper-size.js:2`), where `maxwidth` is `this.width` ratcheted up by any
+     * line whose rods would not compress to it (`layout/layout.js`). A short tune at
+     * `staffwidth: 670` therefore gets a 700px page and `%%staffwidth 5` gets 44.985 —
+     * neither expressible as a host-supplied constant, and the byte table is the only gate
+     * that could see it, since a page too narrow moves no ink.
+     */
+    pageWidth: pageWidth + 2 * ENGRAVE.marginX,
     // `cursor` has one trailing gap on it, added after the last system. abcjs opens with
     // `moveY(padding.top)` before drawing anything (`draw.js:14`), so the page begins
     // ABOVE the ink — expressed as a negative viewBox top rather than by shifting every
@@ -8103,6 +8123,7 @@ export function layoutBook(scores: readonly Score[], options: LayoutOptions = {}
   const systems: LayoutSystem[] = []
   let cursor = 0
   let width = 0
+  let pageWidth = 0
 
   scores.forEach((score, index) => {
     const tune = layout(score, options)
@@ -8110,6 +8131,7 @@ export function layoutBook(scores: readonly Score[], options: LayoutOptions = {}
       systems.push({ ...system, originY: system.originY + cursor })
     }
     width = Math.max(width, tune.width)
+    pageWidth = Math.max(pageWidth, tune.pageWidth)
     cursor += tune.height + (index === scores.length - 1 ? 0 : ENGRAVE.tuneGap)
   })
 
@@ -8121,6 +8143,7 @@ export function layoutBook(scores: readonly Score[], options: LayoutOptions = {}
   return {
     systems,
     width,
+    pageWidth,
     height: cursor + ENGRAVE.marginTop + ENGRAVE.marginBottom,
     top: -ENGRAVE.marginTop,
   }
