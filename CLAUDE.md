@@ -389,6 +389,18 @@ checkpoint and hand off as you go so no context is lost.
 > not `%%stretchlast`, which the fixture's NAME had made the obvious suspect and which
 > costs nothing at all. **A FIXTURE NAME IS NOT EVIDENCE.**
 >
+> ⚖️ **AND v1 HAS ALREADY ANSWERED THE ARCHITECTURAL QUESTION** (Lance, 2026-08-10b: *"v1
+> port from js encountered similar rounding issue — so v1 may have the solution used to get
+> to byte parity to js"*). It did, and **THERE IS NO CLEVER ROUNDING: v1 NEVER INTRODUCED A
+> SECOND UNIT.** It holds abcjs's own PIXELS end to end — `Spacing.STEP = 3.875`,
+> `calcY(pitch) = staffAbsoluteY - pitch * STEP`, `roundNumber = parseFloat(x.toFixed(2))`
+> for paths and text, plain JS `String(number)` for the raw `width`/`height`. We already do
+> every one of those. What we do that v1 does not is DIVIDE BY 7.75 AND MULTIPLY BACK.
+> **AND AT THE ONE PLACE A SCALE HAD TO EXIST IT SOLVED THIS BY ASSOCIATION ORDER** —
+> `pitch * STEP * stepScale`, never `pitch * (STEP * stepScale)`, "to keep the 1.0 path
+> bit-for-bit" (`Spacing.swift:41-43`). The strict path's expression must never contain a
+> CONVERTED constant, and a mode factor goes on the OUTSIDE where 1.0 is the identity.
+>
 > ⚖️ **AND THE HEIGHT IS THREE PROBLEMS, NOT ONE.** Measured: **80 of 171 exact, 86 by pure
 > ULP noise, 2 STRUCTURALLY** — both the same 3.875px, and FOUR LADDERS rule out what it is
 > not. **A BLOCK WRITTEN INSIDE A SYSTEM IS DRAWN AFTER IT** (27.05px for a `T:`, 33.77 for

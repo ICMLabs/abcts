@@ -56,7 +56,7 @@ already closed and took SEVEN fixtures to byte-exact with it; a second closed tw
 `BottomText` a third time (§2). **The five that are left are named in WHAT IS LEFT** and
 none of them is a whole feature any more.
 
-The 82 are the `px / 7.75` round trip, and one line shows the mechanism:
+The ULP rows are the `px / 7.75` round trip, and one line shows the mechanism:
 `flagX = headX + headInk - spaces(ABCJS_PX.flagStemInset)` divides an abcjs pixel by 7.75
 and the emitter multiplies it back. **Every abcjs constant that enters as `px / 7.75` and
 leaves as `* 7.75` loses bits**, and the same is true of every glyph coordinate — so the
@@ -274,8 +274,30 @@ regression, so read the diff before touching the gate.
    STAFF width like a `%%center` — and ours agrees on both. The y does not: 217.88 against
    131 on one rung and 296.88 against 214 on another, and a TRAILING `%%sep` draws no rule
    at all. Every height on those rungs is exact, so this is ink placement only.
-2. **THE ROOT'S `height`'s ULP HALF — 86 rows.** §1. Accumulate the vertical cursor in
-   PIXELS, which is the same change that closes the glyph-coordinate tail.
+2. **THE ROOT'S `height`'s ULP HALF — 86 rows — AND `abcMusicKit` v1 HAS ALREADY ANSWERED
+   THE ARCHITECTURAL QUESTION** (Lance, 2026-08-10b: *"v1 port from js encountered similar
+   rounding issue — so v1 may have the solution used to get to byte parity to js"*). It did,
+   and the answer is that **THERE IS NO CLEVER ROUNDING — v1 NEVER INTRODUCED A SECOND
+   UNIT.** It holds abcjs's own PIXELS end to end: `Spacing.STEP = 3.875`, `calcY(pitch) =
+   staffAbsoluteY - pitch * STEP`, `roundNumber` = `parseFloat(x.toFixed(2))` for paths and
+   text, and `jsString` — plain JS `String(number)` — for the raw `width`/`height`. Every one
+   of those we already do. What we do that v1 does not is DIVIDE BY 7.75 AND MULTIPLY BACK.
+
+   **AND IT MET THIS EXACT PROBLEM AT THE ONE PLACE A SCALE HAD TO EXIST, AND SOLVED IT BY
+   ASSOCIATION ORDER.** `Spacing.swift:41-43`, verbatim from its own comment:
+
+   > `stepScale` (default 1.0) applies a per-staff `staffscale=` factor to STEP —
+   > extended-only; strict passes 1.0 → `pitch * STEP * 1.0 == pitch * STEP` exactly
+   > (byte-identical). Written `pitch * STEP * stepScale` (not `pitch * (STEP * stepScale)`)
+   > to keep the 1.0 path bit-for-bit.
+
+   That is the technique the structural pass needs in miniature: **the strict path's
+   expression must never contain a converted constant**, and where a mode factor must
+   appear it goes on the OUTSIDE where 1.0 is the identity. A working, byte-parity engine
+   settles this — it is no longer a judgement call.
+
+   Note the workspace rule still stands: read v1 for WHAT its output is and for
+   architectural facts like this one, never port an algorithm out of it.
 3. ~~**`BottomText`**~~ — **LANDED.** `creation/elements/bottom-text.js` was the whole spec
    and it is short; kept because the rules are worth having written down:
    - `W:` **unaligned words** — `spacing.words`, then the block in `wordsfont`, then one
