@@ -115,7 +115,7 @@ nothing in `tests/` may grow that mask.**
 
 ## 2. WHAT CLOSED, AND WHY EACH WAS INVISIBLE
 
-Thirty-nine landings, every one a read of a named abcjs function.
+Forty-one landings, every one a read of a named abcjs function.
 
 - **`staffwidth` is the MUSIC area; the page is it plus abcjs's 15px margins.** compat
   mapped `renderAbc(…, {staffwidth: 670})` straight onto core's `systemWidth`, which is
@@ -263,6 +263,12 @@ Thirty-nine landings, every one a read of a named abcjs function.
   (`draw/voice.js:41-46`), so a child generated INSIDE an element sees the counters the
   group itself was named with. Ours read `m1 mm1` where abcjs writes `m0 mm0` — a
   one-measure lag that would have shown on every future in-element class too.
+- **TWO `dots.dot`, NOT ONE BRAVURA `repeatDots`** — abcjs adds one at pitch 7 and one at
+  5 (`abstract-engraver.js:986-987`). `repeatDots` is not in its table at all, so ours fell
+  through to Bravura's and the emitter wrote `scale(7.75)` on it: **a Bravura figure
+  reachable in strict, the class the 2026-08-05 audit closed**, which slipped past because
+  no gate reads a barline's glyphs. **AND THE DOT COLUMNS INTERLEAVE WITH THE RULES** — a
+  repeat END is `dots, dots, bar, bar` and a repeat START is `bar, bar, dots, dots`.
 - **`data-index` is an index into the SELECTABLES, not into the children.**
   `Selectables.add` writes `{selectable: false, "data-index": elements.length}` and only
   after `canSelect`, which with no `selectTypes` admits `el_type 'note'` alone
@@ -426,11 +432,16 @@ regression, so read the diff before touching the gate.
    `M:` at all draws no meter in either engine, and `M:4/4` and `M:C` were already exact.
    What was actually broken is now fixed — an inline `[M:]` before any music on the FIRST
    line is that line's prefix, and it used to be dropped outright.)
-11. **`oneSvgPerLine` / `responsive` / `scale`** — five cases in `svg-per-line.test.js`.
-12. **`el-four-endings`** — `|1,3 … :|2,4 …`. A DECISION, not a bug fix.
-13. **The geometry half of the timing join** — `left`, `endX`, `top`, `height` on every
+11. **AN ENDING IS A GROUP, and the bracket is ONE path.** `<g class="{generated ending}"
+    fill data-name="ending">` holding a single `<path data-name="line">` whose `d` carries
+    every segment of the bracket, then its number in `repeatfont`
+    (`draw/ending.js:27-45`). Ours writes separate `class="abcjs-ending"` lines and no
+    group at all. Six rows of `dom-bars`, which is otherwise at 63 of 69.
+12. **`oneSvgPerLine` / `responsive` / `scale`** — five cases in `svg-per-line.test.js`.
+13. **`el-four-endings`** — `|1,3 … :|2,4 …`. A DECISION, not a bug fix.
+14. **The geometry half of the timing join** — `left`, `endX`, `top`, `height` on every
    `noteTimings` row. A gate to BUILD.
-14. **The structural pass** — terms in `CHECKPOINT-2026-08-08d.md`, not to be re-argued.
+15. **The structural pass** — terms in `CHECKPOINT-2026-08-08d.md`, not to be re-argued.
 
 ---
 
