@@ -234,10 +234,15 @@ checkpoint and hand off as you go so no context is lost.
 > find a note, and is it inside the group a host expects — had never been measured, and
 > `abcts/compat` promises it in as many words. `tests/dom-contract.test.ts` compares
 > `class`, `data-name` and **DEPTH** over 25 tunes and opens at 25 of 25, **which is the
-> point**. The gap is bounded and named in `CHECKPOINT-2026-08-09b` §8 — the
-> `abcjs-staff-wrapper` nesting, abcjs's per-element class scheme, and the note group's
-> child order. Read `src/write/classes.js` for the generator; the `mm` component is not
-> guessable from one tune.
+> point**. Four pieces are closed and it stands at 86 of 694 rows: the
+> `abcjs-staff-wrapper`/`abcjs-staff` nesting, **`fill` belonging on the `<svg>` itself**
+> (our extra `<g fill>` put every element one depth deeper, which no positional gate could
+> express because a group with no transform moves nothing), the class scheme ported from
+> `write/helpers/classes.js`, and `add_classes` becoming a real option — it was declared in
+> `AbcjsParams` and read NOWHERE, so the scheme was emitted unconditionally and broke the
+> `<defs>`/`<use>` saving test, which is how it was caught. **AND THE SOURCE LIED ONCE**:
+> `draw/voice.js:31` reads as though a `staff-extra` cannot open a measure, and abcjs's own
+> goldens give the clef `abcjs-m0 abcjs-mm0`. Measure the output.
 
 > 🔁 **A REPEAT'S LAST ENDING WAS PLAYED TWICE, AND ONLY A THIRD SURFACE COULD SEE IT**
 > (2026-08-09b). `currentTrackMilliseconds` is what the FLATTENER writes back onto the
@@ -474,7 +479,7 @@ backup remote is not a licence to vendor someone else's tree into this one.
 reds; **sixteen gates and EIGHT ranked tables** — 0 of 72 audio cases, 0 of 38 note timings,
 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
 **1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
-**25 of 25 DOM-contract cases, which is the OPEN ARC** — the oracle lands before the
+**25 of 25 DOM-contract cases — 86 of 694 ROWS, from 0 — which is the OPEN ARC** — the oracle lands before the
 implementation here, as it did for audio and the chord grid, and a table that opens at every
 case is the same signal 54 of 54 was. **No table can name a defect, and that is the normal condition here rather than a
 milestone** — the last four findings all came from building a gate that expresses an axis

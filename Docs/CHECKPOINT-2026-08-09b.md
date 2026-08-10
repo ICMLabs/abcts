@@ -24,7 +24,7 @@ work list for what is left.
 | pixel ranked table | 0 of 120 |
 | **timing ranked table** | **0 of 38** — NEW (13 harvested + 25 controls) |
 | **element-timing ranked table** | **1 of 13** — abcjs's own quirk, §7 |
-| **DOM-contract ranked table** | **25 of 25** — NEW, and opening at every case IS the point |
+| **DOM-contract ranked table** | **25 of 25 cases, 86 of 694 ROWS** — the open arc |
 | gates | **16** (32 test files) |
 
 **ONE NAMED ROW LEFT ON ANY TABLE**, and it is abcjs being idiosyncratic rather than us
@@ -241,21 +241,39 @@ Compared: `class`, `data-name` and **DEPTH**, so grouping is part of the contrac
 compared: the tag name — a staff line is a `<path>` in abcjs and a `<rect>` here, which the
 pixel gate already proves equivalent, and folding it in would drown the axis.
 
-**THE GAP IS BOUNDED AND NAMED**, which is what the table is for. We already emit
-`abcjs-top-line`, `abcjs-ledger`, `abcjs-stem`, `abcjs-notehead` and the `data-name` groups.
-Three things are missing:
+**THE GAP IS BOUNDED AND NAMED**, which is what the table is for, and four of its pieces
+are now closed — **86 of 694 rows, from 0**:
 
-1. **The wrappers.** abcjs nests `<g class="abcjs-staff-wrapper abcjs-l0">` →
-   `<g class="abcjs-staff abcjs-l0 abcjs-v0">` holding the five staff lines, with every
-   element group a SIBLING of that inner group rather than a child. Ours has no wrappers at
-   all, so the very first row differs on depth.
-2. **The per-element class scheme.** `abcjs-note abcjs-d0-25 abcjs-p0 abcjs-l0 abcjs-m0
-   abcjs-mm0 abcjs-v0 abcjs-n0` — kind, duration (`.` → `-`), pitch, line, measure, ?, voice
-   and note index. A staff-extra takes the same set less `d`/`p`/`n`. **Read
-   `src/write/classes.js` for the generator rather than inferring it from the goldens** —
-   the `mm` component in particular is not guessable from one tune.
-3. **The note group's child ORDER.** abcjs writes notehead, stem, ledger; we write ledger,
-   stem, notehead. Cheap, but check `glyph-ycorr`'s positional `slice(1)` before moving it.
+- **The wrappers.** `abcjs-staff-wrapper abcjs-l{n}` round a music LINE, and
+  `abcjs-staff abcjs-l{n} abcjs-v{n}` holding the staff lines with the element groups as its
+  SIBLINGS.
+- **abcjs sets `fill` on the `<svg>` ITSELF** and wraps nothing round the music. Our extra
+  `<g fill>` put every element one depth deeper — a difference no positional gate could
+  express, since a group with no transform moves nothing.
+- **The class scheme**, ported from `write/helpers/classes.js` as a stateful counter walked
+  in draw order. `mm` is the one that could not have been guessed: it sums
+  `measureTotalPerLine`, which `newMeasure()` writes at the END of a line.
+- **`add_classes` is a real option now.** It was declared in `AbcjsParams` and read nowhere;
+  emitting the scheme unconditionally bloated every SVG and broke the `<defs>`/`<use>`
+  saving test, which is how it was caught.
+
+**AND THE SOURCE LIED ONCE, WHICH THE OUTPUT SETTLED.** `draw/voice.js:31` reads as though a
+`staff-extra` cannot open a measure, so a clef should carry no `m`/`mm`; abcjs's own goldens
+give it `abcjs-m0 abcjs-mm0`. The measure counter is already 0 by the time the prefix is
+drawn, and that is what is ported.
+
+**DEPTH IS COUNTED OVER CONTRACT ELEMENTS, not raw nesting.** abcjs draws at absolute
+coordinates and we place each system and staff with a `<g transform>`, so a group that moves
+things is a level in one engine and not the other — the same class of choice as
+`<rect>`-versus-`<path>`. What contract depth preserves is what a host walks:
+`closest('.abcjs-note')`, ancestor selectors, and the grouping of parts inside an element.
+
+**WHAT IS NEXT, AND THE TABLE NAMES IT**: the per-GLYPH `data-name` at depth 2 — `clefs.G`,
+`accidentals.flat`, `dots.dot`, `rests.half`, a bare digit for a time-signature figure, and
+the **WRITTEN NOTE NAME** (`C`, `c`, `C,`) on a notehead. We emit `stem`, `ledger` and `bar`
+already; the rest is a `SMUFL_TO_ABCJS` lookup plus the written name carried onto the glyph
+the way `durationClass` and `abcjsPitches` now are. After that: `abcjs-meta-top` for the
+header block, which is `dom-title-composer`'s row 0.
 
 Three of the tunes are `visual/svg.test.js`'s own; twenty-two are controls, one feature each,
 because that file covers a clef, a time signature and a note and nothing else — and a
@@ -334,7 +352,7 @@ npx vitest run      1126 / 1126
 audio ranked        0 of 72
 timing ranked       0 of 38
 element timings     1 of 13   (`el-four-endings`, abcjs's own quirk)
-DOM contract       25 of 25   THE OPEN ARC
+DOM contract       25 of 25   (86 of 694 rows) THE OPEN ARC
 chord-grid ranked   0 of 23
 midi ranked         0 of 3     BYTE-EXACT
 harvested ranked    0 of 174
