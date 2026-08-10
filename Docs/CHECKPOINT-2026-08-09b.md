@@ -16,13 +16,13 @@ work list for what is left.
 
 | axis | standing |
 |---|---|
-| suite | **1065 of 1065. NO REDS.** |
+| suite | **1073 of 1073. NO REDS.** |
 | **audio ranked table** | **0 of 72** — was 2 of 61; the corpus GREW by 11 controls |
 | **chord-grid ranked table** | **0 of 23** — NEW, and the feature is new with it |
 | midi-file ranked table | **0 of 3 — BYTE-EXACT** |
 | harvested ranked table | 0 of 174 |
 | pixel ranked table | 0 of 120 |
-| gates | **11** (26 test files) |
+| gates | **12** (27 test files) |
 
 **THERE IS NO NAMED DEFECT LEFT ON ANY TABLE.** The engine's last one — the host drum
 options — closed first thing this session.
@@ -185,14 +185,39 @@ used to be a sentence in a handoff.
 
 ## WHAT IS LEFT
 
-### 1. `setTiming` — the audio↔geometry JOIN, still unharvested
+### 1. `setTiming` — **HARVESTED; the implementation is what is left**
 
-`timing.test.js`, 16 cases. `doTimingTest` writes `currentTrackMilliseconds` and
-`midiPitches` back onto the DRAWN elements, so a note reached twice through a repeat carries
-`[3000, 9000]`. The other helpers assert `noteTimings` rows carrying `milliseconds`,
-`millisecondsPerMeasure`, `left`, `endX`, `top`, `height`. That is the playback cursor's
-data, and where `millisecondsPerMeasure` and `getTotalTime` belong. **It is now the only
-unharvested portable oracle in abcjs's suite.**
+`tests/corpus-timing/`, 19 cases, `npm run harvest:timing`. Four of them — the crash
+regressions — are live in `tests/timing-creation.test.ts`. The other fifteen wait on the
+engine, and this is the source map:
+
+```
+abc_tune.js:584  setTiming(bpm, measuresOfDelay)
+                   getBpm(tempo)            :563   — 180 default, 120 on compound meter
+                   getBeatLength()          :96    — multiplier / meter.den
+                   getBarLength()           :146
+                   getPickupLength()
+                   startingDelay = measureLength / beatLength * measuresOfDelay
+                                     / beatsPerSecond, LESS the pickup
+                   warp = bpm / naturalBpm, and ONLY when the tune states a `Q:`
+abc_tune.js:438  setupEvents(startingDelay, timeDivider, startingBpm, warp)
+                   makeVoicesArray(), then per element `addElementToEvents`
+                   tempoLocations[measure] re-divides the clock mid-walk
+                   **its own repeat unrolling** — replays elements
+                     startingRepeatElem … endingRepeatElem IN PLACE, and
+                     `startEnding === '1'` is what skips the first ending
+                   makeSortedArray -> one row per distinct millisecond, all voices
+                   push({type: 'end', milliseconds: maxVoiceTimeMilliseconds})
+                   addUsefulCallbackInfo stamps millisecondsPerMeasure on every row
+```
+
+**The repeat unrolling is a SECOND, DIFFERENT answer to a question the sequencer already
+answers** — that is the whole reason this surface is worth building, and it is the same
+argument the MIDI file won on.
+
+**And `left` / `endX` / `top` / `height` have NO oracle here.** They are on every row and
+abcjs's own file asserts none of them, so the geometry half of the join is unmeasured even
+after this lands. Do not mistake a green timing table for a green join.
 
 ### 2. The SVG DOM contract — `visual/svg.test.js` and `svg-per-line.test.js`
 
@@ -233,7 +258,7 @@ first.
 ```
 working tree clean
 npx tsc --noEmit    clean
-npx vitest run      1065 / 1065
+npx vitest run      1073 / 1073
 audio ranked        0 of 72
 chord-grid ranked   0 of 23
 midi ranked         0 of 3     BYTE-EXACT
