@@ -1,0 +1,18 @@
+{
+ "name": "seven-eight",
+ "kind": "warp",
+ "source": "control tune, rendered by abcjs",
+ "abc": "X:1\nL:1/8\nM:7/8\nK:C\nCDEFGAB|\n",
+ "measuresOfDelay": 0,
+ "millisecondsPerMeasure": 1166.6666666666667,
+ "ms": [
+  0,
+  167,
+  333,
+  500,
+  667,
+  833,
+  1000,
+  1167
+ ]
+}

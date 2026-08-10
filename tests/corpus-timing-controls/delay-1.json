@@ -1,0 +1,19 @@
+{
+ "name": "delay-1",
+ "kind": "warp",
+ "source": "control tune, rendered by abcjs",
+ "abc": "X:1\nL:1/4\nM:4/4\nQ:1/4=60\nK:C\nCDEF|GABc|\n",
+ "measuresOfDelay": 1,
+ "millisecondsPerMeasure": 4000,
+ "ms": [
+  4000,
+  5000,
+  6000,
+  7000,
+  8000,
+  9000,
+  10000,
+  11000,
+  12000
+ ]
+}

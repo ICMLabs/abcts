@@ -1,0 +1,17 @@
+{
+ "name": "three-eight",
+ "kind": "warp",
+ "source": "control tune, rendered by abcjs",
+ "abc": "X:1\nL:1/8\nM:3/8\nK:C\nCDE|FGA|\n",
+ "measuresOfDelay": 0,
+ "millisecondsPerMeasure": 333.33333333333337,
+ "ms": [
+  0,
+  111,
+  222,
+  333,
+  444,
+  556,
+  667
+ ]
+}

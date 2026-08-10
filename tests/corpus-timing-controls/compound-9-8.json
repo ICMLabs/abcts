@@ -1,0 +1,20 @@
+{
+ "name": "compound-9-8",
+ "kind": "warp",
+ "source": "control tune, rendered by abcjs",
+ "abc": "X:1\nL:1/8\nM:9/8\nK:C\nCDEFGAcde|\n",
+ "measuresOfDelay": 0,
+ "millisecondsPerMeasure": 1500,
+ "ms": [
+  0,
+  167,
+  333,
+  500,
+  667,
+  833,
+  1000,
+  1167,
+  1333,
+  1500
+ ]
+}

@@ -1,0 +1,19 @@
+{
+ "name": "tempo-half",
+ "kind": "warp",
+ "source": "control tune, rendered by abcjs",
+ "abc": "X:1\nL:1/4\nM:4/4\nQ:1/2=60\nK:C\nCDEF|GABc|\n",
+ "measuresOfDelay": 0,
+ "millisecondsPerMeasure": 2000,
+ "ms": [
+  0,
+  500,
+  1000,
+  1500,
+  2000,
+  2500,
+  3000,
+  3500,
+  4000
+ ]
+}

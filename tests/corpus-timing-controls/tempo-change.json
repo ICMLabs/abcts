@@ -1,0 +1,23 @@
+{
+ "name": "tempo-change",
+ "kind": "warp",
+ "source": "control tune, rendered by abcjs",
+ "abc": "X:1\nL:1/4\nM:4/4\nQ:1/4=60\nK:C\nCDEF|[Q:1/4=120]GABc|CDEF|\n",
+ "measuresOfDelay": 0,
+ "millisecondsPerMeasure": 2000,
+ "ms": [
+  0,
+  1000,
+  2000,
+  3000,
+  4000,
+  4500,
+  5000,
+  5500,
+  6000,
+  6500,
+  7000,
+  7500,
+  8000
+ ]
+}

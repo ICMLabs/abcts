@@ -1,0 +1,19 @@
+{
+ "name": "tempo-eighth",
+ "kind": "warp",
+ "source": "control tune, rendered by abcjs",
+ "abc": "X:1\nL:1/4\nM:4/4\nQ:1/8=120\nK:C\nCDEF|GABc|\n",
+ "measuresOfDelay": 0,
+ "millisecondsPerMeasure": 4000,
+ "ms": [
+  0,
+  1000,
+  2000,
+  3000,
+  4000,
+  5000,
+  6000,
+  7000,
+  8000
+ ]
+}

@@ -48,7 +48,8 @@
     "harvest:audio": "node scripts/harvest-abcjs-audio.mjs",
     "gen:audio-controls": "node scripts/gen-audio-controls.mjs",
     "harvest:chord-grid": "node scripts/harvest-abcjs-chord-grid.mjs",
-    "harvest:timing": "node scripts/harvest-abcjs-timing.mjs"
+    "harvest:timing": "node scripts/harvest-abcjs-timing.mjs",
+    "gen:timing-controls": "node scripts/gen-timing-controls.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.4",
