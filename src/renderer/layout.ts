@@ -5154,6 +5154,8 @@ function curveReserves(
   anchors: readonly NoteAnchor[],
   elements: readonly LayoutElement[],
   voicePos: number,
+  /** Does a tie arrive from the system above? See the call site. */
+  tiedIntoSystem = false,
 ): { ink: { top: number; bottom: number }[]; post: { top: number; bottom: number }[] } {
   const reserves: { top: number; bottom: number }[] = []
   /**
@@ -5313,6 +5315,24 @@ function curveReserves(
     const above = curveIsAbove(a, a, voicePos)
     const y = endAt(a, above, true)
     reserves.push(above ? { top: y - three, bottom: y } : { top: y, bottom: y + three })
+  }
+  /**
+   * …AND A TIE ARRIVING FROM THE SYSTEM ABOVE RESERVES `pitch ± 4` AS INK.
+   *
+   * abcjs splits such a tie into two `TieElem`s. The one on the SECOND line has a null
+   * `anchor1` and its closing note IS on this line, so `setEndAnchor` DOES run and takes
+   * its `else` branch — `top = anchor2.pitch + 4`, `bottom = anchor2.pitch - 4`
+   * (`tie-element.js:35-38`). The one on the FIRST line has a null `anchor2`, so
+   * `setEndAnchor` never runs on it and it reserves nothing at all, which is why a tie at
+   * the END OF THE TUNE costs zero.
+   *
+   * MEASURED with `dump-elements.js`, not inferred: adding the break takes the second
+   * staff's `bottom` from -1 to -3 with its `top` unchanged — 2 pitch, 7.75px, and exactly
+   * `1 - 4` for a `D` at pitch 1.
+   */
+  const arriving = tiedIntoSystem ? anchors[0] : undefined
+  if (arriving !== undefined) {
+    ink.push({ top: centre(arriving) - four, bottom: centre(arriving) + four })
   }
   return { ink, post: reserves }
 }
@@ -7969,7 +7989,27 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       }
       const hasHairpin = systemAnchors.some((a) => a.event.decorations.some(isHairpin))
       const tuplets = layoutTuplets(systemAnchors, elements, beams)
-      const curves = curveReserves(systemAnchors, elements, voicePosOf(voiceIndex))
+      /**
+       * **A TIE THAT CROSSES A SYSTEM BREAK RESERVES ON THE RECEIVING SIDE.** abcjs splits
+       * it into TWO `TieElem`s, one per line, each with a null anchor
+       * (`tie-element.js:6-7`), and the one on the SECOND line — anchor1 null, anchor2 the
+       * first note — takes `getYBounds`'s flat 3-pitch box just as an unclosed slur does.
+       *
+       * MEASURED on a six-rung ladder through abcjs 6.7.0, one variable per rung: a
+       * mid-bar tie, a tie at the END OF THE TUNE and `%%stretchlast` all cost NOTHING, and
+       * only the break costs 7.75px. So the reserve belongs to the line that RECEIVES the
+       * tie, not to the one that opens it — which is why the end-of-tune rung is flat.
+       */
+      const all = voiceAnchors[voiceIndex] ?? []
+      const first = systemAnchors[0]
+      const previous = first === undefined ? undefined : all[all.indexOf(first) - 1]?.event
+      const tiedIntoSystem = previous?.type === 'note' && previous.tiedToNext
+      const curves = curveReserves(
+        systemAnchors,
+        elements,
+        voicePosOf(voiceIndex),
+        tiedIntoSystem,
+      )
       // Melismas resolve here for the same reason tuplets do, and must run AFTER the
       // elements are final: in strict mode this rewrites the syllable's text in place.
       const melismaLines = layoutMelismas(systemAnchors, elements, strict)
