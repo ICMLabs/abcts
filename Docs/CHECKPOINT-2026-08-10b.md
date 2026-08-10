@@ -115,7 +115,7 @@ nothing in `tests/` may grow that mask.**
 
 ## 2. WHAT CLOSED, AND WHY EACH WAS INVISIBLE
 
-Thirty landings, every one a read of a named abcjs function.
+Thirty-one landings, every one a read of a named abcjs function.
 
 - **`staffwidth` is the MUSIC area; the page is it plus abcjs's 15px margins.** compat
   mapped `renderAbc(…, {staffwidth: 670})` straight onto core's `systemWidth`, which is
@@ -233,6 +233,10 @@ Thirty landings, every one a read of a named abcjs function.
   opening the next measure (`draw/voice.js:50`, `helpers/classes.js:44-46`), so every beam is
   `m0 mm0` whatever bar it is in. **AND AN EMPTY STAFF-LINES GROUP IS DELETED** like every
   other empty group.
+- **AN INLINE `[M:]` BEFORE ANY MUSIC ON THE FIRST LINE IS THAT LINE'S PREFIX** — the same
+  lazy-line mechanism the key change takes. `meterChangeLeadsLine` hands such a change to
+  the PREVIOUS measure, and the first line has none, so it was dropped outright:
+  `[M:2/4]CD|` drew no time signature at all.
 - **`data-index` is an index into the SELECTABLES, not into the children.**
   `Selectables.add` writes `{selectable: false, "data-index": elements.length}` and only
   after `canSelect`, which with no `selectTypes` admits `el_type 'note'` alone
@@ -385,9 +389,16 @@ regression, so read the diff before touching the gate.
    and the previous note called it generated from reading a classless golden path and
    ASSUMING it was the ledger. **A path with no class is not evidence about which element it
    is.**
-9. **A DEFAULT 4/4 PREFIX METER IS DRAWN WHERE abcjs DRAWS NONE.** `svg-time-sig-list` has
-   no header `M:` and three inline ones; abcjs's first figure is the `2` of `[M:2/4]` and
-   ours is the `4` of a 4/4 we invent.
+9. **A MEASURE CAN CARRY ONLY ONE `meterChange`, AND `svg-time-sig-list` NEEDS THREE.**
+   `[M:2/4]y[M:3/4]y[M:4/4]` has no barline in it, so all three changes belong to ONE
+   measure and `Measure.meterChange` keeps the last. abcjs draws all three, each as its own
+   `staff-extra time-signature` — **a `y` SPACER does not open a measure**, so every one of
+   them is still a STARTING element. The model has to hold a list before this can be drawn.
+
+   (The suspicion that we invent a default 4/4 here was WRONG and a ladder said so: no
+   `M:` at all draws no meter in either engine, and `M:4/4` and `M:C` were already exact.
+   What was actually broken is now fixed — an inline `[M:]` before any music on the FIRST
+   line is that line's prefix, and it used to be dropped outright.)
 10. **`oneSvgPerLine` / `responsive` / `scale`** — five cases in `svg-per-line.test.js`.
 11. **`el-four-endings`** — `|1,3 … :|2,4 …`. A DECISION, not a bug fix.
 12. **The geometry half of the timing join** — `left`, `endX`, `top`, `height` on every
