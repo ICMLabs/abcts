@@ -458,11 +458,28 @@ const abcjsText = (
   anchor: string,
   name: string,
   body: string,
+  /** abcjs's own class for the row, empty unless `add_classes` asked for it. */
+  klass = '',
 ): string =>
   `<text stroke="none" font-size="${size}" font-style="${italic ? 'italic' : 'normal'}" ` +
   `font-family="${family}" font-weight="${bold ? 'bold' : 'normal'}" text-decoration="none" ` +
-  `class="" text-anchor="${anchor}" x="${x}" y="${y}"${name ? ` data-name="${name}"` : ''}>` +
+  `class="${klass}" text-anchor="${anchor}" x="${x}" y="${y}"${name ? ` data-name="${name}"` : ''}>` +
   `<tspan x="${x}">${body}</tspan></text>`
+
+/**
+ * A top-text row's `data-name` → the class abcjs puts beside it, under `add_classes`.
+ * Literal in `top-text.js` rather than run through `classes.generate`, so no line or
+ * measure suffix joins it.
+ */
+const ABCJS_TEXT_CLASSES: Readonly<Record<string, string>> = {
+  title: 'abcjs-title',
+  subtitle: 'abcjs-text abcjs-subtitle',
+  composer: 'abcjs-composer',
+  author: 'abcjs-author',
+  rhythm: 'abcjs-rhythm',
+  'part-order': 'abcjs-part-order',
+  header: 'abcjs-header abcjs-meta-top',
+}
 
 const ABCJS_STYLE =
   '.abcjs-dragging-in-progress text, .abcjs-dragging-in-progress tspan {-webkit-touch-callout: none; ' +
@@ -497,6 +514,7 @@ const glyphDefs = new Map<GlyphName, string>()
     scale: number | undefined,
     attributes: string,
     role?: string,
+    dataName?: string,
   ): string => {
     const ink = outline(name)
     /**
@@ -558,18 +576,16 @@ const glyphDefs = new Map<GlyphName, string>()
      * ours. `RelativeElement` defaults `this.name = this.c`, the symbol itself
      * (`relative-element.js:43-48`), and `printSymbol` passes it straight through.
      *
-     * ponytail: EXCEPT A NOTEHEAD, whose name abcjs overrides with the WRITTEN NOTE
-     * (`create-note-head.js:34` — `name: pitchelem.name`, which is the source letter with
-     * its accidental and octave marks, rewritten by transposition). That is a parser value
-     * this layout does not carry, so it is left unnamed until it is plumbed — a missing
-     * attribute rather than a wrong one. Tracked by `tests/dom-contract.test.ts`.
+     * EXCEPT A NOTEHEAD, whose name abcjs overrides with the WRITTEN NOTE
+     * (`create-note-head.js:34` — `name: pitchelem.name`). That arrives on the glyph as
+     * `dataName`; see `writtenNote` in `layout.ts`.
      */
     if (abcjs && !scaled) {
       const head = /^M (-?[\d.]+) (-?[\d.]+)/.exec(ink.path)
       if (head?.[1] !== undefined && head[2] !== undefined) {
         const px = Number(head[1]) + x * PX
         const py = Number(head[2]) + corrected * PX + oy
-        const named = role === 'notehead' ? '' : (SMUFL_TO_ABCJS[name] ?? name)
+        const named = dataName ?? SMUFL_TO_ABCJS[name] ?? name
         return (
           `<path${attributes}${named ? ` data-name="${named}"` : ''} ` +
           `d="M ${px} ${py}${ink.path.slice(head[0].length)}"></path>`
@@ -696,6 +712,9 @@ const glyphDefs = new Map<GlyphName, string>()
                 // This read a `text` key that was never in the table, so it was always ''.
                 t.dataName ?? '',
                 escapeText(t.text),
+                options.addClasses === true && t.dataName !== undefined
+                  ? (ABCJS_TEXT_CLASSES[t.dataName] ?? '')
+                  : '',
               ),
             )
           }
@@ -865,7 +884,15 @@ const glyphDefs = new Map<GlyphName, string>()
         for (const g of el.glyphs) {
           // The glyph path is authored at the origin, so a placement is all that is needed.
           parts.push(
-            glyphMarkup(g.name, g.x, g.y, g.scale, attrs(el.type, g.role, g.chordPos), g.role),
+            glyphMarkup(
+              g.name,
+              g.x,
+              g.y,
+              g.scale,
+              attrs(el.type, g.role, g.chordPos),
+              g.role,
+              g.dataName,
+            ),
           )
         }
         for (const line of el.lines) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))

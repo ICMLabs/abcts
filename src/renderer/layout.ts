@@ -785,6 +785,13 @@ export type PartRole =
 export interface PlacedGlyph {
   readonly name: GlyphName
   /**
+   * abcjs's `data-name` for this glyph, when it is NOT the glyph's own key. Only a
+   * notehead has one: `create-note-head.js:34` passes `name: pitchelem.name`, the WRITTEN
+   * note — its source letter with any explicit accidental prefixed and its octave marks
+   * appended, rewritten by transposition (`abc_parse_music.js:1113-1147`).
+   */
+  readonly dataName?: string
+  /**
    * Position within a CHORD, 1 = lowest pitch, counting upward. Absent on a single note.
    *
    * abcjs puts `abcjs-chord-pos-N` on each notehead of a chord and nothing on a lone one,
@@ -1182,6 +1189,38 @@ export interface Layout {
   readonly height: number
   /** y of the topmost content — the SVG backend translates by this. */
   readonly top: number
+}
+
+/**
+ * **THE WRITTEN NOTE**, as abcjs spells it — the `data-name` on a notehead.
+ *
+ * `abc_parse_music.js:1113-1147` builds `el.name` from the SOURCE: the letter as typed,
+ * `accMap[accidental]` prefixed when the note carries an EXPLICIT one, and one `,` or `'`
+ * per octave mark. An uppercase letter is octave 4, a lowercase one octave 5, so `C,` is
+ * octave 3 and `c'` is octave 6. Transposition rewrites the whole string, which is why
+ * deriving it from the (already transposed) pitch reproduces it rather than needing the
+ * source text.
+ *
+ * ponytail: the quarter-tone prefixes `_/` and `^/` are in abcjs's `accMap` and not here,
+ * because `Accidental` is a whole-semitone enum. Strict draws nothing for a three-quarter
+ * tone anyway — see `Docs/ABCJS-DIFFERENCES.md`.
+ */
+const ABCJS_ACCIDENTAL_PREFIX: Readonly<Record<number, string>> = {
+  [-2]: '__',
+  [-1]: '_',
+  0: '=',
+  1: '^',
+  2: '^^',
+}
+
+function writtenNote(pitch: Pitch): string {
+  const letter =
+    pitch.octave >= 5 ? pitch.step.toLowerCase() : pitch.step.toUpperCase()
+  const marks =
+    pitch.octave >= 5 ? "'".repeat(pitch.octave - 5) : ','.repeat(4 - pitch.octave)
+  const prefix =
+    pitch.accidental === null ? '' : (ABCJS_ACCIDENTAL_PREFIX[pitch.accidental] ?? '')
+  return prefix + letter + marks
 }
 
 /** Staff step → y, in staff spaces. Higher pitch is lower y. */
@@ -2554,7 +2593,12 @@ function layoutNoteheads(
   // Sorted ascending to match abcjs, which reports a chord's heads lowest-first — so the
   // gate compares like with like regardless of the order the pitches were written in.
   // `[GCE]` and `[CEG]` are the same chord and must produce the same steps.
-  const steps = pitches.map((p) => pitchToStep(p, clef)).sort((a, b) => a - b)
+  // …and the PITCH travels with its step, because the notehead's `data-name` is the
+  // WRITTEN note and a sort that drops the pairing cannot name a chord's heads.
+  const stepped = pitches
+    .map((p) => ({ step: pitchToStep(p, clef), pitch: p }))
+    .sort((a, b) => a.step - b.step)
+  const steps = stepped.map((s) => s.step)
   const lowest = steps[0] ?? 0
   const highest = steps[steps.length - 1] ?? 0
   const spec = noteGlyph(notated)
@@ -2790,6 +2834,7 @@ function layoutNoteheads(
     glyphs.push({
       ...glyphAt(headName, headX + dx, step),
       role: 'notehead',
+      ...(stepped[position] === undefined ? {} : { dataName: writtenNote(stepped[position].pitch) }),
       reserve: [y - headDeclaredHalf, y + headDeclaredHalf],
       // `steps` is sorted ascending, so the index IS the chord position from the bottom.
       ...(steps.length > 1 ? { chordPos: position + 1 } : {}),
