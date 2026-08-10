@@ -43,14 +43,22 @@ abcjs's** — absolute pixels, no `viewBox`, no `transform` anywhere, one bare `
 The whole suite is green across that change (1127/1127), which is the proof it is right:
 every pixel gate measures pixels, and they see the same pixels they saw before.
 
-What is left, in the order the byte table hits it. **Best case 587 bytes in, median 162**,
+What is left, in the order the byte table hits it. **Best case 651 bytes in, median 162**,
 from 10 when the table opened:
 
-1. **`font-weight="bold"` on the title where abcjs writes `normal`** — and this is a
-   possible REAL defect rather than a markup one. abcjs's default `titlefont` is Times New
-   Roman 20 and is not bold. **No gate here compares text WEIGHT** — the pixel tables
-   measure positions — so if our layout is flagging the title bold, it has been drawing a
-   heavier title than abcjs all along. Named by the byte table, not yet chased.
+1. **THE TITLE IS CENTRED ON THE WRONG WIDTH — a real defect.** abcjs puts it at the
+   PAPER's centre, x=350 on a 700px page, and the rule is already written down in the model:
+   "`%%center` centres on the STAFF width — 335, not the paper's 350 the title uses". We
+   emit x=123.08 for a short titled tune, which is neither — the block is centred on the
+   system's own width. **No pixel gate compares text POSITION**, because those pair
+   noteheads, so this has been wrong on every titled tune.
+
+   (Its sibling, `font-weight="bold"` on the title, is FIXED: abcjs's default `titlefont`
+   is Times New Roman 20 weight `normal` and we drew every title bold. Invisible to every
+   gate — the pixel tables compare positions and `calcWidth`'s tables are keyed by font
+   SIZE alone, so a bold title and a normal one measure the same and land in the same
+   place. Fourth axis to turn out unrepresented, after the line weights, the decoration x
+   and the DOM contract.)
 2. **The two-decimal rounding is not universal.** abcjs rounds path coordinates
    (`roundNumber`) and writes the root's `width`/`height` raw; a `<text>`'s `x`/`y` and a
    `<tspan>`'s follow their own rule, which is unmeasured.
