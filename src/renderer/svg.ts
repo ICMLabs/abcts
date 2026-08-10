@@ -15,7 +15,7 @@ import { ABCJS_ARC, ABCJS_YCORR, spaces } from './abcjs-constants.js'
 import { SMUFL_TO_ABCJS } from './glyph-map.js'
 import { glyphsFor } from './glyph-table.js'
 import { GLYPHS, type GlyphName } from './glyphs.js'
-import type { Layout, PlacedCurve, PlacedLine } from './layout.js'
+import type { Layout, PartRole, PlacedCurve, PlacedLine } from './layout.js'
 
 export interface RenderOptions {
   /** Pixels per staff space. 8 gives a ~32px staff, close to typical engraving size. */
@@ -617,9 +617,19 @@ const glyphDefs = new Map<GlyphName, string>()
         const px = Number(head[1]) + x * PX
         const py = Number(head[2]) + corrected * PX + oy
         const named = dataName ?? SMUFL_TO_ABCJS[name] ?? name
+        /**
+         * **A NOTEHEAD'S CLASS IS WRITTEN AFTER ITS `d`**, because it is not written with
+         * the element at all. Inside an element group `printSymbol` passes ONLY
+         * `data-name` and no `klass` (`draw/print-symbol.js:34-38`) — which is why a clef
+         * glyph carries no class — and `drawAbsolute` comes back afterwards with
+         * `el.setAttribute('class', 'abcjs-notehead')` for any symbol whose glyph name
+         * contains `notehead`, appending `abcjs-chord-pos-N` to it the same way
+         * (`draw/absolute.js:20-28`). A late `setAttribute` serialises LAST.
+         */
+        const late = role === 'notehead' || role === 'grace' ? / class="[^"]*"/.exec(attributes)?.[0] ?? '' : ''
         return (
-          `<path${attributes}${named ? ` data-name="${named}"` : ''} ` +
-          `d="M ${px} ${py}${ink.path.slice(head[0].length)}"></path>`
+          `<path${late ? attributes.replace(late, '') : attributes}${named ? ` data-name="${named}"` : ''} ` +
+          `d="M ${px} ${py}${ink.path.slice(head[0].length)}"${late}></path>`
         )
       }
     }
@@ -973,7 +983,10 @@ const glyphDefs = new Map<GlyphName, string>()
          * which is why the texts are built here and placed by kind rather than in order.
          */
         const barTexts = abcjs && el.type === 'bar'
-        const textParts: string[] = []
+        // Carries the ROLE beside the markup because a note's texts are not one bucket:
+        // `createNote` adds the lyric before the ledger lines and the chord symbol after
+        // them (`abstract-engraver.js:829-855`). See the split at the emission site.
+        const textParts: { readonly role: PartRole | undefined; readonly s: string }[] = []
         for (const t of el.texts) {
           const style =
             (t.bold ? ' font-weight="bold"' : '') + (t.italic ? ' font-style="italic"' : '')
@@ -997,15 +1010,17 @@ const glyphDefs = new Map<GlyphName, string>()
             : isBarNumber
               ? `${attrIfAny(classes.generate('bar-number'))} data-name="bar-number"`
               : attrs(el.type, 'text')
-          textParts.push(
+          textParts.push({
+            role: t.role,
+            s:
             `<text${partAttr} x="${textNum(t.x * PX)}" y="${textNum(t.y * PX + oy)}" ` +
               `font-family="serif" font-size="${num(t.size * PX)}"${style}` +
               // Only the top-text block sets one; the music's own text is all left-aligned.
               `${t.anchor === undefined || t.anchor === 'start' ? '' : ` text-anchor="${t.anchor}"`}` +
               `>${t.jazz === undefined ? escapeText(t.text) : jazzChordMarkup(t.jazz, textNum(t.x * PX))}</text>`,
-          )
+          })
         }
-        if (barTexts) parts.push(...textParts)
+        if (barTexts) parts.push(...textParts.map((t) => t.s))
         /**
          * **THE ORDER INSIDE AN ELEMENT GROUP IS THE ENGRAVER'S ADD ORDER**, and for a note
          * that is, measured against abcjs's own goldens:
@@ -1114,8 +1129,28 @@ const glyphDefs = new Map<GlyphName, string>()
           parts.push('</g>')
           return
         }
-        for (const line of ordered) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
-        // …and everything the engraver added AFTER the rules — decorations, graces.
+        /**
+         * **THE LEDGER IS LAST, AND THE LYRIC, THE GRACES AND THE DECORATION COME BEFORE
+         * IT.** `createNote` is a straight run of adders and `_addChild` is a plain push
+         * (`absolute-element.js:181-190`), so DRAW ORDER IS CALL ORDER:
+         *
+         *     heads+stem → lyric → graces → decorations → barNumber → LEDGER → chord
+         *
+         * (`abstract-engraver.js:829-855`), which abcjs's own contract shows as
+         * `C, stem, scripts.ufermata, ledger` and `C, stem, lyric, ledger`. We emitted
+         * every rule together, so the ledger came out with the stem and everything the
+         * engraver added after it followed. A LYRIC IS A `<text>`, so the "texts last"
+         * rule has to bend: only the CHORD symbol is genuinely last.
+         */
+        const isChordText = (r: PartRole | undefined): boolean => r === 'chord' || r === 'chordBelow'
+        const ledgers = abcjs ? own.filter((l) => l.role !== 'stem') : []
+        for (const line of abcjs ? own.filter((l) => l.role === 'stem' && l.beamed !== true) : ordered) {
+          parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+        }
+        if (abcjs) {
+          for (const t of textParts.filter((t) => t.role === 'lyric')) parts.push(t.s)
+        }
+        // …and everything the engraver added AFTER the stem — decorations, graces.
         for (const g of el.glyphs.slice(pitchEnd)) {
           parts.push(
             glyphMarkup(
@@ -1134,10 +1169,26 @@ const glyphDefs = new Map<GlyphName, string>()
           }
         }
         for (const line of graceStems) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+        // A TEXT DECORATION (`!D.C.!`) is `createDecoration`'s, so it precedes the ledger;
+        // an ANNOTATION (`"^above"`) is `addChord`'s and follows it. Both draw with
+        // `annotationfont`, so the ROLE is what tells them apart, not the markup.
+        if (abcjs) {
+          for (const t of textParts.filter((t) => t.role !== 'lyric' && !isChordText(t.role))) {
+            parts.push(t.s)
+          }
+          for (const line of ledgers) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+        }
         // Prose is a real <text> in a generic family, unlike musical glyphs, which are
         // paths so the SVG stays self-contained. A missing serif face falls back to
         // another serif; a missing Bravura falls back to nothing legible. See layout.ts.
-        if (!barTexts) parts.push(...textParts)
+        if (!barTexts) {
+          parts.push(...textParts.filter((t) => !abcjs || isChordText(t.role)).map((t) => t.s))
+        }
+        if (abcjs) {
+          for (const line of own.filter((l) => l.role === 'stem' && l.beamed === true)) {
+            parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+          }
+        }
         advance()
         if (abcjs) parts.push('</g>')
       })

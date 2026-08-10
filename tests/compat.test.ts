@@ -71,9 +71,15 @@ describe('renderAbc', () => {
     // the first `M` of the outline and writes no transform (`creation/glyphs.js:132-142`),
     // and compat does the same. The `M` carries the outline's own contour start as well as
     // the placement, which cancels between two heads of the same glyph.
-    const xs = [...svg.matchAll(/class="abcjs-notehead"[^>]*\sd="M ([-\d.]+)/g)].map((m) =>
-      Number(m[1]),
-    )
+    // CORRECTED A THIRD TIME, and for the reason the last two were: this read
+    // `class="abcjs-notehead"` BEFORE the `d`, which was true only of our own markup.
+    // abcjs writes that class LAST — it is a `setAttribute` after the element exists
+    // (`draw/absolute.js:20-22`) — so the pattern broke the moment we matched abcjs.
+    // Read the whole tag and ask what it carries, in no order.
+    const xs = [...svg.matchAll(/<path[^>]*>/g)]
+      .map((m) => m[0])
+      .filter((tag) => tag.includes('class="abcjs-notehead"'))
+      .map((tag) => Number(/\sd="M ([-\d.]+)/.exec(tag)?.[1]))
     expect(xs.length).toBeGreaterThan(3)
     expect(((xs[1] ?? 0) - (xs[0] ?? 0)) * toPx).toBeCloseTo(42.43, 1)
   })
