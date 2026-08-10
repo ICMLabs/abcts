@@ -1,0 +1,62 @@
+{
+ "name": "el-tie-and-chord",
+ "kind": "elements",
+ "source": "control tune, rendered by abcjs",
+ "abc": "X:1\nL:1/4\nM:3/4\nQ:1/4=60\nK:C\n|:C2-C|[CEG]DE:|\n",
+ "expected": [
+  {
+   "bar": true
+  },
+  {
+   "ms": [
+    0,
+    6000
+   ],
+   "pitches": [
+    60
+   ]
+  },
+  {
+   "ms": [
+    2000,
+    8000
+   ],
+   "pitches": []
+  },
+  {
+   "bar": true
+  },
+  {
+   "ms": [
+    3000,
+    9000
+   ],
+   "pitches": [
+    60,
+    64,
+    67
+   ]
+  },
+  {
+   "ms": [
+    4000,
+    10000
+   ],
+   "pitches": [
+    62
+   ]
+  },
+  {
+   "ms": [
+    5000,
+    11000
+   ],
+   "pitches": [
+    64
+   ]
+  },
+  {
+   "bar": true
+  }
+ ]
+}

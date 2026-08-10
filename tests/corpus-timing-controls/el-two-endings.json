@@ -1,0 +1,83 @@
+{
+ "name": "el-two-endings",
+ "kind": "elements",
+ "source": "control tune, rendered by abcjs",
+ "abc": "X:1\nL:1/4\nM:3/4\nQ:1/4=60\nK:C\n|:CDE|1FGA:|2cde|]\n",
+ "expected": [
+  {
+   "bar": true
+  },
+  {
+   "ms": [
+    0,
+    6000
+   ],
+   "pitches": [
+    60
+   ]
+  },
+  {
+   "ms": [
+    1000,
+    7000
+   ],
+   "pitches": [
+    62
+   ]
+  },
+  {
+   "ms": [
+    2000,
+    8000
+   ],
+   "pitches": [
+    64
+   ]
+  },
+  {
+   "bar": true
+  },
+  {
+   "ms": 3000,
+   "pitches": [
+    65
+   ]
+  },
+  {
+   "ms": 4000,
+   "pitches": [
+    67
+   ]
+  },
+  {
+   "ms": 5000,
+   "pitches": [
+    69
+   ]
+  },
+  {
+   "bar": true
+  },
+  {
+   "ms": 9000,
+   "pitches": [
+    72
+   ]
+  },
+  {
+   "ms": 10000,
+   "pitches": [
+    74
+   ]
+  },
+  {
+   "ms": 11000,
+   "pitches": [
+    76
+   ]
+  },
+  {
+   "bar": true
+  }
+ ]
+}

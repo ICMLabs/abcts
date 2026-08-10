@@ -76,6 +76,39 @@ const CONTROLS = [
   ['triplet', 'X:1\nL:1/4\nM:4/4\nQ:1/4=60\nK:C\n(3CDE F2|\n', null, 0],
 ]
 
+/**
+ * ── AND A SECOND LADDER, IN THE `elements` SHAPE ────────────────────────────
+ * `currentTrackMilliseconds` is the only surface that can SEE a repeat's structure: a
+ * doubled pass reads as "more notes" on an event table nobody counts by hand, and as a
+ * doubled ENTRY on a per-element one. That is exactly how `|1 … :|2 … |]` was found playing
+ * its last ending twice while the audio table sat at 0 of 72 and the MIDI file was
+ * byte-exact.
+ *
+ * So every repeat SHAPE gets a rung. `no-repeat` is the canary — the same notes with no
+ * repeat at all, whose every element must carry a bare number rather than an array.
+ */
+const ELEMENT_CONTROLS = [
+  ['el-no-repeat', 'X:1\nL:1/4\nM:3/4\nQ:1/4=60\nK:C\nCDE|FGA|\n'],
+  ['el-plain-repeat', 'X:1\nL:1/4\nM:3/4\nQ:1/4=60\nK:C\n|:CDE:|\n'],
+  ['el-repeat-then-more', 'X:1\nL:1/4\nM:3/4\nQ:1/4=60\nK:C\n|:CDE:|FGA|\n'],
+  // THE SHAPE THAT WAS WRONG: a final ending as the LAST measure.
+  ['el-two-endings', 'X:1\nL:1/4\nM:3/4\nQ:1/4=60\nK:C\n|:CDE|1FGA:|2cde|]\n'],
+  // …and the same with music after it, which reaches a different arm.
+  ['el-endings-then-more', 'X:1\nL:1/4\nM:3/4\nQ:1/4=60\nK:C\n|:CDE|1FGA:|2cde|efg|\n'],
+  // A SPARSE ENDING ARRAY — `|1,3` and `|2,4` interleave four passes.
+  ['el-four-endings', 'X:1\nL:1/4\nM:3/4\nQ:1/4=60\nK:C\n|:CDE|1,3FGA:|2,4cde|]\n'],
+  // `::` is an end AND a start on one bar element.
+  ['el-double-repeat', 'X:1\nL:1/4\nM:3/4\nQ:1/4=60\nK:C\n|:CDE::FGA:|\n'],
+  // A `:|` with no `|:` repeats from the head of the tune.
+  ['el-no-start-repeat', 'X:1\nL:1/4\nM:3/4\nQ:1/4=60\nK:C\nCDE|FGA:|\n'],
+  // Two `:|` in a row — a notation error abcjs recovers from.
+  ['el-two-end-repeats', 'X:1\nL:1/4\nM:3/4\nQ:1/4=60\nK:C\n|:CDE:|FGA:|\n'],
+  // A TIE across the repeat's seam, and a chord, both of which the stamp treats specially.
+  ['el-tie-and-chord', 'X:1\nL:1/4\nM:3/4\nQ:1/4=60\nK:C\n|:C2-C|[CEG]DE:|\n'],
+  // A rest and a spacer are stamped too — the spacer sounds nothing and takes no time.
+  ['el-rest-and-spacer', 'X:1\nL:1/4\nM:3/4\nQ:1/4=60\nK:C\nCzE|DyFG|\n'],
+]
+
 const dom = new JSDOM('<!DOCTYPE html><html><body><div id="notation"></div></body></html>')
 global.document = dom.window.document
 global.window = dom.window
@@ -111,4 +144,23 @@ for (const [slug, abc, bpm, measuresOfDelay] of CONTROLS) {
     )}\n`,
   )
 }
-console.log(`${CONTROLS.length} timing controls written to tests/corpus-timing-controls/`)
+for (const [slug, abc] of ELEMENT_CONTROLS) {
+  const visualObj = ABCJS.renderAbc('notation', abc, { staffwidth: 670 })
+  visualObj[0].setUpAudio()
+  const voice = visualObj[0].lines[0].staff[0].voices[0]
+  const expected = voice.map((el) =>
+    el.el_type === 'bar'
+      ? { bar: true }
+      : {
+          ms: el.currentTrackMilliseconds,
+          pitches: (el.midiPitches || []).map((p) => p.pitch),
+        },
+  )
+  writeFileSync(
+    join(out, `${slug}.json`),
+    `${JSON.stringify({ name: slug, kind: 'elements', source: 'control tune, rendered by abcjs', abc, expected }, null, 1)}\n`,
+  )
+}
+console.log(
+  `${CONTROLS.length} timing controls and ${ELEMENT_CONTROLS.length} element controls written to tests/corpus-timing-controls/`,
+)

@@ -1588,8 +1588,11 @@ export function flattenAudio(
       if (item.event !== null) {
         chordTrack.processChord(chordSymbolOf(item.event), annotationsOf(item.event), start)
       }
+      // A SPACER IS NEVER STAMPED AT ALL — it reaches `writeNote` in neither engine, so
+      // abcjs's element carries no `currentTrackMilliseconds` rather than one it ignores.
+      // `CzE|DyFG|` proves it: the `z` rest IS stamped and the `y` is not.
       const stamped =
-        item.event === null
+        item.event === null || (item.event.type === 'rest' && item.event.kind === 'spacer')
           ? null
           : stamp(item.event, (start / beatFractionOf(meter) / startingTempo) * 60 * 1000)
       if (item.event === null || item.event.type === 'rest' || item.tiedOver) continue
