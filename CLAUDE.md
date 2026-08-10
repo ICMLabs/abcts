@@ -202,6 +202,46 @@ checkpoint and hand off as you go so no context is lost.
 > entry point; and **A NOTE THAT CLOSES A SLUR IS NOT ITSELF SLURRED**, worth one byte.
 > Four abcjs quirks reproduced on purpose, listed in the file.
 
+> 🎸 **THE CHORD GRID IS IN — 0 of 23, AND EVERY FINDING WAS IN THE ADAPTER** (2026-08-09b).
+> `src/chord-grid.ts`, ported from `src/parse/chord-grid.js`, whose own header numbers its
+> sixteen rules. abcjs walks a FLAT element stream where we hold measures and its rules are
+> full of order-dependent state, so our measures are converted into its stream and the
+> algorithm is transcribed rather than re-derived. The table opened at 12 of 23:
+> **`|1` IS ONE ELEMENT IN ABCJS AND TWO IN OURS** (seven of the twelve rows were that one
+> flag); **`tripletMultiplier` IS STAMPED ON THE FIRST NOTE OF THE GROUP AND NOTHING ELSE**,
+> so abcjs's beat count is wrong for every tuplet and wrong BY DESIGN — the `under` fixture's
+> own header says "triplets mess up beat counting", and folding the ratio into every member
+> makes the bar 3.9999999999999996 so it never closes; **A BARLINE THAT OPENS A MEASURE TAKES
+> THE PENDING DECORATION AND CHORD**, which ours DROPPED outright and leaked; and
+> **`getMeterFraction()` defaults to 4/4 and reads the first meter of any LINE**, not the
+> header's. **TWO OF THE 23 CASES ASSERT NO GRID AT ALL** — a feature's refusals are part of
+> its contract and they are what a happy-path implementation gets wrong.
+>
+> 🥁 **AND THE AUDIO TABLE IS EMPTY — 0 of 72**, its last two rows (the host drum options)
+> closed and eleven CONTROLS added. `drumIntro` REWRITES THE MUSIC rather than moving a
+> clock: whole measures of rests spliced onto the front of every voice, so every downstream
+> clock shifts by construction. `options.test.js` exercises it twice and both times
+> identically, so five of its branches had no case behind them until
+> `scripts/gen-audio-controls.mjs` rendered them — including `measureLength` being the tune's
+> LAST `M:`, not its first.
+
+> 📐 **EVERY DECORATION IN THE REPO WAS UP TO 10.83px LEFT, AND A CANARY FOUND IT**
+> (2026-08-09b). Not a search — the control written to prove the opening-barline transfer
+> needed a boring rung showing the same coda on a NOTE, and the boring rung disagreed with
+> abcjs by nine pixels. **NO GATE COULD SEE THE X OF A DECORATION**: `pixel-parity` and the
+> harvested table compare what abcjs CLASSES and a decoration carries no class, while
+> `glyph-ycorr` and `above-lane-order` are ladders that measure Y because each was built to
+> name a vertical defect. Same shape as the line weights and the tempo notehead.
+> **THE HALF-WIDTH SHIFT IS CONDITIONAL** — `if (getSymbolAlign(symbol) !== "center") deltaX
+> -= getSymbolWidth(symbol) / 2` — and the align is a RULE, not a table: every `scripts.*`
+> glyph is centred EXCEPT `scripts.roll`. **THE WIDTH IS THE HEAD'S DECLARED ONE**, abcjs's
+> and not Bravura's. **A BARLINE HANDS IT 3 OR 1**, never its drawn width. And a fourth on a
+> different code path: **A DYNAMIC IS NOT A DECORATION** — `drawDynamics` calls
+> `printSymbol(renderer, params.anchor.x, …)` with no width arithmetic at all, proven by a
+> whole note and a quarter drawing their `p` at the same absolute x.
+> `tests/decoration-x.test.ts` is the instrument, and **reverting the rule fails 15 of its 20
+> rungs** — checked, not assumed.
+
 > 🔍 **AND THE HARVESTER NAMED A FILE WHERE IT SHOULD HAVE NAMED A SHAPE** (2026-08-09).
 > An audit of abcjs's 30 test files, classified by ASSERTION TARGET rather than by file
 > because most files mix both kinds. `synth/options.test.js` declares its own
@@ -235,9 +275,12 @@ checkpoint and hand off as you go so no context is lost.
 > `npx tsc --noEmit` BEFORE `git commit`, not alongside it: a duplicate object key shipped
 > that day because vitest passed and the typecheck came back after the push.
 
-Read `Docs/CHECKPOINT-2026-08-09.md` first — the state, the tempo gate, the byte-exact MIDI
-file, the audit of abcjs's own test suite, and **WHAT IS LEFT**.
-`Docs/HANDOFF-2026-08-09.md` has the session prompt. `Docs/CHECKPOINT-2026-08-08e.md` is
+Read `Docs/CHECKPOINT-2026-08-09b.md` first — the state, the count-in ladder, the chord
+grid, **the decoration-x finding**, and **WHAT IS LEFT**.
+`Docs/HANDOFF-2026-08-09b.md` has the session prompt.
+`Docs/CHECKPOINT-2026-08-09.md` is superseded for the state but keeps the tempo gate, the
+byte-exact MIDI file, and **the audit of abcjs's own test suite classified by ASSERTION
+TARGET**, which is still the work list for what is left. `Docs/CHECKPOINT-2026-08-08e.md` is
 superseded for the state but keeps the audio arc's THIRTEEN FINDINGS and **the accent**.
 `Docs/CHECKPOINT-2026-08-08d.md` is superseded for the state but keeps the 6.7.0 flip and
 **the terms the optimisation pass must be held to**, which is the live phase — read it
@@ -385,17 +428,20 @@ abcjs source are all reached by sibling path and stay in that repo. Keep it that
 backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
-**GEOMETRY IS DONE. AUDIO IS ALL BUT DONE. THE MIDI FILE IS BYTE-EXACT.** 1008/1008 with no
-reds; **nine gates and four ranked tables** — 0 of 3 MIDI files, 0 of 174 harvested
-fixtures, 0 of 120 pixel targets, and **2 of 61 audio cases**, both the HOST-supplied drum
-options and the only named defect left in the engine. Three of the nine are ladders of controls rather than
-corpora: `tests/above-lane-order.test.ts` (12 tunes, one per PAIR of above lanes) and
-`tests/glyph-ycorr.test.ts` (20 tunes, one per GLYPH), and now
-`tests/tempo-parts.test.ts` (8 tunes, one per `Q:` beat unit). Nothing in either corpus
-exercises what they cover, which is why each had to be built before its defects could be
-stated — the newest opened naming SIX, and what it measures is WHICH GLYPHS a mark is made
-of, because abcjs classes only `abcjs-notehead` and its TEMPO notehead is not one, so no
-row for a tempo mark has ever existed in any table.
+**GEOMETRY, AUDIO, THE MIDI FILE AND THE CHORD GRID ARE ALL AT ZERO.** 1065/1065 with no
+reds; **eleven gates and FIVE ranked tables, every one of them empty** — 0 of 72 audio
+cases, 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel
+targets. **No table can name a defect, and that is the normal condition here rather than a
+milestone** — the last four findings all came from building a gate that expresses an axis
+none of the others can, or from rendering a control abcjs's own suite does not contain.
+
+FOUR of the eleven gates are LADDERS OF CONTROLS rather than corpora, and each had to be
+built before its defects could be stated: `tests/above-lane-order.test.ts` (12 tunes, one
+per PAIR of above lanes), `tests/glyph-ycorr.test.ts` (20 tunes, one per GLYPH),
+`tests/tempo-parts.test.ts` (8 tunes, one per `Q:` beat unit — it measures WHICH GLYPHS a
+mark is made of, because abcjs classes only `abcjs-notehead` and its TEMPO notehead is not
+one) and `tests/decoration-x.test.ts` (20 rungs on the HORIZONTAL axis, which no table
+could express at all). Nothing in either corpus exercises what any of them covers.
 
 **SO NO GATE CAN NAME THE NEXT DEFECT.** That has happened twice on this branch and the
 answer both times was to BUILD ONE that expresses an axis none of the others can. The two
