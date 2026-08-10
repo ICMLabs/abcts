@@ -85,8 +85,14 @@ The noise is spread through the whole accumulation, not concentrated in the marg
 
 ```bash
 cd /Users/lrettberg/ICMLabs/Code/abcMusicKit/Tools/abcjs-debug
-ABCJS_VERSION=6.7.0 node dump-svg.js --file /tmp/ladder/rung.abc --output /tmp/ladder/rung.svg
+ABCJS_VERSION=6.7.0 node dump-svg.js      --file /tmp/ladder/rung.abc --output /tmp/ladder/rung.svg
+ABCJS_VERSION=6.7.0 node dump-elements.js --file /tmp/ladder/rung.abc --output /tmp/ladder/rung.json
 ```
+
+**AND `dump-elements.js` PUBLISHES abcjs'S OWN `staff.top`/`staff.bottom`.** It settled the
+tie reserve in one step after two wrong inferences had each cost an implementation — ASK IT
+WHICH BOX IS IN PLAY rather than reading the three candidates in `tie-element.js` and
+picking.
 
 **`ABCJS_VERSION` IS NOT OPTIONAL — `dump-svg.js:14` DEFAULTS TO 6.6.3.** A first ladder
 run without it said a second header `T:` costs no staff separation, which reads as a defect
@@ -109,7 +115,7 @@ nothing in `tests/` may grow that mask.**
 
 ## 2. WHAT CLOSED, AND WHY EACH WAS INVISIBLE
 
-Eighteen landings, every one a read of a named abcjs function.
+Twenty-one landings, every one a read of a named abcjs function.
 
 - **`staffwidth` is the MUSIC area; the page is it plus abcjs's 15px margins.** compat
   mapped `renderAbc(…, {staffwidth: 670})` straight onto core's `systemWidth`, which is
@@ -196,6 +202,14 @@ Eighteen landings, every one a read of a named abcjs function.
   read in ONE place, the last-line justification test, and drawn in none. A mid-tune block
   moves to `pendingTextBefore` at the next system start, so when the tune ends before one
   it sat there instead and `finish()` never looked. TWO holes, one shape.
+- **A BLOCK WRITTEN INSIDE A SYSTEM IS DRAWN AFTER IT, NOT BEFORE IT** — for every system
+  but the FIRST those are the same place, which is why only the first was wrong. 27.05px
+  for a `T:` and 33.77 for a `%%text`, drawn nowhere at all. Five ladder rungs.
+- **A TIE ARRIVING FROM THE SYSTEM ABOVE RESERVES `pitch ± 4` AS INK** — the second half of
+  a split tie has a null `anchor1` and its closing note IS on that line, so `setEndAnchor`
+  runs and takes its `else` branch (`tie-element.js:35-38`). The FIRST half never gets one,
+  which is why a tie at the end of the TUNE costs nothing. Two wrong inferences preceded
+  the measurement; `dump-elements.js` settled it in one step.
 - **`data-index` is an index into the SELECTABLES, not into the children.**
   `Selectables.add` writes `{selectable: false, "data-index": elements.length}` and only
   after `canSelect`, which with no `selectTypes` admits `el_type 'note'` alone
@@ -248,50 +262,21 @@ regression, so read the diff before touching the gate.
 
 ## WHAT IS LEFT, IN YIELD ORDER
 
-1. **THE FOUR STRUCTURAL HEIGHTS, each measured down to its residual:**
-   - `visual-mouse-click-01` and `visual-tablature-15` — **3.875px TALL**, one PITCH, down
-     from 23.175 SHORT. Their bottom rows step 49.27 / 72.54 / 26 exactly as abcjs's do, so
-     it is not the bottom block. One `<text>` is still missing from both (31 against 32),
-     and a ladder says which:
+1. **THE TWO STRUCTURAL HEIGHTS THAT ARE LEFT — `visual-mouse-click-01` and
+   `visual-tablature-15`, 3.875px TALL, one PITCH, down from 297 SHORT.** Their staff lines
+   match to the hundredth and every bottom row is uniformly 3.875 too low, so it is one term
+   between the last staff and the block. **FOUR LADDERS THROUGH abcjs 6.7.0 RULE OUT WHAT
+   IT IS NOT** — a subtitle between voice lines of the FIRST system, of the LAST system, a
+   mid-tune `%%sep` and a trailing `%%sep` are all EXACT on height. Do not re-measure those.
 
-     ```
-     mv-none   [V:1] CDEF| / [V:2] GABc|                abcjs 218.052   ours 218.052
-     mv-sub    …with T:Inserted BETWEEN the two lines   abcjs 245.102   ours 218.052  -27.05
-     mv-text   …with %%text  BETWEEN the two lines      abcjs 251.822   ours 218.052  -33.77
-     mv-subend …with T:Inserted AFTER both lines        abcjs 245.102   ours 245.102   exact
-     ```
-
-     **A BLOCK WRITTEN BETWEEN TWO VOICE LINES OF THE SAME SYSTEM IS DROPPED OUTRIGHT**, and
-     abcjs draws it AFTER that system — measured: the staff lines are at IDENTICAL y with
-     and without it (77.2 … 115.95, 156.2 … 187.2) and the subtitle lands at 227.83, below
-     both. Ours is claimed as the first system's `textBefore` and then discarded, because
-     `midTune` is read only for `systemIndex > 0`. **The general rule is NOT yet measured**:
-     whether such a block goes after ITS system or at the very end needs one more rung, with
-     a system following it.
-   - `synth-timing-10-stretchlast-1` — 7.75px, exactly one staff space, and **A LADDER
-     NAMED IT IN ONE RUN.** Six controls through abcjs itself, one variable per rung:
-
-     ```
-     tie-none    C4 D4|  / D4 F2F2 |     abcjs 186.947    ours 186.947
-     tie-mid     C4 D4|  / D4 F2-F2 |    abcjs 186.947    ours 186.947
-     tie-end     C4 D4|  / D4 F2 F2- |   abcjs 186.947    ours 186.947
-     tie-break   C4 D4-| / D4 F2F2 |     abcjs 194.697    ours 186.947   <-- 7.75
-     stretch     %%stretchlast 1         abcjs 186.947    ours 186.947
-     both        break + stretch         abcjs 194.697    ours 186.947
-     ```
-
-     **A TIE THAT CROSSES A SYSTEM BREAK RESERVES 7.75px AND NOTHING ELSE DOES** — not a
-     mid-bar tie, not a tie at the end of the tune, not `%%stretchlast`, which the fixture's
-     name had made the obvious suspect and which costs nothing at all. abcjs splits such a
-     tie into TWO `TieElem`s, one per line, each with a null anchor; `setEndAnchor` gives
-     the anchored end `pitch ± 4` and `getYBounds` a 3-pitch box round the arc
-     (`creation/elements/tie-element.js:25-38`, `:228-252`). Our curves reach
-     `verticalExtent` not at all, which is why we spend nothing.
-
-     **AND THE LADDER WAS RUN THROUGH abcjs ITSELF** — see THE HARNESS below.
-   - `visual-tablature-20-score-1-2` and `visual-transpose-05` — 1e-11 relative, which is
-     the ULP family wearing a slightly bigger number.
-2. ~~**`BottomText`**~~ — **LANDED.** `creation/elements/bottom-text.js` was the whole spec
+   **AND `%%sep`'s RULE IS DRAWN IN THE WRONG PLACE, though its SPACE is right.** abcjs puts
+   it at `x=250 w=170` for `%%sep 0.4cm 0.4cm 6cm` — `(6/2.54)*72` rounded, centred on the
+   STAFF width like a `%%center` — and ours agrees on both. The y does not: 217.88 against
+   131 on one rung and 296.88 against 214 on another, and a TRAILING `%%sep` draws no rule
+   at all. Every height on those rungs is exact, so this is ink placement only.
+2. **THE ROOT'S `height`'s ULP HALF — 86 rows.** §1. Accumulate the vertical cursor in
+   PIXELS, which is the same change that closes the glyph-coordinate tail.
+3. ~~**`BottomText`**~~ — **LANDED.** `creation/elements/bottom-text.js` was the whole spec
    and it is short; kept because the rules are worth having written down:
    - `W:` **unaligned words** — `spacing.words`, then the block in `wordsfont`, then one
      more `getTextSize.calc("i", 'wordsfont')` height.
@@ -307,8 +292,6 @@ regression, so read the diff before touching the gate.
    What variable should this be?" (`draw/draw.js:66`) — and wraps it in
    `abcjs-meta-bottom`. **None of these fields is on `ScoreMetadata` yet**, so this is three
    layers: parse, lay out, emit.
-2. **THE ROOT'S `height`'s ULP HALF — 82 rows.** §1. Accumulate the vertical cursor in
-   PIXELS, which is the same change that closes the glyph-coordinate tail.
 4. ~~**THE ORDER INSIDE A NOTE GROUP**~~ — **CLOSED.** Kept because the rule is worth
    having written down:
    `createNoteHead` builds the notehead but does NOT add it: it `addRight`s the FLAG, then
@@ -365,7 +348,7 @@ npx tsc --noEmit    clean
 npx vitest run      1137 / 1137
 svg bytes           164 of 171   best 5186, median 178   (masked-height median 1241, max EXACT)
                     PASSING ratchet: 7 slugs, the first this table has ever held
-heights             80 exact / 85 ULP-only / 4 structural
+heights             80 exact / 86 ULP-only / 2 structural (3.875px, both the same)
 audio ranked        0 of 72
 timing ranked       0 of 38
 element timings     1 of 13

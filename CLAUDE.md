@@ -389,9 +389,15 @@ checkpoint and hand off as you go so no context is lost.
 > not `%%stretchlast`, which the fixture's NAME had made the obvious suspect and which
 > costs nothing at all. **A FIXTURE NAME IS NOT EVIDENCE.**
 >
-> ⚖️ **AND THE HEIGHT IS THREE PROBLEMS, NOT ONE.** Measured: **80 of 171 exact, 85 by pure
-> ULP noise, 4 STRUCTURALLY** — and the four are down to 3.875px and 7.75px residuals, each
-> one measured to its cause. THE 13 ARE WORTH MORE THAN THE 82 — they are
+> ⚖️ **AND THE HEIGHT IS THREE PROBLEMS, NOT ONE.** Measured: **80 of 171 exact, 86 by pure
+> ULP noise, 2 STRUCTURALLY** — both the same 3.875px, and FOUR LADDERS rule out what it is
+> not. **A BLOCK WRITTEN INSIDE A SYSTEM IS DRAWN AFTER IT** (27.05px for a `T:`, 33.77 for
+> a `%%text`, drawn nowhere at all), and **A TIE ARRIVING FROM THE SYSTEM ABOVE RESERVES
+> `pitch ± 4` AS INK** — the second half of a split tie has a null `anchor1` and its closing
+> note IS on that line, so `setEndAnchor` runs; the FIRST half never gets one, which is why
+> a tie at the end of the TUNE costs nothing. **TWO WRONG INFERENCES PRECEDED THAT ONE, AND
+> `dump-elements.js` SETTLED IT IN A STEP — it publishes abcjs's own `staff.top`/`bottom`,
+> so ASK IT WHICH BOX IS IN PLAY rather than reading the three candidates and picking.** THE 13 ARE WORTH MORE THAN THE 82 — they are
 > real vertical defects no gate here can state, because `pixel-parity` and the harvested
 > table pair NOTEHEADS and a page 300px too short with every note in place reads as
 > perfect. The largest WAS **`BottomText`, an entire missing feature** — `W:`, `N:`, `H:`,
