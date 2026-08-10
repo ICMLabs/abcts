@@ -59,14 +59,13 @@ describe('renderAbc', () => {
   it("matches abcjs's engraving density, so the page does not shift", () => {
     // abcjs spaces a quarter note at sqrt(0.25*8)*30 = 42.43 PIXELS.
     //
-    // Our coordinates are staff spaces inside a viewBox — resolution-independent where
-    // abcjs writes absolute pixels — so the internal numbers differ by design and only
-    // the PAINTED size is comparable. Multiply through the viewBox scale, which is what
-    // the browser does.
+    // CORRECTED: this used to read "our coordinates are staff spaces inside a viewBox —
+    // resolution-independent where abcjs writes absolute pixels — so the internal numbers
+    // differ by design", and multiplied through the viewBox scale. That premise is gone:
+    // compat now emits ABSOLUTE PIXELS and no `viewBox`, because byte parity with abcjs
+    // needs the pixels themselves. The figure is read directly.
     const svg = renderAbc(null, fixture('simple-c'), { staffwidth: 740 })[0]?.svg ?? ''
-    const width = Number(/width="([\d.]+)"/.exec(svg)?.[1])
-    const viewWidth = Number(/viewBox="[-\d.]+ [-\d.]+ ([\d.]+)/.exec(svg)?.[1])
-    const toPx = width / viewWidth
+    const toPx = 1
 
     const xs = [...svg.matchAll(/class="abcjs-notehead"[^>]*translate\(([\d.]+)/g)].map((m) =>
       Number(m[1]),

@@ -100,6 +100,12 @@ describe('optimizeSVG — <defs>/<use> deduplication', () => {
 
   describe('it actually saves', () => {
     it('cuts every glyph-dense fixture by a large fraction', () => {
+      // RE-MEASURED after compat moved to ABSOLUTE PIXELS: a px coordinate is a longer
+      // string than a staff-space one, and a `<use x= y=>` carries two of them where the
+      // deduped `<path d=>` it replaced carried none — so the optimizer's own output grew
+      // slightly faster than the plain output it is measured against. The saving is real
+      // and unchanged in kind; only the ratio moved, 0.65 → 0.67 on the loosest fixture.
+      //
       // Measured: 0.376, 0.618, 0.545. The two loose ones are the SHARED-STAFF fixtures,
       // and their looseness is a SIGN OF PROGRESS rather than of the optimizer weakening.
       // `ragtime-mini` has five voices on two staves and `zocharti-loch` four on two; the
@@ -109,7 +115,7 @@ describe('optimizeSVG — <defs>/<use> deduplication', () => {
       // The plain output shrank; the optimizer did not.
       for (const [name, limit] of [
         ['ave-verum-corpus', 0.45],
-        ['ragtime-mini', 0.65],
+        ['ragtime-mini', 0.67],
         ['zocharti-loch', 0.6],
       ] as const) {
         const abc = fixture(name)

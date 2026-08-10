@@ -229,7 +229,7 @@ function lineToRect(line: PlacedLine, attr: string): string {
  * SMuFL's separate endpoint and midpoint thicknesses describe. Two cubics with control
  * points at the thirds give the shallow, even arc *Behind Bars* asks for.
  */
-function curveToPath(curve: PlacedCurve, attr: string, strict: boolean): string {
+function curveToPath(curve: PlacedCurve, attr: string, strict: boolean, k = 1): string {
   const { x1, y1, x2, y2, bulge } = curve
   // ── ABCJS'S ARC, WHICH IS NOT A LENS ON THE THIRDS ─────────────────────────
   //
@@ -264,8 +264,8 @@ function curveToPath(curve: PlacedCurve, attr: string, strict: boolean): string 
     const cap = curve.kind === 'tie' ? ABCJS_ARC.tieMaxBulge : ABCJS_ARC.slurMaxBulge
     // `bulge` carries our sign convention: negative is ABOVE, which is abcjs's `-1`.
     const arc =
-      Math.sign(bulge) * Math.min(spaces(cap), Math.max(spaces(ABCJS_ARC.minBulge), flatten))
-    const t = spaces(ABCJS_ARC.thickness)
+      Math.sign(bulge) * Math.min(spaces(cap) * k, Math.max(spaces(ABCJS_ARC.minBulge) * k, flatten))
+    const t = spaces(ABCJS_ARC.thickness) * k
     const c1x = x1 + flatten * ux - arc * uy
     const c1y = y1 + flatten * uy + arc * ux
     const c2x = x2 - flatten * ux - arc * uy
@@ -483,9 +483,13 @@ const glyphDefs = new Map<GlyphName, string>()
     //
     // Reproducing the bug is the point: it is 1.99px on every graced note, which is
     // 0.4 of a notehead's ink centre, and it is `vree-grace-notes`' whole residual.
-    const total = strict ? ink.scale : (scale ?? 1) * ink.scale
+    // IN PIXEL MODE THE OUTLINE'S OWN SCALE CANCELS: abcjs's glyph paths are authored in
+    // ITS pixels, and `ink.scale` is `1 / unitsPerSpace` — the conversion into staff
+    // spaces. Multiply by the staff space again and it is 1, which is why abcjs writes no
+    // `scale()` on a glyph at all.
+    const total = (strict ? ink.scale : (scale ?? 1) * ink.scale) * PX
     const scaled = total !== 1
-    const transform = `translate(${num(x)},${num(corrected)})${scaled ? ` scale(${scaleNum(total)})` : ''}`
+    const transform = `translate(${num(x * PX)},${num(corrected * PX)})${scaled ? ` scale(${scaleNum(total)})` : ''}`
     if (!optimize) return `<path${attributes} transform="${transform}" d="${ink.path}"/>`
     // A `<use>` takes a transform, so a scaled glyph dedupes like any other. It used to
     // fall back to an inline path when scaled, which was fine while only a stretched
@@ -493,7 +497,7 @@ const glyphDefs = new Map<GlyphName, string>()
     // since those are in ITS pixels and every one of them carries a scale.
     return scaled
       ? `<use${attributes} href="#${defId(name)}" transform="${transform}"/>`
-      : `<use${attributes} href="#${defId(name)}" x="${num(x)}" y="${num(corrected)}"/>`
+      : `<use${attributes} href="#${defId(name)}" x="${num(x * PX)}" y="${num(corrected * PX)}"/>`
   }
 
   /**
@@ -512,6 +516,37 @@ const glyphDefs = new Map<GlyphName, string>()
     return `${cls ? ` class="${cls}"` : ''}${name ? ` data-name="${name}"` : ''}`
   }
 
+  /**
+   * **ABCJS DRAWS IN ABSOLUTE PIXELS AND WE DRAW IN STAFF SPACES**, and the `viewBox` was
+   * doing the conversion. It cannot: abcjs writes no `viewBox`, so byte parity needs the
+   * pixels themselves.
+   *
+   * `PX` is the staff space in pixels and `OY` is the `viewBox`'s own min-y folded back in,
+   * so a point that used to resolve through the view transform now arrives already
+   * resolved. Applied by TRANSFORMING THE GEOMETRY on its way to the emitters rather than
+   * by editing every `num()` — the same values reach the same string builders, which is why
+   * every pixel gate in the repo stays green across this change.
+   */
+  const PX = abcjs ? scale : 1
+  const OY = abcjs ? -doc.top : 0
+  /** One placed line in output units. */
+  const TL = (l: PlacedLine): PlacedLine =>
+    PX === 1
+      ? l
+      : { ...l, x1: l.x1 * PX, x2: l.x2 * PX, y1: l.y1 * PX, y2: l.y2 * PX, thickness: l.thickness * PX }
+  const TC = (c: PlacedCurve): PlacedCurve =>
+    PX === 1
+      ? c
+      : {
+          ...c,
+          x1: c.x1 * PX,
+          x2: c.x2 * PX,
+          y1: c.y1 * PX,
+          y2: c.y2 * PX,
+          bulge: c.bulge * PX,
+          midThickness: c.midThickness * PX,
+        }
+
   const parts: string[] = []
   /** abcjs's running counters. Inert unless `add_classes` asked for the markup. */
   const classes = new Classes(options.addClasses === true)
@@ -526,7 +561,7 @@ const glyphDefs = new Map<GlyphName, string>()
     // per voice, because a staff step means a different pitch under a different clef.
     parts.push(
       `<g${abcjs ? attrIfAny(classes.generate('staff-wrapper')) : ` class="${prefix}-system"`}` +
-        ` transform="translate(0,${num(system.originY)})">`,
+        ` transform="translate(0,${num((system.originY + OY) * PX)})">`,
     )
     // Braces and brackets first: they belong to the SYSTEM, joining staves rather than
     // sitting on one, and they are drawn at the left edge outside the music area.
@@ -536,7 +571,7 @@ const glyphDefs = new Map<GlyphName, string>()
     for (const line of system.connectorLines) {
       parts.push(
         lineToRect(
-          line,
+          TL(line),
           abcjs ? ' class="abcjs-bracket" data-name="bracket"' : ` class="${prefix}-staff"`,
         ),
       )
@@ -554,13 +589,13 @@ const glyphDefs = new Map<GlyphName, string>()
       parts.push(
         scale === ''
           ? glyphMarkup(g.name, g.x, g.y, undefined, attr)
-          : `<path${attr} transform="translate(${num(g.x)},${num(g.y)})${scale}" d="${outline(g.name).path}"/>`,
+          : `<path${attr} transform="translate(${num(g.x * PX)},${num(g.y * PX)})${scale}" d="${outline(g.name).path}"/>`,
       )
     }
     for (const staff of system.staves) {
       let staffGroup = ''
       parts.push(
-        `<g${abcjs ? '' : ` class="${prefix}-staff-group"`} transform="translate(0,${num(staff.originY)})">`,
+        `<g${abcjs ? '' : ` class="${prefix}-staff-group"`} transform="translate(0,${num(staff.originY * PX)})">`,
       )
       // `incrVoice()` then `newMeasure()` then the staff lines — abcjs's own order
       // (`draw/staff-group.js:80-91`), which is why the staff's class carries `l` and `v`
@@ -598,19 +633,19 @@ const glyphDefs = new Map<GlyphName, string>()
             ? ' class="abcjs-top-line"'
             : ''
           : ` class="${prefix}-staff"`
-        parts.push(lineToRect(line, attr))
+        parts.push(lineToRect(TL(line), attr))
       })
       if (staffGroup) parts.push('</g>')
       for (const beam of staff.beams) {
-        parts.push(lineToRect(beam, abcjs ? ' class="abcjs-beam"' : ` class="${prefix}-beam"`))
+        parts.push(lineToRect(TL(beam), abcjs ? ' class="abcjs-beam"' : ` class="${prefix}-beam"`))
       }
       for (const line of staff.voltaLines) {
-        parts.push(lineToRect(line, abcjs ? ' class="abcjs-ending"' : ` class="${prefix}-volta"`))
+        parts.push(lineToRect(TL(line), abcjs ? ' class="abcjs-ending"' : ` class="${prefix}-volta"`))
       }
       for (const t of staff.voltaTexts) {
         parts.push(
-          `<text${abcjs ? ' class="abcjs-ending"' : ` class="${prefix}-volta"`} x="${num(t.x)}" ` +
-            `y="${num(t.y)}" font-family="serif" font-size="${num(t.size)}">${escapeText(t.text)}</text>`,
+          `<text${abcjs ? ' class="abcjs-ending"' : ` class="${prefix}-volta"`} x="${num(t.x * PX)}" ` +
+            `y="${num(t.y * PX)}" font-family="serif" font-size="${num(t.size * PX)}">${escapeText(t.text)}</text>`,
         )
       }
       // ABCJS CALLS IT A TRIPLET, whatever the number — `classes.generate('triplet ' +
@@ -621,7 +656,7 @@ const glyphDefs = new Map<GlyphName, string>()
       for (const line of staff.tupletLines) {
         parts.push(
           lineToRect(
-            line,
+            TL(line),
             abcjs
               ? ' class="abcjs-triplet" data-name="triplet-bracket"'
               : ` class="${prefix}-tuplet"`,
@@ -631,7 +666,7 @@ const glyphDefs = new Map<GlyphName, string>()
       // Never present in strict mode, where abcjs prints a literal `_` instead — so this
       // reuses abcjs's lyric class rather than inventing one it has no counterpart for.
       for (const line of staff.melismaLines) {
-        parts.push(lineToRect(line, abcjs ? ' class="abcjs-lyric"' : ` class="${prefix}-lyric"`))
+        parts.push(lineToRect(TL(line), abcjs ? ' class="abcjs-lyric"' : ` class="${prefix}-lyric"`))
       }
       // Hairpins and glissandi. THE COMMENT HERE USED TO SAY "abcjs paints these with no
       // class of its own" — reasoned, never measured, and its own output denies it:
@@ -644,7 +679,7 @@ const glyphDefs = new Map<GlyphName, string>()
         const cls = line.role === 'dynamic' ? 'abcjs-decoration abcjs-dynamics' : 'abcjs-glissando'
         parts.push(
           lineToRect(
-            line,
+            TL(line),
             abcjs ? ` class="${cls}" data-name="${named}"` : ` class="${prefix}-decoration"`,
           ),
         )
@@ -661,16 +696,17 @@ const glyphDefs = new Map<GlyphName, string>()
         const anchor = t.anchor === undefined ? '' : ` text-anchor="${t.anchor}"`
         parts.push(
           `<text${abcjs ? ` data-name="${escapeText(t.text)}"` : ` class="${prefix}-tuplet"`}` +
-            `${anchor} x="${num(t.x)}" ` +
-            `y="${num(t.y)}" font-family="serif" font-size="${num(t.size)}"${style}>${escapeText(t.text)}</text>`,
+            `${anchor} x="${num(t.x * PX)}" ` +
+            `y="${num(t.y * PX)}" font-family="serif" font-size="${num(t.size * PX)}"${style}>${escapeText(t.text)}</text>`,
         )
       }
       for (const curve of staff.curves) {
         parts.push(
           curveToPath(
-            curve,
+            TC(curve),
             abcjs ? ` class="abcjs-${curve.kind}"` : ` class="${prefix}-${curve.kind}"`,
             strict,
+            PX,
           ),
         )
       }
@@ -705,7 +741,7 @@ const glyphDefs = new Map<GlyphName, string>()
           if (el.type === 'bar' && !justStarted && foundNote) classes.incrMeasure()
           if (el.type === 'note' || el.type === 'rest') foundNote = true
         }
-        for (const line of el.lines) parts.push(lineToRect(line, attrs(el.type, line.role)))
+        for (const line of el.lines) parts.push(lineToRect(TL(line), attrs(el.type, line.role)))
         for (const g of el.glyphs) {
           // The glyph path is authored at the origin, so a placement is all that is needed.
           parts.push(glyphMarkup(g.name, g.x, g.y, g.scale, attrs(el.type, g.role, g.chordPos)))
@@ -717,11 +753,11 @@ const glyphDefs = new Map<GlyphName, string>()
           const style =
             (t.bold ? ' font-weight="bold"' : '') + (t.italic ? ' font-style="italic"' : '')
           parts.push(
-            `<text${attrs(el.type, 'text')} x="${num(t.x)}" y="${num(t.y)}" ` +
-              `font-family="serif" font-size="${num(t.size)}"${style}` +
+            `<text${attrs(el.type, 'text')} x="${num(t.x * PX)}" y="${num(t.y * PX)}" ` +
+              `font-family="serif" font-size="${num(t.size * PX)}"${style}` +
               // Only the top-text block sets one; the music's own text is all left-aligned.
               `${t.anchor === undefined || t.anchor === 'start' ? '' : ` text-anchor="${t.anchor}"`}` +
-              `>${t.jazz === undefined ? escapeText(t.text) : jazzChordMarkup(t.jazz, num(t.x))}</text>`,
+              `>${t.jazz === undefined ? escapeText(t.text) : jazzChordMarkup(t.jazz, num(t.x * PX))}</text>`,
           )
         }
         if (abcjs) parts.push('</g>')
@@ -763,23 +799,15 @@ const glyphDefs = new Map<GlyphName, string>()
           : ` for &quot;${escapeText(options.title)}&quot;`
       }" width="${raw(w)}" height="${raw(h)}"` +
       /**
-       * **THE `viewBox` IS THE ONE THING BETWEEN THIS AND BYTE PARITY, AND IT IS DELIBERATELY
-       * STILL HERE.**
+       * **NO `viewBox`.** abcjs draws in ABSOLUTE PIXELS and writes none; the drawing above
+       * is now emitted in pixels too, so there is nothing left for a view transform to do.
        *
-       * abcjs draws in ABSOLUTE PIXELS and writes no `viewBox` at all. We draw in STAFF
-       * SPACES and let the `viewBox` do the conversion — which is why every coordinate in
-       * the body differs too, not just this attribute.
-       *
-       * Removing it alone is not the fix: it took 196 tests red in one run, because
-       * `tests/pixel-geometry.ts` reads the `viewBox` to resolve our coordinates to pixels
-       * and every geometry gate in the repo is built on that. The fix is to emit absolute
-       * pixels throughout, and then this attribute and that scaling both go at once.
-       *
-       * Left in place, and left as the FIRST difference the byte table reports on all 171
-       * fixtures, so the blocker is named on every row rather than hidden behind the ones
-       * after it.
+       * This is what took 196 tests red when it was tried on its own: `tests/pixel-geometry.ts`
+       * reads the `viewBox` to resolve our staff spaces, and every geometry gate is built
+       * on it. Removing the attribute AND emitting pixels are one change, and together they
+       * make the gates compare like with like instead of converting first.
        */
-      ` viewBox="${viewBox}">` +
+      `>` +
       // The TITLE element carries the same phrase with REAL quotes — it is text content,
       // where the `aria-label` is an attribute and the serializer escapes them there.
       `<style>${ABCJS_STYLE}</style><title>Sheet Music${
