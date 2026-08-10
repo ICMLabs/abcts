@@ -8012,7 +8012,21 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     // beams, stems and lyrics are a voice's own; what is shared is the five lines they
     // are printed on. So the drawing is concatenated and one set of staff lines is drawn,
     // rather than each voice getting its own stave.
-    const merged = voicesOfStaff.map((members) => {
+    /**
+     * **A STAFF WHOSE VOICE SAYS NOTHING ON THIS LINE IS DROPPED FROM IT.** `cleanUp`
+     * nulls `tune.lines[i].staff[s]` whenever that entry is `undefined` — the voice never
+     * appeared on the source line — and filters the nulls out (`tune-builder.js:33-60`).
+     * It is a stronger rule than the empty-LINE one beside it, and it is per STAFF.
+     *
+     * `[V:T]c|\` / `[V:B]A|\` / `[V:T]d|` is one continued line for T and a shorter one
+     * for B, so abcjs draws THREE staves — T and B, then T alone — where we drew four and
+     * ran 79px tall. Its golden has three `abcjs-top-line` paths, counted rather than
+     * assumed.
+     */
+    const voicesHere = voicesOfStaff.filter((members) =>
+      members.some((v) => (plans[v]?.measures.length ?? 0) > span.start),
+    )
+    const merged = voicesHere.map((members) => {
       const parts = anchorVoltas(
         anchorBelowStaff(
           anchorAboveStaff(
