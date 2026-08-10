@@ -115,7 +115,7 @@ nothing in `tests/` may grow that mask.**
 
 ## 2. WHAT CLOSED, AND WHY EACH WAS INVISIBLE
 
-Thirty-four landings, every one a read of a named abcjs function.
+Thirty-seven landings, every one a read of a named abcjs function.
 
 - **`staffwidth` is the MUSIC area; the page is it plus abcjs's 15px margins.** compat
   mapped `renderAbc(…, {staffwidth: 670})` straight onto core's `systemWidth`, which is
@@ -250,6 +250,13 @@ Thirty-four landings, every one a read of a named abcjs function.
   the counters twice, because `renderText` is handed an already-generated class and appends
   (`draw/relative.js:58`). Ours wrote neither the name nor the class. The first attempt
   doubled the WHOLE string and the contract said so in one run.
+- **A GRACE GETS LEDGER LINES, its head is NAMED with the written note, and its STEM is
+  written after every grace head** — abcjs's contract for `{gab}c4|` is
+  `c, g, a, ledger, b, ledger, stem, stem, stem`. We drew no grace ledgers at all.
+  **THE BASELINES CAUGHT A REGRESSION INSIDE THE FIX**: the grace beam pass walks
+  `graceLines` BY INDEX and assumes every entry is a stem, so pushing the ledgers straight
+  in moved every grace stem — the diff had REMOVALS where a new feature should only ever
+  add.
 - **`data-index` is an index into the SELECTABLES, not into the children.**
   `Selectables.add` writes `{selectable: false, "data-index": elements.length}` and only
   after `canSelect`, which with no `selectTypes` admits `el_type 'note'` alone
@@ -400,19 +407,9 @@ regression, so read the diff before touching the gate.
    and the previous note called it generated from reading a classless golden path and
    ASSUMING it was the ledger. **A path with no class is not evidence about which element it
    is.**
-9. **A GRACE GROUP'S INTERNAL ORDER — `dom-grace`, 10 of 22 rows.** MEASURED from abcjs's
-   own contract for `{gab}c4|`:
-
-   ```
-   c (main head)  →  g  →  a, ledger  →  b, ledger  →  stem, stem, stem
-   ```
-
-   So `addGraceNotes` runs AFTER the pitch loop and after the stem
-   (`abstract-engraver.js:834-836`), each grace contributes its head and then its OWN
-   ledgers, and the three grace STEMS come last, from the grace beam pass. Ours emits the
-   main head, then every LINE (all the grace ledgers and stems), then every grace head —
-   so a stem stands where abcjs's first grace does. Matching it needs a per-grace sort key
-   on both channels, the same shape as the pitch run in `layoutNote`.
+9. ~~**A GRACE GROUP'S INTERNAL ORDER**~~ — **CLOSED, 10 of 22 rows -> 20.** What is left
+   is the grace BEAM element: abcjs classes it `abcjs-beam-elem abcjs-d0 …` and orders it
+   BEFORE the grace slur, where ours writes the slur and no beam class at all.
 10. **A MEASURE CAN CARRY ONLY ONE `meterChange`, AND `svg-time-sig-list` NEEDS THREE.**
    `[M:2/4]y[M:3/4]y[M:4/4]` has no barline in it, so all three changes belong to ONE
    measure and `Measure.meterChange` keeps the last. abcjs draws all three, each as its own
