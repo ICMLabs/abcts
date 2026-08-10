@@ -63,6 +63,7 @@ const PASSING: readonly string[] = [
   'dom-clef-change',
   'dom-key-sig',
   'dom-ledger',
+  'dom-parts',
   'dom-plain',
   'dom-rest',
   'dom-title-composer',

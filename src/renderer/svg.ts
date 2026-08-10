@@ -916,6 +916,7 @@ const glyphDefs = new Map<GlyphName, string>()
         if (abcjs && el.blockHeight !== undefined) return
         // abcjs wraps each element in a group carrying its kind and index, which is what
         // its interaction code walks. Core's own naming needs no wrapper.
+        let gcls = ''
         if (abcjs) {
           const name = ABCJS_ELEMENT_NAMES[el.type] ?? el.type
           // `if (child.type !== 'staff-extra' && !isInMeasure()) startMeasure()`
@@ -931,7 +932,7 @@ const glyphDefs = new Map<GlyphName, string>()
             klass += ` d${Math.round((el.durationClass ?? 0) * 1000) / 1000}`.replace(/\./g, '-')
             for (const p of el.abcjsPitches ?? []) klass += ` p${p}`
           }
-          const gcls = classes.generate(klass)
+          gcls = classes.generate(klass)
           /**
            * abcjs's own attribute order on an element group: `fill`, `stroke`, the class
            * when there is one, then `data-name`.
@@ -1038,8 +1039,24 @@ const glyphDefs = new Map<GlyphName, string>()
         for (const t of el.texts) {
           const style =
             (t.bold ? ' font-weight="bold"' : '') + (t.italic ? ' font-style="italic"' : '')
+          /**
+           * **A `P:` LABEL NAMES ITSELF AND CARRIES ITS GROUP'S CLASS TWICE.**
+           * `renderText(…, { klass: classes.generate("part"), name: params.c }, true)`
+           * (`draw/relative.js:58`), and abcjs's own contract shows the result DOUBLED —
+           * `abcjs-part abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0` repeated — because the group
+           * around it was generated from the same key and the text appends the COUNTERS
+           * again — `abcjs-part abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0 abcjs-l0 abcjs-m0
+           * abcjs-mm0 abcjs-v0`, the key once and the counters twice. Measured from the
+           * contract, which is the oracle here; ours wrote neither the name nor the class.
+           */
+          const isPart = abcjs && el.type === 'part'
+          const counters = gcls.split(' ').slice(1).join(' ')
+          const partAttr = isPart
+            ? `${gcls ? ` class="${gcls}${counters ? ` ${counters}` : ''}"` : ''}` +
+              ` data-name="${escapeAttr(t.text)}"`
+            : attrs(el.type, 'text')
           parts.push(
-            `<text${attrs(el.type, 'text')} x="${textNum(t.x * PX)}" y="${textNum(t.y * PX + oy)}" ` +
+            `<text${partAttr} x="${textNum(t.x * PX)}" y="${textNum(t.y * PX + oy)}" ` +
               `font-family="serif" font-size="${num(t.size * PX)}"${style}` +
               // Only the top-text block sets one; the music's own text is all left-aligned.
               `${t.anchor === undefined || t.anchor === 'start' ? '' : ` text-anchor="${t.anchor}"`}` +
