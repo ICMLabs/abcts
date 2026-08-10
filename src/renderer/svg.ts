@@ -982,8 +982,9 @@ const glyphDefs = new Map<GlyphName, string>()
         // head loop, so they came first.
         const ordered = abcjs
           ? [
-              ...el.lines.filter((l) => l.role === 'stem'),
+              ...el.lines.filter((l) => l.role === 'stem' && l.beamed !== true),
               ...el.lines.filter((l) => l.role !== 'stem'),
+              ...el.lines.filter((l) => l.role === 'stem' && l.beamed === true),
             ]
           : el.lines
         for (const line of ordered) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))

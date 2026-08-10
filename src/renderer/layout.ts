@@ -844,7 +844,11 @@ export interface PlacedLine {
   readonly thickness: number
   /** What this line is. Absent means it inherits its element's kind. */
   readonly role?: PartRole
-  /** Set on a stem a BEAM retargets — see the stem case in `verticalExtent`. */
+  /**
+   * Set on a stem a BEAM retargets — see the stem case in `verticalExtent`, and the
+   * EMISSION ORDER: an unbeamed stem is `addRight` right after the pitch loop and lands
+   * BEFORE the ledgers, a beamed one comes from the beam pass and lands AFTER them.
+   */
   readonly beamed?: boolean
   /**
    * Drawn but NOT counted in the staff's vertical extent.
@@ -3013,6 +3017,12 @@ function layoutNoteheads(
       y2: tip,
       thickness: weight,
       role: 'stem',
+      // WHICH SIDE OF THE LEDGERS THIS STEM IS WRITTEN ON. An UNBEAMED stem is
+      // `abselem.addRight(…)` right after the pitch loop (`abstract-engraver.js:762`) and
+      // lands BEFORE the ledgers; a BEAMED one comes from the beam pass afterwards and
+      // lands AFTER them. abcjs's own contract shows both — `C, ledger, stem` on a beamed
+      // note and `_B,, stem, ledger` on an unbeamed one. `stemOut` is the beam's handle.
+      ...(stemOut === null ? {} : { beamed: true }),
     })
 
     if (stemOut !== null) {
