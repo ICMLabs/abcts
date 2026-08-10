@@ -3323,6 +3323,10 @@ function barNumberText(
   const size = fontSizeOf('measurefont')
   return {
     text,
+    // `renderText(…, klass: classes.generate('bar-number'), name: "bar-number")`
+    // (`draw/relative.js:38-39`) — and it is the bar element's FIRST child, ahead of the
+    // rule itself.
+    dataName: 'bar-number',
     x: onClef === null ? x : x + width / 2,
     y: y + size,
     size,

@@ -917,6 +917,8 @@ const glyphDefs = new Map<GlyphName, string>()
         // abcjs wraps each element in a group carrying its kind and index, which is what
         // its interaction code walks. Core's own naming needs no wrapper.
         let gcls = ''
+        /** The class counters this element advances — spent once its children are out. */
+        let advance = (): void => {}
         if (abcjs) {
           const name = ABCJS_ELEMENT_NAMES[el.type] ?? el.type
           // `if (child.type !== 'staff-extra' && !isInMeasure()) startMeasure()`
@@ -950,12 +952,60 @@ const glyphDefs = new Map<GlyphName, string>()
               ` data-name="${name}"` +
               `${selectable ? ` selectable="false" data-index="${selectableIndex++}"` : ''}>`,
           )
-          if (el.type === 'note' || (el.type === 'rest' && el.plainRest !== false)) {
-            classes.incrNote()
+          /**
+           * **THE COUNTERS ADVANCE AFTER THE ELEMENT IS DRAWN, NOT BEFORE IT.** `drawVoice`
+           * runs `drawAbsolute(…)` and only then `incrNote()` / `incrMeasure()`
+           * (`draw/voice.js:41-46`), so a child generated INSIDE the element sees the
+           * counters the group itself was named with. A BAR NUMBER is such a child, and
+           * ours read `m1 mm1` where abcjs writes `m0 mm0`.
+           */
+          advance = () => {
+            if (el.type === 'note' || (el.type === 'rest' && el.plainRest !== false)) {
+              classes.incrNote()
+            }
+            if (el.type === 'bar' && !justStarted && foundNote) classes.incrMeasure()
+            if (el.type === 'note' || el.type === 'rest') foundNote = true
           }
-          if (el.type === 'bar' && !justStarted && foundNote) classes.incrMeasure()
-          if (el.type === 'note' || el.type === 'rest') foundNote = true
         }
+        /**
+         * **A BAR NUMBER IS THE BAR'S FIRST CHILD**, ahead of the rule itself — abcjs's own
+         * contract reads `bar-number` then `bar`. Every other element's text comes last,
+         * which is why the texts are built here and placed by kind rather than in order.
+         */
+        const barTexts = abcjs && el.type === 'bar'
+        const textParts: string[] = []
+        for (const t of el.texts) {
+          const style =
+            (t.bold ? ' font-weight="bold"' : '') + (t.italic ? ' font-style="italic"' : '')
+          /**
+           * **A `P:` LABEL NAMES ITSELF AND CARRIES ITS GROUP'S CLASS TWICE.**
+           * `renderText(…, { klass: classes.generate("part"), name: params.c }, true)`
+           * (`draw/relative.js:58`), and abcjs's own contract shows the result DOUBLED —
+           * `abcjs-part abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0` repeated — because the group
+           * around it was generated from the same key and the text appends the COUNTERS
+           * again — `abcjs-part abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0 abcjs-l0 abcjs-m0
+           * abcjs-mm0 abcjs-v0`, the key once and the counters twice. Measured from the
+           * contract, which is the oracle here; ours wrote neither the name nor the class.
+           */
+          // A BAR NUMBER carries a GENERATED class of its own — see `barNumberText`.
+          const isBarNumber = abcjs && t.dataName === 'bar-number'
+          const isPart = abcjs && el.type === 'part'
+          const counters = gcls.split(' ').slice(1).join(' ')
+          const partAttr = isPart
+            ? `${gcls ? ` class="${gcls}${counters ? ` ${counters}` : ''}"` : ''}` +
+              ` data-name="${escapeAttr(t.text)}"`
+            : isBarNumber
+              ? `${attrIfAny(classes.generate('bar-number'))} data-name="bar-number"`
+              : attrs(el.type, 'text')
+          textParts.push(
+            `<text${partAttr} x="${textNum(t.x * PX)}" y="${textNum(t.y * PX + oy)}" ` +
+              `font-family="serif" font-size="${num(t.size * PX)}"${style}` +
+              // Only the top-text block sets one; the music's own text is all left-aligned.
+              `${t.anchor === undefined || t.anchor === 'start' ? '' : ` text-anchor="${t.anchor}"`}` +
+              `>${t.jazz === undefined ? escapeText(t.text) : jazzChordMarkup(t.jazz, textNum(t.x * PX))}</text>`,
+          )
+        }
+        if (barTexts) parts.push(...textParts)
         /**
          * **THE ORDER INSIDE AN ELEMENT GROUP IS THE ENGRAVER'S ADD ORDER**, and for a note
          * that is, measured against abcjs's own goldens:
@@ -1051,33 +1101,8 @@ const glyphDefs = new Map<GlyphName, string>()
         // Prose is a real <text> in a generic family, unlike musical glyphs, which are
         // paths so the SVG stays self-contained. A missing serif face falls back to
         // another serif; a missing Bravura falls back to nothing legible. See layout.ts.
-        for (const t of el.texts) {
-          const style =
-            (t.bold ? ' font-weight="bold"' : '') + (t.italic ? ' font-style="italic"' : '')
-          /**
-           * **A `P:` LABEL NAMES ITSELF AND CARRIES ITS GROUP'S CLASS TWICE.**
-           * `renderText(…, { klass: classes.generate("part"), name: params.c }, true)`
-           * (`draw/relative.js:58`), and abcjs's own contract shows the result DOUBLED —
-           * `abcjs-part abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0` repeated — because the group
-           * around it was generated from the same key and the text appends the COUNTERS
-           * again — `abcjs-part abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0 abcjs-l0 abcjs-m0
-           * abcjs-mm0 abcjs-v0`, the key once and the counters twice. Measured from the
-           * contract, which is the oracle here; ours wrote neither the name nor the class.
-           */
-          const isPart = abcjs && el.type === 'part'
-          const counters = gcls.split(' ').slice(1).join(' ')
-          const partAttr = isPart
-            ? `${gcls ? ` class="${gcls}${counters ? ` ${counters}` : ''}"` : ''}` +
-              ` data-name="${escapeAttr(t.text)}"`
-            : attrs(el.type, 'text')
-          parts.push(
-            `<text${partAttr} x="${textNum(t.x * PX)}" y="${textNum(t.y * PX + oy)}" ` +
-              `font-family="serif" font-size="${num(t.size * PX)}"${style}` +
-              // Only the top-text block sets one; the music's own text is all left-aligned.
-              `${t.anchor === undefined || t.anchor === 'start' ? '' : ` text-anchor="${t.anchor}"`}` +
-              `>${t.jazz === undefined ? escapeText(t.text) : jazzChordMarkup(t.jazz, textNum(t.x * PX))}</text>`,
-          )
-        }
+        if (!barTexts) parts.push(...textParts)
+        advance()
         if (abcjs) parts.push('</g>')
       })
       /**
