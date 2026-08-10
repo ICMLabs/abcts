@@ -652,6 +652,8 @@ const glyphDefs = new Map<GlyphName, string>()
   const parts: string[] = []
   /** abcjs's running counters. Inert unless `add_classes` asked for the markup. */
   const classes = new Classes(options.addClasses === true)
+  /** abcjs's `Selectables.elements.length` — one counter for the whole drawing. */
+  let selectableIndex = 0
 
   for (const system of doc.systems) {
     // The system's own origin, flattened into every coordinate under it.
@@ -803,7 +805,7 @@ const glyphDefs = new Map<GlyphName, string>()
       if (abcjs) parts.push('</g>')
       // `foundNote` — a barline before any note does not advance the measure counter.
       let foundNote = false
-      staff.elements.forEach((el, index) => {
+      staff.elements.forEach((el) => {
         // Already written above, ahead of the braces. See the hoist.
         if (abcjs && el.blockHeight !== undefined) return
         // abcjs wraps each element in a group carrying its kind and index, which is what
@@ -824,12 +826,22 @@ const glyphDefs = new Map<GlyphName, string>()
             for (const p of el.abcjsPitches ?? []) klass += ` p${p}`
           }
           const gcls = classes.generate(klass)
-          // abcjs's own attribute order on an element group: `fill`, `stroke`, the class
-          // when there is one, then `data-name` — and a NOTE carries `selectable` and
-          // `data-index` where a staff-extra carries neither.
+          /**
+           * abcjs's own attribute order on an element group: `fill`, `stroke`, the class
+           * when there is one, then `data-name`.
+           *
+           * **AND `data-index` IS AN INDEX INTO THE SELECTABLES, NOT INTO THE CHILDREN.**
+           * `Selectables.add` writes `{selectable: false, "data-index": elements.length}`
+           * and only after `canSelect`, which with no `selectTypes` admits `el_type
+           * 'note'` alone (`draw/selectables.js:15-45`) — abcjs's rests are note elements,
+           * so both count and nothing else does. A barline, a clef and a key signature
+           * carry NEITHER attribute; ours carried both, with the child index in them.
+           */
+          const selectable = el.type === 'note' || el.type === 'rest'
           parts.push(
             `<g fill="currentColor" stroke="none"${gcls ? ` class="${gcls}"` : ''}` +
-              ` data-name="${name}"${isExtra ? '' : ` selectable="false" data-index="${index}"`}>`,
+              ` data-name="${name}"` +
+              `${selectable ? ` selectable="false" data-index="${selectableIndex++}"` : ''}>`,
           )
           if (el.type === 'note' || (el.type === 'rest' && el.plainRest !== false)) {
             classes.incrNote()
@@ -837,13 +849,18 @@ const glyphDefs = new Map<GlyphName, string>()
           if (el.type === 'bar' && !justStarted && foundNote) classes.incrMeasure()
           if (el.type === 'note' || el.type === 'rest') foundNote = true
         }
-        for (const line of el.lines) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+        // **THE GLYPHS COME FIRST INSIDE AN ELEMENT GROUP.** abcjs walks
+        // `params.children` in the order the engraver added them, which for a note is
+        // notehead, stem, ledger (`draw/absolute.js:11-30`) — its own golden reads
+        // `<path data-name="C">…<path class="abcjs-stem">…<path class="abcjs-ledger">`.
+        // We wrote every rule first, so the stem opened every note group.
         for (const g of el.glyphs) {
           // The glyph path is authored at the origin, so a placement is all that is needed.
           parts.push(
             glyphMarkup(g.name, g.x, g.y, g.scale, attrs(el.type, g.role, g.chordPos), g.role),
           )
         }
+        for (const line of el.lines) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
         // Prose is a real <text> in a generic family, unlike musical glyphs, which are
         // paths so the SVG stays self-contained. A missing serif face falls back to
         // another serif; a missing Bravura falls back to nothing legible. See layout.ts.
