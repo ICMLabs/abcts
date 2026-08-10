@@ -1194,7 +1194,7 @@ system 0 width=90.439 originY=0.000
       glyph noteheadHalf 19.572,-1.000
       glyph noteheadHalf 19.572,-2.000
       glyph noteheadHalf 19.572,-3.000
-      glyph ornamentTremblement 19.464,-4.167
+      glyph ornamentTremblement 19.543,-4.167
       line  19.314,-3.000 -> 21.168,-3.000 t=0.090
       line  19.637,-2.833 -> 19.637,2.500 t=0.129
     bar x=22.437 w=0.077
@@ -1257,7 +1257,7 @@ system 0 width=90.439 originY=0.000
     note@-1,3 x=49.481 w=2.737
       glyph noteheadBlack 49.481,0.500
       glyph noteheadBlack 49.481,-1.500
-      glyph articStaccatoAbove 49.879,-3.522
+      glyph articStaccatoAbove 50.114,-3.522
       line  49.520,-1.400 -> 49.520,4.562 t=0.077
     note@0,3 x=50.876 w=4.741
       glyph noteheadBlack 50.876,0.000
@@ -1268,7 +1268,7 @@ system 0 width=90.439 originY=0.000
     note@1,3 x=53.103 w=2.737
       glyph noteheadBlack 53.103,-0.500
       glyph noteheadBlack 53.103,-1.500
-      glyph articStaccatoAbove 53.500,-3.522
+      glyph articStaccatoAbove 53.736,-3.522
       line  53.142,-1.400 -> 53.142,4.257 t=0.077
     bar x=55.143 w=0.077
       line  55.182,-2.000 -> 55.182,2.000 t=0.077
@@ -1718,28 +1718,28 @@ system 0 width=90.478 originY=0.000
       line  35.637,-2.000 -> 35.637,2.000 t=0.077
     note@-3 x=37.018 w=3.871
       glyph noteheadBlack 37.018,1.500
-      glyph articStaccatoBelow 37.415,3.022
+      glyph articStaccatoBelow 37.651,3.022
       line  38.245,1.400 -> 38.245,-3.008 t=0.077
     note@-2 x=39.308 w=3.871
       glyph noteheadBlack 39.308,1.000
-      glyph articStaccatoBelow 39.705,2.522
+      glyph articStaccatoBelow 39.941,2.522
       line  40.535,0.900 -> 40.535,-3.254 t=0.077
     note@-1 x=41.598 w=3.871
       glyph noteheadBlack 41.598,0.500
-      glyph articStaccatoBelow 41.995,2.022
+      glyph articStaccatoBelow 42.231,2.022
       line  42.825,0.400 -> 42.825,-3.500 t=0.077
     note@6 x=43.888 w=3.871
       glyph noteheadBlack 43.888,-3.000
-      glyph ornamentMordent 43.509,-4.418
+      glyph ornamentMordent 44.521,-4.418
       line  43.630,-3.000 -> 45.411,-3.000 t=0.090
       line  43.926,-2.900 -> 43.926,1.250 t=0.077
     note@5 x=46.178 w=3.871
       glyph noteheadBlack 46.178,-2.500
-      glyph ornamentMordent 45.799,-3.918
+      glyph ornamentMordent 46.810,-3.918
       line  46.216,-2.400 -> 46.216,1.496 t=0.077
     note@4 x=48.467 w=3.871
       glyph noteheadBlack 48.467,-2.000
-      glyph ornamentMordent 48.089,-3.896
+      glyph ornamentMordent 49.100,-3.896
       line  48.506,-1.900 -> 48.506,1.742 t=0.077
     note@1 x=50.757 w=5.474
       glyph noteheadBlack 50.757,-0.500
@@ -1825,11 +1825,11 @@ system 1 width=90.478 originY=15.773
       glyph accidentalSharp 8.974,-2.500
     note@1 x=11.329 w=5.474
       glyph noteheadBlack 11.329,-0.500
-      glyph stringsUpBow 11.291,-4.257
+      glyph stringsUpBow 11.962,-4.257
       line  11.394,-0.333 -> 11.394,3.000 t=0.129
     note@8 x=14.241 w=5.474
       glyph noteheadBlack 14.241,-4.000
-      glyph stringsDownBow 14.108,-5.417
+      glyph stringsDownBow 14.874,-5.417
       line  13.983,-3.000 -> 15.765,-3.000 t=0.090
       line  13.983,-4.000 -> 15.765,-4.000 t=0.090
       line  14.306,-3.833 -> 14.306,0.000 t=0.129
@@ -1840,18 +1840,18 @@ system 1 width=90.478 originY=15.773
       line  17.192,-3.900 -> 17.192,-0.250 t=0.077
     note@7 x=19.213 w=3.871
       glyph noteheadBlack 19.213,-3.500
-      glyph ornamentMordent 18.834,-4.918
+      glyph ornamentMordent 19.846,-4.918
       line  18.955,-3.000 -> 20.737,-3.000 t=0.090
       line  19.252,-3.400 -> 19.252,0.079 t=0.077
     note@8 x=21.272 w=3.871
       glyph noteheadBlack 21.272,-4.000
-      glyph ornamentMordent 20.894,-5.418
+      glyph ornamentMordent 21.905,-5.418
       line  21.014,-3.000 -> 22.796,-3.000 t=0.090
       line  21.014,-4.000 -> 22.796,-4.000 t=0.090
       line  21.311,-3.900 -> 21.311,0.408 t=0.077
     note@6 x=23.331 w=3.871
       glyph noteheadBlack 23.331,-3.000
-      glyph ornamentMordent 22.953,-4.418
+      glyph ornamentMordent 23.964,-4.418
       line  23.073,-3.000 -> 24.855,-3.000 t=0.090
       line  23.370,-2.900 -> 23.370,0.738 t=0.077
     bar x=25.391 w=0.077
@@ -1867,17 +1867,17 @@ system 1 width=90.478 originY=15.773
       line  34.093,-3.400 -> 34.093,0.750 t=0.077
     note@6 x=36.113 w=3.871
       glyph noteheadBlack 36.113,-3.000
-      glyph articStaccatoAbove 36.510,-5.022
+      glyph articStaccatoAbove 36.746,-5.022
       line  35.855,-3.000 -> 37.637,-3.000 t=0.090
       line  36.152,-2.900 -> 36.152,0.585 t=0.077
     note@7 x=38.172 w=3.871
       glyph noteheadBlack 38.172,-3.500
-      glyph articStaccatoAbove 38.570,-5.522
+      glyph articStaccatoAbove 38.805,-5.522
       line  37.914,-3.000 -> 39.696,-3.000 t=0.090
       line  38.211,-3.400 -> 38.211,0.421 t=0.077
     note@8 x=40.232 w=3.871
       glyph noteheadBlack 40.232,-4.000
-      glyph articStaccatoAbove 40.629,-6.022
+      glyph articStaccatoAbove 40.865,-6.022
       line  39.974,-3.000 -> 41.755,-3.000 t=0.090
       line  39.974,-4.000 -> 41.755,-4.000 t=0.090
       line  40.270,-3.900 -> 40.270,0.256 t=0.077
@@ -1885,69 +1885,69 @@ system 1 width=90.478 originY=15.773
       line  42.330,-2.000 -> 42.330,2.000 t=0.077
     note@-1 x=43.710 w=5.474
       glyph noteheadBlack 43.710,0.500
-      glyph ornamentTremblement 43.602,-3.645
+      glyph ornamentTremblement 43.645,-3.645
       line  44.912,0.333 -> 44.912,-3.000 t=0.129
     note@5 x=46.622 w=5.474
       glyph noteheadBlack 46.622,-2.500
-      glyph ornamentTremblement 46.515,-3.667
+      glyph ornamentTremblement 46.558,-3.667
       line  46.687,-2.333 -> 46.687,1.000 t=0.129
     note@-1 x=49.535 w=5.474
       glyph noteheadBlack 49.535,0.500
-      glyph ornamentTremblement 49.427,-3.645
+      glyph ornamentTremblement 49.470,-3.645
       line  50.736,0.333 -> 50.736,-3.000 t=0.129
     note@5 x=52.447 w=5.474
       glyph noteheadBlack 52.447,-2.500
-      glyph ornamentTremblement 52.339,-3.667
+      glyph ornamentTremblement 52.382,-3.667
       line  52.511,-2.333 -> 52.511,1.000 t=0.129
     note@-1 x=55.359 w=5.474
       glyph noteheadBlack 55.359,0.500
-      glyph ornamentMordent 54.981,-3.896
+      glyph ornamentMordent 55.992,-3.896
       line  56.560,0.333 -> 56.560,-3.000 t=0.129
     note@5 x=58.271 w=5.474
       glyph noteheadBlack 58.271,-2.500
-      glyph ornamentMordent 57.893,-3.918
+      glyph ornamentMordent 58.904,-3.918
       line  58.336,-2.333 -> 58.336,1.000 t=0.129
     bar x=61.184 w=0.077
       line  61.222,-2.000 -> 61.222,2.000 t=0.077
     note@-1 x=62.603 w=5.474
       glyph noteheadBlack 62.603,0.500
-      glyph articStaccatoBelow 63.000,1.522
+      glyph articStaccatoBelow 63.236,1.522
       line  63.804,0.333 -> 63.804,-3.000 t=0.129
     note@5 x=65.515 w=5.474
       glyph noteheadBlack 65.515,-2.500
-      glyph articStaccatoAbove 65.912,-4.522
+      glyph articStaccatoAbove 66.148,-4.522
       line  65.580,-2.333 -> 65.580,1.000 t=0.129
     note@4 x=68.427 w=3.871
       glyph noteheadBlack 68.427,-2.000
-      glyph stringsDownBow 68.294,-3.895
+      glyph stringsDownBow 69.060,-3.895
       line  68.466,-1.900 -> 68.466,1.750 t=0.077
     note@5 x=70.487 w=3.871
       glyph noteheadBlack 70.487,-2.500
       line  70.525,-2.400 -> 70.525,1.268 t=0.077
     note@6 x=72.546 w=3.871
       glyph noteheadBlack 72.546,-3.000
-      glyph articStaccatoAbove 72.943,-5.022
-      glyph stringsUpBow 72.508,-6.279
+      glyph articStaccatoAbove 73.179,-5.022
+      glyph stringsUpBow 73.179,-6.279
       line  72.288,-3.000 -> 74.070,-3.000 t=0.090
       line  72.585,-2.900 -> 72.585,0.750 t=0.077
     note@7 x=74.605 w=3.871
       glyph noteheadBlack 74.605,-3.500
-      glyph articStaccatoAbove 75.002,-5.522
+      glyph articStaccatoAbove 75.238,-5.522
       line  74.347,-3.000 -> 76.129,-3.000 t=0.090
       line  74.644,-3.400 -> 74.644,0.268 t=0.077
     bar x=76.665 w=0.077
       line  76.703,-2.000 -> 76.703,2.000 t=0.077
     note@1 x=78.084 w=7.742
       glyph noteheadHalf 78.084,-0.500
-      glyph articStaccatoAbove 78.481,-2.022
-      glyph stringsUpBow 78.046,-4.257
-      glyph ornamentTremblement 77.976,-6.159
-      glyph ornamentTremblement 77.976,-7.449
-      glyph ornamentMordent 77.705,-8.991
+      glyph articStaccatoAbove 78.753,-2.022
+      glyph stringsUpBow 78.753,-4.257
+      glyph ornamentTremblement 78.055,-6.159
+      glyph ornamentTremblement 78.055,-7.449
+      glyph ornamentMordent 78.753,-8.991
       line  78.148,-0.333 -> 78.148,3.000 t=0.129
     note@5 x=82.202 w=10.949
       glyph noteheadWhole 82.202,-2.500
-      glyph fermataAbove 81.772,-4.001
+      glyph fermataAbove 83.169,-4.001
     bar x=88.027 w=0.465
       line  88.066,-2.000 -> 88.066,2.000 t=0.077
       line  88.453,-2.000 -> 88.453,2.000 t=0.077

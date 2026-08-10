@@ -73,6 +73,7 @@ import {
   steps,
 } from './abcjs-constants.js'
 import { glyphsFor, lineWeightsFor } from './glyph-table.js'
+import { SMUFL_TO_ABCJS } from './glyph-map.js'
 import { GLYPHS, type GlyphName } from './glyphs.js'
 import {
   CHAR_ADVANCE,
@@ -2965,7 +2966,10 @@ function layoutNoteheads(
     const decorated = decorationGlyphs(
       event.decorations,
       headX,
-      head.width,
+      // `(notehead) ? notehead.w : 0` (`abstract-engraver.js:842`) — the head's DECLARED
+      // width, which in strict is abcjs's and not Bravura's. `head.width` is the outline's,
+      // and the two differ by 1.90px on a whole note, so every decoration sat 0.95 left.
+      headInk,
       highest,
       lowest,
       up,
@@ -3457,6 +3461,53 @@ const DECORATION_TEXTS: Readonly<Record<string, string>> = {
  * staccato dot never collides with its own stem. Ornaments and dynamics take their own
  * lanes above and below the staff.
  */
+/**
+ * `getSymbolAlign` — **THE HALF-WIDTH SHIFT IS NOT UNIVERSAL**, and applying it universally
+ * put every ornament and every articulation glyph left of where abcjs draws it.
+ *
+ *     var deltaX = width / 2;
+ *     if (glyphs.getSymbolAlign(symbol) !== "center")
+ *       deltaX -= (glyphs.getSymbolWidth(symbol) / 2);
+ *
+ * (`creation/decoration.js:44-48`, and the identical pair at `:156-159`.) And the align is
+ * a RULE rather than a table: *every* `scripts.*` glyph is centre-aligned **except**
+ * `scripts.roll` (`creation/glyphs.js:166-172`). Those outlines are authored centred on
+ * their own origin, so abcjs draws them at the notehead's centre and takes nothing off.
+ *
+ * WHY NO GATE COULD SEE IT, and it is the same shape as the line weights and the tempo
+ * notehead before it: `pixel-parity` and the harvested table compare elements abcjs
+ * CLASSES, and a decoration carries no class; `glyph-ycorr` and `above-lane-order` are
+ * ladders of controls that measure Y, because they were built to name a vertical defect.
+ * So the x of every decoration in the repo was unmeasured, and it was out by that glyph's
+ * own declared half-width — 10.83px on a fermata, 8.97 on a coda, 8.45 on a segno.
+ *
+ * Found by a CANARY: a control written to prove the opening-barline transfer put the same
+ * coda on a note instead, and the rung that was supposed to be the boring one disagreed
+ * with abcjs by nine pixels.
+ */
+const centreAligned = (glyph: string): boolean => {
+  // OUR NAMES ARE SMuFL AND THE RULE IS ON abcjs'S, so it is asked through the same map the
+  // glyph table and `getYCorr` are asked through — `fermataAbove` is `scripts.ufermata`.
+  const abcjs = SMUFL_TO_ABCJS[glyph] ?? glyph
+  return abcjs.startsWith('scripts') && abcjs !== 'scripts.roll'
+}
+
+/** abcjs's `deltaX` for a decoration: the head's half-width, less the glyph's if it is left-aligned. */
+const decorationX = (headX: number, headWidth: number, glyph: string, width: number): number =>
+  headX + headWidth / 2 - (centreAligned(glyph) ? 0 : width / 2)
+
+/**
+ * `createBarLine` hands `createDecoration` a width of **3 or 1**, not the bar's drawn width
+ * — `createDecoration(voice, elem.decoration, 12, (thick) ? 3 : 1, abselem, …)`
+ * (`abstract-engraver.js:1002`). So a mark on a barline is centred half a pixel right of
+ * it, wherever the bar's own glyphs reach. Passing the drawn width put a coda 7.5px right.
+ *
+ * `thick` is abcjs's own list at `:970-971`.
+ */
+const THICK_BARS = new Set<Barline>(['repeatEnd', 'repeatBoth', 'repeatStart', 'final', 'thickThin'])
+const barDecorationWidth = (bar: Barline): number =>
+  spaces(THICK_BARS.has(bar) ? ABCJS_PX.barDecorationWidthThick : ABCJS_PX.barDecorationWidthThin)
+
 function decorationGlyphs(
   names: readonly string[],
   headX: number,
@@ -3592,7 +3643,7 @@ function decorationGlyphs(
     // (`decoration.js:47`). Probed: abcjs's `scripts.sforzato` reports `top === pitch`.
     out.push({
       name: glyph,
-      x: headX + headWidth / 2 - table.width(glyph) / 2,
+      x: decorationX(headX, headWidth, glyph, table.width(glyph)),
       y,
       role: 'decoration',
       reserve: [y, y],
@@ -3615,7 +3666,7 @@ function decorationGlyphs(
     if (spec.place === 'articulation') continue // already placed, above
 
     const glyph = spec.above
-    const centre = headX + headWidth / 2 - table.width(glyph) / 2
+    const centre = decorationX(headX, headWidth, glyph, table.width(glyph))
 
     if (spec.place === 'ornament') {
       const height = heightInPitches(glyph) + ENGRAVE.decorationPadding
@@ -3667,7 +3718,7 @@ function decorationGlyphs(
         leftReach = Math.max(leftReach, 2 * width + roomTaken)
         continue
       }
-      const onStem = headX + headWidth / 2 - glyphsFor(strict).width(glyph) / 2
+      const onStem = decorationX(headX, headWidth, glyph, glyphsFor(strict).width(glyph))
       const tip = stemUp
         ? Math.max(topStep, 4) + ENGRAVE.stemLength
         : Math.min(bottomStep, -4) - ENGRAVE.stemLength
@@ -3686,7 +3737,14 @@ function decorationGlyphs(
       // The four pitch abcjs drops every dynamic letter by is NOT here — it is
       // `ABCJS_YCORR`, spent once in the writer for every glyph that has one. This y is
       // the ANCHOR, which is what the lane anchors shift and what a reserve would read.
-      out.push({ name: glyph, x: centre, y: stepToY(lane), role: 'dynamic' })
+      // A DYNAMIC IS NOT A DECORATION — it is drawn at the ELEMENT'S OWN X with no
+      // half-width arithmetic at all. `volumeDecoration` builds a `DynamicDecoration` and
+      // hands it to `voice.addOther`, and `drawDynamics` then calls
+      // `printSymbol(renderer, params.anchor.x, params.pitch, params.dec, …)`
+      // (`creation/decoration.js:67-85`, `draw/dynamics.js:8`). No `deltaX`, no
+      // `getSymbolWidth`, no `getSymbolAlign` — none of that path runs for a dynamic.
+      // Centring it on the head put every one 1.37px right of abcjs's.
+      out.push({ name: glyph, x: headX, y: stepToY(lane), role: 'dynamic' })
     }
   }
 
@@ -5999,7 +6057,7 @@ function layoutMeasure(
         : decorationGlyphs(
             openDecorations,
             x,
-            plain.width,
+            barDecorationWidth(measure.openingBarline),
             6,
             6,
             false,
@@ -6246,7 +6304,7 @@ function layoutMeasure(
         : decorationGlyphs(
             barDecorations,
             x,
-            plain.width,
+            barDecorationWidth(measure.closingBarline),
             6,
             6,
             false,

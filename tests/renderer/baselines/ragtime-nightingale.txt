@@ -260,7 +260,7 @@ system 0 width=90.336 originY=0.000
       glyph noteheadBlack 79.119,5.500
       glyph noteheadBlack 79.119,2.000
       glyph flag8thDown 79.119,9.000
-      glyph articMarcatoAbove 79.225,-3.782
+      glyph articMarcatoAbove 79.751,-3.782
       line  78.860,3.000 -> 80.642,3.000 t=0.090
       line  78.860,4.000 -> 80.642,4.000 t=0.090
       line  78.860,5.000 -> 80.642,5.000 t=0.090
@@ -369,7 +369,7 @@ system 1 width=90.394 originY=46.754
       glyph noteheadHalf 18.092,1.000
       glyph noteheadHalf 18.092,-0.500
       glyph noteheadHalf 18.092,-1.500
-      glyph dynamicMP 16.992,5.750
+      glyph dynamicMP 18.092,5.750
       line  18.157,-1.333 -> 18.157,4.500 t=0.129
     bar x=33.648 w=0.077
       line  33.686,-2.000 -> 33.686,2.000 t=0.077
@@ -3191,7 +3191,7 @@ system 9 width=90.403 originY=306.811
       glyph noteheadHalf 54.597,1.000
       glyph noteheadHalf 54.597,-0.500
       glyph noteheadHalf 54.597,-1.500
-      glyph dynamicMP 53.497,5.247
+      glyph dynamicMP 54.597,5.247
       line  54.661,-1.333 -> 54.661,4.500 t=0.129
     bar x=69.806 w=0.077
       line  69.845,-2.000 -> 69.845,2.000 t=0.077
@@ -4548,7 +4548,7 @@ system 13 width=90.436 originY=437.088
       glyph accidentalFlat 52.741,-1.000
     note@3 x=54.902 w=3.871
       glyph noteheadBlack 54.902,-1.500
-      glyph dynamicMP 53.802,3.500
+      glyph dynamicMP 54.902,3.500
       line  54.941,-1.400 -> 54.941,2.250 t=0.077
     note@4 x=58.662 w=3.871
       glyph noteheadBlack 58.662,-2.000
@@ -6130,12 +6130,12 @@ system 17 width=90.389 originY=577.418
       glyph noteheadBlack 33.489,-0.500
       glyph noteheadBlack 33.489,-1.500
       glyph noteheadBlack 33.489,-3.000
-      glyph articStaccatoBelow 33.886,1.522
+      glyph articStaccatoBelow 34.122,1.522
       line  33.231,-3.000 -> 35.013,-3.000 t=0.090
       line  34.716,0.400 -> 34.716,-8.007 t=0.077
     note@3 x=37.693 w=3.871
       glyph noteheadBlack 37.693,-1.500
-      glyph ornamentTrill 37.125,-4.314
+      glyph ornamentTrill 38.326,-4.314
       line  38.921,-1.600 -> 38.921,-8.413 t=0.077
     note@10 x=42.345 w=3.871
       glyph noteheadBlack 42.345,-5.000
@@ -6175,7 +6175,7 @@ system 17 width=90.389 originY=577.418
       glyph noteheadBlack 56.505,-1.500
       glyph noteheadBlack 56.505,-3.000
       glyph flag8thUp 57.693,-6.500
-      glyph articStaccatoBelow 56.902,1.522
+      glyph articStaccatoBelow 57.138,1.522
       line  56.247,-3.000 -> 58.029,-3.000 t=0.090
       line  57.706,0.333 -> 57.706,-6.500 t=0.129
     rest x=59.585 w=3.871
@@ -6200,7 +6200,7 @@ system 17 width=90.389 originY=577.418
       glyph accidentalFlat 73.844,0.500
     note@0 x=76.005 w=3.871
       glyph noteheadBlack 76.005,0.000
-      glyph dynamicMF 74.919,4.250
+      glyph dynamicMF 76.005,4.250
       line  77.232,-0.100 -> 77.232,-5.512 t=0.077
     note@4 x=79.085 w=3.871
       glyph noteheadBlack 79.085,-2.000
@@ -6514,7 +6514,7 @@ system 18 width=90.428 originY=614.946
     note@0,7 x=60.272 w=2.737
       glyph noteheadBlack 60.272,0.000
       glyph noteheadBlack 60.272,-3.500
-      glyph dynamicFF 59.372,6.500
+      glyph dynamicFF 60.272,6.500
       line  60.014,-3.000 -> 61.796,-3.000 t=0.090
       line  61.499,-0.100 -> 61.499,-7.500 t=0.077
     note@-1,6 x=63.318 w=2.737
@@ -6631,7 +6631,7 @@ system 18 width=90.428 originY=614.946
     note@-9,-2 x=17.895 w=5.474
       glyph noteheadBlack 17.895,4.500
       glyph noteheadBlack 17.895,1.000
-      glyph articMarcatoAbove 18.001,-3.782
+      glyph articMarcatoAbove 18.528,-3.782
       line  17.637,3.000 -> 19.419,3.000 t=0.090
       line  17.637,4.000 -> 19.419,4.000 t=0.090
       line  17.960,1.167 -> 17.960,8.000 t=0.129
@@ -6646,7 +6646,7 @@ system 18 width=90.428 originY=614.946
     note@-9,-2 x=53.201 w=5.474
       glyph noteheadBlack 53.201,4.500
       glyph noteheadBlack 53.201,1.000
-      glyph articMarcatoAbove 53.308,-3.782
+      glyph articMarcatoAbove 53.834,-3.782
       line  52.943,3.000 -> 54.725,3.000 t=0.090
       line  52.943,4.000 -> 54.725,4.000 t=0.090
       line  53.266,1.167 -> 53.266,8.000 t=0.129
@@ -8073,13 +8073,13 @@ system 22 width=90.323 originY=749.211
     note@-2,5 x=71.708 w=3.871
       glyph noteheadBlack 71.708,1.000
       glyph noteheadBlack 71.708,-2.500
-      glyph articAccentAbove 71.427,-5.022
+      glyph articAccentAbove 72.341,-5.022
       line  71.746,-2.400 -> 71.746,4.743 t=0.077
     note@-6,1 x=76.923 w=3.871
       glyph noteheadBlack 76.923,3.000
       glyph noteheadBlack 76.923,-0.500
       glyph flag8thDown 76.923,6.500
-      glyph articAccentAbove 76.642,-2.522
+      glyph articAccentAbove 77.556,-2.522
       line  76.665,3.000 -> 78.447,3.000 t=0.090
       line  76.988,-0.333 -> 76.988,6.500 t=0.129
     rest x=82.139 w=3.871

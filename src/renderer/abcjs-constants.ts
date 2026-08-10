@@ -151,6 +151,15 @@ export const ABCJS_PX = {
   barlineAfterThick: 5,
   barlineBeforeSecondThin: 3,
   barlineBeforeSecondDots: 3,
+  /**
+   * The "notehead width" a BARLINE hands its decorations, which is not a width at all:
+   * `createDecoration(voice, elem.decoration, 12, (thick) ? 3 : 1, abselem, 0, "down", 2, …)`
+   * (`abstract-engraver.js:1002`). The mark is centred half of it right of the bar's own
+   * origin — 1.5px on a repeat or a double, 0.5px on a plain one — wherever the bar's
+   * rules actually reach. Passing the bar's DRAWN width instead put a coda 7.5px right.
+   */
+  barDecorationWidthThick: 3,
+  barDecorationWidthThin: 1,
   /** A bar's own width plus its `minspacing`: nothing follows it closer than this. */
   barGap: 11,
   /** Clearance a barline leaves before the music resumes. */

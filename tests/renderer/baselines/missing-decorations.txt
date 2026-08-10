@@ -66,7 +66,7 @@ system 0 width=57.324 originY=0.000
       glyph timeSig4 6.329,1.000
     note@-6 x=9.141 w=5.474
       glyph noteheadBlack 9.141,3.000
-      glyph ornamentTrill 8.573,-4.314
+      glyph ornamentTrill 9.774,-4.314
       line  8.883,3.000 -> 10.665,3.000 t=0.090
       line  10.343,2.833 -> 10.343,-0.500 t=0.129
     note@-5 x=14.616 w=5.474
@@ -74,7 +74,7 @@ system 0 width=57.324 originY=0.000
       line  15.817,2.333 -> 15.817,-1.000 t=0.129
     note@-4 x=20.090 w=5.474
       glyph noteheadBlack 20.090,2.000
-      glyph ornamentTrill 19.521,-4.314
+      glyph ornamentTrill 20.723,-4.314
       line  21.292,1.833 -> 21.292,-1.500 t=0.129
     note@-3 x=25.565 w=5.474
       glyph noteheadBlack 25.565,1.500
@@ -92,7 +92,7 @@ system 0 width=57.324 originY=0.000
       line  43.472,0.000 -> 43.472,3.500 t=0.129
     note@1 x=48.882 w=5.474
       glyph noteheadBlack 48.882,-0.500
-      glyph ornamentTrill 48.313,-4.314
+      glyph ornamentTrill 49.514,-4.314
       line  48.946,-0.333 -> 48.946,3.000 t=0.129
     bar x=54.356 w=1.239
       line  54.395,-2.000 -> 54.395,2.000 t=0.077
@@ -117,38 +117,38 @@ system 0 width=57.324 originY=0.000
       glyph timeSig4 6.329,1.000
     note@-6 x=9.141 w=5.474
       glyph noteheadBlack 9.141,3.000
-      glyph tremolo1 9.131,-0.375
+      glyph tremolo1 9.174,-0.375
       line  8.883,3.000 -> 10.665,3.000 t=0.090
       line  10.343,2.833 -> 10.343,-0.500 t=0.129
     note@-5 x=14.616 w=5.474
       glyph noteheadBlack 14.616,2.500
-      glyph tremolo2 14.606,-0.625
+      glyph tremolo2 14.649,-0.625
       line  15.817,2.333 -> 15.817,-1.000 t=0.129
     note@-4 x=20.090 w=5.474
       glyph noteheadBlack 20.090,2.000
-      glyph tremolo3 20.080,-0.875
+      glyph tremolo3 20.123,-0.875
       line  21.292,1.833 -> 21.292,-1.500 t=0.129
     note@-3 x=25.565 w=5.474
       glyph noteheadBlack 25.565,1.500
-      glyph tremolo4 25.555,-1.125
+      glyph tremolo4 25.598,-1.125
       line  26.766,1.333 -> 26.766,-2.000 t=0.129
     bar x=31.039 w=0.077
       line  31.078,-2.000 -> 31.078,2.000 t=0.077
     note@-2 x=32.458 w=5.474
       glyph noteheadBlack 32.458,1.000
-      glyph tremolo1 32.448,-1.375
+      glyph tremolo1 32.491,-1.375
       line  33.660,0.833 -> 33.660,-2.500 t=0.129
     note@-1 x=37.933 w=5.474
       glyph noteheadBlack 37.933,0.500
-      glyph tremolo2 37.923,-1.625
+      glyph tremolo2 37.966,-1.625
       line  39.134,0.333 -> 39.134,-3.000 t=0.129
     note@0 x=43.407 w=5.474
       glyph noteheadBlack 43.407,0.000
-      glyph tremolo3 43.397,1.875
+      glyph tremolo3 43.440,1.875
       line  43.472,0.000 -> 43.472,3.500 t=0.129
     note@1 x=48.882 w=5.474
       glyph noteheadBlack 48.882,-0.500
-      glyph tremolo4 48.872,1.625
+      glyph tremolo4 48.914,1.625
       line  48.946,-0.333 -> 48.946,3.000 t=0.129
     bar x=54.356 w=1.239
       line  54.395,-2.000 -> 54.395,2.000 t=0.077
@@ -225,7 +225,7 @@ system 0 width=90.323 originY=0.000
       glyph timeSig4 6.329,1.000
     note@-6 x=9.141 w=5.474
       glyph noteheadBlack 9.141,3.000
-      glyph segno 8.764,-4.702
+      glyph segno 9.774,-4.702
       line  8.883,3.000 -> 10.665,3.000 t=0.090
       line  10.343,2.833 -> 10.343,-0.500 t=0.129
     note@-5 x=18.854 w=5.474
@@ -251,7 +251,7 @@ system 0 width=90.323 originY=0.000
     note@1 x=78.546 w=5.474
       glyph noteheadBlack 78.546,-0.500
       line  78.610,-0.333 -> 78.610,3.000 t=0.129
-      text  73.278,-4.000 size=2.065 italic "D.S. al Coda"
+      text  73.321,-4.000 size=2.065 italic "D.S. al Coda"
     bar x=88.258 w=0.077
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
 system 1 width=90.323 originY=22.252
@@ -265,7 +265,7 @@ system 1 width=90.323 originY=22.252
       glyph gClef 2.581,1.000
     note@-6 x=6.329 w=5.474
       glyph noteheadBlack 6.329,3.000
-      glyph coda 5.885,-4.609
+      glyph coda 6.962,-4.609
       line  6.071,3.000 -> 7.853,3.000 t=0.090
       line  7.530,2.833 -> 7.530,-0.500 t=0.129
     note@-5 x=16.393 w=5.474
@@ -291,10 +291,10 @@ system 1 width=90.323 originY=22.252
     note@1 x=78.194 w=5.474
       glyph noteheadBlack 78.194,-0.500
       line  78.259,-0.333 -> 78.259,3.000 t=0.129
-      text  73.329,-4.000 size=2.065 italic "D.C. al Fine"
+      text  73.372,-4.000 size=2.065 italic "D.C. al Fine"
     bar x=88.258 w=0.077
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
-system 2 width=54.511 originY=35.383
+system 2 width=54.553 originY=35.383
   staff 0 originY=4.750
     staffline 1.935,2.000 -> 52.576,2.000 t=0.090
     staffline 1.935,1.000 -> 52.576,1.000 t=0.090
@@ -307,7 +307,7 @@ system 2 width=54.511 originY=35.383
       glyph noteheadBlack 6.329,3.000
       line  6.071,3.000 -> 7.853,3.000 t=0.090
       line  7.530,2.833 -> 7.530,-0.500 t=0.129
-      text  1.521,-4.000 size=2.065 italic "D.S. al Fine"
+      text  1.564,-4.000 size=2.065 italic "D.S. al Fine"
     note@-5 x=11.804 w=5.474
       glyph noteheadBlack 11.804,2.500
       line  13.005,2.333 -> 13.005,-1.000 t=0.129
@@ -331,14 +331,14 @@ system 2 width=54.511 originY=35.383
     note@1 x=46.069 w=5.474
       glyph noteheadBlack 46.069,-0.500
       line  46.134,-0.333 -> 46.134,3.000 t=0.129
-      text  40.744,-4.000 size=2.065 italic "D.C. al Coda"
+      text  40.787,-4.000 size=2.065 italic "D.C. al Coda"
     bar x=51.544 w=1.239
       line  51.582,-2.000 -> 51.582,2.000 t=0.077
       line  52.318,-2.000 -> 52.318,2.000 t=0.516
 tune 5
-bounds  width=58.888 height=23.401 top=-1.935
+bounds  width=58.930 height=23.401 top=-1.935
 systems 1
-system 0 width=58.888 originY=0.000
+system 0 width=58.930 originY=0.000
   staff 0 originY=15.530
     staffline 1.935,2.000 -> 56.953,2.000 t=0.090
     staffline 1.935,1.000 -> 56.953,1.000 t=0.090
@@ -346,8 +346,8 @@ system 0 width=58.888 originY=0.000
     staffline 1.935,-1.000 -> 56.953,-1.000 t=0.090
     staffline 1.935,-2.000 -> 56.953,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  13.714,-11.071 size=3.484 bold "S-missing-6 Combined Decorations"
-      text  23.460,-6.869 size=2.452 italic "Test Fixture"
+      text  13.735,-11.071 size=3.484 bold "S-missing-6 Combined Decorations"
+      text  23.481,-6.869 size=2.452 italic "Test Fixture"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     timeSignature x=6.329 w=1.522
@@ -359,7 +359,7 @@ system 0 width=58.888 originY=0.000
       line  10.343,2.833 -> 10.343,-0.500 t=0.129
     note@-5 x=14.616 w=5.474
       glyph noteheadBlack 14.616,2.500
-      glyph ornamentTrill 14.047,-4.314
+      glyph ornamentTrill 15.249,-4.314
       line  15.817,2.333 -> 15.817,-1.000 t=0.129
     note@-4 x=20.090 w=5.474
       glyph accidentalSharp 18.768,2.000
@@ -367,7 +367,7 @@ system 0 width=58.888 originY=0.000
       line  21.292,1.833 -> 21.292,-1.500 t=0.129
     note@-3 x=25.565 w=5.474
       glyph noteheadBlack 25.565,1.500
-      glyph tremolo1 25.555,-1.125
+      glyph tremolo1 25.598,-1.125
       line  26.766,1.333 -> 26.766,-2.000 t=0.129
     bar x=31.039 w=0.077
       line  31.078,-2.000 -> 31.078,2.000 t=0.077
@@ -377,16 +377,16 @@ system 0 width=58.888 originY=0.000
       line  35.224,0.833 -> 35.224,-2.500 t=0.129
     note@-1 x=39.497 w=5.474
       glyph noteheadBlack 39.497,0.500
-      glyph tremolo2 39.487,-1.625
+      glyph tremolo2 39.530,-1.625
       line  40.699,0.333 -> 40.699,-3.000 t=0.129
     note@0 x=44.972 w=5.474
       glyph noteheadBlack 44.972,0.000
-      glyph ornamentTrill 44.403,-4.314
+      glyph ornamentTrill 45.605,-4.314
       line  45.036,0.000 -> 45.036,3.500 t=0.129
     note@1 x=50.446 w=5.474
       glyph noteheadBlack 50.446,-0.500
       line  50.511,-0.333 -> 50.511,3.000 t=0.129
-      text  45.121,-4.000 size=2.065 italic "D.C. al Coda"
+      text  45.164,-4.000 size=2.065 italic "D.C. al Coda"
     bar x=55.920 w=1.239
       line  55.959,-2.000 -> 55.959,2.000 t=0.077
       line  56.695,-2.000 -> 56.695,2.000 t=0.516

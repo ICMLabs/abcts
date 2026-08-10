@@ -1195,12 +1195,12 @@ system 0 width=90.323 originY=0.000
       glyph timeSig4 6.329,1.000
     note@-6 x=9.141 w=3.871
       glyph noteheadBlack 9.141,3.000
-      glyph articStaccatoBelow 9.539,4.522
+      glyph articStaccatoBelow 9.774,4.522
       line  8.883,3.000 -> 10.665,3.000 t=0.090
       line  10.369,2.900 -> 10.369,-1.000 t=0.077
     note@-6 x=12.199 w=3.871
       glyph noteheadBlack 12.199,3.000
-      glyph articStaccatoBelow 12.596,4.522
+      glyph articStaccatoBelow 12.832,4.522
       line  11.941,3.000 -> 13.723,3.000 t=0.090
       line  13.426,2.900 -> 13.426,-1.000 t=0.077
     note@-5 x=15.256 w=5.474
@@ -1211,11 +1211,11 @@ system 0 width=90.323 originY=0.000
       line  20.781,2.333 -> 20.781,-1.000 t=0.129
     note@-4 x=23.903 w=3.871
       glyph noteheadBlack 23.903,2.000
-      glyph articStaccatoBelow 24.300,3.522
+      glyph articStaccatoBelow 24.536,3.522
       line  25.130,1.900 -> 25.130,-2.000 t=0.077
     note@-4 x=26.961 w=3.871
       glyph noteheadBlack 26.961,2.000
-      glyph articStaccatoBelow 27.358,3.522
+      glyph articStaccatoBelow 27.594,3.522
       line  28.188,1.900 -> 28.188,-2.000 t=0.077
     bar x=30.018 w=0.077
       line  30.057,-2.000 -> 30.057,2.000 t=0.077
@@ -1285,7 +1285,7 @@ system 1 width=90.323 originY=23.025
       glyph gClef 2.581,1.000
     note@1 x=6.329 w=7.742
       glyph noteheadHalf 6.329,-0.500
-      glyph ornamentTremblement 6.221,-3.645
+      glyph ornamentTremblement 6.300,-3.645
       line  6.394,-0.333 -> 6.394,3.000 t=0.129
     note@1 x=20.947 w=5.474
       glyph noteheadBlack 20.947,-0.500
