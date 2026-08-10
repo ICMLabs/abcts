@@ -225,6 +225,20 @@ checkpoint and hand off as you go so no context is lost.
 > `scripts/gen-audio-controls.mjs` rendered them — including `measureLength` being the tune's
 > LAST `M:`, not its first.
 
+> 🔁 **A REPEAT'S LAST ENDING WAS PLAYED TWICE, AND ONLY A THIRD SURFACE COULD SEE IT**
+> (2026-08-09b). `currentTrackMilliseconds` is what the FLATTENER writes back onto the
+> source (`abc_midi_flattener.js:526-546`) — the event table says what sounds, `setTiming`
+> says where the clock is, and this says which WRITTEN element is lit. `resolveRepeats`
+> pushed a synthetic `startRepeat` for any final section that was not one, including the
+> `startEnding` of a LAST ending, so `CDE|:FG[Ab]|1 Bcd:|2 efg|]` played `efg` twice and
+> ended at 18000 where abcjs ends at 15000. **The audio table was 0 of 72 and the MIDI file
+> byte-exact throughout** — neither has a case with the second ending last, and a doubled
+> pass reads as "more notes" on a table nobody counts by hand. It reads as a doubled ENTRY
+> on a per-element one. A SPACER is never stamped at all, which the same ladder proved.
+> One row is left open and NAMED rather than hidden: `|1,3 … :|2,4 …`, where abcjs's own
+> `duplicateSpan` iterates to an `undefined` end and emits nothing, giving a pass with no
+> ending. Closing it is a decision, not a bug fix.
+
 > ⏱️ **`setTiming` IS IN — 0 of 38 — AND THE HARVESTED CORPUS COULD NOT DEFEND ITS OWN CODE**
 > (2026-08-09b). `src/audio/timing.ts`, the TIME half of the audio↔geometry join, ported
 > from `abc_tune.js`'s `setupEvents`. It re-derives what the flattener already answers a
@@ -442,10 +456,11 @@ abcjs source are all reached by sibling path and stay in that repo. Keep it that
 backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
-**GEOMETRY, AUDIO, THE MIDI FILE, THE CHORD GRID AND THE TIMING CLOCK ARE ALL AT ZERO.** 1112/1112 with no
-reds; **thirteen gates and SIX ranked tables, every one of them empty** — 0 of 72 audio
-cases, 0 of 38 note timings, 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested
-fixtures, 0 of 120 pixel targets. **No table can name a defect, and that is the normal condition here rather than a
+**GEOMETRY, AUDIO, THE MIDI FILE, THE CHORD GRID AND THE TIMING CLOCK ARE ALL AT ZERO.** 1125/1125 with no
+reds; **fifteen gates and SEVEN ranked tables** — 0 of 72 audio cases, 0 of 38 note timings,
+0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
+and **1 of 13 element timings**, which is the only named row in the engine and is abcjs
+being idiosyncratic rather than us being wrong. **No table can name a defect, and that is the normal condition here rather than a
 milestone** — the last four findings all came from building a gate that expresses an axis
 none of the others can, or from rendering a control abcjs's own suite does not contain.
 

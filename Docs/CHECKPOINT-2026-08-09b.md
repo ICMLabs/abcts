@@ -16,17 +16,19 @@ work list for what is left.
 
 | axis | standing |
 |---|---|
-| suite | **1112 of 1112. NO REDS.** |
+| suite | **1125 of 1125. NO REDS.** |
 | **audio ranked table** | **0 of 72** — was 2 of 61; the corpus GREW by 11 controls |
 | **chord-grid ranked table** | **0 of 23** — NEW, and the feature is new with it |
 | midi-file ranked table | **0 of 3 — BYTE-EXACT** |
 | harvested ranked table | 0 of 174 |
 | pixel ranked table | 0 of 120 |
 | **timing ranked table** | **0 of 38** — NEW (13 harvested + 25 controls) |
-| gates | **13** (29 test files) |
+| **element-timing ranked table** | **1 of 13** — NEW; the one open row in the engine |
+| gates | **15** (31 test files) |
 
-**THERE IS NO NAMED DEFECT LEFT ON ANY TABLE.** The engine's last one — the host drum
-options — closed first thing this session.
+**ONE NAMED ROW LEFT ON ANY TABLE**, and it is abcjs being idiosyncratic rather than us
+being wrong — see §7. The engine's last ordinary defect, the host drum options, closed
+first thing this session.
 
 ---
 
@@ -184,6 +186,42 @@ used to be a sentence in a handoff.
 
 ---
 
+## 7. `currentTrackMilliseconds` — A THIRD SURFACE, AND IT FOUND TWO THINGS THE OTHERS COULD NOT
+
+The event table says WHAT sounds; `setTiming` says where the CLOCK is; this says which
+WRITTEN element is lit. abcjs stamps it from inside the FLATTENER
+(`abc_midi_flattener.js:526-546`), which is why `doTimingTest` calls `setUpAudio()` and
+never `setTiming()`. `flattenAudio` now returns `elementTimings`, keyed by the source event
+object.
+
+**A note reached twice through a repeat carries both times**, and the shape is the contract:
+a number until a second DIFFERENT value arrives, an array after that, duplicates from other
+voices dropped. Reproduced rather than normalised.
+
+**FINDING ONE — A REPEAT'S LAST ENDING WAS PLAYED TWICE.** `resolveRepeats` pushed a
+synthetic `startRepeat` for any final section that was not one, including the `startEnding`
+of a LAST ending: it closed the repeat at that index and opened a new one there.
+`CDE|:FG[Ab]|1 Bcd:|2 efg|]` played `efg` at 12000 AND at 15000, and ended at 18000 where
+abcjs ends at 15000. **NO EVENT-LIST GATE COULD SEE IT** — the audio table is 0 of 72 and the
+MIDI file is byte-exact, and neither has a case with the second ending LAST. A doubled pass
+reads as "more notes" on a table nobody counts by hand; it reads as a doubled ENTRY here.
+The `endRepeat` arm of that guard is load-bearing (removing it reds four cases), so the fix
+narrows the condition rather than deleting it.
+
+**FINDING TWO — A SPACER IS NEVER STAMPED AT ALL.** It reaches `writeNote` in neither
+engine, so abcjs's element carries no `currentTrackMilliseconds` rather than one it ignores.
+`CzE|DyFG|`: the `z` rest IS stamped and the `y` is not.
+
+**AND THE ONE OPEN ROW.** `el-four-endings` — `|1,3 … :|2,4 …` — is a corner where abcjs's
+OWN answer is idiosyncratic: `repeats.js` leaves the final ending's `end` undefined and
+`duplicateSpan`'s `for (i = start; i <= undefined; i++)` emits nothing for it, so abcjs
+plays `[CDE FGA][CDE][CDE FGA][CDE cde]` — a second pass with no ending at all. Ours plays
+the four passes the sparse array describes. **Measured on a control, named in the table, and
+not guessed at.** Closing it means porting that undefined-end behaviour deliberately; it is
+a decision, not a bug fix.
+
+---
+
 ## WHAT IS LEFT
 
 ### 1. `setTiming` — **DONE for the TIME half; the GEOMETRY half has no oracle**
@@ -247,9 +285,10 @@ first.
 ```
 working tree clean
 npx tsc --noEmit    clean
-npx vitest run      1112 / 1112
+npx vitest run      1125 / 1125
 audio ranked        0 of 72
 timing ranked       0 of 38
+element timings     1 of 13   (`el-four-endings`, abcjs's own quirk)
 chord-grid ranked   0 of 23
 midi ranked         0 of 3     BYTE-EXACT
 harvested ranked    0 of 174
