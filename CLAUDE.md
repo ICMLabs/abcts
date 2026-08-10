@@ -378,8 +378,11 @@ checkpoint and hand off as you go so no context is lost.
 > DRAWS**, because `draw()` runs `nonMusic(topText)` and spends `spacing.music` before it
 > looks at a line.
 >
-> 🔬 **AND abcjs ITSELF IS RUNNABLE — `node dump-svg.js --file x.abc --output x.svg` from
-> `../abcMusicKit/Tools/abcjs-debug`, at the goldens' own `{staffwidth: 670}`.** A LADDER
+> 🔬 **AND abcjs ITSELF IS RUNNABLE — `ABCJS_VERSION=6.7.0 node dump-svg.js --file x.abc
+> --output x.svg` from `../abcMusicKit/Tools/abcjs-debug`, at the goldens' own
+> `{staffwidth: 670}`. `ABCJS_VERSION` IS NOT OPTIONAL: `dump-svg.js:14` DEFAULTS TO
+> 6.6.3**, and a run without it accused the 6.7.0 branch this engine already ports of a
+> defect it does not have. **THE ORACLE HAS A VERSION AND THE DEFAULT IS THE WRONG ONE.** A LADDER
 > OF CONTROLS THROUGH BOTH ENGINES IS A FIVE-MINUTE OPERATION, and one such ladder named
 > the last structural height in a single run: **a tie that CROSSES A SYSTEM BREAK reserves
 > 7.75px and nothing else does** — not a mid-bar tie, not a tie at the end of the tune, and

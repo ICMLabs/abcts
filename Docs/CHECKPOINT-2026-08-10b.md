@@ -85,8 +85,14 @@ The noise is spread through the whole accumulation, not concentrated in the marg
 
 ```bash
 cd /Users/lrettberg/ICMLabs/Code/abcMusicKit/Tools/abcjs-debug
-node dump-svg.js --file /tmp/ladder/rung.abc --output /tmp/ladder/rung.svg
+ABCJS_VERSION=6.7.0 node dump-svg.js --file /tmp/ladder/rung.abc --output /tmp/ladder/rung.svg
 ```
+
+**`ABCJS_VERSION` IS NOT OPTIONAL — `dump-svg.js:14` DEFAULTS TO 6.6.3.** A first ladder
+run without it said a second header `T:` costs no staff separation, which reads as a defect
+in the 6.7.0 branch this engine already ports and is just the older engine answering
+correctly for itself. Re-run at 6.7.0 the same rung is EXACT. **THE ORACLE HAS A VERSION,
+AND THE DEFAULT IS THE WRONG ONE.**
 
 It renders at `{ staffwidth: 670 }` — the goldens' own params — so a control rendered this
 way is directly comparable with `renderAbc(abc, {staffwidth: 670})`. **A LADDER OF CONTROLS
@@ -103,7 +109,7 @@ nothing in `tests/` may grow that mask.**
 
 ## 2. WHAT CLOSED, AND WHY EACH WAS INVISIBLE
 
-Seventeen landings, every one a read of a named abcjs function.
+Eighteen landings, every one a read of a named abcjs function.
 
 - **`staffwidth` is the MUSIC area; the page is it plus abcjs's 15px margins.** compat
   mapped `renderAbc(…, {staffwidth: 670})` straight onto core's `systemWidth`, which is
@@ -182,6 +188,9 @@ Seventeen landings, every one a read of a named abcjs function.
   rules, which are the parts worth keeping. **A BOXED FONT MEASURES HIGHER HERE TOO**:
   `getTextSize.calc` returns `height + padding * 4` to every caller, and the bottom block
   was the one that did not apply it.
+- **A `T:` AFTER THE MUSIC IS THE TITLE when no earlier one claimed it** — `setTitle`
+  branches on `hasMainTitle`, NOT on position (`abc_parse_header.js:14-22`), so a tune whose
+  only `T:` follows its notes is titled exactly as if the field were in the header. 13.51px.
 - **A BLOCK WITH NO SYSTEM AFTER IT WAS DRAWN NOWHERE.** `score.textBelow` holds exactly
   what a tune ended with — a trailing `%%text`, a `%%center`, a mid-tune `T:` — and it was
   read in ONE place, the last-line justification test, and drawn in none. A mid-tune block
@@ -240,14 +249,25 @@ regression, so read the diff before touching the gate.
 ## WHAT IS LEFT, IN YIELD ORDER
 
 1. **THE FOUR STRUCTURAL HEIGHTS, each measured down to its residual:**
-   - `visual-mouse-click-01` and `visual-tablature-15` — **3.875px TALL**, exactly one
-     PITCH, down from 23.175 SHORT. What closed was the dropped trailing block; what is
-     left is the gap a TRAILING subtitle spends. `appendFreeText` gives it the same leading
-     gap a mid-tune one gets and abcjs apparently does not — measure `Subtitle`'s rows for
-     a line with no music after it. Their bottom rows already step 49.27 / 72.54 / 26
-     exactly as abcjs's do, so it is not the bottom block. One `<text>` is still missing
-     from both (31 against 32) and it is the `%%sep` rule: abcjs draws a 170px-wide rule
-     for `%%sep 0.4cm 0.4cm 6cm` and ours is 211.57 wide at a different y.
+   - `visual-mouse-click-01` and `visual-tablature-15` — **3.875px TALL**, one PITCH, down
+     from 23.175 SHORT. Their bottom rows step 49.27 / 72.54 / 26 exactly as abcjs's do, so
+     it is not the bottom block. One `<text>` is still missing from both (31 against 32),
+     and a ladder says which:
+
+     ```
+     mv-none   [V:1] CDEF| / [V:2] GABc|                abcjs 218.052   ours 218.052
+     mv-sub    …with T:Inserted BETWEEN the two lines   abcjs 245.102   ours 218.052  -27.05
+     mv-text   …with %%text  BETWEEN the two lines      abcjs 251.822   ours 218.052  -33.77
+     mv-subend …with T:Inserted AFTER both lines        abcjs 245.102   ours 245.102   exact
+     ```
+
+     **A BLOCK WRITTEN BETWEEN TWO VOICE LINES OF THE SAME SYSTEM IS DROPPED OUTRIGHT**, and
+     abcjs draws it AFTER that system — measured: the staff lines are at IDENTICAL y with
+     and without it (77.2 … 115.95, 156.2 … 187.2) and the subtitle lands at 227.83, below
+     both. Ours is claimed as the first system's `textBefore` and then discarded, because
+     `midTune` is read only for `systemIndex > 0`. **The general rule is NOT yet measured**:
+     whether such a block goes after ITS system or at the very end needs one more rung, with
+     a system following it.
    - `synth-timing-10-stretchlast-1` — 7.75px, exactly one staff space, and **A LADDER
      NAMED IT IN ONE RUN.** Six controls through abcjs itself, one variable per rung:
 
