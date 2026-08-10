@@ -439,6 +439,31 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
  */
 const raw = (n: number): string => String(n)
 
+
+/**
+ * abcjs's `<text>`, attribute for attribute — `stroke`, `font-size`, `font-style`,
+ * `font-family`, `font-weight`, `text-decoration`, `class`, `text-anchor`, `x`, `y`,
+ * `data-name`, and the content wrapped in a `<tspan x=…>` (`write/svg.js`).
+ *
+ * The `class=""` and the `text-decoration="none"` are written even when empty; that is the
+ * DOM attribute abcjs sets, and a serializer writes what is set.
+ */
+const abcjsText = (
+  x: string,
+  y: string,
+  size: string,
+  family: string,
+  italic: boolean,
+  bold: boolean,
+  anchor: string,
+  name: string,
+  body: string,
+): string =>
+  `<text stroke="none" font-size="${size}" font-style="${italic ? 'italic' : 'normal'}" ` +
+  `font-family="${family}" font-weight="${bold ? 'bold' : 'normal'}" text-decoration="none" ` +
+  `class="" text-anchor="${anchor}" x="${x}" y="${y}"${name ? ` data-name="${name}"` : ''}>` +
+  `<tspan x="${x}">${body}</tspan></text>`
+
 const ABCJS_STYLE =
   '.abcjs-dragging-in-progress text, .abcjs-dragging-in-progress tspan {-webkit-touch-callout: none; ' +
   '-webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; ' +
@@ -596,6 +621,43 @@ const glyphDefs = new Map<GlyphName, string>()
   for (const system of doc.systems) {
     // The system's own origin, flattened into every coordinate under it.
     if (abcjs) oy = (system.originY + OY) * PX
+    /**
+     * **THE TOP TEXT COMES FIRST IN ABCJS'S BODY**, before any staff and before the braces
+     * — `nonMusic()` runs the whole header block and only then does `drawStaffGroup` start
+     * (`draw/draw.js`). Ours hung the block on the first staff, so a brace was written
+     * ahead of the title on every grand-staff fixture.
+     *
+     * OUTSIDE the line group as well as before it: abcjs writes `<g><text …>` straight
+     * under the outer group, and only then opens the line's own `<g>`.
+     */
+    if (abcjs) {
+      const first = system.staves[0]
+      if (first !== undefined) {
+        oy = (system.originY + OY) * PX + first.originY * PX
+        for (const el of first.elements) {
+          if (el.blockHeight === undefined) continue
+          for (const t of el.texts) {
+            const style =
+              (t.bold ? ' font-weight="bold"' : '') + (t.italic ? ' font-style="italic"' : '')
+            parts.push(
+              abcjsText(
+                num(t.x * PX),
+                num(t.y * PX + oy),
+                num(t.size * PX),
+                'Times New Roman',
+                t.italic === true,
+                t.bold === true,
+                t.anchor ?? 'start',
+                ABCJS_DATA_NAMES.text ?? '',
+                escapeText(t.text),
+              ),
+            )
+          }
+          for (const line of el.lines) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+        }
+      }
+    }
+
     // `abcjs-staff-wrapper abcjs-l{n}` wraps a whole music LINE (`draw/draw.js:40-42`),
     // and it is the outermost thing in abcjs's output — our very first contract row
     // differed on depth because it was missing.
@@ -641,10 +703,11 @@ const glyphDefs = new Map<GlyphName, string>()
       // …and the staff's, on top of it. Reset per staff, since `staff.originY` is relative.
       if (abcjs) oy = (system.originY + OY) * PX + staff.originY * PX
       let staffGroup = ''
-      // NO STAFF GROUP IN abcjs MODE. abcjs has one bare `<g>` per LINE and nothing
-      // between it and the drawing; ours nested a staff group inside it, which is a `<g>`
-      // abcjs never writes. `add_classes` puts back the `abcjs-staff` group it DOES write,
-      // and only then.
+      // CORRECTED, by the byte table: abcjs DOES group the staff lines, with or without
+      // `add_classes` — `…</path></g><g fill="currentColor" stroke="none" data-name=
+      // "staff-extra clef">` — so the group is real and the element groups are its
+      // SIBLINGS. `add_classes` only puts a class on it. Removing it outright was right
+      // about the transform and wrong about the group.
       if (!abcjs) {
         parts.push(
           `<g class="${prefix}-staff-group" transform="translate(0,${num(staff.originY * PX)})">`,
@@ -660,7 +723,7 @@ const glyphDefs = new Map<GlyphName, string>()
         // the lines straight into the wrapper, and an empty `<g>` would be a row of its own
         // on the contract table.
         staffGroup = classes.generate('staff')
-        if (staffGroup) parts.push(`<g class="${staffGroup}">`)
+        parts.push(staffGroup ? `<g class="${staffGroup}">` : '<g>')
         // …AND THE MEASURE COUNTER IS ALREADY 0 BY THE TIME THE PREFIX IS DRAWN.
         // `draw/voice.js:31` reads as though a `staff-extra` cannot open a measure —
         // `if (child.type !== 'staff-extra' && !isInMeasure()) startMeasure()` — but
@@ -692,7 +755,7 @@ const glyphDefs = new Map<GlyphName, string>()
           : ` class="${prefix}-staff"`
         parts.push(lineToRect(TL(line), attr, abcjs))
       })
-      if (staffGroup) parts.push('</g>')
+      if (abcjs) parts.push('</g>')
       for (const beam of staff.beams) {
         parts.push(lineToRect(TL(beam), abcjs ? ' class="abcjs-beam"' : ` class="${prefix}-beam"`, abcjs))
       }
@@ -773,6 +836,8 @@ const glyphDefs = new Map<GlyphName, string>()
       // `foundNote` — a barline before any note does not advance the measure counter.
       let foundNote = false
       staff.elements.forEach((el, index) => {
+        // Already written above, ahead of the braces. See the hoist.
+        if (abcjs && el.blockHeight !== undefined) return
         // abcjs wraps each element in a group carrying its kind and index, which is what
         // its interaction code walks. Core's own naming needs no wrapper.
         if (abcjs) {
@@ -791,8 +856,12 @@ const glyphDefs = new Map<GlyphName, string>()
             for (const p of el.abcjsPitches ?? []) klass += ` p${p}`
           }
           const gcls = classes.generate(klass)
+          // abcjs's own attribute order on an element group: `fill`, `stroke`, the class
+          // when there is one, then `data-name` — and a NOTE carries `selectable` and
+          // `data-index` where a staff-extra carries neither.
           parts.push(
-            `<g${gcls ? ` class="${gcls}"` : ''} data-name="${name}" data-index="${index}">`,
+            `<g fill="currentColor" stroke="none"${gcls ? ` class="${gcls}"` : ''}` +
+              ` data-name="${name}"${isExtra ? '' : ` selectable="false" data-index="${index}"`}>`,
           )
           if (el.type === 'note' || (el.type === 'rest' && el.plainRest !== false)) {
             classes.incrNote()
