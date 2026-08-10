@@ -44,16 +44,17 @@ rows still first differ on the root's `height`, and the temptation is to read th
 defect. **It is three**, and the split is measured (`/tmp/probe9.mjs`, recipe below):
 
 ```
-76 of 171   EXACT
+78 of 171   EXACT
 82 of 171   differ by pure ULP noise — relative error under 1e-12
-13 of 171   differ STRUCTURALLY, by 8 to 297 px
+11 of 171   differ by more, and 3 of those are 1e-11 relative — so EIGHT are structural
 ```
 
-**THE 13 ARE WORTH MORE THAN THE 82.** They are real vertical defects that no gate in this
+**THE STRUCTURAL ONES ARE WORTH MORE THAN THE 82.** They are real vertical defects that no gate in this
 repo can state — `pixel-parity` and the harvested table pair NOTEHEADS, so a page that is
 300px too short with every note in the right place reads as perfect. One of them has
-already closed and took SEVEN fixtures to byte-exact with it (§2). The rest are named in
-WHAT IS LEFT.
+already closed and took SEVEN fixtures to byte-exact with it, and a second closed two more
+(§2). **Every one of the eight that is left is `BottomText`** except
+`synth-timing-10-stretchlast-1`, which is out by exactly one staff space.
 
 The 82 are the `px / 7.75` round trip, and one line shows the mechanism:
 `flagX = headX + headInk - spaces(ABCJS_PX.flagStemInset)` divides an abcjs pixel by 7.75
@@ -89,7 +90,7 @@ nothing in `tests/` may grow that mask.**
 
 ## 2. WHAT CLOSED, AND WHY EACH WAS INVISIBLE
 
-Thirteen landings, every one a read of a named abcjs function.
+Fourteen landings, every one a read of a named abcjs function.
 
 - **`staffwidth` is the MUSIC area; the page is it plus abcjs's 15px margins.** compat
   mapped `renderAbc(…, {staffwidth: 670})` straight onto core's `systemWidth`, which is
@@ -156,6 +157,13 @@ Thirteen landings, every one a read of a named abcjs function.
   (`draw/draw.js:12-18`) — a bare `X:43\nT:` is 37.56, the two margins and the music gap
   with nothing between. **NO GATE COULD SEE IT**: the pixel tables pair NOTEHEADS and these
   tunes have none.
+- **A STAFF WHOSE VOICE SAYS NOTHING ON THIS LINE IS DROPPED FROM IT** — a stronger rule
+  than the empty-LINE one and applied per STAFF. `cleanUp` nulls
+  `tune.lines[i].staff[s]` whenever that entry is `undefined`, meaning the voice never
+  appeared on the source line, and filters the nulls out (`tune-builder.js:33-60`).
+  `[V:T]c|\` / `[V:B]A|\` / `[V:T]d|` is one continued line for T and a shorter one for
+  B, so abcjs draws THREE staves where we drew four and ran 79px tall — counted rather
+  than assumed, from the golden's three `abcjs-top-line` paths.
 - **`data-index` is an index into the SELECTABLES, not into the children.**
   `Selectables.add` writes `{selectable: false, "data-index": elements.length}` and only
   after `canSelect`, which with no `selectTypes` admits `el_type 'note'` alone
@@ -283,7 +291,7 @@ npx tsc --noEmit    clean
 npx vitest run      1137 / 1137
 svg bytes           164 of 171   best 5186, median 175   (masked-height median 1241, max EXACT)
                     PASSING ratchet: 7 slugs, the first this table has ever held
-heights             76 exact / 82 ULP-only / 13 structural
+heights             78 exact / 82 ULP-only / 8 structural (all BottomText but one)
 audio ranked        0 of 72
 timing ranked       0 of 38
 element timings     1 of 13
