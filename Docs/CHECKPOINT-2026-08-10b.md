@@ -30,7 +30,7 @@ reproduce goes in `Docs/ABCJS-DIFFERENCES.md` with its evidence and its slug goe
 | chord grid | `chord-grid-ranked` | 0 of 23 |
 | harvested geometry | `corpus-abcjs-ranked` | 0 of 174 |
 | pixel geometry | `pixel-parity` | 0 of 120 |
-| DOM contract | `dom-contract` | **12 of 25 cases** (from 25) — THIRTEEN slugs RATCHETED |
+| DOM contract | `dom-contract` | **11 of 25 cases** (from 25) — FOURTEEN slugs RATCHETED |
 | **SVG bytes** | **`svg-bytes`** | **164 of 171 — SEVEN BYTE-EXACT AND RATCHETED**; best 5186, median 179 (from 171 of 171 at 651 / 162) |
 
 **Suite 1146 of 1146. NO REDS. `npx tsc --noEmit` clean.**
@@ -115,7 +115,7 @@ nothing in `tests/` may grow that mask.**
 
 ## 2. WHAT CLOSED, AND WHY EACH WAS INVISIBLE
 
-Thirty-seven landings, every one a read of a named abcjs function.
+Thirty-nine landings, every one a read of a named abcjs function.
 
 - **`staffwidth` is the MUSIC area; the page is it plus abcjs's 15px margins.** compat
   mapped `renderAbc(…, {staffwidth: 670})` straight onto core's `systemWidth`, which is
@@ -257,6 +257,12 @@ Thirty-seven landings, every one a read of a named abcjs function.
   `graceLines` BY INDEX and assumes every entry is a stem, so pushing the ledgers straight
   in moved every grace stem — the diff had REMOVALS where a new feature should only ever
   add.
+- **A BAR NUMBER IS THE BAR'S FIRST CHILD**, ahead of the rule, named and classed — ours
+  drew it last with neither. **AND THE COUNTERS ADVANCE AFTER THE ELEMENT IS DRAWN**:
+  `drawVoice` runs `drawAbsolute(…)` and only then `incrNote()`/`incrMeasure()`
+  (`draw/voice.js:41-46`), so a child generated INSIDE an element sees the counters the
+  group itself was named with. Ours read `m1 mm1` where abcjs writes `m0 mm0` — a
+  one-measure lag that would have shown on every future in-element class too.
 - **`data-index` is an index into the SELECTABLES, not into the children.**
   `Selectables.add` writes `{selectable: false, "data-index": elements.length}` and only
   after `canSelect`, which with no `selectTypes` admits `el_type 'note'` alone
@@ -444,8 +450,8 @@ chord-grid ranked   0 of 23
 midi ranked         0 of 3       BYTE-EXACT
 harvested ranked    0 of 174
 pixel ranked        0 of 120
-DOM contract        12 of 25
-                    PASSING ratchet: 13 slugs
+DOM contract        11 of 25
+                    PASSING ratchet: 14 slugs
 npx biome check src NOT clean — same rows as before, all pre-existing
 ```
 
