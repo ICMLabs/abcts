@@ -1,0 +1,5 @@
+{
+ "name": "repeat at start crash",
+ "kind": "creation",
+ "abc": "X:1\nT:repeat-at-start-of-line-crash\nK:C\nE8|\n|1 D8 :|2 C8\n"
+}

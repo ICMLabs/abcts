@@ -1,0 +1,5 @@
+{
+ "name": "tie repeat crash",
+ "kind": "creation",
+ "abc": "X:1\nT:tie-repeat-crash\nL:1/8\nQ:1/4=100\nM:4/4\nK:G\nG3 F- F4 :|\n"
+}

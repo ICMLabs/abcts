@@ -1,0 +1,5 @@
+{
+ "name": "skip ties crash",
+ "kind": "creation",
+ "abc": "X:1 \nT:skip-ties-crash\nM:4/4\nK:C\nE8- | E8 |]\n"
+}
