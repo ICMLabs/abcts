@@ -56,7 +56,7 @@ const CASES: Case[] = readdirSync(dir)
  * Cases whose contract is EXACT. Grows, never shrinks — the same ratchet every other table
  * here keeps.
  */
-const PASSING: readonly string[] = ['dom-ledger', 'svg-single-note']
+const PASSING: readonly string[] = ['dom-ledger', 'svg-12-8-group', 'svg-single-note']
 
 /**
  * The same walk the generator does, over our own markup — by TAG SCAN rather than by DOM,

@@ -792,6 +792,16 @@ export interface PlacedGlyph {
    */
   readonly dataName?: string
   /**
+   * **A MULTI-CHARACTER SYMBOL IS ONE GROUP.** `printSymbol` branches on
+   * `symbol.length > 1 && symbol.indexOf(".") < 0` and opens
+   * `<g data-name="{name}">` round one path PER CHARACTER, none of which is named
+   * (`draw/print-symbol.js:14-30`). A `12` numerator, a `2+3` additive one and an `mf`
+   * are all that shape; a single digit is a bare `data-name="3"` path.
+   *
+   * Consecutive glyphs sharing this string are wrapped together by the emitter.
+   */
+  readonly group?: string
+  /**
    * Position within a CHORD, 1 = lowest pitch, counting upward. Absent on a single note.
    *
    * abcjs puts `abcjs-chord-pos-N` on each notehead of a chord and nothing on a lone one,
@@ -1599,6 +1609,8 @@ function digitGlyphs(
   centre: number,
   step: number,
   strict = true,
+  /** The figure as WRITTEN — `12`, `2+3` — which names the group when it is multi-character. */
+  label = '',
 ): PlacedGlyph[] {
   let cursor = centre - totalAdvance(names) / 2
   return names.map((name) => {
@@ -1618,6 +1630,7 @@ function digitGlyphs(
     const placed: PlacedGlyph = {
       ...glyphAt(name, cursor, step),
       reserve: [y - glyph.declaredHeight / 2, y + glyph.declaredHeight / 2],
+      ...(label.length > 1 ? { group: label } : {}),
     }
     cursor += glyphsFor(strict).advance(name)
     return placed
@@ -1656,6 +1669,12 @@ function layoutMeter(x: number, meter: Meter, strict = true): LayoutElement {
       : meter.numeratorParts.flatMap((part, i) =>
           i === 0 ? digitNames(part) : ['timeSigPlus' as GlyphName, ...digitNames(part)],
         )
+  // The numerator AS WRITTEN — abcjs keeps the string, which is why its golden reads
+  // `data-name="2+3"` rather than `5`.
+  const topLabel =
+    meter.numeratorParts === undefined
+      ? String(meter.numerator)
+      : meter.numeratorParts.join('+')
   const bottom = digitNames(meter.denominator)
   const width = Math.max(totalAdvance(top), totalAdvance(bottom))
   const centre = x + width / 2
@@ -1666,7 +1685,10 @@ function layoutMeter(x: number, meter: Meter, strict = true): LayoutElement {
     x,
     width,
     staffSteps: [],
-    glyphs: [...digitGlyphs(top, centre, 2), ...digitGlyphs(bottom, centre, -2)],
+    glyphs: [
+      ...digitGlyphs(top, centre, 2, strict, topLabel),
+      ...digitGlyphs(bottom, centre, -2, strict, String(meter.denominator)),
+    ],
     lines: [],
     texts: [],
   }

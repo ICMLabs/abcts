@@ -881,7 +881,16 @@ const glyphDefs = new Map<GlyphName, string>()
         // notehead, stem, ledger (`draw/absolute.js:11-30`) — its own golden reads
         // `<path data-name="C">…<path class="abcjs-stem">…<path class="abcjs-ledger">`.
         // We wrote every rule first, so the stem opened every note group.
+        // A MULTI-CHARACTER SYMBOL IS ONE GROUP with UNNAMED children — see
+        // `PlacedGlyph.group`. Consecutive glyphs sharing the string are wrapped together.
+        let openGlyphGroup: string | null = null
         for (const g of el.glyphs) {
+          const group = abcjs ? (g.group ?? null) : null
+          if (group !== openGlyphGroup) {
+            if (openGlyphGroup !== null) parts.push('</g>')
+            if (group !== null) parts.push(`<g data-name="${escapeAttr(group)}">`)
+            openGlyphGroup = group
+          }
           // The glyph path is authored at the origin, so a placement is all that is needed.
           parts.push(
             glyphMarkup(
@@ -891,10 +900,14 @@ const glyphDefs = new Map<GlyphName, string>()
               g.scale,
               attrs(el.type, g.role, g.chordPos),
               g.role,
-              g.dataName,
+              // Inside a group abcjs names NONE of the children — `printSymbol` passes
+              // only `{stroke, fill}` there — and `'' ?? x` is `''`, so this suppresses
+              // the attribute rather than falling back to the glyph key.
+              group === null ? g.dataName : '',
             ),
           )
         }
+        if (openGlyphGroup !== null) parts.push('</g>')
         for (const line of el.lines) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
         // Prose is a real <text> in a generic family, unlike musical glyphs, which are
         // paths so the SVG stays self-contained. A missing serif face falls back to
