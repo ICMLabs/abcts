@@ -15,7 +15,7 @@ import { ABCJS_ARC, ABCJS_YCORR, spaces } from './abcjs-constants.js'
 import { SMUFL_TO_ABCJS } from './glyph-map.js'
 import { glyphsFor } from './glyph-table.js'
 import { GLYPHS, type GlyphName } from './glyphs.js'
-import type { Layout, PartRole, PlacedCurve, PlacedLine } from './layout.js'
+import type { Layout, PartRole, PlacedCurve, PlacedGlyph, PlacedLine } from './layout.js'
 
 export interface RenderOptions {
   /** Pixels per staff space. 8 gives a ~32px staff, close to typical engraving size. */
@@ -928,6 +928,14 @@ const glyphDefs = new Map<GlyphName, string>()
       if (abcjs && staff.staffLines.length > 0) parts.push('</g>')
       // `foundNote` — a barline before any note does not advance the measure counter.
       let foundNote = false
+      /**
+       * **A DYNAMIC IS NOT A CHILD OF THE NOTE.** `!p!` becomes a `DynamicDecoration`
+       * pushed onto the voice's `otherchildren` (`decoration.js:287`), so `drawVoice`
+       * draws it AFTER every element and every beam, at the voice's own level — where a
+       * hairpin already sat. Ours nested it in the note group at depth 2. Held back here
+       * and flushed with the spanners below.
+       */
+      const dynamics: PlacedGlyph[] = []
       staff.elements.forEach((el) => {
         // Already written above, ahead of the braces. See the hoist.
         if (abcjs && el.blockHeight !== undefined) return
@@ -1168,6 +1176,12 @@ const glyphDefs = new Map<GlyphName, string>()
         }
         // …and everything the engraver added AFTER the stem — decorations, graces.
         for (const g of el.glyphs.slice(pitchEnd)) {
+          // Held whole rather than as markup: its class is `classes.generate`'d at FLUSH
+          // time, after `startMeasure()` has reset the counters the group was named with.
+          if (abcjs && g.role === 'dynamic') {
+            dynamics.push(g)
+            continue
+          }
           parts.push(
             glyphMarkup(
               g.name,
@@ -1247,6 +1261,29 @@ const glyphDefs = new Map<GlyphName, string>()
           : ` class="${prefix}-beam"`
         parts.push(lineToRect(TL(beam), beamClass, abcjs))
       }
+      // **`drawDynamics` AND `drawCrescendo` DISAGREE ON THE ORDER OF THEIR OWN TWO
+      // CLASSES** — `generate('decoration dynamics')` for a volume mark
+      // (`draw/dynamics.js:11`) and `generate('dynamics decoration')` for a hairpin
+      // (`draw/crescendo.js:34`). abcjs's contract shows both spellings side by side, so
+      // it is a quirk to reproduce rather than one of them to pick.
+      for (const g of dynamics) {
+        parts.push(
+          glyphMarkup(
+            g.name,
+            g.x,
+            g.y,
+            g.scale,
+            // The name goes in the ATTRIBUTES rather than through `dataName`, because a
+            // SCALED glyph takes `glyphMarkup`'s transform path, which writes the
+            // attribute string and nothing else. The ORDER is `svg.js:path`'s key order
+            // over `printSymbol`'s options — class, stroke, fill, then the name — and it
+            // differs from an in-group glyph's because this one is not in a group.
+            ` class="${classes.generate('decoration dynamics')}" stroke="none" ` +
+              `fill="currentColor" data-name="${ABCJS_DATA_NAMES.dynamic}"`,
+            g.role,
+          ),
+        )
+      }
       for (const line of staff.voltaLines) {
         parts.push(lineToRect(TL(line), abcjs ? ' class="abcjs-ending"' : ` class="${prefix}-volta"`, abcjs))
       }
@@ -1283,9 +1320,34 @@ const glyphDefs = new Map<GlyphName, string>()
       // `"data-name": "dynamics"` (`draw/crescendo.js:34`), which comes out as
       // `class="abcjs-decoration abcjs-dynamics …" data-name="dynamics"`. A glissando is
       // `data-name="glissando"` on the same footing.
-      for (const line of staff.spannerLines) {
+      /**
+       * **A HAIRPIN IS ONE STROKED `<path>` WITH TWO SUBPATHS, NOT TWO LINES.**
+       * `drawCrescendo` builds `M %f %f L %f %f M %f %f L %f %f` in a single `printPath`
+       * (`draw/crescendo.js:16-35`), so both arms are one element and one row of the
+       * contract. We drew an arm each, which read as a doubled dynamic. The arms arrive
+       * adjacent and upper-first from `hairpin()` in `layout.ts`, which is the pairing.
+       */
+      for (let i = 0; i < staff.spannerLines.length; i += 1) {
+        const line = staff.spannerLines[i]
+        if (line === undefined) continue
+        const arm2 = line.role === 'dynamic' ? staff.spannerLines[i + 1] : undefined
+        if (abcjs && arm2 !== undefined) {
+          i += 1
+          const [a, b] = [TL(line), TL(arm2)]
+          const d =
+            `M ${round2(a.x1)} ${round2(a.y1)} L ${round2(a.x2)} ${round2(a.y2)} ` +
+            `M ${round2(b.x1)} ${round2(b.y1)} L ${round2(b.x2)} ${round2(b.y2)}`
+          parts.push(
+            `<path d="${d}" highlight="stroke" stroke="currentColor" ` +
+              `class="${classes.generate('dynamics decoration')}" data-name="dynamics"></path>`,
+          )
+          continue
+        }
         const named = line.role === 'dynamic' ? 'dynamics' : 'glissando'
-        const cls = line.role === 'dynamic' ? 'abcjs-decoration abcjs-dynamics' : 'abcjs-glissando'
+        const cls =
+          line.role === 'dynamic'
+            ? classes.generate('dynamics decoration')
+            : classes.generate('glissando')
         parts.push(
           lineToRect(
             TL(line),

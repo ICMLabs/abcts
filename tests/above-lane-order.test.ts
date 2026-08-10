@@ -133,7 +133,12 @@ interface Measured {
 function measure(abc: string): Measured {
   const doc = absolutePixels(renderAbc('paper', abc, {})[0]?.svg ?? '')
   const topLine = doc.items.find((i) => i.cls.includes('top-line'))?.y ?? 0
-  const dyn = doc.items.filter((i) => i.cls.includes('abcjs-dynamics')).map((i) => i.y - topLine)
+  // KEYED ON `data-name`, NOT ON THE CLASS — abcjs's dynamic class is
+  // `classes.generate('decoration dynamics')`, which is the EMPTY STRING when
+  // `add_classes` is off (`helpers/classes.js:78`), and this ladder renders with no
+  // options. We used to write the class literally whatever the option said, so the gate
+  // read our own markup rather than abcjs's contract. The name is unconditional.
+  const dyn = doc.items.filter((i) => i.name === 'dynamics').map((i) => i.y - topLine)
   return {
     topLine,
     marks: doc.items
