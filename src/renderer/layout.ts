@@ -8221,6 +8221,11 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
                   ...el,
                   blockTop: offset,
                   texts: el.texts.map((t) => ({ ...t, y: t.y + offset })),
+                  // …AND THE BLOCK'S INK MOVES WITH ITS TEXT. A `%%sep` rule is a LINE on
+                  // the same element and it was left where the block built it, so its x and
+                  // its width were abcjs's and its y was not — 217.88 against 131 on a
+                  // control, which is inside the staff below it rather than above.
+                  lines: el.lines.map((l) => ({ ...l, y1: l.y1 + offset, y2: l.y2 + offset })),
                 })),
                 ...musicOnly,
               ]
@@ -8782,6 +8787,9 @@ function appendFreeText(
         texts.push({
           text: line,
           role: 'title',
+          // abcjs names every nonMusic row too — a `Subtitle` is `data-name="subtitle"`
+          // and a `FreeText` is `"free-text"` (`elements/subtitle.js`, `free-text.js:11`).
+          dataName: 'subtitle',
           x: centre,
           y: y + size,
           size,
@@ -8799,7 +8807,11 @@ function appendFreeText(
       texts.push({
         text: line,
         role: 'title',
-        x: block.align === 'center' ? centre : 0,
+        dataName: 'free-text',
+        // `%%text` sits at `paddingLeft` with `anchor: "start"` and `%%center` at
+        // `width / 2` with no padding at all (`free-text.js:11`, `:37`) — the same split
+        // the top block's rows take, and this row was placed at 0.
+        x: block.align === 'center' ? centre : ENGRAVE.marginX,
         y: y + textSize + index * ENGRAVE.freeTextLineStep,
         size: textSize,
         bold: false,

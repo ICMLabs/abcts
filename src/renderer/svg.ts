@@ -448,6 +448,12 @@ const raw = (n: number): string => String(n)
  * The `class=""` and the `text-decoration="none"` are written even when empty; that is the
  * DOM attribute abcjs sets, and a serializer writes what is set.
  */
+/**
+ * **A `<text>`'s x AND y ARE ROUNDED TO TWO DECIMALS** — `hash.attr.x = roundNumber(…)`,
+ * `hash.attr.y = roundNumber(…)` (`draw/text.js:63-64`), the same rule its paths take. The
+ * callers pass `round2`'d strings; the `<tspan>` reuses the x, as abcjs does
+ * (`svg.js:195`).
+ */
 const abcjsText = (
   x: string,
   y: string,
@@ -639,6 +645,13 @@ const glyphDefs = new Map<GlyphName, string>()
   const PX = abcjs ? scale : 1
   const OY = abcjs ? -doc.top : 0
   /**
+   * **A `<text>`'s x AND y ARE ROUNDED TO TWO DECIMALS IN ABCJS** — `hash.attr.x =
+   * roundNumber(…)`, `hash.attr.y = roundNumber(…)` (`draw/text.js:63-64`), the same rule
+   * its paths take. Core keeps the emission quantum, which is finer than a hundredth of a
+   * STAFF SPACE and is what its baselines are recorded at.
+   */
+  const textNum = abcjs ? round2 : num
+  /**
    * **abcjs WRITES NO `transform` ANYWHERE** — its line group is a bare `<g>` and every
    * coordinate under it is already absolute. Ours nested a system translate inside a staff
    * translate, which is two more differences per line than the numbers themselves.
@@ -688,8 +701,8 @@ const glyphDefs = new Map<GlyphName, string>()
     oy = OY * PX
     const block = doc.topText.map((t) =>
       abcjsText(
-        num(t.x * PX),
-        num(t.y * PX + oy),
+        round2(t.x * PX),
+        round2(t.y * PX + oy),
         num(t.size * PX),
         'Times New Roman',
         t.italic === true,
@@ -734,8 +747,8 @@ const glyphDefs = new Map<GlyphName, string>()
           for (const t of el.texts) {
             block.push(
               abcjsText(
-                num(t.x * PX),
-                num(t.y * PX + oy),
+                round2(t.x * PX),
+                round2(t.y * PX + oy),
                 num(t.size * PX),
                 'Times New Roman',
                 t.italic === true,
@@ -952,11 +965,11 @@ const glyphDefs = new Map<GlyphName, string>()
           const style =
             (t.bold ? ' font-weight="bold"' : '') + (t.italic ? ' font-style="italic"' : '')
           parts.push(
-            `<text${attrs(el.type, 'text')} x="${num(t.x * PX)}" y="${num(t.y * PX + oy)}" ` +
+            `<text${attrs(el.type, 'text')} x="${textNum(t.x * PX)}" y="${textNum(t.y * PX + oy)}" ` +
               `font-family="serif" font-size="${num(t.size * PX)}"${style}` +
               // Only the top-text block sets one; the music's own text is all left-aligned.
               `${t.anchor === undefined || t.anchor === 'start' ? '' : ` text-anchor="${t.anchor}"`}` +
-              `>${t.jazz === undefined ? escapeText(t.text) : jazzChordMarkup(t.jazz, num(t.x * PX))}</text>`,
+              `>${t.jazz === undefined ? escapeText(t.text) : jazzChordMarkup(t.jazz, textNum(t.x * PX))}</text>`,
           )
         }
         if (abcjs) parts.push('</g>')
@@ -983,8 +996,8 @@ const glyphDefs = new Map<GlyphName, string>()
       }
       for (const t of staff.voltaTexts) {
         parts.push(
-          `<text${abcjs ? ' class="abcjs-ending"' : ` class="${prefix}-volta"`} x="${num(t.x * PX)}" ` +
-            `y="${num(t.y * PX + oy)}" font-family="serif" font-size="${num(t.size * PX)}">${escapeText(t.text)}</text>`,
+          `<text${abcjs ? ' class="abcjs-ending"' : ` class="${prefix}-volta"`} x="${textNum(t.x * PX)}" ` +
+            `y="${round2(t.y * PX + oy)}" font-family="serif" font-size="${num(t.size * PX)}">${escapeText(t.text)}</text>`,
         )
       }
       // ABCJS CALLS IT A TRIPLET, whatever the number — `classes.generate('triplet ' +
@@ -1037,8 +1050,8 @@ const glyphDefs = new Map<GlyphName, string>()
         const anchor = t.anchor === undefined ? '' : ` text-anchor="${t.anchor}"`
         parts.push(
           `<text${abcjs ? ` data-name="${escapeText(t.text)}"` : ` class="${prefix}-tuplet"`}` +
-            `${anchor} x="${num(t.x * PX)}" ` +
-            `y="${num(t.y * PX + oy)}" font-family="serif" font-size="${num(t.size * PX)}"${style}>${escapeText(t.text)}</text>`,
+            `${anchor} x="${textNum(t.x * PX)}" ` +
+            `y="${round2(t.y * PX + oy)}" font-family="serif" font-size="${num(t.size * PX)}"${style}>${escapeText(t.text)}</text>`,
         )
       }
       for (const curve of staff.curves) {
@@ -1073,8 +1086,8 @@ const glyphDefs = new Map<GlyphName, string>()
     oy = OY * PX
     const block = doc.bottomText.map((t) =>
       abcjsText(
-        num(t.x * PX),
-        num(t.y * PX + oy),
+        round2(t.x * PX),
+        round2(t.y * PX + oy),
         num(t.size * PX),
         'Times New Roman',
         t.italic === true,

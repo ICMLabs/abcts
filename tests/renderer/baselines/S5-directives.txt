@@ -342,7 +342,7 @@ system 1 width=90.671 originY=19.012
     beam   64.585,-4.750 -> 67.958,-5.250 t=0.500
     beam   66.486,-4.282 -> 67.958,-4.500 t=0.500
     title x=0.000 w=0.000
-      text  0.000,-6.293 size=2.710 "This translates to:"
+      text  1.935,-6.293 size=2.710 "This translates to:"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     note@-8,-4,-1,1,3 x=6.329 w=3.871
