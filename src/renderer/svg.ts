@@ -846,7 +846,12 @@ const glyphDefs = new Map<GlyphName, string>()
         // the lines straight into the wrapper, and an empty `<g>` would be a row of its own
         // on the contract table.
         staffGroup = classes.generate('staff')
-        parts.push(staffGroup ? `<g class="${staffGroup}">` : '<g>')
+        // …AND AN EMPTY ONE IS DELETED, like every other group `closeGroup` sees with no
+        // children (`svg.js:364-372`). A `clef=none stafflines=0` staff draws no lines at
+        // all, so abcjs's next child is the time signature and ours was an empty `<g>`.
+        if (staff.staffLines.length > 0) {
+          parts.push(staffGroup ? `<g class="${staffGroup}">` : '<g>')
+        }
         // …AND THE MEASURE COUNTER IS ALREADY 0 BY THE TIME THE PREFIX IS DRAWN.
         // `draw/voice.js:31` reads as though a `staff-extra` cannot open a measure —
         // `if (child.type !== 'staff-extra' && !isInMeasure()) startMeasure()` — but
@@ -878,7 +883,7 @@ const glyphDefs = new Map<GlyphName, string>()
           : ` class="${prefix}-staff"`
         parts.push(lineToRect(TL(line), attr, abcjs))
       })
-      if (abcjs) parts.push('</g>')
+      if (abcjs && staff.staffLines.length > 0) parts.push('</g>')
       // `foundNote` — a barline before any note does not advance the measure counter.
       let foundNote = false
       staff.elements.forEach((el) => {
