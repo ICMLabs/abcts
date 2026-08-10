@@ -44,17 +44,17 @@ rows still first differ on the root's `height`, and the temptation is to read th
 defect. **It is three**, and the split is measured (`/tmp/probe9.mjs`, recipe below):
 
 ```
-78 of 171   EXACT
-82 of 171   differ by pure ULP noise — relative error under 1e-12
-11 of 171   differ by more, and 3 of those are 1e-11 relative — so EIGHT are structural
+80 of 171   EXACT
+84 of 171   differ by pure ULP noise — relative error under 1e-12
+ 7 of 171   differ by more, and 2 of those are 1e-11 relative — so FIVE are structural
 ```
 
 **THE STRUCTURAL ONES ARE WORTH MORE THAN THE 82.** They are real vertical defects that no gate in this
 repo can state — `pixel-parity` and the harvested table pair NOTEHEADS, so a page that is
 300px too short with every note in the right place reads as perfect. One of them has
-already closed and took SEVEN fixtures to byte-exact with it, and a second closed two more
-(§2). **Every one of the eight that is left is `BottomText`** except
-`synth-timing-10-stretchlast-1`, which is out by exactly one staff space.
+already closed and took SEVEN fixtures to byte-exact with it; a second closed two more, and
+`BottomText` a third time (§2). **The five that are left are named in WHAT IS LEFT** and
+none of them is a whole feature any more.
 
 The 82 are the `px / 7.75` round trip, and one line shows the mechanism:
 `flagX = headX + headInk - spaces(ABCJS_PX.flagStemInset)` divides an abcjs pixel by 7.75
@@ -90,7 +90,7 @@ nothing in `tests/` may grow that mask.**
 
 ## 2. WHAT CLOSED, AND WHY EACH WAS INVISIBLE
 
-Fourteen landings, every one a read of a named abcjs function.
+Fifteen landings, every one a read of a named abcjs function.
 
 - **`staffwidth` is the MUSIC area; the page is it plus abcjs's 15px margins.** compat
   mapped `renderAbc(…, {staffwidth: 670})` straight onto core's `systemWidth`, which is
@@ -164,6 +164,9 @@ Fourteen landings, every one a read of a named abcjs function.
   `[V:T]c|\` / `[V:B]A|\` / `[V:T]d|` is one continued line for T and a shorter one for
   B, so abcjs draws THREE staves where we drew four and ran 79px tall — counted rather
   than assumed, from the golden's three `abcjs-top-line` paths.
+- **`BottomText` — `W:`, `B:`, `S:`, `D:`, `N:`, `Z:`, `H:`** — an entire missing feature
+  and the largest structural height gaps in the corpus. See WHAT IS LEFT item 2 for the
+  rules, which are the parts worth keeping.
 - **`data-index` is an index into the SELECTABLES, not into the children.**
   `Selectables.add` writes `{selectable: false, "data-index": elements.length}` and only
   after `canSelect`, which with no `selectTypes` admits `el_type 'note'` alone
@@ -216,9 +219,21 @@ regression, so read the diff before touching the gate.
 
 ## WHAT IS LEFT, IN YIELD ORDER
 
-1. **`BottomText` IS AN ENTIRE MISSING FEATURE — the largest structural height gaps, up to
-   297px, and it is unparsed, unlaid-out and unemitted.** `creation/elements/bottom-text.js`
-   is the whole spec and it is short:
+1. **THE FIVE STRUCTURAL HEIGHTS, all measured and none of them a whole feature:**
+   - `visual-mouse-click-01` and `visual-tablature-15` — 23.175px SHORT, and **it is not
+     the bottom block**: `visual-selection-01` carries the same `W:`/`H:`/`S:` fields and
+     is exact, and this one's four bottom rows step 49.27 / 72.54 / 26 exactly as abcjs's
+     do. The difference is above them, in the music.
+   - `visual-options-01-fonts` — 81.2px short. Every font in it is set `box`, and a boxed
+     font measures `height + padding * 4` (`ENGRAVE.fontBoxPadding`); the top block already
+     applies that and the bottom one does not. It also sets `%%header`/`%%footer`, which
+     `TopText`/`BottomText` draw only when `isPrint`.
+   - `synth-timing-10-stretchlast-1` — 7.75px, exactly one staff space, on a two-line tune
+     with `%%stretchlast 1` and a tie across the break.
+   - `visual-tablature-20-score-1-2` and `visual-transpose-05` — 1e-11 relative, which is
+     the ULP family wearing a slightly bigger number.
+2. ~~**`BottomText`**~~ — **LANDED.** `creation/elements/bottom-text.js` was the whole spec
+   and it is short; kept because the rules are worth having written down:
    - `W:` **unaligned words** — `spacing.words`, then the block in `wordsfont`, then one
      more `getTextSize.calc("i", 'wordsfont')` height.
    - `B:`, `S:`, `D:` — ONE line each in `historyfont`, PREFIXED with `"Book: "`,
@@ -235,7 +250,7 @@ regression, so read the diff before touching the gate.
    layers: parse, lay out, emit.
 2. **THE ROOT'S `height`'s ULP HALF — 82 rows.** §1. Accumulate the vertical cursor in
    PIXELS, which is the same change that closes the glyph-coordinate tail.
-3. ~~**THE ORDER INSIDE A NOTE GROUP**~~ — **CLOSED.** Kept because the rule is worth
+4. ~~**THE ORDER INSIDE A NOTE GROUP**~~ — **CLOSED.** Kept because the rule is worth
    having written down:
    `createNoteHead` builds the notehead but does NOT add it: it `addRight`s the FLAG, then
    the DOTS, then `addExtra`s the ACCIDENTAL, and only when it RETURNS does the caller
@@ -259,27 +274,27 @@ regression, so read the diff before touching the gate.
    because the flag hangs off the STEM TIP and cannot be known until every head is placed.
    **The baselines moved as a pure PERMUTATION** — every removed line was also an added
    one, checked rather than assumed, so nothing moved and only the order did.
-4. **A STEM AND A LEDGER ARE DIFFERENT EMITTERS.** A stem is `printStem`'s form —
+5. **A STEM AND A LEDGER ARE DIFFERENT EMITTERS.** A stem is `printStem`'s form —
    `d="M x y1L x y2L x2 y2L x2 y1z"`, no separators between commands, NO `stroke`/`fill`
    inside a group, `class` BEFORE `data-name` (`draw/print-stem.js:32-42`) — where a ledger
    and a staff line are `printLine`'s, with spaces and `data-name` BEFORE `class`
    (`draw/print-line.js:30-35`). Ours writes one form for all three. **The stem's `x` and
    `x + dx` are the head's EDGES and `dx` carries the stem's SIDE**, which `PlacedLine`
    does not record — a down-stem writes the right edge first.
-5. **Glyph coordinate noise.** `M 54.78099999999999` against
+6. **Glyph coordinate noise.** `M 54.78099999999999` against
    `M 54.781000000000006`, and a `clefs.G` whose Y differs in the last digit. Same
    emission-quantum family as the height, and the clef rows are the VERTICAL half of it,
    so §1 may close them too.
-6. **A tie/slur is `drawArc`'s TWO-CUBIC closed path** with `data-name="tie"`/`"slur"`
+7. **A tie/slur is `drawArc`'s TWO-CUBIC closed path** with `data-name="tie"`/`"slur"`
    and a `class` from the anchors' measure/note counters (`draw/tie.js:57-102`); a beam is
    `drawBeam`'s single concatenated `M…L…L…L…z` path with `class="abcjs-beam-elem
    abcjs-d0-25"` (`draw/beam.js:34-43`). Ours are a `<path class="abcjs-tie">` and a
    `<polygon>`.
-7. **`oneSvgPerLine` / `responsive` / `scale`** — five cases in `svg-per-line.test.js`.
-8. **`el-four-endings`** — `|1,3 … :|2,4 …`. A DECISION, not a bug fix.
-9. **The geometry half of the timing join** — `left`, `endX`, `top`, `height` on every
+8. **`oneSvgPerLine` / `responsive` / `scale`** — five cases in `svg-per-line.test.js`.
+9. **`el-four-endings`** — `|1,3 … :|2,4 …`. A DECISION, not a bug fix.
+10. **The geometry half of the timing join** — `left`, `endX`, `top`, `height` on every
    `noteTimings` row. A gate to BUILD.
-10. **The structural pass** — terms in `CHECKPOINT-2026-08-08d.md`, not to be re-argued.
+11. **The structural pass** — terms in `CHECKPOINT-2026-08-08d.md`, not to be re-argued.
 
 ---
 
@@ -289,9 +304,9 @@ regression, so read the diff before touching the gate.
 working tree clean
 npx tsc --noEmit    clean
 npx vitest run      1137 / 1137
-svg bytes           164 of 171   best 5186, median 175   (masked-height median 1241, max EXACT)
+svg bytes           164 of 171   best 5186, median 178   (masked-height median 1241, max EXACT)
                     PASSING ratchet: 7 slugs, the first this table has ever held
-heights             78 exact / 82 ULP-only / 8 structural (all BottomText but one)
+heights             80 exact / 84 ULP-only / 5 structural
 audio ranked        0 of 72
 timing ranked       0 of 38
 element timings     1 of 13

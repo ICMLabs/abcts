@@ -378,14 +378,16 @@ checkpoint and hand off as you go so no context is lost.
 > DRAWS**, because `draw()` runs `nonMusic(topText)` and spends `spacing.music` before it
 > looks at a line.
 >
-> ⚖️ **AND THE HEIGHT IS THREE PROBLEMS, NOT ONE.** Measured: **78 of 171 exact, 82 by pure
-> ULP noise, 8 STRUCTURALLY by 8 to 297px** — and every one of the eight is `BottomText`
-> but one. THE 13 ARE WORTH MORE THAN THE 82 — they are
+> ⚖️ **AND THE HEIGHT IS THREE PROBLEMS, NOT ONE.** Measured: **80 of 171 exact, 84 by pure
+> ULP noise, 5 STRUCTURALLY.** THE 13 ARE WORTH MORE THAN THE 82 — they are
 > real vertical defects no gate here can state, because `pixel-parity` and the harvested
 > table pair NOTEHEADS and a page 300px too short with every note in place reads as
-> perfect. The largest is **`BottomText`, an ENTIRE MISSING FEATURE** — `W:`, `N:`, `H:`,
-> `B:`, `S:`, `D:`, `Z:`, the copyright trio and the print footer, unparsed, unlaid-out and
-> unemitted; `creation/elements/bottom-text.js` is the whole short spec. The 82 are the
+> perfect. The largest WAS **`BottomText`, an entire missing feature** — `W:`, `N:`, `H:`,
+> `B:`, `S:`, `D:`, `Z:`, worth 262, 274 and 297px of page — and it has LANDED across all
+> three layers. Two rules from it transfer: `simplifyMetaText` JOINS `notes` and `history`
+> into one `\n` string so they draw as ONE `<text>` advancing by
+> `round(height * 1.1 * numLines)` — one rounding for the whole block — while an EMPTY line
+> is a row of its own that advances by the RAW height with no `* 1.1` and no rounding. The 82 are the
 > `px / 7.75` ROUND TRIP — `flagX = headX + headInk - spaces(ABCJS_PX.flagStemInset)`
 > divides an abcjs pixel by 7.75 and the emitter multiplies it back, and every glyph
 > coordinate does the same, so the vertical tail and the horizontal one are ONE defect.
