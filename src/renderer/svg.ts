@@ -263,10 +263,39 @@ function lineToRect(line: PlacedLine, attr: string, asPath = false): string {
    * serializer does to an element it built. Both are bytes.
    */
   if (asPath) {
+    /**
+     * **A STEM AND A BARLINE COME OUT OF A DIFFERENT EMITTER FROM A STAFF LINE, AND IT
+     * WRITES A DIFFERENT PATH.** `printStem` joins each command's parts with a space and
+     * CONCATENATES the commands with NOTHING between them — `M 80.66 49.86L 80.66 75.69…`
+     * — where `printLine` builds one `sprintf` with spaces throughout
+     * (`draw/print-stem.js:33-36`, `draw/print-line.js:29`). They also start at different
+     * CORNERS and order their attributes differently.
+     *
+     * The corner is `x` then `x + dx`, with `dx` NEGATIVE for an up stem and the two y's
+     * swapped when it is (`print-stem.js:5-14`) — so an up stem runs
+     * right-top → right-bottom → left-bottom → left-top and a down stem or a barline runs
+     * left-bottom → left-top → right-top → right-bottom. Measured on a control carrying
+     * both directions and a bar.
+     *
+     * AND A STEM CARRIES NO `stroke`/`fill`: `printStem` adds them only when it is NOT
+     * inside an element group, and a stem always is.
+     */
+    if (line.role === 'stem' || line.role === 'bar') {
+      const up = line.role === 'stem' && line.y2 < line.y1
+      const [xa, xb] = up ? [x + w, x] : [x, x + w]
+      const [ya, yb] = up ? [y, y + h] : [y + h, y]
+      return (
+        `<path d="M ${round2(xa)} ${round2(ya)}L ${round2(xa)} ${round2(yb)}` +
+        `L ${round2(xb)} ${round2(yb)}L ${round2(xb)} ${round2(ya)}z"${attr}></path>`
+      )
+    }
+    // `printLine`'s options are `{path, stroke, fill, data-name, class}` in that order —
+    // the NAME before the CLASS, which is the opposite of everywhere else here.
+    const klass = / class="[^"]*"/.exec(attr)?.[0] ?? ''
     return (
       `<path d="M ${round2(x)} ${round2(y)} L ${round2(x + w)} ${round2(y)} ` +
       `L ${round2(x + w)} ${round2(y + h)} L ${round2(x)} ${round2(y + h)} z" ` +
-      `stroke="none" fill="currentColor"${attr}></path>`
+      `stroke="none" fill="currentColor"${attr.replace(klass, '')}${klass}></path>`
     )
   }
   return `<rect${attr} x="${num(x)}" y="${num(y)}" width="${num(w)}" height="${num(h)}"/>`
