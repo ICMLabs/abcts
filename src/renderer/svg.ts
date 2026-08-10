@@ -177,6 +177,24 @@ const PRECISION = 100000
  * (`write/svg.js`), which is why its staff line ends at `193.9` where the arithmetic gives
  * 193.90447. The root's width and height are the exception and go out raw.
  */
+/**
+ * **A `%%sep` RULE IS ITS OWN EMITTER** — `drawSeparator` builds the path by hand
+ * (`draw/separator.js`) and shares nothing with `printLine`:
+ *
+ *   - `y = Math.round(renderer.y)` — the cursor rounded to a WHOLE PIXEL,
+ *   - the rect is `y` to `y + 1`, one pixel, not a thickness either side,
+ *   - FIVE points, closing back to the start before the `z`,
+ *   - `fill="rgba(0,0,0,255)"` and `stroke="rgba(0,0,0,0)"`, not `none`/`currentColor`,
+ *   - and a `defined-text` class rather than a line's.
+ */
+const separatorPath = (x1: number, y: number, x2: number, klass: string): string => {
+  const top = Math.round(y)
+  return (
+    `<path d="M ${x1} ${top} L ${x2} ${top} L ${x2} ${top + 1} L ${x1} ${top + 1} ` +
+    `L ${x1} ${top} z" stroke="rgba(0,0,0,0)" fill="rgba(0,0,0,255)" class="${klass}"></path>`
+  )
+}
+
 const round2 = (n: number): string => {
   const r = Math.round(n * 100) / 100
   return Object.is(r, -0) ? '0' : String(r)
@@ -767,7 +785,14 @@ const glyphDefs = new Map<GlyphName, string>()
               ),
             )
           }
-          for (const line of el.lines) block.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+          for (const line of el.lines) {
+            const t = TL(line)
+            block.push(
+              line.role === 'separator'
+                ? separatorPath(t.x1, t.y1, t.x2, classes.generate('defined-text'))
+                : lineToRect(t, attrs(el.type, line.role), abcjs),
+            )
+          }
         }
       }
       // …and under `add_classes` the group is named: `abcjs-meta-top` for the tune's own
@@ -1153,9 +1178,13 @@ const glyphDefs = new Map<GlyphName, string>()
    * group (`abcjs-meta-bottom` under `add_classes`) and after a bare `moveY(24)`
    * (`draw/draw.js:64-72`). Its y already carries that gap; see `layout.ts`.
    */
-  if (abcjs && doc.bottomText !== undefined && doc.bottomText.length > 0) {
+  if (
+    abcjs &&
+    ((doc.bottomText !== undefined && doc.bottomText.length > 0) ||
+      (doc.bottomLines !== undefined && doc.bottomLines.length > 0))
+  ) {
     oy = OY * PX
-    const block = doc.bottomText.map((t) =>
+    const block = (doc.bottomText ?? []).map((t) =>
       abcjsText(
         round2(t.x * PX),
         round2(t.y * PX + oy),
@@ -1173,6 +1202,11 @@ const glyphDefs = new Map<GlyphName, string>()
         t.middleBaseline === true,
       ),
     )
+    // …and a trailing `%%sep`'s rule, which is INK on the same block.
+    for (const line of doc.bottomLines ?? []) {
+      const t = TL(line)
+      block.push(separatorPath(t.x1, t.y1, t.x2, classes.generate('defined-text')))
+    }
     parts.push(
       `<g${options.addClasses === true ? ' class="abcjs-meta-bottom"' : ''}>${block.join('')}</g>`,
     )

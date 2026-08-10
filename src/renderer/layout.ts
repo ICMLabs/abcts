@@ -781,6 +781,8 @@ export type PartRole =
   | 'chordBelow'
   | 'dynamic'
   | 'title'
+  /** A `%%sep` rule — `drawSeparator` is its own emitter, unlike every other line. */
+  | 'separator'
 
 export interface PlacedGlyph {
   readonly name: GlyphName
@@ -1225,6 +1227,8 @@ export interface Layout {
    * staff in its own `abcjs-meta-bottom` group. y is already in the document's frame.
    */
   readonly bottomText?: readonly PlacedText[]
+  /** `%%sep` rules in a trailing block — see `bottomText`. */
+  readonly bottomLines?: readonly PlacedLine[]
 }
 
 /**
@@ -8447,6 +8451,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
    * wherever it stands (`draw/draw.js:52-58`), costing exactly its own rows.
    */
   const trailing: PlacedText[] = []
+  /** `%%sep` rules inside a trailing block — ink the text channel cannot carry. */
+  const trailingRules: { y: number; width: number }[] = []
   const trailingBlocks = [
     // A one-system tune's in-system block has no next system to ride; it is the last thing
     // on the page, which is exactly what the ladder's `mv-sub` rung measures.
@@ -8456,7 +8462,14 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   const trailingHeight =
     trailingBlocks.length === 0
       ? 0
-      : appendFreeText(trailing, trailingBlocks, 0, (systemWidth - ENGRAVE.marginX * 2) / 2, score.fonts)
+      : appendFreeText(
+          trailing,
+          trailingBlocks,
+          0,
+          (systemWidth - ENGRAVE.marginX * 2) / 2,
+          score.fonts,
+          trailingRules,
+        )
 
   const bottomBlock = bottomTextBlock(score.metadata, score.fonts)
   const bottomStart = bottom + trailingHeight + spaces(ABCJS_PX.bottomTextGap)
@@ -8472,6 +8485,22 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     systems: shown,
     ...(stafflessBlock === undefined ? {} : { topText: stafflessBlock.texts }),
     ...(bottomText === undefined ? {} : { bottomText }),
+    // **A TRAILING `%%sep` DREW NO RULE AT ALL.** Its two spaces were reserved — the height
+    // was exact — but `appendFreeText` collects the rule into a `rules` array the trailing
+    // call never passed, so the ink was dropped on the floor. Centred on the STAFF width,
+    // one pixel thick, as `drawSeparator` draws it.
+    ...(trailingRules.length === 0
+      ? {}
+      : {
+          bottomLines: trailingRules.map((r) => ({
+            x1: (systemWidth - ENGRAVE.marginX * 2 - r.width) / 2,
+            y1: r.y + bottom,
+            x2: (systemWidth - ENGRAVE.marginX * 2 + r.width) / 2,
+            y2: r.y + bottom,
+            thickness: 1 / STAFF_SPACE_PX,
+            role: 'separator' as const,
+          })),
+        }),
     width: Math.max(0, ...shown.map((s) => s.width)),
     /**
      * **THE PAGE IS THE REQUESTED WIDTH OR THE WIDEST LINE, WHICHEVER IS BIGGER** — and
@@ -9042,6 +9071,7 @@ function freeTextBlock(
     x2: (width + r.width) / 2,
     y2: r.y,
     thickness: 1 / STAFF_SPACE_PX,
+    role: 'separator' as const,
   }))
   return { texts, lines, height }
 }
