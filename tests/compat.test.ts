@@ -75,11 +75,14 @@ describe('renderAbc', () => {
     expect(((xs[1] ?? 0) - (xs[0] ?? 0)) * toPx).toBeCloseTo(42.43, 1)
   })
 
-  it('pads to the requested page width, as abcjs does', () => {
-    // abcjs's simple-c is 700px wide with the staff ending at 422 — it pads. A page that
-    // swapped a 700px element for a content-width one would reflow.
+  it('pads to the requested page width PLUS abcjs\'s own margins', () => {
+    // abcjs's page is the staff width plus `padding.left` and `.right` — 15 each on screen
+    // (`write/renderer.js:69-72`). CORRECTED: this asserted the staff width itself, and
+    // every golden says otherwise — `dump-svg.js` renders at `staffwidth: 670` and abcjs
+    // writes `width="700"`. Named by the byte table, which differed on that attribute for
+    // all 171 fixtures.
     const svg = renderAbc(null, fixture('clefs'), { staffwidth: 740 })[0]?.svg ?? ''
-    expect(/width="([\d.]+)"/.exec(svg)?.[1]).toBe('740')
+    expect(/width="([\d.]+)"/.exec(svg)?.[1]).toBe('770')
   })
 
   it('parses in strict mode, reproducing abcjs rather than correcting it', () => {

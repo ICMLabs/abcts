@@ -31,6 +31,13 @@ import { STAFF_SPACE_PX } from '../renderer/abcjs-constants.js'
 import { layout } from '../renderer/layout.js'
 import { toSVG } from '../renderer/svg.js'
 
+/**
+ * abcjs's SCREEN padding — `top/left/right/bottom = 15` (`write/renderer.js:69-72`), where
+ * print mode takes 38/68. The page is the staff width plus this either side, which is why
+ * a 670 staffwidth renders a 700px SVG.
+ */
+const SCREEN_PADDING = 15
+
 /** The subset of abcjs's params that changes the rendering abcts produces. */
 export interface AbcjsParams {
   /** Staff width in pixels. abcjs's default is 740 on screen. */
@@ -103,9 +110,18 @@ export function renderAbc(target: Target, abc: string, params: AbcjsParams = {})
       classes: 'abcjs',
       // abcjs emits its per-element class scheme only when the host asks for it.
       ...(params.add_classes === true ? { addClasses: true } : {}),
+      // abcjs's `aria-label` carries the title; the padding is abcjs's own 15 either side.
+      ...(score.metadata.titles[0] === undefined
+        ? {}
+        : { title: plainText(score.metadata.titles[0]) }),
       // Pad to the requested page width, as abcjs does, so the element occupies the
       // same space in the page whatever the music's own width.
-      ...(params.staffwidth === undefined ? {} : { pageWidth: params.staffwidth }),
+      // THE PAGE IS THE STAFF PLUS abcjs'S PADDING — 15 either side on screen
+      // (`write/renderer.js:69-72`), so a 670 staffwidth is a 700px page. We padded to the
+      // staff width itself, which is 30px narrower than every golden.
+      ...(params.staffwidth === undefined
+        ? {}
+        : { pageWidth: params.staffwidth + SCREEN_PADDING * 2 }),
     }),
     score,
     // abcjs's `metaText.title` is a plain string even when the field changed font

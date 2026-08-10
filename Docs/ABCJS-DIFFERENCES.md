@@ -13,6 +13,59 @@ import { parse, render } from 'abcts'      // render(score, { mode: 'abc2.1' })
 
 ---
 
+## THE STANDING GOAL: `abcjs-strict` OUTPUT IS BYTE-EQUAL TO abcjs 6.7.0
+
+**Lance, 2026-08-09b: abcts exists to build an abcjs-modern whose output — the SVG FILE and
+the AUDIO — is 100% byte-equal to abcjs 6.7.0.** A tolerance is therefore not a compromise
+to be balanced against effort; it is a defect that has not been written down yet.
+
+Where that stands:
+
+| surface | gate | standing |
+|---|---|---|
+| MIDI file | `tests/midi-file-ranked.test.ts` | **BYTE-EXACT, 0 of 3** |
+| audio event list | `tests/audio-ranked.test.ts` | 0 of 72 |
+| note timings | `tests/timing-ranked.test.ts` | 0 of 38 |
+| **SVG file** | `tests/svg-bytes.test.ts` | **171 of 171 differ** — the open arc |
+
+`tests/svg-bytes.test.ts` is the only gate here with no tolerance at all. Every other one
+declares what it ignores — `pixel-parity` compares notehead centres, the harvested table
+takes 0.05px, `dom-contract` counts classed ancestors rather than raw nesting — and each of
+those was defensible for the axis it was built to see. **Together they let a markup
+difference live forever**: a `<rect>` where abcjs writes a `<path>` moves nothing, a
+`<g transform>` where abcjs writes absolute coordinates moves nothing, and an attribute in a
+different order moves nothing. A byte string has no such latitude.
+
+### The blockers, measured rather than estimated
+
+Every fixture now agrees with abcjs to **byte ~153**, which is the whole root element: no
+`xmlns`, `xmlns:xlink` instead, `role`, `fill`, `stroke`, `aria-label` carrying the tune's
+title, the padded page width, the raw-float height, abcjs's `<style>` text and its `<title>`.
+What differs at byte 153 is one attribute, and it is the same one on all 171:
+
+1. **`viewBox`.** abcjs draws in ABSOLUTE PIXELS and writes none. We draw in STAFF SPACES
+   and let the `viewBox` convert — so this attribute is not the difference, it is the
+   SYMPTOM of it: every coordinate in the body differs too. Removing it alone took 196 tests
+   red in one run, because `tests/pixel-geometry.ts` reads it to resolve our coordinates and
+   every geometry gate is built on that. The fix is to emit absolute pixels throughout, and
+   then the attribute and the scaling go together.
+2. **`<rect>` for lines where abcjs writes `<path>`** — staff lines, stems, ledgers, beams.
+   `pixel-parity` normalises the two and proves them equivalent in POSITION, which is why
+   this survived.
+3. **Element ORDER inside a note group** — abcjs writes notehead, stem, ledger; we write
+   ledger, stem, notehead.
+4. **The top text comes FIRST in abcjs's body**, before any staff; ours draws the music
+   first on some fixtures.
+5. **Per-glyph `data-name`** — `clefs.G`, `accidentals.flat`, `dots.dot`, `rests.half`, a
+   bare digit for a time-signature figure, and the WRITTEN NOTE NAME (`C`, `c`, `C,`) on a
+   notehead. Tracked separately by `tests/dom-contract.test.ts`.
+
+**None of these is a ruled divergence.** `tests/svg-bytes.test.ts`'s `DIVERGENT` list is
+empty and stays empty until something is written up HERE with its evidence — a slug in that
+list without an entry in this file is a tolerance wearing a disguise.
+
+---
+
 ## How this list was verified
 
 Every entry was checked against **abcjs 6.6.3 itself** — either by running it over the

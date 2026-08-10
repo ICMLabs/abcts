@@ -40,6 +40,12 @@ export interface RenderOptions {
    */
   readonly addClasses?: boolean
   /**
+   * The tune's title, for the root's `aria-label`. abcjs writes
+   * `Sheet Music for "…"` when `metaText.title` is set and a bare `Sheet Music` when it is
+   * not (`write/renderer.js`), with the quotes HTML-escaped by the DOM serializer.
+   */
+  readonly title?: string
+  /**
    * Force the drawing's width in pixels, rather than fitting the content.
    *
    * abcjs pads its SVG to the requested page width even when the music is narrower —
@@ -394,7 +400,25 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
    * hashing kilobytes of path data per glyph to discover that would cost more than it
    * saves.
    */
-  const attrIfAny = (cls: string): string => (cls ? ` class="${cls}"` : '')
+  
+/**
+ * abcjs's own `<style>` text, byte for byte. It suppresses the OS text-selection callout
+ * while a drag is in progress and does nothing else; reproducing it is part of byte parity
+ * and nothing else reads it.
+ */
+/**
+ * abcjs writes the ROOT's width and height as raw JS numbers — `height="1081.3299999999997"`
+ * — where every coordinate inside the drawing goes through its own rounding. Ours rounded
+ * both, so the two agreed to two decimals and differed as bytes.
+ */
+const raw = (n: number): string => String(n)
+
+const ABCJS_STYLE =
+  '.abcjs-dragging-in-progress text, .abcjs-dragging-in-progress tspan {-webkit-touch-callout: none; ' +
+  '-webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; ' +
+  'user-select: none;}'
+
+const attrIfAny = (cls: string): string => (cls ? ` class="${cls}"` : '')
 
 const glyphDefs = new Map<GlyphName, string>()
   const defId = (name: GlyphName): string => {
@@ -715,6 +739,67 @@ const glyphDefs = new Map<GlyphName, string>()
   // viewBox carries the staff-space coordinate system, including the negative y above
   // the middle line, so nothing downstream has to know about the origin offset.
   const viewBox = `0 ${num(doc.top)} ${num(viewWidth)} ${num(doc.height)}`
+
+  /**
+   * ABCJS'S ROOT ELEMENT, ATTRIBUTE FOR ATTRIBUTE — and it is what a browser's serializer
+   * writes back out of the DOM abcjs built, which is why there is no `xmlns` (an inline
+   * `<svg>` inherits it) and why `xmlns:xlink` is there instead.
+   *
+   * The `<style>` block and the `<title>` are abcjs's own, emitted on every render
+   * (`write/renderer.js`), and they are byte-for-byte fixed text — a drag-in-progress
+   * rule and an accessible label. Neither draws anything, and both are 300-odd bytes of
+   * the contract.
+   *
+   * NO `viewBox`: abcjs draws in ABSOLUTE PIXELS. Ours carries a staff-space coordinate
+   * system and scales it, which is why the whole body still differs after this — that is
+   * the next and much larger piece, and the byte table is what will rank it.
+   */
+  if (abcjs) {
+    return (
+      `<svg xmlns:xlink="http://www.w3.org/1999/xlink" role="img" fill="currentColor" ` +
+      `stroke="currentColor" aria-label="Sheet Music${
+        options.title === undefined || options.title === ''
+          ? ''
+          : ` for &quot;${escapeText(options.title)}&quot;`
+      }" width="${raw(w)}" height="${raw(h)}"` +
+      /**
+       * **THE `viewBox` IS THE ONE THING BETWEEN THIS AND BYTE PARITY, AND IT IS DELIBERATELY
+       * STILL HERE.**
+       *
+       * abcjs draws in ABSOLUTE PIXELS and writes no `viewBox` at all. We draw in STAFF
+       * SPACES and let the `viewBox` do the conversion — which is why every coordinate in
+       * the body differs too, not just this attribute.
+       *
+       * Removing it alone is not the fix: it took 196 tests red in one run, because
+       * `tests/pixel-geometry.ts` reads the `viewBox` to resolve our coordinates to pixels
+       * and every geometry gate in the repo is built on that. The fix is to emit absolute
+       * pixels throughout, and then this attribute and that scaling both go at once.
+       *
+       * Left in place, and left as the FIRST difference the byte table reports on all 171
+       * fixtures, so the blocker is named on every row rather than hidden behind the ones
+       * after it.
+       */
+      ` viewBox="${viewBox}">` +
+      // The TITLE element carries the same phrase with REAL quotes — it is text content,
+      // where the `aria-label` is an attribute and the serializer escapes them there.
+      `<style>${ABCJS_STYLE}</style><title>Sheet Music${
+        options.title === undefined || options.title === ''
+          ? ''
+          : ` for "${escapeText(options.title)}"`
+      }</title>` +
+      (glyphDefs.size === 0
+        ? ''
+        : `<defs>${[...glyphDefs]
+            .map(([name, id]) => `<path id="${id}" d="${outline(name).path}"/>`)
+            .join('')}</defs>`) +
+      // ONE PLAIN `<g>` WRAPS THE WHOLE DRAWING, with no attributes at all — abcjs's
+      // `fill` lives on the `<svg>` and this group carries nothing. Removing it entirely
+      // for the DOM contract was right about DEPTH (contract depth skips unclassed
+      // groups) and wrong about BYTES.
+      `<g>${parts.join('')}</g>` +
+      '</svg>'
+    )
+  }
 
   return (
     `<svg xmlns="http://www.w3.org/2000/svg"${abcjs ? '' : ` class="${escapeAttr(prefix)}"`} ` +
