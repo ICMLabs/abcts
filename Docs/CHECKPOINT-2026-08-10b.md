@@ -31,7 +31,7 @@ reproduce goes in `Docs/ABCJS-DIFFERENCES.md` with its evidence and its slug goe
 | harvested geometry | `corpus-abcjs-ranked` | 0 of 174 |
 | pixel geometry | `pixel-parity` | 0 of 120 |
 | DOM contract | `dom-contract` | **22 of 25 cases** (from 25), **248 of 648 rows** (from 86) — three slugs RATCHETED |
-| **SVG bytes** | **`svg-bytes`** | **164 of 171 — SEVEN BYTE-EXACT AND RATCHETED**; best 5186, median 175 (from 171 of 171 at 651 / 162) |
+| **SVG bytes** | **`svg-bytes`** | **164 of 171 — SEVEN BYTE-EXACT AND RATCHETED**; best 5186, median 179 (from 171 of 171 at 651 / 162) |
 
 **Suite 1137 of 1137. NO REDS. `npx tsc --noEmit` clean.**
 
@@ -115,7 +115,7 @@ nothing in `tests/` may grow that mask.**
 
 ## 2. WHAT CLOSED, AND WHY EACH WAS INVISIBLE
 
-Twenty-one landings, every one a read of a named abcjs function.
+Twenty-five landings, every one a read of a named abcjs function.
 
 - **`staffwidth` is the MUSIC area; the page is it plus abcjs's 15px margins.** compat
   mapped `renderAbc(…, {staffwidth: 670})` straight onto core's `systemWidth`, which is
@@ -210,6 +210,16 @@ Twenty-one landings, every one a read of a named abcjs function.
   runs and takes its `else` branch (`tie-element.js:35-38`). The FIRST half never gets one,
   which is why a tie at the end of the TUNE costs nothing. Two wrong inferences preceded
   the measurement; `dump-elements.js` settled it in one step.
+- **A `<text>`'s x AND y ARE ROUNDED TO TWO DECIMALS** — `draw/text.js:63-64`, the same rule
+  its paths take; ours wrote the emission quantum. **`%%text` sits at `paddingLeft`** and
+  `%%center` at `width / 2` with no padding (`free-text.js:11`, `:37`); that row was at 0.
+  **A block's INK moves with its text** — a `%%sep` rule is a line on the same element and
+  the offset was applied to `texts` alone. And every nonMusic row is NAMED.
+- **A MID-TUNE BLOCK IS DRAWN AT THE TOP OF THE GAP** — abcjs runs the nonMusic line while
+  `renderer.y` is still the previous group's bottom, and `addStaffPadding` tops the gap up
+  AFTER (`draw/draw.js:44-52`), so the slack falls below. Ours anchored from the music
+  BELOW, which is right for the head block and 31.4px low here. **The total is identical
+  either way, so no height moved and no gate could see it.**
 - **`data-index` is an index into the SELECTABLES, not into the children.**
   `Selectables.add` writes `{selectable: false, "data-index": elements.length}` and only
   after `canSelect`, which with no `selectTypes` admits `el_type 'note'` alone
@@ -269,11 +279,11 @@ regression, so read the diff before touching the gate.
    IT IS NOT** — a subtitle between voice lines of the FIRST system, of the LAST system, a
    mid-tune `%%sep` and a trailing `%%sep` are all EXACT on height. Do not re-measure those.
 
-   **AND `%%sep`'s RULE IS DRAWN IN THE WRONG PLACE, though its SPACE is right.** abcjs puts
-   it at `x=250 w=170` for `%%sep 0.4cm 0.4cm 6cm` — `(6/2.54)*72` rounded, centred on the
-   STAFF width like a `%%center` — and ours agrees on both. The y does not: 217.88 against
-   131 on one rung and 296.88 against 214 on another, and a TRAILING `%%sep` draws no rule
-   at all. Every height on those rungs is exact, so this is ink placement only.
+   **AND TWO SMALLER THINGS FELL OUT AND ONE IS STILL OPEN.** A mid-tune block is drawn at
+   the TOP of the gap now, exact on the subtitle rung — but the `%%sep` rung's rule lands at
+   130.85 against 131, so the block top is 0.15 out on that tune where the subtitle rung is
+   exact: it is the PREVIOUS system's bottom extent, not the block. And a TRAILING `%%sep`
+   draws no rule at all, though its space is reserved.
 2. **THE ROOT'S `height`'s ULP HALF — 86 rows — AND `abcMusicKit` v1 HAS ALREADY ANSWERED
    THE ARCHITECTURAL QUESTION** (Lance, 2026-08-10b: *"v1 port from js encountered similar
    rounding issue — so v1 may have the solution used to get to byte parity to js"*). It did,
@@ -368,7 +378,7 @@ regression, so read the diff before touching the gate.
 working tree clean
 npx tsc --noEmit    clean
 npx vitest run      1137 / 1137
-svg bytes           164 of 171   best 5186, median 178   (masked-height median 1241, max EXACT)
+svg bytes           164 of 171   best 5186, median 179   (masked-height median 1241, max EXACT)
                     PASSING ratchet: 7 slugs, the first this table has ever held
 heights             80 exact / 86 ULP-only / 2 structural (3.875px, both the same)
 audio ranked        0 of 72
