@@ -1,0 +1,41 @@
+{
+ "name": "douce",
+ "abc": "X: 1\nM: 4/4\nL: 1/8\nN: print coda\nK: Gm\nP:Ending\n!coda!\"EbΔ7\"dddd-d4|\"D7\"z\"^break\"d_d2c2=B2|_BA_AG zd\"Gm\"G2|]",
+ "expected": [
+  {
+   "type": "part",
+   "name": "Ending",
+   "lines": [
+    [
+     {
+      "chord": [
+       "E♭Δ7",
+       "",
+       "",
+       ""
+      ],
+      "annotations": [
+       "coda"
+      ]
+     },
+     {
+      "chord": [
+       "D7",
+       "break",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "break",
+       "",
+       "",
+       "Gm"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

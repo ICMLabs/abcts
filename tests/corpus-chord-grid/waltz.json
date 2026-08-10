@@ -1,0 +1,5 @@
+{
+ "name": "waltz",
+ "abc": "X: 35\nT:Mollie's Garden\nM:3/4\nL:1/8\nQ:1/2=90\nC:Paul Rosen\nS:Copyright 2007, Paul Rosen\nR:Waltz\nK:D\n\"D\"a6|f6|\"G\"g3f ed|B4cB|\"A7\"A4AB|c2e2a2|\"D\"g6|f6|\"D\"a6|\"(Bm)\"f6|\"G\"g3f ed|\"(Em)\"B4cB|\n\"A7\"A4AB|c2e2A2|\"D\"d6-|d4 dc||\"Bm\"B4Bc|d2e2g2|f6|d6|\"A7\"e4 ef|\ne2d2e2|\"D\"f6-|f4 dc|\"Bm\"B4Bc|d2e2g2|f6|\"B7\"a6|\"Em\"e4 ef|\"A7\"g2e2A2|\"D\"d6-|d6:|",
+ "expected": null
+}

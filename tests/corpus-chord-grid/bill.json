@@ -1,0 +1,296 @@
+{
+ "name": "bill",
+ "abc": "X:1\nT:Bill Bailey\nM:4/4\nN:Subtitles\nN:free text inserted\nL:1/4\nK:C\nT:First Half\n\"C\"GA2c|e3/2^d/2eg|GA2c|e4|\nGA2c|e2g2|\"G7\"(gB3-|B4)|\nGB2d|fefg|GB2d|f4|\nGB2d|g2\"G+\"a2|\"C\"(ae3-|e4)|\nT:Second Half\n\"C\"GA2c|e3/2^d/2eg|GA2c|e3G|\nGGce|g2_b2|\"F\"a4-|a3c|\n%%text extra text is shown and causes a part break\n\"F\"cc2c|\"F#°7\"d2c2|\"C\"gg2a|\"A7\"e3e|\n\"D7\"ed^cd|\"G7\"f2e2|\"C\"c4-|czz2|]\n",
+ "expected": [
+  {
+   "type": "part",
+   "name": "",
+   "lines": [
+    [
+     {
+      "chord": [
+       "C",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "G7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     }
+    ],
+    [
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "G7",
+       "",
+       "G+",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "C",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     }
+    ]
+   ]
+  },
+  {
+   "type": "subtitle",
+   "subtitle": "Second Half"
+  },
+  {
+   "type": "part",
+   "name": "",
+   "lines": [
+    [
+     {
+      "chord": [
+       "C",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "F",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     }
+    ]
+   ]
+  },
+  {
+   "type": "text",
+   "text": "extra text is shown and causes a part break"
+  },
+  {
+   "type": "part",
+   "name": "",
+   "lines": [
+    [
+     {
+      "chord": [
+       "F",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "F♯°7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "C",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "A7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "D7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "G7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "C",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

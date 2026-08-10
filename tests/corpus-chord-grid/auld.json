@@ -1,0 +1,221 @@
+{
+ "name": "auld",
+ "abc": "X:1\nM: 4/4\nL: 1/4\nN:Lots of chords\nN:chords in overlay\nK: F\nC |: \"F6\"F3/ E/\"Dm7\"FA|\"Gm7\"G3/ F/\"C7\"GA/G/|\n\"F6\"F3/F/\"F7\"A\"B7#5\"c|\"BbΔ7\"d3 \"B°7\"d|\"FΔ7\"c3/A/\"Dm7\"AF|\n\"Gm7\"G3/F/\"C7\"G\"C#°7\"A/G/|\"Dm7\"F3/D/\"Gm7\"D\"C7\"C|\"F6\"F3\"C7#5\"d||\n\"FΔ7\"c3/ A/\"Dm7\"AF|\"Gm7\"G3/F/\"C7\"G\"Gb7#5\"d|\"FΔ7\"c3/A/\"F7\"A\"B7#5\"c|\n\"BbΔ7\"d3\"B°7\"d|\"FΔ7\"c3/A/\"Dm7\"AF|\"Gm7\"G3/F/\"C7\"G\"C#°7\"A/G/|\n\"Dm7\"F3/D/\"Gm7\"D\"C7\"C|1\"F6\"F3\"C7\"C :|2F4 && \"Ab6\"x2 \"GbΔ7\"x\"F6\"x|]\n",
+ "expected": [
+  {
+   "type": "part",
+   "name": "",
+   "lines": [
+    [
+     {
+      "chord": [
+       "F6",
+       "",
+       "Dm7",
+       ""
+      ],
+      "hasStartRepeat": true
+     },
+     {
+      "chord": [
+       "Gm7",
+       "",
+       "C7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "F6",
+       "",
+       "F7",
+       "B7♯5"
+      ]
+     },
+     {
+      "chord": [
+       "B♭Δ7",
+       "",
+       "",
+       "B°7"
+      ]
+     },
+     {
+      "chord": [
+       "FΔ7",
+       "",
+       "Dm7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "Gm7",
+       "",
+       "C7",
+       "C♯°7"
+      ]
+     },
+     {
+      "chord": [
+       "Dm7",
+       "",
+       "Gm7",
+       "C7"
+      ]
+     },
+     {
+      "chord": [
+       "F6",
+       "",
+       "",
+       "C7♯5"
+      ]
+     }
+    ],
+    [
+     {
+      "chord": [
+       "FΔ7",
+       "",
+       "Dm7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "Gm7",
+       "",
+       "C7",
+       "G♭7♯5"
+      ]
+     },
+     {
+      "chord": [
+       "FΔ7",
+       "",
+       "F7",
+       "B7♯5"
+      ]
+     },
+     {
+      "chord": [
+       "B♭Δ7",
+       "",
+       "",
+       "B°7"
+      ]
+     },
+     {
+      "chord": [
+       "FΔ7",
+       "",
+       "Dm7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "Gm7",
+       "",
+       "C7",
+       "C♯°7"
+      ]
+     },
+     {
+      "chord": [
+       "Dm7",
+       "",
+       "Gm7",
+       "C7"
+      ]
+     },
+     {
+      "chord": [
+       "F6",
+       "",
+       "",
+       "C7"
+      ],
+      "ending": "1",
+      "hasEndRepeat": true
+     }
+    ],
+    [
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "A♭6",
+       "",
+       "G♭Δ7",
+       "F6"
+      ],
+      "ending": "2"
+     }
+    ]
+   ]
+  }
+ ]
+}

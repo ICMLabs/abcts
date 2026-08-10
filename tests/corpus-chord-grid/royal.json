@@ -1,0 +1,55 @@
+{
+ "name": "royal",
+ "abc": "X: 1\nM: 4/4\nL: 1/8\nN: annotation on same note as a chord\nQ:1/4=170\nK: F\nP:C\n\"F7\"\"^Roll\"F2F2GA3|\"Bb\"\"^Roll\"F2F2GA3|\"Bbm\"\"^Roll\"F2F2GA3|\"F\"!marcato!F2z2\"F7\"!marcato!F2z2||\n",
+ "expected": [
+  {
+   "type": "part",
+   "name": "C",
+   "lines": [
+    [
+     {
+      "chord": [
+       "F7",
+       "",
+       "",
+       ""
+      ],
+      "annotations": [
+       "Roll"
+      ]
+     },
+     {
+      "chord": [
+       "B♭",
+       "",
+       "",
+       ""
+      ],
+      "annotations": [
+       "Roll"
+      ]
+     },
+     {
+      "chord": [
+       "B♭m",
+       "",
+       "",
+       ""
+      ],
+      "annotations": [
+       "Roll"
+      ]
+     },
+     {
+      "chord": [
+       "F",
+       "",
+       "F7",
+       ""
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

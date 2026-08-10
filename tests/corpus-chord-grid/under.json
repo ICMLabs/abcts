@@ -1,0 +1,46 @@
+{
+ "name": "under",
+ "abc": "X:1\nM:4/4\nL:1/8\nN:triplets mess up beat counting\nQ:1/4=86\nK:G\n\"Am7\"gege-e3E|\"D7\"BdB6| \"G\"(3A2G2F2 \"Cm6\"(3A2G2F2 | \"G\"G8|]\n",
+ "expected": [
+  {
+   "type": "part",
+   "name": "",
+   "lines": [
+    [
+     {
+      "chord": [
+       "Am7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "D7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "G",
+       "",
+       "Cm6",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "G",
+       "",
+       "",
+       ""
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

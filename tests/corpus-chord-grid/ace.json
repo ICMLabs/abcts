@@ -1,0 +1,154 @@
+{
+ "name": "ace",
+ "abc": "X:1\nM:4/4\nL:1/8\nN:fermata\nN:annotation\nN:first chord in measure blank\nK:Bb\nP:A\nF2[|\"Bb\"dddd \"Gb7\"_d3d|\"Bb\"dddd \"Gb7\"_d4|\"Bb\"dd^cd \"G7\"ed=BG|\"Cm\"c6G2|\nee\"G7\"df\"Cm\"e2GG|\"Cm\"ee\"G7\"df\"Cm\"e4|\"C7\"=edc_c BGAB|\"F7\"c6F2||\nP:B\n\"Bb\"dddd \"Gb7\"_dd2d|\"Bb\"=dddd \"Gb7\"_dd2F|\"Bb\"dd^cd \"G7\"ed=BG|\"Cm\"c6cd|\n\"C7\"=eede \"F\"dc2d|\"C7\"=eede \"F\"dc3|\"C7\"cc\"C7b5\"cc cGAB|\"F7\"!fermata!c8\"^uptempo\"y|\n",
+ "expected": [
+  {
+   "type": "part",
+   "name": "A",
+   "lines": [
+    [
+     {
+      "chord": [
+       "B♭",
+       "",
+       "G♭7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "B♭",
+       "",
+       "G♭7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "B♭",
+       "",
+       "G7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "Cm",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "Cm",
+       "G7",
+       "Cm",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "Cm",
+       "G7",
+       "Cm",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "C7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "F7",
+       "",
+       "",
+       ""
+      ]
+     }
+    ]
+   ]
+  },
+  {
+   "type": "part",
+   "name": "B",
+   "lines": [
+    [
+     {
+      "chord": [
+       "B♭",
+       "",
+       "G♭7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "B♭",
+       "",
+       "G♭7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "B♭",
+       "",
+       "G7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "Cm",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "C7",
+       "",
+       "F",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "C7",
+       "",
+       "F",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "C7",
+       "C7♭5",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "F7",
+       "",
+       "",
+       ""
+      ],
+      "annotations": [
+       "fermata",
+       "uptempo"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

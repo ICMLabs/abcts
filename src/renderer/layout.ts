@@ -5985,14 +5985,68 @@ function layoutMeasure(
     // An opening `|:` or `[|` prints before the measure it belongs to, and is a SEPARATE
     // barline from the previous measure's closer.
     if (measure.openingBarline === null) return
-    const bar = layoutBar(x, measure.openingBarline, strict)
+    const plain = layoutBar(x, measure.openingBarline, strict)
+    // A DECORATION AND A CHORD WRITTEN BEFORE AN OPENING BARLINE BELONG TO IT, the same
+    // way they belong to a closing one — abcjs has one bar element and `createBarLine`
+    // runs the same `createDecoration` at a fixed pitch 12 and the same `addChord` at
+    // `noteheadWidth = 0` whichever measure the bar opens or closes
+    // (`abstract-engraver.js:1002, 1047-1049`). `!coda!|:` is how a coda on a repeat is
+    // normally written.
+    const openDecorations = measure.openingBarlineDecorations ?? []
+    const marks =
+      openDecorations.length === 0
+        ? null
+        : decorationGlyphs(
+            openDecorations,
+            x,
+            plain.width,
+            6,
+            6,
+            false,
+            6,
+            2,
+            false,
+            strict,
+            0,
+            dynamicsAbove,
+          )
+    const withMarks =
+      marks === null
+        ? plain
+        : {
+            ...plain,
+            glyphs: [...plain.glyphs, ...marks.glyphs],
+            texts: [...plain.texts, ...marks.texts],
+          }
+    const barSpan = { left: 0, right: 0 }
+    const chordTexts =
+      measure.openingBarlineChord === undefined && measure.openingBarlineAnnotations === undefined
+        ? []
+        : noteText(
+            {
+              ...EMPTY_BAR_EVENT,
+              chordSymbol: measure.openingBarlineChord ?? null,
+              annotations: measure.openingBarlineAnnotations ?? [],
+            },
+            x,
+            0,
+            strict,
+            barSpan,
+          )
+    const bar =
+      chordTexts.length === 0
+        ? withMarks
+        : { ...withMarks, texts: [...withMarks.texts, ...chordTexts] }
     openingBarIndex = elements.length
     elements.push(bar)
     fixed(
-      barRod(measure.openingBarline, bar, strict) + endingRoom(measure.volta),
+      Math.max(
+        barRod(measure.openingBarline, bar, strict) + endingRoom(measure.volta),
+        barSpan.right + ENGRAVE.prefixGap,
+      ),
       ENGRAVE.prefixGap + endingRoom(measure.volta),
       'bar',
-      ENGRAVE.barClearance,
+      Math.max(ENGRAVE.barClearance, barSpan.left),
     )
     x += ENGRAVE.barGap
   }

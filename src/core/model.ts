@@ -770,6 +770,25 @@ export interface Measure {
   readonly closingBarlineChord?: string
   readonly closingBarlineAnnotations?: readonly string[]
   /**
+   * …AND SO DOES A BARLINE THAT **OPENS** A MEASURE, which is the same transfer read from
+   * the other side and was missing entirely.
+   *
+   * abcjs has ONE bar element and does not care which measure it belongs to: `!coda!|:` and
+   * `"^3x"|:` both leave `decoration` and `chord` on the `bar_left_repeat`
+   * (measured — a dump of `you`'s delined voice prints
+   * `bar type=bar_left_repeat chord=[{"name":"3x","position":"above"}] dec=["coda"]`).
+   *
+   * Ours split a leading barline off as the NEXT measure's opener, and the transfer had
+   * nowhere to go: `closeMeasure` returns false on that path, so the decorations were
+   * cleared unconditionally by the caller and **lost outright**, while the chord and the
+   * annotations leaked onto the first note. The chord-grid arc is what surfaced it — a
+   * `"^3x"` sitting on the note ahead of that note's own `"G"` makes the annotation the
+   * FIRST entry of `element.chord`, and the grid reads only the first.
+   */
+  readonly openingBarlineDecorations?: readonly string[]
+  readonly openingBarlineChord?: string
+  readonly openingBarlineAnnotations?: readonly string[]
+  /**
    * A `Q:` or `[Q:]` after the FIRST one, printed where it stands.
    *
    * The first `Q:` anywhere in the tune becomes `Score.tempo` and is drawn at the head of

@@ -1,0 +1,57 @@
+{
+ "name": "sugar",
+ "abc": "X:1\nM:4/4\nL:1/8\nQ:1/4=133\nN:the decoration is on a bar line\nK:Bb\nP:Tag\n!coda!|\"Bb\"B8-|\"G7\"B8|\"Cm7\"G4\"G7\"G4|\"Cm7\"c^cdf- \"F7\"f=cd2|\"Bb\"B8-|Bzz2|]\n",
+ "expected": [
+  {
+   "type": "part",
+   "name": "Tag",
+   "lines": [
+    [
+     {
+      "chord": [
+       "B♭",
+       "",
+       "",
+       ""
+      ],
+      "annotations": [
+       "coda"
+      ]
+     },
+     {
+      "chord": [
+       "G7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "Cm7",
+       "",
+       "G7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "Cm7",
+       "",
+       "F7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "B♭",
+       "",
+       "",
+       ""
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

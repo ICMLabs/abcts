@@ -1,0 +1,195 @@
+{
+ "name": "I Wish",
+ "abc": "X:1\nM:4/4\nL:1/8\nQ:1/4=130\nN:placement of annotations\nN:second ending should be on new line\nK:F\nP:C - Trio\n\"C7\"!f!!marcato!c2z2!marcato!c2zc-|cc2A!tenuto!c2!marcato!d2|\"F\"c2c2A3z|c^cdA-A3z|\n\"C7\"!marcato!c2z2!marcato!c2zc-|cc2A!tenuto!c2!marcato!d2|\"@-20,5Trombone\"\"F\"zc \"^break\"df _a2fd|\"@-30,5All\"[!>!f_a]2 [!>!f_a]2 [!>!f_a]2 [!marcato!fd]2|\n\"C7\"dcec dc2c|dced-d2zc|\"F\"fd^GA dc2d|f2f_e-e2\"F7\"zA|\n\"Bb\"d^d2e- \"Bº\"e2=d2|\"F/C\"c^c2d-\"D7\"d2z2|\"G7\"DFDF\"C7\"A2AF-|\"F\"F2^GA \"D7\"ed-d2|\n\"G7\"!diminuendo(!DFDF\"C7\"A2A!diminuendo)!F-|1\"F\"F6z2:|2\"F\"F6\"^Bass Drum:\"\"^Thump\"!style=x!a2|\"^Thump\"!style=x!a !mp!!>!_A3F2z2|]\n",
+ "expected": [
+  {
+   "type": "part",
+   "name": "C - Trio",
+   "lines": [
+    [
+     {
+      "chord": [
+       "C7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "F",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "C7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "C7",
+       "break",
+       "",
+       ""
+      ],
+      "annotations": [
+       "Trombone"
+      ]
+     },
+     {
+      "chord": [
+       "break",
+       "",
+       "",
+       ""
+      ],
+      "annotations": [
+       "All"
+      ]
+     }
+    ],
+    [
+     {
+      "chord": [
+       "C7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "F",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "F",
+       "",
+       "",
+       "F7"
+      ]
+     },
+     {
+      "chord": [
+       "B♭",
+       "",
+       "Bº",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "F/C",
+       "",
+       "D7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "G7",
+       "",
+       "C7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "F",
+       "",
+       "D7",
+       ""
+      ]
+     }
+    ],
+    [
+     {
+      "chord": [
+       "G7",
+       "",
+       "C7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "F",
+       "",
+       "",
+       ""
+      ],
+      "ending": "1",
+      "hasEndRepeat": true
+     }
+    ],
+    [
+     {
+      "chord": [
+       "F",
+       "",
+       "",
+       ""
+      ],
+      "annotations": [
+       "Bass Drum:\nThump"
+      ],
+      "ending": "2"
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ],
+      "annotations": [
+       "Thump"
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

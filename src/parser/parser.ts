@@ -1352,7 +1352,13 @@ class VoiceBuilder {
    */
   private pendingLineStart = false
   /** A leading barline awaiting the measure it opens. */
-  private pendingOpening: { barline: Barline; range: SourceRange } | null = null
+  private pendingOpening: {
+    barline: Barline
+    range: SourceRange
+    decorations: readonly string[]
+    chordSymbol: string | null
+    annotations: readonly string[]
+  } | null = null
   /** A `P:` label awaiting the measure it marks. */
   private pendingPart: { label: string; range: SourceRange } | null = null
   /** A repeat ending awaiting the measure it opens. */
@@ -1384,6 +1390,9 @@ class VoiceBuilder {
   private takeOpening(lastEventStart: number | null): {
     openingBarline: Barline | null
     openingBarlineSourceRange: SourceRange | null
+    openingBarlineDecorations?: readonly string[]
+    openingBarlineChord?: string
+    openingBarlineAnnotations?: readonly string[]
     partLabel: string | null
     partLabelSourceRange: SourceRange | null
     volta: string | null
@@ -1403,6 +1412,13 @@ class VoiceBuilder {
     return {
       openingBarline: pending?.barline ?? null,
       openingBarlineSourceRange: pending?.range ?? null,
+      ...(pending !== null && pending.decorations.length > 0
+        ? { openingBarlineDecorations: pending.decorations }
+        : {}),
+      ...(pending?.chordSymbol != null ? { openingBarlineChord: pending.chordSymbol } : {}),
+      ...(pending !== null && pending.annotations.length > 0
+        ? { openingBarlineAnnotations: pending.annotations }
+        : {}),
       partLabel: part?.label ?? null,
       partLabelSourceRange: part?.range ?? null,
       volta: volta?.label ?? null,
@@ -1471,7 +1487,19 @@ class VoiceBuilder {
       this.overlayIndex = null
       // Two openers in a row keep the first; `[|` then `|:` prints both, but nothing in
       // the corpus does it and one slot is enough until something does.
-      this.pendingOpening ??= { barline, range: barlineRange }
+      //
+      // AND AN OPENING BARLINE TAKES THE PENDING DECORATION AND CHORD, exactly as a
+      // closing one does — abcjs has ONE bar element and does not distinguish them, so
+      // `!coda!|:` leaves the coda on the `bar_left_repeat`. This branch used to keep
+      // nothing: the caller cleared the decorations unconditionally and they were LOST,
+      // while the chord leaked onto the next note ahead of that note's own.
+      this.pendingOpening ??= {
+        barline,
+        range: barlineRange,
+        decorations: [...decorations],
+        chordSymbol,
+        annotations: [...annotations],
+      }
       return false
     }
     this.measures.push({
@@ -3372,14 +3400,15 @@ class Parser {
             pending.chordSymbol,
             pending.annotations,
           )
+          // Cleared either way now: an OPENING barline keeps them too (see `closeMeasure`),
+          // where before this the decorations were cleared into nothing and the chord was
+          // left pending for the next note.
           pending.decorations = []
           pending.decorationSourceRanges = []
-          if (closed) {
-            pending.chordSymbol = null
-            pending.chordSymbolSourceRange = null
-            pending.annotations = []
-            pending.annotationSourceRanges = []
-          }
+          pending.chordSymbol = null
+          pending.chordSymbolSourceRange = null
+          pending.annotations = []
+          pending.annotationSourceRanges = []
           i++
 
           // A digit straight after the barline opens a repeat ENDING — `|1`, `:|2`. The

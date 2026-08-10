@@ -1,0 +1,155 @@
+{
+ "name": "basin",
+ "abc": "X:1\nM: 4/4\n%%score (1 2)\nL: 1/8\nN:2nd voice\nN:Break on second beat\nN:chords on beats 1,3,4\nK: Bb\nV:1\nP: Intro and Outro\nFF|:\"Bb\"DDE2=EF3|x8|BB_AG \"F7\"FG3|x8|\n\"Bb\"FB2F\"Bb7\"B2FF|\"Eb\"B2Bc- \"Ebm\"c4|\"Bb\"zB\"^break\" _AG FDE=E|1\"F7\"F2_DB,-\"Bb\"B,2y\"F+7\"zF:|2\"F7\"F2_DB,-\"Bb\"B,4||\nV:2 cue=on\nxx|:x8|DDE2=EF3|x8|\"Bb\"BF_AG \"F7\"FG3|\n",
+ "expected": [
+  {
+   "type": "part",
+   "name": "Intro and Outro",
+   "lines": [
+    [
+     {
+      "chord": [
+       "B♭",
+       "",
+       "",
+       ""
+      ],
+      "hasStartRepeat": true
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "B♭",
+       "",
+       "F7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "B♭",
+       "",
+       "F7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "B♭",
+       "",
+       "B♭7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "E♭",
+       "",
+       "E♭m",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "B♭",
+       "break",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "F7",
+       "",
+       "B♭",
+       "F+7"
+      ],
+      "ending": "1",
+      "hasEndRepeat": true
+     }
+    ],
+    [
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "F7",
+       "",
+       "B♭",
+       ""
+      ],
+      "ending": "2"
+     }
+    ]
+   ]
+  }
+ ]
+}

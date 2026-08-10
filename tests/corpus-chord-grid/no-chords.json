@@ -1,0 +1,5 @@
+{
+ "name": "no-chords",
+ "abc": "X:1\nT:Bill Bailey\nM:4/4\nL:1/4\nK:C\nP:A\nGA2c|e3/2^d/2eg|GA2c|e4|\nGA2c|e2g2|(gB3-|B4)|\nGB2d|fefg|GB2d|f4|\nGB2d|g2a2|(ae3-|e4)|\nP:B\nGA2c|e3/2^d/2eg|GA2c|e3G|\nGGce|g2_b2|a4-|a3c|\ncc2c|d2c2|gg2a|e3e|\ned^cd|f2e2|c4-|czz2|]\n",
+ "expected": null
+}

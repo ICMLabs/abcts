@@ -1,0 +1,234 @@
+{
+ "name": "fidgety",
+ "abc": "X:1\nM:4/4\nL:1/8\nQ:200\nN:Key change in middle\nK:Bb\n\"F7\"FA2GF2z2|Ac2BA2z2|F^FG^G AG=GF|F2f2z4||\nP:A\n\"Bb\"z!^!dcB !^!dcB!^!d|cB!^!dc \"Bb7\"B!^!dcB|\"Eb\"!^!GBAB \"E°\"cBAG|\"Bb\"F2z2zB2G|\n\"B°\"B\"^break\"G2B _dB2d|=e_d2eg2z2|\"C7\"G^FG^G \"F7\"A=F=GA|1\"Bb\"B2z2z4:|2\"Bb\"B2z2\"Bb7\"z2(3Bcd||\nP:B\nK:Eb\n\"Eb\"e2G2\"^break\"z4|\"G7\"d2=B2\"^break\"z4|\"Ab\"c2A2\"^break\"z4|\"Eb\"G2B2\"^break\"z4|\n",
+ "expected": [
+  {
+   "type": "part",
+   "name": "",
+   "lines": [
+    [
+     {
+      "chord": [
+       "F7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     }
+    ]
+   ]
+  },
+  {
+   "type": "part",
+   "name": "A",
+   "lines": [
+    [
+     {
+      "chord": [
+       "B♭",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "B♭",
+       "",
+       "B♭7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "E♭",
+       "",
+       "E°",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "B♭",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "B°",
+       "break",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "break",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "C7",
+       "",
+       "F7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "B♭",
+       "",
+       "",
+       ""
+      ],
+      "ending": "1",
+      "hasEndRepeat": true
+     }
+    ],
+    [
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "B♭",
+       "",
+       "B♭7",
+       ""
+      ],
+      "ending": "2"
+     }
+    ]
+   ]
+  },
+  {
+   "type": "part",
+   "name": "B",
+   "lines": [
+    [
+     {
+      "chord": [
+       "E♭",
+       "",
+       "break",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "G7",
+       "",
+       "break",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "A♭",
+       "",
+       "break",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "E♭",
+       "",
+       "break",
+       ""
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

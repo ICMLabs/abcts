@@ -1,0 +1,218 @@
+{
+ "name": "east",
+ "abc": "X:1\nT:Here's the Title\nT:And The SubTitle\nN: first subtitle shouldn't print a second time\nN: first ending is \"1,2,3\" and second ending is \"4\"\nN: second ending as 4th measure\nQ:1/4=145\nL:1/4\nM:C\nK:F\n\"FΔ7\"(3CCC E2-|E2D2|\"Am7\"(3A,A,A,E2-|\"D7\"E4|\n\"Gm7\"(3DDDA2-|A2G2|\"Bbm6\"(3BBB_D2-|_D4|\n\"Gm7\"BA\"C7\"c3/2B/|\"Em7b5\"AG\"A7\"B3/2A/|\"Dm7\"F/F/F/F/AA/A/|\"G7\"EEG2|\n\"Gm7\"(3B,DFAG|\"Bbm6\"B2\"C7\"AA|\"Am7\"c4|\"Abm7\"_c4|\n\"Gm7\"(3BBBDD|\"C7\"A2AA|\"F6\"F4-|1,2,3\"Gm7\"F2\"C7\"z2:|4 \"Gm7\"z \"Ab°7\"z\"F\"z2 |]",
+ "expected": [
+  {
+   "type": "part",
+   "name": "",
+   "lines": [
+    [
+     {
+      "chord": [
+       "FΔ7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "Am7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "D7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "Gm7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "B♭m6",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     }
+    ],
+    [
+     {
+      "chord": [
+       "Gm7",
+       "",
+       "C7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "Em7♭5",
+       "",
+       "A7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "Dm7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "G7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "Gm7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "B♭m6",
+       "",
+       "C7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "Am7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "A♭m7",
+       "",
+       "",
+       ""
+      ]
+     }
+    ],
+    [
+     {
+      "chord": [
+       "Gm7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "C7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "F6",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "Gm7",
+       "",
+       "C7",
+       ""
+      ],
+      "ending": "1,2,3",
+      "hasEndRepeat": true
+     }
+    ],
+    [
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "Gm7",
+       "A♭°7",
+       "F",
+       ""
+      ],
+      "ending": "4"
+     }
+    ]
+   ]
+  }
+ ]
+}

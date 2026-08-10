@@ -1,0 +1,152 @@
+{
+ "name": "ive",
+ "abc": "X:12\nL:1/8\nM:4/4\nN:print tempo\nN:this should not be considered 12-bars\nQ:1/4=135\nK:G\nP:Recitatif\n|:\"G\"z2g2fe3|\"G°7\"z2g2fe3|\"Am\"z2gf- fge2|\"D7\"B4A4|\n|1\"Am\"z2ge- ege2|\"D7\"B3A- ABc2|\"G\"d8-|\"C\"d4-\"D7\"d4:|2\"Em\"z2GG- GAB2|e8|\"Am\"z2AA- ABc2|\"D7\"d8||\n",
+ "expected": [
+  {
+   "type": "part",
+   "name": "Recitatif",
+   "lines": [
+    [
+     {
+      "chord": [
+       "G",
+       "",
+       "",
+       ""
+      ],
+      "hasStartRepeat": true
+     },
+     {
+      "chord": [
+       "G°7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "Am",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "D7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "Am",
+       "",
+       "",
+       ""
+      ],
+      "ending": "1"
+     },
+     {
+      "chord": [
+       "D7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "G",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "C",
+       "",
+       "D7",
+       ""
+      ],
+      "hasEndRepeat": true
+     }
+    ],
+    [
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "noBorder": true,
+      "chord": [
+       "",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "Em",
+       "",
+       "",
+       ""
+      ],
+      "ending": "2"
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "Am",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "D7",
+       "",
+       "",
+       ""
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

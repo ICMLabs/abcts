@@ -1,0 +1,188 @@
+{
+ "name": "all",
+ "abc": "X:1\nM: 4/4\nN:1st & 2nd ending same chords\nN:12-bar\nN:No Chord on second beat\nN:ignore \"y\"\nK: Bb\nP:A\nF GB-|:\"Bb7\"B2z2z2_dB-|B2z2z2_de-|e2z2zFG2|B2c_d- d^FGB-|\n\"Eb7\"B2z2z2cB-|B2z2z2gf-|\"Bb7\"f2z2zd2^c|dBGF-\"G7\"F2ze-|\n\"Cm7\"ed (3ede-e2=ef-|\"F7\"f2z2z2zB|\"Bb7\"f2ef\"Eb7\"_d2BB-|1\"Bb7\"B2z2\"F7\"zF GB-:|2\"Bb7\"B2z2\"F7\"z4||\nP:B\n!mark!\"Bb7\"zg2yf- fBFB-|B_dz2z4|zg f_d-d2BB-|B2z2z4|\n\"Eb7\"zg2f- f_dB2|zg2f- fBBB|\"Bb7\"_d2y4 \"^N.C.\"B2B2Bc-|c2z2zF GB-!mark!||\n",
+ "expected": [
+  {
+   "type": "part",
+   "name": "A",
+   "lines": [
+    [
+     {
+      "chord": [
+       "B♭7",
+       "",
+       "",
+       ""
+      ],
+      "hasStartRepeat": true
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     }
+    ],
+    [
+     {
+      "chord": [
+       "E♭7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "B♭7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "B♭7",
+       "",
+       "G7",
+       ""
+      ]
+     }
+    ],
+    [
+     {
+      "chord": [
+       "Cm7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "F7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "B♭7",
+       "",
+       "E♭7",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "B♭7",
+       "",
+       "F7",
+       ""
+      ],
+      "hasEndRepeat": true
+     }
+    ]
+   ]
+  },
+  {
+   "type": "part",
+   "name": "B",
+   "lines": [
+    [
+     {
+      "chord": [
+       "B♭7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "E♭7",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "%",
+       "",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "B♭7",
+       "N.C.",
+       "",
+       ""
+      ]
+     },
+     {
+      "chord": [
+       "N.C.",
+       "",
+       "",
+       ""
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}
