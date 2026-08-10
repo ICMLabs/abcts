@@ -53,7 +53,19 @@ function glyphsAfterClef(abc: string): number[] {
     // never is; a barline carries `data-name="bar"` and a glyph in these controls carries
     // none. Both tests are on the DRAWING rather than on our own naming, which is what
     // kept this ladder honest when the markup changed under it.
-    .filter((i) => i.tag === 'path' && i.cls === '' && i.name === '' && (i.h ?? 0) >= 2)
+    // AND A GLYPH CARRIES ITS OWN NAME NOW — `data-name="scripts.ufermata"`, `"clefs.G"`,
+    // or a bare `"3"` for a time-signature figure: abcjs's key, which it has always
+    // written and we did not. "Unnamed path" therefore stopped meaning "a glyph" the
+    // moment the markup got closer to abcjs's, so the filter names the four things that
+    // are NOT glyphs instead — every one of which abcjs draws as a rule rather than an
+    // outline.
+    .filter(
+      (i) =>
+        i.tag === 'path' &&
+        i.cls === '' &&
+        !['bar', 'stem', 'ledger', 'dynamics'].includes(i.name) &&
+        (i.h ?? 0) >= 2,
+    )
     .slice(1)
     .map((i) => i.y - top)
 }

@@ -113,10 +113,10 @@ const ABCJS_DATA_NAMES: Readonly<Record<string, string>> = {
  * abcjs calls the staff prefix items "staff-extra clef" and "staff-extra time-signature",
  * which is what its layout dump and its DOM both use.
  *
- * ponytail: abcjs also puts a `data-name` on each GLYPH — the pitch letter on a notehead,
- * `clefs.G` on a clef — and those are not reproduced. Ours are SMuFL names, mapping them
- * would be a second table, and no realistic consumer keys on them; the group-level and
- * part-level hooks are the ones interaction code uses.
+ * CORRECTED: abcjs also puts a `data-name` on each GLYPH, and those ARE reproduced now —
+ * `SMUFL_TO_ABCJS` was already there for `getYCorr`, so the "second table" this note said
+ * it would cost did not exist. The one still missing is the NOTEHEAD's, which abcjs names
+ * with the written note rather than the glyph; see `glyphMarkup`.
  */
 const ABCJS_ELEMENT_NAMES: Readonly<Record<string, string>> = {
   clef: 'staff-extra clef',
@@ -496,6 +496,7 @@ const glyphDefs = new Map<GlyphName, string>()
     y: number,
     scale: number | undefined,
     attributes: string,
+    role?: string,
   ): string => {
     const ink = outline(name)
     /**
@@ -541,6 +542,40 @@ const glyphDefs = new Map<GlyphName, string>()
     const total = (strict ? ink.scale : (scale ?? 1) * ink.scale) * PX
     const scaled = total !== 1
     const transform = `translate(${num(x * PX)},${num(corrected * PX + oy)})${scaled ? ` scale(${scaleNum(total)})` : ''}`
+    /**
+     * **ABCJS WRITES NO `transform` ON A GLYPH EITHER — IT ADDS x AND y TO THE FIRST
+     * `M`.** `Glyphs.printSymbol` clones the outline's command array, does
+     * `pathArray[0][1] += x; pathArray[0][2] += y`, joins each command's parts with a
+     * space and CONCATENATES the commands with nothing between them
+     * (`creation/glyphs.js:132-142`) — which is why its `d` reads `M 20.67 88.4245c 0.24`
+     * and why every coordinate after the first is untouched: they are all relative.
+     *
+     * The arithmetic is raw JS and so is the formatting: abcjs's own golden carries
+     * `M 29.689999999999998 22.832000000000008` for a `clefs.G` at (20, 60.242). `num()`
+     * would round it, so this does not use `num()`.
+     *
+     * AND THE NAME IS THE GLYPH'S OWN — `data-name="clefs.G"`, abcjs's key rather than
+     * ours. `RelativeElement` defaults `this.name = this.c`, the symbol itself
+     * (`relative-element.js:43-48`), and `printSymbol` passes it straight through.
+     *
+     * ponytail: EXCEPT A NOTEHEAD, whose name abcjs overrides with the WRITTEN NOTE
+     * (`create-note-head.js:34` — `name: pitchelem.name`, which is the source letter with
+     * its accidental and octave marks, rewritten by transposition). That is a parser value
+     * this layout does not carry, so it is left unnamed until it is plumbed — a missing
+     * attribute rather than a wrong one. Tracked by `tests/dom-contract.test.ts`.
+     */
+    if (abcjs && !scaled) {
+      const head = /^M (-?[\d.]+) (-?[\d.]+)/.exec(ink.path)
+      if (head?.[1] !== undefined && head[2] !== undefined) {
+        const px = Number(head[1]) + x * PX
+        const py = Number(head[2]) + corrected * PX + oy
+        const named = role === 'notehead' ? '' : (SMUFL_TO_ABCJS[name] ?? name)
+        return (
+          `<path${attributes}${named ? ` data-name="${named}"` : ''} ` +
+          `d="${`M ${px} ${py}${ink.path.slice(head[0].length)}`.trimEnd()}"></path>`
+        )
+      }
+    }
     if (!optimize) return `<path${attributes} transform="${transform}" d="${ink.path}"/>`
     // A `<use>` takes a transform, so a scaled glyph dedupes like any other. It used to
     // fall back to an inline path when scaled, which was fine while only a stretched
@@ -879,7 +914,9 @@ const glyphDefs = new Map<GlyphName, string>()
         for (const line of el.lines) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
         for (const g of el.glyphs) {
           // The glyph path is authored at the origin, so a placement is all that is needed.
-          parts.push(glyphMarkup(g.name, g.x, g.y, g.scale, attrs(el.type, g.role, g.chordPos)))
+          parts.push(
+            glyphMarkup(g.name, g.x, g.y, g.scale, attrs(el.type, g.role, g.chordPos), g.role),
+          )
         }
         // Prose is a real <text> in a generic family, unlike musical glyphs, which are
         // paths so the SVG stays self-contained. A missing serif face falls back to

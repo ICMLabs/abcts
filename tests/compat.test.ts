@@ -67,7 +67,11 @@ describe('renderAbc', () => {
     const svg = renderAbc(null, fixture('simple-c'), { staffwidth: 740 })[0]?.svg ?? ''
     const toPx = 1
 
-    const xs = [...svg.matchAll(/class="abcjs-notehead"[^>]*translate\(([\d.]+)/g)].map((m) =>
+    // CORRECTED AGAIN: there is no `translate()` on a glyph either. abcjs adds x and y to
+    // the first `M` of the outline and writes no transform (`creation/glyphs.js:132-142`),
+    // and compat does the same. The `M` carries the outline's own contour start as well as
+    // the placement, which cancels between two heads of the same glyph.
+    const xs = [...svg.matchAll(/class="abcjs-notehead"[^>]*\sd="M ([-\d.]+)/g)].map((m) =>
       Number(m[1]),
     )
     expect(xs.length).toBeGreaterThan(3)
