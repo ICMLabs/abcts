@@ -60,7 +60,7 @@ system 2 width=46.869 originY=30.616
     staffline 1.935,-1.000 -> 14.961,-1.000 t=0.090
     staffline 1.935,-2.000 -> 14.961,-2.000 t=0.090
     title x=0.000 w=0.000
-      text  43.226,-4.155 size=2.710 "Sub"
+      text  43.226,-8.206 size=2.710 "Sub"
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     keySignature x=6.329 w=3.342

@@ -8325,9 +8325,51 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         ? cursor
         : Math.max(cursor, previousBottomLine + interSystemSep - topLineOffset + blockH)
 
+    /**
+     * **A MID-TUNE BLOCK IS DRAWN AT THE TOP OF THE GAP, NOT AT THE BOTTOM OF IT.**
+     *
+     * abcjs runs the nonMusic line the moment it reaches it — `renderer.y` is still the
+     * previous staff group's bottom — and only then does the next group's
+     * `addStaffPadding` top the gap up to `staffSeparation` (`draw/draw.js:44-52`). So the
+     * block sits against the music ABOVE it and the slack falls BELOW.
+     *
+     * Ours anchors the whole block from the music BELOW it (`offset = musicTop - gap -
+     * blockBottom`), which is right for the head block and wrong here: the total is
+     * identical either way, so no height moved and no gate could see it, but a mid-tune
+     * subtitle drew 31.4px low — 259.23 against abcjs's 227.83 on `mv2-sub`.
+     *
+     * Only the INK moves. The extent still carries the block at the top of the system's
+     * box, which is what makes `blockH` additive to the separation above.
+     */
+    const shifted =
+      blockH === 0 || previousBottomLine === null
+        ? system
+        : (() => {
+            const staff0 = staves[0]
+            const top = staff0?.elements.find((el) => el.blockTop !== undefined)?.blockTop
+            if (staff0 === undefined || top === undefined) return system
+            // The previous system's bottom INK — `cursor` still holds it plus the gap.
+            const delta = cursor - ENGRAVE.systemGap - (originY + staff0.originY + top)
+            if (delta >= 0) return system
+            const move = (el: LayoutStaff['elements'][number]) =>
+              el.blockTop === undefined
+                ? el
+                : {
+                    ...el,
+                    texts: el.texts.map((t) => ({ ...t, y: t.y + delta })),
+                    lines: el.lines.map((l) => ({ ...l, y1: l.y1 + delta, y2: l.y2 + delta })),
+                  }
+            return {
+              ...system,
+              staves: staves.map((st, i) =>
+                i === 0 ? { ...st, elements: st.elements.map(move) } : st,
+              ),
+            }
+          })()
+
     previousBottomLine = originY + bottomLineOffset
     cursor = originY + height + ENGRAVE.systemGap
-    return { ...system, originY }
+    return { ...shifted, originY }
   })
 
   // `%%maxStaves` — an INCIPIT. abcjs lays the whole tune out and simply stops drawing
