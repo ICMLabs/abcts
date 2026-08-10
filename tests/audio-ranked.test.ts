@@ -24,7 +24,17 @@ import { describe, expect, it } from 'vitest'
 import { flattenAudio, type MidiEvent } from '../src/audio/flatten.js'
 import { parse } from '../src/parser/parser.js'
 
-const dir = join(import.meta.dirname, 'corpus-audio')
+/**
+ * TWO DIRECTORIES, same shape, same compare.
+ *
+ * `corpus-audio` is harvested from abcjs's suite and `npm run harvest:audio` CLEARS it, so
+ * the control tunes — tunes abcjs's suite does not contain, rendered by abcjs on demand —
+ * live beside it rather than in it. See `scripts/gen-audio-controls.mjs`.
+ */
+const DIRS = [
+  join(import.meta.dirname, 'corpus-audio'),
+  join(import.meta.dirname, 'corpus-audio-controls'),
+]
 
 interface Case {
   readonly slug: string
@@ -39,13 +49,15 @@ interface Case {
   }
 }
 
-const CASES: Case[] = readdirSync(dir)
-  .filter((f) => f.endsWith('.json'))
-  .sort()
-  .map((f) => ({
-    slug: f.replace(/\.json$/, ''),
-    ...JSON.parse(readFileSync(join(dir, f), 'utf-8')),
-  }))
+const CASES: Case[] = DIRS.flatMap((dir) =>
+  readdirSync(dir)
+    .filter((f) => f.endsWith('.json'))
+    .sort()
+    .map((f) => ({
+      slug: f.replace(/\.json$/, ''),
+      ...JSON.parse(readFileSync(join(dir, f), 'utf-8')),
+    })),
+)
 
 /**
  * Cases that are EXACT and must stay so. Add a slug the moment it goes green; never
@@ -99,6 +111,18 @@ const PASSING: readonly string[] = [
   'flatten-triplet-chords',
   'flatten-twelve-eight',
   'ignore-alternate-chord',
+  // THE COUNT-IN'S LADDER — `scripts/gen-audio-controls.mjs`. `intro-0` is its canary.
+  'intro-0',
+  'intro-1',
+  'intro-2',
+  'intro-2-drumoff',
+  'intro-2-pickup',
+  'intro-bars2-pickup',
+  'intro-meter-change',
+  'intro-no-drum',
+  'intro-pickup',
+  'intro-three-four',
+  'intro-two-voices',
   'no-start-repeat-part',
   'no-start-repeat-repeat',
   'no-start-repeat-title',
