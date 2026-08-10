@@ -76,6 +76,27 @@ export interface FlatAudio {
   readonly instrument: number
   readonly totalDuration: number
   readonly tracks: readonly (readonly MidiEvent[])[]
+  /**
+   * WHAT THE FLATTENER WRITES BACK ONTO THE SOURCE — abcjs's `elem.elem.currentTrackMilliseconds`
+   * and `elem.elem.midiPitches` (`abc_midi_flattener.js:526-576`).
+   *
+   * It is a THIRD surface over the same walk, and the one the playback CURSOR reads: the
+   * event table says what sounds, `setTiming` says when the clock is at, and this says which
+   * WRITTEN note is lit. **A note reached twice through a repeat carries both times** — a
+   * number becomes an array the moment a second, different value arrives, and duplicates
+   * from other voices are dropped. That asymmetry is abcjs's shape and not a convenience.
+   *
+   * Keyed by the source event OBJECT, which survives `resolveRepeats` unchanged — the same
+   * identity `writtenTimeline` files tempo changes under.
+   */
+  readonly elementTimings: ReadonlyMap<MusicEvent, ElementTiming>
+}
+
+export interface ElementTiming {
+  /** Milliseconds, in the order the element was reached. One entry for a note played once. */
+  readonly milliseconds: readonly number[]
+  /** The sounding pitches, bottom-up. Empty for a rest and for a tie's silent half. */
+  readonly pitches: readonly number[]
 }
 
 export interface AudioOptions {
@@ -383,10 +404,28 @@ function resolveRepeats<
     }
   }
 
+  /**
+   * A TRAILING `:|` NEEDS A SYNTHETIC `startRepeat` TO CLOSE IT — **and a trailing ending
+   * does not.**
+   *
+   * This used to fire on any last section that was not a `startRepeat`, which caught the
+   * `startEnding` of a FINAL ending too: the synthetic section closed the repeat at the
+   * ending's own index and then opened a new one there, so the last ending's measures were
+   * emitted a second time. `CDE|:FG[Ab]|1 Bcd:|2 efg|]` played `efg` at 12000 **and** at
+   * 15000 where abcjs plays it once.
+   *
+   * **NO EVENT-LIST GATE COULD SEE IT.** The audio table is 0 of 72 and the MIDI file is
+   * byte-exact, and neither has a case shaped `|1 … :|2 … |]` where the second ending is the
+   * LAST measure. It was named by the flattener's BACK-ANNOTATION — a third surface over
+   * the same walk, whose per-element `[3000, 9000]` arrays make a doubled pass visible as a
+   * doubled entry rather than as more notes nobody counted.
+   *
+   * The `endRepeat` arm is load-bearing: removing it reds four cases.
+   */
   const lastSection = sections[sections.length - 1]
   if (
     lastSection !== undefined &&
-    lastSection.type !== 'startRepeat' &&
+    lastSection.type === 'endRepeat' &&
     lastSection.index <= lastIndex
   ) {
     sections.push({ type: 'startRepeat', index: lastSection.index })
@@ -1230,6 +1269,23 @@ export function flattenAudio(
     transposeGlobal = midi.transpose[0] as number
   }
 
+  /**
+   * `elem.elem.currentTrackMilliseconds` — stamped for EVERY element that has one, before
+   * the pitch loop, so a rest and a tie's silent half are stamped too. `ms = realTime /
+   * beatFraction / startingTempo * 60 * 1000`, and `realTime` is our own `start`.
+   */
+  const elementTimings = new Map<MusicEvent, { milliseconds: number[]; pitches: number[] }>()
+  const stamp = (event: MusicEvent, ms: number): { milliseconds: number[]; pitches: number[] } => {
+    let row = elementTimings.get(event)
+    if (row === undefined) {
+      row = { milliseconds: [], pitches: [] }
+      elementTimings.set(event, row)
+    }
+    // "There can be duplicates if there are multiple voices" — a value already present is
+    // dropped rather than repeated.
+    if (!row.milliseconds.includes(ms)) row.milliseconds.push(ms)
+    return row
+  }
   const percMap = score.percMap ?? {}
   const drumMap = score.drumMap ?? {}
   const pickupLength = pickupLengthOf(score)
@@ -1532,6 +1588,10 @@ export function flattenAudio(
       if (item.event !== null) {
         chordTrack.processChord(chordSymbolOf(item.event), annotationsOf(item.event), start)
       }
+      const stamped =
+        item.event === null
+          ? null
+          : stamp(item.event, (start / beatFractionOf(meter) / startingTempo) * 60 * 1000)
       if (item.event === null || item.event.type === 'rest' || item.tiedOver) continue
 
       const volume = stressVolume(start, lastBarTime, meter, pickupLength, voiceOff, stress)
@@ -1722,6 +1782,7 @@ export function flattenAudio(
         // AN ORNAMENT REPLACES THE NOTE RATHER THAN DECORATING IT — abcjs's own
         // `if (ret.noteModification) doModifiedNotes(…) else { …articulation…; push }`,
         // so the run inherits the pitch, volume and instrument and nothing else.
+        if (stamped !== null && !stamped.pitches.includes(pitch)) stamped.pitches.push(pitch)
         if (mods.ornament !== undefined) doModifiedNotes(mods.ornament, event, item.factor, track)
         else track.push(event)
       }
@@ -1753,6 +1814,7 @@ export function flattenAudio(
     instrument: instrument ?? 0,
     totalDuration: Math.round(totalDuration * MICRO) / MICRO,
     tracks,
+    elementTimings,
   }
 }
 
