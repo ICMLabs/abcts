@@ -30,10 +30,10 @@ reproduce goes in `Docs/ABCJS-DIFFERENCES.md` with its evidence and its slug goe
 | chord grid | `chord-grid-ranked` | 0 of 23 |
 | harvested geometry | `corpus-abcjs-ranked` | 0 of 174 |
 | pixel geometry | `pixel-parity` | 0 of 120 |
-| DOM contract | `dom-contract` | 25 of 25 cases, **208 of 694 rows** (from 86) |
+| DOM contract | `dom-contract` | **22 of 25 cases** (from 25), **246 of 648 rows** (from 86) — three slugs RATCHETED |
 | **SVG bytes** | **`svg-bytes`** | **171 of 171 — best 5186, median 174** (from 651 / 162) |
 
-**Suite 1127 of 1127. NO REDS. `npx tsc --noEmit` clean.**
+**Suite 1130 of 1130. NO REDS. `npx tsc --noEmit` clean.**
 
 ---
 
@@ -71,7 +71,7 @@ gate** — nothing in `tests/` may grow that mask.
 
 ## 2. WHAT CLOSED, AND WHY EACH WAS INVISIBLE
 
-Nine landings, every one a read of a named abcjs function.
+Twelve landings, every one a read of a named abcjs function.
 
 - **`staffwidth` is the MUSIC area; the page is it plus abcjs's 15px margins.** compat
   mapped `renderAbc(…, {staffwidth: 670})` straight onto core's `systemWidth`, which is
@@ -113,6 +113,20 @@ Nine landings, every one a read of a named abcjs function.
   dynamics, triplet, ending, tie (`draw/voice.js:25-90`). We drew all of it BEFORE the
   first notehead. 48 rows. **NO POSITIONAL GATE COULD SEE IT — document order is not a
   coordinate, and every gate in this repo resolves to coordinates.**
+- **A NOTEHEAD IS NAMED WITH THE WRITTEN NOTE** — `create-note-head.js:34` passes
+  `name: pitchelem.name`, the source letter with any EXPLICIT accidental prefixed from
+  `accMap` and one `,` or `'` per octave mark, rewritten by transposition. An uppercase
+  letter is octave 4 and a lowercase one octave 5, so it derives from the already
+  transposed pitch and needs no source text. The chord's pitches now travel WITH their
+  steps: the sort that put a chord's heads in pitch order dropped the pairing, and a name
+  you cannot attribute to a head is no name.
+- **A MULTI-CHARACTER SYMBOL IS ONE GROUP** with unnamed children —
+  `symbol.length > 1 && symbol.indexOf(".") < 0` opens `<g data-name="12">` round one path
+  per character (`print-symbol.js:14-30`). The numerator is the string AS WRITTEN, which is
+  why abcjs's golden reads `data-name="2+3"` and not `5`.
+- **A top-text row carries its class** under `add_classes` — `abcjs-title`,
+  `abcjs-text abcjs-subtitle`, `abcjs-composer` — literal in `top-text.js` rather than run
+  through `classes.generate`, so no line or measure suffix joins them.
 - **`data-index` is an index into the SELECTABLES, not into the children.**
   `Selectables.add` writes `{selectable: false, "data-index": elements.length}` and only
   after `canSelect`, which with no `selectTypes` admits `el_type 'note'` alone
@@ -168,27 +182,41 @@ regression, so read the diff before touching the gate.
 1. **THE ROOT'S `height` — 109 of 171 rows.** §1. Accumulate the vertical cursor in
    PIXELS. Highest yield on the board by a wide margin, and everything behind it is
    currently unmeasurable by the real gate.
-2. **The element group's children — ~20 rows.** Two sub-items, both MEASURED:
-   - a FLAG precedes its notehead on a single note and sits BETWEEN the heads of a chord
-     (`['F','flags.u8th','A']` in `abcjs-parse-note-01`'s golden), so it is the engraver's
-     ADD ORDER and not a rule about flags. Read `abstract-engraver`'s `addHead`/`addExtra`.
-   - a STEM is `printStem`'s form — `d="M x y1L x y2L x2 y2L x2 y1z"`, no separators
-     between commands, NO `stroke`/`fill` inside a group, `class` BEFORE `data-name`
-     (`draw/print-stem.js:32-42`) — where a ledger and a staff line are `printLine`'s,
-     with spaces and `data-name` BEFORE `class` (`draw/print-line.js:30-35`). Ours writes
-     one form for all three. **The stem's `x` and `x + dx` are the head's EDGES and dx
-     carries the stem's SIDE**, which `PlacedLine` does not record — a down-stem writes
-     the right edge first.
-3. **Glyph x float noise — ~28 rows.** `M 54.78099999999999` against
-   `M 54.781000000000006`. Same emission-quantum family as the height.
-4. **The notehead's `data-name` is the WRITTEN NOTE** — `C`, `c`, `C,`, with its
-   accidental prefixed and rewritten by transposition (`create-note-head.js:34`,
-   `abc_parse_music.js:1113-1147`). A parser value the layout does not carry; left unnamed
-   rather than wrongly named. Also the largest remaining `dom-contract` family.
-5. **A multi-digit time signature is ONE GROUP** — `<g data-name="12">` with UNNAMED
-   per-character paths (`print-symbol.js:14-30`), where a single digit is a bare
-   `data-name="3"` path.
-6. **A tie/slur is `drawArc`'s TWO-CUBIC closed path** with `data-name="tie"`/`"slur"`
+2. **THE ORDER INSIDE A NOTE GROUP — ~20 rows, and the whole rule is MEASURED.**
+   `createNoteHead` builds the notehead but does NOT add it: it `addRight`s the FLAG, then
+   the DOTS, then `addExtra`s the ACCIDENTAL, and only when it RETURNS does the caller
+   `abselem.addHead(noteHead)` (`create-note-head.js:20-70`, `abstract-engraver.js:722-733`).
+   The stem is added after every pitch, the ledgers after that. So one pitch emits
+
+   ```
+   flag  →  dots  →  accidental  →  head        then, once per element:  stem  →  ledger
+   ```
+
+   — confirmed on `abcjs-visual-layout-04`'s golden, whose note group reads
+   `['dots.dot', 'accidentals.flat', '_B,', 'abcjs-stem', 'ledger']`.
+
+   **AND THE FLAG BELONGS TO THE STEMMED HEAD OF A CHORD, NOT TO THE ELEMENT.**
+   `abstract-engraver.js:671-675`: `flag = null` when
+   `(dir === "down" && p !== 0) || (dir === "up" && p !== pp - 1)`. So an up-stemmed `[FA]`
+   emits `F, flags.u8th, A` — head, flag, head — which is what made this look like an
+   exception to a rule about flags and is in fact the rule itself.
+
+   Ours pushes every accidental, then every head, then the dots, then the flag (which is
+   computed late, at `layout.ts:3008`, because it needs the stem tip). The cheapest honest
+   shape is probably an ORDER KEY per glyph — `(headPosition, flag|dot|accidental|head)` —
+   and one stable sort at the end of `layoutNote`, since the flag cannot move earlier.
+3. **A STEM AND A LEDGER ARE DIFFERENT EMITTERS.** A stem is `printStem`'s form —
+   `d="M x y1L x y2L x2 y2L x2 y1z"`, no separators between commands, NO `stroke`/`fill`
+   inside a group, `class` BEFORE `data-name` (`draw/print-stem.js:32-42`) — where a ledger
+   and a staff line are `printLine`'s, with spaces and `data-name` BEFORE `class`
+   (`draw/print-line.js:30-35`). Ours writes one form for all three. **The stem's `x` and
+   `x + dx` are the head's EDGES and `dx` carries the stem's SIDE**, which `PlacedLine`
+   does not record — a down-stem writes the right edge first.
+4. **Glyph coordinate noise — ~22 rows.** `M 54.78099999999999` against
+   `M 54.781000000000006`, and a `clefs.G` whose Y differs in the last digit. Same
+   emission-quantum family as the height, and the clef rows are the VERTICAL half of it,
+   so §1 may close them too.
+5. **A tie/slur is `drawArc`'s TWO-CUBIC closed path** with `data-name="tie"`/`"slur"`
    and a `class` from the anchors' measure/note counters (`draw/tie.js:57-102`); a beam is
    `drawBeam`'s single concatenated `M…L…L…L…z` path with `class="abcjs-beam-elem
    abcjs-d0-25"` (`draw/beam.js:34-43`). Ours are a `<path class="abcjs-tie">` and a
@@ -206,7 +234,7 @@ regression, so read the diff before touching the gate.
 ```
 working tree clean
 npx tsc --noEmit    clean
-npx vitest run      1127 / 1127
+npx vitest run      1130 / 1130
 svg bytes           171 of 171   best 5186, median 174   (masked-height median 1087)
 audio ranked        0 of 72
 timing ranked       0 of 38
@@ -215,7 +243,8 @@ chord-grid ranked   0 of 23
 midi ranked         0 of 3       BYTE-EXACT
 harvested ranked    0 of 174
 pixel ranked        0 of 120
-DOM contract        25 of 25     (208 of 694 rows, from 86)
+DOM contract        22 of 25     (246 of 648 rows, from 86)
+                    PASSING ratchet: dom-ledger, svg-12-8-group, svg-single-note
 npx biome check src NOT clean — same rows as before, all pre-existing
 ```
 

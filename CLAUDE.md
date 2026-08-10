@@ -353,6 +353,21 @@ checkpoint and hand off as you go so no context is lost.
 > markup got CLOSER to abcjs's. Same shape as the `viewBox` removal that took 196 tests
 > red. **A gate built on our own markup fails when we succeed**; the failure is the signal.
 >
+> **AND THE DOM CONTRACT HAS ITS FIRST PASSING SLUGS** — 22 of 25 cases, 246 of 648 rows
+> from 86, with `dom-ledger`, `svg-12-8-group` and `svg-single-note` EXACT and ratcheted.
+> Three more findings did it: a NOTEHEAD is named with the WRITTEN NOTE
+> (`create-note-head.js:34` — derivable from the already-transposed pitch, so it needs no
+> source text, but the chord's pitches have to travel WITH their steps); a MULTI-CHARACTER
+> SYMBOL is one `<g data-name="12">` with UNNAMED children, and the numerator is the
+> string AS WRITTEN (`data-name="2+3"`, not `5`); and a top-text row carries its own class.
+>
+> **AND THE ORDER INSIDE A NOTE GROUP IS MEASURED AND NOT YET IMPLEMENTED**:
+> `createNoteHead` adds the FLAG, then the DOTS, then the ACCIDENTAL, and only when it
+> RETURNS does the caller `addHead` — so one pitch emits `flag, dots, accidental, head`,
+> then `stem`, then `ledger`. **AND THE FLAG BELONGS TO THE STEMMED HEAD OF A CHORD**
+> (`abstract-engraver.js:671-675`), which is why an up-stemmed `[FA]` reads
+> `F, flags.u8th, A` and looked like an exception to a rule about flags.
+>
 > **WHAT IS LEFT IS ONE THING FIRST**: `svg-bytes` is at best 5186, median 174 — and **109
 > of the 171 fixtures first differ on the root's `height`**, one or two ULPs in either
 > direction because abcjs accumulates `renderer.y` in PIXELS and we accumulate it in staff
@@ -525,7 +540,7 @@ backup remote is not a licence to vendor someone else's tree into this one.
 reds; **seventeen gates and NINE ranked tables** — 0 of 72 audio cases, 0 of 38 note timings,
 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
 **1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
-**25 of 25 DOM-contract cases — 208 of 694 ROWS, from 0** — and **the SVG BYTE TABLE is
+**22 of 25 DOM-contract cases — 246 of 648 ROWS, from 0, with three slugs RATCHETED** — and **the SVG BYTE TABLE is
 THE OPEN ARC**, 171 of 171 at best 5186 / median 174, with 109 of those rows blocked behind
 the root's `height`. The oracle lands before the
 implementation here, as it did for audio and the chord grid, and a table that opens at every
