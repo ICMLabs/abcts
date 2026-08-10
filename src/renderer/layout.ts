@@ -7268,6 +7268,32 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   spans.length = 0
   spans.push(...spansWithInk)
 
+  /**
+   * **A BLOCK WRITTEN INSIDE A SYSTEM IS DRAWN AFTER IT, NOT BEFORE IT** — and for every
+   * system but the first those are the same place, which is why only the first one was
+   * wrong.
+   *
+   * A `T:` or `%%text` between two voice lines of one system is a nonMusic LINE standing
+   * after that system's entry in `abcTune.lines`, so abcjs draws it there. MEASURED on a
+   * four-rung ladder through 6.7.0: with a second system following, the first system's
+   * staff lines do not move (77.2 … 187.2), the subtitle lands at 227.83, and the SECOND
+   * system moves down by its 27.05. Without a following system it is the last thing on the
+   * page.
+   *
+   * Ours claimed such a block as the FIRST system's `textBefore` and then discarded it,
+   * because `midTune` was read only for `systemIndex > 0` — 27.05px for a `T:` and 33.77
+   * for a `%%text`, drawn nowhere at all.
+   */
+  const blocksBeforeSystem: FreeTextBlock[][] = spans.map((sp) =>
+    plans.flatMap((p) => [...(p.measures[sp.start]?.textBefore ?? [])]),
+  )
+  /** The first system's own blocks belong after it — to the next system, or to the tail. */
+  const blocksAfterLastSystem = blocksBeforeSystem[0] ?? []
+  blocksBeforeSystem[0] = []
+  if (spans.length > 1) {
+    blocksBeforeSystem[1] = [...blocksAfterLastSystem, ...(blocksBeforeSystem[1] ?? [])]
+  }
+
   // Anchors for every note of every voice, tagged with the system it landed in. A slur
   // or tie can span a break, so pairing them needs the whole tune, not one system.
   const voiceAnchors: NoteAnchor[][] = plans.map(() => [])
@@ -7671,10 +7697,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // or a mid-tune `T:`. They belong to the SYSTEM, so they are read off the first
       // measure of the span whichever voice happened to claim them, and drawn on the
       // first voice only.
-      const midTune =
-        systemIndex === 0 || voiceIndex !== 0
-          ? []
-          : plans.flatMap((p) => [...(p.measures[span.start]?.textBefore ?? [])])
+      const midTune = voiceIndex !== 0 ? [] : (blocksBeforeSystem[systemIndex] ?? [])
       const block: { texts: PlacedText[]; lines: PlacedLine[]; height: number } =
         systemIndex === 0 && voiceIndex === 0
           ? {
@@ -8301,10 +8324,16 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
    * wherever it stands (`draw/draw.js:52-58`), costing exactly its own rows.
    */
   const trailing: PlacedText[] = []
+  const trailingBlocks = [
+    // A one-system tune's in-system block has no next system to ride; it is the last thing
+    // on the page, which is exactly what the ladder's `mv-sub` rung measures.
+    ...(spans.length > 1 ? [] : blocksAfterLastSystem),
+    ...score.textBelow,
+  ]
   const trailingHeight =
-    score.textBelow.length === 0
+    trailingBlocks.length === 0
       ? 0
-      : appendFreeText(trailing, score.textBelow, 0, (systemWidth - ENGRAVE.marginX * 2) / 2, score.fonts)
+      : appendFreeText(trailing, trailingBlocks, 0, (systemWidth - ENGRAVE.marginX * 2) / 2, score.fonts)
 
   const bottomBlock = bottomTextBlock(score.metadata, score.fonts)
   const bottomStart = bottom + trailingHeight + spaces(ABCJS_PX.bottomTextGap)
