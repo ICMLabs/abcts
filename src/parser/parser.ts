@@ -2652,7 +2652,14 @@ class Parser {
         // road as a mid-tune `%%text`: onto `textBelow`, then onto the next system.
         // `theReverser` runs on EVERY `T:`, before `setTitle` decides which it is
         // (`abc_parse_header.js:543`).
-        if (builder.bodyStarted) {
+        //
+        // **AND `setTitle` BRANCHES ON `hasMainTitle`, NOT ON POSITION**
+        // (`abc_parse_header.js:14-22`). A `T:` after the music is the TITLE — drawn in the
+        // TOP block — when no earlier one claimed it; only the SECOND and later become
+        // subtitles. A tune whose only `T:` follows its notes therefore looks exactly like
+        // a tune with a header title, and we drew it as a trailing subtitle: 13.51px, on a
+        // control ladder run through abcjs 6.7.0.
+        if (builder.bodyStarted && builder.titles.length > 0) {
           builder.textBelow.push({
             lines: [theReverser(decodeTextString(value))],
             align: 'center',
