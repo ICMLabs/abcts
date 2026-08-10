@@ -572,7 +572,7 @@ const glyphDefs = new Map<GlyphName, string>()
         const named = role === 'notehead' ? '' : (SMUFL_TO_ABCJS[name] ?? name)
         return (
           `<path${attributes}${named ? ` data-name="${named}"` : ''} ` +
-          `d="${`M ${px} ${py}${ink.path.slice(head[0].length)}`.trimEnd()}"></path>`
+          `d="M ${px} ${py}${ink.path.slice(head[0].length)}"></path>`
         )
       }
     }
