@@ -462,6 +462,17 @@ staff-stacking arithmetic are where the remaining inline literals are.
      **The margin ORDER is already ported** — `draw()` opens with `moveY(padding.top)` so
      everything lands on top of it and `setPaperSize` adds `padding.bottom` last; JS `+`
      is left to right and writing the margins at the end is a different number.
+     **AND THE ROW ADVANCES ARE NOW PUBLISHED**: `topTextBlock` returns `advances`, one
+     per row, because abcjs adds them ONE AT A TIME to the page's cursor and
+     `15 + a + b` is not `15 + (a + b)`. The TOTAL still places the block; the list is for
+     the page. **WHAT REMAINS IS THE ACCUMULATION ITSELF** — `height` still telescopes
+     through `last.originY + systemHeight(last)`, where abcjs walks
+     `y = 15 → rows → spacing.music → per line (separation, H·STEP) → +15`. Doing it
+     abcjs's way needs `heightPitch` measured from the MUSIC-ONLY extent (`musicTop` in the
+     stacking loop) rather than from the block's top, and the inter-system separations
+     spent as their own terms rather than through `originY`. That is the whole of what is
+     left of the height family, and it is a restructure of the vertical model — worth its
+     own session, not a corner of one.
 
    - **(the original note)** 55 of 171 still differ by
      ULP (`{exact: 114, ulpOnly: 55, structural: 2}`) — in BOTH directions, which is what
