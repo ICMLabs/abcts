@@ -33,11 +33,11 @@ reproduce goes in `Docs/ABCJS-DIFFERENCES.md` with its evidence and its slug goe
 | harvested geometry | `corpus-abcjs-ranked` | 0 of 174 | 0 of 174 |
 | pixel geometry | `pixel-parity` | 0 of 120 | 0 of 120 |
 | **DOM contract** | **`dom-contract`** | **1 of 25 — TWENTY-FOUR RATCHETED** | 11 of 25, fourteen |
-| **SVG bytes** | **`svg-bytes`** | **142 of 171**; best 46104, median 1062 | 164 of 171, best 5186, median 174 |
+| **SVG bytes** | **`svg-bytes`** | **133 of 171**; best 46104, median 1301 | 164 of 171, best 5186, median 174 |
 
 **Suite 1158 of 1158. NO REDS. `npx tsc --noEmit` clean. Working tree clean.**
 
-Heights: **117 exact / 52 ULP-only / 2 structural**, from 80 / 86 / 2 this morning. The
+Heights: **129 exact / 40 ULP-only / 2 structural**, from 80 / 86 / 2 this morning. The
 two structural ones are still `visual-mouse-click-01` and `visual-tablature-15` at 3.875px.
 
 ---
@@ -403,7 +403,33 @@ staff-stacking arithmetic are where the remaining inline literals are.
 
    The families standing now, biggest first — re-run the histogram, these move every time
    something lands:
-   - **THE ROOT'S `height`, 15 rows, AND THE CAUSE IS MEASURED TO THE BIT.**
+   - **~~THE ROOT'S `height`~~ — THE ARC IS PORTED, 80/86 → 129 exact / 40 ULP.**
+     The page is ONE CURSOR walked in abcjs's order: `moveY(padding.top)`, each top-text
+     ROW, `spacing.music`, then per line a separation and `staffGroup.height * STEP`, and
+     `padding.bottom` last (`draw/draw.js:14-76`, `draw/set-paper-size.js:3`). Ours
+     telescoped through `last.originY + systemHeight(last)` — the same terms in a different
+     grouping, and JS `+` is left to right. Four pieces made it work:
+     * **THE TOP TEXT RIDES THE PAGE'S CURSOR.** `topTextBlock` now builds from
+       `padding.top`, so a row's y is `((15 + rows) + size)` and not `(rows + size) + 15`;
+       `PlacedText.pageY` carries it and the emitter prefers it. The local y stays, because
+       the staff's EXTENT is measured in the staff's frame.
+     * **THE BLOCK IS NOT PART OF `staffGroup.height`.** abcjs walks THROUGH it and only
+       then reaches the staff, so it is the page's, not the staff's — `blockSpan`, measured
+       to the MUSIC-ONLY top. Assuming its DECLARED height instead lost a whole subtitle
+       row (27.05px) on `synth-timing-05` and 93.18 on `visual-options-01`, because a row's
+       ink reaches above its own box and abcjs reserves none of it.
+     * **EVERY SYSTEM'S LEADING IS ITS OWN TERM**, not just the first's — a MID-TUNE block
+       is the page's cursor moving through a `nonMusic` line, and dropping it lost that
+       same subtitle row a second way.
+     * **AND `calcHeight` ADDS `staff.top` AND THEN `-staff.bottom`** — two additions onto a
+       running total, NEVER one subtraction (`creation/calc-height.js:8-10`). That last line
+       is worth nine fixtures on its own. **MEASURED AGAINST ABCJS'S OWN DUMP**:
+       `dump-elements.js` publishes `top: 13.724387096774194, bottom: -1.0443870967741935`
+       for `visual-title-07`, whose `H` is `14.768774193548388`; `(bottom - top) / STEP`
+       gives `…387` and the two additions give `…388`. **Ask the oracle for its own
+       intermediate, do not re-derive it.**
+
+   - **(the earlier diagnosis, kept because the method transfers)**
      `synth-flattener-14` gives `149.07999999999998` against abcjs's `149.08`, and the
      dirt is ONE term: with the staff at a clean `originY = 88.08` and the margins a clean
      30, `verticalExtent`'s `bottom` comes out **`30.999999999999986` where abcjs's is
@@ -573,10 +599,10 @@ staff-stacking arithmetic are where the remaining inline literals are.
 working tree clean
 npx tsc --noEmit    clean
 npx vitest run      1158 / 1158
-svg bytes           142 of 171   best 46104, median 1062
+svg bytes           133 of 171   best 46104, median 1301
                     PASSING ratchet: 7 slugs
 DOM contract        1 of 25       PASSING ratchet: 24 slugs
-heights             117 exact / 52 ULP-only / 2 structural
+heights             129 exact / 40 ULP-only / 2 structural
 audio ranked        0 of 72
 timing ranked       0 of 38
 element timings     1 of 13
