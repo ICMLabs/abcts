@@ -4703,6 +4703,12 @@ function noteText(
       role: 'lyric',
       dataName: 'lyric',
       font: 'vocalfont',
+      // **CENTRED BY THE ANCHOR**, as the chord symbol is and for the same reason:
+      // `addCentered` with `relative.js`'s `case "lyric"` drawing `anchor: "middle"`
+      // (`abstract-engraver.js:777`, `draw/relative.js:42`). Its `dx` is 0, so the x
+      // abcjs writes is the ELEMENT's — the notehead's left edge — and the golden agrees
+      // to the pixel: `text-anchor="middle" x="106.03"` under a note placed at 106.03.
+      anchor: 'middle',
       // MEASUREMENT follows the same `size`, so a bigger font both draws and occupies
       // bigger. A font that draws large and measures at the default width is how lyrics
       // end up overlapping — the centring here and the melisma extender's start both
@@ -4710,7 +4716,7 @@ function noteText(
       // CENTRED ON THE ELEMENT'S x, which is the notehead's LEFT edge, not its middle —
       // abcjs's lyric RelativeElement has `dx = 0` and the golden agrees to the pixel:
       // `text-anchor="middle" x="106.03"` under a note placed at 106.03.
-      x: headX - textWidth(verse, size, 'serifBold') / 2,
+      x: headX,
       y: stepToY(ENGRAVE.lyricStep - index * ENGRAVE.lyricLineStep),
       size,
       // BOLD BY DEFAULT — abcjs's `vocalfont` is Times New Roman 13pt **bold**
@@ -4996,7 +5002,10 @@ function layoutMelismas(
     }
     if (last === null) return
 
-    const from = lyric.x + textWidth(lyric.text, lyric.size, 'serifBold') + ENGRAVE.melismaGap
+    // The lyric's `x` is its CENTRE now — it is `anchor: "middle"` — so the extender
+    // starts half a width to the right of it, not a whole one.
+    const from =
+      lyric.x + textWidth(lyric.text, lyric.size, 'serifBold') / 2 + ENGRAVE.melismaGap
     const to = last.right + ENGRAVE.melismaGap
     // A run so tight that the line would be a speck reads as a smudge; drop it instead.
     if (to - from < ENGRAVE.melismaMinLength) return

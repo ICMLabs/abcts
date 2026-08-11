@@ -40,11 +40,11 @@ system 0 width=786.609 originY=0.000
     note@-1 x=439.591 w=60.000
       glyph noteheadHalf 439.591,3.875
       line  449.461,2.583 -> 449.461,-23.250 t=1.000
-      text  430.615,63.500 size=17.000 bold "A-"
+      text  439.591,63.500 size=17.000 bold "A-"
     note@2 x=495.699 w=42.426
       glyph noteheadBlack 495.699,-7.750
       line  496.199,-6.458 -> 496.199,19.375 t=1.000
-      text  485.551,63.500 size=17.000 bold "ve,"
+      text  495.699,63.500 size=17.000 bold "ve,"
     note@-3 x=523.753 w=42.426
       glyph noteheadBlack 523.753,11.625
       line  533.063,10.333 -> 533.063,-15.500 t=1.000
@@ -53,7 +53,7 @@ system 0 width=786.609 originY=0.000
     note@-1 x=571.784 w=42.426
       glyph noteheadBlack 571.784,3.875
       line  581.094,2.583 -> 581.094,-23.250 t=1.000
-      text  562.807,63.500 size=17.000 bold "A-"
+      text  571.784,63.500 size=17.000 bold "A-"
     note@-2 x=599.838 w=42.426
       glyph accidentalSharp 589.588,7.750
       glyph noteheadBlack 599.838,7.750
@@ -62,7 +62,7 @@ system 0 width=786.609 originY=0.000
       glyph accidentalNatural 620.492,7.750
       glyph noteheadHalf 627.892,7.750
       line  637.762,6.458 -> 637.762,-19.375 t=1.000
-      text  617.744,63.500 size=17.000 bold "ve,"
+      text  627.892,63.500 size=17.000 bold "ve,"
     bar x=684.000 w=0.600
       line  684.300,-15.500 -> 684.300,15.500 t=0.600
     voiceName x=15.000 w=0.000
@@ -144,21 +144,21 @@ system 0 width=786.609 originY=0.000
     note@0 x=439.591 w=60.000
       glyph noteheadHalf 439.591,0.000
       line  440.091,1.292 -> 440.091,27.125 t=1.000
-      text  430.615,66.840 size=17.000 bold "A-"
+      text  439.591,66.840 size=17.000 bold "A-"
     note@0 x=495.699 w=60.000
       glyph noteheadHalf 495.699,0.000
       line  496.199,1.292 -> 496.199,27.125 t=1.000
-      text  485.551,66.840 size=17.000 bold "ve,"
+      text  495.699,66.840 size=17.000 bold "ve,"
     bar x=551.807 w=0.600
       line  552.107,-15.500 -> 552.107,15.500 t=0.600
     note@0 x=571.784 w=60.000
       glyph noteheadHalf 571.784,0.000
       line  572.284,1.292 -> 572.284,27.125 t=1.000
-      text  562.807,66.840 size=17.000 bold "A-"
+      text  571.784,66.840 size=17.000 bold "A-"
     note@0 x=627.892 w=60.000
       glyph noteheadHalf 627.892,0.000
       line  628.392,1.292 -> 628.392,27.125 t=1.000
-      text  617.744,66.840 size=17.000 bold "ve,"
+      text  627.892,66.840 size=17.000 bold "ve,"
     bar x=684.000 w=0.600
       line  684.300,-15.500 -> 684.300,15.500 t=0.600
   staff 2 originY=335.823
