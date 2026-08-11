@@ -11,7 +11,7 @@
  */
 
 import { type CompatibilityMode, defaultMode, isStrict } from '../core/model.js'
-import { ABCJS_ARC, ABCJS_YCORR, spaces } from './abcjs-constants.js'
+import { ABCJS_ARC, ABCJS_YCORR, spaces, STAFF_SPACE_PX, UNIT_PX } from './abcjs-constants.js'
 import { SMUFL_TO_ABCJS } from './glyph-map.js'
 import { glyphsFor } from './glyph-table.js'
 import { GLYPHS, type GlyphName } from './glyphs.js'
@@ -497,8 +497,12 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
   const table = glyphsFor(strict)
   const outline = (name: GlyphName): { path: string; scale: number } => {
     const g = table.get(name)
-    if (g === undefined) return { path: GLYPHS[name].path, scale: 1 }
-    return { path: g.path, scale: 1 / g.unitsPerSpace }
+    // PATH UNITS → LAYOUT UNITS. A path unit is `STAFF_SPACE_PX / unitsPerSpace` abcjs
+    // pixels — 1 for abcjs's outlines, 7.75 for Bravura's — and a layout unit is
+    // `UNIT_PX` of them. Written as one expression so the flip carries it; identical to
+    // the `1 / unitsPerSpace` it replaced while `UNIT_PX` is the staff space.
+    if (g === undefined) return { path: GLYPHS[name].path, scale: STAFF_SPACE_PX / UNIT_PX }
+    return { path: g.path, scale: STAFF_SPACE_PX / (g.unitsPerSpace * UNIT_PX) }
   }
 
   /**
@@ -734,7 +738,11 @@ const glyphDefs = new Map<GlyphName, string>()
    * by editing every `num()` — the same values reach the same string builders, which is why
    * every pixel gate in the repo stays green across this change.
    */
-  const PX = abcjs ? scale : 1
+  // LAYOUT UNITS → OUTPUT PIXELS. The host's `staffSpace` is how many pixels it wants a
+  // staff space to be, and a layout unit is `UNIT_PX` abcjs pixels of it — so compat's own
+  // 7.75 resolves to EXACTLY 1 once the layout holds abcjs's pixels, and the emitter stops
+  // multiplying at all.
+  const PX = abcjs ? (scale * UNIT_PX) / STAFF_SPACE_PX : 1
   const OY = abcjs ? -doc.top : 0
   /**
    * **A `<text>`'s x AND y ARE ROUNDED TO TWO DECIMALS IN ABCJS** — `hash.attr.x =

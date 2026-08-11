@@ -66,6 +66,7 @@ import {
   GOLDEN_VOCAL,
   goldenTextHeight,
   PITCH_ORIGIN,
+  SPACE,
   STAFF_SPACE_PX,
   STEP_PX,
   spaces,
@@ -92,7 +93,7 @@ export const ENGRAVE = {
   /** Steps of the five staff lines, bottom → top, about the middle line at 0. */
   staffLineSteps: [-4, -2, 0, 2, 4],
   /** A staff step is half a staff space. */
-  spacePerStep: 0.5,
+  spacePerStep: 0.5 * SPACE,
   /**
    * An UNBEAMED stem's length — abcjs's `Math.round(70 * voiceScale) / 10` = 7 pitch
    * (`abstract-engraver.js:740`), which in staff spaces is the 3.5 this was.
@@ -189,9 +190,9 @@ export const ENGRAVE = {
   /** Two accidentals this far apart in STEPS share a column (`create-note-head.js:87`). */
   accidentalColumnSteps: ABCJS_PITCH.accidentalColumnPitch,
   /** Gap from the notehead's right edge to the first augmentation dot. PROVISIONAL. */
-  dotGap: 0.35,
+  dotGap: 0.35 * SPACE,
   /** Spacing between successive dots on a double- or triple-dotted note. PROVISIONAL. */
-  dotSpacing: 0.45,
+  dotSpacing: 0.45 * SPACE,
   /**
    * Square-root spacing coefficient, in staff spaces: a note's natural width is
    * `spacingScale · √(duration / reference)`.
@@ -203,7 +204,7 @@ export const ENGRAVE = {
    * collapses to `13.3·√d` for any line whose shortest note is a quarter or less — which
    * is nearly all music. 3.25 ≈ 13.3/4 is the corpus-centered scale.
    */
-  spacingScale: 3.25,
+  spacingScale: 3.25 * SPACE,
   /**
    * Absolute spacing anchor. A sixteenth gets exactly `spacingScale`; everything else
    * scales from it by √duration, so a note's width depends only on its own duration and
@@ -211,7 +212,7 @@ export const ENGRAVE = {
    */
   spacingReference: 1 / 16,
   /** Hard minimum gap between adjacent columns — the rod floor beneath the springs. */
-  minColumnGap: 0.6,
+  minColumnGap: 0.6 * SPACE,
   /**
    * Space AFTER a barline, before the next element. Nothing goes before it.
    *
@@ -448,7 +449,7 @@ export const ENGRAVE = {
    */
   connectorIndent: spaces(ABCJS_PX.connectorIndent),
   /** Clearance between a brace or bracket and the staff it joins. */
-  connectorGap: 0.6,
+  connectorGap: 0.6 * SPACE,
   /**
    * A group BRACKET's stem — `xLineWidth = spacing.STEP * 0.75` (`draw/brace.js:20`).
    *
@@ -460,13 +461,13 @@ export const ENGRAVE = {
   /** Mouth of a hairpin at its open end — `height = 8` (`draw/crescendo.js:10`). */
   hairpinMouth: spaces(ABCJS_PX.hairpinMouth),
   /** Clearance either side of a glissando, so it does not touch the noteheads. */
-  spannerGap: 0.3,
+  spannerGap: 0.3 * SPACE,
   /** Below this a hairpin is a smudge rather than a shape. */
-  spannerMinLength: 1.5,
+  spannerMinLength: 1.5 * SPACE,
   /** Gap either side of a melisma extender — off the syllable, past the last notehead. */
-  melismaGap: 0.4,
+  melismaGap: 0.4 * SPACE,
   /** Below this a run is a speck rather than a line; drawn as nothing. */
-  melismaMinLength: 0.8,
+  melismaMinLength: 0.8 * SPACE,
   /**
    * Tempo and part labels are directions; chord symbols and lyrics are smaller.
    *
@@ -520,7 +521,7 @@ export const ENGRAVE = {
   /** A text line advances by its height times this, rounded to whole pixels by abcjs. */
   lineSkipFactor: ABCJS_RATIO.lineSkip,
   /** Vertical gap between tunes in a tunebook — wider than between systems. */
-  tuneGap: 6.0,
+  tuneGap: 6.0 * SPACE,
   /**
    * abcjs's `vocalfont`, 13pt -> `round(13 x 4/3)` = 17px, and its `gchordfont` /
    * `annotationfont`, 12pt -> 16px (`abc_parse_directive.js:25-38`). Both were 1.4 —
@@ -537,7 +538,7 @@ export const ENGRAVE = {
    */
   textLineStep: ABCJS_RATIO.textLineStep,
   /** Length of a secondary-beam stub on a note whose neighbours lack that level. */
-  beamStubLength: 1.1,
+  beamStubLength: 1.1 * SPACE,
   /** `gapWidth = 8` each side of the bracket's MIDPOINT — FIXED, not the number's width. */
   tupletNumberGap: spaces(ABCJS_PX.tupletNumberGap),
   /** `bracketHeight = ±5` — the hook at each end (`draw/triplet.js:24`). Ours was 4.65px. */
@@ -676,14 +677,14 @@ export const ENGRAVE = {
   /** No gap: the last grace's own advance IS the distance to the notehead. */
   graceGap: 0,
   /** Length of the hook that resumes a curve at the start of the next system. */
-  curveContinuation: 2.0,
+  curveContinuation: 2.0 * SPACE,
   /** How far a slur or tie endpoint sits clear of the notehead it springs from. */
-  curveEndGap: 0.3,
+  curveEndGap: 0.3 * SPACE,
   /** Arc height as a fraction of the curve's horizontal span, before clamping. */
   curveBulgeRatio: 0.18,
   /** Arc height floor and ceiling, in staff spaces. *Behind Bars* keeps slurs shallow. */
-  curveMinBulge: 0.5,
-  curveMaxBulge: 2.2,
+  curveMinBulge: 0.5 * SPACE,
+  curveMaxBulge: 2.2 * SPACE,
   /**
    * Page width, in staff spaces — the span a system is justified into.
    *
@@ -1305,7 +1306,7 @@ function writtenNote(pitch: Pitch): string {
 export const stepToY = (step: number): number => -step * ENGRAVE.spacePerStep
 
 /** Middle line to outer staff line, in staff spaces — the staff is four spaces tall. */
-const STAFF_HALF_HEIGHT = 2
+const STAFF_HALF_HEIGHT = 2 * SPACE
 
 /** abcjs's staff space in pixels — the unit its published constants are given in. */
 

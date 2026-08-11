@@ -70,14 +70,38 @@ export const STEP_PX = STAFF_SPACE_PX / 2
  */
 export const PITCH_ORIGIN = 6
 
-/** abcjs PIXELS → staff spaces. One division, so the result is bit-identical to `n / 7.75`. */
-export const spaces = (px: number): number => px / STAFF_SPACE_PX
+/**
+ * **THE LAYOUT'S LENGTH UNIT, IN abcjs PIXELS — AND IT IS ABOUT TO BECOME 1.**
+ *
+ * abcjs holds its own PIXELS end to end and so does `abcMusicKit` v1, whose byte parity
+ * with abcjs is what settles this: `Spacing.STEP = 3.875`,
+ * `calcY(pitch) = staffAbsoluteY - pitch * STEP`, and no second unit anywhere. We divide
+ * every abcjs constant by 7.75 on the way in and multiply back on the way out, and the
+ * two roundings do not cancel — `flagX = headX + headInk - spaces(flagStemInset)` emits
+ * `57.840999999999994` where abcjs writes `57.841`, and the root's `height` is the same
+ * defect on the vertical axis. That is the head AND the median of the byte table.
+ *
+ * The flip is one number. Everything denominated in staff SPACES is written `n * SPACE`
+ * so that it survives it; a PITCH or STEP count is unit-free and is converted by
+ * `spacesOfPitch` / `ENGRAVE.spacePerStep`, which carry the factor themselves. While this
+ * is 7.75, `SPACE` is 1 and every expression below is bit-identical to what it replaced —
+ * which is what makes the annotation pass verifiable on its own: NO BASELINE MAY MOVE.
+ *
+ * See `Docs/CHECKPOINT-2026-08-10c.md` §5.
+ */
+export const UNIT_PX = STAFF_SPACE_PX
 
-/** abcjs PIXELS → staff STEPS, which are its pitch unit. */
+/** One staff space, in layout units. 1 while the unit IS a staff space. */
+export const SPACE = STAFF_SPACE_PX / UNIT_PX
+
+/** abcjs PIXELS → the layout's length unit. */
+export const spaces = (px: number): number => px / UNIT_PX
+
+/** abcjs PIXELS → staff STEPS, which are its pitch unit — unit-free, so no `SPACE`. */
 export const steps = (px: number): number => px / STEP_PX
 
-/** abcjs PITCH → staff spaces. A pitch is half a space. */
-export const spacesOfPitch = (pitch: number): number => pitch * 0.5
+/** abcjs PITCH → the layout's length unit. A pitch is half a staff space. */
+export const spacesOfPitch = (pitch: number): number => pitch * (STEP_PX / UNIT_PX)
 
 /** abcjs PITCH → our staff step. Same unit, different zero. */
 export const stepOfPitch = (pitch: number): number => pitch - PITCH_ORIGIN
