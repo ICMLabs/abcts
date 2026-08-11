@@ -382,9 +382,24 @@ function curveToPath(curve: PlacedCurve, attr: string, strict: boolean, k = 1): 
   // Bravura constants are not wrong numbers — they are the wrong MODEL, and strict now
   // reads none of them.
   if (strict) {
+    /**
+     * **THE ENDPOINTS ARE ROUNDED BEFORE THE ARC IS BUILT, NOT AFTER.** `drawArc` opens
+     * `x1 = roundNumber(x1 + 6); x2 = roundNumber(x2 + 4)` and `y1 = roundNumber(calcY(…))`
+     * (`draw/tie.js:63-67`), so `norm`, `flatten` and every control point are derived from
+     * the ROUNDED chord. Ours rounded only on the way out, which put a control point on the
+     * far side of a `toFixed(2)` boundary — 155.47 against abcjs's 155.46 — while both
+     * endpoints printed the same.
+     */
+    const r = (n: number): number => Number.parseFloat(n.toFixed(2))
+    const [x1, y1, x2, y2] = [r(curve.x1), r(curve.y1), r(curve.x2), r(curve.y2)]
     const dx = x2 - x1
     const dy = y2 - y1
-    const norm = Math.hypot(dx, dy)
+    // **`Math.sqrt(dx * dx + dy * dy)`, NOT `Math.hypot`.** `hypot` is the more accurate
+    // of the two — it scales to avoid overflow — and that is precisely why it is wrong
+    // here: every control point is derived from `norm`, so one ULP of difference lands on
+    // a `toFixed(2)` boundary and prints 155.47 where abcjs prints 155.46
+    // (`draw/tie.js:69`). A better formula is still a different formula.
+    const norm = Math.sqrt(dx * dx + dy * dy)
     if (norm === 0) return ''
     const ux = dx / norm
     const uy = dy / norm
@@ -409,8 +424,7 @@ function curveToPath(curve: PlacedCurve, attr: string, strict: boolean, k = 1): 
      * the attributes are `paper.path`'s key order — `d`, `stroke`, `fill`, `class`,
      * `data-name` — where ours put the name first.
      */
-    const r = (n: number): number => Number.parseFloat(n.toFixed(2))
-    const [rx1, ry1, rx2, ry2] = [r(x1), r(y1), r(x2), r(y2)]
+    const [rx1, ry1, rx2, ry2] = [x1, y1, x2, y2]
     const [rc1x, rc1y, rc2x, rc2y] = [r(c1x), r(c1y), r(c2x), r(c2y)]
     const klass = / class="[^"]*"/.exec(attr)?.[0] ?? ''
     const name = / data-name="[^"]*"/.exec(attr)?.[0] ?? ''
