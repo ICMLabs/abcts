@@ -2794,7 +2794,19 @@ const FLAG_GLYPHS: readonly (readonly [GlyphName, GlyphName])[] = [
 ]
 
 /** Ledger lines for a note that sits beyond the staff. */
-function ledgerLines(step: number, x: number, headWidth: number): PlacedLine[] {
+function ledgerLines(
+  step: number,
+  x: number,
+  headWidth: number,
+  /**
+   * The other end of the chord, when this is one. **`ledgerLines` RUNS ONCE PER ELEMENT,
+   * NOT ONCE PER HEAD** — `abstract-engraver.js:850` hands it `elem.minpitch` and
+   * `elem.maxpitch` and it walks each side from the extreme note back to the staff. Ours
+   * ran it per head, so every head of a chord grew its own full stack and `[F,^G,]` drew
+   * five rules where abcjs draws four.
+   */
+  toStep: number = step,
+): PlacedLine[] {
   const lines: PlacedLine[] = []
   // THE OVERHANG IS PER RENDER, so it is read here and not baked into `ENGRAVE`: abcjs
   // gives a ledger `symbolWidth + 4` of width at `dx = -2` (`abstract-engraver.js:462`),
@@ -2811,8 +2823,15 @@ function ledgerLines(step: number, x: number, headWidth: number): PlacedLine[] {
       role: 'ledger',
     })
   }
-  for (let s = ENGRAVE.firstLedgerStep; s <= step; s += 2) push(s)
-  for (let s = -ENGRAVE.firstLedgerStep; s >= step; s -= 2) push(s)
+  // **OUTERMOST FIRST, BOTH WAYS.** `for (i = maxPitch; i > 11; i--)` then
+  // `for (i = minPitch; i < 1; i++)` (`abstract-engraver.js:447-457`) — each loop starts at
+  // the note and walks BACK toward the staff, so the ledger furthest from it is written
+  // first. Ours started at the staff and walked out, which reverses every stack of two or
+  // more and which no positional gate could see: the same rules land in the same places.
+  const maxStep = Math.max(step, toStep)
+  const minStep = Math.min(step, toStep)
+  for (let s = maxStep; s >= ENGRAVE.firstLedgerStep; s -= 1) if (s % 2 === 0) push(s)
+  for (let s = minStep; s <= -ENGRAVE.firstLedgerStep; s += 1) if (s % 2 === 0) push(s)
   return lines
 }
 
@@ -3140,7 +3159,28 @@ function layoutNoteheads(
       // `steps` is sorted ascending, so the index IS the chord position from the bottom.
       ...(steps.length > 1 ? { chordPos: position + 1 } : {}),
     })
-    lines.push(...ledgerLines(step, headX + dx, headInk))
+  }
+  /**
+   * **AND THE SHIFTED HEAD OF A SECOND GETS ONE EXTRA RULE, NOT A STACK.** `additionalLedgers`
+   * collects `verticalPos - verticalPos % 2` for every head `printer_shift` displaced that
+   * also sits outside the staff, and `ledgerLines` draws each at `±symbolWidth + dx`
+   * (`abstract-engraver.js:657`, `:459-463`) — one rule apiece, however far out the note is.
+   */
+  lines.push(...ledgerLines(lowest, headX, headInk, highest))
+  for (const [position, step] of steps.entries()) {
+    if ((offsetAt[position] ?? 0) === 0) continue
+    const pitch = step + PITCH_ORIGIN
+    if (pitch <= 11 && pitch >= 1) continue
+    const ledgerStep = pitch - (pitch % 2) - PITCH_ORIGIN
+    const lx = headX + (up ? headInk : -headInk)
+    lines.push({
+      x1: lx - LINE_WEIGHTS.ledgerExtension,
+      y1: stepToY(ledgerStep),
+      x2: lx + headInk + LINE_WEIGHTS.ledgerExtension,
+      y2: stepToY(ledgerStep),
+      thickness: LINE_WEIGHTS.ledgerLine,
+      role: 'ledger',
+    })
   }
 
   // Dots align in one column right of the WIDEST extent, so a chord's dots line up
