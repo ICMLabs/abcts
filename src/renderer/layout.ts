@@ -463,6 +463,12 @@ export const ENGRAVE = {
   bracketThickness: spacesOfPitch(ABCJS_PITCH.bracketRule),
   /** Mouth of a hairpin at its open end — `height = 8` (`draw/crescendo.js:10`). */
   hairpinMouth: spaces(ABCJS_PX.hairpinMouth),
+  /**
+   * How far below the dynamics lane a hairpin's mouth is CENTRED — `+ 4` for the offset
+   * `drawCrescendo` calls "so that it looks good with the volume marks" and `height / 2`
+   * for the mouth's own half (`draw/crescendo.js:7-19`).
+   */
+  hairpinDrop: spaces(ABCJS_PX.hairpinOffset + ABCJS_PX.hairpinMouth / 2),
   /** Clearance either side of a glissando, so it does not touch the noteheads. */
   spannerGap: 0.3 * SPACE,
   /** Below this a hairpin is a smudge rather than a shape. */
@@ -1280,6 +1286,12 @@ export interface LayoutStaff {
    * later one, so they belong to no single element for the same reason beams do not.
    */
   readonly spannerLines: readonly PlacedLine[]
+  /**
+   * How far `anchorBelowStaff` moved this staff's BELOW dynamics onto the music's ink.
+   * The hairpins share that lane and arrive after the anchoring, so they spend it at the
+   * merge — see `anchorBelowStaff`.
+   */
+  readonly dynamicShift?: number
   /** Repeat-ending (volta) brackets and their labels. Span whole measures. */
   readonly voltaLines: readonly PlacedLine[]
   readonly voltaTexts: readonly PlacedText[]
@@ -5198,7 +5210,24 @@ function layoutSpanners(
    */
   const hairpin = (system: number, x1: number, x2: number, g1: number, g2: number): void => {
     if (x2 - x1 < ENGRAVE.spannerMinLength) return
-    const y = stepToY(dynamicsAbove ? ENGRAVE.dynamicAboveStep : ENGRAVE.dynamicBelowStep)
+    /**
+     * **THE MOUTH IS CENTRED EIGHT PIXELS BELOW THE LANE'S PITCH.** `drawCrescendo` takes
+     * `y = calcY(params.pitch) + 4` as "the top pixel to use (it is offset a little so that
+     * it looks good with the volume marks)" and a flat `height = 8`, then draws
+     * `y + height / 2` at the tip and `y` … `y + height` at the mouth
+     * (`draw/crescendo.js:7-19`) — so the centre is `calcY(pitch) + 8` at BOTH ends.
+     * Ours sat on the bare lane, 3.47px high on `synth-flattener-01`.
+     */
+    /**
+     * **THE MOUTH IS CENTRED EIGHT PIXELS BELOW THE LANE'S PITCH.** `drawCrescendo` takes
+     * `y = calcY(params.pitch) + 4` as "the top pixel to use (it is offset a little so that
+     * it looks good with the volume marks)" and a flat `height = 8`, then draws
+     * `y + height / 2` at the tip and `y` … `y + height` at the mouth
+     * (`draw/crescendo.js:7-19`) — so the centre is `calcY(pitch) + 8` at BOTH ends.
+     */
+    const y =
+      stepToY(dynamicsAbove ? ENGRAVE.dynamicAboveStep : ENGRAVE.dynamicBelowStep) +
+      ENGRAVE.hairpinDrop
     out[system]?.push(
       { x1, y1: y - g1 / 2, x2, y2: y - g2 / 2, thickness, role: 'dynamic' },
       { x1, y1: y + g1 / 2, x2, y2: y + g2 / 2, thickness, role: 'dynamic' },
@@ -5226,19 +5255,24 @@ function layoutSpanners(
     // Gap as a fraction of the way along: a crescendo opens, a diminuendo closes.
     const gapAt = (t: number) => (kind === 'crescendo' ? t : 1 - t) * mouth
 
+    /**
+     * **BOTH ENDS ARE THE ELEMENT'S OWN x**, not its edges: `left = anchor1.x`,
+     * `right = anchor2.x` (`draw/crescendo.js:12-13`). Ours ran to the closing element's
+     * RIGHT edge, a whole notehead too far — 345.47 against abcjs's 335.66.
+     */
     if (from.system === to.system) {
-      hairpin(from.system, from.left, to.right, gapAt(0), gapAt(1))
+      hairpin(from.system, from.left, to.left, gapAt(0), gapAt(1))
       return
     }
     const start = bounds[from.system]
     const end = bounds[to.system]
     if (start === undefined || end === undefined) return
     const firstRun = Math.max(0, start.right - from.left)
-    const lastRun = Math.max(0, to.right - end.left)
+    const lastRun = Math.max(0, to.left - end.left)
     const total = firstRun + lastRun
     const split = total === 0 ? 0.5 : firstRun / total
     hairpin(from.system, from.left, start.right, gapAt(0), gapAt(split))
-    hairpin(to.system, end.left, to.right, gapAt(split), gapAt(1))
+    hairpin(to.system, end.left, to.left, gapAt(split), gapAt(1))
   }
 
   // A QUEUE per kind, not a single slot. `S1-decorations` writes `!crescendo(!G!<(!G`
@@ -5249,7 +5283,9 @@ function layoutSpanners(
   const open = new Map<string, NoteAnchor[]>()
 
   for (const anchor of anchors) {
-    if (anchor.event.type === 'rest') continue
+    // A REST — a SPACER above all — anchors a hairpin like any other element. abcjs's
+    // `anchor2` is whatever absolute element the `!<)!` was written on, and
+    // `!<(!GABc|!<)!y` closes on the `y`. Skipping rests lost the hairpin outright.
     for (const name of anchor.event.decorations) {
       const opens = SPANNER_OPEN[name]
       if (opens !== undefined) {
@@ -9142,8 +9178,14 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       curves: (voicesOfStaff[staffIndex] ?? []).flatMap(
         (v) => curvesBySystem[v]?.[systemIndex] ?? [],
       ),
-      spannerLines: (voicesOfStaff[staffIndex] ?? []).flatMap(
-        (v) => spannersBySystem[v]?.[systemIndex] ?? [],
+      // …and THE HAIRPIN'S LANE IS ANCHORED HERE, because this is where it arrives. See
+      // `dynamicShift`.
+      spannerLines: (voicesOfStaff[staffIndex] ?? []).flatMap((v) =>
+        (spannersBySystem[v]?.[systemIndex] ?? []).map((l) =>
+          l.role === 'dynamic' && staff.dynamicShift !== undefined
+            ? { ...l, y1: l.y1 + staff.dynamicShift, y2: l.y2 + staff.dynamicShift }
+            : l,
+        ),
       ),
     })),
   }))
@@ -10751,9 +10793,15 @@ function anchorBelowStaff<
   } & StaffFurniture,
 >(parts: readonly T[], strict: boolean): T[] {
   const isDyn = (r: PartRole | undefined, y: number): boolean => r === 'dynamic' && y > 0
+  // …AND A HAIRPIN COUNTS EVEN THOUGH `spannerLines` IS STILL EMPTY HERE — see
+  // `LayoutStaff.dynamicShift`. `hasHairpin` is taken from the EVENTS for exactly this
+  // reason, and reading the (empty) lines instead left a system whose only dynamic is a
+  // crescendo unanchored: `synth-flattener-01`'s first line sat 11.47px low while its
+  // second and third, which carry volume marks, were exact.
   const present =
     parts.some((p) => p.elements.some((el) => el.glyphs.some((g) => isDyn(g.role, g.y)))) ||
-    parts.some((p) => p.spannerLines.some((l) => isDyn(l.role, l.y1)))
+    parts.some((p) => p.spannerLines.some((l) => isDyn(l.role, l.y1))) ||
+    parts.some((p) => p.hasHairpin === true)
   if (!present) return [...parts]
 
   // The MUSIC's ink, with the dynamics themselves taken out — `verticalExtent` already
@@ -10768,6 +10816,12 @@ function anchorBelowStaff<
         tupletTexts: parts.flatMap((p) => p.tupletTexts ?? []),
         voltaLines: parts.flatMap((p) => p.voltaLines ?? []),
         voltaTexts: parts.flatMap((p) => p.voltaTexts ?? []),
+        // **AND THE HAIRPIN'S OWN RESERVE HAS TO BE IN THIS EXTENT TOO**, because the
+        // subtraction below takes it back off. A dynamic GLYPH sets the flag from the
+        // elements, so a staff carrying a volume mark was consistent by accident; one
+        // whose only dynamic is a crescendo had nothing to subtract and came out 7 pitch
+        // — 27.13px — high.
+        ...(parts.some((p) => p.hasHairpin === true) ? { hasHairpin: true } : {}),
       },
     ).bottom -
     ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
@@ -10777,6 +10831,15 @@ function anchorBelowStaff<
     isDyn(l.role, l.y1) ? { ...l, y1: l.y1 + shift, y2: l.y2 + shift } : l
   return parts.map((part) => ({
     ...part,
+    /**
+     * **AND THE HAIRPINS ARE NOT HERE YET.** `spannerLines` is EMPTY at this point — the
+     * spanners resolve across the whole tune, after packing, and are merged onto the staff
+     * hundreds of lines later — so a hairpin never got this shift and sat on the raw lane
+     * constant while every volume MARK beside it was anchored on the music's ink. Recorded
+     * so the merge can spend it. Same lane, same pitch: `setUpperAndLowerCrescendoElements`
+     * assigns `positionY.dynamicHeightAbove/Below`, exactly what a `DynamicDecoration` takes.
+     */
+    dynamicShift: shift,
     elements: part.elements.map((el) =>
       el.glyphs.some((g) => isDyn(g.role, g.y))
         ? {

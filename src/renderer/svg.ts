@@ -1820,6 +1820,9 @@ const glyphDefs = new Map<GlyphName, string>()
               ` class="${classes.generate('decoration dynamics')}" stroke="none" ` +
                 `fill="currentColor" data-name="${ABCJS_DATA_NAMES.dynamic}"`,
               g.role,
+              // The name is already in the attribute string above; `'' ?? x` is `''`, so
+              // this stops `glyphMarkup` adding a SECOND `data-name` from the glyph key.
+              '',
             ),
           })
           continue

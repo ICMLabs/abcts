@@ -271,6 +271,11 @@ export const ABCJS_PX = {
   tupletNumberGap: 8,
   /** A HAIRPIN's full mouth at the open end — `height = 8` (`draw/crescendo.js:10`). */
   hairpinMouth: 8,
+  /**
+   * `var y = renderer.calcY(params.pitch) + 4` — "the top pixel to use (it is offset a
+   * little so that it looks good with the volume marks)" (`draw/crescendo.js:7`).
+   */
+  hairpinOffset: 4,
   /** `renderText`'s `x: linestartx + 5` (`draw/ending.js:41`). */
   voltaTextIndent: 5,
   /**
