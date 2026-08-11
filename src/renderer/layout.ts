@@ -3272,11 +3272,21 @@ function layoutNoteheads(
     // anchors say 0.168 spaces where a third of a pitch is 0.1667: a hundredth of a pixel
     // apart, and strict takes abcjs's figure because "close enough" is not byte parity.
     const ay = strict ? (up ? -1 : 1) * (ENGRAVE.spacePerStep / (beamed ? 5 : 3)) : bravuraY
+    /**
+     * **BOTH ENDS OF A STEM ARE PITCHES, AND `calcY` CONVERTS ONCE.**
+     * `p1 = minpitch + 1/3`, `p2 = maxpitch + stemHeight` going up and the mirror going
+     * down, each clamped to pitch 6 and only then handed to `calcY`
+     * (`abstract-engraver.js:740-762`). Ours added a LENGTH to a y — `stepToY(step) ± 7 *
+     * STEP` — which is the same value through two products instead of one, and printed
+     * 60.54 where abcjs prints 60.53 on four fixtures.
+     */
+    const nearStepRaw = (up ? lowest : highest) + (up ? 1 : -1) / (beamed ? 5 : 3)
+    const farStepRaw = (up ? highest : lowest) + (up ? 1 : -1) * ABCJS_PITCH.stemLength
     // headX, not x: an accidental shifts the noteheads, and the stem follows them.
     const stemX = headX + ax
     // The stem starts at the head nearest its own end and runs past the far one, so a
     // chord's stem spans the whole spread rather than one notehead's worth.
-    const nearRaw = stepToY(up ? lowest : highest) + ay
+    const nearRaw = strict ? stepToY(nearStepRaw) : stepToY(up ? lowest : highest) + ay
     const far = stepToY(up ? highest : lowest)
     // A STEM ON A NOTE FAR FROM THE MIDDLE LINE IS STRETCHED TO REACH IT — abcjs's own
     // words, `create-note-head.js:39`: "the stem will have been stretched to the middle
@@ -3301,7 +3311,9 @@ function layoutNoteheads(
     // our 25.823 for exactly that reason, and it is one note in eight of that fixture.
     // A BEAMED stem is exempt on both ends — `createStems` has no clamp, and `forcedUp` is
     // non-null inside a beam anyway, which is the same guard abcjs's `!stemdir` is.
-    const plain = far + (up ? -ENGRAVE.stemLength : ENGRAVE.stemLength)
+    const plain = strict
+      ? stepToY(farStepRaw)
+      : far + (up ? -ENGRAVE.stemLength : ENGRAVE.stemLength)
     const middle = stepToY(0)
     const tip = forcedUp !== null ? plain : up ? Math.min(plain, middle) : Math.max(plain, middle)
     const base =
