@@ -946,6 +946,17 @@ export interface PlacedText {
    */
   readonly nonMusicIndex?: number
   /**
+   * The RECT a `%%…box` font draws round this row — see the part-order branch of
+   * `topTextBlock`. Present only when the font asked for one; the emitter turns it into
+   * abcjs's four filled rules and wraps the pair in a group.
+   */
+  readonly boxRect?: {
+    readonly x: number
+    readonly y: number
+    readonly width: number
+    readonly height: number
+  }
+  /**
    * Extra lines of the SAME `<text>`, each a `<tspan dy="1.2em">`. abcjs's `addTextIf`
    * takes a string with `\n` in it and emits ONE element (`add-text-if.js:20-33`), which
    * is how `N:` and `H:` print — its own golden reads
@@ -9731,16 +9742,39 @@ function topTextBlock(
   const partOrderRich = metadata.partOrder ?? ''
   const partOrder = plainText(partOrderRich)
   if (partOrder !== '') {
+    /**
+     * **A BOXED FONT DRAWS A BOX, AND THE BOX IS FOUR FILLED RULES.** `renderText` opens
+     * `<g fill data-name>`, moves the text IN by one `padding` on both axes, DELETES its
+     * class, and after drawing measures `getBBox()` to lay a rect around it
+     * (`draw/text.js:48-81`) — which `Svg.rect` writes as a PATH of four one-pixel bars
+     * "so that it can be hollow and the color changes with fill instead of stroke"
+     * (`svg.js:128-142`). `padding` is `font.size * 0.1`.
+     *
+     * `%%partsbox` is what sets it here. Everything is `Math.round`ed on the way out.
+     */
+    const partsSize = sizeOf('partsfont')
+    const pad = partsSize * ENGRAVE.fontBoxPadding
+    const boxed = fonts.partsfont?.box === true
     texts.push({
       text: partOrder,
       role: 'title',
       dataName: 'part-order',
-      x: ENGRAVE.marginX,
-      y: y + sizeOf('partsfont'),
-      size: sizeOf('partsfont'),
+      x: ENGRAVE.marginX + (boxed ? pad : 0),
+      y: y + partsSize + (boxed ? pad : 0),
+      size: partsSize,
       bold: false,
       italic: false,
       anchor: 'start',
+      ...(boxed
+        ? {
+            boxRect: {
+              x: Math.round(ENGRAVE.marginX),
+              y: Math.round(y),
+              width: Math.round(textWidth(partOrder, partsSize, 'serif') + pad * 2),
+              height: Math.round(goldenTextHeight(partsSize) + pad * 2),
+            },
+          }
+        : {}),
     })
     advanceText(partOrderRich, sizeOf('partsfont'), boxOf('partsfont'))
   }
@@ -9863,7 +9897,14 @@ function appendFreeText(
           // and a `FreeText` is `"free-text"` (`elements/subtitle.js`, `free-text.js:11`).
           dataName: 'subtitle',
           ...tag,
-          x: centre,
+          /**
+           * **A SUBTITLE IS PAPER-CENTRED; A `%%center` IS NOT.** The two take their
+           * centre from different expressions: `engraver-controller.js:238` hands
+           * `Subtitle` a `center = this.width / 2 + padding.left` — 350 on a 700px page —
+           * while `FreeText` centres on `width / 2` with no padding at all
+           * (`free-text.js:37`), which is 335. Ours gave both 335.
+           */
+          x: centre + ENGRAVE.marginX,
           y: y + size,
           size,
           bold: false,

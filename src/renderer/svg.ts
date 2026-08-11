@@ -1069,10 +1069,37 @@ const glyphDefs = new Map<GlyphName, string>()
       }
       // Rendered INSIDE the group loop, because a nonMusic row's class carries the LINE
       // counter and that counter advances group by group.
+      /**
+       * **A `%%…box` FONT DRAWS FOUR FILLED RULES ROUND ITS ROW, INSIDE A GROUP.**
+       * `renderText` opens `<g fill data-name>`, DELETES the row's class, and after the
+       * text lays a rect that `Svg.rect` writes as a PATH — "so that it can be hollow and
+       * the color changes with fill instead of stroke" (`draw/text.js:48-81`,
+       * `svg.js:112-142`). The double spaces in the `d` are `constructHLine`'s own.
+       */
+      const stripBox = (t: PlacedText): PlacedText => {
+        const { boxRect: _drop, ...rest } = t
+        return { ...rest, noClass: true }
+      }
+      const boxPath = (r: NonNullable<PlacedText['boxRect']>): string => {
+        // The rect is already ROUNDED in the layout, as `renderText` rounds it, so these
+        // are integers and `Svg.rect` prints them raw.
+        const [x1, y1, x2, y2] = [r.x, r.y, r.x + r.width, r.y + r.height]
+        const h = (yy: number): string => `M ${x1} ${yy} l ${x2 - x1} 0 l 0 1  l ${x1 - x2} 0  z `
+        const v = (xx: number, from: number, to: number): string =>
+          `M ${xx} ${from} l 0 ${to - from} l 1 0  l 0 ${from - to}  z `
+        // `lines.join(" ")` over four pieces that each already END with a space — hence
+        // the doubled space at every joint (`svg.js:130-140`).
+        const d = [h(y1), h(y2), v(x2, y1, y2), v(x1, y2, y1)].join(' ')
+        return `<path d="${d}" stroke="none" data-name="box"></path>`
+      }
       const renderRow = (b: { t?: PlacedText; s?: string }): string =>
         b.s !== undefined || b.t === undefined
           ? (b.s ?? '')
-          : abcjsText(
+          : b.t.boxRect !== undefined
+            ? `<g fill="currentColor" data-name="${b.t.dataName ?? ''}">` +
+              `${renderRow({ t: stripBox(b.t) })}` +
+              `${boxPath(b.t.boxRect)}</g>`
+            : abcjsText(
               round2(b.t.x * PX),
               // **THE PAGE'S OWN y WHERE THERE IS ONE** — see `PlacedText.pageY`. abcjs
               // walks ONE cursor from `padding.top` and writes `renderer.y + font.size`;
@@ -1101,6 +1128,8 @@ const glyphDefs = new Map<GlyphName, string>()
                     : '',
               (b.t.extraLines ?? []).map(escapeText),
               b.t.middleBaseline === true,
+              // A BOXED row's class is DELETED, not emptied (`draw/text.js:58`).
+              b.t.noClass === true,
             )
       // …and under `add_classes` the group is named: `abcjs-meta-top` for the tune's own
       // header block, `abcjs-non-music` for a nonMusic line (`draw/draw.js:11-12`, `:55`).

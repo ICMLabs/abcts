@@ -52,7 +52,7 @@ system 1 width=700.000 originY=140.450
       glyph accidentalNatural 659.100,-23.250
       glyph accidentalSharp 666.500,-38.750
       glyph accidentalSharp 676.750,-27.125
-system 2 width=363.234 originY=237.273
+system 2 width=378.234 originY=237.273
   staff 0 originY=80.232
     staffline 15.000,-7.750 -> 115.951,-7.750 t=0.700
     staffline 15.000,-15.500 -> 115.951,-15.500 t=0.700
@@ -60,7 +60,7 @@ system 2 width=363.234 originY=237.273
     staffline 15.000,-31.000 -> 115.951,-31.000 t=0.700
     staffline 15.000,-38.750 -> 115.951,-38.750 t=0.700
     title x=0.000 w=0.000
-      text  335.000,-86.850 size=21.000 "Sub"
+      text  350.000,-86.850 size=21.000 "Sub"
     clef x=15.000 w=24.051
       glyph gClef 20.000,-15.500
     keySignature x=49.051 w=25.900
