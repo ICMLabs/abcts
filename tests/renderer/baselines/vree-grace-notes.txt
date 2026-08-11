@@ -1,42 +1,42 @@
 tune 0
-bounds  width=52.550 height=17.942 top=-1.935
+bounds  width=407.266 height=139.052 top=-15.000
 systems 1
-system 0 width=52.550 originY=0.000
-  staff 0 originY=10.071
-    staffline 1.935,2.000 -> 30.155,2.000 t=0.090
-    staffline 1.935,1.000 -> 30.155,1.000 t=0.090
-    staffline 1.935,0.000 -> 30.155,0.000 t=0.090
-    staffline 1.935,-1.000 -> 30.155,-1.000 t=0.090
-    staffline 1.935,-2.000 -> 30.155,-2.000 t=0.090
-    slur  9.529,0.250 -> 10.948,0.750 bulge=0.500
-    slur  15.003,1.750 -> 16.422,1.250 bulge=0.500
-    slur  19.187,1.250 -> 21.897,1.750 bulge=0.500
+system 0 width=407.266 originY=0.000
+  staff 0 originY=78.052
+    staffline 15.000,15.500 -> 233.699,15.500 t=0.700
+    staffline 15.000,7.750 -> 233.699,7.750 t=0.700
+    staffline 15.000,0.000 -> 233.699,0.000 t=0.700
+    staffline 15.000,-7.750 -> 233.699,-7.750 t=0.700
+    staffline 15.000,-15.500 -> 233.699,-15.500 t=0.700
+    slur  73.846,1.938 -> 84.846,5.813 bulge=3.875
+    slur  116.272,13.563 -> 127.272,9.688 bulge=3.875
+    slur  148.699,9.688 -> 169.699,13.563 bulge=3.875
     title x=0.000 w=0.000
-      text  45.161,-5.612 size=3.484 "Grace Notes"
-    clef x=1.935 w=3.103
-      glyph gClef 2.581,1.000
-    timeSignature x=6.329 w=1.522
-      glyph timeSig4 6.329,-1.000
-      glyph timeSig4 6.329,1.000
-    note@0 x=10.432 w=5.474
-      glyph noteheadBlack 10.432,0.000
-      glyph noteheadBlack 9.141,-0.500 scale=0.600
-      line  10.496,0.000 -> 10.496,3.500 t=0.129
-      line  9.862,-0.400 -> 9.862,-2.600 t=0.077
-      line  8.941,-1.600 -> 10.303,-2.800 t=0.181
-    note@-1 x=15.906 w=5.474
-      glyph noteheadBlack 15.906,0.500
-      glyph noteheadBlack 14.616,1.000 scale=0.600
-      line  17.107,0.333 -> 17.107,-3.000 t=0.129
-      line  15.337,1.100 -> 15.337,-1.100 t=0.077
-    note@-2 x=21.380 w=7.742
-      glyph noteheadHalf 21.380,1.000
-      glyph noteheadBlack 18.800,0.500 scale=0.600
-      glyph noteheadBlack 20.090,0.000 scale=0.600
-      line  22.654,0.833 -> 22.654,-2.500 t=0.129
-      line  19.521,0.600 -> 19.521,-2.028 t=0.077
-      line  20.811,0.100 -> 20.811,-2.500 t=0.077
-      line  19.482,-1.900 -> 20.850,-2.400 t=0.200
-    bar x=29.122 w=1.239
-      line  29.161,-2.000 -> 29.161,2.000 t=0.077
-      line  29.897,-2.000 -> 29.897,2.000 t=0.516
+      text  350.000,-43.492 size=27.000 "Grace Notes"
+    clef x=15.000 w=24.051
+      glyph gClef 20.000,7.750
+    timeSignature x=49.051 w=11.795
+      glyph timeSig4 49.051,-7.750
+      glyph timeSig4 49.051,7.750
+    note@0 x=80.846 w=42.426
+      glyph noteheadBlack 80.846,0.000
+      glyph noteheadBlack 70.846,-3.875 scale=0.600
+      line  81.346,0.000 -> 81.346,27.125 t=1.000
+      line  76.432,-3.100 -> 76.432,-20.150 t=0.600
+      line  69.296,-12.400 -> 79.846,-21.700 t=1.400
+    note@-1 x=123.272 w=42.426
+      glyph noteheadBlack 123.272,3.875
+      glyph noteheadBlack 113.272,7.750 scale=0.600
+      line  132.582,2.583 -> 132.582,-23.250 t=1.000
+      line  118.858,8.525 -> 118.858,-8.525 t=0.600
+    note@-2 x=165.699 w=60.000
+      glyph noteheadHalf 165.699,7.750
+      glyph noteheadBlack 145.699,3.875 scale=0.600
+      glyph noteheadBlack 155.699,0.000 scale=0.600
+      line  175.569,6.458 -> 175.569,-19.375 t=1.000
+      line  151.285,4.650 -> 151.285,-15.719 t=0.600
+      line  161.285,0.775 -> 161.285,-19.375 t=0.600
+      line  150.985,-14.725 -> 161.585,-18.600 t=1.550
+    bar x=225.699 w=9.600
+      line  225.999,-15.500 -> 225.999,15.500 t=0.600
+      line  231.699,-15.500 -> 231.699,15.500 t=4.000

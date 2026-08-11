@@ -11,7 +11,14 @@
  */
 
 import { type CompatibilityMode, defaultMode, isStrict } from '../core/model.js'
-import { ABCJS_ARC, ABCJS_YCORR, spaces, STAFF_SPACE_PX, UNIT_PX } from './abcjs-constants.js'
+import {
+  ABCJS_ARC,
+  ABCJS_YCORR,
+  spaces,
+  spacesOfPitch,
+  STAFF_SPACE_PX,
+  UNIT_PX,
+} from './abcjs-constants.js'
 import { SMUFL_TO_ABCJS } from './glyph-map.js'
 import { glyphsFor } from './glyph-table.js'
 import { GLYPHS, type GlyphName } from './glyphs.js'
@@ -634,14 +641,18 @@ const glyphDefs = new Map<GlyphName, string>()
      * there is no abcjs name to look up, and every letter abcjs spells the set out of
      * carries the same -4. A pitch is half a staff space, and y runs DOWN.
      */
+    // A PITCH → A LENGTH, which is `spacesOfPitch` — written `0.5 *`, the same number only
+    // while a staff space is the unit. `glyph-ycorr` and `above-lane-order` both caught it
+    // under the flip, by 3.375px per pitch: exactly `3.875 - 0.5`.
     const corrected =
       y -
-      0.5 *
+      spacesOfPitch(
         (strict
           ? name.startsWith('dynamic')
             ? (ABCJS_YCORR.f ?? 0)
             : (ABCJS_YCORR[SMUFL_TO_ABCJS[name] ?? ''] ?? 0)
-          : 0)
+          : 0),
+      )
     // ABCJS NEVER APPLIES A GLYPH'S SCALE AT DRAW TIME, and says so in its own source:
     // `printSymbol` takes `{scalex, scaley}` and passes NEITHER to `glyphs.printSymbol`,
     // under the comment "TODO-PER: what happened to scalex, and scaley? That might have
@@ -779,9 +790,20 @@ const glyphDefs = new Map<GlyphName, string>()
    * coordinate on its way out. Zero in core mode, where the groups stay.
    */
   let oy = 0
+  /**
+   * The identity short-cut is `PX === 1 AND oy === 0`, not `PX === 1` alone.
+   *
+   * It was written when `PX === 1` meant CORE mode, where `oy` is zero by construction and
+   * the groups carry the origin instead. Once the layout holds abcjs's own pixels, `PX` is
+   * 1 in the abcjs path too — and there `oy` is the flattened origin and skipping it drops
+   * the whole staff. It cost three byte-exact fixtures, whose top staff line came out at
+   * `-15.85` where abcjs writes `22.21`: exactly the missing
+   * `(system.originY + OY) + staff.originY`.
+   */
+  const moved = (): boolean => PX !== 1 || oy !== 0
   /** One placed line in output units. */
   const TL = (l: PlacedLine): PlacedLine =>
-    PX === 1
+    !moved()
       ? l
       : {
           ...l,
@@ -792,7 +814,7 @@ const glyphDefs = new Map<GlyphName, string>()
           thickness: l.thickness * PX,
         }
   const TC = (c: PlacedCurve): PlacedCurve =>
-    PX === 1
+    !moved()
       ? c
       : {
           ...c,

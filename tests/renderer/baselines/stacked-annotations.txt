@@ -1,41 +1,41 @@
 tune 0
-bounds  width=57.704 height=28.023 top=-1.935
+bounds  width=447.203 height=217.179 top=-15.000
 systems 1
-system 0 width=57.704 originY=0.000
-  staff 0 originY=15.351
-    staffline 1.935,2.000 -> 23.361,2.000 t=0.090
-    staffline 1.935,1.000 -> 23.361,1.000 t=0.090
-    staffline 1.935,0.000 -> 23.361,0.000 t=0.090
-    staffline 1.935,-1.000 -> 23.361,-1.000 t=0.090
-    staffline 1.935,-2.000 -> 23.361,-2.000 t=0.090
+system 0 width=447.203 originY=0.000
+  staff 0 originY=118.967
+    staffline 15.000,15.500 -> 181.051,15.500 t=0.700
+    staffline 15.000,7.750 -> 181.051,7.750 t=0.700
+    staffline 15.000,0.000 -> 181.051,0.000 t=0.700
+    staffline 15.000,-7.750 -> 181.051,-7.750 t=0.700
+    staffline 15.000,-15.500 -> 181.051,-15.500 t=0.700
     title x=0.000 w=0.000
-      text  45.161,-10.891 size=3.484 "Stacked annotations test"
-    clef x=1.935 w=3.103
-      glyph gClef 2.581,1.000
-    note@-6 x=6.329 w=3.871
-      glyph flag8thUp 7.518,-0.500
-      glyph noteheadBlack 6.329,3.000
-      line  6.071,3.000 -> 7.853,3.000 t=0.090
-      line  7.530,2.833 -> 7.530,-0.500 t=0.129
-      text  6.329,-7.077 size=2.065 "Allegro"
-      text  6.329,-4.496 size=2.065 "con brio"
-    note@-5 x=10.200 w=3.871
-      glyph flag8thUp 11.389,-1.000
-      glyph noteheadBlack 10.200,2.500
-      line  11.401,2.333 -> 11.401,-1.000 t=0.129
-      text  10.200,5.587 size=2.065 "p"
-      text  10.200,8.167 size=2.065 "dolce"
-    bar x=14.071 w=0.077
-      line  14.110,-2.000 -> 14.110,2.000 t=0.077
-    note@-4 x=15.490 w=3.871
-      glyph flag8thUp 16.679,-1.500
-      glyph noteheadBlack 15.490,2.000
-      line  16.692,1.833 -> 16.692,-1.500 t=0.129
-      text  15.490,-7.077 size=2.065 "staccato"
-    note@-3 x=19.361 w=3.871
-      glyph flag8thUp 20.550,-2.000
-      glyph noteheadBlack 19.361,1.500
-      line  20.563,1.333 -> 20.563,-2.000 t=0.129
-      text  19.361,5.587 size=2.065 "marcato"
-    bar x=23.232 w=0.077
-      line  23.271,-2.000 -> 23.271,2.000 t=0.077
+      text  350.000,-84.407 size=27.000 "Stacked annotations test"
+    clef x=15.000 w=24.051
+      glyph gClef 20.000,7.750
+    note@-6 x=49.051 w=30.000
+      glyph flag8thUp 58.261,-3.875
+      glyph noteheadBlack 49.051,23.250
+      line  47.051,23.250 -> 60.861,23.250 t=0.700
+      line  58.361,21.958 -> 58.361,-3.875 t=1.000
+      text  49.051,-54.847 size=16.000 "Allegro"
+      text  49.051,-34.847 size=16.000 "con brio"
+    note@-5 x=79.051 w=30.000
+      glyph flag8thUp 88.261,-7.750
+      glyph noteheadBlack 79.051,19.375
+      line  88.361,18.083 -> 88.361,-7.750 t=1.000
+      text  79.051,43.297 size=16.000 "p"
+      text  79.051,63.297 size=16.000 "dolce"
+    bar x=109.051 w=0.600
+      line  109.351,-15.500 -> 109.351,15.500 t=0.600
+    note@-4 x=120.051 w=30.000
+      glyph flag8thUp 129.261,-11.625
+      glyph noteheadBlack 120.051,15.500
+      line  129.361,14.208 -> 129.361,-11.625 t=1.000
+      text  120.051,-54.847 size=16.000 "staccato"
+    note@-3 x=150.051 w=30.000
+      glyph flag8thUp 159.261,-15.500
+      glyph noteheadBlack 150.051,11.625
+      line  159.361,10.333 -> 159.361,-15.500 t=1.000
+      text  150.051,43.297 size=16.000 "marcato"
+    bar x=180.051 w=0.600
+      line  180.351,-15.500 -> 180.351,15.500 t=0.600

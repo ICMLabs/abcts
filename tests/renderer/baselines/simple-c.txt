@@ -1,46 +1,46 @@
 tune 0
-bounds  width=56.420 height=17.942 top=-1.935
+bounds  width=437.257 height=139.052 top=-15.000
 systems 1
-system 0 width=56.420 originY=0.000
-  staff 0 originY=10.071
-    staffline 1.935,2.000 -> 54.485,2.000 t=0.090
-    staffline 1.935,1.000 -> 54.485,1.000 t=0.090
-    staffline 1.935,0.000 -> 54.485,0.000 t=0.090
-    staffline 1.935,-1.000 -> 54.485,-1.000 t=0.090
-    staffline 1.935,-2.000 -> 54.485,-2.000 t=0.090
+system 0 width=437.257 originY=0.000
+  staff 0 originY=78.052
+    staffline 15.000,15.500 -> 422.257,15.500 t=0.700
+    staffline 15.000,7.750 -> 422.257,7.750 t=0.700
+    staffline 15.000,0.000 -> 422.257,0.000 t=0.700
+    staffline 15.000,-7.750 -> 422.257,-7.750 t=0.700
+    staffline 15.000,-15.500 -> 422.257,-15.500 t=0.700
     title x=0.000 w=0.000
-      text  45.161,-5.612 size=3.484 "Simple C"
-    clef x=1.935 w=3.103
-      glyph gClef 2.581,1.000
-    timeSignature x=6.329 w=1.522
-      glyph timeSig4 6.329,-1.000
-      glyph timeSig4 6.329,1.000
-    note@-6 x=9.141 w=5.474
-      glyph noteheadBlack 9.141,3.000
-      line  8.883,3.000 -> 10.665,3.000 t=0.090
-      line  10.343,2.833 -> 10.343,-0.500 t=0.129
-    note@-5 x=14.616 w=5.474
-      glyph noteheadBlack 14.616,2.500
-      line  15.817,2.333 -> 15.817,-1.000 t=0.129
-    note@-4 x=20.090 w=5.474
-      glyph noteheadBlack 20.090,2.000
-      line  21.291,1.833 -> 21.291,-1.500 t=0.129
-    note@-3 x=25.565 w=5.474
-      glyph noteheadBlack 25.565,1.500
-      line  26.766,1.333 -> 26.766,-2.000 t=0.129
-    bar x=31.039 w=0.077
-      line  31.078,-2.000 -> 31.078,2.000 t=0.077
-    note@-2 x=32.458 w=5.474
-      glyph noteheadBlack 32.458,1.000
-      line  33.660,0.833 -> 33.660,-2.500 t=0.129
-    note@-1 x=37.933 w=5.474
-      glyph noteheadBlack 37.933,0.500
-      line  39.134,0.333 -> 39.134,-3.000 t=0.129
-    note@0 x=43.407 w=5.474
-      glyph noteheadBlack 43.407,0.000
-      line  43.472,0.000 -> 43.472,3.500 t=0.129
-    note@1 x=48.881 w=5.474
-      glyph noteheadBlack 48.881,-0.500
-      line  48.946,-0.333 -> 48.946,3.000 t=0.129
-    bar x=54.356 w=0.077
-      line  54.394,-2.000 -> 54.394,2.000 t=0.077
+      text  350.000,-43.492 size=27.000 "Simple C"
+    clef x=15.000 w=24.051
+      glyph gClef 20.000,7.750
+    timeSignature x=49.051 w=11.795
+      glyph timeSig4 49.051,-7.750
+      glyph timeSig4 49.051,7.750
+    note@-6 x=70.846 w=42.426
+      glyph noteheadBlack 70.846,23.250
+      line  68.846,23.250 -> 82.656,23.250 t=0.700
+      line  80.156,21.958 -> 80.156,-3.875 t=1.000
+    note@-5 x=113.272 w=42.426
+      glyph noteheadBlack 113.272,19.375
+      line  122.582,18.083 -> 122.582,-7.750 t=1.000
+    note@-4 x=155.699 w=42.426
+      glyph noteheadBlack 155.699,15.500
+      line  165.009,14.208 -> 165.009,-11.625 t=1.000
+    note@-3 x=198.125 w=42.426
+      glyph noteheadBlack 198.125,11.625
+      line  207.435,10.333 -> 207.435,-15.500 t=1.000
+    bar x=240.552 w=0.600
+      line  240.852,-15.500 -> 240.852,15.500 t=0.600
+    note@-2 x=251.552 w=42.426
+      glyph noteheadBlack 251.552,7.750
+      line  260.862,6.458 -> 260.862,-19.375 t=1.000
+    note@-1 x=293.978 w=42.426
+      glyph noteheadBlack 293.978,3.875
+      line  303.288,2.583 -> 303.288,-23.250 t=1.000
+    note@0 x=336.404 w=42.426
+      glyph noteheadBlack 336.404,0.000
+      line  336.904,0.000 -> 336.904,27.125 t=1.000
+    note@1 x=378.831 w=42.426
+      glyph noteheadBlack 378.831,-3.875
+      line  379.331,-2.583 -> 379.331,23.250 t=1.000
+    bar x=421.257 w=0.600
+      line  421.557,-15.500 -> 421.557,15.500 t=0.600

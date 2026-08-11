@@ -21,6 +21,7 @@ import {
   keyFifths,
 } from '../../src/core/model.js'
 import { parse } from '../../src/parser/parser.js'
+import { SPACE, UNIT_PX } from '../../src/renderer/abcjs-constants.js'
 import { GLYPHS } from '../../src/renderer/glyphs.js'
 import {
   accidentalGlyph,
@@ -546,7 +547,7 @@ describe('flags and beams', () => {
     const beam = sys("X:1\nM:4/4\nL:1/8\nK:C\nCc'|\n")?.beams[0]
     expect(beam).toBeDefined()
     // A 14-step leap; the beam rises far less than the notes do.
-    expect(Math.abs((beam?.y2 ?? 0) - (beam?.y1 ?? 0))).toBeLessThanOrEqual(2.001)
+    expect(Math.abs((beam?.y2 ?? 0) - (beam?.y1 ?? 0))).toBeLessThanOrEqual(2.001 * SPACE)
   })
 
   it('draws a second beam only where consecutive notes both carry one', () => {
@@ -570,7 +571,7 @@ describe('flags and beams', () => {
     expect(stub).toBeDefined()
     const width = (stub?.x2 ?? 0) - (stub?.x1 ?? 0)
     expect(width).toBeGreaterThan(0)
-    expect(width).toBeLessThan(2) // a stub, not a span
+    expect(width).toBeLessThan(2 * SPACE) // a stub, not a span
   })
 
   it('does not beam a quarter note or anything longer', () => {
@@ -659,7 +660,7 @@ describe('system breaking', () => {
       for (const staff of system.staves) {
         // `+ 0` normalises the -0 that stepToY(0) produces; -0 and 0 are the same line.
         const ys = staff.staffLines.map((l) => l.y1 + 0).sort((a, b) => a - b)
-        expect(ys).toEqual([-2, -1, 0, 1, 2])
+        expect(ys).toEqual([-2, -1, 0, 1, 2].map((n) => n * SPACE))
       }
     }
   })
@@ -768,15 +769,15 @@ describe('spacing and justification', () => {
     // and a default is how strict comes to read one of ours by accident. These figures are
     // the STANDARD profile's; strict runs at abcjs's 2.7372, from `PROFILES`.
     const std = ENGRAVE.spacingScale
-    expect(naturalWidth(rational(1, 16), std)).toBeCloseTo(3.25, 5)
-    expect(naturalWidth(rational(1, 4), std)).toBeCloseTo(6.5, 5)
-    expect(naturalWidth(rational(1, 1), std)).toBeCloseTo(13, 5)
+    expect(naturalWidth(rational(1, 16), std)).toBeCloseTo(3.25 * SPACE, 5)
+    expect(naturalWidth(rational(1, 4), std)).toBeCloseTo(6.5 * SPACE, 5)
+    expect(naturalWidth(rational(1, 1), std)).toBeCloseTo(13 * SPACE, 5)
     // Four times the duration, twice the width — at every scale.
     expect(naturalWidth(rational(1, 2), std) / naturalWidth(rational(1, 8), std)).toBeCloseTo(2, 5)
   })
 
   it('never lets a note fall below the rod floor', () => {
-    expect(naturalWidth(rational(1, 1024), ENGRAVE.spacingScale)).toBeGreaterThanOrEqual(0.6)
+    expect(naturalWidth(rational(1, 1024), ENGRAVE.spacingScale)).toBeGreaterThanOrEqual(0.6 * SPACE)
     expect(naturalWidth(rational(0, 1), ENGRAVE.spacingScale)).toBeGreaterThanOrEqual(0.6)
   })
 
@@ -828,7 +829,7 @@ describe('spacing and justification', () => {
 
   it('justifies every system to the same width', () => {
     const abc = `X:1\nM:4/4\nL:1/4\nK:C\n${'CDEF|CDEF|CDEF|CDEF|\n'.repeat(10)}\n`
-    const doc = layout(parse(abc).scores[0] as Score, { systemWidth: 90 })
+    const doc = layout(parse(abc).scores[0] as Score, { systemWidth: 90 * SPACE })
     expect(doc.systems.length).toBeGreaterThan(2)
     // Including the last, HERE, because every line of this tune is the same length and
     // the last one is therefore as full as the rest. See the next test for the case that
@@ -841,7 +842,7 @@ describe('spacing and justification', () => {
     // which is abcjs's own arithmetic: `staffGroup.w` reaches `width + padding.left` and
     // the page is that plus `padding.right`. Every system does it equally, which is what
     // "the same width" is really claiming.
-    const target = 90
+    const target = 90 * SPACE
     for (const w of doc.systems.map((s) => s.width)) expect(w).toBeCloseTo(target, 5)
   })
 
@@ -851,21 +852,21 @@ describe('spacing and justification', () => {
     // A final bar stretched across a whole page is the classic ugly justification bug,
     // and this is the threshold that avoids it without leaving every full last line short.
     const abc = `X:1\nM:4/4\nL:1/4\nK:C\n${'CDEF|CDEF|CDEF|CDEF|\n'.repeat(3)}CDEF|\n`
-    const doc = layout(parse(abc).scores[0] as Score, { systemWidth: 90 })
+    const doc = layout(parse(abc).scores[0] as Score, { systemWidth: 90 * SPACE })
     const widths = doc.systems.map((s) => s.width)
     expect(widths).toHaveLength(4)
-    const target = 90 // see the note above
+    const target = 90 * SPACE // see the note above
     for (const w of widths.slice(0, -1)) expect(w).toBeCloseTo(target, 5)
-    expect(widths[widths.length - 1]).toBeLessThan(45)
+    expect(widths[widths.length - 1]).toBeLessThan(45 * SPACE)
   })
 
   it('leaves a system short rather than stretching it absurdly', () => {
     // A system needing more than the cap is left ragged, per *Behind Bars*. Two systems
     // where the second holds almost nothing: the first must not be pulled apart.
     const doc = layout(parse('X:1\nM:4/4\nL:1/4\nK:C\nCDEF|C16|\n').scores[0] as Score, {
-      systemWidth: 40,
+      systemWidth: 40 * SPACE,
     })
-    for (const system of doc.systems) expect(system.width).toBeLessThanOrEqual(90)
+    for (const system of doc.systems) expect(system.width).toBeLessThanOrEqual(90 * SPACE)
   })
 })
 
@@ -876,7 +877,9 @@ describe('barline shapes', () => {
       .filter((e) => e.type === 'bar')
 
   const shape = (bar: { lines: readonly { thickness: number }[]; glyphs: readonly unknown[] }) => ({
-    rules: bar.lines.map((l) => (l.thickness > 0.3 ? 'thick' : 'thin')),
+    // The threshold is a LENGTH, so it carries the unit: a thin rule is 0.6px and a
+    // thick one 4.65, and `0.3` only separated them while a staff space was the unit.
+    rules: bar.lines.map((l) => (l.thickness > 0.3 * SPACE ? 'thick' : 'thin')),
     // TWO GLYPHS PER DOT COLUMN — abcjs draws `dots.dot` at pitch 7 and again at 5
     // (`abstract-engraver.js:986-987`), not one combined `repeatDots`.
     dots: bar.glyphs.length / 2,
@@ -941,8 +944,8 @@ describe('barline shapes', () => {
     for (const abc of ['C|', 'C||', 'C|]', '|:C:|', 'CDEF::GABc|']) {
       for (const bar of barsOf(`X:1\nL:1/4\nK:C\n${abc}\n`)) {
         for (const line of bar.lines) {
-          expect(Math.min(line.y1, line.y2)).toBeCloseTo(-2, 5)
-          expect(Math.max(line.y1, line.y2)).toBeCloseTo(2, 5)
+          expect(Math.min(line.y1, line.y2)).toBeCloseTo(-2 * SPACE, 5)
+          expect(Math.max(line.y1, line.y2)).toBeCloseTo(2 * SPACE, 5)
         }
       }
     }
@@ -1012,9 +1015,9 @@ describe('slurs and ties', () => {
     // *Behind Bars* keeps slurs shallow; an arc proportional to span without a cap
     // becomes a semicircle over a long phrase.
     const long = curvesOf('(GGGGGGGG)|')[0]
-    expect(Math.abs(long?.bulge ?? 0)).toBeLessThanOrEqual(2.2)
+    expect(Math.abs(long?.bulge ?? 0)).toBeLessThanOrEqual(2.2 * SPACE)
     // And not vanishingly flat over a short one.
-    expect(Math.abs(curvesOf('(GG)|')[0]?.bulge ?? 0)).toBeGreaterThanOrEqual(0.5)
+    expect(Math.abs(curvesOf('(GG)|')[0]?.bulge ?? 0)).toBeGreaterThanOrEqual(0.5 * SPACE)
   })
 
   it('splits a curve across a system break instead of dropping it', () => {
@@ -1303,9 +1306,9 @@ describe('compatibility modes', () => {
     }
     // abcjs sets a quarter note at sqrt(0.25*8)*30px = 42.43px = 5.474 staff spaces,
     // measured identically in the goldens. Core follows abcm2ps and is looser.
-    expect(gap('abcjs-strict')).toBeCloseTo(5.474, 2)
-    expect(gap('abc2.1')).toBeCloseTo(6.5, 2)
-    expect(gap('extended')).toBeCloseTo(6.5, 2)
+    expect(gap('abcjs-strict')).toBeCloseTo(5.474 * SPACE, 2)
+    expect(gap('abc2.1')).toBeCloseTo(6.5 * SPACE, 2)
+    expect(gap('extended')).toBeCloseTo(6.5 * SPACE, 2)
   })
 
   it('reads `+:` as music in strict mode and as a continuation otherwise', () => {
@@ -1412,7 +1415,7 @@ describe('repeat endings (voltas)', () => {
     const lines = staffOf('|:CDEF|1 GABc:|2 cBAG||')?.voltaLines ?? []
     const rules = lines.filter((l) => l.y1 === l.y2).sort((a, b) => a.x1 - b.x1)
     expect(rules).toHaveLength(2)
-    expect((rules[1]?.x1 ?? 0) - (rules[0]?.x2 ?? 0)).toBeCloseTo(4 / 7.75, 3)
+    expect((rules[1]?.x1 ?? 0) - (rules[0]?.x2 ?? 0)).toBeCloseTo(4 / UNIT_PX, 3)
   })
 
   it('sits above the staff, clear of the music', () => {
@@ -1487,8 +1490,8 @@ describe('annotations', () => {
     // chord lane — `RelativeElement`'s `case "text"` reserves one only when the pitch is
     // UNDEFINED. Middle C in the treble clef is 3 steps below the middle line, so `y` is 3
     // in the y-down staff spaces the layout works in.
-    expect(left?.y).toBeCloseTo(3)
-    expect(right?.y).toBeCloseTo(3)
+    expect(left?.y).toBeCloseTo(3 * SPACE)
+    expect(right?.y).toBeCloseTo(3 * SPACE)
     expect(left?.x ?? 0).toBeLessThan(right?.x ?? 0)
   })
 
@@ -1504,7 +1507,7 @@ describe('annotations', () => {
         }).systems[0]?.staves[0]?.elements ?? []
       ).find((e) => e.type === 'note')?.left ?? 0
     // The left annotation pushes its note right by exactly its own room.
-    expect(noteX('"<F"F G|') - noteX('F G|')).toBeCloseTo((9.7813 + 7) / 7.75, 3)
+    expect(noteX('"<F"F G|') - noteX('F G|')).toBeCloseTo((9.7813 + 7) / UNIT_PX, 3)
     // A right annotation does not move the note it hangs off.
     expect(noteX('">F"F G|')).toBeCloseTo(noteX('F G|'), 3)
   })
@@ -1577,12 +1580,13 @@ describe('melisma extenders', () => {
     expect(line).toBeDefined()
     expect(held).toBeDefined()
     const noteheadRight = Math.max(
-      ...(held?.glyphs ?? []).filter((g) => g.role === 'notehead').map((g) => g.x + 1),
+      // …and the `+ 1` is a notehead's width, a LENGTH, so it carries the unit too.
+      ...(held?.glyphs ?? []).filter((g) => g.role === 'notehead').map((g) => g.x + 1 * SPACE),
     )
     const durationRight = (held?.x ?? 0) + (held?.width ?? 0)
     // Far from the duration's end, and close to the notehead's.
-    expect(line?.x2 ?? 0).toBeLessThan(durationRight - 1)
-    expect(Math.abs((line?.x2 ?? 0) - noteheadRight)).toBeLessThan(1.5)
+    expect(line?.x2 ?? 0).toBeLessThan(durationRight - 1 * SPACE)
+    expect(Math.abs((line?.x2 ?? 0) - noteheadRight)).toBeLessThan(1.5 * SPACE)
   })
 
   it('lets a rest keep the run alive without moving its end', () => {
@@ -2013,9 +2017,9 @@ describe('ornaments and techniques', () => {
     // 8px wide — abcjs's blanks are 10px apart and its tie adds 6 at the start, 4 at the
     // end — and 2 pitch tall, ending 1 pitch below the head. `fixedY` means the anchors'
     // own pitches, with none of a tie's 1.2 lift.
-    expect((curve.x2 - curve.x1) * 7.75).toBeCloseTo(8, 1)
-    expect((curve.y1 - curve.y2) * 7.75).toBeCloseTo(7.75, 1)
-    expect((curve.y2 - head.y) * 7.75).toBeCloseTo(3.875, 1)
+    expect((curve.x2 - curve.x1) * UNIT_PX).toBeCloseTo(8, 1)
+    expect((curve.y1 - curve.y2) * UNIT_PX).toBeCloseTo(7.75, 1)
+    expect((curve.y2 - head.y) * UNIT_PX).toBeCloseTo(3.875, 1)
     expect(curve.x1).toBeLessThan(head.x)
   })
 
@@ -2250,7 +2254,7 @@ describe('text metrics', () => {
     // halved by the centring. This is the rule that took `visual-tablature-17` from 499px
     // out to 41 and `little swallow`'s dx from 24.2 to 21.7.
     const two = leftOf('ЖЖЖ', 'abcjs-strict') - leftOf('Ж', 'abcjs-strict')
-    expect(two).toBeCloseTo((2 * 8) / 2 / 7.75, 4)
+    expect(two).toBeCloseTo((2 * 8) / 2 / UNIT_PX, 4)
   })
 })
 

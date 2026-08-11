@@ -34,7 +34,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import type { CompatibilityMode } from '../src/core/model.js'
 import { parse } from '../src/parser/parser.js'
-import { fontPixels, STAFF_SPACE_PX } from '../src/renderer/abcjs-constants.js'
+import { fontPixels, UNIT_PX } from '../src/renderer/abcjs-constants.js'
 import { render } from '../src/renderer/index.js'
 import { ENGRAVE, layout } from '../src/renderer/layout.js'
 
@@ -98,7 +98,9 @@ describe('lyric continuation across interposed directives', () => {
       // size can, and the italic the directive does not ask for stays off either way.
       const sizes = new Set(drawnLyrics('abcjs-strict').map((text) => text.size))
       expect([...sizes]).toHaveLength(1)
-      expect(drawnLyrics('abcjs-strict').every((text) => text.size === 17 / 7.75)).toBe(true)
+      // 17px, the default `vocalfont` in abcjs's own pixels — expressed through the knob,
+      // not through a hard-coded staff space.
+      expect(drawnLyrics('abcjs-strict').every((text) => text.size === 17 / UNIT_PX)).toBe(true)
       expect(drawnLyrics('abcjs-strict').every((text) => !text.italic)).toBe(true)
     })
   })
@@ -145,7 +147,9 @@ describe('lyric continuation across interposed directives', () => {
         // at 13pt and nowhere else: 12pt is `round(16) = 16`, where the ratio gave 15.69.
         // A ratio anchored on a value that is itself rounded cannot reproduce a rounding,
         // and the drift picks a different row of the height table one size in three.
-        const size = (points: number) => (fontPixels(points) / STAFF_SPACE_PX).toFixed(3)
+        // …and the divisor is the LAYOUT UNIT, not a hard-coded staff space: `text.size`
+        // is in whatever the layout is denominated in, which is abcjs's own pixels now.
+        const size = (points: number) => (fontPixels(points) / UNIT_PX).toFixed(3)
         const roman = size(12)
         const bold = `${size(16)}B`
         const italic = `${size(12)}I`

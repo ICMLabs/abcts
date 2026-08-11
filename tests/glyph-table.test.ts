@@ -15,6 +15,7 @@
  * underneath one.
  */
 import { describe, expect, it } from 'vitest'
+import { SPACE } from '../src/renderer/abcjs-constants.js'
 import { ABCJS_TABLE, BRAVURA_TABLE, glyphTableFor } from '../src/renderer/glyph-table.js'
 import type { GlyphName } from '../src/renderer/glyphs.js'
 
@@ -39,8 +40,12 @@ describe('glyph table selection', () => {
 
     for (const [name, abcjsAdvance, bravuraAdvance] of CASES) {
       it(`${name}`, () => {
-        expect(ABCJS_TABLE.advance(name)).toBeCloseTo(abcjsAdvance, 3)
-        expect(BRAVURA_TABLE.advance(name)).toBeCloseTo(bravuraAdvance, 3)
+        // The figures are STAFF SPACES, which is what both fonts publish; the tables
+        // answer in LAYOUT UNITS, and `SPACE` is how many of those a staff space is. It
+        // was 1 while the layout was denominated in spaces and is 7.75 now, so the
+        // conversion has to be written rather than assumed.
+        expect(ABCJS_TABLE.advance(name)).toBeCloseTo(abcjsAdvance * SPACE, 3)
+        expect(BRAVURA_TABLE.advance(name)).toBeCloseTo(bravuraAdvance * SPACE, 3)
         // And the outlines follow the metrics, not the other way round.
         expect(ABCJS_TABLE.get(name)?.unitsPerSpace).toBe(7.75)
         expect(BRAVURA_TABLE.get(name)?.unitsPerSpace).toBe(1)

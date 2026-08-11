@@ -89,7 +89,7 @@ export const PITCH_ORIGIN = 6
  *
  * See `Docs/CHECKPOINT-2026-08-10c.md` §5.
  */
-export const UNIT_PX = STAFF_SPACE_PX
+export const UNIT_PX = 1
 
 /** One staff space, in layout units. 1 while the unit IS a staff space. */
 export const SPACE = STAFF_SPACE_PX / UNIT_PX

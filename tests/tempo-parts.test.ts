@@ -38,6 +38,7 @@
  * a parts comparison is sufficient and a position one would add nothing.
  */
 import { describe, expect, it } from 'vitest'
+import { UNIT_PX } from '../src/renderer/abcjs-constants.js'
 import { layout } from '../src/renderer/layout.js'
 import { parse } from '../src/parser/parser.js'
 
@@ -105,8 +106,17 @@ const LADDER: readonly Rung[] = [
  */
 const EPSILON = 0.02
 
-/** px per staff space — the gate compares abcjs's px against our staff-space geometry. */
-const STAFF_SPACE_PX = 7.75
+/**
+ * LAYOUT UNITS → abcjs PIXELS, which the gate compares against.
+ *
+ * CORRECTED: this read a hard-coded 7.75 because the layout was denominated in staff
+ * spaces. It holds abcjs's own PIXELS now — the `UNIT_PX` knob in `abcjs-constants.ts` —
+ * so the conversion is the knob, and a gate that hard-codes the old unit reports a
+ * 29.84px error on a tempo mark that is exactly right. Same class as the three markup
+ * gates that broke the same day: a gate built on our own representation fails when the
+ * representation becomes abcjs's.
+ */
+const TO_PX = UNIT_PX
 
 /** The tempo element's glyph names, in the order the layout emits them. */
 function tempoGlyphs(abc: string): { glyphs: string[]; stem: boolean; rateX: number } {
@@ -148,7 +158,7 @@ function tempoGlyphs(abc: string): { glyphs: string[]; stem: boolean; rateX: num
     for (const key of Object.keys(record)) walk(record[key])
   }
   walk(page)
-  return { glyphs, stem, rateX: (rateX - headX) * STAFF_SPACE_PX }
+  return { glyphs, stem, rateX: (rateX - headX) * TO_PX }
 }
 
 /** The quarter is the baseline every other rung's advance is measured against. */

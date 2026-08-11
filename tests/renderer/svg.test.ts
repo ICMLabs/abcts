@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Score } from '../../src/core/model.js'
 import { parse } from '../../src/parser/parser.js'
+import { UNIT_PX } from '../../src/renderer/abcjs-constants.js'
 import { layout } from '../../src/renderer/layout.js'
 import { toSVG } from '../../src/renderer/svg.js'
 
@@ -107,6 +108,8 @@ describe('%%jazzchords', () => {
     const heightOf = (abc: string) => layout(parse(abc).scores[0] as Score).height
     const plain = heightOf('X:1\n%%jazzchords\nK:C\n"C"C|\n')
     const stacked = heightOf('X:1\n%%jazzchords\nK:C\n"x/C"C|\n')
-    expect(stacked - plain).toBeCloseTo((2 * 16 * 1.2) / 7.75, 3)
+    // 38.4 abcjs PIXELS, converted by the layout's own unit knob rather than by a
+    // hard-coded staff space — `layout()` answers in whatever `UNIT_PX` says.
+    expect(stacked - plain).toBeCloseTo((2 * 16 * 1.2) / UNIT_PX, 3)
   })
 })

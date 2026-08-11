@@ -1,26 +1,26 @@
 tune 0
-bounds  width=20.433 height=19.927 top=-1.935
+bounds  width=158.356 height=154.437 top=-15.000
 systems 1
-system 0 width=20.433 originY=0.000
-  staff 0 originY=8.875
-    staffline 1.935,2.000 -> 18.498,2.000 t=0.090
-    staffline 1.935,1.000 -> 18.498,1.000 t=0.090
-    staffline 1.935,0.000 -> 18.498,0.000 t=0.090
-    staffline 1.935,-1.000 -> 18.498,-1.000 t=0.090
-    staffline 1.935,-2.000 -> 18.498,-2.000 t=0.090
-    beam   9.011,4.250 -> 14.704,3.750 t=0.500
-    clef x=1.935 w=3.103
-      glyph gClef 2.581,1.000
-    note@-1 x=9.011 w=3.871
-      glyph noteheadBlack 9.011,0.500
-      line  9.049,0.600 -> 9.049,4.250 t=0.077
-      text  6.329,6.444 size=2.194 bold "Carol"
-    note@2,4,6 x=14.627 w=3.871
-      glyph noteheadBlack 14.627,-1.000
-      glyph noteheadBlack 14.627,-2.000
-      glyph noteheadBlack 14.627,-3.000
-      glyph articAccentAbove 15.259,-5.522
-      glyph ornamentTrill 15.259,-6.836
-      line  14.368,-3.000 -> 16.150,-3.000 t=0.090
-      line  14.665,-2.900 -> 14.665,3.757 t=0.077
-      text  11.821,6.444 size=2.194 bold "David"
+system 0 width=158.356 originY=0.000
+  staff 0 originY=68.785
+    staffline 15.000,15.500 -> 143.356,15.500 t=0.700
+    staffline 15.000,7.750 -> 143.356,7.750 t=0.700
+    staffline 15.000,0.000 -> 143.356,0.000 t=0.700
+    staffline 15.000,-7.750 -> 143.356,-7.750 t=0.700
+    staffline 15.000,-15.500 -> 143.356,-15.500 t=0.700
+    beam   69.832,32.938 -> 113.956,29.063 t=3.875
+    clef x=15.000 w=24.051
+      glyph gClef 20.000,7.750
+    note@-1 x=69.832 w=30.000
+      glyph noteheadBlack 69.832,3.875
+      line  70.132,4.650 -> 70.132,32.938 t=0.600
+      text  49.051,49.938 size=17.000 bold "Carol"
+    note@2,4,6 x=113.356 w=30.000
+      glyph noteheadBlack 113.356,-7.750
+      glyph noteheadBlack 113.356,-15.500
+      glyph noteheadBlack 113.356,-23.250
+      glyph articAccentAbove 118.261,-42.797
+      glyph ornamentTrill 118.261,-52.980
+      line  111.356,-23.250 -> 125.166,-23.250 t=0.700
+      line  113.656,-22.475 -> 113.656,29.115 t=0.600
+      text  91.614,49.938 size=17.000 bold "David"
