@@ -3440,15 +3440,20 @@ function layoutNoteheads(
       thickness: weight,
       role: 'stem',
       // The clamps are abcjs's `if (p1 > 6) p1 = 6` / `if (p2 < 6) p2 = 6`, in pitch.
-      // **ONLY WHEN UNBEAMED**: a beamed stem is RETARGETED by the beam pass, so these two
-      // pitches stop describing it the moment that runs — and it reserves nothing anyway.
-      ...(strict && !beamed
+      // **A BEAMED STEM'S FAR END IS A PLACEHOLDER** — the beam pass RETARGETS it and
+      // replaces this second entry with the beam's own `bary`, which abcjs also computes
+      // in pitch (`layout/beam.js:122`, `relative-element.js:18-21`). The NEAR end is the
+      // same either way, and `createStems` applies no clamp at all.
+      ...(strict
         ? {
             pitchRange: [
               (forcedUp !== null ? nearStepRaw : up ? Math.min(nearStepRaw, 0) : Math.max(nearStepRaw, 0)) +
                 PITCH_ORIGIN,
-              (forcedUp !== null ? farStepRaw : up ? Math.max(farStepRaw, 0) : Math.min(farStepRaw, 0)) +
-                PITCH_ORIGIN,
+              beamed
+                ? (forcedUp !== null ? nearStepRaw : up ? Math.min(nearStepRaw, 0) : Math.max(nearStepRaw, 0)) +
+                  PITCH_ORIGIN
+                : (forcedUp !== null ? farStepRaw : up ? Math.max(farStepRaw, 0) : Math.min(farStepRaw, 0)) +
+                  PITCH_ORIGIN,
             ] as [number, number],
           }
         : {}),
@@ -6671,6 +6676,12 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
   // "just a fudge factor so the down-pointing stems don't overlap" (`layout/beam.js:125`).
   // The BEAM itself is unmoved; only where the stem meets it changes.
   const stemEndOffset = up ? 0 : -0.5 * ENGRAVE.spacePerStep
+  /** The same fudge in PITCH, where abcjs states it — y runs the other way. */
+  const stemEndPitch = up ? 0 : 0.5
+  const startPitch = startStep + PITCH_ORIGIN
+  const endPitch = endStep + PITCH_ORIGIN
+  const pitchAt = (x: number): number =>
+    span === 0 ? startPitch : startPitch + ((x - beamStartX) / span) * (endPitch - startPitch)
   for (const stem of group) {
     const element = elements[stem.element]
     if (!element) continue
@@ -6695,9 +6706,32 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
     // the shift.
     //
     // This was measured, having first been REASONED AWAY as "zero for the common case".
-    const beamY = yAt(stem.headX + stem.headDx + (up ? stem.headWidth : 0)) + stemEndOffset
+    const sampleX = stem.headX + stem.headDx + (up ? stem.headWidth : 0)
+    const beamY = yAt(sampleX) + stemEndOffset
+    /**
+     * **AND THE SAME END IN PITCH, WHICH IS THE ONLY FORM THAT REACHES A RESERVE.**
+     * `createStems` hands the stem `pitch2: bary` straight out of `getBarYAt`, which
+     * interpolates two PITCHES (`layout/beam.js:122`, `get-bar-y-at.js`), and
+     * `RelativeElement` takes `top`/`bottom` as `max`/`min` of `pitch` and `pitch2` with no
+     * conversion (`relative-element.js:18-21`). `calcHeight` then sums those pitches.
+     *
+     * Dividing the retargeted y back is the round trip §3 names, and it is what stood
+     * between thirteen fixtures and byte parity: `visual-layout-04`'s staff top came out
+     * 14.990393852065322 against abcjs's own 14.99039385206532, and every glyph on the
+     * staff carried the ULP.
+     */
+    const beamPitch = pitchAt(sampleX) + stemEndPitch
     const lines = element.lines.map((line) =>
-      line.x1 === line.x2 && line.x1 === stem.x ? { ...line, y2: beamY, beamed: true } : line,
+      line.x1 === line.x2 && line.x1 === stem.x
+        ? {
+            ...line,
+            y2: beamY,
+            beamed: true,
+            ...(line.pitchRange === undefined
+              ? {}
+              : { pitchRange: [line.pitchRange[0], beamPitch] as [number, number] }),
+          }
+        : line,
     )
     elements[stem.element] = { ...element, lines }
   }
@@ -9654,6 +9688,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       ...staff,
       absoluteY: systemAbsoluteY + staff.originCursor + staff.originPitch * ENGRAVE.spacePerStep,
     }))
+
     // abcjs advances the page by the block's rows and then by `staffGroup.height * STEP`,
     // two separate `moveY` calls (`draw/draw.js:54-60`, `:81-82`). Written as one sum they
     // are the same terms in a different grouping.
