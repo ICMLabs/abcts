@@ -401,7 +401,8 @@ staff-stacking arithmetic are where the remaining inline literals are.
      | sed 's/^      want …//' | cut -c1-38 | sort | uniq -c | sort -rn | head
    ```
 
-   The families standing now, biggest first:
+   The families standing now, biggest first — re-run the histogram, these move every time
+   something lands:
    - **THE ROOT'S `height`, 15 rows, AND THE CAUSE IS MEASURED TO THE BIT.**
      `synth-flattener-14` gives `149.07999999999998` against abcjs's `149.08`, and the
      dirt is ONE term: with the staff at a clean `originY = 88.08` and the margins a clean
@@ -519,8 +520,10 @@ staff-stacking arithmetic are where the remaining inline literals are.
      all** — two ladder runs settled what three source reads could not, and the first
      implementation, written from the source, was inert.
    - **`clefs.G`'s y, 6 rows.**
-   - **A `<text>` family**, most likely a lyric's trailing `<tspan dy="1.2em"></tspan>` —
-     abcjs emits one because `addLyric` ends every syllable with a `\n`.
+   - **A TOP-TEXT `<text>` family, ~5 rows** — `class="" text-anchor="start" x="15" y=…`
+     and `text-anchor="middle" x="350" y=…`, so a title or a composer row's own y. The
+     block's ROW ADVANCES are published now (`topTextBlock`'s `advances`); this is the
+     same accumulation as the page height and probably closes with it.
    - **~~A RULE'S TWO EDGES~~ — CLOSED, and it was worth more than its row count.**
      `printLine` rounds `y - dy` and `y + dy` INDEPENDENTLY from the unrounded centre
      (`draw/print-line.js:8-9`); ours built the top edge and added the whole thickness to
