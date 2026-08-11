@@ -316,10 +316,27 @@ function lineToRect(line: PlacedLine, attr: string, asPath = false): string {
     }
     // `printLine`'s options are `{path, stroke, fill, data-name, class}` in that order —
     // the NAME before the CLASS, which is the opposite of everywhere else here.
+    //
+    // **AND ITS TWO EDGES ARE ROUNDED INDEPENDENTLY FROM THE CENTRE** — `y1 =
+    // roundNumber(y - dy)` and `y2 = roundNumber(y + dy)` (`draw/print-line.js:8-9`),
+    // NOT one from the other. Ours built the top edge and added the whole thickness to
+    // it, which is the same number in exact arithmetic and one hundredth out in doubles:
+    // a staff line came out `65.54` where abcjs writes `65.53`. The BEAM is the mirror
+    // case and genuinely does chain its second edge off the rounded first, so the two
+    // emitters must differ here exactly as abcjs's do.
     const klass = / class="[^"]*"/.exec(attr)?.[0] ?? ''
+    const half = line.thickness / 2
+    const [cx, cy] = horizontal
+      ? [0, (line.y1 + line.y2) / 2]
+      : [(line.x1 + line.x2) / 2, 0]
+    const [a1, a2] = horizontal
+      ? [round2(cy - half), round2(cy + half)]
+      : [round2(cx - half), round2(cx + half)]
+    const [x1, x2] = horizontal ? [round2(x), round2(x + w)] : [a1, a2]
+    const [y1, y2] = horizontal ? [a1, a2] : [round2(y), round2(y + h)]
     return (
-      `<path d="M ${round2(x)} ${round2(y)} L ${round2(x + w)} ${round2(y)} ` +
-      `L ${round2(x + w)} ${round2(y + h)} L ${round2(x)} ${round2(y + h)} z" ` +
+      `<path d="M ${x1} ${y1} L ${x2} ${y1} ` +
+      `L ${x2} ${y2} L ${x1} ${y2} z" ` +
       `stroke="none" fill="currentColor"${attr.replace(klass, '')}${klass}></path>`
     )
   }
