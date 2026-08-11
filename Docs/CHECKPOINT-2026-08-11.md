@@ -253,6 +253,36 @@ divide: the staff BOTTOM went from abcjs's exact `1.044774193548387` to
 `1.0447741935483865`, and the top did not improve. **`x * STEP / STEP` is not `x`.** The
 failed shape is written into the code at the site so it is not tried a third time.
 
+**AND IT IS NOW HALF DONE.** `verticalExtent` returns `topPitch`/`bottomPitch` beside its
+y, `include(a, b, ap?, bp?)` takes the pitch a caller knows and divides when it does not,
+every LANE is `staff.top += pitch` as abcjs writes it, and the notehead, the clef and an
+UNBEAMED stem all supply real pitches. `heightPitch` reads those instead of dividing the
+final y. **The redundancy is deliberate — abcjs's structure first, tidy later.**
+
+Two guards the measurement put there, each of which cost a run:
+
+- **A BLOCK'S SPAN IS A LENGTH WITH NO PITCH**, so a system carrying one keeps the single
+  division `-(top + blockSpan) / STEP` it always had. abcjs never puts the top text into
+  `staff.top` at all, so that term is OURS; splitting it into `topPitch - blockSpan / STEP`
+  is two roundings where it was one, and nine `visual-title-*` fixtures said so.
+- **A BEAMED STEM MUST NOT SUPPLY ONE.** The beam pass RETARGETS it, so `p1`/`p2` stop
+  describing it — 24 root elements went structural the moment it did.
+
+**THE NEXT TERM IS THE INTER-SYSTEM GAP**, and it is the same shape one level up.
+`addStaffPadding` is a PITCH sum with ONE multiply:
+
+    lastBottomLine     = -(lastStaff.bottom - 2)
+    nextTopLine        = thisStaffGroup.staffs[0].top - 10
+    separationInPixels = (nextTopLine + lastBottomLine) * spacing.STEP
+    if (separationInPixels < staffSeparation) moveY(staffSeparation - separationInPixels)
+
+(`draw/draw.js:84-90`.) Ours computes `gap = originY - cursor` off `previousBottomLine`,
+`topLineOffset` and the previous system's HEIGHT — four y's where abcjs has two pitches —
+so the terms do not even correspond. The system already carries `heightPitch`; it needs the
+first staff's `top` and the last staff's `bottom` in pitch beside it, and the placement loop
+has to spend the gap as abcjs's own expression. That is a RESTRUCTURE of the placement loop
+rather than a substitution, which is why it is written down here rather than begun.
+
 **So the fix is not at any one site — the EXTENT has to be carried in PITCH**, alongside the
 y that placement and drawing need. That is the next architectural arc, and it is the same
 shape as the unit flip and the staff-frame change: port the STRUCTURE, and the constants
@@ -275,8 +305,9 @@ grep "^      want" /tmp/abcts-svg-bytes-ranked.txt | sed 's/^      want …//' \
   | cut -c1-40 | sort | uniq -c | sort -rn | head
 ```
 
-1. **THE PITCH EXTENT (§3)** — 23 root heights + a long ULP tail. The biggest single family
-   and the only architectural one left.
+1. **THE INTER-SYSTEM GAP IN PITCH (§3)** — the extent itself is done; the gap above each
+   system is the next term of the same sum, and §3 has abcjs's four lines for it. 23 root
+   heights and a long ULP tail hang off it.
 2. **A MULTI-CHARACTER DYNAMIC IS A `<g data-name="dynamics">`** of one path per letter
    (`synth-flattener-03`). Named since 2026-08-10d and still open.
 3. **THE ACCIACCATURA SLASH** — `flags.ugrace` at `-graceoffsets[i] + dAcciaccatura` with
