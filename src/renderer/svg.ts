@@ -13,6 +13,7 @@
 import { type CompatibilityMode, defaultMode, isStrict } from '../core/model.js'
 import {
   ABCJS_ARC,
+  ABCJS_LINE_PX,
   ABCJS_YCORR,
   spaces,
   spacesOfPitch,
@@ -22,7 +23,7 @@ import {
 import { SMUFL_TO_ABCJS } from './glyph-map.js'
 import { glyphsFor } from './glyph-table.js'
 import { GLYPHS, type GlyphName } from './glyphs.js'
-import { ENGRAVE } from './layout.js'
+import { ENGRAVE, stepToY } from './layout.js'
 import type {
   ConnectorSpan,
   Layout,
@@ -1073,6 +1074,30 @@ const glyphDefs = new Map<GlyphName, string>()
     for (const [staffIndex, staff] of system.staves.entries()) {
       /** Connectors that START on this staff — written after its lines. */
       let connectorHere: readonly ConnectorSpan[] = []
+      /**
+       * **EVERY BARLINE OF A JOINED STAFF RUNS UP TO THE STAFF ABOVE IT.**
+       * `drawStaffGroup` sets `bartop = renderer.calcY(2)` after each voice — "this
+       * connects the bar lines between two different staves" — and `relative.js`'s
+       * `case "bar"` draws to it instead of its own `pitch2`, which is always 10
+       * (`draw/staff-group.js:129-133`, `draw/relative.js:61`,
+       * `abstract-engraver.js:992-1024`).
+       *
+       * **MEASURED ON A LADDER, because the source reads otherwise.** `drawVoice` spends
+       * `bartop` on `params.barto || i === params.children.length - 1`, and `barto` comes
+       * from a `|` in `%%score` while the voice's children — dumped from abcjs — are
+       * `[staff-extra clef, bar, note]`, so neither clause should fire. Yet `%%staves
+       * {RH LH}` and `%%staves {RH|LH}` draw IDENTICAL output and EVERY bar of the lower
+       * staff spans, not just its last. So the rule is GROUP MEMBERSHIP, and the `|` makes
+       * no difference at all. Two runs settled what three source reads could not.
+       */
+      const previous = staffIndex === 0 ? undefined : system.staves[staffIndex - 1]
+      const joined = system.connectorSpans.some(
+        (c) => c.staffIndex < staffIndex && staffIndex <= c.through,
+      )
+      const bartop =
+        previous === undefined || !joined
+          ? undefined
+          : previous.originY + stepToY(-4) - staff.originY
       // …and the staff's, on top of it. Reset per staff, since `staff.originY` is relative.
       if (abcjs) oy = (system.originY + OY) * PX + staff.originY * PX
       let staffGroup = ''
@@ -1408,12 +1433,20 @@ const glyphDefs = new Map<GlyphName, string>()
          * the trailing one after. `afterLine` carries how many rules precede each dot.
          */
         if (abcjs && el.type === 'bar') {
+          // …and if this is the voice's LAST element, its rules reach the staff above.
+          const reach = bartop !== undefined
+          const stretched = (l: PlacedLine): PlacedLine =>
+            !reach || bartop === undefined
+              ? l
+              : l.y1 < l.y2
+                ? { ...l, y1: bartop }
+                : { ...l, y2: bartop }
           let li = 0
           for (const g of el.glyphs) {
             while (li < ordered.length && li < (g.afterLine ?? 0)) {
               const line = ordered[li++]
               if (line !== undefined) {
-                parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+                parts.push(lineToRect(TL(stretched(line)), attrs(el.type, line.role), abcjs))
               }
             }
             parts.push(
@@ -1423,7 +1456,7 @@ const glyphDefs = new Map<GlyphName, string>()
           while (li < ordered.length) {
             const line = ordered[li++]
             if (line !== undefined) {
-              parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+              parts.push(lineToRect(TL(stretched(line)), attrs(el.type, line.role), abcjs))
             }
           }
           if (barTexts) {
@@ -1806,6 +1839,31 @@ const glyphDefs = new Map<GlyphName, string>()
       }
 
       if (!abcjs) parts.push('</g>')
+    }
+    /**
+     * **AND A GROUP OF MORE THAN ONE STAFF IS CLOSED BY A PLAIN RULE DOWN ITS LEFT EDGE**
+     * — `printStem(renderer, params.startx, 0.6, topLine, bottomLine, null)`, drawn after
+     * every voice of the group, from the FIRST staff's top line to the LAST staff's
+     * bottom (`draw/staff-group.js:139-144`). No class and no `data-name`, and it is
+     * `printStem`'s path, so its handedness swaps the two y's: `dx > 0` with `y1 < y2`
+     * means the `d` opens at the BOTTOM.
+     */
+    if (abcjs && system.staves.length > 1) {
+      const first = system.staves[0]
+      const last = system.staves[system.staves.length - 1]
+      const x = first?.staffLines[0]?.x1
+      if (first !== undefined && last !== undefined && x !== undefined) {
+        const oyS = (system.originY + OY) * PX
+        const top = (first.originY + stepToY(4)) * PX + oyS
+        const bottom = (last.originY + stepToY(-4)) * PX + oyS
+        const w = spaces(ABCJS_LINE_PX.staffConnector) * PX
+        const r2 = (n: number): number => Number.parseFloat(n.toFixed(2))
+        const [x1, x2] = [r2(x * PX), r2(x * PX + w)]
+        parts.push(
+          `<path d="M ${x1} ${r2(bottom)}L ${x1} ${r2(top)}L ${x2} ${r2(top)}L ${x2} ${r2(bottom)}z" ` +
+            `stroke="none" fill="currentColor"></path>`,
+        )
+      }
     }
     parts.push('</g>')
   }

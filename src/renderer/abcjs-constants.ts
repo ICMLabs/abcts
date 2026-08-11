@@ -343,6 +343,13 @@ export const ABCJS_PX = {
 export const ABCJS_LINE_PX = {
   /** `printStaff(…, dy = 0.35)` + `lineThickness` 0, so 0.35 either side. */
   staffLine: 0.7,
+  /**
+   * The rule down the LEFT EDGE of a staff group of more than one staff —
+   * `printStem(renderer, params.startx, 0.6, topLine, bottomLine, null)`
+   * (`draw/staff-group.js:143`). A `printStem` width, so it is the whole rule and not a
+   * half-thickness.
+   */
+  staffConnector: 0.6,
   /** `printStaffLine(…, 0.35 + lineThickness)` for a ledger too (`draw/relative.js:66`). */
   ledgerLine: 0.7,
   /**

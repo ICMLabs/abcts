@@ -1246,6 +1246,8 @@ export interface ConnectorSpan {
   readonly kind: 'brace' | 'bracket'
   /** Which staff of the system it STARTS on — abcjs draws it with that staff's lines. */
   readonly staffIndex: number
+  /** …and the last staff it spans, which is also how far its barlines join. */
+  readonly through: number
   readonly x: number
   /** The first staff's top LINE and the last staff's bottom line, in system coordinates. */
   readonly top: number
@@ -4874,7 +4876,14 @@ function layoutConnectors(
     if (first === null || last === null) continue
     // `params.x` is the page's left padding — measured on a golden, whose first curve
     // point is `xLeft + 7.5` at 22.5. The staff itself is indented past it.
-    spans.push({ kind: 'brace', staffIndex: from, x: ENGRAVE.marginX, top: first.top, bottom: last.bottom })
+    spans.push({
+      kind: 'brace',
+      staffIndex: from,
+      through: to,
+      x: ENGRAVE.marginX,
+      top: first.top,
+      bottom: last.bottom,
+    })
     const height = last.bottom - first.top
     const glyph = GLYPHS.brace
     // Stretched to the span. The glyph's own height is its natural size, so the scale is
@@ -4898,7 +4907,14 @@ function layoutConnectors(
     const first = edge(from)
     const last = edge(to)
     if (first === null || last === null) continue
-    spans.push({ kind: 'bracket', staffIndex: from, x: ENGRAVE.marginX, top: first.top, bottom: last.bottom })
+    spans.push({
+      kind: 'bracket',
+      staffIndex: from,
+      through: to,
+      x: ENGRAVE.marginX,
+      top: first.top,
+      bottom: last.bottom,
+    })
     const x = -ENGRAVE.connectorGap
     lines.push({
       x1: x,
