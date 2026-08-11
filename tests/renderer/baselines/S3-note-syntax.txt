@@ -531,8 +531,8 @@ system 0 width=925.016 originY=0.000
     timeSignature x=49.051 w=11.795
       glyph timeSig4 49.051,-7.750
       glyph timeSig4 49.051,7.750
-    rest x=70.846 w=84.853
-      glyph restWhole 70.846,-7.750
+    rest x=96.750 w=84.853
+      glyph restWhole 96.750,-7.750
     bar x=155.699 w=0.600
       line  155.999,-15.500 -> 155.999,15.500 t=0.600
     rest x=166.699 w=60.000
@@ -599,9 +599,9 @@ system 1 width=698.925 originY=162.192
     rest x=290.988 w=42.426
     bar x=337.176 w=0.600
       line  337.476,-15.500 -> 337.476,15.500 t=0.600
-    rest x=348.176 w=127.000
-      glyph restHBar 390.176,-3.875
-      text  390.176,-38.750 size=20.000 bold "2"
+    rest x=345.676 w=127.000
+      glyph restHBar 387.676,-3.875
+      text  387.676,-38.750 size=20.000 bold "2"
     bar x=480.176 w=0.600
       line  480.476,-15.500 -> 480.476,15.500 t=0.600
     note@-6 x=491.176 w=42.426
@@ -1461,9 +1461,9 @@ system 0 width=925.016 originY=0.000
       line  249.376,10.333 -> 249.376,-15.500 t=1.000
     bar x=296.472 w=0.600
       line  296.772,-15.500 -> 296.772,15.500 t=0.600
-    rest x=307.472 w=127.000
-      glyph restHBar 349.472,-3.875
-      text  349.472,-38.750 size=20.000 bold "4"
+    rest x=304.972 w=127.000
+      glyph restHBar 346.972,-3.875
+      text  346.972,-38.750 size=20.000 bold "4"
     bar x=439.472 w=0.600
       line  439.772,-15.500 -> 439.772,15.500 t=0.600
     note@-2 x=450.472 w=42.426
@@ -1696,12 +1696,12 @@ system 0 width=700.533 originY=0.000
     timeSignature x=49.051 w=11.795
       glyph timeSig8 49.486,-7.750
       glyph timeSig4 49.051,7.750
-    rest x=70.846 w=120.000
-      glyph restWhole 70.846,-7.750
+    rest x=98.177 w=120.000
+      glyph restWhole 98.177,-7.750
     bar x=158.552 w=0.600
       line  158.852,-15.500 -> 158.852,15.500 t=0.600
-    rest x=169.552 w=120.000
-      glyph restWhole 169.552,-7.750
+    rest x=202.281 w=120.000
+      glyph restWhole 202.281,-7.750
     bar x=257.259 w=0.600
       line  257.559,-15.500 -> 257.559,15.500 t=0.600
     rest x=268.259 w=84.853

@@ -1072,6 +1072,11 @@ export interface LayoutElement {
    * (`abstract-engraver.js:811-813`), AND a multi-measure one. Absent on anything else.
    */
   readonly plainRest?: boolean
+  /**
+   * A `whole` or `multimeasure` rest — the two `centerWholeRests` moves to the midpoint
+   * between its neighbours (`layout/layout.js:123-138`).
+   */
+  readonly wholeRest?: boolean
   readonly staffSteps: readonly number[]
   readonly glyphs: readonly PlacedGlyph[]
   readonly lines: readonly PlacedLine[]
@@ -2448,6 +2453,8 @@ function layoutRest(
     return {
       type: 'rest',
       x,
+      // …and a MULTIMEASURE rest is centred by `centerWholeRests` too.
+      wholeRest: true,
       // `w = 126` measured, exactly `3 x mmWidth`: the glyph sits one width in and is two
       // wide (`addHead(new RelativeElement(c, mmWidth, mmWidth * 2, 7))`).
       width: Math.max(advance, 3 * mm + ENGRAVE.noteRodGap),
@@ -2536,6 +2543,9 @@ function layoutRest(
     left: Math.max(textSpan.left, graces.left),
     // abcjs's `rest.type === 'rest'` after `createNote` has had its say — see `plainRest`.
     plainRest: !invisible && rest.kind !== 'spacer' && rest.measureCount === 0 && !fillsMeasure,
+    // `centerWholeRests` tests `rest.type === 'whole' || 'multimeasure'`, and `whole` is
+    // exactly what the retype above produces — see `fillsMeasure`.
+    ...(fillsMeasure ? { wholeRest: true } : {}),
     staffSteps: [],
     // The graces go on the END — abcjs's document order, an `extra` after the `head`.
     glyphs: [...glyphs, ...graces.glyphs],
@@ -8395,6 +8405,30 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           }
         }
         if (block?.closesVolta) closeVolta(barAnchor(i, 'closing', 'endingEnd') ?? endOf(i), true)
+      }
+
+      /**
+       * **A WHOLE REST ALONE IN A MEASURE IS CENTRED BETWEEN ITS NEIGHBOURS.**
+       * `centerWholeRests` runs AFTER the justification loop, over every element but the
+       * first and last of a voice, and moves any `whole` or `multimeasure` rest to
+       * `midpoint − w / 2` where `midpoint = (after.x − before.x) / 2 + before.x`
+       * (`layout/layout.js:77`, `:123-138`, `absolute-element.js:235-241`). Its children
+       * move with it. `"C"z4|"G7"z4|` had its rest 23px left of abcjs's.
+       */
+      for (let j = 1; j < elements.length - 1; j++) {
+        const el = elements[j]
+        const before = elements[j - 1]
+        const after = elements[j + 1]
+        if (el === undefined || before === undefined || after === undefined) continue
+        if (el.type !== 'rest' || el.wholeRest !== true) continue
+        // **`this.w` IS THE ELEMENT'S INK, NOT ITS SPRING** — `addRight` grows it to
+        // `dx + w` over the drawn children (`absolute-element.js:110-143`), so a whole
+        // rest is ~11px wide however much horizontal space its duration bought. Our `rod`
+        // is that ink plus `minspacing`, which is the one term to take back off; using
+        // `el.width` centred it on the SPRING and put the glyph 37px left of abcjs's.
+        const ink = (el.rod ?? el.width) - ENGRAVE.noteRodGap
+        const midpoint = (after.x - before.x) / 2 + before.x
+        elements[j] = shiftElement(el, midpoint - ink / 2 - el.x)
       }
 
       const beams: PlacedLine[] = []

@@ -1963,8 +1963,8 @@ system 0 width=861.500 originY=0.000
       glyph noteheadWhole 464.570,-7.750
     bar x=536.513 w=0.600
       line  536.813,-15.500 -> 536.813,15.500 t=0.600
-    rest x=547.513 w=84.853
-      glyph restWhole 547.513,-7.750
+    rest x=605.140 w=84.853
+      glyph restWhole 605.140,-7.750
     bar x=685.017 w=0.600
       line  685.317,-15.500 -> 685.317,15.500 t=0.600
   staff 1 originY=217.493
@@ -2482,21 +2482,21 @@ system 0 width=796.359 originY=0.000
     timeSignature x=75.801 w=11.795
       glyph timeSig3 76.831,-7.750
       glyph timeSig4 75.801,7.750
-    rest x=97.596 w=73.485
-      glyph restWhole 97.596,-7.750
-      text  97.596,-41.595 size=16.000 "Trompette"
+    rest x=103.014 w=73.485
+      glyph restWhole 103.014,-7.750
+      text  103.014,-41.595 size=16.000 "Trompette"
     bar x=141.476 w=0.600
       line  141.776,-15.500 -> 141.776,15.500 t=0.600
-    rest x=152.476 w=73.485
-      glyph restWhole 152.476,-7.750
+    rest x=166.290 w=73.485
+      glyph restWhole 166.290,-7.750
     bar x=202.354 w=0.600
       line  202.654,-15.500 -> 202.654,15.500 t=0.600
-    rest x=213.354 w=73.485
-      glyph restWhole 213.354,-7.750
+    rest x=227.215 w=73.485
+      glyph restWhole 227.215,-7.750
     bar x=263.326 w=0.600
       line  263.626,-15.500 -> 263.626,15.500 t=0.600
-    rest x=274.326 w=73.485
-      glyph restWhole 274.326,-7.750
+    rest x=288.139 w=73.485
+      glyph restWhole 288.139,-7.750
     bar x=324.203 w=18.100
       glyph augmentationDot 339.203,-3.875
       glyph augmentationDot 339.203,3.875

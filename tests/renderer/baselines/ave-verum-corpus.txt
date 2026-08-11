@@ -29,12 +29,12 @@ system 0 width=786.609 originY=0.000
       glyph timeSig4 162.388,7.750
     tempo x=184.183 w=0.000
       text  184.183,-35.057 size=20.000 bold "Adagio"
-    rest x=184.183 w=84.853
-      glyph restWhole 184.183,-7.750
+    rest x=234.666 w=84.853
+      glyph restWhole 234.666,-7.750
     bar x=296.399 w=0.600
       line  296.699,-15.500 -> 296.699,15.500 t=0.600
-    rest x=307.399 w=84.853
-      glyph restWhole 307.399,-7.750
+    rest x=352.382 w=84.853
+      glyph restWhole 352.382,-7.750
     bar x=419.615 w=0.600
       line  419.915,-15.500 -> 419.915,15.500 t=0.600
     note@-1 x=439.591 w=60.000
@@ -67,12 +67,12 @@ system 0 width=786.609 originY=0.000
       line  684.300,-15.500 -> 684.300,15.500 t=0.600
     voiceName x=15.000 w=0.000
       text  15.000,15.300 size=17.000 bold "Alto"
-    rest x=184.183 w=84.853
-      glyph restWhole 184.183,7.750
+    rest x=150.074 w=84.853
+      glyph restWhole 150.074,7.750
     bar x=296.399 w=0.600
       line  296.699,-15.500 -> 296.699,15.500 t=0.600
-    rest x=307.399 w=84.853
-      glyph restWhole 307.399,7.750
+    rest x=352.382 w=84.853
+      glyph restWhole 352.382,7.750
     bar x=419.615 w=0.600
       line  419.915,-15.500 -> 419.915,15.500 t=0.600
     note@-3 x=439.591 w=60.000
@@ -107,12 +107,12 @@ system 0 width=786.609 originY=0.000
     timeSignature x=162.388 w=11.795
       glyph timeSig4 162.388,-7.750
       glyph timeSig4 162.388,7.750
-    rest x=184.183 w=84.853
-      glyph restWhole 184.183,-7.750
+    rest x=223.768 w=84.853
+      glyph restWhole 223.768,-7.750
     bar x=296.399 w=0.600
       line  296.699,-15.500 -> 296.699,15.500 t=0.600
-    rest x=307.399 w=84.853
-      glyph restWhole 307.399,-7.750
+    rest x=352.382 w=84.853
+      glyph restWhole 352.382,-7.750
     bar x=419.615 w=0.600
       line  419.915,-15.500 -> 419.915,15.500 t=0.600
     note@4 x=439.591 w=60.000
@@ -133,12 +133,12 @@ system 0 width=786.609 originY=0.000
       line  684.300,-15.500 -> 684.300,15.500 t=0.600
     voiceName x=15.000 w=0.000
       text  15.000,15.300 size=17.000 bold "Basso"
-    rest x=184.183 w=84.853
-      glyph restWhole 184.183,7.750
+    rest x=150.074 w=84.853
+      glyph restWhole 150.074,7.750
     bar x=296.399 w=0.600
       line  296.699,-15.500 -> 296.699,15.500 t=0.600
-    rest x=307.399 w=84.853
-      glyph restWhole 307.399,7.750
+    rest x=352.382 w=84.853
+      glyph restWhole 352.382,7.750
     bar x=419.615 w=0.600
       line  419.915,-15.500 -> 419.915,15.500 t=0.600
     note@0 x=439.591 w=60.000

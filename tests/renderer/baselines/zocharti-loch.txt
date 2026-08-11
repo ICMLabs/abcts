@@ -140,8 +140,8 @@ system 0 width=932.484 originY=0.000
       glyph accidentalFlat 140.638,-3.875
     timeSignature x=157.388 w=13.038
       glyph timeSigCommon 157.388,0.000
-    rest x=180.426 w=84.853
-      glyph restWhole 180.426,-23.250
+    rest x=224.339 w=84.853
+      glyph restWhole 224.339,-23.250
     bar x=302.540 w=0.600
       line  302.840,-15.500 -> 302.840,15.500 t=0.600
     rest x=313.540 w=42.426
@@ -302,12 +302,12 @@ system 1 width=700.000 originY=343.784
       line  684.300,-15.500 -> 684.300,15.500 t=0.600
     voiceName x=15.000 w=0.000
       text  15.000,15.300 size=17.000 bold "T.II"
-    rest x=116.778 w=84.853
-      glyph restWhole 116.778,7.750
+    rest x=133.690 w=84.853
+      glyph restWhole 133.690,7.750
     bar x=263.629 w=0.600
       line  263.929,-15.500 -> 263.929,15.500 t=0.600
-    rest x=274.629 w=84.853
-      glyph restWhole 274.629,7.750
+    rest x=336.930 w=84.853
+      glyph restWhole 336.930,7.750
     bar x=421.480 w=0.600
       line  421.780,-15.500 -> 421.780,15.500 t=0.600
     note@0 x=432.480 w=51.962

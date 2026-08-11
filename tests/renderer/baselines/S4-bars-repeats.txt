@@ -537,8 +537,8 @@ system 0 width=700.000 originY=0.000
     bar x=103.477 w=12.600
       line  109.477,-15.500 -> 109.477,15.500 t=4.000
       line  115.777,-15.500 -> 115.777,15.500 t=0.600
-    rest x=126.477 w=73.485
-      glyph restWhole 126.477,-7.750
+    rest x=137.023 w=73.485
+      glyph restWhole 137.023,-7.750
     bar x=181.819 w=9.600
       line  182.119,-15.500 -> 182.119,15.500 t=0.600
       line  187.819,-15.500 -> 187.819,15.500 t=4.000
@@ -560,8 +560,8 @@ system 0 width=700.000 originY=0.000
       glyph augmentationDot 341.527,3.875
       line  347.827,-15.500 -> 347.827,15.500 t=0.600
       line  353.527,-15.500 -> 353.527,15.500 t=4.000
-    rest x=365.527 w=73.485
-      glyph restWhole 365.527,-7.750
+    rest x=375.573 w=73.485
+      glyph restWhole 375.573,-7.750
     bar x=420.869 w=24.100
       glyph augmentationDot 420.869,-3.875
       glyph augmentationDot 420.869,3.875
