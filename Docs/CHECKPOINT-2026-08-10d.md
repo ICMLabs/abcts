@@ -33,7 +33,7 @@ reproduce goes in `Docs/ABCJS-DIFFERENCES.md` with its evidence and its slug goe
 | harvested geometry | `corpus-abcjs-ranked` | 0 of 174 | 0 of 174 |
 | pixel geometry | `pixel-parity` | 0 of 120 | 0 of 120 |
 | **DOM contract** | **`dom-contract`** | **1 of 25 — TWENTY-FOUR RATCHETED** | 11 of 25, fourteen |
-| **SVG bytes** | **`svg-bytes`** | **147 of 171**; best 22908, median 771 | 164 of 171, best 5186, median 174 |
+| **SVG bytes** | **`svg-bytes`** | **142 of 171**; best 46104, median 1062 | 164 of 171, best 5186, median 174 |
 
 **Suite 1158 of 1158. NO REDS. `npx tsc --noEmit` clean. Working tree clean.**
 
@@ -521,6 +521,19 @@ staff-stacking arithmetic are where the remaining inline literals are.
    - **`clefs.G`'s y, 6 rows.**
    - **A `<text>` family**, most likely a lyric's trailing `<tspan dy="1.2em"></tspan>` —
      abcjs emits one because `addLyric` ends every syllable with a `\n`.
+   - **~~A RULE'S TWO EDGES~~ — CLOSED, and it was worth more than its row count.**
+     `printLine` rounds `y - dy` and `y + dy` INDEPENDENTLY from the unrounded centre
+     (`draw/print-line.js:8-9`); ours built the top edge and added the whole thickness to
+     it, which is the same number in exact arithmetic and one hundredth out in doubles —
+     a staff line came out `65.54` where abcjs writes `65.53`. **The BEAM is the mirror
+     case and genuinely does chain its second edge off the rounded first**
+     (`draw/beam.js:37-42`), so the two emitters have to differ exactly as abcjs's do.
+     Staff lines are in every fixture: the median went 771 → 1075 on that one line.
+   - **~~A DUPLICATE VOICE~~ — CLOSED.** Every voice after the first on a staff is
+     `voice.duplicate`, and `createABCElement` marks its BAR, METER, CLEF and KEY
+     `invisible` (`abstract-engraver.js:150`, `:319-340`) — created, so they still take
+     their width, but `drawAbsolute` returns before opening a group and they produce NO
+     MARKUP. An `&` overlay is such a voice. Four more fixtures byte-exact.
    - **A multi-character DYNAMIC is a `<g data-name="dynamics">` of one path per LETTER.**
      `printSymbol`'s multi-char branch opens a group and draws each character with
      `kernSymbols` between them (`draw/print-symbol.js:15-31`), where SMuFL precomposes
@@ -557,7 +570,7 @@ staff-stacking arithmetic are where the remaining inline literals are.
 working tree clean
 npx tsc --noEmit    clean
 npx vitest run      1158 / 1158
-svg bytes           147 of 171   best 22908, median 771
+svg bytes           142 of 171   best 46104, median 1062
                     PASSING ratchet: 7 slugs
 DOM contract        1 of 25       PASSING ratchet: 24 slugs
 heights             117 exact / 52 ULP-only / 2 structural
