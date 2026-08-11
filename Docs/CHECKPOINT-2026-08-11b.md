@@ -1,6 +1,6 @@
 # CHECKPOINT — 2026-08-11b
 
-**abcts, `main`.** The suite is **1240/1240** with no reds, `npx tsc --noEmit` is clean,
+**abcts, `main`.** The suite is **1255/1255** with no reds, `npx tsc --noEmit` is clean,
 everything below is committed and pushed.
 
 ---
@@ -17,19 +17,20 @@ everything below is committed and pushed.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 0 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 1 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 1 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **82 of 171**, best 54030, median 8168 | 94 of 171 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **67 of 171**, best 52490, median 8185 | 94 of 171 |
 
-**`svg-bytes` is the one open gate**, `DIVERGENT` is still EMPTY, and **89 fixtures are
-byte-exact — all 89 now RATCHETED**, up from seven. See §4.
+**`svg-bytes` is the one open gate**, `DIVERGENT` is still EMPTY, and **104 fixtures are
+byte-exact — all 104 RATCHETED**, up from seven. See §4.
 
 ---
 
 ## 2. THE LANDINGS
 
-Five, and **four of them are one finding wearing four hats**: abcjs holds the vertical in
-PITCH and multiplies by `spacing.STEP` exactly once; we held y and divided back. §3 of
-`CHECKPOINT-2026-08-11.md` named that as the next architectural arc and this is it, done
-for the vertical. The horizontal is untouched and is now the whole head of the table.
+Seven, and **every one of them is the same finding**: abcjs's ARITHMETIC IS PART OF THE
+PORT — which number is formed first, which product is taken once, which offset is stored
+rather than derived. §3 of `CHECKPOINT-2026-08-11.md` named it as the next architectural
+arc for the VERTICAL; it turned out to be the horizontal too, and the horizontal was worth
+more (82 → 67 on two changes).
 
 ### A GLYPH'S y IS ONE VALUE BEFORE THE OUTLINE SEES IT — and the brackets are the finding
 `printSymbol` computes `renderer.calcY(offset + ycorr)` — ONE number — and only then does
@@ -116,6 +117,41 @@ where the compensating pair was *a correct change and a latent defect* rather th
 defects. The lesson is the same either way: land the structure, then chase what it exposes;
 do not read a wash as "no effect".
 
+### THE LINE SOLVE ITERATES ON ABCJS'S SPACING, NOT ON A FACTOR — **82 → 71**
+
+    voice.nextx = x + (spacing * this.getSpacingUnits(voice))     // voice-elements.js:80
+    relSpace    = spacingUnits * spacing
+    constSpace  = lineWidth - relSpace
+    spacing     = (targetWidth - constSpace) / spacingUnits        // layout.js:110-116
+
+`spacing` is ONE number, replaced outright each of the eight passes and opening at the 30px
+base. **Ours carried a dimensionless FACTOR against that base** and re-multiplied it at
+every spring, so each spring was `(factor * base) * units` off a factor the solve had itself
+divided by `units * base` — a multiply and a divide abcjs does not have, spent once per
+element per pass.
+
+**Eleven fixtures, and glyph-x ULP tokens 265 → 48.** The single largest step of the
+session, and it is four lines.
+
+### PLACE AN ELEMENT ON THE SOLVED x — DON'T SHIFT IT THERE — **71 → 67**
+`child.x = x + this.dx` (`relative-element.js:124-125`). abcjs positions every child as the
+SOLVED x plus that child's own stored offset: ONE addition onto the number the solve
+produced. Ours translated the whole element by a delta — `g.x + (target - el.x)` — which is
+the same terms grouped the other way.
+
+**The beam stems place the same way now, or an element and its beam disagree.** Doing the
+elements alone showed as **8.51px of dy on `ragtime-nightingale`** — caught by
+`pixel-parity` mid-refactor, and a reminder that this arc can produce real movement and not
+only ULPs.
+
+**AND ONE OFFSET HAS TO BE BUILT RATHER THAN DERIVED.** A flag's `dx` is literally
+`headx + notehead.w - 0.6` (`create-note-head.js:47`), and `(x + a) - x` is not `a`:
+deriving it broke `abcjs-parse-note-01`, **which the widened ratchet caught in the same
+run**. `PlacedGlyph.dx` carries the constructed number; absent means derive, which is what
+every other glyph still does. **The element's own `x` is `headX`** — abcjs's anchor is the
+STEMMED HEAD, whose `dx` is 0, measured through `RelativeElement.setX`. Reading `el.x` as
+the element's left edge put a down-stem flag 7.4px out on the first attempt.
+
 ---
 
 ## 3. WHAT IS LEFT — the table's shape, measured
@@ -126,45 +162,52 @@ the wrong family):
 
 | | rows | ULP tokens | fixtures carrying them |
 |---|---|---|---|
-| **glyph x** | 34 | **265** | 33 |
-| glyph y | — | 62 | 10 |
-| root `width`/`height` | 9 | 6 | 6 |
-| other | 5 | 8 | 7 |
-| **structural** | **34** | — | — |
+| glyph y | 1 | **62** | 10 |
+| glyph x | 13 | **36** | 13 |
+| root `width`/`height` | 8 | 5 | 5 |
+| other | 7 | 5 | 5 |
+| **structural** | **33** | — | — |
 
-**33 fixtures are PURE ULP** — same token count, every difference under 1e-6.
+At the session's midpoint this read **glyph-x 265 tokens across 33 fixtures**; the spacing
+solve and the place-not-shift port took it to 36 across 13. **The horizontal is no longer
+the head of the table** — the two families are now comparable and both are small.
 
-### 3.1 THE HORIZONTAL IS NOW THE HEAD OF THE TABLE, and it is the same shape one axis over
+### 3.1 THE TWO ULP FAMILIES, EACH NAMED
 
-`abcjs-visual-transpose-03` is down to ONE differing token in 55,703 bytes: a notehead's x,
-`733.5559999999995` against `733.5559999999996`. Measured through both engines:
+**GLYPH-y — 62 tokens, 10 fixtures**, and 27 of them are `visual-slurs-02-score-s-a-t-b`
+alone. Four fixtures carry exactly TWO tokens each and all four are **THE TEMPO
+NOTEHEAD**, which is measured and half-diagnosed:
 
-    abcjs   accidental  717.5159999999995   = absX - 9.95     (dx, a negative offset)
-            notehead    727.4659999999996   = absX            (dx = 0)
-    ours    accidental  717.5159999999995   ← exact
-            notehead    727.4659999999994   ← 2 ULP low
+    abcjs   noteheads.quarter  offset = 15.796645161290321   calcY = 41.934999999999995
+    ours                                                             41.935
 
-**abcjs's `AbsoluteElement.x` IS THE NOTEHEAD'S x**, straight out of the solve, and the
-accidental hangs off it at a negative `dx` — `RelativeElement.setX` is `this.x = x + this.dx`
-(`relative-element.js:124`), one addition. Ours anchors the element's LEFT EDGE and builds
-`headX = (x + graceWidth) + accidentalWidth`, three terms. That our accidental lands on
-abcjs's value exactly and our head does not is the signature.
+That offset is `staff.top` at the tempo rung — the above-ladder's own running pitch — and
+abcjs draws the mark's notehead at `calcY(pitch)` directly (`draw/relative.js:9`, the
+`params.note.children` loop in `draw/tempo.js:26-28`). Ours reaches it by SHIFTING the
+whole tempo element by `tempoY - stepToY(ENGRAVE.tempoStep)`, where `tempoY` is the TEXT
+baseline (`reserve(tempoHeightAbove) + tempoTextSize + tempoDescenderBump`). **It is the
+place-not-shift finding one axis over**, and it needs `aboveLadder` to return the rung's
+PITCH beside its y — which `spend()` already has in hand.
 
-**What is NOT the problem, checked:** our justification is already abcjs's own shape — eight
-passes, each re-running the whole line solve with a new spacing unit, the eighth discarded
-(`layout/layout.js:65-79`; ours at `layout.ts:8673`). There is no scale-a-natural-layout
-step to blame. The difference is inside one pass's accumulation.
+**GLYPH-x — 36 tokens, 13 fixtures**, no single dominant fixture (8, 6, 6, 5, 4, 4, then
+ones). Mixed glyph kinds: accidentals, plain heads, a tempo notehead. The next one to open
+is `visual-transpose-03`, still down to ONE token in 55,703 bytes — the `^^F` head's x. Its
+accidental is EXACT and its head is not, which says the residual is in what `headX` is built
+from (`(x + graceWidth) + accidentalWidth`) rather than in the solve, now that the solve is
+abcjs's. The `PlacedGlyph.dx` mechanism from the place-not-shift landing is the tool:
+construct the offset, do not derive it.
 
-**The probe that will answer it** is the one that answered the vertical: instrument
-`VoiceElement.layoutOne`'s `child.setX(x)` in the scratchpad abcjs (§5) — it prints `x`,
-`er`, `extraWidth` and `nextx` per element — and print the same terms from `lineAt`. Do NOT
-instrument at `headX` in `layoutEvent`: that call site runs in the measuring passes and its
-x is never the final one, which cost a run today.
+**What is NOT the problem, checked:** the justification is already abcjs's shape — eight
+passes, each re-running the whole line solve, the eighth discarded (`layout/layout.js:65-79`;
+ours at `layout.ts:8673`). And `layoutOne`'s cursor arithmetic is ours term for term:
+`er = x - voice.minx`, `if (er < extraWidth) x += extraWidth - er`,
+`voice.minx = x + getMinWidth(child)`.
 
-### 3.2 THE STRUCTURAL THIRTY-FOUR
+### 3.2 THE STRUCTURAL THIRTY-THREE — now the MAJORITY of the table
 Unchanged from `CHECKPOINT-2026-08-11.md` §4.2, which lists each with abcjs's own citation.
 The brace with a header (3 fixtures, `draw/brace.js:78-98`) is still the largest single one
-and still needs no new model.
+and still needs no new model. **With the arithmetic families down to 108 tokens between
+them, these 33 rows are now half the open table and the better place to spend a session.**
 
 ### 3.3 WHAT §3 OF THE PREVIOUS CHECKPOINT STILL OWES
 - **`anchorLyrics` is not abcjs's placement**, so `lyricLanePitch` — measured, correct to
@@ -178,7 +221,10 @@ and still needs no new model.
 ## 4. THE RATCHET NOW HOLDS EVERYTHING GREEN
 
 `svg-bytes.test.ts`'s `PASSING` held **seven** slugs while **eighty-nine** fixtures were
-byte-exact. Twice today a fixture went from byte-exact to differing **while the aggregate
+byte-exact — **104 now, and it has already paid for itself twice more**: it caught
+`abcjs-parse-note-01` regressing under the place-not-shift port, and then
+`abcjs-synth-flattener-14` under the first attempt at the flag's `dx`. Both were found in
+the same run that made the change, not by hand-diffing afterwards. Twice today a fixture went from byte-exact to differing **while the aggregate
 count improved** — `parse-tie-slur-01` under the `addStaffPadding` port, `visual-misc-13`
 under the ladder start — and neither was ratcheted, so the only thing that caught them was
 diffing two runs of a scratch script by hand.
@@ -282,3 +328,12 @@ token COUNTS differ, so a fixture going structural silently leaves its table. Re
   result against the source before treating it as closed.
 - **DO NOT INSTRUMENT A SITE THAT RUNS IN A MEASURING PASS** and read its numbers as final.
   `layoutEvent`'s `headX` is called eight times per line with x's that never reach the page.
+- **PLACE, DON'T SHIFT.** Wherever the layout moves something into position, ask whether
+  abcjs adds a STORED offset to a solved coordinate. Four of this session's seven landings
+  are that one question, on four different quantities.
+- **AN ITERATION VARIABLE IS PART OF THE PORT TOO.** Ours solved for a dimensionless factor
+  where abcjs solves for the spacing itself; the two agree in exact arithmetic and differ by
+  a multiply and a divide per element per pass. Eleven fixtures.
+- **A REFACTOR IN THIS FAMILY CAN MOVE REAL PIXELS.** Placing elements but still SHIFTING
+  their beams put 8.51px of dy on `ragtime-nightingale`. Re-read `pixel-parity` and the
+  harvested table after every step, not at the end.

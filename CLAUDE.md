@@ -594,7 +594,24 @@ checkpoint and hand off as you go so no context is lost.
 > music's ink while our y comes from the last verse's baseline — spending it takes one
 > fixture byte-exact and puts two others structurally out.
 
-> ⚖️ **AND THE VERTICAL NOW HOLDS ABCJS'S PITCHES END TO END** (2026-08-11b).
+> ⚖️ **AND ABCJS'S ARITHMETIC IS PART OF THE PORT — 94 → 67 of 171 ON SEVEN LANDINGS**
+> (2026-08-11b). Which number is formed FIRST, which product is taken ONCE, which offset is
+> STORED rather than derived. The vertical closed first and the HORIZONTAL turned out to be
+> worth more: **the line solve iterates on abcjs's `spacing` itself, not on a factor** —
+> `spacing` is one number replaced outright each of the eight passes
+> (`layout/layout.js:110-116`), where ours carried a ratio to the 30px base and
+> re-multiplied it at every spring, a multiply and a divide per element per pass. Eleven
+> fixtures on four lines. And **PLACE AN ELEMENT ON THE SOLVED x, DON'T SHIFT IT THERE** —
+> `child.x = x + this.dx` (`relative-element.js:124-125`), one addition onto the solved
+> number, where ours translated by a delta. **One offset has to be BUILT rather than
+> derived**: a flag's `dx` is `headx + notehead.w - 0.6` (`create-note-head.js:47`) and
+> `(x + a) - x` is not `a`. `PlacedGlyph.dx` carries the constructed number.
+>
+> **AND THAT REFACTOR MOVED REAL PIXELS, not only ULPs** — placing elements while still
+> SHIFTING their beams put 8.51px of `dy` on `ragtime-nightingale`, caught by `pixel-parity`
+> mid-refactor. Re-read every gate after each step of an arithmetic arc.
+>
+> ⚖️ **AND THE VERTICAL HOLDS ABCJS'S PITCHES END TO END** (the same day).
 > `svg-bytes` **94 → 82 of 171** on five landings, four of which are ONE finding: abcjs
 > holds the vertical in PITCH and multiplies by `spacing.STEP` exactly once, where we held y
 > and divided back. **AN ASSOCIATION IS A DECISION** — `a + b + c` is `(a + b) + c`, and
@@ -627,8 +644,8 @@ checkpoint and hand off as you go so no context is lost.
 > 180-token improvement and 82 → 82 hid a 48-token one. COUNT TOKENS BY AXIS while the
 > family is ULP; `CHECKPOINT-2026-08-11b.md` §5 has the four probes that do it.
 >
-> 🔒 **AND THE RATCHET NOW NAMES ALL 89 BYTE-EXACT FIXTURES, BECAUSE SEVEN COULD NOT
-> DEFEND EIGHTY-NINE.** Twice that day a fixture went from byte-exact to differing **while
+> 🔒 **AND THE RATCHET NOW NAMES ALL 104 BYTE-EXACT FIXTURES, BECAUSE SEVEN COULD NOT
+> DEFEND EIGHTY-NINE.** It has since caught two more, in the same run that made the change. Twice that day a fixture went from byte-exact to differing **while
 > the aggregate count improved**, and neither was ratcheted, so the only thing that caught
 > them was diffing two runs of a scratch script by hand. **A ratchet holding 4% of what is
 > green is a ratchet in name.**
@@ -811,17 +828,18 @@ reds; **seventeen gates and NINE ranked tables** — 0 of 72 audio cases, 0 of 3
 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
 **1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
 **1 of 25 DOM-contract cases with TWENTY-FOUR slugs RATCHETED** — and
-**82 of 171 SVG-byte fixtures, EIGHTY-NINE of them EXACT and ALL 89 RATCHETED** — and **the
-SVG BYTE TABLE is THE ONE OPEN GATE**, at best 54030 / median 8168 — **34 glyph-x ULP + 34
-structural + 9 root + 5 other**, classified by aligning on the first differing character (a
-cruder test sends you at the wrong family). **THE VERTICAL ARITHMETIC IS CLOSED** — the
-layout holds abcjs's pitches end to end — and **THE HORIZONTAL IS NOW THE HEAD OF THE
-TABLE**: 265 of the 341 remaining ULP tokens, the same finding one axis over. abcjs's
-`AbsoluteElement.x` IS THE NOTEHEAD'S x, with the accidental at a negative `dx` and
-`setX` one addition (`relative-element.js:124`), where ours anchors the element's LEFT EDGE
-and adds the grace and accidental widths to it. `CHECKPOINT-2026-08-11b.md` §3.1 has the
-measurement and the probe; the justification is NOT the suspect, ours already being abcjs's
-eight-pass re-solve. The structural thirty-four are listed with citations in
+**67 of 171 SVG-byte fixtures, ONE HUNDRED AND FOUR of them EXACT and ALL 104 RATCHETED** —
+and **the SVG BYTE TABLE is THE ONE OPEN GATE**, at best 52490 / median 8185 — **33
+structural + 13 glyph-x + 8 root + 7 other + 1 glyph-y**, classified by aligning on the
+first differing character (a cruder test sends you at the wrong family). **THE ARITHMETIC
+ARC HAS DONE ITS WORK ON BOTH AXES** — the layout holds abcjs's pitches end to end, the line
+solve iterates on abcjs's own `spacing`, and elements are PLACED on the solved x rather than
+shifted onto it — so the two ULP families are down to **62 glyph-y tokens across 10 fixtures
+and 36 glyph-x across 13**, from 265 across 33 mid-session. **THE STRUCTURAL ROWS ARE NOW
+THE MAJORITY OF THE TABLE** and are where a session buys the most; both remaining ULP
+threads are named and measured in `CHECKPOINT-2026-08-11b.md` §3.1 (the TEMPO NOTEHEAD, which
+is PLACE-DON'T-SHIFT one axis over, and `visual-transpose-03`'s last token). The structural
+thirty-three are listed with citations in
 `CHECKPOINT-2026-08-11.md` §4.2, the largest single one being the BRACE, which
 abcjs draws AFTER its own staff's lines and builds from `curvyPath` arithmetic rather than
 from a glyph. The oracle lands before the
