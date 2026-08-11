@@ -21,7 +21,7 @@ system 0 width=957.031 originY=0.000
     tempo x=70.846 w=0.000
       glyph noteheadBlack 70.846,-37.682 scale=0.750
       line  77.904,-38.651 -> 77.904,-52.213 t=0.600
-      text  83.204,-35.057 size=20.000 "= 120"
+      text  83.204,-35.057 size=20.000 bold "= 120"
     note@-6 x=70.846 w=42.426
       glyph noteheadBlack 70.846,23.250
       line  68.846,23.250 -> 82.656,23.250 t=0.700
@@ -70,7 +70,7 @@ system 0 width=700.000 originY=0.000
       glyph noteheadBlack 159.102,-60.077 scale=0.750
       line  166.160,-61.046 -> 166.160,-74.608 t=0.600
       text  49.051,-57.452 size=20.000 bold "Dolcemente"
-      text  171.460,-57.452 size=20.000 "= 60"
+      text  171.460,-57.452 size=20.000 bold "= 60"
     note@-6 x=49.051 w=42.426
       glyph noteheadBlack 49.051,23.250
       line  47.051,23.250 -> 60.861,23.250 t=0.700

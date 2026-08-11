@@ -21,7 +21,7 @@ system 0 width=1012.953 originY=0.000
     tempo x=70.846 w=0.000
       glyph noteheadBlack 70.846,-86.112 scale=0.750
       line  77.904,-87.081 -> 77.904,-100.643 t=0.600
-      text  83.204,-83.487 size=20.000 "= 120"
+      text  83.204,-83.487 size=20.000 bold "= 120"
     part x=70.846 w=0.000
       text  70.846,-58.362 size=20.000 bold "PART - VERSE, CHORUS, ETC."
     note@-6 x=85.971 w=42.426

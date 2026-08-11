@@ -571,10 +571,17 @@ const abcjsText = (
   extra: readonly string[] = [],
   /** `dominant-baseline="middle"`, which the bottom block's multi-line rows carry. */
   middle = false,
+  /**
+   * `renderText`'s trailing `noClass` argument (`draw/text.js`), which omits the attribute
+   * ENTIRELY rather than writing `class=""`. A bar number, a part label, a tuplet number,
+   * an ending's number and a tempo's three parts all pass it; a lyric, a chord symbol and
+   * an annotation do not, and their goldens carry the empty attribute.
+   */
+  noClass = false,
 ): string =>
   `<text stroke="none" font-size="${size}" font-style="${italic ? 'italic' : 'normal'}" ` +
   `font-family="${family}" font-weight="${bold ? 'bold' : 'normal'}" text-decoration="none" ` +
-  `class="${klass}" text-anchor="${anchor}"${middle ? ' dominant-baseline="middle"' : ''}` +
+  `${noClass ? '' : `class="${klass}" `}text-anchor="${anchor}"${middle ? ' dominant-baseline="middle"' : ''}` +
   ` x="${x}" y="${y}"${name ? ` data-name="${name}"` : ''}>` +
   `<tspan x="${x}">${body}</tspan>` +
   extra.map((line) => `<tspan x="${x}" dy="1.2em">${line}</tspan>`).join('') +
@@ -585,6 +592,34 @@ const abcjsText = (
  * Literal in `top-text.js` rather than run through `classes.generate`, so no line or
  * measure suffix joins it.
  */
+/**
+ * abcjs's DEFAULT font face per `%%…font` type (`parse/abc_parse_directive.js:22-44`).
+ *
+ * The quotes are abcjs's own — it stores `"\"Times New Roman\""` and writes the face
+ * straight into the attribute, where the serializer strips the inner quotes. `tripletfont`
+ * is plain `Times` and NOT `Times New Roman`, which is a difference the goldens show.
+ */
+const ABCJS_FONT_FACE: Readonly<Record<string, string>> = {
+  annotationfont: 'Helvetica',
+  gchordfont: 'Helvetica',
+  historyfont: 'Times New Roman',
+  infofont: 'Times New Roman',
+  measurefont: 'Times New Roman',
+  partsfont: 'Times New Roman',
+  repeatfont: 'Times New Roman',
+  textfont: 'Times New Roman',
+  tripletfont: 'Times',
+  vocalfont: 'Times New Roman',
+  wordsfont: 'Times New Roman',
+  composerfont: 'Times New Roman',
+  subtitlefont: 'Times New Roman',
+  tempofont: 'Times New Roman',
+  titlefont: 'Times New Roman',
+  voicefont: 'Times New Roman',
+  footerfont: 'Times New Roman',
+  headerfont: 'Times New Roman',
+}
+
 const ABCJS_TEXT_CLASSES: Readonly<Record<string, string>> = {
   title: 'abcjs-title',
   subtitle: 'abcjs-text abcjs-subtitle',
@@ -1190,14 +1225,41 @@ const glyphDefs = new Map<GlyphName, string>()
                 : abcjs && t.dataName !== undefined
                   ? ` data-name="${t.dataName}"`
                   : attrs(el.type, 'text')
+          /**
+           * **A MUSIC TEXT IS `renderText`'s ELEMENT, ATTRIBUTE FOR ATTRIBUTE** — the same
+           * shape the top-text block already emitted, with the FACE, weight and style of
+           * its own `%%…font` spelled out (`draw/text.js`, faces in
+           * `parse/abc_parse_directive.js:22-44`). Ours wrote a short ad-hoc `<text>` with
+           * `font-family="serif"` and the attributes in another order, which is ten rows of
+           * the byte table and the first thing after a stem on most of them.
+           */
+          const body =
+            t.jazz === undefined ? escapeText(t.text) : jazzChordMarkup(t.jazz, textNum(t.x * PX))
+          const face = t.font === undefined ? undefined : ABCJS_FONT_FACE[t.font]
           textParts.push({
             role: t.role,
             s:
-            `<text${partAttr} x="${textNum(t.x * PX)}" y="${textNum(t.y * PX + oy)}" ` +
-              `font-family="serif" font-size="${num(t.size * PX)}"${style}` +
-              // Only the top-text block sets one; the music's own text is all left-aligned.
-              `${t.anchor === undefined || t.anchor === 'start' ? '' : ` text-anchor="${t.anchor}"`}` +
-              `>${t.jazz === undefined ? escapeText(t.text) : jazzChordMarkup(t.jazz, textNum(t.x * PX))}</text>`,
+              abcjs && face !== undefined
+                ? abcjsText(
+                    textNum(t.x * PX),
+                    textNum(t.y * PX + oy),
+                    num(t.size * PX),
+                    face,
+                    t.italic,
+                    t.bold,
+                    t.anchor ?? 'start',
+                    t.dataName ?? '',
+                    body,
+                    /^ class="([^"]*)"/.exec(partAttr)?.[1] ?? '',
+                    [],
+                    false,
+                    t.noClass === true,
+                  )
+                : `<text${partAttr} x="${textNum(t.x * PX)}" y="${textNum(t.y * PX + oy)}" ` +
+                  `font-family="serif" font-size="${num(t.size * PX)}"${style}` +
+                  // Only the top-text block sets one; the music's text is left-aligned.
+                  `${t.anchor === undefined || t.anchor === 'start' ? '' : ` text-anchor="${t.anchor}"`}` +
+                  `>${body}</text>`,
           })
         }
         if (barTexts) parts.push(...textParts.map((t) => t.s))

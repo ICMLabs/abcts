@@ -20,7 +20,7 @@ system 0 width=1337.969 originY=0.000
       glyph noteheadBlack 143.204,-69.792 scale=0.750
       line  150.262,-70.761 -> 150.262,-84.324 t=0.600
       text  49.051,-67.167 size=20.000 bold "Allegretto"
-      text  155.562,-67.167 size=20.000 "= 100"
+      text  155.562,-67.167 size=20.000 bold "= 100"
     note@5 x=49.051 w=30.000
       glyph noteheadBlack 49.051,-19.375
       line  49.351,-18.600 -> 49.351,17.438 t=0.600

@@ -1909,7 +1909,7 @@ system 0 width=701.771 originY=0.000
       glyph noteheadBlack 160.007,-60.077 scale=0.750
       line  167.064,-61.046 -> 167.064,-74.608 t=0.600
       text  87.596,-57.452 size=20.000 bold "Allegro"
-      text  172.364,-57.452 size=20.000 "= 120"
+      text  172.364,-57.452 size=20.000 bold "= 120"
     note@-6 x=106.034 w=36.742
       glyph flag8thUp 115.244,-3.875
       glyph augmentationDot 118.844,19.375

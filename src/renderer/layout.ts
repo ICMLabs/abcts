@@ -956,6 +956,17 @@ export interface PlacedText {
   readonly groupClass?: string
   readonly measure?: number
   /**
+   * Which `%%…font` this text is drawn in.
+   *
+   * abcjs writes a `<text>` with the font's FACE, weight and style spelled out — a lyric
+   * is `Times New Roman` bold, a chord symbol `Helvetica` normal, a tuplet number plain
+   * `Times` italic (`parse/abc_parse_directive.js:22-44`) — so the emitter needs the TYPE
+   * and not just the already-resolved size and bold/italic. `noClass` is `renderText`'s
+   * trailing argument, which omits the `class` attribute rather than writing it empty.
+   */
+  readonly font?: AbcFontType
+  readonly noClass?: boolean
+  /**
    * Horizontal alignment. Absent means `start`, which is every text the music draws —
    * only the top-text block centres a title or right-aligns a composer.
    */
@@ -2052,6 +2063,8 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
       // `noClass: true` (`draw/tempo.js:19`, `:31`, `:38`) — the only text in the music
       // that is named and NOT classed.
       dataName: 'pre',
+      font: 'tempofont',
+      noClass: true,
       x: cursor,
       y: baseline,
       size: ENGRAVE.tempoTextSize,
@@ -2181,10 +2194,15 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
     texts.push({
       text: `= ${tempo.bpm}`,
       dataName: 'beats',
+      font: 'tempofont',
+      noClass: true,
       x: cursor,
       y: baseline,
       size: ENGRAVE.tempoTextSize,
-      bold: false,
+      // BOLD, like the `pre` text beside it: both are `type: 'tempofont'`, whose default
+      // is `weight: "bold"` (`parse/abc_parse_directive.js:37`). Ours drew the rate in
+      // normal weight, which the goldens deny in one attribute.
+      bold: true,
       italic: false,
     })
   }
@@ -3424,6 +3442,13 @@ function barNumberText(
     // (`draw/relative.js:38-39`) — and it is the bar element's FIRST child, ahead of the
     // rule itself.
     dataName: 'bar-number',
+    font: 'measurefont',
+    // NO `noClass` — `renderText`'s third argument is `alreadyInGroup`, not `noClass`, and
+    // the bar number passes `true` for THAT while carrying a real `klass`
+    // (`draw/relative.js:38-39`, `draw/text.js:3`, `:60`). Measured through abcjs both
+    // ways: `class=""` without `add_classes` and the generated string with it.
+    // `noClass` is a PROPERTY, and only the tempo's parts, the tuplet number and the
+    // ending's number set it.
     x: onClef === null ? x : x + width / 2,
     y: y + size,
     size,
@@ -4438,6 +4463,7 @@ function noteText(
         // The lane is only the origin: `anchorAboveStaff` moves the whole set onto the
         // staff's music once the voices sharing it are known, exactly as lyrics are.
         role: 'chord',
+        font: 'gchordfont',
         // `type: "chord"` in abcjs, drawn by `relative.js`'s own case with
         // `classes.generate("chord")` and `name: "chord"`. An ANNOTATION shares the lane
         // and the role and is a DIFFERENT element — `type: "text"`, `name: "annotation"`
@@ -4504,6 +4530,7 @@ function noteText(
       // set the staff's top instead — the whole of `frere-jacques`'s last residual.
       role: 'chord',
       dataName: 'annotation',
+      font: 'annotationfont',
     })
   })
 
@@ -4529,6 +4556,7 @@ function noteText(
       italic: false,
       role: 'chordBelow',
       dataName: 'annotation',
+      font: 'annotationfont',
       reserve: pointReserve(y),
       ...(SCORE_FONTS.annotationfont?.box === true ? { box: true } : {}),
     })
@@ -4667,6 +4695,7 @@ function noteText(
       // on the y lane instead would couple that pass to this one's lane arithmetic.
       role: 'lyric',
       dataName: 'lyric',
+      font: 'vocalfont',
       // MEASUREMENT follows the same `size`, so a bigger font both draws and occupies
       // bigger. A font that draws large and measures at the default width is how lyrics
       // end up overlapping — the centring here and the melisma extender's start both
@@ -5817,6 +5846,8 @@ function layoutTuplets(
     texts.push({
       text: label,
       dataName: label,
+      font: 'tripletfont',
+      noClass: true,
       group: tupletGroup,
       // **`generate('triplet ' + durationClass)`**, where `durationClass` is
       // `('d' + round(anchor1.parent.durationClass * 1000) / 1000).replace(/\./, '-')`
@@ -8088,6 +8119,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           groupClass: 'ending',
           measure: openVolta.measure,
           dataName: openVolta.label,
+          font: 'repeatfont',
+          noClass: true,
           x: openVolta.startX + ENGRAVE.voltaTextIndent,
           y: y + ENGRAVE.voltaTextDrop + ENGRAVE.voltaTextSize,
           size: ENGRAVE.voltaTextSize,

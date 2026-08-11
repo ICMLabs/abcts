@@ -21,7 +21,7 @@ system 0 width=834.094 originY=0.000
     tempo x=70.846 w=0.000
       glyph noteheadBlack 70.846,-60.077 scale=0.750
       line  77.904,-61.046 -> 77.904,-74.608 t=0.600
-      text  83.204,-57.452 size=20.000 "= 120"
+      text  83.204,-57.452 size=20.000 bold "= 120"
     note@-6 x=83.604 w=42.426
       glyph noteheadBlack 83.604,23.250
       line  81.604,23.250 -> 95.414,23.250 t=0.700
