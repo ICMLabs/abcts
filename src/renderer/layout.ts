@@ -5509,6 +5509,8 @@ interface NoteAnchor {
    */
   readonly pitchStep?: number
   readonly stemUp: boolean
+  /** `anchor.w` — the notehead's DECLARED width. See the slur's x bump in `buildCurve`. */
+  readonly headWidth?: number
   /** The source event, so ties and slurs can be matched to what the music said. */
   readonly event: MusicEvent
   /** Which system this note ended up in — a curve spanning two is drawn in halves. */
@@ -5581,8 +5583,37 @@ function buildCurve(
   // plus one symmetric `curveEndGap`. Three differences, and the asymmetry is the tell:
   // 6 one end and 4 the other is not a clearance, it is two hardcoded numbers.
   const lift = spacesOfPitch(kind === 'tie' ? ABCJS_ARC.tieLift : ABCJS_ARC.slurLift)
-  const x1 = strict ? from.left + spaces(ABCJS_ARC.startOffset) : from.right + ENGRAVE.curveEndGap
-  const x2 = strict ? to.left + spaces(ABCJS_ARC.endOffset) : to.left - ENGRAVE.curveEndGap
+  /**
+   * **AN ABOVE SLUR THAT AIMS AT THE MIDDLE OF A STEM IS BUMPED RIGHT BY HALF A NOTEHEAD.**
+   * `calcSlurY` takes `startY = (highestVert + pitch) / 2` when the slur is ABOVE and its
+   * anchor's stem points UP, and in the SAME branch writes
+   * `this.startX += this.anchor1.w / 2` — "when going to the middle of the stem, bump the
+   * line to the right a little bit to make it look right" (`tie-element.js:163-177`). The
+   * closing end takes `Math.round(anchor2.w / 2)`, with a rounding the opening end does not
+   * have.
+   *
+   * Our y already lands on the mid-stem point through `slurEndY`; only the x that goes with
+   * it was missing, which is 4.905px on every above slur over an up-stem note. It shows on
+   * a SHARED staff above all, because there `voiceNumber === 0` forces `above` whatever the
+   * stems do.
+   */
+  const midStem = kind === 'slur' && above
+  const startBump = midStem && from.stemUp ? (from.headWidth ?? 0) / 2 : 0
+  /**
+   * …AND THE CLOSING END'S BUMP HAS TWO MORE GUARDS. `beamInterferes` is
+   * `anchor2.parent.beam && beam.stemsUp && beam.elems[0] !== anchor2.parent`
+   * (`tie-element.js:172-177`) — a slur closing on a beamed note that is not FIRST in its
+   * group aims at the beam instead, takes `endY = highestVert`, and gets no bump at all.
+   */
+  const beamInterferes = to.stemUp && to.beamPos !== undefined && to.beamPos !== 'none' && to.beamPos !== 'first'
+  const endBump =
+    midStem && to.stemUp && !beamInterferes ? Math.round((to.headWidth ?? 0) / 2) : 0
+  const x1 = strict
+    ? from.left + spaces(ABCJS_ARC.startOffset) + startBump
+    : from.right + ENGRAVE.curveEndGap
+  const x2 = strict
+    ? to.left + spaces(ABCJS_ARC.endOffset) + endBump
+    : to.left - ENGRAVE.curveEndGap
   // A SLUR'S END IS `calcSlurY`'s, WHICH IS NOT ALWAYS THE NOTEHEAD'S PITCH — a beamed end
   // that is not the last (start) or first (end) of its beam is pinned to the beam-retargeted
   // stem instead. `slurEndY` is that rule, and `curveReserves` resolves its input; a TIE
@@ -7220,6 +7251,9 @@ function layoutMeasure(
             : stepToY(pitchToStep(first, clef)),
         ...(first === undefined ? {} : { pitchStep: pitchToStep(first, clef) }),
         stemUp: el.stemUp ?? el.lines.some((l) => l.x1 === l.x2 && l.y2 < l.y1),
+        // The notehead's DECLARED width — `anchor.w` — which an ABOVE slur bumps its own
+        // ends by half of. See `buildCurve`.
+        headWidth: heads[0] === undefined ? 0 : glyphsFor(strict).width(heads[0].name),
         event,
       })
     } else if (event.type === 'rest') {
