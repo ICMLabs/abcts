@@ -902,6 +902,11 @@ export interface PlacedLine {
    * up-stem beam's `d` opens on its TOP edge and a down-stem beam's on its BOTTOM.
    */
   readonly stemsUp?: boolean
+  /**
+   * The two ends this line was BUILT from, in abcjs PITCH — see `verticalExtent`. A stem's
+   * `p1`/`p2` are pitches abcjs never converts, and the extent sums them as pitches.
+   */
+  readonly pitchRange?: readonly [number, number]
   /** A GRACE's stem — written after every grace head, not with the main note's rules. */
   readonly graceStem?: boolean
   /** Which grace of the group this belongs to, so a ledger follows its OWN head. */
@@ -3384,6 +3389,19 @@ function layoutNoteheads(
       y2: tip,
       thickness: weight,
       role: 'stem',
+      // The clamps are abcjs's `if (p1 > 6) p1 = 6` / `if (p2 < 6) p2 = 6`, in pitch.
+      // **ONLY WHEN UNBEAMED**: a beamed stem is RETARGETED by the beam pass, so these two
+      // pitches stop describing it the moment that runs — and it reserves nothing anyway.
+      ...(strict && !beamed
+        ? {
+            pitchRange: [
+              (forcedUp !== null ? nearStepRaw : up ? Math.min(nearStepRaw, 0) : Math.max(nearStepRaw, 0)) +
+                PITCH_ORIGIN,
+              (forcedUp !== null ? farStepRaw : up ? Math.max(farStepRaw, 0) : Math.min(farStepRaw, 0)) +
+                PITCH_ORIGIN,
+            ] as [number, number],
+          }
+        : {}),
       // WHICH SIDE OF THE LEDGERS THIS STEM IS WRITTEN ON. An UNBEAMED stem is
       // `abselem.addRight(…)` right after the pitch loop (`abstract-engraver.js:762`) and
       // lands BEFORE the ledgers; a BEAMED one comes from the beam pass afterwards and
@@ -11416,7 +11434,18 @@ function verticalExtent(
       // reserve (1) plus half a stem thickness (0.12).
       if (line.role === 'stem') {
         const low = Math.max(line.y1, line.y2)
-        include(Math.min(line.y1, line.y2), low + (line.beamed === true ? 0 : ENGRAVE.spacePerStep))
+        // …AND IN PITCH, where abcjs states it: `p1`/`p2` are pitches and `bottom: p1 - 1`
+        // is a pitch subtraction (`abstract-engraver.js:762`). `pitchRange` carries the two
+        // ends the stem was BUILT from — see `PlacedLine.pitchRange`.
+        const pr = line.pitchRange
+        const [hiP, loP] =
+          pr === undefined ? [undefined, undefined] : [Math.max(...pr), Math.min(...pr)]
+        include(
+          Math.min(line.y1, line.y2),
+          low + (line.beamed === true ? 0 : ENGRAVE.spacePerStep),
+          hiP,
+          loP === undefined ? undefined : loP - (line.beamed === true ? 0 : 1),
+        )
         continue
       }
       // A LINE RESERVES ITS ENDPOINTS AND NOT ITS PAINTED WIDTH. `RelativeElement` widens
