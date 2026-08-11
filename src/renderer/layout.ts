@@ -9858,12 +9858,23 @@ function aboveLadder<
     },
   ).top
 
-  // y is DOWN, so reserving room above walks it negative.
-  let top = inkTop
+  /**
+   * **THE LADDER WALKS IN PITCH, BECAUSE `incTop` DOES** — `staff.top += height + margin`
+   * over PITCH figures, one addition per rung (`set-upper-and-lower-elements.js`). Ours
+   * walked the same rungs in LENGTHS and the staff's top came out one ULP from abcjs's,
+   * which is the root's `height` and the clef's y on every fixture with a lane. Each
+   * rung's own height is a length here (it comes from text metrics, as abcjs's does from
+   * `dim.height`), so it converts once on the way in — exactly where abcjs's
+   * `dim.height / spacing.STEP` does.
+   */
+  const PITCH_PER_UNIT = 1 / ENGRAVE.spacePerStep
+  let topPitch = PITCH_ORIGIN - inkTop * PITCH_PER_UNIT
+  // y is DOWN, so reserving room above walks the PITCH up and the y negative.
+  const yOfPitch = (pitch: number): number => (PITCH_ORIGIN - pitch) * ENGRAVE.spacePerStep
   /** A lane whose margin is already inside the figure — the ending's and the dynamics'. */
   const spend = (height: number): number => {
-    top -= height
-    return top
+    topPitch += height * PITCH_PER_UNIT
+    return yOfPitch(topPitch)
   }
   /** abcjs's `incTop`: `staff.top += height + margin`, and the mark goes at the result. */
   const reserve = (height: number): number => spend(height + ENGRAVE.aboveStackMargin)

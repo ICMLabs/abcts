@@ -1914,9 +1914,9 @@ system 0 width=861.500 originY=0.000
     timeSignature x=133.223 w=13.038
       glyph timeSigCommon 133.223,0.000
     tempo x=156.261 w=0.000
-      glyph noteheadBlack 156.261,-40.437 scale=0.750
+      glyph noteheadBlack 156.261,-40.438 scale=0.750
       line  163.319,-41.406 -> 163.319,-54.969 t=0.600
-      text  168.619,-37.812 size=20.000 bold "= 66"
+      text  168.619,-37.813 size=20.000 bold "= 66"
     note@-1 x=156.261 w=51.962
       glyph augmentationDot 169.071,3.875
       glyph noteheadBlack 156.261,3.875
@@ -2484,7 +2484,7 @@ system 0 width=796.359 originY=0.000
       glyph timeSig4 75.801,7.750
     rest x=97.596 w=73.485
       glyph restWhole 97.596,-7.750
-      text  97.596,-41.594 size=16.000 "Trompette"
+      text  97.596,-41.595 size=16.000 "Trompette"
     bar x=141.476 w=0.600
       line  141.776,-15.500 -> 141.776,15.500 t=0.600
     rest x=152.476 w=73.485
