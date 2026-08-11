@@ -33,7 +33,7 @@ reproduce goes in `Docs/ABCJS-DIFFERENCES.md` with its evidence and its slug goe
 | harvested geometry | `corpus-abcjs-ranked` | 0 of 174 | 0 of 174 |
 | pixel geometry | `pixel-parity` | 0 of 120 | 0 of 120 |
 | **DOM contract** | **`dom-contract`** | **1 of 25 — TWENTY-FOUR RATCHETED** | 11 of 25, fourteen |
-| **SVG bytes** | **`svg-bytes`** | **151 of 171**; best 22908, median 657 | 164 of 171, best 5186, median 174 |
+| **SVG bytes** | **`svg-bytes`** | **149 of 171**; best 22908, median 651 | 164 of 171, best 5186, median 174 |
 
 **Suite 1158 of 1158. NO REDS. `npx tsc --noEmit` clean. Working tree clean.**
 
@@ -349,6 +349,17 @@ itself, and the first two are the ones whose lesson transfers:
   read: `class=""` without `add_classes`, the generated string with it.
 - **A TEMPO'S RATE IS BOLD**, like the `pre` text beside it: both are `tempofont`, whose
   default is `weight: "bold"`.
+- **A CHORD SYMBOL AND A LYRIC ARE CENTRED BY THEIR ANCHOR**, not by pre-subtracting half
+  a width. `addCentered` plus `relative.js`'s `case "chord"` / `case "lyric"` draw both
+  `anchor: "middle"` (`add-chord.js:109`, `abstract-engraver.js:777`,
+  `draw/relative.js:42`, `:45`) — the same correction the tuplet number already carried,
+  and the same reason: `centre − width / 2` is the same point only when our text metrics
+  agree with the browser's. **AND THE EXTENT MOVES WITH IT** — `getChordDim` takes
+  `offset = this.type === "chord" ? realWidth / 2 : 0` (`relative-element.js:96`), so a
+  chord's lane extent is centred on its anchor and an ANNOTATION's runs rightward from it,
+  which is the same asymmetry the `text-anchor` states. Landing the x without the extent
+  put `corpus-abcjs-ranked` at 3 of 174 on `oy` alone — the lane PACKING reads x, and
+  packing is what decides how many chord lanes the staff reserves.
 
 ### What the FIRST attempt cost, and the LESSON that is now proven
 
@@ -392,17 +403,34 @@ staff-stacking arithmetic are where the remaining inline literals are.
    ```
 
    The families standing now, biggest first:
-   - **THE ROOT'S `height`, 12 rows.** 55 of 171 still differ by ULP after the flip
-     (`{exact: 114, ulpOnly: 55, structural: 2}`), and it is no longer a round trip: it is
-     the ORDER the vertical cursor is summed in. abcjs's `draw.js` calls `moveY` repeatedly
-     and we accumulate differently, so `652.3275` meets `652.3275000000001` and
-     `149.07999999999998` meets `149.08` — **in BOTH directions**, which is what says it is
-     an accumulation order rather than a systematic bias.
-   - **A `<text>`, 5 rows**, differing at `decoration="none" class="" text-anchor` — some
-     remaining attribute or a lyric's trailing `<tspan dy="1.2em"></tspan>`, which abcjs
-     emits because `addLyric` ends every syllable with a `\n`.
-   - **The body's very first bytes, 5 rows**, at `;}</style><title>Sheet Music</title><g`.
+   - **THE ROOT'S `height`, 15 rows, AND THE CAUSE IS NAMED.** 55 of 171 still differ by
+     ULP (`{exact: 114, ulpOnly: 55, structural: 2}`) — in BOTH directions, which is what
+     says it is an accumulation ORDER and not a bias. **abcjs SUMS IN PITCH AND MULTIPLIES
+     ONCE.** `calcHeight` is `Σ (staff.top − staff.bottom)` over the group's voices — a
+     PITCH total — and `engraveStaffLine` spends it as `staffGroup.height * spacing.STEP`,
+     one multiplication per LINE (`creation/calc-height.js`, `draw/draw.js:79-83`). The
+     page is then `renderer.y + padding.bottom`. Ours stacks staves in LENGTHS and sums
+     those, so `(a+b+c)·STEP` meets `a·STEP + b·STEP + c·STEP`.
+     **AND THE PORT IS NOT ONLY A ULP MATTER**: `calcHeight` ignores the inter-staff
+     separation entirely — its own comment says so, "TODO-PER: also add the space between
+     staves" — so on a system where our `intraStaffSep` clamp BINDS, abcjs's advance is
+     shorter than the ink it just drew. Port the expression, then measure `oy` on the
+     harvested table before believing it.
+   - **THE BRACE AND THE BRACKET, 5 rows**, and they are the body's very FIRST bytes.
+     Two differences: abcjs draws a connector AFTER its own staff's lines and before that
+     staff's voice — `printStaff`, then `printBrace(brace)`, then `printBrace(bracket)`,
+     then `drawVoice`, once per staff and only when `isStartVoice(index)`
+     (`draw/staff-group.js:74-113`, `:173-182`) — where ours draws every connector ahead of
+     every staff. And the SHAPE is abcjs's own arithmetic, not a glyph: a brace is
+     `curvyPath`'s two cubics off seven-point tables scaled by the span, a bracket is
+     `straightPath`'s rect plus two quadratic arms, both absolute with NO transform
+     (`draw/brace.js:18-76`). Verified against a golden to the last digit: `xLeft = 15`,
+     `yTop = staff.absoluteY − STEP·10` (our top line), `yBottom` the last staff's
+     `− STEP·2`, and every coordinate RAW — `sprintf`'s `%f` is `parseFloat`, so
+     `132.87 + 110/3.14` prints as `167.90184713375797`.
    - **`clefs.G`'s y, 6 rows.**
+   - **A `<text>` family**, most likely a lyric's trailing `<tspan dy="1.2em"></tspan>` —
+     abcjs emits one because `addLyric` ends every syllable with a `\n`.
    - **A multi-character DYNAMIC is a `<g data-name="dynamics">` of one path per LETTER.**
      `printSymbol`'s multi-char branch opens a group and draws each character with
      `kernSymbols` between them (`draw/print-symbol.js:15-31`), where SMuFL precomposes
@@ -439,7 +467,7 @@ staff-stacking arithmetic are where the remaining inline literals are.
 working tree clean
 npx tsc --noEmit    clean
 npx vitest run      1158 / 1158
-svg bytes           151 of 171   best 22908, median 657
+svg bytes           149 of 171   best 22908, median 651
                     PASSING ratchet: 7 slugs
 DOM contract        1 of 25       PASSING ratchet: 24 slugs
 heights             114 exact / 55 ULP-only / 2 structural

@@ -717,11 +717,14 @@ reds; **seventeen gates and NINE ranked tables** — 0 of 72 audio cases, 0 of 3
 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
 **1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
 **1 of 25 DOM-contract cases with TWENTY-FOUR slugs RATCHETED** — and
-**151 of 171 SVG-byte fixtures, TWENTY of them EXACT** — and **the SVG BYTE TABLE is
-THE ONE OPEN GATE**, at best 22908 / median 657. Its remaining families are listed in
-item 1 of `CHECKPOINT-2026-08-10d.md`, and the biggest is the ROOT's `height`: 55 fixtures
-differ by ULP, and it is the ORDER the vertical cursor is summed in rather than a round
-trip, because it differs in BOTH directions. The oracle lands before the
+**149 of 171 SVG-byte fixtures, TWENTY-TWO of them EXACT** — and **the SVG BYTE TABLE is
+THE ONE OPEN GATE**, at best 22908 / median 651. Its remaining families are listed in
+item 1 of `CHECKPOINT-2026-08-10d.md` and the two biggest are NAMED: the ROOT's `height`,
+where **abcjs sums in PITCH and multiplies by `STEP` ONCE per line** (`calcHeight` +
+`engraveStaffLine`) while we stack in lengths and sum those — and `calcHeight` ignores the
+inter-staff separation outright, so it is not only a ULP matter; and the BRACE, which
+abcjs draws AFTER its own staff's lines and builds from `curvyPath` arithmetic rather than
+from a glyph. The oracle lands before the
 implementation here, as it did for audio and the chord grid, and a table that opens at every
 case is the same signal 54 of 54 was. **No table can name a defect, and that is the normal condition here rather than a
 milestone** — the last four findings all came from building a gate that expresses an axis
