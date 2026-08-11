@@ -1340,6 +1340,21 @@ export interface LayoutStaff {
   readonly voltaTexts: readonly PlacedText[]
   /** Vertical offset of this staff's middle line within its system. */
   readonly originY: number
+  /**
+   * The same origin split into the two terms abcjs spends it in — the system-internal
+   * cursor, and the PITCH that one `moveY(spacing.STEP, staff.top)` multiplies. The pitch
+   * is 0 where the origin is not one product off a pitch (a heading block, or a clamped
+   * staff). See the placement loop.
+   */
+  readonly originCursor: number
+  readonly originPitch: number
+  /**
+   * This staff's origin on the PAGE — `staff1.absoluteY` (`draw/staff-group.js:26`),
+   * built by one running cursor seeded with `padding.top`. The emitter draws from this
+   * rather than summing a system origin and a margin, which is the same terms in a
+   * different grouping and a different double.
+   */
+  readonly absoluteY: number
 }
 
 /** One brace or bracket, as abcjs states it: a left edge and the two staff lines it joins. */
@@ -1382,6 +1397,15 @@ export interface LayoutSystem {
    * Our inter-staff clamp is in it too, as a pitch, because abcjs's is inside `staff.top`.
    */
   readonly heightPitch: number
+  /**
+   * `staffs[0].top` and `staffs[last].bottom`, the two PITCHES `addStaffPadding` reads
+   * (`draw/draw.js:86-87`). abcjs measures the gap between two systems from their own
+   * declared extents and multiplies ONCE — `(nextTopLine + lastBottomLine) * STEP` — so
+   * the placement cannot be written off the y's it has already produced without the round
+   * trip §3 names.
+   */
+  readonly firstTopPitch: number
+  readonly lastBottomPitch: number
   /** Where the system's ink starts — everything before the first staff's own extent. */
   readonly leading: number
   /** The separation spent BEFORE this system — see the placement loop. */
@@ -1397,6 +1421,8 @@ export interface LayoutSystem {
    * otherwise churn every baseline below the break.
    */
   readonly originY: number
+  /** The same offset on the PAGE — the running cursor, seeded with `padding.top`. */
+  readonly absoluteY?: number
 }
 
 export interface Layout {
@@ -9071,6 +9097,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         // resolving it here would silently drop every one that does.
         spannerLines: [],
         originY: 0,
+        originCursor: 0,
+        originPitch: 0,
+        absoluteY: 0,
       }
     })
 
@@ -9241,8 +9270,21 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     let heightPitch = 0
     let leadingCursor = cursor
     let staffIndexInSystem = 0
-    /** Bottom staff LINE of the staff placed before this one, in system coordinates. */
-    let previousBottomLine: number | null = null
+    /**
+     * `lastStaffBottom` — `2 - staff.bottom`, the pitch
+     * `set-upper-and-lower-elements.js:92` carries from one staff of a group to the next.
+     */
+    let lastStaffBottomPitch: number | null = null
+    /**
+     * The two pitches `addStaffPadding` reads — `thisStaffGroup.staffs[0].top` and
+     * `lastStaffGroup.staffs[last].bottom` (`draw/draw.js:86-87`). abcjs measures the gap
+     * between two systems from their DECLARED extents and knows nothing about where
+     * either one landed, so these are the staves' own numbers rather than anything the
+     * placement produced. The TOP is the music-only one: abcjs never puts the top text
+     * into `staff.top`.
+     */
+    let firstTopPitch = 0
+    let lastBottomPitch = 0
     const placed = merged.map((staff) => {
       // Place the top-text block FROM the music: its bottom sits `musicSpace` clear of
       // whatever the music's own top is, which already includes a tempo mark or an
@@ -9260,11 +9302,15 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       let blockSpan = 0
       /** The music-only extent top, when a heading is stacked above it. */
       let musicOnlyTop: number | undefined
+      /** …and the same edge in PITCH, which is what `addStaffPadding` reads. */
+      let musicOnlyTopPitch: number | undefined
       const positioned =
         heading.length === 0
           ? staff.elements
           : (() => {
-              const musicTop = verticalExtent(musicOnly, staff.beams, strict, staff).top
+              const musicExtent = verticalExtent(musicOnly, staff.beams, strict, staff)
+              const musicTop = musicExtent.top
+              musicOnlyTopPitch = musicExtent.topPitch
               // The block's own height, not its last descender: abcjs advances by a
               // rounded line height per row and that trailing space is part of the block.
               const blockBottom = Math.max(...heading.map((el) => el.blockHeight ?? 0))
@@ -9301,7 +9347,53 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             `  topBy=${probeTop}  bottomBy=${probeBottom}  flags=${probeFlags}`,
         )
       }
-      const stacked = cursor - extent.top
+      /**
+       * **A STAFF'S ORIGIN IS ONE PRODUCT OFF A PITCH** — `renderer.moveY(spacing.STEP,
+       * staff1.top); staff1.absoluteY = renderer.y` (`draw/staff-group.js:25-26`), which
+       * is `y += STEP * top`. Ours SUBTRACTED the extent's y, which is that same pitch
+       * already multiplied and then re-added — the round trip §3 names, and it is what put
+       * a glyph's y one ULP out on 19 fixtures.
+       *
+       * A BLOCK'S SPAN STILL HAS NO PITCH, so a staff carrying a heading keeps the y form:
+       * abcjs never puts the top text into `staff.top` at all, and splitting it would be
+       * two roundings where the old shape had one. Same asymmetry as `heightPitch` below,
+       * and for the same reason.
+       */
+      /**
+       * **AND THE INTRA-GROUP SEPARATION IS FOLDED INTO THAT PITCH, NOT CLAMPED ONTO THE
+       * y.** abcjs adds it to `staff.top` during layout, in pitches, before anything is
+       * placed:
+       *
+       *     thisStaffTop         = staff.top - 10
+       *     forcedSpacingBetween = lastStaffBottom + thisStaffTop
+       *     minSpacingInPitches  = spacing.systemStaffSeparation / spacing.STEP
+       *     addedSpace           = minSpacingInPitches - forcedSpacingBetween
+       *     if (addedSpace > 0) staff.top += addedSpace
+       *     …
+       *     lastStaffBottom = 2 - staff.bottom
+       *
+       * (`layout/set-upper-and-lower-elements.js:82-92`.) Which is why `calcHeight` can be
+       * a bare sum of tops and bottoms and still be right — its own TODO says the
+       * separation is missing, and it is not: it is already inside `top`. Ours compared
+       * two absolute y's and divided the difference back into `heightPitch`, so a system
+       * whose cursor started at `spacing.music` got a `heightPitch` one ULP from the same
+       * system's without it — 35.18374193548387 against 35.183741935483866, on a tune
+       * where every system has the same two staves.
+       *
+       * `staffTopMargin` follows the clamp in abcjs and is 0 here, so the order of the two
+       * is unobservable; keeping ours inside `verticalExtent` costs nothing.
+       */
+      const clampedTopPitch = (() => {
+        if (lastStaffBottomPitch === null) return extent.topPitch
+        const thisStaffTop = extent.topPitch - 10
+        const forcedSpacingBetween = lastStaffBottomPitch + thisStaffTop
+        const addedSpace = intraStaffSep / ENGRAVE.spacePerStep - forcedSpacingBetween
+        return addedSpace > 0 ? extent.topPitch + addedSpace : extent.topPitch
+      })()
+      const stacked =
+        musicOnlyTop === undefined
+          ? cursor + clampedTopPitch * ENGRAVE.spacePerStep
+          : cursor - extent.top
       // **THE BLOCK BELONGS TO THE PAGE'S CURSOR, NOT TO THE STAFF'S OWN SPAN.** abcjs's
       // `staffGroup.height` knows nothing about the top text: the page walks THROUGH the
       // block and only then reaches the staff (`draw/draw.js:14-18`). So the span is
@@ -9310,19 +9402,32 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // Assuming the declared height instead lost a whole subtitle row (27.05px) on
       // `synth-timing-05` and 93.18 on `visual-options-01`.
       blockSpan = musicOnlyTop === undefined ? 0 : musicOnlyTop - extent.top
-      if (staffIndexInSystem === 0) leadingCursor = cursor + blockSpan
+      if (staffIndexInSystem === 0) {
+        leadingCursor = cursor + blockSpan
+        firstTopPitch = musicOnlyTopPitch ?? extent.topPitch
+      }
+      lastBottomPitch = extent.bottomPitch
       // The separation is a minimum LINE-to-LINE distance, which is what abcjs measures:
       // `draw.js:86-89` works from each staff's overhang past its own outer lines, so
       // what it pads to is bottom-line to top-line. Comparing origins instead is short by
       // however far the ink reaches beyond the lines — which is the part that varies, and
       // it made the minimum silently never bind.
-      const originY =
-        previousBottomLine === null
-          ? stacked
-          : // LINE to LINE: the origin sits `stepToY(4)` below the top line, which is a
-            // NEGATIVE offset in abcjs's frame — hence the subtraction.
-            Math.max(stacked, previousBottomLine + intraStaffSep - stepToY(4))
-      previousBottomLine = originY + stepToY(-4)
+      const originY = stacked
+      lastStaffBottomPitch = 2 - extent.bottomPitch
+      /**
+       * **THE TWO HALVES OF THIS ORIGIN, KEPT APART SO THE PAGE CAN SPEND THEM IN ABCJS'S
+       * ORDER.** `staff1.absoluteY` is `renderer.y` after ONE `moveY(STEP, staff1.top)`
+       * (`draw/staff-group.js:25-26`), and `renderer.y` at that moment is the page's own
+       * running cursor — `padding.top`, the top text, `spacing.music`, then every system
+       * before this one. Summing a system-relative origin and adding the page's later is
+       * the same terms in a different grouping, and a different double.
+       *
+       * `originPitch` is 0 whenever the origin is NOT one product off a pitch — a staff
+       * carrying a heading block, or one the intra-staff clamp moved — because there the
+       * cursor form is what abcjs's own `staff.top` already absorbs.
+       */
+      const originCursor = musicOnlyTop === undefined ? cursor : originY
+      const originPitch = musicOnlyTop === undefined ? clampedTopPitch : 0
       // In PITCH, as abcjs states it: the staff's own span plus whatever the clamp added,
       // which abcjs carries inside `staff.top` and we apply here.
       // **`calcHeight` ADDS `staff.top` AND THEN `-staff.bottom`**, two additions onto a
@@ -9342,12 +9447,13 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // Nine `visual-title-*` fixtures said so the moment it was.
       heightPitch +=
         blockSpan === 0
-          ? extent.topPitch
+          ? clampedTopPitch
           : -(extent.top + blockSpan) / ENGRAVE.spacePerStep
       heightPitch += -extent.bottomPitch
-      heightPitch += (originY - stacked) / ENGRAVE.spacePerStep
       staffIndexInSystem += 1
-      cursor = originY + extent.bottom + ENGRAVE.staffGap
+      // `renderer.moveY(spacing.STEP, -staff1.bottom)` — ONE product off the pitch, the
+      // mirror of the origin above (`draw/staff-group.js:58`).
+      cursor = originY + -extent.bottomPitch * ENGRAVE.spacePerStep + ENGRAVE.staffGap
       return {
         ...staff,
         elements: positioned,
@@ -9355,6 +9461,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         // the right margin and any prose overhanging it — see `staffLinesFor`.
         staffLines: staffLinesFor(ENGRAVE.marginX + indent, solved.width, staff.staffLineCount),
         originY,
+        originCursor,
+        originPitch,
+        absoluteY: 0,
       }
     })
 
@@ -9362,6 +9471,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     return {
       staves: placed,
       heightPitch,
+      firstTopPitch,
+      lastBottomPitch,
       leading: leadingCursor,
       connectorGlyphs: connectors.glyphs,
       connectorLines: connectors.lines,
@@ -9411,12 +9522,30 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
 
   // Stack the systems, with the same line-to-line minimum the staves use.
   let cursor = 0
+  /**
+   * **THE PAGE'S OWN CURSOR, WALKED IN ABCJS'S ORDER AND SEEDED WITH ITS TOP MARGIN.**
+   * `draw()` opens `renderer.moveY(padding.top)` and every later move lands on top of that
+   * one running number — the top text's rows, `spacing.music`, each system's
+   * `staffGroup.height * STEP`, each `addStaffPadding` (`draw/draw.js:14-92`). A staff's
+   * `absoluteY` is that cursor plus ONE `moveY(STEP, staff.top)`.
+   *
+   * Ours held systems in their own coordinates and let the emitter add the margin at the
+   * end — the same terms grouped as `(system + staff) + margin` where abcjs writes
+   * `((margin + …) + staff)`. It agrees in exact arithmetic and not in the last bits, and
+   * that was the whole of the remaining glyph-y tail.
+   *
+   * The system-relative `cursor` above is kept beside it: everything else in the layout is
+   * expressed relative to a system on purpose, so a break inserted earlier cannot shift a
+   * later system's geometry.
+   */
+  let pageCursor = ENGRAVE.marginTop
   /** Absolute y of the BOTTOM staff line of the last system placed. */
   let previousBottomLine: number | null = null
+  /** `lastStaffGroup.staffs[last].bottom`, in PITCH — what `addStaffPadding` reads. */
+  let previousBottomPitch: number | null = null
   const placed = withCurves.map((system) => {
     const height = systemHeight(system, strict)
     const staves = system.staves
-    const topLineOffset = (staves[0]?.originY ?? 0) + stepToY(4)
     const bottomLineOffset = (staves[staves.length - 1]?.originY ?? 0) + stepToY(-4)
     // A MID-TUNE BLOCK IS ADDITIVE TO THE SEPARATION, NOT ABSORBED BY IT. abcjs draws the
     // nonMusic line first — `renderer.y` moves by its rows — and only then runs
@@ -9427,10 +9556,40 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     const blockH = (staves[0]?.elements ?? [])
       .filter((el) => el.type === 'title' && el.blockAbutsMusic === true)
       .reduce((sum, el) => sum + (el.blockHeight ?? 0), 0)
-    const originY =
-      previousBottomLine === null
-        ? cursor
-        : Math.max(cursor, previousBottomLine + interSystemSep - topLineOffset + blockH)
+    /**
+     * **`addStaffPadding` IS A PITCH SUM WITH ONE MULTIPLY, AND A TOP-UP RATHER THAN A
+     * MAXIMUM.**
+     *
+     *     lastBottomLine     = -(lastStaff.bottom - 2)   // 2 is the bottom staff line
+     *     nextTopLine        = thisStaffGroup.staffs[0].top - 10   // 10 is the top one
+     *     separationInPixels = (nextTopLine + lastBottomLine) * spacing.STEP
+     *     if (separationInPixels < staffSeparation)
+     *       renderer.moveY(staffSeparation - separationInPixels)
+     *
+     * (`draw/draw.js:84-92`.) Ours compared two ABSOLUTE y's — `previousBottomLine +
+     * interSystemSep - topLineOffset` — which is four y's where abcjs has two pitches, and
+     * agrees with it in exact arithmetic and not in the last bits: a fifth system's staff
+     * origin came out 445.06199999999995 against abcjs's 445.062, and every glyph on it
+     * carried the ULP.
+     *
+     * **AND THE BLOCK IS SPENT BEFORE THE DECISION, NOT INSIDE IT.** abcjs draws the
+     * nonMusic line the moment it reaches it and only then pads, so a mid-tune block moves
+     * the cursor and the top-up is measured from the two groups' own extents either way.
+     */
+    const previousBottom = previousBottomPitch
+    /** What `addStaffPadding` moves the cursor by before this system — 0 when it is clear. */
+    const padding =
+      previousBottom === null
+        ? 0
+        : (() => {
+            const naturalSeparation = system.firstTopPitch - 10 + -(previousBottom - 2)
+            const separationInPixels = naturalSeparation * ENGRAVE.spacePerStep
+            return separationInPixels < interSystemSep ? interSystemSep - separationInPixels : 0
+          })()
+    const originY = cursor + padding
+    pageCursor += padding
+    /** This system's absolute top — the page cursor as abcjs's `renderer.y` stands here. */
+    const systemAbsoluteY = pageCursor
 
     /**
      * **A MID-TUNE BLOCK IS DRAWN AT THE TOP OF THE GAP, NOT AT THE BOTTOM OF IT.**
@@ -9481,10 +9640,26 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
      * into `originY` and lets the page telescope through that, which is the same terms in
      * a different grouping and a different double.
      */
-    const gap = originY - cursor
+    const gap = padding
     previousBottomLine = originY + bottomLineOffset
+    previousBottomPitch = system.lastBottomPitch
     cursor = originY + height + ENGRAVE.systemGap
-    return { ...shifted, originY, gap }
+    /**
+     * **AND EACH STAFF'S ABSOLUTE ORIGIN IS THAT CURSOR PLUS ONE PRODUCT.** The staff's
+     * own `originCursor` is where the system's internal walk stood; the page cursor is
+     * added FIRST and the pitch multiplied LAST, which is
+     * `renderer.moveY(spacing.STEP, staff1.top)` exactly.
+     */
+    const withAbsolute = shifted.staves.map((staff) => ({
+      ...staff,
+      absoluteY: systemAbsoluteY + staff.originCursor + staff.originPitch * ENGRAVE.spacePerStep,
+    }))
+    // abcjs advances the page by the block's rows and then by `staffGroup.height * STEP`,
+    // two separate `moveY` calls (`draw/draw.js:54-60`, `:81-82`). Written as one sum they
+    // are the same terms in a different grouping.
+    pageCursor += system.leading
+    pageCursor += system.heightPitch * ENGRAVE.spacePerStep
+    return { ...shifted, staves: withAbsolute, originY, absoluteY: systemAbsoluteY, gap }
   })
 
   // `%%maxStaves` — an INCIPIT. abcjs lays the whole tune out and simply stops drawing

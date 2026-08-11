@@ -80,7 +80,7 @@ system 1 width=700.000 originY=289.245
     note@3 x=579.008 w=30.000
       glyph noteheadBlack 579.008,-34.875
       line  579.308,-34.100 -> 579.308,-5.791 t=0.600
-system 2 width=700.373 originY=378.412
+system 2 width=700.373 originY=378.413
   staff 0 originY=96.207
     staffline 15.000,-7.750 -> 685.373,-7.750 t=0.700
     staffline 15.000,-15.500 -> 685.373,-15.500 t=0.700
@@ -164,7 +164,7 @@ system 2 width=700.373 originY=378.412
       text  635.070,20.875 size=17.000 bold "vous?"
     bar x=684.373 w=0.600
       line  684.673,-38.750 -> 684.673,-7.750 t=0.600
-system 3 width=701.252 originY=501.209
+system 3 width=701.252 originY=501.210
   staff 0 originY=118.602
     staffline 15.000,-7.750 -> 686.252,-7.750 t=0.700
     staffline 15.000,-15.500 -> 686.252,-15.500 t=0.700

@@ -1045,7 +1045,8 @@ const glyphDefs = new Map<GlyphName, string>()
 
   for (const [systemIndex, system] of doc.systems.entries()) {
     // The system's own origin, flattened into every coordinate under it.
-    if (abcjs) oy = (system.originY + OY) * PX
+    // **THE PAGE'S CURSOR, NOT A SUM OF OFFSETS** — see `LayoutStaff.absoluteY`.
+    if (abcjs) oy = (system.absoluteY ?? system.originY + OY) * PX
     /**
      * **THE TOP TEXT COMES FIRST IN ABCJS'S BODY**, before any staff and before the braces
      * — `nonMusic()` runs the whole header block and only then does `drawStaffGroup` start
@@ -1077,7 +1078,7 @@ const glyphDefs = new Map<GlyphName, string>()
       const block: { t?: PlacedText; s?: string; nonMusicIndex: number | undefined }[] = []
       const first = system.staves[0]
       if (first !== undefined) {
-        oy = (system.originY + OY) * PX + first.originY * PX
+        oy = abcjs ? first.absoluteY * PX : (system.originY + OY) * PX + first.originY * PX
         for (const el of first.elements) {
           if (el.blockHeight === undefined) continue
           for (const t of el.texts) block.push({ t, nonMusicIndex: t.nonMusicIndex })
@@ -1257,7 +1258,7 @@ const glyphDefs = new Map<GlyphName, string>()
           ? undefined
           : previous.originY + stepToY(-4) - staff.originY
       // …and the staff's, on top of it. Reset per staff, since `staff.originY` is relative.
-      if (abcjs) oy = (system.originY + OY) * PX + staff.originY * PX
+      if (abcjs) oy = staff.absoluteY * PX
       let staffGroup = ''
       // CORRECTED, by the byte table: abcjs DOES group the staff lines, with or without
       // `add_classes` — `…</path></g><g fill="currentColor" stroke="none" data-name=
