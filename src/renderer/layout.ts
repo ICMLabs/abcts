@@ -873,6 +873,14 @@ export interface PlacedGlyph {
    * the above-staff stack.
    */
   readonly reserve?: readonly [top: number, bottom: number]
+  /**
+   * The SAME two edges in abcjs's own PITCH, where the producer knows them.
+   *
+   * `calcHeight` sums `staff.top` and `-staff.bottom` in pitch and multiplies by `STEP`
+   * once, so recovering the pitch by dividing the y back is a different double — see
+   * `verticalExtent`. Absent means "divide", which is what every reserve did before.
+   */
+  readonly reservePitch?: readonly [top: number, bottom: number]
 }
 
 export interface PlacedLine {
@@ -1765,6 +1773,9 @@ function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null 
     {
       ...glyphAt(name, x + ENGRAVE.clefIndent, step),
       reserve: [pitchStep(clefTop), pitchStep(clefBottom)],
+      // `{ top: height + clefPos + ofs, bottom: clefPos + ofs }` is stated in PITCH and
+      // `calcY` converts once (`create-clef.js:37`), so the extent takes the pitch itself.
+      reservePitch: [clefTop, clefBottom],
     },
   ]
 
@@ -3206,6 +3217,9 @@ function layoutNoteheads(
    * is deliberately, with the failed shape recorded so it is not tried a third time.
    */
   const headDeclaredHalf = (glyphsFor(strict).get(headName)?.declaredHeight ?? 0) / 2
+  /** `symbolHeightInPitches(c) * scale / 2` — the same half box, in PITCH. */
+  const headHalfPitch =
+    (glyphsFor(strict).get(headName)?.declaredHeight ?? 0) / ENGRAVE.spacePerStep / 2
   for (const [position, step] of steps.entries()) {
     const dx = offsetAt[position] ?? 0
     const y = stepToY(step)
@@ -3214,6 +3228,11 @@ function layoutNoteheads(
       role: 'notehead',
       ...(stepped[position] === undefined ? {} : { dataName: writtenNote(stepped[position].pitch) }),
       reserve: [y - headDeclaredHalf, y + headDeclaredHalf],
+      // …AND THE SAME BOX IN PITCH, which is how abcjs states it and how `calcHeight` sums
+      // it: `thickness = symbolHeightInPitches(c) * scale`, `top = pitch + thickness / 2`
+      // (`create-note-head.js:34`, `relative-element.js:22-25`). The y above stays a length
+      // added to a y because that is what the PLACEMENT needs; only the extent reads this.
+      reservePitch: [step + PITCH_ORIGIN + headHalfPitch, step + PITCH_ORIGIN - headHalfPitch],
       // `steps` is sorted ascending, so the index IS the chord position from the bottom.
       ...(steps.length > 1 ? { chordPos: position + 1 } : {}),
     })
@@ -9156,9 +9175,20 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // against abcjs's own dump on `visual-title-07`: its `H` is 14.768774193548388 and
       // `(bottom - top) / STEP` gives …387. The clamp goes on as its own term, because
       // abcjs carries its equivalent inside `staff.top`.
-      const pitchOfY = (y: number): number => -y / ENGRAVE.spacePerStep
-      heightPitch += pitchOfY(extent.top + blockSpan)
-      heightPitch += -pitchOfY(extent.bottom)
+      // **AND THE TWO EXTREMES ARE READ IN PITCH, NOT DIVIDED BACK OUT OF y.** See
+      // `verticalExtent`: `calcHeight` sums the pitches and multiplies by `STEP` once, and
+      // `x * STEP / STEP` is not `x`. A BLOCK's span is a length with no pitch of its own,
+      // so it is the one term that still divides.
+      // …AND A BLOCK'S SPAN IS A LENGTH WITH NO PITCH OF ITS OWN, so a system carrying one
+      // keeps the single division it always had. abcjs never puts the top text into
+      // `staff.top` at all — the page walks THROUGH the block — so this term is ours, and
+      // splitting it into `topPitch - blockSpan / STEP` is two roundings where it was one.
+      // Nine `visual-title-*` fixtures said so the moment it was.
+      heightPitch +=
+        blockSpan === 0
+          ? extent.topPitch
+          : -(extent.top + blockSpan) / ENGRAVE.spacePerStep
+      heightPitch += -extent.bottomPitch
       heightPitch += (originY - stacked) / ENGRAVE.spacePerStep
       staffIndexInSystem += 1
       cursor = originY + extent.bottom + ENGRAVE.staffGap
@@ -11151,7 +11181,13 @@ interface StaffFurniture {
   /** abcjs's declared box per tuplet — NOT the bracket's drawn lines. */
   readonly tupletReserves?: readonly { top: number; bottom: number }[]
   /** abcjs's declared box per tie and slur, applied AFTER the lanes. */
-  readonly curveReserves?: readonly { top: number; bottom: number }[]
+  readonly curveReserves?: readonly {
+    top: number
+    bottom: number
+    /** The same two edges in abcjs PITCH where the producer knows them — see `verticalExtent`. */
+    topPitch?: number
+    bottomPitch?: number
+  }[]
   readonly tupletLines?: readonly PlacedLine[]
   readonly tupletTexts?: readonly PlacedText[]
   readonly voltaLines?: readonly PlacedLine[]
@@ -11182,11 +11218,27 @@ function verticalExtent(
   beams: readonly PlacedLine[] = [],
   strict = true,
   furniture: StaffFurniture = {},
-): { top: number; bottom: number; inkBottom: number } {
+): { top: number; bottom: number; inkBottom: number; topPitch: number; bottomPitch: number } {
   // The staff itself is always present, spanning steps 4 to -4.
   let top = stepToY(4)
   let bottom = stepToY(-4)
-  const include = (a: number, b: number) => {
+  /**
+   * **THE SAME TWO EXTREMES IN abcjs's OWN PITCH, CARRIED BESIDE THE y.**
+   *
+   * `calcHeight` sums `staff.top` and `-staff.bottom` in PITCH and multiplies by `STEP`
+   * ONCE (`creation/calc-height.js:8-10`), and every contributor to those two numbers is a
+   * pitch expression abcjs never converts — `pitch ± thickness / 2`,
+   * `gracepitch + 7 * gracescale`, `minpitch + 1/3`. Recovering the pitch by dividing the y
+   * back is NOT the same double: `x * STEP / STEP` is not `x`, which is why porting one
+   * site's reserve "the abcjs way" measurably made it worse (CHECKPOINT-2026-08-11 §3).
+   *
+   * So the extent carries both. A caller that knows its pitch passes it; one that does not
+   * falls back to the division, which is exactly what the whole extent did before. The
+   * redundancy is deliberate — abcjs's structure first.
+   */
+  let topPitch = 4 + PITCH_ORIGIN
+  let bottomPitch = -4 + PITCH_ORIGIN
+  const include = (a: number, b: number, ap?: number, bp?: number) => {
     if (PROBE) {
       const who = (new Error().stack ?? '')
         .split('\n')[2]
@@ -11195,8 +11247,16 @@ function verticalExtent(
       if (a < top) probeTop = `${who} ${a.toFixed(4)}`
       if (b > bottom) probeBottom = `${who} ${b} `
     }
-    top = Math.min(top, a)
-    bottom = Math.max(bottom, b)
+    // A SMALLER y IS A HIGHER PITCH, so the two extremes move together and the pitch that
+    // wins is the one belonging to the y that wins.
+    if (a < top) {
+      top = a
+      topPitch = ap ?? -a / ENGRAVE.spacePerStep
+    }
+    if (b > bottom) {
+      bottom = b
+      bottomPitch = bp ?? -b / ENGRAVE.spacePerStep
+    }
   }
   // Tuplet brackets and volta endings reserve a FIXED LANE beyond the top (or bottom) NOTE,
   // not their drawn geometry. abcjs adds `endingHeightAbove` (`set-upper-and-lower-
@@ -11326,7 +11386,7 @@ function verticalExtent(
         continue
       }
       if (g.reserve !== undefined) {
-        include(g.reserve[0], g.reserve[1])
+        include(g.reserve[0], g.reserve[1], g.reservePitch?.[0], g.reservePitch?.[1])
         continue
       }
       const glyph = glyphsFor(strict).get(g.name) ?? GLYPHS[g.name]
@@ -11433,7 +11493,17 @@ function verticalExtent(
    * before the `TieElem` push. `anchorLyrics` reads this rather than measuring its own.
    */
   const inkBottom = bottom
+  /** Every lane below is abcjs's own `staff.top += …` / `staff.bottom -= …`, in PITCH. */
+  const raise = (pitch: number): void => {
+    top -= pitch * ENGRAVE.spacePerStep
+    topPitch += pitch
+  }
+  const lower = (pitch: number): void => {
+    bottom += pitch * ENGRAVE.spacePerStep
+    bottomPitch -= pitch
+  }
   if (Number.isFinite(lyricBottom)) {
+    const wasBottom = bottom
     bottom = Math.max(
       bottom,
       // `height - size + STEP`, and the `- size` used to be a hard `- 17` because 17 is
@@ -11444,6 +11514,9 @@ function verticalExtent(
       lyricBottom + lyricLaneHeight + ENGRAVE.spacePerStep - lyricFontSize,
       lyricBottom + lyricLaneHeight + ENGRAVE.spacePerStep - lyricFontSize,
     )
+    // A LYRIC LANE IS A LENGTH, not a pitch — it comes from a FONT — so its pitch is the
+    // division, as it was before. Recorded rather than faked.
+    if (bottom !== wasBottom) bottomPitch = -bottom / ENGRAVE.spacePerStep
   }
 
   // Apply the tuplet/volta ending lane now that `top`/`bottom` are the NOTE extent: a fixed
@@ -11465,8 +11538,8 @@ function verticalExtent(
   // from a `musicTop` that already carries them.
   const hasBlock = elements.some((el) => el.type === 'title')
   const aboveSpent = hasBlock || furniture.aboveStackPlaced === true
-  if (sawDynamicBelow) bottom += ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
-  if (sawDynamicAbove && !aboveSpent) top -= ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
+  if (sawDynamicBelow) lower(ENGRAVE.dynamicBelowReserve)
+  if (sawDynamicAbove && !aboveSpent) raise(ENGRAVE.dynamicBelowReserve)
   // THE LANE EXTENDS THE MUSIC, AND ONLY THE MUSIC — so not on a pass that is measuring a
   // top-text block as well.
   //
@@ -11496,13 +11569,12 @@ function verticalExtent(
   // branch, and 2 against a volta's 5 + 1 is four pitch, exactly the 15.49px a ladder of
   // five control tunes put on `"D7"…|1…` and on nothing simpler. A tuplet's lane takes the
   // same branch, since abcjs stores both in the one `endingHeightAbove`.
-  const lane = (pitch: number) => (pitch + ENGRAVE.laneMargin) * ENGRAVE.spacePerStep
+  const lane = (pitch: number) => pitch + ENGRAVE.laneMargin
   if (endingAbove > 0 && !hasBlock && !aboveSpent)
-    top -=
-      furniture.chordLaneAbove === true
-        ? ENGRAVE.endingOverChordLane * ENGRAVE.spacePerStep
-        : lane(endingAbove)
-  if (endingBelow > 0 && !hasBlock) bottom += lane(endingBelow)
+    raise(
+      furniture.chordLaneAbove === true ? ENGRAVE.endingOverChordLane : lane(endingAbove),
+    )
+  if (endingBelow > 0 && !hasBlock) lower(lane(endingBelow))
 
   // A TIE OR SLUR PUSHES THE LANES' RESULT — IT DOES NOT GO UNDER THEM.
   //
@@ -11516,11 +11588,18 @@ function verticalExtent(
   // pitch out, always on a staff that also had a lane, and always by the amount the curve
   // poked past the music underneath it.
   for (const r of furniture.curveReserves ?? []) {
-    top = Math.min(top, r.top)
-    bottom = Math.max(bottom, r.bottom)
+    // A curve's reserve is `max(anchor.pitch) + 4` in abcjs, a PITCH sum — see
+    // `NoteAnchor.pitchStep`, which `curveReserves` already carries where it can.
+    include(r.top, r.bottom, r.topPitch, r.bottomPitch)
   }
 
-  return { top: top - ENGRAVE.marginY, bottom: bottom + ENGRAVE.marginY, inkBottom }
+  return {
+    top: top - ENGRAVE.marginY,
+    bottom: bottom + ENGRAVE.marginY,
+    inkBottom,
+    topPitch: topPitch + ENGRAVE.marginY / ENGRAVE.spacePerStep,
+    bottomPitch: bottomPitch - ENGRAVE.marginY / ENGRAVE.spacePerStep,
+  }
 }
 
 function layoutEvent(
