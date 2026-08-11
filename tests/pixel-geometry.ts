@@ -185,6 +185,8 @@ export function absolutePixels(svg: string): PixelDoc {
 
   const out: PixelItem[] = []
   const stack = [{ x: 0, y: 0 }]
+  /** The enclosing groups' `data-name`s — see the `<g>` branch below. */
+  const groups: string[] = []
   // `<defs>` holds DEFINITIONS. A browser draws none of it directly — only the `<use>`
   // elements that reference it — so counting its contents would report every deduplicated
   // outline twice: once where it is defined and once where it is placed.
@@ -194,7 +196,10 @@ export function absolutePixels(svg: string): PixelDoc {
   for (const m of svg.matchAll(tagRe)) {
     const [, close, tag = '', attrs = '', selfClose] = m
     if (close) {
-      if (tag === 'g') stack.pop()
+      if (tag === 'g') {
+        stack.pop()
+        groups.pop()
+      }
       if (tag === 'defs') inDefs = false
       continue
     }
@@ -216,6 +221,13 @@ export function absolutePixels(svg: string): PixelDoc {
     const here =
       tr?.[1] !== undefined && tr[2] !== undefined ? { x: top.x + +tr[1], y: top.y + +tr[2] } : top
     if (tag === 'g' && !selfClose) {
+      // **A GROUP'S `data-name` BELONGS TO ITS CHILDREN TOO.** A multi-character symbol —
+      // a time signature, a multi-letter DYNAMIC — is `<g data-name="…">` round one
+      // UNNAMED path per character (`draw/print-symbol.js:16-31`), so a comparison keyed on
+      // the name found nothing at all once our markup started doing the same. The gate was
+      // reading its own output, and the fix is to widen the REPRESENTATION rather than to
+      // key on something else.
+      groups.push(/data-name="([^"]*)"/.exec(attrs)?.[1] ?? groups[groups.length - 1] ?? '')
       stack.push(here)
       continue
     }
@@ -225,7 +237,8 @@ export function absolutePixels(svg: string): PixelDoc {
     // with `data-name`, and a barline is one of the things that has the second and not the
     // first. Without this a comparison simply cannot ask about barlines, which is the audit
     // lesson one field over: a representation can only express what it carries.
-    const name = /data-name="([^"]*)"/.exec(attrs)?.[1] ?? ''
+    const name =
+      /data-name="([^"]*)"/.exec(attrs)?.[1] ?? groups[groups.length - 1] ?? ''
     let lx: number | null = null
     let ly: number | null = null
     let lw: number | null = null

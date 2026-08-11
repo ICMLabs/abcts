@@ -35,6 +35,15 @@
  * position, where SMuFL distinguishes `articStaccatoAbove` from `articStaccatoBelow`.
  */
 export const SMUFL_TO_ABCJS: Readonly<Record<string, string>> = {
+  // A DYNAMIC IS LETTERS, and these three are the letters. abcjs composes `pppp` from four
+  // `p` glyphs and `mf` from an `m` and an `f` (`draw/print-symbol.js:17-30`), so the map
+  // carries the SINGLE-letter SMuFL names and the renderer decomposes. The precomposed
+  // `dynamicPP` … `dynamicFFFF` deliberately stay unmapped — see group 2 above — and were
+  // reaching BRAVURA in strict for want of an entry here, which is the class the 2026-08-05
+  // audit closed.
+  dynamicPiano: 'p',
+  dynamicForte: 'f',
+  dynamicMezzo: 'm',
   // Noteheads
   // A BREVE — `chartable.note[-1]`, which abcjs reaches for any note two whole notes
   // long. `G8` under `L:1/4` is one, and every `clefs` fixture is exactly that.

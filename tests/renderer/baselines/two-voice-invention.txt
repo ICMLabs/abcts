@@ -28,7 +28,8 @@ system 0 width=792.750 originY=0.000
       text  84.306,-67.125 size=20.000 bold "= 100"
     note@-6 x=71.948 w=30.000
       glyph noteheadBlack 71.948,0.000
-      glyph dynamicMP 71.948,71.870
+      glyph dynamicMezzo 71.948,71.870
+      glyph dynamicPiano 86.635,71.870
       line  69.948,0.000 -> 83.758,0.000 t=0.700
       line  81.458,-0.775 -> 81.458,-38.822 t=0.600
     note@-5 x=93.338 w=30.000

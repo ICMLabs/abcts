@@ -1774,24 +1774,77 @@ const glyphDefs = new Map<GlyphName, string>()
       // (`draw/dynamics.js:11`) and `generate('dynamics decoration')` for a hairpin
       // (`draw/crescendo.js:34`). abcjs's contract shows both spellings side by side, so
       // it is a quirk to reproduce rather than one of them to pick.
+      /**
+       * **A MULTI-LETTER DYNAMIC IS A GROUP OF PLAIN PATHS.** `printSymbol` opens
+       * `<g data-name="dynamics" class="…">` and gives each LETTER only `{stroke, fill}` —
+       * the class and the name belong to the group, not to its children
+       * (`draw/print-symbol.js:16-31`). A single-letter one takes the other arm and carries
+       * all four attributes itself. `PlacedGlyph.group` is what tells them apart.
+       */
+      /**
+       * **`otherchildren` IS ONE INTERLEAVED LIST IN ADD ORDER**, so a hairpin written
+       * between two dynamics is DRAWN between them (`draw/voice.js:64-90`). Ours held two
+       * buckets and emptied the dynamics one first. Merged by x below, which is the add
+       * order for a single voice: a `CrescendoElem` is added where its `<(` is seen, which
+       * is where its left arm starts.
+       *
+       * **A MULTI-LETTER DYNAMIC IS A GROUP OF PLAIN PATHS.** `printSymbol` opens
+       * `<g data-name="dynamics" class="…">` and gives each LETTER only `{stroke, fill}` —
+       * the class and the name belong to the group, not to its children
+       * (`draw/print-symbol.js:16-31`). A single-letter one takes the other arm and carries
+       * all four attributes itself. `PlacedGlyph.group` names the kind and `groupStart`
+       * marks the occurrence.
+       */
+      const others: { x: number; s: string }[] = []
+      let dynBuf: string[] = []
+      let dynX = 0
+      const flushDynamic = (): void => {
+        if (dynBuf.length > 0) others.push({ x: dynX, s: `${dynBuf.join('')}</g>` })
+        dynBuf = []
+      }
       for (const g of dynamics) {
-        parts.push(
+        const grp = g.group ?? null
+        if (grp === null) {
+          flushDynamic()
+          others.push({
+            x: g.x,
+            s: glyphMarkup(
+              g.name,
+              g.x,
+              g.y,
+              g.scale,
+              // The name goes in the ATTRIBUTES rather than through `dataName`, because a
+              // SCALED glyph takes `glyphMarkup`'s transform path, which writes the
+              // attribute string and nothing else. The ORDER is `svg.js:path`'s key order
+              // over `printSymbol`'s options — class, stroke, fill, then the name.
+              ` class="${classes.generate('decoration dynamics')}" stroke="none" ` +
+                `fill="currentColor" data-name="${ABCJS_DATA_NAMES.dynamic}"`,
+              g.role,
+            ),
+          })
+          continue
+        }
+        if (g.groupStart === true) {
+          flushDynamic()
+          dynX = g.x
+          dynBuf.push(`<g${attrIfAny(classes.generate('decoration dynamics'))} data-name="${grp}">`)
+        }
+        dynBuf.push(
           glyphMarkup(
             g.name,
             g.x,
             g.y,
             g.scale,
-            // The name goes in the ATTRIBUTES rather than through `dataName`, because a
-            // SCALED glyph takes `glyphMarkup`'s transform path, which writes the
-            // attribute string and nothing else. The ORDER is `svg.js:path`'s key order
-            // over `printSymbol`'s options — class, stroke, fill, then the name — and it
-            // differs from an in-group glyph's because this one is not in a group.
-            ` class="${classes.generate('decoration dynamics')}" stroke="none" ` +
-              `fill="currentColor" data-name="${ABCJS_DATA_NAMES.dynamic}"`,
+            ' stroke="none" fill="currentColor"',
             g.role,
+            // Inside the group abcjs names NONE of the children — `printSymbol` hands them
+            // `{stroke, fill}` and nothing else — and `'' ?? x` is `''`, so this suppresses
+            // the attribute rather than falling back to the glyph key.
+            '',
           ),
         )
       }
+      flushDynamic()
       /**
        * **A BRACKET IS A GROUP HOLDING ONE PATH AND ITS NUMBER.** Both `drawEnding` and
        * `drawTriplet` open a `<g>`, write EVERY segment as a single `printPath` `d`, add
@@ -1928,10 +1981,12 @@ const glyphDefs = new Map<GlyphName, string>()
           const d =
             `M ${round2(a.x1)} ${round2(a.y1)} L ${round2(a.x2)} ${round2(a.y2)} ` +
             `M ${round2(b.x1)} ${round2(b.y1)} L ${round2(b.x2)} ${round2(b.y2)}`
-          parts.push(
-            `<path d="${d}" highlight="stroke" stroke="currentColor" ` +
+          others.push({
+            x: a.x1,
+            s:
+              `<path d="${d}" highlight="stroke" stroke="currentColor" ` +
               `class="${classes.generate('dynamics decoration')}" data-name="dynamics"></path>`,
-          )
+          })
           continue
         }
         const named = line.role === 'dynamic' ? 'dynamics' : 'glissando'
@@ -1939,14 +1994,18 @@ const glyphDefs = new Map<GlyphName, string>()
           line.role === 'dynamic'
             ? classes.generate('dynamics decoration')
             : classes.generate('glissando')
-        parts.push(
-          lineToRect(
+        others.push({
+          x: TL(line).x1,
+          s: lineToRect(
             TL(line),
             abcjs ? ` class="${cls}" data-name="${named}"` : ` class="${prefix}-decoration"`,
             abcjs,
           ),
-        )
+        })
       }
+      // …and the two buckets go out as ONE list in x order. `Array.sort` is stable, so a
+      // dynamic and a hairpin starting at the same x keep the order they were built in.
+      for (const o of others.sort((p1, p2) => p1.x - p2.x)) parts.push(o.s)
       // THE NUMBER CARRIES NO CLASS, and that is abcjs's choice rather than an omission:
       // `drawTriplet` passes `noClass: true` and `name: "" + params.number`
       // (`draw/triplet.js:11`), so its golden emits `data-name="3"` and nothing else. The

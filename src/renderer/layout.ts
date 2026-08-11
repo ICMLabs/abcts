@@ -821,9 +821,17 @@ export interface PlacedGlyph {
    * (`draw/print-symbol.js:14-30`). A `12` numerator, a `2+3` additive one and an `mf`
    * are all that shape; a single digit is a bare `data-name="3"` path.
    *
-   * Consecutive glyphs sharing this string are wrapped together by the emitter.
+   * Consecutive glyphs sharing this string are wrapped together by the emitter — see
+   * `groupStart`, which is what keeps two ADJACENT groups of the same name apart.
    */
   readonly group?: string
+  /**
+   * Opens a NEW group even though the previous glyph shared this one's `group` string.
+   *
+   * Two dynamics in a row are two `<g data-name="dynamics">` elements, not one holding
+   * every letter of both — the name is the KIND and the group is the OCCURRENCE.
+   */
+  readonly groupStart?: boolean
   /**
    * Position within a CHORD, 1 = lowest pitch, counting upward. Absent on a single note.
    *
@@ -3798,6 +3806,33 @@ function layoutBar(x: number, kind: Barline, strict = true): LayoutElement {
  * approximated with a glyph that means something else: an Irish roll is not a turn, and
  * drawing one for the other is wrong output, which is worse than absent output.
  */
+/**
+ * The single-letter glyphs abcjs composes a dynamic from — see the dynamic branch of
+ * `decorationGlyphs`. `s` and `z` are absent because this repo's Bravura table has no
+ * single-letter name for them, so `sfz` still draws precomposed.
+ */
+const ABCJS_DATA_NAMES_DYNAMIC = 'dynamics'
+
+const DYNAMIC_LETTERS: Readonly<Record<string, GlyphName | undefined>> = {
+  p: 'dynamicPiano',
+  f: 'dynamicForte',
+  m: 'dynamicMezzo',
+}
+
+/**
+ * `kernSymbols` — "just some adjustments to make it look better"
+ * (`draw/print-symbol.js:47-57`). The advance between two dynamic letters is the FIRST
+ * one's width, reduced for three specific pairs.
+ */
+const kernDynamic = (last: string, next: string, width: number): number =>
+  last === 'f' && next === 'f'
+    ? (width * 2) / 3
+    : last === 'p' && next === 'p'
+      ? (width * 5) / 6
+      : last === 'f' && next === 'z'
+        ? (width * 5) / 8
+        : width
+
 const DECORATIONS: Readonly<
   Record<
     string,
@@ -4285,7 +4320,41 @@ function decorationGlyphs(
       // (`creation/decoration.js:67-85`, `draw/dynamics.js:8`). No `deltaX`, no
       // `getSymbolWidth`, no `getSymbolAlign` — none of that path runs for a dynamic.
       // Centring it on the head put every one 1.37px right of abcjs's.
-      out.push({ name: glyph, x: headX, y: stepToY(lane), role: 'dynamic' })
+      /**
+       * **A DYNAMIC IS LETTERS, ONE PATH EACH, IN A GROUP.** `printSymbol` branches on
+       * `symbol.length > 1 && symbol.indexOf(".") < 0` and opens
+       * `<g data-name="dynamics">` round one path PER CHARACTER, each drawn with
+       * `{stroke, fill}` alone — no name, no class (`draw/print-symbol.js:16-31`). And the
+       * step between them is KERNED: `f`+`f` is two thirds of an `f`, `p`+`p` five sixths
+       * of a `p`, `f`+`z` five eighths (`:47-57`).
+       *
+       * SMuFL precomposes them, so ours drew ONE `dynamicPPPP` — a Bravura figure reachable
+       * in strict, which is the class the 2026-08-05 audit closed, surviving because the
+       * name was ABSENT from `SMUFL_TO_ABCJS` rather than present and wrong.
+       *
+       * `sfz` still draws precomposed: abcjs composes it from `s`, `f` and `z`, and this
+       * repo's Bravura table has no single-letter `s` or `z` to name.
+       */
+      const chars = [...name]
+      const letters = strict ? chars.map((c) => DYNAMIC_LETTERS[c]) : []
+      if (letters.length > 1 && letters.every((g) => g !== undefined)) {
+        let dx = 0
+        letters.forEach((letter, i) => {
+          if (letter === undefined) return
+          out.push({
+            name: letter,
+            x: headX + dx,
+            y: stepToY(lane),
+            role: 'dynamic',
+            group: ABCJS_DATA_NAMES_DYNAMIC,
+            ...(i === 0 ? { groupStart: true } : {}),
+          })
+          const next = chars[i + 1]
+          if (next !== undefined) dx += kernDynamic(chars[i] ?? '', next, table.width(letter))
+        })
+      } else {
+        out.push({ name: glyph, x: headX, y: stepToY(lane), role: 'dynamic' })
+      }
     }
   }
 

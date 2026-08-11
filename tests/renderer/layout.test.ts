@@ -1827,11 +1827,15 @@ describe('decoration coverage', () => {
   })
 
   it("draws every dynamic in abcjs's volumeDecoration set", () => {
-    // Only `p` and `f` were mapped. SMuFL precomposes the multi-letter ones, so `mp` is a
-    // single glyph rather than an `m` and a `p` placed side by side.
-    expect(glyphsOf('!mp!')).toEqual(['dynamicMP'])
-    expect(glyphsOf('!ff!')).toEqual(['dynamicFF'])
-    expect(glyphsOf('!pp!')).toEqual(['dynamicPP'])
+    // **A DYNAMIC IS LETTERS.** `printSymbol` draws `mp` as an `m` and a `p` side by side,
+    // kerned, inside one `<g data-name="dynamics">` (`draw/print-symbol.js:16-31`). This
+    // test asserted the SMuFL precomposed glyph — which is what strict was drawing, a
+    // Bravura figure reachable in strict for want of a `SMUFL_TO_ABCJS` entry.
+    expect(glyphsOf('!mp!')).toEqual(['dynamicMezzo', 'dynamicPiano'])
+    expect(glyphsOf('!ff!')).toEqual(['dynamicForte', 'dynamicForte'])
+    expect(glyphsOf('!pp!')).toEqual(['dynamicPiano', 'dynamicPiano'])
+    // `sfz` still draws precomposed: abcjs composes it from `s`, `f` and `z`, and this
+    // repo's Bravura table has no single-letter `s` or `z` to name. Recorded, not faked.
     expect(glyphsOf('!sfz!')).toEqual(['dynamicSforzando1'])
   })
 

@@ -371,7 +371,8 @@ system 1 width=700.552 originY=362.347
       glyph noteheadHalf 140.213,-15.500
       glyph noteheadHalf 140.213,-27.125
       glyph noteheadHalf 140.213,-34.875
-      glyph dynamicMP 140.213,21.313
+      glyph dynamicMezzo 140.213,21.313
+      glyph dynamicPiano 154.900,21.313
       line  140.713,-33.583 -> 140.713,11.625 t=1.000
     bar x=260.770 w=0.600
       line  261.070,-38.750 -> 261.070,-7.750 t=0.600
@@ -3177,7 +3178,8 @@ system 9 width=700.625 originY=2377.783
       glyph noteheadHalf 423.126,-15.500
       glyph noteheadHalf 423.126,-27.125
       glyph noteheadHalf 423.126,-34.875
-      glyph dynamicMP 423.126,17.418
+      glyph dynamicMezzo 423.126,17.418
+      glyph dynamicPiano 437.813,17.418
       line  423.626,-33.583 -> 423.626,11.625 t=1.000
     bar x=540.996 w=0.600
       line  541.296,-38.750 -> 541.296,-7.750 t=0.600
@@ -4525,7 +4527,8 @@ system 13 width=700.882 originY=3387.436
       glyph accidentalFlat 408.741,-31.000
     note@3 x=425.491 w=30.000
       glyph noteheadBlack 425.491,-34.875
-      glyph dynamicMP 425.491,3.875
+      glyph dynamicMezzo 425.491,3.875
+      glyph dynamicPiano 440.178,3.875
       line  425.791,-34.100 -> 425.791,-5.812 t=0.600
     note@4 x=454.629 w=30.000
       glyph noteheadBlack 454.629,-38.750
@@ -6147,7 +6150,8 @@ system 17 width=700.513 originY=4474.987
       glyph accidentalFlat 572.288,-19.375
     note@0 x=589.038 w=30.000
       glyph noteheadBlack 589.038,-23.250
-      glyph dynamicMF 589.038,9.688
+      glyph dynamicMezzo 589.038,9.688
+      glyph dynamicForte 603.725,9.688
       line  598.548,-24.025 -> 598.548,-65.970 t=0.600
     note@4 x=612.907 w=30.000
       glyph noteheadBlack 612.907,-38.750
@@ -6462,7 +6466,8 @@ system 18 width=700.815 originY=4765.828
     note@0,7 x=467.106 w=21.213
       glyph noteheadBlack 467.106,-23.250
       glyph noteheadBlack 467.106,-50.375
-      glyph dynamicFF 467.106,27.125
+      glyph dynamicForte 467.106,27.125
+      glyph dynamicForte 477.876,27.125
       line  465.106,-46.500 -> 478.916,-46.500 t=0.700
       line  476.616,-24.025 -> 476.616,-81.375 t=0.600
     note@-1,6 x=490.716 w=21.213
