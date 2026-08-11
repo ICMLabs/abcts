@@ -334,9 +334,14 @@ const CLEF_NAMES: ReadonlyArray<readonly [string, ClefShape, number]> = [
   ['baritone', 'F', 3],
   ['mezzosoprano', 'C', 2],
   ['soprano', 'C', 1],
-  // Line 2, like treble — see `CLEF_REFERENCE`. Neither draws a glyph, but both keep
-  // treble's pitch mapping, measured off abcjs's own output.
-  ['perc', 'percussion', 2],
+  // **A PERCUSSION CLEF SITS ON THE MIDDLE LINE AND STILL READS LIKE TREBLE.** abcjs's
+  // table gives it `{ pitch: 6, mid: 0 }` (`abc_parse_key_voice.js:35`) — where treble is
+  // `{ pitch: 4, mid: 0 }` — so its two columns disagree: the GLYPH goes on line 3 and the
+  // PITCH mapping is treble's. Ours derives the mapping FROM the line, so line 2 drew the
+  // glyph 7.75px low on all four percussion fixtures; line 3 with a matching
+  // `CLEF_REFERENCE` keeps B4 on the middle line and moves only the glyph.
+  ['perc', 'percussion', 3],
+  // `none` carries no `pitch` at all — it draws nothing — so its line is only a mapping.
   ['none', 'none', 2],
 ]
 

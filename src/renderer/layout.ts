@@ -1463,7 +1463,10 @@ const CLEF_REFERENCE: Readonly<Record<ClefShape, number>> = {
   //
   // Reading them as a C clef on the middle line — "so notes land somewhere sane" — put
   // every note 3 staff spaces high, and the staff under it ~11.8px low in compensation.
-  percussion: 32,
+  // …and 34 rather than treble's 32 because a percussion clef's own LINE is 3, not 2:
+  // `middleLineIndex` subtracts `(line - 3) * 2`, so the two move together and B4 stays on
+  // the middle line. abcjs states the pair independently (`pitch: 6, mid: 0`).
+  percussion: 34,
   none: 32,
 }
 
