@@ -4339,6 +4339,12 @@ function decorationGlyphs(
       y,
       role: 'decoration',
       reserve: [y, y],
+      // …AND THE POINT IS A PITCH. `closeY` is abcjs's `yPos` and its `RelativeElement`
+      // reports `top === bottom === pitch`, which `staff.top` then MAXES with the other
+      // elements' pitches and `calcHeight` sums (`decoration.js:47`,
+      // `relative-element.js:18-21`). Handing the extent only the y makes it divide back,
+      // and `x * STEP / STEP` is not `x`.
+      reservePitch: [closeY, closeY],
     })
   }
 
@@ -4362,14 +4368,31 @@ function decorationGlyphs(
 
     if (spec.place === 'ornament') {
       const height = heightInPitches(glyph) + ENGRAVE.decorationPadding
+      /**
+       * **AND THE DECLARED BOX IS STATED IN PITCH.** `thickness: symbolHeightInPitches(symbol)`
+       * and `RelativeElement` does `top += thickness / 2; bottom -= thickness / 2` on the
+       * PITCH it was handed (`decoration.js:163`, `relative-element.js:22-24`); `staff.top`
+       * maxes those pitches and `calcHeight` sums them. Reserving only the y makes the
+       * extent divide the product back — the round trip §3 names.
+       */
+      const halfPitch = heightInPitches(glyph) / 2
       if (spec.forceBelow === true) {
-        const y = stepToY(toStep(below - height / 2))
+        const belowPitch = below - height / 2
+        const y = stepToY(toStep(belowPitch))
         const half = (table.get(glyph)?.declaredHeight ?? 0) / 2
-        out.push({ name: glyph, x: centre, y, role: 'decoration', reserve: [y - half, y + half] })
+        out.push({
+          name: glyph,
+          x: centre,
+          y,
+          role: 'decoration',
+          reserve: [y - half, y + half],
+          reservePitch: [belowPitch + halfPitch, belowPitch - halfPitch],
+        })
         below -= height
         continue
       }
-      const y = stepToY(toStep(above + height / 2))
+      const abovePitch = above + height / 2
+      const y = stepToY(toStep(abovePitch))
       // …and a STACKED one is given `thickness: symbolHeightInPitches(symbol)`
       // (`decoration.js:163`), so it reserves `pitch ± thickness / 2` — its DECLARED box,
       // centred on where it sits. Its ink box is not centred on the glyph origin at all:
@@ -4377,7 +4400,14 @@ function decorationGlyphs(
       // the outline put `multi-voice-triplet-brackets` 1.31 pitch high on the staff whose
       // only ornament is a `T`.
       const half = (table.get(glyph)?.declaredHeight ?? 0) / 2
-      out.push({ name: glyph, x: centre, y, role: 'decoration', reserve: [y - half, y + half] })
+      out.push({
+        name: glyph,
+        x: centre,
+        y,
+        role: 'decoration',
+        reserve: [y - half, y + half],
+        reservePitch: [abovePitch + halfPitch, abovePitch - halfPitch],
+      })
       above += height
     } else if (spec.place === 'stem') {
       // Centred on the stem's midpoint. An arpeggio instead sits just LEFT of the head,
@@ -10755,7 +10785,7 @@ function aboveLadder<
   // glyph goes with them, and that omission was the chord-plus-dynamic row of the table
   // above: `verticalExtent` flags an above dynamic and spends its flat lane, so leaving the
   // glyph in made this ink 27.13px higher than the music and every rung rode along.
-  const inkTop = verticalExtent(
+  const inkExtent = verticalExtent(
     parts.flatMap((p) =>
       p.elements
         .filter((el) => el.type !== 'title' && el.type !== 'part' && el.type !== 'tempo')
@@ -10785,7 +10815,7 @@ function aboveLadder<
       // tuplet lane, on every staff carrying both.
       tupletReserves: parts.flatMap((p) => p.tupletReserves ?? []),
     },
-  ).top
+  )
 
   /**
    * **THE LADDER WALKS IN PITCH, BECAUSE `incTop` DOES** — `staff.top += height + margin`
@@ -10797,7 +10827,16 @@ function aboveLadder<
    * `dim.height / spacing.STEP` does.
    */
   const PITCH_PER_UNIT = 1 / ENGRAVE.spacePerStep
-  let topPitch = -inkTop * PITCH_PER_UNIT
+  /**
+   * **AND THE RUNG IT STARTS ON IS `staff.top` ITSELF, NOT THAT TOP DIVIDED BACK.** abcjs
+   * enters `setUpperAndLowerElements` with `staff.top` already a pitch — the max of the
+   * elements' own declared pitches — and every `incTop` adds to it
+   * (`set-upper-and-lower-elements.js:31-49`). Taking the ink's y and dividing by `STEP`
+   * is `x * STEP / STEP`, which is not `x`: `synth-flattener-25`'s tempo notehead came out
+   * at pitch 15.796645161290321 in abcjs and one ULP away here, and a tempo mark is drawn
+   * straight off this number.
+   */
+  let topPitch = inkExtent.topPitch
   // y is DOWN, so reserving room above walks the PITCH up and the y negative.
   const yOfPitch = (pitch: number): number => -pitch * ENGRAVE.spacePerStep
   /** A lane whose margin is already inside the figure — the ending's and the dynamics'. */
