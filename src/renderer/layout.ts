@@ -1087,6 +1087,15 @@ export interface LayoutElement {
    * between its neighbours (`layout/layout.js:123-138`).
    */
   readonly wholeRest?: boolean
+  /**
+   * Which way this note's stem points — **even when no stem is DRAWN.**
+   * `createNoteHead` assigns `notehead.stemDir = dir` before it returns
+   * (`create-note-head.js:36`), so a whole note carries a direction like any other and
+   * every rule that reads one — a tie's side, a slur's — gets a real answer. Ours derived
+   * it from the drawn lines, so a whole note read as STEM DOWN and its tie went to the
+   * wrong side of the staff on every fixture that has one.
+   */
+  readonly stemUp?: boolean
   readonly staffSteps: readonly number[]
   readonly glyphs: readonly PlacedGlyph[]
   readonly lines: readonly PlacedLine[]
@@ -3487,6 +3496,8 @@ function layoutNoteheads(
   const ink = Math.max(headRight, dotWidth, textSpan.right, ...flagInk) + ENGRAVE.noteRodGap
   return {
     type: 'note',
+    // `notehead.stemDir = dir`, drawn or not — see `LayoutElement.stemUp`.
+    stemUp: up,
     // abcjs's `d` and `p` classes; see `LayoutElement.durationClass`.
     durationClass: event === null ? 0 : ratToNumber(event.duration),
     // `pitch` 0 is MIDDLE C in abcjs, so the octave offset comes back off.
@@ -5319,7 +5330,7 @@ function buildCurve(
   /** Which elements the two ends really attach to — absent on a half split by a break. */
   edges?: { start?: number; end?: number },
 ): PlacedCurve {
-  const above = curveIsAbove(from, to, voicePos)
+  const above = curveIsAbove(from, to, voicePos, kind)
   const direction = above ? -1 : 1
 
   // ── THE ENDPOINTS, which finding 89 left when it ported the arc's SHAPE ──────
@@ -5381,10 +5392,35 @@ function buildCurve(
  * The stem rules themselves differ between the two, and this keeps our one-line
  * approximation of them: a curve goes opposite the stems, above when they disagree.
  */
-function curveIsAbove(from: NoteAnchor, to: NoteAnchor, voicePos: number): boolean {
+/**
+ * **A TIE AND A SLUR DO NOT CHOOSE THEIR SIDE THE SAME WAY, AND WE GAVE BOTH THE SLUR'S
+ * RULE.** `calcTieDirection` and `calcSlurDirection` are two functions with two comment
+ * blocks (`tie-element.js:54-115`), and they part company on the MIXED case: a slur asks
+ * only whether ANY stem points down, a tie falls back to the anchor's own PITCH when its
+ * two stems disagree.
+ *
+ * The shared prefix is the voice: position 0 is always ABOVE, any lower voice always
+ * BELOW, and only a voice alone on its staff reaches the rules below — which is
+ * `voice.voicetotal < 2 ? -1 : voice.voicenumber` (`abstract-engraver.js:235`).
+ */
+function curveIsAbove(
+  from: NoteAnchor,
+  to: NoteAnchor,
+  voicePos: number,
+  kind: 'tie' | 'slur',
+): boolean {
   if (voicePos === 0) return true
   if (voicePos > 0) return false
-  return !(from.stemUp && to.stemUp)
+  // A SLUR: `hasDownStem` over both anchors. (abcjs also walks the notes BETWEEN them;
+  // ours does not, and no fixture has yet shown the difference.)
+  if (kind === 'slur') return !from.stemUp || !to.stemUp
+  if (!from.stemUp && !to.stemUp) return true
+  if (from.stemUp && to.stemUp) return false
+  // …and the two disagree, so the note's own pitch decides: `referencePitch >= 6`, which
+  // is the middle line. `stemDir` is set on EVERY notehead — `createNoteHead` assigns it
+  // before it returns — so a whole note reaches this with a real direction rather than
+  // with none, which is the half of it ours had wrong.
+  return (from.pitchStep ?? 0) + PITCH_ORIGIN >= 6
 }
 
 /**
@@ -5671,8 +5707,8 @@ function curveReserves(
     }
     return a.pitchStep
   }
-  const add = (from: NoteAnchor, to: NoteAnchor): void => {
-    const above = curveIsAbove(from, to, voicePos)
+  const add = (from: NoteAnchor, to: NoteAnchor, kind: 'tie' | 'slur'): void => {
+    const above = curveIsAbove(from, to, voicePos, kind)
     // abcjs's `Math.min` over PITCHES is our `Math.max` over y — the lower end on screen.
     const y = Math.max(endAt(from, above, true), endAt(to, above, false))
     if (process.env.ABCTS_CURVE) {
@@ -5745,12 +5781,12 @@ function curveReserves(
     for (let n = 0; n < anchor.event.slurEnds; n++) {
       const start = open.pop()
       const from = start === undefined ? undefined : anchors[start]
-      if (from !== undefined) add(from, anchor)
+      if (from !== undefined) add(from, anchor, 'slur')
     }
     for (let n = 0; n < anchor.event.slurStarts; n++) open.push(i)
     if (anchor.event.tiedToNext) {
       const next = anchors[i + 1]
-      if (next !== undefined) add(anchor, next)
+      if (next !== undefined) add(anchor, next, 'tie')
     }
   })
   // AN UNCLOSED SLUR STILL RESERVES. `voice.addOther(this)` runs where the `(` is seen, so
@@ -5769,7 +5805,7 @@ function curveReserves(
   for (const start of open) {
     const a = anchors[start]
     if (a === undefined) continue
-    const above = curveIsAbove(a, a, voicePos)
+    const above = curveIsAbove(a, a, voicePos, 'slur')
     const y = endAt(a, above, true)
     reserves.push(above ? { top: y - three, bottom: y } : { top: y, bottom: y + three })
   }
@@ -6910,7 +6946,7 @@ function layoutMeasure(
             ? (Math.min(...heads.map((h) => h.y)) + Math.max(...heads.map((h) => h.y))) / 2
             : stepToY(pitchToStep(first, clef)),
         ...(first === undefined ? {} : { pitchStep: pitchToStep(first, clef) }),
-        stemUp: el.lines.some((l) => l.x1 === l.x2 && l.y2 < l.y1),
+        stemUp: el.stemUp ?? el.lines.some((l) => l.x1 === l.x2 && l.y2 < l.y1),
         event,
       })
     } else if (event.type === 'rest') {
