@@ -2,40 +2,40 @@ tune 0
 bounds  width=447.203 height=217.179 top=-15.000
 systems 1
 system 0 width=447.203 originY=0.000
-  staff 0 originY=118.967
-    staffline 15.000,15.500 -> 181.051,15.500 t=0.700
-    staffline 15.000,7.750 -> 181.051,7.750 t=0.700
-    staffline 15.000,0.000 -> 181.051,0.000 t=0.700
+  staff 0 originY=142.217
     staffline 15.000,-7.750 -> 181.051,-7.750 t=0.700
     staffline 15.000,-15.500 -> 181.051,-15.500 t=0.700
+    staffline 15.000,-23.250 -> 181.051,-23.250 t=0.700
+    staffline 15.000,-31.000 -> 181.051,-31.000 t=0.700
+    staffline 15.000,-38.750 -> 181.051,-38.750 t=0.700
     title x=0.000 w=0.000
-      text  350.000,-84.407 size=27.000 "Stacked annotations test"
+      text  350.000,-107.657 size=27.000 "Stacked annotations test"
     clef x=15.000 w=24.051
-      glyph gClef 20.000,7.750
+      glyph gClef 20.000,-15.500
     note@-6 x=49.051 w=30.000
-      glyph flag8thUp 58.261,-3.875
-      glyph noteheadBlack 49.051,23.250
-      line  47.051,23.250 -> 60.861,23.250 t=0.700
-      line  58.361,21.958 -> 58.361,-3.875 t=1.000
-      text  49.051,-54.847 size=16.000 "Allegro"
-      text  49.051,-34.847 size=16.000 "con brio"
+      glyph flag8thUp 58.261,-27.125
+      glyph noteheadBlack 49.051,0.000
+      line  47.051,0.000 -> 60.861,0.000 t=0.700
+      line  58.361,-1.292 -> 58.361,-27.125 t=1.000
+      text  49.051,-78.097 size=16.000 "Allegro"
+      text  49.051,-58.097 size=16.000 "con brio"
     note@-5 x=79.051 w=30.000
-      glyph flag8thUp 88.261,-7.750
-      glyph noteheadBlack 79.051,19.375
-      line  88.361,18.083 -> 88.361,-7.750 t=1.000
-      text  79.051,43.297 size=16.000 "p"
-      text  79.051,63.297 size=16.000 "dolce"
+      glyph flag8thUp 88.261,-31.000
+      glyph noteheadBlack 79.051,-3.875
+      line  88.361,-5.167 -> 88.361,-31.000 t=1.000
+      text  79.051,20.047 size=16.000 "p"
+      text  79.051,40.047 size=16.000 "dolce"
     bar x=109.051 w=0.600
-      line  109.351,-15.500 -> 109.351,15.500 t=0.600
+      line  109.351,-38.750 -> 109.351,-7.750 t=0.600
     note@-4 x=120.051 w=30.000
-      glyph flag8thUp 129.261,-11.625
-      glyph noteheadBlack 120.051,15.500
-      line  129.361,14.208 -> 129.361,-11.625 t=1.000
-      text  120.051,-54.847 size=16.000 "staccato"
+      glyph flag8thUp 129.261,-34.875
+      glyph noteheadBlack 120.051,-7.750
+      line  129.361,-9.042 -> 129.361,-34.875 t=1.000
+      text  120.051,-78.097 size=16.000 "staccato"
     note@-3 x=150.051 w=30.000
-      glyph flag8thUp 159.261,-15.500
-      glyph noteheadBlack 150.051,11.625
-      line  159.361,10.333 -> 159.361,-15.500 t=1.000
-      text  150.051,43.297 size=16.000 "marcato"
+      glyph flag8thUp 159.261,-38.750
+      glyph noteheadBlack 150.051,-11.625
+      line  159.361,-12.917 -> 159.361,-38.750 t=1.000
+      text  150.051,20.047 size=16.000 "marcato"
     bar x=180.051 w=0.600
-      line  180.351,-15.500 -> 180.351,15.500 t=0.600
+      line  180.351,-38.750 -> 180.351,-7.750 t=0.600

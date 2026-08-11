@@ -2,20 +2,20 @@ tune 0
 bounds  width=380.117 height=135.349 top=-15.000
 systems 1
 system 0 width=380.117 originY=0.000
-  staff 0 originY=78.052
-    staffline 15.000,15.500 -> 113.272,15.500 t=0.700
-    staffline 15.000,7.750 -> 113.272,7.750 t=0.700
-    staffline 15.000,0.000 -> 113.272,0.000 t=0.700
+  staff 0 originY=101.302
     staffline 15.000,-7.750 -> 113.272,-7.750 t=0.700
     staffline 15.000,-15.500 -> 113.272,-15.500 t=0.700
+    staffline 15.000,-23.250 -> 113.272,-23.250 t=0.700
+    staffline 15.000,-31.000 -> 113.272,-31.000 t=0.700
+    staffline 15.000,-38.750 -> 113.272,-38.750 t=0.700
     title x=0.000 w=0.000
-      text  350.000,-43.492 size=27.000 "100\\"
+      text  350.000,-66.742 size=27.000 "100\\"
     clef x=15.000 w=24.051
-      glyph gClef 20.000,7.750
+      glyph gClef 20.000,-15.500
     timeSignature x=49.051 w=11.795
-      glyph timeSig4 49.051,-7.750
-      glyph timeSig4 49.051,7.750
+      glyph timeSig4 49.051,-31.000
+      glyph timeSig4 49.051,-15.500
     note@-6 x=70.846 w=42.426
-      glyph noteheadBlack 70.846,23.250
-      line  68.846,23.250 -> 82.656,23.250 t=0.700
-      line  80.156,21.958 -> 80.156,-3.875 t=1.000
+      glyph noteheadBlack 70.846,0.000
+      line  68.846,0.000 -> 82.656,0.000 t=0.700
+      line  80.156,-1.292 -> 80.156,-27.125 t=1.000

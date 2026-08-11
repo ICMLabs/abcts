@@ -2,48 +2,48 @@ tune 0
 bounds  width=792.750 height=277.482 top=-15.000
 systems 1
 system 0 width=792.750 originY=0.000
-  staff 0 originY=193.212
-    staffline 15.000,15.500 -> 685.000,15.500 t=0.700
-    staffline 15.000,7.750 -> 685.000,7.750 t=0.700
-    staffline 15.000,0.000 -> 685.000,0.000 t=0.700
+  staff 0 originY=216.462
     staffline 15.000,-7.750 -> 685.000,-7.750 t=0.700
     staffline 15.000,-15.500 -> 685.000,-15.500 t=0.700
+    staffline 15.000,-23.250 -> 685.000,-23.250 t=0.700
+    staffline 15.000,-31.000 -> 685.000,-31.000 t=0.700
+    staffline 15.000,-38.750 -> 685.000,-38.750 t=0.700
     title x=0.000 w=0.000
-      text  350.000,-97.322 size=27.000 "Center Directive Test"
-      text  685.000,-64.762 size=19.000 italic "Test Fixture"
-      text  335.000,-39.762 size=21.000 "This is centered text above the tune"
+      text  350.000,-120.572 size=27.000 "Center Directive Test"
+      text  685.000,-88.012 size=19.000 italic "Test Fixture"
+      text  335.000,-63.012 size=21.000 "This is centered text above the tune"
     clef x=15.000 w=24.051
-      glyph gClef 20.000,7.750
+      glyph gClef 20.000,-15.500
     timeSignature x=49.051 w=11.795
-      glyph timeSig4 49.051,-7.750
-      glyph timeSig4 49.051,7.750
+      glyph timeSig4 49.051,-31.000
+      glyph timeSig4 49.051,-15.500
     note@-6 x=70.846 w=42.426
-      glyph noteheadBlack 70.846,23.250
-      line  68.846,23.250 -> 82.656,23.250 t=0.700
-      line  80.156,21.958 -> 80.156,-3.875 t=1.000
+      glyph noteheadBlack 70.846,0.000
+      line  68.846,0.000 -> 82.656,0.000 t=0.700
+      line  80.156,-1.292 -> 80.156,-27.125 t=1.000
     note@-5 x=145.240 w=42.426
-      glyph noteheadBlack 145.240,19.375
-      line  154.550,18.083 -> 154.550,-7.750 t=1.000
+      glyph noteheadBlack 145.240,-3.875
+      line  154.550,-5.167 -> 154.550,-31.000 t=1.000
     note@-4 x=219.635 w=42.426
-      glyph noteheadBlack 219.635,15.500
-      line  228.945,14.208 -> 228.945,-11.625 t=1.000
+      glyph noteheadBlack 219.635,-7.750
+      line  228.945,-9.042 -> 228.945,-34.875 t=1.000
     note@-3 x=294.029 w=42.426
-      glyph noteheadBlack 294.029,11.625
-      line  303.339,10.333 -> 303.339,-15.500 t=1.000
+      glyph noteheadBlack 294.029,-11.625
+      line  303.339,-12.917 -> 303.339,-38.750 t=1.000
     bar x=368.423 w=0.600
-      line  368.723,-15.500 -> 368.723,15.500 t=0.600
+      line  368.723,-38.750 -> 368.723,-7.750 t=0.600
     note@-2 x=379.423 w=42.426
-      glyph noteheadBlack 379.423,7.750
-      line  388.733,6.458 -> 388.733,-19.375 t=1.000
+      glyph noteheadBlack 379.423,-15.500
+      line  388.733,-16.792 -> 388.733,-42.625 t=1.000
     note@-1 x=453.817 w=42.426
-      glyph noteheadBlack 453.817,3.875
-      line  463.127,2.583 -> 463.127,-23.250 t=1.000
+      glyph noteheadBlack 453.817,-19.375
+      line  463.127,-20.667 -> 463.127,-46.500 t=1.000
     note@0 x=528.212 w=42.426
-      glyph noteheadBlack 528.212,0.000
-      line  528.712,0.000 -> 528.712,27.125 t=1.000
+      glyph noteheadBlack 528.212,-23.250
+      line  528.712,-23.250 -> 528.712,3.875 t=1.000
     note@1 x=602.606 w=42.426
-      glyph noteheadBlack 602.606,-3.875
-      line  603.106,-2.583 -> 603.106,23.250 t=1.000
+      glyph noteheadBlack 602.606,-27.125
+      line  603.106,-25.833 -> 603.106,0.000 t=1.000
     bar x=677.000 w=9.600
-      line  677.300,-15.500 -> 677.300,15.500 t=0.600
-      line  683.000,-15.500 -> 683.000,15.500 t=4.000
+      line  677.300,-38.750 -> 677.300,-7.750 t=0.600
+      line  683.000,-38.750 -> 683.000,-7.750 t=4.000

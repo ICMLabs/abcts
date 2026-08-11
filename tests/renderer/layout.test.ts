@@ -31,6 +31,7 @@ import {
   middleLineIndex,
   naturalWidth,
   noteGlyph,
+  stepToY,
   TEXT_ASCENT,
 } from '../../src/renderer/layout.js'
 import {
@@ -660,7 +661,9 @@ describe('system breaking', () => {
       for (const staff of system.staves) {
         // `+ 0` normalises the -0 that stepToY(0) produces; -0 and 0 are the same line.
         const ys = staff.staffLines.map((l) => l.y1 + 0).sort((a, b) => a - b)
-        expect(ys).toEqual([-2, -1, 0, 1, 2].map((n) => n * SPACE))
+        // The staff's frame is abcjs's — `y = −pitch × STEP` — so the five lines are
+        // pitches 10…2 and not ±2 staff spaces about a zero on the middle line.
+        expect(ys).toEqual([4, 2, 0, -2, -4].map(stepToY))
       }
     }
   })
@@ -935,17 +938,19 @@ describe('barline shapes', () => {
     expect(dots.map((g) => g.name)).toEqual(['augmentationDot', 'augmentationDot'])
     // One space either side of the middle line, and symmetric about it.
     const ys = dots.map((g) => g.y)
-    expect((ys[0] ?? 0) + (ys[1] ?? 0)).toBeCloseTo(0, 5)
-    expect(Math.min(...ys)).toBeLessThan(0)
-    expect(Math.max(...ys)).toBeGreaterThan(0)
+    // STRADDLING is about the MIDDLE LINE, `stepToY(0)` — the staff's frame is abcjs's
+    // and its zero is pitch 0, a ledger line below the staff. See `stepToY`.
+    expect((ys[0] ?? 0) + (ys[1] ?? 0)).toBeCloseTo(2 * stepToY(0), 5)
+    expect(Math.min(...ys)).toBeLessThan(stepToY(0))
+    expect(Math.max(...ys)).toBeGreaterThan(stepToY(0))
   })
 
   it('spans the staff, whatever the shape', () => {
     for (const abc of ['C|', 'C||', 'C|]', '|:C:|', 'CDEF::GABc|']) {
       for (const bar of barsOf(`X:1\nL:1/4\nK:C\n${abc}\n`)) {
         for (const line of bar.lines) {
-          expect(Math.min(line.y1, line.y2)).toBeCloseTo(-2 * SPACE, 5)
-          expect(Math.max(line.y1, line.y2)).toBeCloseTo(2 * SPACE, 5)
+          expect(Math.min(line.y1, line.y2)).toBeCloseTo(stepToY(4), 5)
+          expect(Math.max(line.y1, line.y2)).toBeCloseTo(stepToY(-4), 5)
         }
       }
     }
@@ -1490,8 +1495,8 @@ describe('annotations', () => {
     // chord lane — `RelativeElement`'s `case "text"` reserves one only when the pitch is
     // UNDEFINED. Middle C in the treble clef is 3 steps below the middle line, so `y` is 3
     // in the y-down staff spaces the layout works in.
-    expect(left?.y).toBeCloseTo(3 * SPACE)
-    expect(right?.y).toBeCloseTo(3 * SPACE)
+    expect(left?.y).toBeCloseTo(stepToY(-6))
+    expect(right?.y).toBeCloseTo(stepToY(-6))
     expect(left?.x ?? 0).toBeLessThan(right?.x ?? 0)
   })
 

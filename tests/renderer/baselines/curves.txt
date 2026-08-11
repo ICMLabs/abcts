@@ -2,231 +2,231 @@ tune 0
 bounds  width=379.648 height=135.177 top=-15.000
 systems 1
 system 0 width=379.648 originY=0.000
-  staff 0 originY=78.052
-    staffline 15.000,15.500 -> 240.552,15.500 t=0.700
-    staffline 15.000,7.750 -> 240.552,7.750 t=0.700
-    staffline 15.000,0.000 -> 240.552,0.000 t=0.700
+  staff 0 originY=101.302
     staffline 15.000,-7.750 -> 240.552,-7.750 t=0.700
     staffline 15.000,-15.500 -> 240.552,-15.500 t=0.700
-    tie  76.846,12.400 -> 117.272,12.400 bulge=7.277
-    tie  161.699,12.400 -> 202.125,12.400 bulge=7.277
+    staffline 15.000,-23.250 -> 240.552,-23.250 t=0.700
+    staffline 15.000,-31.000 -> 240.552,-31.000 t=0.700
+    staffline 15.000,-38.750 -> 240.552,-38.750 t=0.700
+    tie  76.846,-10.850 -> 117.272,-10.850 bulge=7.277
+    tie  161.699,-10.850 -> 202.125,-10.850 bulge=7.277
     title x=0.000 w=0.000
-      text  350.000,-43.492 size=27.000 "Ties"
+      text  350.000,-66.742 size=27.000 "Ties"
     clef x=15.000 w=24.051
-      glyph gClef 20.000,7.750
+      glyph gClef 20.000,-15.500
     timeSignature x=49.051 w=11.795
-      glyph timeSig4 49.051,-7.750
-      glyph timeSig4 49.051,7.750
+      glyph timeSig4 49.051,-31.000
+      glyph timeSig4 49.051,-15.500
     note@-2 x=70.846 w=42.426
-      glyph noteheadBlack 70.846,7.750
-      line  80.156,6.458 -> 80.156,-19.375 t=1.000
+      glyph noteheadBlack 70.846,-15.500
+      line  80.156,-16.792 -> 80.156,-42.625 t=1.000
     note@-2 x=113.272 w=42.426
-      glyph noteheadBlack 113.272,7.750
-      line  122.582,6.458 -> 122.582,-19.375 t=1.000
+      glyph noteheadBlack 113.272,-15.500
+      line  122.582,-16.792 -> 122.582,-42.625 t=1.000
     note@-2 x=155.699 w=42.426
-      glyph noteheadBlack 155.699,7.750
-      line  165.009,6.458 -> 165.009,-19.375 t=1.000
+      glyph noteheadBlack 155.699,-15.500
+      line  165.009,-16.792 -> 165.009,-42.625 t=1.000
     note@-2 x=198.125 w=42.426
-      glyph noteheadBlack 198.125,7.750
-      line  207.435,6.458 -> 207.435,-19.375 t=1.000
+      glyph noteheadBlack 198.125,-15.500
+      line  207.435,-16.792 -> 207.435,-42.625 t=1.000
 tune 1
 bounds  width=382.500 height=135.177 top=-15.000
 systems 1
 system 0 width=382.500 originY=0.000
-  staff 0 originY=78.052
-    staffline 15.000,15.500 -> 240.552,15.500 t=0.700
-    staffline 15.000,7.750 -> 240.552,7.750 t=0.700
-    staffline 15.000,0.000 -> 240.552,0.000 t=0.700
+  staff 0 originY=101.302
     staffline 15.000,-7.750 -> 240.552,-7.750 t=0.700
     staffline 15.000,-15.500 -> 240.552,-15.500 t=0.700
-    slur  76.846,13.563 -> 117.272,13.563 bulge=7.277
-    slur  161.699,13.563 -> 202.125,13.563 bulge=7.277
+    staffline 15.000,-23.250 -> 240.552,-23.250 t=0.700
+    staffline 15.000,-31.000 -> 240.552,-31.000 t=0.700
+    staffline 15.000,-38.750 -> 240.552,-38.750 t=0.700
+    slur  76.846,-9.687 -> 117.272,-9.687 bulge=7.277
+    slur  161.699,-9.687 -> 202.125,-9.687 bulge=7.277
     title x=0.000 w=0.000
-      text  350.000,-43.492 size=27.000 "Slurs"
+      text  350.000,-66.742 size=27.000 "Slurs"
     clef x=15.000 w=24.051
-      glyph gClef 20.000,7.750
+      glyph gClef 20.000,-15.500
     timeSignature x=49.051 w=11.795
-      glyph timeSig4 49.051,-7.750
-      glyph timeSig4 49.051,7.750
+      glyph timeSig4 49.051,-31.000
+      glyph timeSig4 49.051,-15.500
     note@-2 x=70.846 w=42.426
-      glyph noteheadBlack 70.846,7.750
-      line  80.156,6.458 -> 80.156,-19.375 t=1.000
+      glyph noteheadBlack 70.846,-15.500
+      line  80.156,-16.792 -> 80.156,-42.625 t=1.000
     note@-2 x=113.272 w=42.426
-      glyph noteheadBlack 113.272,7.750
-      line  122.582,6.458 -> 122.582,-19.375 t=1.000
+      glyph noteheadBlack 113.272,-15.500
+      line  122.582,-16.792 -> 122.582,-42.625 t=1.000
     note@-2 x=155.699 w=42.426
-      glyph noteheadBlack 155.699,7.750
-      line  165.009,6.458 -> 165.009,-19.375 t=1.000
+      glyph noteheadBlack 155.699,-15.500
+      line  165.009,-16.792 -> 165.009,-42.625 t=1.000
     note@-2 x=198.125 w=42.426
-      glyph noteheadBlack 198.125,7.750
-      line  207.435,6.458 -> 207.435,-19.375 t=1.000
+      glyph noteheadBlack 198.125,-15.500
+      line  207.435,-16.792 -> 207.435,-42.625 t=1.000
 tune 2
 bounds  width=408.242 height=135.177 top=-15.000
 systems 1
 system 0 width=408.242 originY=0.000
-  staff 0 originY=78.052
-    staffline 15.000,15.500 -> 240.552,15.500 t=0.700
-    staffline 15.000,7.750 -> 240.552,7.750 t=0.700
-    staffline 15.000,0.000 -> 240.552,0.000 t=0.700
+  staff 0 originY=101.302
     staffline 15.000,-7.750 -> 240.552,-7.750 t=0.700
     staffline 15.000,-15.500 -> 240.552,-15.500 t=0.700
-    slur  76.846,13.563 -> 117.272,13.563 bulge=7.277
-    slur  76.846,13.563 -> 202.125,13.563 bulge=17.050
+    staffline 15.000,-23.250 -> 240.552,-23.250 t=0.700
+    staffline 15.000,-31.000 -> 240.552,-31.000 t=0.700
+    staffline 15.000,-38.750 -> 240.552,-38.750 t=0.700
+    slur  76.846,-9.687 -> 117.272,-9.687 bulge=7.277
+    slur  76.846,-9.687 -> 202.125,-9.687 bulge=17.050
     title x=0.000 w=0.000
-      text  350.000,-43.492 size=27.000 "Nested Slurs"
+      text  350.000,-66.742 size=27.000 "Nested Slurs"
     clef x=15.000 w=24.051
-      glyph gClef 20.000,7.750
+      glyph gClef 20.000,-15.500
     timeSignature x=49.051 w=11.795
-      glyph timeSig4 49.051,-7.750
-      glyph timeSig4 49.051,7.750
+      glyph timeSig4 49.051,-31.000
+      glyph timeSig4 49.051,-15.500
     note@-2 x=70.846 w=42.426
-      glyph noteheadBlack 70.846,7.750
-      line  80.156,6.458 -> 80.156,-19.375 t=1.000
+      glyph noteheadBlack 70.846,-15.500
+      line  80.156,-16.792 -> 80.156,-42.625 t=1.000
     note@-2 x=113.272 w=42.426
-      glyph noteheadBlack 113.272,7.750
-      line  122.582,6.458 -> 122.582,-19.375 t=1.000
+      glyph noteheadBlack 113.272,-15.500
+      line  122.582,-16.792 -> 122.582,-42.625 t=1.000
     note@-2 x=155.699 w=42.426
-      glyph noteheadBlack 155.699,7.750
-      line  165.009,6.458 -> 165.009,-19.375 t=1.000
+      glyph noteheadBlack 155.699,-15.500
+      line  165.009,-16.792 -> 165.009,-42.625 t=1.000
     note@-2 x=198.125 w=42.426
-      glyph noteheadBlack 198.125,7.750
-      line  207.435,6.458 -> 207.435,-19.375 t=1.000
+      glyph noteheadBlack 198.125,-15.500
+      line  207.435,-16.792 -> 207.435,-42.625 t=1.000
 tune 3
 bounds  width=450.750 height=135.349 top=-15.000
 systems 1
 system 0 width=450.750 originY=0.000
-  staff 0 originY=78.052
-    staffline 15.000,15.500 -> 240.552,15.500 t=0.700
-    staffline 15.000,7.750 -> 240.552,7.750 t=0.700
-    staffline 15.000,0.000 -> 240.552,0.000 t=0.700
+  staff 0 originY=101.302
     staffline 15.000,-7.750 -> 240.552,-7.750 t=0.700
     staffline 15.000,-15.500 -> 240.552,-15.500 t=0.700
-    slur  76.846,13.563 -> 117.272,13.563 bulge=7.277
-    slur  161.699,13.563 -> 202.125,13.563 bulge=7.277
+    staffline 15.000,-23.250 -> 240.552,-23.250 t=0.700
+    staffline 15.000,-31.000 -> 240.552,-31.000 t=0.700
+    staffline 15.000,-38.750 -> 240.552,-38.750 t=0.700
+    slur  76.846,-9.687 -> 117.272,-9.687 bulge=7.277
+    slur  161.699,-9.687 -> 202.125,-9.687 bulge=7.277
     title x=0.000 w=0.000
-      text  350.000,-43.492 size=27.000 "Slurs over Stacked Notes"
+      text  350.000,-66.742 size=27.000 "Slurs over Stacked Notes"
     clef x=15.000 w=24.051
-      glyph gClef 20.000,7.750
+      glyph gClef 20.000,-15.500
     timeSignature x=49.051 w=11.795
-      glyph timeSig4 49.051,-7.750
-      glyph timeSig4 49.051,7.750
+      glyph timeSig4 49.051,-31.000
+      glyph timeSig4 49.051,-15.500
     note@-6,-5,-2 x=70.846 w=42.426
-      glyph noteheadBlack 70.846,23.250
-      glyph noteheadBlack 80.656,19.375
-      glyph noteheadBlack 70.846,7.750
-      line  68.846,23.250 -> 82.656,23.250 t=0.700
-      line  80.156,21.958 -> 80.156,-19.375 t=1.000
+      glyph noteheadBlack 70.846,0.000
+      glyph noteheadBlack 80.656,-3.875
+      glyph noteheadBlack 70.846,-15.500
+      line  68.846,0.000 -> 82.656,0.000 t=0.700
+      line  80.156,-1.292 -> 80.156,-42.625 t=1.000
     note@-6,-5,-2 x=113.272 w=42.426
-      glyph noteheadBlack 113.272,23.250
-      glyph noteheadBlack 123.082,19.375
-      glyph noteheadBlack 113.272,7.750
-      line  111.272,23.250 -> 125.082,23.250 t=0.700
-      line  122.582,21.958 -> 122.582,-19.375 t=1.000
+      glyph noteheadBlack 113.272,0.000
+      glyph noteheadBlack 123.082,-3.875
+      glyph noteheadBlack 113.272,-15.500
+      line  111.272,0.000 -> 125.082,0.000 t=0.700
+      line  122.582,-1.292 -> 122.582,-42.625 t=1.000
     note@-6,-5,-2 x=155.699 w=42.426
-      glyph noteheadBlack 155.699,23.250
-      glyph noteheadBlack 165.509,19.375
-      glyph noteheadBlack 155.699,7.750
-      line  153.699,23.250 -> 167.509,23.250 t=0.700
-      line  165.009,21.958 -> 165.009,-19.375 t=1.000
+      glyph noteheadBlack 155.699,0.000
+      glyph noteheadBlack 165.509,-3.875
+      glyph noteheadBlack 155.699,-15.500
+      line  153.699,0.000 -> 167.509,0.000 t=0.700
+      line  165.009,-1.292 -> 165.009,-42.625 t=1.000
     note@-2 x=198.125 w=42.426
-      glyph noteheadBlack 198.125,7.750
-      line  207.435,6.458 -> 207.435,-19.375 t=1.000
+      glyph noteheadBlack 198.125,-15.500
+      line  207.435,-16.792 -> 207.435,-42.625 t=1.000
 tune 4
 bounds  width=475.071 height=135.349 top=-15.000
 systems 1
 system 0 width=475.071 originY=0.000
-  staff 0 originY=78.052
-    staffline 15.000,15.500 -> 240.552,15.500 t=0.700
-    staffline 15.000,7.750 -> 240.552,7.750 t=0.700
-    staffline 15.000,0.000 -> 240.552,0.000 t=0.700
+  staff 0 originY=101.302
     staffline 15.000,-7.750 -> 240.552,-7.750 t=0.700
     staffline 15.000,-15.500 -> 240.552,-15.500 t=0.700
-    slur  76.846,13.563 -> 117.272,13.563 bulge=7.277
-    slur  76.846,13.563 -> 202.125,13.563 bulge=17.050
+    staffline 15.000,-23.250 -> 240.552,-23.250 t=0.700
+    staffline 15.000,-31.000 -> 240.552,-31.000 t=0.700
+    staffline 15.000,-38.750 -> 240.552,-38.750 t=0.700
+    slur  76.846,-9.687 -> 117.272,-9.687 bulge=7.277
+    slur  76.846,-9.687 -> 202.125,-9.687 bulge=17.050
     title x=0.000 w=0.000
-      text  350.000,-43.492 size=27.000 "Nested slurs over Stacked Notes"
+      text  350.000,-66.742 size=27.000 "Nested slurs over Stacked Notes"
     clef x=15.000 w=24.051
-      glyph gClef 20.000,7.750
+      glyph gClef 20.000,-15.500
     timeSignature x=49.051 w=11.795
-      glyph timeSig4 49.051,-7.750
-      glyph timeSig4 49.051,7.750
+      glyph timeSig4 49.051,-31.000
+      glyph timeSig4 49.051,-15.500
     note@-6,-5,-2 x=70.846 w=42.426
-      glyph noteheadBlack 70.846,23.250
-      glyph noteheadBlack 80.656,19.375
-      glyph noteheadBlack 70.846,7.750
-      line  68.846,23.250 -> 82.656,23.250 t=0.700
-      line  80.156,21.958 -> 80.156,-19.375 t=1.000
+      glyph noteheadBlack 70.846,0.000
+      glyph noteheadBlack 80.656,-3.875
+      glyph noteheadBlack 70.846,-15.500
+      line  68.846,0.000 -> 82.656,0.000 t=0.700
+      line  80.156,-1.292 -> 80.156,-42.625 t=1.000
     note@-2 x=113.272 w=42.426
-      glyph noteheadBlack 113.272,7.750
-      line  122.582,6.458 -> 122.582,-19.375 t=1.000
+      glyph noteheadBlack 113.272,-15.500
+      line  122.582,-16.792 -> 122.582,-42.625 t=1.000
     note@-6,-5,-2 x=155.699 w=42.426
-      glyph noteheadBlack 155.699,23.250
-      glyph noteheadBlack 165.509,19.375
-      glyph noteheadBlack 155.699,7.750
-      line  153.699,23.250 -> 167.509,23.250 t=0.700
-      line  165.009,21.958 -> 165.009,-19.375 t=1.000
+      glyph noteheadBlack 155.699,0.000
+      glyph noteheadBlack 165.509,-3.875
+      glyph noteheadBlack 155.699,-15.500
+      line  153.699,0.000 -> 167.509,0.000 t=0.700
+      line  165.009,-1.292 -> 165.009,-42.625 t=1.000
     note@-2 x=198.125 w=42.426
-      glyph noteheadBlack 198.125,7.750
-      line  207.435,6.458 -> 207.435,-19.375 t=1.000
+      glyph noteheadBlack 198.125,-15.500
+      line  207.435,-16.792 -> 207.435,-42.625 t=1.000
 tune 5
 bounds  width=496.805 height=135.177 top=-15.000
 systems 1
 system 0 width=496.805 originY=0.000
-  staff 0 originY=78.052
-    staffline 15.000,15.500 -> 240.552,15.500 t=0.700
-    staffline 15.000,7.750 -> 240.552,7.750 t=0.700
-    staffline 15.000,0.000 -> 240.552,0.000 t=0.700
+  staff 0 originY=101.302
     staffline 15.000,-7.750 -> 240.552,-7.750 t=0.700
     staffline 15.000,-15.500 -> 240.552,-15.500 t=0.700
-    slur  76.846,13.563 -> 117.272,13.563 bulge=7.277
-    slur  119.272,13.563 -> 202.125,13.563 bulge=14.914
+    staffline 15.000,-23.250 -> 240.552,-23.250 t=0.700
+    staffline 15.000,-31.000 -> 240.552,-31.000 t=0.700
+    staffline 15.000,-38.750 -> 240.552,-38.750 t=0.700
+    slur  76.846,-9.687 -> 117.272,-9.687 bulge=7.277
+    slur  119.272,-9.687 -> 202.125,-9.687 bulge=14.914
     title x=0.000 w=0.000
-      text  350.000,-43.492 size=27.000 "Slurs starting and ending on same note"
+      text  350.000,-66.742 size=27.000 "Slurs starting and ending on same note"
     clef x=15.000 w=24.051
-      glyph gClef 20.000,7.750
+      glyph gClef 20.000,-15.500
     timeSignature x=49.051 w=11.795
-      glyph timeSig4 49.051,-7.750
-      glyph timeSig4 49.051,7.750
+      glyph timeSig4 49.051,-31.000
+      glyph timeSig4 49.051,-15.500
     note@-2 x=70.846 w=42.426
-      glyph noteheadBlack 70.846,7.750
-      line  80.156,6.458 -> 80.156,-19.375 t=1.000
+      glyph noteheadBlack 70.846,-15.500
+      line  80.156,-16.792 -> 80.156,-42.625 t=1.000
     note@-2 x=113.272 w=42.426
-      glyph noteheadBlack 113.272,7.750
-      line  122.582,6.458 -> 122.582,-19.375 t=1.000
+      glyph noteheadBlack 113.272,-15.500
+      line  122.582,-16.792 -> 122.582,-42.625 t=1.000
     note@-2 x=155.699 w=42.426
-      glyph noteheadBlack 155.699,7.750
-      line  165.009,6.458 -> 165.009,-19.375 t=1.000
+      glyph noteheadBlack 155.699,-15.500
+      line  165.009,-16.792 -> 165.009,-42.625 t=1.000
     note@-2 x=198.125 w=42.426
-      glyph noteheadBlack 198.125,7.750
-      line  207.435,6.458 -> 207.435,-19.375 t=1.000
+      glyph noteheadBlack 198.125,-15.500
+      line  207.435,-16.792 -> 207.435,-42.625 t=1.000
 tune 6
 bounds  width=415.094 height=135.177 top=-15.000
 systems 1
 system 0 width=415.094 originY=0.000
-  staff 0 originY=78.052
-    staffline 15.000,15.500 -> 240.552,15.500 t=0.700
-    staffline 15.000,7.750 -> 240.552,7.750 t=0.700
-    staffline 15.000,0.000 -> 240.552,0.000 t=0.700
+  staff 0 originY=101.302
     staffline 15.000,-7.750 -> 240.552,-7.750 t=0.700
     staffline 15.000,-15.500 -> 240.552,-15.500 t=0.700
-    tie  76.846,12.400 -> 117.272,12.400 bulge=7.277
-    slur  76.846,13.563 -> 202.125,13.563 bulge=17.050
+    staffline 15.000,-23.250 -> 240.552,-23.250 t=0.700
+    staffline 15.000,-31.000 -> 240.552,-31.000 t=0.700
+    staffline 15.000,-38.750 -> 240.552,-38.750 t=0.700
+    tie  76.846,-10.850 -> 117.272,-10.850 bulge=7.277
+    slur  76.846,-9.687 -> 202.125,-9.687 bulge=17.050
     title x=0.000 w=0.000
-      text  350.000,-43.492 size=27.000 "Tie within slur"
+      text  350.000,-66.742 size=27.000 "Tie within slur"
     clef x=15.000 w=24.051
-      glyph gClef 20.000,7.750
+      glyph gClef 20.000,-15.500
     timeSignature x=49.051 w=11.795
-      glyph timeSig4 49.051,-7.750
-      glyph timeSig4 49.051,7.750
+      glyph timeSig4 49.051,-31.000
+      glyph timeSig4 49.051,-15.500
     note@-2 x=70.846 w=42.426
-      glyph noteheadBlack 70.846,7.750
-      line  80.156,6.458 -> 80.156,-19.375 t=1.000
+      glyph noteheadBlack 70.846,-15.500
+      line  80.156,-16.792 -> 80.156,-42.625 t=1.000
     note@-2 x=113.272 w=42.426
-      glyph noteheadBlack 113.272,7.750
-      line  122.582,6.458 -> 122.582,-19.375 t=1.000
+      glyph noteheadBlack 113.272,-15.500
+      line  122.582,-16.792 -> 122.582,-42.625 t=1.000
     note@-2 x=155.699 w=42.426
-      glyph noteheadBlack 155.699,7.750
-      line  165.009,6.458 -> 165.009,-19.375 t=1.000
+      glyph noteheadBlack 155.699,-15.500
+      line  165.009,-16.792 -> 165.009,-42.625 t=1.000
     note@-2 x=198.125 w=42.426
-      glyph noteheadBlack 198.125,7.750
-      line  207.435,6.458 -> 207.435,-19.375 t=1.000
+      glyph noteheadBlack 198.125,-15.500
+      line  207.435,-16.792 -> 207.435,-42.625 t=1.000

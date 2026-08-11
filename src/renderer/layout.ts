@@ -1372,7 +1372,24 @@ function writtenNote(pitch: Pitch): string {
 }
 
 /** Staff step → y, in staff spaces. Higher pitch is lower y. */
-export const stepToY = (step: number): number => -step * ENGRAVE.spacePerStep
+/**
+ * **THE STAFF'S LOCAL FRAME IS ABCJS'S OWN: `y = −pitch × STEP`.**
+ *
+ * abcjs has no local frame at all — every coordinate is `calcY(pitch)`, which is
+ * `staff.absoluteY - pitch * spacing.STEP`, TWO terms off the staff's absolute origin.
+ * Ours reached the same point through
+ * `(system.originY + marginTop) + staff.originY + (−step × STEP)` — four — and landed one
+ * ULP away: a `clefs.G` at `23.112000000000002` against abcjs's `23.111999999999995`.
+ *
+ * Putting our zero where abcjs's is — pitch 0, the first ledger line below the staff —
+ * makes the local y abcjs's own product. It is a uniform translation, so
+ * `originY + stepToY(s)` is unchanged and NO GEOMETRY MOVES; only the arithmetic does.
+ * What it does break is every place that read zero as the MIDDLE LINE: the four
+ * `STAFF_HALF_HEIGHT` sites, the y→pitch conversions, and — the subtle ones — the six
+ * `y < 0` tests that are really ABOVE-OR-BELOW-THE-STAFF tests.
+ */
+export const stepToY = (step: number): number =>
+  -(step + PITCH_ORIGIN) * ENGRAVE.spacePerStep
 
 /** Middle line to outer staff line, in staff spaces — the staff is four spaces tall. */
 const STAFF_HALF_HEIGHT = 2 * SPACE
@@ -3318,7 +3335,8 @@ function layoutNoteheads(
   ].filter((l) => l.role === 'stem' && l.noReserve !== true)
   const decorationBelowBase = Math.min(
     lowest - ENGRAVE.noteheadHalfHeight / ENGRAVE.spacePerStep,
-    ...decorationStems.map((l) => -Math.max(l.y1, l.y2) / ENGRAVE.spacePerStep),
+    // y → STEP, and the frame's zero is abcjs's pitch 0 now, so the origin comes off.
+    ...decorationStems.map((l) => -Math.max(l.y1, l.y2) / ENGRAVE.spacePerStep - PITCH_ORIGIN),
   )
   if (event !== null && event.decorations.length > 0) {
     const decorated = decorationGlyphs(
@@ -3350,7 +3368,7 @@ function layoutNoteheads(
       // every notehead on `transpose-output-04`.
       Math.max(
         highest + ENGRAVE.noteheadHalfHeight / ENGRAVE.spacePerStep,
-        ...decorationStems.map((l) => -Math.min(l.y1, l.y2) / ENGRAVE.spacePerStep),
+        ...decorationStems.map((l) => -Math.min(l.y1, l.y2) / ENGRAVE.spacePerStep - PITCH_ORIGIN),
       ),
       decorationBelowBase,
       beamedNote && !up,
@@ -5865,7 +5883,7 @@ function layoutTuplets(
     // OUR y (a LENGTH, positive DOWN, zero at the middle line) → abcjs PITCH. The
     // division is `spacePerStep`, not a doubling: `2 *` is `/ 0.5` and 0.5 is only the
     // step's length while a staff space is the unit.
-    const pitchOf = (y: number): number => 6 - y / ENGRAVE.spacePerStep
+    const pitchOf = (y: number): number => -y / ENGRAVE.spacePerStep
     const yOfPitch = (pitch: number): number => stepToY(pitch - 6)
     const endPitch = (e: { top: number; bottom: number }): number =>
       up ? Math.max(pitchOf(e.top), 9) + 4 : Math.min(pitchOf(e.bottom), 0) - 2
@@ -8193,8 +8211,12 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         const members = voicesOfStaff.find((m) => m.includes(voiceIndex)) ?? [voiceIndex]
         const pos = Math.max(0, members.indexOf(voiceIndex))
         const size = 17 / UNIT_PX
+        // …CENTRED ON THE STAFF'S MIDDLE LINE, which is `stepToY(0)` and no longer y = 0:
+        // the staff's frame is abcjs's, zeroed on pitch 0. See `stepToY`.
         const centre =
-          (pos - (members.length - 1) / 2) * size * ENGRAVE.lineSkipFactor + size * 0.35
+          stepToY(0) +
+          (pos - (members.length - 1) / 2) * size * ENGRAVE.lineSkipFactor +
+          size * 0.35
         nameElements.push({
           type: 'voiceName',
           x: ENGRAVE.marginX,
@@ -8761,8 +8783,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       const originY =
         previousBottomLine === null
           ? stacked
-          : Math.max(stacked, previousBottomLine + intraStaffSep + STAFF_HALF_HEIGHT)
-      previousBottomLine = originY + STAFF_HALF_HEIGHT
+          : // LINE to LINE: the origin sits `stepToY(4)` below the top line, which is a
+            // NEGATIVE offset in abcjs's frame — hence the subtraction.
+            Math.max(stacked, previousBottomLine + intraStaffSep - stepToY(4))
+      previousBottomLine = originY + stepToY(-4)
       // In PITCH, as abcjs states it: the staff's own span plus whatever the clamp added,
       // which abcjs carries inside `staff.top` and we apply here.
       // **`calcHeight` ADDS `staff.top` AND THEN `-staff.bottom`**, two additions onto a
@@ -8770,7 +8794,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // against abcjs's own dump on `visual-title-07`: its `H` is 14.768774193548388 and
       // `(bottom - top) / STEP` gives …387. The clamp goes on as its own term, because
       // abcjs carries its equivalent inside `staff.top`.
-      const pitchOfY = (y: number): number => PITCH_ORIGIN - y / ENGRAVE.spacePerStep
+      const pitchOfY = (y: number): number => -y / ENGRAVE.spacePerStep
       heightPitch += pitchOfY(extent.top + blockSpan)
       heightPitch += -pitchOfY(extent.bottom)
       heightPitch += (originY - stacked) / ENGRAVE.spacePerStep
@@ -8837,8 +8861,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   const placed = withCurves.map((system) => {
     const height = systemHeight(system, strict)
     const staves = system.staves
-    const topLineOffset = (staves[0]?.originY ?? 0) - STAFF_HALF_HEIGHT
-    const bottomLineOffset = (staves[staves.length - 1]?.originY ?? 0) + STAFF_HALF_HEIGHT
+    const topLineOffset = (staves[0]?.originY ?? 0) + stepToY(4)
+    const bottomLineOffset = (staves[staves.length - 1]?.originY ?? 0) + stepToY(-4)
     // A MID-TUNE BLOCK IS ADDITIVE TO THE SEPARATION, NOT ABSORBED BY IT. abcjs draws the
     // nonMusic line first — `renderer.y` moves by its rows — and only then runs
     // `addStaffPadding`, which measures `naturalSeparation` from the two groups' OWN
@@ -9859,12 +9883,12 @@ function aboveLadder<
   // two coincide and they are the same 6 pitch. A hairpin is read from the furniture flags
   // rather than from `spannerLines`, which is still empty when this first runs.
   const dynamicAbove =
-    has((el) => el.glyphs.some((g) => g.role === 'dynamic' && g.y < 0)) ||
+    has((el) => el.glyphs.some((g) => g.role === 'dynamic' && g.y < stepToY(0))) ||
     (parts.some((p) => p.hasHairpin === true) && parts.some((p) => p.dynamicsAbove === true))
   const voltaAbove = parts.some(
     (p) =>
       (p.voltaLines ?? []).some((l) => (l.y1 + l.y2) / 2 < 0) ||
-      (p.voltaTexts ?? []).some((t) => t.y < 0),
+      (p.voltaTexts ?? []).some((t) => t.y < stepToY(0)),
   )
   const endingPitch = Math.max(
     voltaAbove ? ENGRAVE.voltaLane : 0,
@@ -9884,7 +9908,7 @@ function aboveLadder<
         .map((el) => ({
           ...el,
           texts: el.texts.filter((t) => !isChord(t)),
-          glyphs: el.glyphs.filter((g) => !(g.role === 'dynamic' && g.y < 0)),
+          glyphs: el.glyphs.filter((g) => !(g.role === 'dynamic' && g.y < stepToY(0))),
         })),
     ),
     parts.flatMap((p) => p.beams),
@@ -9919,9 +9943,9 @@ function aboveLadder<
    * `dim.height / spacing.STEP` does.
    */
   const PITCH_PER_UNIT = 1 / ENGRAVE.spacePerStep
-  let topPitch = PITCH_ORIGIN - inkTop * PITCH_PER_UNIT
+  let topPitch = -inkTop * PITCH_PER_UNIT
   // y is DOWN, so reserving room above walks the PITCH up and the y negative.
-  const yOfPitch = (pitch: number): number => (PITCH_ORIGIN - pitch) * ENGRAVE.spacePerStep
+  const yOfPitch = (pitch: number): number => -pitch * ENGRAVE.spacePerStep
   /** A lane whose margin is already inside the figure — the ending's and the dynamics'. */
   const spend = (height: number): number => {
     topPitch += height * PITCH_PER_UNIT
@@ -10750,7 +10774,8 @@ function verticalExtent(
     else sawDynamicBelow = true
   }
   const flag = (y: number) => {
-    if (y < 0) endingAbove = Math.max(endingAbove, ENGRAVE.voltaLane)
+    // ABOVE or BELOW the MIDDLE LINE — `stepToY(0)`, not y = 0.
+    if (y < stepToY(0)) endingAbove = Math.max(endingAbove, ENGRAVE.voltaLane)
     else endingBelow = Math.max(endingBelow, ENGRAVE.voltaLane)
   }
   // A TUPLET COUNTS TWICE: its BRACKET'S INK, and then the lane ON TOP OF THAT.
@@ -10782,7 +10807,7 @@ function verticalExtent(
     // `specialY` per staff showed 4 of ragtime's 46 reserve on a hairpin with no `!mf!`
     // beside it, and those are exactly the staves whose `lastBottomLine` ran 7.00 pitch
     // short of abcjs's at the system boundary below them.
-    if (line.role === 'dynamic' && line.y1 > 0) {
+    if (line.role === 'dynamic' && line.y1 > stepToY(0)) {
       sawDynamicBelow = true
       continue
     }
@@ -10835,7 +10860,8 @@ function verticalExtent(
       // Only the BELOW side is re-anchored and lane-reserved. An ABOVE dynamic keeps its
       // own box in the ink scan, which is what it had before and what its fixtures expect.
       if (g.role === 'dynamic') {
-        if (g.y > 0) sawDynamicBelow = true
+        // ABOVE or BELOW is measured from the MIDDLE LINE, `stepToY(0)`, not from y = 0.
+        if (g.y > stepToY(0)) sawDynamicBelow = true
         else sawDynamicAbove = true
         continue
       }
@@ -10857,7 +10883,7 @@ function verticalExtent(
       // abcjs's on every staff whose lowest thing is a down-stem.
       // Dynamics reserve a flat lane below the ink, applied after this scan — see
       // `dynamicBelowReserve`. Their own geometry must not push the ink they hang off.
-      if (line.role === 'dynamic' && line.y1 > 0) {
+      if (line.role === 'dynamic' && line.y1 > stepToY(0)) {
         sawDynamicBelow = true
         continue
       }
