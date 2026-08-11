@@ -59,6 +59,7 @@ const CASES: Case[] = readdirSync(dir)
 const PASSING: readonly string[] = [
   'dom-accidentals',
   'dom-bar-numbers',
+  'dom-bars',
   'dom-beam',
   'dom-chord',
   'dom-chord-symbols',
@@ -71,7 +72,9 @@ const PASSING: readonly string[] = [
   'dom-parts',
   'dom-plain',
   'dom-rest',
+  'dom-tempo',
   'dom-title-composer',
+  'dom-tuplet',
   'dom-two-voices',
   'svg-12-8-group',
   'svg-single-note',

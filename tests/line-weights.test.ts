@@ -185,7 +185,19 @@ describe('line weights match abcjs in strict mode', () => {
     // markup carries no `stroke-width`, which is what makes it SVG's default 1. A
     // representation that cannot express the quantity cannot be asked for it, so the 1 is
     // read from the golden's attributes and asserted here on our side only.
-    expect(ours.rule, 'bracket rule weight').toEqual(1)
+    // CORRECTED, and by this file's own lesson: the line above used to read
+    // `expect(ours.rule).toEqual(1)` because OUR bracket was a rect per stroke and abcjs's
+    // was one stroked path — so the two engines had different representations and only
+    // ours could be asked for a weight. Ours is one stroked path now too, so the number is
+    // the same quantity on both sides and the WEIGHT is not in the geometry for either:
+    // it is SVG's default 1, which is what writing no `stroke-width` MEANS. Assert that,
+    // and assert the boxes agree.
+    expect(render('S4-bars-repeats')).toMatch(/data-name="line"/)
+    expect(
+      /<path[^>]*data-name="line"[^>]*stroke-width/.test(render('S4-bars-repeats')),
+      'an ending rule must paint at SVG\'s default 1, as abcjs\'s does',
+    ).toBe(false)
+    expect(ours.rule, 'bracket rule weight').toEqual(theirs.rule)
     expect(ours.hook, 'end-hook drop').toEqual(theirs.hook)
     expect(ours.left, 'bracket left edge').toEqual(theirs.left)
     expect(ours.right, 'bracket right edge').toEqual(theirs.right)
@@ -244,9 +256,42 @@ describe('line weights match abcjs in strict mode', () => {
       )
       // UPRIGHT pieces only — a triplet's horizontal run and a bracket's two arms are the
       // same `data-name` and would otherwise be averaged in.
-      const hits = doc.items.filter(
-        (i) => i.name === name && i.w !== undefined && i.h !== undefined && (i.h as number) > (i.w as number),
-      )
+      // **A BRACKET IS ONE PATH WITH EVERY SEGMENT IN ITS `d` NOW, AS ABCJS'S ALWAYS
+      // WAS** — so its BOX is the whole shape and no filter over boxes can reach a hook.
+      // The segments are read out of the `d` instead, which is a question both engines can
+      // answer and the one this gate exists to ask. Falls back to the box for a name still
+      // drawn as one rect per stroke.
+      const svg =
+        renderAbc('paper', readFileSync(join(corpusDir, `${fixture}.abc`), 'utf-8'), {})[tune]
+          ?.svg ?? ''
+      const segments: { w: number; h: number }[] = []
+      for (const m of svg.matchAll(/<path[^>]*data-name="([^"]*)"[^>]*>/g)) {
+        const tag = m[0]
+        if (m[1] !== name) continue
+        const d = /\sd="([^"]*)"/.exec(tag)?.[1] ?? ''
+        for (const seg of d.matchAll(
+          /M\s*(-?[\d.]+)\s+(-?[\d.]+)\s*L\s*(-?[\d.]+)\s+(-?[\d.]+)/g,
+        )) {
+          segments.push({
+            w: Math.abs(Number(seg[3]) - Number(seg[1])),
+            h: Math.abs(Number(seg[4]) - Number(seg[2])),
+          })
+        }
+      }
+      // …and the fallback is keyed on the SEGMENTS FOUND, not on the path existing: a group
+      // bracket is one path of curves whose only straight runs are horizontal, so parsing
+      // it yields segments and none of them upright.
+      const upright = segments.filter((sg) => sg.h > sg.w)
+      const hits =
+        upright.length > 0
+          ? upright
+          : doc.items.filter(
+              (i) =>
+                i.name === name &&
+                i.w !== undefined &&
+                i.h !== undefined &&
+                (i.h as number) > (i.w as number),
+            )
       expect(
         hits.length,
         `no upright ${what} in our output — the handle is missing again`,

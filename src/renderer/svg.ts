@@ -15,7 +15,14 @@ import { ABCJS_ARC, ABCJS_YCORR, spaces } from './abcjs-constants.js'
 import { SMUFL_TO_ABCJS } from './glyph-map.js'
 import { glyphsFor } from './glyph-table.js'
 import { GLYPHS, type GlyphName } from './glyphs.js'
-import type { Layout, PartRole, PlacedCurve, PlacedGlyph, PlacedLine } from './layout.js'
+import type {
+  Layout,
+  PartRole,
+  PlacedCurve,
+  PlacedGlyph,
+  PlacedLine,
+  PlacedText,
+} from './layout.js'
 
 export interface RenderOptions {
   /** Pixels per staff space. 8 gives a ~32px staff, close to typical engraving size. */
@@ -429,6 +436,23 @@ class Classes {
     for (let i = 0; i < (this.line ?? 0); i += 1) total += this.perLine[i] ?? 0
     if (this.measure) total += this.measure
     return total
+  }
+  /**
+   * `generate` as of a GIVEN measure, without moving the running one.
+   *
+   * abcjs's `otherchildren` is ONE interleaved list — endings, triplets, ties and `"bar"`
+   * markers together — so its measure counter only ever goes forward as it walks. Ours
+   * are separate buckets per staff, walked in an order of our own, so the counter has to
+   * be addressed rather than advanced. Measured on a ladder: an ending's number is the
+   * count of `"bar"` markers pushed before it, which is its measure index within the LINE
+   * minus one, since the ending is added ahead of its own barline.
+   */
+  generateAt(c: string, measure: number): string {
+    const saved = this.measure
+    this.measure = measure
+    const out = this.generate(c)
+    this.measure = saved
+    return out
   }
   generate(c: string): string {
     if (!this.on) return ''
@@ -1062,7 +1086,12 @@ const glyphDefs = new Map<GlyphName, string>()
                */
               : abcjs && MUSIC_TEXT_NAMES.has(t.dataName ?? '')
                 ? `${attrIfAny(classes.generate(t.dataName ?? ''))} data-name="${t.dataName}"`
-                : attrs(el.type, 'text')
+                // **A TEMPO MARK'S PARTS NAME THEMSELVES AND CARRY NO CLASS** —
+                // `drawTempo` renders `pre`, `beats` and `post` with `noClass: true` and a
+                // `name` each (`draw/tempo.js:19`, `:31`, `:38`).
+                : abcjs && t.dataName !== undefined
+                  ? ` data-name="${t.dataName}"`
+                  : attrs(el.type, 'text')
           textParts.push({
             role: t.role,
             s:
@@ -1313,30 +1342,89 @@ const glyphDefs = new Map<GlyphName, string>()
           ),
         )
       }
-      for (const line of staff.voltaLines) {
-        parts.push(lineToRect(TL(line), abcjs ? ' class="abcjs-ending"' : ` class="${prefix}-volta"`, abcjs))
-      }
-      for (const t of staff.voltaTexts) {
+      /**
+       * **A BRACKET IS A GROUP HOLDING ONE PATH AND ITS NUMBER.** Both `drawEnding` and
+       * `drawTriplet` open a `<g>`, write EVERY segment as a single `printPath` `d`, add
+       * the number as a `noClass` text naming itself, and close
+       * (`draw/ending.js:27-50`, `draw/triplet.js:7-13`). We wrote a line per segment at
+       * the voice's own level and a text beside them, which is four rows of the contract
+       * where abcjs has three — and the `d` is `M … L … ` per segment WITH a trailing
+       * space, from `sprintf`.
+       */
+      const bracketGroup = (
+        lines: readonly PlacedLine[],
+        text: PlacedText | undefined,
+        name: string,
+        pathName: string,
+        fill: boolean,
+      ): void => {
+        if (text === undefined) return
+        const d = lines
+          .map((l) => {
+            const t = TL(l)
+            return `M ${round2(t.x1)} ${round2(t.y1)} L ${round2(t.x2)} ${round2(t.y2)} `
+          })
+          .join('')
         parts.push(
-          `<text${abcjs ? ' class="abcjs-ending"' : ` class="${prefix}-volta"`} x="${textNum(t.x * PX)}" ` +
-            `y="${round2(t.y * PX + oy)}" font-family="serif" font-size="${num(t.size * PX)}">${escapeText(t.text)}</text>`,
+          `<g${attrIfAny(classes.generateAt(text.groupClass ?? '', text.measure ?? 0))}` +
+            `${fill ? ' fill="currentColor"' : ''} data-name="${name}">`,
         )
+        if (d) {
+          parts.push(
+            `<path d="${d}" stroke="currentColor"${fill ? ' fill="currentColor"' : ''} ` +
+              `data-name="${pathName}"></path>`,
+          )
+        }
+        const style =
+          (text.bold ? ' font-weight="bold"' : '') + (text.italic ? ' font-style="italic"' : '')
+        const anchor = text.anchor === undefined ? '' : ` text-anchor="${text.anchor}"`
+        parts.push(
+          `<text${anchor} x="${textNum(text.x * PX)}" y="${round2(text.y * PX + oy)}" ` +
+            `font-family="serif" font-size="${num(text.size * PX)}"${style} ` +
+            `data-name="${escapeAttr(text.dataName ?? text.text)}">${escapeText(text.text)}</text>`,
+        )
+        parts.push('</g>')
+      }
+      if (abcjs) {
+        for (const t of staff.voltaTexts) {
+          bracketGroup(
+            staff.voltaLines.filter((l) => l.group === t.group),
+            t,
+            'ending',
+            'line',
+            true,
+          )
+        }
+      } else {
+        for (const line of staff.voltaLines) {
+          parts.push(lineToRect(TL(line), ` class="${prefix}-volta"`, abcjs))
+        }
+        for (const t of staff.voltaTexts) {
+          parts.push(
+            `<text class="${prefix}-volta" x="${textNum(t.x * PX)}" ` +
+              `y="${round2(t.y * PX + oy)}" font-family="serif" font-size="${num(t.size * PX)}">${escapeText(t.text)}</text>`,
+          )
+        }
       }
       // ABCJS CALLS IT A TRIPLET, whatever the number — `classes.generate('triplet ' +
       // durationClass)` on the group and `data-name="triplet-bracket"` on the path
       // (`draw/triplet.js:7-9`, `:42`). Ours said `abcjs-tuplet`, which is the right word
       // for the concept and the wrong one for compat: a stylesheet written against abcjs
       // selects `.abcjs-triplet`, and no comparison could match the bracket either.
-      for (const line of staff.tupletLines) {
-        parts.push(
-          lineToRect(
-            TL(line),
-            abcjs
-              ? ' class="abcjs-triplet" data-name="triplet-bracket"'
-              : ` class="${prefix}-tuplet"`,
-            abcjs,
-          ),
-        )
+      if (abcjs) {
+        for (const t of staff.tupletTexts) {
+          bracketGroup(
+            staff.tupletLines.filter((l) => l.group === t.group),
+            t,
+            'triplet',
+            'triplet-bracket',
+            false,
+          )
+        }
+      } else {
+        for (const line of staff.tupletLines) {
+          parts.push(lineToRect(TL(line), ` class="${prefix}-tuplet"`, abcjs))
+        }
       }
       // Never present in strict mode, where abcjs prints a literal `_` instead — so this
       // reuses abcjs's lyric class rather than inventing one it has no counterpart for.
@@ -1392,14 +1480,16 @@ const glyphDefs = new Map<GlyphName, string>()
       // that class too — which this did until now — invented a hook abcjs does not offer
       // and still left it unmatchable, since a comparison keyed on `data-name` found
       // nothing.
-      for (const t of staff.tupletTexts) {
-        const style = `${t.bold ? ' font-weight="bold"' : ''}${t.italic ? ' font-style="italic"' : ''}`
-        const anchor = t.anchor === undefined ? '' : ` text-anchor="${t.anchor}"`
-        parts.push(
-          `<text${abcjs ? ` data-name="${escapeText(t.text)}"` : ` class="${prefix}-tuplet"`}` +
-            `${anchor} x="${textNum(t.x * PX)}" ` +
-            `y="${round2(t.y * PX + oy)}" font-family="serif" font-size="${num(t.size * PX)}"${style}>${escapeText(t.text)}</text>`,
-        )
+      // …and under `abcjs` the number is written INSIDE its group, by `bracketGroup`.
+      if (!abcjs) {
+        for (const t of staff.tupletTexts) {
+          const style = `${t.bold ? ' font-weight="bold"' : ''}${t.italic ? ' font-style="italic"' : ''}`
+          const anchor = t.anchor === undefined ? '' : ` text-anchor="${t.anchor}"`
+          parts.push(
+            `<text class="${prefix}-tuplet"${anchor} x="${textNum(t.x * PX)}" ` +
+              `y="${round2(t.y * PX + oy)}" font-family="serif" font-size="${num(t.size * PX)}"${style}>${escapeText(t.text)}</text>`,
+          )
+        }
       }
       for (const curve of staff.curves) {
         parts.push(

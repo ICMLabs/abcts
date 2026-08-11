@@ -846,6 +846,8 @@ export interface PlacedGlyph {
 }
 
 export interface PlacedLine {
+  /** Which bracket group this segment belongs to — see `PlacedText.group`. */
+  group?: number
   readonly x1: number
   readonly y1: number
   readonly x2: number
@@ -924,6 +926,20 @@ export interface PlacedText {
   readonly size: number
   readonly bold: boolean
   readonly italic: boolean
+  /**
+   * **AN ENDING AND A TRIPLET ARE EACH A `<g>` HOLDING ONE PATH AND THIS TEXT.**
+   * `drawEnding` and `drawTriplet` both `openGroup`, emit every bracket segment as ONE
+   * `printPath`, add the number, and close (`draw/ending.js:27-50`,
+   * `draw/triplet.js:7-13`). We drew a line per segment at the voice's own level, so a
+   * two-ending system read as eight rows of the contract where abcjs has six.
+   *
+   * `group` is which bracket this belongs to; the LINES carrying the same `group` are its
+   * segments. `groupClass` is the stem handed to `classes.generate`, and `measure` the
+   * counter to generate it at — see `Classes.generateAt`.
+   */
+  readonly group?: number
+  readonly groupClass?: string
+  readonly measure?: number
   /**
    * Horizontal alignment. Absent means `start`, which is every text the music draws —
    * only the top-text block centres a title or right-aligns a composer.
@@ -1991,6 +2007,10 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
   if (tempo.text !== null && tempo.text !== '') {
     texts.push({
       text: tempo.text,
+      // `drawTempo` names its three parts `pre`, `beats` and `post` and gives them
+      // `noClass: true` (`draw/tempo.js:19`, `:31`, `:38`) — the only text in the music
+      // that is named and NOT classed.
+      dataName: 'pre',
       x: cursor,
       y: baseline,
       size: ENGRAVE.tempoTextSize,
@@ -2112,6 +2132,7 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
     }
     texts.push({
       text: `= ${tempo.bpm}`,
+      dataName: 'beats',
       x: cursor,
       y: baseline,
       size: ENGRAVE.tempoTextSize,
@@ -5499,7 +5520,9 @@ function layoutTuplets(
     groups.set(tuplet.group, members)
   }
 
+  let tupletGroup = -1
   for (const members of groups.values()) {
+    tupletGroup += 1
     const first = members[0]
     const last = members[members.length - 1]
     if (first === undefined || last === undefined) continue
@@ -5689,6 +5712,14 @@ function layoutTuplets(
 
     texts.push({
       text: label,
+      dataName: label,
+      group: tupletGroup,
+      // **`generate('triplet ' + durationClass)`**, where `durationClass` is
+      // `('d' + round(anchor1.parent.durationClass * 1000) / 1000).replace(/\./, '-')`
+      // off the FIRST member's own absolute element (`elements/triplet-element.js:7`) —
+      // its SOUNDING duration, so a triplet eighth under `L:1/4` is `d0-167`.
+      groupClass: `triplet ${`d${Math.round((elements[first.element]?.durationClass ?? 0) * 1000) / 1000}`.replace(/\./, '-')}`,
+      measure: 0,
       // CENTRED ON `xTextPos`, as abcjs's `anchor: "middle"` says (`draw/triplet.js:11`).
       // Ours start-anchored at `centre - width / 2`, which is the same point only when our
       // text metrics agree with the browser's — an approximation with no reason to exist
@@ -5728,11 +5759,14 @@ function layoutTuplets(
     const thickness = ENGRAVE.strokedPathRule
     const hook = ENGRAVE.tupletHook * -direction
 
+    // **THE HOOKS COME FIRST** — `drawBracket` writes the two verticals, then the left
+    // segment, then the right (`draw/triplet.js:28-42`), all into one `d`.
+    const g = tupletGroup
+    lines.push({ group: g, x1: first.left, y1: yStart, x2: first.left, y2: yStart - hook, thickness })
+    lines.push({ group: g, x1: last.right, y1: yEnd, x2: last.right, y2: yEnd - hook, thickness })
     // The rule runs from one end note's pitch to the other's, so it slopes with them.
-    lines.push({ x1: first.left, y1: yStart, x2: centre - gap, y2: y, thickness })
-    lines.push({ x1: centre + gap, y1: y, x2: last.right, y2: yEnd, thickness })
-    lines.push({ x1: first.left, y1: yStart, x2: first.left, y2: yStart - hook, thickness })
-    lines.push({ x1: last.right, y1: yEnd, x2: last.right, y2: yEnd - hook, thickness })
+    lines.push({ group: g, x1: first.left, y1: yStart, x2: centre - gap, y2: y, thickness })
+    lines.push({ group: g, x1: centre + gap, y1: y, x2: last.right, y2: yEnd, thickness })
   }
 
   return { lines, texts, reservesAbove, reserves }
@@ -7902,8 +7936,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // `1` labels against its 3 — and, worse, reserved the ending lane on the BASS staff
       // too, which pushed it 6 pitch clear of the treble on every voltaed system.
       const drawsVoltas = voiceIndex === voicesOfStaff[0]?.[0]
-      /** The repeat ending currently open, and where its bracket started. */
-      let openVolta: { label: string; startX: number } | null = null
+      /** The repeat ending currently open, where its bracket started, and its measure. */
+      let openVolta: { label: string; startX: number; measure: number } | null = null
+      /** Which bracket — every segment and the number of one ending share it. */
+      let voltaGroup = 0
 
       /**
        * Close the open ending, drawing its bracket.
@@ -7915,21 +7951,31 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         if (openVolta === null) return
         const y = stepToY(ENGRAVE.voltaStep)
         const thickness = ENGRAVE.strokedPathRule
-        voltaLines.push({ x1: openVolta.startX, y1: y, x2: endX, y2: y, thickness })
-        // The opening hook always turns down; the closing one only when the ending
-        // really ends here rather than continuing onto the next system.
+        const group = voltaGroup
+        voltaGroup += 1
+        // **THE HOOKS COME FIRST AND THE RULE LAST** — `drawEnding` appends the opening
+        // vertical, then the closing one, then the horizontal (`draw/ending.js:13-26`),
+        // and all three are one `d`. Ours emitted the rule first.
         voltaLines.push({
+          group,
           x1: openVolta.startX,
           y1: y,
           x2: openVolta.startX,
           y2: y + ENGRAVE.voltaHook,
           thickness,
         })
+        // The opening hook always turns down; the closing one only when the ending
+        // really ends here rather than continuing onto the next system.
         if (hooked) {
-          voltaLines.push({ x1: endX, y1: y, x2: endX, y2: y + ENGRAVE.voltaHook, thickness })
+          voltaLines.push({ group, x1: endX, y1: y, x2: endX, y2: y + ENGRAVE.voltaHook, thickness })
         }
+        voltaLines.push({ group, x1: openVolta.startX, y1: y, x2: endX, y2: y, thickness })
         voltaTexts.push({
           text: openVolta.label,
+          group,
+          groupClass: 'ending',
+          measure: openVolta.measure,
+          dataName: openVolta.label,
           x: openVolta.startX + ENGRAVE.voltaTextIndent,
           y: y + ENGRAVE.voltaTextDrop + ENGRAVE.voltaTextSize,
           size: ENGRAVE.voltaTextSize,
@@ -8004,7 +8050,16 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           // A new ending closes whatever was open — `|1 … :|2` runs them back to back.
           if (block.volta !== null && drawsVoltas) {
             closeVolta(voltaStartOf(i), true)
-            openVolta = { label: block.volta, startX: voltaStartOf(i) }
+            // **THE MEASURE COUNTER IS THE ENDING'S MEASURE WITHIN THE LINE, MINUS ONE**
+            // — the count of `"bar"` markers already in `otherchildren`, since the
+            // ending is added ahead of its own barline (`voice-element.js:29-41`).
+            // Measured through abcjs on three controls: `CDEF|1…:|2…` gives m0/m1,
+            // `|:CDEF|GABc|1…:|2…` gives m1/m2, and a second line restarts at m0.
+            openVolta = {
+              label: block.volta,
+              startX: voltaStartOf(i),
+              measure: Math.max(0, i - span.start - 1),
+            }
           }
           const base = elements.length
           // Every element sits where the LINE's shared cursor put it: notes at the same
