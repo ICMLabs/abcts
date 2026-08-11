@@ -2480,8 +2480,23 @@ function layoutRest(
     glyphs.push(glyphAt('restHBar', x + mm, 1))
     texts.push({
       text: String(rest.measureCount),
-      x: x + mm,
-      y: stepToY(10),
+      /**
+       * **`renderText`'s ELEMENT IN `tempofont`, CENTRED ON THE RELATIVE ELEMENT'S OWN
+       * WIDTH** — `drawRelativeElement`'s `multimeasure-text` arm writes it at
+       * `params.x + params.w / 2` with `type: 'tempofont'`, `klass: generate("rest")` and
+       * NO `name` (`draw/relative.js:54-56`), and the element is
+       * `RelativeElement(text, mmWidth, mmWidth, 16)` (`abstract-engraver.js:596`).
+       * Ours had no `font`, so the emitter fell through to its ad-hoc `<text>` with
+       * `font-family="serif"` and the attributes in another order — and it sat half a
+       * glyph left, which no gate could see because a count is not a notehead.
+       */
+      font: 'tempofont',
+      role: 'rest',
+      x: x + mm + mm / 2,
+      // `renderText` adds the FONT SIZE to the y it is handed unless `centerVertically`
+      // (`draw/text.js:29-30`), and this arm passes `false`. The RESERVE stays on the bare
+      // pitch — abcjs's element declares `top === bottom === 16` and draws 20px below it.
+      y: stepToY(10) + ENGRAVE.tempoTextSize,
       size: ENGRAVE.tempoTextSize,
       bold: true,
       italic: false,
