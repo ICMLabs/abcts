@@ -392,11 +392,26 @@ function curveToPath(curve: PlacedCurve, attr: string, strict: boolean, k = 1): 
     const c1y = y1 + flatten * uy + arc * ux
     const c2x = x2 - flatten * ux - arc * uy
     const c2y = y2 - flatten * uy + arc * ux
+    /**
+     * **abcjs's OWN `d`, AND EVERY COORDINATE IS `roundNumber`d.**
+     *
+     *     sprintf("M %f %f C %f %f %f %f %f %f C %f %f %f %f %f %f z", …)
+     *
+     * (`draw/tie.js:83-99`.) Spaces, not commas; a lower-case `z`; the four control
+     * points rounded BEFORE the second curve is derived from them, because `drawArc`
+     * rounds them on the way in and only the two mirrored points are rounded again. And
+     * the attributes are `paper.path`'s key order — `d`, `stroke`, `fill`, `class`,
+     * `data-name` — where ours put the name first.
+     */
+    const r = (n: number): number => Number.parseFloat(n.toFixed(2))
+    const [rx1, ry1, rx2, ry2] = [r(x1), r(y1), r(x2), r(y2)]
+    const [rc1x, rc1y, rc2x, rc2y] = [r(c1x), r(c1y), r(c2x), r(c2y)]
+    const klass = / class="[^"]*"/.exec(attr)?.[0] ?? ''
+    const name = / data-name="[^"]*"/.exec(attr)?.[0] ?? ''
     return (
-      `<path${attr} d="M${num(x1)},${num(y1)} ` +
-      `C${num(c1x)},${num(c1y)} ${num(c2x)},${num(c2y)} ${num(x2)},${num(y2)} ` +
-      `C${num(c2x - t * uy)},${num(c2y + t * ux)} ${num(c1x - t * uy)},${num(c1y + t * ux)} ` +
-      `${num(x1)},${num(y1)}Z"/>`
+      `<path d="M ${rx1} ${ry1} C ${rc1x} ${rc1y} ${rc2x} ${rc2y} ${rx2} ${ry2} ` +
+      `C ${r(rc2x - t * uy)} ${r(rc2y + t * ux)} ${r(rc1x - t * uy)} ${r(rc1y + t * ux)} ` +
+      `${rx1} ${ry1} z" stroke="none" fill="currentColor"${klass}${name}></path>`
     )
   }
   const dx = x2 - x1
@@ -1874,7 +1889,9 @@ const glyphDefs = new Map<GlyphName, string>()
           curveToPath(
             TC(curve),
             abcjs
-              ? `${attrIfAny(classes.generateAt(klass, at))} data-name="${curve.kind}"`
+              // ALWAYS a `class`, empty or not: `generate` returns `''` and `svg.js`'s
+              // `path` sets every key it is handed, so the attribute is written either way.
+              ? ` class="${classes.generateAt(klass, at)}" data-name="${curve.kind}"`
               : ` class="${prefix}-${curve.kind}"`,
             strict,
             PX,
