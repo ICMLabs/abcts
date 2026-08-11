@@ -1107,6 +1107,17 @@ const glyphDefs = new Map<GlyphName, string>()
        * staff spans, not just its last. So the rule is GROUP MEMBERSHIP, and the `|` makes
        * no difference at all. Two runs settled what three source reads could not.
        */
+      /**
+       * **A DUPLICATE VOICE'S BAR, METER, CLEF AND KEY ARE INVISIBLE.** Every voice after
+       * the first on a staff is `voice.duplicate` ("bar lines and other duplicate info
+       * need not be created"), and `createABCElement` marks exactly those four
+       * `elemset[0].invisible = true` (`abstract-engraver.js:150`, `:319-340`);
+       * `drawAbsolute` then returns before it opens a group, so they produce NO MARKUP at
+       * all while still taking their width. An `&` overlay is such a voice, which is why
+       * `visual-tablature-13` ended with one barline too many.
+       */
+      let duplicateFrom = Number.POSITIVE_INFINITY
+      if (abcjs && staff.voices.length > 1) duplicateFrom = staff.voices[0]?.length ?? 0
       const previous = staffIndex === 0 ? undefined : system.staves[staffIndex - 1]
       const joined = system.connectorSpans.some(
         (c) => c.staffIndex < staffIndex && staffIndex <= c.through,
@@ -1214,6 +1225,18 @@ const glyphDefs = new Map<GlyphName, string>()
       staff.elements.forEach((el, elIndex) => {
         // Already written above, ahead of the braces. See the hoist.
         if (abcjs && el.blockHeight !== undefined) return
+        if (
+          elIndex >= duplicateFrom &&
+          (el.type === 'bar' ||
+            el.type === 'timeSignature' ||
+            el.type === 'clef' ||
+            el.type === 'keySignature')
+        ) {
+          // The COUNTERS still advance: `drawVoice` runs them after `drawAbsolute`
+          // returns, whatever it drew (`draw/voice.js:41-49`).
+          if (el.type === 'bar' && foundNote) classes.incrMeasure()
+          return
+        }
         // abcjs wraps each element in a group carrying its kind and index, which is what
         // its interaction code walks. Core's own naming needs no wrapper.
         let gcls = ''
