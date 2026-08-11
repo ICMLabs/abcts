@@ -640,9 +640,9 @@ export const GOLDEN_TEXT_HEIGHTS: Readonly<Record<number, number>> = {
   27: 29.91,
 }
 
-/** A text's height as the generator measures it, in staff spaces. */
-export const goldenTextHeight = (sizeInSpaces: number): number => {
-  const px = sizeInSpaces * STAFF_SPACE_PX
+/** A text's height as the generator measures it, in layout units. */
+export const goldenTextHeight = (sizeInLayoutUnits: number): number => {
+  const px = sizeInLayoutUnits * UNIT_PX
   return spaces(GOLDEN_TEXT_HEIGHTS[Math.round(px)] ?? px + 2)
 }
 

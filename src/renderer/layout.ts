@@ -67,7 +67,7 @@ import {
   goldenTextHeight,
   PITCH_ORIGIN,
   SPACE,
-  STAFF_SPACE_PX,
+  UNIT_PX,
   STEP_PX,
   spaces,
   spacesOfPitch,
@@ -3345,7 +3345,7 @@ function barNumberText(
   // is `pitch - 6`. Its height is in PIXELS over `spacing.STEP`, which is `spaces x 2`.
   const width = textWidth(text, fontSizeOf('measurefont'), 'serif')
   const pitch =
-    onClef?.treble === true && width * STAFF_SPACE_PX > ENGRAVE.barNumberClefWide
+    onClef?.treble === true && width * UNIT_PX > ENGRAVE.barNumberClefWide
       ? ENGRAVE.barNumberClefPitch
       : ENGRAVE.barNumberPitch
   const y = stepToY(pitch + fontHeightOf('measurefont') * 2 - PITCH_ORIGIN)
@@ -4107,7 +4107,7 @@ let SCORE_FONTS: Score['fonts'] = {}
 
 /** A `%%<type>font`'s size in staff spaces — `round(pt x 4 / 3)` px (`get-font-and-attr.js:29`). */
 const fontSizeOf = (type: AbcFontType): number =>
-  Math.round(((SCORE_FONTS[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / STAFF_SPACE_PX
+  Math.round(((SCORE_FONTS[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / UNIT_PX
 
 /**
  * What `getTextSize.calc` returns as a `%%<type>font`'s HEIGHT, in staff spaces.
@@ -4211,7 +4211,7 @@ const chordParts = (chord: string): readonly [string, string, string] => {
  */
 const goldenTextWidth = (text: string, size: number, face: Face): number => {
   if (text === '') return 0
-  const px = size * STAFF_SPACE_PX
+  const px = size * UNIT_PX
   const table =
     px >= 27 || px >= 21
       ? GOLDEN_REPEAT // asks for `titlefont` / `subtitlefont`; neither key exists
@@ -4232,7 +4232,7 @@ const goldenTextWidth = (text: string, size: number, face: Face): number => {
     for (let i = 0; i < line.length; i++) width += table[line[i] as string] ?? 8
     if (width > widest) widest = width
   }
-  return widest / STAFF_SPACE_PX
+  return widest / UNIT_PX
 }
 
 /**
@@ -4523,7 +4523,7 @@ function noteText(
     const y = stepToY(minStep + 3 + a.dy / STEP_PX)
     texts.push({
       text: a.text,
-      x: headX + a.dx / STAFF_SPACE_PX,
+      x: headX + a.dx / UNIT_PX,
       y,
       size: fontSizeOf('annotationfont'),
       bold: false,
@@ -8629,7 +8629,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             y1: r.y + bottom,
             x2: (systemWidth - ENGRAVE.marginX * 2 + r.width) / 2,
             y2: r.y + bottom,
-            thickness: 1 / STAFF_SPACE_PX,
+            thickness: 1 / UNIT_PX,
             role: 'separator' as const,
           })),
         }),
@@ -8755,8 +8755,8 @@ function topTextBlock(
   // table does not list, where the generator falls back to `size + 2`.
   const advance = (size: number, extra = 0): void => {
     y +=
-      Math.round((goldenTextHeight(size) + extra) * ENGRAVE.lineSkipFactor * STAFF_SPACE_PX) /
-      STAFF_SPACE_PX
+      Math.round((goldenTextHeight(size) + extra) * ENGRAVE.lineSkipFactor * UNIT_PX) /
+      UNIT_PX
   }
   /**
    * …AND A ROW THAT CHANGED FONT MID-LINE ADVANCES BY A DIFFERENT RULE ENTIRELY.
@@ -8781,7 +8781,7 @@ function topTextBlock(
     let largest = goldenTextHeight(defaultSize)
     for (const phrase of typeof value === 'string' ? [] : value) {
       if (phrase.font === null) continue
-      largest = Math.max(largest, goldenTextHeight(phrase.font.size / STAFF_SPACE_PX))
+      largest = Math.max(largest, goldenTextHeight(phrase.font.size / UNIT_PX))
     }
     y += largest
   }
@@ -8791,7 +8791,7 @@ function topTextBlock(
     else advanceRich(value, size)
   }
   const sizeOf = (type: AbcFontType): number =>
-    Math.round(((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / STAFF_SPACE_PX
+    Math.round(((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / UNIT_PX
   /** A boxed font measures `height + padding * 4`, `padding = size * fontboxpadding`. */
   const boxOf = (type: AbcFontType): number =>
     fonts[type]?.box === true ? sizeOf(type) * ENGRAVE.fontBoxPadding * 4 : 0
@@ -9002,7 +9002,7 @@ function appendFreeText(
 ): number {
   let y = from
   const sizeOf = (type: AbcFontType): number =>
-    Math.round(((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / STAFF_SPACE_PX
+    Math.round(((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / UNIT_PX
   /**
    * A BOXED font measures `height + padding * 4`, and both of these rows move by their
    * MEASURED height — `getTextSize.calc` in `subtitle.js:8` and `free-text.js:19`. Leaving
@@ -9014,9 +9014,9 @@ function appendFreeText(
     if (block.separator !== undefined) {
       // The RULE COSTS NO HEIGHT — `drawSeparator` paints at the cursor and moves nothing
       // — so the line is worth exactly its two spaces. Points to staff spaces on the way.
-      y += block.separator.above / STAFF_SPACE_PX
-      rules.push({ y, width: block.separator.length / STAFF_SPACE_PX })
-      y += block.separator.below / STAFF_SPACE_PX
+      y += block.separator.above / UNIT_PX
+      rules.push({ y, width: block.separator.length / UNIT_PX })
+      y += block.separator.below / UNIT_PX
       continue
     }
     if (block.role === 'subtitle') {
@@ -9101,7 +9101,7 @@ function bottomTextBlock(
   const texts: PlacedText[] = []
   let y = 0
   const sizeOf = (type: AbcFontType): number =>
-    Math.round(((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / STAFF_SPACE_PX
+    Math.round(((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / UNIT_PX
   /**
    * A BOXED FONT MEASURES `height + padding * 4`, and `getTextSize.calc` returns that
    * boxed height to every caller — the bottom block's rows as much as the top block's.
@@ -9147,8 +9147,8 @@ function bottomTextBlock(
         (goldenTextHeight(size) + box) *
           ENGRAVE.lineSkipFactor *
           (1 + extra.length) *
-          STAFF_SPACE_PX,
-      ) / STAFF_SPACE_PX
+          UNIT_PX,
+      ) / UNIT_PX
   }
   const history = sizeOf('historyfont')
   const historyBox = boxOf('historyfont')
@@ -9202,7 +9202,7 @@ function freeTextBlock(
     y1: r.y,
     x2: (width + r.width) / 2,
     y2: r.y,
-    thickness: 1 / STAFF_SPACE_PX,
+    thickness: 1 / UNIT_PX,
     role: 'separator' as const,
   }))
   return { texts, lines, height }

@@ -25,7 +25,15 @@
  * approximate one, and the emitter can express the same thing with a transform.
  */
 import { type CompatibilityMode, isStrict } from '../core/model.js'
-import { ABCJS_ARC, ABCJS_LINE_PX, ABCJS_PITCH, spaces, spacesOfPitch } from './abcjs-constants.js'
+import {
+  ABCJS_ARC,
+  ABCJS_LINE_PX,
+  ABCJS_PITCH,
+  SPACE,
+  spaces,
+  spacesOfPitch,
+  UNIT_PX,
+} from './abcjs-constants.js'
 import { SMUFL_TO_ABCJS } from './glyph-map.js'
 import { ENGRAVING_DEFAULTS, GLYPHS, type GlyphName } from './glyphs.js'
 import { ABCJS_GLYPHS, ABCJS_STAFF_SPACE } from './glyphs-abcjs.js'
@@ -75,19 +83,22 @@ const bravuraEntry = (name: GlyphName): ResolvedGlyph | undefined => {
   if (glyph === undefined) return undefined
   return {
     path: glyph.path,
-    advance: glyph.advance,
-    width: glyph.width,
-    height: glyph.height,
-    y: glyph.y,
-    declaredHeight: glyph.height,
+    // Bravura's metrics are published in STAFF SPACES, so they carry the unit factor;
+    // abcjs's are published in ITS PIXELS and are divided by the unit instead. Both land
+    // in layout units, which is what every caller means by a width.
+    advance: glyph.advance * SPACE,
+    width: glyph.width * SPACE,
+    height: glyph.height * SPACE,
+    y: glyph.y * SPACE,
+    declaredHeight: glyph.height * SPACE,
     unitsPerSpace: 1,
   }
 }
 
 const BRAVURA: GlyphTable = {
   get: bravuraEntry,
-  advance: (name) => GLYPHS[name]?.advance ?? 0,
-  width: (name) => GLYPHS[name]?.width ?? 0,
+  advance: (name) => (GLYPHS[name]?.advance ?? 0) * SPACE,
+  width: (name) => (GLYPHS[name]?.width ?? 0) * SPACE,
   usesAbcjsGlyphs: false,
 }
 
@@ -107,13 +118,13 @@ const ABCJS: GlyphTable = {
     if (glyph === undefined) return bravuraEntry(name)
     return {
       path: glyph.path,
-      advance: glyph.w / ABCJS_STAFF_SPACE,
-      width: glyph.w / ABCJS_STAFF_SPACE,
+      advance: glyph.w / UNIT_PX,
+      width: glyph.w / UNIT_PX,
       // The DERIVED ink box, not the published `h`: abcjs ships a height but no origin
       // offset, and a glyph cannot be placed vertically without one. See the generator.
-      height: glyph.boxHeight / ABCJS_STAFF_SPACE,
-      y: glyph.y / ABCJS_STAFF_SPACE,
-      declaredHeight: glyph.h / ABCJS_STAFF_SPACE,
+      height: glyph.boxHeight / UNIT_PX,
+      y: glyph.y / UNIT_PX,
+      declaredHeight: glyph.h / UNIT_PX,
       unitsPerSpace: ABCJS_STAFF_SPACE,
     }
   },
@@ -165,18 +176,19 @@ export interface LineWeights {
   readonly tieMidpoint: number
 }
 
+// SMuFL publishes every one of these in STAFF SPACES, so each carries the unit factor.
 const BRAVURA_WEIGHTS: LineWeights = {
-  staffLine: ENGRAVING_DEFAULTS.staffLineThickness,
-  stem: ENGRAVING_DEFAULTS.stemThickness,
-  beamedStem: ENGRAVING_DEFAULTS.stemThickness,
-  beam: ENGRAVING_DEFAULTS.beamThickness,
-  beamStep: ENGRAVING_DEFAULTS.beamThickness + ENGRAVING_DEFAULTS.beamSpacing,
-  ledgerLine: ENGRAVING_DEFAULTS.legerLineThickness,
-  ledgerExtension: ENGRAVING_DEFAULTS.legerLineExtension,
-  thinBarline: ENGRAVING_DEFAULTS.thinBarlineThickness,
-  thickBarline: ENGRAVING_DEFAULTS.thickBarlineThickness,
-  slurMidpoint: ENGRAVING_DEFAULTS.slurMidpointThickness,
-  tieMidpoint: ENGRAVING_DEFAULTS.tieMidpointThickness,
+  staffLine: ENGRAVING_DEFAULTS.staffLineThickness * SPACE,
+  stem: ENGRAVING_DEFAULTS.stemThickness * SPACE,
+  beamedStem: ENGRAVING_DEFAULTS.stemThickness * SPACE,
+  beam: ENGRAVING_DEFAULTS.beamThickness * SPACE,
+  beamStep: (ENGRAVING_DEFAULTS.beamThickness + ENGRAVING_DEFAULTS.beamSpacing) * SPACE,
+  ledgerLine: ENGRAVING_DEFAULTS.legerLineThickness * SPACE,
+  ledgerExtension: ENGRAVING_DEFAULTS.legerLineExtension * SPACE,
+  thinBarline: ENGRAVING_DEFAULTS.thinBarlineThickness * SPACE,
+  thickBarline: ENGRAVING_DEFAULTS.thickBarlineThickness * SPACE,
+  slurMidpoint: ENGRAVING_DEFAULTS.slurMidpointThickness * SPACE,
+  tieMidpoint: ENGRAVING_DEFAULTS.tieMidpointThickness * SPACE,
 }
 
 /**
