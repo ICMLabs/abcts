@@ -9753,6 +9753,23 @@ function topTextBlock(
   // — so it comes from the golden's own table, not from a ratio. The two agree to a
   // hundredth on every DEFAULT size; they part company as soon as a `%%…font` sets one the
   // table does not list, where the generator falls back to `size + 2`.
+  /**
+   * **A LEADING GAP IS A ROW OF ITS OWN.** `spacing.title` and `spacing.subtitle` enter
+   * abcjs's block as `{ move: 7.56 }` / `{ move: 3.78 }` ROWS that `nonMusic` spends
+   * through the same cursor as the text (`elements/top-text.js:23`,
+   * `draw/non-music.js:6-10`) — instrumented in a scratchpad copy rather than read, which
+   * is what finally named this.
+   *
+   * Ours moved `y` and pushed NOTHING, so the block's HEIGHT carried the gap and the
+   * `advances` list did not. The page walk's `first.leading - named` then came out at
+   * exactly `spacing.title` instead of zero, and the block's ink overshoot happens to be
+   * the same 7.56 — **two errors cancelling**, which is why the total was right to the
+   * pixel and wrong in the last bits on 26 root elements.
+   */
+  const spend = (px: number): void => {
+    advances.push(px)
+    y += px
+  }
   const advance = (size: number, extra = 0): void => {
     const step =
       Math.round((goldenTextHeight(size) + extra) * ENGRAVE.lineSkipFactor * UNIT_PX) / UNIT_PX
@@ -9813,7 +9830,7 @@ function topTextBlock(
   const titleSize = sizeOf('titlefont')
   const [title, ...subtitles] = metadata.titles
   if (title !== undefined && plainText(title) !== '') {
-    y += ENGRAVE.titleSpace
+    spend(ENGRAVE.titleSpace)
     texts.push({
       text: plainText(title),
       role: 'title',
@@ -9844,7 +9861,8 @@ function topTextBlock(
   // Second and later `T:` fields are subtitles — abcm2ps's convention, and abcjs's.
   for (const subtitle of subtitles) {
     if (plainText(subtitle) === '') continue
-    y += ENGRAVE.subtitleSpace
+    // …and a subtitle's own leading gap is a row too — see `spend`.
+    spend(ENGRAVE.subtitleSpace)
     texts.push({
       text: plainText(subtitle),
       role: 'title',
