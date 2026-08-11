@@ -546,7 +546,7 @@ checkpoint and hand off as you go so no context is lost.
 > `dump-elements.js` publishes abcjs's own `staff.top`/`bottom`.
 
 > 🧩 **AND THE ULP TAIL IS ONE ARCHITECTURAL DEFECT, PROVEN BY A CHANGE THAT MADE IT WORSE**
-> (2026-08-11). `svg-bytes` went **117 → 100 of 171** on twelve landings, every one a read
+> (2026-08-11). `svg-bytes` went **117 → 97 of 171** on nineteen landings, every one a read
 > of a named abcjs function, and what is left is dominated by a single shape: `calcHeight`
 > sums `staff.top` and `-staff.bottom` **in PITCH** and multiplies by `STEP` once, while we
 > hold the extent in y and divide back. **Writing one site "the abcjs way" is a
@@ -747,8 +747,8 @@ reds; **seventeen gates and NINE ranked tables** — 0 of 72 audio cases, 0 of 3
 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
 **1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
 **1 of 25 DOM-contract cases with TWENTY-FOUR slugs RATCHETED** — and
-**100 of 171 SVG-byte fixtures, SEVENTY-ONE of them EXACT** — and **the SVG BYTE TABLE is
-THE ONE OPEN GATE**, at best 52498 / median 7221. Its remaining families are listed in
+**97 of 171 SVG-byte fixtures, SEVENTY-FOUR of them EXACT** — and **the SVG BYTE TABLE is
+THE ONE OPEN GATE**, at best 52498 / median 7138. Its remaining families are listed in
 item 1 of `CHECKPOINT-2026-08-10d.md` and the two biggest are NAMED: the ROOT's `height`,
 where **abcjs sums in PITCH and multiplies by `STEP` ONCE per line** (`calcHeight` +
 `engraveStaffLine`) while we stack in lengths and sum those — and `calcHeight` ignores the

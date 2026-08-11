@@ -17,11 +17,11 @@ and everything below is committed and pushed.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 11 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 13 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 25 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **100 of 171**; best 52498, median 7221 | 171 of 171 at byte 10 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **97 of 171**; best 52498, median 7138 | 171 of 171 at byte 10 |
 
 **`svg-bytes` is the one open gate**, and `DIVERGENT` is still EMPTY.
-It came into this session at 117 of 171 (median 6228) and stands at **100 of 171**
-(median 7221) with **71 fixtures byte-exact**.
+It came into this session at 117 of 171 (median 6228) and stands at **97 of 171**
+(median 7138) with **74 fixtures byte-exact**.
 
 The ROOT element: **145 byte-exact / 23 ULP-only / 3 structural**, from 144/24/3.
 
@@ -167,6 +167,71 @@ could ever be multi-line.
 clamped to pitch 6 and only THEN handed to `calcY` (`abstract-engraver.js:740-762`). Ours
 added a LENGTH to a y — `stepToY(step) ± 7 * STEP` — the same value through two products
 instead of one, printing 60.54 where abcjs prints 60.53.
+
+### A DYNAMIC IS LETTERS, ONE PATH EACH, IN A GROUP
+`printSymbol` branches on `symbol.length > 1 && symbol.indexOf(".") < 0` and opens
+`<g data-name="dynamics">` round one path PER CHARACTER, each drawn with `{stroke, fill}`
+alone — no name, no class (`draw/print-symbol.js:16-31`) — and the step between them is
+KERNED: `f`+`f` is two thirds of an `f`, `p`+`p` five sixths of a `p`, `f`+`z` five eighths.
+
+SMuFL PRECOMPOSES them, so ours drew one `dynamicPPPP` — **a Bravura figure reachable in
+strict, the class the 2026-08-05 audit closed**, surviving because the name was ABSENT from
+`SMUFL_TO_ABCJS` rather than present and wrong. An absence in that table is usually the
+parity behaviour, which is exactly why this one hid.
+
+`sfz` still draws precomposed and is recorded rather than faked: abcjs composes it from
+`s`, `f` and `z`, and this repo's Bravura table has no single-letter `s` or `z` to name.
+
+**AND `otherchildren` IS ONE INTERLEAVED LIST IN ADD ORDER**, so a hairpin written between
+two dynamics is drawn between them. Ours held two buckets and emptied the dynamics one
+first; they merge by x now, which is the add order for a single voice.
+
+**AND A GATE WENT RED ON IT** — `above-lane-order` keyed on `data-name="dynamics"` being on
+the PATH, which it no longer is. The fix is in the REPRESENTATION: `pixel-geometry` now
+gives a child the enclosing group's `data-name`. Fourth time on this branch.
+
+### A HAIRPIN RUNS ELEMENT-x TO ELEMENT-x, EIGHT BELOW ITS LANE, AND SHARES THE DYNAMICS' ANCHOR
+`left = anchor1.x`, `right = anchor2.x` — the elements' own x, not their edges
+(`draw/crescendo.js:12-13`); ours ran to the closing element's RIGHT edge, a whole notehead
+too far. `y = calcY(params.pitch) + 4` and `height = 8`, so the mouth is centred
+`calcY(pitch) + 8` at BOTH ends.
+
+**AND A REST ANCHORS ONE**: `!<(!GABc|!<)!y` closes on the `y` SPACER, and skipping rests
+lost the hairpin outright.
+
+**AND THE LANE ARRIVES TOO LATE TO BE ANCHORED.** `spannerLines` is EMPTY when
+`anchorBelowStaff` runs — spanners resolve across the whole tune, after packing — so a
+hairpin never got the shift that puts the below-dynamics lane on the music's ink, and sat
+on the raw lane constant while every volume MARK beside it was exact. The shift is recorded
+on the staff and spent at the merge. **AND ITS OWN RESERVE HAD TO BE IN THAT EXTENT TOO**:
+a dynamic GLYPH sets the flag from the elements, so a staff carrying a mark was consistent
+by accident and one whose only dynamic is a crescendo came out 7 pitch — 27.13px — high.
+
+### AN INLINE `[Q:]` IS DRAWN WHERE IT STANDS
+`createABCLine(staff, !hasPrintedTempo ? abcTune.metaText.tempo : null, i)` prints the
+HEADER tempo once, and `metaText.tempo` is set by the FIELD parser, which an inline field
+never reaches. Five inline `[Q:]` and no header one: abcjs draws five marks, we drew six.
+
+### A SUBTITLE IS PAPER-CENTRED AND A `%%center` IS NOT
+`engraver-controller.js:238` hands `Subtitle` a `center = width / 2 + padding.left` — 350 on
+a 700px page — where `FreeText` centres on `width / 2` with no padding, 335. Ours gave both
+335.
+
+### A BOXED FONT DRAWS FOUR FILLED RULES, INSIDE A GROUP
+`renderText` opens `<g fill data-name>`, moves the text in by one `padding` on both axes,
+DELETES its class, and after drawing measures `getBBox()` to lay a rect round it
+(`draw/text.js:48-81`) — which `Svg.rect` writes as a PATH of four one-pixel bars "so that
+it can be hollow and the color changes with fill instead of stroke". `padding` is
+`font.size * 0.1`, everything is `Math.round`ed, and `lines.join(" ")` over four pieces that
+each already END with a space is where the DOUBLED spaces in the `d` come from.
+
+### AN UNBEAMED GRACE'S STEM PRECEDES ITS OWN LEDGERS
+`addGraceNotes` runs `addExtra(stem)` and then `ledgerLines(...)` inside the per-grace loop,
+so one grace reads `flag, head, stem, ledger` — but when the group is BEAMED the stems are
+built by the beam pass instead and come after every head, which is what abcjs's contract for
+`{gab}c4|` shows. Both are true at once and the flag that tells them apart already existed.
+**AND A GRACE LEDGER HAS ITS OWN METRICS**: inset by ONE rather than two, and
+`(symbolWidth + 4) * scale` wide off the FULL-SIZE head (`abstract-engraver.js:522`).
 
 ---
 
