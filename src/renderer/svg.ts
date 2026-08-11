@@ -174,16 +174,25 @@ const escapeText = (s: string): string =>
  * `font-size:0.7em` tspans, raised and dropped. The bass's drop depends on whether a
  * modifier preceded it: `0.4em` clear of a raised one, `0.1em` from the baseline.
  */
-const jazzChordMarkup = (jazz: readonly [string, string, string], x: string): string => {
+/**
+ * **THE ROW'S OWN `<tspan x>` IS THE OUTER ONE.** `Svg.text` splits the string on `\n` and
+ * wraps EVERY line in a `<tspan x>`; the jazz-chord markup is what goes INSIDE that, not a
+ * second wrapper round it (`svg.js:170-200`). Ours built its own outer tspan and then
+ * `abcjsText` added another, so every jazz chord came out doubly nested.
+ */
+const jazzChordMarkup = (
+  jazz: readonly [string, string, string],
+  /** The row's x, when the CALLER writes no `<tspan x>` of its own — the core path. */
+  x?: string,
+): string => {
   const [root, modifier, bass] = jazz
   const small = (dy: string, text: string): string =>
     `<tspan dy="${dy}" style="font-size:0.7em">${escapeText(text)}</tspan>`
-  return (
-    `<tspan x="${x}">${escapeText(root)}` +
+  const inner =
+    escapeText(root) +
     `${modifier === '' ? '' : small('-0.3em', modifier)}` +
-    `${bass === '' ? '' : small(modifier === '' ? '0.1em' : '0.4em', bass)}` +
-    '</tspan>'
-  )
+    `${bass === '' ? '' : small(modifier === '' ? '0.1em' : '0.4em', bass)}`
+  return x === undefined ? inner : `<tspan x="${x}">${inner}</tspan>`
 }
 
 /**
@@ -1468,7 +1477,9 @@ const glyphDefs = new Map<GlyphName, string>()
            * the byte table and the first thing after a stem on most of them.
            */
           const body =
-            t.jazz === undefined ? escapeText(t.text) : jazzChordMarkup(t.jazz, textNum(t.x * PX))
+            t.jazz === undefined
+              ? escapeText(t.text)
+              : jazzChordMarkup(t.jazz, abcjs ? undefined : textNum(t.x * PX))
           const face = t.font === undefined ? undefined : ABCJS_FONT_FACE[t.font]
           textParts.push({
             role: t.role,
