@@ -11438,13 +11438,18 @@ function layoutGraces(
       const headY = stepToY(graceStep)
       graceLines.push({
         x1: stemX,
-        // ABOVE the head's centre, not below it. `p1 = gracepitch + 1/3 * gracescale` is a
-        // PITCH offset and pitch runs the other way from y, so the foot of the stem sits
-        // 0.775px INSIDE the head. Measured on `{e}a`: abcjs 108.06, ours 109.61 — the
-        // whole 1.55 is twice this term, which is the signature of a flipped sign.
-        y1: headY - (ENGRAVE.spacePerStep / 3) * scale,
+        /**
+         * **BOTH ENDS ARE A PITCH, CONVERTED ONCE** — `p1 = gracepitch + 1/3 * gracescale`,
+         * `p2 = gracepitch + 7 * gracescale` (`abstract-engraver.js:515-520`), and `calcY`
+         * multiplies at the very end. Ours ran `stepToY(step) - n * scale * STEP`: the same
+         * value, TWO multiplies, and a different double — 16.200000000000003 of staff
+         * height against abcjs's 16.2, which is one byte of the root's `height` on
+         * `visual-tablature-10`. Sign included: pitch runs the other way from y, so the
+         * foot of the stem sits 0.775px INSIDE the head and ours had it 1.55 below.
+         */
+        y1: stepToY(graceStep + (1 / 3) * scale),
         x2: stemX,
-        y2: headY - graceStemPitches * scale * ENGRAVE.spacePerStep,
+        y2: stepToY(graceStep + ABCJS_PITCH.stemLength * scale),
         thickness: weight,
         role: 'stem',
         // A GRACE'S STEM IS WRITTEN AFTER EVERY GRACE HEAD, not before them. abcjs's own
