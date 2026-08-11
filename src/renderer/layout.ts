@@ -9004,8 +9004,16 @@ function topTextBlock(
   width: number,
   textAbove: readonly FreeTextBlock[] = [],
   fonts: Score['fonts'] = {},
-): { texts: PlacedText[]; height: number } {
+): { texts: PlacedText[]; height: number; advances: number[] } {
   const texts: PlacedText[] = []
+  /**
+   * **EACH ROW'S OWN ADVANCE, IN ORDER** — abcjs adds them ONE AT A TIME to the page's
+   * running cursor, which starts at `padding.top`: `moveY(padding.top)` then
+   * `nonMusic(topText)` (`draw/draw.js:14-15`). `15 + a + b` and `15 + (a + b)` are not
+   * the same double, and the root's `height` is where that shows. The TOTAL still places
+   * the block; the list is only for the page's own accumulation.
+   */
+  const advances: number[] = []
   let y = 0
   // abcjs rounds each line advance to whole PIXELS before moving on, so a block's height
   // is not simply a sum of ems. Reproduced rather than smoothed.
@@ -9015,9 +9023,10 @@ function topTextBlock(
   // hundredth on every DEFAULT size; they part company as soon as a `%%…font` sets one the
   // table does not list, where the generator falls back to `size + 2`.
   const advance = (size: number, extra = 0): void => {
-    y +=
-      Math.round((goldenTextHeight(size) + extra) * ENGRAVE.lineSkipFactor * UNIT_PX) /
-      UNIT_PX
+    const step =
+      Math.round((goldenTextHeight(size) + extra) * ENGRAVE.lineSkipFactor * UNIT_PX) / UNIT_PX
+    advances.push(step)
+    y += step
   }
   /**
    * …AND A ROW THAT CHANGED FONT MID-LINE ADVANCES BY A DIFFERENT RULE ENTIRELY.
@@ -9044,6 +9053,7 @@ function topTextBlock(
       if (phrase.font === null) continue
       largest = Math.max(largest, goldenTextHeight(phrase.font.size / UNIT_PX))
     }
+    advances.push(largest)
     y += largest
   }
   /** A row advances one way or the other — never both. */
@@ -9240,7 +9250,7 @@ function topTextBlock(
   // the title lands on 350 — a 15px difference the model's own comment already recorded.
   y = appendFreeText(texts, textAbove, y, width / 2, fonts)
 
-  return { texts, height: y }
+  return { texts, height: y, advances }
 }
 
 /**
