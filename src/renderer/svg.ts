@@ -1007,6 +1007,15 @@ const glyphDefs = new Map<GlyphName, string>()
         // abcjs wraps each element in a group carrying its kind and index, which is what
         // its interaction code walks. Core's own naming needs no wrapper.
         let gcls = ''
+        /**
+         * Where this element's own `<g>` was pushed, so an element that draws NOTHING can
+         * take it back again. **AN EMPTY GROUP IS DELETED** (`svg.js:364-372`) and
+         * `drawAbsolute` skips the whole append when `closeGroup` returns null — which is
+         * how a `y` SPACER produces no markup at all. Ours wrote a `<g class="abcjs-rest">`
+         * around nothing, so a spacer read as a rest on every gate that walks the DOM.
+         * The same rule already governs `abcjs-meta-top` and the staff-lines group.
+         */
+        let openedAt = -1
         /** The class counters this element advances — spent once its children are out. */
         let advance = (): void => {}
         if (abcjs) {
@@ -1038,6 +1047,7 @@ const glyphDefs = new Map<GlyphName, string>()
            * carry NEITHER attribute; ours carried both, with the child index in them.
            */
           const selectable = el.type === 'note' || el.type === 'rest'
+          openedAt = parts.length
           parts.push(
             `<g fill="currentColor" stroke="none"${gcls ? ` class="${gcls}"` : ''}` +
               ` data-name="${name}"` +
@@ -1295,7 +1305,15 @@ const glyphDefs = new Map<GlyphName, string>()
           }
         }
         advance()
-        if (abcjs) parts.push('</g>')
+        if (abcjs) {
+          if (openedAt >= 0 && parts.length === openedAt + 1) {
+            parts.length = openedAt
+            // The `data-index` it took is given back too: `Selectables.add` never ran.
+            if (el.type === 'note' || el.type === 'rest') selectableIndex -= 1
+          } else {
+            parts.push('</g>')
+          }
+        }
       })
       /**
        * **abcjs DRAWS THE MUSIC FIRST, THEN THE BEAMS, THEN EVERYTHING ELSE** — and we
