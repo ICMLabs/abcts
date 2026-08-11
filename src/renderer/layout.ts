@@ -5212,6 +5212,11 @@ function layoutCurves(
         ),
         midThickness: LINE_WEIGHTS.slurMidpoint,
         kind: 'slur',
+        // BOTH ANCHORS ARE THE SAME ELEMENT — a grace head and the main head are children
+        // of one `AbsoluteElement`, so the class reads `abcjs-start-m0-n0 abcjs-end-m0-n0`
+        // off the same counters twice.
+        startElement: anchor.element,
+        endElement: anchor.element,
       })
     }
 
@@ -10923,6 +10928,12 @@ function layoutGraces(
         y2: yAt(beamEndX) + thickness / 2,
         thickness,
         noReserve: true,
+        // **A GRACE BEAM IS A BEAM, DRAWN AT THE VOICE'S LEVEL WITH THE BEAMS** —
+        // `addBeam(gracebeam)` puts it in `params.beams` (`abstract-engraver.js:493`), so
+        // `drawVoice` writes it after every element and gives it
+        // `classes.generate('beam-elem d0')`. Carried inside the note's lines here because
+        // the grace pass owns it; the emitter hoists it on this role.
+        role: 'beam',
       })
     }
 

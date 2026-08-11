@@ -67,6 +67,7 @@ const PASSING: readonly string[] = [
   'dom-decorations',
   'dom-dots-and-ties',
   'dom-dynamics',
+  'dom-grace',
   'dom-key-sig',
   'dom-ledger',
   'dom-lyrics',

@@ -999,6 +999,8 @@ const glyphDefs = new Map<GlyphName, string>()
        * (`draw/absolute.js:33`). A tie's and a slur's class quote them for both anchors.
        */
       const counters = new Map<number, { measure: number; note: number }>()
+      /** Grace beams, held back to the voice's beam pass where abcjs draws them. */
+      const graceBeams: PlacedLine[] = []
       staff.elements.forEach((el, elIndex) => {
         // Already written above, ahead of the braces. See the hoist.
         if (abcjs && el.blockHeight !== undefined) return
@@ -1177,7 +1179,11 @@ const glyphDefs = new Map<GlyphName, string>()
         // so it is held back past the trailing glyphs entirely.
         const isGraceLine = (l: (typeof el.lines)[number]): boolean =>
           l.graceStem === true || l.graceIndex !== undefined
-        const own = abcjs ? el.lines.filter((l) => !isGraceLine(l)) : el.lines
+        // A GRACE BEAM is hoisted to the voice's beam pass — see `PlacedLine.role`.
+        const own = abcjs
+          ? el.lines.filter((l) => !isGraceLine(l) && l.role !== 'beam')
+          : el.lines
+        if (abcjs) for (const l of el.lines) if (l.role === 'beam') graceBeams.push(l)
         const graceStems = abcjs ? el.lines.filter((l) => l.graceStem === true) : []
         // A grace's LEDGERS follow its OWN head — see `PlacedLine.graceIndex`.
         const graceLedgers = abcjs
@@ -1329,6 +1335,11 @@ const glyphDefs = new Map<GlyphName, string>()
             )}"`
           : ` class="${prefix}-beam"`
         parts.push(lineToRect(TL(beam), beamClass, abcjs))
+      }
+      // A GRACE BEAM's own class is `beam-elem d0` — its `durationClass` is 0, since a
+      // grace note has no sounding duration.
+      for (const b of graceBeams) {
+        parts.push(lineToRect(TL(b), attrIfAny(classes.generate('beam-elem d0')), abcjs))
       }
       // **`drawDynamics` AND `drawCrescendo` DISAGREE ON THE ORDER OF THEIR OWN TWO
       // CLASSES** — `generate('decoration dynamics')` for a volume mark
