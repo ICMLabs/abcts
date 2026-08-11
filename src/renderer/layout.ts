@@ -881,6 +881,17 @@ export interface PlacedGlyph {
    * `verticalExtent`. Absent means "divide", which is what every reserve did before.
    */
   readonly reservePitch?: readonly [top: number, bottom: number]
+  /**
+   * This glyph's offset from its element's own x, CONSTRUCTED rather than derived.
+   *
+   * abcjs stores `dx` on the `RelativeElement` and places it as `this.x = x + this.dx`
+   * (`relative-element.js:124-125`), so the offset is the number the engraver built —
+   * `headx + notehead.w - 0.6` for a flag (`create-note-head.js:47`) — and the placement
+   * is ONE addition onto the solved x. Deriving it back out of two absolute x's is
+   * `(x + a) - x`, which is not `a`. Absent means "derive", which is what everything did
+   * before this field existed.
+   */
+  readonly dx?: number
 }
 
 export interface PlacedLine {
@@ -3497,8 +3508,21 @@ function layoutNoteheads(
       // and it MOVES NOTEHEADS: the flag's `x` is a term in `flagInk`, which is a term in
       // the element's rod. Riding it on `stemX` widened `happy-birthday`'s spread the
       // moment the stem itself became abcjs's.
-      const flagX = strict ? headX + (up ? headInk - spaces(ABCJS_PX.flagStemInset) : 0) : stemX
-      if (flag !== undefined) pendingFlag = { name: flag, x: flagX, y: tip, role: 'flag' }
+      // **AND THE OFFSET IS BUILT, NOT MEASURED** — abcjs's `dx` here is literally
+      // `headx + notehead.w - 0.6` (`create-note-head.js:47`), so `placeElement` adds that
+      // one number to the solved x. See `PlacedGlyph.dx`.
+      // Relative to the ELEMENT'S OWN x, which is `headX` — abcjs's anchor is the stemmed
+      // head, whose own `dx` is 0 (measured through `RelativeElement.setX`).
+      const flagDx = strict ? (up ? headInk - spaces(ABCJS_PX.flagStemInset) : 0) : null
+      const flagX = flagDx === null ? stemX : headX + flagDx
+      if (flag !== undefined)
+        pendingFlag = {
+          name: flag,
+          x: flagX,
+          y: tip,
+          role: 'flag',
+          ...(flagDx === null ? {} : { dx: flagDx }),
+        }
     }
   }
 
@@ -7596,6 +7620,22 @@ function layoutMeasure(
 }
 
 /** Shift a laid-out measure sideways into its place in a system. */
+/**
+ * **PLACE, DON'T SHIFT** — `child.x = x + this.dx` (`relative-element.js:124-125`).
+ *
+ * abcjs positions every child of an element as the SOLVED x plus that child's own stored
+ * offset: one addition, off the number the line solve produced. Translating instead —
+ * `g.x + (target - el.x)` — is the same terms grouped the other way, and JS `+` is left to
+ * right, so it is a different double on every glyph of every element the solve moved.
+ */
+const placeElement = (el: LayoutElement, at: number): LayoutElement => ({
+  ...el,
+  x: at,
+  glyphs: el.glyphs.map((g) => ({ ...g, x: at + (g.dx ?? g.x - el.x) })),
+  lines: el.lines.map((l) => ({ ...l, x1: at + (l.x1 - el.x), x2: at + (l.x2 - el.x) })),
+  texts: el.texts.map((t) => ({ ...t, x: at + (t.x - el.x) })),
+})
+
 const shiftElement = (el: LayoutElement, dx: number): LayoutElement => ({
   ...el,
   x: el.x + dx,
@@ -9030,9 +9070,17 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             const at = block.elements[index]?.x ?? 0
             return (placedAt[index] ?? at) - at
           }
+          /** The same PLACE arithmetic for anything hanging off an element — see `placeElement`. */
+          const placeAt = (index: number, x: number): number => {
+            const own = block.elements[index]?.x ?? 0
+            return (placedAt[index] ?? own) + (x - own)
+          }
           block.elements.forEach((el, index) => {
             elements.push(
-              displaceHeads(shiftElement(el, shiftOf(index)), displacementOf(voiceIndex, i, index)),
+              displaceHeads(
+                placeElement(el, placedAt[index] ?? el.x),
+                displacementOf(voiceIndex, i, index),
+              ),
             )
           })
           for (const [group, members] of block.beams) {
@@ -9041,11 +9089,11 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
               // A stem sits at its element's origin plus an offset within it, so it
               // moves with the element rather than scaling on its own — and with its
               // voice-overlap displacement, which moves the head the stem hangs off.
-              x: m.x + shiftOf(m.element) + displacementOf(voiceIndex, i, m.element),
+              x: placeAt(m.element, m.x) + displacementOf(voiceIndex, i, m.element),
               // …and the HEAD it hangs off moves with it. Leaving this in block-local
               // coordinates while `x` was absolute put `little swallow`'s noteheads 335px
               // out, because the beam's ends are measured from the head, not the stem.
-              headX: m.headX + shiftOf(m.element) + displacementOf(voiceIndex, i, m.element),
+              headX: placeAt(m.element, m.headX) + displacementOf(voiceIndex, i, m.element),
               // The voice-overlap shift is part of the HEAD's `dx`, not the element's —
               // `voice-elements.js:56-62` adds it to each child's dx and leaves `parent.x`
               // alone — so it joins the seconds displacement in the term `createStems`
