@@ -546,7 +546,7 @@ checkpoint and hand off as you go so no context is lost.
 > `dump-elements.js` publishes abcjs's own `staff.top`/`bottom`.
 
 > 🧩 **AND THE ULP TAIL IS ONE ARCHITECTURAL DEFECT, PROVEN BY A CHANGE THAT MADE IT WORSE**
-> (2026-08-11). `svg-bytes` went **117 → 95 of 171** on twenty-four landings, every one a read
+> (2026-08-11). `svg-bytes` went **117 → 94 of 171** on twenty-seven landings, every one a read
 > of a named abcjs function, and what is left is dominated by a single shape: `calcHeight`
 > sums `staff.top` and `-staff.bottom` **in PITCH** and multiplies by `STEP` once, while we
 > hold the extent in y and divide back. **Writing one site "the abcjs way" is a
@@ -572,6 +572,27 @@ checkpoint and hand off as you go so no context is lost.
 > treble**, abcjs's table having two columns that disagree; and **a voice name is
 > `headerPosition`, wears no group, and RESERVES NOTHING** — moving it was byte-right and
 > pushed a staff 2.98px, which only `pixel-parity` could say.
+
+> 🔬 **AND WHEN THE SOURCE IS NOT ENOUGH, INSTRUMENT abcjs — THE DUMP LIES**
+> (2026-08-11). `dump-elements.js` publishes `staff.top`/`bottom` BEFORE
+> `setUpperAndLowerElements` mutates them, and half a session went on a term list reasoned
+> off that number. A SCRATCHPAD COPY with a `console.error` after every `moveY` answered the
+> page walk in ONE run and named the defect: **A LEADING GAP IS A ROW OF ITS OWN** —
+> `spacing.title` and `spacing.subtitle` enter the block as `{ move }` rows — and our block's
+> ink overshoot happened to be the same 7.56, so the total was right to the pixel and wrong
+> in the last bits. **TWO ERRORS CANCELLING**, for the fourth time on this branch. The recipe
+> is in `CHECKPOINT-2026-08-11.md` §5; never instrument `../abcMusicKit` itself.
+>
+> **AND CLASSIFY BEFORE YOU CHOOSE.** The ranked table's shape is not visible by reading it:
+> a crude "does one side have a long decimal tail" test calls 57 rows structural where
+> aligning on the FIRST DIFFERING CHARACTER calls 19 — and a whole stretch went at the
+> minority family on the strength of the wrong count. §4 has the classifier.
+>
+> **AND A ULP IS CHEAPER THAN A POSITION ERROR.** abcjs's lyric lane is
+> `dim.height / STEP + 1` over ONE measurement of the whole verse string; it is measured,
+> correct to the last digit, and deliberately NOT SPENT, because abcjs subtracts it from the
+> music's ink while our y comes from the last verse's baseline — spending it takes one
+> fixture byte-exact and puts two others structurally out.
 
 Read `Docs/CHECKPOINT-2026-08-11.md` first — the state, the twelve landings, and §3, the
 NEGATIVE result that says where the remaining tail is. `Docs/HANDOFF-2026-08-11.md` has the
@@ -748,7 +769,7 @@ reds; **seventeen gates and NINE ranked tables** — 0 of 72 audio cases, 0 of 3
 **1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
 **1 of 25 DOM-contract cases with TWENTY-FOUR slugs RATCHETED** — and
 **94 of 171 SVG-byte fixtures, SEVENTY-SEVEN of them EXACT** — and **the SVG BYTE TABLE is
-THE ONE OPEN GATE**, at best 52498 / median 7181. Its remaining families are listed in
+THE ONE OPEN GATE**, at best 52498 / median 7221 — **25 root + 50 ULP + 19 structural**, classified by aligning on the first differing character (a cruder test says 57 structural and sends you at the wrong family). Its remaining families are listed in
 item 1 of `CHECKPOINT-2026-08-10d.md` and the two biggest are NAMED: the ROOT's `height`,
 where **abcjs sums in PITCH and multiplies by `STEP` ONCE per line** (`calcHeight` +
 `engraveStaffLine`) while we stack in lengths and sum those — and `calcHeight` ignores the

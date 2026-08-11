@@ -17,11 +17,12 @@ and everything below is committed and pushed.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 11 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 13 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 25 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **94 of 171**; best 52498, median 7181 | 171 of 171 at byte 10 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **94 of 171** — 25 root + 50 ULP + 19 structural; best 52498, median 7221 | 171 of 171 at byte 10 |
 
 **`svg-bytes` is the one open gate**, and `DIVERGENT` is still EMPTY.
-It came into this session at 117 of 171 (median 6228) and stands at **95 of 171**
-(median 7181) with **76 fixtures byte-exact**.
+It came into this session at 117 of 171 (median 6228) and stands at **94 of 171**
+(median 7221) with **77 fixtures byte-exact**. `visual-wrap-05` — the table's HEAD at 46104
+when the session opened — is one of them.
 
 The ROOT element: **146 byte-exact / 22 ULP-only / 3 structural**, from 144/24/3.
 
