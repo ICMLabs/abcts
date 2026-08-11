@@ -1576,7 +1576,20 @@ const glyphDefs = new Map<GlyphName, string>()
           ? el.lines.filter((l) => !isGraceLine(l) && l.role !== 'beam')
           : el.lines
         if (abcjs) for (const l of el.lines) if (l.role === 'beam') graceBeams.push(l)
-        const graceStems = abcjs ? el.lines.filter((l) => l.graceStem === true) : []
+        /**
+         * **AN UNBEAMED GRACE'S STEM COMES BEFORE ITS OWN LEDGERS; A BEAMED GROUP'S COME
+         * AFTER EVERY HEAD.** `addGraceNotes` runs `addExtra(stem)` and then
+         * `ledgerLines(...)` inside the per-grace loop, so one grace reads
+         * `flag, head, stem, ledger` — but when the group is BEAMED the stems are built by
+         * the beam pass instead, and abcjs's contract for `{gab}c4|` reads
+         * `c, g, a, ledger, b, ledger, stem, stem, stem` (measured).
+         */
+        const graceStems = abcjs
+          ? el.lines.filter((l) => l.graceStem === true && l.beamed === true)
+          : []
+        const soloGraceStems = abcjs
+          ? el.lines.filter((l) => l.graceStem === true && l.beamed !== true)
+          : []
         // A grace's LEDGERS follow its OWN head — see `PlacedLine.graceIndex`.
         const graceLedgers = abcjs
           ? el.lines.filter((l) => l.graceStem !== true && l.graceIndex !== undefined)
@@ -1671,6 +1684,9 @@ const glyphDefs = new Map<GlyphName, string>()
           // A grace's ledgers follow its HEAD, not its flag or its accidental — all three
           // carry the index, only one of them is the note.
           if (g.graceIndex === undefined || g.role !== 'grace') continue
+          for (const line of soloGraceStems.filter((l) => l.graceIndex === g.graceIndex)) {
+            parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+          }
           for (const line of graceLedgers.filter((l) => l.graceIndex === g.graceIndex)) {
             parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
           }

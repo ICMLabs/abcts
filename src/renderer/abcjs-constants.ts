@@ -150,6 +150,8 @@ export const ABCJS_PX = {
    * arriving from the system above is drawn as (`tie-element.js:126-127`).
    */
   curveStub: 20,
+  /** `grace.dx - 1` — how far LEFT of a grace head its ledger starts (`abstract-engraver.js:522`). */
+  graceLedgerInset: 1,
   /**
    * `var width = params.w - 1` — the `lineEndX` a tie or an ending with no closing anchor
    * is drawn to, one inside the staff line's own end (`draw/voice.js:12`).

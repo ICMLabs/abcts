@@ -461,6 +461,8 @@ export const ENGRAVE = {
    * 92. Ours was a flat 0.5 spaces against abcjs's 0.375.
    */
   bracketThickness: spacesOfPitch(ABCJS_PITCH.bracketRule),
+  /** `grace.dx - 1` — a grace ledger's inset (`abstract-engraver.js:522`), not the note's 2. */
+  graceLedgerInset: spaces(ABCJS_PX.graceLedgerInset),
   /** Mouth of a hairpin at its open end — `height = 8` (`draw/crescendo.js:10`). */
   hairpinMouth: spaces(ABCJS_PX.hairpinMouth),
   /**
@@ -2855,13 +2857,20 @@ function ledgerLines(
    * five rules where abcjs draws four.
    */
   toStep: number = step,
+  /**
+   * A GRACE's ledger is measured differently: `ledgerLines(…, getSymbolWidth("noteheads.quarter"),
+   * [], true, grace.dx - 1, 0.6)` (`abstract-engraver.js:522`) — inset by ONE rather than
+   * two, and `(symbolWidth + 4) * scale` wide off the FULL-SIZE head. Ours ran the main
+   * note's arithmetic on an already-scaled width and came out a pixel wide either side.
+   */
+  grace?: { readonly inset: number; readonly span: number },
 ): PlacedLine[] {
   const lines: PlacedLine[] = []
   // THE OVERHANG IS PER RENDER, so it is read here and not baked into `ENGRAVE`: abcjs
   // gives a ledger `symbolWidth + 4` of width at `dx = -2` (`abstract-engraver.js:462`),
   // which is 2px each side against Bravura's 0.4 of a space, 3.1px.
-  const x1 = x - LINE_WEIGHTS.ledgerExtension
-  const x2 = x + headWidth + LINE_WEIGHTS.ledgerExtension
+  const x1 = grace === undefined ? x - LINE_WEIGHTS.ledgerExtension : x - grace.inset
+  const x2 = grace === undefined ? x + headWidth + LINE_WEIGHTS.ledgerExtension : x1 + grace.span
   const push = (s: number) => {
     lines.push({
       x1,
@@ -11816,11 +11825,10 @@ function layoutGraces(
       // stems: that pass walks `graceLines` BY INDEX — `graceLines[i] = {...stem, y2:
       // yAt(graceXOf(i) + graceInk)}` — and assumes every entry is a stem. Pushing the
       // ledgers into it moved every grace stem, which the baselines caught.
-      for (const line of ledgerLines(
-        graceStep,
-        gx,
-        glyphsFor(strict).width('noteheadBlack') * scale,
-      )) {
+      for (const line of ledgerLines(graceStep, gx, 0, graceStep, {
+        inset: ENGRAVE.graceLedgerInset,
+        span: (glyphsFor(strict).width('noteheadBlack') + LINE_WEIGHTS.ledgerExtension * 2) * scale,
+      })) {
         graceLedgers.push({ ...line, graceIndex: i, noReserve: true })
       }
       // THE STEM IS MEASURED FROM THE HEAD'S PITCH, NOT FROM ITS OWN BASE. abcjs writes
