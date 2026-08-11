@@ -424,6 +424,58 @@ checkpoint and hand off as you go so no context is lost.
 > **A reading of a single aggregate number would have called all 109 rows one bug**; the
 > classifier probe (recipe in `Docs/HANDOFF-2026-08-10b.md`) is what split them.
 
+> 🧭 **THE DOM CONTRACT IS 24 OF 25, AND THE UNIT FLIP IS THE WHOLE REMAINING BYTE TABLE**
+> (2026-08-10d). `dom-contract` went from 11 of 25 to **1**, on nine landings that were each
+> a read of a named abcjs function — and the one case still open is a MODEL change, not a
+> markup one. The ones whose LESSON transfers:
+>
+> - **DRAW ORDER IS CALL ORDER.** `_addChild` is a plain push, so `createNote`'s run of
+>   adders IS the element's child order: `heads+stem → lyric → graces → decorations →
+>   barNumber → LEDGER → chord` (`abstract-engraver.js:829-855`). **THE LEDGER IS LAST**;
+>   only a BEAMED stem comes after it. A LYRIC is a `<text>`, so "texts last" had to bend —
+>   only the CHORD SYMBOL is genuinely last.
+> - **A DYNAMIC IS NOT A CHILD OF THE NOTE** — it is a `DynamicDecoration` on the voice's
+>   `otherchildren`, drawn after every element and every beam. And **`drawDynamics` and
+>   `drawCrescendo` disagree on the order of their own two classes**, which is a quirk to
+>   reproduce rather than one of them to pick.
+> - **AN ENDING AND A TRIPLET ARE EACH A GROUP** holding ONE path with every segment in its
+>   `d` and a `noClass` number naming itself. **The ending's measure counter is its measure
+>   within the LINE minus one** — MEASURED on three controls through abcjs with
+>   `--add-classes`, not reasoned.
+> - **A NOTEHEAD'S CLASS IS WRITTEN AFTER ITS `d`**, because inside an element group
+>   `printSymbol` passes only `data-name` and `drawAbsolute` comes back afterwards with a
+>   `setAttribute` (`draw/absolute.js:20-28`). A late `setAttribute` serialises LAST — which
+>   is also why a CLEF glyph carries no class at all.
+> - **A STEM AND A BARLINE COME OUT OF `printStem`, NOT `printLine`** — commands
+>   concatenated with NO separator, a different starting CORNER per stem direction, the
+>   class before the name, and no `stroke`/`fill` at all inside a group.
+> - **AN ELEMENT THAT DRAWS NOTHING WRITES NO GROUP** — which is why a `y` SPACER produces
+>   no markup, where ours wrapped nothing in an `abcjs-rest`.
+> - **`--add-classes` IS NOT OPTIONAL EITHER.** Without it every generated class in abcjs's
+>   output is the empty string, so the class scheme is invisible.
+>
+> ⚖️ **AND THE UNIT FLIP IS HALF-BUILT — `UNIT_PX`/`SPACE` ARE IN, THE FLIP IS NOT.** The
+> byte table's HEAD is `M 108.03813656268917` against `M 108.038` and its MEDIAN row, on
+> most of 161 fixtures, is `height="149.07999999999998"` against `149.08`. Both are the
+> `px / 7.75` round trip; rounding cannot fix it, because abcjs itself emits
+> `29.689999999999998` where ours is clean. `abcjs-constants.ts` now carries the knob and
+> `ENGRAVE`'s 17 bare space literals, the glyph metrics, the line weights, the emitter's
+> `PX` and all 19 `STAFF_SPACE_PX` uses in `layout.ts` take it. **SETTING `UNIT_PX = 1` WAS
+> ATTEMPTED AND REVERTED**: it took `pixel-parity` to 119 of 120. **DO THE ANNOTATION PASS
+> BEFORE THE FLIP, NOT AFTER IT** — `n * SPACE` while `SPACE === 1` is a zero-behaviour
+> edit whose check is the one already trusted here, the suite green and NO BASELINE MOVED,
+> so every literal converts and verifies one at a time. Flipping first makes the check
+> "everything is broken", which names nothing. The remaining literals are in the SPRING /
+> COLUMN model and the STAFF-STACKING arithmetic, and the discovery mechanism is the
+> baselines used as a RATIO — after the flip every number must be exactly 7.75× its old
+> one. Recipe in `Docs/HANDOFF-2026-08-10d.md`.
+>
+> 🔎 **AND THREE MORE GATES WERE READING THE MARKUP THEY MEASURED** — `compat`'s density
+> test (its THIRD correction), `above-lane-order` (keyed on a class that is empty without
+> `add_classes`) and `line-weights` (asked a one-path bracket for a per-stroke box). All
+> three went red on changes that made the markup CLOSER to abcjs's. **A gate built on our
+> own markup fails when we succeed; the failure is the signal.**
+
 > 🏁 **THE BYTE TABLE HAS PASSING SLUGS AND THE DOM CONTRACT IS THE INSTRUMENT**
 > (2026-08-10c). Both open tables started that day at EVERY case and neither does now:
 > `svg-bytes` **164 of 171 with SEVEN byte-exact slugs** (from 171/171 at best 651, median
@@ -453,9 +505,14 @@ checkpoint and hand off as you go so no context is lost.
 > without it accused the 6.7.0 branch we already port of a defect it does not have.
 > `dump-elements.js` publishes abcjs's own `staff.top`/`bottom`.
 
-Read `Docs/CHECKPOINT-2026-08-10c.md` first — the state and WHAT IS LEFT, whose item 1 is
-measured and unimplemented. `Docs/HANDOFF-2026-08-10c.md` has the session prompt and both
-probe recipes. Then read `Docs/CHECKPOINT-2026-08-10b.md` — the state and WHAT IS LEFT, with the height
+Read `Docs/CHECKPOINT-2026-08-10d.md` first — the state and WHAT IS LEFT, whose item 1 is
+THE UNIT FLIP and is half-built. `Docs/HANDOFF-2026-08-10d.md` has the session prompt, the
+baseline RATIO script the flip is discovered with, and the DOM-contract probe.
+Then `Docs/CHECKPOINT-2026-08-10c.md` — superseded for the state, but it keeps THE HARNESS
+(§1), the height's three-way split (§2), the forty-one landings of the SVG-frame arc (§3)
+and **§5, v1's answer to the round trip**, which is the argument the flip rests on. Its
+own item 1 — the ledger, the decoration and the lyric — is CLOSED.
+`Docs/HANDOFF-2026-08-10c.md` has the session prompt and both probe recipes. Then read `Docs/CHECKPOINT-2026-08-10b.md` — the state and WHAT IS LEFT, with the height
 named as the one thing that unblocks the rest. `Docs/HANDOFF-2026-08-10b.md` has the
 session prompt and the masked-height probe.
 `Docs/CHECKPOINT-2026-08-10.md` is superseded for the state; its **§4 IS CLOSED** and
@@ -615,14 +672,14 @@ abcjs source are all reached by sibling path and stay in that repo. Keep it that
 backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
-**AUDIO IS BYTE-EQUAL AND THE SVG IS THE ARC.** 1127/1127 with no
+**AUDIO IS BYTE-EQUAL AND THE SVG IS THE ARC.** 1158/1158 with no
 reds; **seventeen gates and NINE ranked tables** — 0 of 72 audio cases, 0 of 38 note timings,
 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
 **1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
-**11 of 25 DOM-contract cases with FOURTEEN slugs RATCHETED** — and
-**164 of 171 SVG-byte fixtures, SEVEN of them EXACT and ratcheted** — and **the SVG BYTE TABLE is
-THE OPEN ARC**, 171 of 171 at best 5186 / median 174, with 109 of those rows blocked behind
-the root's `height`. The oracle lands before the
+**1 of 25 DOM-contract cases with TWENTY-FOUR slugs RATCHETED** — and
+**161 of 171 SVG-byte fixtures, SEVEN of them EXACT and ratcheted** — and **the SVG BYTE TABLE is
+THE ONE OPEN ARC**, at best 5779 / median 175, with its head AND its median both blocked
+behind the `px / 7.75` ROUND TRIP, which is item 1 of `CHECKPOINT-2026-08-10d.md`. The oracle lands before the
 implementation here, as it did for audio and the chord grid, and a table that opens at every
 case is the same signal 54 of 54 was. **No table can name a defect, and that is the normal condition here rather than a
 milestone** — the last four findings all came from building a gate that expresses an axis
