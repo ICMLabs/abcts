@@ -694,7 +694,13 @@ const glyphDefs = new Map<GlyphName, string>()
          * contains `notehead`, appending `abcjs-chord-pos-N` to it the same way
          * (`draw/absolute.js:20-28`). A late `setAttribute` serialises LAST.
          */
-        const late = role === 'notehead' || role === 'grace' ? / class="[^"]*"/.exec(attributes)?.[0] ?? '' : ''
+        // BOTH classes `drawAbsolute` sets afterwards travel late — the notehead's and the
+        // chord position's. A `flags.*` glyph carries neither, which is abcjs's own name
+        // test rather than an omission here.
+        const late =
+          role === 'notehead' || role === 'grace' || attributes.includes('abcjs-chord-pos-')
+            ? / class="[^"]*"/.exec(attributes)?.[0] ?? ''
+            : ''
         return (
           `<path${late ? attributes.replace(late, '') : attributes}${named ? ` data-name="${named}"` : ''} ` +
           `d="M ${px} ${py}${ink.path.slice(head[0].length)}"${late}></path>`
@@ -719,10 +725,15 @@ const glyphDefs = new Map<GlyphName, string>()
   const attrs = (elementType: string, role: string | undefined, chordPos?: number): string => {
     if (!abcjs) return ` class="${prefix}-${elementType}"`
     const base = role === undefined ? undefined : ABCJS_CLASSES[role]
-    // abcjs appends the chord position to the notehead's own class rather than replacing
-    // it: `class="abcjs-notehead abcjs-chord-pos-2"`.
+    // abcjs APPENDS the chord position to whatever class the element already has, and sets
+    // it ALONE when there is none: `klass = klass ? klass + ' abcjs-chord-pos-N' : 'abcjs-
+    // chord-pos-N'` (`draw/absolute.js:23-28`). A chord's DOTS and ACCIDENTALS have no
+    // class of their own and are still classed by it; a `flags.*` child is excluded by
+    // name. Ours dropped it whenever there was no base class, which is every child but the
+    // head.
+    const pos = chordPos === undefined ? undefined : `abcjs-chord-pos-${chordPos}`
     const cls =
-      base !== undefined && chordPos !== undefined ? `${base} abcjs-chord-pos-${chordPos}` : base
+      base !== undefined && pos !== undefined ? `${base} ${pos}` : (base ?? pos)
     const name = role === undefined ? undefined : ABCJS_DATA_NAMES[role]
     return `${cls ? ` class="${cls}"` : ''}${name ? ` data-name="${name}"` : ''}`
   }

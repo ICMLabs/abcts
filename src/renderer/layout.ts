@@ -2928,6 +2928,12 @@ function layoutNoteheads(
    * These three collect rather than push, and `emitHeads` below assembles them once the
    * flag is known — it cannot be known earlier, because it hangs off the stem tip.
    */
+  /** `chordPos` for whichever pitch of this chord sits on `step` — see the accidental. */
+  const chordPosOf = (step: number): { chordPos?: number } => {
+    if (steps.length < 2) return {}
+    const at = steps.indexOf(step)
+    return at < 0 ? {} : { chordPos: at + 1 }
+  }
   const pendingAccidentals: { glyph: PlacedGlyph; step: number }[] = []
   const pendingHeads: PlacedGlyph[] = []
   const pendingDots = new Map<number, PlacedGlyph[]>()
@@ -2940,6 +2946,13 @@ function layoutNoteheads(
         ...placed,
         role: 'accidental',
         reserve: [stepToY(a.step) - half, stepToY(a.step) + half],
+        // **EVERY CHILD `createNoteHead` MAKES CARRIES THE CHORD POSITION**, not just the
+        // head: the flag, the dots and the accidental all take `chordPos: chordPos`
+        // (`create-note-head.js:48`, `:53`, `:100`). `drawAbsolute` then appends
+        // `abcjs-chord-pos-N` to any child that has one and is not a `flags.*`
+        // (`draw/absolute.js:23-28`) — so a chord's dots and accidentals are classed and
+        // its flag is not. Ours set it on the head alone.
+        ...chordPosOf(a.step),
       },
       step: a.step,
     })
@@ -2983,8 +2996,13 @@ function layoutNoteheads(
       ? rightmost + spaces(ABCJS_PX.dotOffset + ABCJS_PX.dotSpacing)
       : rightmost + ENGRAVE.dotGap
     const taken = new Set<number>()
-    for (const step of steps)
-      pendingDots.set(step, dotGlyphs(spec.dots, dotX, step, taken, dotStep))
+    for (const step of steps) {
+      const pos = chordPosOf(step)
+      pendingDots.set(
+        step,
+        dotGlyphs(spec.dots, dotX, step, taken, dotStep).map((g) => ({ ...g, ...pos })),
+      )
+    }
     // THE ROD IS THE LAST DOT'S RIGHT EDGE, not a count times a spacing. abcjs's dots are
     // `addRight` children whose extent is `dx + getSymbolWidth("dots.dot")`
     // (`create-note-head.js:53`), so what reaches past the notehead is the FURTHEST dot
