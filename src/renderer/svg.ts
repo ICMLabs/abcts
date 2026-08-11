@@ -1456,7 +1456,9 @@ const glyphDefs = new Map<GlyphName, string>()
                     t.dataName ?? '',
                     body,
                     /^ class="([^"]*)"/.exec(partAttr)?.[1] ?? '',
-                    [],
+                    // A music text can be multi-line too — a LYRIC always is, because
+                    // `addLyric` ends every verse with a newline. This was `[]`.
+                    (t.extraLines ?? []).map(escapeText),
                     false,
                     t.noClass === true,
                   )

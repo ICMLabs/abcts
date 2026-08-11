@@ -4875,6 +4875,21 @@ function noteText(
     centred(verse, size, 0, 'serifBold')
     texts.push({
       text: verse,
+      /**
+       * **EVERY VERSE ENDS WITH A NEWLINE, THE LAST ONE INCLUDED.**
+       * `lyricStr += ly.syllable + div + "\n"` (`abstract-engraver.js:770-773`), so a
+       * single-syllable lyric is `"L\n"` — TWO lines — and `renderText` gives it a second,
+       * EMPTY `<tspan dy="1.2em">`. Not a stray: `lyricDim.height` measures the same two
+       * lines, which is why abcjs's lyric lane is a whole line taller than one syllable
+       * needs.
+       *
+       * ponytail: abcjs writes ONE `<text>` for every verse of a note, tspan per line,
+       * where ours writes one per verse in its own lane. The trailing blank is added only
+       * where there is a single verse; a note with two would need the texts merged, which
+       * is a lane change rather than a markup one. No corpus fixture puts two verses on
+       * one note.
+       */
+      ...(verses.filter((v) => v !== null && v !== '').length === 1 ? { extraLines: [''] } : {}),
       // Tagged so the melisma pass can find the syllable it must extend from. Matching
       // on the y lane instead would couple that pass to this one's lane arithmetic.
       role: 'lyric',
