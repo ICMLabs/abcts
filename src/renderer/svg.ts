@@ -806,7 +806,19 @@ const glyphDefs = new Map<GlyphName, string>()
       const head = /^M (-?[\d.]+) (-?[\d.]+)/.exec(ink.path)
       if (head?.[1] !== undefined && head[2] !== undefined) {
         const px = Number(head[1]) + x * PX
-        const py = Number(head[2]) + corrected * PX + oy
+        /**
+         * **THE GLYPH'S OWN y IS ONE VALUE BEFORE THE OUTLINE SEES IT, AND THE BRACKETS
+         * ARE THE WHOLE FINDING.** abcjs computes `renderer.calcY(offset + ycorr)` — one
+         * number — and only then does `pathArray[0][2] += y`
+         * (`draw/print-symbol.js:33`, `creation/glyphs.js:135`). Written flat as
+         * `head + corrected * PX + oy` JS associates LEFT, so the outline's origin is
+         * folded in before the staff's, and `-3.96 + -11.625 + 84.56` is `68.975` where
+         * `-3.96 + (-11.625 + 84.56)` is `68.97500000000001` — which is what abcjs's own
+         * golden carries for `accidentals.dblsharp` on `visual-transpose-03`.
+         *
+         * The x needs no bracket: `x * PX` is already the whole term abcjs adds.
+         */
+        const py = Number(head[2]) + (corrected * PX + oy)
         const named = dataName ?? SMUFL_TO_ABCJS[name] ?? name
         /**
          * **A NOTEHEAD'S CLASS IS WRITTEN AFTER ITS `d`**, because it is not written with
