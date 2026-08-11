@@ -11512,6 +11512,8 @@ function verticalExtent(
   let lyricBottom = Number.NEGATIVE_INFINITY
   /** The tallest lyric font on the staff — the lane is measured in IT, not the default. */
   let lyricLaneHeight = 0
+  /** abcjs's `lyricHeightBelow` in PITCH — one measurement of the WHOLE verse string. */
+  let lyricLanePitch = 0
   /** …and its SIZE, which is what the baseline is measured from. See below. */
   let lyricFontSize = 0
 
@@ -11607,8 +11609,24 @@ function verticalExtent(
     }
     // No text metrics available, so bound the box by the font size: ascenders reach
     // roughly 0.8 of it above the baseline and descenders 0.25 below.
+    /**
+     * **abcjs MEASURES THE WHOLE MULTI-VERSE STRING ONCE**, so its lyric lane is
+     * `h + (n - 1) * size * 1.2` — the generator's own `getBBox` stub, where `n` counts
+     * the NON-EMPTY tspans and `1.2em` is the `dy` each extra line steps by
+     * (`dump-svg.js:106-124`). `addLyric` builds `lyricStr` from every verse and calls
+     * `getTextSize.calc` ONCE (`abstract-engraver.js:769-777`); we draw a text per verse,
+     * so the count has to be gathered here.
+     *
+     * Two verses at the default `vocalfont` come to `18.84 + 17 * 1.2 = 39.24`, which is
+     * `visual-tablature-23`'s lane to the last digit — 11.126451612903226 pitch with
+     * abcjs's `margin = 1`.
+     */
+    let versesHere = 0
+    let versesSize = 0
     for (const t of el.texts) {
       if (t.role === 'lyric') {
+        if (t.text !== '') versesHere += 1
+        versesSize = Math.max(versesSize, t.size)
         lyricBottom = Math.max(lyricBottom, t.y)
         // …AND THE HEIGHT IT RESERVES IS ITS OWN FONT'S, not the default's. `addLyric`
         // measures `getTextSize.calc(lyricStr, 'vocalfont')`, so a `%%vocalfont` changes
@@ -11639,6 +11657,13 @@ function verticalExtent(
     }
     // A block reserves from its own top, not from its first line's ascender.
     if (el.blockTop !== undefined) include(el.blockTop, el.blockTop)
+    // `staff.specialY.lyricHeightBelow` is a MAX over the staff's children, each child
+    // measuring its own whole `lyricStr` — see `versesHere`.
+    if (versesHere > 0) {
+      const h =
+        goldenTextHeight(versesSize) + (versesHere - 1) * versesSize * ABCJS_RATIO.textLineStep
+      lyricLanePitch = Math.max(lyricLanePitch, h / ENGRAVE.spacePerStep)
+    }
   }
 
   // A LYRIC BLOCK RESERVES ITS OWN HEIGHT PLUS ONE PITCH STEP, measured from the LAST
@@ -11700,6 +11725,21 @@ function verticalExtent(
      * Ours reaches the same y by a different route (a `max` against the last verse's
      * baseline), so the delta stands in for the lane; it is the same quantity by
      * construction and it is what abcjs divides.
+     */
+    /**
+     * **abcjs's OWN LANE IS `dim.height / STEP + 1`, AND WE CANNOT SPEND IT YET.**
+     * Measured and MEASURABLE: `lyricLanePitch` above is abcjs's figure to the last digit —
+     * `visual-tablature-23`'s 11.126451612903226 — and using it takes that fixture's height
+     * byte-exact and the root count to 147/20.
+     *
+     * It also puts `multi-voice-lyrics-two-voices` and `ave-verum-corpus` STRUCTURALLY out,
+     * because abcjs subtracts its lane from `staff.bottom` — the music's ink — while our y
+     * is measured from the LAST VERSE'S BASELINE, which `anchorLyrics` places by a different
+     * rule. Two derivations that agree on a single voice and part company on two.
+     *
+     * **A ULP IS CHEAPER THAN A POSITION ERROR**, so the delta stands in for the lane until
+     * `anchorLyrics` is abcjs's too. That is the next thread, and `lyricLanePitch` is
+     * already computed for it.
      */
     if (bottom !== wasBottom) bottomPitch -= (bottom - wasBottom) / ENGRAVE.spacePerStep
   }
