@@ -347,7 +347,7 @@ system 2 width=90.935 originY=53.589
       text  84.085,9.326 size=2.194 bold "里"
     bar x=88.870 w=0.077
       line  88.909,-2.000 -> 88.909,2.000 t=0.077
-system 3 width=91.038 originY=67.515
+system 3 width=91.037 originY=67.515
   staff 0 originY=3.862
     staffline 1.935,2.000 -> 89.102,2.000 t=0.090
     staffline 1.935,1.000 -> 89.102,1.000 t=0.090

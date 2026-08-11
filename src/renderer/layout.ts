@@ -204,7 +204,10 @@ export const ENGRAVE = {
    * collapses to `13.3·√d` for any line whose shortest note is a quarter or less — which
    * is nearly all music. 3.25 ≈ 13.3/4 is the corpus-centered scale.
    */
-  spacingScale: 3.25 * SPACE,
+  // `3.25 * sqrt(16 d)` restated against abcjs's `sqrt(8 d)` law — see
+  // `ABCJS_PX.spacingUnit`. The SAME curve and the same calibration; one law, so there is
+  // no second expression for a rounded constant to hide in.
+  spacingScale: 3.25 * Math.SQRT2 * SPACE,
   /**
    * Absolute spacing anchor. A sixteenth gets exactly `spacingScale`; everything else
    * scales from it by √duration, so a note's width depends only on its own duration and
@@ -1541,8 +1544,15 @@ export function naturalWidth(duration: Rational, spacingScale: number): number {
  */
 export function springForDuration(d: number, spacingScale: number): number {
   if (!(d > 0)) return ENGRAVE.minColumnGap
-  return Math.max(ENGRAVE.minColumnGap, spacingScale * Math.sqrt(d / ENGRAVE.spacingReference))
+  return Math.max(ENGRAVE.minColumnGap, spacingScale * spacingUnits(d))
 }
+
+/**
+ * abcjs's `getSpacingUnits` — `Math.sqrt(spacingduration * 8)`, and NO floor
+ * (`layout/voice-elements.js:22`). Its own expression, so the spring is abcjs's
+ * arithmetic rather than an equivalent of it.
+ */
+export const spacingUnits = (d: number): number => (d > 0 ? Math.sqrt(d * 8) : 0)
 
 // ─── Element builders ────────────────────────────────────────────────────────
 
@@ -6029,10 +6039,13 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
  */
 export type RenderProfile = 'standard' | 'abcjs'
 
+// **THE SPRING IS `scale * Math.sqrt(duration * 8)`, WHICH IS ABCJS'S OWN EXPRESSION** —
+// see `ABCJS_PX.spacingUnit`. The abcjs profile therefore carries abcjs's base 30 and no
+// arithmetic of ours; core's own density keeps the number it was calibrated at, restated
+// against the same law (`3.25 * sqrt(16 d)` IS `3.25 * sqrt(2) * sqrt(8 d)`).
 const PROFILES: Readonly<Record<RenderProfile, { spacingScale: number }>> = {
-  standard: { spacingScale: 3.25 },
-  // sqrt(8) * 30 / 7.75 / 4 — abcjs's coefficient expressed against core's 1/16 reference.
-  abcjs: { spacingScale: 2.7372 },
+  standard: { spacingScale: ENGRAVE.spacingScale },
+  abcjs: { spacingScale: spaces(ABCJS_PX.spacingUnit) },
 }
 
 export interface LayoutOptions {
@@ -7631,7 +7644,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       const unspent = new Array<number>(n).fill(0)
       const at: number[][] = lines.map(() => [])
       /** abcjs's `getSpacingUnits` — NO floor, and zero for a zero-duration element. */
-      const unitsOf = (d: number): number => (d > 0 ? Math.sqrt(d / ENGRAVE.spacingReference) : 0)
+      const unitsOf = spacingUnits
       const spring = (d: number): number => factor * spacingScale * unitsOf(d)
       const itemOf = (v: number): Advance | undefined => lines[v]?.items[i[v] ?? 0]
       const ended = (v: number): boolean => itemOf(v) === undefined

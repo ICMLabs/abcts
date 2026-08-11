@@ -151,8 +151,8 @@ system 5 width=54.511 originY=69.720
     note@-3 x=29.646 w=5.474
       glyph noteheadBlack 29.646,1.500
       line  30.847,1.333 -> 30.847,-2.000 t=0.129
-    note@-4 x=35.121 w=5.474
-      glyph noteheadBlack 35.121,2.000
+    note@-4 x=35.120 w=5.474
+      glyph noteheadBlack 35.120,2.000
       line  36.322,1.833 -> 36.322,-1.500 t=0.129
     note@-5 x=40.595 w=5.474
       glyph noteheadBlack 40.595,2.500
@@ -160,7 +160,7 @@ system 5 width=54.511 originY=69.720
     note@-6 x=46.069 w=5.474
       glyph noteheadBlack 46.069,3.000
       line  45.811,3.000 -> 47.593,3.000 t=0.090
-      line  47.271,2.833 -> 47.271,-0.500 t=0.129
+      line  47.270,2.833 -> 47.270,-0.500 t=0.129
     bar x=51.544 w=1.239
       line  51.582,-2.000 -> 51.582,2.000 t=0.077
       line  52.318,-2.000 -> 52.318,2.000 t=0.516

@@ -1,7 +1,7 @@
 tune 0
-bounds  width=56.578 height=21.692 top=-1.935
+bounds  width=56.577 height=21.692 top=-1.935
 systems 1
-system 0 width=56.578 originY=0.000
+system 0 width=56.577 originY=0.000
   staff 0 originY=12.571
     staffline 1.935,2.000 -> 54.642,2.000 t=0.090
     staffline 1.935,1.000 -> 54.642,1.000 t=0.090
@@ -30,7 +30,7 @@ system 0 width=56.578 originY=0.000
     note@-6 x=20.090 w=5.474
       glyph noteheadBlack 20.090,3.000
       line  19.832,3.000 -> 21.614,3.000 t=0.090
-      line  21.292,2.833 -> 21.292,-0.500 t=0.129
+      line  21.291,2.833 -> 21.291,-0.500 t=0.129
     note@-5 x=25.565 w=5.474
       glyph noteheadBlack 25.565,2.500
       line  26.766,2.333 -> 26.766,-1.000 t=0.129
@@ -44,10 +44,10 @@ system 0 width=56.578 originY=0.000
       line  36.993,0.000 -> 36.993,3.500 t=0.129
     note@1 x=41.398 w=4.470
       glyph noteheadBlack 41.398,-0.500
-      line  41.463,-0.333 -> 41.463,3.000 t=0.129
+      line  41.462,-0.333 -> 41.462,3.000 t=0.129
     note@2 x=45.868 w=7.742
       glyph noteheadHalf 45.868,-1.000
       line  45.932,-0.833 -> 45.932,2.500 t=0.129
     bar x=53.610 w=1.239
-      line  53.649,-2.000 -> 53.649,2.000 t=0.077
+      line  53.648,-2.000 -> 53.648,2.000 t=0.077
       line  54.384,-2.000 -> 54.384,2.000 t=0.516

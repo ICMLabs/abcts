@@ -429,7 +429,7 @@ system 6 width=33.356 originY=81.634
       line  15.166,1.833 -> 15.166,-1.500 t=0.129
     note@-3 x=19.439 w=5.474
       glyph noteheadBlack 19.439,1.500
-      line  20.641,1.333 -> 20.641,-2.000 t=0.129
+      line  20.640,1.333 -> 20.640,-2.000 t=0.129
     note@-2 x=24.914 w=5.474
       glyph noteheadBlack 24.914,1.000
       line  26.115,0.833 -> 26.115,-2.500 t=0.129
@@ -681,8 +681,8 @@ system 5 width=54.511 originY=69.720
     note@-2 x=29.646 w=5.474
       glyph noteheadBlack 29.646,1.000
       line  30.847,0.833 -> 30.847,-2.500 t=0.129
-    note@-1 x=35.121 w=5.474
-      glyph noteheadBlack 35.121,0.500
+    note@-1 x=35.120 w=5.474
+      glyph noteheadBlack 35.120,0.500
       line  36.322,0.333 -> 36.322,-3.000 t=0.129
     note@0 x=40.595 w=5.474
       glyph noteheadBlack 40.595,0.000
@@ -824,7 +824,7 @@ system 2 width=90.323 originY=33.842
       line  69.426,0.833 -> 69.426,-4.000 t=0.129
     bar x=88.258 w=0.077
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
-system 3 width=54.405 originY=45.893
+system 3 width=54.404 originY=45.893
   staff 0 originY=3.862
     staffline 1.935,2.000 -> 52.469,2.000 t=0.090
     staffline 1.935,1.000 -> 52.469,1.000 t=0.090
@@ -851,20 +851,20 @@ system 3 width=54.405 originY=45.893
       glyph accidentalDoubleFlat 22.730,0.000
       glyph noteheadBlack 24.549,0.000
       line  24.614,0.000 -> 24.614,3.500 t=0.129
-    bar x=30.024 w=0.077
+    bar x=30.023 w=0.077
       line  30.062,-2.000 -> 30.062,2.000 t=0.077
     note@-3 x=32.746 w=5.474
       glyph accidentalNatural 31.791,1.500
       glyph noteheadBlack 32.746,1.500
       line  33.947,1.333 -> 33.947,-2.000 t=0.129
-    note@0 x=38.221 w=5.474
+    note@0 x=38.220 w=5.474
       glyph accidentalNatural 37.266,0.000
-      glyph noteheadBlack 38.221,0.000
+      glyph noteheadBlack 38.220,0.000
       line  38.285,0.000 -> 38.285,3.500 t=0.129
     note@-6 x=43.695 w=7.742
       glyph noteheadHalf 43.695,3.000
       line  43.437,3.000 -> 45.291,3.000 t=0.090
       line  44.968,2.833 -> 44.968,-0.500 t=0.129
     bar x=51.437 w=1.239
-      line  51.476,-2.000 -> 51.476,2.000 t=0.077
+      line  51.475,-2.000 -> 51.475,2.000 t=0.077
       line  52.211,-2.000 -> 52.211,2.000 t=0.516

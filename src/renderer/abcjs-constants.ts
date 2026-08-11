@@ -127,6 +127,22 @@ export const ABCJS_PX = {
   minSpacing: 10,
   /** …and a NOTE's, which is 1 and not 10 (`abstract-engraver.js:808`). */
   noteMinSpacing: 1,
+  /**
+   * **THE BASE SPACING, AND abcjs'S SPRING IS `spacing * Math.sqrt(duration * 8)`** —
+   * `VoiceElement.getSpacingUnits` returns `sqrt(spacingduration * 8)` and
+   * `layoutOneItem` spends `voice.nextx = x + spacing * units`
+   * (`layout/voice-elements.js:22`, `:99`). 30px is the base, scaled by the
+   * justification factor `calcHorizontalSpacing` solves.
+   *
+   * Ours computed `spacingScale * sqrt(d / (1/16))` with `spacingScale = 2.7372` — the
+   * SAME LAW with the `sqrt(2)` folded into the constant and then ROUNDED TO FOUR
+   * DECIMALS. `2.7372 * sqrt(16)` is 10.9488 against abcjs's `(30/7.75) * sqrt(8)` =
+   * 10.948962…, a relative 1.5e-5 on EVERY note's spring — invisible to a 0.05px gate
+   * and not invisible to a byte comparison, which is the whole reason it survived. A
+   * PRE-DIVIDED, PRE-ROUNDED constant is exactly what `CHECKPOINT-2026-08-05b.md`'s
+   * ruling is about: measuring is a compass, never a source of numbers.
+   */
+  spacingUnit: 30,
   /** `var dx = 5` — how far into its element a clef glyph sits (`create-clef.js:32`). */
   clefIndent: 5,
   /** `getSymbolWidth(symbol) + 2` between key-signature accidentals (`create-key-signature.js:26`). */

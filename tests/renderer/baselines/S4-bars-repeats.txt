@@ -122,11 +122,11 @@ system 1 width=90.323 originY=19.066
       line  88.297,-2.000 -> 88.297,2.000 t=0.077
 system 2 width=57.221 originY=33.979
   staff 0 originY=3.862
-    staffline 1.935,2.000 -> 55.286,2.000 t=0.090
-    staffline 1.935,1.000 -> 55.286,1.000 t=0.090
-    staffline 1.935,0.000 -> 55.286,0.000 t=0.090
-    staffline 1.935,-1.000 -> 55.286,-1.000 t=0.090
-    staffline 1.935,-2.000 -> 55.286,-2.000 t=0.090
+    staffline 1.935,2.000 -> 55.285,2.000 t=0.090
+    staffline 1.935,1.000 -> 55.285,1.000 t=0.090
+    staffline 1.935,0.000 -> 55.285,0.000 t=0.090
+    staffline 1.935,-1.000 -> 55.285,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 55.285,-2.000 t=0.090
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     note@-6 x=6.329 w=5.474
@@ -156,32 +156,32 @@ system 2 width=57.221 originY=33.979
     note@-1 x=37.830 w=5.474
       glyph noteheadBlack 37.830,0.500
       line  39.031,0.333 -> 39.031,-3.000 t=0.129
-    note@0 x=43.305 w=5.474
-      glyph noteheadBlack 43.305,0.000
+    note@0 x=43.304 w=5.474
+      glyph noteheadBlack 43.304,0.000
       line  43.369,0.000 -> 43.369,3.500 t=0.129
     note@1 x=48.779 w=5.474
       glyph noteheadBlack 48.779,-0.500
-      line  48.844,-0.333 -> 48.844,3.000 t=0.129
+      line  48.843,-0.333 -> 48.843,3.000 t=0.129
     bar x=54.253 w=1.239
       line  54.292,-2.000 -> 54.292,2.000 t=0.077
-      line  55.028,-2.000 -> 55.028,2.000 t=0.516
+      line  55.027,-2.000 -> 55.027,2.000 t=0.516
 tune 1
 bounds  width=102.290 height=72.540 top=-1.935
 systems 5
 system 0 width=102.290 originY=0.000
   staff 0 originY=17.014
-    staffline 1.935,2.000 -> 88.254,2.000 t=0.090
-    staffline 1.935,1.000 -> 88.254,1.000 t=0.090
-    staffline 1.935,0.000 -> 88.254,0.000 t=0.090
-    staffline 1.935,-1.000 -> 88.254,-1.000 t=0.090
-    staffline 1.935,-2.000 -> 88.254,-2.000 t=0.090
+    staffline 1.935,2.000 -> 88.253,2.000 t=0.090
+    staffline 1.935,1.000 -> 88.253,1.000 t=0.090
+    staffline 1.935,0.000 -> 88.253,0.000 t=0.090
+    staffline 1.935,-1.000 -> 88.253,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 88.253,-2.000 t=0.090
     volta  35.168,-5.862 -> 35.168,-3.282 t=0.129
     volta  62.033,-5.862 -> 62.033,-3.282 t=0.129
     volta  35.168,-5.862 -> 62.033,-5.862 t=0.129
-    volta  62.550,-5.862 -> 62.550,-3.282 t=0.129
-    volta  62.550,-5.862 -> 88.254,-5.862 t=0.129
+    volta  62.549,-5.862 -> 62.549,-3.282 t=0.129
+    volta  62.549,-5.862 -> 88.253,-5.862 t=0.129
     voltatext 35.813,-3.419 "1"
-    voltatext 63.195,-3.419 "2"
+    voltatext 63.194,-3.419 "2"
     title x=0.000 w=0.000
       text  45.161,-12.555 size=3.484 "S4-2 Extended Volta Endings"
       text  88.387,-8.354 size=2.452 italic "Test Fixture"
@@ -204,7 +204,7 @@ system 0 width=102.290 originY=0.000
       line  19.817,2.333 -> 19.817,-1.000 t=0.129
     note@-4 x=24.090 w=5.474
       glyph noteheadBlack 24.090,2.000
-      line  25.292,1.833 -> 25.292,-1.500 t=0.129
+      line  25.291,1.833 -> 25.291,-1.500 t=0.129
     note@-3 x=29.565 w=5.474
       glyph noteheadBlack 29.565,1.500
       line  30.766,1.333 -> 30.766,-2.000 t=0.129
@@ -219,8 +219,8 @@ system 0 width=102.290 originY=0.000
     note@0 x=49.794 w=5.474
       glyph noteheadBlack 49.794,0.000
       line  49.859,0.000 -> 49.859,3.500 t=0.129
-    note@1 x=55.269 w=5.474
-      glyph noteheadBlack 55.269,-0.500
+    note@1 x=55.268 w=5.474
+      glyph noteheadBlack 55.268,-0.500
       line  55.333,-0.333 -> 55.333,3.000 t=0.129
     bar x=60.743 w=2.013
       glyph augmentationDot 60.743,-0.500
@@ -233,13 +233,13 @@ system 0 width=102.290 originY=0.000
     note@0 x=71.701 w=5.474
       glyph noteheadBlack 71.701,0.000
       line  71.766,0.000 -> 71.766,3.500 t=0.129
-    note@-1 x=77.176 w=5.474
-      glyph noteheadBlack 77.176,0.500
+    note@-1 x=77.175 w=5.474
+      glyph noteheadBlack 77.175,0.500
       line  78.377,0.333 -> 78.377,-3.000 t=0.129
     note@-2 x=82.650 w=5.474
       glyph noteheadBlack 82.650,1.000
       line  83.851,0.833 -> 83.851,-2.500 t=0.129
-    bar x=88.125 w=0.077
+    bar x=88.124 w=0.077
       line  88.163,-2.000 -> 88.163,2.000 t=0.077
 system 1 width=90.323 originY=22.066
   staff 0 originY=6.862

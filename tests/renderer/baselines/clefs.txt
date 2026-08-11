@@ -22,11 +22,11 @@ bounds  width=51.090 height=17.605 top=-1.935
 systems 1
 system 0 width=51.090 originY=0.000
   staff 0 originY=11.735
-    staffline 1.935,2.000 -> 24.768,2.000 t=0.090
-    staffline 1.935,1.000 -> 24.768,1.000 t=0.090
-    staffline 1.935,0.000 -> 24.768,0.000 t=0.090
-    staffline 1.935,-1.000 -> 24.768,-1.000 t=0.090
-    staffline 1.935,-2.000 -> 24.768,-2.000 t=0.090
+    staffline 1.935,2.000 -> 24.767,2.000 t=0.090
+    staffline 1.935,1.000 -> 24.767,1.000 t=0.090
+    staffline 1.935,0.000 -> 24.767,0.000 t=0.090
+    staffline 1.935,-1.000 -> 24.767,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 24.767,-2.000 t=0.090
     title x=0.000 w=0.000
       text  45.161,-7.275 size=3.484 "Bass clef"
     clef x=1.935 w=3.246
@@ -44,11 +44,11 @@ bounds  width=52.795 height=16.605 top=-1.935
 systems 1
 system 0 width=52.795 originY=0.000
   staff 0 originY=10.735
-    staffline 1.935,2.000 -> 24.768,2.000 t=0.090
-    staffline 1.935,1.000 -> 24.768,1.000 t=0.090
-    staffline 1.935,0.000 -> 24.768,0.000 t=0.090
-    staffline 1.935,-1.000 -> 24.768,-1.000 t=0.090
-    staffline 1.935,-2.000 -> 24.768,-2.000 t=0.090
+    staffline 1.935,2.000 -> 24.767,2.000 t=0.090
+    staffline 1.935,1.000 -> 24.767,1.000 t=0.090
+    staffline 1.935,0.000 -> 24.767,0.000 t=0.090
+    staffline 1.935,-1.000 -> 24.767,-1.000 t=0.090
+    staffline 1.935,-2.000 -> 24.767,-2.000 t=0.090
     title x=0.000 w=0.000
       text  45.161,-6.275 size=3.484 "Baritone clef"
     clef x=1.935 w=3.246
