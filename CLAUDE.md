@@ -594,9 +594,52 @@ checkpoint and hand off as you go so no context is lost.
 > music's ink while our y comes from the last verse's baseline — spending it takes one
 > fixture byte-exact and puts two others structurally out.
 
-Read `Docs/CHECKPOINT-2026-08-11.md` first — the state, the twelve landings, and §3, the
-NEGATIVE result that says where the remaining tail is. `Docs/HANDOFF-2026-08-11.md` has the
-session prompt and the probes. Then `Docs/CHECKPOINT-2026-08-10d.md` — the state and WHAT IS LEFT, whose item 1 is
+> ⚖️ **AND THE VERTICAL NOW HOLDS ABCJS'S PITCHES END TO END** (2026-08-11b).
+> `svg-bytes` **94 → 82 of 171** on five landings, four of which are ONE finding: abcjs
+> holds the vertical in PITCH and multiplies by `spacing.STEP` exactly once, where we held y
+> and divided back. **AN ASSOCIATION IS A DECISION** — `a + b + c` is `(a + b) + c`, and
+> abcjs's grouping is part of the port: `printSymbol` computes `calcY(offset + ycorr)` as
+> ONE number before `pathArray[0][2] += y`, so `-3.96 + -11.625 + 84.56` is `68.975` where
+> `-3.96 + (-11.625 + 84.56)` is abcjs's own `68.97500000000001`. **Nine fixtures on one
+> pair of brackets.** Then the walk itself: a staff's origin is ONE product off a pitch
+> (`draw/staff-group.js:25-26`); `addStaffPadding` is a pitch sum with one multiply and a
+> TOP-UP rather than a maximum (`draw/draw.js:84-92`); the intra-group separation lives
+> INSIDE `staff.top`, in pitches (`set-upper-and-lower-elements.js:82-92`) — which is why
+> `calcHeight` can be a bare sum of tops and bottoms and still be right, its own `TODO-PER`
+> notwithstanding; and the page is ONE running cursor seeded with `padding.top`, so a staff's
+> `absoluteY` is that cursor plus one `moveY`, never `(system + staff) + margin`.
+>
+> **AND §3 OF THE PREVIOUS CHECKPOINT WAS RIGHT ABOUT THE SYMPTOM AND WRONG ABOUT THE
+> CAUSE.** It recorded that a beamed stem must NOT supply a pitch. It must — just not the
+> UNBEAMED `p1`/`p2`, which the beam pass invalidates: `createStems` hands the stem
+> `pitch2: bary` straight out of `getBarYAt`, which interpolates two PITCHES
+> (`layout/beam.js:122`). Re-read a negative result against the source before treating it
+> as closed.
+>
+> **AND A WASH IS NOT "NO EFFECT".** Starting the above-stack ladder on `staff.top` itself
+> rather than on the ink's y divided back is correct and, alone, took `visual-misc-13` OFF
+> the byte-exact list — because the reciprocal-multiply it replaced had been CANCELLING a
+> latent defect in the ornament's own reserve. **TWO ERRORS CANCELLING, for the fifth time
+> on this branch**, and the first where the pair was a correct change and a latent defect
+> rather than two defects. Land the structure, then chase what it exposes.
+>
+> **AND THE AGGREGATE COUNT IS THE WRONG DIAL FOR AN ARITHMETIC ARC.** 85 → 85 hid a
+> 180-token improvement and 82 → 82 hid a 48-token one. COUNT TOKENS BY AXIS while the
+> family is ULP; `CHECKPOINT-2026-08-11b.md` §5 has the four probes that do it.
+>
+> 🔒 **AND THE RATCHET NOW NAMES ALL 89 BYTE-EXACT FIXTURES, BECAUSE SEVEN COULD NOT
+> DEFEND EIGHTY-NINE.** Twice that day a fixture went from byte-exact to differing **while
+> the aggregate count improved**, and neither was ratcheted, so the only thing that caught
+> them was diffing two runs of a scratch script by hand. **A ratchet holding 4% of what is
+> green is a ratchet in name.**
+
+Read `Docs/CHECKPOINT-2026-08-11b.md` first — the state, the five landings, §3 WHAT IS LEFT
+(the HORIZONTAL is now the head of the table and §3.1 has both the measurement and the
+probe), §5 THE HARNESS and §6 the rules. `Docs/HANDOFF-2026-08-11b.md` has the session
+prompt. Then `Docs/CHECKPOINT-2026-08-11.md` — superseded for the state, but it keeps the
+twenty-seven landings and §3's negative result, whose central claim about a beamed stem is
+corrected in `-08-11b` §2. `Docs/HANDOFF-2026-08-11.md` has that session's prompt.
+Then `Docs/CHECKPOINT-2026-08-10d.md` — the state and WHAT IS LEFT, whose item 1 is
 THE UNIT FLIP and is half-built. `Docs/HANDOFF-2026-08-10d.md` has the session prompt, the
 baseline RATIO script the flip is discovered with, and the DOM-contract probe.
 Then `Docs/CHECKPOINT-2026-08-10c.md` — superseded for the state, but it keeps THE HARNESS
@@ -763,17 +806,23 @@ abcjs source are all reached by sibling path and stay in that repo. Keep it that
 backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
-**AUDIO IS BYTE-EQUAL AND THE SVG IS THE ARC.** 1158/1158 with no
+**AUDIO IS BYTE-EQUAL AND THE SVG IS THE ARC.** 1240/1240 with no
 reds; **seventeen gates and NINE ranked tables** — 0 of 72 audio cases, 0 of 38 note timings,
 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
 **1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
 **1 of 25 DOM-contract cases with TWENTY-FOUR slugs RATCHETED** — and
-**94 of 171 SVG-byte fixtures, SEVENTY-SEVEN of them EXACT** — and **the SVG BYTE TABLE is
-THE ONE OPEN GATE**, at best 52498 / median 7221 — **25 root + 50 ULP + 19 structural**, classified by aligning on the first differing character (a cruder test says 57 structural and sends you at the wrong family). Its remaining families are listed in
-item 1 of `CHECKPOINT-2026-08-10d.md` and the two biggest are NAMED: the ROOT's `height`,
-where **abcjs sums in PITCH and multiplies by `STEP` ONCE per line** (`calcHeight` +
-`engraveStaffLine`) while we stack in lengths and sum those — and `calcHeight` ignores the
-inter-staff separation outright, so it is not only a ULP matter; and the BRACE, which
+**82 of 171 SVG-byte fixtures, EIGHTY-NINE of them EXACT and ALL 89 RATCHETED** — and **the
+SVG BYTE TABLE is THE ONE OPEN GATE**, at best 54030 / median 8168 — **34 glyph-x ULP + 34
+structural + 9 root + 5 other**, classified by aligning on the first differing character (a
+cruder test sends you at the wrong family). **THE VERTICAL ARITHMETIC IS CLOSED** — the
+layout holds abcjs's pitches end to end — and **THE HORIZONTAL IS NOW THE HEAD OF THE
+TABLE**: 265 of the 341 remaining ULP tokens, the same finding one axis over. abcjs's
+`AbsoluteElement.x` IS THE NOTEHEAD'S x, with the accidental at a negative `dx` and
+`setX` one addition (`relative-element.js:124`), where ours anchors the element's LEFT EDGE
+and adds the grace and accidental widths to it. `CHECKPOINT-2026-08-11b.md` §3.1 has the
+measurement and the probe; the justification is NOT the suspect, ours already being abcjs's
+eight-pass re-solve. The structural thirty-four are listed with citations in
+`CHECKPOINT-2026-08-11.md` §4.2, the largest single one being the BRACE, which
 abcjs draws AFTER its own staff's lines and builds from `curvyPath` arithmetic rather than
 from a glyph. The oracle lands before the
 implementation here, as it did for audio and the chord grid, and a table that opens at every
