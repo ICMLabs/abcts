@@ -33,7 +33,7 @@ reproduce goes in `Docs/ABCJS-DIFFERENCES.md` with its evidence and its slug goe
 | harvested geometry | `corpus-abcjs-ranked` | 0 of 174 | 0 of 174 |
 | pixel geometry | `pixel-parity` | 0 of 120 | 0 of 120 |
 | **DOM contract** | **`dom-contract`** | **1 of 25 — TWENTY-FOUR RATCHETED** | 11 of 25, fourteen |
-| **SVG bytes** | **`svg-bytes`** | **149 of 171**; best 22908, median 651 | 164 of 171, best 5186, median 174 |
+| **SVG bytes** | **`svg-bytes`** | **149 of 171**; best 22908, median 771 | 164 of 171, best 5186, median 174 |
 
 **Suite 1158 of 1158. NO REDS. `npx tsc --noEmit` clean. Working tree clean.**
 
@@ -413,6 +413,13 @@ staff-stacking arithmetic are where the remaining inline literals are.
      one of them exact), so it is a COMBINATION that loses it, and the fix is architectural:
      `verticalExtent` must carry the staff's extent in PITCH and convert once, which is what
      `staff.top`/`staff.bottom` are in abcjs.
+     **AND IT IS THE SAME ROOT CAUSE AS MOST OF WHAT IS LEFT** — the `clefs.G` family is
+     `23.112000000000002` against `23.111999999999995`, which is the staff's `originY`
+     accumulated in lengths, not the clef. abcjs places a staff with `moveY(STEP, top)`
+     then `moveY(STEP, -bottom)`, ONE multiply per staff off a PITCH; every reserve
+     feeding those pitches is a pitch too. Carrying the extent — and the reserves that
+     build it — in pitch is one arc that closes the height family, the clef family and
+     most of the tail behind them.
      **AND THE OBVIOUS SHORTCUT IS WRONG, MEASURED**: re-summing the system height as
      `(Σ pitch spans) × STEP` took `pixel-parity` to 1 of 120 and the harvested table to
      2 of 174, because `calcHeight` reads a `staff.top` that ALREADY carries the
@@ -435,7 +442,7 @@ staff-stacking arithmetic are where the remaining inline literals are.
      staves" — so on a system where our `intraStaffSep` clamp BINDS, abcjs's advance is
      shorter than the ink it just drew. Port the expression, then measure `oy` on the
      harvested table before believing it.
-   - **THE BRACE AND THE BRACKET, 5 rows**, and they are the body's very FIRST bytes.
+   - **~~THE BRACE AND THE BRACKET~~ — CLOSED.** Kept because the shape is worth reading:
      Two differences: abcjs draws a connector AFTER its own staff's lines and before that
      staff's voice — `printStaff`, then `printBrace(brace)`, then `printBrace(bracket)`,
      then `drawVoice`, once per staff and only when `isStartVoice(index)`
@@ -446,7 +453,19 @@ staff-stacking arithmetic are where the remaining inline literals are.
      (`draw/brace.js:18-76`). Verified against a golden to the last digit: `xLeft = 15`,
      `yTop = staff.absoluteY − STEP·10` (our top line), `yBottom` the last staff's
      `− STEP·2`, and every coordinate RAW — `sprintf`'s `%f` is `parseFloat`, so
-     `132.87 + 110/3.14` prints as `167.90184713375797`.
+     `132.87 + 110/3.14` prints as `167.90184713375797`. **The connector is in SYSTEM
+     coordinates** — `edge()` already carries each staff's own `originY` — so the offset
+     it takes is the system's alone, and adding the staff's on top put it 37.49px low.
+     **AND THE WEIGHT GATE HAD TO WIDEN A THIRD TIME**: abcjs's bracket rule is a closed
+     rect in RELATIVE commands, `M x y l 0 H l W 0 l 0 -H z`, so its weight is the
+     horizontal run's `W` and no absolute-`L` parser can reach it; reading the path's BOX
+     instead gives the whole bracket including its arms, 10.66 for a 2.906 rule.
+     **NEXT ON THOSE FIXTURES**: `bartop`. The LAST barline of a voice on any staff but the
+     first runs up to the PREVIOUS staff's bottom line — `bartop = renderer.calcY(2)` after
+     each voice is drawn, spent by `drawAbsolute` only when the element is the voice's last
+     child (`draw/staff-group.js:129-133`, `draw/voice.js:43`, `draw/relative.js:61`). And a
+     group of more than one staff also gets a plain 0.6 rule down its LEFT EDGE, drawn after
+     every voice (`:140-144`).
    - **`clefs.G`'s y, 6 rows.**
    - **A `<text>` family**, most likely a lyric's trailing `<tspan dy="1.2em"></tspan>` —
      abcjs emits one because `addLyric` ends every syllable with a `\n`.
@@ -486,7 +505,7 @@ staff-stacking arithmetic are where the remaining inline literals are.
 working tree clean
 npx tsc --noEmit    clean
 npx vitest run      1158 / 1158
-svg bytes           149 of 171   best 22908, median 651
+svg bytes           149 of 171   best 22908, median 771
                     PASSING ratchet: 7 slugs
 DOM contract        1 of 25       PASSING ratchet: 24 slugs
 heights             114 exact / 55 ULP-only / 2 structural
