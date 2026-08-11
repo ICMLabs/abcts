@@ -146,7 +146,10 @@ function tempoGlyphs(abc: string): { glyphs: string[]; stem: boolean; rateX: num
       // this file exists to close.
       if (glyphs.length > 0 || stem) return
       for (const g of (record.glyphs ?? []) as { name: string; x: number }[]) {
-        if (Number.isNaN(headX)) headX = g.x
+        // The NOTEHEAD's x, not the first glyph's — abcjs adds the flag and the dots
+        // BEFORE the head (`createNoteHead` returns before `addHead`), so the first glyph
+        // is a flag on any beat unit shorter than a quarter.
+        if (g.name.startsWith('notehead')) headX = g.x
         glyphs.push(g.name)
       }
       for (const l of (record.lines ?? []) as { role?: string }[]) {

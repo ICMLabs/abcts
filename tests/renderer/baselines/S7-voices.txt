@@ -342,8 +342,8 @@ system 0 width=821.859 originY=0.000
     timeSignature x=93.301 w=13.038
       glyph timeSigCommon 93.301,0.000
     tempo x=116.339 w=0.000
-      glyph noteheadBlack 116.339,-44.562 scale=0.750
       glyph flag8thUp 123.097,-64.906 scale=0.750
+      glyph noteheadBlack 116.339,-44.562 scale=0.750
       line  123.397,-45.531 -> 123.397,-59.094 t=0.600
       text  133.116,-41.937 size=20.000 bold "= 66"
     note@-11,-9,-6 x=116.339 w=42.426

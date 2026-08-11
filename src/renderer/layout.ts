@@ -2148,7 +2148,17 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
       const headAdvance = glyphsFor(strict).advance(spec.head) * ENGRAVE.tempoNoteScale
       const noteY =
         baseline - ENGRAVE.tempoTextSize - ENGRAVE.tempoDescenderBump + 5 * ENGRAVE.spacePerStep
-      glyphs.push({ name: spec.head, x: cursor, y: noteY, scale: ENGRAVE.tempoNoteScale })
+      // **THE FLAG AND THE DOTS COME BEFORE THE HEAD, AND THE STEM AFTER IT** — the tempo
+      // note goes through `createNoteHead` like any other, which `addRight`s the flag and
+      // the dots and leaves the caller to `addHead` (`tempo-element.js:48-58`). Ours drew
+      // head, stem, flag, dots. Held back and pushed below.
+      const tempoHead: PlacedGlyph = {
+        name: spec.head,
+        x: cursor,
+        y: noteY,
+        scale: ENGRAVE.tempoNoteScale,
+      }
+      const tempoStem: PlacedLine[] = []
       if (spec.stemmed) {
         // AND IT IS A THIN STEM, `linewidth: -0.6` (`tempo-element.js:56`) — the beamed
         // weight, not the unbeamed 1. Hung off the head's right EDGE, so its centre is half
@@ -2157,7 +2167,7 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
         // of `[1]` against abcjs's `[0.6, 1]` on nothing but this one line.
         const weight = LINE_WEIGHTS.beamedStem
         const stemX = cursor + headAdvance - weight / 2
-        lines.push({
+        tempoStem.push({
           role: 'stem',
           x1: stemX,
           y1: noteY - 0.25 * ENGRAVE.spacePerStep,
@@ -2233,6 +2243,9 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
         glyphs.push({ name: 'augmentationDot', x: dotX, y: noteY - ENGRAVE.spacePerStep })
         right = Math.max(right, dotX - cursor + glyphsFor(strict).width('augmentationDot'))
       }
+      // …and only now the head, then its stem — `createNoteHead` returns before `addHead`.
+      glyphs.push(tempoHead)
+      lines.push(...tempoStem)
       cursor += right + ENGRAVE.tempoNoteGap
     }
     texts.push({
