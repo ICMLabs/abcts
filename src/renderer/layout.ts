@@ -4464,12 +4464,19 @@ function noteText(
         // staff's music once the voices sharing it are known, exactly as lyrics are.
         role: 'chord',
         font: 'gchordfont',
+        // **CENTRED BY THE ANCHOR, NOT BY PRE-SUBTRACTING HALF A WIDTH.** `addCentered`
+        // gives the chord `dx = noteheadWidth / 2` and `relative.js`'s `case "chord"`
+        // draws it `anchor: "middle"` (`add-chord.js:109`, `draw/relative.js:45`). Ours
+        // start-anchored at `centre - width / 2`, which is the same point only when our
+        // text metrics agree with the browser's — the same correction the tuplet number
+        // already carries, and one abcjs's own attribute states.
+        anchor: 'middle',
         // `type: "chord"` in abcjs, drawn by `relative.js`'s own case with
         // `classes.generate("chord")` and `name: "chord"`. An ANNOTATION shares the lane
         // and the role and is a DIFFERENT element — `type: "text"`, `name: "annotation"`
         // — so the two are told apart here rather than at the emitter.
         dataName: 'chord',
-        x: centre - lineWidth / 2,
+        x: centre,
         y: stepToY(ENGRAVE.chordSymbolStep),
         size,
         bold: false,
@@ -9641,8 +9648,13 @@ function aboveLadder<
     const marks: PlacedText[] = []
     for (const el of part.elements) for (const t of el.texts) if (isChord(t)) marks.push(t)
     for (const t of marks) {
-      const left = t.x
-      const right = left + markWidth(t.text, t.size, t.box === true)
+      // **`getChordDim` TAKES `offset = this.type === "chord" ? realWidth / 2 : 0`**
+      // (`relative-element.js:96`), so a CHORD SYMBOL's extent is centred on its anchor
+      // and an ANNOTATION's runs rightward from it — which is the same asymmetry their
+      // `text-anchor` states. A chord's `x` is its CENTRE here, so the half comes off.
+      const width = markWidth(t.text, t.size, t.box === true)
+      const left = t.dataName === 'chord' ? t.x - width / 2 : t.x
+      const right = left + width
       const lane = rightMost.findIndex((edge) => edge < left)
       if (lane >= 0) {
         rightMost[lane] = right
