@@ -4388,7 +4388,7 @@ function noteText(
     const size =
       event.chordFont === null
         ? ENGRAVE.chordTextSize
-        : Math.round((event.chordFont.size * 4) / 3) / 7.75
+        : Math.round((event.chordFont.size * 4) / 3) / UNIT_PX
     // EACH LINE IS ITS OWN CENTRED MARK, in REVERSE order — `chordString` splits on `\n`
     // and walks `j` down from the last "because we place them from bottom to top"
     // (`add-chord.js:39-41`). So `"D""G"d`, which the parser joined into one name, becomes
@@ -4777,9 +4777,15 @@ function layoutConnectors(
     // the ratio — the one place a glyph is deliberately not drawn at 1:1.
     glyphs.push({
       name: 'brace',
-      x: -ENGRAVE.connectorGap - glyph.width,
+      // `GLYPHS.brace` is read RAW — a brace is Bravura's in every mode, one of the six
+      // sites the 2026-08-05 audit cleared — so its published figures are in STAFF SPACES
+      // and carry the unit here, where `glyphsFor()` would have carried it for them.
+      x: -ENGRAVE.connectorGap - glyph.width * SPACE,
       y: first.top,
-      scale: height / glyph.height,
+      // Stretched to the span: the scale is the ratio of the drawn height to the glyph's
+      // NATURAL height in layout units, which is what the emitter then re-multiplies by
+      // the outline's own path-unit conversion.
+      scale: height / (glyph.height * SPACE),
       role: 'staff',
     })
   }
@@ -5661,7 +5667,10 @@ function layoutTuplets(
     // the ends differ, and 1.4 to 2.0 pitch out on `multi-voice-triplet-brackets`.
     const extents = members.map(extentOf)
     /** abcjs pitch from our y in staff spaces — pitch 0 is middle C, 2 the bottom line. */
-    const pitchOf = (y: number): number => 6 - 2 * y
+    // OUR y (a LENGTH, positive DOWN, zero at the middle line) → abcjs PITCH. The
+    // division is `spacePerStep`, not a doubling: `2 *` is `/ 0.5` and 0.5 is only the
+    // step's length while a staff space is the unit.
+    const pitchOf = (y: number): number => 6 - y / ENGRAVE.spacePerStep
     const yOfPitch = (pitch: number): number => stepToY(pitch - 6)
     const endPitch = (e: { top: number; bottom: number }): number =>
       up ? Math.max(pitchOf(e.top), 9) + 4 : Math.min(pitchOf(e.bottom), 0) - 2
@@ -6291,7 +6300,7 @@ const endingRoom = (label: string | null): number =>
     : // MEASURED IN `repeatfont`, 13pt -> 17px — NOT in `voltaTextSize`, which is the size
       // the bracket's number is DRAWN at. abcjs measures the reserve and the ink with two
       // different fonts and only the first is this.
-      textWidth(label, 17 / 7.75) + 10 / 7.75
+      textWidth(label, 17 / UNIT_PX) + 10 / UNIT_PX
 
 /**
  * Lay out one measure at x = 0. Position within a system comes later, by translation,
@@ -6593,8 +6602,10 @@ function layoutMeasure(
         element: elements.length,
         left: Math.min(...heads.map((h) => h.x)),
         right: Math.max(...heads.map((h) => h.x)) + width,
-        top: Math.min(...heads.map((h) => h.y)) - 0.5,
-        bottom: Math.max(...heads.map((h) => h.y)) + 0.5,
+        // HALF A STAFF SPACE of curve padding either side, which `curveReserves`'
+        // `fixedOf` takes back off again before it puts the notehead's real half on.
+        top: Math.min(...heads.map((h) => h.y)) - 0.5 * SPACE,
+        bottom: Math.max(...heads.map((h) => h.y)) + 0.5 * SPACE,
         pitchY:
           first === undefined
             ? (Math.min(...heads.map((h) => h.y)) + Math.max(...heads.map((h) => h.y))) / 2
@@ -6976,7 +6987,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       ? // ONE DIVISION, NOT TWO ADDITIONS. `w / 7.75 + 2 * (15 / 7.75)` re-multiplied by
         // 7.75 gives 295.99999999999994 where abcjs writes 296; `(w + 30) / 7.75` gives
         // 296 exactly, because the round trip is a single operation and its inverse.
-        (score.staffWidth + 2 * ABCJS_PX.paddingLeft) / 7.75
+        (score.staffWidth + 2 * ABCJS_PX.paddingLeft) / UNIT_PX
       : (options.systemWidth ?? ENGRAVE.systemWidth)
   // The mode picks the look; `profile` can still override it explicitly.
   const profile: RenderProfile =
@@ -6997,11 +7008,12 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   // ragtime-nightingale asks for a wider system gap (staffsep 90 -> 120px) and a wider
   // intra-staff gap (sysstaffsep 50 -> 66.67px), and abcjs honours both. The model carries
   // them already in pixels; here they become staff spaces like the rest of `ENGRAVE`.
-  const interSystemSep = score.staffSep !== null ? score.staffSep / 7.75 : ENGRAVE.systemSeparation
+  const interSystemSep =
+    score.staffSep !== null ? score.staffSep / UNIT_PX : ENGRAVE.systemSeparation
   /** `%%musicspace` — the gap before the FIRST staff group only, in staff spaces. */
-  const musicSpace = score.musicSpace !== null ? score.musicSpace / 7.75 : ENGRAVE.musicSpace
+  const musicSpace = score.musicSpace !== null ? score.musicSpace / UNIT_PX : ENGRAVE.musicSpace
   const intraStaffSep =
-    score.sysStaffSep !== null ? score.sysStaffSep / 7.75 : ENGRAVE.staffSeparation
+    score.sysStaffSep !== null ? score.sysStaffSep / UNIT_PX : ENGRAVE.staffSeparation
 
   /**
    * Which VOICES share each staff — the whole point of `%%score`'s `( … )`.
@@ -7878,7 +7890,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             if (width / target < ENGRAVE.lastSystemFill) break
           } else if (!(1 - (width + 2 * ENGRAVE.marginX) / target < score.stretchLast)) break
         }
-        if (Math.abs(target - width) < 2 / 7.75) break
+        // abcjs compares in PIXELS — `Math.abs(…) < 2` — so the threshold converts.
+        if (Math.abs(target - width) < 2 / UNIT_PX) break
         if (units <= 0) break
         // The EIGHTH layout is the last one abcjs performs, so the spacing solved from it
         // is discarded and this one stands.
@@ -7894,7 +7907,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     // The ratchet. abcjs rounds to whole PIXELS before comparing, so a sub-pixel overrun
     // does not drag the page with it.
     const thisWidth = solved.width - leftEdge
-    if (Math.round(thisWidth * 7.75) > Math.round(pageWidth * 7.75)) {
+    if (Math.round(thisWidth * UNIT_PX) > Math.round(pageWidth * UNIT_PX)) {
       pageWidth = thisWidth
       pageRatcheted = true
     }
@@ -7963,7 +7976,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       if (labelText) {
         const members = voicesOfStaff.find((m) => m.includes(voiceIndex)) ?? [voiceIndex]
         const pos = Math.max(0, members.indexOf(voiceIndex))
-        const size = 17 / 7.75
+        const size = 17 / UNIT_PX
         const centre =
           (pos - (members.length - 1) / 2) * size * ENGRAVE.lineSkipFactor + size * 0.35
         nameElements.push({
@@ -11004,11 +11017,13 @@ function layoutGraces(
       // group as an acciaccatura however many notes it has.
       const firstStep = graceSteps[0] ?? 0
       const tipY = stepToY(firstStep) - ENGRAVE.stemLength * scale
+      // Every offset here is a LENGTH in staff spaces, so each carries the unit. The
+      // 0.9 and the 1.4 are RATIOS of quantities that already do, and do not.
       graceLines.push({
-        x1: x - 0.2,
-        y1: tipY + 1.0,
+        x1: x - 0.2 * SPACE,
+        y1: tipY + 1.0 * SPACE,
         x2: x + ENGRAVE.graceAdvance * 0.9,
-        y2: tipY - 0.2,
+        y2: tipY - 0.2 * SPACE,
         thickness: LINE_WEIGHTS.stem * 1.4,
       })
     }
