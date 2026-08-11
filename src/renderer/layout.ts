@@ -8791,11 +8791,16 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     // `moveY(padding.top)` before drawing anything (`draw.js:14`), so the page begins
     // ABOVE the ink — expressed as a negative viewBox top rather than by shifting every
     // system, which would put the same constant in two places.
+    // **THE ORDER IS ABCJS'S OWN ACCUMULATION**, and in floating point that is not a
+    // detail: `draw()` opens with `moveY(padding.top)` and everything else lands on top of
+    // it, then `setPaperSize` adds `padding.bottom` last — `(15 + content) + 15`, never
+    // `(content + 15) + 15`. JS `+` is left to right, so writing the margins at the end
+    // put the root's `height` one ULP out on 55 of the 171 fixtures, in BOTH directions.
     height:
+      ENGRAVE.marginTop +
       (stafflessBlock === undefined ? bottom : stafflessBlock.height + musicSpace) +
       trailingHeight +
       (bottomBlock.texts.length === 0 ? 0 : spaces(ABCJS_PX.bottomTextGap) + bottomBlock.height) +
-      ENGRAVE.marginTop +
       ENGRAVE.marginBottom,
     top: -ENGRAVE.marginTop,
   }
