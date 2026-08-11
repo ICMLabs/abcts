@@ -216,8 +216,16 @@ const separatorPath = (x1: number, y: number, x2: number, klass: string): string
   )
 }
 
+/**
+ * **abcjs's `roundNumber` IS `parseFloat(x.toFixed(2))`, AND THAT IS NOT
+ * `Math.round(x * 100) / 100`.** The two disagree on a decimal half: `toFixed` rounds the
+ * BINARY value correctly, where multiplying by 100 first introduces its own error and can
+ * tip the result the other way. 171.945 is one — `toFixed` gives 171.94 and the multiply
+ * gives 171.95 — and a beam's second edge is computed FROM the rounded first, so the
+ * 0.01 propagates.
+ */
 const round2 = (n: number): string => {
-  const r = Math.round(n * 100) / 100
+  const r = Number.parseFloat(n.toFixed(2))
   return Object.is(r, -0) ? '0' : String(r)
 }
 
@@ -712,9 +720,27 @@ const glyphDefs = new Map<GlyphName, string>()
           role === 'notehead' || role === 'grace' || attributes.includes('abcjs-chord-pos-')
             ? / class="[^"]*"/.exec(attributes)?.[0] ?? ''
             : ''
+        /**
+         * **A SCALED GLYPH IS CSS-SCALED, NOT DRAWN SMALL.** `drawRelativeElement` ends
+         * with `if (params.scalex !== 1) scaleExistingElem(…)`, which sets
+         * `style="transform:scale(sx,sy);transform-origin:Xpx Ypx;"` on the element it
+         * just made (`draw/relative.js:68-76`). That is the other half of the finding
+         * that abcjs never applies a glyph's scale to its PATH: the outline really is
+         * byte-identical to a full-size one, and a `style` attribute shrinks it.
+         *
+         * The origin is `params.x` and `renderer.calcY(params.pitch)` — the RAW pitch,
+         * before `getYCorr`, because `drawRelativeElement` computes that `y` at its top
+         * and `printSymbol` applies the correction on its own. And like the notehead's
+         * class it is a late `setAttribute`, so it serialises AFTER the `d`.
+         */
+        const styleAttr =
+          scale === undefined || scale === 1
+            ? ''
+            : ` style="transform:scale(${scale},${scale});transform-origin:` +
+              `${x * PX}px ${y * PX + oy}px;"`
         return (
           `<path${late ? attributes.replace(late, '') : attributes}${named ? ` data-name="${named}"` : ''} ` +
-          `d="M ${px} ${py}${ink.path.slice(head[0].length)}"${late}></path>`
+          `d="M ${px} ${py}${ink.path.slice(head[0].length)}"${styleAttr}${late}></path>`
         )
       }
     }
@@ -1383,6 +1409,8 @@ const glyphDefs = new Map<GlyphName, string>()
       // next measure (`helpers/classes.js:44-46`). So every beam is `m0 mm0` whatever bar
       // it is in — ours carried the running count.
       if (abcjs) classes.startMeasure()
+      /** The group already written — see the one-path-per-group rule below. */
+      let lastBeamGroup: number | undefined
       for (const beam of staff.beams) {
         /**
          * **A BEAM'S CLASS IS GENERATED, NOT LITERAL** —
@@ -1401,7 +1429,50 @@ const glyphDefs = new Map<GlyphName, string>()
               ),
             )}"`
           : ` class="${prefix}-beam"`
-        parts.push(lineToRect(TL(beam), beamClass, abcjs))
+        if (!abcjs) {
+          parts.push(lineToRect(TL(beam), beamClass, abcjs))
+          continue
+        }
+        /**
+         * **A BEAM IS A `<path>`, AND ONE PATH HOLDS EVERY BEAM OF ITS GROUP.** `drawBeam`
+         * concatenates each beam's four corners into a single `d` and writes one element
+         * (`draw/beam.js:7-44`), so a sixteenth run is ONE path with two subpaths. Ours was
+         * a `<polygon>` per beam.
+         *
+         * The separators are abcjs's own and they are IRREGULAR — a space before the first
+         * and third `L` and none before the second:
+         *
+         *     "M" + sx + " " + sy + " L" + ex + " " + ey + "L" + ex + " " + ey2 + " L" + sx + " " + sy2 + "z"
+         *
+         * and every coordinate is `roundNumber`d. The second edge is the first plus `dy`,
+         * the beam's thickness, which is why the corners run start-top → end-top →
+         * end-bottom → start-bottom.
+         */
+        if (beam.group !== undefined && beam.group === lastBeamGroup) continue
+        lastBeamGroup = beam.group
+        const members =
+          beam.group === undefined
+            ? [beam]
+            : staff.beams.filter((b) => b.group === beam.group)
+        const d = members
+          .map((b) => {
+            const t = TL(b)
+            // …and the SECOND edge is rounded off the ALREADY-ROUNDED first, because
+            // abcjs computes `startY2 = roundNumber(startY + dy)` from a `startY` that has
+            // been through `roundNumber` itself (`draw/beam.js:37-42`).
+            const r2 = (n: number): number => Number.parseFloat(n.toFixed(2))
+            // `dy` is SIGNED — `+STEP` for stems up, `-STEP` for stems down — so the path
+            // opens on the TOP edge of an up-stem beam and the BOTTOM edge of a down-stem
+            // one. See `PlacedLine.stemsUp`.
+            const dy = (b.stemsUp === false ? -1 : 1) * t.thickness
+            const half = (b.stemsUp === false ? 1 : -1) * (t.thickness / 2)
+            const [sx, ex] = [r2(t.x1), r2(t.x2)]
+            const [sy, ey] = [r2(t.y1 + half), r2(t.y2 + half)]
+            const [sy2, ey2] = [r2(sy + dy), r2(ey + dy)]
+            return `M${sx} ${sy} L${ex} ${ey}L${ex} ${ey2} L${sx} ${sy2}z`
+          })
+          .join('')
+        parts.push(`<path d="${d}" stroke="none" fill="currentColor"${beamClass}></path>`)
       }
       // A GRACE BEAM's own class is `beam-elem d0` — its `durationClass` is 0, since a
       // grace note has no sounding duration.

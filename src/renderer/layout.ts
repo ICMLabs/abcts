@@ -865,6 +865,13 @@ export interface PlacedLine {
   readonly role?: PartRole
   /** A beam's own duration, for its class — see `layoutBeam`. */
   readonly durationClass?: number
+  /**
+   * A beam's stem direction, which is the SIGN of abcjs's `dy` and therefore which edge
+   * its path starts on: `calcDy` returns `+STEP` for stems up and `-STEP` for stems down
+   * (`layout/beam.js:68-72`), and `drawBeam` writes `startY` then `startY + dy`. So an
+   * up-stem beam's `d` opens on its TOP edge and a down-stem beam's on its BOTTOM.
+   */
+  readonly stemsUp?: boolean
   /** A GRACE's stem — written after every grace head, not with the main note's rules. */
   readonly graceStem?: boolean
   /** Which grace of the group this belongs to, so a ledger follows its OWN head. */
@@ -6055,6 +6062,7 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
         // thousandth (`elements/beam-element.js:31-36`). `classes.generate('beam-elem ' +
         // durationClass)` then makes `abcjs-beam-elem abcjs-d0-125 …` (`draw/beam.js:24`).
         ...(firstDuration === undefined ? {} : { durationClass: firstDuration }),
+        stemsUp: up,
       })
       runStart = null
       runEnd = null
@@ -8219,7 +8227,15 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       const beams: PlacedLine[] = []
       // Beams last: they retarget stems already placed and need every member's final
       // position. A beam never crosses a barline, so it never crosses a system break.
-      for (const group of beamGroups.values()) beams.push(...layoutBeam(group, elements))
+      // **ONE `<path>` PER BEAM GROUP, NOT PER BEAM.** `drawBeam` concatenates every
+      // beam of the group into a single `d` and writes one element (`draw/beam.js:7-32`),
+      // so a sixteenth run is one path with two subpaths. The index is what lets the
+      // emitter join them again.
+      let beamGroup = -1
+      for (const group of beamGroups.values()) {
+        beamGroup += 1
+        for (const b of layoutBeam(group, elements)) beams.push({ ...b, group: beamGroup })
+      }
 
       // Curves are NOT resolved here: a slur or tie can span a system break, so it needs
       // every system's anchors, which only exist once the whole tune is packed. Filled
