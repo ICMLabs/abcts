@@ -33,7 +33,7 @@ reproduce goes in `Docs/ABCJS-DIFFERENCES.md` with its evidence and its slug goe
 | harvested geometry | `corpus-abcjs-ranked` | 0 of 174 | 0 of 174 |
 | pixel geometry | `pixel-parity` | 0 of 120 | 0 of 120 |
 | **DOM contract** | **`dom-contract`** | **1 of 25 — TWENTY-FOUR RATCHETED** | 11 of 25, fourteen |
-| **SVG bytes** | **`svg-bytes`** | **121 of 171**; best 46104, median 4743 | 164 of 171, best 5186, median 174 |
+| **SVG bytes** | **`svg-bytes`** | **118 of 171**; best 46104, median 4742 | 164 of 171, best 5186, median 174 |
 
 **Suite 1158 of 1158. NO REDS. `npx tsc --noEmit` clean. Working tree clean.**
 
@@ -472,7 +472,46 @@ staff-stacking arithmetic are where the remaining inline literals are.
      BELOW the music gap, where ours puts it in the top-text block ABOVE it. Exactly one
      `musicSpace`, and it is also why 6.7.0 charges that block a `staffSeparation`.
 
-   - **THE CLEF'S y IS `absoluteY − pitch * STEP`, TWO TERMS.** abcjs keeps one
+   - **THE STAFF FRAME — SPECIFIED, ATTEMPTED, AND LOST TO A `git checkout`. REDO IT.**
+     It is the LAST BIG LEVER: the clef family and every remaining glyph-y ULP.
+     abcjs has NO local frame — every coordinate is `calcY(pitch)` =
+     `staff.absoluteY − pitch * spacing.STEP`, TWO terms. Ours reaches the same point
+     through `(system.originY + marginTop) + staff.originY + (−step × STEP)`, four, and
+     lands one ULP away: `23.112000000000002` against `23.111999999999995`.
+     **THE FIX IS TO PUT OUR ZERO WHERE ABCJS'S IS** — pitch 0, the first ledger line below
+     the staff — so the local y IS `−pitch × STEP`. It is a uniform translation, so
+     `originY + stepToY(s)` is unchanged and NO GEOMETRY MOVES; only the arithmetic does.
+     **THE ATTEMPT TOOK BOTH GEOMETRY GATES FROM 17 of 120 TO 1, AND 19 of 174 TO 1**, so
+     the recipe below is nearly complete — one contributor was still unfound when it was
+     lost. The full edit list, measured:
+
+     1. `stepToY(step) = -(step + PITCH_ORIGIN) * ENGRAVE.spacePerStep`.
+     2. The four `STAFF_HALF_HEIGHT` sites, which assumed zero was the MIDDLE LINE:
+        `previousBottomLine = originY + stepToY(-4)`;
+        `topLineOffset = staves[0].originY + stepToY(4)`;
+        `bottomLineOffset = last.originY + stepToY(-4)`;
+        and the clamp `Math.max(stacked, previousBottomLine + intraStaffSep - stepToY(4))`.
+     3. The above-lane ladder: `topPitch = -inkTop / spacePerStep` and
+        `yOfPitch = (p) => -p * spacePerStep` — both were `PITCH_ORIGIN − …`.
+     4. `heightPitch`'s `pitchOfY` and `layoutTuplets`' `pitchOf` → `-y / spacePerStep`.
+     5. The two decoration-stem y→STEP conversions → `-y / spacePerStep - PITCH_ORIGIN`.
+     6. **EVERY `y < 0` / `y > 0` TEST IS AN ABOVE-OR-BELOW TEST AGAINST THE MIDDLE LINE**,
+        and there are six: the dynamics' `sawDynamicAbove` split, the three
+        `role === 'dynamic' && y < 0` filters in `aboveLadder`, the volta `flag()` helper,
+        and `line.y1 > 0` in the extent. All become `… stepToY(0)`.
+
+     **WHAT WAS STILL WRONG when it was lost**: `ave-verum-corpus` staff 2 gained 9.386px
+     more than the uniform 23.25. Traced to staff 1's `extent.bottom` shifting by only
+     13.864 — a TEXT with a declared `reserve` that did NOT move with the frame, worth
+     17.136 in the new frame, which only became the binding contributor once the stem's
+     own reserve moved. Find it by logging `t.reserve` in `verticalExtent`'s text branch;
+     the two survivors were `ave-verum-corpus` and `visual-wrap-04-wrap-quartet`.
+
+     **AND THE LESSON THAT COST IT**: `git checkout -- <file>` DISCARDS the working tree.
+     The workspace rule says never to run it here and it is not about other agents — it is
+     about this. Twenty minutes of a measured, nearly-finished change went with one
+     command. **COMMIT A LARGE REFACTOR IN PIECES AS IT GOES GREEN**, and use
+     `git stash`/`git diff` to inspect, never `checkout`. abcjs keeps one
      `staff.absoluteY` — `lineStart + STEP * staff.top` — and every glyph on the staff is
      `calcY(pitch)` off it (`draw/staff-group.js:22-26`, `renderer.js`). Ours reaches the
      same point through `(system.originY + marginTop) + staff.originY + localY`, four terms,
@@ -649,7 +688,7 @@ staff-stacking arithmetic are where the remaining inline literals are.
 working tree clean
 npx tsc --noEmit    clean
 npx vitest run      1158 / 1158
-svg bytes           121 of 171   best 46104, median 4743
+svg bytes           118 of 171   best 46104, median 4742
                     PASSING ratchet: 7 slugs
 DOM contract        1 of 25       PASSING ratchet: 24 slugs
 heights             148 exact / 21 ULP-only / 2 structural
