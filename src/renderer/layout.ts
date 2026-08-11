@@ -6200,9 +6200,34 @@ function layoutTuplets(
     const g = tupletGroup
     lines.push({ group: g, x1: first.left, y1: yStart, x2: first.left, y2: yStart - hook, thickness })
     lines.push({ group: g, x1: last.right, y1: yEnd, x2: last.right, y2: yEnd - hook, thickness })
-    // The rule runs from one end note's pitch to the other's, so it slopes with them.
-    lines.push({ group: g, x1: first.left, y1: yStart, x2: centre - gap, y2: y, thickness })
-    lines.push({ group: g, x1: centre + gap, y1: y, x2: last.right, y2: yEnd, thickness })
+    /**
+     * **THE BROKEN ENDS SIT ON THE SLOPE, NOT ON THE NUMBER'S OWN y.** `drawBracket`
+     * computes `slope = (y2 - y1) / (x2 - x1)` and then
+     * `leftEndY = y1 + (leftEndX - x1) * slope` for each inner end (`draw/triplet.js:35-41`),
+     * so a sloping bracket's two segments are COLLINEAR with the line they came from. Ours
+     * ran both inner ends to the number's y, which is the midpoint of the two — level when
+     * the bracket is level, and up to a couple of tenths out when it is not: measured on
+     * `synth-flattener-27`, 124.27 twice where abcjs writes 124.12 and 124.41.
+     */
+    const span = last.right - first.left
+    const slope = span === 0 ? 0 : (yEnd - yStart) / span
+    const atX = (bx: number): number => yStart + (bx - first.left) * slope
+    lines.push({
+      group: g,
+      x1: first.left,
+      y1: yStart,
+      x2: centre - gap,
+      y2: atX(centre - gap),
+      thickness,
+    })
+    lines.push({
+      group: g,
+      x1: centre + gap,
+      y1: atX(centre + gap),
+      x2: last.right,
+      y2: yEnd,
+      thickness,
+    })
   }
 
   return { lines, texts, reservesAbove, reserves }
@@ -8354,10 +8379,25 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         const size = 17 / UNIT_PX
         // …CENTRED ON THE STAFF'S MIDDLE LINE, which is `stepToY(0)` and no longer y = 0:
         // the staff's frame is abcjs's, zeroed on pitch 0. See `stepToY`.
-        const centre =
-          stepToY(0) +
-          (pos - (members.length - 1) / 2) * size * ENGRAVE.lineSkipFactor +
-          size * 0.35
+        /**
+         * **`headerPosition` IS A PITCH, AND abcjs SPELLS IT OUT**:
+         *
+         *     headerPosition = 6 + baselineToCenter(...) / STEP
+         *     baselineToCenter = height * 0.5 + (total - index - 2) * fontSize
+         *
+         * (`abstract-engraver.js:154`, `helpers/get-text-size.js:53-59`) — the MEASURED
+         * height of the label, halved, plus one whole font size per voice BELOW this one on
+         * the staff, less two. Ours centred on the middle line and stepped by a line-skip
+         * from the group's own midpoint, which agrees on a staff of one voice and nowhere
+         * else, and sat 6.01px low even there.
+         *
+         * `calcY(pitch)` is `stepToY(pitch - 6)`, so the 6 cancels and only the ratio is
+         * left.
+         */
+        const centre = stepToY(
+          (goldenTextHeight(size) * 0.5 + (members.length - pos - 2) * size) /
+            ENGRAVE.spacePerStep,
+        )
         nameElements.push({
           type: 'voiceName',
           x: ENGRAVE.marginX,
@@ -8366,7 +8406,24 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           glyphs: [],
           lines: [],
           texts: [
-            { text: labelText, x: ENGRAVE.marginX, y: centre, size, bold: true, italic: false },
+            {
+              text: labelText,
+              // `renderText`'s element, in `voicefont`, and NOT wrapped in a group:
+              // `drawVoice` passes `alreadyInGroup = true` (`draw/voice.js:19`).
+              font: 'voicefont',
+              dataName: 'voice-name',
+              x: ENGRAVE.marginX,
+              y: centre,
+              // **AND IT RESERVES NOTHING.** The voice name is not an `AbsoluteElement` at
+              // all — `drawVoice` draws it beside the children rather than among them — so
+              // it never enters `staff.top`. Its INK does reach above the middle line, and
+              // letting the extent see that pushed the second staff of `ave-verum-corpus`
+              // 2.98px down the moment `headerPosition` moved it.
+              reserve: [centre, centre],
+              size,
+              bold: true,
+              italic: false,
+            },
           ],
         })
       }

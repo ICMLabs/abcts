@@ -14,7 +14,7 @@ system 0 width=788.000 originY=0.000
       text  350.000,-97.302 size=27.000 "Brother John - improved"
       text  685.000,-64.742 size=19.000 italic "Traditional"
     voiceName x=15.000 w=0.000
-      text  15.000,-17.300 size=17.000 bold "Soprano"
+      text  15.000,-15.670 size=17.000 bold "Soprano"
     clef x=98.157 w=24.051
       glyph gClef 103.157,-15.500
     keySignature x=132.208 w=6.750
@@ -120,7 +120,7 @@ system 0 width=788.000 originY=0.000
     staffline 98.157,-31.000 -> 685.000,-31.000 t=0.700
     staffline 98.157,-38.750 -> 685.000,-38.750 t=0.700
     voiceName x=15.000 w=0.000
-      text  15.000,-17.300 size=17.000 bold "Contralto"
+      text  15.000,-15.670 size=17.000 bold "Contralto"
     clef x=98.157 w=24.051
       glyph gClef 103.157,-15.500
     keySignature x=132.208 w=6.750
@@ -195,7 +195,7 @@ system 1 width=700.000 originY=250.010
     staffline 39.563,-31.000 -> 685.000,-31.000 t=0.700
     staffline 39.563,-38.750 -> 685.000,-38.750 t=0.700
     voiceName x=15.000 w=0.000
-      text  15.000,-17.300 size=17.000 bold "S"
+      text  15.000,-15.670 size=17.000 bold "S"
     clef x=39.563 w=24.051
       glyph gClef 44.563,-15.500
     keySignature x=73.614 w=6.750
@@ -245,7 +245,7 @@ system 1 width=700.000 originY=250.010
     beam   90.364,1.938 -> 158.319,5.813 t=3.875
     beam   254.675,1.938 -> 322.630,5.813 t=3.875
     voiceName x=15.000 w=0.000
-      text  15.000,-17.300 size=17.000 bold "C"
+      text  15.000,-15.670 size=17.000 bold "C"
     clef x=39.563 w=24.051
       glyph gClef 44.563,-15.500
     keySignature x=73.614 w=6.750

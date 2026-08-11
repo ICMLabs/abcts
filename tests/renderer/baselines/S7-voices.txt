@@ -1830,7 +1830,7 @@ system 0 width=861.500 originY=0.000
       text  350.000,-127.182 size=27.000 "S7-6 Organ Four Voice"
       text  685.000,-94.622 size=19.000 italic "Johann Nicolaus Hanff"
     voiceName x=15.000 w=0.000
-      text  15.000,-17.300 size=17.000 bold "Rückpos"
+      text  15.000,-15.670 size=17.000 bold "Rückpos"
     clef x=99.172 w=24.051
       glyph gClef 104.172,-15.500
     timeSignature x=133.223 w=13.038
@@ -1906,7 +1906,7 @@ system 0 width=861.500 originY=0.000
     tie  188.594,-12.400 -> 223.835,-12.400 bulge=-6.343
     tie  188.594,4.650 -> 223.835,4.650 bulge=6.343
     voiceName x=15.000 w=0.000
-      text  15.000,-26.650 size=17.000 bold "Organo"
+      text  15.000,-32.670 size=17.000 bold "Organo"
     clef x=99.172 w=24.051
       glyph gClef 104.172,-15.500
     timeSignature x=133.223 w=13.038

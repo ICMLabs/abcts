@@ -11,7 +11,7 @@ system 0 width=409.164 originY=0.000
     title x=0.000 w=0.000
       text  350.000,-52.310 size=27.000 "Reorder Test"
     voiceName x=15.000 w=0.000
-      text  15.000,-17.300 size=17.000 bold "V2-bottom"
+      text  15.000,-15.670 size=17.000 bold "V2-bottom"
     clef x=105.719 w=25.153
       glyph fClef 110.719,-31.000
     timeSignature x=140.872 w=11.795
@@ -42,7 +42,7 @@ system 0 width=409.164 originY=0.000
     staffline 105.719,-31.000 -> 333.373,-31.000 t=0.700
     staffline 105.719,-38.750 -> 333.373,-38.750 t=0.700
     voiceName x=15.000 w=0.000
-      text  15.000,-17.300 size=17.000 bold "V1-top"
+      text  15.000,-15.670 size=17.000 bold "V1-top"
     clef x=105.719 w=24.051
       glyph gClef 110.719,-15.500
     timeSignature x=140.872 w=11.795

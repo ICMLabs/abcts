@@ -1325,7 +1325,15 @@ const glyphDefs = new Map<GlyphName, string>()
         let openedAt = -1
         /** The class counters this element advances — spent once its children are out. */
         let advance = (): void => {}
-        if (abcjs) {
+        /**
+         * **A VOICE NAME IS NOT AN ELEMENT AND WEARS NO GROUP.** `drawVoice` renders it
+         * before it walks `params.children` at all, with `alreadyInGroup = true`
+         * (`draw/voice.js:17-20`) — so abcjs writes a bare `<text data-name="voice-name">`
+         * as a SIBLING of the staff's elements. Ours made it an element like any other and
+         * wrapped it in `<g fill stroke data-name>`.
+         */
+        const bare = el.type === 'voiceName'
+        if (abcjs && !bare) {
           const name = ABCJS_ELEMENT_NAMES[el.type] ?? el.type
           // `if (child.type !== 'staff-extra' && !isInMeasure()) startMeasure()`
           // (`draw/voice.js:31-34`) — a prefix element does not open a measure.
@@ -1659,7 +1667,9 @@ const glyphDefs = new Map<GlyphName, string>()
         }
         advance()
         if (abcjs) {
-          if (openedAt >= 0 && parts.length === openedAt + 1) {
+          if (bare) {
+            // nothing to close
+          } else if (openedAt >= 0 && parts.length === openedAt + 1) {
             parts.length = openedAt
             // The `data-index` it took is given back too: `Selectables.add` never ran.
             if (el.type === 'note' || el.type === 'rest') selectableIndex -= 1
