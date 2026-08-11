@@ -403,7 +403,26 @@ staff-stacking arithmetic are where the remaining inline literals are.
    ```
 
    The families standing now, biggest first:
-   - **THE ROOT'S `height`, 15 rows, AND THE CAUSE IS NAMED.** 55 of 171 still differ by
+   - **THE ROOT'S `height`, 15 rows, AND THE CAUSE IS MEASURED TO THE BIT.**
+     `synth-flattener-14` gives `149.07999999999998` against abcjs's `149.08`, and the
+     dirt is ONE term: with the staff at a clean `originY = 88.08` and the margins a clean
+     30, `verticalExtent`'s `bottom` comes out **`30.999999999999986` where abcjs's is
+     exactly `31`** — its `staff.bottom` is the PITCH `−2` and `moveY(spacing.STEP, -bottom)`
+     multiplies once. **Ours accumulates the below LANES in lengths.** Simple tunes are all
+     clean (a plain line, a chord above or below, a lyric, a dynamic, a tempo, a slur — every
+     one of them exact), so it is a COMBINATION that loses it, and the fix is architectural:
+     `verticalExtent` must carry the staff's extent in PITCH and convert once, which is what
+     `staff.top`/`staff.bottom` are in abcjs.
+     **AND THE OBVIOUS SHORTCUT IS WRONG, MEASURED**: re-summing the system height as
+     `(Σ pitch spans) × STEP` took `pixel-parity` to 1 of 120 and the harvested table to
+     2 of 174, because `calcHeight` reads a `staff.top` that ALREADY carries the
+     inter-staff separation while our clamp applies it at placement time. Port the unit,
+     not the re-association.
+     **The margin ORDER is already ported** — `draw()` opens with `moveY(padding.top)` so
+     everything lands on top of it and `setPaperSize` adds `padding.bottom` last; JS `+`
+     is left to right and writing the margins at the end is a different number.
+
+   - **(the original note)** 55 of 171 still differ by
      ULP (`{exact: 114, ulpOnly: 55, structural: 2}`) — in BOTH directions, which is what
      says it is an accumulation ORDER and not a bias. **abcjs SUMS IN PITCH AND MULTIPLIES
      ONCE.** `calcHeight` is `Σ (staff.top − staff.bottom)` over the group's voices — a
