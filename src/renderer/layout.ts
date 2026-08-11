@@ -1130,6 +1130,17 @@ export interface PlacedCurve {
   readonly midThickness: number
   /** A tie joins one pitch to itself; a slur spans a phrase. They differ in shape rules. */
   readonly kind: 'tie' | 'slur'
+  /**
+   * **A CURVE'S CLASS NAMES THE NOTES IT JOINS** —
+   * `abcjs-start-m0-n0 abcjs-end-m0-n3`, built from
+   * `anchor.parent.counters.measure`/`.note` (`draw/tie.js:6-20`), the counters each
+   * anchor's own GROUP was named with. These are the anchors' element indices on the
+   * staff; the emitter is where the counters live. Absent when a system break split the
+   * curve and one end has no anchor on this line — abcjs writes `abcjs-start-edge` /
+   * `abcjs-end-edge` for exactly that.
+   */
+  readonly startElement?: number
+  readonly endElement?: number
 }
 
 export interface LayoutStaff {
@@ -4991,6 +5002,8 @@ function buildCurve(
   /** The voice's index on its staff, or −1 when it has that staff to itself. */
   voicePos: number,
   strict: boolean,
+  /** Which elements the two ends really attach to — absent on a half split by a break. */
+  edges?: { start?: number; end?: number },
 ): PlacedCurve {
   const above = curveIsAbove(from, to, voicePos)
   const direction = above ? -1 : 1
@@ -5035,6 +5048,8 @@ function buildCurve(
     // no such notion anyway — its arc comes to a point at both ends. Finding 90's class.
     midThickness: kind === 'tie' ? LINE_WEIGHTS.tieMidpoint : LINE_WEIGHTS.slurMidpoint,
     kind,
+    ...(edges?.start === undefined ? {} : { startElement: edges.start }),
+    ...(edges?.end === undefined ? {} : { endElement: edges.end }),
   }
 }
 
@@ -5098,7 +5113,9 @@ function layoutCurves(
    */
   const emit = (from: NoteAnchor, to: NoteAnchor, kind: 'tie' | 'slur'): void => {
     if (from.system === to.system) {
-      curves[from.system]?.push(buildCurve(from, to, kind, voicePos, strict))
+      curves[from.system]?.push(
+        buildCurve(from, to, kind, voicePos, strict, { start: from.element, end: to.element }),
+      )
       return
     }
     const start = bounds[from.system]
@@ -5109,7 +5126,9 @@ function layoutCurves(
     // system would aim at a pitch the reader cannot see, and the two halves would tilt
     // in unrelated directions.
     curves[from.system]?.push(
-      buildCurve(from, { ...from, left: start.right, right: start.right }, kind, voicePos, strict),
+      buildCurve(from, { ...from, left: start.right, right: start.right }, kind, voicePos, strict, {
+        start: from.element,
+      }),
     )
     // The continuation resumes after the new system's clef and key — starting at the
     // system's left edge drew it straight through the clef, where it was invisible.
@@ -5122,7 +5141,9 @@ function layoutCurves(
     const resume = Math.max(end.left, to.left - ENGRAVE.curveContinuation)
     if (to.left - resume >= ENGRAVE.curveEndGap * 2) {
       curves[to.system]?.push(
-        buildCurve({ ...to, left: resume, right: resume }, to, kind, voicePos, strict),
+        buildCurve({ ...to, left: resume, right: resume }, to, kind, voicePos, strict, {
+          end: to.element,
+        }),
       )
     }
   }

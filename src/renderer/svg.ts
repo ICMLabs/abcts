@@ -447,6 +447,10 @@ class Classes {
    * count of `"bar"` markers pushed before it, which is its measure index within the LINE
    * minus one, since the ending is added ahead of its own barline.
    */
+  /** abcjs's `getCurrent()` — the counters an element's group was named with. */
+  current(): { measure: number; note: number } {
+    return { measure: this.measure ?? 0, note: this.note ?? 0 }
+  }
   generateAt(c: string, measure: number): string {
     const saved = this.measure
     this.measure = measure
@@ -989,7 +993,13 @@ const glyphDefs = new Map<GlyphName, string>()
        * and flushed with the spanners below.
        */
       const dynamics: PlacedGlyph[] = []
-      staff.elements.forEach((el) => {
+      /**
+       * The counters each element's GROUP was named with, by index — what abcjs stores as
+       * `params.counters = classes.getCurrent()` inside `drawAbsolute`
+       * (`draw/absolute.js:33`). A tie's and a slur's class quote them for both anchors.
+       */
+      const counters = new Map<number, { measure: number; note: number }>()
+      staff.elements.forEach((el, elIndex) => {
         // Already written above, ahead of the braces. See the hoist.
         if (abcjs && el.blockHeight !== undefined) return
         // abcjs wraps each element in a group carrying its kind and index, which is what
@@ -1013,6 +1023,7 @@ const glyphDefs = new Map<GlyphName, string>()
             for (const p of el.abcjsPitches ?? []) klass += ` p${p}`
           }
           gcls = classes.generate(klass)
+          counters.set(elIndex, classes.current())
           /**
            * abcjs's own attribute order on an element group: `fill`, `stroke`, the class
            * when there is one, then `data-name`.
@@ -1491,11 +1502,34 @@ const glyphDefs = new Map<GlyphName, string>()
           )
         }
       }
+      /**
+       * **A SLUR AND A TIE NAME THE NOTES THEY JOIN.** `drawTie` builds
+       * `abcjs-start-m{measure}-n{note} abcjs-end-m{measure}-n{note}` off each anchor's
+       * `parent.counters` — an unanchored end is `abcjs-start-edge` / `abcjs-end-edge` —
+       * and `drawArc` appends `slur` and then `tie` or `legato` before generating
+       * (`draw/tie.js:6-20`, `:83-87`). `data-name` is `tie` or `slur`. Ours wrote a bare
+       * `abcjs-tie`, which is a class abcjs only ever writes with the rest of that string.
+       */
       for (const curve of staff.curves) {
+        const end = (which: 'start' | 'end', index: number | undefined): string => {
+          const c = index === undefined ? undefined : counters.get(index)
+          return c === undefined
+            ? `abcjs-${which}-edge`
+            : `abcjs-${which}-m${c.measure}-n${c.note}`
+        }
+        const klass =
+          `${end('start', curve.startElement)} ${end('end', curve.endElement)}` +
+          ` slur ${curve.kind === 'tie' ? 'tie' : 'legato'}`
+        // Generated at the CLOSING note's measure: the curve is `addOther`'d when it
+        // closes, so the count of `"bar"` markers ahead of it in `otherchildren` is that
+        // note's own measure index within the line.
+        const at = curve.endElement === undefined ? 0 : (counters.get(curve.endElement)?.measure ?? 0)
         parts.push(
           curveToPath(
             TC(curve),
-            abcjs ? ` class="abcjs-${curve.kind}"` : ` class="${prefix}-${curve.kind}"`,
+            abcjs
+              ? `${attrIfAny(classes.generateAt(klass, at))} data-name="${curve.kind}"`
+              : ` class="${prefix}-${curve.kind}"`,
             strict,
             PX,
           ),
