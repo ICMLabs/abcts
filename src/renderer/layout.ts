@@ -582,7 +582,11 @@ export const ENGRAVE = {
    * The other heads differ in the third decimal (half 2.0986, whole 2.0895, dbl 2.1019);
    * one figure covers them to 0.02px.
    */
-  noteheadHalfHeight: ABCJS_PITCH.noteheadHeight / 4,
+  // **A LENGTH, NOT A PITCH** — half of `symbolHeightInPitches("noteheads.quarter")`
+  // CONVERTED, which is why every caller either adds it to a y or divides it back by
+  // `spacePerStep` to get steps. Written `pitch / 4` it was numerically right and
+  // dimensionally silent, and the unit knob is what made the difference speak.
+  noteheadHalfHeight: spacesOfPitch(ABCJS_PITCH.noteheadHeight) / 2,
   voltaLane: ABCJS_PITCH.voltaLane,
   /**
    * What an ending lane costs when the staff ALSO has a chord lane — a flat 2 pitch with
@@ -1612,7 +1616,11 @@ function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null 
   // `symbolHeightInPitches` reads `glyphs[symbol].h` (`glyphs.js:161-164`), which for the
   // G clef is 57.057px against a derived ink box of 57.09 — 0.033px, a two-hundredth of a
   // staff space, and the SYSTEMIC `oy` that every fixture in the harvested corpus carried.
-  const clefTop = clefBottom + 2 * (glyphsFor(strict).get(name)?.declaredHeight ?? 0)
+  // `symbolHeightInPitches` is the published `h / STEP` — a PITCH count — and
+  // `declaredHeight` is the same figure as a LENGTH. `/ spacePerStep` is that conversion;
+  // it was written `2 *`, which is the same number only while a staff space is 1.
+  const clefTop =
+    clefBottom + (glyphsFor(strict).get(name)?.declaredHeight ?? 0) / ENGRAVE.spacePerStep
   const glyphs: PlacedGlyph[] = [
     {
       ...glyphAt(name, x + ENGRAVE.clefIndent, step),
@@ -1852,10 +1860,14 @@ function keySignatureShift(clef: Clef): number {
 function keyAccidentalReserve(name: GlyphName, step: number, strict: boolean): [number, number] {
   const glyph = glyphsFor(strict).get(name) ?? bravuraDeclared(name)
   const fudge = ABCJS_KEY_ACCIDENTAL_FUDGE_PITCH[name] ?? 0
-  // `symbolHeightInPitches` is the PUBLISHED `h / STEP`, and ours is in staff spaces —
-  // twice that. The published figure, not the ink box: a sharp declares 20.15 against an
-  // ink box of 20.19, which is the extra 0.04px a sharp key signature was adding.
-  return [stepToY(step + 2 * glyph.declaredHeight + fudge), stepToY(step + fudge)]
+  // `symbolHeightInPitches` is the PUBLISHED `h / STEP` — a PITCH count — where
+  // `declaredHeight` is a LENGTH, so `/ spacePerStep` is the conversion. The published
+  // figure, not the ink box: a sharp declares 20.15 against an ink box of 20.19, which is
+  // the extra 0.04px a sharp key signature was adding.
+  return [
+    stepToY(step + glyph.declaredHeight / ENGRAVE.spacePerStep + fudge),
+    stepToY(step + fudge),
+  ]
 }
 
 function layoutKeySignature(
@@ -2042,7 +2054,14 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
     // Real per-character metrics, like everything else that measures text. This kept the
     // flat half-em-per-character estimate after `textWidth` replaced it everywhere else —
     // a stale ponytail that was still running, not just still written.
-    cursor += textWidth(tempo.text, ENGRAVE.tempoTextSize, 'serifBold') + 1
+    //
+    // **AND THE GAP AFTER IT IS ONE AVERAGE CHARACTER, NOT A CONSTANT** — abcjs takes
+    // `charWidth = preWidth / preString.length` and advances `preWidth + charWidth`
+    // ("Just get some average number to increase the spacing", `draw/tempo.js:22-23`).
+    // Ours added a flat 1 staff space, which is a length nobody chose and which the unit
+    // knob is what exposed.
+    const preWidth = textWidth(tempo.text, ENGRAVE.tempoTextSize, 'serifBold')
+    cursor += preWidth + preWidth / Math.max(1, tempo.text.length)
   }
 
   if (tempo.bpm !== null) {

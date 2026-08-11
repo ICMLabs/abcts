@@ -67,10 +67,10 @@ system 0 width=90.323 originY=0.000
     clef x=1.935 w=3.103
       glyph gClef 2.581,1.000
     tempo x=6.329 w=0.000
-      glyph noteheadBlack 20.238,-7.752 scale=0.750
-      line  21.149,-7.877 -> 21.149,-9.627 t=0.077
+      glyph noteheadBlack 20.529,-7.752 scale=0.750
+      line  21.440,-7.877 -> 21.440,-9.627 t=0.077
       text  6.329,-7.413 size=2.581 bold "Dolcemente"
-      text  21.833,-7.413 size=2.581 "= 60"
+      text  22.124,-7.413 size=2.581 "= 60"
     note@-6 x=6.329 w=5.474
       glyph noteheadBlack 6.329,3.000
       line  6.071,3.000 -> 7.853,3.000 t=0.090

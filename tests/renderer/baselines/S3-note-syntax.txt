@@ -1906,10 +1906,10 @@ system 0 width=90.551 originY=0.000
       glyph timeSig3 8.623,-1.000
       glyph timeSig4 8.490,1.000
     tempo x=11.303 w=0.000
-      glyph noteheadBlack 20.478,-7.752 scale=0.750
-      line  21.389,-7.877 -> 21.389,-9.627 t=0.077
+      glyph noteheadBlack 20.646,-7.752 scale=0.750
+      line  21.557,-7.877 -> 21.557,-9.627 t=0.077
       text  11.303,-7.413 size=2.581 bold "Allegro"
-      text  22.073,-7.413 size=2.581 "= 120"
+      text  22.241,-7.413 size=2.581 "= 120"
     note@-6 x=13.682 w=4.741
       glyph flag8thUp 14.870,-0.500
       glyph augmentationDot 15.335,2.500
