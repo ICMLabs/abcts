@@ -9465,7 +9465,11 @@ function appendFreeText(
     if (block.align === 'left') y += textSize / 2
     block.lines.forEach((line, index) => {
       texts.push({
-        text: line,
+        // **A LEADING BLANK LINE IS A NON-BREAKING SPACE** — `renderText` runs
+        // `text.replace(/^\n/, "\xA0\n")` on every row it draws (`draw/text.js:46`), so
+        // `%%begintext / %% / %%endtext` writes `&nbsp;` where an empty string would
+        // collapse. The character is what the row's own height then measures.
+        text: index === 0 && line === '' ? '\u00A0' : line,
         role: 'title',
         dataName: 'free-text',
         // `%%text` sits at `paddingLeft` with `anchor: "start"` and `%%center` at

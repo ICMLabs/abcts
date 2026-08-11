@@ -159,7 +159,13 @@ const escapeAttr = (s: string): string =>
  * will put in a page. `&` first, or it would double-escape the entities added after it.
  */
 const escapeText = (s: string): string =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    // A browser's XML serializer writes U+00A0 as the ENTITY, not as the raw byte — which
+    // is how abcjs's `text.replace(/^\n/, "\xA0\n")` reaches the file as `&nbsp;`.
+    .replace(/ /g, '&nbsp;')
 
 /**
  * `%%jazzchords`' markup for one chord — `svg.js:198-211`, verbatim.
