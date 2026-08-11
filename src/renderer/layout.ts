@@ -4025,9 +4025,18 @@ function decorationGlyphs(
         continue
       }
       const onStem = decorationX(headX, headWidth, glyph, glyphsFor(strict).width(glyph))
+      // **A STEP COUNT, NOT A LENGTH.** `tip` is fed to `stepToY`, and it was adding
+      // `ENGRAVE.stemLength` — which is `spacesOfPitch(7)`, a LENGTH — so the two units
+      // were mixed and agreed numerically only while a staff space was the unit. The
+      // figure is kept exactly as it was (3.5 steps, half abcjs's 7-pitch stem) because
+      // there is no oracle for it: **abcjs draws a tremolo as stacked `flags.ugrace`
+      // glyphs, not as a `tremoloN`** — measured on `!///!C !///!c`, whose golden has
+      // three `flags.ugrace` and no tremolo glyph at all. Ours is a divergence in SHAPE
+      // and belongs in `ABCJS-DIFFERENCES.md`, not in a unit pass.
+      const tremoloStemSteps = ABCJS_PITCH.stemLength / 2
       const tip = stemUp
-        ? Math.max(topStep, 4) + ENGRAVE.stemLength
-        : Math.min(bottomStep, -4) - ENGRAVE.stemLength
+        ? Math.max(topStep, 4) + tremoloStemSteps
+        : Math.min(bottomStep, -4) - tremoloStemSteps
       out.push({
         name: glyph,
         x: onStem,
