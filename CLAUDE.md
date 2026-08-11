@@ -1029,6 +1029,19 @@ absent for much of what they cover. Golden sets exist in `../abcMusicKit` (v1),
 `../abcMusicKit2` (v2) and `../abcMusicKitCpp` — abcm2ps and abc2svg observed through
 their OUTPUT only, never their source (both are GPL; see the clean-room rule).
 
+> 🧾 **AND WHAT WE DO ABCJS'S WAY ON PURPOSE IS NOW A LEDGER** (Lance, 2026-08-11:
+> *"as you decide to use abcjs non-optimal solution — document it for future refactor."*).
+> `Docs/ABCJS-DEBT.md` holds every place abcts is deliberately WORSE-SHAPED than it needs to
+> be because byte parity demands abcjs's arithmetic, order or data model: `Math.sqrt` where
+> `hypot` is better, a dynamic drawn as four kerned letters where SMuFL has one glyph, the
+> extent carrying TWO numbers for one edge, a step-1 ledger loop that discards half its
+> visits, `otherchildren` approximated by sorting two buckets. **The marker is
+> `abcjs-debt:`** — `grep -rn "abcjs-debt:" src` is the index and the file is the reasoning.
+> It is a SEPARATE class from `ponytail:`, which marks OUR OWN shortcuts: a `ponytail:` is a
+> corner we cut, an `abcjs-debt:` is a corner abcjs cut that we are obliged to cut with it.
+> Each entry names the gate that goes red if it is "fixed", so the cost is knowable before
+> anyone reaches for it — and **nothing there may be touched while `svg-bytes` is open.**
+
 `Docs/ABCJS-DIFFERENCES.md` is the verified list of abcjs bugs and gaps that strict
 reproduces and the other modes fix. It is public-facing — every entry must cite how it was
 checked, and anything read from abcjs's source rather than measured from its output says

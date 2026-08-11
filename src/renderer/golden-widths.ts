@@ -1,3 +1,4 @@
+// abcjs-debt: §2.6 — the GOLDEN GENERATOR's metrics, not the font's. Docs/ABCJS-DEBT.md
 // GENERATED from `../abcMusicKit/Tools/abcjs-debug/dump-elements-char-widths.js`.
 // Regenerate: node scripts/gen-golden-widths.mjs — DO NOT EDIT.
 //

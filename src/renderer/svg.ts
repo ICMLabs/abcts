@@ -243,6 +243,8 @@ const separatorPath = (x1: number, y: number, x2: number, klass: string): string
  * gives 171.95 — and a beam's second edge is computed FROM the rounded first, so the
  * 0.01 propagates.
  */
+// abcjs-debt: §1.3 — string formatting in a hot path, because `toFixed` and
+// `Math.round(x*100)/100` disagree on a decimal half. Docs/ABCJS-DEBT.md
 const round2 = (n: number): string => {
   const r = Number.parseFloat(n.toFixed(2))
   return Object.is(r, -0) ? '0' : String(r)
@@ -392,6 +394,7 @@ function curveToPath(curve: PlacedCurve, attr: string, strict: boolean, k = 1): 
   // Bravura constants are not wrong numbers — they are the wrong MODEL, and strict now
   // reads none of them.
   if (strict) {
+    // abcjs-debt: §1.2 — rounded twice, on purpose. Docs/ABCJS-DEBT.md
     /**
      * **THE ENDPOINTS ARE ROUNDED BEFORE THE ARC IS BUILT, NOT AFTER.** `drawArc` opens
      * `x1 = roundNumber(x1 + 6); x2 = roundNumber(x2 + 4)` and `y1 = roundNumber(calcY(…))`
@@ -404,6 +407,7 @@ function curveToPath(curve: PlacedCurve, attr: string, strict: boolean, k = 1): 
     const [x1, y1, x2, y2] = [r(curve.x1), r(curve.y1), r(curve.x2), r(curve.y2)]
     const dx = x2 - x1
     const dy = y2 - y1
+    // abcjs-debt: §1.1 — `hypot` is better and therefore wrong. Docs/ABCJS-DEBT.md
     // **`Math.sqrt(dx * dx + dy * dy)`, NOT `Math.hypot`.** `hypot` is the more accurate
     // of the two — it scales to avoid overflow — and that is precisely why it is wrong
     // here: every control point is derived from `norm`, so one ULP of difference lands on
@@ -1097,6 +1101,7 @@ const glyphDefs = new Map<GlyphName, string>()
         const h = (yy: number): string => `M ${x1} ${yy} l ${x2 - x1} 0 l 0 1  l ${x1 - x2} 0  z `
         const v = (xx: number, from: number, to: number): string =>
           `M ${xx} ${from} l 0 ${to - from} l 1 0  l 0 ${from - to}  z `
+        // abcjs-debt: §3 — the doubled spaces are deliberate. Docs/ABCJS-DEBT.md
         // `lines.join(" ")` over four pieces that each already END with a space — hence
         // the doubled space at every joint (`svg.js:130-140`).
         const d = [h(y1), h(y2), v(x2, y1, y2), v(x1, y2, y1)].join(' ')
@@ -1881,6 +1886,9 @@ const glyphDefs = new Map<GlyphName, string>()
        * all four attributes itself. `PlacedGlyph.group` is what tells them apart.
        */
       /**
+       * abcjs-debt: §2.3 — two buckets merged by x, an APPROXIMATION of abcjs's one
+       * ordered list. The entry most likely to become a defect. Docs/ABCJS-DEBT.md
+       *
        * **`otherchildren` IS ONE INTERLEAVED LIST IN ADD ORDER**, so a hairpin written
        * between two dynamics is DRAWN between them (`draw/voice.js:64-90`). Ours held two
        * buckets and emptied the dynamics one first. Merged by x below, which is the add
@@ -1964,6 +1972,7 @@ const glyphDefs = new Map<GlyphName, string>()
         fill: boolean,
       ): void => {
         if (text === undefined) return
+        // abcjs-debt: §3 — a stray space that is load-bearing. Docs/ABCJS-DEBT.md
         // **THE TWO SEGMENT WRITERS DISAGREE ON A TRAILING SPACE.** `drawEnding`'s
         // `sprintf("M %f %f L %f %f ", …)` ends each segment with one; `drawTriplet`'s
         // `drawLine` does not (`draw/ending.js:14`, `draw/triplet.js:18`). One byte per

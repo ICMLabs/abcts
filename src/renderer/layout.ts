@@ -2885,6 +2885,8 @@ function ledgerLines(
    */
   toStep: number = step,
   /**
+   * abcjs-debt: §3 — inset by ONE where a note's is two. Docs/ABCJS-DEBT.md
+   *
    * A GRACE's ledger is measured differently: `ledgerLines(…, getSymbolWidth("noteheads.quarter"),
    * [], true, grace.dx - 1, 0.6)` (`abstract-engraver.js:522`) — inset by ONE rather than
    * two, and `(symbolWidth + 4) * scale` wide off the FULL-SIZE head. Ours ran the main
@@ -2908,6 +2910,8 @@ function ledgerLines(
       role: 'ledger',
     })
   }
+  // abcjs-debt: §2.2 — a step-1 loop that discards half its visits, because the loop
+  // SHAPE is what fixes the order. Cheapest entry in the ledger. Docs/ABCJS-DEBT.md
   // **OUTERMOST FIRST, BOTH WAYS.** `for (i = maxPitch; i > 11; i--)` then
   // `for (i = minPitch; i < 1; i++)` (`abstract-engraver.js:447-457`) — each loop starts at
   // the note and walks BACK toward the staff, so the ledger furthest from it is written
@@ -3221,6 +3225,9 @@ function layoutNoteheads(
   // tall on the top side and half too short on the bottom. That asymmetry was the whole
   // of `synth-flattener-23`'s remaining `oy`.
   /**
+   * abcjs-debt: §1.5 — the y form is kept BECAUSE the pitch form measures worse.
+   * Docs/ABCJS-DEBT.md
+   *
    * **A PITCH RESERVE MUST NOT ROUND-TRIP, AND WRITING IT AS ONE MADE THIS WORSE.**
    * abcjs reserves `pitch ± thickness / 2` in PITCH and never converts
    * (`create-note-head.js:34`, `relative-element.js:22-25`), and `calcHeight` sums those
@@ -3886,6 +3893,7 @@ function layoutBar(x: number, kind: Barline, strict = true): LayoutElement {
  * approximated with a glyph that means something else: an Irish roll is not a turn, and
  * drawing one for the other is wrong output, which is worse than absent output.
  */
+// abcjs-debt: §2.1 — four paths where SMuFL has one kerned glyph. Docs/ABCJS-DEBT.md
 /**
  * The single-letter glyphs abcjs composes a dynamic from — see the dynamic branch of
  * `decorationGlyphs`. `s` and `z` are absent because this repo's Bravura table has no
@@ -5048,6 +5056,9 @@ function noteText(
     texts.push({
       text: verse,
       /**
+       * abcjs-debt: §3 — the empty trailing `<tspan>` is abcjs's, and its LANE depends
+       * on it. Docs/ABCJS-DEBT.md
+       *
        * **EVERY VERSE ENDS WITH A NEWLINE, THE LAST ONE INCLUDED.**
        * `lyricStr += ly.syllable + div + "\n"` (`abstract-engraver.js:770-773`), so a
        * single-syllable lyric is `"L\n"` — TWO lines — and `renderText` gives it a second,
@@ -5695,6 +5706,7 @@ function layoutCurves(
     // Each half is LEVEL at its own note's height. Sloping it toward a note in another
     // system would aim at a pitch the reader cannot see, and the two halves would tilt
     // in unrelated directions.
+    // abcjs-debt: §3 — looks like an off-by-one; it is abcjs's. Docs/ABCJS-DEBT.md
     // **`lineEndX` IS THE VOICE'S WIDTH MINUS ONE** — `var width = params.w - 1` at the top
     // of `drawVoice`, and that is what a tie or an ending with no closing anchor is handed
     // (`draw/voice.js:12`, `:82-85`). One pixel, on every curve that runs off the end of a
@@ -9219,6 +9231,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // `verticalExtent`: `calcHeight` sums the pitches and multiplies by `STEP` once, and
       // `x * STEP / STEP` is not `x`. A BLOCK's span is a length with no pitch of its own,
       // so it is the one term that still divides.
+      // abcjs-debt: §1.6 — a deliberate asymmetry; do not "tidy" it. Docs/ABCJS-DEBT.md
       // …AND A BLOCK'S SPAN IS A LENGTH WITH NO PITCH OF ITS OWN, so a system carrying one
       // keeps the single division it always had. abcjs never puts the top text into
       // `staff.top` at all — the page walks THROUGH the block — so this term is ours, and
@@ -10964,6 +10977,9 @@ function anchorBelowStaff<
   return parts.map((part) => ({
     ...part,
     /**
+     * abcjs-debt: §2.4 — the lane is anchored in two places because the spanners arrive
+     * after the anchoring. A phase-ordering wart. Docs/ABCJS-DEBT.md
+     *
      * **AND THE HAIRPINS ARE NOT HERE YET.** `spannerLines` is EMPTY at this point — the
      * spanners resolve across the whole tune, after packing, and are merged onto the staff
      * hundreds of lines later — so a hairpin never got this shift and sat on the raw lane
@@ -11276,6 +11292,8 @@ function verticalExtent(
    * falls back to the division, which is exactly what the whole extent did before. The
    * redundancy is deliberate — abcjs's structure first.
    */
+  // abcjs-debt: §1.4 — TWO NUMBERS FOR ONE EDGE, the largest entry in the ledger.
+  // Docs/ABCJS-DEBT.md
   let topPitch = 4 + PITCH_ORIGIN
   let bottomPitch = -4 + PITCH_ORIGIN
   const include = (a: number, b: number, ap?: number, bp?: number) => {
