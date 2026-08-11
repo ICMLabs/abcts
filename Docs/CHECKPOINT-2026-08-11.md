@@ -400,43 +400,78 @@ twice (the grace stem, the note stem) — because there the chain is
 
 ---
 
-## 4. WHAT IS LEFT — the ranked table's own families
+## 4. WHAT IS LEFT
 
 Run first, always:
 
 ```bash
 cd /Users/lrettberg/ICMLabs/Code/abcts
-npx vitest run && cat /tmp/abcts-svg-bytes-ranked.txt
-grep "^      want" /tmp/abcts-svg-bytes-ranked.txt | sed 's/^      want …//' \
-  | cut -c1-40 | sort | uniq -c | sort -rn | head
+npx vitest run && head -1 /tmp/abcts-svg-bytes-ranked.txt
+head -1 /tmp/abcts-pixel-ranked.txt    # must stay 0 of 120
+head -1 /tmp/abcts-corpus-ranked.txt   # must stay 0 of 174
 ```
 
-1. **THE PAGE WALK'S TERM STRUCTURE (§3)** — the extent itself is done, and measuring says
-   the remainder is NOT the gap: ours spends FIVE terms where abcjs spends four, because our
-   `leading - named` compensation is inside `staff.top` for abcjs. **46 of the 95 open rows
-   hang off it** — 26 root elements and 20 lone ULPs. §3 has the evidence and the shape.
-2. **A MULTI-CHARACTER DYNAMIC IS A `<g data-name="dynamics">`** of one path per letter
-   (`synth-flattener-03`). Named since 2026-08-10d and still open.
-3. **THE ACCIACCATURA SLASH** — `flags.ugrace` at `-graceoffsets[i] + dAcciaccatura` with
-   `dAcciaccatura = gracebeam ? 5 : 6` (`abstract-engraver.js:502-505`). We draw none
-   (`visual-transpose-output-03`).
-4. **THE HAIRPIN** (`synth-flattener-01`) — y out by 3.47 and the far end by 9.81.
-   `drawCrescendo` is NOT handed `width`, unlike the tie and the ending.
-5. **`%%score (T B)` WITH A REPEATED `[V:]`** (`visual-parsing-06`/`07`) — abcjs's forced
-   stem direction is a `stem` ELEMENT spliced into a voice's stream by `createVoice`
-   (`tune-builder.js:976-989`), so it is per TUNE LINE and stateful, where ours is one flag
-   per voice for the whole tune. The third block re-enters voice T on a NEW line, where it
-   is alone, so its stem follows pitch. **Ours forces it up on every line.**
-6. **A BOXED FONT DRAWS A BOX** — `%%partsfont box` → `<g fill data-name>` + a rect from
-   `getBBox` (`draw/text.js:48-60`).
-7. **`svg-time-sig-list`** — a measure can carry only ONE `meterChange` in our model;
-   `[M:2/4]y[M:3/4]y[M:4/4]` needs an inline meter to be an ELEMENT in the stream, as
-   `letter_to_inline_header` makes it. The last open DOM-contract case, and a MODEL change.
-8. **A BEAM BREAK'S PATH ORDER** (`visual-misc-12`, `!beambr1!`).
-9. **TWO STRUCTURAL HEIGHTS** — 3.875px on `visual-mouse-click-01` and `visual-tablature-15`;
-   four ladders already rule out what they are not.
+**CLASSIFY BEFORE CHOOSING.** The table's shape is not obvious from reading it: aligning on
+the FIRST DIFFERING CHARACTER and comparing the number that spans it splits **94 rows into
+25 root / 50 ULP / 19 structural**. A cruder test (does one side have a long decimal tail?)
+said 49 structural and sent a whole session at the wrong family.
 
----
+```python
+# align on the real first difference, then compare the numbers that span it
+k = next(k for k in range(min(len(got), len(want))) if got[k] != want[k])
+# widen k to the whole numeric token on each side; ULP if |a - b| < 1e-6
+```
+
+### 1. THE ARITHMETIC FAMILY — **75 of the 94**, and the main line
+25 root elements and 50 lone ULPs. §3 has the state: the extent carries pitch, the leading
+gaps are rows, and the lyric lane is measured but cannot be spent. The tool is §5's
+**instrumented cursor** — do not reason about term lists from the source, print them.
+
+The named threads inside it, in order of size:
+- **`anchorLyrics` is not abcjs's placement.** Until it is, the lyric lane's own pitch
+  (`lyricLanePitch`, already computed) cannot be spent — see §3.
+- **The inter-system gap**, `addStaffPadding` as a pitch sum with one multiply.
+- Everything else is a producer that does not yet supply `reservePitch` / `pitchRange`.
+
+### 2. THE STRUCTURAL NINETEEN, each with abcjs's own citation
+
+- **A BRACE WITH A HEADER OWNS THE VOICE NAME** (3 fixtures: `selection-01`,
+  `svg-per-line-01`, `synth-timing-02`). `drawBrace` opens
+  `<g class="staff-extra voice-name" data-name="brace">`, draws the name at the BRACE's
+  midpoint — `yTop + (yBottom - yTop) / 2 - baselineToCenter(header, 'voicefont', …, 0, 1)`
+  — then the path, then closes (`draw/brace.js:78-98`). Ours draws the name at the voice and
+  the brace elsewhere, and the brace's own x is 53.875 left of abcjs's.
+- **THE CHORD LANE IS A FIRST-FIT PACKING, THEN INVERTED** (`visual-transpose-04`).
+  `setLaneForChord` walks the elements assigning each chord the LOWEST lane whose running
+  `rightMost` is clear of its left edge, and `putChordInLane` is called only for `i > 0`;
+  then, IF any second lane was used, every above-chord takes
+  `invertLane(total)` — `lane = total - lane - 1` — so lane 0 becomes the top
+  (`layout/voice.js:53-127`). Ours stacks the other way, and the base lane is 20px out on a
+  stacked pair.
+- **A RIGHT ANNOTATION'S x** is 7.81 short (`visual-transpose-04`); `roomTakenRight += 4`
+  then `addRight` (`add-chord.js:62-72`).
+- **`%%voicecolor`** (`visual-layout-09`) — `fill="blue"` on the voice's groups. The parser
+  has never seen the directive; the EMITTER half is now easy, since `flushVoice` knows the
+  voice.
+- **THE ACCIACCATURA SLASH** (`visual-transpose-output-03`) — `flags.ugrace` at
+  `-graceoffsets[i] + (gracebeam ? 5 : 6)`, pitch `verticalPos + 7 * gracescale`
+  (`abstract-engraver.js:502-505`). We stroke a LINE instead. Needs a `GlyphName`: abcjs's
+  glyph is in `UNMAPPED_ABCJS` and Bravura has no single name for it — the `scripts.roll`
+  precedent is to map an existing SMuFL name whose MEANING matches.
+- **A BEAM BREAK'S PARTIAL BEAM RUNS THE OTHER WAY** (`visual-misc-12`, `!beambr1!`):
+  `M45 59.37 L24.81` against our `M36.48 59.37 L45`.
+- **A BAR'S TEXT PRECEDES ITS RULES** (`visual-misc-05`) and **a tempo's parts are ordered
+  the other way** (`visual-selection-02`).
+- **`svg-time-sig-list`** — a measure can carry only ONE `meterChange` in our model;
+  `[M:2/4]y[M:3/4]y[M:4/4]` needs an inline meter to be an ELEMENT in the stream, as
+  `letter_to_inline_header` makes it. Still the last open DOM-contract case.
+- **`%%score (T B)` WITH A REPEATED `[V:]`** (`visual-parsing-06`/`07`) — abcjs's forced
+  stem direction is a `stem` ELEMENT spliced into a voice's stream by `createVoice`
+  (`tune-builder.js:976-989`), so it is per TUNE LINE and stateful, where ours is one flag
+  per voice for the whole tune.
+- **A NOTEHEAD'S `data-name` IS THE WRITTEN NOTE** (`visual-tablature-18`): `a,` and `B'`,
+  the source spelling, where ours canonicalises to `A`. Needs the written text on the model.
+- **TWO STRUCTURAL HEIGHTS** — 3.875px on `visual-mouse-click-01` and `visual-tablature-15`.
 
 ## 5. THE HARNESS — unchanged, and both halves are non-optional
 
