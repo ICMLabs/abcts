@@ -11270,6 +11270,38 @@ function layoutGraces(
       // and the element reserves the wider of the two. With no accidental the chord wins
       // and the tune measures exact, which is why this only ever showed where BOTH were
       // present: four rungs of five were green.
+      /**
+       * **AN UNBEAMED GRACE CARRIES A FLAG, AND WE DREW NONE AT ALL.**
+       * `addGraceNotes` passes `flag = gracebeam ? null : chartable.uflags[3]` — a
+       * `flags.u8th`, not a `flags.ugrace`; that glyph is the ACCIACCATURA SLASH and is
+       * added separately (`abstract-engraver.js:492-505`). `createNoteHead` then places it
+       * with the same arithmetic as any other note's: `pos = pitch + 7 * scale` and
+       * `xdelta = headx + notehead.w - 0.6` (`create-note-head.js:37-48`), so it hangs at
+       * the stem's own tip and one linewidth inside the head's right edge.
+       *
+       * No gate here could state it: it is not a notehead, so `pixel-parity` and the
+       * harvested table never paired it, and its RelativeElement takes no `thickness`, so
+       * `top === bottom === pitch` and it reserves a POINT already covered by the stem —
+       * every extent agreed with the glyph missing.
+       *
+       * FIRST, before the accidental and the head, because `createNoteHead` adds it before
+       * it returns and only then does the caller `addExtra(grace)`. abcjs's own golden for
+       * `{e}a` reads `a, stem, flags.u8th, e, stem, ledger`.
+       */
+      if (!beamedGraces) {
+        const graceFlagY = stepToY(graceStep + ABCJS_PITCH.stemLength * scale)
+        graceGlyphs.push({
+          name: 'flag8thUp',
+          x: gx + glyphsFor(strict).width('noteheadBlack') * scale - spaces(ABCJS_PX.flagStemInset),
+          y: graceFlagY,
+          scale,
+          role: 'flag',
+          graceIndex: i,
+          // A POINT — see above. The stem already reaches this pitch, so this changes no
+          // extent; declaring it keeps the ink box out of the reserve all the same.
+          reserve: [graceFlagY, graceFlagY],
+        })
+      }
       const graceAccidental = accidentalGlyph(event.graceNotes[i]?.accidental ?? null)
       if (graceAccidental !== null) {
         const accWidth = glyphsFor(strict).width(graceAccidental)
@@ -11285,6 +11317,7 @@ function layoutGraces(
           // against abcjs's five, which is the gate working: a class-based comparison sees
           // exactly what the class says it is.
           role: 'accidental',
+          graceIndex: i,
           // ITS OWN declared height, and NOT scaled. `createNoteHead` reads
           // `h = symbolHeightInPitches(symb)` and hands the element `top: pitch + h / 2`,
           // `bottom: pitch - h / 2` while passing `scalex`/`scaley` separately
@@ -11351,7 +11384,11 @@ function layoutGraces(
       const headY = stepToY(graceStep)
       graceLines.push({
         x1: stemX,
-        y1: headY + (ENGRAVE.spacePerStep / 3) * scale,
+        // ABOVE the head's centre, not below it. `p1 = gracepitch + 1/3 * gracescale` is a
+        // PITCH offset and pitch runs the other way from y, so the foot of the stem sits
+        // 0.775px INSIDE the head. Measured on `{e}a`: abcjs 108.06, ours 109.61 — the
+        // whole 1.55 is twice this term, which is the signature of a flipped sign.
+        y1: headY - (ENGRAVE.spacePerStep / 3) * scale,
         x2: stemX,
         y2: headY - graceStemPitches * scale * ENGRAVE.spacePerStep,
         thickness: weight,

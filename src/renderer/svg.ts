@@ -1439,7 +1439,16 @@ const glyphDefs = new Map<GlyphName, string>()
             : abcjs && (el.type === 'note' || el.type === 'rest')
           ? (() => {
               let i = 0
-              while (i < el.glyphs.length && PITCH_ROLES.includes(el.glyphs[i]?.role ?? '')) i += 1
+              // …and a GRACE's own flag and accidental wear those roles too, so the run
+              // would swallow them and print them before the main note's stem. abcjs adds
+              // every grace AFTER the stem (`addGraceNotes` runs from `createNote` well
+              // past `addRight(stem)`), so `graceIndex` is what ends the run.
+              while (
+                i < el.glyphs.length &&
+                PITCH_ROLES.includes(el.glyphs[i]?.role ?? '') &&
+                el.glyphs[i]?.graceIndex === undefined
+              )
+                i += 1
               return i
             })()
           : el.glyphs.length
@@ -1572,7 +1581,9 @@ const glyphDefs = new Map<GlyphName, string>()
               g.dataName,
             ),
           )
-          if (g.graceIndex === undefined) continue
+          // A grace's ledgers follow its HEAD, not its flag or its accidental — all three
+          // carry the index, only one of them is the note.
+          if (g.graceIndex === undefined || g.role !== 'grace') continue
           for (const line of graceLedgers.filter((l) => l.graceIndex === g.graceIndex)) {
             parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
           }
