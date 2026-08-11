@@ -967,6 +967,14 @@ export interface PlacedText {
   readonly font?: AbcFontType
   readonly noClass?: boolean
   /**
+   * **THE PAGE'S OWN y, FOR A TOP-TEXT ROW** — what abcjs writes, accumulated FORWARD from
+   * `padding.top` (`draw/draw.js:14-15`). Our layout frame is the first staff's, and the
+   * block is back-fitted above it, so the same point arrives as three terms in a different
+   * order; the emitter prefers this one where it exists. The local `y` stays, because the
+   * staff's EXTENT is measured in the staff's frame.
+   */
+  readonly pageY?: number
+  /**
    * Horizontal alignment. Absent means `start`, which is every text the music draws —
    * only the top-text block centres a title or right-aligns a composer.
    */
@@ -1283,6 +1291,8 @@ export interface LayoutSystem {
   readonly heightPitch: number
   /** Where the system's ink starts — everything before the first staff's own extent. */
   readonly leading: number
+  /** The separation spent BEFORE this system — see the placement loop. */
+  readonly gap?: number
   /** Width of this system, staff spaces. Systems wrap, so they differ. */
   readonly width: number
   /**
@@ -7697,6 +7707,11 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   // or tie can span a break, so pairing them needs the whole tune, not one system.
   const voiceAnchors: NoteAnchor[][] = plans.map(() => [])
   /**
+   * The top-text block's ROW ADVANCES, in order — abcjs adds them one at a time to the
+   * page's cursor and the page's HEIGHT is that cursor. See `PlacedText.pageY`.
+   */
+  let topAdvances: number[] = []
+  /**
    * Where the MUSIC starts on each system, past the clef and key — the left clamp for a
    * slur continued from the system above. With one cursor per line there is no shared
    * prefix width to read this off, so each system records where its first music element
@@ -8100,15 +8115,27 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       const midTune = voiceIndex !== 0 ? [] : (blocksBeforeSystem[systemIndex] ?? [])
       const block: { texts: PlacedText[]; lines: PlacedLine[]; height: number } =
         systemIndex === 0 && voiceIndex === 0
-          ? {
-              lines: [],
-              ...topTextBlock(
+          ? (() => {
+              // Built at the PAGE's cursor, then rebased into the staff's frame — see
+              // `PlacedText.pageY`.
+              const built = topTextBlock(
                 score.metadata,
                 systemWidth - ENGRAVE.marginX * 2,
                 score.textAbove,
                 score.fonts,
-              ),
-            }
+                ENGRAVE.marginTop,
+              )
+              topAdvances = built.advances
+              return {
+                lines: [],
+                height: built.height,
+                texts: built.texts.map((t) => ({
+                  ...t,
+                  pageY: t.y,
+                  y: t.y - ENGRAVE.marginTop,
+                })),
+              }
+            })()
           : midTune.length > 0
             ? freeTextBlock(midTune, systemWidth - ENGRAVE.marginX * 2, score.fonts)
             : { texts: [], lines: [], height: 0 }
@@ -8617,6 +8644,17 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // annotation. The block shifts as a whole, so its internal spacing is untouched.
       const heading = staff.elements.filter((el) => el.type === 'title')
       const musicOnly = staff.elements.filter((el) => el.type !== 'title')
+      /**
+       * How far the HEADING BLOCK reaches above the music — its own height plus the
+       * `musicSpace` gap. abcjs never puts it in `staff.top` at all: it walks the page's
+       * cursor through the block and only then reaches the staff (`draw/draw.js:14-18`),
+       * so the block is NOT part of `staffGroup.height`. Ours back-fits it above the
+       * music, which is right for the ink and wrong for the height — held separately here
+       * so the page can spend it in abcjs's order.
+       */
+      let blockSpan = 0
+      /** The music-only extent top, when a heading is stacked above it. */
+      let musicOnlyTop: number | undefined
       const positioned =
         heading.length === 0
           ? staff.elements
@@ -8627,6 +8665,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
               const blockBottom = Math.max(...heading.map((el) => el.blockHeight ?? 0))
               const gap = heading.some((el) => el.blockAbutsMusic === true) ? 0 : musicSpace
               const offset = musicTop - gap - blockBottom
+              musicOnlyTop = musicTop
               if (PROBE)
                 console.log(
                   `BLOCK musicTop=${musicTop.toFixed(4)} (pitch ${(6 - 2 * musicTop).toFixed(4)}) topBy=${probeTop} flags=${probeFlags} blockH=${blockBottom.toFixed(4)} musicSpace=${musicSpace} offset=${offset.toFixed(4)}`,
@@ -8658,7 +8697,15 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         )
       }
       const stacked = cursor - extent.top
-      if (staffIndexInSystem === 0) leadingCursor = cursor
+      // **THE BLOCK BELONGS TO THE PAGE'S CURSOR, NOT TO THE STAFF'S OWN SPAN.** abcjs's
+      // `staffGroup.height` knows nothing about the top text: the page walks THROUGH the
+      // block and only then reaches the staff (`draw/draw.js:14-18`). So the span is
+      // measured to the MUSIC-ONLY top — not to the block's declared height, because a
+      // row's ink reaches above its own box and the old total carried that overshoot.
+      // Assuming the declared height instead lost a whole subtitle row (27.05px) on
+      // `synth-timing-05` and 93.18 on `visual-options-01`.
+      blockSpan = musicOnlyTop === undefined ? 0 : musicOnlyTop - extent.top
+      if (staffIndexInSystem === 0) leadingCursor = cursor + blockSpan
       // The separation is a minimum LINE-to-LINE distance, which is what abcjs measures:
       // `draw.js:86-89` works from each staff's overhang past its own outer lines, so
       // what it pads to is bottom-line to top-line. Comparing origins instead is short by
@@ -8672,7 +8719,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // In PITCH, as abcjs states it: the staff's own span plus whatever the clamp added,
       // which abcjs carries inside `staff.top` and we apply here.
       heightPitch +=
-        (extent.bottom - extent.top) / ENGRAVE.spacePerStep +
+        (extent.bottom - (extent.top + blockSpan)) / ENGRAVE.spacePerStep +
         (originY - stacked) / ENGRAVE.spacePerStep
       staffIndexInSystem += 1
       cursor = originY + extent.bottom + ENGRAVE.staffGap
@@ -8795,9 +8842,17 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             }
           })()
 
+    /**
+     * **THE SEPARATION THIS SYSTEM COST**, as its own term — abcjs spends it that way,
+     * `addStaffPadding` (or the bare `moveY(staffSeparation)`) BEFORE the group and
+     * `staffGroup.height * STEP` after (`draw/draw.js:43-52`, `:79-83`). Ours folds it
+     * into `originY` and lets the page telescope through that, which is the same terms in
+     * a different grouping and a different double.
+     */
+    const gap = originY - cursor
     previousBottomLine = originY + bottomLineOffset
     cursor = originY + height + ENGRAVE.systemGap
-    return { ...shifted, originY }
+    return { ...shifted, originY, gap }
   })
 
   // `%%maxStaves` — an INCIPIT. abcjs lays the whole tune out and simply stops drawing
@@ -8910,12 +8965,53 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     // it, then `setPaperSize` adds `padding.bottom` last — `(15 + content) + 15`, never
     // `(content + 15) + 15`. JS `+` is left to right, so writing the margins at the end
     // put the root's `height` one ULP out on 55 of the 171 fixtures, in BOTH directions.
-    height:
-      ENGRAVE.marginTop +
-      (stafflessBlock === undefined ? bottom : stafflessBlock.height + musicSpace) +
-      trailingHeight +
-      (bottomBlock.texts.length === 0 ? 0 : spaces(ABCJS_PX.bottomTextGap) + bottomBlock.height) +
-      ENGRAVE.marginBottom,
+    /**
+     * **THE PAGE IS ONE RUNNING CURSOR, WALKED IN ABCJS'S ORDER** — `draw()` opens with
+     * `moveY(padding.top)`, spends each top-text ROW, then `spacing.music`, then per music
+     * line a separation and `staffGroup.height * spacing.STEP`, and `setPaperSize` adds
+     * `padding.bottom` last (`draw/draw.js:14-76`, `draw/set-paper-size.js:3`).
+     *
+     * Ours telescoped through `last.originY + systemHeight(last)`, which is the SAME TERMS
+     * in a different grouping — and JS `+` is left to right, so a different double. The
+     * root's `height` was one ULP out on 52 of the 171 fixtures, in BOTH directions, which
+     * is the signature of an order and not a bias.
+     *
+     * Any advance the block made that its `advances` list does not name is added as the
+     * remainder, which is exactly 0 whenever it names them all.
+     */
+    height: (() => {
+      let y = ENGRAVE.marginTop
+      const block = stafflessBlock === undefined ? undefined : stafflessBlock
+      if (block !== undefined) {
+        for (const a of block.advances) y += a
+        y += block.height - block.advances.reduce((t, a) => t + a, 0)
+        y += musicSpace
+      } else {
+        for (const a of topAdvances) y += a
+        const named = topAdvances.reduce((t, a) => t + a, 0)
+        const first = shown[0]
+        // Everything the first system's `leading` holds that the rows did not: the
+        // `musicSpace` gap, any `%%text` the block advanced by outside its row list, and
+        // the 6.7.0 separation a non-music line before the first staff costs.
+        if (first !== undefined) y += first.leading - named
+        for (const [i, system] of shown.entries()) {
+          if (i > 0) {
+            y += system.gap ?? 0
+            // A MID-TUNE BLOCK is this system's own leading — abcjs draws that nonMusic
+            // line before the group and the page's cursor moves through it
+            // (`draw/draw.js:54-60`). Dropping it lost a whole subtitle row.
+            y += system.leading
+          }
+          y += system.heightPitch * ENGRAVE.spacePerStep
+        }
+      }
+      y += trailingHeight
+      if (bottomBlock.texts.length > 0) {
+        y += spaces(ABCJS_PX.bottomTextGap)
+        y += bottomBlock.height
+      }
+      return y + ENGRAVE.marginBottom
+    })(),
     top: -ENGRAVE.marginTop,
   }
 }
@@ -9004,6 +9100,14 @@ function topTextBlock(
   width: number,
   textAbove: readonly FreeTextBlock[] = [],
   fonts: Score['fonts'] = {},
+  /**
+   * **WHERE THE PAGE'S CURSOR ALREADY IS** — `padding.top`, because abcjs runs
+   * `moveY(padding.top)` and only then `nonMusic(topText)` (`draw/draw.js:14-15`). Every
+   * row lands at `renderer.y + font.size` off THAT cursor, so the y a row is written at
+   * is `((15 + rows) + size)` and not `(rows + size) + 15`. The two are different
+   * doubles, and a title's y is five rows of the byte table.
+   */
+  from = 0,
 ): { texts: PlacedText[]; height: number; advances: number[] } {
   const texts: PlacedText[] = []
   /**
@@ -9014,7 +9118,7 @@ function topTextBlock(
    * the block; the list is only for the page's own accumulation.
    */
   const advances: number[] = []
-  let y = 0
+  let y = from
   // abcjs rounds each line advance to whole PIXELS before moving on, so a block's height
   // is not simply a sum of ems. Reproduced rather than smoothed.
   //
@@ -9250,7 +9354,9 @@ function topTextBlock(
   // the title lands on 350 — a 15px difference the model's own comment already recorded.
   y = appendFreeText(texts, textAbove, y, width / 2, fonts)
 
-  return { texts, height: y, advances }
+  // The HEIGHT is still the block's own, so the placement below is unchanged; only the
+  // texts' y is now the page's.
+  return { texts, height: y - from, advances }
 }
 
 /**

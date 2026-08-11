@@ -1012,7 +1012,11 @@ const glyphDefs = new Map<GlyphName, string>()
             block.push(
               abcjsText(
                 round2(t.x * PX),
-                round2(t.y * PX + oy),
+                // **THE PAGE'S OWN y WHERE THERE IS ONE** — see `PlacedText.pageY`. abcjs
+                // walks ONE cursor from `padding.top` and writes `renderer.y + font.size`;
+                // reaching the same point through the staff's frame is the same three
+                // terms in a different order, and a different double.
+                round2(t.pageY === undefined ? t.y * PX + oy : t.pageY * PX),
                 num(t.size * PX),
                 'Times New Roman',
                 t.italic === true,

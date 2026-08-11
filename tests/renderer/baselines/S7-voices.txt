@@ -2212,7 +2212,7 @@ system 0 width=861.500 originY=0.000
     bar x=685.017 w=0.600
       line  685.317,-15.500 -> 685.317,15.500 t=0.600
 tune 6
-bounds  width=796.359 height=363.216 top=-15.000
+bounds  width=796.359 height=363.217 top=-15.000
 systems 1
 system 0 width=796.359 originY=0.000
   connector brace -7.130,170.825 scale=4.371
