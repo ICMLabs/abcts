@@ -8484,7 +8484,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
      * with the factor, and the solve inverts on it directly — no piecewise search, because
      * the rods that won are already accounted for in `width - units * spacing`.
      */
-    const lineAt = (factor: number): { at: number[][]; width: number; units: number } => {
+    const lineAt = (spacing: number): { at: number[][]; width: number; units: number } => {
       const n = lines.length
       const i = new Array<number>(n).fill(0)
       const durationIndex = new Array<number>(n).fill(0)
@@ -8494,7 +8494,15 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       const at: number[][] = lines.map(() => [])
       /** abcjs's `getSpacingUnits` — NO floor, and zero for a zero-duration element. */
       const unitsOf = spacingUnits
-      const spring = (d: number): number => factor * spacingScale * unitsOf(d)
+      /**
+       * **ABCJS ITERATES ON THE SPACING ITSELF, NOT ON A FACTOR.** `voice.nextx = x +
+       * (spacing * this.getSpacingUnits(voice))` (`layout/voice-elements.js:80`), where
+       * `spacing` is the ONE number `calcHorizontalSpacing` returns. Ours carried a
+       * dimensionless factor and re-multiplied the 30px base at every spring, so the
+       * product was `(factor * base) * units` off a factor the solve had itself divided
+       * by that base — a multiply and a divide abcjs does not have.
+       */
+      const spring = (d: number): number => spacing * unitsOf(d)
       const itemOf = (v: number): Advance | undefined => lines[v]?.items[i[v] ?? 0]
       const ended = (v: number): boolean => itemOf(v) === undefined
       const nextXOf = (v: number): number => Math.max(minx[v] ?? 0, nextx[v] ?? 0)
@@ -8671,9 +8679,11 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
      * bar carries the difference and a rod-dominated one holds it constant.
      */
     const justify = ((): number => {
-      let factor = 1
+      // abcjs's `newspace`, which OPENS at the 30px base and is replaced outright each pass
+      // (`layout/layout.js:68`). Not a ratio to it.
+      let spacing = spacingScale
       for (let pass = 0; pass < 8; pass += 1) {
-        const { width, units } = lineAt(factor)
+        const { width, units } = lineAt(spacing)
         // A last line under `LAST_SYSTEM_FILL` of the page is left at its natural width;
         // above it, it is justified like any other. "Never stretch the last system" was too
         // blunt and was the single largest source of horizontal divergence from abcjs —
@@ -8696,10 +8706,14 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         // The EIGHTH layout is the last one abcjs performs, so the spacing solved from it
         // is discarded and this one stands.
         if (pass === 7) break
-        const springs = units * spacingScale
-        factor = (target - (width - factor * springs)) / springs
+        // `relSpace = spacingUnits * spacing; constSpace = lineWidth - relSpace;`
+        // `spacing = (targetWidth - constSpace) / spacingUnits` — abcjs's own three lines
+        // and its own groupings (`layout/layout.js:110-116`).
+        const relSpace = units * spacing
+        const constSpace = width - relSpace
+        spacing = (target - constSpace) / units
       }
-      return factor
+      return spacing
     })()
     probeFinalPass = true
     const solved = lineAt(justify)
