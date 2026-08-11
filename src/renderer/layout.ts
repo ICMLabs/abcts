@@ -8718,9 +8718,15 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       previousBottomLine = originY + STAFF_HALF_HEIGHT
       // In PITCH, as abcjs states it: the staff's own span plus whatever the clamp added,
       // which abcjs carries inside `staff.top` and we apply here.
-      heightPitch +=
-        (extent.bottom - (extent.top + blockSpan)) / ENGRAVE.spacePerStep +
-        (originY - stacked) / ENGRAVE.spacePerStep
+      // **`calcHeight` ADDS `staff.top` AND THEN `-staff.bottom`**, two additions onto a
+      // running total, never one subtraction (`creation/calc-height.js:8-10`). Measured
+      // against abcjs's own dump on `visual-title-07`: its `H` is 14.768774193548388 and
+      // `(bottom - top) / STEP` gives …387. The clamp goes on as its own term, because
+      // abcjs carries its equivalent inside `staff.top`.
+      const pitchOfY = (y: number): number => PITCH_ORIGIN - y / ENGRAVE.spacePerStep
+      heightPitch += pitchOfY(extent.top + blockSpan)
+      heightPitch += -pitchOfY(extent.bottom)
+      heightPitch += (originY - stacked) / ENGRAVE.spacePerStep
       staffIndexInSystem += 1
       cursor = originY + extent.bottom + ENGRAVE.staffGap
       return {
@@ -8990,10 +8996,14 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         for (const a of topAdvances) y += a
         const named = topAdvances.reduce((t, a) => t + a, 0)
         const first = shown[0]
-        // Everything the first system's `leading` holds that the rows did not: the
-        // `musicSpace` gap, any `%%text` the block advanced by outside its row list, and
-        // the 6.7.0 separation a non-music line before the first staff costs.
-        if (first !== undefined) y += first.leading - named
+        // **`spacing.music` IS ITS OWN TERM**, spent right after the top text and before
+        // the first staff (`draw/draw.js:17`) — not folded into a difference. What is left
+        // of the first system's leading after it is the 6.7.0 separation a non-music line
+        // costs and any ink a block's row reaches above its own declared box, which abcjs
+        // does not reserve at all; it is EXACTLY ZERO on a plain tune, and `y += 0` is
+        // exact.
+        y += musicSpace
+        if (first !== undefined) y += first.leading - named - musicSpace
         for (const [i, system] of shown.entries()) {
           if (i > 0) {
             y += system.gap ?? 0

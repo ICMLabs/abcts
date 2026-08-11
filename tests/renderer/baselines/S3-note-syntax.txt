@@ -2856,7 +2856,7 @@ system 2 width=700.165 originY=276.112
       line  661.466,29.708 -> 661.466,0.000 t=1.000
     bar x=684.165 w=0.600
       line  684.465,-15.500 -> 684.465,15.500 t=0.600
-system 3 width=700.684 originY=368.839
+system 3 width=700.684 originY=368.840
   staff 0 originY=52.327
     staffline 15.000,15.500 -> 685.684,15.500 t=0.700
     staffline 15.000,7.750 -> 685.684,7.750 t=0.700
