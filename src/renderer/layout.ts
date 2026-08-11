@@ -3101,6 +3101,18 @@ function layoutNoteheads(
   // triangle inks [-5, +4] against a declared ±4.5, so its reserve was half a pixel too
   // tall on the top side and half too short on the bottom. That asymmetry was the whole
   // of `synth-flattener-23`'s remaining `oy`.
+  /**
+   * **A PITCH RESERVE MUST NOT ROUND-TRIP, AND WRITING IT AS ONE MADE THIS WORSE.**
+   * abcjs reserves `pitch ± thickness / 2` in PITCH and never converts
+   * (`create-note-head.js:34`, `relative-element.js:22-25`), and `calcHeight` sums those
+   * pitches. Ours holds the extent in y and divides back, so writing this as
+   * `stepToY(step ± half)` adds a multiply AND a divide where `stepToY(step) ± half` has
+   * only the divide: measured, the bottom went from abcjs's exact 1.044774193548387 to
+   * 1.0447741935483865 and the top did not improve. `x * STEP / STEP` is not `x`.
+   *
+   * **So the fix is not at this site — the EXTENT has to be carried in pitch.** Left as it
+   * is deliberately, with the failed shape recorded so it is not tried a third time.
+   */
   const headDeclaredHalf = (glyphsFor(strict).get(headName)?.declaredHeight ?? 0) / 2
   for (const [position, step] of steps.entries()) {
     const dx = offsetAt[position] ?? 0
