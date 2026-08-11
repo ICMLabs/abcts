@@ -684,7 +684,13 @@ export const ENGRAVE = {
   /** No gap: the last grace's own advance IS the distance to the notehead. */
   graceGap: 0,
   /** Length of the hook that resumes a curve at the start of the next system. */
-  curveContinuation: 2.0 * SPACE,
+  /**
+   * `startX = anchor2.x - 20` — the stub an incoming curve-half is drawn as when its
+   * opening note is on the system above (`tie-element.js:127`). abcjs's own literal.
+   */
+  curveContinuation: spaces(ABCJS_PX.curveStub),
+  /** `var width = params.w - 1` — see the curve split (`draw/voice.js:12`). */
+  lineEndInset: spaces(ABCJS_PX.lineEndInset),
   /** How far a slur or tie endpoint sits clear of the notehead it springs from. */
   curveEndGap: 0.3 * SPACE,
   /** Arc height as a fraction of the curve's horizontal span, before clamping. */
@@ -5475,27 +5481,37 @@ function layoutCurves(
     // Each half is LEVEL at its own note's height. Sloping it toward a note in another
     // system would aim at a pitch the reader cannot see, and the two halves would tilt
     // in unrelated directions.
+    // **`lineEndX` IS THE VOICE'S WIDTH MINUS ONE** — `var width = params.w - 1` at the top
+    // of `drawVoice`, and that is what a tie or an ending with no closing anchor is handed
+    // (`draw/voice.js:12`, `:82-85`). One pixel, on every curve that runs off the end of a
+    // system: abcjs writes 284 where the staff line itself ends at 281.
+    const lineEndX = start.right - ENGRAVE.lineEndInset
     curves[from.system]?.push(
-      buildCurve(from, { ...from, left: start.right, right: start.right }, kind, voicePos, strict, {
+      buildCurve(from, { ...from, left: lineEndX, right: lineEndX }, kind, voicePos, strict, {
         start: from.element,
       }),
     )
-    // The continuation resumes after the new system's clef and key — starting at the
-    // system's left edge drew it straight through the clef, where it was invisible.
-    //
-    // ponytail: if the first note sits hard against the prefix there is no room for the
-    // hook, and it is OMITTED rather than drawn backwards. The half running off the
-    // previous system still signals that the curve continues, which is most of the
-    // reading benefit. Engraving reserves room at the system start for exactly this;
-    // doing that means feeding the curve back into spacing, which is a slice of its own.
-    const resume = Math.max(end.left, to.left - ENGRAVE.curveContinuation)
-    if (to.left - resume >= ENGRAVE.curveEndGap * 2) {
-      curves[to.system]?.push(
-        buildCurve({ ...to, left: resume, right: resume }, to, kind, voicePos, strict, {
-          end: to.element,
-        }),
-      )
-    }
+    /**
+     * **THE INCOMING HALF IS A FIXED 20px STUB, AND IT IS NEVER OMITTED.**
+     * `calcX` has no clef to avoid and no room to test: with `anchor2` and no `anchor1` it
+     * writes `startX = anchor2.x - 20` — "There is no element and no repeat mark: make a
+     * small arc" (`tie-element.js:126-127`) — and `lineStartX` is reached only when there
+     * is no anchor at ALL. Measured against abcjs on `parse-tie-slur-01`, whose stub runs
+     * 84.05 to 102.05 off a notehead at 98.05: `(x - 20) + 6` and `x + 4`, `drawArc`'s own
+     * two offsets.
+     *
+     * Ours resumed after the new system's PREFIX and then dropped the half whenever the
+     * first note sat close behind it, with a `ponytail:` note explaining that engraving
+     * would reserve room. abcjs reserves none and overlaps the clef quite happily — the
+     * arc is 20px long wherever the note is. Four of this fixture's eight curves were the
+     * halves we declined to draw.
+     */
+    const resume = to.left - ENGRAVE.curveContinuation
+    curves[to.system]?.push(
+      buildCurve({ ...to, left: resume, right: resume }, to, kind, voicePos, strict, {
+        end: to.element,
+      }),
+    )
   }
 
   anchors.forEach((anchor, i) => {

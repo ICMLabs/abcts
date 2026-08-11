@@ -145,6 +145,16 @@ export const ABCJS_PX = {
   spacingUnit: 30,
   /** `var dx = 5` — how far into its element a clef glyph sits (`create-clef.js:32`). */
   clefIndent: 5,
+  /**
+   * `this.startX = this.anchor2.x - 20` — "make a small arc" — the stub a tie or slur
+   * arriving from the system above is drawn as (`tie-element.js:126-127`).
+   */
+  curveStub: 20,
+  /**
+   * `var width = params.w - 1` — the `lineEndX` a tie or an ending with no closing anchor
+   * is drawn to, one inside the staff line's own end (`draw/voice.js:12`).
+   */
+  lineEndInset: 1,
   /** `getSymbolWidth(symbol) + 2` between key-signature accidentals (`create-key-signature.js:26`). */
   keySignatureGap: 2,
   /**
