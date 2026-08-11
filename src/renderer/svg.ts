@@ -1340,7 +1340,415 @@ const glyphDefs = new Map<GlyphName, string>()
       const counters = new Map<number, { measure: number; note: number }>()
       /** Grace beams, held back to the voice's beam pass where abcjs draws them. */
       const graceBeams: PlacedLine[] = []
+      /**
+       * **ONE VOICE AT A TIME, AND abcjs FINISHES IT BEFORE IT STARTS THE NEXT.**
+       * `drawStaffGroup` loops `params.voices[i]` and `drawVoice` walks that voice's
+       * children, then its BEAMS, then its OTHERCHILDREN (`draw/staff-group.js:112`,
+       * `draw/voice.js:25-90`). Everything below used to run once for the whole staff, so a
+       * shared staff drew both voices' notes and only then both voices' beams — the same
+       * set in a different order, and 19 of the corpus's differing fixtures share a staff.
+       *
+       * `mine` is the filter; the accumulators (`dynamics`, `graceBeams`) are DRAINED
+       * rather than filtered, since they were gathered by this voice's own elements.
+       */
+      const flushVoice = (voiceHere: number): void => {
+        const mine = (x: { voice?: number }): boolean => (x.voice ?? 0) === voiceHere
+        if (abcjs) classes.startMeasure()
+        /** The group already written — see the one-path-per-group rule below. */
+        let lastBeamGroup: number | undefined
+        for (const beam of staff.beams.filter(mine)) {
+          /**
+           * **A BEAM'S CLASS IS GENERATED, NOT LITERAL** —
+           * `classes.generate('beam-elem ' + durationClass)` with `.` → `-`
+           * (`draw/beam.js:24-25`), so `add_classes` gives
+           * `abcjs-beam-elem abcjs-d0-125 abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0` and without it
+           * an EMPTY `class=""` — abcjs passes `''` and `svg.js`'s path sets the attribute
+           * anyway, because `'' !== undefined`. Ours wrote a literal `abcjs-beam`, which is a
+           * class abcjs does not have at all.
+           */
+          const beamClass = abcjs
+            ? ` class="${classes.generate(
+                `beam-elem d${Math.round((beam.durationClass ?? 0) * 1000) / 1000}`.replace(
+                  /\./g,
+                  '-',
+                ),
+              )}"`
+            : ` class="${prefix}-beam"`
+          if (!abcjs) {
+            parts.push(lineToRect(TL(beam), beamClass, abcjs))
+            continue
+          }
+          /**
+           * **A BEAM IS A `<path>`, AND ONE PATH HOLDS EVERY BEAM OF ITS GROUP.** `drawBeam`
+           * concatenates each beam's four corners into a single `d` and writes one element
+           * (`draw/beam.js:7-44`), so a sixteenth run is ONE path with two subpaths. Ours was
+           * a `<polygon>` per beam.
+           *
+           * The separators are abcjs's own and they are IRREGULAR — a space before the first
+           * and third `L` and none before the second:
+           *
+           *     "M" + sx + " " + sy + " L" + ex + " " + ey + "L" + ex + " " + ey2 + " L" + sx + " " + sy2 + "z"
+           *
+           * and every coordinate is `roundNumber`d. The second edge is the first plus `dy`,
+           * the beam's thickness, which is why the corners run start-top → end-top →
+           * end-bottom → start-bottom.
+           */
+          if (beam.group !== undefined && beam.group === lastBeamGroup) continue
+          lastBeamGroup = beam.group
+          const members =
+            beam.group === undefined
+              ? [beam]
+              : staff.beams.filter(mine).filter((b) => b.group === beam.group)
+          const d = members
+            .map((b) => {
+              const t = TL(b)
+              // …and the SECOND edge is rounded off the ALREADY-ROUNDED first, because
+              // abcjs computes `startY2 = roundNumber(startY + dy)` from a `startY` that has
+              // been through `roundNumber` itself (`draw/beam.js:37-42`).
+              const r2 = (n: number): number => Number.parseFloat(n.toFixed(2))
+              // `dy` is SIGNED — `+STEP` for stems up, `-STEP` for stems down — so the path
+              // opens on the TOP edge of an up-stem beam and the BOTTOM edge of a down-stem
+              // one. See `PlacedLine.stemsUp`.
+              const dy = (b.stemsUp === false ? -1 : 1) * t.thickness
+              const half = (b.stemsUp === false ? 1 : -1) * (t.thickness / 2)
+              const [sx, ex] = [r2(t.x1), r2(t.x2)]
+              const [sy, ey] = [r2(t.y1 + half), r2(t.y2 + half)]
+              const [sy2, ey2] = [r2(sy + dy), r2(ey + dy)]
+              return `M${sx} ${sy} L${ex} ${ey}L${ex} ${ey2} L${sx} ${sy2}z`
+            })
+            .join('')
+          parts.push(`<path d="${d}" stroke="none" fill="currentColor"${beamClass}></path>`)
+        }
+        // A GRACE BEAM's own class is `beam-elem d0` — its `durationClass` is 0, since a
+        // grace note has no sounding duration.
+        for (const b of graceBeams) {
+          parts.push(lineToRect(TL(b), attrIfAny(classes.generate('beam-elem d0')), abcjs))
+        }
+        // **`drawDynamics` AND `drawCrescendo` DISAGREE ON THE ORDER OF THEIR OWN TWO
+        // CLASSES** — `generate('decoration dynamics')` for a volume mark
+        // (`draw/dynamics.js:11`) and `generate('dynamics decoration')` for a hairpin
+        // (`draw/crescendo.js:34`). abcjs's contract shows both spellings side by side, so
+        // it is a quirk to reproduce rather than one of them to pick.
+        /**
+         * **A MULTI-LETTER DYNAMIC IS A GROUP OF PLAIN PATHS.** `printSymbol` opens
+         * `<g data-name="dynamics" class="…">` and gives each LETTER only `{stroke, fill}` —
+         * the class and the name belong to the group, not to its children
+         * (`draw/print-symbol.js:16-31`). A single-letter one takes the other arm and carries
+         * all four attributes itself. `PlacedGlyph.group` is what tells them apart.
+         */
+        /**
+         * abcjs-debt: §2.3 — two buckets merged by x, an APPROXIMATION of abcjs's one
+         * ordered list. The entry most likely to become a defect. Docs/ABCJS-DEBT.md
+         *
+         * **`otherchildren` IS ONE INTERLEAVED LIST IN ADD ORDER**, so a hairpin written
+         * between two dynamics is DRAWN between them (`draw/voice.js:64-90`). Ours held two
+         * buckets and emptied the dynamics one first. Merged by x below, which is the add
+         * order for a single voice: a `CrescendoElem` is added where its `<(` is seen, which
+         * is where its left arm starts.
+         *
+         * **A MULTI-LETTER DYNAMIC IS A GROUP OF PLAIN PATHS.** `printSymbol` opens
+         * `<g data-name="dynamics" class="…">` and gives each LETTER only `{stroke, fill}` —
+         * the class and the name belong to the group, not to its children
+         * (`draw/print-symbol.js:16-31`). A single-letter one takes the other arm and carries
+         * all four attributes itself. `PlacedGlyph.group` names the kind and `groupStart`
+         * marks the occurrence.
+         */
+        const others: { x: number; s: string }[] = []
+        let dynBuf: string[] = []
+        let dynX = 0
+        const flushDynamic = (): void => {
+          if (dynBuf.length > 0) others.push({ x: dynX, s: `${dynBuf.join('')}</g>` })
+          dynBuf = []
+        }
+        for (const g of dynamics) {
+          const grp = g.group ?? null
+          if (grp === null) {
+            flushDynamic()
+            others.push({
+              x: g.x,
+              s: glyphMarkup(
+                g.name,
+                g.x,
+                g.y,
+                g.scale,
+                // The name goes in the ATTRIBUTES rather than through `dataName`, because a
+                // SCALED glyph takes `glyphMarkup`'s transform path, which writes the
+                // attribute string and nothing else. The ORDER is `svg.js:path`'s key order
+                // over `printSymbol`'s options — class, stroke, fill, then the name.
+                ` class="${classes.generate('decoration dynamics')}" stroke="none" ` +
+                  `fill="currentColor" data-name="${ABCJS_DATA_NAMES.dynamic}"`,
+                g.role,
+                // The name is already in the attribute string above; `'' ?? x` is `''`, so
+                // this stops `glyphMarkup` adding a SECOND `data-name` from the glyph key.
+                '',
+              ),
+            })
+            continue
+          }
+          if (g.groupStart === true) {
+            flushDynamic()
+            dynX = g.x
+            dynBuf.push(`<g${attrIfAny(classes.generate('decoration dynamics'))} data-name="${grp}">`)
+          }
+          dynBuf.push(
+            glyphMarkup(
+              g.name,
+              g.x,
+              g.y,
+              g.scale,
+              ' stroke="none" fill="currentColor"',
+              g.role,
+              // Inside the group abcjs names NONE of the children — `printSymbol` hands them
+              // `{stroke, fill}` and nothing else — and `'' ?? x` is `''`, so this suppresses
+              // the attribute rather than falling back to the glyph key.
+              '',
+            ),
+          )
+        }
+        flushDynamic()
+        /**
+         * **A BRACKET IS A GROUP HOLDING ONE PATH AND ITS NUMBER.** Both `drawEnding` and
+         * `drawTriplet` open a `<g>`, write EVERY segment as a single `printPath` `d`, add
+         * the number as a `noClass` text naming itself, and close
+         * (`draw/ending.js:27-50`, `draw/triplet.js:7-13`). We wrote a line per segment at
+         * the voice's own level and a text beside them, which is four rows of the contract
+         * where abcjs has three — and the `d` is `M … L … ` per segment WITH a trailing
+         * space, from `sprintf`.
+         */
+        const bracketGroup = (
+          lines: readonly PlacedLine[],
+          text: PlacedText | undefined,
+          name: string,
+          pathName: string,
+          fill: boolean,
+        ): void => {
+          if (text === undefined) return
+          // abcjs-debt: §3 — a stray space that is load-bearing. Docs/ABCJS-DEBT.md
+          // **THE TWO SEGMENT WRITERS DISAGREE ON A TRAILING SPACE.** `drawEnding`'s
+          // `sprintf("M %f %f L %f %f ", …)` ends each segment with one; `drawTriplet`'s
+          // `drawLine` does not (`draw/ending.js:14`, `draw/triplet.js:18`). One byte per
+          // segment, and a quirk to reproduce rather than one of them to pick.
+          const gap = fill ? ' ' : ''
+          const d = lines
+            .map((l) => {
+              const t = TL(l)
+              return `M ${round2(t.x1)} ${round2(t.y1)} L ${round2(t.x2)} ${round2(t.y2)}${gap}`
+            })
+            .join('')
+          parts.push(
+            `<g${attrIfAny(classes.generateAt(text.groupClass ?? '', text.measure ?? 0))}` +
+              `${fill ? ' fill="currentColor"' : ''} data-name="${name}">`,
+          )
+          if (d) {
+            parts.push(
+              `<path d="${d}" stroke="currentColor"${fill ? ' fill="currentColor"' : ''} ` +
+                `data-name="${pathName}"></path>`,
+            )
+          }
+          // **AND THE NUMBER IS `renderText`'s ELEMENT LIKE ANY OTHER** — `repeatfont` with
+          // `noClass` for an ending, `tripletfont` with `noClass` and `centerVertically` for
+          // a triplet (`draw/ending.js:40-49`, `draw/triplet.js:12`). Ours wrote an ad-hoc
+          // `<text>` in `serif` with the attributes in another order.
+          const face = text.font === undefined ? undefined : ABCJS_FONT_FACE[text.font]
+          parts.push(
+            face === undefined
+              ? `<text${text.anchor === undefined ? '' : ` text-anchor="${text.anchor}"`} ` +
+                  `x="${textNum(text.x * PX)}" y="${round2(text.y * PX + oy)}" ` +
+                  `font-family="serif" font-size="${num(text.size * PX)}" ` +
+                  `data-name="${escapeAttr(text.dataName ?? text.text)}">${escapeText(text.text)}</text>`
+              : abcjsText(
+                  textNum(text.x * PX),
+                  round2(text.y * PX + oy),
+                  num(text.size * PX),
+                  face,
+                  text.italic,
+                  text.bold,
+                  text.anchor ?? 'start',
+                  text.dataName ?? text.text,
+                  escapeText(text.text),
+                  '',
+                  [],
+                  false,
+                  text.noClass === true,
+                ),
+          )
+          parts.push('</g>')
+        }
+        if (abcjs) {
+          for (const t of staff.voltaTexts.filter(mine)) {
+            bracketGroup(
+              staff.voltaLines.filter(mine).filter((l) => l.group === t.group),
+              t,
+              'ending',
+              'line',
+              true,
+            )
+          }
+        } else {
+          for (const line of staff.voltaLines.filter(mine)) {
+            parts.push(lineToRect(TL(line), ` class="${prefix}-volta"`, abcjs))
+          }
+          for (const t of staff.voltaTexts.filter(mine)) {
+            parts.push(
+              `<text class="${prefix}-volta" x="${textNum(t.x * PX)}" ` +
+                `y="${round2(t.y * PX + oy)}" font-family="serif" font-size="${num(t.size * PX)}">${escapeText(t.text)}</text>`,
+            )
+          }
+        }
+        // ABCJS CALLS IT A TRIPLET, whatever the number — `classes.generate('triplet ' +
+        // durationClass)` on the group and `data-name="triplet-bracket"` on the path
+        // (`draw/triplet.js:7-9`, `:42`). Ours said `abcjs-tuplet`, which is the right word
+        // for the concept and the wrong one for compat: a stylesheet written against abcjs
+        // selects `.abcjs-triplet`, and no comparison could match the bracket either.
+        if (abcjs) {
+          for (const t of staff.tupletTexts.filter(mine)) {
+            bracketGroup(
+              staff.tupletLines.filter(mine).filter((l) => l.group === t.group),
+              t,
+              'triplet',
+              'triplet-bracket',
+              false,
+            )
+          }
+        } else {
+          for (const line of staff.tupletLines.filter(mine)) {
+            parts.push(lineToRect(TL(line), ` class="${prefix}-tuplet"`, abcjs))
+          }
+        }
+        // Never present in strict mode, where abcjs prints a literal `_` instead — so this
+        // reuses abcjs's lyric class rather than inventing one it has no counterpart for.
+        for (const line of staff.melismaLines.filter(mine)) {
+          parts.push(lineToRect(TL(line), abcjs ? ' class="abcjs-lyric"' : ` class="${prefix}-lyric"`, abcjs))
+        }
+        // Hairpins and glissandi. THE COMMENT HERE USED TO SAY "abcjs paints these with no
+        // class of its own" — reasoned, never measured, and its own output denies it:
+        // `drawCrescendo` passes `classes.generate('dynamics decoration')` and
+        // `"data-name": "dynamics"` (`draw/crescendo.js:34`), which comes out as
+        // `class="abcjs-decoration abcjs-dynamics …" data-name="dynamics"`. A glissando is
+        // `data-name="glissando"` on the same footing.
+        /**
+         * **A HAIRPIN IS ONE STROKED `<path>` WITH TWO SUBPATHS, NOT TWO LINES.**
+         * `drawCrescendo` builds `M %f %f L %f %f M %f %f L %f %f` in a single `printPath`
+         * (`draw/crescendo.js:16-35`), so both arms are one element and one row of the
+         * contract. We drew an arm each, which read as a doubled dynamic. The arms arrive
+         * adjacent and upper-first from `hairpin()` in `layout.ts`, which is the pairing.
+         */
+        const spanners = staff.spannerLines.filter(mine)
+        for (let i = 0; i < spanners.length; i += 1) {
+          const line = spanners[i]
+          if (line === undefined) continue
+          const arm2 = line.role === 'dynamic' ? spanners[i + 1] : undefined
+          if (abcjs && arm2 !== undefined) {
+            i += 1
+            const [a, b] = [TL(line), TL(arm2)]
+            const d =
+              `M ${round2(a.x1)} ${round2(a.y1)} L ${round2(a.x2)} ${round2(a.y2)} ` +
+              `M ${round2(b.x1)} ${round2(b.y1)} L ${round2(b.x2)} ${round2(b.y2)}`
+            others.push({
+              x: a.x1,
+              s:
+                `<path d="${d}" highlight="stroke" stroke="currentColor" ` +
+                `class="${classes.generate('dynamics decoration')}" data-name="dynamics"></path>`,
+            })
+            continue
+          }
+          const named = line.role === 'dynamic' ? 'dynamics' : 'glissando'
+          const cls =
+            line.role === 'dynamic'
+              ? classes.generate('dynamics decoration')
+              : classes.generate('glissando')
+          others.push({
+            x: TL(line).x1,
+            s: lineToRect(
+              TL(line),
+              abcjs ? ` class="${cls}" data-name="${named}"` : ` class="${prefix}-decoration"`,
+              abcjs,
+            ),
+          })
+        }
+        // …and the two buckets go out as ONE list in x order. `Array.sort` is stable, so a
+        // dynamic and a hairpin starting at the same x keep the order they were built in.
+        for (const o of others.sort((p1, p2) => p1.x - p2.x)) parts.push(o.s)
+        // THE NUMBER CARRIES NO CLASS, and that is abcjs's choice rather than an omission:
+        // `drawTriplet` passes `noClass: true` and `name: "" + params.number`
+        // (`draw/triplet.js:11`), so its golden emits `data-name="3"` and nothing else. The
+        // BRACKET beside it is classed `abcjs-triplet` through the group. Giving the number
+        // that class too — which this did until now — invented a hook abcjs does not offer
+        // and still left it unmatchable, since a comparison keyed on `data-name` found
+        // nothing.
+        // …and under `abcjs` the number is written INSIDE its group, by `bracketGroup`.
+        if (!abcjs) {
+          for (const t of staff.tupletTexts.filter(mine)) {
+            const style = `${t.bold ? ' font-weight="bold"' : ''}${t.italic ? ' font-style="italic"' : ''}`
+            const anchor = t.anchor === undefined ? '' : ` text-anchor="${t.anchor}"`
+            parts.push(
+              `<text class="${prefix}-tuplet"${anchor} x="${textNum(t.x * PX)}" ` +
+                `y="${round2(t.y * PX + oy)}" font-family="serif" font-size="${num(t.size * PX)}"${style}>${escapeText(t.text)}</text>`,
+            )
+          }
+        }
+        /**
+         * **A SLUR AND A TIE NAME THE NOTES THEY JOIN.** `drawTie` builds
+         * `abcjs-start-m{measure}-n{note} abcjs-end-m{measure}-n{note}` off each anchor's
+         * `parent.counters` — an unanchored end is `abcjs-start-edge` / `abcjs-end-edge` —
+         * and `drawArc` appends `slur` and then `tie` or `legato` before generating
+         * (`draw/tie.js:6-20`, `:83-87`). `data-name` is `tie` or `slur`. Ours wrote a bare
+         * `abcjs-tie`, which is a class abcjs only ever writes with the rest of that string.
+         */
+        for (const curve of staff.curves.filter(mine)) {
+          const end = (which: 'start' | 'end', index: number | undefined): string => {
+            const c = index === undefined ? undefined : counters.get(index)
+            return c === undefined
+              ? `abcjs-${which}-edge`
+              : `abcjs-${which}-m${c.measure}-n${c.note}`
+          }
+          const klass =
+            `${end('start', curve.startElement)} ${end('end', curve.endElement)}` +
+            ` slur ${curve.kind === 'tie' ? 'tie' : 'legato'}`
+          // Generated at the CLOSING note's measure: the curve is `addOther`'d when it
+          // closes, so the count of `"bar"` markers ahead of it in `otherchildren` is that
+          // note's own measure index within the line.
+          const at = curve.endElement === undefined ? 0 : (counters.get(curve.endElement)?.measure ?? 0)
+          parts.push(
+            curveToPath(
+              TC(curve),
+              abcjs
+                // ALWAYS a `class`, empty or not: `generate` returns `''` and `svg.js`'s
+                // `path` sets every key it is handed, so the attribute is written either way.
+                ? ` class="${classes.generateAt(klass, at)}" data-name="${curve.kind}"`
+                : ` class="${prefix}-${curve.kind}"`,
+              strict,
+              PX,
+            ),
+          )
+        }
+        dynamics.length = 0
+        graceBeams.length = 0
+      }
+      /**
+       * Which VOICE each element belongs to. `staff.elements` is already voice-major —
+       * `fixed.flat()` — so the boundaries are the running lengths of `staff.voices`.
+       */
+      const voiceEnds: number[] = []
+      {
+        let n = 0
+        for (const v of staff.voices) {
+          n += v.length
+          voiceEnds.push(n)
+        }
+      }
+      const voiceOf = (i: number): number => {
+        const at = voiceEnds.findIndex((end) => i < end)
+        return at < 0 ? Math.max(0, staff.voices.length - 1) : at
+      }
+      let openVoice = 0
       staff.elements.forEach((el, elIndex) => {
+        // …AND THE PREVIOUS VOICE IS FINISHED BEFORE THIS ONE OPENS — see `flushVoice`.
+        if (abcjs && voiceOf(elIndex) !== openVoice) {
+          flushVoice(openVoice)
+          openVoice = voiceOf(elIndex)
+          classes.incrVoice()
+        }
         // Already written above, ahead of the braces. See the hoist.
         if (abcjs && el.blockHeight !== undefined) return
         if (
@@ -1802,375 +2210,8 @@ const glyphDefs = new Map<GlyphName, string>()
       // (`draw/voice.js:50`, `:59`), and it RESETS the counter to 0 rather than opening the
       // next measure (`helpers/classes.js:44-46`). So every beam is `m0 mm0` whatever bar
       // it is in — ours carried the running count.
-      if (abcjs) classes.startMeasure()
-      /** The group already written — see the one-path-per-group rule below. */
-      let lastBeamGroup: number | undefined
-      for (const beam of staff.beams) {
-        /**
-         * **A BEAM'S CLASS IS GENERATED, NOT LITERAL** —
-         * `classes.generate('beam-elem ' + durationClass)` with `.` → `-`
-         * (`draw/beam.js:24-25`), so `add_classes` gives
-         * `abcjs-beam-elem abcjs-d0-125 abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0` and without it
-         * an EMPTY `class=""` — abcjs passes `''` and `svg.js`'s path sets the attribute
-         * anyway, because `'' !== undefined`. Ours wrote a literal `abcjs-beam`, which is a
-         * class abcjs does not have at all.
-         */
-        const beamClass = abcjs
-          ? ` class="${classes.generate(
-              `beam-elem d${Math.round((beam.durationClass ?? 0) * 1000) / 1000}`.replace(
-                /\./g,
-                '-',
-              ),
-            )}"`
-          : ` class="${prefix}-beam"`
-        if (!abcjs) {
-          parts.push(lineToRect(TL(beam), beamClass, abcjs))
-          continue
-        }
-        /**
-         * **A BEAM IS A `<path>`, AND ONE PATH HOLDS EVERY BEAM OF ITS GROUP.** `drawBeam`
-         * concatenates each beam's four corners into a single `d` and writes one element
-         * (`draw/beam.js:7-44`), so a sixteenth run is ONE path with two subpaths. Ours was
-         * a `<polygon>` per beam.
-         *
-         * The separators are abcjs's own and they are IRREGULAR — a space before the first
-         * and third `L` and none before the second:
-         *
-         *     "M" + sx + " " + sy + " L" + ex + " " + ey + "L" + ex + " " + ey2 + " L" + sx + " " + sy2 + "z"
-         *
-         * and every coordinate is `roundNumber`d. The second edge is the first plus `dy`,
-         * the beam's thickness, which is why the corners run start-top → end-top →
-         * end-bottom → start-bottom.
-         */
-        if (beam.group !== undefined && beam.group === lastBeamGroup) continue
-        lastBeamGroup = beam.group
-        const members =
-          beam.group === undefined
-            ? [beam]
-            : staff.beams.filter((b) => b.group === beam.group)
-        const d = members
-          .map((b) => {
-            const t = TL(b)
-            // …and the SECOND edge is rounded off the ALREADY-ROUNDED first, because
-            // abcjs computes `startY2 = roundNumber(startY + dy)` from a `startY` that has
-            // been through `roundNumber` itself (`draw/beam.js:37-42`).
-            const r2 = (n: number): number => Number.parseFloat(n.toFixed(2))
-            // `dy` is SIGNED — `+STEP` for stems up, `-STEP` for stems down — so the path
-            // opens on the TOP edge of an up-stem beam and the BOTTOM edge of a down-stem
-            // one. See `PlacedLine.stemsUp`.
-            const dy = (b.stemsUp === false ? -1 : 1) * t.thickness
-            const half = (b.stemsUp === false ? 1 : -1) * (t.thickness / 2)
-            const [sx, ex] = [r2(t.x1), r2(t.x2)]
-            const [sy, ey] = [r2(t.y1 + half), r2(t.y2 + half)]
-            const [sy2, ey2] = [r2(sy + dy), r2(ey + dy)]
-            return `M${sx} ${sy} L${ex} ${ey}L${ex} ${ey2} L${sx} ${sy2}z`
-          })
-          .join('')
-        parts.push(`<path d="${d}" stroke="none" fill="currentColor"${beamClass}></path>`)
-      }
-      // A GRACE BEAM's own class is `beam-elem d0` — its `durationClass` is 0, since a
-      // grace note has no sounding duration.
-      for (const b of graceBeams) {
-        parts.push(lineToRect(TL(b), attrIfAny(classes.generate('beam-elem d0')), abcjs))
-      }
-      // **`drawDynamics` AND `drawCrescendo` DISAGREE ON THE ORDER OF THEIR OWN TWO
-      // CLASSES** — `generate('decoration dynamics')` for a volume mark
-      // (`draw/dynamics.js:11`) and `generate('dynamics decoration')` for a hairpin
-      // (`draw/crescendo.js:34`). abcjs's contract shows both spellings side by side, so
-      // it is a quirk to reproduce rather than one of them to pick.
-      /**
-       * **A MULTI-LETTER DYNAMIC IS A GROUP OF PLAIN PATHS.** `printSymbol` opens
-       * `<g data-name="dynamics" class="…">` and gives each LETTER only `{stroke, fill}` —
-       * the class and the name belong to the group, not to its children
-       * (`draw/print-symbol.js:16-31`). A single-letter one takes the other arm and carries
-       * all four attributes itself. `PlacedGlyph.group` is what tells them apart.
-       */
-      /**
-       * abcjs-debt: §2.3 — two buckets merged by x, an APPROXIMATION of abcjs's one
-       * ordered list. The entry most likely to become a defect. Docs/ABCJS-DEBT.md
-       *
-       * **`otherchildren` IS ONE INTERLEAVED LIST IN ADD ORDER**, so a hairpin written
-       * between two dynamics is DRAWN between them (`draw/voice.js:64-90`). Ours held two
-       * buckets and emptied the dynamics one first. Merged by x below, which is the add
-       * order for a single voice: a `CrescendoElem` is added where its `<(` is seen, which
-       * is where its left arm starts.
-       *
-       * **A MULTI-LETTER DYNAMIC IS A GROUP OF PLAIN PATHS.** `printSymbol` opens
-       * `<g data-name="dynamics" class="…">` and gives each LETTER only `{stroke, fill}` —
-       * the class and the name belong to the group, not to its children
-       * (`draw/print-symbol.js:16-31`). A single-letter one takes the other arm and carries
-       * all four attributes itself. `PlacedGlyph.group` names the kind and `groupStart`
-       * marks the occurrence.
-       */
-      const others: { x: number; s: string }[] = []
-      let dynBuf: string[] = []
-      let dynX = 0
-      const flushDynamic = (): void => {
-        if (dynBuf.length > 0) others.push({ x: dynX, s: `${dynBuf.join('')}</g>` })
-        dynBuf = []
-      }
-      for (const g of dynamics) {
-        const grp = g.group ?? null
-        if (grp === null) {
-          flushDynamic()
-          others.push({
-            x: g.x,
-            s: glyphMarkup(
-              g.name,
-              g.x,
-              g.y,
-              g.scale,
-              // The name goes in the ATTRIBUTES rather than through `dataName`, because a
-              // SCALED glyph takes `glyphMarkup`'s transform path, which writes the
-              // attribute string and nothing else. The ORDER is `svg.js:path`'s key order
-              // over `printSymbol`'s options — class, stroke, fill, then the name.
-              ` class="${classes.generate('decoration dynamics')}" stroke="none" ` +
-                `fill="currentColor" data-name="${ABCJS_DATA_NAMES.dynamic}"`,
-              g.role,
-              // The name is already in the attribute string above; `'' ?? x` is `''`, so
-              // this stops `glyphMarkup` adding a SECOND `data-name` from the glyph key.
-              '',
-            ),
-          })
-          continue
-        }
-        if (g.groupStart === true) {
-          flushDynamic()
-          dynX = g.x
-          dynBuf.push(`<g${attrIfAny(classes.generate('decoration dynamics'))} data-name="${grp}">`)
-        }
-        dynBuf.push(
-          glyphMarkup(
-            g.name,
-            g.x,
-            g.y,
-            g.scale,
-            ' stroke="none" fill="currentColor"',
-            g.role,
-            // Inside the group abcjs names NONE of the children — `printSymbol` hands them
-            // `{stroke, fill}` and nothing else — and `'' ?? x` is `''`, so this suppresses
-            // the attribute rather than falling back to the glyph key.
-            '',
-          ),
-        )
-      }
-      flushDynamic()
-      /**
-       * **A BRACKET IS A GROUP HOLDING ONE PATH AND ITS NUMBER.** Both `drawEnding` and
-       * `drawTriplet` open a `<g>`, write EVERY segment as a single `printPath` `d`, add
-       * the number as a `noClass` text naming itself, and close
-       * (`draw/ending.js:27-50`, `draw/triplet.js:7-13`). We wrote a line per segment at
-       * the voice's own level and a text beside them, which is four rows of the contract
-       * where abcjs has three — and the `d` is `M … L … ` per segment WITH a trailing
-       * space, from `sprintf`.
-       */
-      const bracketGroup = (
-        lines: readonly PlacedLine[],
-        text: PlacedText | undefined,
-        name: string,
-        pathName: string,
-        fill: boolean,
-      ): void => {
-        if (text === undefined) return
-        // abcjs-debt: §3 — a stray space that is load-bearing. Docs/ABCJS-DEBT.md
-        // **THE TWO SEGMENT WRITERS DISAGREE ON A TRAILING SPACE.** `drawEnding`'s
-        // `sprintf("M %f %f L %f %f ", …)` ends each segment with one; `drawTriplet`'s
-        // `drawLine` does not (`draw/ending.js:14`, `draw/triplet.js:18`). One byte per
-        // segment, and a quirk to reproduce rather than one of them to pick.
-        const gap = fill ? ' ' : ''
-        const d = lines
-          .map((l) => {
-            const t = TL(l)
-            return `M ${round2(t.x1)} ${round2(t.y1)} L ${round2(t.x2)} ${round2(t.y2)}${gap}`
-          })
-          .join('')
-        parts.push(
-          `<g${attrIfAny(classes.generateAt(text.groupClass ?? '', text.measure ?? 0))}` +
-            `${fill ? ' fill="currentColor"' : ''} data-name="${name}">`,
-        )
-        if (d) {
-          parts.push(
-            `<path d="${d}" stroke="currentColor"${fill ? ' fill="currentColor"' : ''} ` +
-              `data-name="${pathName}"></path>`,
-          )
-        }
-        // **AND THE NUMBER IS `renderText`'s ELEMENT LIKE ANY OTHER** — `repeatfont` with
-        // `noClass` for an ending, `tripletfont` with `noClass` and `centerVertically` for
-        // a triplet (`draw/ending.js:40-49`, `draw/triplet.js:12`). Ours wrote an ad-hoc
-        // `<text>` in `serif` with the attributes in another order.
-        const face = text.font === undefined ? undefined : ABCJS_FONT_FACE[text.font]
-        parts.push(
-          face === undefined
-            ? `<text${text.anchor === undefined ? '' : ` text-anchor="${text.anchor}"`} ` +
-                `x="${textNum(text.x * PX)}" y="${round2(text.y * PX + oy)}" ` +
-                `font-family="serif" font-size="${num(text.size * PX)}" ` +
-                `data-name="${escapeAttr(text.dataName ?? text.text)}">${escapeText(text.text)}</text>`
-            : abcjsText(
-                textNum(text.x * PX),
-                round2(text.y * PX + oy),
-                num(text.size * PX),
-                face,
-                text.italic,
-                text.bold,
-                text.anchor ?? 'start',
-                text.dataName ?? text.text,
-                escapeText(text.text),
-                '',
-                [],
-                false,
-                text.noClass === true,
-              ),
-        )
-        parts.push('</g>')
-      }
-      if (abcjs) {
-        for (const t of staff.voltaTexts) {
-          bracketGroup(
-            staff.voltaLines.filter((l) => l.group === t.group),
-            t,
-            'ending',
-            'line',
-            true,
-          )
-        }
-      } else {
-        for (const line of staff.voltaLines) {
-          parts.push(lineToRect(TL(line), ` class="${prefix}-volta"`, abcjs))
-        }
-        for (const t of staff.voltaTexts) {
-          parts.push(
-            `<text class="${prefix}-volta" x="${textNum(t.x * PX)}" ` +
-              `y="${round2(t.y * PX + oy)}" font-family="serif" font-size="${num(t.size * PX)}">${escapeText(t.text)}</text>`,
-          )
-        }
-      }
-      // ABCJS CALLS IT A TRIPLET, whatever the number — `classes.generate('triplet ' +
-      // durationClass)` on the group and `data-name="triplet-bracket"` on the path
-      // (`draw/triplet.js:7-9`, `:42`). Ours said `abcjs-tuplet`, which is the right word
-      // for the concept and the wrong one for compat: a stylesheet written against abcjs
-      // selects `.abcjs-triplet`, and no comparison could match the bracket either.
-      if (abcjs) {
-        for (const t of staff.tupletTexts) {
-          bracketGroup(
-            staff.tupletLines.filter((l) => l.group === t.group),
-            t,
-            'triplet',
-            'triplet-bracket',
-            false,
-          )
-        }
-      } else {
-        for (const line of staff.tupletLines) {
-          parts.push(lineToRect(TL(line), ` class="${prefix}-tuplet"`, abcjs))
-        }
-      }
-      // Never present in strict mode, where abcjs prints a literal `_` instead — so this
-      // reuses abcjs's lyric class rather than inventing one it has no counterpart for.
-      for (const line of staff.melismaLines) {
-        parts.push(lineToRect(TL(line), abcjs ? ' class="abcjs-lyric"' : ` class="${prefix}-lyric"`, abcjs))
-      }
-      // Hairpins and glissandi. THE COMMENT HERE USED TO SAY "abcjs paints these with no
-      // class of its own" — reasoned, never measured, and its own output denies it:
-      // `drawCrescendo` passes `classes.generate('dynamics decoration')` and
-      // `"data-name": "dynamics"` (`draw/crescendo.js:34`), which comes out as
-      // `class="abcjs-decoration abcjs-dynamics …" data-name="dynamics"`. A glissando is
-      // `data-name="glissando"` on the same footing.
-      /**
-       * **A HAIRPIN IS ONE STROKED `<path>` WITH TWO SUBPATHS, NOT TWO LINES.**
-       * `drawCrescendo` builds `M %f %f L %f %f M %f %f L %f %f` in a single `printPath`
-       * (`draw/crescendo.js:16-35`), so both arms are one element and one row of the
-       * contract. We drew an arm each, which read as a doubled dynamic. The arms arrive
-       * adjacent and upper-first from `hairpin()` in `layout.ts`, which is the pairing.
-       */
-      for (let i = 0; i < staff.spannerLines.length; i += 1) {
-        const line = staff.spannerLines[i]
-        if (line === undefined) continue
-        const arm2 = line.role === 'dynamic' ? staff.spannerLines[i + 1] : undefined
-        if (abcjs && arm2 !== undefined) {
-          i += 1
-          const [a, b] = [TL(line), TL(arm2)]
-          const d =
-            `M ${round2(a.x1)} ${round2(a.y1)} L ${round2(a.x2)} ${round2(a.y2)} ` +
-            `M ${round2(b.x1)} ${round2(b.y1)} L ${round2(b.x2)} ${round2(b.y2)}`
-          others.push({
-            x: a.x1,
-            s:
-              `<path d="${d}" highlight="stroke" stroke="currentColor" ` +
-              `class="${classes.generate('dynamics decoration')}" data-name="dynamics"></path>`,
-          })
-          continue
-        }
-        const named = line.role === 'dynamic' ? 'dynamics' : 'glissando'
-        const cls =
-          line.role === 'dynamic'
-            ? classes.generate('dynamics decoration')
-            : classes.generate('glissando')
-        others.push({
-          x: TL(line).x1,
-          s: lineToRect(
-            TL(line),
-            abcjs ? ` class="${cls}" data-name="${named}"` : ` class="${prefix}-decoration"`,
-            abcjs,
-          ),
-        })
-      }
-      // …and the two buckets go out as ONE list in x order. `Array.sort` is stable, so a
-      // dynamic and a hairpin starting at the same x keep the order they were built in.
-      for (const o of others.sort((p1, p2) => p1.x - p2.x)) parts.push(o.s)
-      // THE NUMBER CARRIES NO CLASS, and that is abcjs's choice rather than an omission:
-      // `drawTriplet` passes `noClass: true` and `name: "" + params.number`
-      // (`draw/triplet.js:11`), so its golden emits `data-name="3"` and nothing else. The
-      // BRACKET beside it is classed `abcjs-triplet` through the group. Giving the number
-      // that class too — which this did until now — invented a hook abcjs does not offer
-      // and still left it unmatchable, since a comparison keyed on `data-name` found
-      // nothing.
-      // …and under `abcjs` the number is written INSIDE its group, by `bracketGroup`.
-      if (!abcjs) {
-        for (const t of staff.tupletTexts) {
-          const style = `${t.bold ? ' font-weight="bold"' : ''}${t.italic ? ' font-style="italic"' : ''}`
-          const anchor = t.anchor === undefined ? '' : ` text-anchor="${t.anchor}"`
-          parts.push(
-            `<text class="${prefix}-tuplet"${anchor} x="${textNum(t.x * PX)}" ` +
-              `y="${round2(t.y * PX + oy)}" font-family="serif" font-size="${num(t.size * PX)}"${style}>${escapeText(t.text)}</text>`,
-          )
-        }
-      }
-      /**
-       * **A SLUR AND A TIE NAME THE NOTES THEY JOIN.** `drawTie` builds
-       * `abcjs-start-m{measure}-n{note} abcjs-end-m{measure}-n{note}` off each anchor's
-       * `parent.counters` — an unanchored end is `abcjs-start-edge` / `abcjs-end-edge` —
-       * and `drawArc` appends `slur` and then `tie` or `legato` before generating
-       * (`draw/tie.js:6-20`, `:83-87`). `data-name` is `tie` or `slur`. Ours wrote a bare
-       * `abcjs-tie`, which is a class abcjs only ever writes with the rest of that string.
-       */
-      for (const curve of staff.curves) {
-        const end = (which: 'start' | 'end', index: number | undefined): string => {
-          const c = index === undefined ? undefined : counters.get(index)
-          return c === undefined
-            ? `abcjs-${which}-edge`
-            : `abcjs-${which}-m${c.measure}-n${c.note}`
-        }
-        const klass =
-          `${end('start', curve.startElement)} ${end('end', curve.endElement)}` +
-          ` slur ${curve.kind === 'tie' ? 'tie' : 'legato'}`
-        // Generated at the CLOSING note's measure: the curve is `addOther`'d when it
-        // closes, so the count of `"bar"` markers ahead of it in `otherchildren` is that
-        // note's own measure index within the line.
-        const at = curve.endElement === undefined ? 0 : (counters.get(curve.endElement)?.measure ?? 0)
-        parts.push(
-          curveToPath(
-            TC(curve),
-            abcjs
-              // ALWAYS a `class`, empty or not: `generate` returns `''` and `svg.js`'s
-              // `path` sets every key it is handed, so the attribute is written either way.
-              ? ` class="${classes.generateAt(klass, at)}" data-name="${curve.kind}"`
-              : ` class="${prefix}-${curve.kind}"`,
-            strict,
-            PX,
-          ),
-        )
-      }
-
+      // The LAST voice of the staff — the loop only flushes on a boundary.
+      flushVoice(openVoice)
       if (!abcjs) parts.push('</g>')
     }
     /**

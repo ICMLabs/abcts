@@ -907,6 +907,8 @@ export interface PlacedLine {
    * `p1`/`p2` are pitches abcjs never converts, and the extent sums them as pitches.
    */
   readonly pitchRange?: readonly [number, number]
+  /** Which voice ON THIS STAFF this belongs to — abcjs finishes one before the next. */
+  readonly voice?: number
   /** A GRACE's stem — written after every grace head, not with the main note's rules. */
   readonly graceStem?: boolean
   /** Which grace of the group this belongs to, so a ledger follows its OWN head. */
@@ -960,6 +962,8 @@ export interface PlacedText {
    * which is why the staff after two of them is `abcjs-l2` and not `abcjs-l0`.
    */
   readonly nonMusicIndex?: number
+  /** Which voice ON THIS STAFF this belongs to — see `PlacedLine.voice`. */
+  readonly voice?: number
   /**
    * The RECT a `%%…box` font draws round this row — see the part-order branch of
    * `topTextBlock`. Present only when the font asked for one; the emitter turns it into
@@ -1236,6 +1240,8 @@ export interface StemInfo {
  * the two cubics, and a future canvas backend would derive its own.
  */
 export interface PlacedCurve {
+  /** Which voice ON THIS STAFF this belongs to — see `PlacedLine.voice`. */
+  readonly voice?: number
   readonly x1: number
   readonly y1: number
   readonly x2: number
@@ -9074,13 +9080,26 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         parts.map((p) => p.elements),
         strict,
       )
+      /**
+       * **abcjs FINISHES ONE VOICE BEFORE IT STARTS THE NEXT.** `drawStaffGroup` loops
+       * `params.voices[i]` and `drawVoice` walks that voice's children, THEN its beams,
+       * THEN its otherchildren (`draw/staff-group.js:112`, `draw/voice.js:25-90`). Ours
+       * merged every voice's elements, then every voice's beams — which is the same set in
+       * a different order, and 19 of the corpus's differing fixtures share a staff.
+       *
+       * The elements were already voice-major (`fixed.flat()`); everything else needed a
+       * handle, so each voice's furniture is STAMPED with its position on the staff and the
+       * emitter flushes per voice.
+       */
+      const stampLine = (v: number) => (l: PlacedLine) => ({ ...l, voice: v })
+      const stampText = (v: number) => (t: PlacedText) => ({ ...t, voice: v })
       return {
         ...first,
         voices: fixed,
         elements: fixed.flat(),
-        beams: parts.flatMap((p) => p.beams),
-        tupletLines: parts.flatMap((p) => p.tupletLines),
-        tupletTexts: parts.flatMap((p) => p.tupletTexts),
+        beams: parts.flatMap((p, v) => p.beams.map(stampLine(v))),
+        tupletLines: parts.flatMap((p, v) => p.tupletLines.map(stampLine(v))),
+        tupletTexts: parts.flatMap((p, v) => p.tupletTexts.map(stampText(v))),
         // The staff's reserves are the union of its voices', not the first voice's. A
         // spread alone kept only voice one's, so a hairpin or a tuplet on the lower voice
         // of a shared staff reserved nothing at all.
@@ -9088,9 +9107,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         curveReserves: parts.flatMap((p) => p.curveReserves),
         tupletReservesAbove: parts.some((p) => p.tupletReservesAbove),
         hasHairpin: parts.some((p) => p.hasHairpin),
-        voltaLines: parts.flatMap((p) => p.voltaLines),
-        voltaTexts: parts.flatMap((p) => p.voltaTexts),
-        melismaLines: parts.flatMap((p) => p.melismaLines),
+        voltaLines: parts.flatMap((p, v) => p.voltaLines.map(stampLine(v))),
+        voltaTexts: parts.flatMap((p, v) => p.voltaTexts.map(stampText(v))),
+        melismaLines: parts.flatMap((p, v) => p.melismaLines.map(stampLine(v))),
       }
     })
 
@@ -9290,17 +9309,18 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     // every voice on it.
     staves: system.staves.map((staff, staffIndex) => ({
       ...staff,
-      curves: (voicesOfStaff[staffIndex] ?? []).flatMap(
-        (v) => curvesBySystem[v]?.[systemIndex] ?? [],
+      curves: (voicesOfStaff[staffIndex] ?? []).flatMap((v, pos) =>
+        (curvesBySystem[v]?.[systemIndex] ?? []).map((c) => ({ ...c, voice: pos })),
       ),
       // …and THE HAIRPIN'S LANE IS ANCHORED HERE, because this is where it arrives. See
       // `dynamicShift`.
-      spannerLines: (voicesOfStaff[staffIndex] ?? []).flatMap((v) =>
-        (spannersBySystem[v]?.[systemIndex] ?? []).map((l) =>
-          l.role === 'dynamic' && staff.dynamicShift !== undefined
+      spannerLines: (voicesOfStaff[staffIndex] ?? []).flatMap((v, pos) =>
+        (spannersBySystem[v]?.[systemIndex] ?? []).map((l) => ({
+          ...(l.role === 'dynamic' && staff.dynamicShift !== undefined
             ? { ...l, y1: l.y1 + staff.dynamicShift, y2: l.y2 + staff.dynamicShift }
-            : l,
-        ),
+            : l),
+          voice: pos,
+        })),
       ),
     })),
   }))
