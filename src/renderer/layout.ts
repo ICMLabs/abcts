@@ -916,6 +916,16 @@ export interface PlacedText {
    */
   readonly dataName?: string
   /**
+   * Which nonMusic LINE of the tune's own top block this row belongs to, if any.
+   *
+   * abcjs closes `abcjs-meta-top` after the title rows and opens ONE
+   * `<g class="abcjs-non-music">` per nonMusic line (`draw/draw.js:12-58`), so two
+   * consecutive `%%text` directives are two sibling groups rather than one — measured on a
+   * control through abcjs with `--add-classes`. It also runs `classes.incrLine()` for each,
+   * which is why the staff after two of them is `abcjs-l2` and not `abcjs-l0`.
+   */
+  readonly nonMusicIndex?: number
+  /**
    * Extra lines of the SAME `<text>`, each a `<tspan dy="1.2em">`. abcjs's `addTextIf`
    * takes a string with `\n` in it and emits ONE element (`add-text-if.js:20-33`), which
    * is how `N:` and `H:` print — its own golden reads
@@ -8165,6 +8175,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
                 score.textAbove,
                 score.fonts,
                 ENGRAVE.marginTop,
+                musicSpace,
               )
               topAdvances = built.advances
               return {
@@ -8187,11 +8198,13 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           : [
               {
                 type: 'title',
-                // A MID-TUNE BLOCK SPENDS NO `musicSpace`. abcjs's `spacing.music` is
-                // spent once, before the first staff group (`draw.js:17`); a nonMusic line
-                // between two groups costs exactly its own rows. Measured on a control
-                // pair: a mid-tune `T:` costs 27.05px and nothing else moves.
-                blockAbutsMusic: systemIndex > 0,
+                // NEITHER BLOCK SPENDS ONE HERE. abcjs's `spacing.music` is spent once,
+                // before the first staff group (`draw.js:17`); a nonMusic line between two
+                // groups costs exactly its own rows. Measured on a control pair: a mid-tune
+                // `T:` costs 27.05px and nothing else moves. The tune's OWN block now
+                // carries the term inside itself, in abcjs's position — before its
+                // `%%text` rows rather than after them — so it too abuts the music.
+                blockAbutsMusic: true,
                 x: 0,
                 width: 0,
                 staffSteps: [],
@@ -8953,7 +8966,14 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   const stafflessBlock =
     shown.length > 0
       ? undefined
-      : topTextBlock(score.metadata, systemWidth - ENGRAVE.marginX * 2, score.textAbove, score.fonts)
+      : topTextBlock(
+          score.metadata,
+          systemWidth - ENGRAVE.marginX * 2,
+          score.textAbove,
+          score.fonts,
+          0,
+          musicSpace,
+        )
 
   /**
    * The bottom block — `W:`, `B:`, `S:`, `D:`, `N:`, `Z:`, `H:` — with `draw()`'s bare
@@ -9062,7 +9082,6 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       if (block !== undefined) {
         for (const a of block.advances) y += a
         y += block.height - block.advances.reduce((t, a) => t + a, 0)
-        y += musicSpace
       } else {
         for (const a of topAdvances) y += a
         const named = topAdvances.reduce((t, a) => t + a, 0)
@@ -9073,8 +9092,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         // costs and any ink a block's row reaches above its own declared box, which abcjs
         // does not reserve at all; it is EXACTLY ZERO on a plain tune, and `y += 0` is
         // exact.
-        y += musicSpace
-        if (first !== undefined) y += first.leading - named - musicSpace
+        if (first !== undefined) y += first.leading - named
         for (const [i, system] of shown.entries()) {
           if (i > 0) {
             y += system.gap ?? 0
@@ -9189,6 +9207,8 @@ function topTextBlock(
    * doubles, and a title's y is five rows of the byte table.
    */
   from = 0,
+  /** `spacing.music`, spent before the nonMusic rows — see below. `%%musicspace` sets it. */
+  musicSpace: number = ENGRAVE.musicSpace,
 ): { texts: PlacedText[]; height: number; advances: number[] } {
   const texts: PlacedText[] = []
   /**
@@ -9433,7 +9453,32 @@ function topTextBlock(
   // …AND `%%center` IS THE ONE ROW THAT IS NOT PAPER-CENTRED. `FreeText` puts it at
   // `width / 2` with no `paddingLeft` at all (`free-text.js:37`), so it lands on 335 where
   // the title lands on 350 — a 15px difference the model's own comment already recorded.
-  y = appendFreeText(texts, textAbove, y, width / 2, fonts)
+  /**
+   * **A `%%text` BEFORE THE MUSIC IS A nonMusic LINE, NOT TOP TEXT — so `spacing.music` is
+   * spent BEFORE it and not after.** `draw()` closes the `abcjs-meta-top` group, runs
+   * `moveY(spacing.music)`, and only THEN walks `tune.lines`, where a `%%text`,
+   * a `%%center` or a `%%begintext` block stands as `abcLine.nonMusic`
+   * (`draw/draw.js:12-58`). Measured through abcjs on a control pair: a `%%text` written
+   * before `K:` and one written after it produce IDENTICAL output, so the placement is not
+   * a parser question at all.
+   *
+   * The comment this replaces reasoned from the TOTAL — "we place the block `musicSpace`
+   * above the music, so that same 7.56 is already accounted for on the other side" — and
+   * the total was right, which is why the root's `height` matched to the byte while every
+   * free-text row sat 7.56px high. **A SUM CANNOT SEE AN ORDER.** Same shape as the page
+   * walk, and the fix is the same: spend the term where abcjs spends it.
+   *
+   * The block's own HEIGHT does not change: its last row now ends exactly where the staff
+   * group begins, which is what abcjs's `%%center` case already said in as many words.
+   */
+  // **AND IT IS A TERM OF THIS BLOCK, IN THIS POSITION.** `15 + titles + music + rows` and
+  // `15 + titles + rows + music` are different doubles, which is the same ULP the page walk
+  // was rewritten for. The block therefore ENDS at the staff group — the placement gives it
+  // no gap of its own (`blockAbutsMusic`), and the page walk no longer spends the term
+  // separately.
+  advances.push(musicSpace)
+  y += musicSpace
+  y = appendFreeText(texts, textAbove, y, width / 2, fonts, [], true)
 
   // The HEIGHT is still the block's own, so the placement below is unchanged; only the
   // texts' y is now the page's.
@@ -9457,6 +9502,12 @@ function appendFreeText(
   fonts: Score['fonts'],
   /** `%%sep` rules, collected out — a block can carry ink as well as text. */
   rules: { y: number; width: number }[] = [],
+  /**
+   * Stamp each row with WHICH nonMusic line it came from. Only the tune's own top block
+   * needs it: a mid-tune block is already one group of its own, where the top block's
+   * rows sit beside the title's and abcjs closes `abcjs-meta-top` between them.
+   */
+  tagNonMusic = false,
 ): number {
   let y = from
   const sizeOf = (type: AbcFontType): number =>
@@ -9468,7 +9519,8 @@ function appendFreeText(
    */
   const boxOf = (type: AbcFontType): number =>
     fonts[type]?.box === true ? sizeOf(type) * ENGRAVE.fontBoxPadding * 4 : 0
-  for (const block of blocks) {
+  for (const [blockIndex, block] of blocks.entries()) {
+    const tag: { nonMusicIndex?: number } = tagNonMusic ? { nonMusicIndex: blockIndex } : {}
     if (block.separator !== undefined) {
       // The RULE COSTS NO HEIGHT — `drawSeparator` paints at the cursor and moves nothing
       // — so the line is worth exactly its two spaces. Points to staff spaces on the way.
@@ -9487,6 +9539,7 @@ function appendFreeText(
           // abcjs names every nonMusic row too — a `Subtitle` is `data-name="subtitle"`
           // and a `FreeText` is `"free-text"` (`elements/subtitle.js`, `free-text.js:11`).
           dataName: 'subtitle',
+          ...tag,
           x: centre,
           y: y + size,
           size,
@@ -9509,6 +9562,7 @@ function appendFreeText(
         text: index === 0 && line === '' ? '\u00A0' : line,
         role: 'title',
         dataName: 'free-text',
+        ...tag,
         // `%%text` sits at `paddingLeft` with `anchor: "start"` and `%%center` at
         // `width / 2` with no padding at all (`free-text.js:11`, `:37`) — the same split
         // the top block's rows take, and this row was placed at 0.

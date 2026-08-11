@@ -11,7 +11,7 @@ system 0 width=792.750 originY=0.000
     title x=0.000 w=0.000
       text  350.000,-120.572 size=27.000 "Center Directive Test"
       text  685.000,-88.012 size=19.000 italic "Test Fixture"
-      text  335.000,-63.012 size=21.000 "This is centered text above the tune"
+      text  335.000,-55.452 size=21.000 "This is centered text above the tune"
     clef x=15.000 w=24.051
       glyph gClef 20.000,-15.500
     timeSignature x=49.051 w=11.795

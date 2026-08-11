@@ -1023,57 +1023,91 @@ const glyphDefs = new Map<GlyphName, string>()
      * titleless tune's first child is the staff-wrapper and not an empty `<g></g>`.
      */
     if (abcjs) {
-      const block: string[] = []
+      /**
+       * **THE TOP BLOCK IS NOT ONE GROUP — `abcjs-meta-top` CLOSES BEFORE THE FIRST
+       * `%%text`.** `draw()` opens the meta-top group, runs `nonMusic(topText)`, closes it,
+       * spends `spacing.music`, and only then walks `tune.lines`, opening ONE
+       * `<g class="abcjs-non-music">` per nonMusic line (`draw/draw.js:12-58`). Measured on
+       * a control with two `%%text` directives: two sibling groups, and the staff after
+       * them is `abcjs-l2` because each ran `classes.incrLine()`.
+       *
+       * `nonMusicIndex` says which line a row came from; the rows with none are the title's
+       * and stay in meta-top.
+       */
+      const block: { t?: PlacedText; s?: string; nonMusicIndex: number | undefined }[] = []
       const first = system.staves[0]
       if (first !== undefined) {
         oy = (system.originY + OY) * PX + first.originY * PX
         for (const el of first.elements) {
           if (el.blockHeight === undefined) continue
-          for (const t of el.texts) {
-            block.push(
-              abcjsText(
-                round2(t.x * PX),
-                // **THE PAGE'S OWN y WHERE THERE IS ONE** — see `PlacedText.pageY`. abcjs
-                // walks ONE cursor from `padding.top` and writes `renderer.y + font.size`;
-                // reaching the same point through the staff's frame is the same three
-                // terms in a different order, and a different double.
-                round2(t.pageY === undefined ? t.y * PX + oy : t.pageY * PX),
-                num(t.size * PX),
-                'Times New Roman',
-                t.italic === true,
-                t.bold === true,
-                t.anchor ?? 'start',
-                // abcjs names EVERY top-text row — `title`, `subtitle`, `composer`,
-                // `free-text` — from the `name` its `addTextIf`/`richText` call passes.
-                // This read a `text` key that was never in the table, so it was always ''.
-                t.dataName ?? '',
-                escapeText(t.text),
-                options.addClasses === true && t.dataName !== undefined
-                  ? (ABCJS_TEXT_CLASSES[t.dataName] ?? '')
-                  : '',
-                (t.extraLines ?? []).map(escapeText),
-                t.middleBaseline === true,
-              ),
-            )
-          }
+          for (const t of el.texts) block.push({ t, nonMusicIndex: t.nonMusicIndex })
           for (const line of el.lines) {
             const t = TL(line)
-            block.push(
-              line.role === 'separator'
-                ? separatorPath(t.x1, t.y1, t.x2, classes.generate('defined-text'))
-                : lineToRect(t, attrs(el.type, line.role), abcjs),
-            )
+            block.push({
+              nonMusicIndex: undefined,
+              s:
+                line.role === 'separator'
+                  ? separatorPath(t.x1, t.y1, t.x2, classes.generate('defined-text'))
+                  : lineToRect(t, attrs(el.type, line.role), abcjs),
+            })
           }
         }
       }
+      // Rendered INSIDE the group loop, because a nonMusic row's class carries the LINE
+      // counter and that counter advances group by group.
+      const renderRow = (b: { t?: PlacedText; s?: string }): string =>
+        b.s !== undefined || b.t === undefined
+          ? (b.s ?? '')
+          : abcjsText(
+              round2(b.t.x * PX),
+              // **THE PAGE'S OWN y WHERE THERE IS ONE** — see `PlacedText.pageY`. abcjs
+              // walks ONE cursor from `padding.top` and writes `renderer.y + font.size`;
+              // reaching the same point through the staff's frame is the same three
+              // terms in a different order, and a different double.
+              round2(b.t.pageY === undefined ? b.t.y * PX + oy : b.t.pageY * PX),
+              num(b.t.size * PX),
+              'Times New Roman',
+              b.t.italic === true,
+              b.t.bold === true,
+              b.t.anchor ?? 'start',
+              // abcjs names EVERY top-text row — `title`, `subtitle`, `composer`,
+              // `free-text` — from the `name` its `addTextIf`/`richText` call passes.
+              // This read a `text` key that was never in the table, so it was always ''.
+              b.t.dataName ?? '',
+              escapeText(b.t.text),
+              // A nonMusic ROW IS NOT A TOP-TEXT ROW: `renderText` classes it
+              // `classes.generate('defined-text')`, which carries the LINE number
+              // (`draw/text.js:36`), where a title's class is a flat literal from the table.
+              options.addClasses !== true
+                ? ''
+                : b.t.nonMusicIndex !== undefined
+                  ? classes.generate('defined-text')
+                  : b.t.dataName !== undefined
+                    ? (ABCJS_TEXT_CLASSES[b.t.dataName] ?? '')
+                    : '',
+              (b.t.extraLines ?? []).map(escapeText),
+              b.t.middleBaseline === true,
+            )
       // …and under `add_classes` the group is named: `abcjs-meta-top` for the tune's own
-      // header block, `abcjs-non-music` for a mid-tune one (`draw/draw.js:11-12`, `:55`).
-      if (block.length > 0) {
-        const klass =
-          options.addClasses === true
-            ? ` class="${systemIndex === 0 ? 'abcjs-meta-top' : 'abcjs-non-music'}"`
-            : ''
-        parts.push(`<g${klass}>${block.join('')}</g>`)
+      // header block, `abcjs-non-music` for a nonMusic line (`draw/draw.js:11-12`, `:55`).
+      // An EMPTY group is DELETED (`svg.js:364-372`), which is what the length tests are.
+      const klassOf = (nonMusic: boolean): string =>
+        options.addClasses === true
+          ? ` class="${!nonMusic && systemIndex === 0 ? 'abcjs-meta-top' : 'abcjs-non-music'}"`
+          : ''
+      const meta = block.filter((b) => b.nonMusicIndex === undefined)
+      if (meta.length > 0) parts.push(`<g${klassOf(false)}>${meta.map(renderRow).join('')}</g>`)
+      const indices = [
+        ...new Set(
+          block.flatMap((b) => (b.nonMusicIndex === undefined ? [] : [b.nonMusicIndex])),
+        ),
+      ].sort((a, b) => a - b)
+      for (const i of indices) {
+        // BEFORE the group, not after it: `draw()` runs `classes.incrLine()` at the head of
+        // every line it walks (`draw/draw.js:30-31`), so the FIRST `%%text` is `abcjs-l0`.
+        classes.incrLine()
+        const rows = block.filter((b) => b.nonMusicIndex === i)
+        parts.push(`<g${klassOf(true)}>${rows.map(renderRow).join('')}</g>`)
       }
     }
 
