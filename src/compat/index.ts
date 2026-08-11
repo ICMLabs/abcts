@@ -27,7 +27,7 @@
  */
 import { plainText, type Score } from '../core/model.js'
 import { parse } from '../parser/parser.js'
-import { STAFF_SPACE_PX } from '../renderer/abcjs-constants.js'
+import { STAFF_SPACE_PX, UNIT_PX } from '../renderer/abcjs-constants.js'
 import { layout } from '../renderer/layout.js'
 import { toSVG } from '../renderer/svg.js'
 
@@ -108,7 +108,7 @@ export function renderAbc(target: Target, abc: string, params: AbcjsParams = {})
   const systemWidth =
     params.staffwidth === undefined
       ? undefined
-      : (params.staffwidth + SCREEN_PADDING * 2) / STAFF_SPACE_PX
+      : (params.staffwidth + SCREEN_PADDING * 2) / UNIT_PX
 
   const tunes = result.scores.map((score) => ({
     svg: toSVG(layout(score, { mode: 'abcjs-strict', ...(systemWidth ? { systemWidth } : {}) }), {

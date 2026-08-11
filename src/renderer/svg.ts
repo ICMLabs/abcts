@@ -753,7 +753,15 @@ const glyphDefs = new Map<GlyphName, string>()
   // staff space to be, and a layout unit is `UNIT_PX` abcjs pixels of it — so compat's own
   // 7.75 resolves to EXACTLY 1 once the layout holds abcjs's pixels, and the emitter stops
   // multiplying at all.
-  const PX = abcjs ? (scale * UNIT_PX) / STAFF_SPACE_PX : 1
+  /**
+   * LAYOUT UNITS → OUTPUT PIXELS, whatever the mode. The host's `staffSpace` is how many
+   * pixels it wants a staff space to be and a layout unit is `UNIT_PX` abcjs pixels of
+   * one, so compat's own 7.75 resolves to EXACTLY 1 once the layout holds abcjs's pixels.
+   */
+  const OUT = (scale * UNIT_PX) / STAFF_SPACE_PX
+  // The DRAWING is in output pixels under `abcjs` and in layout units under core, where a
+  // `viewBox` does the conversion instead. The ROOT's size is `OUT` either way.
+  const PX = abcjs ? OUT : 1
   const OY = abcjs ? -doc.top : 0
   /**
    * **A `<text>`'s x AND y ARE ROUNDED TO TWO DECIMALS IN ABCJS** — `hash.attr.x =
@@ -1635,11 +1643,11 @@ const glyphDefs = new Map<GlyphName, string>()
     )
   }
 
-  const w = abcjs ? doc.pageWidth * scale : (options.pageWidth ?? doc.width * scale)
-  const h = doc.height * scale
+  const w = abcjs ? doc.pageWidth * OUT : (options.pageWidth ?? doc.width * OUT)
+  const h = doc.height * OUT
   // The viewBox must widen with the page, or forcing the width would just scale the
   // music up to fill it instead of leaving the margin abcjs leaves.
-  const viewWidth = options.pageWidth === undefined ? doc.width : options.pageWidth / scale
+  const viewWidth = options.pageWidth === undefined ? doc.width : options.pageWidth / OUT
   // viewBox carries the staff-space coordinate system, including the negative y above
   // the middle line, so nothing downstream has to know about the origin offset.
   const viewBox = `0 ${num(doc.top)} ${num(viewWidth)} ${num(doc.height)}`

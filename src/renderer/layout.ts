@@ -3395,7 +3395,12 @@ function barNumberText(
     onClef?.treble === true && width * UNIT_PX > ENGRAVE.barNumberClefWide
       ? ENGRAVE.barNumberClefPitch
       : ENGRAVE.barNumberPitch
-  const y = stepToY(pitch + fontHeightOf('measurefont') * 2 - PITCH_ORIGIN)
+  // `measureNumDim.height / spacing.STEP` — a LENGTH over the STEP, which is the division
+  // by `spacePerStep`. Written `* 2` it was the same number only while a staff space was
+  // the unit, and the comment above already said so in words.
+  const y = stepToY(
+    pitch + fontHeightOf('measurefont') / ENGRAVE.spacePerStep - PITCH_ORIGIN,
+  )
   // THE POINT IS THE RESERVE; THE BASELINE IS ONE FONT SIZE BELOW IT. `renderText` ends
   // `if (!params.centerVertically) hash.attr.y += hash.font.size` (`draw/text.js:29-30`),
   // and the `barNumber` case passes no `centerVertically` (`draw/relative.js:38-39`). Its
