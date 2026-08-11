@@ -302,7 +302,27 @@ Two guards the measurement put there, each of which cost a run:
 - **A BEAMED STEM MUST NOT SUPPLY ONE.** The beam pass RETARGETS it, so `p1`/`p2` stop
   describing it — 24 root elements went structural the moment it did.
 
-**THE NEXT TERM IS THE INTER-SYSTEM GAP**, and it is the same shape one level up.
+**AND MEASURING SAID IT IS NOT THE GAP — IT IS THE WALK'S TERM STRUCTURE.**
+Of the 23 ULP-height fixtures, **SIX have ONE staff in the whole tune**, so no
+`addStaffPadding` can apply to them at all. Instrumenting the walk on one of those —
+`synth-flattener-33`, ours 162.47400000000002 against abcjs's 162.474 — shows the two
+engines spending a DIFFERENT NUMBER OF TERMS:
+
+    abcjs   15  +  33  +  7.56             +  H·STEP  +  15      (four)
+    ours    15  +  33  +  7.56  +  7.56…16 +  H·STEP  +  15      (five)
+
+The extra is `first.leading - named`, our compensation for a system whose `leading` already
+carries what the top-text `advances` also carry. abcjs has no such term because its
+equivalent is INSIDE `staff.top`, and therefore inside `H` — its `H` is 1.9509 pitch larger
+than ours by exactly that musicSpace. **The totals agree; the ASSOCIATION does not, and a
+five-term sum cannot equal a four-term one bit for bit.**
+
+So the job is one job: **make the page walk spend exactly abcjs's terms.** The block's
+`musicSpace` has to live inside the system's height the way abcjs's lives inside
+`staff.top`, and then `leading - named` disappears rather than being computed more carefully.
+The inter-system gap below is the same job one level up, and both fall out of it.
+
+**THE INTER-SYSTEM GAP** is the second half, and it is the same shape.
 `addStaffPadding` is a PITCH sum with ONE multiply:
 
     lastBottomLine     = -(lastStaff.bottom - 2)
@@ -339,9 +359,10 @@ grep "^      want" /tmp/abcts-svg-bytes-ranked.txt | sed 's/^      want …//' \
   | cut -c1-40 | sort | uniq -c | sort -rn | head
 ```
 
-1. **THE INTER-SYSTEM GAP IN PITCH (§3)** — the extent itself is done; the gap above each
-   system is the next term of the same sum, and §3 has abcjs's four lines for it. 23 root
-   heights and a long ULP tail hang off it.
+1. **THE PAGE WALK'S TERM STRUCTURE (§3)** — the extent itself is done, and measuring says
+   the remainder is NOT the gap: ours spends FIVE terms where abcjs spends four, because our
+   `leading - named` compensation is inside `staff.top` for abcjs. **46 of the 95 open rows
+   hang off it** — 26 root elements and 20 lone ULPs. §3 has the evidence and the shape.
 2. **A MULTI-CHARACTER DYNAMIC IS A `<g data-name="dynamics">`** of one path per letter
    (`synth-flattener-03`). Named since 2026-08-10d and still open.
 3. **THE ACCIACCATURA SLASH** — `flags.ugrace` at `-graceoffsets[i] + dAcciaccatura` with
