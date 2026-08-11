@@ -33,13 +33,12 @@ reproduce goes in `Docs/ABCJS-DIFFERENCES.md` with its evidence and its slug goe
 | harvested geometry | `corpus-abcjs-ranked` | 0 of 174 | 0 of 174 |
 | pixel geometry | `pixel-parity` | 0 of 120 | 0 of 120 |
 | **DOM contract** | **`dom-contract`** | **1 of 25 — TWENTY-FOUR RATCHETED** | 11 of 25, fourteen |
-| **SVG bytes** | **`svg-bytes`** | **149 of 171**; best 22908, median 771 | 164 of 171, best 5186, median 174 |
+| **SVG bytes** | **`svg-bytes`** | **149 of 171**; best 22908, median 773 | 164 of 171, best 5186, median 174 |
 
 **Suite 1158 of 1158. NO REDS. `npx tsc --noEmit` clean. Working tree clean.**
 
-Heights: **80 exact / 86 ULP-only / 5 larger, of which 2 are structural** — unchanged, and
-the two structural ones are still `visual-mouse-click-01` and `visual-tablature-15` at
-3.875px.
+Heights: **117 exact / 52 ULP-only / 2 structural**, from 80 / 86 / 2 this morning. The
+two structural ones are still `visual-mouse-click-01` and `visual-tablature-15` at 3.875px.
 
 ---
 
@@ -420,11 +419,24 @@ staff-stacking arithmetic are where the remaining inline literals are.
      feeding those pitches is a pitch too. Carrying the extent — and the reserves that
      build it — in pitch is one arc that closes the height family, the clef family and
      most of the tail behind them.
-     **AND THE OBVIOUS SHORTCUT IS WRONG, MEASURED**: re-summing the system height as
-     `(Σ pitch spans) × STEP` took `pixel-parity` to 1 of 120 and the harvested table to
-     2 of 174, because `calcHeight` reads a `staff.top` that ALREADY carries the
-     inter-staff separation while our clamp applies it at placement time. Port the unit,
-     not the re-association.
+     **HALF OF IT IS PORTED**: a system's advance is now ONE product off a PITCH total
+     (`LayoutSystem.heightPitch`), which took the heights from 80 exact / 86 ULP to
+     **117 exact / 52 ULP** with both geometry gates unmoved. The clamp had to go into that
+     total as a pitch, because abcjs carries its own inside `staff.top` — the first attempt
+     dropped it and took `pixel-parity` to 1 of 120 and the harvested table to 2 of 174.
+     **PORT THE UNIT, NOT THE RE-ASSOCIATION.**
+     **WHAT IS LEFT OF IT** is the length→pitch DIVISION at the extent boundary:
+     `heightPitch` is assembled as `(extent.bottom − extent.top) / spacePerStep`, and
+     `extent.top` is not a clean multiple — it is the CHORD LANE, `inkTop` walked upward by
+     `chordHeightAbove * lanes + margin` in LENGTHS. abcjs never divides: its `staff.top`
+     IS a pitch, because `incTop` adds pitches to it. `verticalExtent` and the
+     `aboveLadder` cursor feeding it have to produce pitches natively, and then the
+     division goes away with them.
+     **AND TWO CANDIDATES WERE RULED OUT BY MEASUREMENT** — a tie's `pitch ± 4` ink reserve
+     and `getYBounds`' three-pitch box are both pitch sums converted once now
+     (`NoteAnchor.pitchStep`, `endStep`), and neither moved the failing case. The minimal
+     dirty reproducer is a CHORD SYMBOL plus a TIE: `"Eb7"zG2GA2A2|` is clean, `=A2AB-B4|`
+     is clean, the two together are not.
      **The margin ORDER is already ported** — `draw()` opens with `moveY(padding.top)` so
      everything lands on top of it and `setPaperSize` adds `padding.bottom` last; JS `+`
      is left to right and writing the margins at the end is a different number.
@@ -505,10 +517,10 @@ staff-stacking arithmetic are where the remaining inline literals are.
 working tree clean
 npx tsc --noEmit    clean
 npx vitest run      1158 / 1158
-svg bytes           149 of 171   best 22908, median 771
+svg bytes           149 of 171   best 22908, median 773
                     PASSING ratchet: 7 slugs
 DOM contract        1 of 25       PASSING ratchet: 24 slugs
-heights             114 exact / 55 ULP-only / 2 structural
+heights             117 exact / 52 ULP-only / 2 structural
 audio ranked        0 of 72
 timing ranked       0 of 38
 element timings     1 of 13
