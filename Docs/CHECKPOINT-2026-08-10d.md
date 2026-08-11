@@ -33,7 +33,7 @@ reproduce goes in `Docs/ABCJS-DIFFERENCES.md` with its evidence and its slug goe
 | harvested geometry | `corpus-abcjs-ranked` | 0 of 174 | 0 of 174 |
 | pixel geometry | `pixel-parity` | 0 of 120 | 0 of 120 |
 | **DOM contract** | **`dom-contract`** | **1 of 25 — TWENTY-FOUR RATCHETED** | 11 of 25, fourteen |
-| **SVG bytes** | **`svg-bytes`** | **149 of 171**; best 22908, median 773 | 164 of 171, best 5186, median 174 |
+| **SVG bytes** | **`svg-bytes`** | **147 of 171**; best 22908, median 771 | 164 of 171, best 5186, median 174 |
 
 **Suite 1158 of 1158. NO REDS. `npx tsc --noEmit` clean. Working tree clean.**
 
@@ -494,12 +494,19 @@ staff-stacking arithmetic are where the remaining inline literals are.
      rect in RELATIVE commands, `M x y l 0 H l W 0 l 0 -H z`, so its weight is the
      horizontal run's `W` and no absolute-`L` parser can reach it; reading the path's BOX
      instead gives the whole bracket including its arms, 10.66 for a 2.906 rule.
-     **NEXT ON THOSE FIXTURES**: `bartop`. The LAST barline of a voice on any staff but the
-     first runs up to the PREVIOUS staff's bottom line — `bartop = renderer.calcY(2)` after
-     each voice is drawn, spent by `drawAbsolute` only when the element is the voice's last
-     child (`draw/staff-group.js:129-133`, `draw/voice.js:43`, `draw/relative.js:61`). And a
-     group of more than one staff also gets a plain 0.6 rule down its LEFT EDGE, drawn after
-     every voice (`:140-144`).
+     **AND THE GRAND STAFF IS CLOSED WITH IT** — `visual-tablature-03` is byte-exact.
+     **EVERY BARLINE OF A JOINED STAFF RUNS UP TO THE STAFF ABOVE**, and a group of more
+     than one staff is closed by a plain 0.6 rule down its LEFT EDGE, from the first
+     staff's TOP line to the last's bottom, with no class and no `data-name`
+     (`draw/staff-group.js:129-144`, `draw/relative.js:61`).
+     **THE FIRST RULE WAS MEASURED, BECAUSE THE SOURCE READS OTHERWISE.** `drawVoice`
+     spends `bartop` on `params.barto || i === params.children.length - 1`; `barto` comes
+     from a `|` in `%%score`, and the voice's children — DUMPED from abcjs — are
+     `[staff-extra clef, bar, note]`, so neither clause should fire. Yet `%%staves {RH LH}`
+     and `%%staves {RH|LH}` render IDENTICALLY and EVERY bar of the lower staff spans, not
+     just its last. **The rule is GROUP MEMBERSHIP and the `|` makes no difference at
+     all** — two ladder runs settled what three source reads could not, and the first
+     implementation, written from the source, was inert.
    - **`clefs.G`'s y, 6 rows.**
    - **A `<text>` family**, most likely a lyric's trailing `<tspan dy="1.2em"></tspan>` —
      abcjs emits one because `addLyric` ends every syllable with a `\n`.
@@ -539,7 +546,7 @@ staff-stacking arithmetic are where the remaining inline literals are.
 working tree clean
 npx tsc --noEmit    clean
 npx vitest run      1158 / 1158
-svg bytes           149 of 171   best 22908, median 773
+svg bytes           147 of 171   best 22908, median 771
                     PASSING ratchet: 7 slugs
 DOM contract        1 of 25       PASSING ratchet: 24 slugs
 heights             117 exact / 52 ULP-only / 2 structural
