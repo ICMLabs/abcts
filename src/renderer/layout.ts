@@ -1267,6 +1267,20 @@ export interface LayoutSystem {
   readonly connectorLines: readonly PlacedLine[]
   /** The same connectors as abcjs's own arithmetic — see `ConnectorSpan`. */
   readonly connectorSpans: readonly ConnectorSpan[]
+  /**
+   * **THE SYSTEM'S OWN ADVANCE, IN PITCH** — abcjs's `staffGroup.height`, which is
+   * `Σ (staff.top − staff.bottom)` over the group's voices and is spent as ONE product,
+   * `staffGroup.height * spacing.STEP` (`creation/calc-height.js`, `draw/draw.js:79-83`).
+   * The staff PLACEMENT is a different accumulation — `moveY(STEP, top)` then
+   * `moveY(STEP, -bottom)` per staff — and abcjs's own comment says the two are parallel
+   * on purpose. Summing the already-multiplied lengths instead is `Σ(span·STEP)` where
+   * abcjs writes `(Σ span)·STEP`, and that is the root's `height` one ULP out.
+   *
+   * Our inter-staff clamp is in it too, as a pitch, because abcjs's is inside `staff.top`.
+   */
+  readonly heightPitch: number
+  /** Where the system's ink starts — everything before the first staff's own extent. */
+  readonly leading: number
   /** Width of this system, staff spaces. Systems wrap, so they differ. */
   readonly width: number
   /**
@@ -5094,6 +5108,14 @@ interface NoteAnchor {
    * pitch so that `[GCE]` and `[CEG]` engrave alike.
    */
   readonly pitchY: number
+  /**
+   * The same point as a STEP, because abcjs reserves in PITCH and multiplies by `STEP`
+   * ONCE: a tie's `this.top = Math.max(anchor1.pitch, anchor2.pitch) + 4`
+   * (`tie-element.js:28-36`) enters `staff.top` as a pitch and only the staff placement
+   * converts it. Written `pitchY - 4 * spacePerStep` the same quantity is two products
+   * added, which differs in the last bits — and the root's `height` is where it shows.
+   */
+  readonly pitchStep?: number
   readonly stemUp: boolean
   /** The source event, so ties and slurs can be matched to what the music said. */
   readonly event: MusicEvent
@@ -5492,6 +5514,19 @@ function curveReserves(
   }
   const endAt = (a: NoteAnchor, above: boolean, isStart: boolean): number =>
     slurEndY(a, above, isStart)
+  /**
+   * The same end as a STEP, when `slurEndY` took the plain pitch rather than the
+   * beam-retargeted stem — so the reserve can be a PITCH SUM converted once, which is how
+   * abcjs states it. Undefined on the retargeted branch, whose y is a length already.
+   */
+  const endStep = (a: NoteAnchor, isStart: boolean): number | undefined => {
+    const pos = a.beamPos ?? 'none'
+    const fixed = a.slurFixed
+    if (fixed !== undefined && pos !== 'none' && (isStart ? pos !== 'last' : pos !== 'first')) {
+      return undefined
+    }
+    return a.pitchStep
+  }
   const add = (from: NoteAnchor, to: NoteAnchor): void => {
     const above = curveIsAbove(from, to, voicePos)
     // abcjs's `Math.min` over PITCHES is our `Math.max` over y — the lower end on screen.
@@ -5503,10 +5538,27 @@ function curveReserves(
         ` fixed.b=${p(fixedOf(a).bottom)} lines=[${(elements[a.element]?.lines ?? []).map((l) => `${l.role ?? '?'}:${p(l.y1)}..${p(l.y2)}`).join(' ')}]`
       console.log(`CURVE above=${above} res=${p(y + three)} | a1 ${dump(from)} | a2 ${dump(to)}`)
     }
-    reserves.push(above ? { top: y - three, bottom: y } : { top: y, bottom: y + three })
+    // **`getYBounds` IS A PITCH SUM** — three pitch off the lower end — so it converts
+    // once. `y` is the LOWER end on screen, which is the SMALLER step.
+    const s1 = endStep(from, true)
+    const s2 = endStep(to, false)
+    const step = s1 === undefined || s2 === undefined ? undefined : Math.min(s1, s2)
+    reserves.push(
+      above
+        ? { top: step === undefined ? y - three : stepToY(step + 3), bottom: y }
+        : { top: y, bottom: step === undefined ? y + three : stepToY(step - 3) },
+    )
     ink.push({
-      top: Math.min(centre(from), centre(to)) - four,
-      bottom: Math.max(centre(from), centre(to)) + four,
+      // **A PITCH SUM CONVERTED ONCE**, not two products added — see `NoteAnchor.pitchStep`.
+      // y runs DOWN, so the curve's TOP is the HIGHEST step.
+      top:
+        from.pitchStep === undefined || to.pitchStep === undefined
+          ? Math.min(centre(from), centre(to)) - four
+          : stepToY(Math.max(from.pitchStep, to.pitchStep) + 4),
+      bottom:
+        from.pitchStep === undefined || to.pitchStep === undefined
+          ? Math.max(centre(from), centre(to)) + four
+          : stepToY(Math.min(from.pitchStep, to.pitchStep) - 4),
     })
   }
   // A GRACE GROUP CARRIES ITS OWN SLUR, and it is the only curve abcjs builds without the
@@ -6707,6 +6759,7 @@ function layoutMeasure(
           first === undefined
             ? (Math.min(...heads.map((h) => h.y)) + Math.max(...heads.map((h) => h.y))) / 2
             : stepToY(pitchToStep(first, clef)),
+        ...(first === undefined ? {} : { pitchStep: pitchToStep(first, clef) }),
         stemUp: el.lines.some((l) => l.x1 === l.x2 && l.y2 < l.y1),
         event,
       })
@@ -8536,6 +8589,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     const nonMusicBeforeMusic =
       systemIndex === 0 && (score.textAbove.length > 0 || score.metadata.titles.length > 1)
     let cursor = (headingless ? musicSpace : 0) + (nonMusicBeforeMusic ? interSystemSep : 0)
+    /** abcjs's `staffGroup.height`, in PITCH — see `LayoutSystem.heightPitch`. */
+    let heightPitch = 0
+    let leadingCursor = cursor
+    let staffIndexInSystem = 0
     /** Bottom staff LINE of the staff placed before this one, in system coordinates. */
     let previousBottomLine: number | null = null
     const placed = merged.map((staff) => {
@@ -8575,13 +8632,17 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       const extent = verticalExtent(positioned, staff.beams, strict, staff)
       if (PROBE) {
         // abcjs pitch = 6 - 2 * ourY(spaces); its `top` is our MIN y and vice versa.
-        const pitch = (y: number) => (6 - 2 * y).toFixed(4)
+        // abcjs PITCH from our y, at FULL precision — the ULP tail is what this probe is
+        // for now, and `6 - 2 * y` was the pre-flip conversion, stale since the layout
+        // started holding abcjs's pixels.
+        const pitch = (y: number) => String(6 - y / ENGRAVE.spacePerStep)
         console.log(
           `PROBE staff ${systemIndex} top=${pitch(extent.top)} bottom=${pitch(extent.bottom)}` +
             `  topBy=${probeTop}  bottomBy=${probeBottom}  flags=${probeFlags}`,
         )
       }
       const stacked = cursor - extent.top
+      if (staffIndexInSystem === 0) leadingCursor = cursor
       // The separation is a minimum LINE-to-LINE distance, which is what abcjs measures:
       // `draw.js:86-89` works from each staff's overhang past its own outer lines, so
       // what it pads to is bottom-line to top-line. Comparing origins instead is short by
@@ -8592,6 +8653,12 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           ? stacked
           : Math.max(stacked, previousBottomLine + intraStaffSep + STAFF_HALF_HEIGHT)
       previousBottomLine = originY + STAFF_HALF_HEIGHT
+      // In PITCH, as abcjs states it: the staff's own span plus whatever the clamp added,
+      // which abcjs carries inside `staff.top` and we apply here.
+      heightPitch +=
+        (extent.bottom - extent.top) / ENGRAVE.spacePerStep +
+        (originY - stacked) / ENGRAVE.spacePerStep
+      staffIndexInSystem += 1
       cursor = originY + extent.bottom + ENGRAVE.staffGap
       return {
         ...staff,
@@ -8606,6 +8673,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     const connectors = layoutConnectors(score.staves, placed)
     return {
       staves: placed,
+      heightPitch,
+      leading: leadingCursor,
       connectorGlyphs: connectors.glyphs,
       connectorLines: connectors.lines,
       connectorSpans: connectors.spans,
@@ -8878,13 +8947,13 @@ export function layoutBook(scores: readonly Score[], options: LayoutOptions = {}
 }
 
 /** A system's full vertical extent, from the top of its first staff's content down. */
-function systemHeight(system: LayoutSystem, strict = true): number {
-  let bottom = 0
-  for (const staff of system.staves) {
-    const extent = verticalExtent(staff.elements, staff.beams, strict, staff)
-    bottom = Math.max(bottom, staff.originY + extent.bottom)
-  }
-  return bottom
+/**
+ * **ONE PRODUCT, OFF A PITCH TOTAL** — `staffGroup.height * spacing.STEP`. See
+ * `LayoutSystem.heightPitch` for why the placement and the advance are two different
+ * accumulations, which is abcjs's own arrangement and not an accident of ours.
+ */
+function systemHeight(system: LayoutSystem, _strict = true): number {
+  return system.leading + system.heightPitch * ENGRAVE.spacePerStep
 }
 
 /**
@@ -10436,7 +10505,7 @@ function verticalExtent(
         ?.trim()
         .replace(/.*layout\.ts:/, 'L')
       if (a < top) probeTop = `${who} ${a.toFixed(4)}`
-      if (b > bottom) probeBottom = `${who} ${b.toFixed(4)}`
+      if (b > bottom) probeBottom = `${who} ${b} `
     }
     top = Math.min(top, a)
     bottom = Math.max(bottom, b)
