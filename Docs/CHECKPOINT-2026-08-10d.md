@@ -1,4 +1,4 @@
-# abcts — Checkpoint, 2026-08-10d — **THE DOM CONTRACT IS 24 OF 25, AND THE UNIT ANNOTATION PASS IS DONE**
+# abcts — Checkpoint, 2026-08-10d — **THE DOM CONTRACT IS 24 OF 25, AND THE LAYOUT HOLDS ABCJS'S OWN PIXELS**
 
 Supersedes `CHECKPOINT-2026-08-10c.md` for the STATE. That file keeps THE HARNESS (§1), the
 height's three-way split (§2), the forty-one landings of the SVG-frame arc (§3) and — above
@@ -33,7 +33,7 @@ reproduce goes in `Docs/ABCJS-DIFFERENCES.md` with its evidence and its slug goe
 | harvested geometry | `corpus-abcjs-ranked` | 0 of 174 | 0 of 174 |
 | pixel geometry | `pixel-parity` | 0 of 120 | 0 of 120 |
 | **DOM contract** | **`dom-contract`** | **1 of 25 — TWENTY-FOUR RATCHETED** | 11 of 25, fourteen |
-| **SVG bytes** | **`svg-bytes`** | **161 of 171**; best 7975, median 177 | 164 of 171, best 5186 |
+| **SVG bytes** | **`svg-bytes`** | **151 of 171**; best 22908, median 657 | 164 of 171, best 5186, median 174 |
 
 **Suite 1158 of 1158. NO REDS. `npx tsc --noEmit` clean. Working tree clean.**
 
@@ -295,7 +295,62 @@ the dimensions speak:
   measuring is a compass, never a source of numbers — in one constant. Landing it took the
   byte table's best row from 5779 to 7897.
 
-### What is NOT built, and the ONE LESSON THE FIRST ATTEMPT COST
+### …AND THE FLIP IS LANDED
+
+`UNIT_PX = 1`. **The layout holds abcjs's own pixels end to end**, as `abcMusicKit` v1 does
+and for the reason v1 does. Suite green, both geometry gates at zero, the ratio report
+empty. The byte table on either side of it:
+
+```
+                      differ   median   best      heights (exact / ULP / structural)
+before the flip      161/171      177   7 975     80 /  86 / 2
+after                151/171      657  22 908    114 /  55 / 2
+```
+
+**34 heights went from ULP-noise to EXACT and the median first-difference nearly
+quadrupled** — the round trip really was the tail. Five more findings came out of the flip
+itself, and the first two are the ones whose lesson transfers:
+
+- **THE IDENTITY SHORT-CUT WAS `PX === 1`, AND IT HAD TO BE `PX === 1 && oy === 0`.** `TL`
+  and `TC` returned their argument untouched when the scale was 1 — written when `PX === 1`
+  meant CORE mode, where `oy` is zero by construction and the groups carry the origin
+  instead. Once the layout holds abcjs's pixels, `PX` is 1 in the abcjs path too, and there
+  `oy` is the flattened origin: skipping it dropped the whole staff. **It cost three
+  byte-exact fixtures**, whose top staff line came out at `-15.85` where abcjs writes
+  `22.21` — exactly the missing `(system.originY + OY) + staff.originY`. A short-cut is a
+  claim about its guard, and the guard had quietly changed meaning.
+- **`roundNumber` IS `parseFloat(x.toFixed(2))`, WHICH IS NOT `Math.round(x * 100) / 100`.**
+  The two disagree on a decimal half — `toFixed` rounds the BINARY value correctly where
+  multiplying by 100 first introduces its own error — and a beam's second edge is computed
+  FROM the rounded first, so 171.945 became 171.95 against abcjs's 171.94 and the 0.01
+  propagated. **Three more fixtures byte-exact on that one line.**
+- **A SCALED GLYPH IS CSS-SCALED, NOT DRAWN SMALL.** `drawRelativeElement` ends with
+  `if (params.scalex !== 1) scaleExistingElem(…)`, setting
+  `style="transform:scale(sx,sy);transform-origin:Xpx Ypx;"` on the element it just made
+  (`draw/relative.js:68-76`). That is the OTHER HALF of the finding that abcjs never
+  applies a glyph's scale to its PATH: the outline really is byte-identical to a full-size
+  one, and a `style` attribute shrinks it. The origin is the RAW pitch, before `getYCorr`,
+  and like the notehead's class it is a late `setAttribute` — so it serialises after the
+  `d`.
+- **A BEAM IS A `<path>`, AND ONE PATH HOLDS EVERY BEAM OF ITS GROUP.** `drawBeam`
+  concatenates the corners of every beam in the group into a single `d`
+  (`draw/beam.js:7-44`), where ours was a `<polygon>` each. The separators are irregular —
+  a space before the first and third `L` and none before the second — and `dy` is SIGNED,
+  `+STEP` for stems up and `-STEP` for stems down, so an up-stem beam's path opens on its
+  TOP edge and a down-stem beam's on its BOTTOM.
+- **A MUSIC TEXT IS `renderText`'s ELEMENT, ATTRIBUTE FOR ATTRIBUTE**, with the FACE,
+  weight and style of its own `%%…font` spelled out — a lyric is Times New Roman BOLD, a
+  chord symbol Helvetica, a tuplet number plain `Times` and not Times New Roman
+  (`parse/abc_parse_directive.js:22-44`). Ours wrote a short ad-hoc `<text>` with
+  `font-family="serif"`. **And `noClass` is a PROPERTY, not `renderText`'s third
+  argument** — that one is `alreadyInGroup`. The bar number passes `true` for THAT while
+  carrying a real class, and reading the positional argument as `noClass` broke
+  `dom-bar-numbers` the moment it landed. Measured through abcjs both ways rather than
+  read: `class=""` without `add_classes`, the generated string with it.
+- **A TEMPO'S RATE IS BOLD**, like the `pre` text beside it: both are `tempofont`, whose
+  default is `weight: "bold"`.
+
+### What the FIRST attempt cost, and the LESSON that is now proven
 
 **THE FLIP WAS ATTEMPTED AND REVERTED.** Setting `UNIT_PX = 1` took `pixel-parity` to
 **119 of 120** and the harvested table to **150 of 174**. The layout is full of INLINE
@@ -327,24 +382,35 @@ staff-stacking arithmetic are where the remaining inline literals are.
 
 ## WHAT IS LEFT, IN YIELD ORDER
 
-1. **FINISH THE FLIP.** §4. The ANNOTATION PASS IS DONE and proven — with `UNIT_PX = 1`
-   the baseline ratio report is EMPTY and both geometry gates are at zero. What is left is
-   the EMITTER and the TEST SUITE:
-   - **Under the flip the byte table is 164 of 171 at median 432** against 161 of 171 at
-     median 177 unflipped. **The median more than DOUBLED** — the round trip really is the
-     tail — but THREE fixtures that were byte-exact are not, so the flip is not landable
-     yet. Find them with `svg-bytes` and the ranked table; the last one chased was a staff
-     line 93.05px high on `synth-timing-06`, which is a VERTICAL origin and not a
-     round-trip residue.
-   - **Twelve test files fail under the flip**, and most are gates reading the OLD unit —
-     `glyph-table`, `lyric-continuation`, `renderer/layout`, `renderer/svg`,
-     `staff-spacing`, `tempo-parts`, `decoration-x`, `glyph-ycorr`, `above-lane-order`,
-     `line-weights`, `compat`. Each asserts a figure in staff spaces that is now abcjs
-     pixels. **That is the same class as the three gates §3 records** — a gate built on our
-     own representation fails when the representation becomes abcjs's — so convert the
-     assertion, never the code.
-   - Then flip, re-record every baseline (they all move by exactly 7.75×, uniquely for this
-     change), and hold to **`pixel-parity` 0 of 120 and `corpus-abcjs-ranked` 0 of 174**.
+1. **THE BYTE TABLE, WHICH IS NOW THE ONLY OPEN GATE.** 151 of 171, median 657. Read
+   `/tmp/abcts-svg-bytes-ranked.txt` and its FAMILY HISTOGRAM — the one command that has
+   named most of this arc's work:
+
+   ```bash
+   grep "^      want" /tmp/abcts-svg-bytes-ranked.txt \
+     | sed 's/^      want …//' | cut -c1-38 | sort | uniq -c | sort -rn | head
+   ```
+
+   The families standing now, biggest first:
+   - **THE ROOT'S `height`, 12 rows.** 55 of 171 still differ by ULP after the flip
+     (`{exact: 114, ulpOnly: 55, structural: 2}`), and it is no longer a round trip: it is
+     the ORDER the vertical cursor is summed in. abcjs's `draw.js` calls `moveY` repeatedly
+     and we accumulate differently, so `652.3275` meets `652.3275000000001` and
+     `149.07999999999998` meets `149.08` — **in BOTH directions**, which is what says it is
+     an accumulation order rather than a systematic bias.
+   - **A `<text>`, 5 rows**, differing at `decoration="none" class="" text-anchor` — some
+     remaining attribute or a lyric's trailing `<tspan dy="1.2em"></tspan>`, which abcjs
+     emits because `addLyric` ends every syllable with a `\n`.
+   - **The body's very first bytes, 5 rows**, at `;}</style><title>Sheet Music</title><g`.
+   - **`clefs.G`'s y, 6 rows.**
+   - **A multi-character DYNAMIC is a `<g data-name="dynamics">` of one path per LETTER.**
+     `printSymbol`'s multi-char branch opens a group and draws each character with
+     `kernSymbols` between them (`draw/print-symbol.js:15-31`), where SMuFL precomposes
+     `pppp` into one glyph. Strict must spell it out — the same shape the time signature
+     already takes.
+   - **The two structural HEIGHTS**, 3.875px on `visual-mouse-click-01` and
+     `visual-tablature-15`, with FOUR LADDERS already ruling out what they are not. Do not
+     re-measure those.
 2. **A MEASURE CAN CARRY ONLY ONE `meterChange`, AND `svg-time-sig-list` NEEDS THREE.**
    `[M:2/4]y[M:3/4]y[M:4/4]` has no barline in it, so all three belong to ONE measure and
    `Measure.meterChange` keeps the last. abcjs draws all three, each as its own
@@ -373,11 +439,10 @@ staff-stacking arithmetic are where the remaining inline literals are.
 working tree clean
 npx tsc --noEmit    clean
 npx vitest run      1158 / 1158
-svg bytes           161 of 171   best 7975, median 177
-                    (with UNIT_PX = 1: 164 of 171, median 432 — see WHAT IS LEFT item 1)
+svg bytes           151 of 171   best 22908, median 657
                     PASSING ratchet: 7 slugs
 DOM contract        1 of 25       PASSING ratchet: 24 slugs
-heights             80 exact / 86 ULP-only / 5 larger (2 structural)
+heights             114 exact / 55 ULP-only / 2 structural
 audio ranked        0 of 72
 timing ranked       0 of 38
 element timings     1 of 13

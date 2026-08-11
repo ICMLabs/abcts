@@ -454,22 +454,24 @@ checkpoint and hand off as you go so no context is lost.
 > - **`--add-classes` IS NOT OPTIONAL EITHER.** Without it every generated class in abcjs's
 >   output is the empty string, so the class scheme is invisible.
 >
-> ⚖️ **AND THE UNIT ANNOTATION PASS IS DONE — THE FLIP ITSELF IS NOT.** The byte table's
-> HEAD is `M 108.03813656268917` against `M 108.038` and its MEDIAN row, on most of 161
-> fixtures, is `height="149.07999999999998"` against `149.08`. Both are the `px / 7.75`
-> round trip; rounding cannot fix it, because abcjs itself emits `29.689999999999998` where
-> ours is clean — only the SAME ARITHMETIC produces the same bytes. `abcjs-constants.ts`
-> carries the knob (`UNIT_PX`, `SPACE`) and every length in the engine now says which unit
-> it is in. **PROVEN MECHANICALLY**: with `UNIT_PX = 1` the baseline RATIO script reports
-> NOTHING — all 46 baselines scale by exactly 7.75 — and `pixel-parity` is 0 of 120 with
-> `corpus-abcjs-ranked` 0 of 174. What is left is the EMITTER (three byte-exact fixtures
-> break) and TWELVE TEST FILES that assert figures in the OLD unit.
+> ⚖️ **AND THE LAYOUT HOLDS ABCJS'S OWN PIXELS NOW — THE UNIT FLIP IS LANDED.** The byte
+> table's head was `M 108.03813656268917` against `M 108.038` and its median row
+> `height="149.07999999999998"` against `149.08`: the `px / 7.75` round trip, which
+> rounding cannot fix because abcjs itself emits `29.689999999999998` where ours was clean.
+> **Only the SAME ARITHMETIC produces the same bytes**, so `abcjs-constants.ts` carries a
+> `UNIT_PX`/`SPACE` knob, every length in the engine says which unit it is in, and
+> `UNIT_PX = 1`. It took the byte table from **161 of 171 at median 177 to 151 of 171 at
+> median 657**, and the root height from **80 exact / 86 ULP to 114 exact / 55 ULP**.
 >
-> **DO THE ANNOTATION PASS BEFORE THE FLIP, NOT AFTER IT.** The first attempt flipped
-> first and took `pixel-parity` to 119 of 120; with hundreds of literals wrong at once the
-> ranked tables are noise rather than a work list. `n * SPACE` while `SPACE === 1` is a
+> **DO THE ANNOTATION PASS BEFORE THE FLIP, NOT AFTER IT.** The first attempt flipped first
+> and took `pixel-parity` to 119 of 120; with hundreds of literals wrong at once the ranked
+> tables are noise rather than a work list. `n * SPACE` while `SPACE === 1` is a
 > zero-behaviour edit whose check is the one already trusted here — the suite green and NO
-> BASELINE MOVED — so every literal converts and verifies one at a time.
+> BASELINE MOVED — so every literal converts and verifies one at a time. **And the
+> DISCOVERY MECHANISM was the baselines used as a RATIO**: after the flip every number must
+> be exactly 7.75× its old one, which is exhaustive and needs no judgement. Its three
+> filters earned themselves — integers are counts and step indices, anything under half a
+> unit is print rounding, and `x == y` is a value with no unit at all.
 >
 > **THE CLASSES OF LITERAL IT FOUND**: a length→step conversion written `2 *` (four sites,
 > each with a comment already calling it a division); a LENGTH spelled as a pitch
@@ -484,13 +486,30 @@ checkpoint and hand off as you go so no context is lost.
 > `spacing * Math.sqrt(duration * 8)` at a base of 30px, with the `sqrt(2)` folded into the
 > constant and then ROUNDED TO FOUR DECIMALS — a relative 1.5e-5 on EVERY note's spring,
 > **invisible to a 0.05px gate and not invisible to a byte comparison**, which is exactly
-> why it survived. Landing it took the byte table's best row from 5779 to 7897.
-> **A TEMPO'S PRE-TEXT GAP** is one AVERAGE CHARACTER — `charWidth = preWidth / length`
-> (`draw/tempo.js:22-23`) — where ours added a flat 1 staff space; verified against abcjs's
-> own SVG, which puts `data-name="beats"` at x 155.61 in both engines now.
-> `CHECKPOINT-2026-08-05b.md`'s ruling in two constants: **measuring is a COMPASS, never a
-> SOURCE OF NUMBERS.**
+> why it survived. **A TEMPO'S PRE-TEXT GAP** is one AVERAGE CHARACTER —
+> `charWidth = preWidth / length` (`draw/tempo.js:22-23`) — where ours added a flat 1 staff
+> space; verified against abcjs's own SVG, which puts `data-name="beats"` at x 155.61 in
+> both engines now. `CHECKPOINT-2026-08-05b.md`'s ruling in two constants: **measuring is a
+> COMPASS, never a SOURCE OF NUMBERS.**
 >
+> 🔩 **AND THE FLIP ITSELF FOUND FIVE MORE, TWO OF THEM ABOUT A GUARD THAT QUIETLY CHANGED
+> MEANING.** **THE IDENTITY SHORT-CUT WAS `PX === 1` AND HAD TO BE `PX === 1 && oy === 0`**
+> — `TL`/`TC` returned their argument untouched at scale 1, written when that meant CORE
+> mode, where `oy` is zero by construction; once the layout holds abcjs's pixels it is 1 in
+> the abcjs path too, and skipping `oy` dropped the whole staff origin. Three byte-exact
+> fixtures. **AND `roundNumber` IS `parseFloat(x.toFixed(2))`, NOT `Math.round(x*100)/100`**
+> — they disagree on a decimal half, and a beam's second edge is computed FROM the rounded
+> first, so 171.945 became 171.95 against abcjs's 171.94. Three more.
+> **A SCALED GLYPH IS CSS-SCALED, NOT DRAWN SMALL** (`draw/relative.js:68-76`) — the other
+> half of the finding that abcjs never applies a glyph's scale to its PATH.
+> **A BEAM IS A `<path>` AND ONE PATH HOLDS EVERY BEAM OF ITS GROUP**, with irregular
+> separators and a SIGNED `dy` that decides which edge the path opens on.
+> **A MUSIC TEXT IS `renderText`'s ELEMENT**, with its own `%%…font`'s face, weight and
+> style spelled out — and **`noClass` is a PROPERTY, not `renderText`'s third argument**,
+> which is `alreadyInGroup`; reading the positional one as `noClass` broke
+> `dom-bar-numbers` the moment it landed, and abcjs answered it in one run with and without
+> `--add-classes`.
+
 > 🔎 **AND THREE MORE GATES WERE READING THE MARKUP THEY MEASURED** — `compat`'s density
 > test (its THIRD correction), `above-lane-order` (keyed on a class that is empty without
 > `add_classes`) and `line-weights` (asked a one-path bracket for a per-stroke box). All
@@ -698,9 +717,11 @@ reds; **seventeen gates and NINE ranked tables** — 0 of 72 audio cases, 0 of 3
 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
 **1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
 **1 of 25 DOM-contract cases with TWENTY-FOUR slugs RATCHETED** — and
-**161 of 171 SVG-byte fixtures, SEVEN of them EXACT and ratcheted** — and **the SVG BYTE TABLE is
-THE ONE OPEN ARC**, at best 7975 / median 177, with its head AND its median both blocked
-behind the `px / 7.75` ROUND TRIP, which is item 1 of `CHECKPOINT-2026-08-10d.md`. The oracle lands before the
+**151 of 171 SVG-byte fixtures, TWENTY of them EXACT** — and **the SVG BYTE TABLE is
+THE ONE OPEN GATE**, at best 22908 / median 657. Its remaining families are listed in
+item 1 of `CHECKPOINT-2026-08-10d.md`, and the biggest is the ROOT's `height`: 55 fixtures
+differ by ULP, and it is the ORDER the vertical cursor is summed in rather than a round
+trip, because it differs in BOTH directions. The oracle lands before the
 implementation here, as it did for audio and the chord grid, and a table that opens at every
 case is the same signal 54 of 54 was. **No table can name a defect, and that is the normal condition here rather than a
 milestone** — the last four findings all came from building a gate that expresses an axis
