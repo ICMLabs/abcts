@@ -1,4 +1,4 @@
-# abcts — Checkpoint, 2026-08-10d — **THE DOM CONTRACT IS 24 OF 25, AND THE UNIT FLIP IS HALF-BUILT**
+# abcts — Checkpoint, 2026-08-10d — **THE DOM CONTRACT IS 24 OF 25, AND THE UNIT ANNOTATION PASS IS DONE**
 
 Supersedes `CHECKPOINT-2026-08-10c.md` for the STATE. That file keeps THE HARNESS (§1), the
 height's three-way split (§2), the forty-one landings of the SVG-frame arc (§3) and — above
@@ -33,7 +33,7 @@ reproduce goes in `Docs/ABCJS-DIFFERENCES.md` with its evidence and its slug goe
 | harvested geometry | `corpus-abcjs-ranked` | 0 of 174 | 0 of 174 |
 | pixel geometry | `pixel-parity` | 0 of 120 | 0 of 120 |
 | **DOM contract** | **`dom-contract`** | **1 of 25 — TWENTY-FOUR RATCHETED** | 11 of 25, fourteen |
-| **SVG bytes** | **`svg-bytes`** | **161 of 171**; best 5779, median 175 | 164 of 171, best 5186 |
+| **SVG bytes** | **`svg-bytes`** | **161 of 171**; best 7975, median 177 | 164 of 171, best 5186 |
 
 **Suite 1158 of 1158. NO REDS. `npx tsc --noEmit` clean. Working tree clean.**
 
@@ -244,7 +244,58 @@ and everything denominated in staff SPACES is written `n * SPACE` so it survives
 - **All 19 `STAFF_SPACE_PX` uses in `layout.ts`** — every one a px↔layout-unit conversion —
   are `UNIT_PX`, and so is `goldenTextHeight`'s.
 
-### What is NOT built, and the ONE LESSON THIS COST
+### …AND THE ANNOTATION PASS IS NOW **DONE**, AND PROVEN DONE
+
+Later the same session, on a green tree, every remaining space-denominated length was
+annotated. **The proof is mechanical**: with `UNIT_PX = 1`, the baseline RATIO script
+(recipe in the handoff) reports **NOTHING** — every number in all 46 baselines scales by
+exactly 7.75 — and under the flip
+
+```
+pixel-parity            0 of 120     (unflipped: 0 of 120)
+corpus-abcjs-ranked     0 of 174     (unflipped: 0 of 174)
+```
+
+so the GEOMETRY is unit-clean. Ten literals did it, and the classes they fall into are what
+transfers:
+
+- **A LENGTH→STEP CONVERSION WRITTEN `2 *`.** `2 * x` is `x / 0.5`, and 0.5 is only the
+  step's length while a staff space is the unit. Four sites, each of which had a comment
+  already SAYING it was a division: the clef's declared top, a key accidental's, the bar
+  number's `measureNumDim.height / spacing.STEP`, and the tuplet's `pitchOf(y) = 6 - 2 * y`.
+- **A LENGTH SPELLED AS A PITCH.** `noteheadHalfHeight` was `ABCJS_PITCH.noteheadHeight / 4`
+  — numerically right and dimensionally silent, because `/4` is "pitch → spaces, halved".
+  Now `spacesOfPitch(h) / 2`.
+- **A STEP SPELLED AS A LENGTH** — the mirror. A tremolo's stem reach added
+  `ENGRAVE.stemLength` (a LENGTH) to a STEP.
+- **A BARE OFFSET.** Half a staff space of curve padding on every note anchor; the grace
+  slash's three offsets.
+- **A HARD-CODED `7.75`.** Nine of them, every one a px↔unit conversion — `%%staffsep`,
+  `%%musicspace`, `%%sysstaffsep`, `%%staffwidth`, a font size, the justification loop's
+  2px break threshold, the page ratchet's whole-pixel compare, and compat's own page width.
+- **A RAW `GLYPHS[…]` READ.** The brace is Bravura's in every mode — one of the six sites
+  the 2026-08-05 audit cleared — so its published width and height are in STAFF SPACES and
+  carry the unit at the call site, where `glyphsFor()` would have carried it for them.
+- **THE ROOT'S OWN SIZE.** `w`/`h` multiplied by the host's `staffSpace` where they wanted
+  layout-units-to-output-pixels. Now one `OUT` factor, used by both modes.
+
+**AND TWO OF THE TEN WERE REAL DEFECTS, NOT UNIT SLIPS**, found only because the knob made
+the dimensions speak:
+
+- **A TEMPO'S PRE-TEXT GAP IS ONE AVERAGE CHARACTER.** abcjs takes
+  `charWidth = preWidth / preString.length` and advances `preWidth + charWidth`
+  (`draw/tempo.js:22-23`); ours added a flat 1 staff space. **Verified against abcjs's own
+  SVG**: `Q:"Allegro" 1/4=60` puts `data-name="beats"` at x 155.61 in both engines now.
+- **THE SPRING WAS A PRE-DIVIDED, PRE-ROUNDED CONSTANT.** abcjs's law is
+  `spacing * Math.sqrt(duration * 8)` with a base of 30px (`layout/voice-elements.js:22`,
+  `:99`). Ours was `spacingScale * sqrt(d / (1/16))` with `spacingScale = 2.7372` — the
+  same law with the `sqrt(2)` folded in and then rounded to FOUR DECIMALS, a relative
+  1.5e-5 on every note's spring. **Invisible to a 0.05px gate and not to a byte
+  comparison**, which is exactly why it survived: `CHECKPOINT-2026-08-05b.md`'s ruling —
+  measuring is a compass, never a source of numbers — in one constant. Landing it took the
+  byte table's best row from 5779 to 7897.
+
+### What is NOT built, and the ONE LESSON THE FIRST ATTEMPT COST
 
 **THE FLIP WAS ATTEMPTED AND REVERTED.** Setting `UNIT_PX = 1` took `pixel-parity` to
 **119 of 120** and the harvested table to **150 of 174**. The layout is full of INLINE
@@ -276,13 +327,24 @@ staff-stacking arithmetic are where the remaining inline literals are.
 
 ## WHAT IS LEFT, IN YIELD ORDER
 
-1. **FINISH THE ANNOTATION PASS, THEN FLIP.** §4. This is the whole remaining byte table —
-   the head, the median and the root's `height`, one change. Method: annotate `* SPACE` on a
-   GREEN tree with baselines unmoved; start where the flip said the errors are (element
-   widths / the spring and column model, then the staff-stacking arithmetic); flip only when
-   nothing is left to annotate; then use the baseline RATIO script to mop up. The invariant
-   afterwards is **`pixel-parity` 0 of 120 and `corpus-abcjs-ranked` 0 of 174** — the
-   baselines are NOT the net here, because every one of them legitimately moves by 7.75×.
+1. **FINISH THE FLIP.** §4. The ANNOTATION PASS IS DONE and proven — with `UNIT_PX = 1`
+   the baseline ratio report is EMPTY and both geometry gates are at zero. What is left is
+   the EMITTER and the TEST SUITE:
+   - **Under the flip the byte table is 164 of 171 at median 432** against 161 of 171 at
+     median 177 unflipped. **The median more than DOUBLED** — the round trip really is the
+     tail — but THREE fixtures that were byte-exact are not, so the flip is not landable
+     yet. Find them with `svg-bytes` and the ranked table; the last one chased was a staff
+     line 93.05px high on `synth-timing-06`, which is a VERTICAL origin and not a
+     round-trip residue.
+   - **Twelve test files fail under the flip**, and most are gates reading the OLD unit —
+     `glyph-table`, `lyric-continuation`, `renderer/layout`, `renderer/svg`,
+     `staff-spacing`, `tempo-parts`, `decoration-x`, `glyph-ycorr`, `above-lane-order`,
+     `line-weights`, `compat`. Each asserts a figure in staff spaces that is now abcjs
+     pixels. **That is the same class as the three gates §3 records** — a gate built on our
+     own representation fails when the representation becomes abcjs's — so convert the
+     assertion, never the code.
+   - Then flip, re-record every baseline (they all move by exactly 7.75×, uniquely for this
+     change), and hold to **`pixel-parity` 0 of 120 and `corpus-abcjs-ranked` 0 of 174**.
 2. **A MEASURE CAN CARRY ONLY ONE `meterChange`, AND `svg-time-sig-list` NEEDS THREE.**
    `[M:2/4]y[M:3/4]y[M:4/4]` has no barline in it, so all three belong to ONE measure and
    `Measure.meterChange` keeps the last. abcjs draws all three, each as its own
@@ -311,7 +373,8 @@ staff-stacking arithmetic are where the remaining inline literals are.
 working tree clean
 npx tsc --noEmit    clean
 npx vitest run      1158 / 1158
-svg bytes           161 of 171   best 5779, median 175
+svg bytes           161 of 171   best 7975, median 177
+                    (with UNIT_PX = 1: 164 of 171, median 432 — see WHAT IS LEFT item 1)
                     PASSING ratchet: 7 slugs
 DOM contract        1 of 25       PASSING ratchet: 24 slugs
 heights             80 exact / 86 ULP-only / 5 larger (2 structural)
