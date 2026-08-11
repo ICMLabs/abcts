@@ -545,7 +545,37 @@ checkpoint and hand off as you go so no context is lost.
 > without it accused the 6.7.0 branch we already port of a defect it does not have.
 > `dump-elements.js` publishes abcjs's own `staff.top`/`bottom`.
 
-Read `Docs/CHECKPOINT-2026-08-10d.md` first — the state and WHAT IS LEFT, whose item 1 is
+> 🧩 **AND THE ULP TAIL IS ONE ARCHITECTURAL DEFECT, PROVEN BY A CHANGE THAT MADE IT WORSE**
+> (2026-08-11). `svg-bytes` went **117 → 100 of 171** on twelve landings, every one a read
+> of a named abcjs function, and what is left is dominated by a single shape: `calcHeight`
+> sums `staff.top` and `-staff.bottom` **in PITCH** and multiplies by `STEP` once, while we
+> hold the extent in y and divide back. **Writing one site "the abcjs way" is a
+> REGRESSION** — `stepToY(step ± halfPitch)` adds a multiply AND a divide where
+> `stepToY(step) ± half` had only the divide, and the staff bottom went from abcjs's exact
+> `1.044774193548387` to `1.0447741935483865`. `x * STEP / STEP` is not `x`. The extent
+> itself has to carry pitch; the failed shape is recorded at the site so it is not tried a
+> third time. Where a value is only DRAWN the local fix DOES work, and it landed twice (a
+> grace stem, a note stem).
+>
+> The landings whose LESSON transfers: **an unbeamed grace carries a `flags.u8th`** and no
+> gate could state it (not a notehead, and its reserve is a POINT the stem already covers);
+> **a `%%text` before the music is a nonMusic LINE**, so `spacing.music` is spent BEFORE it —
+> the total was right and every row was 7.56px high, because **A SUM CANNOT SEE AN ORDER**;
+> **ledgers run once per ELEMENT, outermost first**, with one extra rule per shifted head,
+> which a corpus-wide COUNT of `data-name="ledger"` (171 match, 0 differ) is what made safe
+> against a baseline diff full of removals; **a TIE and a SLUR choose their side by different
+> rules** and a WHOLE NOTE still has a stem direction; **an incoming curve-half is a fixed
+> 20px stub that is never omitted** — the `ponytail:` note claiming engraving needs room at a
+> system's start was a hypothesis, and abcjs overlaps the clef; **an arc is built from its
+> ROUNDED endpoints with `sqrt` and not `hypot`**, because A BETTER FORMULA IS STILL A
+> DIFFERENT FORMULA; **a percussion clef sits on the middle line and still reads like
+> treble**, abcjs's table having two columns that disagree; and **a voice name is
+> `headerPosition`, wears no group, and RESERVES NOTHING** — moving it was byte-right and
+> pushed a staff 2.98px, which only `pixel-parity` could say.
+
+Read `Docs/CHECKPOINT-2026-08-11.md` first — the state, the twelve landings, and §3, the
+NEGATIVE result that says where the remaining tail is. `Docs/HANDOFF-2026-08-11.md` has the
+session prompt and the probes. Then `Docs/CHECKPOINT-2026-08-10d.md` — the state and WHAT IS LEFT, whose item 1 is
 THE UNIT FLIP and is half-built. `Docs/HANDOFF-2026-08-10d.md` has the session prompt, the
 baseline RATIO script the flip is discovered with, and the DOM-contract probe.
 Then `Docs/CHECKPOINT-2026-08-10c.md` — superseded for the state, but it keeps THE HARNESS
@@ -717,8 +747,8 @@ reds; **seventeen gates and NINE ranked tables** — 0 of 72 audio cases, 0 of 3
 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
 **1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
 **1 of 25 DOM-contract cases with TWENTY-FOUR slugs RATCHETED** — and
-**117 of 171 SVG-byte fixtures, FIFTY-FOUR of them EXACT** — and **the SVG BYTE TABLE is
-THE ONE OPEN GATE**, at best 46104 / median 6228. Its remaining families are listed in
+**100 of 171 SVG-byte fixtures, SEVENTY-ONE of them EXACT** — and **the SVG BYTE TABLE is
+THE ONE OPEN GATE**, at best 52498 / median 7221. Its remaining families are listed in
 item 1 of `CHECKPOINT-2026-08-10d.md` and the two biggest are NAMED: the ROOT's `height`,
 where **abcjs sums in PITCH and multiplies by `STEP` ONCE per line** (`calcHeight` +
 `engraveStaffLine`) while we stack in lengths and sum those — and `calcHeight` ignores the
