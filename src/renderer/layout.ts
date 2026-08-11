@@ -965,6 +965,17 @@ export interface PlacedText {
    * `topTextBlock`. Present only when the font asked for one; the emitter turns it into
    * abcjs's four filled rules and wraps the pair in a group.
    */
+  /**
+   * The FACE a `%%…font` named, when it is not the type's default. abcjs writes the
+   * directive's own string into `font-family` (`parse/abc_parse_directive.js:22-44`).
+   */
+  readonly face?: string
+  /**
+   * `getBBox()`'s width and height for this row, present only when its font asked for a
+   * BOX. The emitter lays abcjs's four rules out from them AFTER the lanes have moved the
+   * row's y, which is why the size travels rather than the rect.
+   */
+  readonly boxSize?: { readonly width: number; readonly height: number }
   readonly boxRect?: {
     readonly x: number
     readonly y: number
@@ -4809,7 +4820,18 @@ function noteText(
         bold: false,
         italic: false,
         ...(JAZZ_CHORDS ? { jazz: parts } : {}),
-        ...(event.chordFont?.box === true ? { box: true } : {}),
+        // A `%%gchordfont Arial 10` NAMES ITS FACE, and the emitter's table only has the
+        // DEFAULT one per type. abcjs writes whatever the directive said.
+        ...(event.chordFont === null ? {} : { face: event.chordFont.face }),
+        ...(boxed
+          ? {
+              box: true,
+              // `getBBox()`'s two figures, which the box is laid out from — see
+              // `PlacedText.boxSize`. Measured HERE because the metrics live here; the
+              // emitter turns them into abcjs's four rules once the lanes have moved the y.
+              boxSize: { width: markWidth(line, size, false), height: goldenTextHeight(size) },
+            }
+          : {}),
       })
     }
   }

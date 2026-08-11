@@ -14,6 +14,7 @@ import { type CompatibilityMode, defaultMode, isStrict } from '../core/model.js'
 import {
   ABCJS_ARC,
   ABCJS_LINE_PX,
+  ABCJS_RATIO,
   ABCJS_YCORR,
   spaces,
   spacesOfPitch,
@@ -1480,14 +1481,33 @@ const glyphDefs = new Map<GlyphName, string>()
             t.jazz === undefined
               ? escapeText(t.text)
               : jazzChordMarkup(t.jazz, abcjs ? undefined : textNum(t.x * PX))
-          const face = t.font === undefined ? undefined : ABCJS_FONT_FACE[t.font]
+          // A `%%…font` that NAMES a face wins over the type's default — see `PlacedText.face`.
+          const face = t.face ?? (t.font === undefined ? undefined : ABCJS_FONT_FACE[t.font])
+          /**
+           * **A BOXED MUSIC TEXT TAKES THE SAME GROUP-AND-FOUR-RULES AS A BOXED TOP-TEXT
+           * ROW** — one `renderText`, one branch (`draw/text.js:48-81`). `padding` is
+           * `font.size * 0.1`; the text moves IN by it on both axes (on x only for a
+           * `start` or `end` anchor, which is where `hash.attr.x` is adjusted), its class
+           * is DELETED, and the rect is measured from `getBBox()` — `PlacedText.boxSize`.
+           */
+          const pad = t.size * ABCJS_RATIO.fontBoxPadding
+          const bs = t.box === true ? t.boxSize : undefined
+          const boxDelta =
+            bs === undefined
+              ? 0
+              : t.anchor === 'middle'
+                ? bs.width / 2 + pad
+                : t.anchor === 'end'
+                  ? bs.width + pad * 2
+                  : 0
+          const boxDx = bs === undefined ? 0 : t.anchor === 'start' ? pad : t.anchor === 'end' ? -pad : 0
           textParts.push({
             role: t.role,
             s:
               abcjs && face !== undefined
                 ? abcjsText(
-                    textNum(t.x * PX),
-                    textNum(t.y * PX + oy),
+                    textNum((t.x + boxDx) * PX),
+                    textNum((t.y + (bs === undefined ? 0 : pad)) * PX + oy),
                     num(t.size * PX),
                     face,
                     t.italic,
@@ -1500,7 +1520,8 @@ const glyphDefs = new Map<GlyphName, string>()
                     // `addLyric` ends every verse with a newline. This was `[]`.
                     (t.extraLines ?? []).map(escapeText),
                     false,
-                    t.noClass === true,
+                    // A BOXED row's class is DELETED, not emptied (`draw/text.js:58`).
+                    t.noClass === true || bs !== undefined,
                   )
                 : `<text${partAttr} x="${textNum(t.x * PX)}" y="${textNum(t.y * PX + oy)}" ` +
                   `font-family="serif" font-size="${num(t.size * PX)}"${style}` +
@@ -1508,6 +1529,28 @@ const glyphDefs = new Map<GlyphName, string>()
                   `${t.anchor === undefined || t.anchor === 'start' ? '' : ` text-anchor="${t.anchor}"`}` +
                   `>${body}</text>`,
           })
+          // …and the BOX wraps whatever that produced. `Svg.rect` writes four one-pixel
+          // bars and `lines.join(" ")` doubles the space at every joint (`svg.js:112-142`).
+          if (bs !== undefined && abcjs) {
+            const part = textParts[textParts.length - 1]
+            if (part !== undefined) {
+              const bx = Math.round((t.x - boxDelta) * PX)
+              const by = Math.round((t.y - t.size) * PX + oy)
+              const bw = Math.round((bs.width + pad * 2) * PX)
+              const bh = Math.round((bs.height + pad * 2) * PX)
+              const h = (yy: number): string =>
+                `M ${bx} ${yy} l ${bw} 0 l 0 1  l ${-bw} 0  z `
+              const v = (xx: number, from: number, to: number): string =>
+                `M ${xx} ${from} l 0 ${to - from} l 1 0  l 0 ${from - to}  z `
+              const d = [h(by), h(by + bh), v(bx + bw, by, by + bh), v(bx, by + bh, by)].join(' ')
+              textParts[textParts.length - 1] = {
+                ...part,
+                s:
+                  `<g fill="currentColor" data-name="${t.dataName ?? ''}">${part.s}` +
+                  `<path d="${d}" stroke="none" data-name="box"></path></g>`,
+              }
+            }
+          }
         }
         if (barTexts) parts.push(...textParts.map((t) => t.s))
         /**
