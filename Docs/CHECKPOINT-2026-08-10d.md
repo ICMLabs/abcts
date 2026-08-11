@@ -461,10 +461,16 @@ staff-stacking arithmetic are where the remaining inline literals are.
      (`markWidth(…, boxed)`) and draw nothing. Needs the text's bbox, which is what
      `golden-widths.ts` already reproduces.
 
-   - **A FREE-TEXT BLOCK'S LEADING BLANK LINE IS A NON-BREAKING SPACE** —
-     `text.replace(/^\n/, "\xA0\n")` and, for a `free-text` row, `^[ \t]*\n` → `' \n'`
-     per line (`draw/text.js:39-46`). `%%begintext / %% / %%endtext` writes `&nbsp;` where
-     ours writes an empty tspan, and the row's HEIGHT follows the character.
+   - **~~A FREE-TEXT BLOCK'S LEADING BLANK LINE~~ — HALF CLOSED.** It is a NON-BREAKING
+     SPACE — `text.replace(/^\n/, "\xA0\n")` (`draw/text.js:46`) — and a browser's XML
+     serializer writes U+00A0 as the ENTITY, which is how it reaches the file as `&nbsp;`.
+     Both are in (`escapeText` now encodes it).
+     **WHAT IS LEFT IS STRUCTURAL, AND IT IS 7.56px: `%%text` BEFORE THE MUSIC IS A LINE,
+     NOT TOP TEXT.** abcjs's `draw()` spends `spacing.music` and only THEN walks
+     `abcTune.lines`, where a `nonMusic` line is drawn like any other
+     (`draw/draw.js:17`, `:54-60`) — so a `%%begintext` block ahead of the first staff sits
+     BELOW the music gap, where ours puts it in the top-text block ABOVE it. Exactly one
+     `musicSpace`, and it is also why 6.7.0 charges that block a `staffSeparation`.
 
    - **THE CLEF'S y IS `absoluteY − pitch * STEP`, TWO TERMS.** abcjs keeps one
      `staff.absoluteY` — `lineStart + STEP * staff.top` — and every glyph on the staff is
