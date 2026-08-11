@@ -425,7 +425,29 @@ staff-stacking arithmetic are where the remaining inline literals are.
      total as a pitch, because abcjs carries its own inside `staff.top` — the first attempt
      dropped it and took `pixel-parity` to 1 of 120 and the harvested table to 2 of 174.
      **PORT THE UNIT, NOT THE RE-ASSOCIATION.**
-     **WHAT IS LEFT OF IT** is the length→pitch DIVISION at the extent boundary:
+     **AND THE DIRECTION HAS NOW FLIPPED ON TWELVE ROWS, WHICH IS THE REAL FINDING.**
+     `visual-title-07` gives OURS a clean `135.349` against abcjs's
+     `135.34900000000002`; `synth-flattener-35` the same shape. **The goal is not a
+     cleaner number, it is abcjs's SEQUENCE.** Its page height is one running cursor:
+
+     ```
+     y  = 0
+     y += padding.top                       // 15
+     y += each top-text ROW's advance       // one at a time
+     y += spacing.music
+     per music line:  y += separation ; y += staffGroup.height * STEP
+     h  = y + padding.bottom
+     ```
+
+     (`draw/draw.js:14-76`, `draw/set-paper-size.js:3`.) Ours folds the top-text block and
+     `musicSpace` INTO the first staff's extent — measured on `title-07`, whose whole
+     `heightPitch * STEP` is 105.349 where abcjs adds 33 (the title row), 7.5566
+     (`musicSpace`) and the staff's own span as three separate steps. Left-to-right `+`
+     over the same terms in a different grouping is a different double. **The arc is to
+     port `draw()`'s cursor**: keep the block and the music gap OUT of the pitch total and
+     spend them in abcjs's order.
+
+     **WHAT IS ALSO LEFT** is the length→pitch DIVISION at the extent boundary:
      `heightPitch` is assembled as `(extent.bottom − extent.top) / spacePerStep`, and
      `extent.top` is not a clean multiple — it is the CHORD LANE, `inkTop` walked upward by
      `chordHeightAbove * lanes + margin` in LENGTHS. abcjs never divides: its `staff.top`
