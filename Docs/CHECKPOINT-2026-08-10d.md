@@ -33,11 +33,11 @@ reproduce goes in `Docs/ABCJS-DIFFERENCES.md` with its evidence and its slug goe
 | harvested geometry | `corpus-abcjs-ranked` | 0 of 174 | 0 of 174 |
 | pixel geometry | `pixel-parity` | 0 of 120 | 0 of 120 |
 | **DOM contract** | **`dom-contract`** | **1 of 25 — TWENTY-FOUR RATCHETED** | 11 of 25, fourteen |
-| **SVG bytes** | **`svg-bytes`** | **133 of 171**; best 46104, median 1301 | 164 of 171, best 5186, median 174 |
+| **SVG bytes** | **`svg-bytes`** | **121 of 171**; best 46104, median 4743 | 164 of 171, best 5186, median 174 |
 
 **Suite 1158 of 1158. NO REDS. `npx tsc --noEmit` clean. Working tree clean.**
 
-Heights: **129 exact / 40 ULP-only / 2 structural**, from 80 / 86 / 2 this morning. The
+Heights: **148 exact / 21 ULP-only / 2 structural**, from 80 / 86 / 2 this morning. The
 two structural ones are still `visual-mouse-click-01` and `visual-tablature-15` at 3.875px.
 
 ---
@@ -429,6 +429,50 @@ staff-stacking arithmetic are where the remaining inline literals are.
        gives `…387` and the two additions give `…388`. **Ask the oracle for its own
        intermediate, do not re-derive it.**
 
+     * **AND THE LADDER ITSELF WALKS IN PITCH NOW**, because `incTop` does —
+       `staff.top += height + margin` over PITCH figures, one addition per rung. Ours
+       walked the same rungs in LENGTHS and the staff's top came out one ULP from abcjs's.
+       Each rung's height is still a length on the way in (it comes from text metrics, as
+       abcjs's does from `dim.height`), so it converts exactly where abcjs's
+       `dim.height / spacing.STEP` does. **Heights 129 → 148 exact; the byte median
+       1301 → 5546.**
+
+   - **~~A WHOLE REST~~ — CLOSED, and it is a FEATURE, not a rounding.** `centerWholeRests`
+     runs AFTER the justification loop and moves any `whole` or `multimeasure` rest that is
+     neither the first nor the last child of a voice to `midpoint − w / 2`, where
+     `midpoint = (after.x − before.x) / 2 + before.x` (`layout/layout.js:77`, `:123-138`,
+     `absolute-element.js:235-241`). **AND `this.w` IS THE ELEMENT'S INK, NOT ITS SPRING** —
+     `addRight` grows it over the DRAWN children, so a whole rest is ~11px wide however
+     much horizontal space its duration bought. Centring on `el.width` put the glyph 37px
+     left of abcjs's; the ink is our `rod` minus `minspacing`. Six fixtures.
+
+   - **~~A SLUR AND A TIE~~ — CLOSED.** `drawArc` writes
+     `sprintf("M %f %f C %f %f %f %f %f %f C %f %f %f %f %f %f z", …)` with every
+     coordinate `roundNumber`'d and the four control points rounded BEFORE the mirrored
+     pair is derived from them (`draw/tie.js:83-99`). Ours wrote commas, no spaces and full
+     precision. **AND THE `class` IS ALWAYS WRITTEN, EMPTY OR NOT** — `generate` returns
+     `''`, and `svg.js`'s `path` sets every key it is handed. Four fixtures on that one
+     attribute.
+
+   - **A BOXED FONT DRAWS A BOX** — `%%partsfont box` and friends. `renderText` opens a
+     `<g fill="currentColor" data-name="{name}">`, shifts x by the padding, DELETES the
+     text's own class, and after drawing measures `elem.getBBox()` to stroke a rectangle as
+     four thin `l`-runs (`draw/text.js:49-58`, `:68-`). We measure the box for WIDTH already
+     (`markWidth(…, boxed)`) and draw nothing. Needs the text's bbox, which is what
+     `golden-widths.ts` already reproduces.
+
+   - **A FREE-TEXT BLOCK'S LEADING BLANK LINE IS A NON-BREAKING SPACE** —
+     `text.replace(/^\n/, "\xA0\n")` and, for a `free-text` row, `^[ \t]*\n` → `' \n'`
+     per line (`draw/text.js:39-46`). `%%begintext / %% / %%endtext` writes `&nbsp;` where
+     ours writes an empty tspan, and the row's HEIGHT follows the character.
+
+   - **THE CLEF'S y IS `absoluteY − pitch * STEP`, TWO TERMS.** abcjs keeps one
+     `staff.absoluteY` — `lineStart + STEP * staff.top` — and every glyph on the staff is
+     `calcY(pitch)` off it (`draw/staff-group.js:22-26`, `renderer.js`). Ours reaches the
+     same point through `(system.originY + marginTop) + staff.originY + localY`, four terms,
+     and lands one ULP away: `23.112000000000002` against `23.111999999999995`. The next
+     layer of the same arc, and the biggest single family left.
+
    - **(the earlier diagnosis, kept because the method transfers)**
      `synth-flattener-14` gives `149.07999999999998` against abcjs's `149.08`, and the
      dirt is ONE term: with the staff at a clean `originY = 88.08` and the margins a clean
@@ -599,10 +643,10 @@ staff-stacking arithmetic are where the remaining inline literals are.
 working tree clean
 npx tsc --noEmit    clean
 npx vitest run      1158 / 1158
-svg bytes           133 of 171   best 46104, median 1301
+svg bytes           121 of 171   best 46104, median 4743
                     PASSING ratchet: 7 slugs
 DOM contract        1 of 25       PASSING ratchet: 24 slugs
-heights             129 exact / 40 ULP-only / 2 structural
+heights             148 exact / 21 ULP-only / 2 structural
 audio ranked        0 of 72
 timing ranked       0 of 38
 element timings     1 of 13
