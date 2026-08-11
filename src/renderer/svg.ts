@@ -22,7 +22,9 @@ import {
 import { SMUFL_TO_ABCJS } from './glyph-map.js'
 import { glyphsFor } from './glyph-table.js'
 import { GLYPHS, type GlyphName } from './glyphs.js'
+import { ENGRAVE } from './layout.js'
 import type {
+  ConnectorSpan,
   Layout,
   PartRole,
   PlacedCurve,
@@ -862,6 +864,48 @@ const glyphDefs = new Map<GlyphName, string>()
    * `(system.originY + OY) + staff.originY`.
    */
   const moved = (): boolean => PX !== 1 || oy !== 0
+  /**
+   * **A BRACE AND A BRACKET ARE ABCJS'S OWN ARITHMETIC**, not a glyph — `curvyPath` and
+   * `straightPath` (`draw/brace.js:18-76`), absolute and with no transform. Every
+   * coordinate is RAW: `sprintf`'s `%f` is `parseFloat`, so `132.87 + 110/3.14` prints as
+   * `167.90184713375797`. Verified against a golden to the last digit.
+   *
+   * `STEP` is `spacing.STEP`, the pitch unit — `ENGRAVE.spacePerStep` here, which is
+   * abcjs's 3.875 once the layout holds its pixels.
+   */
+  const connectorPath = (span: ConnectorSpan, yTop: number, yBottom: number): string => {
+    const STEP = ENGRAVE.spacePerStep * PX
+    const xLeft = span.x * PX
+    const n = (v: number): string => String(v)
+    if (span.kind === 'brace') {
+      const h = yBottom - yTop
+      const curve = (xC: readonly number[], yC: readonly number[]): string =>
+        `M ${n(xLeft + (xC[0] ?? 0))} ${n(yTop + (yC[0] ?? 0))} ` +
+        `C ${n(xLeft + (xC[1] ?? 0))} ${n(yTop + (yC[1] ?? 0))} ` +
+        `${n(xLeft + (xC[2] ?? 0))} ${n(yTop + (yC[2] ?? 0))} ` +
+        `${n(xLeft + (xC[3] ?? 0))} ${n(yTop + (yC[3] ?? 0))} ` +
+        `C ${n(xLeft + (xC[4] ?? 0))} ${n(yTop + (yC[4] ?? 0))} ` +
+        `${n(xLeft + (xC[5] ?? 0))} ${n(yTop + (yC[5] ?? 0))} ` +
+        `${n(xLeft + (xC[6] ?? 0))} ${n(yTop + (yC[6] ?? 0))} z`
+      return (
+        curve([7.5, -8, 21, 0, 18.5, -10.5, 7.5], [0, h / 5.5, h / 3.14, h / 2, h / 2.93, h / 4.88, 0]) +
+        curve([0, 17.5, -7.5, 6.6, -5, 20, 0], [h / 2, h / 1.46, h / 1.22, h, h / 1.19, h / 1.42, h / 2])
+      )
+    }
+    const x = xLeft + STEP
+    const w = STEP * 0.75
+    const overlap = STEP * 0.75
+    const h = yBottom - yTop
+    const wCurve = STEP * 2
+    const hCurve = STEP
+    return (
+      `M ${n(x)} ${n(yTop - overlap)} l 0 ${n(h + overlap * 2)} l ${n(w)} 0 l 0 ${n(-(h + overlap * 2))} z` +
+      `M ${n(x + w)} ${n(yTop - overlap)} q ${n(wCurve * 0.6)} ${n(hCurve * 0.2)} ${n(wCurve)} ${n(-hCurve)} ` +
+      `q ${n(-wCurve * 0.1)} ${n(hCurve * 0.3)} ${n(-wCurve)} ${n(hCurve + STEP)} z` +
+      `M ${n(x + w)} ${n(yTop + overlap + h)} q ${n(wCurve * 0.6)} ${n(-hCurve * 0.2)} ${n(wCurve)} ${n(hCurve)} ` +
+      `q ${n(-wCurve * 0.1)} ${n(-hCurve * 0.3)} ${n(-wCurve)} ${n(-hCurve - STEP)} z`
+    )
+  }
   /** One placed line in output units. */
   const TL = (l: PlacedLine): PlacedLine =>
     !moved()
@@ -1006,32 +1050,29 @@ const glyphDefs = new Map<GlyphName, string>()
     // A BRACKET'S STEM. abcjs classes it `abcjs-bracket` and names it `bracket`
     // (`draw/brace.js`, via `classes.generate`), and we emitted neither — so no comparison
     // could reach a bracket at all. Finding 92: the representation was missing a HANDLE.
-    for (const line of system.connectorLines) {
-      parts.push(
-        lineToRect(
-          TL(line),
-          abcjs ? ' class="abcjs-bracket" data-name="bracket"' : ` class="${prefix}-staff"`,
-          abcjs,
-        ),
-      )
-    }
-    for (const g of system.connectorGlyphs) {
+    if (!abcjs)
+      for (const line of system.connectorLines) {
+        parts.push(lineToRect(TL(line), ` class="${prefix}-staff"`, abcjs))
+      }
+    // Under `abcjs` a connector is `curvyPath`/`straightPath` arithmetic drawn with its own
+    // staff's lines — see `connectorPath` and the staff loop below.
+    if (!abcjs) for (const g of system.connectorGlyphs) {
       // A brace stretches VERTICALLY to span its staves — `scale(1,n)`, not a uniform
       // scale — so it cannot share a definition with an unstretched one and stays a path.
       const scale = g.scale === undefined || g.scale === 1 ? '' : ` scale(1,${num(g.scale)})`
       // …and the same handle for the glyphs. abcjs draws a brace and a bracket as ONE path
       // each, so a `brace` name covers the whole shape and `bracket` covers its two arms.
       const named = g.name === 'brace' ? 'brace' : 'bracket'
-      const attr = abcjs
-        ? ` class="abcjs-${named}" data-name="${named}"`
-        : ` class="${prefix}-staff"`
+      const attr = ` class="${prefix}-staff"`
       parts.push(
         scale === ''
           ? glyphMarkup(g.name, g.x, g.y, undefined, attr)
           : `<path${attr} transform="translate(${num(g.x * PX)},${num(g.y * PX + oy)})${scale}" d="${outline(g.name).path}"/>`,
       )
     }
-    for (const staff of system.staves) {
+    for (const [staffIndex, staff] of system.staves.entries()) {
+      /** Connectors that START on this staff — written after its lines. */
+      let connectorHere: readonly ConnectorSpan[] = []
       // …and the staff's, on top of it. Reset per staff, since `staff.originY` is relative.
       if (abcjs) oy = (system.originY + OY) * PX + staff.originY * PX
       let staffGroup = ''
@@ -1061,6 +1102,11 @@ const glyphDefs = new Map<GlyphName, string>()
         if (staff.staffLines.length > 0) {
           parts.push(staffGroup ? `<g class="${staffGroup}">` : '<g>')
         }
+        // …and the CONNECTOR comes straight after this staff's lines, as
+        // `drawStaffGroup` draws it — `printStaff`, then `printBrace(brace)`, then
+        // `printBrace(bracket)`, then `drawVoice` (`draw/staff-group.js:74-113`). The
+        // group closes below, so the connector is written after it.
+        connectorHere = system.connectorSpans.filter((c) => c.staffIndex === staffIndex)
         // …AND THE MEASURE COUNTER IS ALREADY 0 BY THE TIME THE PREFIX IS DRAWN.
         // `draw/voice.js:31` reads as though a `staff-extra` cannot open a measure —
         // `if (child.type !== 'staff-extra' && !isInMeasure()) startMeasure()` — but
@@ -1093,6 +1139,18 @@ const glyphDefs = new Map<GlyphName, string>()
         parts.push(lineToRect(TL(line), attr, abcjs))
       })
       if (abcjs && staff.staffLines.length > 0) parts.push('</g>')
+      for (const span of connectorHere) {
+        // SYSTEM coordinates — `edge()` already carries each staff's own `originY`, so the
+        // offset is the system's alone and not this staff's.
+        const systemOy = (system.originY + OY) * PX
+        const yTop = span.top * PX + systemOy
+        const yBottom = span.bottom * PX + systemOy
+        parts.push(
+          `<path d="${connectorPath(span, yTop, yBottom)}" stroke="currentColor" ` +
+            `fill="currentColor" class="${classes.generate(span.kind)}" ` +
+            `data-name="${span.kind}"></path>`,
+        )
+      }
       // `foundNote` — a barline before any note does not advance the measure counter.
       let foundNote = false
       /**

@@ -1241,6 +1241,17 @@ export interface LayoutStaff {
   readonly originY: number
 }
 
+/** One brace or bracket, as abcjs states it: a left edge and the two staff lines it joins. */
+export interface ConnectorSpan {
+  readonly kind: 'brace' | 'bracket'
+  /** Which staff of the system it STARTS on — abcjs draws it with that staff's lines. */
+  readonly staffIndex: number
+  readonly x: number
+  /** The first staff's top LINE and the last staff's bottom line, in system coordinates. */
+  readonly top: number
+  readonly bottom: number
+}
+
 export interface LayoutSystem {
   /** One per STAFF, top to bottom. `%%score`'s `( … )` puts several voices on one. */
   readonly staves: readonly LayoutStaff[]
@@ -1254,6 +1265,8 @@ export interface LayoutSystem {
    */
   readonly connectorGlyphs: readonly PlacedGlyph[]
   readonly connectorLines: readonly PlacedLine[]
+  /** The same connectors as abcjs's own arithmetic — see `ConnectorSpan`. */
+  readonly connectorSpans: readonly ConnectorSpan[]
   /** Width of this system, staff spaces. Systems wrap, so they differ. */
   readonly width: number
   /**
@@ -4803,10 +4816,21 @@ const SPANNER_CLOSE: Readonly<Record<string, 'crescendo' | 'diminuendo' | 'gliss
 function layoutConnectors(
   groups: readonly StaffGroup[],
   staves: readonly { readonly originY: number }[],
-): { glyphs: PlacedGlyph[]; lines: PlacedLine[] } {
+): { glyphs: PlacedGlyph[]; lines: PlacedLine[]; spans: ConnectorSpan[] } {
   const glyphs: PlacedGlyph[] = []
   const lines: PlacedLine[] = []
-  if (groups.length === 0) return { glyphs, lines }
+  /**
+   * **abcjs BUILDS A CONNECTOR FROM ARITHMETIC, NOT FROM A GLYPH**, and draws it AFTER
+   * its own staff's lines. `drawStaffGroup` runs `printStaff`, then
+   * `printBrace(brace)`, then `printBrace(bracket)`, then `drawVoice`, once per staff and
+   * only when `isStartVoice(index)` (`draw/staff-group.js:74-113`, `:173-182`) — where we
+   * drew every connector ahead of every staff. The SHAPE is `curvyPath`'s two cubics off
+   * seven-point tables scaled by the span, or `straightPath`'s rect plus two quadratic
+   * arms, both absolute and with no transform (`draw/brace.js:18-76`). The emitter builds
+   * the `d`, because abcjs writes those coordinates RAW.
+   */
+  const spans: ConnectorSpan[] = []
+  if (groups.length === 0) return { glyphs, lines, spans }
 
   /** Runs of consecutive staves sharing a connector, from its `start`…`end` markers. */
   const runs = (kind: 'brace' | 'bracket'): { from: number; to: number }[] => {
@@ -4834,6 +4858,9 @@ function layoutConnectors(
     const first = edge(from)
     const last = edge(to)
     if (first === null || last === null) continue
+    // `params.x` is the page's left padding — measured on a golden, whose first curve
+    // point is `xLeft + 7.5` at 22.5. The staff itself is indented past it.
+    spans.push({ kind: 'brace', staffIndex: from, x: ENGRAVE.marginX, top: first.top, bottom: last.bottom })
     const height = last.bottom - first.top
     const glyph = GLYPHS.brace
     // Stretched to the span. The glyph's own height is its natural size, so the scale is
@@ -4857,6 +4884,7 @@ function layoutConnectors(
     const first = edge(from)
     const last = edge(to)
     if (first === null || last === null) continue
+    spans.push({ kind: 'bracket', staffIndex: from, x: ENGRAVE.marginX, top: first.top, bottom: last.bottom })
     const x = -ENGRAVE.connectorGap
     lines.push({
       x1: x,
@@ -4870,7 +4898,7 @@ function layoutConnectors(
     glyphs.push({ name: 'bracketBottom', x, y: last.bottom, role: 'staff' })
   }
 
-  return { glyphs, lines }
+  return { glyphs, lines, spans }
 }
 
 function layoutSpanners(
@@ -8580,6 +8608,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       staves: placed,
       connectorGlyphs: connectors.glyphs,
       connectorLines: connectors.lines,
+      connectorSpans: connectors.spans,
       width,
       originY: 0,
     }

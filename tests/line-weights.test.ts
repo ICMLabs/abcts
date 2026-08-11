@@ -277,6 +277,17 @@ describe('line weights match abcjs in strict mode', () => {
             h: Math.abs(Number(seg[4]) - Number(seg[2])),
           })
         }
+        // **AND abcjs's BRACKET RULE IS A CLOSED RECT IN RELATIVE COMMANDS** —
+        // `M x y l 0 H l W 0 l 0 -H z` (`draw/brace.js:24-29`) — so its WEIGHT is the
+        // horizontal run's `W` and its LENGTH the vertical run's `H`. Nothing in the
+        // absolute `L` form above can express that, and reading the path's BOX instead
+        // gives the whole bracket including its two arms: 10.66 for a 2.906 rule. The
+        // third time this file has had to widen because our markup became abcjs's.
+        for (const seg of d.matchAll(
+          /M\s*(?:-?[\d.]+)\s+(?:-?[\d.]+)\s*l\s*0\s+(-?[\d.]+)\s*l\s*(-?[\d.]+)\s+0/g,
+        )) {
+          segments.push({ w: Math.abs(Number(seg[2])), h: Math.abs(Number(seg[1])) })
+        }
       }
       // …and the fallback is keyed on the SEGMENTS FOUND, not on the path existing: a group
       // bracket is one path of curves whose only straight runs are horizontal, so parsing
