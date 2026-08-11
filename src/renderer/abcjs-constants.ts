@@ -509,6 +509,11 @@ export const ABCJS_PITCH = {
    */
   stemLength: 7,
   /**
+   * `highestVert += 6` — what a stem-up note shorter than a whole adds for the sake of
+   * placing a SLUR, which is not its stem's real length (`abstract-engraver.js:700`).
+   */
+  slurStemCompensation: 6,
+  /**
    * `volumeHeightBelow` and `dynamicHeightBelow`, both 6 (`dynamic-decoration.js:8`,
    * `crescendo-element.js:11`). A staff with both reserves `max(...) + margin` in one go
    * (`set-upper-and-lower-elements.js:66`), which is why this is one figure and not two.

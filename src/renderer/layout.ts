@@ -5597,17 +5597,51 @@ function buildCurve(
    * a SHARED staff above all, because there `voiceNumber === 0` forces `above` whatever the
    * stems do.
    */
+  // A SLUR'S END IS `calcSlurY`'s, WHICH IS NOT ALWAYS THE NOTEHEAD'S PITCH — see below.
+  const slurY = (a: NoteAnchor, isStart: boolean) => slurEndY(a, above, isStart)
+  /**
+   * **THE BUMP BELONGS TO THE BRANCH, SO IT IS KEYED ON THE BRANCH'S OWN OUTCOME.**
+   * `calcSlurY` writes `startX += anchor1.w / 2` INSIDE the arm that takes
+   * `startY = (highestVert + pitch) / 2`, and `endX += Math.round(anchor2.w / 2)` inside
+   * the closing arm — whose guards are `!beamInterferes && midPoint < startY`
+   * (`tie-element.js:163-177`). Reproducing those two guards separately means reproducing
+   * `highestVert` and `beamInterferes` twice; asking whether the END LANDED on the
+   * mid-stem point asks the same question once, and `slurEndY` is already that rule.
+   *
+   * The opening end has no such guards, so it is the plain test.
+   */
   const midStem = kind === 'slur' && above
   const startBump = midStem && from.stemUp ? (from.headWidth ?? 0) / 2 : 0
   /**
-   * …AND THE CLOSING END'S BUMP HAS TWO MORE GUARDS. `beamInterferes` is
-   * `anchor2.parent.beam && beam.stemsUp && beam.elems[0] !== anchor2.parent`
-   * (`tie-element.js:172-177`) — a slur closing on a beamed note that is not FIRST in its
-   * group aims at the beam instead, takes `endY = highestVert`, and gets no bump at all.
+   * …AND THE CLOSING END HAS TWO GUARDS THE OPENING ONE DOES NOT.
+   *
+   *   beamInterferes = anchor2.parent.beam && beam.stemsUp && beam.elems[0] !== parent
+   *   if (above && stemDir === 'up' && !beamInterferes && midPoint < startY) { … }
+   *
+   * (`tie-element.js:172-177`.) A slur closing on a beamed note that is not FIRST in its
+   * group aims at the BEAM instead and gets no bump; and one closing HIGHER than it opened
+   * keeps the notehead. `midPoint` is `(highestVert + pitch) / 2`, and a pitch below
+   * another is a LARGER y here, so abcjs's `<` is our `>`.
    */
-  const beamInterferes = to.stemUp && to.beamPos !== undefined && to.beamPos !== 'none' && to.beamPos !== 'first'
+  const beamed = (a: NoteAnchor): boolean => a.beamPos !== undefined && a.beamPos !== 'none'
+  const beamInterferes = to.stemUp && beamed(to) && to.beamPos !== 'first'
+  /**
+   * `highestVert` is NOT the stem's real top: `elem.pitches[p].highestVert = verticalPos`,
+   * and a note that STARTS OR ENDS a slur, is stem-up and shorter than a whole note gets a
+   * flat `+= 6` — "if the stem is up, then compensate for the length of the stem"
+   * (`abstract-engraver.js:692-712`). Six, not the stem's own seven.
+   */
+  const highPitch = (a: NoteAnchor): number =>
+    (a.pitchStep ?? 0) +
+    (a.stemUp && ratToNumber(a.event.duration) < 1 ? ABCJS_PITCH.slurStemCompensation : 0)
+  const midPointY = (a: NoteAnchor): number => (stepToY(highPitch(a)) + stepToY(a.pitchStep ?? 0)) / 2
+  // `this.startY` at the moment of the comparison is anchor1's MID-STEM value — the beam
+  // override two blocks later has not run yet — so the test reads that, not the final y.
+  const startYAtTest = midStem && from.stemUp ? midPointY(from) : stepToY(from.pitchStep ?? 0)
   const endBump =
-    midStem && to.stemUp && !beamInterferes ? Math.round((to.headWidth ?? 0) / 2) : 0
+    midStem && to.stemUp && !beamInterferes && midPointY(to) > startYAtTest
+      ? Math.round((to.headWidth ?? 0) / 2)
+      : 0
   const x1 = strict
     ? from.left + spaces(ABCJS_ARC.startOffset) + startBump
     : from.right + ENGRAVE.curveEndGap
