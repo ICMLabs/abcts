@@ -4962,6 +4962,13 @@ function noteText(
         size,
         bold: false,
         italic: false,
+        // **`renderText`'s ELEMENT, in `annotationfont`.** `relative.js`'s `case "text"`
+        // draws every annotation with `type: 'annotationfont'`, `klass: generate("annotation")`
+        // and `name: "annotation"` (`draw/relative.js:52`). Ours had no `font`, so the
+        // emitter fell through to its ad-hoc `<text font-family="serif">` — the marks were
+        // in the right place and in the wrong element, which only a byte gate could say.
+        font: 'annotationfont',
+        dataName: 'annotation',
         reserve: pointReserve(stepToY(averageStep)),
       })
     } else {
@@ -4975,6 +4982,13 @@ function noteText(
         size,
         bold: false,
         italic: false,
+        // **`renderText`'s ELEMENT, in `annotationfont`.** `relative.js`'s `case "text"`
+        // draws every annotation with `type: 'annotationfont'`, `klass: generate("annotation")`
+        // and `name: "annotation"` (`draw/relative.js:52`). Ours had no `font`, so the
+        // emitter fell through to its ad-hoc `<text font-family="serif">` — the marks were
+        // in the right place and in the wrong element, which only a byte gate could say.
+        font: 'annotationfont',
+        dataName: 'annotation',
         reserve: pointReserve(stepToY(averageStep)),
       })
     }
@@ -4994,6 +5008,8 @@ function noteText(
       size: fontSizeOf('annotationfont'),
       bold: false,
       italic: false,
+      font: 'annotationfont',
+      dataName: 'annotation',
       reserve: pointReserve(y),
     })
   }
