@@ -33,11 +33,11 @@ reproduce goes in `Docs/ABCJS-DIFFERENCES.md` with its evidence and its slug goe
 | harvested geometry | `corpus-abcjs-ranked` | 0 of 174 | 0 of 174 |
 | pixel geometry | `pixel-parity` | 0 of 120 | 0 of 120 |
 | **DOM contract** | **`dom-contract`** | **1 of 25 — TWENTY-FOUR RATCHETED** | 11 of 25, fourteen |
-| **SVG bytes** | **`svg-bytes`** | **118 of 171**; best 46104, median 4742 | 164 of 171, best 5186, median 174 |
+| **SVG bytes** | **`svg-bytes`** | **117 of 171**; best 46104, median 6228 | 164 of 171, best 5186, median 174 |
 
 **Suite 1158 of 1158. NO REDS. `npx tsc --noEmit` clean. Working tree clean.**
 
-Heights: **148 exact / 21 ULP-only / 2 structural**, from 80 / 86 / 2 this morning. The
+Heights: **146 exact / 23 ULP-only / 2 structural**, from 80 / 86 / 2 at the start. The
 two structural ones are still `visual-mouse-click-01` and `visual-tablature-15` at 3.875px.
 
 ---
@@ -472,8 +472,16 @@ staff-stacking arithmetic are where the remaining inline literals are.
      BELOW the music gap, where ours puts it in the top-text block ABOVE it. Exactly one
      `musicSpace`, and it is also why 6.7.0 charges that block a `staffSeparation`.
 
-   - **THE STAFF FRAME — SPECIFIED, ATTEMPTED, AND LOST TO A `git checkout`. REDO IT.**
-     It is the LAST BIG LEVER: the clef family and every remaining glyph-y ULP.
+   - **~~THE STAFF FRAME~~ — LANDED.** It was the last big lever, and the clef's y is exact
+     now (what remains on those rows is a horizontal ULP). Byte median 4742 → 6228.
+     **It was written once, LOST TO A `git checkout`, and rebuilt from this recipe in one
+     pass** — which is the argument for writing the recipe down before finishing.
+     The last contributor took a log to find and is the kind that hides: **the VOICE
+     LABEL**, centred on `y = 0` because that used to be the middle line. It only became
+     the binding extent once every honest contributor had moved.
+     The original statement of the problem follows.
+
+     It was the LAST BIG LEVER: the clef family and every remaining glyph-y ULP.
      abcjs has NO local frame — every coordinate is `calcY(pitch)` =
      `staff.absoluteY − pitch * spacing.STEP`, TWO terms. Ours reaches the same point
      through `(system.originY + marginTop) + staff.originY + (−step × STEP)`, four, and
@@ -688,10 +696,10 @@ staff-stacking arithmetic are where the remaining inline literals are.
 working tree clean
 npx tsc --noEmit    clean
 npx vitest run      1158 / 1158
-svg bytes           118 of 171   best 46104, median 4742
+svg bytes           117 of 171   best 46104, median 6228
                     PASSING ratchet: 7 slugs
 DOM contract        1 of 25       PASSING ratchet: 24 slugs
-heights             148 exact / 21 ULP-only / 2 structural
+heights             146 exact / 23 ULP-only / 2 structural
 audio ranked        0 of 72
 timing ranked       0 of 38
 element timings     1 of 13
