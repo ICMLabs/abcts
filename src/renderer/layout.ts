@@ -7883,7 +7883,19 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // It prints once: on the first system, above the top staff. Every staff still gets
       // its own clef, key and meter, which are per-staff by definition.
       // Zero width, so it does not advance the cursor.
-      if (withMeter && topStaff && score.tempo !== null) {
+      /**
+       * **AN INLINE `[Q:]` IS DRAWN WHERE IT STANDS AND NOT AT THE HEAD OF THE SYSTEM.**
+       * `createABCLine(staff, !hasPrintedTempo ? abcTune.metaText.tempo : null, i)` prints
+       * the HEADER tempo once (`engraver-controller.js:232`), and `metaText.tempo` is set
+       * by the FIELD parser, which an inline field never reaches. Every `[Q:]` is an
+       * ordinary element in its voice's stream instead.
+       *
+       * The model keeps the first one as the tune's tempo — audio and metadata want it —
+       * and `tempoInline` is what says it must not ALSO be drawn here. Measured on
+       * `synth-flattener-10`, five inline `[Q:]` and no header one: abcjs draws five marks
+       * and we drew six, the first twice.
+       */
+      if (withMeter && topStaff && score.tempo !== null && score.tempoInline !== true) {
         const tempo = layoutTempo(x, score.tempo, strict)
         if (tempo !== null) {
           elements.push(tempo)
