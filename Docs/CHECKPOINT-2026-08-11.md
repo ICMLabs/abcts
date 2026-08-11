@@ -17,11 +17,11 @@ and everything below is committed and pushed.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 11 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 13 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 25 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **97 of 171**; best 52498, median 7138 | 171 of 171 at byte 10 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **95 of 171**; best 52498, median 7181 | 171 of 171 at byte 10 |
 
 **`svg-bytes` is the one open gate**, and `DIVERGENT` is still EMPTY.
-It came into this session at 117 of 171 (median 6228) and stands at **97 of 171**
-(median 7138) with **74 fixtures byte-exact**.
+It came into this session at 117 of 171 (median 6228) and stands at **95 of 171**
+(median 7181) with **76 fixtures byte-exact**.
 
 The ROOT element: **145 byte-exact / 23 ULP-only / 3 structural**, from 144/24/3.
 
@@ -232,6 +232,40 @@ built by the beam pass instead and come after every head, which is what abcjs's 
 `{gab}c4|` shows. Both are true at once and the flag that tells them apart already existed.
 **AND A GRACE LEDGER HAS ITS OWN METRICS**: inset by ONE rather than two, and
 `(symbolWidth + 4) * scale` wide off the FULL-SIZE head (`abstract-engraver.js:522`).
+
+### ONE VOICE AT A TIME — abcjs FINISHES ITS BEAMS AND OTHERS BEFORE THE NEXT VOICE
+`drawStaffGroup` loops `params.voices[i]` and `drawVoice` walks that voice's children, THEN
+its beams, THEN its otherchildren (`draw/staff-group.js:112`, `draw/voice.js:25-90`). Ours
+merged every voice's elements, then every voice's beams — **the same set in a different
+order, and DOCUMENT ORDER IS NOT A COORDINATE**, so no positional gate could see it.
+
+**Nineteen of the ninety-six differing fixtures shared a staff between voices**, which is how
+the family was sized before the work started rather than after: a six-line script over the
+ranked table and the fixtures' own `%%score`. `visual-wrap-05` — the table's HEAD, at 46104 —
+went byte-exact on it.
+
+The elements were already voice-major (`fixed.flat()`); everything else needed a handle, so
+each voice's furniture is stamped with its position on the staff and the emitter's whole tail
+became `flushVoice(v)`.
+
+### AN ABOVE SLUR AIMING AT THE MIDDLE OF A STEM IS BUMPED RIGHT BY HALF A NOTEHEAD
+`calcSlurY` writes `startX += anchor1.w / 2` INSIDE the arm that takes
+`startY = (highestVert + pitch) / 2` — "when going to the middle of the stem, bump the line
+to the right a little bit to make it look right" — and `endX += Math.round(anchor2.w / 2)`
+in the closing arm, with a rounding the opening one does not have
+(`tie-element.js:163-177`).
+
+Our y already landed on the mid-stem point; only the x that goes with it was missing. It
+shows on a SHARED staff above all, because there `voiceNumber === 0` forces `above` whatever
+the stems do.
+
+**AND THE CLOSING END HAS TWO GUARDS THE OPENING ONE DOES NOT** — `!beamInterferes` and
+`midPoint < this.startY`. Trying to key the bump on "did the end LAND on the mid-stem point"
+looked equivalent and is not: a beamed end also lands off its notehead, by a different rule,
+and the control said so in one run. **AND `highestVert` IS NOT THE STEM'S REAL TOP** — a note
+that starts or ends a slur, is stem-up and shorter than a whole gets a flat `+= 6`, six and
+not the stem's own seven. **AND `this.startY` AT THE COMPARISON IS THE MID-STEM VALUE**, not
+the final one: the beam override is two blocks further down and has not run yet.
 
 ---
 
