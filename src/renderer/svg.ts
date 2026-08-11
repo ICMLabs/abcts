@@ -1144,11 +1144,12 @@ const glyphDefs = new Map<GlyphName, string>()
       let duplicateFrom = Number.POSITIVE_INFINITY
       if (abcjs && staff.voices.length > 1) duplicateFrom = staff.voices[0]?.length ?? 0
       const previous = staffIndex === 0 ? undefined : system.staves[staffIndex - 1]
-      const joined = system.connectorSpans.some(
-        (c) => c.staffIndex < staffIndex && staffIndex <= c.through,
-      )
+      // **ANY STAFF AFTER THE FIRST**, not only one inside a `%%score` group — `bartop`
+      // is set after every non-duplicate voice, whatever joins them
+      // (`draw/staff-group.js:129-133`). Measured: two bare `V:` voices with no `%%staves`
+      // at all draw the lower staff's bars up to the upper staff's bottom line.
       const bartop =
-        previous === undefined || !joined
+        previous === undefined
           ? undefined
           : previous.originY + stepToY(-4) - staff.originY
       // …and the staff's, on top of it. Reset per staff, since `staff.originY` is relative.
