@@ -1783,10 +1783,15 @@ const glyphDefs = new Map<GlyphName, string>()
         fill: boolean,
       ): void => {
         if (text === undefined) return
+        // **THE TWO SEGMENT WRITERS DISAGREE ON A TRAILING SPACE.** `drawEnding`'s
+        // `sprintf("M %f %f L %f %f ", …)` ends each segment with one; `drawTriplet`'s
+        // `drawLine` does not (`draw/ending.js:14`, `draw/triplet.js:18`). One byte per
+        // segment, and a quirk to reproduce rather than one of them to pick.
+        const gap = fill ? ' ' : ''
         const d = lines
           .map((l) => {
             const t = TL(l)
-            return `M ${round2(t.x1)} ${round2(t.y1)} L ${round2(t.x2)} ${round2(t.y2)} `
+            return `M ${round2(t.x1)} ${round2(t.y1)} L ${round2(t.x2)} ${round2(t.y2)}${gap}`
           })
           .join('')
         parts.push(
@@ -1799,13 +1804,32 @@ const glyphDefs = new Map<GlyphName, string>()
               `data-name="${pathName}"></path>`,
           )
         }
-        const style =
-          (text.bold ? ' font-weight="bold"' : '') + (text.italic ? ' font-style="italic"' : '')
-        const anchor = text.anchor === undefined ? '' : ` text-anchor="${text.anchor}"`
+        // **AND THE NUMBER IS `renderText`'s ELEMENT LIKE ANY OTHER** — `repeatfont` with
+        // `noClass` for an ending, `tripletfont` with `noClass` and `centerVertically` for
+        // a triplet (`draw/ending.js:40-49`, `draw/triplet.js:12`). Ours wrote an ad-hoc
+        // `<text>` in `serif` with the attributes in another order.
+        const face = text.font === undefined ? undefined : ABCJS_FONT_FACE[text.font]
         parts.push(
-          `<text${anchor} x="${textNum(text.x * PX)}" y="${round2(text.y * PX + oy)}" ` +
-            `font-family="serif" font-size="${num(text.size * PX)}"${style} ` +
-            `data-name="${escapeAttr(text.dataName ?? text.text)}">${escapeText(text.text)}</text>`,
+          face === undefined
+            ? `<text${text.anchor === undefined ? '' : ` text-anchor="${text.anchor}"`} ` +
+                `x="${textNum(text.x * PX)}" y="${round2(text.y * PX + oy)}" ` +
+                `font-family="serif" font-size="${num(text.size * PX)}" ` +
+                `data-name="${escapeAttr(text.dataName ?? text.text)}">${escapeText(text.text)}</text>`
+            : abcjsText(
+                textNum(text.x * PX),
+                round2(text.y * PX + oy),
+                num(text.size * PX),
+                face,
+                text.italic,
+                text.bold,
+                text.anchor ?? 'start',
+                text.dataName ?? text.text,
+                escapeText(text.text),
+                '',
+                [],
+                false,
+                text.noClass === true,
+              ),
         )
         parts.push('</g>')
       }

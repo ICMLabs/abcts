@@ -6092,7 +6092,13 @@ function layoutTuplets(
     // (`draw/triplet.js:33-40`). abcjs breaks the same 16px for `13` as for `3`.
     const gap = ENGRAVE.tupletNumberGap
     const thickness = ENGRAVE.strokedPathRule
-    const hook = ENGRAVE.tupletHook * -direction
+    // **THE HOOK TURNS AWAY FROM THE NOTES, NOT TOWARD THEM** — `bracketHeight = up ? 5 :
+    // -5` and the segment runs `y1 → y1 + bracketHeight` (`draw/triplet.js:24-30`), so an
+    // UP bracket's hooks point DOWN in SVG's y. Ours pointed the other way on every
+    // bracket in the repo, which no gate could see: `pixel-parity` compares noteheads and
+    // a tuplet bracket carries no class. Measured on `synth-flattener-27`, where every
+    // other coordinate of the `d` already matched to the hundredth.
+    const hook = ENGRAVE.tupletHook * direction
 
     // **THE HOOKS COME FIRST** — `drawBracket` writes the two verticals, then the left
     // segment, then the right (`draw/triplet.js:28-42`), all into one `d`.
