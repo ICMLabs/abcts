@@ -17,13 +17,13 @@ and everything below is committed and pushed.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 11 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 13 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 25 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **95 of 171**; best 52498, median 7181 | 171 of 171 at byte 10 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **94 of 171**; best 52498, median 7181 | 171 of 171 at byte 10 |
 
 **`svg-bytes` is the one open gate**, and `DIVERGENT` is still EMPTY.
 It came into this session at 117 of 171 (median 6228) and stands at **95 of 171**
 (median 7181) with **76 fixtures byte-exact**.
 
-The ROOT element: **145 byte-exact / 23 ULP-only / 3 structural**, from 144/24/3.
+The ROOT element: **146 byte-exact / 22 ULP-only / 3 structural**, from 144/24/3.
 
 ---
 
@@ -301,6 +301,58 @@ Two guards the measurement put there, each of which cost a run:
   is two roundings where it was one, and nine `visual-title-*` fixtures said so.
 - **A BEAMED STEM MUST NOT SUPPLY ONE.** The beam pass RETARGETS it, so `p1`/`p2` stop
   describing it — 24 root elements went structural the moment it did.
+
+### 🔬 AND THE TOOL THAT CRACKED IT — **INSTRUMENT abcjs's OWN CURSOR**
+
+Reading the source predicted a term list; the source was not enough, and the DUMP lies about
+this one — `dump-elements.js` publishes `staff.top`/`bottom` BEFORE
+`setUpperAndLowerElements` mutates them, so its `-2` for a lyric staff is not the number the
+page is built from. Instrumenting a SCRATCHPAD COPY answered it in one run:
+
+```bash
+rm -rf /tmp/gp/abcjs && mkdir -p /tmp/gp/abcjs
+cp -R ../abcMusicKit/Docs/References/abcjs/abcjs-6.7.0/. /tmp/gp/abcjs/
+# add `if (process.env.ABCJS_WALK) console.error(...)` after every moveY in
+#   src/write/draw/draw.js          — padding.top, topText, spacing.music, per line
+#   src/write/draw/non-music.js     — one line per ROW, printing {move, text, font}
+sed 's|^var abcjsPath = .*|var abcjsPath = process.env.ABCJS_PATH \|\| "";|' \
+  ../abcMusicKit/Tools/abcjs-debug/dump-svg.js > /tmp/gp/walk.js
+cp ../abcMusicKit/Tools/abcjs-debug/dump-elements-char-widths.js /tmp/gp/
+NODE_PATH=../abcMusicKit/Tools/abcjs-debug/node_modules ABCJS_PATH=/tmp/gp/abcjs \
+  ABCJS_WALK=1 node /tmp/gp/walk.js --file <fixture> --output /tmp/gp/w.svg
+```
+
+**NEVER instrument `../abcMusicKit` itself** — another agent works there. `NODE_PATH` is what
+lets the copied runner resolve `jsdom` from the harness's own `node_modules`.
+
+It printed, for `synth-flattener-33`:
+
+    WALK padding.top -> y=15
+      ROW {"move":7.56}                              y=15
+      ROW {"text":"tempo-override","font":"titlefont"} y=22.56
+      ROW {"move":33}                                y=22.56
+    WALK topText   -> y=55.56
+    WALK music(7.56) -> y=63.120000000000005
+    WALK  line 0 H=21.76877419354839 afterStaff y=147.474
+
+— **and `H` is OURS to the last digit.** The whole difference was in the head.
+
+**A LEADING GAP IS A ROW OF ITS OWN.** `spacing.title` (7.56) and `spacing.subtitle` (3.78)
+enter the block as `{ move }` ROWS that `nonMusic` spends through the same cursor as the
+text (`elements/top-text.js:23`). Ours moved `y` and pushed NOTHING onto `advances`, so the
+block's HEIGHT carried the gap and the walk's list did not — and the block's ink overshoot
+happens to be the SAME 7.56, so the total was right to the pixel and wrong in the last bits.
+**TWO ERRORS CANCELLING**, the pattern this repo has now been bitten by four times. Fixed:
+`spend()` pushes the gap as an advance, and `first.leading - named` is 0 where it should be.
+
+**AND THE LYRIC LANE IS SUBTRACTED IN PITCH.**
+`staff.bottom -= (lyricHeightBelow + margin)` with `lyricHeightBelow = dim.height / STEP`,
+`spacing.vocal = 0` and **`margin = 1`** (`set-upper-and-lower-elements.js:50-54, :102`).
+Ours divided the accumulated y; it now divides the DELTA, which is the same quantity abcjs
+divides. Two ULP remain on `visual-tablature-23`, and the reason is named: abcjs measures
+the WHOLE multi-verse string ONCE — `getTextSize.calc(lyricStr)` over `"g\nG\n"` — where we
+measure each verse. Its lane there is **11.126451612903226 pitch**, so `dim.height` is
+39.24, not `max(verse heights)`. **That is the next thread and it is one measurement.**
 
 **AND MEASURING SAID IT IS NOT THE GAP — IT IS THE WALK'S TERM STRUCTURE.**
 Of the 23 ULP-height fixtures, **SIX have ONE staff in the whole tune**, so no
