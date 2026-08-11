@@ -11689,9 +11689,19 @@ function verticalExtent(
       lyricBottom + lyricLaneHeight + ENGRAVE.spacePerStep - lyricFontSize,
       lyricBottom + lyricLaneHeight + ENGRAVE.spacePerStep - lyricFontSize,
     )
-    // A LYRIC LANE IS A LENGTH, not a pitch — it comes from a FONT — so its pitch is the
-    // division, as it was before. Recorded rather than faked.
-    if (bottom !== wasBottom) bottomPitch = -bottom / ENGRAVE.spacePerStep
+    /**
+     * **THE LANE IS SUBTRACTED IN PITCH, AS ABCJS SUBTRACTS IT** —
+     * `staff.bottom -= (lyricHeightBelow + margin)` where `lyricHeightBelow` is
+     * `lyricDim.height / STEP` plus `spacing.vocal / STEP`
+     * (`set-upper-and-lower-elements.js:50-54`, `abstract-engraver.js:777`). So the
+     * DIVISION is of the lane, not of the accumulated y — which is the whole difference
+     * between `pitch - lane/STEP` and `-(y + lane)/STEP`.
+     *
+     * Ours reaches the same y by a different route (a `max` against the last verse's
+     * baseline), so the delta stands in for the lane; it is the same quantity by
+     * construction and it is what abcjs divides.
+     */
+    if (bottom !== wasBottom) bottomPitch -= (bottom - wasBottom) / ENGRAVE.spacePerStep
   }
 
   // Apply the tuplet/volta ending lane now that `top`/`bottom` are the NOTE extent: a fixed
