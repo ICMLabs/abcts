@@ -11624,7 +11624,15 @@ function anchorBelowStaff<
   // skips them, so this is just the staff's own bottom before the lane is added.
   const inkBottom =
     verticalExtent(
-      parts.flatMap((p) => p.elements),
+      // **AND THE TOP-TEXT BLOCK IS NOT MUSIC AND HAS NOT BEEN PLACED YET.** It rides the
+      // first staff of the first system so the extent can account for it, but at this
+      // point its rows still carry their BLOCK-LOCAL y — measured from the block's own top,
+      // and therefore positive and large. `anchorAboveStaff` filters it out for the same
+      // reason; this did not, so a tune with a heading measured its own composer row as ink
+      // 189px BELOW the staff and dropped the below-dynamics lane 160px past it. Only
+      // `visual-selection-01` and its twin carry both a heading block and a below dynamic,
+      // which is why one fixture in the corpus could see it.
+      parts.flatMap((p) => p.elements.filter((el) => el.type !== 'title')),
       parts.flatMap((p) => p.beams),
       strict,
       {

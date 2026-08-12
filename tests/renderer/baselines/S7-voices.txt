@@ -317,7 +317,7 @@ system 0 width=821.859 originY=0.000
       glyph noteheadBlack 116.339,19.375
       glyph noteheadBlack 116.339,11.625
       glyph noteheadBlack 116.339,0.000
-      glyph dynamicForte 116.339,71.870
+      glyph dynamicForte 116.339,23.422
       line  114.339,15.500 -> 128.149,15.500 t=0.700
       line  114.339,7.750 -> 128.149,7.750 t=0.700
       line  114.339,0.000 -> 128.149,0.000 t=0.700
@@ -385,7 +385,7 @@ system 0 width=821.859 originY=0.000
       glyph noteheadBlack 416.006,3.875
       glyph noteheadBlack 416.006,-3.875
       glyph noteheadBlack 416.006,-11.625
-      glyph dynamicForte 416.006,71.870
+      glyph dynamicForte 416.006,23.422
       line  414.006,0.000 -> 427.816,0.000 t=0.700
       line  425.316,2.583 -> 425.316,-38.750 t=1.000
       text  416.458,-54.250 size=16.000 italic "3"
@@ -920,7 +920,7 @@ system 0 width=764.000 originY=0.000
       text  112.697,-63.250 size=20.000 bold "= 66"
     note@0 x=100.339 w=42.426
       glyph noteheadBlack 100.339,-23.250
-      glyph dynamicPiano 100.339,71.870
+      glyph dynamicPiano 100.339,13.563
       line  100.839,-23.250 -> 100.839,3.875 t=1.000
     note@-1 x=138.674 w=30.000
       glyph noteheadBlack 138.674,-19.375
