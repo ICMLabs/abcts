@@ -8098,7 +8098,16 @@ function layoutMeasure(
       voiceStem,
       dynamicsAbove,
       sharedStaff,
-      meterInForce === null ? null : meterInForce.numerator / meterInForce.denominator,
+      /**
+       * **A TUNE WITH NO `M:` STILL HAS A MEASURE LENGTH, AND IT IS 1.**
+       * `engraver-controller.js:206` seeds `this.measureLength =
+       * abcTune.getMeterFraction().num / .den`, and `getMeterFraction()` returns 4/4 when
+       * the tune names no meter; the per-staff branch only overwrites it `if
+       * (abcstaff.meter)` (`abstract-engraver.js:171-176`). Ours passed `null`, so
+       * `fillsMeasure` was never true and `centerWholeRests` never ran at all —
+       * `flattener-07` has no `M:` and its `z4` sat 20.58px left of abcjs's.
+       */
+      meterInForce === null ? 1 : meterInForce.numerator / meterInForce.denominator,
     )
     if (el === null) continue
     if (group !== null && stemOut?.value) {

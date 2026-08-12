@@ -125,12 +125,12 @@ system 0 width=788.000 originY=0.000
       glyph gClef 103.157,-15.500
     keySignature x=132.208 w=6.750
       glyph accidentalFlat 132.208,-23.250
-    rest x=148.958 w=84.853
-      glyph restWhole 148.958,-31.000
+    rest x=172.378 w=84.853
+      glyph restWhole 172.378,-31.000
     bar x=223.798 w=0.600
       line  224.098,-38.750 -> 224.098,-7.750 t=0.600
-    rest x=234.798 w=84.853
-      glyph restWhole 234.798,-31.000
+    rest x=261.093 w=84.853
+      glyph restWhole 261.093,-31.000
     bar x=309.638 w=0.600
       line  309.938,-38.750 -> 309.938,-7.750 t=0.600
     note@-3 x=320.638 w=42.426
@@ -228,12 +228,12 @@ system 1 width=700.000 originY=250.010
       glyph restQuarter 376.234,-23.250
     bar x=407.986 w=0.600
       line  408.286,-38.750 -> 408.286,-7.750 t=0.600
-    rest x=418.986 w=84.853
-      glyph restWhole 418.986,-31.000
+    rest x=471.364 w=84.853
+      glyph restWhole 471.364,-31.000
     bar x=545.993 w=0.600
       line  546.293,-38.750 -> 546.293,-7.750 t=0.600
-    rest x=556.993 w=84.853
-      glyph restWhole 556.993,-31.000
+    rest x=609.371 w=84.853
+      glyph restWhole 609.371,-31.000
     bar x=684.000 w=0.600
       line  684.300,-38.750 -> 684.300,-7.750 t=0.600
   staff 1 originY=132.182
