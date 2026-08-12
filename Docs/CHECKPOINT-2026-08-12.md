@@ -19,9 +19,9 @@ on stale runs before finding out what it was.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 0 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 1 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 1 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **30 of 171**, best 200613 | 49 of 171 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **29 of 171**, best 200613 | 49 of 171 |
 
-`DIVERGENT` is still EMPTY. **141 fixtures are byte-exact and all 141 are RATCHETED.**
+`DIVERGENT` is still EMPTY. **142 fixtures are byte-exact and all 142 are RATCHETED.**
 
 The 34 that remain classify **21 STRUCTURAL / 13 ULP** — see §3.4.
 
@@ -407,6 +407,44 @@ identical, so it is a flag on the curve rather than a second shape.
 **`visual-transpose-output-03` is byte-exact**, from 11240 of 43612 when the session started
 on it — six landings, all in this file's §2.20 onward.
 
+### 2.25 A HAIRPIN CLOSES ON A BARLINE, AND THE SPANNER SCAN ONLY WALKED NOTES
+
+`flattener-02` drew **no hairpin at all** — three dynamic glyphs where abcjs's line reads
+`DYNAMIC HAIRPIN DYNAMIC HAIRPIN DYNAMIC`. Traced, the OPEN reached the layout and the
+CLOSE never did:
+
+    SPAN name "<(" opens crescendo closes undefined
+
+`!<)!` is written before a `|`, and **a decoration before a barline attaches to the
+BARLINE** (`abstract-engraver.js:1002`) — a rule this engine already knows and already
+implements for the barline's own MARKS. What it did not do is let one CLOSE a spanner,
+because `layoutSpanners` walked `anchors` and an anchor exists only for a note or a rest.
+**The audio arc found the same rule from the other side in August** and the flattener has
+obeyed it since; the renderer never learned it.
+
+**A SEPARATE LIST, NOT AN EXTRA ANCHOR.** An anchor is read by the curve pass, the tuplet
+pass and the grace pass, and a bar belongs to none of them — it would lengthen a tuplet
+bracket and offer itself as a slur end. `emit`'s hairpin arm reads only `system` and `left`,
+so `SpannerSite` carries those plus an optional `anchor` for the GLISSANDO arm, which joins
+two noteheads and cannot end on a bar.
+
+**AND THE MERGE SORTS BY SYSTEM FIRST.** `element` is an index into the system's own list
+and REPEATS across systems; sorting on it alone paired a hairpin's open with the wrong close.
+A unit test caught it and the baseline diff showed **12 spanner REMOVALS and no additions**,
+which is the shape that says regression rather than change.
+
+### 2.26 A SLUR IS ADDED AT ITS OPEN, A HAIRPIN AT ITS CLOSE
+
+`voice.addOther(slur)` sits inside `if (pitchelem.startSlur)` and the tie's inside
+`if (pitchelem.startTie)` (`abstract-engraver.js:897-941`), so a curve joins `otherchildren`
+where it BEGINS. A hairpin is the other way round — `new CrescendoElem(this.startCrescendoX,
+lastNote(voice.children), …)` is built when the CLOSE is seen (`decoration.js:304-308`).
+
+The comment here claimed both sorted on the close. **Measurably neutral** — nothing in
+either corpus has a curve and a hairpin whose two orderings disagree — and committed for the
+citation, because the old note would send the next reader the wrong way and
+`visual-svg-per-line-01` is still open on this list.
+
 ---
 
 ## 3. WHAT IS LEFT — MEASURED, NOT LANDED
@@ -573,34 +611,6 @@ any anchor whose event is a rest, so the close is dropped entirely. Two parts: t
 must attach a `)` that follows a grace group to the last GRACE note, and the layout must be
 able to anchor a curve on a grace head — which `NoteAnchor.graceSlur` already half carries.
 
-### 3.3e A HAIRPIN CLOSES ON A BARLINE, AND OUR SPANNER SCAN ONLY WALKS NOTES
-
-`flattener-02` is `!p!C!<(!DEF GABc |d2 B2 G2 F2!<)! |` and **we draw no hairpin at all** —
-three dynamic glyphs and nothing else, where abcjs's line reads
-`DYNAMIC HAIRPIN DYNAMIC HAIRPIN DYNAMIC`.
-
-Traced: the OPEN reaches the layout and the CLOSE never does.
-
-    SPAN name "<(" opens crescendo closes undefined
-    SPAN name ">(" opens diminuendo closes undefined
-
-`!<)!` is written before a BARLINE, and **a decoration written before a barline attaches to
-the barline** (`abstract-engraver.js:1002`) — a rule this engine already knows and already
-implements for the barline's own MARKS (`Measure.closingBarlineDecorations`, read by
-`layoutMeasure`). What it does not do is let one CLOSE a spanner: `layoutSpanners` walks
-`anchors`, and an anchor exists only for a note or a rest.
-
-**The audio arc found the same rule from the other side** — "a hairpin's search is scoped to
-the SOURCE LINE and its close lands on the BARLINE" is in `CHECKPOINT-2026-08-08c.md`. The
-flattener obeys it; the renderer does not.
-
-The fix needs a decision rather than a patch: `emit`'s hairpin arm reads only `from.system`,
-`from.left`, `to.left` and `to.system`, so a bar needs far less than a `NoteAnchor` — but
-`NoteAnchor.event` is a `MusicEvent` and a bar is not one. Either the scan becomes generic
-over `{ system, left, decorations }`, or bars get anchors. Three fixtures wait on it:
-`flattener-02`, `flattener-01` and `visual-svg-per-line-01`, and abcjs's own add order —
-measured, `p`, crescendo, `f`, crescendo, `p` — is what the emitter must then reproduce.
-
 ### 3.4 THE REST OF THE TABLE — 21 STRUCTURAL, 13 ULP
 
 Read `/tmp/abcts-svg-bytes-ranked.txt` after `npx vitest run tests/svg-bytes.test.ts`, and
@@ -623,7 +633,7 @@ The named structural rows, cheapest last:
 
 ## 4. THE RATCHET
 
-`tests/svg-bytes.test.ts`'s `PASSING` names all 141 byte-exact fixtures. It caught nothing
+`tests/svg-bytes.test.ts`'s `PASSING` names all 142 byte-exact fixtures. It caught nothing
 this session, which is the point of it — every change here moved the count the right way
 AND kept every ratcheted slug. Regenerate it with `/tmp/gp/exact.mjs`; never shrink it.
 
