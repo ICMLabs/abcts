@@ -4661,7 +4661,20 @@ function decorationGlyphs(
   // hands it the literal `'below'` while every other ornament passes `positioning`
   // through (`decoration.js:261-264`), so the inverted fermata hangs UNDER the note
   // however the tune is written. Stacking it above put `!invertedfermata!EF` 6.52px low.
-  let below = Math.min(bottomPitch, ENGRAVE.decorationMinBottom)
+  /**
+   * **THE BELOW CURSOR'S FLOOR IS THE ELEMENT'S OWN BOTTOM, NOT A CONSTANT.**
+   *
+   *     yPos.below = Math.min(yPos.below, minPitch);
+   *     stackedDecoration(decoration, width, abselem, yPos, positioning.ornamentPosition,
+   *                       this.minTop, minPitch, accentAbove);
+   *
+   * (`creation/decoration.js:390-391`) — the SEVENTH argument is `minBottom`, and it is
+   * `minPitch`, the element's own bottom. `this.minBottom` from the constructor is passed
+   * NOWHERE, which is what this clamp was reading. So an inverted fermata on a high note
+   * hangs at pitch 8, well inside the staff, and ours could never rise past the constant:
+   * `visual-decorations-01` went from byte 7221 to 17871 of 59302 on removing it.
+   */
+  let below = bottomPitch
 
   for (const name of names) {
     if (strict && STRICT_UNDRAWN.has(name)) continue
@@ -4684,6 +4697,8 @@ function decorationGlyphs(
       const halfPitch = heightInPitches(glyph) / 2
       if (spec.forceBelow === true) {
         const belowPitch = below - height / 2
+        if (process.env.ABCTS_DEC)
+          console.error('SYMDEC', glyph, 'below', below, 'height', height, 'hip', heightInPitches(glyph), 'y', belowPitch)
         const y = stepToY(toStep(belowPitch))
         const half = (table.get(glyph)?.declaredHeight ?? 0) / 2
         out.push({
