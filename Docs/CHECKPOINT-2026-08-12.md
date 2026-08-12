@@ -682,6 +682,21 @@ The suspect is named in the code already: our beamed stem takes a BRAVURA anchor
 the same `ENGRAVING_DEFAULTS`-shaped hole the line weights came out of, one axis over. Start
 by printing both for this fixture's beamed stem.
 
+### 3.3i `flattener-23` IS 166 BYTES FROM CLOSING, ON A GRACE SLUR'S y
+
+Its last divergence is one curve: `M 315.71 79.37` against abcjs's `M 315.71 78.21`. The x
+is identical and the y is **1.16px — 0.2994 pitch** — apart.
+
+Instrumented, abcjs draws exactly one curve in the tune and it is the automatic GRACE slur:
+
+    TIE a1 312.7142857142858 a2 322.7142857142858 isGrace true above false
+
+`drawTie`'s `fudgeY` is 0 unless `fixedY`, so the difference is in `startY` itself — the
+pitch `calcSlurY` hands `drawArc`. Both engines agree on the two anchor x's and on the +3
+that `drawArc` adds, so the anchors are right and only the pitch is not. 0.2994 is not a
+third, not the 0.6 grace scale and not half a notehead; naming it is the next step, and the
+fixture closes when it is.
+
 ### 3.4 THE REST OF THE TABLE — 16 STRUCTURAL, 13 ULP
 
 Read `/tmp/abcts-svg-bytes-ranked.txt` after `npx vitest run tests/svg-bytes.test.ts`, and
