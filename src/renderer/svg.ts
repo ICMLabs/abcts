@@ -997,6 +997,40 @@ const glyphDefs = new Map<GlyphName, string>()
           y2: l.y2 * PX + oy,
           thickness: l.thickness * PX,
         }
+  /**
+   * **A BEAM IS A `<path>`, AND ONE PATH HOLDS EVERY BEAM OF ITS GROUP.** `drawBeam`
+   * concatenates each beam's four corners into a single `d` and writes one element
+   * (`draw/beam.js:7-44`), so a sixteenth run is ONE path with two subpaths — and a GRACE
+   * group goes through the same routine, where ours wrote a `<polygon>` per beam.
+   *
+   * The separators are abcjs's own and they are IRREGULAR — a space before the first and
+   * third `L` and none before the second:
+   *
+   *     "M" + sx + " " + sy + " L" + ex + " " + ey + "L" + ex + " " + ey2 + " L" + sx + " " + sy2 + "z"
+   *
+   * The second edge is the first plus `dy`, the beam's thickness, which is why the corners
+   * run start-top → end-top → end-bottom → start-bottom.
+   */
+  const beamPath = (members: readonly PlacedLine[]): string =>
+    members
+      .map((b) => {
+        const t = TL(b)
+        // …and the SECOND edge is rounded off the ALREADY-ROUNDED first, because abcjs
+        // computes `startY2 = roundNumber(startY + dy)` from a `startY` that has been
+        // through `roundNumber` itself (`draw/beam.js:37-42`).
+        const r2 = (n: number): number => Number.parseFloat(n.toFixed(2))
+        // `dy` is SIGNED — `+STEP` for stems up, `-STEP` for stems down — so the path opens
+        // on the TOP edge of an up-stem beam and the BOTTOM edge of a down-stem one. See
+        // `PlacedLine.stemsUp`.
+        const dy = (b.stemsUp === false ? -1 : 1) * t.thickness
+        const half = (b.stemsUp === false ? 1 : -1) * (t.thickness / 2)
+        const [sx, ex] = [r2(t.x1), r2(t.x2)]
+        const [sy, ey] = [r2(t.y1 + half), r2(t.y2 + half)]
+        const [sy2, ey2] = [r2(sy + dy), r2(ey + dy)]
+        return `M${sx} ${sy} L${ex} ${ey}L${ex} ${ey2} L${sx} ${sy2}z`
+      })
+      .join('')
+
   const TC = (c: PlacedCurve): PlacedCurve =>
     !moved()
       ? c
@@ -1472,31 +1506,32 @@ const glyphDefs = new Map<GlyphName, string>()
             beam.group === undefined
               ? [beam]
               : staff.beams.filter(mine).filter((b) => b.group === beam.group)
-          const d = members
-            .map((b) => {
-              const t = TL(b)
-              // …and the SECOND edge is rounded off the ALREADY-ROUNDED first, because
-              // abcjs computes `startY2 = roundNumber(startY + dy)` from a `startY` that has
-              // been through `roundNumber` itself (`draw/beam.js:37-42`).
-              const r2 = (n: number): number => Number.parseFloat(n.toFixed(2))
-              // `dy` is SIGNED — `+STEP` for stems up, `-STEP` for stems down — so the path
-              // opens on the TOP edge of an up-stem beam and the BOTTOM edge of a down-stem
-              // one. See `PlacedLine.stemsUp`.
-              const dy = (b.stemsUp === false ? -1 : 1) * t.thickness
-              const half = (b.stemsUp === false ? 1 : -1) * (t.thickness / 2)
-              const [sx, ex] = [r2(t.x1), r2(t.x2)]
-              const [sy, ey] = [r2(t.y1 + half), r2(t.y2 + half)]
-              const [sy2, ey2] = [r2(sy + dy), r2(ey + dy)]
-              return `M${sx} ${sy} L${ex} ${ey}L${ex} ${ey2} L${sx} ${sy2}z`
-            })
-            .join('')
+          const d = beamPath(members)
           parts.push(`<path d="${d}" stroke="none" fill="currentColor"${beamClass}></path>`)
         }
         // A GRACE BEAM's own class is `beam-elem d0` — its `durationClass` is 0, since a
         // grace note has no sounding duration.
-        for (const b of graceBeams) {
-          parts.push(lineToRect(TL(b), attrIfAny(classes.generate('beam-elem d0')), abcjs))
+        // …**AND IT IS A `<path>` LIKE ANY OTHER BEAM, ONE PER GROUP.** `drawBeam` is the
+        // same routine for both (`draw/beam.js:7-44`); ours wrote a `<polygon>` per grace
+        // beam, so a two-level grace group came out as two elements of the wrong kind.
+        {
+          let last: number | undefined
+          for (const b of graceBeams) {
+            if (b.group !== undefined && b.group === last) continue
+            last = b.group
+            const members =
+              b.group === undefined ? [b] : graceBeams.filter((g) => g.group === b.group)
+            // ALWAYS a `class`, empty or not — `svg.js`'s `path` sets every key it is
+            // handed and `generate` returns `''` without `add_classes`, so the attribute is
+            // written either way. Ours used `attrIfAny`, which omits it.
+            parts.push(
+              `<path d="${beamPath(members)}" stroke="none" fill="currentColor"` +
+                ` class="${classes.generate('beam-elem d0')}"></path>`,
+            )
+          }
         }
+        // A GRACE BEAM's own class is `beam-elem d0` — its `durationClass` is 0, since a
+        // grace note has no sounding duration.
         // **`drawDynamics` AND `drawCrescendo` DISAGREE ON THE ORDER OF THEIR OWN TWO
         // CLASSES** — `generate('decoration dynamics')` for a volume mark
         // (`draw/dynamics.js:11`) and `generate('dynamics decoration')` for a hairpin
@@ -2295,7 +2330,8 @@ const glyphDefs = new Map<GlyphName, string>()
             parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
           }
         }
-        for (const line of graceStems) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+        // (A BEAMED grace group's stems come out below, after the element's ledgers — see
+        // `graceStems`.)
         // A TEXT DECORATION (`!D.C.!`) is `createDecoration`'s, so it precedes the ledger;
         // an ANNOTATION (`"^above"`) is `addChord`'s and follows it. Both draw with
         // `annotationfont`, so the ROLE is what tells them apart, not the markup.
@@ -2310,6 +2346,16 @@ const glyphDefs = new Map<GlyphName, string>()
           }
           for (const line of ledgers) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
         }
+        /**
+         * **AND A BEAMED GRACE GROUP'S STEMS COME AFTER THE ELEMENT'S LEDGERS**, because
+         * they are not built when the element is. `addGraceNotes` runs inside `createNote`,
+         * before `ledgerLines`, but a BEAMED group's stems come from `createStems` in the
+         * LAYOUT phase — `stem.setX(parent.x); parent.addRight(stem)`
+         * (`layout/beam.js:135-140`) — which appends them to a child list `createNote`
+         * finished with long ago. An UNBEAMED grace's stem is built in the loop and stays
+         * with its own head.
+         */
+        for (const line of graceStems) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
         // Prose is a real <text> in a generic family, unlike musical glyphs, which are
         // paths so the SVG stays self-contained. A missing serif face falls back to
         // another serif; a missing Bravura falls back to nothing legible. See layout.ts.
