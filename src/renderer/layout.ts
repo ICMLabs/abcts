@@ -785,6 +785,8 @@ export type ElementType =
  */
 export type PartRole =
   | 'notehead'
+  /** The miniature notehead of a `Q:` mark — see `AboveLadder.tempoPitch`. */
+  | 'tempoNote'
   | 'stem'
   | 'ledger'
   | 'accidental'
@@ -2349,6 +2351,10 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
         x: cursor,
         y: noteY,
         scale: ENGRAVE.tempoNoteScale,
+        // Tagged so `anchorAboveStaff` can put it back on abcjs's own pitch — the mark's
+        // head is `calcY(positionY.tempoHeightAbove - 5)`, ONE product, where ours reaches
+        // it through the text baseline. See `AboveLadder.tempoPitch`.
+        role: 'tempoNote',
       }
       const tempoStem: PlacedLine[] = []
       if (spec.stemmed) {
@@ -11083,6 +11089,13 @@ interface AboveLadder {
   readonly dynamicY: number | null
   readonly partY: number | null
   readonly tempoY: number | null
+  /**
+   * The tempo rung's own PITCH — `positionY.tempoHeightAbove`, which is `staff.top` when
+   * the walk reached it (`set-upper-and-lower-elements.js:49`). The mark's NOTEHEAD is
+   * drawn straight off it at `calcY(pitch - 5)`, one product, where the text takes the y
+   * beside it. See `layoutTempo`.
+   */
+  readonly tempoPitch: number | null
   /** Packed lane index per chord/annotation — `setLaneForChord`'s answer. */
   readonly laneOf: ReadonlyMap<PlacedText, number>
 }
@@ -11319,8 +11332,10 @@ function aboveLadder<
   const tempoY = tempos
     ? reserve(ENGRAVE.tempoHeightAbove) + ENGRAVE.tempoTextSize + ENGRAVE.tempoDescenderBump
     : null
+  // `reserve` walked `topPitch` to the tempo rung; that pitch is what the NOTEHEAD reads.
+  const tempoPitch = tempos ? topPitch : null
 
-  return { chordY, endingY, dynamicY, partY, tempoY, laneOf }
+  return { chordY, endingY, dynamicY, partY, tempoY, tempoPitch, laneOf }
 }
 
 /**
@@ -11341,7 +11356,7 @@ function anchorAboveStaff<
   const partLabels = has((el) => el.type === 'part')
   const tempos = has((el) => el.type === 'tempo')
   if (!chords && !partLabels && !tempos) return [...parts]
-  const { chordY, partY, tempoY, laneOf } = aboveLadder(parts, strict, partsBox)
+  const { chordY, partY, tempoY, tempoPitch, laneOf } = aboveLadder(parts, strict, partsBox)
 
   // A uniform shift per item, so a tempo mark's beat-unit glyph and its stem ride along
   // with the `= 120` they belong to rather than being re-derived.
@@ -11380,7 +11395,25 @@ function anchorAboveStaff<
         // markup nor its rounding.
         return moved
       }
-      if (el.type === 'tempo') return shiftBy(el, tempoShift)
+      if (el.type === 'tempo') {
+        const moved = shiftBy(el, tempoShift)
+        /**
+         * **AND THE MARK'S NOTEHEAD SITS ON A PITCH, NOT ON THE TEXT'S BASELINE.**
+         * `set-upper-and-lower-elements.js:209` gives it
+         * `element.pitch - totalHeightInPitches + 1` — the tempo rung less five — and
+         * `printSymbol` draws it at `calcY` of that, one product. Instrumented on
+         * `synth-flattener-25`: abcjs's rung is 20.79664516129032 and its notehead's offset
+         * 15.796645161290321, exactly five below. Ours reached the same place through the
+         * text baseline and four y terms, and came out one ULP away on every tune with a
+         * `Q:`.
+         */
+        if (tempoPitch === null) return moved
+        const headY = -(tempoPitch - ABCJS_PITCH.tempoNoteDrop) * ENGRAVE.spacePerStep
+        return {
+          ...moved,
+          glyphs: moved.glyphs.map((g) => (g.role === 'tempoNote' ? { ...g, y: headY } : g)),
+        }
+      }
       if (!el.texts.some(isChord)) return el
       return {
         ...el,

@@ -532,6 +532,13 @@ export const ABCJS_PITCH = {
   partHeightAbove: 5.718709677419355,
   /** `tempoHeightAbove` — the tempo lane. */
   tempoHeightAbove: 6,
+  /**
+   * How far below the tempo rung its NOTEHEAD sits — `element.pitch -
+   * totalHeightInPitches + 1` with `totalHeightInPitches = 6`
+   * (`set-upper-and-lower-elements.js:209`, `tempo-element.js:14`). Instrumented on
+   * `synth-flattener-25`: rung 20.79664516129032, head offset 15.796645161290321.
+   */
+  tempoNoteDrop: 5,
   /** `endingHeightAbove` for a VOLTA (`ending-element.js:8`). */
   voltaLane: 5,
   /** …and for a TUPLET, which shares the field (`triplet-element.js:25`). */
