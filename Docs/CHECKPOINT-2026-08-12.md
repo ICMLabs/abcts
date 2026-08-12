@@ -611,13 +611,22 @@ are TWO call sites and they do not use the same clef: the header path passes
 `params.clef` (`abc_parse_music.js:984`), which is the element's own. Stamping the key with
 a running K:-clef defaulting to treble took `svg-bytes` from **34 to 36** and put two
 pixel-gate tunes out — so some fixture in the corpus DOES want the staff clef, and the
-split between the two paths is the whole remaining question. Three measurements to make
-before trying again:
+split between the two paths is the whole remaining question. **MEASUREMENTS 1 AND 2 ARE NOW MADE.** Instrumenting all four call sites on
+`visual-layout-07`:
 
-1. Which of `abc_parse_header.js`'s three call sites fires for a `K:` written after `V:`
-   lines, as `visual-layout-07`'s second `K:GMin` is.
-2. What `params.clef` actually is at `abc_parse_music.js:984` for an inline `[K:]`.
-3. Which fixtures regressed at treble-default — they are the ones that name the rule.
+    ADDPOS-INLINE clef {"type":"treble","verticalPos":0}     x2
+    ADDPOS-INLINE clef {"type":"bass","verticalPos":-12}     x2
+    FIXKEY site3  clef {"type":"treble","verticalPos":0}
+
+So the INLINE path runs once per voice with **that voice's own clef** — the bass voices do
+get bass positions — and the header path runs once with `multilineVars.clef`, treble. And
+`CREATEKEYSIG` is handed `Bflat@6 eflat@9` FOUR times: **the per-voice bass positions are
+computed and thrown away, and the header element is what every staff draws.**
+
+That confirms the model tried and reverted — a running K:-clef defaulting to treble — is the
+right shape. What is left is measurement 3: it took `svg-bytes` from 34 to 36 and put two
+pixel-gate tunes out, and **which fixtures those were has not been looked at**. They are the
+ones that name the rest of the rule.
 
 Note also that the two `setKeyChange`/`setClefChange` calls in our mid-tune branch are
 ORDER-SENSITIVE: swapping them cost `clefs-tune7` 7.40px of dx on the first run, before any
