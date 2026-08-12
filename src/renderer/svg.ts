@@ -1327,8 +1327,28 @@ const glyphDefs = new Map<GlyphName, string>()
         // SYSTEM coordinates — `edge()` already carries each staff's own `originY`, so the
         // offset is the system's alone and not this staff's.
         const systemOy = (system.originY + OY) * PX
-        const yTop = span.top * PX + systemOy
-        const yBottom = span.bottom * PX + systemOy
+        /**
+         * **A BRACE'S ENDS COME OFF `staff.absoluteY`, ONE PRODUCT EACH.**
+         *
+         *     var startY = params.startVoice.staff.absoluteY - spacing.STEP * 10;
+         *     params.endY = params.endVoice.staff.absoluteY - spacing.STEP * 2;
+         *
+         * (`draw/brace.js:8-14`) — 10 is the top staff line and 2 the bottom, in abcjs's
+         * pitch frame. Ours summed a system-relative edge and the system's own origin,
+         * which is the same terms in a different grouping: `visual-selection-01`'s curve
+         * printed `452.5570454545454` against abcjs's `452.55704545454546`, because every
+         * control point is `yTop + yHeight / k`.
+         */
+        const braceStaff = system.staves[span.staffIndex]
+        const braceLast = system.staves[span.through]
+        const yTop =
+          braceStaff === undefined
+            ? span.top * PX + systemOy
+            : braceStaff.absoluteY * PX - ENGRAVE.spacePerStep * PX * 10
+        const yBottom =
+          braceLast === undefined
+            ? span.bottom * PX + systemOy
+            : braceLast.absoluteY * PX - ENGRAVE.spacePerStep * PX * 2
         /**
          * **A BRACE WITH A HEADER OWNS THE VOICE NAME, AND DRAWS IT ITSELF.**
          *

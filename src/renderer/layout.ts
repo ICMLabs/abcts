@@ -8137,7 +8137,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     const prefix = (
       withMeter: boolean,
       topStaff: boolean,
-      indent: number,
+      /** `getLeftEdgeOfStaff`'s answer — already `(padding.left + voiceheaderw) + ofs`. */
+      leftEdge: number,
       /** The first measure of the system, so the prefix prints the clef in force there. */
       from = 0,
     ): { elements: LayoutElement[]; advances: Advance[] } => {
@@ -8153,7 +8154,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // widths — the cursor takes the wider ONE ELEMENT AT A TIME and both time signatures
       // land on the same x. Summing each voice's prefix and taking the widest total is a
       // different number whenever the two voices' prefixes differ in shape.
-      let x = ENGRAVE.marginX + indent
+      let x = leftEdge
       const push = (el: LayoutElement): void => {
         elements.push(el)
         advances.push({
@@ -8280,7 +8281,46 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     )
   }
 
-  const indentFor = (systemIndex: number): number => {
+
+
+  /**
+   * **THE LEFT EDGE IS `(padding.left + voiceheaderw) + ofs`, IN THAT ORDER.**
+   *
+   *     var x = renderer.padding.left;
+   *     …
+   *     x += voiceheaderw;
+   *     …
+   *     return x + ofs;
+   *
+   * (`layout/get-left-edge-of-staff.js:2-27`.) Ours summed the indent's own three terms
+   * first and added the margin last — the same terms in a different grouping, which put
+   * every prefix glyph of a named grand staff one ULP out (`visual-selection-01`'s clef at
+   * `75.5964` against abcjs's `75.59639999999999`).
+   */
+  const leftEdgeFor = (systemIndex: number): number =>
+    ENGRAVE.marginX +
+    headerIndentFor(systemIndex) +
+    (score.staves.some((group) => group.brace !== null || group.bracket !== null)
+      ? ENGRAVE.connectorIndent
+      : 0)
+
+  /**
+   * `voiceheaderw` on its own — `getLeftEdgeOfStaff`'s running `x` before the connector's
+   * width joins it, which is where a brace or bracket is DRAWN
+   * (`get-left-edge-of-staff.js:22-26`).
+   *
+   * **BUILT, NOT SUBTRACTED FROM THE LEFT EDGE.** `(connector + widest + widthA) - connector`
+   * is not `widest + widthA`, and a brace drawn off that landed one ULP out on
+   * `visual-selection-01` — `58.406400000000005` against abcjs's `58.4064`.
+   *
+   * A BRACE OR BRACKET moves the left edge whether or not anything is named — `ofs` is the
+   * widest connector's `getWidth()`, a flat 10 for both, and abcjs's own note says its
+   * drawing does not vary with it. The "width of an A" is NOT part of that: it is added
+   * only when there is a header to clear, so an unnamed grand staff takes exactly the 10.
+   * Probed on `ragtime-mini` (`%%score { ( 4 5 ) | ( 1 2 3 ) }`, no names): `leftEdge` is
+   * 25.000 against a bare tune's 15.
+   */
+  const headerIndentFor = (systemIndex: number): number => {
     const label = (plan: VoicePlan): string | null => (systemIndex === 0 ? plan.name : plan.subname)
     const widest = Math.max(
       0,
@@ -8289,34 +8329,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         return text ? voiceNameWidth(text) : 0
       }),
     )
-    // A BRACE OR BRACKET MOVES THE LEFT EDGE, name or no name.
-    //
-    // `getLeftEdgeOfStaff` ends `return x + ofs`, where `ofs` is the widest connector's
-    // `getWidth()` — a flat 10 for both, with abcjs's own note that its drawing does not
-    // vary. The "width of an A" of trailing space is NOT part of it: that is added only
-    // when there is a header to clear, so an unnamed grand staff takes exactly the 10.
-    // Probed on `ragtime-mini`, which has `%%score { ( 4 5 ) | ( 1 2 3 ) }` and no names:
-    // `leftEdge = 25.000` against a bare tune's 15.
-    const connector = score.staves.some((group) => group.brace !== null || group.bracket !== null)
-      ? ENGRAVE.connectorIndent
-      : 0
-    if (widest === 0) return connector
-    // …plus "the width of an A" in the SAME font, box padding and all — abcjs measures it
-    // with `getTextSize.calc("A", 'voicefont')` rather than taking a constant
-    // (`get-left-edge-of-staff.js:19-20`).
-    return connector + widest + voiceNameWidth('A')
+    return widest === 0 ? 0 : widest + voiceNameWidth('A')
   }
-
-  /**
-   * `voiceheaderw` on its own — `getLeftEdgeOfStaff`'s running `x` before the connector's
-   * width joins it, which is where a brace or bracket is DRAWN
-   * (`get-left-edge-of-staff.js:22-26`). The same terms as `indentFor` less the connector.
-   */
-  const headerIndentFor = (systemIndex: number): number =>
-    indentFor(systemIndex) -
-    (score.staves.some((group) => group.brace !== null || group.bracket !== null)
-      ? ENGRAVE.connectorIndent
-      : 0)
 
   /**
    * **WHICH BRACE OWNS A VOICE NAME.** `setBottomStaff` moves the header off the start
@@ -8341,8 +8355,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         const startVoice = voicesOfStaff[open]?.[0]
         const startName = label(startVoice)
         if (startVoice !== undefined && startName && !label(voicesOfStaff[i]?.[0])) {
-          // `voicefont`'s resolved size, the same 17 the voice's own label uses.
-          const size = 17 / UNIT_PX
+          // `voicefont`'s RESOLVED size, the same one the voice's own label uses.
+          const size = fontSizeOf('voicefont')
           byStaff.set(open, {
             text: startName,
             size,
@@ -8486,7 +8500,6 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
 
   const systems: LayoutSystem[] = spans.map((span, systemIndex) => {
     const withMeter = systemIndex === 0
-    const indent = indentFor(systemIndex)
 
     /**
      * ONE CURSOR ACROSS EVERY VOICE, FOR THE WHOLE LINE — abcjs's `layoutStaffGroup`.
@@ -8536,7 +8549,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
      */
     const BEFORE = 5e-7
     /** Where the staff's music starts — abcjs's `getLeftEdgeOfStaff`. */
-    const leftEdge = ENGRAVE.marginX + indent
+    const leftEdge = leftEdgeFor(systemIndex)
 
     /**
      * Every element of one voice on this line, prefix included, in cursor order.
@@ -8555,7 +8568,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       (voicesOfStaff.find((m) => m.includes(v)) ?? [v])[0] === v
     const blank = { elements: [] as LayoutElement[], advances: [] as Advance[] }
     const heads = plans.map((plan, v) =>
-      leadsStaff(v) ? plan.prefix(withMeter, v === 0, indent, span.start) : blank,
+      leadsStaff(v) ? plan.prefix(withMeter, v === 0, leftEdge, span.start) : blank,
     )
     const lines = plans.map((plan, v) => {
       const items: Advance[] = [...(heads[v]?.advances ?? [])]
@@ -8932,7 +8945,13 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       if (labelText && !braceHeaders(systemIndex).takenFrom.has(voiceIndex)) {
         const members = voicesOfStaff.find((m) => m.includes(voiceIndex)) ?? [voiceIndex]
         const pos = Math.max(0, members.indexOf(voiceIndex))
-        const size = 17 / UNIT_PX
+        // **`%%voicefont` IS REALIZED, FACE, SIZE AND WEIGHT.** The label was hard-coded to
+        // a bold 17px Times — the DEFAULT resolved — so `%%voicefont Helvetica-Bold 10.0`
+        // drew at the default while `voiceNameWidth` (and therefore the whole indent)
+        // already read the directive. `visual-selection-01`'s golden asks for 13px
+        // Helvetica bold; a size that big a difference also moves the baseline, since the
+        // label centres on its own measured height.
+        const size = fontSizeOf('voicefont')
         // …CENTRED ON THE STAFF'S MIDDLE LINE, which is `stepToY(0)` and no longer y = 0:
         // the staff's frame is abcjs's, zeroed on pitch 0. See `stepToY`.
         /**
@@ -8967,6 +8986,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
               // `renderText`'s element, in `voicefont`, and NOT wrapped in a group:
               // `drawVoice` passes `alreadyInGroup = true` (`draw/voice.js:19`).
               font: 'voicefont',
+              ...(score.fonts.voicefont === undefined
+                ? {}
+                : { face: score.fonts.voicefont.face }),
               dataName: 'voice-name',
               x: ENGRAVE.marginX,
               y: centre,
@@ -8977,8 +8999,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
               // 2.98px down the moment `headerPosition` moved it.
               reserve: [centre, centre],
               size,
-              bold: true,
-              italic: false,
+              bold: score.fonts.voicefont === undefined || score.fonts.voicefont.bold,
+              italic: score.fonts.voicefont?.italic === true,
             },
           ],
         })
@@ -9672,7 +9694,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         elements: positioned,
         // `startx` .. `w`: the music's own span. `width` is the SYSTEM's, which carries
         // the right margin and any prose overhanging it — see `staffLinesFor`.
-        staffLines: staffLinesFor(ENGRAVE.marginX + indent, solved.width, staff.staffLineCount),
+        staffLines: staffLinesFor(leftEdgeFor(systemIndex), solved.width, staff.staffLineCount),
         originY,
         originCursor,
         originPitch,
@@ -9704,7 +9726,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   // tune and hand each system its share.
   // Music starts after the widest prefix on the system and ends at its right margin.
   const systemBounds = systems.map((system, i) => ({
-    left: musicLeft[i] ?? ENGRAVE.marginX + indentFor(i),
+    left: musicLeft[i] ?? leftEdgeFor(i),
     right: system.width - ENGRAVE.marginX,
   }))
   const curvesBySystem = voiceAnchors.map((anchors, v) =>

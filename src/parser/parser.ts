@@ -4168,6 +4168,64 @@ const FONT_ALIASES: Readonly<Record<string, string>> = {
   barnumfont: 'measurefont',
 }
 
+/**
+ * **A POSTSCRIPT FONT NAME CARRIES ITS WEIGHT AND STYLE, AND abcjs TRANSLATES IT.**
+ *
+ * `fontTranslation` maps each PostScript name to a WEB family plus a weight and a style,
+ * so `%%voicefont Helvetica-Bold 10.0` draws `font-family="Helvetica" font-weight="bold"`
+ * rather than naming a family no browser has (`parse/abc_parse_directive.js:62-160`).
+ * Ours read the suffix for the weight — correctly — and then wrote the whole PostScript
+ * name into `font-family`, which `visual-selection-01`'s golden denies in one attribute.
+ *
+ * Transcribed from abcjs's own switch rather than derived by splitting on `-`: a family
+ * can contain a hyphen, and the table's faces are not all one word (`Bookman,serif`,
+ * `"Helvetica Narrow",Helvetica`).
+ */
+const POSTSCRIPT_FONTS: Readonly<
+  Record<string, { readonly face: string; readonly bold: boolean; readonly italic: boolean }>
+> = {
+  'Arial-Italic': { face: 'Arial', bold: false, italic: true },
+  'Arial-Bold': { face: 'Arial', bold: true, italic: false },
+  'Bookman-Demi': { face: 'Bookman,serif', bold: true, italic: false },
+  'Bookman-DemiItalic': { face: 'Bookman,serif', bold: true, italic: true },
+  'Bookman-Light': { face: 'Bookman,serif', bold: false, italic: false },
+  'Bookman-LightItalic': { face: 'Bookman,serif', bold: false, italic: true },
+  'Courier': { face: '"Courier New\\', bold: false, italic: false },
+  'Courier-Oblique': { face: '"Courier New\\', bold: false, italic: true },
+  'Courier-Bold': { face: '"Courier New\\', bold: true, italic: false },
+  'Courier-BoldOblique': { face: '"Courier New\\', bold: true, italic: true },
+  'AvantGarde-Book': { face: 'AvantGarde,Arial', bold: false, italic: false },
+  'AvantGarde-BookOblique': { face: 'AvantGarde,Arial', bold: false, italic: true },
+  'AvantGarde-Demi': { face: 'AvantGarde,Arial', bold: true, italic: false },
+  'Avant-Garde-Demi': { face: 'AvantGarde,Arial', bold: true, italic: false },
+  'AvantGarde-DemiOblique': { face: 'AvantGarde,Arial', bold: true, italic: true },
+  'Helvetica-Oblique': { face: 'Helvetica', bold: false, italic: true },
+  'Helvetica-Bold': { face: 'Helvetica', bold: true, italic: false },
+  'Helvetica-BoldOblique': { face: 'Helvetica', bold: true, italic: true },
+  'Helvetica-Narrow': { face: '"Helvetica Narrow",Helvetica', bold: false, italic: false },
+  'Helvetica-Narrow-Oblique': { face: '"Helvetica Narrow",Helvetica', bold: false, italic: true },
+  'Helvetica-Narrow-Bold': { face: '"Helvetica Narrow",Helvetica', bold: true, italic: false },
+  'Helvetica-Narrow-BoldOblique': { face: '"Helvetica Narrow",Helvetica', bold: true, italic: true },
+  'Palatino-Roman': { face: 'Palatino', bold: false, italic: false },
+  'Palatino-Italic': { face: 'Palatino', bold: false, italic: true },
+  'Palatino-Bold': { face: 'Palatino', bold: true, italic: false },
+  'Palatino-BoldItalic': { face: 'Palatino', bold: true, italic: true },
+  'NewCenturySchlbk-Roman': { face: '"New Century",serif', bold: false, italic: false },
+  'NewCenturySchlbk-Italic': { face: '"New Century",serif', bold: false, italic: true },
+  'NewCenturySchlbk-Bold': { face: '"New Century",serif', bold: true, italic: false },
+  'NewCenturySchlbk-BoldItalic': { face: '"New Century",serif', bold: true, italic: true },
+  'Times': { face: '"Times New Roman\\', bold: false, italic: false },
+  'Times-Roman': { face: '"Times New Roman\\', bold: false, italic: false },
+  'Times-Narrow': { face: '"Times New Roman\\', bold: false, italic: false },
+  'Times-Courier': { face: '"Times New Roman\\', bold: false, italic: false },
+  'Times-New-Roman': { face: '"Times New Roman\\', bold: false, italic: false },
+  'Times-Italic': { face: '"Times New Roman\\', bold: false, italic: true },
+  'Times-Italics': { face: '"Times New Roman\\', bold: false, italic: true },
+  'Times-Bold': { face: '"Times New Roman\\', bold: true, italic: false },
+  'Times-BoldItalic': { face: '"Times New Roman\\', bold: true, italic: true },
+  'ZapfChancery-MediumItalic': { face: '"Zapf Chancery",cursive,serif', bold: false, italic: false },
+}
+
 function parseFontSpec(spec: string, defaultPt: number = DEFAULT_VOCALFONT_PT): LyricFont {
   // `box` may follow the size — `%%gchordfont Arial 10 box`. abcjs accepts it on eleven of
   // the font types (`fontTypeCanHaveBox`, `abc_parse_directive.js:60`) and it draws a frame
@@ -4190,14 +4248,21 @@ function parseFontSpec(spec: string, defaultPt: number = DEFAULT_VOCALFONT_PT): 
   )
   const face = (sizeMatch ? trimmed.slice(0, sizeMatch.index) : trimmed).trim()
   const modifiers = sizeMatch ? trimmed.slice(sizeMatch.index + sizeMatch[0].length) : ''
+  // …AND THE FACE ITSELF IS TRANSLATED, when it is a PostScript name — see
+  // `POSTSCRIPT_FONTS`. Anything not in abcjs's table passes through unchanged, which is
+  // abcjs's own `default: return { face: fontFace, … }`.
+  const translated = POSTSCRIPT_FONTS[face]
   return {
-    face,
+    face: translated?.face ?? face,
     size: sizeMatch?.[2] ? Number.parseFloat(sizeMatch[2]) : defaultPt,
     // A face may still SAY bold — `%%vocalfont Times-Bold 16` names one face — so both
     // roads are read. abcjs only honours the word, but the face spelling is what the
     // corpus's existing fixtures are gated on, and this widens rather than replaces it.
-    bold: /bold/i.test(face) || /\bbold\b/i.test(modifiers),
-    italic: /italic|oblique/i.test(face) || /\b(?:italic|oblique)\b/i.test(modifiers),
+    bold: translated?.bold === true || /bold/i.test(face) || /\bbold\b/i.test(modifiers),
+    italic:
+      translated?.italic === true ||
+      /italic|oblique/i.test(face) ||
+      /\b(?:italic|oblique)\b/i.test(modifiers),
     box: boxed,
   }
 }
