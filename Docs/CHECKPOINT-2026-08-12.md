@@ -19,9 +19,9 @@ on stale runs before finding out what it was.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 0 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 1 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 1 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **33 of 171**, best 200613 | 49 of 171 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **31 of 171**, best 200613 | 49 of 171 |
 
-`DIVERGENT` is still EMPTY. **138 fixtures are byte-exact and all 138 are RATCHETED.**
+`DIVERGENT` is still EMPTY. **140 fixtures are byte-exact and all 140 are RATCHETED.**
 
 The 34 that remain classify **21 STRUCTURAL / 13 ULP** — see §3.4.
 
@@ -284,6 +284,43 @@ abcjs writes `_/A`. `Pitch.writtenAccidental` carries the name, the same shape a
 `Pitch.written` beside it. Every other fraction (`^3/2`) has no `accMap` entry at all and
 keeps the base sign, which is what abcjs does too.
 
+### 2.16 A GLISSANDO IS A SQUIGGLE, AND IT RUNS NOTEHEAD CENTRE TO NOTEHEAD CENTRE
+
+We had none of `draw/glissando.js`: ours ran from the first ink's RIGHT edge to the next
+ink's LEFT with a 0.3-space gap, took the anchor BOX's midpoint for y, and drew a straight
+`<polygon>`. All three our own engraving in a shape abcjs does not have.
+
+`leftX = anchor1.x + anchor1.w / 2`, `marginLeft = anchor1.w / 2 + 4`, and the y at each end
+is `calcY(heads[0].pitch)` sheared along the line by that margin (`:9-22`). `numSquigglies`
+is `max(2, floor((len - 10) / 6))` over the length already less both margins, `len` being
+the centre-to-centre hypotenuse — `Math.sqrt`, the same debt the curve's arc carries. The
+SHAPE is four constant segment lists sheared by the slope — lead-in, `num` along the TOP,
+a turn, `num` back along the BOTTOM, lead-out, `z` — each step
+`'l' + dx + ' ' + roundNumber(dy + dx * slope)`, the dx RAW and the dy rounded.
+
+### 2.17 ONLY A BAR NUMBER PRECEDES THE BARLINE'S RULE
+
+The comment at that line already said it — "a bar number is the bar's FIRST child, ahead of
+the rule itself; every other element's text comes last" — and the code pushed ALL of a bar's
+texts first. A `!D.C.alcoda!` written before a barline attaches to the BARLINE
+(`abstract-engraver.js:1002`) and `createBarLine` adds the rules first.
+
+### 2.18 A TEXT DECORATION IS `renderText`'S ELEMENT, AND IT DECLARES ITS OWN ANCHOR
+
+    renderText(renderer, { x: params.x, y: y + 6, text: params.c,
+      type: 'annotationfont', anchor: params.anchor, centerVertically: true, … })
+
+(`draw/relative.js:47-50`) — "the +6 is to compensate for the placement of text in svg".
+`centerVertically` is TRUE, so no font size is added to the y. Ours went out through the
+plain writer at `font-family="serif"`, in ITALIC, centring itself by subtracting half its
+measured width. `textDecoration(text, placement, anchor)` takes the anchor as a parameter:
+the four `al coda`/`al fine` phrases pass `'end'`, everything else `'middle'`.
+
+**AND THE LITERALS ARE ABCJS'S, NOT A STYLE GUIDE'S** — `"FINE"` in capitals and a
+lowercase `al coda`. Two unit tests asserted `Fine`, `al Coda` and italic, all three our own
+judgement written as though measured. **A TEST CAN ENCODE AN INFERENCE AS FIRMLY AS A
+COMMENT CAN**, and it is harder to notice, because a green test reads as a checked fact.
+
 ---
 
 ## 3. WHAT IS LEFT — MEASURED, NOT LANDED
@@ -435,6 +472,21 @@ children, and one lane PER LINE. That relationship is the missing measurement.
 Do not land the inversion alone: on `transpose-04` it fixes `"C"` and puts `"D"` and
 `"G"` the wrong way round.
 
+### 3.3d A SLUR CLOSES ON A GRACE NOTE — measured, one fixture
+
+`visual-tablature-10` is `(f3 {a})y` and abcjs draws a curve we draw not at all: `TIE a1
+49.051 a2 91.01252422706631`, the second anchor being the GRACE NOTE. Instrumented, the
+parser puts the `)` on the last grace note rather than on the element that follows it:
+
+    GRACE {"pitch":12,"name":"a","duration":0.125,"endSlur":[101],"verticalPos":12}
+
+and `addSlursAndTies` runs for grace notes as well as pitches
+(`abstract-engraver.js:498`, `:728`) — but NEVER for a rest, which is why the `y` spacer
+after it closes nothing. Ours records `slurEnds` on the main event and `layoutCurves` skips
+any anchor whose event is a rest, so the close is dropped entirely. Two parts: the parser
+must attach a `)` that follows a grace group to the last GRACE note, and the layout must be
+able to anchor a curve on a grace head — which `NoteAnchor.graceSlur` already half carries.
+
 ### 3.4 THE REST OF THE TABLE — 21 STRUCTURAL, 13 ULP
 
 Read `/tmp/abcts-svg-bytes-ranked.txt` after `npx vitest run tests/svg-bytes.test.ts`, and
@@ -446,9 +498,6 @@ same `x.0000000000004` shape.
 The named structural rows, cheapest last:
 
 - THREE `[M:]` IN ONE MEASURE — §3.3, and the whole of `visual-svg-02-staffwidth-12`.
-- A GLISSANDO is a squiggly `<path>` where we draw a `<polygon>` (`visual-misc-04`,
-  `draw/glissando.js`).
-- `visual-misc-05` draws a `<text>` where abcjs draws a `<path>` for a `D.C. al coda` mark.
 - `visual-misc-12`'s `!beambr1!` beam split.
 - `flattener-37` emits `rests.half` where abcjs emits `dots.dot` — an element ORDER row.
 - `visual-transpose-04`'s chord annotation is 20px high; `visual-decorations-01`'s
@@ -461,7 +510,7 @@ The named structural rows, cheapest last:
 
 ## 4. THE RATCHET
 
-`tests/svg-bytes.test.ts`'s `PASSING` names all 138 byte-exact fixtures. It caught nothing
+`tests/svg-bytes.test.ts`'s `PASSING` names all 140 byte-exact fixtures. It caught nothing
 this session, which is the point of it — every change here moved the count the right way
 AND kept every ratcheted slug. Regenerate it with `/tmp/gp/exact.mjs`; never shrink it.
 
