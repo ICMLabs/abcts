@@ -6300,6 +6300,13 @@ function buildCurve(
   strict: boolean,
   /** Which elements the two ends really attach to — absent on a half split by a break. */
   edges?: { start?: number; end?: number },
+  /**
+   * **`avoidCollisionAbove` — the highest INTERNAL note, in staff steps.** abcjs's
+   * `maxInnerHeight` over `internalNotes[i].highestVert` (`tie-element.js:216-227`), and
+   * `layout()` applies it after `calcSlurY` on every drawn slur. `getYBounds` does NOT
+   * call it, so the RESERVE is unaffected and only the drawing moves.
+   */
+  internalHigh?: number,
 ): PlacedCurve {
   const above = curveIsAbove(from, to, voicePos, kind)
   const direction = above ? -1 : 1
@@ -6409,9 +6416,29 @@ function buildCurve(
     if (isStart) return midPointY(a)
     return !beamInterferes && midPointY(a) > startYAtTest ? midPointY(a) : a.pitchY
   }
+  /**
+   * "Double check that an interior note in the slur isn't so high that it interferes":
+   *
+   *     if (maxInnerHeight > this.startY && maxInnerHeight > this.endY)
+   *       this.startY = this.endY = maxInnerHeight - 1
+   *
+   * BOTH ends move, to the same value, and only when the inner note clears BOTH — which
+   * is why it is one number and not a per-end clamp. `visual-selection-01`'s `(bfdf)` is
+   * the case: the beam rule puts its ends at 10.0444 and the inner `d` reaches 11, so
+   * abcjs draws the whole curve at 10 and ours sat 0.17px high on the last slur of a
+   * 202k-byte file.
+   */
+  const raw = { from: endY(from, true), to: endY(to, false) }
+  if (strict && above && kind === 'slur' && internalHigh !== undefined) {
+    const inner = stepToY(internalHigh)
+    // A HIGHER PITCH IS A SMALLER y, so abcjs's two `>` are two `<` here.
+    if (inner < raw.from && inner < raw.to) {
+      raw.from = raw.to = stepToY(internalHigh - 1)
+    }
+  }
   const edge = (a: NoteAnchor, isStart: boolean) =>
     strict
-      ? endY(a, isStart) + direction * lift
+      ? (isStart ? raw.from : raw.to) + direction * lift
       : (above ? a.top : a.bottom) + direction * ENGRAVE.curveEndGap
 
   const span = Math.max(0, x2 - x1)
@@ -6545,7 +6572,38 @@ function layoutCurves(
   ): 'tie' | 'slur' =>
     kind === 'tie' || (from.pitchStep === to.pitchStep && internal === 0) ? 'tie' : 'slur'
 
-  const emit = (from: NoteAnchor, to: NoteAnchor, kind: 'tie' | 'slur'): void => {
+  /**
+   * `internalNotes[i].highestVert` for the notes strictly between two anchors, in steps.
+   *
+   * abcjs pushes one entry per NOTEHEAD (`abstract-engraver.js:932-937`) and each carries
+   * `pitchelem.highestVert` (`:696-717`): its own `verticalPos`, except that a lone note —
+   * `pp === 1`, so both the top-when-stem-down and bottom-when-stem-up tests pass — takes
+   * the chord's top and adds 6 when its stem is UP and it is shorter than a whole note.
+   * A chord with no slur of its own keeps each head's own pitch, so its maximum is simply
+   * its top head.
+   */
+  const internalHighOf = (from: number, to: number): number | undefined => {
+    let max: number | undefined
+    for (const a of anchors.slice(from + 1, to)) {
+      if (a.event.type === 'rest') continue
+      const heads = a.tieSteps ?? (a.pitchStep === undefined ? [] : [a.pitchStep])
+      if (heads.length === 0) continue
+      const top = Math.max(...heads)
+      const h =
+        heads.length === 1 && a.stemUp && ratToNumber(a.event.duration) < 1
+          ? top + ABCJS_PITCH.slurStemCompensation
+          : top
+      if (max === undefined || h > max) max = h
+    }
+    return max
+  }
+
+  const emit = (
+    from: NoteAnchor,
+    to: NoteAnchor,
+    kind: 'tie' | 'slur',
+    internalHigh?: number,
+  ): void => {
     // `.-` and `.(` — the STYLE rides on the element the curve OPENS at, one flag for the
     // tie it starts and one for the slurs opening on it. See `PlacedCurve.dotted`.
     const style: { dotted?: true } =
@@ -6554,7 +6612,15 @@ function layoutCurves(
         : {}
     if (from.system === to.system) {
       curves[from.system]?.push({
-        ...buildCurve(from, to, kind, voicePos, strict, { start: from.element, end: to.element }),
+        ...buildCurve(
+          from,
+          to,
+          kind,
+          voicePos,
+          strict,
+          { start: from.element, end: to.element },
+          internalHigh,
+        ),
         ...style,
       })
       return
@@ -6641,7 +6707,12 @@ function layoutCurves(
         const internal = anchors
           .slice((start ?? 0) + 1, i)
           .filter((a) => a.event.type !== 'rest').length
-        emit(from, anchor, drawnKind(from, anchor, 'slur', internal))
+        emit(
+          from,
+          anchor,
+          drawnKind(from, anchor, 'slur', internal),
+          internalHighOf(start ?? 0, i),
+        )
       }
     }
     for (let n = 0; n < event.slurStarts; n++) open.push(i)
