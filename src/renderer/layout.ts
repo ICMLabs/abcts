@@ -7374,6 +7374,23 @@ const meterChangeLeadsLine = (measure: Measure | undefined): boolean => {
   return at < musicStartsAt(measure)
 }
 
+/**
+ * **A METER FIELD BEFORE ANY MUSIC AT ALL ON THE TUNE'S FIRST MEASURE IS THAT LINE'S
+ * PREFIX** — inline or standalone. `meterChangeLeadsLine` restricts itself to the INLINE
+ * form because a standalone `M:` mid-tune reaches the NEXT line's prefix through
+ * `multilineVars.meter` (finding 121); on the first measure there is no next line, and the
+ * field is appended to a still-empty voice either way, so `startNewLine` has not fired.
+ *
+ * Both the PREFIX and the mid-line draw read this, or the meter prints twice.
+ */
+const meterLeadsFirstMeasure = (measure: Measure | undefined): boolean => {
+  if (measure === undefined || measure.startsSystem !== true || measure.meterChange == null) {
+    return false
+  }
+  const at = measure.meterChangeSourceRange?.start
+  return at != null && at < musicStartsAt(measure)
+}
+
 const barRod = (kind: Barline, el: LayoutElement, strict: boolean): number =>
   (strict ? (ENGRAVE.barLayoutWidth[kind] ?? el.width) : el.width) + ENGRAVE.prefixGap
 
@@ -7445,6 +7462,8 @@ function layoutMeasure(
   trailingKey: readonly [KeySignature, KeySignature] | null = null,
   /** A meter that arrives after this measure's barline and LEADS the next system. */
   trailingMeter: Meter | null = null,
+  /** The tune's FIRST measure — see `meterLeadsFirstMeasure`. */
+  isFirstMeasure = false,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
   /**
@@ -7605,6 +7624,8 @@ function layoutMeasure(
     // NOT WHEN IT LEADS THE SYSTEM — the previous system's `trailingMeter` drew it, and
     // unlike a key change it is NOT reprinted in this line's prefix either.
     if (meterChangeLeadsLine(measure)) return
+    // …and the same for a standalone one on the tune's first measure — the prefix drew it.
+    if (isFirstMeasure && meterLeadsFirstMeasure(measure)) return
     // A RESTATED METER PRINTS NOTHING, exactly as a restated key does.
     //
     // THE `meterInForce === null` GUARD IS GONE, and it was masking a real one. It read
@@ -8378,6 +8399,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           const next = (voice?.measures ?? [])[measureIndex + 1]
           return meterChangeLeadsLine(next) ? (next?.meterChange ?? null) : null
         })(),
+        measureIndex === 0,
       )
       if (measure.keyChange !== null) keyInForce = measure.keyChange
       if (measure.meterChange != null) meterInForce = measure.meterChange
@@ -8463,9 +8485,21 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
        * voice that is still empty, so it becomes a STARTING element rather than a mid-line
        * one.
        */
+      /**
+       * **AND A STANDALONE `M:` BEFORE ANY MUSIC AT ALL IS THE FIRST LINE'S PREFIX TOO.**
+       * `meterChangeLeadsLine` deliberately fires only on the INLINE form, because a
+       * standalone `M:` mid-tune goes into `multilineVars.meter` and reaches the NEXT
+       * line's prefix (finding 121). On the tune's FIRST measure there is no next line —
+       * the field is appended to a voice that is still empty, so `startNewLine` has not
+       * fired and it becomes a starting element either way.
+       *
+       * `M: 4/4` in the header, `M:2/4` after `K:C`, then the music: abcjs opens the staff
+       * with a `2`, and ours drew the header's `4`.
+       */
+      const firstMeasure = (voice?.measures ?? [])[0]
       const leading =
-        from === 0 && meterChangeLeadsLine((voice?.measures ?? [])[0])
-          ? ((voice?.measures ?? [])[0]?.meterChange ?? null)
+        from === 0 && meterLeadsFirstMeasure(firstMeasure)
+          ? (firstMeasure?.meterChange ?? null)
           : null
       const prefixMeter = leading ?? (withMeter ? score.meter : null)
       if (prefixMeter !== null) {
