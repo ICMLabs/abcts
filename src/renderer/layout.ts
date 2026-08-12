@@ -5828,6 +5828,18 @@ interface NoteAnchor {
    * added, which differs in the last bits — and the root's `height` is where it shows.
    */
   readonly pitchStep?: number
+  /**
+   * **EVERY HEAD'S STEP, ASCENDING — because A CHORD'S TIE IS ONE TIE PER NOTEHEAD.**
+   *
+   * `-` after a chord is `el.pitches.forEach(function(pitch) { pitch.startTie = {} })`
+   * (`abc_parse_music.js:427`), and `addSlursAndTies` runs once per pitch, so `[GB]8-`
+   * builds TWO `TieElem`s (`abstract-engraver.js:873-905`). We drew one, on `pitches[0]`.
+   *
+   * A SLUR IS NOT LIKE THIS: `(` is hung on `el.pitches[0]` and on nothing else
+   * (`:508`), which is what `pitchY` above is about — the two rules look alike and are
+   * not, so both are stated.
+   */
+  readonly tieSteps?: readonly number[]
   readonly stemUp: boolean
   /** `anchor.w` — the notehead's DECLARED width. See the slur's x bump in `buildCurve`. */
   readonly headWidth?: number
@@ -5877,6 +5889,31 @@ function slurEndY(a: NoteAnchor, above: boolean, isStart: boolean): number {
     return above ? fixed.top : fixed.bottom
   }
   return a.pitchY
+}
+
+/**
+ * **A CHORD'S TIE IS ONE TIE PER NOTEHEAD** — see `NoteAnchor.tieSteps`.
+ *
+ * The pairing is abcjs's own: an arriving head closes the open tie whose `anchor1.pitch`
+ * MATCHES it, and an unmatched one closes `ties[0]`, the oldest still open
+ * (`abstract-engraver.js:874-891`). Same-index is the fallback before that, which is what
+ * a chord tied to a chord of the same size wants and what the pitch match already gives.
+ */
+function tiePairs(from: NoteAnchor, to: NoteAnchor): [NoteAnchor, NoteAnchor][] {
+  const fromSteps = from.tieSteps ?? []
+  if (fromSteps.length < 2) return [[from, to]]
+  const toSteps = to.tieSteps ?? []
+  const at = (a: NoteAnchor, step: number): NoteAnchor => ({
+    ...a,
+    pitchStep: step,
+    pitchY: stepToY(step),
+  })
+  return fromSteps.map((step, k) => {
+    const target = toSteps.includes(step)
+      ? step
+      : (toSteps[k] ?? toSteps[0] ?? to.pitchStep ?? step)
+    return [at(from, step), at(to, target)]
+  })
 }
 
 function buildCurve(
@@ -6169,7 +6206,7 @@ function layoutCurves(
     // A tie joins this note to the next SOUNDING one, wherever it falls.
     if (event.tiedToNext) {
       const next = anchors[i + 1]
-      if (next !== undefined) emit(anchor, next, 'tie')
+      if (next !== undefined) for (const [a, b] of tiePairs(anchor, next)) emit(a, b, 'tie')
     }
 
     // `!slide!` IS A CURVE AT THE NOTE, NOT A GLYPH ABOVE THE STAFF.
@@ -6475,7 +6512,7 @@ function curveReserves(
     for (let n = 0; n < anchor.event.slurStarts; n++) open.push(i)
     if (anchor.event.tiedToNext) {
       const next = anchors[i + 1]
-      if (next !== undefined) add(anchor, next, 'tie')
+      if (next !== undefined) for (const [a, b] of tiePairs(anchor, next)) add(a, b, 'tie')
     }
   })
   // AN UNCLOSED SLUR STILL RESERVES. `voice.addOther(this)` runs where the `(` is seen, so
@@ -7774,6 +7811,14 @@ function layoutMeasure(
             ? (Math.min(...heads.map((h) => h.y)) + Math.max(...heads.map((h) => h.y))) / 2
             : stepToY(pitchToStep(first, clef)),
         ...(first === undefined ? {} : { pitchStep: pitchToStep(first, clef) }),
+        // Ascending, which is the order `layoutNoteheads` draws them in and the order
+        // abcjs's sorted `el.pitches` hands `addSlursAndTies`.
+        tieSteps:
+          event.type === 'chord'
+            ? event.pitches.map((pp) => pitchToStep(pp, clef)).sort((a, b) => a - b)
+            : first === undefined
+              ? []
+              : [pitchToStep(first, clef)],
         stemUp: el.stemUp ?? el.lines.some((l) => l.x1 === l.x2 && l.y2 < l.y1),
         // The notehead's DECLARED width — `anchor.w` — which an ABOVE slur bumps its own
         // ends by half of. See `buildCurve`.
