@@ -752,6 +752,36 @@ checkpoint and hand off as you go so no context is lost.
 > a cause is the reason the row stopped being read** (the `G8` breve, the `extra-class`
 > accent, this).
 >
+> 🔟 **AND THE DAY CLOSED AT 29 of 171 WITH 142 EXACT, ON TWENTY-SIX LANDINGS.** The later
+> ones, and every one is a read of a named abcjs function: **%%voicecolor is `drawVoice`'s
+> SWAP** and the staff LINES are drawn before it; **an ENDING running off a system ends at
+> the voice's width MINUS ONE, unrounded**, because `drawEnding` rounds only what came from
+> an anchor; **a `%%sep` in the head of a tune drew NOTHING** — its `rules` sink was a
+> literal `[]`, and the two rules that had to follow it were both things the block's TEXTS
+> already did; **a GLISSANDO is a squiggle** built from four constant segment lists sheared
+> by the slope; **a TEXT decoration is `renderText`'s element in `annotationfont`** and
+> declares its own anchor, its literals being abcjs's `FINE` and `al coda` rather than a
+> style guide's; **the BELOW decoration cursor's floor is the ELEMENT's own bottom** —
+> `this.minBottom` from the constructor is passed nowhere, and the ABOVE side really does
+> take the constant, which is why one half was right; **the ACCIACCATURA SLASH is a glyph**,
+> abcjs's own `flags.ugrace`, which sat in `UNMAPPED_ABCJS` under a misreading SMuFL denies;
+> **an empty `""` is a CHORD** and `includes('')` is TRUE; **a DOTTED tie is the outward half
+> alone, stroked**; and **a HAIRPIN CLOSES ON A BARLINE**, which the audio arc had already
+> found from the other side while the renderer never learned it.
+>
+> ⚖️ **AND THREE OF THEM WERE ONLY REACHABLE BECAUSE ANOTHER GATE CAUGHT THE FIRST
+> ATTEMPT.** `role: 'grace'` on the acciaccatura slash made the pixel gate count a sixth
+> notehead; `role: 'chord'` on a left annotation fixed its ORDER and cost 18.52px of LANE —
+> **two questions, two fields**; and sorting the spanner sites on `element` alone paired a
+> hairpin's open with the wrong close, which the baselines reported as **12 REMOVALS and no
+> additions**, the shape that says regression rather than change.
+>
+> 🧾 **AND A TEST CAN ENCODE AN INFERENCE AS FIRMLY AS A COMMENT CAN, AND IS HARDER TO
+> NOTICE** — a green test reads as a checked fact. Three asserted our own engraving as
+> though measured: the decoration texts' `Fine` / `al Coda` / italic, the acciaccatura's
+> extra LINE, and `lines('{/A}G2|') > lines('{A}G2|')`. All three now assert what abcjs
+> draws and say what they used to claim.
+
 > 🧮 **AND FIVE MORE THE SAME DAY — 39 → 34 of 171, 137 EXACT.** **A STEM'S `bottom: p1 - 1`
 > IS SKIPPED WHEN IT IS ZERO** — `if (opt.bottom)` and `0` is FALSY
 > (`relative-element.js:41-42`) — so a stem whose low end is pitch 1 reserves one pitch
@@ -961,8 +991,8 @@ anything from a suite run.
 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
 **1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
 **1 of 25 DOM-contract cases with TWENTY-FOUR slugs RATCHETED** — and
-**34 of 171 SVG-byte fixtures, ONE HUNDRED AND THIRTY-SEVEN of them EXACT and ALL 137
-RATCHETED** — 21 STRUCTURAL and 13 ULP — and **the SVG BYTE TABLE is THE ONE OPEN GATE**, at best 200613 — mostly
+**29 of 171 SVG-byte fixtures, ONE HUNDRED AND FORTY-TWO of them EXACT and ALL 142
+RATCHETED** — 16 STRUCTURAL and 13 ULP — and **the SVG BYTE TABLE is THE ONE OPEN GATE**, at best 200613 — mostly
 STRUCTURAL now, classified by aligning on the
 first differing character (a cruder test sends you at the wrong family). **The next three
 are named and measured in `CHECKPOINT-2026-08-12.md` §3**: the FORCED STEM being per LINE

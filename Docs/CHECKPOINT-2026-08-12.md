@@ -23,7 +23,7 @@ on stale runs before finding out what it was.
 
 `DIVERGENT` is still EMPTY. **142 fixtures are byte-exact and all 142 are RATCHETED.**
 
-The 34 that remain classify **21 STRUCTURAL / 13 ULP** — see §3.4.
+The 29 that remain classify **16 STRUCTURAL / 13 ULP** — see §3.4.
 
 ---
 
@@ -266,15 +266,6 @@ genuinely built `rod` as `width + gap`, and is ABSENT on a BARLINE, where `rod` 
 with ours item by item: both agree to the last digit through the clef and the time signature
 and part company at the BAR after them.
 
-### 2.15 A REST'S DOTS COME BEFORE IT, BECAUSE THEY COME BEFORE A NOTEHEAD TOO
-
-`createNoteHead` pushes the dots itself with `addRight` and the caller pushes the head with
-`addHead` AFTERWARDS (`create-note-head.js:50-53`, `abstract-engraver.js:600-604`). DRAW
-ORDER IS CALL ORDER, the rule already ported for a note as "flag, dots, accidental, head" —
-and it stopped at the note. A rest's branch ends in the SAME `createNoteHead` call.
-`"F"z3` in `flattener-37` is one dotted half rest on which the two engines disagree about
-nothing else.
-
 ### 2.14 A QUARTER TONE NAMES ITSELF
 
 `accMap` has SEVEN entries — `__ _ = ^ ^^` plus `_/` and `^/`
@@ -283,6 +274,15 @@ deviation in `microtoneCents`, so every quarter tone printed its BASE sign:  `_A
 abcjs writes `_/A`. `Pitch.writtenAccidental` carries the name, the same shape as
 `Pitch.written` beside it. Every other fraction (`^3/2`) has no `accMap` entry at all and
 keeps the base sign, which is what abcjs does too.
+
+### 2.15 A REST'S DOTS COME BEFORE IT, BECAUSE THEY COME BEFORE A NOTEHEAD TOO
+
+`createNoteHead` pushes the dots itself with `addRight` and the caller pushes the head with
+`addHead` AFTERWARDS (`create-note-head.js:50-53`, `abstract-engraver.js:600-604`). DRAW
+ORDER IS CALL ORDER, the rule already ported for a note as "flag, dots, accidental, head" —
+and it stopped at the note. A rest's branch ends in the SAME `createNoteHead` call.
+`"F"z3` in `flattener-37` is one dotted half rest on which the two engines disagree about
+nothing else.
 
 ### 2.16 A GLISSANDO IS A SQUIGGLE, AND IT RUNS NOTEHEAD CENTRE TO NOTEHEAD CENTRE
 
@@ -635,13 +635,18 @@ prints durations for**, and finding out which they are is the next probe. Note t
 seven-grace group reports only `j 0` where the three-grace group reports `j 0` and `j 1`,
 which is backwards from any duration rule and is the sharpest clue in the trace.
 
-### 3.4 THE REST OF THE TABLE — 21 STRUCTURAL, 13 ULP
+### 3.4 THE REST OF THE TABLE — 16 STRUCTURAL, 13 ULP
 
 Read `/tmp/abcts-svg-bytes-ranked.txt` after `npx vitest run tests/svg-bytes.test.ts`, and
 classify it by aligning on the FIRST DIFFERING CHARACTER and comparing the two numbers it
 sits in — a crude "does one side have a long tail" test calls the wrong family the majority.
-At 34 rows that split is **21 structural / 13 ULP**, and the ULP thirteen are almost all the
+At 29 rows that split is **16 structural / 13 ULP**, and the thirteen are almost all the
 same `x.0000000000004` shape.
+
+**AND THE CLASSIFIER HAS A TRAP OF ITS OWN**: the ranked table's two excerpt lines are
+prefixed `got  …` and `want …`, which are DIFFERENT LENGTHS. Comparing them raw diverges at
+the prefix and calls every row structural — it reported `ULP 0 STRUCTURAL 29` until the
+prefixes were stripped. Strip them before aligning.
 
 The named structural rows, cheapest last:
 
