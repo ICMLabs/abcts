@@ -991,6 +991,14 @@ export interface PlacedText {
    * row's y, which is why the size travels rather than the rect.
    */
   readonly boxSize?: { readonly width: number; readonly height: number }
+  /**
+   * `renderText`'s `alreadyInGroup` (`draw/text.js:3`, `:50`, `:80`). A BOXED text opens
+   * its own `<g fill data-name>` round the text and the rect — but only when the caller is
+   * not already inside one. `drawRelativeElement` passes `true` for a `part` label and a
+   * `barNumber` and `false` for everything else, so a boxed `P:` gets the rect as a
+   * SIBLING of its text inside the element's own group rather than a second group.
+   */
+  readonly inGroup?: boolean
   readonly boxRect?: {
     readonly x: number
     readonly y: number
@@ -2458,11 +2466,41 @@ const layoutPart = (x: number, label: string): LayoutElement => ({
       text: label,
       x,
       y: stepToY(ENGRAVE.partStep),
+      // **`renderText`'s ELEMENT, IN `partsfont`** — `renderText(…, { type: 'partsfont',
+      // klass: classes.generate("part"), name: params.c }, true)` (`draw/relative.js:58`).
+      // Without the `font` the emitter fell through to its ad-hoc `<text
+      // font-family="serif">`, which carries none of abcjs's attributes.
+      //
+      // **AND abcjs's `partsfont` DEFAULT IS WEIGHT `normal`** — `{ face: "Times New
+      // Roman", size: 15, weight: "normal", style: "normal" }`
+      // (`abc_parse_directive.js:27`). Ours hard-coded bold.
+      font: 'partsfont',
+      // `anchor: "start"`, which is what shifts a BOXED label right by one padding.
+      anchor: 'start',
+      inGroup: true,
+      ...faceOf('partsfont'),
+      // **AND A BOXED FONT MOVES THE TEXT AND DELETES ITS CLASS** — `renderText` shifts a
+      // `start`-anchored one right by `hash.font.padding`, drops `class` outright, and
+      // measures the rect afterwards (`draw/text.js:49-80`). Both were missing here: the
+      // `A` of `visual-selection-01` sat at 143.35 against abcjs's 145.35 and carried a
+      // `class=""` abcjs does not write. The emitter draws the rect from the same flag,
+      // which is `Svg.rect`'s four one-pixel bars rather than our own four rules.
+      ...(SCORE_PARTS_BOX
+        ? {
+            box: true,
+            // `getBBox()`, which the rect is measured from — see `PlacedText.boxSize`.
+            boxSize: {
+              width: textWidth(label, fontSizeOf('partsfont')),
+              height: goldenTextHeight(fontSizeOf('partsfont')),
+            },
+          }
+        : {}),
+      dataName: label,
       // `partsfont`, whatever the tune set — `%%partsfont sans-serif 29 box` is 26.45px of
       // part lane over the 15pt default.
       size: fontSizeOf('partsfont'),
-      bold: true,
-      italic: false,
+      bold: SCORE_FONTS.partsfont?.bold === true,
+      italic: SCORE_FONTS.partsfont?.italic === true,
     },
   ],
 })
@@ -4660,10 +4698,27 @@ const markWidth = (text: string, size: number, boxed: boolean): number =>
  * measure, note and bar builders. abcjs keeps it on the controller for the same reason.
  */
 let SCORE_FONTS: Score['fonts'] = {}
+/**
+ * `%%partsbox` and `%%partsfont … box` ARE THE SAME FLAG — the former is written
+ * `multilineVars.partsfont.box = multilineVars.partsBox` (`abc_parse_directive.js:924`),
+ * so the merged one on the score is what a `P:` label reads.
+ */
+let SCORE_PARTS_BOX = false
 
 /** A `%%<type>font`'s size in staff spaces — `round(pt x 4 / 3)` px (`get-font-and-attr.js:29`). */
 const fontSizeOf = (type: AbcFontType): number =>
   Math.round(((SCORE_FONTS[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / UNIT_PX
+
+/**
+ * The face a `%%<type>font` names, when it names one.
+ *
+ * A BARE `box` directive — `%%partsfont box` — sets no face at all, and abcjs keeps the
+ * one it had; an empty string here would override the emitter's default with nothing.
+ */
+const faceOf = (type: AbcFontType): { face?: string } => {
+  const face = SCORE_FONTS[type]?.face
+  return face === undefined || face === '' ? {} : { face }
+}
 
 /**
  * What `getTextSize.calc` returns as a `%%<type>font`'s HEIGHT, in staff spaces.
@@ -7859,6 +7914,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   LINE_WEIGHTS = lineWeightsFor(strict)
   JAZZ_CHORDS = score.jazzChords
   SCORE_FONTS = score.fonts
+  SCORE_PARTS_BOX = score.partsBox
   PERC_MAP = score.percMap
   const { spacingScale } = PROFILES[profile]
   const voices = score.voices.length > 0 ? score.voices : [undefined]
@@ -8986,9 +9042,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
               // `renderText`'s element, in `voicefont`, and NOT wrapped in a group:
               // `drawVoice` passes `alreadyInGroup = true` (`draw/voice.js:19`).
               font: 'voicefont',
-              ...(score.fonts.voicefont === undefined
-                ? {}
-                : { face: score.fonts.voicefont.face }),
+              ...faceOf('voicefont'),
               dataName: 'voice-name',
               x: ENGRAVE.marginX,
               y: centre,
@@ -11149,9 +11203,9 @@ function aboveLadder<
   // box` and not at all for `%%partsbox` — 15.6px each way.
   const partSize = fontSizeOf('partsfont')
   const boxPad = partsBox ? partSize * ENGRAVE.fontBoxPadding : 0
-  const partY = partLabels
-    ? reserve(goldenTextHeight(partSize) + boxPad * 4) + partSize + boxPad
-    : null
+  // …and the box's own PADDING is `renderText`'s, not the lane's: it adds it to the
+  // baseline at draw time (`draw/text.js:57`), so adding it here too counted it twice.
+  const partY = partLabels ? reserve(goldenTextHeight(partSize) + boxPad * 4) + partSize : null
   const tempoY = tempos
     ? reserve(ENGRAVE.tempoHeightAbove) + ENGRAVE.tempoTextSize + ENGRAVE.tempoDescenderBump
     : null
@@ -11211,7 +11265,10 @@ function anchorAboveStaff<
     elements: part.elements.map((el) => {
       if (el.type === 'part') {
         const moved = shiftBy(el, partShift)
-        return partsBox ? { ...moved, lines: [...moved.lines, ...partBox(moved)] } : moved
+        // The RECT is `renderText`'s, drawn from the text's own `boxSize` — see
+        // `PlacedText.box`. Ours drew four separate rules here, which is neither abcjs's
+        // markup nor its rounding.
+        return moved
       }
       if (el.type === 'tempo') return shiftBy(el, tempoShift)
       if (!el.texts.some(isChord)) return el

@@ -23,7 +23,7 @@ system 0 width=1012.953 originY=0.000
       line  77.904,-110.331 -> 77.904,-123.893 t=0.600
       text  83.204,-106.737 size=20.000 bold "= 120"
     part x=70.846 w=0.000
-      text  70.846,-81.612 size=20.000 bold "PART - VERSE, CHORUS, ETC."
+      text  70.846,-81.612 size=20.000 "PART - VERSE, CHORUS, ETC."
     note@-6 x=85.971 w=42.426
       glyph noteheadBlack 85.971,0.000
       line  83.971,0.000 -> 97.781,0.000 t=0.700

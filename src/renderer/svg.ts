@@ -1917,7 +1917,12 @@ const glyphDefs = new Map<GlyphName, string>()
         // Carries the ROLE beside the markup because a note's texts are not one bucket:
         // `createNote` adds the lyric before the ledger lines and the chord symbol after
         // them (`abstract-engraver.js:829-855`). See the split at the emission site.
-        const textParts: { readonly role: PartRole | undefined; readonly s: string }[] = []
+        const textParts: {
+          readonly role: PartRole | undefined
+          /** abcjs's own `name`, which is how a tempo's three parts tell each other apart. */
+          readonly dataName?: string | undefined
+          readonly s: string
+        }[] = []
         for (const t of el.texts) {
           const style =
             (t.bold ? ' font-weight="bold"' : '') + (t.italic ? ' font-style="italic"' : '')
@@ -1989,6 +1994,7 @@ const glyphDefs = new Map<GlyphName, string>()
           const boxDx = bs === undefined ? 0 : t.anchor === 'start' ? pad : t.anchor === 'end' ? -pad : 0
           textParts.push({
             role: t.role,
+            dataName: t.dataName,
             s:
               abcjs && face !== undefined
                 ? abcjsText(
@@ -2029,11 +2035,16 @@ const glyphDefs = new Map<GlyphName, string>()
               const v = (xx: number, from: number, to: number): string =>
                 `M ${xx} ${from} l 0 ${to - from} l 1 0  l 0 ${from - to}  z `
               const d = [h(by), h(by + bh), v(bx + bw, by, by + bh), v(bx, by + bh, by)].join(' ')
+              // `if (!alreadyInGroup) openGroup(...)` — a `part` label is already inside
+              // its element's group, so the rect is its text's SIBLING (`draw/text.js:50`,
+              // `:80`). See `PlacedText.inGroup`.
+              const boxSvg = `<path d="${d}" stroke="none" data-name="box"></path>`
               textParts[textParts.length - 1] = {
                 ...part,
                 s:
-                  `<g fill="currentColor" data-name="${t.dataName ?? ''}">${part.s}` +
-                  `<path d="${d}" stroke="none" data-name="box"></path></g>`,
+                  t.inGroup === true
+                    ? `${part.s}${boxSvg}`
+                    : `<g fill="currentColor" data-name="${t.dataName ?? ''}">${part.s}${boxSvg}</g>`,
               }
             }
           }
@@ -2079,6 +2090,22 @@ const glyphDefs = new Map<GlyphName, string>()
               return i
             })()
           : el.glyphs.length
+        /**
+         * **A TEMPO'S PARTS ARE INTERLEAVED, AND ITS `pre` COMES FIRST.** `drawTempo`
+         * renders `params.tempo.preString`, THEN walks `params.note.children` for the
+         * glyphs, THEN writes `"= " + bpm`, and finally `postString`
+         * (`draw/tempo.js:18-38`). Ours put every glyph of the element out before any of
+         * its texts, which is right for a note and wrong here — the mark reads
+         * `♩ Easy Swing = 140` instead of `Easy Swing ♩ = 140`. Only `pre` moves; `beats`
+         * and `post` already follow the glyphs.
+         *
+         * Keyed on `data-name`, which is abcjs's own `name: "pre"` and the same handle its
+         * golden carries — not on the text's position, which is a consequence rather than
+         * the rule.
+         */
+        if (abcjs && el.type === 'tempo') {
+          for (const t of textParts.filter((t) => t.dataName === 'pre')) parts.push(t.s)
+        }
         let openGlyphGroup: string | null = null
         for (const g of el.glyphs.slice(0, pitchEnd)) {
           const group = abcjs ? (g.group ?? null) : null
@@ -2236,7 +2263,12 @@ const glyphDefs = new Map<GlyphName, string>()
         // an ANNOTATION (`"^above"`) is `addChord`'s and follows it. Both draw with
         // `annotationfont`, so the ROLE is what tells them apart, not the markup.
         if (abcjs) {
-          for (const t of textParts.filter((t) => t.role !== 'lyric' && !isChordText(t.role))) {
+          for (const t of textParts.filter(
+            (t) =>
+              t.role !== 'lyric' &&
+              !isChordText(t.role) &&
+              !(el.type === 'tempo' && t.dataName === 'pre'),
+          )) {
             parts.push(t.s)
           }
           for (const line of ledgers) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
