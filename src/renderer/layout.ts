@@ -10626,7 +10626,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       y += trailingHeight
       if (bottomBlock.texts.length > 0) {
         y += spaces(ABCJS_PX.bottomTextGap)
-        y += bottomBlock.height
+        // …ROW BY ROW, as `nonMusic` spends them — see `bottomTextBlock`.
+        for (const a of bottomBlock.advances) y += a
       }
       return y + ENGRAVE.marginBottom
     })(),
@@ -11180,9 +11181,22 @@ function appendFreeText(
 function bottomTextBlock(
   metadata: ScoreMetadata,
   fonts: Score['fonts'] = {},
-): { texts: PlacedText[]; height: number } {
+): { texts: PlacedText[]; height: number; advances: number[] } {
   const texts: PlacedText[] = []
+  const advances: number[] = []
   let y = 0
+  /**
+   * **EVERY ROW IS ONE `moveY` ON THE PAGE'S OWN CURSOR, NOT A LOCAL SUM ADDED LATER.**
+   * `nonMusic` walks the block's rows calling `renderer.moveY(row.move)` per row
+   * (`draw/non-music.js:10`), so `visual-tablature-15`'s tail is nine separate adds onto a
+   * number that already carries the whole page. Accumulating them from zero and adding the
+   * total is the same terms in a different grouping and a different double — its height
+   * came out `982.6205` against abcjs's `982.6204999999999`. Same shape as `topAdvances`.
+   */
+  const move = (d: number): void => {
+    advances.push(d)
+    y += d
+  }
   const sizeOf = (type: AbcFontType): number =>
     Math.round(((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / UNIT_PX
   /**
@@ -11210,7 +11224,7 @@ function bottomTextBlock(
      * abcjs's own 49.27 between the two verse lines of `visual-selection-01`.
      */
     if (text === '' && extra.length === 0) {
-      y += goldenTextHeight(size) + box
+      move(goldenTextHeight(size) + box)
       return
     }
     texts.push({
@@ -11225,13 +11239,14 @@ function bottomTextBlock(
       italic: false,
       anchor: 'start',
     })
-    y +=
+    move(
       Math.round(
         (goldenTextHeight(size) + box) *
           ENGRAVE.lineSkipFactor *
           (1 + extra.length) *
           UNIT_PX,
-      ) / UNIT_PX
+      ) / UNIT_PX,
+    )
   }
   const history = sizeOf('historyfont')
   const historyBox = boxOf('historyfont')
@@ -11244,7 +11259,9 @@ function bottomTextBlock(
     // (`bottom-text.js:62`), which `unalignedWords` then follows with a SECOND
     // `{move: space.height}` (`:20`). Two raw heights, not one.
     for (const line of metadata.unalignedWords) addText(line, [], words, 'unalignedWords', false)
-    y += 2 * goldenTextHeight(words)
+    // TWO raw heights, and abcjs spends them as two separate rows.
+    move(goldenTextHeight(words))
+    move(goldenTextHeight(words))
   }
 
   const single = (value: RichText | null, prefix: string): void => {
@@ -11268,7 +11285,7 @@ function bottomTextBlock(
   single(metadata.transcription, 'Transcription: ')
   multi(metadata.history, 'History:')
 
-  return { texts, height: y }
+  return { texts, height: y, advances }
 }
 
 function freeTextBlock(
