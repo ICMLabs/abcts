@@ -635,6 +635,33 @@ prints durations for**, and finding out which they are is the next probe. Note t
 seven-grace group reports only `j 0` where the three-grace group reports `j 0` and `j 1`,
 which is backwards from any duration rule and is the sharpest clue in the trace.
 
+### 3.3g `!beambr1!` BUILDS A LITERAL `split` ARRAY, AND ITS SEGMENTS OVERLAP
+
+`visual-misc-12` is `B!beambr1!B/BB/` under `L:1/8` — durations 1/8, 1/16, 1/8, 1/16, so
+only notes 2 and 4 carry a second beam and each is alone at that level. Ours therefore draws
+two 5px stubs, `45→40` and `96.21→91.21`. abcjs draws `45→24.81` and `35.79→40`, **which
+overlap**.
+
+Modelling `beambr` as a RUN BREAK reproduces neither: implemented and reverted, it changed
+nothing at all, because at level 1 the run is already empty where the break would fire.
+
+Reading `layout/beam.js:188-205` with that output in hand explains the shape. The split is
+pushed IMMEDIATELY AFTER the aux beam is created, at the same element:
+
+    if (!auxBeams[index].split) auxBeams[index].split = [auxBeams[index].x]
+    var xPos = calcXPos(asc, elems[i - 1], elem)
+    auxBeams[index].split.push(xPos[0]); auxBeams[index].split.push(xPos[1])
+
+so `split` becomes `[thisNoteX, prevNoteRight, thisNoteLeft]` and closes with `endX`. The
+drawn pairs are `(thisNoteX, prevNoteRight)` and `(thisNoteLeft, endX)` — the FIRST runs
+BACKWARDS from this note to the previous one's right edge, which is where `45→24.81` comes
+from, and the second is the forward stub. **A `beambr` does not break a run; it makes the
+aux beam reach back over its neighbour and then resume.**
+
+Porting it means carrying abcjs's `split` array through to the emitter rather than
+expressing it as runs — our beam model has one `[x1,x2]` per level per run and cannot say
+this. One fixture, and the last 200 bytes of it.
+
 ### 3.4 THE REST OF THE TABLE — 16 STRUCTURAL, 13 ULP
 
 Read `/tmp/abcts-svg-bytes-ranked.txt` after `npx vitest run tests/svg-bytes.test.ts`, and
