@@ -909,6 +909,14 @@ export interface PlacedLine {
   readonly thickness: number
   /** What this line is. Absent means it inherits its element's kind. */
   readonly role?: PartRole
+  /**
+   * The PAGE's own y, where this line has one — a `%%sep` in the head of a tune. The same
+   * quantity and the same reason as `PlacedText.pageY`: the top block is built on the
+   * page's cursor and only rebased into a staff's frame for the layout's sake.
+   */
+  readonly pageY?: number
+  /** Which nonMusic ROW this line belongs to — see `PlacedText.nonMusicIndex`. */
+  readonly nonMusicIndex?: number
   /** A beam's own duration, for its class — see `layoutBeam`. */
   readonly durationClass?: number
   /**
@@ -9328,7 +9336,12 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
               )
               topAdvances = built.advances
               return {
-                lines: [],
+                // …and the rules are rebased with the texts, being in the same frame.
+                lines: built.lines.map((l) => ({
+                  ...l,
+                  y1: l.y1 - ENGRAVE.marginTop,
+                  y2: l.y2 - ENGRAVE.marginTop,
+                })),
                 height: built.height,
                 texts: built.texts.map((t) => ({
                   ...t,
@@ -10729,8 +10742,18 @@ function topTextBlock(
   from = 0,
   /** `spacing.music`, spent before the nonMusic rows — see below. `%%musicspace` sets it. */
   musicSpace: number = ENGRAVE.musicSpace,
-): { texts: PlacedText[]; height: number; advances: number[] } {
+): { texts: PlacedText[]; lines: PlacedLine[]; height: number; advances: number[] } {
   const texts: PlacedText[] = []
+  /**
+   * **A `%%sep` IN THE HEAD OF A TUNE IS A RULE LIKE ANY OTHER, AND ITS `rules` SINK WAS
+   * A LITERAL `[]`.** `appendFreeText` has collected them since the mid-tune blocks
+   * needed them; the tune's own block passed a throwaway array and the rule was dropped on
+   * the floor. `visual-tablature-15`'s `%%sep 0.4cm 0.4cm 6cm` cost both its 11px moves
+   * (they are the block's rows, so the height was right) and drew NOTHING —
+   * two errors that do not cancel but look like one, because the only visible symptom is a
+   * missing path.
+   */
+  const rules: { y: number; width: number; index?: number }[] = []
   /**
    * **EACH ROW'S OWN ADVANCE, IN ORDER** — abcjs adds them ONE AT A TIME to the page's
    * running cursor, which starts at `padding.top`: `moveY(padding.top)` then
@@ -11039,11 +11062,28 @@ function topTextBlock(
   // separately.
   advances.push(musicSpace)
   y += musicSpace
-  y = appendFreeText(texts, textAbove, y, width / 2, fonts, [], true)
+  y = appendFreeText(texts, textAbove, y, width / 2, fonts, rules, true)
+
+  // `drawSeparator` centres on `renderer.controller.width` — the STAFF width, which is
+  // what `width` is here — and paints a 1px rule at `Math.round(renderer.y)`
+  // (`draw/separator.js:4-8`). Same shape as `freeTextBlock`'s.
+  const lines: PlacedLine[] = rules.map((r) => ({
+    x1: (width - r.width) / 2,
+    y1: r.y,
+    x2: (width + r.width) / 2,
+    y2: r.y,
+    thickness: 1 / UNIT_PX,
+    role: 'separator' as const,
+    // The PAGE's own y and the ROW it belongs to, so the emitter draws it where the block
+    // put it and in its turn among the rows — see `PlacedText.pageY` / `.nonMusicIndex`,
+    // which the block's texts already carry for the same two reasons.
+    pageY: r.y,
+    ...(r.index === undefined ? {} : { nonMusicIndex: r.index }),
+  }))
 
   // The HEIGHT is still the block's own, so the placement below is unchanged; only the
   // texts' y is now the page's.
-  return { texts, height: y - from, advances }
+  return { texts, lines, height: y - from, advances }
 }
 
 /**
@@ -11062,7 +11102,7 @@ function appendFreeText(
   centre: number,
   fonts: Score['fonts'],
   /** `%%sep` rules, collected out — a block can carry ink as well as text. */
-  rules: { y: number; width: number }[] = [],
+  rules: { y: number; width: number; index?: number }[] = [],
   /**
    * Stamp each row with WHICH nonMusic line it came from. Only the tune's own top block
    * needs it: a mid-tune block is already one group of its own, where the top block's
@@ -11086,7 +11126,7 @@ function appendFreeText(
       // The RULE COSTS NO HEIGHT — `drawSeparator` paints at the cursor and moves nothing
       // — so the line is worth exactly its two spaces. Points to staff spaces on the way.
       y += block.separator.above / UNIT_PX
-      rules.push({ y, width: block.separator.length / UNIT_PX })
+      rules.push({ y, width: block.separator.length / UNIT_PX, index: blockIndex })
       y += block.separator.below / UNIT_PX
       continue
     }
@@ -11294,7 +11334,7 @@ function freeTextBlock(
   fonts: Score['fonts'] = {},
 ): { texts: PlacedText[]; lines: PlacedLine[]; height: number } {
   const texts: PlacedText[] = []
-  const rules: { y: number; width: number }[] = []
+  const rules: { y: number; width: number; index?: number }[] = []
   const height = appendFreeText(texts, blocks, 0, width / 2, fonts, rules)
   // Centred on the STAFF width, as `drawSeparator` centres it, and one pixel thick.
   const lines: PlacedLine[] = rules.map((r) => ({

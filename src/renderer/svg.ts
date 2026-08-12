@@ -1129,11 +1129,15 @@ const glyphDefs = new Map<GlyphName, string>()
           for (const t of el.texts) block.push({ t, nonMusicIndex: t.nonMusicIndex })
           for (const line of el.lines) {
             const t = TL(line)
+            // **THE PAGE'S OWN y WHERE THERE IS ONE**, exactly as the block's texts take
+            // `pageY` — and in the ROW it belongs to, so `nonMusic` draws it in its turn
+            // rather than dropping every rule into `meta-top`. See `PlacedLine.pageY`.
+            const ly = line.pageY === undefined ? t.y1 : line.pageY * PX
             block.push({
-              nonMusicIndex: undefined,
+              nonMusicIndex: line.nonMusicIndex,
               s:
                 line.role === 'separator'
-                  ? separatorPath(t.x1, t.y1, t.x2, classes.generate('defined-text'))
+                  ? separatorPath(t.x1, ly, t.x2, classes.generate('defined-text'))
                   : lineToRect(t, attrs(el.type, line.role), abcjs),
             })
           }
