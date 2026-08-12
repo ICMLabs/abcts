@@ -109,6 +109,7 @@ const PASSING: readonly string[] = [
   'abcjs-synth-flattener-20-k-treble-8-b-a4-ce-f-4-k-treble-8-g8-g-2',
   'abcjs-synth-flattener-21-c4-d4',
   'abcjs-synth-flattener-22-b-c4-d4',
+  'abcjs-synth-flattener-23-percmap-d-pedal-hi-hat-x',
   'abcjs-synth-flattener-24-percmap-c-high-tom-x',
   'abcjs-synth-flattener-25-cd-d2-d2-dz',
   'abcjs-synth-flattener-26-gbcd-d4-zcdc-dc3',
