@@ -4584,9 +4584,21 @@ const centreAligned = (glyph: string): boolean => {
   return abcjs.startsWith('scripts') && abcjs !== 'scripts.roll'
 }
 
-/** abcjs's `deltaX` for a decoration: the head's half-width, less the glyph's if it is left-aligned. */
+/**
+ * abcjs's `deltaX` for a decoration: the head's half-width, less the glyph's if it is
+ * left-aligned.
+ *
+ * **AND `deltaX` IS FORMED WHOLE BEFORE THE NOTE'S x IS ADDED.** abcjs builds it in two
+ * statements and hands the finished number to `RelativeElement`, whose `child.x` is one
+ * addition onto the parent (`relative-element.js:124-125`) — so the bracketing is
+ * `x + (w / 2 - gw / 2)`. Ours read left to right and formed `(x + w / 2) - gw / 2`, which
+ * is `scripts.roll`'s 428.1323333333333 against abcjs's 428.13233333333335. Same shape as
+ * `PlacedGlyph.dx`: a CONSTRUCTED offset has to be built, not derived.
+ */
+const decorationDx = (headWidth: number, glyph: string, width: number): number =>
+  headWidth / 2 - (centreAligned(glyph) ? 0 : width / 2)
 const decorationX = (headX: number, headWidth: number, glyph: string, width: number): number =>
-  headX + headWidth / 2 - (centreAligned(glyph) ? 0 : width / 2)
+  headX + decorationDx(headWidth, glyph, width)
 
 /**
  * `createBarLine` hands `createDecoration` a width of **3 or 1**, not the bar's drawn width
@@ -4736,6 +4748,7 @@ function decorationGlyphs(
     out.push({
       name: glyph,
       x: decorationX(headX, headWidth, glyph, table.width(glyph)),
+      dx: decorationDx(headWidth, glyph, table.width(glyph)),
       y,
       role: 'decoration',
       reserve: [y, y],
@@ -4778,6 +4791,7 @@ function decorationGlyphs(
 
     const glyph = spec.above
     const centre = decorationX(headX, headWidth, glyph, table.width(glyph))
+    const centreDx = decorationDx(headWidth, glyph, table.width(glyph))
 
     if (spec.place === 'ornament') {
       const height = heightInPitches(glyph) + ENGRAVE.decorationPadding
@@ -4796,6 +4810,7 @@ function decorationGlyphs(
         out.push({
           name: glyph,
           x: centre,
+          dx: centreDx,
           y,
           role: 'decoration',
           reserve: [y - half, y + half],
@@ -4816,6 +4831,7 @@ function decorationGlyphs(
       out.push({
         name: glyph,
         x: centre,
+        dx: centreDx,
         y,
         role: 'decoration',
         reserve: [y - half, y + half],
