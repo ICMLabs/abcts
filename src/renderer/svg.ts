@@ -1680,7 +1680,9 @@ const glyphDefs = new Map<GlyphName, string>()
           const d = lines
             .map((l) => {
               const t = TL(l)
-              return `M ${round2(t.x1)} ${round2(t.y1)} L ${round2(t.x2)} ${round2(t.y2)}${gap}`
+              // …and an UNANCHORED end goes in raw — see `PlacedLine.rawEnd`.
+              const x2 = l.rawEnd === true ? raw(t.x2) : round2(t.x2)
+              return `M ${round2(t.x1)} ${round2(t.y1)} L ${x2} ${round2(t.y2)}${gap}`
             })
             .join('')
           emit(

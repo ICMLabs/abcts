@@ -936,6 +936,15 @@ export interface PlacedLine {
    */
   readonly beamed?: boolean
   /**
+   * This line's END x is abcjs's own UNROUNDED number and must be emitted as such.
+   *
+   * Only a repeat ending running off a system sets it — `drawEnding` rounds an endpoint
+   * that came from an ANCHOR and leaves the line-width fallback raw
+   * (`draw/ending.js:13-26`). One `d` therefore mixes two-decimal coordinates with a full
+   * double, which no general rule about rounding could produce.
+   */
+  readonly rawEnd?: boolean
+  /**
    * Drawn but NOT counted in the staff's vertical extent.
    *
    * A PHASE distinction, not a drawing one. abcjs accumulates `staff.top` from the children
@@ -9491,7 +9500,23 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         if (hooked) {
           voltaLines.push({ group, x1: endX, y1: y, x2: endX, y2: y + ENGRAVE.voltaHook, thickness })
         }
-        voltaLines.push({ group, x1: openVolta.startX, y1: y, x2: endX, y2: y, thickness })
+        /**
+         * **AND AN UNANCHORED END IS NOT ROUNDED.** `drawEnding` calls `roundNumber` only
+         * inside `if (params.anchor1)` and `if (params.anchor2)`; the fallbacks — the
+         * voice's `startx + 10` and its `w - 1` — go into the `sprintf` raw
+         * (`draw/ending.js:13-26`). So a bracket that runs off a system writes
+         * `294.7566274847714` where every other coordinate in the same `d` is at two
+         * decimals. See `PlacedLine.rawEnd`.
+         */
+        voltaLines.push({
+          group,
+          x1: openVolta.startX,
+          y1: y,
+          x2: endX,
+          y2: y,
+          thickness,
+          ...(hooked ? {} : { rawEnd: true }),
+        })
         voltaTexts.push({
           text: openVolta.label,
           group,
@@ -9684,8 +9709,14 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // Curves are NOT resolved here: a slur or tie can span a system break, so it needs
       // every system's anchors, which only exist once the whole tune is packed. Filled
       // in by the pass below.
-      // An ending still open at the end of a system runs off it, unhooked.
-      closeVolta(solved.width, false)
+      /**
+       * An ending still open at the end of a system runs off it, unhooked — and it ends at
+       * **the voice's width MINUS ONE**, not at the system's right edge. `drawVoice` opens
+       * `var width = params.w - 1` and hands that to `drawEnding` as its `lineendx`
+       * default (`draw/voice.js:12`, `:82`) — the same off-by-one a curve running off the
+       * end already reproduces through `ENGRAVE.lineEndInset`.
+       */
+      closeVolta(solved.width - ENGRAVE.lineEndInset, false)
 
       // Tuplets resolve here — unlike curves they never span a system, because a beam
       // and a barline both break them long before a line break can.
