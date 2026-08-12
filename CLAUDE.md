@@ -721,7 +721,51 @@ checkpoint and hand off as you go so no context is lost.
 > them was diffing two runs of a scratch script by hand. **A ratchet holding 4% of what is
 > green is a ratchet in name.**
 
-Read `Docs/CHECKPOINT-2026-08-11b.md` first — the state, the five landings, §3 WHAT IS LEFT
+> 🧾 **AND FIVE MORE FELL ON 2026-08-12 — 49 → 41 of 171 — THREE OF THEM NAMED BY A FIXTURE
+> THAT WAS ABOUT SOMETHING ELSE.** A standalone `M:` on the tune's FIRST measure belongs to
+> that line's prefix, because `startNewLine` fires lazily and on the first measure there is
+> no next line to receive it (finding 121's twin). Then the bar-number arc, three rules
+> stacked, each invisible until the one before it closed: a bar number wears
+> **`measurefont`'s WEIGHT AND STYLE**, not just its size; **a BOXED font is measured four
+> paddings wider AND taller** (`get-text-size.js:46-49`) — `fontHeightOf` already did the
+> height and `textWidth` did not, so **landing it on both was worse than landing it on
+> neither**, at 9.06px of page; and **A BAR NUMBER ON A CLEF DOES NOT PUSH THE TOP**, an
+> explicit `okToPushTop = false` in `_addChild` (`absolute-element.js:184-189`) that was
+> invisible until the boxed width flipped `vert` from 11 to 13.5.
+>
+> **AND "DOES NOT RESERVE" HAS TO BE SAID, NOT OMITTED** — deleting the reserve changed
+> nothing at all, because an absent one falls back to `verticalExtent`'s ascent/descent
+> estimate, which reserves MORE. The built-in `ABCTS_PROBE` named the real contributor in
+> one run, after a wrong guess had already been implemented and measured to do nothing.
+>
+> **AND A CHORD'S TIE IS ONE TIE PER NOTEHEAD** — `el.pitches.forEach(function(pitch) {
+> pitch.startTie = {} })` (`abc_parse_music.js:427`), so `[GB]8-` builds TWO `TieElem`s
+> where we built one. **A SLUR IS NOT LIKE THIS**, being hung on `pitches[0]` alone, and the
+> two rules look alike — which is how it survived. Three baselines moved and the diff was
+> PURE ADDITIONS, which is the shape a new feature has to have.
+>
+> **AND A NOTEHEAD'S `data-name` IS THE SOURCE SPELLING, WHICH IS NOT DERIVABLE.** `c,` and
+> `C` are the same note and abcjs keeps whichever was typed (`abc_parse_music.js:1116-1147`);
+> we canonicalised. `writtenNote`'s own doc block said the pitch was enough — the premise was
+> true, the conclusion did not follow, and it had been wrong on every lowercase-with-comma
+> note in the corpus since it was written. **The third time on this branch that a note naming
+> a cause is the reason the row stopped being read** (the `G8` breve, the `extra-class`
+> accent, this).
+>
+> ⚠️ **AND A BISECT THAT NEVER TURNS GREEN MEANS THE CAUSE IS NOT IN THE HISTORY.**
+> `content-parity`'s one red is `S7-voices`, and it is an UNCOMMITTED edit to that fixture in
+> `../abcMusicKit` — same notes, respelled chord durations, so every source offset moved
+> while the goldens stayed at 2026-08-08. Seven commits of bisecting bought nothing that
+> `ls -la` on the two inputs did not say at once. **AND A GATE'S REPORT FILE IS NOT ITS
+> RESULT**: `/tmp/abcts-*.txt` outlives the run, and I called that gate green twice off a
+> stale one.
+
+Read `Docs/CHECKPOINT-2026-08-12.md` first — the state, the five landings, §3 WHAT IS LEFT
+(two rows measured to the digit and NOT landed — the per-LINE forced stem and the staff
+BOTTOM's one-ULP pitch), §5 THE ONE RED IS NOT OURS, §6 THE HARNESS and §7 the rules.
+`Docs/HANDOFF-2026-08-12.md` has the session prompt and the two probes.
+Then `Docs/CHECKPOINT-2026-08-11b.md` — superseded for the state, but it keeps the
+arithmetic arc, §3 WHAT IS LEFT
 (the HORIZONTAL is now the head of the table and §3.1 has both the measurement and the
 probe), §5 THE HARNESS and §6 the rules. `Docs/HANDOFF-2026-08-11b.md` has the session
 prompt. Then `Docs/CHECKPOINT-2026-08-11.md` — superseded for the state, but it keeps the
@@ -894,16 +938,23 @@ abcjs source are all reached by sibling path and stay in that repo. Keep it that
 backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
-**AUDIO IS BYTE-EQUAL AND THE SVG IS THE ARC.** 1268/1268 with no
-reds; **seventeen gates and NINE ranked tables** — 0 of 72 audio cases, 0 of 38 note timings,
+**AUDIO IS BYTE-EQUAL AND THE SVG IS THE ARC.** 1275/1276, and **the ONE red is NOT OURS** —
+`content-parity`'s `S7-voices` is an uncommitted edit to a fixture in `../abcMusicKit` whose
+goldens were not regenerated (`CHECKPOINT-2026-08-12.md` §5). Read that before you conclude
+anything from a suite run.
+
+**seventeen gates and NINE ranked tables** — 0 of 72 audio cases, 0 of 38 note timings,
 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
 **1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
 **1 of 25 DOM-contract cases with TWENTY-FOUR slugs RATCHETED** — and
-**57 of 171 SVG-byte fixtures, ONE HUNDRED AND FOURTEEN of them EXACT and ALL 114
-RATCHETED** — and **the SVG BYTE TABLE is THE ONE OPEN GATE**, at best 200613 / median
-10288 — mostly STRUCTURAL now, the ULP families being 49 glyph-y tokens across 5 fixtures
-and 36 glyph-x across 13, classified by aligning on the
-first differing character (a cruder test sends you at the wrong family). **THE ARITHMETIC
+**41 of 171 SVG-byte fixtures, ONE HUNDRED AND THIRTY of them EXACT and ALL 130
+RATCHETED** — and **the SVG BYTE TABLE is THE ONE OPEN GATE**, at best 200613 — mostly
+STRUCTURAL now, classified by aligning on the
+first differing character (a cruder test sends you at the wrong family). **The next three
+are named and measured in `CHECKPOINT-2026-08-12.md` §3**: `%%voicecolor`, which is not
+implemented at all and is the earliest structural row left; the FORCED STEM being per LINE
+rather than per voice, with abcjs's own three voice streams printed; and the staff BOTTOM's
+one-ULP pitch, which is probably the head of the whole remaining `x.0000000000004` family. **THE ARITHMETIC
 ARC HAS DONE ITS WORK ON BOTH AXES** — the layout holds abcjs's pitches end to end, the line
 solve iterates on abcjs's own `spacing`, and elements are PLACED on the solved x rather than
 shifted onto it — so the two ULP families are down to **62 glyph-y tokens across 10 fixtures
