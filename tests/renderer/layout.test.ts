@@ -2230,12 +2230,31 @@ describe('tremolo, phrases and technique', () => {
       .filter((g) => g.role === 'decoration' || g.role === 'dynamic')
       .map((g) => g.name)
 
-  it('picks one tremolo glyph per stroke count', () => {
-    // The count IS the rhythm, so `!//!` is tremolo2 rather than two tremolo1s stacked.
-    expect(glyphsOf('!/!')).toEqual(['tremolo1'])
-    expect(glyphsOf('!//!')).toEqual(['tremolo2'])
-    expect(glyphsOf('!///!')).toEqual(['tremolo3'])
-    expect(glyphsOf('!////!')).toEqual(['tremolo4'])
+  it('stacks one grace flag per stroke in strict, and picks a tremolo bar otherwise', () => {
+    // **STRICT DRAWS N COPIES OF `flags.ugrace`, NOT ONE `tremoloN`** —
+    // `compoundDecoration('flags.ugrace', count)` loops, placing each a pitch below the
+    // last (`creation/decoration.js:104-121`), which abcjs's own golden for
+    // `synth-flattener-11` confirms: three `flags.ugrace` and no tremolo glyph at all.
+    //
+    // This test used to assert `['tremolo1']`…`['tremolo4']` with the note "the count IS
+    // the rhythm, so `!//!` is tremolo2 rather than two tremolo1s stacked". True of the
+    // SMuFL family and of what the other modes draw; not true of abcjs, which had never
+    // been measured here.
+    expect(glyphsOf('!/!')).toEqual(['graceNoteSlashStemUp'])
+    expect(glyphsOf('!//!')).toEqual(['graceNoteSlashStemUp', 'graceNoteSlashStemUp'])
+    expect(glyphsOf('!///!')).toEqual(Array(3).fill('graceNoteSlashStemUp'))
+    expect(glyphsOf('!////!')).toEqual(Array(4).fill('graceNoteSlashStemUp'))
+    // The other modes keep the drawn bars, which are the right shape.
+    const extended = (
+      layout(parse('X:1\nL:1/4\nK:C\n!//!F|\n', { mode: 'extended' }).scores[0] as Score, {
+        mode: 'extended',
+        systemWidth: 200,
+      }).systems[0]?.staves[0]?.elements ?? []
+    )
+      .flatMap((e) => e.glyphs)
+      .filter((g) => g.role === 'decoration')
+      .map((g) => g.name)
+    expect(extended).toEqual(['tremolo2'])
   })
 
   it('draws nothing for `trem1`..`trem4`, matching abcjs', () => {
@@ -2248,8 +2267,10 @@ describe('tremolo, phrases and technique', () => {
 
   it('puts a tremolo on the stem, not in an ornament lane', () => {
     const y = (
-      layout(parse('X:1\nL:1/4\nK:C\n!//!F|\n').scores[0] as Score, { systemWidth: 200 }).systems[0]
-        ?.staves[0]?.elements ?? []
+      layout(parse('X:1\nL:1/4\nK:C\n!//!F|\n', { mode: 'extended' }).scores[0] as Score, {
+        mode: 'extended',
+        systemWidth: 200,
+      }).systems[0]?.staves[0]?.elements ?? []
     )
       .flatMap((e) => e.glyphs)
       .find((g) => g.name === 'tremolo2')?.y

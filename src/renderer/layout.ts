@@ -4595,6 +4595,11 @@ const centreAligned = (glyph: string): boolean => {
  * is `scripts.roll`'s 428.1323333333333 against abcjs's 428.13233333333335. Same shape as
  * `PlacedGlyph.dx`: a CONSTRUCTED offset has to be built, not derived.
  */
+/** `compoundDecoration`'s count per spelling — one `flags.ugrace` per slash. */
+const TREMOLO_COUNT: Readonly<Record<string, number>> = { '/': 1, '//': 2, '///': 3, '////': 4 }
+/** abcjs draws every one of them with the GRACE FLAG (`creation/decoration.js:118-121`). */
+const TREMOLO_GLYPH = 'graceNoteSlashStemUp'
+
 const decorationDx = (headWidth: number, glyph: string, width: number): number =>
   headWidth / 2 - (centreAligned(glyph) ? 0 : width / 2)
 const decorationX = (headX: number, headWidth: number, glyph: string, width: number): number =>
@@ -4705,6 +4710,49 @@ function decorationGlyphs(
   // `pitch` is `abselem.top` and `minPitch` its bottom, both DECLARED. Worked on
   // `frere-jacques`: top 12.0493 → 14.0493 → accent → 15.0493 → above 9 → **16.0493**,
   // which is abcjs's number to the digit.
+  /**
+   * **A TREMOLO IS A STACK OF `flags.ugrace` GLYPHS, AND IT IS PLACED BEFORE EVERYTHING
+   * ELSE.** `compoundDecoration` runs third in `createDecoration` — after the two dynamics
+   * and BEFORE `closeDecoration` — so its glyphs lead the element's decoration children
+   * (`creation/decoration.js:87-122`, `:385`):
+   *
+   *     placement = dir === 'down' ? lowestPitch() + 1 : highestPitch() + 9
+   *     if (dir !== 'down' && count === 1) placement--
+   *     deltaX = width / 2;  deltaX += (dir === 'down') ? -5 : 3
+   *     for (i = 0; i < count; i++) { placement -= 1; addFixedX(symbol, deltaX, w, placement) }
+   *
+   * `highestPitch`/`lowestPitch` are the HEADS' extremes, not the element's box, and the
+   * slashes march DOWNWARD from the first one whichever way the stem points.
+   *
+   * A previous note here recorded the shape difference — "ours is a divergence in SHAPE and
+   * belongs in `ABCJS-DIFFERENCES.md`" — and it never went in either file. It is a defect
+   * that had not been written down yet: strict has no latitude, so it is ported.
+   * `abc2.1`/`extended` keep the drawn `tremoloN` bars, which are the right shape.
+   */
+  if (strict) {
+    for (const name of names) {
+      const count = TREMOLO_COUNT[name]
+      if (count === undefined) continue
+      let placement = stemUp ? toPitch(topStep) + 9 : toPitch(bottomStep) + 1
+      if (stemUp && count === 1) placement -= 1
+      const dx = headWidth / 2 + (stemUp ? ABCJS_PX.tremoloDxUp : ABCJS_PX.tremoloDxDown)
+      for (let i = 0; i < count; i++) {
+        placement -= 1
+        const y = stepToY(toStep(placement))
+        out.push({
+          name: TREMOLO_GLYPH,
+          x: headX + dx,
+          dx,
+          y,
+          role: 'decoration',
+          // No `thickness` is passed, so the declared box is a POINT at its own pitch.
+          reserve: [y, y],
+          reservePitch: [placement, placement],
+        })
+      }
+    }
+  }
+
   const artAbove = !stemUp
   const topPitch = toPitch(elemTopStep)
   let closeY: number | undefined
@@ -4870,6 +4918,7 @@ function decorationGlyphs(
         leftReach = Math.max(leftReach, 2 * width + roomTaken)
         continue
       }
+      if (strict && TREMOLO_COUNT[name] !== undefined) continue // already placed, above
       const onStem = decorationX(headX, headWidth, glyph, glyphsFor(strict).width(glyph))
       // **A STEP COUNT, NOT A LENGTH.** `tip` is fed to `stepToY`, and it was adding
       // `ENGRAVE.stemLength` — which is `spacesOfPitch(7)`, a LENGTH — so the two units

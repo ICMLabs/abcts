@@ -117,38 +117,50 @@ system 0 width=792.750 originY=0.000
       glyph timeSig4 49.051,-15.500
     note@-6 x=70.846 w=42.426
       glyph noteheadBlack 70.846,0.000
-      glyph tremolo1 71.101,-26.156
+      glyph graceNoteSlashStemUp 78.751,-27.125
       line  68.846,0.000 -> 82.656,0.000 t=0.700
       line  80.156,-1.292 -> 80.156,-27.125 t=1.000
     note@-5 x=113.272 w=42.426
       glyph noteheadBlack 113.272,-3.875
-      glyph tremolo2 113.527,-28.094
+      glyph graceNoteSlashStemUp 121.177,-34.875
+      glyph graceNoteSlashStemUp 121.177,-31.000
       line  122.582,-5.167 -> 122.582,-31.000 t=1.000
     note@-4 x=155.699 w=42.426
       glyph noteheadBlack 155.699,-7.750
-      glyph tremolo3 155.954,-30.031
+      glyph graceNoteSlashStemUp 163.604,-38.750
+      glyph graceNoteSlashStemUp 163.604,-34.875
+      glyph graceNoteSlashStemUp 163.604,-31.000
       line  165.009,-9.042 -> 165.009,-34.875 t=1.000
     note@-3 x=198.125 w=42.426
       glyph noteheadBlack 198.125,-11.625
-      glyph tremolo4 198.380,-31.969
+      glyph graceNoteSlashStemUp 206.030,-42.625
+      glyph graceNoteSlashStemUp 206.030,-38.750
+      glyph graceNoteSlashStemUp 206.030,-34.875
+      glyph graceNoteSlashStemUp 206.030,-31.000
       line  207.435,-12.917 -> 207.435,-38.750 t=1.000
     bar x=240.552 w=0.600
       line  240.852,-38.750 -> 240.852,-7.750 t=0.600
     note@-2 x=251.552 w=42.426
       glyph noteheadBlack 251.552,-15.500
-      glyph tremolo1 251.807,-33.906
+      glyph graceNoteSlashStemUp 259.457,-42.625
       line  260.862,-16.792 -> 260.862,-42.625 t=1.000
     note@-1 x=293.978 w=42.426
       glyph noteheadBlack 293.978,-19.375
-      glyph tremolo2 294.233,-35.844
+      glyph graceNoteSlashStemUp 301.883,-50.375
+      glyph graceNoteSlashStemUp 301.883,-46.500
       line  303.288,-20.667 -> 303.288,-46.500 t=1.000
     note@0 x=336.404 w=42.426
       glyph noteheadBlack 336.404,-23.250
-      glyph tremolo3 336.659,-8.719
+      glyph graceNoteSlashStemUp 336.309,-23.250
+      glyph graceNoteSlashStemUp 336.309,-19.375
+      glyph graceNoteSlashStemUp 336.309,-15.500
       line  336.904,-23.250 -> 336.904,3.875 t=1.000
     note@1 x=378.831 w=42.426
       glyph noteheadBlack 378.831,-27.125
-      glyph tremolo4 379.086,-10.656
+      glyph graceNoteSlashStemUp 378.736,-27.125
+      glyph graceNoteSlashStemUp 378.736,-23.250
+      glyph graceNoteSlashStemUp 378.736,-19.375
+      glyph graceNoteSlashStemUp 378.736,-15.500
       line  379.331,-25.833 -> 379.331,0.000 t=1.000
     bar x=421.257 w=9.600
       line  421.557,-38.750 -> 421.557,-7.750 t=0.600
@@ -367,7 +379,7 @@ system 0 width=792.750 originY=0.000
       line  165.009,-9.042 -> 165.009,-34.875 t=1.000
     note@-3 x=198.125 w=42.426
       glyph noteheadBlack 198.125,-11.625
-      glyph tremolo1 198.380,-31.969
+      glyph graceNoteSlashStemUp 206.030,-38.750
       line  207.435,-12.917 -> 207.435,-38.750 t=1.000
     bar x=240.552 w=0.600
       line  240.852,-38.750 -> 240.852,-7.750 t=0.600
@@ -377,7 +389,8 @@ system 0 width=792.750 originY=0.000
       line  272.987,-16.792 -> 272.987,-42.625 t=1.000
     note@-1 x=306.103 w=42.426
       glyph noteheadBlack 306.103,-19.375
-      glyph tremolo2 306.358,-35.844
+      glyph graceNoteSlashStemUp 314.008,-50.375
+      glyph graceNoteSlashStemUp 314.008,-46.500
       line  315.413,-20.667 -> 315.413,-46.500 t=1.000
     note@0 x=348.529 w=42.426
       glyph noteheadBlack 348.529,-23.250

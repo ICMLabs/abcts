@@ -115,6 +115,13 @@ export const stepOfPitch = (pitch: number): number => pitch - PITCH_ORIGIN
  * a reader can check the number against the source without doing arithmetic first.
  */
 export const ABCJS_PX = {
+  /**
+   * `deltaX += (dir === 'down') ? -5 : 3` — how far off the notehead's centre a TREMOLO
+   * slash sits, which side depending on which side of the head the stem is
+   * (`creation/decoration.js:109`). An x, so abcjs PIXELS and not pitch.
+   */
+  tremoloDxUp: 3,
+  tremoloDxDown: -5,
   /** `padding.left` for SCREEN media (`write/renderer.js:71`); print is 68. */
   paddingLeft: 15,
   /** `padding.top` / `.bottom`, screen (`write/renderer.js:69-72`). */
