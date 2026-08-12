@@ -766,6 +766,29 @@ byte table walks, and both other corpora are green.
 
 ---
 
+## 5b. AND `fuzz.test.ts` IS FLAKY UNDER A FULL RUN — IT MEASURES WALL CLOCK
+
+It failed once in a full-suite run and passed three times on its own, which is the shape of
+a phantom regression. Reproduced under load, the message names itself:
+
+    "SLOW edge#19: 1304ms for 50008 chars"
+
+`check()` does `const t0 = Date.now()` … `if (ms > 1000) problems.push('SLOW …')`
+(`tests/fuzz.test.ts:24-33`). That is a WALL-CLOCK budget on a 50KB adversarial input,
+asserted while vitest is running every other suite in parallel on the same machine. Nothing
+about the parse is wrong and nothing in the engine changed.
+
+**The threshold has NOT been touched**, because relaxing a gate to make a run green is the
+one thing this branch does not do — and the assertion's intent (the parser must not go
+superlinear on hostile input) is worth keeping. But the INSTRUMENT is wrong for a parallel
+runner: a ratio against a known-linear input of the same size would say the same thing and
+not depend on what else is on the CPU. That is a test-infrastructure change and it is
+Lance's call, not one to make unattended.
+
+Until then: **if `fuzz` fails, run it alone before believing it.** It also seeds from
+`../abcMusicKit/Tools/abcjs-debug/fixtures` — the same directory §5 is about — so a fixture
+edited mid-run changes its inputs as well.
+
 ## 6. THE HARNESS
 
 Unchanged from `CHECKPOINT-2026-08-11b.md` §5, plus two things worth writing down:
