@@ -1996,7 +1996,11 @@ function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null 
     const adjust = bassEight ? 0 : (glyphsFor(strict).advance(name) - width) / 2
     glyphs.push({
       name: 'timeSig8',
-      x: x + ENGRAVE.clefIndent + adjust,
+      // …AND `dx + adjustspacing` IS ONE OFFSET, formed before the element's x is added:
+      // `addRight(new RelativeElement('8', dx + adjustspacing, …))` and `child.x = x + dx`
+      // (`create-clef.js:49`, `relative-element.js:124-125`). Ours read left to right and
+      // formed `(x + 5) + adjust`, which is 78.6605 against abcjs's 78.66050000000001.
+      x: x + (ENGRAVE.clefIndent + adjust),
       y: pitchStep(drawPitch),
       scale: OCTAVE_MARKER_SCALE,
       role: 'clef',
