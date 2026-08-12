@@ -341,6 +341,45 @@ value. Three of its twelve are still one pitch out — the element bottom coming
 STEM rather than the head — and the fixture's next divergence is a `scripts.ufermata` 22px
 out, which is the staff's own origin moving underneath it, not the decoration.
 
+### 2.20 THE ACCIACCATURA SLASH IS A GLYPH, AND IT FOLLOWS THE FIRST GRACE HEAD
+
+`flags.ugrace` — abcjs's own grace FLAG reused as the stroke, at "the same formula that
+determines the flag position", scaled like the head and with ZERO width
+(`abstract-engraver.js:501-506`). Ours drew a thickened line from five invented ratios,
+pushed after EVERY grace rather than after the one it belongs to. `dAcciaccatura` is 5 when
+the group is BEAMED and 6 when it is not.
+
+**THE GLYPH WAS IN `UNMAPPED_ABCJS`** as "no SMuFL name claims it" — the same misreading
+that once left four decorations on Bravura's outlines. SMuFL names it
+`graceNoteSlashStemUp`; `scripts/gen-glyphs.mjs` says adding a glyph is "add the name,
+re-run, commit", so no outline had to be invented. **`role: 'flag'`, NOT `'grace'`** — the
+role picks the class and `grace` maps to `abcjs-notehead`, which abcjs gives only to a glyph
+whose NAME contains `notehead`; the pixel gate counted it as a sixth notehead the moment it
+did not. `visual-transpose-output-03` went from byte 11240 to 31189 of 43612.
+
+### 2.21 AN ANNOTATION IS IN THE CHORD BUCKET — AND THAT IS NOT ITS LANE
+
+Every annotation comes out of `addChord`, so it sits in the bucket `createNote` adds LAST,
+after the decorations. A `"<2"` was written before the `+1+` beside it.
+
+**Keyed on `dataName`, not on the ROLE**: the role also decides whether a mark takes a CHORD
+LANE, and a left- or right-placed annotation does not. Giving these `role: 'chord'` fixed the
+order and cost `S2-fields-tune1` 18.52px — one whole lane, caught by the pixel gate on the
+first run. **TWO QUESTIONS, TWO FIELDS.**
+
+### 2.22 AN EMPTY `""` IS A CHORD, AND `includes('')` IS TRUE
+
+abcjs decides by POSITION — `isAnnotation = pos === "left" || … || !!rel_position`
+(`add-chord.js:9`) — and an empty chord names none, so it is a chord symbol: centred,
+`data-name="chord"`. Ours read the first character, and **the empty string is a substring of
+every string**, so `'^_<>@'.includes(text[0] ?? '')` answered TRUE for it.
+
+**AND AN EMPTY CHORD STILL DRAWS AN EMPTY `<text>`** — `addChord` calls `addCentered` for
+every entry whose position is not `hidden` and never tests the STRING (`:104-116`). Two
+guards here skipped it, one on the whole symbol and one per line. An element with no ink at
+all, which only a byte comparison could see. `visual-transpose-output-03` went from 33085 to
+**41691 of 43612**, and what is left on it is beam order.
+
 ---
 
 ## 3. WHAT IS LEFT — MEASURED, NOT LANDED
@@ -521,7 +560,7 @@ The named structural rows, cheapest last:
 - `visual-misc-12`'s `!beambr1!` beam split.
 - `flattener-37` emits `rests.half` where abcjs emits `dots.dot` — an element ORDER row.
 - `visual-transpose-04`'s chord annotation is 20px high — that is §3.3c.
-- `visual-tablature-*` — an acciaccatura slash, and `-20`'s missing note element.
+- `visual-tablature-20`'s missing note element and its 16px-narrow staff line.
 - The `x.0000000000004` tail on `88.038`, `417.893`, `29.69`, `609.95…` — the same ULP
   family as §3.2 and probably the same cause.
 
