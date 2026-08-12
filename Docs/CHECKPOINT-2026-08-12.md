@@ -19,15 +19,17 @@ on stale runs before finding out what it was.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 0 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 1 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 1 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **39 of 171**, best 200613 | 49 of 171 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **34 of 171**, best 200613 | 49 of 171 |
 
-`DIVERGENT` is still EMPTY. **132 fixtures are byte-exact and all 132 are RATCHETED.**
+`DIVERGENT` is still EMPTY. **137 fixtures are byte-exact and all 137 are RATCHETED.**
+
+The 34 that remain classify **21 STRUCTURAL / 13 ULP** — see §3.4.
 
 ---
 
 ## 2. THE LANDINGS
 
-Nine, and the shape of the session is that **five of them were found by a fixture that had
+Fourteen, and the shape of the session is that **most were found by a fixture that had
 nothing to do with what they were about.** The bar-number arc in particular is three
 rules stacked, each invisible until the one before it closed.
 
@@ -211,6 +213,68 @@ nobody had connected to it.
 `294.7566274847714` beside `182.4` — which no general rule about rounding could produce.
 `PlacedLine.rawEnd` carries it rather than the formatter guessing.
 
+### 2.10 A STEM'S `bottom: p1 - 1` IS SKIPPED WHEN IT IS ZERO — JS TRUTHINESS
+
+`RelativeElement`'s constructor ends `if (opt.bottom) this.bottom = opt.bottom`
+(`relative-element.js:41-42`), and **`0` is FALSY** — so a stem whose low end is pitch 1
+keeps the default `min(pitch, pitch2)`, which is `p1` itself. `p1` is always the LOW end
+(`abstract-engraver.js:740-742`), so the reserve is one pitch shallower on exactly that
+note and no other.
+
+`visual-tablature-15` and `visual-mouse-click-01` were each **3.875px — one step —** too
+tall on nothing else. This is the guard the workspace's own porting notes warn about, found
+by comparing abcjs's page walk with ours staff by staff: its bass staff reported `bottom 1`
+against our 0.
+
+### 2.11 THE BOTTOM-TEXT BLOCK'S ROWS ARE SPENT ON THE PAGE'S CURSOR, ONE AT A TIME
+
+`nonMusic` walks a block's rows calling `renderer.moveY(row.move)` per row
+(`draw/non-music.js:10`). We accumulated them from zero inside `bottomTextBlock` and added
+the total. **A SUM CANNOT SEE AN ORDER**, again — the same rule as `topAdvances` and the
+staff-origin walk. Worth `982.6205` against abcjs's `982.6204999999999`, and it took those
+two fixtures from byte 187 to 2412 of 85865.
+
+### 2.12 A `%%sep` IN THE HEAD OF A TUNE DREW NOTHING, AND ITS `rules` SINK WAS A LITERAL `[]`
+
+`appendFreeText` has collected separator rules since the mid-tune blocks needed them; the
+tune's OWN block passed a throwaway array. The `%%sep` still cost both its 11px moves —
+those are the block's ROWS, so the height was right — and the only symptom was a missing
+path, **which no gate here reads**.
+
+Two more rules had to follow it, and both are things the block's TEXTS already did: the
+rule takes **THE PAGE'S OWN y** (`pageY`, because the top block is built on the page's
+cursor and rebased into a staff's frame), and it takes **ITS TURN AMONG THE ROWS**
+(`nonMusicIndex`, because `nonMusic` draws each row where it stands and every block LINE was
+tagged `undefined`, dropping it into `meta-top`).
+
+### 2.13 `minx` IS TWO ADDS — THE MIN WIDTH, THEN THE MINSPACING
+
+    voice.minx = x + getMinWidth(child);
+    if (voice.i !== voice.children.length - 1) voice.minx += child.minspacing;
+
+(`layout/voice-elements.js:74-77`). Ours folded both into one `rod` and subtracted the gap
+back on the last element: `x + (w + gap)` where abcjs writes `(x + w) + gap`.
+
+**AND `rod - gap` DOES NOT RECOVER `w`**, which is why the obvious rewrite moved nothing
+when it was first tried: `21.795 - 10` is `11.795000000000002`, so the reconstructed width
+is itself one ULP wrong and the line lands where it started. The width has to be CARRIED —
+the same lesson as `PlacedGlyph.dx`. `Advance.width` is therefore set only where the caller
+genuinely built `rod` as `width + gap`, and is ABSENT on a BARLINE, where `rod` is a
+`Math.max` over competing claims and the split is not ours to invent.
+
+**39 → 35 of 171 on that one association**, found by comparing abcjs's `child.setX` trace
+with ours item by item: both agree to the last digit through the clef and the time signature
+and part company at the BAR after them.
+
+### 2.14 A QUARTER TONE NAMES ITSELF
+
+`accMap` has SEVEN entries — `__ _ = ^ ^^` plus `_/` and `^/`
+(`abc_parse_settings.js:147-155`) — and our `Accidental` is a whole-semitone enum with the
+deviation in `microtoneCents`, so every quarter tone printed its BASE sign:  `_A` where
+abcjs writes `_/A`. `Pitch.writtenAccidental` carries the name, the same shape as
+`Pitch.written` beside it. Every other fraction (`^3/2`) has no `accMap` entry at all and
+keeps the base sign, which is what abcjs does too.
+
 ---
 
 ## 3. WHAT IS LEFT — MEASURED, NOT LANDED
@@ -244,7 +308,32 @@ re-reading `ave-verum-corpus` and `ragtime-nightingale`**, whose vertical extent
 depend on the existing rule (see `stemForVoice`'s own doc block, which records 23.5px of
 error from getting it wrong the other way).
 
-### 3.2 THE STAFF-LINE ULP IS THE STAFF **BOTTOM** PITCH — 1 fixture, located to the digit
+### 3.2 THE STAFF-LINE ULP IS A NAMED DEBT, AND ITS MISSING TERM IS NOW MEASURED
+
+**Corrected on re-reading**: this is not an unknown. The bottom carries
+`bottomPitch -= (bottom - wasBottom) / spacePerStep` — the lane recovered as a DELTA and
+divided back — with `lyricLanePitch` computed beside it and deliberately not spent, on the
+recorded grounds that **A ULP IS CHEAPER THAN A POSITION ERROR**.
+
+Re-measured 2026-08-12, and the verdict holds: spending `lyricLanePitch + 1` on the ink
+bottom directly takes `svg-bytes` from 39 to 40 and puts `ave-verum-corpus`,
+`multi-voice-lyrics-two-voices` and `visual-multi-voice-01` out by **exactly 18.84px, one
+lyric block**. The missing term is abcjs's `diff`: a lyric on voice n>0 takes
+`child.pitch -= voiceNumber * child.lyricHeightBelow`, which drives
+`bottom = Math.min(element.bottom, child.pitch)` and then `staff.bottom -= diff` per VOICE
+(`set-upper-and-lower-elements.js:118-125`, `:163-168`). **Porting the lane without the
+per-voice diff is half a rule**, and that diff is the whole remaining job here.
+
+### 3.3 THREE `[M:]` IN ONE MEASURE DRAW ONE — the model is singular
+
+`visual-svg-02-staffwidth-12` is `[M:2/4]y[M:3/4]y[M:4/4]`. abcjs draws THREE
+`staff-extra time-signature` groups; we draw one, and it is the LAST — so the page comes out
+51.795 wide against abcjs's 87.385. `Measure.meterChange` is a single field, so a measure
+that changes meter more than once keeps only the final change. Fixing it means meter changes
+become a positioned LIST on the measure, which also touches `meterChangeLeadsLine` and
+`meterLeadsFirstMeasure`. One fixture, and the only one in either corpus that varies it.
+
+#### The original note, kept for its numbers
 
 `visual-multi-voice-02`, byte 38733 of 48279: a staff line reads
 `M 15 414.24 … 414.94` against abcjs's `M 15 414.23 … 414.94`.
@@ -270,11 +359,17 @@ knowing before reaching for the usual fix. `staff.bottom` is built by
 `set-upper-and-lower-elements.js:55-80` (`staff.bottom -= (lane + margin)`, then
 `staff.bottom -= diff` per voice); start by instrumenting those terms.
 
-### 3.3 THE REST OF THE TABLE
+### 3.4 THE REST OF THE TABLE — 21 STRUCTURAL, 13 ULP
 
-Read `/tmp/abcts-svg-bytes-ranked.txt` after `npx vitest run tests/svg-bytes.test.ts`.
+Read `/tmp/abcts-svg-bytes-ranked.txt` after `npx vitest run tests/svg-bytes.test.ts`, and
+classify it by aligning on the FIRST DIFFERING CHARACTER and comparing the two numbers it
+sits in — a crude "does one side have a long tail" test calls the wrong family the majority.
+At 34 rows that split is **21 structural / 13 ULP**, and the ULP thirteen are almost all the
+same `x.0000000000004` shape.
+
 The named structural rows, cheapest last:
 
+- THREE `[M:]` IN ONE MEASURE — §3.3, and the whole of `visual-svg-02-staffwidth-12`.
 - A GLISSANDO is a squiggly `<path>` where we draw a `<polygon>` (`visual-misc-04`,
   `draw/glissando.js`).
 - `visual-misc-05` draws a `<text>` where abcjs draws a `<path>` for a `D.C. al coda` mark.
@@ -290,7 +385,7 @@ The named structural rows, cheapest last:
 
 ## 4. THE RATCHET
 
-`tests/svg-bytes.test.ts`'s `PASSING` names all 132 byte-exact fixtures. It caught nothing
+`tests/svg-bytes.test.ts`'s `PASSING` names all 137 byte-exact fixtures. It caught nothing
 this session, which is the point of it — every change here moved the count the right way
 AND kept every ratcheted slug. Regenerate it with `/tmp/gp/exact.mjs`; never shrink it.
 

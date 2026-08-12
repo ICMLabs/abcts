@@ -752,6 +752,20 @@ checkpoint and hand off as you go so no context is lost.
 > a cause is the reason the row stopped being read** (the `G8` breve, the `extra-class`
 > accent, this).
 >
+> 🧮 **AND FIVE MORE THE SAME DAY — 39 → 34 of 171, 137 EXACT.** **A STEM'S `bottom: p1 - 1`
+> IS SKIPPED WHEN IT IS ZERO** — `if (opt.bottom)` and `0` is FALSY
+> (`relative-element.js:41-42`) — so a stem whose low end is pitch 1 reserves one pitch
+> less, which is 3.875px of page on two fixtures. **THE BOTTOM-TEXT BLOCK'S ROWS ARE SPENT
+> ON THE PAGE'S CURSOR ONE AT A TIME**, as `nonMusic` spends them; a sum cannot see an
+> order, for the fourth time on this branch. **A `%%sep` IN THE HEAD OF A TUNE DREW
+> NOTHING** because its `rules` sink was a literal `[]` — and the two rules that had to
+> follow it were both things the block's TEXTS already did (the page's own y, and its turn
+> among the rows). **`minx` IS TWO ADDS** — `x + getMinWidth` then `+= minspacing` — and
+> **`rod - gap` DOES NOT RECOVER `w`** (`21.795 - 10` is `11.795000000000002`), which is
+> why the obvious rewrite moved nothing the first time: THE WIDTH HAS TO BE CARRIED, not
+> derived, exactly as `PlacedGlyph.dx` is. And **A QUARTER TONE NAMES ITSELF** — `accMap`
+> has seven entries where our `Accidental` enum has five.
+>
 > ⚠️ **AND A BISECT THAT NEVER TURNS GREEN MEANS THE CAUSE IS NOT IN THE HISTORY.**
 > `content-parity`'s one red is `S7-voices`, and it is an UNCOMMITTED edit to that fixture in
 > `../abcMusicKit` — same notes, respelled chord durations, so every source offset moved
@@ -947,14 +961,15 @@ anything from a suite run.
 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
 **1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
 **1 of 25 DOM-contract cases with TWENTY-FOUR slugs RATCHETED** — and
-**41 of 171 SVG-byte fixtures, ONE HUNDRED AND THIRTY of them EXACT and ALL 130
-RATCHETED** — and **the SVG BYTE TABLE is THE ONE OPEN GATE**, at best 200613 — mostly
+**34 of 171 SVG-byte fixtures, ONE HUNDRED AND THIRTY-SEVEN of them EXACT and ALL 137
+RATCHETED** — 21 STRUCTURAL and 13 ULP — and **the SVG BYTE TABLE is THE ONE OPEN GATE**, at best 200613 — mostly
 STRUCTURAL now, classified by aligning on the
 first differing character (a cruder test sends you at the wrong family). **The next three
-are named and measured in `CHECKPOINT-2026-08-12.md` §3**: `%%voicecolor`, which is not
-implemented at all and is the earliest structural row left; the FORCED STEM being per LINE
-rather than per voice, with abcjs's own three voice streams printed; and the staff BOTTOM's
-one-ULP pitch, which is probably the head of the whole remaining `x.0000000000004` family. **THE ARITHMETIC
+are named and measured in `CHECKPOINT-2026-08-12.md` §3**: the FORCED STEM being per LINE
+rather than per voice (abcjs's own three voice streams printed); the lyric lane's per-VOICE
+`diff`, without which spending the measured lane costs three fixtures 18.84px each — measured
+twice, so do not re-try it bare; and `Measure.meterChange` being SINGULAR, so three `[M:]`
+in one bar draw one. **THE ARITHMETIC
 ARC HAS DONE ITS WORK ON BOTH AXES** — the layout holds abcjs's pitches end to end, the line
 solve iterates on abcjs's own `spacing`, and elements are PLACED on the solved x rather than
 shifted onto it — so the two ULP families are down to **62 glyph-y tokens across 10 fixtures
