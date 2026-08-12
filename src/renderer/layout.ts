@@ -5898,8 +5898,31 @@ function buildCurve(
   // that is not the last (start) or first (end) of its beam is pinned to the beam-retargeted
   // stem instead. `slurEndY` is that rule, and `curveReserves` resolves its input; a TIE
   // takes `calcTieY`, which is the plain pitch, so it does not come here.
-  const endY = (a: NoteAnchor, isStart: boolean) =>
-    kind === 'tie' ? a.pitchY : slurEndY(a, above, isStart)
+  /**
+   * **`calcSlurY` IN FULL, IN ABCJS'S OWN ORDER** (`tie-element.js:163-200`):
+   *
+   *     if (above && a1.stemDir === 'up' && !fixedY) startY = (a1.highestVert + a1.pitch)/2
+   *     else                                          startY = a1.pitch
+   *     if (above && a2.stemDir === 'up' && !fixedY && !beamInterferes && midPoint < startY)
+   *                                                   endY = midPoint
+   *     else  endY = above && beamInterferes ? a2.highestVert : a2.pitch
+   *     …then the BEAMED override replaces either with `parent.fixed.t`/`.b`.
+   *
+   * Only the beamed override was ported. The `ponytail:` beside it said the mid-stem arm is
+   * a no-op because "`highestVert` IS the anchor pitch on every binding curve here" — a
+   * PREDICTION, and `visual-slurs-02` denies it: `(E2D2)` is two unbeamed quarters, abcjs
+   * reports `pitch 2, highestVert 8`, and its slur sits three pitch above ours. The
+   * arithmetic for the arm was already here — `midPointY`, `beamInterferes`,
+   * `startYAtTest` — because the same branch carries the x bump that WAS ported.
+   */
+  const endY = (a: NoteAnchor, isStart: boolean): number => {
+    if (kind === 'tie') return a.pitchY
+    const pinned = slurEndY(a, above, isStart)
+    if (pinned !== a.pitchY) return pinned
+    if (!midStem || !a.stemUp) return isStart || !beamInterferes ? a.pitchY : stepToY(highPitch(a))
+    if (isStart) return midPointY(a)
+    return !beamInterferes && midPointY(a) > startYAtTest ? midPointY(a) : a.pitchY
+  }
   const edge = (a: NoteAnchor, isStart: boolean) =>
     strict
       ? endY(a, isStart) + direction * lift
@@ -6250,6 +6273,10 @@ function curveReserves(
   for (const a of anchors) {
     a.beamPos = beamPos(a)
     a.slurFixed = fixedOf(a)
+    if (process.env.ABCTS_SLUR)
+      console.error('ANCHOR pitchY', a.pitchY, 'pitch', -a.pitchY / ENGRAVE.spacePerStep,
+        'beamPos', a.beamPos, 'fixed.top(pitch)', a.slurFixed === undefined ? undefined : -a.slurFixed.top / ENGRAVE.spacePerStep,
+        'fixed.bottom(pitch)', a.slurFixed === undefined ? undefined : -a.slurFixed.bottom / ENGRAVE.spacePerStep)
   }
   const endAt = (a: NoteAnchor, above: boolean, isStart: boolean): number =>
     slurEndY(a, above, isStart)
