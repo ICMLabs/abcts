@@ -130,6 +130,7 @@ const PASSING: readonly string[] = [
   'abcjs-synth-timing-02-score-1-2',
   'abcjs-synth-timing-03-cd-e-f-3gab-ac',
   'abcjs-synth-timing-04-cd-e-f-3gab-ac',
+  'abcjs-synth-timing-06-repeat-at-start-of-line-crash',
   'abcjs-synth-timing-07-skip-ties-crash',
   'abcjs-synth-timing-08-tie-repeat-crash',
   'abcjs-synth-timing-09-f-c-2d-2-e-4-g-6-a-2-g-4-e-4',
