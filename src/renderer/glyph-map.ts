@@ -44,6 +44,9 @@ export const SMUFL_TO_ABCJS: Readonly<Record<string, string>> = {
   dynamicPiano: 'p',
   dynamicForte: 'f',
   dynamicMezzo: 'm',
+  // abcjs composes `sfz` from three letters, so strict needs `s` and `z` singly.
+  dynamicSforzando: 's',
+  dynamicZ: 'z',
   // Noteheads
   // A BREVE — `chartable.note[-1]`, which abcjs reaches for any note two whole notes
   // long. `G8` under `L:1/4` is one, and every `clefs` fixture is exactly that.

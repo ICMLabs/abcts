@@ -4330,6 +4330,11 @@ const DYNAMIC_LETTERS: Readonly<Record<string, GlyphName | undefined>> = {
   p: 'dynamicPiano',
   f: 'dynamicForte',
   m: 'dynamicMezzo',
+  // `sfz` is three letters like any other: abcjs has no precomposed one, and the note that
+  // said this repo's table "has no single-letter `s` or `z` to name" was a gap in the
+  // GENERATOR's list rather than in SMuFL, which names them `dynamicSforzando`/`dynamicZ`.
+  s: 'dynamicSforzando',
+  z: 'dynamicZ',
 }
 
 /**
@@ -4970,8 +4975,8 @@ function decorationGlyphs(
        * in strict, which is the class the 2026-08-05 audit closed, surviving because the
        * name was ABSENT from `SMUFL_TO_ABCJS` rather than present and wrong.
        *
-       * `sfz` still draws precomposed: abcjs composes it from `s`, `f` and `z`, and this
-       * repo's Bravura table has no single-letter `s` or `z` to name.
+       * `sfz` composes too, now that the generator emits `dynamicSforzando` and `dynamicZ`
+       * — the earlier note here blamed SMuFL for a gap that was in our own glyph list.
        */
       const chars = [...name]
       const letters = strict ? chars.map((c) => DYNAMIC_LETTERS[c]) : []

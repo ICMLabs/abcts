@@ -190,6 +190,10 @@ const GLYPHS = [
   'dynamicFF',
   'dynamicFFF',
   'dynamicFFFF',
+  // `s` and `z` — abcjs composes `sfz` from three letters (`draw/print-symbol.js:18-26`),
+  // so strict needs both singly. SMuFL names them `dynamicSforzando` and `dynamicZ`.
+  'dynamicSforzando',
+  'dynamicZ',
   'dynamicSforzando1',
   // Fingerings — abcjs draws `!3!` as a decoration digit above the staff.
   'fingering0',

@@ -90,6 +90,7 @@ const PASSING: readonly string[] = [
   'abcjs-parse-tie-slur-02-staffwidth-200',
   'abcjs-parse-tie-slur-03-staffwidth-200',
   'abcjs-parse-tie-slur-04-stretchlast-1',
+  'abcjs-synth-flattener-01-crescendo-efga-gab-crescendo-c-diminuend',
   'abcjs-synth-flattener-02-p-c-def-gabc-d2-b2-g2-f2-f-e-fga-bcde-p-',
   'abcjs-synth-flattener-03-pppp-cdef-gabc-y-ffff-bcba-gfed-y-pppp-c',
   'abcjs-synth-flattener-04-g-gab-cde-d7-fga-def',

@@ -1888,9 +1888,12 @@ describe('decoration coverage', () => {
     expect(glyphsOf('!mp!')).toEqual(['dynamicMezzo', 'dynamicPiano'])
     expect(glyphsOf('!ff!')).toEqual(['dynamicForte', 'dynamicForte'])
     expect(glyphsOf('!pp!')).toEqual(['dynamicPiano', 'dynamicPiano'])
-    // `sfz` still draws precomposed: abcjs composes it from `s`, `f` and `z`, and this
-    // repo's Bravura table has no single-letter `s` or `z` to name. Recorded, not faked.
-    expect(glyphsOf('!sfz!')).toEqual(['dynamicSforzando1'])
+    // `sfz` is three letters like the rest. This asserted the precomposed
+    // `dynamicSforzando1` and said "this repo's Bravura table has no single-letter `s` or
+    // `z` to name" — true of the table, and the table was ours: SMuFL names them
+    // `dynamicSforzando` and `dynamicZ`, and the generator's list simply did not ask for
+    // them. A gap in our own input, recorded as a property of the font.
+    expect(glyphsOf('!sfz!')).toEqual(['dynamicSforzando', 'dynamicForte', 'dynamicZ'])
   })
 
   it('draws fingerings as TEXT digits, not glyphs', () => {

@@ -512,7 +512,9 @@ system 11 width=700.000 originY=1075.496
       line  58.361,-16.792 -> 58.361,-42.625 t=1.000
     note@-2 x=207.788 w=42.426
       glyph noteheadBlack 207.788,-15.500
-      glyph dynamicSforzando1 207.788,3.875
+      glyph dynamicSforzando 207.788,3.875
+      glyph dynamicForte 214.420,3.875
+      glyph dynamicZ 224.517,3.875
       line  217.098,-16.792 -> 217.098,-42.625 t=1.000
     note@-2 x=366.526 w=42.426
       glyph noteheadBlack 366.526,-15.500
