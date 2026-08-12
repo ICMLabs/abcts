@@ -12836,6 +12836,8 @@ function layoutGraces(
         if (stem === undefined || stem.role !== 'stem') continue
         graceLines[i] = { ...stem, y2: yAt(graceXOf(i) + graceInk) }
       }
+      /** One id per grace group, so the emitter writes its levels as ONE `<path>`. */
+      const graceBeamGroup = -1 - Math.round(beamStartX * 1000)
       graceLines.push({
         x1: beamStartX,
         y1: yAt(beamStartX) + thickness / 2,
@@ -12843,6 +12845,7 @@ function layoutGraces(
         y2: yAt(beamEndX) + thickness / 2,
         thickness,
         noReserve: true,
+        group: graceBeamGroup,
         // **A GRACE BEAM IS A BEAM, DRAWN AT THE VOICE'S LEVEL WITH THE BEAMS** —
         // `addBeam(gracebeam)` puts it in `params.beams` (`abstract-engraver.js:493`), so
         // `drawVoice` writes it after every element and gives it
@@ -12850,6 +12853,45 @@ function layoutGraces(
         // the grace pass owns it; the emitter hoists it on this role.
         role: 'beam',
       })
+      /**
+       * **A GRACE NOTE IS A SIXTEENTH BY DEFINITION, SO A BARE GROUP TAKES TWO BEAMS.**
+       * `abc_parse_music.js:694-695` divides the parsed duration by `default_length * 8`
+       * under its own comment — *"The grace note durations should not be affected by the
+       * default length: they should be based on 1/16"* — so `{CD}` draws two beams whether
+       * the tune says `L:1/4`, `L:1/8` or `L:1/16`. Measured through abcjs at all three.
+       *
+       * The deeper levels stack toward the noteheads at `sy * 2/3` PITCH — "this makes the
+       * second beam on grace notes closer to the first one" (`layout/beam.js:181`) — and
+       * `sy` is NEGATIVE on the ascending branch, which a grace group always takes, so in
+       * y they go DOWN.
+       *
+       * **AND EACH ONE'S START y IS SAMPLED AT THE NOTE'S OWN x WHILE ITS START x KEEPS THE
+       * INSET** — `auxBeams[index] = { x: x + (asc ? -0.6 : 0), y: bary + sy * (index + 1) }`
+       * with `bary = getBarYAt(…, x)` (`layout/beam.js:174-188`), the same asymmetry the
+       * ordinary beams have. Instrumented rather than reasoned: on the control abcjs
+       * reports `beam.startY = 5`, `bary = 6` and an aux running pitch 4.0566 → 5, which is
+       * `yAt(beamStartX + inset) + 1 pitch` to `yAt(beamEndX) + 1 pitch` to the hundredth.
+       */
+      const graceStep = LINE_WEIGHTS.beamStep * ABCJS_RATIO.graceBeamStepScale
+      const graceLevels = Math.max(
+        1,
+        ...event.graceNotes.map(
+          (p) => noteGlyph(rational(p.length.numerator, p.length.denominator * 16))?.flags ?? 1,
+        ),
+      )
+      for (let level = 1; level < graceLevels; level += 1) {
+        const drop = level * graceStep
+        graceLines.push({
+          x1: beamStartX,
+          y1: yAt(beamStartX + spaces(ABCJS_PX.flagStemInset)) + thickness / 2 + drop,
+          x2: beamEndX,
+          y2: yAt(beamEndX) + thickness / 2 + drop,
+          thickness,
+          noReserve: true,
+          group: graceBeamGroup,
+          role: 'beam',
+        })
+      }
     }
 
     // The note sits at abcjs's `abselem.x`, which is the FIRST grace's offset past our

@@ -656,6 +656,12 @@ export const ABCJS_RATIO = {
   graceStemScale: 3.5 / 5,
   /** `calcDy` scales a GRACE beam to this — `dy = dy * 0.4` (`layout/beam.js:70`). */
   graceBeamScale: 0.4,
+  /**
+   * How much closer together a GRACE group's beams stack — `if (isGrace) sy = sy * 2 / 3`,
+   * "this makes the second beam on grace notes closer to the first one"
+   * (`layout/beam.js:181`). `sy` is the ±1.5 PITCH step an ordinary group takes.
+   */
+  graceBeamStepScale: 2 / 3,
   /** The octave marker's scale on a `clef=treble-8` (`create-clef.js:39`). */
   octaveMarkerScale: 2 / 3,
   /** A tempo's beat-unit note is drawn at this fraction. */
