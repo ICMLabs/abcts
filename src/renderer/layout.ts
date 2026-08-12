@@ -6404,6 +6404,33 @@ function layoutCurves(
    * gets its two ends and no middle. The intervening systems would each want a full-width
    * arc; no corpus fixture has one.
    */
+  /**
+   * **`isTie` IS RECOMPUTED AT DRAW TIME FROM THE ANCHORS, NOT TAKEN FROM THE SOURCE.**
+   *
+   *     if (!params.anchor1 || !params.anchor2) params.isTie = true
+   *     else if (params.anchor1.pitch === params.anchor2.pitch &&
+   *              params.internalNotes.length === 0) params.isTie = true
+   *     else params.isTie = false
+   *
+   * (`draw/tie.js:33-42`.) So a SLUR between two notes of the same pitch with nothing
+   * between them is drawn AS A TIE — and that one flag decides everything downstream at
+   * once: the 1.2 rather than 1.5 pitch lift, the 10 rather than 25 maximum flatten,
+   * `calcTieDirection`/`calcTieY` instead of the slur pair, the `tie` class and the
+   * `data-name`. `internalNotes` is fed only by `addSlursAndTies`' `else if (!isGrace)`
+   * arm (`abstract-engraver.js:927-932`), so a REST between the ends does not count and
+   * neither does a grace.
+   *
+   * `flattener-23`'s automatic grace slur is exactly this case — grace and main head both
+   * at pitch 7 — and it came out 1.16px low, which is the 0.3 pitch between the two lifts.
+   */
+  const drawnKind = (
+    from: NoteAnchor,
+    to: NoteAnchor,
+    kind: 'tie' | 'slur',
+    internal: number,
+  ): 'tie' | 'slur' =>
+    kind === 'tie' || (from.pitchStep === to.pitchStep && internal === 0) ? 'tie' : 'slur'
+
   const emit = (from: NoteAnchor, to: NoteAnchor, kind: 'tie' | 'slur'): void => {
     // `.-` and `.(` — the STYLE rides on the element the curve OPENS at, one flag for the
     // tie it starts and one for the slurs opening on it. See `PlacedCurve.dotted`.
@@ -6469,7 +6496,14 @@ function layoutCurves(
     for (let n = 0; n < event.slurEnds; n++) {
       const start = open.pop()
       const from = start === undefined ? undefined : anchors[start]
-      if (from !== undefined) emit(from, anchor, 'slur')
+      if (from !== undefined) {
+        // Notes strictly between the two ends — abcjs's `internalNotes`, which a REST and
+        // a GRACE never join. See `drawnKind`.
+        const internal = anchors
+          .slice((start ?? 0) + 1, i)
+          .filter((a) => a.event.type !== 'rest').length
+        emit(from, anchor, drawnKind(from, anchor, 'slur', internal))
+      }
     }
     for (let n = 0; n < event.slurStarts; n++) open.push(i)
 
@@ -6512,7 +6546,17 @@ function layoutCurves(
     if (gs !== undefined) {
       const x1 = gs.graceX - spaces(ABCJS_ARC.graceStartInset) + spaces(ABCJS_ARC.startOffset)
       const x2 = gs.headX + spaces(ABCJS_ARC.endOffset)
-      const lift = spacesOfPitch(ABCJS_ARC.slurLift)
+      /**
+       * …**AND IT IS DRAWN AS A TIE WHENEVER ITS TWO ENDS SHARE A PITCH** — see
+       * `drawnKind`. A grace slur has no internal notes by construction (both anchors are
+       * children of ONE `AbsoluteElement`), so the pitch test is the whole rule. `{^c}^c`
+       * in `flattener-23` is exactly that, and the 0.3 pitch between the two lifts is the
+       * 1.16px it came out low.
+       */
+      const graceKind = gs.graceY === anchor.pitchY ? ('tie' as const) : ('slur' as const)
+      const lift = spacesOfPitch(
+        graceKind === 'tie' ? ABCJS_ARC.tieLift : ABCJS_ARC.slurLift,
+      )
       curves[anchor.system]?.push({
         x1,
         y1: gs.graceY + lift,
@@ -6524,7 +6568,7 @@ function layoutCurves(
           Math.max(ENGRAVE.curveMinBulge, Math.max(0, x2 - x1) * ENGRAVE.curveBulgeRatio),
         ),
         midThickness: LINE_WEIGHTS.slurMidpoint,
-        kind: 'slur',
+        kind: graceKind,
         // BOTH ANCHORS ARE THE SAME ELEMENT — a grace head and the main head are children
         // of one `AbsoluteElement`, so the class reads `abcjs-start-m0-n0 abcjs-end-m0-n0`
         // off the same counters twice.

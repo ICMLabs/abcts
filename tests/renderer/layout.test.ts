@@ -1006,9 +1006,17 @@ describe('slurs and ties', () => {
       systemWidth: 400,
     }).systems.flatMap((s) => s.staves.flatMap((st) => st.curves))
 
-  it('draws a tie between tied notes and a slur between slurred ones', () => {
+  it('draws a tie between tied notes, and a SLUR only where the two ends differ', () => {
     expect(curvesOf('G-G|').map((c) => c.kind)).toEqual(['tie'])
-    expect(curvesOf('(GG)|').map((c) => c.kind)).toEqual(['slur'])
+    // **`(GG)` IS DRAWN AS A TIE, and this asserted `slur`.** `isTie` is recomputed at draw
+    // time — `anchor1.pitch === anchor2.pitch && internalNotes.length === 0` makes it one
+    // whatever the source wrote (`draw/tie.js:33-42`) — and it decides the lift, the
+    // flatten cap, the direction rule, the class and the `data-name` together.
+    expect(curvesOf('(GG)|').map((c) => c.kind)).toEqual(['tie'])
+    // A slur between two DIFFERENT pitches stays a slur…
+    expect(curvesOf('(GA)|').map((c) => c.kind)).toEqual(['slur'])
+    // …and so does one over a note, even when its ends match.
+    expect(curvesOf('(GAG)|').map((c) => c.kind)).toEqual(['slur'])
     expect(curvesOf('GG|')).toEqual([])
   })
 
