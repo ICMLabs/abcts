@@ -8388,12 +8388,20 @@ function layoutMeasure(
     x += trailing.width + ENGRAVE.prefixGap
   }
 
-  // A repeat barline or a final ends the ending it sits in; a plain one does not.
-  const closesVolta =
-    measure.closingBarline === 'repeatEnd' ||
-    measure.closingBarline === 'repeatBoth' ||
-    measure.closingBarline === 'final' ||
-    measure.closingBarline === 'double'
+  /**
+   * **ANY BARLINE THAT IS NOT A PLAIN THIN `|` ENDS THE ENDING IT SITS IN.**
+   *
+   *     if (multilineVars.inEnding && bar.type !== 'bar_thin') {
+   *       bar.endEnding = true; multilineVars.inEnding = false;
+   *     }
+   *
+   * (`abc_parse_music.js:271-274`.) The rule is a COMPLEMENT, and ours was a LIST —
+   * `repeatEnd`, `repeatBoth`, `final`, `double` — which is the same set for everything the
+   * corpus writes except an INVISIBLE `[|]`. `visual-tablature-20`'s second ending both
+   * opens and closes on one, so ours never closed it and ran unhooked to the line end where
+   * abcjs hooks it at the bar.
+   */
+  const closesVolta = measure.closingBarline !== null && measure.closingBarline !== 'thin'
 
   return {
     elements,
