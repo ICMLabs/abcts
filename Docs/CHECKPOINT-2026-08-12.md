@@ -27,8 +27,8 @@ on stale runs before finding out what it was.
 
 ## 2. THE LANDINGS
 
-Nine, and the shape of the session is that **three of the five were found by a fixture that
-had nothing to do with what they were about.** The bar-number arc in particular is three
+Nine, and the shape of the session is that **five of them were found by a fixture that had
+nothing to do with what they were about.** The bar-number arc in particular is three
 rules stacked, each invisible until the one before it closed.
 
 ### 2.1 A STANDALONE `M:` ON THE TUNE'S FIRST MEASURE BELONGS TO THAT LINE'S PREFIX
