@@ -1,6 +1,6 @@
 # CHECKPOINT — 2026-08-11b
 
-**abcts, `main`.** The suite is **1260/1260** with no reds, `npx tsc --noEmit` is clean,
+**abcts, `main`.** The suite is **1262/1262** with no reds, `npx tsc --noEmit` is clean,
 everything below is committed and pushed.
 
 ---
@@ -17,23 +17,23 @@ everything below is committed and pushed.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 0 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 1 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 1 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **65 of 171**, best 52490, median 10288 | 94 of 171 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **63 of 171**, best 52490, median 10288 | 94 of 171 |
 
-**`svg-bytes` is the one open gate**, `DIVERGENT` is still EMPTY, and **106 fixtures are
-byte-exact — all 106 RATCHETED**, up from seven. See §4.
+**`svg-bytes` is the one open gate**, `DIVERGENT` is still EMPTY, and **108 fixtures are
+byte-exact — all 108 RATCHETED**, up from seven. See §4.
 
 ---
 
 ## 2. THE LANDINGS
 
-**Sixteen, in two halves.** The first seven are one finding: abcjs's ARITHMETIC IS PART OF
+**Twenty, in two halves.** The first seven are one finding: abcjs's ARITHMETIC IS PART OF
 THE PORT — which number is formed first, which product is taken once, which offset is
 stored rather than derived. §3 of `CHECKPOINT-2026-08-11.md` named it as the next
 architectural arc for the VERTICAL; it turned out to be the horizontal too, and the
 horizontal was worth more (82 → 67 on two changes).
 
-The last nine are STRUCTURAL — 67 → 65 — and every one came out of the two biggest fixtures
-in the corpus (`visual-selection-01` and `visual-svg-per-line-01`, 202k bytes each, the same
+The last thirteen are STRUCTURAL — 67 → 63 — and every one came out of the two biggest
+fixtures in the corpus (`visual-selection-01` and `visual-svg-per-line-01`, 202k bytes each, the same
 tune), which went from byte 3038 to byte **12305**. They are in §2.8 onward. **Four of the
 last five are invisible to every ranked table** and were reachable only because the byte
 comparison walks the whole file in order.
@@ -275,6 +275,54 @@ hairpin was moved by the below lane's number — 2.15px on a singing control.
 every ranked table: a hairpin carries no notehead class, the baselines say CHANGED rather
 than WRONG, and the byte table could only see them once everything before them closed.
 
+### 2.17 THE BEAM'S OWN ARITHMETIC AND MARKUP — and the `otherchildren` ORDER
+
+- **AN AUXILIARY BEAM'S START y IS SAMPLED AT THE NOTE'S OWN x**, not at its offset start.
+  `auxBeams[index] = { x: x + (asc ? -0.6 : 0), y: bary + sy * (index + 1) }` with
+  `bary = getBarYAt(…, x)` (`layout/beam.js:174-188`) — the x carries the inset and the y
+  does not, so on a SLANT a deeper beam's left edge sits `0.6 × slope` off the line its own
+  x lies on. **65 → 63 of 171 and 49 baseline rows** on `ragtime-nightingale`.
+- **A CURVE IS ON `otherchildren` TOO, AND THE LIST SORTS ON THE CLOSE.** `addOther` is one
+  list and `drawVoice` walks it once, so a slur, a hairpin, a dynamic and a triplet
+  interleave — and both a curve and a hairpin are added by their CLOSING decoration, so
+  `!<(! (bfdf) (3B2d2c2 !<)!` writes the slur first even though the hairpin opens to its
+  left. Sorting on the opening x gets it backwards.
+- **A GRACE BEAM IS A `<path>` LIKE ANY OTHER**, one per group with every level in its `d`
+  and always a `class` attribute; ours wrote a `<polygon>` per beam. The path builder is
+  shared with the ordinary beams now rather than duplicated.
+- **AND A BEAMED GRACE GROUP'S STEMS COME AFTER THE ELEMENT'S LEDGERS.** `addGraceNotes`
+  runs inside `createNote`, before `ledgerLines`, but a beamed group's stems come from
+  `createStems` in the LAYOUT phase — `stem.setX(parent.x); parent.addRight(stem)`
+  (`layout/beam.js:135-140`) — appending them to a child list `createNote` finished with
+  long ago. An UNBEAMED grace's stem is built in the loop and stays with its own head.
+
+Together these took the two big fixtures from byte 12305 to **74220 of 202156**.
+
+### 2.18 ⚖️ ONE MEASURED FINDING NOT LANDED — **A GRACE NOTE IS A SIXTEENTH**
+
+`abc_parse_music.js:694-695` divides a grace's parsed duration by `default_length * 8`
+under its own comment — *"The grace note durations should not be affected by the default
+length: they should be based on 1/16"* — so a bare `{CD}` group draws **TWO beams**.
+Measured through abcjs at `L:1/4`, `L:1/8` and `L:1/16`: two beams every time. **Ours draws
+one.**
+
+An implementation is written and REVERTED, because the second beam's y did not settle and a
+guess is worse than a gap. What the control says, on `X:1 M:4/4 L:1/8 K:C {CD}B,4 {C}B,4|`:
+
+    abcjs   M76.13 56.37 L86.73 52.49 L86.73 54.04 L76.13 57.92 z
+            M76.13 60.02 L86.73 56.37 L86.73 57.92 L76.13 61.57 z
+    ours    M76.13 60.24 L86.73 56.37 L86.73 57.92 L76.13 61.79 z     (one beam)
+
+Three things to settle before trying again, and the first is the trap:
+
+1. **WHICH OF ABCJS'S TWO IS THE ONE THE STEMS REACH.** Its subpaths are 3.65 apart, not
+   the 3.875 that `sy * 2/3` = 1 pitch would give, so the offset is NOT a whole pitch and
+   reading the pair as "main plus one pitch" is what made the first attempt wrong in both
+   directions. Instrument `createAdditionalBeams` and print `bary` and `auxBeams[j].y`.
+2. Our single beam sits 0.22 from abcjs's LOWER one, which is a separate residual.
+3. The level count itself is the easy half — `noteGlyph(length / 16).flags`, and the group
+   needs one shared `group` id so `beamPath` writes one `<path>`.
+
 ---
 
 ## 3. WHAT IS LEFT — the table's shape, measured
@@ -481,6 +529,10 @@ token COUNTS differ, so a fixture going structural silently leaves its table. Re
   before it closed. A large fixture is not a hard fixture; it is a DENSE one — and a BYTE
   comparison is what makes it one, because it walks the whole file in order and stops at the
   first thing wrong.
+- **A HALF-UNDERSTOOD FIX IS WORTH LESS THAN A WRITTEN-DOWN MEASUREMENT.** The grace-beam
+  level count is certain and its geometry is not; the implementation was reverted and §2.18
+  records both engines' output verbatim plus the three questions to settle. A guess that
+  moves four tests red teaches the next session nothing.
 - **A `ponytail:` THAT SAYS "THE CORPUS NEVER VARIES THIS" IS A PREDICTION, NOT A
   MEASUREMENT.** The hairpin's tune-wide `hasVocals` carried exactly that note, and one
   fixture in 171 varies it — worth 118px. When a shortcut is justified by what the corpus
