@@ -154,6 +154,7 @@ const PASSING: readonly string[] = [
   'abcjs-visual-misc-02-title',
   'abcjs-visual-misc-03-jazzchords',
   'abcjs-visual-misc-04-stretchlast',
+  'abcjs-visual-misc-05-cccc-d-c-alcoda-dddd-d-c-alfine-eeee-d-s',
   'abcjs-visual-misc-07-ab-ef-g-d-df-f-d-a-4-c-4',
   'abcjs-visual-misc-08-a2-c2-t-a2t-c2',
   'abcjs-visual-misc-09-begintext',
