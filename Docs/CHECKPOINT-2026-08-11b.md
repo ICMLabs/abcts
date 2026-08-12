@@ -1,6 +1,6 @@
 # CHECKPOINT — 2026-08-11b
 
-**abcts, `main`.** The suite is **1258/1258** with no reds, `npx tsc --noEmit` is clean,
+**abcts, `main`.** The suite is **1260/1260** with no reds, `npx tsc --noEmit` is clean,
 everything below is committed and pushed.
 
 ---
@@ -26,16 +26,17 @@ byte-exact — all 106 RATCHETED**, up from seven. See §4.
 
 ## 2. THE LANDINGS
 
-**Twelve, in two halves.** The first seven are one finding: abcjs's ARITHMETIC IS PART OF
+**Sixteen, in two halves.** The first seven are one finding: abcjs's ARITHMETIC IS PART OF
 THE PORT — which number is formed first, which product is taken once, which offset is
 stored rather than derived. §3 of `CHECKPOINT-2026-08-11.md` named it as the next
 architectural arc for the VERTICAL; it turned out to be the horizontal too, and the
 horizontal was worth more (82 → 67 on two changes).
 
-The last five are STRUCTURAL, off the list in `CHECKPOINT-2026-08-11.md` §4.2 — 67 → 65
-with the two biggest fixtures in the corpus (`visual-selection-01` and
-`visual-svg-per-line-01`, 202k bytes each) taken from byte 3038 to byte 11121. They are in
-§2.8 onward.
+The last nine are STRUCTURAL — 67 → 65 — and every one came out of the two biggest fixtures
+in the corpus (`visual-selection-01` and `visual-svg-per-line-01`, 202k bytes each, the same
+tune), which went from byte 3038 to byte **12305**. They are in §2.8 onward. **Four of the
+last five are invisible to every ranked table** and were reachable only because the byte
+comparison walks the whole file in order.
 
 ### A GLYPH'S y IS ONE VALUE BEFORE THE OUTLINE SEES IT — and the brackets are the finding
 `printSymbol` computes `renderer.calcY(offset + ycorr)` — ONE number — and only then does
@@ -231,6 +232,48 @@ abcjs shifts tokens in order: a leading `quote` is `preString`, and a `quote` st
 once the rate has been read is `postString` (`abc_parse_header.js:257-330`). So
 `[Q:"left" 1/4=170"right"]` is TWO strings, one each side, and **which side decides which —
 not the content**. Ours took the first quote as the direction and dropped any second.
+
+### 2.13 A LONE AUXILIARY BEAM IS A 5px STUB, AND ITS SIDE IS A FOUR-WAY RULE
+
+    if (isFirstNote)              end = x + 5      // always right
+    else if (isLastNote)          end = x - 5      // always left
+    else if (prevDur === nextDur) end = i % 2 === 0 ? x + 5 : x - 5
+    else                          end = prevDur < nextDur ? x + 5 : x - 5
+
+(`layout/beam.js:215-238`.) Ours pointed backward whenever the note was not the first —
+the first two arms only — and used a stub length of 1.1 staff spaces that nobody chose.
+**AND THE TWO ENDS ARE NOT SYMMETRIC**: the stub STARTS at `x + (asc ? -0.6 : 0)` and ENDS
+at `x ± 5`, while its start y is sampled at `x` itself, so an up-stem's stub spans 4.4 and
+a down-stem's 5. Fifty-three baseline rows on `ragtime-nightingale` alone, all 1-for-1.
+
+### 2.14 A TRIPLET JOINS THE `otherchildren` MERGE
+A `TripletElem` and a `DynamicDecoration` share abcjs's ONE add-order list, so they
+interleave; ours wrote every triplet ahead of every dynamic. A VOLTA still goes straight
+out, which is where `drawStaffGroup` puts it.
+
+### 2.15 THE BELOW-DYNAMICS LANE MUST NOT MEASURE THE UNPLACED HEADING BLOCK
+The top-text block rides the first staff of the first system so the extent can account for
+it, but when `anchorBelowStaff` runs its rows still carry their BLOCK-LOCAL y — positive
+and large. `anchorAboveStaff` filters it out for exactly that reason; this did not, so a
+tune with a heading measured its own composer row as ink **189px BELOW the staff** and
+dropped the lane 160px past it. `visual-selection-01`'s `!mp!` sat below the SECOND staff
+of a three-staff system where abcjs puts it below the first.
+
+### 2.16 A HAIRPIN TAKES THE DYNAMICS LANE FOR ITS OWN SYSTEM, AND ITS OWN SIDE
+`hasVocals` is set once per LINE (`abstract-engraver.js:110`) and `createDecoration`
+defaults `volumePosition` to `hasVocals ? 'above' : 'below'` (`creation/decoration.js:379`),
+so a tune whose lyrics start on its SECOND system puts the first system's dynamics below
+and the rest above. `layoutSpanners` took the TUNE-WIDE flag — **and the recorded
+`ponytail:` said "the corpus never varies" it.** `visual-selection-01` varies it, and it is
+118px of hairpin, while the volume marks beside it, which do read it per system, were exact.
+
+**AND THE SHIFT HAS TO MATCH THE SIDE.** `anchorBelowStaff` stamped a below shift whenever
+a hairpin was present at all and the merge applied it to every dynamic line, so an ABOVE
+hairpin was moved by the below lane's number — 2.15px on a singing control.
+
+**THE FOUR OF THESE CAME OUT OF ONE FIXTURE AGAIN**, and three of the four are invisible to
+every ranked table: a hairpin carries no notehead class, the baselines say CHANGED rather
+than WRONG, and the byte table could only see them once everything before them closed.
 
 ---
 
@@ -434,5 +477,11 @@ token COUNTS differ, so a fixture going structural silently leaves its table. Re
   class, `alreadyInGroup`, and where the rect is measured); `draw/brace.js` gave three. When
   a fixture points at a function, read the function rather than the line.
 - **AND THE FIXTURE THAT POINTS AT ONE IS USUALLY THE BIGGEST.** `visual-selection-01` is
-  202k bytes and named five separate defects in one sitting, each revealed only once the one
-  before it closed. A large fixture is not a hard fixture; it is a DENSE one.
+  202k bytes and named NINE separate defects in one sitting, each revealed only once the one
+  before it closed. A large fixture is not a hard fixture; it is a DENSE one — and a BYTE
+  comparison is what makes it one, because it walks the whole file in order and stops at the
+  first thing wrong.
+- **A `ponytail:` THAT SAYS "THE CORPUS NEVER VARIES THIS" IS A PREDICTION, NOT A
+  MEASUREMENT.** The hairpin's tune-wide `hasVocals` carried exactly that note, and one
+  fixture in 171 varies it — worth 118px. When a shortcut is justified by what the corpus
+  does, COUNT the corpus.

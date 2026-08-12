@@ -594,8 +594,20 @@ checkpoint and hand off as you go so no context is lost.
 > music's ink while our y comes from the last verse's baseline — spending it takes one
 > fixture byte-exact and puts two others structurally out.
 
-> 🧱 **AND THEN THE STRUCTURAL ROWS STARTED FALLING — 67 → 65, FIVE OF THEM OFF ONE
-> FIXTURE** (2026-08-11b). `visual-selection-01` is 202k bytes and named five separate
+> 🧱 **AND THEN THE STRUCTURAL ROWS STARTED FALLING — 67 → 65, NINE FINDINGS OFF ONE
+> FIXTURE** (2026-08-11b). Four of the nine are invisible to every ranked table and were
+> reachable only because a BYTE comparison walks the whole file in order: **a lone auxiliary
+> beam is a 5px stub** whose side is a four-way rule and whose two ends are not symmetric
+> (`layout/beam.js:215-238`); **a triplet joins the `otherchildren` merge** rather than
+> queueing ahead of it; **the below-dynamics lane must not measure the UNPLACED heading
+> block**, whose rows still carry a block-local y and read as 189px of ink below the staff;
+> and **a hairpin takes the dynamics lane for its OWN SYSTEM** — `hasVocals` is per LINE
+> (`abstract-engraver.js:110`), so a tune whose lyrics start on its second system puts the
+> first system's dynamics below and the rest above. **A `ponytail:` THAT SAYS "THE CORPUS
+> NEVER VARIES THIS" IS A PREDICTION, NOT A MEASUREMENT** — that one carried exactly such a
+> note and was worth 118px.
+>
+> The other five: `visual-selection-01` is 202k bytes and named five separate
 > defects in one sitting, each visible only once the one before it closed: **a brace with a
 > header OWNS the voice name** and `setBottomStaff` DELETES it off the voice
 > (`brace-element.js:9-14`); the brace's own x is `padding.left + voiceheaderw`, past that
@@ -843,7 +855,7 @@ abcjs source are all reached by sibling path and stay in that repo. Keep it that
 backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
-**AUDIO IS BYTE-EQUAL AND THE SVG IS THE ARC.** 1258/1258 with no
+**AUDIO IS BYTE-EQUAL AND THE SVG IS THE ARC.** 1260/1260 with no
 reds; **seventeen gates and NINE ranked tables** — 0 of 72 audio cases, 0 of 38 note timings,
 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
 **1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
