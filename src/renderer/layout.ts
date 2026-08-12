@@ -5199,7 +5199,11 @@ function noteText(
     spans.right = Math.max(spans.right, dx + half)
   }
 
-  if (event.chordSymbol !== null && event.chordSymbol !== '') {
+  // **AN EMPTY CHORD STILL DRAWS AN EMPTY `<text>`.** abcjs's `addChord` walks
+  // `elem.chord` and calls `addCentered` for every entry whose position is not `hidden`
+  // (`add-chord.js:104-116`) — it never tests the STRING, so `""` reaches the paper as an
+  // element with no ink. Ours skipped it, which is one `<text>` of markup and no pixels.
+  if (event.chordSymbol !== null) {
     // `%%gchordfont`'s size, in POINTS, converted the way abcjs converts every font:
     // `Math.round(size * 4 / 3)` (`get-font-and-attr.js:29`). Its default is Helvetica 12,
     // which is the 16px `chordTextSize` already here, so a tune with no directive takes
@@ -5215,7 +5219,6 @@ function noteText(
     // second lane, which is 18.52px of staff. Collapsing them to one line lost that on
     // every fixture that stacks a chord.
     for (const raw of event.chordSymbol.split('\n').reverse()) {
-      if (raw === '') continue
       // `translateChord` RUNS ON EVERY CHORD SYMBOL, not just under `%%jazzchords`
       // (`add-chord.js:44-45` — the only guard is `!isAnnotation`). Without the markers it
       // looks like an identity, and it is not: the string is REBUILT from three regex

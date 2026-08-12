@@ -3922,7 +3922,21 @@ const noAttachments = (): Attachments => ({
  * chord symbol. `"^above"`, `"_below"`, `"<left"`, `">right"`, `"@x,y text"` are
  * annotations; `"Am7"` is a chord symbol.
  */
-const isAnnotation = (text: string): boolean => '^_<>@'.includes(text[0] ?? '')
+/**
+ * **AN EMPTY `""` IS A CHORD, AND `includes('')` IS TRUE.**
+ *
+ * abcjs decides by POSITION — `isAnnotation = pos === "left" || "right" || "below" ||
+ * "above" || !!rel_position` (`creation/add-chord.js:9`) — and an empty chord names no
+ * position, so it is a chord symbol like any other: centred, `data-name="chord"`.
+ *
+ * Ours read the first character, and `''` is a substring of EVERY string, so
+ * `'^_<>@'.includes(text[0] ?? '')` answered TRUE for the empty one. `""_G-_G` in
+ * `visual-transpose-output-03` drew an empty `<text>` anchored `start` and named
+ * `annotation` where abcjs writes one anchored `middle` and named `chord` — an element
+ * with no ink at all, which only a byte comparison could see.
+ */
+const isAnnotation = (text: string): boolean =>
+  text.length > 0 && '^_<>@'.includes(text[0] as string)
 
 /**
  * Every `!name!` decoration abcjs accepts, as data.
