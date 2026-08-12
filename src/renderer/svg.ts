@@ -2405,7 +2405,21 @@ const glyphDefs = new Map<GlyphName, string>()
          * engraver added after it followed. A LYRIC IS A `<text>`, so the "texts last"
          * rule has to bend: only the CHORD symbol is genuinely last.
          */
-        const isChordText = (r: PartRole | undefined): boolean => r === 'chord' || r === 'chordBelow'
+        /**
+         * **WHICH TEXTS COME LAST — and it is a question about ADD ORDER, not about lanes.**
+         *
+         * Every annotation comes out of `addChord`, so it sits in the CHORD bucket that
+         * `createNote` adds after the decorations (`abstract-engraver.js:829-855`). A
+         * `"<2"` was therefore written BEFORE the `+1+` beside it, where abcjs writes the
+         * fingering first.
+         *
+         * Keyed on `dataName` rather than on the ROLE, because the role also decides
+         * whether a mark takes a CHORD LANE, and a left- or right-placed annotation does
+         * not: giving these `role: 'chord'` fixed the order and cost `S2-fields-tune1`
+         * 18.52px — one whole lane. Two questions, two fields.
+         */
+        const isChordText = (t: { role?: PartRole | undefined; dataName?: string | undefined }): boolean =>
+          t.role === 'chord' || t.role === 'chordBelow' || t.dataName === 'annotation'
         const ledgers = abcjs ? own.filter((l) => l.role !== 'stem') : []
         for (const line of abcjs ? own.filter((l) => l.role === 'stem' && l.beamed !== true) : ordered) {
           parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs, fg(voiceOf(elIndex))))
@@ -2451,7 +2465,7 @@ const glyphDefs = new Map<GlyphName, string>()
           for (const t of textParts.filter(
             (t) =>
               t.role !== 'lyric' &&
-              !isChordText(t.role) &&
+              !isChordText(t) &&
               !(el.type === 'tempo' && t.dataName === 'pre'),
           )) {
             parts.push(t.s)
@@ -2472,7 +2486,7 @@ const glyphDefs = new Map<GlyphName, string>()
         // paths so the SVG stays self-contained. A missing serif face falls back to
         // another serif; a missing Bravura falls back to nothing legible. See layout.ts.
         if (!barTexts) {
-          parts.push(...textParts.filter((t) => !abcjs || isChordText(t.role)).map((t) => t.s))
+          parts.push(...textParts.filter((t) => !abcjs || isChordText(t)).map((t) => t.s))
         }
         if (abcjs) {
           for (const line of own.filter((l) => l.role === 'stem' && l.beamed === true)) {
