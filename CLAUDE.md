@@ -594,8 +594,21 @@ checkpoint and hand off as you go so no context is lost.
 > music's ink while our y comes from the last verse's baseline — spending it takes one
 > fixture byte-exact and puts two others structurally out.
 
-> 🧱 **AND THEN THE STRUCTURAL ROWS STARTED FALLING — 67 → 63, THIRTEEN FINDINGS OFF ONE
-> FIXTURE** (2026-08-11b). The last four are the beam and the `otherchildren` list: **an
+> 🧱 **AND THEN THE STRUCTURAL ROWS STARTED FALLING — 67 → 59, NINETEEN FINDINGS OFF ONE
+> FIXTURE** (2026-08-11b), which a BYTE comparison hands you one at a time because it walks
+> the whole file in order. The later ones: **a grace note is a SIXTEENTH** so a bare group
+> takes TWO beams (`abc_parse_music.js:694-695`, measured at three `L:` values); **an ending
+> is on `otherchildren` too**, and **an ending and a triplet take their turn at their START
+> where a curve and a hairpin take theirs at their CLOSE**; **`%%vocalfont`'s FACE** was not
+> realized on a lyric though its size and weight were; and **a tempo mark's notehead sits on
+> a PITCH** — the rung less five (`set-upper-and-lower-elements.js:209`) — where ours
+> reached it through the text baseline and four y terms.
+>
+> 🔬 **AND TWICE A FIX WAS REVERTED AND THEN LANDED BY INSTRUMENTING.** The grace beam's aux
+> level was wrong in BOTH directions when read off the two engines' `d` strings; one
+> `console.error` in `createAdditionalBeams` printed `bary=6, startY=4.0566, beam.startY=5`
+> and it went byte-identical the same hour. **A HALF-UNDERSTOOD FIX IS WORTH LESS THAN A
+> WRITTEN-DOWN MEASUREMENT** — and the measurement is cheap, so instrument first. The last four are the beam and the `otherchildren` list: **an
 > auxiliary beam's start y is sampled at the NOTE'S OWN x** and not at its 0.6-inset start,
 > which on a slant is `0.6 × slope` (`layout/beam.js:174-188`); **a curve is on
 > `otherchildren` too and the list sorts on the CLOSE**, since a slur and a hairpin are both
@@ -870,14 +883,14 @@ abcjs source are all reached by sibling path and stay in that repo. Keep it that
 backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
-**AUDIO IS BYTE-EQUAL AND THE SVG IS THE ARC.** 1262/1262 with no
+**AUDIO IS BYTE-EQUAL AND THE SVG IS THE ARC.** 1266/1266 with no
 reds; **seventeen gates and NINE ranked tables** — 0 of 72 audio cases, 0 of 38 note timings,
 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
 **1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
 **1 of 25 DOM-contract cases with TWENTY-FOUR slugs RATCHETED** — and
-**63 of 171 SVG-byte fixtures, ONE HUNDRED AND EIGHT of them EXACT and ALL 108 RATCHETED** —
-and **the SVG BYTE TABLE is THE ONE OPEN GATE**, at best 52490 / median 10288 — **30
-structural + 14 glyph-x + 11 root + 7 other + 1 glyph-y**, classified by aligning on the
+**59 of 171 SVG-byte fixtures, ONE HUNDRED AND TWELVE of them EXACT and ALL 112 RATCHETED** —
+and **the SVG BYTE TABLE is THE ONE OPEN GATE**, at best 200613 / median 10288 — **32
+structural + 13 glyph-x + 11 root + 3 other**, classified by aligning on the
 first differing character (a cruder test sends you at the wrong family). **THE ARITHMETIC
 ARC HAS DONE ITS WORK ON BOTH AXES** — the layout holds abcjs's pitches end to end, the line
 solve iterates on abcjs's own `spacing`, and elements are PLACED on the solved x rather than

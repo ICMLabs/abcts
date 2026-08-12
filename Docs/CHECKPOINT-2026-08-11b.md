@@ -1,6 +1,6 @@
 # CHECKPOINT — 2026-08-11b
 
-**abcts, `main`.** The suite is **1262/1262** with no reds, `npx tsc --noEmit` is clean,
+**abcts, `main`.** The suite is **1266/1266** with no reds, `npx tsc --noEmit` is clean,
 everything below is committed and pushed.
 
 ---
@@ -17,22 +17,22 @@ everything below is committed and pushed.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 0 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 1 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 1 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **63 of 171**, best 52490, median 10288 | 94 of 171 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **59 of 171**, best 200613, median 10288 | 94 of 171 |
 
-**`svg-bytes` is the one open gate**, `DIVERGENT` is still EMPTY, and **108 fixtures are
-byte-exact — all 108 RATCHETED**, up from seven. See §4.
+**`svg-bytes` is the one open gate**, `DIVERGENT` is still EMPTY, and **112 fixtures are
+byte-exact — all 112 RATCHETED**, up from seven. See §4.
 
 ---
 
 ## 2. THE LANDINGS
 
-**Twenty, in two halves.** The first seven are one finding: abcjs's ARITHMETIC IS PART OF
+**Twenty-six, in two halves.** The first seven are one finding: abcjs's ARITHMETIC IS PART OF
 THE PORT — which number is formed first, which product is taken once, which offset is
 stored rather than derived. §3 of `CHECKPOINT-2026-08-11.md` named it as the next
 architectural arc for the VERTICAL; it turned out to be the horizontal too, and the
 horizontal was worth more (82 → 67 on two changes).
 
-The last thirteen are STRUCTURAL — 67 → 63 — and every one came out of the two biggest
+The last nineteen are STRUCTURAL — 67 → 59 — and every one came out of the two biggest
 fixtures in the corpus (`visual-selection-01` and `visual-svg-per-line-01`, 202k bytes each, the same
 tune), which went from byte 3038 to byte **12305**. They are in §2.8 onward. **Four of the
 last five are invisible to every ranked table** and were reachable only because the byte
@@ -298,30 +298,69 @@ than WRONG, and the byte table could only see them once everything before them c
 
 Together these took the two big fixtures from byte 12305 to **74220 of 202156**.
 
-### 2.18 ⚖️ ONE MEASURED FINDING NOT LANDED — **A GRACE NOTE IS A SIXTEENTH**
+### 2.18 A GRACE NOTE IS A SIXTEENTH, SO A BARE GRACE GROUP TAKES TWO BEAMS
 
 `abc_parse_music.js:694-695` divides a grace's parsed duration by `default_length * 8`
 under its own comment — *"The grace note durations should not be affected by the default
-length: they should be based on 1/16"* — so a bare `{CD}` group draws **TWO beams**.
-Measured through abcjs at `L:1/4`, `L:1/8` and `L:1/16`: two beams every time. **Ours draws
-one.**
+length: they should be based on 1/16"* — so `{CD}` draws two beams whether the tune says
+`L:1/4`, `L:1/8` or `L:1/16`. Measured through abcjs at all three; ours drew one.
 
-An implementation is written and REVERTED, because the second beam's y did not settle and a
-guess is worse than a gap. What the control says, on `X:1 M:4/4 L:1/8 K:C {CD}B,4 {C}B,4|`:
+**AND THE FIRST ATTEMPT WAS WRONG IN BOTH DIRECTIONS, WHICH IS WHY THIS ONE IS
+INSTRUMENTED.** Reading the two engines' `d` strings side by side could not say which of
+abcjs's two subpaths the stems reach, and a plausible reading put the whole stack a pitch
+out. A `console.error` in `createAdditionalBeams` answered it in one run:
 
-    abcjs   M76.13 56.37 L86.73 52.49 L86.73 54.04 L76.13 57.92 z
-            M76.13 60.02 L86.73 56.37 L86.73 57.92 L76.13 61.57 z
-    ours    M76.13 60.24 L86.73 56.37 L86.73 57.92 L76.13 61.79 z     (one beam)
+    AUX j=0 isGrace=true sy=-1 bary=6 startY=4.0566 endY=5 beam.startY=5 beam.endY=6
 
-Three things to settle before trying again, and the first is the trap:
+— so the MAIN beam is `params.beams[0]` at pitch 5→6, the aux is ONE pitch below it, and
+its start y is sampled at the note's own x while its start x keeps the 0.6 inset (the same
+asymmetry §2.17 found for ordinary beams). `yAt(beamStartX + inset) + 1 pitch` to
+`yAt(beamEndX) + 1 pitch`, and the control went byte-identical.
 
-1. **WHICH OF ABCJS'S TWO IS THE ONE THE STEMS REACH.** Its subpaths are 3.65 apart, not
-   the 3.875 that `sy * 2/3` = 1 pitch would give, so the offset is NOT a whole pitch and
-   reading the pair as "main plus one pitch" is what made the first attempt wrong in both
-   directions. Instrument `createAdditionalBeams` and print `bary` and `auxBeams[j].y`.
-2. Our single beam sits 0.22 from abcjs's LOWER one, which is a separate residual.
-3. The level count itself is the easy half — `noteGlyph(length / 16).flags`, and the group
-   needs one shared `group` id so `beamPath` writes one `<path>`.
+Counting beam LEVELS in both engines across all 171 fixtures: **161 match before, 169
+after**; the two left are pre-existing and named (`%%voicecolor`, and `!beambr1!`'s split).
+
+### 2.19 THE LAST OF THE BIG FIXTURE — 99.2% OF 202,156 BYTES
+
+- **`%%vocalfont`'s FACE on a lyric.** The size and weight were realized and the face was
+  not, so `%%vocalfont Helvetica 10.0` drew every syllable in the default Times New Roman
+  at the right size — the same half-realization the voice name had.
+- **AN ENDING IS ON `otherchildren` TOO**, so it takes its turn in the one add-order list
+  rather than preceding all of them.
+- **AND AN ENDING AND A TRIPLET TAKE THEIR TURN AT THEIR START, WHERE A CURVE AND A HAIRPIN
+  TAKE THEIRS AT THEIR CLOSE.** Measured: abcjs writes a single-letter dynamic at x 120.63
+  BEFORE an ending spanning 309.86…777.54, and that same ending BEFORE a hairpin closing at
+  698.49. Only a start key gives the first and only a close key the second.
+- **A TEMPO MARK'S NOTEHEAD SITS ON A PITCH.** `set-upper-and-lower-elements.js:209` gives
+  it `element.pitch - totalHeightInPitches + 1` — the tempo rung less five — and
+  `printSymbol` draws it at `calcY` of that, ONE product, where ours reached the same place
+  through the text baseline and four y terms. Instrumented: `incTop` reports a rung of
+  20.79664516129032 on `synth-flattener-25` and `printSymbol` the notehead's offset as
+  15.796645161290321, exactly five below. **Three fixtures.**
+
+`visual-selection-01` and its twin are now at byte **200613 of 202156**, and what is left
+is 0.17px of one slur's y.
+
+### 2.20 ⚖️ AND ONE MORE MEASURED AND NOT LANDED — **THE LEADING IS EIGHT ADDS**
+
+`visual-tablature-08` (`T:First` / `T:Second`) and five siblings carry a uniform ULP on
+every glyph of the staff AND on the root's `height`. Instrumented, abcjs's page cursor is:
+
+    15 → 22.56 → 55.56 → 59.34 → 85.34    padding.top, then four nonMusic ROWS
+         → 92.9                            spacing.music
+         → 154.23000000000002              staffSeparation, the 6.7.0 else-arm
+         → 207.41200000000003              + STEP × 13.724387096774194
+
+**Eight adds and one product.** Ours sums the whole lead into ONE number — `leading`
+139.23 — and reaches 154.23 rather than 154.23000000000002.
+
+An implementation that spends `originAdvances` as a list is written and **REVERTED**: it
+took `pixel-parity` to 9 of 120 and the harvested table to 13 of 174, so the decomposition
+is wrong, not just the order. What it got wrong is where `spacing.music` lives — with a
+heading block `headingless` is FALSE, so `musicSpace` is NOT in the system's `cursor` at
+all; it is inside `blockSpan`, via `offset = musicTop - gap - blockBottom`. Splitting
+`blockSpan` into rows + gap + overshoot is the part to get right, and the term list above
+is the target to hit exactly.
 
 ---
 
@@ -333,21 +372,22 @@ the wrong family):
 
 | | rows | ULP tokens | fixtures carrying them |
 |---|---|---|---|
-| glyph y | 1 | **62** | 10 |
-| glyph x | 14 | **36** | 13 |
+| glyph y | — | **58** | 6 |
+| glyph x | 13 | **36** | 13 |
 | root `width`/`height` | 11 | 5 | 5 |
-| other | 7 | 5 | 5 |
+| other | 3 | 1 | 1 |
 | **structural** | **32** | — | — |
 
-At the session's midpoint this read **glyph-x 265 tokens across 33 fixtures**; the spacing
-solve and the place-not-shift port took it to 36 across 13. **The two arithmetic families
-are down to 108 tokens between them and the STRUCTURAL rows are half the open table.**
+At the session's midpoint this read **glyph-x 265 tokens across 33 fixtures**. **The two
+arithmetic families are down to 94 tokens between them and the STRUCTURAL rows are more
+than half the open table.**
 
 ### 3.1 THE TWO ULP FAMILIES, EACH NAMED
 
-**GLYPH-y — 62 tokens, 10 fixtures**, and 27 of them are `visual-slurs-02-score-s-a-t-b`
-alone. Four fixtures carry exactly TWO tokens each and all four are **THE TEMPO
-NOTEHEAD**, which is measured and half-diagnosed:
+**GLYPH-y — 58 tokens, SIX fixtures**, and 27 of them are `visual-slurs-02-score-s-a-t-b`
+alone. **The tempo notehead that used to be four of them is closed (§2.19)**, and what is
+left is dominated by §2.20's leading walk. The old note is kept below because its shape is
+the one to look for:
 
     abcjs   noteheads.quarter  offset = 15.796645161290321   calcY = 41.934999999999995
     ours                                                             41.935
