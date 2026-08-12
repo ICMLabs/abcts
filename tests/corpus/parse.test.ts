@@ -78,7 +78,8 @@ describe('parse: simple-c', () => {
       // The `%%gchordfont` in force, null when the tune sets none — see `Note.chordFont`.
       chordFont: null,
       // null accidental means "inherit from the key" — resolution is an engrave concern.
-      pitch: { step: 'c', octave: 4, accidental: null },
+      // `written` is the SOURCE spelling, which is not derivable — see `Pitch.written`.
+      pitch: { step: 'c', octave: 4, accidental: null, written: 'C' },
       duration: rational(1, 4),
       notatedDuration: rational(1, 4),
       tiedToNext: false,

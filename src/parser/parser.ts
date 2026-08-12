@@ -3566,14 +3566,20 @@ class Parser {
     let octave = letter >= 'a' && letter <= 'g' ? 5 : 4
 
     let i = index + 1
+    let marks = ''
     while (i < tokens.length) {
       const next = tokens[i] as Token
-      if (next.kind === 'octaveUp') octave++
-      else if (next.kind === 'octaveDown') octave--
-      else break
+      if (next.kind === 'octaveUp') {
+        octave++
+        marks += "'"
+      } else if (next.kind === 'octaveDown') {
+        octave--
+        marks += ','
+      } else break
       i++
     }
-    return { pitch: { step, octave, accidental }, next: i }
+    // The SOURCE spelling, kept because it cannot be derived — see `Pitch.written`.
+    return { pitch: { step, octave, accidental, written: letter + marks }, next: i }
   }
 
   /**

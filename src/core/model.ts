@@ -107,6 +107,16 @@ export interface Pitch {
   readonly octave: number
   /** `null` means "inherit from the key signature". Key resolution is deferred to engrave. */
   readonly accidental: Accidental | null
+  /**
+   * **THE LETTER AND OCTAVE MARKS EXACTLY AS WRITTEN**, without the accidental — `c,`,
+   * `C`, `b'`. Absent when the pitch was not read from source (the DSL, a converter).
+   *
+   * It is NOT derivable from the pitch, which is the whole reason it is here: `c,` and `C`
+   * are the same note and abcjs keeps whichever the writer typed. `el.name = line[index]`
+   * then one `,` or `'` appended per mark (`abc_parse_music.js:1116-1147`), and it is what
+   * a notehead's `data-name` carries (`create-note-head.js:34`). See `writtenNote`.
+   */
+  readonly written?: string
 }
 
 export interface PitchClass {

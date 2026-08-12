@@ -1539,13 +1539,21 @@ const ABCJS_ACCIDENTAL_PREFIX: Readonly<Record<number, string>> = {
 }
 
 function writtenNote(pitch: Pitch): string {
+  // **THE SOURCE SPELLING WINS, BECAUSE IT IS NOT DERIVABLE.** `c,` and `C` are the same
+  // note; abcjs keeps whichever was typed and we canonicalised, so every `c,` in the corpus
+  // came out `C`. The doc block above used to claim the pitch was enough — measured false
+  // on `visual-transpose-06`, whose eighth notehead is exactly that.
+  //
+  // The canonical form below is still the fallback, and it is also what abcjs itself
+  // produces once a `%%transpose` has rewritten a name through `allPitches`
+  // (`abc_transpose.js:170-176`, `all-notes.js:3-12`) — the same table in the same order.
   const letter =
     pitch.octave >= 5 ? pitch.step.toLowerCase() : pitch.step.toUpperCase()
   const marks =
     pitch.octave >= 5 ? "'".repeat(pitch.octave - 5) : ','.repeat(4 - pitch.octave)
   const prefix =
     pitch.accidental === null ? '' : (ABCJS_ACCIDENTAL_PREFIX[pitch.accidental] ?? '')
-  return prefix + letter + marks
+  return prefix + (pitch.written ?? letter + marks)
 }
 
 /** Staff step → y, in staff spaces. Higher pitch is lower y. */
