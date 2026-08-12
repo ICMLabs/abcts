@@ -3889,7 +3889,24 @@ function barNumberText(
   // box` measures 14.6px against the default's 21.06 and drops the reserve 1.68px.
   // abcjs PITCH -> our step: the bottom staff line is pitch 2 and our step -4, so a step
   // is `pitch - 6`. Its height is in PIXELS over `spacing.STEP`, which is `spaces x 2`.
-  const width = textWidth(text, fontSizeOf('measurefont'), 'serif')
+  // …AND A BOXED FONT IS MEASURED FOUR PADDINGS WIDER AND TALLER — `getTextSize.calc`
+  // ends `if (hash.font.box) return { height: height + padding * 4, width: width +
+  // padding * 4 }` (`helpers/get-text-size.js:46-49`), "padding and an equal margin to
+  // each side". `padding` is `font.size * fontboxpadding` (default 0.1). It is the SAME
+  // number `addMeasureNumber` centres on and thresholds `vert` against, so a boxed bar
+  // number is centred on the BOX rather than on its digits.
+  //
+  // ONLY THE WIDTH WAS MISSING IT: `fontHeightOf` already adds `size * padding * 4` for a
+  // boxed font, and `textWidth` — which is the raw glyph run — does not. Adding it to the
+  // HEIGHT here as well double-counted and cost 9.06px of page, which is how the split was
+  // found. Instrumented through abcjs on this fixture: `w 26.6 h 35.6 pad 2.4`, against a
+  // `getBBox` of 17.0 x 26.0 — so both axes carry the 9.6, once each.
+  const boxPad =
+    SCORE_FONTS.measurefont?.box === true
+      ? fontSizeOf('measurefont') * ABCJS_RATIO.fontBoxPadding * 4
+      : 0
+  const rawWidth = textWidth(text, fontSizeOf('measurefont'), 'serif')
+  const width = rawWidth + boxPad
   const pitch =
     onClef?.treble === true && width * UNIT_PX > ENGRAVE.barNumberClefWide
       ? ENGRAVE.barNumberClefPitch
@@ -3926,10 +3943,42 @@ function barNumberText(
     x: onClef === null ? x : x + width / 2,
     y: y + size,
     size,
-    bold: false,
-    italic: true,
+    // THE WEIGHT AND STYLE ARE `measurefont`'S TOO, not just the size. Both were hard
+    // coded to abcjs's own default — `{ face: "Times New Roman", size: 14, weight:
+    // "normal", style: "italic" }` (`abc_parse_directive.js:26`) — which is right until a
+    // tune sets `%%barlabelfont Times-Bold 18 box`, and then the SIZE moved while the
+    // style did not, because only the size was ever read from the score.
+    bold: SCORE_FONTS.measurefont?.bold === true,
+    italic: SCORE_FONTS.measurefont?.italic ?? true,
     anchor: 'middle',
-    reserve: [y, y],
+    // The bar number is `renderText(…, true)` — `alreadyInGroup` — so its rect is the
+    // text's SIBLING inside the bar element's group (`draw/relative.js:39`).
+    ...(boxPad === 0
+      ? {}
+      : {
+          box: true,
+          inGroup: true,
+          // The rect is measured from `getBBox()`, which is the UNPADDED text.
+          boxSize: {
+            width: rawWidth,
+            height: goldenTextHeight(fontSizeOf('measurefont')),
+          },
+        }),
+    // **A BAR NUMBER ON A CLEF DOES NOT PUSH THE TOP.** `_addChild` opens with an explicit
+    // exception — `if (abcelem.el_type == "clef" && child.type == "barNumber")
+    // okToPushTop = false` (`elements/absolute-element.js:184-189`), whose own comment is
+    // "To avoid extra space for chords if there is only a bar number on the clef". It
+    // still pushes the BOTTOM, which for a point this far above the staff can never win.
+    //
+    // It was invisible while the width was measured unboxed: `%%measurefont Helvetica 7
+    // box` measured 8.5 raw and took `vert` 11, which sits inside the clef's own extent,
+    // so the unconditional push cost nothing. Boxed it measures 12.1, `vert` becomes 13.5
+    // — abcjs's own number, instrumented — and the second system dropped 9.69px.
+    //
+    // "Does not push the top" has to be SAID, not left out: an absent `reserve` falls back
+    // to the ascent/descent estimate, which pushes MORE. `stepToY(4)` is the staff's own
+    // top line, which is where `verticalExtent` starts, so it can never win.
+    reserve: onClef === null ? [y, y] : [stepToY(4), y],
   }
 }
 
