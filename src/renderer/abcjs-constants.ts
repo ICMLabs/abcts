@@ -171,6 +171,13 @@ export const ABCJS_PX = {
    * `beam.js`'s `calcXPos` uses the same 0.6 for a beam's ends — see `layoutBeam`.
    */
   flagStemInset: 0.6,
+  /**
+   * How far a LONE auxiliary beam reaches from its note — `auxBeamEndX = x ± 5`
+   * (`layout/beam.js:220-236`). A flat 5, whichever side it points; the stub's own START
+   * is the note's sample point less `flagStemInset` going up, so an up-stem's stub spans
+   * 4.4 rather than 5.
+   */
+  beamStub: 5,
   /** `getSymbolWidth(symb) * scale + 2` before an accidental (`create-note-head.js:95`). */
   accidentalGap: 2,
   /**

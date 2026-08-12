@@ -586,16 +586,36 @@ describe('flags and beams', () => {
     expect(span(secondary)).toBeLessThan(span(primary))
   })
 
-  it('stubs a lone short note rather than beaming it to nothing', () => {
-    // `C2DE2` — an eighth, a lone sixteenth, an eighth. The sixteenth's second beam has
-    // no neighbour to span to, so it becomes a stub pointing back at the note before it.
+  it('stubs a lone short note, and the SIDE is a four-way rule', () => {
+    // `C2DE2` — an eighth, a lone sixteenth, an eighth. The sixteenth's second beam has no
+    // neighbour to span to, so it becomes a 5px stub. WHICH SIDE is
+    // `layout/beam.js:215-238`: first note of the group always right, last always left,
+    // and a middle note toward the LONGER neighbour — or, when the two match, alternating
+    // by index parity. Here the neighbours are equal and the index is 1, so it points LEFT
+    // and `x2 < x1`.
     const system = sys('X:1\nM:4/4\nL:1/16\nK:C\nC2DE2|\n')
     expect(system?.beams).toHaveLength(2)
     const stub = system?.beams[1]
     expect(stub).toBeDefined()
     const width = (stub?.x2 ?? 0) - (stub?.x1 ?? 0)
-    expect(width).toBeGreaterThan(0)
-    expect(width).toBeLessThan(2 * SPACE) // a stub, not a span
+    expect(width).toBeLessThan(0)
+    // AND THE TWO ENDS ARE NOT SYMMETRIC: it starts at `x - 0.6` going up and ends at
+    // `x - 5`, so an up-stem's stub spans 4.4 rather than 5.
+    expect(Math.abs(width)).toBeCloseTo(4.4, 6)
+  })
+
+  it('points a FIRST-note stub right and a LAST-note stub left', () => {
+    // The two unambiguous arms of the same rule, which no corpus fixture isolates.
+    const firstOf = (abc: string) => {
+      const beams = sys(abc)?.beams ?? []
+      return beams[beams.length - 1]
+    }
+    // `DC2C2` — the lone sixteenth leads the group, so its stub goes RIGHT.
+    const lead = firstOf('X:1\nM:4/4\nL:1/16\nK:C\nDC2C2|\n')
+    expect((lead?.x2 ?? 0) - (lead?.x1 ?? 0)).toBeGreaterThan(0)
+    // `C2C2D` — it ends the group, so LEFT.
+    const trail = firstOf('X:1\nM:4/4\nL:1/16\nK:C\nC2C2D|\n')
+    expect((trail?.x2 ?? 0) - (trail?.x1 ?? 0)).toBeLessThan(0)
   })
 
   it('does not beam a quarter note or anything longer', () => {

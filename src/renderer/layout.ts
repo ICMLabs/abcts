@@ -548,8 +548,11 @@ export const ENGRAVE = {
    * (`dump-svg.js:120-124`).
    */
   textLineStep: ABCJS_RATIO.textLineStep,
-  /** Length of a secondary-beam stub on a note whose neighbours lack that level. */
-  beamStubLength: 1.1 * SPACE,
+  /**
+   * Length of a secondary-beam stub on a note whose neighbours lack that level — abcjs's
+   * flat `± 5` (`layout/beam.js:220-236`). Ours was 1.1 staff spaces, a figure nobody chose.
+   */
+  beamStubLength: spaces(ABCJS_PX.beamStub),
   /** `gapWidth = 8` each side of the bracket's MIDPOINT — FIXED, not the number's width. */
   tupletNumberGap: spaces(ABCJS_PX.tupletNumberGap),
   /** `bracketHeight = ±5` — the hook at each end (`draw/triplet.js:24`). Ours was 4.65px. */
@@ -6939,13 +6942,53 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
             ? runEnd.headX + runEnd.headWidth
             : runEnd.headX
       if (runStart === runEnd) {
-        // A stub: point it back toward the previous note when there is one, so a lone
-        // sixteenth in a run of eighths reads as belonging to what precedes it.
+        /**
+         * **A LONE AUXILIARY BEAM IS A 5px STUB, AND WHICH SIDE IT POINTS TO IS A FOUR-WAY
+         * RULE** (`layout/beam.js:215-238`):
+         *
+         *     if (isFirstNote)              end = x + 5      // always right
+         *     else if (isLastNote)          end = x - 5      // always left
+         *     else if (prevDur === nextDur) end = i % 2 === 0 ? x + 5 : x - 5
+         *     else                          end = prevDur < nextDur ? x + 5 : x - 5
+         *
+         * — first and last of the GROUP, then a tie broken by index parity, then "toward
+         * the longer note". Ours pointed backward whenever the note was not the first,
+         * which is the first two arms only.
+         *
+         * **AND THE TWO ENDS ARE NOT SYMMETRIC.** The stub STARTS at
+         * `auxBeams[index].x = x + (asc ? -0.6 : 0)` and ENDS at `x ± 5`, so an up-stem's
+         * stub spans 4.4 and a down-stem's 5 — while its start y is sampled at `x` itself,
+         * not at the offset start. Measured on `visual-selection-01`: abcjs writes
+         * `M199.36 395.28 L194.96 …` where `x` is 199.96, and ours ran 191.43 → 199.96.
+         */
         const index = group.indexOf(runStart)
-        const backward = index > 0
         const at = up ? runStart.headX + runStart.headWidth : runStart.headX
-        x1 = backward ? at - ENGRAVE.beamStubLength : at
-        x2 = backward ? at : at + ENGRAVE.beamStubLength
+        const prev = index > 0 ? group[index - 1] : undefined
+        const next = index < group.length - 1 ? group[index + 1] : undefined
+        const forward = ((): boolean => {
+          if (prev === undefined) return true
+          if (next === undefined) return false
+          const prevDuration = elements[prev.element]?.durationClass ?? 0
+          const nextDuration = elements[next.element]?.durationClass ?? 0
+          if (prevDuration === nextDuration) return index % 2 === 0
+          return prevDuration < nextDuration
+        })()
+        x1 = at + (up ? -inset : 0)
+        x2 = forward ? at + ENGRAVE.beamStubLength : at - ENGRAVE.beamStubLength
+        beams.push({
+          x1,
+          // `auxBeams[index].y` is `bary` at `x`, NOT at the offset start — abcjs's own
+          // asymmetry, and the reason a stub is not a shortened beam.
+          y1: yAt(at) + offset,
+          x2,
+          y2: yAt(x2) + offset,
+          thickness,
+          ...(firstDuration === undefined ? {} : { durationClass: firstDuration }),
+          stemsUp: up,
+        })
+        runStart = null
+        runEnd = null
+        return
       }
       beams.push({
         x1,
