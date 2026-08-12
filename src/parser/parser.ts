@@ -1558,7 +1558,49 @@ class VoiceBuilder {
    * whole overlay layer, so whether the notes existed depended on a trailing `|`.
    */
   private closeUnterminatedMeasure(): void {
-    if (this.events.length === 0 && this.overlays.length === 0) return
+    /**
+     * **A BARLINE WITH NOTHING AFTER IT IS STILL A BARLINE.**
+     *
+     * Two barlines in a row leave the second as a `pendingOpening`, waiting for a measure
+     * to open. When nothing follows — `[|] |` at the end of a line, which
+     * `visual-tablature-20` writes twice — that pending bar was DISCARDED, and abcjs draws
+     * it: its voice children are a flat stream and every `|` is its own `bar` element
+     * (`abstract-engraver.js:957`), so that fixture has SEVEN bar groups against our five
+     * and its last staff line ran 16px short.
+     *
+     * Emitted as an empty measure whose CLOSING barline is the pending one, which is the
+     * shape `layoutMeasure` already draws.
+     */
+    if (this.events.length === 0 && this.overlays.length === 0) {
+      const trailing = this.pendingOpening
+      if (trailing !== null) {
+        this.pendingOpening = null
+        const bare: Measure = {
+          events: [],
+          overlays: [],
+          keyChange: null,
+          keyChangeSourceRange: null,
+          meterChange: null,
+          meterChangeSourceRange: null,
+          volta: null,
+          voltaSourceRange: null,
+          partLabel: null,
+          partLabelSourceRange: null,
+          startsSystem: false,
+          openingBarline: null,
+          openingBarlineSourceRange: null,
+          closingBarline: trailing.barline,
+          closingBarlineSourceRange: trailing.range,
+          sourceRange: trailing.range,
+        }
+        this.measures.push(
+          trailing.decorations.length === 0
+            ? bare
+            : { ...bare, closingBarlineDecorations: [...trailing.decorations] },
+        )
+      }
+      return
+    }
     const last = this.events[this.events.length - 1]
     this.measures.push({
       events: this.events,
