@@ -1736,7 +1736,9 @@ const glyphDefs = new Map<GlyphName, string>()
               `M ${round2(a.x1)} ${round2(a.y1)} L ${round2(a.x2)} ${round2(a.y2)} ` +
               `M ${round2(b.x1)} ${round2(b.y1)} L ${round2(b.x2)} ${round2(b.y2)}`
             others.push({
-              x: a.x1,
+              // …and a HAIRPIN is added by its CLOSING decoration too, so it sorts on the
+              // x it ENDS at — see the curve below.
+              x: Math.max(a.x2, b.x2),
               s:
                 `<path d="${d}" highlight="stroke" stroke="currentColor" ` +
                 `class="${classes.generate('dynamics decoration')}" data-name="dynamics"></path>`,
@@ -1759,7 +1761,6 @@ const glyphDefs = new Map<GlyphName, string>()
         }
         // …and the two buckets go out as ONE list in x order. `Array.sort` is stable, so a
         // dynamic and a hairpin starting at the same x keep the order they were built in.
-        for (const o of others.sort((p1, p2) => p1.x - p2.x)) parts.push(o.s)
         // THE NUMBER CARRIES NO CLASS, and that is abcjs's choice rather than an omission:
         // `drawTriplet` passes `noClass: true` and `name: "" + params.number`
         // (`draw/triplet.js:11`), so its golden emits `data-name="3"` and nothing else. The
@@ -1786,6 +1787,7 @@ const glyphDefs = new Map<GlyphName, string>()
          * (`draw/tie.js:6-20`, `:83-87`). `data-name` is `tie` or `slur`. Ours wrote a bare
          * `abcjs-tie`, which is a class abcjs only ever writes with the rest of that string.
          */
+        const curveSink: string[] = []
         for (const curve of staff.curves.filter(mine)) {
           const end = (which: 'start' | 'end', index: number | undefined): string => {
             const c = index === undefined ? undefined : counters.get(index)
@@ -1800,7 +1802,20 @@ const glyphDefs = new Map<GlyphName, string>()
           // closes, so the count of `"bar"` markers ahead of it in `otherchildren` is that
           // note's own measure index within the line.
           const at = curve.endElement === undefined ? 0 : (counters.get(curve.endElement)?.measure ?? 0)
-          parts.push(
+          /**
+           * **AND A CURVE IS ON `otherchildren` TOO**, so it interleaves with the hairpins,
+           * the dynamics and the triplets rather than following all of them — `addOther` is
+           * one list and `drawVoice` walks it once (`draw/voice.js:80-90`). Ours wrote every
+           * curve last, which put `visual-selection-01`'s slur after a hairpin abcjs writes
+           * after IT.
+           *
+           * **ORDERED BY THE CLOSING x, BECAUSE THAT IS WHEN IT IS ADDED.** A curve and a
+           * hairpin are both `addOther`'d by their CLOSING decoration, so
+           * `!<(! (bfdf) (3B2d2c2 !<)!` writes the slur first even though the hairpin opens
+           * to its left — which is what `visual-selection-01`'s golden does and what sorting
+           * on the opening x gets backwards.
+           */
+          curveSink.push(
             curveToPath(
               TC(curve),
               abcjs
@@ -1812,7 +1827,11 @@ const glyphDefs = new Map<GlyphName, string>()
               PX,
             ),
           )
+          others.push({ x: TC(curve).x2, s: curveSink.pop() ?? '' })
         }
+        // …and the whole `otherchildren` list goes out as ONE run in x order. `Array.sort`
+        // is stable, so two things starting at the same x keep the order they were built in.
+        for (const o of others.sort((p1, p2) => p1.x - p2.x)) parts.push(o.s)
         dynamics.length = 0
         graceBeams.length = 0
       }
