@@ -1,6 +1,6 @@
 # CHECKPOINT — 2026-08-11b
 
-**abcts, `main`.** The suite is **1268/1268** with no reds, `npx tsc --noEmit` is clean,
+**abcts, `main`.** The suite is **1276/1276** with no reds, `npx tsc --noEmit` is clean,
 everything below is committed and pushed.
 
 ---
@@ -17,22 +17,22 @@ everything below is committed and pushed.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 0 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 1 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 1 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **57 of 171**, best 200613, median 10288 | 94 of 171 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **49 of 171**, best 200613 | 94 of 171 |
 
-**`svg-bytes` is the one open gate**, `DIVERGENT` is still EMPTY, and **114 fixtures are
-byte-exact — all 114 RATCHETED**, up from seven. See §4.
+**`svg-bytes` is the one open gate**, `DIVERGENT` is still EMPTY, and **122 fixtures are
+byte-exact — all 122 RATCHETED**, up from seven. See §4.
 
 ---
 
 ## 2. THE LANDINGS
 
-**Twenty-eight, in two halves.** The first seven are one finding: abcjs's ARITHMETIC IS PART OF
+**Thirty-six, in two halves.** The first seven are one finding: abcjs's ARITHMETIC IS PART OF
 THE PORT — which number is formed first, which product is taken once, which offset is
 stored rather than derived. §3 of `CHECKPOINT-2026-08-11.md` named it as the next
 architectural arc for the VERTICAL; it turned out to be the horizontal too, and the
 horizontal was worth more (82 → 67 on two changes).
 
-The last twenty-one are STRUCTURAL — 67 → 57 — and every one came out of the two biggest
+The last twenty-nine are STRUCTURAL — 67 → 49 — and every one came out of the two biggest
 fixtures in the corpus (`visual-selection-01` and `visual-svg-per-line-01`, 202k bytes each, the same
 tune), which went from byte 3038 to byte **12305**. They are in §2.8 onward. **Four of the
 last five are invisible to every ranked table** and were reachable only because the byte
@@ -397,6 +397,49 @@ Five baselines moved 1-for-1, every row a slur endpoint rising 11.625px. **`pixe
 the harvested table cannot see a slur at all** and stayed at 0 throughout — the third time
 this branch has had to lean on the byte table for an axis no other gate expresses.
 
+### 2.22 THE CONSTRUCTED-OFFSET SWEEP — **56 → 49 of 171**
+
+`PlacedGlyph.dx` was added for the flag (§2.x). The same question — *does abcjs STORE this
+offset or DERIVE it?* — turned out to be worth six more fixtures in three edits:
+
+- **A TIME SIGNATURE'S ROW OFFSET IS CONSTRUCTED.** `addRight(new RelativeElement(num,
+  x + (maxWidth - numWidth) / 2, …))` (`create-time-signature.js:25-26`). Ours built a
+  CENTRE and subtracted half the row from it — `(x + w/2) - n/2` against abcjs's
+  `x + (w - n)/2`. **Four fixtures.**
+- **AN ACCIDENTAL'S OFFSET IS CONSTRUCTED** — abcjs stores it as a negative number
+  (`create-note-head.js:95-100`) where ours derived it back out of two absolute x's, and
+  `(headX - place) - headX` is not `-place`. **Two fixtures**, and no baseline moved at all.
+- **EACH STAFF BEFORE THIS ONE IS TWO MOVES, NOT THEIR SUM** —
+  `moveY(STEP, staff.top)` then `moveY(STEP, -staff.bottom)` per staff
+  (`draw/staff-group.js:25`, `:58`), so the second staff's origin is
+  `((groupTop + top0·STEP) + −bottom0·STEP) + top1·STEP`. Ours summed the pair into
+  `cursor` first. **One fixture and glyph-y ULP tokens 49 → 22.**
+
+**AND A BARLINE REACHES THE STAFF ABOVE ONLY WHERE `%%staves` CONNECTS THEM.**
+`voice.barto = (connectBarLines === 'continue' || === 'end')`
+(`abstract-engraver.js:148`), spent on `params.barto || i === children.length - 1`
+(`draw/voice.js:43`). Ours applied the join to EVERY barline of any staff after the first,
+on a note that said the rule is group membership and was *"measured on a ladder, because
+the source reads otherwise"*. **The ladder was `%%staves` tunes with ONE BAR PER LINE,
+where the only barline IS the last child** — both readings predict the same output there.
+Printing `connectBarLines` per fixture settles it: `%%staves` gives start/continue,
+`%%score` gives undefined unless the directive writes `|`. The parser has modelled it since
+it was written; the renderer had never read it.
+
+> **A MEASUREMENT THAT CANNOT DISTINGUISH TWO RULES HAS NOT CHOSEN BETWEEN THEM.**
+
+### 2.23 TWO CORRECT PORTS THAT ARE NEUTRAL TODAY, LANDED ANYWAY
+
+- **`getBarYAt` TAKES THE SLOPE FIRST** — `starty + (endy - starty) / (endx - startx) *
+  (x - startx)` (`layout/get-bar-y-at.js`), where ours divided the x-fraction first.
+- **THE RESERVE'S END MUST BE THE END THE CURVE IS DRAWN AT.** `getYBounds` reads
+  `this.startY`/`this.endY` after `calcSlurY` has resolved them, so §2.21's mid-stem arm
+  had to appear in `endStep` as a PITCH as well.
+
+Both leave the byte table at 122 exact. They are in because the SHAPE is abcjs's, which is
+what this arc is for — and because the next thing that touches either would otherwise
+inherit the wrong grouping.
+
 ---
 
 ## 3. WHAT IS LEFT — the table's shape, measured
@@ -405,15 +448,31 @@ Classified by aligning on the FIRST DIFFERING CHARACTER and comparing the numeri
 that spans it (§4 of `CHECKPOINT-2026-08-11.md` has the recipe; a cruder test sends you at
 the wrong family):
 
-| | rows | ULP tokens | fixtures carrying them |
-|---|---|---|---|
-| glyph y | — | **49** | 5 |
-| glyph x | 13 | **36** | 13 |
-| root `width`/`height` | — | 2 | 2 |
-| **structural** | **~30** | — | — |
+| | ULP tokens | fixtures carrying them |
+|---|---|---|
+| glyph y | **39** | 4 |
+| glyph x | **15** | 5 |
+| **structural** | — | ~30 |
 
-At the session's midpoint this read **glyph-x 265 tokens across 33 fixtures** and the root
-5 across 5. **The arithmetic families are down to 87 tokens between them.**
+From **glyph-x 265 across 33** at the session's midpoint. **The arithmetic families are 54
+tokens across 9 fixtures; everything else is structural.**
+
+### 3.0 THE ONE ULP THREAD STILL OPEN, MEASURED
+
+`visual-slurs-02` holds 27 of the 39 glyph-y tokens and the cause is upstream of the walk —
+its STAFF EXTENTS themselves differ:
+
+    abcjs   staff0 top 17                bottom -11.482545131959373
+            staff1 top 17.982545131959377 bottom -19.482545131959373
+    ours    staff0 top 17                bottom -11.482545131959375
+            staff1 top 17.982545131959373 bottom -19.482545131959373
+
+Two to four ULP, and staff1's BOTTOM is exact — so it is one contributor, not the sum.
+Instrumenting abcjs's `adjustRange` names the shape: a NOTE reports
+`bottom = -16.482545131959373`, i.e. the `.4825…` fraction is an element's own `fixed.b`,
+which on a beamed note is where the beam retargeted its stem. `getBarYAt`'s slope form has
+since been ported and did NOT move it, so the remaining difference is further up the beam's
+own `calcYPos`/`calcXPos` chain. **Instrument `layoutBeam`'s inputs next, not its output.**
 
 ### 3.1 THE TWO ULP FAMILIES, EACH NAMED
 
