@@ -321,6 +321,26 @@ lowercase `al coda`. Two unit tests asserted `Fine`, `al Coda` and italic, all t
 judgement written as though measured. **A TEST CAN ENCODE AN INFERENCE AS FIRMLY AS A
 COMMENT CAN**, and it is harder to notice, because a green test reads as a checked fact.
 
+### 2.19 THE BELOW DECORATION CURSOR'S FLOOR IS THE ELEMENT'S OWN BOTTOM
+
+    yPos.below = Math.min(yPos.below, minPitch);
+    stackedDecoration(decoration, width, abselem, yPos, positioning.ornamentPosition,
+                      this.minTop, minPitch, accentAbove);
+
+(`creation/decoration.js:390-391`) — the SEVENTH argument is `minBottom` and it is
+`minPitch`, **the element's own bottom**. `this.minBottom` from the constructor is passed
+NOWHERE, and that constant is what our clamp was reading, *with a citation to the line that
+defines it*. The ABOVE side really does take the constant (`this.minTop` is the sixth
+argument), which is why one half was right and the other was not.
+
+So an inverted fermata on a high note hangs at pitch 8, well inside the staff, and ours
+could never rise past the floor. `visual-decorations-01` went from byte 7221 to 17871 of
+59302. **Measured by dumping every below placement out of both engines and sorting them**:
+abcjs's set has 1.0009, 6.0009 and 8.0009 in it and ours had six copies of one clamped
+value. Three of its twelve are still one pitch out — the element bottom coming from the
+STEM rather than the head — and the fixture's next divergence is a `scripts.ufermata` 22px
+out, which is the staff's own origin moving underneath it, not the decoration.
+
 ---
 
 ## 3. WHAT IS LEFT — MEASURED, NOT LANDED
@@ -500,8 +520,7 @@ The named structural rows, cheapest last:
 - THREE `[M:]` IN ONE MEASURE — §3.3, and the whole of `visual-svg-02-staffwidth-12`.
 - `visual-misc-12`'s `!beambr1!` beam split.
 - `flattener-37` emits `rests.half` where abcjs emits `dots.dot` — an element ORDER row.
-- `visual-transpose-04`'s chord annotation is 20px high; `visual-decorations-01`'s
-  `scripts.dfermata` 3.70px.
+- `visual-transpose-04`'s chord annotation is 20px high — that is §3.3c.
 - `visual-tablature-*` — an acciaccatura slash, and `-20`'s missing note element.
 - The `x.0000000000004` tail on `88.038`, `417.893`, `29.69`, `609.95…` — the same ULP
   family as §3.2 and probably the same cause.
