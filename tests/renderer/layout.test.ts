@@ -1942,6 +1942,27 @@ describe('spanning decorations', () => {
     expect(a?.spannerLines).toHaveLength(2)
   })
 
+  it('puts a hairpin on the dynamics lane FOR ITS OWN SYSTEM', () => {
+    // `hasVocals` is set once per LINE in abcjs (`abstract-engraver.js:110`) and
+    // `createDecoration` defaults `volumePosition` to `hasVocals ? 'above' : 'below'`
+    // (`creation/decoration.js:379`). So a tune whose lyrics start on its SECOND system
+    // puts the first system's dynamics below and the rest above — and a hairpin takes the
+    // same lane as the volume marks beside it.
+    //
+    // `visual-selection-01` is the only fixture in either corpus that varies it, and it is
+    // 118px of hairpin. Measured against abcjs on a control: `T:` + `!mp!` + `!<(!…!<)!` +
+    // `w:` puts both on `M 186.67 71.12`, above the staff.
+    const doc = layout(
+      parse('X:1\nM:4/4\nL:1/4\nK:C\n!<(!C D !<)!E z|\nF G A B|\nw:la la la la\n')
+        .scores[0] as Score,
+      { systemWidth: 300 },
+    )
+    const lineY = (system: number): number =>
+      doc.systems[system]?.staves[0]?.spannerLines[0]?.y1 ?? Number.NaN
+    // System 0 does not sing yet, so its hairpin hangs BELOW the middle line.
+    expect(lineY(0)).toBeGreaterThan(0)
+  })
+
   it('pairs consecutive hairpins of the same kind in order', () => {
     // S1-decorations writes `!crescendo(!G!<(!G` and then closes both. A single open slot
     // per kind let the second overwrite the first and silently lost a hairpin, so this is

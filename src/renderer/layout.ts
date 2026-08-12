@@ -1357,6 +1357,13 @@ export interface LayoutStaff {
    * merge — see `anchorBelowStaff`.
    */
   readonly dynamicShift?: number
+  /**
+   * The same for the ABOVE lane — `createDecoration` puts a staff's dynamics above when the
+   * tune SINGS (`creation/decoration.js:379`), and a hairpin takes the same lane as the
+   * volume marks beside it. Two numbers because the two passes run at different points and
+   * `spannerLines` is empty for both of them.
+   */
+  readonly dynamicShiftAbove?: number
   /** Repeat-ending (volta) brackets and their labels. Span whole measures. */
   readonly voltaLines: readonly PlacedLine[]
   readonly voltaTexts: readonly PlacedText[]
@@ -5506,8 +5513,17 @@ function layoutSpanners(
   anchors: readonly NoteAnchor[],
   /** Where each system's music starts and ends, exactly as `layoutCurves` uses it. */
   bounds: readonly { left: number; right: number }[],
-  /** Hairpins share the dynamics lane, so they share its side. See `dynamicAboveStep`. */
-  dynamicsAbove: boolean,
+  /**
+   * Hairpins share the dynamics lane, so they share its side — **PER SYSTEM, as the notes
+   * read it.** `hasVocals` is set once per LINE in abcjs (`abstract-engraver.js:110`) and
+   * `createDecoration` reads it there (`creation/decoration.js:379`), so a tune whose
+   * lyrics start on its second system puts its first system's dynamics BELOW and the rest
+   * ABOVE. This took the tune-wide flag, which the recorded `ponytail:` said "the corpus
+   * never varies" — `visual-selection-01` varies it, and its first system's hairpins came
+   * out 118px above where abcjs draws them while the volume marks beside them, which do
+   * read it per system, were exact.
+   */
+  dynamicsAboveAt: (system: number) => boolean,
 ): PlacedLine[][] {
   const out: PlacedLine[][] = bounds.map(() => [])
   // A third borrowed weight: this was `LINE_WEIGHTS.staffLine`, which is abcjs's 0.6px
@@ -5541,8 +5557,9 @@ function layoutSpanners(
      * (`draw/crescendo.js:7-19`) — so the centre is `calcY(pitch) + 8` at BOTH ends.
      */
     const y =
-      stepToY(dynamicsAbove ? ENGRAVE.dynamicAboveStep : ENGRAVE.dynamicBelowStep) +
-      ENGRAVE.hairpinDrop
+      stepToY(
+        dynamicsAboveAt(system) ? ENGRAVE.dynamicAboveStep : ENGRAVE.dynamicBelowStep,
+      ) + ENGRAVE.hairpinDrop
     out[system]?.push(
       { x1, y1: y - g1 / 2, x2, y2: y - g2 / 2, thickness, role: 'dynamic' },
       { x1, y1: y + g1 / 2, x2, y2: y + g2 / 2, thickness, role: 'dynamic' },
@@ -9857,7 +9874,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   // lost HALF the hairpins in S1-decorations tune 2 — it wraps to six systems and the
   // pairs straddle the breaks.
   const spannersBySystem = voiceAnchors.map((anchors) =>
-    layoutSpanners(anchors, systemBounds, hasVocals),
+    layoutSpanners(anchors, systemBounds, (i) => hasVocalsAt(spans[i]?.start ?? 0)),
   )
   const withCurves = systems.map((system, systemIndex) => ({
     ...system,
@@ -9872,8 +9889,17 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // `dynamicShift`.
       spannerLines: (voicesOfStaff[staffIndex] ?? []).flatMap((v, pos) =>
         (spannersBySystem[v]?.[systemIndex] ?? []).map((l) => ({
-          ...(l.role === 'dynamic' && staff.dynamicShift !== undefined
-            ? { ...l, y1: l.y1 + staff.dynamicShift, y2: l.y2 + staff.dynamicShift }
+          // …AND IT SPENDS THE SHIFT FOR ITS OWN SIDE. A staff that sings puts its
+          // dynamics ABOVE, so an above hairpin owes `dynamicShiftAbove` and a below one
+          // `dynamicShift` — applying the below shift to both put a singing tune's hairpin
+          // 2.15px out on a control and 118px on `visual-selection-01`.
+          ...(l.role === 'dynamic' &&
+          (staff.dynamicsAbove ? staff.dynamicShiftAbove : staff.dynamicShift) !== undefined
+            ? (() => {
+                const by =
+                  (staff.dynamicsAbove ? staff.dynamicShiftAbove : staff.dynamicShift) ?? 0
+                return { ...l, y1: l.y1 + by, y2: l.y2 + by }
+              })()
             : l),
           voice: pos,
         })),
@@ -11557,9 +11583,18 @@ function anchorDynamicsAbove<
   } & StaffFurniture,
 >(parts: readonly T[], strict: boolean): T[] {
   const isDyn = (r: PartRole | undefined, y: number): boolean => r === 'dynamic' && y < 0
+  /**
+   * **AND A HAIRPIN IS ON WHICHEVER SIDE THE STAFF'S DYNAMICS ARE** — `createDecoration`
+   * defaults `volumePosition` to `hasVocals ? 'above' : 'below'`
+   * (`creation/decoration.js:379`), and a `CrescendoElem` takes the same lane. It cannot be
+   * read off `spannerLines` here, which are still EMPTY; `hasHairpin` and `dynamicsAbove`
+   * are what say so. See `LayoutStaff.dynamicShiftAbove`.
+   */
+  const hairpinHere = parts.some((p) => p.hasHairpin === true && p.dynamicsAbove)
   const present =
     parts.some((p) => p.elements.some((el) => el.glyphs.some((g) => isDyn(g.role, g.y)))) ||
-    parts.some((p) => p.spannerLines.some((l) => isDyn(l.role, l.y1)))
+    parts.some((p) => p.spannerLines.some((l) => isDyn(l.role, l.y1))) ||
+    hairpinHere
   if (!present) return [...parts]
 
   // THE DYNAMIC'S OWN RUNG — third of five, above the chord and the ending and below the
@@ -11573,6 +11608,8 @@ function anchorDynamicsAbove<
     isDyn(l.role, l.y1) ? { ...l, y1: l.y1 + shift, y2: l.y2 + shift } : l
   return parts.map((part) => ({
     ...part,
+    /** The ABOVE lane's shift, which an above hairpin spends at the merge. */
+    dynamicShiftAbove: shift,
     elements: part.elements.map((el) =>
       el.glyphs.some((g) => isDyn(g.role, g.y))
         ? {
@@ -11617,7 +11654,11 @@ function anchorBelowStaff<
   const present =
     parts.some((p) => p.elements.some((el) => el.glyphs.some((g) => isDyn(g.role, g.y)))) ||
     parts.some((p) => p.spannerLines.some((l) => isDyn(l.role, l.y1))) ||
-    parts.some((p) => p.hasHairpin === true)
+    // …AND ONLY WHEN THE LANE IS ON THIS SIDE. A SINGING staff puts its dynamics ABOVE
+    // (`creation/decoration.js:379`), so a hairpin there owes this pass nothing — and
+    // stamping a below shift for it put the control's hairpin 2.15px out and
+    // `visual-selection-01`'s 118.
+    parts.some((p) => p.hasHairpin === true && !p.dynamicsAbove)
   if (!present) return [...parts]
 
   // The MUSIC's ink, with the dynamics themselves taken out — `verticalExtent` already
@@ -11645,7 +11686,9 @@ function anchorBelowStaff<
         // elements, so a staff carrying a volume mark was consistent by accident; one
         // whose only dynamic is a crescendo had nothing to subtract and came out 7 pitch
         // — 27.13px — high.
-        ...(parts.some((p) => p.hasHairpin === true) ? { hasHairpin: true } : {}),
+        ...(parts.some((p) => p.hasHairpin === true && !p.dynamicsAbove)
+          ? { hasHairpin: true }
+          : {}),
       },
     ).bottom -
     ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
