@@ -1579,8 +1579,11 @@ function writtenNote(pitch: Pitch): string {
     pitch.octave >= 5 ? pitch.step.toLowerCase() : pitch.step.toUpperCase()
   const marks =
     pitch.octave >= 5 ? "'".repeat(pitch.octave - 5) : ','.repeat(4 - pitch.octave)
+  // …AND A QUARTER TONE NAMES ITSELF — see `Pitch.writtenAccidental`. `accMap` has seven
+  // entries and our `Accidental` enum has five.
   const prefix =
-    pitch.accidental === null ? '' : (ABCJS_ACCIDENTAL_PREFIX[pitch.accidental] ?? '')
+    pitch.writtenAccidental ??
+    (pitch.accidental === null ? '' : (ABCJS_ACCIDENTAL_PREFIX[pitch.accidental] ?? ''))
   return prefix + (pitch.written ?? letter + marks)
 }
 

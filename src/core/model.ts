@@ -117,6 +117,15 @@ export interface Pitch {
    * a notehead's `data-name` carries (`create-note-head.js:34`). See `writtenNote`.
    */
   readonly written?: string
+  /**
+   * The ACCIDENTAL as abcjs names it, when that is not derivable from `accidental` alone.
+   *
+   * `el.name = accMap[el.accidental] + el.name` (`abc_parse_music.js:1118`) and `accMap`
+   * has SEVEN entries — `__ _ = ^ ^^` and the two quarter tones `_/` and `^/`
+   * (`abc_parse_settings.js:147-155`). Our `Accidental` is a whole-semitone enum with the
+   * deviation in `microtoneCents`, so a quarter tone would otherwise print its BASE sign.
+   */
+  readonly writtenAccidental?: string
 }
 
 export interface PitchClass {

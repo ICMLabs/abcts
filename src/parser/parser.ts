@@ -3543,7 +3543,7 @@ class Parser {
     accidentalStart: number | null,
   ): { note: Note; next: number } {
     const token = tokens[index] as Token
-    const head = this.readNoteHead(tokens, index, accidental)
+    const head = this.readNoteHead(tokens, index, accidental, microtoneCents)
     const length = this.readLength(tokens, head.next)
     const last = tokens[Math.max(index, length.next - 1)] as Token
     const duration = ratMul(builder.unitNoteLength, length.factor)
@@ -3583,6 +3583,8 @@ class Parser {
     tokens: readonly Token[],
     index: number,
     accidental: Accidental | null,
+    /** `^/` and `_/` are their own names in abcjs — see `Pitch.writtenAccidental`. */
+    microtoneCents = 0,
   ): { pitch: Pitch; next: number } {
     const letter = (tokens[index] as Token).aux
     const step = letter.toLowerCase() as DiatonicStep
@@ -3602,8 +3604,26 @@ class Parser {
       } else break
       i++
     }
+    // A QUARTER TONE IS ITS OWN `accMap` NAME. `_/` lexes as a flat with -50 cents and
+    // `^/` as a sharp with +50; every other fraction (`^3/2`) has no entry in abcjs's table
+    // and keeps the base sign.
+    const quarter =
+      accidental === -1 && microtoneCents === -50
+        ? '_/'
+        : accidental === 1 && microtoneCents === 50
+          ? '^/'
+          : undefined
     // The SOURCE spelling, kept because it cannot be derived — see `Pitch.written`.
-    return { pitch: { step, octave, accidental, written: letter + marks }, next: i }
+    return {
+      pitch: {
+        step,
+        octave,
+        accidental,
+        written: letter + marks,
+        ...(quarter === undefined ? {} : { writtenAccidental: quarter }),
+      },
+      next: i,
+    }
   }
 
   /**
