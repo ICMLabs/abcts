@@ -5768,6 +5768,13 @@ function layoutSpanners(
    * read it per system, were exact.
    */
   dynamicsAboveAt: (system: number) => boolean,
+  /**
+   * **THE NON-NOTE PLACES A HAIRPIN MAY OPEN OR CLOSE** — barlines. A decoration written
+   * before a `|` attaches to the BARLINE (`abstract-engraver.js:1002`), and `!<)!` before
+   * one is how most hairpins in the corpus end. Merged with the anchors in ELEMENT order,
+   * which is the order abcjs's `otherchildren` is built in.
+   */
+  barSites: readonly SpannerSite[] = [],
 ): PlacedLine[][] {
   const out: PlacedLine[][] = bounds.map(() => [])
   // A third borrowed weight: this was `LINE_WEIGHTS.staffLine`, which is abcjs's 0.6px
@@ -5810,8 +5817,12 @@ function layoutSpanners(
     )
   }
 
-  const emit = (from: NoteAnchor, to: NoteAnchor, kind: string): void => {
+  const emit = (from: SpannerSite, to: SpannerSite, kind: string): void => {
     if (kind === 'glissando') {
+      // A GLISSANDO JOINS TWO NOTEHEADS and cannot end on a bar — see `SpannerSite`.
+      const fromNote = from.anchor
+      const toNote = to.anchor
+      if (fromNote === undefined || toNote === undefined) return
       // Tracks PITCH, so it follows the noteheads rather than sitting in a lane. A
       // glissando across a system break is dropped rather than split: half a pitch line
       // aimed at a note the reader cannot see says nothing. No fixture writes one.
@@ -5828,12 +5839,12 @@ function layoutSpanners(
        * both margins, `len` being the centre-to-centre hypotenuse — `Math.sqrt`, not
        * `hypot`, which is the same abcjs-debt the curve's arc carries.
        */
-      const w1 = from.headWidth ?? 0
-      const w2 = to.headWidth ?? 0
-      const leftX = from.left + w1 / 2
-      const rightX = to.left + w2 / 2
-      const leftY = from.pitchY
-      const rightY = to.pitchY
+      const w1 = fromNote.headWidth ?? 0
+      const w2 = toNote.headWidth ?? 0
+      const leftX = fromNote.left + w1 / 2
+      const rightX = toNote.left + w2 / 2
+      const leftY = fromNote.pitchY
+      const rightY = toNote.pitchY
       const marginLeft = w1 / 2 + ENGRAVE.glissandoMargin
       const marginRight = w2 / 2 + ENGRAVE.glissandoMargin
       const runX = rightX - leftX
@@ -5886,24 +5897,42 @@ function layoutSpanners(
   // second open overwrite the first and silently lost a hairpin. FIFO rather than a
   // stack because hairpins on one voice run in sequence; they do not nest, so the first
   // open belongs to the first close.
-  const open = new Map<string, NoteAnchor[]>()
+  const open = new Map<string, SpannerSite[]>()
 
-  for (const anchor of anchors) {
-    // A REST — a SPACER above all — anchors a hairpin like any other element. abcjs's
-    // `anchor2` is whatever absolute element the `!<)!` was written on, and
-    // `!<(!GABc|!<)!y` closes on the `y`. Skipping rests lost the hairpin outright.
-    for (const name of anchor.event.decorations) {
+  // A REST — a SPACER above all — anchors a hairpin like any other element. abcjs's
+  // `anchor2` is whatever absolute element the `!<)!` was written on, and
+  // `!<(!GABc|!<)!y` closes on the `y`. Skipping rests lost the hairpin outright.
+  //
+  // …AND SO DOES A BARLINE, which is not an anchor at all. `Array.sort` is stable and the
+  // element index is what orders them, so a bar and the note before it keep their order.
+  const sites: SpannerSite[] = [
+    ...anchors.map((a) => ({
+      element: a.element,
+      system: a.system,
+      left: a.left,
+      decorations: a.event.decorations,
+      anchor: a,
+    })),
+    ...barSites,
+    // BY SYSTEM FIRST. `element` is an index into the system's own list and REPEATS across
+    // systems, so sorting on it alone interleaves two systems' marks and pairs a hairpin's
+    // open with the wrong close — `!crescendo(!G!<(!G | !crescendo)!G!<)!G` lost one of its
+    // two outright. Both input lists are already system-major and `Array.sort` is stable.
+  ].sort((p, q) => p.system - q.system || p.element - q.element)
+
+  for (const site of sites) {
+    for (const name of site.decorations) {
       const opens = SPANNER_OPEN[name]
       if (opens !== undefined) {
         const queue = open.get(opens)
-        if (queue === undefined) open.set(opens, [anchor])
-        else queue.push(anchor)
+        if (queue === undefined) open.set(opens, [site])
+        else queue.push(site)
         continue
       }
       const closes = SPANNER_CLOSE[name]
       if (closes === undefined) continue
       const from = open.get(closes)?.shift()
-      if (from !== undefined) emit(from, anchor, closes)
+      if (from !== undefined) emit(from, site, closes)
     }
   }
 
@@ -7509,6 +7538,17 @@ interface MeasureBlock {
   readonly openingBarIndex: number | null
   /** Note anchors for slur and tie resolution, positioned LOCAL to this block. */
   readonly anchors: readonly NoteAnchor[]
+  /**
+   * **WHERE A SPANNER MAY OPEN OR CLOSE THAT IS NOT A NOTE** — a BARLINE, because a
+   * decoration written before one attaches to it (`abstract-engraver.js:1002`) and
+   * `!<)!` before a `|` is how most hairpins in the corpus end.
+   *
+   * A separate list rather than an entry in `anchors`, because an anchor is read by the
+   * curve pass, the tuplet pass and the grace pass, and a bar belongs to none of them: it
+   * would lengthen a tuplet bracket and offer itself as a slur end. A hairpin needs only
+   * `system` and `left`, which is what a site carries.
+   */
+  readonly spannerSites: readonly SpannerSite[]
   /** A repeat ending opening at this measure, and whether this measure closes it. */
   readonly volta: string | null
   readonly closesVolta: boolean
@@ -7538,6 +7578,22 @@ interface MeasureBlock {
  * `layout/voice-elements.js`). The spring is not stored — it is `sqrt(duration)`, and the
  * cursor recomputes it at whatever factor the solve has reached.
  */
+/**
+ * A place a hairpin may open or close: a note, a rest or a BARLINE.
+ *
+ * `emit`'s hairpin arm reads only `system` and `left` — `left = anchor1.x` and
+ * `right = anchor2.x` (`draw/crescendo.js:12-13`) — so a bar needs far less than a
+ * `NoteAnchor`. `anchor` is present only for the note-like sites, and the GLISSANDO arm
+ * requires it: a glissando joins two noteheads and cannot end on a bar.
+ */
+interface SpannerSite {
+  readonly element: number
+  readonly system: number
+  readonly left: number
+  readonly decorations: readonly string[]
+  readonly anchor?: NoteAnchor
+}
+
 interface Advance {
   readonly rod: number
   readonly gap: number
@@ -7788,6 +7844,8 @@ function layoutMeasure(
   }
   const beams = new Map<number, StemInfo[]>()
   const anchors: NoteAnchor[] = []
+  /** …and the non-note places a hairpin may open or close — see `MeasureBlock.spannerSites`. */
+  const spannerSites: SpannerSite[] = []
   let x = 0
 
   // The label precedes the first event that comes AFTER the `P:` in the source, which is
@@ -8114,6 +8172,16 @@ function layoutMeasure(
     // extent — abcjs passes the literal 12 (`abstract-engraver.js:1002`). Pitch 12 is our
     // step 6, and `decorationMinTop` clamps it there anyway.
     const barDecorations = measure.closingBarlineDecorations ?? []
+    // **AND A HAIRPIN MAY CLOSE ON IT.** `!<)!` before a `|` attaches to the BARLINE, and
+    // our spanner scan only ever walked notes — so `flattener-02` drew no hairpin at all.
+    // `left` is the bar element's own x, which is what `drawCrescendo` takes for both ends.
+    if (barDecorations.length > 0)
+      spannerSites.push({
+        element: closingBarIndex,
+        system: 0,
+        left: x,
+        decorations: barDecorations,
+      })
     const marks =
       barDecorations.length === 0
         ? null
@@ -8238,6 +8306,7 @@ function layoutMeasure(
     width: x,
     beams,
     anchors,
+    spannerSites,
     closingBarIndex,
     openingBarIndex,
     musicWidth,
@@ -9070,6 +9139,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   // Anchors for every note of every voice, tagged with the system it landed in. A slur
   // or tie can span a break, so pairing them needs the whole tune, not one system.
   const voiceAnchors: NoteAnchor[][] = plans.map(() => [])
+  const voiceSites: SpannerSite[][] = plans.map(() => [])
   /**
    * The top-text block's ROW ADVANCES, in order — abcjs adds them one at a time to the
    * page's cursor and the page's HEIGHT is that cursor. See `PlacedText.pageY`.
@@ -9860,6 +9930,16 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
               right: a.right + shiftOf(a.element) + away,
             })
           }
+          // …and the BARLINE sites, stamped the same way — see `MeasureBlock.spannerSites`.
+          for (const site of block.spannerSites) {
+            const away = displacementOf(voiceIndex, i, site.element)
+            voiceSites[voiceIndex]?.push({
+              ...site,
+              system: systemIndex,
+              element: site.element + base,
+              left: site.left + shiftOf(site.element) + away,
+            })
+          }
         }
         if (block?.closesVolta) closeVolta(barAnchor(i, 'closing', 'endingEnd') ?? endOf(i), true)
       }
@@ -10465,8 +10545,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   // Hairpins need the same treatment and for the same reason. Resolved per system, they
   // lost HALF the hairpins in S1-decorations tune 2 — it wraps to six systems and the
   // pairs straddle the breaks.
-  const spannersBySystem = voiceAnchors.map((anchors) =>
-    layoutSpanners(anchors, systemBounds, (i) => hasVocalsAt(spans[i]?.start ?? 0)),
+  const spannersBySystem = voiceAnchors.map((anchors, v) =>
+    layoutSpanners(anchors, systemBounds, (i) => hasVocalsAt(spans[i]?.start ?? 0), voiceSites[v] ?? []),
   )
   const withCurves = systems.map((system, systemIndex) => ({
     ...system,
