@@ -662,6 +662,26 @@ Porting it means carrying abcjs's `split` array through to the emitter rather th
 expressing it as runs — our beam model has one `[x1,x2]` per level per run and cannot say
 this. One fixture, and the last 200 bytes of it.
 
+### 3.3h A BEAMED STEM'S ANCHOR IS 0.005px SHORT — located, not fixed
+
+`visual-svg-per-line-02` prints a stem as `M 265 … L 264.39 …` where abcjs writes `265` and
+`264.4`. Probed, our stem's line is `x1 264.695 thickness 0.6`, so the emitter's two edges
+are `264.995` and `264.395` — and `roundNumber` sends the first to **265** (the double for
+`264.995` sits just above the half) and the second to **264.39** (the double for `264.395`
+sits just below). Both roundings are abcjs's own `parseFloat(toFixed(2))` behaving
+correctly.
+
+So the emitter is right and **the anchor is 0.005px short**: abcjs's stem x is the head's
+right edge at exactly `265`, ours implies `264.995`. Deriving the far edge from the anchor
+rather than from the centre — which is what `printStem` does, `x` and `x + dx`
+(`draw/print-stem.js:5-14`) — was implemented and **reverted**: it is the faithful form and
+it changed nothing, because the anchor it derives from is the value that is wrong.
+
+The suspect is named in the code already: our beamed stem takes a BRAVURA anchor
+(`head.anchors.stemUpSE`) where abcjs takes `furthestHead.w`, the head's DECLARED width —
+the same `ENGRAVING_DEFAULTS`-shaped hole the line weights came out of, one axis over. Start
+by printing both for this fixture's beamed stem.
+
 ### 3.4 THE REST OF THE TABLE — 16 STRUCTURAL, 13 ULP
 
 Read `/tmp/abcts-svg-bytes-ranked.txt` after `npx vitest run tests/svg-bytes.test.ts`, and
