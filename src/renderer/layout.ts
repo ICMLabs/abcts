@@ -6310,13 +6310,41 @@ function curveReserves(
    * beam-retargeted stem — so the reserve can be a PITCH SUM converted once, which is how
    * abcjs states it. Undefined on the retargeted branch, whose y is a length already.
    */
-  const endStep = (a: NoteAnchor, isStart: boolean): number | undefined => {
+  /**
+   * **THE RESERVE'S END MUST BE THE SAME END THE CURVE IS DRAWN AT** — `getYBounds` reads
+   * `this.startY`/`this.endY`, which `calcSlurY` has already resolved
+   * (`tie-element.js:163-224`). So every arm of `endY` in `buildCurve` has to appear here
+   * as a PITCH, or the extent divides a y back and the staff's top comes out one ULP away:
+   * `visual-slurs-02`'s second staff wanted `17.982545131959377` and the `.4825…` fraction
+   * is the slur's own mid-stem point.
+   *
+   * abcjs-debt: §  — the two live apart because one produces a y for drawing and the other
+   * a pitch for the extent, and abcjs's single `startY` serves both. Keep them in step; a
+   * new arm in `endY` needs one here.
+   */
+  const endStep = (
+    a: NoteAnchor,
+    isStart: boolean,
+    ctx?: { above: boolean; kind: 'tie' | 'slur'; from: NoteAnchor; to: NoteAnchor },
+  ): number | undefined => {
     const pos = a.beamPos ?? 'none'
     const fixed = a.slurFixed
     if (fixed !== undefined && pos !== 'none' && (isStart ? pos !== 'last' : pos !== 'first')) {
       return undefined
     }
-    return a.pitchStep
+    if (ctx === undefined || ctx.kind === 'tie' || !ctx.above) return a.pitchStep
+    const isBeamed = (n: NoteAnchor): boolean => n.beamPos !== undefined && n.beamPos !== 'none'
+    const beamInterferes = ctx.to.stemUp && isBeamed(ctx.to) && ctx.to.beamPos !== 'first'
+    const highP = (n: NoteAnchor): number =>
+      (n.pitchStep ?? 0) +
+      (n.stemUp && ratToNumber(n.event.duration) < 1 ? ABCJS_PITCH.slurStemCompensation : 0)
+    const midP = (n: NoteAnchor): number => (highP(n) + (n.pitchStep ?? 0)) / 2
+    const startAtTest =
+      ctx.from.stemUp ? midP(ctx.from) : (ctx.from.pitchStep ?? 0)
+    if (!a.stemUp) return isStart || !beamInterferes ? a.pitchStep : highP(a)
+    if (isStart) return midP(a)
+    // abcjs's `midPoint < startY` is a PITCH comparison the other way round from y.
+    return !beamInterferes && midP(a) < startAtTest ? midP(a) : a.pitchStep
   }
   const add = (from: NoteAnchor, to: NoteAnchor, kind: 'tie' | 'slur'): void => {
     const above = curveIsAbove(from, to, voicePos, kind)
@@ -6331,8 +6359,9 @@ function curveReserves(
     }
     // **`getYBounds` IS A PITCH SUM** — three pitch off the lower end — so it converts
     // once. `y` is the LOWER end on screen, which is the SMALLER step.
-    const s1 = endStep(from, true)
-    const s2 = endStep(to, false)
+    const ctx = { above, kind, from, to }
+    const s1 = endStep(from, true, ctx)
+    const s2 = endStep(to, false, ctx)
     const step = s1 === undefined || s2 === undefined ? undefined : Math.min(s1, s2)
     reserves.push(
       above
@@ -6916,8 +6945,19 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
   const startY = stepToY(startStep)
   const endY = stepToY(endStep)
 
+  /**
+   * **`getBarYAt` TAKES THE SLOPE FIRST.**
+   *
+   *     return starty + (endy - starty) / (endx - startx) * (x - startx)
+   *
+   * (`layout/get-bar-y-at.js`.) Ours divided the x-fraction first and multiplied by the
+   * span — `((x - x0) / span) * (y1 - y0)` against abcjs's `((y1 - y0) / span) * (x - x0)`,
+   * the same terms in a different grouping. It reaches every beamed stem, and through
+   * `fixed.b` every staff extent a beam touches: `visual-slurs-02`'s note bottom wanted
+   * `-16.482545131959373`.
+   */
   const yAt = (x: number): number =>
-    span === 0 ? startY : startY + ((x - beamStartX) / span) * (endY - startY)
+    span === 0 ? startY : startY + ((endY - startY) / span) * (x - beamStartX)
 
   // Retarget each stem to the beam.
   //
@@ -6932,7 +6972,7 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
   const startPitch = startStep + PITCH_ORIGIN
   const endPitch = endStep + PITCH_ORIGIN
   const pitchAt = (x: number): number =>
-    span === 0 ? startPitch : startPitch + ((x - beamStartX) / span) * (endPitch - startPitch)
+    span === 0 ? startPitch : startPitch + ((endPitch - startPitch) / span) * (x - beamStartX)
   for (const stem of group) {
     const element = elements[stem.element]
     if (!element) continue
@@ -13016,8 +13056,9 @@ function layoutGraces(
       const span = beamEndX - beamStartX
       const startY = stepToY(startStep)
       const endY = stepToY(endStep)
+      // …the same slope-first form `getBarYAt` uses; see the main beam's `yAt`.
       const yAt = (bx: number): number =>
-        span === 0 ? startY : startY + ((bx - beamStartX) / span) * (endY - startY)
+        span === 0 ? startY : startY + ((endY - startY) / span) * (bx - beamStartX)
       // `calcDy` returns `STEP * 0.4` for a grace beam — under half the weight of a full
       // one (`layout/beam.js:66-71`).
       const thickness = LINE_WEIGHTS.beam * ABCJS_RATIO.graceBeamScale
