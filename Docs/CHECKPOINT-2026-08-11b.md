@@ -1,6 +1,6 @@
 # CHECKPOINT — 2026-08-11b
 
-**abcts, `main`.** The suite is **1266/1266** with no reds, `npx tsc --noEmit` is clean,
+**abcts, `main`.** The suite is **1268/1268** with no reds, `npx tsc --noEmit` is clean,
 everything below is committed and pushed.
 
 ---
@@ -17,22 +17,22 @@ everything below is committed and pushed.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 0 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 1 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 1 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **59 of 171**, best 200613, median 10288 | 94 of 171 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **57 of 171**, best 200613, median 10288 | 94 of 171 |
 
-**`svg-bytes` is the one open gate**, `DIVERGENT` is still EMPTY, and **112 fixtures are
-byte-exact — all 112 RATCHETED**, up from seven. See §4.
+**`svg-bytes` is the one open gate**, `DIVERGENT` is still EMPTY, and **114 fixtures are
+byte-exact — all 114 RATCHETED**, up from seven. See §4.
 
 ---
 
 ## 2. THE LANDINGS
 
-**Twenty-six, in two halves.** The first seven are one finding: abcjs's ARITHMETIC IS PART OF
+**Twenty-eight, in two halves.** The first seven are one finding: abcjs's ARITHMETIC IS PART OF
 THE PORT — which number is formed first, which product is taken once, which offset is
 stored rather than derived. §3 of `CHECKPOINT-2026-08-11.md` named it as the next
 architectural arc for the VERTICAL; it turned out to be the horizontal too, and the
 horizontal was worth more (82 → 67 on two changes).
 
-The last nineteen are STRUCTURAL — 67 → 59 — and every one came out of the two biggest
+The last twenty-one are STRUCTURAL — 67 → 57 — and every one came out of the two biggest
 fixtures in the corpus (`visual-selection-01` and `visual-svg-per-line-01`, 202k bytes each, the same
 tune), which went from byte 3038 to byte **12305**. They are in §2.8 onward. **Four of the
 last five are invisible to every ranked table** and were reachable only because the byte
@@ -341,26 +341,61 @@ after**; the two left are pre-existing and named (`%%voicecolor`, and `!beambr1!
 `visual-selection-01` and its twin are now at byte **200613 of 202156**, and what is left
 is 0.17px of one slur's y.
 
-### 2.20 ⚖️ AND ONE MORE MEASURED AND NOT LANDED — **THE LEADING IS EIGHT ADDS**
+### 2.20 THE TOP-BLOCK LEAD IS ABCJS'S EIGHT ADDS, SPENT AS ONE TERM LIST
 
-`visual-tablature-08` (`T:First` / `T:Second`) and five siblings carry a uniform ULP on
-every glyph of the staff AND on the root's `height`. Instrumented, abcjs's page cursor is:
+Instrumented on `visual-tablature-08` (`T:First` / `T:Second`), abcjs's page cursor reads
 
     15 → 22.56 → 55.56 → 59.34 → 85.34    padding.top, then four nonMusic ROWS
          → 92.9                            spacing.music
          → 154.23000000000002              staffSeparation, the 6.7.0 else-arm
          → 207.41200000000003              + STEP × 13.724387096774194
 
-**Eight adds and one product.** Ours sums the whole lead into ONE number — `leading`
-139.23 — and reaches 154.23 rather than 154.23000000000002.
+**Eight adds and one product.** Ours summed the whole lead into ONE number and subtracted
+the extent's y, reaching `207.41199999999998`.
 
-An implementation that spends `originAdvances` as a list is written and **REVERTED**: it
-took `pixel-parity` to 9 of 120 and the harvested table to 13 of 174, so the decomposition
-is wrong, not just the order. What it got wrong is where `spacing.music` lives — with a
-heading block `headingless` is FALSE, so `musicSpace` is NOT in the system's `cursor` at
-all; it is inside `blockSpan`, via `offset = musicTop - gap - blockBottom`. Splitting
-`blockSpan` into rows + gap + overshoot is the part to get right, and the term list above
-is the target to hit exactly.
+**A FIRST ATTEMPT FAILED AND THE SECOND ONE PRINTED EVERY PIECE FIRST.** The failure took
+`pixel-parity` to 9 of 120 because it added `spacing.music` a second time and split
+`blockSpan` as though the two were disjoint. One `console.error` of every input settled it:
+**`topAdvances` ALREADY ENDS WITH `spacing.music`, and `blockSpan` IS its sum.** So the lead
+is `[...topAdvances, separation]` and nothing else.
+
+The list closes on a REMAINDER spent only when it exceeds a nanopixel — `visual-options-01`
+carries one extra `spacing.music` these terms do not name, and below that threshold the
+value is the same quantity by a different association, so keeping it took the byte table
+59 → 60. **`ABCTS_CHECK=1` asserts the walked origin and the system-relative one agree**,
+which is how `options-01`'s shape was found at all; it reports 0 mismatches across the
+corpus and is the guard against a term list that silently stops describing a shape.
+
+**TWO MORE FELL OUT OF IT.** A BLOCK STAFF'S TOP IS A PITCH TOO, now that the music-only
+extent reports one — `calcHeight` sums `staff.top`, which knows nothing about the top text.
+And THE HEIGHT WALK SPENDS THE SAME LIST: it used to add `topAdvances` and then
+`first.leading - named`, which is the separation reached by subtracting two sums, and
+`(61.33 + 77.89999999999999) - 77.9` is not `61.33`. **59 → 57**, and glyph-y ULP tokens
+58 → 49.
+
+### 2.21 `calcSlurY`'s MID-STEM ARM, WHICH A `ponytail:` PREDICTED WAS A NO-OP
+
+    if (above && a1.stemDir === 'up' && !fixedY) startY = (a1.highestVert + a1.pitch)/2
+    else                                          startY = a1.pitch
+    if (above && a2.stemDir === 'up' && !fixedY && !beamInterferes && midPoint < startY)
+                                                  endY = midPoint
+    else  endY = above && beamInterferes ? a2.highestVert : a2.pitch
+
+(`tie-element.js:163-200`.) Only the BEAMED override that follows it was ported, and the
+`ponytail:` beside it said the mid-stem arm is a no-op because *"`highestVert` IS the anchor
+pitch on every binding curve here"*. **A PREDICTION.** `visual-slurs-02` denies it: `(E2D2)`
+is two UNBEAMED quarters, instrumented abcjs reports `pitch 2 / highestVert 8`, and its slur
+sits three pitch — 11.62px — above ours.
+
+**AND THE ARITHMETIC WAS ALREADY IN THE FILE**, because the same branch carries the x bump
+that WAS ported: `midPointY`, `highPitch`, `beamInterferes` and `startYAtTest` all existed
+and only the y read them. Instrumenting BOTH sides is what narrowed it — our `fixed.top` for
+the beamed anchor is `12.988226417082117`, exactly abcjs's, which ruled the beamed branch out
+and left the unbeamed one.
+
+Five baselines moved 1-for-1, every row a slur endpoint rising 11.625px. **`pixel-parity` and
+the harvested table cannot see a slur at all** and stayed at 0 throughout — the third time
+this branch has had to lean on the byte table for an axis no other gate expresses.
 
 ---
 
@@ -372,15 +407,13 @@ the wrong family):
 
 | | rows | ULP tokens | fixtures carrying them |
 |---|---|---|---|
-| glyph y | — | **58** | 6 |
+| glyph y | — | **49** | 5 |
 | glyph x | 13 | **36** | 13 |
-| root `width`/`height` | 11 | 5 | 5 |
-| other | 3 | 1 | 1 |
-| **structural** | **32** | — | — |
+| root `width`/`height` | — | 2 | 2 |
+| **structural** | **~30** | — | — |
 
-At the session's midpoint this read **glyph-x 265 tokens across 33 fixtures**. **The two
-arithmetic families are down to 94 tokens between them and the STRUCTURAL rows are more
-than half the open table.**
+At the session's midpoint this read **glyph-x 265 tokens across 33 fixtures** and the root
+5 across 5. **The arithmetic families are down to 87 tokens between them.**
 
 ### 3.1 THE TWO ULP FAMILIES, EACH NAMED
 
@@ -569,6 +602,12 @@ token COUNTS differ, so a fixture going structural silently leaves its table. Re
   before it closed. A large fixture is not a hard fixture; it is a DENSE one — and a BYTE
   comparison is what makes it one, because it walks the whole file in order and stops at the
   first thing wrong.
+- **PRINT EVERY INPUT BEFORE CONSTRUCTING THE TERM LIST.** §2.20 failed once by reasoning
+  about which terms `blockSpan` and `topAdvances` hold, and closed in one step after a
+  `console.error` printed both. The failure cost a full suite run; the print cost nothing.
+- **AND LEAVE THE ASSERTION BEHIND.** `ABCTS_CHECK=1` compares the walked origin with the
+  system-relative one and is what found the shape the term list did not describe. A term
+  list is a claim about every shape in the corpus; make it checkable.
 - **A HALF-UNDERSTOOD FIX IS WORTH LESS THAN A WRITTEN-DOWN MEASUREMENT.** The grace-beam
   level count is certain and its geometry is not; the implementation was reverted and §2.18
   records both engines' output verbatim plus the three questions to settle. A guess that

@@ -594,8 +594,8 @@ checkpoint and hand off as you go so no context is lost.
 > music's ink while our y comes from the last verse's baseline — spending it takes one
 > fixture byte-exact and puts two others structurally out.
 
-> 🧱 **AND THEN THE STRUCTURAL ROWS STARTED FALLING — 67 → 59, NINETEEN FINDINGS OFF ONE
-> FIXTURE** (2026-08-11b), which a BYTE comparison hands you one at a time because it walks
+> 🧱 **AND THEN THE STRUCTURAL ROWS STARTED FALLING — 67 → 57, TWENTY-ONE FINDINGS, MOST
+> OFF ONE FIXTURE** (2026-08-11b), which a BYTE comparison hands you one at a time because it walks
 > the whole file in order. The later ones: **a grace note is a SIXTEENTH** so a bare group
 > takes TWO beams (`abc_parse_music.js:694-695`, measured at three `L:` values); **an ending
 > is on `otherchildren` too**, and **an ending and a triplet take their turn at their START
@@ -603,6 +603,17 @@ checkpoint and hand off as you go so no context is lost.
 > realized on a lyric though its size and weight were; and **a tempo mark's notehead sits on
 > a PITCH** — the rung less five (`set-upper-and-lower-elements.js:209`) — where ours
 > reached it through the text baseline and four y terms.
+>
+> 🔬 **AND THE LAST TWO WERE THE PAGE LEAD AND A SLUR.** The top-block lead is abcjs's
+> EIGHT ADDS — `padding.top`, four nonMusic rows, `spacing.music`, `staffSeparation`, then
+> ONE product — where ours summed it into one number; a first attempt failed by REASONING
+> about which terms `blockSpan` and `topAdvances` hold and a `console.error` of both settled
+> it in one step (`topAdvances` already ends with `spacing.music`, and `blockSpan` IS its
+> sum). **`ABCTS_CHECK=1` is the assertion left behind** — it compares the walked staff
+> origin with the system-relative one and found the one shape the term list did not
+> describe. And `calcSlurY`'s MID-STEM ARM was never ported because a `ponytail:` predicted
+> it a no-op; `visual-slurs-02`'s `(E2D2)` denies it by three pitch, and **the arithmetic was
+> already in the file** — the same branch carries an x bump that WAS ported.
 >
 > 🔬 **AND TWICE A FIX WAS REVERTED AND THEN LANDED BY INSTRUMENTING.** The grace beam's aux
 > level was wrong in BOTH directions when read off the two engines' `d` strings; one
@@ -883,14 +894,15 @@ abcjs source are all reached by sibling path and stay in that repo. Keep it that
 backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
-**AUDIO IS BYTE-EQUAL AND THE SVG IS THE ARC.** 1266/1266 with no
+**AUDIO IS BYTE-EQUAL AND THE SVG IS THE ARC.** 1268/1268 with no
 reds; **seventeen gates and NINE ranked tables** — 0 of 72 audio cases, 0 of 38 note timings,
 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
 **1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
 **1 of 25 DOM-contract cases with TWENTY-FOUR slugs RATCHETED** — and
-**59 of 171 SVG-byte fixtures, ONE HUNDRED AND TWELVE of them EXACT and ALL 112 RATCHETED** —
-and **the SVG BYTE TABLE is THE ONE OPEN GATE**, at best 200613 / median 10288 — **32
-structural + 13 glyph-x + 11 root + 3 other**, classified by aligning on the
+**57 of 171 SVG-byte fixtures, ONE HUNDRED AND FOURTEEN of them EXACT and ALL 114
+RATCHETED** — and **the SVG BYTE TABLE is THE ONE OPEN GATE**, at best 200613 / median
+10288 — mostly STRUCTURAL now, the ULP families being 49 glyph-y tokens across 5 fixtures
+and 36 glyph-x across 13, classified by aligning on the
 first differing character (a cruder test sends you at the wrong family). **THE ARITHMETIC
 ARC HAS DONE ITS WORK ON BOTH AXES** — the layout holds abcjs's pitches end to end, the line
 solve iterates on abcjs's own `spacing`, and elements are PLACED on the solved x rather than
