@@ -1329,11 +1329,51 @@ const glyphDefs = new Map<GlyphName, string>()
         const systemOy = (system.originY + OY) * PX
         const yTop = span.top * PX + systemOy
         const yBottom = span.bottom * PX + systemOy
+        /**
+         * **A BRACE WITH A HEADER OWNS THE VOICE NAME, AND DRAWS IT ITSELF.**
+         *
+         *     if (header) {
+         *       paper.openGroup({ klass: classes.generate("staff-extra voice-name"),
+         *                         "data-name": type });
+         *       var position = yTop + (yBottom - yTop) / 2;
+         *       position = position - getTextSize.baselineToCenter(header, "voicefont",
+         *                                'staff-extra voice-name', 0, 1);
+         *       renderText(renderer, { x: renderer.padding.left, y: position, … });
+         *     }
+         *     …the path…
+         *     if (header) ret = paper.closeGroup();
+         *
+         * (`draw/brace.js:78-98`.) The name is at the PAGE's left padding, not the
+         * staff's, and centred on the BRACE rather than on either staff it joins — which
+         * is why `BraceElem.setBottomStaff` deletes it off the voice. See
+         * `ConnectorSpan.header`.
+         */
+        const header = span.header
+        if (abcjs && header !== undefined) {
+          const cls = classes.generate('staff-extra voice-name')
+          parts.push(`<g${cls ? ` class="${cls}"` : ''} data-name="${span.kind}">`)
+          const position = yTop + (yBottom - yTop) / 2 - header.baselineToCentre * PX
+          parts.push(
+            abcjsText(
+              textNum(ENGRAVE.marginX * PX),
+              textNum(position),
+              num(header.size * PX),
+              ABCJS_FONT_FACE.voicefont ?? 'Times New Roman',
+              false,
+              true,
+              'start',
+              '',
+              escapeText(header.text),
+              cls,
+            ),
+          )
+        }
         parts.push(
           `<path d="${connectorPath(span, yTop, yBottom)}" stroke="currentColor" ` +
             `fill="currentColor" class="${classes.generate(span.kind)}" ` +
             `data-name="${span.kind}"></path>`,
         )
+        if (abcjs && header !== undefined) parts.push('</g>')
       }
       // `foundNote` — a barline before any note does not advance the measure counter.
       let foundNote = false

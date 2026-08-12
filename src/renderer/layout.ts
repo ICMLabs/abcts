@@ -1376,6 +1376,32 @@ export interface ConnectorSpan {
   /** …and the last staff it spans, which is also how far its barlines join. */
   readonly through: number
   readonly x: number
+  /**
+   * **THE VOICE NAME, WHEN THE BRACE OWNS IT RATHER THAN THE STAFF.**
+   *
+   *     // If only the start brace has a name then the name belongs to the brace
+   *     // instead of the staff.
+   *     if (this.startVoice.header && !this.endVoice.header) {
+   *       this.header = this.startVoice.header;
+   *       delete this.startVoice.header;
+   *     }
+   *
+   * (`creation/elements/brace-element.js:9-14`.) `drawBrace` then opens a
+   * `<g class="staff-extra voice-name" data-name="brace">`, draws the name at the BRACE's
+   * own vertical midpoint, draws the path, and closes (`draw/brace.js:78-98`). The
+   * `delete` is what stops the voice drawing it a second time.
+   */
+  readonly header?: {
+    readonly text: string
+    readonly size: number
+    /**
+     * `getTextSize.baselineToCenter(header, "voicefont", 'staff-extra voice-name', 0, 1)`
+     * — `height * 0.5 + (total - index - 2) * fontSize` with a total of ONE, so the label
+     * is centred on the brace as a block of one (`helpers/get-text-size.js:53-59`).
+     * Computed here because the text metrics live in the layout.
+     */
+    readonly baselineToCentre: number
+  }
   /** The first staff's top LINE and the last staff's bottom line, in system coordinates. */
   readonly top: number
   readonly bottom: number
@@ -5285,6 +5311,10 @@ const SPANNER_CLOSE: Readonly<Record<string, 'crescendo' | 'diminuendo' | 'gliss
 function layoutConnectors(
   groups: readonly StaffGroup[],
   staves: readonly { readonly originY: number }[],
+  /** The name this brace OWNS, by staff-group index — see `ConnectorSpan.header`. */
+  headers: ReadonlyMap<number, NonNullable<ConnectorSpan['header']>> = new Map(),
+  /** `padding.left + voiceheaderw`, which is where `getLeftEdgeOfStaff` puts a connector. */
+  connectorX: number = ENGRAVE.marginX,
 ): { glyphs: PlacedGlyph[]; lines: PlacedLine[]; spans: ConnectorSpan[] } {
   const glyphs: PlacedGlyph[] = []
   const lines: PlacedLine[] = []
@@ -5327,13 +5357,19 @@ function layoutConnectors(
     const first = edge(from)
     const last = edge(to)
     if (first === null || last === null) continue
-    // `params.x` is the page's left padding — measured on a golden, whose first curve
-    // point is `xLeft + 7.5` at 22.5. The staff itself is indented past it.
+    // `params.x` is `getLeftEdgeOfStaff`'s running `x` BEFORE the connector's own width is
+    // added — `padding.left + voiceheaderw`, where `voiceheaderw` is the widest voice or
+    // brace header plus the width of an "A", and 0 when there is no header at all
+    // (`layout/get-left-edge-of-staff.js:2-27`). With no names that is the page's left
+    // padding, which is what a golden measured at `xLeft + 7.5 = 22.5`; with one it is
+    // 53.875 further right, past the name the brace itself draws.
+    const header = headers.get(from)
     spans.push({
       kind: 'brace',
       staffIndex: from,
       through: to,
-      x: ENGRAVE.marginX,
+      x: connectorX,
+      ...(header === undefined ? {} : { header }),
       top: first.top,
       bottom: last.bottom,
     })
@@ -8271,6 +8307,55 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     return connector + widest + voiceNameWidth('A')
   }
 
+  /**
+   * `voiceheaderw` on its own — `getLeftEdgeOfStaff`'s running `x` before the connector's
+   * width joins it, which is where a brace or bracket is DRAWN
+   * (`get-left-edge-of-staff.js:22-26`). The same terms as `indentFor` less the connector.
+   */
+  const headerIndentFor = (systemIndex: number): number =>
+    indentFor(systemIndex) -
+    (score.staves.some((group) => group.brace !== null || group.bracket !== null)
+      ? ENGRAVE.connectorIndent
+      : 0)
+
+  /**
+   * **WHICH BRACE OWNS A VOICE NAME.** `setBottomStaff` moves the header off the start
+   * voice when the END voice has none, and DELETES it there
+   * (`creation/elements/brace-element.js:9-14`) — so the staff stops drawing it and the
+   * brace starts. Keyed by staff-group index, with the voice it was taken from.
+   */
+  const braceHeaders = (
+    systemIndex: number,
+  ): { byStaff: Map<number, NonNullable<ConnectorSpan['header']>>; takenFrom: Set<number> } => {
+    const byStaff = new Map<number, NonNullable<ConnectorSpan['header']>>()
+    const takenFrom = new Set<number>()
+    const label = (v: number | undefined): string | null => {
+      const plan = v === undefined ? undefined : plans[v]
+      if (plan === undefined) return null
+      return systemIndex === 0 ? plan.name : plan.subname
+    }
+    let open: number | null = null
+    score.staves.forEach((group, i) => {
+      if (group.brace === 'start') open = i
+      if (group.brace === 'end' && open !== null) {
+        const startVoice = voicesOfStaff[open]?.[0]
+        const startName = label(startVoice)
+        if (startVoice !== undefined && startName && !label(voicesOfStaff[i]?.[0])) {
+          // `voicefont`'s resolved size, the same 17 the voice's own label uses.
+          const size = 17 / UNIT_PX
+          byStaff.set(open, {
+            text: startName,
+            size,
+            baselineToCentre: goldenTextHeight(size) * 0.5 + (1 - 0 - 2) * size,
+          })
+          takenFrom.add(startVoice)
+        }
+        open = null
+      }
+    })
+    return { byStaff, takenFrom }
+  }
+
   /** How many measures the longest voice has — the span indices run over these. */
   const columns = Math.max(0, ...plans.map((plan) => plan.blocks.length))
 
@@ -8842,7 +8927,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // room for, so it advances nothing.
       const labelText = systemIndex === 0 ? plan.name : plan.subname
       const nameElements: LayoutElement[] = []
-      if (labelText) {
+      // …UNLESS A BRACE TOOK IT. `setBottomStaff` deletes the header off the voice, so the
+      // staff draws nothing and the brace's own group draws it — see `ConnectorSpan.header`.
+      if (labelText && !braceHeaders(systemIndex).takenFrom.has(voiceIndex)) {
         const members = voicesOfStaff.find((m) => m.includes(voiceIndex)) ?? [voiceIndex]
         const pos = Math.max(0, members.indexOf(voiceIndex))
         const size = 17 / UNIT_PX
@@ -9593,7 +9680,12 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       }
     })
 
-    const connectors = layoutConnectors(score.staves, placed)
+    const connectors = layoutConnectors(
+      score.staves,
+      placed,
+      braceHeaders(systemIndex).byStaff,
+      ENGRAVE.marginX + headerIndentFor(systemIndex),
+    )
     return {
       staves: placed,
       heightPitch,

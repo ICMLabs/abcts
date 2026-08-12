@@ -115,6 +115,7 @@ const PASSING: readonly string[] = [
   'abcjs-synth-midi-01-midi-options',
   'abcjs-synth-midi-02-staccato',
   'abcjs-synth-midi-03-percmap',
+  'abcjs-synth-timing-02-score-1-2',
   'abcjs-synth-timing-03-cd-e-f-3gab-ac',
   'abcjs-synth-timing-04-cd-e-f-3gab-ac',
   'abcjs-synth-timing-07-skip-ties-crash',
