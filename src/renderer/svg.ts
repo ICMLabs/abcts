@@ -2214,7 +2214,12 @@ const glyphDefs = new Map<GlyphName, string>()
             }
           }
         }
-        if (barTexts) parts.push(...textParts.map((t) => t.s))
+        // …AND ONLY THE BAR NUMBER. The comment above says "every other element's text
+        // comes last" and this line pushed ALL of a bar's texts first, bar number and
+        // decoration alike. A `!D.C.alcoda!` written before a barline attaches to the
+        // BARLINE (`abstract-engraver.js:1002`), and abcjs's `createBarLine` adds the rules
+        // and only then the decorations — so the rule comes out before the text.
+        if (barTexts) parts.push(...textParts.filter((t) => t.dataName === 'bar-number').map((t) => t.s))
         /**
          * **THE ORDER INSIDE AN ELEMENT GROUP IS THE ENGRAVER'S ADD ORDER**, and for a note
          * that is, measured against abcjs's own goldens:
@@ -2369,7 +2374,8 @@ const glyphDefs = new Map<GlyphName, string>()
             }
           }
           if (barTexts) {
-            // already emitted above
+            // …and everything that is NOT the bar number comes after the rules.
+            parts.push(...textParts.filter((t) => t.dataName !== 'bar-number').map((t) => t.s))
           }
           advance()
           /**
