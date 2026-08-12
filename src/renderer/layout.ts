@@ -1159,6 +1159,8 @@ export interface LayoutElement {
    */
   readonly spring?: number
   readonly rod?: number
+  /** The `getMinWidth` half of `rod`, where the two are a sum — see `Advance.width`. */
+  readonly rodWidth?: number
   /**
    * How far the element's ink reaches LEFT of its own x — abcjs's `-child.extraw`.
    *
@@ -2796,6 +2798,8 @@ function layoutRest(
       // `minspacing: 1` like any note — abcjs adds it to `minx` on every element but the
       // line's last (`voice-elements.js:74`).
       rod: 3 * mm + ENGRAVE.noteRodGap,
+      // `getMinWidth` alone — see `Advance.width`.
+      rodWidth: 3 * mm,
       staffSteps: [],
       glyphs: [...glyphs, ...graces.glyphs],
       lines: graces.lines,
@@ -7396,6 +7400,21 @@ interface MeasureBlock {
 interface Advance {
   readonly rod: number
   readonly gap: number
+  /**
+   * **`getMinWidth(child)` ALONE, WHERE IT IS KNOWN EXACTLY** — because abcjs spends the
+   * two separately: `voice.minx = x + getMinWidth(child)` and then, on every element but
+   * the line's last, `voice.minx += child.minspacing` (`layout/voice-elements.js:74-77`).
+   *
+   * `x + (w + gap)` and `(x + w) + gap` are different doubles, and `rod - gap` does NOT
+   * recover `w`: on `flattener-34` the time signature's `21.795 - 10` is
+   * `11.795000000000002`, which is how the whole line came out one ULP right. So the width
+   * has to be CARRIED, not derived — the same lesson as `PlacedGlyph.dx`.
+   *
+   * Absent where `rod` is a `Math.max` over several claims rather than a sum, which is a
+   * BARLINE: there abcjs's `getMinWidth` is that max and the split is not ours to invent.
+   * Those fall back to the single add they always had.
+   */
+  readonly width?: number
   readonly duration: number
   /** Ink reaching LEFT of the element's own x — abcjs's `-child.extraw`. */
   readonly left: number
@@ -7616,8 +7635,15 @@ function layoutMeasure(
    */
   const advances: Advance[] = []
   /** A zero-duration element: a bar, a key change, a part label. */
-  const fixed = (rod: number, gap: number, kind: Advance['kind'] = 'other', left = 0): void => {
-    advances.push({ rod, gap, duration: 0, left, kind })
+  const fixed = (
+    rod: number,
+    gap: number,
+    kind: Advance['kind'] = 'other',
+    left = 0,
+    /** `getMinWidth` alone, when the caller built `rod` as `width + gap` — see `Advance.width`. */
+    width?: number,
+  ): void => {
+    advances.push({ rod, gap, duration: 0, left, kind, ...(width === undefined ? {} : { width }) })
   }
   const beams = new Map<number, StemInfo[]>()
   const anchors: NoteAnchor[] = []
@@ -7667,7 +7693,7 @@ function layoutMeasure(
     const change = layoutKeyChange(x, keyInForce, measure.keyChange, clef, strict)
     if (change === null) return
     elements.push(change)
-    fixed(change.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
+    fixed(change.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap, 'other', 0, change.width)
     x += change.width + ENGRAVE.prefixGap
   }
   let openingBarIndex: number | null = null
@@ -7752,7 +7778,7 @@ function layoutMeasure(
     const change = layoutClef(x, measure.clefChange, strict)
     if (change === null) return
     elements.push(change)
-    fixed(change.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
+    fixed(change.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap, 'other', 0, change.width)
     x += change.width + ENGRAVE.prefixGap
   }
   // A MID-TUNE `[M:4/4]` or `M:` PRINTS WHERE IT STANDS. abcjs builds an ordinary
@@ -7786,7 +7812,7 @@ function layoutMeasure(
     }
     const meter = layoutMeter(x, measure.meterChange, strict)
     elements.push(meter)
-    fixed(meter.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
+    fixed(meter.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap, 'other', 0, meter.width)
     x += meter.width + ENGRAVE.prefixGap
   }
   // A `Q:` AFTER THE FIRST prints where it stands, on its OWN voice's staff — an ordinary
@@ -7915,6 +7941,7 @@ function layoutMeasure(
     advances.push({
       rod: el.rod ?? el.width,
       gap: ENGRAVE.noteRodGap,
+      ...(el.rodWidth === undefined ? {} : { width: el.rodWidth }),
       duration,
       left: el.left ?? 0,
       kind: 'other',
@@ -8031,7 +8058,7 @@ function layoutMeasure(
     const trailing = layoutClef(x, trailingClef, strict)
     if (trailing !== null) {
       elements.push(trailing)
-      fixed(trailing.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
+      fixed(trailing.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap, 'other', 0, trailing.width)
       x += trailing.width + ENGRAVE.prefixGap
     }
   }
@@ -8041,7 +8068,7 @@ function layoutMeasure(
     const trailing = layoutKeyChange(x, trailingKey[0], trailingKey[1], clef, strict)
     if (trailing !== null) {
       elements.push(trailing)
-      fixed(trailing.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
+      fixed(trailing.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap, 'other', 0, trailing.width)
       x += trailing.width + ENGRAVE.prefixGap
     }
   }
@@ -8053,7 +8080,7 @@ function layoutMeasure(
   if (trailingMeter !== null) {
     const trailing = layoutMeter(x, trailingMeter, strict)
     elements.push(trailing)
-    fixed(trailing.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap)
+    fixed(trailing.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap, 'other', 0, trailing.width)
     x += trailing.width + ENGRAVE.prefixGap
   }
 
@@ -8585,6 +8612,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         advances.push({
           rod: el.width + ENGRAVE.prefixGap,
           gap: ENGRAVE.prefixGap,
+          width: el.width,
           duration: 0,
           left: 0,
           kind: 'other',
@@ -9137,7 +9165,11 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           const line = lines[v]
           const item = line?.items[k]
           if (line === undefined || item === undefined) continue
-          line.items[k] = { ...item, rod: item.rod + theirs.width }
+          line.items[k] = {
+            ...item,
+            rod: item.rod + theirs.width,
+            ...(item.width === undefined ? {} : { width: item.width + theirs.width }),
+          }
           const row = seen ?? new Map<number, number>()
           row.set(k, theirs.width)
           displaced.set(v, row)
@@ -9180,7 +9212,16 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           unspent[v] = item.duration
           // The line's LAST element keeps its own width and loses its `minspacing`.
           const last = k === (lines[v]?.items.length ?? 0) - 1
-          minx[v] = x + item.rod - (last ? item.gap : 0)
+          // **TWO ADDS, AS ABCJS SPENDS THEM** — `minx = x + getMinWidth(child)` and then
+          // `minx += child.minspacing` on every element but the last
+          // (`layout/voice-elements.js:74-77`). See `Advance.width` for why `rod - gap`
+          // cannot stand in for the first term.
+          minx[v] =
+            item.width === undefined
+              ? x + item.rod - (last ? item.gap : 0)
+              : last
+                ? x + item.width
+                : x + item.width + item.gap
           nextx[v] = x + spring(item.duration)
           durationIndex[v] = (durationIndex[v] ?? 0) + item.duration
           i[v] = k + 1
