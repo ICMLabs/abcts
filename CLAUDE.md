@@ -752,7 +752,22 @@ checkpoint and hand off as you go so no context is lost.
 > a cause is the reason the row stopped being read** (the `G8` breve, the `extra-class`
 > accent, this).
 >
-> 🔟 **AND THE DAY CLOSED AT 29 of 171 WITH 142 EXACT, ON TWENTY-SIX LANDINGS.** The later
+> 🔟 **AND THE DAY CLOSED AT 26 of 171 WITH 145 EXACT, ON THIRTY-ONE LANDINGS.** The last
+> five: **a SLASH or TRIANGLE notehead moves the stem's NOTEHEAD end**, on an UNBEAMED stem
+> and AFTER the middle-line clamp — both conditions found by a gate reporting the fixture
+> going BACKWARDS; **a tune with no `M:` still has a MEASURE LENGTH, and it is 1**, so
+> `centerWholeRests` had never run at all; **`isTie` is RECOMPUTED AT DRAW TIME** — a slur
+> whose two ends share a pitch with nothing between them is drawn as a TIE, which decides
+> the lift, the flatten cap, the direction rule, the class and the `data-name` together;
+> **a BARLINE WITH NOTHING AFTER IT is still a barline**, so `A | |` had been parsing as ONE
+> measure; and **ANY barline that is not a plain thin `|` ENDS THE ENDING it sits in** —
+> abcjs's rule is a COMPLEMENT where ours was a LIST, identical for everything but an
+> invisible `[|]`.
+>
+> 🔇 **AND SILENCE IS A SHARPER SIGNAL THAN A WRONG NUMBER.** Twice this day a probe printed
+> abcjs's answer and NOTHING from ours — `centerWholeRests` and the hairpin's close — and
+> both times that moved the search from "our arithmetic is off" to "this code never runs",
+> which is a different bug in a different file. The later
 > ones, and every one is a read of a named abcjs function: **%%voicecolor is `drawVoice`'s
 > SWAP** and the staff LINES are drawn before it; **an ENDING running off a system ends at
 > the voice's width MINUS ONE, unrounded**, because `drawEnding` rounds only what came from
@@ -991,8 +1006,8 @@ anything from a suite run.
 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
 **1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
 **1 of 25 DOM-contract cases with TWENTY-FOUR slugs RATCHETED** — and
-**29 of 171 SVG-byte fixtures, ONE HUNDRED AND FORTY-TWO of them EXACT and ALL 142
-RATCHETED** — 16 STRUCTURAL and 13 ULP — and **the SVG BYTE TABLE is THE ONE OPEN GATE**, at best 200613 — mostly
+**26 of 171 SVG-byte fixtures, ONE HUNDRED AND FORTY-FIVE of them EXACT and ALL 145
+RATCHETED** — 13 STRUCTURAL and 13 ULP — and **the SVG BYTE TABLE is THE ONE OPEN GATE**, at best 200613 — mostly
 STRUCTURAL now, classified by aligning on the
 first differing character (a cruder test sends you at the wrong family). **The next three
 are named and measured in `CHECKPOINT-2026-08-12.md` §3**: the FORCED STEM being per LINE

@@ -19,11 +19,11 @@ on stale runs before finding out what it was.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 0 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 1 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 1 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **29 of 171**, best 200613 | 49 of 171 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **26 of 171**, best 200613 | 49 of 171 |
 
-`DIVERGENT` is still EMPTY. **142 fixtures are byte-exact and all 142 are RATCHETED.**
+`DIVERGENT` is still EMPTY. **145 fixtures are byte-exact and all 145 are RATCHETED.**
 
-The 29 that remain classify **16 STRUCTURAL / 13 ULP** — see §3.4.
+The 26 that remain classify **13 STRUCTURAL / 13 ULP** — see §3.4.
 
 ---
 
@@ -445,6 +445,64 @@ either corpus has a curve and a hairpin whose two orderings disagree — and com
 citation, because the old note would send the next reader the wrong way and
 `visual-svg-per-line-01` is still open on this list.
 
+### 2.27 A SLASH OR TRIANGLE NOTEHEAD MOVES THE STEM'S NOTEHEAD END
+
+`p2 -= 0.7` down and `p1 -= 1.2` up for a triangle, `∓1` for a slash
+(`abstract-engraver.js:749-761`). abcjs's `p1` is always the LOW end and `p2` the HIGH one,
+so a down stem's `p2` and an up stem's `p1` are both the end AT THE NOTEHEAD.
+
+**ONLY ON AN UNBEAMED STEM** — the rule sits inside `if (hasStem)` and `createBeam` passes
+`nostem: true`, so `flattener-23`'s fourteen triangle heads produce exactly ONE stem that
+reaches it. Applying it to the beamed ones drove that fixture from byte 18826 BACK to 6809.
+**AND AFTER THE MIDDLE-LINE CLAMP**, where `p1`/`p2` already stand: adding it to the raw
+value let the clamp swallow part of it, showing as 2.583px where the rule is a whole pitch.
+
+### 2.28 A TUNE WITH NO `M:` STILL HAS A MEASURE LENGTH, AND IT IS 1
+
+`engraver-controller.js:206` seeds it from `getMeterFraction()`, which is 4/4 when the tune
+names no meter, and the per-staff branch only OVERWRITES it `if (abcstaff.meter)`. Ours
+passed `null`, so `fillsMeasure` was never true and `centerWholeRests` — implemented,
+correct, cited — **never ran at all**.
+
+Instrumenting `center()` on both sides printed abcjs's `before 419.24 bar after 493.65 bar
+w 11.25` and, from ours, NOTHING. **Silence was the sharper signal**: it moved the search
+from "our arithmetic is 20px off" to "our centring never runs", a different bug in a
+different file. Same shape as the hairpin below.
+
+### 2.29 `isTie` IS RECOMPUTED AT DRAW TIME FROM THE ANCHORS
+
+    if (!anchor1 || !anchor2) isTie = true
+    else if (anchor1.pitch === anchor2.pitch && internalNotes.length === 0) isTie = true
+    else isTie = false
+
+(`draw/tie.js:33-42`.) A SLUR between two notes of the same pitch with nothing between them
+is drawn AS A TIE, and that one flag decides the 1.2 rather than 1.5 pitch lift, the 10
+rather than 25 flatten cap, `calcTieDirection`/`calcTieY`, the class and the `data-name`
+together. `internalNotes` is fed only by the `else if (!isGrace)` arm, so a REST between the
+ends does not count and neither does a grace.
+
+**Found on the automatic GRACE SLUR, which is the case that proves it**: `flattener-23`
+draws `{^c}^c`, both ends at pitch 7, and its curve came out 1.16px low — 0.3 pitch, exactly
+the difference between the lifts. Every other number matched, which is why it took printing
+abcjs's `startY 7 endY 7` beside ours to see that the pitches agreed and the SPACING did not.
+
+### 2.30 A BARLINE WITH NOTHING AFTER IT IS STILL A BARLINE
+
+Two barlines in a row leave the second as a `pendingOpening`; when nothing follows — `[|] |`
+at the end of a line — it was DISCARDED. abcjs's voice children are a flat stream and every
+`|` is its own `bar` element, so `visual-tablature-20` has SEVEN bar groups against our five
+and its last staff line ran 16px short. `A | |` parsed here as ONE measure.
+
+### 2.31 AND ANY BARLINE THAT IS NOT A PLAIN THIN `|` ENDS THE ENDING IT SITS IN
+
+    if (multilineVars.inEnding && bar.type !== 'bar_thin') { bar.endEnding = true; … }
+
+(`abc_parse_music.js:271-274`.) **The rule is a COMPLEMENT and ours was a LIST** —
+`repeatEnd`, `repeatBoth`, `final`, `double` — the same set for everything the corpus writes
+except an INVISIBLE `[|]`. `visual-tablature-20`'s second ending both opens and closes on
+one. It only became visible once the trailing barline existed at all: **the two are one
+fixture's worth of rule, found in the order the byte comparison hands them over.**
+
 ---
 
 ## 3. WHAT IS LEFT — MEASURED, NOT LANDED
@@ -697,12 +755,12 @@ that `drawArc` adds, so the anchors are right and only the pitch is not. 0.2994 
 third, not the 0.6 grace scale and not half a notehead; naming it is the next step, and the
 fixture closes when it is.
 
-### 3.4 THE REST OF THE TABLE — 16 STRUCTURAL, 13 ULP
+### 3.4 THE REST OF THE TABLE — 13 STRUCTURAL, 13 ULP
 
 Read `/tmp/abcts-svg-bytes-ranked.txt` after `npx vitest run tests/svg-bytes.test.ts`, and
 classify it by aligning on the FIRST DIFFERING CHARACTER and comparing the two numbers it
 sits in — a crude "does one side have a long tail" test calls the wrong family the majority.
-At 29 rows that split is **16 structural / 13 ULP**, and the thirteen are almost all the
+At 26 rows that split is **13 structural / 13 ULP**, and the thirteen are almost all the
 same `x.0000000000004` shape.
 
 **AND THE CLASSIFIER HAS A TRAP OF ITS OWN**: the ranked table's two excerpt lines are
@@ -724,7 +782,7 @@ The named structural rows, cheapest last:
 
 ## 4. THE RATCHET
 
-`tests/svg-bytes.test.ts`'s `PASSING` names all 142 byte-exact fixtures. It caught nothing
+`tests/svg-bytes.test.ts`'s `PASSING` names all 145 byte-exact fixtures. It caught nothing
 this session, which is the point of it — every change here moved the count the right way
 AND kept every ratcheted slug. Regenerate it with `/tmp/gp/exact.mjs`; never shrink it.
 
