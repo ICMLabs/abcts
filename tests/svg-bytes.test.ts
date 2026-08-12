@@ -188,6 +188,7 @@ const PASSING: readonly string[] = [
   'abcjs-visual-tablature-07-staves-rh-lh',
   'abcjs-visual-tablature-08-first',
   'abcjs-visual-tablature-09-f-g',
+  'abcjs-visual-tablature-10-f3-a-y',
   'abcjs-visual-tablature-11-f-f',
   'abcjs-visual-tablature-12-b',
   'abcjs-visual-tablature-13-g8-c4-d4-e4-f4',
