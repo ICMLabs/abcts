@@ -1594,8 +1594,21 @@ const glyphDefs = new Map<GlyphName, string>()
           name: string,
           pathName: string,
           fill: boolean,
+          /**
+           * Where to put it. A VOLTA goes straight out; a TRIPLET joins the `otherchildren`
+           * merge below, because abcjs keeps ONE add-order list and a `TripletElem` and a
+           * `DynamicDecoration` sit in it together — `visual-selection-01`'s golden writes
+           * the dynamics group first.
+           */
+          into: { x: number; s: string }[] | null = null,
         ): void => {
           if (text === undefined) return
+          /** Held rather than written when this group has to take its turn in the merge. */
+          const sink: string[] = []
+          const emit = (piece: string): void => {
+            if (into === null) parts.push(piece)
+            else sink.push(piece)
+          }
           // abcjs-debt: §3 — a stray space that is load-bearing. Docs/ABCJS-DEBT.md
           // **THE TWO SEGMENT WRITERS DISAGREE ON A TRAILING SPACE.** `drawEnding`'s
           // `sprintf("M %f %f L %f %f ", …)` ends each segment with one; `drawTriplet`'s
@@ -1608,12 +1621,12 @@ const glyphDefs = new Map<GlyphName, string>()
               return `M ${round2(t.x1)} ${round2(t.y1)} L ${round2(t.x2)} ${round2(t.y2)}${gap}`
             })
             .join('')
-          parts.push(
+          emit(
             `<g${attrIfAny(classes.generateAt(text.groupClass ?? '', text.measure ?? 0))}` +
               `${fill ? ' fill="currentColor"' : ''} data-name="${name}">`,
           )
           if (d) {
-            parts.push(
+            emit(
               `<path d="${d}" stroke="currentColor"${fill ? ' fill="currentColor"' : ''} ` +
                 `data-name="${pathName}"></path>`,
             )
@@ -1623,7 +1636,7 @@ const glyphDefs = new Map<GlyphName, string>()
           // a triplet (`draw/ending.js:40-49`, `draw/triplet.js:12`). Ours wrote an ad-hoc
           // `<text>` in `serif` with the attributes in another order.
           const face = text.font === undefined ? undefined : ABCJS_FONT_FACE[text.font]
-          parts.push(
+          emit(
             face === undefined
               ? `<text${text.anchor === undefined ? '' : ` text-anchor="${text.anchor}"`} ` +
                   `x="${textNum(text.x * PX)}" y="${round2(text.y * PX + oy)}" ` +
@@ -1645,7 +1658,8 @@ const glyphDefs = new Map<GlyphName, string>()
                   text.noClass === true,
                 ),
           )
-          parts.push('</g>')
+          emit('</g>')
+          if (into !== null) into.push({ x: TL(lines[0] ?? { x1: text.x, x2: text.x, y1: 0, y2: 0, thickness: 0 }).x1, s: sink.join('') })
         }
         if (abcjs) {
           for (const t of staff.voltaTexts.filter(mine)) {
@@ -1674,6 +1688,9 @@ const glyphDefs = new Map<GlyphName, string>()
         // for the concept and the wrong one for compat: a stylesheet written against abcjs
         // selects `.abcjs-triplet`, and no comparison could match the bracket either.
         if (abcjs) {
+          // …INTO THE `otherchildren` MERGE, not straight out. A `TripletElem` and a
+          // `DynamicDecoration` share abcjs's one add-order list, and
+          // `visual-selection-01`'s golden writes the dynamics group first.
           for (const t of staff.tupletTexts.filter(mine)) {
             bracketGroup(
               staff.tupletLines.filter(mine).filter((l) => l.group === t.group),
@@ -1681,6 +1698,7 @@ const glyphDefs = new Map<GlyphName, string>()
               'triplet',
               'triplet-bracket',
               false,
+              others,
             )
           }
         } else {
