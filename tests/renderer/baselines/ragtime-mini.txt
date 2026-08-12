@@ -21,7 +21,7 @@ system 0 width=700.000 originY=0.000
       glyph accidentalFlat 68.903,-34.875
       glyph accidentalFlat 77.653,-19.375
     timeSignature x=94.403 w=11.795
-      glyph timeSig2 94.918,-31.000
+      glyph timeSig2 94.919,-31.000
       glyph timeSig4 94.403,-15.500
     tempo x=116.198 w=0.000
       glyph noteheadBlack 116.198,-89.125 scale=0.750
@@ -91,7 +91,7 @@ system 0 width=700.000 originY=0.000
       glyph accidentalFlat 68.903,-27.125
       glyph accidentalFlat 77.653,-11.625
     timeSignature x=94.403 w=11.795
-      glyph timeSig2 94.918,-31.000
+      glyph timeSig2 94.919,-31.000
       glyph timeSig4 94.403,-15.500
     note@-8 x=116.198 w=21.213
       glyph noteheadBlack 116.198,7.750

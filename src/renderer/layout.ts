@@ -1955,13 +1955,26 @@ const totalAdvance = (names: readonly GlyphName[], strict = true): number =>
 /** Digits laid out left to right, the group centred on `centre`. */
 function digitGlyphs(
   names: readonly GlyphName[],
-  centre: number,
+  /** The ELEMENT's own x — the digits carry their offset from it, as abcjs does. */
+  elementX: number,
+  /** `maxWidth`, the wider of the two rows. */
+  boxWidth: number,
   step: number,
   strict = true,
   /** The figure as WRITTEN — `12`, `2+3` — which names the group when it is multi-character. */
   label = '',
 ): PlacedGlyph[] {
-  let cursor = centre - totalAdvance(names) / 2
+  /**
+   * **THE ROW'S OFFSET IS CONSTRUCTED, NOT CENTRED THROUGH A MIDPOINT.**
+   * `abselem.addRight(new RelativeElement(num, x + (maxWidth - numWidth) / 2, …))`
+   * (`create-time-signature.js:25-26`) — one stored `dx` per row, added to the solved x by
+   * `setX`. Ours built a centre and subtracted half the row from it, which is
+   * `(x + w/2) - n/2` where abcjs writes `x + (w - n)/2`: the same terms grouped the other
+   * way, and one ULP on the digit's x in every tune whose meter is written out.
+   */
+  const rowDx = (boxWidth - totalAdvance(names, strict)) / 2
+  let dx = rowDx
+  let cursor = elementX + rowDx
   return names.map((name) => {
     // A TIME-SIGNATURE DIGIT RESERVES A BOX CENTRED ON ITS PITCH, not its ink.
     //
@@ -1978,10 +1991,12 @@ function digitGlyphs(
     const y = stepToY(step)
     const placed: PlacedGlyph = {
       ...glyphAt(name, cursor, step),
+      dx,
       reserve: [y - glyph.declaredHeight / 2, y + glyph.declaredHeight / 2],
       ...(label.length > 1 ? { group: label } : {}),
     }
     cursor += glyphsFor(strict).advance(name)
+    dx += glyphsFor(strict).advance(name)
     return placed
   })
 }
@@ -2026,7 +2041,6 @@ function layoutMeter(x: number, meter: Meter, strict = true): LayoutElement {
       : meter.numeratorParts.join('+')
   const bottom = digitNames(meter.denominator)
   const width = Math.max(totalAdvance(top), totalAdvance(bottom))
-  const centre = x + width / 2
   // Numerator and denominator centre on steps +2 and -2 — symmetric about the middle
   // line, each filling half the staff. Standard engraving.
   return {
@@ -2035,8 +2049,8 @@ function layoutMeter(x: number, meter: Meter, strict = true): LayoutElement {
     width,
     staffSteps: [],
     glyphs: [
-      ...digitGlyphs(top, centre, 2, strict, topLabel),
-      ...digitGlyphs(bottom, centre, -2, strict, String(meter.denominator)),
+      ...digitGlyphs(top, x, width, 2, strict, topLabel),
+      ...digitGlyphs(bottom, x, width, -2, strict, String(meter.denominator)),
     ],
     lines: [],
     texts: [],
