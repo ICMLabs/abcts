@@ -1983,7 +1983,15 @@ const glyphDefs = new Map<GlyphName, string>()
               PX,
             ),
           )
-          others.push({ x: TC(curve).x2, s: curveSink.pop() ?? '' })
+          // **A SLUR AND A TIE ARE ADDED AT THEIR OPEN**, not at their close:
+          // `voice.addOther(slur)` sits inside `if (pitchelem.startSlur)` and the tie's
+          // inside `if (pitchelem.startTie)` (`abstract-engraver.js:897-941`). A HAIRPIN is
+          // the other way round — `new CrescendoElem(this.startCrescendoX, lastNote(...))`
+          // is built when the CLOSE is seen (`creation/decoration.js:304-308`) — which is
+          // why the two keys differ. The note here said both sorted on the close; the trace
+          // of `voice.addOther` says otherwise, and `visual-svg-per-line-01` put a hairpin
+          // where abcjs has a slur.
+          others.push({ x: TC(curve).x1, s: curveSink.pop() ?? '' })
         }
         // …and the whole `otherchildren` list goes out as ONE run in x order. `Array.sort`
         // is stable, so two things starting at the same x keep the order they were built in.
