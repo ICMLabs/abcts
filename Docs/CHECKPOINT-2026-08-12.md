@@ -573,6 +573,34 @@ any anchor whose event is a rest, so the close is dropped entirely. Two parts: t
 must attach a `)` that follows a grace group to the last GRACE note, and the layout must be
 able to anchor a curve on a grace head — which `NoteAnchor.graceSlur` already half carries.
 
+### 3.3e A HAIRPIN CLOSES ON A BARLINE, AND OUR SPANNER SCAN ONLY WALKS NOTES
+
+`flattener-02` is `!p!C!<(!DEF GABc |d2 B2 G2 F2!<)! |` and **we draw no hairpin at all** —
+three dynamic glyphs and nothing else, where abcjs's line reads
+`DYNAMIC HAIRPIN DYNAMIC HAIRPIN DYNAMIC`.
+
+Traced: the OPEN reaches the layout and the CLOSE never does.
+
+    SPAN name "<(" opens crescendo closes undefined
+    SPAN name ">(" opens diminuendo closes undefined
+
+`!<)!` is written before a BARLINE, and **a decoration written before a barline attaches to
+the barline** (`abstract-engraver.js:1002`) — a rule this engine already knows and already
+implements for the barline's own MARKS (`Measure.closingBarlineDecorations`, read by
+`layoutMeasure`). What it does not do is let one CLOSE a spanner: `layoutSpanners` walks
+`anchors`, and an anchor exists only for a note or a rest.
+
+**The audio arc found the same rule from the other side** — "a hairpin's search is scoped to
+the SOURCE LINE and its close lands on the BARLINE" is in `CHECKPOINT-2026-08-08c.md`. The
+flattener obeys it; the renderer does not.
+
+The fix needs a decision rather than a patch: `emit`'s hairpin arm reads only `from.system`,
+`from.left`, `to.left` and `to.system`, so a bar needs far less than a `NoteAnchor` — but
+`NoteAnchor.event` is a `MusicEvent` and a bar is not one. Either the scan becomes generic
+over `{ system, left, decorations }`, or bars get anchors. Three fixtures wait on it:
+`flattener-02`, `flattener-01` and `visual-svg-per-line-01`, and abcjs's own add order —
+measured, `p`, crescendo, `f`, crescendo, `p` — is what the emitter must then reproduce.
+
 ### 3.4 THE REST OF THE TABLE — 21 STRUCTURAL, 13 ULP
 
 Read `/tmp/abcts-svg-bytes-ranked.txt` after `npx vitest run tests/svg-bytes.test.ts`, and
