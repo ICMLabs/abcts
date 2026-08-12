@@ -5300,6 +5300,10 @@ function noteText(
       role: 'lyric',
       dataName: 'lyric',
       font: 'vocalfont',
+      // …AND `%%vocalfont`'s FACE. The size and weight were already realized and the face
+      // was not, so `%%vocalfont Helvetica 10.0` drew every syllable in the DEFAULT Times
+      // New Roman at the right size — the same half-realization the voice name had.
+      ...faceOf('vocalfont'),
       // **CENTRED BY THE ANCHOR**, as the chord symbol is and for the same reason:
       // `addCentered` with `relative.js`'s `case "lyric"` drawing `anchor: "middle"`
       // (`abstract-engraver.js:777`, `draw/relative.js:42`). Its `dx` is 0, so the x

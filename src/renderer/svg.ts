@@ -1694,9 +1694,25 @@ const glyphDefs = new Map<GlyphName, string>()
                 ),
           )
           emit('</g>')
-          if (into !== null) into.push({ x: TL(lines[0] ?? { x1: text.x, x2: text.x, y1: 0, y2: 0, thickness: 0 }).x1, s: sink.join('') })
+          /**
+           * **AN ENDING AND A TRIPLET TAKE THEIR TURN AT THEIR START, WHERE A CURVE AND A
+           * HAIRPIN TAKE THEIRS AT THEIR CLOSE.** Measured, not assumed: abcjs writes a
+           * single-letter dynamic at x 120.63 BEFORE an ending spanning 309.86…777.54, and
+           * that same ending BEFORE a hairpin closing at 698.49 — which only a start key
+           * gives. The curve and the hairpin are added by their closing decoration and
+           * need the other one; see below.
+           */
+          if (into !== null)
+            into.push({
+              x: Math.min(text.x, ...lines.map((l) => Math.min(TL(l).x1, TL(l).x2))),
+              s: sink.join(''),
+            })
         }
         if (abcjs) {
+          // …AND AN ENDING IS ON `otherchildren` TOO. `EndingElem` is `addOther`'d like a
+          // curve and a hairpin, so it takes its turn in the one add-order list rather than
+          // preceding all of them — abcjs writes a single-letter dynamic BEFORE the bracket
+          // on `visual-selection-01`. Keyed on the CLOSING x, as the others are.
           for (const t of staff.voltaTexts.filter(mine)) {
             bracketGroup(
               staff.voltaLines.filter(mine).filter((l) => l.group === t.group),
@@ -1704,6 +1720,7 @@ const glyphDefs = new Map<GlyphName, string>()
               'ending',
               'line',
               true,
+              others,
             )
           }
         } else {
