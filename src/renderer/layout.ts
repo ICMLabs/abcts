@@ -12798,6 +12798,17 @@ function verticalExtent(
      * `anchorLyrics` is abcjs's too. That is the next thread, and `lyricLanePitch` is
      * already computed for it.
      */
+    /**
+     * **RE-MEASURED 2026-08-12 AND THE DECISION HOLDS.** Spending `lyricLanePitch + 1` on
+     * `wasBottom` directly — abcjs's own `staff.bottom -= (lyricHeightBelow + margin)` —
+     * takes `svg-bytes` from 39 to 40 and puts `ave-verum-corpus`,
+     * `multi-voice-lyrics-two-voices` and `visual-multi-voice-01` out by exactly 18.84px,
+     * ONE lyric block. The missing term is abcjs's `diff`: a lyric on voice n>0 gets
+     * `child.pitch -= voiceNumber * child.lyricHeightBelow`, which drives
+     * `bottom = Math.min(element.bottom, child.pitch)` and then `staff.bottom -= diff` per
+     * VOICE (`set-upper-and-lower-elements.js:118-125`, `:163-168`). Porting the lane
+     * without the per-voice diff is half a rule.
+     */
     if (bottom !== wasBottom) bottomPitch -= (bottom - wasBottom) / ENGRAVE.spacePerStep
   }
 
