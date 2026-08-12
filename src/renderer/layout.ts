@@ -4697,8 +4697,6 @@ function decorationGlyphs(
       const halfPitch = heightInPitches(glyph) / 2
       if (spec.forceBelow === true) {
         const belowPitch = below - height / 2
-        if (process.env.ABCTS_DEC)
-          console.error('SYMDEC', glyph, 'below', below, 'height', height, 'hip', heightInPitches(glyph), 'y', belowPitch)
         const y = stepToY(toStep(belowPitch))
         const half = (table.get(glyph)?.declaredHeight ?? 0) / 2
         out.push({
