@@ -19,9 +19,9 @@ on stale runs before finding out what it was.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 0 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 1 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 1 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **31 of 171**, best 200613 | 49 of 171 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **30 of 171**, best 200613 | 49 of 171 |
 
-`DIVERGENT` is still EMPTY. **140 fixtures are byte-exact and all 140 are RATCHETED.**
+`DIVERGENT` is still EMPTY. **141 fixtures are byte-exact and all 141 are RATCHETED.**
 
 The 34 that remain classify **21 STRUCTURAL / 13 ULP** — see §3.4.
 
@@ -380,6 +380,33 @@ guards here skipped it, one on the whole symbol and one per line. An element wit
 all, which only a byte comparison could see. `visual-transpose-output-03` went from 33085 to
 **41691 of 43612**, and what is left on it is beam order.
 
+### 2.23 THE BEAMS GO OUT IN ADD ORDER, AND A GRACE BEAM IS ADDED EARLIER
+
+`drawVoice` walks `params.beams` as it stands, and `createBeam` pushes each member through
+`createNote` — which adds that element's grace beam (`abstract-engraver.js:537`) — before
+pushing the group's own beam (`:426`). So an ordinary beam is added at its group's LAST
+element and a grace beam at its own. Ours wrote every ordinary beam and then every grace
+beam, so `{/GA}B` at the head of a tune put its grace beam after a beam 290px right of it.
+
+### 2.24 A DOTTED TIE AND SLUR — `.-` AND `.(`
+
+**The `.` is not a staccato and the parser already knew it** — abcjs's decoration lexer
+breaks out of `case '.'` when `(` or `-` follows (`abc_parse_music.js:783-786`) and ours had
+that rule *with a comment explaining it*. What it did next was throw the dot away, so `.-`
+and `-` drew the same filled lens. **A rule can be read correctly and then discarded**, and
+nothing but a byte comparison notices.
+
+The flag rides on the ELEMENT the curve OPENS at — one for the tie it starts (`:1062-1066`)
+and one for the slurs opening on it (`:896`) — which is why there are two fields.
+
+**A DOTTED CURVE IS THE OUTWARD HALF ALONE, STROKED**: one cubic with
+`stroke: foregroundColor`, `fill: "none"` and `stroke-dasharray: "5 5"`
+(`draw/tie.js:89-95`) — no mirrored return, no `z`. Everything else about the arc is
+identical, so it is a flag on the curve rather than a second shape.
+
+**`visual-transpose-output-03` is byte-exact**, from 11240 of 43612 when the session started
+on it — six landings, all in this file's §2.20 onward.
+
 ---
 
 ## 3. WHAT IS LEFT — MEASURED, NOT LANDED
@@ -568,7 +595,7 @@ The named structural rows, cheapest last:
 
 ## 4. THE RATCHET
 
-`tests/svg-bytes.test.ts`'s `PASSING` names all 140 byte-exact fixtures. It caught nothing
+`tests/svg-bytes.test.ts`'s `PASSING` names all 141 byte-exact fixtures. It caught nothing
 this session, which is the point of it — every change here moved the count the right way
 AND kept every ratcheted slug. Regenerate it with `/tmp/gp/exact.mjs`; never shrink it.
 
