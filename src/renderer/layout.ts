@@ -3625,7 +3625,50 @@ function layoutNoteheads(
      * STEP` — which is the same value through two products instead of one, and printed
      * 60.54 where abcjs prints 60.53 on four fixtures.
      */
+    /**
+     * **A SLASH OR TRIANGLE NOTEHEAD MOVES THE STEM'S NOTEHEAD END**, and only that end:
+     *
+     *     if (noteHead.c === 'noteheads.slash.quarter')    { if (down) p2 -= 1;   else p1 += 1 }
+     *     if (noteHead.c === 'noteheads.triangle.quarter') { if (down) p2 -= 0.7; else p1 -= 1.2 }
+     *
+     * (`abstract-engraver.js:749-761`.) abcjs's `p1` is always the LOW end and `p2` the
+     * HIGH one, so a DOWN stem's `p2` and an UP stem's `p1` are both the end AT THE
+     * NOTEHEAD — the far end is never touched. Applied AFTER the middle-line clamps, which
+     * is where `p1`/`p2` already stand.
+     *
+     * `flattener-23`'s last note is `^a` under `%%percmap … triangle`, and its down stem's
+     * top read 55.48 against abcjs's 58.19 — 2.71px, which is 0.7 pitch exactly.
+     */
+    /**
+     * **AND ONLY ON AN UNBEAMED STEM.** The rule sits inside `if (hasStem)`, and `hasStem`
+     * is `!nostem && durlog <= -1` — `createBeam` passes `nostem: true` for every member,
+     * so a beamed note never reaches it and takes its stem from `createStems` instead
+     * (`abstract-engraver.js:720`, `:414-419`). Instrumented on `flattener-23`, whose
+     * fourteen triangle heads produce exactly ONE `STEM dir down c
+     * noteheads.triangle.quarter`: the last note, the only one not in a beam. Applying it
+     * to the beamed ones took that fixture from byte 18826 back to 6809.
+     */
+    const headStemShift =
+      beamed
+        ? 0
+        : headName === 'noteheadSlashHorizontalEnds'
+          ? up
+            ? 1
+            : -1
+          : headName === 'noteheadTriangleUpBlack'
+            ? up
+              ? -1.2
+              : -0.7
+            : 0
     const nearStepRaw = (up ? lowest : highest) + (up ? 1 : -1) / (beamed ? 5 : 3)
+    /**
+     * …**AND IT IS APPLIED AFTER THE MIDDLE-LINE CLAMP**, which is where `p1`/`p2` already
+     * stand when the `noteHead.c` tests run (`abstract-engraver.js:743-761`). Adding it to
+     * the raw value instead let the clamp swallow part of it — `S5-directives`' three
+     * styled stems moved by 2.583px where the rule is a whole pitch.
+     */
+    const nearClamp = (v: number): number =>
+      (forcedUp !== null ? v : up ? Math.min(v, 0) : Math.max(v, 0)) + headStemShift
     const farStepRaw = (up ? highest : lowest) + (up ? 1 : -1) * ABCJS_PITCH.stemLength
     // headX, not x: an accidental shifts the noteheads, and the stem follows them.
     const stemX = headX + ax
@@ -3662,7 +3705,8 @@ function layoutNoteheads(
     const middle = stepToY(0)
     const tip = forcedUp !== null ? plain : up ? Math.min(plain, middle) : Math.max(plain, middle)
     const base =
-      forcedUp !== null ? nearRaw : up ? Math.max(nearRaw, middle) : Math.min(nearRaw, middle)
+      (forcedUp !== null ? nearRaw : up ? Math.max(nearRaw, middle) : Math.min(nearRaw, middle)) -
+      headStemShift * ENGRAVE.spacePerStep
     lines.push({
       x1: stemX,
       y1: base,
@@ -3678,11 +3722,9 @@ function layoutNoteheads(
       ...(strict
         ? {
             pitchRange: [
-              (forcedUp !== null ? nearStepRaw : up ? Math.min(nearStepRaw, 0) : Math.max(nearStepRaw, 0)) +
-                PITCH_ORIGIN,
+              nearClamp(nearStepRaw) + PITCH_ORIGIN,
               beamed
-                ? (forcedUp !== null ? nearStepRaw : up ? Math.min(nearStepRaw, 0) : Math.max(nearStepRaw, 0)) +
-                  PITCH_ORIGIN
+                ? nearClamp(nearStepRaw) + PITCH_ORIGIN
                 : (forcedUp !== null ? farStepRaw : up ? Math.max(farStepRaw, 0) : Math.min(farStepRaw, 0)) +
                   PITCH_ORIGIN,
             ] as [number, number],
