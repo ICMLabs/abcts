@@ -359,6 +359,42 @@ knowing before reaching for the usual fix. `staff.bottom` is built by
 `set-upper-and-lower-elements.js:55-80` (`staff.bottom -= (lane + margin)`, then
 `staff.bottom -= diff` per voice); start by instrumenting those terms.
 
+### 3.3b A KEY SIGNATURE'S POSITIONS ARE BAKED AT PARSE TIME — MEASURED, TRIED, REVERTED
+
+`visual-layout-07` is four voices on two staves (`V:3 bass,, / V:4 bass,, merge`) under
+`K:GMin`. Its bass staff's two flats sit **7.75px — 2 pitch — lower in ours**, and
+*everything else on that staff is byte-identical*: the bass clef glyph, every notehead.
+Instrumented through abcjs, the cause is not the arithmetic but WHEN it runs:
+
+    ADDPOS out   0  ["Bflat@6","eflat@9"]     ← treble
+    ADDPOS out -12  ["Bflat@4","eflat@7"]     ← bass, computed and NOT USED
+    CREATEKEYSIG    ["Bflat@6","eflat@9"]   x4  ← what the engraver is actually handed
+
+**abcjs resolves `verticalPos` ONCE, when the `K:` is read**, and `multilineVars.clef` —
+the clef it resolves against — is written by a `K:`'s own `clef=` and **by nothing else**
+(`abc_parse_key_voice.js:513`, `abc_parse_header.js:371`). A `V:… clef=bass` never touches
+it. So a tune whose `K:` names no clef draws TREBLE-positioned accidentals on its BASS
+staff. It is arguably wrong engraving and it is what strict has to draw. Our
+`keySignatureShift` reads the STAFF's clef at draw time, which is right and not abcjs.
+
+**IT WAS IMPLEMENTED AND REVERTED, and the reason is worth more than the attempt.** There
+are TWO call sites and they do not use the same clef: the header path passes
+`multilineVars.clef` (`abc_parse_header.js:371`, `:437`, `:513`) and the INLINE path passes
+`params.clef` (`abc_parse_music.js:984`), which is the element's own. Stamping the key with
+a running K:-clef defaulting to treble took `svg-bytes` from **34 to 36** and put two
+pixel-gate tunes out — so some fixture in the corpus DOES want the staff clef, and the
+split between the two paths is the whole remaining question. Three measurements to make
+before trying again:
+
+1. Which of `abc_parse_header.js`'s three call sites fires for a `K:` written after `V:`
+   lines, as `visual-layout-07`'s second `K:GMin` is.
+2. What `params.clef` actually is at `abc_parse_music.js:984` for an inline `[K:]`.
+3. Which fixtures regressed at treble-default — they are the ones that name the rule.
+
+Note also that the two `setKeyChange`/`setClefChange` calls in our mid-tune branch are
+ORDER-SENSITIVE: swapping them cost `clefs-tune7` 7.40px of dx on the first run, before any
+of the above was in play.
+
 ### 3.4 THE REST OF THE TABLE — 21 STRUCTURAL, 13 ULP
 
 Read `/tmp/abcts-svg-bytes-ranked.txt` after `npx vitest run tests/svg-bytes.test.ts`, and
