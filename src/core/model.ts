@@ -923,6 +923,15 @@ export interface Voice {
    */
   readonly stemDirection: 'up' | 'down' | null
   /**
+   * `%%voicecolor <colour>` — every mark this voice makes is drawn in it. `null` means the
+   * host's `foregroundColor`, which abcjs writes as the literal `currentColor`.
+   *
+   * The token is taken RAW and never validated: abcjs stores whatever word or quoted string
+   * followed the directive (`abc_parse_directive.js:863-870`) and hands it straight to the
+   * SVG `fill`, so `blue`, `#c00` and nonsense all reach the attribute alike.
+   */
+  readonly color: string | null
+  /**
    * `V:… name=` — the label printed to the left of the FIRST system. `null` means none.
    * abcjs reserves horizontal space for it, shifting the staff (and its notes) right.
    */

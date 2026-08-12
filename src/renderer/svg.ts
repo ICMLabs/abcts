@@ -276,7 +276,18 @@ const scaleNum = (n: number): string => (Object.is(n, -0) ? '0' : String(n))
  * engraving means, but stroke rendering also picks up linecap and antialiasing
  * differences between renderers. A rect is unambiguous.
  */
-function lineToRect(line: PlacedLine, attr: string, asPath = false): string {
+function lineToRect(
+  line: PlacedLine,
+  attr: string,
+  asPath = false,
+  /**
+   * `renderer.foregroundColor` AT THE MOMENT OF DRAWING — `printLine` fills with it
+   * (`draw/print-line.js:5`), and inside a voice `drawVoice` has swapped it for
+   * `%%voicecolor`. A LEDGER is drawn inside its note's group and so takes it; a STAFF LINE
+   * is `printStaff`'s, drawn before the swap, and keeps the host's. See `fg`.
+   */
+  ink = 'currentColor',
+): string {
   // A SLOPED line — only a beam is — is neither a horizontal nor a vertical rect. Drawn
   // as a parallelogram with vertical ends, which is how beams are cut in engraving, and
   // which a rect would silently render as a vertical bar.
@@ -355,7 +366,7 @@ function lineToRect(line: PlacedLine, attr: string, asPath = false): string {
     return (
       `<path d="M ${x1} ${y1} L ${x2} ${y1} ` +
       `L ${x2} ${y2} L ${x1} ${y2} z" ` +
-      `stroke="none" fill="currentColor"${attr.replace(klass, '')}${klass}></path>`
+      `stroke="none" fill="${ink}"${attr.replace(klass, '')}${klass}></path>`
     )
   }
   return `<rect${attr} x="${num(x)}" y="${num(y)}" width="${num(w)}" height="${num(h)}"/>`
@@ -1458,7 +1469,23 @@ const glyphDefs = new Map<GlyphName, string>()
        * `mine` is the filter; the accumulators (`dynamics`, `graceBeams`) are DRAINED
        * rather than filtered, since they were gathered by this voice's own elements.
        */
+      /**
+       * **`%%voicecolor` IS `drawVoice`'S SWAP, NOT A PROPERTY OF ANY ELEMENT.**
+       *
+       *     var saveColor = renderer.foregroundColor
+       *     if (params.color) renderer.foregroundColor = params.color
+       *     …
+       *     renderer.foregroundColor = saveColor
+       *
+       * (`draw/voice.js:14-16`, `:93`) — so everything drawn between those two lines takes
+       * it, including the voice's `staff-extra` clef and key, and nothing outside does. The
+       * staff LINES are `printStaff`'s and are drawn BEFORE the swap, which is why abcjs's
+       * own golden leaves them `currentColor` on a fully coloured tune.
+       */
+      const fg = (voiceHere: number): string =>
+        staff.voiceColors?.[voiceHere] ?? 'currentColor'
       const flushVoice = (voiceHere: number): void => {
+        const ink = fg(voiceHere)
         const mine = (x: { voice?: number }): boolean => (x.voice ?? 0) === voiceHere
         if (abcjs) classes.startMeasure()
         /** The group already written — see the one-path-per-group rule below. */
@@ -1482,7 +1509,7 @@ const glyphDefs = new Map<GlyphName, string>()
               )}"`
             : ` class="${prefix}-beam"`
           if (!abcjs) {
-            parts.push(lineToRect(TL(beam), beamClass, abcjs))
+            parts.push(lineToRect(TL(beam), beamClass, abcjs, ink))
             continue
           }
           /**
@@ -1507,7 +1534,7 @@ const glyphDefs = new Map<GlyphName, string>()
               ? [beam]
               : staff.beams.filter(mine).filter((b) => b.group === beam.group)
           const d = beamPath(members)
-          parts.push(`<path d="${d}" stroke="none" fill="currentColor"${beamClass}></path>`)
+          parts.push(`<path d="${d}" stroke="none" fill="${ink}"${beamClass}></path>`)
         }
         // A GRACE BEAM's own class is `beam-elem d0` — its `durationClass` is 0, since a
         // grace note has no sounding duration.
@@ -1525,7 +1552,7 @@ const glyphDefs = new Map<GlyphName, string>()
             // handed and `generate` returns `''` without `add_classes`, so the attribute is
             // written either way. Ours used `attrIfAny`, which omits it.
             parts.push(
-              `<path d="${beamPath(members)}" stroke="none" fill="currentColor"` +
+              `<path d="${beamPath(members)}" stroke="none" fill="${ink}"` +
                 ` class="${classes.generate('beam-elem d0')}"></path>`,
             )
           }
@@ -1584,7 +1611,7 @@ const glyphDefs = new Map<GlyphName, string>()
                 // attribute string and nothing else. The ORDER is `svg.js:path`'s key order
                 // over `printSymbol`'s options — class, stroke, fill, then the name.
                 ` class="${classes.generate('decoration dynamics')}" stroke="none" ` +
-                  `fill="currentColor" data-name="${ABCJS_DATA_NAMES.dynamic}"`,
+                  `fill="${ink}" data-name="${ABCJS_DATA_NAMES.dynamic}"`,
                 g.role,
                 // The name is already in the attribute string above; `'' ?? x` is `''`, so
                 // this stops `glyphMarkup` adding a SECOND `data-name` from the glyph key.
@@ -1604,7 +1631,7 @@ const glyphDefs = new Map<GlyphName, string>()
               g.x,
               g.y,
               g.scale,
-              ' stroke="none" fill="currentColor"',
+              ` stroke="none" fill="${ink}"`,
               g.role,
               // Inside the group abcjs names NONE of the children — `printSymbol` hands them
               // `{stroke, fill}` and nothing else — and `'' ?? x` is `''`, so this suppresses
@@ -1658,11 +1685,11 @@ const glyphDefs = new Map<GlyphName, string>()
             .join('')
           emit(
             `<g${attrIfAny(classes.generateAt(text.groupClass ?? '', text.measure ?? 0))}` +
-              `${fill ? ' fill="currentColor"' : ''} data-name="${name}">`,
+              `${fill ? ` fill="${ink}"` : ''} data-name="${name}">`,
           )
           if (d) {
             emit(
-              `<path d="${d}" stroke="currentColor"${fill ? ' fill="currentColor"' : ''} ` +
+              `<path d="${d}" stroke="${ink}"${fill ? ` fill="${ink}"` : ''} ` +
                 `data-name="${pathName}"></path>`,
             )
           }
@@ -1725,7 +1752,7 @@ const glyphDefs = new Map<GlyphName, string>()
           }
         } else {
           for (const line of staff.voltaLines.filter(mine)) {
-            parts.push(lineToRect(TL(line), ` class="${prefix}-volta"`, abcjs))
+            parts.push(lineToRect(TL(line), ` class="${prefix}-volta"`, abcjs, ink))
           }
           for (const t of staff.voltaTexts.filter(mine)) {
             parts.push(
@@ -1755,13 +1782,13 @@ const glyphDefs = new Map<GlyphName, string>()
           }
         } else {
           for (const line of staff.tupletLines.filter(mine)) {
-            parts.push(lineToRect(TL(line), ` class="${prefix}-tuplet"`, abcjs))
+            parts.push(lineToRect(TL(line), ` class="${prefix}-tuplet"`, abcjs, ink))
           }
         }
         // Never present in strict mode, where abcjs prints a literal `_` instead — so this
         // reuses abcjs's lyric class rather than inventing one it has no counterpart for.
         for (const line of staff.melismaLines.filter(mine)) {
-          parts.push(lineToRect(TL(line), abcjs ? ' class="abcjs-lyric"' : ` class="${prefix}-lyric"`, abcjs))
+          parts.push(lineToRect(TL(line), abcjs ? ' class="abcjs-lyric"' : ` class="${prefix}-lyric"`, abcjs, ink))
         }
         // Hairpins and glissandi. THE COMMENT HERE USED TO SAY "abcjs paints these with no
         // class of its own" — reasoned, never measured, and its own output denies it:
@@ -1792,7 +1819,7 @@ const glyphDefs = new Map<GlyphName, string>()
               // x it ENDS at — see the curve below.
               x: Math.max(a.x2, b.x2),
               s:
-                `<path d="${d}" highlight="stroke" stroke="currentColor" ` +
+                `<path d="${d}" highlight="stroke" stroke="${ink}" ` +
                 `class="${classes.generate('dynamics decoration')}" data-name="dynamics"></path>`,
             })
             continue
@@ -1978,7 +2005,9 @@ const glyphDefs = new Map<GlyphName, string>()
           const selectable = el.type === 'note' || el.type === 'rest'
           openedAt = parts.length
           parts.push(
-            `<g fill="currentColor" stroke="none"${gcls ? ` class="${gcls}"` : ''}` +
+            // …AND THE GROUP'S OWN `fill` IS THE VOICE'S — see `fg` at `flushVoice`. An
+            // element is drawn inside `drawVoice`, so it is inside the colour swap.
+            `<g fill="${fg(voiceOf(elIndex))}" stroke="none"${gcls ? ` class="${gcls}"` : ''}` +
               ` data-name="${name}"` +
               `${selectable ? ` selectable="false" data-index="${selectableIndex++}"` : ''}>`,
           )
@@ -2279,7 +2308,7 @@ const glyphDefs = new Map<GlyphName, string>()
             while (li < ordered.length && li < (g.afterLine ?? 0)) {
               const line = ordered[li++]
               if (line !== undefined) {
-                parts.push(lineToRect(TL(stretched(line)), attrs(el.type, line.role), abcjs))
+                parts.push(lineToRect(TL(stretched(line)), attrs(el.type, line.role), abcjs, fg(voiceOf(elIndex))))
               }
             }
             parts.push(
@@ -2289,14 +2318,25 @@ const glyphDefs = new Map<GlyphName, string>()
           while (li < ordered.length) {
             const line = ordered[li++]
             if (line !== undefined) {
-              parts.push(lineToRect(TL(stretched(line)), attrs(el.type, line.role), abcjs))
+              parts.push(lineToRect(TL(stretched(line)), attrs(el.type, line.role), abcjs, fg(voiceOf(elIndex))))
             }
           }
           if (barTexts) {
             // already emitted above
           }
           advance()
-          parts.push('</g>')
+          /**
+           * **AND AN EMPTY GROUP IS DELETED HERE TOO.** `Svg.closeGroup` removes any `<g>`
+           * whose `children.length === 0` — "if nothing was added to the group it is because
+           * all the elements were invisible" (`write/svg.js:364-372`) — and this branch
+           * pushed `</g>` unconditionally where the note branch below already obeyed it.
+           *
+           * A `[1` that opens a repeat ending at the START of a line IS such an element: it
+           * is a bar with no rule and no glyph, its bracket belonging to the ending on
+           * `otherchildren`. `visual-layout-09` has two, one per system.
+           */
+          if (openedAt >= 0 && parts.length === openedAt + 1) parts.length = openedAt
+          else parts.push('</g>')
           return
         }
         /**
@@ -2315,7 +2355,7 @@ const glyphDefs = new Map<GlyphName, string>()
         const isChordText = (r: PartRole | undefined): boolean => r === 'chord' || r === 'chordBelow'
         const ledgers = abcjs ? own.filter((l) => l.role !== 'stem') : []
         for (const line of abcjs ? own.filter((l) => l.role === 'stem' && l.beamed !== true) : ordered) {
-          parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+          parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs, fg(voiceOf(elIndex))))
         }
         if (abcjs) {
           for (const t of textParts.filter((t) => t.role === 'lyric')) parts.push(t.s)
@@ -2343,10 +2383,10 @@ const glyphDefs = new Map<GlyphName, string>()
           // carry the index, only one of them is the note.
           if (g.graceIndex === undefined || g.role !== 'grace') continue
           for (const line of soloGraceStems.filter((l) => l.graceIndex === g.graceIndex)) {
-            parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+            parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs, fg(voiceOf(elIndex))))
           }
           for (const line of graceLedgers.filter((l) => l.graceIndex === g.graceIndex)) {
-            parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+            parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs, fg(voiceOf(elIndex))))
           }
         }
         // (A BEAMED grace group's stems come out below, after the element's ledgers — see
@@ -2363,7 +2403,7 @@ const glyphDefs = new Map<GlyphName, string>()
           )) {
             parts.push(t.s)
           }
-          for (const line of ledgers) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+          for (const line of ledgers) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs, fg(voiceOf(elIndex))))
         }
         /**
          * **AND A BEAMED GRACE GROUP'S STEMS COME AFTER THE ELEMENT'S LEDGERS**, because
@@ -2374,7 +2414,7 @@ const glyphDefs = new Map<GlyphName, string>()
          * finished with long ago. An UNBEAMED grace's stem is built in the loop and stays
          * with its own head.
          */
-        for (const line of graceStems) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+        for (const line of graceStems) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs, fg(voiceOf(elIndex))))
         // Prose is a real <text> in a generic family, unlike musical glyphs, which are
         // paths so the SVG stays self-contained. A missing serif face falls back to
         // another serif; a missing Bravura falls back to nothing legible. See layout.ts.
@@ -2383,7 +2423,7 @@ const glyphDefs = new Map<GlyphName, string>()
         }
         if (abcjs) {
           for (const line of own.filter((l) => l.role === 'stem' && l.beamed === true)) {
-            parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs))
+            parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs, fg(voiceOf(elIndex))))
           }
         }
         advance()

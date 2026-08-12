@@ -1307,6 +1307,15 @@ export interface LayoutStaff {
    * These hold the SAME element objects as `elements`, not copies.
    */
   readonly voices: readonly (readonly LayoutElement[])[]
+  /**
+   * `%%voicecolor`, one entry per `voices` entry — `null` for the host's own foreground.
+   *
+   * Held HERE rather than stamped on each element because it is `drawVoice`'s swap:
+   * `if (params.color) renderer.foregroundColor = params.color` … `renderer.foregroundColor
+   * = saveColor` (`draw/voice.js:14-16`, `:93`). Everything drawn between those two lines
+   * takes it, which is exactly what the emitter's `flushVoice` spans. See `Voice.color`.
+   */
+  readonly voiceColors?: readonly (string | null)[]
   readonly staffLines: readonly PlacedLine[]
   /**
    * How many lines `staffLines` was built from — `V:… stafflines=`, 5 unless stated.
@@ -4075,6 +4084,26 @@ function layoutBar(x: number, kind: Barline, strict = true): LayoutElement {
   const secondThin =
     kind === 'repeatStart' || kind === 'double' || kind === 'repeatBoth' || kind === 'thickThin'
   const secondDots = kind === 'repeatStart' || kind === 'repeatBoth'
+
+  /**
+   * **AN INVISIBLE BAR STILL CARRIES A 1-WIDE ANCHOR.**
+   *
+   *     if (elem.type === "bar_invisible") {
+   *       anchor = new RelativeElement(null, dx, 1, 2, { "type": "none", … });
+   *       abselem.addRight(anchor);
+   *     }
+   *
+   * (`abstract-engraver.js:996-999`) — the same `w: 1` a thin rule's anchor gets, on an
+   * element that draws NOTHING. A `[1` opening a repeat ending at the start of a line is
+   * exactly that, and a repeat ending hangs off `anchor1.x + anchor1.w`
+   * (`draw/ending.js:14`), so the bracket starts one pixel right of the element. We skipped
+   * the whole branch and the bracket opened at 87.55 against abcjs's 88.55.
+   */
+  if (kind === 'invisible') {
+    anchorLeft = cursor
+    anchorWidth = spaces(ABCJS_PX.barAnchorThin)
+    endAnchorLeft = anchorLeft
+  }
 
   if (kind !== 'invisible') {
     // THE CURSOR IS ABCJS'S, and it is five hardcoded numbers rather than one separation —
@@ -9814,7 +9843,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       )
       const first = parts[0]
       if (first === undefined) return centred[0] as (typeof centred)[number]
-      if (parts.length === 1) return { ...first, voices: [first.elements] }
+      const voiceColors = members.map((v) => voices[v]?.color ?? null)
+      if (parts.length === 1) return { ...first, voices: [first.elements], voiceColors }
       // …AND ONLY NOW DO THE RESTS GET OUT OF EACH OTHER'S WAY. abcjs runs
       // `fixVoiceCollisions` after the lanes are stacked and does not restack them, so this
       // has to come after every `anchor*` above it and before the extent is taken.
@@ -9838,6 +9868,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       return {
         ...first,
         voices: fixed,
+        voiceColors,
         elements: fixed.flat(),
         beams: parts.flatMap((p, v) => p.beams.map(stampLine(v))),
         tupletLines: parts.flatMap((p, v) => p.tupletLines.map(stampLine(v))),

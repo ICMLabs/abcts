@@ -880,6 +880,8 @@ class VoiceBuilder {
   staffLineOverride: number | null = null
   /** `V:… stems=up|down` — see `Voice.stemDirection`. */
   stemDirection: 'up' | 'down' | null = null
+  /** `%%voicecolor` — see `Voice.color`. */
+  color: string | null = null
   clef: Clef | null = null
   /** `V:… name=` / `subname=` — labels printed left of the staff. See `Voice`. */
   name: string | null = null
@@ -1610,6 +1612,7 @@ class VoiceBuilder {
       clef: this.clef,
       staffLineOverride: this.staffLineOverride,
       stemDirection: this.stemDirection,
+      color: this.color,
       name: this.name,
       subname: this.subname,
       measures: padOverlays(moveTrailingBarNumbers(measures), this.meterForOverlays),
@@ -2364,6 +2367,27 @@ class Parser {
     // with `anchor: 'middle'` at `width / 2` (`write/creation/elements/free-text.js`),
     // where `width` is the STAFF width — so it centres on 335 where the title, which
     // centres on the paper, sits at 350.
+    /**
+     * **`%%voicecolor <colour>` — EVERY MARK THE CURRENT VOICE MAKES.**
+     *
+     * `multilineVars.currentVoice.color = voiceColor.token` (`abc_parse_directive.js:863-870`),
+     * and `drawVoice` swaps `renderer.foregroundColor` for the whole voice
+     * (`draw/voice.js:14-16`) — so its notes, bars, beams, ties, endings AND its
+     * `staff-extra` clef and key all come out in it, while the staff LINES do not: they are
+     * `printStaff`'s and are drawn before the swap.
+     *
+     * The token is taken raw and never validated — see `Voice.color`.
+     *
+     * ponytail: abcjs appends a `color` ELEMENT to the voice stream, so a second
+     * `%%voicecolor` mid-tune repaints from there on and `drawVoice` colours the whole LINE
+     * it lands in, retroactively. We hold ONE colour per voice, which is every use in either
+     * corpus. Widen it to a per-line stamp if a fixture ever changes colour mid-tune.
+     */
+    const voiceColor = /^voicecolor\s+(\S+)\s*$/.exec(body)
+    if (voiceColor?.[1] !== undefined) {
+      this.ensureScore(start).voice.color = voiceColor[1]
+      return
+    }
     const centred = /^center\s+(.*)$/.exec(body)
     if (centred?.[1] !== undefined) {
       const builder = this.ensureScore(start)
