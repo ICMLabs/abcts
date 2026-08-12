@@ -145,6 +145,7 @@ const PASSING: readonly string[] = [
   'abcjs-synth-timing-10-stretchlast-1',
   'abcjs-synth-timing-11-stretchlast-1',
   'abcjs-synth-timing-12-stretchlast-1',
+  'abcjs-visual-decorations-01-score-s-a-b',
   'abcjs-visual-layout-01-barlabelfont-times-bold-18-box',
   'abcjs-visual-layout-02-barlabelfont-times-bold-18-box',
   'abcjs-visual-layout-03-cdef-cdef',

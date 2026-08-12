@@ -484,6 +484,12 @@ export const ABCJS_PITCH = {
   beamedDecorationFloor: -3,
   /** `symbolHeightInPitches(symbol) + 1` — the 1 is "a little padding" (`decoration.js:160`). */
   decorationPadding: 1,
+  /**
+   * `padding` in `moveDecorations` — "the vertical padding between elements, in pitches"
+   * (`layout/voice.js:31`). How far clear of the BEAM an above-ornament is pushed once the
+   * beam it would have been drawn through is known.
+   */
+  ornamentBeamPadding: 1.5,
   /** `textFudge` in `textDecoration` (`decoration.js:148`). */
   decorationTextFudge: 2,
   /**

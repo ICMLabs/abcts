@@ -299,6 +299,8 @@ export const ENGRAVE = {
   beamedDecorationFloor: ABCJS_PITCH.beamedDecorationFloor,
   /** The pitch of padding each stacked decoration adds so nothing touches (`:154`). */
   decorationPadding: ABCJS_PITCH.decorationPadding,
+  /** How far clear of a BEAM an above-ornament is pushed (`layout/voice.js:31`). */
+  ornamentBeamPadding: ABCJS_PITCH.ornamentBeamPadding,
   /** `textFudge` — how far a TEXT decoration sits above the stack cursor (`:149`). */
   decorationTextFudge: ABCJS_PITCH.decorationTextFudge,
   /** `textHeight` — the flat pitch a text decoration advances the cursor by (`:150`). */
@@ -870,6 +872,14 @@ export interface PlacedGlyph {
    * legitimately target it, and it was the ONLY class abcjs emits that we did not.
    */
   readonly chordPos?: number
+  /**
+   * **AN ORNAMENT ABOVE A BEAMED NOTE IS MOVED CLEAR OF THE BEAM AFTER THE FACT** — this
+   * is the pitch it was STACKED at, which `moveDecorations` needs to re-place it from.
+   * Only the ABOVE stack carries it: abcjs's test is
+   * `el.klass === 'ornament' && el.position !== 'below'` (`layout/voice.js:39`), so a
+   * close decoration (no `klass`) and a forced-below one are both out.
+   */
+  readonly ornamentPitch?: number
   readonly x: number
   readonly y: number
   /** What this glyph is. Absent means it inherits its element's kind. */
@@ -4810,6 +4820,7 @@ function decorationGlyphs(
         role: 'decoration',
         reserve: [y - half, y + half],
         reservePitch: [abovePitch + halfPitch, abovePitch - halfPitch],
+        ornamentPitch: abovePitch,
       })
       above += height
     } else if (spec.place === 'stem') {
@@ -7398,7 +7409,13 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
   // slants delivers each stem to a slightly wrong height — which is how a purely
   // horizontal correction to the stems moved `ragtime-nightingale`'s vertical offset.
   const inset = spaces(ABCJS_PX.flagStemInset)
-  const beamStartX = up ? first.headX + first.headWidth - inset : first.headX
+  // …AND THE 0.6 COMES OFF THE WIDTH, NOT OFF THE SUM. `calcXPos` writes it as a compound
+  // assignment — `startX = starthead.x; if (asc) startX += starthead.w - 0.6`
+  // (`layout/beam.js:74-81`) — so the bracketing is `x + (w - 0.6)`. Ours read left to
+  // right and formed `(x + w) - 0.6`, which is 545.9214999999999 where abcjs has a clean
+  // 545.9215; every stem `getBarYAt` delivers along that line inherits it, and it was the
+  // last token between `visual-decorations-01` and byte parity.
+  const beamStartX = up ? first.headX + (first.headWidth - inset) : first.headX
   const beamEndX = up ? last.headX + last.headWidth : last.headX + inset
   const span = beamEndX - beamStartX
   const startY = stepToY(startStep)
@@ -7484,6 +7501,67 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
         : line,
     )
     elements[stem.element] = { ...element, lines }
+  }
+
+  /**
+   * **AN ORNAMENT ABOVE A BEAMED NOTE IS MOVED CLEAR OF THE BEAM, AFTER THE BEAM IS LAID
+   * OUT** — `moveDecorations(voice.beams[i])`, called straight after `layoutBeam` and
+   * before `voice.adjustRange` (`layout/voice.js:5-14, 30-50`):
+   *
+   *     var top = yAtNote(child, beam)                 // the beam's PITCH at the note's x
+   *     if (el.bottom - 1.5 < top) {
+   *       var distance = top - el.bottom + 1.5
+   *       el.bottom += distance; el.top += distance; el.pitch += distance
+   *       top = child.top = el.top                     // the next ornament stacks on it
+   *     }
+   *
+   * The stack itself cannot know this: `createDecoration` runs in the CREATION phase where
+   * a beamed note has no stem at all, so every ornament is placed against the notehead and
+   * a beam riding above it would be drawn straight through. `visual-decorations-01`'s
+   * `!fermata!ef` is the case — one of its twelve, the only beamed note whose beam clears
+   * the `minTop` floor, so eleven agreed and it sat 22.42px low.
+   *
+   * `yAtNote` samples at `element.x`, NOT at the stem's `furthestHead.x + dx`, and off
+   * `beam.beams[0]` — the OUTERMOST beam, in pitch.
+   *
+   * abcjs guards the whole thing on `if (child.top)`, which is JS-truthy: an element whose
+   * declared top is exactly pitch 0 is skipped. Nothing in either corpus reaches it — an
+   * ornament forces a top well above 0 — so the guard is not reproduced here; it would need
+   * the element's own top, which this pass does not carry.
+   */
+  for (const stem of group) {
+    const element = elements[stem.element]
+    if (element === undefined) continue
+    let barTop = pitchAt(element.x)
+    let moved = false
+    const glyphs = element.glyphs.map((g) => {
+      if (g.ornamentPitch === undefined || g.reservePitch === undefined) return g
+      // THE THREE EDGES MOVE BY THE SAME ADDITION, and each is taken off the number it was
+      // BUILT from — `el.bottom += distance` and not `pitch - thickness / 2 + distance`.
+      // `(a + h) - a` is not `h`, and deriving the half-height back out of the declared box
+      // cost this fixture its last ULP: 22.14216016691081 against 22.142160166910838.
+      const [elemTop, elemBottom] = g.reservePitch
+      if (elemBottom - ENGRAVE.ornamentBeamPadding >= barTop) return g
+      const distance = barTop - elemBottom + ENGRAVE.ornamentBeamPadding
+      const pitch = g.ornamentPitch + distance
+      barTop = elemTop + distance
+      moved = true
+      return {
+        ...g,
+        y: stepToY(pitch - PITCH_ORIGIN),
+        ornamentPitch: pitch,
+        ...(g.reserve === undefined
+          ? {}
+          : {
+              reserve: [
+                g.reserve[0] - distance * ENGRAVE.spacePerStep,
+                g.reserve[1] - distance * ENGRAVE.spacePerStep,
+              ] as [number, number],
+            }),
+        reservePitch: [elemTop + distance, elemBottom + distance] as [number, number],
+      }
+    })
+    if (moved) elements[stem.element] = { ...element, glyphs }
   }
 
   // Level 0 spans the whole group; deeper levels only where consecutive notes both carry
