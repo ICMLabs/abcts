@@ -19,9 +19,9 @@ on stale runs before finding out what it was.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 0 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 1 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 1 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **34 of 171**, best 200613 | 49 of 171 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **33 of 171**, best 200613 | 49 of 171 |
 
-`DIVERGENT` is still EMPTY. **137 fixtures are byte-exact and all 137 are RATCHETED.**
+`DIVERGENT` is still EMPTY. **138 fixtures are byte-exact and all 138 are RATCHETED.**
 
 The 34 that remain classify **21 STRUCTURAL / 13 ULP** — see §3.4.
 
@@ -266,6 +266,15 @@ genuinely built `rod` as `width + gap`, and is ABSENT on a BARLINE, where `rod` 
 with ours item by item: both agree to the last digit through the clef and the time signature
 and part company at the BAR after them.
 
+### 2.15 A REST'S DOTS COME BEFORE IT, BECAUSE THEY COME BEFORE A NOTEHEAD TOO
+
+`createNoteHead` pushes the dots itself with `addRight` and the caller pushes the head with
+`addHead` AFTERWARDS (`create-note-head.js:50-53`, `abstract-engraver.js:600-604`). DRAW
+ORDER IS CALL ORDER, the rule already ported for a note as "flag, dots, accidental, head" —
+and it stopped at the note. A rest's branch ends in the SAME `createNoteHead` call.
+`"F"z3` in `flattener-37` is one dotted half rest on which the two engines disagree about
+nothing else.
+
 ### 2.14 A QUARTER TONE NAMES ITSELF
 
 `accMap` has SEVEN entries — `__ _ = ^ ^^` plus `_/` and `^/`
@@ -395,6 +404,37 @@ Note also that the two `setKeyChange`/`setClefChange` calls in our mid-tune bran
 ORDER-SENSITIVE: swapping them cost `clefs-tune7` 7.40px of dx on the first run, before any
 of the above was in play.
 
+### 3.3c THE CHORD LANE IS INVERTED, AND `placeInLane` DOES NOT WALK SOURCE ORDER
+
+`visual-transpose-04` draws its first chord symbol at y 79.12 where abcjs draws it at
+99.12 — exactly one lane, `(fontSize + margin) * 1`. The rule is real and is `setLane`:
+
+    if (rightMostAbove.length > 1 || rightMostBelow.length > 1)
+        setLane(absElems, rightMostAbove.length, rightMostBelow.length);
+    // invertLane: this.lane = total - this.lane - 1
+
+(`layout/voice.js:100-102`, `relative-element.js:103-107`) — "flip the indexes of the names
+so that we can count from the top line". **LANE 0 IS THE TOP**, and everything that fitted
+in the packing lane 0 ends up at the BOTTOM when a second lane opens.
+
+`layoutAboveStack`'s existing comment says the opposite and cites a measurement of
+`stacked-annotations` to justify it. **Both measurements are right and the comment's
+conclusion is wrong.** Instrumented, abcjs's final lanes are:
+
+    transpose-04         "C" -> 1   "G" -> 1   "D" -> 0
+    stacked-annotations  "con brio" -> 1   "Allegro" -> 0   "staccato" -> 1
+
+Source order plus inversion reproduces the first and *inverts* the second, so
+`placeInLane` is not walking source order. What it walks is not yet pinned down, and there
+is a strong clue: **abcjs MERGES two marks at the same position into ONE `elem.chord`
+entry with a newline** — `CHORDORDER ["Allegro\ncon brio@above"]` — while
+`setLaneForChord`'s own criteria say "a chord can have more than one line (for instance
+"C\nD") each line is a lane". So a multi-line mark is one parse entry, one or more
+children, and one lane PER LINE. That relationship is the missing measurement.
+
+Do not land the inversion alone: on `transpose-04` it fixes `"C"` and puts `"D"` and
+`"G"` the wrong way round.
+
 ### 3.4 THE REST OF THE TABLE — 21 STRUCTURAL, 13 ULP
 
 Read `/tmp/abcts-svg-bytes-ranked.txt` after `npx vitest run tests/svg-bytes.test.ts`, and
@@ -421,7 +461,7 @@ The named structural rows, cheapest last:
 
 ## 4. THE RATCHET
 
-`tests/svg-bytes.test.ts`'s `PASSING` names all 137 byte-exact fixtures. It caught nothing
+`tests/svg-bytes.test.ts`'s `PASSING` names all 138 byte-exact fixtures. It caught nothing
 this session, which is the point of it — every change here moved the count the right way
 AND kept every ratcheted slug. Regenerate it with `/tmp/gp/exact.mjs`; never shrink it.
 
