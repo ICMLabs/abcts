@@ -4982,6 +4982,11 @@ function decorationGlyphs(
           out.push({
             name: letter,
             x: headX + dx,
+            // …AND THE KERN IS ONE ACCUMULATED OFFSET, added to the anchor at DRAW time:
+            // `printSymbol(x + dx, …)` with `dx` running over the letters
+            // (`draw/print-symbol.js:18-26`). Letting `placeElement` recover it as
+            // `g.x - el.x` cost `pppp` its last bits — 417.893 against 417.89300000000003.
+            dx,
             y: stepToY(lane),
             role: 'dynamic',
             group: ABCJS_DATA_NAMES_DYNAMIC,
