@@ -3858,10 +3858,29 @@ function layoutNoteheads(
     // beamed group is deferred, which `noReserve` already says.
     ...graceLines,
   ].filter((l) => l.role === 'stem' && l.noReserve !== true)
+  /**
+   * **A STEM'S CONTRIBUTION HERE IS ITS DECLARED `bottom`, NOT ITS DRAWN END.**
+   * `createStems` hands the element `bottom: p1 - 1` (`abstract-engraver.js:762`), and
+   * `abselem.bottom` is what `createDecoration` receives as `minPitch` — so a DOWN stem's
+   * element bottom is `minpitch - 8`, an integer, where its drawn end is `minpitch - 7`.
+   * Instrumented on `visual-decorations-01`: abcjs reports `abselemBottom 1`, `-3`, `-8`
+   * for its down-stemmed notes and the head box `pitch - 1.0444` for its up-stemmed ones.
+   *
+   * `pitchRange` already carries that number, the JS-truthiness exception included — this
+   * path re-derived it from the drawn y and lost the `- 1`, which is the one pitch three of
+   * this fixture's twelve below fermatas were out by.
+   */
   const decorationBelowBase = Math.min(
     lowest - ENGRAVE.noteheadHalfHeight / ENGRAVE.spacePerStep,
     // y → STEP, and the frame's zero is abcjs's pitch 0 now, so the origin comes off.
-    ...decorationStems.map((l) => -Math.max(l.y1, l.y2) / ENGRAVE.spacePerStep - PITCH_ORIGIN),
+    ...decorationStems.map((l) => {
+      if (l.pitchRange === undefined) return -Math.max(l.y1, l.y2) / ENGRAVE.spacePerStep - PITCH_ORIGIN
+      // `p1 - 1`, and the SAME JS-truthiness exception the extent applies below: a stem whose
+      // low end is pitch 1 keeps `p1` itself, because `if (opt.bottom)` skips a zero.
+      const loP = Math.min(...l.pitchRange)
+      const drop = l.beamed === true ? 0 : 1
+      return (loP - drop === 0 ? loP : loP - drop) - PITCH_ORIGIN
+    }),
   )
   if (event !== null && event.decorations.length > 0) {
     const decorated = decorationGlyphs(
