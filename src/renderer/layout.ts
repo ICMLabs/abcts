@@ -12645,11 +12645,29 @@ function verticalExtent(
         const pr = line.pitchRange
         const [hiP, loP] =
           pr === undefined ? [undefined, undefined] : [Math.max(...pr), Math.min(...pr)]
+        /**
+         * **AND `bottom: p1 - 1` IS SKIPPED WHEN IT IS ZERO — JS TRUTHINESS.**
+         *
+         * `RelativeElement`'s constructor ends `if (opt.bottom) this.bottom = opt.bottom`
+         * (`relative-element.js:41-42`), and `0` is FALSY, so a stem whose low end is pitch
+         * 1 keeps the default `min(pitch, pitch2)` — which is `p1` itself. `p1` is always
+         * the LOW end (`abstract-engraver.js:740-742`: `minpitch - stemHeight` down,
+         * `minpitch + 1/3` up), so the reserve is one pitch SHALLOWER on exactly that note
+         * and no other.
+         *
+         * `visual-tablature-15` and `visual-mouse-click-01` were each 3.875px — one step —
+         * too tall on nothing else: their bass staff's lowest stem starts at pitch 1.
+         *
+         * A BEAMED stem passes no `bottom` at all (`layout/beam.js:135-138`), so it never
+         * enters this arm; that is what `line.beamed` already selects.
+         */
+        const drop = line.beamed === true ? 0 : 1
+        const zeroed = loP !== undefined && loP - drop === 0
         include(
           Math.min(line.y1, line.y2),
-          low + (line.beamed === true ? 0 : ENGRAVE.spacePerStep),
+          low + (zeroed ? 0 : drop * ENGRAVE.spacePerStep),
           hiP,
-          loP === undefined ? undefined : loP - (line.beamed === true ? 0 : 1),
+          loP === undefined ? undefined : loP - (zeroed ? 0 : drop),
         )
         continue
       }
