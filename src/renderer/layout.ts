@@ -6064,6 +6064,11 @@ interface NoteAnchor {
    * elements, and the grace head is a glyph on the element.
    */
   graceSlur?: { graceX: number; graceY: number; headX: number }
+  /**
+   * Every grace head's drawn position, in order — so a `)` that closed on one can be
+   * anchored there. See `GracePitch.slurEnds`.
+   */
+  graceHeads?: readonly { x: number; y: number }[]
   beamPos?: 'none' | 'first' | 'last' | 'middle'
   /** Left and right edges of the notehead, and its vertical extremes. */
   readonly left: number
@@ -6490,6 +6495,31 @@ function layoutCurves(
 
   anchors.forEach((anchor, i) => {
     const event = anchor.event
+
+    /**
+     * **A SLUR CLOSES ON A GRACE NOTE BEFORE THE ELEMENT'S OWN CLOSES.** `addSlursAndTies`
+     * runs for `elem.gracenotes[i]` inside `addGraceNotes`, which `createNote` calls before
+     * it reaches the pitch loop (`abstract-engraver.js:498`, `:728`, `:835`). The anchor is
+     * the GRACE head, so the curve stops inside the group rather than at the notehead.
+     */
+    if ('graceNotes' in event)
+      for (const [gi, g] of event.graceNotes.entries())
+        for (let n = 0; n < (g.slurEnds ?? 0); n++) {
+          const start = open.pop()
+          const from = start === undefined ? undefined : anchors[start]
+          const head = anchor.graceHeads?.[gi]
+          if (from === undefined || head === undefined) continue
+          // The GRACE's own pitch, not the element's: `buildCurve` reads `pitchStep` for the
+          // arc's ends and `pitchY` for its y, and both have to be the head the `)` landed
+          // on. `stepToY` is `-(step + PITCH_ORIGIN) * spacePerStep`, so this inverts it.
+          const graceStep = -head.y / ENGRAVE.spacePerStep - PITCH_ORIGIN
+          emit(
+            from,
+            { ...anchor, left: head.x, right: head.x, pitchY: head.y, pitchStep: graceStep },
+            'slur',
+          )
+        }
+    // …and only THEN is a rest done with: it can carry graces, but never a slur of its own.
     if (event.type === 'rest') return
 
     // Slurs close before they open, so `(A)(B)` closes on A before opening on B.
@@ -6801,6 +6831,16 @@ function curveReserves(
   // `{C}D` binds, at -3.0000, and `min(pitch 0, pitch 1) - 3` is exactly that.
   for (const a of anchors) {
     if (!('graceNotes' in a.event) || a.event.graceNotes.length === 0) continue
+    /**
+     * …**AND THE HEADS ARE RECORDED EVEN WHERE THE AUTOMATIC SLUR IS SUPPRESSED**, because
+     * a written `)` can still close on one. `addGraceNotes` draws the group for a SPACER
+     * like any other element; only the automatic slur is skipped for it
+     * (`abstract-engraver.js:528-533`). `(f3 {a})y` is exactly that — the `)` closes on the
+     * grace and the spacer that follows closes nothing. See `NoteAnchor.graceHeads`.
+     */
+    a.graceHeads = (elements[a.element]?.glyphs ?? [])
+      .filter((g) => g.role === 'grace')
+      .map((g) => ({ x: g.x, y: g.y }))
     if (a.event.type === 'rest' && (a.event.kind === 'invisible' || a.event.kind === 'spacer'))
       continue
     const head = elements[a.element]?.glyphs.find((g) => g.role === 'grace')

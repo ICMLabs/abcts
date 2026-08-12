@@ -536,6 +536,16 @@ export interface Note {
  */
 export interface GracePitch extends Pitch {
   readonly length: Rational
+  /**
+   * **A `)` WRITTEN AFTER A GRACE GROUP CLOSES ON THE LAST GRACE, NOT ON THE NOTE.**
+   *
+   * abcjs's parser puts it there — `(f3 {a})y` gives the grace
+   * `{"pitch":12,"name":"a","endSlur":[101]}` — and `addSlursAndTies` runs for grace notes
+   * as well as pitches (`abstract-engraver.js:498`, `:728`), so the curve's `anchor2` is
+   * the GRACE head. It never runs for a rest, which is why the `y` spacer after it closes
+   * nothing at all.
+   */
+  readonly slurEnds?: number
 }
 
 export type RestKind = 'normal' | 'invisible' | 'multiMeasure' | 'invisibleMultiMeasure' | 'spacer'

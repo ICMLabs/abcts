@@ -3455,6 +3455,18 @@ class Parser {
           break
         }
         case 'rparen': {
+          // **A `)` STRAIGHT AFTER A GRACE GROUP CLOSES ON THE LAST GRACE** — see
+          // `GracePitch.slurEnds`. `pendingGrace` is cleared the moment a note consumes the
+          // group, so its being non-empty here IS "nothing has come between".
+          const lastGrace = pendingGrace[pendingGrace.length - 1]
+          if (lastGrace !== undefined) {
+            pendingGrace = [
+              ...pendingGrace.slice(0, -1),
+              { ...lastGrace, slurEnds: (lastGrace.slurEnds ?? 0) + 1 },
+            ]
+            i++
+            break
+          }
           voice().slurEndLast()
           i++
           break
