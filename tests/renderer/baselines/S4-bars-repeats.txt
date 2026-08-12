@@ -573,8 +573,8 @@ system 0 width=700.000 originY=0.000
     rest x=452.869 w=42.426
       glyph restQuarter 452.869,-23.250
     rest x=484.821 w=51.962
-      glyph restQuarter 484.821,-23.250
       glyph augmentationDot 495.709,-27.125
+      glyph restQuarter 484.821,-23.250
     rest x=523.954 w=30.000
       glyph rest8th 523.954,-23.250
     bar x=546.548 w=0.600

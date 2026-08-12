@@ -606,8 +606,8 @@ system 0 width=821.859 originY=0.000
       line  597.726,0.000 -> 611.536,0.000 t=0.700
       line  609.036,18.083 -> 609.036,-23.250 t=1.000
     rest x=632.767 w=25.981
-      glyph rest16th 632.767,-23.250
       glyph augmentationDot 645.491,-27.125
+      glyph rest16th 632.767,-23.250
     note@-11 x=661.381 w=16.907
       glyph flag32ndUp 670.591,-23.250
       glyph noteheadBlack 661.381,19.375

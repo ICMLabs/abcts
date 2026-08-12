@@ -2823,13 +2823,23 @@ function layoutRest(
     // declared 2.766 — and asymmetrically, since that glyph inks 11.88px up and 9.6 down
     // around a declared ±10.72.
     const restHalf = (glyphsFor(strict).get(spec.name)?.declaredHeight ?? 0) / 2
-    glyphs.push({
+    /**
+     * **THE DOTS COME BEFORE THE REST, because they come before the NOTEHEAD too.**
+     *
+     * `createNoteHead` pushes them itself with `addRight` and the caller pushes the head
+     * with `addHead` AFTERWARDS (`create-note-head.js:50-53`, `abstract-engraver.js:600-604`)
+     * — and `_addChild` is a plain push, so DRAW ORDER IS CALL ORDER. The rule was ported
+     * for a note ("flag, dots, accidental, head") and stopped at the note: a rest's branch
+     * ends in the SAME `createNoteHead` call, so it has the same order. `"F"z3` in
+     * `flattener-37` is one dotted half rest and the two engines disagree on nothing else.
+     */
+    const restGlyph = {
       ...glyphAt(spec.name, x, spec.step + shift),
       reserve: [
         stepToY(ABCJS_PITCH.restPitch + shift - PITCH_ORIGIN) - restHalf,
         stepToY(ABCJS_PITCH.restPitch + shift - PITCH_ORIGIN) + restHalf,
-      ],
-    })
+      ] as [number, number],
+    }
     if (spec.dots > 0) {
       // A DOTTED REST TAKES A NOTE'S DOT ARITHMETIC, because in abcjs it is literally the
       // same call: the rest branch ends in `createNoteHead(abselem, c, {verticalPos:
@@ -2863,6 +2873,7 @@ function layoutRest(
         (spec.dots - 1) * step +
         (strict ? glyphsFor(strict).width('augmentationDot') : step)
     }
+    glyphs.push(restGlyph)
   }
 
   // A REST IS A ROD LIKE ANY NOTE. abcjs's `getMinWidth` is `child.w` whatever the type,
