@@ -7007,9 +7007,22 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
         runEnd = null
         return
       }
+      /**
+       * **AN AUXILIARY BEAM'S START y IS SAMPLED AT THE NOTE'S OWN x, NOT AT ITS OFFSET
+       * START.** `createAdditionalBeams` builds
+       * `auxBeams[index] = { x: x + (asc ? -0.6 : 0), y: bary + sy * (index + 1) }` where
+       * `bary = getBarYAt(…, x)` (`layout/beam.js:174-188`) — the x carries the inset and
+       * the y does not, so on a SLANT the second beam's left edge is `0.6 × slope` off the
+       * line its own x sits on. abcjs's quirk, worth 0.14px on `visual-selection-01`'s
+       * steepest group, and a quirk to reproduce rather than one to tidy.
+       *
+       * Level 0 is exempt: its ends ARE the beam's own endpoints, so `yAt(x1)` is `startY`
+       * by construction and there is nothing to sample.
+       */
+      const sampleAt = level === 0 ? x1 : up ? runStart.headX + runStart.headWidth : runStart.headX
       beams.push({
         x1,
-        y1: yAt(x1) + offset,
+        y1: yAt(sampleAt) + offset,
         x2,
         y2: yAt(x2) + offset,
         thickness,
