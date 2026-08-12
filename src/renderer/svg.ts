@@ -245,8 +245,9 @@ const separatorPath = (x1: number, y: number, x2: number, klass: string): string
  */
 // abcjs-debt: §1.3 — string formatting in a hot path, because `toFixed` and
 // `Math.round(x*100)/100` disagree on a decimal half. Docs/ABCJS-DEBT.md
+const roundNumber = (n: number): number => Number.parseFloat(n.toFixed(2))
 const round2 = (n: number): string => {
-  const r = Number.parseFloat(n.toFixed(2))
+  const r = roundNumber(n)
   return Object.is(r, -0) ? '0' : String(r)
 }
 
@@ -619,6 +620,41 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
  * both, so the two agreed to two decimals and differed as bytes.
  */
 const raw = (n: number): string => String(n)
+
+/**
+ * **A GLISSANDO IS A SQUIGGLE, NOT A RULE** — `drawSquiggly` (`draw/glissando.js:48-71`).
+ *
+ * Four constant segment lists sheared along the line's slope: a lead-in, `num` zig-zags
+ * along the TOP, a turn at the right, `num` back along the BOTTOM, a lead-out, then `z`.
+ * Each step is `'l' + dx + ' ' + roundNumber(dy + dx * slope)` — the dx RAW and the dy
+ * rounded, concatenated with no separator between commands, which is `printStem`'s habit
+ * rather than `printLine`'s.
+ */
+const GLISS_LEAD_IN: readonly (readonly [number, number])[] = [[3.5, -4.8]]
+const GLISS_TURN: readonly (readonly [number, number])[] = [
+  [1.5, -1],
+  [0.3, -0.3],
+  [-3.5, 3.8],
+]
+const GLISS_LEAD_OUT: readonly (readonly [number, number])[] = [[-1.5, 2]]
+const GLISS_TOP: readonly (readonly [number, number])[] = [
+  [3, 4],
+  [3, -4],
+]
+const GLISS_BOTTOM: readonly (readonly [number, number])[] = [
+  [-3, 4],
+  [-3, -4],
+]
+
+const squigglyPath = (x: number, y: number, num: number, slope: number): string => {
+  const seg = (arr: readonly (readonly [number, number])[]): string =>
+    arr.map(([dx, dy]) => `l${raw(dx)} ${round2(dy + dx * slope)}`).join('')
+  let d = `M ${raw(x)} ${raw(y)}` + seg(GLISS_LEAD_IN)
+  for (let i = 0; i < num; i += 1) d += seg(GLISS_TOP)
+  d += seg(GLISS_TURN)
+  for (let i = 0; i < num; i += 1) d += seg(GLISS_BOTTOM)
+  return `${d}${seg(GLISS_LEAD_OUT)}z`
+}
 
 
 /**
@@ -1835,13 +1871,18 @@ const glyphDefs = new Map<GlyphName, string>()
             line.role === 'dynamic'
               ? classes.generate('dynamics decoration')
               : classes.generate('glissando')
+          const t = TL(line)
           others.push({
-            x: TL(line).x1,
-            s: lineToRect(
-              TL(line),
-              abcjs ? ` class="${cls}" data-name="${named}"` : ` class="${prefix}-decoration"`,
-              abcjs,
-            ),
+            x: t.x1,
+            s:
+              abcjs && line.squiggles !== undefined
+                ? `<path d="${squigglyPath(t.x1, roundNumber(t.y1), line.squiggles, line.slope ?? 0)}" ` +
+                  `highlight="stroke" stroke="${ink}" class="${cls}" data-name="${named}"></path>`
+                : lineToRect(
+                    t,
+                    abcjs ? ` class="${cls}" data-name="${named}"` : ` class="${prefix}-decoration"`,
+                    abcjs,
+                  ),
           })
         }
         // …and the two buckets go out as ONE list in x order. `Array.sort` is stable, so a

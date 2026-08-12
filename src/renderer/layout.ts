@@ -473,6 +473,10 @@ export const ENGRAVE = {
   hairpinDrop: spaces(ABCJS_PX.hairpinOffset + ABCJS_PX.hairpinMouth / 2),
   /** Clearance either side of a glissando, so it does not touch the noteheads. */
   spannerGap: 0.3 * SPACE,
+  /** `var margin = 4` — a glissando's inset past half a notehead (`draw/glissando.js:9`). */
+  glissandoMargin: 4 / UNIT_PX,
+  /** `var endLen = 5` — the non-repeating part at each end (`draw/glissando.js:43`). */
+  glissandoEndRun: 5 / UNIT_PX,
   /** Below this a hairpin is a smudge rather than a shape. */
   spannerMinLength: 1.5 * SPACE,
   /** Gap either side of a melisma extender — off the syllable, past the last notehead. */
@@ -952,6 +956,13 @@ export interface PlacedLine {
    * double, which no general rule about rounding could produce.
    */
   readonly rawEnd?: boolean
+  /**
+   * A GLISSANDO's squiggle count and the slope its zig-zag is sheared by — `numSquigglies`
+   * and `drawSquiggly`'s `slope` (`draw/glissando.js:42-71`). Present only on a glissando,
+   * and the emitter writes abcjs's path from them rather than a straight rule.
+   */
+  readonly squiggles?: number
+  readonly slope?: number
   /**
    * Drawn but NOT counted in the staff's vertical extent.
    *
@@ -5728,13 +5739,43 @@ function layoutSpanners(
       // glissando across a system break is dropped rather than split: half a pitch line
       // aimed at a note the reader cannot see says nothing. No fixture writes one.
       if (from.system !== to.system) return
+      /**
+       * **A GLISSANDO RUNS NOTEHEAD CENTRE TO NOTEHEAD CENTRE, INSET BY HALF A HEAD PLUS
+       * FOUR** — `leftX = anchor1.x + anchor1.w / 2`, `marginLeft = anchor1.w / 2 + margin`
+       * with `margin = 4` (`draw/glissando.js:9-22`), and the y at each end is
+       * `calcY(heads[0].pitch)` sheared along the line by that margin. Ours ran from the
+       * ink's RIGHT edge to the next ink's LEFT with a 0.3-space gap and took the anchor
+       * BOX's midpoint for y — our own engraving, in a shape abcjs does not have.
+       *
+       * `numSquigglies` is `max(2, floor((len - 10) / 6))` over the length ALREADY less
+       * both margins, `len` being the centre-to-centre hypotenuse — `Math.sqrt`, not
+       * `hypot`, which is the same abcjs-debt the curve's arc carries.
+       */
+      const w1 = from.headWidth ?? 0
+      const w2 = to.headWidth ?? 0
+      const leftX = from.left + w1 / 2
+      const rightX = to.left + w2 / 2
+      const leftY = from.pitchY
+      const rightY = to.pitchY
+      const marginLeft = w1 / 2 + ENGRAVE.glissandoMargin
+      const marginRight = w2 / 2 + ENGRAVE.glissandoMargin
+      const runX = rightX - leftX
+      const runY = rightY - leftY
+      // abcjs-debt: §3 — `sqrt` where `hypot` is better. Docs/ABCJS-DEBT.md
+      const len = Math.sqrt(runX * runX + runY * runY)
+      const slope = runY / runX
       out[from.system]?.push({
-        x1: from.right + ENGRAVE.spannerGap,
-        y1: (from.top + from.bottom) / 2,
-        x2: to.left - ENGRAVE.spannerGap,
-        y2: (to.top + to.bottom) / 2,
+        x1: leftX + marginLeft,
+        y1: leftY + marginLeft * slope,
+        x2: rightX - marginRight,
+        y2: rightY - marginRight * slope,
         thickness,
         role: 'decoration',
+        squiggles: Math.max(
+          2,
+          Math.floor((len - marginLeft - marginRight - ENGRAVE.glissandoEndRun * 2) / 6),
+        ),
+        slope,
       })
       return
     }
