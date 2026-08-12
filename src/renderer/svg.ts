@@ -2265,7 +2265,9 @@ const glyphDefs = new Map<GlyphName, string>()
          */
         if (abcjs && el.type === 'bar') {
           // …and if this is the voice's LAST element, its rules reach the staff above.
-          const reach = bartop !== undefined
+          const reach =
+            bartop !== undefined &&
+            (staff.connectBars || elIndex === (voiceEnds[voiceOf(elIndex)] ?? 0) - 1)
           const stretched = (l: PlacedLine): PlacedLine =>
             !reach || bartop === undefined
               ? l

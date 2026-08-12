@@ -86,6 +86,7 @@ const PASSING: readonly string[] = [
   'abcjs-parse-book_parser-07-a',
   'abcjs-parse-note-01-c0-d1-eg-0-fa-1',
   'abcjs-parse-tie-slur-01-staffwidth-200',
+  'abcjs-parse-tie-slur-04-stretchlast-1',
   'abcjs-synth-flattener-03-pppp-cdef-gabc-y-ffff-bcba-gfed-y-pppp-c',
   'abcjs-synth-flattener-04-g-gab-cde-d7-fga-def',
   'abcjs-synth-flattener-05-c-cde-def-c2e-d2f-c-c2-d-d-g-d2-e-e',

@@ -1369,6 +1369,12 @@ export interface LayoutStaff {
   /** Repeat-ending (volta) brackets and their labels. Span whole measures. */
   readonly voltaLines: readonly PlacedLine[]
   readonly voltaTexts: readonly PlacedText[]
+  /**
+   * **`voice.barto`** — `abcstaff.connectBarLines === "continue" || === "end"`
+   * (`abstract-engraver.js:148`). TRUE when this staff's barlines run through to the staff
+   * ABOVE on every bar rather than only on the voice's last child; see the emitter.
+   */
+  readonly connectBars: boolean
   /** Vertical offset of this staff's middle line within its system. */
   readonly originY: number
   /**
@@ -9519,6 +9525,11 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         // Filled in after packing, with curves: a hairpin can cross a system break, and
         // resolving it here would silently drop every one that does.
         spannerLines: [],
+        connectBars: (() => {
+          const staffIdx = voicesOfStaff.findIndex((m) => m.includes(voiceIndex))
+          const c = score.staves[staffIdx < 0 ? 0 : staffIdx]?.connectBarLines
+          return c === 'continue' || c === 'end'
+        })(),
         originY: 0,
         originAdvances: [0],
         originPitch: 0,
