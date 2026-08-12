@@ -95,6 +95,7 @@ const PASSING: readonly string[] = [
   'abcjs-synth-flattener-04-g-gab-cde-d7-fga-def',
   'abcjs-synth-flattener-05-c-cde-def-c2e-d2f-c-c2-d-d-g-d2-e-e',
   'abcjs-synth-flattener-06-cde-d7-f2-d2-e2-f2-1-g-g4-fedc-c-e4z4',
+  'abcjs-synth-flattener-07-metronome',
   'abcjs-synth-flattener-08-em-egab',
   'abcjs-synth-flattener-09-d-defg-q-1-2-90-defg',
   'abcjs-synth-flattener-10-q-1-4-129-0476605-cdef-q-1-4-127-gabc-q-',
