@@ -611,6 +611,30 @@ any anchor whose event is a rest, so the close is dropped entirely. Two parts: t
 must attach a `)` that follows a grace group to the last GRACE note, and the layout must be
 able to anchor a curve on a grace head — which `NoteAnchor.graceSlur` already half carries.
 
+### 3.3f THE GRACE GROUP'S SECOND BEAM STARTS ONE GRACE LATE — partly measured
+
+`flattener-17`'s first beam subpath is byte-identical and its SECOND is not: ours runs from
+143.45, abcjs's from **153.45** — one grace advance later — and the y's differ with it.
+This is the thread `CHECKPOINT-2026-08-11b.md` §2.18 left open ("the level count is certain
+and the second beam's y is not, so the implementation was reverted").
+
+What is measured now, instrumenting `createAdditionalBeams` and `addGraceNotes`:
+
+    GRACEDUR i 0 raw 0.125 used 0.0625      (every grace, in both groups)
+    AUX j 1 single false startX 153.45 endX 164.05 i 2 nelems 3
+    AUX j 0 single false startX 153.45 endX 164.05 i 2 nelems 3
+    AUX j 0 single false startX 501.74 endX 562.34 i 6 nelems 7
+
+An aux beam is created at the FIRST element whose `getDurlog(duration) < -3`, at that
+element's own x (`layout/beam.js:180-190`). Every grace pseudo-element has duration
+`0.0625` — durlog −4 — which makes **index 0 only**, created at i = 0. Two facts contradict
+that: a `j 1` exists at all, and both start at the SECOND grace rather than the first.
+
+**So the pseudo-elements `createAdditionalBeams` walks are not the ones `addGraceNotes`
+prints durations for**, and finding out which they are is the next probe. Note the
+seven-grace group reports only `j 0` where the three-grace group reports `j 0` and `j 1`,
+which is backwards from any duration rule and is the sharpest clue in the trace.
+
 ### 3.4 THE REST OF THE TABLE — 21 STRUCTURAL, 13 ULP
 
 Read `/tmp/abcts-svg-bytes-ranked.txt` after `npx vitest run tests/svg-bytes.test.ts`, and
