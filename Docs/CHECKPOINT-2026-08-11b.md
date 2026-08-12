@@ -1,6 +1,6 @@
 # CHECKPOINT — 2026-08-11b
 
-**abcts, `main`.** The suite is **1255/1255** with no reds, `npx tsc --noEmit` is clean,
+**abcts, `main`.** The suite is **1258/1258** with no reds, `npx tsc --noEmit` is clean,
 everything below is committed and pushed.
 
 ---
@@ -17,20 +17,25 @@ everything below is committed and pushed.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 0 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 1 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 1 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **67 of 171**, best 52490, median 8185 | 94 of 171 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **65 of 171**, best 52490, median 10288 | 94 of 171 |
 
-**`svg-bytes` is the one open gate**, `DIVERGENT` is still EMPTY, and **104 fixtures are
-byte-exact — all 104 RATCHETED**, up from seven. See §4.
+**`svg-bytes` is the one open gate**, `DIVERGENT` is still EMPTY, and **106 fixtures are
+byte-exact — all 106 RATCHETED**, up from seven. See §4.
 
 ---
 
 ## 2. THE LANDINGS
 
-Seven, and **every one of them is the same finding**: abcjs's ARITHMETIC IS PART OF THE
-PORT — which number is formed first, which product is taken once, which offset is stored
-rather than derived. §3 of `CHECKPOINT-2026-08-11.md` named it as the next architectural
-arc for the VERTICAL; it turned out to be the horizontal too, and the horizontal was worth
-more (82 → 67 on two changes).
+**Twelve, in two halves.** The first seven are one finding: abcjs's ARITHMETIC IS PART OF
+THE PORT — which number is formed first, which product is taken once, which offset is
+stored rather than derived. §3 of `CHECKPOINT-2026-08-11.md` named it as the next
+architectural arc for the VERTICAL; it turned out to be the horizontal too, and the
+horizontal was worth more (82 → 67 on two changes).
+
+The last five are STRUCTURAL, off the list in `CHECKPOINT-2026-08-11.md` §4.2 — 67 → 65
+with the two biggest fixtures in the corpus (`visual-selection-01` and
+`visual-svg-per-line-01`, 202k bytes each) taken from byte 3038 to byte 11121. They are in
+§2.8 onward.
 
 ### A GLYPH'S y IS ONE VALUE BEFORE THE OUTLINE SEES IT — and the brackets are the finding
 `printSymbol` computes `renderer.calcY(offset + ycorr)` — ONE number — and only then does
@@ -152,6 +157,81 @@ every other glyph still does. **The element's own `x` is `headX`** — abcjs's a
 STEMMED HEAD, whose `dx` is 0, measured through `RelativeElement.setX`. Reading `el.x` as
 the element's left edge put a down-stem flag 7.4px out on the first attempt.
 
+### 2.8 A BRACE WITH A HEADER OWNS THE VOICE NAME
+
+    // If only the start brace has a name then the name belongs to the brace
+    // instead of the staff.
+    if (this.startVoice.header && !this.endVoice.header) {
+      this.header = this.startVoice.header;
+      delete this.startVoice.header;
+    }
+
+(`creation/elements/brace-element.js:9-14`.) `drawBrace` then opens
+`<g class="staff-extra voice-name" data-name="brace">`, draws the name at the PAGE's left
+padding and at the BRACE's own vertical midpoint less
+`baselineToCenter(header, 'voicefont', …, 0, 1)`, draws the path, and closes
+(`draw/brace.js:78-98`). **The `delete` is what stops the voice drawing it a second time**,
+and the baseline records the loss as a REMOVED `voiceName` element — which is the finding
+rather than a regression. Counting the voice-name text in BOTH engines across all 171
+fixtures, bare and brace-owned kept apart: **171 match / 0 differ.**
+
+Three more came out of the same fixture, each one a read:
+
+- **THE BRACE'S OWN x IS PAST THAT NAME.** `params.x` is `getLeftEdgeOfStaff`'s running `x`
+  BEFORE the connector's width joins it — `padding.left + voiceheaderw`, where
+  `voiceheaderw` is the widest voice or brace header plus the width of an `"A"`, and 0 when
+  there is no header at all (`get-left-edge-of-staff.js:2-27`). Ours drew every brace at the
+  page margin, 53.875px left on a named grand staff. **BUILT, not subtracted from the left
+  edge**: `(connector + widest + widthA) - connector` is not `widest + widthA`, and a brace
+  drawn off that landed one ULP out.
+- **AND THE LEFT EDGE IS `(padding.left + voiceheaderw) + ofs`, IN THAT ORDER.** Ours summed
+  the indent's three terms first and added the margin last, which put every prefix glyph of
+  a named grand staff one ULP out.
+- **A BRACE'S ENDS COME OFF `staff.absoluteY`, ONE PRODUCT EACH** —
+  `absoluteY - spacing.STEP * 10` and `- spacing.STEP * 2` (`draw/brace.js:8-14`), 10 being
+  the top staff line and 2 the bottom. Ours summed a system-relative edge and the system's
+  origin, and every control point of the curve is `yTop + yHeight / k`.
+
+### 2.9 `%%voicefont` IS REALIZED, AND A POSTSCRIPT NAME CARRIES ITS WEIGHT
+The label was hard-coded to a bold 17px Times — the DEFAULT resolved — so
+`%%voicefont Helvetica-Bold 10.0` drew at the default while `voiceNameWidth`, and therefore
+the whole indent, already read the directive.
+
+**AND `fontTranslation` IS A TABLE, NOT A SUFFIX RULE.** abcjs maps each PostScript name to
+a WEB family plus a weight and a style (`abc_parse_directive.js:62-160`), so `Helvetica-Bold`
+draws `font-family="Helvetica" font-weight="bold"` and not a family no browser has. Ours read
+the suffix for the weight — correctly — and then wrote the whole PostScript name into
+`font-family`. All 34 rows are transcribed rather than derived by splitting on `-`: a family
+can contain a hyphen (`Times-Roman` is one face) and the faces are not all one word
+(`Bookman,serif`, `"Helvetica Narrow",Helvetica`).
+
+### 2.10 A TEMPO'S PARTS ARE INTERLEAVED
+`drawTempo` renders `preString`, THEN walks `params.note.children` for the glyphs, THEN
+writes `"= " + bpm`, and finally `postString` (`draw/tempo.js:18-38`). Ours put every glyph
+of the element out before any of its texts — right for a note, wrong here: the mark read
+`♩ Easy Swing = 140` instead of `Easy Swing ♩ = 140`. Keyed on abcjs's own `name: "pre"`.
+
+### 2.11 A `P:` LABEL IS `renderText`'s ELEMENT, AND `draw/text.js` HAS THREE MORE RULES IN IT
+Without a `font` the emitter fell through to its ad-hoc `<text font-family="serif">`, which
+carries none of abcjs's attributes. Reading `renderText` gave the rest:
+
+- **abcjs's `partsfont` DEFAULT IS WEIGHT `normal`** (`abc_parse_directive.js:27`); ours
+  hard-coded bold.
+- **A BOXED FONT SHIFTS A `start`-ANCHORED TEXT RIGHT BY ONE PADDING AND DELETES ITS CLASS**
+  (`draw/text.js:49-60`) — two attributes, both measurable.
+- **AND THE PADDING BELONGS TO `renderText`**, which adds it to the baseline at draw time, so
+  adding it to the lane's baseline too counted it twice.
+- **THE RECT IS `renderText`'s**, drawn from the text's own `getBBox()` and wrapped in its own
+  group ONLY when the caller is not `alreadyInGroup` — which a `P:` label is. Our four
+  separate rules are gone. Counting `data-name="box"` in BOTH engines: **6 fixtures differed
+  before, 3 after, none newly wrong.**
+
+### 2.12 `Q:` TAKES A QUOTE ON EITHER SIDE OF THE RATE
+abcjs shifts tokens in order: a leading `quote` is `preString`, and a `quote` still there
+once the rate has been read is `postString` (`abc_parse_header.js:257-330`). So
+`[Q:"left" 1/4=170"right"]` is TWO strings, one each side, and **which side decides which —
+not the content**. Ours took the first quote as the direction and dropped any second.
+
 ---
 
 ## 3. WHAT IS LEFT — the table's shape, measured
@@ -163,14 +243,14 @@ the wrong family):
 | | rows | ULP tokens | fixtures carrying them |
 |---|---|---|---|
 | glyph y | 1 | **62** | 10 |
-| glyph x | 13 | **36** | 13 |
-| root `width`/`height` | 8 | 5 | 5 |
+| glyph x | 14 | **36** | 13 |
+| root `width`/`height` | 11 | 5 | 5 |
 | other | 7 | 5 | 5 |
-| **structural** | **33** | — | — |
+| **structural** | **32** | — | — |
 
 At the session's midpoint this read **glyph-x 265 tokens across 33 fixtures**; the spacing
-solve and the place-not-shift port took it to 36 across 13. **The horizontal is no longer
-the head of the table** — the two families are now comparable and both are small.
+solve and the place-not-shift port took it to 36 across 13. **The two arithmetic families
+are down to 108 tokens between them and the STRUCTURAL rows are half the open table.**
 
 ### 3.1 THE TWO ULP FAMILIES, EACH NAMED
 
@@ -203,11 +283,18 @@ ours at `layout.ts:8673`). And `layoutOne`'s cursor arithmetic is ours term for 
 `er = x - voice.minx`, `if (er < extraWidth) x += extraWidth - er`,
 `voice.minx = x + getMinWidth(child)`.
 
-### 3.2 THE STRUCTURAL THIRTY-THREE — now the MAJORITY of the table
-Unchanged from `CHECKPOINT-2026-08-11.md` §4.2, which lists each with abcjs's own citation.
-The brace with a header (3 fixtures, `draw/brace.js:78-98`) is still the largest single one
-and still needs no new model. **With the arithmetic families down to 108 tokens between
-them, these 33 rows are now half the open table and the better place to spend a session.**
+### 3.2 THE STRUCTURAL THIRTY-TWO — half the open table
+`CHECKPOINT-2026-08-11.md` §4.2 lists each with abcjs's own citation. **Five of its rows
+closed this session** (§2.8-2.12): the brace with a header, the brace's x, a tempo's part
+order, the `P:` label, and the `Q:` post-string. What is left there is unchanged and still
+the better place to spend a session — the arithmetic families are down to 108 tokens
+between them.
+
+**AND THE TWO BIGGEST FIXTURES IN THE CORPUS ARE NOW WORTH READING.**
+`visual-selection-01` and `visual-svg-per-line-01` are the same 202k-byte tune and went
+from byte 3038 to byte 11121; what stops them next is a CURVE's path, which is a family
+none of the rows above names. Run `/tmp/gp/tok.mjs` on one of them before picking anything
+else — a fixture that large names several defects per read.
 
 ### 3.3 WHAT §3 OF THE PREVIOUS CHECKPOINT STILL OWES
 - **`anchorLyrics` is not abcjs's placement**, so `lyricLanePitch` — measured, correct to
@@ -337,3 +424,15 @@ token COUNTS differ, so a fixture going structural silently leaves its table. Re
 - **A REFACTOR IN THIS FAMILY CAN MOVE REAL PIXELS.** Placing elements but still SHIFTING
   their beams put 8.51px of dy on `ragtime-nightingale`. Re-read `pixel-parity` and the
   harvested table after every step, not at the end.
+- **A REMOVAL IS A FINDING WHEN A COUNT SAYS SO.** Two landed this session on removals the
+  baseline flagged — the brace taking the voice name off the staff, and `renderText` taking
+  the box off `partBox`. Both were settled by counting the thing in BOTH engines across all
+  171 fixtures (`171 match / 0 differ`; `6 fixtures differed before, 3 after`). Write the
+  count, not the argument.
+- **ONE SOURCE FILE CAN HOLD SEVERAL FINDINGS, AND READING IT WHOLE IS CHEAPER THAN
+  RETURNING.** `draw/text.js` gave four in one pass (the box's padding shift, the deleted
+  class, `alreadyInGroup`, and where the rect is measured); `draw/brace.js` gave three. When
+  a fixture points at a function, read the function rather than the line.
+- **AND THE FIXTURE THAT POINTS AT ONE IS USUALLY THE BIGGEST.** `visual-selection-01` is
+  202k bytes and named five separate defects in one sitting, each revealed only once the one
+  before it closed. A large fixture is not a hard fixture; it is a DENSE one.

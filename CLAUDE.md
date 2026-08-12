@@ -594,8 +594,28 @@ checkpoint and hand off as you go so no context is lost.
 > music's ink while our y comes from the last verse's baseline — spending it takes one
 > fixture byte-exact and puts two others structurally out.
 
+> 🧱 **AND THEN THE STRUCTURAL ROWS STARTED FALLING — 67 → 65, FIVE OF THEM OFF ONE
+> FIXTURE** (2026-08-11b). `visual-selection-01` is 202k bytes and named five separate
+> defects in one sitting, each visible only once the one before it closed: **a brace with a
+> header OWNS the voice name** and `setBottomStaff` DELETES it off the voice
+> (`brace-element.js:9-14`); the brace's own x is `padding.left + voiceheaderw`, past that
+> name, and its ends come off `staff.absoluteY` one product each (`draw/brace.js:8-14`);
+> **`%%voicefont` was not realized at all** and `fontTranslation` is a 34-row TABLE mapping
+> a PostScript name to a web family plus a weight, not a suffix rule
+> (`abc_parse_directive.js:62-160`); **a tempo's parts are INTERLEAVED**, `preString`
+> before the glyphs (`draw/tempo.js:18-38`); **a `P:` label is `renderText`'s element**,
+> which brought three more rules out of `draw/text.js` in one pass — a boxed font shifts a
+> `start`-anchored text by its padding, DELETES its class, and owns the rect, wrapping it in
+> a group only when the caller is not `alreadyInGroup`; and **`Q:` takes a quote on EITHER
+> SIDE of the rate**, position deciding which, not content.
+>
+> **A LARGE FIXTURE IS NOT A HARD FIXTURE; IT IS A DENSE ONE.** And **A REMOVAL IS A
+> FINDING WHEN A COUNT SAYS SO** — two of the five rested on removals the baseline flagged,
+> both settled by counting the thing in BOTH engines across all 171 fixtures (`171 match /
+> 0 differ` for the voice name; `6 fixtures differed before, 3 after` for the box).
+>
 > ⚖️ **AND ABCJS'S ARITHMETIC IS PART OF THE PORT — 94 → 67 of 171 ON SEVEN LANDINGS**
-> (2026-08-11b). Which number is formed FIRST, which product is taken ONCE, which offset is
+> (the same day). Which number is formed FIRST, which product is taken ONCE, which offset is
 > STORED rather than derived. The vertical closed first and the HORIZONTAL turned out to be
 > worth more: **the line solve iterates on abcjs's `spacing` itself, not on a factor** —
 > `spacing` is one number replaced outright each of the eight passes
@@ -823,14 +843,14 @@ abcjs source are all reached by sibling path and stay in that repo. Keep it that
 backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
-**AUDIO IS BYTE-EQUAL AND THE SVG IS THE ARC.** 1240/1240 with no
+**AUDIO IS BYTE-EQUAL AND THE SVG IS THE ARC.** 1258/1258 with no
 reds; **seventeen gates and NINE ranked tables** — 0 of 72 audio cases, 0 of 38 note timings,
 0 of 23 chord grids, 0 of 3 MIDI files, 0 of 174 harvested fixtures, 0 of 120 pixel targets,
 **1 of 13 element timings** (abcjs being idiosyncratic rather than us being wrong), and
 **1 of 25 DOM-contract cases with TWENTY-FOUR slugs RATCHETED** — and
-**67 of 171 SVG-byte fixtures, ONE HUNDRED AND FOUR of them EXACT and ALL 104 RATCHETED** —
-and **the SVG BYTE TABLE is THE ONE OPEN GATE**, at best 52490 / median 8185 — **33
-structural + 13 glyph-x + 8 root + 7 other + 1 glyph-y**, classified by aligning on the
+**65 of 171 SVG-byte fixtures, ONE HUNDRED AND SIX of them EXACT and ALL 106 RATCHETED** —
+and **the SVG BYTE TABLE is THE ONE OPEN GATE**, at best 52490 / median 10288 — **32
+structural + 14 glyph-x + 11 root + 7 other + 1 glyph-y**, classified by aligning on the
 first differing character (a cruder test sends you at the wrong family). **THE ARITHMETIC
 ARC HAS DONE ITS WORK ON BOTH AXES** — the layout holds abcjs's pitches end to end, the line
 solve iterates on abcjs's own `spacing`, and elements are PLACED on the solved x rather than
@@ -839,8 +859,9 @@ and 36 glyph-x across 13**, from 265 across 33 mid-session. **THE STRUCTURAL ROW
 THE MAJORITY OF THE TABLE** and are where a session buys the most; both remaining ULP
 threads are named and measured in `CHECKPOINT-2026-08-11b.md` §3.1 (the TEMPO NOTEHEAD, which
 is PLACE-DON'T-SHIFT one axis over, and `visual-transpose-03`'s last token). The structural
-thirty-three are listed with citations in
-`CHECKPOINT-2026-08-11.md` §4.2, the largest single one being the BRACE, which
+thirty-two are listed with citations in
+`CHECKPOINT-2026-08-11.md` §4.2 — five of its rows closed on 2026-08-11b — and the largest
+single one left is the BRACE's own shape, which
 abcjs draws AFTER its own staff's lines and builds from `curvyPath` arithmetic rather than
 from a glyph. The oracle lands before the
 implementation here, as it did for audio and the chord grid, and a table that opens at every
