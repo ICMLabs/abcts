@@ -2139,17 +2139,26 @@ describe('navigation directions', () => {
         .systems[0]?.staves[0]?.elements ?? []
     ).flatMap((e) => e.texts)
 
-  it('draws them as WORDS, in conventional engraving spelling', () => {
-    // The ABC token is an identifier; the page wants prose. abcjs paints each of these —
-    // verified as a delta against a plain note in its rendered SVG.
+  it('draws them as WORDS, in ABCJS\'S OWN SPELLING', () => {
+    // The ABC token is an identifier; the page wants prose. **The literals are abcjs's,
+    // not conventional engraving's** — `"FINE"` in capitals and a lowercase `al coda` /
+    // `al fine` (`decoration.js:213-229`). This test asserted `Fine` and `al Coda`, which
+    // is what a style guide says and not what strict has to draw, and the byte gate found
+    // it on `visual-misc-05`.
     expect(textsOf('!D.C.!').map((t) => t.text)).toEqual(['D.C.'])
-    expect(textsOf('!fine!').map((t) => t.text)).toEqual(['Fine'])
-    expect(textsOf('!D.S.alcoda!').map((t) => t.text)).toEqual(['D.S. al Coda'])
-    expect(textsOf('!D.C.alfine!').map((t) => t.text)).toEqual(['D.C. al Fine'])
+    expect(textsOf('!fine!').map((t) => t.text)).toEqual(['FINE'])
+    expect(textsOf('!D.S.alcoda!').map((t) => t.text)).toEqual(['D.S. al coda'])
+    expect(textsOf('!D.C.alfine!').map((t) => t.text)).toEqual(['D.C. al fine'])
   })
 
-  it('sets them in italic, as directions rather than lyrics', () => {
-    expect(textsOf('!D.C.!')[0]?.italic).toBe(true)
+  it('sets them UPRIGHT in `annotationfont`, and anchors the al-coda phrases at their END', () => {
+    // `renderText(…, type: 'annotationfont', anchor: params.anchor, centerVertically: true)`
+    // (`draw/relative.js:47-50`). This asserted ITALIC, which was our own judgement — a
+    // direction reads as italic in a style guide and abcjs's `annotationfont` is upright.
+    expect(textsOf('!D.C.!')[0]?.italic).toBe(false)
+    expect(textsOf('!D.C.!')[0]?.font).toBe('annotationfont')
+    expect(textsOf('!D.C.!')[0]?.anchor).toBe('middle')
+    expect(textsOf('!D.C.alcoda!')[0]?.anchor).toBe('end')
   })
 
   it('stacks two on one note rather than overprinting', () => {

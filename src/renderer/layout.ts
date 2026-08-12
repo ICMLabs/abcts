@@ -471,6 +471,11 @@ export const ENGRAVE = {
    * for the mouth's own half (`draw/crescendo.js:7-19`).
    */
   hairpinDrop: spaces(ABCJS_PX.hairpinOffset + ABCJS_PX.hairpinMouth / 2),
+  /**
+   * `y + 6` — "to compensate for the placement of text in svg: to be on the same row as
+   * symbols" (`draw/relative.js:48`). A TEXT decoration only; a symbol one has none.
+   */
+  decorationTextDrop: 6 / UNIT_PX,
   /** Clearance either side of a glissando, so it does not touch the noteheads. */
   spannerGap: 0.3 * SPACE,
   /** `var margin = 4` — a glissando's inset past half a notehead (`draw/glissando.js:9`). */
@@ -4424,11 +4429,27 @@ const DECORATION_TEXTS: Readonly<Record<string, string>> = {
   '5': '5',
   'D.C.': 'D.C.',
   'D.S.': 'D.S.',
-  fine: 'Fine',
-  'D.C.alcoda': 'D.C. al Coda',
-  'D.C.alfine': 'D.C. al Fine',
-  'D.S.alcoda': 'D.S. al Coda',
-  'D.S.alfine': 'D.S. al Fine',
+  // abcjs's own literals, which are not title case: `"FINE"` and a lowercase `coda`/`fine`
+  // (`decoration.js:213-229`). Ours read `Fine` and `al Coda`.
+  fine: 'FINE',
+  'D.C.alcoda': 'D.C. al coda',
+  'D.C.alfine': 'D.C. al fine',
+  'D.S.alcoda': 'D.S. al coda',
+  'D.S.alfine': 'D.S. al fine',
+}
+
+/**
+ * **AND EACH ONE DECLARES ITS OWN ANCHOR.** `textDecoration(text, placement, anchor)` takes
+ * it as a parameter and the four `al coda`/`al fine` phrases pass `'end'` where the
+ * fingerings, `D.C.`, `D.S.` and `FINE` pass `'middle'` (`decoration.js:146`, `:209-229`).
+ * The RelativeElement's own dx is `width / 2` for all of them, so the anchor is the only
+ * thing that decides which way the text runs from the notehead's centre.
+ */
+const DECORATION_TEXT_ANCHOR: Readonly<Record<string, 'middle' | 'end'>> = {
+  'D.C.alcoda': 'end',
+  'D.C.alfine': 'end',
+  'D.S.alcoda': 'end',
+  'D.S.alfine': 'end',
 }
 
 /**
@@ -4813,13 +4834,30 @@ function decorationGlyphs(
     const size = ENGRAVE.chordTextSize
     const y = stepToY(toStep(above + ENGRAVE.decorationTextFudge))
     const half = (ENGRAVE.decorationTextThickness * ENGRAVE.spacePerStep) / 2
+    /**
+     * **A TEXT DECORATION IS `renderText`'S ELEMENT, IN `annotationfont`.**
+     *
+     *     renderText(renderer, { x: params.x, y: y + 6, text: params.c,
+     *       type: 'annotationfont', klass: classes.generate("annotation"),
+     *       anchor: params.anchor, centerVertically: true, dim: params.dim })
+     *
+     * (`draw/relative.js:47-50`) — "the +6 is to compensate for the placement of text in
+     * svg: to be on the same row as symbols". `centerVertically` is TRUE, so `renderText`
+     * does NOT add a font size to the y, which every other music text takes.
+     *
+     * Ours went out through the plain writer at `font-family="serif"` with no anchor, and
+     * centred itself by subtracting half its own measured width — where abcjs places it at
+     * the notehead's centre and lets `text-anchor` do the work.
+     */
     texts.push({
       text,
-      x: headX + headWidth / 2 - textWidth(text, size) / 2,
-      y,
+      font: 'annotationfont',
+      anchor: DECORATION_TEXT_ANCHOR[name] ?? 'middle',
+      x: headX + headWidth / 2,
+      y: y + ENGRAVE.decorationTextDrop,
       size,
       bold: false,
-      italic: true,
+      italic: false,
       reserve: [y - half, y + half],
     })
     above += ENGRAVE.decorationTextHeight

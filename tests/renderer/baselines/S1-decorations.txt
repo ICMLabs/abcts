@@ -325,23 +325,23 @@ system 5 width=700.000 originY=514.635
     note@-2 x=49.051 w=42.426
       glyph noteheadBlack 49.051,-15.500
       line  58.361,-16.792 -> 58.361,-42.625 t=1.000
-      text  49.503,-54.250 size=16.000 italic "0"
+      text  53.956,-48.250 size=16.000 "0"
     note@-2 x=176.041 w=42.426
       glyph noteheadBlack 176.041,-15.500
       line  185.351,-16.792 -> 185.351,-42.625 t=1.000
-      text  176.493,-54.250 size=16.000 italic "1"
+      text  180.946,-48.250 size=16.000 "1"
     note@-2 x=303.031 w=42.426
       glyph noteheadBlack 303.031,-15.500
       line  312.341,-16.792 -> 312.341,-42.625 t=1.000
-      text  303.482,-54.250 size=16.000 italic "2"
+      text  307.936,-48.250 size=16.000 "2"
     note@-2 x=430.020 w=42.426
       glyph noteheadBlack 430.020,-15.500
       line  439.330,-16.792 -> 439.330,-42.625 t=1.000
-      text  430.472,-54.250 size=16.000 italic "3"
+      text  434.925,-48.250 size=16.000 "3"
     note@-2 x=557.010 w=42.426
       glyph noteheadBlack 557.010,-15.500
       line  566.320,-16.792 -> 566.320,-42.625 t=1.000
-      text  557.462,-54.250 size=16.000 italic "4"
+      text  561.915,-48.250 size=16.000 "4"
     bar x=684.000 w=0.600
       line  684.300,-38.750 -> 684.300,-7.750 t=0.600
 system 6 width=700.000 originY=606.965
@@ -356,7 +356,7 @@ system 6 width=700.000 originY=606.965
     note@-2 x=49.051 w=42.426
       glyph noteheadBlack 49.051,-15.500
       line  58.361,-16.792 -> 58.361,-42.625 t=1.000
-      text  49.503,-54.250 size=16.000 italic "5"
+      text  53.956,-48.250 size=16.000 "5"
     note@-2 x=207.788 w=42.426
       glyph noteheadBlack 207.788,-15.500
       glyph pluckedLeftHandPizzicato 208.477,-52.653
@@ -590,19 +590,19 @@ system 14 width=700.000 originY=1355.216
     note@-2 x=49.051 w=42.426
       glyph noteheadBlack 49.051,-15.500
       line  58.361,-16.792 -> 58.361,-42.625 t=1.000
-      text  38.386,-54.250 size=16.000 italic "D.S."
+      text  53.956,-48.250 size=16.000 "D.S."
     note@-2 x=207.788 w=42.426
       glyph noteheadBlack 207.788,-15.500
       line  217.098,-16.792 -> 217.098,-42.625 t=1.000
-      text  196.678,-54.250 size=16.000 italic "D.C."
+      text  212.693,-48.250 size=16.000 "D.C."
     note@-2 x=366.526 w=42.426
       glyph noteheadBlack 366.526,-15.500
       line  375.836,-16.792 -> 375.836,-42.625 t=1.000
-      text  325.587,-54.250 size=16.000 italic "D.C. al Coda"
+      text  371.431,-48.250 size=16.000 "D.C. al coda"
     note@-2 x=525.263 w=42.426
       glyph noteheadBlack 525.263,-15.500
       line  534.573,-16.792 -> 534.573,-42.625 t=1.000
-      text  487.886,-54.250 size=16.000 italic "D.C. al Fine"
+      text  530.168,-48.250 size=16.000 "D.C. al fine"
     bar x=684.000 w=0.600
       line  684.300,-38.750 -> 684.300,-7.750 t=0.600
 system 15 width=234.757 originY=1436.131
@@ -617,7 +617,7 @@ system 15 width=234.757 originY=1436.131
     note@-2 x=49.051 w=42.426
       glyph noteheadBlack 49.051,-15.500
       line  58.361,-16.792 -> 58.361,-42.625 t=1.000
-      text  38.378,-54.250 size=16.000 italic "Fine"
+      text  53.956,-48.250 size=16.000 "FINE"
     note@-2 x=91.477 w=42.426
       glyph noteheadBlack 91.477,-15.500
       glyph breathMarkTick 96.382,-52.457

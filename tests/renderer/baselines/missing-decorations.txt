@@ -251,10 +251,10 @@ system 0 width=792.750 originY=0.000
     note@1 x=608.731 w=42.426
       glyph noteheadBlack 608.731,-27.125
       line  609.231,-25.833 -> 609.231,0.000 t=1.000
-      text  568.237,-54.250 size=16.000 italic "D.S. al Coda"
+      text  613.636,-48.250 size=16.000 "D.S. al coda"
     bar x=684.000 w=0.600
       line  684.300,-38.750 -> 684.300,-7.750 t=0.600
-system 1 width=700.000 originY=172.452
+system 1 width=705.146 originY=172.452
   staff 0 originY=69.500
     staffline 15.000,-7.750 -> 685.000,-7.750 t=0.700
     staffline 15.000,-15.500 -> 685.000,-15.500 t=0.700
@@ -291,10 +291,10 @@ system 1 width=700.000 originY=172.452
     note@1 x=606.006 w=42.426
       glyph noteheadBlack 606.006,-27.125
       line  606.506,-25.833 -> 606.506,0.000 t=1.000
-      text  568.630,-54.250 size=16.000 italic "D.C. al Fine"
+      text  610.911,-48.250 size=16.000 "D.C. al fine"
     bar x=684.000 w=0.600
       line  684.300,-38.750 -> 684.300,-7.750 t=0.600
-system 2 width=422.785 originY=274.219
+system 2 width=465.066 originY=274.219
   staff 0 originY=60.063
     staffline 15.000,-7.750 -> 407.462,-7.750 t=0.700
     staffline 15.000,-15.500 -> 407.462,-15.500 t=0.700
@@ -307,7 +307,7 @@ system 2 width=422.785 originY=274.219
       glyph noteheadBlack 49.051,0.000
       line  47.051,0.000 -> 60.861,0.000 t=0.700
       line  58.361,-1.292 -> 58.361,-27.125 t=1.000
-      text  12.120,-54.250 size=16.000 italic "D.S. al Fine"
+      text  53.956,-48.250 size=16.000 "D.S. al fine"
     note@-5 x=91.477 w=42.426
       glyph noteheadBlack 91.477,-3.875
       line  100.787,-5.167 -> 100.787,-31.000 t=1.000
@@ -331,7 +331,7 @@ system 2 width=422.785 originY=274.219
     note@1 x=357.036 w=42.426
       glyph noteheadBlack 357.036,-27.125
       line  357.536,-25.833 -> 357.536,0.000 t=1.000
-      text  316.097,-54.250 size=16.000 italic "D.C. al Coda"
+      text  361.941,-48.250 size=16.000 "D.C. al coda"
     bar x=399.462 w=9.600
       line  399.762,-38.750 -> 399.762,-7.750 t=0.600
       line  405.462,-38.750 -> 405.462,-7.750 t=4.000
@@ -386,7 +386,7 @@ system 0 width=792.750 originY=0.000
     note@1 x=390.956 w=42.426
       glyph noteheadBlack 390.956,-27.125
       line  391.456,-25.833 -> 391.456,0.000 t=1.000
-      text  350.017,-54.250 size=16.000 italic "D.C. al Coda"
+      text  395.861,-48.250 size=16.000 "D.C. al coda"
     bar x=433.382 w=9.600
       line  433.682,-38.750 -> 433.682,-7.750 t=0.600
       line  439.382,-38.750 -> 439.382,-7.750 t=4.000
