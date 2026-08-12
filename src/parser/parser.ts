@@ -1344,9 +1344,10 @@ class VoiceBuilder {
   }
 
   /** `-` reaches back: the tie belongs to the note already emitted. Rests cannot tie. */
-  tieLast(): void {
+  tieLast(dotted = false): void {
     const last = this.last
-    if (last && last.type !== 'rest') this.replaceLast({ ...last, tiedToNext: true })
+    if (last && last.type !== 'rest')
+      this.replaceLast({ ...last, tiedToNext: true, ...(dotted ? { tieDotted: true } : {}) })
   }
 
   /** `)` likewise closes the slur on the preceding note. Rests cannot be slurred. */
@@ -3036,6 +3037,9 @@ class Parser {
     let pending = noAttachments()
     /** `(` opens a slur on the NEXT event; `)` closes on the PREVIOUS one. */
     let pendingSlurStarts = 0
+    /** `.(` / `.-` — see `Note.tieDotted`. Set by the dot, consumed by the mark it leads. */
+    let pendingSlurDotted = false
+    let dottedCurve = false
     let pendingGrace: GracePitch[] = []
     let pendingGraceSlash = false
 
@@ -3121,6 +3125,7 @@ class Parser {
           ...pending,
           style,
           slurStarts: pendingSlurStarts,
+          ...(pendingSlurDotted ? { slurDotted: true } : {}),
           graceNotes: pendingGrace,
           graceSlash: pendingGraceSlash,
         }
@@ -3129,6 +3134,7 @@ class Parser {
       voice().pendingBroken = null
       pending = noAttachments()
       pendingSlurStarts = 0
+      pendingSlurDotted = false
       pendingGrace = []
       pendingGraceSlash = false
       beamAfterEmit()
@@ -3312,6 +3318,10 @@ class Parser {
           // decoration no renderer should draw.
           const nextKind = (tokens[i + 1] as Token | undefined)?.kind
           const dotsAMark = token.aux === '.' && (nextKind === 'lparen' || nextKind === 'tie')
+          // …AND THE DOT IS NOT DISCARDED, IT IS THE CURVE'S STYLE — see
+          // `Note.tieDotted`. It was read here and thrown away, so `.- ` and `-` drew the
+          // same filled lens where abcjs strokes a dashed one.
+          if (dotsAMark) dottedCurve = true
           // User definitions WIN over the built-ins — abcjs looks in its macro table
           // first (`abc_parse_music.js:756`) and only falls through to the hard-coded
           // letters. `frere-jacques` relies on exactly that to swap `u` and `v`.
@@ -3397,7 +3407,8 @@ class Parser {
           break
         }
         case 'tie': {
-          voice().tieLast()
+          voice().tieLast(dottedCurve)
+          dottedCurve = false
           i++
           break
         }
@@ -3426,6 +3437,10 @@ class Parser {
           )
           if (!spec?.[1]) {
             pendingSlurStarts++
+            if (dottedCurve) {
+              pendingSlurDotted = true
+              dottedCurve = false
+            }
             i++
             break
           }

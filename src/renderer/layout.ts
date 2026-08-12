@@ -1317,6 +1317,13 @@ export interface StemInfo {
 export interface PlacedCurve {
   /** Which voice ON THIS STAFF this belongs to — see `PlacedLine.voice`. */
   readonly voice?: number
+  /**
+   * `.-` / `.(` — a DOTTED tie or slur. abcjs draws it as the outward half ALONE, stroked
+   * with `stroke-dasharray="5 5"` and `fill: none`, and adds `dotted` to its class
+   * (`draw/tie.js:89-95`). Everything else about the arc is identical, which is why this is
+   * a flag on the curve rather than a second shape.
+   */
+  readonly dotted?: boolean
   readonly x1: number
   readonly y1: number
   readonly x2: number
@@ -6327,10 +6334,17 @@ function layoutCurves(
    * arc; no corpus fixture has one.
    */
   const emit = (from: NoteAnchor, to: NoteAnchor, kind: 'tie' | 'slur'): void => {
+    // `.-` and `.(` — the STYLE rides on the element the curve OPENS at, one flag for the
+    // tie it starts and one for the slurs opening on it. See `PlacedCurve.dotted`.
+    const style: { dotted?: true } =
+      (kind === 'tie' ? 'tieDotted' in from.event && from.event.tieDotted : 'slurDotted' in from.event && from.event.slurDotted)
+        ? { dotted: true }
+        : {}
     if (from.system === to.system) {
-      curves[from.system]?.push(
-        buildCurve(from, to, kind, voicePos, strict, { start: from.element, end: to.element }),
-      )
+      curves[from.system]?.push({
+        ...buildCurve(from, to, kind, voicePos, strict, { start: from.element, end: to.element }),
+        ...style,
+      })
       return
     }
     const start = bounds[from.system]
@@ -6346,11 +6360,12 @@ function layoutCurves(
     // (`draw/voice.js:12`, `:82-85`). One pixel, on every curve that runs off the end of a
     // system: abcjs writes 284 where the staff line itself ends at 281.
     const lineEndX = start.right - ENGRAVE.lineEndInset
-    curves[from.system]?.push(
-      buildCurve(from, { ...from, left: lineEndX, right: lineEndX }, kind, voicePos, strict, {
+    curves[from.system]?.push({
+      ...buildCurve(from, { ...from, left: lineEndX, right: lineEndX }, kind, voicePos, strict, {
         start: from.element,
       }),
-    )
+      ...style,
+    })
     /**
      * **THE INCOMING HALF IS A FIXED 20px STUB, AND IT IS NEVER OMITTED.**
      * `calcX` has no clef to avoid and no room to test: with `anchor2` and no `anchor1` it
@@ -6367,11 +6382,12 @@ function layoutCurves(
      * halves we declined to draw.
      */
     const resume = to.left - ENGRAVE.curveContinuation
-    curves[to.system]?.push(
-      buildCurve({ ...to, left: resume, right: resume }, to, kind, voicePos, strict, {
+    curves[to.system]?.push({
+      ...buildCurve({ ...to, left: resume, right: resume }, to, kind, voicePos, strict, {
         end: to.element,
       }),
-    )
+      ...style,
+    })
   }
 
   anchors.forEach((anchor, i) => {

@@ -454,6 +454,19 @@ function curveToPath(curve: PlacedCurve, attr: string, strict: boolean, k = 1): 
     const [rc1x, rc1y, rc2x, rc2y] = [r(c1x), r(c1y), r(c2x), r(c2y)]
     const klass = / class="[^"]*"/.exec(attr)?.[0] ?? ''
     const name = / data-name="[^"]*"/.exec(attr)?.[0] ?? ''
+    /**
+     * **A DOTTED CURVE IS THE OUTWARD HALF ALONE, STROKED.** `drawArc`'s other arm writes
+     * one cubic and gives it `stroke: foregroundColor`, `fill: "none"` and
+     * `stroke-dasharray: "5 5"` (`draw/tie.js:89-95`) — no mirrored return, no `z`. Its
+     * class gains `dotted`, which is appended BEFORE `generate` runs, so it lands inside
+     * the generated string rather than after it.
+     */
+    if (curve.dotted === true) {
+      return (
+        `<path d="M ${rx1} ${ry1} C ${rc1x} ${rc1y} ${rc2x} ${rc2y} ${rx2} ${ry2}" ` +
+        `stroke="currentColor" fill="none" stroke-dasharray="5 5"${klass}${name}></path>`
+      )
+    }
     return (
       `<path d="M ${rx1} ${ry1} C ${rc1x} ${rc1y} ${rc2x} ${rc2y} ${rx2} ${ry2} ` +
       `C ${r(rc2x - t * uy)} ${r(rc2y + t * ux)} ${r(rc1x - t * uy)} ${r(rc1y + t * ux)} ` +

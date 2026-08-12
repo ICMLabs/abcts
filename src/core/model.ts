@@ -436,6 +436,15 @@ export interface Note {
   readonly notatedDuration: Rational
   /** `-` ties this event into the next; they sound as one. */
   readonly tiedToNext: boolean
+  /**
+   * `.-` and `.(` — a DOTTED tie and a DOTTED slur, drawn as a dashed open curve rather
+   * than a filled lens (`draw/tie.js:89-95`). The leading `.` is NOT a staccato: abcjs's
+   * decoration lexer breaks out of the `case '.'` when `(` or `-` follows
+   * (`abc_parse_music.js:783-786`), and the flag rides on the ELEMENT, one for the tie it
+   * starts and one for the slurs opening on it (`:896`, `:1062-1066`).
+   */
+  readonly tieDotted?: boolean
+  readonly slurDotted?: boolean
   /** How many slurs open on this event, and how many close on it. */
   readonly slurStarts: number
   readonly slurEnds: number
@@ -591,6 +600,15 @@ export interface Chord {
   readonly notatedDuration: Rational
   /** `-` ties this event into the next; they sound as one. */
   readonly tiedToNext: boolean
+  /**
+   * `.-` and `.(` — a DOTTED tie and a DOTTED slur, drawn as a dashed open curve rather
+   * than a filled lens (`draw/tie.js:89-95`). The leading `.` is NOT a staccato: abcjs's
+   * decoration lexer breaks out of the `case '.'` when `(` or `-` follows
+   * (`abc_parse_music.js:783-786`), and the flag rides on the ELEMENT, one for the tie it
+   * starts and one for the slurs opening on it (`:896`, `:1062-1066`).
+   */
+  readonly tieDotted?: boolean
+  readonly slurDotted?: boolean
   /** How many slurs open on this event, and how many close on it. */
   readonly slurStarts: number
   readonly slurEnds: number
