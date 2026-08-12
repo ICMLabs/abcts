@@ -1377,7 +1377,7 @@ export interface LayoutStaff {
    * is 0 where the origin is not one product off a pitch (a heading block, or a clamped
    * staff). See the placement loop.
    */
-  readonly originCursor: number
+  readonly originAdvances: readonly number[]
   readonly originPitch: number
   /**
    * This staff's origin on the PAGE — `staff1.absoluteY` (`draw/staff-group.js:26`),
@@ -9493,7 +9493,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         // resolving it here would silently drop every one that does.
         spannerLines: [],
         originY: 0,
-        originCursor: 0,
+        originAdvances: [0],
         originPitch: 0,
         absoluteY: 0,
       }
@@ -9822,8 +9822,59 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
        * carrying a heading block, or one the intra-staff clamp moved — because there the
        * cursor form is what abcjs's own `staff.top` already absorbs.
        */
-      const originCursor = musicOnlyTop === undefined ? cursor : originY
-      const originPitch = musicOnlyTop === undefined ? clampedTopPitch : 0
+      /**
+       * **AND A HEADING BLOCK'S ROWS ARE SPENT ONE AT A TIME, THEN THE SEPARATION, THEN THE
+       * PITCH.** Instrumented on `visual-tablature-08` (`T:First` / `T:Second`), abcjs's
+       * page cursor reads
+       *
+       *     15 → 22.56 → 55.56 → 59.34 → 85.34   padding.top, then four nonMusic ROWS
+       *          → 92.9                           spacing.music
+       *          → 154.23000000000002             staffSeparation, the 6.7.0 else-arm
+       *          → 207.41200000000003             + STEP × 13.724387096774194
+       *
+       * — eight adds and one product. Ours summed the whole lead into ONE number and then
+       * subtracted the extent's y, reaching 207.41199999999998: one ULP on every glyph of
+       * the staff and on the root's `height`.
+       *
+       * **`topAdvances` ALREADY ENDS WITH `spacing.music`** — measured, and the reason a
+       * first attempt at this failed: it added the gap a second time and split `blockSpan`
+       * as though the two were disjoint. `blockSpan` IS the sum of those advances, so the
+       * whole lead is `[...topAdvances, separation]` and nothing else.
+       *
+       * Only the FIRST staff of the FIRST system: a mid-tune block is its own system's
+       * leading and `topAdvances` describes the head of the tune, not it.
+       */
+      const walksTopBlock =
+        musicOnlyTop !== undefined &&
+        musicOnlyTopPitch !== undefined &&
+        systemIndex === 0 &&
+        staffIndexInSystem === 0
+      const originAdvances = ((): number[] => {
+        const flat = musicOnlyTop === undefined ? cursor : originY
+        if (!walksTopBlock) return [flat]
+        const terms = [...topAdvances, nonMusicBeforeMusic ? interSystemSep : 0]
+        /**
+         * …AND THE LIST CLOSES ON A REMAINDER, which is EXACTLY ZERO whenever the terms
+         * account for the whole lead — and `y += 0` is exact, so the clean case walks
+         * abcjs's own eight adds and nothing else. It is not zero everywhere:
+         * `visual-options-01` carries one extra `spacing.music` that these terms do not
+         * name, and until that is understood the remainder is what keeps the walked origin
+         * and the system-relative one the same number. Measured by asserting it — see
+         * `ABCTS_CHECK` below.
+         */
+        const named = terms.reduce((t, a) => t + a, 0)
+        const rest = flat - named - (musicOnlyTopPitch ?? 0) * ENGRAVE.spacePerStep
+        // …and only when it is a REAL term. Below a nanopixel it is the same quantity
+        // reached by a different association — the very thing this walk exists to remove —
+        // and spending it puts the ULP straight back. Measured: keeping it took the byte
+        // table from 59 to 60.
+        return Math.abs(rest) > 1e-9 ? [...terms, rest] : terms
+      })()
+      const originPitch = walksTopBlock
+        ? (musicOnlyTopPitch ?? 0)
+        : musicOnlyTop === undefined
+          ? clampedTopPitch
+          : 0
       // In PITCH, as abcjs states it: the staff's own span plus whatever the clamp added,
       // which abcjs carries inside `staff.top` and we apply here.
       // **`calcHeight` ADDS `staff.top` AND THEN `-staff.bottom`**, two additions onto a
@@ -9841,10 +9892,14 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // `staff.top` at all — the page walks THROUGH the block — so this term is ours, and
       // splitting it into `topPitch - blockSpan / STEP` is two roundings where it was one.
       // Nine `visual-title-*` fixtures said so the moment it was.
+      // …AND A BLOCK STAFF'S TOP IS A PITCH TOO, NOW THAT THE MUSIC-ONLY EXTENT REPORTS
+      // ONE. `calcHeight` sums `staff.top`, which knows nothing about the top text — the
+      // page walks THROUGH the block — so the term is the MUSIC's own pitch and not the
+      // divided-back difference this used to compute. Its own comment said a block's span
+      // is a length with no pitch, which is true of the SPAN and not of what is left after
+      // it: `visual-tablature-08`'s root `height` was the last token on that fixture.
       heightPitch +=
-        blockSpan === 0
-          ? clampedTopPitch
-          : -(extent.top + blockSpan) / ENGRAVE.spacePerStep
+        blockSpan === 0 ? clampedTopPitch : (musicOnlyTopPitch ?? -(extent.top + blockSpan) / ENGRAVE.spacePerStep)
       heightPitch += -extent.bottomPitch
       staffIndexInSystem += 1
       // `renderer.moveY(spacing.STEP, -staff1.bottom)` — ONE product off the pitch, the
@@ -9857,7 +9912,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         // the right margin and any prose overhanging it — see `staffLinesFor`.
         staffLines: staffLinesFor(leftEdgeFor(systemIndex), solved.width, staff.staffLineCount),
         originY,
-        originCursor,
+        originAdvances,
         originPitch,
         absoluteY: 0,
       }
@@ -10062,7 +10117,27 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
      */
     const withAbsolute = shifted.staves.map((staff) => ({
       ...staff,
-      absoluteY: systemAbsoluteY + staff.originCursor + staff.originPitch * ENGRAVE.spacePerStep,
+      absoluteY: (() => {
+        const walked =
+          staff.originAdvances.reduce((y, a) => y + a, systemAbsoluteY) +
+          staff.originPitch * ENGRAVE.spacePerStep
+        /**
+         * **THE INVARIANT, ASSERTABLE.** The walked origin and the system-relative one are
+         * the same point by two routes; they may differ in the last bits and nothing more.
+         * `ABCTS_CHECK=1` prints any pair that does not, which is how the missing
+         * `spacing.music` on `visual-options-01` was found — a term list that silently
+         * stops describing a shape is exactly the failure this arc is prone to.
+         */
+        if (process.env.ABCTS_CHECK !== undefined) {
+          const flat = systemAbsoluteY + staff.originY
+          if (Math.abs(walked - flat) > 1e-9)
+            console.error(
+              'WALK MISMATCH', walked, flat, 'diff', walked - flat,
+              JSON.stringify(staff.originAdvances), staff.originPitch,
+            )
+        }
+        return walked
+      })(),
     }))
 
     // abcjs advances the page by the block's rows and then by `staffGroup.height * STEP`,
@@ -10211,16 +10286,16 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         for (const a of block.advances) y += a
         y += block.height - block.advances.reduce((t, a) => t + a, 0)
       } else {
-        for (const a of topAdvances) y += a
-        const named = topAdvances.reduce((t, a) => t + a, 0)
         const first = shown[0]
-        // **`spacing.music` IS ITS OWN TERM**, spent right after the top text and before
-        // the first staff (`draw/draw.js:17`) — not folded into a difference. What is left
-        // of the first system's leading after it is the 6.7.0 separation a non-music line
-        // costs and any ink a block's row reaches above its own declared box, which abcjs
-        // does not reserve at all; it is EXACTLY ZERO on a plain tune, and `y += 0` is
-        // exact.
-        if (first !== undefined) y += first.leading - named
+        /**
+         * **THE SAME TERM LIST THE STAFF'S OWN ORIGIN WALKS** — see
+         * `LayoutStaff.originAdvances`. This used to spend `topAdvances` and then
+         * `first.leading - named`, which is the SEPARATION reached by subtracting two
+         * sums: `(61.33 + 77.89999999999999) - 77.9` is not `61.33`, and that was the last
+         * token on `visual-tablature-08`. One list, spent once, and the page and the staff
+         * cannot drift apart.
+         */
+        for (const a of first?.staves[0]?.originAdvances ?? topAdvances) y += a
         for (const [i, system] of shown.entries()) {
           if (i > 0) {
             y += system.gap ?? 0
