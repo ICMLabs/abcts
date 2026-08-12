@@ -275,13 +275,33 @@ describe('tempo', () => {
   const tempoOf = (q: string) =>
     parse(`X:1\nM:4/4\nL:1/4\n${q}\nK:C\nC|\n`).scores[0]?.tempo ?? null
 
+  it('takes a quote on EITHER side of the rate', () => {
+    // `[Q:"left" 1/4=170"right"]` — abcjs shifts tokens in order, so a leading quote is
+    // `preString` and one still there once the rate is read is `postString`
+    // (`abc_parse_header.js:257-330`). Which side decides which, not the content.
+    expect(tempoOf('Q:"left" 1/4=170"right"')).toEqual({
+      beatUnit: rational(1, 4),
+      bpm: 170,
+      text: 'left',
+      postText: 'right',
+    })
+    // A lone quote AFTER the rate is the post one.
+    expect(tempoOf('Q:1/4=120 "Allegro"')).toEqual({
+      beatUnit: rational(1, 4),
+      bpm: 120,
+      text: null,
+      postText: 'Allegro',
+    })
+  })
+
   it('reads every spelling the corpus uses', () => {
-    expect(tempoOf('Q:1/4=120')).toEqual({ beatUnit: rational(1, 4), bpm: 120, text: null })
-    expect(tempoOf('Q: "Adagio"')).toEqual({ beatUnit: null, bpm: null, text: 'Adagio' })
+    expect(tempoOf('Q:1/4=120')).toEqual({ beatUnit: rational(1, 4), bpm: 120, text: null, postText: null })
+    expect(tempoOf('Q: "Adagio"')).toEqual({ beatUnit: null, bpm: null, text: 'Adagio', postText: null })
     expect(tempoOf('Q:"Allegretto" 1/4=100')).toEqual({
       beatUnit: rational(1, 4),
       bpm: 100,
       text: 'Allegretto',
+      postText: null,
     })
   })
 
@@ -291,6 +311,7 @@ describe('tempo', () => {
       beatUnit: rational(1, 4),
       bpm: 120,
       text: 'Allegro',
+      postText: null,
     })
   })
 
@@ -300,21 +321,23 @@ describe('tempo', () => {
     // beside it. `ragtime-nightingale` is `M:2/4 L:1/4 Q:80` and abcjs draws a QUARTER.
     const withMeter = (m: string, q: string) =>
       parse(`X:1\nM:${m}\nL:1/4\n${q}\nK:C\nC|\n`).scores[0]?.tempo ?? null
-    expect(withMeter('6/8', 'Q:120')).toEqual({ beatUnit: rational(1, 8), bpm: 120, text: null })
+    expect(withMeter('6/8', 'Q:120')).toEqual({ beatUnit: rational(1, 8), bpm: 120, text: null, postText: null })
     // No `M:` at all falls back to a quarter, as abcjs's `var dur = 1/4` does.
     expect(parse('X:1\nQ:120\nK:C\nC|\n').scores[0]?.tempo).toEqual({
       beatUnit: rational(1, 4),
       bpm: 120,
       text: null,
+      postText: null,
     })
   })
 
   it('reads the legacy bare rate without taking a digit out of the text', () => {
-    expect(tempoOf('Q:120')).toEqual({ beatUnit: rational(1, 4), bpm: 120, text: null })
+    expect(tempoOf('Q:120')).toEqual({ beatUnit: rational(1, 4), bpm: 120, text: null, postText: null })
     expect(tempoOf('Q:"Tempo di Marcia 2"')).toEqual({
       beatUnit: null,
       bpm: null,
       text: 'Tempo di Marcia 2',
+      postText: null,
     })
   })
 

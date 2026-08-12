@@ -532,12 +532,20 @@ function parseTempo(content: string): Tempo | null {
   // A `%` starts a comment; strip before parsing, or `% tempo` reads as a stray word.
   const spec = (content.split('%')[0] ?? '').trim()
 
-  const quoted = /"([^"]*)"/.exec(spec)
-  const text = quoted?.[1] ?? null
-
   // `1/4=120`, tolerating spaces round the `=`. Take the beat unit only when it is
   // attached to a rate — a lone fraction is not a tempo.
   const rate = /(\d+)\s*\/\s*(\d+)\s*=\s*(\d+)/.exec(spec)
+  /**
+   * **WHICH SIDE OF THE RATE A QUOTE FALLS ON IS THE WHOLE RULE.** abcjs shifts tokens in
+   * order: a leading `quote` is `preString`, and a `quote` still there once the rate has
+   * been read is `postString` (`abc_parse_header.js:257-330`). So
+   * `[Q:"left" 1/4=170"right"]` is two strings, one each side, and a lone quote before the
+   * rate is the PRE one however it reads. Ours took the first quote and dropped any second.
+   */
+  const quotes = [...spec.matchAll(/"([^"]*)"/g)]
+  const rateAt = rate?.index ?? Number.POSITIVE_INFINITY
+  const text = quotes.find((q) => q.index < rateAt)?.[1] ?? null
+  const postText = quotes.find((q) => q.index > rateAt)?.[1] ?? null
   let beatUnit: Rational | null = null
   let bpm: number | null = null
   if (rate) {
@@ -555,8 +563,8 @@ function parseTempo(content: string): Tempo | null {
   }
 
   if (bpm !== null && !Number.isFinite(bpm)) bpm = null
-  if (text === null && bpm === null) return null
-  return { beatUnit, bpm, text }
+  if (text === null && postText === null && bpm === null) return null
+  return { beatUnit, bpm, text, postText }
 }
 
 /**

@@ -2444,6 +2444,30 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
       bold: true,
       italic: false,
     })
+    // …and the RATE advances the same way the pre-string does: its own width plus one
+    // average character (`draw/tempo.js:33-35`).
+    const postWidth = textWidth(`= ${tempo.bpm}`, ENGRAVE.tempoTextSize, 'serifBold')
+    cursor += postWidth + postWidth / Math.max(1, `= ${tempo.bpm}`.length)
+  }
+
+  /**
+   * **AND A QUOTE AFTER THE RATE IS DRAWN AFTER THE MARK** — `if (params.tempo.postString)
+   * renderText(…, { x: x, y: y, text: params.tempo.postString, type: 'tempofont', … })`
+   * (`draw/tempo.js:36-38`), at the cursor the rate left behind. `[Q:"left" 1/4=170"right"]`
+   * is what asks for it, and neither corpus has another.
+   */
+  if (tempo.postText) {
+    texts.push({
+      text: tempo.postText,
+      dataName: 'post',
+      font: 'tempofont',
+      noClass: true,
+      x: cursor,
+      y: baseline,
+      size: ENGRAVE.tempoTextSize,
+      bold: true,
+      italic: false,
+    })
   }
 
   if (glyphs.length === 0 && texts.length === 0) return null

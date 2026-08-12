@@ -378,8 +378,18 @@ export interface Tempo {
   readonly beatUnit: Rational | null
   /** Beats per minute. */
   readonly bpm: number | null
-  /** A quoted direction, e.g. "Allegro". */
+  /** A quoted direction BEFORE the rate — abcjs's `preString`, e.g. `Q:"Allegro" 1/4=120`. */
   readonly text: string | null
+  /**
+   * A quoted direction AFTER the rate — abcjs's `postString`.
+   *
+   * `Q:` takes a quote on either side of the rate and draws them on either side of the
+   * mark: `[Q:"left" 1/4=170"right"]` prints `left ♩ = 170 right`
+   * (`parse/abc_parse_header.js:257-330`, `write/draw/tempo.js:18-38`). Which side a lone
+   * quote falls on is decided by POSITION, not by content — one written before the rate is
+   * the pre-string even when it reads like a marking.
+   */
+  readonly postText?: string | null
 }
 
 // ─── Events ──────────────────────────────────────────────────────────────────

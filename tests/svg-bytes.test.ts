@@ -145,6 +145,7 @@ const PASSING: readonly string[] = [
   'abcjs-visual-parsing-05-v-t-c-v-b-a-v-t-d',
   'abcjs-visual-parsing-08-score-t-b',
   'abcjs-visual-parsing-09-score-t-b',
+  'abcjs-visual-selection-02-g4-q-left-1-4-170-right-a4',
   'abcjs-visual-selection-03-c4',
   'abcjs-visual-slurs-01-score-s-a',
   'abcjs-visual-svg-01-staffwidth-5',
