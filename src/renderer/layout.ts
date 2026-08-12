@@ -3362,7 +3362,12 @@ function layoutNoteheads(
   const pendingDots = new Map<number, PlacedGlyph[]>()
   let pendingFlag: PlacedGlyph | undefined
   accidentals.forEach((a, index) => {
-    const placed = glyphAt(a.glyph, headXOf(accidentalPlaces[index] ?? 0), a.step)
+    // **AND THE OFFSET IS CONSTRUCTED** — abcjs stores the accidental's `dx` as a negative
+    // number and `setX` adds it to the solved x (`create-note-head.js:95-100`,
+    // `relative-element.js:124-125`). `(headX - place) - headX` is not `-place`. See
+    // `PlacedGlyph.dx`.
+    const place = accidentalPlaces[index] ?? 0
+    const placed = { ...glyphAt(a.glyph, headXOf(place), a.step), dx: -place }
     const half = (glyphsFor(strict).get(a.glyph)?.declaredHeight ?? 0) / 2
     pendingAccidentals.push({
       glyph: {
