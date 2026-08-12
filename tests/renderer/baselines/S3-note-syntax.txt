@@ -1291,9 +1291,9 @@ system 1 width=700.000 originY=178.448
       glyph noteheadBlack 162.343,-27.125
       glyph flag8thUp 157.629,-47.275 scale=0.600
       glyph noteheadBlack 152.343,-31.000 scale=0.600
+      glyph graceNoteSlashStemUp 158.343,-47.275 scale=0.600
       line  162.843,-25.833 -> 162.843,0.000 t=1.000
       line  157.929,-31.775 -> 157.929,-47.275 t=0.600
-      line  150.793,-39.525 -> 161.343,-48.825 t=1.400
     note@1 x=242.452 w=42.426
       glyph noteheadBlack 242.452,-27.125
       glyph noteheadBlack 222.452,-27.125 scale=0.600

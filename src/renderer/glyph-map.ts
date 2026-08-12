@@ -101,6 +101,12 @@ export const SMUFL_TO_ABCJS: Readonly<Record<string, string>> = {
 
   // Flags
   flag8thUp: 'flags.u8th',
+  // THE ACCIACCATURA SLASH IS A GLYPH, and abcjs's is `flags.ugrace` — its own eighth-note
+  // grace flag reused as the stroke (`abstract-engraver.js:501-506`). SMuFL names it, we
+  // draw it, and the two were never joined up: it sat in `UNMAPPED_ABCJS` as "no SMuFL name
+  // claims it", which is the same misreading that left four decorations on Bravura's
+  // outlines in strict.
+  graceNoteSlashStemUp: 'flags.ugrace',
   flag8thDown: 'flags.d8th',
   flag16thUp: 'flags.u16th',
   flag16thDown: 'flags.d16th',
@@ -191,7 +197,6 @@ export const SMUFL_TO_ABCJS: Readonly<Record<string, string>> = {
 /** abcjs glyphs no SMuFL name above claims — its vocabulary, minus what we use. */
 export const UNMAPPED_ABCJS = [
   'scripts.stopped',
-  'flags.ugrace',
   'flags.dgrace',
   'tab.big',
   'tab.tiny',

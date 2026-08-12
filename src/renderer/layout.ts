@@ -478,6 +478,13 @@ export const ENGRAVE = {
   decorationTextDrop: 6 / UNIT_PX,
   /** Clearance either side of a glissando, so it does not touch the noteheads. */
   spannerGap: 0.3 * SPACE,
+  /**
+   * `dAcciaccatura` — the slash's own x offset off its grace head, "just an offset to make
+   * it line up correctly" in abcjs's words. 5 when the grace group is BEAMED and 6 when it
+   * is not (`abstract-engraver.js:504`), which is the only place a beam reaches this.
+   */
+  acciaccaturaBeamed: 5 / UNIT_PX,
+  acciaccaturaUnbeamed: 6 / UNIT_PX,
   /** `var margin = 4` — a glissando's inset past half a notehead (`draw/glissando.js:9`). */
   glissandoMargin: 4 / UNIT_PX,
   /** `var endLen = 5` — the non-repeating part at each end (`draw/glissando.js:43`). */
@@ -13385,12 +13392,12 @@ function layoutGraces(
         // caller compares this against `headX - x`, which is measured the same way.
         graceLeft = Math.max(graceLeft, graceNoteX - accX)
       }
-      graceGlyphs.push({
-        name: 'noteheadBlack',
+      const headGlyph = {
+        name: 'noteheadBlack' as const,
         x: gx,
         y: stepToY(graceStep),
         scale,
-        role: 'grace',
+        role: 'grace' as const,
         // A GRACE HEAD IS NAMED WITH ITS WRITTEN NOTE, like any other notehead —
         // `createNoteHead` is the same constructor (`create-note-head.js:34`), so abcjs's
         // own contract reads `g`, `a`, `b` where ours read `noteheads.quarter`.
@@ -13406,8 +13413,44 @@ function layoutGraces(
         reserve: [
           stepToY(graceStep) - graceDeclaredHalf * scale,
           stepToY(graceStep) + graceDeclaredHalf * scale,
-        ],
-      })
+        ] as [number, number],
+      }
+      graceGlyphs.push(headGlyph)
+      /**
+       * **THE ACCIACCATURA SLASH IS A GLYPH, NOT A STROKE, AND IT FOLLOWS THE FIRST HEAD.**
+       *
+       *     if (elem.gracenotes[i].acciaccatura) {
+       *       var pos = elem.gracenotes[i].verticalPos + 7 * gracescale;
+       *       var dAcciaccatura = gracebeam ? 5 : 6;
+       *       abselem.addRight(new RelativeElement("flags.ugrace",
+       *         -graceoffsets[i] + dAcciaccatura, 0, pos,
+       *         { scalex: gracescale, scaley: gracescale }));
+       *     }
+       *
+       * (`abstract-engraver.js:501-506`) — abcjs's own grace FLAG reused as the stroke, at
+       * "the same formula that determines the flag position", scaled like the head and
+       * with ZERO width. Ours drew a thickened line from five invented ratios, after every
+       * grace rather than after the one the slash belongs to.
+       *
+       * `dAcciaccatura` is 5 when the group is BEAMED and 6 when it is not — "just an
+       * offset to make it line up correctly", abcjs's own words, and the only place a beam
+       * reaches this.
+       *
+       * `role: 'flag'`, NOT `'grace'`: the role picks the class and `grace` maps to
+       * `abcjs-notehead`, which abcjs gives only to a glyph whose NAME contains `notehead`.
+       * The grace accidental beside it carries the same note for the same reason, and the
+       * pixel gate counted this one as a sixth notehead the moment it did not.
+       */
+      if (i === 0 && event.graceSlash) {
+        graceGlyphs.push({
+          name: 'graceNoteSlashStemUp',
+          x: gx + (beamedGraces ? ENGRAVE.acciaccaturaBeamed : ENGRAVE.acciaccaturaUnbeamed),
+          y: stepToY(graceStep + ABCJS_PITCH.graceStemReach * scale),
+          scale,
+          role: 'flag',
+          graceIndex: i,
+        })
+      }
       /**
        * **A GRACE GETS LEDGER LINES LIKE ANY OTHER HEAD, and we drew none at all.**
        * `addGraceNotes` runs `ledgerLines(abselem, …, scale)` for every grace
@@ -13567,21 +13610,6 @@ function layoutGraces(
       graceSteps.length * ENGRAVE.graceAdvance +
       event.graceNotes.filter((p) => p.accidental !== null).length * ENGRAVE.graceAccidentalRoom
 
-    if (event.graceSlash) {
-      // One slash across the first grace note's stem, which is what marks the whole
-      // group as an acciaccatura however many notes it has.
-      const firstStep = graceSteps[0] ?? 0
-      const tipY = stepToY(firstStep) - ENGRAVE.stemLength * scale
-      // Every offset here is a LENGTH in staff spaces, so each carries the unit. The
-      // 0.9 and the 1.4 are RATIOS of quantities that already do, and do not.
-      graceLines.push({
-        x1: x - 0.2 * SPACE,
-        y1: tipY + 1.0 * SPACE,
-        x2: x + ENGRAVE.graceAdvance * 0.9,
-        y2: tipY - 0.2 * SPACE,
-        thickness: LINE_WEIGHTS.stem * 1.4,
-      })
-    }
   }
   return {
     glyphs: graceGlyphs,

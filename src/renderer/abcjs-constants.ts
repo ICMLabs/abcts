@@ -516,6 +516,12 @@ export const ABCJS_PITCH = {
    */
   stemLength: 7,
   /**
+   * `pos = gracenote.verticalPos + 7 * gracescale` — where the ACCIACCATURA slash sits,
+   * "the same formula that determines the flag position" (`abstract-engraver.js:502-503`).
+   * A PITCH, scaled by the grace scale at the site.
+   */
+  graceStemReach: 7,
+  /**
    * `highestVert += 6` — what a stem-up note shorter than a whole adds for the sake of
    * placing a SLUR, which is not its stem's real length (`abstract-engraver.js:700`).
    */

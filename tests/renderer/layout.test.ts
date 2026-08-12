@@ -1125,10 +1125,13 @@ describe('grace notes, chord symbols, lyrics and decorations', () => {
     expect(first('{AB}G2|')?.width).toBe(first('G2|')?.width)
   })
 
-  it('slashes an acciaccatura and not an appoggiatura', () => {
-    const lines = (abc: string) => notesOf(abc)[0]?.lines.length ?? 0
-    // `{/g}` is the slashed one. Same note, same grace count — one extra line.
-    expect(lines('{/A}G2|')).toBeGreaterThan(lines('{A}G2|'))
+  it('slashes an acciaccatura with a GLYPH, and not an appoggiatura at all', () => {
+    const slashes = (abc: string) =>
+      (notesOf(abc)[0]?.glyphs ?? []).filter((g) => g.name === 'graceNoteSlashStemUp').length
+    // `{/g}` is the slashed one, and the slash is abcjs's `flags.ugrace` glyph — this
+    // asserted an extra LINE, which is what we drew before the port.
+    expect(slashes('{/A}G2|')).toBe(1)
+    expect(slashes('{A}G2|')).toBe(0)
   })
 
   it('puts a chord symbol above and a lyric below', () => {

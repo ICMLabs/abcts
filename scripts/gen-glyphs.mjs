@@ -74,6 +74,8 @@ const GLYPHS = [
   'noteheadSlashVerticalEnds',
   // Flags
   'flag8thUp',
+  // The ACCIACCATURA slash — abcjs's `flags.ugrace` (`abstract-engraver.js:501-506`).
+  'graceNoteSlashStemUp',
   'flag8thDown',
   'flag16thUp',
   'flag16thDown',
