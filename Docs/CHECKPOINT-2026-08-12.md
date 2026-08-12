@@ -19,15 +19,15 @@ on stale runs before finding out what it was.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 0 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 1 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 1 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **41 of 171**, best 200613 | 49 of 171 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **39 of 171**, best 200613 | 49 of 171 |
 
-`DIVERGENT` is still EMPTY. **130 fixtures are byte-exact and all 130 are RATCHETED.**
+`DIVERGENT` is still EMPTY. **132 fixtures are byte-exact and all 132 are RATCHETED.**
 
 ---
 
 ## 2. THE LANDINGS
 
-Five, and the shape of the session is that **three of the five were found by a fixture that
+Nine, and the shape of the session is that **three of the five were found by a fixture that
 had nothing to do with what they were about.** The bar-number arc in particular is three
 rules stacked, each invisible until the one before it closed.
 
@@ -159,6 +159,58 @@ The canonical form stays as the fallback, and it is ALSO what abcjs itself produ
 derives. Only the letter and marks are carried; the accidental prefix is abcjs's canonical
 `accMap[el.accidental]` and was already right.
 
+### 2.7 `%%voicecolor` IS `drawVoice`'S SWAP, NOT A PROPERTY OF ANY ELEMENT
+
+It was not implemented at all, and it was the earliest structural row left.
+
+    var saveColor = renderer.foregroundColor
+    if (params.color) renderer.foregroundColor = params.color
+    …
+    renderer.foregroundColor = saveColor
+
+(`draw/voice.js:14-16`, `:93`) — everything drawn between those two lines takes it,
+including the voice's `staff-extra` clef and key and its LEDGERS, and nothing outside does.
+**The staff LINES are `printStaff`'s and are drawn before the swap**, which is why abcjs's
+own golden leaves them `currentColor` on a fully coloured tune. The emitter's `flushVoice`
+already spans exactly that range, because "abcjs finishes one voice before it starts the
+next" landed on 2026-08-11b — so this was a colour variable and not a refactor.
+
+The token is taken RAW and never validated (`abc_parse_directive.js:863-870`).
+
+*ponytail*: abcjs appends a `color` ELEMENT to the voice stream, so a second
+`%%voicecolor` repaints from there on and colours the whole LINE it lands in,
+retroactively. We hold ONE colour per voice, which is every use in either corpus.
+
+### 2.8 AND TWO RULES WERE HIDING BEHIND IT
+
+Landing the colour moved that fixture's first divergence from byte 1257 to 7737 and made
+both reachable for the first time.
+
+**AN EMPTY GROUP IS DELETED** — `Svg.closeGroup` removes any `<g>` whose
+`children.length === 0`, *"if nothing was added to the group it is because all the elements
+were invisible"* (`write/svg.js:364-372`). The NOTE branch already obeyed it; the BAR branch
+pushed `</g>` unconditionally. A `[1` opening a repeat ending at the START of a line is such
+an element — a bar with no rule and no glyph.
+
+**AND AN INVISIBLE BAR STILL CARRIES A 1-WIDE ANCHOR** — the same `w: 1` a thin rule's
+anchor gets, on an element that draws nothing (`abstract-engraver.js:996-999`). A repeat
+ending hangs off `anchor1.x + anchor1.w` (`draw/ending.js:14`), so the bracket opens one
+pixel right of the element; we skipped the branch entirely. Measured through abcjs as
+`anchor1.x 87.551 w 1 c null`.
+
+### 2.9 AN ENDING RUNNING OFF A SYSTEM ENDS AT THE VOICE'S WIDTH MINUS ONE, UNROUNDED
+
+`drawVoice` opens `var width = params.w - 1` and hands that to `drawEnding` as its
+`lineendx` default (`draw/voice.js:12`, `:82`) — **the same off-by-one a CURVE running off
+the end already reproduced through `ENGRAVE.lineEndInset`**, on a different element that
+nobody had connected to it.
+
+**AND AN UNANCHORED END IS NOT ROUNDED.** `drawEnding` calls `roundNumber` only inside
+`if (params.anchor1)` and `if (params.anchor2)`; the fallbacks go into the `sprintf` raw
+(`draw/ending.js:13-26`). So one `d` mixes two-decimal coordinates with a full double —
+`294.7566274847714` beside `182.4` — which no general rule about rounding could produce.
+`PlacedLine.rawEnd` carries it rather than the formatter guessing.
+
 ---
 
 ## 3. WHAT IS LEFT — MEASURED, NOT LANDED
@@ -223,12 +275,6 @@ knowing before reaching for the usual fix. `staff.bottom` is built by
 Read `/tmp/abcts-svg-bytes-ranked.txt` after `npx vitest run tests/svg-bytes.test.ts`.
 The named structural rows, cheapest last:
 
-- **`%%voicecolor` IS NOT IMPLEMENTED AT ALL** — `visual-layout-09-endings`, byte 1257 of
-  38942, the earliest structural divergence left. `%%voicecolor blue` sets
-  `multilineVars.currentVoice.color` (`abc_parse_directive.js:863-869`) and `drawVoice`
-  swaps `renderer.foregroundColor` for the whole voice (`draw/voice.js:14-16`), so its
-  notes, bars, endings, lines AND its `staff-extra` clef and key all come out `fill="blue"`.
-  21 elements in that one golden.
 - A GLISSANDO is a squiggly `<path>` where we draw a `<polygon>` (`visual-misc-04`,
   `draw/glissando.js`).
 - `visual-misc-05` draws a `<text>` where abcjs draws a `<path>` for a `D.C. al coda` mark.
@@ -244,7 +290,7 @@ The named structural rows, cheapest last:
 
 ## 4. THE RATCHET
 
-`tests/svg-bytes.test.ts`'s `PASSING` names all 130 byte-exact fixtures. It caught nothing
+`tests/svg-bytes.test.ts`'s `PASSING` names all 132 byte-exact fixtures. It caught nothing
 this session, which is the point of it — every change here moved the count the right way
 AND kept every ratcheted slug. Regenerate it with `/tmp/gp/exact.mjs`; never shrink it.
 
