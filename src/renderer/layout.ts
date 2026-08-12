@@ -9738,6 +9738,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
      */
     let firstTopPitch = 0
     let lastBottomPitch = 0
+    /** The system's own leading, as terms — staff 0's `originAdvances`. */
+    let leadTerms: number[] = []
+    /** Every `moveY` the staves before this one spent, in abcjs's order. */
+    const staffMoves: number[] = []
     const placed = merged.map((staff) => {
       // Place the top-text block FROM the music: its bottom sits `musicSpace` clear of
       // whatever the music's own top is, which already includes a tempo mark or an
@@ -9908,6 +9912,16 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         staffIndexInSystem === 0
       const originAdvances = ((): number[] => {
         const flat = musicOnlyTop === undefined ? cursor : originY
+        /**
+         * **AND EACH STAFF BEFORE THIS ONE IS TWO MOVES, NOT THEIR SUM.**
+         * `drawStaffGroup` walks `moveY(spacing.STEP, staff.top)` then
+         * `moveY(spacing.STEP, -staff.bottom)` per staff (`draw/staff-group.js:25`, `:58`),
+         * so the second staff's origin is `((groupTop + top0·STEP) + −bottom0·STEP) +
+         * top1·STEP`. Ours summed the two into `cursor` first and added the system origin
+         * after, which is the same terms grouped the other way — one ULP on EVERY glyph of
+         * every staff after the first.
+         */
+        if (staffIndexInSystem > 0 && musicOnlyTop === undefined) return [...leadTerms, ...staffMoves]
         if (!walksTopBlock) return [flat]
         const terms = [...topAdvances, nonMusicBeforeMusic ? interSystemSep : 0]
         /**
@@ -9958,7 +9972,14 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       heightPitch +=
         blockSpan === 0 ? clampedTopPitch : (musicOnlyTopPitch ?? -(extent.top + blockSpan) / ENGRAVE.spacePerStep)
       heightPitch += -extent.bottomPitch
+      if (staffIndexInSystem === 0) leadTerms = [...originAdvances]
       staffIndexInSystem += 1
+      // …and the two moves this staff spent, kept apart for the next one — see
+      // `originAdvances`.
+      staffMoves.push(
+        originPitch * ENGRAVE.spacePerStep,
+        -extent.bottomPitch * ENGRAVE.spacePerStep + ENGRAVE.staffGap,
+      )
       // `renderer.moveY(spacing.STEP, -staff1.bottom)` — ONE product off the pitch, the
       // mirror of the origin above (`draw/staff-group.js:58`).
       cursor = originY + -extent.bottomPitch * ENGRAVE.spacePerStep + ENGRAVE.staffGap

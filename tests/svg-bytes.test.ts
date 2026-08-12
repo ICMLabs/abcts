@@ -199,6 +199,7 @@ const PASSING: readonly string[] = [
   'abcjs-visual-transpose-output-06-f',
   'abcjs-visual-wrap-01-b-4-c2d2-e3f-gabc-d-e-f-g-marcato-d-e-f-',
   'abcjs-visual-wrap-02-stretchlast-1',
+  'abcjs-visual-wrap-04-wrap-quartet',
   'abcjs-visual-wrap-05-score-1-2-3-4',
 ]
 
