@@ -1530,6 +1530,17 @@ const glyphDefs = new Map<GlyphName, string>()
         if (abcjs) classes.startMeasure()
         /** The group already written — see the one-path-per-group rule below. */
         let lastBeamGroup: number | undefined
+        /**
+         * **THE BEAMS GO OUT IN ADD ORDER, AND A GRACE BEAM IS ADDED EARLIER THAN ITS
+         * NEIGHBOURS' BEAMS.** `drawVoice` walks `params.beams` as it stands, and
+         * `createBeam` pushes each member through `createNote` — which adds that element's
+         * grace beam (`abstract-engraver.js:537`) — before pushing the group's own beam
+         * (`:426`). Ours wrote every ordinary beam and then every grace beam, so
+         * `{/GA}B` at the head of a tune put its grace beam after a beam 290px to the
+         * right of it. Buffered and merged on `beamAt`; `Array.sort` is stable, so two
+         * added at the same element keep their built order.
+         */
+        const beamOut: { at: number; s: string }[] = []
         for (const beam of staff.beams.filter(mine)) {
           /**
            * **A BEAM'S CLASS IS GENERATED, NOT LITERAL** —
@@ -1574,7 +1585,10 @@ const glyphDefs = new Map<GlyphName, string>()
               ? [beam]
               : staff.beams.filter(mine).filter((b) => b.group === beam.group)
           const d = beamPath(members)
-          parts.push(`<path d="${d}" stroke="none" fill="${ink}"${beamClass}></path>`)
+          beamOut.push({
+            at: beam.beamAt ?? 0,
+            s: `<path d="${d}" stroke="none" fill="${ink}"${beamClass}></path>`,
+          })
         }
         // A GRACE BEAM's own class is `beam-elem d0` — its `durationClass` is 0, since a
         // grace note has no sounding duration.
@@ -1591,12 +1605,15 @@ const glyphDefs = new Map<GlyphName, string>()
             // ALWAYS a `class`, empty or not — `svg.js`'s `path` sets every key it is
             // handed and `generate` returns `''` without `add_classes`, so the attribute is
             // written either way. Ours used `attrIfAny`, which omits it.
-            parts.push(
-              `<path d="${beamPath(members)}" stroke="none" fill="${ink}"` +
+            beamOut.push({
+              at: b.beamAt ?? 0,
+              s:
+                `<path d="${beamPath(members)}" stroke="none" fill="${ink}"` +
                 ` class="${classes.generate('beam-elem d0')}"></path>`,
-            )
+            })
           }
         }
+        for (const b of beamOut.sort((p, q) => p.at - q.at)) parts.push(b.s)
         // A GRACE BEAM's own class is `beam-elem d0` — its `durationClass` is 0, since a
         // grace note has no sounding duration.
         // **`drawDynamics` AND `drawCrescendo` DISAGREE ON THE ORDER OF THEIR OWN TWO
@@ -2312,7 +2329,11 @@ const glyphDefs = new Map<GlyphName, string>()
         const own = abcjs
           ? el.lines.filter((l) => !isGraceLine(l) && l.role !== 'beam')
           : el.lines
-        if (abcjs) for (const l of el.lines) if (l.role === 'beam') graceBeams.push(l)
+        // …stamped with the element that carries it, because `voice.beams` is drawn in ADD
+        // order and a grace beam is added inside `createNote` while its group's own beam is
+        // added after the whole group — see `PlacedLine.beamAt`.
+        if (abcjs)
+          for (const l of el.lines) if (l.role === 'beam') graceBeams.push({ ...l, beamAt: elIndex })
         /**
          * **AN UNBEAMED GRACE'S STEM COMES BEFORE ITS OWN LEDGERS; A BEAMED GROUP'S COME
          * AFTER EVERY HEAD.** `addGraceNotes` runs `addExtra(stem)` and then

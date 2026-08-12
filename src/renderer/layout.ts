@@ -976,6 +976,15 @@ export interface PlacedLine {
   readonly squiggles?: number
   readonly slope?: number
   /**
+   * **WHERE THIS BEAM WAS ADDED TO THE VOICE**, as an element index — because
+   * `voice.beams` is drawn in ADD order and a grace beam and an ordinary one are added at
+   * different moments. `createBeam` calls `createNote` for every member first (and each of
+   * those pushes its own grace beam, `abstract-engraver.js:537`) and only then
+   * `voice.addBeam(beamelem)` (`:426`). So an ordinary beam is added at its group's LAST
+   * element and a grace beam at its own.
+   */
+  readonly beamAt?: number
+  /**
    * Drawn but NOT counted in the staff's vertical extent.
    *
    * A PHASE distinction, not a drawing one. abcjs accumulates `staff.top` from the children
@@ -9873,7 +9882,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       let beamGroup = -1
       for (const group of beamGroups.values()) {
         beamGroup += 1
-        for (const b of layoutBeam(group, elements)) beams.push({ ...b, group: beamGroup })
+        // The group's LAST element — see `PlacedLine.beamAt`.
+        const beamAt = Math.max(...group.map((m) => m.element))
+        for (const b of layoutBeam(group, elements))
+          beams.push({ ...b, group: beamGroup, beamAt })
       }
 
       // Curves are NOT resolved here: a slur or tie can span a system break, so it needs
