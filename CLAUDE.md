@@ -573,6 +573,21 @@ checkpoint and hand off as you go so no context is lost.
 > `headerPosition`, wears no group, and RESERVES NOTHING** — moving it was byte-right and
 > pushed a staff 2.98px, which only `pixel-parity` could say.
 
+> 🔬 **INSTRUMENT BOTH ENGINES — STANDING AUTHORITY** (Lance, 2026-08-13, and three times
+> before): *"you have abcjs code to work from and the ability and my authority to add
+> instrumentation to abcjs and to abcts to converge to 100% byte parity."* Reaching for a
+> probe is the FIRST move, not the last resort. Instrument a SCRATCHPAD COPY at
+> `/tmp/gp/abcjs` — never `../abcMusicKit` — and abcts through `scripts/zzpr.ts`, gating
+> each probe on its own env var. **Print BOTH engines' answer for the same quantity in one
+> sitting**: two of this branch's biggest steps came from a probe that printed abcjs's
+> number and NOTHING from ours, which moves the search from "our arithmetic is off" to
+> "this code never runs", and a probe that prints the RIGHT answer has ruled something out.
+> **Never stop at "the source says X" when the output can be asked.** A careful chain of
+> source reads has predicted something abcjs's own output denies FIVE times here — the `G8`
+> breve, the `extra-class` accent, the notehead `data-name`, the `sfz` glyph table, and
+> `beambr`'s `+= elem.w` guard, which reads as though it must fire and provably does not.
+> If a fix is only half understood, WRITE THE MEASUREMENT DOWN instead of shipping it.
+
 > 🔬 **AND WHEN THE SOURCE IS NOT ENOUGH, INSTRUMENT abcjs — THE DUMP LIES**
 > (2026-08-11). `dump-elements.js` publishes `staff.top`/`bottom` BEFORE
 > `setUpperAndLowerElements` mutates them, and half a session went on a term list reasoned
