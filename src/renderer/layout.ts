@@ -11922,7 +11922,13 @@ function topTextBlock(
   const composer = plainText(composerRich)
   const origin = plainText(originRich)
   if (rhythm !== '' || composer !== '' || origin !== '') {
-    y += ENGRAVE.composerSpace
+    // **AND `spacing.composer` IS A ROW OF ITS OWN TOO** — `this.rows.push({ move:
+    // spacing.composer })` guarded by the same three fields (`elements/top-text.js:34-35`),
+    // exactly as `spacing.title` and `spacing.subtitle` are. This moved `y` and pushed
+    // nothing, so the page recovered it as the block's REMAINDER — `7.559999999999974`
+    // where abcjs spends `7.56` — and `visual-options-01`'s root `height` printed
+    // `975.1000000000001` against `…03`.
+    spend(ENGRAVE.composerSpace)
     if (rhythm !== '') {
       texts.push({
         text: rhythm,
