@@ -14,7 +14,7 @@ system 0 width=158.356 originY=0.000
     note@-1 x=69.832 w=30.000
       glyph noteheadBlack 69.832,-19.375
       line  70.132,-18.600 -> 70.132,9.688 t=0.600
-      text  69.832,26.688 size=17.000 bold "Carol"
+      text  69.832,26.688 size=17.000 bold "Carol" +""
     note@2,4,6 x=113.356 w=30.000
       glyph noteheadBlack 113.356,-31.000
       glyph noteheadBlack 113.356,-38.750
@@ -23,4 +23,4 @@ system 0 width=158.356 originY=0.000
       glyph ornamentTrill 118.261,-76.229
       line  111.356,-46.500 -> 125.166,-46.500 t=0.700
       line  113.656,-45.725 -> 113.656,5.865 t=0.600
-      text  113.356,26.688 size=17.000 bold "David"
+      text  113.356,26.688 size=17.000 bold "David" +""

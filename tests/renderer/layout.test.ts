@@ -1153,11 +1153,17 @@ describe('grace notes, chord symbols, lyrics and decorations', () => {
     expect(lyric?.y).toBeGreaterThan(2)
   })
 
-  it('stacks extra verses downward', () => {
+  it("holds every verse of a note in ONE text, as abcjs's lyricStr does", () => {
+    // `lyricStr += ly.syllable + div + "\n"` for every verse and ONE `RelativeElement`
+    // for the result (`abstract-engraver.js:769-778`), which `Svg.prototype.text` splits
+    // into a `<tspan dy="1.2em">` per line — trailing empty one included, because every
+    // verse ends with the newline. This used to assert two SEPARATE texts stacked
+    // downward, which was our own engraving and not abcjs's markup.
     const [note] = notesOf('G2|\nw:one\nw:two')
-    const ys = (note?.texts ?? []).map((t) => t.y).sort((a, b) => a - b)
-    expect(ys).toHaveLength(2)
-    expect(ys[1]).toBeGreaterThan(ys[0] as number)
+    const lyrics = (note?.texts ?? []).filter((t) => t.role === 'lyric')
+    expect(lyrics).toHaveLength(1)
+    expect(lyrics[0]?.text).toBe('one')
+    expect(lyrics[0]?.extraLines).toEqual(['two', ''])
   })
 
   it('places an articulation away from the stem', () => {

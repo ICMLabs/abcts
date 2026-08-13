@@ -218,6 +218,7 @@ const PASSING: readonly string[] = [
   'abcjs-visual-tablature-20-score-1-2',
   'abcjs-visual-tablature-21-a2-a-a-f-f-f-f-f-e-ee-g-gg-g-k-eb-a2-a2',
   'abcjs-visual-tablature-22-g-cegda',
+  'abcjs-visual-tablature-23-gab',
   'abcjs-visual-tablature-24-stretchlast',
   'abcjs-visual-title-01-not-transformed',
   'abcjs-visual-title-02-transformed-the',

@@ -122,8 +122,14 @@ function snapshotTune(score: Score, index: number): string {
         }
         for (const t of el.texts) {
           const style = `${t.bold ? ' bold' : ''}${t.italic ? ' italic' : ''}`
+          // …AND THE EXTRA LINES OF THE SAME `<text>`, because a baseline can only catch
+          // what its representation can express: a note's second verse is a `<tspan>` of
+          // its first one's element (abcjs's `lyricStr`), and leaving them out reported
+          // the merge as a REMOVAL — the shape that says regression rather than change.
+          const extra = (t.extraLines ?? []).map((l) => JSON.stringify(l)).join(' ')
           lines.push(
-            `      text  ${n(t.x)},${n(t.y)} size=${n(t.size)}${style} ${JSON.stringify(t.text)}`,
+            `      text  ${n(t.x)},${n(t.y)} size=${n(t.size)}${style} ${JSON.stringify(t.text)}` +
+              (extra === '' ? '' : ` +${extra}`),
           )
         }
       }

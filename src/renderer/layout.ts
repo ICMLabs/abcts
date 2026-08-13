@@ -5769,11 +5769,42 @@ function noteText(
     event.lyricFont !== null ? spaces(fontPixels(event.lyricFont.size)) : ENGRAVE.lyricTextSize
   const lyricBold = event.lyricFont !== null ? event.lyricFont.bold : true
   const lyricItalic = event.lyricFont !== null ? event.lyricFont.italic : false
+  /**
+   * **abcjs BUILDS ONE STRING FOR EVERY VERSE OF A NOTE, AND ONE `<text>` FOR IT.**
+   *
+   *     elem.lyric.forEach(function (ly) {
+   *       var div = ly.divider === ' ' ? "" : ly.divider
+   *       lyricStr += ly.syllable + div + "\n"
+   *     })
+   *
+   * (`abstract-engraver.js:769-778`) — ONE `RelativeElement` of type `lyric` carrying the
+   * whole thing, and `Svg.prototype.text` splits it on `\n` into a `<tspan dy="1.2em">`
+   * per line (`write/svg.js:171-190`). A note with two verses is therefore
+   * `<tspan>Tra</tspan><tspan dy>Tra</tspan><tspan dy></tspan>` — three tspans for two
+   * verses, the trailing empty one because EVERY verse ends with the newline.
+   *
+   * Ours wrote a `<text>` per verse in its own lane and appended the trailing blank only
+   * where there was a single verse; its own note predicted that "no corpus fixture puts
+   * two verses on one note", and `visual-tablature-23` is `w: Tra la la` twice.
+   * **A `ponytail:` SAYING "THE CORPUS NEVER VARIES THIS" IS A PREDICTION, NOT A
+   * MEASUREMENT** — the fourth on this branch.
+   *
+   * The merge is markup only: a tspan's `dy="1.2em"` is the same `lyricLineStep` the
+   * second lane drew at, and the lane RESERVE counts verses rather than texts.
+   */
+  const sungAt = verses.findIndex((v) => v !== null && v !== '')
+  const later = verses.filter((v, i) => i !== sungAt && v !== null && v !== '') as string[]
   verses.forEach((raw, index) => {
     if (raw === null || raw === '') return
     // Verse 1 carries the font; later verses stay at the default until `extraVerses` can
     // hold one of their own.
     const size = index === 0 ? lyricSize : ENGRAVE.lyricTextSize
+    if (index !== sungAt) {
+      // A `<tspan>` of the first verse's `<text>`, but it still claims its own width —
+      // `addCentered` measures the whole `lyricStr`, whose width is the widest line.
+      centred(raw, size, 0, 'serifBold')
+      return
+    }
     // THE MELISMA `_` IS PART OF THE SYLLABLE, SO IT IS PART OF THE MEASUREMENT.
     //
     // In strict abcjs prints the underscore as literal text, and `addLyric` measures the
@@ -5806,7 +5837,7 @@ function noteText(
        * is a lane change rather than a markup one. No corpus fixture puts two verses on
        * one note.
        */
-      ...(verses.filter((v) => v !== null && v !== '').length === 1 ? { extraLines: [''] } : {}),
+      extraLines: [...later, ''],
       // Tagged so the melisma pass can find the syllable it must extend from. Matching
       // on the y lane instead would couple that pass to this one's lane arithmetic.
       role: 'lyric',
@@ -14010,7 +14041,11 @@ function verticalExtent(
     let versesVoice = 0
     for (const t of el.texts) {
       if (t.role === 'lyric') {
-        if (t.text !== '') versesHere += 1
+        // **ONE `<text>` HOLDS EVERY VERSE OF THE NOTE**, so the count is its LINES and not
+        // the number of texts — `getTextSize.calc(lyricStr, …)` measures the whole string
+        // (`abstract-engraver.js:774`). The trailing empty line is abcjs's too and is part
+        // of what it measures; see `PlacedText.extraLines` at the lyric's own site.
+        if (t.text !== '') versesHere += t.extraLines?.length ?? 1
         versesVoice = Math.max(versesVoice, t.voice ?? 0)
         versesSize = Math.max(versesSize, t.size)
         lyricBottom = Math.max(lyricBottom, t.y)
