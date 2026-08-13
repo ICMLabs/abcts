@@ -5475,7 +5475,19 @@ function noteText(
   const above = annotations.filter((a) => a.where === 'above')
   const below = annotations.filter((a) => a.where === 'below')
 
-  above.forEach((a, index) => {
+  /**
+   * **AN ELEMENT'S ABOVE MARKS ARE ADDED IN REVERSE SOURCE ORDER** — `addChord` closes with
+   * `for (var j = chords.length - 1; j >= 0; j--)` under its own comment, *"parse these in
+   * opposite order because we place them from bottom to top"* (`creation/add-chord.js:42`).
+   * `setLaneForChord` then walks the children FORWARD, so the LAST-written mark of a note
+   * is the first one offered a lane and ends up nearest the music — which, after
+   * `invertLane`, puts the FIRST-written one on top.
+   *
+   * Our chord-symbol branch already stored them that way; this one did not, and the
+   * difference only showed once the private within-element stack came out.
+   */
+  above.reverse()
+  above.forEach((a) => {
     // `annotationfont`, not the chord font — abcjs picks `font = isAnnotation ?
     // 'annotationfont' : 'gchordfont'` (`add-chord.js:11-17`). They share a 12pt default,
     // so a tune that sets neither is unmoved; `%%annotationfont Times-Roman 15 box` is
@@ -5485,9 +5497,15 @@ function noteText(
     // same rule the chord lanes use, not a flat step. The two agree at the 12pt default
     // and nowhere else, so `%%annotationfont Times-Roman 15` moved abcjs's stack and not
     // ours.
-    const lane =
-      ENGRAVE.annotationAboveStep +
-      ((above.length - 1 - index) * size * ABCJS_RATIO.laneLineStep) / ENGRAVE.spacePerStep
+    /**
+     * **THE WITHIN-ELEMENT STACK IS GONE — abcjs HAS ONE MECHANISM AND IT IS THE LANE.**
+     * This carried `((above.length - 1 - index) * size * laneLineStep) / STEP`, a private
+     * stack for the marks on ONE note, while `aboveLadder`'s `laneOf` stacked ACROSS
+     * notes. abcjs runs both through `placeInLane`/`invertLane`, so two marks at one x
+     * simply open a second lane like any other pair that would touch
+     * (`layout/voice.js:33-72`).
+     */
+    const lane = ENGRAVE.annotationAboveStep
     texts.push({
       text: a.text,
       // LEFT-JUSTIFIED AT THE ELEMENT, where a chord symbol is CENTRED on it. abcjs's
@@ -12479,6 +12497,22 @@ function aboveLadder<
       }
     }
     if (marks.length > 0) chordLanes = rightMost.length
+    /**
+     * **AND THE LANES ARE FLIPPED ONCE MORE THAN ONE IS USED** —
+     * `if (rightMostAbove.length > 1 || rightMostBelow.length > 1) setLane(...)`, whose
+     * `invertLane` is `this.lane = total - this.lane - 1`, *"flip the indexes of the names
+     * so that we can count from the top line"* (`layout/voice.js:100-102`,
+     * `relative-element.js:103-107`). The packing lane 0 — nearest the music — ends up at
+     * the BOTTOM, and the drawing offsets DOWNWARD from the block's top, which is what the
+     * consumer already does.
+     *
+     * abcjs's own answer on `visual-transpose-04` is `C -> 1, G -> 1, D -> 0`, traced with
+     * dims through `placeInLane`. The earlier note here read two measurements the other way
+     * round and concluded the inversion was not real; it is, and what was missing is that
+     * the ANNOTATION branch was stacking a second time on its own.
+     */
+    if (rightMost.length > 1)
+      for (const t of marks) laneOf.set(t, rightMost.length - (laneOf.get(t) ?? 0) - 1)
   }
   // THE LANE IS AS TALL AS THE FONT. `RelativeElement` takes `chordHeightAbove` straight
   // from the text's measured height (`relative-element.js:60`), so `%%gchordfont Arial 80`

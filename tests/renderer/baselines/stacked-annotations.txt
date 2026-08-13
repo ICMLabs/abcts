@@ -17,8 +17,8 @@ system 0 width=447.203 originY=0.000
       glyph noteheadBlack 49.051,0.000
       line  47.051,0.000 -> 60.861,0.000 t=0.700
       line  58.361,-1.292 -> 58.361,-27.125 t=1.000
-      text  49.051,-78.097 size=16.000 "Allegro"
       text  49.051,-58.097 size=16.000 "con brio"
+      text  49.051,-78.097 size=16.000 "Allegro"
     note@-5 x=79.051 w=30.000
       glyph flag8thUp 88.261,-31.000
       glyph noteheadBlack 79.051,-3.875
@@ -31,7 +31,7 @@ system 0 width=447.203 originY=0.000
       glyph flag8thUp 129.261,-34.875
       glyph noteheadBlack 120.051,-7.750
       line  129.361,-9.042 -> 129.361,-34.875 t=1.000
-      text  120.051,-78.097 size=16.000 "staccato"
+      text  120.051,-58.097 size=16.000 "staccato"
     note@-3 x=150.051 w=30.000
       glyph flag8thUp 159.261,-38.750
       glyph noteheadBlack 150.051,-11.625
