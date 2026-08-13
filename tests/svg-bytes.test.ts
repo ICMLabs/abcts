@@ -182,6 +182,8 @@ const PASSING: readonly string[] = [
   'abcjs-visual-parsing-03-v-1-f',
   'abcjs-visual-parsing-04-v-t-c',
   'abcjs-visual-parsing-05-v-t-c-v-b-a-v-t-d',
+  'abcjs-visual-parsing-06-score-t-b',
+  'abcjs-visual-parsing-07-score-t-b',
   'abcjs-visual-parsing-08-score-t-b',
   'abcjs-visual-parsing-09-score-t-b',
   'abcjs-visual-parsing-10-song',

@@ -9318,9 +9318,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
    * needs collision detection this engine does not have yet. abcjs does the same thing
    * here, forcing every voice after the first down, so strict has nothing to answer for.
    */
-  const opensAt = (index: number): number =>
-    voices[index]?.measures?.[0]?.sourceRange?.start ?? Number.POSITIVE_INFINITY
-  const stemForVoice = (index: number): boolean | null => {
+  const stemForVoiceOn = (index: number, line: number): boolean | null => {
     // `V:… stems=` WINS over the shared-staff convention — abcjs takes
     // `if (params.stem) … else if (voiceNum > 0)` (`parse/tune-builder.js:971-986`), so a
     // declared direction also suppresses the `up` back-filled onto the staff's first voice.
@@ -9331,10 +9329,14 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     if (declared != null) return declared === 'up'
     const staff = voicesOfStaff.find((members) => members.includes(index))
     if (staff === undefined || staff.length < 2) return null
-    if (staff.indexOf(index) !== 0) return false
-    return staff.every((member) => member === index || opensAt(index) < opensAt(member))
-      ? true
-      : null
+    // `else if (tune.voiceNum > 0)` — the STAFF-RELATIVE index from the declaration, so a
+    // second voice appearing alone on a line is still forced down.
+    if (staff.indexOf(index) !== 0) return opensOnLine(index, line) ? false : null
+    // …and the `up` is spliced onto `voices[0]` only when a later voice is created while
+    // `thisStaff.voices[0] !== undefined`, which is to say AFTER it, ON THIS LINE.
+    const later = staff.filter((member, at) => at > 0 && opensOnLine(member, line))
+    if (later.length === 0) return null
+    return later.every((member) => opensAtOn(index, line) < opensAtOn(member, line)) ? true : null
   }
 
   // Does the tune SING? Dynamics stack above the staff if so, below if not — abcjs's
@@ -9388,6 +9390,47 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   /** The tune sings SOMEWHERE — for the passes that are not per measure. */
   const hasVocals = Number.isFinite(firstSingingSystemAt)
 
+  /**
+   * **THE FORCED STEM DIRECTION IS PER LINE, BECAUSE `createVoice` RUNS PER LINE.**
+   *
+   * `thisStaff` is `tune.lines[tune.lineNum].staff[tune.staffNum]`
+   * (`parse/tune-builder.js:967`), so `thisStaff.voices` is that LINE's voice list and the
+   * `{el_type:'stem'}` elements it appends belong to that line's element streams.
+   * `createABCVoice` then resets `this.stemdir = null` at the head of every line
+   * (`abstract-engraver.js:229`), so nothing carries over.
+   *
+   * Instrumented on `visual-parsing-06` — `%%score (T B)` with `[V:T]c|\ [V:B]A|\ [V:T]d|`,
+   * three source lines and two of them continued — abcjs's own three voice streams are
+   *
+   *     VOICE s 0 v 0 stream ["stem:up",   "note:c", "bar"]
+   *     VOICE s 0 v 1 stream ["stem:down", "note:A", "bar"]
+   *     VOICE s 0 v 0 stream [             "note:d", "bar"]
+   *
+   * The third `[V:T]` opens a line whose staff carries ONE voice, so nothing is forced and
+   * `d` takes its natural DOWN stem by pitch. Ours was per VOICE for the whole tune and
+   * drew `flags.u8th` there.
+   */
+  const lineOfMeasure: number[] = []
+  {
+    const total = Math.max(0, ...voices.map((v) => v?.measures.length ?? 0))
+    let line = 0
+    for (let i = 0; i < total; i++) {
+      if (i > 0 && systemOpensAt.has(i)) line += 1
+      lineOfMeasure[i] = line
+    }
+  }
+  /** `thisStaff.voices[n] = []` — does this voice open at all on that line? */
+  const opensOnLine = (v: number, line: number): boolean =>
+    (voices[v]?.measures ?? []).some((_, i) => lineOfMeasure[i] === line)
+  /** Where on that line it opens, which is the order `createVoice` sees them in. */
+  const opensAtOn = (v: number, line: number): number => {
+    const measures = voices[v]?.measures ?? []
+    for (const [i, m] of measures.entries()) {
+      if (lineOfMeasure[i] === line) return m.sourceRange?.start ?? Number.POSITIVE_INFINITY
+    }
+    return Number.POSITIVE_INFINITY
+  }
+
   const plans: VoicePlan[] = voices.map((voice, voiceIndex) => {
     // A voice's own `clef=` wins over the tune's `K:` clef; treble is the fallback.
     // A bare `V:… stafflines=` rides on the VOICE, not its clef, so that it can apply to
@@ -9397,7 +9440,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       voice?.staffLineOverride == null
         ? resolved
         : { ...resolved, staffLines: voice.staffLineOverride }
-    const directions = beamDirections(voice, clef, stemForVoice(voiceIndex))
+    const directions = beamDirections(voice, clef, (measureIndex) =>
+      stemForVoiceOn(voiceIndex, lineOfMeasure[measureIndex] ?? 0),
+    )
     // The key in force, accumulated forward. `Measure.keyChange` is a DELTA — the model
     // deliberately keeps `score.key` as the header key and leaves accumulation to the
     // consumer — so the renderer is the consumer that has to do it.
@@ -9468,7 +9513,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         directions,
         spacingScale,
         strict,
-        stemForVoice(voiceIndex),
+        stemForVoiceOn(voiceIndex, lineOfMeasure[measureIndex] ?? 0),
         keyInForce,
         hasVocalsAt(measureIndex),
         // ONLY THE VOICE THAT CARRIES THE ENDING PAYS FOR IT. abcjs adds
@@ -14250,7 +14295,7 @@ function beamDirections(
    * the whole of ragtime's treble: its `V:4`/`V:5` share a staff, so abcjs forces `V:4`
    * up and we let each beam group pick by pitch — 388 up-stems against our 81.
    */
-  forced: boolean | null = null,
+  forcedAt: (measureIndex: number) => boolean | null = () => null,
 ): Map<number, boolean> {
   // A BEAM'S DIRECTION IS THE MEAN OF ITS NOTES' AVERAGE PITCHES, not its extremes.
   //
@@ -14266,8 +14311,8 @@ function beamDirections(
   // on a compact run and disagrees the moment one note is an outlier: `"E"e"F"F"F#"^F"G"G`
   // averages 4.75 and beams UP where its extremes are symmetric about the line and beamed
   // DOWN. That was 16.52px of staff, and all of `visual-transpose-05`.
-  const totals = new Map<number, { total: number; count: number }>()
-  for (const measure of voice?.measures ?? []) {
+  const totals = new Map<number, { total: number; count: number; forced: boolean | null }>()
+  for (const [measureIndex, measure] of (voice?.measures ?? []).entries()) {
     for (const event of measure.events) {
       if (event.type === 'rest' || event.beamGroup === null) continue
       const pitches = event.type === 'chord' ? event.pitches : [event.pitch]
@@ -14276,7 +14321,14 @@ function beamDirections(
       const average =
         pitches.reduce((sum, p) => sum + pitchToStep(p, clef), 0) / pitches.length + PITCH_ORIGIN
       const seen = totals.get(event.beamGroup)
-      if (seen === undefined) totals.set(event.beamGroup, { total: Math.round(average), count: 1 })
+      if (seen === undefined)
+        // A beam group never spans a line break, so `this.stemdir` at the group's FIRST
+        // note is the one `createBeam` hands to `BeamElem` — and it is per LINE.
+        totals.set(event.beamGroup, {
+          total: Math.round(average),
+          count: 1,
+          forced: forcedAt(measureIndex),
+        })
       else {
         seen.total = Math.round(seen.total + average)
         seen.count += 1
@@ -14285,9 +14337,9 @@ function beamDirections(
   }
 
   const directions = new Map<number, boolean>()
-  // A beam cannot join opposed stems, so a forced voice's beams all point its way.
-  const declared = voice?.stemDirection == null ? forced : voice.stemDirection === 'up'
-  for (const [group, { total, count }] of totals) {
+  for (const [group, { total, count, forced }] of totals) {
+    // A beam cannot join opposed stems, so a forced voice's beams all point its way.
+    const declared = voice?.stemDirection == null ? forced : voice.stemDirection === 'up'
     directions.set(group, declared ?? total / count < PITCH_ORIGIN)
   }
   return directions
