@@ -691,6 +691,33 @@ children, and one lane PER LINE. That relationship is the missing measurement.
 Do not land the inversion alone: on `transpose-04` it fixes `"C"` and puts `"D"` and
 `"G"` the wrong way round.
 
+**THE MISSING MEASUREMENT IS NOW MADE, AND IT IS NOT WHAT THE CLUE SUGGESTED**
+(2026-08-12b). `placeInLane` traced on `transpose-04`, dims and all:
+
+    PLACE "C"  dim  75.75..87.31   rightMost [0]              -> lane 0
+    PLACE "G"  dim 126.71..139.16  rightMost [87.31]          -> lane 0
+    PLACE "D"  dim 127.15..138.71  rightMost [139.16]         -> lane 1  (new)
+    LANE  "C" -> 1   "G" -> 1   "D" -> 0
+
+So: **`setLaneForChord` DOES walk source order** over elements and forward over children —
+what reverses is the CHILD LIST itself. `addChord` closes with
+`for (var j = chords.length - 1; j >= 0; j--)` under its own comment, *"parse these in
+opposite order because we place them from bottom to top"* (`creation/add-chord.js:42`). And
+the two marks on one note differ in extent because each is CENTRED and `G` measures wider
+than `D` — nothing to do with the `\n` merge the earlier clue pointed at.
+
+**IT WAS IMPLEMENTED, MEASURED AND REVERTED.** Inversion plus our own `el.texts` order
+(already reversed for CHORD SYMBOLS) took `visual-transpose-04` from byte 7784 to **12466
+of 15781** — and broke `stacks above the staff with the first one written on top`, whose
+claim IS abcjs's measured answer (`stacked-annotations`: `Allegro -> 0`, `con brio -> 1`).
+
+**BECAUSE ANNOTATIONS AND CHORD SYMBOLS ARE STACKED BY TWO DIFFERENT MECHANISMS HERE.** The
+annotation branch carries its own within-element stack —
+`lane = annotationAboveStep + ((above.length - 1 - index) * size * laneLineStep) / STEP` —
+so the lane machinery inverting on top of it double-counts. abcjs has ONE mechanism.
+**The job is to delete the annotation branch's private stack and let the lanes do it**, and
+only then land the inversion. That is the whole remaining measurement.
+
 ### 3.3d A SLUR CLOSES ON A GRACE NOTE — measured, one fixture
 
 `visual-tablature-10` is `(f3 {a})y` and abcjs draws a curve we draw not at all: `TIE a1
