@@ -11254,7 +11254,12 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     bottomBlock.texts.length === 0 && trailing.length === 0
       ? undefined
       : [
-          ...trailing.map((t) => ({ ...t, y: t.y + bottom })),
+          // **A TRAILING BLOCK IS A nonMusic LINE AND WEARS ITS OWN GROUP** — `draw()`
+          // opens one `<g>` per nonMusic line and the bottom text gets another
+          // (`draw/draw.js:55`, `:64-72`), so a mid-tune `T:` that no staff follows is a
+          // SIBLING of the `W:`/`H:` block rather than the first rows of it. Marked here
+          // because this is where the two are concatenated; the emitter splits on it.
+          ...trailing.map((t) => ({ ...t, y: t.y + bottom, nonMusicIndex: 0 })),
           ...bottomBlock.texts.map((t) => ({ ...t, y: t.y + bottomStart })),
         ]
 

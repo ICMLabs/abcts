@@ -2693,14 +2693,26 @@ const glyphDefs = new Map<GlyphName, string>()
       return out + markup
     })
     if (openGroup !== undefined) block.push('</g>')
+    /**
+     * **AND A TRAILING nonMusic LINE IS A SIBLING GROUP, NOT THE HEAD OF THIS ONE.**
+     * `draw()` writes one `<g>` per nonMusic line and opens ANOTHER for the bottom text
+     * (`draw/draw.js:55`, `:64-72`). Ours ran the two together, so `visual-tablature-15`'s
+     * `T:Inserted subtitle` and its `W:` block shared a group where abcjs closes one and
+     * opens the next. See `nonMusicIndex` on the trailing rows.
+     */
+    const trailingCount = (doc.bottomText ?? []).filter((t) => t.nonMusicIndex !== undefined)
+      .length
     // …and a trailing `%%sep`'s rule, which is INK on the same block.
     for (const line of doc.bottomLines ?? []) {
       const t = TL(line)
       block.push(separatorPath(t.x1, t.y1, t.x2, classes.generate('defined-text')))
     }
-    parts.push(
-      `<g${options.addClasses === true ? ' class="abcjs-meta-bottom"' : ''}>${block.join('')}</g>`,
-    )
+    const klassBottom = options.addClasses === true ? ' class="abcjs-meta-bottom"' : ''
+    const klassNonMusic = options.addClasses === true ? ' class="abcjs-non-music"' : ''
+    if (trailingCount > 0)
+      parts.push(`<g${klassNonMusic}>${block.slice(0, trailingCount).join('')}</g>`)
+    const rest = block.slice(trailingCount)
+    if (rest.length > 0) parts.push(`<g${klassBottom}>${rest.join('')}</g>`)
   }
 
   const w = abcjs ? doc.pageWidth * OUT : (options.pageWidth ?? doc.width * OUT)
