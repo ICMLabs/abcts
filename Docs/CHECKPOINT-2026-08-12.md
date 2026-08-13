@@ -629,6 +629,32 @@ right shape. What is left is measurement 3: it took `svg-bytes` from 34 to 36 an
 pixel-gate tunes out, and **which fixtures those were has not been looked at**. They are the
 ones that name the rest of the rule.
 
+**AND A LADDER THROUGH ABCJS SAYS WHY "ALWAYS TREBLE" IS THE WRONG SHAPE** (2026-08-12b).
+Six controls, `CREATEKEYSIG` printed for each — the positions the ENGRAVER is handed, not
+the ones the parser computes:
+
+| control | source | drawn |
+|---|---|---|
+| e | `K:D` | `fsharp@10 csharp@7` — treble |
+| a | `K:D clef=bass` | `fsharp@8 csharp@5` — **bass** |
+| b | `V:1 clef=bass` then `K:D` | `fsharp@8 csharp@5` — **bass** |
+| c | `K:D`, then `V:1 clef=bass` | `fsharp@8 csharp@5` — **bass** |
+| d | `V:T clef=treble` / `V:B clef=bass` then `K:D` | `fsharp@8 csharp@5` on BOTH staves |
+| f | `K:D clef=bass` + `V:2 clef=treble` | **TWO signatures**, `@8/@5` and `@10/@7` |
+
+So the drawn positions are BASS in four of the six, ONE object is shared by every staff in
+`d`, and `f` proves abcjs can emit two different ones in a tune. **A blanket "use the
+treble positions" is denied by five of the six rows** — which is almost certainly what the
+two reverted attempts amounted to, and it explains the two pixel-gate tunes.
+
+The discriminator is `params.clef` at the moment the `K:` line is read, and it is a PARSER
+STATE MACHINE rather than a rule: `visual-layout-07` has a header `K:GMin`, then four `V:`
+lines two of which are `bass,,`, then a body `K:GMin` — and that body `K:` is read with
+`params.clef` TREBLE, where control `d`'s `K:D` after the same shape of `V:` block is read
+with BASS. The difference is the HEADER `K:` that precedes it. **Port
+`multilineVars.clef`'s write set, do not infer the rule from the outcome** — that is the
+third attempt this row has earned, and the first two both inferred.
+
 Note also that the two `setKeyChange`/`setClefChange` calls in our mid-tune branch are
 ORDER-SENSITIVE: swapping them cost `clefs-tune7` 7.40px of dx on the first run, before any
 of the above was in play.
