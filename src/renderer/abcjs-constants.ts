@@ -519,6 +519,13 @@ export const ABCJS_PITCH = {
   /** `margin = 1` — one pitch between every lane (`set-upper-and-lower-elements.js:102`). */
   laneMargin: 1,
   /**
+   * The five-line staff's outer lines, in abcjs's pitch — `renderer.calcY(10)` for the top
+   * and `calcY(linePitch)` for the bottom, `linePitch` being 2 on a five-line staff
+   * (`draw/staff-group.js:86-96`). Read by the rule that closes a multi-staff group.
+   */
+  topLine: 10,
+  bottomLine: 2,
+  /**
    * An UNBEAMED stem's length — `Math.round(70 * this.voiceScale) / 10`
    * (`abstract-engraver.js:740`), so 7 at the default scale, measured from the note's own
    * pitch rather than run up from a base. NOT the beamed one, which comes from

@@ -14,6 +14,7 @@ import { type CompatibilityMode, defaultMode, isStrict } from '../core/model.js'
 import {
   ABCJS_ARC,
   ABCJS_LINE_PX,
+  ABCJS_PITCH,
   ABCJS_RATIO,
   ABCJS_YCORR,
   spaces,
@@ -2583,9 +2584,22 @@ const glyphDefs = new Map<GlyphName, string>()
       const last = system.staves[system.staves.length - 1]
       const x = first?.staffLines[0]?.x1
       if (first !== undefined && last !== undefined && x !== undefined) {
-        const oyS = (system.originY + OY) * PX
-        const top = (first.originY + stepToY(4)) * PX + oyS
-        const bottom = (last.originY + stepToY(-4)) * PX + oyS
+        /**
+         * **AND ITS TWO ENDS ARE `calcY` OFF EACH STAFF'S OWN `absoluteY`, ONE PRODUCT
+         * EACH** — `topLine = renderer.calcY(10)` on the FIRST staff and
+         * `bottomLine = renderer.calcY(linePitch)` on the LAST, both taken while
+         * `renderer.y` is that staff's origin (`draw/staff-group.js:86-96`, `:142-143`),
+         * and `calcY` is `this.y - ofs * spacing.STEP`. The same shape the BRACE above
+         * already takes.
+         *
+         * Ours was `(staff.originY + stepToY(±4)) + systemOy` — THREE terms in the other
+         * order — and it straddled a `roundNumber` boundary: `453.335 - 2 * 3.875` is the
+         * double that prints `445.585` and rounds to `445.58`, where the three-term form
+         * lands one ULP above and rounds to `445.59`. `visual-multi-voice-02`'s last 92
+         * bytes.
+         */
+        const top = first.absoluteY * PX - ENGRAVE.spacePerStep * ABCJS_PITCH.topLine * PX
+        const bottom = last.absoluteY * PX - ENGRAVE.spacePerStep * ABCJS_PITCH.bottomLine * PX
         const w = spaces(ABCJS_LINE_PX.staffConnector) * PX
         const r2 = (n: number): number => Number.parseFloat(n.toFixed(2))
         const [x1, x2] = [r2(x * PX), r2(x * PX + w)]
