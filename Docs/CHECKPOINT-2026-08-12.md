@@ -1055,6 +1055,18 @@ exact either way. The fix is to give `extentOf` a pitch twin: the head's declare
 in pitch, and each line's `pitchRange` (the stem's `p1 - 1` included, which `extentOf`
 already models in y as `+ spacePerStep`).
 
+**AND BOTH ENGINES WERE PROBED BEFORE ANY OF THAT WAS WRITTEN, WHICH CHANGES THE JOB.**
+On `visual-tablature-15` abcjs reports ONE triplet and reports it in clean integers:
+
+    TRIP up=true  a1.top 16  a2.top 11  start 20  end 15
+
+Ours reports TWO, and the SECOND is abcjs's answer exactly — `a1 16, a2 11 → 20, 15`. The
+FIRST is ours alone and carries `a1.topPitch 15.027002700270028`, whose fraction is a
+division artefact rather than anything abcjs computes. **So this row may not be an
+arithmetic defect at all**: the pitch twin would make a wrong-shaped number exact instead of
+removing it. Find out WHICH triplet draws at 449.85 and why we lay out a second one, before
+porting anything. abcjs's probe is `ABCJS_TRIP=1` on `layout/triplet.js:34`.
+
 ---
 
 ## 3.5 WHAT THE TABLE LOOKS LIKE NOW — 22 rows, and what each one is
