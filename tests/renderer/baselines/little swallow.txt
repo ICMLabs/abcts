@@ -126,7 +126,7 @@ system 0 width=757.344 originY=0.000
       text  649.769,47.088 size=17.000 bold "里，"
     bar x=685.695 w=0.600
       line  685.995,-38.750 -> 685.995,-7.750 t=0.600
-system 1 width=703.190 originY=305.555
+system 1 width=703.190 originY=305.554
   staff 0 originY=53.182
     staffline 15.000,-7.750 -> 688.190,-7.750 t=0.700
     staffline 15.000,-15.500 -> 688.190,-15.500 t=0.700

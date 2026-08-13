@@ -12123,7 +12123,16 @@ function anchorLyrics<
       ...part,
       elements: part.elements.map((el) =>
         el.texts.some(isLyric)
-          ? { ...el, texts: el.texts.map((t) => (isLyric(t) ? { ...t, y: t.y + shift } : t)) }
+          ? {
+              ...el,
+              texts: el.texts.map((t) =>
+                // …AND THE VOICE IS STAMPED HERE, because this is where it is known and the
+                // staff's extent is measured after the merge. abcjs's own per-voice term is
+                // `child.pitch -= child.voiceNumber * child.lyricHeightBelow`
+                // (`set-upper-and-lower-elements.js:170-173`). See `PlacedText.voice`.
+                isLyric(t) ? { ...t, y: t.y + shift, voice: voiceIndex } : t,
+              ),
+            }
           : el,
       ),
       melismaLines: part.melismaLines.map((line) =>
@@ -13314,12 +13323,10 @@ function verticalExtent(
 
   /** LOWEST lyric baseline on the staff — the last verse of the lowest-offset voice. */
   let lyricBottom = Number.NEGATIVE_INFINITY
-  /** The tallest lyric font on the staff — the lane is measured in IT, not the default. */
-  let lyricLaneHeight = 0
   /** abcjs's `lyricHeightBelow` in PITCH — one measurement of the WHOLE verse string. */
   let lyricLanePitch = 0
-  /** …and its SIZE, which is what the baseline is measured from. See below. */
-  let lyricFontSize = 0
+  /** The per-VOICE drop below the lane — see where it is gathered. */
+  let lyricVoiceDrop = 0
 
   for (const el of elements) {
     // A TEMPO MARK RESERVES A FLAT 6 PITCHES, not its ink.
@@ -13445,9 +13452,11 @@ function verticalExtent(
      */
     let versesHere = 0
     let versesSize = 0
+    let versesVoice = 0
     for (const t of el.texts) {
       if (t.role === 'lyric') {
         if (t.text !== '') versesHere += 1
+        versesVoice = Math.max(versesVoice, t.voice ?? 0)
         versesSize = Math.max(versesSize, t.size)
         lyricBottom = Math.max(lyricBottom, t.y)
         // …AND THE HEIGHT IT RESERVES IS ITS OWN FONT'S, not the default's. `addLyric`
@@ -13457,8 +13466,6 @@ function verticalExtent(
         // `visual-selection-01`'s dy.
         // No box term: `vocalfont` is not in abcjs's `fontTypeCanHaveBox`
         // (`abc_parse_directive.js:60`), so `%%vocalfont … box` never sets one.
-        lyricLaneHeight = Math.max(lyricLaneHeight, goldenTextHeight(t.size))
-        lyricFontSize = Math.max(lyricFontSize, t.size)
         continue
       }
       // OUT-OF-STAFF TEXT RESERVES ABCJS'S WAY: a full font size above the baseline and
@@ -13485,6 +13492,17 @@ function verticalExtent(
       const h =
         goldenTextHeight(versesSize) + (versesHere - 1) * versesSize * ABCJS_RATIO.textLineStep
       lyricLanePitch = Math.max(lyricLanePitch, h / ENGRAVE.spacePerStep)
+      /**
+       * **AND EVERY VOICE AFTER THE FIRST DROPS ITS WHOLE BLOCK AGAIN** —
+       * `child.pitch -= child.voiceNumber * child.lyricHeightBelow`, whose `bottom` then
+       * feeds `staff.bottom -= diff` per voice (`set-upper-and-lower-elements.js:118-131`,
+       * `:170-173`). The lane above is a MAX over the staff and knows nothing about it.
+       *
+       * This is why measuring the LAST VERSE'S baseline worked where spending the lane
+       * alone does not: the baseline already carries the drop, `anchorLyrics` having put it
+       * there. Both terms, and the lane can be spent in pitch as abcjs spends it.
+       */
+      lyricVoiceDrop = Math.max(lyricVoiceDrop, (versesVoice * h) / ENGRAVE.spacePerStep)
     }
   }
 
@@ -13525,56 +13543,39 @@ function verticalExtent(
     bottomPitch -= pitch
   }
   if (Number.isFinite(lyricBottom)) {
-    const wasBottom = bottom
-    bottom = Math.max(
-      bottom,
-      // `height - size + STEP`, and the `- size` used to be a hard `- 17` because 17 is
-      // both `spacing.vocal` AND the default vocalfont's drawn size — two different
-      // quantities that happen to be equal, which is exactly the coincidence that hides a
-      // rule. abcjs draws the baseline one FONT SIZE below the lane top (`text.js:30`), so
-      // at 27px it sits 10px lower and the staff below it only 7.5px lower.
-      lyricBottom + lyricLaneHeight + ENGRAVE.spacePerStep - lyricFontSize,
-      lyricBottom + lyricLaneHeight + ENGRAVE.spacePerStep - lyricFontSize,
-    )
     /**
      * **THE LANE IS SUBTRACTED IN PITCH, AS ABCJS SUBTRACTS IT** —
      * `staff.bottom -= (lyricHeightBelow + margin)` where `lyricHeightBelow` is
      * `lyricDim.height / STEP` plus `spacing.vocal / STEP`
      * (`set-upper-and-lower-elements.js:50-54`, `abstract-engraver.js:777`). So the
-     * DIVISION is of the lane, not of the accumulated y — which is the whole difference
-     * between `pitch - lane/STEP` and `-(y + lane)/STEP`.
+     * DIVISION is of the LANE, not of the accumulated y — which is the whole difference
+     * between `pitch - lane / STEP` and `-(y + lane) / STEP`.
      *
-     * Ours reaches the same y by a different route (a `max` against the last verse's
-     * baseline), so the delta stands in for the lane; it is the same quantity by
-     * construction and it is what abcjs divides.
-     */
-    /**
-     * **abcjs's OWN LANE IS `dim.height / STEP + 1`, AND WE CANNOT SPEND IT YET.**
-     * Measured and MEASURABLE: `lyricLanePitch` above is abcjs's figure to the last digit —
-     * `visual-tablature-23`'s 11.126451612903226 — and using it takes that fixture's height
-     * byte-exact and the root count to 147/20.
-     *
-     * It also puts `multi-voice-lyrics-two-voices` and `ave-verum-corpus` STRUCTURALLY out,
-     * because abcjs subtracts its lane from `staff.bottom` — the music's ink — while our y
-     * is measured from the LAST VERSE'S BASELINE, which `anchorLyrics` places by a different
-     * rule. Two derivations that agree on a single voice and part company on two.
-     *
-     * **A ULP IS CHEAPER THAN A POSITION ERROR**, so the delta stands in for the lane until
-     * `anchorLyrics` is abcjs's too. That is the next thread, and `lyricLanePitch` is
-     * already computed for it.
-     */
-    /**
-     * **RE-MEASURED 2026-08-12 AND THE DECISION HOLDS.** Spending `lyricLanePitch + 1` on
-     * `wasBottom` directly — abcjs's own `staff.bottom -= (lyricHeightBelow + margin)` —
-     * takes `svg-bytes` from 39 to 40 and puts `ave-verum-corpus`,
-     * `multi-voice-lyrics-two-voices` and `visual-multi-voice-01` out by exactly 18.84px,
-     * ONE lyric block. The missing term is abcjs's `diff`: a lyric on voice n>0 gets
-     * `child.pitch -= voiceNumber * child.lyricHeightBelow`, which drives
+     * **THIS TOOK THREE MEASUREMENTS AND TWO REFUSALS TO LAND, AND THE MISSING HALF WAS
+     * `lyricVoiceDrop`.** Spending the lane alone was tried twice and recorded twice as
+     * costing `ave-verum-corpus`, `multi-voice-lyrics-two-voices` and
+     * `visual-multi-voice-01` exactly 18.84px — ONE lyric block — with the note that
+     * *"porting the lane without the per-voice diff is half a rule"*. It was: abcjs's
+     * `child.pitch -= child.voiceNumber * child.lyricHeightBelow` drives
      * `bottom = Math.min(element.bottom, child.pitch)` and then `staff.bottom -= diff` per
-     * VOICE (`set-upper-and-lower-elements.js:118-125`, `:163-168`). Porting the lane
-     * without the per-voice diff is half a rule.
+     * VOICE (`set-upper-and-lower-elements.js:118-131`, `:163-173`).
+     *
+     * The old form — a `max` against the LAST VERSE'S baseline, with the delta divided back
+     * — worked precisely because that baseline already carried the per-voice drop,
+     * `anchorLyrics` having put it there. So the two terms were never separable: one
+     * derivation held both and the other held neither.
+     *
+     * With both spent in pitch, `visual-multi-voice-02` goes from byte 38733 to 48187 of
+     * 48279 and `visual-tablature-23` from 153 to 9585 of 11740, and `pixel-parity` stays
+     * at 0 of 120.
+     *
+     * ponytail: abcjs's `diff` also carries `element.bottom - staff.bottom` — the element's
+     * own overhang below the staff's lowest point — and takes the LAST such element rather
+     * than the deepest. Nothing in either corpus separates the two: every fixture's
+     * lyric-bearing element IS its lowest. A control that puts a low stem on a voice whose
+     * lyric is not the deepest would name it.
      */
-    if (bottom !== wasBottom) bottomPitch -= (bottom - wasBottom) / ENGRAVE.spacePerStep
+    lower(lyricLanePitch + ENGRAVE.laneMargin + lyricVoiceDrop)
   }
 
   // Apply the tuplet/volta ending lane now that `top`/`bottom` are the NOTE extent: a fixed
