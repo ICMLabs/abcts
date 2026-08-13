@@ -338,7 +338,19 @@ function lineToRect(
      */
     if (line.role === 'stem' || line.role === 'bar') {
       const up = line.role === 'stem' && line.y2 < line.y1
-      const [xa, xb] = up ? [x + w, x] : [x, x + w]
+      /**
+       * **THE FAR EDGE IS BUILT FROM THE *ROUNDED* ANCHOR** — `x = roundNumber(x); var x2 =
+       * roundNumber(x + dx)` (`draw/print-stem.js:14-15`), so the second corner is a
+       * hundredth off the first and NOT the other side of an unrounded centre. The two
+       * agree in exact arithmetic and disagree whenever the centre lands on a rounding
+       * boundary: `visual-svg-per-line-02-scaled` wrote `264.39` against abcjs's `264.4`,
+       * because our anchor is `264.995…` and `(264.995 - 0.3) - 0.3` is `264.395`.
+       *
+       * The BEAM's emitter above chains the same way for the same reason; this is the one
+       * place that did not.
+       */
+      const anchor = roundNumber(up ? x + w : x)
+      const [xa, xb] = [anchor, roundNumber(anchor + (up ? -w : w))]
       const [ya, yb] = up ? [y, y + h] : [y + h, y]
       return (
         `<path d="M ${round2(xa)} ${round2(ya)}L ${round2(xa)} ${round2(yb)}` +
