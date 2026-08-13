@@ -19,10 +19,11 @@ on stale runs before finding out what it was.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 0 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 1 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 1 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **15 of 171**, best 51473 | 49 of 171 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **14 of 171**, best 51473 | 49 of 171 |
 
-`DIVERGENT` is still EMPTY. **151 fixtures are byte-exact and all 151 are RATCHETED**, and
-`visual-selection-01` — 202,156 bytes, the corpus's largest — is one of them.
+`DIVERGENT` is still EMPTY. **157 fixtures are byte-exact and all 157 are RATCHETED** —
+`visual-selection-01` (202,156 bytes, the corpus's largest), `visual-tablature-15` and
+`visual-mouse-click-01` (85,865 each) among them.
 
 The 26 that remained at the first checkpoint classified **13 STRUCTURAL / 13 ULP** — §3.4.
 Seven more closed after it; §2b is those, and §3.5 is what the table looks like now.
@@ -1162,6 +1163,32 @@ wrong anchor can produce a wrong order by itself.
   `this.voiceNumber === 0` for a slide's `TieElem` — it carries none — so `above` is TRUE;
   and `isTie` is recomputed from the anchors, whose two BLANKS sit at `yPos2 ± 1`, so
   neither arm fires.
+
+
+### 2b.15 THE CHORD LANE, AND A RIGHT ANNOTATION'S ROOM — 15 → 14
+
+**THE CHORD LANE INVERTS, AND THE ANNOTATION BRANCH WAS STACKING TWICE.**
+`setLaneForChord` walks source order over elements and FORWARD over children; what reverses
+is the CHILD LIST — `addChord` closes with a descending loop under its own comment, *"parse
+these in opposite order because we place them from bottom to top"*
+(`creation/add-chord.js:42`). Then `invertLane` flips the result once more than one lane is
+used, *"so that we can count from the top line"*.
+
+The inversion could not land alone — §3.3c said so and was right — because the ANNOTATION
+branch carried a private within-element stack (`(above.length - 1 - index) * size *
+laneLineStep`) while the lane machinery stacked ACROSS notes. **abcjs has ONE mechanism.**
+That stack is gone and the above marks are stored reversed, as the chord-symbol branch
+already stored them. abcjs's own lanes for `stacked-annotations` — `Allegro 0`,
+`con brio 1`, `staccato 1` — now come out exactly.
+
+**AND A RIGHT ANNOTATION'S ROOM STARTS AT THE DOT SHIFT, NOT AT ZERO.**
+`createNoteHead` returns `dotshiftx = notehead.w + dotshiftx - 2 + 5 * dot`
+(`create-note-head.js:50`) whether or not the note is dotted, and `createNote` hands it
+straight to `addChord` as `roomtakenright` (`abstract-engraver.js:610`, `:858`). So a
+`">G"` on an undotted quarter sits at `9.81 - 2 + 4`, not at `4` — traced,
+`RIGHT "G" x 11.81 roomTakenRight 11.81`.
+
+`visual-transpose-04` closed on the two together.
 
 ---
 
