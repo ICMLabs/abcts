@@ -1055,6 +1055,8 @@ exact either way. The fix is to give `extentOf` a pitch twin: the head's declare
 in pitch, and each line's `pitchRange` (the stem's `p1 - 1` included, which `extentOf`
 already models in y as `+ spacePerStep`).
 
+**IT WAS BOTH, AND NEITHER WAS THE ROUND TRIP ALONE — §2b.13.**
+
 **AND BOTH ENGINES WERE PROBED BEFORE ANY OF THAT WAS WRITTEN, WHICH CHANGES THE JOB.**
 On `visual-tablature-15` abcjs reports ONE triplet and reports it in clean integers:
 
@@ -1066,6 +1068,40 @@ division artefact rather than anything abcjs computes. **So this row may not be 
 arithmetic defect at all**: the pitch twin would make a wrong-shaped number exact instead of
 removing it. Find out WHICH triplet draws at 449.85 and why we lay out a second one, before
 porting anything. abcjs's probe is `ABCJS_TRIP=1` on `layout/triplet.js:34`.
+
+
+### 2b.13 A TUPLET'S MIDDLE MEMBER DECLARES **ITS OWN** NOTEHEAD'S BOX, IN PITCH
+
+`middleElems[i]` is the head's `RelativeElement` and its `top` is
+`pitch + symbolHeightInPitches(symbol) / 2` (`layout/triplet.js:41-44`,
+`relative-element.js:22-24`).
+
+Two things were wrong and **only one of them was written down**. The note at the site said
+the box is `pitch ± thickness/2` — right — and then read `ENGRAVE.noteheadHalfHeight`, which
+is `noteheads.quarter` and nothing else. Probed through abcjs on `visual-tablature-15`:
+`pitch=10, top=11.049290322580646`, a half-box of **1.04929**. `noteheads.half` publishes
+`h: 8.132` where the quarter publishes `8.094`, so an OPEN head declares 0.0098 of a pitch
+more. The other half was the round trip: the whole thing was computed in y and divided back.
+
+**AND 0.0098 OF A PITCH DECIDES WHETHER THE FLATTEN FIRES AT ALL.** abcjs's `max + 4` is
+15.049290322580646 against an `endNote` of 15, so the bracket is drawn FLAT at `max + 3`;
+ours reached 15.0444, the test failed, and the bracket SLOPED. **A rounding-sized constant
+inside a comparison is not a rounding-sized error** — the row read as a 0.02px hundredth and
+was a different shape.
+
+`visual-tablature-15` and `visual-mouse-click-01` go from byte 53155 to **63245 of 85865**.
+
+**AND A FIRST ATTEMPT USED `NoteAnchor.pitchStep` FOR THE HEAD'S PITCH AND WAS WRONG** —
+that is the chord's FIRST WRITTEN pitch, where abcjs's `middleElems[i]` is one specific
+head; on this fixture it reads 1 where the head is at abcjs pitch 10. The head's pitch comes
+off `anchor.top` less one step (the curve padding the anchor carries), which divides an
+exact multiple of `spacePerStep` rather than an accumulated sum.
+
+**WHAT IS LEFT ON THIS FIXTURE IS A TIE, AND IT IS TWO THINGS.** Ours draws
+`slur@309.34, tie@312.34`; abcjs draws `tie@332.34, slur@309.34`. So (a) the tie's ANCHOR is
+20px — one note — earlier in ours, and (b) the `otherchildren` merge orders it after the
+slur where abcjs puts it before. Settle the anchor first: the order key is the CLOSE, so a
+wrong anchor can produce a wrong order by itself.
 
 ---
 
