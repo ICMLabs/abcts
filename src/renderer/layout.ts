@@ -3492,6 +3492,35 @@ function layoutNoteheads(
   // this point reads the doubled figure.
   const roomAfterGraces = graceRoom === 0 ? roomTaken : roomTaken + roomTaken + graceRoom
 
+  /**
+   * **AN UNBEAMED GRACE'S FLAG CARRIES ITS OFFSET BUILT, AND `headx` STARTS AT THE MAIN
+   * NOTE'S ACCIDENTAL ROOM.**
+   *
+   * `xdelta = headx + notehead.w - 0.6` with `headx = -graceoffsets[i]`
+   * (`create-note-head.js:47`, `abstract-engraver.js:485-494`), placed as ONE addition
+   * onto the element's own x (`relative-element.js:124-125`). `graceoffsets` is a walk
+   * that OPENS at the `roomtaken` `createNoteHead` returned for this note's accidentals,
+   * so a grace after a sharp sits at `headx = -20.25` where a bare one sits at `-10`.
+   * Instrumented on abcjs — 17 of `S8-layout`'s 18 grace flags are the first, one is the
+   * second — and that one is why the offset cannot be built inside `layoutGraces`, which
+   * runs before the accidental column is known.
+   *
+   * Ours reached the same point as `(gx + w) - 0.6` and let `placeElement` derive the
+   * offset back out as `g.x - el.x`: three terms in another order, and
+   * `synth-flattener-28` wrote `609.9529209936139` against abcjs's `…38`.
+   */
+  const graceFlagDx = (index: number): number =>
+    -(roomTaken + (graces?.offsets[index] ?? 0)) +
+    glyphsFor(strict).width('noteheadBlack') * ENGRAVE.graceScale -
+    spaces(ABCJS_PX.flagStemInset)
+  // The ACCIACCATURA SLASH wears `role: 'flag'` too — the role picks the CLASS — so the
+  // two are told apart by name. Its own offset is one term shorter and still derived.
+  const placedGraceGlyphs = graceGlyphs.map((g) =>
+    g.name === 'flag8thUp' && g.graceIndex !== undefined
+      ? { ...g, dx: graceFlagDx(g.graceIndex) }
+      : g,
+  )
+
   // AN ACCIDENTAL DECLARES `pitch ± h / 2`, centred on the note it belongs to, and abcjs
   // passes that as an explicit `top`/`bottom` rather than letting the outline stand
   // (`create-note-head.js:99-100`) — the same escape the key signature takes two files
@@ -4074,7 +4103,7 @@ function layoutNoteheads(
     ),
     staffSteps: steps,
     // The graces go on the END — abcjs's document order, see the grace block above.
-    glyphs: [...glyphs, ...graceGlyphs],
+    glyphs: [...glyphs, ...placedGraceGlyphs],
     lines: [...lines, ...graceLines],
     texts,
   }
@@ -14262,7 +14291,20 @@ function layoutGraces(
   x: number,
   clef: Clef,
   strict: boolean,
-): { glyphs: PlacedGlyph[]; lines: PlacedLine[]; width: number; room: number; left: number } {
+): {
+  glyphs: PlacedGlyph[]
+  lines: PlacedLine[]
+  width: number
+  room: number
+  left: number
+  /**
+   * abcjs's `graceoffsets`, RELATIVE to the room already taken — its own walk starts at
+   * the incoming `roomtaken` (`abstract-engraver.js:485-490`), which is the MAIN note's
+   * accidental column and is not known until after this runs. The caller adds it back to
+   * build `headx = -graceoffsets[i]`.
+   */
+  offsets: readonly number[]
+} {
   const graceGlyphs: PlacedGlyph[] = []
   const graceLines: PlacedLine[] = []
   /** A grace's own ledgers — merged in only after the beam pass, which walks by index. */
@@ -14271,6 +14313,8 @@ function layoutGraces(
   let graceRoom = 0
   /** How far LEFT of the cursor the graces reach — abcjs's `extraw`, which is a MIN. */
   let graceLeft = 0
+  /** abcjs's `graceoffsets`, less the room already taken — see the return type. */
+  let offsets: readonly number[] = []
   if ('graceNotes' in event && event.graceNotes.length > 0) {
     const scale = ENGRAVE.graceScale
     const graceSteps = event.graceNotes.map((p) => pitchToStep(p, clef))
@@ -14311,6 +14355,7 @@ function layoutGraces(
       if (event.graceNotes[i]?.accidental != null) walk += ENGRAVE.graceAccidentalRoom
     }
     /** Abcjs's `abselem.x` in our frame: the graces hang LEFT of it. */
+    offsets = graceOffsets
     const graceNoteX = x + (graceOffsets[0] ?? 0)
     const graceXOf = (i: number): number => graceNoteX - (graceOffsets[i] ?? 0)
     graceSteps.forEach((graceStep, i) => {
@@ -14694,5 +14739,6 @@ function layoutGraces(
     width: graceWidth,
     room: graceRoom,
     left: graceLeft,
+    offsets,
   }
 }
