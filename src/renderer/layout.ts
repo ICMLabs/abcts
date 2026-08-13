@@ -8490,7 +8490,15 @@ function layoutMeasure(
     }
     // Anchor the curve endpoints on the NOTEHEAD, not the element: an accidental shifts
     // the head right, and a slur springing from the accidental would start in mid-air.
-    const heads = el.glyphs.filter((g) => g.name.startsWith('notehead'))
+    /**
+     * **AND A GRACE'S HEAD IS NOT ONE OF THEM.** `calcX` sets `this.startX =
+     * this.anchor1.x` (`tie-element.js:113`) and `anchor1` is the MAIN notehead's
+     * `RelativeElement`; a grace head is a separate child at a negative `dx`. This filtered
+     * on the NAME alone — a grace head is a `notehead*` like any other — so a curve opening
+     * on a graced note sprang from its first GRACE: `({^CD}B,4 =B,8)` on
+     * `visual-tablature-15` drew its tie 20px, two grace advances, left of abcjs's.
+     */
+    const heads = el.glyphs.filter((g) => g.role !== 'grace' && g.name.startsWith('notehead'))
     if (heads.length > 0) {
       // THE ACTIVE TABLE'S WIDTH, not Bravura's. This anchor is where a slur or tie
       // STARTS, and abcjs's noteheads are wider than Bravura's by 0.67px on a black head,

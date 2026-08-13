@@ -1659,7 +1659,7 @@ const glyphDefs = new Map<GlyphName, string>()
          * all four attributes itself. `PlacedGlyph.group` names the kind and `groupStart`
          * marks the occurrence.
          */
-        const others: { x: number; s: string }[] = []
+        const others: { x: number; s: string; k?: number }[] = []
         let dynBuf: string[] = []
         let dynX = 0
         const flushDynamic = (): void => {
@@ -1992,11 +1992,38 @@ const glyphDefs = new Map<GlyphName, string>()
           // why the two keys differ. The note here said both sorted on the close; the trace
           // of `voice.addOther` says otherwise, and `visual-svg-per-line-01` put a hairpin
           // where abcjs has a slur.
-          others.push({ x: TC(curve).x1, s: curveSink.pop() ?? '' })
+          /**
+           * **AND A GRACE SLUR TAKES ITS PLACE AT THE MAIN NOTE, NOT AT THE GRACE.**
+           * `addGraceNotes` runs at `abstract-engraver.js:840` and the pitch loop's
+           * `addSlursAndTies` at `:732`, so within ONE element the WRITTEN curve is
+           * `addOther`'d first and the automatic grace slur second — even though the grace
+           * head sits well to the LEFT of the note. Traced through `voice.addOther` on
+           * `visual-tablature-15`: grace, written, grace, written, with each written one
+           * carrying `a2x null` because its close has not been seen yet.
+           *
+           * Keying a grace slur on its own `x1` put it before the written slur that opens
+           * on the same note. Its `x2` is that note's head, which is where the list has it.
+           * A grace slur is the only curve whose two ends are the SAME element.
+           */
+          const graceCurve =
+            curve.startElement !== undefined && curve.startElement === curve.endElement
+          others.push({
+            // A grace slur's own `x1` is its GRACE; the list has it at the MAIN NOTE, whose
+            // `x1` a written curve opening there would take —
+            // `x2 + startOffset - endOffset` is exactly that number, so the two tie and the
+            // secondary key decides.
+            x: graceCurve
+              ? TC(curve).x2 + spaces(ABCJS_ARC.startOffset) - spaces(ABCJS_ARC.endOffset)
+              : TC(curve).x1,
+            // …and it comes SECOND, `addGraceNotes` running after the pitch loop.
+            k: graceCurve ? 1 : 0,
+            s: curveSink.pop() ?? '',
+          })
         }
         // …and the whole `otherchildren` list goes out as ONE run in x order. `Array.sort`
         // is stable, so two things starting at the same x keep the order they were built in.
-        for (const o of others.sort((p1, p2) => p1.x - p2.x)) parts.push(o.s)
+        for (const o of others.sort((p1, p2) => p1.x - p2.x || (p1.k ?? 0) - (p2.k ?? 0)))
+          parts.push(o.s)
         dynamics.length = 0
         graceBeams.length = 0
       }
