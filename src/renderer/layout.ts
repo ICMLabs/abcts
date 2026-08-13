@@ -1569,6 +1569,8 @@ export interface LayoutSystem {
   readonly lastBottomPitch: number
   /** Where the system's ink starts — everything before the first staff's own extent. */
   readonly leading: number
+  /** The music's own width, without any prose that overhangs it — see `systemBounds`. */
+  readonly musicWidth: number
   /** The separation spent BEFORE this system — see the placement loop. */
   readonly gap?: number
   /** Width of this system, staff spaces. Systems wrap, so they differ. */
@@ -6723,6 +6725,19 @@ function layoutCurves(
      * arc is 20px long wherever the note is. Four of this fixture's eight curves were the
      * halves we declined to draw.
      */
+    /**
+     * **AND `startLimitX` IS AN ARM WE DO NOT TAKE — MEASURED, TRIED, REVERTED.**
+     *
+     *     else if (this.startLimitX) this.startX = this.startLimitX.x + this.startLimitX.w
+     *     else if (this.anchor2)     this.startX = this.anchor2.x - 20
+     *
+     * (`tie-element.js:118-130`.) `visual-svg-per-line-01`'s incoming half runs from 81.65
+     * where the 20px stub gives 96.7 — 15.05, the width of that line's prefix — so abcjs
+     * IS taking the first arm there. Substituting `bounds[].left`, which is exactly
+     * "past the clef and key", took `parse-tie-slur-01`, `-02` and `-03` OFF the byte-exact
+     * list: those three take the stub. So `startlimitelem` is not simply "this line has a
+     * prefix", and what distinguishes the two cases is unmeasured.
+     */
     const resume = to.left - ENGRAVE.curveContinuation
     curves[to.system]?.push({
       ...buildCurve({ ...to, left: resume, right: resume }, to, halfKind, voicePos, strict, {
@@ -11029,6 +11044,15 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       connectorLines: connectors.lines,
       connectorSpans: connectors.spans,
       width,
+      /**
+       * The MUSIC's own width, without the prose. `drawVoice` opens
+       * `var width = params.w - 1` off the VOICE element (`draw/voice.js:12`), and that is
+       * what a curve or an ending running off the end of a system is handed — not the
+       * system's box, which `Math.max(musicWidth, proseWidth)` widens for a long title.
+       * `visual-svg-per-line-01`'s first line is 687.18 of music under an 800px subtitle,
+       * and its split slur ran to 788.75 against abcjs's 690.18.
+       */
+      musicWidth,
       originY: 0,
     }
   })
@@ -11038,7 +11062,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   // Music starts after the widest prefix on the system and ends at its right margin.
   const systemBounds = systems.map((system, i) => ({
     left: musicLeft[i] ?? leftEdgeFor(i),
-    right: system.width - ENGRAVE.marginX,
+    // …and the RIGHT edge is the MUSIC's, not the system's — see `LayoutSystem.musicWidth`.
+    right: system.musicWidth - ENGRAVE.marginX,
   }))
   const curvesBySystem = voiceAnchors.map((anchors, v) =>
     layoutCurves(strict, anchors, systemBounds, voicePosOf(v)),
