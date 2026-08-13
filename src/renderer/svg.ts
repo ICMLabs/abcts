@@ -1054,8 +1054,9 @@ const glyphDefs = new Map<GlyphName, string>()
           ...l,
           x1: l.x1 * PX,
           x2: l.x2 * PX,
-          y1: l.y1 * PX + oy,
-          y2: l.y2 * PX + oy,
+          // …unless the line carries an ABSOLUTE end — see `PlacedLine.absY1`.
+          y1: l.absY1 ?? l.y1 * PX + oy,
+          y2: l.absY2 ?? l.y2 * PX + oy,
           thickness: l.thickness * PX,
         }
   /**
@@ -1352,10 +1353,13 @@ const glyphDefs = new Map<GlyphName, string>()
       // is set after every non-duplicate voice, whatever joins them
       // (`draw/staff-group.js:129-133`). Measured: two bare `V:` voices with no `%%staves`
       // at all draw the lower staff's bars up to the upper staff's bottom line.
+      // **ONE PRODUCT OFF THE STAFF ABOVE'S OWN `absoluteY`** — `bartop =
+      // renderer.calcY(2 + tabNameHeight)` taken while `renderer.y` is that staff's origin
+      // (`draw/staff-group.js:132`). See `PlacedLine.absY1`.
       const bartop =
         previous === undefined
           ? undefined
-          : previous.originY + stepToY(-4) - staff.originY
+          : previous.absoluteY * PX - ENGRAVE.spacePerStep * ABCJS_PITCH.bottomLine * PX
       // …and the staff's, on top of it. Reset per staff, since `staff.originY` is relative.
       if (abcjs) oy = staff.absoluteY * PX
       let staffGroup = ''
@@ -2423,8 +2427,8 @@ const glyphDefs = new Map<GlyphName, string>()
             !reach || bartop === undefined
               ? l
               : l.y1 < l.y2
-                ? { ...l, y1: bartop }
-                : { ...l, y2: bartop }
+                ? { ...l, absY1: bartop }
+                : { ...l, absY2: bartop }
           let li = 0
           for (const g of el.glyphs) {
             while (li < ordered.length && li < (g.afterLine ?? 0)) {

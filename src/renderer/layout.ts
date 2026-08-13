@@ -957,6 +957,16 @@ export interface PlacedLine {
    * `p1`/`p2` are pitches abcjs never converts, and the extent sums them as pitches.
    */
   readonly pitchRange?: readonly [number, number]
+  /**
+   * **AN ABSOLUTE y THAT THE TRANSLATION MUST NOT TOUCH.** A joined staff's barline reaches
+   * the staff ABOVE, and abcjs takes that end as `renderer.calcY(2)` off THAT staff's
+   * `absoluteY` — one product (`draw/staff-group.js:132`). Reaching it through this staff's
+   * frame is `(prevOrigin + local - thisOrigin) + thisAbsolute`, four terms, and it lands a
+   * ULP either side of a `roundNumber` boundary: `visual-slurs-02` wrote 80.68 where abcjs
+   * writes 80.69.
+   */
+  readonly absY1?: number
+  readonly absY2?: number
   /** Which voice ON THIS STAFF this belongs to — abcjs finishes one before the next. */
   readonly voice?: number
   /** A GRACE's stem — written after every grace head, not with the main note's rules. */
