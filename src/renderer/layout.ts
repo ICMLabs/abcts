@@ -1581,6 +1581,15 @@ export interface LayoutSystem {
   readonly lastBottomPitch: number
   /** Where the system's ink starts — everything before the first staff's own extent. */
   readonly leading: number
+  /**
+   * **THE SAME LEAD AS TERMS**, in the order abcjs's `moveY`s spend them: the top block's
+   * rows for the first system, a mid-tune nonMusic line's rows for a later one, `[]` for a
+   * plain one. `leading` is their SUM and a sum cannot see an order — the page's cursor
+   * walks THIS, and `addStaffPadding` is spent after it, which is `draw/draw.js:44-58`
+   * exactly. Staff 0's `originAdvances` opens with the same list, so the page and the staff
+   * cannot drift apart.
+   */
+  readonly leadAdvances: readonly number[]
   /** The music's own width, without any prose that overhangs it — see `systemBounds`. */
   readonly musicWidth: number
   /** The separation spent BEFORE this system — see the placement loop. */
@@ -10188,6 +10197,11 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       systemWidth,
     )
 
+    /**
+     * **A MID-TUNE BLOCK'S OWN `moveY` ROWS, IN ORDER** — see `LayoutSystem.leadAdvances`.
+     * Only the first voice builds the block, so only it fills this.
+     */
+    let midAdvances: number[] = []
     const staves: LayoutStaff[] = plans.map((plan, voiceIndex) => {
       // The title heads the tune: first system, top staff, and inside the layout so the
       // vertical extent accounts for it. Added afterwards it would sit above y = 0 and
@@ -10231,7 +10245,15 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
               }
             })()
           : midTune.length > 0
-            ? freeTextBlock(midTune, systemWidth - ENGRAVE.marginX * 2, score.fonts)
+            ? (() => {
+                const built = freeTextBlock(
+                  midTune,
+                  systemWidth - ENGRAVE.marginX * 2,
+                  score.fonts,
+                )
+                midAdvances = built.advances
+                return built
+              })()
             : { texts: [], lines: [], height: 0 }
       const blockLines: readonly PlacedLine[] = block.lines
       const heading: LayoutElement[] =
@@ -11054,6 +11076,23 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         musicOnlyTopPitch !== undefined &&
         systemIndex === 0 &&
         staffIndexInSystem === 0
+      /**
+       * **AND A MID-TUNE BLOCK WALKS ITS OWN ROWS THE SAME WAY.** abcjs draws the nonMusic
+       * line the moment it reaches it — `nonMusic` spending one `moveY` per row — and only
+       * THEN runs `addStaffPadding` for the group below (`draw/draw.js:44-58`). Instrumented
+       * on `synth-timing-05`, its second system's cursor reads
+       *
+       *     120.177 → +3.78 → +23.27 → +34.033 → + 3.875 × 14.044387096774194
+       *
+       * where ours spent the padding FIRST (`systemAbsoluteY 154.21`) and then ONE advance
+       * of `81.472` holding the two rows and the staff's own product together. **A SUM
+       * CANNOT SEE AN ORDER**, and this one is the whole root-dimension ULP family.
+       */
+      const walksMidBlock =
+        musicOnlyTop !== undefined &&
+        musicOnlyTopPitch !== undefined &&
+        systemIndex > 0 &&
+        staffIndexInSystem === 0
       const originAdvances = ((): number[] => {
         const flat = musicOnlyTop === undefined ? cursor : originY
         /**
@@ -11066,8 +11105,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
          * every staff after the first.
          */
         if (staffIndexInSystem > 0 && musicOnlyTop === undefined) return [...leadTerms, ...staffMoves]
-        if (!walksTopBlock) return [flat]
-        const terms = [...topAdvances, nonMusicBeforeMusic ? interSystemSep : 0]
+        if (!walksTopBlock && !walksMidBlock) return [flat]
+        const terms = walksMidBlock
+          ? [...midAdvances]
+          : [...topAdvances, nonMusicBeforeMusic ? interSystemSep : 0]
         /**
          * …AND THE LIST CLOSES ON A REMAINDER, which is EXACTLY ZERO whenever the terms
          * account for the whole lead — and `y += 0` is exact, so the clean case walks
@@ -11085,11 +11126,12 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         // table from 59 to 60.
         return Math.abs(rest) > 1e-9 ? [...terms, rest] : terms
       })()
-      const originPitch = walksTopBlock
-        ? (musicOnlyTopPitch ?? 0)
-        : musicOnlyTop === undefined
-          ? clampedTopPitch
-          : 0
+      const originPitch =
+        walksTopBlock || walksMidBlock
+          ? (musicOnlyTopPitch ?? 0)
+          : musicOnlyTop === undefined
+            ? clampedTopPitch
+            : 0
       // In PITCH, as abcjs states it: the staff's own span plus whatever the clamp added,
       // which abcjs carries inside `staff.top` and we apply here.
       // **`calcHeight` ADDS `staff.top` AND THEN `-staff.bottom`**, two additions onto a
@@ -11152,6 +11194,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       firstTopPitch,
       lastBottomPitch,
       leading: leadingCursor,
+      // Staff 0's own list is the lead — see `LayoutSystem.leadAdvances`. A staff after the
+      // first re-states it as `leadTerms`, so slicing it off is uniform across the system.
+      leadAdvances: placed[0]?.originAdvances ?? [],
       connectorGlyphs: connectors.glyphs,
       connectorLines: connectors.lines,
       connectorSpans: connectors.spans,
@@ -11303,8 +11348,21 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             return separationInPixels < interSystemSep ? interSystemSep - separationInPixels : 0
           })()
     const originY = cursor + padding
+    /**
+     * **THE LEAD IS SPENT ROW BY ROW, AND BEFORE THE PADDING.** `draw()` runs
+     * `nonMusic(abcLine.nonMusic)` the moment it reaches the line and only THEN calls
+     * `addStaffPadding` for the group below it (`draw/draw.js:44-58`); each row is its own
+     * `moveY`. Ours spent the padding first and the lead as ONE number, which is the same
+     * terms in two wrong groupings at once.
+     */
+    const lead = system.leadAdvances
+    for (const a of lead) pageCursor += a
     pageCursor += padding
-    /** This system's absolute top — the page cursor as abcjs's `renderer.y` stands here. */
+    /**
+     * This system's absolute top — `renderer.y` as abcjs enters `drawStaffGroup`, so the
+     * lead and the padding are already spent. Every staff's own walk therefore skips the
+     * first `lead.length` terms of its `originAdvances`, which open with that same list.
+     */
     const systemAbsoluteY = pageCursor
 
     /**
@@ -11370,7 +11428,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       ...staff,
       absoluteY: (() => {
         const walked =
-          staff.originAdvances.reduce((y, a) => y + a, systemAbsoluteY) +
+          staff.originAdvances.slice(lead.length).reduce((y, a) => y + a, systemAbsoluteY) +
           staff.originPitch * ENGRAVE.spacePerStep
         /**
          * **THE INVARIANT, ASSERTABLE.** The walked origin and the system-relative one are
@@ -11378,9 +11436,12 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
          * `ABCTS_CHECK=1` prints any pair that does not, which is how the missing
          * `spacing.music` on `visual-options-01` was found — a term list that silently
          * stops describing a shape is exactly the failure this arc is prone to.
+         *
+         * The system-relative `originY` still counts the LEAD, which `systemAbsoluteY` has
+         * already spent — so it comes off here rather than being carried twice.
          */
         if (process.env.ABCTS_CHECK !== undefined) {
-          const flat = systemAbsoluteY + staff.originY
+          const flat = systemAbsoluteY - system.leading + staff.originY
           if (Math.abs(walked - flat) > 1e-9)
             console.error(
               'WALK MISMATCH', walked, flat, 'diff', walked - flat,
@@ -11391,10 +11452,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       })(),
     }))
 
-    // abcjs advances the page by the block's rows and then by `staffGroup.height * STEP`,
-    // two separate `moveY` calls (`draw/draw.js:54-60`, `:81-82`). Written as one sum they
-    // are the same terms in a different grouping.
-    pageCursor += system.leading
+    // abcjs advances the page by `staffGroup.height * STEP` once the group is drawn
+    // (`draw/draw.js:81-82`); the lead went in before the padding, above.
     pageCursor += system.heightPitch * ENGRAVE.spacePerStep
     return { ...shifted, staves: withAbsolute, originY, absoluteY: systemAbsoluteY, gap }
   })
@@ -11551,14 +11610,15 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
          * token on `visual-tablature-08`. One list, spent once, and the page and the staff
          * cannot drift apart.
          */
-        for (const a of first?.staves[0]?.originAdvances ?? topAdvances) y += a
+        for (const a of first?.leadAdvances ?? topAdvances) y += a
         for (const [i, system] of shown.entries()) {
           if (i > 0) {
-            y += system.gap ?? 0
             // A MID-TUNE BLOCK is this system's own leading — abcjs draws that nonMusic
-            // line before the group and the page's cursor moves through it
-            // (`draw/draw.js:54-60`). Dropping it lost a whole subtitle row.
-            y += system.leading
+            // line before the group and the page's cursor moves through it, ROW BY ROW,
+            // and only THEN pads (`draw/draw.js:44-58`). Dropping it lost a whole subtitle
+            // row; spending it as a SUM, or after the padding, lost the last bits.
+            for (const a of system.leadAdvances) y += a
+            y += system.gap ?? 0
           }
           y += system.heightPitch * ENGRAVE.spacePerStep
         }
@@ -12036,8 +12096,21 @@ function appendFreeText(
    * rows sit beside the title's and abcjs closes `abcjs-meta-top` between them.
    */
   tagNonMusic = false,
+  /**
+   * **EACH ROW'S OWN `moveY`, IN ORDER** — `nonMusic` walks a block's rows spending one at
+   * a time through the page's running cursor (`draw/non-music.js:10`), and `a + b + c` in
+   * three steps is not the same double as `a + (b + c)`. `topTextBlock` has kept this list
+   * since the top block's lead was walked; a MID-TUNE block's rows were summed into one
+   * `blockSpan` and spent as a single number, which is the whole of the root-dimension ULP
+   * family. See the placement loop's `leadAdvances`.
+   */
+  advances: number[] = [],
 ): number {
   let y = from
+  const spend = (px: number): void => {
+    advances.push(px)
+    y += px
+  }
   const sizeOf = (type: AbcFontType): number =>
     Math.round(((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / UNIT_PX
   /**
@@ -12052,14 +12125,14 @@ function appendFreeText(
     if (block.separator !== undefined) {
       // The RULE COSTS NO HEIGHT — `drawSeparator` paints at the cursor and moves nothing
       // — so the line is worth exactly its two spaces. Points to staff spaces on the way.
-      y += block.separator.above / UNIT_PX
+      spend(block.separator.above / UNIT_PX)
       rules.push({ y, width: block.separator.length / UNIT_PX, index: blockIndex })
-      y += block.separator.below / UNIT_PX
+      spend(block.separator.below / UNIT_PX)
       continue
     }
     if (block.role === 'subtitle') {
       const size = sizeOf('subtitlefont')
-      y += ENGRAVE.subtitleSpace
+      spend(ENGRAVE.subtitleSpace)
       for (const line of block.lines) {
         texts.push({
           text: line,
@@ -12083,11 +12156,11 @@ function appendFreeText(
           anchor: 'middle',
         })
       }
-      y += goldenTextHeight(size) + boxOf('subtitlefont')
+      spend(goldenTextHeight(size) + boxOf('subtitlefont'))
       continue
     }
     const textSize = sizeOf('textfont')
-    if (block.align === 'left') y += textSize / 2
+    if (block.align === 'left') spend(textSize / 2)
     block.lines.forEach((line, index) => {
       texts.push({
         // **A LEADING BLANK LINE IS A NON-BREAKING SPACE** — `renderText` runs
@@ -12109,10 +12182,11 @@ function appendFreeText(
         anchor: block.align === 'center' ? 'middle' : 'start',
       })
     })
-    y +=
+    spend(
       goldenTextHeight(textSize) +
-      boxOf('textfont') +
-      (block.lines.length - 1) * ENGRAVE.freeTextLineStep
+        boxOf('textfont') +
+        (block.lines.length - 1) * ENGRAVE.freeTextLineStep,
+    )
   }
   return y
 }
@@ -12283,10 +12357,11 @@ function freeTextBlock(
   blocks: readonly FreeTextBlock[],
   width: number,
   fonts: Score['fonts'] = {},
-): { texts: PlacedText[]; lines: PlacedLine[]; height: number } {
+): { texts: PlacedText[]; lines: PlacedLine[]; height: number; advances: number[] } {
   const texts: PlacedText[] = []
   const rules: { y: number; width: number; index?: number }[] = []
-  const height = appendFreeText(texts, blocks, 0, width / 2, fonts, rules)
+  const advances: number[] = []
+  const height = appendFreeText(texts, blocks, 0, width / 2, fonts, rules, false, advances)
   // Centred on the STAFF width, as `drawSeparator` centres it, and one pixel thick.
   const lines: PlacedLine[] = rules.map((r) => ({
     x1: (width - r.width) / 2,
@@ -12296,7 +12371,7 @@ function freeTextBlock(
     thickness: 1 / UNIT_PX,
     role: 'separator' as const,
   }))
-  return { texts, lines, height }
+  return { texts, lines, height, advances }
 }
 
 /**
