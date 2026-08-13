@@ -2616,6 +2616,14 @@ const glyphDefs = new Map<GlyphName, string>()
       (doc.bottomLines !== undefined && doc.bottomLines.length > 0))
   ) {
     oy = OY * PX
+    /**
+     * **A RUN OF ROWS SHARING A `groupName` IS ITS OWN NESTED `<g data-name="…">`.**
+     * `addMultiLine`'s ARRAY branch pushes `{ startGroup: groupName }` before its rows
+     * (`bottom-text.js:48`) where its string branch does not, and `W:` is the only field
+     * that reaches it — `simplifyMetaText` joins `notes` and `history` into single strings.
+     * See `PlacedText.groupName`.
+     */
+    let openGroup: string | undefined
     const block = (doc.bottomText ?? []).map((t) =>
       abcjsText(
         round2(t.x * PX),
@@ -2633,7 +2641,17 @@ const glyphDefs = new Map<GlyphName, string>()
         (t.extraLines ?? []).map(escapeText),
         t.middleBaseline === true,
       ),
-    )
+    ).map((markup, i) => {
+      const name = (doc.bottomText ?? [])[i]?.groupName
+      let out = ''
+      if (name !== openGroup) {
+        if (openGroup !== undefined) out += '</g>'
+        openGroup = name
+        if (openGroup !== undefined) out += `<g data-name="${escapeAttr(openGroup)}">`
+      }
+      return out + markup
+    })
+    if (openGroup !== undefined) block.push('</g>')
     // …and a trailing `%%sep`'s rule, which is INK on the same block.
     for (const line of doc.bottomLines ?? []) {
       const t = TL(line)

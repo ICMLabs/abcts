@@ -1028,6 +1028,17 @@ export interface PlacedText {
    */
   readonly dataName?: string
   /**
+   * **A RUN OF ROWS INSIDE ITS OWN `<g data-name="…">`.** `addMultiLine`'s ARRAY branch
+   * opens one — `rows.push({ startGroup: groupName, klass, name })` — where its string
+   * branch does not (`bottom-text.js:37-62`). `W:` is the only field that reaches it: it
+   * is the one `simplifyMetaText` does NOT join into a single string, so `notes` and
+   * `history` take the string branch and wear no group at all.
+   *
+   * Consecutive rows carrying the same name are ONE group; the emitter closes it when the
+   * name changes.
+   */
+  readonly groupName?: string
+  /**
    * Which nonMusic LINE of the tune's own top block this row belongs to, if any.
    *
    * abcjs closes `abcjs-meta-top` after the title rows and opens ONE
@@ -11909,6 +11920,7 @@ function bottomTextBlock(
     dataName: string,
     middle: boolean,
     box = 0,
+    groupName?: string,
   ): void => {
     const text = plainText(value)
     /**
@@ -11933,6 +11945,7 @@ function bottomTextBlock(
       bold: false,
       italic: false,
       anchor: 'start',
+      ...(groupName === undefined ? {} : { groupName }),
     })
     move(
       Math.round(
@@ -11953,7 +11966,10 @@ function bottomTextBlock(
     // …AND `addMultiLine`'S ARRAY BRANCH CLOSES WITH `{move: size.height}` OF ITS OWN
     // (`bottom-text.js:62`), which `unalignedWords` then follows with a SECOND
     // `{move: space.height}` (`:20`). Two raw heights, not one.
-    for (const line of metadata.unalignedWords) addText(line, [], words, 'unalignedWords', false)
+    // …AND THE ARRAY BRANCH OPENS A GROUP OF ITS OWN — `rows.push({ startGroup:
+    // 'unalignedWords' })` before the rows (`bottom-text.js:48`). See `PlacedText.groupName`.
+    for (const line of metadata.unalignedWords)
+      addText(line, [], words, 'unalignedWords', false, 0, 'unalignedWords')
     // TWO raw heights, and abcjs spends them as two separate rows.
     move(goldenTextHeight(words))
     move(goldenTextHeight(words))
@@ -11970,7 +11986,26 @@ function bottomTextBlock(
     // its share of the one rounded advance.
     const all = value.map(plainText)
     if (all.every((t) => t === '')) return
-    addText(preface, all, history, 'description', true, historyBox)
+    /**
+     * **A BLANK LINE IS DRAWN AS A SPACE, AND THE REWRITE IS `renderText`'s** —
+     * `text = params.text.replace(/\n\n/g, "\n \n")` then
+     * `text.replace(/^\n/, "\xA0\n")` (`draw/text.js:46-48`). It happens at DRAW time on
+     * the JOINED string, so the `/g` is non-overlapping: three consecutive blank lines get
+     * a space on the first and third and nothing on the second. Doing it per row would
+     * space all of them.
+     *
+     * `free-text` takes the OTHER arm — `/^[ \t]*\n/gm → ' \n'`, every whitespace-only
+     * line — and `svg.js` then skips its empties outright, so that path is unaffected.
+     *
+     * Worth one byte on `visual-selection-01`: `<tspan x="15" dy="1.2em"></tspan>` against
+     * abcjs's `<tspan x="15" dy="1.2em"> </tspan>`, the last of its 202,156.
+     */
+    const rows = [preface, ...all]
+      .join('\n')
+      .replace(/\n\n/g, '\n \n')
+      .replace(/^\n/, '\u00A0\n')
+      .split('\n')
+    addText(rows[0] ?? preface, rows.slice(1), history, 'description', true, historyBox)
   }
 
   single(metadata.book, 'Book: ')
