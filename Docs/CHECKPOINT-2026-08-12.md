@@ -19,7 +19,7 @@ on stale runs before finding out what it was.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 0 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 1 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 1 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **20 of 171**, best 51404 | 49 of 171 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **19 of 171**, best 51457 | 49 of 171 |
 
 `DIVERGENT` is still EMPTY. **151 fixtures are byte-exact and all 151 are RATCHETED**, and
 `visual-selection-01` — 202,156 bytes, the corpus's largest — is one of them.
@@ -1006,6 +1006,25 @@ and takes the LAST such element rather than the deepest. Every fixture's lyric-b
 element IS its lowest. A control with a low stem on a voice whose lyric is not the deepest
 would name it.
 
+
+### 2b.11 THE RULE CLOSING A MULTI-STAFF GROUP IS `calcY` OFF EACH STAFF'S OWN `absoluteY`
+
+`topLine = renderer.calcY(10)` on the FIRST staff and `bottomLine = calcY(linePitch)` on
+the LAST, each taken while `renderer.y` is that staff's origin
+(`draw/staff-group.js:86-96`, `:142-143`), and `calcY` is `this.y - ofs * spacing.STEP`.
+ONE product each — the same shape the BRACE beside it already took.
+
+Ours was `(staff.originY + stepToY(±4)) + systemOy`: three terms in the other order, and it
+straddled a `roundNumber` boundary. `453.335 - 2 * 3.875` is the double that prints
+`445.585` and rounds to `445.58`; the three-term form lands one ULP above and rounds to
+`445.59`.
+
+**FOUND BY ELIMINATION, AND THE ELIMINATION WAS THE WHOLE JOB.** The layout's own barlines
+were printed and were abcjs's numbers to the digit — `100.232`, `207.12900000000002`,
+`338.688`, `445.585` — so the divergent path could not be one of them, which is what sent
+the search to the LAST path in the file. **A probe that prints the right answer has ruled
+something out**; that is worth as much as one that prints the wrong one.
+
 ---
 
 ## 3.5 WHAT THE TABLE LOOKS LIKE NOW — 22 rows, and what each one is
@@ -1045,6 +1064,16 @@ residual is downstream of the origin, in the element's own y. `calcY` is
 `this.y - ofs * spacing.STEP` and the bar branch is
 `printStem(renderer, x, linewidth + lineThickness, y, bartop ? bartop : calcY(pitch2))`
 (`draw/relative.js:61`) — instrument THAT rather than the walk.
+
+**§2b.11 CLOSED `multi-voice-02`, AND THE OTHER THREE ARE THE ABOVE-LANE LADDER.**
+`visual-tablature-15` and `visual-mouse-click-01` (an ending bracket at 393.6 vs 393.59)
+and `visual-slurs-02` (a barline top at 80.68 vs 80.69) are the SAME straddle one lane over:
+`drawEnding` takes `y = roundNumber(renderer.calcY(params.pitch))` where `params.pitch` is
+`positionY.endingHeightAbove`, and abcjs builds THAT by `staff.top += endingHeightAbove +
+margin` — **a running PITCH**. Ours builds the above lanes with `spend()`/`reserve()`, which
+accumulate a **y**, so the ending's `y1` is a y ladder rather than one product off the
+staff's origin. Converting the above-lane ladder to pitch is the same move `heightPitch`
+and `bottomPitch` already made on the extent, and it is what these three rows want.
 
 **AND IT HAS BEEN, ON `multi-voice-02`.** abcjs's four bars print
 
