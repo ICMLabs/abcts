@@ -8219,9 +8219,13 @@ interface Advance {
    * `11.795000000000002`, which is how the whole line came out one ULP right. So the width
    * has to be CARRIED, not derived — the same lesson as `PlacedGlyph.dx`.
    *
-   * Absent where `rod` is a `Math.max` over several claims rather than a sum, which is a
-   * BARLINE: there abcjs's `getMinWidth` is that max and the split is not ours to invent.
-   * Those fall back to the single add they always had.
+   * **A BARLINE CARRIES IT TOO, AND THAT WAS ONCE WRITTEN DOWN AS IMPOSSIBLE HERE** — the
+   * note said `rod` was "a `Math.max` over several claims rather than a sum", so the split
+   * was "not ours to invent". It is abcjs's own split and needed no invention: a barline's
+   * `w` IS that max (`addCentered` gives `w = max(w, chordWidth / 2)`) and its `minspacing`
+   * is the separate flat 10 plus an ending label's room. See `barWidthOf`.
+   *
+   * Anything still absent falls back to the single add it always had.
    */
   readonly width?: number
   readonly duration: number
@@ -8359,8 +8363,20 @@ const meterLeadsFirstMeasure = (measure: Measure | undefined): boolean => {
   return at != null && at < musicStartsAt(measure)
 }
 
-const barRod = (kind: Barline, el: LayoutElement, strict: boolean): number =>
-  (strict ? (ENGRAVE.barLayoutWidth[kind] ?? el.width) : el.width) + ENGRAVE.prefixGap
+/**
+ * **A BARLINE'S `child.w`, WHICH IS NOT ITS ROD** — `getMinWidth(child)` is `child.w` and
+ * the cursor spends it as TWO adds, `voice.minx = x + getMinWidth(child)` and then
+ * `voice.minx += child.minspacing` (`layout/voice-elements.js:79-80`). A barline's
+ * `minspacing` is the flat 10 plus whatever an ending label asks for
+ * (`abstract-engraver.js:1034-1041`), and it is never part of `w`.
+ *
+ * Returned WITHOUT the gap so the caller can hand both to `fixed` separately: `x + (w + g)`
+ * and `(x + w) + g` are different doubles, and `rod - gap` does not recover `w` — see
+ * `Advance.width`. `visual-transpose-output-04`'s whole line was one ULP right on exactly
+ * this, an `"E"|` barline at `503.746185497294 + 5.33595 + 10`.
+ */
+const barWidthOf = (kind: Barline, el: LayoutElement, strict: boolean): number =>
+  strict ? (ENGRAVE.barLayoutWidth[kind] ?? el.width) : el.width
 
 /**
  * A BAR THAT STARTS AN ENDING GETS MORE `minspacing` — the label's width plus 10.
@@ -8566,14 +8582,16 @@ function layoutMeasure(
         : { ...withMarks, texts: [...withMarks.texts, ...chordTexts] }
     openingBarIndex = elements.length
     elements.push(bar)
+    // `addCentered` gives a barline carrying a chord `w = max(w, chordWidth / 2)`, so the
+    // width is one max and the `minspacing` is the separate sum below.
+    const openW = Math.max(barWidthOf(measure.openingBarline, bar, strict), barSpan.right)
+    const openGap = ENGRAVE.prefixGap + endingRoom(measure.volta)
     fixed(
-      Math.max(
-        barRod(measure.openingBarline, bar, strict) + endingRoom(measure.volta),
-        barSpan.right + ENGRAVE.prefixGap,
-      ),
-      ENGRAVE.prefixGap + endingRoom(measure.volta),
+      openW + openGap,
+      openGap,
       'bar',
       Math.max(ENGRAVE.barClearance, barSpan.left),
+      openW,
     )
     x += ENGRAVE.barGap
   }
@@ -8881,12 +8899,14 @@ function layoutMeasure(
         ? numbered
         : { ...numbered, texts: [...numbered.texts, ...barChordTexts] }
     elements.push(bar)
+    const closeW = Math.max(barWidthOf(measure.closingBarline, bar, strict), barSpan.right)
+    const closeGap = ENGRAVE.prefixGap + endingRoom(voltaAfter)
     fixed(
-      Math.max(barRod(measure.closingBarline, bar, strict), barSpan.right + ENGRAVE.prefixGap) +
-        endingRoom(voltaAfter),
-      ENGRAVE.prefixGap + endingRoom(voltaAfter),
+      closeW + closeGap,
+      closeGap,
       'bar',
       Math.max(ENGRAVE.barClearance, barSpan.left),
+      closeW,
     )
     x += ENGRAVE.barGap
   }
