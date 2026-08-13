@@ -1046,6 +1046,21 @@ residual is downstream of the origin, in the element's own y. `calcY` is
 `printStem(renderer, x, linewidth + lineThickness, y, bartop ? bartop : calcY(pitch2))`
 (`draw/relative.js:61`) — instrument THAT rather than the walk.
 
+**AND IT HAS BEEN, ON `multi-voice-02`.** abcjs's four bars print
+
+    BAR y 100.232               pitch 2  pitch2 10  bartop 0        rendererY 107.982
+    BAR y 207.12900000000002    pitch 2  pitch2 10  bartop 100.232  rendererY 214.87900000000002
+    BAR y 338.688               pitch 2  pitch2 10  bartop 0        rendererY 346.438
+    BAR y 445.585               pitch 2  pitch2 10  bartop 338.688  rendererY 453.335
+
+`453.335 - 2 * 3.875` IS the double that prints `445.585`, and `(445.585).toFixed(2)` is
+`"445.58"`. Our staff origin is now the same double (§2b.10) and our bar still rounds to
+`445.59`, so **ours is not formed as `origin - pitch * STEP`** — it is a staff-LOCAL y with
+the origin added at emit time, two terms in the other order. The fix is the same rule the
+layout already obeys everywhere else: **a bar's endpoint has to reach the emitter as a
+PITCH**, the way a stem's `pitchRange` does, so the product is taken once against the
+staff's own origin. That is one change and it is worth all four of these rows.
+
 **Still unread:** `svg-per-line-01` (a hairpin drawn where abcjs draws a slur — an
 `otherchildren` ORDER question, and note the SAME TUNE is byte-exact when not split per
 line), `visual-tablature-15` and `visual-mouse-click-01` (an ending bracket at 393.6 vs
