@@ -12243,6 +12243,13 @@ interface AboveLadder {
    * beside it. See `layoutTempo`.
    */
   readonly tempoPitch: number | null
+  /**
+   * The ending rung's own PITCH — `positionY.endingHeightAbove`, `staff.top` when the walk
+   * reached it. `drawEnding` writes `y = roundNumber(renderer.calcY(params.pitch))`
+   * (`draw/ending.js:9`), ONE product off it with the `- 2` inside the pitch, where the y
+   * beside it reaches the same point through two products added. See `anchorVoltas`.
+   */
+  readonly endingPitch: number | null
   /** Packed lane index per chord/annotation — `setLaneForChord`'s answer. */
   readonly laneOf: ReadonlyMap<PlacedText, number>
 }
@@ -12449,6 +12456,8 @@ function aboveLadder<
             ENGRAVE.spacePerStep,
         )
       : null
+  /** …and the same rung as a PITCH — see `AboveLadder.endingPitch`. */
+  const endingLanePitch = endingY === null ? null : topPitch
   /**
    * A FLAT LANE, never the mark's own box — `DynamicDecoration` declares
    * `volumeHeightAbove = 6` and `CrescendoElem` `dynamicHeightAbove = 6`
@@ -12482,7 +12491,7 @@ function aboveLadder<
   // `reserve` walked `topPitch` to the tempo rung; that pitch is what the NOTEHEAD reads.
   const tempoPitch = tempos ? topPitch : null
 
-  return { chordY, endingY, dynamicY, partY, tempoY, tempoPitch, laneOf }
+  return { chordY, endingY, dynamicY, partY, tempoY, tempoPitch, endingPitch: endingLanePitch, laneOf }
 }
 
 /**
@@ -13111,19 +13120,43 @@ function anchorVoltas<
   // volta on a staff that also carried a dynamic or a part label was pushed out past it:
   // measured against abcjs's `positionY`, its `|1` sat 27.13px too high on a `!mf!` staff
   // and 26.04px on a `P:A` one, while the staff's extent was exact on both.
-  const top = aboveLadder(parts, strict, false).endingY
-  if (top === null) return [...parts]
+  const ladder = aboveLadder(parts, strict, false)
+  const top = ladder.endingY
+  if (top === null || ladder.endingPitch === null) return [...parts]
 
   // `marginY` is zero and `verticalExtent` has already subtracted it; adding it back keeps
   // the two in step if it ever stops being zero. `voltaDrawDrop` is abcjs's `- 2`, and y is
   // DOWN here, so dropping the bracket back toward the staff is an addition.
-  const drawY = top + ENGRAVE.marginY + ENGRAVE.voltaDrawDrop * ENGRAVE.spacePerStep
-  const shift = drawY - stepToY(ENGRAVE.voltaStep)
-  if (shift === 0) return [...parts]
+  /**
+   * **ONE PRODUCT OFF THE LANE'S PITCH, WITH THE `- 2` INSIDE IT.** `drawEnding` takes
+   * `renderer.calcY(params.pitch)` where `params.pitch` is `positionY.endingHeightAbove`
+   * already reduced by the drop (`draw/ending.js:9`), and `calcY` is
+   * `this.y - ofs * spacing.STEP`. Ours added `voltaDrawDrop * STEP` to a y that was
+   * itself `-pitch * STEP` — two products added where abcjs takes one — and that is the
+   * hundredth `visual-tablature-15` and `visual-mouse-click-01` write at 393.6 against
+   * abcjs's 393.59. `marginY` is zero and adding it is exact.
+   */
+  const drawY =
+    -(ladder.endingPitch - ENGRAVE.voltaDrawDrop) * ENGRAVE.spacePerStep + ENGRAVE.marginY
+  /**
+   * **PLACED ON `drawY`, NOT SHIFTED ONTO IT** — `drawEnding` writes
+   * `y = roundNumber(renderer.calcY(params.pitch))` and every segment of the bracket off
+   * that one number (`draw/ending.js:9-27`). Ours built the bracket at a placeholder step
+   * and added the difference, and `a + (b - a)` is not `b`: `visual-tablature-15` and
+   * `visual-mouse-click-01` wrote 393.6 where abcjs writes 393.59, one ULP either side of
+   * a `roundNumber` boundary.
+   *
+   * The builder only ever writes `y` or `y + voltaHook`, so which end a coordinate is can
+   * be read back exactly — it is the SAME expression, not an approximation of it. Same
+   * rule as `PlacedGlyph.dx`: place, do not shift.
+   */
+  const base = stepToY(ENGRAVE.voltaStep)
+  const at = (v: number): number => (v === base ? drawY : drawY + ENGRAVE.voltaHook)
+  if (drawY === base) return [...parts]
   return parts.map((part) => ({
     ...part,
-    voltaLines: (part.voltaLines ?? []).map((l) => ({ ...l, y1: l.y1 + shift, y2: l.y2 + shift })),
-    voltaTexts: (part.voltaTexts ?? []).map((t) => ({ ...t, y: t.y + shift })),
+    voltaLines: (part.voltaLines ?? []).map((l) => ({ ...l, y1: at(l.y1), y2: at(l.y2) })),
+    voltaTexts: (part.voltaTexts ?? []).map((t) => ({ ...t, y: t.y + (drawY - base) })),
   }))
 }
 
