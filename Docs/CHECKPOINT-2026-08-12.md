@@ -19,7 +19,7 @@ on stale runs before finding out what it was.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 0 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 1 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 1 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **19 of 171**, best 51457 | 49 of 171 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **15 of 171**, best 51473 | 49 of 171 |
 
 `DIVERGENT` is still EMPTY. **151 fixtures are byte-exact and all 151 are RATCHETED**, and
 `visual-selection-01` — 202,156 bytes, the corpus's largest — is one of them.
@@ -1102,6 +1102,39 @@ exact multiple of `spacePerStep` rather than an accumulated sum.
 20px — one note — earlier in ours, and (b) the `otherchildren` merge orders it after the
 slur where abcjs puts it before. Settle the anchor first: the order key is the CLOSE, so a
 wrong anchor can produce a wrong order by itself.
+
+
+### 2b.14 FIVE MORE, ALL TRACED RATHER THAN REASONED — 19 → 15
+
+- **A CURVE SPRINGS FROM THE MAIN NOTEHEAD.** `calcX` sets `startX = anchor1.x` and
+  `anchor1` is the MAIN head's `RelativeElement`. Ours filtered an element's heads on the
+  NAME alone and a grace head is a `notehead*` like any other, so a curve opening on a
+  graced note sprang from its first GRACE — 20px, two grace advances.
+- **AND A GRACE SLUR TAKES ITS PLACE IN `otherchildren` AT THE MAIN NOTE.**
+  `addGraceNotes` runs at `abstract-engraver.js:840` and the pitch loop's
+  `addSlursAndTies` at `:732`, so within ONE element the WRITTEN curve is `addOther`'d
+  first. Traced through `voice.addOther`: grace, written, grace, written, each written one
+  carrying `a2x null` because its close has not been seen.
+- **A TRAILING nonMusic LINE IS A SIBLING GROUP**, not the head of the bottom block
+  (`draw/draw.js:55`, `:64-72`). Ours ran the two arrays together and wrapped the lot in
+  one `<g>`.
+- **A JOINED STAFF'S BARLINE REACHES ONE PRODUCT OFF THE STAFF ABOVE'S OWN `absoluteY`** —
+  `bartop = renderer.calcY(2 + tabNameHeight)` taken while `renderer.y` is THAT staff's
+  origin (`draw/staff-group.js:132`). Ours reached it through this staff's frame, four
+  terms. `PlacedLine.absY1`/`absY2` are the ends the translation must not touch.
+- **A SPLIT CURVE IS DRAWN AS A TIE** — `if (!params.anchor1 || !params.anchor2)
+  params.isTie = true`, abcjs's own comment: *"if the slur goes off the end of the line,
+  then draw it like a tie"*. Six `data-name="slur"` against abcjs's four.
+- **AND `otherchildren` KEYS ON THE ANCHOR, NOT THE ARC.** `drawArc` adds 6 at the start
+  and 4 at the end; a HAIRPIN closing on the same note has neither, so keying the arc put a
+  curve 6px right of the hairpin sharing its element. The secondary key is `createNote`'s
+  own order for ONE element: `addSlursAndTies` (:732), `addGraceNotes` (:840), then
+  `createDecoration` (:847) — whose first call is `volumeDecoration` and whose second
+  builds the `CrescendoElem`.
+- **A SLIDE BOWS ABOVE AND IS DRAWN AS A SLUR.** `calcTieDirection` takes
+  `this.voiceNumber === 0` for a slide's `TieElem` — it carries none — so `above` is TRUE;
+  and `isTie` is recomputed from the anchors, whose two BLANKS sit at `yPos2 ± 1`, so
+  neither arm fires.
 
 ---
 
