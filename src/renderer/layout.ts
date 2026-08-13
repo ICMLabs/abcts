@@ -1115,6 +1115,18 @@ export interface PlacedText {
    * pitch high.
    */
   readonly reserve?: readonly [number, number]
+  /**
+   * The TOP edge of that reserve in abcjs's own PITCH, where the producer knows it.
+   *
+   * `calcHeight` sums `staff.top` in pitch and multiplies by `STEP` once, so recovering
+   * the pitch by dividing the y back is a different double — see `verticalExtent` and
+   * `PlacedGlyph.reservePitch`. A CHORD SYMBOL is the case: `incTop` sets `staff.top` and
+   * `positionY.chordHeightAbove` to the SAME pitch and the mark is drawn AT it
+   * (`set-upper-and-lower-elements.js:104-110`), so abcjs never re-derives the staff's top
+   * from the chord's baseline. Ours did, and `visual-transpose-05`'s root `height` printed
+   * `143.15373506324653` against abcjs's `…56` on that one round trip.
+   */
+  readonly reserveTopPitch?: number
   readonly x: number
   /** Baseline y, staff spaces. */
   readonly y: number
@@ -12588,6 +12600,14 @@ const chordHeightOf = (t: PlacedText): number =>
  */
 interface AboveLadder {
   readonly chordY: number | null
+  /**
+   * The chord rung's own y and the PITCH abcjs holds it in — `positionY.chordHeightAbove`,
+   * which `incTop` sets to `staff.top` itself (`set-upper-and-lower-elements.js:104-110`).
+   * The staff's top IS this pitch; deriving it back from the mark's baseline is
+   * `x * STEP / STEP`. See `PlacedText.reserveTopPitch`.
+   */
+  readonly chordTopY: number | null
+  readonly chordPitch: number | null
   readonly endingY: number | null
   readonly dynamicY: number | null
   readonly partY: number | null
@@ -12808,6 +12828,9 @@ function aboveLadder<
       ? ENGRAVE.chordHeightAbove
       : Math.max(...chordTexts.map(chordHeightOf))) * chordLanes
   const chordY = chords ? reserve(chordBlock) + chordSize : null
+  /** …and the rung it landed on — its own y, and the PITCH abcjs holds it in. */
+  const chordTopY = chordY === null ? null : chordY - chordSize
+  const chordPitch = chords ? topPitch : null
 
   /**
    * AND AN ENDING OVER A CHORD LANE COSTS A FLAT 2 PITCH, margin included:
@@ -12863,7 +12886,18 @@ function aboveLadder<
   // `reserve` walked `topPitch` to the tempo rung; that pitch is what the NOTEHEAD reads.
   const tempoPitch = tempos ? topPitch : null
 
-  return { chordY, endingY, dynamicY, partY, tempoY, tempoPitch, endingPitch: endingLanePitch, laneOf }
+  return {
+    chordY,
+    chordTopY,
+    chordPitch,
+    endingY,
+    dynamicY,
+    partY,
+    tempoY,
+    tempoPitch,
+    endingPitch: endingLanePitch,
+    laneOf,
+  }
 }
 
 /**
@@ -12884,7 +12918,11 @@ function anchorAboveStaff<
   const partLabels = has((el) => el.type === 'part')
   const tempos = has((el) => el.type === 'tempo')
   if (!chords && !partLabels && !tempos) return [...parts]
-  const { chordY, partY, tempoY, tempoPitch, laneOf } = aboveLadder(parts, strict, partsBox)
+  const { chordY, chordTopY, chordPitch, partY, tempoY, tempoPitch, laneOf } = aboveLadder(
+    parts,
+    strict,
+    partsBox,
+  )
 
   // A uniform shift per item, so a tempo mark's beat-unit glyph and its stem ride along
   // with the `= 120` they belong to rather than being re-derived.
@@ -12945,7 +12983,18 @@ function anchorAboveStaff<
       if (!el.texts.some(isChord)) return el
       return {
         ...el,
-        texts: el.texts.map((t) => (isChord(t) ? { ...t, y: chordAt(t) } : t)),
+        texts: el.texts.map((t) => {
+          if (!isChord(t)) return t
+          const y = chordAt(t)
+          // **THE RUNG IS `staff.top` ITSELF, NOT THIS BASELINE DIVIDED BACK.** `incTop`
+          // writes the pitch to `staff.top` and to `positionY.chordHeightAbove` together,
+          // and the mark is DRAWN at it, so abcjs never recovers the staff's top from the
+          // chord's box. Only the tallest mark in lane 0 sits on the rung; every other
+          // chord's box lands below it and cannot set the top anyway.
+          return chordPitch !== null && y - t.size === chordTopY
+            ? { ...t, y, reserveTopPitch: chordPitch }
+            : { ...t, y }
+        }),
       }
     }),
   }))
@@ -13887,7 +13936,9 @@ function verticalExtent(
       }
       const ascent = el.type === 'title' ? TEXT_ASCENT : 1
       const descent = el.type === 'title' ? TEXT_DESCENT : ENGRAVE.textHeightRatio - 1
-      include(t.y - t.size * ascent, t.y + t.size * descent)
+      // …and its TOP in abcjs's pitch where the producer knows it — see
+      // `PlacedText.reserveTopPitch`.
+      include(t.y - t.size * ascent, t.y + t.size * descent, t.reserveTopPitch)
     }
     // A block reserves from its own top, not from its first line's ascender.
     if (el.blockTop !== undefined) include(el.blockTop, el.blockTop)

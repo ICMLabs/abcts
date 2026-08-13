@@ -229,6 +229,7 @@ const PASSING: readonly string[] = [
   'abcjs-visual-transpose-02-cdef-gabc-c-d-e-f-g-a-b-c-c-d-e-f-g-a-b-',
   'abcjs-visual-transpose-03-cdef-gabc-c-d-e-f-g-a-b-c-c-d-e-f-g-a-b-',
   'abcjs-visual-transpose-04-transpose-annotations',
+  'abcjs-visual-transpose-05-n-c-ab-c-c-c-c-d-d-d-d-e-e-f-f-f-f-g-g-g',
   'abcjs-visual-transpose-06-c-d-e-f-g-a-b-c-cdef-gabc-c-d-e-f-g-a-b-',
   'abcjs-visual-transpose-output-01-transpose-output',
   'abcjs-visual-transpose-output-02-transpose-output',
