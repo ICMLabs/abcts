@@ -7941,6 +7941,19 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
   // Deeper beams stack INWARD, toward the noteheads: the outermost beam is the one the
   // stems actually end on, so an up-stem's second beam sits below its first.
   const beams: PlacedLine[] = []
+  /**
+   * **THE AUXILIARY BEAMS GO OUT DEEPEST FIRST, AND PER ELEMENT** — `createAdditionalBeams`
+   * walks the group's elements and flushes with `for (var j = auxBeams.length - 1; j >= 0;
+   * j--)` (`layout/beam.js:208`), so a run that ends later comes later and two runs ending
+   * on the same element come out in DESCENDING level. `drawBeam` then concatenates every
+   * one of them into a single `d` (`draw/beam.js:6-22`), so the order is visible in the
+   * bytes and nowhere else. Ours walked levels 0, 1, 2… and wrote a three-beam group's
+   * `d` as 22.56 / 28.37 / 34.19 where abcjs writes 22.56 / 34.19 / 28.37.
+   *
+   * The grace builder has sorted on this key since `layoutGraces` learned about aux
+   * levels; the main one never did.
+   */
+  const aux: { end: number; level: number; line: PlacedLine }[] = []
   const maxLevel = Math.max(...group.map((stem) => stem.beams))
   const thickness = LINE_WEIGHTS.beam
   const inward = -direction
@@ -7999,6 +8012,12 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
 
     const flush = () => {
       if (runStart === null || runEnd === null) return
+      const at = runEnd
+      /** Level 0 is abcjs's `beam` itself and always leads; the rest sort — see `aux`. */
+      const emit = (line: PlacedLine): void => {
+        if (level === 0) beams.push(line)
+        else aux.push({ end: group.indexOf(at), level, line })
+      }
       // Level 0 is the main beam and takes `calcXPos`; a deeper one is an `auxBeam`, which
       // is measured the same way except that a descending run ends flush at the head
       // rather than 0.6 past it (`createAdditionalBeams`, `layout/beam.js:180-200`).
@@ -8032,7 +8051,7 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
          * `M199.36 395.28 L194.96 …` where `x` is 199.96, and ours ran 191.43 → 199.96.
          */
         const index = group.indexOf(runStart)
-        const at = up ? runStart.headX + runStart.headWidth : runStart.headX
+        const stubAt = up ? runStart.headX + runStart.headWidth : runStart.headX
         const prev = index > 0 ? group[index - 1] : undefined
         const next = index < group.length - 1 ? group[index + 1] : undefined
         const forward = ((): boolean => {
@@ -8043,13 +8062,13 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
           if (prevDuration === nextDuration) return index % 2 === 0
           return prevDuration < nextDuration
         })()
-        x1 = at + (up ? -inset : 0)
-        x2 = forward ? at + ENGRAVE.beamStubLength : at - ENGRAVE.beamStubLength
-        beams.push({
+        x1 = stubAt + (up ? -inset : 0)
+        x2 = forward ? stubAt + ENGRAVE.beamStubLength : stubAt - ENGRAVE.beamStubLength
+        emit({
           x1,
           // `auxBeams[index].y` is `bary` at `x`, NOT at the offset start — abcjs's own
           // asymmetry, and the reason a stub is not a shortened beam.
-          y1: yAt(at) + offset,
+          y1: yAt(stubAt) + offset,
           x2,
           y2: yAt(x2) + offset,
           thickness,
@@ -8074,7 +8093,7 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
        * by construction and there is nothing to sample.
        */
       const sampleAt = level === 0 ? x1 : up ? runStart.headX + runStart.headWidth : runStart.headX
-      beams.push({
+      emit({
         x1,
         y1: yAt(sampleAt) + offset,
         x2,
@@ -8116,6 +8135,8 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
     })
     flush()
   }
+  aux.sort((a, b) => a.end - b.end || b.level - a.level)
+  for (const a of aux) beams.push(a.line)
 
   return beams
 }

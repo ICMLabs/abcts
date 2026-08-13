@@ -117,6 +117,7 @@ const PASSING: readonly string[] = [
   'abcjs-synth-flattener-25-cd-d2-d2-dz',
   'abcjs-synth-flattener-26-gbcd-d4-zcdc-dc3',
   'abcjs-synth-flattener-27-triplets-and-chord-rhythm',
+  'abcjs-synth-flattener-28-midi-channel-10',
   'abcjs-synth-flattener-29-midi-drum-dddd-76-77-77-77-50-50-50-50',
   'abcjs-synth-flattener-30-am-a2e-e2d-g-bab-d2b-am-a2e-e2d-g-b2a-ga',
   'abcjs-synth-flattener-31-tempo-change-three-voices',
