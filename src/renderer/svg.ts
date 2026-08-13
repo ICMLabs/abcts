@@ -2539,7 +2539,24 @@ const glyphDefs = new Map<GlyphName, string>()
           for (const t of textParts.filter((t) => t.role === 'lyric')) parts.push(t.s)
         }
         // …and everything the engraver added AFTER the stem — decorations, graces.
-        for (const g of el.glyphs.slice(pitchEnd)) {
+        /**
+         * **AN UNBEAMED GRACE'S STEM COMES AFTER ITS ACCIACCATURA SLASH**, because the
+         * slash is `addRight`'d between the head and the stem:
+         *
+         *     abselem.addExtra(grace)                                   // the head
+         *     if (acciaccatura) abselem.addRight("flags.ugrace", …)     // the slash
+         *     else /* no beam *​/ abselem.addExtra(stem)
+         *     ledgerLines(abselem, …)
+         *
+         * (`abstract-engraver.js:507-517`.) Firing the stem on the HEAD put it one glyph
+         * early on every `{/x}` — `synth-flattener-28` at byte 21920 — so it fires on the
+         * LAST glyph carrying the index instead, which is the slash where there is one.
+         */
+        const graceTail = new Map<number, number>()
+        el.glyphs.forEach((g, k) => {
+          if (g.graceIndex !== undefined) graceTail.set(g.graceIndex, k)
+        })
+        for (const [gi, g] of el.glyphs.slice(pitchEnd).entries()) {
           // Held whole rather than as markup: its class is `classes.generate`'d at FLUSH
           // time, after `startMeasure()` has reset the counters the group was named with.
           if (abcjs && g.role === 'dynamic') {
@@ -2557,9 +2574,9 @@ const glyphDefs = new Map<GlyphName, string>()
               g.dataName,
             ),
           )
-          // A grace's ledgers follow its HEAD, not its flag or its accidental — all three
-          // carry the index, only one of them is the note.
-          if (g.graceIndex === undefined || g.role !== 'grace') continue
+          // A grace's stem and ledgers follow the LAST glyph carrying its index — the
+          // acciaccatura slash where there is one, otherwise the head. See `graceTail`.
+          if (g.graceIndex === undefined || graceTail.get(g.graceIndex) !== pitchEnd + gi) continue
           for (const line of soloGraceStems.filter((l) => l.graceIndex === g.graceIndex)) {
             parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs, fg(voiceOf(elIndex))))
           }
