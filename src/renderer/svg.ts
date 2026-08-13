@@ -1667,7 +1667,9 @@ const glyphDefs = new Map<GlyphName, string>()
         let dynBuf: string[] = []
         let dynX = 0
         const flushDynamic = (): void => {
-          if (dynBuf.length > 0) others.push({ x: dynX, s: `${dynBuf.join('')}</g>` })
+          // `volumeDecoration` is `createDecoration`'s FIRST call, so a dynamic on an
+          // element comes after its curves and before its hairpin (`decoration.js:379-385`).
+          if (dynBuf.length > 0) others.push({ x: dynX, k: 2, s: `${dynBuf.join('')}</g>` })
           dynBuf = []
         }
         for (const g of dynamics) {
@@ -1895,6 +1897,8 @@ const glyphDefs = new Map<GlyphName, string>()
               // …and a HAIRPIN is added by its CLOSING decoration too, so it sorts on the
               // x it ENDS at — see the curve below.
               x: Math.max(a.x2, b.x2),
+              // …and LAST of the four, `createDecoration` running after the graces.
+              k: 3,
               s:
                 `<path d="${d}" highlight="stroke" stroke="${ink}" ` +
                 `class="${classes.generate('dynamics decoration')}" data-name="dynamics"></path>`,
@@ -2012,14 +2016,20 @@ const glyphDefs = new Map<GlyphName, string>()
           const graceCurve =
             curve.startElement !== undefined && curve.startElement === curve.endElement
           others.push({
-            // A grace slur's own `x1` is its GRACE; the list has it at the MAIN NOTE, whose
-            // `x1` a written curve opening there would take —
-            // `x2 + startOffset - endOffset` is exactly that number, so the two tie and the
-            // secondary key decides.
+            /**
+             * **THE KEY IS THE ANCHOR'S OWN x, NOT THE ARC'S** — `drawArc` adds 6 at the
+             * start and 4 at the end (`draw/tie.js:60-61`), and a HAIRPIN closing on the
+             * same note has neither. Keying the arc put a curve 6px right of the hairpin
+             * that shares its element, and abcjs draws them the other way round.
+             *
+             * `k` is `createNote`'s own order for one element: the pitch loop's
+             * `addSlursAndTies` at `abstract-engraver.js:732`, then `addGraceNotes` at
+             * `:840`, then `createDecoration` at `:847` — whose first call is
+             * `volumeDecoration` and whose second builds the `CrescendoElem`.
+             */
             x: graceCurve
-              ? TC(curve).x2 + spaces(ABCJS_ARC.startOffset) - spaces(ABCJS_ARC.endOffset)
-              : TC(curve).x1,
-            // …and it comes SECOND, `addGraceNotes` running after the pitch loop.
+              ? TC(curve).x2 - spaces(ABCJS_ARC.endOffset)
+              : TC(curve).x1 - spaces(ABCJS_ARC.startOffset),
             k: graceCurve ? 1 : 0,
             s: curveSink.pop() ?? '',
           })

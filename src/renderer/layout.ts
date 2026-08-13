@@ -6659,8 +6659,20 @@ function layoutCurves(
     // (`draw/voice.js:12`, `:82-85`). One pixel, on every curve that runs off the end of a
     // system: abcjs writes 284 where the staff line itself ends at 281.
     const lineEndX = start.right - ENGRAVE.lineEndInset
+    /**
+     * **AND A HALF IS DRAWN AS A TIE, WHICHEVER IT WAS WRITTEN AS** — `if (!params.anchor1
+     * || !params.anchor2) params.isTie = true`, the FIRST arm of the same recomputation
+     * `drawnKind` models (`draw/tie.js:39-40`) and abcjs's own comment says so: *"if the
+     * slur goes off the end of the line, then draw it like a tie"*. It decides the 1.2
+     * rather than 1.5 lift, the flatten cap, the direction rule, the class and the
+     * `data-name` together.
+     *
+     * `visual-svg-per-line-01` is `!<)!(g4|` … `!f!a4)` — one slur across a system break —
+     * and we drew both halves as SLURS: six `data-name="slur"` against abcjs's four.
+     */
+    const halfKind = 'tie' as const
     curves[from.system]?.push({
-      ...buildCurve(from, { ...from, left: lineEndX, right: lineEndX }, kind, voicePos, strict, {
+      ...buildCurve(from, { ...from, left: lineEndX, right: lineEndX }, halfKind, voicePos, strict, {
         start: from.element,
       }),
       ...style,
@@ -6682,7 +6694,7 @@ function layoutCurves(
      */
     const resume = to.left - ENGRAVE.curveContinuation
     curves[to.system]?.push({
-      ...buildCurve({ ...to, left: resume, right: resume }, to, kind, voicePos, strict, {
+      ...buildCurve({ ...to, left: resume, right: resume }, to, halfKind, voicePos, strict, {
         end: to.element,
       }),
       ...style,
