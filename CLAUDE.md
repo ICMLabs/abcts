@@ -834,9 +834,33 @@ checkpoint and hand off as you go so no context is lost.
 > RESULT**: `/tmp/abcts-*.txt` outlives the run, and I called that gate green twice off a
 > stale one.
 
-**READ `Docs/HANDOFF-2026-08-13.md` FIRST** — the current state (12 of 171, 159 byte-exact
-and all ratcheted), THE TWELVE with what each one needs and what has already been tried and
-reverted, THE HARNESS, and the rules this arc earned. Then
+> 🎯 **AND THE BYTE TABLE IS DOWN TO THREE — 168 of 171 EXACT** (2026-08-13). Ten landings,
+> every one a read of a named abcjs function and every one settled by PRINTING THE SAME
+> QUANTITY FROM BOTH ENGINES: a barline's `w` and its `minspacing` are TWO ADDS and
+> `Advance.width`'s own doc block said that split was "not ours to invent" (it is abcjs's);
+> a CHORD LANE'S RUNG **is** `staff.top` and the ladder had the number all along before the
+> extent divided it back; `spacing.composer` is a ROW of the top block, so the page
+> recovered it as a REMAINDER (`7.559999999999974` against `7.56`); a GRACE FLAG'S `headx`
+> opens at the note's own ACCIDENTAL ROOM — 17 of `S8-layout`'s 18 flags read −10 and the
+> eighteenth −20.25, which is why two earlier attempts picked the wrong frame; a grace's
+> STEM comes after its ACCIACCATURA SLASH; AUXILIARY BEAMS go out DEEPEST FIRST and
+> `drawBeam` concatenates them into one `d`, **the only place document order is visible**;
+> a STEM'S FAR EDGE is built from the ROUNDED anchor, as the beam's second edge already was;
+> a FORCED STEM DIRECTION is per LINE because `createVoice` runs per line; and EVERY VERSE
+> OF A NOTE lives in ONE `<text>`, which the baseline dump could not express and therefore
+> reported as pure REMOVALS.
+>
+> **AND ONE FIX WAS MEASURED, IMPLEMENTED AND REVERTED.** `%%tempofont` is not realized;
+> swapping the size puts the mark's baseline on abcjs's own number and takes the root height
+> 5px short, because `tempoHeightAbove` is a FLAT 6 PITCH reserving a POINT
+> (`elements/tempo-element.js:12-13`). Both engines' numbers are in
+> `CHECKPOINT-2026-08-13.md` §3.1 with the next probe named. **A HALF-UNDERSTOOD FIX IS
+> WORTH LESS THAN A WRITTEN-DOWN MEASUREMENT.**
+
+**READ `Docs/CHECKPOINT-2026-08-13.md` FIRST** — the current state (3 of 171, 168 byte-exact
+and all ratcheted), §2 the ten landings, §3 WHAT IS LEFT (the tempo font measured and
+reverted, and the two rows unchanged from `-08-12`), §5 the eight new abcjs probes and §6
+the rules. `Docs/HANDOFF-2026-08-13.md` has the session prompt and THE THREE. Then
 `Docs/CHECKPOINT-2026-08-12.md` — the state, the five landings, §3 WHAT IS LEFT
 (two rows measured to the digit and NOT landed — the per-LINE forced stem and the staff
 BOTTOM's one-ULP pitch), §5 THE ONE RED IS NOT OURS, §6 THE HARNESS and §7 the rules.
