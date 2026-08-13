@@ -1025,6 +1025,36 @@ were printed and were abcjs's numbers to the digit — `100.232`, `207.129000000
 the search to the LAST path in the file. **A probe that prints the right answer has ruled
 something out**; that is worth as much as one that prints the wrong one.
 
+
+### 2b.12 AN ENDING'S BRACKET IS ONE PRODUCT OFF THE LANE'S PITCH, WITH THE `- 2` INSIDE
+
+`drawEnding` takes `y = roundNumber(renderer.calcY(params.pitch))` where `params.pitch` is
+`positionY.endingHeightAbove` already reduced by the drop (`draw/ending.js:9`), and `calcY`
+is `this.y - ofs * spacing.STEP`.
+
+TWO defects, and the first one hid the second:
+
+- ours added `voltaDrawDrop * STEP` to a y that was itself `-pitch * STEP` — **two products
+  added where abcjs takes one**; and
+- the bracket was built at a placeholder step and SHIFTED onto that y, where
+  `a + (b - a)` is not `b`.
+
+Fixing the shift alone moved nothing, which is what said the base itself was wrong. The
+ladder now returns the ending rung's PITCH beside its y — exactly as it already did for the
+tempo notehead, `AboveLadder.tempoPitch` — and the bracket is PLACED.
+
+`visual-tablature-15` and `visual-mouse-click-01` go from byte 51404 to **53158 of 85865**.
+
+**AND THEIR NEXT DIVERGENCE IS THE TRIPLET BRACKET, ONE LANE OVER AND THE SAME SHAPE** —
+449.85 against abcjs's 449.83. `layoutTuplets` computes its end pitches with
+`pitchOf(y) = -y / ENGRAVE.spacePerStep` over `extentOf`'s ACCUMULATED y
+(`layout/triplet.js:29-64` is `max(anchor.parent.top, 9) + 4`, a PITCH), so it is the
+`x * STEP / STEP` round trip once more. 0.02px is 0.005 pitch, which also says the `max`
+picked the measured term rather than the constant 9 — a fixture where it picks 9 would be
+exact either way. The fix is to give `extentOf` a pitch twin: the head's declared half-box
+in pitch, and each line's `pitchRange` (the stem's `p1 - 1` included, which `extentOf`
+already models in y as `+ spacePerStep`).
+
 ---
 
 ## 3.5 WHAT THE TABLE LOOKS LIKE NOW — 22 rows, and what each one is
