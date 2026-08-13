@@ -697,11 +697,20 @@ const squigglyPath = (x: number, y: number, num: number, slope: number): string 
  * callers pass `round2`'d strings; the `<tspan>` reuses the x, as abcjs does
  * (`svg.js:195`).
  */
+/**
+ * **`font-family` STRIPS THE FACE'S OWN QUOTES** — `getFamily` returns
+ * `type.substring(1, type.length - 1)` when the string both opens and closes with `"`
+ * (`write/helpers/get-font-and-attr.js:17-22`). abcjs's `fontTranslation` stores
+ * `"\"Times New Roman\""`, quotes included, so the attribute is the bare name.
+ */
+const fontFamily = (face: string): string =>
+  face.length > 1 && face.startsWith('"') && face.endsWith('"') ? face.slice(1, -1) : face
+
 const abcjsText = (
   x: string,
   y: string,
   size: string,
-  family: string,
+  face: string,
   italic: boolean,
   bold: boolean,
   anchor: string,
@@ -722,7 +731,7 @@ const abcjsText = (
   noClass = false,
 ): string =>
   `<text stroke="none" font-size="${size}" font-style="${italic ? 'italic' : 'normal'}" ` +
-  `font-family="${family}" font-weight="${bold ? 'bold' : 'normal'}" text-decoration="none" ` +
+  `font-family="${fontFamily(face)}" font-weight="${bold ? 'bold' : 'normal'}" text-decoration="none" ` +
   `${noClass ? '' : `class="${klass}" `}text-anchor="${anchor}"${middle ? ' dominant-baseline="middle"' : ''}` +
   ` x="${x}" y="${y}"${name ? ` data-name="${name}"` : ''}>` +
   `<tspan x="${x}">${body}</tspan>` +
@@ -1268,7 +1277,10 @@ const glyphDefs = new Map<GlyphName, string>()
               // terms in a different order, and a different double.
               round2(b.t.pageY === undefined ? b.t.y * PX + oy : b.t.pageY * PX),
               num(b.t.size * PX),
-              'Times New Roman',
+              // …AND THE FACE A `%%<type>font` NAMES. Hard-coded here, so
+              // `%%titlefont cursive 23` drew in the default — the same half-realization
+              // `%%vocalfont` and the voice name each had.
+              b.t.face ?? 'Times New Roman',
               b.t.italic === true,
               b.t.bold === true,
               b.t.anchor ?? 'start',

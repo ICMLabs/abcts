@@ -10471,10 +10471,29 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
          * `calcY(pitch)` is `stepToY(pitch - 6)`, so the 6 cancels and only the ratio is
          * left.
          */
+        // …and the HEIGHT it halves is `getTextSize.calc`'s, which for a BOXED font is
+        // `height + padding * 4` (`helpers/get-text-size.js:46-49`). `%%voicefont Verdana
+        // 17 box` therefore centres 4.6px higher than the same font unboxed.
         const centre = stepToY(
-          (goldenTextHeight(size) * 0.5 + (members.length - pos - 2) * size) /
+          (fontHeightOf('voicefont') * 0.5 + (members.length - pos - 2) * size) /
             ENGRAVE.spacePerStep,
         )
+        /**
+         * **AND THE BOX ITSELF** — `renderText` moves a `start`-anchored text in by one
+         * padding on both axes, DELETES its class, and lays four rules round the MEASURED
+         * text (`draw/text.js:48-81`). No group here: `drawVoice` passes
+         * `alreadyInGroup = true`, so the box path follows the text bare.
+         */
+        const nameBox =
+          score.fonts.voicefont?.box !== true
+            ? {}
+            : {
+                box: true,
+                boxSize: { width: textWidth(labelText, size, 'serif'), height: goldenTextHeight(size) },
+                // `drawVoice` passes `alreadyInGroup = true` (`draw/voice.js:19`), so the
+                // rect is the text's SIBLING and no `<g>` opens.
+                inGroup: true,
+              }
         nameElements.push({
           type: 'voiceName',
           x: ENGRAVE.marginX,
@@ -10490,8 +10509,12 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
               font: 'voicefont',
               ...faceOf('voicefont'),
               dataName: 'voice-name',
+              // Stated rather than defaulted, because a BOXED text reads it to decide
+              // which way the padding shifts (`draw/text.js:52-56`).
+              anchor: 'start',
               x: ENGRAVE.marginX,
               y: centre,
+              ...nameBox,
               // **AND IT RESERVES NOTHING.** The voice name is not an `AbsoluteElement` at
               // all — `drawVoice` draws it beside the children rather than among them — so
               // it never enters `staff.top`. Its INK does reach above the middle line, and
@@ -11977,6 +12000,78 @@ function topTextBlock(
   const boxOf = (type: AbcFontType): number =>
     fonts[type]?.box === true ? sizeOf(type) * ENGRAVE.fontBoxPadding * 4 : 0
   /**
+   * The FACE a `%%<type>font` names — the block's own `faceOf`, reading the `fonts` this
+   * was handed rather than the module-level score fonts. `%%titlefont cursive 23 box`
+   * drew in the default Times New Roman until this existed: the size was realized and the
+   * face was not, the same half-realization the voice name and the lyric each had.
+   */
+  const faceIn = (type: AbcFontType): { face?: string } => {
+    const face = fonts[type]?.face
+    return face === undefined || face === '' ? {} : { face }
+  }
+  /**
+   * **A BOXED FONT MOVES ITS TEXT IN BY ONE PADDING AND LAYS FOUR RULES ROUND IT.**
+   *
+   *     if (hash.font.box) {
+   *       if (!alreadyInGroup) openGroup({klass, fill, "data-name": params.name})
+   *       if (anchor === "end")   hash.attr.x -= hash.font.padding
+   *       else if (anchor === "start") hash.attr.x += hash.font.padding
+   *       hash.attr.y += hash.font.padding
+   *       delete hash.attr['class']
+   *     }
+   *     …
+   *     delta = anchor === "middle" ? size.width/2 + padding
+   *           : anchor === "end"    ? size.width + padding*2 : 0
+   *     rect({ "data-name": "box", x: round(params.x - delta), y: round(y),
+   *            width: round(size.width + padding*2), height: round(size.height + padding*2) })
+   *
+   * (`draw/text.js:48-81`.) `params.y` is the row's own CURSOR, before the font size the
+   * baseline adds, and `Svg.rect` writes the rect as a PATH of four one-pixel bars.
+   *
+   * The `P:` part-order row has carried this since `%%partsbox` landed; every other row of
+   * the block took the plain path, so `visual-options-01` — which boxes all nineteen fonts
+   * — drew none of them.
+   */
+  const boxIn = (
+    type: AbcFontType,
+    x: number,
+    rowTop: number,
+    text: string,
+    anchor: 'start' | 'middle' | 'end',
+  ): Partial<PlacedText> => {
+    if (fonts[type]?.box !== true) return {}
+    const size = sizeOf(type)
+    const pad = size * ENGRAVE.fontBoxPadding
+    const width = textWidth(text, size, 'serif')
+    const delta = anchor === 'middle' ? width / 2 + pad : anchor === 'end' ? width + pad * 2 : 0
+    return {
+      x: x + (anchor === 'start' ? pad : anchor === 'end' ? -pad : 0),
+      boxRect: {
+        x: Math.round(x - delta),
+        y: Math.round(rowTop),
+        width: Math.round(width + pad * 2),
+        height: Math.round(goldenTextHeight(size) + pad * 2),
+      },
+    }
+  }
+  /** The `padding` a boxed row adds to its BASELINE — zero when the font is not boxed. */
+  const boxPad = (type: AbcFontType): number =>
+    fonts[type]?.box === true ? sizeOf(type) * ENGRAVE.fontBoxPadding : 0
+  /**
+   * **A `%%<type>font` REPLACES THE WHOLE FONT OBJECT, WEIGHT AND STYLE INCLUDED.**
+   * `multilineVars[cmd] = font` after `getFontParameter` fills in every field
+   * (`abc_parse_directive.js:200-240`), so `%%infofont Monaco 11` draws UPRIGHT where the
+   * default `infofont` is italic. Ours hard-coded each row's default style.
+   */
+  const styleIn = (
+    type: AbcFontType,
+    bold: boolean,
+    italic: boolean,
+  ): { bold: boolean; italic: boolean } => {
+    const font = fonts[type]
+    return font === undefined ? { bold, italic } : { bold: font.bold, italic: font.italic }
+  }
+  /**
    * **THE TITLE IS CENTRED ON THE PAPER, AND ABSOLUTELY** — `tLeft = paddingLeft +
    * width / 2` (`top-text.js:20`), where `width` is abcjs's `this.width`, the STAFF width.
    * A 670 staff on a 700 page puts every title at x=350 whatever the music under it is.
@@ -11999,8 +12094,10 @@ function topTextBlock(
       dataName: 'title',
       x: centre,
       // abcjs writes the baseline one font size below the cursor (`text.js:30`).
-      y: y + titleSize,
+      y: y + titleSize + boxPad('titlefont'),
       size: titleSize,
+      ...faceIn('titlefont'),
+      ...boxIn('titlefont', centre, y, plainText(title), 'middle'),
       /**
        * **NOT BOLD.** abcjs's default `titlefont` is
        * `{face: "Times New Roman", size: 20, weight: "normal", style: "normal"}`
@@ -12030,11 +12127,13 @@ function topTextBlock(
       role: 'title',
       dataName: 'subtitle',
       x: centre,
-      y: y + sizeOf('subtitlefont'),
+      y: y + sizeOf('subtitlefont') + boxPad('subtitlefont'),
       size: sizeOf('subtitlefont'),
       bold: false,
       italic: false,
       anchor: 'middle',
+      ...faceIn('subtitlefont'),
+      ...boxIn('subtitlefont', centre, y, plainText(subtitle), 'middle'),
     })
     advanceText(subtitle, sizeOf('subtitlefont'), boxOf('subtitlefont'))
   }
@@ -12061,11 +12160,12 @@ function topTextBlock(
         role: 'title',
         dataName: 'rhythm',
         x: ENGRAVE.marginX,
-        y: y + sizeOf('infofont'),
+        y: y + sizeOf('infofont') + boxPad('infofont'),
         size: sizeOf('infofont'),
-        bold: false,
-        italic: true,
+        ...styleIn('infofont', false, true),
         anchor: 'start',
+        ...faceIn('infofont'),
+        ...boxIn('infofont', ENGRAVE.marginX, y, rhythm, 'start'),
       })
     }
     // abcjs emits composer and origin as ONE text, the origin parenthesised.
@@ -12076,11 +12176,12 @@ function topTextBlock(
         role: 'title',
         dataName: 'composer',
         x: ENGRAVE.marginX + width,
-        y: y + sizeOf('composerfont'),
+        y: y + sizeOf('composerfont') + boxPad('composerfont'),
         size: sizeOf('composerfont'),
-        bold: false,
-        italic: true,
+        ...styleIn('composerfont', false, true),
         anchor: 'end',
+        ...faceIn('composerfont'),
+        ...boxIn('composerfont', ENGRAVE.marginX + width, y, right, 'end'),
       })
     }
     // THE ROW ADVANCES BY WHICHEVER FIELD MOVES IT, not by the taller of the two.
@@ -12107,11 +12208,12 @@ function topTextBlock(
       role: 'title',
       dataName: 'author',
       x: ENGRAVE.marginX + width,
-      y: y + sizeOf('composerfont'),
+      y: y + sizeOf('composerfont') + boxPad('composerfont'),
       size: sizeOf('composerfont'),
-      bold: false,
-      italic: true,
+      ...styleIn('composerfont', false, true),
       anchor: 'end',
+      ...faceIn('composerfont'),
+      ...boxIn('composerfont', ENGRAVE.marginX + width, y, author, 'end'),
     })
     advanceText(authorRich, sizeOf('composerfont'), boxOf('composerfont'))
   }
@@ -12140,9 +12242,9 @@ function topTextBlock(
       x: ENGRAVE.marginX + (boxed ? pad : 0),
       y: y + partsSize + (boxed ? pad : 0),
       size: partsSize,
-      bold: false,
-      italic: false,
+      ...styleIn('partsfont', false, false),
       anchor: 'start',
+      ...faceIn('partsfont'),
       ...(boxed
         ? {
             boxRect: {
