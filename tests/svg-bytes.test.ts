@@ -189,6 +189,7 @@ const PASSING: readonly string[] = [
   'abcjs-visual-slurs-02-score-s-a-t-b',
   'abcjs-visual-svg-01-staffwidth-5',
   'abcjs-visual-svg-03-a4',
+  'abcjs-visual-svg-per-line-01-selection-test',
   'abcjs-visual-tablature-01-gr',
   'abcjs-visual-tablature-02-g-fg-a-g2-a-very-very-long-chord-d2-cd-f',
   'abcjs-visual-tablature-03-staves-rh-lh',

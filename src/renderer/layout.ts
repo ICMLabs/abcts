@@ -5978,7 +5978,7 @@ function layoutConnectors(
 function layoutSpanners(
   anchors: readonly NoteAnchor[],
   /** Where each system's music starts and ends, exactly as `layoutCurves` uses it. */
-  bounds: readonly { left: number; right: number }[],
+  bounds: readonly { left: number; right: number; prefixEnd?: number }[],
   /**
    * Hairpins share the dynamics lane, so they share its side — **PER SYSTEM, as the notes
    * read it.** `hasVocals` is set once per LINE in abcjs (`abstract-engraver.js:110`) and
@@ -6598,7 +6598,7 @@ function layoutCurves(
    * Where each system's music starts and ends. A split curve runs to the right edge of
    * the system it leaves and resumes after the clef and key of the one it enters.
    */
-  bounds: readonly { left: number; right: number }[],
+  bounds: readonly { left: number; right: number; prefixEnd?: number }[],
   /** The voice's index on its staff, or −1 when it has that staff to itself. */
   voicePos: number,
 ): PlacedCurve[][] {
@@ -6780,13 +6780,18 @@ function layoutCurves(
      *     parse-tie-slur-01   startLimitX null           anchor2x  98.051 -> 78.051
      *     svg-per-line-01     startLimitX 60.153+15.5    anchor2x 110.700 -> 75.653
      *
-     * **WHAT IS MISSING IS THE 75.653.** It is the OPENING line's prefix end, and neither
-     * number we have is it: `bounds[].left` is 143.35 (where the first NOTE lands) and the
-     * last clef/key/meter element's `x + width` is 133.35 — both measured, both tried. The
-     * prefix on that line is indented by a voice NAME, which abcjs's `startlimitelem` sits
-     * before. Find the frame those elements are placed in before reaching for this again.
+     * **AND IT IS THE CLOSING LINE'S KEY SIGNATURE, NOT THE OPENING LINE'S.**
+     * `startlimitelem` is a per-LINE field on the engraver, so the half drawn on the second
+     * line reads THAT line's prefix. Instrumented on both sides in one sitting: abcjs
+     * reports `LIMIT2 staff-extra key-signature | x=60.153 | w=15.5`, and ours reports
+     * `SPLITSYS from 0 to 1 … prefixEnd(from) 133.3544 prefixEnd(to) 75.65299999999999` —
+     * the CLOSING system's, to the digit. Three earlier guesses (`bounds[].left` on either
+     * side, the opening system's prefix) each named a plausible number and none was it.
      */
-    const resume = to.left - ENGRAVE.curveContinuation
+    const resume =
+      kind === 'slur' && end.prefixEnd !== undefined
+        ? end.prefixEnd
+        : to.left - ENGRAVE.curveContinuation
     curves[to.system]?.push({
       ...buildCurve({ ...to, left: resume, right: resume }, to, halfKind, voicePos, strict, {
         end: to.element,
@@ -11167,11 +11172,30 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   // Now that every system exists, resolve each voice's slurs and ties across the whole
   // tune and hand each system its share.
   // Music starts after the widest prefix on the system and ends at its right margin.
-  const systemBounds = systems.map((system, i) => ({
-    left: musicLeft[i] ?? leftEdgeFor(i),
-    // …and the RIGHT edge is the MUSIC's, not the system's — see `LayoutSystem.musicWidth`.
-    right: system.musicWidth - ENGRAVE.marginX,
-  }))
+  const systemBounds = systems.map((system, i) => {
+    /**
+     * `startlimitelem` — the CLEF, then the KEY SIGNATURE, then the TIME SIGNATURE of this
+     * line, each overwriting the last under the comment "limit ties here"
+     * (`abstract-engraver.js:165`, `:170`, `:179`), and never cleared. `calcX` starts a
+     * SLUR that has no opening anchor at `startLimitX.x + startLimitX.w`
+     * (`tie-element.js:122-123`).
+     *
+     * Instrumented on `visual-svg-per-line-01`, which is what named the element:
+     * `LIMIT2 staff-extra key-signature | x=60.153 | w=15.5` — and our own system 1 reports
+     * `keySignature@60.153+15.5` exactly. NOT `left` below, which is where the first NOTE
+     * lands.
+     */
+    const prefix = (system.staves[0]?.elements ?? []).filter(
+      (el) => el.type === 'clef' || el.type === 'keySignature' || el.type === 'timeSignature',
+    )
+    const last = prefix[prefix.length - 1]
+    return {
+      left: musicLeft[i] ?? leftEdgeFor(i),
+      // …and the RIGHT edge is the MUSIC's, not the system's — see `LayoutSystem.musicWidth`.
+      right: system.musicWidth - ENGRAVE.marginX,
+      ...(last === undefined ? {} : { prefixEnd: last.x + last.width }),
+    }
+  })
   const curvesBySystem = voiceAnchors.map((anchors, v) =>
     layoutCurves(strict, anchors, systemBounds, voicePosOf(v)),
   )
