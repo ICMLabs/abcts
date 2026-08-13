@@ -6726,17 +6726,48 @@ function layoutCurves(
      * halves we declined to draw.
      */
     /**
-     * **AND `startLimitX` IS AN ARM WE DO NOT TAKE — MEASURED, TRIED, REVERTED.**
+     * **AND WHICH ARM THE INCOMING HALF TAKES IS DECIDED BY SLUR-VERSUS-TIE.**
      *
      *     else if (this.startLimitX) this.startX = this.startLimitX.x + this.startLimitX.w
      *     else if (this.anchor2)     this.startX = this.anchor2.x - 20
      *
-     * (`tie-element.js:118-130`.) `visual-svg-per-line-01`'s incoming half runs from 81.65
-     * where the 20px stub gives 96.7 — 15.05, the width of that line's prefix — so abcjs
-     * IS taking the first arm there. Substituting `bounds[].left`, which is exactly
-     * "past the clef and key", took `parse-tie-slur-01`, `-02` and `-03` OFF the byte-exact
-     * list: those three take the stub. So `startlimitelem` is not simply "this line has a
-     * prefix", and what distinguishes the two cases is unmeasured.
+     * (`tie-element.js:118-130`.) `setStartX(this.startlimitelem)` is called ONLY in the
+     * branch that opens a SLUR (`abstract-engraver.js:928-930`); the tie branch beside it
+     * does not, so a tie's `startLimitX` is never set and it always takes the 20px stub.
+     *
+     * Traced through `calcX` on both fixtures at once, which is what settled it:
+     *
+     *     parse-tie-slur-01   startLimitX null            anchor2x  98.051 -> 78.051
+     *     svg-per-line-01     startLimitX 60.153+15.5     anchor2x 110.700 -> 75.653
+     *
+     * `startlimitelem` is the CLEF, then the KEY SIGNATURE, then the TIME SIGNATURE of the
+     * line the curve OPENED on — "limit ties here" (`:165`, `:170`, `:179`) — and it is
+     * never cleared, so it is that line's prefix end. `bounds[].left` is the same number.
+     *
+     * Substituting it for BOTH kinds took `parse-tie-slur-01`, `-02` and `-03` off the
+     * byte-exact list; the earlier note here recorded that as "unmeasured" and it was one
+     * `console.error` away.
+     */
+    /**
+     * **WHICH ARM THE INCOMING HALF TAKES IS SLUR-VERSUS-TIE, AND THE VALUE IS NOT OURS
+     * TO HAND YET.**
+     *
+     *     else if (this.startLimitX) this.startX = this.startLimitX.x + this.startLimitX.w
+     *     else if (this.anchor2)     this.startX = this.anchor2.x - 20
+     *
+     * (`tie-element.js:118-130`.) `setStartX(this.startlimitelem)` is called ONLY in the
+     * branch that opens a SLUR (`abstract-engraver.js:928-930`), so a tie's `startLimitX`
+     * is never set and it always takes the 20px stub. Traced through `calcX` on both
+     * fixtures at once, which is what settled a question two notes here called unmeasured:
+     *
+     *     parse-tie-slur-01   startLimitX null           anchor2x  98.051 -> 78.051
+     *     svg-per-line-01     startLimitX 60.153+15.5    anchor2x 110.700 -> 75.653
+     *
+     * **WHAT IS MISSING IS THE 75.653.** It is the OPENING line's prefix end, and neither
+     * number we have is it: `bounds[].left` is 143.35 (where the first NOTE lands) and the
+     * last clef/key/meter element's `x + width` is 133.35 — both measured, both tried. The
+     * prefix on that line is indented by a voice NAME, which abcjs's `startlimitelem` sits
+     * before. Find the frame those elements are placed in before reaching for this again.
      */
     const resume = to.left - ENGRAVE.curveContinuation
     curves[to.system]?.push({

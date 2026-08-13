@@ -2027,9 +2027,15 @@ const glyphDefs = new Map<GlyphName, string>()
              * `:840`, then `createDecoration` at `:847` — whose first call is
              * `volumeDecoration` and whose second builds the `CrescendoElem`.
              */
-            x: graceCurve
-              ? TC(curve).x2 - spaces(ABCJS_ARC.endOffset)
-              : TC(curve).x1 - spaces(ABCJS_ARC.startOffset),
+            // **AN INCOMING HALF LEADS THE LINE.** The `TieElem` was `addOther`'d on the
+            // line the curve OPENED on and carries over, so it is already in the voice's
+            // `otherchildren` before anything this line adds. `startElement` is absent on
+            // exactly that half — `layoutCurves` passes only `{ end }` for it.
+            x: curve.startElement === undefined
+              ? Number.NEGATIVE_INFINITY
+              : graceCurve
+                ? TC(curve).x2 - spaces(ABCJS_ARC.endOffset)
+                : TC(curve).x1 - spaces(ABCJS_ARC.startOffset),
             k: graceCurve ? 1 : 0,
             s: curveSink.pop() ?? '',
           })
