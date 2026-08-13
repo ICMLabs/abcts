@@ -1086,10 +1086,31 @@ const glyphDefs = new Map<GlyphName, string>()
         // `PlacedLine.stemsUp`.
         const dy = (b.stemsUp === false ? -1 : 1) * t.thickness
         const half = (b.stemsUp === false ? 1 : -1) * (t.thickness / 2)
-        const [sx, ex] = [r2(t.x1), r2(t.x2)]
-        const [sy, ey] = [r2(t.y1 + half), r2(t.y2 + half)]
-        const [sy2, ey2] = [r2(sy + dy), r2(ey + dy)]
-        return `M${sx} ${sy} L${ex} ${ey}L${ex} ${ey2} L${sx} ${sy2}z`
+        const seg = (x1: number, y1: number, x2: number, y2: number): string => {
+          const [sx, ex] = [r2(x1), r2(x2)]
+          const [sy, ey] = [r2(y1 + half), r2(y2 + half)]
+          const [sy2, ey2] = [r2(sy + dy), r2(ey + dy)]
+          return `M${sx} ${sy} L${ex} ${ey}L${ex} ${ey2} L${sx} ${sy2}z`
+        }
+        /**
+         * **A BEAM BROKEN BY `!beambr1!` IS DRAWN FROM A LIST OF x PAIRS**, each pair's y
+         * interpolated along the WHOLE beam's slope — `getSlope(startX, startY, endX, endY)`
+         * once, then `getY(startX, startY, slope, x)` per end (`draw/beam.js:11-20`). So
+         * every segment lies on one line however the pairs are ordered, and abcjs's first
+         * pair runs BACKWARDS. See `PlacedLine.split`.
+         */
+        if (b.split !== undefined) {
+          const span = t.x2 - t.x1
+          const slope = span === 0 ? 0 : (t.y2 - t.y1) / span
+          const yAt = (x: number): number => t.y1 + slope * (x - t.x1)
+          let out = ''
+          for (let i = 0; i + 1 < b.split.length; i += 2) {
+            const [a, c] = [(b.split[i] ?? 0) * PX, (b.split[i + 1] ?? 0) * PX]
+            out += seg(a, yAt(a), c, yAt(c))
+          }
+          return out
+        }
+        return seg(t.x1, t.y1, t.x2, t.y2)
       })
       .join('')
 

@@ -168,6 +168,7 @@ const PASSING: readonly string[] = [
   'abcjs-visual-misc-09-begintext',
   'abcjs-visual-misc-10-begintext',
   'abcjs-visual-misc-11-begintext',
+  'abcjs-visual-misc-12-b-beambr1-b-bb',
   'abcjs-visual-misc-13-ceg-t-gce-d-f-b-3-dm7-d-te',
   'abcjs-visual-misc-14-tune',
   'abcjs-visual-mouse-click-01-selection-test',

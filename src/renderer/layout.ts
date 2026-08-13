@@ -958,6 +958,12 @@ export interface PlacedLine {
    */
   readonly pitchRange?: readonly [number, number]
   /**
+   * **A BEAM BROKEN BY `!beambr1!` IS A LIST OF x PAIRS, NOT ONE SEGMENT.** `drawBeam`
+   * walks `beam.split` two at a time and interpolates each pair's y along the beam's own
+   * slope (`draw/beam.js:11-20`). Built in `layoutBeam`.
+   */
+  readonly split?: readonly number[]
+  /**
    * **AN ABSOLUTE y THAT THE TRANSLATION MUST NOT TOUCH.** A joined staff's barline reaches
    * the staff ABOVE, and abcjs takes that end as `renderer.calcY(2)` off THAT staff's
    * `absoluteY` — one product (`draw/staff-group.js:132`). Reaching it through this staff's
@@ -1306,6 +1312,12 @@ export interface StemInfo {
   readonly headX: number
   /** That head's ink width — abcjs's `furthestHead.w`. */
   readonly headWidth: number
+  /**
+   * `!beambr1!` / `!beambr2!` — how many beam levels this note BREAKS, from the decoration
+   * of the same name. It splits the auxiliary beam at that level and below
+   * (`layout/beam.js:193-203`).
+   */
+  readonly beambr?: number
   /**
    * That head's own `dx` WITHIN its element — a seconds displacement plus the voice-overlap
    * shift — carried separately because `createStems` counts it TWICE.
@@ -3785,6 +3797,11 @@ function layoutNoteheads(
         headX: headX + stemHeadOffset,
         headWidth: headInk,
         headDx: baseShift,
+        ...(event?.decorations.includes('beambr2') === true
+          ? { beambr: 2 }
+          : event?.decorations.includes('beambr1') === true
+            ? { beambr: 1 }
+            : {}),
         farStep: up ? highest : lowest,
         averageStep: steps.reduce((a, b) => a + b, 0) / steps.length,
         up,
@@ -7881,6 +7898,49 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
     const offset = level * step + (inward * thickness) / 2
     let runStart: StemInfo | null = null
     let runEnd: StemInfo | null = null
+    /**
+     * **`!beambr1!` BUILDS A LITERAL LIST OF x PAIRS AND THE BEAM IS DRAWN FROM IT.**
+     *
+     *     if (i > 0 && elem.abcelem.beambr && elem.abcelem.beambr <= (index + 1)) {
+     *       if (!auxBeams[index].split) auxBeams[index].split = [auxBeams[index].x]
+     *       var xPos = calcXPos(asc, elems[i - 1], elem)
+     *       if (auxBeams[index].split[last] >= xPos[0]) xPos[0] += elem.w
+     *       auxBeams[index].split.push(xPos[0]); auxBeams[index].split.push(xPos[1])
+     *     }
+     *     …
+     *     if (b.endX <= split[split.length - 1]) split[split.length - 1] -= elem.w
+     *     split.push(b.endX)
+     *
+     * (`layout/beam.js:193-203`, `:250-256`), and `drawBeam` walks the result in PAIRS
+     * (`draw/beam.js:11-20`). So the run comes out as several segments and the FIRST pair
+     * runs BACKWARDS over the previous note.
+     *
+     * **BOTH ENGINES PRINTED SIDE BY SIDE ON `visual-misc-12`, WHICH IS THE ONLY WAY THIS
+     * CAME OUT RIGHT.** A first attempt read `elem.w` as the ELEMENT's width — ours is
+     * 11.4 with its trailing gap — and read the guard as not firing, because the probe
+     * that showed `xPos [24.81, 45.6]` was printed AFTER the adjustment, not before.
+     * Instrumenting `calcXPos` itself settled both:
+     *
+     *     XPOS asc false  startheadX 15  w 9.81  parentX 15 | endheadX 45  parentX 45
+     *     SPLITFINAL [45, 24.81, 35.79, 40]  endX 40
+     *
+     * so `xPos` is `[15, 45.6]`, the guard DOES fire (`45 >= 15`), and `elem.w` is the
+     * NOTEHEAD's 9.81 — an `AbsoluteElement`'s `w` for a plain note, not our padded width.
+     */
+    let split: number[] | undefined
+    /**
+     * The list's LAST entry is the beam's own end, and an end that would fall inside the
+     * previous pair pulls that pair back by the notehead's width first (`:250-256`).
+     */
+    const closeSplit = (endX: number, last: StemInfo | null): { split?: readonly number[] } => {
+      if (split === undefined) return {}
+      const out = [...split]
+      const w = last?.headWidth ?? 0
+      if (endX <= (out[out.length - 1] ?? 0)) out[out.length - 1] = (out[out.length - 1] ?? 0) - w
+      out.push(endX)
+      split = undefined
+      return { split: out }
+    }
 
     const flush = () => {
       if (runStart === null || runEnd === null) return
@@ -7939,6 +7999,7 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
           y2: yAt(x2) + offset,
           thickness,
           ...(firstDuration === undefined ? {} : { durationClass: firstDuration }),
+          ...closeSplit(x2, runEnd),
           stemsUp: up,
         })
         runStart = null
@@ -7964,6 +8025,7 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
         x2,
         y2: yAt(x2) + offset,
         thickness,
+        ...closeSplit(x2, runEnd),
         // A BEAM'S CLASS CARRIES ITS DURATION, and the duration is the FIRST element's —
         // `this.duration = firstElement.duration * tripletMultiplier`, rounded to a
         // thousandth (`elements/beam-element.js:31-36`). `classes.generate('beam-elem ' +
@@ -7975,14 +8037,28 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
       runEnd = null
     }
 
-    for (const stem of group) {
+    group.forEach((stem, i) => {
       if (stem.beams > level) {
+        const first = runStart === null
         runStart ??= stem
         runEnd = stem
+        const prev = group[i - 1]
+        if (i > 0 && prev !== undefined && stem.beambr !== undefined && stem.beambr <= level) {
+          // `auxBeams[index].x` — the run's own start, which on the element that opens the
+          // run is this one. `calcXPos` is the same asymmetric pair the main beam takes.
+          const opener = first ? stem : runStart
+          split ??= [up ? opener.headX + opener.headWidth - inset : opener.headX]
+          const pair = up
+            ? [prev.headX + prev.headWidth - inset, stem.headX + stem.headWidth]
+            : [prev.headX, stem.headX + inset]
+          const last = split[split.length - 1] ?? 0
+          const at = pair[0] ?? 0
+          split.push(last >= at ? at + stem.headWidth : at, pair[1] ?? 0)
+        }
       } else {
         flush()
       }
-    }
+    })
     flush()
   }
 
