@@ -834,7 +834,10 @@ checkpoint and hand off as you go so no context is lost.
 > RESULT**: `/tmp/abcts-*.txt` outlives the run, and I called that gate green twice off a
 > stale one.
 
-Read `Docs/CHECKPOINT-2026-08-12.md` first — the state, the five landings, §3 WHAT IS LEFT
+**READ `Docs/HANDOFF-2026-08-13.md` FIRST** — the current state (12 of 171, 159 byte-exact
+and all ratcheted), THE TWELVE with what each one needs and what has already been tried and
+reverted, THE HARNESS, and the rules this arc earned. Then
+`Docs/CHECKPOINT-2026-08-12.md` — the state, the five landings, §3 WHAT IS LEFT
 (two rows measured to the digit and NOT landed — the per-LINE forced stem and the staff
 BOTTOM's one-ULP pitch), §5 THE ONE RED IS NOT OURS, §6 THE HARNESS and §7 the rules.
 `Docs/HANDOFF-2026-08-12.md` has the session prompt and the two probes.
