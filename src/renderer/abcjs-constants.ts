@@ -116,6 +116,13 @@ export const stepOfPitch = (pitch: number): number => pitch - PITCH_ORIGIN
  */
 export const ABCJS_PX = {
   /**
+   * `newDotShiftX = notehead.w + dotshiftx - 2 + 5 * dot` (`create-note-head.js:50`) — the
+   * element's RIGHT room, computed whether or not the note is dotted, and what
+   * `roomTakenRight` starts at when `addChord` places a `">"` annotation.
+   */
+  dotShiftInset: 2,
+  dotShiftStep: 5,
+  /**
    * `deltaX += (dir === 'down') ? -5 : 3` — how far off the notehead's centre a TREMOLO
    * slash sits, which side depending on which side of the head the stem is
    * (`creation/decoration.js:109`). An x, so abcjs PIXELS and not pitch.

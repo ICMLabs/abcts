@@ -5577,7 +5577,20 @@ function noteText(
   //
   // Both are pitched on the note's AVERAGE, which is also why neither takes a lane.
   let roomTaken = roomTakenBefore
-  let roomTakenRight = 0
+  /**
+   * **AND THE RIGHT ROOM DOES NOT START AT ZERO — IT STARTS AT THE DOT SHIFT.**
+   * `createNoteHead` returns `dotshiftx = notehead.w + dotshiftx - 2 + 5 * dot`
+   * (`create-note-head.js:50`) whether or not the note is dotted, and `createNote` hands
+   * that straight to `addChord` as `roomtakenright` (`abstract-engraver.js:610`, `:858`).
+   * So a `">G"` on an undotted quarter sits at `9.81 - 2 + 4`, not at `4`: traced through
+   * abcjs, `RIGHT "G" x 11.81 roomTakenRight 11.81 w 12.4531`, and ours wrote 365.41 where
+   * abcjs writes 373.22 — exactly the 7.81 it never started with.
+   */
+  let roomTakenRight =
+    headWidth -
+    spaces(ABCJS_PX.dotShiftInset) +
+    spaces(ABCJS_PX.dotShiftStep) *
+      ('dots' in event && typeof event.dots === 'number' ? event.dots : 0)
   for (const a of annotations) {
     if (a.where !== 'left' && a.where !== 'right') continue
     const size = fontSizeOf('annotationfont')
