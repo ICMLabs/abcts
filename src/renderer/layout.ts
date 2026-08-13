@@ -14198,6 +14198,21 @@ function layoutGraces(
        */
       if (!beamedGraces) {
         const graceFlagY = stepToY(graceStep + ABCJS_PITCH.stemLength * scale)
+        /**
+         * **THE OFFSET SHOULD BE BUILT WHOLE — MEASURED, TRIED TWICE, REVERTED.**
+         * `create-note-head.js:47` is `xdelta = headx + notehead.w - 0.6` with `headx`
+         * NEGATIVE for a grace: instrumented, `FLAGDX headx -10 noteheadw 5.886
+         * dx -4.714`, and `RelativeElement`'s `child.x` is ONE addition onto the parent.
+         * Ours reaches the same point as `(gx + w) - 0.6`, three terms in another order,
+         * and `synth-flattener-28` writes 609.9529209936139 against abcjs's …38.
+         *
+         * Carrying it as a `dx` needs the frame `placeElement` will add it to, and neither
+         * candidate is right: relative to the cursor `x` the flag lands 10px right on this
+         * fixture, and relative to `graceNoteX` it lands 10.25px right on `S8-layout`'s.
+         * **Find what a graced note's element `x` actually is before trying a third time** —
+         * abcjs's parent is the note's own head, and ours is neither of the two numbers in
+         * scope here.
+         */
         graceGlyphs.push({
           name: 'flag8thUp',
           x: gx + glyphsFor(strict).width('noteheadBlack') * scale - spaces(ABCJS_PX.flagStemInset),

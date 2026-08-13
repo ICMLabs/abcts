@@ -19,9 +19,9 @@ on stale runs before finding out what it was.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 0 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 1 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 1 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **14 of 171**, best 51473 | 49 of 171 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **12 of 171**, best 21920 | 49 of 171 |
 
-`DIVERGENT` is still EMPTY. **157 fixtures are byte-exact and all 157 are RATCHETED** —
+`DIVERGENT` is still EMPTY. **159 fixtures are byte-exact and all 159 are RATCHETED** —
 `visual-selection-01` (202,156 bytes, the corpus's largest), `visual-tablature-15` and
 `visual-mouse-click-01` (85,865 each) among them.
 
@@ -1219,6 +1219,46 @@ straight to `addChord` as `roomtakenright` (`abstract-engraver.js:610`, `:858`).
 `RIGHT "G" x 11.81 roomTakenRight 11.81`.
 
 `visual-transpose-04` closed on the two together.
+
+
+### 2b.16 INSTRUMENTING **BOTH** ENGINES FOR THE SAME QUANTITY — 14 → 12
+
+Lance gave standing authority to instrument abcjs and abcts as much as it takes
+(2026-08-13). Two rows that had each survived a careful source read fell the same hour once
+BOTH engines printed the same number.
+
+**`beambr` SPLITS AN AUXILIARY BEAM INTO A LIST OF x PAIRS.** `createAdditionalBeams`
+builds a literal `split` array — the run's own start, then `calcXPos(prev, this)` per break,
+then the beam's end — and `drawBeam` walks it in PAIRS, interpolating each pair's y along
+the whole beam's slope (`layout/beam.js:193-203`, `:250-256`, `draw/beam.js:11-20`). The
+FIRST pair runs backwards over the previous note.
+
+A first attempt failed on two operands and **both were mis-read from the source**:
+
+- `elem.w` is an `AbsoluteElement`'s width, which for a plain note is the NOTEHEAD's 9.81;
+  ours is 11.4 with its trailing gap.
+- the `if (split[last] >= xPos[0]) xPos[0] += elem.w` guard reads as though it cannot fire
+  and DOES — the probe that seemed to deny it printed `xPos` AFTER the adjustment.
+
+Instrumenting `calcXPos` itself settled both at once:
+
+    XPOS asc false  startheadX 15  w 9.81  parentX 15 | endheadX 45  parentX 45
+    SPLITFINAL [45, 24.81, 35.79, 40]  endX 40
+
+**AND AN INCOMING SLUR-HALF STARTS AT THE *CLOSING* LINE'S PREFIX.** `startlimitelem` is a
+per-LINE field on the engraver — clef, then key signature, then time signature, each
+overwriting the last (`:165`, `:170`, `:179`) — so the half drawn on the second line reads
+THAT line's prefix, not the one the slur opened on:
+
+    abcjs  LIMIT2 staff-extra key-signature | x=60.153 | w=15.5
+    ours   SPLITSYS from 0 to 1 … prefixEnd(from) 133.3544 prefixEnd(to) 75.653
+
+Three earlier guesses — `bounds[].left` on either side, then the opening system's prefix —
+each named a plausible number and none was it. `visual-svg-per-line-01`, 202,515 bytes, is
+exact.
+
+**THE RULE:** print the SAME quantity from both engines in one sitting. A source read gives
+a hypothesis; only the pair of numbers gives the answer.
 
 ---
 
