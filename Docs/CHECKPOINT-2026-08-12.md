@@ -19,11 +19,12 @@ on stale runs before finding out what it was.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 0 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 1 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 1 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **26 of 171**, best 200613 | 49 of 171 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **22 of 171**, best 200883 | 49 of 171 |
 
-`DIVERGENT` is still EMPTY. **145 fixtures are byte-exact and all 145 are RATCHETED.**
+`DIVERGENT` is still EMPTY. **149 fixtures are byte-exact and all 149 are RATCHETED.**
 
-The 26 that remain classify **13 STRUCTURAL / 13 ULP** — see §3.4.
+The 26 that remained at the first checkpoint classified **13 STRUCTURAL / 13 ULP** — §3.4.
+Seven more closed after it; §2b is those, and §3.5 is what the table looks like now.
 
 ---
 
@@ -789,6 +790,148 @@ The named structural rows, cheapest last:
 
 ---
 
+## 2b. THE LANDINGS AFTER THE FIRST CHECKPOINT — 26 → 22
+
+### 2b.1 A STEM'S DECORATION FLOOR IS ITS DECLARED `bottom`, WHICH IS `p1 - 1`
+
+`createDecoration` receives `abselem.bottom` as `minPitch`, and a DOWN stem's element
+bottom is `minpitch - 8` — an INTEGER — where its drawn end is `minpitch - 7`. Instrumented
+on `visual-decorations-01`: abcjs reports `abselemBottom 1`, `-3`, `-8` for its
+down-stemmed notes and the head box `pitch - 1.0444` for its up-stemmed ones.
+
+`PlacedLine.pitchRange` already carried that number, the JS-truthiness exception included
+(`if (opt.bottom)` skips a zero). `decorationBelowBase` re-derived it from the DRAWN y and
+lost the `- 1`, which is the one pitch three of that fixture's twelve below fermatas were
+out by.
+
+### 2b.2 AN ORNAMENT ABOVE A BEAMED NOTE IS MOVED CLEAR OF THE BEAM
+
+`moveDecorations(voice.beams[i])` runs straight after `layoutBeam` and before
+`voice.adjustRange` (`layout/voice.js:5-14, 30-50`):
+
+    var top = yAtNote(child, beam)                 // the beam's PITCH at the note's x
+    if (el.bottom - 1.5 < top) {
+      var distance = top - el.bottom + 1.5
+      el.bottom += distance; el.top += distance; el.pitch += distance
+      top = child.top = el.top                     // the next ornament stacks on the moved top
+    }
+
+The creation phase cannot know this: a beamed note has no stem when `createDecoration`
+runs, so every ornament is placed against the notehead and a beam riding above it would be
+drawn straight through. `yAtNote` samples at `element.x`, NOT at the stem's
+`furthestHead.x + dx`, and off `beam.beams[0]` — the outermost beam, in pitch.
+
+Not reproduced: abcjs guards on `if (child.top)`, JS-truthy, so an element whose declared
+top is exactly pitch 0 is skipped. Nothing in either corpus reaches it.
+
+### 2b.3 …AND THE BEAM'S START x IS `x + (w - 0.6)`
+
+`calcXPos` writes it as a compound assignment — `startX = starthead.x;
+if (asc) startX += starthead.w - 0.6` (`layout/beam.js:74-81`) — so the 0.6 comes off the
+WIDTH, not off the sum. Ours read left to right and formed `(x + w) - 0.6`, which is
+545.9214999999999 where abcjs has a clean 545.9215; every stem `getBarYAt` delivers along
+that line inherits it. **It was the last token between `visual-decorations-01` and byte
+parity**, and it surfaced only because 2b.2's probe printed both engines' beam ends.
+
+### 2b.4 THREE MORE CONSTRUCTED OFFSETS — the `PlacedGlyph.dx` rule, three elements over
+
+`placeElement` derives an offset as `g.x - el.x` when the glyph carries no `dx`, and
+`(x + a) - x` is not `a`. Three sites were still deriving:
+
+| site | abcjs | ours was | cost |
+|---|---|---|---|
+| a DECORATION's `deltaX` | `width / 2` then `-= symbolWidth / 2`, handed whole to `RelativeElement` (`decoration.js:44-48`) | `(x + w/2) - gw/2` | `scripts.roll` at 419.0510833333332 vs …33 |
+| the CLEF's octave `8` | `addRight(new RelativeElement('8', dx + adjustspacing, …))` (`create-clef.js:49`) | `(x + 5) + adjust` | 78.6605 vs 78.66050000000001 — **and it unblocked 44k bytes on two fixtures** |
+| a DYNAMIC's kern | `printSymbol(x + dx, …)`, `dx` running over the letters (`draw/print-symbol.js:18-26`) | derived | `pppp` at 417.893 vs 417.89300000000003 |
+
+**A ULP in an x is not a small defect — it is a WALL.** The clef one sat at byte 6931 of
+85865 on `visual-tablature-15` and `visual-mouse-click-01`; closing it took both to 51404.
+
+### 2b.5 A TREMOLO IS A STACK OF `flags.ugrace` GLYPHS
+
+`compoundDecoration` (`creation/decoration.js:87-122`), called THIRD in `createDecoration`
+— after the two dynamics and BEFORE `closeDecoration`, so its glyphs lead the element's
+decoration children:
+
+    placement = dir === 'down' ? lowestPitch() + 1 : highestPitch() + 9
+    if (dir !== 'down' && count === 1) placement--
+    deltaX = width / 2;  deltaX += (dir === 'down') ? -5 : 3
+    for (i = 0; i < count; i++) { placement -= 1; addFixedX(symbol, deltaX, w, placement) }
+
+`highestPitch`/`lowestPitch` are the HEADS' extremes, and the slashes march DOWNWARD from
+the first whichever way the stem points.
+
+**The site already carried a note saying ours "is a divergence in SHAPE and belongs in
+`ABCJS-DIFFERENCES.md`" — and it was in neither that file nor the `DIVERGENT` list.**
+Strict has no latitude, so it is ported; `abc2.1`/`extended` keep the drawn `tremoloN`
+bars, which are the right shape.
+
+### 2b.6 `sfz` IS THREE LETTERS TOO, AND THE MISSING GLYPHS WERE OURS
+
+The note beside it read: abcjs composes `sfz` from `s`, `f` and `z`, and "this repo's
+Bravura table has no single-letter `s` or `z` to name." True of the table — and the table
+is GENERATED from a list in `scripts/gen-glyphs.mjs` that simply never asked for them.
+SMuFL names them `dynamicSforzando` and `dynamicZ`.
+
+**The fourth time on this branch that a note naming a cause is the reason the row stopped
+being read** (the `G8` breve, the `extra-class` accent, the notehead `data-name`, this).
+
+### 2b.7 `avoidCollisionAbove` — AN INNER NOTE PUSHES BOTH ENDS OF A SLUR
+
+    if (maxInnerHeight > this.startY && maxInnerHeight > this.endY)
+      this.startY = this.endY = maxInnerHeight - 1
+
+(`tie-element.js:216-227`.) BOTH ends move, to the SAME value, and only when the inner note
+clears both — which is why it is one number and not a per-end clamp. `layout()` applies it
+after `calcSlurY` on every drawn slur; **`getYBounds` does NOT call it**, so the RESERVE is
+untouched and only the drawing moves.
+
+`internalNotes[i].highestVert` is the per-pitch value from `abstract-engraver.js:696-717`:
+its own `verticalPos`, except that a LONE note — `pp === 1`, so both the
+top-when-stem-down and bottom-when-stem-up tests pass — takes the chord's top and adds 6
+when its stem is UP and it is shorter than a whole note.
+
+`visual-selection-01`'s `(bfdf)` is the case: the beam rule puts its ends at 10.0444, the
+inner `d` reaches 11, so abcjs draws the whole curve at 10 and ours sat **0.17px** high on
+the LAST slur of a 202k-byte file.
+
+---
+
+## 3.5 WHAT THE TABLE LOOKS LIKE NOW — 22 rows, and what each one is
+
+Read `/tmp/abcts-svg-bytes-ranked.txt` for the live version. As of this checkpoint:
+
+**Named and measured, in §3 above:** `visual-parsing-06`/`-07` (§3.1, the per-LINE forced
+stem — the last flag of a three-line tune), `visual-svg-02-staffwidth-12` (§3.3, three
+`[M:]` in one measure — **confirmed by counting: abcjs draws 3 `staff-extra
+time-signature`, we draw 1**), `visual-transpose-04` (§3.3c, the chord lane, 20px),
+`visual-misc-12` (§3.3g, `beambr1`'s literal split array).
+
+**The ROOT-DIMENSION ULP FAMILY — 6 fixtures, one cause.** `visual-directives-01` and
+`synth-timing-05` (a `clefs.G` y), `visual-transpose-output-04` (root `width`),
+`visual-transpose-05`, `visual-options-01` and `visual-tablature-23` (root `height`).
+**Measured this session on `synth-timing-05`**: system 1's walked origin is abcjs's own
+number exactly — `15 + 7.56 + 33 + 7.56 + 0` then `3.875 × 13.724387096774194` — and
+system 2's is not, because a system carrying a MID-TUNE block takes the
+`originAdvances = [flat]` arm: one number where abcjs spends four `moveY`s
+(`57.057`, `3.78`, `23.27`, `34.033`) and then `3.875 × 14.044387096774194` inside the
+staff group. **The top block already walks abcjs's eight adds; the mid-tune block does
+not**, and that is the whole of this family.
+
+**Still unread:** `synth-flattener-17` (a grace beam's `d`), `svg-per-line-01` (a hairpin
+drawn where abcjs draws a slur — an `otherchildren` ORDER question), `visual-tablature-15`
+and `visual-mouse-click-01` (an ending bracket at 393.6 vs 393.59),
+`visual-slurs-02` (a barline at 80.68 vs 80.69), `visual-multi-voice-02` (a staff line at
+414.24 vs 414.23), `synth-flattener-11` (a `!slide!` curve bulging the wrong way),
+`synth-flattener-28` (a `flags.u8th` x ULP), `visual-layout-07` (an accidental 2 pitch
+out), `visual-svg-per-line-02-scaled` (a stem edge at 264.39 vs 264.4),
+`visual-selection-01` (`W:` needs a `<g data-name="unalignedWords">` — `addMultiLine` takes
+the ARRAY branch and pushes `{startGroup}`, `{move: spacing.info}` and one `richText` per
+line, `bottom-text.js:37-62`).
+
+
+---
+
 ## 4. THE RATCHET
 
 `tests/svg-bytes.test.ts`'s `PASSING` names all 145 byte-exact fixtures. It caught nothing
@@ -899,6 +1042,16 @@ what §2.4 turned on. **vitest swallows `console.log`**, so a probe run has to g
 - **A RULE THAT IS ALREADY OBEYED BY ONE OF TWO FUNCTIONS IS A HALF-RULE.** `fontHeightOf`
   had the box padding and `textWidth` did not; landing it on both was worse than landing it
   on neither.
+- **A ULP IN AN x IS A WALL, NOT A SMALL DEFECT.** The clef octave marker's last bit sat at
+  byte 6931 of 85865 on two fixtures; closing it took both to 51404. Rank the table by what
+  a row BLOCKS, not by how wrong the number looks.
+- **A CONSTRUCTED OFFSET IS BUILT, NEVER DERIVED** — the `PlacedGlyph.dx` rule, and this
+  session found three more sites obeying it and three not. When a byte row is a pure ULP in
+  an x, ask FIRST whether the offset is recovered as `g.x - el.x`.
+- **A NOTE THAT SAYS "…AND IT BELONGS IN `ABCJS-DIFFERENCES.md`" IS NOT AN ENTRY IN IT.**
+  Two rows this session were divergences recorded only at the code site — the tremolo's
+  shape and `sfz`'s precomposed glyph — so neither the doc nor the `DIVERGENT` list knew,
+  and the ratchet could not see them. Grep the source for prose promising a doc entry.
 - **AND THE ONE FROM §2.6, WHICH THIS BRANCH KEEPS RELEARNING**: a comment that explains why
   a derivation is safe is the reason nobody re-measures it. `writtenNote`'s said the source
   text was unnecessary, and it had been wrong on every lowercase-with-comma note in the
