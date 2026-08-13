@@ -6828,9 +6828,17 @@ function layoutCurves(
         y1: anchor.pitchY + spacesOfPitch(3),
         x2,
         y2: anchor.pitchY + spacesOfPitch(1),
-        bulge: -Math.max(ENGRAVE.curveMinBulge, (x2 - x1) * ENGRAVE.curveBulgeRatio),
-        midThickness: LINE_WEIGHTS.tieMidpoint,
-        kind: 'tie',
+        // **AND IT BOWS THE WAY `calcTieDirection` SAYS, WHICH IS ABOVE.** A slide's
+        // `TieElem` carries no `voiceNumber`, so `this.voiceNumber === 0` takes the first
+        // arm and `above` is TRUE (`tie-element.js:54-65`); ours bowed the other way, so
+        // `synth-flattener-11` wrote `C 477.45 90.15 …` against abcjs's `C 483.02 95.9 …`.
+        bulge: Math.max(ENGRAVE.curveMinBulge, (x2 - x1) * ENGRAVE.curveBulgeRatio),
+        // …**AND IT IS DRAWN AS A SLUR**, because `isTie` is recomputed from the anchors
+        // and a slide's two BLANKS sit at `yPos2 - 1` and `yPos2 + 1` — different pitches,
+        // so neither arm of the test fires (`draw/tie.js:39-42`, `decoration.js:49-57`).
+        // That decides the 1.5 rather than 1.2 lift and the `slur` name together.
+        midThickness: LINE_WEIGHTS.slurMidpoint,
+        kind: 'slur',
       })
     }
   })
