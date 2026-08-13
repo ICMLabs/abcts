@@ -785,6 +785,36 @@ Porting it means carrying abcjs's `split` array through to the emitter rather th
 expressing it as runs — our beam model has one `[x1,x2]` per level per run and cannot say
 this. One fixture, and the last 200 bytes of it.
 
+
+**MEASURED IN FULL, IMPLEMENTED, AND REVERTED (2026-08-12b) — TWO NUMBERS ARE NOT OURS.**
+
+abcjs's own final array on `visual-misc-12`, printed at the push and at the close:
+
+    SPLIT      i 1  index 0  auxX 45  xPos [24.810000000000002, 45.6]  elemW 9.81
+               splitBefore [45]  asc false
+    SPLITFINAL [45, 24.810000000000002, 35.79, 40]  endX 40
+
+`drawBeam` walks that in PAIRS (`draw/beam.js:11-20`), so the level-1 beam is
+`(45 → 24.81)` — **backwards over the previous note** — then `(35.79 → 40)`, and the run's
+own stub is a third segment. The infrastructure to draw it is small: a `split` array on the
+beam line and a loop in the emitter interpolating each pair's y along the whole beam's
+slope. That part was written and worked.
+
+**WHAT DOES NOT RECONCILE IS `calcXPos`'s OPERANDS.** With `asc === false` it returns
+`[starthead.x, endhead.x + 0.6]`, and abcjs's pair is `[24.81, 45.6]` — so its
+`elems[0]`'s head sits at **24.81** and `elems[1]`'s at **45**. Our `StemInfo.headX` for the
+same two members is **15** and **23.79**, and 15 is right by the MAIN beam, which runs
+`15 → 96.81` off `[starthead.x, endhead.x + 0.6]` in both engines. One notehead width
+separates the two readings and nothing in the trace says which head abcjs is taking.
+
+**AND THE `+= elem.w` GUARD DOES NOT FIRE THOUGH IT READS AS THOUGH IT MUST.**
+`if (split[split.length - 1] >= xPos[0]) xPos[0] += elem.w` with `split = [45]` and
+`xPos[0] = 24.81` — yet the final array keeps 24.81. Reproducing the guard puts the first
+segment at 34.62 and the fixture further out.
+
+So: the SHAPE is settled and two operands are not. Do not re-derive the shape; get
+`calcXPos`'s two heads printed with their `parent.x` and `dx` first.
+
 ### 3.3h A BEAMED STEM'S ANCHOR IS 0.005px SHORT — located, not fixed
 
 `visual-svg-per-line-02` prints a stem as `M 265 … L 264.39 …` where abcjs writes `265` and
