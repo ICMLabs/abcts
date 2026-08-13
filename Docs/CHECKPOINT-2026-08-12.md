@@ -19,7 +19,7 @@ on stale runs before finding out what it was.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 0 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 1 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 1 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **20 of 171**, best 56731 | 49 of 171 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **20 of 171**, best 51404 | 49 of 171 |
 
 `DIVERGENT` is still EMPTY. **151 fixtures are byte-exact and all 151 are RATCHETED**, and
 `visual-selection-01` — 202,156 bytes, the corpus's largest — is one of them.
@@ -964,6 +964,48 @@ so two levels ending on the same note come out 2 then 1.
 than by measuring the fixture: the level count was already right and the run structure had
 never been asked about.
 
+
+### 2b.10 THE LYRIC LANE IS SPENT IN PITCH, AND ITS MISSING HALF WAS THE PER-VOICE DROP
+
+**§3.2 IS CLOSED.** `staff.bottom -= (lyricHeightBelow + margin)` where `lyricHeightBelow`
+is `lyricDim.height / STEP` plus `spacing.vocal / STEP` — so the DIVISION is of the LANE,
+not of the accumulated y (`set-upper-and-lower-elements.js:50-54`,
+`abstract-engraver.js:777`).
+
+Spending the lane ALONE was tried twice and recorded twice as costing
+`ave-verum-corpus`, `multi-voice-lyrics-two-voices` and `visual-multi-voice-01` exactly
+18.84px — ONE lyric block — under the note *"porting the lane without the per-voice diff is
+half a rule"*. It was, and the diff is:
+
+    child.pitch -= child.voiceNumber * child.lyricHeightBelow    // :170-173
+    bottom = Math.min(element.bottom, child.pitch)               // :174
+    …
+    staff.bottom -= diff                                         // :82, per VOICE
+
+**AND THE REASON THE OLD FORM WORKED IS THE REASON THE TWO TERMS ARE NOT SEPARABLE.** Ours
+took a `max` against the LAST VERSE'S BASELINE and divided the delta back; that baseline
+already carried the per-voice drop, because `anchorLyrics` puts it there
+(`voiceIndex * goldenTextHeight(size)`). So one derivation held BOTH terms and the other
+held NEITHER — which is exactly why spending half of it was a 18.84px regression and looked
+like the lane being wrong.
+
+The port: `anchorLyrics` stamps `voice` on each lyric text (the field already existed on
+`PlacedText`), the extent gathers `lyricVoiceDrop = max(voice × blockHeight / STEP)`, and
+the bottom takes `lower(lyricLanePitch + margin + lyricVoiceDrop)` — abcjs's own two
+subtractions, in pitch.
+
+`visual-multi-voice-02` goes from byte 38733 to **48187 of 48279** and
+`visual-tablature-23` from 153 to **9585 of 11740**; `pixel-parity` stays 0 of 120 and the
+harvested corpus 0 of 174. **AND ALL FOUR OF `multi-voice-02`'s STAFF ORIGINS ARE NOW
+abcjs's OWN DOUBLES** — 107.982, 214.87900000000002, 346.438, 453.335 — where the fourth
+was 453.33500000000004 before.
+
+Not reproduced, and no fixture separates it: abcjs's `diff` also carries
+`element.bottom - staff.bottom`, the element's own overhang below the staff's lowest point,
+and takes the LAST such element rather than the deepest. Every fixture's lyric-bearing
+element IS its lowest. A control with a low stem on a voice whose lyric is not the deepest
+would name it.
+
 ---
 
 ## 3.5 WHAT THE TABLE LOOKS LIKE NOW — 22 rows, and what each one is
@@ -993,6 +1035,16 @@ not**, and that is the whole of this family.
 accidental of both engines: the four treble ones are byte-identical and the BASS staff's two
 key flats are 7.75px low, which is exactly the treble-vs-bass `verticalPos` split. Read
 §3.3b's six-control ladder before touching it.
+
+**THE 0.01 ROWS ARE NOT THE STAFF ORIGIN.** `visual-multi-voice-02` (barline bottom 445.59
+vs 445.58), `visual-slurs-02` (barline top 80.68 vs 80.69) and `visual-tablature-15` /
+`visual-mouse-click-01` (an ending bracket at 393.6 vs 393.59) all straddle a `roundNumber`
+boundary — `parseFloat(x.toFixed(2))` on a value whose last bits differ. **Measured after
+§2b.10: all four of `multi-voice-02`'s staff origins are abcjs's own doubles**, so the
+residual is downstream of the origin, in the element's own y. `calcY` is
+`this.y - ofs * spacing.STEP` and the bar branch is
+`printStem(renderer, x, linewidth + lineThickness, y, bartop ? bartop : calcY(pitch2))`
+(`draw/relative.js:61`) — instrument THAT rather than the walk.
 
 **Still unread:** `svg-per-line-01` (a hairpin drawn where abcjs draws a slur — an
 `otherchildren` ORDER question, and note the SAME TUNE is byte-exact when not split per
