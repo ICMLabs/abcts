@@ -7127,6 +7127,8 @@ function layoutTuplets(
    * the down side, which is 0.49 pitch of the tuplet number's y.
    */
   beamLines: readonly PlacedLine[] = [],
+  /** `abcjs-strict` — which glyph table the middle member's declared box is read from. */
+  strict = true,
 ): {
   lines: PlacedLine[]
   texts: PlacedText[]
@@ -7352,16 +7354,45 @@ function layoutTuplets(
     // `anchor1.parent.top` at the ends is the whole note. Probed on the same triplet:
     // abcjs reads a middle of 6.04 where our stem-tip reading said 12.00, and the six
     // pitches of difference fired the flattening override abcjs never reaches.
-    const middle = members.slice(1, -1).map((m) => ({
-      // A middle member contributes its NOTEHEAD's declared box — `pitch ± thickness/2`,
-      // see `ENGRAVE.noteheadHalfHeight` — not the anchor's curve-padded one. That
-      // 0.0444 of a pitch is what `multi-voice-triplet-brackets` was out by at both ends.
-      top: m.top + ENGRAVE.spacePerStep - ENGRAVE.noteheadHalfHeight,
-      bottom: m.bottom - ENGRAVE.spacePerStep + ENGRAVE.noteheadHalfHeight,
-    }))
+    /**
+     * **A MIDDLE MEMBER CONTRIBUTES ITS OWN NOTEHEAD'S DECLARED BOX, IN PITCH** —
+     * `middleElems[i]` is the head's `RelativeElement` and its `top` is
+     * `pitch + symbolHeightInPitches(symbol) / 2` (`layout/triplet.js:41-44`,
+     * `relative-element.js:22-24`).
+     *
+     * TWO things were wrong and only one of them was written down. The note here said the
+     * box is `pitch ± thickness/2` — right — and then read `ENGRAVE.noteheadHalfHeight`,
+     * which is the QUARTER's `noteheads.quarter` and nothing else. abcjs's own probe on
+     * `visual-tablature-15` reports `pitch=10, top=11.049290322580646`, a half-box of
+     * 1.04929: `noteheads.half` publishes `h: 8.132` where the quarter publishes `8.094`,
+     * so an open head declares 0.0098 of a pitch more. And the whole thing was computed in
+     * y and divided back, which is the round trip §3 names.
+     *
+     * Both are gone: the box is the member's OWN glyph and the arithmetic is abcjs's —
+     * `thickness = h / STEP` first, then `pitch + thickness / 2`.
+     */
+    const table = glyphsFor(strict)
+    const headOf = (m: NoteAnchor): number =>
+      (table.get(
+        elements[m.element]?.glyphs.find(
+          (g) => g.role !== 'grace' && g.name.startsWith('notehead'),
+        )?.name ?? 'noteheadBlack',
+      )?.declaredHeight ?? 0) / ENGRAVE.spacePerStep
+    const middle = members.slice(1, -1).map((m) => {
+      // `anchor.top` is the head's own pitch padded by one step for curves, so the head
+      // sits one step inside it — which is the same `- 1` the y form already carried, and
+      // it divides an exact multiple of `spacePerStep` rather than an accumulated sum.
+      // `m.pitchStep` is NOT it: that is the chord's FIRST written pitch and abcjs's
+      // `middleElems[i]` is one specific head.
+      const thickness = headOf(m)
+      return {
+        topPitch: pitchOf(m.top) - 1 + thickness / 2,
+        bottomPitch: pitchOf(m.bottom) + 1 - thickness / 2,
+      }
+    })
     if (middle.length > 0) {
       if (up) {
-        const highest = Math.max(0, ...middle.map((e) => pitchOf(e.top))) + 4
+        const highest = Math.max(0, ...middle.map((e) => e.topPitch)) + 4
         if (highest > startNote || highest > endNote) {
           startNote = highest + 3
           endNote = highest + 3
@@ -7374,7 +7405,7 @@ function layoutTuplets(
         // corpus fixture had a low middle note that binds; `multi-voice-triplet-brackets`
         // does, and without the height its bracket sat 4 pitch high.
         const lowest =
-          Math.min(0, ...middle.map((e) => pitchOf(e.bottom) - ENGRAVE.relativeElementHeight)) - 3
+          Math.min(0, ...middle.map((e) => e.bottomPitch - ENGRAVE.relativeElementHeight)) - 3
         if (lowest < startNote && lowest < endNote) {
           startNote = Math.min(lowest, startNote) - 2
           endNote = Math.min(lowest, endNote) - 2
@@ -10407,7 +10438,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         return kind === 'crescendo' || kind === 'diminuendo'
       }
       const hasHairpin = systemAnchors.some((a) => a.event.decorations.some(isHairpin))
-      const tuplets = layoutTuplets(systemAnchors, elements, beams)
+      const tuplets = layoutTuplets(systemAnchors, elements, beams, strict)
       /**
        * **A TIE THAT CROSSES A SYSTEM BREAK RESERVES ON THE RECEIVING SIDE.** abcjs splits
        * it into TWO `TieElem`s, one per line, each with a null anchor
