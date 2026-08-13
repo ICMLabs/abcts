@@ -19,9 +19,10 @@ on stale runs before finding out what it was.
 | Pixel targets | `abcts-pixel-ranked` | **0 of 120** | 0 of 120 |
 | Element timings | — | 1 of 13 (abcjs's own quirk, NAMED) | 1 of 13 |
 | DOM contract | — | **1 of 25**, 24 slugs RATCHETED | 1 of 25 |
-| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **22 of 171**, best 200883 | 49 of 171 |
+| **SVG bytes** | **`abcts-svg-bytes-ranked`** | **20 of 171**, best 56731 | 49 of 171 |
 
-`DIVERGENT` is still EMPTY. **149 fixtures are byte-exact and all 149 are RATCHETED.**
+`DIVERGENT` is still EMPTY. **151 fixtures are byte-exact and all 151 are RATCHETED**, and
+`visual-selection-01` — 202,156 bytes, the corpus's largest — is one of them.
 
 The 26 that remained at the first checkpoint classified **13 STRUCTURAL / 13 ULP** — §3.4.
 Seven more closed after it; §2b is those, and §3.5 is what the table looks like now.
@@ -921,6 +922,48 @@ when its stem is UP and it is shorter than a whole note.
 inner `d` reaches 11, so abcjs draws the whole curve at 10 and ours sat **0.17px** high on
 the LAST slur of a 202k-byte file.
 
+### 2b.8 THE `W:` BLOCK WEARS ITS OWN GROUP, AND A BLANK LINE IS DRAWN AS A SPACE
+
+Two rules, both at the tail of `visual-selection-01`.
+
+`addMultiLine`'s ARRAY branch pushes `{ startGroup: groupName }` before its rows where its
+STRING branch does not (`bottom-text.js:37-62`) — so `W:`, the one field `simplifyMetaText`
+does NOT join into a single string, is the only one that wears a
+`<g data-name="unalignedWords">`. `notes` and `history` are joined and wear nothing.
+
+And **`renderText` rewrites blank lines at DRAW time, on the JOINED string**:
+
+    text = params.name === 'free-text'
+      ? params.text.replace(/^[ \t]*\n/gm, ' \n')
+      : params.text.replace(/\n\n/g, "\n \n")
+    text = text.replace(/^\n/, "\xA0\n")
+
+(`draw/text.js:41-48`.) The `/g` is NON-OVERLAPPING, so three consecutive blank lines get a
+space on the first and third and nothing on the second — doing it per row would space all
+of them. `free-text` takes the other arm and `svg.js` then skips its empties outright.
+
+Worth one byte, and it was the last of 202,156.
+
+### 2b.9 A GRACE GROUP'S DEEPER BEAMS RUN ONLY OVER THE GRACES THAT HAVE THEM
+
+`layoutBeam` calls `createAdditionalBeams(elems, asc, beam, isGrace, dy)` — **the same
+function the ordinary beams take** (`layout/beam.js:168-258`), `isGrace` changing nothing
+but `sy`. So a grace group whose durations differ takes PARTIAL auxiliary beams, with the
+lone-note stub and its four-way side rule, exactly as an ordinary group does.
+
+Ours drew every level across the whole group, which is right only when every grace is the
+same length — **every rung of the ladder that named the level COUNT (§2.18 of
+`-08-11b`), and none that could name this**. `{B2c/d/}` is the case: one eighth and two
+thirty-seconds, so abcjs's second and third beams start at the SECOND grace and ours
+started at the first, 10px left.
+
+And the flush order is DEEPEST FIRST — `for (var j = auxBeams.length - 1; j >= 0; j--)` —
+so two levels ending on the same note come out 2 then 1.
+
+**§3.3f IS CLOSED BY THIS**, and it closed by asking what a NAMED abcjs function does rather
+than by measuring the fixture: the level count was already right and the run structure had
+never been asked about.
+
 ---
 
 ## 3.5 WHAT THE TABLE LOOKS LIKE NOW — 22 rows, and what each one is
@@ -944,16 +987,21 @@ system 2's is not, because a system carrying a MID-TUNE block takes the
 staff group. **The top block already walks abcjs's eight adds; the mid-tune block does
 not**, and that is the whole of this family.
 
-**Still unread:** `synth-flattener-17` (a grace beam's `d`), `svg-per-line-01` (a hairpin
-drawn where abcjs draws a slur — an `otherchildren` ORDER question), `visual-tablature-15`
-and `visual-mouse-click-01` (an ending bracket at 393.6 vs 393.59),
-`visual-slurs-02` (a barline at 80.68 vs 80.69), `visual-multi-voice-02` (a staff line at
-414.24 vs 414.23), `synth-flattener-11` (a `!slide!` curve bulging the wrong way),
-`synth-flattener-28` (a `flags.u8th` x ULP), `visual-layout-07` (an accidental 2 pitch
-out), `visual-svg-per-line-02-scaled` (a stem edge at 264.39 vs 264.4),
-`visual-selection-01` (`W:` needs a `<g data-name="unalignedWords">` — `addMultiLine` takes
-the ARRAY branch and pushes `{startGroup}`, `{move: spacing.info}` and one `richText` per
-line, `bottom-text.js:37-62`).
+**CLOSED SINCE:** `visual-selection-01` (§2b.7, §2b.8) and `synth-flattener-17` (§2b.9).
+
+**`visual-layout-07` IS §3.3b AND NOTHING ELSE** — measured this session by comparing every
+accidental of both engines: the four treble ones are byte-identical and the BASS staff's two
+key flats are 7.75px low, which is exactly the treble-vs-bass `verticalPos` split. Read
+§3.3b's six-control ladder before touching it.
+
+**Still unread:** `svg-per-line-01` (a hairpin drawn where abcjs draws a slur — an
+`otherchildren` ORDER question, and note the SAME TUNE is byte-exact when not split per
+line), `visual-tablature-15` and `visual-mouse-click-01` (an ending bracket at 393.6 vs
+393.59), `visual-slurs-02` (a barline at 80.68 vs 80.69), `visual-multi-voice-02` (a staff
+line at 414.24 vs 414.23), `synth-flattener-11` (a `!slide!` curve bulging the wrong way —
+`closeDecoration`'s two blank anchors and a `fixedY` `TieElem`, `decoration.js:49-57`),
+`synth-flattener-28` (a `flags.u8th` x ULP), `visual-svg-per-line-02-scaled` (a stem edge at
+264.39 vs 264.4).
 
 
 ---
