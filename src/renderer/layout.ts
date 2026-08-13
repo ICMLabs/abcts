@@ -14114,25 +14114,88 @@ function layoutGraces(
        * `yAt(beamStartX + inset) + 1 pitch` to `yAt(beamEndX) + 1 pitch` to the hundredth.
        */
       const graceStep = LINE_WEIGHTS.beamStep * ABCJS_RATIO.graceBeamStepScale
-      const graceLevels = Math.max(
-        1,
-        ...event.graceNotes.map(
-          (p) => noteGlyph(rational(p.length.numerator, p.length.denominator * 16))?.flags ?? 1,
-        ),
+      /**
+       * …**AND A DEEPER LEVEL RUNS ONLY OVER THE GRACES THAT HAVE IT.** `layoutBeam` calls
+       * `createAdditionalBeams(elems, asc, beam, isGrace, dy)` — the SAME function the
+       * ordinary beams take (`layout/beam.js:168-258`), `isGrace` changing nothing but
+       * `sy`. So a group whose durations differ takes PARTIAL auxiliary beams, with the
+       * lone-note stub and its four-way side rule, exactly as an ordinary group does.
+       *
+       * Ours drew every level across the whole group, which is right only when every grace
+       * is the same length — every rung of the ladder that named the level COUNT, and none
+       * that could name this. `{B2c/d/}` is the case: one eighth and two thirty-seconds, so
+       * abcjs's second and third beams start at the SECOND grace and ours started at the
+       * first, 10px left.
+       *
+       * **AND THE FLUSH ORDER IS DEEPEST FIRST** — `for (var j = auxBeams.length - 1;
+       * j >= 0; j--)` (`:205`) — so two levels ending on the same note come out in the
+       * order 2, 1. Sorted here by (where the run ends, then depth) for the same reason.
+       */
+      const graceFlags = event.graceNotes.map(
+        (p) => noteGlyph(rational(p.length.numerator, p.length.denominator * 16))?.flags ?? 1,
       )
+      const graceLevels = Math.max(1, ...graceFlags)
+      const graceDuration = (i: number): number => {
+        const g = event.graceNotes[i]
+        return g === undefined ? 0 : g.length.numerator / g.length.denominator
+      }
+      /** The x `getBarYAt` is sampled at — the head's right edge, the ascending arm. */
+      const graceAt = (i: number): number => graceXOf(i) + graceInk
+      const aux: { end: number; level: number; line: PlacedLine }[] = []
       for (let level = 1; level < graceLevels; level += 1) {
         const drop = level * graceStep
-        graceLines.push({
-          x1: beamStartX,
-          y1: yAt(beamStartX + spaces(ABCJS_PX.flagStemInset)) + thickness / 2 + drop,
-          x2: beamEndX,
-          y2: yAt(beamEndX) + thickness / 2 + drop,
-          thickness,
-          noReserve: true,
-          group: graceBeamGroup,
-          role: 'beam',
-        })
+        let runStart: number | null = null
+        let runEnd: number | null = null
+        const flush = (): void => {
+          if (runStart === null || runEnd === null) return
+          const at = graceAt(runStart)
+          const [x1, x2, sample] =
+            runStart === runEnd
+              ? (() => {
+                  // The four-way side rule, in abcjs's order: first of the group points
+                  // right, last points left, a tie between equal neighbours breaks on index
+                  // parity, and otherwise it points at the LONGER note.
+                  const forward =
+                    runStart === 0
+                      ? true
+                      : runStart === graceFlags.length - 1
+                        ? false
+                        : graceDuration(runStart - 1) === graceDuration(runStart + 1)
+                          ? runStart % 2 === 0
+                          : graceDuration(runStart - 1) < graceDuration(runStart + 1)
+                  const end = forward
+                    ? at + ENGRAVE.beamStubLength
+                    : at - ENGRAVE.beamStubLength
+                  return [at - spaces(ABCJS_PX.flagStemInset), end, at] as const
+                })()
+              : ([at - spaces(ABCJS_PX.flagStemInset), graceAt(runEnd), at] as const)
+          aux.push({
+            end: runEnd,
+            level,
+            line: {
+              x1,
+              y1: yAt(sample) + thickness / 2 + drop,
+              x2,
+              y2: yAt(x2) + thickness / 2 + drop,
+              thickness,
+              noReserve: true,
+              group: graceBeamGroup,
+              role: 'beam',
+            },
+          })
+          runStart = null
+          runEnd = null
+        }
+        for (let i = 0; i < graceFlags.length; i += 1) {
+          if ((graceFlags[i] ?? 1) > level) {
+            runStart ??= i
+            runEnd = i
+          } else flush()
+        }
+        flush()
       }
+      aux.sort((a, b) => a.end - b.end || b.level - a.level)
+      for (const a of aux) graceLines.push(a.line)
     }
 
     // The note sits at abcjs's `abselem.x`, which is the FIRST grace's offset past our
