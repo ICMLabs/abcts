@@ -2459,8 +2459,44 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
 
   // Above the staff, clear of anything reaching over the top line.
   const step = ENGRAVE.tempoStep
-  const baseline = stepToY(step)
   let cursor = x
+  /**
+   * **`%%tempofont` IS REALIZED, AND ITS LANE IS NOT.** `drawTempo`'s three parts are
+   * `renderText`'s elements in `tempofont` (`draw/tempo.js:18-38`), so the directive reaches
+   * the drawn text and every width it advances by — `%%tempofont serif 19 box` draws at
+   * `round(19 * 4/3) = 25`, and `tempofont` is not in `fontTypeCanHaveBox` so the `box` is
+   * ignored.
+   *
+   * **BUT THE STAFF'S TOP MUST NOT MOVE WITH IT.** `TempoElement` sets
+   * `totalHeightInPitches = 6` and `tempoHeightAbove = totalHeightInPitches`
+   * (`elements/tempo-element.js:12-13`), and `set-upper-and-lower-elements.js:209-212`
+   * gives the element `pitch = top = bottom = positionY.tempoHeightAbove` — **a POINT at
+   * the rung**. A first attempt swapped the size and nothing else, and the root height went
+   * from `975.1000000000003` to `970.1000000000003`: both staves rose by exactly the size
+   * delta, because with no declared reserve `verticalExtent` estimates a text's ink from
+   * its own size and the baseline sits a size below the rung. The reserves below are that
+   * point, so the drawing moves and the lane does not.
+   */
+  const tempoSize = fontSizeOf('tempofont')
+  /**
+   * …**AND THE BASELINE FOLLOWS THE SIZE WHILE THE RUNG DOES NOT.** `renderText` adds the
+   * font size to the y it is handed (`draw/text.js:29-30`), so a bigger `%%tempofont` draws
+   * LOWER by the delta while the lane it hangs from is unmoved. Anchoring the rung and
+   * deriving the baseline keeps the default identical — `rungY + defaultSize + bump` IS
+   * `stepToY(tempoStep)` — and moves only what abcjs moves: at 25px the `pre` baseline goes
+   * from 312.79 to abcjs's own 317.79.
+   */
+  const rungY = stepToY(step) - ENGRAVE.tempoTextSize - ENGRAVE.tempoDescenderBump
+  const baseline = rungY + tempoSize + ENGRAVE.tempoDescenderBump
+  /**
+   * …**AND THE WEIGHT IS THE DIRECTIVE'S, WHICH DEFAULTS BOLD ONLY WHEN THERE IS NONE.**
+   * A `%%…font` line REPLACES the font rather than amending it, so `%%tempofont serif 19`
+   * is normal weight — abcjs writes `font-weight="normal"` for it — while a tune that sets
+   * nothing keeps `tempofont`'s bold default.
+   */
+  const tempoFont = SCORE_FONTS.tempofont
+  const tempoBold = tempoFont === undefined ? true : tempoFont.bold === true
+  const tempoItalic = tempoFont?.italic === true
 
   if (tempo.text !== null && tempo.text !== '') {
     texts.push({
@@ -2473,9 +2509,10 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
       noClass: true,
       x: cursor,
       y: baseline,
-      size: ENGRAVE.tempoTextSize,
-      bold: true,
-      italic: false,
+      size: tempoSize,
+      ...faceOf('tempofont'),
+      bold: tempoBold,
+      italic: tempoItalic,
     })
     // Real per-character metrics, like everything else that measures text. This kept the
     // flat half-em-per-character estimate after `textWidth` replaced it everywhere else —
@@ -2486,7 +2523,7 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
     // ("Just get some average number to increase the spacing", `draw/tempo.js:22-23`).
     // Ours added a flat 1 staff space, which is a length nobody chose and which the unit
     // knob is what exposed.
-    const preWidth = textWidth(tempo.text, ENGRAVE.tempoTextSize, 'serifBold')
+    const preWidth = textWidth(tempo.text, tempoSize, 'serifBold')
     cursor += preWidth + preWidth / Math.max(1, tempo.text.length)
   }
 
@@ -2509,7 +2546,7 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
     if (spec !== null) {
       const headAdvance = glyphsFor(strict).advance(spec.head) * ENGRAVE.tempoNoteScale
       const noteY =
-        baseline - ENGRAVE.tempoTextSize - ENGRAVE.tempoDescenderBump + 5 * ENGRAVE.spacePerStep
+        baseline - tempoSize - ENGRAVE.tempoDescenderBump + 5 * ENGRAVE.spacePerStep
       // **THE FLAG AND THE DOTS COME BEFORE THE HEAD, AND THE STEM AFTER IT** — the tempo
       // note goes through `createNoteHead` like any other, which `addRight`s the flag and
       // the dots and leaves the caller to `addHead` (`tempo-element.js:48-58`). Ours drew
@@ -2621,16 +2658,18 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
       noClass: true,
       x: cursor,
       y: baseline,
-      size: ENGRAVE.tempoTextSize,
+      size: tempoSize,
       // BOLD, like the `pre` text beside it: both are `type: 'tempofont'`, whose default
       // is `weight: "bold"` (`parse/abc_parse_directive.js:37`). Ours drew the rate in
-      // normal weight, which the goldens deny in one attribute.
-      bold: true,
-      italic: false,
+      // normal weight, which the goldens deny in one attribute — and a `%%tempofont` line
+      // REPLACES that default, so the flag is the directive's when there is one.
+      ...faceOf('tempofont'),
+      bold: tempoBold,
+      italic: tempoItalic,
     })
     // …and the RATE advances the same way the pre-string does: its own width plus one
     // average character (`draw/tempo.js:33-35`).
-    const postWidth = textWidth(`= ${tempo.bpm}`, ENGRAVE.tempoTextSize, 'serifBold')
+    const postWidth = textWidth(`= ${tempo.bpm}`, tempoSize, 'serifBold')
     cursor += postWidth + postWidth / Math.max(1, `= ${tempo.bpm}`.length)
   }
 
@@ -2648,9 +2687,10 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
       noClass: true,
       x: cursor,
       y: baseline,
-      size: ENGRAVE.tempoTextSize,
-      bold: true,
-      italic: false,
+      size: tempoSize,
+      ...faceOf('tempofont'),
+      bold: tempoBold,
+      italic: tempoItalic,
     })
   }
 
@@ -13160,6 +13200,12 @@ function anchorAboveStaff<
 
   // A uniform shift per item, so a tempo mark's beat-unit glyph and its stem ride along
   // with the `= 120` they belong to rather than being re-derived.
+  /**
+   * **A DECLARED RESERVE IS DELIBERATELY NOT SHIFTED HERE — MEASURED, TRIED, REVERTED.**
+   * Moving `reserve` with `y` reads as the obvious correction once the tempo declares one,
+   * and it costs `visual-options-01` **oy = -5.0** on the harvested gate while leaving the
+   * root height exactly where it was. So the 5px is NOT the reserve travelling; see §3.1.
+   */
   const shiftBy = (el: LayoutElement, shift: number): LayoutElement => ({
     ...el,
     glyphs: el.glyphs.map((g) => ({ ...g, y: g.y + shift })),
@@ -14034,7 +14080,12 @@ function verticalExtent(
     // the reserve without threading it through.
     if (el.type === 'tempo' && el.texts.length > 0) {
       const baseline = Math.min(...el.texts.map((t) => t.y))
-      const declaredTop = baseline - ENGRAVE.tempoTextSize - ENGRAVE.tempoDescenderBump
+      // …**AT THE MARK'S OWN SIZE.** This read `ENGRAVE.tempoTextSize`, the DEFAULT, and
+      // derives the rung by subtracting it from the drawn baseline — so the moment
+      // `%%tempofont` moved that baseline the rung moved with it, and `visual-options-01`'s
+      // page came out 5px short, exactly the size delta. `tempoHeightAbove` is a FLAT 6
+      // PITCH (`elements/tempo-element.js:12-13`), so the rung cannot depend on the font.
+      const declaredTop = baseline - fontSizeOf('tempofont') - ENGRAVE.tempoDescenderBump
       include(declaredTop, declaredTop + ENGRAVE.tempoHeightAbove)
       continue
     }
