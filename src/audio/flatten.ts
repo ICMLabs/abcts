@@ -405,27 +405,24 @@ function resolveRepeats<
   }
 
   /**
-   * A TRAILING `:|` NEEDS A SYNTHETIC `startRepeat` TO CLOSE IT — **and a trailing ending
-   * does not.**
+   * **A TRAILING SECTION OF ANY KIND NEEDS A SYNTHETIC `startRepeat` AFTER IT** —
+   * `else if (lastSection.index+1 < lastElement) sections.push({type:"startRepeat",
+   * index: lastSection.index+1})`, guarded only by the last section not already BEING a
+   * `startRepeat` (`synth/repeats.js:29-33`). abcjs's `index+1` is the element after the
+   * bar, which in measures is the section's own index.
    *
-   * This used to fire on any last section that was not a `startRepeat`, which caught the
-   * `startEnding` of a FINAL ending too: the synthetic section closed the repeat at the
-   * ending's own index and then opened a new one there, so the last ending's measures were
-   * emitted a second time. `CDE|:FG[Ab]|1 Bcd:|2 efg|]` played `efg` at 12000 **and** at
-   * 15000 where abcjs plays it once.
-   *
-   * **NO EVENT-LIST GATE COULD SEE IT.** The audio table is 0 of 72 and the MIDI file is
-   * byte-exact, and neither has a case shaped `|1 … :|2 … |]` where the second ending is the
-   * LAST measure. It was named by the flattener's BACK-ANNOTATION — a third surface over
-   * the same walk, whose per-element `[3000, 9000]` arrays make a doubled pass visible as a
-   * doubled entry rather than as more notes nobody counted.
-   *
-   * The `endRepeat` arm is load-bearing: removing it reds four cases.
+   * **IT WAS NARROWED TO `endRepeat` ONCE AND THAT WAS HALF A FIX.** Firing it on a final
+   * `startEnding` made the last ending's measures come out TWICE — but only because the
+   * emitter then filled the ending's missing `end` with `lastIndex`. abcjs leaves it
+   * UNDEFINED and `duplicateSpan`'s `for (i = start; i <= undefined; i++)` runs zero
+   * times, so the pass has no ending at all. The two halves are one rule; with both in
+   * place `CDE|:FG[Ab]|1 Bcd:|2 efg|]` plays `efg` once, and `|:CDE|1,3FGA:|2,4cde|]`
+   * plays abcjs's `CDE FGA · CDE · CDE FGA · CDE cde` — seven bars, not eight.
    */
   const lastSection = sections[sections.length - 1]
   if (
     lastSection !== undefined &&
-    lastSection.type === 'endRepeat' &&
+    lastSection.type !== 'startRepeat' &&
     lastSection.index <= lastIndex
   ) {
     sections.push({ type: 'startRepeat', index: lastSection.index })
@@ -457,9 +454,13 @@ function resolveRepeats<
             current.endings[current.endings.length] = { start: -1, end: -1 }
           }
           instructions.push(current)
-          let lastUsed = current.common.end ?? -1
+          // **AN UNRESOLVED ENDING POISONS THE GAP TEST, AND THAT IS abcjs's ANSWER.**
+          // `lastUsed = Math.max(lastUsed, ending.end)` over an `undefined` end is NaN, and
+          // `NaN < section.index - 1` is FALSE — so no gap span is inserted at all. A `?? -1`
+          // here would invent one.
+          let lastUsed: number = current.common.end ?? -1
           for (const e of current.endings ?? []) {
-            if (e !== undefined) lastUsed = Math.max(lastUsed, e.end ?? -1)
+            if (e !== undefined) lastUsed = e.end === undefined ? Number.NaN : Math.max(lastUsed, e.end)
           }
           if (lastUsed < section.index - 1) {
             instructions.push({ common: { start: lastUsed + 1, end: section.index - 1 } })
@@ -516,7 +517,10 @@ function resolveRepeats<
       for (const ending of r.endings) {
         if (ending === undefined) continue
         span(r.common.start, end)
-        if (ending.start >= 0) span(ending.start, ending.end ?? lastIndex)
+        // …AND AN ENDING WITH NO `end` EMITS NOTHING. `duplicateSpan`'s
+        // `for (i = start; i <= end; i++)` with `end === undefined` runs zero times
+        // (`synth/repeats.js:165`), so the pass takes the common span alone.
+        if (ending.start >= 0 && ending.end !== undefined) span(ending.start, ending.end)
       }
     }
   }

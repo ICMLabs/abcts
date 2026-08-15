@@ -46,14 +46,16 @@ const CASES: Case[] = DIRS.flatMap((dir) =>
 ).filter((c) => c.kind === 'elements')
 
 /**
- * `el-four-endings` is the one OPEN row and it is left out on purpose — see the ranked
- * table's output. `|1,3 … :|2,4 …` is a corner where abcjs's OWN answer is idiosyncratic:
- * `repeats.js` leaves the final ending's `end` undefined and `duplicateSpan` then emits
- * nothing for it, so abcjs plays `[CDE FGA][CDE][CDE FGA][CDE cde]` — a second pass with no
- * ending at all. Ours plays the four passes the sparse array describes. Measured, named, and
- * not guessed at.
+ * **`el-four-endings` IS CLOSED — the last open row in this repo.** `|1,3 … :|2,4 …` is a
+ * corner where abcjs's own answer is idiosyncratic and it is reproduced rather than
+ * corrected: `repeats.js` leaves the final ending's `end` undefined, because the synthetic
+ * trailing `startRepeat` skips any ending that STARTS where it sits, and `duplicateSpan`'s
+ * `for (i = start; i <= undefined; i++)` then runs zero times. So abcjs plays
+ * `[CDE FGA][CDE][CDE FGA][CDE cde]` — seven bars, one pass with no ending at all — where
+ * the sparse array reads as four full passes.
  */
 const PASSING: readonly string[] = [
+  'el-four-endings',
   'of-11-8',
   'of-repeated-sections',
   'el-double-repeat',
