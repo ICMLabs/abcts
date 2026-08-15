@@ -1959,7 +1959,28 @@ export function noteGlyph(notated: Rational): NoteGlyphSpec | null {
  */
 function dotGlyphs(
   count: number,
-  x: number,
+  /**
+   * **THE ELEMENT'S OWN x**, because abcjs builds the whole offset first and adds it once:
+   * `addRight(new RelativeElement("dots.dot", notehead.w + dotshiftx - 2 + 5 * dot, …))`
+   * with `child.x = x + this.dx` (`create-note-head.js:54`,
+   * `relative-element.js:124-125`). This took the DOT's x already summed, so
+   * `((base + w + shift) + 3) + (i - 1) * 5` where abcjs forms
+   * `base + (((w + shift) - 2) + 5 * i)` — the same value and a different double, which
+   * `S3-note-syntax-tune17` reports as `651.4589246557051` against `651.458924655705`.
+   *
+   * `headx` is NOT in it. abcjs passes the dot's dx off `notehead.w` alone, so an
+   * accidental — which moves the head right and the element's own x left — never reaches
+   * the dot. Probed: `^C3/2` gives `headx 0` and `dx 12.81`, the same as `C3/2`.
+   */
+  baseX: number,
+  /** `notehead.w + dotshiftx` — the head's DECLARED width plus the chord's own shift. */
+  dxBase: number,
+  /**
+   * abcjs's `- 2`, the term that sits between the head's width and the per-dot step.
+   * The other modes fold their own gap in here as `dotGap - dotSpacing`, so that
+   * `offset + spacing * i` reproduces what `dotGap + (i - 1) * spacing` gave.
+   */
+  offset: number,
   step: number,
   taken: Set<number>,
   /**
@@ -1984,7 +2005,13 @@ function dotGlyphs(
   // coordinates in the other order — `C15/8` on `S3-note-syntax-tune2` wrote 157.57 where
   // abcjs writes 162.57, and no positional gate can express a swap.
   for (let i = count; i > 0; i--) {
-    out.push({ ...glyphAt('augmentationDot', x + (i - 1) * spacing, dotStep), role: 'dot' })
+    // **AND THE OFFSET IS CARRIED, NOT DERIVED.** Placement is `at + (g.dx ?? g.x - el.x)`,
+    // and `(x + a) - x` is not `a`: without a `dx` the dot's 12.81 came back as
+    // 12.810000000000002 once the solve had moved the element, which is
+    // `S3-note-syntax-tune17`'s and `happy-birthday`'s whole difference. The flag beside it
+    // has carried its own `dx` since `create-note-head.js:47` was ported.
+    const dx = dxBase + offset + spacing * i
+    out.push({ ...glyphAt('augmentationDot', baseX + dx, dotStep), dx, role: 'dot' })
   }
   return out
 }
@@ -3108,13 +3135,21 @@ function layoutRest(
       // the triage rather than by a fixture: `dotGlyphs` took `ENGRAVE.dotSpacing` as a
       // DEFAULT PARAMETER, so the gated call site passed abcjs's value and this one
       // silently did not. That is the leak shape the whole audit is about, in one line.
-      const dotX =
-        x +
-        glyphsFor(strict).width(spec.name) +
-        (strict ? spaces(ABCJS_PX.dotOffset + ABCJS_PX.dotSpacing) : ENGRAVE.dotGap)
       const step = strict ? spaces(ABCJS_PX.dotSpacing) : ENGRAVE.dotSpacing
+      // `dxBase` is the REST glyph's width — abcjs's `notehead.w`, since a rest reaches
+      // `createNoteHead` with its own `c`. See `dotGlyphs` for why the base is the
+      // element's x rather than a summed `dotX`.
+      const dotOff = strict ? spaces(ABCJS_PX.dotOffset) : ENGRAVE.dotGap - ENGRAVE.dotSpacing
       glyphs.push(
-        ...dotGlyphs(spec.dots, dotX, spec.step + restPitchShift(sharedStaffStem), new Set(), step),
+        ...dotGlyphs(
+          spec.dots,
+          x,
+          glyphsFor(strict).width(spec.name),
+          dotOff,
+          spec.step + restPitchShift(sharedStaffStem),
+          new Set(),
+          step,
+        ),
       )
       // …AND THE DOT WIDENS THE ELEMENT, exactly as it does on a note. It is an `addRight`
       // child, so `w = max(w, dx + getSymbolWidth("dots.dot"))` — abcjs probes a dotted
@@ -3125,9 +3160,9 @@ function layoutRest(
       // one only ever knew `restWidth`. `S4-bars-repeats` X:403 is eleven rests and two
       // notes, and one dotted rest 6.45 narrow moved both heads.
       dotRight =
-        dotX -
-        x +
-        (spec.dots - 1) * step +
+        glyphsFor(strict).width(spec.name) +
+        dotOff +
+        step * spec.dots +
         (strict ? glyphsFor(strict).width('augmentationDot') : step)
     }
     glyphs.push(restGlyph)
@@ -3807,15 +3842,19 @@ function layoutNoteheads(
     // its right edge: `notehead.w + dotshiftx - 2 + 5 * dot` (`create-note-head.js:50-53`).
     // Ours was a 0.35-space gap and a 0.45-space step — 2.71 and 3.49px against 3 and 5.
     const dotStep = strict ? spaces(ABCJS_PX.dotSpacing) : ENGRAVE.dotSpacing
-    const dotX = strict
-      ? rightmost + spaces(ABCJS_PX.dotOffset + ABCJS_PX.dotSpacing)
-      : rightmost + ENGRAVE.dotGap
+    const dotOff = strict ? spaces(ABCJS_PX.dotOffset) : ENGRAVE.dotGap - ENGRAVE.dotSpacing
+    // `notehead.w + dotshiftx` — the head's declared width plus the chord's own shift,
+    // formed as ONE offset onto the element's x. See `dotGlyphs`.
+    const dxBase = Math.max(0, ...offsetAt) + headInk
     const taken = new Set<number>()
     for (const step of steps) {
       const pos = chordPosOf(step)
       pendingDots.set(
         step,
-        dotGlyphs(spec.dots, dotX, step, taken, dotStep).map((g) => ({ ...g, ...pos })),
+        dotGlyphs(spec.dots, headX, dxBase, dotOff, step, taken, dotStep).map((g) => ({
+          ...g,
+          ...pos,
+        })),
       )
     }
     // THE ROD IS THE LAST DOT'S RIGHT EDGE, not a count times a spacing. abcjs's dots are
@@ -3824,9 +3863,9 @@ function layoutNoteheads(
     // plus one dot's width. Multiplying the count by the new 5px step instead put an extra
     // 1.5px of rod on every dotted note and cost `happy-birthday` 1.8px of spread.
     dotWidth =
-      dotX -
-      headX +
-      (spec.dots - 1) * dotStep +
+      dxBase +
+      dotOff +
+      dotStep * spec.dots +
       (strict ? glyphsFor(strict).width('augmentationDot') : dotStep)
   }
 
