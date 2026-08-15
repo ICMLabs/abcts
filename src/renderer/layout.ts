@@ -8001,7 +8001,10 @@ function curveReserves(
       if (from !== undefined) add(from, anchor, 'slur')
     }
     for (let n = 0; n < anchor.event.slurStarts; n++) open.push(i)
-    if (anchor.event.tiedToNext) {
+    // …**AND A PARTLY-TIED CHORD RESERVES FOR ITS TIED HEADS**, the same set the drawing
+    // takes — see `Chord.tiedPitches`. `voice.addOther(tie)` runs whatever the tie's
+    // extent, so a reserve missing here is a staff 4 pitch short of abcjs's.
+    if (anchor.event.tiedToNext || anchor.tiedHeads?.some(Boolean) === true) {
       const next = anchors[i + 1]
       if (next !== undefined) for (const [a, b] of tiePairs(anchor, next)) add(a, b, 'tie')
     }
@@ -14933,6 +14936,22 @@ function anchorBelowStaff<
     ).bottom -
     ENGRAVE.dynamicBelowReserve * ENGRAVE.spacePerStep
 
+  /**
+   * **AND ONE MARK IN `ragtime-nightingale` LANDS SIX PITCH SHORT OF THIS — MEASURED, NOT
+   * FIXED.** The shift lands a mark on `inkBottom` only if its raw y IS
+   * `stepToY(dynamicBelowStep)`; that file's third `mp` is built six pitch off it.
+   *
+   * abcjs draws it at PITCH -7 — `DYN mp x 425.49 pitch -7 calcY 3557.435503514904` — which
+   * is the staff's own ink bottom before the lane is taken: `BOTEND bottom -14 volBelow -7
+   * specialY {"v":6,"d":0,"c":0,"l":0}`, one lane and no hairpin beside it. Ours draws it at
+   * pitch -1, `3540.7755035149044` against abcjs's `3564.0255035149044`.
+   *
+   * The EXTENT is not the culprit: our `PROBE staff` for that staff reads `bottom=-8`, which
+   * is abcjs's -14 in the probe's +6 convention. So either the raw lane this mark was built
+   * on is not `dynamicBelowStep`, or the stack put it a lane deeper than abcjs's single
+   * `positionY.volumeHeightBelow`. It is the LAST byte of the 41-fixture gate: everything
+   * before 1,137,504 of 2,007,011 agrees.
+   */
   const shift = inkBottom - stepToY(ENGRAVE.dynamicBelowStep)
   const moveLine = (l: PlacedLine): PlacedLine =>
     isDyn(l.role, l.y1) ? { ...l, y1: l.y1 + shift, y2: l.y2 + shift } : l
