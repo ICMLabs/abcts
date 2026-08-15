@@ -1090,9 +1090,16 @@ export interface PlacedText {
    * SIBLING of its text inside the element's own group rather than a second group.
    */
   readonly inGroup?: boolean
+  /**
+   * The rect a `%%…box` row draws — its LEFT EDGE and its two sizes, already rounded as
+   * `renderText` rounds them. **Its TOP is not carried**: `rect.y` is `Math.round(y)`
+   * where `y` is the same `params.y` the baseline is built from (`draw/text.js:29-30`,
+   * `:78`), so the emitter recovers it as `baseline - size - padding` and it travels with
+   * the text through every shift. Carrying it cost a mid-tune block 150px, the staff
+   * origin the text got and the rect did not.
+   */
   readonly boxRect?: {
     readonly x: number
-    readonly y: number
     readonly width: number
     readonly height: number
   }
@@ -4246,6 +4253,9 @@ function barNumberText(
     // style did not, because only the size was ever read from the score.
     bold: SCORE_FONTS.measurefont?.bold === true,
     italic: SCORE_FONTS.measurefont?.italic ?? true,
+    // …AND SO IS THE FACE. `%%measurefont Helvetica 7 box` draws in Helvetica; the same
+    // sentence as the weight and style, and the same reason it was missed.
+    ...faceOf('measurefont'),
     anchor: 'middle',
     // The bar number is `renderText(…, true)` — `alreadyInGroup` — so its rect is the
     // text's SIBLING inside the bar element's group (`draw/relative.js:39`).
@@ -5630,7 +5640,16 @@ function noteText(
       size,
       bold: false,
       italic: false,
-      ...(SCORE_FONTS.annotationfont?.box === true ? { box: true } : {}),
+      // `%%annotationfont Times-Roman 15 box` NAMES ITS FACE, exactly as `%%gchordfont`
+      // does one branch up — `getFontAndAttr` reads the whole object, not just the size.
+      ...faceOf('annotationfont'),
+      ...(SCORE_FONTS.annotationfont?.box === true
+        ? {
+            box: true,
+            // `getBBox()`'s two figures, as the chord symbol's box already carries.
+            boxSize: { width: markWidth(a.text, size, false), height: goldenTextHeight(size) },
+          }
+        : {}),
       // AN ANNOTATION SHARES THE CHORD LANE. `RelativeElement` gives a `type: "text"`
       // with no pitch the very same `chordHeightAbove` a `type: "chord"` gets
       // (`relative-element.js:60-76`), and `setUpperAndLowerRelativeElements` handles
@@ -5667,7 +5686,13 @@ function noteText(
       dataName: 'annotation',
       font: 'annotationfont',
       reserve: pointReserve(y),
-      ...(SCORE_FONTS.annotationfont?.box === true ? { box: true } : {}),
+      ...faceOf('annotationfont'),
+      ...(SCORE_FONTS.annotationfont?.box === true
+        ? {
+            box: true,
+            boxSize: { width: markWidth(a.text, size, false), height: goldenTextHeight(size) },
+          }
+        : {}),
     })
   })
 
@@ -7668,13 +7693,17 @@ function layoutTuplets(
     const y = beamed ? beamY() : yOfPitch(startNote + (endNote - startNote) / 2)
 
     const label = String(number)
-    const size = ENGRAVE.tupletTextSize
+    // `%%tripletfont cursive 39 box` draws the number at `round(39 * 4/3)` = 52px. The
+    // constant here IS the 11pt default, so a tune that sets nothing is unmoved.
+    const size = fontSizeOf('tripletfont')
     const centre = (first.left + last.right) / 2
 
     texts.push({
       text: label,
       dataName: label,
       font: 'tripletfont',
+      // …and the FACE `%%tripletfont` names, as with every other `renderText` element.
+      ...faceOf('tripletfont'),
       noClass: true,
       group: tupletGroup,
       // **`generate('triplet ' + durationClass)`**, where `durationClass` is
@@ -7705,8 +7734,11 @@ function layoutTuplets(
       // the y. The volta hook again, and this time both halves are in place.
       y: y + ENGRAVE.tupletTextDrop,
       size,
-      bold: false,
-      italic: true,
+      // …and the WEIGHT and STYLE the directive set. A `%%<type>font` REPLACES the whole
+      // font object (`abc_parse_directive.js:200-240`), so `%%tripletfont cursive 39 box`
+      // draws UPRIGHT where the 11pt default is italic.
+      bold: SCORE_FONTS.tripletfont?.bold === true,
+      italic: SCORE_FONTS.tripletfont?.italic ?? true,
     })
 
     reserves.push({ top: y - ENGRAVE.spacePerStep, bottom: y + 2 * ENGRAVE.spacePerStep })
@@ -10660,6 +10692,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           measure: openVolta.measure,
           dataName: openVolta.label,
           font: 'repeatfont',
+          // `%%repeatfont Helvetica 13 box` names a FACE — `renderText` reads the whole
+          // font object, and `repeatfont` is not in `fontTypeCanHaveBox`, so the `box` is
+          // ignored while the face is not.
+          ...faceOf('repeatfont'),
           noClass: true,
           x: openVolta.startX + ENGRAVE.voltaTextIndent,
           y: y + ENGRAVE.voltaTextDrop + ENGRAVE.voltaTextSize,
@@ -12075,7 +12111,6 @@ function topTextBlock(
   const boxIn = (
     type: AbcFontType,
     x: number,
-    rowTop: number,
     text: string,
     anchor: 'start' | 'middle' | 'end',
   ): Partial<PlacedText> => {
@@ -12088,7 +12123,6 @@ function topTextBlock(
       x: x + (anchor === 'start' ? pad : anchor === 'end' ? -pad : 0),
       boxRect: {
         x: Math.round(x - delta),
-        y: Math.round(rowTop),
         width: Math.round(width + pad * 2),
         height: Math.round(goldenTextHeight(size) + pad * 2),
       },
@@ -12137,7 +12171,7 @@ function topTextBlock(
       y: y + titleSize + boxPad('titlefont'),
       size: titleSize,
       ...faceIn('titlefont'),
-      ...boxIn('titlefont', centre, y, plainText(title), 'middle'),
+      ...boxIn('titlefont', centre, plainText(title), 'middle'),
       /**
        * **NOT BOLD.** abcjs's default `titlefont` is
        * `{face: "Times New Roman", size: 20, weight: "normal", style: "normal"}`
@@ -12173,7 +12207,7 @@ function topTextBlock(
       italic: false,
       anchor: 'middle',
       ...faceIn('subtitlefont'),
-      ...boxIn('subtitlefont', centre, y, plainText(subtitle), 'middle'),
+      ...boxIn('subtitlefont', centre, plainText(subtitle), 'middle'),
     })
     advanceText(subtitle, sizeOf('subtitlefont'), boxOf('subtitlefont'))
   }
@@ -12205,7 +12239,7 @@ function topTextBlock(
         ...styleIn('infofont', false, true),
         anchor: 'start',
         ...faceIn('infofont'),
-        ...boxIn('infofont', ENGRAVE.marginX, y, rhythm, 'start'),
+        ...boxIn('infofont', ENGRAVE.marginX, rhythm, 'start'),
       })
     }
     // abcjs emits composer and origin as ONE text, the origin parenthesised.
@@ -12221,7 +12255,7 @@ function topTextBlock(
         ...styleIn('composerfont', false, true),
         anchor: 'end',
         ...faceIn('composerfont'),
-        ...boxIn('composerfont', ENGRAVE.marginX + width, y, right, 'end'),
+        ...boxIn('composerfont', ENGRAVE.marginX + width, right, 'end'),
       })
     }
     // THE ROW ADVANCES BY WHICHEVER FIELD MOVES IT, not by the taller of the two.
@@ -12253,7 +12287,7 @@ function topTextBlock(
       ...styleIn('composerfont', false, true),
       anchor: 'end',
       ...faceIn('composerfont'),
-      ...boxIn('composerfont', ENGRAVE.marginX + width, y, author, 'end'),
+      ...boxIn('composerfont', ENGRAVE.marginX + width, author, 'end'),
     })
     advanceText(authorRich, sizeOf('composerfont'), boxOf('composerfont'))
   }
@@ -12289,7 +12323,6 @@ function topTextBlock(
         ? {
             boxRect: {
               x: Math.round(ENGRAVE.marginX),
-              y: Math.round(y),
               width: Math.round(textWidth(partOrder, partsSize, 'serif') + pad * 2),
               height: Math.round(goldenTextHeight(partsSize) + pad * 2),
             },
@@ -12426,6 +12459,45 @@ function appendFreeText(
    */
   const boxOf = (type: AbcFontType): number =>
     fonts[type]?.box === true ? sizeOf(type) * ENGRAVE.fontBoxPadding * 4 : 0
+  /**
+   * **A MID-TUNE ROW TAKES `renderText`'s BOXED BRANCH TOO** — the same group, the same
+   * padding on both axes, the same deleted class and the same four rules
+   * (`draw/text.js:48-81`). `topTextBlock`'s `boxIn` is this rule for the TOP block; a
+   * `%%text` or mid-tune `T:` between two systems took the plain path, so
+   * `visual-options-01` drew neither its `%%textfont … box` nor its `%%subtitlefont … box`.
+   */
+  const boxIn = (
+    type: AbcFontType,
+    x: number,
+    width: number,
+    height: number,
+    anchor: 'start' | 'middle' | 'end',
+  ): Partial<PlacedText> => {
+    if (fonts[type]?.box !== true) return {}
+    const pad = sizeOf(type) * ENGRAVE.fontBoxPadding
+    const delta = anchor === 'middle' ? width / 2 + pad : anchor === 'end' ? width + pad * 2 : 0
+    return {
+      x: x + (anchor === 'start' ? pad : anchor === 'end' ? -pad : 0),
+      boxRect: {
+        x: Math.round(x - delta),
+        width: Math.round(width + pad * 2),
+        height: Math.round(height + pad * 2),
+      },
+    }
+  }
+  /** The `padding` a boxed row adds to its BASELINE (`draw/text.js:57`). */
+  const boxPad = (type: AbcFontType): number =>
+    fonts[type]?.box === true ? sizeOf(type) * ENGRAVE.fontBoxPadding : 0
+  /** The FACE the directive named, and the weight and style it replaced wholesale. */
+  const fontIn = (type: AbcFontType): Partial<PlacedText> => {
+    const font = fonts[type]
+    if (font === undefined) return {}
+    return {
+      ...(font.face === '' ? {} : { face: font.face }),
+      bold: font.bold,
+      italic: font.italic,
+    }
+  }
   for (const [blockIndex, block] of blocks.entries()) {
     const tag: { nonMusicIndex?: number } = tagNonMusic ? { nonMusicIndex: blockIndex } : {}
     if (block.separator !== undefined) {
@@ -12455,11 +12527,19 @@ function appendFreeText(
            * (`free-text.js:37`), which is 335. Ours gave both 335.
            */
           x: centre + ENGRAVE.marginX,
-          y: y + size,
+          y: y + size + boxPad('subtitlefont'),
           size,
           bold: false,
           italic: false,
           anchor: 'middle',
+          ...fontIn('subtitlefont'),
+          ...boxIn(
+            'subtitlefont',
+            centre + ENGRAVE.marginX,
+            textWidth(line, size, 'serif'),
+            goldenTextHeight(size),
+            'middle',
+          ),
         })
       }
       spend(goldenTextHeight(size) + boxOf('subtitlefont'))
@@ -12481,11 +12561,25 @@ function appendFreeText(
         // `width / 2` with no padding at all (`free-text.js:11`, `:37`) — the same split
         // the top block's rows take, and this row was placed at 0.
         x: block.align === 'center' ? centre : ENGRAVE.marginX,
-        y: y + textSize + index * ENGRAVE.freeTextLineStep,
+        y: y + textSize + index * ENGRAVE.freeTextLineStep + boxPad('textfont'),
         size: textSize,
         bold: false,
         italic: false,
         anchor: block.align === 'center' ? 'middle' : 'start',
+        ...fontIn('textfont'),
+        // ONE rect for the whole block: a string `%%text` is ONE row and therefore one
+        // `<text>` with a tspan per line (`free-text.js:11`), so the box is measured over
+        // all of them and drawn once. Single-line — every boxed case in the corpus — this
+        // is the row's own ink.
+        ...(index === 0
+          ? boxIn(
+              'textfont',
+              block.align === 'center' ? centre : ENGRAVE.marginX,
+              Math.max(...block.lines.map((l) => textWidth(l, textSize, 'serif'))),
+              goldenTextHeight(textSize) + (block.lines.length - 1) * ENGRAVE.freeTextLineStep,
+              block.align === 'center' ? 'middle' : 'start',
+            )
+          : {}),
       })
     })
     spend(
@@ -12553,6 +12647,11 @@ function bottomTextBlock(
    */
   const boxOf = (type: AbcFontType): number =>
     fonts[type]?.box === true ? sizeOf(type) * ENGRAVE.fontBoxPadding * 4 : 0
+  /** The face the directive named, when it named one. */
+  const faceIn = (type: AbcFontType | undefined): { face?: string } => {
+    const face = type === undefined ? undefined : fonts[type]?.face
+    return face === undefined || face === '' ? {} : { face }
+  }
   /** `addTextIf`: one row, then `round(height * 1.1 * lines)` — one rounding for all. */
   const addText = (
     value: RichText,
@@ -12562,6 +12661,8 @@ function bottomTextBlock(
     middle: boolean,
     box = 0,
     groupName?: string,
+    /** Which `%%<type>font` drew it — its FACE, weight and style, not just its size. */
+    fontType?: AbcFontType,
   ): void => {
     const text = plainText(value)
     /**
@@ -12575,17 +12676,46 @@ function bottomTextBlock(
       move(goldenTextHeight(size) + box)
       return
     }
+    // A BOXED ROW MOVES IN BY ONE PADDING ON BOTH AXES AND OWNS FOUR RULES — the same
+    // `renderText` branch every other boxed text takes (`draw/text.js:48-81`). `box` is
+    // `padding * 4`, the measured height's own share.
+    const pad = box / 4
     texts.push({
       text,
       role: 'title',
       dataName,
       ...(extra.length > 0 ? { extraLines: extra, middleBaseline: middle } : {}),
-      x: ENGRAVE.marginX,
-      y: y + size,
+      ...(box === 0
+        ? {}
+        : {
+            boxRect: {
+              x: Math.round(ENGRAVE.marginX),
+              // **THE WIDEST NON-EMPTY TSPAN, AND ONE EXTRA LINE PER TSPAN AFTER THE
+              // FIRST** — `h + (nonEmptyCount - 1) * fontSize * 1.2` and the max width
+              // over the same set, which is the generator's patched `getBBox`
+              // (`dump-svg.js:106-128`). An EMPTY line counts for neither.
+              width: Math.round(
+                Math.max(0, ...[text, ...extra].filter((l) => l !== '').map((l) => textWidth(l, size, 'serif'))) +
+                  pad * 2,
+              ),
+              height: Math.round(
+                goldenTextHeight(size) +
+                  Math.max(0, [text, ...extra].filter((l) => l !== '').length - 1) *
+                    size *
+                    ABCJS_RATIO.textLineStep +
+                  pad * 2,
+              ),
+            },
+          }),
+      x: ENGRAVE.marginX + pad,
+      y: y + size + pad,
       size,
-      bold: false,
-      italic: false,
+      bold: fontType === undefined ? false : (fonts[fontType]?.bold ?? false),
+      italic: fontType === undefined ? false : (fonts[fontType]?.italic ?? false),
       anchor: 'start',
+      // `%%wordsfont Georgia 13` draws the `W:` block in Georgia — `getFontAndAttr` reads
+      // the whole font object, and this row took the emitter's hard-coded default.
+      ...faceIn(fontType),
       ...(groupName === undefined ? {} : { groupName }),
     })
     move(
@@ -12610,7 +12740,7 @@ function bottomTextBlock(
     // …AND THE ARRAY BRANCH OPENS A GROUP OF ITS OWN — `rows.push({ startGroup:
     // 'unalignedWords' })` before the rows (`bottom-text.js:48`). See `PlacedText.groupName`.
     for (const line of metadata.unalignedWords)
-      addText(line, [], words, 'unalignedWords', false, 0, 'unalignedWords')
+      addText(line, [], words, 'unalignedWords', false, 0, 'unalignedWords', 'wordsfont')
     // TWO raw heights, and abcjs spends them as two separate rows.
     move(goldenTextHeight(words))
     move(goldenTextHeight(words))
@@ -12618,7 +12748,7 @@ function bottomTextBlock(
 
   const single = (value: RichText | null, prefix: string): void => {
     if (value === null || plainText(value) === '') return
-    addText(prefix + plainText(value), [], history, 'description', false, historyBox)
+    addText(prefix + plainText(value), [], history, 'description', false, historyBox, undefined, 'historyfont')
   }
   const multi = (value: readonly RichText[], preface: string): void => {
     if (value.length === 0) return
@@ -12646,7 +12776,7 @@ function bottomTextBlock(
       .replace(/\n\n/g, '\n \n')
       .replace(/^\n/, '\u00A0\n')
       .split('\n')
-    addText(rows[0] ?? preface, rows.slice(1), history, 'description', true, historyBox)
+    addText(rows[0] ?? preface, rows.slice(1), history, 'description', true, historyBox, undefined, 'historyfont')
   }
 
   single(metadata.book, 'Book: ')
@@ -12667,7 +12797,11 @@ function freeTextBlock(
   const texts: PlacedText[] = []
   const rules: { y: number; width: number; index?: number }[] = []
   const advances: number[] = []
-  const height = appendFreeText(texts, blocks, 0, width / 2, fonts, rules, false, advances)
+  // **EACH BLOCK IS ITS OWN `tune.lines` ENTRY AND THEREFORE ITS OWN GROUP** — `draw()`
+  // opens one `<g>` per `abcLine.nonMusic` and runs `classes.incrLine()` for each
+  // (`draw/draw.js:53-58`). A `%%text` followed by a mid-tune `T:` is two lines, two
+  // groups; ours put every block between two systems into one.
+  const height = appendFreeText(texts, blocks, 0, width / 2, fonts, rules, true, advances)
   // Centred on the STAFF width, as `drawSeparator` centres it, and one pixel thick.
   const lines: PlacedLine[] = rules.map((r) => ({
     x1: (width - r.width) / 2,
@@ -13216,10 +13350,19 @@ function anchorAboveStaff<
   /** A chord or annotation is placed ABSOLUTELY in its lane, not shifted from where it
    * was drawn: the two kinds start from different steps, so one shift cannot serve both. */
   const chordAt = (t: PlacedText): number =>
+    /**
+     * **THE RUNG IS SHARED AND THE BASELINE IS DERIVED FROM IT, ONE MARK AT A TIME.**
+     * `renderText` adds `hash.font.size` — the item's OWN size — to the y it is handed
+     * (`draw/text.js:29-30`), and the lane offset is spent BEFORE that add
+     * (`:13-15`). So two marks in one lane share the RUNG, not the baseline, and their
+     * baselines differ by their sizes. This started from `chordY`, the TALLEST mark's
+     * baseline, which put a `%%annotationfont` 15pt mark 13px below abcjs's beside a 25pt
+     * `%%gchordfont` chord symbol — the same defect `%%tempofont` had one lane over.
+     */
     // THE MARK'S OWN SIZE, not the default's. This read `ENGRAVE.chordTextSize`, so a
     // `%%gchordfont` at any size other than the 12pt default stacked its second lane at
     // the default's step — the same defect the annotation lane had one function over.
-    (chordY ?? 0) + (laneOf.get(t) ?? 0) * t.size * ABCJS_RATIO.laneLineStep
+    (chordTopY ?? 0) + t.size + (laneOf.get(t) ?? 0) * t.size * ABCJS_RATIO.laneLineStep
   const partShift = partY === null ? 0 : partY - stepToY(ENGRAVE.partStep)
   const tempoShift = tempoY === null ? 0 : tempoY - stepToY(ENGRAVE.tempoStep)
 

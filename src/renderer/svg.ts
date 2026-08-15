@@ -788,6 +788,32 @@ const ABCJS_STYLE =
 
 const attrIfAny = (cls: string): string => (cls ? ` class="${cls}"` : '')
 
+/**
+ * **A `%%…box` FONT DRAWS FOUR FILLED RULES ROUND ITS ROW.** `renderText` lays a rect that
+ * `Svg.rect` writes as a PATH — "so that it can be hollow and the color changes with fill
+ * instead of stroke" (`draw/text.js:78`, `svg.js:112-142`), and the doubled spaces in the
+ * `d` are `lines.join(" ")` over four pieces that each already end with one.
+ *
+ * **THE TOP IS THE BASELINE LESS THE SIZE AND ONE PADDING** — abcjs writes
+ * `rect.y = Math.round(y)` off the same `params.y` the baseline is built from
+ * (`draw/text.js:29-30`, `:57`, `:78`) — so it is recovered from the drawn text rather
+ * than carried, and a block's rect travels with its rows through every shift.
+ */
+const boxRulesPath = (
+  r: NonNullable<PlacedText['boxRect']>,
+  baseline: number,
+  size: number,
+): string => {
+  const y1 = Math.round(baseline - size * (1 + ABCJS_RATIO.fontBoxPadding))
+  const [x1, x2, y2] = [r.x, r.x + r.width, y1 + r.height]
+  const h = (yy: number): string => `M ${x1} ${yy} l ${x2 - x1} 0 l 0 1  l ${x1 - x2} 0  z `
+  const v = (xx: number, from: number, to: number): string =>
+    `M ${xx} ${from} l 0 ${to - from} l 1 0  l 0 ${from - to}  z `
+  // abcjs-debt: §3 — the doubled spaces are deliberate. Docs/ABCJS-DEBT.md
+  const d = [h(y1), h(y2), v(x2, y1, y2), v(x1, y2, y1)].join(' ')
+  return `<path d="${d}" stroke="none" data-name="box"></path>`
+}
+
 const glyphDefs = new Map<GlyphName, string>()
   const defId = (name: GlyphName): string => {
     let id = glyphDefs.get(name)
@@ -1249,26 +1275,15 @@ const glyphDefs = new Map<GlyphName, string>()
         const { boxRect: _drop, ...rest } = t
         return { ...rest, noClass: true }
       }
-      const boxPath = (r: NonNullable<PlacedText['boxRect']>): string => {
-        // The rect is already ROUNDED in the layout, as `renderText` rounds it, so these
-        // are integers and `Svg.rect` prints them raw.
-        const [x1, y1, x2, y2] = [r.x, r.y, r.x + r.width, r.y + r.height]
-        const h = (yy: number): string => `M ${x1} ${yy} l ${x2 - x1} 0 l 0 1  l ${x1 - x2} 0  z `
-        const v = (xx: number, from: number, to: number): string =>
-          `M ${xx} ${from} l 0 ${to - from} l 1 0  l 0 ${from - to}  z `
-        // abcjs-debt: §3 — the doubled spaces are deliberate. Docs/ABCJS-DEBT.md
-        // `lines.join(" ")` over four pieces that each already END with a space — hence
-        // the doubled space at every joint (`svg.js:130-140`).
-        const d = [h(y1), h(y2), v(x2, y1, y2), v(x1, y2, y1)].join(' ')
-        return `<path d="${d}" stroke="none" data-name="box"></path>`
-      }
+      const boxPath = (t: PlacedText, r: NonNullable<PlacedText['boxRect']>): string =>
+        boxRulesPath(r, t.pageY === undefined ? t.y * PX + oy : t.pageY * PX, t.size * PX)
       const renderRow = (b: { t?: PlacedText; s?: string }): string =>
         b.s !== undefined || b.t === undefined
           ? (b.s ?? '')
           : b.t.boxRect !== undefined
             ? `<g fill="currentColor" data-name="${b.t.dataName ?? ''}">` +
               `${renderRow({ t: stripBox(b.t) })}` +
-              `${boxPath(b.t.boxRect)}</g>`
+              `${boxPath(b.t, b.t.boxRect)}</g>`
             : abcjsText(
               round2(b.t.x * PX),
               // **THE PAGE'S OWN y WHERE THERE IS ONE** — see `PlacedText.pageY`. abcjs
@@ -1295,7 +1310,11 @@ const glyphDefs = new Map<GlyphName, string>()
               options.addClasses !== true
                 ? ''
                 : b.t.nonMusicIndex !== undefined
-                  ? classes.generate('defined-text')
+                  ? // EACH ROW CARRIES ITS OWN `klass` — `nonMusic` passes `row.klass` to
+                    // `renderText` and `getFontAndAttr` runs `classes.generate` on it, so a
+                    // `Subtitle` row is `text subtitle` where a `FreeText` row is
+                    // `defined-text` (`subtitle.js:7`, `free-text.js:11`).
+                    classes.generate(b.t.dataName === 'subtitle' ? 'text subtitle' : 'defined-text')
                   : b.t.dataName !== undefined
                     ? (ABCJS_TEXT_CLASSES[b.t.dataName] ?? '')
                     : '',
@@ -1821,7 +1840,9 @@ const glyphDefs = new Map<GlyphName, string>()
           // `noClass` for an ending, `tripletfont` with `noClass` and `centerVertically` for
           // a triplet (`draw/ending.js:40-49`, `draw/triplet.js:12`). Ours wrote an ad-hoc
           // `<text>` in `serif` with the attributes in another order.
-          const face = text.font === undefined ? undefined : ABCJS_FONT_FACE[text.font]
+          // A `%%repeatfont`/`%%tripletfont` that NAMES a face wins over the type's
+          // default, exactly as it does for a music text — see `PlacedText.face`.
+          const face = text.face ?? (text.font === undefined ? undefined : ABCJS_FONT_FACE[text.font])
           emit(
             face === undefined
               ? `<text${text.anchor === undefined ? '' : ` text-anchor="${text.anchor}"`} ` +
@@ -2279,15 +2300,20 @@ const glyphDefs = new Map<GlyphName, string>()
            */
           const pad = t.size * ABCJS_RATIO.fontBoxPadding
           const bs = t.box === true ? t.boxSize : undefined
+          // The anchor the ATTRIBUTE carries, which is what `renderText` branches on —
+          // `hash.attr["text-anchor"]`, defaulted to `start` a few lines down. An
+          // annotation leaves `t.anchor` undefined and is still start-anchored, so reading
+          // the field raw skipped its padding shift.
+          const anchor = t.anchor ?? 'start'
           const boxDelta =
             bs === undefined
               ? 0
-              : t.anchor === 'middle'
+              : anchor === 'middle'
                 ? bs.width / 2 + pad
-                : t.anchor === 'end'
+                : anchor === 'end'
                   ? bs.width + pad * 2
                   : 0
-          const boxDx = bs === undefined ? 0 : t.anchor === 'start' ? pad : t.anchor === 'end' ? -pad : 0
+          const boxDx = bs === undefined ? 0 : anchor === 'start' ? pad : anchor === 'end' ? -pad : 0
           textParts.push({
             role: t.role,
             dataName: t.dataName,
@@ -2747,12 +2773,16 @@ const glyphDefs = new Map<GlyphName, string>()
      * See `PlacedText.groupName`.
      */
     let openGroup: string | undefined
-    const block = (doc.bottomText ?? []).map((t) =>
-      abcjsText(
+    const block = (doc.bottomText ?? []).map((t) => {
+      const base = round2(t.y * PX + oy)
+      const markup = abcjsText(
         round2(t.x * PX),
-        round2(t.y * PX + oy),
+        base,
         num(t.size * PX),
-        'Times New Roman',
+        // …AND THE FACE A `%%<type>font` NAMES, as every other `renderText` element takes
+        // it. Hard-coded here, so a trailing `%%text` under `%%textfont Verdana 21` drew
+        // in the default.
+        t.face ?? 'Times New Roman',
         t.italic === true,
         t.bold === true,
         t.anchor ?? 'start',
@@ -2763,8 +2793,15 @@ const glyphDefs = new Map<GlyphName, string>()
           : '',
         (t.extraLines ?? []).map(escapeText),
         t.middleBaseline === true,
-      ),
-    ).map((markup, i) => {
+        // A BOXED row's class is DELETED, not emptied (`draw/text.js:58`).
+        t.boxRect !== undefined,
+      )
+      // …and the same group-and-four-rules a boxed row takes anywhere else.
+      return t.boxRect === undefined
+        ? markup
+        : `<g fill="currentColor" data-name="${t.dataName ?? ''}">` +
+          `${markup}${boxRulesPath(t.boxRect, t.y * PX + oy, t.size * PX)}</g>`
+    }).map((markup, i) => {
       const name = (doc.bottomText ?? [])[i]?.groupName
       let out = ''
       if (name !== openGroup) {
