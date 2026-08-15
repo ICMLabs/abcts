@@ -6542,11 +6542,42 @@ function layoutSpanners(
     hairpin(to.system, end.left, to.left, gapAt(split), gapAt(1))
   }
 
-  // A QUEUE per kind, not a single slot. `S1-decorations` writes `!crescendo(!G!<(!G`
-  // and then closes both — the two spellings are the same kind, so a single slot let the
-  // second open overwrite the first and silently lost a hairpin. FIFO rather than a
-  // stack because hairpins on one voice run in sequence; they do not nest, so the first
-  // open belongs to the first close.
+  /**
+   * A QUEUE per kind, not a single slot. `S1-decorations` writes `!crescendo(!G!<(!G`
+   * and then closes both — the two spellings are the same kind, so a single slot let the
+   * second open overwrite the first and silently lost a hairpin. FIFO rather than a
+   * stack because hairpins on one voice run in sequence; they do not nest, so the first
+   * open belongs to the first close.
+   *
+   * **AND abcjs'S SLOT REALLY IS SINGLE, AND IT IS CLOSED AT THE END OF EVERY ABC LINE —
+   * MEASURED IN FULL, NOT FIXED.** `decoration.js:315-364` keeps ONE `startCrescendoX` and
+   * ONE `startDiminuendoX` on the Decoration object, so a second `(` before any `)`
+   * REPLACES the first and that hairpin is never drawn. `endLine(voice)`, called from
+   * `createABCVoice`'s last line (`abstract-engraver.js:280`), closes whatever is still
+   * open at `lastNote(voice.children)` — which despite the name is the line's LAST CHILD,
+   * barline included — and clears the slot. On the next line a `)` with nothing open takes
+   * `firstNote(voice.children)`, and `voice.addChild` runs AFTER `createABCElement`, so on
+   * the line's very first element that list is EMPTY and `anchor1` is null: `drawCrescendo`
+   * then falls back to `left = 0` and draws from the page's left edge.
+   *
+   * `S1-decorations` X:103 writes all four of those cases in six paths. abcjs's own
+   * `ABCJS_CRESC` probe, per direction:
+   *
+   *     left 525.2627500000001  right 684.0000000000001  a1 true   a2 true
+   *     left 0                  right 49.051             a1 false  a2 true
+   *     left 49.051             right 207.78825          a1 true   a2 true
+   *
+   * — the `crescendo(` at 366.53 overwritten and gone, the survivor closed on the barline,
+   * a first-of-line `)` starting at x 0, and a second one starting at the note already
+   * added. Ours draws both opens, runs them to the staff's end at 685, and SPLITS the
+   * crossing hairpin geometrically into two interpolated halves; abcjs makes two whole
+   * hairpins with real mouths.
+   *
+   * Closing it needs the ABC SOURCE LINE, which nothing in `ScoreModel` records — abcjs's
+   * `endLine` fires per `abcline`, and a system is not the same partition once a `\`
+   * continuation or two short lines share one. That is a parser change plus this loop, so
+   * it is written down whole rather than approximated on system boundaries.
+   */
   const open = new Map<string, SpannerSite[]>()
 
   // A REST — a SPACER above all — anchors a hairpin like any other element. abcjs's
