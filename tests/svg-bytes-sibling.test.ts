@@ -120,6 +120,7 @@ const PASSING: readonly string[] = [
   'S5-directives-tune5',
   'S6-keys-tune0',
   'S6-keys-tune1',
+  'S6-keys-tune2',
   'S6-keys-tune3',
   'S6-keys-tune4',
   'S8-layout-tune0',

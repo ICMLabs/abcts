@@ -2470,9 +2470,21 @@ function layoutKeySignature(
   let dx = 0
   const glyphs: PlacedGlyph[] = written.map((w) => {
     const at = x + dx
+    const own = dx
     dx += glyphsFor(strict).advance(w.name) + ENGRAVE.keySignatureGap
     return {
       ...glyphAt(w.name, at, w.step),
+      /**
+       * **…AND IT IS CARRIED TO THE PLACEMENT, NOT RE-DERIVED THERE.** A signature is built
+       * once at the prefix's own x and re-placed wherever the line needs it, and
+       * `placeElement` recovered the offset as `g.x - el.x`. That subtraction is not the
+       * number that went in: a third flat built at `180.7056274847714 + 14.8` comes back out
+       * as `14.800000000000011`, and re-added to a courtesy signature's
+       * `663.4499999999999` it prints 678.25 where abcjs prints 678.2499999999999.
+       * abcjs never subtracts — `child.x = this.x + child.dx` with the same `dx` the
+       * element was constructed from (`relative-element.js:124-125`).
+       */
+      dx: own,
       // A KEY-SIGNATURE ACCIDENTAL RESERVES A DECLARED BOX TOO — abcjs's
       // `{ top: verticalPos + symbolHeightInPitches + fudge, bottom: verticalPos + fudge }`
       // (`create-key-signature.js:25`), with `fudge` a per-accidental constant: -3 for a
@@ -2574,6 +2586,8 @@ function layoutKeyChange(
     // `[K:Eb]` after `K:G` puts abcjs's top line 8.34px lower than ours did with none.
     glyphs.push({
       ...glyphAt(name, x + dx, step),
+      // …AND IT IS CARRIED, not re-derived at placement — see `layoutKeySignature`.
+      dx,
       reserve: keyAccidentalReserve(name, step, strict),
     })
     dx += glyphsFor(strict).advance(name) + ENGRAVE.keySignatureGap
