@@ -1681,7 +1681,8 @@ const glyphDefs = new Map<GlyphName, string>()
               at: b.beamAt ?? 0,
               s:
                 `<path d="${beamPath(members)}" stroke="none" fill="${ink}"` +
-                ` class="${classes.generate('beam-elem d0')}"></path>`,
+                // …and at the element the group hangs off, like any other beam.
+                ` class="${classes.generateAt('beam-elem d0', counters.get((b.beamAt ?? -1) + voiceBase)?.measure ?? 0)}"></path>`,
             })
           }
         }
@@ -1876,7 +1877,14 @@ const glyphDefs = new Map<GlyphName, string>()
             })
             .join('')
           emit(
-            `<g${attrIfAny(classes.generateAt(text?.groupClass ?? name, text?.measure ?? 0))}` +
+            `<g${attrIfAny(
+              classes.generateAt(
+                text?.groupClass ?? name,
+                text?.measureElement === undefined
+                  ? (text?.measure ?? 0)
+                  : (counters.get(text.measureElement + voiceBase)?.measure ?? 0),
+              ),
+            )}` +
               `${fill ? ` fill="${ink}"` : ''} data-name="${name}">`,
           )
           if (d) {

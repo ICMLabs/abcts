@@ -1222,6 +1222,8 @@ export interface PlacedText {
   readonly group?: number
   readonly groupClass?: string
   readonly measure?: number
+  /** …or the ELEMENT whose counters it takes, when only the emitter knows them. */
+  readonly measureElement?: number
   /**
    * Which `%%…font` this text is drawn in.
    *
@@ -8451,7 +8453,14 @@ function layoutTuplets(
       // off the FIRST member's own absolute element (`elements/triplet-element.js:7`) —
       // its SOUNDING duration, so a triplet eighth under `L:1/4` is `d0-167`.
       groupClass: `triplet ${`d${Math.round((elements[first.element]?.durationClass ?? 0) * 1000) / 1000}`.replace(/\./, '-')}`,
-      measure: 0,
+      /**
+       * **A TRIPLET IS `addOther`'d WHEN IT CLOSES**, so its class carries the CLOSING
+       * element's counters: `if (this.triplet && this.triplet.isClosed()) voice.addOther
+       * (this.triplet)` (`abstract-engraver.js:423-427`). `S8-layout-classes-tune5` writes
+       * `abcjs-triplet abcjs-d0-042 abcjs-l0 abcjs-m3 abcjs-mm3`; ours had a hard 0 here
+       * because nothing under the plain gate could tell.
+       */
+      measureElement: last.element,
       // CENTRED ON `xTextPos`, as abcjs's `anchor: "middle"` says (`draw/triplet.js:11`).
       // Ours start-anchored at `centre - width / 2`, which is the same point only when our
       // text metrics agree with the browser's — an approximation with no reason to exist
