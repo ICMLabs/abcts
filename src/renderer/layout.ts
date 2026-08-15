@@ -12591,7 +12591,11 @@ function topTextBlock(
       origin === ''
         ? composerRich
         : typeof composerRich === 'string' && typeof originRich === 'string'
-          ? `${composer === '' ? '' : `${composer} `}(${origin})`
+          ? // **THE SPACE BELONGS TO THE `(`, NOT TO THE COMPOSER.**
+            // `composerLine += ' (' + metaText.origin + ')'` (`top-text.js:49-50`), and
+            // `composerLine` is `''` when there is no `C:` — so a tune with only an `O:`
+            // draws `" (China)"` with a LEADING SPACE. `little swallow` is that tune.
+            `${composer}${' ('}${origin})`
           : [
               ...(typeof composerRich === 'string'
                 ? composer === ''

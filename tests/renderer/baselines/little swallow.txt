@@ -1,7 +1,7 @@
 tune 0
-bounds  width=757.344 height=971.454 top=-15.000
+bounds  width=762.094 height=971.454 top=-15.000
 systems 5
-system 0 width=757.344 originY=0.000
+system 0 width=762.094 originY=0.000
   staff 0 originY=252.752
     staffline 15.000,-7.750 -> 686.695,-7.750 t=0.700
     staffline 15.000,-15.500 -> 686.695,-15.500 t=0.700
@@ -24,7 +24,7 @@ system 0 width=757.344 originY=0.000
       text  350.000,-156.862 size=27.000 "Little Swallow"
       text  350.000,-126.082 size=21.000 "Xi\\vao yàn zi"
       text  350.000,-96.302 size=21.000 "小燕子"
-      text  685.000,-64.742 size=19.000 italic "(China)"
+      text  685.000,-64.742 size=19.000 italic " (China)"
     clef x=15.000 w=24.051
       glyph gClef 20.000,-15.500
     timeSignature x=49.051 w=11.795

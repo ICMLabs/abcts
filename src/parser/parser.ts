@@ -1290,8 +1290,23 @@ class VoiceBuilder {
       verseOfStart.set(line.start, verse + 1)
       while (verses.length <= verse) verses.push(new Map())
       line.syllables.forEach((syllable, offset) => {
-        // `skip` is the absence of a syllable, so it need not be recorded; `melisma`
-        // must be, or the held note becomes indistinguishable from a wordless one.
+        /**
+         * **A `*` IS AN EMPTY SYLLABLE, NOT AN ABSENT ONE — MEASURED, NOT LANDED.**
+         *
+         * This note says a `skip` "need not be recorded", and abcjs's own SVG denies it:
+         * `little swallow`'s `w:` lines carry 19 `*`s and abcjs draws 89 lyric elements
+         * where we draw 70. Each `*` gets a `<text data-name="lyric">` of its own, and its
+         * content falls out of `renderText`'s two rewrites: `addLyric` builds
+         * `lyricStr += syllable + div + "\n"`, so two blank verses give `"\n\n"`, which
+         * `/\n\n/g → "\n \n"` and `/^\n/ → "\xA0\n"` turn into the three tspans
+         * abcjs writes — `&nbsp;`, a space, and an empty one.
+         *
+         * NOT LANDED because it is three pieces, not one: the parser has to keep the
+         * syllable, the lyric emitter has to apply those two rewrites to the JOINED verse
+         * string as `bottomTextBlock` already does for `N:`/`H:`, and the LANE counts
+         * `versesHere` by non-empty text — which 19 new empty lyrics would change. One
+         * row of the sibling byte table.
+         */
         if (syllable.kind !== 'skip') verses[verse]?.set(line.start + offset, syllable)
       })
     }
