@@ -1496,8 +1496,8 @@ system 0 width=700.534 originY=0.000
       line  654.346,-24.025 -> 654.346,-39.525 t=0.600
     bar x=684.534 w=0.600
       line  684.834,-38.750 -> 684.834,-7.750 t=0.600
-system 1 width=734.171 originY=133.079
-  staff 0 originY=60.553
+system 1 width=734.171 originY=131.745
+  staff 0 originY=61.887
     staffline 15.000,-7.750 -> 719.171,-7.750 t=0.700
     staffline 15.000,-15.500 -> 719.171,-15.500 t=0.700
     staffline 15.000,-23.250 -> 719.171,-23.250 t=0.700

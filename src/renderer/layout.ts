@@ -12174,21 +12174,20 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
      * abcjs advances the page by `staffGroup.height * STEP` once the group is drawn
      * (`draw/draw.js:81-82`); the lead went in before the padding, above.
      *
-     * **AND THE SPLIT BETWEEN THIS AND `addStaffPadding` IS OFF ON SOME SYSTEMS, WHICH IS
-     * THE LAST OF THE ULP FAMILY — MEASURED, NOT FIXED.** Printed side by side on
-     * `S3-note-syntax` X:309 with `ABCTS_Y=1` against `ABCJS_MOVEY=1`, the first two
-     * systems agree term for term and the third does not:
+     * **AND THE SPLIT BETWEEN THIS AND `addStaffPadding` WAS OFF, WHICH IS HOW THE LAST
+     * ULP FAMILY WAS FOUND.** Printed side by side on `S3-note-syntax` X:309 with
+     * `ABCTS_Y=1` against `ABCJS_MOVEY=1`, the first two systems agreed term for term and
+     * the third did not:
      *
      *     abcjs   gap 22.751798029556653 -> 274.63679802955664   sys 77.32820197044335 -> 351.965
      *     ours    gap 35.272999999999996 -> 287.158              sys 64.807            -> 351.96500000000003
      *
-     * The two SUM to the same place — 12.521px moves from the system's own height into the
-     * padding and back — so this is **TWO ERRORS CANCELLING**, the sixth time on this
-     * branch, and all that survives is the association. `addStaffPadding` is a TOP-UP
+     * The two SUM to the same place — 12.521px moved from the system's own height into the
+     * padding and back — so it was **TWO ERRORS CANCELLING**, the sixth on this branch, and
+     * all that survived was the association. `addStaffPadding` is a TOP-UP
      * (`staffSeparation - naturalSeparation * STEP`), so a `staff.top` 3.232 pitch short
-     * is made up by the gap: that system is the one full of GRACE groups, whose beamed
-     * stems are deliberately out of the extent (`noReserve`). Find which term of
-     * `staff.top` abcjs has there and the height follows.
+     * is made up by the gap exactly. The 3.232 was a BEAMED GRACE'S STEM — see the
+     * `mainBeamed` re-range in `verticalExtent`.
      */
     pageCursor += system.heightPitch * ENGRAVE.spacePerStep
     return { ...shifted, staves: withAbsolute, originY, absoluteY: systemAbsoluteY, gap }
@@ -14947,10 +14946,23 @@ function verticalExtent(
       const glyph = glyphsFor(strict).get(g.name) ?? GLYPHS[g.name]
       include(g.y + glyph.y, g.y + glyph.y + glyph.height)
     }
+    /**
+     * **AND A BEAMED NOTE'S RANGE IS TAKEN A SECOND TIME, AFTER THE BEAM PASS.**
+     * `layout/voice.js:9-14` re-runs `voice.adjustRange` over every beam's elems once
+     * `layoutBeam` has run, under its own comment — *"The above will change the top and
+     * bottom of the abselem children, so see if we need to expand our range."* A beamed
+     * GRACE's stem is built in that same pass and `parent.addRight(stem)` hangs it on the
+     * MAIN NOTE (`layout/beam.js:117, 143`), so it reaches the staff only when that main
+     * note is itself in a beam and gets re-ranged. A grace beam never does: its `elems` are
+     * the pseudo-objects `{heads, abcelem}` and `adjustRange` reads an undefined `top`.
+     */
+    const mainBeamed = el.lines.some(
+      (l) => l.role === 'stem' && l.beamed === true && l.graceStem !== true,
+    )
     for (const line of el.lines) {
       // DRAWN IN THE LAYOUT PHASE, so it never reached `staff.top` — see `noReserve`. A
       // beamed grace group's stems and its beam are the whole of this case.
-      if (line.noReserve === true) continue
+      if (line.noReserve === true && !(mainBeamed && line.graceStem === true)) continue
       // A STEM reserves one step below its low end — `bottom: p1 - 1` on the stem's
       // RelativeElement (`abstract-engraver.js:762`), `p1` being the low pitch. On an
       // up-stem that end is at the notehead and the head's own box swallows it; on a
