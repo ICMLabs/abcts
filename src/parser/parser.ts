@@ -1770,6 +1770,8 @@ class ScoreBuilder {
   setfont: (LyricFont | undefined)[] = []
   /** Every `%%<type>font` set so far. The renderer defaults an absent entry itself. */
   fonts: Partial<Record<AbcFontType, LyricFont>> = {}
+  /** See `Score.firstLineKeyClef` — a standalone body `K:` read before any music. */
+  firstLineKeyClef: { voiceId: string; clef: Clef } | null = null
   keySourceRange: SourceRange | null = null
   meterSourceRange: SourceRange | null = null
   /** Declaration order is output order — a Map preserves insertion order. */
@@ -1875,6 +1877,15 @@ class ScoreBuilder {
 
   constructor(readonly sourceStartOffset: number) {}
 
+  /**
+   * abcjs's `multilineVars.currentVoice` — the LAST `V:` read, header or body.
+   *
+   * Not `currentVoiceId`, which is where MUSIC lands and stays on the first voice through
+   * a header `V:` block. The two differ exactly where this is needed: after `V:1 … V:4`,
+   * abcjs's `tune.staffNum` is V:4's.
+   */
+  lastVoiceId = DEFAULT_VOICE_ID
+
   /** The voice music currently lands in. Created on demand for tunes with no `V:` at all. */
   get voice(): VoiceBuilder {
     return this.voiceFor(this.currentVoiceId)
@@ -1930,6 +1941,7 @@ class ScoreBuilder {
     const isFirst = this.voices.size === 0
     this.voiceFor(id).explicit = true
     if (isFirst) this.currentVoiceId = id
+    this.lastVoiceId = id
     // `startStaff || staves.length === 0` — the first voice opens a staff whatever it says.
     if (!this.staffOfVoice.has(id)) {
       if (!merge || this.staffCount === 0) this.staffCount += 1
@@ -1951,6 +1963,7 @@ class ScoreBuilder {
     voice.explicit = true
     voice.switchedTo()
     this.currentVoiceId = id
+    this.lastVoiceId = id
   }
 
   get isEmpty(): boolean {
@@ -2041,6 +2054,7 @@ class ScoreBuilder {
       tempo: resolveBeatUnit(this.tempo, this.meter),
       tempoInline: this.tempoInline,
       unitNoteLength: this.unitNoteLength,
+      ...(this.firstLineKeyClef === null ? {} : { firstLineKeyClef: this.firstLineKeyClef }),
       voices: this.orderedVoices().map((v) => {
         // The meter lives on the score, and a voice needs it to pad an empty overlay
         // layer to a full measure's silence.
@@ -2969,6 +2983,19 @@ class Parser {
         const keyStyle = styleModifier(value)
         if (keyStyle !== null) builder.voice.setNoteStyle(keyStyle, inline)
         if (builder.bodyStarted) {
+          /**
+           * **A STANDALONE `K:` BEFORE ANY MUSIC RESTAMPS THE CURRENT VOICE'S STAFF KEY,
+           * AGAINST THE `K:`-CLEF.** `appendStartingElement` lands on
+           * `staff[tune.staffNum].key` while that voice is still empty
+           * (`parse/tune-builder.js:294`), and it is positioned by `multilineVars.clef`,
+           * which only a `K:`'s own `clef=` writes. See `Score.firstLineKeyClef` — the
+           * ladder that pins it is in `CHECKPOINT-2026-08-14.md`.
+           */
+          if (!inline && !builder.musicStarted)
+            builder.firstLineKeyClef = {
+              voiceId: builder.lastVoiceId,
+              clef: clefWith(builder.clef, value),
+            }
           // A style-only K: must not touch the key. `parseKey` reads the first token and
           // falls back to C for anything that is not a key letter, so passing it
           // `style=harmonic` would silently transpose the rest of the tune to C major.

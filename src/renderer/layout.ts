@@ -9721,9 +9721,26 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // only" for free, because the line after that compares equal.
       const lineKey = keyAtMeasure[from] ?? score.key
       const beforeKey = keyBeforeLine[from] ?? score.key
+      /**
+       * **A STANDALONE BODY `K:` POSITIONS ONE STAFF'S SIGNATURE AGAINST THE `K:`-CLEF.**
+       * See `Score.firstLineKeyClef`: `appendStartingElement` overwrites
+       * `staff[tune.staffNum].key` with `fixKey(multilineVars.clef, …)` while that voice is
+       * still empty, so `visual-layout-07`'s BASS staff draws TREBLE-positioned flats — 2
+       * pitch, 7.75px, and everything else on that staff byte-identical. The FIRST line
+       * only: a second music line calls `startNewLine` again and gets its own clef back,
+       * measured on a two-line control.
+       */
+      const keyClef =
+        from === 0 &&
+        score.firstLineKeyClef !== undefined &&
+        (voicesOfStaff.find((m) => m.includes(voiceIndex)) ?? [voiceIndex]).includes(
+          voices.findIndex((v) => v?.id === score.firstLineKeyClef?.voiceId),
+        )
+          ? score.firstLineKeyClef.clef
+          : clef
       const keySig =
-        layoutKeyChange(x, beforeKey, lineKey, clef, strict) ??
-        layoutKeySignature(x, lineKey, clef, strict)
+        layoutKeyChange(x, beforeKey, lineKey, keyClef, strict) ??
+        layoutKeySignature(x, lineKey, keyClef, strict)
       if (keySig !== null) push(keySig)
       /**
        * **AN INLINE `[M:]` BEFORE ANY MUSIC ON THE FIRST LINE IS THAT LINE'S PREFIX.**

@@ -1115,6 +1115,28 @@ export interface Score {
    */
   readonly tempoInline?: boolean
   readonly unitNoteLength: Rational
+  /**
+   * **A STANDALONE `K:` IN THE BODY RESTAMPS ONE STAFF'S KEY SIGNATURE, AGAINST THE
+   * `K:`-CLEF RATHER THAN THAT STAFF'S OWN.**
+   *
+   * `appendStartingElement('key', …, fixKey(multilineVars.clef, multilineVars.key))` lands
+   * on `staff[tune.staffNum].key` when the current voice has no note or bar yet
+   * (`parse/tune-builder.js:294`), and `multilineVars.clef` is written by a `K:`'s own
+   * `clef=` and by NOTHING else — a `V:… clef=bass` never touches it
+   * (`abc_parse_key_voice.js:513`). So a `K:` line written after a `V:` block draws
+   * TREBLE-positioned accidentals on that voice's BASS staff.
+   *
+   * Named here rather than folded into the voice's clef because it is deliberately
+   * narrow, and a six-rung ladder through abcjs pins every edge: only the CURRENT voice's
+   * staff is restamped (staff 0 keeps its own positions), and only the line that was open
+   * when the `K:` was read — a second music line draws bass again. `null` when no such
+   * `K:` exists, which is every tune in both corpora but one.
+   *
+   * ponytail: scoped to the FIRST SYSTEM rather than to abcjs's tune LINE. The two differ
+   * only when the first source line WRAPS, where `wrap_lines.js:50` copies the running key
+   * signature onto the continuation; no fixture does both.
+   */
+  readonly firstLineKeyClef?: { readonly voiceId: string; readonly clef: Clef }
   readonly voices: readonly Voice[]
   /**
    * One entry per STAFF, in top-to-bottom order. Empty when the tune has no
