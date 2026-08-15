@@ -177,7 +177,10 @@ export const SMUFL_TO_ABCJS: Readonly<Record<string, string>> = {
   // Navigation and breath
   segno: 'scripts.segno',
   coda: 'scripts.coda',
-  breathMarkComma: 'scripts.comma',
+  // **`!breath!` DRAWS abcjs's `,`, NOT `scripts.comma`** — `symbolList` maps
+  // `"breath": ","` (`creation/decoration.js:195`), and the two are different outlines in
+  // its own table. `scripts.comma` is in the font and no decoration reaches it.
+  breathMarkComma: ',',
 
   // ── The five abcjs kept out of SMuFL's vocabulary, and they are not out of it ──
   //
@@ -188,7 +191,11 @@ export const SMUFL_TO_ABCJS: Readonly<Record<string, string>> = {
   // `!longphrase!` — the exact class of leak the Bravura ruling calls a defect — and the
   // mark landed up to 11.66px off abcjs's, measured one decoration per control tune.
   //
-  // `scripts.stopped` is abcjs's `+`, which we draw as `brassMuteClosed`.
+  // `scripts.stopped` is abcjs's `+` — `symbolList`'s `"+": "scripts.stopped"`
+  // (`decoration.js:171`) — and it was left UNMAPPED, so strict fell through to BRAVURA's
+  // `pluckedLeftHandPizzicato` with `scale(7.75)` on it. The Bravura ruling calls that a
+  // defect, not a decision, and `S1-decorations-tune2` is where it shows.
+  pluckedLeftHandPizzicato: 'scripts.stopped',
   articStaccatissimoAbove: 'scripts.wedge',
   articStaccatissimoBelow: 'scripts.wedge',
   breathMarkTick: 'scripts.shortphrase',
@@ -199,7 +206,7 @@ export const SMUFL_TO_ABCJS: Readonly<Record<string, string>> = {
 
 /** abcjs glyphs no SMuFL name above claims — its vocabulary, minus what we use. */
 export const UNMAPPED_ABCJS = [
-  'scripts.stopped',
+  'scripts.comma',
   'flags.dgrace',
   'tab.big',
   'tab.tiny',
@@ -209,8 +216,8 @@ export const UNMAPPED_ABCJS = [
   'timesig.perfectum2',
   // Text glyphs abcjs draws inline in chord symbols and annotations — a `,` in a figured
   // bass. abcts sets prose in <text>, so it has no outline for it and needs none. (`+` is
-  // no longer here: an additive meter draws one, so it is mapped from `timeSigPlus`.)
-  ',',
+  // no longer here: an additive meter draws one, so it is mapped from `timeSigPlus`; nor
+  // is `,`, which is what `!breath!` draws.)
   'f',
   'm',
   'p',

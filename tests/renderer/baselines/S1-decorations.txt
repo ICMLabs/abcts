@@ -76,7 +76,7 @@ system 1 width=422.462 originY=164.996
       line  143.214,-9.042 -> 143.214,-34.875 t=1.000
     note@-3 x=176.330 w=42.426
       glyph noteheadBlack 176.330,-11.625
-      glyph breathMarkComma 181.235,-53.056
+      glyph breathMarkComma 179.509,-52.509
       line  185.640,-12.917 -> 185.640,-38.750 t=1.000
     bar x=218.757 w=0.600
       line  219.057,-38.750 -> 219.057,-7.750 t=0.600
@@ -359,11 +359,11 @@ system 6 width=700.000 originY=606.965
       text  53.956,-48.250 size=16.000 "5"
     note@-2 x=207.788 w=42.426
       glyph noteheadBlack 207.788,-15.500
-      glyph pluckedLeftHandPizzicato 208.477,-52.653
+      glyph pluckedLeftHandPizzicato 212.693,-52.585
       line  217.098,-16.792 -> 217.098,-42.625 t=1.000
     note@-2 x=366.526 w=42.426
       glyph noteheadBlack 366.526,-15.500
-      glyph pluckedLeftHandPizzicato 367.215,-52.653
+      glyph pluckedLeftHandPizzicato 371.431,-52.585
       line  375.836,-16.792 -> 375.836,-42.625 t=1.000
     note@-2 x=525.263 w=42.426
       glyph noteheadBlack 525.263,-15.500
@@ -417,7 +417,7 @@ system 8 width=700.000 originY=793.500
       line  217.098,-16.792 -> 217.098,-42.625 t=1.000
     note@-2 x=366.526 w=42.426
       glyph noteheadBlack 366.526,-15.500
-      glyph breathMarkComma 371.431,-53.056
+      glyph breathMarkComma 369.705,-52.509
       line  375.836,-16.792 -> 375.836,-42.625 t=1.000
     note@-2 x=525.263 w=42.426
       glyph noteheadBlack 525.263,-15.500

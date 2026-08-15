@@ -78,6 +78,7 @@ const DIVERGENT: readonly string[] = []
 
 /** Slugs that are BYTE-EXACT and must stay so. Grows, never shrinks. */
 const PASSING: readonly string[] = [
+  'S1-decorations-tune0',
   'S1-decorations-tune1',
   'S1-decorations-tune4',
   'S2-fields-tune0',
