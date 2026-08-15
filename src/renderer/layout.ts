@@ -14955,6 +14955,21 @@ function verticalExtent(
         include(g.reserve[0], g.reserve[1], g.reservePitch?.[0], g.reservePitch?.[1])
         continue
       }
+      /**
+       * **A FLAG RESERVES ITS ANCHOR PITCH AND NOTHING ELSE.**
+       *
+       * `create-note-head.js:49` builds it as `new RelativeElement(flag, xdelta, w, pos,
+       * {scalex, scaley, chordPos})` — no `thickness`, so `RelativeElement` leaves
+       * `top === bottom === pos` and the flag adds no height at all. Ours took the ink box,
+       * which for an UP flag hangs 32px BELOW its anchor and for a DOWN flag stands 22px
+       * above it. Measured on `S8-layout` X:804, whose `d//` put the staff bottom at pitch
+       * -1.3071 where abcjs has -1.0444 — the notehead's own half-box — and made the page
+       * 1.018px too tall.
+       */
+      if (g.name.startsWith('flag')) {
+        include(g.y, g.y)
+        continue
+      }
       const glyph = glyphsFor(strict).get(g.name) ?? GLYPHS[g.name]
       include(g.y + glyph.y, g.y + glyph.y + glyph.height)
     }
