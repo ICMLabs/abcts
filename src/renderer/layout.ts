@@ -3102,6 +3102,12 @@ function restGlyph(notated: Rational): { name: GlyphName; step: number; dots: nu
  * Four pitch either way, and it moves the DRAWN rest as well as the box it reserves —
  * `createNoteHead(abselem, c, { verticalPos: restpitch })` is the same variable.
  */
+/**
+ * What a ZERO-duration note spaces and classes as — `if (duration === 0) duration = 0.25`
+ * (`abstract-engraver.js:802`), a quarter.
+ */
+const ZERO_DURATION_SPACING = 0.25
+
 const restPitchShift = (stemUp: boolean | null): number =>
   stemUp === null
     ? 0
@@ -4528,7 +4534,15 @@ function layoutNoteheads(
     // `notehead.stemDir = dir`, drawn or not — see `LayoutElement.stemUp`.
     stemUp: up,
     // abcjs's `d` and `p` classes; see `LayoutElement.durationClass`.
-    durationClass: event === null ? 0 : ratToNumber(event.duration),
+    /**
+     * **`durationClassOveride ? … : this.duration` IS A FALSY TEST**
+     * (`elements/absolute-element.js:40`), and the override is `elem.duration *
+     * tripletmultiplier` — 0 for a ZERO-DURATION note, which then falls back to
+     * `durationForSpacing`, itself rewritten to 0.25 by `if (duration === 0) { duration =
+     * 0.25 }` (`abstract-engraver.js:802, 813-819`). So `x0` classes as `abcjs-d0-25`.
+     */
+    durationClass:
+      event === null ? 0 : ratToNumber(event.duration) || ZERO_DURATION_SPACING,
     /**
      * …**AND A BEAM MULTIPLIES BY THE TRIPLET RATIO ONLY WHEN ITS FIRST ELEMENT STARTS
      * ONE** — `if (firstElement.startTriplet) this.duration *= firstElement
