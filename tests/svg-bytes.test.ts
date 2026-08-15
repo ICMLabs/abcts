@@ -41,19 +41,43 @@ interface Case {
   readonly slug: string
   readonly abc: string
   readonly golden: string
+  /** Which tune of the file this row renders — `renderAbc` returns one entry per `X:`. */
+  readonly tune: number
 }
 
 /**
- * A fixture is compared only where a SINGLE-TUNE golden exists — a multi-tune file's
- * goldens are `<name>-tune0.svg`, and rendering a tunebook into one SVG is a different
- * surface with a different generator (`dump-tunebook-svg.js`).
+ * **A MULTI-TUNE FILE IS THREE ROWS, NOT A SKIP.** A single-tune fixture's golden is
+ * `<name>.svg` and a multi-tune file's are `<name>-tune0.svg`, `-tune1.svg`, … — one per
+ * `X:`, which is exactly what `renderAbc` returns. This enumerated `<name>.svg` alone and
+ * therefore SKIPPED three fixtures and SEVEN tunes, whose goldens have sat in the same
+ * directory since April.
+ *
+ * **A GATE'S REACH IS A PROPERTY OF ITS ENUMERATION, NOT OF ITS COMPARISON**, for the
+ * second time on this branch — `pixel-parity` had the same hole and the same shape of note
+ * explaining it away ("rendering a tunebook into one SVG is a different surface"). It is
+ * not: each tune is its own `<svg>` in both engines. Six of the seven were already exact;
+ * the seventh named a defect nothing else could reach.
  */
 const CASES: Case[] = readdirSync(fixtures)
   .filter((f) => f.endsWith('.abc'))
   .sort()
-  .map((f) => ({ slug: f.replace(/\.abc$/, ''), abc: readFileSync(join(fixtures, f), 'utf-8') }))
-  .filter((c) => existsSync(join(goldens, `${c.slug}.svg`)))
-  .map((c) => ({ ...c, golden: readFileSync(join(goldens, `${c.slug}.svg`), 'utf-8') }))
+  .flatMap((f) => {
+    const slug = f.replace(/\.abc$/, '')
+    const abc = readFileSync(join(fixtures, f), 'utf-8')
+    if (existsSync(join(goldens, `${slug}.svg`))) {
+      return [{ slug, abc, tune: 0, golden: readFileSync(join(goldens, `${slug}.svg`), 'utf-8') }]
+    }
+    const rows: Case[] = []
+    for (let i = 0; existsSync(join(goldens, `${slug}-tune${i}.svg`)); i += 1) {
+      rows.push({
+        slug: `${slug}-tune${i}`,
+        abc,
+        tune: i,
+        golden: readFileSync(join(goldens, `${slug}-tune${i}.svg`), 'utf-8'),
+      })
+    }
+    return rows
+  })
 
 /**
  * Slugs whose difference is a RULED divergence rather than a defect. Empty, and it stays
@@ -81,7 +105,12 @@ const DIVERGENT: readonly string[] = []
 const PASSING: readonly string[] = [
   'abcjs-parse-book_parser-01-example',
   'abcjs-parse-book_parser-02-tune',
+  'abcjs-parse-book_parser-03-a-tune0',
+  'abcjs-parse-book_parser-03-a-tune1',
+  'abcjs-parse-book_parser-03-a-tune2',
   'abcjs-parse-book_parser-04-wed',
+  'abcjs-parse-book_parser-05-a-tune0',
+  'abcjs-parse-book_parser-05-a-tune1',
   'abcjs-parse-book_parser-06-a',
   'abcjs-parse-book_parser-07-a',
   'abcjs-parse-note-01-c0-d1-eg-0-fa-1',
@@ -167,6 +196,7 @@ const PASSING: readonly string[] = [
   'abcjs-visual-misc-03-jazzchords',
   'abcjs-visual-misc-04-stretchlast',
   'abcjs-visual-misc-05-cccc-d-c-alcoda-dddd-d-c-alfine-eeee-d-s',
+  'abcjs-visual-misc-06-title-1bold-0-100-reg-the-tune1',
   'abcjs-visual-misc-07-ab-ef-g-d-df-f-d-a-4-c-4',
   'abcjs-visual-misc-08-a2-c2-t-a2t-c2',
   'abcjs-visual-misc-09-begintext',
@@ -281,7 +311,10 @@ function firstDifference(got: string, want: string): Diff | null {
  * about the harness rather than the engine.
  */
 function run(c: Case): Diff | null {
-  return firstDifference(renderAbc('paper', c.abc, { staffwidth: 670 })[0]?.svg ?? '', c.golden)
+  return firstDifference(
+    renderAbc('paper', c.abc, { staffwidth: 670 })[c.tune]?.svg ?? '',
+    c.golden,
+  )
 }
 
 describe('strict SVG vs abcjs, byte for byte', () => {
