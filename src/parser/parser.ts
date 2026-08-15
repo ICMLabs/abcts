@@ -3824,6 +3824,8 @@ class Parser {
      * fails its `getCoreNote` and the accent is discarded.
      */
     const innerDecorations: string[] = []
+    /** One flag per pitch — see `Chord.tiedPitches`. */
+    const innerTies: boolean[] = []
     let pendingInner: string[] = []
 
     while (i < tokens.length && (tokens[i] as Token).kind !== 'closeBracket') {
@@ -3837,11 +3839,22 @@ class Parser {
         const head = this.readNoteHead(tokens, i, accidental)
         const length = this.readLength(tokens, head.next)
         pitches.push(head.pitch)
+        innerTies.push(false)
         innerMultipliers.push(length.factor)
         innerDecorations.push(...pendingInner)
         pendingInner = []
         accidental = null
         i = length.next
+        continue
+      }
+      /**
+       * **A `-` INSIDE THE BRACKETS TIES THAT PITCH AND NOT THE CHORD.** `[B-eg-b-]` ties
+       * three of its four heads — see `Chord.tiedPitches`. It reaches back to the pitch
+       * already read, exactly as the outer `-` reaches back to the note.
+       */
+      if (token.kind === 'tie') {
+        if (innerTies.length > 0) innerTies[innerTies.length - 1] = true
+        i++
         continue
       }
       const decoration = this.chordDecoration(token, builder)
@@ -3868,7 +3881,12 @@ class Parser {
         pitches,
         duration,
         notatedDuration: duration,
-        tiedToNext: false,
+        // EVERY head tied is the whole-chord form, which `-` after the bracket writes and
+        // the audio already understands; a PARTIAL set is the per-pitch one.
+        tiedToNext: innerTies.length > 0 && innerTies.every(Boolean),
+        ...(innerTies.some(Boolean) && !innerTies.every(Boolean)
+          ? { tiedPitches: innerTies }
+          : {}),
         slurStarts: 0,
         slurEnds: 0,
         graceNotes: [],

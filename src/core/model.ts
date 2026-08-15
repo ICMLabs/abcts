@@ -611,6 +611,19 @@ export interface Chord {
   /** `-` ties this event into the next; they sound as one. */
   readonly tiedToNext: boolean
   /**
+   * Which of `pitches` carry a `-` of their OWN, in the same order — `[B-eg-b-]`.
+   *
+   * **THE `-` IS A PROPERTY OF THE PITCH.** `addSlursAndTies` is called once per pitch with
+   * `pitchelem.startTie` (`abstract-engraver.js:737, 903-916`), so a chord can tie three of
+   * its four heads. Absent when every head ties or none does — `[ceg]-` sets `tiedToNext`
+   * instead, which is the whole-chord form the audio already understands.
+   *
+   * ponytail: the FLATTENER still reads `tiedToNext` alone, so a partly-tied chord
+   * re-articulates every head. No audio gate covers one; give the flattener the same list
+   * when one turns up.
+   */
+  readonly tiedPitches?: readonly boolean[]
+  /**
    * `.-` and `.(` — a DOTTED tie and a DOTTED slur, drawn as a dashed open curve rather
    * than a filled lens (`draw/tie.js:89-95`). The leading `.` is NOT a staccato: abcjs's
    * decoration lexer breaks out of the `case '.'` when `(` or `-` follows

@@ -6875,6 +6875,8 @@ interface NoteAnchor {
   readonly tieHeadDx?: readonly number[]
   /** How far `tiePairs` moved this copy's `left` onto its own head — see `orderShift`. */
   readonly tieHeadShift?: number
+  /** Which of `tieSteps` carry their own `-` — see `Chord.tiedPitches`. */
+  readonly tiedHeads?: readonly boolean[]
   readonly stemUp: boolean
   /** `anchor.w` — the notehead's DECLARED width. See the slur's x bump in `buildCurve`. */
   readonly headWidth?: number
@@ -6971,6 +6973,11 @@ function tiePairs(from: NoteAnchor, to: NoteAnchor): [NoteAnchor, NoteAnchor][] 
   const fromSteps = from.tieSteps ?? []
   if (fromSteps.length < 2) return [[from, to]]
   const toSteps = to.tieSteps ?? []
+  /**
+   * **AND ONLY THE HEADS THAT CARRY A `-` OF THEIR OWN** — see `Chord.tiedPitches`.
+   * Absent means the chord ties as a whole, which is every other case.
+   */
+  const tiedHeads = from.tiedHeads
   /** …AND THE HEAD'S OWN x WITH IT — see `NoteAnchor.tieHeadDx`. */
   const at = (a: NoteAnchor, step: number, index: number): NoteAnchor => {
     const dx = a.tieHeadDx?.[index] ?? 0
@@ -6984,11 +6991,12 @@ function tiePairs(from: NoteAnchor, to: NoteAnchor): [NoteAnchor, NoteAnchor][] 
       ...(dx === 0 ? {} : { tieHeadShift: dx }),
     }
   }
-  return fromSteps.map((step, k) => {
+  return fromSteps.flatMap((step, k) => {
+    if (tiedHeads !== undefined && tiedHeads[k] !== true) return []
     const targetIndex = toSteps.indexOf(step)
     const target = targetIndex >= 0 ? step : (toSteps[k] ?? toSteps[0] ?? to.pitchStep ?? step)
     const toIndex = targetIndex >= 0 ? targetIndex : k < toSteps.length ? k : 0
-    return [at(from, step, k), at(to, target, toIndex)]
+    return [[at(from, step, k), at(to, target, toIndex)] as [NoteAnchor, NoteAnchor]]
   })
 }
 
@@ -7570,7 +7578,7 @@ function layoutCurves(
     }
 
     // A tie joins this note to the next SOUNDING one, wherever it falls.
-    if (event.tiedToNext) {
+    if (event.tiedToNext || anchor.tiedHeads?.some(Boolean) === true) {
       const next = anchors[i + 1]
       if (next !== undefined) for (const [a, b] of tiePairs(anchor, next)) emit(a, b, 'tie')
     }
@@ -9609,6 +9617,18 @@ function layoutMeasure(
           : event.type === 'chord'
             ? [...event.pitches].sort((a, b) => pitchToStep(a, clef) - pitchToStep(b, clef))[0]
             : undefined
+      /** The chord's heads ASCENDING, with each one's own tie flag beside it. */
+      const tieHeads =
+        event.type === 'chord'
+          ? event.pitches
+              .map((pp, k) => ({
+                step: pitchToStep(pp, clef),
+                tied: event.tiedPitches?.[k] ?? false,
+              }))
+              .sort((a, b) => a.step - b.step)
+          : first === undefined
+            ? []
+            : [{ step: pitchToStep(first, clef), tied: false }]
       anchors.push({
         system: 0, // filled in when the block is placed into a system
         element: elements.length,
@@ -9626,12 +9646,14 @@ function layoutMeasure(
         ...(first === undefined ? {} : { pitchStep: pitchToStep(first, clef) }),
         // Ascending, which is the order `layoutNoteheads` draws them in and the order
         // abcjs's sorted `el.pitches` hands `addSlursAndTies`.
-        tieSteps:
-          event.type === 'chord'
-            ? event.pitches.map((pp) => pitchToStep(pp, clef)).sort((a, b) => a - b)
-            : first === undefined
-              ? []
-              : [pitchToStep(first, clef)],
+        tieSteps: tieHeads.map((h) => h.step),
+        /**
+         * Which of those heads carry a `-` of their OWN — see `Chord.tiedPitches`. Absent
+         * when the chord ties as a whole or not at all, which is every other case.
+         */
+        ...(event.type === 'chord' && event.tiedPitches !== undefined
+          ? { tiedHeads: tieHeads.map((h) => h.tied) }
+          : {}),
         // …and each head's own offset from `left` — see `NoteAnchor.tieHeadDx`. `heads` is
         // ascending, the order `layoutNoteheads` draws them and the order `tieSteps` takes.
         tieHeadDx: heads.map((h) => h.x - Math.min(...heads.map((g) => g.x))),
