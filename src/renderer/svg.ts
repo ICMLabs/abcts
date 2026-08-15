@@ -1147,7 +1147,8 @@ const glyphDefs = new Map<GlyphName, string>()
         // on the TOP edge of an up-stem beam and the BOTTOM edge of a down-stem one. See
         // `PlacedLine.stemsUp`.
         const dy = (b.stemsUp === false ? -1 : 1) * t.thickness
-        const half = (b.stemsUp === false ? 1 : -1) * (t.thickness / 2)
+        // …and a line that already holds the EDGE takes no shift at all — see `edgeY`.
+        const half = b.edgeY === true ? 0 : (b.stemsUp === false ? 1 : -1) * (t.thickness / 2)
         const seg = (x1: number, y1: number, x2: number, y2: number): string => {
           const [sx, ex] = [r2(x1), r2(x2)]
           const [sy, ey] = [r2(y1 + half), r2(y2 + half)]

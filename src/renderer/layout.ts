@@ -983,6 +983,18 @@ export interface PlacedLine {
   readonly voice?: number
   /** A GRACE's stem — written after every grace head, not with the main note's rules. */
   readonly graceStem?: boolean
+  /**
+   * **THIS LINE'S y IS THE BEAM'S EDGE, NOT ITS CENTRE — SO THE EMITTER MUST NOT SHIFT IT.**
+   *
+   * A `PlacedLine` normally carries a centre and `beamPath` takes half a thickness back off
+   * to reach abcjs's `startY`. That round trip is not free: `(274.465 + 0.775) - 0.775` is
+   * `274.46500000000003`, which lands on the far side of `toFixed(2)` and prints 274.47
+   * where abcjs prints 274.46 — abcjs's own `calcY` returns 274.465 and `(274.465).toFixed(2)`
+   * is "274.46", because the double is really 274.46499999999997. It was the whole of
+   * `S3-note-syntax-tune8`'s last difference. A grace beam's line is read by NOTHING but
+   * the emitter, so it holds abcjs's number unshifted and skips the trip.
+   */
+  readonly edgeY?: boolean
   /** Which grace of the group this belongs to, so a ledger follows its OWN head. */
   readonly graceIndex?: number
   /**
@@ -15721,10 +15733,11 @@ function layoutGraces(
       const graceBeamGroup = -1 - Math.round(beamStartX * 1000)
       graceLines.push({
         x1: beamStartX,
-        y1: yAt(beamStartX) + thickness / 2,
+        y1: yAt(beamStartX),
         x2: beamEndX,
-        y2: yAt(beamEndX) + thickness / 2,
+        y2: yAt(beamEndX),
         thickness,
+        edgeY: true,
         noReserve: true,
         group: graceBeamGroup,
         // **A GRACE BEAM IS A BEAM, DRAWN AT THE VOICE'S LEVEL WITH THE BEAMS** —
@@ -15814,10 +15827,11 @@ function layoutGraces(
             level,
             line: {
               x1,
-              y1: yAt(sample) + thickness / 2 + drop,
+              y1: yAt(sample) + drop,
               x2,
-              y2: yAt(x2) + thickness / 2 + drop,
+              y2: yAt(x2) + drop,
               thickness,
+              edgeY: true,
               noReserve: true,
               group: graceBeamGroup,
               role: 'beam',
