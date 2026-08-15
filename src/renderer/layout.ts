@@ -1356,6 +1356,15 @@ export interface LayoutElement {
    */
   readonly slideRoom?: number
   /**
+   * abcjs's `restpitch` for this rest — 7, or 11 when the stems are up and 3 when they are
+   * down (`abstract-engraver.js:549-560`).
+   *
+   * The BEAM reads it: `BeamElem.add` takes every element the group covers and a rest's
+   * `minpitch`/`maxpitch` ARE `restpitch`, so an invisible rest inside a beamed run lifts
+   * or drops the whole beam. See `Rest.beamGroup`.
+   */
+  readonly restPitch?: number
+  /**
    * How far the element's ink reaches LEFT of its own x — abcjs's `-child.extraw`.
    *
    * An accidental, a grace group or a barline's clearance sits before the thing that
@@ -1466,6 +1475,11 @@ export interface StemInfo {
   readonly up: boolean
   /** Beams needed at this note: 1 for an eighth, 2 for a sixteenth. */
   readonly beams: number
+  /**
+   * A REST inside the run — in the group for `min`/`max`, skipped by `createStems`
+   * (`layout/beam.js:112`). See `Rest.beamGroup`.
+   */
+  readonly rest?: boolean
 }
 
 /**
@@ -3182,6 +3196,11 @@ function layoutRest(
       texts,
     }
   }
+  /**
+   * abcjs's `restpitch` for this rest, carried out so the BEAM can read it — see
+   * `LayoutElement.restPitch`.
+   */
+  let restBoxPitchOut: number | undefined = ABCJS_PITCH.restPitch + restPitchShift(sharedStaffStem)
   if (spec) {
     // abcjs's `restpitch`, which is BOTH where the glyph is drawn and the pitch its
     // declared box is centred on — one variable through `createNoteHead`'s `verticalPos`.
@@ -3189,6 +3208,8 @@ function layoutRest(
     // sits 14.360px below the top staff line against abcjs's 14.362), so the shift is
     // applied as a DELTA rather than by re-deriving the anchor.
     const shift = restPitchShift(sharedStaffStem)
+    // …and `restpitch` reaches the BEAM too — see `LayoutElement.restPitch`.
+
     // A REST RESERVES ITS DECLARED BOX, like a notehead: `thickness:
     // symbolHeightInPitches(c)` on its `RelativeElement`, so `pitch ± thickness / 2`
     // (`create-note-head.js:33-35`, `relative-element.js:22-24`). Falling through to the
@@ -3228,6 +3249,7 @@ function layoutRest(
       ],
       anchorPitch: spec.step + shift + PITCH_ORIGIN,
     }
+
     if (spec.dots > 0) {
       // A DOTTED REST TAKES A NOTE'S DOT ARITHMETIC, because in abcjs it is literally the
       // same call: the rest branch ends in `createNoteHead(abselem, c, {verticalPos:
@@ -3288,6 +3310,7 @@ function layoutRest(
   )
   return {
     type: 'rest',
+    ...(restBoxPitchOut === undefined ? {} : { restPitch: restBoxPitchOut }),
     durationClass: ratToNumber(rest.duration),
     x,
     width: Math.max(advance, restInk),
@@ -8502,10 +8525,18 @@ function layoutTuplets(
  * Returns the beam rectangles. Stems are rewritten in place in `elements`.
  */
 function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): PlacedLine[] {
-  const firstDuration = elements[group[0]?.element ?? -1]?.durationClass
-  const first = group[0]
-  const last = group[group.length - 1]
-  if (!first || !last || group.length < 2) return []
+  /**
+   * **THE ENDS ARE THE FIRST AND LAST NOTES, NOT THE FIRST AND LAST MEMBERS.** A REST is a
+   * member (see `Rest.beamGroup`) and has no heads, where `calcXPos` reads
+   * `firstElement.heads[asc ? 0 : len - 1]` (`layout/beam.js:74-82`). abcjs takes
+   * `beam.elems[0]` raw and would fail on a rest there, so a run never opens or closes on
+   * one; taking the first NOTE is the same element wherever abcjs is defined.
+   */
+  const notes = group.filter((m) => m.rest !== true)
+  const firstDuration = elements[notes[0]?.element ?? -1]?.durationClass
+  const first = notes[0]
+  const last = notes[notes.length - 1]
+  if (!first || !last || notes.length < 2) return []
 
   const up = first.up
   const direction = up ? -1 : 1
@@ -8555,7 +8586,7 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
   // Slant, from the END elements' average pitches and capped at half the stem count
   // (`calcSlant`). `Math.floor` on both halves is abcjs's, negatives included — it is what
   // makes an odd slant land asymmetrically rather than splitting evenly.
-  const maxSlant = group.length / 2
+  const maxSlant = group.length / 2 // `beam.elems.length` — the REST counts here.
   const rawSlant = first.averageStep - last.averageStep
   const slant = Math.max(-maxSlant, Math.min(maxSlant, rawSlant))
   let startStep = pos + Math.floor(slant / 2)
@@ -8634,6 +8665,8 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
   const pitchAt = (x: number): number =>
     span === 0 ? startPitch : startPitch + ((endPitch - startPitch) / span) * (x - beamStartX)
   for (const stem of group) {
+    // `createStems` opens `if (elem.abcelem.rest) continue` (`layout/beam.js:112`).
+    if (stem.rest === true) continue
     const element = elements[stem.element]
     if (!element) continue
     // WHERE THE BEAM IS SAMPLED IS NOT WHERE THE STEM IS DRAWN, twice over.
@@ -8672,6 +8705,13 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
      * staff carried the ULP.
      */
     const beamPitch = pitchAt(sampleX) + stemEndPitch
+    /** Both engines' beam for one stem, side by side — see `ABCJS_BEAMY`'s `BEAMX`. */
+    if (process.env.ABCTS_BG && Math.abs(sampleX - Number(process.env.ABCTS_BG)) < 0.05)
+      console.log(
+        'BG sampleX', sampleX, 'beamPitch', beamPitch, 'up', up,
+        'startPitch', startPitch, 'endPitch', endPitch,
+        'group', JSON.stringify(group.map((m) => [Number(m.headX.toFixed(3)), m.averageStep + 6, m.farStep + 6, m.rest === true])),
+      )
     const lines = element.lines.map((line) =>
       line.x1 === line.x2 && line.x1 === stem.x
         ? {
@@ -8714,6 +8754,7 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
    * the element's own top, which this pass does not carry.
    */
   for (const stem of group) {
+    if (stem.rest === true) continue
     const element = elements[stem.element]
     if (element === undefined) continue
     let barTop = pitchAt(element.x)
@@ -8925,6 +8966,9 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
     }
 
     group.forEach((stem, i) => {
+      // `createAdditionalBeams` opens `if (elem.abcelem.rest) continue` — a rest is in the
+      // GROUP and never in a beam's own run (`layout/beam.js:150-152`).
+      if (stem.rest === true) return
       if (stem.beams > level) {
         const first = runStart === null
         runStart ??= stem
@@ -9602,7 +9646,8 @@ function layoutMeasure(
       elements.push(layoutPart(x, measure.partLabel))
       fixed(0, 0, 'part')
     }
-    const group = event.type === 'rest' ? null : event.beamGroup
+    // …**AND A REST INSIDE THE RUN IS A MEMBER OF THE BEAM** — see `Rest.beamGroup`.
+    const group = event.beamGroup ?? null
     const stemOut: { value: Omit<StemInfo, 'element'> | null } | null =
       group === null ? null : { value: null }
     const el = layoutEvent(
@@ -9631,6 +9676,28 @@ function layoutMeasure(
     if (group !== null && stemOut?.value) {
       const members = beams.get(group) ?? []
       members.push({ ...stemOut.value, element: elements.length })
+      beams.set(group, members)
+    } else if (group !== null && el.type === 'rest' && el.restPitch !== undefined) {
+      /**
+       * A REST HAS NO STEM AND IS STILL IN THE GROUP. `BeamElem.add` pushes every element
+       * the run covers and only tracks `allrests` apart; the beam's `min`/`max` then take
+       * the rest's `minpitch`/`maxpitch`, which ARE `restpitch`. `createStems` skips it
+       * afterwards on `elem.abcelem.rest` (`layout/beam.js:112`), which `rest: true` is.
+       */
+      const step = el.restPitch - PITCH_ORIGIN
+      const members = beams.get(group) ?? []
+      members.push({
+        element: elements.length,
+        x: el.x,
+        headX: el.x,
+        headDx: 0,
+        headWidth: 0,
+        farStep: step,
+        averageStep: step,
+        up: true,
+        beams: 0,
+        rest: true,
+      })
       beams.set(group, members)
     }
     // Anchor the curve endpoints on the NOTEHEAD, not the element: an accidental shifts

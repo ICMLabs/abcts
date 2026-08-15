@@ -554,6 +554,20 @@ export interface Rest {
   readonly type: 'rest'
   readonly duration: Rational
   readonly notatedDuration: Rational
+  /**
+   * Shared id across a beamed run — a rest INSIDE one is a member of it.
+   *
+   * `BeamElem.add` takes every element the group covers and only tracks `allrests`
+   * separately; a rest's `minpitch`/`maxpitch` are `restpitch` — 7, or 11 when the stems
+   * are up and 3 when they are down (`abstract-engraver.js:559-560`) — and they feed the
+   * beam's `min`/`max` like any note's. `ragtime-nightingale` beams `[de]/4[de]/4 x/4
+   * [de]/4[de]/4` with the stems up, so the invisible rest reports pitch 11 and lifts the
+   * whole beam two pitch above the `de` chords that surround it.
+   *
+   * Optional because only the beam pass reads it, and null for a rest that beams with
+   * nothing.
+   */
+  readonly beamGroup?: number | null
   readonly kind: RestKind
   /**
    * `!fermata!z4` is idiomatic, so a rest does carry decorations — but not ties, slurs or

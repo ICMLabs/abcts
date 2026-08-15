@@ -1378,10 +1378,20 @@ class VoiceBuilder {
     return this.target.length - 1
   }
 
+  /**
+   * …**AND A REST INSIDE THE RUN IS STAMPED TOO** — see `Rest.beamGroup`. `BeamElem.add`
+   * takes every element the group covers, and a rest's `restpitch` feeds the beam's
+   * `min`/`max` like any note's.
+   */
+  /** Is the event at `index` a rest? `closeBeamRun` trims the run's trailing ones. */
+  isRestAt(index: number): boolean {
+    return this.target[index]?.type === 'rest'
+  }
+
   setBeamGroup(index: number, group: number): void {
     const target = this.target
     const event = target[index]
-    if (event && event.type !== 'rest') target[index] = { ...event, beamGroup: group }
+    if (event) target[index] = { ...event, beamGroup: group }
   }
 
   /** `-` reaches back: the tie belongs to the note already emitted. Rests cannot tie. */
@@ -3170,9 +3180,21 @@ class Parser {
     // barline, rest, longer note, overlay boundary or end of line breaks the run.
     let beamRun: number[] = []
     const closeBeamRun = (): void => {
-      if (beamRun.length >= 2) {
+      /**
+       * **THE GROUP RUNS TO THE `endBeam`, AND THAT IS ALWAYS A NOTE.** `getBeamGroup`
+       * walks consecutive `el_type === 'note'` elements — a REST is one — and stops at the
+       * first with `endBeam` (`abstract-engraver.js:381-395`), which the tune-builder only
+       * ever sets on a note. So a rest BETWEEN two beamed notes is in the group and a
+       * trailing one is not, and the run needs ≥ 2 NOTES rather than ≥ 2 members.
+       */
+      const run = [...beamRun]
+      while (run.length > 0 && voice().isRestAt(run[run.length - 1] ?? -1)) run.pop()
+      // …and a LEADING one is not in it either: `getBeamGroup` only opens on an element
+      // with `startBeam`, which the tune-builder sets on a note.
+      while (run.length > 0 && voice().isRestAt(run[0] ?? -1)) run.shift()
+      if (run.filter((index) => !voice().isRestAt(index)).length >= 2) {
         const group = builder.nextBeamGroup()
-        for (const index of beamRun) voice().setBeamGroup(index, group)
+        for (const index of run) voice().setBeamGroup(index, group)
       }
       beamRun = []
     }
@@ -3203,8 +3225,11 @@ class Parser {
       //
       // We broke on every rest, so `(6cegczg` came out as two beamed pairs and a bracket
       // in fourteen pieces where abcjs draws one beam and three bracket paths.
-      if (last.type === 'rest') return
+      // …**AND IT IS IN THE GROUP ALL THE SAME**, because `getBeamGroup` spans every
+      // consecutive `note` element and a rest is one. See `closeBeamRun`, which trims the
+      // trailing ones the `endBeam` never reaches.
       beamRun.push(voice().lastIndex)
+      if (last.type === 'rest') return
     }
 
     /**
