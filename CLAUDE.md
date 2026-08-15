@@ -929,25 +929,26 @@ checkpoint and hand off as you go so no context is lost.
 > next**, as a bare rule with no hook and no number — which our emitter, keyed on the
 > NUMBER, dropped even once the layout produced it.
 >
-> **AND SIX ROWS REMAIN.** 2026-08-15 took the 41-fixture byte gate from 13 to **6** and its
-> ratchet from 100 to **107**, on nine fixes: a beamed grace's stem DOES reach the staff when
-> its own note is beamed (`layoutVoice` re-ranges the group after `layoutBeam`); a grace
-> beam's line holds abcjs's EDGE, so the emitter's centre round-trip cannot move it across a
-> `toFixed(2)` boundary; a FLAG reserves its anchor pitch and no ink; a key signature's and a
-> grace accidental's `dx` are CARRIED, not re-derived; `!slide!` hangs off `roomtaken`; a
-> grace beam goes out before its group's own beam at the same element; a grace slur ends on
-> the chord's LAST head; a note that CLOSES a slur is not an internal note; and a slur's
-> `hasDownStem` reads the notes BETWEEN the anchors.
+> **AND ONE ROW REMAINS.** 2026-08-15 took the 41-fixture byte gate from 13 to **1** and its
+> ratchet from 100 to **112**, on twenty-one fixes. The recurring shapes: a RESERVE is a
+> DECLARED BOX and it is stated in PITCH (a flag reserves its anchor and no ink; a moved rest
+> shifts a pitch; a curve's reserve and a beam-pinned end carry theirs); an OFFSET is
+> CONSTRUCTED, never re-derived (a key signature's `dx`, a grace accidental's two steps, a
+> notehead's `shiftheadx` — and `accidentalWidth + dx`, tried on 08-14, was the wrong term,
+> not the wrong idea); DOCUMENT ORDER is creation order, so a grace beam precedes its group's
+> and a chord's ties all key on the element; and a CHORD is per-pitch — its stem direction is
+> the MEAN of every pitch (`>= 6`, so the middle line stems down), its tie hangs on its own
+> head, and `[B-eg-b-]` ties three of its four.
 >
-> **THE FOUR THAT ARE DIAGNOSED AND NOT BUILT** are written at their code sites, not just in
-> the docs: the moved rest shifts a PITCH not a y, a mid-tune text row's baseline takes the
-> LOCAL chain not the page's, abcjs's hairpin slot is SINGLE and closes at every ABC SOURCE
-> LINE, and the BRACE. The first two are the same page-cursor rework in two domains.
+> Also landed: abcjs's hairpin slot is SINGLE and `endLine` empties it at every ABC line —
+> **and an ABC line IS a system**, which was the open question. A bracket takes the brace's
+> left edge. A mid-tune text row's baseline comes off the PAGE's cursor.
 >
-> **READ `Docs/HANDOFF-2026-08-14.md` FIRST**, then `Docs/CHECKPOINT-2026-08-15.md` — §3 and
-> §4 are the work list for the six, §5 the harness (nine abcjs probes, four of ours, two
-> ratchets) and §6 the rules. Then `Docs/CHECKPOINT-2026-08-14.md` — §4 is the work list as
-> it stood, §5 the harness. Then the files below.
+> **READ `Docs/HANDOFF-2026-08-14.md` FIRST**, then `Docs/CHECKPOINT-2026-08-15.md` — §2 is
+> what landed, §3 the one row left and the one audio gap behind it, §4 the harness (thirteen
+> abcjs probes, six of ours, two ratchets) and §5 the rules. Then
+> `Docs/CHECKPOINT-2026-08-14.md` — §4 is the work list as it stood, §5 the harness. Then the
+> files below.
 
 **READ `Docs/CHECKPOINT-2026-08-13.md` FIRST** — the current state (3 of 171, 168 byte-exact
 and all ratcheted), §2 the ten landings, §3 WHAT IS LEFT (the tempo font measured and
