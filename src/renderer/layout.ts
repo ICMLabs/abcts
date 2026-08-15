@@ -3632,10 +3632,21 @@ function layoutNoteheads(
   /** How far the graces reach LEFT — a grace accidental beats the chord symbol's half. */
   const graceLeft = graces?.left ?? 0
 
-  // Stem direction follows the chord as a whole: away from the middle line, judged by
-  // the midpoint of its outermost notes. On the middle line itself the stem goes down.
-  // A beamed note takes its group's direction instead — a beam cannot join opposed stems.
-  const up = forcedUp ?? (lowest + highest) / 2 < 0
+  /**
+   * **STEM DIRECTION IS THE MEAN OF EVERY PITCH, NOT THE MIDPOINT OF THE EXTREMES.**
+   *
+   *     elem.averagepitch = sum / elem.pitches.length          // setAveragePitch, :396-404
+   *     var dir = (elem.averagepitch >= 6) ? "down" : "up"     // createNote, :644
+   *
+   * On the middle line itself the stem goes DOWN — `>=`, not `>`. Ours judged by
+   * `(lowest + highest) / 2`, which agrees for one note and for any evenly-spread chord and
+   * parts company the moment the inner notes are lopsided: `S5-directives` X:502's
+   * `[DAdf]` averages exactly 6 and abcjs stems it DOWN, where the midpoint of `D` and `f`
+   * is 5.5 and ours stemmed it up. A beamed note takes its group's direction instead — a
+   * beam cannot join opposed stems.
+   */
+  const averagePitch = steps.reduce((a, b) => a + b, 0) / steps.length + PITCH_ORIGIN
+  const up = forcedUp ?? averagePitch < 6
 
   // Accidentals sit in a column before the heads and push everything right. ponytail:
   // ONE column. Real engraving fans accidentals into several columns when they would

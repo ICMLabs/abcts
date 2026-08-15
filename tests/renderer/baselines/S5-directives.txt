@@ -420,7 +420,7 @@ system 1 width=702.701 originY=147.345
       glyph noteheadBlack 173.681,-19.375
       glyph noteheadBlack 173.681,-31.000
       glyph noteheadBlack 173.681,-38.750
-      line  182.991,-5.167 -> 182.991,-65.875 t=1.000
+      line  174.181,-37.458 -> 174.181,23.250 t=1.000
     note@-5,-1,2,4 x=194.518 w=21.213
       glyph noteheadBlack 194.518,-3.875
       glyph noteheadBlack 194.518,-19.375
