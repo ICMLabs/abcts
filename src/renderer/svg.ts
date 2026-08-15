@@ -1599,7 +1599,11 @@ const glyphDefs = new Map<GlyphName, string>()
        * hairpin already sat. Ours nested it in the note group at depth 2. Held back here
        * and flushed with the spanners below.
        */
-      const dynamics: PlacedGlyph[] = []
+      /**
+       * …**AND EACH ONE REMEMBERS THE ELEMENT IT WAS ADDED AT**, which is what its class
+       * counters come from — see `markerAt`.
+       */
+      const dynamics: { g: PlacedGlyph; at: number }[] = []
       /**
        * The counters each element's GROUP was named with, by index — what abcjs stores as
        * `params.counters = classes.getCurrent()` inside `drawAbsolute`
@@ -1647,6 +1651,42 @@ const glyphDefs = new Map<GlyphName, string>()
          * the plain gate could never see it — no class, no counter, no difference.
          */
         const voiceBase = voiceHere === 0 ? 0 : (voiceEnds[voiceHere - 1] ?? 0)
+        /**
+         * **abcjs'S OWN ALGORITHM FOR THE `otherchildren` COUNTERS, NOT A RULE PER KIND.**
+         * `otherchildren` is ONE list in add order with `'bar'` MARKERS interleaved, and
+         * `drawVoice` restarts the counter and `incrMeasure()`s on each marker
+         * (`draw/voice.js:59-70`). `addChild` pushes a marker for every bar element unless
+         * everything before it is a `staff-extra` or a `tempo` (`voice-element.js:29-42`).
+         * So the counter for anything `addOther`'d at element `e` is simply the number of
+         * markers ahead of `e` — one walk, and no per-kind reasoning about which anchor a
+         * tie, a triplet or a hairpin should read.
+         *
+         * Instrumented rather than inferred: `ABCJS_OTHER` prints the list and each item's
+         * counter. `S1-decorations` tune 2 opens `["bar","DynamicDecoration" x4,"bar"]`, so
+         * its four `mp` marks read `m=1 mm=3` where ours had 0 and 2.
+         *
+         * Keyed by STAFF-wide element index — `staff.elements` is the voices concatenated,
+         * so a lower voice's per-voice index needs `voiceBase` first.
+         */
+        const markerAt = new Map<number, number>()
+        {
+          let n = 0
+          let seenReal = false
+          staff.elements.forEach((el, i) => {
+            if (voiceOf(i) !== voiceHere) return
+            markerAt.set(i, n)
+            if (el.type === 'bar') {
+              if (seenReal) n += 1
+            } else if (
+              !(ABCJS_ELEMENT_NAMES[el.type] ?? el.type).startsWith('staff-extra') &&
+              el.type !== 'tempo' &&
+              el.type !== 'title' &&
+              el.type !== 'voiceName'
+            ) {
+              seenReal = true
+            }
+          })
+        }
         const mine = (x: { voice?: number }): boolean => (x.voice ?? 0) === voiceHere
         if (abcjs) classes.startMeasure()
         /** The group already written — see the one-path-per-group rule below. */
@@ -1682,7 +1722,7 @@ const glyphDefs = new Map<GlyphName, string>()
               s:
                 `<path d="${beamPath(members)}" stroke="none" fill="${ink}"` +
                 // …and at the element the group hangs off, like any other beam.
-                ` class="${classes.generateAt('beam-elem d0', counters.get((b.beamAt ?? -1) + voiceBase)?.measure ?? 0)}"></path>`,
+                ` class="${classes.generateAt('beam-elem d0', markerAt.get((b.beamAt ?? -1) + voiceBase) ?? 0)}"></path>`,
             })
           }
         }
@@ -1786,7 +1826,8 @@ const glyphDefs = new Map<GlyphName, string>()
           if (dynBuf.length > 0) others.push({ x: dynX, k: 2, s: `${dynBuf.join('')}</g>` })
           dynBuf = []
         }
-        for (const g of dynamics) {
+        for (const { g, at: dynAt } of dynamics) {
+          const dynM = markerAt.get(dynAt) ?? 0
           const grp = g.group ?? null
           if (grp === null) {
             flushDynamic()
@@ -1801,7 +1842,7 @@ const glyphDefs = new Map<GlyphName, string>()
                 // SCALED glyph takes `glyphMarkup`'s transform path, which writes the
                 // attribute string and nothing else. The ORDER is `svg.js:path`'s key order
                 // over `printSymbol`'s options — class, stroke, fill, then the name.
-                ` class="${classes.generate('decoration dynamics')}" stroke="none" ` +
+                ` class="${classes.generateAt('decoration dynamics', dynM)}" stroke="none" ` +
                   `fill="${ink}" data-name="${ABCJS_DATA_NAMES.dynamic}"`,
                 g.role,
                 // The name is already in the attribute string above; `'' ?? x` is `''`, so
@@ -1814,7 +1855,9 @@ const glyphDefs = new Map<GlyphName, string>()
           if (g.groupStart === true) {
             flushDynamic()
             dynX = g.x
-            dynBuf.push(`<g${attrIfAny(classes.generate('decoration dynamics'))} data-name="${grp}">`)
+            dynBuf.push(
+              `<g${attrIfAny(classes.generateAt('decoration dynamics', dynM))} data-name="${grp}">`,
+            )
           }
           dynBuf.push(
             glyphMarkup(
@@ -1882,7 +1925,7 @@ const glyphDefs = new Map<GlyphName, string>()
                 text?.groupClass ?? name,
                 text?.measureElement === undefined
                   ? (text?.measure ?? 0)
-                  : (counters.get(text.measureElement + voiceBase)?.measure ?? 0),
+                  : (markerAt.get(text.measureElement + voiceBase) ?? 0),
               ),
             )}` +
               `${fill ? ` fill="${ink}"` : ''} data-name="${name}">`,
@@ -2120,7 +2163,10 @@ const glyphDefs = new Map<GlyphName, string>()
            * `abcjs-l0 abcjs-m1 abcjs-mm1`; ours read the closing element and wrote `m2 mm2`.
            */
           const anchorEl = curve.startElement ?? curve.endElement
-          const at = anchorEl === undefined ? 0 : (counters.get(anchorEl + voiceBase)?.measure ?? 0)
+          // …**AT THE MARKER COUNT, LIKE EVERY OTHER `addOther` ITEM** — see `markerAt`.
+          // The `start-m`/`end-m` names above are a different quantity: those come from
+          // `anchor.parent.counters`, the CHILDREN pass's own counter.
+          const at = anchorEl === undefined ? 0 : (markerAt.get(anchorEl + voiceBase) ?? 0)
           /**
            * **AND A CURVE IS ON `otherchildren` TOO**, so it interleaves with the hairpins,
            * the dynamics and the triplets rather than following all of them — `addOther` is
@@ -2200,8 +2246,16 @@ const glyphDefs = new Map<GlyphName, string>()
         }
         // …and the whole `otherchildren` list goes out as ONE run in x order. `Array.sort`
         // is stable, so two things starting at the same x keep the order they were built in.
-        for (const o of others.sort((p1, p2) => p1.x - p2.x || (p1.k ?? 0) - (p2.k ?? 0)))
-          parts.push(o.s)
+        const ordered = others.sort((p1, p2) => p1.x - p2.x || (p1.k ?? 0) - (p2.k ?? 0))
+        if (process.env.ABCTS_OTHER)
+          for (const o of ordered)
+            console.log(
+              'OTHER x=', Number(o.x.toFixed(3)),
+              'name=', /data-name="([^"]*)"/.exec(o.s)?.[1] ?? '?',
+              'm=', /abcjs-m(\d+)/.exec(o.s)?.[1] ?? '-',
+              'mm=', /abcjs-mm(\d+)/.exec(o.s)?.[1] ?? '-',
+            )
+        for (const o of ordered) parts.push(o.s)
         dynamics.length = 0
         graceBeams.length = 0
         /**
@@ -2776,7 +2830,7 @@ const glyphDefs = new Map<GlyphName, string>()
           // Held whole rather than as markup: its class is `classes.generate`'d at FLUSH
           // time, after `startMeasure()` has reset the counters the group was named with.
           if (abcjs && g.role === 'dynamic') {
-            dynamics.push(g)
+            dynamics.push({ g, at: elIndex })
             continue
           }
           parts.push(
