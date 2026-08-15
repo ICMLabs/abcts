@@ -10765,13 +10765,38 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // several voices share a staff their labels stack, centred as a block — abcjs's
       // `headerPosition`. Zero-width: it lives left of the music the indent already made
       // room for, so it advances nothing.
-      const labelText = systemIndex === 0 ? plan.name : plan.subname
+      /**
+       * **A STAFF'S NAMES AND ITS VOICE STREAMS ARE INDEXED THE SAME WAY AND ORDERED
+       * DIFFERENTLY, AND THAT IS abcjs's OWN BUG.** `createABCStaff` pairs
+       * `abcstaff.title[v]` with `abcstaff.voices[v]` (`abstract-engraver.js:144-156`) —
+       * but the TITLES are filled in declaration order and the STREAMS in `%%score` order,
+       * so a reordered staff draws each stream under the WRONG name.
+       *
+       * Instrumented on `score-reorder-shared` (`%%score (V2 V1)`, `V:V1 name="Melody"`):
+       *
+       *     STAFF title ["Melody","Harmony"]  streams ["G,","C"]
+       *
+       * `G,` is Harmony's and it is drawn under `Melody`. Reproduced, not corrected: the
+       * label a voice draws is the one at ITS OWN position in the staff's DECLARATION
+       * order. Single-voice staves and un-reordered ones are unaffected, which is every
+       * other fixture in both corpora.
+       */
+      const staffMembers = voicesOfStaff.find((m) => m.includes(voiceIndex)) ?? [voiceIndex]
+      const drawPos = Math.max(0, staffMembers.indexOf(voiceIndex))
+      const named =
+        voices[
+          [...staffMembers].sort(
+            (a, b) => (voices[a]?.declaredIndex ?? a) - (voices[b]?.declaredIndex ?? b),
+          )[drawPos] ?? voiceIndex
+        ]
+      const labelText = systemIndex === 0 ? (named?.name ?? null) : (named?.subname ?? null)
       const nameElements: LayoutElement[] = []
       // …UNLESS A BRACE TOOK IT. `setBottomStaff` deletes the header off the voice, so the
       // staff draws nothing and the brace's own group draws it — see `ConnectorSpan.header`.
       if (labelText && !braceHeaders(systemIndex).takenFrom.has(voiceIndex)) {
-        const members = voicesOfStaff.find((m) => m.includes(voiceIndex)) ?? [voiceIndex]
-        const pos = Math.max(0, members.indexOf(voiceIndex))
+        const members = staffMembers
+        // `headerPosition`'s `v` is the same index the title was read at — see above.
+        const pos = drawPos
         // **`%%voicefont` IS REALIZED, FACE, SIZE AND WEIGHT.** The label was hard-coded to
         // a bold 17px Times — the DEFAULT resolved — so `%%voicefont Helvetica-Bold 10.0`
         // drew at the default while `voiceNameWidth` (and therefore the whole indent)

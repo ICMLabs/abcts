@@ -11,7 +11,7 @@ system 0 width=432.086 originY=0.000
     title x=0.000 w=0.000
       text  350.000,-66.742 size=27.000 "Same Staff Reorder"
     voiceName x=15.000 w=0.000
-      text  15.000,-32.670 size=17.000 bold "Harmony"
+      text  15.000,-32.670 size=17.000 bold "Melody"
     clef x=97.203 w=24.051
       glyph gClef 102.203,-15.500
     timeSignature x=131.254 w=11.795
@@ -38,7 +38,7 @@ system 0 width=432.086 originY=0.000
     bar x=322.755 w=0.600
       line  323.055,-38.750 -> 323.055,-7.750 t=0.600
     voiceName x=15.000 w=0.000
-      text  15.000,-15.670 size=17.000 bold "Melody"
+      text  15.000,-15.670 size=17.000 bold "Harmony"
     note@-6 x=153.049 w=42.426
       glyph noteheadBlack 153.049,0.000
       line  151.049,0.000 -> 164.859,0.000 t=0.700

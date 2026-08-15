@@ -1636,7 +1636,7 @@ class VoiceBuilder {
     this.measureStart = null
   }
 
-  finish(): Voice {
+  finish(): Omit<Voice, 'declaredIndex'> {
     this.closeUnterminatedMeasure()
     this.applyLyrics()
     this.applySymbols()
@@ -2065,12 +2065,18 @@ class ScoreBuilder {
       tempoInline: this.tempoInline,
       unitNoteLength: this.unitNoteLength,
       ...(this.firstLineKeyClef === null ? {} : { firstLineKeyClef: this.firstLineKeyClef }),
-      voices: this.orderedVoices().map((v) => {
-        // The meter lives on the score, and a voice needs it to pad an empty overlay
-        // layer to a full measure's silence.
-        v.meterForOverlays = this.meter
-        return v.finish()
-      }),
+      voices: (() => {
+        // **DECLARATION ORDER, STAMPED BEFORE `%%score` REORDERS THEM** — see
+        // `Voice.declaredIndex`. `this.voices` is a Map, so its insertion order IS the
+        // order the `V:` fields were read in.
+        const declared = new Map([...this.voices.keys()].map((id, i) => [id, i]))
+        return this.orderedVoices().map((v) => {
+          // The meter lives on the score, and a voice needs it to pad an empty overlay
+          // layer to a full measure's silence.
+          v.meterForOverlays = this.meter
+          return { ...v.finish(), declaredIndex: declared.get(v.id) ?? 0 }
+        })
+      })(),
       staves: this.resolvedStaves(),
       staffSep: this.staffSep,
       musicSpace: this.musicSpace,

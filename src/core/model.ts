@@ -931,6 +931,18 @@ export interface Measure {
 export interface Voice {
   readonly id: string
   /**
+   * **WHERE THIS VOICE'S `V:` STANDS, WHICH IS NOT WHERE `%%score` PUTS IT.**
+   *
+   * `voices` is ordered for DRAWING — `%%score` first, as `drawStaffGroup` walks the
+   * staffgroup's flat list. abcjs keeps a second order beside it: `abcstaff.voices` is the
+   * parser's per-staff array keyed by `tune.voiceNum`, and `headerPosition` indexes THAT
+   * (`abstract-engraver.js:155`, `parse/tune-builder.js:969-972`). So a staff can draw its
+   * voices one way round and stack their NAMES the other, which `%%score (V2 V1)` with
+   * `V:V1 name="Melody"` does: abcjs reports `v 0 header "Melody"` while `Harmony`'s
+   * notes are the first stream drawn.
+   */
+  readonly declaredIndex: number
+  /**
    * `V:… octave=±n` — a sounding shift in octaves, NOT baked into `Pitch.octave`.
    * Pitches stay as written; consumers (audio, engrave) apply this. abcjs bakes the
    * shift into its pitch numbers instead, so any comparison against it must add it back.
