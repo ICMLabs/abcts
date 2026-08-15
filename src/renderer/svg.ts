@@ -1649,6 +1649,29 @@ const glyphDefs = new Map<GlyphName, string>()
          * added at the same element keep their built order.
          */
         const beamOut: { at: number; s: string }[] = []
+        // A GRACE BEAM's own class is `beam-elem d0` — its `durationClass` is 0, since a
+        // grace note has no sounding duration.
+        // …**AND IT IS A `<path>` LIKE ANY OTHER BEAM, ONE PER GROUP.** `drawBeam` is the
+        // same routine for both (`draw/beam.js:7-44`); ours wrote a `<polygon>` per grace
+        // beam, so a two-level grace group came out as two elements of the wrong kind.
+        {
+          let last: number | undefined
+          for (const b of graceBeams) {
+            if (b.group !== undefined && b.group === last) continue
+            last = b.group
+            const members =
+              b.group === undefined ? [b] : graceBeams.filter((g) => g.group === b.group)
+            // ALWAYS a `class`, empty or not — `svg.js`'s `path` sets every key it is
+            // handed and `generate` returns `''` without `add_classes`, so the attribute is
+            // written either way. Ours used `attrIfAny`, which omits it.
+            beamOut.push({
+              at: b.beamAt ?? 0,
+              s:
+                `<path d="${beamPath(members)}" stroke="none" fill="${ink}"` +
+                ` class="${classes.generate('beam-elem d0')}"></path>`,
+            })
+          }
+        }
         for (const beam of staff.beams.filter(mine)) {
           /**
            * **A BEAM'S CLASS IS GENERATED, NOT LITERAL** —
@@ -1697,29 +1720,6 @@ const glyphDefs = new Map<GlyphName, string>()
             at: beam.beamAt ?? 0,
             s: `<path d="${d}" stroke="none" fill="${ink}"${beamClass}></path>`,
           })
-        }
-        // A GRACE BEAM's own class is `beam-elem d0` — its `durationClass` is 0, since a
-        // grace note has no sounding duration.
-        // …**AND IT IS A `<path>` LIKE ANY OTHER BEAM, ONE PER GROUP.** `drawBeam` is the
-        // same routine for both (`draw/beam.js:7-44`); ours wrote a `<polygon>` per grace
-        // beam, so a two-level grace group came out as two elements of the wrong kind.
-        {
-          let last: number | undefined
-          for (const b of graceBeams) {
-            if (b.group !== undefined && b.group === last) continue
-            last = b.group
-            const members =
-              b.group === undefined ? [b] : graceBeams.filter((g) => g.group === b.group)
-            // ALWAYS a `class`, empty or not — `svg.js`'s `path` sets every key it is
-            // handed and `generate` returns `''` without `add_classes`, so the attribute is
-            // written either way. Ours used `attrIfAny`, which omits it.
-            beamOut.push({
-              at: b.beamAt ?? 0,
-              s:
-                `<path d="${beamPath(members)}" stroke="none" fill="${ink}"` +
-                ` class="${classes.generate('beam-elem d0')}"></path>`,
-            })
-          }
         }
         for (const b of beamOut.sort((p, q) => p.at - q.at)) parts.push(b.s)
         // A GRACE BEAM's own class is `beam-elem d0` — its `durationClass` is 0, since a
