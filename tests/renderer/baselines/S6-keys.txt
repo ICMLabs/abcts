@@ -32,9 +32,9 @@ system 0 width=1006.481 originY=0.000
     clef x=15.000 w=24.051
       glyph gClef 20.000,-15.500
     keySignature x=49.051 w=23.050
-      glyph accidentalNatural 49.051,-27.125
-      glyph accidentalNatural 56.451,-42.625
-      glyph accidentalSharp 63.851,-38.750
+      glyph accidentalSharp 49.051,-38.750
+      glyph accidentalNatural 59.301,-27.125
+      glyph accidentalNatural 66.701,-42.625
     timeSignature x=82.101 w=11.795
       glyph timeSig8 82.536,-31.000
       glyph timeSig4 82.101,-15.500
@@ -330,9 +330,9 @@ system 3 width=700.000 originY=347.302
     clef x=15.000 w=24.051
       glyph gClef 20.000,-15.500
     keySignature x=49.051 w=21.550
-      glyph accidentalNatural 49.051,-38.750
-      glyph accidentalNatural 56.451,-27.125
-      glyph accidentalFlat 63.851,-23.250
+      glyph accidentalFlat 49.051,-23.250
+      glyph accidentalNatural 57.801,-38.750
+      glyph accidentalNatural 65.201,-27.125
     note@-3 x=80.601 w=42.426
       glyph noteheadBlack 80.601,-11.625
       line  89.911,-12.917 -> 89.911,-38.750 t=1.000
@@ -583,9 +583,9 @@ system 3 width=700.000 originY=347.302
     clef x=15.000 w=24.051
       glyph gClef 20.000,-15.500
     keySignature x=49.051 w=21.550
-      glyph accidentalNatural 49.051,-38.750
-      glyph accidentalNatural 56.451,-27.125
-      glyph accidentalFlat 63.851,-23.250
+      glyph accidentalFlat 49.051,-23.250
+      glyph accidentalNatural 57.801,-38.750
+      glyph accidentalNatural 65.201,-27.125
     note@-3 x=80.601 w=42.426
       glyph noteheadBlack 80.601,-11.625
       line  89.911,-12.917 -> 89.911,-38.750 t=1.000

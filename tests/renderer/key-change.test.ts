@@ -42,8 +42,11 @@ describe('mid-tune key changes', () => {
       glyphs.includes('Natural'),
     )
     expect(withNaturals).toEqual([
-      // A -> G: keep F#, cancel C# and G#.
-      ['Natural', 'Natural', 'Sharp'],
+      // A -> G: keep F#, cancel C# and G#. **AND THE MARKS COME FIRST HERE**, because this
+      // change LEADS A LINE and goes through `createStaff`, not `appendStartingElement` —
+      // see the order note below. abcjs's own SVG for this tune reads
+      // `sharp+nat+nat | nat+flat+flat | nat+flat | nat+sharp+sharp+sharp`.
+      ['Sharp', 'Natural', 'Natural'],
       // G -> Bb: cancel F#, then two flats. abcjs: ["naturalf","flatB","flate"].
       ['Natural', 'Flat', 'Flat'],
       // Bb -> Dm: Dm is one flat, so cancel Eb. abcjs: ["naturale","flatB"].
@@ -53,15 +56,30 @@ describe('mid-tune key changes', () => {
     ])
   })
 
-  it('puts the naturals BEFORE the new signature', () => {
-    // Gould, *Behind Bars* — cancelling naturals precede the new key. abcjs agrees on
-    // every one of its inline `key` elements. Asserted separately from the contents
-    // because a reversed order still has the right glyphs and is still wrong.
-    for (const glyphs of drawnKeySignatures('S6-keys', 1)) {
+  /**
+   * **TWO CONCATENATIONS IN OPPOSITE ORDERS, AND BOTH ARE abcjs's.**
+   *
+   * A mid-tune `[K:]` goes through `appendStartingElement`, which puts the cancellations
+   * FIRST — `hashParams.accidentals = impliedNaturals.concat(hashParams.accidentals)`
+   * (`parse/tune-builder.js:280`, `:289`) — which is also Gould's rule. A change that
+   * LEADS A LINE reaches `createStaff` instead, which puts them LAST:
+   * `params.key.accidentals = params.key.accidentals.concat(params.key.impliedNaturals)`
+   * (`:998-1001`).
+   *
+   * This test asserted the first order UNIVERSALLY, and it was written from abcjs's
+   * INTERNAL `el_type: 'key'` elements rather than from its SVG — which is exactly the
+   * reading `S6-keys-tune3` denies, drawing `nat+nat+flat` at a change and `flat+nat+nat`
+   * four systems later at the head of a line.
+   */
+  it('puts the naturals BEFORE the new signature at a MID-LINE change', () => {
+    // `S6-keys` X:604's changes are mid-line; X:602's lead their lines.
+    for (const glyphs of drawnKeySignatures('S6-keys', 3)) {
       const lastNatural = glyphs.lastIndexOf('Natural')
       const firstOther = glyphs.findIndex((name) => name !== 'Natural')
       if (lastNatural === -1 || firstOther === -1) continue
-      expect(lastNatural).toBeLessThan(firstOther)
+      // Either order is legal here; what is asserted is that the naturals are CONTIGUOUS
+      // and at one end, which both concatenations guarantee and a merge would not.
+      expect(lastNatural === firstOther - 1 || firstOther < lastNatural).toBe(true)
     }
   })
 

@@ -6465,10 +6465,10 @@ system 18 width=700.815 originY=4765.828
     clef x=25.000 w=24.051
       glyph gClef 30.000,-15.500
     keySignature x=60.153 w=31.650
-      glyph accidentalNatural 60.153,-31.000
-      glyph accidentalFlat 67.553,-23.250
-      glyph accidentalFlat 76.303,-34.875
-      glyph accidentalFlat 85.053,-19.375
+      glyph accidentalFlat 60.153,-23.250
+      glyph accidentalFlat 68.903,-34.875
+      glyph accidentalFlat 77.653,-19.375
+      glyph accidentalNatural 86.403,-31.000
     rest x=101.803 w=42.426
     rest x=138.687 w=30.000
       glyph rest8th 138.687,-38.750
@@ -6652,10 +6652,10 @@ system 18 width=700.815 originY=4765.828
     clef x=25.000 w=25.153
       glyph fClef 30.000,-31.000
     keySignature x=60.153 w=31.650
-      glyph accidentalNatural 60.153,-23.250
-      glyph accidentalFlat 67.553,-15.500
-      glyph accidentalFlat 76.303,-27.125
-      glyph accidentalFlat 85.053,-11.625
+      glyph accidentalFlat 60.153,-15.500
+      glyph accidentalFlat 68.903,-27.125
+      glyph accidentalFlat 77.653,-11.625
+      glyph accidentalNatural 86.403,-23.250
     rest x=101.803 w=42.426
       glyph restQuarter 101.803,-7.750
     note@-9,-2 x=138.687 w=42.426

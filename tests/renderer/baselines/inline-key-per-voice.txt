@@ -108,9 +108,9 @@ system 1 width=700.000 originY=178.890
     clef x=15.000 w=24.051
       glyph gClef 20.000,-15.500
     keySignature x=49.051 w=21.550
-      glyph accidentalNatural 49.051,-38.750
-      glyph accidentalNatural 56.451,-27.125
-      glyph accidentalFlat 63.851,-23.250
+      glyph accidentalFlat 49.051,-23.250
+      glyph accidentalNatural 57.801,-38.750
+      glyph accidentalNatural 65.201,-27.125
     note@-6 x=80.601 w=42.426
       glyph noteheadBlack 80.601,0.000
       line  78.601,0.000 -> 92.411,0.000 t=0.700
@@ -153,9 +153,9 @@ system 1 width=700.000 originY=178.890
     clef x=15.000 w=24.051
       glyph gClef 20.000,-15.500
     keySignature x=49.051 w=21.550
-      glyph accidentalNatural 49.051,-38.750
-      glyph accidentalNatural 56.451,-27.125
-      glyph accidentalFlat 63.851,-23.250
+      glyph accidentalFlat 49.051,-23.250
+      glyph accidentalNatural 57.801,-38.750
+      glyph accidentalNatural 65.201,-27.125
     note@-6 x=80.601 w=42.426
       glyph noteheadBlack 80.601,0.000
       line  78.601,0.000 -> 92.411,0.000 t=0.700

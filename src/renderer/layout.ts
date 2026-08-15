@@ -2448,6 +2448,17 @@ function layoutKeyChange(
   to: KeySignature,
   clef: Clef,
   strict = true,
+  /**
+   * **TWO CONCATENATIONS IN OPPOSITE ORDERS, AND BOTH ARE abcjs's.** A mid-tune `[K:]`
+   * goes through `appendStartingElement`, which puts the cancellations FIRST —
+   * `hashParams.accidentals = impliedNaturals.concat(hashParams.accidentals)`
+   * (`parse/tune-builder.js:280`, `:289`) — where a LINE PREFIX goes through
+   * `createStaff`, which puts them LAST:
+   * `params.key.accidentals = params.key.accidentals.concat(params.key.impliedNaturals)`
+   * (`:998-1001`). `S6-keys-tune3` draws both within four systems of each other:
+   * `nat+nat+flat` at the change and `flat+nat+nat` at the head of the next line.
+   */
+  naturalsLast = false,
 ): LayoutElement | null {
   // THERE IS NO "SAME SIGNATURE, PRINT NOTHING" TEST IN ABCJS, and the one that used to
   // stand here was our own engraving judgement wearing a citation.
@@ -2502,9 +2513,20 @@ function layoutKeyChange(
     })
     cursor += glyphsFor(strict).advance(name) + ENGRAVE.keySignatureGap
   }
-  for (const entry of cancelled) advance('accidentalNatural', entry.step)
-  for (const entry of incoming)
-    advance(entry.sharp ? 'accidentalSharp' : 'accidentalFlat', entry.step)
+  const marks = (): void => {
+    for (const entry of incoming)
+      advance(entry.sharp ? 'accidentalSharp' : 'accidentalFlat', entry.step)
+  }
+  const naturals = (): void => {
+    for (const entry of cancelled) advance('accidentalNatural', entry.step)
+  }
+  if (naturalsLast) {
+    marks()
+    naturals()
+  } else {
+    naturals()
+    marks()
+  }
 
   return {
     type: 'keySignature',
@@ -9878,8 +9900,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         )
           ? score.firstLineKeyClef.clef
           : clef
+      // …AND THE PREFIX IS `createStaff`'s CONCATENATION — marks first, naturals last.
       const keySig =
-        layoutKeyChange(x, beforeKey, lineKey, keyClef, strict) ??
+        layoutKeyChange(x, beforeKey, lineKey, keyClef, strict, true) ??
         layoutKeySignature(x, lineKey, keyClef, strict)
       if (keySig !== null) push(keySig)
       /**
