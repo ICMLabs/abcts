@@ -767,6 +767,19 @@ export interface Measure {
    */
   readonly meterChangeInline?: boolean
   /**
+   * **EVERY `[M:]` IN THIS MEASURE, IN ORDER**, each with the number of events already
+   * emitted when it was read — because abcjs treats a meter as an ORDINARY element in the
+   * voice stream and draws it where it stands, so `[M:2/4]y[M:3/4]y[M:4/4]` is five
+   * elements and three time signatures.
+   *
+   * Present only when a measure carries more than one, which is the only case the singular
+   * `meterChange` cannot express. That field is the LAST entry's meter — the meter IN
+   * FORCE, which is a different role from the DRAWN ones and is what audio, timing and the
+   * chord grid read. Both are built from this list in one place (`takeChanges`), so they
+   * cannot drift.
+   */
+  readonly meterChanges?: readonly { readonly meter: Meter | null; readonly at: number }[]
+  /**
    * A repeat ending (volta) starting at this measure — the `1` in `|1`, or `1,2`.
    *
    * ABC writes the number after the barline that opens the ending, and the ending runs

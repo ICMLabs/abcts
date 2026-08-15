@@ -1030,7 +1030,12 @@ class VoiceBuilder {
     this.pendingMeterChange = meter
     this.pendingMeterChangeRange = range
     this.pendingMeterChangeInline = inline
+    // …AND ITS POSITION IN THE STREAM, because a measure can carry more than one and
+    // abcjs draws every one of them where it stands. See `Measure.meterChanges`.
+    this.pendingMeterChanges.push({ meter, at: this.events.length })
   }
+
+  private pendingMeterChanges: { meter: Meter | null; at: number }[] = []
 
   private pendingMeterChangeInline = false
 
@@ -1067,6 +1072,9 @@ class VoiceBuilder {
       meterChange: this.pendingMeterChange,
       meterChangeSourceRange: this.pendingMeterChangeRange,
       ...(this.pendingMeterChangeInline ? { meterChangeInline: true } : {}),
+      ...(this.pendingMeterChanges.length > 1
+        ? { meterChanges: this.pendingMeterChanges }
+        : {}),
     }
     this.pendingKeyChange = null
     this.pendingClefChange = null
@@ -1076,6 +1084,7 @@ class VoiceBuilder {
     this.pendingMeterChange = null
     this.pendingMeterChangeRange = null
     this.pendingMeterChangeInline = false
+    this.pendingMeterChanges = []
     return changes
   }
 
@@ -1175,6 +1184,7 @@ class VoiceBuilder {
     if (this.meterForNextLine !== null) {
       this.pendingMeterChange = this.meterForNextLine.meter
       this.pendingMeterChangeRange = this.meterForNextLine.range
+      this.pendingMeterChanges.push({ meter: this.meterForNextLine.meter, at: this.events.length })
       // The standalone form, by construction — this is abcjs's `startNewLine` consuming
       // `multilineVars.meter`, which the inline arm never fills.
       this.pendingMeterChangeInline = false

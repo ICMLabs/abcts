@@ -3037,7 +3037,12 @@ function layoutRest(
   // that plus `minspacing`. We reported 0, so a compressed line let the note after a rest
   // slide onto it: `visual-layout-04` put its `zA` 37.6px left of abcjs's.
   const restInk = Math.max(
-    spec === null ? 0 : restWidth + ENGRAVE.noteRodGap,
+    // **AN INVISIBLE REST AND A SPACER STILL SPEND THEIR `minspacing`.** `getMinWidth` is
+    // 0 for both — they draw nothing — and `voice.minx += child.minspacing` runs on every
+    // element whatever it drew (`layout/voice-elements.js:74-80`). Instrumented on
+    // `[M:2/4]y[M:3/4]y[M:4/4]`: abcjs's `rest x 36.795 minx 37.795 w 0 minspacing 1`,
+    // and ours spent nothing at all, so every element after a `y` sat one pixel left.
+    spec === null ? ENGRAVE.noteRodGap : restWidth + ENGRAVE.noteRodGap,
     dotRight === 0 ? 0 : dotRight + ENGRAVE.noteRodGap,
     textSpan.right,
   )
@@ -8779,6 +8784,26 @@ function layoutMeasure(
   // `staff-extra time-signature` for it, like the clef change beside it — and unlike the
   // clef, it is NOT reprinted at the head of later systems, so there is no double to
   // guard against: our prefix prints a meter only on system 0.
+  /**
+   * **A METER IS AN ORDINARY ELEMENT IN THE STREAM AND EVERY ONE OF THEM DRAWS.**
+   * `[M:2/4]y[M:3/4]y[M:4/4]` is FIVE elements in abcjs's voice — instrumented, its
+   * `x`/`minx` chain reads `timeSig 15, rest 36.795, timeSig 37.795, rest 59.59,
+   * timeSig 60.59` — where a singular `meterChange` keeps only the last. See
+   * `Measure.meterChanges`; `drawMeterChange` remains the whole path when a measure
+   * carries one, which is every measure in both corpora but this fixture's.
+   */
+  const emitMeter = (m: Meter | null): void => {
+    if (m == null) return
+    const el = layoutMeter(x, m, strict)
+    elements.push(el)
+    fixed(el.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap, 'other', 0, el.width)
+    x += el.width + ENGRAVE.prefixGap
+  }
+  /** The extra ones — index 0 is `drawMeterChange`'s, wherever that put it. */
+  const extraMeters = (measure.meterChanges ?? []).slice(1)
+  const drawMetersBefore = (eventIndex: number): void => {
+    for (const m of extraMeters) if (m.at === eventIndex) emitMeter(m.meter)
+  }
   const drawMeterChange = (): void => {
     if (measure.meterChange == null) return
     // NOT WHEN IT LEADS THE SYSTEM — the previous system's `trailingMeter` drew it, and
@@ -8804,10 +8829,7 @@ function layoutMeasure(
     ) {
       return
     }
-    const meter = layoutMeter(x, measure.meterChange, strict)
-    elements.push(meter)
-    fixed(meter.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap, 'other', 0, meter.width)
-    x += meter.width + ENGRAVE.prefixGap
+    emitMeter(measure.meterChanges === undefined ? measure.meterChange : measure.meterChanges[0]?.meter ?? null)
   }
   // A `Q:` AFTER THE FIRST prints where it stands, on its OWN voice's staff — an ordinary
   // element in that voice's stream. Zero width, like the tune's own mark.
@@ -8833,6 +8855,7 @@ function layoutMeasure(
   }
 
   for (const [eventIndex, event] of measure.events.entries()) {
+    drawMetersBefore(eventIndex)
     if (measure.partLabel !== null && eventIndex === partIndex && partIndex > 0) {
       elements.push(layoutPart(x, measure.partLabel))
       fixed(0, 0, 'part')
@@ -8968,6 +8991,10 @@ function layoutMeasure(
     })
     x += el.width
   }
+
+  // …AND A `[M:]` WRITTEN AFTER THE LAST EVENT IS STILL AN ELEMENT — abcjs's voice ends
+  // `timeSig 60.59` on `[M:2/4]y[M:3/4]y[M:4/4]`.
+  drawMetersBefore(measure.events.length)
 
   // Every event preceded the `P:` — the label belongs after them, before the barline.
   if (measure.partLabel !== null && partIndex === -1) {
@@ -9767,9 +9794,14 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
        * with a `2`, and ours drew the header's `4`.
        */
       const firstMeasure = (voice?.measures ?? [])[0]
+      // …AND WHEN THE MEASURE CARRIES SEVERAL, IT IS THE FIRST OF THEM. `[M:2/4]y[M:3/4]`
+      // opens the staff with the `2`; `meterChange` is the meter in FORCE, which is the
+      // last. See `Measure.meterChanges`.
       const leading =
         from === 0 && meterLeadsFirstMeasure(firstMeasure)
-          ? (firstMeasure?.meterChange ?? null)
+          ? ((firstMeasure?.meterChanges === undefined
+              ? firstMeasure?.meterChange
+              : firstMeasure.meterChanges[0]?.meter) ?? null)
           : null
       const prefixMeter = leading ?? (withMeter ? score.meter : null)
       if (prefixMeter !== null) {
