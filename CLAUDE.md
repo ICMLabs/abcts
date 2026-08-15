@@ -896,7 +896,19 @@ checkpoint and hand off as you go so no context is lost.
 > LAST at the head of a line, because `appendStartingElement` and `createStaff` concatenate
 > them in OPPOSITE ORDERS and abcjs's own SVG draws both within four systems; and a KEY
 > SIGNATURE'S `dx` IS BUILT FROM ZERO, `x + ((w1+2) + (w2+2))` rather than
-> `((x+w1+2) + w2+2)` — three rows on one association.
+> `((x+w1+2) + w2+2)` — three rows on one association. Then a DOT'S OFFSET IS BUILT **AND
+> CARRIED** (`at + (g.dx ?? g.x - el.x)`, and `(x + a) - x` is not `a` — the first half
+> alone moved nothing, which is how the second was found); a note's BELOW annotations are
+> written backwards and PACKED FORWARDS, because `setLaneForChord`'s two loops differ and
+> `setLane`'s below branch is COMMENTED OUT in abcjs's own source; and **A REORDERED STAFF
+> DRAWS EACH VOICE UNDER THE WRONG NAME** — `abcstaff.title[v]` is filled in DECLARATION
+> order and `abcstaff.voices[v]` in `%%score` order, and abcjs pairs them by index.
+>
+> **AND THE ULP FAMILY IS LOCATED RATHER THAN GUESSED AT**: a carried `dx` on the NOTEHEAD
+> — the obvious mirror of the dot's fix — takes `svg-bytes` from 0 to 23 of 178, and
+> `placeElement` printed for the same head says why (`el.x` and `g.x` are EQUAL, so its
+> offset is genuinely zero). What is left is the LINE SOLVE's own cursor, one ULP above
+> abcjs's element x on six rows.
 >
 > **READ `Docs/HANDOFF-2026-08-14.md` FIRST**, then `Docs/CHECKPOINT-2026-08-14.md` — §4 is
 > the work list for the 31, §5 the harness (four new abcjs probes, three of ours, two
