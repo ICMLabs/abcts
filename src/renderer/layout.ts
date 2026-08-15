@@ -1256,6 +1256,17 @@ export interface LayoutElement {
   readonly durationClass?: number
   readonly abcjsPitches?: readonly number[]
   /**
+   * **`!mark!` PAINTS THE WHOLE ELEMENT GREEN AND NAMES IT.** `stackedDecoration` sets
+   * `abselem.klass = "mark"` (`creation/decoration.js:267-268`) and `drawAbsolute` closes
+   * with `if (params.klass) setClass(params.elemset, "mark", "", "#00ff00")`
+   * (`draw/absolute.js:68-69`), which writes the group's `fill` — or whatever attribute
+   * its `highlight` names — and APPENDS the class.
+   *
+   * The class lands LAST in the attribute order because `setAttribute` runs after the
+   * group was built, which is the same rule a notehead's late class already follows.
+   */
+  readonly marked?: boolean
+  /**
    * Total height, for an element that is a BLOCK rather than a mark — only the top text.
    * abcjs advances its cursor by a rounded line height per row, which is more than the
    * last row's descender, so the block cannot be measured from its texts after the fact.
@@ -4290,6 +4301,8 @@ function layoutNoteheads(
     stemUp: up,
     // abcjs's `d` and `p` classes; see `LayoutElement.durationClass`.
     durationClass: event === null ? 0 : ratToNumber(event.duration),
+    // `!mark!` — see `LayoutElement.marked`.
+    ...(event !== null && event.decorations.includes('mark') ? { marked: true } : {}),
     // `pitch` 0 is MIDDLE C in abcjs, so the octave offset comes back off.
     abcjsPitches: pitches.map((p) => diatonicIndex(p) - 7 * 4),
     // THE ELEMENT IS ITS NOTEHEAD. Grace notes and accidentals hang LEFT of it and cost

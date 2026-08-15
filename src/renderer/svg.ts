@@ -800,6 +800,9 @@ const ABCJS_STYLE =
 
 const attrIfAny = (cls: string): string => (cls ? ` class="${cls}"` : '')
 
+/** `setClass(params.elemset, "mark", "", "#00ff00")` — abcjs's own literal for `!mark!`. */
+const ABCJS_MARK_COLOUR = '#00ff00'
+
 /**
  * **A `%%…box` FONT DRAWS FOUR FILLED RULES ROUND ITS ROW.** `renderText` lays a rect that
  * `Svg.rect` writes as a PATH — "so that it can be hollow and the color changes with fill
@@ -2232,12 +2235,24 @@ const glyphDefs = new Map<GlyphName, string>()
            */
           const selectable = el.type === 'note' || el.type === 'rest'
           openedAt = parts.length
+          /**
+           * **`!mark!` PAINTS THE GROUP GREEN AND APPENDS ITS CLASS LAST.**
+           * `setClass(params.elemset, "mark", "", "#00ff00")` overwrites the group's `fill`
+           * and then `setAttribute("class", …)` (`draw/absolute.js:68-69`,
+           * `helpers/set-class.js`) — so with no `add_classes` the attribute is CREATED at
+           * the end, after `data-index`, and with them it is appended to what is there.
+           * See `LayoutElement.marked`.
+           */
+          const marked = el.marked === true
+          const groupClass = marked ? (gcls ? `${gcls} mark` : 'mark') : gcls
           parts.push(
             // …AND THE GROUP'S OWN `fill` IS THE VOICE'S — see `fg` at `flushVoice`. An
             // element is drawn inside `drawVoice`, so it is inside the colour swap.
-            `<g fill="${fg(voiceOf(elIndex))}" stroke="none"${gcls ? ` class="${gcls}"` : ''}` +
+            `<g fill="${marked ? ABCJS_MARK_COLOUR : fg(voiceOf(elIndex))}" stroke="none"` +
+              `${gcls ? ` class="${groupClass}"` : ''}` +
               ` data-name="${name}"` +
-              `${selectable ? ` selectable="false" data-index="${selectableIndex++}"` : ''}>`,
+              `${selectable ? ` selectable="false" data-index="${selectableIndex++}"` : ''}` +
+              `${marked && !gcls ? ` class="${groupClass}"` : ''}>`,
           )
           /**
            * **THE COUNTERS ADVANCE AFTER THE ELEMENT IS DRAWN, NOT BEFORE IT.** `drawVoice`
