@@ -1307,7 +1307,7 @@ class VoiceBuilder {
          * `versesHere` by non-empty text — which 19 new empty lyrics would change. One
          * row of the sibling byte table.
          */
-        if (syllable.kind !== 'skip') verses[verse]?.set(line.start + offset, syllable)
+        verses[verse]?.set(line.start + offset, syllable)
       })
     }
 
@@ -1320,14 +1320,23 @@ class VoiceBuilder {
       events: measure.events.map((event) => {
         if (event.type === 'rest') return event
         const first = verses[0]?.get(index)
-        const extras = verses.slice(1).map((verse) => verse.get(index)?.text ?? null)
+        // …and a LATER verse tells "not covered" (null) from "covered, no syllable" ('')
+        // the same way verse 1 does — see `lyric` below.
+        const extras = verses.slice(1).map((verse) => {
+          const sy = verse.get(index)
+          return sy === undefined ? null : (sy.text ?? '')
+        })
         // Named rather than read after `index += 1`: the lookahead is deliberate, and
         // spelling it out keeps it from reading as an off-by-one.
         const next = verses[0]?.get(index + 1)
         index += 1
         return {
           ...event,
-          lyric: first?.text ?? null,
+          // **AN EMPTY SYLLABLE IS NOT AN ABSENT ONE.** A `*` (skip) and the note a `_`
+          // holds over both reach `addLyric` in abcjs, which builds
+          // `lyricStr = "" + div + "\n"` and draws `&nbsp;` — `null` here means the `w:`
+          // line never covered this note at all. See the note above `verses`.
+          lyric: first === undefined ? null : (first.text ?? ''),
           lyricSourceRange: first?.range ?? null,
           lyricFont: first?.font ?? null,
           // ponytail: melisma is tracked for verse 1 only. extraVerses is a plain

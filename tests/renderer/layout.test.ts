@@ -1394,7 +1394,9 @@ describe('compatibility modes', () => {
       (parse('X:1\nL:1/4\nK:C\nCDE|\nw:A - ve,\n', { mode }).scores[0]?.voices[0]?.measures ?? [])
         .flatMap((m) => m.events)
         .map((e) => (e.type === 'rest' ? null : e.lyric))
-    expect(lyrics('abcjs-strict')).toEqual(['A-', null, 've,'])
+    // The middle note is COVERED by the `w:` line and given nothing, which is `''` — see
+    // the `*` tests in `parse.test.ts`. `null` is a note the line never reached.
+    expect(lyrics('abcjs-strict')).toEqual(['A-', '', 've,'])
     expect(lyrics('abc2.1')).toEqual(['A', 've,', null])
   })
 })

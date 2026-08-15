@@ -989,6 +989,7 @@ system 1 width=700.620 originY=154.162
     note@-2 x=555.861 w=60.000
       glyph noteheadHalf 555.861,-15.500
       line  565.731,-16.792 -> 565.731,-42.625 t=1.000
+      text  555.861,24.750 size=17.000 bold " " +""
     rest x=620.241 w=60.000
       glyph restHalf 620.241,-23.250
     bar x=684.620 w=0.600

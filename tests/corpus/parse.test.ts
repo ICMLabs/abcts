@@ -405,19 +405,27 @@ describe('lyrics', () => {
     expect(notes.map((n) => n.lyric)).toEqual(['Fre-', 're', 'Jac-', 'ques'])
   })
 
-  it('treats * as a skipped note and | as an alignment hint occupying none', () => {
+  /**
+   * **AN EMPTY SYLLABLE IS NOT AN ABSENT ONE, AND THESE TESTS SAID IT WAS.**
+   * abcjs's own parse golden for `S5-directives` X:505 ends `["true.|_"] ["| "]` — an
+   * entry with an EMPTY syllable for the note the `_` holds over — and `addLyric` builds
+   * `lyricStr = "" + div + "\n"` for it, which `renderText` draws as `&nbsp;`
+   * (`abstract-engraver.js:779-784`, `draw/text.js:44-46`). `null` now means the `w:`
+   * lines never covered this note; `''` means they did and gave it nothing.
+   */
+  it('treats * as an EMPTY syllable and | as an alignment hint occupying none', () => {
     const notes = notesOf('X:1\nL:1/4\nK:C\nCDEF|\nw:Do * | Mi Fa\n')
-    expect(notes.map((n) => n.lyric)).toEqual(['Do', null, 'Mi', 'Fa'])
+    expect(notes.map((n) => n.lyric)).toEqual(['Do', '', 'Mi', 'Fa'])
     // `*` is nothing sung — NOT a held syllable.
     expect(notes.map((n) => n.lyricMelisma)).toEqual([false, false, false, false])
   })
 
   it('distinguishes _ (melisma) from * (skip)', () => {
-    // Both leave `lyric` null and occupy a note, but only `_` means the previous
+    // Both leave `lyric` EMPTY and occupy a note, but only `_` means the previous
     // syllable is still being sung — which is what a renderer needs to draw an
     // extension line rather than a gap.
     const notes = notesOf('X:1\nL:1/4\nK:C\nCDEF|\nw:Do _ * Fa\n')
-    expect(notes.map((n) => n.lyric)).toEqual(['Do', null, null, 'Fa'])
+    expect(notes.map((n) => n.lyric)).toEqual(['Do', '', '', 'Fa'])
     expect(notes.map((n) => n.lyricMelisma)).toEqual([false, true, false, false])
   })
 
@@ -426,7 +434,7 @@ describe('lyrics', () => {
     // `A-` · hold · `ma-` · `zing` · hold. A tokenizer that only splits on `-` leaves
     // literal underscores in the text ("_ma-", "zing_") and loses both holds.
     const notes = notesOf('X:1\nL:1/8\nK:C\nG2 c3/2 B/ c2 e2 |\nw: A-_ma-zing_ * grace\n')
-    expect(notes.map((n) => n.lyric)).toEqual(['A-', null, 'ma-', 'zing', null])
+    expect(notes.map((n) => n.lyric)).toEqual(['A-', '', 'ma-', 'zing', ''])
     expect(notes.map((n) => n.lyricMelisma)).toEqual([false, true, false, false, true])
   })
 
@@ -786,7 +794,8 @@ describe('`s:` symbol lines', () => {
     // strict render therefore prints `!trill!` under the staff, delimiters and all.
     expect(events('abcjs-strict').map((e) => e.lyric)).toEqual([
       '!trill!',
-      null,
+      // A `*` is an EMPTY syllable, not an absent one — see the `w:` tests above.
+      '',
       '!fermata!',
       '!staccato!',
     ])

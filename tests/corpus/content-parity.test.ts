@@ -536,7 +536,12 @@ it('content parity against abcjs goldens does not regress', () => {
   // ─── Lyrics ───────────────────────────────────────────────────────────────
   // Verse 1 only. abcjs stores a hyphen as a `divider` on the syllable rather than in
   // it, and does not decode `\vao`-style escapes, so both sides are normalised before
-  // comparing: reattach abcjs's divider, decode its text, and read its "" skip as null.
+  // comparing: reattach abcjs's divider and decode its text.
+  //
+  // **THE `"" -> null` NORMALISATION IS GONE, AND IT WAS ENCODING AN INFERENCE.** abcjs's
+  // own golden ends `["true.|_"] ["| "]` — an EMPTY syllable on the note the `_` holds
+  // over — and `addLyric` draws it as `&nbsp;`. Mapping it to `null` made ours agree while
+  // our page was missing an element per `*`; `little swallow` draws 89 lyric texts.
   const lyricFailures: string[] = []
   let lyricsCompared = 0
   for (const file of fixtures) {
@@ -558,7 +563,7 @@ it('content parity against abcjs goldens does not regress', () => {
       const first = note.lyric?.[0]
       if (!first) return null
       const syllable = decodeTextString(first.syllable ?? '')
-      return syllable === '' ? null : syllable + (first.divider === '-' ? '-' : '')
+      return syllable + (first.divider === '-' ? '-' : '')
     })
     if (!ours.some(Boolean) && !theirs.some(Boolean)) continue
     lyricsCompared++

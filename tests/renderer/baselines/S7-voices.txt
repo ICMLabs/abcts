@@ -1300,6 +1300,7 @@ system 0 width=779.737 originY=0.000
       glyph augmentationDot 421.369,-11.625
       glyph noteheadBlack 408.559,-11.625
       line  417.869,-12.917 -> 417.869,-38.750 t=1.000
+      text  408.559,57.627 size=17.000 bold " " +" " ""
     note@-3 x=438.092 w=30.000
       glyph noteheadBlack 438.092,-11.625
       line  447.602,-12.400 -> 447.602,-42.625 t=0.600

@@ -48,6 +48,7 @@ system 0 width=786.609 originY=0.000
     note@-3 x=523.753 w=42.426
       glyph noteheadBlack 523.753,-11.625
       line  533.063,-12.917 -> 533.063,-38.750 t=1.000
+      text  523.753,40.250 size=17.000 bold " " +""
     bar x=551.807 w=0.600
       line  552.107,-38.750 -> 552.107,-7.750 t=0.600
     note@-1 x=571.784 w=42.426
@@ -58,6 +59,7 @@ system 0 width=786.609 originY=0.000
       glyph accidentalSharp 589.588,-15.500
       glyph noteheadBlack 599.838,-15.500
       line  609.148,-16.792 -> 609.148,-42.625 t=1.000
+      text  599.838,40.250 size=17.000 bold " " +""
     note@-2 x=627.892 w=60.000
       glyph accidentalNatural 620.492,-15.500
       glyph noteheadHalf 627.892,-15.500

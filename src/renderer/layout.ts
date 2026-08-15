@@ -6058,10 +6058,24 @@ function noteText(
    * The merge is markup only: a tspan's `dy="1.2em"` is the same `lyricLineStep` the
    * second lane drew at, and the lane RESERVE counts verses rather than texts.
    */
-  const sungAt = verses.findIndex((v) => v !== null && v !== '')
-  const later = verses.filter((v, i) => i !== sungAt && v !== null && v !== '') as string[]
+  /**
+   * **THE FIRST VERSE THE `w:` LINES COVER, EMPTY OR NOT — THE ORDER IS THE VERSES'.**
+   * This read `v !== null && v !== ''`, which promoted a later verse whenever the first
+   * one was a `*`: `little swallow`'s `Xi\vao* / 小*` note drew `燕` on the first line
+   * where abcjs draws `&nbsp;` then `燕`. abcjs has no such choice to make —
+   * `elem.lyric.forEach` walks them in order and skips none.
+   */
+  const sungAt = verses.findIndex((v) => v !== null)
+  const later = verses.filter((v, i) => i > sungAt && v !== null) as string[]
   verses.forEach((raw, index) => {
-    if (raw === null || raw === '') return
+    // **`null` IS "NO LYRIC HERE"; `''` IS AN EMPTY SYLLABLE AND STILL DRAWS.** A `*` and
+    // the note a `_` holds over both reach `addLyric`, whose `lyricStr` is
+    // `"" + div + "\n"` with `div` emptied for a space divider
+    // (`abstract-engraver.js:779-784`) — so `renderText`'s `/^\n/ -> "\xA0\n"` gives a
+    // `&nbsp;` and one empty tspan. Its WIDTH is measured on the unrewritten string and is
+    // therefore zero, which is why the element takes no room.
+    if (raw === null) return
+    if (raw === '' && index !== sungAt) return
     // Verse 1 carries the font; later verses stay at the default until `extraVerses` can
     // hold one of their own.
     const size = index === 0 ? lyricSize : ENGRAVE.lyricTextSize
@@ -6083,9 +6097,24 @@ function noteText(
     // `_`. One number computed in two places whose inputs had drifted — the third time on
     // this branch, after the lyric reserve and `curveReserves`.
     const verse = strict && index === 0 && event.lyricMelismaStart ? `${raw}_` : raw
+    /**
+     * **THE TSPANS ARE `renderText`'S TWO REWRITES OVER THE JOINED VERSES.**
+     * `lyricStr` is `syllable + div + "\n"` per verse — every one of them, the empty ones
+     * included — and `renderText` then runs `/\n\n/g -> "\n \n"` and `/^\n/ ->
+     * "\xA0\n"` before `Svg.text` splits on the newline (`abstract-engraver.js:779-784`,
+     * `draw/text.js:44-46`). So two blank verses give `&nbsp;`, a space and an empty
+     * tspan — three, where the same note with two syllables gives three too.
+     *
+     * The `/g` is NON-OVERLAPPING, which is why three consecutive blanks space the first
+     * and third and not the second. Reproduced by joining rather than by a per-line rule.
+     */
+    const lyricLines = `${[verse, ...later].join('\n')}\n`
+      .replace(/\n\n/g, '\n \n')
+      .replace(/^\n/, '\u00A0\n')
+      .split('\n')
     centred(verse, size, 0, 'serifBold')
     texts.push({
-      text: verse,
+      text: lyricLines[0] ?? '',
       /**
        * abcjs-debt: §3 — the empty trailing `<tspan>` is abcjs's, and its LANE depends
        * on it. Docs/ABCJS-DEBT.md
@@ -6103,7 +6132,7 @@ function noteText(
        * is a lane change rather than a markup one. No corpus fixture puts two verses on
        * one note.
        */
-      extraLines: [...later, ''],
+      extraLines: lyricLines.slice(1),
       // Tagged so the melisma pass can find the syllable it must extend from. Matching
       // on the y lane instead would couple that pass to this one's lane arithmetic.
       role: 'lyric',
