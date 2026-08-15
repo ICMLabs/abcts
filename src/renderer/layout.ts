@@ -1037,6 +1037,11 @@ export interface PlacedLine {
    */
   readonly beamAt?: number
   /**
+   * The element this was `addOther`'d at — a HAIRPIN and a GLISSANDO take their class
+   * counters from there, like everything else in `otherchildren`. See `markerAt`.
+   */
+  readonly atElement?: number
+  /**
    * Drawn but NOT counted in the staff's vertical extent.
    *
    * A PHASE distinction, not a drawing one. abcjs accumulates `staff.top` from the children
@@ -6610,7 +6615,15 @@ function layoutSpanners(
    * half, so each piece continues the taper the other left off at. The mouth therefore
    * interpolates by how much of the span each system carries.
    */
-  const hairpin = (system: number, x1: number, x2: number, g1: number, g2: number): void => {
+  const hairpin = (
+    system: number,
+    x1: number,
+    x2: number,
+    g1: number,
+    g2: number,
+    /** The element it was `addOther`'d at — its class counters come from there. */
+    atElement?: number,
+  ): void => {
     if (x2 - x1 < ENGRAVE.spannerMinLength) return
     /**
      * **THE MOUTH IS CENTRED EIGHT PIXELS BELOW THE LANE'S PITCH.** `drawCrescendo` takes
@@ -6632,12 +6645,18 @@ function layoutSpanners(
         dynamicsAboveAt(system) ? ENGRAVE.dynamicAboveStep : ENGRAVE.dynamicBelowStep,
       ) + ENGRAVE.hairpinDrop
     out[system]?.push(
-      { x1, y1: y - g1 / 2, x2, y2: y - g2 / 2, thickness, role: 'dynamic' },
-      { x1, y1: y + g1 / 2, x2, y2: y + g2 / 2, thickness, role: 'dynamic' },
+      { x1, y1: y - g1 / 2, x2, y2: y - g2 / 2, thickness, role: 'dynamic', ...(atElement === undefined ? {} : { atElement }) },
+      { x1, y1: y + g1 / 2, x2, y2: y + g2 / 2, thickness, role: 'dynamic', ...(atElement === undefined ? {} : { atElement }) },
     )
   }
 
-  const emit = (from: SpannerSite, to: SpannerSite, kind: string): void => {
+  const emit = (
+    from: SpannerSite,
+    to: SpannerSite,
+    kind: string,
+    /** `endLine` adds after every child of the line — see `PlacedLine.atElement`. */
+    addedAfter = false,
+  ): void => {
     if (kind === 'glissando') {
       // A GLISSANDO JOINS TWO NOTEHEADS and cannot end on a bar — see `SpannerSite`.
       const fromNote = from.anchor
@@ -6698,7 +6717,9 @@ function layoutSpanners(
      * RIGHT edge, a whole notehead too far — 345.47 against abcjs's 335.66.
      */
     if (from.system === to.system) {
-      hairpin(from.system, from.left, to.left, gapAt(0), gapAt(1))
+      // …and one the LINE's end closes is added after every child, so its counters see the
+      // barline's own marker — see `addedAfter`.
+      hairpin(from.system, from.left, to.left, gapAt(0), gapAt(1), to.element + (addedAfter ? 1 : 0))
       return
     }
     const start = bounds[from.system]
@@ -6708,8 +6729,8 @@ function layoutSpanners(
     const lastRun = Math.max(0, to.left - end.left)
     const total = firstRun + lastRun
     const split = total === 0 ? 0.5 : firstRun / total
-    hairpin(from.system, from.left, start.right, gapAt(0), gapAt(split))
-    hairpin(to.system, end.left, to.left, gapAt(split), gapAt(1))
+    hairpin(from.system, from.left, start.right, gapAt(0), gapAt(split), to.element)
+    hairpin(to.system, end.left, to.left, gapAt(split), gapAt(1), to.element)
   }
 
   /**
@@ -6810,7 +6831,7 @@ function layoutSpanners(
       const held = open.get(kind)
       if (held === undefined) continue
       open.delete(kind)
-      if (last !== undefined) emit(held, last, kind)
+      if (last !== undefined) emit(held, last, kind, true)
     }
   }
 
@@ -13930,6 +13951,13 @@ function bottomTextBlock(
     fontType?: AbcFontType,
     /** The `startGroup` key, where two adjacent groups share a drawn name. */
     groupId?: string,
+    /**
+     * The literal class abcjs hands this row, which for the BOTTOM block is per FIELD and
+     * not per drawn name: `addSingleLine`/`addMultiLine` prefix `abcjs-extra-text` to an
+     * `abcjs-<field>` of their own (`elements/bottom-text.js:24-45, 67-79`), while both
+     * `N:` and `H:` draw as `data-name="description"`.
+     */
+    abcjsClass?: string,
   ): void => {
     const text = plainText(value)
     /**
@@ -14003,6 +14031,7 @@ function bottomTextBlock(
       text,
       role: 'title',
       dataName,
+      ...(abcjsClass === undefined ? {} : { groupClass: abcjsClass }),
       ...(extra.length > 0 ? { extraLines: extra } : {}),
       ...(middle ? { middleBaseline: true } : {}),
       ...(box === 0
@@ -14061,22 +14090,22 @@ function bottomTextBlock(
     // …AND THE ARRAY BRANCH OPENS A GROUP OF ITS OWN — `rows.push({ startGroup:
     // 'unalignedWords' })` before the rows (`bottom-text.js:48`). See `PlacedText.groupName`.
     for (const line of metadata.unalignedWords)
-      addText(line, [], words, 'unalignedWords', false, 0, 'unalignedWords', 'wordsfont')
+      addText(line, [], words, 'unalignedWords', false, 0, 'unalignedWords', 'wordsfont', undefined, 'abcjs-extra-text abcjs-unaligned-words')
     // TWO raw heights, and abcjs spends them as two separate rows.
     move(goldenTextHeight(words))
     move(goldenTextHeight(words))
   }
 
   /** `addSingleLine` — the preface joins the phrases as one more of them when rich. */
-  const single = (value: RichText | null, prefix: string): void => {
+  const single = (value: RichText | null, prefix: string, klass: string): void => {
     if (value === null || plainText(value) === '') return
     const joined: RichText =
       typeof value === 'string'
         ? prefix + value
         : [{ font: null, text: prefix }, ...value]
-    addText(joined, [], history, 'description', false, historyBox, undefined, 'historyfont')
+    addText(joined, [], history, 'description', false, historyBox, undefined, 'historyfont', undefined, klass)
   }
-  const multi = (value: readonly RichText[], preface: string, groupId: string): void => {
+  const multi = (value: readonly RichText[], preface: string, groupId: string, klass: string): void => {
     if (value.length === 0) return
     // BLANK LINES ARE KEPT. `simplifyMetaText` joins the entries with `\n` and `addTextIf`
     // counts `text.split("\n").length`, so an empty `H:` is a line of the block and costs
@@ -14094,11 +14123,11 @@ function bottomTextBlock(
     if (value.some((v) => typeof v !== 'string')) {
       // `openGroup({klass, "data-name": row.name})` — the drawn name is `description` for
       // BOTH `notes` and `history`, so the run is keyed on the `startGroup` string.
-      addText(preface, [], history, 'description', true, historyBox, 'description', 'historyfont', groupId)
+      addText(preface, [], history, 'description', true, historyBox, 'description', 'historyfont', groupId, klass)
       move((goldenTextHeight(history) * 3) / 4)
       value.forEach((entry, j) => {
         if (plainText(entry) !== '') {
-          addText(entry, [], history, 'description', false, historyBox, 'description', 'historyfont', groupId)
+          addText(entry, [], history, 'description', false, historyBox, 'description', 'historyfont', groupId, klass)
         }
         // abcjs's own "TODO-PER: Hack! the string and rich lines should have used up the
         // same amount of space without this" (`bottom-text.js:58-59`).
@@ -14129,15 +14158,16 @@ function bottomTextBlock(
       .replace(/\n\n/g, '\n \n')
       .replace(/^\n/, '\u00A0\n')
       .split('\n')
-    addText(rows[0] ?? preface, rows.slice(1), history, 'description', true, historyBox, undefined, 'historyfont')
+    addText(rows[0] ?? preface, rows.slice(1), history, 'description', true, historyBox, undefined, 'historyfont', undefined, klass)
   }
 
-  single(metadata.book, 'Book: ')
-  single(metadata.source, 'Source: ')
-  single(metadata.discography, 'Discography: ')
-  multi(metadata.notes, 'Notes:', 'notes')
-  single(metadata.transcription, 'Transcription: ')
-  multi(metadata.history, 'History:', 'history')
+  // The class per FIELD — `abcjs-extra-text` plus the field's own (`bottom-text.js:67-79`).
+  single(metadata.book, 'Book: ', 'abcjs-extra-text abcjs-book')
+  single(metadata.source, 'Source: ', 'abcjs-extra-text abcjs-source')
+  single(metadata.discography, 'Discography: ', 'abcjs-extra-text abcjs-discography')
+  multi(metadata.notes, 'Notes:', 'notes', 'abcjs-extra-text abcjs-notes')
+  single(metadata.transcription, 'Transcription: ', 'abcjs-extra-text abcjs-transcription')
+  multi(metadata.history, 'History:', 'history', 'abcjs-extra-text abcjs-history')
 
   return { texts, height: y - from, advances }
 }

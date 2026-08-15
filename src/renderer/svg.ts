@@ -1216,7 +1216,11 @@ const glyphDefs = new Map<GlyphName, string>()
         t.dataName ?? '',
         escapeText(t.text),
         options.addClasses === true && t.dataName !== undefined
-          ? (ABCJS_TEXT_CLASSES[t.dataName] ?? '')
+          ? // …**AND THE BOTTOM BLOCK'S CLASS IS PER FIELD, NOT PER DRAWN NAME** — both
+            // `N:` and `H:` draw as `data-name="description"` and carry
+            // `abcjs-extra-text abcjs-notes` / `…-history` (`bottom-text.js:24-45, 67-79`),
+            // which is what `PlacedText.groupClass` holds for those rows.
+            (t.groupClass ?? ABCJS_TEXT_CLASSES[t.dataName] ?? '')
           : '',
       ),
     )
@@ -1685,6 +1689,10 @@ const glyphDefs = new Map<GlyphName, string>()
             ) {
               seenReal = true
             }
+            // …**AND THE POSITION AFTER IT**, which is where `endLine` adds. A hairpin the
+            // line's end closes is `addOther`'d once every child is in, so it sees the
+            // marker of the barline it closes on (`creation/decoration.js:304-313`).
+            markerAt.set(i + 1, n)
           })
         }
         const mine = (x: { voice?: number }): boolean => (x.voice ?? 0) === voiceHere
@@ -2079,15 +2087,17 @@ const glyphDefs = new Map<GlyphName, string>()
               k: 3,
               s:
                 `<path d="${d}" highlight="stroke" stroke="${ink}" ` +
-                `class="${classes.generate('dynamics decoration')}" data-name="dynamics"></path>`,
+                `class="${classes.generateAt('dynamics decoration', markerAt.get((line.atElement ?? -1) + voiceBase) ?? 0)}" data-name="dynamics"></path>`,
             })
             continue
           }
           const named = line.role === 'dynamic' ? 'dynamics' : 'glissando'
+          // …at the element it was `addOther`'d at, like everything else in the list.
+          const spanM = markerAt.get((line.atElement ?? -1) + voiceBase) ?? 0
           const cls =
             line.role === 'dynamic'
-              ? classes.generate('dynamics decoration')
-              : classes.generate('glissando')
+              ? classes.generateAt('dynamics decoration', spanM)
+              : classes.generateAt('glissando', spanM)
           const t = TL(line)
           others.push({
             x: t.x1,
@@ -2147,7 +2157,12 @@ const glyphDefs = new Map<GlyphName, string>()
           }
           const klass =
             `${end('start', curve.startElement)} ${end('end', curve.endElement)}` +
-            ` slur ${curve.kind === 'tie' ? 'tie' : 'legato'}`
+            ` slur ${curve.kind === 'tie' ? 'tie' : 'legato'}` +
+            // …**AND `dotted` GOES IN BEFORE `generate` RUNS**, so it lands inside the
+            // generated string and takes the `abcjs-` prefix like the rest
+            // (`draw/tie.js:83-87`). `S3-note-syntax-classes-tune22` writes
+            // `abcjs-slur abcjs-legato abcjs-dotted abcjs-l2 …`.
+            `${curve.dotted === true ? ' dotted' : ''}`
           // Generated at the CLOSING note's measure: the curve is `addOther`'d when it
           // closes, so the count of `"bar"` markers ahead of it in `otherchildren` is that
           // note's own measure index within the line.
@@ -3019,7 +3034,7 @@ const glyphDefs = new Map<GlyphName, string>()
           raw(t.y * PX + oy),
           t.anchor ?? 'start',
           options.addClasses === true && t.dataName !== undefined
-            ? (ABCJS_TEXT_CLASSES[t.dataName] ?? '')
+            ? (t.groupClass ?? ABCJS_TEXT_CLASSES[t.dataName] ?? '')
             : undefined,
         )
       }
@@ -3038,7 +3053,7 @@ const glyphDefs = new Map<GlyphName, string>()
         t.dataName ?? '',
         escapeText(t.text),
         options.addClasses === true && t.dataName !== undefined
-          ? (ABCJS_TEXT_CLASSES[t.dataName] ?? '')
+          ? (t.groupClass ?? ABCJS_TEXT_CLASSES[t.dataName] ?? '')
           : '',
         (t.extraLines ?? []).map(escapeText),
         t.middleBaseline === true,
