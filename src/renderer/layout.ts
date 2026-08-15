@@ -4130,21 +4130,20 @@ function layoutNoteheads(
     // bass voices therefore keep the plain length, which is what makes ragtime's bass
     // staves match abcjs to a tenth of a pitch.
     //
-    // **AND "THE SHARED-STAFF CONVENTION" IS NOT ONE OF THEM — MEASURED, NOT FIXED.**
-    // `this.stemdir` is `null` for a whole line (`abstract-engraver.js:236`) and only an
-    // explicit `stem` ELEMENT sets it (`:350`). That element comes from the PARSER, and its
-    // rule is `tune.voiceNum > 0` — the tune's SECOND and later voices get `direction:
-    // "down"`, and the staff's own `voices[0]` gets `"up"` only if it already exists
-    // (`parse/tune-builder.js:977-991`). Ours forces a direction for every voice of a
-    // multi-voice staff, so a voice abcjs leaves free skips this clamp where abcjs applies
-    // it: `ragtime-nightingale` draws an up-stem `M 550.99 4011.66` where ours writes
-    // `4019.41`, two pitch shorter, which is `p2 = maxpitch + 7` falling below the middle
-    // line and abcjs's `if (p2 < 6) p2 = 6` catching it.
+    // **A NOTE ON `stemdir` THAT THIS CLAMP DOES NOT DEPEND ON.** `this.stemdir` is `null`
+    // for a whole line (`abstract-engraver.js:236`) and only an explicit `stem` ELEMENT
+    // sets it (`:350`); that element comes from the PARSER, whose rule is
+    // `tune.voiceNum > 0` — the tune's SECOND and later voices per STAFF get `direction:
+    // "down"` and the staff's own `voices[0]` gets `"up"` (`parse/tune-builder.js:977-991`).
+    // So there is no "shared-staff convention" in the engraver, as an earlier version of
+    // this comment claimed. `ragtime-nightingale` declares `V:1..3 bass stems=down` and
+    // `V:4/V:5 treble`, and `ABCJS_VSTEM` prints `voiceNum 0 paramsStem undefined` for V:4 —
+    // it is the only voice abcjs leaves free.
     //
-    // It is the LAST byte of the 41-fixture gate — everything before 1,315,727 of
-    // 2,007,011 agrees — and it is not a one-liner: `forcedUp` decides stem DIRECTION as
-    // well as this clamp, so narrowing it moves stems, beams and every reserve that hangs
-    // off them. Port the parser's rule first, with the ratchet watching.
+    // It is NOT the last byte of the 41-fixture gate, which a `measure:` commit briefly
+    // said it was. That stem is BEAMED: `ABCJS_RELX` reads `stem x= 550.99 dx= 9.81
+    // pitch= 8.2 pitch2= 19`, and `8.2` is `furthestHead.pitch + 1/5` — `layout/beam.js`'s
+    // `createStems`, which this clamp never reaches. See the beam's own `pos`.
     //
     // AND THE CLAMP IS ON BOTH ENDS, NOT ONLY THE FAR ONE. abcjs writes `p1` and `p2` and
     // then clamps EACH to pitch 6 independently — `if (p1 > 6) p1 = 6`, `if (p2 < 6)
@@ -8531,6 +8530,26 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
   const extreme = up
     ? Math.max(...group.map((stem) => stem.farStep))
     : Math.min(...group.map((stem) => stem.farStep))
+  /**
+   * **AND `pos` IS WHERE `ragtime-nightingale` STILL PARTS COMPANY — MEASURED, NOT FIXED.**
+   *
+   * The stem at page x 550.99 is BEAMED — `ABCJS_RELX` reads `stem x= 550.99 dx= 9.81
+   * pitch= 8.2 pitch2= 19`, and `8.2` is `furthestHead.pitch + 1/5`, `layout/beam.js`'s
+   * `createStems` — so its length is this beam's `pos`, not the middle-line clamp above.
+   * abcjs writes 19 and ours 17, which is the whole 7.75px.
+   *
+   * abcjs's beam there, from `ABCJS_BEAMY`'s `BEAMX`:
+   *
+   *     n 5  xs [[541.18,8,9,8.5],[561.80,8,9,8.5],[582.42,11,11,11],
+   *              [598.78,8,9,8.5],[619.40,8,9,8.5]]  min 8  max 11  avg 9.4
+   *
+   * `round(max(9.4 + 7.5, 11 + 7.5))` is `round(18.5)` is 19. With the SAME five members
+   * ours would agree — `max(farStep)` is that 11 — so the difference is the GROUP, not this
+   * expression: our `BEAM` probe prints no beam at all whose members open at 541.18 on that
+   * staff. Print `xs` from both engines for that system and see where the two groupings
+   * part; an inline `[K:]` is NOT the answer, both engines break a beam there (control:
+   * `cccc [K:G] cccc` gives 4 + 4 in each).
+   */
   const pos = Math.round(up ? extreme + barpos : extreme - barpos)
 
   // Slant, from the END elements' average pitches and capped at half the stem count
@@ -8556,7 +8575,8 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
         ` min=${Math.min(...group.map((g) => g.farStep)) + 6} max=${Math.max(...group.map((g) => g.farStep)) + 6}` +
         ` barpos=${barpos} firstAvg=${first.averageStep + 6} lastAvg=${last.averageStep + 6}` +
         ` pos=${pos + 6} startY=${startStep + 6} endY=${endStep + 6}` +
-        ` startX=${(first.x * 7.75).toFixed(3)} endX=${(last.x * 7.75).toFixed(3)}`,
+        ` startX=${(first.x * 7.75).toFixed(3)} endX=${(last.x * 7.75).toFixed(3)}` +
+        ` xs=${JSON.stringify(group.map((g) => [Number(g.x.toFixed(4)), g.averageStep + 6, g.farStep + 6]))}`,
     )
   // A BEAM'S ENDS ARE NOT ITS STEMS, and the two edges are not even symmetric. `calcXPos`
   // (`layout/beam.js:74-82`) reads the FURTHEST heads and writes

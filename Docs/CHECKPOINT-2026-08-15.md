@@ -75,21 +75,29 @@ chord's `dotshiftx` is the head width PLUS 2**, the mirror of `roomTaken`.
 
     ragtime-nightingale   1315727/2007011
 
-**abcjs FORCES A STEM DIRECTION ONLY FROM AN EXPLICIT `stem` ELEMENT, and the "shared-staff
-convention" is not one.** `this.stemdir` is `null` for a whole line
-(`abstract-engraver.js:236`) and only `:350` sets it. That element comes from the PARSER,
-whose rule is `tune.voiceNum > 0` — the tune's SECOND and later voices get `direction:
-"down"`, and the staff's own `voices[0]` gets `"up"` only if it already exists
-(`parse/tune-builder.js:977-991`). Ours forces one for every voice of a multi-voice staff.
+**THE BEAM'S `pos`.** The stem at page x 550.99 is BEAMED — `ABCJS_RELX` reads
+`stem x= 550.99 dx= 9.81 pitch= 8.2 pitch2= 19`, and `8.2` is `furthestHead.pitch + 1/5`,
+`layout/beam.js`'s `createStems` — so its length is the beam line's, not the middle-line
+stem clamp. abcjs writes `pitch2 = 19` and ours 17: the whole 7.75px.
 
-The consequence at the frontier is the middle-line stem clamp, which abcjs guards on
-`!stemdir`: `ragtime-nightingale` draws an up-stem `M 550.99 4011.66` where ours writes
-`4019.41`, two pitch shorter — `p2 = maxpitch + 7` falling below the middle line and
-`if (p2 < 6) p2 = 6` catching it in abcjs and not in ours.
+abcjs's beam there, from `ABCJS_BEAMY`'s `BEAMX`:
 
-It is not a one-liner: `forcedUp` decides stem DIRECTION as well as the clamp, so narrowing
-it moves stems, beams and every reserve that hangs off them. Port the parser's rule first,
-with the ratchet watching. Written in full at the clamp itself.
+    n 5  xs [[541.18,8,9,8.5],[561.80,8,9,8.5],[582.42,11,11,11],
+             [598.78,8,9,8.5],[619.40,8,9,8.5]]  min 8  max 11  avg 9.4
+
+`round(max(9.4 + 7.5, 11 + 7.5))` is `round(18.5)` is 19. With the SAME five members ours
+would agree — `max(farStep)` is that 11 — so **the difference is the GROUP, not the
+expression**: our `BEAM` probe prints no beam at all whose members open at 541.18 on that
+staff. Print `xs` from both engines for that system and see where the two groupings part.
+An inline `[K:]` is NOT the answer: both engines break a beam there (control `cccc [K:G]
+cccc` gives 4 + 4 in each). Written at the `pos` line itself.
+
+**A WRONG FINDING, CORRECTED.** A `measure:` commit earlier the same day said this row was
+the middle-line stem clamp and abcjs's `stemdir` rule. The `stemdir` reading stands — there
+is no "shared-staff convention" in the engraver, only the parser's `tune.voiceNum > 0` — but
+the clamp NEVER RUNS on a beamed stem, so it was the wrong culprit. It came from inferring
+"2 pitch short = the clamp" instead of printing `pitch2`. **THE PROBE THAT NAMES THE VALUE
+BEATS THE ARITHMETIC THAT EXPLAINS IT.**
 
 **One known gap behind it**: the FLATTENER still reads `tiedToNext` alone, so a partly-tied
 chord re-articulates every head in the AUDIO. No audio gate covers one —
