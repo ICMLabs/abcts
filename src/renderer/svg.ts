@@ -1684,12 +1684,22 @@ const glyphDefs = new Map<GlyphName, string>()
            * anyway, because `'' !== undefined`. Ours wrote a literal `abcjs-beam`, which is a
            * class abcjs does not have at all.
            */
+          /**
+           * **AND A BEAM CARRIES THE MEASURE IT IS IN.** `drawVoice` restarts the counter
+           * before the beam pass and `incrMeasure()`s on every `'bar'` MARKER interleaved
+           * in `params.beams` (`draw/voice.js:54-60`), one per bar element that is not the
+           * line's first item (`voice-element.js:29-42`). `S8-layout-classes-tune10`'s beam
+           * reads `abcjs-beam-elem abcjs-d0-125 abcjs-l1 abcjs-m2 abcjs-mm5 abcjs-v0`; ours
+           * generated at the counter as the ELEMENT pass had left it. The element's own
+           * recorded counter is that same count — see `counters`.
+           */
           const beamClass = abcjs
-            ? ` class="${classes.generate(
+            ? ` class="${classes.generateAt(
                 `beam-elem d${Math.round((beam.durationClass ?? 0) * 1000) / 1000}`.replace(
                   /\./g,
                   '-',
                 ),
+                counters.get(beam.beamAt ?? -1)?.measure ?? 0,
               )}"`
             : ` class="${prefix}-beam"`
           if (!abcjs) {
@@ -2163,6 +2173,29 @@ const glyphDefs = new Map<GlyphName, string>()
           parts.push(o.s)
         dynamics.length = 0
         graceBeams.length = 0
+        /**
+         * **AND THE COUNTER ENDS THE VOICE AT THE LINE'S BAR COUNT**, which is what
+         * `newMeasure()` banks into `measureTotalPerLine` for every LATER line's `mm`.
+         * `drawVoice` gets there by `incrMeasure()`-ing on each `'bar'` MARKER in
+         * `params.otherchildren` (`draw/voice.js:64-70`), and a marker is pushed for every
+         * bar element except the line's FIRST item — `addChild` skips it when nothing but a
+         * `staff-extra` or a `tempo` precedes (`voice-element.js:29-42`).
+         */
+        let bars = 0
+        let seenReal = false
+        staff.elements.forEach((el, i) => {
+          if (voiceOf(i) !== voiceHere) return
+          if (el.type === 'bar') {
+            if (seenReal) bars += 1
+          } else if (
+            !(ABCJS_ELEMENT_NAMES[el.type] ?? el.type).startsWith('staff-extra') &&
+            el.type !== 'tempo'
+          ) {
+            seenReal = true
+          }
+        })
+        classes.startMeasure()
+        for (let i = 0; i < bars; i += 1) classes.incrMeasure()
       }
       /**
        * Which VOICE each element belongs to. `staff.elements` is already voice-major —
