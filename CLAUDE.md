@@ -910,6 +910,25 @@ checkpoint and hand off as you go so no context is lost.
 > offset is genuinely zero). What is left is the LINE SOLVE's own cursor, one ULP above
 > abcjs's element x on six rows.
 >
+> 🧩 **AND THE LAST SEVEN WERE EACH A NAMED FUNCTION READ FIRST** (Lance, 2026-08-14: *"use
+> abcjs code along with instrumentation to close what's left open"* — both halves, and
+> neither works alone). `centerWholeRests` skips a voice's first and last CHILD, and
+> `voice.children` holds neither the title block nor the voice name — **a duplicate voice
+> on a shared staff gets no `staff-extra` children at all**, so its `z8` is `children[0]`.
+> A DECORATION stacks on THIS HEAD'S own half-box (`noteheads.half` is 8.132 against the
+> quarter's 8.094, and `ENGRAVE.noteheadHalfHeight` was the quarter's). A `P:` label comes
+> after the STAFF'S OWN meter — only a standalone `M:` becomes `staff.meter` — and before
+> the stream; moving it past the barline too took a byte-exact fixture off the list while
+> the aggregate improved, **and the ratchet is what said so**. THE SLASH HEAD'S stem rule
+> has a SECOND copy on the beamed path (`layout/beam.js:129-135`), where the triangle's
+> genuinely is unbeamed-only. `!mark!` paints the element `#00ff00` and appends its class
+> LAST. A `%%begintext` block is ONE `<text>`. **AN EMPTY SYLLABLE IS NOT AN ABSENT ONE** —
+> a `*` and the note a `_` holds over each draw `&nbsp;`, and FOUR TESTS encoded the old
+> belief, `content-parity`'s lyric comparison among them (it normalised abcjs's `""` to
+> `null` under a comment saying so). And **an ENDING that runs off a system RESUMES on the
+> next**, as a bare rule with no hook and no number — which our emitter, keyed on the
+> NUMBER, dropped even once the layout produced it.
+>
 > **READ `Docs/HANDOFF-2026-08-14.md` FIRST**, then `Docs/CHECKPOINT-2026-08-14.md` — §4 is
 > the work list for the 31, §5 the harness (four new abcjs probes, three of ours, two
 > ratchets) and §6 the rules. Then the files below.

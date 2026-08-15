@@ -12,7 +12,7 @@ regenerated. Do not bisect it; `ls -la` on the two inputs says it at once.
 | Gate | Now | Session start |
 |---|---|---|
 | **SVG bytes, in-repo corpus** | **0 of 178** | 3 of 171 |
-| **SVG bytes, 41-fixture corpus** | **22 of 113** | *did not exist* |
+| **SVG bytes, 41-fixture corpus** | **14 of 113** | *did not exist* |
 | Audio events / timings / chord grids / MIDI | 0 of 72 / 0 of 38 / 0 of 23 / 0 of 3 | same |
 | Element timings | **0 of 13** | 1 of 13 |
 | Harvested geometry / pixel targets | 0 of 174 / 0 of 120 | same |
@@ -22,7 +22,7 @@ regenerated. Do not bisect it; `ls -la` on the two inputs says it at once.
 
 **EVERY TABLE THAT EXISTED AT THE START OF THE SESSION IS NOW AT ZERO.** The one open gate
 is the one that did not exist — `tests/svg-bytes-sibling.test.ts`, which reads the 41-fixture
-corpus's own 381 abcjs SVGs, opened at 38 of 113 and is at 22.
+corpus's own 381 abcjs SVGs, opened at 38 of 113 and is at 14.
 
 ---
 
@@ -190,60 +190,38 @@ tunes, six already exact and the seventh the whole rich-text feature.
 
 ---
 
-## 4. WHAT IS LEFT — 22 of 113
+## 4. WHAT IS LEFT — 14 of 113
 
 Regenerate with `npx vitest run tests/svg-bytes-sibling.test.ts` →
 `/tmp/abcts-svg-bytes-sibling-ranked.txt`. Probe one row with
 `S=<slug> [T=<tune>] npx tsx scripts/zzs1.ts`.
 
-### 4.1 THE ULP FAMILY IS IN THE SOLVE, and that is now measured
+### 4.1 THE ULP FAMILY IS IN THE SOLVE — six rows, one cause, and it is located
 
 `S8-layout-tune9`'s `G,` draws at `81.57861713702906` against abcjs's `…04`; `-tune10`'s
 `^c`, `-tune7`'s sharp, `S6-keys-tune2`'s flat, `S3-note-syntax-tune8`'s and
-`ragtime-nightingale`'s `height` are the same shape — **six rows behind one cause.**
+`ragtime-nightingale`'s `height` are the same shape.
 
 **IT IS NOT THE PLACEMENT.** A carried `dx` on the notehead was tried and took `svg-bytes`
 from 0 to 23 of 178; `placeElement` printed for the same head reads
+`at 75.48861713702905  el.x 34.64101615137754  g.x 34.64101615137754  derived 0`, so the
+head's offset is genuinely zero. Taking each glyph's own offset off both engines' drawn x
+leaves OUR `at` one ULP above abcjs's element x — **the line solve's own cursor**.
+`ABCJS_XX` prints abcjs's per-element `x`/`minx`/`nextx`; walk the two chains back to where
+they part. `CHECKPOINT-2026-08-11b.md` §5 has the token counters.
 
-    at 75.48861713702905  el.x 34.64101615137754  g.x 34.64101615137754  derived 0
-
-so the head's offset is genuinely zero and there is nothing to build. Taking the glyph's
-own 6.09 off both drawn x's leaves OUR `at` one ULP above abcjs's element x — **the line
-solve's own cursor.** `ABCJS_XX` prints abcjs's per-element `x`/`minx`/`nextx`; walk the
-two chains back to where they part. `CHECKPOINT-2026-08-11b.md` §5 has the token counters.
-
-### 4.2 A `*` IS AN EMPTY SYLLABLE — measured, NOT landed
-
-`little swallow` carries 19 `*`s in its `w:` lines and abcjs draws **89 lyric elements to
-our 70**, one per `*`. The content falls out of `renderText`'s two rewrites: `addLyric`
-builds `lyricStr += syllable + div + "\n"`, so two blank verses give `"\n\n"`, which
-`/\n\n/g → "\n \n"` and `/^\n/ → "\xA0\n"` turn into abcjs's three tspans —
-`&nbsp;`, a space, an empty one.
-
-Three pieces, which is why it is written down instead: the parser must keep the syllable
-(`applyLyrics` drops it with a note saying it "need not be recorded"), the lyric emitter
-must apply those rewrites to the JOINED verse string as `bottomTextBlock` already does for
-`N:`/`H:`, and the LANE counts `versesHere` by non-empty text.
-
-### 4.3 The rest, by what its first difference names
+### 4.2 The rest, by what its first difference names
 
 | row | first difference |
 |---|---|
 | `S1-decorations-tune2` | a hairpin's x — 366.53 against 525.26, and one hairpin too many |
-| `zocharti-loch` | a whole rest's x, 133.75 against 116.84 |
 | `S8-layout-tune6` | a beam's `d` — one path against two |
-| `S5-directives-tune4` | a `<text>` missing after a stem |
-| `S8-layout-tune8` | a slur flat where abcjs slopes it |
-| `S4-bars-repeats-tune1` | an ending bracket at 203.41 against 58.05 |
-| `S8-layout-tune5` | `scripts.roll`'s y, 90.698 against 90.679 |
+| `S8-layout-tune8` | a slur flat where abcjs slopes it — abcjs's `ARC pitch1 8.5 pitch2 10.5`, ours 10.5/10.5, so `calcSlurY`'s beam arm |
+| `S5-directives-tune1` | a mid-tune `%%text`'s y at 179.01 against 179.02 — the block's page CURSOR, the same shape the bottom block needed |
 | `vree-slurs-and-triplets` | a curve 23px low |
-| `S2-fields-tune2` | a `%%text` block between two music lines |
-| `S1-decorations-tune3` | a note group |
-| `multi-voice-rest-placement` | a quarter rest's x |
-| `S5-directives-tune1` | a stem after a `"Am"` |
+| `multi-voice-rest-placement` | a quarter rest's x — `fixVoiceCollisions` |
 | `ave-verum-corpus` | a BRACE's path — `curvyPath` arithmetic, the largest single one left |
 | `S8-layout-tune3` | `height` 187.542 against 186.524 |
-| `frere-jacques` | `height` 854.4015 against 854.4205 |
 
 ## 5. THE HARNESS — WHAT WAS ADDED THIS SESSION
 
