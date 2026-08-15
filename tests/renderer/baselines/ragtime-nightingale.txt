@@ -4600,8 +4600,8 @@ system 13 width=700.882 originY=3387.436
       glyph accidentalFlat 408.741,-31.000
     note@3 x=425.491 w=30.000
       glyph noteheadBlack 425.491,-34.875
-      glyph dynamicMezzo 425.491,3.875
-      glyph dynamicPiano 440.178,3.875
+      glyph dynamicMezzo 425.491,27.125
+      glyph dynamicPiano 440.178,27.125
       line  425.791,-34.100 -> 425.791,-5.812 t=0.600
     note@4 x=454.629 w=30.000
       glyph noteheadBlack 454.629,-38.750

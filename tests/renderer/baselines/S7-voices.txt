@@ -327,7 +327,7 @@ system 0 width=821.859 originY=0.000
       glyph noteheadBlack 116.339,19.375
       glyph noteheadBlack 116.339,11.625
       glyph noteheadBlack 116.339,0.000
-      glyph dynamicForte 116.339,23.422
+      glyph dynamicForte 116.339,34.875
       line  114.339,15.500 -> 128.149,15.500 t=0.700
       line  114.339,7.750 -> 128.149,7.750 t=0.700
       line  114.339,0.000 -> 128.149,0.000 t=0.700
@@ -395,7 +395,7 @@ system 0 width=821.859 originY=0.000
       glyph noteheadBlack 416.006,3.875
       glyph noteheadBlack 416.006,-3.875
       glyph noteheadBlack 416.006,-11.625
-      glyph dynamicForte 416.006,23.422
+      glyph dynamicForte 416.006,34.875
       line  414.006,0.000 -> 427.816,0.000 t=0.700
       line  425.316,2.583 -> 425.316,-38.750 t=1.000
       text  420.911,-48.250 size=16.000 "3"

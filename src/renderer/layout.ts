@@ -14924,6 +14924,20 @@ function anchorBelowStaff<
         tupletTexts: parts.flatMap((p) => p.tupletTexts ?? []),
         voltaLines: parts.flatMap((p) => p.voltaLines ?? []),
         voltaTexts: parts.flatMap((p) => p.voltaTexts ?? []),
+        /**
+         * **AND A TIE'S OWN INK IS PART OF THE BOTTOM THIS LANE HANGS OFF.**
+         * `positionY.volumeHeightBelow = staff.bottom` is read where
+         * `setUpperAndLowerElements` reaches the below lanes — after the lyric and chord
+         * ones and BEFORE the dynamic one — and by then `staff.bottom` has already seen
+         * every `voice.setRange(slur)` from the creation pass
+         * (`abstract-engraver.js:891, 899, 926`), whose box is `min(anchor1.pitch,
+         * anchor2.pitch) - 4`. `tupletReserves` is where `curves.ink` is carried.
+         *
+         * The `post` list — `curveReserves`, `getYBounds`' box — is NOT here on purpose:
+         * that one lands in `setUpperAndLowerVoiceElements`, which runs AFTER this pitch is
+         * captured, so it can deepen the staff without moving the mark.
+         */
+        tupletReserves: parts.flatMap((p) => p.tupletReserves ?? []),
         // **AND THE HAIRPIN'S OWN RESERVE HAS TO BE IN THIS EXTENT TOO**, because the
         // subtraction below takes it back off. A dynamic GLYPH sets the flag from the
         // elements, so a staff carrying a volume mark was consistent by accident; one
