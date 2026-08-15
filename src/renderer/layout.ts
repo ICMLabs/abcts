@@ -1224,6 +1224,8 @@ export interface PlacedText {
   readonly measure?: number
   /** …or the ELEMENT whose counters it takes, when only the emitter knows them. */
   readonly measureElement?: number
+  /** Its class is generated TWICE, so the counters appear twice — see the decoration text. */
+  readonly doubleClass?: boolean
   /**
    * Which `%%…font` this text is drawn in.
    *
@@ -5572,6 +5574,18 @@ function decorationGlyphs(
     texts.push({
       text,
       font: 'annotationfont',
+      /**
+       * **A TEXT DECORATION IS AN `annotation`, AND ITS CLASS IS GENERATED TWICE.**
+       * `textDecoration` passes `klass: classes.generate('annotation')`
+       * (`creation/decoration.js:147-153`) and `renderText` runs `getFontAndAttr.calc`,
+       * which generates AGAIN over the already-generated string — so the counters appear a
+       * second time and the `abcjs-` prefix on the first copy survives untouched.
+       * `S1-decorations-classes-tune2`'s `!0!` reads `abcjs-annotation abcjs-l5 abcjs-m0
+       * abcjs-mm5 abcjs-v0 abcjs-l5 abcjs-m0 abcjs-mm5 abcjs-v0`. The same doubling a `P:`
+       * part label already has — see the `isPart` branch in the emitter.
+       */
+      groupClass: 'annotation',
+      doubleClass: true,
       anchor: DECORATION_TEXT_ANCHOR[name] ?? 'middle',
       x: headX + headWidth / 2,
       y: y + ENGRAVE.decorationTextDrop,
@@ -7744,6 +7758,15 @@ function layoutCurves(
         // That decides the 1.5 rather than 1.2 lift and the `slur` name together.
         midThickness: LINE_WEIGHTS.slurMidpoint,
         kind: 'slur',
+        /**
+         * **AND BOTH ITS ENDS NAME THE NOTE**, because both anchors are blanks whose
+         * `parent` is that note's absolute element (`decoration.js:51-59`) — `drawTie`
+         * reads `anchor.parent.counters` for each. `S8-layout-classes-tune7` writes
+         * `abcjs-start-m1-n6 abcjs-end-m1-n6`; ours carried neither element, so both came
+         * out `abcjs-…-edge`, the class abcjs reserves for a curve running off the line.
+         */
+        startElement: anchor.element,
+        endElement: anchor.element,
       })
     }
   })

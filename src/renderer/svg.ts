@@ -2426,6 +2426,15 @@ const glyphDefs = new Map<GlyphName, string>()
                * `generate` appends it for a key containing `note`, `rest` or `lyric`
                * (`helpers/classes.js:90`). Ours wrote neither the class nor the name.
                */
+              : abcjs && t.doubleClass === true
+                ? (() => {
+                    // …**AND A TEXT DECORATION'S CLASS IS GENERATED TWICE**, so the
+                    // counters repeat — see `PlacedText.doubleClass`. abcjs writes no
+                    // `data-name` for one.
+                    const once = classes.generate(t.groupClass ?? '')
+                    const again = once.split(' ').slice(1).join(' ')
+                    return once ? ` class="${once}${again ? ` ${again}` : ''}"` : ' class=""'
+                  })()
               : abcjs && MUSIC_TEXT_NAMES.has(t.dataName ?? '')
                 ? `${attrIfAny(classes.generate(t.dataName ?? ''))} data-name="${t.dataName}"`
                 // **A TEMPO MARK'S PARTS NAME THEMSELVES AND CARRY NO CLASS** —
