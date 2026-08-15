@@ -1474,6 +1474,17 @@ export interface PlacedCurve {
    * `(([GCD]G)[GCD]G)` writes the two arcs the wrong way round.
    */
   readonly openSeq?: number
+  /**
+   * How far this curve's start was moved onto its OWN notehead, to be taken back off for
+   * the DRAW ORDER.
+   *
+   * `otherchildren` goes out in creation order, which the emitter reproduces by sorting on
+   * the anchor's x. A chord's ties are all created at ONE element, in pitch order, and on a
+   * SECOND one of their heads is displaced by a notehead width — so keying on the moved x
+   * puts that tie last where abcjs writes it first. `ragtime-nightingale`'s
+   * `[…]` at 442.2 has three, and abcjs's order is 452.01, 442.2, 442.2.
+   */
+  readonly orderShift?: number
   readonly x1: number
   readonly y1: number
   readonly x2: number
@@ -6759,6 +6770,19 @@ interface NoteAnchor {
    * not, so both are stated.
    */
   readonly tieSteps?: readonly number[]
+  /**
+   * Each of those heads' own x offset from `left`, in the same order.
+   *
+   * **A CHORD'S TIE HANGS ON ITS OWN NOTEHEAD.** `calcX` sets `startX = anchor1.x` and
+   * `anchor1` is the head `addSlursAndTies` was called with, per pitch
+   * (`tie-element.js:113`, `abstract-engraver.js:737`) — so on a SECOND, where one head is
+   * displaced by a notehead width, the two ties of one chord start a notehead apart. Kept
+   * as an offset rather than an absolute so it survives the system shift and the
+   * voice-overlap displacement, both of which move `left`.
+   */
+  readonly tieHeadDx?: readonly number[]
+  /** How far `tiePairs` moved this copy's `left` onto its own head — see `orderShift`. */
+  readonly tieHeadShift?: number
   readonly stemUp: boolean
   /** `anchor.w` — the notehead's DECLARED width. See the slur's x bump in `buildCurve`. */
   readonly headWidth?: number
@@ -6840,16 +6864,24 @@ function tiePairs(from: NoteAnchor, to: NoteAnchor): [NoteAnchor, NoteAnchor][] 
   const fromSteps = from.tieSteps ?? []
   if (fromSteps.length < 2) return [[from, to]]
   const toSteps = to.tieSteps ?? []
-  const at = (a: NoteAnchor, step: number): NoteAnchor => ({
-    ...a,
-    pitchStep: step,
-    pitchY: stepToY(step),
-  })
+  /** …AND THE HEAD'S OWN x WITH IT — see `NoteAnchor.tieHeadDx`. */
+  const at = (a: NoteAnchor, step: number, index: number): NoteAnchor => {
+    const dx = a.tieHeadDx?.[index] ?? 0
+    return {
+      ...a,
+      pitchStep: step,
+      pitchY: stepToY(step),
+      left: a.left + dx,
+      right: a.right + dx,
+      // …**BUT THE DRAW ORDER IS STILL THE ELEMENT'S.** See `PlacedCurve.orderShift`.
+      ...(dx === 0 ? {} : { tieHeadShift: dx }),
+    }
+  }
   return fromSteps.map((step, k) => {
-    const target = toSteps.includes(step)
-      ? step
-      : (toSteps[k] ?? toSteps[0] ?? to.pitchStep ?? step)
-    return [at(from, step), at(to, target)]
+    const targetIndex = toSteps.indexOf(step)
+    const target = targetIndex >= 0 ? step : (toSteps[k] ?? toSteps[0] ?? to.pitchStep ?? step)
+    const toIndex = targetIndex >= 0 ? targetIndex : k < toSteps.length ? k : 0
+    return [at(from, step, k), at(to, target, toIndex)]
   })
 }
 
@@ -7042,6 +7074,7 @@ function buildCurve(
     kind,
     ...(edges?.start === undefined ? {} : { startElement: edges.start }),
     ...(edges?.end === undefined ? {} : { endElement: edges.end }),
+    ...(from.tieHeadShift === undefined ? {} : { orderShift: from.tieHeadShift }),
   }
 }
 
@@ -9492,6 +9525,9 @@ function layoutMeasure(
             : first === undefined
               ? []
               : [pitchToStep(first, clef)],
+        // …and each head's own offset from `left` — see `NoteAnchor.tieHeadDx`. `heads` is
+        // ascending, the order `layoutNoteheads` draws them and the order `tieSteps` takes.
+        tieHeadDx: heads.map((h) => h.x - Math.min(...heads.map((g) => g.x))),
         stemUp: el.stemUp ?? el.lines.some((l) => l.x1 === l.x2 && l.y2 < l.y1),
         // The notehead's DECLARED width — `anchor.w` — which an ABOVE slur bumps its own
         // ends by half of. See `buildCurve`.
@@ -11534,6 +11570,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           }
           for (const a of block.anchors) {
             const away = displacementOf(voiceIndex, i, a.element)
+            if (process.env.ABCTS_AW && Math.abs(a.left + shiftOf(a.element) + away - 436.2) < 0.5)
+              console.log('AW left', a.left, 'shift', shiftOf(a.element), 'away', away, 'v', voiceIndex, 'el', a.element, 'sys', systemIndex, 'pitchY', a.pitchY, 'ties', a.event.type === 'rest' ? '-' : a.event.tiedToNext)
             voiceAnchors[voiceIndex]?.push({
               ...a,
               system: systemIndex,

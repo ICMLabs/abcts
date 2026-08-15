@@ -2146,7 +2146,11 @@ const glyphDefs = new Map<GlyphName, string>()
               ? Number.NEGATIVE_INFINITY
               : graceCurve
                 ? TC(curve).x2 - spaces(ABCJS_ARC.endOffset)
-                : TC(curve).x1 - spaces(ABCJS_ARC.startOffset),
+                : // …**AND A CHORD'S TIES ALL KEY ON THE ELEMENT**, not on the head each
+                  // one hangs off — see `PlacedCurve.orderShift`. Transformed with the
+                  // curve so the key stays in the drawn frame.
+                  TC({ ...curve, x1: curve.x1 - (curve.orderShift ?? 0) }).x1 -
+                  spaces(ABCJS_ARC.startOffset),
             k: graceCurve ? 1 : 0,
             s: curveSink.pop() ?? '',
           })
