@@ -199,7 +199,25 @@ strips them at the attribute (`get-font-and-attr.js:17-22`); both halves are por
 
 ## 3. WHAT IS LEFT
 
-### 3.1 `%%tempofont` IS NOT REALIZED — MEASURED, IMPLEMENTED, REVERTED
+### 3.1 `%%tempofont` — **CLOSED 2026-08-14.** The rung was being derived from the baseline.
+
+**THE ANSWER, FOR THE RECORD:** `verticalExtent` has an explicit `el.type === 'tempo'` arm
+that computes `declaredTop = baseline - ENGRAVE.tempoTextSize - tempoDescenderBump` — the
+DEFAULT size — so the moment `%%tempofont` moved the drawn baseline the rung moved with it.
+Reading the mark's own size makes it size-independent, which is what `tempoHeightAbove`
+being a FLAT 6 PITCH requires. Two further things had to land with it: the baseline is
+DERIVED from an anchored rung (`renderText` adds the font size to the y it is handed,
+`draw/text.js:29-30`), and the three parts take `faceOf`/the directive's weight.
+
+**AND TWO GUESSES WERE WRONG ON THE WAY** — shifting a declared `reserve` with its ink in
+`shiftBy` costs `oy = -5.0` on the harvested gate, and letting `aboveLadder`'s `tempoY` read
+the real size doubles the error to 10px. Both are recorded at their sites. It was a PROBE
+that named the contributor: printing the music-only extent's top before and after showed
+`musicTop` moving −204.65 → −199.65 and pointed at the line directly.
+
+The original note follows, because its measurements are still the fastest way in.
+
+### 3.1b `%%tempofont` — the original measurement
 
 `visual-options-01` is at byte 7292 of 33896 and the next difference is the tempo mark:
 
