@@ -84,6 +84,7 @@ const PASSING: readonly string[] = [
   'S1-decorations-tune4',
   'S2-fields-tune0',
   'S2-fields-tune1',
+  'S2-fields-tune2',
   'S3-note-syntax-tune0',
   'S3-note-syntax-tune1',
   'S3-note-syntax-tune2',

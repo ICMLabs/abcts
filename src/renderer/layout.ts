@@ -12989,7 +12989,17 @@ function appendFreeText(
     }
     const textSize = sizeOf('textfont')
     if (block.align === 'left') spend(textSize / 2)
-    block.lines.forEach((line, index) => {
+    /**
+     * **A `%%begintext` BLOCK IS ONE `<text>`, NOT ONE PER LINE.** `FreeText` pushes a
+     * SINGLE row for a string — `{left, text, font, klass, anchor, …}` with the newlines
+     * still in it (`free-text.js:11`) — and `Svg.prototype.text` splits on `\n` into a
+     * `<tspan dy="1.2em">` per line. Ours wrote a `<text>` apiece, which is the same
+     * defect the LYRIC verses had and the same fix: one element carrying `extraLines`.
+     */
+    const oneBlock = [block.lines]
+    oneBlock.forEach((lines) => {
+      const index = 0
+      const line = lines[0] ?? ''
       texts.push({
         // **A LEADING BLANK LINE IS A NON-BREAKING SPACE** — `renderText` runs
         // `text.replace(/^\n/, "\xA0\n")` on every row it draws (`draw/text.js:46`), so
@@ -13013,6 +13023,9 @@ function appendFreeText(
         // `<text>` with a tspan per line (`free-text.js:11`), so the box is measured over
         // all of them and drawn once. Single-line — every boxed case in the corpus — this
         // is the row's own ink.
+        ...(lines.length > 1
+          ? { extraLines: lines.slice(1).map((l) => (l === '' ? ' ' : l)) }
+          : {}),
         ...(index === 0
           ? boxIn(
               'textfont',

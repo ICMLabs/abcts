@@ -199,8 +199,7 @@ system 1 width=422.462 originY=140.450
     staffline 15.000,-31.000 -> 407.462,-31.000 t=0.700
     staffline 15.000,-38.750 -> 407.462,-38.750 t=0.700
     title x=0.000 w=0.000
-      text  15.000,-112.050 size=21.000 "This is a text block between two music lines."
-      text  15.000,-86.850 size=21.000 "It spans multiple lines to test the block rendering."
+      text  15.000,-112.050 size=21.000 "This is a text block between two music lines." +"It spans multiple lines to test the block rendering."
     clef x=15.000 w=24.051
       glyph gClef 20.000,-15.500
     note@1 x=49.051 w=42.426
