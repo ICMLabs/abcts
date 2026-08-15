@@ -11137,7 +11137,20 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
        * (`layout/layout.js:77`, `:123-138`, `absolute-element.js:235-241`). Its children
        * move with it. `"C"z4|"G7"z4|` had its rest 23px left of abcjs's.
        */
-      for (let j = 1; j < elements.length - 1; j++) {
+      /**
+       * **AND `voice.children` HOLDS NEITHER THE TITLE BLOCK NOR THE VOICE NAME**, so the
+       * "except the first and last" window is over the MUSIC alone. The heading is a
+       * nonMusic line and the name is a PROPERTY of the `VoiceElement` that `drawVoice`
+       * renders itself (`draw/voice.js:20`) — ours are both prepended to `elements`, which
+       * pushed every voice's first child to index 1 and centred rests abcjs leaves alone.
+       *
+       * `zocharti-loch`'s second voice on a shared staff is exactly that: instrumented,
+       * its `voice.children` opens `["rest:whole@116.8", "bar@263.6", …]` with NO
+       * `staff-extra` at all — a duplicate voice gets none — so its `z8` is `children[0]`
+       * and abcjs skips it. Ours centred it 16.9px right.
+       */
+      const musicStart = heading.length + nameElements.length
+      for (let j = musicStart + 1; j < elements.length - 1; j++) {
         const el = elements[j]
         const before = elements[j - 1]
         const after = elements[j + 1]

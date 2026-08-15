@@ -302,8 +302,8 @@ system 1 width=700.000 originY=343.784
       line  684.300,-38.750 -> 684.300,-7.750 t=0.600
     voiceName x=15.000 w=0.000
       text  15.000,-15.670 size=17.000 bold "T.II"
-    rest x=133.690 w=84.853
-      glyph restWhole 133.690,-15.500
+    rest x=116.778 w=84.853
+      glyph restWhole 116.778,-15.500
     bar x=263.629 w=0.600
       line  263.929,-38.750 -> 263.929,-7.750 t=0.600
     rest x=336.930 w=84.853

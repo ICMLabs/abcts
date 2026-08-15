@@ -67,8 +67,8 @@ system 0 width=786.609 originY=0.000
       line  684.300,-38.750 -> 684.300,-7.750 t=0.600
     voiceName x=15.000 w=0.000
       text  15.000,-15.670 size=17.000 bold "Alto"
-    rest x=150.074 w=84.853
-      glyph restWhole 150.074,-15.500
+    rest x=184.183 w=84.853
+      glyph restWhole 184.183,-15.500
     bar x=296.399 w=0.600
       line  296.699,-38.750 -> 296.699,-7.750 t=0.600
     rest x=352.382 w=84.853
@@ -133,8 +133,8 @@ system 0 width=786.609 originY=0.000
       line  684.300,-38.750 -> 684.300,-7.750 t=0.600
     voiceName x=15.000 w=0.000
       text  15.000,-15.670 size=17.000 bold "Basso"
-    rest x=150.074 w=84.853
-      glyph restWhole 150.074,-15.500
+    rest x=184.183 w=84.853
+      glyph restWhole 184.183,-15.500
     bar x=296.399 w=0.600
       line  296.699,-38.750 -> 296.699,-7.750 t=0.600
     rest x=352.382 w=84.853
