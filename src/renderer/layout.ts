@@ -4483,7 +4483,14 @@ function layoutNoteheads(
     // `!mark!` — see `LayoutElement.marked`.
     ...(event !== null && event.decorations.includes('mark') ? { marked: true } : {}),
     // `pitch` 0 is MIDDLE C in abcjs, so the octave offset comes back off.
-    abcjsPitches: pitches.map((p) => diatonicIndex(p) - 7 * 4),
+    /**
+     * …**IN ASCENDING ORDER, WHICH IS THE ORDER abcjs HOLDS THEM IN.** `setAveragePitch`
+     * runs `sortPitch(elem)` before anything reads `elem.pitches`
+     * (`abstract-engraver.js:396-404`), and `drawAbsolute` appends one `p{pitch}` per
+     * entry in that order (`draw/absolute.js:31-40`). `S8-layout-classes-tune6` writes
+     * `abcjs-p5 abcjs-p7` for a chord our source order gave as `p7 p5`.
+     */
+    abcjsPitches: pitches.map((p) => diatonicIndex(p) - 7 * 4).sort((a, b) => a - b),
     // THE ELEMENT IS ITS NOTEHEAD. Grace notes and accidentals hang LEFT of it and cost
     // the cursor nothing — abcjs's `w` for `^c` is 9.810, the notehead alone, with the
     // accidental recorded as `extraw = -14.375` and no part of the rod (probed on

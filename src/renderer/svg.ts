@@ -1636,6 +1636,17 @@ const glyphDefs = new Map<GlyphName, string>()
         staff.voiceColors?.[voiceHere] ?? 'currentColor'
       const flushVoice = (voiceHere: number): void => {
         const ink = fg(voiceHere)
+        /**
+         * **A CURVE'S ANCHOR INDEX IS PER VOICE; `counters` IS KEYED PER STAFF.**
+         * `staff.elements` is the voices concatenated (`fixed.flat()`), and only the FIRST
+         * voice of a staff carries the staff-extras — so a lower voice's element 0 is a
+         * NOTE at staff index `voiceEnds[v - 1]`. Looking a curve's anchor up unshifted
+         * lands in the first voice's prefix: `ave-verum-corpus-classes` wrote
+         * `abcjs-end-m0-n0` for abcjs's `abcjs-end-m1-n0`, the counter of a clef rather
+         * than of the note the tie closes on. The two coincide for voice 0, which is why
+         * the plain gate could never see it — no class, no counter, no difference.
+         */
+        const voiceBase = voiceHere === 0 ? 0 : (voiceEnds[voiceHere - 1] ?? 0)
         const mine = (x: { voice?: number }): boolean => (x.voice ?? 0) === voiceHere
         if (abcjs) classes.startMeasure()
         /** The group already written — see the one-path-per-group rule below. */
@@ -2078,7 +2089,7 @@ const glyphDefs = new Map<GlyphName, string>()
           .slice()
           .sort((a, b) => (a.openSeq ?? 0) - (b.openSeq ?? 0))) {
           const end = (which: 'start' | 'end', index: number | undefined): string => {
-            const c = index === undefined ? undefined : counters.get(index)
+            const c = index === undefined ? undefined : counters.get(index + voiceBase)
             return c === undefined
               ? `abcjs-${which}-edge`
               : `abcjs-${which}-m${c.measure}-n${c.note}`
@@ -2101,7 +2112,7 @@ const glyphDefs = new Map<GlyphName, string>()
            * `abcjs-l0 abcjs-m1 abcjs-mm1`; ours read the closing element and wrote `m2 mm2`.
            */
           const anchorEl = curve.startElement ?? curve.endElement
-          const at = anchorEl === undefined ? 0 : (counters.get(anchorEl)?.measure ?? 0)
+          const at = anchorEl === undefined ? 0 : (counters.get(anchorEl + voiceBase)?.measure ?? 0)
           /**
            * **AND A CURVE IS ON `otherchildren` TOO**, so it interleaves with the hairpins,
            * the dynamics and the triplets rather than following all of them — `addOther` is
@@ -2298,6 +2309,8 @@ const glyphDefs = new Map<GlyphName, string>()
           }
           gcls = classes.generate(klass)
           counters.set(elIndex, classes.current())
+          if (process.env.ABCTS_CT && gcls.includes(`abcjs-v${process.env.ABCTS_CT} `) || (process.env.ABCTS_CT && gcls.endsWith(`abcjs-v${process.env.ABCTS_CT}`)))
+            console.log('CT', elIndex, el.type, 'm', classes.current().measure, 'n', classes.current().note, 'justStarted', justStarted, 'foundNote', foundNote)
           /**
            * abcjs's own attribute order on an element group: `fill`, `stroke`, the class
            * when there is one, then `data-name`.

@@ -211,6 +211,7 @@ const PASSING: readonly string[] = [
   'S8-layout-classes-tune10',
   'S8-layout-classes-tune11',
   'ave-verum-corpus',
+  'ave-verum-corpus-classes',
   'brother-john-inline-voices',
   'brother-john-inline-voices-classes',
   'center-text',
@@ -242,6 +243,8 @@ const PASSING: readonly string[] = [
   'curves-classes-tune0',
   'curves-classes-tune1',
   'curves-classes-tune2',
+  'curves-classes-tune3',
+  'curves-classes-tune4',
   'curves-classes-tune5',
   'curves-classes-tune6',
   'extra-class',
@@ -288,6 +291,7 @@ const PASSING: readonly string[] = [
   'two-voice-invention',
   'two-voice-invention-classes',
   'voice-middle-after-clef',
+  'voice-middle-after-clef-classes',
   'voice-octave-shift',
   'vree-compound-meter',
   'vree-compound-meter-classes',
@@ -299,6 +303,7 @@ const PASSING: readonly string[] = [
   'vree-ties-across-bars',
   'vree-ties-across-bars-classes',
   'zocharti-loch',
+  'zocharti-loch-classes',
 ]
 
 interface Diff {
