@@ -1,7 +1,7 @@
 # CHECKPOINT — 2026-08-15
 
 Continues `CHECKPOINT-2026-08-14.md`. That session built the 41-fixture byte gate and took
-it from 38 differing to 13. This one took it to **1**, and that one row is 57% byte-exact
+it from 38 differing to 13. This one took it to **1**, and that one row is 65% byte-exact
 through 2,007,011 bytes with its next cause measured and written at the code site.
 
 ---
@@ -22,7 +22,7 @@ bisect it (`CHECKPOINT-2026-08-12.md` §5).
 
 ---
 
-## 2. WHAT LANDED — twenty-one fixes, one commit each
+## 2. WHAT LANDED — twenty-three fixes, one commit each
 
 Every one came from a pair of numbers printed out of both engines in one sitting.
 
@@ -71,23 +71,44 @@ chord's `dotshiftx` is the head width PLUS 2**, the mirror of `roomTaken`.
 
 ---
 
-## 3. WHAT IS LEFT — one row
+## 3. WHAT IS LEFT — one row, at 65%
 
-    ragtime-nightingale   1137504/2007011
+    ragtime-nightingale   1315727/2007011
 
-`anchorBelowStaff`'s shift lands a below dynamic on `inkBottom` only if its raw y IS
-`stepToY(dynamicBelowStep)`. That file's third `mp` is built six pitch off it — abcjs
-draws it at PITCH -7, the staff's own ink bottom before the lane is taken, and ours at -1.
+**abcjs FORCES A STEM DIRECTION ONLY FROM AN EXPLICIT `stem` ELEMENT, and the "shared-staff
+convention" is not one.** `this.stemdir` is `null` for a whole line
+(`abstract-engraver.js:236`) and only `:350` sets it. That element comes from the PARSER,
+whose rule is `tune.voiceNum > 0` — the tune's SECOND and later voices get `direction:
+"down"`, and the staff's own `voices[0]` gets `"up"` only if it already exists
+(`parse/tune-builder.js:977-991`). Ours forces one for every voice of a multi-voice staff.
 
-The EXTENT is not the culprit, which is the useful half: our `PROBE staff` reads `bottom=-8`
-for that staff, which IS abcjs's -14 in the probe's `+6` convention. So either the raw lane
-the mark was built on is not `dynamicBelowStep`, or the stack put it a lane deeper than
-abcjs's single `positionY.volumeHeightBelow`. Written in full at the `shift` line with both
-engines' numbers.
+The consequence at the frontier is the middle-line stem clamp, which abcjs guards on
+`!stemdir`: `ragtime-nightingale` draws an up-stem `M 550.99 4011.66` where ours writes
+`4019.41`, two pitch shorter — `p2 = maxpitch + 7` falling below the middle line and
+`if (p2 < 6) p2 = 6` catching it in abcjs and not in ours.
+
+It is not a one-liner: `forcedUp` decides stem DIRECTION as well as the clamp, so narrowing
+it moves stems, beams and every reserve that hangs off them. Port the parser's rule first,
+with the ratchet watching. Written in full at the clamp itself.
 
 **One known gap behind it**: the FLATTENER still reads `tiedToNext` alone, so a partly-tied
 chord re-articulates every head in the AUDIO. No audio gate covers one —
 `ragtime-nightingale` is not in that corpus — and the note is at `Chord.tiedPitches`.
+
+### The three that fell on the way, after reading the V1 SWIFT PORT
+
+`../abcMusicKit`'s `LayoutVertical.swift` is a faithful strict port of
+`setUpperAndLowerElements`, and reading it (read-only — another lane owns that repo) is what
+unstuck this row. Its shape says `dyn.pitch = positionY["volumeHeightBelow"]` — a per-staff
+number ASSIGNED to the element — where ours builds every mark on one raw lane and translates
+it, which is what said the fault had to be in the NUMBER and not in the stack:
+
+1. **The below-dynamic lane hangs off a bottom that has seen the TIES.** `anchorBelowStaff`
+   ran its own `verticalExtent` with no reserve list at all.
+2. **An inline `[K:]` pitches its accidentals for TREBLE.** `addPosToKey` takes
+   `params.clef`, which a bare `[K:Ab]` leaves at the default — a standalone `K:` line goes
+   the other way with the voice's real clef.
+3. …and the stem clamp above, measured but not built.
 
 ---
 

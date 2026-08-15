@@ -4124,11 +4124,27 @@ function layoutNoteheads(
     // and abcjs's `p1`/`p2` clamps say the same (`abstract-engraver.js:740-745`).
     //
     // ONLY WHEN NO DIRECTION IS FORCED, which is what `forcedUp === null` means here:
-    // abcjs guards both clamps on `!stemdir`, and `stemdir` is truthy for a `V:… stems=`,
-    // for the shared-staff convention, AND inside a beam (`createBeam` sets it around the
-    // notes it builds). A beamed stem is retargeted to the beam anyway, so extending it
-    // first would be undone. `stems=down` bass voices therefore keep the plain length,
-    // which is what makes ragtime's bass staves match abcjs to a tenth of a pitch.
+    // abcjs guards both clamps on `!stemdir`, and `stemdir` is truthy for a `V:… stems=`
+    // AND inside a beam (`createBeam` sets it around the notes it builds). A beamed stem is
+    // retargeted to the beam anyway, so extending it first would be undone. `stems=down`
+    // bass voices therefore keep the plain length, which is what makes ragtime's bass
+    // staves match abcjs to a tenth of a pitch.
+    //
+    // **AND "THE SHARED-STAFF CONVENTION" IS NOT ONE OF THEM — MEASURED, NOT FIXED.**
+    // `this.stemdir` is `null` for a whole line (`abstract-engraver.js:236`) and only an
+    // explicit `stem` ELEMENT sets it (`:350`). That element comes from the PARSER, and its
+    // rule is `tune.voiceNum > 0` — the tune's SECOND and later voices get `direction:
+    // "down"`, and the staff's own `voices[0]` gets `"up"` only if it already exists
+    // (`parse/tune-builder.js:977-991`). Ours forces a direction for every voice of a
+    // multi-voice staff, so a voice abcjs leaves free skips this clamp where abcjs applies
+    // it: `ragtime-nightingale` draws an up-stem `M 550.99 4011.66` where ours writes
+    // `4019.41`, two pitch shorter, which is `p2 = maxpitch + 7` falling below the middle
+    // line and abcjs's `if (p2 < 6) p2 = 6` catching it.
+    //
+    // It is the LAST byte of the 41-fixture gate — everything before 1,315,727 of
+    // 2,007,011 agrees — and it is not a one-liner: `forcedUp` decides stem DIRECTION as
+    // well as this clamp, so narrowing it moves stems, beams and every reserve that hangs
+    // off them. Port the parser's rule first, with the ratchet watching.
     //
     // AND THE CLAMP IS ON BOTH ENDS, NOT ONLY THE FAR ONE. abcjs writes `p1` and `p2` and
     // then clamps EACH to pitch 6 independently — `if (p1 > 6) p1 = 6`, `if (p2 < 6)
