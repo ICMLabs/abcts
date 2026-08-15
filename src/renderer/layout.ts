@@ -1320,6 +1320,14 @@ export interface LayoutElement {
   /** The `getMinWidth` half of `rod`, where the two are a sum — see `Advance.width`. */
   readonly rodWidth?: number
   /**
+   * abcjs's `roomtaken` AS IT STOOD WHEN `createDecoration` WAS CALLED — the accidental
+   * columns plus the graces, with the double-count `roomAfterGraces` reproduces. Only
+   * `!slide!` reads it: its two blanks hang at `-roomtaken - 15` and `-roomtaken - 5` off
+   * the element (`decoration.js:51-59`), so a slide on a note that carries an accidental
+   * starts that much further left than one on a bare note.
+   */
+  readonly slideRoom?: number
+  /**
    * How far the element's ink reaches LEFT of its own x — abcjs's `-child.extraw`.
    *
    * An accidental, a grace group or a barline's clearance sits before the thing that
@@ -4359,6 +4367,7 @@ function layoutNoteheads(
      * `Advance.width`.
      */
     rodWidth: inkWidth,
+    slideRoom: roomAfterGraces,
     // abcjs's `-extraw`, and it is a MIN OVER SIBLINGS, never a sum. The accidental's
     // `extraw -= extraLeft` runs BEFORE the graces' `addExtra`, and that `addExtra` is
     // `if (dx < extraw) extraw = dx` (`abstract-engraver.js:723-725, 834-836`,
@@ -6674,6 +6683,8 @@ interface NoteAnchor {
   readonly right: number
   readonly top: number
   readonly bottom: number
+  /** The element's `slideRoom`, carried so `!slide!` can hang its blanks off it. */
+  readonly slideRoom?: number
   /**
    * `anchor.pitch` AS ABCJS MEANS IT — the FIRST pitch of the chord as the source wrote
    * it, not the chord's middle and not its lowest note. A slur or tie is hung on
@@ -7372,8 +7383,18 @@ function layoutCurves(
     }
 
     if (event.decorations.includes('slide')) {
-      const x1 = anchor.left - spaces(15) + spaces(ABCJS_ARC.startOffset)
-      const x2 = anchor.left - spaces(5) + spaces(ABCJS_ARC.endOffset)
+      /**
+       * **…AND THE BLANKS HANG OFF `roomtaken`, NOT OFF THE HEAD.** `decoration.js:51-59`
+       * builds them at `-roomtaken - 15` and `-roomtaken - 5`, and `roomtaken` at the
+       * `createDecoration` call is the accidental columns plus the graces
+       * (`abstract-engraver.js:845, 852`) — so `J^c` starts its slide 10.25px left of where
+       * `Jc` does. Ours ignored it and drew all three of `S8-layout` X:808's slides at the
+       * bare-note offset. The offset is CONSTRUCTED, one addition onto the element, which is
+       * abcjs's `setX`.
+       */
+      const room = anchor.slideRoom ?? 0
+      const x1 = anchor.left + (-room - spaces(15)) + spaces(ABCJS_ARC.startOffset)
+      const x2 = anchor.left + (-room - spaces(5)) + spaces(ABCJS_ARC.endOffset)
       curves[anchor.system]?.push({
         x1,
         y1: anchor.pitchY + spacesOfPitch(3),
@@ -9257,6 +9278,7 @@ function layoutMeasure(
         element: elements.length,
         left: Math.min(...heads.map((h) => h.x)),
         right: Math.max(...heads.map((h) => h.x)) + width,
+        ...(el.slideRoom === undefined ? {} : { slideRoom: el.slideRoom }),
         // HALF A STAFF SPACE of curve padding either side, which `curveReserves`'
         // `fixedOf` takes back off again before it puts the notehead's real half on.
         top: Math.min(...heads.map((h) => h.y)) - 0.5 * SPACE,
