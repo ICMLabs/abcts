@@ -1556,7 +1556,7 @@ export interface LayoutStaff {
   /** abcjs's declared box per tuplet on this staff — see `layoutTuplets`. */
   readonly tupletReserves: readonly { top: number; bottom: number }[]
   /** abcjs's declared box per tie and slur — see `curveReserves`. */
-  readonly curveReserves: readonly { top: number; bottom: number }[]
+  readonly curveReserves: readonly CurveReserve[]
   /** Tuplet brackets, and the numbers that go with them. Also span elements. */
   readonly tupletLines: readonly PlacedLine[]
   readonly tupletTexts: readonly PlacedText[]
@@ -6801,6 +6801,24 @@ interface NoteAnchor {
  * Falls back to the pitch when the anchor was never resolved — `curveReserves` stamps
  * every anchor of every system it is given, so that is a curve whose end is off-system.
  */
+/**
+ * **AND WHERE THIS RETURNS THE BEAM'S OWN END IT RETURNS A y, WHERE abcjs HAS A PITCH —
+ * MEASURED, NOT FIXED.** `parent.fixed.t` is built from the beamed stem's `pitch2 = bary`,
+ * and `getBarYAt` interpolates along the beam in PITCH; only `calcY` ever multiplies
+ * (`layout/beam.js:124`, `get-bar-y-at.js`). Ours interpolates in y, so
+ * `verticalExtent`'s `include` has nothing to be handed and divides `-y / STEP` back.
+ *
+ * That is the LAST byte of `ragtime-nightingale`: its ninth staff's `top` comes out
+ * `26.511771866457227` for abcjs's `…224`, three ULPs, and `staffGroup.height * STEP`
+ * carries them to the root `height` — `6085.180081567692` against `…691`, in 2,007,011
+ * bytes that are otherwise identical. Located by walking both page cursors term by term
+ * (`ABCTS_Y` / `ABCJS_MOVEY`) to the first differing ADVANCE, then both `staff.top` terms
+ * (`ABCTS_H` / `ABCJS_ABSY`).
+ *
+ * Closing it means a pitch on the beamed stem — `PlacedLine` would carry `y2Pitch`,
+ * `fixedOf` would return both, and this would have a pitch to return. The beam solve
+ * itself is in y throughout, so it is not one line.
+ */
 function slurEndY(a: NoteAnchor, above: boolean, isStart: boolean): number {
   const pos = a.beamPos ?? 'none'
   const fixed = a.slurFixed
@@ -7542,14 +7560,28 @@ function layoutCurves(
  * An ABOVE slur between two up-stem notes reads the middle of the stem instead; that
  * side is inside the notes' own ink in every corpus fixture, so it never binds.
  */
+/**
+ * A curve's declared box, with the PITCH the producer built it from where it has one.
+ *
+ * `verticalExtent`'s `include` falls back to `-y / STEP` when it is handed no pitch, and
+ * that division is not the sum that made the y — abcjs never divides, its
+ * `Math.max(anchor1.pitch, anchor2.pitch) + 4` IS the pitch (`tie-element.js:28-36`).
+ */
+interface CurveReserve {
+  readonly top: number
+  readonly bottom: number
+  readonly topPitch?: number
+  readonly bottomPitch?: number
+}
+
 function curveReserves(
   anchors: readonly NoteAnchor[],
   elements: readonly LayoutElement[],
   voicePos: number,
   /** Does a tie arrive from the system above? See the call site. */
   tiedIntoSystem = false,
-): { ink: { top: number; bottom: number }[]; post: { top: number; bottom: number }[] } {
-  const reserves: { top: number; bottom: number }[] = []
+): { ink: CurveReserve[]; post: CurveReserve[] } {
+  const reserves: CurveReserve[] = []
   /**
    * The EARLIER of a curve's two reserves — a flat 4 pitch either side of its anchors,
    * set the moment the closing note is known:
@@ -7563,7 +7595,7 @@ function curveReserves(
    * `getYBounds` box this one is INK, and every lane then stacks on top of it.
    * `ave-verum-corpus`'s tenor staff reaches its bottom on nothing else.
    */
-  const ink: { top: number; bottom: number }[] = []
+  const ink: CurveReserve[] = []
   const four = 4 * ENGRAVE.spacePerStep
   const open: number[] = []
   const centre = (a: NoteAnchor) => a.pitchY
@@ -7687,20 +7719,41 @@ function curveReserves(
     const step = s1 === undefined || s2 === undefined ? undefined : Math.min(s1, s2)
     reserves.push(
       above
-        ? { top: step === undefined ? y - three : stepToY(step + 3), bottom: y }
-        : { top: y, bottom: step === undefined ? y + three : stepToY(step - 3) },
+        ? {
+            top: step === undefined ? y - three : stepToY(step + 3),
+            bottom: y,
+            ...(step === undefined ? {} : { topPitch: step + 3 + PITCH_ORIGIN }),
+          }
+        : {
+            top: y,
+            bottom: step === undefined ? y + three : stepToY(step - 3),
+            ...(step === undefined ? {} : { bottomPitch: step - 3 + PITCH_ORIGIN }),
+          },
     )
+    const bothSteps = from.pitchStep !== undefined && to.pitchStep !== undefined
     ink.push({
       // **A PITCH SUM CONVERTED ONCE**, not two products added — see `NoteAnchor.pitchStep`.
       // y runs DOWN, so the curve's TOP is the HIGHEST step.
-      top:
-        from.pitchStep === undefined || to.pitchStep === undefined
-          ? Math.min(centre(from), centre(to)) - four
-          : stepToY(Math.max(from.pitchStep, to.pitchStep) + 4),
-      bottom:
-        from.pitchStep === undefined || to.pitchStep === undefined
-          ? Math.max(centre(from), centre(to)) + four
-          : stepToY(Math.min(from.pitchStep, to.pitchStep) - 4),
+      top: bothSteps
+        ? stepToY(Math.max(from.pitchStep ?? 0, to.pitchStep ?? 0) + 4)
+        : Math.min(centre(from), centre(to)) - four,
+      bottom: bothSteps
+        ? stepToY(Math.min(from.pitchStep ?? 0, to.pitchStep ?? 0) - 4)
+        : Math.max(centre(from), centre(to)) + four,
+      /**
+       * **…AND THE PITCH TRAVELS WITH IT.** `verticalExtent`'s `include` falls back to
+       * `-y / STEP` when it is handed no pitch, and that division is not the sum that made
+       * the y: `ragtime-nightingale`'s ninth staff came out `26.511771866457227` for abcjs's
+       * `…224`, three ULPs, and `staffGroup.height * STEP` carried it to the root `height`.
+       * abcjs never divides — `this.top = Math.max(anchor1.pitch, anchor2.pitch) + 4` IS the
+       * pitch (`tie-element.js:28-36`).
+       */
+      ...(bothSteps
+        ? {
+            topPitch: Math.max(from.pitchStep ?? 0, to.pitchStep ?? 0) + 4 + PITCH_ORIGIN,
+            bottomPitch: Math.min(from.pitchStep ?? 0, to.pitchStep ?? 0) - 4 + PITCH_ORIGIN,
+          }
+        : {}),
     })
   }
   // A GRACE GROUP CARRIES ITS OWN SLUR, and it is the only curve abcjs builds without the
@@ -12036,9 +12089,12 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // divided-back difference this used to compute. Its own comment said a block's span
       // is a length with no pitch, which is true of the SPAN and not of what is left after
       // it: `visual-tablature-08`'s root `height` was the last token on that fixture.
-      heightPitch +=
+      const topTerm =
         blockSpan === 0 ? clampedTopPitch : (musicOnlyTopPitch ?? -(extent.top + blockSpan) / ENGRAVE.spacePerStep)
+      heightPitch += topTerm
       heightPitch += -extent.bottomPitch
+      if (process.env.ABCTS_H)
+        console.log('H top', topTerm, 'bottom', -extent.bottomPitch, '->', heightPitch)
       if (staffIndexInSystem === 0) leadTerms = [...originAdvances]
       staffIndexInSystem += 1
       // …and the two moves this staff spent, kept apart for the next one — see
