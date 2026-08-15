@@ -13120,6 +13120,25 @@ function appendFreeText(
   advances: number[] = [],
 ): number {
   let y = from
+  /**
+   * **AND A MID-TUNE ROW'S BASELINE IS THE PAGE CURSOR PLUS ITS FONT SIZE, ONE ADD EACH —
+   * MEASURED, NOT FIXED.** `nonMusic` moves the page's own cursor row by row and
+   * `renderText` writes `hash.attr.y = y; hash.attr.y += hash.font.size`
+   * (`draw/non-music.js:10`, `draw/text.js:28-30`). The TOP block already reaches that
+   * through `PlacedText.pageY`, built at the page's cursor; a MID-TUNE block is built from
+   * zero and offset into a staff's LOCAL frame afterwards, so its baseline comes out as
+   * `staffOrigin + (offset + local) + size` where abcjs has `(cursor + row) + size`.
+   *
+   * `S5-directives` X:502 is the case and it is one hundredth. Both engines put the page
+   * cursor at `158.01500000000001` — our `ABCTS_Y` walk and abcjs's `ABCJS_NM` agree to the
+   * last digit — but our `%%text` baseline comes out of the local chain as `158.015 + 21 =
+   * 179.015`, whose `toFixed(2)` is "179.01", where abcjs's `158.01500000000001 + 21` is
+   * `179.01500000000001` and rounds to "179.02".
+   *
+   * Closing it means a `pageY` for mid-tune rows, which needs each row's index into
+   * `advances` and the walk that spends them — the same page-cursor rework the moved rest
+   * wants in PITCH. Written down rather than half-done.
+   */
   const spend = (px: number): void => {
     advances.push(px)
     y += px
