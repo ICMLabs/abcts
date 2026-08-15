@@ -3218,6 +3218,11 @@ function layoutRest(
       bold: true,
       italic: false,
       anchor: 'middle',
+      // …**AND ITS CLASS IS GENERATED TWICE**, like a text decoration's: the element is
+      // built with `classes.generate('rest')` and `renderText` generates again over the
+      // result, so the counters repeat. See `PlacedText.doubleClass`.
+      groupClass: 'rest',
+      doubleClass: true,
       // A POINT at its pitch: abcjs's `multimeasure-text` is a bare `RelativeElement` with
       // no thickness, so `top === bottom === pitch` (`relative-element.js:18-21`).
       reserve: [stepToY(10), stepToY(10)],
@@ -3225,6 +3230,11 @@ function layoutRest(
     return {
       type: 'rest',
       x,
+      // **ITS DURATION IS THE MEASURE COUNT TIMES THE MEASURE** — `Z2` in 4/4 is
+      // `abcjs-d2` in `S3-note-syntax-classes-tune3`.
+      durationClass: rest.measureCount * (measureLength ?? 1),
+      // `isNonSpacerRest` counts it — see the note on the ordinary rest's own flag.
+      nonSpacerRest: true,
       // …and a MULTIMEASURE rest is centred by `centerWholeRests` too.
       wholeRest: true,
       // `w = 126` measured, exactly `3 x mmWidth`: the glyph sits one width in and is two
@@ -3357,6 +3367,11 @@ function layoutRest(
   return {
     type: 'rest',
     ...(restBoxPitchOut === undefined ? {} : { restPitch: restBoxPitchOut }),
+    /**
+     * **A MULTIMEASURE REST'S DURATION IS ITS MEASURE COUNT TIMES THE MEASURE.** `Z2` in
+     * 4/4 is `abcjs-d2` in `S3-note-syntax-classes-tune3`, where our model keeps the count
+     * apart from the duration and left the field at 0.
+     */
     durationClass: ratToNumber(rest.duration),
     x,
     width: Math.max(advance, restInk),
@@ -6732,6 +6747,9 @@ function layoutSpanners(
         y2: rightY - marginRight * slope,
         thickness,
         role: 'decoration',
+        // `glissando)` builds `{start, stop}` and `addOther`s it there
+        // (`creation/decoration.js:345-361`), so its counters are the CLOSING element's.
+        atElement: to.element,
         squiggles: Math.max(
           2,
           Math.floor((len - marginLeft - marginRight - ENGRAVE.glissandoEndRun * 2) / 6),
@@ -8648,7 +8666,13 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
    * one; taking the first NOTE is the same element wherever abcjs is defined.
    */
   const notes = group.filter((m) => m.rest !== true)
-  const firstElement = elements[notes[0]?.element ?? -1]
+  /**
+   * …**AND THE DURATION COMES OFF `elems[0]`, REST INCLUDED.** `createBeam` passes
+   * `elems[0]` to `new BeamElem(…)` (`abstract-engraver.js:412`) — `getBeamGroup`'s first
+   * element, which may be a rest — where `calcXPos` needs the first with HEADS. Two
+   * different firsts.
+   */
+  const firstElement = elements[group[0]?.element ?? -1]
   const firstDuration = firstElement?.tupletStartDuration ?? firstElement?.durationClass
   const first = notes[0]
   const last = notes[notes.length - 1]
@@ -9925,7 +9949,10 @@ function layoutMeasure(
      * …**AND THE ELEMENT THAT OPENS A TUPLET CARRIES ITS SOUNDING DURATION**, which is the
      * one a beam starting there classes on — see `LayoutElement.tupletStartDuration`.
      */
-    const tupletGroupId = event.type === 'rest' ? null : (event.tuplet?.group ?? null)
+    // …**AND A REST OPENS A TUPLET LIKE ANY OTHER ELEMENT.** `(3zcd` puts `startTriplet`
+    // on the `z`, so the `c` after it is a member that does NOT open one and classes
+    // NOTATED — `S8-layout` X:810's beam is `abcjs-d0-125`.
+    const tupletGroupId = event.tuplet?.group ?? null
     const opensTuplet = tupletGroupId !== null && !tupletSeen.has(tupletGroupId)
     if (opensTuplet && tupletGroupId !== null) tupletSeen.add(tupletGroupId)
     elements.push(

@@ -2097,7 +2097,10 @@ const glyphDefs = new Map<GlyphName, string>()
           const cls =
             line.role === 'dynamic'
               ? classes.generateAt('dynamics decoration', spanM)
-              : classes.generateAt('glissando', spanM)
+              : // `classes.generate('decoration')` with `data-name: "glissando"` — the two
+                // are different strings (`draw/glissando.js:73`), and ours used the name for
+                // both.
+                classes.generateAt('decoration', spanM)
           const t = TL(line)
           others.push({
             x: t.x1,
