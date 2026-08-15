@@ -182,6 +182,7 @@ const PASSING: readonly string[] = [
   'vree-compound-meter',
   'vree-grace-notes',
   'vree-sharps',
+  'vree-slurs-and-triplets',
   'vree-ties-across-bars',
   'zocharti-loch',
 ]

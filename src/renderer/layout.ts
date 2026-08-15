@@ -6808,8 +6808,10 @@ function buildCurve(
    * call it, so the RESERVE is unaffected and only the drawing moves.
    */
   internalHigh?: number,
+  /** `hasDownStem` over the notes BETWEEN the anchors — see `curveIsAbove`. */
+  internalDown?: boolean,
 ): PlacedCurve {
-  const above = curveIsAbove(from, to, voicePos, kind)
+  const above = curveIsAbove(from, to, voicePos, kind, internalDown)
   const direction = above ? -1 : 1
 
   // ── THE ENDPOINTS, which finding 89 left when it ported the arc's SHAPE ──────
@@ -6993,12 +6995,20 @@ function curveIsAbove(
   to: NoteAnchor,
   voicePos: number,
   kind: 'tie' | 'slur',
+  /**
+   * **AND `hasDownStem` READS THE NOTES BETWEEN THEM TOO.** `calcSlurDirection` walks
+   * `this.internalNotes` after testing the two anchors (`tie-element.js:105-109`), and
+   * `calcTieDirection` does not — the two functions differ here as well as on the mixed
+   * case. `vree-slurs-and-triplets`' `(ABCD)` is the proof: both anchors are stem-up, so
+   * ours drew the slur BELOW, while abcjs sees the internal `B` at the middle line with its
+   * stem DOWN and draws it above. That is the whole 23px the curve sat out by.
+   */
+  internalDown = false,
 ): boolean {
   if (voicePos === 0) return true
   if (voicePos > 0) return false
-  // A SLUR: `hasDownStem` over both anchors. (abcjs also walks the notes BETWEEN them;
-  // ours does not, and no fixture has yet shown the difference.)
-  if (kind === 'slur') return !from.stemUp || !to.stemUp
+  // A SLUR: `hasDownStem` over both anchors AND every internal note.
+  if (kind === 'slur') return !from.stemUp || !to.stemUp || internalDown
   if (!from.stemUp && !to.stemUp) return true
   if (from.stemUp && to.stemUp) return false
   // …and the two disagree, so the note's own pitch decides: `referencePitch >= 6`, which
@@ -7126,6 +7136,15 @@ function layoutCurves(
     return max
   }
 
+  /**
+   * `hasDownStem` over the SAME list `internalHighOf` reads — a note that closes a slur is
+   * not in it, for the same `else if` reason.
+   */
+  const internalDownOf = (from: number, to: number): boolean =>
+    anchors
+      .slice(from + 1, to)
+      .some((a) => a.event.type !== 'rest' && a.event.slurEnds === 0 && !a.stemUp)
+
   const emit = (
     from: NoteAnchor,
     to: NoteAnchor,
@@ -7133,6 +7152,7 @@ function layoutCurves(
     internalHigh?: number,
     /** See `PlacedCurve.openSeq` — the `(` order, for two curves opening on one element. */
     openSeqOf?: number,
+    internalDown?: boolean,
   ): void => {
     // `.-` and `.(` — the STYLE rides on the element the curve OPENS at, one flag for the
     // tie it starts and one for the slurs opening on it. See `PlacedCurve.dotted`.
@@ -7150,6 +7170,7 @@ function layoutCurves(
           strict,
           { start: from.element, end: to.element },
           internalHigh,
+          internalDown,
         ),
         ...style,
         ...(openSeqOf === undefined ? {} : { openSeq: openSeqOf }),
@@ -7319,6 +7340,7 @@ function layoutCurves(
           drawnKind(from, anchor, 'slur', internal),
           internalHighOf(start ?? 0, i, from),
           openSeq.get(depth),
+          internalDownOf(start ?? 0, i),
         )
       }
     }
