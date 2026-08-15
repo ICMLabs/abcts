@@ -2403,10 +2403,19 @@ function layoutKeySignature(
   }
   if (written.length === 0) return null // C major and K:none both draw nothing.
 
-  let cursor = x
+  /**
+   * **`dx` IS BUILT FROM ZERO AND ADDED TO `x` ONCE PER CHILD** — `var dx = 0;` then
+   * `addRight(new RelativeElement(symbol, dx, …)); dx += getSymbolWidth(symbol) + 2`
+   * (`create-key-signature.js:14-27`), with `child.x = x + this.dx`
+   * (`relative-element.js:124-125`). `x + (w1 + 2) + (w2 + 2)` and `((x + w1 + 2) + w2 + 2)`
+   * are different doubles: `S6-keys-tune1`'s third accidental printed `66.911` against
+   * abcjs's `66.91099999999999`. Same lesson as `PlacedGlyph.dx` — A CONSTRUCTED OFFSET IS
+   * BUILT, NEVER DERIVED.
+   */
+  let dx = 0
   const glyphs: PlacedGlyph[] = written.map((w) => {
-    const at = cursor
-    cursor += glyphsFor(strict).advance(w.name) + ENGRAVE.keySignatureGap
+    const at = x + dx
+    dx += glyphsFor(strict).advance(w.name) + ENGRAVE.keySignatureGap
     return {
       ...glyphAt(w.name, at, w.step),
       // A KEY-SIGNATURE ACCIDENTAL RESERVES A DECLARED BOX TOO — abcjs's
@@ -2421,7 +2430,7 @@ function layoutKeySignature(
     type: 'keySignature',
     x,
     // No trailing gap: the signature ends at the last glyph's ink.
-    width: cursor - x - ENGRAVE.keySignatureGap,
+    width: dx - ENGRAVE.keySignatureGap,
     staffSteps: [],
     glyphs,
     lines: [],
@@ -2501,17 +2510,18 @@ function layoutKeyChange(
   if (cancelled.length === 0 && incoming.length === 0) return null
 
   const glyphs: PlacedGlyph[] = []
-  let cursor = x
+  // `dx` from ZERO, added to `x` once per child — see `layoutKeySignature`.
+  let dx = 0
   const advance = (name: GlyphName, step: number): void => {
     // The SAME declared box the opening signature reserves — `createKeySignature` is one
     // function and abcjs calls it for a mid-tune `[K:]` too. A NATURAL's fudge is 0 and it
     // is the tall glyph, so a change that cancels anything reserves well above the staff:
     // `[K:Eb]` after `K:G` puts abcjs's top line 8.34px lower than ours did with none.
     glyphs.push({
-      ...glyphAt(name, cursor, step),
+      ...glyphAt(name, x + dx, step),
       reserve: keyAccidentalReserve(name, step, strict),
     })
-    cursor += glyphsFor(strict).advance(name) + ENGRAVE.keySignatureGap
+    dx += glyphsFor(strict).advance(name) + ENGRAVE.keySignatureGap
   }
   const marks = (): void => {
     for (const entry of incoming)
@@ -2532,7 +2542,7 @@ function layoutKeyChange(
     type: 'keySignature',
     x,
     // No trailing gap: the signature ends at the last glyph's ink.
-    width: cursor - x - ENGRAVE.keySignatureGap,
+    width: dx - ENGRAVE.keySignatureGap,
     staffSteps: [],
     glyphs,
     lines: [],
