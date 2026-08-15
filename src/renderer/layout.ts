@@ -6708,7 +6708,7 @@ interface NoteAnchor {
    * which is the lyric-reserve bug's exact shape: one number computed in two places whose
    * inputs drift apart. See `slurEndY`.
    */
-  slurFixed?: { top: number; bottom: number }
+  slurFixed?: { top: number; bottom: number; topPitch?: number; bottomPitch?: number }
   /**
    * The two ends of this note's GRACE SLUR, resolved where the elements are — the same
    * merge `slurFixed` makes and for the same reason. `layoutCurves` has anchors and no
@@ -7604,17 +7604,43 @@ function curveReserves(
    * the beam-retargeted stem end, and on the other side the notehead's. Not the stem
    * alone: reading only the stem left four staves half a pitch out either way.
    */
-  const fixedOf = (a: NoteAnchor): { top: number; bottom: number } => {
+  const fixedOf = (
+    a: NoteAnchor,
+  ): { top: number; bottom: number; topPitch?: number; bottomPitch?: number } => {
     // A NOTEHEAD's declared box is `pitch ± thickness / 2` and the thickness is the
     // glyph's own height in pitches — see `ENGRAVE.noteheadHalfHeight`. `a.top`/`a.bottom`
     // carry half a space of curve padding, so that comes off before the real half goes on.
     let top = a.top + ENGRAVE.spacePerStep - ENGRAVE.noteheadHalfHeight
     let bottom = a.bottom - ENGRAVE.spacePerStep + ENGRAVE.noteheadHalfHeight
+    /**
+     * **AND THE PITCH TRAVELS WITH WHICHEVER EDGE WINS.** abcjs's `parent.fixed` is a box
+     * over PITCHES — a beamed stem's `pitch2` is `getBarYAt`'s interpolation of two of them
+     * (`layout/beam.js:122`) — and `getYBounds` adds 3 to it, so nothing is ever divided.
+     * Only a LINE offers one here: `PlacedLine.pitchRange` carries the two ends a stem was
+     * built from, while the notehead half-box would need the head GLYPH's own declared
+     * height (a quarter's differs from a half's), so the head arm stays undefined and
+     * `include` keeps its old fallback for it.
+     */
+    let topPitch: number | undefined
+    let bottomPitch: number | undefined
     for (const line of elements[a.element]?.lines ?? []) {
-      top = Math.min(top, line.y1, line.y2)
-      bottom = Math.max(bottom, line.y1, line.y2)
+      const hi = Math.min(line.y1, line.y2)
+      const lo = Math.max(line.y1, line.y2)
+      if (hi < top) {
+        top = hi
+        topPitch = line.pitchRange === undefined ? undefined : Math.max(...line.pitchRange)
+      }
+      if (lo > bottom) {
+        bottom = lo
+        bottomPitch = line.pitchRange === undefined ? undefined : Math.min(...line.pitchRange)
+      }
     }
-    return { top, bottom }
+    return {
+      top,
+      bottom,
+      ...(topPitch === undefined ? {} : { topPitch }),
+      ...(bottomPitch === undefined ? {} : { bottomPitch }),
+    }
   }
   const three = 3 * ENGRAVE.spacePerStep
   /** Position in its own beam group, so the mid-beam rules below can be applied. */
@@ -7684,7 +7710,13 @@ function curveReserves(
     const pos = a.beamPos ?? 'none'
     const fixed = a.slurFixed
     if (fixed !== undefined && pos !== 'none' && (isStart ? pos !== 'last' : pos !== 'first')) {
-      return undefined
+      // …**AND THE PINNED END HAS A PITCH TOO, WHEN THE EDGE THAT WON IS A STEM.** It used
+      // to return undefined outright under a note saying "whose y is a length already",
+      // which sent `include` to `-y / STEP`. That division is the LAST byte of
+      // `ragtime-nightingale`: its ninth staff's top came out `26.511771866457227` for
+      // abcjs's `…224`, and `staffGroup.height * STEP` carried the three ULPs to the root.
+      const p = ctx === undefined ? undefined : ctx.above ? fixed.topPitch : fixed.bottomPitch
+      return p === undefined ? undefined : p - PITCH_ORIGIN
     }
     if (ctx === undefined || ctx.kind === 'tie' || !ctx.above) return a.pitchStep
     const isBeamed = (n: NoteAnchor): boolean => n.beamPos !== undefined && n.beamPos !== 'none'
