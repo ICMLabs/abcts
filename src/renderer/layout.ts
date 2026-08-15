@@ -9527,7 +9527,11 @@ function layoutMeasure(
 const placeElement = (el: LayoutElement, at: number): LayoutElement => ({
   ...el,
   x: at,
-  glyphs: el.glyphs.map((g) => ({ ...g, x: at + (g.dx ?? g.x - el.x) })),
+  glyphs: el.glyphs.map((g) => {
+    if (process.env.ABCTS_PL !== undefined && Math.abs(at + (g.dx ?? g.x - el.x) - Number(process.env.ABCTS_PL)) < 0.005)
+      console.log('PL', g.name, 'at', at, 'elx', el.x, 'gx', g.x, 'dx', g.dx, 'off', g.dx ?? g.x - el.x, '=>', at + (g.dx ?? g.x - el.x))
+    return { ...g, x: at + (g.dx ?? g.x - el.x) }
+  }),
   lines: el.lines.map((l) => ({ ...l, x1: at + (l.x1 - el.x), x2: at + (l.x2 - el.x) })),
   texts: el.texts.map((t) => ({ ...t, x: at + (t.x - el.x) })),
 })
@@ -15584,10 +15588,22 @@ function layoutGraces(
       if (graceAccidental !== null) {
         const accWidth = glyphsFor(strict).width(graceAccidental)
         const accDeclaredHalf = (glyphsFor(strict).get(graceAccidental)?.declaredHeight ?? 0) / 2
-        const accX = gx - (accWidth * scale + spaces(ABCJS_PX.accidentalGap))
+        const accRoom = accWidth * scale + spaces(ABCJS_PX.accidentalGap)
+        const accX = gx - accRoom
         graceGlyphs.push({
           name: graceAccidental,
           x: accX,
+          /**
+           * **AND ITS OFFSET IS CONSTRUCTED FROM THE NOTE, IN abcjs'S TWO STEPS.**
+           * `create-note-head.js:87,97` is `accPlace = extrax` — the grace's own
+           * `-graceoffsets[i]` — then `accPlace -= (getSymbolWidth(symb) * scale + 2)`, and
+           * `setX` adds that once onto `abselem.x`. Our element's x IS `graceNoteX`, which
+           * the probe pins exactly (`GA graceNoteX 154.27922061357856` against `PL elx
+           * 154.27922061357856`), so the same two terms reach the same double. Derived
+           * instead, `(graceNoteX - 10 - 6.95) - graceNoteX` gives -16.94999999999999 and
+           * `S8-layout-tune7`'s `{E^c}` sharp printed 597.5202515246128 for …127.
+           */
+          dx: -(graceOffsets[i] ?? 0) - accRoom,
           y: stepToY(graceStep),
           scale,
           // `accidental`, NOT `grace` — the role picks the CLASS, and `grace` maps to
