@@ -8870,11 +8870,6 @@ function layoutMeasure(
       : measure.events.findIndex(
           (e) => (e.sourceRange?.start ?? Number.POSITIVE_INFINITY) >= partAfter,
         )
-  if (measure.partLabel !== null && partIndex === 0) {
-    elements.push(layoutPart(x, measure.partLabel))
-    fixed(0, 0, 'part')
-  }
-
   // A mid-tune `K:` and the barline that opens the measure print in SOURCE ORDER.
   //
   // Which comes first is not a convention to pick, it is what the file says: `[K:Bb] |`
@@ -9039,6 +9034,34 @@ function layoutMeasure(
     }
     emitMeter(measure.meterChanges === undefined ? measure.meterChange : measure.meterChanges[0]?.meter ?? null)
   }
+  /**
+   * **A `P:` LABEL COMES AFTER THE CLEF, KEY AND METER — AND BEFORE THE BARLINE.**
+   * `createABCStaff` adds those three to `voice.children` and only THEN runs
+   * `createABCVoice` over the voice's own elements, where `createStaff`'s
+   * `appendElement('part', …)` has put the label as the FIRST of them
+   * (`abstract-engraver.js:160-192`, `parse/tune-builder.js:1022-1023`).
+   *
+   * This stood ahead of the whole block, so `frere-jacques`'s `P:A` was written before
+   * the `M:4/4` its system reprints. Moving it past the barline as well took
+   * `visual-options-01` off the byte-exact list in the same run — **the ratchet caught it**
+   * — because that fixture's `P:Part` precedes its opening bar.
+   */
+  let partDrawn = false
+  const drawPart = (): void => {
+    if (partDrawn || measure.partLabel === null || partIndex !== 0) return
+    partDrawn = true
+    elements.push(layoutPart(x, measure.partLabel))
+    fixed(0, 0, 'part')
+  }
+  /**
+   * …and the ONE prefix child that can be drawn from here is a STANDALONE `M:`.
+   * `createStaff` puts it on `staff.meter` (`parse/tune-builder.js:1024`), which
+   * `createABCStaff` turns into a `staff-extra time-signature` BEFORE `createABCVoice`
+   * runs; an INLINE `[M:]` is an ordinary element of the stream and stays behind the
+   * label. `frere-jacques` is the first, `visual-options-01` has no meter at all on its
+   * `P:` measure and wants the label ahead of its `|1` bar.
+   */
+  const staffMeterHere = measure.meterChange != null && measure.meterChangeInline !== true
   // A `Q:` AFTER THE FIRST prints where it stands, on its OWN voice's staff — an ordinary
   // element in that voice's stream. Zero width, like the tune's own mark.
   const drawTempoChange = (): void => {
@@ -9052,14 +9075,18 @@ function layoutMeasure(
     drawTempoChange()
     drawClefChange()
     drawKeyChange()
+    if (!staffMeterHere) drawPart()
     drawMeterChange()
+    drawPart()
     drawOpeningBar()
   } else {
+    if (!staffMeterHere) drawPart()
     drawOpeningBar()
     drawTempoChange()
     drawClefChange()
     drawKeyChange()
     drawMeterChange()
+    drawPart()
   }
 
   for (const [eventIndex, event] of measure.events.entries()) {

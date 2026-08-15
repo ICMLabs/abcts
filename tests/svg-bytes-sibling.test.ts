@@ -142,6 +142,7 @@ const PASSING: readonly string[] = [
   'curves-tune5',
   'curves-tune6',
   'extra-class',
+  'frere-jacques',
   'full-song-template',
   'happy-birthday',
   'missing-decorations-tune0',

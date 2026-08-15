@@ -89,11 +89,11 @@ system 2 width=700.373 originY=378.413
     staffline 15.000,-38.750 -> 685.373,-38.750 t=0.700
     clef x=15.000 w=24.051
       glyph gClef 20.000,-15.500
-    part x=49.051 w=0.000
-      text  49.051,-76.226 size=20.000 "A"
     timeSignature x=49.051 w=11.795
       glyph timeSig4 49.051,-31.000
       glyph timeSig4 49.051,-15.500
+    part x=70.846 w=0.000
+      text  70.846,-76.226 size=20.000 "A"
     note@1 x=86.651 w=42.426
       glyph noteheadBlack 86.651,-27.125
       line  87.151,-25.833 -> 87.151,0.000 t=1.000
