@@ -1242,6 +1242,26 @@ export interface PlacedText {
    */
   readonly pageY?: number
   /**
+   * How many of the block's `advances` had been spent when this row was built, and what it
+   * then adds to reach its BASELINE.
+   *
+   * `nonMusic` moves the page's own cursor one row at a time and `renderText` writes
+   * `hash.attr.y = y; hash.attr.y += hash.font.size` (`draw/non-music.js:10`,
+   * `draw/text.js:28-30`). The TOP block is built at the page cursor already; a MID-TUNE
+   * block is built from zero and offset into a staff's LOCAL frame, so its baseline came
+   * out `staffOrigin + (offset + local) + size` where abcjs has `(cursor + row) + size` —
+   * `S5-directives` X:502's `%%text` printed `179.01` for abcjs's `179.02`, both engines
+   * agreeing on the cursor at `158.01500000000001`. The page walk spends that same list, so
+   * these two let it stamp `pageY` as abcjs's own two adds.
+   *
+   * ponytail: `rowExtra` is one number where the build is `((y + size) + index * step) +
+   * pad`. They are the same double for every row in either corpus — `index` is 0 and there
+   * is no box — and differ in the last bits for a boxed multi-row block. Split it if one
+   * turns up.
+   */
+  readonly advanceAt?: number
+  readonly rowExtra?: number
+  /**
    * Horizontal alignment. Absent means `start`, which is every text the music draws —
    * only the top-text block centres a title or right-aligns a composer.
    */
@@ -12423,7 +12443,16 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
      * terms in two wrong groupings at once.
      */
     const lead = system.leadAdvances
-    for (const a of lead) pageCursor += a
+    /**
+     * The page cursor after each of the lead's terms. A MID-TUNE block's rows are the
+     * opening of that list (`originAdvances` returns `[...midAdvances, …]`), so this is the
+     * `renderer.y` each row is drawn at — see `PlacedText.advanceAt`.
+     */
+    const leadCursors: number[] = [pageCursor]
+    for (const a of lead) {
+      pageCursor += a
+      leadCursors.push(pageCursor)
+    }
     pageCursor += padding
     /**
      * This system's absolute top — `renderer.y` as abcjs enters `drawStaffGroup`, so the
@@ -12539,7 +12568,32 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
      * `mainBeamed` re-range in `verticalExtent`.
      */
     pageCursor += system.heightPitch * ENGRAVE.spacePerStep
-    return { ...shifted, staves: withAbsolute, originY, absoluteY: systemAbsoluteY, gap }
+    /**
+     * **AND A MID-TUNE ROW'S BASELINE IS THAT CURSOR PLUS ITS OWN FONT SIZE**, which is
+     * `renderText`'s two adds and not the local chain's three — see `PlacedText.advanceAt`.
+     * The TOP block already carries a `pageY` built at the page's cursor, so it is left
+     * alone.
+     */
+    const withPageY = withAbsolute.map((staff, index) =>
+      index !== 0
+        ? staff
+        : {
+            ...staff,
+            elements: staff.elements.map((el) =>
+              el.blockTop === undefined
+                ? el
+                : {
+                    ...el,
+                    texts: el.texts.map((t) =>
+                      t.pageY !== undefined || t.advanceAt === undefined
+                        ? t
+                        : { ...t, pageY: (leadCursors[t.advanceAt] ?? 0) + (t.rowExtra ?? 0) },
+                    ),
+                  },
+            ),
+          },
+    )
+    return { ...shifted, staves: withPageY, originY, absoluteY: systemAbsoluteY, gap }
   })
 
   // `%%maxStaves` — an INCIPIT. abcjs lays the whole tune out and simply stops drawing
@@ -13469,6 +13523,9 @@ function appendFreeText(
            */
           x: centre + ENGRAVE.marginX,
           y: y + size + boxPad('subtitlefont'),
+          // …and the same baseline off the PAGE's cursor — see `PlacedText.advanceAt`.
+          advanceAt: advances.length,
+          rowExtra: size + boxPad('subtitlefont'),
           size,
           bold: false,
           italic: false,
@@ -13513,6 +13570,9 @@ function appendFreeText(
         // the top block's rows take, and this row was placed at 0.
         x: block.align === 'center' ? centre : ENGRAVE.marginX,
         y: y + textSize + index * ENGRAVE.freeTextLineStep + boxPad('textfont'),
+        // …and the same baseline off the PAGE's cursor — see `PlacedText.advanceAt`.
+        advanceAt: advances.length,
+        rowExtra: textSize + index * ENGRAVE.freeTextLineStep + boxPad('textfont'),
         size: textSize,
         bold: false,
         italic: false,
