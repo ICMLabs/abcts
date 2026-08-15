@@ -151,22 +151,46 @@ describe('microtonal accidentals', () => {
       .filter((event) => event.type === 'note')
   }
 
-  it('reads cents from a fractional accidental', () => {
-    const notes = notesOfAbc('X:1\nL:1/8\nK:C\nG ^/G ^G ^3/2G _/A _3/2A |\n')
-    expect(notes.map((n) => n.microtoneCents)).toEqual([0, 50, 0, 150, -50, -150])
+  const notesOfAbcIn = (abc: string, mode: 'abc2.1') => {
+    const result = parse(abc, { mode })
+    if (!result.ok) throw new Error('expected parse to succeed')
+    return (result.scores[0]?.voices[0]?.measures ?? [])
+      .flatMap((measure) => measure.events)
+      .filter((event) => event.type === 'note')
+  }
+
+  /**
+   * **STRICT READS EXACTLY ONE CHARACTER OF MICROTONE, AND A SECOND IS A PARSE FAILURE.**
+   * `getCoreNote`'s `case '0' … case '/'` arm turns state `sharp2` into `quartersharp` and
+   * moves to `pitch` (`abc_parse_music.js:1195-1217`); a further digit or `/` then falls
+   * through to `return null`, the note is abandoned and the letter alone is re-read.
+   *
+   * These three tests asserted OUR reading — 150 cents from `^3/2` and the base sign kept —
+   * which is ABC 2.1 and is NOT what abcjs does. Measured through abcjs, one variable a
+   * rung: `^3G` and `^/G` both draw `accidentals.halfsharp` and name the head `^/G`, while
+   * `^3/2G`, `^/2G`, `^1/2G` and `_3/2G` all draw a PLAIN `G` with no accidental at all. So
+   * the fraction's VALUE never reaches the page; only its length does.
+   *
+   * The ABC 2.1 reading is real and is what every other mode is for, so both are asserted.
+   */
+  it('reads ONE character of microtone in strict, as abcjs does', () => {
+    const notes = notesOfAbc('X:1\nL:1/8\nK:C\nG ^/G ^G ^3G _/A _3/2A |\n')
+    expect(notes.map((n) => n.microtoneCents)).toEqual([0, 50, 0, 50, -50, 0])
+    expect(notes.map((n) => n.pitch.accidental)).toEqual([null, 1, 1, 1, -1, null])
   })
 
-  it('keeps the printed accidental as the base sign', () => {
-    const notes = notesOfAbc('X:1\nL:1/8\nK:C\n^3/2G _3/2A |\n')
-    expect(notes[0]?.pitch.accidental).toBe(1) // sharp
-    expect(notes[1]?.pitch.accidental).toBe(-1) // flat
+  it('reads the whole fraction in abc2.1', () => {
+    const notes = notesOfAbcIn('X:1\nL:1/8\nK:C\nG ^/G ^G ^3/2G _/A _3/2A |\n', 'abc2.1')
+    expect(notes.map((n) => n.microtoneCents)).toEqual([0, 50, 0, 150, -50, -150])
+    expect(notes.map((n) => n.pitch.accidental)).toEqual([null, 1, 1, 1, -1, -1])
   })
 
   it('does not confuse a microtone with a duration', () => {
     const [micro] = notesOfAbc('X:1\nL:1/8\nK:C\n^3/2G |\n')
     const [duration] = notesOfAbc('X:1\nL:1/8\nK:C\n^G3/2 |\n')
+    // The DURATION is the note's own either way — abcjs abandons only the accidental.
     expect(micro?.duration).toEqual(rational(1, 8))
-    expect(micro?.microtoneCents).toBe(150)
+    expect(micro?.microtoneCents).toBe(0)
     expect(duration?.duration).toEqual(rational(3, 16))
     expect(duration?.microtoneCents).toBe(0)
   })

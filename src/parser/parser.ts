@@ -3237,6 +3237,36 @@ class Parser {
             pendingMicrotone = Math.round(
               ((sign * fraction.factor.numerator) / fraction.factor.denominator) * 100,
             )
+            /**
+             * **abcjs READS EXACTLY ONE CHARACTER OF MICROTONE, AND A SECOND IS A PARSE
+             * FAILURE.** `getCoreNote`'s `case '0' … case '/'` arm turns state `sharp2`
+             * into `quartersharp` and moves to `pitch` (`abc_parse_music.js:1195-1217`);
+             * a further digit or `/` then falls through to `return null`, the note is
+             * abandoned, and the letter alone is re-read. Measured through abcjs, one
+             * variable a rung:
+             *
+             *     ^3G      accidentals.halfsharp, name `^/G`   — a QUARTERSHARP
+             *     ^/G      the same
+             *     ^3/2G    plain `G`, NO accidental
+             *     ^/2G     plain `G`
+             *     ^1/2G    plain `G`
+             *     _3/2G    plain `G`
+             *
+             * So the VALUE of the fraction never matters — only how many characters it
+             * spans. `S3-note-syntax-tune1` named its notehead `^G` where abcjs names it
+             * `G`. Strict only: ABC 2.1's numeric microtone is real, and reading it is
+             * what every other mode is for.
+             */
+            const first = tokens[i] as Token
+            const chars = fraction.next - i === 1 ? first.length : 2
+            if (isStrict(this.mode)) {
+              if (chars > 1) {
+                pendingAccidental = null
+                pendingMicrotone = 0
+              } else {
+                pendingMicrotone = sign * 50
+              }
+            }
             i = fraction.next
             // MODE-GATED SOURCE RANGE. abcjs starts a microtonal note's span at the note
             // LETTER, excluding the `^3/2` — while a plain `^G` starts at the accidental
