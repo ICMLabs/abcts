@@ -910,6 +910,8 @@ class VoiceBuilder {
   meterForOverlays: Meter | null = null
   /** A mid-tune `K:`/`M:` applies to the measure it opens, so it pends until close. */
   private pendingKeyChange: KeySignature | null = null
+  /** The clef an INLINE `[K:]` pitches its accidentals for — see `Measure.keyChangeClef`. */
+  private pendingKeyChangeClef: Clef | undefined = undefined
   private pendingClefChange: Clef | null = null
   private pendingTempoChange: Tempo | null = null
   private pendingMidi: { cmd: string; params: readonly (string | number)[] }[] = []
@@ -999,9 +1001,10 @@ class VoiceBuilder {
     return shift
   }
 
-  setKeyChange(key: KeySignature, range: SourceRange): void {
+  setKeyChange(key: KeySignature, range: SourceRange, clef?: Clef): void {
     this.pendingKeyChange = key
     this.pendingKeyChangeRange = range
+    this.pendingKeyChangeClef = clef
   }
 
   /** A mid-tune `K:… clef=` or `[K: bass]`. Delta, like the key change. */
@@ -1065,6 +1068,9 @@ class VoiceBuilder {
   private takeChanges() {
     const changes = {
       keyChange: this.pendingKeyChange,
+      ...(this.pendingKeyChangeClef === undefined
+        ? {}
+        : { keyChangeClef: this.pendingKeyChangeClef }),
       clefChange: this.pendingClefChange,
       tempoChange: this.pendingTempoChange,
       ...(this.pendingMidi.length > 0 ? { midiCommands: this.pendingMidi } : {}),
@@ -1077,6 +1083,7 @@ class VoiceBuilder {
         : {}),
     }
     this.pendingKeyChange = null
+    this.pendingKeyChangeClef = undefined
     this.pendingClefChange = null
     this.pendingTempoChange = null
     this.pendingMidi = []
@@ -3039,10 +3046,17 @@ class Parser {
           // A style-only K: must not touch the key. `parseKey` reads the first token and
           // falls back to C for anything that is not a key letter, so passing it
           // `style=harmonic` would silently transpose the rest of the tune to C major.
-          if (hasKeySpec(value)) builder.voice.setKeyChange(parseKey(value), range)
           // A MID-TUNE CLEF. `K:C clef=bass` and `[K: bass]` both land here, and abcjs
           // prints the new clef where it stands AND at the head of every system after it.
           const midClef = parseClef(value)
+          // …and an INLINE change is PITCHED for the field's own clef or for TREBLE, never
+          // for the voice's — see `Measure.keyChangeClef`.
+          if (hasKeySpec(value))
+            builder.voice.setKeyChange(
+              parseKey(value),
+              range,
+              inline ? (midClef ?? defaultClef) : undefined,
+            )
           if (midClef !== null) builder.voice.setClefChange(midClef)
           // A MID-TUNE `K: octave=` is GLOBAL and takes effect from here. abcjs reads it
           // per note as the fallback under the voice's own `octave=`, so `parse-note-id-01`

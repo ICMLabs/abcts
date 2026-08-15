@@ -756,6 +756,23 @@ export interface Measure {
    * key; a consumer accumulates changes forward to get the key in force.
    */
   readonly keyChange: KeySignature | null
+  /**
+   * The clef abcjs PITCHES that change's accidentals for — present only when the change
+   * came from an INLINE `[K:]`.
+   *
+   * `addPosToKey` shifts the accidentals off `clef.verticalPos`, and the inline field hands
+   * it `params.clef`: whatever the field's own `clef=` named, or the DEFAULT TREBLE
+   * (`parse/abc_parse_music.js:986`, `parse/abc_parse_key_voice.js:104-112`). A `K:` on its
+   * own line goes the other way, through `:167` with the voice's real clef — so the two
+   * spellings of a mid-tune key change disagree about where the flats go, and abcjs's own
+   * probe on a `V:2 clef=bass` control says so in two lines:
+   *
+   *     ADDPOS mid -12 clefType bass    -> ["Bflat@4","eflat@7","Aflat@3"]    // the header
+   *     ADDPOS mid 0   clefType treble  -> ["Bflat@6","eflat@9","Aflat@5"]    // the change
+   *
+   * Absent means "use the voice's clef", which is every other case.
+   */
+  readonly keyChangeClef?: Clef
   readonly keyChangeSourceRange: SourceRange | null
   /** A mid-tune `M:` taking effect at this measure. */
   readonly meterChange: Meter | null

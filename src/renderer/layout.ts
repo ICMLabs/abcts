@@ -9353,7 +9353,15 @@ function layoutMeasure(
     // NOT WHEN IT LEADS THE SYSTEM — the prefix already carries it, and the previous
     // system's `trailingKey` already drew it. See `keyChangeLeadsLine`.
     if (keyChangeLeadsLine(measure)) return
-    const change = layoutKeyChange(x, keyInForce, measure.keyChange, clef, strict)
+    // …**AND AN INLINE `[K:]` IS PITCHED FOR ITS OWN CLEF, NOT THE VOICE'S** — see
+    // `Measure.keyChangeClef`.
+    const change = layoutKeyChange(
+      x,
+      keyInForce,
+      measure.keyChange,
+      measure.keyChangeClef ?? clef,
+      strict,
+    )
     if (change === null) return
     elements.push(change)
     fixed(change.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap, 'other', 0, change.width)

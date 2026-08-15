@@ -4729,10 +4729,10 @@ system 13 width=700.882 originY=3387.436
       line  362.491,-38.750 -> 362.491,-7.750 t=4.000
       line  368.791,-38.750 -> 368.791,-7.750 t=0.600
     keySignature x=382.491 w=33.000
-      glyph accidentalFlat 382.491,-15.500
-      glyph accidentalFlat 391.241,-27.125
-      glyph accidentalFlat 399.991,-11.625
-      glyph accidentalFlat 408.741,-23.250
+      glyph accidentalFlat 382.491,-23.250
+      glyph accidentalFlat 391.241,-34.875
+      glyph accidentalFlat 399.991,-19.375
+      glyph accidentalFlat 408.741,-31.000
     note@-3,4 x=425.491 w=30.000
       glyph noteheadBlack 425.491,-11.625
       glyph noteheadBlack 425.491,-38.750
@@ -4788,10 +4788,10 @@ system 13 width=700.882 originY=3387.436
       line  362.491,-38.750 -> 362.491,-7.750 t=4.000
       line  368.791,-38.750 -> 368.791,-7.750 t=0.600
     keySignature x=382.491 w=33.000
-      glyph accidentalFlat 382.491,-15.500
-      glyph accidentalFlat 391.241,-27.125
-      glyph accidentalFlat 399.991,-11.625
-      glyph accidentalFlat 408.741,-23.250
+      glyph accidentalFlat 382.491,-23.250
+      glyph accidentalFlat 391.241,-34.875
+      glyph accidentalFlat 399.991,-19.375
+      glyph accidentalFlat 408.741,-31.000
     rest x=425.491 w=60.000
     bar x=543.283 w=0.600
       line  543.583,-38.750 -> 543.583,-7.750 t=0.600
@@ -4808,10 +4808,10 @@ system 13 width=700.882 originY=3387.436
       line  362.491,-38.750 -> 362.491,-7.750 t=4.000
       line  368.791,-38.750 -> 368.791,-7.750 t=0.600
     keySignature x=382.491 w=33.000
-      glyph accidentalFlat 382.491,-15.500
-      glyph accidentalFlat 391.241,-27.125
-      glyph accidentalFlat 399.991,-11.625
-      glyph accidentalFlat 408.741,-23.250
+      glyph accidentalFlat 382.491,-23.250
+      glyph accidentalFlat 391.241,-34.875
+      glyph accidentalFlat 399.991,-19.375
+      glyph accidentalFlat 408.741,-31.000
     rest x=425.491 w=60.000
     bar x=543.283 w=0.600
       line  543.583,-38.750 -> 543.583,-7.750 t=0.600
@@ -6382,10 +6382,10 @@ system 17 width=700.513 originY=4474.987
       line  533.688,-38.750 -> 533.688,-7.750 t=0.600
       line  536.688,-38.750 -> 536.688,-7.750 t=0.600
     keySignature x=547.388 w=31.650
-      glyph accidentalNatural 547.388,-23.250
-      glyph accidentalFlat 554.788,-15.500
-      glyph accidentalFlat 563.538,-27.125
-      glyph accidentalFlat 572.288,-11.625
+      glyph accidentalNatural 547.388,-31.000
+      glyph accidentalFlat 554.788,-23.250
+      glyph accidentalFlat 563.538,-34.875
+      glyph accidentalFlat 572.288,-19.375
     note@5,7 x=589.038 w=30.000
       glyph flag8thDown 589.038,-15.500
       glyph noteheadBlack 589.038,-42.625
@@ -6412,10 +6412,10 @@ system 17 width=700.513 originY=4474.987
       line  533.688,-38.750 -> 533.688,-7.750 t=0.600
       line  536.688,-38.750 -> 536.688,-7.750 t=0.600
     keySignature x=547.388 w=31.650
-      glyph accidentalNatural 547.388,-23.250
-      glyph accidentalFlat 554.788,-15.500
-      glyph accidentalFlat 563.538,-27.125
-      glyph accidentalFlat 572.288,-11.625
+      glyph accidentalNatural 547.388,-31.000
+      glyph accidentalFlat 554.788,-23.250
+      glyph accidentalFlat 563.538,-34.875
+      glyph accidentalFlat 572.288,-19.375
     rest x=589.038 w=60.000
     bar x=684.513 w=0.600
       line  684.813,-38.750 -> 684.813,-7.750 t=0.600
@@ -6433,10 +6433,10 @@ system 17 width=700.513 originY=4474.987
       line  533.688,-38.750 -> 533.688,-7.750 t=0.600
       line  536.688,-38.750 -> 536.688,-7.750 t=0.600
     keySignature x=547.388 w=31.650
-      glyph accidentalNatural 547.388,-23.250
-      glyph accidentalFlat 554.788,-15.500
-      glyph accidentalFlat 563.538,-27.125
-      glyph accidentalFlat 572.288,-11.625
+      glyph accidentalNatural 547.388,-31.000
+      glyph accidentalFlat 554.788,-23.250
+      glyph accidentalFlat 563.538,-34.875
+      glyph accidentalFlat 572.288,-19.375
     rest x=589.038 w=60.000
     bar x=684.513 w=0.600
       line  684.813,-38.750 -> 684.813,-7.750 t=0.600
