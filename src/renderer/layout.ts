@@ -3848,18 +3848,21 @@ function layoutNoteheads(
     const y = stepToY(step)
     pendingHeads.push({
       /**
-       * **A CARRIED `dx` WAS TRIED HERE AND IS WRONG — MEASURED, REVERTED, AND THE PROBE
-       * SAYS WHY.** Giving the head `dx: accidentalWidth + dx` took `svg-bytes` from 0 to
-       * **23 of 178**. `placeElement` printed for the same head reads
-       * `at 75.48861713702905  el.x 34.64101615137754  g.x 34.64101615137754  derived 0`
-       * — `el.x` and `g.x` are EQUAL, so the head's offset is genuinely zero and there is
-       * nothing to build. The accidental room is already inside the element's own x.
+       * **THE OFFSET IS `shiftheadx` AND NOTHING ELSE.** `createNoteHead` builds the head as
+       * `new RelativeElement(c, shiftheadx, …)` and `setX` adds that once onto `abselem.x`
+       * (`create-note-head.js:30-35`, `relative-element.js:124-125`) — so an undisplaced
+       * head has dx 0 and a displaced one has `±(getSymbolWidth(c) * scale - adjust)`.
        *
-       * **`S8-layout-tune9`'s remaining ULP IS IN THE SOLVE, NOT HERE**: its `G,` draws at
-       * `81.57861713702906` against abcjs's `…04`, and `81.5786… - 6.09` is our `at`
-       * against abcjs's element x one ULP below it.
+       * **`accidentalWidth + dx` WAS TRIED HERE AND TOOK `svg-bytes` FROM 0 TO 23 OF 178**,
+       * because the accidental room is ALREADY inside the element's own x: `placeElement`
+       * printed `at 75.48861713702905  el.x 34.64101615137754  g.x 34.64101615137754
+       * derived 0` for an undisplaced head, `el.x` and `g.x` equal. That measurement is what
+       * says the right term is the shift alone — and a DISPLACED head is where the
+       * derivation shows: `S8-layout` X:811 prints `off -9.810000000000002` where abcjs
+       * constructs -9.81, and `856.2469999999996 + 6.09` is one ULP under its `…998`.
        */
       ...glyphAt(headName, headX + dx, step),
+      dx,
       role: 'notehead',
       ...(stepped[position] === undefined ? {} : { dataName: writtenNote(stepped[position].pitch) }),
       reserve: [y - headDeclaredHalf, y + headDeclaredHalf],
