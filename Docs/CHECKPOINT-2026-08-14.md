@@ -190,44 +190,64 @@ tunes, six already exact and the seventh the whole rich-text feature.
 
 ---
 
-## 4. WHAT IS LEFT — 31 of 113, and the head of the table
+## 4. WHAT IS LEFT — 27 of 113, and what each row's first difference says
 
 Regenerate with `npx vitest run tests/svg-bytes-sibling.test.ts` →
 `/tmp/abcts-svg-bytes-sibling-ranked.txt`. Probe one row with
 `S=<slug> [T=<tune>] npx tsx scripts/zzs1.ts`.
 
-Classified by first difference, the families are:
+### 4.1 THE DOT'S `dx` IS BUILT FROM THE ELEMENT'S x — measured, NOT landed
 
-**4.1 ULPs in a glyph x or y** — `S8-layout-tune10` (`862.3369999999996` against `…98`),
-`-tune7`, `-tune9`, `S6-keys-tune2`, `S3-note-syntax-tune17`, `happy-birthday`. The
-arithmetic arc's shape: an association order somewhere upstream. `CHECKPOINT-2026-08-11b.md`
-§5 has the four probes that count tokens by axis.
+`S3-note-syntax-tune17` and `happy-birthday` share ONE first difference and it is a ULP:
 
-**4.2 A THREE-QUARTER-TONE ACCIDENTAL IS NOT AN ACCIDENTAL AT ALL — measured, not landed.**
-`S3-note-syntax-tune1` names a notehead `^G` where abcjs names it `G`. abcjs's own parse
-golden for `^3/2G` is `{"n":"G"}` — **no `accidental` key**, where `^/G` is
-`{"n":"^/G","a":"quartersharp"}` and `^G` is `{"n":"^G","a":"sharp"}`. So abcjs DROPS a
-numeric `^n/m` outright and we reduce it to a plain sharp, which leaks into the name (and may
-leak into the accidental column's width). Strict already draws no glyph for it — that half is
-done. The fix belongs in the PARSER, not at the naming site.
+    got  <path data-name="dots.dot" d="M 651.4589246557051 …
+    want <path data-name="dots.dot" d="M 651.458924655705  …
 
-**4.3 Structural rows, one fixture each:**
+abcjs forms the WHOLE offset first and adds the element's x once —
+`dx = notehead.w + dotshiftx - 2 + 5 * dot`, then `child.x = x + this.dx`
+(`create-note-head.js:50-54`, `relative-element.js:124-125`) — where ours runs a chain from
+`headX`: `((headX + offset + headInk) + (dotOffset + dotSpacing)) + (i - 1) * dotStep`. The
+VALUES agree (`5i - 2` either way); the association does not.
+
+**IT IS NOT LANDED BECAUSE THE BASE IS NOT PINNED.** abcjs's `x` here is the ABSOLUTE
+ELEMENT's, and `notehead.w`/`dotshiftx` are the head's declared width and the chord shift —
+which of our `headX`, `rightmost` and `offsetAt` correspond is a guess until a probe prints
+abcjs's `dx` and `abselem.x` for the same dot. `ABCJS_GDX` already sits in
+`create-note-head.js` and prints the FLAG's; one more line beside it prints this.
+
+### 4.2 The rest of the table, by what its first difference names
 
 | row | first difference |
 |---|---|
+| `S1-decorations-tune2` | a hairpin's x — 366.53 against 525.26, and one hairpin too many |
+| `S8-layout-tune10` | a `^c` head at `862.3369999999996` against `…98` — ULP |
 | `zocharti-loch` | a whole rest's x, 133.75 against 116.84 |
-| `S6-keys-tune3` | a key signature draws `accidentals.nat` where abcjs draws `accidentals.flat` |
+| `S8-layout-tune7` | an accidental at `597.5202515246128` against `…27` — ULP |
 | `S8-layout-tune6` | a beam's `d` — one path against two |
+| `S8-layout-tune9` | a `G,` head at `81.57861713702906` against `…04` — ULP |
 | `S5-directives-tune4` | a `<text>` missing after a stem |
-| `S4-bars-repeats-tune1` | an ending bracket's x, 203.41 against 58.05 |
-| `S2-fields-tune1` | an annotation's y, 380.22 against 420.22 (and its text) |
+| `S6-keys-tune2` | a flat at `677.89` against `677.8899999999999` — ULP |
+| `S8-layout-tune8` | a slur flat where abcjs slopes it |
+| `S4-bars-repeats-tune1` | an ending bracket at 203.41 against 58.05 |
+| `S2-fields-tune1` | an annotation's y, 380.22 against 420.22 — and a different text, so the LANE order |
 | `S8-layout-tune5` | `scripts.roll`'s y, 90.698 against 90.679 |
-| `S8-layout-tune8` | a slur's shape — flat against sloped |
 | `vree-slurs-and-triplets` | a curve 23px low |
-| `frere-jacques` | `854.4015` against `854.4205` |
-| `ragtime-nightingale` | ONE ULP of `height` in 2,007,011 bytes |
+| `S2-fields-tune2` | a `%%text` block between two music lines |
+| `S1-decorations-tune3` | a note group |
+| `multi-voice-rest-placement` | a quarter rest's x |
+| `stacked-annotations` | an annotation's y — the lane again |
+| `S5-directives-tune1` | a stem after a `"Am"` |
+| `ave-verum-corpus` | a BRACE's path — `curvyPath` arithmetic, the largest single one left |
+| `score-reorder-shared` | a voice name |
+| `little swallow` | a staff line's right edge, 686.6 |
+| `S8-layout-tune3` | `height` 187.542 against 186.524 |
+| `S3-note-syntax-tune8` | `height` `366.96500000000003` against `366.965` — ULP |
+| `ragtime-nightingale` | `height` one ULP in 2,007,011 bytes |
+| `frere-jacques` | `height` `854.4015` against `854.4205` |
 
----
+**THE ULP FAMILY IS THE MAJORITY AGAIN**, and every one landed today that was a ULP had the
+same cause: an offset accumulated from `x` instead of built from zero. `CHECKPOINT-2026-08-11b.md`
+§5 has the four probes that count tokens by axis.
 
 ## 5. THE HARNESS — WHAT WAS ADDED THIS SESSION
 

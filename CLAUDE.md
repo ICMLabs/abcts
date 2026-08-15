@@ -889,7 +889,14 @@ checkpoint and hand off as you go so no context is lost.
 > a note's DOTS GO OUT FROM THE OUTSIDE IN; `!breath!` draws abcjs's `,` and not
 > `scripts.comma`; and **`"+": "scripts.stopped"` WAS STILL REACHING FOR BRAVURA**, the
 > class the 2026-08-05 audit closed, surviving because the note beside it read like a mapping
-> and was a sentence.
+> and was a sentence. Then STRICT READS ONE CHARACTER OF MICROTONE and a second is a PARSE
+> FAILURE (`^3G` is a quartersharp, `^3/2G` a plain `G` — **the fraction's VALUE never
+> reaches the page, only its length does**, and three tests had asserted our ABC 2.1 reading
+> as though it were measured); a key change's naturals come FIRST at a mid-line `[K:]` and
+> LAST at the head of a line, because `appendStartingElement` and `createStaff` concatenate
+> them in OPPOSITE ORDERS and abcjs's own SVG draws both within four systems; and a KEY
+> SIGNATURE'S `dx` IS BUILT FROM ZERO, `x + ((w1+2) + (w2+2))` rather than
+> `((x+w1+2) + w2+2)` — three rows on one association.
 >
 > **READ `Docs/HANDOFF-2026-08-14.md` FIRST**, then `Docs/CHECKPOINT-2026-08-14.md` — §4 is
 > the work list for the 31, §5 the harness (four new abcjs probes, three of ours, two
