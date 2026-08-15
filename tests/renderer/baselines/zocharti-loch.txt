@@ -517,7 +517,7 @@ system 1 width=700.000 originY=343.784
     note@14 x=617.412 w=73.485
       glyph augmentationDot 630.782,-81.375
       glyph noteheadHalf 617.412,-77.500
-      glyph fermataAbove 622.597,-89.129
+      glyph fermataAbove 622.597,-89.148
       line  615.412,-77.500 -> 629.782,-77.500 t=0.700
       line  615.412,-69.750 -> 629.782,-69.750 t=0.700
       line  615.412,-62.000 -> 629.782,-62.000 t=0.700

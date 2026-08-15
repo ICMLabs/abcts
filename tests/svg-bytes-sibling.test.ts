@@ -121,6 +121,7 @@ const PASSING: readonly string[] = [
   'S8-layout-tune1',
   'S8-layout-tune2',
   'S8-layout-tune4',
+  'S8-layout-tune5',
   'S8-layout-tune11',
   'brother-john-inline-voices',
   'center-text',
@@ -169,6 +170,7 @@ const PASSING: readonly string[] = [
   'vree-grace-notes',
   'vree-sharps',
   'vree-ties-across-bars',
+  'zocharti-loch',
 ]
 
 interface Diff {

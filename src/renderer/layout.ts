@@ -4178,8 +4178,24 @@ function layoutNoteheads(
    * path re-derived it from the drawn y and lost the `- 1`, which is the one pitch three of
    * this fixture's twelve below fermatas were out by.
    */
+  /**
+   * **THE HALF-BOX IS THIS HEAD'S OWN, NOT A CONSTANT.** `abselem.top`/`.bottom` are
+   * `pitch ± thickness / 2` with `thickness = symbolHeightInPitches(c) * scale`
+   * (`create-note-head.js:34`, `relative-element.js:22-24`) — the GLYPH's published `h`,
+   * which abcjs's table gives as 8.094 for `noteheads.quarter` and **8.132 for
+   * `noteheads.half`**. `ENGRAVE.noteheadHalfHeight` is the quarter's, so a HALF note
+   * handed the decoration stack a top 0.0049 pitch low and its fermata drew 0.019px below
+   * abcjs's — `zocharti-loch`'s last difference, and instrumented there as
+   * `abselemTop 21.049290322580646` where `21.049290322580646 - 8.132 / 7.75` is the head.
+   */
+  const decorationHeadHalf = (() => {
+    const head = glyphs.find((g) => g.role === 'notehead')
+    return head === undefined
+      ? ENGRAVE.noteheadHalfHeight / ENGRAVE.spacePerStep
+      : (glyphsFor(strict).get(head.name)?.declaredHeight ?? 0) / ENGRAVE.spacePerStep / 2
+  })()
   const decorationBelowBase = Math.min(
-    lowest - ENGRAVE.noteheadHalfHeight / ENGRAVE.spacePerStep,
+    lowest - decorationHeadHalf,
     // y → STEP, and the frame's zero is abcjs's pitch 0 now, so the origin comes off.
     ...decorationStems.map((l) => {
       if (l.pitchRange === undefined) return -Math.max(l.y1, l.y2) / ENGRAVE.spacePerStep - PITCH_ORIGIN
@@ -4219,7 +4235,7 @@ function layoutNoteheads(
       // clamps to 12, `{d}+1+c` reaches 12.2 and keeps it. 0.2 pitch — 0.775px — under
       // every notehead on `transpose-output-04`.
       Math.max(
-        highest + ENGRAVE.noteheadHalfHeight / ENGRAVE.spacePerStep,
+        highest + decorationHeadHalf,
         ...decorationStems.map((l) => -Math.min(l.y1, l.y2) / ENGRAVE.spacePerStep - PITCH_ORIGIN),
       ),
       decorationBelowBase,

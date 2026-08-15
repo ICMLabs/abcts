@@ -1195,7 +1195,7 @@ system 0 width=700.899 originY=0.000
       glyph noteheadHalf 151.683,-31.000
       glyph noteheadHalf 151.683,-38.750
       glyph noteheadHalf 151.683,-46.500
-      glyph ornamentTremblement 151.459,-55.547
+      glyph ornamentTremblement 151.459,-55.566
       line  149.683,-46.500 -> 164.053,-46.500 t=0.700
       line  152.183,-45.208 -> 152.183,-3.875 t=1.000
     bar x=173.889 w=0.600
@@ -1980,7 +1980,7 @@ system 1 width=701.208 originY=122.242
       line  594.450,-38.750 -> 594.450,-7.750 t=0.600
     note@1 x=605.150 w=60.000
       glyph noteheadHalf 605.150,-27.125
-      glyph articStaccatoAbove 610.335,-38.922
+      glyph articStaccatoAbove 610.335,-38.941
       glyph stringsUpBow 610.335,-56.241
       glyph ornamentTremblement 604.926,-70.983
       glyph ornamentTremblement 604.926,-80.983
@@ -1988,7 +1988,7 @@ system 1 width=701.208 originY=122.242
       line  605.650,-25.833 -> 605.650,0.000 t=1.000
     note@5 x=637.068 w=84.853
       glyph noteheadWhole 637.068,-42.625
-      glyph fermataAbove 644.561,-54.254
+      glyph fermataAbove 644.561,-54.255
     bar x=682.208 w=3.600
       line  682.508,-38.750 -> 682.508,-7.750 t=0.600
       line  685.508,-38.750 -> 685.508,-7.750 t=0.600
