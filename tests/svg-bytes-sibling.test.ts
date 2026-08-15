@@ -31,7 +31,32 @@ interface Case {
   readonly abc: string
   readonly golden: string
   readonly tune: number
+  /** `add_classes` — the `-classes` family. See `MODES`. */
+  readonly addClasses?: boolean
 }
+
+/**
+ * **THE CORPUS IS RENDERED FIVE WAYS AND THIS GATE READ ONE OF THEM.**
+ *
+ * `dump-svg.js` writes a plain family and an `--add-classes` one; `dump-tunebook-svg.js`
+ * writes `-stacked`; and both take `--print`. Counted over the 507 goldens: 120 plain, 118
+ * `-classes`, 117 `-print`, 12 `-stacked`, 12 `-stacked-print`. Until this list existed the
+ * gate enumerated the 120 and nothing else — **A GATE'S REACH IS A PROPERTY OF ITS
+ * ENUMERATION**, for the fifth time on this branch.
+ *
+ * `-classes` is `renderAbc(divs, abc, { staffwidth: 670, add_classes: true })`, the same
+ * call with one flag, so it is enumerated here.
+ *
+ * `-print` and the two `-stacked` families are NOT, and the reason is capability rather
+ * than reach: `print: true` is not in `AbcjsParams` at all, and a STACKED render is
+ * `EngraverController(div).engraveABC(allTunes)` — every tune of a book into ONE svg —
+ * which `compat` has no entry point for. Both are written up in
+ * `Docs/CHECKPOINT-2026-08-15.md`; neither is a tolerance, they are unbuilt features.
+ */
+const MODES: readonly { readonly suffix: string; readonly addClasses: boolean }[] = [
+  { suffix: '', addClasses: false },
+  { suffix: '-classes', addClasses: true },
+]
 
 /**
  * **`S7-voices` IS EXCLUDED AND THE REASON IS NOT OURS.** Its fixture was edited in the
@@ -52,19 +77,28 @@ const CASES: Case[] = existsSync(fixtures)
       .flatMap((f) => {
         const slug = f.replace(/\.abc$/, '')
         const abc = readFileSync(join(fixtures, f), 'utf-8')
-        // A SINGLE-tune fixture's golden is `<slug>.svg`; a tunebook's are `-tune0`, … .
-        const single = existsSync(join(goldens, `${slug}.svg`))
         const rows: Case[] = []
-        if (single) {
-          rows.push({ slug, abc, tune: 0, golden: readFileSync(join(goldens, `${slug}.svg`), 'utf-8') })
-        }
-        for (let i = 0; existsSync(join(goldens, `${slug}-tune${i}.svg`)); i += 1) {
-          rows.push({
-            slug: `${slug}-tune${i}`,
-            abc,
-            tune: i,
-            golden: readFileSync(join(goldens, `${slug}-tune${i}.svg`), 'utf-8'),
-          })
+        for (const mode of MODES) {
+          const base = `${slug}${mode.suffix}`
+          const flag = mode.addClasses ? { addClasses: true } : {}
+          // A SINGLE-tune fixture's golden is `<base>.svg`; a tunebook's are `-tune0`, … .
+          if (existsSync(join(goldens, `${base}.svg`)))
+            rows.push({
+              slug: base,
+              abc,
+              tune: 0,
+              ...flag,
+              golden: readFileSync(join(goldens, `${base}.svg`), 'utf-8'),
+            })
+          for (let i = 0; existsSync(join(goldens, `${base}-tune${i}.svg`)); i += 1) {
+            rows.push({
+              slug: `${base}-tune${i}`,
+              abc,
+              tune: i,
+              ...flag,
+              golden: readFileSync(join(goldens, `${base}-tune${i}.svg`), 'utf-8'),
+            })
+          }
         }
         return rows
       })
@@ -214,7 +248,8 @@ function firstDifference(got: string, want: string): Diff | null {
 
 /** THE SAME PARAMS THE GOLDENS WERE MADE WITH — `dump-svg.js`'s `{staffwidth: 670}`. */
 function run(c: Case): Diff | null {
-  return firstDifference(renderAbc('paper', c.abc, { staffwidth: 670 })[c.tune]?.svg ?? '', c.golden)
+  const params = { staffwidth: 670, ...(c.addClasses === true ? { add_classes: true } : {}) }
+  return firstDifference(renderAbc('paper', c.abc, params)[c.tune]?.svg ?? '', c.golden)
 }
 
 describe('strict SVG vs the 41-fixture corpus, byte for byte', () => {
