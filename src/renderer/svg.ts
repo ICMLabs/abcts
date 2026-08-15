@@ -1484,13 +1484,6 @@ const glyphDefs = new Map<GlyphName, string>()
         // `printBrace(bracket)`, then `drawVoice` (`draw/staff-group.js:74-113`). The
         // group closes below, so the connector is written after it.
         connectorHere = system.connectorSpans.filter((c) => c.staffIndex === staffIndex)
-        // …AND THE MEASURE COUNTER IS ALREADY 0 BY THE TIME THE PREFIX IS DRAWN.
-        // `draw/voice.js:31` reads as though a `staff-extra` cannot open a measure —
-        // `if (child.type !== 'staff-extra' && !isInMeasure()) startMeasure()` — but
-        // abcjs's own OUTPUT gives the clef `abcjs-m0 abcjs-mm0`, so something upstream
-        // has already started it. Measured rather than reasoned: the source lies here,
-        // and the goldens are the target.
-        classes.startMeasure()
       }
       // abcjs classes only the TOP staff line; the other four carry no class at all.
       //
@@ -1516,6 +1509,15 @@ const glyphDefs = new Map<GlyphName, string>()
         parts.push(lineToRect(TL(line), attr, abcjs))
       })
       if (abcjs && staff.staffLines.length > 0) parts.push('</g>')
+      /**
+       * …**AND THE MEASURE COUNTER IS STILL NULL WHILE THE CONNECTOR AND THE VOICE NAME
+       * GO OUT.** `drawStaffGroup` runs `newMeasure()` before `printStaff` and only
+       * `drawVoice` starts one, after it has drawn the voice name
+       * (`draw/staff-group.js:92-113`, `draw/voice.js:19-34`). So a brace, a bracket and a
+       * voice name carry `l` and `v` and NO `m`/`mm`, where the clef after them carries all
+       * four. `ave-verum-corpus-classes` writes `abcjs-bracket abcjs-l0 abcjs-v0`; ours
+       * started the measure before this loop and wrote `abcjs-m0 abcjs-mm0` into both.
+       */
       for (const span of connectorHere) {
         // SYSTEM coordinates — `edge()` already carries each staff's own `originY`, so the
         // offset is the system's alone and not this staff's.
@@ -2222,6 +2224,18 @@ const glyphDefs = new Map<GlyphName, string>()
          * wrapped it in `<g fill stroke data-name>`.
          */
         const bare = el.type === 'voiceName'
+        /**
+         * **AND THE MEASURE OPENS ONCE THE CONNECTOR AND THE NAME ARE OUT.**
+         * `draw/voice.js:31` reads as though a `staff-extra` cannot open one —
+         * `if (child.type !== 'staff-extra' && !isInMeasure()) startMeasure()` — but abcjs's
+         * own OUTPUT gives the clef `abcjs-m0 abcjs-mm0`, so something upstream has already
+         * started it. Measured rather than reasoned: the source lies here, the goldens are
+         * the target, and what the source DOES pin is where it cannot have happened yet —
+         * `drawStaffGroup` runs `newMeasure()` before `printStaff`, and the brace, the
+         * bracket and the voice name all go out before the first child. All three carry
+         * `l` and `v` and neither counter.
+         */
+        if (abcjs && !bare && !classes.isInMeasure()) classes.startMeasure()
         if (abcjs && !bare) {
           const name = ABCJS_ELEMENT_NAMES[el.type] ?? el.type
           // `if (child.type !== 'staff-extra' && !isInMeasure()) startMeasure()`
@@ -2265,8 +2279,13 @@ const glyphDefs = new Map<GlyphName, string>()
           parts.push(
             // …AND THE GROUP'S OWN `fill` IS THE VOICE'S — see `fg` at `flushVoice`. An
             // element is drawn inside `drawVoice`, so it is inside the colour swap.
-            `<g fill="${marked ? ABCJS_MARK_COLOUR : fg(voiceOf(elIndex))}" stroke="none"` +
-              `${gcls ? ` class="${groupClass}"` : ''}` +
+            //
+            // **THE CLASS COMES FIRST WHEN THERE IS ONE.** `openGroup` sets `class`, then
+            // `fill`, then `stroke`, then `data-name` (`write/svg.js:openGroup`), and a
+            // falsy `klass` is skipped — so WITHOUT `add_classes` the run opens at `fill`
+            // and the order the plain goldens show is the tail of the same list.
+            `<g${gcls ? ` class="${groupClass}"` : ''}` +
+              ` fill="${marked ? ABCJS_MARK_COLOUR : fg(voiceOf(elIndex))}" stroke="none"` +
               ` data-name="${name}"` +
               `${selectable ? ` selectable="false" data-index="${selectableIndex++}"` : ''}` +
               `${marked && !gcls ? ` class="${groupClass}"` : ''}>`,
@@ -2317,11 +2336,22 @@ const glyphDefs = new Map<GlyphName, string>()
           // A BAR NUMBER carries a GENERATED class of its own — see `barNumberText`.
           const isBarNumber = abcjs && t.dataName === 'bar-number'
           const isPart = abcjs && el.type === 'part'
+          /**
+           * **A VOICE NAME NAMES ITSELF TOO.** `drawVoice` renders it with
+           * `klass: 'staff-extra voice-name'` (`draw/voice.js:20`), and `getFontAndAttr`
+           * runs `classes.generate` on that — so under `add_classes` it carries
+           * `abcjs-staff-extra abcjs-voice-name` plus the line and voice counters, and NO
+           * `m`/`mm`: the measure has not opened yet. It wears no GROUP, which is why the
+           * class cannot be inherited from one.
+           */
+          const isVoiceName = abcjs && el.type === 'voiceName'
           const counters = gcls.split(' ').slice(1).join(' ')
           const partAttr = isPart
             ? `${gcls ? ` class="${gcls}${counters ? ` ${counters}` : ''}"` : ''}` +
               ` data-name="${escapeAttr(t.text)}"`
-            : isBarNumber
+            : isVoiceName
+              ? `${attrIfAny(classes.generate('staff-extra voice-name'))} data-name="voice-name"`
+              : isBarNumber
               ? `${attrIfAny(classes.generate('bar-number'))} data-name="bar-number"`
               /**
                * **A LYRIC, A CHORD SYMBOL AND AN ANNOTATION EACH NAME THEMSELVES** —
@@ -2765,8 +2795,25 @@ const glyphDefs = new Map<GlyphName, string>()
       // it is in — ours carried the running count.
       // The LAST voice of the staff — the loop only flushes on a boundary.
       flushVoice(openVoice)
+      /**
+       * **AND THE LINE'S MEASURE COUNT IS BANKED WHEN THE STAFF ENDS.**
+       * `drawStaffGroup` runs `newMeasure()` AFTER each staff's `drawVoice` and once more
+       * after the whole loop (`draw/staff-group.js:130, 137`), and `newMeasure` is what
+       * writes `measureTotalPerLine[lineNumber]` — the number every LATER line's `mm`
+       * counter sums.
+       *
+       * **AND IT BANKS NOTHING UNTIL THE BEAM AND `otherchildren` PASSES COUNT THEIR BARS.**
+       * `drawVoice` runs `startMeasure()` before each of those two loops and `incrMeasure()`
+       * on every `'bar'` MARKER interleaved in them (`draw/voice.js:54-70`), so the counter
+       * ends the staff at the line's bar count. Ours resets and never counts, so `measure`
+       * is 0 here and `if (this.measureNumber)` — a falsy test, abcjs's own — banks nothing:
+       * `S8-layout-classes-tune10`'s second line reads `abcjs-mm0` where abcjs has
+       * `abcjs-mm3`. The markers are the missing half; see the beam pass.
+       */
+      if (abcjs) classes.newMeasure()
       if (!abcjs) parts.push('</g>')
     }
+    if (abcjs) classes.newMeasure()
     /**
      * **AND A GROUP OF MORE THAN ONE STAFF IS CLOSED BY A PLAIN RULE DOWN ITS LEFT EDGE**
      * — `printStem(renderer, params.startx, 0.6, topLine, bottomLine, null)`, drawn after
