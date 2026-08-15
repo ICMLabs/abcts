@@ -636,8 +636,8 @@ system 0 width=732.000 originY=0.000
       glyph noteheadBlack 466.235,-34.875
       line  466.535,-34.100 -> 466.535,-5.716 t=0.600
     note@2 x=479.770 w=39.686
-      glyph augmentationDot 492.580,-34.875
       glyph augmentationDot 497.580,-34.875
+      glyph augmentationDot 492.580,-34.875
       glyph noteheadBlack 479.770,-31.000
       line  480.070,-30.225 -> 480.070,-1.937 t=0.600
     note@3 x=505.092 w=15.000

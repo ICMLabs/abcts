@@ -1978,8 +1978,13 @@ function dotGlyphs(
   taken.add(dotStep)
 
   const out: PlacedGlyph[] = []
-  for (let i = 0; i < count; i++) {
-    out.push({ ...glyphAt('augmentationDot', x + i * spacing, dotStep), role: 'dot' })
+  // **THE DOTS GO OUT FROM THE OUTSIDE IN.** `for (; dot > 0; dot--)` with
+  // `dx = notehead.w + dotshiftx - 2 + 5 * dot` (`create-note-head.js:52-55`), so a
+  // double-dotted note emits the FAR dot first. Ours counted up, which is the same two
+  // coordinates in the other order — `C15/8` on `S3-note-syntax-tune2` wrote 157.57 where
+  // abcjs writes 162.57, and no positional gate can express a swap.
+  for (let i = count; i > 0; i--) {
+    out.push({ ...glyphAt('augmentationDot', x + (i - 1) * spacing, dotStep), role: 'dot' })
   }
   return out
 }
