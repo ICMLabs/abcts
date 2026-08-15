@@ -6866,6 +6866,21 @@ function slurEndY(a: NoteAnchor, above: boolean, isStart: boolean): number {
 /**
  * **A CHORD'S TIE IS ONE TIE PER NOTEHEAD** — see `NoteAnchor.tieSteps`.
  *
+ * **…AND A CHORD CAN TIE SOME OF ITS HEADS AND NOT OTHERS — MEASURED, NOT FIXED.** The `-`
+ * is a property of the PITCH, not of the chord: `addSlursAndTies` is called once per pitch
+ * with `pitchelem.startTie` (`abstract-engraver.js:737, 903-916`), so `[B-eg-b-]` ties
+ * three of its four heads. Our parser drops a `-` written inside a chord entirely —
+ * `[B-eg-b-]` comes out `tiedToNext: false` — and this function then ties either all four
+ * heads or none.
+ *
+ * `ragtime-nightingale` writes exactly that at bar 22 and it is the whole of the file's
+ * remaining difference: 165 `data-name="tie"` paths against abcjs's 168, the three missing
+ * ones at `M 456.03 1439.78`, `…1420.4` and `…1412.65`.
+ *
+ * Closing it is a MODEL change — `Chord` needs a per-pitch tie — and it reaches the AUDIO,
+ * where a tie merges durations and ours would start articulating three of four notes
+ * differently. The audio gate is at 0 of 72 and this must not be half-done to break it.
+ *
  * The pairing is abcjs's own: an arriving head closes the open tie whose `anchor1.pitch`
  * MATCHES it, and an unmatched one closes `ties[0]`, the oldest still open
  * (`abstract-engraver.js:874-891`). Same-index is the fallback before that, which is what
@@ -11581,8 +11596,6 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           }
           for (const a of block.anchors) {
             const away = displacementOf(voiceIndex, i, a.element)
-            if (process.env.ABCTS_AW && Math.abs(a.left + shiftOf(a.element) + away - 436.2) < 0.5)
-              console.log('AW left', a.left, 'shift', shiftOf(a.element), 'away', away, 'v', voiceIndex, 'el', a.element, 'sys', systemIndex, 'pitchY', a.pitchY, 'ties', a.event.type === 'rest' ? '-' : a.event.tiedToNext)
             voiceAnchors[voiceIndex]?.push({
               ...a,
               system: systemIndex,
