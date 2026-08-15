@@ -919,6 +919,14 @@ export interface PlacedGlyph {
    */
   readonly reservePitch?: readonly [top: number, bottom: number]
   /**
+   * The PITCH this glyph is drawn at, where something has to MOVE it in pitch.
+   *
+   * Only a rest carries one: `fixVoiceCollisions` does `children[0].pitch -= distance` and
+   * `calcY` multiplies once (`layout/layout.js:164-175`), so the shift has to be applied to
+   * the pitch and converted afterwards — not added to the drawn y.
+   */
+  readonly anchorPitch?: number
+  /**
    * This glyph's offset from its element's own x, CONSTRUCTED rather than derived.
    *
    * abcjs stores `dx` on the `RelativeElement` and places it as `this.x = x + this.dx`
@@ -3178,12 +3186,27 @@ function layoutRest(
      * ends in the SAME `createNoteHead` call, so it has the same order. `"F"z3` in
      * `flattener-37` is one dotted half rest and the two engines disagree on nothing else.
      */
+    /** The declared box's half, in PITCH — `symbolHeightInPitches(c) / 2`. */
+    const restHalfPitch = restHalf / ENGRAVE.spacePerStep
+    const restBoxPitch = ABCJS_PITCH.restPitch + shift
     const restGlyph = {
       ...glyphAt(spec.name, x, spec.step + shift),
       reserve: [
-        stepToY(ABCJS_PITCH.restPitch + shift - PITCH_ORIGIN) - restHalf,
-        stepToY(ABCJS_PITCH.restPitch + shift - PITCH_ORIGIN) + restHalf,
+        stepToY(restBoxPitch - PITCH_ORIGIN) - restHalf,
+        stepToY(restBoxPitch - PITCH_ORIGIN) + restHalf,
       ] as [number, number],
+      /**
+       * …**AND THE SAME BOX IN PITCH, plus the pitch the glyph is DRAWN at.**
+       * `fixVoiceCollisions` moves a rest by `children[0].pitch -= distance1`, every term a
+       * pitch, and `calcY` multiplies once at the end (`layout/layout.js:164-175`). Without
+       * these the move is a difference of two y's, which is `-p*STEP + d*STEP` where abcjs
+       * has `-(p - d)*STEP`.
+       */
+      reservePitch: [restBoxPitch + restHalfPitch, restBoxPitch - restHalfPitch] as [
+        number,
+        number,
+      ],
+      anchorPitch: spec.step + shift + PITCH_ORIGIN,
     }
     if (spec.dots > 0) {
       // A DOTTED REST TAKES A NOTE'S DOT ARITHMETIC, because in abcjs it is literally the
@@ -14914,19 +14937,40 @@ function fixRestCollisions(
   const out = voices.map((v) => [...v])
   if (out.length < 2) return out
 
-  /** The near edge of an element's ink, in y. Skips the lanes, as abcjs's helpers do. */
-  const edge = (el: LayoutElement, side: 'top' | 'bottom'): number => {
-    const ys: number[] = []
-    for (const g of el.glyphs) {
-      if (g.reserve !== undefined) ys.push(g.reserve[side === 'top' ? 0 : 1])
-      else {
-        const glyph = glyphsFor(strict).get(g.name) ?? GLYPHS[g.name]
-        ys.push(side === 'top' ? g.y + glyph.y : g.y + glyph.y + glyph.height)
+  /**
+   * The near edge of an element's ink, in y — **and in PITCH where the edge that WINS knows
+   * its own**, which is the only form `fixVoiceCollisions` states its arithmetic in
+   * (`closeTop`/`closeBottom` are a `max`/`min` over `child.top`/`child.bottom`, both
+   * pitches). Skips the lanes, as abcjs's helpers do.
+   */
+  const edge = (
+    el: LayoutElement,
+    side: 'top' | 'bottom',
+  ): { y: number; pitch?: number } => {
+    const top = side === 'top'
+    let best = top ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY
+    let pitch: number | undefined
+    const take = (y: number, p?: number): void => {
+      if (top ? y < best : y > best) {
+        best = y
+        pitch = p
       }
     }
-    for (const l of el.lines) ys.push(side === 'top' ? Math.min(l.y1, l.y2) : Math.max(l.y1, l.y2))
-    if (ys.length === 0) return side === 'top' ? stepToY(4) : stepToY(-4)
-    return side === 'top' ? Math.min(...ys) : Math.max(...ys)
+    for (const g of el.glyphs) {
+      if (g.reserve !== undefined) {
+        take(g.reserve[top ? 0 : 1], g.reservePitch?.[top ? 0 : 1])
+        continue
+      }
+      const glyph = glyphsFor(strict).get(g.name) ?? GLYPHS[g.name]
+      take(top ? g.y + glyph.y : g.y + glyph.y + glyph.height)
+    }
+    for (const l of el.lines) {
+      const y = top ? Math.min(l.y1, l.y2) : Math.max(l.y1, l.y2)
+      const pr = l.pitchRange
+      take(y, pr === undefined ? undefined : top ? Math.max(...pr) : Math.min(...pr))
+    }
+    if (!Number.isFinite(best)) return { y: top ? stepToY(4) : stepToY(-4) }
+    return pitch === undefined ? { y: best } : { y: best, pitch }
   }
   // `rest.type === 'rest'` EXACTLY, which is narrower than "a rest that draws something".
   // It excludes the invisible ones, as abcjs's comment says, and ALSO `whole` and
@@ -14963,20 +15007,39 @@ function fixRestCollisions(
    * That is the "reserve in PITCH" refactor several findings have circled; it is not one
    * line here, so it is written down rather than half-done.
    */
-  const shift = (voice: number, index: number, dy: number): void => {
+  const shift = (voice: number, index: number, dy: number, dPitch?: number): void => {
     const row = out[voice]
     const el = row?.[index]
     const head = el?.glyphs[0]
     if (row === undefined || el === undefined || head === undefined) return
+    /**
+     * **THE MOVE IS A PITCH SUBTRACTION AND ONE PRODUCT, WHERE IT CAN BE.** `children[0]
+     * .pitch -= distance` and `calcY` multiplies at the end (`layout/layout.js:170-175`),
+     * so `-(p - d) * STEP` — not `-p * STEP + d * STEP`, which is a different double.
+     * `multi-voice-rest-placement`'s moved quarter rest printed `30.850500000000004` for
+     * abcjs's `30.850499999999997` on that alone. Falls back to the y when either edge of
+     * the comparison had no pitch to offer.
+     */
+    const byPitch = dPitch !== undefined && head.anchorPitch !== undefined
+    const movedPitch = byPitch ? (head.anchorPitch ?? 0) - dPitch : undefined
     row[index] = {
       ...el,
       glyphs: [
         {
           ...head,
-          y: head.y + dy,
+          y: movedPitch === undefined ? head.y + dy : stepToY(movedPitch - PITCH_ORIGIN),
+          ...(movedPitch === undefined ? {} : { anchorPitch: movedPitch }),
           ...(head.reserve === undefined
             ? {}
             : { reserve: [head.reserve[0] + dy, head.reserve[1] + dy] as [number, number] }),
+          ...(head.reservePitch === undefined || dPitch === undefined
+            ? {}
+            : {
+                reservePitch: [head.reservePitch[0] - dPitch, head.reservePitch[1] - dPitch] as [
+                  number,
+                  number,
+                ],
+              }),
         },
         ...el.glyphs.slice(1),
       ],
@@ -14995,12 +15058,25 @@ function fixRestCollisions(
     if (drawnRest(firstEl) && lastEl.type !== 'rest') {
       // `distance1 = restTop.bottom - closeTop(other) - 2`, in PITCH, and negative means
       // they overlap. In y — where down is positive and a pitch is `spacePerStep` — the
-      // same quantity is the gap itself, so no conversion is needed either way.
-      const dy = edge(lastEl, 'top') - edge(firstEl, 'bottom') - 2 * ENGRAVE.spacePerStep
-      if (dy < 0) shift(first.voice, first.index, dy)
+      // same quantity is the gap itself, so no conversion is needed either way; the PITCH
+      // form is carried alongside so the move itself can be abcjs's single product.
+      const otherTop = edge(lastEl, 'top')
+      const restBottom = edge(firstEl, 'bottom')
+      const dy = otherTop.y - restBottom.y - 2 * ENGRAVE.spacePerStep
+      const dPitch =
+        otherTop.pitch === undefined || restBottom.pitch === undefined
+          ? undefined
+          : restBottom.pitch - otherTop.pitch - 2
+      if (dy < 0) shift(first.voice, first.index, dy, dPitch)
     } else if (drawnRest(lastEl) && firstEl.type !== 'rest') {
-      const dy = edge(firstEl, 'bottom') - edge(lastEl, 'top') + 2 * ENGRAVE.spacePerStep
-      if (dy > 0) shift(last.voice, last.index, dy)
+      const otherBottom = edge(firstEl, 'bottom')
+      const restTop = edge(lastEl, 'top')
+      const dy = otherBottom.y - restTop.y + 2 * ENGRAVE.spacePerStep
+      const dPitch =
+        otherBottom.pitch === undefined || restTop.pitch === undefined
+          ? undefined
+          : restTop.pitch - otherBottom.pitch + 2
+      if (dy > 0) shift(last.voice, last.index, dy, dPitch)
     }
   }
   return out

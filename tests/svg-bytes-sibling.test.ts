@@ -167,6 +167,7 @@ const PASSING: readonly string[] = [
   'missing-decorations-tune5',
   'multi-voice-lyrics-two-voices',
   'multi-voice-rest-collision',
+  'multi-voice-rest-placement',
   'multi-voice-triplet-brackets',
   'program-127-test',
   'ragtime-mini',

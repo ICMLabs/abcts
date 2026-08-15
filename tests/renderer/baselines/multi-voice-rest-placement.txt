@@ -36,7 +36,7 @@ system 0 width=700.000 originY=0.000
       glyph noteheadBlack 413.969,-42.625
       line  423.279,-43.917 -> 423.279,-69.750 t=1.000
     rest x=481.477 w=42.426
-      glyph restQuarter 481.477,-49.639
+      glyph restQuarter 481.477,-49.640
     note@5 x=548.985 w=42.426
       glyph noteheadBlack 548.985,-42.625
       line  558.295,-43.917 -> 558.295,-69.750 t=1.000
