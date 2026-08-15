@@ -130,9 +130,9 @@ system 2 width=245.752 originY=264.864
       glyph noteheadBlack 49.051,0.000
       line  47.051,0.000 -> 60.861,0.000 t=0.700
       line  58.361,-1.292 -> 58.361,-27.125 t=1.000
-      text  49.051,20.047 size=16.000 "one"
-      text  49.051,40.047 size=16.000 "two"
       text  49.051,60.047 size=16.000 "three"
+      text  49.051,40.047 size=16.000 "two"
+      text  49.051,20.047 size=16.000 "one"
     note@-4 x=91.477 w=42.426
       glyph noteheadBlack 91.477,-7.750
       line  100.787,-9.042 -> 100.787,-34.875 t=1.000

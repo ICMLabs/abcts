@@ -23,8 +23,8 @@ system 0 width=447.203 originY=0.000
       glyph flag8thUp 88.261,-31.000
       glyph noteheadBlack 79.051,-3.875
       line  88.361,-5.167 -> 88.361,-31.000 t=1.000
-      text  79.051,20.047 size=16.000 "p"
       text  79.051,40.047 size=16.000 "dolce"
+      text  79.051,20.047 size=16.000 "p"
     bar x=109.051 w=0.600
       line  109.351,-38.750 -> 109.351,-7.750 t=0.600
     note@-4 x=120.051 w=30.000

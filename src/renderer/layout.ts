@@ -5749,8 +5749,15 @@ function noteText(
    *
    * Our chord-symbol branch already stored them that way; this one did not, and the
    * difference only showed once the private within-element stack came out.
+   *
+   * **AND THE LOOP IS OVER `chords`, SO THE BELOW MARKS TURN ROUND TOO.** It is ONE
+   * backwards walk over every annotation on the note, not an above-side rule — this
+   * reversed only the above list, so `"_p""_dolce"D` came out `p, dolce` where abcjs
+   * writes `dolce, p`. Both lanes were already exact; it is the DOCUMENT ORDER that was
+   * wrong, which no positional gate can express.
    */
   above.reverse()
+  below.reverse()
   above.forEach((a) => {
     // `annotationfont`, not the chord font — abcjs picks `font = isAnnotation ?
     // 'annotationfont' : 'gchordfont'` (`add-chord.js:11-17`). They share a 12pt default,
@@ -13956,7 +13963,21 @@ function anchorChordsBelow<
     const rightMost: number[] = [0]
     let any = false
     for (const el of part.elements) {
-      for (const t of el.texts.filter(isBelow)) {
+      /**
+       * **THE BELOW ARM WALKS ONE ELEMENT'S CHILDREN BACKWARDS, AND `invertLane` NEVER
+       * RUNS ON IT.** `setLaneForChord`'s two loops are not mirror images: the above one
+       * is `for (j = 0; j < children.length; j++)` and the below one
+       * `for (j = children.length - 1; j >= 0; j--)` (`layout/voice.js:88-99`) — and
+       * `setLane`'s below branch is COMMENTED OUT in abcjs's own source
+       * (`layout/voice.js:131-135`), so lane 0 stays nearest the music.
+       *
+       * `addChord` has already stored the marks in reverse source order, so walking them
+       * backwards here restores SOURCE order for the lane packing while the DOCUMENT order
+       * stays reversed. `"_p""_dolce"D` therefore writes `dolce, p` and places `p` nearest
+       * the staff. Inverting instead — the obvious mirror of the above side — puts a lone
+       * `"_marcato"` on the far lane.
+       */
+      for (const t of [...el.texts.filter(isBelow)].reverse()) {
         any = true
         const left = t.x
         const right = left + markWidth(t.text, t.size, t.box === true)
