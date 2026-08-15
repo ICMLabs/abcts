@@ -2073,13 +2073,25 @@ function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null 
   // it was written `2 *`, which is the same number only while a staff space is 1.
   const clefTop =
     clefBottom + (glyphsFor(strict).get(name)?.declaredHeight ?? 0) / ENGRAVE.spacePerStep
+  /**
+   * **AND A DECLARED EDGE OF ZERO IS NOT DECLARED AT ALL** — `if (opt.top)` /
+   * `if (opt.bottom)`, and `0` is FALSY (`relative-element.js:40-43`). The element keeps
+   * the default the constructor gave it, which is its own `pitch` — for a clef,
+   * `elem.clefPos`.
+   *
+   * A MEZZOSOPRANO CLEF IS EXACTLY THAT CASE: `K:C alto2` has `clefPos 4` and `ofs -4`, so
+   * `bottom` is 0 and abcjs keeps 4. Ours reserved down to 0 and `clefs-tune5` came out
+   * 7.75px — 2 pitch — taller than abcjs's own SVG. The same rule is already ported for a
+   * STEM's `bottom: p1 - 1` (`CHECKPOINT-2026-08-12`); it belongs to every declared box.
+   */
+  const declared = (edge: number): number => (edge === 0 ? 2 * clef.line : edge)
   const glyphs: PlacedGlyph[] = [
     {
       ...glyphAt(name, x + ENGRAVE.clefIndent, step),
-      reserve: [pitchStep(clefTop), pitchStep(clefBottom)],
+      reserve: [pitchStep(declared(clefTop)), pitchStep(declared(clefBottom))],
       // `{ top: height + clefPos + ofs, bottom: clefPos + ofs }` is stated in PITCH and
       // `calcY` converts once (`create-clef.js:37`), so the extent takes the pitch itself.
-      reservePitch: [clefTop, clefBottom],
+      reservePitch: [declared(clefTop), declared(clefBottom)],
     },
   ]
 

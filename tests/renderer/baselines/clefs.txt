@@ -100,7 +100,7 @@ system 0 width=395.000 originY=0.000
     note@4 x=72.105 w=120.000
       glyph noteheadDoubleWhole 72.105,-38.750
 tune 5
-bounds  width=429.008 height=116.870 top=-15.000
+bounds  width=429.008 height=109.120 top=-15.000
 systems 1
 system 0 width=429.008 originY=0.000
   staff 0 originY=86.870

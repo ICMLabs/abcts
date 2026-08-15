@@ -122,6 +122,7 @@ const PASSING: readonly string[] = [
   'clefs-tune2',
   'clefs-tune3',
   'clefs-tune4',
+  'clefs-tune5',
   'clefs-tune6',
   'curves-tune0',
   'curves-tune1',
