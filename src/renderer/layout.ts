@@ -6913,9 +6913,28 @@ function buildCurve(
    * flat `+= 6` — "if the stem is up, then compensate for the length of the stem"
    * (`abstract-engraver.js:692-712`). Six, not the stem's own seven.
    */
-  const highPitch = (a: NoteAnchor): number =>
-    (a.pitchStep ?? 0) +
-    (a.stemUp && ratToNumber(a.event.duration) < 1 ? ABCJS_PITCH.slurStemCompensation : 0)
+  const highPitch = (a: NoteAnchor): number => {
+    /**
+     * **AND IT IS THE CHORD'S TOP HEAD IT COMPENSATES FROM, NOT THE ANCHOR'S OWN.**
+     * `highestVert = elem.pitches[pp - 1].verticalPos` — the LAST pitch, which the engraver
+     * has sorted, so the highest — and only then `+= 6`
+     * (`abstract-engraver.js:704-710, 718-721`). The overwrite is guarded by
+     * `isTopWhenStemIsDown`, which for a STEM-UP chord is `p === 0`: exactly the head a slur
+     * hangs on. A stem-DOWN chord reaches neither guard with the slur on `pitches[0]`, so
+     * there the anchor keeps its own pitch.
+     *
+     * `ave-verum-corpus`'s `(DA,D[CE])` closes on `[CE]`: abcjs's `midPoint` is `(8 + 0)/2 =
+     * 4`, NOT less than `startY` 4, so `calcSlurY`'s mid-stem arm does not fire and there is
+     * no `endX += Math.round(w / 2)`. Ours read the anchor's own pitch, got 3, fired the
+     * arm, and drew the slur's far end 5px right of abcjs's.
+     */
+    const own = a.pitchStep ?? 0
+    const heads = a.tieSteps ?? []
+    const top = a.stemUp && heads.length > 1 ? Math.max(...heads) : own
+    return (
+      top + (a.stemUp && ratToNumber(a.event.duration) < 1 ? ABCJS_PITCH.slurStemCompensation : 0)
+    )
+  }
   const midPointY = (a: NoteAnchor): number => (stepToY(highPitch(a)) + stepToY(a.pitchStep ?? 0)) / 2
   // `this.startY` at the moment of the comparison is anchor1's MID-STEM value — the beam
   // override two blocks later has not run yet — so the test reads that, not the final y.
