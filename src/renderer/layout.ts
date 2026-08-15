@@ -3919,9 +3919,20 @@ function layoutNoteheads(
     // Ours was a 0.35-space gap and a 0.45-space step — 2.71 and 3.49px against 3 and 5.
     const dotStep = strict ? spaces(ABCJS_PX.dotSpacing) : ENGRAVE.dotSpacing
     const dotOff = strict ? spaces(ABCJS_PX.dotOffset) : ENGRAVE.dotGap - ENGRAVE.dotSpacing
-    // `notehead.w + dotshiftx` — the head's declared width plus the chord's own shift,
-    // formed as ONE offset onto the element's x. See `dotGlyphs`.
-    const dxBase = Math.max(0, ...offsetAt) + headInk
+    /**
+     * `notehead.w + dotshiftx` — the head's declared width plus the chord's own shift,
+     * formed as ONE offset onto the element's x. See `dotGlyphs`.
+     *
+     * **AND `dotshiftx` IS `getSymbolWidth(noteSymbol) + 2`, THE MIRROR OF `roomTaken`.**
+     * `abstract-engraver.js:663-672` sets one or the other from the SAME expression — the
+     * down-stem branch seeds the accidental room, the up-stem branch this — once for the
+     * whole chord, from the FULL head width. Ours read `max(offsetAt)`, which is the head's
+     * drawn shift: two pixels short of abcjs's, and a pixel shorter again on a UNISON,
+     * whose displacement abcjs's `dotshiftx` does not follow. `ragtime-nightingale`'s
+     * `dots.dot` printed 382.414 for abcjs's 384.414.
+     */
+    const dotShiftX = up && offsetAt.some((d) => d > 0) ? headInk + ENGRAVE.accidentalGap : 0
+    const dxBase = headInk + dotShiftX
     const taken = new Set<number>()
     for (const step of steps) {
       const pos = chordPosOf(step)
