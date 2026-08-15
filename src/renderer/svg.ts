@@ -1759,7 +1759,7 @@ const glyphDefs = new Map<GlyphName, string>()
                   /\./g,
                   '-',
                 ),
-                counters.get(beam.beamAt ?? -1)?.measure ?? 0,
+                markerAt.get((beam.beamAt ?? -1) + voiceBase) ?? 0,
               )}"`
             : ` class="${prefix}-beam"`
           if (!abcjs) {
