@@ -13,6 +13,7 @@
 import { type CompatibilityMode, defaultMode, isStrict } from '../core/model.js'
 import {
   ABCJS_ARC,
+  ABCJS_FONT_FACE,
   ABCJS_LINE_PX,
   ABCJS_PITCH,
   ABCJS_RATIO,
@@ -739,6 +740,37 @@ const abcjsText = (
   '</text>'
 
 /**
+ * **`richTextLine` — one `<text>`, one `<tspan>` PER PHRASE** (`write/svg.js:242-269`).
+ *
+ * `renderText` returns early on `params.phrases` (`draw/text.js:7-10`), so none of the
+ * rest of that function runs: no font size added to the baseline, no `roundNumber`, no
+ * box, no `data-name`. The `class` is written UNCONDITIONALLY from `params.klass`, which
+ * `richText` sets only when `add_classes` asked for one (`rich-text.js:24-25`) — so
+ * without it `setAttribute("class", undefined)` serialises as the literal
+ * `class="undefined"`. Reproduced, not corrected.
+ *
+ * A phrase attribute whose value is `''` is SKIPPED (`svg.js:255-257`).
+ */
+const richTextLine = (
+  phrases: NonNullable<PlacedText['phrases']>,
+  x: string,
+  y: string,
+  anchor: string,
+  klass: string | undefined,
+): string =>
+  `<text stroke="none" class="${klass ?? 'undefined'}" x="${x}" y="${y}" ` +
+  `text-anchor="${anchor}" dominant-baseline="middle">` +
+  phrases
+    .map(
+      (p) =>
+        `<tspan font-family="${fontFamily(p.face)}" font-size="${num(p.size)}" ` +
+        `font-weight="${p.bold ? 'bold' : 'normal'}" font-style="${p.italic ? 'italic' : 'normal'}" ` +
+        `font-decoration="none">${escapeText(p.text)}</tspan>`,
+    )
+    .join('') +
+  '</text>'
+
+/**
  * A top-text row's `data-name` → the class abcjs puts beside it, under `add_classes`.
  * Literal in `top-text.js` rather than run through `classes.generate`, so no line or
  * measure suffix joins it.
@@ -750,26 +782,6 @@ const abcjsText = (
  * straight into the attribute, where the serializer strips the inner quotes. `tripletfont`
  * is plain `Times` and NOT `Times New Roman`, which is a difference the goldens show.
  */
-const ABCJS_FONT_FACE: Readonly<Record<string, string>> = {
-  annotationfont: 'Helvetica',
-  gchordfont: 'Helvetica',
-  historyfont: 'Times New Roman',
-  infofont: 'Times New Roman',
-  measurefont: 'Times New Roman',
-  partsfont: 'Times New Roman',
-  repeatfont: 'Times New Roman',
-  textfont: 'Times New Roman',
-  tripletfont: 'Times',
-  vocalfont: 'Times New Roman',
-  wordsfont: 'Times New Roman',
-  composerfont: 'Times New Roman',
-  subtitlefont: 'Times New Roman',
-  tempofont: 'Times New Roman',
-  titlefont: 'Times New Roman',
-  voicefont: 'Times New Roman',
-  footerfont: 'Times New Roman',
-  headerfont: 'Times New Roman',
-}
 
 const ABCJS_TEXT_CLASSES: Readonly<Record<string, string>> = {
   title: 'abcjs-title',
@@ -1280,6 +1292,16 @@ const glyphDefs = new Map<GlyphName, string>()
       const renderRow = (b: { t?: PlacedText; s?: string }): string =>
         b.s !== undefined || b.t === undefined
           ? (b.s ?? '')
+          : b.t.phrases !== undefined
+            ? richTextLine(
+                b.t.phrases,
+                raw(b.t.x * PX),
+                raw(b.t.pageY === undefined ? b.t.y * PX + oy : b.t.pageY * PX),
+                b.t.anchor ?? 'start',
+                options.addClasses === true && b.t.dataName !== undefined
+                  ? (ABCJS_TEXT_CLASSES[b.t.dataName] ?? '')
+                  : undefined,
+              )
           : b.t.boxRect !== undefined
             ? `<g fill="currentColor" data-name="${b.t.dataName ?? ''}">` +
               `${renderRow({ t: stripBox(b.t) })}` +
@@ -2774,6 +2796,18 @@ const glyphDefs = new Map<GlyphName, string>()
      */
     let openGroup: string | undefined
     const block = (doc.bottomText ?? []).map((t) => {
+      // …AND A ROW THAT CHANGED FONT MID-LINE IS `richTextLine`'s, here as anywhere else.
+      if (t.phrases !== undefined) {
+        return richTextLine(
+          t.phrases,
+          raw(t.x * PX),
+          raw(t.y * PX + oy),
+          t.anchor ?? 'start',
+          options.addClasses === true && t.dataName !== undefined
+            ? (ABCJS_TEXT_CLASSES[t.dataName] ?? '')
+            : undefined,
+        )
+      }
       const base = round2(t.y * PX + oy)
       const markup = abcjsText(
         round2(t.x * PX),
@@ -2802,12 +2836,14 @@ const glyphDefs = new Map<GlyphName, string>()
         : `<g fill="currentColor" data-name="${t.dataName ?? ''}">` +
           `${markup}${boxRulesPath(t.boxRect, t.y * PX + oy, t.size * PX)}</g>`
     }).map((markup, i) => {
-      const name = (doc.bottomText ?? [])[i]?.groupName
+      const row = (doc.bottomText ?? [])[i]
+      const name = row?.groupName
+      const id = row?.groupId ?? name
       let out = ''
-      if (name !== openGroup) {
+      if (id !== openGroup) {
         if (openGroup !== undefined) out += '</g>'
-        openGroup = name
-        if (openGroup !== undefined) out += `<g data-name="${escapeAttr(openGroup)}">`
+        openGroup = id
+        if (id !== undefined) out += `<g data-name="${escapeAttr(name ?? '')}">`
       }
       return out + markup
     })

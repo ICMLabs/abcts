@@ -53,6 +53,7 @@ import {
 import {
   ABCJS_ARC,
   ABCJS_CLEF_OFFSET_PITCH,
+  ABCJS_FONT_FACE,
   ABCJS_KEY_ACCIDENTAL_FUDGE_PITCH,
   ABCJS_PERC_NOTE_NAMES,
   ABCJS_PITCH,
@@ -1055,6 +1056,14 @@ export interface PlacedText {
    */
   readonly groupName?: string
   /**
+   * Which `startGroup` this row belongs to, where the NAME alone cannot say.
+   *
+   * `openGroup` is passed `row.name`, so `notes` and `history` both open a
+   * `<g data-name="description">` and the two are ADJACENT — a run detector keyed on the
+   * drawn name would merge them into one. abcjs's own key is the `startGroup` string.
+   */
+  readonly groupId?: string
+  /**
    * Which nonMusic LINE of the tune's own top block this row belongs to, if any.
    *
    * abcjs closes `abcjs-meta-top` after the title rows and opens ONE
@@ -1103,6 +1112,39 @@ export interface PlacedText {
     readonly width: number
     readonly height: number
   }
+  /**
+   * **A ROW THAT CHANGED FONT MID-LINE IS `richTextLine`'s ELEMENT, NOT `renderText`'s.**
+   *
+   * `renderText` RETURNS EARLY on `params.phrases` (`draw/text.js:7-10`), before the size
+   * is added to the baseline, before any rounding and before the box branch — so the row
+   * is drawn AT the cursor with `dominant-baseline="middle"`, carries no `data-name`, and
+   * is one `<tspan>` per phrase with its own five font attributes (`svg.js:242-269`).
+   *
+   * **AND A PHRASE'S OWN SIZE GOES IN RAW.** `getTextSize.calc` applies the `pt -> px` 4/3
+   * only when handed a font by NAME; handed a font OBJECT — which is what a `%%setfont`
+   * is — it copies `type.size` straight through (`get-text-size.js:24-43`). So
+   * `%%setfont-1 cursive 16 bold` draws at 16 beside a `titlefont` at 27. `advanceRich`
+   * already measures it that way; this is the drawing half.
+   */
+  readonly phrases?: readonly {
+    readonly text: string
+    readonly face: string
+    readonly size: number
+    readonly bold: boolean
+    readonly italic: boolean
+  }[]
+  /**
+   * A rich row's own `largestY` — what `nonMusic` spends for it, and therefore the ink it
+   * may claim: `[y, y + rowSpan]`.
+   *
+   * A RELATIVE span rather than a `reserve`, because the top block is built at its own
+   * zero and moved into the staff's frame by shifting `texts.y` alone — an absolute
+   * reserve would stay behind. A plain row needs none: its baseline sits one font size
+   * below the cursor, so the 0.8 ascent estimate falls inside the block by construction.
+   * A rich row is drawn AT the cursor and the same estimate reaches a font size ABOVE the
+   * block's top, which dragged `visual-misc-06`'s music down by 14.04px.
+   */
+  readonly rowSpan?: number
   /**
    * Extra lines of the SAME `<text>`, each a `<tspan dy="1.2em">`. abcjs's `addTextIf`
    * takes a string with `\n` in it and emits ONE element (`add-text-if.js:20-33`), which
@@ -11830,8 +11872,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           trailingRules,
         )
 
-  const bottomBlock = bottomTextBlock(score.metadata, score.fonts)
   const bottomStart = bottom + trailingHeight + spaces(ABCJS_PX.bottomTextGap)
+  const bottomBlock = bottomTextBlock(score.metadata, score.fonts, bottomStart)
   const bottomText =
     bottomBlock.texts.length === 0 && trailing.length === 0
       ? undefined
@@ -11842,7 +11884,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           // SIBLING of the `W:`/`H:` block rather than the first rows of it. Marked here
           // because this is where the two are concatenated; the emitter splits on it.
           ...trailing.map((t) => ({ ...t, y: t.y + bottom, nonMusicIndex: 0 })),
-          ...bottomBlock.texts.map((t) => ({ ...t, y: t.y + bottomStart })),
+          ...bottomBlock.texts,
         ]
 
   return {
@@ -12135,6 +12177,62 @@ function topTextBlock(
     return face === undefined || face === '' ? {} : { face }
   }
   /**
+   * **A ROW THAT CHANGED FONT MID-LINE IS DRAWN AT THE CURSOR, ONE `<tspan>` PER PHRASE.**
+   * See `PlacedText.phrases`. `richText` builds each phrase's attrs from the phrase's OWN
+   * font when it has one and from `getTextSize.attr(defFont)` when it does not
+   * (`rich-text.js:29-39`) — the first is a `%%setfont` object and goes in at its RAW
+   * size, the second is the type's own already-scaled px.
+   *
+   * `advanceRich` has measured this row correctly since the block was built; only the
+   * DRAWING was missing, so every `$N` field came out flattened to one font.
+   */
+  const richIn = (
+    value: RichText,
+    type: AbcFontType,
+    bold: boolean,
+    italic: boolean,
+  ): Partial<PlacedText> => {
+    if (typeof value === 'string') return {}
+    const def = fonts[type]
+    const base = {
+      face: def?.face === undefined || def.face === '' ? (ABCJS_FONT_FACE[type] ?? '') : def.face,
+      size: sizeOf(type),
+      bold: def === undefined ? bold : def.bold,
+      italic: def === undefined ? italic : def.italic,
+    }
+    /**
+     * **AND IT RESERVES ITS ROW, NOT ITS INK.** The block is placed from `blockHeight` and
+     * every row's ink then has to fall inside it; a plain row does by construction,
+     * because its baseline sits one font size below the cursor and `TEXT_ASCENT` is 0.8.
+     * A rich row is drawn AT the cursor, so the same estimate reaches a whole font size
+     * ABOVE the block's own top and drags the music down with it — 14.04px on
+     * `visual-misc-06`, measured as the difference between the two engines' first
+     * staff line. Its span is `[cursor, cursor + largestY]`, which is what `nonMusic`
+     * spends.
+     */
+    let largest = goldenTextHeight(base.size)
+    for (const p of value) {
+      if (p.font !== null) largest = Math.max(largest, goldenTextHeight(p.font.size / UNIT_PX))
+    }
+    return {
+      rowSpan: largest,
+      phrases: value.map((p) =>
+        p.font === null
+          ? { text: p.text, ...base }
+          : {
+              text: p.text,
+              face: p.font.face,
+              size: p.font.size / UNIT_PX,
+              bold: p.font.bold,
+              italic: p.font.italic,
+            },
+      ),
+    }
+  }
+  /** A rich row is drawn AT the cursor; a plain one one font size below it. */
+  const baselineOf = (value: RichText, size: number, pad: number): number =>
+    typeof value === 'string' ? y + size + pad : y
+  /**
    * **A BOXED FONT MOVES ITS TEXT IN BY ONE PADDING AND LAYS FOUR RULES ROUND IT.**
    *
    *     if (hash.font.box) {
@@ -12216,11 +12314,13 @@ function topTextBlock(
       role: 'title',
       dataName: 'title',
       x: centre,
-      // abcjs writes the baseline one font size below the cursor (`text.js:30`).
-      y: y + titleSize + boxPad('titlefont'),
+      // abcjs writes the baseline one font size below the cursor (`text.js:30`) — unless
+      // the row is RICH, which returns before that line. See `richIn`.
+      y: baselineOf(title, titleSize, boxPad('titlefont')),
       size: titleSize,
       ...faceIn('titlefont'),
       ...boxIn('titlefont', centre, plainText(title), 'middle'),
+      ...richIn(title, 'titlefont', false, false),
       /**
        * **NOT BOLD.** abcjs's default `titlefont` is
        * `{face: "Times New Roman", size: 20, weight: "normal", style: "normal"}`
@@ -12250,13 +12350,14 @@ function topTextBlock(
       role: 'title',
       dataName: 'subtitle',
       x: centre,
-      y: y + sizeOf('subtitlefont') + boxPad('subtitlefont'),
+      y: baselineOf(subtitle, sizeOf('subtitlefont'), boxPad('subtitlefont')),
       size: sizeOf('subtitlefont'),
       bold: false,
       italic: false,
       anchor: 'middle',
       ...faceIn('subtitlefont'),
       ...boxIn('subtitlefont', centre, plainText(subtitle), 'middle'),
+      ...richIn(subtitle, 'subtitlefont', false, false),
     })
     advanceText(subtitle, sizeOf('subtitlefont'), boxOf('subtitlefont'))
   }
@@ -12283,6 +12384,8 @@ function topTextBlock(
         role: 'title',
         dataName: 'rhythm',
         x: ENGRAVE.marginX,
+        // `rhythm` takes `addTextIf` in BOTH cases — `top-text.js:38` never calls
+        // `richText` for it — so a `$N` in an `R:` is flattened by abcjs too.
         y: y + sizeOf('infofont') + boxPad('infofont'),
         size: sizeOf('infofont'),
         ...styleIn('infofont', false, true),
@@ -12291,20 +12394,41 @@ function topTextBlock(
         ...boxIn('infofont', ENGRAVE.marginX, rhythm, 'start'),
       })
     }
-    // abcjs emits composer and origin as ONE text, the origin parenthesised.
-    const right = origin === '' ? composer : `${composer === '' ? '' : `${composer} `}(${origin})`
+    /**
+     * abcjs emits composer and origin as ONE text, the origin parenthesised — and the
+     * JOIN is rich when EITHER side is: `composerLine.push({text:" ("})`, then the
+     * origin's phrases, then `{text:")"}` (`top-text.js:47-60`). The two brackets carry no
+     * font of their own, so they draw in `composerfont`'s.
+     */
+    const rightRich: RichText =
+      origin === ''
+        ? composerRich
+        : typeof composerRich === 'string' && typeof originRich === 'string'
+          ? `${composer === '' ? '' : `${composer} `}(${origin})`
+          : [
+              ...(typeof composerRich === 'string'
+                ? composer === ''
+                  ? []
+                  : [{ font: null, text: composer }]
+                : composerRich),
+              { font: null, text: ' (' },
+              ...(typeof originRich === 'string' ? [{ font: null, text: origin }] : originRich),
+              { font: null, text: ')' },
+            ]
+    const right = plainText(rightRich)
     if (right !== '') {
       texts.push({
         text: right,
         role: 'title',
         dataName: 'composer',
         x: ENGRAVE.marginX + width,
-        y: y + sizeOf('composerfont') + boxPad('composerfont'),
+        y: baselineOf(rightRich, sizeOf('composerfont'), boxPad('composerfont')),
         size: sizeOf('composerfont'),
         ...styleIn('composerfont', false, true),
         anchor: 'end',
         ...faceIn('composerfont'),
         ...boxIn('composerfont', ENGRAVE.marginX + width, right, 'end'),
+        ...richIn(rightRich, 'composerfont', false, true),
       })
     }
     // THE ROW ADVANCES BY WHICHEVER FIELD MOVES IT, not by the taller of the two.
@@ -12315,8 +12439,7 @@ function topTextBlock(
     // box`'s 24px where abcjs spent `%%composerfont Arial 8 box`'s 19.
     const rowFont: AbcFontType = composer !== '' || origin !== '' ? 'composerfont' : 'infofont'
     // …and the field that MOVES the row is the one whose rich-vs-plain rule applies.
-    const mover =
-      rowFont === 'composerfont' ? (composer !== '' ? composerRich : originRich) : rhythmRich
+    const mover = rowFont === 'composerfont' ? rightRich : rhythmRich
     advanceText(mover, sizeOf(rowFont), boxOf(rowFont))
   }
 
@@ -12331,12 +12454,13 @@ function topTextBlock(
       role: 'title',
       dataName: 'author',
       x: ENGRAVE.marginX + width,
-      y: y + sizeOf('composerfont') + boxPad('composerfont'),
+      y: baselineOf(authorRich, sizeOf('composerfont'), boxPad('composerfont')),
       size: sizeOf('composerfont'),
       ...styleIn('composerfont', false, true),
       anchor: 'end',
       ...faceIn('composerfont'),
       ...boxIn('composerfont', ENGRAVE.marginX + width, author, 'end'),
+      ...richIn(authorRich, 'composerfont', false, true),
     })
     advanceText(authorRich, sizeOf('composerfont'), boxOf('composerfont'))
   }
@@ -12363,11 +12487,12 @@ function topTextBlock(
       role: 'title',
       dataName: 'part-order',
       x: ENGRAVE.marginX + (boxed ? pad : 0),
-      y: y + partsSize + (boxed ? pad : 0),
+      y: baselineOf(partOrderRich, partsSize, boxed ? pad : 0),
       size: partsSize,
       ...styleIn('partsfont', false, false),
       anchor: 'start',
       ...faceIn('partsfont'),
+      ...richIn(partOrderRich, 'partsfont', false, false),
       ...(boxed
         ? {
             boxRect: {
@@ -12671,10 +12796,17 @@ function appendFreeText(
 function bottomTextBlock(
   metadata: ScoreMetadata,
   fonts: Score['fonts'] = {},
+  /**
+   * **WHERE THE PAGE'S CURSOR ALREADY IS**, as `topTextBlock` takes it — because a RICH
+   * row's y goes into the markup RAW (`renderText` returns before `roundNumber`), so
+   * `local + base` and `base + a + b + …` are visibly different doubles: 610.5615 against
+   * abcjs's 610.5614999999999. A plain row's `round2` hid it.
+   */
+  from = 0,
 ): { texts: PlacedText[]; height: number; advances: number[] } {
   const texts: PlacedText[] = []
   const advances: number[] = []
-  let y = 0
+  let y = from
   /**
    * **EVERY ROW IS ONE `moveY` ON THE PAGE'S OWN CURSOR, NOT A LOCAL SUM ADDED LATER.**
    * `nonMusic` walks the block's rows calling `renderer.moveY(row.move)` per row
@@ -12712,8 +12844,62 @@ function bottomTextBlock(
     groupName?: string,
     /** Which `%%<type>font` drew it — its FACE, weight and style, not just its size. */
     fontType?: AbcFontType,
+    /** The `startGroup` key, where two adjacent groups share a drawn name. */
+    groupId?: string,
   ): void => {
     const text = plainText(value)
+    /**
+     * **A ROW THAT CHANGED FONT MID-LINE TAKES `richText`'s OTHER ARM.** One `<text>` at
+     * the cursor with a `<tspan>` per phrase, and an advance of `largestY` — the tallest
+     * phrase's RAW height, with no `* 1.1` and no rounding (`rich-text.js:20-47`). The top
+     * block has measured its rows that way since `advanceRich`; this block flattened every
+     * `$N` field to one font and advanced as though it were plain, which is 17.45px per
+     * row of page.
+     */
+    if (typeof value !== 'string' && extra.length === 0 && text !== '') {
+      const face =
+        fontType === undefined
+          ? ''
+          : ((fonts[fontType]?.face ?? '') === ''
+              ? (ABCJS_FONT_FACE[fontType] ?? '')
+              : (fonts[fontType]?.face ?? ''))
+      let largest = goldenTextHeight(size)
+      for (const phrase of value) {
+        if (phrase.font !== null) largest = Math.max(largest, goldenTextHeight(phrase.font.size / UNIT_PX))
+      }
+      texts.push({
+        text,
+        role: 'title',
+        dataName,
+        x: ENGRAVE.marginX,
+        y,
+        size,
+        bold: fontType === undefined ? false : (fonts[fontType]?.bold ?? false),
+        italic: fontType === undefined ? false : (fonts[fontType]?.italic ?? false),
+        anchor: 'start',
+        ...(groupName === undefined ? {} : { groupName }),
+        ...(groupId === undefined ? {} : { groupId }),
+        phrases: value.map((p) =>
+          p.font === null
+            ? {
+                text: p.text,
+                face,
+                size,
+                bold: fontType === undefined ? false : (fonts[fontType]?.bold ?? false),
+                italic: fontType === undefined ? false : (fonts[fontType]?.italic ?? false),
+              }
+            : {
+                text: p.text,
+                face: p.font.face,
+                size: p.font.size / UNIT_PX,
+                bold: p.font.bold,
+                italic: p.font.italic,
+              },
+        ),
+      })
+      move(largest)
+      return
+    }
     /**
      * **AN EMPTY LINE IS A ROW OF ITS OWN, AND IT ADVANCES BY A DIFFERENT RULE.**
      * `richText` pushes a bare `{move: space.height}` for `''` (`rich-text.js:5-7`) — the
@@ -12733,7 +12919,8 @@ function bottomTextBlock(
       text,
       role: 'title',
       dataName,
-      ...(extra.length > 0 ? { extraLines: extra, middleBaseline: middle } : {}),
+      ...(extra.length > 0 ? { extraLines: extra } : {}),
+      ...(middle ? { middleBaseline: true } : {}),
       ...(box === 0
         ? {}
         : {
@@ -12766,6 +12953,7 @@ function bottomTextBlock(
       // the whole font object, and this row took the emitter's hard-coded default.
       ...faceIn(fontType),
       ...(groupName === undefined ? {} : { groupName }),
+      ...(groupId === undefined ? {} : { groupId }),
     })
     move(
       Math.round(
@@ -12795,17 +12983,49 @@ function bottomTextBlock(
     move(goldenTextHeight(words))
   }
 
+  /** `addSingleLine` — the preface joins the phrases as one more of them when rich. */
   const single = (value: RichText | null, prefix: string): void => {
     if (value === null || plainText(value) === '') return
-    addText(prefix + plainText(value), [], history, 'description', false, historyBox, undefined, 'historyfont')
+    const joined: RichText =
+      typeof value === 'string'
+        ? prefix + value
+        : [{ font: null, text: prefix }, ...value]
+    addText(joined, [], history, 'description', false, historyBox, undefined, 'historyfont')
   }
-  const multi = (value: readonly RichText[], preface: string): void => {
+  const multi = (value: readonly RichText[], preface: string, groupId: string): void => {
     if (value.length === 0) return
     // BLANK LINES ARE KEPT. `simplifyMetaText` joins the entries with `\n` and `addTextIf`
     // counts `text.split("\n").length`, so an empty `H:` is a line of the block and costs
     // its share of the one rounded advance.
     const all = value.map(plainText)
     if (all.every((t) => t === '')) return
+    /**
+     * **`simplifyMetaText` JOINS ONLY AN ARRAY OF STRINGS** (`tune-builder.js:479-484`).
+     * One `$N` anywhere in an `N:` or `H:` block and the ARRAY survives, which takes
+     * `addMultiLine`'s other branch entirely: the preface is its own `addTextIf` with
+     * `dominant-baseline: middle`, followed by `size.height * 3/4`, then ONE ROW PER
+     * ENTRY, then a closing `size.height` (`bottom-text.js:47-63`). Nothing about it is a
+     * special case of the joined form.
+     */
+    if (value.some((v) => typeof v !== 'string')) {
+      // `openGroup({klass, "data-name": row.name})` — the drawn name is `description` for
+      // BOTH `notes` and `history`, so the run is keyed on the `startGroup` string.
+      addText(preface, [], history, 'description', true, historyBox, 'description', 'historyfont', groupId)
+      move((goldenTextHeight(history) * 3) / 4)
+      value.forEach((entry, j) => {
+        if (plainText(entry) !== '') {
+          addText(entry, [], history, 'description', false, historyBox, 'description', 'historyfont', groupId)
+        }
+        // abcjs's own "TODO-PER: Hack! the string and rich lines should have used up the
+        // same amount of space without this" (`bottom-text.js:58-59`).
+        const next = value[j + 1]
+        if (j < value.length - 1 && typeof entry === 'string' && next !== undefined && typeof next !== 'string') {
+          move((goldenTextHeight(history) * 3) / 4)
+        }
+      })
+      move(goldenTextHeight(history))
+      return
+    }
     /**
      * **A BLANK LINE IS DRAWN AS A SPACE, AND THE REWRITE IS `renderText`'s** —
      * `text = params.text.replace(/\n\n/g, "\n \n")` then
@@ -12831,11 +13051,11 @@ function bottomTextBlock(
   single(metadata.book, 'Book: ')
   single(metadata.source, 'Source: ')
   single(metadata.discography, 'Discography: ')
-  multi(metadata.notes, 'Notes:')
+  multi(metadata.notes, 'Notes:', 'notes')
   single(metadata.transcription, 'Transcription: ')
-  multi(metadata.history, 'History:')
+  multi(metadata.history, 'History:', 'history')
 
-  return { texts, height: y, advances }
+  return { texts, height: y - from, advances }
 }
 
 function freeTextBlock(
@@ -14413,6 +14633,11 @@ function verticalExtent(
       // raising the ascent to 1.0 is recorded as moving every drawing 3.7px down.
       if (t.reserve !== undefined) {
         include(t.reserve[0], t.reserve[1])
+        continue
+      }
+      // …AND A RICH ROW DECLARES ITS OWN SPAN — see `PlacedText.rowSpan`.
+      if (t.rowSpan !== undefined) {
+        include(t.y, t.y + t.rowSpan)
         continue
       }
       const ascent = el.type === 'title' ? TEXT_ASCENT : 1

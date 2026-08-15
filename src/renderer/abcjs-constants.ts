@@ -881,3 +881,31 @@ export const ABCJS_YCORR: Readonly<Record<string, number>> = {
   'scripts.longphrase': -1,
   'scripts.dfermata': 1,
 }
+
+/**
+ * abcjs's DEFAULT font face per `%%…font` type (`parse/abc_parse_directive.js:22-44`).
+ *
+ * The quotes are abcjs's own — it stores `"\"Times New Roman\""` and writes the face
+ * straight into the attribute, where the serializer strips the inner quotes. `tripletfont`
+ * is plain `Times` and NOT `Times New Roman`, which is a difference the goldens show.
+ */
+export const ABCJS_FONT_FACE: Readonly<Record<string, string>> = {
+  annotationfont: 'Helvetica',
+  gchordfont: 'Helvetica',
+  historyfont: 'Times New Roman',
+  infofont: 'Times New Roman',
+  measurefont: 'Times New Roman',
+  partsfont: 'Times New Roman',
+  repeatfont: 'Times New Roman',
+  textfont: 'Times New Roman',
+  tripletfont: 'Times',
+  vocalfont: 'Times New Roman',
+  wordsfont: 'Times New Roman',
+  composerfont: 'Times New Roman',
+  subtitlefont: 'Times New Roman',
+  tempofont: 'Times New Roman',
+  titlefont: 'Times New Roman',
+  voicefont: 'Times New Roman',
+  footerfont: 'Times New Roman',
+  headerfont: 'Times New Roman',
+}

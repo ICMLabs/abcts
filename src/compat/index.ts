@@ -25,7 +25,7 @@
  * tomorrow, oddities included. Opt into corrections with `abcts` proper and mode
  * `abc2.1`.
  */
-import { plainText, type Score } from '../core/model.js'
+import { plainText, type RichText, type Score } from '../core/model.js'
 import { parse } from '../parser/parser.js'
 import { STAFF_SPACE_PX, UNIT_PX } from '../renderer/abcjs-constants.js'
 import { layout } from '../renderer/layout.js'
@@ -37,6 +37,10 @@ import { toSVG } from '../renderer/svg.js'
  * a 670 staffwidth renders a 700px SVG.
  */
 const SCREEN_PADDING = 15
+
+/** What `"Sheet Music for \"" + metaText.title + '"'` produces — see the call site. */
+const ariaTitle = (title: RichText): string =>
+  typeof title === 'string' ? title : title.map(() => '[object Object]').join(',')
 
 /** The subset of abcjs's params that changes the rendering abcts produces. */
 export interface AbcjsParams {
@@ -116,10 +120,19 @@ export function renderAbc(target: Target, abc: string, params: AbcjsParams = {})
       classes: 'abcjs',
       // abcjs emits its per-element class scheme only when the host asks for it.
       ...(params.add_classes === true ? { addClasses: true } : {}),
-      // abcjs's `aria-label` carries the title; the padding is abcjs's own 15 either side.
+      /**
+       * abcjs's `aria-label` carries the title; the padding is abcjs's own 15 either side.
+       *
+       * **AND A RICH TITLE GOES IN AS AN ARRAY.** `setPaperSize` builds the label by
+       * CONCATENATION — `"Sheet Music for \"" + metaText.title + '"'`
+       * (`draw/set-paper-size.js:12`) — and `metaText.title` is the phrase array whenever
+       * the field carried a `$N`, so JS's own `Array.prototype.toString` writes
+       * `[object Object],[object Object],…`. Measured from abcjs's own golden, not
+       * reasoned: `visual-misc-06`'s label says exactly that.
+       */
       ...(score.metadata.titles[0] === undefined
         ? {}
-        : { title: plainText(score.metadata.titles[0]) }),
+        : { title: ariaTitle(score.metadata.titles[0]) }),
       // NO `pageWidth` HERE. The page is `layout()`'s own ratchet — the staff width plus
       // abcjs's 15px either side (`write/renderer.js:69-72`), raised by any line too stiff
       // to compress to it and REPLACED outright by a `%%staffwidth`, which the host cannot
