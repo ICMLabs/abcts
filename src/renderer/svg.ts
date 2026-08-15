@@ -2284,19 +2284,12 @@ const glyphDefs = new Map<GlyphName, string>()
          * bar element except the line's FIRST item — `addChild` skips it when nothing but a
          * `staff-extra` or a `tempo` precedes (`voice-element.js:29-42`).
          */
-        let bars = 0
-        let seenReal = false
-        staff.elements.forEach((el, i) => {
-          if (voiceOf(i) !== voiceHere) return
-          if (el.type === 'bar') {
-            if (seenReal) bars += 1
-          } else if (
-            !(ABCJS_ELEMENT_NAMES[el.type] ?? el.type).startsWith('staff-extra') &&
-            el.type !== 'tempo'
-          ) {
-            seenReal = true
-          }
-        })
+        // …**AND IT IS THE SAME WALK `markerAt` MADE**, so it is that one's last value
+        // rather than a second copy of the rule. The copy had drifted: it counted a LEADING
+        // barline whenever a heading block or a voice name preceded it, because those are
+        // ours and not abcjs children — `S4-bars-repeats` banked 4 for abcjs's 3 and every
+        // later line's `mm` was one high.
+        const bars = markerAt.get(voiceEnds[voiceHere] ?? 0) ?? 0
         classes.startMeasure()
         for (let i = 0; i < bars; i += 1) classes.incrMeasure()
       }

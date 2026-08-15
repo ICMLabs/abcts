@@ -181,6 +181,7 @@ const PASSING: readonly string[] = [
   'S4-bars-repeats-tune1',
   'S4-bars-repeats-tune2',
   'S4-bars-repeats-classes-tune0',
+  'S4-bars-repeats-classes-tune1',
   'S4-bars-repeats-classes-tune2',
   'S5-directives-tune0',
   'S5-directives-tune1',
