@@ -126,6 +126,7 @@ const PASSING: readonly string[] = [
   'S8-layout-tune2',
   'S8-layout-tune4',
   'S8-layout-tune5',
+  'S8-layout-tune9',
   'S8-layout-tune11',
   'brother-john-inline-voices',
   'center-text',

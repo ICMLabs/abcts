@@ -4299,7 +4299,9 @@ function layoutNoteheads(
   const flagInk = glyphs
     .filter((g) => g.role === 'flag')
     .map((g) => g.x - headX + glyphsFor(strict).width(g.name))
-  const ink = Math.max(headRight, dotWidth, textSpan.right, ...flagInk) + ENGRAVE.noteRodGap
+  /** `getMinWidth(child)` — the element's own `w`, WITHOUT the `minspacing` beside it. */
+  const inkWidth = Math.max(headRight, dotWidth, textSpan.right, ...flagInk)
+  const ink = inkWidth + ENGRAVE.noteRodGap
   return {
     type: 'note',
     // `notehead.stemDir = dir`, drawn or not — see `LayoutElement.stemUp`.
@@ -4321,6 +4323,16 @@ function layoutNoteheads(
     width: Math.max(advance, ink),
     spring: advance,
     rod: ink,
+    /**
+     * **AND THE CURSOR SPENDS IT AS TWO ADDS** — `voice.minx = x + getMinWidth(child)`
+     * then `voice.minx += child.minspacing` (`layout/voice-elements.js:74-77`). A NOTE was
+     * the last element still falling back to the single add, and
+     * `(x + 9.81) + 1` is not `x + 10.81`: on `S8-layout` X:810's second system the two
+     * part at the tenth element, which carries out through the SOLVE and puts the whole
+     * line's `spacing` one ULP off — `22.895648056193973` against abcjs's `…966`. See
+     * `Advance.width`.
+     */
+    rodWidth: inkWidth,
     // abcjs's `-extraw`, and it is a MIN OVER SIBLINGS, never a sum. The accidental's
     // `extraw -= extraLeft` runs BEFORE the graces' `addExtra`, and that `addExtra` is
     // `if (dx < extraw) extraw = dx` (`abstract-engraver.js:723-725, 834-836`,
@@ -10653,6 +10665,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             }
           }
           at[v]?.push(x)
+          if (process.env.ABCTS_XX) console.log('XX v', v, 'i', k, 'kind', item.kind, 'x', x, 'minx', minx[v], 'nextx', nextx[v], 'dur', item.duration)
           if (PROBE && probeFinalPass) {
             const px = (n: number) => (n * 7.75).toFixed(3)
             console.log(
@@ -10777,10 +10790,12 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         // `relSpace = spacingUnits * spacing; constSpace = lineWidth - relSpace;`
         // `spacing = (targetWidth - constSpace) / spacingUnits` — abcjs's own three lines
         // and its own groupings (`layout/layout.js:110-116`).
+        if (process.env.ABCTS_SP) console.log('SP it', pass, 'space', spacing, 'w', width, 'units', units)
         const relSpace = units * spacing
         const constSpace = width - relSpace
         spacing = (target - constSpace) / units
       }
+      if (process.env.ABCTS_SP) console.log('SP final', spacing)
       return spacing
     })()
     probeFinalPass = true
