@@ -6383,7 +6383,16 @@ function layoutConnectors(
       kind: 'bracket',
       staffIndex: from,
       through: to,
-      x: ENGRAVE.marginX,
+      /**
+       * **THE SAME LEFT EDGE THE BRACE TAKES, WHICH IS PAST THE VOICE NAMES.**
+       * `getLeftEdgeOfStaff` builds ONE `x = padding.left + voiceheaderw` and hands it to
+       * `setBraceLocation` for the brace AND the bracket alike
+       * (`layout/get-left-edge-of-staff.js:24-26`). Ours read `connectorX` for the brace and
+       * the bare page margin for the bracket, so `ave-verum-corpus`'s `[(S A) | (T B)]` drew
+       * at 18.875 where abcjs has 92.6096 — the whole 73.7346 of "Soprano" plus an "A" — and
+       * every other coordinate of that path already matched to the last digit.
+       */
+      x: connectorX,
       top: first.top,
       bottom: last.bottom,
     })
