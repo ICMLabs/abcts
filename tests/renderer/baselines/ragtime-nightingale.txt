@@ -379,8 +379,8 @@ system 1 width=700.552 originY=362.347
       glyph noteheadHalf 140.213,-15.500
       glyph noteheadHalf 140.213,-27.125
       glyph noteheadHalf 140.213,-34.875
-      glyph dynamicMezzo 140.213,21.313
-      glyph dynamicPiano 154.900,21.313
+      glyph dynamicMezzo 130.403,21.313
+      glyph dynamicPiano 145.090,21.313
       line  140.713,-33.583 -> 140.713,11.625 t=1.000
     bar x=260.770 w=0.600
       line  261.070,-38.750 -> 261.070,-7.750 t=0.600
@@ -3231,8 +3231,8 @@ system 9 width=700.625 originY=2377.783
       glyph noteheadHalf 423.126,-15.500
       glyph noteheadHalf 423.126,-27.125
       glyph noteheadHalf 423.126,-34.875
-      glyph dynamicMezzo 423.126,17.418
-      glyph dynamicPiano 437.813,17.418
+      glyph dynamicMezzo 413.316,17.418
+      glyph dynamicPiano 428.003,17.418
       line  423.626,-33.583 -> 423.626,11.625 t=1.000
     bar x=540.996 w=0.600
       line  541.296,-38.750 -> 541.296,-7.750 t=0.600

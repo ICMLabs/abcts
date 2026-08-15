@@ -9776,7 +9776,20 @@ const displaceHeads = (el: LayoutElement, dx: number): LayoutElement =>
     ? el
     : {
         ...el,
-        glyphs: el.glyphs.map((g) => (g.name.startsWith('accidental') ? g : { ...g, x: g.x + dx })),
+        /**
+         * **AND A DYNAMIC IS NOT A CHILD OF THE ELEMENT, SO IT DOES NOT MOVE.** The loop is
+         * over `child.children` — the abselem's RELATIVE children
+         * (`layout/voice-elements.js:56-63`) — and a `DynamicDecoration` reaches the page
+         * through `voice.addOther`, at the voice's own level (`creation/decoration.js:81`).
+         * `drawDynamics` then prints at `params.anchor.x`, the element's SOLVED x, with no
+         * displacement in it (`draw/dynamics.js:8`). Ours carries dynamics inside the note's
+         * glyphs, so the accidental exemption was not enough: `ragtime-nightingale`'s first
+         * two `mp` marks printed 143.003 and 425.916 where abcjs has 133.193 and 416.106,
+         * a whole notehead each and only on the notes the overlap rule moved.
+         */
+        glyphs: el.glyphs.map((g) =>
+          g.name.startsWith('accidental') || g.role === 'dynamic' ? g : { ...g, x: g.x + dx },
+        ),
         lines: el.lines.map((l) => ({ ...l, x1: l.x1 + dx, x2: l.x2 + dx })),
         texts: el.texts.map((t) => ({ ...t, x: t.x + dx })),
       }
