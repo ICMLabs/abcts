@@ -3797,6 +3797,18 @@ function layoutNoteheads(
     const dx = offsetAt[position] ?? 0
     const y = stepToY(step)
     pendingHeads.push({
+      /**
+       * **A CARRIED `dx` WAS TRIED HERE AND IS WRONG — MEASURED, REVERTED, AND THE PROBE
+       * SAYS WHY.** Giving the head `dx: accidentalWidth + dx` took `svg-bytes` from 0 to
+       * **23 of 178**. `placeElement` printed for the same head reads
+       * `at 75.48861713702905  el.x 34.64101615137754  g.x 34.64101615137754  derived 0`
+       * — `el.x` and `g.x` are EQUAL, so the head's offset is genuinely zero and there is
+       * nothing to build. The accidental room is already inside the element's own x.
+       *
+       * **`S8-layout-tune9`'s remaining ULP IS IN THE SOLVE, NOT HERE**: its `G,` draws at
+       * `81.57861713702906` against abcjs's `…04`, and `81.5786… - 6.09` is our `at`
+       * against abcjs's element x one ULP below it.
+       */
       ...glyphAt(headName, headX + dx, step),
       role: 'notehead',
       ...(stepped[position] === undefined ? {} : { dataName: writtenNote(stepped[position].pitch) }),
