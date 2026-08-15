@@ -2089,7 +2089,19 @@ const glyphDefs = new Map<GlyphName, string>()
           // Generated at the CLOSING note's measure: the curve is `addOther`'d when it
           // closes, so the count of `"bar"` markers ahead of it in `otherchildren` is that
           // note's own measure index within the line.
-          const at = curve.endElement === undefined ? 0 : (counters.get(curve.endElement)?.measure ?? 0)
+          /**
+           * **A CURVE IS `addOther`'d WHERE IT OPENS**, so its class carries the OPENING
+           * element's counters. `addSlursAndTies` builds the `TieElem` at the note that
+           * starts the tie or slur and calls `voice.addOther(tie)` there
+           * (`abstract-engraver.js:907-913, 948-953`); `setEndAnchor` only fills the far
+           * end in. The `anchor2`-only form — a `)` with nothing open — is the exception,
+           * and it is added at the CLOSING note (`:930-933`), which is the fallback here.
+           *
+           * `ave-verum-corpus-classes` ties across a barline and abcjs writes
+           * `abcjs-l0 abcjs-m1 abcjs-mm1`; ours read the closing element and wrote `m2 mm2`.
+           */
+          const anchorEl = curve.startElement ?? curve.endElement
+          const at = anchorEl === undefined ? 0 : (counters.get(anchorEl)?.measure ?? 0)
           /**
            * **AND A CURVE IS ON `otherchildren` TOO**, so it interleaves with the hairpins,
            * the dynamics and the triplets rather than following all of them — `addOther` is
