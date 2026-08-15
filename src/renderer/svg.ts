@@ -10,7 +10,11 @@
  * installed and no @font-face rule. See ARCHITECTURE.md on the glyph-source decision.
  */
 
-import { type CompatibilityMode, defaultMode, isStrict } from '../core/model.js'
+import {
+  type CompatibilityMode,
+  defaultMode,
+  isStrict,
+} from "../core/model.js";
 import {
   ABCJS_ARC,
   ABCJS_FONT_FACE,
@@ -22,11 +26,11 @@ import {
   spacesOfPitch,
   STAFF_SPACE_PX,
   UNIT_PX,
-} from './abcjs-constants.js'
-import { SMUFL_TO_ABCJS } from './glyph-map.js'
-import { glyphsFor } from './glyph-table.js'
-import { GLYPHS, type GlyphName } from './glyphs.js'
-import { ENGRAVE, stepToY } from './layout.js'
+} from "./abcjs-constants.js";
+import { SMUFL_TO_ABCJS } from "./glyph-map.js";
+import { glyphsFor } from "./glyph-table.js";
+import { GLYPHS, type GlyphName } from "./glyphs.js";
+import { ENGRAVE, stepToY } from "./layout.js";
 import type {
   ConnectorSpan,
   Layout,
@@ -35,13 +39,13 @@ import type {
   PlacedGlyph,
   PlacedLine,
   PlacedText,
-} from './layout.js'
+} from "./layout.js";
 
 export interface RenderOptions {
   /** Pixels per staff space. 8 gives a ~32px staff, close to typical engraving size. */
-  readonly staffSpace?: number
+  readonly staffSpace?: number;
   /** Emitted as a `class` on every element, for host styling. */
-  readonly className?: string
+  readonly className?: string;
   /**
    * Which naming to put in the DOM.
    *
@@ -50,7 +54,7 @@ export interface RenderOptions {
    * `[data-name="note"]` keeps working when abcts replaces abcjs. That, not byte
    * identity, is what a drop-in actually needs.
    */
-  readonly classes?: 'abcts' | 'abcjs'
+  readonly classes?: "abcts" | "abcjs";
   /**
    * abcjs's `add_classes` — the per-element `l`/`m`/`mm`/`v`/`n` class scheme and the
    * `staff-wrapper`/`staff` groups, which abcjs emits ONLY when a host asks for them
@@ -58,13 +62,13 @@ export interface RenderOptions {
    * not gated on it here and never were: they are the hooks a stylesheet needs whatever
    * the host asked for, and they cost a word each. This scheme costs a line each.
    */
-  readonly addClasses?: boolean
+  readonly addClasses?: boolean;
   /**
    * The tune's title, for the root's `aria-label`. abcjs writes
    * `Sheet Music for "…"` when `metaText.title` is set and a bare `Sheet Music` when it is
    * not (`write/renderer.js`), with the quotes HTML-escaped by the DOM serializer.
    */
-  readonly title?: string
+  readonly title?: string;
   /**
    * Force the drawing's width in pixels, rather than fitting the content.
    *
@@ -72,7 +76,7 @@ export interface RenderOptions {
    * `simple-c` is 700px wide with the staff ending at 422. A page that swapped a
    * 700px-wide element for a 186px one would reflow, so compat sets this.
    */
-  readonly pageWidth?: number
+  readonly pageWidth?: number;
   /**
    * Deduplicate glyph outlines into `<defs>` and place them with `<use>`.
    *
@@ -90,9 +94,9 @@ export interface RenderOptions {
    * the `<path>` moves to the `<use>`, so a stylesheet or a click handler cannot tell
    * the difference. That is the whole point — smaller bytes, identical hooks.
    */
-  readonly optimizeSVG?: boolean
+  readonly optimizeSVG?: boolean;
   /** Which dialect is being rendered; decides `optimizeSVG` when it is not set. */
-  readonly mode?: CompatibilityMode
+  readonly mode?: CompatibilityMode;
 }
 
 /**
@@ -104,35 +108,39 @@ export interface RenderOptions {
  * most of its parts — only some are named.
  */
 const ABCJS_CLASSES: Readonly<Record<string, string>> = {
-  notehead: 'abcjs-notehead',
-  grace: 'abcjs-notehead',
-  stem: 'abcjs-stem',
-  ledger: 'abcjs-ledger',
+  notehead: "abcjs-notehead",
+  grace: "abcjs-notehead",
+  stem: "abcjs-stem",
+  ledger: "abcjs-ledger",
   // A DYNAMIC MARK IS CLASSED AND NAMED, and ours carried neither. abcjs's
   // `createDecoration` routes `!p!`/`!mf!` through `decoration.js` with
   // `classes.generate('decoration dynamics')`, which its own golden shows as
   // `class="abcjs-decoration abcjs-dynamics …" data-name="dynamics"`. Finding 92: it is
   // not a notehead and it had no handle, so no comparison could reach one.
-  dynamic: 'abcjs-decoration abcjs-dynamics',
-}
+  dynamic: "abcjs-decoration abcjs-dynamics",
+};
 
 /**
  * The music's own texts that carry a generated class and name themselves after it
  * (`draw/relative.js:41-52`). The key is BOTH the class stem and the `data-name`, which is
  * why one set covers both.
  */
-const MUSIC_TEXT_NAMES: ReadonlySet<string> = new Set(['lyric', 'chord', 'annotation'])
+const MUSIC_TEXT_NAMES: ReadonlySet<string> = new Set([
+  "lyric",
+  "chord",
+  "annotation",
+]);
 
 /** abcjs's `data-name` hooks, which its interaction code keys on. */
 const ABCJS_DATA_NAMES: Readonly<Record<string, string>> = {
-  stem: 'stem',
-  ledger: 'ledger',
+  stem: "stem",
+  ledger: "ledger",
   // abcjs gives a barline NO class and a `data-name` — `printStem(…, null, "bar")`
   // (`abstract-engraver.js:992`). It is the only handle either engine offers on one, so
   // without it nothing downstream can ask a question about barlines at all.
-  bar: 'bar',
-  dynamic: 'dynamics',
-}
+  bar: "bar",
+  dynamic: "dynamics",
+};
 
 /**
  * Element kinds → abcjs's `data-name` for the group.
@@ -146,15 +154,15 @@ const ABCJS_DATA_NAMES: Readonly<Record<string, string>> = {
  * with the written note rather than the glyph; see `glyphMarkup`.
  */
 const ABCJS_ELEMENT_NAMES: Readonly<Record<string, string>> = {
-  clef: 'staff-extra clef',
-  keySignature: 'staff-extra key-signature',
-  timeSignature: 'staff-extra time-signature',
-  voiceName: 'voice-name',
-}
+  clef: "staff-extra clef",
+  keySignature: "staff-extra key-signature",
+  timeSignature: "staff-extra time-signature",
+  voiceName: "voice-name",
+};
 
 /** SVG needs `&` and `<` escaped; attribute values here also carry `"`. */
 const escapeAttr = (s: string): string =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
 
 /**
  * Character data. Escaped, not sanitised: ABC text is untrusted input — a `T:` or `Q:`
@@ -163,12 +171,12 @@ const escapeAttr = (s: string): string =>
  */
 const escapeText = (s: string): string =>
   s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
     // A browser's XML serializer writes U+00A0 as the ENTITY, not as the raw byte — which
     // is how abcjs's `text.replace(/^\n/, "\xA0\n")` reaches the file as `&nbsp;`.
-    .replace(/ /g, '&nbsp;')
+    .replace(/ /g, "&nbsp;");
 
 /**
  * `%%jazzchords`' markup for one chord — `svg.js:198-211`, verbatim.
@@ -188,15 +196,15 @@ const jazzChordMarkup = (
   /** The row's x, when the CALLER writes no `<tspan x>` of its own — the core path. */
   x?: string,
 ): string => {
-  const [root, modifier, bass] = jazz
+  const [root, modifier, bass] = jazz;
   const small = (dy: string, text: string): string =>
-    `<tspan dy="${dy}" style="font-size:0.7em">${escapeText(text)}</tspan>`
+    `<tspan dy="${dy}" style="font-size:0.7em">${escapeText(text)}</tspan>`;
   const inner =
     escapeText(root) +
-    `${modifier === '' ? '' : small('-0.3em', modifier)}` +
-    `${bass === '' ? '' : small(modifier === '' ? '0.1em' : '0.4em', bass)}`
-  return x === undefined ? inner : `<tspan x="${x}">${inner}</tspan>`
-}
+    `${modifier === "" ? "" : small("-0.3em", modifier)}` +
+    `${bass === "" ? "" : small(modifier === "" ? "0.1em" : "0.4em", bass)}`;
+  return x === undefined ? inner : `<tspan x="${x}">${inner}</tspan>`;
+};
 
 /**
  * THE EMISSION QUANTUM, in staff spaces — a hundred-thousandth, or 7.75e-5 of a pixel.
@@ -212,7 +220,7 @@ const jazzChordMarkup = (
  * Five decimals rather than full precision because full precision writes seventeen digits
  * for numbers like 4.838709677419355 and buys nothing measurable.
  */
-const PRECISION = 100000
+const PRECISION = 100000;
 
 /**
  * `roundNumber` — abcjs rounds every coordinate it writes into path data to TWO DECIMALS
@@ -229,13 +237,18 @@ const PRECISION = 100000
  *   - `fill="rgba(0,0,0,255)"` and `stroke="rgba(0,0,0,0)"`, not `none`/`currentColor`,
  *   - and a `defined-text` class rather than a line's.
  */
-const separatorPath = (x1: number, y: number, x2: number, klass: string): string => {
-  const top = Math.round(y)
+const separatorPath = (
+  x1: number,
+  y: number,
+  x2: number,
+  klass: string,
+): string => {
+  const top = Math.round(y);
   return (
     `<path d="M ${x1} ${top} L ${x2} ${top} L ${x2} ${top + 1} L ${x1} ${top + 1} ` +
     `L ${x1} ${top} z" stroke="rgba(0,0,0,0)" fill="rgba(0,0,0,255)" class="${klass}"></path>`
-  )
-}
+  );
+};
 
 /**
  * **abcjs's `roundNumber` IS `parseFloat(x.toFixed(2))`, AND THAT IS NOT
@@ -247,16 +260,16 @@ const separatorPath = (x1: number, y: number, x2: number, klass: string): string
  */
 // abcjs-debt: §1.3 — string formatting in a hot path, because `toFixed` and
 // `Math.round(x*100)/100` disagree on a decimal half. Docs/ABCJS-DEBT.md
-const roundNumber = (n: number): number => Number.parseFloat(n.toFixed(2))
+const roundNumber = (n: number): number => Number.parseFloat(n.toFixed(2));
 const round2 = (n: number): string => {
-  const r = roundNumber(n)
-  return Object.is(r, -0) ? '0' : String(r)
-}
+  const r = roundNumber(n);
+  return Object.is(r, -0) ? "0" : String(r);
+};
 
 const num = (n: number): string => {
-  const r = Math.round(n * PRECISION) / PRECISION
-  return Object.is(r, -0) ? '0' : String(r)
-}
+  const r = Math.round(n * PRECISION) / PRECISION;
+  return Object.is(r, -0) ? "0" : String(r);
+};
 
 /**
  * A SCALE is not a coordinate, and rounding it like one is a RELATIVE error.
@@ -271,7 +284,7 @@ const num = (n: number): string => {
  * Emitted at full precision instead. Nothing downstream reads it as text, and an SVG
  * `scale()` takes as many digits as it is given.
  */
-const scaleNum = (n: number): string => (Object.is(n, -0) ? '0' : String(n))
+const scaleNum = (n: number): string => (Object.is(n, -0) ? "0" : String(n));
 
 /**
  * A line is emitted as a filled rect rather than a stroked line: SVG strokes straddle
@@ -289,27 +302,31 @@ function lineToRect(
    * `%%voicecolor`. A LEDGER is drawn inside its note's group and so takes it; a STAFF LINE
    * is `printStaff`'s, drawn before the swap, and keeps the host's. See `fg`.
    */
-  ink = 'currentColor',
+  ink = "currentColor",
 ): string {
   // A SLOPED line — only a beam is — is neither a horizontal nor a vertical rect. Drawn
   // as a parallelogram with vertical ends, which is how beams are cut in engraving, and
   // which a rect would silently render as a vertical bar.
   if (line.y1 !== line.y2 && line.x1 !== line.x2) {
-    const half = line.thickness / 2
+    const half = line.thickness / 2;
     const points = [
       `${num(line.x1)},${num(line.y1 - half)}`,
       `${num(line.x2)},${num(line.y2 - half)}`,
       `${num(line.x2)},${num(line.y2 + half)}`,
       `${num(line.x1)},${num(line.y1 + half)}`,
-    ].join(' ')
-    return `<polygon${attr} points="${points}"/>`
+    ].join(" ");
+    return `<polygon${attr} points="${points}"/>`;
   }
 
-  const horizontal = line.y1 === line.y2
-  const x = horizontal ? Math.min(line.x1, line.x2) : line.x1 - line.thickness / 2
-  const y = horizontal ? line.y1 - line.thickness / 2 : Math.min(line.y1, line.y2)
-  const w = horizontal ? Math.abs(line.x2 - line.x1) : line.thickness
-  const h = horizontal ? line.thickness : Math.abs(line.y2 - line.y1)
+  const horizontal = line.y1 === line.y2;
+  const x = horizontal
+    ? Math.min(line.x1, line.x2)
+    : line.x1 - line.thickness / 2;
+  const y = horizontal
+    ? line.y1 - line.thickness / 2
+    : Math.min(line.y1, line.y2);
+  const w = horizontal ? Math.abs(line.x2 - line.x1) : line.thickness;
+  const h = horizontal ? line.thickness : Math.abs(line.y2 - line.y1);
   /**
    * **A LINE IS A CLOSED PATH IN ABCJS, NOT A `<rect>`** — `printStem` and `printStaff`
    * both build `M x y L x2 y L x2 y2 L x y2 z` and fill it (`write/draw/*`), so a staff
@@ -337,8 +354,8 @@ function lineToRect(
      * AND A STEM CARRIES NO `stroke`/`fill`: `printStem` adds them only when it is NOT
      * inside an element group, and a stem always is.
      */
-    if (line.role === 'stem' || line.role === 'bar') {
-      const up = line.role === 'stem' && line.y2 < line.y1
+    if (line.role === "stem" || line.role === "bar") {
+      const up = line.role === "stem" && line.y2 < line.y1;
       /**
        * **THE FAR EDGE IS BUILT FROM THE *ROUNDED* ANCHOR** — `x = roundNumber(x); var x2 =
        * roundNumber(x + dx)` (`draw/print-stem.js:14-15`), so the second corner is a
@@ -350,13 +367,13 @@ function lineToRect(
        * The BEAM's emitter above chains the same way for the same reason; this is the one
        * place that did not.
        */
-      const anchor = roundNumber(up ? x + w : x)
-      const [xa, xb] = [anchor, roundNumber(anchor + (up ? -w : w))]
-      const [ya, yb] = up ? [y, y + h] : [y + h, y]
+      const anchor = roundNumber(up ? x + w : x);
+      const [xa, xb] = [anchor, roundNumber(anchor + (up ? -w : w))];
+      const [ya, yb] = up ? [y, y + h] : [y + h, y];
       return (
         `<path d="M ${round2(xa)} ${round2(ya)}L ${round2(xa)} ${round2(yb)}` +
         `L ${round2(xb)} ${round2(yb)}L ${round2(xb)} ${round2(ya)}z"${attr}></path>`
-      )
+      );
     }
     // `printLine`'s options are `{path, stroke, fill, data-name, class}` in that order —
     // the NAME before the CLASS, which is the opposite of everywhere else here.
@@ -368,23 +385,23 @@ function lineToRect(
     // a staff line came out `65.54` where abcjs writes `65.53`. The BEAM is the mirror
     // case and genuinely does chain its second edge off the rounded first, so the two
     // emitters must differ here exactly as abcjs's do.
-    const klass = / class="[^"]*"/.exec(attr)?.[0] ?? ''
-    const half = line.thickness / 2
+    const klass = / class="[^"]*"/.exec(attr)?.[0] ?? "";
+    const half = line.thickness / 2;
     const [cx, cy] = horizontal
       ? [0, (line.y1 + line.y2) / 2]
-      : [(line.x1 + line.x2) / 2, 0]
+      : [(line.x1 + line.x2) / 2, 0];
     const [a1, a2] = horizontal
       ? [round2(cy - half), round2(cy + half)]
-      : [round2(cx - half), round2(cx + half)]
-    const [x1, x2] = horizontal ? [round2(x), round2(x + w)] : [a1, a2]
-    const [y1, y2] = horizontal ? [a1, a2] : [round2(y), round2(y + h)]
+      : [round2(cx - half), round2(cx + half)];
+    const [x1, x2] = horizontal ? [round2(x), round2(x + w)] : [a1, a2];
+    const [y1, y2] = horizontal ? [a1, a2] : [round2(y), round2(y + h)];
     return (
       `<path d="M ${x1} ${y1} L ${x2} ${y1} ` +
       `L ${x2} ${y2} L ${x1} ${y2} z" ` +
-      `stroke="none" fill="${ink}"${attr.replace(klass, '')}${klass}></path>`
-    )
+      `stroke="none" fill="${ink}"${attr.replace(klass, "")}${klass}></path>`
+    );
   }
-  return `<rect${attr} x="${num(x)}" y="${num(y)}" width="${num(w)}" height="${num(h)}"/>`
+  return `<rect${attr} x="${num(x)}" y="${num(y)}" width="${num(w)}" height="${num(h)}"/>`;
 }
 
 /**
@@ -395,8 +412,13 @@ function lineToRect(
  * SMuFL's separate endpoint and midpoint thicknesses describe. Two cubics with control
  * points at the thirds give the shallow, even arc *Behind Bars* asks for.
  */
-function curveToPath(curve: PlacedCurve, attr: string, strict: boolean, k = 1): string {
-  const { x1, y1, x2, y2, bulge } = curve
+function curveToPath(
+  curve: PlacedCurve,
+  attr: string,
+  strict: boolean,
+  k = 1,
+): string {
+  const { x1, y1, x2, y2, bulge } = curve;
   // ── ABCJS'S ARC, WHICH IS NOT A LENS ON THE THIRDS ─────────────────────────
   //
   // `drawArc` (`draw/tie.js:57-102`) builds the whole shape from the UNIT VECTOR between
@@ -429,30 +451,40 @@ function curveToPath(curve: PlacedCurve, attr: string, strict: boolean, k = 1): 
      * far side of a `toFixed(2)` boundary — 155.47 against abcjs's 155.46 — while both
      * endpoints printed the same.
      */
-    const r = (n: number): number => Number.parseFloat(n.toFixed(2))
-    const [x1, y1, x2, y2] = [r(curve.x1), r(curve.y1), r(curve.x2), r(curve.y2)]
-    const dx = x2 - x1
-    const dy = y2 - y1
+    const r = (n: number): number => Number.parseFloat(n.toFixed(2));
+    const [x1, y1, x2, y2] = [
+      r(curve.x1),
+      r(curve.y1),
+      r(curve.x2),
+      r(curve.y2),
+    ];
+    const dx = x2 - x1;
+    const dy = y2 - y1;
     // abcjs-debt: §1.1 — `hypot` is better and therefore wrong. Docs/ABCJS-DEBT.md
     // **`Math.sqrt(dx * dx + dy * dy)`, NOT `Math.hypot`.** `hypot` is the more accurate
     // of the two — it scales to avoid overflow — and that is precisely why it is wrong
     // here: every control point is derived from `norm`, so one ULP of difference lands on
     // a `toFixed(2)` boundary and prints 155.47 where abcjs prints 155.46
     // (`draw/tie.js:69`). A better formula is still a different formula.
-    const norm = Math.sqrt(dx * dx + dy * dy)
-    if (norm === 0) return ''
-    const ux = dx / norm
-    const uy = dy / norm
-    const flatten = norm / ABCJS_ARC.flattenDivisor
-    const cap = curve.kind === 'tie' ? ABCJS_ARC.tieMaxBulge : ABCJS_ARC.slurMaxBulge
+    const norm = Math.sqrt(dx * dx + dy * dy);
+    if (norm === 0) return "";
+    const ux = dx / norm;
+    const uy = dy / norm;
+    const flatten = norm / ABCJS_ARC.flattenDivisor;
+    const cap =
+      curve.kind === "tie" ? ABCJS_ARC.tieMaxBulge : ABCJS_ARC.slurMaxBulge;
     // `bulge` carries our sign convention: negative is ABOVE, which is abcjs's `-1`.
     const arc =
-      Math.sign(bulge) * Math.min(spaces(cap) * k, Math.max(spaces(ABCJS_ARC.minBulge) * k, flatten))
-    const t = spaces(ABCJS_ARC.thickness) * k
-    const c1x = x1 + flatten * ux - arc * uy
-    const c1y = y1 + flatten * uy + arc * ux
-    const c2x = x2 - flatten * ux - arc * uy
-    const c2y = y2 - flatten * uy + arc * ux
+      Math.sign(bulge) *
+      Math.min(
+        spaces(cap) * k,
+        Math.max(spaces(ABCJS_ARC.minBulge) * k, flatten),
+      );
+    const t = spaces(ABCJS_ARC.thickness) * k;
+    const c1x = x1 + flatten * ux - arc * uy;
+    const c1y = y1 + flatten * uy + arc * ux;
+    const c2x = x2 - flatten * ux - arc * uy;
+    const c2y = y2 - flatten * uy + arc * ux;
     /**
      * **abcjs's OWN `d`, AND EVERY COORDINATE IS `roundNumber`d.**
      *
@@ -464,10 +496,10 @@ function curveToPath(curve: PlacedCurve, attr: string, strict: boolean, k = 1): 
      * the attributes are `paper.path`'s key order — `d`, `stroke`, `fill`, `class`,
      * `data-name` — where ours put the name first.
      */
-    const [rx1, ry1, rx2, ry2] = [x1, y1, x2, y2]
-    const [rc1x, rc1y, rc2x, rc2y] = [r(c1x), r(c1y), r(c2x), r(c2y)]
-    const klass = / class="[^"]*"/.exec(attr)?.[0] ?? ''
-    const name = / data-name="[^"]*"/.exec(attr)?.[0] ?? ''
+    const [rx1, ry1, rx2, ry2] = [x1, y1, x2, y2];
+    const [rc1x, rc1y, rc2x, rc2y] = [r(c1x), r(c1y), r(c2x), r(c2y)];
+    const klass = / class="[^"]*"/.exec(attr)?.[0] ?? "";
+    const name = / data-name="[^"]*"/.exec(attr)?.[0] ?? "";
     /**
      * **A DOTTED CURVE IS THE OUTWARD HALF ALONE, STROKED.** `drawArc`'s other arm writes
      * one cubic and gives it `stroke: foregroundColor`, `fill: "none"` and
@@ -479,27 +511,26 @@ function curveToPath(curve: PlacedCurve, attr: string, strict: boolean, k = 1): 
       return (
         `<path d="M ${rx1} ${ry1} C ${rc1x} ${rc1y} ${rc2x} ${rc2y} ${rx2} ${ry2}" ` +
         `stroke="currentColor" fill="none" stroke-dasharray="5 5"${klass}${name}></path>`
-      )
+      );
     }
     return (
       `<path d="M ${rx1} ${ry1} C ${rc1x} ${rc1y} ${rc2x} ${rc2y} ${rx2} ${ry2} ` +
       `C ${r(rc2x - t * uy)} ${r(rc2y + t * ux)} ${r(rc1x - t * uy)} ${r(rc1y + t * ux)} ` +
       `${rx1} ${ry1} z" stroke="none" fill="currentColor"${klass}${name}></path>`
-    )
+    );
   }
-  const dx = x2 - x1
+  const dx = x2 - x1;
   // Control points at the thirds, pushed out by the bulge. The outer edge carries the
   // full arc; the inner edge falls short by the midpoint thickness, which opens the lens.
-  const inner = bulge - Math.sign(bulge) * curve.midThickness
-  const cx1 = x1 + dx / 3
-  const cx2 = x1 + (dx * 2) / 3
-  const lift = (t: number) => (v: number) => v + t
+  const inner = bulge - Math.sign(bulge) * curve.midThickness;
+  const cx1 = x1 + dx / 3;
+  const cx2 = x1 + (dx * 2) / 3;
+  const lift = (t: number) => (v: number) => v + t;
 
-  const outer = `C${num(cx1)},${num(lift(bulge)(y1))} ${num(cx2)},${num(lift(bulge)(y2))} ${num(x2)},${num(y2)}`
-  const back = `C${num(cx2)},${num(lift(inner)(y2))} ${num(cx1)},${num(lift(inner)(y1))} ${num(x1)},${num(y1)}`
-  return `<path${attr} d="M${num(x1)},${num(y1)} ${outer} ${back}Z"/>`
+  const outer = `C${num(cx1)},${num(lift(bulge)(y1))} ${num(cx2)},${num(lift(bulge)(y2))} ${num(x2)},${num(y2)}`;
+  const back = `C${num(cx2)},${num(lift(inner)(y2))} ${num(cx1)},${num(lift(inner)(y1))} ${num(x1)},${num(y1)}`;
+  return `<path${attr} d="M${num(x1)},${num(y1)} ${outer} ${back}Z"/>`;
 }
-
 
 /**
  * abcjs's `Classes.generate` — the `add_classes` class string, ported from
@@ -516,57 +547,58 @@ function curveToPath(curve: PlacedCurve, attr: string, strict: boolean, k = 1): 
  */
 class Classes {
   constructor(private readonly on: boolean) {}
-  private line: number | null = null
-  private voice: number | null = null
-  private measure: number | null = null
-  private note: number | null = null
-  private readonly perLine: number[] = []
+  private line: number | null = null;
+  private voice: number | null = null;
+  private measure: number | null = null;
+  private note: number | null = null;
+  private readonly perLine: number[] = [];
 
   /** `classes.js:6-12` — and `perLine` is emptied with the rest. */
   reset(): void {
-    this.line = null
-    this.voice = null
-    this.measure = null
-    this.note = null
-    this.perLine.length = 0
+    this.line = null;
+    this.voice = null;
+    this.measure = null;
+    this.note = null;
+    this.perLine.length = 0;
   }
   incrLine(): void {
-    this.line = this.line === null ? 0 : this.line + 1
-    this.voice = null
-    this.measure = null
-    this.note = null
+    this.line = this.line === null ? 0 : this.line + 1;
+    this.voice = null;
+    this.measure = null;
+    this.note = null;
   }
   incrVoice(): void {
-    this.voice = this.voice === null ? 0 : this.voice + 1
-    this.measure = null
-    this.note = null
+    this.voice = this.voice === null ? 0 : this.voice + 1;
+    this.measure = null;
+    this.note = null;
   }
   newMeasure(): void {
     // `if (this.measureNumber)` — a FALSY test, so a line whose measure counter is still 0
     // records nothing. That is abcjs's own line and it is why `mm` can lag.
-    if (this.measure && this.line !== null) this.perLine[this.line] = this.measure
-    this.measure = null
-    this.note = null
+    if (this.measure && this.line !== null)
+      this.perLine[this.line] = this.measure;
+    this.measure = null;
+    this.note = null;
   }
   startMeasure(): void {
-    this.measure = 0
-    this.note = 0
+    this.measure = 0;
+    this.note = 0;
   }
   incrMeasure(): void {
-    this.measure = (this.measure ?? 0) + 1
-    this.note = 0
+    this.measure = (this.measure ?? 0) + 1;
+    this.note = 0;
   }
   isInMeasure(): boolean {
-    return this.measure !== null
+    return this.measure !== null;
   }
   incrNote(): void {
-    this.note = (this.note ?? 0) + 1
+    this.note = (this.note ?? 0) + 1;
   }
   private measureTotal(): number {
-    let total = 0
-    for (let i = 0; i < (this.line ?? 0); i += 1) total += this.perLine[i] ?? 0
-    if (this.measure) total += this.measure
-    return total
+    let total = 0;
+    for (let i = 0; i < (this.line ?? 0); i += 1) total += this.perLine[i] ?? 0;
+    if (this.measure) total += this.measure;
+    return total;
   }
   /**
    * `generate` as of a GIVEN measure, without moving the running one.
@@ -580,61 +612,65 @@ class Classes {
    */
   /** abcjs's `getCurrent()` — the counters an element's group was named with. */
   current(): { measure: number; note: number } {
-    return { measure: this.measure ?? 0, note: this.note ?? 0 }
+    return { measure: this.measure ?? 0, note: this.note ?? 0 };
   }
   generateAt(c: string, measure: number): string {
-    const saved = this.measure
-    this.measure = measure
-    const out = this.generate(c)
-    this.measure = saved
-    return out
+    const saved = this.measure;
+    this.measure = measure;
+    const out = this.generate(c);
+    this.measure = saved;
+    return out;
   }
   generate(c: string): string {
-    if (!this.on) return ''
-    const ret: string[] = []
-    if (c.length > 0) ret.push(c)
-    if (this.line !== null) ret.push(`l${this.line}`)
-    if (this.measure !== null) ret.push(`m${this.measure}`)
+    if (!this.on) return "";
+    const ret: string[] = [];
+    if (c.length > 0) ret.push(c);
+    if (this.line !== null) ret.push(`l${this.line}`);
+    if (this.measure !== null) ret.push(`m${this.measure}`);
     // "measureNumber is null between measures so this is still the test for measureTotal"
-    if (this.measure !== null) ret.push(`mm${this.measureTotal()}`)
-    if (this.voice !== null) ret.push(`v${this.voice}`)
+    if (this.measure !== null) ret.push(`mm${this.measureTotal()}`);
+    if (this.voice !== null) ret.push(`v${this.voice}`);
     if (
-      (c.includes('note') || c.includes('rest') || c.includes('lyric')) &&
+      (c.includes("note") || c.includes("rest") || c.includes("lyric")) &&
       this.note !== null
     ) {
-      ret.push(`n${this.note}`)
+      ret.push(`n${this.note}`);
     }
     return ret
-      .join(' ')
-      .split(' ')
+      .join(" ")
+      .split(" ")
       .filter((x) => x.length > 0)
-      .map((x) => (x.startsWith('abcjs-') ? x : `abcjs-${x}`))
-      .join(' ')
+      .map((x) => (x.startsWith("abcjs-") ? x : `abcjs-${x}`))
+      .join(" ");
   }
 }
 
 export function toSVG(doc: Layout, options: RenderOptions = {}): string {
-  const scale = options.staffSpace ?? 8
-  const prefix = options.className ?? 'abcts'
-  const abcjs = options.classes === 'abcjs'
+  const scale = options.staffSpace ?? 8;
+  const prefix = options.className ?? "abcts";
+  const abcjs = options.classes === "abcjs";
   // Tri-state resolved once: explicit wins, otherwise the mode decides and strict says no.
-  const strict = isStrict(options.mode ?? defaultMode)
-  const optimize = options.optimizeSVG ?? !strict
+  const strict = isStrict(options.mode ?? defaultMode);
+  const optimize = options.optimizeSVG ?? !strict;
   // The OUTLINES from the same table layout took its metrics from. Drawing Bravura at
   // abcjs's advances would be the worst of both — correctly sized gaps around wrongly
   // sized shapes — which is the whole reason there are two tables rather than one set of
   // numbers. abcjs's paths are in ITS pixels, 7.75 to a staff space, so they carry a
   // scale; Bravura's are already in staff spaces and carry none.
-  const table = glyphsFor(strict)
+  const table = glyphsFor(strict);
   const outline = (name: GlyphName): { path: string; scale: number } => {
-    const g = table.get(name)
+    const g = table.get(name);
     // PATH UNITS → LAYOUT UNITS. A path unit is `STAFF_SPACE_PX / unitsPerSpace` abcjs
     // pixels — 1 for abcjs's outlines, 7.75 for Bravura's — and a layout unit is
     // `UNIT_PX` of them. Written as one expression so the flip carries it; identical to
     // the `1 / unitsPerSpace` it replaced while `UNIT_PX` is the staff space.
-    if (g === undefined) return { path: GLYPHS[name].path, scale: STAFF_SPACE_PX / UNIT_PX }
-    return { path: g.path, scale: STAFF_SPACE_PX / (g.unitsPerSpace * UNIT_PX) }
-  }
+    if (g === undefined)
+      return { path: GLYPHS[name].path, scale: STAFF_SPACE_PX / UNIT_PX };
+    return {
+      path: g.path,
+      scale: STAFF_SPACE_PX / (g.unitsPerSpace * UNIT_PX),
+    };
+  };
 
   /**
    * Each distinct glyph outline, in first-use order, so `<defs>` can emit it once.
@@ -643,220 +679,227 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
    * hashing kilobytes of path data per glyph to discover that would cost more than it
    * saves.
    */
-  
-/**
- * abcjs's own `<style>` text, byte for byte. It suppresses the OS text-selection callout
- * while a drag is in progress and does nothing else; reproducing it is part of byte parity
- * and nothing else reads it.
- */
-/**
- * abcjs writes the ROOT's width and height as raw JS numbers — `height="1081.3299999999997"`
- * — where every coordinate inside the drawing goes through its own rounding. Ours rounded
- * both, so the two agreed to two decimals and differed as bytes.
- */
-const raw = (n: number): string => String(n)
 
-/**
- * **A GLISSANDO IS A SQUIGGLE, NOT A RULE** — `drawSquiggly` (`draw/glissando.js:48-71`).
- *
- * Four constant segment lists sheared along the line's slope: a lead-in, `num` zig-zags
- * along the TOP, a turn at the right, `num` back along the BOTTOM, a lead-out, then `z`.
- * Each step is `'l' + dx + ' ' + roundNumber(dy + dx * slope)` — the dx RAW and the dy
- * rounded, concatenated with no separator between commands, which is `printStem`'s habit
- * rather than `printLine`'s.
- */
-const GLISS_LEAD_IN: readonly (readonly [number, number])[] = [[3.5, -4.8]]
-const GLISS_TURN: readonly (readonly [number, number])[] = [
-  [1.5, -1],
-  [0.3, -0.3],
-  [-3.5, 3.8],
-]
-const GLISS_LEAD_OUT: readonly (readonly [number, number])[] = [[-1.5, 2]]
-const GLISS_TOP: readonly (readonly [number, number])[] = [
-  [3, 4],
-  [3, -4],
-]
-const GLISS_BOTTOM: readonly (readonly [number, number])[] = [
-  [-3, 4],
-  [-3, -4],
-]
-
-const squigglyPath = (x: number, y: number, num: number, slope: number): string => {
-  const seg = (arr: readonly (readonly [number, number])[]): string =>
-    arr.map(([dx, dy]) => `l${raw(dx)} ${round2(dy + dx * slope)}`).join('')
-  let d = `M ${raw(x)} ${raw(y)}` + seg(GLISS_LEAD_IN)
-  for (let i = 0; i < num; i += 1) d += seg(GLISS_TOP)
-  d += seg(GLISS_TURN)
-  for (let i = 0; i < num; i += 1) d += seg(GLISS_BOTTOM)
-  return `${d}${seg(GLISS_LEAD_OUT)}z`
-}
-
-
-/**
- * abcjs's `<text>`, attribute for attribute — `stroke`, `font-size`, `font-style`,
- * `font-family`, `font-weight`, `text-decoration`, `class`, `text-anchor`, `x`, `y`,
- * `data-name`, and the content wrapped in a `<tspan x=…>` (`write/svg.js`).
- *
- * The `class=""` and the `text-decoration="none"` are written even when empty; that is the
- * DOM attribute abcjs sets, and a serializer writes what is set.
- */
-/**
- * **A `<text>`'s x AND y ARE ROUNDED TO TWO DECIMALS** — `hash.attr.x = roundNumber(…)`,
- * `hash.attr.y = roundNumber(…)` (`draw/text.js:63-64`), the same rule its paths take. The
- * callers pass `round2`'d strings; the `<tspan>` reuses the x, as abcjs does
- * (`svg.js:195`).
- */
-/**
- * **`font-family` STRIPS THE FACE'S OWN QUOTES** — `getFamily` returns
- * `type.substring(1, type.length - 1)` when the string both opens and closes with `"`
- * (`write/helpers/get-font-and-attr.js:17-22`). abcjs's `fontTranslation` stores
- * `"\"Times New Roman\""`, quotes included, so the attribute is the bare name.
- */
-const fontFamily = (face: string): string =>
-  face.length > 1 && face.startsWith('"') && face.endsWith('"') ? face.slice(1, -1) : face
-
-const abcjsText = (
-  x: string,
-  y: string,
-  size: string,
-  face: string,
-  italic: boolean,
-  bold: boolean,
-  anchor: string,
-  name: string,
-  body: string,
-  /** abcjs's own class for the row, empty unless `add_classes` asked for it. */
-  klass = '',
-  /** Extra lines of the SAME element — one `<tspan dy="1.2em">` each. */
-  extra: readonly string[] = [],
-  /** `dominant-baseline="middle"`, which the bottom block's multi-line rows carry. */
-  middle = false,
   /**
-   * `renderText`'s trailing `noClass` argument (`draw/text.js`), which omits the attribute
-   * ENTIRELY rather than writing `class=""`. A bar number, a part label, a tuplet number,
-   * an ending's number and a tempo's three parts all pass it; a lyric, a chord symbol and
-   * an annotation do not, and their goldens carry the empty attribute.
+   * abcjs's own `<style>` text, byte for byte. It suppresses the OS text-selection callout
+   * while a drag is in progress and does nothing else; reproducing it is part of byte parity
+   * and nothing else reads it.
    */
-  noClass = false,
-): string =>
-  `<text stroke="none" font-size="${size}" font-style="${italic ? 'italic' : 'normal'}" ` +
-  `font-family="${fontFamily(face)}" font-weight="${bold ? 'bold' : 'normal'}" text-decoration="none" ` +
-  `${noClass ? '' : `class="${klass}" `}text-anchor="${anchor}"${middle ? ' dominant-baseline="middle"' : ''}` +
-  ` x="${x}" y="${y}"${name ? ` data-name="${name}"` : ''}>` +
-  `<tspan x="${x}">${body}</tspan>` +
-  extra.map((line) => `<tspan x="${x}" dy="1.2em">${line}</tspan>`).join('') +
-  '</text>'
+  /**
+   * abcjs writes the ROOT's width and height as raw JS numbers — `height="1081.3299999999997"`
+   * — where every coordinate inside the drawing goes through its own rounding. Ours rounded
+   * both, so the two agreed to two decimals and differed as bytes.
+   */
+  const raw = (n: number): string => String(n);
 
-/**
- * **`richTextLine` — one `<text>`, one `<tspan>` PER PHRASE** (`write/svg.js:242-269`).
- *
- * `renderText` returns early on `params.phrases` (`draw/text.js:7-10`), so none of the
- * rest of that function runs: no font size added to the baseline, no `roundNumber`, no
- * box, no `data-name`. The `class` is written UNCONDITIONALLY from `params.klass`, which
- * `richText` sets only when `add_classes` asked for one (`rich-text.js:24-25`) — so
- * without it `setAttribute("class", undefined)` serialises as the literal
- * `class="undefined"`. Reproduced, not corrected.
- *
- * A phrase attribute whose value is `''` is SKIPPED (`svg.js:255-257`).
- */
-const richTextLine = (
-  phrases: NonNullable<PlacedText['phrases']>,
-  x: string,
-  y: string,
-  anchor: string,
-  klass: string | undefined,
-): string =>
-  `<text stroke="none" class="${klass ?? 'undefined'}" x="${x}" y="${y}" ` +
-  `text-anchor="${anchor}" dominant-baseline="middle">` +
-  phrases
-    .map(
-      (p) =>
-        `<tspan font-family="${fontFamily(p.face)}" font-size="${num(p.size)}" ` +
-        `font-weight="${p.bold ? 'bold' : 'normal'}" font-style="${p.italic ? 'italic' : 'normal'}" ` +
-        `font-decoration="none">${escapeText(p.text)}</tspan>`,
-    )
-    .join('') +
-  '</text>'
+  /**
+   * **A GLISSANDO IS A SQUIGGLE, NOT A RULE** — `drawSquiggly` (`draw/glissando.js:48-71`).
+   *
+   * Four constant segment lists sheared along the line's slope: a lead-in, `num` zig-zags
+   * along the TOP, a turn at the right, `num` back along the BOTTOM, a lead-out, then `z`.
+   * Each step is `'l' + dx + ' ' + roundNumber(dy + dx * slope)` — the dx RAW and the dy
+   * rounded, concatenated with no separator between commands, which is `printStem`'s habit
+   * rather than `printLine`'s.
+   */
+  const GLISS_LEAD_IN: readonly (readonly [number, number])[] = [[3.5, -4.8]];
+  const GLISS_TURN: readonly (readonly [number, number])[] = [
+    [1.5, -1],
+    [0.3, -0.3],
+    [-3.5, 3.8],
+  ];
+  const GLISS_LEAD_OUT: readonly (readonly [number, number])[] = [[-1.5, 2]];
+  const GLISS_TOP: readonly (readonly [number, number])[] = [
+    [3, 4],
+    [3, -4],
+  ];
+  const GLISS_BOTTOM: readonly (readonly [number, number])[] = [
+    [-3, 4],
+    [-3, -4],
+  ];
 
-/**
- * A top-text row's `data-name` → the class abcjs puts beside it, under `add_classes`.
- * Literal in `top-text.js` rather than run through `classes.generate`, so no line or
- * measure suffix joins it.
- */
-/**
- * abcjs's DEFAULT font face per `%%…font` type (`parse/abc_parse_directive.js:22-44`).
- *
- * The quotes are abcjs's own — it stores `"\"Times New Roman\""` and writes the face
- * straight into the attribute, where the serializer strips the inner quotes. `tripletfont`
- * is plain `Times` and NOT `Times New Roman`, which is a difference the goldens show.
- */
+  const squigglyPath = (
+    x: number,
+    y: number,
+    num: number,
+    slope: number,
+  ): string => {
+    const seg = (arr: readonly (readonly [number, number])[]): string =>
+      arr.map(([dx, dy]) => `l${raw(dx)} ${round2(dy + dx * slope)}`).join("");
+    let d = `M ${raw(x)} ${raw(y)}` + seg(GLISS_LEAD_IN);
+    for (let i = 0; i < num; i += 1) d += seg(GLISS_TOP);
+    d += seg(GLISS_TURN);
+    for (let i = 0; i < num; i += 1) d += seg(GLISS_BOTTOM);
+    return `${d}${seg(GLISS_LEAD_OUT)}z`;
+  };
 
-const ABCJS_TEXT_CLASSES: Readonly<Record<string, string>> = {
-  title: 'abcjs-title',
-  subtitle: 'abcjs-text abcjs-subtitle',
-  composer: 'abcjs-composer',
-  author: 'abcjs-author',
-  rhythm: 'abcjs-rhythm',
-  'part-order': 'abcjs-part-order',
-  header: 'abcjs-header abcjs-meta-top',
-}
+  /**
+   * abcjs's `<text>`, attribute for attribute — `stroke`, `font-size`, `font-style`,
+   * `font-family`, `font-weight`, `text-decoration`, `class`, `text-anchor`, `x`, `y`,
+   * `data-name`, and the content wrapped in a `<tspan x=…>` (`write/svg.js`).
+   *
+   * The `class=""` and the `text-decoration="none"` are written even when empty; that is the
+   * DOM attribute abcjs sets, and a serializer writes what is set.
+   */
+  /**
+   * **A `<text>`'s x AND y ARE ROUNDED TO TWO DECIMALS** — `hash.attr.x = roundNumber(…)`,
+   * `hash.attr.y = roundNumber(…)` (`draw/text.js:63-64`), the same rule its paths take. The
+   * callers pass `round2`'d strings; the `<tspan>` reuses the x, as abcjs does
+   * (`svg.js:195`).
+   */
+  /**
+   * **`font-family` STRIPS THE FACE'S OWN QUOTES** — `getFamily` returns
+   * `type.substring(1, type.length - 1)` when the string both opens and closes with `"`
+   * (`write/helpers/get-font-and-attr.js:17-22`). abcjs's `fontTranslation` stores
+   * `"\"Times New Roman\""`, quotes included, so the attribute is the bare name.
+   */
+  const fontFamily = (face: string): string =>
+    face.length > 1 && face.startsWith('"') && face.endsWith('"')
+      ? face.slice(1, -1)
+      : face;
 
-/**
- * …**AND A ROW WHOSE CLASS IS GENERATED RATHER THAN LITERAL.** `FreeText` gives every row
- * `klass: 'defined-text'` (`elements/free-text.js:12, 29, 39`) and `renderText` runs
- * `classes.generate` on it, so a `%%text` or `%%center` row carries the LINE counter too —
- * `abcjs-defined-text abcjs-l2` on `center-text-classes`. The table above is literal
- * strings; this one has to be generated at the row's own line.
- */
-const ABCJS_GENERATED_TEXT_CLASSES: Readonly<Record<string, string>> = {
-  'free-text': 'defined-text',
-}
+  const abcjsText = (
+    x: string,
+    y: string,
+    size: string,
+    face: string,
+    italic: boolean,
+    bold: boolean,
+    anchor: string,
+    name: string,
+    body: string,
+    /** abcjs's own class for the row, empty unless `add_classes` asked for it. */
+    klass = "",
+    /** Extra lines of the SAME element — one `<tspan dy="1.2em">` each. */
+    extra: readonly string[] = [],
+    /** `dominant-baseline="middle"`, which the bottom block's multi-line rows carry. */
+    middle = false,
+    /**
+     * `renderText`'s trailing `noClass` argument (`draw/text.js`), which omits the attribute
+     * ENTIRELY rather than writing `class=""`. A bar number, a part label, a tuplet number,
+     * an ending's number and a tempo's three parts all pass it; a lyric, a chord symbol and
+     * an annotation do not, and their goldens carry the empty attribute.
+     */
+    noClass = false,
+  ): string =>
+    `<text stroke="none" font-size="${size}" font-style="${italic ? "italic" : "normal"}" ` +
+    `font-family="${fontFamily(face)}" font-weight="${bold ? "bold" : "normal"}" text-decoration="none" ` +
+    `${noClass ? "" : `class="${klass}" `}text-anchor="${anchor}"${middle ? ' dominant-baseline="middle"' : ""}` +
+    ` x="${x}" y="${y}"${name ? ` data-name="${name}"` : ""}>` +
+    `<tspan x="${x}">${body}</tspan>` +
+    extra.map((line) => `<tspan x="${x}" dy="1.2em">${line}</tspan>`).join("") +
+    "</text>";
 
-const ABCJS_STYLE =
-  '.abcjs-dragging-in-progress text, .abcjs-dragging-in-progress tspan {-webkit-touch-callout: none; ' +
-  '-webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; ' +
-  'user-select: none;}'
+  /**
+   * **`richTextLine` — one `<text>`, one `<tspan>` PER PHRASE** (`write/svg.js:242-269`).
+   *
+   * `renderText` returns early on `params.phrases` (`draw/text.js:7-10`), so none of the
+   * rest of that function runs: no font size added to the baseline, no `roundNumber`, no
+   * box, no `data-name`. The `class` is written UNCONDITIONALLY from `params.klass`, which
+   * `richText` sets only when `add_classes` asked for one (`rich-text.js:24-25`) — so
+   * without it `setAttribute("class", undefined)` serialises as the literal
+   * `class="undefined"`. Reproduced, not corrected.
+   *
+   * A phrase attribute whose value is `''` is SKIPPED (`svg.js:255-257`).
+   */
+  const richTextLine = (
+    phrases: NonNullable<PlacedText["phrases"]>,
+    x: string,
+    y: string,
+    anchor: string,
+    klass: string | undefined,
+  ): string =>
+    `<text stroke="none" class="${klass ?? "undefined"}" x="${x}" y="${y}" ` +
+    `text-anchor="${anchor}" dominant-baseline="middle">` +
+    phrases
+      .map(
+        (p) =>
+          `<tspan font-family="${fontFamily(p.face)}" font-size="${num(p.size)}" ` +
+          `font-weight="${p.bold ? "bold" : "normal"}" font-style="${p.italic ? "italic" : "normal"}" ` +
+          `font-decoration="none">${escapeText(p.text)}</tspan>`,
+      )
+      .join("") +
+    "</text>";
 
-const attrIfAny = (cls: string): string => (cls ? ` class="${cls}"` : '')
+  /**
+   * A top-text row's `data-name` → the class abcjs puts beside it, under `add_classes`.
+   * Literal in `top-text.js` rather than run through `classes.generate`, so no line or
+   * measure suffix joins it.
+   */
+  /**
+   * abcjs's DEFAULT font face per `%%…font` type (`parse/abc_parse_directive.js:22-44`).
+   *
+   * The quotes are abcjs's own — it stores `"\"Times New Roman\""` and writes the face
+   * straight into the attribute, where the serializer strips the inner quotes. `tripletfont`
+   * is plain `Times` and NOT `Times New Roman`, which is a difference the goldens show.
+   */
 
-/** `setClass(params.elemset, "mark", "", "#00ff00")` — abcjs's own literal for `!mark!`. */
-const ABCJS_MARK_COLOUR = '#00ff00'
+  const ABCJS_TEXT_CLASSES: Readonly<Record<string, string>> = {
+    title: "abcjs-title",
+    subtitle: "abcjs-text abcjs-subtitle",
+    composer: "abcjs-composer",
+    author: "abcjs-author",
+    rhythm: "abcjs-rhythm",
+    "part-order": "abcjs-part-order",
+    header: "abcjs-header abcjs-meta-top",
+  };
 
-/**
- * **A `%%…box` FONT DRAWS FOUR FILLED RULES ROUND ITS ROW.** `renderText` lays a rect that
- * `Svg.rect` writes as a PATH — "so that it can be hollow and the color changes with fill
- * instead of stroke" (`draw/text.js:78`, `svg.js:112-142`), and the doubled spaces in the
- * `d` are `lines.join(" ")` over four pieces that each already end with one.
- *
- * **THE TOP IS THE BASELINE LESS THE SIZE AND ONE PADDING** — abcjs writes
- * `rect.y = Math.round(y)` off the same `params.y` the baseline is built from
- * (`draw/text.js:29-30`, `:57`, `:78`) — so it is recovered from the drawn text rather
- * than carried, and a block's rect travels with its rows through every shift.
- */
-const boxRulesPath = (
-  r: NonNullable<PlacedText['boxRect']>,
-  baseline: number,
-  size: number,
-): string => {
-  const y1 = Math.round(baseline - size * (1 + ABCJS_RATIO.fontBoxPadding))
-  const [x1, x2, y2] = [r.x, r.x + r.width, y1 + r.height]
-  const h = (yy: number): string => `M ${x1} ${yy} l ${x2 - x1} 0 l 0 1  l ${x1 - x2} 0  z `
-  const v = (xx: number, from: number, to: number): string =>
-    `M ${xx} ${from} l 0 ${to - from} l 1 0  l 0 ${from - to}  z `
-  // abcjs-debt: §3 — the doubled spaces are deliberate. Docs/ABCJS-DEBT.md
-  const d = [h(y1), h(y2), v(x2, y1, y2), v(x1, y2, y1)].join(' ')
-  return `<path d="${d}" stroke="none" data-name="box"></path>`
-}
+  /**
+   * …**AND A ROW WHOSE CLASS IS GENERATED RATHER THAN LITERAL.** `FreeText` gives every row
+   * `klass: 'defined-text'` (`elements/free-text.js:12, 29, 39`) and `renderText` runs
+   * `classes.generate` on it, so a `%%text` or `%%center` row carries the LINE counter too —
+   * `abcjs-defined-text abcjs-l2` on `center-text-classes`. The table above is literal
+   * strings; this one has to be generated at the row's own line.
+   */
+  const ABCJS_GENERATED_TEXT_CLASSES: Readonly<Record<string, string>> = {
+    "free-text": "defined-text",
+  };
 
-const glyphDefs = new Map<GlyphName, string>()
+  const ABCJS_STYLE =
+    ".abcjs-dragging-in-progress text, .abcjs-dragging-in-progress tspan {-webkit-touch-callout: none; " +
+    "-webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; " +
+    "user-select: none;}";
+
+  const attrIfAny = (cls: string): string => (cls ? ` class="${cls}"` : "");
+
+  /** `setClass(params.elemset, "mark", "", "#00ff00")` — abcjs's own literal for `!mark!`. */
+  const ABCJS_MARK_COLOUR = "#00ff00";
+
+  /**
+   * **A `%%…box` FONT DRAWS FOUR FILLED RULES ROUND ITS ROW.** `renderText` lays a rect that
+   * `Svg.rect` writes as a PATH — "so that it can be hollow and the color changes with fill
+   * instead of stroke" (`draw/text.js:78`, `svg.js:112-142`), and the doubled spaces in the
+   * `d` are `lines.join(" ")` over four pieces that each already end with one.
+   *
+   * **THE TOP IS THE BASELINE LESS THE SIZE AND ONE PADDING** — abcjs writes
+   * `rect.y = Math.round(y)` off the same `params.y` the baseline is built from
+   * (`draw/text.js:29-30`, `:57`, `:78`) — so it is recovered from the drawn text rather
+   * than carried, and a block's rect travels with its rows through every shift.
+   */
+  const boxRulesPath = (
+    r: NonNullable<PlacedText["boxRect"]>,
+    baseline: number,
+    size: number,
+  ): string => {
+    const y1 = Math.round(baseline - size * (1 + ABCJS_RATIO.fontBoxPadding));
+    const [x1, x2, y2] = [r.x, r.x + r.width, y1 + r.height];
+    const h = (yy: number): string =>
+      `M ${x1} ${yy} l ${x2 - x1} 0 l 0 1  l ${x1 - x2} 0  z `;
+    const v = (xx: number, from: number, to: number): string =>
+      `M ${xx} ${from} l 0 ${to - from} l 1 0  l 0 ${from - to}  z `;
+    // abcjs-debt: §3 — the doubled spaces are deliberate. Docs/ABCJS-DEBT.md
+    const d = [h(y1), h(y2), v(x2, y1, y2), v(x1, y2, y1)].join(" ");
+    return `<path d="${d}" stroke="none" data-name="box"></path>`;
+  };
+
+  const glyphDefs = new Map<GlyphName, string>();
   const defId = (name: GlyphName): string => {
-    let id = glyphDefs.get(name)
+    let id = glyphDefs.get(name);
     if (id === undefined) {
-      id = `g${glyphDefs.size}`
-      glyphDefs.set(name, id)
+      id = `g${glyphDefs.size}`;
+      glyphDefs.set(name, id);
     }
-    return id
-  }
+    return id;
+  };
 
   /**
    * One glyph, either as its own `<path>` or as a `<use>` of a shared definition.
@@ -876,7 +919,7 @@ const glyphDefs = new Map<GlyphName, string>()
     role?: string,
     dataName?: string,
   ): string => {
-    const ink = outline(name)
+    const ink = outline(name);
     /**
      * `getYCorr`, and it belongs HERE because abcjs applies it here and only here.
      *
@@ -901,12 +944,12 @@ const glyphDefs = new Map<GlyphName, string>()
     const corrected =
       y -
       spacesOfPitch(
-        (strict
-          ? name.startsWith('dynamic')
+        strict
+          ? name.startsWith("dynamic")
             ? (ABCJS_YCORR.f ?? 0)
-            : (ABCJS_YCORR[SMUFL_TO_ABCJS[name] ?? ''] ?? 0)
-          : 0),
-      )
+            : (ABCJS_YCORR[SMUFL_TO_ABCJS[name] ?? ""] ?? 0)
+          : 0,
+      );
     // ABCJS NEVER APPLIES A GLYPH'S SCALE AT DRAW TIME, and says so in its own source:
     // `printSymbol` takes `{scalex, scaley}` and passes NEITHER to `glyphs.printSymbol`,
     // under the comment "TODO-PER: what happened to scalex, and scaley? That might have
@@ -921,9 +964,9 @@ const glyphDefs = new Map<GlyphName, string>()
     // ITS pixels, and `ink.scale` is `1 / unitsPerSpace` — the conversion into staff
     // spaces. Multiply by the staff space again and it is 1, which is why abcjs writes no
     // `scale()` on a glyph at all.
-    const total = (strict ? ink.scale : (scale ?? 1) * ink.scale) * PX
-    const scaled = total !== 1
-    const transform = `translate(${num(x * PX)},${num(corrected * PX + oy)})${scaled ? ` scale(${scaleNum(total)})` : ''}`
+    const total = (strict ? ink.scale : (scale ?? 1) * ink.scale) * PX;
+    const scaled = total !== 1;
+    const transform = `translate(${num(x * PX)},${num(corrected * PX + oy)})${scaled ? ` scale(${scaleNum(total)})` : ""}`;
     /**
      * **ABCJS WRITES NO `transform` ON A GLYPH EITHER — IT ADDS x AND y TO THE FIRST
      * `M`.** `Glyphs.printSymbol` clones the outline's command array, does
@@ -945,9 +988,9 @@ const glyphDefs = new Map<GlyphName, string>()
      * `dataName`; see `writtenNote` in `layout.ts`.
      */
     if (abcjs && !scaled) {
-      const head = /^M (-?[\d.]+) (-?[\d.]+)/.exec(ink.path)
+      const head = /^M (-?[\d.]+) (-?[\d.]+)/.exec(ink.path);
       if (head?.[1] !== undefined && head[2] !== undefined) {
-        const px = Number(head[1]) + x * PX
+        const px = Number(head[1]) + x * PX;
         /**
          * **THE GLYPH'S OWN y IS ONE VALUE BEFORE THE OUTLINE SEES IT, AND THE BRACKETS
          * ARE THE WHOLE FINDING.** abcjs computes `renderer.calcY(offset + ycorr)` — one
@@ -960,8 +1003,8 @@ const glyphDefs = new Map<GlyphName, string>()
          *
          * The x needs no bracket: `x * PX` is already the whole term abcjs adds.
          */
-        const py = Number(head[2]) + (corrected * PX + oy)
-        const named = dataName ?? SMUFL_TO_ABCJS[name] ?? name
+        const py = Number(head[2]) + (corrected * PX + oy);
+        const named = dataName ?? SMUFL_TO_ABCJS[name] ?? name;
         /**
          * **A NOTEHEAD'S CLASS IS WRITTEN AFTER ITS `d`**, because it is not written with
          * the element at all. Inside an element group `printSymbol` passes ONLY
@@ -975,9 +1018,11 @@ const glyphDefs = new Map<GlyphName, string>()
         // chord position's. A `flags.*` glyph carries neither, which is abcjs's own name
         // test rather than an omission here.
         const late =
-          role === 'notehead' || role === 'grace' || attributes.includes('abcjs-chord-pos-')
-            ? / class="[^"]*"/.exec(attributes)?.[0] ?? ''
-            : ''
+          role === "notehead" ||
+          role === "grace" ||
+          attributes.includes("abcjs-chord-pos-")
+            ? (/ class="[^"]*"/.exec(attributes)?.[0] ?? "")
+            : "";
         /**
          * **A SCALED GLYPH IS CSS-SCALED, NOT DRAWN SMALL.** `drawRelativeElement` ends
          * with `if (params.scalex !== 1) scaleExistingElem(…)`, which sets
@@ -993,45 +1038,53 @@ const glyphDefs = new Map<GlyphName, string>()
          */
         const styleAttr =
           scale === undefined || scale === 1
-            ? ''
+            ? ""
             : ` style="transform:scale(${scale},${scale});transform-origin:` +
-              `${x * PX}px ${y * PX + oy}px;"`
+              `${x * PX}px ${y * PX + oy}px;"`;
         return (
-          `<path${late ? attributes.replace(late, '') : attributes}${named ? ` data-name="${named}"` : ''} ` +
+          `<path${late ? attributes.replace(late, "") : attributes}${named ? ` data-name="${named}"` : ""} ` +
           `d="M ${px} ${py}${ink.path.slice(head[0].length)}"${styleAttr}${late}></path>`
-        )
+        );
       }
     }
-    if (!optimize) return `<path${attributes} transform="${transform}" d="${ink.path}"/>`
+    if (!optimize)
+      return `<path${attributes} transform="${transform}" d="${ink.path}"/>`;
     // A `<use>` takes a transform, so a scaled glyph dedupes like any other. It used to
     // fall back to an inline path when scaled, which was fine while only a stretched
     // brace was scaled — and stopped being fine the moment abcjs's outlines arrived,
     // since those are in ITS pixels and every one of them carries a scale.
     return scaled
       ? `<use${attributes} href="#${defId(name)}" transform="${transform}"/>`
-      : `<use${attributes} href="#${defId(name)}" x="${num(x * PX)}" y="${num(corrected * PX + oy)}"/>`
-  }
+      : `<use${attributes} href="#${defId(name)}" x="${num(x * PX)}" y="${num(corrected * PX + oy)}"/>`;
+  };
 
   /**
    * Attributes for one drawn part. Core names by ELEMENT (`abcts-note` on everything a
    * note draws); abcjs names by PART and adds `data-name` hooks. Both are emitted from
    * the same role, so neither naming is the privileged one.
    */
-  const attrs = (elementType: string, role: string | undefined, chordPos?: number): string => {
-    if (!abcjs) return ` class="${prefix}-${elementType}"`
-    const base = role === undefined ? undefined : ABCJS_CLASSES[role]
+  const attrs = (
+    elementType: string,
+    role: string | undefined,
+    chordPos?: number,
+  ): string => {
+    if (!abcjs) return ` class="${prefix}-${elementType}"`;
+    const base = role === undefined ? undefined : ABCJS_CLASSES[role];
     // abcjs APPENDS the chord position to whatever class the element already has, and sets
     // it ALONE when there is none: `klass = klass ? klass + ' abcjs-chord-pos-N' : 'abcjs-
     // chord-pos-N'` (`draw/absolute.js:23-28`). A chord's DOTS and ACCIDENTALS have no
     // class of their own and are still classed by it; a `flags.*` child is excluded by
     // name. Ours dropped it whenever there was no base class, which is every child but the
     // head.
-    const pos = chordPos === undefined ? undefined : `abcjs-chord-pos-${chordPos}`
+    const pos =
+      chordPos === undefined ? undefined : `abcjs-chord-pos-${chordPos}`;
     const cls =
-      base !== undefined && pos !== undefined ? `${base} ${pos}` : (base ?? pos)
-    const name = role === undefined ? undefined : ABCJS_DATA_NAMES[role]
-    return `${cls ? ` class="${cls}"` : ''}${name ? ` data-name="${name}"` : ''}`
-  }
+      base !== undefined && pos !== undefined
+        ? `${base} ${pos}`
+        : (base ?? pos);
+    const name = role === undefined ? undefined : ABCJS_DATA_NAMES[role];
+    return `${cls ? ` class="${cls}"` : ""}${name ? ` data-name="${name}"` : ""}`;
+  };
 
   /**
    * **ABCJS DRAWS IN ABSOLUTE PIXELS AND WE DRAW IN STAFF SPACES**, and the `viewBox` was
@@ -1053,18 +1106,18 @@ const glyphDefs = new Map<GlyphName, string>()
    * pixels it wants a staff space to be and a layout unit is `UNIT_PX` abcjs pixels of
    * one, so compat's own 7.75 resolves to EXACTLY 1 once the layout holds abcjs's pixels.
    */
-  const OUT = (scale * UNIT_PX) / STAFF_SPACE_PX
+  const OUT = (scale * UNIT_PX) / STAFF_SPACE_PX;
   // The DRAWING is in output pixels under `abcjs` and in layout units under core, where a
   // `viewBox` does the conversion instead. The ROOT's size is `OUT` either way.
-  const PX = abcjs ? OUT : 1
-  const OY = abcjs ? -doc.top : 0
+  const PX = abcjs ? OUT : 1;
+  const OY = abcjs ? -doc.top : 0;
   /**
    * **A `<text>`'s x AND y ARE ROUNDED TO TWO DECIMALS IN ABCJS** — `hash.attr.x =
    * roundNumber(…)`, `hash.attr.y = roundNumber(…)` (`draw/text.js:63-64`), the same rule
    * its paths take. Core keeps the emission quantum, which is finer than a hundredth of a
    * STAFF SPACE and is what its baselines are recorded at.
    */
-  const textNum = abcjs ? round2 : num
+  const textNum = abcjs ? round2 : num;
   /**
    * **abcjs WRITES NO `transform` ANYWHERE** — its line group is a bare `<g>` and every
    * coordinate under it is already absolute. Ours nested a system translate inside a staff
@@ -1073,7 +1126,7 @@ const glyphDefs = new Map<GlyphName, string>()
    * `oy` is that nesting, flattened: the running origin in OUTPUT units, folded into every
    * coordinate on its way out. Zero in core mode, where the groups stay.
    */
-  let oy = 0
+  let oy = 0;
   /**
    * The identity short-cut is `PX === 1 AND oy === 0`, not `PX === 1` alone.
    *
@@ -1084,7 +1137,7 @@ const glyphDefs = new Map<GlyphName, string>()
    * `-15.85` where abcjs writes `22.21`: exactly the missing
    * `(system.originY + OY) + staff.originY`.
    */
-  const moved = (): boolean => PX !== 1 || oy !== 0
+  const moved = (): boolean => PX !== 1 || oy !== 0;
   /**
    * **A BRACE AND A BRACKET ARE ABCJS'S OWN ARITHMETIC**, not a glyph — `curvyPath` and
    * `straightPath` (`draw/brace.js:18-76`), absolute and with no transform. Every
@@ -1094,12 +1147,16 @@ const glyphDefs = new Map<GlyphName, string>()
    * `STEP` is `spacing.STEP`, the pitch unit — `ENGRAVE.spacePerStep` here, which is
    * abcjs's 3.875 once the layout holds its pixels.
    */
-  const connectorPath = (span: ConnectorSpan, yTop: number, yBottom: number): string => {
-    const STEP = ENGRAVE.spacePerStep * PX
-    const xLeft = span.x * PX
-    const n = (v: number): string => String(v)
-    if (span.kind === 'brace') {
-      const h = yBottom - yTop
+  const connectorPath = (
+    span: ConnectorSpan,
+    yTop: number,
+    yBottom: number,
+  ): string => {
+    const STEP = ENGRAVE.spacePerStep * PX;
+    const xLeft = span.x * PX;
+    const n = (v: number): string => String(v);
+    if (span.kind === "brace") {
+      const h = yBottom - yTop;
       const curve = (xC: readonly number[], yC: readonly number[]): string =>
         `M ${n(xLeft + (xC[0] ?? 0))} ${n(yTop + (yC[0] ?? 0))} ` +
         `C ${n(xLeft + (xC[1] ?? 0))} ${n(yTop + (yC[1] ?? 0))} ` +
@@ -1107,26 +1164,32 @@ const glyphDefs = new Map<GlyphName, string>()
         `${n(xLeft + (xC[3] ?? 0))} ${n(yTop + (yC[3] ?? 0))} ` +
         `C ${n(xLeft + (xC[4] ?? 0))} ${n(yTop + (yC[4] ?? 0))} ` +
         `${n(xLeft + (xC[5] ?? 0))} ${n(yTop + (yC[5] ?? 0))} ` +
-        `${n(xLeft + (xC[6] ?? 0))} ${n(yTop + (yC[6] ?? 0))} z`
+        `${n(xLeft + (xC[6] ?? 0))} ${n(yTop + (yC[6] ?? 0))} z`;
       return (
-        curve([7.5, -8, 21, 0, 18.5, -10.5, 7.5], [0, h / 5.5, h / 3.14, h / 2, h / 2.93, h / 4.88, 0]) +
-        curve([0, 17.5, -7.5, 6.6, -5, 20, 0], [h / 2, h / 1.46, h / 1.22, h, h / 1.19, h / 1.42, h / 2])
-      )
+        curve(
+          [7.5, -8, 21, 0, 18.5, -10.5, 7.5],
+          [0, h / 5.5, h / 3.14, h / 2, h / 2.93, h / 4.88, 0],
+        ) +
+        curve(
+          [0, 17.5, -7.5, 6.6, -5, 20, 0],
+          [h / 2, h / 1.46, h / 1.22, h, h / 1.19, h / 1.42, h / 2],
+        )
+      );
     }
-    const x = xLeft + STEP
-    const w = STEP * 0.75
-    const overlap = STEP * 0.75
-    const h = yBottom - yTop
-    const wCurve = STEP * 2
-    const hCurve = STEP
+    const x = xLeft + STEP;
+    const w = STEP * 0.75;
+    const overlap = STEP * 0.75;
+    const h = yBottom - yTop;
+    const wCurve = STEP * 2;
+    const hCurve = STEP;
     return (
       `M ${n(x)} ${n(yTop - overlap)} l 0 ${n(h + overlap * 2)} l ${n(w)} 0 l 0 ${n(-(h + overlap * 2))} z` +
       `M ${n(x + w)} ${n(yTop - overlap)} q ${n(wCurve * 0.6)} ${n(hCurve * 0.2)} ${n(wCurve)} ${n(-hCurve)} ` +
       `q ${n(-wCurve * 0.1)} ${n(hCurve * 0.3)} ${n(-wCurve)} ${n(hCurve + STEP)} z` +
       `M ${n(x + w)} ${n(yTop + overlap + h)} q ${n(wCurve * 0.6)} ${n(-hCurve * 0.2)} ${n(wCurve)} ${n(hCurve)} ` +
       `q ${n(-wCurve * 0.1)} ${n(-hCurve * 0.3)} ${n(-wCurve)} ${n(-hCurve - STEP)} z`
-    )
-  }
+    );
+  };
   /** One placed line in output units. */
   const TL = (l: PlacedLine): PlacedLine =>
     !moved()
@@ -1139,7 +1202,7 @@ const glyphDefs = new Map<GlyphName, string>()
           y1: l.absY1 ?? l.y1 * PX + oy,
           y2: l.absY2 ?? l.y2 * PX + oy,
           thickness: l.thickness * PX,
-        }
+        };
   /**
    * **A BEAM IS A `<path>`, AND ONE PATH HOLDS EVERY BEAM OF ITS GROUP.** `drawBeam`
    * concatenates each beam's four corners into a single `d` and writes one element
@@ -1157,23 +1220,31 @@ const glyphDefs = new Map<GlyphName, string>()
   const beamPath = (members: readonly PlacedLine[]): string =>
     members
       .map((b) => {
-        const t = TL(b)
+        const t = TL(b);
         // …and the SECOND edge is rounded off the ALREADY-ROUNDED first, because abcjs
         // computes `startY2 = roundNumber(startY + dy)` from a `startY` that has been
         // through `roundNumber` itself (`draw/beam.js:37-42`).
-        const r2 = (n: number): number => Number.parseFloat(n.toFixed(2))
+        const r2 = (n: number): number => Number.parseFloat(n.toFixed(2));
         // `dy` is SIGNED — `+STEP` for stems up, `-STEP` for stems down — so the path opens
         // on the TOP edge of an up-stem beam and the BOTTOM edge of a down-stem one. See
         // `PlacedLine.stemsUp`.
-        const dy = (b.stemsUp === false ? -1 : 1) * t.thickness
+        const dy = (b.stemsUp === false ? -1 : 1) * t.thickness;
         // …and a line that already holds the EDGE takes no shift at all — see `edgeY`.
-        const half = b.edgeY === true ? 0 : (b.stemsUp === false ? 1 : -1) * (t.thickness / 2)
-        const seg = (x1: number, y1: number, x2: number, y2: number): string => {
-          const [sx, ex] = [r2(x1), r2(x2)]
-          const [sy, ey] = [r2(y1 + half), r2(y2 + half)]
-          const [sy2, ey2] = [r2(sy + dy), r2(ey + dy)]
-          return `M${sx} ${sy} L${ex} ${ey}L${ex} ${ey2} L${sx} ${sy2}z`
-        }
+        const half =
+          b.edgeY === true
+            ? 0
+            : (b.stemsUp === false ? 1 : -1) * (t.thickness / 2);
+        const seg = (
+          x1: number,
+          y1: number,
+          x2: number,
+          y2: number,
+        ): string => {
+          const [sx, ex] = [r2(x1), r2(x2)];
+          const [sy, ey] = [r2(y1 + half), r2(y2 + half)];
+          const [sy2, ey2] = [r2(sy + dy), r2(ey + dy)];
+          return `M${sx} ${sy} L${ex} ${ey}L${ex} ${ey2} L${sx} ${sy2}z`;
+        };
         /**
          * **A BEAM BROKEN BY `!beambr1!` IS DRAWN FROM A LIST OF x PAIRS**, each pair's y
          * interpolated along the WHOLE beam's slope — `getSlope(startX, startY, endX, endY)`
@@ -1182,19 +1253,19 @@ const glyphDefs = new Map<GlyphName, string>()
          * pair runs BACKWARDS. See `PlacedLine.split`.
          */
         if (b.split !== undefined) {
-          const span = t.x2 - t.x1
-          const slope = span === 0 ? 0 : (t.y2 - t.y1) / span
-          const yAt = (x: number): number => t.y1 + slope * (x - t.x1)
-          let out = ''
+          const span = t.x2 - t.x1;
+          const slope = span === 0 ? 0 : (t.y2 - t.y1) / span;
+          const yAt = (x: number): number => t.y1 + slope * (x - t.x1);
+          let out = "";
           for (let i = 0; i + 1 < b.split.length; i += 2) {
-            const [a, c] = [(b.split[i] ?? 0) * PX, (b.split[i + 1] ?? 0) * PX]
-            out += seg(a, yAt(a), c, yAt(c))
+            const [a, c] = [(b.split[i] ?? 0) * PX, (b.split[i + 1] ?? 0) * PX];
+            out += seg(a, yAt(a), c, yAt(c));
           }
-          return out
+          return out;
         }
-        return seg(t.x1, t.y1, t.x2, t.y2)
+        return seg(t.x1, t.y1, t.x2, t.y2);
       })
-      .join('')
+      .join("");
 
   const TC = (c: PlacedCurve): PlacedCurve =>
     !moved()
@@ -1207,18 +1278,18 @@ const glyphDefs = new Map<GlyphName, string>()
           y2: c.y2 * PX + oy,
           bulge: c.bulge * PX,
           midThickness: c.midThickness * PX,
-        }
+        };
 
-  const parts: string[] = []
+  const parts: string[] = [];
   /** abcjs's running counters. Inert unless `add_classes` asked for the markup. */
-  const classes = new Classes(options.addClasses === true)
+  const classes = new Classes(options.addClasses === true);
   /** A row whose class abcjs GENERATES at the row's own line, or `undefined` if it states one. */
   const generatedTextClass = (name: string): string | undefined => {
-    const k = ABCJS_GENERATED_TEXT_CLASSES[name]
-    return k === undefined ? undefined : classes.generate(k)
-  }
+    const k = ABCJS_GENERATED_TEXT_CLASSES[name];
+    return k === undefined ? undefined : classes.generate(k);
+  };
   /** abcjs's `Selectables.elements.length` — one counter for the whole drawing. */
-  let selectableIndex = 0
+  let selectableIndex = 0;
 
   /**
    * A TUNE WITH NO MUSIC still writes its title, in the same `abcjs-meta-top` group a
@@ -1227,34 +1298,39 @@ const glyphDefs = new Map<GlyphName, string>()
    * `layout.ts`.
    */
   if (abcjs && doc.topText !== undefined && doc.topText.length > 0) {
-    oy = OY * PX
+    oy = OY * PX;
     const block = doc.topText.map((t) =>
       abcjsText(
         round2(t.x * PX),
         round2(t.y * PX + oy),
         num(t.size * PX),
-        'Times New Roman',
+        "Times New Roman",
         t.italic === true,
         t.bold === true,
-        t.anchor ?? 'start',
-        t.dataName ?? '',
+        t.anchor ?? "start",
+        t.dataName ?? "",
         escapeText(t.text),
         options.addClasses === true && t.dataName !== undefined
           ? // …**AND THE BOTTOM BLOCK'S CLASS IS PER FIELD, NOT PER DRAWN NAME** — both
             // `N:` and `H:` draw as `data-name="description"` and carry
             // `abcjs-extra-text abcjs-notes` / `…-history` (`bottom-text.js:24-45, 67-79`),
             // which is what `PlacedText.groupClass` holds for those rows.
-            (t.groupClass ?? generatedTextClass(t.dataName) ?? ABCJS_TEXT_CLASSES[t.dataName] ?? '')
-          : '',
+            (t.groupClass ??
+              generatedTextClass(t.dataName) ??
+              ABCJS_TEXT_CLASSES[t.dataName] ??
+              "")
+          : "",
       ),
-    )
-    parts.push(`<g${options.addClasses === true ? ' class="abcjs-meta-top"' : ''}>${block.join('')}</g>`)
+    );
+    parts.push(
+      `<g${options.addClasses === true ? ' class="abcjs-meta-top"' : ""}>${block.join("")}</g>`,
+    );
   }
 
   for (const [systemIndex, system] of doc.systems.entries()) {
     // The system's own origin, flattened into every coordinate under it.
     // **THE PAGE'S CURSOR, NOT A SUM OF OFFSETS** — see `LayoutStaff.absoluteY`.
-    if (abcjs) oy = (system.absoluteY ?? system.originY + OY) * PX
+    if (abcjs) oy = (system.absoluteY ?? system.originY + OY) * PX;
     /**
      * **THE TOP TEXT COMES FIRST IN ABCJS'S BODY**, before any staff and before the braces
      * — `nonMusic()` runs the whole header block and only then does `drawStaffGroup` start
@@ -1283,26 +1359,38 @@ const glyphDefs = new Map<GlyphName, string>()
        * `nonMusicIndex` says which line a row came from; the rows with none are the title's
        * and stay in meta-top.
        */
-      const block: { t?: PlacedText; s?: string; nonMusicIndex: number | undefined }[] = []
-      const first = system.staves[0]
+      const block: {
+        t?: PlacedText;
+        s?: string;
+        nonMusicIndex: number | undefined;
+      }[] = [];
+      const first = system.staves[0];
       if (first !== undefined) {
-        oy = abcjs ? first.absoluteY * PX : (system.originY + OY) * PX + first.originY * PX
+        oy = abcjs
+          ? first.absoluteY * PX
+          : (system.originY + OY) * PX + first.originY * PX;
         for (const el of first.elements) {
-          if (el.blockHeight === undefined) continue
-          for (const t of el.texts) block.push({ t, nonMusicIndex: t.nonMusicIndex })
+          if (el.blockHeight === undefined) continue;
+          for (const t of el.texts)
+            block.push({ t, nonMusicIndex: t.nonMusicIndex });
           for (const line of el.lines) {
-            const t = TL(line)
+            const t = TL(line);
             // **THE PAGE'S OWN y WHERE THERE IS ONE**, exactly as the block's texts take
             // `pageY` — and in the ROW it belongs to, so `nonMusic` draws it in its turn
             // rather than dropping every rule into `meta-top`. See `PlacedLine.pageY`.
-            const ly = line.pageY === undefined ? t.y1 : line.pageY * PX
+            const ly = line.pageY === undefined ? t.y1 : line.pageY * PX;
             block.push({
               nonMusicIndex: line.nonMusicIndex,
               s:
-                line.role === 'separator'
-                  ? separatorPath(t.x1, ly, t.x2, classes.generate('defined-text'))
+                line.role === "separator"
+                  ? separatorPath(
+                      t.x1,
+                      ly,
+                      t.x2,
+                      classes.generate("defined-text"),
+                    )
                   : lineToRect(t, attrs(el.type, line.role), abcjs),
-            })
+            });
           }
         }
       }
@@ -1316,101 +1404,124 @@ const glyphDefs = new Map<GlyphName, string>()
        * `svg.js:112-142`). The double spaces in the `d` are `constructHLine`'s own.
        */
       const stripBox = (t: PlacedText): PlacedText => {
-        const { boxRect: _drop, ...rest } = t
-        return { ...rest, noClass: true }
-      }
-      const boxPath = (t: PlacedText, r: NonNullable<PlacedText['boxRect']>): string =>
-        boxRulesPath(r, t.pageY === undefined ? t.y * PX + oy : t.pageY * PX, t.size * PX)
+        const { boxRect: _drop, ...rest } = t;
+        return { ...rest, noClass: true };
+      };
+      const boxPath = (
+        t: PlacedText,
+        r: NonNullable<PlacedText["boxRect"]>,
+      ): string =>
+        boxRulesPath(
+          r,
+          t.pageY === undefined ? t.y * PX + oy : t.pageY * PX,
+          t.size * PX,
+        );
       const renderRow = (b: { t?: PlacedText; s?: string }): string =>
         b.s !== undefined || b.t === undefined
-          ? (b.s ?? '')
+          ? (b.s ?? "")
           : b.t.phrases !== undefined
             ? richTextLine(
                 b.t.phrases,
                 raw(b.t.x * PX),
                 raw(b.t.pageY === undefined ? b.t.y * PX + oy : b.t.pageY * PX),
-                b.t.anchor ?? 'start',
+                b.t.anchor ?? "start",
                 options.addClasses === true && b.t.dataName !== undefined
-                  ? (ABCJS_TEXT_CLASSES[b.t.dataName] ?? '')
+                  ? (ABCJS_TEXT_CLASSES[b.t.dataName] ?? "")
                   : undefined,
               )
-          : b.t.boxRect !== undefined
-            ? `<g fill="currentColor" data-name="${b.t.dataName ?? ''}">` +
-              `${renderRow({ t: stripBox(b.t) })}` +
-              `${boxPath(b.t, b.t.boxRect)}</g>`
-            : abcjsText(
-              round2(b.t.x * PX),
-              // **THE PAGE'S OWN y WHERE THERE IS ONE** — see `PlacedText.pageY`. abcjs
-              // walks ONE cursor from `padding.top` and writes `renderer.y + font.size`;
-              // reaching the same point through the staff's frame is the same three
-              // terms in a different order, and a different double.
-              round2(b.t.pageY === undefined ? b.t.y * PX + oy : b.t.pageY * PX),
-              num(b.t.size * PX),
-              // …AND THE FACE A `%%<type>font` NAMES. Hard-coded here, so
-              // `%%titlefont cursive 23` drew in the default — the same half-realization
-              // `%%vocalfont` and the voice name each had.
-              b.t.face ?? 'Times New Roman',
-              b.t.italic === true,
-              b.t.bold === true,
-              b.t.anchor ?? 'start',
-              // abcjs names EVERY top-text row — `title`, `subtitle`, `composer`,
-              // `free-text` — from the `name` its `addTextIf`/`richText` call passes.
-              // This read a `text` key that was never in the table, so it was always ''.
-              b.t.dataName ?? '',
-              escapeText(b.t.text),
-              // A nonMusic ROW IS NOT A TOP-TEXT ROW: `renderText` classes it
-              // `classes.generate('defined-text')`, which carries the LINE number
-              // (`draw/text.js:36`), where a title's class is a flat literal from the table.
-              options.addClasses !== true
-                ? ''
-                : b.t.nonMusicIndex !== undefined
-                  ? // EACH ROW CARRIES ITS OWN `klass` — `nonMusic` passes `row.klass` to
-                    // `renderText` and `getFontAndAttr` runs `classes.generate` on it, so a
-                    // `Subtitle` row is `text subtitle` where a `FreeText` row is
-                    // `defined-text` (`subtitle.js:7`, `free-text.js:11`).
-                    classes.generate(b.t.dataName === 'subtitle' ? 'text subtitle' : 'defined-text')
-                  : b.t.dataName !== undefined
-                    ? (generatedTextClass(b.t.dataName) ?? ABCJS_TEXT_CLASSES[b.t.dataName] ?? '')
-                    : '',
-              (b.t.extraLines ?? []).map(escapeText),
-              b.t.middleBaseline === true,
-              // A BOXED row's class is DELETED, not emptied (`draw/text.js:58`).
-              b.t.noClass === true,
-            )
+            : b.t.boxRect !== undefined
+              ? `<g fill="currentColor" data-name="${b.t.dataName ?? ""}">` +
+                `${renderRow({ t: stripBox(b.t) })}` +
+                `${boxPath(b.t, b.t.boxRect)}</g>`
+              : abcjsText(
+                  round2(b.t.x * PX),
+                  // **THE PAGE'S OWN y WHERE THERE IS ONE** — see `PlacedText.pageY`. abcjs
+                  // walks ONE cursor from `padding.top` and writes `renderer.y + font.size`;
+                  // reaching the same point through the staff's frame is the same three
+                  // terms in a different order, and a different double.
+                  round2(
+                    b.t.pageY === undefined ? b.t.y * PX + oy : b.t.pageY * PX,
+                  ),
+                  num(b.t.size * PX),
+                  // …AND THE FACE A `%%<type>font` NAMES. Hard-coded here, so
+                  // `%%titlefont cursive 23` drew in the default — the same half-realization
+                  // `%%vocalfont` and the voice name each had.
+                  b.t.face ?? "Times New Roman",
+                  b.t.italic === true,
+                  b.t.bold === true,
+                  b.t.anchor ?? "start",
+                  // abcjs names EVERY top-text row — `title`, `subtitle`, `composer`,
+                  // `free-text` — from the `name` its `addTextIf`/`richText` call passes.
+                  // This read a `text` key that was never in the table, so it was always ''.
+                  b.t.dataName ?? "",
+                  escapeText(b.t.text),
+                  // A nonMusic ROW IS NOT A TOP-TEXT ROW: `renderText` classes it
+                  // `classes.generate('defined-text')`, which carries the LINE number
+                  // (`draw/text.js:36`), where a title's class is a flat literal from the table.
+                  options.addClasses !== true
+                    ? ""
+                    : b.t.nonMusicIndex !== undefined
+                      ? // EACH ROW CARRIES ITS OWN `klass` — `nonMusic` passes `row.klass` to
+                        // `renderText` and `getFontAndAttr` runs `classes.generate` on it, so a
+                        // `Subtitle` row is `text subtitle` where a `FreeText` row is
+                        // `defined-text` (`subtitle.js:7`, `free-text.js:11`).
+                        classes.generate(
+                          b.t.dataName === "subtitle"
+                            ? "text subtitle"
+                            : "defined-text",
+                        )
+                      : b.t.dataName !== undefined
+                        ? (generatedTextClass(b.t.dataName) ??
+                          ABCJS_TEXT_CLASSES[b.t.dataName] ??
+                          "")
+                        : "",
+                  (b.t.extraLines ?? []).map(escapeText),
+                  b.t.middleBaseline === true,
+                  // A BOXED row's class is DELETED, not emptied (`draw/text.js:58`).
+                  b.t.noClass === true,
+                );
       // …and under `add_classes` the group is named: `abcjs-meta-top` for the tune's own
       // header block, `abcjs-non-music` for a nonMusic line (`draw/draw.js:11-12`, `:55`).
       // An EMPTY group is DELETED (`svg.js:364-372`), which is what the length tests are.
       const klassOf = (nonMusic: boolean): string =>
         options.addClasses === true
-          ? ` class="${!nonMusic && systemIndex === 0 ? 'abcjs-meta-top' : 'abcjs-non-music'}"`
-          : ''
-      const meta = block.filter((b) => b.nonMusicIndex === undefined)
-      if (meta.length > 0) parts.push(`<g${klassOf(false)}>${meta.map(renderRow).join('')}</g>`)
+          ? ` class="${!nonMusic && systemIndex === 0 ? "abcjs-meta-top" : "abcjs-non-music"}"`
+          : "";
+      // **AND A SUBTITLE LINE DRAWS NOTHING AND STILL COUNTS** — see
+      // `RenderDoc.blankLeadingLines`.
+      if (systemIndex === 0)
+        for (let i = 0; i < (doc.blankLeadingLines ?? 0); i += 1)
+          classes.incrLine();
+      const meta = block.filter((b) => b.nonMusicIndex === undefined);
+      if (meta.length > 0)
+        parts.push(`<g${klassOf(false)}>${meta.map(renderRow).join("")}</g>`);
       const indices = [
         ...new Set(
-          block.flatMap((b) => (b.nonMusicIndex === undefined ? [] : [b.nonMusicIndex])),
+          block.flatMap((b) =>
+            b.nonMusicIndex === undefined ? [] : [b.nonMusicIndex],
+          ),
         ),
-      ].sort((a, b) => a - b)
+      ].sort((a, b) => a - b);
       for (const i of indices) {
         // BEFORE the group, not after it: `draw()` runs `classes.incrLine()` at the head of
         // every line it walks (`draw/draw.js:30-31`), so the FIRST `%%text` is `abcjs-l0`.
-        classes.incrLine()
-        const rows = block.filter((b) => b.nonMusicIndex === i)
-        parts.push(`<g${klassOf(true)}>${rows.map(renderRow).join('')}</g>`)
+        classes.incrLine();
+        const rows = block.filter((b) => b.nonMusicIndex === i);
+        parts.push(`<g${klassOf(true)}>${rows.map(renderRow).join("")}</g>`);
       }
     }
 
     // `abcjs-staff-wrapper abcjs-l{n}` wraps a whole music LINE (`draw/draw.js:40-42`),
     // and it is the outermost thing in abcjs's output — our very first contract row
     // differed on depth because it was missing.
-    if (abcjs) classes.incrLine()
+    if (abcjs) classes.incrLine();
     // Each system is laid out in its own space and placed by translation, so nothing
     // inside it depends on how many systems precede it. Staves nest the same way, one
     // per voice, because a staff step means a different pitch under a different clef.
     parts.push(
-      `<g${abcjs ? attrIfAny(classes.generate('staff-wrapper')) : ` class="${prefix}-system"`}` +
-        `${abcjs ? '' : ` transform="translate(0,${num((system.originY + OY) * PX)})"`}>`,
-    )
+      `<g${abcjs ? attrIfAny(classes.generate("staff-wrapper")) : ` class="${prefix}-system"`}` +
+        `${abcjs ? "" : ` transform="translate(0,${num((system.originY + OY) * PX)})"`}>`,
+    );
     // Braces and brackets first: they belong to the SYSTEM, joining staves rather than
     // sitting on one, and they are drawn at the left edge outside the music area.
     // A BRACKET'S STEM. abcjs classes it `abcjs-bracket` and names it `bracket`
@@ -1418,27 +1529,31 @@ const glyphDefs = new Map<GlyphName, string>()
     // could reach a bracket at all. Finding 92: the representation was missing a HANDLE.
     if (!abcjs)
       for (const line of system.connectorLines) {
-        parts.push(lineToRect(TL(line), ` class="${prefix}-staff"`, abcjs))
+        parts.push(lineToRect(TL(line), ` class="${prefix}-staff"`, abcjs));
       }
     // Under `abcjs` a connector is `curvyPath`/`straightPath` arithmetic drawn with its own
     // staff's lines — see `connectorPath` and the staff loop below.
-    if (!abcjs) for (const g of system.connectorGlyphs) {
-      // A brace stretches VERTICALLY to span its staves — `scale(1,n)`, not a uniform
-      // scale — so it cannot share a definition with an unstretched one and stays a path.
-      const scale = g.scale === undefined || g.scale === 1 ? '' : ` scale(1,${num(g.scale)})`
-      // …and the same handle for the glyphs. abcjs draws a brace and a bracket as ONE path
-      // each, so a `brace` name covers the whole shape and `bracket` covers its two arms.
-      const named = g.name === 'brace' ? 'brace' : 'bracket'
-      const attr = ` class="${prefix}-staff"`
-      parts.push(
-        scale === ''
-          ? glyphMarkup(g.name, g.x, g.y, undefined, attr)
-          : `<path${attr} transform="translate(${num(g.x * PX)},${num(g.y * PX + oy)})${scale}" d="${outline(g.name).path}"/>`,
-      )
-    }
+    if (!abcjs)
+      for (const g of system.connectorGlyphs) {
+        // A brace stretches VERTICALLY to span its staves — `scale(1,n)`, not a uniform
+        // scale — so it cannot share a definition with an unstretched one and stays a path.
+        const scale =
+          g.scale === undefined || g.scale === 1
+            ? ""
+            : ` scale(1,${num(g.scale)})`;
+        // …and the same handle for the glyphs. abcjs draws a brace and a bracket as ONE path
+        // each, so a `brace` name covers the whole shape and `bracket` covers its two arms.
+        const named = g.name === "brace" ? "brace" : "bracket";
+        const attr = ` class="${prefix}-staff"`;
+        parts.push(
+          scale === ""
+            ? glyphMarkup(g.name, g.x, g.y, undefined, attr)
+            : `<path${attr} transform="translate(${num(g.x * PX)},${num(g.y * PX + oy)})${scale}" d="${outline(g.name).path}"/>`,
+        );
+      }
     for (const [staffIndex, staff] of system.staves.entries()) {
       /** Connectors that START on this staff — written after its lines. */
-      let connectorHere: readonly ConnectorSpan[] = []
+      let connectorHere: readonly ConnectorSpan[] = [];
       /**
        * **EVERY BARLINE OF A JOINED STAFF RUNS UP TO THE STAFF ABOVE IT.**
        * `drawStaffGroup` sets `bartop = renderer.calcY(2)` after each voice — "this
@@ -1464,9 +1579,11 @@ const glyphDefs = new Map<GlyphName, string>()
        * all while still taking their width. An `&` overlay is such a voice, which is why
        * `visual-tablature-13` ended with one barline too many.
        */
-      let duplicateFrom = Number.POSITIVE_INFINITY
-      if (abcjs && staff.voices.length > 1) duplicateFrom = staff.voices[0]?.length ?? 0
-      const previous = staffIndex === 0 ? undefined : system.staves[staffIndex - 1]
+      let duplicateFrom = Number.POSITIVE_INFINITY;
+      if (abcjs && staff.voices.length > 1)
+        duplicateFrom = staff.voices[0]?.length ?? 0;
+      const previous =
+        staffIndex === 0 ? undefined : system.staves[staffIndex - 1];
       // **ANY STAFF AFTER THE FIRST**, not only one inside a `%%score` group — `bartop`
       // is set after every non-duplicate voice, whatever joins them
       // (`draw/staff-group.js:129-133`). Measured: two bare `V:` voices with no `%%staves`
@@ -1477,10 +1594,11 @@ const glyphDefs = new Map<GlyphName, string>()
       const bartop =
         previous === undefined
           ? undefined
-          : previous.absoluteY * PX - ENGRAVE.spacePerStep * ABCJS_PITCH.bottomLine * PX
+          : previous.absoluteY * PX -
+            ENGRAVE.spacePerStep * ABCJS_PITCH.bottomLine * PX;
       // …and the staff's, on top of it. Reset per staff, since `staff.originY` is relative.
-      if (abcjs) oy = staff.absoluteY * PX
-      let staffGroup = ''
+      if (abcjs) oy = staff.absoluteY * PX;
+      let staffGroup = "";
       // CORRECTED, by the byte table: abcjs DOES group the staff lines, with or without
       // `add_classes` — `…</path></g><g fill="currentColor" stroke="none" data-name=
       // "staff-extra clef">` — so the group is real and the element groups are its
@@ -1489,29 +1607,31 @@ const glyphDefs = new Map<GlyphName, string>()
       if (!abcjs) {
         parts.push(
           `<g class="${prefix}-staff-group" transform="translate(0,${num(staff.originY * PX)})">`,
-        )
+        );
       }
       // `incrVoice()` then `newMeasure()` then the staff lines — abcjs's own order
       // (`draw/staff-group.js:80-91`), which is why the staff's class carries `l` and `v`
       // but no `m`/`mm`: the measure counter is null across that call.
       if (abcjs) {
-        classes.incrVoice()
-        classes.newMeasure()
+        classes.incrVoice();
+        classes.newMeasure();
         // The staff-lines group exists ONLY under `add_classes`; without it abcjs draws
         // the lines straight into the wrapper, and an empty `<g>` would be a row of its own
         // on the contract table.
-        staffGroup = classes.generate('staff')
+        staffGroup = classes.generate("staff");
         // …AND AN EMPTY ONE IS DELETED, like every other group `closeGroup` sees with no
         // children (`svg.js:364-372`). A `clef=none stafflines=0` staff draws no lines at
         // all, so abcjs's next child is the time signature and ours was an empty `<g>`.
         if (staff.staffLines.length > 0) {
-          parts.push(staffGroup ? `<g class="${staffGroup}">` : '<g>')
+          parts.push(staffGroup ? `<g class="${staffGroup}">` : "<g>");
         }
         // …and the CONNECTOR comes straight after this staff's lines, as
         // `drawStaffGroup` draws it — `printStaff`, then `printBrace(brace)`, then
         // `printBrace(bracket)`, then `drawVoice` (`draw/staff-group.js:74-113`). The
         // group closes below, so the connector is written after it.
-        connectorHere = system.connectorSpans.filter((c) => c.staffIndex === staffIndex)
+        connectorHere = system.connectorSpans.filter(
+          (c) => c.staffIndex === staffIndex,
+        );
       }
       // abcjs classes only the TOP staff line; the other four carry no class at all.
       //
@@ -1519,11 +1639,14 @@ const glyphDefs = new Map<GlyphName, string>()
       // y is down and the array runs upward — so keying on index 0 put `abcjs-top-line`
       // on the bottom line, four staff spaces from where a stylesheet targeting it would
       // expect. Silent, because the class was present and the count was right.
-      const ordered = abcjs ? [...staff.staffLines].reverse() : staff.staffLines
+      const ordered = abcjs
+        ? [...staff.staffLines].reverse()
+        : staff.staffLines;
       const topLine = ordered.reduce(
-        (best, line, i) => (line.y1 < (ordered[best]?.y1 ?? Number.POSITIVE_INFINITY) ? i : best),
+        (best, line, i) =>
+          line.y1 < (ordered[best]?.y1 ?? Number.POSITIVE_INFINITY) ? i : best,
         0,
-      )
+      );
       // **TOP-DOWN.** `staffLines[0]` is the BOTTOM line here — y is down and the array runs
       // upward — and abcjs's `printStaff` writes from the top. A pure ORDER difference,
       // invisible to every gate that compares positions and worth 31px of apparent offset
@@ -1532,11 +1655,11 @@ const glyphDefs = new Map<GlyphName, string>()
         const attr = abcjs
           ? i === topLine
             ? ' class="abcjs-top-line"'
-            : ''
-          : ` class="${prefix}-staff"`
-        parts.push(lineToRect(TL(line), attr, abcjs))
-      })
-      if (abcjs && staff.staffLines.length > 0) parts.push('</g>')
+            : ""
+          : ` class="${prefix}-staff"`;
+        parts.push(lineToRect(TL(line), attr, abcjs));
+      });
+      if (abcjs && staff.staffLines.length > 0) parts.push("</g>");
       /**
        * …**AND THE MEASURE COUNTER IS STILL NULL WHILE THE CONNECTOR AND THE VOICE NAME
        * GO OUT.** `drawStaffGroup` runs `newMeasure()` before `printStaff` and only
@@ -1549,7 +1672,7 @@ const glyphDefs = new Map<GlyphName, string>()
       for (const span of connectorHere) {
         // SYSTEM coordinates — `edge()` already carries each staff's own `originY`, so the
         // offset is the system's alone and not this staff's.
-        const systemOy = (system.originY + OY) * PX
+        const systemOy = (system.originY + OY) * PX;
         /**
          * **A BRACE'S ENDS COME OFF `staff.absoluteY`, ONE PRODUCT EACH.**
          *
@@ -1562,16 +1685,16 @@ const glyphDefs = new Map<GlyphName, string>()
          * printed `452.5570454545454` against abcjs's `452.55704545454546`, because every
          * control point is `yTop + yHeight / k`.
          */
-        const braceStaff = system.staves[span.staffIndex]
-        const braceLast = system.staves[span.through]
+        const braceStaff = system.staves[span.staffIndex];
+        const braceLast = system.staves[span.through];
         const yTop =
           braceStaff === undefined
             ? span.top * PX + systemOy
-            : braceStaff.absoluteY * PX - ENGRAVE.spacePerStep * PX * 10
+            : braceStaff.absoluteY * PX - ENGRAVE.spacePerStep * PX * 10;
         const yBottom =
           braceLast === undefined
             ? span.bottom * PX + systemOy
-            : braceLast.absoluteY * PX - ENGRAVE.spacePerStep * PX * 2
+            : braceLast.absoluteY * PX - ENGRAVE.spacePerStep * PX * 2;
         /**
          * **A BRACE WITH A HEADER OWNS THE VOICE NAME, AND DRAWS IT ITSELF.**
          *
@@ -1591,35 +1714,38 @@ const glyphDefs = new Map<GlyphName, string>()
          * is why `BraceElem.setBottomStaff` deletes it off the voice. See
          * `ConnectorSpan.header`.
          */
-        const header = span.header
+        const header = span.header;
         if (abcjs && header !== undefined) {
-          const cls = classes.generate('staff-extra voice-name')
-          parts.push(`<g${cls ? ` class="${cls}"` : ''} data-name="${span.kind}">`)
-          const position = yTop + (yBottom - yTop) / 2 - header.baselineToCentre * PX
+          const cls = classes.generate("staff-extra voice-name");
+          parts.push(
+            `<g${cls ? ` class="${cls}"` : ""} data-name="${span.kind}">`,
+          );
+          const position =
+            yTop + (yBottom - yTop) / 2 - header.baselineToCentre * PX;
           parts.push(
             abcjsText(
               textNum(ENGRAVE.marginX * PX),
               textNum(position),
               num(header.size * PX),
-              ABCJS_FONT_FACE.voicefont ?? 'Times New Roman',
+              ABCJS_FONT_FACE.voicefont ?? "Times New Roman",
               false,
               true,
-              'start',
-              '',
+              "start",
+              "",
               escapeText(header.text),
               cls,
             ),
-          )
+          );
         }
         parts.push(
           `<path d="${connectorPath(span, yTop, yBottom)}" stroke="currentColor" ` +
             `fill="currentColor" class="${classes.generate(span.kind)}" ` +
             `data-name="${span.kind}"></path>`,
-        )
-        if (abcjs && header !== undefined) parts.push('</g>')
+        );
+        if (abcjs && header !== undefined) parts.push("</g>");
       }
       // `foundNote` — a barline before any note does not advance the measure counter.
-      let foundNote = false
+      let foundNote = false;
       /**
        * **A DYNAMIC IS NOT A CHILD OF THE NOTE.** `!p!` becomes a `DynamicDecoration`
        * pushed onto the voice's `otherchildren` (`decoration.js:287`), so `drawVoice`
@@ -1631,15 +1757,15 @@ const glyphDefs = new Map<GlyphName, string>()
        * …**AND EACH ONE REMEMBERS THE ELEMENT IT WAS ADDED AT**, which is what its class
        * counters come from — see `markerAt`.
        */
-      const dynamics: { g: PlacedGlyph; at: number }[] = []
+      const dynamics: { g: PlacedGlyph; at: number }[] = [];
       /**
        * The counters each element's GROUP was named with, by index — what abcjs stores as
        * `params.counters = classes.getCurrent()` inside `drawAbsolute`
        * (`draw/absolute.js:33`). A tie's and a slur's class quote them for both anchors.
        */
-      const counters = new Map<number, { measure: number; note: number }>()
+      const counters = new Map<number, { measure: number; note: number }>();
       /** Grace beams, held back to the voice's beam pass where abcjs draws them. */
-      const graceBeams: PlacedLine[] = []
+      const graceBeams: PlacedLine[] = [];
       /**
        * **ONE VOICE AT A TIME, AND abcjs FINISHES IT BEFORE IT STARTS THE NEXT.**
        * `drawStaffGroup` loops `params.voices[i]` and `drawVoice` walks that voice's
@@ -1665,9 +1791,9 @@ const glyphDefs = new Map<GlyphName, string>()
        * own golden leaves them `currentColor` on a fully coloured tune.
        */
       const fg = (voiceHere: number): string =>
-        staff.voiceColors?.[voiceHere] ?? 'currentColor'
+        staff.voiceColors?.[voiceHere] ?? "currentColor";
       const flushVoice = (voiceHere: number): void => {
-        const ink = fg(voiceHere)
+        const ink = fg(voiceHere);
         /**
          * **A CURVE'S ANCHOR INDEX IS PER VOICE; `counters` IS KEYED PER STAFF.**
          * `staff.elements` is the voices concatenated (`fixed.flat()`), and only the FIRST
@@ -1678,7 +1804,7 @@ const glyphDefs = new Map<GlyphName, string>()
          * than of the note the tie closes on. The two coincide for voice 0, which is why
          * the plain gate could never see it — no class, no counter, no difference.
          */
-        const voiceBase = voiceHere === 0 ? 0 : (voiceEnds[voiceHere - 1] ?? 0)
+        const voiceBase = voiceHere === 0 ? 0 : (voiceEnds[voiceHere - 1] ?? 0);
         /**
          * **abcjs'S OWN ALGORITHM FOR THE `otherchildren` COUNTERS, NOT A RULE PER KIND.**
          * `otherchildren` is ONE list in add order with `'bar'` MARKERS interleaved, and
@@ -1696,33 +1822,36 @@ const glyphDefs = new Map<GlyphName, string>()
          * Keyed by STAFF-wide element index — `staff.elements` is the voices concatenated,
          * so a lower voice's per-voice index needs `voiceBase` first.
          */
-        const markerAt = new Map<number, number>()
+        const markerAt = new Map<number, number>();
         {
-          let n = 0
-          let seenReal = false
+          let n = 0;
+          let seenReal = false;
           staff.elements.forEach((el, i) => {
-            if (voiceOf(i) !== voiceHere) return
-            markerAt.set(i, n)
-            if (el.type === 'bar') {
-              if (seenReal) n += 1
+            if (voiceOf(i) !== voiceHere) return;
+            markerAt.set(i, n);
+            if (el.type === "bar") {
+              if (seenReal) n += 1;
             } else if (
-              !(ABCJS_ELEMENT_NAMES[el.type] ?? el.type).startsWith('staff-extra') &&
-              el.type !== 'tempo' &&
-              el.type !== 'title' &&
-              el.type !== 'voiceName'
+              !(ABCJS_ELEMENT_NAMES[el.type] ?? el.type).startsWith(
+                "staff-extra",
+              ) &&
+              el.type !== "tempo" &&
+              el.type !== "title" &&
+              el.type !== "voiceName"
             ) {
-              seenReal = true
+              seenReal = true;
             }
             // …**AND THE POSITION AFTER IT**, which is where `endLine` adds. A hairpin the
             // line's end closes is `addOther`'d once every child is in, so it sees the
             // marker of the barline it closes on (`creation/decoration.js:304-313`).
-            markerAt.set(i + 1, n)
-          })
+            markerAt.set(i + 1, n);
+          });
         }
-        const mine = (x: { voice?: number }): boolean => (x.voice ?? 0) === voiceHere
-        if (abcjs) classes.startMeasure()
+        const mine = (x: { voice?: number }): boolean =>
+          (x.voice ?? 0) === voiceHere;
+        if (abcjs) classes.startMeasure();
         /** The group already written — see the one-path-per-group rule below. */
-        let lastBeamGroup: number | undefined
+        let lastBeamGroup: number | undefined;
         /**
          * **THE BEAMS GO OUT IN ADD ORDER, AND A GRACE BEAM IS ADDED EARLIER THAN ITS
          * NEIGHBOURS' BEAMS.** `drawVoice` walks `params.beams` as it stands, and
@@ -1733,19 +1862,21 @@ const glyphDefs = new Map<GlyphName, string>()
          * right of it. Buffered and merged on `beamAt`; `Array.sort` is stable, so two
          * added at the same element keep their built order.
          */
-        const beamOut: { at: number; s: string }[] = []
+        const beamOut: { at: number; s: string }[] = [];
         // A GRACE BEAM's own class is `beam-elem d0` — its `durationClass` is 0, since a
         // grace note has no sounding duration.
         // …**AND IT IS A `<path>` LIKE ANY OTHER BEAM, ONE PER GROUP.** `drawBeam` is the
         // same routine for both (`draw/beam.js:7-44`); ours wrote a `<polygon>` per grace
         // beam, so a two-level grace group came out as two elements of the wrong kind.
         {
-          let last: number | undefined
+          let last: number | undefined;
           for (const b of graceBeams) {
-            if (b.group !== undefined && b.group === last) continue
-            last = b.group
+            if (b.group !== undefined && b.group === last) continue;
+            last = b.group;
             const members =
-              b.group === undefined ? [b] : graceBeams.filter((g) => g.group === b.group)
+              b.group === undefined
+                ? [b]
+                : graceBeams.filter((g) => g.group === b.group);
             // ALWAYS a `class`, empty or not — `svg.js`'s `path` sets every key it is
             // handed and `generate` returns `''` without `add_classes`, so the attribute is
             // written either way. Ours used `attrIfAny`, which omits it.
@@ -1754,8 +1885,8 @@ const glyphDefs = new Map<GlyphName, string>()
               s:
                 `<path d="${beamPath(members)}" stroke="none" fill="${ink}"` +
                 // …and at the element the group hangs off, like any other beam.
-                ` class="${classes.generateAt('beam-elem d0', markerAt.get((b.beamAt ?? -1) + voiceBase) ?? 0)}"></path>`,
-            })
+                ` class="${classes.generateAt("beam-elem d0", markerAt.get((b.beamAt ?? -1) + voiceBase) ?? 0)}"></path>`,
+            });
           }
         }
         for (const beam of staff.beams.filter(mine)) {
@@ -1781,14 +1912,14 @@ const glyphDefs = new Map<GlyphName, string>()
             ? ` class="${classes.generateAt(
                 `beam-elem d${Math.round((beam.durationClass ?? 0) * 1000) / 1000}`.replace(
                   /\./g,
-                  '-',
+                  "-",
                 ),
                 markerAt.get((beam.beamAt ?? -1) + voiceBase) ?? 0,
               )}"`
-            : ` class="${prefix}-beam"`
+            : ` class="${prefix}-beam"`;
           if (!abcjs) {
-            parts.push(lineToRect(TL(beam), beamClass, abcjs, ink))
-            continue
+            parts.push(lineToRect(TL(beam), beamClass, abcjs, ink));
+            continue;
           }
           /**
            * **A BEAM IS A `<path>`, AND ONE PATH HOLDS EVERY BEAM OF ITS GROUP.** `drawBeam`
@@ -1805,19 +1936,20 @@ const glyphDefs = new Map<GlyphName, string>()
            * the beam's thickness, which is why the corners run start-top → end-top →
            * end-bottom → start-bottom.
            */
-          if (beam.group !== undefined && beam.group === lastBeamGroup) continue
-          lastBeamGroup = beam.group
+          if (beam.group !== undefined && beam.group === lastBeamGroup)
+            continue;
+          lastBeamGroup = beam.group;
           const members =
             beam.group === undefined
               ? [beam]
-              : staff.beams.filter(mine).filter((b) => b.group === beam.group)
-          const d = beamPath(members)
+              : staff.beams.filter(mine).filter((b) => b.group === beam.group);
+          const d = beamPath(members);
           beamOut.push({
             at: beam.beamAt ?? 0,
             s: `<path d="${d}" stroke="none" fill="${ink}"${beamClass}></path>`,
-          })
+          });
         }
-        for (const b of beamOut.sort((p, q) => p.at - q.at)) parts.push(b.s)
+        for (const b of beamOut.sort((p, q) => p.at - q.at)) parts.push(b.s);
         // A GRACE BEAM's own class is `beam-elem d0` — its `durationClass` is 0, since a
         // grace note has no sounding duration.
         // **`drawDynamics` AND `drawCrescendo` DISAGREE ON THE ORDER OF THEIR OWN TWO
@@ -1849,20 +1981,21 @@ const glyphDefs = new Map<GlyphName, string>()
          * all four attributes itself. `PlacedGlyph.group` names the kind and `groupStart`
          * marks the occurrence.
          */
-        const others: { x: number; s: string; k?: number }[] = []
-        let dynBuf: string[] = []
-        let dynX = 0
+        const others: { x: number; s: string; k?: number }[] = [];
+        let dynBuf: string[] = [];
+        let dynX = 0;
         const flushDynamic = (): void => {
           // `volumeDecoration` is `createDecoration`'s FIRST call, so a dynamic on an
           // element comes after its curves and before its hairpin (`decoration.js:379-385`).
-          if (dynBuf.length > 0) others.push({ x: dynX, k: 2, s: `${dynBuf.join('')}</g>` })
-          dynBuf = []
-        }
+          if (dynBuf.length > 0)
+            others.push({ x: dynX, k: 2, s: `${dynBuf.join("")}</g>` });
+          dynBuf = [];
+        };
         for (const { g, at: dynAt } of dynamics) {
-          const dynM = markerAt.get(dynAt) ?? 0
-          const grp = g.group ?? null
+          const dynM = markerAt.get(dynAt) ?? 0;
+          const grp = g.group ?? null;
           if (grp === null) {
-            flushDynamic()
+            flushDynamic();
             others.push({
               x: g.x,
               s: glyphMarkup(
@@ -1874,22 +2007,22 @@ const glyphDefs = new Map<GlyphName, string>()
                 // SCALED glyph takes `glyphMarkup`'s transform path, which writes the
                 // attribute string and nothing else. The ORDER is `svg.js:path`'s key order
                 // over `printSymbol`'s options — class, stroke, fill, then the name.
-                ` class="${classes.generateAt('decoration dynamics', dynM)}" stroke="none" ` +
+                ` class="${classes.generateAt("decoration dynamics", dynM)}" stroke="none" ` +
                   `fill="${ink}" data-name="${ABCJS_DATA_NAMES.dynamic}"`,
                 g.role,
                 // The name is already in the attribute string above; `'' ?? x` is `''`, so
                 // this stops `glyphMarkup` adding a SECOND `data-name` from the glyph key.
-                '',
+                "",
               ),
-            })
-            continue
+            });
+            continue;
           }
           if (g.groupStart === true) {
-            flushDynamic()
-            dynX = g.x
+            flushDynamic();
+            dynX = g.x;
             dynBuf.push(
-              `<g${attrIfAny(classes.generateAt('decoration dynamics', dynM))} data-name="${grp}">`,
-            )
+              `<g${attrIfAny(classes.generateAt("decoration dynamics", dynM))} data-name="${grp}">`,
+            );
           }
           dynBuf.push(
             glyphMarkup(
@@ -1902,11 +2035,11 @@ const glyphDefs = new Map<GlyphName, string>()
               // Inside the group abcjs names NONE of the children — `printSymbol` hands them
               // `{stroke, fill}` and nothing else — and `'' ?? x` is `''`, so this suppresses
               // the attribute rather than falling back to the glyph key.
-              '',
+              "",
             ),
-          )
+          );
         }
-        flushDynamic()
+        flushDynamic();
         /**
          * **A BRACKET IS A GROUP HOLDING ONE PATH AND ITS NUMBER.** Both `drawEnding` and
          * `drawTriplet` open a `<g>`, write EVERY segment as a single `printPath` `d`, add
@@ -1930,27 +2063,27 @@ const glyphDefs = new Map<GlyphName, string>()
            */
           into: { x: number; s: string }[] | null = null,
         ): void => {
-          if (text === undefined && lines.length === 0) return
+          if (text === undefined && lines.length === 0) return;
           /** Held rather than written when this group has to take its turn in the merge. */
-          const sink: string[] = []
+          const sink: string[] = [];
           const emit = (piece: string): void => {
-            if (into === null) parts.push(piece)
-            else sink.push(piece)
-          }
+            if (into === null) parts.push(piece);
+            else sink.push(piece);
+          };
           // abcjs-debt: §3 — a stray space that is load-bearing. Docs/ABCJS-DEBT.md
           // **THE TWO SEGMENT WRITERS DISAGREE ON A TRAILING SPACE.** `drawEnding`'s
           // `sprintf("M %f %f L %f %f ", …)` ends each segment with one; `drawTriplet`'s
           // `drawLine` does not (`draw/ending.js:14`, `draw/triplet.js:18`). One byte per
           // segment, and a quirk to reproduce rather than one of them to pick.
-          const gap = fill ? ' ' : ''
+          const gap = fill ? " " : "";
           const d = lines
             .map((l) => {
-              const t = TL(l)
+              const t = TL(l);
               // …and an UNANCHORED end goes in raw — see `PlacedLine.rawEnd`.
-              const x2 = l.rawEnd === true ? raw(t.x2) : round2(t.x2)
-              return `M ${round2(t.x1)} ${round2(t.y1)} L ${x2} ${round2(t.y2)}${gap}`
+              const x2 = l.rawEnd === true ? raw(t.x2) : round2(t.x2);
+              return `M ${round2(t.x1)} ${round2(t.y1)} L ${x2} ${round2(t.y2)}${gap}`;
             })
-            .join('')
+            .join("");
           emit(
             `<g${attrIfAny(
               classes.generateAt(
@@ -1959,14 +2092,13 @@ const glyphDefs = new Map<GlyphName, string>()
                   ? (text?.measure ?? 0)
                   : (markerAt.get(text.measureElement + voiceBase) ?? 0),
               ),
-            )}` +
-              `${fill ? ` fill="${ink}"` : ''} data-name="${name}">`,
-          )
+            )}` + `${fill ? ` fill="${ink}"` : ""} data-name="${name}">`,
+          );
           if (d) {
             emit(
-              `<path d="${d}" stroke="${ink}"${fill ? ` fill="${ink}"` : ''} ` +
+              `<path d="${d}" stroke="${ink}"${fill ? ` fill="${ink}"` : ""} ` +
                 `data-name="${pathName}"></path>`,
-            )
+            );
           }
           // **AND THE NUMBER IS `renderText`'s ELEMENT LIKE ANY OTHER** — `repeatfont` with
           // `noClass` for an ending, `tripletfont` with `noClass` and `centerVertically` for
@@ -1977,14 +2109,17 @@ const glyphDefs = new Map<GlyphName, string>()
           // **THE NUMBER IS `if (params.anchor1)`'s** (`draw/ending.js:38-49`), so a
           // bracket carried over a system break has none — see `voltaCarried`.
           if (text === undefined) {
-            emit('</g>')
-            if (into !== null) into.push({ x: lines[0]?.x1 ?? 0, s: sink.join('') })
-            return
+            emit("</g>");
+            if (into !== null)
+              into.push({ x: lines[0]?.x1 ?? 0, s: sink.join("") });
+            return;
           }
-          const face = text.face ?? (text.font === undefined ? undefined : ABCJS_FONT_FACE[text.font])
+          const face =
+            text.face ??
+            (text.font === undefined ? undefined : ABCJS_FONT_FACE[text.font]);
           emit(
             face === undefined
-              ? `<text${text.anchor === undefined ? '' : ` text-anchor="${text.anchor}"`} ` +
+              ? `<text${text.anchor === undefined ? "" : ` text-anchor="${text.anchor}"`} ` +
                   `x="${textNum(text.x * PX)}" y="${round2(text.y * PX + oy)}" ` +
                   `font-family="serif" font-size="${num(text.size * PX)}" ` +
                   `data-name="${escapeAttr(text.dataName ?? text.text)}">${escapeText(text.text)}</text>`
@@ -1995,16 +2130,16 @@ const glyphDefs = new Map<GlyphName, string>()
                   face,
                   text.italic,
                   text.bold,
-                  text.anchor ?? 'start',
+                  text.anchor ?? "start",
                   text.dataName ?? text.text,
                   escapeText(text.text),
-                  '',
+                  "",
                   [],
                   false,
                   text.noClass === true,
                 ),
-          )
-          emit('</g>')
+          );
+          emit("</g>");
           /**
            * **AN ENDING AND A TRIPLET TAKE THEIR TURN AT THEIR START, WHERE A CURVE AND A
            * HAIRPIN TAKE THEIRS AT THEIR CLOSE.** Measured, not assumed: abcjs writes a
@@ -2015,10 +2150,13 @@ const glyphDefs = new Map<GlyphName, string>()
            */
           if (into !== null)
             into.push({
-              x: Math.min(text.x, ...lines.map((l) => Math.min(TL(l).x1, TL(l).x2))),
-              s: sink.join(''),
-            })
-        }
+              x: Math.min(
+                text.x,
+                ...lines.map((l) => Math.min(TL(l).x1, TL(l).x2)),
+              ),
+              s: sink.join(""),
+            });
+        };
         if (abcjs) {
           // …AND AN ENDING IS ON `otherchildren` TOO. `EndingElem` is `addOther`'d like a
           // curve and a hairpin, so it takes its turn in the one add-order list rather than
@@ -2028,26 +2166,28 @@ const glyphDefs = new Map<GlyphName, string>()
           // all, and iterating the TEXTS dropped it entirely.
           const voltaGroups = [
             ...new Set(staff.voltaLines.filter(mine).map((l) => l.group ?? 0)),
-          ].sort((a, b) => a - b)
+          ].sort((a, b) => a - b);
           for (const g of voltaGroups) {
             bracketGroup(
               staff.voltaLines.filter(mine).filter((l) => (l.group ?? 0) === g),
               staff.voltaTexts.filter(mine).find((t) => t.group === g),
-              'ending',
-              'line',
+              "ending",
+              "line",
               true,
               others,
-            )
+            );
           }
         } else {
           for (const line of staff.voltaLines.filter(mine)) {
-            parts.push(lineToRect(TL(line), ` class="${prefix}-volta"`, abcjs, ink))
+            parts.push(
+              lineToRect(TL(line), ` class="${prefix}-volta"`, abcjs, ink),
+            );
           }
           for (const t of staff.voltaTexts.filter(mine)) {
             parts.push(
               `<text class="${prefix}-volta" x="${textNum(t.x * PX)}" ` +
                 `y="${round2(t.y * PX + oy)}" font-family="serif" font-size="${num(t.size * PX)}">${escapeText(t.text)}</text>`,
-            )
+            );
           }
         }
         // ABCJS CALLS IT A TRIPLET, whatever the number — `classes.generate('triplet ' +
@@ -2063,21 +2203,30 @@ const glyphDefs = new Map<GlyphName, string>()
             bracketGroup(
               staff.tupletLines.filter(mine).filter((l) => l.group === t.group),
               t,
-              'triplet',
-              'triplet-bracket',
+              "triplet",
+              "triplet-bracket",
               false,
               others,
-            )
+            );
           }
         } else {
           for (const line of staff.tupletLines.filter(mine)) {
-            parts.push(lineToRect(TL(line), ` class="${prefix}-tuplet"`, abcjs, ink))
+            parts.push(
+              lineToRect(TL(line), ` class="${prefix}-tuplet"`, abcjs, ink),
+            );
           }
         }
         // Never present in strict mode, where abcjs prints a literal `_` instead — so this
         // reuses abcjs's lyric class rather than inventing one it has no counterpart for.
         for (const line of staff.melismaLines.filter(mine)) {
-          parts.push(lineToRect(TL(line), abcjs ? ' class="abcjs-lyric"' : ` class="${prefix}-lyric"`, abcjs, ink))
+          parts.push(
+            lineToRect(
+              TL(line),
+              abcjs ? ' class="abcjs-lyric"' : ` class="${prefix}-lyric"`,
+              abcjs,
+              ink,
+            ),
+          );
         }
         // Hairpins and glissandi. THE COMMENT HERE USED TO SAY "abcjs paints these with no
         // class of its own" — reasoned, never measured, and its own output denies it:
@@ -2092,17 +2241,17 @@ const glyphDefs = new Map<GlyphName, string>()
          * contract. We drew an arm each, which read as a doubled dynamic. The arms arrive
          * adjacent and upper-first from `hairpin()` in `layout.ts`, which is the pairing.
          */
-        const spanners = staff.spannerLines.filter(mine)
+        const spanners = staff.spannerLines.filter(mine);
         for (let i = 0; i < spanners.length; i += 1) {
-          const line = spanners[i]
-          if (line === undefined) continue
-          const arm2 = line.role === 'dynamic' ? spanners[i + 1] : undefined
+          const line = spanners[i];
+          if (line === undefined) continue;
+          const arm2 = line.role === "dynamic" ? spanners[i + 1] : undefined;
           if (abcjs && arm2 !== undefined) {
-            i += 1
-            const [a, b] = [TL(line), TL(arm2)]
+            i += 1;
+            const [a, b] = [TL(line), TL(arm2)];
             const d =
               `M ${round2(a.x1)} ${round2(a.y1)} L ${round2(a.x2)} ${round2(a.y2)} ` +
-              `M ${round2(b.x1)} ${round2(b.y1)} L ${round2(b.x2)} ${round2(b.y2)}`
+              `M ${round2(b.x1)} ${round2(b.y1)} L ${round2(b.x2)} ${round2(b.y2)}`;
             others.push({
               // …and a HAIRPIN is added by its CLOSING decoration too, so it sorts on the
               // x it ENDS at — see the curve below.
@@ -2111,21 +2260,21 @@ const glyphDefs = new Map<GlyphName, string>()
               k: 3,
               s:
                 `<path d="${d}" highlight="stroke" stroke="${ink}" ` +
-                `class="${classes.generateAt('dynamics decoration', markerAt.get((line.atElement ?? -1) + voiceBase) ?? 0)}" data-name="dynamics"></path>`,
-            })
-            continue
+                `class="${classes.generateAt("dynamics decoration", markerAt.get((line.atElement ?? -1) + voiceBase) ?? 0)}" data-name="dynamics"></path>`,
+            });
+            continue;
           }
-          const named = line.role === 'dynamic' ? 'dynamics' : 'glissando'
+          const named = line.role === "dynamic" ? "dynamics" : "glissando";
           // …at the element it was `addOther`'d at, like everything else in the list.
-          const spanM = markerAt.get((line.atElement ?? -1) + voiceBase) ?? 0
+          const spanM = markerAt.get((line.atElement ?? -1) + voiceBase) ?? 0;
           const cls =
-            line.role === 'dynamic'
-              ? classes.generateAt('dynamics decoration', spanM)
+            line.role === "dynamic"
+              ? classes.generateAt("dynamics decoration", spanM)
               : // `classes.generate('decoration')` with `data-name: "glissando"` — the two
                 // are different strings (`draw/glissando.js:73`), and ours used the name for
                 // both.
-                classes.generateAt('decoration', spanM)
-          const t = TL(line)
+                classes.generateAt("decoration", spanM);
+          const t = TL(line);
           others.push({
             x: t.x1,
             s:
@@ -2134,10 +2283,12 @@ const glyphDefs = new Map<GlyphName, string>()
                   `highlight="stroke" stroke="${ink}" class="${cls}" data-name="${named}"></path>`
                 : lineToRect(
                     t,
-                    abcjs ? ` class="${cls}" data-name="${named}"` : ` class="${prefix}-decoration"`,
+                    abcjs
+                      ? ` class="${cls}" data-name="${named}"`
+                      : ` class="${prefix}-decoration"`,
                     abcjs,
                   ),
-          })
+          });
         }
         // …and the two buckets go out as ONE list in x order. `Array.sort` is stable, so a
         // dynamic and a hairpin starting at the same x keep the order they were built in.
@@ -2151,12 +2302,13 @@ const glyphDefs = new Map<GlyphName, string>()
         // …and under `abcjs` the number is written INSIDE its group, by `bracketGroup`.
         if (!abcjs) {
           for (const t of staff.tupletTexts.filter(mine)) {
-            const style = `${t.bold ? ' font-weight="bold"' : ''}${t.italic ? ' font-style="italic"' : ''}`
-            const anchor = t.anchor === undefined ? '' : ` text-anchor="${t.anchor}"`
+            const style = `${t.bold ? ' font-weight="bold"' : ""}${t.italic ? ' font-style="italic"' : ""}`;
+            const anchor =
+              t.anchor === undefined ? "" : ` text-anchor="${t.anchor}"`;
             parts.push(
               `<text class="${prefix}-tuplet"${anchor} x="${textNum(t.x * PX)}" ` +
                 `y="${round2(t.y * PX + oy)}" font-family="serif" font-size="${num(t.size * PX)}"${style}>${escapeText(t.text)}</text>`,
-            )
+            );
           }
         }
         /**
@@ -2167,7 +2319,7 @@ const glyphDefs = new Map<GlyphName, string>()
          * (`draw/tie.js:6-20`, `:83-87`). `data-name` is `tie` or `slur`. Ours wrote a bare
          * `abcjs-tie`, which is a class abcjs only ever writes with the rest of that string.
          */
-        const curveSink: string[] = []
+        const curveSink: string[] = [];
         // **AND `((` PUTS TWO CURVES ON ONE ELEMENT, WHICH NO x CAN TELL APART.** Both
         // are `addOther`'d at the same open, and abcjs's `for (i = 0; i < elem.startSlur
         // .length; i++)` adds the OUTER one first. Ours emits at CLOSE time, which is
@@ -2176,20 +2328,24 @@ const glyphDefs = new Map<GlyphName, string>()
           .filter(mine)
           .slice()
           .sort((a, b) => (a.openSeq ?? 0) - (b.openSeq ?? 0))) {
-          const end = (which: 'start' | 'end', index: number | undefined): string => {
-            const c = index === undefined ? undefined : counters.get(index + voiceBase)
+          const end = (
+            which: "start" | "end",
+            index: number | undefined,
+          ): string => {
+            const c =
+              index === undefined ? undefined : counters.get(index + voiceBase);
             return c === undefined
               ? `abcjs-${which}-edge`
-              : `abcjs-${which}-m${c.measure}-n${c.note}`
-          }
+              : `abcjs-${which}-m${c.measure}-n${c.note}`;
+          };
           const klass =
-            `${end('start', curve.startElement)} ${end('end', curve.endElement)}` +
-            ` slur ${curve.kind === 'tie' ? 'tie' : 'legato'}` +
+            `${end("start", curve.startElement)} ${end("end", curve.endElement)}` +
+            ` slur ${curve.kind === "tie" ? "tie" : "legato"}` +
             // …**AND `dotted` GOES IN BEFORE `generate` RUNS**, so it lands inside the
             // generated string and takes the `abcjs-` prefix like the rest
             // (`draw/tie.js:83-87`). `S3-note-syntax-classes-tune22` writes
             // `abcjs-slur abcjs-legato abcjs-dotted abcjs-l2 …`.
-            `${curve.dotted === true ? ' dotted' : ''}`
+            `${curve.dotted === true ? " dotted" : ""}`;
           // Generated at the CLOSING note's measure: the curve is `addOther`'d when it
           // closes, so the count of `"bar"` markers ahead of it in `otherchildren` is that
           // note's own measure index within the line.
@@ -2204,11 +2360,14 @@ const glyphDefs = new Map<GlyphName, string>()
            * `ave-verum-corpus-classes` ties across a barline and abcjs writes
            * `abcjs-l0 abcjs-m1 abcjs-mm1`; ours read the closing element and wrote `m2 mm2`.
            */
-          const anchorEl = curve.startElement ?? curve.endElement
+          const anchorEl = curve.startElement ?? curve.endElement;
           // …**AT THE MARKER COUNT, LIKE EVERY OTHER `addOther` ITEM** — see `markerAt`.
           // The `start-m`/`end-m` names above are a different quantity: those come from
           // `anchor.parent.counters`, the CHILDREN pass's own counter.
-          const at = anchorEl === undefined ? 0 : (markerAt.get(anchorEl + voiceBase) ?? 0)
+          const at =
+            anchorEl === undefined
+              ? 0
+              : (markerAt.get(anchorEl + voiceBase) ?? 0);
           /**
            * **AND A CURVE IS ON `otherchildren` TOO**, so it interleaves with the hairpins,
            * the dynamics and the triplets rather than following all of them — `addOther` is
@@ -2226,14 +2385,14 @@ const glyphDefs = new Map<GlyphName, string>()
             curveToPath(
               TC(curve),
               abcjs
-                // ALWAYS a `class`, empty or not: `generate` returns `''` and `svg.js`'s
-                // `path` sets every key it is handed, so the attribute is written either way.
-                ? ` class="${classes.generateAt(klass, at)}" data-name="${curve.kind}"`
+                ? // ALWAYS a `class`, empty or not: `generate` returns `''` and `svg.js`'s
+                  // `path` sets every key it is handed, so the attribute is written either way.
+                  ` class="${classes.generateAt(klass, at)}" data-name="${curve.kind}"`
                 : ` class="${prefix}-${curve.kind}"`,
               strict,
               PX,
             ),
-          )
+          );
           // **A SLUR AND A TIE ARE ADDED AT THEIR OPEN**, not at their close:
           // `voice.addOther(slur)` sits inside `if (pitchelem.startSlur)` and the tie's
           // inside `if (pitchelem.startTie)` (`abstract-engraver.js:897-941`). A HAIRPIN is
@@ -2256,7 +2415,8 @@ const glyphDefs = new Map<GlyphName, string>()
            * A grace slur is the only curve whose two ends are the SAME element.
            */
           const graceCurve =
-            curve.startElement !== undefined && curve.startElement === curve.endElement
+            curve.startElement !== undefined &&
+            curve.startElement === curve.endElement;
           others.push({
             /**
              * **THE KEY IS THE ANCHOR'S OWN x, NOT THE ARC'S** — `drawArc` adds 6 at the
@@ -2273,33 +2433,40 @@ const glyphDefs = new Map<GlyphName, string>()
             // line the curve OPENED on and carries over, so it is already in the voice's
             // `otherchildren` before anything this line adds. `startElement` is absent on
             // exactly that half — `layoutCurves` passes only `{ end }` for it.
-            x: curve.startElement === undefined
-              ? Number.NEGATIVE_INFINITY
-              : graceCurve
-                ? TC(curve).x2 - spaces(ABCJS_ARC.endOffset)
-                : // …**AND A CHORD'S TIES ALL KEY ON THE ELEMENT**, not on the head each
-                  // one hangs off — see `PlacedCurve.orderShift`. Transformed with the
-                  // curve so the key stays in the drawn frame.
-                  TC({ ...curve, x1: curve.x1 - (curve.orderShift ?? 0) }).x1 -
-                  spaces(ABCJS_ARC.startOffset),
+            x:
+              curve.startElement === undefined
+                ? Number.NEGATIVE_INFINITY
+                : graceCurve
+                  ? TC(curve).x2 - spaces(ABCJS_ARC.endOffset)
+                  : // …**AND A CHORD'S TIES ALL KEY ON THE ELEMENT**, not on the head each
+                    // one hangs off — see `PlacedCurve.orderShift`. Transformed with the
+                    // curve so the key stays in the drawn frame.
+                    TC({ ...curve, x1: curve.x1 - (curve.orderShift ?? 0) })
+                      .x1 - spaces(ABCJS_ARC.startOffset),
             k: graceCurve ? 1 : 0,
-            s: curveSink.pop() ?? '',
-          })
+            s: curveSink.pop() ?? "",
+          });
         }
         // …and the whole `otherchildren` list goes out as ONE run in x order. `Array.sort`
         // is stable, so two things starting at the same x keep the order they were built in.
-        const ordered = others.sort((p1, p2) => p1.x - p2.x || (p1.k ?? 0) - (p2.k ?? 0))
+        const ordered = others.sort(
+          (p1, p2) => p1.x - p2.x || (p1.k ?? 0) - (p2.k ?? 0),
+        );
         if (process.env.ABCTS_OTHER)
           for (const o of ordered)
             console.log(
-              'OTHER x=', Number(o.x.toFixed(3)),
-              'name=', /data-name="([^"]*)"/.exec(o.s)?.[1] ?? '?',
-              'm=', /abcjs-m(\d+)/.exec(o.s)?.[1] ?? '-',
-              'mm=', /abcjs-mm(\d+)/.exec(o.s)?.[1] ?? '-',
-            )
-        for (const o of ordered) parts.push(o.s)
-        dynamics.length = 0
-        graceBeams.length = 0
+              "OTHER x=",
+              Number(o.x.toFixed(3)),
+              "name=",
+              /data-name="([^"]*)"/.exec(o.s)?.[1] ?? "?",
+              "m=",
+              /abcjs-m(\d+)/.exec(o.s)?.[1] ?? "-",
+              "mm=",
+              /abcjs-mm(\d+)/.exec(o.s)?.[1] ?? "-",
+            );
+        for (const o of ordered) parts.push(o.s);
+        dynamics.length = 0;
+        graceBeams.length = 0;
         /**
          * **AND THE COUNTER ENDS THE VOICE AT THE LINE'S BAR COUNT**, which is what
          * `newMeasure()` banks into `measureTotalPerLine` for every LATER line's `mm`.
@@ -2313,56 +2480,56 @@ const glyphDefs = new Map<GlyphName, string>()
         // barline whenever a heading block or a voice name preceded it, because those are
         // ours and not abcjs children — `S4-bars-repeats` banked 4 for abcjs's 3 and every
         // later line's `mm` was one high.
-        const bars = markerAt.get(voiceEnds[voiceHere] ?? 0) ?? 0
-        classes.startMeasure()
-        for (let i = 0; i < bars; i += 1) classes.incrMeasure()
-      }
+        const bars = markerAt.get(voiceEnds[voiceHere] ?? 0) ?? 0;
+        classes.startMeasure();
+        for (let i = 0; i < bars; i += 1) classes.incrMeasure();
+      };
       /**
        * Which VOICE each element belongs to. `staff.elements` is already voice-major —
        * `fixed.flat()` — so the boundaries are the running lengths of `staff.voices`.
        */
-      const voiceEnds: number[] = []
+      const voiceEnds: number[] = [];
       {
-        let n = 0
+        let n = 0;
         for (const v of staff.voices) {
-          n += v.length
-          voiceEnds.push(n)
+          n += v.length;
+          voiceEnds.push(n);
         }
       }
       const voiceOf = (i: number): number => {
-        const at = voiceEnds.findIndex((end) => i < end)
-        return at < 0 ? Math.max(0, staff.voices.length - 1) : at
-      }
-      let openVoice = 0
+        const at = voiceEnds.findIndex((end) => i < end);
+        return at < 0 ? Math.max(0, staff.voices.length - 1) : at;
+      };
+      let openVoice = 0;
       staff.elements.forEach((el, elIndex) => {
         // …AND THE PREVIOUS VOICE IS FINISHED BEFORE THIS ONE OPENS — see `flushVoice`.
         if (abcjs && voiceOf(elIndex) !== openVoice) {
-          flushVoice(openVoice)
-          openVoice = voiceOf(elIndex)
-          classes.incrVoice()
+          flushVoice(openVoice);
+          openVoice = voiceOf(elIndex);
+          classes.incrVoice();
           // …**AND `foundNote` IS PER `drawVoice`**, declared inside it
           // (`draw/voice.js:26`). Ours was per STAFF, so the second voice of a shared
           // staff opened with it already true and its LEADING barline incremented the
           // measure where abcjs's does not.
-          foundNote = false
+          foundNote = false;
         }
         // Already written above, ahead of the braces. See the hoist.
-        if (abcjs && el.blockHeight !== undefined) return
+        if (abcjs && el.blockHeight !== undefined) return;
         if (
           elIndex >= duplicateFrom &&
-          (el.type === 'bar' ||
-            el.type === 'timeSignature' ||
-            el.type === 'clef' ||
-            el.type === 'keySignature')
+          (el.type === "bar" ||
+            el.type === "timeSignature" ||
+            el.type === "clef" ||
+            el.type === "keySignature")
         ) {
           // The COUNTERS still advance: `drawVoice` runs them after `drawAbsolute`
           // returns, whatever it drew (`draw/voice.js:41-49`).
-          if (el.type === 'bar' && foundNote) classes.incrMeasure()
-          return
+          if (el.type === "bar" && foundNote) classes.incrMeasure();
+          return;
         }
         // abcjs wraps each element in a group carrying its kind and index, which is what
         // its interaction code walks. Core's own naming needs no wrapper.
-        let gcls = ''
+        let gcls = "";
         /**
          * Where this element's own `<g>` was pushed, so an element that draws NOTHING can
          * take it back again. **AN EMPTY GROUP IS DELETED** (`svg.js:364-372`) and
@@ -2371,9 +2538,9 @@ const glyphDefs = new Map<GlyphName, string>()
          * around nothing, so a spacer read as a rest on every gate that walks the DOM.
          * The same rule already governs `abcjs-meta-top` and the staff-lines group.
          */
-        let openedAt = -1
+        let openedAt = -1;
         /** The class counters this element advances — spent once its children are out. */
-        let advance = (): void => {}
+        let advance = (): void => {};
         /**
          * **A VOICE NAME IS NOT AN ELEMENT AND WEARS NO GROUP.** `drawVoice` renders it
          * before it walks `params.children` at all, with `alreadyInGroup = true`
@@ -2381,7 +2548,7 @@ const glyphDefs = new Map<GlyphName, string>()
          * as a SIBLING of the staff's elements. Ours made it an element like any other and
          * wrapped it in `<g fill stroke data-name>`.
          */
-        const bare = el.type === 'voiceName'
+        const bare = el.type === "voiceName";
         /**
          * **AND THE MEASURE OPENS ONCE THE CONNECTOR AND THE NAME ARE OUT.**
          * `draw/voice.js:31` reads as though a `staff-extra` cannot open one —
@@ -2408,25 +2575,46 @@ const glyphDefs = new Map<GlyphName, string>()
          * It matters twice: the clef gets the counters, AND `justInitialized` suppresses
          * the `incrMeasure` on a LEADING barline that is the voice's first child.
          */
-        const startedHere = abcjs && !bare && !classes.isInMeasure()
-        if (startedHere) classes.startMeasure()
+        const startedHere = abcjs && !bare && !classes.isInMeasure();
+        if (startedHere) classes.startMeasure();
         if (abcjs && !bare) {
-          const name = ABCJS_ELEMENT_NAMES[el.type] ?? el.type
+          const name = ABCJS_ELEMENT_NAMES[el.type] ?? el.type;
           // `if (child.type !== 'staff-extra' && !isInMeasure()) startMeasure()`
           // (`draw/voice.js:31-34`) — a prefix element does not open a measure.
-          const justStarted = startedHere
+          const justStarted = startedHere;
           // `klass = params.type`, then ` d{durationClass}` with `.` → `-`, then one
           // ` p{pitch}` per pitch, for a note or a rest only
           // (`draw/absolute.js:31-40`).
-          let klass = name
-          if (el.type === 'note' || el.type === 'rest') {
-            klass += ` d${Math.round((el.durationClass ?? 0) * 1000) / 1000}`.replace(/\./g, '-')
-            for (const p of el.abcjsPitches ?? []) klass += ` p${p}`
+          let klass = name;
+          if (el.type === "note" || el.type === "rest") {
+            klass +=
+              ` d${Math.round((el.durationClass ?? 0) * 1000) / 1000}`.replace(
+                /\./g,
+                "-",
+              );
+            for (const p of el.abcjsPitches ?? []) klass += ` p${p}`;
           }
-          gcls = classes.generate(klass)
-          counters.set(elIndex, classes.current())
-          if (process.env.ABCTS_CT && gcls.includes(`abcjs-v${process.env.ABCTS_CT} `) || (process.env.ABCTS_CT && gcls.endsWith(`abcjs-v${process.env.ABCTS_CT}`)))
-            console.log('CT', elIndex, el.type, 'm', classes.current().measure, 'n', classes.current().note, 'justStarted', justStarted, 'foundNote', foundNote)
+          gcls = classes.generate(klass);
+          counters.set(elIndex, classes.current());
+          if (
+            (process.env.ABCTS_CT &&
+              gcls.includes(`abcjs-v${process.env.ABCTS_CT} `)) ||
+            (process.env.ABCTS_CT &&
+              gcls.endsWith(`abcjs-v${process.env.ABCTS_CT}`))
+          )
+            console.log(
+              "CT",
+              elIndex,
+              el.type,
+              "m",
+              classes.current().measure,
+              "n",
+              classes.current().note,
+              "justStarted",
+              justStarted,
+              "foundNote",
+              foundNote,
+            );
           /**
            * abcjs's own attribute order on an element group: `fill`, `stroke`, the class
            * when there is one, then `data-name`.
@@ -2438,8 +2626,8 @@ const glyphDefs = new Map<GlyphName, string>()
            * so both count and nothing else does. A barline, a clef and a key signature
            * carry NEITHER attribute; ours carried both, with the child index in them.
            */
-          const selectable = el.type === 'note' || el.type === 'rest'
-          openedAt = parts.length
+          const selectable = el.type === "note" || el.type === "rest";
+          openedAt = parts.length;
           /**
            * **`!mark!` PAINTS THE GROUP GREEN AND APPENDS ITS CLASS LAST.**
            * `setClass(params.elemset, "mark", "", "#00ff00")` overwrites the group's `fill`
@@ -2448,8 +2636,8 @@ const glyphDefs = new Map<GlyphName, string>()
            * the end, after `data-index`, and with them it is appended to what is there.
            * See `LayoutElement.marked`.
            */
-          const marked = el.marked === true
-          const groupClass = marked ? (gcls ? `${gcls} mark` : 'mark') : gcls
+          const marked = el.marked === true;
+          const groupClass = marked ? (gcls ? `${gcls} mark` : "mark") : gcls;
           parts.push(
             // …AND THE GROUP'S OWN `fill` IS THE VOICE'S — see `fg` at `flushVoice`. An
             // element is drawn inside `drawVoice`, so it is inside the colour swap.
@@ -2458,12 +2646,12 @@ const glyphDefs = new Map<GlyphName, string>()
             // `fill`, then `stroke`, then `data-name` (`write/svg.js:openGroup`), and a
             // falsy `klass` is skipped — so WITHOUT `add_classes` the run opens at `fill`
             // and the order the plain goldens show is the tail of the same list.
-            `<g${gcls ? ` class="${groupClass}"` : ''}` +
+            `<g${gcls ? ` class="${groupClass}"` : ""}` +
               ` fill="${marked ? ABCJS_MARK_COLOUR : fg(voiceOf(elIndex))}" stroke="none"` +
               ` data-name="${name}"` +
-              `${selectable ? ` selectable="false" data-index="${selectableIndex++}"` : ''}` +
-              `${marked && !gcls ? ` class="${groupClass}"` : ''}>`,
-          )
+              `${selectable ? ` selectable="false" data-index="${selectableIndex++}"` : ""}` +
+              `${marked && !gcls ? ` class="${groupClass}"` : ""}>`,
+          );
           /**
            * **THE COUNTERS ADVANCE AFTER THE ELEMENT IS DRAWN, NOT BEFORE IT.** `drawVoice`
            * runs `drawAbsolute(…)` and only then `incrNote()` / `incrMeasure()`
@@ -2474,31 +2662,36 @@ const glyphDefs = new Map<GlyphName, string>()
           advance = () => {
             // `if (child.type === 'note' || isNonSpacerRest(child)) incrNote()`
             // (`draw/voice.js:47-48`) — see `LayoutElement.nonSpacerRest`.
-            if (el.type === 'note' || (el.type === 'rest' && el.nonSpacerRest === true)) {
-              classes.incrNote()
+            if (
+              el.type === "note" ||
+              (el.type === "rest" && el.nonSpacerRest === true)
+            ) {
+              classes.incrNote();
             }
-            if (el.type === 'bar' && !justStarted && foundNote) classes.incrMeasure()
-            if (el.type === 'note' || el.type === 'rest') foundNote = true
-          }
+            if (el.type === "bar" && !justStarted && foundNote)
+              classes.incrMeasure();
+            if (el.type === "note" || el.type === "rest") foundNote = true;
+          };
         }
         /**
          * **A BAR NUMBER IS THE BAR'S FIRST CHILD**, ahead of the rule itself — abcjs's own
          * contract reads `bar-number` then `bar`. Every other element's text comes last,
          * which is why the texts are built here and placed by kind rather than in order.
          */
-        const barTexts = abcjs && el.type === 'bar'
+        const barTexts = abcjs && el.type === "bar";
         // Carries the ROLE beside the markup because a note's texts are not one bucket:
         // `createNote` adds the lyric before the ledger lines and the chord symbol after
         // them (`abstract-engraver.js:829-855`). See the split at the emission site.
         const textParts: {
-          readonly role: PartRole | undefined
+          readonly role: PartRole | undefined;
           /** abcjs's own `name`, which is how a tempo's three parts tell each other apart. */
-          readonly dataName?: string | undefined
-          readonly s: string
-        }[] = []
+          readonly dataName?: string | undefined;
+          readonly s: string;
+        }[] = [];
         for (const t of el.texts) {
           const style =
-            (t.bold ? ' font-weight="bold"' : '') + (t.italic ? ' font-style="italic"' : '')
+            (t.bold ? ' font-weight="bold"' : "") +
+            (t.italic ? ' font-style="italic"' : "");
           /**
            * **A `P:` LABEL NAMES ITSELF AND CARRIES ITS GROUP'S CLASS TWICE.**
            * `renderText(…, { klass: classes.generate("part"), name: params.c }, true)`
@@ -2510,8 +2703,8 @@ const glyphDefs = new Map<GlyphName, string>()
            * contract, which is the oracle here; ours wrote neither the name nor the class.
            */
           // A BAR NUMBER carries a GENERATED class of its own — see `barNumberText`.
-          const isBarNumber = abcjs && t.dataName === 'bar-number'
-          const isPart = abcjs && el.type === 'part'
+          const isBarNumber = abcjs && t.dataName === "bar-number";
+          const isPart = abcjs && el.type === "part";
           /**
            * **A VOICE NAME NAMES ITSELF TOO.** `drawVoice` renders it with
            * `klass: 'staff-extra voice-name'` (`draw/voice.js:20`), and `getFontAndAttr`
@@ -2520,39 +2713,41 @@ const glyphDefs = new Map<GlyphName, string>()
            * `m`/`mm`: the measure has not opened yet. It wears no GROUP, which is why the
            * class cannot be inherited from one.
            */
-          const isVoiceName = abcjs && el.type === 'voiceName'
-          const counters = gcls.split(' ').slice(1).join(' ')
+          const isVoiceName = abcjs && el.type === "voiceName";
+          const counters = gcls.split(" ").slice(1).join(" ");
           const partAttr = isPart
-            ? `${gcls ? ` class="${gcls}${counters ? ` ${counters}` : ''}"` : ''}` +
+            ? `${gcls ? ` class="${gcls}${counters ? ` ${counters}` : ""}"` : ""}` +
               ` data-name="${escapeAttr(t.text)}"`
             : isVoiceName
-              ? `${attrIfAny(classes.generate('staff-extra voice-name'))} data-name="voice-name"`
+              ? `${attrIfAny(classes.generate("staff-extra voice-name"))} data-name="voice-name"`
               : isBarNumber
-              ? `${attrIfAny(classes.generate('bar-number'))} data-name="bar-number"`
-              /**
-               * **A LYRIC, A CHORD SYMBOL AND AN ANNOTATION EACH NAME THEMSELVES** —
-               * `relative.js:41-52` gives all three `klass: classes.generate(<name>)` and
-               * the same string as `name`. The `n` counter joins only the lyric's, because
-               * `generate` appends it for a key containing `note`, `rest` or `lyric`
-               * (`helpers/classes.js:90`). Ours wrote neither the class nor the name.
-               */
-              : abcjs && t.doubleClass === true
-                ? (() => {
-                    // …**AND A TEXT DECORATION'S CLASS IS GENERATED TWICE**, so the
-                    // counters repeat — see `PlacedText.doubleClass`. abcjs writes no
-                    // `data-name` for one.
-                    const once = classes.generate(t.groupClass ?? '')
-                    const again = once.split(' ').slice(1).join(' ')
-                    return once ? ` class="${once}${again ? ` ${again}` : ''}"` : ' class=""'
-                  })()
-              : abcjs && MUSIC_TEXT_NAMES.has(t.dataName ?? '')
-                ? `${attrIfAny(classes.generate(t.dataName ?? ''))} data-name="${t.dataName}"`
-                // **A TEMPO MARK'S PARTS NAME THEMSELVES AND CARRY NO CLASS** —
-                // `drawTempo` renders `pre`, `beats` and `post` with `noClass: true` and a
-                // `name` each (`draw/tempo.js:19`, `:31`, `:38`).
-                : abcjs && t.dataName !== undefined
-                  ? ` data-name="${t.dataName}"`
-                  : attrs(el.type, 'text')
+                ? `${attrIfAny(classes.generate("bar-number"))} data-name="bar-number"`
+                : /**
+                   * **A LYRIC, A CHORD SYMBOL AND AN ANNOTATION EACH NAME THEMSELVES** —
+                   * `relative.js:41-52` gives all three `klass: classes.generate(<name>)` and
+                   * the same string as `name`. The `n` counter joins only the lyric's, because
+                   * `generate` appends it for a key containing `note`, `rest` or `lyric`
+                   * (`helpers/classes.js:90`). Ours wrote neither the class nor the name.
+                   */
+                  abcjs && t.doubleClass === true
+                  ? (() => {
+                      // …**AND A TEXT DECORATION'S CLASS IS GENERATED TWICE**, so the
+                      // counters repeat — see `PlacedText.doubleClass`. abcjs writes no
+                      // `data-name` for one.
+                      const once = classes.generate(t.groupClass ?? "");
+                      const again = once.split(" ").slice(1).join(" ");
+                      return once
+                        ? ` class="${once}${again ? ` ${again}` : ""}"`
+                        : ' class=""';
+                    })()
+                  : abcjs && MUSIC_TEXT_NAMES.has(t.dataName ?? "")
+                    ? `${attrIfAny(classes.generate(t.dataName ?? ""))} data-name="${t.dataName}"`
+                    : // **A TEMPO MARK'S PARTS NAME THEMSELVES AND CARRY NO CLASS** —
+                      // `drawTempo` renders `pre`, `beats` and `post` with `noClass: true` and a
+                      // `name` each (`draw/tempo.js:19`, `:31`, `:38`).
+                      abcjs && t.dataName !== undefined
+                      ? ` data-name="${t.dataName}"`
+                      : attrs(el.type, "text");
           /**
            * **A MUSIC TEXT IS `renderText`'s ELEMENT, ATTRIBUTE FOR ATTRIBUTE** — the same
            * shape the top-text block already emitted, with the FACE, weight and style of
@@ -2564,9 +2759,11 @@ const glyphDefs = new Map<GlyphName, string>()
           const body =
             t.jazz === undefined
               ? escapeText(t.text)
-              : jazzChordMarkup(t.jazz, abcjs ? undefined : textNum(t.x * PX))
+              : jazzChordMarkup(t.jazz, abcjs ? undefined : textNum(t.x * PX));
           // A `%%…font` that NAMES a face wins over the type's default — see `PlacedText.face`.
-          const face = t.face ?? (t.font === undefined ? undefined : ABCJS_FONT_FACE[t.font])
+          const face =
+            t.face ??
+            (t.font === undefined ? undefined : ABCJS_FONT_FACE[t.font]);
           /**
            * **A BOXED MUSIC TEXT TAKES THE SAME GROUP-AND-FOUR-RULES AS A BOXED TOP-TEXT
            * ROW** — one `renderText`, one branch (`draw/text.js:48-81`). `padding` is
@@ -2574,22 +2771,29 @@ const glyphDefs = new Map<GlyphName, string>()
            * `start` or `end` anchor, which is where `hash.attr.x` is adjusted), its class
            * is DELETED, and the rect is measured from `getBBox()` — `PlacedText.boxSize`.
            */
-          const pad = t.size * ABCJS_RATIO.fontBoxPadding
-          const bs = t.box === true ? t.boxSize : undefined
+          const pad = t.size * ABCJS_RATIO.fontBoxPadding;
+          const bs = t.box === true ? t.boxSize : undefined;
           // The anchor the ATTRIBUTE carries, which is what `renderText` branches on —
           // `hash.attr["text-anchor"]`, defaulted to `start` a few lines down. An
           // annotation leaves `t.anchor` undefined and is still start-anchored, so reading
           // the field raw skipped its padding shift.
-          const anchor = t.anchor ?? 'start'
+          const anchor = t.anchor ?? "start";
           const boxDelta =
             bs === undefined
               ? 0
-              : anchor === 'middle'
+              : anchor === "middle"
                 ? bs.width / 2 + pad
-                : anchor === 'end'
+                : anchor === "end"
                   ? bs.width + pad * 2
-                  : 0
-          const boxDx = bs === undefined ? 0 : anchor === 'start' ? pad : anchor === 'end' ? -pad : 0
+                  : 0;
+          const boxDx =
+            bs === undefined
+              ? 0
+              : anchor === "start"
+                ? pad
+                : anchor === "end"
+                  ? -pad
+                  : 0;
           textParts.push({
             role: t.role,
             dataName: t.dataName,
@@ -2602,10 +2806,10 @@ const glyphDefs = new Map<GlyphName, string>()
                     face,
                     t.italic,
                     t.bold,
-                    t.anchor ?? 'start',
-                    t.dataName ?? '',
+                    t.anchor ?? "start",
+                    t.dataName ?? "",
                     body,
-                    /^ class="([^"]*)"/.exec(partAttr)?.[1] ?? '',
+                    /^ class="([^"]*)"/.exec(partAttr)?.[1] ?? "",
                     // A music text can be multi-line too — a LYRIC always is, because
                     // `addLyric` ends every verse with a newline. This was `[]`.
                     (t.extraLines ?? []).map(escapeText),
@@ -2616,34 +2820,39 @@ const glyphDefs = new Map<GlyphName, string>()
                 : `<text${partAttr} x="${textNum(t.x * PX)}" y="${textNum(t.y * PX + oy)}" ` +
                   `font-family="serif" font-size="${num(t.size * PX)}"${style}` +
                   // Only the top-text block sets one; the music's text is left-aligned.
-                  `${t.anchor === undefined || t.anchor === 'start' ? '' : ` text-anchor="${t.anchor}"`}` +
+                  `${t.anchor === undefined || t.anchor === "start" ? "" : ` text-anchor="${t.anchor}"`}` +
                   `>${body}</text>`,
-          })
+          });
           // …and the BOX wraps whatever that produced. `Svg.rect` writes four one-pixel
           // bars and `lines.join(" ")` doubles the space at every joint (`svg.js:112-142`).
           if (bs !== undefined && abcjs) {
-            const part = textParts[textParts.length - 1]
+            const part = textParts[textParts.length - 1];
             if (part !== undefined) {
-              const bx = Math.round((t.x - boxDelta) * PX)
-              const by = Math.round((t.y - t.size) * PX + oy)
-              const bw = Math.round((bs.width + pad * 2) * PX)
-              const bh = Math.round((bs.height + pad * 2) * PX)
+              const bx = Math.round((t.x - boxDelta) * PX);
+              const by = Math.round((t.y - t.size) * PX + oy);
+              const bw = Math.round((bs.width + pad * 2) * PX);
+              const bh = Math.round((bs.height + pad * 2) * PX);
               const h = (yy: number): string =>
-                `M ${bx} ${yy} l ${bw} 0 l 0 1  l ${-bw} 0  z `
+                `M ${bx} ${yy} l ${bw} 0 l 0 1  l ${-bw} 0  z `;
               const v = (xx: number, from: number, to: number): string =>
-                `M ${xx} ${from} l 0 ${to - from} l 1 0  l 0 ${from - to}  z `
-              const d = [h(by), h(by + bh), v(bx + bw, by, by + bh), v(bx, by + bh, by)].join(' ')
+                `M ${xx} ${from} l 0 ${to - from} l 1 0  l 0 ${from - to}  z `;
+              const d = [
+                h(by),
+                h(by + bh),
+                v(bx + bw, by, by + bh),
+                v(bx, by + bh, by),
+              ].join(" ");
               // `if (!alreadyInGroup) openGroup(...)` — a `part` label is already inside
               // its element's group, so the rect is its text's SIBLING (`draw/text.js:50`,
               // `:80`). See `PlacedText.inGroup`.
-              const boxSvg = `<path d="${d}" stroke="none" data-name="box"></path>`
+              const boxSvg = `<path d="${d}" stroke="none" data-name="box"></path>`;
               textParts[textParts.length - 1] = {
                 ...part,
                 s:
                   t.inGroup === true
                     ? `${part.s}${boxSvg}`
-                    : `<g fill="currentColor" data-name="${t.dataName ?? ''}">${part.s}${boxSvg}</g>`,
-              }
+                    : `<g fill="currentColor" data-name="${t.dataName ?? ""}">${part.s}${boxSvg}</g>`,
+              };
             }
           }
         }
@@ -2652,7 +2861,12 @@ const glyphDefs = new Map<GlyphName, string>()
         // decoration alike. A `!D.C.alcoda!` written before a barline attaches to the
         // BARLINE (`abstract-engraver.js:1002`), and abcjs's `createBarLine` adds the rules
         // and only then the decorations — so the rule comes out before the text.
-        if (barTexts) parts.push(...textParts.filter((t) => t.dataName === 'bar-number').map((t) => t.s))
+        if (barTexts)
+          parts.push(
+            ...textParts
+              .filter((t) => t.dataName === "bar-number")
+              .map((t) => t.s),
+          );
         /**
          * **THE ORDER INSIDE AN ELEMENT GROUP IS THE ENGRAVER'S ADD ORDER**, and for a note
          * that is, measured against abcjs's own goldens:
@@ -2668,31 +2882,31 @@ const glyphDefs = new Map<GlyphName, string>()
          * A MULTI-CHARACTER SYMBOL IS ONE GROUP with UNNAMED children — see
          * `PlacedGlyph.group`. Consecutive glyphs sharing the string are wrapped together.
          */
-        const PITCH_ROLES = ['flag', 'dot', 'accidental', 'notehead']
+        const PITCH_ROLES = ["flag", "dot", "accidental", "notehead"];
         // Only a NOTE or a REST has rules between its glyphs; a clef, a key and a time
         // signature are glyphs alone, and splitting their run broke the `<g data-name="12">`
         // a multi-character figure is wrapped in — which the PASSING ratchet caught.
         // A BAR INTERLEAVES its rules and its dot columns — see `PlacedGlyph.afterLine` —
         // so it takes its own merge below and has no pitch run at all.
         const pitchEnd =
-          abcjs && el.type === 'bar'
+          abcjs && el.type === "bar"
             ? 0
-            : abcjs && (el.type === 'note' || el.type === 'rest')
-          ? (() => {
-              let i = 0
-              // …and a GRACE's own flag and accidental wear those roles too, so the run
-              // would swallow them and print them before the main note's stem. abcjs adds
-              // every grace AFTER the stem (`addGraceNotes` runs from `createNote` well
-              // past `addRight(stem)`), so `graceIndex` is what ends the run.
-              while (
-                i < el.glyphs.length &&
-                PITCH_ROLES.includes(el.glyphs[i]?.role ?? '') &&
-                el.glyphs[i]?.graceIndex === undefined
-              )
-                i += 1
-              return i
-            })()
-          : el.glyphs.length
+            : abcjs && (el.type === "note" || el.type === "rest")
+              ? (() => {
+                  let i = 0;
+                  // …and a GRACE's own flag and accidental wear those roles too, so the run
+                  // would swallow them and print them before the main note's stem. abcjs adds
+                  // every grace AFTER the stem (`addGraceNotes` runs from `createNote` well
+                  // past `addRight(stem)`), so `graceIndex` is what ends the run.
+                  while (
+                    i < el.glyphs.length &&
+                    PITCH_ROLES.includes(el.glyphs[i]?.role ?? "") &&
+                    el.glyphs[i]?.graceIndex === undefined
+                  )
+                    i += 1;
+                  return i;
+                })()
+              : el.glyphs.length;
         /**
          * **A TEMPO'S PARTS ARE INTERLEAVED, AND ITS `pre` COMES FIRST.** `drawTempo`
          * renders `params.tempo.preString`, THEN walks `params.note.children` for the
@@ -2706,16 +2920,18 @@ const glyphDefs = new Map<GlyphName, string>()
          * golden carries — not on the text's position, which is a consequence rather than
          * the rule.
          */
-        if (abcjs && el.type === 'tempo') {
-          for (const t of textParts.filter((t) => t.dataName === 'pre')) parts.push(t.s)
+        if (abcjs && el.type === "tempo") {
+          for (const t of textParts.filter((t) => t.dataName === "pre"))
+            parts.push(t.s);
         }
-        let openGlyphGroup: string | null = null
+        let openGlyphGroup: string | null = null;
         for (const g of el.glyphs.slice(0, pitchEnd)) {
-          const group = abcjs ? (g.group ?? null) : null
+          const group = abcjs ? (g.group ?? null) : null;
           if (group !== openGlyphGroup) {
-            if (openGlyphGroup !== null) parts.push('</g>')
-            if (group !== null) parts.push(`<g data-name="${escapeAttr(group)}">`)
-            openGlyphGroup = group
+            if (openGlyphGroup !== null) parts.push("</g>");
+            if (group !== null)
+              parts.push(`<g data-name="${escapeAttr(group)}">`);
+            openGlyphGroup = group;
           }
           // The glyph path is authored at the origin, so a placement is all that is needed.
           parts.push(
@@ -2729,27 +2945,28 @@ const glyphDefs = new Map<GlyphName, string>()
               // Inside a group abcjs names NONE of the children — `printSymbol` passes
               // only `{stroke, fill}` there — and `'' ?? x` is `''`, so this suppresses
               // the attribute rather than falling back to the glyph key.
-              group === null ? g.dataName : '',
+              group === null ? g.dataName : "",
             ),
-          )
+          );
         }
-        if (openGlyphGroup !== null) parts.push('</g>')
+        if (openGlyphGroup !== null) parts.push("</g>");
         // A STEM PRECEDES A LEDGER — `abselem.addRight(stem)` runs after every pitch and the
         // ledgers follow it (`abstract-engraver.js:762`). Ours built the ledgers inside the
         // head loop, so they came first.
         // A GRACE's stem is written after every grace HEAD — see `PlacedLine.graceStem` —
         // so it is held back past the trailing glyphs entirely.
         const isGraceLine = (l: (typeof el.lines)[number]): boolean =>
-          l.graceStem === true || l.graceIndex !== undefined
+          l.graceStem === true || l.graceIndex !== undefined;
         // A GRACE BEAM is hoisted to the voice's beam pass — see `PlacedLine.role`.
         const own = abcjs
-          ? el.lines.filter((l) => !isGraceLine(l) && l.role !== 'beam')
-          : el.lines
+          ? el.lines.filter((l) => !isGraceLine(l) && l.role !== "beam")
+          : el.lines;
         // …stamped with the element that carries it, because `voice.beams` is drawn in ADD
         // order and a grace beam is added inside `createNote` while its group's own beam is
         // added after the whole group — see `PlacedLine.beamAt`.
         if (abcjs)
-          for (const l of el.lines) if (l.role === 'beam') graceBeams.push({ ...l, beamAt: elIndex })
+          for (const l of el.lines)
+            if (l.role === "beam") graceBeams.push({ ...l, beamAt: elIndex });
         /**
          * **AN UNBEAMED GRACE'S STEM COMES BEFORE ITS OWN LEDGERS; A BEAMED GROUP'S COME
          * AFTER EVERY HEAD.** `addGraceNotes` runs `addExtra(stem)` and then
@@ -2760,61 +2977,90 @@ const glyphDefs = new Map<GlyphName, string>()
          */
         const graceStems = abcjs
           ? el.lines.filter((l) => l.graceStem === true && l.beamed === true)
-          : []
+          : [];
         const soloGraceStems = abcjs
           ? el.lines.filter((l) => l.graceStem === true && l.beamed !== true)
-          : []
+          : [];
         // A grace's LEDGERS follow its OWN head — see `PlacedLine.graceIndex`.
         const graceLedgers = abcjs
-          ? el.lines.filter((l) => l.graceStem !== true && l.graceIndex !== undefined)
-          : []
+          ? el.lines.filter(
+              (l) => l.graceStem !== true && l.graceIndex !== undefined,
+            )
+          : [];
         const ordered = abcjs
           ? [
-              ...own.filter((l) => l.role === 'stem' && l.beamed !== true),
-              ...own.filter((l) => l.role !== 'stem'),
-              ...own.filter((l) => l.role === 'stem' && l.beamed === true),
+              ...own.filter((l) => l.role === "stem" && l.beamed !== true),
+              ...own.filter((l) => l.role !== "stem"),
+              ...own.filter((l) => l.role === "stem" && l.beamed === true),
             ]
-          : own
+          : own;
         /**
          * **A BARLINE'S DOT COLUMNS INTERLEAVE WITH ITS RULES.** abcjs's contract shows a
          * repeat END as `dots.dot, dots.dot, bar, bar` and a repeat START as
          * `bar, bar, dots.dot, dots.dot` — the leading column is added before the rules and
          * the trailing one after. `afterLine` carries how many rules precede each dot.
          */
-        if (abcjs && el.type === 'bar') {
+        if (abcjs && el.type === "bar") {
           // …and if this is the voice's LAST element, its rules reach the staff above.
           const reach =
             bartop !== undefined &&
-            (staff.connectBars || elIndex === (voiceEnds[voiceOf(elIndex)] ?? 0) - 1)
+            (staff.connectBars ||
+              elIndex === (voiceEnds[voiceOf(elIndex)] ?? 0) - 1);
           const stretched = (l: PlacedLine): PlacedLine =>
             !reach || bartop === undefined
               ? l
               : l.y1 < l.y2
                 ? { ...l, absY1: bartop }
-                : { ...l, absY2: bartop }
-          let li = 0
+                : { ...l, absY2: bartop };
+          let li = 0;
           for (const g of el.glyphs) {
             while (li < ordered.length && li < (g.afterLine ?? 0)) {
-              const line = ordered[li++]
+              const line = ordered[li++];
               if (line !== undefined) {
-                parts.push(lineToRect(TL(stretched(line)), attrs(el.type, line.role), abcjs, fg(voiceOf(elIndex))))
+                parts.push(
+                  lineToRect(
+                    TL(stretched(line)),
+                    attrs(el.type, line.role),
+                    abcjs,
+                    fg(voiceOf(elIndex)),
+                  ),
+                );
               }
             }
             parts.push(
-              glyphMarkup(g.name, g.x, g.y, g.scale, attrs(el.type, g.role, g.chordPos), g.role, g.dataName),
-            )
+              glyphMarkup(
+                g.name,
+                g.x,
+                g.y,
+                g.scale,
+                attrs(el.type, g.role, g.chordPos),
+                g.role,
+                g.dataName,
+              ),
+            );
           }
           while (li < ordered.length) {
-            const line = ordered[li++]
+            const line = ordered[li++];
             if (line !== undefined) {
-              parts.push(lineToRect(TL(stretched(line)), attrs(el.type, line.role), abcjs, fg(voiceOf(elIndex))))
+              parts.push(
+                lineToRect(
+                  TL(stretched(line)),
+                  attrs(el.type, line.role),
+                  abcjs,
+                  fg(voiceOf(elIndex)),
+                ),
+              );
             }
           }
           if (barTexts) {
             // …and everything that is NOT the bar number comes after the rules.
-            parts.push(...textParts.filter((t) => t.dataName !== 'bar-number').map((t) => t.s))
+            parts.push(
+              ...textParts
+                .filter((t) => t.dataName !== "bar-number")
+                .map((t) => t.s),
+            );
           }
-          advance()
+          advance();
           /**
            * **AND AN EMPTY GROUP IS DELETED HERE TOO.** `Svg.closeGroup` removes any `<g>`
            * whose `children.length === 0` — "if nothing was added to the group it is because
@@ -2825,9 +3071,10 @@ const glyphDefs = new Map<GlyphName, string>()
            * is a bar with no rule and no glyph, its bracket belonging to the ending on
            * `otherchildren`. `visual-layout-09` has two, one per system.
            */
-          if (openedAt >= 0 && parts.length === openedAt + 1) parts.length = openedAt
-          else parts.push('</g>')
-          return
+          if (openedAt >= 0 && parts.length === openedAt + 1)
+            parts.length = openedAt;
+          else parts.push("</g>");
+          return;
         }
         /**
          * **THE LEDGER IS LAST, AND THE LYRIC, THE GRACES AND THE DECORATION COME BEFORE
@@ -2855,14 +3102,29 @@ const glyphDefs = new Map<GlyphName, string>()
          * not: giving these `role: 'chord'` fixed the order and cost `S2-fields-tune1`
          * 18.52px — one whole lane. Two questions, two fields.
          */
-        const isChordText = (t: { role?: PartRole | undefined; dataName?: string | undefined }): boolean =>
-          t.role === 'chord' || t.role === 'chordBelow' || t.dataName === 'annotation'
-        const ledgers = abcjs ? own.filter((l) => l.role !== 'stem') : []
-        for (const line of abcjs ? own.filter((l) => l.role === 'stem' && l.beamed !== true) : ordered) {
-          parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs, fg(voiceOf(elIndex))))
+        const isChordText = (t: {
+          role?: PartRole | undefined;
+          dataName?: string | undefined;
+        }): boolean =>
+          t.role === "chord" ||
+          t.role === "chordBelow" ||
+          t.dataName === "annotation";
+        const ledgers = abcjs ? own.filter((l) => l.role !== "stem") : [];
+        for (const line of abcjs
+          ? own.filter((l) => l.role === "stem" && l.beamed !== true)
+          : ordered) {
+          parts.push(
+            lineToRect(
+              TL(line),
+              attrs(el.type, line.role),
+              abcjs,
+              fg(voiceOf(elIndex)),
+            ),
+          );
         }
         if (abcjs) {
-          for (const t of textParts.filter((t) => t.role === 'lyric')) parts.push(t.s)
+          for (const t of textParts.filter((t) => t.role === "lyric"))
+            parts.push(t.s);
         }
         // …and everything the engraver added AFTER the stem — decorations, graces.
         /**
@@ -2878,16 +3140,16 @@ const glyphDefs = new Map<GlyphName, string>()
          * early on every `{/x}` — `synth-flattener-28` at byte 21920 — so it fires on the
          * LAST glyph carrying the index instead, which is the slash where there is one.
          */
-        const graceTail = new Map<number, number>()
+        const graceTail = new Map<number, number>();
         el.glyphs.forEach((g, k) => {
-          if (g.graceIndex !== undefined) graceTail.set(g.graceIndex, k)
-        })
+          if (g.graceIndex !== undefined) graceTail.set(g.graceIndex, k);
+        });
         for (const [gi, g] of el.glyphs.slice(pitchEnd).entries()) {
           // Held whole rather than as markup: its class is `classes.generate`'d at FLUSH
           // time, after `startMeasure()` has reset the counters the group was named with.
-          if (abcjs && g.role === 'dynamic') {
-            dynamics.push({ g, at: elIndex })
-            continue
+          if (abcjs && g.role === "dynamic") {
+            dynamics.push({ g, at: elIndex });
+            continue;
           }
           parts.push(
             glyphMarkup(
@@ -2899,15 +3161,37 @@ const glyphDefs = new Map<GlyphName, string>()
               g.role,
               g.dataName,
             ),
-          )
+          );
           // A grace's stem and ledgers follow the LAST glyph carrying its index — the
           // acciaccatura slash where there is one, otherwise the head. See `graceTail`.
-          if (g.graceIndex === undefined || graceTail.get(g.graceIndex) !== pitchEnd + gi) continue
-          for (const line of soloGraceStems.filter((l) => l.graceIndex === g.graceIndex)) {
-            parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs, fg(voiceOf(elIndex))))
+          if (
+            g.graceIndex === undefined ||
+            graceTail.get(g.graceIndex) !== pitchEnd + gi
+          )
+            continue;
+          for (const line of soloGraceStems.filter(
+            (l) => l.graceIndex === g.graceIndex,
+          )) {
+            parts.push(
+              lineToRect(
+                TL(line),
+                attrs(el.type, line.role),
+                abcjs,
+                fg(voiceOf(elIndex)),
+              ),
+            );
           }
-          for (const line of graceLedgers.filter((l) => l.graceIndex === g.graceIndex)) {
-            parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs, fg(voiceOf(elIndex))))
+          for (const line of graceLedgers.filter(
+            (l) => l.graceIndex === g.graceIndex,
+          )) {
+            parts.push(
+              lineToRect(
+                TL(line),
+                attrs(el.type, line.role),
+                abcjs,
+                fg(voiceOf(elIndex)),
+              ),
+            );
           }
         }
         // (A BEAMED grace group's stems come out below, after the element's ledgers — see
@@ -2918,13 +3202,21 @@ const glyphDefs = new Map<GlyphName, string>()
         if (abcjs) {
           for (const t of textParts.filter(
             (t) =>
-              t.role !== 'lyric' &&
+              t.role !== "lyric" &&
               !isChordText(t) &&
-              !(el.type === 'tempo' && t.dataName === 'pre'),
+              !(el.type === "tempo" && t.dataName === "pre"),
           )) {
-            parts.push(t.s)
+            parts.push(t.s);
           }
-          for (const line of ledgers) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs, fg(voiceOf(elIndex))))
+          for (const line of ledgers)
+            parts.push(
+              lineToRect(
+                TL(line),
+                attrs(el.type, line.role),
+                abcjs,
+                fg(voiceOf(elIndex)),
+              ),
+            );
         }
         /**
          * **AND A BEAMED GRACE GROUP'S STEMS COME AFTER THE ELEMENT'S LEDGERS**, because
@@ -2935,31 +3227,52 @@ const glyphDefs = new Map<GlyphName, string>()
          * finished with long ago. An UNBEAMED grace's stem is built in the loop and stays
          * with its own head.
          */
-        for (const line of graceStems) parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs, fg(voiceOf(elIndex))))
+        for (const line of graceStems)
+          parts.push(
+            lineToRect(
+              TL(line),
+              attrs(el.type, line.role),
+              abcjs,
+              fg(voiceOf(elIndex)),
+            ),
+          );
         // Prose is a real <text> in a generic family, unlike musical glyphs, which are
         // paths so the SVG stays self-contained. A missing serif face falls back to
         // another serif; a missing Bravura falls back to nothing legible. See layout.ts.
         if (!barTexts) {
-          parts.push(...textParts.filter((t) => !abcjs || isChordText(t)).map((t) => t.s))
+          parts.push(
+            ...textParts
+              .filter((t) => !abcjs || isChordText(t))
+              .map((t) => t.s),
+          );
         }
         if (abcjs) {
-          for (const line of own.filter((l) => l.role === 'stem' && l.beamed === true)) {
-            parts.push(lineToRect(TL(line), attrs(el.type, line.role), abcjs, fg(voiceOf(elIndex))))
+          for (const line of own.filter(
+            (l) => l.role === "stem" && l.beamed === true,
+          )) {
+            parts.push(
+              lineToRect(
+                TL(line),
+                attrs(el.type, line.role),
+                abcjs,
+                fg(voiceOf(elIndex)),
+              ),
+            );
           }
         }
-        advance()
+        advance();
         if (abcjs) {
           if (bare) {
             // nothing to close
           } else if (openedAt >= 0 && parts.length === openedAt + 1) {
-            parts.length = openedAt
+            parts.length = openedAt;
             // The `data-index` it took is given back too: `Selectables.add` never ran.
-            if (el.type === 'note' || el.type === 'rest') selectableIndex -= 1
+            if (el.type === "note" || el.type === "rest") selectableIndex -= 1;
           } else {
-            parts.push('</g>')
+            parts.push("</g>");
           }
         }
-      })
+      });
       /**
        * **abcjs DRAWS THE MUSIC FIRST, THEN THE BEAMS, THEN EVERYTHING ELSE** — and we
        * drew all of it before the first notehead.
@@ -2979,7 +3292,7 @@ const glyphDefs = new Map<GlyphName, string>()
       // next measure (`helpers/classes.js:44-46`). So every beam is `m0 mm0` whatever bar
       // it is in — ours carried the running count.
       // The LAST voice of the staff — the loop only flushes on a boundary.
-      flushVoice(openVoice)
+      flushVoice(openVoice);
       /**
        * **AND THE LINE'S MEASURE COUNT IS BANKED WHEN THE STAFF ENDS.**
        * `drawStaffGroup` runs `newMeasure()` AFTER each staff's `drawVoice` and once more
@@ -2995,10 +3308,10 @@ const glyphDefs = new Map<GlyphName, string>()
        * `S8-layout-classes-tune10`'s second line reads `abcjs-mm0` where abcjs has
        * `abcjs-mm3`. The markers are the missing half; see the beam pass.
        */
-      if (abcjs) classes.newMeasure()
-      if (!abcjs) parts.push('</g>')
+      if (abcjs) classes.newMeasure();
+      if (!abcjs) parts.push("</g>");
     }
-    if (abcjs) classes.newMeasure()
+    if (abcjs) classes.newMeasure();
     /**
      * **AND A GROUP OF MORE THAN ONE STAFF IS CLOSED BY A PLAIN RULE DOWN ITS LEFT EDGE**
      * — `printStem(renderer, params.startx, 0.6, topLine, bottomLine, null)`, drawn after
@@ -3008,9 +3321,9 @@ const glyphDefs = new Map<GlyphName, string>()
      * means the `d` opens at the BOTTOM.
      */
     if (abcjs && system.staves.length > 1) {
-      const first = system.staves[0]
-      const last = system.staves[system.staves.length - 1]
-      const x = first?.staffLines[0]?.x1
+      const first = system.staves[0];
+      const last = system.staves[system.staves.length - 1];
+      const x = first?.staffLines[0]?.x1;
       if (first !== undefined && last !== undefined && x !== undefined) {
         /**
          * **AND ITS TWO ENDS ARE `calcY` OFF EACH STAFF'S OWN `absoluteY`, ONE PRODUCT
@@ -3026,18 +3339,22 @@ const glyphDefs = new Map<GlyphName, string>()
          * lands one ULP above and rounds to `445.59`. `visual-multi-voice-02`'s last 92
          * bytes.
          */
-        const top = first.absoluteY * PX - ENGRAVE.spacePerStep * ABCJS_PITCH.topLine * PX
-        const bottom = last.absoluteY * PX - ENGRAVE.spacePerStep * ABCJS_PITCH.bottomLine * PX
-        const w = spaces(ABCJS_LINE_PX.staffConnector) * PX
-        const r2 = (n: number): number => Number.parseFloat(n.toFixed(2))
-        const [x1, x2] = [r2(x * PX), r2(x * PX + w)]
+        const top =
+          first.absoluteY * PX -
+          ENGRAVE.spacePerStep * ABCJS_PITCH.topLine * PX;
+        const bottom =
+          last.absoluteY * PX -
+          ENGRAVE.spacePerStep * ABCJS_PITCH.bottomLine * PX;
+        const w = spaces(ABCJS_LINE_PX.staffConnector) * PX;
+        const r2 = (n: number): number => Number.parseFloat(n.toFixed(2));
+        const [x1, x2] = [r2(x * PX), r2(x * PX + w)];
         parts.push(
           `<path d="M ${x1} ${r2(bottom)}L ${x1} ${r2(top)}L ${x2} ${r2(top)}L ${x2} ${r2(bottom)}z" ` +
             `stroke="none" fill="currentColor"></path>`,
-        )
+        );
       }
     }
-    parts.push('</g>')
+    parts.push("</g>");
   }
 
   /**
@@ -3057,7 +3374,7 @@ const glyphDefs = new Map<GlyphName, string>()
     ((doc.bottomText !== undefined && doc.bottomText.length > 0) ||
       (doc.bottomLines !== undefined && doc.bottomLines.length > 0))
   ) {
-    oy = OY * PX
+    oy = OY * PX;
     /**
      * **A RUN OF ROWS SHARING A `groupName` IS ITS OWN NESTED `<g data-name="…">`.**
      * `addMultiLine`'s ARRAY branch pushes `{ startGroup: groupName }` before its rows
@@ -3065,7 +3382,7 @@ const glyphDefs = new Map<GlyphName, string>()
      * that reaches it — `simplifyMetaText` joins `notes` and `history` into single strings.
      * See `PlacedText.groupName`.
      */
-    let openGroup: string | undefined
+    let openGroup: string | undefined;
     /**
      * **A TRAILING nonMusic LINE IS STILL A LINE, AND THE BOTTOM TEXT IS NOT.** `draw()`
      * runs `classes.incrLine()` at the head of every `tune.lines` iteration — a nonMusic
@@ -3074,65 +3391,74 @@ const glyphDefs = new Map<GlyphName, string>()
      * `W:` row carries no counter at all. Ours generated both off whatever the last
      * SYSTEM left behind, which is where `abcjs-l1 abcjs-v0` came from.
      */
-    let lastNonMusicIndex: number | undefined | -1 = -1
-    const block = (doc.bottomText ?? []).map((t) => {
-      if (t.nonMusicIndex !== lastNonMusicIndex) {
-        lastNonMusicIndex = t.nonMusicIndex
-        if (t.nonMusicIndex === undefined) classes.reset()
-        else classes.incrLine()
-      }
-      // …AND A ROW THAT CHANGED FONT MID-LINE IS `richTextLine`'s, here as anywhere else.
-      if (t.phrases !== undefined) {
-        return richTextLine(
-          t.phrases,
-          raw(t.x * PX),
-          raw(t.y * PX + oy),
-          t.anchor ?? 'start',
+    let lastNonMusicIndex: number | undefined | -1 = -1;
+    const block = (doc.bottomText ?? [])
+      .map((t) => {
+        if (t.nonMusicIndex !== lastNonMusicIndex) {
+          lastNonMusicIndex = t.nonMusicIndex;
+          if (t.nonMusicIndex === undefined) classes.reset();
+          else classes.incrLine();
+        }
+        // …AND A ROW THAT CHANGED FONT MID-LINE IS `richTextLine`'s, here as anywhere else.
+        if (t.phrases !== undefined) {
+          return richTextLine(
+            t.phrases,
+            raw(t.x * PX),
+            raw(t.y * PX + oy),
+            t.anchor ?? "start",
+            options.addClasses === true && t.dataName !== undefined
+              ? (t.groupClass ??
+                  generatedTextClass(t.dataName) ??
+                  ABCJS_TEXT_CLASSES[t.dataName] ??
+                  "")
+              : undefined,
+          );
+        }
+        const base = round2(t.y * PX + oy);
+        const markup = abcjsText(
+          round2(t.x * PX),
+          base,
+          num(t.size * PX),
+          // …AND THE FACE A `%%<type>font` NAMES, as every other `renderText` element takes
+          // it. Hard-coded here, so a trailing `%%text` under `%%textfont Verdana 21` drew
+          // in the default.
+          t.face ?? "Times New Roman",
+          t.italic === true,
+          t.bold === true,
+          t.anchor ?? "start",
+          t.dataName ?? "",
+          escapeText(t.text),
           options.addClasses === true && t.dataName !== undefined
-            ? (t.groupClass ?? generatedTextClass(t.dataName) ?? ABCJS_TEXT_CLASSES[t.dataName] ?? '')
-            : undefined,
-        )
-      }
-      const base = round2(t.y * PX + oy)
-      const markup = abcjsText(
-        round2(t.x * PX),
-        base,
-        num(t.size * PX),
-        // …AND THE FACE A `%%<type>font` NAMES, as every other `renderText` element takes
-        // it. Hard-coded here, so a trailing `%%text` under `%%textfont Verdana 21` drew
-        // in the default.
-        t.face ?? 'Times New Roman',
-        t.italic === true,
-        t.bold === true,
-        t.anchor ?? 'start',
-        t.dataName ?? '',
-        escapeText(t.text),
-        options.addClasses === true && t.dataName !== undefined
-          ? (t.groupClass ?? generatedTextClass(t.dataName) ?? ABCJS_TEXT_CLASSES[t.dataName] ?? '')
-          : '',
-        (t.extraLines ?? []).map(escapeText),
-        t.middleBaseline === true,
-        // A BOXED row's class is DELETED, not emptied (`draw/text.js:58`).
-        t.boxRect !== undefined,
-      )
-      // …and the same group-and-four-rules a boxed row takes anywhere else.
-      return t.boxRect === undefined
-        ? markup
-        : `<g fill="currentColor" data-name="${t.dataName ?? ''}">` +
-          `${markup}${boxRulesPath(t.boxRect, t.y * PX + oy, t.size * PX)}</g>`
-    }).map((markup, i) => {
-      const row = (doc.bottomText ?? [])[i]
-      const name = row?.groupName
-      const id = row?.groupId ?? name
-      let out = ''
-      if (id !== openGroup) {
-        if (openGroup !== undefined) out += '</g>'
-        openGroup = id
-        if (id !== undefined) out += `<g data-name="${escapeAttr(name ?? '')}">`
-      }
-      return out + markup
-    })
-    if (openGroup !== undefined) block.push('</g>')
+            ? (t.groupClass ??
+                generatedTextClass(t.dataName) ??
+                ABCJS_TEXT_CLASSES[t.dataName] ??
+                "")
+            : "",
+          (t.extraLines ?? []).map(escapeText),
+          t.middleBaseline === true,
+          // A BOXED row's class is DELETED, not emptied (`draw/text.js:58`).
+          t.boxRect !== undefined,
+        );
+        // …and the same group-and-four-rules a boxed row takes anywhere else.
+        return t.boxRect === undefined
+          ? markup
+          : `<g fill="currentColor" data-name="${t.dataName ?? ""}">` +
+              `${markup}${boxRulesPath(t.boxRect, t.y * PX + oy, t.size * PX)}</g>`;
+      })
+      .map((markup, i) => {
+        const row = (doc.bottomText ?? [])[i];
+        const name = row?.groupName;
+        const id = row?.groupId ?? name;
+        let out = "";
+        if (id !== openGroup) {
+          if (openGroup !== undefined) out += "</g>";
+          openGroup = id;
+          if (id !== undefined)
+            out += `<g data-name="${escapeAttr(name ?? "")}">`;
+        }
+        return out + markup;
+      });
+    if (openGroup !== undefined) block.push("</g>");
     /**
      * **AND A TRAILING nonMusic LINE IS A SIBLING GROUP, NOT THE HEAD OF THIS ONE.**
      * `draw()` writes one `<g>` per nonMusic line and opens ANOTHER for the bottom text
@@ -3140,29 +3466,39 @@ const glyphDefs = new Map<GlyphName, string>()
      * `T:Inserted subtitle` and its `W:` block shared a group where abcjs closes one and
      * opens the next. See `nonMusicIndex` on the trailing rows.
      */
-    const trailingCount = (doc.bottomText ?? []).filter((t) => t.nonMusicIndex !== undefined)
-      .length
+    const trailingCount = (doc.bottomText ?? []).filter(
+      (t) => t.nonMusicIndex !== undefined,
+    ).length;
     // …and a trailing `%%sep`'s rule, which is INK on the same block.
     for (const line of doc.bottomLines ?? []) {
-      const t = TL(line)
-      block.push(separatorPath(t.x1, t.y1, t.x2, classes.generate('defined-text')))
+      const t = TL(line);
+      block.push(
+        separatorPath(t.x1, t.y1, t.x2, classes.generate("defined-text")),
+      );
     }
-    const klassBottom = options.addClasses === true ? ' class="abcjs-meta-bottom"' : ''
-    const klassNonMusic = options.addClasses === true ? ' class="abcjs-non-music"' : ''
+    const klassBottom =
+      options.addClasses === true ? ' class="abcjs-meta-bottom"' : "";
+    const klassNonMusic =
+      options.addClasses === true ? ' class="abcjs-non-music"' : "";
     if (trailingCount > 0)
-      parts.push(`<g${klassNonMusic}>${block.slice(0, trailingCount).join('')}</g>`)
-    const rest = block.slice(trailingCount)
-    if (rest.length > 0) parts.push(`<g${klassBottom}>${rest.join('')}</g>`)
+      parts.push(
+        `<g${klassNonMusic}>${block.slice(0, trailingCount).join("")}</g>`,
+      );
+    const rest = block.slice(trailingCount);
+    if (rest.length > 0) parts.push(`<g${klassBottom}>${rest.join("")}</g>`);
   }
 
-  const w = abcjs ? doc.pageWidth * OUT : (options.pageWidth ?? doc.width * OUT)
-  const h = doc.height * OUT
+  const w = abcjs
+    ? doc.pageWidth * OUT
+    : (options.pageWidth ?? doc.width * OUT);
+  const h = doc.height * OUT;
   // The viewBox must widen with the page, or forcing the width would just scale the
   // music up to fill it instead of leaving the margin abcjs leaves.
-  const viewWidth = options.pageWidth === undefined ? doc.width : options.pageWidth / OUT
+  const viewWidth =
+    options.pageWidth === undefined ? doc.width : options.pageWidth / OUT;
   // viewBox carries the staff-space coordinate system, including the negative y above
   // the middle line, so nothing downstream has to know about the origin offset.
-  const viewBox = `0 ${num(doc.top)} ${num(viewWidth)} ${num(doc.height)}`
+  const viewBox = `0 ${num(doc.top)} ${num(viewWidth)} ${num(doc.height)}`;
 
   /**
    * ABCJS'S ROOT ELEMENT, ATTRIBUTE FOR ATTRIBUTE — and it is what a browser's serializer
@@ -3182,8 +3518,8 @@ const glyphDefs = new Map<GlyphName, string>()
     return (
       `<svg xmlns:xlink="http://www.w3.org/1999/xlink" role="img" fill="currentColor" ` +
       `stroke="currentColor" aria-label="Sheet Music${
-        options.title === undefined || options.title === ''
-          ? ''
+        options.title === undefined || options.title === ""
+          ? ""
           : ` for &quot;${escapeText(options.title)}&quot;`
       }" width="${raw(w)}" height="${raw(h)}"` +
       /**
@@ -3199,42 +3535,42 @@ const glyphDefs = new Map<GlyphName, string>()
       // The TITLE element carries the same phrase with REAL quotes — it is text content,
       // where the `aria-label` is an attribute and the serializer escapes them there.
       `<style>${ABCJS_STYLE}</style><title>Sheet Music${
-        options.title === undefined || options.title === ''
-          ? ''
+        options.title === undefined || options.title === ""
+          ? ""
           : ` for "${escapeText(options.title)}"`
       }</title>` +
       (glyphDefs.size === 0
-        ? ''
+        ? ""
         : `<defs>${[...glyphDefs]
             .map(([name, id]) => `<path id="${id}" d="${outline(name).path}"/>`)
-            .join('')}</defs>`) +
+            .join("")}</defs>`) +
       // NO WRAPPER ROUND THE WHOLE DRAWING. abcjs's `fill` lives on the `<svg>` and its
       // outermost children are SIBLINGS: the meta-top group, then one staff-wrapper per
       // line, then the meta-bottom group. The `<g>` that used to be here was read as
       // abcjs's outer group and is in fact its `abcjs-meta-top`, which now sits with the
       // top text that fills it.
-      parts.join('') +
-      '</svg>'
-    )
+      parts.join("") +
+      "</svg>"
+    );
   }
 
   return (
-    `<svg xmlns="http://www.w3.org/2000/svg"${abcjs ? '' : ` class="${escapeAttr(prefix)}"`} ` +
+    `<svg xmlns="http://www.w3.org/2000/svg"${abcjs ? "" : ` class="${escapeAttr(prefix)}"`} ` +
     // abcjs SETS `fill` ON THE `<svg>` ITSELF and wraps nothing round the music, so its
     // outermost child is the staff-wrapper. Ours carried an extra `<g fill>`, which put
     // every element ONE DEPTH deeper than abcjs's and made the very first contract row
     // differ — a difference no positional gate could express, since a group with no
     // transform moves nothing.
-    `${abcjs ? 'fill="currentColor" ' : ''}` +
+    `${abcjs ? 'fill="currentColor" ' : ""}` +
     `width="${num(w)}" height="${num(h)}" viewBox="${viewBox}">` +
     // Built while walking the music, so it can only be serialised now that the walk is
     // done — which is why `parts` is assembled first and the document assembled last.
     (glyphDefs.size === 0
-      ? ''
+      ? ""
       : `<defs>${[...glyphDefs]
           .map(([name, id]) => `<path id="${id}" d="${outline(name).path}"/>`)
-          .join('')}</defs>`) +
-    (abcjs ? parts.join('') : `<g fill="currentColor">${parts.join('')}</g>`) +
+          .join("")}</defs>`) +
+    (abcjs ? parts.join("") : `<g fill="currentColor">${parts.join("")}</g>`) +
     `</svg>`
-  )
+  );
 }

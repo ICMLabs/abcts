@@ -1820,6 +1820,15 @@ export interface Layout {
   readonly bottomText?: readonly PlacedText[]
   /** `%%sep` rules in a trailing block — see `bottomText`. */
   readonly bottomLines?: readonly PlacedLine[]
+  /**
+   * **A SUBTITLE IS A LINE OF ITS OWN THAT DRAWS NOTHING.** Every `T:` after the first
+   * becomes a bare `{subtitle}` entry in `abcTune.lines` — no `staff`, no `nonMusic`, so
+   * `draw()`'s loop matches neither branch and emits no markup — and the loop still runs
+   * `classes.incrLine()` over it (`draw/draw.js:28-31`). That is why a tune with one
+   * extra `T:` opens at `abcjs-staff-wrapper abcjs-l1` and `little swallow`, which has
+   * two, opens at `abcjs-l2`. The TEXT itself is drawn from `topText` before the loop.
+   */
+  readonly blankLeadingLines?: number
 }
 
 /**
@@ -13068,6 +13077,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
      * that could see it, since a page too narrow moves no ink.
      */
     pageWidth: pageRatcheted ? pageWidth + 2 * ENGRAVE.marginX : systemWidth,
+    // See `blankLeadingLines` — every `T:` past the first is one.
+    blankLeadingLines: Math.max(0, score.metadata.titles.length - 1),
     // `cursor` has one trailing gap on it, added after the last system. abcjs opens with
     // `moveY(padding.top)` before drawing anything (`draw.js:14`), so the page begins
     // ABOVE the ink — expressed as a negative viewBox top rather than by shifting every
