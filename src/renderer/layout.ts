@@ -7099,6 +7099,21 @@ function layoutCurves(
       (opener?.tieSteps?.length ?? 0) > 1 ? Math.max(...(opener?.tieSteps ?? [])) : undefined
     for (const a of anchors.slice(from + 1, to)) {
       if (a.event.type === 'rest') continue
+      /**
+       * **A NOTE THAT CLOSES A SLUR IS NOT AN INTERNAL NOTE.** `addSlursAndTies` reaches
+       * `addInternalNote` through an `else if (!isGrace)` hanging off `if
+       * (pitchelem.endSlur)` (`abstract-engraver.js:920-942`), so a head that ends any slur
+       * skips the whole block. `((c2 (3(d)ef) e2)` on `S8-layout` X:809 is the case: `d`
+       * closes `(d)` and `f` closes `(3(d)ef)`, leaving abcjs ONE internal note — its own
+       * probe says `INNER n= 1 max= 9` — where ours had three and the highest was the `f`.
+       * That fired `avoidCollisionAbove`, which flattens BOTH ends to one value, and the
+       * slur came out at pitch 10.5/10.5 against abcjs's 8.5/10.5.
+       *
+       * ponytail: abcjs excludes the HEAD, not the note — a chord where one head closes a
+       * slur still contributes its others. Nothing in either corpus writes one; widen this
+       * to `tieSteps` if something does.
+       */
+      if (a.event.slurEnds > 0) continue
       const heads = a.tieSteps ?? (a.pitchStep === undefined ? [] : [a.pitchStep])
       if (heads.length === 0) continue
       const top = Math.max(...heads)
