@@ -155,6 +155,7 @@ const PASSING: readonly string[] = [
   'S3-note-syntax-classes-tune1',
   'S3-note-syntax-classes-tune4',
   'S3-note-syntax-classes-tune5',
+  'S3-note-syntax-classes-tune6',
   'S3-note-syntax-classes-tune7',
   'S3-note-syntax-classes-tune8',
   'S3-note-syntax-classes-tune10',

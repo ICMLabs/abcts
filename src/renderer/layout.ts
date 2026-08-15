@@ -1308,6 +1308,20 @@ export interface LayoutElement {
    * clef read back out of it.
    */
   readonly durationClass?: number
+  /**
+   * What a BEAM starting here classes on, when that is not `durationClass`.
+   *
+   * `BeamElem` takes `firstElement.duration` and multiplies by `tripletMultiplier` only
+   * when that element STARTS the triplet (`elements/beam-element.js:31-36`), and abcjs's
+   * `abcelem.duration` is the NOTATED value: `ABCJS_BDUR` prints `firstDuration 0.125 …
+   * mult 0.667 -> 0.083` for a triplet eighth that opens one. So a member that opens the
+   * tuplet classes SOUNDING and one that does not classes NOTATED — which is why
+   * `S8-layout-classes-tune9`'s beam is `abcjs-d0-125` and not `d0-083`.
+   *
+   * Only a tuplet member carries it. Making `durationClass` itself notated was tried and
+   * took the gate from 18 to 23: a NOTE's own `d` class is not the same quantity.
+   */
+  readonly tupletStartDuration?: number
   readonly abcjsPitches?: readonly number[]
   /**
    * **`!mark!` PAINTS THE WHOLE ELEMENT GREEN AND NAMES IT.** `stackedDecoration` sets
@@ -4489,6 +4503,15 @@ function layoutNoteheads(
     stemUp: up,
     // abcjs's `d` and `p` classes; see `LayoutElement.durationClass`.
     durationClass: event === null ? 0 : ratToNumber(event.duration),
+    /**
+     * …**AND A BEAM MULTIPLIES BY THE TRIPLET RATIO ONLY WHEN ITS FIRST ELEMENT STARTS
+     * ONE** — `if (firstElement.startTriplet) this.duration *= firstElement
+     * .tripletMultiplier` (`elements/beam-element.js:31-36`). Notated times the ratio IS
+     * the sounding duration, so this is it; a member that does not open the tuplet keeps
+     * the notated value, which is why `S8-layout-classes-tune9`'s beam is `abcjs-d0-125`
+     * and not `d0-083`.
+     */
+
     // `!mark!` — see `LayoutElement.marked`.
     ...(event !== null && event.decorations.includes('mark') ? { marked: true } : {}),
     // `pitch` 0 is MIDDLE C in abcjs, so the octave offset comes back off.
@@ -8614,7 +8637,8 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
    * one; taking the first NOTE is the same element wherever abcjs is defined.
    */
   const notes = group.filter((m) => m.rest !== true)
-  const firstDuration = elements[notes[0]?.element ?? -1]?.durationClass
+  const firstElement = elements[notes[0]?.element ?? -1]
+  const firstDuration = firstElement?.tupletStartDuration ?? firstElement?.durationClass
   const first = notes[0]
   const last = notes[notes.length - 1]
   if (!first || !last || notes.length < 2) return []
@@ -9476,6 +9500,8 @@ function layoutMeasure(
   const anchors: NoteAnchor[] = []
   /** …and the non-note places a hairpin may open or close — see `MeasureBlock.spannerSites`. */
   const spannerSites: SpannerSite[] = []
+  /** Tuplet groups already opened, so only the FIRST member is stamped. */
+  const tupletSeen = new Set<number>()
   let x = 0
 
   // The label precedes the first event that comes AFTER the `P:` in the source, which is
@@ -9884,7 +9910,23 @@ function layoutMeasure(
         event,
       })
     }
-    elements.push(el)
+    /**
+     * …**AND THE ELEMENT THAT OPENS A TUPLET CARRIES ITS SOUNDING DURATION**, which is the
+     * one a beam starting there classes on — see `LayoutElement.tupletStartDuration`.
+     */
+    const tupletGroupId = event.type === 'rest' ? null : (event.tuplet?.group ?? null)
+    const opensTuplet = tupletGroupId !== null && !tupletSeen.has(tupletGroupId)
+    if (opensTuplet && tupletGroupId !== null) tupletSeen.add(tupletGroupId)
+    elements.push(
+      tupletGroupId === null
+        ? el
+        : {
+            ...el,
+            tupletStartDuration: ratToNumber(
+              opensTuplet ? event.duration : (event as { notatedDuration: Rational }).notatedDuration,
+            ),
+          },
+    )
     // A ZERO-DURATION NOTE SPACES AS A QUARTER. abcjs rewrites the duration before
     // anything reads it — `if (duration === 0) { zeroDuration = true; duration = 0.25;
     // nostem = true; }` (`abstract-engraver.js:791`) — so the head, the stem and the
