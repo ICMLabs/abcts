@@ -1428,6 +1428,16 @@ export interface PlacedCurve {
    * a flag on the curve rather than a second shape.
    */
   readonly dotted?: boolean
+  /**
+   * **THE ORDER THE `(` WAS READ IN**, for two curves that OPEN on the same element.
+   *
+   * A slur is `addOther`'d at its open, so `otherchildren` orders it by its opening x —
+   * but `((` puts two slurs on one element, and abcjs's `for (i = 0; i < elem.startSlur
+   * .length; i++)` then adds the OUTER one first (`abstract-engraver.js:942-950`). Ours
+   * emits at CLOSE time, which is inner-first, and no x can tell them apart:
+   * `(([GCD]G)[GCD]G)` writes the two arcs the wrong way round.
+   */
+  readonly openSeq?: number
   readonly x1: number
   readonly y1: number
   readonly x2: number
@@ -6809,6 +6819,9 @@ function layoutCurves(
 ): PlacedCurve[][] {
   const curves: PlacedCurve[][] = bounds.map(() => [])
   const open: number[] = []
+  /** `(` order, by stack depth — see `PlacedCurve.openSeq`. */
+  const openSeq = new Map<number, number>()
+  let seq = 0
 
   /**
    * Emit one logical curve, SPLITTING it if its ends are in different systems.
@@ -6858,8 +6871,17 @@ function layoutCurves(
    * A chord with no slur of its own keeps each head's own pitch, so its maximum is simply
    * its top head.
    */
-  const internalHighOf = (from: number, to: number): number | undefined => {
-    let max: number | undefined
+  const internalHighOf = (
+    from: number,
+    to: number,
+    /** The OPENING anchor, whose own upper heads are internal notes — see the call site. */
+    opener?: NoteAnchor,
+  ): number | undefined => {
+    // Their `highestVert` is their own `verticalPos` and nothing else: the overwrite at
+    // `abstract-engraver.js:704-708` fires only for `p === 0` or `p === pp - 1`, and a
+    // chord's top head is neither once the slur is on `pitches[0]` with the stem up.
+    let max: number | undefined =
+      (opener?.tieSteps?.length ?? 0) > 1 ? Math.max(...(opener?.tieSteps ?? [])) : undefined
     for (const a of anchors.slice(from + 1, to)) {
       if (a.event.type === 'rest') continue
       const heads = a.tieSteps ?? (a.pitchStep === undefined ? [] : [a.pitchStep])
@@ -6879,6 +6901,8 @@ function layoutCurves(
     to: NoteAnchor,
     kind: 'tie' | 'slur',
     internalHigh?: number,
+    /** See `PlacedCurve.openSeq` — the `(` order, for two curves opening on one element. */
+    openSeqOf?: number,
   ): void => {
     // `.-` and `.(` — the STYLE rides on the element the curve OPENS at, one flag for the
     // tie it starts and one for the slurs opening on it. See `PlacedCurve.dotted`.
@@ -6898,6 +6922,7 @@ function layoutCurves(
           internalHigh,
         ),
         ...style,
+        ...(openSeqOf === undefined ? {} : { openSeq: openSeqOf }),
       })
       return
     }
@@ -7036,23 +7061,41 @@ function layoutCurves(
 
     // Slurs close before they open, so `(A)(B)` closes on A before opening on B.
     for (let n = 0; n < event.slurEnds; n++) {
+      const depth = open.length - 1
       const start = open.pop()
       const from = start === undefined ? undefined : anchors[start]
       if (from !== undefined) {
         // Notes strictly between the two ends — abcjs's `internalNotes`, which a REST and
         // a GRACE never join. See `drawnKind`.
-        const internal = anchors
-          .slice((start ?? 0) + 1, i)
-          .filter((a) => a.event.type !== 'rest').length
+        /**
+         * **AND A CHORD'S OWN OTHER NOTEHEADS ARE INTERNAL NOTES OF THE SLUR THAT OPENS
+         * ON IT.** `addSlursAndTies` runs ONCE PER PITCH, and its `else if (!isGrace)`
+         * arm pushes every head that carries no `endSlur` into every OPEN slur
+         * (`abstract-engraver.js:934-940`). A slur opens on `pitches[0]`, so the chord's
+         * remaining heads are read a moment later and land inside it.
+         *
+         * That decides `isTie`: `([GCD][GCD])` has anchors of equal pitch and would be
+         * drawn as a TIE by the count alone — abcjs draws a SLUR, and `curves-tune3`'s
+         * page is 11.45px taller for it. The CLOSING chord contributes none, because
+         * `setEndAnchor` deletes the slur before its other heads are reached.
+         */
+        const chordHeads = Math.max(0, (from.tieSteps?.length ?? 1) - 1)
+        const internal =
+          chordHeads +
+          anchors.slice((start ?? 0) + 1, i).filter((a) => a.event.type !== 'rest').length
         emit(
           from,
           anchor,
           drawnKind(from, anchor, 'slur', internal),
-          internalHighOf(start ?? 0, i),
+          internalHighOf(start ?? 0, i, from),
+          openSeq.get(depth),
         )
       }
     }
-    for (let n = 0; n < event.slurStarts; n++) open.push(i)
+    for (let n = 0; n < event.slurStarts; n++) {
+      open.push(i)
+      openSeq.set(open.length - 1, seq++)
+    }
 
     // A tie joins this note to the next SOUNDING one, wherever it falls.
     if (event.tiedToNext) {
@@ -8963,8 +9006,19 @@ function layoutMeasure(
       // warning about ("that is not a rounding difference; it moves notes"). The metric
       // twenty lines up already reads `glyphsFor(strict)`; this one did not.
       const width = glyphsFor(strict).width(heads[0]?.name ?? 'noteheadBlack')
+      /**
+       * **A CURVE HANGS ON THE CHORD'S LOWEST HEAD, NOT ITS FIRST-WRITTEN ONE.**
+       * `addSlursAndTies` walks `el.pitches`, which the ENGRAVER has SORTED so the
+       * noteheads can stack, and a slur is hung on `pitches[0]` — so `([GCD][GCD])`
+       * anchors on C where the source says G. Ours took the written order and drew both
+       * slurs 4 pitch high, which is 11.45px of page on `curves-tune3` and `-tune4`.
+       */
       const first =
-        event.type === 'note' ? event.pitch : event.type === 'chord' ? event.pitches[0] : undefined
+        event.type === 'note'
+          ? event.pitch
+          : event.type === 'chord'
+            ? [...event.pitches].sort((a, b) => pitchToStep(a, clef) - pitchToStep(b, clef))[0]
+            : undefined
       anchors.push({
         system: 0, // filled in when the block is placed into a system
         element: elements.length,

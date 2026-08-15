@@ -2041,7 +2041,14 @@ const glyphDefs = new Map<GlyphName, string>()
          * `abcjs-tie`, which is a class abcjs only ever writes with the rest of that string.
          */
         const curveSink: string[] = []
-        for (const curve of staff.curves.filter(mine)) {
+        // **AND `((` PUTS TWO CURVES ON ONE ELEMENT, WHICH NO x CAN TELL APART.** Both
+        // are `addOther`'d at the same open, and abcjs's `for (i = 0; i < elem.startSlur
+        // .length; i++)` adds the OUTER one first. Ours emits at CLOSE time, which is
+        // inner-first. See `PlacedCurve.openSeq`.
+        for (const curve of staff.curves
+          .filter(mine)
+          .slice()
+          .sort((a, b) => (a.openSeq ?? 0) - (b.openSeq ?? 0))) {
           const end = (which: 'start' | 'end', index: number | undefined): string => {
             const c = index === undefined ? undefined : counters.get(index)
             return c === undefined

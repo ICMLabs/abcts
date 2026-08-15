@@ -92,7 +92,7 @@ system 0 width=408.242 originY=0.000
       glyph noteheadBlack 198.125,-15.500
       line  207.435,-16.792 -> 207.435,-42.625 t=1.000
 tune 3
-bounds  width=450.750 height=135.349 top=-15.000
+bounds  width=450.750 height=146.802 top=-15.000
 systems 1
 system 0 width=450.750 originY=0.000
   staff 0 originY=101.302
@@ -101,8 +101,8 @@ system 0 width=450.750 originY=0.000
     staffline 15.000,-23.250 -> 240.552,-23.250 t=0.700
     staffline 15.000,-31.000 -> 240.552,-31.000 t=0.700
     staffline 15.000,-38.750 -> 240.552,-38.750 t=0.700
-    tie  76.846,-10.850 -> 117.272,-10.850 bulge=7.277
-    tie  161.699,-10.850 -> 202.125,-10.850 bulge=7.277
+    slur  76.846,5.813 -> 117.272,5.813 bulge=7.277
+    slur  161.699,5.813 -> 202.125,-9.687 bulge=7.277
     title x=0.000 w=0.000
       text  350.000,-66.742 size=27.000 "Slurs over Stacked Notes"
     clef x=15.000 w=24.051
@@ -132,7 +132,7 @@ system 0 width=450.750 originY=0.000
       glyph noteheadBlack 198.125,-15.500
       line  207.435,-16.792 -> 207.435,-42.625 t=1.000
 tune 4
-bounds  width=475.071 height=135.349 top=-15.000
+bounds  width=475.071 height=146.802 top=-15.000
 systems 1
 system 0 width=475.071 originY=0.000
   staff 0 originY=101.302
@@ -141,8 +141,8 @@ system 0 width=475.071 originY=0.000
     staffline 15.000,-23.250 -> 240.552,-23.250 t=0.700
     staffline 15.000,-31.000 -> 240.552,-31.000 t=0.700
     staffline 15.000,-38.750 -> 240.552,-38.750 t=0.700
-    tie  76.846,-10.850 -> 117.272,-10.850 bulge=7.277
-    slur  76.846,-9.687 -> 202.125,-9.687 bulge=17.050
+    slur  76.846,5.813 -> 117.272,-9.687 bulge=7.277
+    slur  76.846,5.813 -> 202.125,-9.687 bulge=17.050
     title x=0.000 w=0.000
       text  350.000,-66.742 size=27.000 "Nested slurs over Stacked Notes"
     clef x=15.000 w=24.051
