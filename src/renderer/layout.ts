@@ -12170,8 +12170,26 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       })(),
     }))
 
-    // abcjs advances the page by `staffGroup.height * STEP` once the group is drawn
-    // (`draw/draw.js:81-82`); the lead went in before the padding, above.
+    /**
+     * abcjs advances the page by `staffGroup.height * STEP` once the group is drawn
+     * (`draw/draw.js:81-82`); the lead went in before the padding, above.
+     *
+     * **AND THE SPLIT BETWEEN THIS AND `addStaffPadding` IS OFF ON SOME SYSTEMS, WHICH IS
+     * THE LAST OF THE ULP FAMILY — MEASURED, NOT FIXED.** Printed side by side on
+     * `S3-note-syntax` X:309 with `ABCTS_Y=1` against `ABCJS_MOVEY=1`, the first two
+     * systems agree term for term and the third does not:
+     *
+     *     abcjs   gap 22.751798029556653 -> 274.63679802955664   sys 77.32820197044335 -> 351.965
+     *     ours    gap 35.272999999999996 -> 287.158              sys 64.807            -> 351.96500000000003
+     *
+     * The two SUM to the same place — 12.521px moves from the system's own height into the
+     * padding and back — so this is **TWO ERRORS CANCELLING**, the sixth time on this
+     * branch, and all that survives is the association. `addStaffPadding` is a TOP-UP
+     * (`staffSeparation - naturalSeparation * STEP`), so a `staff.top` 3.232 pitch short
+     * is made up by the gap: that system is the one full of GRACE groups, whose beamed
+     * stems are deliberately out of the extent (`noReserve`). Find which term of
+     * `staff.top` abcjs has there and the height follows.
+     */
     pageCursor += system.heightPitch * ENGRAVE.spacePerStep
     return { ...shifted, staves: withAbsolute, originY, absoluteY: systemAbsoluteY, gap }
   })
@@ -12328,17 +12346,25 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
          * token on `visual-tablature-08`. One list, spent once, and the page and the staff
          * cannot drift apart.
          */
-        for (const a of first?.leadAdvances ?? topAdvances) y += a
+        for (const a of first?.leadAdvances ?? topAdvances) {
+          y += a
+          if (process.env.ABCTS_Y) console.log('Y lead', a, '->', y)
+        }
         for (const [i, system] of shown.entries()) {
           if (i > 0) {
             // A MID-TUNE BLOCK is this system's own leading — abcjs draws that nonMusic
             // line before the group and the page's cursor moves through it, ROW BY ROW,
             // and only THEN pads (`draw/draw.js:44-58`). Dropping it lost a whole subtitle
             // row; spending it as a SUM, or after the padding, lost the last bits.
-            for (const a of system.leadAdvances) y += a
+            for (const a of system.leadAdvances) {
+              y += a
+              if (process.env.ABCTS_Y) console.log('Y sysLead', a, '->', y)
+            }
             y += system.gap ?? 0
+            if (process.env.ABCTS_Y) console.log('Y gap', system.gap ?? 0, '->', y)
           }
           y += system.heightPitch * ENGRAVE.spacePerStep
+          if (process.env.ABCTS_Y) console.log('Y sys', system.heightPitch * ENGRAVE.spacePerStep, '->', y)
         }
       }
       y += trailingHeight
