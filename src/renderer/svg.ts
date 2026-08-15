@@ -1830,7 +1830,7 @@ const glyphDefs = new Map<GlyphName, string>()
            */
           into: { x: number; s: string }[] | null = null,
         ): void => {
-          if (text === undefined) return
+          if (text === undefined && lines.length === 0) return
           /** Held rather than written when this group has to take its turn in the merge. */
           const sink: string[] = []
           const emit = (piece: string): void => {
@@ -1852,7 +1852,7 @@ const glyphDefs = new Map<GlyphName, string>()
             })
             .join('')
           emit(
-            `<g${attrIfAny(classes.generateAt(text.groupClass ?? '', text.measure ?? 0))}` +
+            `<g${attrIfAny(classes.generateAt(text?.groupClass ?? name, text?.measure ?? 0))}` +
               `${fill ? ` fill="${ink}"` : ''} data-name="${name}">`,
           )
           if (d) {
@@ -1867,6 +1867,13 @@ const glyphDefs = new Map<GlyphName, string>()
           // `<text>` in `serif` with the attributes in another order.
           // A `%%repeatfont`/`%%tripletfont` that NAMES a face wins over the type's
           // default, exactly as it does for a music text — see `PlacedText.face`.
+          // **THE NUMBER IS `if (params.anchor1)`'s** (`draw/ending.js:38-49`), so a
+          // bracket carried over a system break has none — see `voltaCarried`.
+          if (text === undefined) {
+            emit('</g>')
+            if (into !== null) into.push({ x: lines[0]?.x1 ?? 0, s: sink.join('') })
+            return
+          }
           const face = text.face ?? (text.font === undefined ? undefined : ABCJS_FONT_FACE[text.font])
           emit(
             face === undefined
@@ -1910,10 +1917,15 @@ const glyphDefs = new Map<GlyphName, string>()
           // curve and a hairpin, so it takes its turn in the one add-order list rather than
           // preceding all of them — abcjs writes a single-letter dynamic BEFORE the bracket
           // on `visual-selection-01`. Keyed on the CLOSING x, as the others are.
-          for (const t of staff.voltaTexts.filter(mine)) {
+          // **KEYED ON THE BRACKET, NOT ON ITS NUMBER.** A carried half has no number at
+          // all, and iterating the TEXTS dropped it entirely.
+          const voltaGroups = [
+            ...new Set(staff.voltaLines.filter(mine).map((l) => l.group ?? 0)),
+          ].sort((a, b) => a - b)
+          for (const g of voltaGroups) {
             bracketGroup(
-              staff.voltaLines.filter(mine).filter((l) => l.group === t.group),
-              t,
+              staff.voltaLines.filter(mine).filter((l) => (l.group ?? 0) === g),
+              staff.voltaTexts.filter(mine).find((t) => t.group === g),
               'ending',
               'line',
               true,

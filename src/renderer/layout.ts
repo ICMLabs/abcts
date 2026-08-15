@@ -403,6 +403,11 @@ export const ENGRAVE = {
    * abcjs's default is 0.1 and the directive can change it (`get-font-and-attr.js:35`).
    */
   fontBoxPadding: ABCJS_RATIO.fontBoxPadding,
+  /**
+   * `params.startx + 10` — where a carried ending's rule opens (`draw/voice.js:85`).
+   * The same 10 `drawEnding` uses for `linestartx`'s default.
+   */
+  voltaLineStart: spaces(10),
   /** Stroke of the rules `%%partsbox` draws — one pixel, as abcjs's `rect` emits. */
   fontBoxRule: spaces(ABCJS_PX.fontBoxRule),
   tempoHeightAbove: spacesOfPitch(ABCJS_PITCH.tempoHeightAbove),
@@ -8592,6 +8597,8 @@ interface MeasureBlock {
   /** A repeat ending opening at this measure, and whether this measure closes it. */
   readonly volta: string | null
   readonly closesVolta: boolean
+  /** …and the same for its OPENING barline — see `voltaCarried`. */
+  readonly opensAfterVolta: boolean
   /**
    * Width of the music alone, excluding the closing barline and its gaps.
    *
@@ -9444,6 +9451,15 @@ function layoutMeasure(
    * abcjs hooks it at the bar.
    */
   const closesVolta = measure.closingBarline !== null && measure.closingBarline !== 'thin'
+  /**
+   * …AND THE SAME TEST ON THE MEASURE'S OPENING BARLINE, for a volta CARRIED over a
+   * system break. `if (inEnding && bar.type !== 'bar_thin') bar.endEnding = true`
+   * (`abc_parse_music.js:271-274`) is a property of the BAR, not of which measure our
+   * model happened to hang it on: `|2 c B A G |` followed by a line-leading `|:` closes on
+   * that `|:`, which is the NEXT measure's opening bar here. See `voltaCarried`.
+   */
+  const opensAfterVolta =
+    measure.openingBarline !== null && measure.openingBarline !== 'thin'
 
   return {
     elements,
@@ -9457,6 +9473,7 @@ function layoutMeasure(
     musicWidth,
     volta: measure.volta,
     closesVolta,
+    opensAfterVolta,
   }
 }
 
@@ -10387,6 +10404,17 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
    */
   let pageRatcheted = false
 
+  /**
+   * **AN ENDING THAT RUNS OFF A SYSTEM RESUMES ON THE NEXT ONE.** abcjs splits it into TWO
+   * `EndingElem`s — `anchor1` null means "starts at the beginning of the line", `anchor2`
+   * null means "ends at the end of it" (`creation/elements/ending-element.js:3-8`) — and
+   * `drawEnding` draws the opening hook and the NUMBER only `if (params.anchor1)`
+   * (`draw/ending.js:15-49`). So the continuation is a bare rule from `params.startx + 10`
+   * to its close, with one hook and no text. Ours drew the first half and dropped the
+   * rest: `S4-bars-repeats` X:402 wraps its third ending and abcjs opens the next system
+   * with `M 58.05 … L 58.05 … M 25 … L 58.05`.
+   */
+  let voltaCarried: { label: string; measure: number } | null = null
   const systems: LayoutSystem[] = spans.map((span, systemIndex) => {
     const withMeter = systemIndex === 0
 
@@ -11007,9 +11035,25 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // too, which pushed it 6 pitch clear of the treble on every voltaed system.
       const drawsVoltas = voiceIndex === voicesOfStaff[0]?.[0]
       /** The repeat ending currently open, where its bracket started, and its measure. */
-      let openVolta: { label: string; startX: number; measure: number } | null = null
+      let openVolta: {
+        label: string
+        startX: number
+        measure: number
+        /** Carried over a system break — no opening hook and no number. See `voltaCarried`. */
+        continued?: boolean
+      } | null = null
       /** Which bracket — every segment and the number of one ending share it. */
       let voltaGroup = 0
+      // …and an ending carried over the break opens this system with no hook and no
+      // number, at `params.startx + 10` (`draw/voice.js:85`). See `voltaCarried`.
+      if (drawsVoltas && voltaCarried !== null) {
+        openVolta = {
+          label: voltaCarried.label,
+          startX: leftEdge + ENGRAVE.voltaLineStart,
+          measure: 0,
+          continued: true,
+        }
+      }
 
       /**
        * Close the open ending, drawing its bracket.
@@ -11026,14 +11070,16 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         // **THE HOOKS COME FIRST AND THE RULE LAST** — `drawEnding` appends the opening
         // vertical, then the closing one, then the horizontal (`draw/ending.js:13-26`),
         // and all three are one `d`. Ours emitted the rule first.
-        voltaLines.push({
-          group,
-          x1: openVolta.startX,
-          y1: y,
-          x2: openVolta.startX,
-          y2: y + ENGRAVE.voltaHook,
-          thickness,
-        })
+        if (openVolta.continued !== true) {
+          voltaLines.push({
+            group,
+            x1: openVolta.startX,
+            y1: y,
+            x2: openVolta.startX,
+            y2: y + ENGRAVE.voltaHook,
+            thickness,
+          })
+        }
         // The opening hook always turns down; the closing one only when the ending
         // really ends here rather than continuing onto the next system.
         if (hooked) {
@@ -11056,6 +11102,13 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           thickness,
           ...(hooked ? {} : { rawEnd: true }),
         })
+        // …AND THE NUMBER IS `if (params.anchor1)`'s TOO, so a carried half has none.
+        // The GROUP still opens either way, which is why the emitter keys on the lines.
+        if (openVolta.continued === true) {
+          voltaCarried = null
+          openVolta = null
+          return
+        }
         voltaTexts.push({
           text: openVolta.label,
           group,
@@ -11139,6 +11192,11 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       for (let i = span.start; i < span.end; i++) {
         const block = plan.blocks[i]
         if (block !== undefined) {
+          // A CARRIED ending closes on this measure's OPENING bar when that bar ends one —
+          // see `Block.opensAfterVolta`.
+          if (openVolta?.continued === true && block.opensAfterVolta) {
+            closeVolta(barAnchor(i, 'opening', 'endingEnd') ?? startOf(i), true)
+          }
           // A new ending closes whatever was open — `|1 … :|2` runs them back to back.
           if (block.volta !== null && drawsVoltas) {
             closeVolta(voltaStartOf(i), true)
@@ -11285,6 +11343,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
        * default (`draw/voice.js:12`, `:82`) — the same off-by-one a curve running off the
        * end already reproduces through `ENGRAVE.lineEndInset`.
        */
+      // …and it RESUMES on the next system — see `voltaCarried`.
+      if (openVolta !== null && drawsVoltas) {
+        voltaCarried = { label: openVolta.label, measure: openVolta.measure }
+      }
       closeVolta(solved.width - ENGRAVE.lineEndInset, false)
 
       // Tuplets resolve here — unlike curves they never span a system, because a beam
