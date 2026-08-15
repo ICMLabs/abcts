@@ -6631,25 +6631,25 @@ function layoutSpanners(
   }
 
   /**
-   * A QUEUE per kind, not a single slot. `S1-decorations` writes `!crescendo(!G!<(!G`
-   * and then closes both — the two spellings are the same kind, so a single slot let the
-   * second open overwrite the first and silently lost a hairpin. FIFO rather than a
-   * stack because hairpins on one voice run in sequence; they do not nest, so the first
-   * open belongs to the first close.
+   * **ONE SLOT PER KIND, AND IT IS CLOSED AT THE END OF EVERY ABC LINE.**
    *
-   * **AND abcjs'S SLOT REALLY IS SINGLE, AND IT IS CLOSED AT THE END OF EVERY ABC LINE —
-   * MEASURED IN FULL, NOT FIXED.** `decoration.js:315-364` keeps ONE `startCrescendoX` and
-   * ONE `startDiminuendoX` on the Decoration object, so a second `(` before any `)`
-   * REPLACES the first and that hairpin is never drawn. `endLine(voice)`, called from
-   * `createABCVoice`'s last line (`abstract-engraver.js:280`), closes whatever is still
-   * open at `lastNote(voice.children)` — which despite the name is the line's LAST CHILD,
-   * barline included — and clears the slot. On the next line a `)` with nothing open takes
+   * `decoration.js:315-364` keeps ONE `startCrescendoX` and ONE `startDiminuendoX` on the
+   * Decoration object, so a second `(` before any `)` REPLACES the first and that hairpin
+   * is never drawn. `endLine(voice)`, called from `createABCVoice`'s last line
+   * (`abstract-engraver.js:280`), closes whatever is still open at
+   * `lastNote(voice.children)` — which despite the name is the line's LAST CHILD, barline
+   * included — and clears the slot. On the next line a `)` with nothing open takes
    * `firstNote(voice.children)`, and `voice.addChild` runs AFTER `createABCElement`, so on
-   * the line's very first element that list is EMPTY and `anchor1` is null: `drawCrescendo`
-   * then falls back to `left = 0` and draws from the page's left edge.
+   * the line's very first element that list is EMPTY, `anchor1` is null and `drawCrescendo`
+   * falls back to `left = 0`.
    *
-   * `S1-decorations` X:103 writes all four of those cases in six paths. abcjs's own
-   * `ABCJS_CRESC` probe, per direction:
+   * **AN ABC LINE IS A SYSTEM**, which was the open question when this was first measured:
+   * abcjs parses `\` continuations into ONE `abcline` and gives each `abcline` one staff
+   * group, and `Measure.startsSystem` carries the same break points. So the system boundary
+   * IS `endLine`.
+   *
+   * `S1-decorations` X:103 writes all four cases in six paths. abcjs's own `ABCJS_CRESC`
+   * probe, per direction:
    *
    *     left 525.2627500000001  right 684.0000000000001  a1 true   a2 true
    *     left 0                  right 49.051             a1 false  a2 true
@@ -6657,16 +6657,14 @@ function layoutSpanners(
    *
    * — the `crescendo(` at 366.53 overwritten and gone, the survivor closed on the barline,
    * a first-of-line `)` starting at x 0, and a second one starting at the note already
-   * added. Ours draws both opens, runs them to the staff's end at 685, and SPLITS the
-   * crossing hairpin geometrically into two interpolated halves; abcjs makes two whole
-   * hairpins with real mouths.
+   * added. Ours ran a QUEUE, drew both opens to the staff's end, and SPLIT the crossing
+   * hairpin into two interpolated halves where abcjs makes two whole ones.
    *
-   * Closing it needs the ABC SOURCE LINE, which nothing in `ScoreModel` records — abcjs's
-   * `endLine` fires per `abcline`, and a system is not the same partition once a `\`
-   * continuation or two short lines share one. That is a parser change plus this loop, so
-   * it is written down whole rather than approximated on system boundaries.
+   * A GLISSANDO shares the single slot and NOT the rest: `endLine` names only the two
+   * hairpins, and a `~)` with nothing open builds `GlissandoElem(undefined, stop)`, which
+   * the emitter drops for want of an `anchor1`.
    */
-  const open = new Map<string, SpannerSite[]>()
+  const open = new Map<string, SpannerSite>()
 
   // A REST — a SPACER above all — anchors a hairpin like any other element. abcjs's
   // `anchor2` is whatever absolute element the `!<)!` was written on, and
@@ -6689,19 +6687,48 @@ function layoutSpanners(
     // two outright. Both input lists are already system-major and `Array.sort` is stable.
   ].sort((p, q) => p.system - q.system || p.element - q.element)
 
+  /** The sites of one ABC line, in order — abcjs's `voice.children` for that line. */
+  const bySystem = new Map<number, SpannerSite[]>()
   for (const site of sites) {
-    for (const name of site.decorations) {
-      const opens = SPANNER_OPEN[name]
-      if (opens !== undefined) {
-        const queue = open.get(opens)
-        if (queue === undefined) open.set(opens, [site])
-        else queue.push(site)
-        continue
+    const group = bySystem.get(site.system)
+    if (group === undefined) bySystem.set(site.system, [site])
+    else group.push(site)
+  }
+
+  for (const system of [...bySystem.keys()].sort((a, b) => a - b)) {
+    const group = bySystem.get(system) ?? []
+    /** What `voice.addChild` has taken so far — `firstNote` searches THIS. */
+    const placed: SpannerSite[] = []
+    for (const site of group) {
+      for (const name of site.decorations) {
+        const opens = SPANNER_OPEN[name]
+        if (opens !== undefined) {
+          open.set(opens, site)
+          continue
+        }
+        const closes = SPANNER_CLOSE[name]
+        if (closes === undefined) continue
+        const held = open.get(closes)
+        open.delete(closes)
+        if (held !== undefined) {
+          emit(held, site, closes)
+          continue
+        }
+        if (closes === 'glissando') continue
+        // `if (!this.startCrescendoX) this.startCrescendoX = firstNote(voice.children)` —
+        // and `null` when nothing has been added yet, which `drawCrescendo` reads as x 0.
+        const first = placed.find((p) => p.anchor !== undefined)
+        emit(first ?? { ...site, left: 0 }, site, closes)
       }
-      const closes = SPANNER_CLOSE[name]
-      if (closes === undefined) continue
-      const from = open.get(closes)?.shift()
-      if (from !== undefined) emit(from, site, closes)
+      placed.push(site)
+    }
+    // `this.decoration.endLine(voice)` — the LAST child of the line, barline included.
+    const last = group[group.length - 1]
+    for (const kind of ['crescendo', 'diminuendo'] as const) {
+      const held = open.get(kind)
+      if (held === undefined) continue
+      open.delete(kind)
+      if (last !== undefined) emit(held, last, kind)
     }
   }
 
@@ -9686,16 +9713,23 @@ function layoutMeasure(
     // extent — abcjs passes the literal 12 (`abstract-engraver.js:1002`). Pitch 12 is our
     // step 6, and `decorationMinTop` clamps it there anyway.
     const barDecorations = measure.closingBarlineDecorations ?? []
-    // **AND A HAIRPIN MAY CLOSE ON IT.** `!<)!` before a `|` attaches to the BARLINE, and
-    // our spanner scan only ever walked notes — so `flattener-02` drew no hairpin at all.
-    // `left` is the bar element's own x, which is what `drawCrescendo` takes for both ends.
-    if (barDecorations.length > 0)
-      spannerSites.push({
-        element: closingBarIndex,
-        system: 0,
-        left: x,
-        decorations: barDecorations,
-      })
+    /**
+     * **AND A HAIRPIN MAY CLOSE ON IT.** `!<)!` before a `|` attaches to the BARLINE, and
+     * our spanner scan only ever walked notes — so `flattener-02` drew no hairpin at all.
+     * `left` is the bar element's own x, which is what `drawCrescendo` takes for both ends.
+     *
+     * **…AND AN UNDECORATED BAR IS A SITE TOO**, because `endLine` closes an open hairpin
+     * at `lastNote(voice.children)` — the line's LAST CHILD whatever it is, and that is
+     * almost always the barline. `S1-decorations` X:103 ends its lines at 684 where the
+     * last NOTE is at 525.26. The site carries no decorations, so it opens and closes
+     * nothing; it only marks where the line ends.
+     */
+    spannerSites.push({
+      element: closingBarIndex,
+      system: 0,
+      left: x,
+      decorations: barDecorations,
+    })
     const marks =
       barDecorations.length === 0
         ? null

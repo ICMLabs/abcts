@@ -80,6 +80,7 @@ const DIVERGENT: readonly string[] = []
 const PASSING: readonly string[] = [
   'S1-decorations-tune0',
   'S1-decorations-tune1',
+  'S1-decorations-tune2',
   'S1-decorations-tune3',
   'S1-decorations-tune4',
   'S2-fields-tune0',

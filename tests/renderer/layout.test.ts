@@ -1985,15 +1985,25 @@ describe('spanning decorations', () => {
     expect(lineY(0)).toBeGreaterThan(0)
   })
 
-  it('pairs consecutive hairpins of the same kind in order', () => {
-    // S1-decorations writes `!crescendo(!G!<(!G` and then closes both. A single open slot
-    // per kind let the second overwrite the first and silently lost a hairpin, so this is
-    // a queue. FIFO because hairpins run in sequence rather than nesting.
-    const staff = staffOf(
-      'X:1\nM:4/4\nL:1/4\nK:C\n!crescendo(!G!<(!G |\n!crescendo)!G!<)!G z2|\n',
-      400,
+  it('keeps ONE open hairpin per kind, and closes it at the line end', () => {
+    // **abcjs's SLOT IS SINGLE AND `endLine` EMPTIES IT.** `decoration.js:315-364` keeps one
+    // `startCrescendoX`, so `!crescendo(!G!<(!G` OVERWRITES — the first is never drawn —
+    // and `endLine(voice)` closes the survivor at the line's last child. On the next line
+    // each `)` finds nothing open and takes `firstNote(voice.children)`, which is EMPTY on
+    // the first element and a null anchor: `drawCrescendo` reads that as x 0.
+    //
+    // So this writes THREE hairpins, not two: the survivor of line 1, a stub from the page
+    // edge, and one off the note already placed. Measured on abcjs itself
+    // (`ABCJS_CRESC`) for `S1-decorations` X:103, which writes the same four marks.
+    const doc = layout(
+      parse('X:1\nM:4/4\nL:1/4\nK:C\n!crescendo(!G!<(!G |\n!crescendo)!G!<)!G z2|\n')
+        .scores[0] as Score,
+      { systemWidth: 400 },
     )
-    expect(staff?.spannerLines).toHaveLength(4)
+    const strokes = doc.systems.flatMap((sys) => sys.staves).flatMap((st) => st.spannerLines)
+    expect(strokes).toHaveLength(6)
+    // The stub takes the page's left edge, which is `anchor1 ? anchor1.x : 0`.
+    expect(strokes.some((l) => l.x1 === 0)).toBe(true)
   })
 
   it('splits a hairpin across a system break instead of dropping it', () => {
@@ -2020,8 +2030,11 @@ describe('spanning decorations', () => {
     expect(line?.y1).not.toBe(line?.y2)
   })
 
-  it('draws nothing for an unpaired open', () => {
-    expect(staffOf('X:1\nM:4/4\nL:1/4\nK:C\n!<(!C D E F|\n')?.spannerLines).toEqual([])
+  it('closes an unpaired open at the end of its line', () => {
+    // Not dropped: `endLine(voice)` closes whatever is still open at
+    // `lastNote(voice.children)` — the line's LAST CHILD, the barline included
+    // (`creation/decoration.js:304-313`). Two strokes, one hairpin.
+    expect(staffOf('X:1\nM:4/4\nL:1/4\nK:C\n!<(!C D E F|\n')?.spannerLines).toHaveLength(2)
   })
 })
 
