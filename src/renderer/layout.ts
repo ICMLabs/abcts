@@ -6671,7 +6671,7 @@ interface NoteAnchor {
    * merge `slurFixed` makes and for the same reason. `layoutCurves` has anchors and no
    * elements, and the grace head is a glyph on the element.
    */
-  graceSlur?: { graceX: number; graceY: number; headX: number }
+  graceSlur?: { graceX: number; graceY: number; headX: number; headY: number }
   /**
    * Every grace head's drawn position, in order — so a `)` that closed on one can be
    * anchored there. See `GracePitch.slurEnds`.
@@ -7358,7 +7358,7 @@ function layoutCurves(
        * in `flattener-23` is exactly that, and the 0.3 pitch between the two lifts is the
        * 1.16px it came out low.
        */
-      const graceKind = gs.graceY === anchor.pitchY ? ('tie' as const) : ('slur' as const)
+      const graceKind = gs.graceY === gs.headY ? ('tie' as const) : ('slur' as const)
       const lift = spacesOfPitch(
         graceKind === 'tie' ? ABCJS_ARC.tieLift : ABCJS_ARC.slurLift,
       )
@@ -7366,7 +7366,7 @@ function layoutCurves(
         x1,
         y1: gs.graceY + lift,
         x2,
-        y2: anchor.pitchY + lift,
+        y2: gs.headY + lift,
         // Below, so the arc bows DOWNWARD — `buildCurve`'s `direction` is +1 there.
         bulge: Math.min(
           ENGRAVE.curveMaxBulge,
@@ -7644,10 +7644,22 @@ function curveReserves(
     // …and the DRAWING's two ends, resolved here because this is where the elements are.
     // `anchor2` is the MAIN notehead, which is not `a.left`: that is a min over every head
     // on the element and the grace heads are in it.
-    const main = elements[a.element]?.glyphs.find(
+    /**
+     * **AND IT IS THE CHORD'S LAST HEAD, NOT ITS FIRST.** `createNote` reassigns `noteHead`
+     * once per pitch and hands the survivor to `addGraceNotes`
+     * (`abstract-engraver.js:735, 832, 845`), so `anchor2` is the head of the HIGHEST pitch
+     * — abcjs sorts them ascending. `{G}[G4e4]` on `S8-layout` X:807 is the case: abcjs
+     * draws `ARC pitch1 2.5 pitch2 7.5`, a slur climbing five pitch to the `e`, where ours
+     * took the first-written `G` and drew it flat. This is NOT the `pitches[0]` rule an
+     * ordinary slur follows — that one is chosen in `addSlursAndTies`, per pitch; this one
+     * is whatever the loop left behind.
+     */
+    const mainHeads = (elements[a.element]?.glyphs ?? []).filter(
       (g) => g.role !== 'grace' && g.name.startsWith('notehead'),
     )
-    if (main !== undefined) a.graceSlur = { graceX: head.x, graceY: head.y, headX: main.x }
+    const main = mainHeads[mainHeads.length - 1]
+    if (main !== undefined)
+      a.graceSlur = { graceX: head.x, graceY: head.y, headX: main.x, headY: main.y }
   }
   anchors.forEach((anchor, i) => {
     if (anchor.event.type === 'rest') return
