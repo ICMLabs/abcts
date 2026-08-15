@@ -2596,6 +2596,23 @@ function layoutKeyChange(
    * `nat+nat+flat` at the change and `flat+nat+nat` at the head of the next line.
    */
   naturalsLast = false,
+  /**
+   * **THE CANCELLING NATURALS KEEP THE STAFF'S CLEF WHERE THE MARKS DO NOT.**
+   *
+   * `addPosToKey` stamps `key.accidentals` and `key.impliedNaturals` from ONE `mid`, but an
+   * inline `[K:]` is stamped TWICE: once with the staff's clef
+   * (`parse/abc_parse_music.js:961, 986`) and again by `parseKey`'s own
+   * `addPosToKey(clef, fixedKey)` at treble (`parse/abc_parse_key_voice.js:167`), which
+   * rewrites the accidentals on the new object and leaves the naturals as the first call
+   * left them. `tune-builder` then concatenates the two lists.
+   *
+   * `ragtime-nightingale`'s bass staff prints the mixture in abcjs's own
+   * `CREATEKEYSIG`: `["dnatural@6","Bflat@6","eflat@9","Aflat@5"]` — the natural at the
+   * BASS position 6 and the flats at the TREBLE 6/9/5. A treble staff has no mixture to
+   * show, and a LINE PREFIX has none either: `["Bflat@4","eflat@7","Aflat@3","dnatural@6"]`
+   * is all bass, naturals last.
+   */
+  naturalsClef: Clef = clef,
 ): LayoutElement | null {
   // THERE IS NO "SAME SIGNATURE, PRINT NOTHING" TEST IN ABCJS, and the one that used to
   // stand here was our own engraving judgement wearing a citation.
@@ -2622,12 +2639,16 @@ function layoutKeyChange(
   // end of that system, which justification then spread over eight noteheads as a clean
   // 3.56px-per-note ramp out to dx 24.93.
   const shift = keySignatureShift(clef)
+  /** The naturals' own shift — see `naturalsClef`. */
+  const naturalShift = keySignatureShift(naturalsClef)
+  // Compared UNSHIFTED, so the two lists are comparable however the clefs differ; the
+  // shift goes on at the moment each accidental is placed.
   const stepsFor = (key: KeySignature): { step: number; sharp: boolean }[] => {
     const fifths = keyFifths(key)
     const sharp = fifths > 0
     return (sharp ? SHARP_STEPS : FLAT_STEPS)
       .slice(0, Math.abs(fifths))
-      .map((step) => ({ step: step + shift, sharp }))
+      .map((step) => ({ step, sharp }))
   }
   const outgoing = stepsFor(from)
   const incoming = stepsFor(to)
@@ -2655,10 +2676,10 @@ function layoutKeyChange(
   }
   const marks = (): void => {
     for (const entry of incoming)
-      advance(entry.sharp ? 'accidentalSharp' : 'accidentalFlat', entry.step)
+      advance(entry.sharp ? 'accidentalSharp' : 'accidentalFlat', entry.step + shift)
   }
   const naturals = (): void => {
-    for (const entry of cancelled) advance('accidentalNatural', entry.step)
+    for (const entry of cancelled) advance('accidentalNatural', entry.step + naturalShift)
   }
   if (naturalsLast) {
     marks()
@@ -9441,6 +9462,9 @@ function layoutMeasure(
       measure.keyChange,
       measure.keyChangeClef ?? clef,
       strict,
+      false,
+      // …and the cancelling NATURALS keep the staff's own clef — see `naturalsClef`.
+      clef,
     )
     if (change === null) return
     elements.push(change)

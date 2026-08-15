@@ -173,6 +173,7 @@ const PASSING: readonly string[] = [
   'multi-voice-triplet-brackets',
   'program-127-test',
   'ragtime-mini',
+  'ragtime-nightingale',
   'score-reorder-shared',
   'score-reorder',
   'simple-c',

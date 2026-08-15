@@ -6382,7 +6382,7 @@ system 17 width=700.513 originY=4474.987
       line  533.688,-38.750 -> 533.688,-7.750 t=0.600
       line  536.688,-38.750 -> 536.688,-7.750 t=0.600
     keySignature x=547.388 w=31.650
-      glyph accidentalNatural 547.388,-31.000
+      glyph accidentalNatural 547.388,-23.250
       glyph accidentalFlat 554.788,-23.250
       glyph accidentalFlat 563.538,-34.875
       glyph accidentalFlat 572.288,-19.375
@@ -6412,7 +6412,7 @@ system 17 width=700.513 originY=4474.987
       line  533.688,-38.750 -> 533.688,-7.750 t=0.600
       line  536.688,-38.750 -> 536.688,-7.750 t=0.600
     keySignature x=547.388 w=31.650
-      glyph accidentalNatural 547.388,-31.000
+      glyph accidentalNatural 547.388,-23.250
       glyph accidentalFlat 554.788,-23.250
       glyph accidentalFlat 563.538,-34.875
       glyph accidentalFlat 572.288,-19.375
@@ -6433,7 +6433,7 @@ system 17 width=700.513 originY=4474.987
       line  533.688,-38.750 -> 533.688,-7.750 t=0.600
       line  536.688,-38.750 -> 536.688,-7.750 t=0.600
     keySignature x=547.388 w=31.650
-      glyph accidentalNatural 547.388,-31.000
+      glyph accidentalNatural 547.388,-23.250
       glyph accidentalFlat 554.788,-23.250
       glyph accidentalFlat 563.538,-34.875
       glyph accidentalFlat 572.288,-19.375
