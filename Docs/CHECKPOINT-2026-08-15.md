@@ -137,7 +137,16 @@ abcjs, in the SCRATCHPAD COPY at `/tmp/gp/abcjs` (NEVER `../abcMusicKit`):
 | `ABCJS_RELX` | every named relative element's `x`, `dx` and `parent.x` |
 | `ABCJS_INNER` | `avoidCollisionAbove`'s internal notes, their max, and both ends |
 | `ABCJS_CRESC` / `ABCJS_DYN` | a hairpin's ends and anchors; a dynamic's `anchor.x` and pitch |
+| `ABCJS_KEY` | `addPosToKey` — the clef it was handed and the accidental positions out |
+| `ABCJS_TRI` | every stem's `p1`/`p2` and the head glyph that set them |
 | `ABCJS_SLUR` / `ABCJS_SYM` / `ABCJS_NM` / `ABCJS_XX` / `ABCJS_DOT` | as `CHECKPOINT-2026-08-14.md` §5 |
+
+**AND THE V1 SWIFT PORT IS A THIRD ORACLE.** `../abcMusicKit/Sources/abcMusicKitRenderer/`
+is a line-by-line port of abcjs for `.abcjsStrict`, with the JS line numbers in its comments
+and the NATIVE deviations labelled as such. `LayoutVertical.swift` unstuck two rows this
+session by showing the SHAPE — `dyn.pitch = positionY["volumeHeightBelow"]`, a per-staff
+number assigned to the element — that abcjs's own source spreads over three files.
+**READ-ONLY: another lane owns that repo.**
 
 `/tmp/gp/abcjs/src/write/creation/abstract-engraver.js:234` carries an UNGATED
 `console.error("VOICE s"…)` from an earlier session. Harmless — walk.js's own output goes to
