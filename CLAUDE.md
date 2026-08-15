@@ -857,6 +857,44 @@ checkpoint and hand off as you go so no context is lost.
 > `CHECKPOINT-2026-08-13.md` §3.1 with the next probe named. **A HALF-UNDERSTOOD FIX IS
 > WORTH LESS THAN A WRITTEN-DOWN MEASUREMENT.**
 
+> 🏁 **EVERY TABLE THAT EXISTED IS AT ZERO, AND THE ONE OPEN GATE IS THE ONE THAT DID NOT**
+> (2026-08-14). `svg-bytes` closed at **0 of 178** — from 3 of 171 — and with it the DOM
+> contract (0 of 25) and the element timings (0 of 13), so audio, MIDI, chord grids,
+> timings, the harvested corpus and the pixel targets are all at zero beside them. Nine
+> landings, every one a read of a named abcjs function: a CHORD LANE'S MARKS SHARE THE RUNG
+> AND NOT THE BASELINE (a 15pt annotation sat 13px below abcjs's beside a 25pt chord
+> symbol); the FACE was hard-coded at six emitters and a `%%<type>font` REPLACES the whole
+> object; a BOXED rect's top is RECOVERED from the baseline, never carried; a standalone
+> body `K:` RESTAMPS ONE STAFF'S KEY against the `K:`-clef (`appendStartingElement` falling
+> through to `staff[staffNum][type]` while the voice is still empty — **two earlier attempts
+> inferred the rule from the outcome and were reverted; a seven-rung ladder through abcjs
+> pins every edge**); a METER IS AN ORDINARY ELEMENT IN THE STREAM, so three `[M:]` in one
+> bar draw three; an INVISIBLE REST AND A SPACER still spend their `minspacing`; and an
+> ENDING WITH NO `end` EMITS NOTHING, which is one rule that had been ported in HALF.
+>
+> 🔍 **AND THEN THE ENUMERATION WAS THE DEFECT, TWICE.** `svg-bytes` read `<slug>.svg` and
+> SKIPPED any fixture without one, under a note saying a multi-tune file "is a different
+> surface" — it is not, and the seven tunes it skipped named a whole missing feature:
+> **RICH TEXT IS `richTextLine`'s ELEMENT**, a `$N` field drawn at the CURSOR with a
+> `<tspan>` per phrase, each phrase's own `%%setfont` size going in RAW because
+> `getTextSize.calc` scales only a font named by STRING. Then the same question was asked of
+> the 41-fixture corpus's own 381 abcjs SVGs, which only `pixel-parity` had ever opened —
+> and it compares NOTEHEAD CENTRES within 0.05px. **`tests/svg-bytes-sibling.test.ts` opened
+> at 38 of 113**, `ragtime-nightingale` differing on ONE ULP of its `height` in 2,007,011
+> bytes. Seven landings took it to 31: a DECLARED EDGE OF ZERO IS NOT DECLARED AT ALL
+> (`if (opt.bottom)` and `0` is falsy — a mezzosoprano clef, and the rule was already ported
+> for a STEM and written up as belonging to that one site); a CURVE HANGS ON THE CHORD'S
+> LOWEST HEAD and its OTHER HEADS ARE INTERNAL NOTES OF IT, which is what makes
+> `([GCD][GCD])` a slur rather than a tie; `((` orders two curves by the `(`, not by any x;
+> a note's DOTS GO OUT FROM THE OUTSIDE IN; `!breath!` draws abcjs's `,` and not
+> `scripts.comma`; and **`"+": "scripts.stopped"` WAS STILL REACHING FOR BRAVURA**, the
+> class the 2026-08-05 audit closed, surviving because the note beside it read like a mapping
+> and was a sentence.
+>
+> **READ `Docs/HANDOFF-2026-08-14.md` FIRST**, then `Docs/CHECKPOINT-2026-08-14.md` — §4 is
+> the work list for the 31, §5 the harness (four new abcjs probes, three of ours, two
+> ratchets) and §6 the rules. Then the files below.
+
 **READ `Docs/CHECKPOINT-2026-08-13.md` FIRST** — the current state (3 of 171, 168 byte-exact
 and all ratcheted), §2 the ten landings, §3 WHAT IS LEFT (the tempo font measured and
 reverted, and the two rows unchanged from `-08-12`), §5 the eight new abcjs probes and §6
