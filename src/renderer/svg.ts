@@ -2320,6 +2320,11 @@ const glyphDefs = new Map<GlyphName, string>()
           flushVoice(openVoice)
           openVoice = voiceOf(elIndex)
           classes.incrVoice()
+          // …**AND `foundNote` IS PER `drawVoice`**, declared inside it
+          // (`draw/voice.js:26`). Ours was per STAFF, so the second voice of a shared
+          // staff opened with it already true and its LEADING barline incremented the
+          // measure where abcjs's does not.
+          foundNote = false
         }
         // Already written above, ahead of the braces. See the hoist.
         if (abcjs && el.blockHeight !== undefined) return
@@ -2368,14 +2373,28 @@ const glyphDefs = new Map<GlyphName, string>()
          * bracket and the voice name all go out before the first child. All three carry
          * `l` and `v` and neither counter.
          */
-        if (abcjs && !bare && !classes.isInMeasure()) classes.startMeasure()
+        /**
+         * **abcjs's GUARD IS A WHOLE-STRING COMPARISON AND NO CHILD EVER MATCHES IT.**
+         * `if (child.type !== 'staff-extra' && !isInMeasure()) { startMeasure();
+         * justInitializedMeasureNumber = true }` (`draw/voice.js:31-35`) — but a prefix
+         * child's type is `'staff-extra clef'`, `'staff-extra key-signature'`, …, never the
+         * bare `'staff-extra'`. So the FIRST child of every voice opens a measure whatever
+         * it is, and `ABCJS_CHILD` prints `type= staff-extra clef … justInit= true` for it.
+         *
+         * That is the answer to the note this used to carry — "abcjs's own OUTPUT gives the
+         * clef `abcjs-m0 abcjs-mm0`, so something upstream has already started it". Nothing
+         * upstream did; the guard is inert.
+         *
+         * It matters twice: the clef gets the counters, AND `justInitialized` suppresses
+         * the `incrMeasure` on a LEADING barline that is the voice's first child.
+         */
+        const startedHere = abcjs && !bare && !classes.isInMeasure()
+        if (startedHere) classes.startMeasure()
         if (abcjs && !bare) {
           const name = ABCJS_ELEMENT_NAMES[el.type] ?? el.type
           // `if (child.type !== 'staff-extra' && !isInMeasure()) startMeasure()`
           // (`draw/voice.js:31-34`) — a prefix element does not open a measure.
-          const isExtra = name.startsWith('staff-extra')
-          const justStarted = !isExtra && !classes.isInMeasure()
-          if (justStarted) classes.startMeasure()
+          const justStarted = startedHere
           // `klass = params.type`, then ` d{durationClass}` with `.` → `-`, then one
           // ` p{pitch}` per pitch, for a note or a rest only
           // (`draw/absolute.js:31-40`).
@@ -2433,7 +2452,9 @@ const glyphDefs = new Map<GlyphName, string>()
            * ours read `m1 mm1` where abcjs writes `m0 mm0`.
            */
           advance = () => {
-            if (el.type === 'note' || (el.type === 'rest' && el.plainRest !== false)) {
+            // `if (child.type === 'note' || isNonSpacerRest(child)) incrNote()`
+            // (`draw/voice.js:47-48`) — see `LayoutElement.nonSpacerRest`.
+            if (el.type === 'note' || (el.type === 'rest' && el.nonSpacerRest === true)) {
               classes.incrNote()
             }
             if (el.type === 'bar' && !justStarted && foundNote) classes.incrMeasure()

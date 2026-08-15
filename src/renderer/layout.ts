@@ -1412,6 +1412,8 @@ export interface LayoutElement {
    * (`abstract-engraver.js:811-813`), AND a multi-measure one. Absent on anything else.
    */
   readonly plainRest?: boolean
+  /** `isNonSpacerRest` — advances the `n` class counter. See the rest's own note. */
+  readonly nonSpacerRest?: boolean
   /**
    * A `whole` or `multimeasure` rest — the two `centerWholeRests` moves to the midpoint
    * between its neighbours (`layout/layout.js:123-138`).
@@ -3363,6 +3365,15 @@ function layoutRest(
     left: Math.max(textSpan.left, graces.left),
     // abcjs's `rest.type === 'rest'` after `createNote` has had its say — see `plainRest`.
     plainRest: !invisible && rest.kind !== 'spacer' && rest.measureCount === 0 && !fillsMeasure,
+    /**
+     * **`isNonSpacerRest` IS A DIFFERENT TEST FROM `plainRest`** — `elem.abcelem.rest.type
+     * !== 'spacer'` and nothing else (`draw/voice.js:105-111`), so an INVISIBLE rest, a
+     * whole-measure rest and a multimeasure rest all advance the `n` counter where
+     * `plainRest` excludes every one of them. `plainRest` is `fixVoiceCollisions`'
+     * `rest.type === 'rest'`; using it for `incrNote` cost `ragtime-nightingale-classes`
+     * an `abcjs-n1`.
+     */
+    nonSpacerRest: rest.kind !== 'spacer',
     // `centerWholeRests` tests `rest.type === 'whole' || 'multimeasure'`, and `whole` is
     // exactly what the retype above produces — see `fillsMeasure`.
     ...(fillsMeasure ? { wholeRest: true } : {}),

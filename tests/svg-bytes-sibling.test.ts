@@ -287,6 +287,7 @@ const PASSING: readonly string[] = [
   'ragtime-mini',
   'ragtime-mini-classes',
   'ragtime-nightingale',
+  'ragtime-nightingale-classes',
   'score-reorder-shared',
   'score-reorder-shared-classes',
   'score-reorder',
