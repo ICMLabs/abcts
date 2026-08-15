@@ -197,27 +197,27 @@ system 0 width=701.524 originY=0.000
       glyph timeSigCommon 49.051,-23.250
     note@0 x=84.089 w=30.000
       glyph noteheadSlashHorizontalEnds 84.089,-23.250
-      line  84.389,-22.475 -> 84.389,1.938 t=0.600
+      line  84.389,-18.600 -> 84.389,1.938 t=0.600
       text  88.589,-60.645 size=16.000 "Am"
     note@0 x=101.589 w=30.000
       glyph noteheadSlashHorizontalEnds 101.589,-23.250
-      line  101.889,-22.475 -> 101.889,1.938 t=0.600
+      line  101.889,-18.600 -> 101.889,1.938 t=0.600
     note@0 x=111.646 w=30.000
       glyph noteheadSlashHorizontalEnds 111.646,-23.250
-      line  111.946,-22.475 -> 111.946,1.938 t=0.600
+      line  111.946,-18.600 -> 111.946,1.938 t=0.600
     note@0 x=121.703 w=30.000
       glyph noteheadSlashHorizontalEnds 121.703,-23.250
-      line  122.003,-22.475 -> 122.003,1.938 t=0.600
+      line  122.003,-18.600 -> 122.003,1.938 t=0.600
     note@0 x=131.760 w=42.426
       glyph noteheadSlashHorizontalEnds 131.760,-23.250
       line  132.260,-19.375 -> 132.260,3.875 t=1.000
     note@0 x=145.982 w=36.742
       glyph augmentationDot 157.982,-27.125
       glyph noteheadSlashHorizontalEnds 145.982,-23.250
-      line  146.282,-22.475 -> 146.282,1.938 t=0.600
+      line  146.282,-18.600 -> 146.282,1.938 t=0.600
     note@0 x=162.432 w=21.213
       glyph noteheadSlashHorizontalEnds 162.432,-23.250
-      line  162.732,-22.475 -> 162.732,1.938 t=0.600
+      line  162.732,-18.600 -> 162.732,1.938 t=0.600
     bar x=177.432 w=0.600
       line  177.732,-38.750 -> 177.732,-7.750 t=0.600
     note@0 x=200.877 w=42.426
@@ -226,13 +226,13 @@ system 0 width=701.524 originY=0.000
       text  205.377,-60.645 size=16.000 "Dm"
     note@0 x=218.823 w=21.213
       glyph noteheadSlashHorizontalEnds 218.823,-23.250
-      line  219.123,-22.475 -> 219.123,1.938 t=0.600
+      line  219.123,-18.600 -> 219.123,1.938 t=0.600
     note@0 x=228.823 w=21.213
       glyph noteheadSlashHorizontalEnds 228.823,-23.250
-      line  229.123,-22.475 -> 229.123,1.938 t=0.600
+      line  229.123,-18.600 -> 229.123,1.938 t=0.600
     note@0 x=238.823 w=30.000
       glyph noteheadSlashHorizontalEnds 238.823,-23.250
-      line  239.123,-22.475 -> 239.123,1.938 t=0.600
+      line  239.123,-18.600 -> 239.123,1.938 t=0.600
     note@0 x=254.604 w=60.000
       glyph noteheadSlashWhiteWhole 254.604,-23.250
       line  255.104,-23.250 -> 255.104,3.875 t=1.000
@@ -266,19 +266,19 @@ system 0 width=701.524 originY=0.000
       text  406.031,-60.645 size=16.000 "Dm"
     note@0 x=419.476 w=21.213
       glyph noteheadSlashHorizontalEnds 419.476,-23.250
-      line  428.176,-24.025 -> 428.176,-52.873 t=0.600
+      line  428.176,-27.900 -> 428.176,-52.873 t=0.600
     note@0 x=429.476 w=21.213
       glyph noteheadSlashHorizontalEnds 429.476,-23.250
-      line  438.176,-24.025 -> 438.176,-54.250 t=0.600
+      line  438.176,-27.900 -> 438.176,-54.250 t=0.600
     note@-5 x=439.476 w=30.000
       glyph noteheadBlack 439.476,-3.875
       line  448.986,-4.650 -> 448.986,-50.488 t=0.600
     note@0 x=450.286 w=21.213
       glyph noteheadSlashHorizontalEnds 450.286,-23.250
-      line  458.986,-24.025 -> 458.986,-52.369 t=0.600
+      line  458.986,-27.900 -> 458.986,-52.369 t=0.600
     note@0 x=460.286 w=21.213
       glyph noteheadSlashHorizontalEnds 460.286,-23.250
-      line  468.986,-24.025 -> 468.986,-54.250 t=0.600
+      line  468.986,-27.900 -> 468.986,-54.250 t=0.600
     note@-6 x=476.067 w=30.000
       glyph noteheadBlack 476.067,0.000
       line  474.067,0.000 -> 487.877,0.000 t=0.700
@@ -286,20 +286,20 @@ system 0 width=701.524 originY=0.000
       text  480.972,-60.645 size=16.000 "C"
     note@0 x=487.753 w=21.213
       glyph noteheadSlashHorizontalEnds 487.753,-23.250
-      line  496.453,-24.025 -> 496.453,-52.446 t=0.600
+      line  496.453,-27.900 -> 496.453,-52.446 t=0.600
     note@0 x=497.753 w=21.213
       glyph noteheadSlashHorizontalEnds 497.753,-23.250
-      line  506.453,-24.025 -> 506.453,-54.250 t=0.600
+      line  506.453,-27.900 -> 506.453,-54.250 t=0.600
     note@-6 x=507.753 w=30.000
       glyph noteheadBlack 507.753,0.000
       line  505.753,0.000 -> 519.563,0.000 t=0.700
       line  517.263,-0.775 -> 517.263,-50.488 t=0.600
     note@0 x=518.563 w=21.213
       glyph noteheadSlashHorizontalEnds 518.563,-23.250
-      line  527.263,-24.025 -> 527.263,-52.369 t=0.600
+      line  527.263,-27.900 -> 527.263,-52.369 t=0.600
     note@0 x=528.563 w=21.213
       glyph noteheadSlashHorizontalEnds 528.563,-23.250
-      line  537.263,-24.025 -> 537.263,-54.250 t=0.600
+      line  537.263,-27.900 -> 537.263,-54.250 t=0.600
     bar x=543.563 w=0.600
       line  543.863,-38.750 -> 543.863,-7.750 t=0.600
     note@0 x=554.563 w=84.853

@@ -3951,13 +3951,21 @@ function layoutNoteheads(
      * noteheads.triangle.quarter`: the last note, the only one not in a beam. Applying it
      * to the beamed ones took that fixture from byte 18826 back to 6809.
      */
+    /**
+     * **…EXCEPT THE SLASH HEAD, WHICH HAS ITS OWN COPY ON THE BEAMED PATH.**
+     * `createStems` carries the same ±1 under abcjs's own "TODO-PER-HACK: One type of
+     * note head has a different placement of the stem" (`layout/beam.js:129-135`) — and
+     * it names ONLY `noteheads.slash.quarter`, so the triangle really is unbeamed-only.
+     * `S5-directives`' `K:C treble style=rhythm` opens with four beamed `B`s whose stems
+     * stopped 3.88px — one whole pitch — short of abcjs's.
+     */
     const headStemShift =
-      beamed
-        ? 0
-        : headName === 'noteheadSlashHorizontalEnds'
-          ? up
-            ? 1
-            : -1
+      headName === 'noteheadSlashHorizontalEnds'
+        ? up
+          ? 1
+          : -1
+        : beamed
+          ? 0
           : headName === 'noteheadTriangleUpBlack'
             ? up
               ? -1.2
