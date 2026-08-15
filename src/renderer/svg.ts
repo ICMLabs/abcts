@@ -522,6 +522,14 @@ class Classes {
   private note: number | null = null
   private readonly perLine: number[] = []
 
+  /** `classes.js:6-12` — and `perLine` is emptied with the rest. */
+  reset(): void {
+    this.line = null
+    this.voice = null
+    this.measure = null
+    this.note = null
+    this.perLine.length = 0
+  }
   incrLine(): void {
     this.line = this.line === null ? 0 : this.line + 1
     this.voice = null
@@ -791,6 +799,17 @@ const ABCJS_TEXT_CLASSES: Readonly<Record<string, string>> = {
   rhythm: 'abcjs-rhythm',
   'part-order': 'abcjs-part-order',
   header: 'abcjs-header abcjs-meta-top',
+}
+
+/**
+ * …**AND A ROW WHOSE CLASS IS GENERATED RATHER THAN LITERAL.** `FreeText` gives every row
+ * `klass: 'defined-text'` (`elements/free-text.js:12, 29, 39`) and `renderText` runs
+ * `classes.generate` on it, so a `%%text` or `%%center` row carries the LINE counter too —
+ * `abcjs-defined-text abcjs-l2` on `center-text-classes`. The table above is literal
+ * strings; this one has to be generated at the row's own line.
+ */
+const ABCJS_GENERATED_TEXT_CLASSES: Readonly<Record<string, string>> = {
+  'free-text': 'defined-text',
 }
 
 const ABCJS_STYLE =
@@ -1193,6 +1212,11 @@ const glyphDefs = new Map<GlyphName, string>()
   const parts: string[] = []
   /** abcjs's running counters. Inert unless `add_classes` asked for the markup. */
   const classes = new Classes(options.addClasses === true)
+  /** A row whose class abcjs GENERATES at the row's own line, or `undefined` if it states one. */
+  const generatedTextClass = (name: string): string | undefined => {
+    const k = ABCJS_GENERATED_TEXT_CLASSES[name]
+    return k === undefined ? undefined : classes.generate(k)
+  }
   /** abcjs's `Selectables.elements.length` — one counter for the whole drawing. */
   let selectableIndex = 0
 
@@ -1220,7 +1244,7 @@ const glyphDefs = new Map<GlyphName, string>()
             // `N:` and `H:` draw as `data-name="description"` and carry
             // `abcjs-extra-text abcjs-notes` / `…-history` (`bottom-text.js:24-45, 67-79`),
             // which is what `PlacedText.groupClass` holds for those rows.
-            (t.groupClass ?? ABCJS_TEXT_CLASSES[t.dataName] ?? '')
+            (t.groupClass ?? generatedTextClass(t.dataName) ?? ABCJS_TEXT_CLASSES[t.dataName] ?? '')
           : '',
       ),
     )
@@ -1346,7 +1370,7 @@ const glyphDefs = new Map<GlyphName, string>()
                     // `defined-text` (`subtitle.js:7`, `free-text.js:11`).
                     classes.generate(b.t.dataName === 'subtitle' ? 'text subtitle' : 'defined-text')
                   : b.t.dataName !== undefined
-                    ? (ABCJS_TEXT_CLASSES[b.t.dataName] ?? '')
+                    ? (generatedTextClass(b.t.dataName) ?? ABCJS_TEXT_CLASSES[b.t.dataName] ?? '')
                     : '',
               (b.t.extraLines ?? []).map(escapeText),
               b.t.middleBaseline === true,
@@ -3042,7 +3066,21 @@ const glyphDefs = new Map<GlyphName, string>()
      * See `PlacedText.groupName`.
      */
     let openGroup: string | undefined
+    /**
+     * **A TRAILING nonMusic LINE IS STILL A LINE, AND THE BOTTOM TEXT IS NOT.** `draw()`
+     * runs `classes.incrLine()` at the head of every `tune.lines` iteration — a nonMusic
+     * line included — and then `classes.reset()` before the bottom block
+     * (`draw/draw.js:30`, `:54-58`, `:61`), so a trailing `%%center` is `abcjs-l2` where a
+     * `W:` row carries no counter at all. Ours generated both off whatever the last
+     * SYSTEM left behind, which is where `abcjs-l1 abcjs-v0` came from.
+     */
+    let lastNonMusicIndex: number | undefined | -1 = -1
     const block = (doc.bottomText ?? []).map((t) => {
+      if (t.nonMusicIndex !== lastNonMusicIndex) {
+        lastNonMusicIndex = t.nonMusicIndex
+        if (t.nonMusicIndex === undefined) classes.reset()
+        else classes.incrLine()
+      }
       // …AND A ROW THAT CHANGED FONT MID-LINE IS `richTextLine`'s, here as anywhere else.
       if (t.phrases !== undefined) {
         return richTextLine(
@@ -3051,7 +3089,7 @@ const glyphDefs = new Map<GlyphName, string>()
           raw(t.y * PX + oy),
           t.anchor ?? 'start',
           options.addClasses === true && t.dataName !== undefined
-            ? (t.groupClass ?? ABCJS_TEXT_CLASSES[t.dataName] ?? '')
+            ? (t.groupClass ?? generatedTextClass(t.dataName) ?? ABCJS_TEXT_CLASSES[t.dataName] ?? '')
             : undefined,
         )
       }
@@ -3070,7 +3108,7 @@ const glyphDefs = new Map<GlyphName, string>()
         t.dataName ?? '',
         escapeText(t.text),
         options.addClasses === true && t.dataName !== undefined
-          ? (t.groupClass ?? ABCJS_TEXT_CLASSES[t.dataName] ?? '')
+          ? (t.groupClass ?? generatedTextClass(t.dataName) ?? ABCJS_TEXT_CLASSES[t.dataName] ?? '')
           : '',
         (t.extraLines ?? []).map(escapeText),
         t.middleBaseline === true,

@@ -232,6 +232,7 @@ const PASSING: readonly string[] = [
   'brother-john-inline-voices',
   'brother-john-inline-voices-classes',
   'center-text',
+  'center-text-classes',
   'chord-grid',
   'chord-grid-classes',
   'clefs-tune0',
