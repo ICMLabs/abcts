@@ -14653,7 +14653,23 @@ function fixRestCollisions(
     })
   })
 
-  /** Move the rest glyph — abcjs shifts `children[0]` and the element's own extent, alone. */
+  /**
+   * Move the rest glyph — abcjs shifts `children[0]` and the element's own extent, alone.
+   *
+   * **AND IT SHIFTS A PITCH, NOT A y — MEASURED, NOT FIXED.** `layout.js:172-174` is
+   * `children[0].pitch -= distance1` with `distance1 = restTop.bottom - otherTop - 2`, every
+   * term a PITCH, and `calcY` multiplies once at the end. Ours moves the drawn y by a
+   * difference of two y's, which is `-p*STEP + d*STEP` where abcjs has `-(p - d)*STEP`, and
+   * the two are different doubles: `multi-voice-rest-placement`'s moved quarter rest prints
+   * `30.850500000000004` for abcjs's `30.850499999999997` — its x is exact and nothing else
+   * in the file differs. abcjs's own numbers for it are `SYM rests.quarter offset=
+   * 13.810193548387097 ycorr= -1 calcY= 42.6705`, and 42.6705 - 11.82 is …997 on the nose.
+   *
+   * Closing it means `edge` returning PITCH, which needs a `reservePitch` on the rest (it
+   * has only `reserve`) and a pitch for the LINES the scan also reads — a stem has none.
+   * That is the "reserve in PITCH" refactor several findings have circled; it is not one
+   * line here, so it is written down rather than half-done.
+   */
   const shift = (voice: number, index: number, dy: number): void => {
     const row = out[voice]
     const el = row?.[index]
