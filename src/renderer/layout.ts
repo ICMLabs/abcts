@@ -4004,11 +4004,26 @@ function layoutNoteheads(
     const place = accidentalPlaces[index] ?? 0
     const placed = { ...glyphAt(a.glyph, headXOf(place), a.step), dx: -place }
     const half = (glyphsFor(strict).get(a.glyph)?.declaredHeight ?? 0) / 2
+    /**
+     * …**AND IT RESERVES IN PITCH, as the notehead beside it already does.**
+     * `create-note-head.js:102` states the box as `top: pitch + h / 2`, `bottom:
+     * pitch - h / 2`, where `h` is `symbolHeightInPitches` — a PITCH count — so the y form
+     * costs a multiply and a divide the pitch form does not. On a page 3000px down that is
+     * one ULP of `staff.top` (`15.898322580645162` against abcjs's `…16`), which no
+     * standalone render can show because the smaller absolute y rounds it away: it was the
+     * last differing row of the STACKED corpus, and only there.
+     */
+    const halfPitch =
+      (glyphsFor(strict).get(a.glyph)?.declaredHeight ?? 0) / ENGRAVE.spacePerStep / 2
     pendingAccidentals.push({
       glyph: {
         ...placed,
         role: 'accidental',
         reserve: [stepToY(a.step) - half, stepToY(a.step) + half],
+        reservePitch: [
+          a.step + PITCH_ORIGIN + halfPitch,
+          a.step + PITCH_ORIGIN - halfPitch,
+        ],
         // **EVERY CHILD `createNoteHead` MAKES CARRIES THE CHORD POSITION**, not just the
         // head: the flag, the dots and the accidental all take `chordPos: chordPos`
         // (`create-note-head.js:48`, `:53`, `:100`). `drawAbsolute` then appends
@@ -13019,6 +13034,17 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         const walked =
           staff.originAdvances.slice(lead.length).reduce((y, a) => y + a, systemAbsoluteY) +
           staff.originPitch * ENGRAVE.spacePerStep
+        if (process.env.ABCTS_ABSY)
+          console.log(
+            'ABSY',
+            walked,
+            'sys',
+            systemAbsoluteY,
+            'terms',
+            JSON.stringify(staff.originAdvances.slice(lead.length)),
+            'pitch',
+            staff.originPitch,
+          )
         /**
          * **THE INVARIANT, ASSERTABLE.** The walked origin and the system-relative one are
          * the same point by two routes; they may differ in the last bits and nothing more.

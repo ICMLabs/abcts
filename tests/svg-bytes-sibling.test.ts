@@ -322,6 +322,7 @@ const PASSING: readonly string[] = [
   'S8-layout-print-tune9',
   'S8-layout-print-tune10',
   'S8-layout-print-tune11',
+  'S8-layout-stacked',
   'S8-layout-stacked-print',
   'ave-verum-corpus',
   'ave-verum-corpus-classes',
