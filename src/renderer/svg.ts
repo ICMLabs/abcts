@@ -646,7 +646,10 @@ class Classes {
   }
 }
 
-export function toSVG(doc: Layout, options: RenderOptions = {}): string {
+export function toSVG(
+  input: Layout | readonly Layout[],
+  options: RenderOptions = {},
+): string {
   const scale = options.staffSpace ?? 8;
   const prefix = options.className ?? "abcts";
   const abcjs = options.classes === "abcjs";
@@ -1111,1927 +1114,2001 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
   // The DRAWING is in output pixels under `abcjs` and in layout units under core, where a
   // `viewBox` does the conversion instead. The ROOT's size is `OUT` either way.
   const PX = abcjs ? OUT : 1;
-  const OY = abcjs ? -doc.top : 0;
   /**
-   * **A `<text>`'s x AND y ARE ROUNDED TO TWO DECIMALS IN ABCJS** — `hash.attr.x =
-   * roundNumber(…)`, `hash.attr.y = roundNumber(…)` (`draw/text.js:63-64`), the same rule
-   * its paths take. Core keeps the emission quantum, which is finer than a hundredth of a
-   * STAFF SPACE and is what its baselines are recorded at.
-   */
-  const textNum = abcjs ? round2 : num;
-  /**
-   * **abcjs WRITES NO `transform` ANYWHERE** — its line group is a bare `<g>` and every
-   * coordinate under it is already absolute. Ours nested a system translate inside a staff
-   * translate, which is two more differences per line than the numbers themselves.
+   * **A STACKED TUNEBOOK IS ONE RENDERER DRAWING EVERY TUNE IN TURN.**
+   * `engraveABC` resets ONCE and then runs `engraveTune` per tune, so `renderer.y` — and
+   * with it every absolute coordinate — carries across (`engraver-controller.js:105-118`).
+   * Each tune still opens with its own `moveY(padding.top)` and closes with the page's
+   * `padding.bottom` only at the end, so tune k sits at `Σ(height − padding.bottom)` over
+   * the tunes before it. Measured on `tunebook-3`: tune 0's staff at 77.2 and tune 1's at
+   * 201.25, which is `139.052 − 15` exactly, and the whole markup of tune 0 appears
+   * VERBATIM inside the stacked golden.
    *
-   * `oy` is that nesting, flattened: the running origin in OUTPUT units, folded into every
-   * coordinate on its way out. Zero in core mode, where the groups stay.
+   * `setPaperSize` runs per tune and the LAST call wins, which is why a stacked SVG takes
+   * the last tune's width and the last tune's `aria-label` rather than the widest or the
+   * first.
    */
+  const docs: readonly Layout[] = Array.isArray(input)
+    ? (input as readonly Layout[])
+    : [input as Layout];
+  const lastDoc = docs[docs.length - 1] as Layout;
+  const parts: string[] = [];
+  let stackBase = 0;
+  /** The y a coordinate is drawn against — reset per system, per staff and per tune. */
   let oy = 0;
-  /**
-   * The identity short-cut is `PX === 1 AND oy === 0`, not `PX === 1` alone.
-   *
-   * It was written when `PX === 1` meant CORE mode, where `oy` is zero by construction and
-   * the groups carry the origin instead. Once the layout holds abcjs's own pixels, `PX` is
-   * 1 in the abcjs path too — and there `oy` is the flattened origin and skipping it drops
-   * the whole staff. It cost three byte-exact fixtures, whose top staff line came out at
-   * `-15.85` where abcjs writes `22.21`: exactly the missing
-   * `(system.originY + OY) + staff.originY`.
-   */
-  const moved = (): boolean => PX !== 1 || oy !== 0;
-  /**
-   * **A BRACE AND A BRACKET ARE ABCJS'S OWN ARITHMETIC**, not a glyph — `curvyPath` and
-   * `straightPath` (`draw/brace.js:18-76`), absolute and with no transform. Every
-   * coordinate is RAW: `sprintf`'s `%f` is `parseFloat`, so `132.87 + 110/3.14` prints as
-   * `167.90184713375797`. Verified against a golden to the last digit.
-   *
-   * `STEP` is `spacing.STEP`, the pitch unit — `ENGRAVE.spacePerStep` here, which is
-   * abcjs's 3.875 once the layout holds its pixels.
-   */
-  const connectorPath = (
-    span: ConnectorSpan,
-    yTop: number,
-    yBottom: number,
-  ): string => {
-    const STEP = ENGRAVE.spacePerStep * PX;
-    const xLeft = span.x * PX;
-    const n = (v: number): string => String(v);
-    if (span.kind === "brace") {
+  for (const doc of docs) {
+    const OY = abcjs ? -doc.top : 0;
+    /**
+     * **A `<text>`'s x AND y ARE ROUNDED TO TWO DECIMALS IN ABCJS** — `hash.attr.x =
+     * roundNumber(…)`, `hash.attr.y = roundNumber(…)` (`draw/text.js:63-64`), the same rule
+     * its paths take. Core keeps the emission quantum, which is finer than a hundredth of a
+     * STAFF SPACE and is what its baselines are recorded at.
+     */
+    const textNum = abcjs ? round2 : num;
+    /**
+     * **abcjs WRITES NO `transform` ANYWHERE** — its line group is a bare `<g>` and every
+     * coordinate under it is already absolute. Ours nested a system translate inside a staff
+     * translate, which is two more differences per line than the numbers themselves.
+     *
+     * `oy` is that nesting, flattened: the running origin in OUTPUT units, folded into every
+     * coordinate on its way out. Zero in core mode, where the groups stay.
+     */
+    /**
+     * The identity short-cut is `PX === 1 AND oy === 0`, not `PX === 1` alone.
+     *
+     * It was written when `PX === 1` meant CORE mode, where `oy` is zero by construction and
+     * the groups carry the origin instead. Once the layout holds abcjs's own pixels, `PX` is
+     * 1 in the abcjs path too — and there `oy` is the flattened origin and skipping it drops
+     * the whole staff. It cost three byte-exact fixtures, whose top staff line came out at
+     * `-15.85` where abcjs writes `22.21`: exactly the missing
+     * `(system.originY + OY) + staff.originY`.
+     */
+    const moved = (): boolean => PX !== 1 || oy !== 0;
+    /**
+     * **A BRACE AND A BRACKET ARE ABCJS'S OWN ARITHMETIC**, not a glyph — `curvyPath` and
+     * `straightPath` (`draw/brace.js:18-76`), absolute and with no transform. Every
+     * coordinate is RAW: `sprintf`'s `%f` is `parseFloat`, so `132.87 + 110/3.14` prints as
+     * `167.90184713375797`. Verified against a golden to the last digit.
+     *
+     * `STEP` is `spacing.STEP`, the pitch unit — `ENGRAVE.spacePerStep` here, which is
+     * abcjs's 3.875 once the layout holds its pixels.
+     */
+    const connectorPath = (
+      span: ConnectorSpan,
+      yTop: number,
+      yBottom: number,
+    ): string => {
+      const STEP = ENGRAVE.spacePerStep * PX;
+      const xLeft = span.x * PX;
+      const n = (v: number): string => String(v);
+      if (span.kind === "brace") {
+        const h = yBottom - yTop;
+        const curve = (xC: readonly number[], yC: readonly number[]): string =>
+          `M ${n(xLeft + (xC[0] ?? 0))} ${n(yTop + (yC[0] ?? 0))} ` +
+          `C ${n(xLeft + (xC[1] ?? 0))} ${n(yTop + (yC[1] ?? 0))} ` +
+          `${n(xLeft + (xC[2] ?? 0))} ${n(yTop + (yC[2] ?? 0))} ` +
+          `${n(xLeft + (xC[3] ?? 0))} ${n(yTop + (yC[3] ?? 0))} ` +
+          `C ${n(xLeft + (xC[4] ?? 0))} ${n(yTop + (yC[4] ?? 0))} ` +
+          `${n(xLeft + (xC[5] ?? 0))} ${n(yTop + (yC[5] ?? 0))} ` +
+          `${n(xLeft + (xC[6] ?? 0))} ${n(yTop + (yC[6] ?? 0))} z`;
+        return (
+          curve(
+            [7.5, -8, 21, 0, 18.5, -10.5, 7.5],
+            [0, h / 5.5, h / 3.14, h / 2, h / 2.93, h / 4.88, 0],
+          ) +
+          curve(
+            [0, 17.5, -7.5, 6.6, -5, 20, 0],
+            [h / 2, h / 1.46, h / 1.22, h, h / 1.19, h / 1.42, h / 2],
+          )
+        );
+      }
+      const x = xLeft + STEP;
+      const w = STEP * 0.75;
+      const overlap = STEP * 0.75;
       const h = yBottom - yTop;
-      const curve = (xC: readonly number[], yC: readonly number[]): string =>
-        `M ${n(xLeft + (xC[0] ?? 0))} ${n(yTop + (yC[0] ?? 0))} ` +
-        `C ${n(xLeft + (xC[1] ?? 0))} ${n(yTop + (yC[1] ?? 0))} ` +
-        `${n(xLeft + (xC[2] ?? 0))} ${n(yTop + (yC[2] ?? 0))} ` +
-        `${n(xLeft + (xC[3] ?? 0))} ${n(yTop + (yC[3] ?? 0))} ` +
-        `C ${n(xLeft + (xC[4] ?? 0))} ${n(yTop + (yC[4] ?? 0))} ` +
-        `${n(xLeft + (xC[5] ?? 0))} ${n(yTop + (yC[5] ?? 0))} ` +
-        `${n(xLeft + (xC[6] ?? 0))} ${n(yTop + (yC[6] ?? 0))} z`;
+      const wCurve = STEP * 2;
+      const hCurve = STEP;
       return (
-        curve(
-          [7.5, -8, 21, 0, 18.5, -10.5, 7.5],
-          [0, h / 5.5, h / 3.14, h / 2, h / 2.93, h / 4.88, 0],
-        ) +
-        curve(
-          [0, 17.5, -7.5, 6.6, -5, 20, 0],
-          [h / 2, h / 1.46, h / 1.22, h, h / 1.19, h / 1.42, h / 2],
-        )
+        `M ${n(x)} ${n(yTop - overlap)} l 0 ${n(h + overlap * 2)} l ${n(w)} 0 l 0 ${n(-(h + overlap * 2))} z` +
+        `M ${n(x + w)} ${n(yTop - overlap)} q ${n(wCurve * 0.6)} ${n(hCurve * 0.2)} ${n(wCurve)} ${n(-hCurve)} ` +
+        `q ${n(-wCurve * 0.1)} ${n(hCurve * 0.3)} ${n(-wCurve)} ${n(hCurve + STEP)} z` +
+        `M ${n(x + w)} ${n(yTop + overlap + h)} q ${n(wCurve * 0.6)} ${n(-hCurve * 0.2)} ${n(wCurve)} ${n(hCurve)} ` +
+        `q ${n(-wCurve * 0.1)} ${n(-hCurve * 0.3)} ${n(-wCurve)} ${n(-hCurve - STEP)} z`
+      );
+    };
+    /** One placed line in output units. */
+    const TL = (l: PlacedLine): PlacedLine =>
+      !moved()
+        ? l
+        : {
+            ...l,
+            x1: l.x1 * PX,
+            x2: l.x2 * PX,
+            // …unless the line carries an ABSOLUTE end — see `PlacedLine.absY1`.
+            y1: l.absY1 ?? l.y1 * PX + oy,
+            y2: l.absY2 ?? l.y2 * PX + oy,
+            thickness: l.thickness * PX,
+          };
+    /**
+     * **A BEAM IS A `<path>`, AND ONE PATH HOLDS EVERY BEAM OF ITS GROUP.** `drawBeam`
+     * concatenates each beam's four corners into a single `d` and writes one element
+     * (`draw/beam.js:7-44`), so a sixteenth run is ONE path with two subpaths — and a GRACE
+     * group goes through the same routine, where ours wrote a `<polygon>` per beam.
+     *
+     * The separators are abcjs's own and they are IRREGULAR — a space before the first and
+     * third `L` and none before the second:
+     *
+     *     "M" + sx + " " + sy + " L" + ex + " " + ey + "L" + ex + " " + ey2 + " L" + sx + " " + sy2 + "z"
+     *
+     * The second edge is the first plus `dy`, the beam's thickness, which is why the corners
+     * run start-top → end-top → end-bottom → start-bottom.
+     */
+    const beamPath = (members: readonly PlacedLine[]): string =>
+      members
+        .map((b) => {
+          const t = TL(b);
+          // …and the SECOND edge is rounded off the ALREADY-ROUNDED first, because abcjs
+          // computes `startY2 = roundNumber(startY + dy)` from a `startY` that has been
+          // through `roundNumber` itself (`draw/beam.js:37-42`).
+          const r2 = (n: number): number => Number.parseFloat(n.toFixed(2));
+          // `dy` is SIGNED — `+STEP` for stems up, `-STEP` for stems down — so the path opens
+          // on the TOP edge of an up-stem beam and the BOTTOM edge of a down-stem one. See
+          // `PlacedLine.stemsUp`.
+          const dy = (b.stemsUp === false ? -1 : 1) * t.thickness;
+          // …and a line that already holds the EDGE takes no shift at all — see `edgeY`.
+          const half =
+            b.edgeY === true
+              ? 0
+              : (b.stemsUp === false ? 1 : -1) * (t.thickness / 2);
+          const seg = (
+            x1: number,
+            y1: number,
+            x2: number,
+            y2: number,
+          ): string => {
+            const [sx, ex] = [r2(x1), r2(x2)];
+            const [sy, ey] = [r2(y1 + half), r2(y2 + half)];
+            const [sy2, ey2] = [r2(sy + dy), r2(ey + dy)];
+            return `M${sx} ${sy} L${ex} ${ey}L${ex} ${ey2} L${sx} ${sy2}z`;
+          };
+          /**
+           * **A BEAM BROKEN BY `!beambr1!` IS DRAWN FROM A LIST OF x PAIRS**, each pair's y
+           * interpolated along the WHOLE beam's slope — `getSlope(startX, startY, endX, endY)`
+           * once, then `getY(startX, startY, slope, x)` per end (`draw/beam.js:11-20`). So
+           * every segment lies on one line however the pairs are ordered, and abcjs's first
+           * pair runs BACKWARDS. See `PlacedLine.split`.
+           */
+          if (b.split !== undefined) {
+            const span = t.x2 - t.x1;
+            const slope = span === 0 ? 0 : (t.y2 - t.y1) / span;
+            const yAt = (x: number): number => t.y1 + slope * (x - t.x1);
+            let out = "";
+            for (let i = 0; i + 1 < b.split.length; i += 2) {
+              const [a, c] = [
+                (b.split[i] ?? 0) * PX,
+                (b.split[i + 1] ?? 0) * PX,
+              ];
+              out += seg(a, yAt(a), c, yAt(c));
+            }
+            return out;
+          }
+          return seg(t.x1, t.y1, t.x2, t.y2);
+        })
+        .join("");
+
+    const TC = (c: PlacedCurve): PlacedCurve =>
+      !moved()
+        ? c
+        : {
+            ...c,
+            x1: c.x1 * PX,
+            x2: c.x2 * PX,
+            y1: c.y1 * PX + oy,
+            y2: c.y2 * PX + oy,
+            bulge: c.bulge * PX,
+            midThickness: c.midThickness * PX,
+          };
+
+    /** abcjs's running counters. Inert unless `add_classes` asked for the markup. */
+    const classes = new Classes(options.addClasses === true);
+    /** A row whose class abcjs GENERATES at the row's own line, or `undefined` if it states one. */
+    const generatedTextClass = (name: string): string | undefined => {
+      const k = ABCJS_GENERATED_TEXT_CLASSES[name];
+      return k === undefined ? undefined : classes.generate(k);
+    };
+    /** abcjs's `Selectables.elements.length` — one counter for the whole drawing. */
+    let selectableIndex = 0;
+
+    /**
+     * A TUNE WITH NO MUSIC still writes its title, in the same `abcjs-meta-top` group a
+     * tune with a staff writes it in — `draw()` runs `nonMusic(topText)` before it looks at
+     * a line at all (`draw/draw.js:12-17`). `doc.topText` is set only in that case; see
+     * `layout.ts`.
+     */
+    if (abcjs && doc.topText !== undefined && doc.topText.length > 0) {
+      oy = (OY + stackBase) * PX;
+      const block = doc.topText.map((t) =>
+        abcjsText(
+          round2(t.x * PX),
+          round2(t.y * PX + oy),
+          num(t.size * PX),
+          "Times New Roman",
+          t.italic === true,
+          t.bold === true,
+          t.anchor ?? "start",
+          t.dataName ?? "",
+          escapeText(t.text),
+          options.addClasses === true && t.dataName !== undefined
+            ? // …**AND THE BOTTOM BLOCK'S CLASS IS PER FIELD, NOT PER DRAWN NAME** — both
+              // `N:` and `H:` draw as `data-name="description"` and carry
+              // `abcjs-extra-text abcjs-notes` / `…-history` (`bottom-text.js:24-45, 67-79`),
+              // which is what `PlacedText.groupClass` holds for those rows.
+              (t.groupClass ??
+                generatedTextClass(t.dataName) ??
+                ABCJS_TEXT_CLASSES[t.dataName] ??
+                "")
+            : "",
+        ),
+      );
+      parts.push(
+        `<g${options.addClasses === true ? ' class="abcjs-meta-top"' : ""}>${block.join("")}</g>`,
       );
     }
-    const x = xLeft + STEP;
-    const w = STEP * 0.75;
-    const overlap = STEP * 0.75;
-    const h = yBottom - yTop;
-    const wCurve = STEP * 2;
-    const hCurve = STEP;
-    return (
-      `M ${n(x)} ${n(yTop - overlap)} l 0 ${n(h + overlap * 2)} l ${n(w)} 0 l 0 ${n(-(h + overlap * 2))} z` +
-      `M ${n(x + w)} ${n(yTop - overlap)} q ${n(wCurve * 0.6)} ${n(hCurve * 0.2)} ${n(wCurve)} ${n(-hCurve)} ` +
-      `q ${n(-wCurve * 0.1)} ${n(hCurve * 0.3)} ${n(-wCurve)} ${n(hCurve + STEP)} z` +
-      `M ${n(x + w)} ${n(yTop + overlap + h)} q ${n(wCurve * 0.6)} ${n(-hCurve * 0.2)} ${n(wCurve)} ${n(hCurve)} ` +
-      `q ${n(-wCurve * 0.1)} ${n(-hCurve * 0.3)} ${n(-wCurve)} ${n(-hCurve - STEP)} z`
-    );
-  };
-  /** One placed line in output units. */
-  const TL = (l: PlacedLine): PlacedLine =>
-    !moved()
-      ? l
-      : {
-          ...l,
-          x1: l.x1 * PX,
-          x2: l.x2 * PX,
-          // …unless the line carries an ABSOLUTE end — see `PlacedLine.absY1`.
-          y1: l.absY1 ?? l.y1 * PX + oy,
-          y2: l.absY2 ?? l.y2 * PX + oy,
-          thickness: l.thickness * PX,
-        };
-  /**
-   * **A BEAM IS A `<path>`, AND ONE PATH HOLDS EVERY BEAM OF ITS GROUP.** `drawBeam`
-   * concatenates each beam's four corners into a single `d` and writes one element
-   * (`draw/beam.js:7-44`), so a sixteenth run is ONE path with two subpaths — and a GRACE
-   * group goes through the same routine, where ours wrote a `<polygon>` per beam.
-   *
-   * The separators are abcjs's own and they are IRREGULAR — a space before the first and
-   * third `L` and none before the second:
-   *
-   *     "M" + sx + " " + sy + " L" + ex + " " + ey + "L" + ex + " " + ey2 + " L" + sx + " " + sy2 + "z"
-   *
-   * The second edge is the first plus `dy`, the beam's thickness, which is why the corners
-   * run start-top → end-top → end-bottom → start-bottom.
-   */
-  const beamPath = (members: readonly PlacedLine[]): string =>
-    members
-      .map((b) => {
-        const t = TL(b);
-        // …and the SECOND edge is rounded off the ALREADY-ROUNDED first, because abcjs
-        // computes `startY2 = roundNumber(startY + dy)` from a `startY` that has been
-        // through `roundNumber` itself (`draw/beam.js:37-42`).
-        const r2 = (n: number): number => Number.parseFloat(n.toFixed(2));
-        // `dy` is SIGNED — `+STEP` for stems up, `-STEP` for stems down — so the path opens
-        // on the TOP edge of an up-stem beam and the BOTTOM edge of a down-stem one. See
-        // `PlacedLine.stemsUp`.
-        const dy = (b.stemsUp === false ? -1 : 1) * t.thickness;
-        // …and a line that already holds the EDGE takes no shift at all — see `edgeY`.
-        const half =
-          b.edgeY === true
-            ? 0
-            : (b.stemsUp === false ? 1 : -1) * (t.thickness / 2);
-        const seg = (
-          x1: number,
-          y1: number,
-          x2: number,
-          y2: number,
-        ): string => {
-          const [sx, ex] = [r2(x1), r2(x2)];
-          const [sy, ey] = [r2(y1 + half), r2(y2 + half)];
-          const [sy2, ey2] = [r2(sy + dy), r2(ey + dy)];
-          return `M${sx} ${sy} L${ex} ${ey}L${ex} ${ey2} L${sx} ${sy2}z`;
-        };
-        /**
-         * **A BEAM BROKEN BY `!beambr1!` IS DRAWN FROM A LIST OF x PAIRS**, each pair's y
-         * interpolated along the WHOLE beam's slope — `getSlope(startX, startY, endX, endY)`
-         * once, then `getY(startX, startY, slope, x)` per end (`draw/beam.js:11-20`). So
-         * every segment lies on one line however the pairs are ordered, and abcjs's first
-         * pair runs BACKWARDS. See `PlacedLine.split`.
-         */
-        if (b.split !== undefined) {
-          const span = t.x2 - t.x1;
-          const slope = span === 0 ? 0 : (t.y2 - t.y1) / span;
-          const yAt = (x: number): number => t.y1 + slope * (x - t.x1);
-          let out = "";
-          for (let i = 0; i + 1 < b.split.length; i += 2) {
-            const [a, c] = [(b.split[i] ?? 0) * PX, (b.split[i + 1] ?? 0) * PX];
-            out += seg(a, yAt(a), c, yAt(c));
-          }
-          return out;
-        }
-        return seg(t.x1, t.y1, t.x2, t.y2);
-      })
-      .join("");
 
-  const TC = (c: PlacedCurve): PlacedCurve =>
-    !moved()
-      ? c
-      : {
-          ...c,
-          x1: c.x1 * PX,
-          x2: c.x2 * PX,
-          y1: c.y1 * PX + oy,
-          y2: c.y2 * PX + oy,
-          bulge: c.bulge * PX,
-          midThickness: c.midThickness * PX,
-        };
-
-  const parts: string[] = [];
-  /** abcjs's running counters. Inert unless `add_classes` asked for the markup. */
-  const classes = new Classes(options.addClasses === true);
-  /** A row whose class abcjs GENERATES at the row's own line, or `undefined` if it states one. */
-  const generatedTextClass = (name: string): string | undefined => {
-    const k = ABCJS_GENERATED_TEXT_CLASSES[name];
-    return k === undefined ? undefined : classes.generate(k);
-  };
-  /** abcjs's `Selectables.elements.length` — one counter for the whole drawing. */
-  let selectableIndex = 0;
-
-  /**
-   * A TUNE WITH NO MUSIC still writes its title, in the same `abcjs-meta-top` group a
-   * tune with a staff writes it in — `draw()` runs `nonMusic(topText)` before it looks at
-   * a line at all (`draw/draw.js:12-17`). `doc.topText` is set only in that case; see
-   * `layout.ts`.
-   */
-  if (abcjs && doc.topText !== undefined && doc.topText.length > 0) {
-    oy = OY * PX;
-    const block = doc.topText.map((t) =>
-      abcjsText(
-        round2(t.x * PX),
-        round2(t.y * PX + oy),
-        num(t.size * PX),
-        "Times New Roman",
-        t.italic === true,
-        t.bold === true,
-        t.anchor ?? "start",
-        t.dataName ?? "",
-        escapeText(t.text),
-        options.addClasses === true && t.dataName !== undefined
-          ? // …**AND THE BOTTOM BLOCK'S CLASS IS PER FIELD, NOT PER DRAWN NAME** — both
-            // `N:` and `H:` draw as `data-name="description"` and carry
-            // `abcjs-extra-text abcjs-notes` / `…-history` (`bottom-text.js:24-45, 67-79`),
-            // which is what `PlacedText.groupClass` holds for those rows.
-            (t.groupClass ??
-              generatedTextClass(t.dataName) ??
-              ABCJS_TEXT_CLASSES[t.dataName] ??
-              "")
-          : "",
-      ),
-    );
-    parts.push(
-      `<g${options.addClasses === true ? ' class="abcjs-meta-top"' : ""}>${block.join("")}</g>`,
-    );
-  }
-
-  for (const [systemIndex, system] of doc.systems.entries()) {
-    // The system's own origin, flattened into every coordinate under it.
-    // **THE PAGE'S CURSOR, NOT A SUM OF OFFSETS** — see `LayoutStaff.absoluteY`.
-    if (abcjs) oy = (system.absoluteY ?? system.originY + OY) * PX;
-    /**
-     * **THE TOP TEXT COMES FIRST IN ABCJS'S BODY**, before any staff and before the braces
-     * — `nonMusic()` runs the whole header block and only then does `drawStaffGroup` start
-     * (`draw/draw.js`). Ours hung the block on the first staff, so a brace was written
-     * ahead of the title on every grand-staff fixture.
-     *
-     * IT IS ITS OWN GROUP, AND A SIBLING OF THE LINE'S — `draw.js:12-17` opens a group
-     * (`abcjs-meta-top` under `add_classes`, bare without), runs `nonMusic`, and CLOSES it
-     * before the first staff-wrapper. Ours wrapped the whole drawing in one plain `<g>`
-     * instead and never closed it, so every fixture carried one `<g>` too many and a
-     * titled one had its text inside the wrapper rather than beside it.
-     *
-     * **AND AN EMPTY GROUP IS DELETED.** `Svg.closeGroup` removes a group whose children
-     * are none — "all the elements were invisible" (`svg.js:364-372`) — which is why a
-     * titleless tune's first child is the staff-wrapper and not an empty `<g></g>`.
-     */
-    if (abcjs) {
+    for (const [systemIndex, system] of doc.systems.entries()) {
+      // The system's own origin, flattened into every coordinate under it.
+      // **THE PAGE'S CURSOR, NOT A SUM OF OFFSETS** — see `LayoutStaff.absoluteY`.
+      if (abcjs)
+        oy = ((system.absoluteY ?? system.originY + OY) + stackBase) * PX;
       /**
-       * **THE TOP BLOCK IS NOT ONE GROUP — `abcjs-meta-top` CLOSES BEFORE THE FIRST
-       * `%%text`.** `draw()` opens the meta-top group, runs `nonMusic(topText)`, closes it,
-       * spends `spacing.music`, and only then walks `tune.lines`, opening ONE
-       * `<g class="abcjs-non-music">` per nonMusic line (`draw/draw.js:12-58`). Measured on
-       * a control with two `%%text` directives: two sibling groups, and the staff after
-       * them is `abcjs-l2` because each ran `classes.incrLine()`.
+       * **THE TOP TEXT COMES FIRST IN ABCJS'S BODY**, before any staff and before the braces
+       * — `nonMusic()` runs the whole header block and only then does `drawStaffGroup` start
+       * (`draw/draw.js`). Ours hung the block on the first staff, so a brace was written
+       * ahead of the title on every grand-staff fixture.
        *
-       * `nonMusicIndex` says which line a row came from; the rows with none are the title's
-       * and stay in meta-top.
+       * IT IS ITS OWN GROUP, AND A SIBLING OF THE LINE'S — `draw.js:12-17` opens a group
+       * (`abcjs-meta-top` under `add_classes`, bare without), runs `nonMusic`, and CLOSES it
+       * before the first staff-wrapper. Ours wrapped the whole drawing in one plain `<g>`
+       * instead and never closed it, so every fixture carried one `<g>` too many and a
+       * titled one had its text inside the wrapper rather than beside it.
+       *
+       * **AND AN EMPTY GROUP IS DELETED.** `Svg.closeGroup` removes a group whose children
+       * are none — "all the elements were invisible" (`svg.js:364-372`) — which is why a
+       * titleless tune's first child is the staff-wrapper and not an empty `<g></g>`.
        */
-      const block: {
-        t?: PlacedText;
-        s?: string;
-        nonMusicIndex: number | undefined;
-      }[] = [];
-      const first = system.staves[0];
-      if (first !== undefined) {
-        oy = abcjs
-          ? first.absoluteY * PX
-          : (system.originY + OY) * PX + first.originY * PX;
-        for (const el of first.elements) {
-          if (el.blockHeight === undefined) continue;
-          for (const t of el.texts)
-            block.push({ t, nonMusicIndex: t.nonMusicIndex });
-          for (const line of el.lines) {
-            const t = TL(line);
-            // **THE PAGE'S OWN y WHERE THERE IS ONE**, exactly as the block's texts take
-            // `pageY` — and in the ROW it belongs to, so `nonMusic` draws it in its turn
-            // rather than dropping every rule into `meta-top`. See `PlacedLine.pageY`.
-            const ly = line.pageY === undefined ? t.y1 : line.pageY * PX;
-            block.push({
-              nonMusicIndex: line.nonMusicIndex,
-              s:
-                line.role === "separator"
-                  ? separatorPath(
-                      t.x1,
-                      ly,
-                      t.x2,
-                      classes.generate("defined-text"),
-                    )
-                  : lineToRect(t, attrs(el.type, line.role), abcjs),
-            });
+      if (abcjs) {
+        /**
+         * **THE TOP BLOCK IS NOT ONE GROUP — `abcjs-meta-top` CLOSES BEFORE THE FIRST
+         * `%%text`.** `draw()` opens the meta-top group, runs `nonMusic(topText)`, closes it,
+         * spends `spacing.music`, and only then walks `tune.lines`, opening ONE
+         * `<g class="abcjs-non-music">` per nonMusic line (`draw/draw.js:12-58`). Measured on
+         * a control with two `%%text` directives: two sibling groups, and the staff after
+         * them is `abcjs-l2` because each ran `classes.incrLine()`.
+         *
+         * `nonMusicIndex` says which line a row came from; the rows with none are the title's
+         * and stay in meta-top.
+         */
+        const block: {
+          t?: PlacedText;
+          s?: string;
+          nonMusicIndex: number | undefined;
+        }[] = [];
+        const first = system.staves[0];
+        if (first !== undefined) {
+          oy = abcjs
+            ? (first.absoluteY + stackBase) * PX
+            : (system.originY + OY + stackBase) * PX + first.originY * PX;
+          for (const el of first.elements) {
+            if (el.blockHeight === undefined) continue;
+            for (const t of el.texts)
+              block.push({ t, nonMusicIndex: t.nonMusicIndex });
+            for (const line of el.lines) {
+              const t = TL(line);
+              // **THE PAGE'S OWN y WHERE THERE IS ONE**, exactly as the block's texts take
+              // `pageY` — and in the ROW it belongs to, so `nonMusic` draws it in its turn
+              // rather than dropping every rule into `meta-top`. See `PlacedLine.pageY`.
+              const ly = line.pageY === undefined ? t.y1 : line.pageY * PX;
+              block.push({
+                nonMusicIndex: line.nonMusicIndex,
+                s:
+                  line.role === "separator"
+                    ? separatorPath(
+                        t.x1,
+                        ly,
+                        t.x2,
+                        classes.generate("defined-text"),
+                      )
+                    : lineToRect(t, attrs(el.type, line.role), abcjs),
+              });
+            }
           }
         }
-      }
-      // Rendered INSIDE the group loop, because a nonMusic row's class carries the LINE
-      // counter and that counter advances group by group.
-      /**
-       * **A `%%…box` FONT DRAWS FOUR FILLED RULES ROUND ITS ROW, INSIDE A GROUP.**
-       * `renderText` opens `<g fill data-name>`, DELETES the row's class, and after the
-       * text lays a rect that `Svg.rect` writes as a PATH — "so that it can be hollow and
-       * the color changes with fill instead of stroke" (`draw/text.js:48-81`,
-       * `svg.js:112-142`). The double spaces in the `d` are `constructHLine`'s own.
-       */
-      const stripBox = (t: PlacedText): PlacedText => {
-        const { boxRect: _drop, ...rest } = t;
-        return { ...rest, noClass: true };
-      };
-      const boxPath = (
-        t: PlacedText,
-        r: NonNullable<PlacedText["boxRect"]>,
-      ): string =>
-        boxRulesPath(
-          r,
-          t.pageY === undefined ? t.y * PX + oy : t.pageY * PX,
-          t.size * PX,
-        );
-      const renderRow = (b: { t?: PlacedText; s?: string }): string =>
-        b.s !== undefined || b.t === undefined
-          ? (b.s ?? "")
-          : b.t.phrases !== undefined
-            ? richTextLine(
-                b.t.phrases,
-                raw(b.t.x * PX),
-                raw(b.t.pageY === undefined ? b.t.y * PX + oy : b.t.pageY * PX),
-                b.t.anchor ?? "start",
-                options.addClasses === true && b.t.dataName !== undefined
-                  ? (ABCJS_TEXT_CLASSES[b.t.dataName] ?? "")
-                  : undefined,
-              )
-            : b.t.boxRect !== undefined
-              ? `<g fill="currentColor" data-name="${b.t.dataName ?? ""}">` +
-                `${renderRow({ t: stripBox(b.t) })}` +
-                `${boxPath(b.t, b.t.boxRect)}</g>`
-              : abcjsText(
-                  round2(b.t.x * PX),
-                  // **THE PAGE'S OWN y WHERE THERE IS ONE** — see `PlacedText.pageY`. abcjs
-                  // walks ONE cursor from `padding.top` and writes `renderer.y + font.size`;
-                  // reaching the same point through the staff's frame is the same three
-                  // terms in a different order, and a different double.
-                  round2(
+        // Rendered INSIDE the group loop, because a nonMusic row's class carries the LINE
+        // counter and that counter advances group by group.
+        /**
+         * **A `%%…box` FONT DRAWS FOUR FILLED RULES ROUND ITS ROW, INSIDE A GROUP.**
+         * `renderText` opens `<g fill data-name>`, DELETES the row's class, and after the
+         * text lays a rect that `Svg.rect` writes as a PATH — "so that it can be hollow and
+         * the color changes with fill instead of stroke" (`draw/text.js:48-81`,
+         * `svg.js:112-142`). The double spaces in the `d` are `constructHLine`'s own.
+         */
+        const stripBox = (t: PlacedText): PlacedText => {
+          const { boxRect: _drop, ...rest } = t;
+          return { ...rest, noClass: true };
+        };
+        const boxPath = (
+          t: PlacedText,
+          r: NonNullable<PlacedText["boxRect"]>,
+        ): string =>
+          boxRulesPath(
+            r,
+            t.pageY === undefined ? t.y * PX + oy : t.pageY * PX,
+            t.size * PX,
+          );
+        const renderRow = (b: { t?: PlacedText; s?: string }): string =>
+          b.s !== undefined || b.t === undefined
+            ? (b.s ?? "")
+            : b.t.phrases !== undefined
+              ? richTextLine(
+                  b.t.phrases,
+                  raw(b.t.x * PX),
+                  raw(
                     b.t.pageY === undefined ? b.t.y * PX + oy : b.t.pageY * PX,
                   ),
-                  num(b.t.size * PX),
-                  // …AND THE FACE A `%%<type>font` NAMES. Hard-coded here, so
-                  // `%%titlefont cursive 23` drew in the default — the same half-realization
-                  // `%%vocalfont` and the voice name each had.
-                  b.t.face ?? "Times New Roman",
-                  b.t.italic === true,
-                  b.t.bold === true,
                   b.t.anchor ?? "start",
-                  // abcjs names EVERY top-text row — `title`, `subtitle`, `composer`,
-                  // `free-text` — from the `name` its `addTextIf`/`richText` call passes.
-                  // This read a `text` key that was never in the table, so it was always ''.
-                  b.t.dataName ?? "",
-                  escapeText(b.t.text),
-                  // A nonMusic ROW IS NOT A TOP-TEXT ROW: `renderText` classes it
-                  // `classes.generate('defined-text')`, which carries the LINE number
-                  // (`draw/text.js:36`), where a title's class is a flat literal from the table.
-                  options.addClasses !== true
-                    ? ""
-                    : b.t.nonMusicIndex !== undefined
-                      ? // EACH ROW CARRIES ITS OWN `klass` — `nonMusic` passes `row.klass` to
-                        // `renderText` and `getFontAndAttr` runs `classes.generate` on it, so a
-                        // `Subtitle` row is `text subtitle` where a `FreeText` row is
-                        // `defined-text` (`subtitle.js:7`, `free-text.js:11`).
-                        classes.generate(
-                          b.t.dataName === "subtitle"
-                            ? "text subtitle"
-                            : "defined-text",
-                        )
-                      : b.t.dataName !== undefined
-                        ? (generatedTextClass(b.t.dataName) ??
-                          ABCJS_TEXT_CLASSES[b.t.dataName] ??
-                          "")
-                        : "",
-                  (b.t.extraLines ?? []).map(escapeText),
-                  b.t.middleBaseline === true,
-                  // A BOXED row's class is DELETED, not emptied (`draw/text.js:58`).
-                  b.t.noClass === true,
-                );
-      // …and under `add_classes` the group is named: `abcjs-meta-top` for the tune's own
-      // header block, `abcjs-non-music` for a nonMusic line (`draw/draw.js:11-12`, `:55`).
-      // An EMPTY group is DELETED (`svg.js:364-372`), which is what the length tests are.
-      const klassOf = (nonMusic: boolean): string =>
-        options.addClasses === true
-          ? ` class="${!nonMusic && systemIndex === 0 ? "abcjs-meta-top" : "abcjs-non-music"}"`
-          : "";
-      // **AND A SUBTITLE LINE DRAWS NOTHING AND STILL COUNTS** — see
-      // `RenderDoc.blankLeadingLines`.
-      if (systemIndex === 0)
-        for (let i = 0; i < (doc.blankLeadingLines ?? 0); i += 1)
-          classes.incrLine();
-      const meta = block.filter((b) => b.nonMusicIndex === undefined);
-      if (meta.length > 0)
-        parts.push(`<g${klassOf(false)}>${meta.map(renderRow).join("")}</g>`);
-      const indices = [
-        ...new Set(
-          block.flatMap((b) =>
-            b.nonMusicIndex === undefined ? [] : [b.nonMusicIndex],
-          ),
-        ),
-      ].sort((a, b) => a - b);
-      for (const i of indices) {
-        // BEFORE the group, not after it: `draw()` runs `classes.incrLine()` at the head of
-        // every line it walks (`draw/draw.js:30-31`), so the FIRST `%%text` is `abcjs-l0`.
-        classes.incrLine();
-        const rows = block.filter((b) => b.nonMusicIndex === i);
-        parts.push(`<g${klassOf(true)}>${rows.map(renderRow).join("")}</g>`);
-      }
-    }
-
-    // `abcjs-staff-wrapper abcjs-l{n}` wraps a whole music LINE (`draw/draw.js:40-42`),
-    // and it is the outermost thing in abcjs's output — our very first contract row
-    // differed on depth because it was missing.
-    if (abcjs) classes.incrLine();
-    // Each system is laid out in its own space and placed by translation, so nothing
-    // inside it depends on how many systems precede it. Staves nest the same way, one
-    // per voice, because a staff step means a different pitch under a different clef.
-    parts.push(
-      `<g${abcjs ? attrIfAny(classes.generate("staff-wrapper")) : ` class="${prefix}-system"`}` +
-        `${abcjs ? "" : ` transform="translate(0,${num((system.originY + OY) * PX)})"`}>`,
-    );
-    // Braces and brackets first: they belong to the SYSTEM, joining staves rather than
-    // sitting on one, and they are drawn at the left edge outside the music area.
-    // A BRACKET'S STEM. abcjs classes it `abcjs-bracket` and names it `bracket`
-    // (`draw/brace.js`, via `classes.generate`), and we emitted neither — so no comparison
-    // could reach a bracket at all. Finding 92: the representation was missing a HANDLE.
-    if (!abcjs)
-      for (const line of system.connectorLines) {
-        parts.push(lineToRect(TL(line), ` class="${prefix}-staff"`, abcjs));
-      }
-    // Under `abcjs` a connector is `curvyPath`/`straightPath` arithmetic drawn with its own
-    // staff's lines — see `connectorPath` and the staff loop below.
-    if (!abcjs)
-      for (const g of system.connectorGlyphs) {
-        // A brace stretches VERTICALLY to span its staves — `scale(1,n)`, not a uniform
-        // scale — so it cannot share a definition with an unstretched one and stays a path.
-        const scale =
-          g.scale === undefined || g.scale === 1
-            ? ""
-            : ` scale(1,${num(g.scale)})`;
-        // …and the same handle for the glyphs. abcjs draws a brace and a bracket as ONE path
-        // each, so a `brace` name covers the whole shape and `bracket` covers its two arms.
-        const named = g.name === "brace" ? "brace" : "bracket";
-        const attr = ` class="${prefix}-staff"`;
-        parts.push(
-          scale === ""
-            ? glyphMarkup(g.name, g.x, g.y, undefined, attr)
-            : `<path${attr} transform="translate(${num(g.x * PX)},${num(g.y * PX + oy)})${scale}" d="${outline(g.name).path}"/>`,
-        );
-      }
-    for (const [staffIndex, staff] of system.staves.entries()) {
-      /** Connectors that START on this staff — written after its lines. */
-      let connectorHere: readonly ConnectorSpan[] = [];
-      /**
-       * **EVERY BARLINE OF A JOINED STAFF RUNS UP TO THE STAFF ABOVE IT.**
-       * `drawStaffGroup` sets `bartop = renderer.calcY(2)` after each voice — "this
-       * connects the bar lines between two different staves" — and `relative.js`'s
-       * `case "bar"` draws to it instead of its own `pitch2`, which is always 10
-       * (`draw/staff-group.js:129-133`, `draw/relative.js:61`,
-       * `abstract-engraver.js:992-1024`).
-       *
-       * **MEASURED ON A LADDER, because the source reads otherwise.** `drawVoice` spends
-       * `bartop` on `params.barto || i === params.children.length - 1`, and `barto` comes
-       * from a `|` in `%%score` while the voice's children — dumped from abcjs — are
-       * `[staff-extra clef, bar, note]`, so neither clause should fire. Yet `%%staves
-       * {RH LH}` and `%%staves {RH|LH}` draw IDENTICAL output and EVERY bar of the lower
-       * staff spans, not just its last. So the rule is GROUP MEMBERSHIP, and the `|` makes
-       * no difference at all. Two runs settled what three source reads could not.
-       */
-      /**
-       * **A DUPLICATE VOICE'S BAR, METER, CLEF AND KEY ARE INVISIBLE.** Every voice after
-       * the first on a staff is `voice.duplicate` ("bar lines and other duplicate info
-       * need not be created"), and `createABCElement` marks exactly those four
-       * `elemset[0].invisible = true` (`abstract-engraver.js:150`, `:319-340`);
-       * `drawAbsolute` then returns before it opens a group, so they produce NO MARKUP at
-       * all while still taking their width. An `&` overlay is such a voice, which is why
-       * `visual-tablature-13` ended with one barline too many.
-       */
-      let duplicateFrom = Number.POSITIVE_INFINITY;
-      if (abcjs && staff.voices.length > 1)
-        duplicateFrom = staff.voices[0]?.length ?? 0;
-      const previous =
-        staffIndex === 0 ? undefined : system.staves[staffIndex - 1];
-      // **ANY STAFF AFTER THE FIRST**, not only one inside a `%%score` group — `bartop`
-      // is set after every non-duplicate voice, whatever joins them
-      // (`draw/staff-group.js:129-133`). Measured: two bare `V:` voices with no `%%staves`
-      // at all draw the lower staff's bars up to the upper staff's bottom line.
-      // **ONE PRODUCT OFF THE STAFF ABOVE'S OWN `absoluteY`** — `bartop =
-      // renderer.calcY(2 + tabNameHeight)` taken while `renderer.y` is that staff's origin
-      // (`draw/staff-group.js:132`). See `PlacedLine.absY1`.
-      const bartop =
-        previous === undefined
-          ? undefined
-          : previous.absoluteY * PX -
-            ENGRAVE.spacePerStep * ABCJS_PITCH.bottomLine * PX;
-      // …and the staff's, on top of it. Reset per staff, since `staff.originY` is relative.
-      if (abcjs) oy = staff.absoluteY * PX;
-      let staffGroup = "";
-      // CORRECTED, by the byte table: abcjs DOES group the staff lines, with or without
-      // `add_classes` — `…</path></g><g fill="currentColor" stroke="none" data-name=
-      // "staff-extra clef">` — so the group is real and the element groups are its
-      // SIBLINGS. `add_classes` only puts a class on it. Removing it outright was right
-      // about the transform and wrong about the group.
-      if (!abcjs) {
-        parts.push(
-          `<g class="${prefix}-staff-group" transform="translate(0,${num(staff.originY * PX)})">`,
-        );
-      }
-      // `incrVoice()` then `newMeasure()` then the staff lines — abcjs's own order
-      // (`draw/staff-group.js:80-91`), which is why the staff's class carries `l` and `v`
-      // but no `m`/`mm`: the measure counter is null across that call.
-      if (abcjs) {
-        classes.incrVoice();
-        classes.newMeasure();
-        // The staff-lines group exists ONLY under `add_classes`; without it abcjs draws
-        // the lines straight into the wrapper, and an empty `<g>` would be a row of its own
-        // on the contract table.
-        staffGroup = classes.generate("staff");
-        // …AND AN EMPTY ONE IS DELETED, like every other group `closeGroup` sees with no
-        // children (`svg.js:364-372`). A `clef=none stafflines=0` staff draws no lines at
-        // all, so abcjs's next child is the time signature and ours was an empty `<g>`.
-        if (staff.staffLines.length > 0) {
-          parts.push(staffGroup ? `<g class="${staffGroup}">` : "<g>");
-        }
-        // …and the CONNECTOR comes straight after this staff's lines, as
-        // `drawStaffGroup` draws it — `printStaff`, then `printBrace(brace)`, then
-        // `printBrace(bracket)`, then `drawVoice` (`draw/staff-group.js:74-113`). The
-        // group closes below, so the connector is written after it.
-        connectorHere = system.connectorSpans.filter(
-          (c) => c.staffIndex === staffIndex,
-        );
-      }
-      // abcjs classes only the TOP staff line; the other four carry no class at all.
-      //
-      // Found by the LOWEST y rather than by index. `staffLines[0]` is the BOTTOM line —
-      // y is down and the array runs upward — so keying on index 0 put `abcjs-top-line`
-      // on the bottom line, four staff spaces from where a stylesheet targeting it would
-      // expect. Silent, because the class was present and the count was right.
-      const ordered = abcjs
-        ? [...staff.staffLines].reverse()
-        : staff.staffLines;
-      const topLine = ordered.reduce(
-        (best, line, i) =>
-          line.y1 < (ordered[best]?.y1 ?? Number.POSITIVE_INFINITY) ? i : best,
-        0,
-      );
-      // **TOP-DOWN.** `staffLines[0]` is the BOTTOM line here — y is down and the array runs
-      // upward — and abcjs's `printStaff` writes from the top. A pure ORDER difference,
-      // invisible to every gate that compares positions and worth 31px of apparent offset
-      // when the first line of each engine's output was read side by side.
-      ordered.forEach((line, i) => {
-        const attr = abcjs
-          ? i === topLine
-            ? ' class="abcjs-top-line"'
-            : ""
-          : ` class="${prefix}-staff"`;
-        parts.push(lineToRect(TL(line), attr, abcjs));
-      });
-      if (abcjs && staff.staffLines.length > 0) parts.push("</g>");
-      /**
-       * …**AND THE MEASURE COUNTER IS STILL NULL WHILE THE CONNECTOR AND THE VOICE NAME
-       * GO OUT.** `drawStaffGroup` runs `newMeasure()` before `printStaff` and only
-       * `drawVoice` starts one, after it has drawn the voice name
-       * (`draw/staff-group.js:92-113`, `draw/voice.js:19-34`). So a brace, a bracket and a
-       * voice name carry `l` and `v` and NO `m`/`mm`, where the clef after them carries all
-       * four. `ave-verum-corpus-classes` writes `abcjs-bracket abcjs-l0 abcjs-v0`; ours
-       * started the measure before this loop and wrote `abcjs-m0 abcjs-mm0` into both.
-       */
-      for (const span of connectorHere) {
-        // SYSTEM coordinates — `edge()` already carries each staff's own `originY`, so the
-        // offset is the system's alone and not this staff's.
-        const systemOy = (system.originY + OY) * PX;
-        /**
-         * **A BRACE'S ENDS COME OFF `staff.absoluteY`, ONE PRODUCT EACH.**
-         *
-         *     var startY = params.startVoice.staff.absoluteY - spacing.STEP * 10;
-         *     params.endY = params.endVoice.staff.absoluteY - spacing.STEP * 2;
-         *
-         * (`draw/brace.js:8-14`) — 10 is the top staff line and 2 the bottom, in abcjs's
-         * pitch frame. Ours summed a system-relative edge and the system's own origin,
-         * which is the same terms in a different grouping: `visual-selection-01`'s curve
-         * printed `452.5570454545454` against abcjs's `452.55704545454546`, because every
-         * control point is `yTop + yHeight / k`.
-         */
-        const braceStaff = system.staves[span.staffIndex];
-        const braceLast = system.staves[span.through];
-        const yTop =
-          braceStaff === undefined
-            ? span.top * PX + systemOy
-            : braceStaff.absoluteY * PX - ENGRAVE.spacePerStep * PX * 10;
-        const yBottom =
-          braceLast === undefined
-            ? span.bottom * PX + systemOy
-            : braceLast.absoluteY * PX - ENGRAVE.spacePerStep * PX * 2;
-        /**
-         * **A BRACE WITH A HEADER OWNS THE VOICE NAME, AND DRAWS IT ITSELF.**
-         *
-         *     if (header) {
-         *       paper.openGroup({ klass: classes.generate("staff-extra voice-name"),
-         *                         "data-name": type });
-         *       var position = yTop + (yBottom - yTop) / 2;
-         *       position = position - getTextSize.baselineToCenter(header, "voicefont",
-         *                                'staff-extra voice-name', 0, 1);
-         *       renderText(renderer, { x: renderer.padding.left, y: position, … });
-         *     }
-         *     …the path…
-         *     if (header) ret = paper.closeGroup();
-         *
-         * (`draw/brace.js:78-98`.) The name is at the PAGE's left padding, not the
-         * staff's, and centred on the BRACE rather than on either staff it joins — which
-         * is why `BraceElem.setBottomStaff` deletes it off the voice. See
-         * `ConnectorSpan.header`.
-         */
-        const header = span.header;
-        if (abcjs && header !== undefined) {
-          const cls = classes.generate("staff-extra voice-name");
-          parts.push(
-            `<g${cls ? ` class="${cls}"` : ""} data-name="${span.kind}">`,
-          );
-          const position =
-            yTop + (yBottom - yTop) / 2 - header.baselineToCentre * PX;
-          parts.push(
-            abcjsText(
-              textNum((doc.paddingLeft ?? ENGRAVE.marginX) * PX),
-              textNum(position),
-              num(header.size * PX),
-              ABCJS_FONT_FACE.voicefont ?? "Times New Roman",
-              false,
-              true,
-              "start",
-              "",
-              escapeText(header.text),
-              cls,
+                  options.addClasses === true && b.t.dataName !== undefined
+                    ? (ABCJS_TEXT_CLASSES[b.t.dataName] ?? "")
+                    : undefined,
+                )
+              : b.t.boxRect !== undefined
+                ? `<g fill="currentColor" data-name="${b.t.dataName ?? ""}">` +
+                  `${renderRow({ t: stripBox(b.t) })}` +
+                  `${boxPath(b.t, b.t.boxRect)}</g>`
+                : abcjsText(
+                    round2(b.t.x * PX),
+                    // **THE PAGE'S OWN y WHERE THERE IS ONE** — see `PlacedText.pageY`. abcjs
+                    // walks ONE cursor from `padding.top` and writes `renderer.y + font.size`;
+                    // reaching the same point through the staff's frame is the same three
+                    // terms in a different order, and a different double.
+                    round2(
+                      b.t.pageY === undefined
+                        ? b.t.y * PX + oy
+                        : b.t.pageY * PX,
+                    ),
+                    num(b.t.size * PX),
+                    // …AND THE FACE A `%%<type>font` NAMES. Hard-coded here, so
+                    // `%%titlefont cursive 23` drew in the default — the same half-realization
+                    // `%%vocalfont` and the voice name each had.
+                    b.t.face ?? "Times New Roman",
+                    b.t.italic === true,
+                    b.t.bold === true,
+                    b.t.anchor ?? "start",
+                    // abcjs names EVERY top-text row — `title`, `subtitle`, `composer`,
+                    // `free-text` — from the `name` its `addTextIf`/`richText` call passes.
+                    // This read a `text` key that was never in the table, so it was always ''.
+                    b.t.dataName ?? "",
+                    escapeText(b.t.text),
+                    // A nonMusic ROW IS NOT A TOP-TEXT ROW: `renderText` classes it
+                    // `classes.generate('defined-text')`, which carries the LINE number
+                    // (`draw/text.js:36`), where a title's class is a flat literal from the table.
+                    options.addClasses !== true
+                      ? ""
+                      : b.t.nonMusicIndex !== undefined
+                        ? // EACH ROW CARRIES ITS OWN `klass` — `nonMusic` passes `row.klass` to
+                          // `renderText` and `getFontAndAttr` runs `classes.generate` on it, so a
+                          // `Subtitle` row is `text subtitle` where a `FreeText` row is
+                          // `defined-text` (`subtitle.js:7`, `free-text.js:11`).
+                          classes.generate(
+                            b.t.dataName === "subtitle"
+                              ? "text subtitle"
+                              : "defined-text",
+                          )
+                        : b.t.dataName !== undefined
+                          ? (generatedTextClass(b.t.dataName) ??
+                            ABCJS_TEXT_CLASSES[b.t.dataName] ??
+                            "")
+                          : "",
+                    (b.t.extraLines ?? []).map(escapeText),
+                    b.t.middleBaseline === true,
+                    // A BOXED row's class is DELETED, not emptied (`draw/text.js:58`).
+                    b.t.noClass === true,
+                  );
+        // …and under `add_classes` the group is named: `abcjs-meta-top` for the tune's own
+        // header block, `abcjs-non-music` for a nonMusic line (`draw/draw.js:11-12`, `:55`).
+        // An EMPTY group is DELETED (`svg.js:364-372`), which is what the length tests are.
+        const klassOf = (nonMusic: boolean): string =>
+          options.addClasses === true
+            ? ` class="${!nonMusic && systemIndex === 0 ? "abcjs-meta-top" : "abcjs-non-music"}"`
+            : "";
+        // **AND A SUBTITLE LINE DRAWS NOTHING AND STILL COUNTS** — see
+        // `RenderDoc.blankLeadingLines`.
+        if (systemIndex === 0)
+          for (let i = 0; i < (doc.blankLeadingLines ?? 0); i += 1)
+            classes.incrLine();
+        const meta = block.filter((b) => b.nonMusicIndex === undefined);
+        if (meta.length > 0)
+          parts.push(`<g${klassOf(false)}>${meta.map(renderRow).join("")}</g>`);
+        const indices = [
+          ...new Set(
+            block.flatMap((b) =>
+              b.nonMusicIndex === undefined ? [] : [b.nonMusicIndex],
             ),
+          ),
+        ].sort((a, b) => a - b);
+        for (const i of indices) {
+          // BEFORE the group, not after it: `draw()` runs `classes.incrLine()` at the head of
+          // every line it walks (`draw/draw.js:30-31`), so the FIRST `%%text` is `abcjs-l0`.
+          classes.incrLine();
+          const rows = block.filter((b) => b.nonMusicIndex === i);
+          parts.push(`<g${klassOf(true)}>${rows.map(renderRow).join("")}</g>`);
+        }
+      }
+
+      // `abcjs-staff-wrapper abcjs-l{n}` wraps a whole music LINE (`draw/draw.js:40-42`),
+      // and it is the outermost thing in abcjs's output — our very first contract row
+      // differed on depth because it was missing.
+      if (abcjs) classes.incrLine();
+      // Each system is laid out in its own space and placed by translation, so nothing
+      // inside it depends on how many systems precede it. Staves nest the same way, one
+      // per voice, because a staff step means a different pitch under a different clef.
+      parts.push(
+        `<g${abcjs ? attrIfAny(classes.generate("staff-wrapper")) : ` class="${prefix}-system"`}` +
+          `${abcjs ? "" : ` transform="translate(0,${num((system.originY + OY + stackBase) * PX)})"`}>`,
+      );
+      // Braces and brackets first: they belong to the SYSTEM, joining staves rather than
+      // sitting on one, and they are drawn at the left edge outside the music area.
+      // A BRACKET'S STEM. abcjs classes it `abcjs-bracket` and names it `bracket`
+      // (`draw/brace.js`, via `classes.generate`), and we emitted neither — so no comparison
+      // could reach a bracket at all. Finding 92: the representation was missing a HANDLE.
+      if (!abcjs)
+        for (const line of system.connectorLines) {
+          parts.push(lineToRect(TL(line), ` class="${prefix}-staff"`, abcjs));
+        }
+      // Under `abcjs` a connector is `curvyPath`/`straightPath` arithmetic drawn with its own
+      // staff's lines — see `connectorPath` and the staff loop below.
+      if (!abcjs)
+        for (const g of system.connectorGlyphs) {
+          // A brace stretches VERTICALLY to span its staves — `scale(1,n)`, not a uniform
+          // scale — so it cannot share a definition with an unstretched one and stays a path.
+          const scale =
+            g.scale === undefined || g.scale === 1
+              ? ""
+              : ` scale(1,${num(g.scale)})`;
+          // …and the same handle for the glyphs. abcjs draws a brace and a bracket as ONE path
+          // each, so a `brace` name covers the whole shape and `bracket` covers its two arms.
+          const named = g.name === "brace" ? "brace" : "bracket";
+          const attr = ` class="${prefix}-staff"`;
+          parts.push(
+            scale === ""
+              ? glyphMarkup(g.name, g.x, g.y, undefined, attr)
+              : `<path${attr} transform="translate(${num(g.x * PX)},${num(g.y * PX + oy)})${scale}" d="${outline(g.name).path}"/>`,
           );
         }
-        parts.push(
-          `<path d="${connectorPath(span, yTop, yBottom)}" stroke="currentColor" ` +
-            `fill="currentColor" class="${classes.generate(span.kind)}" ` +
-            `data-name="${span.kind}"></path>`,
-        );
-        if (abcjs && header !== undefined) parts.push("</g>");
-      }
-      // `foundNote` — a barline before any note does not advance the measure counter.
-      let foundNote = false;
-      /**
-       * **A DYNAMIC IS NOT A CHILD OF THE NOTE.** `!p!` becomes a `DynamicDecoration`
-       * pushed onto the voice's `otherchildren` (`decoration.js:287`), so `drawVoice`
-       * draws it AFTER every element and every beam, at the voice's own level — where a
-       * hairpin already sat. Ours nested it in the note group at depth 2. Held back here
-       * and flushed with the spanners below.
-       */
-      /**
-       * …**AND EACH ONE REMEMBERS THE ELEMENT IT WAS ADDED AT**, which is what its class
-       * counters come from — see `markerAt`.
-       */
-      const dynamics: { g: PlacedGlyph; at: number }[] = [];
-      /**
-       * The counters each element's GROUP was named with, by index — what abcjs stores as
-       * `params.counters = classes.getCurrent()` inside `drawAbsolute`
-       * (`draw/absolute.js:33`). A tie's and a slur's class quote them for both anchors.
-       */
-      const counters = new Map<number, { measure: number; note: number }>();
-      /** Grace beams, held back to the voice's beam pass where abcjs draws them. */
-      const graceBeams: PlacedLine[] = [];
-      /**
-       * **ONE VOICE AT A TIME, AND abcjs FINISHES IT BEFORE IT STARTS THE NEXT.**
-       * `drawStaffGroup` loops `params.voices[i]` and `drawVoice` walks that voice's
-       * children, then its BEAMS, then its OTHERCHILDREN (`draw/staff-group.js:112`,
-       * `draw/voice.js:25-90`). Everything below used to run once for the whole staff, so a
-       * shared staff drew both voices' notes and only then both voices' beams — the same
-       * set in a different order, and 19 of the corpus's differing fixtures share a staff.
-       *
-       * `mine` is the filter; the accumulators (`dynamics`, `graceBeams`) are DRAINED
-       * rather than filtered, since they were gathered by this voice's own elements.
-       */
-      /**
-       * **`%%voicecolor` IS `drawVoice`'S SWAP, NOT A PROPERTY OF ANY ELEMENT.**
-       *
-       *     var saveColor = renderer.foregroundColor
-       *     if (params.color) renderer.foregroundColor = params.color
-       *     …
-       *     renderer.foregroundColor = saveColor
-       *
-       * (`draw/voice.js:14-16`, `:93`) — so everything drawn between those two lines takes
-       * it, including the voice's `staff-extra` clef and key, and nothing outside does. The
-       * staff LINES are `printStaff`'s and are drawn BEFORE the swap, which is why abcjs's
-       * own golden leaves them `currentColor` on a fully coloured tune.
-       */
-      const fg = (voiceHere: number): string =>
-        staff.voiceColors?.[voiceHere] ?? "currentColor";
-      const flushVoice = (voiceHere: number): void => {
-        const ink = fg(voiceHere);
+      for (const [staffIndex, staff] of system.staves.entries()) {
+        /** Connectors that START on this staff — written after its lines. */
+        let connectorHere: readonly ConnectorSpan[] = [];
         /**
-         * **A CURVE'S ANCHOR INDEX IS PER VOICE; `counters` IS KEYED PER STAFF.**
-         * `staff.elements` is the voices concatenated (`fixed.flat()`), and only the FIRST
-         * voice of a staff carries the staff-extras — so a lower voice's element 0 is a
-         * NOTE at staff index `voiceEnds[v - 1]`. Looking a curve's anchor up unshifted
-         * lands in the first voice's prefix: `ave-verum-corpus-classes` wrote
-         * `abcjs-end-m0-n0` for abcjs's `abcjs-end-m1-n0`, the counter of a clef rather
-         * than of the note the tie closes on. The two coincide for voice 0, which is why
-         * the plain gate could never see it — no class, no counter, no difference.
+         * **EVERY BARLINE OF A JOINED STAFF RUNS UP TO THE STAFF ABOVE IT.**
+         * `drawStaffGroup` sets `bartop = renderer.calcY(2)` after each voice — "this
+         * connects the bar lines between two different staves" — and `relative.js`'s
+         * `case "bar"` draws to it instead of its own `pitch2`, which is always 10
+         * (`draw/staff-group.js:129-133`, `draw/relative.js:61`,
+         * `abstract-engraver.js:992-1024`).
+         *
+         * **MEASURED ON A LADDER, because the source reads otherwise.** `drawVoice` spends
+         * `bartop` on `params.barto || i === params.children.length - 1`, and `barto` comes
+         * from a `|` in `%%score` while the voice's children — dumped from abcjs — are
+         * `[staff-extra clef, bar, note]`, so neither clause should fire. Yet `%%staves
+         * {RH LH}` and `%%staves {RH|LH}` draw IDENTICAL output and EVERY bar of the lower
+         * staff spans, not just its last. So the rule is GROUP MEMBERSHIP, and the `|` makes
+         * no difference at all. Two runs settled what three source reads could not.
          */
-        const voiceBase = voiceHere === 0 ? 0 : (voiceEnds[voiceHere - 1] ?? 0);
         /**
-         * **abcjs'S OWN ALGORITHM FOR THE `otherchildren` COUNTERS, NOT A RULE PER KIND.**
-         * `otherchildren` is ONE list in add order with `'bar'` MARKERS interleaved, and
-         * `drawVoice` restarts the counter and `incrMeasure()`s on each marker
-         * (`draw/voice.js:59-70`). `addChild` pushes a marker for every bar element unless
-         * everything before it is a `staff-extra` or a `tempo` (`voice-element.js:29-42`).
-         * So the counter for anything `addOther`'d at element `e` is simply the number of
-         * markers ahead of `e` — one walk, and no per-kind reasoning about which anchor a
-         * tie, a triplet or a hairpin should read.
-         *
-         * Instrumented rather than inferred: `ABCJS_OTHER` prints the list and each item's
-         * counter. `S1-decorations` tune 2 opens `["bar","DynamicDecoration" x4,"bar"]`, so
-         * its four `mp` marks read `m=1 mm=3` where ours had 0 and 2.
-         *
-         * Keyed by STAFF-wide element index — `staff.elements` is the voices concatenated,
-         * so a lower voice's per-voice index needs `voiceBase` first.
+         * **A DUPLICATE VOICE'S BAR, METER, CLEF AND KEY ARE INVISIBLE.** Every voice after
+         * the first on a staff is `voice.duplicate` ("bar lines and other duplicate info
+         * need not be created"), and `createABCElement` marks exactly those four
+         * `elemset[0].invisible = true` (`abstract-engraver.js:150`, `:319-340`);
+         * `drawAbsolute` then returns before it opens a group, so they produce NO MARKUP at
+         * all while still taking their width. An `&` overlay is such a voice, which is why
+         * `visual-tablature-13` ended with one barline too many.
          */
-        const markerAt = new Map<number, number>();
-        {
-          let n = 0;
-          let seenReal = false;
-          staff.elements.forEach((el, i) => {
-            if (voiceOf(i) !== voiceHere) return;
-            markerAt.set(i, n);
-            if (el.type === "bar") {
-              if (seenReal) n += 1;
-            } else if (
-              !(ABCJS_ELEMENT_NAMES[el.type] ?? el.type).startsWith(
-                "staff-extra",
-              ) &&
-              el.type !== "tempo" &&
-              el.type !== "title" &&
-              el.type !== "voiceName"
-            ) {
-              seenReal = true;
-            }
-            // …**AND THE POSITION AFTER IT**, which is where `endLine` adds. A hairpin the
-            // line's end closes is `addOther`'d once every child is in, so it sees the
-            // marker of the barline it closes on (`creation/decoration.js:304-313`).
-            markerAt.set(i + 1, n);
-          });
+        let duplicateFrom = Number.POSITIVE_INFINITY;
+        if (abcjs && staff.voices.length > 1)
+          duplicateFrom = staff.voices[0]?.length ?? 0;
+        const previous =
+          staffIndex === 0 ? undefined : system.staves[staffIndex - 1];
+        // **ANY STAFF AFTER THE FIRST**, not only one inside a `%%score` group — `bartop`
+        // is set after every non-duplicate voice, whatever joins them
+        // (`draw/staff-group.js:129-133`). Measured: two bare `V:` voices with no `%%staves`
+        // at all draw the lower staff's bars up to the upper staff's bottom line.
+        // **ONE PRODUCT OFF THE STAFF ABOVE'S OWN `absoluteY`** — `bartop =
+        // renderer.calcY(2 + tabNameHeight)` taken while `renderer.y` is that staff's origin
+        // (`draw/staff-group.js:132`). See `PlacedLine.absY1`.
+        const bartop =
+          previous === undefined
+            ? undefined
+            : previous.absoluteY * PX -
+              ENGRAVE.spacePerStep * ABCJS_PITCH.bottomLine * PX;
+        // …and the staff's, on top of it. Reset per staff, since `staff.originY` is relative.
+        if (abcjs) oy = (staff.absoluteY + stackBase) * PX;
+        let staffGroup = "";
+        // CORRECTED, by the byte table: abcjs DOES group the staff lines, with or without
+        // `add_classes` — `…</path></g><g fill="currentColor" stroke="none" data-name=
+        // "staff-extra clef">` — so the group is real and the element groups are its
+        // SIBLINGS. `add_classes` only puts a class on it. Removing it outright was right
+        // about the transform and wrong about the group.
+        if (!abcjs) {
+          parts.push(
+            `<g class="${prefix}-staff-group" transform="translate(0,${num(staff.originY * PX)})">`,
+          );
         }
-        const mine = (x: { voice?: number }): boolean =>
-          (x.voice ?? 0) === voiceHere;
-        if (abcjs) classes.startMeasure();
-        /** The group already written — see the one-path-per-group rule below. */
-        let lastBeamGroup: number | undefined;
+        // `incrVoice()` then `newMeasure()` then the staff lines — abcjs's own order
+        // (`draw/staff-group.js:80-91`), which is why the staff's class carries `l` and `v`
+        // but no `m`/`mm`: the measure counter is null across that call.
+        if (abcjs) {
+          classes.incrVoice();
+          classes.newMeasure();
+          // The staff-lines group exists ONLY under `add_classes`; without it abcjs draws
+          // the lines straight into the wrapper, and an empty `<g>` would be a row of its own
+          // on the contract table.
+          staffGroup = classes.generate("staff");
+          // …AND AN EMPTY ONE IS DELETED, like every other group `closeGroup` sees with no
+          // children (`svg.js:364-372`). A `clef=none stafflines=0` staff draws no lines at
+          // all, so abcjs's next child is the time signature and ours was an empty `<g>`.
+          if (staff.staffLines.length > 0) {
+            parts.push(staffGroup ? `<g class="${staffGroup}">` : "<g>");
+          }
+          // …and the CONNECTOR comes straight after this staff's lines, as
+          // `drawStaffGroup` draws it — `printStaff`, then `printBrace(brace)`, then
+          // `printBrace(bracket)`, then `drawVoice` (`draw/staff-group.js:74-113`). The
+          // group closes below, so the connector is written after it.
+          connectorHere = system.connectorSpans.filter(
+            (c) => c.staffIndex === staffIndex,
+          );
+        }
+        // abcjs classes only the TOP staff line; the other four carry no class at all.
+        //
+        // Found by the LOWEST y rather than by index. `staffLines[0]` is the BOTTOM line —
+        // y is down and the array runs upward — so keying on index 0 put `abcjs-top-line`
+        // on the bottom line, four staff spaces from where a stylesheet targeting it would
+        // expect. Silent, because the class was present and the count was right.
+        const ordered = abcjs
+          ? [...staff.staffLines].reverse()
+          : staff.staffLines;
+        const topLine = ordered.reduce(
+          (best, line, i) =>
+            line.y1 < (ordered[best]?.y1 ?? Number.POSITIVE_INFINITY)
+              ? i
+              : best,
+          0,
+        );
+        // **TOP-DOWN.** `staffLines[0]` is the BOTTOM line here — y is down and the array runs
+        // upward — and abcjs's `printStaff` writes from the top. A pure ORDER difference,
+        // invisible to every gate that compares positions and worth 31px of apparent offset
+        // when the first line of each engine's output was read side by side.
+        ordered.forEach((line, i) => {
+          const attr = abcjs
+            ? i === topLine
+              ? ' class="abcjs-top-line"'
+              : ""
+            : ` class="${prefix}-staff"`;
+          parts.push(lineToRect(TL(line), attr, abcjs));
+        });
+        if (abcjs && staff.staffLines.length > 0) parts.push("</g>");
         /**
-         * **THE BEAMS GO OUT IN ADD ORDER, AND A GRACE BEAM IS ADDED EARLIER THAN ITS
-         * NEIGHBOURS' BEAMS.** `drawVoice` walks `params.beams` as it stands, and
-         * `createBeam` pushes each member through `createNote` — which adds that element's
-         * grace beam (`abstract-engraver.js:537`) — before pushing the group's own beam
-         * (`:426`). Ours wrote every ordinary beam and then every grace beam, so
-         * `{/GA}B` at the head of a tune put its grace beam after a beam 290px to the
-         * right of it. Buffered and merged on `beamAt`; `Array.sort` is stable, so two
-         * added at the same element keep their built order.
+         * …**AND THE MEASURE COUNTER IS STILL NULL WHILE THE CONNECTOR AND THE VOICE NAME
+         * GO OUT.** `drawStaffGroup` runs `newMeasure()` before `printStaff` and only
+         * `drawVoice` starts one, after it has drawn the voice name
+         * (`draw/staff-group.js:92-113`, `draw/voice.js:19-34`). So a brace, a bracket and a
+         * voice name carry `l` and `v` and NO `m`/`mm`, where the clef after them carries all
+         * four. `ave-verum-corpus-classes` writes `abcjs-bracket abcjs-l0 abcjs-v0`; ours
+         * started the measure before this loop and wrote `abcjs-m0 abcjs-mm0` into both.
          */
-        const beamOut: { at: number; s: string }[] = [];
-        // A GRACE BEAM's own class is `beam-elem d0` — its `durationClass` is 0, since a
-        // grace note has no sounding duration.
-        // …**AND IT IS A `<path>` LIKE ANY OTHER BEAM, ONE PER GROUP.** `drawBeam` is the
-        // same routine for both (`draw/beam.js:7-44`); ours wrote a `<polygon>` per grace
-        // beam, so a two-level grace group came out as two elements of the wrong kind.
-        {
-          let last: number | undefined;
-          for (const b of graceBeams) {
-            if (b.group !== undefined && b.group === last) continue;
-            last = b.group;
-            const members =
-              b.group === undefined
-                ? [b]
-                : graceBeams.filter((g) => g.group === b.group);
-            // ALWAYS a `class`, empty or not — `svg.js`'s `path` sets every key it is
-            // handed and `generate` returns `''` without `add_classes`, so the attribute is
-            // written either way. Ours used `attrIfAny`, which omits it.
-            beamOut.push({
-              at: b.beamAt ?? 0,
-              s:
-                `<path d="${beamPath(members)}" stroke="none" fill="${ink}"` +
-                // …and at the element the group hangs off, like any other beam.
-                ` class="${classes.generateAt("beam-elem d0", markerAt.get((b.beamAt ?? -1) + voiceBase) ?? 0)}"></path>`,
+        for (const span of connectorHere) {
+          // SYSTEM coordinates — `edge()` already carries each staff's own `originY`, so the
+          // offset is the system's alone and not this staff's.
+          const systemOy = (system.originY + OY + stackBase) * PX;
+          /**
+           * **A BRACE'S ENDS COME OFF `staff.absoluteY`, ONE PRODUCT EACH.**
+           *
+           *     var startY = params.startVoice.staff.absoluteY - spacing.STEP * 10;
+           *     params.endY = params.endVoice.staff.absoluteY - spacing.STEP * 2;
+           *
+           * (`draw/brace.js:8-14`) — 10 is the top staff line and 2 the bottom, in abcjs's
+           * pitch frame. Ours summed a system-relative edge and the system's own origin,
+           * which is the same terms in a different grouping: `visual-selection-01`'s curve
+           * printed `452.5570454545454` against abcjs's `452.55704545454546`, because every
+           * control point is `yTop + yHeight / k`.
+           */
+          const braceStaff = system.staves[span.staffIndex];
+          const braceLast = system.staves[span.through];
+          const yTop =
+            braceStaff === undefined
+              ? span.top * PX + systemOy
+              : braceStaff.absoluteY * PX - ENGRAVE.spacePerStep * PX * 10;
+          const yBottom =
+            braceLast === undefined
+              ? span.bottom * PX + systemOy
+              : braceLast.absoluteY * PX - ENGRAVE.spacePerStep * PX * 2;
+          /**
+           * **A BRACE WITH A HEADER OWNS THE VOICE NAME, AND DRAWS IT ITSELF.**
+           *
+           *     if (header) {
+           *       paper.openGroup({ klass: classes.generate("staff-extra voice-name"),
+           *                         "data-name": type });
+           *       var position = yTop + (yBottom - yTop) / 2;
+           *       position = position - getTextSize.baselineToCenter(header, "voicefont",
+           *                                'staff-extra voice-name', 0, 1);
+           *       renderText(renderer, { x: renderer.padding.left, y: position, … });
+           *     }
+           *     …the path…
+           *     if (header) ret = paper.closeGroup();
+           *
+           * (`draw/brace.js:78-98`.) The name is at the PAGE's left padding, not the
+           * staff's, and centred on the BRACE rather than on either staff it joins — which
+           * is why `BraceElem.setBottomStaff` deletes it off the voice. See
+           * `ConnectorSpan.header`.
+           */
+          const header = span.header;
+          if (abcjs && header !== undefined) {
+            const cls = classes.generate("staff-extra voice-name");
+            parts.push(
+              `<g${cls ? ` class="${cls}"` : ""} data-name="${span.kind}">`,
+            );
+            const position =
+              yTop + (yBottom - yTop) / 2 - header.baselineToCentre * PX;
+            parts.push(
+              abcjsText(
+                textNum((doc.paddingLeft ?? ENGRAVE.marginX) * PX),
+                textNum(position),
+                num(header.size * PX),
+                ABCJS_FONT_FACE.voicefont ?? "Times New Roman",
+                false,
+                true,
+                "start",
+                "",
+                escapeText(header.text),
+                cls,
+              ),
+            );
+          }
+          parts.push(
+            `<path d="${connectorPath(span, yTop, yBottom)}" stroke="currentColor" ` +
+              `fill="currentColor" class="${classes.generate(span.kind)}" ` +
+              `data-name="${span.kind}"></path>`,
+          );
+          if (abcjs && header !== undefined) parts.push("</g>");
+        }
+        // `foundNote` — a barline before any note does not advance the measure counter.
+        let foundNote = false;
+        /**
+         * **A DYNAMIC IS NOT A CHILD OF THE NOTE.** `!p!` becomes a `DynamicDecoration`
+         * pushed onto the voice's `otherchildren` (`decoration.js:287`), so `drawVoice`
+         * draws it AFTER every element and every beam, at the voice's own level — where a
+         * hairpin already sat. Ours nested it in the note group at depth 2. Held back here
+         * and flushed with the spanners below.
+         */
+        /**
+         * …**AND EACH ONE REMEMBERS THE ELEMENT IT WAS ADDED AT**, which is what its class
+         * counters come from — see `markerAt`.
+         */
+        const dynamics: { g: PlacedGlyph; at: number }[] = [];
+        /**
+         * The counters each element's GROUP was named with, by index — what abcjs stores as
+         * `params.counters = classes.getCurrent()` inside `drawAbsolute`
+         * (`draw/absolute.js:33`). A tie's and a slur's class quote them for both anchors.
+         */
+        const counters = new Map<number, { measure: number; note: number }>();
+        /** Grace beams, held back to the voice's beam pass where abcjs draws them. */
+        const graceBeams: PlacedLine[] = [];
+        /**
+         * **ONE VOICE AT A TIME, AND abcjs FINISHES IT BEFORE IT STARTS THE NEXT.**
+         * `drawStaffGroup` loops `params.voices[i]` and `drawVoice` walks that voice's
+         * children, then its BEAMS, then its OTHERCHILDREN (`draw/staff-group.js:112`,
+         * `draw/voice.js:25-90`). Everything below used to run once for the whole staff, so a
+         * shared staff drew both voices' notes and only then both voices' beams — the same
+         * set in a different order, and 19 of the corpus's differing fixtures share a staff.
+         *
+         * `mine` is the filter; the accumulators (`dynamics`, `graceBeams`) are DRAINED
+         * rather than filtered, since they were gathered by this voice's own elements.
+         */
+        /**
+         * **`%%voicecolor` IS `drawVoice`'S SWAP, NOT A PROPERTY OF ANY ELEMENT.**
+         *
+         *     var saveColor = renderer.foregroundColor
+         *     if (params.color) renderer.foregroundColor = params.color
+         *     …
+         *     renderer.foregroundColor = saveColor
+         *
+         * (`draw/voice.js:14-16`, `:93`) — so everything drawn between those two lines takes
+         * it, including the voice's `staff-extra` clef and key, and nothing outside does. The
+         * staff LINES are `printStaff`'s and are drawn BEFORE the swap, which is why abcjs's
+         * own golden leaves them `currentColor` on a fully coloured tune.
+         */
+        const fg = (voiceHere: number): string =>
+          staff.voiceColors?.[voiceHere] ?? "currentColor";
+        const flushVoice = (voiceHere: number): void => {
+          const ink = fg(voiceHere);
+          /**
+           * **A CURVE'S ANCHOR INDEX IS PER VOICE; `counters` IS KEYED PER STAFF.**
+           * `staff.elements` is the voices concatenated (`fixed.flat()`), and only the FIRST
+           * voice of a staff carries the staff-extras — so a lower voice's element 0 is a
+           * NOTE at staff index `voiceEnds[v - 1]`. Looking a curve's anchor up unshifted
+           * lands in the first voice's prefix: `ave-verum-corpus-classes` wrote
+           * `abcjs-end-m0-n0` for abcjs's `abcjs-end-m1-n0`, the counter of a clef rather
+           * than of the note the tie closes on. The two coincide for voice 0, which is why
+           * the plain gate could never see it — no class, no counter, no difference.
+           */
+          const voiceBase =
+            voiceHere === 0 ? 0 : (voiceEnds[voiceHere - 1] ?? 0);
+          /**
+           * **abcjs'S OWN ALGORITHM FOR THE `otherchildren` COUNTERS, NOT A RULE PER KIND.**
+           * `otherchildren` is ONE list in add order with `'bar'` MARKERS interleaved, and
+           * `drawVoice` restarts the counter and `incrMeasure()`s on each marker
+           * (`draw/voice.js:59-70`). `addChild` pushes a marker for every bar element unless
+           * everything before it is a `staff-extra` or a `tempo` (`voice-element.js:29-42`).
+           * So the counter for anything `addOther`'d at element `e` is simply the number of
+           * markers ahead of `e` — one walk, and no per-kind reasoning about which anchor a
+           * tie, a triplet or a hairpin should read.
+           *
+           * Instrumented rather than inferred: `ABCJS_OTHER` prints the list and each item's
+           * counter. `S1-decorations` tune 2 opens `["bar","DynamicDecoration" x4,"bar"]`, so
+           * its four `mp` marks read `m=1 mm=3` where ours had 0 and 2.
+           *
+           * Keyed by STAFF-wide element index — `staff.elements` is the voices concatenated,
+           * so a lower voice's per-voice index needs `voiceBase` first.
+           */
+          const markerAt = new Map<number, number>();
+          {
+            let n = 0;
+            let seenReal = false;
+            staff.elements.forEach((el, i) => {
+              if (voiceOf(i) !== voiceHere) return;
+              markerAt.set(i, n);
+              if (el.type === "bar") {
+                if (seenReal) n += 1;
+              } else if (
+                !(ABCJS_ELEMENT_NAMES[el.type] ?? el.type).startsWith(
+                  "staff-extra",
+                ) &&
+                el.type !== "tempo" &&
+                el.type !== "title" &&
+                el.type !== "voiceName"
+              ) {
+                seenReal = true;
+              }
+              // …**AND THE POSITION AFTER IT**, which is where `endLine` adds. A hairpin the
+              // line's end closes is `addOther`'d once every child is in, so it sees the
+              // marker of the barline it closes on (`creation/decoration.js:304-313`).
+              markerAt.set(i + 1, n);
             });
           }
-        }
-        for (const beam of staff.beams.filter(mine)) {
+          const mine = (x: { voice?: number }): boolean =>
+            (x.voice ?? 0) === voiceHere;
+          if (abcjs) classes.startMeasure();
+          /** The group already written — see the one-path-per-group rule below. */
+          let lastBeamGroup: number | undefined;
           /**
-           * **A BEAM'S CLASS IS GENERATED, NOT LITERAL** —
-           * `classes.generate('beam-elem ' + durationClass)` with `.` → `-`
-           * (`draw/beam.js:24-25`), so `add_classes` gives
-           * `abcjs-beam-elem abcjs-d0-125 abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0` and without it
-           * an EMPTY `class=""` — abcjs passes `''` and `svg.js`'s path sets the attribute
-           * anyway, because `'' !== undefined`. Ours wrote a literal `abcjs-beam`, which is a
-           * class abcjs does not have at all.
+           * **THE BEAMS GO OUT IN ADD ORDER, AND A GRACE BEAM IS ADDED EARLIER THAN ITS
+           * NEIGHBOURS' BEAMS.** `drawVoice` walks `params.beams` as it stands, and
+           * `createBeam` pushes each member through `createNote` — which adds that element's
+           * grace beam (`abstract-engraver.js:537`) — before pushing the group's own beam
+           * (`:426`). Ours wrote every ordinary beam and then every grace beam, so
+           * `{/GA}B` at the head of a tune put its grace beam after a beam 290px to the
+           * right of it. Buffered and merged on `beamAt`; `Array.sort` is stable, so two
+           * added at the same element keep their built order.
            */
-          /**
-           * **AND A BEAM CARRIES THE MEASURE IT IS IN.** `drawVoice` restarts the counter
-           * before the beam pass and `incrMeasure()`s on every `'bar'` MARKER interleaved
-           * in `params.beams` (`draw/voice.js:54-60`), one per bar element that is not the
-           * line's first item (`voice-element.js:29-42`). `S8-layout-classes-tune10`'s beam
-           * reads `abcjs-beam-elem abcjs-d0-125 abcjs-l1 abcjs-m2 abcjs-mm5 abcjs-v0`; ours
-           * generated at the counter as the ELEMENT pass had left it. The element's own
-           * recorded counter is that same count — see `counters`.
-           */
-          const beamClass = abcjs
-            ? ` class="${classes.generateAt(
-                `beam-elem d${Math.round((beam.durationClass ?? 0) * 1000) / 1000}`.replace(
-                  /\./g,
-                  "-",
-                ),
-                markerAt.get((beam.beamAt ?? -1) + voiceBase) ?? 0,
-              )}"`
-            : ` class="${prefix}-beam"`;
-          if (!abcjs) {
-            parts.push(lineToRect(TL(beam), beamClass, abcjs, ink));
-            continue;
+          const beamOut: { at: number; s: string }[] = [];
+          // A GRACE BEAM's own class is `beam-elem d0` — its `durationClass` is 0, since a
+          // grace note has no sounding duration.
+          // …**AND IT IS A `<path>` LIKE ANY OTHER BEAM, ONE PER GROUP.** `drawBeam` is the
+          // same routine for both (`draw/beam.js:7-44`); ours wrote a `<polygon>` per grace
+          // beam, so a two-level grace group came out as two elements of the wrong kind.
+          {
+            let last: number | undefined;
+            for (const b of graceBeams) {
+              if (b.group !== undefined && b.group === last) continue;
+              last = b.group;
+              const members =
+                b.group === undefined
+                  ? [b]
+                  : graceBeams.filter((g) => g.group === b.group);
+              // ALWAYS a `class`, empty or not — `svg.js`'s `path` sets every key it is
+              // handed and `generate` returns `''` without `add_classes`, so the attribute is
+              // written either way. Ours used `attrIfAny`, which omits it.
+              beamOut.push({
+                at: b.beamAt ?? 0,
+                s:
+                  `<path d="${beamPath(members)}" stroke="none" fill="${ink}"` +
+                  // …and at the element the group hangs off, like any other beam.
+                  ` class="${classes.generateAt("beam-elem d0", markerAt.get((b.beamAt ?? -1) + voiceBase) ?? 0)}"></path>`,
+              });
+            }
           }
+          for (const beam of staff.beams.filter(mine)) {
+            /**
+             * **A BEAM'S CLASS IS GENERATED, NOT LITERAL** —
+             * `classes.generate('beam-elem ' + durationClass)` with `.` → `-`
+             * (`draw/beam.js:24-25`), so `add_classes` gives
+             * `abcjs-beam-elem abcjs-d0-125 abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0` and without it
+             * an EMPTY `class=""` — abcjs passes `''` and `svg.js`'s path sets the attribute
+             * anyway, because `'' !== undefined`. Ours wrote a literal `abcjs-beam`, which is a
+             * class abcjs does not have at all.
+             */
+            /**
+             * **AND A BEAM CARRIES THE MEASURE IT IS IN.** `drawVoice` restarts the counter
+             * before the beam pass and `incrMeasure()`s on every `'bar'` MARKER interleaved
+             * in `params.beams` (`draw/voice.js:54-60`), one per bar element that is not the
+             * line's first item (`voice-element.js:29-42`). `S8-layout-classes-tune10`'s beam
+             * reads `abcjs-beam-elem abcjs-d0-125 abcjs-l1 abcjs-m2 abcjs-mm5 abcjs-v0`; ours
+             * generated at the counter as the ELEMENT pass had left it. The element's own
+             * recorded counter is that same count — see `counters`.
+             */
+            const beamClass = abcjs
+              ? ` class="${classes.generateAt(
+                  `beam-elem d${Math.round((beam.durationClass ?? 0) * 1000) / 1000}`.replace(
+                    /\./g,
+                    "-",
+                  ),
+                  markerAt.get((beam.beamAt ?? -1) + voiceBase) ?? 0,
+                )}"`
+              : ` class="${prefix}-beam"`;
+            if (!abcjs) {
+              parts.push(lineToRect(TL(beam), beamClass, abcjs, ink));
+              continue;
+            }
+            /**
+             * **A BEAM IS A `<path>`, AND ONE PATH HOLDS EVERY BEAM OF ITS GROUP.** `drawBeam`
+             * concatenates each beam's four corners into a single `d` and writes one element
+             * (`draw/beam.js:7-44`), so a sixteenth run is ONE path with two subpaths. Ours was
+             * a `<polygon>` per beam.
+             *
+             * The separators are abcjs's own and they are IRREGULAR — a space before the first
+             * and third `L` and none before the second:
+             *
+             *     "M" + sx + " " + sy + " L" + ex + " " + ey + "L" + ex + " " + ey2 + " L" + sx + " " + sy2 + "z"
+             *
+             * and every coordinate is `roundNumber`d. The second edge is the first plus `dy`,
+             * the beam's thickness, which is why the corners run start-top → end-top →
+             * end-bottom → start-bottom.
+             */
+            if (beam.group !== undefined && beam.group === lastBeamGroup)
+              continue;
+            lastBeamGroup = beam.group;
+            const members =
+              beam.group === undefined
+                ? [beam]
+                : staff.beams
+                    .filter(mine)
+                    .filter((b) => b.group === beam.group);
+            const d = beamPath(members);
+            beamOut.push({
+              at: beam.beamAt ?? 0,
+              s: `<path d="${d}" stroke="none" fill="${ink}"${beamClass}></path>`,
+            });
+          }
+          for (const b of beamOut.sort((p, q) => p.at - q.at)) parts.push(b.s);
+          // A GRACE BEAM's own class is `beam-elem d0` — its `durationClass` is 0, since a
+          // grace note has no sounding duration.
+          // **`drawDynamics` AND `drawCrescendo` DISAGREE ON THE ORDER OF THEIR OWN TWO
+          // CLASSES** — `generate('decoration dynamics')` for a volume mark
+          // (`draw/dynamics.js:11`) and `generate('dynamics decoration')` for a hairpin
+          // (`draw/crescendo.js:34`). abcjs's contract shows both spellings side by side, so
+          // it is a quirk to reproduce rather than one of them to pick.
           /**
-           * **A BEAM IS A `<path>`, AND ONE PATH HOLDS EVERY BEAM OF ITS GROUP.** `drawBeam`
-           * concatenates each beam's four corners into a single `d` and writes one element
-           * (`draw/beam.js:7-44`), so a sixteenth run is ONE path with two subpaths. Ours was
-           * a `<polygon>` per beam.
-           *
-           * The separators are abcjs's own and they are IRREGULAR — a space before the first
-           * and third `L` and none before the second:
-           *
-           *     "M" + sx + " " + sy + " L" + ex + " " + ey + "L" + ex + " " + ey2 + " L" + sx + " " + sy2 + "z"
-           *
-           * and every coordinate is `roundNumber`d. The second edge is the first plus `dy`,
-           * the beam's thickness, which is why the corners run start-top → end-top →
-           * end-bottom → start-bottom.
+           * **A MULTI-LETTER DYNAMIC IS A GROUP OF PLAIN PATHS.** `printSymbol` opens
+           * `<g data-name="dynamics" class="…">` and gives each LETTER only `{stroke, fill}` —
+           * the class and the name belong to the group, not to its children
+           * (`draw/print-symbol.js:16-31`). A single-letter one takes the other arm and carries
+           * all four attributes itself. `PlacedGlyph.group` is what tells them apart.
            */
-          if (beam.group !== undefined && beam.group === lastBeamGroup)
-            continue;
-          lastBeamGroup = beam.group;
-          const members =
-            beam.group === undefined
-              ? [beam]
-              : staff.beams.filter(mine).filter((b) => b.group === beam.group);
-          const d = beamPath(members);
-          beamOut.push({
-            at: beam.beamAt ?? 0,
-            s: `<path d="${d}" stroke="none" fill="${ink}"${beamClass}></path>`,
-          });
-        }
-        for (const b of beamOut.sort((p, q) => p.at - q.at)) parts.push(b.s);
-        // A GRACE BEAM's own class is `beam-elem d0` — its `durationClass` is 0, since a
-        // grace note has no sounding duration.
-        // **`drawDynamics` AND `drawCrescendo` DISAGREE ON THE ORDER OF THEIR OWN TWO
-        // CLASSES** — `generate('decoration dynamics')` for a volume mark
-        // (`draw/dynamics.js:11`) and `generate('dynamics decoration')` for a hairpin
-        // (`draw/crescendo.js:34`). abcjs's contract shows both spellings side by side, so
-        // it is a quirk to reproduce rather than one of them to pick.
-        /**
-         * **A MULTI-LETTER DYNAMIC IS A GROUP OF PLAIN PATHS.** `printSymbol` opens
-         * `<g data-name="dynamics" class="…">` and gives each LETTER only `{stroke, fill}` —
-         * the class and the name belong to the group, not to its children
-         * (`draw/print-symbol.js:16-31`). A single-letter one takes the other arm and carries
-         * all four attributes itself. `PlacedGlyph.group` is what tells them apart.
-         */
-        /**
-         * abcjs-debt: §2.3 — two buckets merged by x, an APPROXIMATION of abcjs's one
-         * ordered list. The entry most likely to become a defect. Docs/ABCJS-DEBT.md
-         *
-         * **`otherchildren` IS ONE INTERLEAVED LIST IN ADD ORDER**, so a hairpin written
-         * between two dynamics is DRAWN between them (`draw/voice.js:64-90`). Ours held two
-         * buckets and emptied the dynamics one first. Merged by x below, which is the add
-         * order for a single voice: a `CrescendoElem` is added where its `<(` is seen, which
-         * is where its left arm starts.
-         *
-         * **A MULTI-LETTER DYNAMIC IS A GROUP OF PLAIN PATHS.** `printSymbol` opens
-         * `<g data-name="dynamics" class="…">` and gives each LETTER only `{stroke, fill}` —
-         * the class and the name belong to the group, not to its children
-         * (`draw/print-symbol.js:16-31`). A single-letter one takes the other arm and carries
-         * all four attributes itself. `PlacedGlyph.group` names the kind and `groupStart`
-         * marks the occurrence.
-         */
-        const others: { x: number; s: string; k?: number }[] = [];
-        let dynBuf: string[] = [];
-        let dynX = 0;
-        const flushDynamic = (): void => {
-          // `volumeDecoration` is `createDecoration`'s FIRST call, so a dynamic on an
-          // element comes after its curves and before its hairpin (`decoration.js:379-385`).
-          if (dynBuf.length > 0)
-            others.push({ x: dynX, k: 2, s: `${dynBuf.join("")}</g>` });
-          dynBuf = [];
-        };
-        for (const { g, at: dynAt } of dynamics) {
-          const dynM = markerAt.get(dynAt) ?? 0;
-          const grp = g.group ?? null;
-          if (grp === null) {
-            flushDynamic();
-            others.push({
-              x: g.x,
-              s: glyphMarkup(
+          /**
+           * abcjs-debt: §2.3 — two buckets merged by x, an APPROXIMATION of abcjs's one
+           * ordered list. The entry most likely to become a defect. Docs/ABCJS-DEBT.md
+           *
+           * **`otherchildren` IS ONE INTERLEAVED LIST IN ADD ORDER**, so a hairpin written
+           * between two dynamics is DRAWN between them (`draw/voice.js:64-90`). Ours held two
+           * buckets and emptied the dynamics one first. Merged by x below, which is the add
+           * order for a single voice: a `CrescendoElem` is added where its `<(` is seen, which
+           * is where its left arm starts.
+           *
+           * **A MULTI-LETTER DYNAMIC IS A GROUP OF PLAIN PATHS.** `printSymbol` opens
+           * `<g data-name="dynamics" class="…">` and gives each LETTER only `{stroke, fill}` —
+           * the class and the name belong to the group, not to its children
+           * (`draw/print-symbol.js:16-31`). A single-letter one takes the other arm and carries
+           * all four attributes itself. `PlacedGlyph.group` names the kind and `groupStart`
+           * marks the occurrence.
+           */
+          const others: { x: number; s: string; k?: number }[] = [];
+          let dynBuf: string[] = [];
+          let dynX = 0;
+          const flushDynamic = (): void => {
+            // `volumeDecoration` is `createDecoration`'s FIRST call, so a dynamic on an
+            // element comes after its curves and before its hairpin (`decoration.js:379-385`).
+            if (dynBuf.length > 0)
+              others.push({ x: dynX, k: 2, s: `${dynBuf.join("")}</g>` });
+            dynBuf = [];
+          };
+          for (const { g, at: dynAt } of dynamics) {
+            const dynM = markerAt.get(dynAt) ?? 0;
+            const grp = g.group ?? null;
+            if (grp === null) {
+              flushDynamic();
+              others.push({
+                x: g.x,
+                s: glyphMarkup(
+                  g.name,
+                  g.x,
+                  g.y,
+                  g.scale,
+                  // The name goes in the ATTRIBUTES rather than through `dataName`, because a
+                  // SCALED glyph takes `glyphMarkup`'s transform path, which writes the
+                  // attribute string and nothing else. The ORDER is `svg.js:path`'s key order
+                  // over `printSymbol`'s options — class, stroke, fill, then the name.
+                  ` class="${classes.generateAt("decoration dynamics", dynM)}" stroke="none" ` +
+                    `fill="${ink}" data-name="${ABCJS_DATA_NAMES.dynamic}"`,
+                  g.role,
+                  // The name is already in the attribute string above; `'' ?? x` is `''`, so
+                  // this stops `glyphMarkup` adding a SECOND `data-name` from the glyph key.
+                  "",
+                ),
+              });
+              continue;
+            }
+            if (g.groupStart === true) {
+              flushDynamic();
+              dynX = g.x;
+              dynBuf.push(
+                `<g${attrIfAny(classes.generateAt("decoration dynamics", dynM))} data-name="${grp}">`,
+              );
+            }
+            dynBuf.push(
+              glyphMarkup(
                 g.name,
                 g.x,
                 g.y,
                 g.scale,
-                // The name goes in the ATTRIBUTES rather than through `dataName`, because a
-                // SCALED glyph takes `glyphMarkup`'s transform path, which writes the
-                // attribute string and nothing else. The ORDER is `svg.js:path`'s key order
-                // over `printSymbol`'s options — class, stroke, fill, then the name.
-                ` class="${classes.generateAt("decoration dynamics", dynM)}" stroke="none" ` +
-                  `fill="${ink}" data-name="${ABCJS_DATA_NAMES.dynamic}"`,
+                ` stroke="none" fill="${ink}"`,
                 g.role,
-                // The name is already in the attribute string above; `'' ?? x` is `''`, so
-                // this stops `glyphMarkup` adding a SECOND `data-name` from the glyph key.
+                // Inside the group abcjs names NONE of the children — `printSymbol` hands them
+                // `{stroke, fill}` and nothing else — and `'' ?? x` is `''`, so this suppresses
+                // the attribute rather than falling back to the glyph key.
                 "",
               ),
-            });
-            continue;
-          }
-          if (g.groupStart === true) {
-            flushDynamic();
-            dynX = g.x;
-            dynBuf.push(
-              `<g${attrIfAny(classes.generateAt("decoration dynamics", dynM))} data-name="${grp}">`,
             );
           }
-          dynBuf.push(
-            glyphMarkup(
-              g.name,
-              g.x,
-              g.y,
-              g.scale,
-              ` stroke="none" fill="${ink}"`,
-              g.role,
-              // Inside the group abcjs names NONE of the children — `printSymbol` hands them
-              // `{stroke, fill}` and nothing else — and `'' ?? x` is `''`, so this suppresses
-              // the attribute rather than falling back to the glyph key.
-              "",
-            ),
-          );
-        }
-        flushDynamic();
-        /**
-         * **A BRACKET IS A GROUP HOLDING ONE PATH AND ITS NUMBER.** Both `drawEnding` and
-         * `drawTriplet` open a `<g>`, write EVERY segment as a single `printPath` `d`, add
-         * the number as a `noClass` text naming itself, and close
-         * (`draw/ending.js:27-50`, `draw/triplet.js:7-13`). We wrote a line per segment at
-         * the voice's own level and a text beside them, which is four rows of the contract
-         * where abcjs has three — and the `d` is `M … L … ` per segment WITH a trailing
-         * space, from `sprintf`.
-         */
-        const bracketGroup = (
-          lines: readonly PlacedLine[],
-          text: PlacedText | undefined,
-          name: string,
-          pathName: string,
-          fill: boolean,
+          flushDynamic();
           /**
-           * Where to put it. A VOLTA goes straight out; a TRIPLET joins the `otherchildren`
-           * merge below, because abcjs keeps ONE add-order list and a `TripletElem` and a
-           * `DynamicDecoration` sit in it together — `visual-selection-01`'s golden writes
-           * the dynamics group first.
+           * **A BRACKET IS A GROUP HOLDING ONE PATH AND ITS NUMBER.** Both `drawEnding` and
+           * `drawTriplet` open a `<g>`, write EVERY segment as a single `printPath` `d`, add
+           * the number as a `noClass` text naming itself, and close
+           * (`draw/ending.js:27-50`, `draw/triplet.js:7-13`). We wrote a line per segment at
+           * the voice's own level and a text beside them, which is four rows of the contract
+           * where abcjs has three — and the `d` is `M … L … ` per segment WITH a trailing
+           * space, from `sprintf`.
            */
-          into: { x: number; s: string }[] | null = null,
-        ): void => {
-          if (text === undefined && lines.length === 0) return;
-          /** Held rather than written when this group has to take its turn in the merge. */
-          const sink: string[] = [];
-          const emit = (piece: string): void => {
-            if (into === null) parts.push(piece);
-            else sink.push(piece);
-          };
-          // abcjs-debt: §3 — a stray space that is load-bearing. Docs/ABCJS-DEBT.md
-          // **THE TWO SEGMENT WRITERS DISAGREE ON A TRAILING SPACE.** `drawEnding`'s
-          // `sprintf("M %f %f L %f %f ", …)` ends each segment with one; `drawTriplet`'s
-          // `drawLine` does not (`draw/ending.js:14`, `draw/triplet.js:18`). One byte per
-          // segment, and a quirk to reproduce rather than one of them to pick.
-          const gap = fill ? " " : "";
-          const d = lines
-            .map((l) => {
-              const t = TL(l);
-              // …and an UNANCHORED end goes in raw — see `PlacedLine.rawEnd`.
-              const x2 = l.rawEnd === true ? raw(t.x2) : round2(t.x2);
-              // …and an UNANCHORED START goes in raw for the same reason — see
-              // `PlacedLine.rawStart`.
-              const x1 = l.rawStart === true ? raw(t.x1) : round2(t.x1);
-              return `M ${x1} ${round2(t.y1)} L ${x2} ${round2(t.y2)}${gap}`;
-            })
-            .join("");
-          emit(
-            `<g${attrIfAny(
-              classes.generateAt(
-                text?.groupClass ?? name,
-                text?.measureElement === undefined
-                  ? (text?.measure ?? 0)
-                  : (markerAt.get(text.measureElement + voiceBase) ?? 0),
-              ),
-            )}` + `${fill ? ` fill="${ink}"` : ""} data-name="${name}">`,
-          );
-          if (d) {
+          const bracketGroup = (
+            lines: readonly PlacedLine[],
+            text: PlacedText | undefined,
+            name: string,
+            pathName: string,
+            fill: boolean,
+            /**
+             * Where to put it. A VOLTA goes straight out; a TRIPLET joins the `otherchildren`
+             * merge below, because abcjs keeps ONE add-order list and a `TripletElem` and a
+             * `DynamicDecoration` sit in it together — `visual-selection-01`'s golden writes
+             * the dynamics group first.
+             */
+            into: { x: number; s: string }[] | null = null,
+          ): void => {
+            if (text === undefined && lines.length === 0) return;
+            /** Held rather than written when this group has to take its turn in the merge. */
+            const sink: string[] = [];
+            const emit = (piece: string): void => {
+              if (into === null) parts.push(piece);
+              else sink.push(piece);
+            };
+            // abcjs-debt: §3 — a stray space that is load-bearing. Docs/ABCJS-DEBT.md
+            // **THE TWO SEGMENT WRITERS DISAGREE ON A TRAILING SPACE.** `drawEnding`'s
+            // `sprintf("M %f %f L %f %f ", …)` ends each segment with one; `drawTriplet`'s
+            // `drawLine` does not (`draw/ending.js:14`, `draw/triplet.js:18`). One byte per
+            // segment, and a quirk to reproduce rather than one of them to pick.
+            const gap = fill ? " " : "";
+            const d = lines
+              .map((l) => {
+                const t = TL(l);
+                // …and an UNANCHORED end goes in raw — see `PlacedLine.rawEnd`.
+                const x2 = l.rawEnd === true ? raw(t.x2) : round2(t.x2);
+                // …and an UNANCHORED START goes in raw for the same reason — see
+                // `PlacedLine.rawStart`.
+                const x1 = l.rawStart === true ? raw(t.x1) : round2(t.x1);
+                return `M ${x1} ${round2(t.y1)} L ${x2} ${round2(t.y2)}${gap}`;
+              })
+              .join("");
             emit(
-              `<path d="${d}" stroke="${ink}"${fill ? ` fill="${ink}"` : ""} ` +
-                `data-name="${pathName}"></path>`,
+              `<g${attrIfAny(
+                classes.generateAt(
+                  text?.groupClass ?? name,
+                  text?.measureElement === undefined
+                    ? (text?.measure ?? 0)
+                    : (markerAt.get(text.measureElement + voiceBase) ?? 0),
+                ),
+              )}` + `${fill ? ` fill="${ink}"` : ""} data-name="${name}">`,
+            );
+            if (d) {
+              emit(
+                `<path d="${d}" stroke="${ink}"${fill ? ` fill="${ink}"` : ""} ` +
+                  `data-name="${pathName}"></path>`,
+              );
+            }
+            // **AND THE NUMBER IS `renderText`'s ELEMENT LIKE ANY OTHER** — `repeatfont` with
+            // `noClass` for an ending, `tripletfont` with `noClass` and `centerVertically` for
+            // a triplet (`draw/ending.js:40-49`, `draw/triplet.js:12`). Ours wrote an ad-hoc
+            // `<text>` in `serif` with the attributes in another order.
+            // A `%%repeatfont`/`%%tripletfont` that NAMES a face wins over the type's
+            // default, exactly as it does for a music text — see `PlacedText.face`.
+            // **THE NUMBER IS `if (params.anchor1)`'s** (`draw/ending.js:38-49`), so a
+            // bracket carried over a system break has none — see `voltaCarried`.
+            if (text === undefined) {
+              emit("</g>");
+              if (into !== null)
+                into.push({ x: lines[0]?.x1 ?? 0, s: sink.join("") });
+              return;
+            }
+            const face =
+              text.face ??
+              (text.font === undefined
+                ? undefined
+                : ABCJS_FONT_FACE[text.font]);
+            emit(
+              face === undefined
+                ? `<text${text.anchor === undefined ? "" : ` text-anchor="${text.anchor}"`} ` +
+                    `x="${textNum(text.x * PX)}" y="${round2(text.y * PX + oy)}" ` +
+                    `font-family="serif" font-size="${num(text.size * PX)}" ` +
+                    `data-name="${escapeAttr(text.dataName ?? text.text)}">${escapeText(text.text)}</text>`
+                : abcjsText(
+                    textNum(text.x * PX),
+                    round2(text.y * PX + oy),
+                    num(text.size * PX),
+                    face,
+                    text.italic,
+                    text.bold,
+                    text.anchor ?? "start",
+                    text.dataName ?? text.text,
+                    escapeText(text.text),
+                    "",
+                    [],
+                    false,
+                    text.noClass === true,
+                  ),
+            );
+            emit("</g>");
+            /**
+             * **AN ENDING AND A TRIPLET TAKE THEIR TURN AT THEIR START, WHERE A CURVE AND A
+             * HAIRPIN TAKE THEIRS AT THEIR CLOSE.** Measured, not assumed: abcjs writes a
+             * single-letter dynamic at x 120.63 BEFORE an ending spanning 309.86…777.54, and
+             * that same ending BEFORE a hairpin closing at 698.49 — which only a start key
+             * gives. The curve and the hairpin are added by their closing decoration and
+             * need the other one; see below.
+             */
+            if (into !== null)
+              into.push({
+                x: Math.min(
+                  text.x,
+                  ...lines.map((l) => Math.min(TL(l).x1, TL(l).x2)),
+                ),
+                s: sink.join(""),
+              });
+          };
+          if (abcjs) {
+            // …AND AN ENDING IS ON `otherchildren` TOO. `EndingElem` is `addOther`'d like a
+            // curve and a hairpin, so it takes its turn in the one add-order list rather than
+            // preceding all of them — abcjs writes a single-letter dynamic BEFORE the bracket
+            // on `visual-selection-01`. Keyed on the CLOSING x, as the others are.
+            // **KEYED ON THE BRACKET, NOT ON ITS NUMBER.** A carried half has no number at
+            // all, and iterating the TEXTS dropped it entirely.
+            const voltaGroups = [
+              ...new Set(
+                staff.voltaLines.filter(mine).map((l) => l.group ?? 0),
+              ),
+            ].sort((a, b) => a - b);
+            for (const g of voltaGroups) {
+              bracketGroup(
+                staff.voltaLines
+                  .filter(mine)
+                  .filter((l) => (l.group ?? 0) === g),
+                staff.voltaTexts.filter(mine).find((t) => t.group === g),
+                "ending",
+                "line",
+                true,
+                others,
+              );
+            }
+          } else {
+            for (const line of staff.voltaLines.filter(mine)) {
+              parts.push(
+                lineToRect(TL(line), ` class="${prefix}-volta"`, abcjs, ink),
+              );
+            }
+            for (const t of staff.voltaTexts.filter(mine)) {
+              parts.push(
+                `<text class="${prefix}-volta" x="${textNum(t.x * PX)}" ` +
+                  `y="${round2(t.y * PX + oy)}" font-family="serif" font-size="${num(t.size * PX)}">${escapeText(t.text)}</text>`,
+              );
+            }
+          }
+          // ABCJS CALLS IT A TRIPLET, whatever the number — `classes.generate('triplet ' +
+          // durationClass)` on the group and `data-name="triplet-bracket"` on the path
+          // (`draw/triplet.js:7-9`, `:42`). Ours said `abcjs-tuplet`, which is the right word
+          // for the concept and the wrong one for compat: a stylesheet written against abcjs
+          // selects `.abcjs-triplet`, and no comparison could match the bracket either.
+          if (abcjs) {
+            // …INTO THE `otherchildren` MERGE, not straight out. A `TripletElem` and a
+            // `DynamicDecoration` share abcjs's one add-order list, and
+            // `visual-selection-01`'s golden writes the dynamics group first.
+            for (const t of staff.tupletTexts.filter(mine)) {
+              bracketGroup(
+                staff.tupletLines
+                  .filter(mine)
+                  .filter((l) => l.group === t.group),
+                t,
+                "triplet",
+                "triplet-bracket",
+                false,
+                others,
+              );
+            }
+          } else {
+            for (const line of staff.tupletLines.filter(mine)) {
+              parts.push(
+                lineToRect(TL(line), ` class="${prefix}-tuplet"`, abcjs, ink),
+              );
+            }
+          }
+          // Never present in strict mode, where abcjs prints a literal `_` instead — so this
+          // reuses abcjs's lyric class rather than inventing one it has no counterpart for.
+          for (const line of staff.melismaLines.filter(mine)) {
+            parts.push(
+              lineToRect(
+                TL(line),
+                abcjs ? ' class="abcjs-lyric"' : ` class="${prefix}-lyric"`,
+                abcjs,
+                ink,
+              ),
             );
           }
-          // **AND THE NUMBER IS `renderText`'s ELEMENT LIKE ANY OTHER** — `repeatfont` with
-          // `noClass` for an ending, `tripletfont` with `noClass` and `centerVertically` for
-          // a triplet (`draw/ending.js:40-49`, `draw/triplet.js:12`). Ours wrote an ad-hoc
-          // `<text>` in `serif` with the attributes in another order.
-          // A `%%repeatfont`/`%%tripletfont` that NAMES a face wins over the type's
-          // default, exactly as it does for a music text — see `PlacedText.face`.
-          // **THE NUMBER IS `if (params.anchor1)`'s** (`draw/ending.js:38-49`), so a
-          // bracket carried over a system break has none — see `voltaCarried`.
-          if (text === undefined) {
-            emit("</g>");
-            if (into !== null)
-              into.push({ x: lines[0]?.x1 ?? 0, s: sink.join("") });
+          // Hairpins and glissandi. THE COMMENT HERE USED TO SAY "abcjs paints these with no
+          // class of its own" — reasoned, never measured, and its own output denies it:
+          // `drawCrescendo` passes `classes.generate('dynamics decoration')` and
+          // `"data-name": "dynamics"` (`draw/crescendo.js:34`), which comes out as
+          // `class="abcjs-decoration abcjs-dynamics …" data-name="dynamics"`. A glissando is
+          // `data-name="glissando"` on the same footing.
+          /**
+           * **A HAIRPIN IS ONE STROKED `<path>` WITH TWO SUBPATHS, NOT TWO LINES.**
+           * `drawCrescendo` builds `M %f %f L %f %f M %f %f L %f %f` in a single `printPath`
+           * (`draw/crescendo.js:16-35`), so both arms are one element and one row of the
+           * contract. We drew an arm each, which read as a doubled dynamic. The arms arrive
+           * adjacent and upper-first from `hairpin()` in `layout.ts`, which is the pairing.
+           */
+          const spanners = staff.spannerLines.filter(mine);
+          for (let i = 0; i < spanners.length; i += 1) {
+            const line = spanners[i];
+            if (line === undefined) continue;
+            const arm2 = line.role === "dynamic" ? spanners[i + 1] : undefined;
+            if (abcjs && arm2 !== undefined) {
+              i += 1;
+              const [a, b] = [TL(line), TL(arm2)];
+              const d =
+                `M ${round2(a.x1)} ${round2(a.y1)} L ${round2(a.x2)} ${round2(a.y2)} ` +
+                `M ${round2(b.x1)} ${round2(b.y1)} L ${round2(b.x2)} ${round2(b.y2)}`;
+              others.push({
+                // …and a HAIRPIN is added by its CLOSING decoration too, so it sorts on the
+                // x it ENDS at — see the curve below.
+                x: Math.max(a.x2, b.x2),
+                // …and LAST of the four, `createDecoration` running after the graces.
+                k: 3,
+                s:
+                  `<path d="${d}" highlight="stroke" stroke="${ink}" ` +
+                  `class="${classes.generateAt("dynamics decoration", markerAt.get((line.atElement ?? -1) + voiceBase) ?? 0)}" data-name="dynamics"></path>`,
+              });
+              continue;
+            }
+            const named = line.role === "dynamic" ? "dynamics" : "glissando";
+            // …at the element it was `addOther`'d at, like everything else in the list.
+            const spanM = markerAt.get((line.atElement ?? -1) + voiceBase) ?? 0;
+            const cls =
+              line.role === "dynamic"
+                ? classes.generateAt("dynamics decoration", spanM)
+                : // `classes.generate('decoration')` with `data-name: "glissando"` — the two
+                  // are different strings (`draw/glissando.js:73`), and ours used the name for
+                  // both.
+                  classes.generateAt("decoration", spanM);
+            const t = TL(line);
+            others.push({
+              x: t.x1,
+              s:
+                abcjs && line.squiggles !== undefined
+                  ? `<path d="${squigglyPath(t.x1, roundNumber(t.y1), line.squiggles, line.slope ?? 0)}" ` +
+                    `highlight="stroke" stroke="${ink}" class="${cls}" data-name="${named}"></path>`
+                  : lineToRect(
+                      t,
+                      abcjs
+                        ? ` class="${cls}" data-name="${named}"`
+                        : ` class="${prefix}-decoration"`,
+                      abcjs,
+                    ),
+            });
+          }
+          // …and the two buckets go out as ONE list in x order. `Array.sort` is stable, so a
+          // dynamic and a hairpin starting at the same x keep the order they were built in.
+          // THE NUMBER CARRIES NO CLASS, and that is abcjs's choice rather than an omission:
+          // `drawTriplet` passes `noClass: true` and `name: "" + params.number`
+          // (`draw/triplet.js:11`), so its golden emits `data-name="3"` and nothing else. The
+          // BRACKET beside it is classed `abcjs-triplet` through the group. Giving the number
+          // that class too — which this did until now — invented a hook abcjs does not offer
+          // and still left it unmatchable, since a comparison keyed on `data-name` found
+          // nothing.
+          // …and under `abcjs` the number is written INSIDE its group, by `bracketGroup`.
+          if (!abcjs) {
+            for (const t of staff.tupletTexts.filter(mine)) {
+              const style = `${t.bold ? ' font-weight="bold"' : ""}${t.italic ? ' font-style="italic"' : ""}`;
+              const anchor =
+                t.anchor === undefined ? "" : ` text-anchor="${t.anchor}"`;
+              parts.push(
+                `<text class="${prefix}-tuplet"${anchor} x="${textNum(t.x * PX)}" ` +
+                  `y="${round2(t.y * PX + oy)}" font-family="serif" font-size="${num(t.size * PX)}"${style}>${escapeText(t.text)}</text>`,
+              );
+            }
+          }
+          /**
+           * **A SLUR AND A TIE NAME THE NOTES THEY JOIN.** `drawTie` builds
+           * `abcjs-start-m{measure}-n{note} abcjs-end-m{measure}-n{note}` off each anchor's
+           * `parent.counters` — an unanchored end is `abcjs-start-edge` / `abcjs-end-edge` —
+           * and `drawArc` appends `slur` and then `tie` or `legato` before generating
+           * (`draw/tie.js:6-20`, `:83-87`). `data-name` is `tie` or `slur`. Ours wrote a bare
+           * `abcjs-tie`, which is a class abcjs only ever writes with the rest of that string.
+           */
+          const curveSink: string[] = [];
+          // **AND `((` PUTS TWO CURVES ON ONE ELEMENT, WHICH NO x CAN TELL APART.** Both
+          // are `addOther`'d at the same open, and abcjs's `for (i = 0; i < elem.startSlur
+          // .length; i++)` adds the OUTER one first. Ours emits at CLOSE time, which is
+          // inner-first. See `PlacedCurve.openSeq`.
+          for (const curve of staff.curves
+            .filter(mine)
+            .slice()
+            .sort((a, b) => (a.openSeq ?? 0) - (b.openSeq ?? 0))) {
+            const end = (
+              which: "start" | "end",
+              index: number | undefined,
+            ): string => {
+              const c =
+                index === undefined
+                  ? undefined
+                  : counters.get(index + voiceBase);
+              return c === undefined
+                ? `abcjs-${which}-edge`
+                : `abcjs-${which}-m${c.measure}-n${c.note}`;
+            };
+            const klass =
+              `${end("start", curve.startElement)} ${end("end", curve.endElement)}` +
+              ` slur ${curve.kind === "tie" ? "tie" : "legato"}` +
+              // …**AND `dotted` GOES IN BEFORE `generate` RUNS**, so it lands inside the
+              // generated string and takes the `abcjs-` prefix like the rest
+              // (`draw/tie.js:83-87`). `S3-note-syntax-classes-tune22` writes
+              // `abcjs-slur abcjs-legato abcjs-dotted abcjs-l2 …`.
+              `${curve.dotted === true ? " dotted" : ""}`;
+            // Generated at the CLOSING note's measure: the curve is `addOther`'d when it
+            // closes, so the count of `"bar"` markers ahead of it in `otherchildren` is that
+            // note's own measure index within the line.
+            /**
+             * **A CURVE IS `addOther`'d WHERE IT OPENS**, so its class carries the OPENING
+             * element's counters. `addSlursAndTies` builds the `TieElem` at the note that
+             * starts the tie or slur and calls `voice.addOther(tie)` there
+             * (`abstract-engraver.js:907-913, 948-953`); `setEndAnchor` only fills the far
+             * end in. The `anchor2`-only form — a `)` with nothing open — is the exception,
+             * and it is added at the CLOSING note (`:930-933`), which is the fallback here.
+             *
+             * `ave-verum-corpus-classes` ties across a barline and abcjs writes
+             * `abcjs-l0 abcjs-m1 abcjs-mm1`; ours read the closing element and wrote `m2 mm2`.
+             */
+            const anchorEl = curve.startElement ?? curve.endElement;
+            // …**AT THE MARKER COUNT, LIKE EVERY OTHER `addOther` ITEM** — see `markerAt`.
+            // The `start-m`/`end-m` names above are a different quantity: those come from
+            // `anchor.parent.counters`, the CHILDREN pass's own counter.
+            const at =
+              anchorEl === undefined
+                ? 0
+                : (markerAt.get(anchorEl + voiceBase) ?? 0);
+            /**
+             * **AND A CURVE IS ON `otherchildren` TOO**, so it interleaves with the hairpins,
+             * the dynamics and the triplets rather than following all of them — `addOther` is
+             * one list and `drawVoice` walks it once (`draw/voice.js:80-90`). Ours wrote every
+             * curve last, which put `visual-selection-01`'s slur after a hairpin abcjs writes
+             * after IT.
+             *
+             * **ORDERED BY THE CLOSING x, BECAUSE THAT IS WHEN IT IS ADDED.** A curve and a
+             * hairpin are both `addOther`'d by their CLOSING decoration, so
+             * `!<(! (bfdf) (3B2d2c2 !<)!` writes the slur first even though the hairpin opens
+             * to its left — which is what `visual-selection-01`'s golden does and what sorting
+             * on the opening x gets backwards.
+             */
+            curveSink.push(
+              curveToPath(
+                TC(curve),
+                abcjs
+                  ? // ALWAYS a `class`, empty or not: `generate` returns `''` and `svg.js`'s
+                    // `path` sets every key it is handed, so the attribute is written either way.
+                    ` class="${classes.generateAt(klass, at)}" data-name="${curve.kind}"`
+                  : ` class="${prefix}-${curve.kind}"`,
+                strict,
+                PX,
+              ),
+            );
+            // **A SLUR AND A TIE ARE ADDED AT THEIR OPEN**, not at their close:
+            // `voice.addOther(slur)` sits inside `if (pitchelem.startSlur)` and the tie's
+            // inside `if (pitchelem.startTie)` (`abstract-engraver.js:897-941`). A HAIRPIN is
+            // the other way round — `new CrescendoElem(this.startCrescendoX, lastNote(...))`
+            // is built when the CLOSE is seen (`creation/decoration.js:304-308`) — which is
+            // why the two keys differ. The note here said both sorted on the close; the trace
+            // of `voice.addOther` says otherwise, and `visual-svg-per-line-01` put a hairpin
+            // where abcjs has a slur.
+            /**
+             * **AND A GRACE SLUR TAKES ITS PLACE AT THE MAIN NOTE, NOT AT THE GRACE.**
+             * `addGraceNotes` runs at `abstract-engraver.js:840` and the pitch loop's
+             * `addSlursAndTies` at `:732`, so within ONE element the WRITTEN curve is
+             * `addOther`'d first and the automatic grace slur second — even though the grace
+             * head sits well to the LEFT of the note. Traced through `voice.addOther` on
+             * `visual-tablature-15`: grace, written, grace, written, with each written one
+             * carrying `a2x null` because its close has not been seen yet.
+             *
+             * Keying a grace slur on its own `x1` put it before the written slur that opens
+             * on the same note. Its `x2` is that note's head, which is where the list has it.
+             * A grace slur is the only curve whose two ends are the SAME element.
+             */
+            const graceCurve =
+              curve.startElement !== undefined &&
+              curve.startElement === curve.endElement;
+            others.push({
+              /**
+               * **THE KEY IS THE ANCHOR'S OWN x, NOT THE ARC'S** — `drawArc` adds 6 at the
+               * start and 4 at the end (`draw/tie.js:60-61`), and a HAIRPIN closing on the
+               * same note has neither. Keying the arc put a curve 6px right of the hairpin
+               * that shares its element, and abcjs draws them the other way round.
+               *
+               * `k` is `createNote`'s own order for one element: the pitch loop's
+               * `addSlursAndTies` at `abstract-engraver.js:732`, then `addGraceNotes` at
+               * `:840`, then `createDecoration` at `:847` — whose first call is
+               * `volumeDecoration` and whose second builds the `CrescendoElem`.
+               */
+              // **AN INCOMING HALF LEADS THE LINE.** The `TieElem` was `addOther`'d on the
+              // line the curve OPENED on and carries over, so it is already in the voice's
+              // `otherchildren` before anything this line adds. `startElement` is absent on
+              // exactly that half — `layoutCurves` passes only `{ end }` for it.
+              x:
+                curve.startElement === undefined
+                  ? Number.NEGATIVE_INFINITY
+                  : graceCurve
+                    ? TC(curve).x2 - spaces(ABCJS_ARC.endOffset)
+                    : // …**AND A CHORD'S TIES ALL KEY ON THE ELEMENT**, not on the head each
+                      // one hangs off — see `PlacedCurve.orderShift`. Transformed with the
+                      // curve so the key stays in the drawn frame.
+                      TC({ ...curve, x1: curve.x1 - (curve.orderShift ?? 0) })
+                        .x1 - spaces(ABCJS_ARC.startOffset),
+              k: graceCurve ? 1 : 0,
+              s: curveSink.pop() ?? "",
+            });
+          }
+          // …and the whole `otherchildren` list goes out as ONE run in x order. `Array.sort`
+          // is stable, so two things starting at the same x keep the order they were built in.
+          const ordered = others.sort(
+            (p1, p2) => p1.x - p2.x || (p1.k ?? 0) - (p2.k ?? 0),
+          );
+          if (process.env.ABCTS_OTHER)
+            for (const o of ordered)
+              console.log(
+                "OTHER x=",
+                Number(o.x.toFixed(3)),
+                "name=",
+                /data-name="([^"]*)"/.exec(o.s)?.[1] ?? "?",
+                "m=",
+                /abcjs-m(\d+)/.exec(o.s)?.[1] ?? "-",
+                "mm=",
+                /abcjs-mm(\d+)/.exec(o.s)?.[1] ?? "-",
+              );
+          for (const o of ordered) parts.push(o.s);
+          dynamics.length = 0;
+          graceBeams.length = 0;
+          /**
+           * **AND THE COUNTER ENDS THE VOICE AT THE LINE'S BAR COUNT**, which is what
+           * `newMeasure()` banks into `measureTotalPerLine` for every LATER line's `mm`.
+           * `drawVoice` gets there by `incrMeasure()`-ing on each `'bar'` MARKER in
+           * `params.otherchildren` (`draw/voice.js:64-70`), and a marker is pushed for every
+           * bar element except the line's FIRST item — `addChild` skips it when nothing but a
+           * `staff-extra` or a `tempo` precedes (`voice-element.js:29-42`).
+           */
+          // …**AND IT IS THE SAME WALK `markerAt` MADE**, so it is that one's last value
+          // rather than a second copy of the rule. The copy had drifted: it counted a LEADING
+          // barline whenever a heading block or a voice name preceded it, because those are
+          // ours and not abcjs children — `S4-bars-repeats` banked 4 for abcjs's 3 and every
+          // later line's `mm` was one high.
+          const bars = markerAt.get(voiceEnds[voiceHere] ?? 0) ?? 0;
+          classes.startMeasure();
+          for (let i = 0; i < bars; i += 1) classes.incrMeasure();
+        };
+        /**
+         * Which VOICE each element belongs to. `staff.elements` is already voice-major —
+         * `fixed.flat()` — so the boundaries are the running lengths of `staff.voices`.
+         */
+        const voiceEnds: number[] = [];
+        {
+          let n = 0;
+          for (const v of staff.voices) {
+            n += v.length;
+            voiceEnds.push(n);
+          }
+        }
+        const voiceOf = (i: number): number => {
+          const at = voiceEnds.findIndex((end) => i < end);
+          return at < 0 ? Math.max(0, staff.voices.length - 1) : at;
+        };
+        let openVoice = 0;
+        staff.elements.forEach((el, elIndex) => {
+          // …AND THE PREVIOUS VOICE IS FINISHED BEFORE THIS ONE OPENS — see `flushVoice`.
+          if (abcjs && voiceOf(elIndex) !== openVoice) {
+            flushVoice(openVoice);
+            openVoice = voiceOf(elIndex);
+            classes.incrVoice();
+            // …**AND `foundNote` IS PER `drawVoice`**, declared inside it
+            // (`draw/voice.js:26`). Ours was per STAFF, so the second voice of a shared
+            // staff opened with it already true and its LEADING barline incremented the
+            // measure where abcjs's does not.
+            foundNote = false;
+          }
+          // Already written above, ahead of the braces. See the hoist.
+          if (abcjs && el.blockHeight !== undefined) return;
+          if (
+            elIndex >= duplicateFrom &&
+            (el.type === "bar" ||
+              el.type === "timeSignature" ||
+              el.type === "clef" ||
+              el.type === "keySignature")
+          ) {
+            // The COUNTERS still advance: `drawVoice` runs them after `drawAbsolute`
+            // returns, whatever it drew (`draw/voice.js:41-49`).
+            if (el.type === "bar" && foundNote) classes.incrMeasure();
             return;
           }
-          const face =
-            text.face ??
-            (text.font === undefined ? undefined : ABCJS_FONT_FACE[text.font]);
-          emit(
-            face === undefined
-              ? `<text${text.anchor === undefined ? "" : ` text-anchor="${text.anchor}"`} ` +
-                  `x="${textNum(text.x * PX)}" y="${round2(text.y * PX + oy)}" ` +
-                  `font-family="serif" font-size="${num(text.size * PX)}" ` +
-                  `data-name="${escapeAttr(text.dataName ?? text.text)}">${escapeText(text.text)}</text>`
-              : abcjsText(
-                  textNum(text.x * PX),
-                  round2(text.y * PX + oy),
-                  num(text.size * PX),
-                  face,
-                  text.italic,
-                  text.bold,
-                  text.anchor ?? "start",
-                  text.dataName ?? text.text,
-                  escapeText(text.text),
-                  "",
-                  [],
-                  false,
-                  text.noClass === true,
-                ),
-          );
-          emit("</g>");
+          // abcjs wraps each element in a group carrying its kind and index, which is what
+          // its interaction code walks. Core's own naming needs no wrapper.
+          let gcls = "";
           /**
-           * **AN ENDING AND A TRIPLET TAKE THEIR TURN AT THEIR START, WHERE A CURVE AND A
-           * HAIRPIN TAKE THEIRS AT THEIR CLOSE.** Measured, not assumed: abcjs writes a
-           * single-letter dynamic at x 120.63 BEFORE an ending spanning 309.86…777.54, and
-           * that same ending BEFORE a hairpin closing at 698.49 — which only a start key
-           * gives. The curve and the hairpin are added by their closing decoration and
-           * need the other one; see below.
+           * Where this element's own `<g>` was pushed, so an element that draws NOTHING can
+           * take it back again. **AN EMPTY GROUP IS DELETED** (`svg.js:364-372`) and
+           * `drawAbsolute` skips the whole append when `closeGroup` returns null — which is
+           * how a `y` SPACER produces no markup at all. Ours wrote a `<g class="abcjs-rest">`
+           * around nothing, so a spacer read as a rest on every gate that walks the DOM.
+           * The same rule already governs `abcjs-meta-top` and the staff-lines group.
            */
-          if (into !== null)
-            into.push({
-              x: Math.min(
-                text.x,
-                ...lines.map((l) => Math.min(TL(l).x1, TL(l).x2)),
-              ),
-              s: sink.join(""),
-            });
-        };
-        if (abcjs) {
-          // …AND AN ENDING IS ON `otherchildren` TOO. `EndingElem` is `addOther`'d like a
-          // curve and a hairpin, so it takes its turn in the one add-order list rather than
-          // preceding all of them — abcjs writes a single-letter dynamic BEFORE the bracket
-          // on `visual-selection-01`. Keyed on the CLOSING x, as the others are.
-          // **KEYED ON THE BRACKET, NOT ON ITS NUMBER.** A carried half has no number at
-          // all, and iterating the TEXTS dropped it entirely.
-          const voltaGroups = [
-            ...new Set(staff.voltaLines.filter(mine).map((l) => l.group ?? 0)),
-          ].sort((a, b) => a - b);
-          for (const g of voltaGroups) {
-            bracketGroup(
-              staff.voltaLines.filter(mine).filter((l) => (l.group ?? 0) === g),
-              staff.voltaTexts.filter(mine).find((t) => t.group === g),
-              "ending",
-              "line",
-              true,
-              others,
-            );
-          }
-        } else {
-          for (const line of staff.voltaLines.filter(mine)) {
-            parts.push(
-              lineToRect(TL(line), ` class="${prefix}-volta"`, abcjs, ink),
-            );
-          }
-          for (const t of staff.voltaTexts.filter(mine)) {
-            parts.push(
-              `<text class="${prefix}-volta" x="${textNum(t.x * PX)}" ` +
-                `y="${round2(t.y * PX + oy)}" font-family="serif" font-size="${num(t.size * PX)}">${escapeText(t.text)}</text>`,
-            );
-          }
-        }
-        // ABCJS CALLS IT A TRIPLET, whatever the number — `classes.generate('triplet ' +
-        // durationClass)` on the group and `data-name="triplet-bracket"` on the path
-        // (`draw/triplet.js:7-9`, `:42`). Ours said `abcjs-tuplet`, which is the right word
-        // for the concept and the wrong one for compat: a stylesheet written against abcjs
-        // selects `.abcjs-triplet`, and no comparison could match the bracket either.
-        if (abcjs) {
-          // …INTO THE `otherchildren` MERGE, not straight out. A `TripletElem` and a
-          // `DynamicDecoration` share abcjs's one add-order list, and
-          // `visual-selection-01`'s golden writes the dynamics group first.
-          for (const t of staff.tupletTexts.filter(mine)) {
-            bracketGroup(
-              staff.tupletLines.filter(mine).filter((l) => l.group === t.group),
-              t,
-              "triplet",
-              "triplet-bracket",
-              false,
-              others,
-            );
-          }
-        } else {
-          for (const line of staff.tupletLines.filter(mine)) {
-            parts.push(
-              lineToRect(TL(line), ` class="${prefix}-tuplet"`, abcjs, ink),
-            );
-          }
-        }
-        // Never present in strict mode, where abcjs prints a literal `_` instead — so this
-        // reuses abcjs's lyric class rather than inventing one it has no counterpart for.
-        for (const line of staff.melismaLines.filter(mine)) {
-          parts.push(
-            lineToRect(
-              TL(line),
-              abcjs ? ' class="abcjs-lyric"' : ` class="${prefix}-lyric"`,
-              abcjs,
-              ink,
-            ),
-          );
-        }
-        // Hairpins and glissandi. THE COMMENT HERE USED TO SAY "abcjs paints these with no
-        // class of its own" — reasoned, never measured, and its own output denies it:
-        // `drawCrescendo` passes `classes.generate('dynamics decoration')` and
-        // `"data-name": "dynamics"` (`draw/crescendo.js:34`), which comes out as
-        // `class="abcjs-decoration abcjs-dynamics …" data-name="dynamics"`. A glissando is
-        // `data-name="glissando"` on the same footing.
-        /**
-         * **A HAIRPIN IS ONE STROKED `<path>` WITH TWO SUBPATHS, NOT TWO LINES.**
-         * `drawCrescendo` builds `M %f %f L %f %f M %f %f L %f %f` in a single `printPath`
-         * (`draw/crescendo.js:16-35`), so both arms are one element and one row of the
-         * contract. We drew an arm each, which read as a doubled dynamic. The arms arrive
-         * adjacent and upper-first from `hairpin()` in `layout.ts`, which is the pairing.
-         */
-        const spanners = staff.spannerLines.filter(mine);
-        for (let i = 0; i < spanners.length; i += 1) {
-          const line = spanners[i];
-          if (line === undefined) continue;
-          const arm2 = line.role === "dynamic" ? spanners[i + 1] : undefined;
-          if (abcjs && arm2 !== undefined) {
-            i += 1;
-            const [a, b] = [TL(line), TL(arm2)];
-            const d =
-              `M ${round2(a.x1)} ${round2(a.y1)} L ${round2(a.x2)} ${round2(a.y2)} ` +
-              `M ${round2(b.x1)} ${round2(b.y1)} L ${round2(b.x2)} ${round2(b.y2)}`;
-            others.push({
-              // …and a HAIRPIN is added by its CLOSING decoration too, so it sorts on the
-              // x it ENDS at — see the curve below.
-              x: Math.max(a.x2, b.x2),
-              // …and LAST of the four, `createDecoration` running after the graces.
-              k: 3,
-              s:
-                `<path d="${d}" highlight="stroke" stroke="${ink}" ` +
-                `class="${classes.generateAt("dynamics decoration", markerAt.get((line.atElement ?? -1) + voiceBase) ?? 0)}" data-name="dynamics"></path>`,
-            });
-            continue;
-          }
-          const named = line.role === "dynamic" ? "dynamics" : "glissando";
-          // …at the element it was `addOther`'d at, like everything else in the list.
-          const spanM = markerAt.get((line.atElement ?? -1) + voiceBase) ?? 0;
-          const cls =
-            line.role === "dynamic"
-              ? classes.generateAt("dynamics decoration", spanM)
-              : // `classes.generate('decoration')` with `data-name: "glissando"` — the two
-                // are different strings (`draw/glissando.js:73`), and ours used the name for
-                // both.
-                classes.generateAt("decoration", spanM);
-          const t = TL(line);
-          others.push({
-            x: t.x1,
-            s:
-              abcjs && line.squiggles !== undefined
-                ? `<path d="${squigglyPath(t.x1, roundNumber(t.y1), line.squiggles, line.slope ?? 0)}" ` +
-                  `highlight="stroke" stroke="${ink}" class="${cls}" data-name="${named}"></path>`
-                : lineToRect(
-                    t,
-                    abcjs
-                      ? ` class="${cls}" data-name="${named}"`
-                      : ` class="${prefix}-decoration"`,
-                    abcjs,
-                  ),
-          });
-        }
-        // …and the two buckets go out as ONE list in x order. `Array.sort` is stable, so a
-        // dynamic and a hairpin starting at the same x keep the order they were built in.
-        // THE NUMBER CARRIES NO CLASS, and that is abcjs's choice rather than an omission:
-        // `drawTriplet` passes `noClass: true` and `name: "" + params.number`
-        // (`draw/triplet.js:11`), so its golden emits `data-name="3"` and nothing else. The
-        // BRACKET beside it is classed `abcjs-triplet` through the group. Giving the number
-        // that class too — which this did until now — invented a hook abcjs does not offer
-        // and still left it unmatchable, since a comparison keyed on `data-name` found
-        // nothing.
-        // …and under `abcjs` the number is written INSIDE its group, by `bracketGroup`.
-        if (!abcjs) {
-          for (const t of staff.tupletTexts.filter(mine)) {
-            const style = `${t.bold ? ' font-weight="bold"' : ""}${t.italic ? ' font-style="italic"' : ""}`;
-            const anchor =
-              t.anchor === undefined ? "" : ` text-anchor="${t.anchor}"`;
-            parts.push(
-              `<text class="${prefix}-tuplet"${anchor} x="${textNum(t.x * PX)}" ` +
-                `y="${round2(t.y * PX + oy)}" font-family="serif" font-size="${num(t.size * PX)}"${style}>${escapeText(t.text)}</text>`,
-            );
-          }
-        }
-        /**
-         * **A SLUR AND A TIE NAME THE NOTES THEY JOIN.** `drawTie` builds
-         * `abcjs-start-m{measure}-n{note} abcjs-end-m{measure}-n{note}` off each anchor's
-         * `parent.counters` — an unanchored end is `abcjs-start-edge` / `abcjs-end-edge` —
-         * and `drawArc` appends `slur` and then `tie` or `legato` before generating
-         * (`draw/tie.js:6-20`, `:83-87`). `data-name` is `tie` or `slur`. Ours wrote a bare
-         * `abcjs-tie`, which is a class abcjs only ever writes with the rest of that string.
-         */
-        const curveSink: string[] = [];
-        // **AND `((` PUTS TWO CURVES ON ONE ELEMENT, WHICH NO x CAN TELL APART.** Both
-        // are `addOther`'d at the same open, and abcjs's `for (i = 0; i < elem.startSlur
-        // .length; i++)` adds the OUTER one first. Ours emits at CLOSE time, which is
-        // inner-first. See `PlacedCurve.openSeq`.
-        for (const curve of staff.curves
-          .filter(mine)
-          .slice()
-          .sort((a, b) => (a.openSeq ?? 0) - (b.openSeq ?? 0))) {
-          const end = (
-            which: "start" | "end",
-            index: number | undefined,
-          ): string => {
-            const c =
-              index === undefined ? undefined : counters.get(index + voiceBase);
-            return c === undefined
-              ? `abcjs-${which}-edge`
-              : `abcjs-${which}-m${c.measure}-n${c.note}`;
-          };
-          const klass =
-            `${end("start", curve.startElement)} ${end("end", curve.endElement)}` +
-            ` slur ${curve.kind === "tie" ? "tie" : "legato"}` +
-            // …**AND `dotted` GOES IN BEFORE `generate` RUNS**, so it lands inside the
-            // generated string and takes the `abcjs-` prefix like the rest
-            // (`draw/tie.js:83-87`). `S3-note-syntax-classes-tune22` writes
-            // `abcjs-slur abcjs-legato abcjs-dotted abcjs-l2 …`.
-            `${curve.dotted === true ? " dotted" : ""}`;
-          // Generated at the CLOSING note's measure: the curve is `addOther`'d when it
-          // closes, so the count of `"bar"` markers ahead of it in `otherchildren` is that
-          // note's own measure index within the line.
+          let openedAt = -1;
+          /** The class counters this element advances — spent once its children are out. */
+          let advance = (): void => {};
           /**
-           * **A CURVE IS `addOther`'d WHERE IT OPENS**, so its class carries the OPENING
-           * element's counters. `addSlursAndTies` builds the `TieElem` at the note that
-           * starts the tie or slur and calls `voice.addOther(tie)` there
-           * (`abstract-engraver.js:907-913, 948-953`); `setEndAnchor` only fills the far
-           * end in. The `anchor2`-only form — a `)` with nothing open — is the exception,
-           * and it is added at the CLOSING note (`:930-933`), which is the fallback here.
+           * **A VOICE NAME IS NOT AN ELEMENT AND WEARS NO GROUP.** `drawVoice` renders it
+           * before it walks `params.children` at all, with `alreadyInGroup = true`
+           * (`draw/voice.js:17-20`) — so abcjs writes a bare `<text data-name="voice-name">`
+           * as a SIBLING of the staff's elements. Ours made it an element like any other and
+           * wrapped it in `<g fill stroke data-name>`.
+           */
+          const bare = el.type === "voiceName";
+          /**
+           * **AND THE MEASURE OPENS ONCE THE CONNECTOR AND THE NAME ARE OUT.**
+           * `draw/voice.js:31` reads as though a `staff-extra` cannot open one —
+           * `if (child.type !== 'staff-extra' && !isInMeasure()) startMeasure()` — but abcjs's
+           * own OUTPUT gives the clef `abcjs-m0 abcjs-mm0`, so something upstream has already
+           * started it. Measured rather than reasoned: the source lies here, the goldens are
+           * the target, and what the source DOES pin is where it cannot have happened yet —
+           * `drawStaffGroup` runs `newMeasure()` before `printStaff`, and the brace, the
+           * bracket and the voice name all go out before the first child. All three carry
+           * `l` and `v` and neither counter.
+           */
+          /**
+           * **abcjs's GUARD IS A WHOLE-STRING COMPARISON AND NO CHILD EVER MATCHES IT.**
+           * `if (child.type !== 'staff-extra' && !isInMeasure()) { startMeasure();
+           * justInitializedMeasureNumber = true }` (`draw/voice.js:31-35`) — but a prefix
+           * child's type is `'staff-extra clef'`, `'staff-extra key-signature'`, …, never the
+           * bare `'staff-extra'`. So the FIRST child of every voice opens a measure whatever
+           * it is, and `ABCJS_CHILD` prints `type= staff-extra clef … justInit= true` for it.
            *
-           * `ave-verum-corpus-classes` ties across a barline and abcjs writes
-           * `abcjs-l0 abcjs-m1 abcjs-mm1`; ours read the closing element and wrote `m2 mm2`.
-           */
-          const anchorEl = curve.startElement ?? curve.endElement;
-          // …**AT THE MARKER COUNT, LIKE EVERY OTHER `addOther` ITEM** — see `markerAt`.
-          // The `start-m`/`end-m` names above are a different quantity: those come from
-          // `anchor.parent.counters`, the CHILDREN pass's own counter.
-          const at =
-            anchorEl === undefined
-              ? 0
-              : (markerAt.get(anchorEl + voiceBase) ?? 0);
-          /**
-           * **AND A CURVE IS ON `otherchildren` TOO**, so it interleaves with the hairpins,
-           * the dynamics and the triplets rather than following all of them — `addOther` is
-           * one list and `drawVoice` walks it once (`draw/voice.js:80-90`). Ours wrote every
-           * curve last, which put `visual-selection-01`'s slur after a hairpin abcjs writes
-           * after IT.
+           * That is the answer to the note this used to carry — "abcjs's own OUTPUT gives the
+           * clef `abcjs-m0 abcjs-mm0`, so something upstream has already started it". Nothing
+           * upstream did; the guard is inert.
            *
-           * **ORDERED BY THE CLOSING x, BECAUSE THAT IS WHEN IT IS ADDED.** A curve and a
-           * hairpin are both `addOther`'d by their CLOSING decoration, so
-           * `!<(! (bfdf) (3B2d2c2 !<)!` writes the slur first even though the hairpin opens
-           * to its left — which is what `visual-selection-01`'s golden does and what sorting
-           * on the opening x gets backwards.
+           * It matters twice: the clef gets the counters, AND `justInitialized` suppresses
+           * the `incrMeasure` on a LEADING barline that is the voice's first child.
            */
-          curveSink.push(
-            curveToPath(
-              TC(curve),
-              abcjs
-                ? // ALWAYS a `class`, empty or not: `generate` returns `''` and `svg.js`'s
-                  // `path` sets every key it is handed, so the attribute is written either way.
-                  ` class="${classes.generateAt(klass, at)}" data-name="${curve.kind}"`
-                : ` class="${prefix}-${curve.kind}"`,
-              strict,
-              PX,
-            ),
-          );
-          // **A SLUR AND A TIE ARE ADDED AT THEIR OPEN**, not at their close:
-          // `voice.addOther(slur)` sits inside `if (pitchelem.startSlur)` and the tie's
-          // inside `if (pitchelem.startTie)` (`abstract-engraver.js:897-941`). A HAIRPIN is
-          // the other way round — `new CrescendoElem(this.startCrescendoX, lastNote(...))`
-          // is built when the CLOSE is seen (`creation/decoration.js:304-308`) — which is
-          // why the two keys differ. The note here said both sorted on the close; the trace
-          // of `voice.addOther` says otherwise, and `visual-svg-per-line-01` put a hairpin
-          // where abcjs has a slur.
-          /**
-           * **AND A GRACE SLUR TAKES ITS PLACE AT THE MAIN NOTE, NOT AT THE GRACE.**
-           * `addGraceNotes` runs at `abstract-engraver.js:840` and the pitch loop's
-           * `addSlursAndTies` at `:732`, so within ONE element the WRITTEN curve is
-           * `addOther`'d first and the automatic grace slur second — even though the grace
-           * head sits well to the LEFT of the note. Traced through `voice.addOther` on
-           * `visual-tablature-15`: grace, written, grace, written, with each written one
-           * carrying `a2x null` because its close has not been seen yet.
-           *
-           * Keying a grace slur on its own `x1` put it before the written slur that opens
-           * on the same note. Its `x2` is that note's head, which is where the list has it.
-           * A grace slur is the only curve whose two ends are the SAME element.
-           */
-          const graceCurve =
-            curve.startElement !== undefined &&
-            curve.startElement === curve.endElement;
-          others.push({
-            /**
-             * **THE KEY IS THE ANCHOR'S OWN x, NOT THE ARC'S** — `drawArc` adds 6 at the
-             * start and 4 at the end (`draw/tie.js:60-61`), and a HAIRPIN closing on the
-             * same note has neither. Keying the arc put a curve 6px right of the hairpin
-             * that shares its element, and abcjs draws them the other way round.
-             *
-             * `k` is `createNote`'s own order for one element: the pitch loop's
-             * `addSlursAndTies` at `abstract-engraver.js:732`, then `addGraceNotes` at
-             * `:840`, then `createDecoration` at `:847` — whose first call is
-             * `volumeDecoration` and whose second builds the `CrescendoElem`.
-             */
-            // **AN INCOMING HALF LEADS THE LINE.** The `TieElem` was `addOther`'d on the
-            // line the curve OPENED on and carries over, so it is already in the voice's
-            // `otherchildren` before anything this line adds. `startElement` is absent on
-            // exactly that half — `layoutCurves` passes only `{ end }` for it.
-            x:
-              curve.startElement === undefined
-                ? Number.NEGATIVE_INFINITY
-                : graceCurve
-                  ? TC(curve).x2 - spaces(ABCJS_ARC.endOffset)
-                  : // …**AND A CHORD'S TIES ALL KEY ON THE ELEMENT**, not on the head each
-                    // one hangs off — see `PlacedCurve.orderShift`. Transformed with the
-                    // curve so the key stays in the drawn frame.
-                    TC({ ...curve, x1: curve.x1 - (curve.orderShift ?? 0) })
-                      .x1 - spaces(ABCJS_ARC.startOffset),
-            k: graceCurve ? 1 : 0,
-            s: curveSink.pop() ?? "",
-          });
-        }
-        // …and the whole `otherchildren` list goes out as ONE run in x order. `Array.sort`
-        // is stable, so two things starting at the same x keep the order they were built in.
-        const ordered = others.sort(
-          (p1, p2) => p1.x - p2.x || (p1.k ?? 0) - (p2.k ?? 0),
-        );
-        if (process.env.ABCTS_OTHER)
-          for (const o of ordered)
-            console.log(
-              "OTHER x=",
-              Number(o.x.toFixed(3)),
-              "name=",
-              /data-name="([^"]*)"/.exec(o.s)?.[1] ?? "?",
-              "m=",
-              /abcjs-m(\d+)/.exec(o.s)?.[1] ?? "-",
-              "mm=",
-              /abcjs-mm(\d+)/.exec(o.s)?.[1] ?? "-",
-            );
-        for (const o of ordered) parts.push(o.s);
-        dynamics.length = 0;
-        graceBeams.length = 0;
-        /**
-         * **AND THE COUNTER ENDS THE VOICE AT THE LINE'S BAR COUNT**, which is what
-         * `newMeasure()` banks into `measureTotalPerLine` for every LATER line's `mm`.
-         * `drawVoice` gets there by `incrMeasure()`-ing on each `'bar'` MARKER in
-         * `params.otherchildren` (`draw/voice.js:64-70`), and a marker is pushed for every
-         * bar element except the line's FIRST item — `addChild` skips it when nothing but a
-         * `staff-extra` or a `tempo` precedes (`voice-element.js:29-42`).
-         */
-        // …**AND IT IS THE SAME WALK `markerAt` MADE**, so it is that one's last value
-        // rather than a second copy of the rule. The copy had drifted: it counted a LEADING
-        // barline whenever a heading block or a voice name preceded it, because those are
-        // ours and not abcjs children — `S4-bars-repeats` banked 4 for abcjs's 3 and every
-        // later line's `mm` was one high.
-        const bars = markerAt.get(voiceEnds[voiceHere] ?? 0) ?? 0;
-        classes.startMeasure();
-        for (let i = 0; i < bars; i += 1) classes.incrMeasure();
-      };
-      /**
-       * Which VOICE each element belongs to. `staff.elements` is already voice-major —
-       * `fixed.flat()` — so the boundaries are the running lengths of `staff.voices`.
-       */
-      const voiceEnds: number[] = [];
-      {
-        let n = 0;
-        for (const v of staff.voices) {
-          n += v.length;
-          voiceEnds.push(n);
-        }
-      }
-      const voiceOf = (i: number): number => {
-        const at = voiceEnds.findIndex((end) => i < end);
-        return at < 0 ? Math.max(0, staff.voices.length - 1) : at;
-      };
-      let openVoice = 0;
-      staff.elements.forEach((el, elIndex) => {
-        // …AND THE PREVIOUS VOICE IS FINISHED BEFORE THIS ONE OPENS — see `flushVoice`.
-        if (abcjs && voiceOf(elIndex) !== openVoice) {
-          flushVoice(openVoice);
-          openVoice = voiceOf(elIndex);
-          classes.incrVoice();
-          // …**AND `foundNote` IS PER `drawVoice`**, declared inside it
-          // (`draw/voice.js:26`). Ours was per STAFF, so the second voice of a shared
-          // staff opened with it already true and its LEADING barline incremented the
-          // measure where abcjs's does not.
-          foundNote = false;
-        }
-        // Already written above, ahead of the braces. See the hoist.
-        if (abcjs && el.blockHeight !== undefined) return;
-        if (
-          elIndex >= duplicateFrom &&
-          (el.type === "bar" ||
-            el.type === "timeSignature" ||
-            el.type === "clef" ||
-            el.type === "keySignature")
-        ) {
-          // The COUNTERS still advance: `drawVoice` runs them after `drawAbsolute`
-          // returns, whatever it drew (`draw/voice.js:41-49`).
-          if (el.type === "bar" && foundNote) classes.incrMeasure();
-          return;
-        }
-        // abcjs wraps each element in a group carrying its kind and index, which is what
-        // its interaction code walks. Core's own naming needs no wrapper.
-        let gcls = "";
-        /**
-         * Where this element's own `<g>` was pushed, so an element that draws NOTHING can
-         * take it back again. **AN EMPTY GROUP IS DELETED** (`svg.js:364-372`) and
-         * `drawAbsolute` skips the whole append when `closeGroup` returns null — which is
-         * how a `y` SPACER produces no markup at all. Ours wrote a `<g class="abcjs-rest">`
-         * around nothing, so a spacer read as a rest on every gate that walks the DOM.
-         * The same rule already governs `abcjs-meta-top` and the staff-lines group.
-         */
-        let openedAt = -1;
-        /** The class counters this element advances — spent once its children are out. */
-        let advance = (): void => {};
-        /**
-         * **A VOICE NAME IS NOT AN ELEMENT AND WEARS NO GROUP.** `drawVoice` renders it
-         * before it walks `params.children` at all, with `alreadyInGroup = true`
-         * (`draw/voice.js:17-20`) — so abcjs writes a bare `<text data-name="voice-name">`
-         * as a SIBLING of the staff's elements. Ours made it an element like any other and
-         * wrapped it in `<g fill stroke data-name>`.
-         */
-        const bare = el.type === "voiceName";
-        /**
-         * **AND THE MEASURE OPENS ONCE THE CONNECTOR AND THE NAME ARE OUT.**
-         * `draw/voice.js:31` reads as though a `staff-extra` cannot open one —
-         * `if (child.type !== 'staff-extra' && !isInMeasure()) startMeasure()` — but abcjs's
-         * own OUTPUT gives the clef `abcjs-m0 abcjs-mm0`, so something upstream has already
-         * started it. Measured rather than reasoned: the source lies here, the goldens are
-         * the target, and what the source DOES pin is where it cannot have happened yet —
-         * `drawStaffGroup` runs `newMeasure()` before `printStaff`, and the brace, the
-         * bracket and the voice name all go out before the first child. All three carry
-         * `l` and `v` and neither counter.
-         */
-        /**
-         * **abcjs's GUARD IS A WHOLE-STRING COMPARISON AND NO CHILD EVER MATCHES IT.**
-         * `if (child.type !== 'staff-extra' && !isInMeasure()) { startMeasure();
-         * justInitializedMeasureNumber = true }` (`draw/voice.js:31-35`) — but a prefix
-         * child's type is `'staff-extra clef'`, `'staff-extra key-signature'`, …, never the
-         * bare `'staff-extra'`. So the FIRST child of every voice opens a measure whatever
-         * it is, and `ABCJS_CHILD` prints `type= staff-extra clef … justInit= true` for it.
-         *
-         * That is the answer to the note this used to carry — "abcjs's own OUTPUT gives the
-         * clef `abcjs-m0 abcjs-mm0`, so something upstream has already started it". Nothing
-         * upstream did; the guard is inert.
-         *
-         * It matters twice: the clef gets the counters, AND `justInitialized` suppresses
-         * the `incrMeasure` on a LEADING barline that is the voice's first child.
-         */
-        const startedHere = abcjs && !bare && !classes.isInMeasure();
-        if (startedHere) classes.startMeasure();
-        if (abcjs && !bare) {
-          const name = ABCJS_ELEMENT_NAMES[el.type] ?? el.type;
-          // `if (child.type !== 'staff-extra' && !isInMeasure()) startMeasure()`
-          // (`draw/voice.js:31-34`) — a prefix element does not open a measure.
-          const justStarted = startedHere;
-          // `klass = params.type`, then ` d{durationClass}` with `.` → `-`, then one
-          // ` p{pitch}` per pitch, for a note or a rest only
-          // (`draw/absolute.js:31-40`).
-          let klass = name;
-          if (el.type === "note" || el.type === "rest") {
-            klass +=
-              ` d${Math.round((el.durationClass ?? 0) * 1000) / 1000}`.replace(
-                /\./g,
-                "-",
-              );
-            for (const p of el.abcjsPitches ?? []) klass += ` p${p}`;
-          }
-          gcls = classes.generate(klass);
-          counters.set(elIndex, classes.current());
-          if (
-            (process.env.ABCTS_CT &&
-              gcls.includes(`abcjs-v${process.env.ABCTS_CT} `)) ||
-            (process.env.ABCTS_CT &&
-              gcls.endsWith(`abcjs-v${process.env.ABCTS_CT}`))
-          )
-            console.log(
-              "CT",
-              elIndex,
-              el.type,
-              "m",
-              classes.current().measure,
-              "n",
-              classes.current().note,
-              "justStarted",
-              justStarted,
-              "foundNote",
-              foundNote,
-            );
-          /**
-           * abcjs's own attribute order on an element group: `fill`, `stroke`, the class
-           * when there is one, then `data-name`.
-           *
-           * **AND `data-index` IS AN INDEX INTO THE SELECTABLES, NOT INTO THE CHILDREN.**
-           * `Selectables.add` writes `{selectable: false, "data-index": elements.length}`
-           * and only after `canSelect`, which with no `selectTypes` admits `el_type
-           * 'note'` alone (`draw/selectables.js:15-45`) — abcjs's rests are note elements,
-           * so both count and nothing else does. A barline, a clef and a key signature
-           * carry NEITHER attribute; ours carried both, with the child index in them.
-           */
-          const selectable = el.type === "note" || el.type === "rest";
-          openedAt = parts.length;
-          /**
-           * **`!mark!` PAINTS THE GROUP GREEN AND APPENDS ITS CLASS LAST.**
-           * `setClass(params.elemset, "mark", "", "#00ff00")` overwrites the group's `fill`
-           * and then `setAttribute("class", …)` (`draw/absolute.js:68-69`,
-           * `helpers/set-class.js`) — so with no `add_classes` the attribute is CREATED at
-           * the end, after `data-index`, and with them it is appended to what is there.
-           * See `LayoutElement.marked`.
-           */
-          const marked = el.marked === true;
-          /**
-           * **AND `!class=name!` GOES ON BEFORE `mark` DOES.** `endGroup(klass, name,
-           * extraClass)` appends it to the generated class INSIDE its `if (c)`
-           * (`draw/group-elements.js:45-59`) — so it is dropped entirely without
-           * `add_classes` — and `absolute.js:42` runs that before the `!mark!` swap at
-           * `:68-69`. See `LayoutElement.extraClass`.
-           */
-          const withExtra =
-            gcls && el.extraClass !== undefined ? `${gcls} ${el.extraClass}` : gcls;
-          const groupClass = marked
-            ? withExtra
-              ? `${withExtra} mark`
-              : "mark"
-            : withExtra;
-          parts.push(
-            // …AND THE GROUP'S OWN `fill` IS THE VOICE'S — see `fg` at `flushVoice`. An
-            // element is drawn inside `drawVoice`, so it is inside the colour swap.
-            //
-            // **THE CLASS COMES FIRST WHEN THERE IS ONE.** `openGroup` sets `class`, then
-            // `fill`, then `stroke`, then `data-name` (`write/svg.js:openGroup`), and a
-            // falsy `klass` is skipped — so WITHOUT `add_classes` the run opens at `fill`
-            // and the order the plain goldens show is the tail of the same list.
-            `<g${gcls ? ` class="${escapeAttr(groupClass)}"` : ""}` +
-              ` fill="${marked ? ABCJS_MARK_COLOUR : fg(voiceOf(elIndex))}" stroke="none"` +
-              ` data-name="${name}"` +
-              `${selectable ? ` selectable="false" data-index="${selectableIndex++}"` : ""}` +
-              `${marked && !gcls ? ` class="${groupClass}"` : ""}>`,
-          );
-          /**
-           * **THE COUNTERS ADVANCE AFTER THE ELEMENT IS DRAWN, NOT BEFORE IT.** `drawVoice`
-           * runs `drawAbsolute(…)` and only then `incrNote()` / `incrMeasure()`
-           * (`draw/voice.js:41-46`), so a child generated INSIDE the element sees the
-           * counters the group itself was named with. A BAR NUMBER is such a child, and
-           * ours read `m1 mm1` where abcjs writes `m0 mm0`.
-           */
-          advance = () => {
-            // `if (child.type === 'note' || isNonSpacerRest(child)) incrNote()`
-            // (`draw/voice.js:47-48`) — see `LayoutElement.nonSpacerRest`.
+          const startedHere = abcjs && !bare && !classes.isInMeasure();
+          if (startedHere) classes.startMeasure();
+          if (abcjs && !bare) {
+            const name = ABCJS_ELEMENT_NAMES[el.type] ?? el.type;
+            // `if (child.type !== 'staff-extra' && !isInMeasure()) startMeasure()`
+            // (`draw/voice.js:31-34`) — a prefix element does not open a measure.
+            const justStarted = startedHere;
+            // `klass = params.type`, then ` d{durationClass}` with `.` → `-`, then one
+            // ` p{pitch}` per pitch, for a note or a rest only
+            // (`draw/absolute.js:31-40`).
+            let klass = name;
+            if (el.type === "note" || el.type === "rest") {
+              klass +=
+                ` d${Math.round((el.durationClass ?? 0) * 1000) / 1000}`.replace(
+                  /\./g,
+                  "-",
+                );
+              for (const p of el.abcjsPitches ?? []) klass += ` p${p}`;
+            }
+            gcls = classes.generate(klass);
+            counters.set(elIndex, classes.current());
             if (
-              el.type === "note" ||
-              (el.type === "rest" && el.nonSpacerRest === true)
-            ) {
-              classes.incrNote();
-            }
-            if (el.type === "bar" && !justStarted && foundNote)
-              classes.incrMeasure();
-            if (el.type === "note" || el.type === "rest") foundNote = true;
-          };
-        }
-        /**
-         * **A BAR NUMBER IS THE BAR'S FIRST CHILD**, ahead of the rule itself — abcjs's own
-         * contract reads `bar-number` then `bar`. Every other element's text comes last,
-         * which is why the texts are built here and placed by kind rather than in order.
-         */
-        const barTexts = abcjs && el.type === "bar";
-        // Carries the ROLE beside the markup because a note's texts are not one bucket:
-        // `createNote` adds the lyric before the ledger lines and the chord symbol after
-        // them (`abstract-engraver.js:829-855`). See the split at the emission site.
-        const textParts: {
-          readonly role: PartRole | undefined;
-          /** abcjs's own `name`, which is how a tempo's three parts tell each other apart. */
-          readonly dataName?: string | undefined;
-          readonly s: string;
-        }[] = [];
-        for (const t of el.texts) {
-          const style =
-            (t.bold ? ' font-weight="bold"' : "") +
-            (t.italic ? ' font-style="italic"' : "");
-          /**
-           * **A `P:` LABEL NAMES ITSELF AND CARRIES ITS GROUP'S CLASS TWICE.**
-           * `renderText(…, { klass: classes.generate("part"), name: params.c }, true)`
-           * (`draw/relative.js:58`), and abcjs's own contract shows the result DOUBLED —
-           * `abcjs-part abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0` repeated — because the group
-           * around it was generated from the same key and the text appends the COUNTERS
-           * again — `abcjs-part abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0 abcjs-l0 abcjs-m0
-           * abcjs-mm0 abcjs-v0`, the key once and the counters twice. Measured from the
-           * contract, which is the oracle here; ours wrote neither the name nor the class.
-           */
-          // A BAR NUMBER carries a GENERATED class of its own — see `barNumberText`.
-          const isBarNumber = abcjs && t.dataName === "bar-number";
-          const isPart = abcjs && el.type === "part";
-          /**
-           * **A VOICE NAME NAMES ITSELF TOO.** `drawVoice` renders it with
-           * `klass: 'staff-extra voice-name'` (`draw/voice.js:20`), and `getFontAndAttr`
-           * runs `classes.generate` on that — so under `add_classes` it carries
-           * `abcjs-staff-extra abcjs-voice-name` plus the line and voice counters, and NO
-           * `m`/`mm`: the measure has not opened yet. It wears no GROUP, which is why the
-           * class cannot be inherited from one.
-           */
-          const isVoiceName = abcjs && el.type === "voiceName";
-          const counters = gcls.split(" ").slice(1).join(" ");
-          const partAttr = isPart
-            ? `${gcls ? ` class="${gcls}${counters ? ` ${counters}` : ""}"` : ""}` +
-              ` data-name="${escapeAttr(t.text)}"`
-            : isVoiceName
-              ? `${attrIfAny(classes.generate("staff-extra voice-name"))} data-name="voice-name"`
-              : isBarNumber
-                ? `${attrIfAny(classes.generate("bar-number"))} data-name="bar-number"`
-                : /**
-                   * **A LYRIC, A CHORD SYMBOL AND AN ANNOTATION EACH NAME THEMSELVES** —
-                   * `relative.js:41-52` gives all three `klass: classes.generate(<name>)` and
-                   * the same string as `name`. The `n` counter joins only the lyric's, because
-                   * `generate` appends it for a key containing `note`, `rest` or `lyric`
-                   * (`helpers/classes.js:90`). Ours wrote neither the class nor the name.
-                   */
-                  abcjs && t.doubleClass === true
-                  ? (() => {
-                      // …**AND A TEXT DECORATION'S CLASS IS GENERATED TWICE**, so the
-                      // counters repeat — see `PlacedText.doubleClass`. abcjs writes no
-                      // `data-name` for one.
-                      const once = classes.generate(t.groupClass ?? "");
-                      const again = once.split(" ").slice(1).join(" ");
-                      return once
-                        ? ` class="${once}${again ? ` ${again}` : ""}"`
-                        : ' class=""';
-                    })()
-                  : abcjs && MUSIC_TEXT_NAMES.has(t.dataName ?? "")
-                    ? `${attrIfAny(classes.generate(t.dataName ?? ""))} data-name="${t.dataName}"`
-                    : // **A TEMPO MARK'S PARTS NAME THEMSELVES AND CARRY NO CLASS** —
-                      // `drawTempo` renders `pre`, `beats` and `post` with `noClass: true` and a
-                      // `name` each (`draw/tempo.js:19`, `:31`, `:38`).
-                      abcjs && t.dataName !== undefined
-                      ? ` data-name="${t.dataName}"`
-                      : attrs(el.type, "text");
-          /**
-           * **A MUSIC TEXT IS `renderText`'s ELEMENT, ATTRIBUTE FOR ATTRIBUTE** — the same
-           * shape the top-text block already emitted, with the FACE, weight and style of
-           * its own `%%…font` spelled out (`draw/text.js`, faces in
-           * `parse/abc_parse_directive.js:22-44`). Ours wrote a short ad-hoc `<text>` with
-           * `font-family="serif"` and the attributes in another order, which is ten rows of
-           * the byte table and the first thing after a stem on most of them.
-           */
-          const body =
-            t.jazz === undefined
-              ? escapeText(t.text)
-              : jazzChordMarkup(t.jazz, abcjs ? undefined : textNum(t.x * PX));
-          // A `%%…font` that NAMES a face wins over the type's default — see `PlacedText.face`.
-          const face =
-            t.face ??
-            (t.font === undefined ? undefined : ABCJS_FONT_FACE[t.font]);
-          /**
-           * **A BOXED MUSIC TEXT TAKES THE SAME GROUP-AND-FOUR-RULES AS A BOXED TOP-TEXT
-           * ROW** — one `renderText`, one branch (`draw/text.js:48-81`). `padding` is
-           * `font.size * 0.1`; the text moves IN by it on both axes (on x only for a
-           * `start` or `end` anchor, which is where `hash.attr.x` is adjusted), its class
-           * is DELETED, and the rect is measured from `getBBox()` — `PlacedText.boxSize`.
-           */
-          const pad = t.size * ABCJS_RATIO.fontBoxPadding;
-          const bs = t.box === true ? t.boxSize : undefined;
-          // The anchor the ATTRIBUTE carries, which is what `renderText` branches on —
-          // `hash.attr["text-anchor"]`, defaulted to `start` a few lines down. An
-          // annotation leaves `t.anchor` undefined and is still start-anchored, so reading
-          // the field raw skipped its padding shift.
-          const anchor = t.anchor ?? "start";
-          const boxDelta =
-            bs === undefined
-              ? 0
-              : anchor === "middle"
-                ? bs.width / 2 + pad
-                : anchor === "end"
-                  ? bs.width + pad * 2
-                  : 0;
-          const boxDx =
-            bs === undefined
-              ? 0
-              : anchor === "start"
-                ? pad
-                : anchor === "end"
-                  ? -pad
-                  : 0;
-          textParts.push({
-            role: t.role,
-            dataName: t.dataName,
-            s:
-              abcjs && face !== undefined
-                ? abcjsText(
-                    textNum((t.x + boxDx) * PX),
-                    textNum((t.y + (bs === undefined ? 0 : pad)) * PX + oy),
-                    num(t.size * PX),
-                    face,
-                    t.italic,
-                    t.bold,
-                    t.anchor ?? "start",
-                    t.dataName ?? "",
-                    body,
-                    /^ class="([^"]*)"/.exec(partAttr)?.[1] ?? "",
-                    // A music text can be multi-line too — a LYRIC always is, because
-                    // `addLyric` ends every verse with a newline. This was `[]`.
-                    (t.extraLines ?? []).map(escapeText),
-                    false,
-                    // A BOXED row's class is DELETED, not emptied (`draw/text.js:58`).
-                    t.noClass === true || bs !== undefined,
-                  )
-                : `<text${partAttr} x="${textNum(t.x * PX)}" y="${textNum(t.y * PX + oy)}" ` +
-                  `font-family="serif" font-size="${num(t.size * PX)}"${style}` +
-                  // Only the top-text block sets one; the music's text is left-aligned.
-                  `${t.anchor === undefined || t.anchor === "start" ? "" : ` text-anchor="${t.anchor}"`}` +
-                  `>${body}</text>`,
-          });
-          // …and the BOX wraps whatever that produced. `Svg.rect` writes four one-pixel
-          // bars and `lines.join(" ")` doubles the space at every joint (`svg.js:112-142`).
-          if (bs !== undefined && abcjs) {
-            const part = textParts[textParts.length - 1];
-            if (part !== undefined) {
-              const bx = Math.round((t.x - boxDelta) * PX);
-              const by = Math.round((t.y - t.size) * PX + oy);
-              const bw = Math.round((bs.width + pad * 2) * PX);
-              const bh = Math.round((bs.height + pad * 2) * PX);
-              const h = (yy: number): string =>
-                `M ${bx} ${yy} l ${bw} 0 l 0 1  l ${-bw} 0  z `;
-              const v = (xx: number, from: number, to: number): string =>
-                `M ${xx} ${from} l 0 ${to - from} l 1 0  l 0 ${from - to}  z `;
-              const d = [
-                h(by),
-                h(by + bh),
-                v(bx + bw, by, by + bh),
-                v(bx, by + bh, by),
-              ].join(" ");
-              // `if (!alreadyInGroup) openGroup(...)` — a `part` label is already inside
-              // its element's group, so the rect is its text's SIBLING (`draw/text.js:50`,
-              // `:80`). See `PlacedText.inGroup`.
-              const boxSvg = `<path d="${d}" stroke="none" data-name="box"></path>`;
-              textParts[textParts.length - 1] = {
-                ...part,
-                s:
-                  t.inGroup === true
-                    ? `${part.s}${boxSvg}`
-                    : `<g fill="currentColor" data-name="${t.dataName ?? ""}">${part.s}${boxSvg}</g>`,
-              };
-            }
-          }
-        }
-        // …AND ONLY THE BAR NUMBER. The comment above says "every other element's text
-        // comes last" and this line pushed ALL of a bar's texts first, bar number and
-        // decoration alike. A `!D.C.alcoda!` written before a barline attaches to the
-        // BARLINE (`abstract-engraver.js:1002`), and abcjs's `createBarLine` adds the rules
-        // and only then the decorations — so the rule comes out before the text.
-        if (barTexts)
-          parts.push(
-            ...textParts
-              .filter((t) => t.dataName === "bar-number")
-              .map((t) => t.s),
-          );
-        /**
-         * **THE ORDER INSIDE AN ELEMENT GROUP IS THE ENGRAVER'S ADD ORDER**, and for a note
-         * that is, measured against abcjs's own goldens:
-         *
-         *     [flag, dots, accidental, head] per pitch  ->  stem  ->  ledger  ->  decoration
-         *
-         * `dots.dot, accidentals.flat, _B,, abcjs-stem, ledger` on `visual-layout-04`, and
-         * `e, abcjs-stem, scripts.trill` on `synth-flattener-11`. The per-pitch run is
-         * assembled in `layoutNote`; the split here is what puts the RULES between it and
-         * everything the engraver added after them. We wrote every glyph and then every
-         * rule, so a fermata preceded its own stem.
-         *
-         * A MULTI-CHARACTER SYMBOL IS ONE GROUP with UNNAMED children — see
-         * `PlacedGlyph.group`. Consecutive glyphs sharing the string are wrapped together.
-         */
-        const PITCH_ROLES = ["flag", "dot", "accidental", "notehead"];
-        // Only a NOTE or a REST has rules between its glyphs; a clef, a key and a time
-        // signature are glyphs alone, and splitting their run broke the `<g data-name="12">`
-        // a multi-character figure is wrapped in — which the PASSING ratchet caught.
-        // A BAR INTERLEAVES its rules and its dot columns — see `PlacedGlyph.afterLine` —
-        // so it takes its own merge below and has no pitch run at all.
-        const pitchEnd =
-          abcjs && el.type === "bar"
-            ? 0
-            : abcjs && (el.type === "note" || el.type === "rest")
-              ? (() => {
-                  let i = 0;
-                  // …and a GRACE's own flag and accidental wear those roles too, so the run
-                  // would swallow them and print them before the main note's stem. abcjs adds
-                  // every grace AFTER the stem (`addGraceNotes` runs from `createNote` well
-                  // past `addRight(stem)`), so `graceIndex` is what ends the run.
-                  while (
-                    i < el.glyphs.length &&
-                    PITCH_ROLES.includes(el.glyphs[i]?.role ?? "") &&
-                    el.glyphs[i]?.graceIndex === undefined
-                  )
-                    i += 1;
-                  return i;
-                })()
-              : el.glyphs.length;
-        /**
-         * **A TEMPO'S PARTS ARE INTERLEAVED, AND ITS `pre` COMES FIRST.** `drawTempo`
-         * renders `params.tempo.preString`, THEN walks `params.note.children` for the
-         * glyphs, THEN writes `"= " + bpm`, and finally `postString`
-         * (`draw/tempo.js:18-38`). Ours put every glyph of the element out before any of
-         * its texts, which is right for a note and wrong here — the mark reads
-         * `♩ Easy Swing = 140` instead of `Easy Swing ♩ = 140`. Only `pre` moves; `beats`
-         * and `post` already follow the glyphs.
-         *
-         * Keyed on `data-name`, which is abcjs's own `name: "pre"` and the same handle its
-         * golden carries — not on the text's position, which is a consequence rather than
-         * the rule.
-         */
-        if (abcjs && el.type === "tempo") {
-          for (const t of textParts.filter((t) => t.dataName === "pre"))
-            parts.push(t.s);
-        }
-        let openGlyphGroup: string | null = null;
-        for (const g of el.glyphs.slice(0, pitchEnd)) {
-          const group = abcjs ? (g.group ?? null) : null;
-          if (group !== openGlyphGroup) {
-            if (openGlyphGroup !== null) parts.push("</g>");
-            if (group !== null)
-              parts.push(`<g data-name="${escapeAttr(group)}">`);
-            openGlyphGroup = group;
-          }
-          // The glyph path is authored at the origin, so a placement is all that is needed.
-          parts.push(
-            glyphMarkup(
-              g.name,
-              g.x,
-              g.y,
-              g.scale,
-              attrs(el.type, g.role, g.chordPos),
-              g.role,
-              // Inside a group abcjs names NONE of the children — `printSymbol` passes
-              // only `{stroke, fill}` there — and `'' ?? x` is `''`, so this suppresses
-              // the attribute rather than falling back to the glyph key.
-              group === null ? g.dataName : "",
-            ),
-          );
-        }
-        if (openGlyphGroup !== null) parts.push("</g>");
-        // A STEM PRECEDES A LEDGER — `abselem.addRight(stem)` runs after every pitch and the
-        // ledgers follow it (`abstract-engraver.js:762`). Ours built the ledgers inside the
-        // head loop, so they came first.
-        // A GRACE's stem is written after every grace HEAD — see `PlacedLine.graceStem` —
-        // so it is held back past the trailing glyphs entirely.
-        const isGraceLine = (l: (typeof el.lines)[number]): boolean =>
-          l.graceStem === true || l.graceIndex !== undefined;
-        // A GRACE BEAM is hoisted to the voice's beam pass — see `PlacedLine.role`.
-        const own = abcjs
-          ? el.lines.filter((l) => !isGraceLine(l) && l.role !== "beam")
-          : el.lines;
-        // …stamped with the element that carries it, because `voice.beams` is drawn in ADD
-        // order and a grace beam is added inside `createNote` while its group's own beam is
-        // added after the whole group — see `PlacedLine.beamAt`.
-        if (abcjs)
-          for (const l of el.lines)
-            if (l.role === "beam") graceBeams.push({ ...l, beamAt: elIndex });
-        /**
-         * **AN UNBEAMED GRACE'S STEM COMES BEFORE ITS OWN LEDGERS; A BEAMED GROUP'S COME
-         * AFTER EVERY HEAD.** `addGraceNotes` runs `addExtra(stem)` and then
-         * `ledgerLines(...)` inside the per-grace loop, so one grace reads
-         * `flag, head, stem, ledger` — but when the group is BEAMED the stems are built by
-         * the beam pass instead, and abcjs's contract for `{gab}c4|` reads
-         * `c, g, a, ledger, b, ledger, stem, stem, stem` (measured).
-         */
-        const graceStems = abcjs
-          ? el.lines.filter((l) => l.graceStem === true && l.beamed === true)
-          : [];
-        const soloGraceStems = abcjs
-          ? el.lines.filter((l) => l.graceStem === true && l.beamed !== true)
-          : [];
-        // A grace's LEDGERS follow its OWN head — see `PlacedLine.graceIndex`.
-        const graceLedgers = abcjs
-          ? el.lines.filter(
-              (l) => l.graceStem !== true && l.graceIndex !== undefined,
+              (process.env.ABCTS_CT &&
+                gcls.includes(`abcjs-v${process.env.ABCTS_CT} `)) ||
+              (process.env.ABCTS_CT &&
+                gcls.endsWith(`abcjs-v${process.env.ABCTS_CT}`))
             )
-          : [];
-        const ordered = abcjs
-          ? [
-              ...own.filter((l) => l.role === "stem" && l.beamed !== true),
-              ...own.filter((l) => l.role !== "stem"),
-              ...own.filter((l) => l.role === "stem" && l.beamed === true),
-            ]
-          : own;
-        /**
-         * **A BARLINE'S DOT COLUMNS INTERLEAVE WITH ITS RULES.** abcjs's contract shows a
-         * repeat END as `dots.dot, dots.dot, bar, bar` and a repeat START as
-         * `bar, bar, dots.dot, dots.dot` — the leading column is added before the rules and
-         * the trailing one after. `afterLine` carries how many rules precede each dot.
-         */
-        if (abcjs && el.type === "bar") {
-          // …and if this is the voice's LAST element, its rules reach the staff above.
-          const reach =
-            bartop !== undefined &&
-            (staff.connectBars ||
-              elIndex === (voiceEnds[voiceOf(elIndex)] ?? 0) - 1);
-          const stretched = (l: PlacedLine): PlacedLine =>
-            !reach || bartop === undefined
-              ? l
-              : l.y1 < l.y2
-                ? { ...l, absY1: bartop }
-                : { ...l, absY2: bartop };
-          let li = 0;
-          for (const g of el.glyphs) {
-            while (li < ordered.length && li < (g.afterLine ?? 0)) {
+              console.log(
+                "CT",
+                elIndex,
+                el.type,
+                "m",
+                classes.current().measure,
+                "n",
+                classes.current().note,
+                "justStarted",
+                justStarted,
+                "foundNote",
+                foundNote,
+              );
+            /**
+             * abcjs's own attribute order on an element group: `fill`, `stroke`, the class
+             * when there is one, then `data-name`.
+             *
+             * **AND `data-index` IS AN INDEX INTO THE SELECTABLES, NOT INTO THE CHILDREN.**
+             * `Selectables.add` writes `{selectable: false, "data-index": elements.length}`
+             * and only after `canSelect`, which with no `selectTypes` admits `el_type
+             * 'note'` alone (`draw/selectables.js:15-45`) — abcjs's rests are note elements,
+             * so both count and nothing else does. A barline, a clef and a key signature
+             * carry NEITHER attribute; ours carried both, with the child index in them.
+             */
+            const selectable = el.type === "note" || el.type === "rest";
+            openedAt = parts.length;
+            /**
+             * **`!mark!` PAINTS THE GROUP GREEN AND APPENDS ITS CLASS LAST.**
+             * `setClass(params.elemset, "mark", "", "#00ff00")` overwrites the group's `fill`
+             * and then `setAttribute("class", …)` (`draw/absolute.js:68-69`,
+             * `helpers/set-class.js`) — so with no `add_classes` the attribute is CREATED at
+             * the end, after `data-index`, and with them it is appended to what is there.
+             * See `LayoutElement.marked`.
+             */
+            const marked = el.marked === true;
+            /**
+             * **AND `!class=name!` GOES ON BEFORE `mark` DOES.** `endGroup(klass, name,
+             * extraClass)` appends it to the generated class INSIDE its `if (c)`
+             * (`draw/group-elements.js:45-59`) — so it is dropped entirely without
+             * `add_classes` — and `absolute.js:42` runs that before the `!mark!` swap at
+             * `:68-69`. See `LayoutElement.extraClass`.
+             */
+            const withExtra =
+              gcls && el.extraClass !== undefined
+                ? `${gcls} ${el.extraClass}`
+                : gcls;
+            const groupClass = marked
+              ? withExtra
+                ? `${withExtra} mark`
+                : "mark"
+              : withExtra;
+            parts.push(
+              // …AND THE GROUP'S OWN `fill` IS THE VOICE'S — see `fg` at `flushVoice`. An
+              // element is drawn inside `drawVoice`, so it is inside the colour swap.
+              //
+              // **THE CLASS COMES FIRST WHEN THERE IS ONE.** `openGroup` sets `class`, then
+              // `fill`, then `stroke`, then `data-name` (`write/svg.js:openGroup`), and a
+              // falsy `klass` is skipped — so WITHOUT `add_classes` the run opens at `fill`
+              // and the order the plain goldens show is the tail of the same list.
+              `<g${gcls ? ` class="${escapeAttr(groupClass)}"` : ""}` +
+                ` fill="${marked ? ABCJS_MARK_COLOUR : fg(voiceOf(elIndex))}" stroke="none"` +
+                ` data-name="${name}"` +
+                `${selectable ? ` selectable="false" data-index="${selectableIndex++}"` : ""}` +
+                `${marked && !gcls ? ` class="${groupClass}"` : ""}>`,
+            );
+            /**
+             * **THE COUNTERS ADVANCE AFTER THE ELEMENT IS DRAWN, NOT BEFORE IT.** `drawVoice`
+             * runs `drawAbsolute(…)` and only then `incrNote()` / `incrMeasure()`
+             * (`draw/voice.js:41-46`), so a child generated INSIDE the element sees the
+             * counters the group itself was named with. A BAR NUMBER is such a child, and
+             * ours read `m1 mm1` where abcjs writes `m0 mm0`.
+             */
+            advance = () => {
+              // `if (child.type === 'note' || isNonSpacerRest(child)) incrNote()`
+              // (`draw/voice.js:47-48`) — see `LayoutElement.nonSpacerRest`.
+              if (
+                el.type === "note" ||
+                (el.type === "rest" && el.nonSpacerRest === true)
+              ) {
+                classes.incrNote();
+              }
+              if (el.type === "bar" && !justStarted && foundNote)
+                classes.incrMeasure();
+              if (el.type === "note" || el.type === "rest") foundNote = true;
+            };
+          }
+          /**
+           * **A BAR NUMBER IS THE BAR'S FIRST CHILD**, ahead of the rule itself — abcjs's own
+           * contract reads `bar-number` then `bar`. Every other element's text comes last,
+           * which is why the texts are built here and placed by kind rather than in order.
+           */
+          const barTexts = abcjs && el.type === "bar";
+          // Carries the ROLE beside the markup because a note's texts are not one bucket:
+          // `createNote` adds the lyric before the ledger lines and the chord symbol after
+          // them (`abstract-engraver.js:829-855`). See the split at the emission site.
+          const textParts: {
+            readonly role: PartRole | undefined;
+            /** abcjs's own `name`, which is how a tempo's three parts tell each other apart. */
+            readonly dataName?: string | undefined;
+            readonly s: string;
+          }[] = [];
+          for (const t of el.texts) {
+            const style =
+              (t.bold ? ' font-weight="bold"' : "") +
+              (t.italic ? ' font-style="italic"' : "");
+            /**
+             * **A `P:` LABEL NAMES ITSELF AND CARRIES ITS GROUP'S CLASS TWICE.**
+             * `renderText(…, { klass: classes.generate("part"), name: params.c }, true)`
+             * (`draw/relative.js:58`), and abcjs's own contract shows the result DOUBLED —
+             * `abcjs-part abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0` repeated — because the group
+             * around it was generated from the same key and the text appends the COUNTERS
+             * again — `abcjs-part abcjs-l0 abcjs-m0 abcjs-mm0 abcjs-v0 abcjs-l0 abcjs-m0
+             * abcjs-mm0 abcjs-v0`, the key once and the counters twice. Measured from the
+             * contract, which is the oracle here; ours wrote neither the name nor the class.
+             */
+            // A BAR NUMBER carries a GENERATED class of its own — see `barNumberText`.
+            const isBarNumber = abcjs && t.dataName === "bar-number";
+            const isPart = abcjs && el.type === "part";
+            /**
+             * **A VOICE NAME NAMES ITSELF TOO.** `drawVoice` renders it with
+             * `klass: 'staff-extra voice-name'` (`draw/voice.js:20`), and `getFontAndAttr`
+             * runs `classes.generate` on that — so under `add_classes` it carries
+             * `abcjs-staff-extra abcjs-voice-name` plus the line and voice counters, and NO
+             * `m`/`mm`: the measure has not opened yet. It wears no GROUP, which is why the
+             * class cannot be inherited from one.
+             */
+            const isVoiceName = abcjs && el.type === "voiceName";
+            const counters = gcls.split(" ").slice(1).join(" ");
+            const partAttr = isPart
+              ? `${gcls ? ` class="${gcls}${counters ? ` ${counters}` : ""}"` : ""}` +
+                ` data-name="${escapeAttr(t.text)}"`
+              : isVoiceName
+                ? `${attrIfAny(classes.generate("staff-extra voice-name"))} data-name="voice-name"`
+                : isBarNumber
+                  ? `${attrIfAny(classes.generate("bar-number"))} data-name="bar-number"`
+                  : /**
+                     * **A LYRIC, A CHORD SYMBOL AND AN ANNOTATION EACH NAME THEMSELVES** —
+                     * `relative.js:41-52` gives all three `klass: classes.generate(<name>)` and
+                     * the same string as `name`. The `n` counter joins only the lyric's, because
+                     * `generate` appends it for a key containing `note`, `rest` or `lyric`
+                     * (`helpers/classes.js:90`). Ours wrote neither the class nor the name.
+                     */
+                    abcjs && t.doubleClass === true
+                    ? (() => {
+                        // …**AND A TEXT DECORATION'S CLASS IS GENERATED TWICE**, so the
+                        // counters repeat — see `PlacedText.doubleClass`. abcjs writes no
+                        // `data-name` for one.
+                        const once = classes.generate(t.groupClass ?? "");
+                        const again = once.split(" ").slice(1).join(" ");
+                        return once
+                          ? ` class="${once}${again ? ` ${again}` : ""}"`
+                          : ' class=""';
+                      })()
+                    : abcjs && MUSIC_TEXT_NAMES.has(t.dataName ?? "")
+                      ? `${attrIfAny(classes.generate(t.dataName ?? ""))} data-name="${t.dataName}"`
+                      : // **A TEMPO MARK'S PARTS NAME THEMSELVES AND CARRY NO CLASS** —
+                        // `drawTempo` renders `pre`, `beats` and `post` with `noClass: true` and a
+                        // `name` each (`draw/tempo.js:19`, `:31`, `:38`).
+                        abcjs && t.dataName !== undefined
+                        ? ` data-name="${t.dataName}"`
+                        : attrs(el.type, "text");
+            /**
+             * **A MUSIC TEXT IS `renderText`'s ELEMENT, ATTRIBUTE FOR ATTRIBUTE** — the same
+             * shape the top-text block already emitted, with the FACE, weight and style of
+             * its own `%%…font` spelled out (`draw/text.js`, faces in
+             * `parse/abc_parse_directive.js:22-44`). Ours wrote a short ad-hoc `<text>` with
+             * `font-family="serif"` and the attributes in another order, which is ten rows of
+             * the byte table and the first thing after a stem on most of them.
+             */
+            const body =
+              t.jazz === undefined
+                ? escapeText(t.text)
+                : jazzChordMarkup(
+                    t.jazz,
+                    abcjs ? undefined : textNum(t.x * PX),
+                  );
+            // A `%%…font` that NAMES a face wins over the type's default — see `PlacedText.face`.
+            const face =
+              t.face ??
+              (t.font === undefined ? undefined : ABCJS_FONT_FACE[t.font]);
+            /**
+             * **A BOXED MUSIC TEXT TAKES THE SAME GROUP-AND-FOUR-RULES AS A BOXED TOP-TEXT
+             * ROW** — one `renderText`, one branch (`draw/text.js:48-81`). `padding` is
+             * `font.size * 0.1`; the text moves IN by it on both axes (on x only for a
+             * `start` or `end` anchor, which is where `hash.attr.x` is adjusted), its class
+             * is DELETED, and the rect is measured from `getBBox()` — `PlacedText.boxSize`.
+             */
+            const pad = t.size * ABCJS_RATIO.fontBoxPadding;
+            const bs = t.box === true ? t.boxSize : undefined;
+            // The anchor the ATTRIBUTE carries, which is what `renderText` branches on —
+            // `hash.attr["text-anchor"]`, defaulted to `start` a few lines down. An
+            // annotation leaves `t.anchor` undefined and is still start-anchored, so reading
+            // the field raw skipped its padding shift.
+            const anchor = t.anchor ?? "start";
+            const boxDelta =
+              bs === undefined
+                ? 0
+                : anchor === "middle"
+                  ? bs.width / 2 + pad
+                  : anchor === "end"
+                    ? bs.width + pad * 2
+                    : 0;
+            const boxDx =
+              bs === undefined
+                ? 0
+                : anchor === "start"
+                  ? pad
+                  : anchor === "end"
+                    ? -pad
+                    : 0;
+            textParts.push({
+              role: t.role,
+              dataName: t.dataName,
+              s:
+                abcjs && face !== undefined
+                  ? abcjsText(
+                      textNum((t.x + boxDx) * PX),
+                      textNum((t.y + (bs === undefined ? 0 : pad)) * PX + oy),
+                      num(t.size * PX),
+                      face,
+                      t.italic,
+                      t.bold,
+                      t.anchor ?? "start",
+                      t.dataName ?? "",
+                      body,
+                      /^ class="([^"]*)"/.exec(partAttr)?.[1] ?? "",
+                      // A music text can be multi-line too — a LYRIC always is, because
+                      // `addLyric` ends every verse with a newline. This was `[]`.
+                      (t.extraLines ?? []).map(escapeText),
+                      false,
+                      // A BOXED row's class is DELETED, not emptied (`draw/text.js:58`).
+                      t.noClass === true || bs !== undefined,
+                    )
+                  : `<text${partAttr} x="${textNum(t.x * PX)}" y="${textNum(t.y * PX + oy)}" ` +
+                    `font-family="serif" font-size="${num(t.size * PX)}"${style}` +
+                    // Only the top-text block sets one; the music's text is left-aligned.
+                    `${t.anchor === undefined || t.anchor === "start" ? "" : ` text-anchor="${t.anchor}"`}` +
+                    `>${body}</text>`,
+            });
+            // …and the BOX wraps whatever that produced. `Svg.rect` writes four one-pixel
+            // bars and `lines.join(" ")` doubles the space at every joint (`svg.js:112-142`).
+            if (bs !== undefined && abcjs) {
+              const part = textParts[textParts.length - 1];
+              if (part !== undefined) {
+                const bx = Math.round((t.x - boxDelta) * PX);
+                const by = Math.round((t.y - t.size) * PX + oy);
+                const bw = Math.round((bs.width + pad * 2) * PX);
+                const bh = Math.round((bs.height + pad * 2) * PX);
+                const h = (yy: number): string =>
+                  `M ${bx} ${yy} l ${bw} 0 l 0 1  l ${-bw} 0  z `;
+                const v = (xx: number, from: number, to: number): string =>
+                  `M ${xx} ${from} l 0 ${to - from} l 1 0  l 0 ${from - to}  z `;
+                const d = [
+                  h(by),
+                  h(by + bh),
+                  v(bx + bw, by, by + bh),
+                  v(bx, by + bh, by),
+                ].join(" ");
+                // `if (!alreadyInGroup) openGroup(...)` — a `part` label is already inside
+                // its element's group, so the rect is its text's SIBLING (`draw/text.js:50`,
+                // `:80`). See `PlacedText.inGroup`.
+                const boxSvg = `<path d="${d}" stroke="none" data-name="box"></path>`;
+                textParts[textParts.length - 1] = {
+                  ...part,
+                  s:
+                    t.inGroup === true
+                      ? `${part.s}${boxSvg}`
+                      : `<g fill="currentColor" data-name="${t.dataName ?? ""}">${part.s}${boxSvg}</g>`,
+                };
+              }
+            }
+          }
+          // …AND ONLY THE BAR NUMBER. The comment above says "every other element's text
+          // comes last" and this line pushed ALL of a bar's texts first, bar number and
+          // decoration alike. A `!D.C.alcoda!` written before a barline attaches to the
+          // BARLINE (`abstract-engraver.js:1002`), and abcjs's `createBarLine` adds the rules
+          // and only then the decorations — so the rule comes out before the text.
+          if (barTexts)
+            parts.push(
+              ...textParts
+                .filter((t) => t.dataName === "bar-number")
+                .map((t) => t.s),
+            );
+          /**
+           * **THE ORDER INSIDE AN ELEMENT GROUP IS THE ENGRAVER'S ADD ORDER**, and for a note
+           * that is, measured against abcjs's own goldens:
+           *
+           *     [flag, dots, accidental, head] per pitch  ->  stem  ->  ledger  ->  decoration
+           *
+           * `dots.dot, accidentals.flat, _B,, abcjs-stem, ledger` on `visual-layout-04`, and
+           * `e, abcjs-stem, scripts.trill` on `synth-flattener-11`. The per-pitch run is
+           * assembled in `layoutNote`; the split here is what puts the RULES between it and
+           * everything the engraver added after them. We wrote every glyph and then every
+           * rule, so a fermata preceded its own stem.
+           *
+           * A MULTI-CHARACTER SYMBOL IS ONE GROUP with UNNAMED children — see
+           * `PlacedGlyph.group`. Consecutive glyphs sharing the string are wrapped together.
+           */
+          const PITCH_ROLES = ["flag", "dot", "accidental", "notehead"];
+          // Only a NOTE or a REST has rules between its glyphs; a clef, a key and a time
+          // signature are glyphs alone, and splitting their run broke the `<g data-name="12">`
+          // a multi-character figure is wrapped in — which the PASSING ratchet caught.
+          // A BAR INTERLEAVES its rules and its dot columns — see `PlacedGlyph.afterLine` —
+          // so it takes its own merge below and has no pitch run at all.
+          const pitchEnd =
+            abcjs && el.type === "bar"
+              ? 0
+              : abcjs && (el.type === "note" || el.type === "rest")
+                ? (() => {
+                    let i = 0;
+                    // …and a GRACE's own flag and accidental wear those roles too, so the run
+                    // would swallow them and print them before the main note's stem. abcjs adds
+                    // every grace AFTER the stem (`addGraceNotes` runs from `createNote` well
+                    // past `addRight(stem)`), so `graceIndex` is what ends the run.
+                    while (
+                      i < el.glyphs.length &&
+                      PITCH_ROLES.includes(el.glyphs[i]?.role ?? "") &&
+                      el.glyphs[i]?.graceIndex === undefined
+                    )
+                      i += 1;
+                    return i;
+                  })()
+                : el.glyphs.length;
+          /**
+           * **A TEMPO'S PARTS ARE INTERLEAVED, AND ITS `pre` COMES FIRST.** `drawTempo`
+           * renders `params.tempo.preString`, THEN walks `params.note.children` for the
+           * glyphs, THEN writes `"= " + bpm`, and finally `postString`
+           * (`draw/tempo.js:18-38`). Ours put every glyph of the element out before any of
+           * its texts, which is right for a note and wrong here — the mark reads
+           * `♩ Easy Swing = 140` instead of `Easy Swing ♩ = 140`. Only `pre` moves; `beats`
+           * and `post` already follow the glyphs.
+           *
+           * Keyed on `data-name`, which is abcjs's own `name: "pre"` and the same handle its
+           * golden carries — not on the text's position, which is a consequence rather than
+           * the rule.
+           */
+          if (abcjs && el.type === "tempo") {
+            for (const t of textParts.filter((t) => t.dataName === "pre"))
+              parts.push(t.s);
+          }
+          let openGlyphGroup: string | null = null;
+          for (const g of el.glyphs.slice(0, pitchEnd)) {
+            const group = abcjs ? (g.group ?? null) : null;
+            if (group !== openGlyphGroup) {
+              if (openGlyphGroup !== null) parts.push("</g>");
+              if (group !== null)
+                parts.push(`<g data-name="${escapeAttr(group)}">`);
+              openGlyphGroup = group;
+            }
+            // The glyph path is authored at the origin, so a placement is all that is needed.
+            parts.push(
+              glyphMarkup(
+                g.name,
+                g.x,
+                g.y,
+                g.scale,
+                attrs(el.type, g.role, g.chordPos),
+                g.role,
+                // Inside a group abcjs names NONE of the children — `printSymbol` passes
+                // only `{stroke, fill}` there — and `'' ?? x` is `''`, so this suppresses
+                // the attribute rather than falling back to the glyph key.
+                group === null ? g.dataName : "",
+              ),
+            );
+          }
+          if (openGlyphGroup !== null) parts.push("</g>");
+          // A STEM PRECEDES A LEDGER — `abselem.addRight(stem)` runs after every pitch and the
+          // ledgers follow it (`abstract-engraver.js:762`). Ours built the ledgers inside the
+          // head loop, so they came first.
+          // A GRACE's stem is written after every grace HEAD — see `PlacedLine.graceStem` —
+          // so it is held back past the trailing glyphs entirely.
+          const isGraceLine = (l: (typeof el.lines)[number]): boolean =>
+            l.graceStem === true || l.graceIndex !== undefined;
+          // A GRACE BEAM is hoisted to the voice's beam pass — see `PlacedLine.role`.
+          const own = abcjs
+            ? el.lines.filter((l) => !isGraceLine(l) && l.role !== "beam")
+            : el.lines;
+          // …stamped with the element that carries it, because `voice.beams` is drawn in ADD
+          // order and a grace beam is added inside `createNote` while its group's own beam is
+          // added after the whole group — see `PlacedLine.beamAt`.
+          if (abcjs)
+            for (const l of el.lines)
+              if (l.role === "beam") graceBeams.push({ ...l, beamAt: elIndex });
+          /**
+           * **AN UNBEAMED GRACE'S STEM COMES BEFORE ITS OWN LEDGERS; A BEAMED GROUP'S COME
+           * AFTER EVERY HEAD.** `addGraceNotes` runs `addExtra(stem)` and then
+           * `ledgerLines(...)` inside the per-grace loop, so one grace reads
+           * `flag, head, stem, ledger` — but when the group is BEAMED the stems are built by
+           * the beam pass instead, and abcjs's contract for `{gab}c4|` reads
+           * `c, g, a, ledger, b, ledger, stem, stem, stem` (measured).
+           */
+          const graceStems = abcjs
+            ? el.lines.filter((l) => l.graceStem === true && l.beamed === true)
+            : [];
+          const soloGraceStems = abcjs
+            ? el.lines.filter((l) => l.graceStem === true && l.beamed !== true)
+            : [];
+          // A grace's LEDGERS follow its OWN head — see `PlacedLine.graceIndex`.
+          const graceLedgers = abcjs
+            ? el.lines.filter(
+                (l) => l.graceStem !== true && l.graceIndex !== undefined,
+              )
+            : [];
+          const ordered = abcjs
+            ? [
+                ...own.filter((l) => l.role === "stem" && l.beamed !== true),
+                ...own.filter((l) => l.role !== "stem"),
+                ...own.filter((l) => l.role === "stem" && l.beamed === true),
+              ]
+            : own;
+          /**
+           * **A BARLINE'S DOT COLUMNS INTERLEAVE WITH ITS RULES.** abcjs's contract shows a
+           * repeat END as `dots.dot, dots.dot, bar, bar` and a repeat START as
+           * `bar, bar, dots.dot, dots.dot` — the leading column is added before the rules and
+           * the trailing one after. `afterLine` carries how many rules precede each dot.
+           */
+          if (abcjs && el.type === "bar") {
+            // …and if this is the voice's LAST element, its rules reach the staff above.
+            const reach =
+              bartop !== undefined &&
+              (staff.connectBars ||
+                elIndex === (voiceEnds[voiceOf(elIndex)] ?? 0) - 1);
+            const stretched = (l: PlacedLine): PlacedLine =>
+              !reach || bartop === undefined
+                ? l
+                : l.y1 < l.y2
+                  ? { ...l, absY1: bartop }
+                  : { ...l, absY2: bartop };
+            let li = 0;
+            for (const g of el.glyphs) {
+              while (li < ordered.length && li < (g.afterLine ?? 0)) {
+                const line = ordered[li++];
+                if (line !== undefined) {
+                  parts.push(
+                    lineToRect(
+                      TL(stretched(line)),
+                      attrs(el.type, line.role),
+                      abcjs,
+                      fg(voiceOf(elIndex)),
+                    ),
+                  );
+                }
+              }
+              parts.push(
+                glyphMarkup(
+                  g.name,
+                  g.x,
+                  g.y,
+                  g.scale,
+                  attrs(el.type, g.role, g.chordPos),
+                  g.role,
+                  g.dataName,
+                ),
+              );
+            }
+            while (li < ordered.length) {
               const line = ordered[li++];
               if (line !== undefined) {
                 parts.push(
@@ -3044,6 +3121,105 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
                 );
               }
             }
+            if (barTexts) {
+              // …and everything that is NOT the bar number comes after the rules.
+              parts.push(
+                ...textParts
+                  .filter((t) => t.dataName !== "bar-number")
+                  .map((t) => t.s),
+              );
+            }
+            advance();
+            /**
+             * **AND AN EMPTY GROUP IS DELETED HERE TOO.** `Svg.closeGroup` removes any `<g>`
+             * whose `children.length === 0` — "if nothing was added to the group it is because
+             * all the elements were invisible" (`write/svg.js:364-372`) — and this branch
+             * pushed `</g>` unconditionally where the note branch below already obeyed it.
+             *
+             * A `[1` that opens a repeat ending at the START of a line IS such an element: it
+             * is a bar with no rule and no glyph, its bracket belonging to the ending on
+             * `otherchildren`. `visual-layout-09` has two, one per system.
+             */
+            if (openedAt >= 0 && parts.length === openedAt + 1)
+              parts.length = openedAt;
+            else parts.push("</g>");
+            return;
+          }
+          /**
+           * **THE LEDGER IS LAST, AND THE LYRIC, THE GRACES AND THE DECORATION COME BEFORE
+           * IT.** `createNote` is a straight run of adders and `_addChild` is a plain push
+           * (`absolute-element.js:181-190`), so DRAW ORDER IS CALL ORDER:
+           *
+           *     heads+stem → lyric → graces → decorations → barNumber → LEDGER → chord
+           *
+           * (`abstract-engraver.js:829-855`), which abcjs's own contract shows as
+           * `C, stem, scripts.ufermata, ledger` and `C, stem, lyric, ledger`. We emitted
+           * every rule together, so the ledger came out with the stem and everything the
+           * engraver added after it followed. A LYRIC IS A `<text>`, so the "texts last"
+           * rule has to bend: only the CHORD symbol is genuinely last.
+           */
+          /**
+           * **WHICH TEXTS COME LAST — and it is a question about ADD ORDER, not about lanes.**
+           *
+           * Every annotation comes out of `addChord`, so it sits in the CHORD bucket that
+           * `createNote` adds after the decorations (`abstract-engraver.js:829-855`). A
+           * `"<2"` was therefore written BEFORE the `+1+` beside it, where abcjs writes the
+           * fingering first.
+           *
+           * Keyed on `dataName` rather than on the ROLE, because the role also decides
+           * whether a mark takes a CHORD LANE, and a left- or right-placed annotation does
+           * not: giving these `role: 'chord'` fixed the order and cost `S2-fields-tune1`
+           * 18.52px — one whole lane. Two questions, two fields.
+           */
+          const isChordText = (t: {
+            role?: PartRole | undefined;
+            dataName?: string | undefined;
+          }): boolean =>
+            t.role === "chord" ||
+            t.role === "chordBelow" ||
+            t.dataName === "annotation";
+          const ledgers = abcjs ? own.filter((l) => l.role !== "stem") : [];
+          for (const line of abcjs
+            ? own.filter((l) => l.role === "stem" && l.beamed !== true)
+            : ordered) {
+            parts.push(
+              lineToRect(
+                TL(line),
+                attrs(el.type, line.role),
+                abcjs,
+                fg(voiceOf(elIndex)),
+              ),
+            );
+          }
+          if (abcjs) {
+            for (const t of textParts.filter((t) => t.role === "lyric"))
+              parts.push(t.s);
+          }
+          // …and everything the engraver added AFTER the stem — decorations, graces.
+          /**
+           * **AN UNBEAMED GRACE'S STEM COMES AFTER ITS ACCIACCATURA SLASH**, because the
+           * slash is `addRight`'d between the head and the stem:
+           *
+           *     abselem.addExtra(grace)                                   // the head
+           *     if (acciaccatura) abselem.addRight("flags.ugrace", …)     // the slash
+           *     else /* no beam *​/ abselem.addExtra(stem)
+           *     ledgerLines(abselem, …)
+           *
+           * (`abstract-engraver.js:507-517`.) Firing the stem on the HEAD put it one glyph
+           * early on every `{/x}` — `synth-flattener-28` at byte 21920 — so it fires on the
+           * LAST glyph carrying the index instead, which is the slash where there is one.
+           */
+          const graceTail = new Map<number, number>();
+          el.glyphs.forEach((g, k) => {
+            if (g.graceIndex !== undefined) graceTail.set(g.graceIndex, k);
+          });
+          for (const [gi, g] of el.glyphs.slice(pitchEnd).entries()) {
+            // Held whole rather than as markup: its class is `classes.generate`'d at FLUSH
+            // time, after `startMeasure()` has reset the counters the group was named with.
+            if (abcjs && g.role === "dynamic") {
+              dynamics.push({ g, at: elIndex });
+              continue;
+            }
             parts.push(
               glyphMarkup(
                 g.name,
@@ -3055,13 +3231,31 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
                 g.dataName,
               ),
             );
-          }
-          while (li < ordered.length) {
-            const line = ordered[li++];
-            if (line !== undefined) {
+            // A grace's stem and ledgers follow the LAST glyph carrying its index — the
+            // acciaccatura slash where there is one, otherwise the head. See `graceTail`.
+            if (
+              g.graceIndex === undefined ||
+              graceTail.get(g.graceIndex) !== pitchEnd + gi
+            )
+              continue;
+            for (const line of soloGraceStems.filter(
+              (l) => l.graceIndex === g.graceIndex,
+            )) {
               parts.push(
                 lineToRect(
-                  TL(stretched(line)),
+                  TL(line),
+                  attrs(el.type, line.role),
+                  abcjs,
+                  fg(voiceOf(elIndex)),
+                ),
+              );
+            }
+            for (const line of graceLedgers.filter(
+              (l) => l.graceIndex === g.graceIndex,
+            )) {
+              parts.push(
+                lineToRect(
+                  TL(line),
                   attrs(el.type, line.role),
                   abcjs,
                   fg(voiceOf(elIndex)),
@@ -3069,457 +3263,321 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
               );
             }
           }
-          if (barTexts) {
-            // …and everything that is NOT the bar number comes after the rules.
+          // (A BEAMED grace group's stems come out below, after the element's ledgers — see
+          // `graceStems`.)
+          // A TEXT DECORATION (`!D.C.!`) is `createDecoration`'s, so it precedes the ledger;
+          // an ANNOTATION (`"^above"`) is `addChord`'s and follows it. Both draw with
+          // `annotationfont`, so the ROLE is what tells them apart, not the markup.
+          if (abcjs) {
+            for (const t of textParts.filter(
+              (t) =>
+                t.role !== "lyric" &&
+                !isChordText(t) &&
+                !(el.type === "tempo" && t.dataName === "pre"),
+            )) {
+              parts.push(t.s);
+            }
+            for (const line of ledgers)
+              parts.push(
+                lineToRect(
+                  TL(line),
+                  attrs(el.type, line.role),
+                  abcjs,
+                  fg(voiceOf(elIndex)),
+                ),
+              );
+          }
+          /**
+           * **AND A BEAMED GRACE GROUP'S STEMS COME AFTER THE ELEMENT'S LEDGERS**, because
+           * they are not built when the element is. `addGraceNotes` runs inside `createNote`,
+           * before `ledgerLines`, but a BEAMED group's stems come from `createStems` in the
+           * LAYOUT phase — `stem.setX(parent.x); parent.addRight(stem)`
+           * (`layout/beam.js:135-140`) — which appends them to a child list `createNote`
+           * finished with long ago. An UNBEAMED grace's stem is built in the loop and stays
+           * with its own head.
+           */
+          for (const line of graceStems)
+            parts.push(
+              lineToRect(
+                TL(line),
+                attrs(el.type, line.role),
+                abcjs,
+                fg(voiceOf(elIndex)),
+              ),
+            );
+          // Prose is a real <text> in a generic family, unlike musical glyphs, which are
+          // paths so the SVG stays self-contained. A missing serif face falls back to
+          // another serif; a missing Bravura falls back to nothing legible. See layout.ts.
+          if (!barTexts) {
             parts.push(
               ...textParts
-                .filter((t) => t.dataName !== "bar-number")
+                .filter((t) => !abcjs || isChordText(t))
                 .map((t) => t.s),
             );
           }
+          if (abcjs) {
+            for (const line of own.filter(
+              (l) => l.role === "stem" && l.beamed === true,
+            )) {
+              parts.push(
+                lineToRect(
+                  TL(line),
+                  attrs(el.type, line.role),
+                  abcjs,
+                  fg(voiceOf(elIndex)),
+                ),
+              );
+            }
+          }
           advance();
-          /**
-           * **AND AN EMPTY GROUP IS DELETED HERE TOO.** `Svg.closeGroup` removes any `<g>`
-           * whose `children.length === 0` — "if nothing was added to the group it is because
-           * all the elements were invisible" (`write/svg.js:364-372`) — and this branch
-           * pushed `</g>` unconditionally where the note branch below already obeyed it.
-           *
-           * A `[1` that opens a repeat ending at the START of a line IS such an element: it
-           * is a bar with no rule and no glyph, its bracket belonging to the ending on
-           * `otherchildren`. `visual-layout-09` has two, one per system.
-           */
-          if (openedAt >= 0 && parts.length === openedAt + 1)
-            parts.length = openedAt;
-          else parts.push("</g>");
-          return;
-        }
-        /**
-         * **THE LEDGER IS LAST, AND THE LYRIC, THE GRACES AND THE DECORATION COME BEFORE
-         * IT.** `createNote` is a straight run of adders and `_addChild` is a plain push
-         * (`absolute-element.js:181-190`), so DRAW ORDER IS CALL ORDER:
-         *
-         *     heads+stem → lyric → graces → decorations → barNumber → LEDGER → chord
-         *
-         * (`abstract-engraver.js:829-855`), which abcjs's own contract shows as
-         * `C, stem, scripts.ufermata, ledger` and `C, stem, lyric, ledger`. We emitted
-         * every rule together, so the ledger came out with the stem and everything the
-         * engraver added after it followed. A LYRIC IS A `<text>`, so the "texts last"
-         * rule has to bend: only the CHORD symbol is genuinely last.
-         */
-        /**
-         * **WHICH TEXTS COME LAST — and it is a question about ADD ORDER, not about lanes.**
-         *
-         * Every annotation comes out of `addChord`, so it sits in the CHORD bucket that
-         * `createNote` adds after the decorations (`abstract-engraver.js:829-855`). A
-         * `"<2"` was therefore written BEFORE the `+1+` beside it, where abcjs writes the
-         * fingering first.
-         *
-         * Keyed on `dataName` rather than on the ROLE, because the role also decides
-         * whether a mark takes a CHORD LANE, and a left- or right-placed annotation does
-         * not: giving these `role: 'chord'` fixed the order and cost `S2-fields-tune1`
-         * 18.52px — one whole lane. Two questions, two fields.
-         */
-        const isChordText = (t: {
-          role?: PartRole | undefined;
-          dataName?: string | undefined;
-        }): boolean =>
-          t.role === "chord" ||
-          t.role === "chordBelow" ||
-          t.dataName === "annotation";
-        const ledgers = abcjs ? own.filter((l) => l.role !== "stem") : [];
-        for (const line of abcjs
-          ? own.filter((l) => l.role === "stem" && l.beamed !== true)
-          : ordered) {
-          parts.push(
-            lineToRect(
-              TL(line),
-              attrs(el.type, line.role),
-              abcjs,
-              fg(voiceOf(elIndex)),
-            ),
-          );
-        }
-        if (abcjs) {
-          for (const t of textParts.filter((t) => t.role === "lyric"))
-            parts.push(t.s);
-        }
-        // …and everything the engraver added AFTER the stem — decorations, graces.
-        /**
-         * **AN UNBEAMED GRACE'S STEM COMES AFTER ITS ACCIACCATURA SLASH**, because the
-         * slash is `addRight`'d between the head and the stem:
-         *
-         *     abselem.addExtra(grace)                                   // the head
-         *     if (acciaccatura) abselem.addRight("flags.ugrace", …)     // the slash
-         *     else /* no beam *​/ abselem.addExtra(stem)
-         *     ledgerLines(abselem, …)
-         *
-         * (`abstract-engraver.js:507-517`.) Firing the stem on the HEAD put it one glyph
-         * early on every `{/x}` — `synth-flattener-28` at byte 21920 — so it fires on the
-         * LAST glyph carrying the index instead, which is the slash where there is one.
-         */
-        const graceTail = new Map<number, number>();
-        el.glyphs.forEach((g, k) => {
-          if (g.graceIndex !== undefined) graceTail.set(g.graceIndex, k);
+          if (abcjs) {
+            if (bare) {
+              // nothing to close
+            } else if (openedAt >= 0 && parts.length === openedAt + 1) {
+              parts.length = openedAt;
+              // The `data-index` it took is given back too: `Selectables.add` never ran.
+              if (el.type === "note" || el.type === "rest")
+                selectableIndex -= 1;
+            } else {
+              parts.push("</g>");
+            }
+          }
         });
-        for (const [gi, g] of el.glyphs.slice(pitchEnd).entries()) {
-          // Held whole rather than as markup: its class is `classes.generate`'d at FLUSH
-          // time, after `startMeasure()` has reset the counters the group was named with.
-          if (abcjs && g.role === "dynamic") {
-            dynamics.push({ g, at: elIndex });
-            continue;
-          }
-          parts.push(
-            glyphMarkup(
-              g.name,
-              g.x,
-              g.y,
-              g.scale,
-              attrs(el.type, g.role, g.chordPos),
-              g.role,
-              g.dataName,
-            ),
-          );
-          // A grace's stem and ledgers follow the LAST glyph carrying its index — the
-          // acciaccatura slash where there is one, otherwise the head. See `graceTail`.
-          if (
-            g.graceIndex === undefined ||
-            graceTail.get(g.graceIndex) !== pitchEnd + gi
-          )
-            continue;
-          for (const line of soloGraceStems.filter(
-            (l) => l.graceIndex === g.graceIndex,
-          )) {
-            parts.push(
-              lineToRect(
-                TL(line),
-                attrs(el.type, line.role),
-                abcjs,
-                fg(voiceOf(elIndex)),
-              ),
-            );
-          }
-          for (const line of graceLedgers.filter(
-            (l) => l.graceIndex === g.graceIndex,
-          )) {
-            parts.push(
-              lineToRect(
-                TL(line),
-                attrs(el.type, line.role),
-                abcjs,
-                fg(voiceOf(elIndex)),
-              ),
-            );
-          }
-        }
-        // (A BEAMED grace group's stems come out below, after the element's ledgers — see
-        // `graceStems`.)
-        // A TEXT DECORATION (`!D.C.!`) is `createDecoration`'s, so it precedes the ledger;
-        // an ANNOTATION (`"^above"`) is `addChord`'s and follows it. Both draw with
-        // `annotationfont`, so the ROLE is what tells them apart, not the markup.
-        if (abcjs) {
-          for (const t of textParts.filter(
-            (t) =>
-              t.role !== "lyric" &&
-              !isChordText(t) &&
-              !(el.type === "tempo" && t.dataName === "pre"),
-          )) {
-            parts.push(t.s);
-          }
-          for (const line of ledgers)
-            parts.push(
-              lineToRect(
-                TL(line),
-                attrs(el.type, line.role),
-                abcjs,
-                fg(voiceOf(elIndex)),
-              ),
-            );
-        }
         /**
-         * **AND A BEAMED GRACE GROUP'S STEMS COME AFTER THE ELEMENT'S LEDGERS**, because
-         * they are not built when the element is. `addGraceNotes` runs inside `createNote`,
-         * before `ledgerLines`, but a BEAMED group's stems come from `createStems` in the
-         * LAYOUT phase — `stem.setX(parent.x); parent.addRight(stem)`
-         * (`layout/beam.js:135-140`) — which appends them to a child list `createNote`
-         * finished with long ago. An UNBEAMED grace's stem is built in the loop and stays
-         * with its own head.
-         */
-        for (const line of graceStems)
-          parts.push(
-            lineToRect(
-              TL(line),
-              attrs(el.type, line.role),
-              abcjs,
-              fg(voiceOf(elIndex)),
-            ),
-          );
-        // Prose is a real <text> in a generic family, unlike musical glyphs, which are
-        // paths so the SVG stays self-contained. A missing serif face falls back to
-        // another serif; a missing Bravura falls back to nothing legible. See layout.ts.
-        if (!barTexts) {
-          parts.push(
-            ...textParts
-              .filter((t) => !abcjs || isChordText(t))
-              .map((t) => t.s),
-          );
-        }
-        if (abcjs) {
-          for (const line of own.filter(
-            (l) => l.role === "stem" && l.beamed === true,
-          )) {
-            parts.push(
-              lineToRect(
-                TL(line),
-                attrs(el.type, line.role),
-                abcjs,
-                fg(voiceOf(elIndex)),
-              ),
-            );
-          }
-        }
-        advance();
-        if (abcjs) {
-          if (bare) {
-            // nothing to close
-          } else if (openedAt >= 0 && parts.length === openedAt + 1) {
-            parts.length = openedAt;
-            // The `data-index` it took is given back too: `Selectables.add` never ran.
-            if (el.type === "note" || el.type === "rest") selectableIndex -= 1;
-          } else {
-            parts.push("</g>");
-          }
-        }
-      });
-      /**
-       * **abcjs DRAWS THE MUSIC FIRST, THEN THE BEAMS, THEN EVERYTHING ELSE** — and we
-       * drew all of it before the first notehead.
-       *
-       * `drawVoice` walks `params.children` (the absolute elements), then
-       * `params.beams` — "beams must be drawn first for proper printing of triplets,
-       * slurs and ties" — then `params.otherchildren`, whose switch runs glissando,
-       * crescendo, dynamics, triplet, ending and tie (`draw/voice.js:25-90`). So a beam
-       * or a tie sits AFTER the group of the note it belongs to, not before it.
-       *
-       * 48 rows of the byte table first differed exactly here, on a `<polygon>` where
-       * abcjs's next byte opens the following note's `<g>`. No positional gate could see
-       * it: document order is not a coordinate.
-       */
-      // `classes.startMeasure()` runs before the beams and again before the otherchildren
-      // (`draw/voice.js:50`, `:59`), and it RESETS the counter to 0 rather than opening the
-      // next measure (`helpers/classes.js:44-46`). So every beam is `m0 mm0` whatever bar
-      // it is in — ours carried the running count.
-      // The LAST voice of the staff — the loop only flushes on a boundary.
-      flushVoice(openVoice);
-      /**
-       * **AND THE LINE'S MEASURE COUNT IS BANKED WHEN THE STAFF ENDS.**
-       * `drawStaffGroup` runs `newMeasure()` AFTER each staff's `drawVoice` and once more
-       * after the whole loop (`draw/staff-group.js:130, 137`), and `newMeasure` is what
-       * writes `measureTotalPerLine[lineNumber]` — the number every LATER line's `mm`
-       * counter sums.
-       *
-       * **AND IT BANKS NOTHING UNTIL THE BEAM AND `otherchildren` PASSES COUNT THEIR BARS.**
-       * `drawVoice` runs `startMeasure()` before each of those two loops and `incrMeasure()`
-       * on every `'bar'` MARKER interleaved in them (`draw/voice.js:54-70`), so the counter
-       * ends the staff at the line's bar count. Ours resets and never counts, so `measure`
-       * is 0 here and `if (this.measureNumber)` — a falsy test, abcjs's own — banks nothing:
-       * `S8-layout-classes-tune10`'s second line reads `abcjs-mm0` where abcjs has
-       * `abcjs-mm3`. The markers are the missing half; see the beam pass.
-       */
-      if (abcjs) classes.newMeasure();
-      if (!abcjs) parts.push("</g>");
-    }
-    if (abcjs) classes.newMeasure();
-    /**
-     * **AND A GROUP OF MORE THAN ONE STAFF IS CLOSED BY A PLAIN RULE DOWN ITS LEFT EDGE**
-     * — `printStem(renderer, params.startx, 0.6, topLine, bottomLine, null)`, drawn after
-     * every voice of the group, from the FIRST staff's top line to the LAST staff's
-     * bottom (`draw/staff-group.js:139-144`). No class and no `data-name`, and it is
-     * `printStem`'s path, so its handedness swaps the two y's: `dx > 0` with `y1 < y2`
-     * means the `d` opens at the BOTTOM.
-     */
-    if (abcjs && system.staves.length > 1) {
-      const first = system.staves[0];
-      const last = system.staves[system.staves.length - 1];
-      const x = first?.staffLines[0]?.x1;
-      if (first !== undefined && last !== undefined && x !== undefined) {
-        /**
-         * **AND ITS TWO ENDS ARE `calcY` OFF EACH STAFF'S OWN `absoluteY`, ONE PRODUCT
-         * EACH** — `topLine = renderer.calcY(10)` on the FIRST staff and
-         * `bottomLine = renderer.calcY(linePitch)` on the LAST, both taken while
-         * `renderer.y` is that staff's origin (`draw/staff-group.js:86-96`, `:142-143`),
-         * and `calcY` is `this.y - ofs * spacing.STEP`. The same shape the BRACE above
-         * already takes.
+         * **abcjs DRAWS THE MUSIC FIRST, THEN THE BEAMS, THEN EVERYTHING ELSE** — and we
+         * drew all of it before the first notehead.
          *
-         * Ours was `(staff.originY + stepToY(±4)) + systemOy` — THREE terms in the other
-         * order — and it straddled a `roundNumber` boundary: `453.335 - 2 * 3.875` is the
-         * double that prints `445.585` and rounds to `445.58`, where the three-term form
-         * lands one ULP above and rounds to `445.59`. `visual-multi-voice-02`'s last 92
-         * bytes.
+         * `drawVoice` walks `params.children` (the absolute elements), then
+         * `params.beams` — "beams must be drawn first for proper printing of triplets,
+         * slurs and ties" — then `params.otherchildren`, whose switch runs glissando,
+         * crescendo, dynamics, triplet, ending and tie (`draw/voice.js:25-90`). So a beam
+         * or a tie sits AFTER the group of the note it belongs to, not before it.
+         *
+         * 48 rows of the byte table first differed exactly here, on a `<polygon>` where
+         * abcjs's next byte opens the following note's `<g>`. No positional gate could see
+         * it: document order is not a coordinate.
          */
-        const top =
-          first.absoluteY * PX -
-          ENGRAVE.spacePerStep * ABCJS_PITCH.topLine * PX;
-        const bottom =
-          last.absoluteY * PX -
-          ENGRAVE.spacePerStep * ABCJS_PITCH.bottomLine * PX;
-        const w = spaces(ABCJS_LINE_PX.staffConnector) * PX;
-        const r2 = (n: number): number => Number.parseFloat(n.toFixed(2));
-        const [x1, x2] = [r2(x * PX), r2(x * PX + w)];
-        parts.push(
-          `<path d="M ${x1} ${r2(bottom)}L ${x1} ${r2(top)}L ${x2} ${r2(top)}L ${x2} ${r2(bottom)}z" ` +
-            `stroke="none" fill="currentColor"></path>`,
-        );
+        // `classes.startMeasure()` runs before the beams and again before the otherchildren
+        // (`draw/voice.js:50`, `:59`), and it RESETS the counter to 0 rather than opening the
+        // next measure (`helpers/classes.js:44-46`). So every beam is `m0 mm0` whatever bar
+        // it is in — ours carried the running count.
+        // The LAST voice of the staff — the loop only flushes on a boundary.
+        flushVoice(openVoice);
+        /**
+         * **AND THE LINE'S MEASURE COUNT IS BANKED WHEN THE STAFF ENDS.**
+         * `drawStaffGroup` runs `newMeasure()` AFTER each staff's `drawVoice` and once more
+         * after the whole loop (`draw/staff-group.js:130, 137`), and `newMeasure` is what
+         * writes `measureTotalPerLine[lineNumber]` — the number every LATER line's `mm`
+         * counter sums.
+         *
+         * **AND IT BANKS NOTHING UNTIL THE BEAM AND `otherchildren` PASSES COUNT THEIR BARS.**
+         * `drawVoice` runs `startMeasure()` before each of those two loops and `incrMeasure()`
+         * on every `'bar'` MARKER interleaved in them (`draw/voice.js:54-70`), so the counter
+         * ends the staff at the line's bar count. Ours resets and never counts, so `measure`
+         * is 0 here and `if (this.measureNumber)` — a falsy test, abcjs's own — banks nothing:
+         * `S8-layout-classes-tune10`'s second line reads `abcjs-mm0` where abcjs has
+         * `abcjs-mm3`. The markers are the missing half; see the beam pass.
+         */
+        if (abcjs) classes.newMeasure();
+        if (!abcjs) parts.push("</g>");
       }
-    }
-    parts.push("</g>");
-  }
-
-  /**
-   * **THE PAGE IS `doc.pageWidth`, NOT THE INK AND NOT A HOST CONSTANT.** abcjs sizes the
-   * root from `maxwidth + padding.left + padding.right` (`draw/set-paper-size.js:2`), and
-   * `maxwidth` is the requested staff width raised by any line too stiff to compress to
-   * it. So `%%staffwidth 5` gives 44.985 and a tune too wide for 670 gives 752.491 —
-   * neither expressible by the host, which is why `options.pageWidth` is core-only now.
-   */
-  /**
-   * **THE BOTTOM BLOCK CLOSES THE DRAWING** — `draw()` runs it after every line, in its own
-   * group (`abcjs-meta-bottom` under `add_classes`) and after a bare `moveY(24)`
-   * (`draw/draw.js:64-72`). Its y already carries that gap; see `layout.ts`.
-   */
-  if (
-    abcjs &&
-    ((doc.bottomText !== undefined && doc.bottomText.length > 0) ||
-      (doc.bottomLines !== undefined && doc.bottomLines.length > 0))
-  ) {
-    oy = OY * PX;
-    /**
-     * **A RUN OF ROWS SHARING A `groupName` IS ITS OWN NESTED `<g data-name="…">`.**
-     * `addMultiLine`'s ARRAY branch pushes `{ startGroup: groupName }` before its rows
-     * (`bottom-text.js:48`) where its string branch does not, and `W:` is the only field
-     * that reaches it — `simplifyMetaText` joins `notes` and `history` into single strings.
-     * See `PlacedText.groupName`.
-     */
-    let openGroup: string | undefined;
-    /**
-     * **A TRAILING nonMusic LINE IS STILL A LINE, AND THE BOTTOM TEXT IS NOT.** `draw()`
-     * runs `classes.incrLine()` at the head of every `tune.lines` iteration — a nonMusic
-     * line included — and then `classes.reset()` before the bottom block
-     * (`draw/draw.js:30`, `:54-58`, `:61`), so a trailing `%%center` is `abcjs-l2` where a
-     * `W:` row carries no counter at all. Ours generated both off whatever the last
-     * SYSTEM left behind, which is where `abcjs-l1 abcjs-v0` came from.
-     */
-    let lastNonMusicIndex: number | undefined | -1 = -1;
-    const block = (doc.bottomText ?? [])
-      .map((t) => {
-        if (t.nonMusicIndex !== lastNonMusicIndex) {
-          lastNonMusicIndex = t.nonMusicIndex;
-          if (t.nonMusicIndex === undefined) classes.reset();
-          else classes.incrLine();
+      if (abcjs) classes.newMeasure();
+      /**
+       * **AND A GROUP OF MORE THAN ONE STAFF IS CLOSED BY A PLAIN RULE DOWN ITS LEFT EDGE**
+       * — `printStem(renderer, params.startx, 0.6, topLine, bottomLine, null)`, drawn after
+       * every voice of the group, from the FIRST staff's top line to the LAST staff's
+       * bottom (`draw/staff-group.js:139-144`). No class and no `data-name`, and it is
+       * `printStem`'s path, so its handedness swaps the two y's: `dx > 0` with `y1 < y2`
+       * means the `d` opens at the BOTTOM.
+       */
+      if (abcjs && system.staves.length > 1) {
+        const first = system.staves[0];
+        const last = system.staves[system.staves.length - 1];
+        const x = first?.staffLines[0]?.x1;
+        if (first !== undefined && last !== undefined && x !== undefined) {
+          /**
+           * **AND ITS TWO ENDS ARE `calcY` OFF EACH STAFF'S OWN `absoluteY`, ONE PRODUCT
+           * EACH** — `topLine = renderer.calcY(10)` on the FIRST staff and
+           * `bottomLine = renderer.calcY(linePitch)` on the LAST, both taken while
+           * `renderer.y` is that staff's origin (`draw/staff-group.js:86-96`, `:142-143`),
+           * and `calcY` is `this.y - ofs * spacing.STEP`. The same shape the BRACE above
+           * already takes.
+           *
+           * Ours was `(staff.originY + stepToY(±4)) + systemOy` — THREE terms in the other
+           * order — and it straddled a `roundNumber` boundary: `453.335 - 2 * 3.875` is the
+           * double that prints `445.585` and rounds to `445.58`, where the three-term form
+           * lands one ULP above and rounds to `445.59`. `visual-multi-voice-02`'s last 92
+           * bytes.
+           */
+          const top =
+            first.absoluteY * PX -
+            ENGRAVE.spacePerStep * ABCJS_PITCH.topLine * PX;
+          const bottom =
+            last.absoluteY * PX -
+            ENGRAVE.spacePerStep * ABCJS_PITCH.bottomLine * PX;
+          const w = spaces(ABCJS_LINE_PX.staffConnector) * PX;
+          const r2 = (n: number): number => Number.parseFloat(n.toFixed(2));
+          const [x1, x2] = [r2(x * PX), r2(x * PX + w)];
+          parts.push(
+            `<path d="M ${x1} ${r2(bottom)}L ${x1} ${r2(top)}L ${x2} ${r2(top)}L ${x2} ${r2(bottom)}z" ` +
+              `stroke="none" fill="currentColor"></path>`,
+          );
         }
-        // …AND A ROW THAT CHANGED FONT MID-LINE IS `richTextLine`'s, here as anywhere else.
-        if (t.phrases !== undefined) {
-          return richTextLine(
-            t.phrases,
-            raw(t.x * PX),
-            raw(t.y * PX + oy),
+      }
+      parts.push("</g>");
+    }
+
+    /**
+     * **THE PAGE IS `doc.pageWidth`, NOT THE INK AND NOT A HOST CONSTANT.** abcjs sizes the
+     * root from `maxwidth + padding.left + padding.right` (`draw/set-paper-size.js:2`), and
+     * `maxwidth` is the requested staff width raised by any line too stiff to compress to
+     * it. So `%%staffwidth 5` gives 44.985 and a tune too wide for 670 gives 752.491 —
+     * neither expressible by the host, which is why `options.pageWidth` is core-only now.
+     */
+    /**
+     * **THE BOTTOM BLOCK CLOSES THE DRAWING** — `draw()` runs it after every line, in its own
+     * group (`abcjs-meta-bottom` under `add_classes`) and after a bare `moveY(24)`
+     * (`draw/draw.js:64-72`). Its y already carries that gap; see `layout.ts`.
+     */
+    if (
+      abcjs &&
+      ((doc.bottomText !== undefined && doc.bottomText.length > 0) ||
+        (doc.bottomLines !== undefined && doc.bottomLines.length > 0))
+    ) {
+      oy = OY * PX;
+      /**
+       * **A RUN OF ROWS SHARING A `groupName` IS ITS OWN NESTED `<g data-name="…">`.**
+       * `addMultiLine`'s ARRAY branch pushes `{ startGroup: groupName }` before its rows
+       * (`bottom-text.js:48`) where its string branch does not, and `W:` is the only field
+       * that reaches it — `simplifyMetaText` joins `notes` and `history` into single strings.
+       * See `PlacedText.groupName`.
+       */
+      let openGroup: string | undefined;
+      /**
+       * **A TRAILING nonMusic LINE IS STILL A LINE, AND THE BOTTOM TEXT IS NOT.** `draw()`
+       * runs `classes.incrLine()` at the head of every `tune.lines` iteration — a nonMusic
+       * line included — and then `classes.reset()` before the bottom block
+       * (`draw/draw.js:30`, `:54-58`, `:61`), so a trailing `%%center` is `abcjs-l2` where a
+       * `W:` row carries no counter at all. Ours generated both off whatever the last
+       * SYSTEM left behind, which is where `abcjs-l1 abcjs-v0` came from.
+       */
+      let lastNonMusicIndex: number | undefined | -1 = -1;
+      const block = (doc.bottomText ?? [])
+        .map((t) => {
+          if (t.nonMusicIndex !== lastNonMusicIndex) {
+            lastNonMusicIndex = t.nonMusicIndex;
+            if (t.nonMusicIndex === undefined) classes.reset();
+            else classes.incrLine();
+          }
+          // …AND A ROW THAT CHANGED FONT MID-LINE IS `richTextLine`'s, here as anywhere else.
+          if (t.phrases !== undefined) {
+            return richTextLine(
+              t.phrases,
+              raw(t.x * PX),
+              raw(t.y * PX + oy),
+              t.anchor ?? "start",
+              options.addClasses === true && t.dataName !== undefined
+                ? (t.groupClass ??
+                    generatedTextClass(t.dataName) ??
+                    ABCJS_TEXT_CLASSES[t.dataName] ??
+                    "")
+                : undefined,
+            );
+          }
+          const base = round2(t.y * PX + oy);
+          const markup = abcjsText(
+            round2(t.x * PX),
+            base,
+            num(t.size * PX),
+            // …AND THE FACE A `%%<type>font` NAMES, as every other `renderText` element takes
+            // it. Hard-coded here, so a trailing `%%text` under `%%textfont Verdana 21` drew
+            // in the default.
+            t.face ?? "Times New Roman",
+            t.italic === true,
+            t.bold === true,
             t.anchor ?? "start",
-            options.addClasses === true && t.dataName !== undefined
+            t.dataName ?? "",
+            escapeText(t.text),
+            options.addClasses === true &&
+              t.dataName !== undefined &&
+              t.groupName === undefined
               ? (t.groupClass ??
                   generatedTextClass(t.dataName) ??
                   ABCJS_TEXT_CLASSES[t.dataName] ??
                   "")
-              : undefined,
+              : "",
+            (t.extraLines ?? []).map(escapeText),
+            t.middleBaseline === true,
+            // A BOXED row's class is DELETED, not emptied (`draw/text.js:58`).
+            t.boxRect !== undefined,
           );
-        }
-        const base = round2(t.y * PX + oy);
-        const markup = abcjsText(
-          round2(t.x * PX),
-          base,
-          num(t.size * PX),
-          // …AND THE FACE A `%%<type>font` NAMES, as every other `renderText` element takes
-          // it. Hard-coded here, so a trailing `%%text` under `%%textfont Verdana 21` drew
-          // in the default.
-          t.face ?? "Times New Roman",
-          t.italic === true,
-          t.bold === true,
-          t.anchor ?? "start",
-          t.dataName ?? "",
-          escapeText(t.text),
-          options.addClasses === true &&
-          t.dataName !== undefined &&
-          t.groupName === undefined
-            ? (t.groupClass ??
-                generatedTextClass(t.dataName) ??
-                ABCJS_TEXT_CLASSES[t.dataName] ??
-                "")
-            : "",
-          (t.extraLines ?? []).map(escapeText),
-          t.middleBaseline === true,
-          // A BOXED row's class is DELETED, not emptied (`draw/text.js:58`).
-          t.boxRect !== undefined,
+          // …and the same group-and-four-rules a boxed row takes anywhere else.
+          return t.boxRect === undefined
+            ? markup
+            : `<g fill="currentColor" data-name="${t.dataName ?? ""}">` +
+                `${markup}${boxRulesPath(t.boxRect, t.y * PX + oy, t.size * PX)}</g>`;
+        })
+        .map((markup, i) => {
+          const row = (doc.bottomText ?? [])[i];
+          const name = row?.groupName;
+          const id = row?.groupId ?? name;
+          let out = "";
+          if (id !== openGroup) {
+            if (openGroup !== undefined) out += "</g>";
+            openGroup = id;
+            if (id !== undefined)
+              // **AND THE ARRAY BRANCH'S CLASS IS THE GROUP'S, NOT THE ROWS'.**
+              // `addMultiLine` pushes `{ startGroup, klass, name }` and `openGroup` writes
+              // `class` before `data-name` (`bottom-text.js:48`, `draw/non-music.js:36-37`),
+              // while its `richText` rows are handed `''` (`:57`). The STRING branch is the
+              // other way round — no group at all and the klass on the text.
+              out += `<g${
+                options.addClasses === true && row?.groupClass !== undefined
+                  ? ` class="${escapeAttr(row.groupClass)}"`
+                  : ""
+              } data-name="${escapeAttr(name ?? "")}">`;
+          }
+          return out + markup;
+        });
+      if (openGroup !== undefined) block.push("</g>");
+      /**
+       * **AND A TRAILING nonMusic LINE IS A SIBLING GROUP, NOT THE HEAD OF THIS ONE.**
+       * `draw()` writes one `<g>` per nonMusic line and opens ANOTHER for the bottom text
+       * (`draw/draw.js:55`, `:64-72`). Ours ran the two together, so `visual-tablature-15`'s
+       * `T:Inserted subtitle` and its `W:` block shared a group where abcjs closes one and
+       * opens the next. See `nonMusicIndex` on the trailing rows.
+       */
+      const trailingCount = (doc.bottomText ?? []).filter(
+        (t) => t.nonMusicIndex !== undefined,
+      ).length;
+      // …and a trailing `%%sep`'s rule, which is INK on the same block.
+      for (const line of doc.bottomLines ?? []) {
+        const t = TL(line);
+        block.push(
+          separatorPath(t.x1, t.y1, t.x2, classes.generate("defined-text")),
         );
-        // …and the same group-and-four-rules a boxed row takes anywhere else.
-        return t.boxRect === undefined
-          ? markup
-          : `<g fill="currentColor" data-name="${t.dataName ?? ""}">` +
-              `${markup}${boxRulesPath(t.boxRect, t.y * PX + oy, t.size * PX)}</g>`;
-      })
-      .map((markup, i) => {
-        const row = (doc.bottomText ?? [])[i];
-        const name = row?.groupName;
-        const id = row?.groupId ?? name;
-        let out = "";
-        if (id !== openGroup) {
-          if (openGroup !== undefined) out += "</g>";
-          openGroup = id;
-          if (id !== undefined)
-            // **AND THE ARRAY BRANCH'S CLASS IS THE GROUP'S, NOT THE ROWS'.**
-            // `addMultiLine` pushes `{ startGroup, klass, name }` and `openGroup` writes
-            // `class` before `data-name` (`bottom-text.js:48`, `draw/non-music.js:36-37`),
-            // while its `richText` rows are handed `''` (`:57`). The STRING branch is the
-            // other way round — no group at all and the klass on the text.
-            out += `<g${
-              options.addClasses === true && row?.groupClass !== undefined
-                ? ` class="${escapeAttr(row.groupClass)}"`
-                : ""
-            } data-name="${escapeAttr(name ?? "")}">`;
-        }
-        return out + markup;
-      });
-    if (openGroup !== undefined) block.push("</g>");
-    /**
-     * **AND A TRAILING nonMusic LINE IS A SIBLING GROUP, NOT THE HEAD OF THIS ONE.**
-     * `draw()` writes one `<g>` per nonMusic line and opens ANOTHER for the bottom text
-     * (`draw/draw.js:55`, `:64-72`). Ours ran the two together, so `visual-tablature-15`'s
-     * `T:Inserted subtitle` and its `W:` block shared a group where abcjs closes one and
-     * opens the next. See `nonMusicIndex` on the trailing rows.
-     */
-    const trailingCount = (doc.bottomText ?? []).filter(
-      (t) => t.nonMusicIndex !== undefined,
-    ).length;
-    // …and a trailing `%%sep`'s rule, which is INK on the same block.
-    for (const line of doc.bottomLines ?? []) {
-      const t = TL(line);
-      block.push(
-        separatorPath(t.x1, t.y1, t.x2, classes.generate("defined-text")),
-      );
+      }
+      const klassBottom =
+        options.addClasses === true ? ' class="abcjs-meta-bottom"' : "";
+      const klassNonMusic =
+        options.addClasses === true ? ' class="abcjs-non-music"' : "";
+      if (trailingCount > 0)
+        parts.push(
+          `<g${klassNonMusic}>${block.slice(0, trailingCount).join("")}</g>`,
+        );
+      const rest = block.slice(trailingCount);
+      if (rest.length > 0) parts.push(`<g${klassBottom}>${rest.join("")}</g>`);
     }
-    const klassBottom =
-      options.addClasses === true ? ' class="abcjs-meta-bottom"' : "";
-    const klassNonMusic =
-      options.addClasses === true ? ' class="abcjs-non-music"' : "";
-    if (trailingCount > 0)
-      parts.push(
-        `<g${klassNonMusic}>${block.slice(0, trailingCount).join("")}</g>`,
-      );
-    const rest = block.slice(trailingCount);
-    if (rest.length > 0) parts.push(`<g${klassBottom}>${rest.join("")}</g>`);
+
+    stackBase += doc.height - (doc.paddingBottom ?? 0);
   }
 
   const w = abcjs
-    ? doc.pageWidth * OUT
-    : (options.pageWidth ?? doc.width * OUT);
-  const h = doc.height * OUT;
+    ? lastDoc.pageWidth * OUT
+    : (options.pageWidth ?? lastDoc.width * OUT);
+  // …and the TOTAL is that running base with the last page's bottom padding put back:
+  // `Σ(h − pad) + pad` is `Σ_{j<last}(h − pad) + h_last`, the same walk abcjs's cursor makes.
+  const h = (stackBase + (lastDoc.paddingBottom ?? 0)) * OUT;
   /**
    * **PRINT IS A CSS SCALE ON THE ROOT AND AN ELEVEN-INCH FLOOR ON ITS HEIGHT.**
    * `setPaperSize` computes `w`/`h` at the scale and then hands `setSize` `w / scale` and
@@ -3529,9 +3587,11 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
    * (`write/svg.js:71-83`) — and jsdom serialises only the three properties it knows, so
    * the `-ms-` pair and the `-*-transform-origin-x/y` four are absent from the goldens.
    */
-  const printScale = doc.printScale ?? 1;
+  const printScale = lastDoc.printScale ?? 1;
   const printH =
-    printScale === 1 ? h : Math.max(h * printScale, ABCJS_PX.printMinHeight) / printScale;
+    printScale === 1
+      ? h
+      : Math.max(h * printScale, ABCJS_PX.printMinHeight) / printScale;
   const printStyle =
     printScale === 1
       ? ""
@@ -3540,10 +3600,10 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
   // The viewBox must widen with the page, or forcing the width would just scale the
   // music up to fill it instead of leaving the margin abcjs leaves.
   const viewWidth =
-    options.pageWidth === undefined ? doc.width : options.pageWidth / OUT;
+    options.pageWidth === undefined ? lastDoc.width : options.pageWidth / OUT;
   // viewBox carries the staff-space coordinate system, including the negative y above
   // the middle line, so nothing downstream has to know about the origin offset.
-  const viewBox = `0 ${num(doc.top)} ${num(viewWidth)} ${num(doc.height)}`;
+  const viewBox = `0 ${num(lastDoc.top)} ${num(viewWidth)} ${num(lastDoc.height)}`;
 
   /**
    * ABCJS'S ROOT ELEMENT, ATTRIBUTE FOR ATTRIBUTE — and it is what a browser's serializer

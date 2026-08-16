@@ -1853,6 +1853,11 @@ export interface Layout {
    * emitter needs it for the one thing it places absolutely: a brace's own voice name.
    */
   readonly paddingLeft?: number
+  /**
+   * `renderer.padding.bottom` for this render — what a STACKED tunebook has to subtract
+   * from each tune's height to find where the next one starts. See `toSVG`.
+   */
+  readonly paddingBottom?: number
 }
 
 /**
@@ -13182,6 +13187,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     blankLeadingLines: Math.max(0, score.metadata.titles.length - 1),
     printScale: PRINT_SCALE,
     paddingLeft: PAGE_PADDING.left,
+    paddingBottom: PAGE_PADDING.bottom,
     // `cursor` has one trailing gap on it, added after the last system. abcjs opens with
     // `moveY(padding.top)` before drawing anything (`draw.js:14`), so the page begins
     // ABOVE the ink — expressed as a negative viewBox top rather than by shifting every

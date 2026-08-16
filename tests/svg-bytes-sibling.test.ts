@@ -490,7 +490,9 @@ function run(c: Case): Diff | null {
 }
 
 describe('strict SVG vs the 41-fixture corpus, byte for byte', () => {
-  it('writes the ranked table', () => {
+  // 334 rows across three render flavours, each a full parse + layout + emit of a
+  // whole fixture — `ragtime-nightingale` alone is 2MB of SVG. Well past the 5s default.
+  it('writes the ranked table', { timeout: 120_000 }, () => {
     const rows = CASES.map((c) => {
       let diff: Diff | null
       try {
