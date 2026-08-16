@@ -103,14 +103,15 @@ with abcjs on `output-miss-accidental`. And `abcjs.synth`'s silent half,
 
 **Surface 62 → 32 absent.** `Docs/CHECKPOINT-2026-08-15c.md` is what landed and why.
 
-Phase 5 is opened too: **`%%vskip` is built and gated**, with a control fixture whose
-goldens come from abcjs. `%%visualTranspose` (a parse-time transposition of every pitch,
-`multilineVars.globalTranspose`) and `%%keywarn` (which suppresses the DRAWN clef/key of a
-mid-tune `K:`, not a warning) are still open.
+**Phase 5 is DONE.** All three directives the sweep named are built and gated, each with a
+control fixture whose goldens come from running abcjs: `%%vskip` (blank space above a
+line), `%%keywarn` (which removes the CAUTIONARY key of a mid-tune `K:` and nothing else —
+not a warning) and `%%visualTranspose` (every pitch moved at parse time, key signature and
+spelling with it, and the `visualTranspose` render param with it). `svg-bytes` is 0 of
+**188**, up from 178, and the harvested corpus 177 of 177.
 
 **NEXT, in order:** Phase 4 (`lines` + selectables, 389 expected entries, half already
-proven by `data-index` being byte-exact), Phase 5 (`%%vskip`, `%%visualTranspose`,
-`%%keywarn`), then the WebAudio and editor surface (`CreateSynth`, `SynthController`,
+proven by `data-index` being byte-exact), then the WebAudio and editor surface (`CreateSynth`, `SynthController`,
 `CreateSynthControl`, `SynthSequence`, `TimingCallbacks`, `Editor`, `EditArea`), then the
 stragglers: `extractMeasures`, `tuneMetrics`, `setGlyph`, the three animation functions,
 and the tune object's `lines`-derived accessors.
