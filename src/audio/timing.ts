@@ -228,6 +228,7 @@ interface TimedElement {
  * carried; adding them is the geometry half's job and it needs an oracle first.
  */
 function voiceElements(voice: Voice, score: Score, tempos: Map<number, Tempo>): TimedElement[] {
+  const meter = meterOf(score)
   const out: TimedElement[] = []
   let measureNumber = 0
   let noteFound = false
@@ -287,7 +288,23 @@ function voiceElements(voice: Voice, score: Score, tempos: Map<number, Tempo>): 
        * falsy-zero class as `if (opt.bottom)` on a stem and `if (this.measureNumber)` in
        * the class counters.
        */
-      const sounding = spacer ? 0 : ratToNumber(event.duration)
+      /**
+       * **AND A MULTI-MEASURE REST TAKES ITS MEASURES.** `durationClassOveride` is the
+       * PARSE tree's `elem.duration`, which for `Zn` is `n` whole measures — only the
+       * SPACING duration is flattened to 1 (`abstract-engraver.js:812-816`), and
+       * `setupEvents` reads `durationClass` first (`abc_tune.js:301`). So `Z24 | F2 |`
+       * runs 32.667s at 180bpm in 2/4 and ours ran 2s, because our model carries the
+       * DRAWN duration on the event.
+       */
+      const multi =
+        event.type === 'rest' &&
+        (event.kind === 'multiMeasure' || event.kind === 'invisibleMultiMeasure') &&
+        event.measureCount > 0
+      const sounding = spacer
+        ? 0
+        : multi
+          ? event.measureCount * barLengthOf(meter)
+          : ratToNumber(event.duration)
       out.push({
         kind: 'note',
         measureNumber,
