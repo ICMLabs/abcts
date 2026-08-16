@@ -1133,7 +1133,7 @@ backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
 
-> 🖱️ **THE SELECTABLES ARE IN — 149 OF 389, AND THE JOIN IS A REFERENCE RATHER THAN A
+> 🖱️ **THE SELECTABLES ARE IN — 151 OF 389, AND THE JOIN IS A REFERENCE RATHER THAN A
 > POSITION** (2026-08-16). abcjs's selectable array holds `absEl.abcelem`, the very
 > `tune.lines` element, so its two public surfaces agree by IDENTITY; ours are separate
 > objects, and pairing them POSITIONALLY — the k-th drawn note against the k-th event of the
@@ -1177,9 +1177,18 @@ backup remote is not a licence to vendor someone else's tree into this one.
 > and by `ls -la` on the two inputs, which is the check the 08-12 checkpoint says to reach
 > for before bisecting.
 >
+> ⚠️ **AND RETAINING THE `Layout` MADE THE SUITE'S WORKERS DIE.** The selectables walk the
+> drawing, so the first cut kept it in each `TuneObject`'s closure — and a `Layout` is the
+> biggest object this library makes while a host keeps every tune a render returns. The full
+> suite went from **5.6s to 50-120s and failed a DIFFERENT test on every run**, across
+> different FILES, which reads exactly like an intermittent value difference and is a worker
+> dying. It is laid out AGAIN inside the lazy accessor now — 0.7ms, and only when a host
+> asks, the same argument `lines` is built on.
+>
 > **READ `Docs/HANDOFF-2026-08-16.md` FIRST** — the gate table, the ordered work list (the
-> other ten `Selectables.add` sites, with each one's `abcelem` shape) and the three traps —
-> then `Docs/CHECKPOINT-2026-08-16.md`.
+> other ten `Selectables.add` sites with each one's `abcelem` shape, and the two cheap
+> blockers: a `tempo` and a `part` have no source range, and a key signature's accidentals
+> are measured but not built) — then `Docs/CHECKPOINT-2026-08-16.md`.
 
 > 🔌 **THE API SURFACE IS THE ARC NOW, AND ITS GATE IS BUILT BY WALKING abcjs'S OBJECT**
 > (2026-08-15c). The ruling is Lance's: *match abcjs on every API, every output; internally

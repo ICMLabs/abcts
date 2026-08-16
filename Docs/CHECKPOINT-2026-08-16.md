@@ -12,7 +12,7 @@ every corpus here shares.**
 
 | Gate | Start | Now |
 |---|---|---|
-| **`engraver.selectables`** | *did not exist* | **149 of 389**, one case ratcheted |
+| **`engraver.selectables`** | *did not exist* | **151 of 389**, one case ratcheted |
 | **`tune.lines` characters** | 250,226 of 256,138 | **250,775**, 177 tunes ratcheted (was 170) |
 | **abcjs API surface** | 30 of 64 absent | **27 absent** |
 | SVG bytes, in-repo / sibling | 0 of 188 / 0 of 356 | unchanged |
@@ -177,6 +177,24 @@ whose rows are misaligned reports every field of every row).
   2. the six element types the projection does not carry (`tempo`, `clef`, `midi`, `style`,
      `color`, `part`), whose characters are swallowed by the note before them.
   Plus **one beam pair** whose run our machine closes a note early.
+
+### 4b. AND THE ELEMENT SITES LANDED AFTER THAT — the join is THREE joins
+
+A note or a rest joins by its model event; a BARLINE by where it was written, the RAW range
+because the tiled `startChar` moves; and the CLEF, KEY and METER by neither, since abcjs
+hangs those on the STAFF rather than in the voice's stream. **The staff's furniture carries
+no `startChar` at all** — not `-1`, ABSENT — which was the entire difference on the two rows
+that closed. `clefPos` and `verticalPos` are derived, not tabled: the clef's line doubled,
+and this staff's middle line measured from a treble staff's.
+
+A KEY SIGNATURE is measured and deliberately NOT built — its `accidentals` are
+`{acc, note, verticalPos}` where `note` is the name AT THE POSITION DRAWN, so B♭ major
+gives `B` and `e`, upper and lower case in one list, moving with the clef.
+
+**AND RETAINING THE `Layout` MADE THE SUITE'S WORKERS DIE** — 5.6s to 50-120s, a different
+test failing on every run across different FILES. Laid out again inside the lazy accessor
+now. A rarer flake exists underneath it (one run in two with everything stashed) and is
+named in the handoff.
 
 ---
 
