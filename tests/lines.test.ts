@@ -18,10 +18,19 @@ import { parse } from "../src/parser/parser.js";
  * `PASSING` and must stay there. The aggregate is printed too, because the open rows are
  * a work list rather than a regression.
  *
- * **WHAT IS MISSING IS NAMED, NOT GUESSED AT.** Eleven element types appear across the
- * corpora and the projection carries five — `note`, `bar`, `keySignature`, `timeSignature`
- * and the subtitle lines. `tempo`, `clef`, `midi`, `style`, `color`, `part` and `stem`
- * need source ranges the model does not keep yet, and they are what every open row is.
+ * **WHAT IS MISSING IS NAMED AND MEASURED, NOT GUESSED AT.** 5,912 characters across 126
+ * tunes, and it is two things:
+ *
+ * 1. **SIX ELEMENT TYPES THE PROJECTION DOES NOT CARRY** — `tempo`, `clef`, `midi`,
+ *    `style`, `color` and `part`, each needing a source range the model does not keep.
+ *    (`stem` is the eleventh type and costs NOTHING: `appendElement('stem', null, null,
+ *    …)` gives it a null `startChar`, so abcjs's own truthiness guard skips it —
+ *    289 of them and not one reachable.)
+ * 2. **A CHORD'S RANGE STOPS SHORT OF A TRAILING TIE.** `ragtime-nightingale` loses 1,273
+ *    characters on its own, the most of any row, and the first is `[G,D]/4-` at 272:
+ *    abcjs's element is 272…281 and ours 272…279, missing the `-`. That is a PARSER
+ *    change — a chord's `sourceRange` — under gates that read source offsets, so it is
+ *    measured here rather than guessed at from this side.
  */
 const GOLDEN = JSON.parse(
   readFileSync(

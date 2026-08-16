@@ -110,8 +110,13 @@ not a warning) and `%%visualTranspose` (every pitch moved at parse time, key sig
 spelling with it, and the `visualTranspose` render param with it). `svg-bytes` is 0 of
 **188**, up from 178, and the harvested corpus 177 of 177.
 
-**NEXT, in order:** Phase 4 (`lines` + selectables, 389 expected entries, half already
-proven by `data-index` being byte-exact), then the WebAudio and editor surface (`CreateSynth`, `SynthController`,
+**Phase 4 is OPEN and half-built**: `lines` is a projection at **250,226 of 256,138
+characters**, with 170 tunes ratcheted exact and the remaining 5,912 characters measured —
+six element types with no source range yet, and a chord's range stopping short of a
+trailing tie. The selectables (`getSelectableArray`, `findSelectableElement`) are the other
+half and their oracle is `selection.test.js`'s 389 entries.
+
+**NEXT, in order:** finish Phase 4, then the WebAudio and editor surface (`CreateSynth`, `SynthController`,
 `CreateSynthControl`, `SynthSequence`, `TimingCallbacks`, `Editor`, `EditArea`), then the
 stragglers: `extractMeasures`, `tuneMetrics`, `setGlyph`, the three animation functions,
 and the tune object's `lines`-derived accessors.

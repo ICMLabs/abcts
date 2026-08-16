@@ -27,7 +27,7 @@ for (const [key, want] of Object.entries(G)) {
     total += 1
     const same = w === undefined ? g === null : g !== null && g.el_type === w[1] && g.startChar === w[2] && g.endChar === w[3]
     if (same) ok += 1
-    else if (bad.length < 3) {
+    else if (bad.length < 6) {
       bad.push(`  char ${c} (${JSON.stringify(abc[c])}) abcjs ${w ? `${w[1]} ${w[2]}..${w[3]}` : 'null'} ours ${g ? `${g.el_type} ${g.startChar}..${g.endChar}` : 'null'}`)
     }
   }

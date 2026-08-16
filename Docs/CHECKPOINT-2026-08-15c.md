@@ -13,9 +13,10 @@ the library.**
 
 | Gate | Start | Now |
 |---|---|---|
-| **SVG bytes, in-repo** | 0 of 178 | **0 of 178** |
+| **SVG bytes, in-repo** | 0 of 178 | **0 of 188** — three CONTROLS added |
 | **SVG bytes, sibling (5 flavours)** | 0 of 356 | **0 of 356** |
-| **abcjs API surface** | *did not exist* | **32 of 64 absent**, from 62 |
+| **abcjs API surface** | *did not exist* | **30 of 64 absent**, from 62 |
+| **`tune.lines` characters** | *did not exist* | **250,226 of 256,138**, 170 tunes ratcheted |
 | **`AbcTune` numeric accessors** | *did not exist* | **2 of 291**, from 18, both written down |
 | **`strTranspose`** | *did not exist* | **1 of 59**, written down |
 | Audio / timings / element timings / chord grids / MIDI | 0 of 72 / 38 / 13 / 23 / 3 | unchanged |
@@ -244,6 +245,43 @@ trees and diffs — **221 of 221 identical** — and, checked the way this branc
 things, that probe CANNOT see this particular defect: deliberately re-breaking the brace
 leaves all 221 identical, because no fixture in either corpus reaches those guards' false
 arms. So the hazard is real, the fix stands, and no past reading is known to be wrong.
+
+---
+
+## 5c. PHASE 4 OPENED — `tune.lines` AT 97.7% OF CHARACTERS
+
+`lines` is an API a host reads, so it must exist and match; under the ruling it is NOT
+what the engine is built on, so it is a **PROJECTION** built from the `Score` on read and
+cached for the object's life. A host that never asks for it pays nothing — which is the
+clause doing real work, because adopting abcjs's tree would have been the alternative.
+
+The oracle is abcjs asked for the element at **every character of all 303 tunes** in both
+corpora — 28,712 that map to something and every other one that must map to nothing.
+`tests/lines.test.ts` ratchets **170 tunes exact** and prints the rest;
+**250,226 of 256,138 characters agree.**
+
+**THE SPANS TILE THE LINE, AND THE ASYMMETRY IS THE WHOLE FINDING.** Each element opens
+where the one before it closed, so no character of a music line belongs to nothing — and
+**a NOTE closes over its trailing whitespace while a BAR does not**. On `S1-decorations`:
+`!fermata!C ` is 163…174 and `!accent!D ` 174…184, the space going with the note BEFORE;
+but `| !tenuto!E` is bar 206…207 and note 207…217, the space going with the note AFTER.
+Three earlier shapes each got one half right — a backward walk over braces and bangs, a
+pure tiling on own ranges, and a hybrid.
+
+An element also opens at the first thing written FOR it: the decorations, annotations and
+chord symbol come from ranges the model keeps, a grace group and an UNRECOGNISED
+decoration from a textual walk. `!staccato!` is a name abcjs does not know, so strict drops
+the decoration and its range while abcjs still counts its characters — which is why
+`!tenuto!E !staccato!F` opens its second element at 194 and not 204.
+
+**And character 0 is unreachable**, because abcjs's guard is truthiness.
+
+What is left is measured rather than claimed: 5,912 characters across 126 tunes, and it is
+six element types the projection does not carry (`tempo`, `clef`, `midi`, `style`, `color`,
+`part` — `stem` is the eleventh and costs NOTHING, since abcjs gives it a null `startChar`
+and its own guard then skips all 289) plus **a chord's range stopping short of a trailing
+tie**: `[G,D]/4-` is 272…281 in abcjs and 272…279 in ours, and `ragtime-nightingale` loses
+1,273 characters to it alone.
 
 ---
 
