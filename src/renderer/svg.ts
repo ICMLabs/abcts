@@ -3428,7 +3428,9 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
           t.anchor ?? "start",
           t.dataName ?? "",
           escapeText(t.text),
-          options.addClasses === true && t.dataName !== undefined
+          options.addClasses === true &&
+          t.dataName !== undefined &&
+          t.groupName === undefined
             ? (t.groupClass ??
                 generatedTextClass(t.dataName) ??
                 ABCJS_TEXT_CLASSES[t.dataName] ??
@@ -3454,7 +3456,16 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
           if (openGroup !== undefined) out += "</g>";
           openGroup = id;
           if (id !== undefined)
-            out += `<g data-name="${escapeAttr(name ?? "")}">`;
+            // **AND THE ARRAY BRANCH'S CLASS IS THE GROUP'S, NOT THE ROWS'.**
+            // `addMultiLine` pushes `{ startGroup, klass, name }` and `openGroup` writes
+            // `class` before `data-name` (`bottom-text.js:48`, `draw/non-music.js:36-37`),
+            // while its `richText` rows are handed `''` (`:57`). The STRING branch is the
+            // other way round — no group at all and the klass on the text.
+            out += `<g${
+              options.addClasses === true && row?.groupClass !== undefined
+                ? ` class="${escapeAttr(row.groupClass)}"`
+                : ""
+            } data-name="${escapeAttr(name ?? "")}">`;
         }
         return out + markup;
       });
