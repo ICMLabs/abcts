@@ -1132,6 +1132,48 @@ abcjs source are all reached by sibling path and stay in that repo. Keep it that
 backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
+
+> 🏁 **EVERY SVG BYTE GATE IS AT ZERO, ACROSS ALL FIVE FLAVOURS THE CORPUS IS RENDERED
+> IN** (2026-08-15b). `svg-bytes` **0 of 178**, `svg-bytes-sibling` **0 of 356 with all
+> 356 RATCHETED** — plain, `-classes`, `-print`, `-stacked` and `-stacked-print` — beside
+> audio, MIDI, chord grids, timings, element timings, the DOM contract, the harvested
+> corpus and the pixel targets, all already at zero. Suite 1689/1690 and the one red is
+> the known-not-ours `S7-voices`.
+>
+> **AND THE GATE HAD BEEN READING TWO OF THE FIVE.** The note beside the hole was RIGHT
+> about the cause — `-print` and the two `-stacked` families were unbuilt features, not
+> tolerances — and then left them unbuilt for a day. Both were an afternoon, and each
+> named real defects in code that had been byte-exact for two days. **A NOTE THAT SAYS
+> "UNBUILT, NOT A TOLERANCE" IS STILL A NOTE THAT STOPS THE ROW BEING READ.**
+>
+> `print` is FOUR THINGS AND NO ENGRAVING CHANGE: the page margins take their print
+> defaults (38/68 against 15 all round), the whole SVG is CSS-scaled 0.75 with the
+> margins and the music width divided back out first, `TopText` opens with a
+> `spacing.top` row, and the page is at least 11 inches tall — a floor on the SVG's own
+> size and nothing inside it. It exposed four defects no other flavour could state,
+> including **a TEMPO MARK being built at DRAW TIME from the SOLVED x** (the prefix
+> builder's provisional x and the line solve's are two accumulations of the same widths
+> and disagree in the last bit) and **a CARRIED ENDING'S LEFT EDGE going in raw**, which
+> on screen is `15 + 10` and rounds to itself.
+>
+> `-stacked` is `renderTuneBook` — abcjs's `EngraverController(div).engraveABC(allTunes)`,
+> which its own public API has no entry point for. **THE PAGE CURSOR IS ONE WALK**:
+> seeding each tune with the one above's `endY` rather than adding per-tune TOTALS took it
+> from 19 of 24 to 1, because `Σ(height − padding.bottom)` is right to the pixel and
+> re-derives the sum. **A TOTAL IS NOT A WALK** — the same finding as `calcHeight`,
+> `topAdvances` and `minx` in different clothes. The `<style>`/`<title>` pair REPEATS in
+> reverse tune order (both `setTitle` and `insertStyles` PREPEND), the root takes the LAST
+> tune's width and `aria-label`, and `data-index` RESETS per tune.
+>
+> The last row was **an ACCIDENTAL RESERVING IN y RATHER THAN PITCH** —
+> `create-note-head.js:102` states `pitch ± h / 2` where `h` is `symbolHeightInPitches` —
+> which is one ULP of `staff.top` and **only expressible three thousand pixels down**, so
+> it survived 178 + 334 byte-exact rows. **A DEFECT CAN NEED A BIGGER PAGE TO BE VISIBLE.**
+>
+> **READ `Docs/CHECKPOINT-2026-08-15b.md` FIRST** — §3 is what landed, §4 WHAT IS LEFT
+> (all API surface and one audio model gap; nothing on any SVG table), §5 the harness and
+> §6 the rules.
+
 **AUDIO IS BYTE-EQUAL AND THE SVG IS THE ARC.** 1275/1276, and **the ONE red is NOT OURS** —
 `content-parity`'s `S7-voices` is an uncommitted edit to a fixture in `../abcMusicKit` whose
 goldens were not regenerated (`CHECKPOINT-2026-08-12.md` §5). Read that before you conclude
