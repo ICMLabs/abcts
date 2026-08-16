@@ -5719,6 +5719,25 @@ const textWidth = (text: string, size: number, face: Face = 'serif'): number =>
  * `textWidth`'s sixteen call sites, most of which do not have the mode in scope. Thread it
  * properly if a caller ever needs both metrics in one render.
  */
+/**
+ * **PRINT SCALES THE PAGE MARGINS AND THE MUSIC WIDTH, AND NOTHING ELSE ABOUT THE PAGE.**
+ * `renderer.padding` takes a DIFFERENT SET OF DEFAULTS in print — 38px top and bottom,
+ * 68px left and right, against 15px all round on screen (`write/renderer.js:69-72`) — and
+ * then `adjustNonScaledItems` divides every one of them by the scale, along with
+ * `controller.width` (`engraver-controller.js:124-126`, `renderer.js:78-86`), because the
+ * whole SVG is CSS-scaled afterwards and these are the parts that must not shrink with it.
+ *
+ * Render-scoped rather than threaded: `PAGE_PADDING.left` is read at thirty-four sites and
+ * `marginTop` at seven, all of them meaning "the page's own margin", and the engine
+ * renders one score at a time — the same shape `STRICT_TEXT_METRICS` and `LINE_WEIGHTS`
+ * already have.
+ */
+let PAGE_PADDING = {
+  left: ENGRAVE.marginX,
+  top: ENGRAVE.marginTop,
+  bottom: ENGRAVE.marginBottom,
+}
+
 let STRICT_TEXT_METRICS = true
 
 /** `%%jazzchords` for the current render — same one-place switch, set beside it. */
@@ -6545,7 +6564,7 @@ function layoutConnectors(
   /** The name this brace OWNS, by staff-group index — see `ConnectorSpan.header`. */
   headers: ReadonlyMap<number, NonNullable<ConnectorSpan['header']>> = new Map(),
   /** `padding.left + voiceheaderw`, which is where `getLeftEdgeOfStaff` puts a connector. */
-  connectorX: number = ENGRAVE.marginX,
+  connectorX: number = PAGE_PADDING.left,
 ): { glyphs: PlacedGlyph[]; lines: PlacedLine[]; spans: ConnectorSpan[] } {
   const glyphs: PlacedGlyph[] = []
   const lines: PlacedLine[] = []
@@ -10959,7 +10978,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
    * `75.5964` against abcjs's `75.59639999999999`).
    */
   const leftEdgeFor = (systemIndex: number): number =>
-    ENGRAVE.marginX +
+    PAGE_PADDING.left +
     headerIndentFor(systemIndex) +
     (score.staves.some((group) => group.brace !== null || group.bracket !== null)
       ? ENGRAVE.connectorIndent
@@ -11152,7 +11171,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
    * `expandToWidest` would re-run the earlier lines at the final width; abcjs leaves it
    * off by default and so do we, which is why this is a forward-only ratchet.
    */
-  let pageWidth = systemWidth - 2 * ENGRAVE.marginX
+  let pageWidth = systemWidth - 2 * PAGE_PADDING.left
   /**
    * …and whether it ever fired, because `(w - 2m) + 2m` is not `w` in floating point:
    * `%%staffwidth 200` came back 296.00000000000006 against abcjs's 296. When the ratchet
@@ -11469,7 +11488,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
      * Measured on `voice-middle-after-clef`: `minSpace=0`. `spacing * 0 > 50` is never true,
      * so the guard is inert in abcjs itself and implementing it would be a divergence.
      */
-    const target = pageWidth + ENGRAVE.marginX
+    const target = pageWidth + PAGE_PADDING.left
     // Trailing `%%center` text means the music is no longer the LAST LINE of the tune, so
     // abcjs justifies it unconditionally — its last-line guard tests the last LINE, not
     // the last STAFF line. `center-text` sat 219px out on exactly this.
@@ -11523,7 +11542,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         if (isLast) {
           if (score.stretchLast === null) {
             if (width / target < ENGRAVE.lastSystemFill) break
-          } else if (!(1 - (width + 2 * ENGRAVE.marginX) / target < score.stretchLast)) break
+          } else if (!(1 - (width + 2 * PAGE_PADDING.left) / target < score.stretchLast)) break
         }
         // abcjs compares in PIXELS — `Math.abs(…) < 2` — so the threshold converts.
         if (Math.abs(target - width) < 2 / UNIT_PX) break
@@ -11585,10 +11604,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
               // `PlacedText.pageY`.
               const built = topTextBlock(
                 score.metadata,
-                systemWidth - ENGRAVE.marginX * 2,
+                systemWidth - PAGE_PADDING.left * 2,
                 score.textAbove,
                 score.fonts,
-                ENGRAVE.marginTop,
+                PAGE_PADDING.top,
                 musicSpace,
               )
               topAdvances = built.advances
@@ -11596,14 +11615,14 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
                 // …and the rules are rebased with the texts, being in the same frame.
                 lines: built.lines.map((l) => ({
                   ...l,
-                  y1: l.y1 - ENGRAVE.marginTop,
-                  y2: l.y2 - ENGRAVE.marginTop,
+                  y1: l.y1 - PAGE_PADDING.top,
+                  y2: l.y2 - PAGE_PADDING.top,
                 })),
                 height: built.height,
                 texts: built.texts.map((t) => ({
                   ...t,
                   pageY: t.y,
-                  y: t.y - ENGRAVE.marginTop,
+                  y: t.y - PAGE_PADDING.top,
                 })),
               }
             })()
@@ -11611,7 +11630,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             ? (() => {
                 const built = freeTextBlock(
                   midTune,
-                  systemWidth - ENGRAVE.marginX * 2,
+                  systemWidth - PAGE_PADDING.left * 2,
                   score.fonts,
                 )
                 midAdvances = built.advances
@@ -11726,7 +11745,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
               }
         nameElements.push({
           type: 'voiceName',
-          x: ENGRAVE.marginX,
+          x: PAGE_PADDING.left,
           width: 0,
           staffSteps: [],
           glyphs: [],
@@ -11742,7 +11761,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
               // Stated rather than defaulted, because a BOXED text reads it to decide
               // which way the padding shifts (`draw/text.js:52-56`).
               anchor: 'start',
-              x: ENGRAVE.marginX,
+              x: PAGE_PADDING.left,
               y: centre,
               ...nameBox,
               // **AND IT RESERVES NOTHING.** The voice name is not an `AbsoluteElement` at
@@ -12184,7 +12203,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
 
     // The line's own solved width — abcjs's `staffGroup.w`, which is absolute and already
     // carries the left edge — plus the right margin.
-    const musicWidth = solved.width + ENGRAVE.marginX
+    const musicWidth = solved.width + PAGE_PADDING.left
 
     /**
      * The drawing has to fit its PROSE too, not just its music.
@@ -12210,7 +12229,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             (t) =>
               t.x +
               (t.anchor === 'middle' ? textWidth_(t) / 2 : textWidth_(t)) +
-              ENGRAVE.marginX,
+              PAGE_PADDING.left,
           ),
         ),
       ),
@@ -12651,7 +12670,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       score.staves,
       placed,
       braceHeaders(systemIndex).byStaff,
-      ENGRAVE.marginX + headerIndentFor(systemIndex),
+      PAGE_PADDING.left + headerIndentFor(systemIndex),
     )
     return {
       staves: placed,
@@ -12702,7 +12721,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     return {
       left: musicLeft[i] ?? leftEdgeFor(i),
       // …and the RIGHT edge is the MUSIC's, not the system's — see `LayoutSystem.musicWidth`.
-      right: system.musicWidth - ENGRAVE.marginX,
+      right: system.musicWidth - PAGE_PADDING.left,
       ...(last === undefined ? {} : { prefixEnd: last.x + last.width }),
     }
   })
@@ -12764,7 +12783,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
    * expressed relative to a system on purpose, so a break inserted earlier cannot shift a
    * later system's geometry.
    */
-  let pageCursor = ENGRAVE.marginTop
+  let pageCursor = PAGE_PADDING.top
   /** Absolute y of the BOTTOM staff line of the last system placed. */
   let previousBottomLine: number | null = null
   /** `lastStaffGroup.staffs[last].bottom`, in PITCH — what `addStaffPadding` reads. */
@@ -12997,7 +13016,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       ? undefined
       : topTextBlock(
           score.metadata,
-          systemWidth - ENGRAVE.marginX * 2,
+          systemWidth - PAGE_PADDING.left * 2,
           score.textAbove,
           score.fonts,
           0,
@@ -13035,7 +13054,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           trailing,
           trailingBlocks,
           0,
-          (systemWidth - ENGRAVE.marginX * 2) / 2,
+          (systemWidth - PAGE_PADDING.left * 2) / 2,
           score.fonts,
           trailingRules,
         )
@@ -13067,9 +13086,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       ? {}
       : {
           bottomLines: trailingRules.map((r) => ({
-            x1: (systemWidth - ENGRAVE.marginX * 2 - r.width) / 2,
+            x1: (systemWidth - PAGE_PADDING.left * 2 - r.width) / 2,
             y1: r.y + bottom,
-            x2: (systemWidth - ENGRAVE.marginX * 2 + r.width) / 2,
+            x2: (systemWidth - PAGE_PADDING.left * 2 + r.width) / 2,
             y2: r.y + bottom,
             thickness: 1 / UNIT_PX,
             role: 'separator' as const,
@@ -13086,7 +13105,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
      * neither expressible as a host-supplied constant, and the byte table is the only gate
      * that could see it, since a page too narrow moves no ink.
      */
-    pageWidth: pageRatcheted ? pageWidth + 2 * ENGRAVE.marginX : systemWidth,
+    pageWidth: pageRatcheted ? pageWidth + 2 * PAGE_PADDING.left : systemWidth,
     // See `blankLeadingLines` — every `T:` past the first is one.
     blankLeadingLines: Math.max(0, score.metadata.titles.length - 1),
     // `cursor` has one trailing gap on it, added after the last system. abcjs opens with
@@ -13113,7 +13132,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
      * remainder, which is exactly 0 whenever it names them all.
      */
     height: (() => {
-      let y = ENGRAVE.marginTop
+      let y = PAGE_PADDING.top
       const block = stafflessBlock === undefined ? undefined : stafflessBlock
       if (block !== undefined) {
         for (const a of block.advances) y += a
@@ -13155,9 +13174,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         // …ROW BY ROW, as `nonMusic` spends them — see `bottomTextBlock`.
         for (const a of bottomBlock.advances) y += a
       }
-      return y + ENGRAVE.marginBottom
+      return y + PAGE_PADDING.bottom
     })(),
-    top: -ENGRAVE.marginTop,
+    top: -PAGE_PADDING.top,
   }
 }
 
@@ -13193,13 +13212,13 @@ export function layoutBook(scores: readonly Score[], options: LayoutOptions = {}
   // the page begins ABOVE the ink. Expressed as a negative viewBox top rather than by
   // shifting every system, which would put the same constant in two places.
   //
-  // AND IT CLOSES WITH `padding.bottom` — see `ENGRAVE.marginBottom`.
+  // AND IT CLOSES WITH `padding.bottom` — see `PAGE_PADDING.bottom`.
   return {
     systems,
     width,
     pageWidth,
-    height: cursor + ENGRAVE.marginTop + ENGRAVE.marginBottom,
-    top: -ENGRAVE.marginTop,
+    height: cursor + PAGE_PADDING.top + PAGE_PADDING.bottom,
+    top: -PAGE_PADDING.top,
   }
 }
 
@@ -13481,7 +13500,7 @@ function topTextBlock(
    * 123.08. **No pixel gate compares text POSITION** — they pair noteheads — so it was
    * wrong on every titled tune in the repo and only the byte table could say so.
    */
-  const centre = ENGRAVE.marginX + width / 2
+  const centre = PAGE_PADDING.left + width / 2
 
   const titleSize = sizeOf('titlefont')
   const [title, ...subtitles] = metadata.titles
@@ -13561,7 +13580,7 @@ function topTextBlock(
         text: rhythm,
         role: 'title',
         dataName: 'rhythm',
-        x: ENGRAVE.marginX,
+        x: PAGE_PADDING.left,
         // `rhythm` takes `addTextIf` in BOTH cases — `top-text.js:38` never calls
         // `richText` for it — so a `$N` in an `R:` is flattened by abcjs too.
         y: y + sizeOf('infofont') + boxPad('infofont'),
@@ -13569,7 +13588,7 @@ function topTextBlock(
         ...styleIn('infofont', false, true),
         anchor: 'start',
         ...faceIn('infofont'),
-        ...boxIn('infofont', ENGRAVE.marginX, rhythm, 'start'),
+        ...boxIn('infofont', PAGE_PADDING.left, rhythm, 'start'),
       })
     }
     /**
@@ -13603,13 +13622,13 @@ function topTextBlock(
         text: right,
         role: 'title',
         dataName: 'composer',
-        x: ENGRAVE.marginX + width,
+        x: PAGE_PADDING.left + width,
         y: baselineOf(rightRich, sizeOf('composerfont'), boxPad('composerfont')),
         size: sizeOf('composerfont'),
         ...styleIn('composerfont', false, true),
         anchor: 'end',
         ...faceIn('composerfont'),
-        ...boxIn('composerfont', ENGRAVE.marginX + width, right, 'end'),
+        ...boxIn('composerfont', PAGE_PADDING.left + width, right, 'end'),
         ...richIn(rightRich, 'composerfont', false, true),
       })
     }
@@ -13635,13 +13654,13 @@ function topTextBlock(
       text: author,
       role: 'title',
       dataName: 'author',
-      x: ENGRAVE.marginX + width,
+      x: PAGE_PADDING.left + width,
       y: baselineOf(authorRich, sizeOf('composerfont'), boxPad('composerfont')),
       size: sizeOf('composerfont'),
       ...styleIn('composerfont', false, true),
       anchor: 'end',
       ...faceIn('composerfont'),
-      ...boxIn('composerfont', ENGRAVE.marginX + width, author, 'end'),
+      ...boxIn('composerfont', PAGE_PADDING.left + width, author, 'end'),
       ...richIn(authorRich, 'composerfont', false, true),
     })
     advanceText(authorRich, sizeOf('composerfont'), boxOf('composerfont'))
@@ -13668,7 +13687,7 @@ function topTextBlock(
       text: partOrder,
       role: 'title',
       dataName: 'part-order',
-      x: ENGRAVE.marginX + (boxed ? pad : 0),
+      x: PAGE_PADDING.left + (boxed ? pad : 0),
       y: baselineOf(partOrderRich, partsSize, boxed ? pad : 0),
       size: partsSize,
       ...styleIn('partsfont', false, false),
@@ -13678,7 +13697,7 @@ function topTextBlock(
       ...(boxed
         ? {
             boxRect: {
-              x: Math.round(ENGRAVE.marginX),
+              x: Math.round(PAGE_PADDING.left),
               width: Math.round(textWidth(partOrder, partsSize, 'serif') + pad * 2),
               height: Math.round(goldenTextHeight(partsSize) + pad * 2),
             },
@@ -13901,7 +13920,7 @@ function appendFreeText(
            * while `FreeText` centres on `width / 2` with no padding at all
            * (`free-text.js:37`), which is 335. Ours gave both 335.
            */
-          x: centre + ENGRAVE.marginX,
+          x: centre + PAGE_PADDING.left,
           y: y + size + boxPad('subtitlefont'),
           // …and the same baseline off the PAGE's cursor — see `PlacedText.advanceAt`.
           advanceAt: advances.length,
@@ -13913,7 +13932,7 @@ function appendFreeText(
           ...fontIn('subtitlefont'),
           ...boxIn(
             'subtitlefont',
-            centre + ENGRAVE.marginX,
+            centre + PAGE_PADDING.left,
             textWidth(line, size, 'serif'),
             goldenTextHeight(size),
             'middle',
@@ -13948,7 +13967,7 @@ function appendFreeText(
         // `%%text` sits at `paddingLeft` with `anchor: "start"` and `%%center` at
         // `width / 2` with no padding at all (`free-text.js:11`, `:37`) — the same split
         // the top block's rows take, and this row was placed at 0.
-        x: block.align === 'center' ? centre : ENGRAVE.marginX,
+        x: block.align === 'center' ? centre : PAGE_PADDING.left,
         y: y + textSize + index * ENGRAVE.freeTextLineStep + boxPad('textfont'),
         // …and the same baseline off the PAGE's cursor — see `PlacedText.advanceAt`.
         advanceAt: advances.length,
@@ -13968,7 +13987,7 @@ function appendFreeText(
         ...(index === 0
           ? boxIn(
               'textfont',
-              block.align === 'center' ? centre : ENGRAVE.marginX,
+              block.align === 'center' ? centre : PAGE_PADDING.left,
               Math.max(...block.lines.map((l) => textWidth(l, textSize, 'serif'))),
               goldenTextHeight(textSize) + (block.lines.length - 1) * ENGRAVE.freeTextLineStep,
               block.align === 'center' ? 'middle' : 'start',
@@ -14098,7 +14117,7 @@ function bottomTextBlock(
         text,
         role: 'title',
         dataName,
-        x: ENGRAVE.marginX,
+        x: PAGE_PADDING.left,
         y,
         size,
         bold: fontType === undefined ? false : (fonts[fontType]?.bold ?? false),
@@ -14153,7 +14172,7 @@ function bottomTextBlock(
         ? {}
         : {
             boxRect: {
-              x: Math.round(ENGRAVE.marginX),
+              x: Math.round(PAGE_PADDING.left),
               // **THE WIDEST NON-EMPTY TSPAN, AND ONE EXTRA LINE PER TSPAN AFTER THE
               // FIRST** — `h + (nonEmptyCount - 1) * fontSize * 1.2` and the max width
               // over the same set, which is the generator's patched `getBBox`
@@ -14171,7 +14190,7 @@ function bottomTextBlock(
               ),
             },
           }),
-      x: ENGRAVE.marginX + pad,
+      x: PAGE_PADDING.left + pad,
       y: y + size + pad,
       size,
       bold: fontType === undefined ? false : (fonts[fontType]?.bold ?? false),
