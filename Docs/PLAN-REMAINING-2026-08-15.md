@@ -103,6 +103,11 @@ with abcjs on `output-miss-accidental`. And `abcjs.synth`'s silent half,
 
 **Surface 62 → 32 absent.** `Docs/CHECKPOINT-2026-08-15c.md` is what landed and why.
 
+Phase 5 is opened too: **`%%vskip` is built and gated**, with a control fixture whose
+goldens come from abcjs. `%%visualTranspose` (a parse-time transposition of every pitch,
+`multilineVars.globalTranspose`) and `%%keywarn` (which suppresses the DRAWN clef/key of a
+mid-tune `K:`, not a warning) are still open.
+
 **NEXT, in order:** Phase 4 (`lines` + selectables, 389 expected entries, half already
 proven by `data-index` being byte-exact), Phase 5 (`%%vskip`, `%%visualTranspose`,
 `%%keywarn`), then the WebAudio and editor surface (`CreateSynth`, `SynthController`,

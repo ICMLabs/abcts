@@ -1190,6 +1190,24 @@ backup remote is not a licence to vendor someone else's tree into this one.
 > the space between — which is why `findNotes` masks the quoted and banged runs and does
 > NOT mask the braces.
 >
+> ⚠️ **AND AN UNBRACED `if` TURNS A PROBE INTO A BEHAVIOUR CHANGE.** Four probes in the
+> scratchpad copy of abcjs sat directly under an unbraced `if` and had STOLEN its body —
+> three of them on the very `foundKey` guards they were added to measure
+> (`abc_parse_header.js:371`, `:438`, `:515`, `wrap_lines.js:50`). All four are braced and
+> a sweep reports zero. **What it cost is nothing and that is knowable**: every golden in
+> both corpora comes from the VENDORED tree via `dump-svg.js`, never the scratchpad. There
+> is a check for it now — `/tmp/gp/twin.js` renders every fixture through BOTH trees and
+> diffs, **221 of 221 identical** — and, verified the way this branch verifies things, that
+> check CANNOT see this particular defect: re-breaking the brace leaves all 221 identical,
+> because no fixture reaches those guards' false arms. Gate the probe, and brace the `if`.
+>
+> ✅ **AND `%%vskip` IS BUILT** — the first of the three directives the sweep named, and it
+> moves the whole page. The CONTROL was written before the code and caught both edges the
+> first attempt got wrong: the FIRST line takes one too, and **the measurement is in POINTS
+> with `cm` going through inches**, so `%%vskip 1cm` is 28px and not the 37.7953 I assumed.
+> `svg-bytes` is 0 of **181** now and the harvested corpus 175 of 175 — the extra fixture
+> is OURS, with goldens from abcjs like every other row.
+>
 > **READ `Docs/CHECKPOINT-2026-08-15c.md` FIRST**, then the PLAN.
 
 > 🏁 **EVERY SVG BYTE GATE IS AT ZERO, ACROSS ALL FIVE FLAVOURS THE CORPUS IS RENDERED

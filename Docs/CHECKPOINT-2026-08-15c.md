@@ -204,12 +204,59 @@ preferring flats the whole way, so its last entry is `Db9`; `instrumentIndexToNa
 
 ---
 
+## 5b. `%%vskip`, AND THE ORACLE ITSELF HAD DRIFTED
+
+**`%%vskip n` is in** — blank space above a line, and it moves the whole page. `addSpacing`
+parks the number and `pushLine` stamps it onto whatever line is pushed next; `draw()`
+spends it with `moveY(abcLine.vskip)` BETWEEN the group opening and the staff padding
+(`tune-builder.js:304-306`, `:906-911`, `draw/draw.js:41-49`). Measured through abcjs
+first: two four-note lines are a 190.822px page and the same tune with `%%vskip 40` between
+them is 230.822.
+
+The CONTROL was written before the code and it caught both edges the first attempt got
+wrong: **the first line takes one too** (`if (abcLine.vskip)` is not guarded on
+`staffgroups.length`, so a header directive moves line 0), and **the measurement is in
+POINTS with `cm` going through inches** — `parseFloat(num)/2.54*72`, so `%%vskip 1cm` is
+**28px and not 38**. I had assumed 37.7953 px/cm.
+
+`tests/corpus-abcjs/fixtures/abcts-vskip.abc` is three rungs with goldens from abcjs 6.7.0
+at the corpus's own `{staffwidth: 670}`. **The 175th fixture is ours, not abcjs's** — only
+its INPUT was chosen by us; it is measured the same way as every other row.
+
+### AND FOUR PROBES HAD STOLEN THEIR GUARDS' BODIES
+
+Reading `%%keywarn` turned up this, in the scratchpad copy of abcjs:
+
+    if (result.foundKey && tuneBuilder.hasBeginMusic() && multilineVars.keywarn !== false)
+        if (process.env.ABCJS_KEY) console.error('FIXKEY site2 clef', …);
+        tuneBuilder.appendStartingElement('key', …);          // ← NO LONGER GUARDED
+
+**An unbraced `if` turns a probe into a behaviour change.** Four of them, all inserted by
+earlier sessions, three of them on the very `foundKey` guards they were added to measure —
+`abc_parse_header.js:371`, `:438`, `:515` and `wrap_lines.js:50`. All four are braced now,
+and a sweep for the pattern reports zero.
+
+**What it cost is knowable and it is nothing**, which is the only reason this is a note
+rather than a re-measurement of a week's findings: every golden in both corpora is
+generated from the VENDORED tree by `dump-svg.js`, never from the scratchpad, so no gate
+ever read the corrupted code. `/tmp/gp/twin.js` now renders every fixture through BOTH
+trees and diffs — **221 of 221 identical** — and, checked the way this branch checks
+things, that probe CANNOT see this particular defect: deliberately re-breaking the brace
+leaves all 221 identical, because no fixture in either corpus reaches those guards' false
+arms. So the hazard is real, the fix stands, and no past reading is known to be wrong.
+
+---
+
 ## 6. THE HARNESS ADDED
 
 Ours: `scripts/zzacc.ts` (every accessor row that differs), `scripts/zztim.ts` (our
 `setTiming` rows), `scripts/zzev.ts` (our parsed event durations), `scripts/zzflat.ts`
 (our flattened MIDI notes), `tests/render-all.ts` (one output slot per tune, the way
 abcjs's generator asks).
+
+**AND `twin.js`, WHICH CHECKS THE ORACLE ITSELF** — every fixture rendered through the
+vendored tree and the scratchpad and diffed. Nothing did that before, and four probes had
+silently changed abcjs's behaviour.
 
 abcjs, in the SCRATCHPAD COPY at `/tmp/gp/abcjs` — never `../abcMusicKit`:
 `surface.js` (the whole public surface, walked), `accessors.js` (nine accessors per tune
