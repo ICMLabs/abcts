@@ -54,6 +54,7 @@ import {
 } from "./synth.js";
 import { numberOfTunes } from "./tunebook.js";
 import { parse } from "../parser/parser.js";
+import { EngraverController, Parse } from "./engraver.js";
 import { strTranspose as transposeString } from "../str/transpose.js";
 import { STAFF_SPACE_PX, UNIT_PX } from "../renderer/abcjs-constants.js";
 import { layout } from "../renderer/layout.js";
@@ -441,6 +442,12 @@ export const synth = {
   },
 };
 
+/**
+ * `abcjs.test` — the two internals abcjs exposes "for testing", and which its own golden
+ * generator calls. `EngraverController` is what a STACKED render is.
+ */
+export const test = { Parse, EngraverController };
+
 export function parseOnly(abc: string, params: AbcjsParams = {}): TuneObject[] {
   return renderAbc(
     new Array<string>(numberOfTunes(abc)).fill("*"),
@@ -464,37 +471,10 @@ export function parseOnly(abc: string, params: AbcjsParams = {}): TuneObject[] {
  * and the last call wins.
  */
 export function renderTuneBook(abc: string, params: AbcjsParams = {}): string {
-  const result = parse(abc, { mode: "abcjs-strict" });
-  const printing = params.print === true;
-  const padding = printing ? PRINT_PADDING : SCREEN_PADDING;
-  const scale = printing ? PRINT_SCALE : 1;
-  const systemWidth =
-    params.staffwidth === undefined
-      ? undefined
-      : (params.staffwidth + padding * 2) / UNIT_PX / scale;
-  // **ONE CONTINUOUS PAGE CURSOR** — each tune's walk is seeded with the one above's
-  // `endY`, because abcjs's `renderer.y` runs through every advance of every tune and a
-  // sum of per-tune totals is a different double. See `LayoutOptions.pageTop`.
-  let pageTop = 0;
-  const layouts = result.scores.map((score) => {
-    const doc = layout(score, {
-      mode: "abcjs-strict",
-      ...(systemWidth ? { systemWidth } : {}),
-      ...(printing ? { print: true } : {}),
-      pageTop,
-    });
-    pageTop = doc.endY ?? pageTop;
-    return doc;
-  });
-  return toSVG(layouts, {
-    staffSpace: STAFF_SPACE_PX * (params.scale ?? 1),
-    classes: "abcjs",
-    ...(params.add_classes === true ? { addClasses: true } : {}),
-    // One `<style>`/`<title>` pair per tune, in reverse — see `RenderOptions.titles`.
-    titles: result.scores.map((score) =>
-      score.metadata.titles[0] === undefined
-        ? undefined
-        : ariaTitle(score.metadata.titles[0]),
-    ),
-  });
+  // **AND IT DELEGATES**, rather than standing beside `EngraverController` doing the same
+  // thing: abcjs's own generator calls `new EngraverController(div, params).engraveABC(…)`
+  // and this is that call.
+  return new EngraverController(null, params).engraveABC(
+    parseOnly(abc, params),
+  );
 }
