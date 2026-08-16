@@ -1,10 +1,9 @@
-// Rest events. `ABC=$'X:1\nM:4/4\nK:C\nZ2\n' npx tsx scripts/zzr.ts`
-import { parse } from "../src/parser/parser.js";
-const r = parse(process.env.ABC ?? "");
-if (!r.ok) throw new Error("parse failed");
-for (const m of r.scores[0]?.voices[0]?.measures ?? [])
-  for (const e of m.events)
-    if (e.type === "rest")
-      console.log(
-        JSON.stringify({ kind: e.kind, dur: e.duration, mc: e.measureCount }),
-      );
+// An IN-REPO corpus fixture rendered like the byte gate -> /tmp/ours.svg
+//   S=<slug> [T=<tune>] npx tsx scripts/zzr.ts
+import { readFileSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { numberOfTunes, renderAbc } from '../src/compat/index.js'
+const dir = join(import.meta.dirname, '..', 'tests', 'corpus-abcjs', 'fixtures')
+const abc = readFileSync(join(dir, `${process.env.S}.abc`), 'utf8')
+const out = renderAbc(new Array<string>(numberOfTunes(abc)).fill('*'), abc, { staffwidth: 670 })
+writeFileSync('/tmp/ours.svg', out[Number(process.env.T ?? 0)]?.svg ?? '')

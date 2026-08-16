@@ -5801,6 +5801,9 @@ let STRICT_TEXT_METRICS = true
 /** `%%jazzchords` for the current render — same one-place switch, set beside it. */
 let JAZZ_CHORDS = false
 
+/** `%%keywarn 0` stops a mid-tune `K:` being DRAWN — see `Score.keywarn`. */
+let KEYWARN = true
+
 /**
  * LINE WEIGHTS for the current render — abcjs's in strict, Bravura's otherwise.
  *
@@ -9700,6 +9703,10 @@ function layoutMeasure(
   const openingBarAt = measure.openingBarlineSourceRange?.start ?? Number.POSITIVE_INFINITY
   const drawKeyChange = (): void => {
     if (measure.keyChange === null || keyInForce === null) return
+    // **`%%keywarn 0` STOPS IT BEING DRAWN, not taking effect** — `appendStartingElement`
+    // is guarded on it, so no key element enters the stream while every note after the
+    // change is still spelled in the new key. See `Score.keywarn`.
+    if (!KEYWARN) return
     // NOT WHEN IT LEADS THE SYSTEM — the prefix already carries it, and the previous
     // system's `trailingKey` already drew it. See `keyChangeLeadsLine`.
     if (keyChangeLeadsLine(measure)) return
@@ -10552,6 +10559,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   STRICT_TEXT_METRICS = strict
   LINE_WEIGHTS = lineWeightsFor(strict)
   JAZZ_CHORDS = score.jazzChords
+  KEYWARN = score.keywarn
   SCORE_FONTS = score.fonts
   SCORE_PARTS_BOX = score.partsBox
   PERC_MAP = score.percMap
@@ -10853,6 +10861,20 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         (voicesOfStaff.find((m) => m.includes(voiceIndex))?.length ?? 1) > 1,
         (() => {
           const next = (voice?.measures ?? [])[measureIndex + 1]
+          /**
+           * **`%%keywarn 0` REMOVES THE CAUTIONARY KEY AND NOTHING ELSE.** Its guard is on
+           * `appendStartingElement`, which is what puts a key ELEMENT in the stream — so
+           * the warning at the end of the previous line goes, while the new line's own
+           * signature stays, because that comes from `staff.key` and `multilineVars.key`
+           * is updated either way (`abc_parse_header.js:435-437`).
+           *
+           * MEASURED on the control, sharps by position: with no directive abcjs draws
+           * three — 682.48 (the cautionary), 54.78 (line 2's own key) and 190.06 (a `^c`
+           * accidental); with `%%keywarn 0` it draws TWO, having dropped only the first.
+           * A first attempt suppressed the line-leading key as well and took line 2's
+           * notes 18.25px left of abcjs's.
+           */
+          if (!KEYWARN) return null
           if (!keyChangeLeadsLine(next) || next?.keyChange == null) return null
           // The key as THIS measure ends is what the cancellation is measured against, and
           // `keyInForce` is still that: `measure.keyChange` is applied below.

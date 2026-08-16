@@ -1306,6 +1306,23 @@ export interface Score {
    * abcjs has no way to turn it off again — the directive only ever sets it TRUE
    * (`abc_parse_directive.js:791`).
    */
+  /**
+   * **`%%keywarn 0` STOPS A MID-TUNE `K:` BEING DRAWN**, without stopping it taking
+   * effect.
+   *
+   * `appendStartingElement('key', …)` is guarded on `multilineVars.keywarn !== false`
+   * (`abc_parse_header.js:435-437`, `:511`), so with the directive off no key element
+   * enters the stream — while `multilineVars.key` is set either way, so every note after
+   * it is still spelled in the new key. The name says "warn" and the effect is the
+   * DRAWING.
+   *
+   * **AND IT TAKES 0 OR 1, NOT `false`** — `tokens[0].intt !== 1 && tokens[0].intt !== 0`
+   * is an error and the directive is dropped (`abc_parse_directive.js:941-946`), so
+   * `%%keywarn false` does nothing at all. Measured: `%%keywarn 0` moves the second line's
+   * first notehead from 209.316 to 213.878 and takes 1,766 bytes off the page;
+   * `%%keywarn false` is byte-identical to no directive.
+   */
+  readonly keywarn: boolean
   readonly jazzChords: boolean
   /**
    * `%%percmap <abc-note> <drum-sound> [<note-head>]` — the NOTEHEAD a written pitch draws

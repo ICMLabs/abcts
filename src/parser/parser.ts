@@ -1824,6 +1824,7 @@ interface Formatting {
   musicSpace: number | null
   partsBox: boolean
   jazzChords: boolean
+  keywarn: boolean
   percMap: Record<string, PercMapEntry>
   drumMap?: Record<string, number>
   midi?: Record<string, readonly (string | number)[]>
@@ -1911,6 +1912,8 @@ class ScoreBuilder {
   musicSpace: number | null = null
   partsBox = false
   jazzChords = false
+  /** `%%keywarn 0` stops a mid-tune `K:` being DRAWN — see `Score.keywarn`. */
+  keywarn = true
   percMap: Record<string, PercMapEntry> = {}
   /** `%%MIDI drummap <abc-note> <midi>` — accumulated, one key per directive line. */
   drumMap: Record<string, number> = {}
@@ -1928,6 +1931,7 @@ class ScoreBuilder {
       musicSpace: this.musicSpace,
       partsBox: this.partsBox,
       jazzChords: this.jazzChords,
+      keywarn: this.keywarn,
       percMap: this.percMap,
       drumMap: this.drumMap,
       midi: this.midi,
@@ -2195,6 +2199,7 @@ class ScoreBuilder {
       musicSpace: this.musicSpace,
       partsBox: this.partsBox,
       jazzChords: this.jazzChords,
+      keywarn: this.keywarn,
       percMap: this.percMap,
       drumMap: this.drumMap,
       midi: this.midi,
@@ -2628,6 +2633,16 @@ class Parser {
      * Found by the Phase 0 sweep: in abcjs's own tests, in NEITHER corpus, and it moves
      * the whole page — see `Measure.vskip`.
      */
+    /**
+     * `%%keywarn 0|1` — see `Score.keywarn`. **NOT `true`/`false`**: abcjs requires the
+     * integer 0 or 1 and drops the directive otherwise
+     * (`abc_parse_directive.js:941-946`), so `%%keywarn false` is a no-op.
+     */
+    const keywarn = /^keywarn\s+([01])\s*$/.exec(body)
+    if (keywarn?.[1] !== undefined) {
+      if (this.builder) this.builder.keywarn = keywarn[1] === '1'
+      return
+    }
     const vskip = /^vskip\s+(-?\d+(?:\.\d+)?)\s*(cm|in|pt)?/.exec(body)
     if (vskip?.[1] !== undefined) {
       const n = Number.parseFloat(vskip[1])
