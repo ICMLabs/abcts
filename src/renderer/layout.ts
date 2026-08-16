@@ -11846,9 +11846,26 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         ...heading,
         ...nameElements,
         // The prefix rides the same cursor as the music, so its elements move with it.
-        ...(heads[voiceIndex]?.elements ?? []).map((el, index) =>
-          shiftElement(el, (prefixX[index] ?? el.x) - el.x),
-        ),
+        ...(heads[voiceIndex]?.elements ?? []).map((el, index) => {
+          const at = prefixX[index] ?? el.x
+          /**
+           * **A TEMPO MARK IS BUILT AT DRAW TIME, FROM THE SOLVED x** — `drawTempo` takes
+           * `params.x` and walks its own cursor over it, `x += preWidth + charWidth` and
+           * then `x += note.w + 5` (`draw/tempo.js:5-38`). Every other prefix element is
+           * PLACED, its children carrying constructed offsets; this one has none, because
+           * abcjs never computes them until it has the x.
+           *
+           * It matters because the prefix builder's provisional x and the line solve's are
+           * two accumulations of the same widths and disagree in the last bit —
+           * `163.2626666666667` against abcjs's own `163.26266666666666`. Rounded text
+           * hides it; the beat-unit notehead's raw path does not, and it was the last
+           * `-print` row. Rebuilding is what makes the mark's internal cursor start where
+           * abcjs's does.
+           */
+          if (el.type === 'tempo' && score.tempo !== null)
+            return layoutTempo(at, score.tempo, strict) ?? placeElement(el, at)
+          return placeElement(el, at)
+        }),
       ]
       const beamGroups = new Map<number, StemInfo[]>()
       const voltaLines: PlacedLine[] = []
