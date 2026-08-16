@@ -71,6 +71,10 @@ import {
 } from '../core/model.js'
 import { Lexer, type Token } from './lexer.js'
 import { decodeTextString, setAbcjsEscapes } from './text.js'
+import { visualTranspose } from './visual-transpose.js'
+
+/** The host's `visualTranspose` param for this parse — see `ParseOptions`. */
+let HOST_TRANSPOSE = 0
 
 /**
  * Both branches carry everything.
@@ -1914,6 +1918,8 @@ class ScoreBuilder {
   jazzChords = false
   /** `%%keywarn 0` stops a mid-tune `K:` being DRAWN — see `Score.keywarn`. */
   keywarn = true
+  /** `%%visualTranspose n` — see `visualTranspose`. */
+  visualTranspose = 0
   percMap: Record<string, PercMapEntry> = {}
   /** `%%MIDI drummap <abc-note> <midi>` — accumulated, one key per directive line. */
   drumMap: Record<string, number> = {}
@@ -2270,7 +2276,20 @@ class Parser {
   }
 
   private flush(): void {
-    if (this.builder && !this.builder.isEmpty) this.scores.push(this.builder.finish())
+    if (this.builder && !this.builder.isEmpty) {
+      // **`%%visualTranspose` IS APPLIED TO THE FINISHED SCORE**, not woven through the
+      // parse. abcjs transposes as it reads, but its `accidentalChange` is written against
+      // the ORIGINAL and TARGET key signatures explicitly rather than against running
+      // state, so the two are the same transform in different places — and this one cannot
+      // leak into a tune that did not ask for it.
+      // **THE HOST'S `visualTranspose` AND THE DIRECTIVE ARE THE SAME KNOB** — abcjs sets
+      // `multilineVars.globalTranspose` from either (`abc_parse.js:529-536`,
+      // `abc_parse_directive.js:1206-1212`), and its own test helper checks that by
+      // writing the directive into the string. The directive wins where both are given,
+      // because it is read later.
+      const steps = this.builder.visualTranspose || HOST_TRANSPOSE
+      this.scores.push(visualTranspose(this.builder.finish(), steps))
+    }
     this.builder = null
   }
 
@@ -2638,6 +2657,17 @@ class Parser {
      * integer 0 or 1 and drops the directive otherwise
      * (`abc_parse_directive.js:941-946`), so `%%keywarn false` is a no-op.
      */
+    /**
+     * `%%visualTranspose n` — every pitch moved AT PARSE TIME, key signature and spelling
+     * with it (`abc_parse_directive.js:1206-1212`). abcjs warns when the number is missing
+     * and otherwise sets `multilineVars.globalTranspose`; the transform itself is
+     * `src/parser/visual-transpose.ts`.
+     */
+    const visual = /^visualtranspose\s+(-?\d+)\s*$/i.exec(body)
+    if (visual?.[1] !== undefined) {
+      if (this.builder) this.builder.visualTranspose = Number.parseInt(visual[1], 10)
+      return
+    }
     const keywarn = /^keywarn\s+([01])\s*$/.exec(body)
     if (keywarn?.[1] !== undefined) {
       if (this.builder) this.builder.keywarn = keywarn[1] === '1'
@@ -4897,6 +4927,13 @@ export interface ParseOptions {
    * its bugs — see `CompatibilityMode`.
    */
   readonly mode?: CompatibilityMode
+  /**
+   * abcjs's `visualTranspose` render param — every pitch moved at parse time, key
+   * signature and spelling with it. The same knob `%%visualTranspose n` turns, and the
+   * DIRECTIVE wins where both are given because it is read later
+   * (`abc_parse.js:529-536`).
+   */
+  readonly visualTranspose?: number
 }
 
 /**
@@ -4923,6 +4960,7 @@ export interface ParseOptions {
 const escapePercent = (source: string): string => source.replace(/\\%/g, '\u200B\uFF05')
 
 export function parse(source: string, options: ParseOptions = {}): ParseResult {
+  HOST_TRANSPOSE = options.visualTranspose ?? 0
   const mode = options.mode ?? defaultMode
   // WHICH ESCAPE TABLE THE TEXT DECODER READS — abcjs's fixed map in strict, ABC 2.1's
   // generic combining marks everywhere else. Set here rather than threaded through the

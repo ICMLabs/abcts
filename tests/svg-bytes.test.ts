@@ -295,6 +295,10 @@ const PASSING: readonly string[] = [
   "abcts-keywarn-tune0",
   "abcts-keywarn-tune1",
   "abcts-keywarn-tune2",
+  "abcts-visualtranspose-tune0",
+  "abcts-visualtranspose-tune1",
+  "abcts-visualtranspose-tune2",
+  "abcts-visualtranspose-tune3",
 ];
 
 interface Diff {

@@ -115,6 +115,13 @@ export interface AbcjsParams {
   readonly add_classes?: boolean;
   /** Which tune of the book the first output slot gets (`abc_tunebook.js:69`). */
   readonly startingTune?: number | string;
+  /**
+   * abcjs's `visualTranspose` — every pitch moved AT PARSE TIME, key signature and
+   * spelling with it. The same thing `%%visualTranspose n` does, and abcjs's own test
+   * helper writes the directive into the string to check the two agree
+   * (`abc_parse.js:529-536`, `tests/visual/transpose.test.js:255-262`).
+   */
+  readonly visualTranspose?: number;
 }
 
 /**
@@ -239,7 +246,10 @@ export function renderAbc(
   abc: string,
   params: AbcjsParams = {},
 ): TuneObject[] {
-  const result = parse(abc, { mode: "abcjs-strict" });
+  const result = parse(abc, {
+    mode: "abcjs-strict",
+    ...(params.visualTranspose ? { visualTranspose: params.visualTranspose } : {}),
+  });
   const staffSpace = STAFF_SPACE_PX * (params.scale ?? 1);
   // abcjs's staffwidth is the MUSIC AREA in pixels; core's `systemWidth` is the PAGE in
   // staff spaces — `%%staffwidth` maps `staffWidth / 7.75 + 2 * marginX` and the engine
