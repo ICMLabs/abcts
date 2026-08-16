@@ -1793,6 +1793,11 @@ export interface LayoutSystem {
   readonly musicWidth: number
   /** The separation spent BEFORE this system — see the placement loop. */
   readonly gap?: number
+  /**
+   * `%%vskip n` — blank space above this system, spent BEFORE the staff padding
+   * (`draw/draw.js:44-46`). See `Measure.vskip`.
+   */
+  readonly vskip?: number
   /** Width of this system, staff spaces. Systems wrap, so they differ. */
   readonly width: number
   /**
@@ -11226,6 +11231,16 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   const blocksBeforeSystem: FreeTextBlock[][] = spans.map((sp) =>
     plans.flatMap((p) => [...(p.measures[sp.start]?.textBefore ?? [])]),
   )
+  /**
+   * **`%%vskip` BELONGS TO THE LINE IT WAS STAMPED ON**, read off the same first measure
+   * the blocks are — `pushLine` puts it on the next line pushed and `draw()` spends it with
+   * `moveY(abcLine.vskip)` before the staff padding (`tune-builder.js:906-911`,
+   * `draw/draw.js:44-46`). Unlike the blocks it applies to the FIRST system too, because
+   * that `if` is not guarded on `staffgroups.length`.
+   */
+  const vskipBeforeSystem: number[] = spans.map(
+    (sp) => plans.map((p) => p.measures[sp.start]?.vskip ?? 0).find((v) => v > 0) ?? 0,
+  )
   /** The first system's own blocks belong after it — to the next system, or to the tail. */
   const blocksAfterLastSystem = blocksBeforeSystem[0] ?? []
   blocksBeforeSystem[0] = []
@@ -12793,6 +12808,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       firstTopPitch,
       lastBottomPitch,
       leading: leadingCursor,
+      // `%%vskip` — see `vskipBeforeSystem`.
+      ...(vskipBeforeSystem[systemIndex] ? { vskip: vskipBeforeSystem[systemIndex] } : {}),
       // Staff 0's own list is the lead — see `LayoutSystem.leadAdvances`. A staff after the
       // first re-states it as `leadTerms`, so slicing it off is uniform across the system.
       leadAdvances: placed[0]?.originAdvances ?? [],
@@ -12946,7 +12963,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             const separationInPixels = naturalSeparation * ENGRAVE.spacePerStep
             return separationInPixels < interSystemSep ? interSystemSep - separationInPixels : 0
           })()
-    const originY = cursor + padding
+    const originY = cursor + (system.vskip ?? 0) + padding
     /**
      * **THE LEAD IS SPENT ROW BY ROW, AND BEFORE THE PADDING.** `draw()` runs
      * `nonMusic(abcLine.nonMusic)` the moment it reaches the line and only THEN calls
@@ -12965,6 +12982,11 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       pageCursor += a
       leadCursors.push(pageCursor)
     }
+    // **`%%vskip` GOES IN BEFORE THE PADDING** — `openGroup`, then
+    // `if (abcLine.vskip) moveY(vskip)`, then `addStaffPadding` (`draw/draw.js:41-49`).
+    // See `LayoutSystem.vskip`.
+    const vskip = system.vskip ?? 0
+    pageCursor += vskip
     pageCursor += padding
     /**
      * This system's absolute top — `renderer.y` as abcjs enters `drawStaffGroup`, so the
@@ -13226,6 +13248,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           y += a
           if (process.env.ABCTS_Y) console.log('Y lead', a, '->', y)
         }
+        // …**AND THE FIRST SYSTEM TAKES ITS `%%vskip` TOO** — `if (abcLine.vskip)` is not
+        // guarded on `staffgroups.length`, so a directive in the HEADER moves line 0
+        // (`draw/draw.js:41-46`). See `LayoutSystem.vskip`.
+        y += first?.vskip ?? 0
         for (const [i, system] of shown.entries()) {
           if (i > 0) {
             // A MID-TUNE BLOCK is this system's own leading — abcjs draws that nonMusic
@@ -13236,6 +13262,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
               y += a
               if (process.env.ABCTS_Y) console.log('Y sysLead', a, '->', y)
             }
+            // `%%vskip`, spent before the padding — see `LayoutSystem.vskip`.
+            y += system.vskip ?? 0
             y += system.gap ?? 0
             if (process.env.ABCTS_Y) console.log('Y gap', system.gap ?? 0, '->', y)
           }

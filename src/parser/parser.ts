@@ -998,7 +998,14 @@ class VoiceBuilder {
       current: number
       firstVoiceId: string | null
     } = { every: null, current: 1, firstVoiceId: null },
+    /** `%%vskip` waiting for the next line, shared across voices as abcjs shares it. */
+    readonly pendingVskip: { value: number | null } = { value: null },
   ) {}
+
+  /** `%%vskip n` — see `Measure.vskip`. */
+  setPendingVskip(px: number): void {
+    this.pendingVskip.value = px
+  }
 
   /**
    * The number to print on the barline now closing, or null.
@@ -1559,6 +1566,14 @@ class VoiceBuilder {
    * Returns nothing on every other measure, so the field stays absent rather than an
    * empty array — a measure carrying `textBefore: []` would read as "there was text".
    */
+  /** `%%vskip` waiting for the next line — see `Measure.vskip`. */
+  private takeVskip(startsSystem: boolean): { vskip?: number } {
+    if (!startsSystem || this.pendingVskip.value === null) return {}
+    const n = this.pendingVskip.value
+    this.pendingVskip.value = null
+    return { vskip: n }
+  }
+
   private takeTextBefore(startsSystem: boolean): { textBefore?: readonly FreeTextBlock[] } {
     if (!startsSystem || this.pendingTextBefore.blocks.length === 0) return {}
     const blocks = this.pendingTextBefore.blocks
@@ -1628,6 +1643,7 @@ class VoiceBuilder {
           startsSystem,
           ...this.takeSystemBarNumber(startsSystem),
           ...this.takeTextBefore(startsSystem),
+          ...this.takeVskip(startsSystem),
         }
       })(),
       closingBarline: barline,
@@ -1712,6 +1728,7 @@ class VoiceBuilder {
           startsSystem,
           ...this.takeSystemBarNumber(startsSystem),
           ...this.takeTextBefore(startsSystem),
+          ...this.takeVskip(startsSystem),
         }
       })(),
       closingBarline: null,
@@ -1967,6 +1984,8 @@ class ScoreBuilder {
    * at the first measure of the span across all voices.
    */
   readonly pendingTextBefore: { blocks: FreeTextBlock[] } = { blocks: [] }
+  /** `%%vskip` waiting for the next line — see `Measure.vskip`. */
+  readonly pendingVskip: { value: number | null } = { value: null }
   /**
    * The tune-level `K: octave=` — abcjs's `multilineVars.octave`, which is GLOBAL and can
    * change mid-tune. A voice that set its own `octave=` ignores it.
@@ -2018,7 +2037,13 @@ class ScoreBuilder {
   voiceFor(id: string): VoiceBuilder {
     let builder = this.voices.get(id)
     if (!builder) {
-      builder = new VoiceBuilder(id, this.pendingTextBefore, this.keyOctave, this.barNumbering)
+      builder = new VoiceBuilder(
+        id,
+        this.pendingTextBefore,
+        this.keyOctave,
+        this.barNumbering,
+        this.pendingVskip,
+      )
       this.barNumbering.firstVoiceId ??= id
       this.voices.set(id, builder)
     }
@@ -2592,6 +2617,30 @@ class Parser {
           length: Math.round(length ?? 85),
         },
       })
+      return
+    }
+    /**
+     * **`%%vskip n` — BLANK SPACE ABOVE THE NEXT LINE.** `addSpacing` parks the number and
+     * `pushLine` stamps it onto whatever line is pushed next
+     * (`abc_parse_directive.js:872-877`, `tune-builder.js:304-306`, `:906-911`). abcjs
+     * ROUNDS the measurement, so `%%vskip 40` is 40 and `%%vskip 1cm` is 38.
+     *
+     * Found by the Phase 0 sweep: in abcjs's own tests, in NEITHER corpus, and it moves
+     * the whole page — see `Measure.vskip`.
+     */
+    const vskip = /^vskip\s+(-?\d+(?:\.\d+)?)\s*(cm|in|pt)?/.exec(body)
+    if (vskip?.[1] !== undefined) {
+      const n = Number.parseFloat(vskip[1])
+      const unit = vskip[2]
+      // **THE MEASUREMENT IS IN POINTS, AND `cm` GOES THROUGH INCHES** —
+      // `case 'cm': value = parseFloat(num)/2.54*72` and `case 'in': value = num*72`,
+      // while `pt` and `px` are taken as written (`abc_tokenizer.js:776-782`). So
+      // `%%vskip 1cm` is 28px and not 38: abcjs converts to POINTS and then spends them as
+      // pixels, which is a conflation and is the contract.
+      const px = unit === 'cm' ? (n / 2.54) * 72 : unit === 'in' ? n * 72 : n
+      // The directive can stand in the HEADER, before any voice exists, and abcjs parks it
+      // on the TUNE either way — so it goes on the score's shared box, not the voice's.
+      if (this.builder) this.builder.pendingVskip.value = Math.round(px)
       return
     }
     // `%%staffsep` / `%%sysstaffsep` — minimum staff separations, given in POINTS and

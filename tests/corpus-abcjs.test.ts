@@ -399,15 +399,21 @@ const WITHIN: Readonly<Record<string, number>> = {
   // `%%` lines (`abc_parse_book.js:12-33`). That was the last CONTENT gap, and closing it
   // made the 174th fixture measurable for the first time.
   //
-  // **174 OF 174, ON EVERY THRESHOLD.** The whole harvested corpus agrees with abcjs on
+  // **175 OF 175, ON EVERY THRESHOLD.** The whole harvested corpus agrees with abcjs on
   // note content and on all four geometric axes to within 0.05px. The ranked table is
   // EMPTY — it prints no rows at all — so it can no longer name anything, and the gates
   // that remain are regression nets rather than instruments. See
   // `Docs/CHECKPOINT-2026-08-06b.md` for what that means for finding the next defect.
-  "0.05": 174,
-  "1": 174,
-  "5": 174,
-  "25": 174,
+  //
+  // **THE 175th IS OURS, NOT abcjs's** — `abcts-vskip.abc`, a CONTROL written on
+  // 2026-08-15 for a directive that appears in abcjs's own tests and in NEITHER corpus.
+  // Its goldens come from running abcjs 6.7.0 like every other row here, so it is measured
+  // the same way; only its INPUT was chosen by us. That is the pattern this branch has
+  // used for every feature no fixture exercised.
+  "0.05": 175,
+  "1": 175,
+  "5": 175,
+  "25": 175,
 };
 
 const names = readdirSync(fixturesDir)

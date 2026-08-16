@@ -289,6 +289,9 @@ const PASSING: readonly string[] = [
   "abcjs-visual-wrap-03-piano-wrap",
   "abcjs-visual-wrap-04-wrap-quartet",
   "abcjs-visual-wrap-05-score-1-2-3-4",
+  "abcts-vskip-tune0",
+  "abcts-vskip-tune1",
+  "abcts-vskip-tune2",
 ];
 
 interface Diff {

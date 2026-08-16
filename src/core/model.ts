@@ -966,6 +966,21 @@ export interface Measure {
   }[]
   readonly startsSystem: boolean
   /**
+   * **`%%vskip n` — BLANK VERTICAL SPACE ABOVE THIS SYSTEM**, in pixels.
+   *
+   * `addSpacing` parks the number on `tune.vskipPending` and `pushLine` stamps it onto the
+   * NEXT line pushed, whatever kind that is (`tune-builder.js:304-306`, `:906-911`);
+   * `draw()` then spends it with `moveY(abcLine.vskip)` BEFORE the staff separation
+   * (`draw/draw.js:44-46`), and a nonMusic line spends it as `FreeText`'s first row
+   * (`elements/free-text.js:5-6`).
+   *
+   * Measured through abcjs: two four-note lines are a 190.822px page and the same tune
+   * with `%%vskip 40` between them is 230.822 — exactly 40 more, and nothing else moves.
+   * The directive appears in abcjs's own tests and in NEITHER of our corpora, which is how
+   * it went unbuilt; `tests/corpus-abcjs/fixtures/abcts-vskip.abc` is the control.
+   */
+  readonly vskip?: number
+  /**
    * Free-text blocks and mid-tune subtitles standing between the PREVIOUS system and this
    * one. Empty for all but the first measure of a system, and empty on that one too
    * unless something non-musical stood above it.
