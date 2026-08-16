@@ -43,6 +43,15 @@ import {
 } from "../audio/timing.js";
 import { plainText, type RichText, type Score } from "../core/model.js";
 export { type BookTune, numberOfTunes, TuneBook } from "./tunebook.js";
+import {
+  activeAudioContext,
+  getMidiFileFor,
+  instrumentIndexToName,
+  type MidiFileParams,
+  pitchToNoteName,
+  registerAudioContext,
+  supportsAudio,
+} from "./synth.js";
 import { numberOfTunes } from "./tunebook.js";
 import { parse } from "../parser/parser.js";
 import { strTranspose as transposeString } from "../str/transpose.js";
@@ -403,6 +412,34 @@ export function strTranspose(
     steps,
   );
 }
+
+/**
+ * `abcjs.synth` — the parts that make no sound, which are the parts that can be compared
+ * exactly. `CreateSynth`, `SynthController` and `CreateSynthControl` need WebAudio and a
+ * soundfont and are not here yet; their contract is the event sequence, already 0 of 72.
+ */
+export const synth = {
+  pitchToNoteName,
+  instrumentIndexToName,
+  supportsAudio,
+  registerAudioContext,
+  activeAudioContext,
+  /** `getMidiFile(source, options)` — a string is parsed, a tune array is used as given. */
+  getMidiFile(
+    source: string | readonly TuneObject[],
+    options: MidiFileParams = {},
+  ): (string | Uint8Array)[] {
+    const tunes =
+      typeof source === "string"
+        ? parseOnly(source)
+        : (source as readonly TuneObject[]);
+    return getMidiFileFor(
+      tunes.map((t) => t.score),
+      tunes.map((t) => t.metaText.title),
+      options,
+    );
+  },
+};
 
 export function parseOnly(abc: string, params: AbcjsParams = {}): TuneObject[] {
   return renderAbc(
