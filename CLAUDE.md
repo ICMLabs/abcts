@@ -1208,7 +1208,17 @@ backup remote is not a licence to vendor someone else's tree into this one.
 > `svg-bytes` is 0 of **181** now and the harvested corpus 175 of 175 — the extra fixture
 > is OURS, with goldens from abcjs like every other row.
 >
-> **READ `Docs/CHECKPOINT-2026-08-15c.md` FIRST**, then the PLAN.
+> 🧩 **AND PHASE 4 IS OPEN — `tune.lines` IS A PROJECTION AT 250,226 OF 256,138
+> CHARACTERS**, with 170 tunes ratcheted exact. The oracle is abcjs asked for the element
+> at EVERY character of all 303 tunes in both corpora. **THE SPANS TILE THE LINE, AND THE
+> ASYMMETRY IS THE FINDING**: each element opens where the one before it closed, and a
+> NOTE closes over its trailing whitespace while a BAR does not. What is left is measured,
+> not claimed — six element types with no source range, and **a chord's range stopping
+> short of a trailing tie** (`[G,D]/4-` is 272…281 in abcjs and 272…279 in ours, worth
+> 1,273 characters on `ragtime-nightingale` alone).
+>
+> **READ `Docs/HANDOFF-2026-08-15c.md` FIRST** — the gate table, the ordered work list and
+> the two traps — then `Docs/CHECKPOINT-2026-08-15c.md`, then the PLAN.
 
 > 🏁 **EVERY SVG BYTE GATE IS AT ZERO, ACROSS ALL FIVE FLAVOURS THE CORPUS IS RENDERED
 > IN** (2026-08-15b). `svg-bytes` **0 of 178**, `svg-bytes-sibling` **0 of 356 with all

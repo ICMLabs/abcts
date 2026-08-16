@@ -180,16 +180,17 @@ preferring flats the whole way, so its last entry is `Db9`; `instrumentIndexToNa
 
 ---
 
-## 5. WHAT IS LEFT — 32 symbols
+## 5. WHAT IS LEFT — 30 symbols
 
 `Docs/PLAN-REMAINING-2026-08-15.md` has the order. In descending size:
 
-- **`lines`, `engraver`, the selectables** — `getElementFromChar`,
-  `findSelectableElement`, `getSelectableArray`, `topText`, `bottomText`, `formatting`,
-  `metaTextInfo`. All PROJECTIONS under the ruling, built from our IR on read.
-  `visual/selection.test.js` holds **389 expected entries** and half of it is already
-  proven: we emit `data-index` byte-exactly on all 356 rows, so the array's order and
-  count are right today.
+- **THE SELECTABLES** — `getSelectableArray`, `findSelectableElement`, `engraver`, and
+  with them `topText`, `bottomText`, `formatting`, `metaTextInfo`, `getKeySignature`,
+  `makeVoicesArray`, `setupEvents`, `addElementToEvents`, `addUsefulCallbackInfo`,
+  `deline`, `meter`. All PROJECTIONS under the ruling. `visual/selection.test.js` holds
+  **389 expected entries** and half of it is already proven: we emit `data-index`
+  byte-exactly on all 356 rows, so the array's ORDER and COUNT are right today. `lines`
+  and `getElementFromChar` landed this session — see §5c.
 - **The WebAudio and editor surface** — `CreateSynth`, `SynthController`,
   `CreateSynthControl`, `SynthSequence`, `TimingCallbacks`, `Editor`, `EditArea`, and the
   small helpers (`getMidiFile`, `pitchToNoteName`, `instrumentIndexToName`,
@@ -199,13 +200,12 @@ preferring flats the whole way, so its last entry is `Db9`; `instrumentIndexToNa
 - **`test.Parse` / `test.EngraverController`**, with `renderTuneBook` delegating.
 - **`renderEngine`, `extractMeasures`, `tuneMetrics`, `setGlyph`, the three animation
   functions.**
-- **Three unparsed directives**: `%%vskip`, `%%visualTranspose`, `%%keywarn` — found by
-  the Phase 0 sweep, in abcjs's own tests and in neither corpus. `%%vskip` moves the page
-  (`draw/draw.js:41-43`). `%%wrap` is not in `src/` at all.
+- **`%%wrap` is not in `src/` at all**, and `visual/wrap.test.js` is 9 cases. The three
+  directives the sweep named are all BUILT — see §5b and §5d.
 
 ---
 
-## 5b. `%%vskip`, AND THE ORACLE ITSELF HAD DRIFTED
+## 5b. THE THREE DIRECTIVES, AND THE ORACLE ITSELF HAD DRIFTED
 
 **`%%vskip n` is in** — blank space above a line, and it moves the whole page. `addSpacing`
 parks the number and `pushLine` stamps it onto whatever line is pushed next; `draw()`
@@ -223,6 +223,36 @@ POINTS with `cm` going through inches** — `parseFloat(num)/2.54*72`, so `%%vsk
 `tests/corpus-abcjs/fixtures/abcts-vskip.abc` is three rungs with goldens from abcjs 6.7.0
 at the corpus's own `{staffwidth: 670}`. **The 175th fixture is ours, not abcjs's** — only
 its INPUT was chosen by us; it is measured the same way as every other row.
+
+### `%%keywarn` AND `%%visualTranspose` CLOSED THE SWEEP'S LIST
+
+**`%%keywarn` REMOVES THE CAUTIONARY KEY AND NOTHING ELSE**, and its name is misleading:
+`multilineVars.keywarn !== false` guards `appendStartingElement`, which is what puts a key
+ELEMENT in the stream (`abc_parse_header.js:435-437`). So a mid-tune `K:` still takes
+effect and is simply not drawn as a warning. **AND IT TAKES THE INTEGER 0 OR 1** — anything
+else is an error and the directive is dropped, so `%%keywarn false` is a no-op, which is
+the control's third rung.
+
+The control is what stopped a wrong suppression shipping. Sharps by POSITION on the same
+tune: with no directive abcjs draws three — 682.48 (the cautionary at the end of line 1),
+54.78 (line 2's own signature) and 190.06 (a `^c` accidental); with `%%keywarn 0` it draws
+TWO, having dropped only the first. My first attempt suppressed the LINE-LEADING key as
+well — the one that comes from `staff.key` rather than from the stream — and took line 2's
+notes 18.25px left of abcjs's. **Counting the drawn thing, not the bytes, is what said so.**
+
+**`%%visualTranspose` MOVES EVERY PITCH AT PARSE TIME**, key signature and spelling with
+it, and the `visualTranspose` render param is the same knob. It is not what `strTranspose`
+does: that rewrites the SOURCE, this rewrites the parsed music. The rules that matter are
+all about spelling — the distance is a LETTER distance (`Ab -> A` going up gains an
+octave); an exact octave moves the notes and leaves the key; the accidental is RE-DERIVED
+from the two key signatures and can move the pitch by another letter; a minor key spells
+from a different table.
+
+Applied to the FINISHED score rather than woven through the parse, because abcjs's
+`accidentalChange` is written against the original and target signatures explicitly rather
+than against running state. **And the last thing wrong was the WRITTEN NAME** — with the
+geometry already matching to the digit, `data-name` still read `C` where abcjs writes `D`,
+the source spelling a notehead is named from, which cannot survive a transposition.
 
 ### AND FOUR PROBES HAD STOLEN THEIR GUARDS' BODIES
 
