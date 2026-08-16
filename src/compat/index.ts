@@ -42,6 +42,12 @@ import {
   timingsOf,
 } from "../audio/timing.js";
 import { plainText, type RichText, type Score } from "../core/model.js";
+import {
+  type AbcElement,
+  type AbcLine,
+  elementFromChar,
+  linesOf,
+} from "./lines.js";
 export { type BookTune, numberOfTunes, TuneBook } from "./tunebook.js";
 import {
   activeAudioContext,
@@ -205,6 +211,14 @@ export interface TuneObject {
 
   /** `setUpAudio(options)` — the flattened event list `CreateSynth` plays. */
   readonly setUpAudio: (options?: AudioOptions) => FlatAudio;
+
+  /**
+   * abcjs's laid-out tree, PROJECTED from ours on read — see `src/compat/lines.ts`. It is
+   * what a host walks to find the element under a caret, and `getElementFromChar` is that
+   * walk.
+   */
+  readonly lines: readonly AbcLine[];
+  readonly getElementFromChar: (char: number) => AbcElement | null;
 }
 
 /** A div, an id, `"*"` for a headless slot, or nothing (`abc_tunebook.js:76-82`). */
@@ -248,7 +262,9 @@ export function renderAbc(
 ): TuneObject[] {
   const result = parse(abc, {
     mode: "abcjs-strict",
-    ...(params.visualTranspose ? { visualTranspose: params.visualTranspose } : {}),
+    ...(params.visualTranspose
+      ? { visualTranspose: params.visualTranspose }
+      : {}),
   });
   const staffSpace = STAFF_SPACE_PX * (params.scale ?? 1);
   // abcjs's staffwidth is the MUSIC AREA in pixels; core's `systemWidth` is the PAGE in
@@ -286,6 +302,7 @@ export function renderAbc(
      * (`abc_tune.js:584-621`), so a host that calls `getTotalTime()` first gets
      * `undefined` from abcjs — and must get `undefined` from us.
      */
+    let lineCache: readonly AbcLine[] | null = null;
     const timings: {
       rows: NoteTiming[];
       time: number | undefined;
@@ -376,6 +393,17 @@ export function renderAbc(
       getTotalBeats: () => timings.beats,
 
       setUpAudio: (options: AudioOptions = {}) => flattenAudio(score, options),
+
+      get lines(): readonly AbcLine[] {
+        // Built on read and cached for the object's life — a host that never asks for it
+        // pays nothing, which is the point of it being a projection.
+        lineCache ??= linesOf(score, abc);
+        return lineCache;
+      },
+      getElementFromChar(char: number): AbcElement | null {
+        lineCache ??= linesOf(score, abc);
+        return elementFromChar(lineCache, char);
+      },
     };
   };
 
