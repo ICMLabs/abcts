@@ -128,6 +128,7 @@ const PASSING: readonly string[] = [
   "sib/S3-note-syntax-tune24",
   "sib/S5-directives-tune3",
   "sib/S6-keys-tune0",
+  "sib/S8-layout-tune2",
   "sib/center-text-tune0",
   "sib/chord-grid-tune0",
   "sib/clefs-tune0",
@@ -145,6 +146,8 @@ const PASSING: readonly string[] = [
   "sib/missing-decorations-tune3",
   "sib/missing-decorations-tune4",
   "sib/missing-decorations-tune5",
+  "sib/multi-voice-lyrics-two-voices-tune0",
+  "sib/multi-voice-rest-collision-tune0",
   "sib/multi-voice-rest-placement-tune0",
   "sib/multi-voice-triplet-brackets-tune0",
   "sib/program-127-test-tune0",
@@ -193,6 +196,7 @@ const PASSING: readonly string[] = [
   "repo/abcjs-synth-flattener-35-midi-bassprog-10-tune0",
   "repo/abcjs-synth-flattener-36-midi-gchord-fhihfhih-tune0",
   "repo/abcjs-synth-flattener-37-midi-gchord-bzczbzcz-tune0",
+  "repo/abcjs-synth-flattener-38-c-zz-d-z-e-z-tune0",
   "repo/abcjs-synth-flattener-39-midi-gchord-bzczbzcz-tune0",
   "repo/abcjs-synth-flattener-40-c5-z4-tune0",
   "repo/abcjs-synth-flattener-41-midi-bassprog-10-octave-1-tune0",
@@ -219,6 +223,8 @@ const PASSING: readonly string[] = [
   "repo/abcjs-visual-misc-12-b-beambr1-b-bb-tune0",
   "repo/abcjs-visual-misc-13-ceg-t-gce-d-f-b-3-dm7-d-te-tune0",
   "repo/abcjs-visual-misc-14-tune-tune0",
+  "repo/abcjs-visual-multi-voice-01-score-top-bottom-tune0",
+  "repo/abcjs-visual-multi-voice-02-p-c-2b2-z4-f2a2-f4-tune0",
   "repo/abcjs-visual-parsing-01-azzz-e2-tune0",
   "repo/abcjs-visual-parsing-02-sx-tune0",
   "repo/abcjs-visual-svg-01-staffwidth-5-tune0",
@@ -264,6 +270,7 @@ const PASSING: readonly string[] = [
   "repo/abcjs-visual-wrap-01-b-4-c2d2-e3f-gabc-d-e-f-g-marcato-d-e-f--tune0",
   "repo/abcjs-visual-wrap-02-stretchlast-1-tune0",
   "repo/abcjs-visual-wrap-05-score-1-2-3-4-tune0",
+  "repo/abcts-keywarn-tune1",
   "repo/abcts-visualtranspose-tune0",
   "repo/abcts-visualtranspose-tune1",
   "repo/abcts-visualtranspose-tune2",
@@ -307,7 +314,7 @@ describe("tune.lines and getElementFromChar", () => {
    */
   it("the whole corpus agrees on at least the characters it did", () => {
     const agree = table.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(250226);
+    expect(agree).toBeGreaterThanOrEqual(250775);
   });
 
   /**

@@ -436,7 +436,38 @@ export function renderAbc(
       getTotalTime: () => timings.time,
       getTotalBeats: () => timings.beats,
 
-      setUpAudio: (options: AudioOptions = {}) => flattenAudio(score, options),
+      setUpAudio: (options: AudioOptions = {}) => {
+        const audio = flattenAudio(score, options);
+        // **THE FLATTENER WRITES BACK ONTO THE ELEMENT** — `currentTrackMilliseconds`,
+        // `currentTrackWholeNotes` and `midiPitches` land on the very `tune.lines` element
+        // a host then reads (`abc_midi_flattener.js:526-596`). It is a THIRD surface over
+        // the same walk and the one a playback cursor lights.
+        //
+        // **A NUMBER BECOMES AN ARRAY ONLY WHEN A SECOND, DIFFERENT VALUE ARRIVES** —
+        // through a repeat — and `midiPitches` carries the ELEMENT's own `startChar` and
+        // `endChar`, which is why this is stamped here rather than in the flattener: only
+        // this side holds the projected span.
+        const index = projection();
+        for (const [event, timing] of audio.elementTimings) {
+          const abcelem = index.get(event);
+          if (abcelem === undefined) continue;
+          const ms = timing.milliseconds[0];
+          const wholes = timing.wholeNotes[0];
+          if (ms !== undefined && wholes !== undefined) {
+            abcelem.currentTrackMilliseconds =
+              timing.milliseconds.length === 1 ? ms : [...timing.milliseconds];
+            abcelem.currentTrackWholeNotes =
+              timing.wholeNotes.length === 1 ? wholes : [...timing.wholeNotes];
+          }
+          if (timing.notes.length > 0)
+            abcelem.midiPitches = timing.notes.map((n) => ({
+              ...n,
+              startChar: abcelem.startChar,
+              endChar: abcelem.endChar,
+            }));
+        }
+        return audio;
+      },
 
       get lines(): readonly AbcLine[] {
         // Built on read and cached for the object's life — a host that never asks for it

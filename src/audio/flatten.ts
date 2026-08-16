@@ -95,8 +95,23 @@ export interface FlatAudio {
 export interface ElementTiming {
   /** Milliseconds, in the order the element was reached. One entry for a note played once. */
   readonly milliseconds: readonly number[]
+  /** The same instants in WHOLE NOTES — abcjs's `currentTrackWholeNotes`, stamped beside. */
+  readonly wholeNotes: readonly number[]
   /** The sounding pitches, bottom-up. Empty for a rest and for a tie's silent half. */
   readonly pitches: readonly number[]
+  /**
+   * `elem.elem.midiPitches` — **THE VERY NOTE OBJECTS THAT GO INTO THE TRACK**, which is
+   * why the `gap` an element gets AFTER it is pushed is visible here too
+   * (`abc_midi_flattener.js:589-611`: one object, pushed to both).
+   *
+   * **AND IT IS RESET ON EVERY VISIT** — `elem.elem.midiPitches = []` runs each time the
+   * element is written, so an element reached twice through a repeat keeps only the LAST
+   * pass, where `currentTrackMilliseconds` keeps both. Two fields, two rules.
+   *
+   * abcjs's own carry `startChar`/`endChar` off the `tune.lines` element; those are added
+   * where the projection is, in `src/compat/`, because only that side knows the span.
+   */
+  readonly notes: readonly MidiNote[]
 }
 
 export interface AudioOptions {
@@ -1278,16 +1293,27 @@ export function flattenAudio(
    * the pitch loop, so a rest and a tie's silent half are stamped too. `ms = realTime /
    * beatFraction / startingTempo * 60 * 1000`, and `realTime` is our own `start`.
    */
-  const elementTimings = new Map<MusicEvent, { milliseconds: number[]; pitches: number[] }>()
-  const stamp = (event: MusicEvent, ms: number): { milliseconds: number[]; pitches: number[] } => {
+  type Stamped = {
+    milliseconds: number[]
+    wholeNotes: number[]
+    pitches: number[]
+    notes: MidiNote[]
+  }
+  const elementTimings = new Map<MusicEvent, Stamped>()
+  const stamp = (event: MusicEvent, ms: number, wholeNotes: number): Stamped => {
     let row = elementTimings.get(event)
     if (row === undefined) {
-      row = { milliseconds: [], pitches: [] }
+      row = { milliseconds: [], wholeNotes: [], pitches: [], notes: [] }
       elementTimings.set(event, row)
     }
     // "There can be duplicates if there are multiple voices" — a value already present is
     // dropped rather than repeated.
-    if (!row.milliseconds.includes(ms)) row.milliseconds.push(ms)
+    if (!row.milliseconds.includes(ms)) {
+      row.milliseconds.push(ms)
+      row.wholeNotes.push(wholeNotes)
+    }
+    // …**AND `midiPitches` IS EMPTIED ON EVERY VISIT**, where the times accumulate.
+    row.notes.length = 0
     return row
   }
   const percMap = score.percMap ?? {}
@@ -1598,7 +1624,7 @@ export function flattenAudio(
       const stamped =
         item.event === null || (item.event.type === 'rest' && item.event.kind === 'spacer')
           ? null
-          : stamp(item.event, (start / beatFractionOf(meter) / startingTempo) * 60 * 1000)
+          : stamp(item.event, (start / beatFractionOf(meter) / startingTempo) * 60 * 1000, start)
       if (item.event === null || item.event.type === 'rest' || item.tiedOver) continue
 
       const volume = stressVolume(start, lastBarTime, meter, pickupLength, voiceOff, stress)
@@ -1790,6 +1816,9 @@ export function flattenAudio(
         // `if (ret.noteModification) doModifiedNotes(…) else { …articulation…; push }`,
         // so the run inherits the pitch, volume and instrument and nothing else.
         if (stamped !== null && !stamped.pitches.includes(pitch)) stamped.pitches.push(pitch)
+        // The SAME object the track gets — abcjs pushes one `p` to both, which is why its
+        // `gap` shows up here.
+        if (stamped !== null) stamped.notes.push(event)
         if (mods.ornament !== undefined) doModifiedNotes(mods.ornament, event, item.factor, track)
         else track.push(event)
       }

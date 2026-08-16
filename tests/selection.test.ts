@@ -44,7 +44,7 @@ const GOLDEN = JSON.parse(
 }[];
 
 /** Cases whose every row agrees. Grows, never shrinks. */
-const PASSING: readonly string[] = [];
+const PASSING: readonly string[] = ["selection-clefs"];
 
 /** Deep equality that ignores KEY ORDER, as `chai.assert.deepStrictEqual` does. */
 const same = (a: unknown, b: unknown): boolean => {
@@ -148,7 +148,7 @@ describe("engraver.selectables", () => {
 
   /** A floor, not a target: it moves up as the projection grows and never down. */
   it("agrees on at least the rows it did", () => {
-    expect(rows.reduce((t, r) => t + r.agree, 0)).toBeGreaterThanOrEqual(142);
+    expect(rows.reduce((t, r) => t + r.agree, 0)).toBeGreaterThanOrEqual(149);
   });
 
   /**

@@ -76,6 +76,11 @@ export interface AbcElement {
   endTriplet?: boolean;
   tripletMultiplier?: number;
   tripletR?: number;
+  // ── written by the FLATTENER, on `setUpAudio` ──
+  /** A number for an element played once, an ARRAY for one a repeat reaches twice. */
+  currentTrackMilliseconds?: number | readonly number[];
+  currentTrackWholeNotes?: number | readonly number[];
+  midiPitches?: readonly Record<string, unknown>[];
   // ── written by the engraver, not the parser ──
   averagepitch?: number;
   minpitch?: number;
@@ -199,6 +204,10 @@ function decoratedRange(abc: string, event: MusicEvent): SourceRange | null {
   while (abc[end] === " " || abc[end] === "\t") end += 1;
   return { start, end };
 }
+
+/** True when the range opens a LINE — i.e. the field was written on one of its own. */
+const fieldLine = (abc: string, range: SourceRange | null | undefined): boolean =>
+  range != null && (range.start === 0 || abc[range.start - 1] === "\n");
 
 /** `accMap` — the sign abcjs prefixes to a written note name (`abc_parse_settings.js:147`). */
 const ACCIDENTAL_NAME: Readonly<Record<number, string>> = {
@@ -379,8 +388,19 @@ function voiceElements(
     // `[Q:]`, `%%MIDI`, `!style=!`, `%%voicecolor` and `P:` do not yet — so those six
     // element types are absent from the projection. `tests/lines.test.ts` measures which
     // characters that costs, rather than the gap being a claim.
-    out.push(el("keySignature", measure.keyChangeSourceRange));
-    out.push(el("timeSignature", measure.meterChangeSourceRange));
+    // **A STANDALONE `K:` OR `M:` LINE IS NOT IN THE STREAM — IT RESTAMPS THE STAFF.**
+    // Only the INLINE form is an element (`[K:…]`, `[M:…]`); a field on a line of its own
+    // goes to `staff.key` / `staff.meter`, which is the same rule that lets `%%keywarn`
+    // remove a cautionary key without touching the line's own signature, and the same one
+    // the engraver follows when it draws a body `K:` as a whole staff's key.
+    //
+    // MEASURED on `selection-clefs`, whose seven `K:C clef=…` lines each precede a note:
+    // abcjs opens that note at the LINE, and we opened it at the key element's own end,
+    // one character earlier.
+    if (!fieldLine(abc, measure.keyChangeSourceRange))
+      out.push(el("keySignature", measure.keyChangeSourceRange));
+    if (!fieldLine(abc, measure.meterChangeSourceRange))
+      out.push(el("timeSignature", measure.meterChangeSourceRange));
     for (const event of measure.events) {
       const e = el("note", decoratedRange(abc, event));
       if (e !== null) {
