@@ -33,6 +33,8 @@ interface Case {
   readonly tune: number
   /** `add_classes` — the `-classes` family. See `MODES`. */
   readonly addClasses?: boolean
+  /** `print` — the `-print` family. See `MODES`. */
+  readonly print?: boolean
 }
 
 /**
@@ -47,15 +49,22 @@ interface Case {
  * `-classes` is `renderAbc(divs, abc, { staffwidth: 670, add_classes: true })`, the same
  * call with one flag, so it is enumerated here.
  *
- * `-print` and the two `-stacked` families are NOT, and the reason is capability rather
- * than reach: `print: true` is not in `AbcjsParams` at all, and a STACKED render is
- * `EngraverController(div).engraveABC(allTunes)` — every tune of a book into ONE svg —
- * which `compat` has no entry point for. Both are written up in
- * `Docs/CHECKPOINT-2026-08-15.md`; neither is a tolerance, they are unbuilt features.
+ * `-print` is `{ print: true }` — abcjs's PAGE media, four differences and no engraving
+ * change (see `LayoutOptions.print`) — and is enumerated here too.
+ *
+ * The two `-stacked` families are NOT, and the reason is capability rather than reach: a
+ * STACKED render is `EngraverController(div).engraveABC(allTunes)` — every tune of a book
+ * into ONE svg — which `compat` has no entry point for. Written up in
+ * `Docs/CHECKPOINT-2026-08-15.md`; it is not a tolerance, it is an unbuilt feature.
  */
-const MODES: readonly { readonly suffix: string; readonly addClasses: boolean }[] = [
+const MODES: readonly {
+  readonly suffix: string
+  readonly addClasses: boolean
+  readonly print?: boolean
+}[] = [
   { suffix: '', addClasses: false },
   { suffix: '-classes', addClasses: true },
+  { suffix: '-print', addClasses: false, print: true },
 ]
 
 /**
@@ -80,7 +89,10 @@ const CASES: Case[] = existsSync(fixtures)
         const rows: Case[] = []
         for (const mode of MODES) {
           const base = `${slug}${mode.suffix}`
-          const flag = mode.addClasses ? { addClasses: true } : {}
+          const flag = {
+            ...(mode.addClasses ? { addClasses: true } : {}),
+            ...(mode.print === true ? { print: true } : {}),
+          }
           // A SINGLE-tune fixture's golden is `<base>.svg`; a tunebook's are `-tune0`, … .
           if (existsSync(join(goldens, `${base}.svg`)))
             rows.push({
@@ -122,12 +134,20 @@ const PASSING: readonly string[] = [
   'S1-decorations-classes-tune2',
   'S1-decorations-classes-tune3',
   'S1-decorations-classes-tune4',
+  'S1-decorations-print-tune0',
+  'S1-decorations-print-tune1',
+  'S1-decorations-print-tune2',
+  'S1-decorations-print-tune3',
+  'S1-decorations-print-tune4',
   'S2-fields-tune0',
   'S2-fields-tune1',
   'S2-fields-tune2',
   'S2-fields-classes-tune0',
   'S2-fields-classes-tune1',
   'S2-fields-classes-tune2',
+  'S2-fields-print-tune0',
+  'S2-fields-print-tune1',
+  'S2-fields-print-tune2',
   'S3-note-syntax-tune0',
   'S3-note-syntax-tune1',
   'S3-note-syntax-tune2',
@@ -178,12 +198,38 @@ const PASSING: readonly string[] = [
   'S3-note-syntax-classes-tune22',
   'S3-note-syntax-classes-tune23',
   'S3-note-syntax-classes-tune24',
+  'S3-note-syntax-print-tune0',
+  'S3-note-syntax-print-tune1',
+  'S3-note-syntax-print-tune2',
+  'S3-note-syntax-print-tune3',
+  'S3-note-syntax-print-tune4',
+  'S3-note-syntax-print-tune5',
+  'S3-note-syntax-print-tune6',
+  'S3-note-syntax-print-tune7',
+  'S3-note-syntax-print-tune8',
+  'S3-note-syntax-print-tune9',
+  'S3-note-syntax-print-tune10',
+  'S3-note-syntax-print-tune11',
+  'S3-note-syntax-print-tune12',
+  'S3-note-syntax-print-tune13',
+  'S3-note-syntax-print-tune14',
+  'S3-note-syntax-print-tune15',
+  'S3-note-syntax-print-tune16',
+  'S3-note-syntax-print-tune18',
+  'S3-note-syntax-print-tune19',
+  'S3-note-syntax-print-tune20',
+  'S3-note-syntax-print-tune21',
+  'S3-note-syntax-print-tune22',
+  'S3-note-syntax-print-tune23',
+  'S3-note-syntax-print-tune24',
   'S4-bars-repeats-tune0',
   'S4-bars-repeats-tune1',
   'S4-bars-repeats-tune2',
   'S4-bars-repeats-classes-tune0',
   'S4-bars-repeats-classes-tune1',
   'S4-bars-repeats-classes-tune2',
+  'S4-bars-repeats-print-tune0',
+  'S4-bars-repeats-print-tune2',
   'S5-directives-tune0',
   'S5-directives-tune1',
   'S5-directives-tune2',
@@ -196,6 +242,12 @@ const PASSING: readonly string[] = [
   'S5-directives-classes-tune3',
   'S5-directives-classes-tune4',
   'S5-directives-classes-tune5',
+  'S5-directives-print-tune0',
+  'S5-directives-print-tune1',
+  'S5-directives-print-tune2',
+  'S5-directives-print-tune3',
+  'S5-directives-print-tune4',
+  'S5-directives-print-tune5',
   'S6-keys-tune0',
   'S6-keys-tune1',
   'S6-keys-tune2',
@@ -206,6 +258,11 @@ const PASSING: readonly string[] = [
   'S6-keys-classes-tune2',
   'S6-keys-classes-tune3',
   'S6-keys-classes-tune4',
+  'S6-keys-print-tune0',
+  'S6-keys-print-tune1',
+  'S6-keys-print-tune2',
+  'S6-keys-print-tune3',
+  'S6-keys-print-tune4',
   'S8-layout-tune0',
   'S8-layout-tune1',
   'S8-layout-tune2',
@@ -230,14 +287,29 @@ const PASSING: readonly string[] = [
   'S8-layout-classes-tune9',
   'S8-layout-classes-tune10',
   'S8-layout-classes-tune11',
+  'S8-layout-print-tune0',
+  'S8-layout-print-tune1',
+  'S8-layout-print-tune2',
+  'S8-layout-print-tune3',
+  'S8-layout-print-tune4',
+  'S8-layout-print-tune5',
+  'S8-layout-print-tune6',
+  'S8-layout-print-tune7',
+  'S8-layout-print-tune8',
+  'S8-layout-print-tune9',
+  'S8-layout-print-tune10',
+  'S8-layout-print-tune11',
   'ave-verum-corpus',
   'ave-verum-corpus-classes',
   'brother-john-inline-voices',
   'brother-john-inline-voices-classes',
+  'brother-john-inline-voices-print',
   'center-text',
   'center-text-classes',
+  'center-text-print',
   'chord-grid',
   'chord-grid-classes',
+  'chord-grid-print',
   'clefs-tune0',
   'clefs-tune1',
   'clefs-tune2',
@@ -254,6 +326,14 @@ const PASSING: readonly string[] = [
   'clefs-classes-tune5',
   'clefs-classes-tune6',
   'clefs-classes-tune7',
+  'clefs-print-tune0',
+  'clefs-print-tune1',
+  'clefs-print-tune2',
+  'clefs-print-tune3',
+  'clefs-print-tune4',
+  'clefs-print-tune5',
+  'clefs-print-tune6',
+  'clefs-print-tune7',
   'curves-tune0',
   'curves-tune1',
   'curves-tune2',
@@ -268,16 +348,26 @@ const PASSING: readonly string[] = [
   'curves-classes-tune4',
   'curves-classes-tune5',
   'curves-classes-tune6',
+  'curves-print-tune0',
+  'curves-print-tune1',
+  'curves-print-tune2',
+  'curves-print-tune3',
+  'curves-print-tune4',
+  'curves-print-tune5',
+  'curves-print-tune6',
   'extra-class',
   'extra-class-classes',
   'frere-jacques',
   'frere-jacques-classes',
+  'frere-jacques-print',
   'full-song-template',
   'full-song-template-classes',
+  'full-song-template-print',
   'happy-birthday',
   'happy-birthday-classes',
   'little swallow',
   'little swallow-classes',
+  'little swallow-print',
   'missing-decorations-tune0',
   'missing-decorations-tune1',
   'missing-decorations-tune2',
@@ -290,6 +380,12 @@ const PASSING: readonly string[] = [
   'missing-decorations-classes-tune3',
   'missing-decorations-classes-tune4',
   'missing-decorations-classes-tune5',
+  'missing-decorations-print-tune0',
+  'missing-decorations-print-tune1',
+  'missing-decorations-print-tune2',
+  'missing-decorations-print-tune3',
+  'missing-decorations-print-tune4',
+  'missing-decorations-print-tune5',
   'multi-voice-lyrics-two-voices',
   'multi-voice-lyrics-two-voices-classes',
   'multi-voice-rest-collision',
@@ -300,16 +396,22 @@ const PASSING: readonly string[] = [
   'multi-voice-triplet-brackets-classes',
   'program-127-test',
   'program-127-test-classes',
+  'program-127-test-print',
   'ragtime-mini',
   'ragtime-mini-classes',
+  'ragtime-mini-print',
   'ragtime-nightingale',
   'ragtime-nightingale-classes',
+  'ragtime-nightingale-print',
   'score-reorder-shared',
   'score-reorder-shared-classes',
+  'score-reorder-shared-print',
   'score-reorder',
   'score-reorder-classes',
+  'score-reorder-print',
   'simple-c',
   'simple-c-classes',
+  'simple-c-print',
   'stacked-annotations',
   'tunebook-3-tune0',
   'tunebook-3-tune1',
@@ -317,25 +419,37 @@ const PASSING: readonly string[] = [
   'tunebook-3-classes-tune0',
   'tunebook-3-classes-tune1',
   'tunebook-3-classes-tune2',
+  'tunebook-3-print-tune0',
+  'tunebook-3-print-tune1',
+  'tunebook-3-print-tune2',
   'twinkle',
   'twinkle-classes',
+  'twinkle-print',
   'two-voice-invention',
   'two-voice-invention-classes',
+  'two-voice-invention-print',
   'voice-middle-after-clef',
   'voice-middle-after-clef-classes',
+  'voice-middle-after-clef-print',
   'voice-octave-shift',
   'vree-compound-meter',
   'vree-compound-meter-classes',
+  'vree-compound-meter-print',
   'vree-grace-notes',
   'vree-grace-notes-classes',
+  'vree-grace-notes-print',
   'vree-sharps',
   'vree-sharps-classes',
+  'vree-sharps-print',
   'vree-slurs-and-triplets',
   'vree-slurs-and-triplets-classes',
+  'vree-slurs-and-triplets-print',
   'vree-ties-across-bars',
   'vree-ties-across-bars-classes',
+  'vree-ties-across-bars-print',
   'zocharti-loch',
   'zocharti-loch-classes',
+  'zocharti-loch-print',
 ]
 
 interface Diff {
@@ -359,7 +473,11 @@ function firstDifference(got: string, want: string): Diff | null {
 
 /** THE SAME PARAMS THE GOLDENS WERE MADE WITH — `dump-svg.js`'s `{staffwidth: 670}`. */
 function run(c: Case): Diff | null {
-  const params = { staffwidth: 670, ...(c.addClasses === true ? { add_classes: true } : {}) }
+  const params = {
+    staffwidth: 670,
+    ...(c.addClasses === true ? { add_classes: true } : {}),
+    ...(c.print === true ? { print: true } : {}),
+  }
   return firstDifference(renderAbc('paper', c.abc, params)[c.tune]?.svg ?? '', c.golden)
 }
 

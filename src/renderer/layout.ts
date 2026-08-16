@@ -1835,6 +1835,11 @@ export interface Layout {
    * two, opens at `abcjs-l2`. The TEXT itself is drawn from `topText` before the loop.
    */
   readonly blankLeadingLines?: number
+  /**
+   * The CSS scale a PRINT render is drawn at — 1 on screen, so the emitter writes no
+   * `style` and no height floor. See `LayoutOptions.print`.
+   */
+  readonly printScale?: number
 }
 
 /**
@@ -5738,6 +5743,9 @@ let PAGE_PADDING = {
   bottom: ENGRAVE.marginBottom,
 }
 
+/** 1 on screen; `print`'s own 0.75 otherwise — see `LayoutOptions.print`. */
+let PRINT_SCALE = 1
+
 let STRICT_TEXT_METRICS = true
 
 /** `%%jazzchords` for the current render — same one-place switch, set beside it. */
@@ -9238,6 +9246,15 @@ export interface LayoutOptions {
    * width at a typical staff size; a host with a known viewport should pass its own.
    */
   readonly systemWidth?: number
+  /**
+   * abcjs's `print: true` — its PAGE media rather than its screen media
+   * (`abc_parse.js:525-526` sets `tune.media = 'print'`, `renderer.js:38` reads it).
+   * It is four things and no engraving change at all: the page margins take their print
+   * defaults, the whole SVG is CSS-scaled by 0.75 with the margins and the music width
+   * divided back out so they do not shrink with it, the top block opens with
+   * `spacing.top`, and the page is at least 11 inches tall.
+   */
+  readonly print?: boolean
 }
 
 /** A measure laid out on its own, ready to be placed into whichever system it lands in. */
@@ -10443,7 +10460,11 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       ? // ONE DIVISION, NOT TWO ADDITIONS. `w / 7.75 + 2 * (15 / 7.75)` re-multiplied by
         // 7.75 gives 295.99999999999994 where abcjs writes 296; `(w + 30) / 7.75` gives
         // 296 exactly, because the round trip is a single operation and its inverse.
-        (score.staffWidth + 2 * ABCJS_PX.paddingLeft) / UNIT_PX
+        // …AND PRINT'S TWO MARGINS AND ITS MUSIC WIDTH ARE EACH DIVIDED BY THE SCALE
+        // (`engraver-controller.js:124-126`), which is one division of the same sum.
+        (score.staffWidth + 2 * (options.print === true ? ABCJS_PX.printPaddingLeft : ABCJS_PX.paddingLeft)) /
+        UNIT_PX /
+        (options.print === true ? ABCJS_RATIO.printScale : 1)
       : (options.systemWidth ?? ENGRAVE.systemWidth)
   // The mode picks the look; `profile` can still override it explicitly.
   const profile: RenderProfile =
@@ -10452,6 +10473,21 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   // may set it either way, but whether a melisma prints abcjs's literal `_` or an
   // extender is a question about which engine's behaviour is being reproduced.
   const strict = isStrict(options.mode ?? defaultMode)
+  // **PRINT'S SCALE IS 0.75 AND EVERY PAGE MARGIN IS DIVIDED BY IT** — see `PAGE_PADDING`
+  // and `LayoutOptions.print`. `%%scale` wins where the tune states one
+  // (`engraver-controller.js:214-217`).
+  // ponytail: `%%scale` is not modelled, so print always takes abcjs's 0.75. No fixture
+  // in either corpus sets one.
+  const printScale = options.print === true ? ABCJS_RATIO.printScale : 1
+  PRINT_SCALE = printScale
+  PAGE_PADDING =
+    options.print === true
+      ? {
+          left: spaces(ABCJS_PX.printPaddingLeft) / printScale,
+          top: spaces(ABCJS_PX.printPaddingTop) / printScale,
+          bottom: spaces(ABCJS_PX.printPaddingTop) / printScale,
+        }
+      : { left: ENGRAVE.marginX, top: ENGRAVE.marginTop, bottom: ENGRAVE.marginBottom }
   STRICT_TEXT_METRICS = strict
   LINE_WEIGHTS = lineWeightsFor(strict)
   JAZZ_CHORDS = score.jazzChords
@@ -13108,6 +13144,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     pageWidth: pageRatcheted ? pageWidth + 2 * PAGE_PADDING.left : systemWidth,
     // See `blankLeadingLines` — every `T:` past the first is one.
     blankLeadingLines: Math.max(0, score.metadata.titles.length - 1),
+    printScale: PRINT_SCALE,
     // `cursor` has one trailing gap on it, added after the last system. abcjs opens with
     // `moveY(padding.top)` before drawing anything (`draw.js:14`), so the page begins
     // ABOVE the ink — expressed as a negative viewBox top rather than by shifting every
@@ -13501,6 +13538,11 @@ function topTextBlock(
    * wrong on every titled tune in the repo and only the byte table could say so.
    */
   const centre = PAGE_PADDING.left + width / 2
+
+  // **AND PRINT OPENS THE BLOCK WITH `spacing.top`** — `if (isPrint) this.rows.push({ move:
+  // spacing.top })`, ahead of the title and after the `%%header` row
+  // (`top-text.js:17-18`). A row of its own, so the page's cursor spends it in its turn.
+  if (PRINT_SCALE !== 1) spend(spaces(ABCJS_PX.printTopSpace))
 
   const titleSize = sizeOf('titlefont')
   const [title, ...subtitles] = metadata.titles

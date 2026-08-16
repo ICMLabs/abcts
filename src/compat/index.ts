@@ -38,6 +38,12 @@ import { toSVG } from '../renderer/svg.js'
  */
 const SCREEN_PADDING = 15
 
+/** And PRINT's — 1.8cm either side (`renderer.js:71-72`). */
+const PRINT_PADDING = 68
+
+/** The CSS scale a print render is drawn at (`engraver-controller.js:216`). */
+const PRINT_SCALE = 0.75
+
 /** What `"Sheet Music for \"" + metaText.title + '"'` produces — see the call site. */
 const ariaTitle = (title: RichText): string =>
   typeof title === 'string' ? title : title.map(() => '[object Object]').join(',')
@@ -46,6 +52,12 @@ const ariaTitle = (title: RichText): string =>
 export interface AbcjsParams {
   /** Staff width in pixels. abcjs's default is 740 on screen. */
   readonly staffwidth?: number
+  /**
+   * abcjs's PAGE media — a 0.75 CSS scale on the root, print's own page margins, an extra
+   * `spacing.top` above the title and an eleven-inch minimum height. See
+   * `LayoutOptions.print`.
+   */
+  readonly print?: boolean
   /** Uniform scale factor applied to the whole drawing. */
   readonly scale?: number
   /**
@@ -109,13 +121,22 @@ export function renderAbc(target: Target, abc: string, params: AbcjsParams = {})
   // default is 700 for abcjs's 670. Dropping the padding here made every justified line
   // 30px narrow (`L 655` where abcjs writes `L 685`) and it was invisible to every
   // geometry gate, because they all render with NO staffwidth and take the default.
+  // …AND PRINT'S MARGINS AND MUSIC WIDTH ARE EACH DIVIDED BY THE SCALE, which is one
+  // division of the same sum (`engraver-controller.js:124-126`, `renderer.js:78-86`).
+  const printing = params.print === true
+  const padding = printing ? PRINT_PADDING : SCREEN_PADDING
+  const scale = printing ? PRINT_SCALE : 1
   const systemWidth =
     params.staffwidth === undefined
       ? undefined
-      : (params.staffwidth + SCREEN_PADDING * 2) / UNIT_PX
+      : (params.staffwidth + padding * 2) / UNIT_PX / scale
 
   const tunes = result.scores.map((score) => ({
-    svg: toSVG(layout(score, { mode: 'abcjs-strict', ...(systemWidth ? { systemWidth } : {}) }), {
+    svg: toSVG(layout(score, {
+      mode: 'abcjs-strict',
+      ...(systemWidth ? { systemWidth } : {}),
+      ...(printing ? { print: true } : {}),
+    }), {
       staffSpace,
       classes: 'abcjs',
       // abcjs emits its per-element class scheme only when the host asks for it.

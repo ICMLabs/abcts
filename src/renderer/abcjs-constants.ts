@@ -135,6 +135,22 @@ export const ABCJS_PX = {
   paddingTop: 15,
   paddingBottom: 15,
   /**
+   * And PRINT's own set (`write/renderer.js:69-72`) — 1cm top and bottom, 1.8cm either
+   * side, both stated in the comment beside them as their pixel conversions.
+   */
+  printPaddingLeft: 68,
+  printPaddingTop: 38,
+  /**
+   * `spacing.top` — the vertical space above a tune, spent by `TopText` ONLY in print
+   * (`renderer.js:99`, `top-text.js:17-18`).
+   */
+  printTopSpace: 30.24,
+  /**
+   * The minimum page height in print: 11in at 72pt/in and 1.33px/pt
+   * (`draw/set-paper-size.js:4-5`). It floors the SVG's own size and nothing inside it.
+   */
+  printMinHeight: 1056,
+  /**
    * `minspacing` on every `AbsoluteElement` that is not a note — a bar, a clef, a key or
    * time signature (`abstract-engraver.js:959` and each `staff-extra`).
    */
@@ -665,6 +681,13 @@ export const ABCJS_PITCH = {
 
 /** Every abcjs figure that is a scale, a fraction or a multiplier. */
 export const ABCJS_RATIO = {
+  /**
+   * The CSS scale a print render is drawn at when neither the host nor `%%scale` names one
+   * (`engraver-controller.js:216`). Everything that must NOT shrink with it — the four
+   * page margins, the music width, the header and footer font sizes — is divided by it
+   * first (`:124-126`, `renderer.js:78-86`).
+   */
+  printScale: 0.75,
   /** `fontboxpadding` — the fraction of the font size a boxed font pads by, per side. */
   fontBoxPadding: 0.1,
   /** `size.height * 1.1` — what a top-text row advances by (`add-text-if.js:26`). */

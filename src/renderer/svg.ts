@@ -20,6 +20,7 @@ import {
   ABCJS_FONT_FACE,
   ABCJS_LINE_PX,
   ABCJS_PITCH,
+  ABCJS_PX,
   ABCJS_RATIO,
   ABCJS_YCORR,
   spaces,
@@ -3516,6 +3517,23 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
     ? doc.pageWidth * OUT
     : (options.pageWidth ?? doc.width * OUT);
   const h = doc.height * OUT;
+  /**
+   * **PRINT IS A CSS SCALE ON THE ROOT AND AN ELEVEN-INCH FLOOR ON ITS HEIGHT.**
+   * `setPaperSize` computes `w`/`h` at the scale and then hands `setSize` `w / scale` and
+   * `h / scale` whenever the scale is under 1 (`draw/set-paper-size.js:1-41`), so the two
+   * divisions cancel on the WIDTH and leave the floor as the only thing the height gains:
+   * `max(h, 1056) / scale`. `setScale` then writes the transform
+   * (`write/svg.js:71-83`) — and jsdom serialises only the three properties it knows, so
+   * the `-ms-` pair and the `-*-transform-origin-x/y` four are absent from the goldens.
+   */
+  const printScale = doc.printScale ?? 1;
+  const printH =
+    printScale === 1 ? h : Math.max(h * printScale, ABCJS_PX.printMinHeight) / printScale;
+  const printStyle =
+    printScale === 1
+      ? ""
+      : ` style="transform: scale(${printScale},${printScale}); ` +
+        `-webkit-transform: scale(${printScale},${printScale}); transform-origin: 0 0;"`;
   // The viewBox must widen with the page, or forcing the width would just scale the
   // music up to fill it instead of leaving the margin abcjs leaves.
   const viewWidth =
@@ -3545,7 +3563,7 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
         options.title === undefined || options.title === ""
           ? ""
           : ` for &quot;${escapeText(options.title)}&quot;`
-      }" width="${raw(w)}" height="${raw(h)}"` +
+      }" width="${raw(w)}" height="${raw(printH)}"${printStyle}` +
       /**
        * **NO `viewBox`.** abcjs draws in ABSOLUTE PIXELS and writes none; the drawing above
        * is now emitted in pixels too, so there is nothing left for a view transform to do.
