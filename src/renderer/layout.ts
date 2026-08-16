@@ -1840,6 +1840,11 @@ export interface Layout {
    * `style` and no height floor. See `LayoutOptions.print`.
    */
   readonly printScale?: number
+  /**
+   * `renderer.padding.left` for this render — 15 on screen, `68 / scale` in print. The
+   * emitter needs it for the one thing it places absolutely: a brace's own voice name.
+   */
+  readonly paddingLeft?: number
 }
 
 /**
@@ -13150,6 +13155,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     // See `blankLeadingLines` — every `T:` past the first is one.
     blankLeadingLines: Math.max(0, score.metadata.titles.length - 1),
     printScale: PRINT_SCALE,
+    paddingLeft: PAGE_PADDING.left,
     // `cursor` has one trailing gap on it, added after the last system. abcjs opens with
     // `moveY(padding.top)` before drawing anything (`draw.js:14`), so the page begins
     // ABOVE the ink — expressed as a negative viewBox top rather than by shifting every

@@ -1725,7 +1725,7 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
             yTop + (yBottom - yTop) / 2 - header.baselineToCentre * PX;
           parts.push(
             abcjsText(
-              textNum(ENGRAVE.marginX * PX),
+              textNum((doc.paddingLeft ?? ENGRAVE.marginX) * PX),
               textNum(position),
               num(header.size * PX),
               ABCJS_FONT_FACE.voicefont ?? "Times New Roman",

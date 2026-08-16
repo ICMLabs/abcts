@@ -301,6 +301,7 @@ const PASSING: readonly string[] = [
   'S8-layout-print-tune11',
   'ave-verum-corpus',
   'ave-verum-corpus-classes',
+  'ave-verum-corpus-print',
   'brother-john-inline-voices',
   'brother-john-inline-voices-classes',
   'brother-john-inline-voices-print',
