@@ -155,11 +155,16 @@ function tile(abc: string, elements: readonly AbcElement[]): AbcElement[] {
   // **IN PLACE, NOT COPIED.** A copy would break the identity the selectable array and
   // `getElementFromChar` both rest on — abcjs hands out ONE object per element and its
   // engraver stamps that object.
+  // …**AND THE TILING IS PER SOURCE LINE.** An element opens where the one before it
+  // closed only when the two were written on the SAME line; the first of a line opens at
+  // the line. abcjs does not tile at all — each element's `startChar` is simply where its
+  // tokenizer began reading it, and that is right after the previous element on the same
+  // line and at the line's own start otherwise. Worth 300 characters on its own.
   const lineStart = (at: number): number => abc.lastIndexOf("\n", at - 1) + 1;
   const opened = elements.map((e, i) => {
     const own = e.startChar ?? 0;
     const before = elements[i - 1]?.endChar;
-    return before ?? lineStart(own);
+    return before === undefined || before < lineStart(own) ? lineStart(own) : before;
   });
   elements.forEach((e, i) => {
     e.startChar = opened[i] ?? e.startChar ?? 0;
@@ -743,16 +748,17 @@ export function projectionOf(
    * preString: "Easy Swing", duration: [0.25], bpm: 140}`, and putting it in the stream
    * takes the selectable gate from 152 to **157**.
    *
-   * It is not landed because **THE TILING CANNOT EXPRESS IT YET**. abcjs gives the tempo
-   * 16…39 and the first note 44…46 — the `\nK:C\n` between them belongs to NOTHING, where
-   * our spans tile a line exactly. Two shapes were measured:
+   * It is not landed because of the SORT, and that is now understood rather than guessed:
+   * the stream is ordered by `startChar`, and a `Q:` written on line 21 — `frere-jacques`
+   * — sorts into the MIDDLE of line 0's stream, where abcjs draws it at the head of
+   * system 1 regardless. So it has to be placed FIRST and kept out of the chain, not
+   * sorted in. Measured:
    *
-   *   head tempo in the stream, tiling unchanged   244,058 characters (from 251,012)
-   *   …with an element opening at ITS OWN LINE
-   *   whenever the one before it ended earlier      250,900, and 21 ratcheted tunes RED
+   *   head tempo sorted in, tiling per line        250,900 characters, 21 ratcheted RED
+   *   head tempo sorted in, no per-line tiling     244,058
+   *   no head tempo, tiling per line               251,312   <- where this file stands
    *
-   * The second is nearly right and still wrong, so the rule it approximates has to be read
-   * out of abcjs rather than guessed at a third time. The ratchet is what said so.
+   * Worth FIVE selectable rows (152 -> 157) when it lands.
    */
 
   breaks.forEach((from, i) => {

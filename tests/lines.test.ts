@@ -141,6 +141,7 @@ const PASSING: readonly string[] = [
   "sib/clefs-tune6",
   "sib/escaped-percent-tune0",
   "sib/extra-class-tune0",
+  "sib/full-song-template-tune0",
   "sib/missing-decorations-tune0",
   "sib/missing-decorations-tune1",
   "sib/missing-decorations-tune2",
@@ -217,6 +218,8 @@ const PASSING: readonly string[] = [
   "repo/abcjs-visual-misc-02-title-tune0",
   "repo/abcjs-visual-misc-03-jazzchords-tune0",
   "repo/abcjs-visual-misc-05-cccc-d-c-alcoda-dddd-d-c-alfine-eeee-d-s-tune0",
+  "repo/abcjs-visual-misc-06-title-1bold-0-100-reg-the-tune0",
+  "repo/abcjs-visual-misc-06-title-1bold-0-100-reg-the-tune1",
   "repo/abcjs-visual-misc-07-ab-ef-g-d-df-f-d-a-4-c-4-tune0",
   "repo/abcjs-visual-misc-08-a2-c2-t-a2t-c2-tune0",
   "repo/abcjs-visual-misc-09-begintext-tune0",
@@ -316,7 +319,7 @@ describe("tune.lines and getElementFromChar", () => {
    */
   it("the whole corpus agrees on at least the characters it did", () => {
     const agree = table.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(251012);
+    expect(agree).toBeGreaterThanOrEqual(251312);
   });
 
   /**
