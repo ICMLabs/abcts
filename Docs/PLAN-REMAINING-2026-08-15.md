@@ -86,6 +86,25 @@ the boundary rather than being our IR — see consequence 1 above. Nothing in
 
 ---
 
+---
+
+## PROGRESS — 2026-08-15c
+
+**DONE:** Phase 0 (the sweep, and `tests/compat-surface.test.ts` is its executable form),
+Phase 1 (the gate plus fifteen tune-object symbols, `TuneBook`, `numberOfTunes`,
+`parseOnly`, `signature`), Phase 2 (all nine accessors, with a 293-tune oracle, at 2 rows
+and both written down), and Phase 6 measured, cited and gated as two `it.fails` rather than
+half-ported.
+
+**Surface 62 → 44 absent.** `Docs/CHECKPOINT-2026-08-15c.md` is what landed and why.
+
+**NEXT, in order:** Phase 3 (`strTranspose`, 32 cases with expected strings, nothing else
+calls it), Phase 4 (`lines` + selectables, 389 expected entries, half already proven by
+`data-index` being byte-exact), Phase 5 (`%%vskip`, `%%visualTranspose`, `%%keywarn`), then
+the WebAudio and editor surface.
+
+---
+
 ## PHASE 0 — Ask what evidence EXISTS, not what it says
 
 **One session. Do it first; it reorders everything below.**
