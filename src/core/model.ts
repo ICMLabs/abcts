@@ -409,6 +409,17 @@ export interface Tempo {
    * the pre-string even when it reads like a marking.
    */
   readonly postText?: string | null
+  /**
+   * **A LONE TEMPO WORD CARRIES A RATE AND DOES NOT PRINT IT.** `Q:"Adagio"` with nothing
+   * else looks the word up in a 26-entry table and stamps `bpm` from it, with
+   * `suppressBpm: true` so the mark still draws only the word
+   * (`abc_parse_header.js:204-268`). So the tune SOUNDS at 68 and READS as "Adagio", and
+   * a renderer that ignored the flag would print `Adagio ♩ = 68`.
+   *
+   * `ave-verum-corpus` is the case: every SVG gate was green on it while `getBpm` said
+   * 180 — the default — because nothing in the audio corpus writes a bare tempo word.
+   */
+  readonly suppressBpm?: boolean
 }
 
 // ─── Events ──────────────────────────────────────────────────────────────────

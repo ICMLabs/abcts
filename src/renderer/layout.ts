@@ -2854,7 +2854,11 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
     cursor += preWidth + preWidth / Math.max(1, tempo.text.length)
   }
 
-  if (tempo.bpm !== null) {
+  // …**AND A LONE TEMPO WORD DRAWS NO RATE.** `suppressBpm` is set beside the bpm the
+  // word's own table supplied (`abc_parse_header.js:257-268`), and `drawTempo` writes the
+  // note and the number only `if (params.note)` — which `TempoElement` builds only when
+  // the tempo is not suppressed. See `Tempo.suppressBpm`.
+  if (tempo.bpm !== null && tempo.suppressBpm !== true) {
     // THE BEAT-UNIT NOTE IS A 0.75-SCALE MINIATURE FIVE PITCHES BELOW THE RESERVED TOP,
     // and its stem is a flat 3.5 pitch — not the note geometry the staff uses.
     //

@@ -528,6 +528,42 @@ function middleLineOverride(spec: string): number | null {
  * Returns null when none is found, so a malformed field declares no tempo instead of a
  * default one.
  */
+/**
+ * **THE TEMPO WORDS, AND THEIR RATES** — `abc_parse_header.js:204-232`, twenty-six of
+ * them, matched case-insensitively against the WHOLE pre-string when a `Q:` states nothing
+ * else. Reproduced verbatim because they are abcjs's numbers, not a convention: its
+ * `moderato` is 112 where most tables say 108-120, and `marcia moderato` and `andante
+ * moderato` are two-word keys.
+ */
+const TEMPO_WORDS: Readonly<Record<string, number>> = {
+  larghissimo: 20,
+  adagissimo: 24,
+  sostenuto: 28,
+  grave: 32,
+  largo: 40,
+  lento: 50,
+  larghetto: 60,
+  adagio: 68,
+  adagietto: 74,
+  andante: 80,
+  andantino: 88,
+  'marcia moderato': 84,
+  'andante moderato': 100,
+  moderato: 112,
+  allegretto: 116,
+  'allegro moderato': 120,
+  allegro: 126,
+  animato: 132,
+  agitato: 140,
+  veloce: 148,
+  'mosso vivo': 156,
+  vivace: 164,
+  vivacissimo: 172,
+  allegrissimo: 176,
+  presto: 184,
+  prestissimo: 210,
+}
+
 function parseTempo(content: string): Tempo | null {
   // A `%` starts a comment; strip before parsing, or `% tempo` reads as a stray word.
   const spec = (content.split('%')[0] ?? '').trim()
@@ -564,6 +600,17 @@ function parseTempo(content: string): Tempo | null {
 
   if (bpm !== null && !Number.isFinite(bpm)) bpm = null
   if (text === null && postText === null && bpm === null) return null
+  /**
+   * **AND A LONE TEMPO WORD IS A RATE.** `setTempo` shifts the leading quote, finds NO
+   * tokens after it, and looks the string up in `tempoString` — `bpm` from the table and
+   * `suppressBpm: true` so the number is not drawn (`abc_parse_header.js:257-268`). The
+   * guard is "nothing else in the field at all", which is why `Q:"Allegro" 1/4=120` keeps
+   * its stated 120 and `Q:"Allegro"` alone sounds at 126.
+   */
+  if (bpm === null && postText === null && text !== null) {
+    const word = TEMPO_WORDS[text.toLowerCase()]
+    if (word !== undefined) return { beatUnit, bpm: word, text, postText, suppressBpm: true }
+  }
   return { beatUnit, bpm, text, postText }
 }
 

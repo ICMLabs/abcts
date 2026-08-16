@@ -47,6 +47,9 @@ export interface TimingOptions {
 
 const DEFAULT_METER: Meter = { numerator: 4, denominator: 4, symbol: 'numeric' }
 
+/** What `createNote` replaces a zero duration with — a quarter (`abstract-engraver.js:802`). */
+const ZERO_LENGTH_DRAWN = 0.25
+
 /**
  * `getMeterFraction()` — the first meter on any staff of any LINE, and **4/4 when there is
  * none at all** (`abc_tune.js:181-220`). Not the header's meter: a tune may write its `K:`
@@ -198,10 +201,26 @@ function voiceElements(voice: Voice, score: Score, tempos: Map<number, Tempo>): 
       // "If there is an invisible rest, then there are not elements" — and a SPACER has no
       // duration at all (`addElementToEvents:302-303`).
       const spacer = event.type === 'rest' && event.kind === 'spacer'
+      /**
+       * **AND A ZERO-LENGTH NOTE TAKES A QUARTER OF TIME.** `durationClassOveride` is
+       * `elem.duration * tripletmultiplier` and `AbsoluteElement` takes it only
+       * `if (options.durationClassOveride)` — **`0` IS FALSY** — so it falls through to the
+       * element's own `duration`, which `createNote` has already replaced: `if (duration
+       * === 0) { zeroDuration = true; duration = 0.25; nostem = true; }`, abcjs's own
+       * comment reading "zero duration will draw a quarter note head"
+       * (`abstract-engraver.js:801-819`, `absolute-element.js:40`). `setupEvents` then
+       * reads `durationClass ? durationClass : duration` (`abc_tune.js:301`).
+       *
+       * So `C0` DRAWS as a stemless quarter, SOUNDS for nothing — the flattener walks the
+       * parse tree and never sees this — and OCCUPIES a quarter on the clock. The same
+       * falsy-zero class as `if (opt.bottom)` on a stem and `if (this.measureNumber)` in
+       * the class counters.
+       */
+      const sounding = spacer ? 0 : ratToNumber(event.duration)
       out.push({
         kind: 'note',
         measureNumber,
-        duration: spacer ? 0 : ratToNumber(event.duration),
+        duration: sounding === 0 && !spacer ? ZERO_LENGTH_DRAWN : sounding,
       })
       noteFound = true
     }
@@ -326,6 +345,64 @@ function setupEvents(
  * The count-in is whole measures LESS THE PICKUP — the music's downbeat still lands on a
  * bar line — and `if (startingDelay)` guards it, so a zero delay never subtracts.
  */
+/**
+ * **THE `AbcTune` ACCESSORS, WITH abcjs'S OWN NAMES AND ANSWERS.**
+ *
+ * Every one of these already existed here as a private helper the timing gate leaned on —
+ * `meterOf`, `beatLengthOf`, `barLengthOf`, `bpmOf`, `pickupOf` — because the clock cannot
+ * be built without them. abcjs states them on the tune object
+ * (`data/abc_tune.js:90-181`), so under "match every API" they are exported rather than
+ * reimplemented, and `tests/accessors.test.ts` measures all nine against abcjs's own
+ * answers over 293 tunes.
+ *
+ * They take a `Score` where abcjs's take nothing, because ours are functions and abcjs's
+ * are methods; `compat` binds them to the tune object it hands back.
+ */
+export const getMeter = (score: Score): Meter => meterOf(score)
+/** `getBeatLength()` — the note value one beat is (`abc_tune.js:90-135`). */
+export const getBeatLength = (score: Score): number => beatLengthOf(meterOf(score))
+/** `getBarLength()` — `meter.num / meter.den` (`abc_tune.js:145-148`). */
+export const getBarLength = (score: Score): number => barLengthOf(meterOf(score))
+/** `getBeatsPerMeasure()` — the bar over the beat (`abc_tune.js:175-179`). */
+export const getBeatsPerMeasure = (score: Score): number =>
+  getBarLength(score) / getBeatLength(score)
+/** `getBpm(tempo)` — the tune's own rate, with abcjs's compound-meter default. */
+export const getBpm = (score: Score): number => bpmOf(score.tempo, meterOf(score))
+/** `getPickupLength()` — the lead-in before the first full measure, in whole notes. */
+export const getPickupLength = (score: Score): number => pickupOf(score, meterOf(score))
+
+/**
+ * `millisecondsPerMeasure(bpmOverride)` — the tune-level form, which resolves the rate the
+ * way abcjs does before dividing: the override if there is one, else the tune's own
+ * (`abc_tune.js:158-173`).
+ */
+export function millisecondsPerMeasureOf(score: Score, bpmOverride?: number): number {
+  return millisecondsPerMeasure(meterOf(score), bpmOverride ? bpmOverride : getBpm(score))
+}
+
+/**
+ * `setTiming`'s two by-products. abcjs STORES them on the tune and `getTotalTime()` /
+ * `getTotalBeats()` just read the field, so both are `undefined` until the timings have
+ * been built at least once (`abc_tune.js:614-621`) — reproduced, because a host that calls
+ * `getTotalTime()` too early gets `undefined` from abcjs and must get it from us.
+ */
+export interface TimingTotals {
+  readonly rows: NoteTiming[]
+  readonly totalTime: number | undefined
+  readonly totalBeats: number | undefined
+}
+
+/** `setTiming`, with the totals it computes on the way (`abc_tune.js:614-621`). */
+export function timingsOf(score: Score, options: TimingOptions = {}): TimingTotals {
+  const rows = setTiming(score, options)
+  const last = rows[rows.length - 1]
+  if (last === undefined) return { rows, totalTime: undefined, totalBeats: undefined }
+  // The rate the run actually used, resolved exactly as `setTiming` resolves it.
+  const bpm = options.bpm !== undefined && options.bpm ? options.bpm : getBpm(score)
+  const totalTime = last.milliseconds / 1000
+  return { rows, totalTime, totalBeats: totalTime * (bpm / 60) }
+}
+
 export function setTiming(score: Score, options: TimingOptions = {}): NoteTiming[] {
   const meter = meterOf(score)
   const measuresOfDelay = options.measuresOfDelay ?? 0
