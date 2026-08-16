@@ -25,17 +25,18 @@
  *     each. 174 individual numbers would be noise nobody reads and a merge conflict every
  *     time; the counts move only when something real changes, and they only go up.
  */
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { describe, expect, it } from 'vitest'
-import { renderAbc } from '../src/compat/index.js'
-import { parse } from '../src/parser/parser.js'
-import { absolutePixels, byClass } from './pixel-geometry.js'
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
+import { renderAbc } from "../src/compat/index.js";
+import { renderAll } from "./render-all.js";
+import { parse } from "../src/parser/parser.js";
+import { absolutePixels, byClass } from "./pixel-geometry.js";
 
-const base = join(dirname(fileURLToPath(import.meta.url)), 'corpus-abcjs')
-const fixturesDir = join(base, 'fixtures')
-const goldenDir = join(base, 'golden')
+const base = join(dirname(fileURLToPath(import.meta.url)), "corpus-abcjs");
+const fixturesDir = join(base, "fixtures");
+const goldenDir = join(base, "golden");
 
 /**
  * Fixtures whose notehead count does not match abcjs's, and WHY.
@@ -62,7 +63,7 @@ const CONTENT_GAPS: Readonly<Record<string, string>> = {
   //
   // THE LIST IS EMPTY, AND IT IS THE FIRST TIME. Every fixture of the harvested corpus
   // now agrees with abcjs on note content as well as on all four geometric axes.
-}
+};
 
 /**
  * How many fixtures land within each threshold, on all four axes at once.
@@ -403,63 +404,74 @@ const WITHIN: Readonly<Record<string, number>> = {
   // EMPTY — it prints no rows at all — so it can no longer name anything, and the gates
   // that remain are regression nets rather than instruments. See
   // `Docs/CHECKPOINT-2026-08-06b.md` for what that means for finding the next defect.
-  '0.05': 174,
-  '1': 174,
-  '5': 174,
-  '25': 174,
-}
+  "0.05": 174,
+  "1": 174,
+  "5": 174,
+  "25": 174,
+};
 
 const names = readdirSync(fixturesDir)
-  .filter((f) => f.endsWith('.abc'))
-  .map((f) => f.replace(/\.abc$/, ''))
-  .sort()
+  .filter((f) => f.endsWith(".abc"))
+  .map((f) => f.replace(/\.abc$/, ""))
+  .sort();
 
-const goldens = readdirSync(goldenDir)
+const goldens = readdirSync(goldenDir);
 
 /** abcjs writes one SVG per tune, `<name>.svg` alone or `<name>-tuneN.svg` for a book. */
 const goldensFor = (name: string): string[] =>
   existsSync(join(goldenDir, `${name}.svg`))
     ? [`${name}.svg`]
-    : goldens.filter((g) => g.startsWith(`${name}-tune`)).sort()
+    : goldens.filter((g) => g.startsWith(`${name}-tune`)).sort();
 
 interface Measured {
-  ourHeads: number
-  goldenHeads: number
-  dy: number
-  dx: number
-  oy: number
-  ox: number
+  ourHeads: number;
+  goldenHeads: number;
+  dy: number;
+  dx: number;
+  oy: number;
+  ox: number;
 }
 
 function measure(name: string): Measured {
-  const abc = readFileSync(join(fixturesDir, `${name}.abc`), 'utf-8')
-  const files = goldensFor(name)
-  const ours = renderAbc('paper', abc, {})
+  const abc = readFileSync(join(fixturesDir, `${name}.abc`), "utf-8");
+  const files = goldensFor(name);
+  const ours = renderAll(abc, {});
   if (ours.length !== files.length) {
-    return { ourHeads: -ours.length, goldenHeads: -files.length, dy: 0, dx: 0, oy: 0, ox: 0 }
+    return {
+      ourHeads: -ours.length,
+      goldenHeads: -files.length,
+      dy: 0,
+      dx: 0,
+      oy: 0,
+      ox: 0,
+    };
   }
-  let goldenHeads = 0
-  let ourHeads = 0
-  let dy = 0
-  let dx = 0
-  let sumY = 0
-  let sumX = 0
-  let paired = 0
+  let goldenHeads = 0;
+  let ourHeads = 0;
+  let dy = 0;
+  let dx = 0;
+  let sumY = 0;
+  let sumX = 0;
+  let paired = 0;
   files.forEach((file, i) => {
-    const g = byClass(absolutePixels(readFileSync(join(goldenDir, file), 'utf-8')), 'notehead')
-    const o = byClass(absolutePixels(ours[i]?.svg ?? ''), 'notehead')
-    goldenHeads += g.length
-    ourHeads += o.length
-    const n = Math.min(g.length, o.length)
-    const deltas = (axis: 'x' | 'y'): number[] =>
-      g.slice(0, n).map((head, k) => (o[k]?.[axis] ?? 0) - head[axis])
-    const spread = (v: number[]): number => (v.length === 0 ? 0 : Math.max(...v) - Math.min(...v))
-    dy = Math.max(dy, spread(deltas('y')))
-    dx = Math.max(dx, spread(deltas('x')))
-    sumY += deltas('y').reduce((a, b) => a + b, 0)
-    sumX += deltas('x').reduce((a, b) => a + b, 0)
-    paired += n
-  })
+    const g = byClass(
+      absolutePixels(readFileSync(join(goldenDir, file), "utf-8")),
+      "notehead",
+    );
+    const o = byClass(absolutePixels(ours[i]?.svg ?? ""), "notehead");
+    goldenHeads += g.length;
+    ourHeads += o.length;
+    const n = Math.min(g.length, o.length);
+    const deltas = (axis: "x" | "y"): number[] =>
+      g.slice(0, n).map((head, k) => (o[k]?.[axis] ?? 0) - head[axis]);
+    const spread = (v: number[]): number =>
+      v.length === 0 ? 0 : Math.max(...v) - Math.min(...v);
+    dy = Math.max(dy, spread(deltas("y")));
+    dx = Math.max(dx, spread(deltas("x")));
+    sumY += deltas("y").reduce((a, b) => a + b, 0);
+    sumX += deltas("x").reduce((a, b) => a + b, 0);
+    paired += n;
+  });
   return {
     ourHeads,
     goldenHeads,
@@ -467,54 +479,54 @@ function measure(name: string): Measured {
     dx,
     oy: paired === 0 ? 0 : sumY / paired,
     ox: paired === 0 ? 0 : sumX / paired,
-  }
+  };
 }
 
-describe('abcjs test-suite corpus', () => {
-  it('the harvest and its goldens are in step', () => {
-    expect(names.length).toBeGreaterThan(150)
+describe("abcjs test-suite corpus", () => {
+  it("the harvest and its goldens are in step", () => {
+    expect(names.length).toBeGreaterThan(150);
     // A fixture without a golden would be silently unmeasured, which is the shape of
     // every gate bug this repo has recorded.
-    expect(names.filter((n) => goldensFor(n).length === 0)).toEqual([])
-  })
+    expect(names.filter((n) => goldensFor(n).length === 0)).toEqual([]);
+  });
 
-  describe('nothing throws', () => {
+  describe("nothing throws", () => {
     for (const name of names) {
       it(`${name}`, () => {
-        const abc = readFileSync(join(fixturesDir, `${name}.abc`), 'utf-8')
-        const result = parse(abc)
-        expect(result.ok).toBe(true)
-        const rendered = renderAbc('paper', abc, {})
-        expect(rendered.length).toBeGreaterThan(0)
-        for (const tune of rendered) expect(tune.svg).toContain('<svg')
-      })
+        const abc = readFileSync(join(fixturesDir, `${name}.abc`), "utf-8");
+        const result = parse(abc);
+        expect(result.ok).toBe(true);
+        const rendered = renderAll(abc, {});
+        expect(rendered.length).toBeGreaterThan(0);
+        for (const tune of rendered) expect(tune.svg).toContain("<svg");
+      });
     }
-  })
+  });
 
-  it('notehead counts match abcjs, except where a gap is recorded', () => {
-    const mismatched: string[] = []
+  it("notehead counts match abcjs, except where a gap is recorded", () => {
+    const mismatched: string[] = [];
     for (const name of names) {
-      const { ourHeads, goldenHeads } = measure(name)
-      if (ourHeads !== goldenHeads) mismatched.push(name)
+      const { ourHeads, goldenHeads } = measure(name);
+      if (ourHeads !== goldenHeads) mismatched.push(name);
     }
     // Both directions: a new mismatch is a regression, and a fixed one means the list
     // above is stale. Neither is allowed to pass quietly.
-    expect(mismatched.sort()).toEqual(Object.keys(CONTENT_GAPS).sort())
-  })
+    expect(mismatched.sort()).toEqual(Object.keys(CONTENT_GAPS).sort());
+  });
 
-  it('geometry does not regress', () => {
+  it("geometry does not regress", () => {
     const scores = names
       .filter((n) => CONTENT_GAPS[n] === undefined)
       .map((n) => {
-        const m = measure(n)
-        return Math.max(m.dy, m.dx, Math.abs(m.oy), Math.abs(m.ox))
-      })
-    const summary: Record<string, number> = {}
+        const m = measure(n);
+        return Math.max(m.dy, m.dx, Math.abs(m.oy), Math.abs(m.ox));
+      });
+    const summary: Record<string, number> = {};
     for (const key of Object.keys(WITHIN)) {
-      summary[key] = scores.filter((s) => s < Number.parseFloat(key)).length
+      summary[key] = scores.filter((s) => s < Number.parseFloat(key)).length;
     }
     // A ratchet: only up. An improvement must be RECORDED, or the number drifts away
     // from reality and stops meaning anything.
-    expect(summary).toEqual(WITHIN)
-  })
-})
+    expect(summary).toEqual(WITHIN);
+  });
+});

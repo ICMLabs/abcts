@@ -18,25 +18,42 @@
  * is reached by SIBLING PATH and is not committed here, so a checkout without it must skip
  * rather than fail.
  */
-import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
-import { renderAbc, renderTuneBook } from '../src/compat/index.js'
+import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { renderAbc, renderTuneBook } from "../src/compat/index.js";
+import { renderAll } from "./render-all.js";
 
-const fixtures = join(import.meta.dirname, '..', '..', 'abcMusicKit', 'Tools', 'abcjs-debug', 'fixtures')
-const goldens = join(import.meta.dirname, '..', '..', 'abcMusicKit', 'Tools', 'abcjs-debug', 'golden')
+const fixtures = join(
+  import.meta.dirname,
+  "..",
+  "..",
+  "abcMusicKit",
+  "Tools",
+  "abcjs-debug",
+  "fixtures",
+);
+const goldens = join(
+  import.meta.dirname,
+  "..",
+  "..",
+  "abcMusicKit",
+  "Tools",
+  "abcjs-debug",
+  "golden",
+);
 
 interface Case {
-  readonly slug: string
-  readonly abc: string
-  readonly golden: string
-  readonly tune: number
+  readonly slug: string;
+  readonly abc: string;
+  readonly golden: string;
+  readonly tune: number;
   /** `add_classes` — the `-classes` family. See `MODES`. */
-  readonly addClasses?: boolean
+  readonly addClasses?: boolean;
   /** `print` — the `-print` family. See `MODES`. */
-  readonly print?: boolean
+  readonly print?: boolean;
   /** `renderTuneBook` — the `-stacked` families. See `MODES`. */
-  readonly stacked?: boolean
+  readonly stacked?: boolean;
 }
 
 /**
@@ -61,17 +78,17 @@ interface Case {
  * So all five flavours are gated and the list is complete.
  */
 const MODES: readonly {
-  readonly suffix: string
-  readonly addClasses: boolean
-  readonly print?: boolean
-  readonly stacked?: boolean
+  readonly suffix: string;
+  readonly addClasses: boolean;
+  readonly print?: boolean;
+  readonly stacked?: boolean;
 }[] = [
-  { suffix: '', addClasses: false },
-  { suffix: '-classes', addClasses: true },
-  { suffix: '-print', addClasses: false, print: true },
-  { suffix: '-stacked', addClasses: false, stacked: true },
-  { suffix: '-stacked-print', addClasses: false, print: true, stacked: true },
-]
+  { suffix: "", addClasses: false },
+  { suffix: "-classes", addClasses: true },
+  { suffix: "-print", addClasses: false, print: true },
+  { suffix: "-stacked", addClasses: false, stacked: true },
+  { suffix: "-stacked-print", addClasses: false, print: true, stacked: true },
+];
 
 /**
  * **`S7-voices` IS EXCLUDED AND THE REASON IS NOT OURS.** Its fixture was edited in the
@@ -82,24 +99,24 @@ const MODES: readonly {
  * (`CHECKPOINT-2026-08-12.md` §5). Do not chase these rows; delete this entry when that
  * repo's goldens are rebuilt.
  */
-const STALE: readonly string[] = ['S7-voices']
+const STALE: readonly string[] = ["S7-voices"];
 
 const CASES: Case[] = existsSync(fixtures)
   ? readdirSync(fixtures)
-      .filter((f) => f.endsWith('.abc'))
+      .filter((f) => f.endsWith(".abc"))
       .sort()
-      .filter((f) => !STALE.includes(f.replace(/\.abc$/, '')))
+      .filter((f) => !STALE.includes(f.replace(/\.abc$/, "")))
       .flatMap((f) => {
-        const slug = f.replace(/\.abc$/, '')
-        const abc = readFileSync(join(fixtures, f), 'utf-8')
-        const rows: Case[] = []
+        const slug = f.replace(/\.abc$/, "");
+        const abc = readFileSync(join(fixtures, f), "utf-8");
+        const rows: Case[] = [];
         for (const mode of MODES) {
-          const base = `${slug}${mode.suffix}`
+          const base = `${slug}${mode.suffix}`;
           const flag = {
             ...(mode.addClasses ? { addClasses: true } : {}),
             ...(mode.print === true ? { print: true } : {}),
             ...(mode.stacked === true ? { stacked: true } : {}),
-          }
+          };
           // A SINGLE-tune fixture's golden is `<base>.svg`; a tunebook's are `-tune0`, … .
           if (existsSync(join(goldens, `${base}.svg`)))
             rows.push({
@@ -107,407 +124,414 @@ const CASES: Case[] = existsSync(fixtures)
               abc,
               tune: 0,
               ...flag,
-              golden: readFileSync(join(goldens, `${base}.svg`), 'utf-8'),
-            })
+              golden: readFileSync(join(goldens, `${base}.svg`), "utf-8"),
+            });
           // A STACKED book is one file for the whole fixture — no `-tune<i>` companions.
-          if (mode.stacked === true) continue
-          for (let i = 0; existsSync(join(goldens, `${base}-tune${i}.svg`)); i += 1) {
+          if (mode.stacked === true) continue;
+          for (
+            let i = 0;
+            existsSync(join(goldens, `${base}-tune${i}.svg`));
+            i += 1
+          ) {
             rows.push({
               slug: `${base}-tune${i}`,
               abc,
               tune: i,
               ...flag,
-              golden: readFileSync(join(goldens, `${base}-tune${i}.svg`), 'utf-8'),
-            })
+              golden: readFileSync(
+                join(goldens, `${base}-tune${i}.svg`),
+                "utf-8",
+              ),
+            });
           }
         }
-        return rows
+        return rows;
       })
-  : []
+  : [];
 
 /**
  * Slugs whose difference is a RULED divergence rather than a defect. Empty, and it stays
  * empty until something is written up in `Docs/ABCJS-DIFFERENCES.md`.
  */
-const DIVERGENT: readonly string[] = []
+const DIVERGENT: readonly string[] = [];
 
 /** Slugs that are BYTE-EXACT and must stay so. Grows, never shrinks. */
 const PASSING: readonly string[] = [
-  'S1-decorations-tune0',
-  'S1-decorations-tune1',
-  'S1-decorations-tune2',
-  'S1-decorations-tune3',
-  'S1-decorations-tune4',
-  'S1-decorations-classes-tune0',
-  'S1-decorations-classes-tune1',
-  'S1-decorations-classes-tune2',
-  'S1-decorations-classes-tune3',
-  'S1-decorations-classes-tune4',
-  'S1-decorations-print-tune0',
-  'S1-decorations-print-tune1',
-  'S1-decorations-print-tune2',
-  'S1-decorations-print-tune3',
-  'S1-decorations-print-tune4',
-  'S1-decorations-stacked',
-  'S1-decorations-stacked-print',
-  'S2-fields-tune0',
-  'S2-fields-tune1',
-  'S2-fields-tune2',
-  'S2-fields-classes-tune0',
-  'S2-fields-classes-tune1',
-  'S2-fields-classes-tune2',
-  'S2-fields-print-tune0',
-  'S2-fields-print-tune1',
-  'S2-fields-print-tune2',
-  'S2-fields-stacked',
-  'S2-fields-stacked-print',
-  'S3-note-syntax-tune0',
-  'S3-note-syntax-tune1',
-  'S3-note-syntax-tune2',
-  'S3-note-syntax-tune3',
-  'S3-note-syntax-tune4',
-  'S3-note-syntax-tune5',
-  'S3-note-syntax-tune6',
-  'S3-note-syntax-tune7',
-  'S3-note-syntax-tune8',
-  'S3-note-syntax-tune9',
-  'S3-note-syntax-tune10',
-  'S3-note-syntax-tune11',
-  'S3-note-syntax-tune12',
-  'S3-note-syntax-tune13',
-  'S3-note-syntax-tune14',
-  'S3-note-syntax-tune15',
-  'S3-note-syntax-tune16',
-  'S3-note-syntax-tune17',
-  'S3-note-syntax-tune18',
-  'S3-note-syntax-tune19',
-  'S3-note-syntax-tune20',
-  'S3-note-syntax-tune21',
-  'S3-note-syntax-tune22',
-  'S3-note-syntax-tune23',
-  'S3-note-syntax-tune24',
-  'S3-note-syntax-classes-tune0',
-  'S3-note-syntax-classes-tune1',
-  'S3-note-syntax-classes-tune2',
-  'S3-note-syntax-classes-tune3',
-  'S3-note-syntax-classes-tune4',
-  'S3-note-syntax-classes-tune5',
-  'S3-note-syntax-classes-tune6',
-  'S3-note-syntax-classes-tune7',
-  'S3-note-syntax-classes-tune8',
-  'S3-note-syntax-classes-tune9',
-  'S3-note-syntax-classes-tune10',
-  'S3-note-syntax-classes-tune11',
-  'S3-note-syntax-classes-tune12',
-  'S3-note-syntax-classes-tune13',
-  'S3-note-syntax-classes-tune14',
-  'S3-note-syntax-classes-tune15',
-  'S3-note-syntax-classes-tune16',
-  'S3-note-syntax-classes-tune17',
-  'S3-note-syntax-classes-tune18',
-  'S3-note-syntax-classes-tune19',
-  'S3-note-syntax-classes-tune20',
-  'S3-note-syntax-classes-tune21',
-  'S3-note-syntax-classes-tune22',
-  'S3-note-syntax-classes-tune23',
-  'S3-note-syntax-classes-tune24',
-  'S3-note-syntax-print-tune0',
-  'S3-note-syntax-print-tune1',
-  'S3-note-syntax-print-tune2',
-  'S3-note-syntax-print-tune3',
-  'S3-note-syntax-print-tune4',
-  'S3-note-syntax-print-tune5',
-  'S3-note-syntax-print-tune6',
-  'S3-note-syntax-print-tune7',
-  'S3-note-syntax-print-tune8',
-  'S3-note-syntax-print-tune9',
-  'S3-note-syntax-print-tune10',
-  'S3-note-syntax-print-tune11',
-  'S3-note-syntax-print-tune12',
-  'S3-note-syntax-print-tune13',
-  'S3-note-syntax-print-tune14',
-  'S3-note-syntax-print-tune15',
-  'S3-note-syntax-print-tune16',
-  'S3-note-syntax-print-tune17',
-  'S3-note-syntax-print-tune18',
-  'S3-note-syntax-print-tune19',
-  'S3-note-syntax-print-tune20',
-  'S3-note-syntax-print-tune21',
-  'S3-note-syntax-print-tune22',
-  'S3-note-syntax-print-tune23',
-  'S3-note-syntax-print-tune24',
-  'S3-note-syntax-stacked',
-  'S3-note-syntax-stacked-print',
-  'S4-bars-repeats-tune0',
-  'S4-bars-repeats-tune1',
-  'S4-bars-repeats-tune2',
-  'S4-bars-repeats-classes-tune0',
-  'S4-bars-repeats-classes-tune1',
-  'S4-bars-repeats-classes-tune2',
-  'S4-bars-repeats-print-tune0',
-  'S4-bars-repeats-print-tune1',
-  'S4-bars-repeats-print-tune2',
-  'S4-bars-repeats-stacked',
-  'S4-bars-repeats-stacked-print',
-  'S5-directives-tune0',
-  'S5-directives-tune1',
-  'S5-directives-tune2',
-  'S5-directives-tune3',
-  'S5-directives-tune4',
-  'S5-directives-tune5',
-  'S5-directives-classes-tune0',
-  'S5-directives-classes-tune1',
-  'S5-directives-classes-tune2',
-  'S5-directives-classes-tune3',
-  'S5-directives-classes-tune4',
-  'S5-directives-classes-tune5',
-  'S5-directives-print-tune0',
-  'S5-directives-print-tune1',
-  'S5-directives-print-tune2',
-  'S5-directives-print-tune3',
-  'S5-directives-print-tune4',
-  'S5-directives-print-tune5',
-  'S5-directives-stacked',
-  'S5-directives-stacked-print',
-  'S6-keys-tune0',
-  'S6-keys-tune1',
-  'S6-keys-tune2',
-  'S6-keys-tune3',
-  'S6-keys-tune4',
-  'S6-keys-classes-tune0',
-  'S6-keys-classes-tune1',
-  'S6-keys-classes-tune2',
-  'S6-keys-classes-tune3',
-  'S6-keys-classes-tune4',
-  'S6-keys-print-tune0',
-  'S6-keys-print-tune1',
-  'S6-keys-print-tune2',
-  'S6-keys-print-tune3',
-  'S6-keys-print-tune4',
-  'S6-keys-stacked',
-  'S6-keys-stacked-print',
-  'S8-layout-tune0',
-  'S8-layout-tune1',
-  'S8-layout-tune2',
-  'S8-layout-tune3',
-  'S8-layout-tune4',
-  'S8-layout-tune5',
-  'S8-layout-tune6',
-  'S8-layout-tune7',
-  'S8-layout-tune8',
-  'S8-layout-tune9',
-  'S8-layout-tune10',
-  'S8-layout-tune11',
-  'S8-layout-classes-tune0',
-  'S8-layout-classes-tune1',
-  'S8-layout-classes-tune2',
-  'S8-layout-classes-tune3',
-  'S8-layout-classes-tune4',
-  'S8-layout-classes-tune5',
-  'S8-layout-classes-tune6',
-  'S8-layout-classes-tune7',
-  'S8-layout-classes-tune8',
-  'S8-layout-classes-tune9',
-  'S8-layout-classes-tune10',
-  'S8-layout-classes-tune11',
-  'S8-layout-print-tune0',
-  'S8-layout-print-tune1',
-  'S8-layout-print-tune2',
-  'S8-layout-print-tune3',
-  'S8-layout-print-tune4',
-  'S8-layout-print-tune5',
-  'S8-layout-print-tune6',
-  'S8-layout-print-tune7',
-  'S8-layout-print-tune8',
-  'S8-layout-print-tune9',
-  'S8-layout-print-tune10',
-  'S8-layout-print-tune11',
-  'S8-layout-stacked',
-  'S8-layout-stacked-print',
-  'ave-verum-corpus',
-  'ave-verum-corpus-classes',
-  'ave-verum-corpus-print',
-  'brother-john-inline-voices',
-  'brother-john-inline-voices-classes',
-  'brother-john-inline-voices-print',
-  'center-text',
-  'center-text-classes',
-  'center-text-print',
-  'chord-grid',
-  'chord-grid-classes',
-  'chord-grid-print',
-  'clefs-tune0',
-  'clefs-tune1',
-  'clefs-tune2',
-  'clefs-tune3',
-  'clefs-tune4',
-  'clefs-tune5',
-  'clefs-tune6',
-  'clefs-tune7',
-  'clefs-classes-tune0',
-  'clefs-classes-tune1',
-  'clefs-classes-tune2',
-  'clefs-classes-tune3',
-  'clefs-classes-tune4',
-  'clefs-classes-tune5',
-  'clefs-classes-tune6',
-  'clefs-classes-tune7',
-  'clefs-print-tune0',
-  'clefs-print-tune1',
-  'clefs-print-tune2',
-  'clefs-print-tune3',
-  'clefs-print-tune4',
-  'clefs-print-tune5',
-  'clefs-print-tune6',
-  'clefs-print-tune7',
-  'clefs-stacked',
-  'clefs-stacked-print',
-  'curves-tune0',
-  'curves-tune1',
-  'curves-tune2',
-  'curves-tune3',
-  'curves-tune4',
-  'curves-tune5',
-  'curves-tune6',
-  'curves-classes-tune0',
-  'curves-classes-tune1',
-  'curves-classes-tune2',
-  'curves-classes-tune3',
-  'curves-classes-tune4',
-  'curves-classes-tune5',
-  'curves-classes-tune6',
-  'curves-print-tune0',
-  'curves-print-tune1',
-  'curves-print-tune2',
-  'curves-print-tune3',
-  'curves-print-tune4',
-  'curves-print-tune5',
-  'curves-print-tune6',
-  'curves-stacked',
-  'curves-stacked-print',
-  'extra-class',
-  'extra-class-classes',
-  'frere-jacques',
-  'frere-jacques-classes',
-  'frere-jacques-print',
-  'full-song-template',
-  'full-song-template-classes',
-  'full-song-template-print',
-  'happy-birthday',
-  'happy-birthday-classes',
-  'happy-birthday-print',
-  'little swallow',
-  'little swallow-classes',
-  'little swallow-print',
-  'missing-decorations-tune0',
-  'missing-decorations-tune1',
-  'missing-decorations-tune2',
-  'missing-decorations-tune3',
-  'missing-decorations-tune4',
-  'missing-decorations-tune5',
-  'missing-decorations-classes-tune0',
-  'missing-decorations-classes-tune1',
-  'missing-decorations-classes-tune2',
-  'missing-decorations-classes-tune3',
-  'missing-decorations-classes-tune4',
-  'missing-decorations-classes-tune5',
-  'missing-decorations-print-tune0',
-  'missing-decorations-print-tune1',
-  'missing-decorations-print-tune2',
-  'missing-decorations-print-tune3',
-  'missing-decorations-print-tune4',
-  'missing-decorations-print-tune5',
-  'missing-decorations-stacked',
-  'missing-decorations-stacked-print',
-  'multi-voice-lyrics-two-voices',
-  'multi-voice-lyrics-two-voices-classes',
-  'multi-voice-lyrics-two-voices-print',
-  'multi-voice-rest-collision',
-  'multi-voice-rest-collision-classes',
-  'multi-voice-rest-collision-print',
-  'multi-voice-rest-placement',
-  'multi-voice-rest-placement-classes',
-  'multi-voice-rest-placement-print',
-  'multi-voice-triplet-brackets',
-  'multi-voice-triplet-brackets-classes',
-  'multi-voice-triplet-brackets-print',
-  'program-127-test',
-  'program-127-test-classes',
-  'program-127-test-print',
-  'ragtime-mini',
-  'ragtime-mini-classes',
-  'ragtime-mini-print',
-  'ragtime-nightingale',
-  'ragtime-nightingale-classes',
-  'ragtime-nightingale-print',
-  'score-reorder-shared',
-  'score-reorder-shared-classes',
-  'score-reorder-shared-print',
-  'score-reorder',
-  'score-reorder-classes',
-  'score-reorder-print',
-  'simple-c',
-  'simple-c-classes',
-  'simple-c-print',
-  'stacked-annotations',
-  'tunebook-3-tune0',
-  'tunebook-3-tune1',
-  'tunebook-3-tune2',
-  'tunebook-3-classes-tune0',
-  'tunebook-3-classes-tune1',
-  'tunebook-3-classes-tune2',
-  'tunebook-3-print-tune0',
-  'tunebook-3-print-tune1',
-  'tunebook-3-print-tune2',
-  'tunebook-3-stacked',
-  'tunebook-3-stacked-print',
-  'twinkle',
-  'twinkle-classes',
-  'twinkle-print',
-  'two-voice-invention',
-  'two-voice-invention-classes',
-  'two-voice-invention-print',
-  'voice-middle-after-clef',
-  'voice-middle-after-clef-classes',
-  'voice-middle-after-clef-print',
-  'voice-octave-shift',
-  'vree-compound-meter',
-  'vree-compound-meter-classes',
-  'vree-compound-meter-print',
-  'vree-grace-notes',
-  'vree-grace-notes-classes',
-  'vree-grace-notes-print',
-  'vree-sharps',
-  'vree-sharps-classes',
-  'vree-sharps-print',
-  'vree-slurs-and-triplets',
-  'vree-slurs-and-triplets-classes',
-  'vree-slurs-and-triplets-print',
-  'vree-ties-across-bars',
-  'vree-ties-across-bars-classes',
-  'vree-ties-across-bars-print',
-  'zocharti-loch',
-  'zocharti-loch-classes',
-  'zocharti-loch-print',
-]
+  "S1-decorations-tune0",
+  "S1-decorations-tune1",
+  "S1-decorations-tune2",
+  "S1-decorations-tune3",
+  "S1-decorations-tune4",
+  "S1-decorations-classes-tune0",
+  "S1-decorations-classes-tune1",
+  "S1-decorations-classes-tune2",
+  "S1-decorations-classes-tune3",
+  "S1-decorations-classes-tune4",
+  "S1-decorations-print-tune0",
+  "S1-decorations-print-tune1",
+  "S1-decorations-print-tune2",
+  "S1-decorations-print-tune3",
+  "S1-decorations-print-tune4",
+  "S1-decorations-stacked",
+  "S1-decorations-stacked-print",
+  "S2-fields-tune0",
+  "S2-fields-tune1",
+  "S2-fields-tune2",
+  "S2-fields-classes-tune0",
+  "S2-fields-classes-tune1",
+  "S2-fields-classes-tune2",
+  "S2-fields-print-tune0",
+  "S2-fields-print-tune1",
+  "S2-fields-print-tune2",
+  "S2-fields-stacked",
+  "S2-fields-stacked-print",
+  "S3-note-syntax-tune0",
+  "S3-note-syntax-tune1",
+  "S3-note-syntax-tune2",
+  "S3-note-syntax-tune3",
+  "S3-note-syntax-tune4",
+  "S3-note-syntax-tune5",
+  "S3-note-syntax-tune6",
+  "S3-note-syntax-tune7",
+  "S3-note-syntax-tune8",
+  "S3-note-syntax-tune9",
+  "S3-note-syntax-tune10",
+  "S3-note-syntax-tune11",
+  "S3-note-syntax-tune12",
+  "S3-note-syntax-tune13",
+  "S3-note-syntax-tune14",
+  "S3-note-syntax-tune15",
+  "S3-note-syntax-tune16",
+  "S3-note-syntax-tune17",
+  "S3-note-syntax-tune18",
+  "S3-note-syntax-tune19",
+  "S3-note-syntax-tune20",
+  "S3-note-syntax-tune21",
+  "S3-note-syntax-tune22",
+  "S3-note-syntax-tune23",
+  "S3-note-syntax-tune24",
+  "S3-note-syntax-classes-tune0",
+  "S3-note-syntax-classes-tune1",
+  "S3-note-syntax-classes-tune2",
+  "S3-note-syntax-classes-tune3",
+  "S3-note-syntax-classes-tune4",
+  "S3-note-syntax-classes-tune5",
+  "S3-note-syntax-classes-tune6",
+  "S3-note-syntax-classes-tune7",
+  "S3-note-syntax-classes-tune8",
+  "S3-note-syntax-classes-tune9",
+  "S3-note-syntax-classes-tune10",
+  "S3-note-syntax-classes-tune11",
+  "S3-note-syntax-classes-tune12",
+  "S3-note-syntax-classes-tune13",
+  "S3-note-syntax-classes-tune14",
+  "S3-note-syntax-classes-tune15",
+  "S3-note-syntax-classes-tune16",
+  "S3-note-syntax-classes-tune17",
+  "S3-note-syntax-classes-tune18",
+  "S3-note-syntax-classes-tune19",
+  "S3-note-syntax-classes-tune20",
+  "S3-note-syntax-classes-tune21",
+  "S3-note-syntax-classes-tune22",
+  "S3-note-syntax-classes-tune23",
+  "S3-note-syntax-classes-tune24",
+  "S3-note-syntax-print-tune0",
+  "S3-note-syntax-print-tune1",
+  "S3-note-syntax-print-tune2",
+  "S3-note-syntax-print-tune3",
+  "S3-note-syntax-print-tune4",
+  "S3-note-syntax-print-tune5",
+  "S3-note-syntax-print-tune6",
+  "S3-note-syntax-print-tune7",
+  "S3-note-syntax-print-tune8",
+  "S3-note-syntax-print-tune9",
+  "S3-note-syntax-print-tune10",
+  "S3-note-syntax-print-tune11",
+  "S3-note-syntax-print-tune12",
+  "S3-note-syntax-print-tune13",
+  "S3-note-syntax-print-tune14",
+  "S3-note-syntax-print-tune15",
+  "S3-note-syntax-print-tune16",
+  "S3-note-syntax-print-tune17",
+  "S3-note-syntax-print-tune18",
+  "S3-note-syntax-print-tune19",
+  "S3-note-syntax-print-tune20",
+  "S3-note-syntax-print-tune21",
+  "S3-note-syntax-print-tune22",
+  "S3-note-syntax-print-tune23",
+  "S3-note-syntax-print-tune24",
+  "S3-note-syntax-stacked",
+  "S3-note-syntax-stacked-print",
+  "S4-bars-repeats-tune0",
+  "S4-bars-repeats-tune1",
+  "S4-bars-repeats-tune2",
+  "S4-bars-repeats-classes-tune0",
+  "S4-bars-repeats-classes-tune1",
+  "S4-bars-repeats-classes-tune2",
+  "S4-bars-repeats-print-tune0",
+  "S4-bars-repeats-print-tune1",
+  "S4-bars-repeats-print-tune2",
+  "S4-bars-repeats-stacked",
+  "S4-bars-repeats-stacked-print",
+  "S5-directives-tune0",
+  "S5-directives-tune1",
+  "S5-directives-tune2",
+  "S5-directives-tune3",
+  "S5-directives-tune4",
+  "S5-directives-tune5",
+  "S5-directives-classes-tune0",
+  "S5-directives-classes-tune1",
+  "S5-directives-classes-tune2",
+  "S5-directives-classes-tune3",
+  "S5-directives-classes-tune4",
+  "S5-directives-classes-tune5",
+  "S5-directives-print-tune0",
+  "S5-directives-print-tune1",
+  "S5-directives-print-tune2",
+  "S5-directives-print-tune3",
+  "S5-directives-print-tune4",
+  "S5-directives-print-tune5",
+  "S5-directives-stacked",
+  "S5-directives-stacked-print",
+  "S6-keys-tune0",
+  "S6-keys-tune1",
+  "S6-keys-tune2",
+  "S6-keys-tune3",
+  "S6-keys-tune4",
+  "S6-keys-classes-tune0",
+  "S6-keys-classes-tune1",
+  "S6-keys-classes-tune2",
+  "S6-keys-classes-tune3",
+  "S6-keys-classes-tune4",
+  "S6-keys-print-tune0",
+  "S6-keys-print-tune1",
+  "S6-keys-print-tune2",
+  "S6-keys-print-tune3",
+  "S6-keys-print-tune4",
+  "S6-keys-stacked",
+  "S6-keys-stacked-print",
+  "S8-layout-tune0",
+  "S8-layout-tune1",
+  "S8-layout-tune2",
+  "S8-layout-tune3",
+  "S8-layout-tune4",
+  "S8-layout-tune5",
+  "S8-layout-tune6",
+  "S8-layout-tune7",
+  "S8-layout-tune8",
+  "S8-layout-tune9",
+  "S8-layout-tune10",
+  "S8-layout-tune11",
+  "S8-layout-classes-tune0",
+  "S8-layout-classes-tune1",
+  "S8-layout-classes-tune2",
+  "S8-layout-classes-tune3",
+  "S8-layout-classes-tune4",
+  "S8-layout-classes-tune5",
+  "S8-layout-classes-tune6",
+  "S8-layout-classes-tune7",
+  "S8-layout-classes-tune8",
+  "S8-layout-classes-tune9",
+  "S8-layout-classes-tune10",
+  "S8-layout-classes-tune11",
+  "S8-layout-print-tune0",
+  "S8-layout-print-tune1",
+  "S8-layout-print-tune2",
+  "S8-layout-print-tune3",
+  "S8-layout-print-tune4",
+  "S8-layout-print-tune5",
+  "S8-layout-print-tune6",
+  "S8-layout-print-tune7",
+  "S8-layout-print-tune8",
+  "S8-layout-print-tune9",
+  "S8-layout-print-tune10",
+  "S8-layout-print-tune11",
+  "S8-layout-stacked",
+  "S8-layout-stacked-print",
+  "ave-verum-corpus",
+  "ave-verum-corpus-classes",
+  "ave-verum-corpus-print",
+  "brother-john-inline-voices",
+  "brother-john-inline-voices-classes",
+  "brother-john-inline-voices-print",
+  "center-text",
+  "center-text-classes",
+  "center-text-print",
+  "chord-grid",
+  "chord-grid-classes",
+  "chord-grid-print",
+  "clefs-tune0",
+  "clefs-tune1",
+  "clefs-tune2",
+  "clefs-tune3",
+  "clefs-tune4",
+  "clefs-tune5",
+  "clefs-tune6",
+  "clefs-tune7",
+  "clefs-classes-tune0",
+  "clefs-classes-tune1",
+  "clefs-classes-tune2",
+  "clefs-classes-tune3",
+  "clefs-classes-tune4",
+  "clefs-classes-tune5",
+  "clefs-classes-tune6",
+  "clefs-classes-tune7",
+  "clefs-print-tune0",
+  "clefs-print-tune1",
+  "clefs-print-tune2",
+  "clefs-print-tune3",
+  "clefs-print-tune4",
+  "clefs-print-tune5",
+  "clefs-print-tune6",
+  "clefs-print-tune7",
+  "clefs-stacked",
+  "clefs-stacked-print",
+  "curves-tune0",
+  "curves-tune1",
+  "curves-tune2",
+  "curves-tune3",
+  "curves-tune4",
+  "curves-tune5",
+  "curves-tune6",
+  "curves-classes-tune0",
+  "curves-classes-tune1",
+  "curves-classes-tune2",
+  "curves-classes-tune3",
+  "curves-classes-tune4",
+  "curves-classes-tune5",
+  "curves-classes-tune6",
+  "curves-print-tune0",
+  "curves-print-tune1",
+  "curves-print-tune2",
+  "curves-print-tune3",
+  "curves-print-tune4",
+  "curves-print-tune5",
+  "curves-print-tune6",
+  "curves-stacked",
+  "curves-stacked-print",
+  "extra-class",
+  "extra-class-classes",
+  "frere-jacques",
+  "frere-jacques-classes",
+  "frere-jacques-print",
+  "full-song-template",
+  "full-song-template-classes",
+  "full-song-template-print",
+  "happy-birthday",
+  "happy-birthday-classes",
+  "happy-birthday-print",
+  "little swallow",
+  "little swallow-classes",
+  "little swallow-print",
+  "missing-decorations-tune0",
+  "missing-decorations-tune1",
+  "missing-decorations-tune2",
+  "missing-decorations-tune3",
+  "missing-decorations-tune4",
+  "missing-decorations-tune5",
+  "missing-decorations-classes-tune0",
+  "missing-decorations-classes-tune1",
+  "missing-decorations-classes-tune2",
+  "missing-decorations-classes-tune3",
+  "missing-decorations-classes-tune4",
+  "missing-decorations-classes-tune5",
+  "missing-decorations-print-tune0",
+  "missing-decorations-print-tune1",
+  "missing-decorations-print-tune2",
+  "missing-decorations-print-tune3",
+  "missing-decorations-print-tune4",
+  "missing-decorations-print-tune5",
+  "missing-decorations-stacked",
+  "missing-decorations-stacked-print",
+  "multi-voice-lyrics-two-voices",
+  "multi-voice-lyrics-two-voices-classes",
+  "multi-voice-lyrics-two-voices-print",
+  "multi-voice-rest-collision",
+  "multi-voice-rest-collision-classes",
+  "multi-voice-rest-collision-print",
+  "multi-voice-rest-placement",
+  "multi-voice-rest-placement-classes",
+  "multi-voice-rest-placement-print",
+  "multi-voice-triplet-brackets",
+  "multi-voice-triplet-brackets-classes",
+  "multi-voice-triplet-brackets-print",
+  "program-127-test",
+  "program-127-test-classes",
+  "program-127-test-print",
+  "ragtime-mini",
+  "ragtime-mini-classes",
+  "ragtime-mini-print",
+  "ragtime-nightingale",
+  "ragtime-nightingale-classes",
+  "ragtime-nightingale-print",
+  "score-reorder-shared",
+  "score-reorder-shared-classes",
+  "score-reorder-shared-print",
+  "score-reorder",
+  "score-reorder-classes",
+  "score-reorder-print",
+  "simple-c",
+  "simple-c-classes",
+  "simple-c-print",
+  "stacked-annotations",
+  "tunebook-3-tune0",
+  "tunebook-3-tune1",
+  "tunebook-3-tune2",
+  "tunebook-3-classes-tune0",
+  "tunebook-3-classes-tune1",
+  "tunebook-3-classes-tune2",
+  "tunebook-3-print-tune0",
+  "tunebook-3-print-tune1",
+  "tunebook-3-print-tune2",
+  "tunebook-3-stacked",
+  "tunebook-3-stacked-print",
+  "twinkle",
+  "twinkle-classes",
+  "twinkle-print",
+  "two-voice-invention",
+  "two-voice-invention-classes",
+  "two-voice-invention-print",
+  "voice-middle-after-clef",
+  "voice-middle-after-clef-classes",
+  "voice-middle-after-clef-print",
+  "voice-octave-shift",
+  "vree-compound-meter",
+  "vree-compound-meter-classes",
+  "vree-compound-meter-print",
+  "vree-grace-notes",
+  "vree-grace-notes-classes",
+  "vree-grace-notes-print",
+  "vree-sharps",
+  "vree-sharps-classes",
+  "vree-sharps-print",
+  "vree-slurs-and-triplets",
+  "vree-slurs-and-triplets-classes",
+  "vree-slurs-and-triplets-print",
+  "vree-ties-across-bars",
+  "vree-ties-across-bars-classes",
+  "vree-ties-across-bars-print",
+  "zocharti-loch",
+  "zocharti-loch-classes",
+  "zocharti-loch-print",
+];
 
 interface Diff {
-  readonly matched: number
-  readonly where: string
+  readonly matched: number;
+  readonly where: string;
 }
 
 function firstDifference(got: string, want: string): Diff | null {
-  if (got === want) return null
-  let i = 0
-  while (i < got.length && i < want.length && got[i] === want[i]) i += 1
-  const from = Math.max(0, i - 60)
+  if (got === want) return null;
+  let i = 0;
+  while (i < got.length && i < want.length && got[i] === want[i]) i += 1;
+  const from = Math.max(0, i - 60);
   return {
     matched: i,
     where:
       `byte ${i} of ${want.length}\n` +
-      `      got  …${got.slice(from, i + 60).replace(/\n/g, '⏎')}\n` +
-      `      want …${want.slice(from, i + 60).replace(/\n/g, '⏎')}`,
-  }
+      `      got  …${got.slice(from, i + 60).replace(/\n/g, "⏎")}\n` +
+      `      want …${want.slice(from, i + 60).replace(/\n/g, "⏎")}`,
+  };
 }
 
 /** THE SAME PARAMS THE GOLDENS WERE MADE WITH — `dump-svg.js`'s `{staffwidth: 670}`. */
@@ -516,48 +540,51 @@ function run(c: Case): Diff | null {
     staffwidth: 670,
     ...(c.addClasses === true ? { add_classes: true } : {}),
     ...(c.print === true ? { print: true } : {}),
-  }
-  if (c.stacked === true) return firstDifference(renderTuneBook(c.abc, params), c.golden)
-  return firstDifference(renderAbc('paper', c.abc, params)[c.tune]?.svg ?? '', c.golden)
+  };
+  if (c.stacked === true)
+    return firstDifference(renderTuneBook(c.abc, params), c.golden);
+  return firstDifference(renderAll(c.abc, params)[c.tune]?.svg ?? "", c.golden);
 }
 
-describe('strict SVG vs the 41-fixture corpus, byte for byte', () => {
+describe("strict SVG vs the 41-fixture corpus, byte for byte", () => {
   // 334 rows across three render flavours, each a full parse + layout + emit of a
   // whole fixture — `ragtime-nightingale` alone is 2MB of SVG. Well past the 5s default.
-  it('writes the ranked table', { timeout: 120_000 }, () => {
+  it("writes the ranked table", { timeout: 120_000 }, () => {
     const rows = CASES.map((c) => {
-      let diff: Diff | null
+      let diff: Diff | null;
       try {
-        diff = run(c)
+        diff = run(c);
       } catch (error) {
-        diff = { matched: 0, where: `threw: ${(error as Error).message}` }
+        diff = { matched: 0, where: `threw: ${(error as Error).message}` };
       }
-      return { slug: c.slug, diff, n: c.golden.length }
-    })
-    const off = rows.filter((r) => r.diff !== null && !DIVERGENT.includes(r.slug))
+      return { slug: c.slug, diff, n: c.golden.length };
+    });
+    const off = rows.filter(
+      (r) => r.diff !== null && !DIVERGENT.includes(r.slug),
+    );
     const text = [
       `${off.length} of ${rows.length} tunes differ from abcjs`,
       `${DIVERGENT.length} ruled divergent — see Docs/ABCJS-DIFFERENCES.md`,
       `${STALE.length} fixture excluded as STALE IN THE SIBLING REPO — see STALE`,
-      '',
+      "",
       ...off
         .sort((a, b) => (b.diff?.matched ?? 0) - (a.diff?.matched ?? 0))
         .map(
           (r) =>
             `  ${r.slug.padEnd(38)} ${String(r.diff?.matched).padStart(7)}/${r.n} ok  ${r.diff?.where}`,
         ),
-    ].join('\n')
-    writeFileSync('/tmp/abcts-svg-bytes-sibling-ranked.txt', `${text}\n`)
-    expect(rows.length).toBe(CASES.length)
-  })
+    ].join("\n");
+    writeFileSync("/tmp/abcts-svg-bytes-sibling-ranked.txt", `${text}\n`);
+    expect(rows.length).toBe(CASES.length);
+  });
 
   for (const slug of PASSING) {
     it(`is byte-exact — ${slug}`, () => {
-      const c = CASES.find((x) => x.slug === slug)
+      const c = CASES.find((x) => x.slug === slug);
       // The corpus is a SIBLING checkout, not committed here — skip rather than fail.
-      if (CASES.length === 0) return
-      if (c === undefined) throw new Error(`no such case ${slug}`)
-      expect(run(c)?.where ?? null).toBeNull()
-    })
+      if (CASES.length === 0) return;
+      if (c === undefined) throw new Error(`no such case ${slug}`);
+      expect(run(c)?.where ?? null).toBeNull();
+    });
   }
-})
+});

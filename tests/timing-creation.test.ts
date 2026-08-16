@@ -12,36 +12,40 @@
  * that directory's README for the classification and for what abcjs's own file never
  * asserts.
  */
-import { readdirSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
-import { renderAbc } from '../src/compat/index.js'
-import { parse } from '../src/parser/parser.js'
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { renderAbc } from "../src/compat/index.js";
+import { renderAll } from "./render-all.js";
+import { parse } from "../src/parser/parser.js";
 
-const dir = join(import.meta.dirname, 'corpus-timing')
+const dir = join(import.meta.dirname, "corpus-timing");
 
 interface Case {
-  readonly slug: string
-  readonly name: string
-  readonly kind: string
-  readonly abc: string
+  readonly slug: string;
+  readonly name: string;
+  readonly kind: string;
+  readonly abc: string;
 }
 
 const CASES: Case[] = readdirSync(dir)
-  .filter((f) => f.endsWith('.json'))
+  .filter((f) => f.endsWith(".json"))
   .sort()
-  .map((f) => ({ slug: f.replace(/\.json$/, ''), ...JSON.parse(readFileSync(join(dir, f), 'utf-8')) }))
-  .filter((c) => c.kind === 'creation')
+  .map((f) => ({
+    slug: f.replace(/\.json$/, ""),
+    ...JSON.parse(readFileSync(join(dir, f), "utf-8")),
+  }))
+  .filter((c) => c.kind === "creation");
 
-describe('tunes that once crashed abcjs still render', () => {
+describe("tunes that once crashed abcjs still render", () => {
   for (const c of CASES) {
     it(`${c.slug} — parses`, () => {
-      const parsed = parse(c.abc)
-      expect(parsed.ok).toBe(true)
-    })
+      const parsed = parse(c.abc);
+      expect(parsed.ok).toBe(true);
+    });
     it(`${c.slug} — renders`, () => {
-      const svg = renderAbc('paper', c.abc, {})[0]?.svg ?? ''
-      expect(svg.startsWith('<svg')).toBe(true)
-    })
+      const svg = renderAll(c.abc, {})[0]?.svg ?? "";
+      expect(svg.startsWith("<svg")).toBe(true);
+    });
   }
-})
+});

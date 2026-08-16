@@ -16,55 +16,61 @@
  * pads only to a minimum). Half of our boundaries are already exact to the pixel; the
  * fudges are averaging over the half that are not.
  */
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
-import { renderAbc } from '../src/compat/index.js'
-import { corpusDir, goldensDir, loadCorpus } from './corpus/corpus.js'
-import { absolutePixels } from './pixel-geometry.js'
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { renderAbc } from "../src/compat/index.js";
+import { renderAll } from "./render-all.js";
+import { corpusDir, goldensDir, loadCorpus } from "./corpus/corpus.js";
+import { absolutePixels } from "./pixel-geometry.js";
 
 /** The y of every staff's TOP line, in page pixels, in document order. */
 const topLines = (svg: string): number[] =>
   absolutePixels(svg)
-    .items.filter((item) => item.cls.includes('top-line'))
-    .map((item) => item.y)
+    .items.filter((item) => item.cls.includes("top-line"))
+    .map((item) => item.y);
 
-describe('staff spacing vs abcjs', () => {
-  it('records each boundary error', () => {
-    const rows: string[] = ['fixture'.padEnd(30) + 'ours - abcjs, per staff boundary (px)']
-    const all: number[] = []
+describe("staff spacing vs abcjs", () => {
+  it("records each boundary error", () => {
+    const rows: string[] = [
+      "fixture".padEnd(30) + "ours - abcjs, per staff boundary (px)",
+    ];
+    const all: number[] = [];
     for (const entry of loadCorpus()) {
-      const golden = join(goldensDir, `${entry.name}.svg`)
-      if (!existsSync(golden)) continue
-      const g = topLines(readFileSync(golden, 'utf-8'))
-      const abc = readFileSync(join(corpusDir, `${entry.name}.abc`), 'utf-8')
-      const o = topLines(renderAbc('paper', abc, {})[0]?.svg ?? '')
+      const golden = join(goldensDir, `${entry.name}.svg`);
+      if (!existsSync(golden)) continue;
+      const g = topLines(readFileSync(golden, "utf-8"));
+      const abc = readFileSync(join(corpusDir, `${entry.name}.abc`), "utf-8");
+      const o = topLines(renderAll(abc, {})[0]?.svg ?? "");
       // A staff-count mismatch is a different defect and the structure gate owns it.
-      if (g.length < 2 || g.length !== o.length) continue
+      if (g.length < 2 || g.length !== o.length) continue;
       const errors = g
         .slice(1)
-        .map((_, i) => (o[i + 1] ?? 0) - (o[i] ?? 0) - ((g[i + 1] ?? 0) - (g[i] ?? 0)))
-      all.push(...errors)
+        .map(
+          (_, i) =>
+            (o[i + 1] ?? 0) - (o[i] ?? 0) - ((g[i + 1] ?? 0) - (g[i] ?? 0)),
+        );
+      all.push(...errors);
       rows.push(
         entry.name.padEnd(30) +
           errors
             .slice(0, 12)
             .map((e) => e.toFixed(1).padStart(7))
-            .join(''),
-      )
+            .join(""),
+      );
     }
-    const mean = (v: number[]) => v.reduce((a, b) => a + b, 0) / v.length
-    const sorted = [...all].sort((a, b) => a - b)
+    const mean = (v: number[]) => v.reduce((a, b) => a + b, 0) / v.length;
+    const sorted = [...all].sort((a, b) => a - b);
     rows.push(
-      '',
+      "",
       `boundaries ${all.length}   exact(<0.05px) ${all.filter((e) => Math.abs(e) < 0.05).length}` +
         `   median ${(sorted[Math.floor(sorted.length / 2)] ?? 0).toFixed(2)}` +
         `   mean ${mean(all).toFixed(2)}   mean |error| ${mean(all.map(Math.abs)).toFixed(2)}`,
-    )
-    writeFileSync('/tmp/abcts-staff-spacing.txt', rows.join('\n'))
+    );
+    writeFileSync("/tmp/abcts-staff-spacing.txt", rows.join("\n"));
     // The probe that lied for nine straight runs wrote a stale file and nobody noticed,
     // so this one proves it read real staves before anything reads its table.
-    expect(all.length).toBeGreaterThan(50)
-    expect(all.filter((e) => Math.abs(e) < 0.05).length).toBeGreaterThan(15)
-  })
-})
+    expect(all.length).toBeGreaterThan(50);
+    expect(all.filter((e) => Math.abs(e) < 0.05).length).toBeGreaterThan(15);
+  });
+});

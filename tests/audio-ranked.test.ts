@@ -18,11 +18,11 @@
  * Nothing here asserts a tolerance, because an event list has none — a pitch is right or
  * it is not.
  */
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
-import { flattenAudio, type MidiEvent } from '../src/audio/flatten.js'
-import { parse } from '../src/parser/parser.js'
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { flattenAudio, type MidiEvent } from "../src/audio/flatten.js";
+import { parse } from "../src/parser/parser.js";
 
 /**
  * TWO DIRECTORIES, same shape, same compare.
@@ -32,117 +32,117 @@ import { parse } from '../src/parser/parser.js'
  * live beside it rather than in it. See `scripts/gen-audio-controls.mjs`.
  */
 const DIRS = [
-  join(import.meta.dirname, 'corpus-audio'),
-  join(import.meta.dirname, 'corpus-audio-controls'),
-]
+  join(import.meta.dirname, "corpus-audio"),
+  join(import.meta.dirname, "corpus-audio-controls"),
+];
 
 interface Case {
-  readonly slug: string
-  readonly name: string
-  readonly abc: string
-  readonly options: Record<string, unknown> | null
+  readonly slug: string;
+  readonly name: string;
+  readonly abc: string;
+  readonly options: Record<string, unknown> | null;
   readonly expected: {
-    tempo: number
-    instrument: number
-    totalDuration: number
-    tracks: MidiEvent[][]
-  }
+    tempo: number;
+    instrument: number;
+    totalDuration: number;
+    tracks: MidiEvent[][];
+  };
 }
 
 const CASES: Case[] = DIRS.flatMap((dir) =>
   readdirSync(dir)
-    .filter((f) => f.endsWith('.json'))
+    .filter((f) => f.endsWith(".json"))
     .sort()
     .map((f) => ({
-      slug: f.replace(/\.json$/, ''),
-      ...JSON.parse(readFileSync(join(dir, f), 'utf-8')),
+      slug: f.replace(/\.json$/, ""),
+      ...JSON.parse(readFileSync(join(dir, f), "utf-8")),
     })),
-)
+);
 
 /**
  * Cases that are EXACT and must stay so. Add a slug the moment it goes green; never
  * remove one to make a change pass — that is the same rule as never raising a ceiling.
  */
 const PASSING: readonly string[] = [
-  'bass-and-chord-octave',
-  'cancel-gchord',
-  'flatten-all-time-sigs',
-  'flatten-break',
-  'flatten-break2',
-  'flatten-change-gchord',
-  'flatten-chord-arpeggio',
-  'flatten-chord-params',
-  'flatten-chord-swing',
-  'flatten-decorations',
-  'flatten-drum',
-  'flatten-dynamics',
-  'flatten-dynamics2',
-  'flatten-dynamics3',
-  'flatten-end-chord',
-  'flatten-grace',
-  'flatten-jig-chords',
-  'flatten-long-tie',
-  'flatten-meter-change',
-  'flatten-metronome',
-  'flatten-mid-measure',
-  'flatten-midi-options',
-  'flatten-multi-measure-rest',
-  'flatten-no-chord-voice',
-  'flatten-octave-clefs',
-  'flatten-overlay',
-  'flatten-perc-map',
-  'flatten-perc-map-high-c',
-  'flatten-pickup-overlay',
-  'flatten-pickup-triplet-chords-rhythmhead',
-  'flatten-power-chord',
-  'flatten-quarter-tone',
-  'flatten-regular-tie',
-  'flatten-rep-and-over',
-  'flatten-repeat',
-  'flatten-six-huit',
-  'flatten-snare',
-  'flatten-tempo-3-voices',
-  'flatten-tempo-change',
-  'flatten-tempo-change2',
-  'flatten-tempo-override',
-  'flatten-transpose',
-  'flatten-treble-8',
-  'flatten-trill-test',
-  'flatten-triplet-chords',
-  'flatten-twelve-eight',
-  'ignore-alternate-chord',
+  "bass-and-chord-octave",
+  "cancel-gchord",
+  "flatten-all-time-sigs",
+  "flatten-break",
+  "flatten-break2",
+  "flatten-change-gchord",
+  "flatten-chord-arpeggio",
+  "flatten-chord-params",
+  "flatten-chord-swing",
+  "flatten-decorations",
+  "flatten-drum",
+  "flatten-dynamics",
+  "flatten-dynamics2",
+  "flatten-dynamics3",
+  "flatten-end-chord",
+  "flatten-grace",
+  "flatten-jig-chords",
+  "flatten-long-tie",
+  "flatten-meter-change",
+  "flatten-metronome",
+  "flatten-mid-measure",
+  "flatten-midi-options",
+  "flatten-multi-measure-rest",
+  "flatten-no-chord-voice",
+  "flatten-octave-clefs",
+  "flatten-overlay",
+  "flatten-perc-map",
+  "flatten-perc-map-high-c",
+  "flatten-pickup-overlay",
+  "flatten-pickup-triplet-chords-rhythmhead",
+  "flatten-power-chord",
+  "flatten-quarter-tone",
+  "flatten-regular-tie",
+  "flatten-rep-and-over",
+  "flatten-repeat",
+  "flatten-six-huit",
+  "flatten-snare",
+  "flatten-tempo-3-voices",
+  "flatten-tempo-change",
+  "flatten-tempo-change2",
+  "flatten-tempo-override",
+  "flatten-transpose",
+  "flatten-treble-8",
+  "flatten-trill-test",
+  "flatten-triplet-chords",
+  "flatten-twelve-eight",
+  "ignore-alternate-chord",
   // THE COUNT-IN'S LADDER — `scripts/gen-audio-controls.mjs`. `intro-0` is its canary.
-  'intro-0',
-  'intro-1',
-  'intro-2',
-  'intro-2-drumoff',
-  'intro-2-pickup',
-  'intro-bars2-pickup',
-  'intro-meter-change',
-  'intro-no-drum',
-  'intro-pickup',
-  'intro-three-four',
-  'intro-two-voices',
-  'no-start-repeat-part',
-  'no-start-repeat-repeat',
-  'no-start-repeat-title',
-  'overlay-repeat',
-  'options-all-midi-options-1',
-  'options-all-midi-options-2',
-  'options-all-midi-options-3',
-  'options-all-midi-options-4',
-  'options-all-midi-options-5',
-  'options-all-midi-options-6',
-  'options-all-midi-options-7',
-  'repeat-3',
-  'volume-crash',
-  'volume-in-chords',
-]
+  "intro-0",
+  "intro-1",
+  "intro-2",
+  "intro-2-drumoff",
+  "intro-2-pickup",
+  "intro-bars2-pickup",
+  "intro-meter-change",
+  "intro-no-drum",
+  "intro-pickup",
+  "intro-three-four",
+  "intro-two-voices",
+  "no-start-repeat-part",
+  "no-start-repeat-repeat",
+  "no-start-repeat-title",
+  "overlay-repeat",
+  "options-all-midi-options-1",
+  "options-all-midi-options-2",
+  "options-all-midi-options-3",
+  "options-all-midi-options-4",
+  "options-all-midi-options-5",
+  "options-all-midi-options-6",
+  "options-all-midi-options-7",
+  "repeat-3",
+  "volume-crash",
+  "volume-in-chords",
+];
 
 interface Diff {
   /** How many events matched before the first divergence — bigger is closer. */
-  readonly matched: number
-  readonly where: string
+  readonly matched: number;
+  readonly where: string;
 }
 
 /**
@@ -154,93 +154,111 @@ interface Diff {
 const canonical = (event: unknown): string =>
   JSON.stringify(
     Object.fromEntries(
-      Object.entries(event as Record<string, unknown>).sort(([a], [b]) => (a < b ? -1 : 1)),
+      Object.entries(event as Record<string, unknown>).sort(([a], [b]) =>
+        a < b ? -1 : 1,
+      ),
     ),
-  )
+  );
 
 /** The first difference, in abcjs's own reading order: header, then track by track. */
 function firstDifference(
   got: ReturnType<typeof flattenAudio>,
-  want: Case['expected'],
+  want: Case["expected"],
 ): Diff | null {
   if (got.tempo !== want.tempo) {
-    return { matched: 0, where: `tempo ${got.tempo} vs ${want.tempo}` }
+    return { matched: 0, where: `tempo ${got.tempo} vs ${want.tempo}` };
   }
   if (got.instrument !== want.instrument) {
-    return { matched: 0, where: `instrument ${got.instrument} vs ${want.instrument}` }
+    return {
+      matched: 0,
+      where: `instrument ${got.instrument} vs ${want.instrument}`,
+    };
   }
   if (got.tracks.length !== want.tracks.length) {
-    return { matched: 0, where: `${got.tracks.length} tracks vs ${want.tracks.length}` }
+    return {
+      matched: 0,
+      where: `${got.tracks.length} tracks vs ${want.tracks.length}`,
+    };
   }
-  let matched = 0
+  let matched = 0;
   for (const [t, wantTrack] of want.tracks.entries()) {
-    const gotTrack = got.tracks[t] ?? []
+    const gotTrack = got.tracks[t] ?? [];
     for (const [e, wantEvent] of wantTrack.entries()) {
-      const gotEvent = gotTrack[e]
+      const gotEvent = gotTrack[e];
       if (gotEvent === undefined) {
-        return { matched, where: `trk ${t} ev ${e} missing, want ${JSON.stringify(wantEvent)}` }
+        return {
+          matched,
+          where: `trk ${t} ev ${e} missing, want ${JSON.stringify(wantEvent)}`,
+        };
       }
       if (canonical(gotEvent) !== canonical(wantEvent)) {
         return {
           matched,
           where: `trk ${t} ev ${e}\n      got  ${JSON.stringify(gotEvent)}\n      want ${JSON.stringify(wantEvent)}`,
-        }
+        };
       }
-      matched += 1
+      matched += 1;
     }
     if (gotTrack.length > wantTrack.length) {
       return {
         matched,
         where: `trk ${t} has ${gotTrack.length} events, want ${wantTrack.length}: extra ${JSON.stringify(gotTrack[wantTrack.length])}`,
-      }
+      };
     }
   }
   if (got.totalDuration !== want.totalDuration) {
-    return { matched, where: `totalDuration ${got.totalDuration} vs ${want.totalDuration}` }
+    return {
+      matched,
+      where: `totalDuration ${got.totalDuration} vs ${want.totalDuration}`,
+    };
   }
-  return null
+  return null;
 }
 
 function run(c: Case): Diff | null {
-  const parsed = parse(c.abc)
-  if (!parsed.ok) return { matched: 0, where: `parse failed: ${parsed.errors[0]?.message ?? '?'}` }
-  const score = parsed.scores[0]
-  if (score === undefined) return { matched: 0, where: 'no tune parsed' }
-  return firstDifference(flattenAudio(score, c.options ?? {}), c.expected)
+  const parsed = parse(c.abc);
+  if (!parsed.ok)
+    return {
+      matched: 0,
+      where: `parse failed: ${parsed.errors[0]?.message ?? "?"}`,
+    };
+  const score = parsed.scores[0];
+  if (score === undefined) return { matched: 0, where: "no tune parsed" };
+  return firstDifference(flattenAudio(score, c.options ?? {}), c.expected);
 }
 
-describe('audio flattener vs abcjs', () => {
-  it('writes the ranked table', () => {
+describe("audio flattener vs abcjs", () => {
+  it("writes the ranked table", () => {
     const rows = CASES.map((c) => {
-      let diff: Diff | null
+      let diff: Diff | null;
       try {
-        diff = run(c)
+        diff = run(c);
       } catch (error) {
-        diff = { matched: 0, where: `threw: ${(error as Error).message}` }
+        diff = { matched: 0, where: `threw: ${(error as Error).message}` };
       }
-      const events = c.expected.tracks.reduce((n, t) => n + t.length, 0)
-      return { slug: c.slug, diff, events }
-    })
-    const off = rows.filter((r) => r.diff !== null)
+      const events = c.expected.tracks.reduce((n, t) => n + t.length, 0);
+      return { slug: c.slug, diff, events };
+    });
+    const off = rows.filter((r) => r.diff !== null);
     const text = [
       `${off.length} of ${rows.length} cases differ from abcjs`,
-      '',
+      "",
       ...off
         .sort((a, b) => (a.diff?.matched ?? 0) - (b.diff?.matched ?? 0))
         .map(
           (r) =>
             `  ${r.slug.padEnd(34)} ${String(r.diff?.matched).padStart(4)}/${r.events} ok  ${r.diff?.where}`,
         ),
-    ].join('\n')
-    writeFileSync('/tmp/abcts-audio-ranked.txt', `${text}\n`)
-    expect(rows.length).toBe(CASES.length)
-  })
+    ].join("\n");
+    writeFileSync("/tmp/abcts-audio-ranked.txt", `${text}\n`);
+    expect(rows.length).toBe(CASES.length);
+  });
 
   for (const slug of PASSING) {
     it(`is exact — ${slug}`, () => {
-      const c = CASES.find((x) => x.slug === slug)
-      if (c === undefined) throw new Error(`no such case ${slug}`)
-      expect(run(c)?.where ?? null).toBeNull()
-    })
+      const c = CASES.find((x) => x.slug === slug);
+      if (c === undefined) throw new Error(`no such case ${slug}`);
+      expect(run(c)?.where ?? null).toBeNull();
+    });
   }
-})
+});

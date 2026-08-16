@@ -24,44 +24,48 @@
  * A NO-OP WHEN THE DIRECTORY IS ABSENT, which is the normal state — this is a tool, not a
  * gate, and the ranked table and the pixel gate are what assert anything.
  */
-import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { describe, expect, it } from 'vitest'
-import { renderAbc } from '../src/compat/index.js'
-import { absolutePixels, byClass } from './pixel-geometry.js'
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { describe, expect, it } from "vitest";
+import { renderAbc } from "../src/compat/index.js";
+import { renderAll } from "./render-all.js";
+import { absolutePixels, byClass } from "./pixel-geometry.js";
 
-const dir = '/tmp/abcts-probe'
+const dir = "/tmp/abcts-probe";
 
-describe('controlled pair', () => {
-  it('measures whatever is in /tmp/abcts-probe', () => {
-    if (!existsSync(dir)) return
-    const rows: string[] = []
+describe("controlled pair", () => {
+  it("measures whatever is in /tmp/abcts-probe", () => {
+    if (!existsSync(dir)) return;
+    const rows: string[] = [];
     for (const file of readdirSync(dir)
-      .filter((f) => f.endsWith('.abc'))
+      .filter((f) => f.endsWith(".abc"))
       .sort()) {
-      const name = file.replace(/\.abc$/, '')
-      if (!existsSync(`${dir}/${name}.svg`)) continue
-      const ours = renderAbc('paper', readFileSync(`${dir}/${file}`, 'utf-8'), {})[0]?.svg ?? ''
-      const gold = readFileSync(`${dir}/${name}.svg`, 'utf-8')
-      const g = byClass(absolutePixels(gold), 'notehead')
-      const o = byClass(absolutePixels(ours), 'notehead')
-      const n = Math.min(g.length, o.length)
-      const delta = (axis: 'x' | 'y'): number[] =>
-        g.slice(0, n).map((head, k) => (o[k]?.[axis] ?? 0) - head[axis])
-      const avg = (v: number[]): number => (v.length ? v.reduce((a, b) => a + b, 0) / v.length : 0)
-      const spread = (v: number[]): number => (v.length ? Math.max(...v) - Math.min(...v) : 0)
+      const name = file.replace(/\.abc$/, "");
+      if (!existsSync(`${dir}/${name}.svg`)) continue;
+      const ours =
+        renderAll(readFileSync(`${dir}/${file}`, "utf-8"), {})[0]?.svg ?? "";
+      const gold = readFileSync(`${dir}/${name}.svg`, "utf-8");
+      const g = byClass(absolutePixels(gold), "notehead");
+      const o = byClass(absolutePixels(ours), "notehead");
+      const n = Math.min(g.length, o.length);
+      const delta = (axis: "x" | "y"): number[] =>
+        g.slice(0, n).map((head, k) => (o[k]?.[axis] ?? 0) - head[axis]);
+      const avg = (v: number[]): number =>
+        v.length ? v.reduce((a, b) => a + b, 0) / v.length : 0;
+      const spread = (v: number[]): number =>
+        v.length ? Math.max(...v) - Math.min(...v) : 0;
       // The STAFF LINE, beside the noteheads: a constant offset in both is placement, a
       // constant offset in the noteheads alone would be the glyph.
       const line = (svg: string): string =>
-        byClass(absolutePixels(svg), 'top-line')
+        byClass(absolutePixels(svg), "top-line")
           .map((l) => l.y.toFixed(2))
-          .join(',')
+          .join(",");
       rows.push(
-        `${name}  heads ${o.length}/${g.length}  dy=${spread(delta('y')).toFixed(2)}` +
-          ` dx=${spread(delta('x')).toFixed(2)} oy=${avg(delta('y')).toFixed(2)}` +
-          ` ox=${avg(delta('x')).toFixed(2)}  topline ours=[${line(ours)}] abcjs=[${line(gold)}]`,
-      )
+        `${name}  heads ${o.length}/${g.length}  dy=${spread(delta("y")).toFixed(2)}` +
+          ` dx=${spread(delta("x")).toFixed(2)} oy=${avg(delta("y")).toFixed(2)}` +
+          ` ox=${avg(delta("x")).toFixed(2)}  topline ours=[${line(ours)}] abcjs=[${line(gold)}]`,
+      );
     }
-    writeFileSync('/tmp/abcts-probe.txt', rows.join('\n'))
-    expect(rows.length).toBeGreaterThanOrEqual(0)
-  })
-})
+    writeFileSync("/tmp/abcts-probe.txt", rows.join("\n"));
+    expect(rows.length).toBeGreaterThanOrEqual(0);
+  });
+});

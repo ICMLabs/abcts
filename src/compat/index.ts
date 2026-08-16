@@ -44,6 +44,18 @@ const PRINT_PADDING = 68;
 /** The CSS scale a print render is drawn at (`engraver-controller.js:216`). */
 const PRINT_SCALE = 0.75;
 
+/**
+ * abcjs's `numberOfTunes`, quirks and all: `abc.split("\nX:").length`, with a floor of 1
+ * (`api/abc_tunebook.js:13-18`). It counts a `X:` that opens the STRING as part of the
+ * first chunk and a `\nX:` inside a comment as a tune, because it is a split and not a
+ * parse — reproduced rather than corrected, since a host sizing its div array with this
+ * must get the same number we do.
+ */
+export function numberOfTunes(abc: string): number {
+  const num = abc.split("\nX:").length;
+  return num === 0 ? 1 : num;
+}
+
 /** What `"Sheet Music for \"" + metaText.title + '"'` produces — see the call site. */
 const ariaTitle = (title: RichText): string =>
   typeof title === "string"
@@ -68,6 +80,8 @@ export interface AbcjsParams {
    * existing calls do not have to change.
    */
   readonly add_classes?: boolean;
+  /** Which tune of the book the first output slot gets (`abc_tunebook.js:69`). */
+  readonly startingTune?: number | string;
 }
 
 /**
@@ -98,6 +112,7 @@ export interface TuneObject {
   readonly metaText: { readonly title?: string };
 }
 
+/** A div, an id, `"*"` for a headless slot, or nothing (`abc_tunebook.js:76-82`). */
 type Target = string | { innerHTML: string } | null | undefined;
 
 function resolve(target: Target): { innerHTML: string } | null {
@@ -112,13 +127,27 @@ function resolve(target: Target): { innerHTML: string } | null {
 }
 
 /**
- * abcjs's `renderAbc`. Renders every tune in the string and returns one object each.
+ * abcjs's `renderAbc`.
+ *
+ * **IT RENDERS ONE TUNE PER OUTPUT SLOT, NOT ONE PER TUNE.** `renderEngine` normalises a
+ * non-array `output` to `[output]`, opens at `params.startingTune ?? 0`, and walks the
+ * SLOTS — so a single div renders the FIRST tune and nothing else, an array of three
+ * renders three, and a slot past the end of the book CLEARS its div rather than being
+ * skipped (`api/abc_tunebook.js:56-104`). `"*"` is a headless slot: the work is done and
+ * no markup is shown.
+ *
+ * Ours returned one object per TUNE and joined every `svg` into the one target, which is
+ * a divergence on the most-used function in the library and which no gate could see: the
+ * byte gates ask for `renderAbc(...)[i]` and were handed an array our own implementation
+ * had over-filled. Measured against abcjs on `tunebook-3` — `numberOfTunes` 3, a string
+ * target returns 1, an array of three returns 3 — and then read back in the source before
+ * it was changed.
  *
  * A DOM target is filled in; without one — Node, a test — the markup comes back on the
  * returned objects and nothing is injected.
  */
 export function renderAbc(
-  target: Target,
+  target: Target | readonly Target[],
   abc: string,
   params: AbcjsParams = {},
 ): TuneObject[] {
@@ -139,7 +168,20 @@ export function renderAbc(
       ? undefined
       : (params.staffwidth + padding * 2) / UNIT_PX / scale;
 
-  const tunes = result.scores.map((score) => ({
+  /**
+   * **THE SLOTS, NOT THE TUNES.** A non-array output is one slot (`abc_tunebook.js:65-66`);
+   * `startingTune` is where the walk opens (`:69`); a slot past the end of the book empties
+   * its div and contributes NOTHING to the returned array (`:99-102`).
+   */
+  const slots: readonly Target[] = Array.isArray(target)
+    ? (target as readonly Target[])
+    : [target as Target];
+  const from =
+    params.startingTune === undefined
+      ? 0
+      : Number.parseInt(String(params.startingTune), 10);
+
+  const render = (score: (typeof result.scores)[number]) => ({
     svg: toSVG(
       layout(score, {
         mode: "abcjs-strict",
@@ -178,10 +220,22 @@ export function renderAbc(
       score.metadata.titles[0] === undefined
         ? {}
         : { title: plainText(score.metadata.titles[0]) },
-  }));
+  });
 
-  const element = resolve(target);
-  if (element !== null) element.innerHTML = tunes.map((t) => t.svg).join("\n");
+  const tunes: TuneObject[] = [];
+  slots.forEach((slot, i) => {
+    // A HEADLESS slot does the work and shows nothing (`abc_tunebook.js:78-80`).
+    const element = slot === "*" ? null : resolve(slot);
+    const score = result.scores[from + i];
+    if (score === undefined) {
+      // …AND A SLOT PAST THE END CLEARS ITS DIV rather than being skipped (`:99-102`).
+      if (element !== null) element.innerHTML = "";
+      return;
+    }
+    const tune = render(score);
+    if (element !== null) element.innerHTML = tune.svg;
+    tunes.push(tune);
+  });
   return tunes;
 }
 

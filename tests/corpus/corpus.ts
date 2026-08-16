@@ -1,25 +1,27 @@
-import { readdirSync, readFileSync } from 'node:fs'
-import { basename, join, resolve } from 'node:path'
+import { readdirSync, readFileSync } from "node:fs";
+import { basename, join, resolve } from "node:path";
 
 const required = (key: string): string => {
-  const value = process.env[key]
+  const value = process.env[key];
   if (!value) {
-    throw new Error(`${key} is not set — vitest.config.ts exports it from abcts.config.json`)
+    throw new Error(
+      `${key} is not set — vitest.config.ts exports it from abcts.config.json`,
+    );
   }
-  return resolve(value)
-}
+  return resolve(value);
+};
 
-export const corpusDir = required('ABCTS_CORPUS_PATH')
-export const goldensDir = required('ABCTS_GOLDENS_PATH')
+export const corpusDir = required("ABCTS_CORPUS_PATH");
+export const goldensDir = required("ABCTS_GOLDENS_PATH");
 
 /** One ABC fixture and every abcjs golden generated from it. */
 export interface CorpusCase {
   /** Fixture filename without the `.abc` extension. Golden files are keyed on this. */
-  readonly name: string
-  readonly abcPath: string
-  readonly abc: string
+  readonly name: string;
+  readonly abcPath: string;
+  readonly abc: string;
   /** Golden filenames (not paths) attributed to this fixture. */
-  readonly goldens: readonly string[]
+  readonly goldens: readonly string[];
 }
 
 /**
@@ -42,86 +44,92 @@ export function withGolden(
   corpus: readonly CorpusCase[],
   suffix: string,
 ): { cases: CorpusCase[]; skipped: string[] } {
-  const cases: CorpusCase[] = []
-  const skipped: string[] = []
+  const cases: CorpusCase[] = [];
+  const skipped: string[] = [];
   for (const c of corpus) {
-    if (c.goldens.includes(`${c.name}${suffix}`)) cases.push(c)
-    else skipped.push(c.name)
+    if (c.goldens.includes(`${c.name}${suffix}`)) cases.push(c);
+    else skipped.push(c.name);
   }
-  return { cases, skipped }
+  return { cases, skipped };
 }
 
 // A golden belongs to a fixture when the character right after the stem separates it
 // from a variant (`-tune0.svg`) or an extension (`.parse.json`, `.svg`, `.mid`).
 const ownsGolden = (stem: string, golden: string): boolean =>
-  golden.startsWith(stem) && (golden[stem.length] === '.' || golden[stem.length] === '-')
+  golden.startsWith(stem) &&
+  (golden[stem.length] === "." || golden[stem.length] === "-");
 
 export function loadCorpus(): CorpusCase[] {
   const fixtures = readdirSync(corpusDir)
-    .filter((f) => f.endsWith('.abc'))
-    .sort()
-  const stems = fixtures.map((f) => basename(f, '.abc'))
+    .filter((f) => f.endsWith(".abc"))
+    .sort();
+  const stems = fixtures.map((f) => basename(f, ".abc"));
 
   // Longest stem wins: `score-reorder-shared-*.svg` also prefix-matches `score-reorder`,
   // so a naive startsWith would attribute it to both fixtures.
-  const byLength = [...stems].sort((a, b) => b.length - a.length)
-  const goldensFor = new Map<string, string[]>(stems.map((s) => [s, []]))
+  const byLength = [...stems].sort((a, b) => b.length - a.length);
+  const goldensFor = new Map<string, string[]>(stems.map((s) => [s, []]));
   for (const golden of readdirSync(goldensDir)) {
-    const owner = byLength.find((stem) => ownsGolden(stem, golden))
-    if (owner) goldensFor.get(owner)?.push(golden)
+    const owner = byLength.find((stem) => ownsGolden(stem, golden));
+    if (owner) goldensFor.get(owner)?.push(golden);
   }
 
   return stems.map((name) => ({
     name,
     abcPath: join(corpusDir, `${name}.abc`),
-    abc: readFileSync(join(corpusDir, `${name}.abc`), 'utf-8'),
+    abc: readFileSync(join(corpusDir, `${name}.abc`), "utf-8"),
     goldens: goldensFor.get(name) ?? [],
-  }))
+  }));
 }
 
 /** The abcjs parse-tree dump for a fixture — the compat-mode parser target. */
 export function parseGolden(name: string): unknown {
-  return JSON.parse(readFileSync(join(goldensDir, `${name}.parse.json`), 'utf-8'))
+  return JSON.parse(
+    readFileSync(join(goldensDir, `${name}.parse.json`), "utf-8"),
+  );
 }
 
 /** The subset of an abcjs golden element this suite reads. */
 export interface GoldenElement {
-  readonly el_type: string
-  readonly startChar: number
-  readonly endChar: number
-  readonly duration: number
-  readonly rest?: unknown
+  readonly el_type: string;
+  readonly startChar: number;
+  readonly endChar: number;
+  readonly duration: number;
+  readonly rest?: unknown;
   readonly pitches?: readonly {
-    readonly pitch: number
+    readonly pitch: number;
     /** 'sharp' | 'flat' | 'natural' | 'dblsharp' | 'dblflat' | 'quartersharp' | 'quarterflat' */
-    readonly accidental?: string
-  }[]
+    readonly accidental?: string;
+  }[];
   /** On the FIRST note of a tuplet only: the sounding multiplier, e.g. 2/3 for a triplet. */
-  readonly tripletMultiplier?: number
+  readonly tripletMultiplier?: number;
   /** On the first note of a tuplet: how many notes the multiplier covers. */
-  readonly tripletR?: number
+  readonly tripletR?: number;
   /** Beam-run boundaries: set on the first and last note of a beamed run. */
-  readonly startBeam?: boolean
-  readonly endBeam?: boolean
+  readonly startBeam?: boolean;
+  readonly endBeam?: boolean;
   /** Grace-note pitches attached to this element. */
-  readonly gracenotes?: readonly { readonly pitch: number }[]
+  readonly gracenotes?: readonly { readonly pitch: number }[];
   /** Decoration names attached to this element, e.g. ['trill']. */
-  readonly decoration?: readonly string[]
+  readonly decoration?: readonly string[];
   /** Chord symbols / annotations: {name, position}. */
   readonly chord?: readonly {
-    readonly name: string
-    readonly position?: string
+    readonly name: string;
+    readonly position?: string;
     /** Present on `"@x,y text"` annotations, which are NOT chord symbols. */
-    readonly rel_position?: unknown
-  }[]
+    readonly rel_position?: unknown;
+  }[];
   /** Lyric syllables, one per verse: {syllable, divider}. */
-  readonly lyric?: readonly { readonly syllable: string; readonly divider?: string }[]
+  readonly lyric?: readonly {
+    readonly syllable: string;
+    readonly divider?: string;
+  }[];
 }
 
 interface GoldenTune {
   readonly lines?: readonly {
-    readonly staff?: readonly { readonly voices?: GoldenElement[][] }[]
-  }[]
+    readonly staff?: readonly { readonly voices?: GoldenElement[][] }[];
+  }[];
 }
 
 /**
@@ -133,8 +141,8 @@ interface GoldenTune {
  * tunebook fixtures, which reads as "no coverage" rather than "wrong reader".
  */
 function goldenTunes(name: string): readonly GoldenTune[] {
-  const golden = parseGolden(name) as { tunes?: GoldenTune[] } & GoldenTune
-  return golden.tunes ?? [golden]
+  const golden = parseGolden(name) as { tunes?: GoldenTune[] } & GoldenTune;
+  return golden.tunes ?? [golden];
 }
 
 /**
@@ -151,33 +159,33 @@ function goldenTunes(name: string): readonly GoldenTune[] {
  * Grouping restarts per tune, so tune 0's voice 0 never merges with tune 1's.
  */
 export function goldenElements(name: string): GoldenElement[] {
-  const out: GoldenElement[] = []
+  const out: GoldenElement[] = [];
   for (const tune of goldenTunes(name)) {
-    const byVoice = new Map<string, GoldenElement[]>() // insertion order = first appearance
+    const byVoice = new Map<string, GoldenElement[]>(); // insertion order = first appearance
     for (const line of tune.lines ?? []) {
-      ;(line.staff ?? []).forEach((staff, staffIndex) => {
-        ;(staff.voices ?? []).forEach((voice, voiceIndex) => {
-          const key = `${staffIndex}:${voiceIndex}`
-          let bucket = byVoice.get(key)
+      (line.staff ?? []).forEach((staff, staffIndex) => {
+        (staff.voices ?? []).forEach((voice, voiceIndex) => {
+          const key = `${staffIndex}:${voiceIndex}`;
+          let bucket = byVoice.get(key);
           if (!bucket) {
-            bucket = []
-            byVoice.set(key, bucket)
+            bucket = [];
+            byVoice.set(key, bucket);
           }
           for (const element of voice) {
-            if (element.el_type !== 'note') continue
-            bucket.push(element)
+            if (element.el_type !== "note") continue;
+            bucket.push(element);
           }
-        })
-      })
+        });
+      });
     }
-    for (const bucket of byVoice.values()) out.push(...bucket)
+    for (const bucket of byVoice.values()) out.push(...bucket);
   }
-  return out
+  return out;
 }
 
 /** Sounding notes only — rests dropped. Use `goldenElements` when tuplet state matters. */
 export const goldenNotes = (name: string): GoldenElement[] =>
-  goldenElements(name).filter((element) => !element.rest && element.pitches)
+  goldenElements(name).filter((element) => !element.rest && element.pitches);
 
 // ─── Layout goldens (`*.elements.json`) ──────────────────────────────────────
 // abcjs's LAID-OUT elements, as distinct from its parse tree. This is the renderer's
@@ -187,17 +195,17 @@ export const goldenNotes = (name: string): GoldenElement[] =>
 /** The subset of an abcjs layout element this suite reads. */
 export interface GoldenLayoutElement {
   /** e.g. 'note', 'bar', 'rest', 'staff-extra clef'. */
-  readonly type: string
-  readonly duration: number
-  readonly w: number
+  readonly type: string;
+  readonly duration: number;
+  readonly w: number;
   /** Noteheads, carrying the staff position in abcjs's pitch numbering. */
-  readonly heads?: readonly { readonly c: string; readonly pitch: number }[]
+  readonly heads?: readonly { readonly c: string; readonly pitch: number }[];
 }
 
 interface GoldenLayout {
   readonly staffGroups?: readonly {
-    readonly voices?: readonly { readonly children?: GoldenLayoutElement[] }[]
-  }[]
+    readonly voices?: readonly { readonly children?: GoldenLayoutElement[] }[];
+  }[];
 }
 
 /**
@@ -216,15 +224,15 @@ interface GoldenLayout {
  */
 export function goldenLayoutElements(name: string): GoldenLayoutElement[] {
   const layout = JSON.parse(
-    readFileSync(join(goldensDir, `${name}.elements.json`), 'utf-8'),
-  ) as GoldenLayout
+    readFileSync(join(goldensDir, `${name}.elements.json`), "utf-8"),
+  ) as GoldenLayout;
 
-  const out: GoldenLayoutElement[] = []
-  ;(layout.staffGroups ?? []).forEach((group, systemIndex) => {
+  const out: GoldenLayoutElement[] = [];
+  (layout.staffGroups ?? []).forEach((group, systemIndex) => {
     for (const child of group.voices?.[0]?.children ?? []) {
-      if (systemIndex > 0 && child.type.startsWith('staff-extra')) continue
-      out.push(child)
+      if (systemIndex > 0 && child.type.startsWith("staff-extra")) continue;
+      out.push(child);
     }
-  })
-  return out
+  });
+  return out;
 }

@@ -23,46 +23,47 @@
  *
  *     npx vitest run tests/bench.test.ts   # prints the timing; /tmp/abcts-bench.txt
  */
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
-import { renderAbc } from '../src/compat/index.js'
-import { corpusDir } from './corpus/corpus.js'
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { renderAbc } from "../src/compat/index.js";
+import { renderAll } from "./render-all.js";
+import { corpusDir } from "./corpus/corpus.js";
 
-const harvestedDir = join(import.meta.dirname, 'corpus-abcjs', 'fixtures')
+const harvestedDir = join(import.meta.dirname, "corpus-abcjs", "fixtures");
 
 const tunesOf = (dir: string): string[] =>
   readdirSync(dir)
-    .filter((f) => f.endsWith('.abc'))
+    .filter((f) => f.endsWith(".abc"))
     .sort()
-    .map((f) => readFileSync(join(dir, f), 'utf-8'))
+    .map((f) => readFileSync(join(dir, f), "utf-8"));
 
-describe('render benchmark', () => {
-  it('renders both corpora without throwing, and records how long it took', () => {
-    const tunes = [...tunesOf(corpusDir), ...tunesOf(harvestedDir)]
-    expect(tunes.length).toBeGreaterThan(200)
+describe("render benchmark", () => {
+  it("renders both corpora without throwing, and records how long it took", () => {
+    const tunes = [...tunesOf(corpusDir), ...tunesOf(harvestedDir)];
+    expect(tunes.length).toBeGreaterThan(200);
 
     // One warm pass: the first render pays for module init and the glyph tables, and
     // timing that in would make the number depend on which file vitest loaded first.
-    renderAbc('paper', tunes[0] as string, {})
+    renderAll(tunes[0] as string, {});
 
-    const failures: string[] = []
-    const started = process.hrtime.bigint()
+    const failures: string[] = [];
+    const started = process.hrtime.bigint();
     for (const [i, abc] of tunes.entries()) {
       try {
-        renderAbc('paper', abc, {})
+        renderAll(abc, {});
       } catch (error) {
-        failures.push(`${i}: ${(error as Error).message}`)
+        failures.push(`${i}: ${(error as Error).message}`);
       }
     }
-    const ms = Number(process.hrtime.bigint() - started) / 1e6
+    const ms = Number(process.hrtime.bigint() - started) / 1e6;
 
     writeFileSync(
-      '/tmp/abcts-bench.txt',
+      "/tmp/abcts-bench.txt",
       `${tunes.length} tunes in ${ms.toFixed(0)}ms (${(ms / tunes.length).toFixed(2)}ms each)\n`,
-    )
+    );
     // THE REAL ASSERTION. A tune that stops rendering at all would otherwise only show up
     // as a missing row in a ranked table, which is easy to read as "not measured".
-    expect(failures).toEqual([])
-  })
-})
+    expect(failures).toEqual([]);
+  });
+});

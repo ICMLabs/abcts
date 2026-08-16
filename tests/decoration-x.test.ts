@@ -44,12 +44,13 @@
  *
  * One decoration per tune, so nothing stacks and a difference can only be that glyph's own.
  */
-import { describe, expect, it } from 'vitest'
-import { renderAbc } from '../src/compat/index.js'
-import { absolutePixels } from './pixel-geometry.js'
+import { describe, expect, it } from "vitest";
+import { renderAbc } from "../src/compat/index.js";
+import { renderAll } from "./render-all.js";
+import { absolutePixels } from "./pixel-geometry.js";
 
-const EPSILON = 0.05
-const HEAD = 'X:1\nM:4/4\nL:1/4\nK:C\n'
+const EPSILON = 0.05;
+const HEAD = "X:1\nM:4/4\nL:1/4\nK:C\n";
 
 /**
  * `[name, body, abcjs's offsets]`.
@@ -61,26 +62,26 @@ const HEAD = 'X:1\nM:4/4\nL:1/4\nK:C\n'
  */
 const RUNGS: readonly (readonly [string, string, readonly number[]])[] = [
   // ── Rule 1: centre-aligned `scripts.*`, which is all of them but one ──
-  ['fermata', '!fermata!C4|', [-0.022]],
-  ['coda', '!coda!C4|', [-0.022]],
-  ['segno', '!segno!C4|', [0.098]],
-  ['trill', '!trill!C4|', [-0.758]],
-  ['upbow', '!upbow!C4|', [-0.022]],
-  ['turn', '!turn!C4|', [-0.022]],
-  ['mordent', '!lowermordent!C4|', [-0.022]],
-  ['accent', '!accent!C4|', [-0.022]],
-  ['tenuto', '!tenuto!C4|', [-0.022]],
+  ["fermata", "!fermata!C4|", [-0.022]],
+  ["coda", "!coda!C4|", [-0.022]],
+  ["segno", "!segno!C4|", [0.098]],
+  ["trill", "!trill!C4|", [-0.758]],
+  ["upbow", "!upbow!C4|", [-0.022]],
+  ["turn", "!turn!C4|", [-0.022]],
+  ["mordent", "!lowermordent!C4|", [-0.022]],
+  ["accent", "!accent!C4|", [-0.022]],
+  ["tenuto", "!tenuto!C4|", [-0.022]],
   // THE EXCEPTION, and the rung that makes the gate a ladder rather than a list.
-  ['roll', '!roll!C4|', [-1.711]],
+  ["roll", "!roll!C4|", [-1.711]],
   // ── Rule 2: the head's DECLARED width, which changes with the head ──
-  ['quarter-head', '!fermata!C|', [-0.030]],
-  ['half-head', '!fermata!C2|', [-0.005]],
+  ["quarter-head", "!fermata!C|", [-0.03]],
+  ["half-head", "!fermata!C2|", [-0.005]],
   // ── Rule 3: a barline hands it 3 or 1, never its drawn width ──
-  ['bar-close-thin', 'CCC!coda!C|', [-0.030]],
-  ['bar-close-repeat', 'CCC!coda!C:|', [-0.030]],
-  ['bar-open-repeat', '!coda!|:"G"G4|', [-38.242]],
-  ['bar-open-thickthin', '!coda![|"G"G4|', [-35.242]],
-]
+  ["bar-close-thin", "CCC!coda!C|", [-0.03]],
+  ["bar-close-repeat", "CCC!coda!C:|", [-0.03]],
+  ["bar-open-repeat", '!coda!|:"G"G4|', [-38.242]],
+  ["bar-open-thickthin", '!coda![|"G"G4|', [-35.242]],
+];
 
 /**
  * THE DYNAMICS ARE A SEPARATE LIST WITH A CEILING, and the ceiling is an OUTLINE.
@@ -95,49 +96,61 @@ const RUNGS: readonly (readonly [string, string, readonly number[]])[] = [
  * head on a wrong rule and does not on the right one. `dyn-quarter` is the proof: abcjs
  * draws the `p` at the same absolute x under a quarter head as under a whole one.
  */
-const DYNAMIC_RUNGS: readonly (readonly [string, string, readonly number[]])[] = [
-  ['dyn-plain', '!p!C4|', [-4.155]],
-  ['dyn-sharp', '!p!^C4|', [-13.64, -4.155]],
-  ['dyn-grace', '!p!{d}C4|', [-4.155]],
-  ['dyn-quarter', '!p!C|', [-1.575]],
-]
+const DYNAMIC_RUNGS: readonly (readonly [string, string, readonly number[]])[] =
+  [
+    ["dyn-plain", "!p!C4|", [-4.155]],
+    ["dyn-sharp", "!p!^C4|", [-13.64, -4.155]],
+    ["dyn-grace", "!p!{d}C4|", [-4.155]],
+    ["dyn-quarter", "!p!C|", [-1.575]],
+  ];
 /** The measured outline residual, in px. Lower it when the glyph becomes abcjs's. */
-const DYNAMIC_CEILING = 0.94
+const DYNAMIC_CEILING = 0.94;
 
 /** Every unclassed glyph clear of the staff, by its x relative to the nearest notehead. */
 function marks(abc: string): number[] {
-  const doc = absolutePixels(renderAbc('paper', HEAD + abc + '\n', {})[0]?.svg ?? '')
-  const top = doc.items.find((i) => i.cls.includes('top-line'))?.y ?? 0
-  const heads = doc.items.filter((i) => i.cls.includes('abcjs-notehead')).map((i) => i.x)
+  const doc = absolutePixels(renderAll(HEAD + abc + "\n", {})[0]?.svg ?? "");
+  const top = doc.items.find((i) => i.cls.includes("top-line"))?.y ?? 0;
+  const heads = doc.items
+    .filter((i) => i.cls.includes("abcjs-notehead"))
+    .map((i) => i.x);
   return doc.items
     .filter(
       (i) =>
-        i.tag === 'path' &&
-        i.name !== 'ledger' &&
-        !i.cls.includes('notehead') &&
+        i.tag === "path" &&
+        i.name !== "ledger" &&
+        !i.cls.includes("notehead") &&
         (i.y - top < -3 || i.y - top > 34),
     )
-    .map((m) => m.x - heads.reduce((a, b) => (Math.abs(b - m.x) < Math.abs(a - m.x) ? b : a), 1e9))
+    .map(
+      (m) =>
+        m.x -
+        heads.reduce(
+          (a, b) => (Math.abs(b - m.x) < Math.abs(a - m.x) ? b : a),
+          1e9,
+        ),
+    );
 }
 
-describe('a decoration sits where abcjs puts it, horizontally', () => {
+describe("a decoration sits where abcjs puts it, horizontally", () => {
   for (const [name, abc, want] of RUNGS) {
     it(`${name} — ${abc}`, () => {
-      const got = marks(abc)
-      expect(got.length).toBe(want.length)
+      const got = marks(abc);
+      expect(got.length).toBe(want.length);
       got.forEach((x, i) => {
-        expect(Math.abs(x - (want[i] as number))).toBeLessThan(EPSILON)
-      })
-    })
+        expect(Math.abs(x - (want[i] as number))).toBeLessThan(EPSILON);
+      });
+    });
   }
 
   for (const [name, abc, want] of DYNAMIC_RUNGS) {
     it(`${name} — ${abc} (anchor exact, outline within ${DYNAMIC_CEILING})`, () => {
-      const got = marks(abc)
-      expect(got.length).toBe(want.length)
+      const got = marks(abc);
+      expect(got.length).toBe(want.length);
       got.forEach((x, i) => {
-        expect(Math.abs(x - (want[i] as number))).toBeLessThanOrEqual(DYNAMIC_CEILING)
-      })
-    })
+        expect(Math.abs(x - (want[i] as number))).toBeLessThanOrEqual(
+          DYNAMIC_CEILING,
+        );
+      });
+    });
   }
-})
+});

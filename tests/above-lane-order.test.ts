@@ -26,21 +26,22 @@
  * the staff is negative. The tunes are inline rather than fixtures because they are
  * controls: each one exists to isolate one PAIR of lanes and nothing else.
  */
-import { describe, expect, it } from 'vitest'
-import { renderAbc } from '../src/compat/index.js'
-import { absolutePixels } from './pixel-geometry.js'
+import { describe, expect, it } from "vitest";
+import { renderAbc } from "../src/compat/index.js";
+import { renderAll } from "./render-all.js";
+import { absolutePixels } from "./pixel-geometry.js";
 
-const EPSILON = 0.05
+const EPSILON = 0.05;
 
 interface Control {
-  readonly name: string
-  readonly abc: string
+  readonly name: string;
+  readonly abc: string;
   /** abcjs's top staff line, in absolute px — the staff's own EXTENT. */
-  readonly topLine: number
+  readonly topLine: number;
   /** Every abcjs `<text>` above the staff, px from the top line, ascending. */
-  readonly marks: readonly number[]
+  readonly marks: readonly number[];
   /** abcjs's dynamic glyph, px from the top line — mean of its `m` and `f` outlines. */
-  readonly dynamic?: number
+  readonly dynamic?: number;
 }
 
 /**
@@ -50,42 +51,52 @@ interface Control {
  * staff takes the lyric lane below, not a chord lane above — and why this file exists.
  */
 const CONTROLS: readonly Control[] = [
-  { name: 'chord', abc: 'X:1\nK:C\n"D7"CDEF|GABc|\n', topLine: 68.21, marks: [-29.65] },
   {
-    name: 'dynamic above',
-    abc: 'X:1\nK:C\n!mf!CDEF|GABc|\nw: la la la la la la la la\n',
+    name: "chord",
+    abc: 'X:1\nK:C\n"D7"CDEF|GABc|\n',
+    topLine: 68.21,
+    marks: [-29.65],
+  },
+  {
+    name: "dynamic above",
+    abc: "X:1\nK:C\n!mf!CDEF|GABc|\nw: la la la la la la la la\n",
     topLine: 72.94,
     marks: [],
     dynamic: -39.37,
   },
   {
-    name: 'chord + dynamic',
+    name: "chord + dynamic",
     abc: 'X:1\nK:C\n"D7"!mf!CDEF|GABc|\nw: la la la la la la la la\n',
     topLine: 95.33,
     marks: [-29.64],
     dynamic: -61.77,
   },
   {
-    name: 'volta',
-    abc: 'X:1\nK:C\nCDEF|1GABc:|2cBAG|]\n',
+    name: "volta",
+    abc: "X:1\nK:C\nCDEF|1GABc:|2cBAG|]\n",
     topLine: 69.06,
     marks: [-19.81, -19.81],
   },
-  { name: 'tempo', abc: 'X:1\nQ:1/4=120\nK:C\nCDEF|GABc|\n', topLine: 72.94, marks: [-28.38] },
   {
-    name: 'volta + tempo',
-    abc: 'X:1\nQ:1/4=120\nK:C\nCDEF|1GABc:|2cBAG|]\n',
+    name: "tempo",
+    abc: "X:1\nQ:1/4=120\nK:C\nCDEF|GABc|\n",
+    topLine: 72.94,
+    marks: [-28.38],
+  },
+  {
+    name: "volta + tempo",
+    abc: "X:1\nQ:1/4=120\nK:C\nCDEF|1GABc:|2cBAG|]\n",
     topLine: 96.19,
     marks: [-51.63, -19.81, -19.81],
   },
   {
-    name: 'volta + part',
-    abc: 'X:1\nK:C\nP:A\nCDEF|1GABc:|2cBAG|]\n',
+    name: "volta + part",
+    abc: "X:1\nK:C\nP:A\nCDEF|1GABc:|2cBAG|]\n",
     topLine: 95.09,
     marks: [-52.53, -19.81, -19.81],
   },
   {
-    name: 'chord + part + tempo',
+    name: "chord + part + tempo",
     abc: 'X:1\nQ:1/4=120\nK:C\nP:A\n"D7"CDEF|GABc|\n',
     topLine: 121.37,
     marks: [-76.81, -51.68, -29.65],
@@ -94,21 +105,21 @@ const CONTROLS: readonly Control[] = [
     // THE ENDING-OVER-A-CHORD BRANCH: `if (chordHeightAbove) staff.top += 2` rather than
     // `endingHeightAbove + margin`, so the `|1` sits 2 pitch above the chord lane and not
     // 6 (`set-upper-and-lower-elements.js:33-38`).
-    name: 'volta + chord',
+    name: "volta + chord",
     abc: 'X:1\nK:C\n"D7"CDEF|1GABc:|2cBAG|]\n',
     topLine: 75.96,
     marks: [-29.65, -26.71, -26.71],
   },
   {
-    name: 'volta + dynamic',
-    abc: 'X:1\nK:C\n!mf!CDEF|1GABc:|2cBAG|]\nw: la la la la la la la la\n',
+    name: "volta + dynamic",
+    abc: "X:1\nK:C\n!mf!CDEF|1GABc:|2cBAG|]\nw: la la la la la la la la\n",
     topLine: 96.19,
     marks: [-19.81, -19.81],
     dynamic: -62.62,
   },
   {
-    name: 'part + dynamic',
-    abc: 'X:1\nK:C\nP:A\n!mf!CDEF|GABc|\nw: la la la la la la la la\n',
+    name: "part + dynamic",
+    abc: "X:1\nK:C\nP:A\n!mf!CDEF|GABc|\nw: la la la la la la la la\n",
     topLine: 98.97,
     marks: [-56.41],
     dynamic: -39.37,
@@ -116,52 +127,60 @@ const CONTROLS: readonly Control[] = [
   {
     // The BELOW side, as the calibration for the dynamic glyph's own outline — see the
     // delta assertion below.
-    name: 'dynamic below',
-    abc: 'X:1\nK:C\n!mf!CDEF|GABc|\n',
+    name: "dynamic below",
+    abc: "X:1\nK:C\n!mf!CDEF|GABc|\n",
     topLine: 45.81,
     marks: [],
     dynamic: 53.81,
   },
-]
+];
 
 interface Measured {
-  readonly topLine: number
-  readonly marks: number[]
-  readonly dynamic: number | null
+  readonly topLine: number;
+  readonly marks: number[];
+  readonly dynamic: number | null;
 }
 
 function measure(abc: string): Measured {
-  const doc = absolutePixels(renderAbc('paper', abc, {})[0]?.svg ?? '')
-  const topLine = doc.items.find((i) => i.cls.includes('top-line'))?.y ?? 0
+  const doc = absolutePixels(renderAll(abc, {})[0]?.svg ?? "");
+  const topLine = doc.items.find((i) => i.cls.includes("top-line"))?.y ?? 0;
   // KEYED ON `data-name`, NOT ON THE CLASS — abcjs's dynamic class is
   // `classes.generate('decoration dynamics')`, which is the EMPTY STRING when
   // `add_classes` is off (`helpers/classes.js:78`), and this ladder renders with no
   // options. We used to write the class literally whatever the option said, so the gate
   // read our own markup rather than abcjs's contract. The name is unconditional.
-  const dyn = doc.items.filter((i) => i.name === 'dynamics').map((i) => i.y - topLine)
+  const dyn = doc.items
+    .filter((i) => i.name === "dynamics")
+    .map((i) => i.y - topLine);
   return {
     topLine,
     marks: doc.items
-      .filter((i) => i.tag === 'text' && i.y - topLine < 0)
+      .filter((i) => i.tag === "text" && i.y - topLine < 0)
       .map((i) => i.y - topLine)
       .sort((a, b) => a - b),
-    dynamic: dyn.length === 0 ? null : dyn.reduce((a, b) => a + b, 0) / dyn.length,
-  }
+    dynamic:
+      dyn.length === 0 ? null : dyn.reduce((a, b) => a + b, 0) / dyn.length,
+  };
 }
 
-describe('above-lane order vs abcjs', () => {
+describe("above-lane order vs abcjs", () => {
   for (const control of CONTROLS) {
     it(`puts every above mark on abcjs's rung — ${control.name}`, () => {
-      const got = measure(control.abc)
+      const got = measure(control.abc);
       // THE EXTENT FIRST, because it is what agreed all along: every one of these was
       // already within 0.01px of abcjs before the ladder landed. If this fails, a lane has
       // been added or lost rather than reordered.
-      expect(Math.abs(got.topLine - control.topLine), 'top line').toBeLessThan(EPSILON)
-      expect(got.marks.length, 'mark count').toBe(control.marks.length)
+      expect(Math.abs(got.topLine - control.topLine), "top line").toBeLessThan(
+        EPSILON,
+      );
+      expect(got.marks.length, "mark count").toBe(control.marks.length);
       for (const [i, expected] of control.marks.entries()) {
-        expect(Math.abs((got.marks[i] ?? 0) - expected), `mark ${i}`).toBeLessThan(EPSILON)
+        expect(
+          Math.abs((got.marks[i] ?? 0) - expected),
+          `mark ${i}`,
+        ).toBeLessThan(EPSILON);
       }
-    })
+    });
   }
 
   /**
@@ -179,26 +198,30 @@ describe('above-lane order vs abcjs', () => {
    * precomposed `dynamicMF` against abcjs's `m` and `f` set side by side, measured as box
    * centres. That is the outline, which is out of scope; the delta assertion cancels it.
    */
-  const OUTLINE_RESIDUAL = 0.5
+  const OUTLINE_RESIDUAL = 0.5;
 
   it("draws the dynamic where abcjs's printSymbol draws it", () => {
     for (const control of CONTROLS) {
-      if (control.dynamic === undefined) continue
-      const got = measure(control.abc).dynamic
-      expect(got, `${control.name} draws a dynamic`).not.toBeNull()
-      expect(Math.abs((got ?? 0) - control.dynamic), control.name).toBeLessThan(OUTLINE_RESIDUAL)
+      if (control.dynamic === undefined) continue;
+      const got = measure(control.abc).dynamic;
+      expect(got, `${control.name} draws a dynamic`).not.toBeNull();
+      expect(Math.abs((got ?? 0) - control.dynamic), control.name).toBeLessThan(
+        OUTLINE_RESIDUAL,
+      );
     }
-  })
+  });
 
   it("moves the dynamic between lanes exactly as abcjs's does", () => {
-    const base = CONTROLS.find((c) => c.name === 'dynamic above')
-    if (base === undefined) throw new Error('missing baseline control')
-    const ourBase = measure(base.abc).dynamic ?? 0
+    const base = CONTROLS.find((c) => c.name === "dynamic above");
+    if (base === undefined) throw new Error("missing baseline control");
+    const ourBase = measure(base.abc).dynamic ?? 0;
     for (const control of CONTROLS) {
-      if (control.dynamic === undefined) continue
-      const ours = (measure(control.abc).dynamic ?? 0) - ourBase
-      const theirs = control.dynamic - (base.dynamic ?? 0)
-      expect(Math.abs(ours - theirs), `${control.name} delta`).toBeLessThan(EPSILON)
+      if (control.dynamic === undefined) continue;
+      const ours = (measure(control.abc).dynamic ?? 0) - ourBase;
+      const theirs = control.dynamic - (base.dynamic ?? 0);
+      expect(Math.abs(ours - theirs), `${control.name} delta`).toBeLessThan(
+        EPSILON,
+      );
     }
-  })
-})
+  });
+});
