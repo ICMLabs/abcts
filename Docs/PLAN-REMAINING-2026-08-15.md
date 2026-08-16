@@ -110,7 +110,14 @@ not a warning) and `%%visualTranspose` (every pitch moved at parse time, key sig
 spelling with it, and the `visualTranspose` render param with it). `svg-bytes` is 0 of
 **188**, up from 178, and the harvested corpus 177 of 177.
 
-**Phase 4 is OPEN and half-built**: `lines` is a projection at **250,226 of 256,138
+**Phase 4 — 2026-08-16: the SELECTABLES landed at 149 of 389** with `selection-clefs`
+ratcheted byte-for-byte, and `tune.lines` moved to 250,775 characters / 177 ratcheted tunes.
+What is open is the other ten `Selectables.add` sites — the text rows, the voice name, the
+brace, the endings, the triplets, the curves, the dynamics, and the `bar`/`tempo`/`part` and
+staff-extra elements — every shape measured in `tests/corpus-selection/golden.json`. See
+`Docs/HANDOFF-2026-08-16.md`.
+
+**Phase 4 as it stood on 2026-08-15c**: `lines` is a projection at **250,226 of 256,138
 characters**, with 170 tunes ratcheted exact and the remaining 5,912 characters measured —
 six element types with no source range yet, and a chord's range stopping short of a
 trailing tie. The selectables (`getSelectableArray`, `findSelectableElement`) are the other
