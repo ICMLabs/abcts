@@ -25,6 +25,22 @@
  * tomorrow, oddities included. Opt into corrections with `abcts` proper and mode
  * `abc2.1`.
  */
+import {
+  type AudioOptions,
+  type FlatAudio,
+  flattenAudio,
+} from "../audio/flatten.js";
+import {
+  getBarLength,
+  getBeatLength,
+  getBeatsPerMeasure,
+  getBpm,
+  getMeter,
+  getPickupLength,
+  millisecondsPerMeasureOf,
+  type NoteTiming,
+  timingsOf,
+} from "../audio/timing.js";
 import { plainText, type RichText, type Score } from "../core/model.js";
 import { parse } from "../parser/parser.js";
 import { STAFF_SPACE_PX, UNIT_PX } from "../renderer/abcjs-constants.js";
@@ -37,6 +53,12 @@ import { toSVG } from "../renderer/svg.js";
  * a 670 staffwidth renders a 700px SVG.
  */
 const SCREEN_PADDING = 15;
+
+/**
+ * `AbcTune`'s own `version`, reported verbatim — a host that feature-detects on it must
+ * not break because it is running abcts (`abc_tune.js:16`).
+ */
+const ABCJS_TUNE_VERSION = "1.1.0";
 
 /** And PRINT's — 1.8cm either side (`renderer.js:71-72`). */
 const PRINT_PADDING = 68;
@@ -85,6 +107,34 @@ export interface AbcjsParams {
 }
 
 /**
+ * abcjs's `getMeter()` shape — `{ type: "common_time" }`, `{ type: "cut_time" }`, or
+ * `{ type: "specified", value: [{ num, den }] }` **with the numbers as STRINGS**, which is
+ * why `getMeterFraction` calls `parseInt` on them (`abc_tune.js:181-220`).
+ */
+export interface AbcjsMeter {
+  readonly type: "common_time" | "cut_time" | "specified";
+  readonly value?: readonly { readonly num: string; readonly den: string }[];
+}
+
+/** `getMeterFraction()` — the same meter reduced to two integers (`abc_tune.js:196-219`). */
+export interface AbcjsMeterFraction {
+  readonly num: number;
+  readonly den: number;
+}
+
+const abcjsMeter = (score: Score): AbcjsMeter => {
+  const m = getMeter(score);
+  // A tune with no music has no staff and therefore no meter — `getMeter` falls through
+  // to `common_time`, which is 4/4 whatever the header said.
+  if (m.symbol === "common") return { type: "common_time" };
+  if (m.symbol === "cut") return { type: "cut_time" };
+  return {
+    type: "specified",
+    value: [{ num: String(m.numerator), den: String(m.denominator) }],
+  };
+};
+
+/**
  * What `renderAbc` hands back, per tune.
  *
  * ponytail: abcjs's tune object also carries audio and timing methods (`setUpAudio`,
@@ -110,6 +160,33 @@ export interface TuneObject {
   readonly score: Score;
   /** abcjs exposes the title list at `metaText.title`. */
   readonly metaText: { readonly title?: string };
+  /** `AbcTune`'s own, and it is abcjs's number rather than abcts's — a host may test it. */
+  readonly version: string;
+  /** `"screen"` unless `print: true` was asked for (`abc_parse.js:525-526`). */
+  readonly media: "screen" | "print";
+
+  // ── The accessors, bound to this tune (`abc_tune.js:90-181`) ────────────────
+  readonly getMeter: () => AbcjsMeter;
+  readonly getMeterFraction: () => AbcjsMeterFraction;
+  readonly getBeatLength: () => number;
+  readonly getBarLength: () => number;
+  readonly getBeatsPerMeasure: () => number;
+  readonly getBpm: () => number;
+  readonly getPickupLength: () => number;
+  readonly millisecondsPerMeasure: (bpmOverride?: number) => number;
+
+  /**
+   * `setTiming(bpm, measuresOfDelay)` — builds `noteTimings` and, on the way, the two
+   * totals. abcjs STORES them, so `getTotalTime()` before `setTiming()` is `undefined`
+   * from abcjs and must be `undefined` from us (`abc_tune.js:584-621`).
+   */
+  readonly setTiming: (bpm?: number, measuresOfDelay?: number) => NoteTiming[];
+  readonly noteTimings: NoteTiming[];
+  readonly getTotalTime: () => number | undefined;
+  readonly getTotalBeats: () => number | undefined;
+
+  /** `setUpAudio(options)` — the flattened event list `CreateSynth` plays. */
+  readonly setUpAudio: (options?: AudioOptions) => FlatAudio;
 }
 
 /** A div, an id, `"*"` for a headless slot, or nothing (`abc_tunebook.js:76-82`). */
@@ -181,46 +258,105 @@ export function renderAbc(
       ? 0
       : Number.parseInt(String(params.startingTune), 10);
 
-  const render = (score: (typeof result.scores)[number]) => ({
-    svg: toSVG(
-      layout(score, {
-        mode: "abcjs-strict",
-        ...(systemWidth ? { systemWidth } : {}),
-        ...(printing ? { print: true } : {}),
-      }),
-      {
-        staffSpace,
-        classes: "abcjs",
-        // abcjs emits its per-element class scheme only when the host asks for it.
-        ...(params.add_classes === true ? { addClasses: true } : {}),
-        /**
-         * abcjs's `aria-label` carries the title; the padding is abcjs's own 15 either side.
-         *
-         * **AND A RICH TITLE GOES IN AS AN ARRAY.** `setPaperSize` builds the label by
-         * CONCATENATION — `"Sheet Music for \"" + metaText.title + '"'`
-         * (`draw/set-paper-size.js:12`) — and `metaText.title` is the phrase array whenever
-         * the field carried a `$N`, so JS's own `Array.prototype.toString` writes
-         * `[object Object],[object Object],…`. Measured from abcjs's own golden, not
-         * reasoned: `visual-misc-06`'s label says exactly that.
-         */
-        ...(score.metadata.titles[0] === undefined
+  const render = (score: (typeof result.scores)[number]): TuneObject => {
+    /**
+     * **`noteTimings` AND THE TOTALS ARE STATE, not derived on read.** `setTiming` writes
+     * all three onto the tune and the three getters just read the fields
+     * (`abc_tune.js:584-621`), so a host that calls `getTotalTime()` first gets
+     * `undefined` from abcjs — and must get `undefined` from us.
+     */
+    const timings: {
+      rows: NoteTiming[];
+      time: number | undefined;
+      beats: number | undefined;
+    } = { rows: [], time: undefined, beats: undefined };
+    return {
+      svg: toSVG(
+        layout(score, {
+          mode: "abcjs-strict",
+          ...(systemWidth ? { systemWidth } : {}),
+          ...(printing ? { print: true } : {}),
+        }),
+        {
+          staffSpace,
+          classes: "abcjs",
+          // abcjs emits its per-element class scheme only when the host asks for it.
+          ...(params.add_classes === true ? { addClasses: true } : {}),
+          /**
+           * abcjs's `aria-label` carries the title; the padding is abcjs's own 15 either side.
+           *
+           * **AND A RICH TITLE GOES IN AS AN ARRAY.** `setPaperSize` builds the label by
+           * CONCATENATION — `"Sheet Music for \"" + metaText.title + '"'`
+           * (`draw/set-paper-size.js:12`) — and `metaText.title` is the phrase array whenever
+           * the field carried a `$N`, so JS's own `Array.prototype.toString` writes
+           * `[object Object],[object Object],…`. Measured from abcjs's own golden, not
+           * reasoned: `visual-misc-06`'s label says exactly that.
+           */
+          ...(score.metadata.titles[0] === undefined
+            ? {}
+            : { title: ariaTitle(score.metadata.titles[0]) }),
+          // NO `pageWidth` HERE. The page is `layout()`'s own ratchet — the staff width plus
+          // abcjs's 15px either side (`write/renderer.js:69-72`), raised by any line too stiff
+          // to compress to it and REPLACED outright by a `%%staffwidth`, which the host cannot
+          // know. Forcing it to `staffwidth + 30` wrote `width="700"` where abcjs writes 296
+          // for `%%staffwidth 200` and 752.491 for a tune that overflows.
+        },
+      ),
+      score,
+      // abcjs's `metaText.title` is a plain string even when the field changed font
+      // mid-line — the phrases are a LAYOUT structure, not part of the public shape.
+      metaText:
+        score.metadata.titles[0] === undefined
           ? {}
-          : { title: ariaTitle(score.metadata.titles[0]) }),
-        // NO `pageWidth` HERE. The page is `layout()`'s own ratchet — the staff width plus
-        // abcjs's 15px either side (`write/renderer.js:69-72`), raised by any line too stiff
-        // to compress to it and REPLACED outright by a `%%staffwidth`, which the host cannot
-        // know. Forcing it to `staffwidth + 30` wrote `width="700"` where abcjs writes 296
-        // for `%%staffwidth 200` and 752.491 for a tune that overflows.
+          : { title: plainText(score.metadata.titles[0]) },
+
+      // abcjs's own version string, not abcts's — a host may feature-detect on it.
+      version: ABCJS_TUNE_VERSION,
+      media: printing ? "print" : "screen",
+
+      getMeter: () => abcjsMeter(score),
+      getMeterFraction: () => {
+        const m = abcjsMeter(score);
+        if (m.type === "cut_time") return { num: 2, den: 2 };
+        const first = m.value?.[0];
+        if (m.type !== "specified" || first === undefined)
+          return { num: 4, den: 4 };
+        // **A COMPOUND NUMERATOR SUMS ITS PARTS** — `3+2+3` is 8 (`abc_tune.js:202-207`).
+        const num =
+          first.num.indexOf("+") > 0
+            ? first.num
+                .split("+")
+                .reduce((t, p) => t + Number.parseInt(p, 10), 0)
+            : Number.parseInt(first.num, 10);
+        return { num, den: Number.parseInt(first.den, 10) };
       },
-    ),
-    score,
-    // abcjs's `metaText.title` is a plain string even when the field changed font
-    // mid-line — the phrases are a LAYOUT structure, not part of the public shape.
-    metaText:
-      score.metadata.titles[0] === undefined
-        ? {}
-        : { title: plainText(score.metadata.titles[0]) },
-  });
+      getBeatLength: () => getBeatLength(score),
+      getBarLength: () => getBarLength(score),
+      getBeatsPerMeasure: () => getBeatsPerMeasure(score),
+      getBpm: () => getBpm(score),
+      getPickupLength: () => getPickupLength(score),
+      millisecondsPerMeasure: (bpmOverride?: number) =>
+        millisecondsPerMeasureOf(score, bpmOverride),
+
+      setTiming(bpm?: number, measuresOfDelay?: number): NoteTiming[] {
+        const t = timingsOf(score, {
+          ...(bpm === undefined ? {} : { bpm }),
+          ...(measuresOfDelay === undefined ? {} : { measuresOfDelay }),
+        });
+        timings.rows = t.rows;
+        timings.time = t.totalTime;
+        timings.beats = t.totalBeats;
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        (this as { noteTimings: NoteTiming[] }).noteTimings = t.rows;
+        return t.rows;
+      },
+      noteTimings: timings.rows,
+      getTotalTime: () => timings.time,
+      getTotalBeats: () => timings.beats,
+
+      setUpAudio: (options: AudioOptions = {}) => flattenAudio(score, options),
+    };
+  };
 
   const tunes: TuneObject[] = [];
   slots.forEach((slot, i) => {
