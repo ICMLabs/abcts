@@ -15,12 +15,13 @@ the library.**
 |---|---|---|
 | **SVG bytes, in-repo** | 0 of 178 | **0 of 178** |
 | **SVG bytes, sibling (5 flavours)** | 0 of 356 | **0 of 356** |
-| **abcjs API surface** | *did not exist* | **44 of 64 absent**, from 62 |
+| **abcjs API surface** | *did not exist* | **32 of 64 absent**, from 62 |
 | **`AbcTune` numeric accessors** | *did not exist* | **2 of 291**, from 18, both written down |
+| **`strTranspose`** | *did not exist* | **1 of 59**, written down |
 | Audio / timings / element timings / chord grids / MIDI | 0 of 72 / 38 / 13 / 23 / 3 | unchanged |
 | Harvested geometry / pixel / DOM contract | 0 of 174 / 120 / 25 | unchanged |
 
-Suite 1713 passing, 2 expected-fail, one red — the known-not-ours `S7-voices`
+Suite 1776 passing, 2 expected-fail, one red — the known-not-ours `S7-voices`
 (`CHECKPOINT-2026-08-12.md` §5).
 
 ---

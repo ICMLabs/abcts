@@ -1179,6 +1179,17 @@ backup remote is not a licence to vendor someone else's tree into this one.
 > asserting what abcjs does, so they go RED when the gap closes), `%%maxStaves` truncating
 > the clock, and an `&` overlay's `end` row.
 >
+> **AND `strTranspose` IS IN AT 58 OF 59**, with `abcjs.synth`'s silent half,
+> `test.Parse`/`test.EngraverController` (with `renderTuneBook` delegating) and
+> `renderEngine` beside it — **surface 62 → 32 absent**. The transpose oracle is generated
+> by RUNNING abcjs rather than copied from its suite, and that earned itself immediately:
+> on `output-miss-accidental` abcjs's own test expects `=B, _B,|_B, |` and abcjs produces
+> `=B, B,|_B, |`. **THE ORACLE IS WHAT abcjs DOES, NOT WHAT ITS SUITE ASSERTS.** Five
+> findings on the way, the largest being that **abcjs's ELEMENT SPAN opens at the first
+> thing written for the note** — chord symbol, `!…!` or `+…+` decoration, grace group and
+> the space between — which is why `findNotes` masks the quoted and banged runs and does
+> NOT mask the braces.
+>
 > **READ `Docs/CHECKPOINT-2026-08-15c.md` FIRST**, then the PLAN.
 
 > 🏁 **EVERY SVG BYTE GATE IS AT ZERO, ACROSS ALL FIVE FLAVOURS THE CORPUS IS RENDERED
