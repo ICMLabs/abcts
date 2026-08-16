@@ -112,7 +112,6 @@ const MISSING: readonly string[] = [
   "TimingCallbacks",
   "extractMeasures",
   "pauseAnimation",
-  "renderEngine",
   "setGlyph",
   "startAnimation",
   "stopAnimation",

@@ -369,19 +369,61 @@ export function renderAbc(
     };
   };
 
+  return walkSlots(slots, from, result.scores, (element, score) => {
+    const tune = render(score);
+    if (element !== null) element.innerHTML = tune.svg;
+    return tune;
+  });
+}
+
+/**
+ * `renderEngine(callback, output, abc, params)` — abcjs's generic slot walker, and the
+ * thing `renderAbc`, `parseOnly` and `tuneMetrics` are each one callback away from
+ * (`api/abc_tunebook.js:56-104`).
+ *
+ * The callback's return REPLACES the tune in the result when it is truthy
+ * (`var override = callback(...); ret.push(override ? override : tune)`), which is how
+ * `tuneMetrics` returns measure widths from the same walk.
+ */
+export function renderEngine<T>(
+  callback: (
+    element: { innerHTML: string } | null,
+    tune: TuneObject,
+    index: number,
+  ) => T,
+  output: Target | readonly Target[],
+  abc: string,
+  params: AbcjsParams = {},
+): (T | TuneObject)[] {
+  const tunes = renderAbc(
+    Array.isArray(output) ? (output as readonly Target[]) : [output as Target],
+    abc,
+    params,
+  );
+  return tunes.map((tune, i) => {
+    const override = callback(null, tune, i);
+    return override ? override : tune;
+  });
+}
+
+/** The slot rule itself — see `renderAbc`. */
+function walkSlots(
+  slots: readonly Target[],
+  from: number,
+  scores: readonly Score[],
+  make: (element: { innerHTML: string } | null, score: Score) => TuneObject,
+): TuneObject[] {
   const tunes: TuneObject[] = [];
   slots.forEach((slot, i) => {
     // A HEADLESS slot does the work and shows nothing (`abc_tunebook.js:78-80`).
     const element = slot === "*" ? null : resolve(slot);
-    const score = result.scores[from + i];
+    const score = scores[from + i];
     if (score === undefined) {
       // …AND A SLOT PAST THE END CLEARS ITS DIV rather than being skipped (`:99-102`).
       if (element !== null) element.innerHTML = "";
       return;
     }
-    const tune = render(score);
-    if (element !== null) element.innerHTML = tune.svg;
-    tunes.push(tune);
+    tunes.push(make(element, score));
   });
   return tunes;
 }
