@@ -1133,7 +1133,7 @@ backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
 
-> 🖱️ **THE SELECTABLES ARE IN — 152 OF 389, AND THE JOIN IS A REFERENCE RATHER THAN A
+> 🖱️ **THE SELECTABLES ARE IN — 157 OF 389, AND THE JOIN IS A REFERENCE RATHER THAN A
 > POSITION** (2026-08-16). abcjs's selectable array holds `absEl.abcelem`, the very
 > `tune.lines` element, so its two public surfaces agree by IDENTITY; ours are separate
 > objects, and pairing them POSITIONALLY — the k-th drawn note against the k-th event of the
@@ -1177,14 +1177,23 @@ backup remote is not a licence to vendor someone else's tree into this one.
 > and by `ls -la` on the two inputs, which is the check the 08-12 checkpoint says to reach
 > for before bisecting.
 >
+> 🎯 **AND THE HEADER `Q:` IS A DRAWN ELEMENT THAT IS NOT IN `tune.lines` — THE TWO GATES
+> SETTLED IT ONE EACH WAY.** abcjs's selectable array holds it (five rows) and
+> `getElementFromChar` answers NOTHING for a `Q:` field line's characters, so it is
+> registered for the drawing to find by range and put in no voice's stream — abcjs's own
+> split, the header tempo living on `metaText`. Four shapes were measured before the fifth
+> was right, and the third killed the hypothesis the second had produced: placing the
+> element FIRST instead of sorting it in changed nothing at all, which said the cost was
+> never the ordering but its PRESENCE in a stream `getElementFromChar` walks. **When a
+> change to an input moves nothing, the output is not reading that input.** With it,
+> `tune.lines` is **251,312 characters** and 182 ratcheted tunes.
+>
 > ⚙️ **AND A `tempo` AND A `part` CARRY THEIR SOURCE RANGE NOW** — two of the six element
-> types the projection could not hold — which took `tune.lines` to **251,012 characters**
-> and 179 ratcheted tunes. **THE TUNE'S OWN `Q:` IS MEASURED AND NOT LANDED**: abcjs puts it
-> in the stream of line 0 voice 0 wherever the field sits, worth FIVE selectable rows, and
-> landing it needs a tiling rule that lets the `\nK:C\n` between the field and the music
-> belong to NOTHING. Two shapes are recorded at the code site; the nearer one moved the
-> aggregate by a tenth of a percent and took **21 ratcheted tunes RED**, which is the whole
-> argument for a ratchet that names rows.
+> types the projection could not hold — and the TILING IS PER SOURCE LINE — an
+> element opens where the one before it closed only when the two were written on the same
+> line, which is what abcjs's tokenizer does without tiling at all. One intermediate shape
+> moved the aggregate by a tenth of a percent and took **21 ratcheted tunes RED**, which is
+> the whole argument for a ratchet that names rows rather than counting them.
 >
 > ⚠️ **AND RETAINING THE `Layout` MADE THE SUITE'S WORKERS DIE.** The selectables walk the
 > drawing, so the first cut kept it in each `TuneObject`'s closure — and a `Layout` is the
