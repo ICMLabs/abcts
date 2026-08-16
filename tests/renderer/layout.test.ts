@@ -342,11 +342,16 @@ describe("tempo", () => {
       text: null,
       postText: null,
     });
+    // **A LONE TEMPO WORD CARRIES A RATE AND DOES NOT PRINT IT** — 26 of them in
+    // `abc_parse_header.js:204-232`, with `suppressBpm` set beside the bpm
+    // (`:257-268`). This asserted `bpm: null` for a week, which is what let
+    // `ave-verum-corpus` play at the 180 default.
     expect(tempoOf('Q: "Adagio"')).toEqual({
-      beatUnit: null,
-      bpm: null,
+      beatUnit: rational(1, 4),
+      bpm: 68,
       text: "Adagio",
       postText: null,
+      suppressBpm: true,
     });
     expect(tempoOf('Q:"Allegretto" 1/4=100')).toEqual({
       beatUnit: rational(1, 4),

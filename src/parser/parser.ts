@@ -4835,6 +4835,29 @@ export interface ParseOptions {
   readonly mode?: CompatibilityMode
 }
 
+/**
+ * **`\%` IS A LITERAL PERCENT, AND abcjs NEVER PUTS IT BACK.**
+ *
+ *     // If there is an escaped percent, then temporarily change it so it doesn't affect
+ *     // the processing.
+ *     strTune = strTune.replace(/\\%/g, "\u200B\uFF05")
+ *
+ * (`abc_parse.js:511-512`, new in **6.7.0**.) Two characters replace two characters, so
+ * every source offset downstream is unmoved — which is the whole reason it is done this
+ * way rather than by deleting the backslash — and the "temporarily" in its own comment is
+ * wrong: nothing restores it. So `T:100\% Amazing` really does become
+ * `100<ZWSP>％ Amazing` with a FULLWIDTH percent, and that is what abcjs draws.
+ *
+ * **THIS WAS FILED AS A DECISION AND IT WAS A STALE ONE.** `content-parity` carried a
+ * paragraph saying the fixture came from 6.7.0 while our target was 6.6.3, where a `%`
+ * truncates unconditionally, so "one note is the right answer for our target". The target
+ * MOVED to 6.7.0 on 2026-08-08 and the note did not, so a fixture whose whole point is
+ * this rule sat excluded for a week — and with it went every note after the escape, which
+ * is why `escaped-percent`'s clock ran to 0.333s against abcjs's 1.667. The fifth time on
+ * this branch that a note naming a cause is the reason a row stopped being read.
+ */
+const escapePercent = (source: string): string => source.replace(/\\%/g, '\u200B\uFF05')
+
 export function parse(source: string, options: ParseOptions = {}): ParseResult {
   const mode = options.mode ?? defaultMode
   // WHICH ESCAPE TABLE THE TEXT DECODER READS — abcjs's fixed map in strict, ABC 2.1's
@@ -4842,7 +4865,7 @@ export function parse(source: string, options: ParseOptions = {}): ParseResult {
   // fourteen `decodeTextString` call sites, which is the shape `JAZZ_CHORDS` and
   // `PERC_MAP` already take in the renderer. See `setAbcjsEscapes`.
   setAbcjsEscapes(isStrict(mode))
-  return deepFreeze(new Parser(source, mode).parse())
+  return deepFreeze(new Parser(escapePercent(source), mode).parse())
 }
 
 /**

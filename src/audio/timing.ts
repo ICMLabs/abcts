@@ -159,22 +159,38 @@ function bpmOf(tempo: Tempo | null, meter: Meter): number {
   return bpm
 }
 
-/** `getPickupLength()`, in whole notes — the lead-in before the first full measure. */
+/**
+ * `getPickupLength()`, in whole notes — the lead-in before the first full measure.
+ *
+ * **AND IT WALKS EVERY VOICE OF EVERY STAFF, ACCUMULATING, UNTIL IT MEETS A BAR.**
+ * `computePickupLength`'s three nested loops run over `lines[i].staff[j].voices[v]` and
+ * only the `el_type === 'bar'` arm returns (`abc_tune.js:108-134`), so a two-voice tune
+ * with no barline at all sums BOTH voices: `tablature-07` is `ABc` over `A,B,C` and abcjs
+ * answers 0.75 where one voice is 0.375. Reproduced rather than corrected — a host asking
+ * for the pickup gets abcjs's number, and this is one of the places its own comment does
+ * not claim the result is sensible.
+ */
 function pickupOf(score: Score, meter: Meter): number {
-  const voice = score.voices[0]
-  if (voice === undefined) return 0
   const barLength = barLengthOf(meter)
   let pickup = 0
-  for (const measure of voice.measures) {
-    if (measure.openingBarline !== null) return pickup
-    for (const event of measure.events) {
-      if (!(event.type === 'rest' && event.kind === 'spacer')) pickup += ratToNumber(event.duration)
-      if (pickup >= barLength) pickup -= barLength
+  for (const voice of score.voices) {
+    for (const measure of voice.measures) {
+      if (measure.openingBarline !== null) return settle(pickup, barLength)
+      for (const event of measure.events) {
+        if (!(event.type === 'rest' && event.kind === 'spacer')) {
+          pickup += ratToNumber(event.duration)
+        }
+        if (pickup >= barLength) pickup -= barLength
+      }
+      if (measure.closingBarline !== null) return settle(pickup, barLength)
     }
-    if (measure.closingBarline !== null) break
   }
-  return pickup < 1e-8 || barLength - pickup < 1e-8 ? 0 : pickup
+  return settle(pickup, barLength)
 }
+
+/** "If computed pickup length is very close to 0 or the bar length, we assume" no pickup. */
+const settle = (pickup: number, barLength: number): number =>
+  pickup < 1e-8 || barLength - pickup < 1e-8 ? 0 : pickup
 
 /** abcjs's `bar_*` names, which the repeat logic reads. */
 const BAR_TYPE: Readonly<Record<string, string>> = {
