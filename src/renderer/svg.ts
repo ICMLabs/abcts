@@ -71,6 +71,16 @@ export interface RenderOptions {
    */
   readonly title?: string;
   /**
+   * **ONE PER TUNE, WHEN A STACKED BOOK IS RENDERED — AND THE `<style>`/`<title>` PAIR
+   * REPEATS.** `setPaperSize` runs per tune and both `setTitle` and `insertStyles`
+   * PREPEND to the `<svg>` (`write/svg.js:26-31`, `:88-93`), with the style prepended
+   * last, so a three-tune book opens `style, title(tune 2), style, title(tune 1), style,
+   * title(tune 0)` — the pairs in REVERSE tune order, with the bodies after them in
+   * forward order. The `aria-label` is a `setAttribute`, so it is the LAST tune's alone.
+   * Measured from `tunebook-3-stacked.svg`.
+   */
+  readonly titles?: readonly (string | undefined)[];
+  /**
    * Force the drawing's width in pixels, rather than fitting the content.
    *
    * abcjs pads its SVG to the requested page width even when the music is narrower —
@@ -1133,7 +1143,6 @@ export function toSVG(
     : [input as Layout];
   const lastDoc = docs[docs.length - 1] as Layout;
   const parts: string[] = [];
-  let stackBase = 0;
   /** The y a coordinate is drawn against — reset per system, per staff and per tune. */
   let oy = 0;
   for (const doc of docs) {
@@ -1326,7 +1335,7 @@ export function toSVG(
      * `layout.ts`.
      */
     if (abcjs && doc.topText !== undefined && doc.topText.length > 0) {
-      oy = (OY + stackBase) * PX;
+      oy = OY * PX;
       const block = doc.topText.map((t) =>
         abcjsText(
           round2(t.x * PX),
@@ -1358,8 +1367,7 @@ export function toSVG(
     for (const [systemIndex, system] of doc.systems.entries()) {
       // The system's own origin, flattened into every coordinate under it.
       // **THE PAGE'S CURSOR, NOT A SUM OF OFFSETS** — see `LayoutStaff.absoluteY`.
-      if (abcjs)
-        oy = ((system.absoluteY ?? system.originY + OY) + stackBase) * PX;
+      if (abcjs) oy = (system.absoluteY ?? system.originY + OY) * PX;
       /**
        * **THE TOP TEXT COMES FIRST IN ABCJS'S BODY**, before any staff and before the braces
        * — `nonMusic()` runs the whole header block and only then does `drawStaffGroup` start
@@ -1396,8 +1404,8 @@ export function toSVG(
         const first = system.staves[0];
         if (first !== undefined) {
           oy = abcjs
-            ? (first.absoluteY + stackBase) * PX
-            : (system.originY + OY + stackBase) * PX + first.originY * PX;
+            ? first.absoluteY * PX
+            : (system.originY + OY) * PX + first.originY * PX;
           for (const el of first.elements) {
             if (el.blockHeight === undefined) continue;
             for (const t of el.texts)
@@ -1553,7 +1561,7 @@ export function toSVG(
       // per voice, because a staff step means a different pitch under a different clef.
       parts.push(
         `<g${abcjs ? attrIfAny(classes.generate("staff-wrapper")) : ` class="${prefix}-system"`}` +
-          `${abcjs ? "" : ` transform="translate(0,${num((system.originY + OY + stackBase) * PX)})"`}>`,
+          `${abcjs ? "" : ` transform="translate(0,${num((system.originY + OY) * PX)})"`}>`,
       );
       // Braces and brackets first: they belong to the SYSTEM, joining staves rather than
       // sitting on one, and they are drawn at the left edge outside the music area.
@@ -1630,7 +1638,7 @@ export function toSVG(
             : previous.absoluteY * PX -
               ENGRAVE.spacePerStep * ABCJS_PITCH.bottomLine * PX;
         // …and the staff's, on top of it. Reset per staff, since `staff.originY` is relative.
-        if (abcjs) oy = (staff.absoluteY + stackBase) * PX;
+        if (abcjs) oy = staff.absoluteY * PX;
         let staffGroup = "";
         // CORRECTED, by the byte table: abcjs DOES group the staff lines, with or without
         // `add_classes` — `…</path></g><g fill="currentColor" stroke="none" data-name=
@@ -1707,7 +1715,7 @@ export function toSVG(
         for (const span of connectorHere) {
           // SYSTEM coordinates — `edge()` already carries each staff's own `originY`, so the
           // offset is the system's alone and not this staff's.
-          const systemOy = (system.originY + OY + stackBase) * PX;
+          const systemOy = (system.originY + OY) * PX;
           /**
            * **A BRACE'S ENDS COME OFF `staff.absoluteY`, ONE PRODUCT EACH.**
            *
@@ -3568,16 +3576,14 @@ export function toSVG(
       const rest = block.slice(trailingCount);
       if (rest.length > 0) parts.push(`<g${klassBottom}>${rest.join("")}</g>`);
     }
-
-    stackBase += doc.height - (doc.paddingBottom ?? 0);
   }
 
   const w = abcjs
     ? lastDoc.pageWidth * OUT
     : (options.pageWidth ?? lastDoc.width * OUT);
-  // …and the TOTAL is that running base with the last page's bottom padding put back:
-  // `Σ(h − pad) + pad` is `Σ_{j<last}(h − pad) + h_last`, the same walk abcjs's cursor makes.
-  const h = (stackBase + (lastDoc.paddingBottom ?? 0)) * OUT;
+  // …and the LAST tune's height IS the whole page, because its own walk was seeded with
+  // the tune above's `endY` — see `LayoutOptions.pageTop`.
+  const h = lastDoc.height * OUT;
   /**
    * **PRINT IS A CSS SCALE ON THE ROOT AND AN ELEVEN-INCH FLOOR ON ITS HEIGHT.**
    * `setPaperSize` computes `w`/`h` at the scale and then hands `setSize` `w / scale` and
@@ -3587,6 +3593,11 @@ export function toSVG(
    * (`write/svg.js:71-83`) — and jsdom serialises only the three properties it knows, so
    * the `-ms-` pair and the `-*-transform-origin-x/y` four are absent from the goldens.
    */
+  /** One per tune — see `RenderOptions.titles`. */
+  const titles: readonly (string | undefined)[] = options.titles ?? [
+    options.title,
+  ];
+  const lastTitle = titles[titles.length - 1];
   const printScale = lastDoc.printScale ?? 1;
   const printH =
     printScale === 1
@@ -3623,9 +3634,9 @@ export function toSVG(
     return (
       `<svg xmlns:xlink="http://www.w3.org/1999/xlink" role="img" fill="currentColor" ` +
       `stroke="currentColor" aria-label="Sheet Music${
-        options.title === undefined || options.title === ""
+        lastTitle === undefined || lastTitle === ""
           ? ""
-          : ` for &quot;${escapeText(options.title)}&quot;`
+          : ` for &quot;${escapeText(lastTitle)}&quot;`
       }" width="${raw(w)}" height="${raw(printH)}"${printStyle}` +
       /**
        * **NO `viewBox`.** abcjs draws in ABSOLUTE PIXELS and writes none; the drawing above
@@ -3639,11 +3650,15 @@ export function toSVG(
       `>` +
       // The TITLE element carries the same phrase with REAL quotes — it is text content,
       // where the `aria-label` is an attribute and the serializer escapes them there.
-      `<style>${ABCJS_STYLE}</style><title>Sheet Music${
-        options.title === undefined || options.title === ""
-          ? ""
-          : ` for "${escapeText(options.title)}"`
-      }</title>` +
+      [...titles]
+        .reverse()
+        .map(
+          (t) =>
+            `<style>${ABCJS_STYLE}</style><title>Sheet Music${
+              t === undefined || t === "" ? "" : ` for "${escapeText(t)}"`
+            }</title>`,
+        )
+        .join("") +
       (glyphDefs.size === 0
         ? ""
         : `<defs>${[...glyphDefs]

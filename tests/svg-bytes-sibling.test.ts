@@ -21,7 +21,7 @@
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { renderAbc } from '../src/compat/index.js'
+import { renderAbc, renderTuneBook } from '../src/compat/index.js'
 
 const fixtures = join(import.meta.dirname, '..', '..', 'abcMusicKit', 'Tools', 'abcjs-debug', 'fixtures')
 const goldens = join(import.meta.dirname, '..', '..', 'abcMusicKit', 'Tools', 'abcjs-debug', 'golden')
@@ -35,6 +35,8 @@ interface Case {
   readonly addClasses?: boolean
   /** `print` — the `-print` family. See `MODES`. */
   readonly print?: boolean
+  /** `renderTuneBook` — the `-stacked` families. See `MODES`. */
+  readonly stacked?: boolean
 }
 
 /**
@@ -52,19 +54,23 @@ interface Case {
  * `-print` is `{ print: true }` — abcjs's PAGE media, four differences and no engraving
  * change (see `LayoutOptions.print`) — and is enumerated here too.
  *
- * The two `-stacked` families are NOT, and the reason is capability rather than reach: a
- * STACKED render is `EngraverController(div).engraveABC(allTunes)` — every tune of a book
- * into ONE svg — which `compat` has no entry point for. Written up in
- * `Docs/CHECKPOINT-2026-08-15.md`; it is not a tolerance, it is an unbuilt feature.
+ * The two `-stacked` families are `renderTuneBook` — every tune of a book down ONE svg,
+ * abcjs's `EngraverController(div).engraveABC(allTunes)`, which its own public API has no
+ * entry point for. Enumerated here as a SINGLE row each, since the whole book is one file.
+ *
+ * So all five flavours are gated and the list is complete.
  */
 const MODES: readonly {
   readonly suffix: string
   readonly addClasses: boolean
   readonly print?: boolean
+  readonly stacked?: boolean
 }[] = [
   { suffix: '', addClasses: false },
   { suffix: '-classes', addClasses: true },
   { suffix: '-print', addClasses: false, print: true },
+  { suffix: '-stacked', addClasses: false, stacked: true },
+  { suffix: '-stacked-print', addClasses: false, print: true, stacked: true },
 ]
 
 /**
@@ -92,6 +98,7 @@ const CASES: Case[] = existsSync(fixtures)
           const flag = {
             ...(mode.addClasses ? { addClasses: true } : {}),
             ...(mode.print === true ? { print: true } : {}),
+            ...(mode.stacked === true ? { stacked: true } : {}),
           }
           // A SINGLE-tune fixture's golden is `<base>.svg`; a tunebook's are `-tune0`, … .
           if (existsSync(join(goldens, `${base}.svg`)))
@@ -102,6 +109,8 @@ const CASES: Case[] = existsSync(fixtures)
               ...flag,
               golden: readFileSync(join(goldens, `${base}.svg`), 'utf-8'),
             })
+          // A STACKED book is one file for the whole fixture — no `-tune<i>` companions.
+          if (mode.stacked === true) continue
           for (let i = 0; existsSync(join(goldens, `${base}-tune${i}.svg`)); i += 1) {
             rows.push({
               slug: `${base}-tune${i}`,
@@ -139,6 +148,8 @@ const PASSING: readonly string[] = [
   'S1-decorations-print-tune2',
   'S1-decorations-print-tune3',
   'S1-decorations-print-tune4',
+  'S1-decorations-stacked',
+  'S1-decorations-stacked-print',
   'S2-fields-tune0',
   'S2-fields-tune1',
   'S2-fields-tune2',
@@ -148,6 +159,8 @@ const PASSING: readonly string[] = [
   'S2-fields-print-tune0',
   'S2-fields-print-tune1',
   'S2-fields-print-tune2',
+  'S2-fields-stacked',
+  'S2-fields-stacked-print',
   'S3-note-syntax-tune0',
   'S3-note-syntax-tune1',
   'S3-note-syntax-tune2',
@@ -223,6 +236,8 @@ const PASSING: readonly string[] = [
   'S3-note-syntax-print-tune22',
   'S3-note-syntax-print-tune23',
   'S3-note-syntax-print-tune24',
+  'S3-note-syntax-stacked',
+  'S3-note-syntax-stacked-print',
   'S4-bars-repeats-tune0',
   'S4-bars-repeats-tune1',
   'S4-bars-repeats-tune2',
@@ -232,6 +247,8 @@ const PASSING: readonly string[] = [
   'S4-bars-repeats-print-tune0',
   'S4-bars-repeats-print-tune1',
   'S4-bars-repeats-print-tune2',
+  'S4-bars-repeats-stacked',
+  'S4-bars-repeats-stacked-print',
   'S5-directives-tune0',
   'S5-directives-tune1',
   'S5-directives-tune2',
@@ -250,6 +267,8 @@ const PASSING: readonly string[] = [
   'S5-directives-print-tune3',
   'S5-directives-print-tune4',
   'S5-directives-print-tune5',
+  'S5-directives-stacked',
+  'S5-directives-stacked-print',
   'S6-keys-tune0',
   'S6-keys-tune1',
   'S6-keys-tune2',
@@ -265,6 +284,8 @@ const PASSING: readonly string[] = [
   'S6-keys-print-tune2',
   'S6-keys-print-tune3',
   'S6-keys-print-tune4',
+  'S6-keys-stacked',
+  'S6-keys-stacked-print',
   'S8-layout-tune0',
   'S8-layout-tune1',
   'S8-layout-tune2',
@@ -301,6 +322,7 @@ const PASSING: readonly string[] = [
   'S8-layout-print-tune9',
   'S8-layout-print-tune10',
   'S8-layout-print-tune11',
+  'S8-layout-stacked-print',
   'ave-verum-corpus',
   'ave-verum-corpus-classes',
   'ave-verum-corpus-print',
@@ -337,6 +359,8 @@ const PASSING: readonly string[] = [
   'clefs-print-tune5',
   'clefs-print-tune6',
   'clefs-print-tune7',
+  'clefs-stacked',
+  'clefs-stacked-print',
   'curves-tune0',
   'curves-tune1',
   'curves-tune2',
@@ -358,6 +382,8 @@ const PASSING: readonly string[] = [
   'curves-print-tune4',
   'curves-print-tune5',
   'curves-print-tune6',
+  'curves-stacked',
+  'curves-stacked-print',
   'extra-class',
   'extra-class-classes',
   'frere-jacques',
@@ -390,6 +416,8 @@ const PASSING: readonly string[] = [
   'missing-decorations-print-tune3',
   'missing-decorations-print-tune4',
   'missing-decorations-print-tune5',
+  'missing-decorations-stacked',
+  'missing-decorations-stacked-print',
   'multi-voice-lyrics-two-voices',
   'multi-voice-lyrics-two-voices-classes',
   'multi-voice-lyrics-two-voices-print',
@@ -430,6 +458,8 @@ const PASSING: readonly string[] = [
   'tunebook-3-print-tune0',
   'tunebook-3-print-tune1',
   'tunebook-3-print-tune2',
+  'tunebook-3-stacked',
+  'tunebook-3-stacked-print',
   'twinkle',
   'twinkle-classes',
   'twinkle-print',
@@ -486,6 +516,7 @@ function run(c: Case): Diff | null {
     ...(c.addClasses === true ? { add_classes: true } : {}),
     ...(c.print === true ? { print: true } : {}),
   }
+  if (c.stacked === true) return firstDifference(renderTuneBook(c.abc, params), c.golden)
   return firstDifference(renderAbc('paper', c.abc, params)[c.tune]?.svg ?? '', c.golden)
 }
 

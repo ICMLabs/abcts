@@ -1835,6 +1835,11 @@ export interface Layout {
   /** `%%sep` rules in a trailing block — see `bottomText`. */
   readonly bottomLines?: readonly PlacedLine[]
   /**
+   * The page cursor where this tune ENDS, before `padding.bottom` — what a stacked book
+   * hands the next tune as its `pageTop`. See `LayoutOptions.pageTop`.
+   */
+  readonly endY?: number
+  /**
    * **A SUBTITLE IS A LINE OF ITS OWN THAT DRAWS NOTHING.** Every `T:` after the first
    * becomes a bare `{subtitle}` entry in `abcTune.lines` — no `staff`, no `nonMusic`, so
    * `draw()`'s loop matches neither branch and emits no markup — and the loop still runs
@@ -5764,6 +5769,9 @@ let PAGE_PADDING = {
 /** 1 on screen; `print`'s own 0.75 otherwise — see `LayoutOptions.print`. */
 let PRINT_SCALE = 1
 
+/** Where this render's page cursor opens — see `LayoutOptions.pageTop`. */
+let PAGE_TOP = 0
+
 let STRICT_TEXT_METRICS = true
 
 /** `%%jazzchords` for the current render — same one-place switch, set beside it. */
@@ -9273,6 +9281,15 @@ export interface LayoutOptions {
    * `spacing.top`, and the page is at least 11 inches tall.
    */
   readonly print?: boolean
+  /**
+   * **WHERE THIS TUNE'S PAGE CURSOR STARTS** — 0 for a tune of its own, and the PREVIOUS
+   * tune's `endY` when a whole book is stacked into one SVG. `engraveABC` resets the
+   * renderer once and then runs `engraveTune` per tune, so `renderer.y` runs CONTINUOUSLY
+   * through every advance of every tune (`engraver-controller.js:105-118`) — and adding
+   * per-tune TOTALS instead re-derives that sum, which was one ULP out on 19 of the 24
+   * stacked goldens. The walk has to be one walk.
+   */
+  readonly pageTop?: number
 }
 
 /** A measure laid out on its own, ready to be placed into whichever system it lands in. */
@@ -10498,6 +10515,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   // in either corpus sets one.
   const printScale = options.print === true ? ABCJS_RATIO.printScale : 1
   PRINT_SCALE = printScale
+  // …and the page's own origin, which a stacked book seeds with the tune above's `endY`.
+  PAGE_TOP = options.pageTop ?? 0
   PAGE_PADDING =
     options.print === true
       ? {
@@ -11661,7 +11680,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
                 systemWidth - PAGE_PADDING.left * 2,
                 score.textAbove,
                 score.fonts,
-                PAGE_PADDING.top,
+                PAGE_TOP + PAGE_PADDING.top,
                 musicSpace,
               )
               topAdvances = built.advances
@@ -11669,14 +11688,14 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
                 // …and the rules are rebased with the texts, being in the same frame.
                 lines: built.lines.map((l) => ({
                   ...l,
-                  y1: l.y1 - PAGE_PADDING.top,
-                  y2: l.y2 - PAGE_PADDING.top,
+                  y1: l.y1 - (PAGE_TOP + PAGE_PADDING.top),
+                  y2: l.y2 - (PAGE_TOP + PAGE_PADDING.top),
                 })),
                 height: built.height,
                 texts: built.texts.map((t) => ({
                   ...t,
                   pageY: t.y,
-                  y: t.y - PAGE_PADDING.top,
+                  y: t.y - (PAGE_TOP + PAGE_PADDING.top),
                 })),
               }
             })()
@@ -12860,7 +12879,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
    * expressed relative to a system on purpose, so a break inserted earlier cannot shift a
    * later system's geometry.
    */
-  let pageCursor = PAGE_PADDING.top
+  let pageCursor = PAGE_TOP + PAGE_PADDING.top
   /** Absolute y of the BOTTOM staff line of the last system placed. */
   let previousBottomLine: number | null = null
   /** `lastStaffGroup.staffs[last].bottom`, in PITCH — what `addStaffPadding` reads. */
@@ -13151,6 +13170,58 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           ...bottomBlock.texts,
         ]
 
+  /**
+   * **THE PAGE CURSOR WHERE THIS TUNE ENDS**, before `padding.bottom`. It is the walk
+   * below, hoisted out of `height` so a STACKED book can seed the NEXT tune with it —
+   * abcjs's `renderer.y` is one continuous cursor across every tune of a book, and a sum
+   * of per-tune totals is a different double. See `LayoutOptions.pageTop`.
+   */
+  const pageEnd = ((): number => {
+      let y = PAGE_TOP + PAGE_PADDING.top
+      const block = stafflessBlock === undefined ? undefined : stafflessBlock
+      if (block !== undefined) {
+        for (const a of block.advances) y += a
+        y += block.height - block.advances.reduce((t, a) => t + a, 0)
+      } else {
+        const first = shown[0]
+        /**
+         * **THE SAME TERM LIST THE STAFF'S OWN ORIGIN WALKS** — see
+         * `LayoutStaff.originAdvances`. This used to spend `topAdvances` and then
+         * `first.leading - named`, which is the SEPARATION reached by subtracting two
+         * sums: `(61.33 + 77.89999999999999) - 77.9` is not `61.33`, and that was the last
+         * token on `visual-tablature-08`. One list, spent once, and the page and the staff
+         * cannot drift apart.
+         */
+        for (const a of first?.leadAdvances ?? topAdvances) {
+          y += a
+          if (process.env.ABCTS_Y) console.log('Y lead', a, '->', y)
+        }
+        for (const [i, system] of shown.entries()) {
+          if (i > 0) {
+            // A MID-TUNE BLOCK is this system's own leading — abcjs draws that nonMusic
+            // line before the group and the page's cursor moves through it, ROW BY ROW,
+            // and only THEN pads (`draw/draw.js:44-58`). Dropping it lost a whole subtitle
+            // row; spending it as a SUM, or after the padding, lost the last bits.
+            for (const a of system.leadAdvances) {
+              y += a
+              if (process.env.ABCTS_Y) console.log('Y sysLead', a, '->', y)
+            }
+            y += system.gap ?? 0
+            if (process.env.ABCTS_Y) console.log('Y gap', system.gap ?? 0, '->', y)
+          }
+          y += system.heightPitch * ENGRAVE.spacePerStep
+          if (process.env.ABCTS_Y) console.log('Y sys', system.heightPitch * ENGRAVE.spacePerStep, '->', y)
+        }
+      }
+      y += trailingHeight
+      if (bottomBlock.texts.length > 0) {
+        y += spaces(ABCJS_PX.bottomTextGap)
+        // …ROW BY ROW, as `nonMusic` spends them — see `bottomTextBlock`.
+        for (const a of bottomBlock.advances) y += a
+      }
+      return y
+  })()
+
   return {
     systems: shown,
     ...(stafflessBlock === undefined ? {} : { topText: stafflessBlock.texts }),
@@ -13211,52 +13282,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
      * Any advance the block made that its `advances` list does not name is added as the
      * remainder, which is exactly 0 whenever it names them all.
      */
-    height: (() => {
-      let y = PAGE_PADDING.top
-      const block = stafflessBlock === undefined ? undefined : stafflessBlock
-      if (block !== undefined) {
-        for (const a of block.advances) y += a
-        y += block.height - block.advances.reduce((t, a) => t + a, 0)
-      } else {
-        const first = shown[0]
-        /**
-         * **THE SAME TERM LIST THE STAFF'S OWN ORIGIN WALKS** — see
-         * `LayoutStaff.originAdvances`. This used to spend `topAdvances` and then
-         * `first.leading - named`, which is the SEPARATION reached by subtracting two
-         * sums: `(61.33 + 77.89999999999999) - 77.9` is not `61.33`, and that was the last
-         * token on `visual-tablature-08`. One list, spent once, and the page and the staff
-         * cannot drift apart.
-         */
-        for (const a of first?.leadAdvances ?? topAdvances) {
-          y += a
-          if (process.env.ABCTS_Y) console.log('Y lead', a, '->', y)
-        }
-        for (const [i, system] of shown.entries()) {
-          if (i > 0) {
-            // A MID-TUNE BLOCK is this system's own leading — abcjs draws that nonMusic
-            // line before the group and the page's cursor moves through it, ROW BY ROW,
-            // and only THEN pads (`draw/draw.js:44-58`). Dropping it lost a whole subtitle
-            // row; spending it as a SUM, or after the padding, lost the last bits.
-            for (const a of system.leadAdvances) {
-              y += a
-              if (process.env.ABCTS_Y) console.log('Y sysLead', a, '->', y)
-            }
-            y += system.gap ?? 0
-            if (process.env.ABCTS_Y) console.log('Y gap', system.gap ?? 0, '->', y)
-          }
-          y += system.heightPitch * ENGRAVE.spacePerStep
-          if (process.env.ABCTS_Y) console.log('Y sys', system.heightPitch * ENGRAVE.spacePerStep, '->', y)
-        }
-      }
-      y += trailingHeight
-      if (bottomBlock.texts.length > 0) {
-        y += spaces(ABCJS_PX.bottomTextGap)
-        // …ROW BY ROW, as `nonMusic` spends them — see `bottomTextBlock`.
-        for (const a of bottomBlock.advances) y += a
-      }
-      return y + PAGE_PADDING.bottom
-    })(),
-    top: -PAGE_PADDING.top,
+    endY: pageEnd,
+    height: pageEnd + PAGE_PADDING.bottom,
+    top: -(PAGE_TOP + PAGE_PADDING.top),
   }
 }
 

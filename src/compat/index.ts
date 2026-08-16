@@ -25,47 +25,49 @@
  * tomorrow, oddities included. Opt into corrections with `abcts` proper and mode
  * `abc2.1`.
  */
-import { plainText, type RichText, type Score } from '../core/model.js'
-import { parse } from '../parser/parser.js'
-import { STAFF_SPACE_PX, UNIT_PX } from '../renderer/abcjs-constants.js'
-import { layout } from '../renderer/layout.js'
-import { toSVG } from '../renderer/svg.js'
+import { plainText, type RichText, type Score } from "../core/model.js";
+import { parse } from "../parser/parser.js";
+import { STAFF_SPACE_PX, UNIT_PX } from "../renderer/abcjs-constants.js";
+import { layout } from "../renderer/layout.js";
+import { toSVG } from "../renderer/svg.js";
 
 /**
  * abcjs's SCREEN padding — `top/left/right/bottom = 15` (`write/renderer.js:69-72`), where
  * print mode takes 38/68. The page is the staff width plus this either side, which is why
  * a 670 staffwidth renders a 700px SVG.
  */
-const SCREEN_PADDING = 15
+const SCREEN_PADDING = 15;
 
 /** And PRINT's — 1.8cm either side (`renderer.js:71-72`). */
-const PRINT_PADDING = 68
+const PRINT_PADDING = 68;
 
 /** The CSS scale a print render is drawn at (`engraver-controller.js:216`). */
-const PRINT_SCALE = 0.75
+const PRINT_SCALE = 0.75;
 
 /** What `"Sheet Music for \"" + metaText.title + '"'` produces — see the call site. */
 const ariaTitle = (title: RichText): string =>
-  typeof title === 'string' ? title : title.map(() => '[object Object]').join(',')
+  typeof title === "string"
+    ? title
+    : title.map(() => "[object Object]").join(",");
 
 /** The subset of abcjs's params that changes the rendering abcts produces. */
 export interface AbcjsParams {
   /** Staff width in pixels. abcjs's default is 740 on screen. */
-  readonly staffwidth?: number
+  readonly staffwidth?: number;
   /**
    * abcjs's PAGE media — a 0.75 CSS scale on the root, print's own page margins, an extra
    * `spacing.top` above the title and an eleven-inch minimum height. See
    * `LayoutOptions.print`.
    */
-  readonly print?: boolean
+  readonly print?: boolean;
   /** Uniform scale factor applied to the whole drawing. */
-  readonly scale?: number
+  readonly scale?: number;
   /**
    * abcjs adds its `abcjs-*` classes only when asked. Compat emits them either way,
    * because they are the reason to use this entry point; the flag is accepted so that
    * existing calls do not have to change.
    */
-  readonly add_classes?: boolean
+  readonly add_classes?: boolean;
 }
 
 /**
@@ -89,22 +91,24 @@ export interface AbcjsParams {
  */
 export interface TuneObject {
   /** The rendered markup, also injected into the target when there is a DOM. */
-  readonly svg: string
+  readonly svg: string;
   /** abcts's own parsed score, for callers that want the real thing. */
-  readonly score: Score
+  readonly score: Score;
   /** abcjs exposes the title list at `metaText.title`. */
-  readonly metaText: { readonly title?: string }
+  readonly metaText: { readonly title?: string };
 }
 
-type Target = string | { innerHTML: string } | null | undefined
+type Target = string | { innerHTML: string } | null | undefined;
 
 function resolve(target: Target): { innerHTML: string } | null {
-  if (target === null || target === undefined) return null
-  if (typeof target !== 'string') return target
+  if (target === null || target === undefined) return null;
+  if (typeof target !== "string") return target;
   // Only look for an element when there is a document — this must run under Node too.
-  const doc = (globalThis as { document?: { getElementById(id: string): unknown } }).document
-  const found = doc?.getElementById(target)
-  return (found as { innerHTML: string } | undefined) ?? null
+  const doc = (
+    globalThis as { document?: { getElementById(id: string): unknown } }
+  ).document;
+  const found = doc?.getElementById(target);
+  return (found as { innerHTML: string } | undefined) ?? null;
 }
 
 /**
@@ -113,9 +117,13 @@ function resolve(target: Target): { innerHTML: string } | null {
  * A DOM target is filled in; without one — Node, a test — the markup comes back on the
  * returned objects and nothing is injected.
  */
-export function renderAbc(target: Target, abc: string, params: AbcjsParams = {}): TuneObject[] {
-  const result = parse(abc, { mode: 'abcjs-strict' })
-  const staffSpace = STAFF_SPACE_PX * (params.scale ?? 1)
+export function renderAbc(
+  target: Target,
+  abc: string,
+  params: AbcjsParams = {},
+): TuneObject[] {
+  const result = parse(abc, { mode: "abcjs-strict" });
+  const staffSpace = STAFF_SPACE_PX * (params.scale ?? 1);
   // abcjs's staffwidth is the MUSIC AREA in pixels; core's `systemWidth` is the PAGE in
   // staff spaces — `%%staffwidth` maps `staffWidth / 7.75 + 2 * marginX` and the engine
   // default is 700 for abcjs's 670. Dropping the padding here made every justified line
@@ -123,51 +131,106 @@ export function renderAbc(target: Target, abc: string, params: AbcjsParams = {})
   // geometry gate, because they all render with NO staffwidth and take the default.
   // …AND PRINT'S MARGINS AND MUSIC WIDTH ARE EACH DIVIDED BY THE SCALE, which is one
   // division of the same sum (`engraver-controller.js:124-126`, `renderer.js:78-86`).
-  const printing = params.print === true
-  const padding = printing ? PRINT_PADDING : SCREEN_PADDING
-  const scale = printing ? PRINT_SCALE : 1
+  const printing = params.print === true;
+  const padding = printing ? PRINT_PADDING : SCREEN_PADDING;
+  const scale = printing ? PRINT_SCALE : 1;
   const systemWidth =
     params.staffwidth === undefined
       ? undefined
-      : (params.staffwidth + padding * 2) / UNIT_PX / scale
+      : (params.staffwidth + padding * 2) / UNIT_PX / scale;
 
   const tunes = result.scores.map((score) => ({
-    svg: toSVG(layout(score, {
-      mode: 'abcjs-strict',
-      ...(systemWidth ? { systemWidth } : {}),
-      ...(printing ? { print: true } : {}),
-    }), {
-      staffSpace,
-      classes: 'abcjs',
-      // abcjs emits its per-element class scheme only when the host asks for it.
-      ...(params.add_classes === true ? { addClasses: true } : {}),
-      /**
-       * abcjs's `aria-label` carries the title; the padding is abcjs's own 15 either side.
-       *
-       * **AND A RICH TITLE GOES IN AS AN ARRAY.** `setPaperSize` builds the label by
-       * CONCATENATION — `"Sheet Music for \"" + metaText.title + '"'`
-       * (`draw/set-paper-size.js:12`) — and `metaText.title` is the phrase array whenever
-       * the field carried a `$N`, so JS's own `Array.prototype.toString` writes
-       * `[object Object],[object Object],…`. Measured from abcjs's own golden, not
-       * reasoned: `visual-misc-06`'s label says exactly that.
-       */
-      ...(score.metadata.titles[0] === undefined
-        ? {}
-        : { title: ariaTitle(score.metadata.titles[0]) }),
-      // NO `pageWidth` HERE. The page is `layout()`'s own ratchet — the staff width plus
-      // abcjs's 15px either side (`write/renderer.js:69-72`), raised by any line too stiff
-      // to compress to it and REPLACED outright by a `%%staffwidth`, which the host cannot
-      // know. Forcing it to `staffwidth + 30` wrote `width="700"` where abcjs writes 296
-      // for `%%staffwidth 200` and 752.491 for a tune that overflows.
-    }),
+    svg: toSVG(
+      layout(score, {
+        mode: "abcjs-strict",
+        ...(systemWidth ? { systemWidth } : {}),
+        ...(printing ? { print: true } : {}),
+      }),
+      {
+        staffSpace,
+        classes: "abcjs",
+        // abcjs emits its per-element class scheme only when the host asks for it.
+        ...(params.add_classes === true ? { addClasses: true } : {}),
+        /**
+         * abcjs's `aria-label` carries the title; the padding is abcjs's own 15 either side.
+         *
+         * **AND A RICH TITLE GOES IN AS AN ARRAY.** `setPaperSize` builds the label by
+         * CONCATENATION — `"Sheet Music for \"" + metaText.title + '"'`
+         * (`draw/set-paper-size.js:12`) — and `metaText.title` is the phrase array whenever
+         * the field carried a `$N`, so JS's own `Array.prototype.toString` writes
+         * `[object Object],[object Object],…`. Measured from abcjs's own golden, not
+         * reasoned: `visual-misc-06`'s label says exactly that.
+         */
+        ...(score.metadata.titles[0] === undefined
+          ? {}
+          : { title: ariaTitle(score.metadata.titles[0]) }),
+        // NO `pageWidth` HERE. The page is `layout()`'s own ratchet — the staff width plus
+        // abcjs's 15px either side (`write/renderer.js:69-72`), raised by any line too stiff
+        // to compress to it and REPLACED outright by a `%%staffwidth`, which the host cannot
+        // know. Forcing it to `staffwidth + 30` wrote `width="700"` where abcjs writes 296
+        // for `%%staffwidth 200` and 752.491 for a tune that overflows.
+      },
+    ),
     score,
     // abcjs's `metaText.title` is a plain string even when the field changed font
     // mid-line — the phrases are a LAYOUT structure, not part of the public shape.
     metaText:
-      score.metadata.titles[0] === undefined ? {} : { title: plainText(score.metadata.titles[0]) },
-  }))
+      score.metadata.titles[0] === undefined
+        ? {}
+        : { title: plainText(score.metadata.titles[0]) },
+  }));
 
-  const element = resolve(target)
-  if (element !== null) element.innerHTML = tunes.map((t) => t.svg).join('\n')
-  return tunes
+  const element = resolve(target);
+  if (element !== null) element.innerHTML = tunes.map((t) => t.svg).join("\n");
+  return tunes;
+}
+
+/**
+ * **A WHOLE TUNEBOOK STACKED INTO ONE SVG.**
+ *
+ * This is not `renderAbc` with a different flag: abcjs's public API has no entry point
+ * for it. `renderAbc` gives each tune its own `EngraverController` and therefore its own
+ * `<svg>`; a stacked render is `new EngraverController(div, params).engraveABC(allTunes)`
+ * — ONE controller, one renderer, every tune drawn in turn down the same page
+ * (`engraver-controller.js:105-118`). That is what abcjs's own golden generator calls,
+ * and what `-stacked` in the sibling corpus is.
+ *
+ * The composition rule is in `toSVG`; this only supplies the layouts and the fact that
+ * the root's `aria-label` comes from the LAST tune, because `setPaperSize` runs per tune
+ * and the last call wins.
+ */
+export function renderTuneBook(abc: string, params: AbcjsParams = {}): string {
+  const result = parse(abc, { mode: "abcjs-strict" });
+  const printing = params.print === true;
+  const padding = printing ? PRINT_PADDING : SCREEN_PADDING;
+  const scale = printing ? PRINT_SCALE : 1;
+  const systemWidth =
+    params.staffwidth === undefined
+      ? undefined
+      : (params.staffwidth + padding * 2) / UNIT_PX / scale;
+  // **ONE CONTINUOUS PAGE CURSOR** — each tune's walk is seeded with the one above's
+  // `endY`, because abcjs's `renderer.y` runs through every advance of every tune and a
+  // sum of per-tune totals is a different double. See `LayoutOptions.pageTop`.
+  let pageTop = 0;
+  const layouts = result.scores.map((score) => {
+    const doc = layout(score, {
+      mode: "abcjs-strict",
+      ...(systemWidth ? { systemWidth } : {}),
+      ...(printing ? { print: true } : {}),
+      pageTop,
+    });
+    pageTop = doc.endY ?? pageTop;
+    return doc;
+  });
+  return toSVG(layouts, {
+    staffSpace: STAFF_SPACE_PX * (params.scale ?? 1),
+    classes: "abcjs",
+    ...(params.add_classes === true ? { addClasses: true } : {}),
+    // One `<style>`/`<title>` pair per tune, in reverse — see `RenderOptions.titles`.
+    titles: result.scores.map((score) =>
+      score.metadata.titles[0] === undefined
+        ? undefined
+        : ariaTitle(score.metadata.titles[0]),
+    ),
+  });
 }
