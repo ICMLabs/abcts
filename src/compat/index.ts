@@ -42,6 +42,8 @@ import {
   timingsOf,
 } from "../audio/timing.js";
 import { plainText, type RichText, type Score } from "../core/model.js";
+export { type BookTune, numberOfTunes, TuneBook } from "./tunebook.js";
+import { numberOfTunes } from "./tunebook.js";
 import { parse } from "../parser/parser.js";
 import { STAFF_SPACE_PX, UNIT_PX } from "../renderer/abcjs-constants.js";
 import { layout } from "../renderer/layout.js";
@@ -55,6 +57,16 @@ import { toSVG } from "../renderer/svg.js";
 const SCREEN_PADDING = 15;
 
 /**
+ * abcjs's own `signature`, reported verbatim — `"abcjs-basic v" + version`
+ * (`index.js:32`, `version.js`). A host that feature-detects on it must not break because
+ * it is running abcts; abcts's own identity goes under `abctsSignature`.
+ */
+export const signature = "abcjs-basic v6.7.0";
+
+/** abcts's own, for a host that wants to know what it is really talking to. */
+export const abctsSignature = "abcts (abcjs-compatible)";
+
+/**
  * `AbcTune`'s own `version`, reported verbatim — a host that feature-detects on it must
  * not break because it is running abcts (`abc_tune.js:16`).
  */
@@ -65,18 +77,6 @@ const PRINT_PADDING = 68;
 
 /** The CSS scale a print render is drawn at (`engraver-controller.js:216`). */
 const PRINT_SCALE = 0.75;
-
-/**
- * abcjs's `numberOfTunes`, quirks and all: `abc.split("\nX:").length`, with a floor of 1
- * (`api/abc_tunebook.js:13-18`). It counts a `X:` that opens the STRING as part of the
- * first chunk and a `\nX:` inside a comment as a tune, because it is a split and not a
- * parse — reproduced rather than corrected, since a host sizing its div array with this
- * must get the same number we do.
- */
-export function numberOfTunes(abc: string): number {
-  const num = abc.split("\nX:").length;
-  return num === 0 ? 1 : num;
-}
 
 /** What `"Sheet Music for \"" + metaText.title + '"'` produces — see the call site. */
 const ariaTitle = (title: RichText): string =>
@@ -373,6 +373,23 @@ export function renderAbc(
     tunes.push(tune);
   });
   return tunes;
+}
+
+/**
+ * `parseOnly(abc, params)` — every tune parsed and none of them drawn.
+ *
+ * abcjs builds an output array of `numberOfTunes` slots and passes a callback that does
+ * nothing (`api/abc_tunebook.js:42-54`), so this is the whole book, one object per tune,
+ * with no markup. Ours renders nothing at all rather than rendering into a hidden div,
+ * which is the "internals are ours" half of the ruling — the observable result is the same
+ * array of tune objects.
+ */
+export function parseOnly(abc: string, params: AbcjsParams = {}): TuneObject[] {
+  return renderAbc(
+    new Array<string>(numberOfTunes(abc)).fill("*"),
+    abc,
+    params,
+  );
 }
 
 /**
