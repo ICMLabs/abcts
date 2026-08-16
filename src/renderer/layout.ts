@@ -1335,6 +1335,12 @@ export interface LayoutElement {
    */
   readonly marked?: boolean
   /**
+   * `!class=name!` — appended to the element group's generated class by
+   * `endGroup(klass, name, extraClass)` (`draw/group-elements.js:45-59`). See
+   * `Note.extraClass`.
+   */
+  readonly extraClass?: string
+  /**
    * Total height, for an element that is a BLOCK rather than a mark — only the top text.
    * abcjs advances its cursor by a rounded line height per row, which is more than the
    * last row's descender, so the block cannot be measured from its texts after the fact.
@@ -4563,6 +4569,10 @@ function layoutNoteheads(
 
     // `!mark!` — see `LayoutElement.marked`.
     ...(event !== null && event.decorations.includes('mark') ? { marked: true } : {}),
+    // `!class=name!` — see `LayoutElement.extraClass`.
+    ...(event !== null && event.extraClass !== undefined
+      ? { extraClass: event.extraClass }
+      : {}),
     // `pitch` 0 is MIDDLE C in abcjs, so the octave offset comes back off.
     /**
      * …**IN ASCENDING ORDER, WHICH IS THE ORDER abcjs HOLDS THEM IN.** `setAveragePitch`

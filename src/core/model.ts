@@ -512,6 +512,14 @@ export interface Note {
    */
   readonly chordFont: LyricFont | null
   /** `!trill!`, `.` staccato, and the shorthand letters. */
+  /**
+   * **`!class=name!` IS NOT A DECORATION** — `abc_parse_music.js:227-231` handles it in
+   * the same `if` as `!style=…!` and stamps `el.extraClass`. It is styling only: under
+   * `add_classes` `endGroup` appends it to the element group's generated class
+   * (`draw/group-elements.js:45-59`), and with no classes at all it is dropped, because
+   * that append happens inside `if (c)`.
+   */
+  readonly extraClass?: string
   readonly decorations: readonly string[]
   /** Parallel to `decorations`. */
   readonly decorationSourceRanges: readonly SourceRange[]
@@ -573,6 +581,14 @@ export interface Rest {
    * `!fermata!z4` is idiomatic, so a rest does carry decorations — but not ties, slurs or
    * lyrics, none of which apply to silence.
    */
+  /**
+   * **`!class=name!` IS NOT A DECORATION** — `abc_parse_music.js:227-231` handles it in
+   * the same `if` as `!style=…!` and stamps `el.extraClass`. It is styling only: under
+   * `add_classes` `endGroup` appends it to the element group's generated class
+   * (`draw/group-elements.js:45-59`), and with no classes at all it is dropped, because
+   * that append happens inside `if (c)`.
+   */
+  readonly extraClass?: string
   readonly decorations: readonly string[]
   readonly decorationSourceRanges: readonly SourceRange[]
   /**
@@ -715,6 +731,14 @@ export interface Chord {
    */
   readonly chordFont: LyricFont | null
   /** `!trill!`, `.` staccato, and the shorthand letters. */
+  /**
+   * **`!class=name!` IS NOT A DECORATION** — `abc_parse_music.js:227-231` handles it in
+   * the same `if` as `!style=…!` and stamps `el.extraClass`. It is styling only: under
+   * `add_classes` `endGroup` appends it to the element group's generated class
+   * (`draw/group-elements.js:45-59`), and with no classes at all it is dropped, because
+   * that append happens inside `if (c)`.
+   */
+  readonly extraClass?: string
   readonly decorations: readonly string[]
   /** Parallel to `decorations`. */
   readonly decorationSourceRanges: readonly SourceRange[]

@@ -3257,6 +3257,7 @@ class Parser {
           graceSlash: pendingGraceSlash,
           decorations: pending.decorations,
           decorationSourceRanges: pending.decorationSourceRanges,
+          ...(pending.extraClass === undefined ? {} : { extraClass: pending.extraClass }),
           chordSymbol: pending.chordSymbol,
           chordSymbolSourceRange: pending.chordSymbolSourceRange,
           chordFont: builder.chordFont,
@@ -3470,11 +3471,11 @@ class Parser {
           // it took a slot on the stacking cursor and moved the notes 3.88px — one pitch,
           // the height of a decoration lane.
           //
-          // ponytail: the class is DROPPED rather than carried through to the markup.
-          // abcjs emits it on the group only under `add_classes`, and the `-classes`
-          // goldens are not gated here; `extra-class`'s own header says that is the golden
-          // which would witness it.
+          // …AND IT IS CARRIED NOW, NOT DROPPED. The `ponytail:` above said the
+          // `-classes` goldens were not gated; `svg-bytes-sibling` gates all 111 of them,
+          // and `extra-class-classes` is the golden its own header names.
           if (name.startsWith('class=')) {
+            pending.extraClass = name.slice(6)
             i++
             break
           }
@@ -4123,6 +4124,8 @@ function scaleEvent(event: MusicEvent, factor: Rational): MusicEvent {
 
 /** Everything that can be written before a note and belongs to it. */
 interface Attachments {
+  /** `!class=name!` — see `Note.extraClass`. */
+  extraClass?: string
   chordSymbol: string | null
   chordSymbolSourceRange: SourceRange | null
   decorations: string[]

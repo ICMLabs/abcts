@@ -2637,7 +2637,20 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
            * See `LayoutElement.marked`.
            */
           const marked = el.marked === true;
-          const groupClass = marked ? (gcls ? `${gcls} mark` : "mark") : gcls;
+          /**
+           * **AND `!class=name!` GOES ON BEFORE `mark` DOES.** `endGroup(klass, name,
+           * extraClass)` appends it to the generated class INSIDE its `if (c)`
+           * (`draw/group-elements.js:45-59`) — so it is dropped entirely without
+           * `add_classes` — and `absolute.js:42` runs that before the `!mark!` swap at
+           * `:68-69`. See `LayoutElement.extraClass`.
+           */
+          const withExtra =
+            gcls && el.extraClass !== undefined ? `${gcls} ${el.extraClass}` : gcls;
+          const groupClass = marked
+            ? withExtra
+              ? `${withExtra} mark`
+              : "mark"
+            : withExtra;
           parts.push(
             // …AND THE GROUP'S OWN `fill` IS THE VOICE'S — see `fg` at `flushVoice`. An
             // element is drawn inside `drawVoice`, so it is inside the colour swap.
@@ -2646,7 +2659,7 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
             // `fill`, then `stroke`, then `data-name` (`write/svg.js:openGroup`), and a
             // falsy `klass` is skipped — so WITHOUT `add_classes` the run opens at `fill`
             // and the order the plain goldens show is the tail of the same list.
-            `<g${gcls ? ` class="${groupClass}"` : ""}` +
+            `<g${gcls ? ` class="${escapeAttr(groupClass)}"` : ""}` +
               ` fill="${marked ? ABCJS_MARK_COLOUR : fg(voiceOf(elIndex))}" stroke="none"` +
               ` data-name="${name}"` +
               `${selectable ? ` selectable="false" data-index="${selectableIndex++}"` : ""}` +
