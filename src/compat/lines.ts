@@ -1,4 +1,5 @@
 import type {
+  Barline,
   Measure,
   MusicEvent,
   Pitch,
@@ -55,8 +56,24 @@ export interface AbcPitch {
  */
 export interface AbcElement {
   el_type: string;
-  startChar: number;
-  endChar: number;
+  /**
+   * **THE STAFF'S OWN FURNITURE CARRIES NEITHER.** A clef, a key and a meter that came
+   * from the staff rather than from the stream have no `startChar` at all in abcjs — not
+   * `-1`, ABSENT — which is visible the moment a host compares the objects and invisible
+   * to anything that only reads them.
+   */
+  startChar?: number;
+  endChar?: number;
+  /** A barline's drawn kind — `bar_thin`, `bar_left_repeat`, … — or a tempo's `"tempo"`. */
+  type?: string;
+  // ── the staff's own furniture, which abcjs hangs on the STAFF and not on the stream ──
+  verticalPos?: number;
+  clefPos?: number;
+  accidentals?: readonly { acc: string; note: string; verticalPos: number }[];
+  root?: string;
+  acc?: string;
+  mode?: string;
+  value?: readonly { num: string; den: string }[];
   // ── a note (and a rest, which abcjs also calls a note) ──
   pitches?: AbcPitch[];
   rest?: { type: string; text?: string };
@@ -134,11 +151,11 @@ function tile(abc: string, elements: readonly AbcElement[]): AbcElement[] {
   // engraver stamps that object.
   const opened = elements.map((e, i) =>
     i === 0
-      ? abc.lastIndexOf("\n", e.startChar - 1) + 1
-      : (elements[i - 1]?.endChar ?? e.startChar),
+      ? abc.lastIndexOf("\n", (e.startChar ?? 0) - 1) + 1
+      : (elements[i - 1]?.endChar ?? e.startChar ?? 0),
   );
   elements.forEach((e, i) => {
-    e.startChar = opened[i] ?? e.startChar;
+    e.startChar = opened[i] ?? e.startChar ?? 0;
   });
   return elements as AbcElement[];
 }
@@ -204,6 +221,40 @@ function decoratedRange(abc: string, event: MusicEvent): SourceRange | null {
   while (abc[end] === " " || abc[end] === "\t") end += 1;
   return { start, end };
 }
+
+/**
+ * `bar_thin` and its seven siblings — abcjs's own names for what a barline DRAWS
+ * (`abstract-engraver.js:965-985`). The projection carries the name because a host reads
+ * it off `tune.lines` and the selectable array hands back the same object.
+ */
+const BARLINE_TYPE: Readonly<Record<string, string>> = {
+  thin: "bar_thin",
+  double: "bar_thin_thin",
+  thickThin: "bar_thick_thin",
+  final: "bar_thin_thick",
+  repeatStart: "bar_left_repeat",
+  repeatEnd: "bar_right_repeat",
+  repeatBoth: "bar_dbl_repeat",
+  invisible: "bar_invisible",
+};
+
+/**
+ * A barline element, registered by WHERE IT WAS WRITTEN so the drawing can find it again.
+ *
+ * The drawn barline carries `LayoutElement.sourceRange`, and the raw range is the key —
+ * the tiled `startChar` moves, the written one does not.
+ */
+const bar = (
+  kind: Barline | null,
+  range: SourceRange | null,
+  byRange?: Map<number, AbcElement>,
+): AbcElement | null => {
+  const e = el("bar", range);
+  if (e === null || range === null) return e;
+  e.type = (kind === null ? undefined : BARLINE_TYPE[kind]) ?? "bar_thin";
+  byRange?.set(range.start, e);
+  return e;
+};
 
 /** True when the range opens a LINE — i.e. the field was written on one of its own. */
 const fieldLine = (abc: string, range: SourceRange | null | undefined): boolean =>
@@ -377,13 +428,17 @@ function voiceElements(
   measures: readonly Measure[],
   /** Filled in as the stream is built — see `projectionOf`. */
   byEvent?: Map<MusicEvent, AbcElement>,
+  /** The same, for elements the drawing joins by SOURCE RANGE rather than by event. */
+  byRange?: Map<number, AbcElement>,
   /** The slur labels still open on this VOICE — one stack for the whole tune. */
   openSlurs: number[] = [],
 ): AbcElement[] {
   const out: (AbcElement | null)[] = [];
   const notes: { event: MusicEvent; e: AbcElement }[] = [];
   for (const measure of measures) {
-    out.push(el("bar", measure.openingBarlineSourceRange));
+    out.push(
+      bar(measure.openingBarline, measure.openingBarlineSourceRange, byRange),
+    );
     // ponytail: a mid-tune `[K:]` and `[M:]` carry source ranges and a `[V:… clef=]`,
     // `[Q:]`, `%%MIDI`, `!style=!`, `%%voicecolor` and `P:` do not yet — so those six
     // element types are absent from the projection. `tests/lines.test.ts` measures which
@@ -411,7 +466,9 @@ function voiceElements(
       }
       out.push(e);
     }
-    out.push(el("bar", measure.closingBarlineSourceRange));
+    out.push(
+      bar(measure.closingBarline, measure.closingBarlineSourceRange, byRange),
+    );
   }
   // **SORTED BY POSITION, NOT BY THE ORDER WE HAPPEN TO BUILD THEM.** abcjs appends to the
   // voice as it reads the line, so the stream is in source order by construction; ours is
@@ -420,7 +477,7 @@ function voiceElements(
   markTieEnds(notes);
   const stream = out
     .filter((e): e is AbcElement => e !== null)
-    .sort((a, b) => a.startChar - b.startChar);
+    .sort((a, b) => (a.startChar ?? 0) - (b.startChar ?? 0));
   markBeams(abc, stream);
   return tile(abc, stream);
 }
@@ -561,7 +618,8 @@ function markBeams(abc: string, stream: readonly AbcElement[]): void {
     // SOURCE that says so. **AND THE ELEMENT'S OWN `endChar` HAS ALREADY EATEN THAT
     // SPACE** — `decoratedRange` walks it, because a note's span closes over its trailing
     // whitespace — so the character to test is the one BEFORE the end, not after it.
-    const spaced = abc[e.endChar - 1] === " " || abc[e.endChar - 1] === "\t";
+    const at = (e.endChar ?? 0) - 1;
+    const spaced = abc[at] === " " || abc[at] === "\t";
     if ((e.duration ?? 0) >= 0.25) closeLast();
     else if (spaced && start !== undefined) {
       if (isRest) closeLast();
@@ -597,8 +655,13 @@ export function linesOf(score: Score, abc: string): AbcLine[] {
 export function projectionOf(
   score: Score,
   abc: string,
-): { lines: AbcLine[]; byEvent: Map<MusicEvent, AbcElement> } {
+): {
+  lines: AbcLine[];
+  byEvent: Map<MusicEvent, AbcElement>;
+  byRange: Map<number, AbcElement>;
+} {
   const byEvent = new Map<MusicEvent, AbcElement>();
+  const byRange = new Map<number, AbcElement>();
   const lines: AbcLine[] = [];
   /** One open-slur stack per voice, carried across every system — see `markSlurs`. */
   const openSlurs: number[][] = [];
@@ -617,7 +680,7 @@ export function projectionOf(
     return at.length > 0 ? at : [0];
   };
   const first = score.voices[0];
-  if (first === undefined) return { lines, byEvent };
+  if (first === undefined) return { lines, byEvent, byRange };
   const breaks = starts(first);
 
   breaks.forEach((from, i) => {
@@ -628,13 +691,19 @@ export function projectionOf(
           voices: score.voices.map((v, k) => {
             const slurs = openSlurs[k] ?? [];
             openSlurs[k] = slurs;
-            return voiceElements(abc, v.measures.slice(from, to), byEvent, slurs);
+            return voiceElements(
+              abc,
+              v.measures.slice(from, to),
+              byEvent,
+              byRange,
+              slurs,
+            );
           }),
         },
       ],
     });
   });
-  return { lines, byEvent };
+  return { lines, byEvent, byRange };
 }
 
 /**

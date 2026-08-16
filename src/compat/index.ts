@@ -328,27 +328,41 @@ export function renderAbc(
      * `undefined` from abcjs — and must get `undefined` from us.
      */
     let lineCache: readonly AbcLine[] | null = null;
-    let eventIndex: ReadonlyMap<MusicEvent, AbcElement> | null = null;
+    let eventIndex: {
+      byEvent: ReadonlyMap<MusicEvent, AbcElement>;
+      byRange: ReadonlyMap<number, AbcElement>;
+    } | null = null;
     let selectableCache: readonly Selectable[] | null = null;
     /**
-     * The drawing, kept because the selectable array is a walk of it — the same walk the
-     * emitter writes `data-index` in. `toSVG` is handed this very object below.
+     * The drawing. The selectable array is a walk of it — the same walk the emitter writes
+     * `data-index` in — but it is **LAID OUT AGAIN rather than retained**: a `Layout` is
+     * the biggest object this library makes, a host keeps every `TuneObject` a render
+     * returns, and holding one per tune made the test suite's own memory blow up and its
+     * workers start dying mid-file. Re-laying costs 0.7ms and only when a host asks.
      */
-    const doc = layout(score, {
-      mode: "abcjs-strict",
-      ...(systemWidth ? { systemWidth } : {}),
-      ...(printing ? { print: true } : {}),
-    });
-    const projection = (): ReadonlyMap<MusicEvent, AbcElement> => {
+    const laidOut = (): ReturnType<typeof layout> =>
+      layout(score, {
+        mode: "abcjs-strict",
+        ...(systemWidth ? { systemWidth } : {}),
+        ...(printing ? { print: true } : {}),
+      });
+    const projection = (): {
+      byEvent: ReadonlyMap<MusicEvent, AbcElement>;
+      byRange: ReadonlyMap<number, AbcElement>;
+    } => {
       if (eventIndex === null) {
         const p = projectionOf(score, abc);
         lineCache = p.lines;
-        eventIndex = p.byEvent;
+        eventIndex = { byEvent: p.byEvent, byRange: p.byRange };
       }
       return eventIndex;
     };
     const selectables = (): readonly Selectable[] => {
-      selectableCache ??= selectablesOf(doc, projection(), params.selectTypes);
+      selectableCache ??= selectablesOf(
+        laidOut(),
+        projection(),
+        params.selectTypes,
+      );
       return selectableCache;
     };
     const timings: {
@@ -358,7 +372,7 @@ export function renderAbc(
     } = { rows: [], time: undefined, beats: undefined };
     return {
       svg: toSVG(
-        doc,
+        laidOut(),
         {
           staffSpace,
           classes: "abcjs",
@@ -447,7 +461,7 @@ export function renderAbc(
         // through a repeat — and `midiPitches` carries the ELEMENT's own `startChar` and
         // `endChar`, which is why this is stamped here rather than in the flattener: only
         // this side holds the projected span.
-        const index = projection();
+        const index = projection().byEvent;
         for (const [event, timing] of audio.elementTimings) {
           const abcelem = index.get(event);
           if (abcelem === undefined) continue;

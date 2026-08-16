@@ -1,4 +1,9 @@
-import type { Clef, MusicEvent, Pitch } from "../core/model.js";
+import type {
+  Clef,
+  Meter,
+  MusicEvent,
+  Pitch,
+} from "../core/model.js";
 import { stepIndex } from "../core/model.js";
 import type { Layout, LayoutElement } from "../renderer/layout.js";
 import { middleLineIndex } from "../renderer/layout.js";
@@ -209,9 +214,120 @@ export function findSelectable(
   };
 }
 
+/** The two maps `projectionOf` hands back — see `abcelemOf`. */
+export interface ProjectionIndex {
+  readonly byEvent: ReadonlyMap<MusicEvent, AbcElement>;
+  readonly byRange: ReadonlyMap<number, AbcElement>;
+}
+
+/**
+ * The `abcelem` a drawn element carries, and it is THREE DIFFERENT JOINS.
+ *
+ * A NOTE or a REST joins by its model event. A BARLINE joins by where it was WRITTEN,
+ * since the projection already builds one element per barline and the drawing carries its
+ * range — the raw one, because the tiled `startChar` moves and the written one does not.
+ * The CLEF, KEY and METER join by NEITHER: abcjs hangs those on the STAFF rather than
+ * putting them in the voice's stream, so there is no stream element to be identical with
+ * and they are built here from the model object the drawing was made from.
+ *
+ * ponytail: a `tempo` and a `part` ARE stream elements and have no source range in our
+ * model — two of the six types `tests/lines.test.ts` already names — so they produce
+ * nothing here, and because the gate compares row against row, every entry after one is
+ * misaligned. That is the whole of what `selection-tempo` is still missing on the element
+ * side; the ten `wrapSvgEl` sites are the other half of `selection-multiple`. Both are in
+ * `Docs/HANDOFF-2026-08-16.md`.
+ */
+function abcelemOf(
+  element: LayoutElement,
+  index: ProjectionIndex,
+): AbcElement | undefined {
+  switch (element.type) {
+    case "note":
+    case "rest": {
+      const event = element.sourceEvent;
+      return event === undefined ? undefined : index.byEvent.get(event);
+    }
+    case "bar":
+      return element.sourceRange === undefined
+        ? undefined
+        : index.byRange.get(element.sourceRange.start);
+    case "clef":
+      return element.sourceClef === undefined
+        ? undefined
+        : clefElement(element.sourceClef);
+    // ponytail: a KEY SIGNATURE is measured and NOT built. Its shape is
+    // `{accidentals: [{acc, note, verticalPos}], root, acc, mode}` and the mode is the
+    // EMPTY STRING for major — but `note` is the accidental's own written name AT THE
+    // POSITION IT IS DRAWN, so B♭ major gives `B` (verticalPos 6) and `e` (verticalPos 9),
+    // upper and lower case in one list, and every one of those moves with the clef. Our
+    // model holds no such list at all: `layoutKeySignature` derives the glyph positions
+    // from `keyFifths` and the sharp/flat order. Building it needs that derivation
+    // repeated with abcjs's naming, which is a measurement this session did not make.
+    // `selection-multiple` has four of them and is blocked ahead of them anyway.
+    case "timeSignature":
+      return element.sourceMeter === undefined
+        ? undefined
+        : meterElement(element.sourceMeter);
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * `{type, verticalPos, clefPos}` — abcjs's own clef table
+ * (`abc_parse_key_voice.js:25-70`), and both numbers are DERIVED rather than tabled:
+ * `clefPos` is the LINE the clef sits on, doubled, and `verticalPos` is the table's `mid`,
+ * which is this staff's middle line measured from a treble staff's. `tenor` comes back
+ * spelled `alto`, because the field names the clef and the element names what is DRAWN.
+ */
+const clefElement = (clef: Clef): AbcElement => ({
+  el_type: "clef",
+  type:
+    (CLEF_TYPE[clef.shape] ?? "treble") +
+    (clef.octaveShift === 0 || clef.octaveShift === undefined
+      ? ""
+      : clef.octaveShift > 0
+        ? "+8"
+        : "-8"),
+  verticalPos: middleLineIndex(clef) - TREBLE_MIDDLE_LINE_INDEX,
+  clefPos: clef.line * 2,
+});
+
+const CLEF_TYPE: Readonly<Record<string, string>> = {
+  G: "treble",
+  F: "bass",
+  C: "alto",
+  percussion: "perc",
+  none: "none",
+};
+
+/** B4, the middle line of a treble staff — what abcjs's `mid` is measured from. */
+const TREBLE_MIDDLE_LINE_INDEX = 34;
+
+/** The same shape `getMeter()` returns — `{type, value: [{num, den}]}`, numbers as STRINGS. */
+const meterElement = (meter: Meter): AbcElement => ({
+  el_type: "timeSignature",
+  ...(meter.symbol === "common"
+    ? { type: "common_time" }
+    : meter.symbol === "cut"
+      ? { type: "cut_time" }
+      : {
+          type: "specified",
+          value: [
+            {
+              num:
+                meter.numeratorParts === undefined
+                  ? String(meter.numerator)
+                  : meter.numeratorParts.join("+"),
+              den: String(meter.denominator),
+            },
+          ],
+        }),
+});
+
 export function selectablesOf(
   doc: Layout,
-  byEvent: ReadonlyMap<MusicEvent, AbcElement>,
+  index: ProjectionIndex,
   selectTypes: SelectTypes,
   tuneNumber = 0,
 ): Selectable[] {
@@ -220,9 +336,7 @@ export function selectablesOf(
     for (const staff of system.staves) {
       for (const voice of staff.voices) {
         for (const element of voice) {
-          if (element.type !== "note" && element.type !== "rest") continue;
-          const event = element.sourceEvent;
-          const abcelem = event === undefined ? undefined : byEvent.get(event);
+          const abcelem = abcelemOf(element, index);
           if (abcelem === undefined) continue;
           stampEngraved(abcelem, element);
           if (!canSelect(abcelem.el_type, selectTypes)) continue;

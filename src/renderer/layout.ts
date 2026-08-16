@@ -44,6 +44,7 @@ import {
   rational,
   ratToNumber,
   type Score,
+  type SourceRange,
   type ScoreMetadata,
   type StaffGroup,
   stepIndex,
@@ -1323,6 +1324,20 @@ export interface LayoutElement {
   readonly sourceEvent?: MusicEvent
   readonly sourceClef?: Clef
   /**
+   * The same join for everything that is not an event: a BARLINE by its own span, and the
+   * clef, key, meter and tempo by the model object each was built from.
+   *
+   * A barline carries a RANGE rather than an object because the projection already builds
+   * one element per barline and keys them by where they were written; the staff furniture
+   * carries the object, because abcjs hangs its clef, key and meter on the STAFF rather
+   * than putting them in the voice's stream.
+   */
+  readonly sourceRange?: SourceRange
+  readonly sourceKey?: KeySignature
+  readonly sourceMeter?: Meter
+  readonly sourceTempo?: Tempo
+  readonly sourcePartLabel?: string
+  /**
    * `durationClass` and abcjs's own PITCH NUMBERS, carried for the `add_classes` markup and
    * for nothing else — `klass += ' d' + Math.round(durationClass*1000)/1000` then one
    * `' p' + pitch` per pitch (`write/draw/absolute.js:31-40`).
@@ -2350,6 +2365,7 @@ function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null 
 
   return {
     type: 'clef',
+    sourceClef: clef,
     x,
     // The octave marker does NOT widen the clef: abcjs fixes the element at `w: 10` and
     // adds the `8` inside it (`create-clef.js:11`), so the music behind it does not move.
@@ -2446,6 +2462,7 @@ function layoutMeter(x: number, meter: Meter, strict = true): LayoutElement {
     const name: GlyphName = meter.symbol === 'cut' ? 'timeSigCutCommon' : 'timeSigCommon'
     return {
       type: 'timeSignature',
+      sourceMeter: meter,
       x,
       width: glyphsFor(strict).advance(name),
       staffSteps: [],
@@ -2476,6 +2493,7 @@ function layoutMeter(x: number, meter: Meter, strict = true): LayoutElement {
   // line, each filling half the staff. Standard engraving.
   return {
     type: 'timeSignature',
+    sourceMeter: meter,
     x,
     width,
     staffSteps: [],
@@ -2647,6 +2665,7 @@ function layoutKeySignature(
 
   return {
     type: 'keySignature',
+    sourceKey: key,
     x,
     // No trailing gap: the signature ends at the last glyph's ink.
     width: dx - ENGRAVE.keySignatureGap,
@@ -2782,6 +2801,7 @@ function layoutKeyChange(
 
   return {
     type: 'keySignature',
+    sourceKey: to,
     x,
     // No trailing gap: the signature ends at the last glyph's ink.
     width: dx - ENGRAVE.keySignatureGap,
@@ -3049,7 +3069,7 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
   }
 
   if (glyphs.length === 0 && texts.length === 0) return null
-  return { type: 'tempo', x, width: 0, staffSteps: [], glyphs, lines, texts }
+  return { type: 'tempo', sourceTempo: tempo, x, width: 0, staffSteps: [], glyphs, lines, texts }
 }
 
 /**
@@ -3057,6 +3077,7 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
  * reason: abcjs reports `w: 0`, and a label must not push the music it labels.
  */
 const layoutPart = (x: number, label: string): LayoutElement => ({
+  sourcePartLabel: label,
   type: 'part',
   x,
   width: 0,
@@ -4846,7 +4867,13 @@ function barNumberText(
   }
 }
 
-function layoutBar(x: number, kind: Barline, strict = true): LayoutElement {
+function layoutBar(
+  x: number,
+  kind: Barline,
+  strict = true,
+  /** Where it was WRITTEN — the join to the projection's own bar element. */
+  range?: SourceRange,
+): LayoutElement {
   const thin = LINE_WEIGHTS.thinBarline
   const thick = LINE_WEIGHTS.thickBarline
 
@@ -4992,6 +5019,7 @@ function layoutBar(x: number, kind: Barline, strict = true): LayoutElement {
 
   return {
     type: 'bar',
+    ...(range === undefined ? {} : { sourceRange: range }),
     x,
     width: cursor - x,
     staffSteps: [],
@@ -9756,7 +9784,7 @@ function layoutMeasure(
     // An opening `|:` or `[|` prints before the measure it belongs to, and is a SEPARATE
     // barline from the previous measure's closer.
     if (measure.openingBarline === null) return
-    const plain = layoutBar(x, measure.openingBarline, strict)
+    const plain = layoutBar(x, measure.openingBarline, strict, measure.openingBarlineSourceRange ?? undefined)
     // A DECORATION AND A CHORD WRITTEN BEFORE AN OPENING BARLINE BELONG TO IT, the same
     // way they belong to a closing one — abcjs has one bar element and `createBarLine`
     // runs the same `createDecoration` at a fixed pitch 12 and the same `addChord` at
@@ -10167,7 +10195,7 @@ function layoutMeasure(
   const musicWidth = x
   if (measure.closingBarline !== null) {
     closingBarIndex = elements.length
-    const plain = layoutBar(x, measure.closingBarline, strict)
+    const plain = layoutBar(x, measure.closingBarline, strict, measure.closingBarlineSourceRange ?? undefined)
     // A DECORATION ON THE BAR starts its stack at a FIXED pitch 12, not at any note's
     // extent — abcjs passes the literal 12 (`abstract-engraver.js:1002`). Pitch 12 is our
     // step 6, and `decorationMinTop` clamps it there anyway.

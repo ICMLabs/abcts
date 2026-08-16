@@ -148,7 +148,7 @@ describe("engraver.selectables", () => {
 
   /** A floor, not a target: it moves up as the projection grows and never down. */
   it("agrees on at least the rows it did", () => {
-    expect(rows.reduce((t, r) => t + r.agree, 0)).toBeGreaterThanOrEqual(149);
+    expect(rows.reduce((t, r) => t + r.agree, 0)).toBeGreaterThanOrEqual(151);
   });
 
   /**
