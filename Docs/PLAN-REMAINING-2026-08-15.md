@@ -11,11 +11,52 @@ first, what needs a new oracle comes last.
 
 ---
 
-## THE TWO DECISIONS THAT GATE PHASE 1
+## THE RULING — 2026-08-15 (Lance)
 
-Neither is mine to make; both are one line of answer.
+> **abcts must match abcjs on every API, every output. Internally it can use any
+> architecture / design / data model that is best for performance, size, modern TS
+> syntax.** …**abcts must be able to compile and create a "modern" abcjs that has ALL the
+> same features, functions, api, and output.**
 
-### D1 — Where does the audio surface hang?
+Three consequences, and they reorder everything below.
+
+**1. THE BOUNDARY IS THE API; BEHIND IT WE ARE FREE.** `tune.lines`, `abcelem`, the
+selectable array — these are things abcjs's callers READ, so they must exist and match.
+They do NOT have to be what the engine is built on. Each becomes a PROJECTION built from
+our IR on read. That turns the biggest remaining item from "adopt abcjs's data model" into
+"write an adapter", which is smaller, reversible, and cannot slow the engine down.
+
+**2. INTERNAL FREEDOM STOPS AT ARITHMETIC**, because the OUTPUT constrains it. Every entry
+in `Docs/ABCJS-DEBT.md` — `Math.sqrt` where `hypot` is better, `a + (b + c)` where the
+grouping is load-bearing, a step-1 ledger loop that discards half its visits — names the
+gate that goes red if it is "fixed". Those stay. The freedom is in types, module
+boundaries, allocation and syntax, never in which double comes out.
+
+**3. THE SCOPE IS THE WHOLE OF `index.js`, NOT THE RENDERER.** The 2026-08-08 arc decision
+put soundfonts and WebAudio out of scope as "host playback". **That decision is
+REVERSED** — it was taken when audio was unbuilt, and "ALL the same features" is explicit.
+`CreateSynth`, `SynthController`, `CreateSynthControl`, `Editor`, `EditArea` and
+`TimingCallbacks` are in, ~2,160 lines of abcjs between them.
+
+For those six the contract has to be stated, because nothing can byte-compare a sound:
+**the API surface and the EVENT SEQUENCE handed to WebAudio are the gate** — the sequence
+is already at 0 of 72 against abcjs's own event lists — **not the samples.** Everything
+else on `index.js` has an output that can be compared exactly, and is.
+
+Two smaller rulings, both settled:
+
+- **Version strings MATCH.** `abcjs.signature` reports `"abcjs-basic v6.7.0"` and
+  `tune.version` reports `"1.1.0"`, because a host that feature-detects must not break.
+  abcts's own identity goes under a separate key.
+- **`abcjs.test.{Parse, EngraverController}` IS BUILT**, and `renderTuneBook` delegates to
+  `EngraverController.engraveABC` rather than standing beside it. abcjs's own golden
+  generator calls it, and it is exactly what `-stacked` is.
+
+---
+
+## THE TWO DECISIONS THAT GATED PHASE 1 — both now answered above
+
+### D1 — Where does the audio surface hang? → **BOTH**
 
 `setUpAudio`, `setTiming`, `millisecondsPerMeasure`, `getMidiFile` and `chordGrid` are
 **implemented and byte/event-exact** — 0 of 72 events, 0 of 38 timings, 0 of 13 element
@@ -26,13 +67,12 @@ than an implementation one:
 > Hang them here and they become part of the drop-in contract, which is what `compat` is
 > for — flag it before doing it.
 
-Options: **(a)** `abcts/compat` only, as methods on `TuneObject`, matching abcjs exactly;
-**(b)** also on `src/index.ts`'s curated surface as free functions, which ARCHITECTURE.md
-governs; **(c)** both, with compat's methods delegating. My recommendation is **(c)** —
-the free functions are the honest shape and the methods are the drop-in promise — but the
-curated surface is an ARCHITECTURE.md question and I will not widen it unasked.
+**ANSWERED: both.** The free functions stay the implementation — that is the "any
+internal architecture" half — and `TuneObject`'s methods delegate to them, shaped exactly
+as abcjs shapes them. ARCHITECTURE.md's curated surface widens to match, because "every
+API" is the governing rule now.
 
-### D2 — `tune.lines`
+### D2 — `tune.lines` → **REPRODUCE IT, AS A PROJECTION**
 
 abcjs's `TuneObject` exposes `lines`, its own laid-out element tree, and three accessors
 that walk it (`getElementFromChar`, `findSelectableElement`, `getSelectableArray`). Our IR
@@ -40,7 +80,9 @@ is different **by design**. Either we reproduce `lines` — large, and it is abc
 internals leaking into a public API — or we expose ours and write the difference up in
 `Docs/ABCJS-DIFFERENCES.md` with its evidence.
 
-This decides whether Phase 4 is a week or a fortnight.
+**ANSWERED: reproduce it.** It is an API, so it matches. But it is built from our IR at
+the boundary rather than being our IR — see consequence 1 above. Nothing in
+`ABCJS-DIFFERENCES.md`; there is no divergence to declare.
 
 ---
 
@@ -91,10 +133,17 @@ Everything here exists and is gated; only the plumbing is missing.
 | `getMidiFile()` | `src/audio/midi-file.ts` | 0 of 3, BYTE-exact |
 | `chordGrid` | `src/chord-grid.ts` | 0 of 23 |
 
-**New gate:** `tests/compat-surface.test.ts` — for each method abcjs's `AbcTune` exposes,
-assert we either have it or have it listed as declined. It is a ratchet like the byte
-gate: the list of absences shrinks and never grows. **That is the artefact, not the
-wiring** — without it the next session re-discovers the same holes.
+**New gate, and it is the artefact — not the wiring:** `tests/compat-surface.test.ts`,
+which enumerates **every symbol on abcjs's own `index.js`** — `renderAbc`, `tuneMetrics`,
+`TimingCallbacks`, `setGlyph`, `strTranspose`, the twelve entries under `synth`, `Editor`,
+`EditArea`, `test.*`, and everything the animation and tunebook modules spread onto the
+root — plus every key and method on the object `renderAbc` hands back. Each is PRESENT or
+on a `MISSING` list that shrinks and never grows.
+
+**It is generated by REQUIRING abcjs and walking the object**, not by reading its source
+into a literal, so a symbol cannot be missed the way twelve fixtures and three flavours
+were. **A GATE'S REACH IS A PROPERTY OF ITS ENUMERATION**, and this is the enumeration for
+the whole remaining arc.
 
 ---
 
@@ -191,10 +240,12 @@ In descending order of size, none of it blocking:
 - **`%%wrap` / `wrap_lines.js`.** Not in `src/` at all; `visual/wrap.test.js` is 9 cases.
 - **The parse oracles.** 6 files, 13 cases — `start-char` and `tie-slur` in particular
   assert source offsets, which every cross-link in a host depends on.
-- **`TimingCallbacks`, `CreateSynth`, the synth controller.** Out of scope by the
-  2026-08-08 arc decision: soundfonts and WebAudio are host playback, the same split the
-  renderer makes between geometry and glyph outlines. `setTiming` — the thing
-  `TimingCallbacks` consumes — is done and gated.
+- **`TimingCallbacks`, `CreateSynth`, `SynthController`, `CreateSynthControl`, `Editor`,
+  `EditArea`.** **IN**, by the ruling above — the 2026-08-08 exclusion is reversed.
+  ~2,160 lines of abcjs. `setTiming`, which `TimingCallbacks` consumes, and the event
+  sequence, which `CreateSynth` plays, are both already done and gated at 0 — so what is
+  left here is the driver and the DOM, not the music. Gate: API surface plus the sequence
+  handed to WebAudio; the samples are not comparable and that is stated, not hidden.
 
 ---
 
