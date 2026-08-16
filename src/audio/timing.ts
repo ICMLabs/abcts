@@ -56,11 +56,66 @@ const ZERO_LENGTH_DRAWN = 0.25
  * before its `M:`.
  */
 function meterOf(score: Score): Meter {
-  return (
-    score.meter ??
-    score.voices.flatMap((v) => v.measures.map((m) => m.meterChange)).find((m) => m !== null) ??
-    DEFAULT_METER
-  )
+  /**
+   * **IT IS THE STAFF'S METER, WHICH IS THE ONE IN FORCE WHEN THE VOICE'S FIRST ELEMENT IS
+   * EMITTED** — and a tune with no elements at all has no `lines`, so it falls through to
+   * `{ type: "common_time" }` and 4/4 (`abc_tune.js:181-220`).
+   *
+   * `appendStartingElement` stamps `staff[staffNum][type]` while the voice is still empty,
+   * which is the same fall-through that lets a body `K:` restamp a staff's key — so an
+   * INLINE `[M:]` written before any note becomes the staff's meter just as a standalone
+   * `M:` does, and one written after it does not. Three fixtures say so:
+   *
+   *     misc-14                header `M:6/8`, NO music     abcjs 4/4  (no lines at all)
+   *     flattener-38           header 4/4, body `M:2/4`     abcjs 2/4  (before any note)
+   *     svg-02-staffwidth-12   `[M:2/4]y[M:3/4]y[M:4/4]`    abcjs 2/4  (the first, inline)
+   *
+   * Ours read `score.meter ?? the first meterChange`, which is the HEADER's when there is
+   * one and never sees an inline meter at all.
+   */
+  const voice = score.voices[0]
+  let inForce = score.meter
+  for (const measure of voice?.measures ?? []) {
+    // A barline is an element too — `containsNotes` tests `el_type === 'note' || 'bar'`.
+    if (measure.openingBarline !== null) return inForce ?? DEFAULT_METER
+    /**
+     * …**AND AN INLINE `[M:]` ONLY STAMPS THE STAFF WHEN NOTHING HAS STAMPED IT YET.**
+     * `appendStartingElement` replaces `staff[staffNum][type]` while the voice holds no
+     * note or bar (`tune-builder.js:272-277`), but a HEADER meter has already put one
+     * there — measured on three fixtures through abcjs:
+     *
+     *     grandstaff-inline-meter  header 4/4, V:1 opens `[M:3/4]`   abcjs 4/4
+     *     svg-02-staffwidth-12     no header, opens `[M:2/4]`        abcjs 2/4
+     *     flattener-38             header 4/4, body `M:2/4` line     abcjs 2/4
+     *
+     * So a STANDALONE `M:` replaces whatever is there and an INLINE one only fills a gap.
+     * A measure carrying `meterChanges` has more than one `[M:]` in it, which only inline
+     * meters can do.
+     */
+    const changes =
+      measure.meterChanges?.map((c) => ({ ...c, inline: true })) ??
+      (measure.meterChange === null
+        ? []
+        : [
+            {
+              meter: measure.meterChange,
+              at: 0,
+              inline: measure.meterChangeInline === true,
+            },
+          ])
+    let next = 0
+    for (let i = 0; i <= measure.events.length; i += 1) {
+      while (next < changes.length && (changes[next]?.at ?? 0) <= i) {
+        const c = changes[next]
+        if (c?.meter != null && (!c.inline || inForce === null)) inForce = c.meter
+        next += 1
+      }
+      // A SPACER counts: abcjs gives it `el_type: 'note'` like any other rest.
+      if (i < measure.events.length) return inForce ?? DEFAULT_METER
+    }
+    if (measure.closingBarline !== null) return inForce ?? DEFAULT_METER
+  }
+  return DEFAULT_METER
 }
 
 /**
@@ -367,7 +422,15 @@ export const getBarLength = (score: Score): number => barLengthOf(meterOf(score)
 export const getBeatsPerMeasure = (score: Score): number =>
   getBarLength(score) / getBeatLength(score)
 /** `getBpm(tempo)` — the tune's own rate, with abcjs's compound-meter default. */
-export const getBpm = (score: Score): number => bpmOf(score.tempo, meterOf(score))
+/**
+ * `getBpm(tempo)` — and **the tempo it defaults to is `metaText.tempo`, the HEADER's
+ * alone** (`abc_tune.js:563-566`). An inline `[Q:]` becomes a `tempo` ELEMENT in the voice
+ * stream and never reaches `metaText`, so `flattener-10` — five inline `[Q:]` and no
+ * header one — answers with the 180 default where ours answered 129. The inline rates
+ * still drive the clock through `tempoLocations`; they just are not the tune's own rate.
+ */
+export const getBpm = (score: Score): number =>
+  bpmOf(score.tempoInline === true ? null : score.tempo, meterOf(score))
 /** `getPickupLength()` — the lead-in before the first full measure, in whole notes. */
 export const getPickupLength = (score: Score): number => pickupOf(score, meterOf(score))
 
