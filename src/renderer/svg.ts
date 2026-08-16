@@ -2082,7 +2082,10 @@ export function toSVG(doc: Layout, options: RenderOptions = {}): string {
               const t = TL(l);
               // …and an UNANCHORED end goes in raw — see `PlacedLine.rawEnd`.
               const x2 = l.rawEnd === true ? raw(t.x2) : round2(t.x2);
-              return `M ${round2(t.x1)} ${round2(t.y1)} L ${x2} ${round2(t.y2)}${gap}`;
+              // …and an UNANCHORED START goes in raw for the same reason — see
+              // `PlacedLine.rawStart`.
+              const x1 = l.rawStart === true ? raw(t.x1) : round2(t.x1);
+              return `M ${x1} ${round2(t.y1)} L ${x2} ${round2(t.y2)}${gap}`;
             })
             .join("");
           emit(

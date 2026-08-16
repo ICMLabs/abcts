@@ -1021,6 +1021,14 @@ export interface PlacedLine {
    */
   readonly rawEnd?: boolean
   /**
+   * …**AND THE SAME IS TRUE OF THE START**, for the same reason one line up: `linestartx`
+   * is `roundNumber`ed only inside `if (params.anchor1)`, so a bracket CARRIED onto a new
+   * system writes its left edge — the voice's own `startx + 10` — raw. Invisible on
+   * screen, where that is `15 + 10 + …` and rounds to itself; in print it is
+   * `90.66666666666667 + 10`. See `rawEnd`.
+   */
+  readonly rawStart?: boolean
+  /**
    * A GLISSANDO's squiggle count and the slope its zig-zag is sheared by — `numSquigglies`
    * and `drawSquiggly`'s `slope` (`draw/glissando.js:42-71`). Present only on a glissando,
    * and the emitter writes abcjs's path from them rather than a straight rule.
@@ -11920,6 +11928,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           y2: y,
           thickness,
           ...(hooked ? {} : { rawEnd: true }),
+          ...(openVolta.continued === true ? { rawStart: true } : {}),
         })
         // …AND THE NUMBER IS `if (params.anchor1)`'s TOO, so a carried half has none.
         // The GROUP still opens either way, which is why the emitter keys on the lines.
