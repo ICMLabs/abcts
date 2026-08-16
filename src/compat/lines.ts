@@ -486,7 +486,7 @@ function voiceElements(
   /** The tune's own `Q:`, for the first voice of the first line — see `projectionOf`. */
   headTempo: AbcElement | null = null,
 ): AbcElement[] {
-  const out: (AbcElement | null)[] = [headTempo];
+  const out: (AbcElement | null)[] = [];
   const notes: { event: MusicEvent; e: AbcElement }[] = [];
   for (const measure of measures) {
     out.push(
@@ -741,25 +741,31 @@ export function projectionOf(
   const breaks = starts(first);
 
   /**
-   * **MEASURED AND NOT LANDED — THE TUNE'S OWN `Q:` IS AN ELEMENT OF LINE 0, VOICE 0.**
+   * **THE TUNE'S OWN `Q:` IS A DRAWN ELEMENT AND IS NOT IN `tune.lines`** — and the two
+   * gates are what say so, one each way. It is REGISTERED here so the selectable array
+   * finds it by range (worth five rows, 152 -> 157) and it is put in NO voice's stream,
+   * because `getElementFromChar` must keep answering nothing for the characters of a `Q:`
+   * field line: putting it in one costs 412 of them and takes 21 ratcheted tunes red,
+   * whether it is sorted into the stream or placed ahead of it.
+   *
+   * That is abcjs's own split — the header tempo lives on `metaText`, and the mark at the
+   * head of system 1 is drawn from it rather than from anything in the voice.
    *
    * abcjs draws the mark at the head of system 1 wherever the field sits, and the element
    * keeps the field's own span: `selection-tempo` row 2 is `{startChar: 16, endChar: 39,
    * preString: "Easy Swing", duration: [0.25], bpm: 140}`, and putting it in the stream
    * takes the selectable gate from 152 to **157**.
    *
-   * It is not landed because of the SORT, and that is now understood rather than guessed:
-   * the stream is ordered by `startChar`, and a `Q:` written on line 21 — `frere-jacques`
-   * — sorts into the MIDDLE of line 0's stream, where abcjs draws it at the head of
-   * system 1 regardless. So it has to be placed FIRST and kept out of the chain, not
-   * sorted in. Measured:
    *
-   *   head tempo sorted in, tiling per line        250,900 characters, 21 ratcheted RED
-   *   head tempo sorted in, no per-line tiling     244,058
-   *   no head tempo, tiling per line               251,312   <- where this file stands
+   * Measured, all four shapes:
    *
-   * Worth FIVE selectable rows (152 -> 157) when it lands.
+   *   in the stream, sorted by startChar, no per-line tiling   244,058 characters
+   *   in the stream, sorted, tiling per line                   250,900, 21 ratcheted RED
+   *   placed FIRST and out of the chain                        250,900, the same rows RED
+   *   registered only, in no stream                            251,312 and 157 selectables
    */
+  const headTempo = tempoElement(score.tempo, score.tempoSourceRange, byRange);
+  void headTempo;
 
   breaks.forEach((from, i) => {
     const to = breaks[i + 1] ?? first.measures.length;
