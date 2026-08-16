@@ -142,7 +142,10 @@ function stampEngraved(abcelem: AbcElement, element: LayoutElement): void {
     const anchor = up ? pitches[0] : top;
     if (anchor !== undefined && top !== undefined && pitches.length === 1) {
       anchor.highestVert =
-        top.verticalPos + (up && (abcelem.duration ?? 0) < 1 ? 6 : 0);
+        top.verticalPos +
+        (up && (typeof abcelem.duration === "number" ? abcelem.duration : 0) < 1
+          ? 6
+          : 0);
     }
     abcelem.averagepitch =
       pitches.reduce((t, p) => t + p.verticalPos, 0) / pitches.length;
@@ -247,7 +250,11 @@ function abcelemOf(
       const event = element.sourceEvent;
       return event === undefined ? undefined : index.byEvent.get(event);
     }
+    // A BARLINE, a TEMPO and a body `P:` are all stream elements the projection already
+    // built; each joins by where it was WRITTEN.
     case "bar":
+    case "tempo":
+    case "part":
       return element.sourceRange === undefined
         ? undefined
         : index.byRange.get(element.sourceRange.start);

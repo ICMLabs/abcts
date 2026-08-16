@@ -965,6 +965,7 @@ class VoiceBuilder {
   private pendingKeyChangeClef: Clef | undefined = undefined
   private pendingClefChange: Clef | null = null
   private pendingTempoChange: Tempo | null = null
+  private pendingTempoChangeRange: SourceRange | null = null
   private pendingMidi: { cmd: string; params: readonly (string | number)[] }[] = []
   private pendingKeyChangeRange: SourceRange | null = null
   private pendingMeterChange: Meter | null = null
@@ -1083,8 +1084,9 @@ class VoiceBuilder {
   }
 
   /** A `Q:` after the first — printed where it stands. */
-  setTempoChange(tempo: Tempo | null): void {
+  setTempoChange(tempo: Tempo | null, range: SourceRange | null = null): void {
     this.pendingTempoChange = tempo
+    this.pendingTempoChangeRange = range
   }
 
   setMeterChange(meter: Meter | null, range: SourceRange, inline = false): void {
@@ -1131,6 +1133,7 @@ class VoiceBuilder {
         : { keyChangeClef: this.pendingKeyChangeClef }),
       clefChange: this.pendingClefChange,
       tempoChange: this.pendingTempoChange,
+      tempoChangeSourceRange: this.pendingTempoChangeRange,
       ...(this.pendingMidi.length > 0 ? { midiCommands: this.pendingMidi } : {}),
       keyChangeSourceRange: this.pendingKeyChangeRange,
       meterChange: this.pendingMeterChange,
@@ -1144,6 +1147,7 @@ class VoiceBuilder {
     this.pendingKeyChangeClef = undefined
     this.pendingClefChange = null
     this.pendingTempoChange = null
+    this.pendingTempoChangeRange = null
     this.pendingMidi = []
     this.pendingKeyChangeRange = null
     this.pendingMeterChange = null
@@ -1859,6 +1863,7 @@ class ScoreBuilder {
   key: KeySignature = defaultKey()
   clef: Clef = defaultClef
   tempo: Tempo | null = null
+  tempoSourceRange: SourceRange | null = null
   /** The tune's `Q:` was written INLINE — drawn, but not the audio clock's. */
   tempoInline = false
   meter: Meter | null = null
@@ -2185,6 +2190,7 @@ class ScoreBuilder {
       clef: this.clef,
       meter: this.meter,
       tempo: resolveBeatUnit(this.tempo, this.meter),
+      tempoSourceRange: this.tempoSourceRange,
       tempoInline: this.tempoInline,
       unitNoteLength: this.unitNoteLength,
       ...(this.firstLineKeyClef === null ? {} : { firstLineKeyClef: this.firstLineKeyClef }),
@@ -3086,9 +3092,12 @@ class Parser {
         // `tempoInline` is what lets audio take the one and not the other.
         if (builder.tempo === null) {
           builder.tempo = parseTempo(value)
+          builder.tempoSourceRange = range
           builder.tempoInline = inline
-          if (inline && builder.bodyStarted) builder.voice.setTempoChange(parseTempo(value))
-        } else if (builder.bodyStarted) builder.voice.setTempoChange(parseTempo(value))
+          if (inline && builder.bodyStarted)
+            builder.voice.setTempoChange(parseTempo(value), range)
+        } else if (builder.bodyStarted)
+          builder.voice.setTempoChange(parseTempo(value), range)
         return
       }
       case 'w': {

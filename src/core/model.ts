@@ -951,6 +951,8 @@ export interface Measure {
    * voices and abcjs draws all five marks.
    */
   readonly tempoChange?: Tempo | null
+  /** Where it was WRITTEN — a tempo is an element of the stream and a host reads its span. */
+  readonly tempoChangeSourceRange?: SourceRange | null
   /**
    * `%%MIDI` directives written inside the music, taking effect from this measure.
    *
@@ -1227,6 +1229,12 @@ export interface Score {
    * is mid-tune, so a mid-tune `Q:` lands here rather than on a Measure. First one wins.
    */
   readonly tempo: Tempo | null
+  /**
+   * Where the tune's own `Q:` was written. abcjs draws the mark at the head of system 1
+   * WHEREVER the field sits, and the element it makes still carries the field's own span —
+   * which is what `tune.lines` and the selectable array hand back.
+   */
+  readonly tempoSourceRange?: SourceRange | null
   /**
    * The tune's `Q:` was written INLINE (`[Q:1/4=129]`) rather than as a field.
    *

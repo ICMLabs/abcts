@@ -5,6 +5,7 @@ import type {
   Pitch,
   Score,
   SourceRange,
+  Tempo,
 } from "../core/model.js";
 import { ratToNumber, stepIndex } from "../core/model.js";
 
@@ -66,6 +67,11 @@ export interface AbcElement {
   endChar?: number;
   /** A barline's drawn kind — `bar_thin`, `bar_left_repeat`, … — or a tempo's `"tempo"`. */
   type?: string;
+  // ── a tempo mark, and a body `P:` ──
+  preString?: string;
+  postString?: string;
+  bpm?: number;
+  title?: string;
   // ── the staff's own furniture, which abcjs hangs on the STAFF and not on the stream ──
   verticalPos?: number;
   clefPos?: number;
@@ -77,7 +83,7 @@ export interface AbcElement {
   // ── a note (and a rest, which abcjs also calls a note) ──
   pitches?: AbcPitch[];
   rest?: { type: string; text?: string };
-  duration?: number;
+  duration?: number | readonly number[];
   decoration?: readonly string[];
   chord?: readonly { name: string; position: string }[];
   gracenotes?: readonly {
@@ -149,11 +155,12 @@ function tile(abc: string, elements: readonly AbcElement[]): AbcElement[] {
   // **IN PLACE, NOT COPIED.** A copy would break the identity the selectable array and
   // `getElementFromChar` both rest on — abcjs hands out ONE object per element and its
   // engraver stamps that object.
-  const opened = elements.map((e, i) =>
-    i === 0
-      ? abc.lastIndexOf("\n", (e.startChar ?? 0) - 1) + 1
-      : (elements[i - 1]?.endChar ?? e.startChar ?? 0),
-  );
+  const lineStart = (at: number): number => abc.lastIndexOf("\n", at - 1) + 1;
+  const opened = elements.map((e, i) => {
+    const own = e.startChar ?? 0;
+    const before = elements[i - 1]?.endChar;
+    return before ?? lineStart(own);
+  });
   elements.forEach((e, i) => {
     e.startChar = opened[i] ?? e.startChar ?? 0;
   });
@@ -252,6 +259,45 @@ const bar = (
   const e = el("bar", range);
   if (e === null || range === null) return e;
   e.type = (kind === null ? undefined : BARLINE_TYPE[kind]) ?? "bar_thin";
+  byRange?.set(range.start, e);
+  return e;
+};
+
+/**
+ * `{preString?, duration, bpm, postString?, type: "tempo"}` — abcjs's tempo element.
+ *
+ * **`duration` IS AN ARRAY**, because `Q:1/4 1/8=120` counts two note values, and `type`
+ * is the literal `"tempo"` beside `el_type` — the same word twice, which is abcjs's shape
+ * rather than a redundancy of ours (`abc_parse_header.js:204-330`).
+ *
+ * A LONE TEMPO WORD still carries the rate it looked up and simply does not print it; the
+ * element keeps the `bpm` either way, which is what `getBpm` reads.
+ */
+const tempoElement = (
+  tempo: Tempo | null | undefined,
+  range: SourceRange | null | undefined,
+  byRange?: Map<number, AbcElement>,
+): AbcElement | null => {
+  const e = el("tempo", range);
+  if (e === null || tempo == null || range == null) return null;
+  e.type = "tempo";
+  if (tempo.text !== null) e.preString = tempo.text;
+  if (tempo.beatUnit !== null) e.duration = [ratToNumber(tempo.beatUnit)];
+  if (tempo.bpm !== null) e.bpm = tempo.bpm;
+  if (tempo.postText != null) e.postString = tempo.postText;
+  byRange?.set(range.start, e);
+  return e;
+};
+
+/** `{title, el_type: "part"}` — a BODY `P:`, printed above the staff where it stands. */
+const partElement = (
+  label: string | null,
+  range: SourceRange | null,
+  byRange?: Map<number, AbcElement>,
+): AbcElement | null => {
+  const e = el("part", range);
+  if (e === null || label === null || range === null) return null;
+  e.title = label;
   byRange?.set(range.start, e);
   return e;
 };
@@ -432,8 +478,10 @@ function voiceElements(
   byRange?: Map<number, AbcElement>,
   /** The slur labels still open on this VOICE — one stack for the whole tune. */
   openSlurs: number[] = [],
+  /** The tune's own `Q:`, for the first voice of the first line — see `projectionOf`. */
+  headTempo: AbcElement | null = null,
 ): AbcElement[] {
-  const out: (AbcElement | null)[] = [];
+  const out: (AbcElement | null)[] = [headTempo];
   const notes: { event: MusicEvent; e: AbcElement }[] = [];
   for (const measure of measures) {
     out.push(
@@ -456,6 +504,10 @@ function voiceElements(
       out.push(el("keySignature", measure.keyChangeSourceRange));
     if (!fieldLine(abc, measure.meterChangeSourceRange))
       out.push(el("timeSignature", measure.meterChangeSourceRange));
+    out.push(tempoElement(measure.tempoChange, measure.tempoChangeSourceRange, byRange));
+    out.push(
+      partElement(measure.partLabel, measure.partLabelSourceRange, byRange),
+    );
     for (const event of measure.events) {
       const e = el("note", decoratedRange(abc, event));
       if (e !== null) {
@@ -620,7 +672,7 @@ function markBeams(abc: string, stream: readonly AbcElement[]): void {
     // whitespace — so the character to test is the one BEFORE the end, not after it.
     const at = (e.endChar ?? 0) - 1;
     const spaced = abc[at] === " " || abc[at] === "\t";
-    if ((e.duration ?? 0) >= 0.25) closeLast();
+    if ((typeof e.duration === "number" ? e.duration : 0) >= 0.25) closeLast();
     else if (spaced && start !== undefined) {
       if (isRest) closeLast();
       else {
@@ -683,6 +735,26 @@ export function projectionOf(
   if (first === undefined) return { lines, byEvent, byRange };
   const breaks = starts(first);
 
+  /**
+   * **MEASURED AND NOT LANDED — THE TUNE'S OWN `Q:` IS AN ELEMENT OF LINE 0, VOICE 0.**
+   *
+   * abcjs draws the mark at the head of system 1 wherever the field sits, and the element
+   * keeps the field's own span: `selection-tempo` row 2 is `{startChar: 16, endChar: 39,
+   * preString: "Easy Swing", duration: [0.25], bpm: 140}`, and putting it in the stream
+   * takes the selectable gate from 152 to **157**.
+   *
+   * It is not landed because **THE TILING CANNOT EXPRESS IT YET**. abcjs gives the tempo
+   * 16…39 and the first note 44…46 — the `\nK:C\n` between them belongs to NOTHING, where
+   * our spans tile a line exactly. Two shapes were measured:
+   *
+   *   head tempo in the stream, tiling unchanged   244,058 characters (from 251,012)
+   *   …with an element opening at ITS OWN LINE
+   *   whenever the one before it ended earlier      250,900, and 21 ratcheted tunes RED
+   *
+   * The second is nearly right and still wrong, so the rule it approximates has to be read
+   * out of abcjs rather than guessed at a third time. The ratchet is what said so.
+   */
+
   breaks.forEach((from, i) => {
     const to = breaks[i + 1] ?? first.measures.length;
     lines.push({
@@ -697,6 +769,7 @@ export function projectionOf(
               byEvent,
               byRange,
               slurs,
+              null,
             );
           }),
         },

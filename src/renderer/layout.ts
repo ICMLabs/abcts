@@ -2822,7 +2822,13 @@ function layoutKeyChange(
  * Its text therefore overhangs to the right, which is also why this needs no text
  * metrics: nothing downstream depends on how wide the words turn out to be.
  */
-function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | null {
+function layoutTempo(
+  x: number,
+  tempo: Tempo,
+  strict = true,
+  /** Where the `Q:` was written — the join to the projection's own tempo element. */
+  range?: SourceRange | null,
+): LayoutElement | null {
   const glyphs: PlacedGlyph[] = []
   const texts: PlacedText[] = []
   const lines: PlacedLine[] = []
@@ -3069,15 +3075,30 @@ function layoutTempo(x: number, tempo: Tempo, strict = true): LayoutElement | nu
   }
 
   if (glyphs.length === 0 && texts.length === 0) return null
-  return { type: 'tempo', sourceTempo: tempo, x, width: 0, staffSteps: [], glyphs, lines, texts }
+  return {
+    type: 'tempo',
+    sourceTempo: tempo,
+    ...(range == null ? {} : { sourceRange: range }),
+    x,
+    width: 0,
+    staffSteps: [],
+    glyphs,
+    lines,
+    texts,
+  }
 }
 
 /**
  * A `P:` part label above the staff. Zero width, like the tempo mark and for the same
  * reason: abcjs reports `w: 0`, and a label must not push the music it labels.
  */
-const layoutPart = (x: number, label: string): LayoutElement => ({
+const layoutPart = (
+  x: number,
+  label: string,
+  range?: SourceRange | null,
+): LayoutElement => ({
   sourcePartLabel: label,
+  ...(range == null ? {} : { sourceRange: range }),
   type: 'part',
   x,
   width: 0,
@@ -9933,7 +9954,7 @@ function layoutMeasure(
   const drawPart = (): void => {
     if (partDrawn || measure.partLabel === null || partIndex !== 0) return
     partDrawn = true
-    elements.push(layoutPart(x, measure.partLabel))
+    elements.push(layoutPart(x, measure.partLabel, measure.partLabelSourceRange))
     fixed(0, 0, 'part')
   }
   /**
@@ -9949,7 +9970,7 @@ function layoutMeasure(
   // element in that voice's stream. Zero width, like the tune's own mark.
   const drawTempoChange = (): void => {
     if (measure.tempoChange == null) return
-    const tempo = layoutTempo(x, measure.tempoChange, strict)
+    const tempo = layoutTempo(x, measure.tempoChange, strict, measure.tempoChangeSourceRange)
     if (tempo === null) return
     elements.push(tempo)
     fixed(0, 0)
@@ -9975,7 +9996,7 @@ function layoutMeasure(
   for (const [eventIndex, event] of measure.events.entries()) {
     drawMetersBefore(eventIndex)
     if (measure.partLabel !== null && eventIndex === partIndex && partIndex > 0) {
-      elements.push(layoutPart(x, measure.partLabel))
+      elements.push(layoutPart(x, measure.partLabel, measure.partLabelSourceRange))
       fixed(0, 0, 'part')
     }
     // …**AND A REST INSIDE THE RUN IS A MEMBER OF THE BEAM** — see `Rest.beamGroup`.
@@ -10187,7 +10208,7 @@ function layoutMeasure(
 
   // Every event preceded the `P:` — the label belongs after them, before the barline.
   if (measure.partLabel !== null && partIndex === -1) {
-    elements.push(layoutPart(x, measure.partLabel))
+    elements.push(layoutPart(x, measure.partLabel, measure.partLabelSourceRange))
     fixed(0, 0, 'part')
   }
 
@@ -11084,7 +11105,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
        * and we drew six, the first twice.
        */
       if (withMeter && topStaff && score.tempo !== null && score.tempoInline !== true) {
-        const tempo = layoutTempo(x, score.tempo, strict)
+        const tempo = layoutTempo(x, score.tempo, strict, score.tempoSourceRange)
         if (tempo !== null) {
           elements.push(tempo)
           advances.push({ rod: 0, gap: 0, duration: 0, left: 0, kind: 'other' })
@@ -11995,7 +12016,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
            * abcjs's does.
            */
           if (el.type === 'tempo' && score.tempo !== null)
-            return layoutTempo(at, score.tempo, strict) ?? placeElement(el, at)
+            return (
+              layoutTempo(at, score.tempo, strict, score.tempoSourceRange) ??
+              placeElement(el, at)
+            )
           return placeElement(el, at)
         }),
       ]
