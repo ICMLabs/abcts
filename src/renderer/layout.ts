@@ -12401,7 +12401,12 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     // in 6.7.0 and moved nothing in 6.6.3.
     const nonMusicBeforeMusic =
       systemIndex === 0 && (score.textAbove.length > 0 || score.metadata.titles.length > 1)
-    let cursor = (headingless ? musicSpace : 0) + (nonMusicBeforeMusic ? interSystemSep : 0)
+    // …**AND PRINT'S `spacing.top` IS A ROW OF THE TOP BLOCK EVEN WHEN THE BLOCK IS
+    // EMPTY** — `TopText` pushes it before it looks at the title (`top-text.js:17-18`),
+    // so a title-less tune, whose block this branch skips entirely, still spends it.
+    const printTopSpace = PRINT_SCALE === 1 ? 0 : spaces(ABCJS_PX.printTopSpace)
+    let cursor =
+      (headingless ? printTopSpace + musicSpace : 0) + (nonMusicBeforeMusic ? interSystemSep : 0)
     /** abcjs's `staffGroup.height`, in PITCH — see `LayoutSystem.heightPitch`. */
     let heightPitch = 0
     let leadingCursor = cursor
