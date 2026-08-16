@@ -41,13 +41,23 @@ import {
   type NoteTiming,
   timingsOf,
 } from "../audio/timing.js";
-import { plainText, type RichText, type Score } from "../core/model.js";
+import {
+  type MusicEvent,
+  plainText,
+  type RichText,
+  type Score,
+} from "../core/model.js";
 import {
   type AbcElement,
   type AbcLine,
   elementFromChar,
-  linesOf,
+  projectionOf,
 } from "./lines.js";
+import {
+  findSelectable,
+  type Selectable,
+  selectablesOf,
+} from "./selectables.js";
 export { type BookTune, numberOfTunes, TuneBook } from "./tunebook.js";
 import {
   activeAudioContext,
@@ -128,6 +138,12 @@ export interface AbcjsParams {
    * (`abc_parse.js:529-536`, `tests/visual/transpose.test.js:255-262`).
    */
   readonly visualTranspose?: number;
+  /**
+   * Which element types a host may click. `false` none, `true` every one that carries an
+   * `abcelem`, a LIST for those types — and ABSENT is not "all": abcjs's default admits
+   * `note` and `tabNumber` alone (`draw/selectables.js:31-45`).
+   */
+  readonly selectTypes?: boolean | readonly string[];
 }
 
 /**
@@ -219,6 +235,15 @@ export interface TuneObject {
    */
   readonly lines: readonly AbcLine[];
   readonly getElementFromChar: (char: number) => AbcElement | null;
+
+  /**
+   * `engraver.selectables` and the two accessors over it. abcjs returns `[]` and `null`
+   * when there is no engraver at all (`abc_tune.js:633-642`), which is what `parseOnly`
+   * hands back.
+   */
+  readonly engraver: { readonly selectables: readonly Selectable[] };
+  readonly getSelectableArray: () => readonly Selectable[];
+  readonly findSelectableElement: (target: unknown) => unknown;
 }
 
 /** A div, an id, `"*"` for a headless slot, or nothing (`abc_tunebook.js:76-82`). */
@@ -303,6 +328,29 @@ export function renderAbc(
      * `undefined` from abcjs — and must get `undefined` from us.
      */
     let lineCache: readonly AbcLine[] | null = null;
+    let eventIndex: ReadonlyMap<MusicEvent, AbcElement> | null = null;
+    let selectableCache: readonly Selectable[] | null = null;
+    /**
+     * The drawing, kept because the selectable array is a walk of it — the same walk the
+     * emitter writes `data-index` in. `toSVG` is handed this very object below.
+     */
+    const doc = layout(score, {
+      mode: "abcjs-strict",
+      ...(systemWidth ? { systemWidth } : {}),
+      ...(printing ? { print: true } : {}),
+    });
+    const projection = (): ReadonlyMap<MusicEvent, AbcElement> => {
+      if (eventIndex === null) {
+        const p = projectionOf(score, abc);
+        lineCache = p.lines;
+        eventIndex = p.byEvent;
+      }
+      return eventIndex;
+    };
+    const selectables = (): readonly Selectable[] => {
+      selectableCache ??= selectablesOf(doc, projection(), params.selectTypes);
+      return selectableCache;
+    };
     const timings: {
       rows: NoteTiming[];
       time: number | undefined;
@@ -310,11 +358,7 @@ export function renderAbc(
     } = { rows: [], time: undefined, beats: undefined };
     return {
       svg: toSVG(
-        layout(score, {
-          mode: "abcjs-strict",
-          ...(systemWidth ? { systemWidth } : {}),
-          ...(printing ? { print: true } : {}),
-        }),
+        doc,
         {
           staffSpace,
           classes: "abcjs",
@@ -396,14 +440,22 @@ export function renderAbc(
 
       get lines(): readonly AbcLine[] {
         // Built on read and cached for the object's life — a host that never asks for it
-        // pays nothing, which is the point of it being a projection.
-        lineCache ??= linesOf(score, abc);
-        return lineCache;
+        // pays nothing, which is the point of it being a projection. Asking for the
+        // SELECTABLES builds it too, because they hold the very same elements.
+        selectables();
+        return lineCache ?? [];
       },
       getElementFromChar(char: number): AbcElement | null {
-        lineCache ??= linesOf(score, abc);
-        return elementFromChar(lineCache, char);
+        selectables();
+        return elementFromChar(lineCache ?? [], char);
       },
+
+      get engraver(): { selectables: readonly Selectable[] } {
+        return { selectables: selectables() };
+      },
+      getSelectableArray: () => selectables(),
+      findSelectableElement: (target: unknown) =>
+        findSelectable(selectables(), target),
     };
   };
 

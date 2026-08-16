@@ -1305,6 +1305,24 @@ export interface PlacedText {
 export interface LayoutElement {
   readonly type: ElementType
   /**
+   * **THE MODEL EVENT THIS WAS BUILT FROM, AND THE CLEF IT WAS DRAWN UNDER** — a
+   * reference, carried for the compat layer's `abcelem` and read by NOTHING in layout or
+   * in the emitter.
+   *
+   * abcjs's selectable array holds `absEl.abcelem`, the very parse element `tune.lines`
+   * holds, so the two agree by identity. Ours are separate objects and something has to
+   * join them: pairing them POSITIONALLY — the k-th drawn note against the k-th event of
+   * the k-th voice — breaks the moment `%%score` reorders the staves or an `&` overlay
+   * becomes a voice of its own, both of which this engine already does. A reference
+   * cannot break that way.
+   *
+   * The CLEF comes with it because abcjs's `verticalPos` is `pitch - mid`
+   * (`tune-builder.js:918`) and `mid` is the staff's own middle line, which the event
+   * does not know.
+   */
+  readonly sourceEvent?: MusicEvent
+  readonly sourceClef?: Clef
+  /**
    * `durationClass` and abcjs's own PITCH NUMBERS, carried for the `add_classes` markup and
    * for nothing else — `klass += ' d' + Math.round(durationClass*1000)/1000` then one
    * `' p' + pitch` per pitch (`write/draw/absolute.js:31-40`).
@@ -3287,6 +3305,8 @@ function layoutRest(
     })
     return {
       type: 'rest',
+      sourceEvent: rest,
+      sourceClef: clef,
       x,
       // **ITS DURATION IS THE MEASURE COUNT TIMES THE MEASURE** — `Z2` in 4/4 is
       // `abcjs-d2` in `S3-note-syntax-classes-tune3`.
@@ -3424,6 +3444,8 @@ function layoutRest(
   )
   return {
     type: 'rest',
+    sourceEvent: rest,
+    sourceClef: clef,
     ...(restBoxPitchOut === undefined ? {} : { restPitch: restBoxPitchOut }),
     /**
      * **A MULTIMEASURE REST'S DURATION IS ITS MEASURE COUNT TIMES THE MEASURE.** `Z2` in
@@ -4598,6 +4620,8 @@ function layoutNoteheads(
   const ink = inkWidth + ENGRAVE.noteRodGap
   return {
     type: 'note',
+    ...(event === null ? {} : { sourceEvent: event }),
+    sourceClef: clef,
     // `notehead.stemDir = dir`, drawn or not — see `LayoutElement.stemUp`.
     stemUp: up,
     // abcjs's `d` and `p` classes; see `LayoutElement.durationClass`.

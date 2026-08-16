@@ -1,4 +1,11 @@
-import type { Measure, MusicEvent, Score, SourceRange } from "../core/model.js";
+import type {
+  Measure,
+  MusicEvent,
+  Pitch,
+  Score,
+  SourceRange,
+} from "../core/model.js";
+import { ratToNumber, stepIndex } from "../core/model.js";
 
 /**
  * **abcjs's `tune.lines` — ITS LAID-OUT TREE, PROJECTED FROM OURS.**
@@ -20,10 +27,59 @@ import type { Measure, MusicEvent, Score, SourceRange } from "../core/model.js";
  * is why `%%keywarn` can remove one without touching the line's own signature.
  */
 
+/** One pitch of a note element, as abcjs's parser and engraver leave it between them. */
+export interface AbcPitch {
+  /** ABSOLUTE diatonic index — middle C is 0, whatever the clef. */
+  pitch: number;
+  /** The note AS WRITTEN, accidental sign included: `^c`, `B,`, `d`. */
+  name: string;
+  /** `pitch - mid` — where it sits on THIS staff (`tune-builder.js:918`). */
+  verticalPos: number;
+  /** Where a slur may hang off it — the engraver's answer, not the parser's. */
+  highestVert?: number;
+  startSlur?: readonly { label: number }[];
+  endSlur?: readonly number[];
+  startTie?: Record<string, never>;
+  endTie?: boolean;
+}
+
+/**
+ * One element of a voice's stream.
+ *
+ * abcjs's own is a bag the parser fills and the ENGRAVER then mutates in place —
+ * `highestVert`, `averagepitch`, `minpitch`, `maxpitch` and, after `setUpAudio`,
+ * `currentTrackMilliseconds` and `midiPitches` are all written onto the same object a host
+ * reads back through `tune.lines`. Ours is the same object for the same reason: the
+ * selectable array holds it, `getElementFromChar` returns it, and a host that stamps one
+ * must see it through the other.
+ */
 export interface AbcElement {
-  readonly el_type: string;
-  readonly startChar: number;
-  readonly endChar: number;
+  el_type: string;
+  startChar: number;
+  endChar: number;
+  // ── a note (and a rest, which abcjs also calls a note) ──
+  pitches?: AbcPitch[];
+  rest?: { type: string; text?: string };
+  duration?: number;
+  decoration?: readonly string[];
+  chord?: readonly { name: string; position: string }[];
+  gracenotes?: readonly {
+    pitch: number;
+    name: string;
+    duration: number;
+    verticalPos: number;
+  }[];
+  lyric?: readonly { syllable: string; divider: string }[];
+  startBeam?: boolean;
+  endBeam?: boolean;
+  startTriplet?: number;
+  endTriplet?: boolean;
+  tripletMultiplier?: number;
+  tripletR?: number;
+  // ── written by the engraver, not the parser ──
+  averagepitch?: number;
+  minpitch?: number;
+  maxpitch?: number;
 }
 
 export interface AbcStaff {
@@ -61,20 +117,25 @@ const el = (
  * because the rule is not about content at all.
  */
 function tile(abc: string, elements: readonly AbcElement[]): AbcElement[] {
-  return elements.map((e, i) => ({
-    el_type: e.el_type,
-    // **EACH ELEMENT OPENS WHERE THE ONE BEFORE IT CLOSED**, and the first of a line opens
-    // at the line. A NOTE closes over its trailing whitespace and a BAR does not — measured
-    // on `S1-decorations`: `!fermata!C ` is 163…174 and `!accent!D ` 174…184, the space
-    // going with the note before it, while `| !tenuto!E` is bar 206…207 and note 207…217,
-    // the space going with the note AFTER. That asymmetry is abcjs's and it is what makes
-    // the spans tile.
-    startChar:
-      i === 0
-        ? abc.lastIndexOf("\n", e.startChar - 1) + 1
-        : (elements[i - 1]?.endChar ?? e.startChar),
-    endChar: e.endChar,
-  }));
+  // **EACH ELEMENT OPENS WHERE THE ONE BEFORE IT CLOSED**, and the first of a line opens
+  // at the line. A NOTE closes over its trailing whitespace and a BAR does not — measured
+  // on `S1-decorations`: `!fermata!C ` is 163…174 and `!accent!D ` 174…184, the space
+  // going with the note before it, while `| !tenuto!E` is bar 206…207 and note 207…217,
+  // the space going with the note AFTER. That asymmetry is abcjs's and it is what makes
+  // the spans tile.
+  //
+  // **IN PLACE, NOT COPIED.** A copy would break the identity the selectable array and
+  // `getElementFromChar` both rest on — abcjs hands out ONE object per element and its
+  // engraver stamps that object.
+  const opened = elements.map((e, i) =>
+    i === 0
+      ? abc.lastIndexOf("\n", e.startChar - 1) + 1
+      : (elements[i - 1]?.endChar ?? e.startChar),
+  );
+  elements.forEach((e, i) => {
+    e.startChar = opened[i] ?? e.startChar;
+  });
+  return elements as AbcElement[];
 }
 
 /**
@@ -139,6 +200,165 @@ function decoratedRange(abc: string, event: MusicEvent): SourceRange | null {
   return { start, end };
 }
 
+/** `accMap` — the sign abcjs prefixes to a written note name (`abc_parse_settings.js:147`). */
+const ACCIDENTAL_NAME: Readonly<Record<number, string>> = {
+  [-2]: "dblflat",
+  [-1]: "flat",
+  0: "natural",
+  1: "sharp",
+  2: "dblsharp",
+};
+
+const ACC_SIGN: Readonly<Record<number, string>> = {
+  [-2]: "__",
+  [-1]: "_",
+  0: "=",
+  1: "^",
+  2: "^^",
+};
+
+/** ABSOLUTE diatonic index, middle C = 0 — abcjs's `pitch` on every pitch element. */
+const abcjsPitch = (p: Pitch): number =>
+  stepIndex(p.step) + 7 * p.octave - MIDDLE_C_INDEX;
+const MIDDLE_C_INDEX = 7 * 4;
+
+/**
+ * The note AS WRITTEN — `el.name = accMap[el.accidental] + el.name`
+ * (`abc_parse_music.js:1116-1147`). NOT derivable from the pitch: `c,` and `C` are the
+ * same note and abcjs keeps whichever was typed, which is why the model carries it.
+ */
+const writtenName = (p: Pitch): string => {
+  const letter =
+    p.written ??
+    (p.octave >= 5
+      ? p.step + "'".repeat(p.octave - 5)
+      : p.octave === 4
+        ? p.step.toUpperCase()
+        : p.step.toUpperCase() + ",".repeat(4 - p.octave));
+  const sign =
+    p.writtenAccidental ??
+    (p.accidental === null ? "" : (ACC_SIGN[p.accidental] ?? ""));
+  return sign + letter;
+};
+
+/**
+ * The PARSE-TIME half of a note element — everything abcjs's parser puts on it.
+ *
+ * `verticalPos`, `highestVert`, `averagepitch`, `minpitch` and `maxpitch` are NOT here:
+ * the first needs the staff's middle line and the rest are the engraver's, so they are
+ * stamped onto this same object when the drawing is walked. See `src/compat/selectables.ts`.
+ */
+function noteFields(e: AbcElement, event: MusicEvent): void {
+  e.duration = ratToNumber(event.notatedDuration);
+  if (event.type === "rest") {
+    e.rest = { type: restType(event.kind) };
+  } else {
+    const pitches = event.type === "note" ? [event.pitch] : event.pitches;
+    e.pitches = pitches
+      .map((p) => ({
+        // **AN EXPLICIT ACCIDENTAL IS NAMED ON THE PITCH**, and only an explicit one — a
+        // note taking its accidental from the key signature carries none.
+        ...(p.accidental === null
+          ? {}
+          : { accidental: ACCIDENTAL_NAME[p.accidental] ?? "natural" }),
+        pitch: abcjsPitch(p),
+        name: writtenName(p),
+        // A placeholder until the drawing is walked — abcjs's own is `pitch - mid`, and
+        // `mid` is the staff's, which this side does not know.
+        verticalPos: abcjsPitch(p),
+      }))
+      .sort((a, b) => a.pitch - b.pitch);
+    // **A TIE IS A PROPERTY OF THE PITCH** — `el.pitches.forEach(p => p.startTie = {})`
+    // (`abc_parse_music.js:427`), and `[B-eg-b-]` ties three of its four heads. A plain
+    // note's `-` lands on `pitches[0]` (`tune-builder.js:162-171`), which is the same rule
+    // for a chord of one.
+    const tied =
+      event.type === "chord" && event.tiedPitches !== undefined
+        ? event.tiedPitches
+        : undefined;
+    e.pitches.forEach((p, i) => {
+      if (tied === undefined ? event.tiedToNext && i === 0 : tied[i] === true)
+        p.startTie = {};
+    });
+    if (tied === undefined && event.tiedToNext && e.pitches.length > 1)
+      for (const p of e.pitches) p.startTie = {};
+  }
+  if (event.decorations.length > 0)
+    e.decoration = event.decorations.map((d) => DECORATION_NAME[d] ?? d);
+  const chord: { name: string; position: string }[] = [];
+  if (event.chordSymbol !== null)
+    chord.push({ name: event.chordSymbol, position: "default" });
+  for (const a of event.annotations)
+    chord.push({ name: a.slice(1), position: ANNOTATION_POSITION[a[0] ?? ""] ?? "default" });
+  if (chord.length > 0) e.chord = chord;
+  if (event.type !== "rest" && event.lyric !== null) {
+    // **THE DIVIDER IS PART OF THE SYLLABLE IN OUR MODEL AND A FIELD OF ITS OWN IN
+    // abcjs's** — `Strang-` is `{syllable: "Strang", divider: "-"}`, and a syllable that
+    // ends a word takes a space.
+    const hyphen = event.lyric.endsWith("-");
+    e.lyric = [
+      {
+        syllable: hyphen ? event.lyric.slice(0, -1) : event.lyric,
+        divider: hyphen ? "-" : " ",
+      },
+    ];
+  }
+  if (event.graceNotes.length > 0)
+    e.gracenotes = event.graceNotes.map((g) => ({
+      pitch: abcjsPitch(g),
+      name: writtenName(g),
+      // **A GRACE'S DURATION IS RELATIVE TO A SIXTEENTH, NOT TO `L:`** — `note.duration =
+      // note.duration / (default_length * 8)` (`abc_parse_music.js:694`), so a bare grace
+      // is 0.125 whatever the unit note length is, and `{B2}` is 0.25.
+      duration: ratToNumber(g.length) / 8,
+      verticalPos: abcjsPitch(g),
+    }));
+}
+
+/**
+ * `accentPseudonyms` and `accentDynamicPseudonyms` — the SPELLINGS abcjs's parser folds
+ * away (`abc_parse_settings.js:95-110`). `<(` is `crescendo(` by the time a host sees it,
+ * `>` and `emphasis` are both `accent`, and `^` is `umarcato`. Our model keeps what was
+ * written, because the renderer needs the source spelling for nothing and the parser has no
+ * reason to lose it — so the fold happens here, at the boundary that has to match.
+ *
+ * The same rule bit the geometry once from the other side: `!>!` drew the sforzato and then
+ * failed `closeDecoration`'s `name === 'accent'` test, and every accent in the corpus sat
+ * one pitch out.
+ */
+const DECORATION_NAME: Readonly<Record<string, string>> = {
+  "<": "accent",
+  ">": "accent",
+  tr: "trill",
+  plus: "+",
+  emphasis: "accent",
+  "^": "umarcato",
+  marcato: "umarcato",
+  "<(": "crescendo(",
+  "<)": "crescendo)",
+  ">(": "diminuendo(",
+  ">)": "diminuendo)",
+};
+
+/** `"^above"` / `"_below"` / `"<left"` / `">right"` / `"@free"` — abcjs's own words. */
+const ANNOTATION_POSITION: Readonly<Record<string, string>> = {
+  "^": "above",
+  _: "below",
+  "<": "left",
+  ">": "right",
+  "@": "free",
+};
+
+/** abcjs's `rest.type` after `createNote` has had its say. */
+const restType = (kind: string): string =>
+  kind === "spacer"
+    ? "spacer"
+    : kind === "invisible" || kind === "invisibleMultiMeasure"
+      ? "invisible"
+      : kind === "multiMeasure"
+        ? "multimeasure"
+        : "rest";
+
 /**
  * One voice's elements in SOURCE ORDER: the mid-tune changes where they stand, the events,
  * and the barlines that open and close each measure.
@@ -146,8 +366,13 @@ function decoratedRange(abc: string, event: MusicEvent): SourceRange | null {
 function voiceElements(
   abc: string,
   measures: readonly Measure[],
+  /** Filled in as the stream is built — see `projectionOf`. */
+  byEvent?: Map<MusicEvent, AbcElement>,
+  /** The slur labels still open on this VOICE — one stack for the whole tune. */
+  openSlurs: number[] = [],
 ): AbcElement[] {
   const out: (AbcElement | null)[] = [];
+  const notes: { event: MusicEvent; e: AbcElement }[] = [];
   for (const measure of measures) {
     out.push(el("bar", measure.openingBarlineSourceRange));
     // ponytail: a mid-tune `[K:]` and `[M:]` carry source ranges and a `[V:… clef=]`,
@@ -156,24 +381,207 @@ function voiceElements(
     // characters that costs, rather than the gap being a claim.
     out.push(el("keySignature", measure.keyChangeSourceRange));
     out.push(el("timeSignature", measure.meterChangeSourceRange));
-    for (const event of measure.events)
-      out.push(el("note", decoratedRange(abc, event)));
+    for (const event of measure.events) {
+      const e = el("note", decoratedRange(abc, event));
+      if (e !== null) {
+        noteFields(e, event);
+        markSlurs(e, event, openSlurs);
+        byEvent?.set(event, e);
+        notes.push({ event, e });
+      }
+      out.push(e);
+    }
     out.push(el("bar", measure.closingBarlineSourceRange));
   }
   // **SORTED BY POSITION, NOT BY THE ORDER WE HAPPEN TO BUILD THEM.** abcjs appends to the
   // voice as it reads the line, so the stream is in source order by construction; ours is
   // assembled from a measure's fields and has to be put back into it.
-  return tile(
-    abc,
-    out
-      .filter((e): e is AbcElement => e !== null)
-      .sort((a, b) => a.startChar - b.startChar),
-  );
+  markTuplets(notes.filter((n) => n.event.tuplet !== null));
+  markTieEnds(notes);
+  const stream = out
+    .filter((e): e is AbcElement => e !== null)
+    .sort((a, b) => a.startChar - b.startChar);
+  markBeams(abc, stream);
+  return tile(abc, stream);
+}
+
+/**
+ * **A TIE'S CLOSING HEAD IS MARKED TOO** — `endTie: true` on the pitch of the NEXT element
+ * that carries the same note, which is what tells a host (and abcjs's own engraver) which
+ * head a curve arrives at. Matched by pitch, because a chord ties head by head.
+ */
+function markTieEnds(
+  notes: readonly { event: MusicEvent; e: AbcElement }[],
+): void {
+  let open: number[] = [];
+  for (const { e } of notes) {
+    const pitches = e.pitches;
+    if (pitches === undefined) continue;
+    for (const p of pitches) if (open.includes(p.pitch)) p.endTie = true;
+    open = pitches.filter((p) => p.startTie !== undefined).map((p) => p.pitch);
+  }
+}
+
+/**
+ * **A SLUR IS A NUMBERED PAIR, AND THE NUMBER IS THE CHORD POSITION TIMES A HUNDRED.**
+ *
+ * `addStartSlur` opens at `chordPos * 100 + 1` and walks up past whatever is already open
+ * on that voice (`tune-builder.js:697-721`), so the first slur of an ordinary note is
+ * **101** — chord position 1, because a slur written before a note is moved onto
+ * `pitches[0]` and numbered as that head (`abc_parse_music.js:507-508`). Grace notes take
+ * chord position 20, i.e. 2001.
+ *
+ * The stack is per VOICE and spans the whole tune, which is why it is threaded in rather
+ * than being local to a line: a slur may open on one system and close on the next.
+ */
+function markSlurs(
+  e: AbcElement,
+  event: MusicEvent,
+  open: number[],
+): void {
+  if (event.type === "rest") return;
+  const head = e.pitches?.[0];
+  if (head === undefined) return;
+  // **A CLOSE IS MATCHED LAST-OPENED-FIRST**, and it is a bare number where an open is an
+  // object (`{label}` against `[101]`).
+  if (event.slurEnds > 0) {
+    const ends: number[] = [];
+    for (let i = 0; i < event.slurEnds; i += 1) {
+      const label = open.pop();
+      if (label !== undefined) ends.push(label);
+    }
+    if (ends.length > 0) head.endSlur = ends;
+  }
+  if (event.slurStarts > 0) {
+    const starts: { label: number }[] = [];
+    for (let i = 0; i < event.slurStarts; i += 1) {
+      let next = SLUR_LABEL_BASE;
+      while (open.includes(next)) next += 1;
+      open.push(next);
+      starts.push({ label: next });
+    }
+    head.startSlur = starts;
+  }
+}
+
+/** `chordPos * 100 + 1` with `chordPos` 1 — the first head of the element. */
+const SLUR_LABEL_BASE = 101;
+
+/**
+ * `(3` — **THE MARKS RIDE ON THE FIRST NOTE OF THE GROUP AND ON THE LAST, AND NOTHING IN
+ * BETWEEN.** `startTriplet` is the count `p`, `tripletR` how many notes it covers, and
+ * `tripletMultiplier` the ratio each duration is scaled by; only `endTriplet` sits on the
+ * last (`abc_parse_music.js`, and the chord grid found the same asymmetry from the other
+ * side — abcjs's own beat count is wrong for every tuplet BECAUSE the ratio is stamped
+ * once).
+ *
+ * The ratio is not a new model field: our `duration` is the SOUNDING one and
+ * `notatedDuration` the written one, so their quotient IS the multiplier, exactly.
+ */
+function markTuplets(
+  members: readonly { event: MusicEvent; e: AbcElement }[],
+): void {
+  const groups = new Map<number, { event: MusicEvent; e: AbcElement }[]>();
+  for (const m of members) {
+    const group = m.event.tuplet?.group;
+    if (group === undefined) continue;
+    const list = groups.get(group) ?? [];
+    list.push(m);
+    groups.set(group, list);
+  }
+  for (const list of groups.values()) {
+    const head = list[0];
+    const tail = list[list.length - 1];
+    if (head === undefined || tail === undefined) continue;
+    head.e.startTriplet = head.event.tuplet?.number ?? list.length;
+    head.e.tripletMultiplier =
+      ratToNumber(head.event.duration) / ratToNumber(head.event.notatedDuration);
+    head.e.tripletR = list.length;
+    tail.e.endTriplet = true;
+  }
+}
+
+/**
+ * **`startBeam` AND `endBeam` ARE A STATE MACHINE OVER THE STREAM, NOT THE DRAWN BEAM.**
+ *
+ * `appendElement` carries two pointers — the note a beam could start on and the one it
+ * could end on — and flags the pair whenever the run closes (`tune-builder.js:174-220`,
+ * `:880-945`). Four rules, and three of them are about what does NOT break a run:
+ *
+ * - a note of a QUARTER or longer closes the run before it (`dur >= 0.25`);
+ * - a SPACE after a note closes the run ON it (`el.end_beam`, set by the tokenizer at
+ *   `abc_parse_music.js:1244`) — unless the note is a REST, which closes it on the note
+ *   BEFORE instead;
+ * - a REST otherwise changes nothing at all: it falls past every arm, so `C/D/ z C/D/`
+ *   keeps ONE potential run across the silence even though two beams are drawn;
+ * - anything that is not a note — a barline, a key, a meter — closes the run.
+ *
+ * And a run of ONE gets no flags either way, because both pointers must be set. So this is
+ * not "the first and last of a beam group": it is abcjs's own bookkeeping, and reading the
+ * drawn beams instead would differ on every one of those three cases.
+ */
+function markBeams(abc: string, stream: readonly AbcElement[]): void {
+  let start: AbcElement | undefined;
+  let end: AbcElement | undefined;
+  const closeLast = (): void => {
+    if (start !== undefined && end !== undefined) {
+      start.startBeam = true;
+      end.endBeam = true;
+    }
+    start = undefined;
+    end = undefined;
+  };
+  for (const e of stream) {
+    if (e.el_type !== "note") {
+      closeLast();
+      continue;
+    }
+    const isRest = e.rest !== undefined;
+    // `el.end_beam = true` on the whitespace branch of the note tokenizer — so it is the
+    // SOURCE that says so. **AND THE ELEMENT'S OWN `endChar` HAS ALREADY EATEN THAT
+    // SPACE** — `decoratedRange` walks it, because a note's span closes over its trailing
+    // whitespace — so the character to test is the one BEFORE the end, not after it.
+    const spaced = abc[e.endChar - 1] === " " || abc[e.endChar - 1] === "\t";
+    if ((e.duration ?? 0) >= 0.25) closeLast();
+    else if (spaced && start !== undefined) {
+      if (isRest) closeLast();
+      else {
+        start.startBeam = true;
+        e.endBeam = true;
+        start = undefined;
+        end = undefined;
+      }
+    } else if (!isRest) {
+      if (start === undefined) {
+        if (!spaced) start = e;
+      } else end = e;
+    }
+  }
+  // `closeLine` — the last run of a line is flagged when the line is pushed.
+  closeLast();
 }
 
 /** `tune.lines` for a score — one line per SYSTEM, as abcjs has one per source line. */
 export function linesOf(score: Score, abc: string): AbcLine[] {
+  return projectionOf(score, abc).lines;
+}
+
+/**
+ * The projection, plus the index the selectable array joins on.
+ *
+ * abcjs's engraver holds the very `tune.lines` element on each drawn thing, so a host that
+ * clicks a note and a host that walks `lines` are handed the SAME object. Ours are built
+ * here and the drawing carries a reference to the model event it came from
+ * (`LayoutElement.sourceEvent`), so this map is the join — see `selectables.ts`.
+ */
+export function projectionOf(
+  score: Score,
+  abc: string,
+): { lines: AbcLine[]; byEvent: Map<MusicEvent, AbcElement> } {
+  const byEvent = new Map<MusicEvent, AbcElement>();
   const lines: AbcLine[] = [];
+  /** One open-slur stack per voice, carried across every system — see `markSlurs`. */
+  const openSlurs: number[][] = [];
   // Every `T:` after the first is a line of its own that draws nothing — see
   // `RenderDoc.blankLeadingLines`.
   for (const title of score.metadata.titles.slice(1)) {
@@ -189,7 +597,7 @@ export function linesOf(score: Score, abc: string): AbcLine[] {
     return at.length > 0 ? at : [0];
   };
   const first = score.voices[0];
-  if (first === undefined) return lines;
+  if (first === undefined) return { lines, byEvent };
   const breaks = starts(first);
 
   breaks.forEach((from, i) => {
@@ -197,14 +605,16 @@ export function linesOf(score: Score, abc: string): AbcLine[] {
     lines.push({
       staff: [
         {
-          voices: score.voices.map((v) =>
-            voiceElements(abc, v.measures.slice(from, to)),
-          ),
+          voices: score.voices.map((v, k) => {
+            const slurs = openSlurs[k] ?? [];
+            openSlurs[k] = slurs;
+            return voiceElements(abc, v.measures.slice(from, to), byEvent, slurs);
+          }),
         },
       ],
     });
   });
-  return lines;
+  return { lines, byEvent };
 }
 
 /**
