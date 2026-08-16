@@ -659,6 +659,10 @@ export interface Chord {
    * its four heads. Absent when every head ties or none does — `[ceg]-` sets `tiedToNext`
    * instead, which is the whole-chord form the audio already understands.
    *
+   * **MEASURED THROUGH BOTH ENGINES AND GATED** — `tests/chord-tie.test.ts` carries the
+   * three controls and abcjs's algorithm (`abc_midi_flattener.js:287-325`: per-PITCH
+   * duration, the tied head NULLED out of the later element, `element.duration` deleted).
+   *
    * ponytail: the FLATTENER still reads `tiedToNext` alone, so a partly-tied chord
    * re-articulates every head. No audio gate covers one; give the flattener the same list
    * when one turns up.
