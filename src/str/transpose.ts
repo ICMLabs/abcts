@@ -492,7 +492,15 @@ function elementsOf(abc: string, measures: readonly Measure[]): VoiceElement[] {
         chord: (event as { chordSymbol?: string | null }).chordSymbol ?? null,
       });
     }
-    if (measure.closingBarline !== null) out.push({ kind: "bar", range: null });
+    if (measure.closingBarline !== null) {
+      // …and a chord written just BEFORE the barline attaches to IT, not to the next
+      // note — see `Measure.closingBarlineChord`.
+      out.push({
+        kind: "bar",
+        range: elementSpan(abc, measure.closingBarlineSourceRange),
+        chord: measure.closingBarlineChord ?? null,
+      });
+    }
   }
   return out;
 }

@@ -36,20 +36,17 @@ const GOLDEN = JSON.parse(
 ) as Case[];
 
 /**
- * **MEASURED, NOT PORTED — one row.**
+ * **CLOSED, AND IT WAS ONE LINE.** `output-unusual` writes `""_A-_A"D"|B>c|`, a chord
+ * symbol standing between the last note of a measure and its barline. abcjs attaches a
+ * pending chord to the BAR element and `transposeVoice` tests `el.chord` before it looks
+ * at `el_type` (`output.js:127-138`).
  *
- * `output-unusual` writes `""_A-_A"D"|B>c|`, a chord symbol standing between the last note
- * of a measure and its barline. abcjs attaches a pending chord to the BAR element and
- * `transposeVoice` tests `el.chord` before it looks at `el_type` (`output.js:127-138`), so
- * the `"D"` transposes to `"E"`.
- *
- * **OUR PARSER DROPS IT.** `Measure.openingBarlineChord` exists for a chord before an
- * OPENING barline — the chord-grid port added it — and there is no field for one before a
- * CLOSING barline, so it reaches neither the bar nor the next note. Measured:
- * `c "D"|B>c|` parses with `openingBarlineChord: undefined` and both notes' `chordSymbol`
- * null. Fixing it is a model and parser change under the byte gates, not a change here.
+ * The first note here said our parser dropped it, on the strength of
+ * `Measure.openingBarlineChord` being `undefined` — and the model has
+ * `closingBarlineChord` sitting right beside it for exactly this case, which the element
+ * walk was not reading. **Two fields, one checked.** The list is empty.
  */
-const MEASURED_NOT_PORTED: readonly string[] = ["output-unusual-up2"];
+const MEASURED_NOT_PORTED: readonly string[] = [];
 
 describe("strTranspose", () => {
   const run = (c: Case): string => {
