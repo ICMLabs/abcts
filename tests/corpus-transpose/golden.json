@@ -1,0 +1,357 @@
+[
+ {
+  "slug": "output-cooley-up0",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": 0,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n"
+ },
+ {
+  "slug": "output-cooley-up1",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": 1,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Fm\n|:E2|Fc{d}cB c2 Fc|~c2 Bc ecBA|\n"
+ },
+ {
+  "slug": "output-cooley-up2",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": 2,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: F#m\n|:E2|Fc{d}cB c2 Fc|~c2 Bc ecBA|\n"
+ },
+ {
+  "slug": "output-cooley-up3",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": 3,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Gm\n|:F2|Gd{e}dc d2 Gd|~d2 cd fdcB|\n"
+ },
+ {
+  "slug": "output-cooley-up4",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": 4,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: G#m\n|:F2|Gd{e}dc d2 Gd|~d2 cd fdcB|\n"
+ },
+ {
+  "slug": "output-cooley-up5",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": 5,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Am\n|:G2|Ae{f}ed e2 Ae|~e2 de gedc|\n"
+ },
+ {
+  "slug": "output-cooley-up6",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": 6,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Bbm\n|:A2|Bf{g}fe f2 Bf|~f2 ef afed|\n"
+ },
+ {
+  "slug": "output-cooley-up7",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": 7,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Bm\n|:A2|Bf{g}fe f2 Bf|~f2 ef afed|\n"
+ },
+ {
+  "slug": "output-cooley-up8",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": 8,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Cm\n|:B2|cg{a}gf g2 cg|~g2 fg bgfe|\n"
+ },
+ {
+  "slug": "output-cooley-up9",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": 9,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: C#m\n|:B2|cg{a}gf g2 cg|~g2 fg bgfe|\n"
+ },
+ {
+  "slug": "output-cooley-up10",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": 10,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Dm\n|:c2|da{b}ag a2 da|~a2 ga c'agf|\n"
+ },
+ {
+  "slug": "output-cooley-up11",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": 11,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Ebm\n|:d2|eb{c'}ba b2 eb|~b2 ab d'bag|\n"
+ },
+ {
+  "slug": "output-cooley-up12",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": 12,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:d2|eb{c'}ba b2 eb|~b2 ab d'bag|\n"
+ },
+ {
+  "slug": "output-cooley-up13",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": 13,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Fm\n|:e2|fc'{d'}c'b c'2 fc'|~c'2 bc' e'c'ba|\n"
+ },
+ {
+  "slug": "output-cooley-down1",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": -1,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Ebm\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n"
+ },
+ {
+  "slug": "output-cooley-down2",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": -2,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Dm\n|:C2|DA{B}AG A2 DA|~A2 GA cAGF|\n"
+ },
+ {
+  "slug": "output-cooley-down3",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": -3,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: C#m\n|:B,2|CG{A}GF G2 CG|~G2 FG BGFE|\n"
+ },
+ {
+  "slug": "output-cooley-down4",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": -4,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Cm\n|:B,2|CG{A}GF G2 CG|~G2 FG BGFE|\n"
+ },
+ {
+  "slug": "output-cooley-down5",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": -5,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Bm\n|:A,2|B,F{G}FE F2 B,F|~F2 EF AFED|\n"
+ },
+ {
+  "slug": "output-cooley-down6",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": -6,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Bbm\n|:A,2|B,F{G}FE F2 B,F|~F2 EF AFED|\n"
+ },
+ {
+  "slug": "output-cooley-down7",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": -7,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Am\n|:G,2|A,E{F}ED E2 A,E|~E2 DE GEDC|\n"
+ },
+ {
+  "slug": "output-cooley-down8",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": -8,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: G#m\n|:F,2|G,D{E}DC D2 G,D|~D2 CD FDCB,|\n"
+ },
+ {
+  "slug": "output-cooley-down9",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": -9,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Gm\n|:F,2|G,D{E}DC D2 G,D|~D2 CD FDCB,|\n"
+ },
+ {
+  "slug": "output-cooley-down10",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": -10,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: F#m\n|:E,2|F,C{D}CB, C2 F,C|~C2 B,C ECB,A,|\n"
+ },
+ {
+  "slug": "output-cooley-down11",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": -11,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Fm\n|:E,2|F,C{D}CB, C2 F,C|~C2 B,C ECB,A,|\n"
+ },
+ {
+  "slug": "output-cooley-down12",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": -12,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D,2|E,B,{C}B,A, B,2 E,B,|~B,2 A,B, DB,A,G,|\n"
+ },
+ {
+  "slug": "output-cooley-down13",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": -13,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Ebm\n|:D,2|E,B,{C}B,A, B,2 E,B,|~B,2 A,B, DB,A,G,|\n"
+ },
+ {
+  "slug": "output-cooley-down14",
+  "abc": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Em\n|:D2|EB{c}BA B2 EB|~B2 AB dBAG|\n",
+  "steps": -14,
+  "expected": "T: Cooley's\nM: 4/4\nL: 1/8\nK: Dm\n|:C,2|D,A,{B,}A,G, A,2 D,A,|~A,2 G,A, CA,G,F,|\n"
+ },
+ {
+  "slug": "output-transpose-chords-up2",
+  "abc": "T: Transpose Output\nK: D\n[DEF] [_DE^F] [_E=F_G] |\n",
+  "steps": 2,
+  "expected": "T: Transpose Output\nK: E\n[EFG] [_EF^G] [=F=G_A] |\n"
+ },
+ {
+  "slug": "output-transpose-chords-spaced-up2",
+  "abc": "T: Transpose Output\nK: D\n[D E  F] [ _D   E ^F ] [    _E=F             _G ] [ F2 ^F4  G3/2  ] |\n",
+  "steps": 2,
+  "expected": "T: Transpose Output\nK: E\n[E F  G] [ _E   F ^G ] [    =F=G             _A ] [ G2 ^G4  A3/2  ] |\n"
+ },
+ {
+  "slug": "output-transpose-chord-symbols-up2",
+  "abc": "X:1\nT: Transpose Output\nK:C\n\"N.C.\"c|\"C\"c\"C#\"c\"Dmaj7\"c\"D#\"c|\"E\"c\"F\"c\"F#\"c\"G\"c|\"G#\"c\"A/F#\"c\"A#\"c\"B\"c|\"Db\"c\"Eb\"c\"Gb\"c\"Ab\"c|\"Bb\"c \"C/B\"c \"C/Bb\"c \"C/A#\"c | \"C/A\"c \"C/Ab\"c \"C/G#\"c \"C/G\"c ||",
+  "steps": 2,
+  "expected": "X:1\nT: Transpose Output\nK:D\n\"N.C.\"d|\"D\"d\"D#\"d\"Emaj7\"d\"F\"d|\"F#\"d\"G\"d\"G#\"d\"A\"d|\"A#\"d\"B/G#\"d\"C\"d\"C#\"d|\"D#\"d\"F\"d\"G#\"d\"A#\"d|\"C\"d \"D/C#\"d \"D/C\"d \"D/C\"d | \"D/B\"d \"D/A#\"d \"D/A#\"d \"D/A\"d ||"
+ },
+ {
+  "slug": "output-measure-accidental-up2",
+  "abc": "T: Transpose Output\nL: 1/4\nK: C\nABcd _A_B_c_d z ABcd =A=B=c=d z ABcd |\n ^A^B^c^d z ABcd ^^A^^B^^c^^d z ABcd __A__B__c__d ABcd |\n",
+  "steps": 2,
+  "expected": "T: Transpose Output\nL: 1/4\nK: D\nBcde _B=c_d_e z Bcde =B^c=d=e z Bcde |\n ^B^^c^d^e z Bcde ^^Bd^^d^^e z B^d^^de __B_c__d__e Bcde |\n"
+ },
+ {
+  "slug": "output-all-up2",
+  "abc": "T: Transpose Output\nK: Eb\nV: 1\n\"Eb\"C_D\"Eb/C\"!marcato!E^F ^^GAB\"Ab7b5\"z|E__E_E E =E^E^^E E|\nV: 2\nC,_D,=E,^F, \"N.C.\"G,A,B,\"^Coda\"c,| z8|\nV: 1\nc_d_e^f [gbd]__abc'|\nV: 2\nc'_d'e'^f' g'a'b'Tc''|\n",
+  "steps": 2,
+  "expected": "T: Transpose Output\nK: F\nV: 1\n\"F\"D_E\"F/D\"!marcato!F^G ^^ABc\"Bb7b5\"z|F_F=F F ^F^^F^^G G|\nV: 2\nD,_E,^F,^G, \"N.C.\"A,B,C\"^Coda\"D| z8|\nV: 1\nd_e=f^g [ac'e]__bc'd'|\nV: 2\nd'_e'f'^g' a'b'c''Td''|\n"
+ },
+ {
+  "slug": "output-inline-key-up2",
+  "abc": "T: Transpose Output\nK: C\nC_DE^F GABc| [K:D] d_e^fg abc'd'|\nd_e^fg abc'd'||\n",
+  "steps": 2,
+  "expected": "T: Transpose Output\nK: D\nD_EF^G ABcd| [K:E] e=f^ga bc'd'e'|\ne=f^ga bc'd'e'||\n"
+ },
+ {
+  "slug": "output-dorian-up2",
+  "abc": "T: Transpose Output\nK: EDor\nEFGA|Bcde|\n",
+  "steps": 2,
+  "expected": "T: Transpose Output\nK: F#Dor\nFGAB|cdef|\n"
+ },
+ {
+  "slug": "output-minor-up2",
+  "abc": "T: Transpose Output\nK: Em\nEFGA|Bcde|\n",
+  "steps": 2,
+  "expected": "T: Transpose Output\nK: F#m\nFGAB|cdef|\n"
+ },
+ {
+  "slug": "output-aeolian-up2",
+  "abc": "T: Transpose Output\nK: EAeo\nEFGA|Bcde|\n",
+  "steps": 2,
+  "expected": "T: Transpose Output\nK: F#Aeo\nFGAB|cdef|\n"
+ },
+ {
+  "slug": "output-none-up2",
+  "abc": "T: Transpose Output\nK: none\nCDEF ^C^D^E^F CDEF|GABc _G_A_B_c GABc|^^C^^D^^E^^F CDEF|__G__A__B__c GABc|\n",
+  "steps": 2,
+  "expected": "T: Transpose Output\nK: none\nDEFG ^D^E^F^G DEFG|ABcd _A_B_c_d ABcd|^^D^^E^^F^^G DEFG|__A__B__c__d ABcd|\n"
+ },
+ {
+  "slug": "output-perc-up2",
+  "abc": "T: Transpose Output\nL:1/16\nK:clef=perc stafflines=1\nBBBB BzBB zBBB BBzB BBBz \n",
+  "steps": 2,
+  "expected": "T: Transpose Output\nL:1/16\nK:clef=perc stafflines=1\nBBBB BzBB zBBB BBzB BBBz \n"
+ },
+ {
+  "slug": "output-grace-up2",
+  "abc": "T: Transpose Output\nK: G\n{A}G{dcB}A|\n",
+  "steps": 2,
+  "expected": "T: Transpose Output\nK: A\n{B}A{edc}B|\n"
+ },
+ {
+  "slug": "output-key-change-up2",
+  "abc": "T: Transpose Output\nK: Eb\nEFGA|\nK:B\nBcde||\n",
+  "steps": 2,
+  "expected": "T: Transpose Output\nK: F\nFGAB|\nK:Db\ndefg||\n"
+ },
+ {
+  "slug": "output-bagpipes-up2",
+  "abc": "T:Scotland The Brave\nL:1/8\nM:4/4\nK:Hp\ne|{g}A2 {GdGe}A>B {gcd}c{e}A {gcd}ce| {ag}a2{g}a2 {GdG}ae {gcd}c{e}A|\n",
+  "steps": 2,
+  "expected": "T:Scotland The Brave\nL:1/8\nM:4/4\nK:Hp\ne|{g}A2 {GdGe}A>B {gcd}c{e}A {gcd}ce| {ag}a2{g}a2 {GdG}ae {gcd}c{e}A|\n"
+ },
+ {
+  "slug": "output-unusual-up2",
+  "abc": "\n\nX:1\nT: Transpose Output\nK:F#min\n{/GA}B | [G3_d3] | =A !arpeggio!A !arpeggio![CEG^c] | D .- D | {A}B\"<2\"{c}+1+B \"\"_G-_G\"D\"|A>B|\"<2\"(de)| [BG]>[cA] |\n",
+  "steps": 2,
+  "expected": "\n\nX:1\nT: Transpose Output\nK:G#min\n{/AB}c | [A3_e3] | =B !arpeggio!B !arpeggio![DFA^d] | E .- E | {B}c\"<2\"{d}+1+c \"\"_A-_A\"E\"|B>c|\"<2\"(ef)| [cA]>[dB] |\n"
+ },
+ {
+  "slug": "output-dor-space-down1",
+  "abc": "X:1\nK:G dor\nG\n",
+  "steps": -1,
+  "expected": "X:1\nK:F# dor\nF\n"
+ },
+ {
+  "slug": "output-dor-space-up1",
+  "abc": "X:1\nK:F# dor\nF\n",
+  "steps": 1,
+  "expected": "X:1\nK:G dor\nG\n"
+ },
+ {
+  "slug": "output-miss-accidental-down2",
+  "abc": "L:1/4\nK:C\n^C =C|=C |",
+  "steps": -2,
+  "expected": "L:1/4\nK:Bb\n=B, B,|_B, |",
+  "testFileSays": "L:1/4\nK:Bb\n=B, _B,|_B, |"
+ },
+ {
+  "slug": "output-dim-chords-up1",
+  "abc": "L:1/4\nK:C\n\"Ebdim7\" C \"E°7\" C |",
+  "steps": 1,
+  "expected": "L:1/4\nK:Db\n\"Edim7\" D \"F°7\" D |"
+ },
+ {
+  "slug": "output-dim-chords-up2",
+  "abc": "L:1/4\nK:C\n\"Ebdim7\" C \"E°7\" C |",
+  "steps": 2,
+  "expected": "L:1/4\nK:D\n\"Fdim7\" D \"F#°7\" D |"
+ },
+ {
+  "slug": "output-dim-chords-up3",
+  "abc": "L:1/4\nK:C\n\"Ebdim7\" C \"E°7\" C |",
+  "steps": 3,
+  "expected": "L:1/4\nK:Eb\n\"Gbdim7\" E \"G°7\" E |"
+ },
+ {
+  "slug": "output-dim-chords-up4",
+  "abc": "L:1/4\nK:C\n\"Ebdim7\" C \"E°7\" C |",
+  "steps": 4,
+  "expected": "L:1/4\nK:E\n\"Gdim7\" E \"G#°7\" E |"
+ },
+ {
+  "slug": "output-dim-chords-up5",
+  "abc": "L:1/4\nK:C\n\"Ebdim7\" C \"E°7\" C |",
+  "steps": 5,
+  "expected": "L:1/4\nK:F\n\"Abdim7\" F \"A°7\" F |"
+ },
+ {
+  "slug": "output-dim-chords-up6",
+  "abc": "L:1/4\nK:C\n\"Ebdim7\" C \"E°7\" C |",
+  "steps": 6,
+  "expected": "L:1/4\nK:Gb\n\"Adim7\" G \"Bb°7\" G |"
+ },
+ {
+  "slug": "output-dim-chords-up7",
+  "abc": "L:1/4\nK:C\n\"Ebdim7\" C \"E°7\" C |",
+  "steps": 7,
+  "expected": "L:1/4\nK:G\n\"Bbdim7\" G \"B°7\" G |"
+ },
+ {
+  "slug": "output-dim-chords-up8",
+  "abc": "L:1/4\nK:C\n\"Ebdim7\" C \"E°7\" C |",
+  "steps": 8,
+  "expected": "L:1/4\nK:Ab\n\"Bdim7\" A \"C°7\" A |"
+ },
+ {
+  "slug": "output-dim-chords-up9",
+  "abc": "L:1/4\nK:C\n\"Ebdim7\" C \"E°7\" C |",
+  "steps": 9,
+  "expected": "L:1/4\nK:A\n\"Cdim7\" A \"C#°7\" A |"
+ },
+ {
+  "slug": "output-dim-chords-up10",
+  "abc": "L:1/4\nK:C\n\"Ebdim7\" C \"E°7\" C |",
+  "steps": 10,
+  "expected": "L:1/4\nK:Bb\n\"Dbdim7\" B \"D°7\" B |"
+ },
+ {
+  "slug": "output-dim-chords-up11",
+  "abc": "L:1/4\nK:C\n\"Ebdim7\" C \"E°7\" C |",
+  "steps": 11,
+  "expected": "L:1/4\nK:B\n\"Ddim7\" B \"Eb°7\" B |"
+ },
+ {
+  "slug": "space-before-chord-down1",
+  "abc": "X:1\nK:Bb\n[c2A2] >[A2^F2] | !coda![c'2A,,2]\"Gm\"[A,2^A2] |[A,2A2] >[AA] |",
+  "steps": -1,
+  "expected": "X:1\nK:A\n[B2G2] >[G2^E2] | !coda![b2G,,2]\"F#m\"[G,2^^G2] |[G,2G2] >[GG] |"
+ },
+ {
+  "slug": "clef-specified-down1",
+  "abc": "X: 1\nK: Bb clef=treble\nF",
+  "steps": -1,
+  "expected": "X: 1\nK: A clef=treble\nE"
+ }
+]

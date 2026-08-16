@@ -116,7 +116,6 @@ const MISSING: readonly string[] = [
   "setGlyph",
   "startAnimation",
   "stopAnimation",
-  "strTranspose",
   "synth",
   "test",
   "tuneMetrics",

@@ -45,6 +45,7 @@ import { plainText, type RichText, type Score } from "../core/model.js";
 export { type BookTune, numberOfTunes, TuneBook } from "./tunebook.js";
 import { numberOfTunes } from "./tunebook.js";
 import { parse } from "../parser/parser.js";
+import { strTranspose as transposeString } from "../str/transpose.js";
 import { STAFF_SPACE_PX, UNIT_PX } from "../renderer/abcjs-constants.js";
 import { layout } from "../renderer/layout.js";
 import { toSVG } from "../renderer/svg.js";
@@ -384,6 +385,25 @@ export function renderAbc(
  * which is the "internals are ours" half of the ruling — the observable result is the same
  * array of tune objects.
  */
+/**
+ * `abcjs.strTranspose(abc, tunes, steps)` — ABC text in, ABC text out.
+ *
+ * abcjs takes the array `renderAbc` returned; ours takes the same, and reads each object's
+ * `score`. The implementation is `src/str/transpose.ts` and is gated against 59 of abcjs's
+ * own cases.
+ */
+export function strTranspose(
+  abc: string,
+  tunes: readonly TuneObject[],
+  steps: number,
+): string {
+  return transposeString(
+    abc,
+    tunes.map((t) => t.score),
+    steps,
+  );
+}
+
 export function parseOnly(abc: string, params: AbcjsParams = {}): TuneObject[] {
   return renderAbc(
     new Array<string>(numberOfTunes(abc)).fill("*"),
