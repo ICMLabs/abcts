@@ -150,6 +150,7 @@ const PASSING: readonly string[] = [
   "sib/S5-directives-tune0",
   "sib/S5-directives-tune3",
   "sib/S5-directives-tune4",
+  "sib/S5-directives-tune5",
   "sib/S6-keys-tune0",
   "sib/S6-keys-tune1",
   "sib/S6-keys-tune2",
@@ -158,6 +159,13 @@ const PASSING: readonly string[] = [
   "sib/S8-layout-tune0",
   "sib/S8-layout-tune1",
   "sib/S8-layout-tune2",
+  "sib/S8-layout-tune3",
+  "sib/S8-layout-tune4",
+  "sib/S8-layout-tune5",
+  "sib/S8-layout-tune6",
+  "sib/S8-layout-tune8",
+  "sib/S8-layout-tune9",
+  "sib/S8-layout-tune10",
   "sib/ave-verum-corpus-tune0",
   "sib/brother-john-inline-voices-tune0",
   "sib/center-text-tune0",
@@ -268,6 +276,7 @@ const PASSING: readonly string[] = [
   "repo/abcjs-synth-flattener-43-gm-zzz-cm-zzz-tune0",
   "repo/abcjs-synth-flattener-44-cd-pppp-c-ffff-d-ffff-c-pppp-d-cd-tune0",
   "repo/abcjs-synth-flattener-45-segno-f-d2-tune0",
+  "repo/abcjs-synth-flattener-46-c8-1-d8-2-e8-3-f8-tune0",
   "repo/abcjs-synth-midi-01-midi-options-tune0",
   "repo/abcjs-synth-midi-02-staccato-tune0",
   "repo/abcjs-synth-midi-03-percmap-tune0",
@@ -337,6 +346,7 @@ const PASSING: readonly string[] = [
   "repo/abcjs-visual-tablature-11-f-f-tune0",
   "repo/abcjs-visual-tablature-12-b-tune0",
   "repo/abcjs-visual-tablature-14-c-tune0",
+  "repo/abcjs-visual-tablature-16-g-g-g-g-tune0",
   "repo/abcjs-visual-tablature-18-a-b-tune0",
   "repo/abcjs-visual-tablature-19-d-a-d-g-b-e-tune0",
   "repo/abcjs-visual-tablature-20-score-1-2-tune0",
@@ -418,7 +428,7 @@ describe("tune.lines and getElementFromChar", () => {
     // 251,396 of 256,138 until 2026-08-16, when the sibling repo's edits to two fixtures
     // took both numbers down with them — the FLOOR moves with its corpus, and the
     // exclusions above are what make it comparable at all.
-    expect(agree).toBeGreaterThanOrEqual(255228);
+    expect(agree).toBeGreaterThanOrEqual(255376);
   });
 
   /**

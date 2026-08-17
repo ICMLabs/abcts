@@ -195,7 +195,15 @@ function tile(abc: string, elements: readonly AbcElement[]): AbcElement[] {
      * the previous element's own close — so the only `]` this can find is a field's; a
      * chord's is inside an element whose own start precedes it.
      */
-    const line = lineStart(own);
+    /**
+     * **AND A LINE'S OWN LEADING WHITESPACE BELONGS TO NOTHING.** `parseMusic` eats it
+     * before it begins reading, so `\n c8| d4` opens its first element at the `c` — six of
+     * `S8-layout`'s ten tunes are written that way and abcjs answers null for the space.
+     * The space after an inline `[V: …]` is NOT skipped: that one is inside the line and
+     * goes to the element after it, which is why the two fallbacks differ.
+     */
+    let line = lineStart(own);
+    while (line < own && (abc[line] === " " || abc[line] === "\t")) line += 1;
     const field = abc.lastIndexOf("]", own - 1);
     return field >= line ? field + 1 : line;
   });
