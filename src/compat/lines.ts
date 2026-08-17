@@ -178,7 +178,19 @@ function tile(abc: string, elements: readonly AbcElement[]): AbcElement[] {
     // the barline is 46…47 and the `[Q:"left" …]` 48…73, with 47 in neither.
     if (FIELD_ELEMENTS.has(e.el_type)) return own;
     const before = elements[i - 1]?.endChar;
-    return before === undefined || before < lineStart(own) ? lineStart(own) : before;
+    if (before !== undefined && before >= lineStart(own)) return before;
+    /**
+     * **AND AN INLINE FIELD STOPS THE READING EVEN WHEN IT IS IN NO STREAM.** A `[V: …]`
+     * switches voice and is not an element at all, but abcjs's tokenizer has consumed it,
+     * so the first note after it opens at its `]` and not at the line: on
+     * `selection-multiple` the note is 700…714 (`" !mp![b8B8d8] "`) where the line itself
+     * begins at 681. Only reachable for the FIRST element of a line — anything later takes
+     * the previous element's own close — so the only `]` this can find is a field's; a
+     * chord's is inside an element whose own start precedes it.
+     */
+    const line = lineStart(own);
+    const field = abc.lastIndexOf("]", own - 1);
+    return field >= line ? field + 1 : line;
   });
   elements.forEach((e, i) => {
     e.startChar = opened[i] ?? e.startChar ?? 0;
@@ -241,10 +253,22 @@ function decoratedRange(abc: string, event: MusicEvent): SourceRange | null {
   // our decoration ranges opens on the space, so the start is walked forward off it.
   while (start < own.start && (abc[start] === " " || abc[start] === "\t"))
     start += 1;
-  // …**AND A NOTE CLOSES OVER ITS TRAILING WHITESPACE**, which is what hands the next
-  // element its own opening. See `tile`.
+  /**
+   * …**AND A NOTE READS PAST ITS CLOSING `)` AND ITS TIE `-` BEFORE IT STOPS.**
+   * `getCoreNote`'s `case ')'` neither sets `endChar` nor returns — it counts the slur
+   * close and falls through to `index++` (`abc_parse_music.js:1077-1081`) — and `case '-'`
+   * sets `state = 'broken_rhythm'` and keeps going whenever the note could take one, which
+   * in a music line it can (`:1222-1237`). So `f) ` is ONE span of three and `B,4- ` one of
+   * five, where ours stopped at the pitch.
+   *
+   * **THEN THE TRAILING WHITESPACE, AND ANY `-` RUN INSIDE IT.** The `case ' '` branch's
+   * do-while swallows `isWhiteSpace(c) || c === '-'` together (`:1241-1262`) — which is
+   * what hands the next element its own opening. A `)` after whitespace is NOT swallowed:
+   * that branch takes whitespace and ties alone, which is why the two loops are separate.
+   */
   let end = own.end;
-  while (abc[end] === " " || abc[end] === "\t") end += 1;
+  while (abc[end] === ")" || abc[end] === "-") end += 1;
+  while (abc[end] === " " || abc[end] === "\t" || abc[end] === "-") end += 1;
   return { start, end };
 }
 
