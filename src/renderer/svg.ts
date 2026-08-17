@@ -81,6 +81,12 @@ export interface RenderOptions {
    * sink writes exactly the bytes it wrote before.
    */
   readonly selectables?: SelectableRecord[];
+  /**
+   * abcjs's `selectTypes` — which element types a host may click, and it decides the
+   * ATTRIBUTES as well as the set: without it an element is `selectable="false"` carrying
+   * only its index, with it a real tab stop (`draw/selectables.js:19-23`).
+   */
+  readonly selectTypes?: boolean | readonly string[];
   /** Emitted as a `class` on every element, for host styling. */
   readonly className?: string;
   /**
@@ -1381,6 +1387,25 @@ export function toSVG(
      * `Selectables.add` — records the entry and RETURNS THE INDEX, so it reads inline where
      * the attribute is written and cannot drift from it. With no sink it is the identity.
      */
+    /**
+     * `Selectables.canSelect` over OUR element types — abcjs tests the abcelem's
+     * `el_type`, and a REST is a note element to it, which is why the default admits both
+     * and nothing else (`draw/selectables.js:31-45`).
+     */
+    const canSelectHere = (type: string): boolean => {
+      const elType = ABCJS_EL_TYPES[type] ?? type;
+      const types = options.selectTypes;
+      if (types === false) return false;
+      if (types === true) return true;
+      if (types === undefined)
+        return elType === "note" || elType === "tabNumber";
+      return types.includes(elType);
+    };
+    /** `Selectables.add`'s two attribute shapes. */
+    const selectableAttrs = (index: number): string =>
+      options.selectTypes === undefined
+        ? ` selectable="false" data-index="${index}"`
+        : ` selectable="true" tabindex="0" data-index="${index}"`;
     const record = (
       index: number,
       kind: SelectableRecord["kind"],
@@ -2749,7 +2774,7 @@ export function toSVG(
              * so both count and nothing else does. A barline, a clef and a key signature
              * carry NEITHER attribute; ours carried both, with the child index in them.
              */
-            const selectable = el.type === "note" || el.type === "rest";
+            const selectable = canSelectHere(el.type);
             openedAt = parts.length;
             /**
              * **`!mark!` PAINTS THE GROUP GREEN AND APPENDS ITS CLASS LAST.**
@@ -2787,7 +2812,7 @@ export function toSVG(
               `<g${gcls ? ` class="${escapeAttr(groupClass)}"` : ""}` +
                 ` fill="${marked ? ABCJS_MARK_COLOUR : fg(voiceOf(elIndex))}" stroke="none"` +
                 ` data-name="${name}"` +
-                `${selectable ? ` selectable="false" data-index="${record(selectableIndex++, "element", el)}"` : ""}` +
+                `${selectable ? selectableAttrs(record(selectableIndex++, "element", el)) : ""}` +
                 `${marked && !gcls ? ` class="${groupClass}"` : ""}>`,
             );
             /**
