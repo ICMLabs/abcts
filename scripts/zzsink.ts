@@ -15,3 +15,11 @@ const n = new Map<string, number>()
 for (const r of selectables) n.set(r.element?.type ?? r.kind, (n.get(r.element?.type ?? r.kind) ?? 0) + 1)
 console.log(`${selectables.length} recorded, abcjs has ${c.rows.length}`)
 console.log([...n].sort().map(([k, v]) => `  ${k} ${v}`).join('\n'))
+// The non-element records, against abcjs's row at the same index.
+for (const r of selectables) {
+  if (r.element !== undefined) continue
+  const want = c.rows[r.index]?.abcEl
+  const got = (r as any).abcelem
+  const same = JSON.stringify(got) === JSON.stringify(want)
+  console.log(`${same ? 'OK  ' : 'DIFF'} [${r.index}] ${r.kind}\n     abcjs ${JSON.stringify(want)}\n     ours  ${JSON.stringify(got)}`)
+}

@@ -70,6 +70,14 @@ export interface SelectableRecord {
     | "dynamic";
   /** The laid-out element, when the record came from one. */
   readonly element?: LayoutElement;
+  /**
+   * The whole `abcelem` for a record with NO laid-out element behind it — abcjs's
+   * `wrapSvgEl` argument, which for a text row is
+   * `{el_type, name, startChar, endChar, text}` (`draw/non-music.js:24-30`). It is built
+   * here rather than in the compat layer because only the drawing knows which rows carry
+   * an `absElemType` at all.
+   */
+  readonly abcelem?: Readonly<Record<string, string | number>>;
 }
 
 export interface RenderOptions {
@@ -850,11 +858,17 @@ export function toSVG(
      * an annotation do not, and their goldens carry the empty attribute.
      */
     noClass = false,
+    /**
+     * `Selectables.add`'s attributes, which `setAttributeOnElement` writes AFTER the
+     * element exists — so they serialise LAST, past `data-name`, exactly as a notehead's
+     * late `class` does (`draw/absolute.js:20-28`).
+     */
+    selectAttrs = "",
   ): string =>
     `<text stroke="none" font-size="${size}" font-style="${italic ? "italic" : "normal"}" ` +
     `font-family="${fontFamily(face)}" font-weight="${bold ? "bold" : "normal"}" text-decoration="none" ` +
     `${noClass ? "" : `class="${klass}" `}text-anchor="${anchor}"${middle ? ' dominant-baseline="middle"' : ""}` +
-    ` x="${x}" y="${y}"${name ? ` data-name="${name}"` : ""}>` +
+    ` x="${x}" y="${y}"${name ? ` data-name="${name}"` : ""}${selectAttrs}>` +
     `<tspan x="${x}">${body}</tspan>` +
     extra.map((line) => `<tspan x="${x}" dy="1.2em">${line}</tspan>`).join("") +
     "</text>";
@@ -1416,6 +1430,35 @@ export function toSVG(
       );
       return index;
     };
+    /**
+     * **`nonMusic`'s `wrapSvgEl`, FOR A ROW THAT CARRIES AN `absElemType`.**
+     * `{el_type, name, startChar, endChar, text}` (`draw/non-music.js:24-30`, `:38-45`),
+     * and `canSelect` reads `el_type` — so with abcjs's DEFAULT `selectTypes` a title is
+     * neither selectable nor counted, which is why 544 byte-exact `data-index` rows do
+     * not move when these land.
+     *
+     * Returns the attributes to write, `""` when the row is not selectable at all.
+     */
+    const recordText = (t: PlacedText): string => {
+      const sel = t.selectable;
+      // A RICH ROW IS NOT SELECTABLE — `richText`'s array branch pushes its phrases with
+      // no `absElemType` (`rich-text.js:18-28`).
+      if (sel === undefined || t.phrases !== undefined) return "";
+      if (!canSelectHere(sel.elType)) return "";
+      const index = selectableIndex++;
+      options.selectables?.push({
+        index,
+        kind: "text",
+        abcelem: {
+          el_type: sel.elType,
+          ...(t.dataName === undefined ? {} : { name: t.dataName }),
+          ...(sel.startChar === undefined ? {} : { startChar: sel.startChar }),
+          ...(sel.endChar === undefined ? {} : { endChar: sel.endChar }),
+          text: sel.text ?? t.text,
+        },
+      });
+      return selectableAttrs(index);
+    };
 
     /**
      * A TUNE WITH NO MUSIC still writes its title, in the same `abcjs-meta-top` group a
@@ -1446,6 +1489,10 @@ export function toSVG(
                 ABCJS_TEXT_CLASSES[t.dataName] ??
                 "")
             : "",
+          [],
+          false,
+          false,
+          recordText(t),
         ),
       );
       parts.push(
@@ -1529,8 +1576,10 @@ export function toSVG(
          * the color changes with fill instead of stroke" (`draw/text.js:48-81`,
          * `svg.js:112-142`). The double spaces in the `d` are `constructHLine`'s own.
          */
+        // …and the SELECTABLE with it: a boxed row's attributes belong on the group the
+        // rect and the text share, so the inner text must not claim a second index.
         const stripBox = (t: PlacedText): PlacedText => {
-          const { boxRect: _drop, ...rest } = t;
+          const { boxRect: _drop, selectable: _sel, ...rest } = t;
           return { ...rest, noClass: true };
         };
         const boxPath = (
@@ -1558,7 +1607,10 @@ export function toSVG(
                     : undefined,
                 )
               : b.t.boxRect !== undefined
-                ? `<g fill="currentColor" data-name="${b.t.dataName ?? ""}">` +
+                ? // **THE SELECT ATTRIBUTES GO ON WHATEVER `renderText` RETURNED** — the
+                  // GROUP for a boxed row, which is why `partOrder`'s golden entry carries
+                  // no `x` at all where every other text row does (`draw/text.js:48-81`).
+                  `<g fill="currentColor" data-name="${b.t.dataName ?? ""}"${recordText(b.t)}>` +
                   `${renderRow({ t: stripBox(b.t) })}` +
                   `${boxPath(b.t, b.t.boxRect)}</g>`
                 : abcjsText(
@@ -1609,6 +1661,7 @@ export function toSVG(
                     b.t.middleBaseline === true,
                     // A BOXED row's class is DELETED, not emptied (`draw/text.js:58`).
                     b.t.noClass === true,
+                    recordText(b.t),
                   );
         // …and under `add_classes` the group is named: `abcjs-meta-top` for the tune's own
         // header block, `abcjs-non-music` for a nonMusic line (`draw/draw.js:11-12`, `:55`).

@@ -1115,6 +1115,42 @@ export interface PlacedText {
   /** Which voice ON THIS STAFF this belongs to — see `PlacedLine.voice`. */
   readonly voice?: number
   /**
+   * **abcjs's `row.absElemType`, WITH THE `abcelem` IT IS WRAPPED WITH.** `nonMusic` calls
+   * `selectables.wrapSvgEl({el_type, name, startChar, endChar, text}, el)` for exactly the
+   * rows that carry one (`draw/non-music.js:24-30`, `:38-45`); every other row draws and
+   * is not clickable.
+   *
+   * **ABSENT IS THE COMMON CASE, AND IT IS ABCJS'S OWN SWITCH** — `addTextIf` and
+   * `richText`'s STRING branch pass `absElemType` through, while `richText`'s ARRAY branch
+   * pushes its phrases with none at all (`rich-text.js:18-28`), so a title that changed
+   * font mid-line is drawn and cannot be selected.
+   *
+   * `startChar`/`endChar` come from `metaTextInfo.<field>` — see `ScoreMetadata.fieldRanges`
+   * — and the two constants are abcjs's own: `-1` where the row is given no `info`
+   * (`bottom-text.js:61`) and `-2` where `addTextIf` fills one in (`add-text-if.js:8`).
+   */
+  readonly selectable?: {
+    readonly elType: string
+    /**
+     * **ABSENT IS NOT `-2`.** `addTextIf` defaults a missing `info` to `{-2, -2}`
+     * (`add-text-if.js:8`), so every TOP-block row has a number; `Subtitle` and `FreeText`
+     * read `info.startChar` off the line object directly (`subtitle.js:7`,
+     * `free-text.js:11`) and a `%%center` has none at all — `addCentered` pushes
+     * `{text: [...]}` with no span (`tune-builder.js:318-320`). abcjs then writes
+     * `startChar: undefined` into the `abcelem`, which is a key that is not there.
+     */
+    readonly startChar?: number
+    readonly endChar?: number
+    /** `""` on a group-CLOSING row, whatever the group drew; the row's own text otherwise. */
+    readonly text?: string
+    /**
+     * The record belongs to the CLOSE of this row's `groupName` group rather than to the
+     * row itself — `addMultiLine`'s `{endGroup, absElemType}` (`bottom-text.js:61`), which
+     * `nonMusic` wraps around the closed `<g>` and not around any text.
+     */
+    readonly onGroupClose?: boolean
+  }
+  /**
    * The RECT a `%%…box` font draws round this row — see the part-order branch of
    * `topTextBlock`. Present only when the font asked for one; the emitter turns it into
    * abcjs's four filled rules and wraps the pair in a group.
@@ -13766,6 +13802,20 @@ function topTextBlock(
    * 123.08. **No pixel gate compares text POSITION** — they pair noteheads — so it was
    * wrong on every titled tune in the repo and only the byte table could say so.
    */
+  /**
+   * `metaTextInfo.<field>` as the `abcelem` a selectable text row is wrapped with — the
+   * SAME object `TopText` hands `addTextIf`/`richText` as its `info`
+   * (`top-text.js:23`, `:39`, `:64`, `:70`, `:75`). No range means no `info`, which
+   * `addTextIf` answers with abcjs's own `{startChar: -2, endChar: -2}`.
+   */
+  const selectableIn = (
+    elType: string,
+    range: SourceRange | undefined,
+    text: string,
+  ): { selectable: NonNullable<PlacedText['selectable']> } => ({
+    selectable: { elType, startChar: range?.start ?? -2, endChar: range?.end ?? -2, text },
+  })
+
   const centre = PAGE_PADDING.left + width / 2
 
   // **AND PRINT OPENS THE BLOCK WITH `spacing.top`** — `if (isPrint) this.rows.push({ move:
@@ -13804,12 +13854,13 @@ function topTextBlock(
       bold: false,
       italic: false,
       anchor: 'middle',
+      ...selectableIn('title', metadata.titleRanges[0], plainText(title)),
     })
     advanceText(title, titleSize, boxOf('titlefont'))
   }
 
   // Second and later `T:` fields are subtitles — abcm2ps's convention, and abcjs's.
-  for (const subtitle of subtitles) {
+  for (const [i, subtitle] of subtitles.entries()) {
     if (plainText(subtitle) === '') continue
     // …and a subtitle's own leading gap is a row too — see `spend`.
     spend(ENGRAVE.subtitleSpace)
@@ -13826,6 +13877,10 @@ function topTextBlock(
       ...faceIn('subtitlefont'),
       ...boxIn('subtitlefont', centre, plainText(subtitle), 'middle'),
       ...richIn(subtitle, 'subtitlefont', false, false),
+      // **A LEADING SUBTITLE'S RANGE IS ITS OWN `T:` LINE'S**, not the title's — `TopText`
+      // walks `lines[index].subtitle` and passes that whole object as the `info`
+      // (`top-text.js:26-31`), where every other row takes `metaTextInfo.<field>`.
+      ...selectableIn('subtitle', metadata.titleRanges[i + 1], plainText(subtitle)),
     })
     advanceText(subtitle, sizeOf('subtitlefont'), boxOf('subtitlefont'))
   }
@@ -13860,6 +13915,7 @@ function topTextBlock(
         anchor: 'start',
         ...faceIn('infofont'),
         ...boxIn('infofont', PAGE_PADDING.left, rhythm, 'start'),
+        ...selectableIn('rhythm', metadata.fieldRanges.rhythm, rhythm),
       })
     }
     /**
@@ -13901,6 +13957,11 @@ function topTextBlock(
         ...faceIn('composerfont'),
         ...boxIn('composerfont', PAGE_PADDING.left + width, right, 'end'),
         ...richIn(rightRich, 'composerfont', false, true),
+        // **THE COMPOSER'S RANGE, EVEN WHEN THE ROW IS THE `O:`'s TEXT.** `TopText` builds
+        // one `composerLine` from both and hands it `info: metaTextInfo.composer`
+        // (`top-text.js:64`), so a tune with only an `O:` draws `" (China)"` under the
+        // COMPOSER's absent range — `{startChar: -2}`, not the origin's.
+        ...selectableIn('composer', metadata.fieldRanges.composer, right),
       })
     }
     // THE ROW ADVANCES BY WHICHEVER FIELD MOVES IT, not by the taller of the two.
@@ -13933,6 +13994,7 @@ function topTextBlock(
       ...faceIn('composerfont'),
       ...boxIn('composerfont', PAGE_PADDING.left + width, author, 'end'),
       ...richIn(authorRich, 'composerfont', false, true),
+      ...selectableIn('author', metadata.fieldRanges.author, author),
     })
     advanceText(authorRich, sizeOf('composerfont'), boxOf('composerfont'))
   }
@@ -13965,6 +14027,7 @@ function topTextBlock(
       anchor: 'start',
       ...faceIn('partsfont'),
       ...richIn(partOrderRich, 'partsfont', false, false),
+      ...selectableIn('partOrder', metadata.fieldRanges.partOrder, partOrder),
       ...(boxed
         ? {
             boxRect: {
@@ -14153,6 +14216,22 @@ function appendFreeText(
   /** The `padding` a boxed row adds to its BASELINE (`draw/text.js:57`). */
   const boxPad = (type: AbcFontType): number =>
     fonts[type]?.box === true ? sizeOf(type) * ENGRAVE.fontBoxPadding : 0
+  /**
+   * `Subtitle` and `FreeText` read `info.startChar`/`endChar` off the LINE object and
+   * supply no default (`subtitle.js:7`, `free-text.js:11`), so a `%%center` — which
+   * `addCentered` pushes with no span at all — is genuinely spanless.
+   */
+  const selectableRow = (
+    elType: string,
+    range: SourceRange | undefined,
+    text: string,
+  ): { selectable: NonNullable<PlacedText['selectable']> } => ({
+    selectable: {
+      elType,
+      ...(range === undefined ? {} : { startChar: range.start, endChar: range.end }),
+      text,
+    },
+  })
   /** The FACE the directive named, and the weight and style it replaced wholesale. */
   const fontIn = (type: AbcFontType): Partial<PlacedText> => {
     const font = fonts[type]
@@ -14208,6 +14287,9 @@ function appendFreeText(
             goldenTextHeight(size),
             'middle',
           ),
+          // `Subtitle`'s row carries `startChar: info.startChar` off the LINE object
+          // (`subtitle.js:7`), which for a mid-tune `T:` is that field line's own span.
+          ...selectableRow('subtitle', block.sourceRange, line),
         })
       }
       spend(goldenTextHeight(size) + boxOf('subtitlefont'))
@@ -14264,6 +14346,8 @@ function appendFreeText(
               block.align === 'center' ? 'middle' : 'start',
             )
           : {}),
+        // **A `%%center` HAS NO SPAN AT ALL** — see `PlacedText.selectable`.
+        ...selectableRow('freeText', block.sourceRange, line),
       })
     })
     spend(
