@@ -323,7 +323,35 @@ function decoratedRange(abc: string, event: MusicEvent): SourceRange | null {
     abc[end] === "<"
   )
     end += 1;
-  while (abc[end] === " " || abc[end] === "\t" || abc[end] === "-") end += 1;
+  /**
+   * …**AND THE WHITESPACE RUN IS ENTERED ONLY BY A LITERAL SPACE OR TAB, WHICH IS WHERE A
+   * `\` LINE CONTINUATION GETS IN.** The switch arm is `case ' ': case '\t':` and the
+   * do-while inside it tests `tokenizer.isWhiteSpace(c) || c === '-'`
+   * (`abc_parse_music.js:1241-1262`) — and `isWhiteSpace` answers TRUE for `\x12`
+   * (`abc_tokenizer.js:420-422`), the character abcjs's preprocessing puts where a `\`
+   * continuation stood, padding the rest of the line with SPACES so the count is unchanged
+   * (`abc_parse.js:513-517`).
+   *
+   * **SO THE TWO TESTS DISAGREE ON `\x12`, AND THAT ASYMMETRY IS THE RULE**: ` e6 \` is a
+   * span of five because a space opened the run, while `e2)\` closes at the `)` because
+   * nothing opened one. Swallowing the continuation unconditionally took FOUR ratcheted
+   * tunes red while the aggregate improved, which is what named it.
+   */
+  if (abc[end] === " " || abc[end] === "\t") {
+    while (abc[end] === " " || abc[end] === "\t" || abc[end] === "-") end += 1;
+    /**
+     * **AND A CHORD DOES NOT TAKE THE CONTINUATION, BECAUSE A CHORD HAS ITS OWN LOOP.**
+     * The post-chord `while (i < line.length && !postChordDone)` switch tests the LITERAL
+     * `' '` and `'\t'` (`abc_parse_music.js:417-421`) where the single-note branch's
+     * do-while calls `isWhiteSpace` — so `\x12` falls to that switch's
+     * `default: postChordDone = true` and stops it. `~g \` is a span of four and
+     * `[^G^e^c']   \` one of twelve, on the same line of the same tune.
+     */
+    if (event.type !== "chord") {
+      const cont = /^\\[ \t]*(%[^\n]*)?/.exec(abc.slice(end));
+      if (cont !== null) end += cont[0].length;
+    }
+  }
   return { start, end };
 }
 
@@ -616,9 +644,11 @@ const restType = (kind: string): string =>
  * the directive turns off the mid-tune key change a `K:` LINE makes and leaves a bracketed
  * one alone. `abcts-keywarn` is the fixture, and it is one of ours.
  */
-const keyInStream = (measure: Measure, keywarn?: boolean): boolean =>
-  measure.keyChangeSourceRange !== null &&
-  (measure.keyChangeInline === true || keywarn !== false);
+const inStream = (
+  range: SourceRange | null | undefined,
+  inline: boolean | undefined,
+  keywarn: boolean | undefined,
+): boolean => range != null && (inline === true || keywarn !== false);
 
 function voiceElements(
   abc: string,
@@ -688,11 +718,21 @@ function voiceElements(
      * `hoistLeadingStaffFields`. Emitted here whatever their position, because the test is
      * "does music precede it", which only the assembled line can answer.
      */
-    if (keyInStream(measure, keywarn)) {
-      if (measure.clefChange !== null)
-        out.push(el("clef", measure.keyChangeSourceRange));
+    // **AND A CLEF IS ITS OWN ELEMENT, WITH OR WITHOUT A KEY BESIDE IT** —
+    // `if (result.foundClef) appendStartingElement('clef', …)` is unconditional on the key
+    // (`abc_parse_header.js:508-509`), so `[K: treble+8]` puts a CLEF in the stream and no
+    // key, and `getElementFromChar` answers `clef` for its characters.
+    if (
+      measure.clefChange !== null &&
+      inStream(
+        measure.clefChangeSourceRange,
+        measure.clefChangeInline,
+        keywarn,
+      )
+    )
+      out.push(el("clef", measure.clefChangeSourceRange));
+    if (inStream(measure.keyChangeSourceRange, measure.keyChangeInline, keywarn))
       out.push(el("keySignature", measure.keyChangeSourceRange));
-    }
     /**
      * **A STANDALONE `M:` LINE IS NEVER IN THE STREAM AND AN INLINE OR CONTINUED ONE ALWAYS
      * IS.** The header parser's `M:` arm only fills `multilineVars.meter` for the next

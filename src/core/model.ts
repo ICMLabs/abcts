@@ -844,6 +844,17 @@ export interface Measure {
    * `src/compat/lines.ts`).
    */
   readonly keyChangeInline?: boolean
+  /**
+   * Where the `K:` that named this clef was written, and whether it was bracketed.
+   *
+   * A CLEF is its own element in `tune.lines` — `if (result.foundClef)
+   * appendStartingElement('clef', startChar, endChar, …)` runs whether or not a key came
+   * with it (`abc_parse_header.js:508-509`, `:366-367`) — so `[K: treble+8]` puts a clef in
+   * the stream and no key at all, and `getElementFromChar` answers `clef` for its
+   * characters.
+   */
+  readonly clefChangeSourceRange?: SourceRange | null
+  readonly clefChangeInline?: boolean
   /** A mid-tune `M:` taking effect at this measure. */
   readonly meterChange: Meter | null
   readonly meterChangeSourceRange: SourceRange | null

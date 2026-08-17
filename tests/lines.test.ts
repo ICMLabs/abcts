@@ -167,6 +167,7 @@ const PASSING: readonly string[] = [
   "sib/S8-layout-tune8",
   "sib/S8-layout-tune9",
   "sib/S8-layout-tune10",
+  "sib/S8-layout-tune11",
   "sib/ave-verum-corpus-tune0",
   "sib/brother-john-inline-voices-tune0",
   "sib/center-text-tune0",
@@ -256,6 +257,7 @@ const PASSING: readonly string[] = [
   "repo/abcjs-synth-flattener-17-midi-grace-notes-tune0",
   "repo/abcjs-synth-flattener-18-midi-program-40-tune0",
   "repo/abcjs-synth-flattener-19-cdef-z4-fedc-tune0",
+  "repo/abcjs-synth-flattener-20-k-treble-8-b-a4-ce-f-4-k-treble-8-g8-g-2-tune0",
   "repo/abcjs-synth-flattener-23-percmap-d-pedal-hi-hat-x-tune0",
   "repo/abcjs-synth-flattener-24-percmap-c-high-tom-x-tune0",
   "repo/abcjs-synth-flattener-25-cd-d2-d2-dz-tune0",
@@ -431,7 +433,7 @@ describe("tune.lines and getElementFromChar", () => {
     // 251,396 of 256,138 until 2026-08-16, when the sibling repo's edits to two fixtures
     // took both numbers down with them — the FLOOR moves with its corpus, and the
     // exclusions above are what make it comparable at all.
-    expect(agree).toBeGreaterThanOrEqual(255485);
+    expect(agree).toBeGreaterThanOrEqual(255507);
   });
 
   /**

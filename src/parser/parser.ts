@@ -967,6 +967,9 @@ class VoiceBuilder {
   private pendingKeyChangeInline = false
   /** The meter came off a standalone `M:` LINE — see `Measure.meterChangeStandalone`. */
   private pendingMeterChangeStandalone = false
+  /** Where the `K:` that named this clef was written — see `Measure.clefChangeSourceRange`. */
+  private pendingClefChangeRange: SourceRange | null = null
+  private pendingClefChangeInline = false
   private pendingClefChange: Clef | null = null
   private pendingTempoChange: Tempo | null = null
   private pendingTempoChangeRange: SourceRange | null = null
@@ -1072,8 +1075,10 @@ class VoiceBuilder {
   }
 
   /** A mid-tune `K:… clef=` or `[K: bass]`. Delta, like the key change. */
-  setClefChange(clef: Clef): void {
+  setClefChange(clef: Clef, range: SourceRange | null = null, inline = false): void {
     this.pendingClefChange = clef
+    this.pendingClefChangeRange = range
+    this.pendingClefChangeInline = inline
   }
 
   /**
@@ -1137,6 +1142,8 @@ class VoiceBuilder {
         ? {}
         : { keyChangeClef: this.pendingKeyChangeClef }),
       clefChange: this.pendingClefChange,
+      clefChangeSourceRange: this.pendingClefChangeRange,
+      ...(this.pendingClefChangeInline ? { clefChangeInline: true } : {}),
       tempoChange: this.pendingTempoChange,
       tempoChangeSourceRange: this.pendingTempoChangeRange,
       ...(this.pendingMidi.length > 0 ? { midiCommands: this.pendingMidi } : {}),
@@ -1154,6 +1161,8 @@ class VoiceBuilder {
     this.pendingKeyChangeClef = undefined
     this.pendingKeyChangeInline = false
     this.pendingClefChange = null
+    this.pendingClefChangeRange = null
+    this.pendingClefChangeInline = false
     this.pendingTempoChange = null
     this.pendingTempoChangeRange = null
     this.pendingMidi = []
@@ -3296,7 +3305,7 @@ class Parser {
               inline ? (midClef ?? defaultClef) : undefined,
               inline,
             )
-          if (midClef !== null) builder.voice.setClefChange(midClef)
+          if (midClef !== null) builder.voice.setClefChange(midClef, range, inline)
           // A MID-TUNE `K: octave=` is GLOBAL and takes effect from here. abcjs reads it
           // per note as the fallback under the voice's own `octave=`, so `parse-note-id-01`
           // — whose second half is written an octave lower on purpose — printed 27.1px
