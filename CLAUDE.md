@@ -950,7 +950,14 @@ checkpoint and hand off as you go so no context is lost.
 > `Docs/CHECKPOINT-2026-08-14.md` — §4 is the work list as it stood, §5 the harness. Then the
 > files below.
 
-**READ `Docs/CHECKPOINT-2026-08-13.md` FIRST** — the current state (3 of 171, 168 byte-exact
+**READ `Docs/CHECKPOINT-2026-08-17.md` FIRST** — the current state (selectables CLOSED at
+389 of 389, `metaTextInfo` 0 of 310, `tune.lines` 255,641 of 255,684), §1 the field-range
+plumbing that paid four times, §2 the selectables' eleven `wrapSvgEl` sites and the
+one-walk refactor, §3 the ten `tune.lines` findings and §3.1's `\x12` table, §4 abcjs's own
+default staffwidth and the SEVEN gates that broke with only three saying so, §5 WHAT IS
+LEFT, §6 the harness and §7 the rules. `Docs/HANDOFF-2026-08-17.md` has the session prompt,
+THE NEXT UNIT and the six traps. Then
+`Docs/CHECKPOINT-2026-08-13.md` — the current state (3 of 171, 168 byte-exact
 and all ratcheted), §2 the ten landings, §3 WHAT IS LEFT (the tempo font measured and
 reverted, and the two rows unchanged from `-08-12`), §5 the eight new abcjs probes and §6
 the rules. `Docs/HANDOFF-2026-08-13.md` has the session prompt and THE THREE. Then
@@ -1133,6 +1140,95 @@ backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
 
+> 🖱️ **`engraver.selectables` IS CLOSED — 389 OF 389, ALL FOUR CASES RATCHETED**
+> (2026-08-17), from 158 when the day opened. `tune.lines` is **255,641 of 255,684
+> characters and 290 of 295 tunes exact**, from 250,942 and 185. A new gate —
+> **`metaTextInfo`, 312 tunes and 310 field positions harvested by RUNNING abcjs, which its
+> own suite asserts nowhere** — opened at 4 of 310 and closed at 0. Suite **1803 passing, 2
+> expected-fail, no reds**; every other table is still at zero.
+>
+> **THE UNIT WAS ONE PIECE OF PLUMBING AND IT PAID FOUR TIMES**, as the handoff predicted:
+> `applyField`'s ranges now reach `metaTextInfo`, `FreeTextBlock.sourceRange` and the
+> `startChar`/`endChar` of every selectable text row, because `TopText` builds each row with
+> `info: metaTextInfo.<field>` and `nonMusic` hands that straight to `wrapSvgEl`. Two rules
+> came out of it that reach far past it: **the trailing-whitespace strip is UNCONDITIONAL**
+> (`abc_parse.js:408-411`) — the `end` every field and every music element takes its offsets
+> from — and **a `%%` directive's span is the line WITHOUT its `%%`**, `iChar + str.length`
+> where `str` is `addDirective`'s argument.
+>
+> ✅ **AND ONE WALK BUILDS BOTH PUBLIC SURFACES NOW, WHICH IS WHAT abcjs DOES.** Its
+> selectable array is built inside `draw()`, so the array and `data-index` cannot disagree;
+> ours had the emitter for the markup and a SECOND walk of the layout for the array — a walk
+> that could not reach a text row, a brace, a voice name, an ending, a triplet, a curve or a
+> dynamic **at all**, because none of those is in `staff.voices`. Every rule about WHICH
+> elements are selectable now lives once. The records ride the eager `toSVG` call the tune
+> object already makes, so nothing is laid out or rendered twice and no `Layout` is retained.
+>
+> ⚠️ **AND AN INDEX ALLOCATED IN THE WRONG PASS IS INVISIBLE TO A COUNT.** The
+> `otherchildren` run is SORTED after it is built, so its indices cannot be handed out while
+> it is: each entry carries the record it wants and a SLOT in its markup. Getting it wrong
+> would have mis-numbered nine dynamics, six curves, an ending and a triplet **while every
+> count looked right**.
+>
+> 🔌 **abcjs HAS A DEFAULT STAFFWIDTH OF ITS OWN AND OURS WAS NOT IT** — 740 on screen, 680
+> in print (`engraver-controller.js:52-60`, `:210`). Ours fell through to the engine's 700px
+> PAGE, which is the goldens' `staffwidth: 670` plus abcjs's margins, so a host calling
+> `renderAbc('paper', abc)` with no params got a page **70px narrow** and every centred title
+> with it. **NO GEOMETRY GATE HERE COULD SEE IT: they all rendered with `{}` against 670
+> goldens, so they agreed only while the default was wrong.** Named by the selectable oracle,
+> the one generated WITHOUT a staffwidth.
+>
+> ⚠️ **AND FIXING IT BROKE SEVEN GATES WHILE ONLY THREE SAID SO.** The harvested ranked table
+> went to **74 of 177 fixtures off some axis, one by 211.8px, AND ITS ASSERTION PASSED THE
+> WHOLE TIME** — it ratchets "no worse than recorded" against numbers it had already
+> recorded. It was found by READING THE REPORT, which is the only thing that could have.
+> **A GATE THAT RECORDS ITS OWN NUMBERS CANNOT SEE A CHANGE OF UNITS.** Every gate that opens
+> a `dump-svg.js` golden now passes `{staffwidth: 670}` explicitly, which is what they always
+> meant.
+>
+> 🧩 **AND `tune.lines` CLOSED TEN FINDINGS OUT OF TWO FUNCTIONS** — `getCoreNote` and
+> `appendStartingElement`, read first and measured second. The ones whose LESSON transfers:
+>
+> - **A STAFF FIELD WRITTEN BEFORE ANY MUSIC ON ITS LINE BELONGS TO THE LINE ABOVE.**
+>   `appendStartingElement` is a three-way branch — note/bar → PUSH with the span, same type
+>   → REPLACE in place, neither → onto `staff[n][type]` where it has no span and
+>   `getElementFromChar` (voices only) can never see it (`tune-builder.js:272-295`) — and
+>   `startNewLine` is LAZY, so the push lands on the line above. **THIS CORRECTS 2026-08-16's
+>   "a standalone `K:` or `M:` line is NOT in the stream"**, which was true only of the case
+>   measured then. Predicted from the source and then confirmed row for row by
+>   `/tmp/gp/lines.js` on `S6-keys` before a line was written.
+> - **THE THREE TESTS THAT READ `\x12` DO NOT AGREE, AND THAT IS THE RULE.** abcjs's
+>   preprocessing puts `\x12` where a `\` continuation stood and `isWhiteSpace` answers TRUE
+>   for it — but the note's whitespace do-while calls `isWhiteSpace` (so ` e6 \` is one span
+>   of five), its enclosing switch arm tests the LITERAL `' '`/`'\t'` (so `e2)\` closes at
+>   the `)`), and a CHORD's post-loop switch tests the literals with a `default` that STOPS it
+>   (so `[^G^e^c']   \` stops before the `\` while `~g \` swallows it — **on the same line
+>   of the same tune**).
+> - **AN `&` OVERLAY LAYER IS A VOICE OF ITS OWN WITH ITS OWN COPY OF THE BARLINES, AND THE
+>   TILING IS PER LINE ACROSS EVERY VOICE**, because READING is: abcjs's tokenizer reads one
+>   line top-to-bottom whatever voice each element lands in, so the barline after a layer did
+>   NOT tile back over it. Per-VOICE tiling had one barline swallowing a whole overlay.
+> - **`|1` IS ONE ELEMENT IN ABCJS AND TWO IN OURS** — `letter_to_bar` consumes the barline,
+>   optional whitespace, an optional `[` and a token of `1234567890-,`, and the element spans
+>   the lot. **The same finding the chord-grid arc's biggest row was**, one surface over.
+> - **A `K:` NAMING A CLEF APPENDS THE CLEF FIRST AND THEN THE KEY, from the same two
+>   characters**, so `getElementFromChar` over `K:C bass` answers `clef`. And a clef is its
+>   own element with or without a key beside it.
+> - **A STANDALONE `M:` LINE IS NEVER IN THE STREAM, AND THAT IS A THIRD STATE** rather than
+>   the negation of inline — an `M:` after a `\` continuation is neither.
+>
+> ⚠️ **AND A RATCHET THAT NAMES ROWS CAUGHT FIVE REGRESSIONS THE AGGREGATE HID**, in three
+> separate landings, every one while the total improved.
+>
+> ⚠️ **AND /tmp IS CLEANED: THE SCRATCHPAD abcjs CAME BACK HALF THERE** — `src/` survived with
+> its instrumentation and every top-level file was gone, which reads as `Cannot find module`
+> rather than as a missing tree. The restore recipe is in the handoff.
+>
+> **READ `Docs/HANDOFF-2026-08-17.md` FIRST** — THE NEXT UNIT (`tune.topText` /
+> `tune.bottomText` / `metaText`, which are abcjs's INTERMEDIATE row list and which our
+> layout already computes both halves of), the gate table, the five open `tune.lines` tunes
+> with their character counts, and the six traps — then `Docs/CHECKPOINT-2026-08-17.md`.
+
 > 🖱️ **THE SELECTABLES ARE IN — 158 OF 389, AND THE JOIN IS A REFERENCE RATHER THAN A
 > POSITION** (2026-08-16). abcjs's selectable array holds `absEl.abcelem`, the very
 > `tune.lines` element, so its two public surfaces agree by IDENTITY; ours are separate
@@ -1228,10 +1324,11 @@ backup remote is not a licence to vendor someone else's tree into this one.
 > dying. It is laid out AGAIN inside the lazy accessor now — 0.7ms, and only when a host
 > asks, the same argument `lines` is built on.
 >
-> **READ `Docs/HANDOFF-2026-08-16.md` FIRST** — the gate table, the ordered work list (the
-> other ten `Selectables.add` sites with each one's `abcelem` shape, and the two cheap
-> blockers: a `tempo` and a `part` have no source range, and a key signature's accidentals
-> are measured but not built) — then `Docs/CHECKPOINT-2026-08-16.md`.
+> **SUPERSEDED FOR THE STATE by `Docs/CHECKPOINT-2026-08-17.md`** — the selectables closed
+> at 389 of 389 the next day and the ten `wrapSvgEl` sites are all in. Its work list is
+> spent; what it keeps is the ten rules, the `Layout`-retention trap and the note that this
+> section's "a standalone `K:` or `M:` line is NOT in the stream" is CORRECTED by
+> `-08-17` §3. `Docs/HANDOFF-2026-08-16.md` has that session's prompt.
 
 > 🔌 **THE API SURFACE IS THE ARC NOW, AND ITS GATE IS BUILT BY WALKING abcjs'S OBJECT**
 > (2026-08-15c). The ruling is Lance's: *match abcjs on every API, every output; internally
