@@ -27,7 +27,7 @@ describe("per-notehead probe", () => {
       "notehead",
     );
     const ours = byClass(
-      absolutePixels(renderAll(abc, {})[0]?.svg ?? ""),
+      absolutePixels(renderAll(abc, { staffwidth: 670 })[0]?.svg ?? ""),
       "notehead",
     );
     const pad = (n: number, w = 8) => n.toFixed(2).padStart(w);

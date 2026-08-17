@@ -47,7 +47,9 @@ describe("abcjs test-suite corpus, ranked", () => {
     for (const name of names) {
       const abc = readFileSync(join(fixturesDir, `${name}.abc`), "utf-8");
       const files = goldensFor(name);
-      const ours = renderAll(abc, {});
+      // The goldens' own `{staffwidth: 670}` — abcjs's screen DEFAULT is 740, so a bare
+      // `{}` compares a 770px page against a 700px one (`engraver-controller.js:52-60`).
+      const ours = renderAll(abc, { staffwidth: 670 });
       // A tune-count mismatch is a CONTENT gap and the ratchet owns it; it has no axes.
       if (ours.length !== files.length) {
         rows.push(

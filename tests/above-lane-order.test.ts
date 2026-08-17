@@ -142,7 +142,9 @@ interface Measured {
 }
 
 function measure(abc: string): Measured {
-  const doc = absolutePixels(renderAll(abc, {})[0]?.svg ?? "");
+  const doc = absolutePixels(
+    renderAll(abc, { staffwidth: 670 })[0]?.svg ?? "",
+  );
   const topLine = doc.items.find((i) => i.cls.includes("top-line"))?.y ?? 0;
   // KEYED ON `data-name`, NOT ON THE CLASS — abcjs's dynamic class is
   // `classes.generate('decoration dynamics')`, which is the EMPTY STRING when

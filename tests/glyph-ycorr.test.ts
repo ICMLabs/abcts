@@ -43,7 +43,9 @@ const EPSILON = 0.05;
  * fragile in general, exact for a tune with one decoration in it.
  */
 function glyphsAfterClef(abc: string): number[] {
-  const doc = absolutePixels(renderAll(abc, {})[0]?.svg ?? "");
+  const doc = absolutePixels(
+    renderAll(abc, { staffwidth: 670 })[0]?.svg ?? "",
+  );
   const top = doc.items.find((i) => i.cls.includes("top-line"))?.y ?? 0;
   return (
     doc.items

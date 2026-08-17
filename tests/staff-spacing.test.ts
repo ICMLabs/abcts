@@ -41,7 +41,7 @@ describe("staff spacing vs abcjs", () => {
       if (!existsSync(golden)) continue;
       const g = topLines(readFileSync(golden, "utf-8"));
       const abc = readFileSync(join(corpusDir, `${entry.name}.abc`), "utf-8");
-      const o = topLines(renderAll(abc, {})[0]?.svg ?? "");
+      const o = topLines(renderAll(abc, { staffwidth: 670 })[0]?.svg ?? "");
       // A staff-count mismatch is a different defect and the structure gate owns it.
       if (g.length < 2 || g.length !== o.length) continue;
       const errors = g

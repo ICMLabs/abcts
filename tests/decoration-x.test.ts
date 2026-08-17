@@ -108,7 +108,9 @@ const DYNAMIC_CEILING = 0.94;
 
 /** Every unclassed glyph clear of the staff, by its x relative to the nearest notehead. */
 function marks(abc: string): number[] {
-  const doc = absolutePixels(renderAll(HEAD + abc + "\n", {})[0]?.svg ?? "");
+  const doc = absolutePixels(
+    renderAll(HEAD + abc + "\n", { staffwidth: 670 })[0]?.svg ?? "",
+  );
   const top = doc.items.find((i) => i.cls.includes("top-line"))?.y ?? 0;
   const heads = doc.items
     .filter((i) => i.cls.includes("abcjs-notehead"))

@@ -42,7 +42,9 @@ describe("controlled pair", () => {
       const name = file.replace(/\.abc$/, "");
       if (!existsSync(`${dir}/${name}.svg`)) continue;
       const ours =
-        renderAll(readFileSync(`${dir}/${file}`, "utf-8"), {})[0]?.svg ?? "";
+        renderAll(readFileSync(`${dir}/${file}`, "utf-8"), {
+          staffwidth: 670,
+        })[0]?.svg ?? "";
       const gold = readFileSync(`${dir}/${name}.svg`, "utf-8");
       const g = byClass(absolutePixels(gold), "notehead");
       const o = byClass(absolutePixels(ours), "notehead");
