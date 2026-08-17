@@ -356,7 +356,7 @@ const TREBLE_MIDDLE_LINE_INDEX = 34;
  * abcjs writes the MAJOR mode as the empty string, and `root`/`acc` are the tonic split in
  * two — `Bb` is `{root: "B", acc: "b"}`.
  */
-const keyElement = (key: KeySignature, clef: Clef): AbcElement => {
+export const keyElement = (key: KeySignature, clef: Clef): AbcElement => {
   const fifths = keyFifths(key);
   const sharps = fifths > 0;
   const shift = keySignatureShift(clef);

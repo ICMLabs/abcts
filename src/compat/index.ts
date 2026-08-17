@@ -42,6 +42,7 @@ import {
   timingsOf,
 } from "../audio/timing.js";
 import {
+  defaultClef,
   type MusicEvent,
   plainText,
   type RichText,
@@ -55,6 +56,7 @@ import {
 } from "./lines.js";
 import {
   findSelectable,
+  keyElement,
   type Selectable,
   selectablesOf,
 } from "./selectables.js";
@@ -235,6 +237,8 @@ export interface TuneObject {
    */
   readonly lines: readonly AbcLine[];
   readonly getElementFromChar: (char: number) => AbcElement | null;
+  /** The first key on any staff of any line, or `{}` (`abc_tune.js:222-233`). */
+  readonly getKeySignature: () => AbcElement | Record<string, never>;
 
   /**
    * `engraver.selectables` and the two accessors over it. abcjs returns `[]` and `null`
@@ -432,6 +436,17 @@ export function renderAbc(
             : Number.parseInt(first.num, 10);
         return { num, den: Number.parseInt(first.den, 10) };
       },
+      /**
+       * `getKeySignature()` — the FIRST key on any staff of any line, or `{}`
+       * (`abc_tune.js:222-233`). It walks `lines`, so it is the same object a host reads
+       * off the staff, and the empty object for a tune with no music is abcjs's own answer
+       * rather than a null.
+       */
+      getKeySignature: () => {
+        const voice = score.voices[0];
+        return keyElement(score.key, voice?.clef ?? defaultClef);
+      },
+
       getBeatLength: () => getBeatLength(score),
       getBarLength: () => getBarLength(score),
       getBeatsPerMeasure: () => getBeatsPerMeasure(score),
