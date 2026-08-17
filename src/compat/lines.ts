@@ -72,6 +72,8 @@ export interface AbcElement {
   postString?: string;
   bpm?: number;
   title?: string;
+  /** A voice name's label, and a text row's own words. */
+  text?: string;
   // ── the staff's own furniture, which abcjs hangs on the STAFF and not on the stream ──
   verticalPos?: number;
   clefPos?: number;

@@ -291,6 +291,18 @@ function abcelemOf(
     // repeated with abcjs's naming, which is a measurement this session did not make.
     // `selection-multiple` has four of them — built now, off the same order and shift the
     // layout draws them with.)
+    /**
+     * **A VOICE NAME IS A WRAPPED TEXT, NOT AN ELEMENT OF THE MUSIC** — `drawVoice` wraps
+     * the label it prints left of the staff in a synthetic abcelem carrying the text and
+     * no span at all (`draw/voice.js:20`). It is one of the ten `wrapSvgEl` sites and the
+     * only one the layout walk can reach today, because ours IS an element.
+     */
+    case "voiceName": {
+      const text = element.texts[0]?.text;
+      return text === undefined
+        ? undefined
+        : { el_type: "voiceName", startChar: -1, endChar: -1, text };
+    }
     case "timeSignature":
       return element.sourceMeter === undefined
         ? undefined
