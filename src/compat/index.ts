@@ -239,6 +239,22 @@ export interface TuneObject {
   readonly getElementFromChar: (char: number) => AbcElement | null;
   /** The first key on any staff of any line, or `{}` (`abc_tune.js:222-233`). */
   readonly getKeySignature: () => AbcElement | Record<string, never>;
+  /**
+   * **`meter` IS STATE THAT `getMeterFraction()` WRITES**, not an accessor — abcjs's own
+   * comment says so: "is this saved value used anywhere? A get function shouldn't change
+   * state" (`abc_tune.js:218-219`). It is `{num, den}`, the fraction, and it exists from
+   * the first call onward. Ours is computed once at construction, which is the same value
+   * a host can observe and does not depend on call order.
+   */
+  readonly meter: AbcjsMeterFraction;
+  /**
+   * `formatting` — the `%%` settings the parser collected. Initialised `{}`
+   * (`abc_tune.js:20`) and read back by `setUpAudio`, which takes `formatting.percmap` and
+   * `formatting.midi` from it (`:628`).
+   */
+  readonly formatting: Record<string, unknown>;
+  /** `metaTextInfo` — where each `metaText` field was written. `{}` until one is recorded. */
+  readonly metaTextInfo: Record<string, unknown>;
 
   /**
    * `engraver.selectables` and the two accessors over it. abcjs returns `[]` and `null`
@@ -446,6 +462,30 @@ export function renderAbc(
         const voice = score.voices[0];
         return keyElement(score.key, voice?.clef ?? defaultClef);
       },
+
+      meter: (() => {
+        const m = abcjsMeter(score);
+        if (m.type === "cut_time") return { num: 2, den: 2 };
+        const first = m.value?.[0];
+        if (m.type !== "specified" || first === undefined)
+          return { num: 4, den: 4 };
+        const num =
+          first.num.indexOf("+") > 0
+            ? first.num
+                .split("+")
+                .reduce((t, part) => t + Number.parseInt(part, 10), 0)
+            : Number.parseInt(first.num, 10);
+        return { num, den: Number.parseInt(first.den, 10) };
+      })(),
+      formatting: {
+        // The two `setUpAudio` reads, which are the only ones abcjs itself makes of this
+        // object — everything else in it is for a host.
+        ...(score.percMap === undefined ? {} : { percmap: score.percMap }),
+        ...(score.drumMap === undefined ? {} : { drummap: score.drumMap }),
+      },
+      // Empty until a field's position is recorded — the same start abcjs has, and the
+      // fields' spans are the piece the text rows need too. See the handoff.
+      metaTextInfo: {},
 
       getBeatLength: () => getBeatLength(score),
       getBarLength: () => getBarLength(score),

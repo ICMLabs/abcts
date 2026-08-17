@@ -127,10 +127,7 @@ const MISSING: readonly string[] = [
   "tune.addUsefulCallbackInfo",
   "tune.bottomText",
   "tune.deline",
-  "tune.formatting",
   "tune.makeVoicesArray",
-  "tune.metaTextInfo",
-  "tune.meter",
   "tune.setupEvents",
   "tune.topText",
 ];
