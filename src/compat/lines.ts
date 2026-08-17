@@ -159,7 +159,20 @@ const el = (
  * got the graces right and missed a bare `.` staccato and the space before a decoration —
  * because the rule is not about content at all.
  */
-const FIELD_ELEMENTS: ReadonlySet<string> = new Set(["tempo", "part"]);
+/**
+ * Elements that came from a BRACKETED or a FIELD-LINE header and keep their own opening —
+ * `letter_to_inline_header` sets `startChar = iChar + i` with `i` already past the
+ * whitespace it ate (`abc_parse_header.js:344-350`), and the field-line arms pass the
+ * line's own span. So the space before a `[K:F]` belongs to NOTHING, exactly as it does
+ * before a `[Q:]`.
+ */
+const FIELD_ELEMENTS: ReadonlySet<string> = new Set([
+  "tempo",
+  "part",
+  "keySignature",
+  "timeSignature",
+  "clef",
+]);
 
 function tile(abc: string, elements: readonly AbcElement[]): AbcElement[] {
   // **EACH ELEMENT OPENS WHERE THE ONE BEFORE IT CLOSED**, and the first of a line opens
@@ -184,28 +197,33 @@ function tile(abc: string, elements: readonly AbcElement[]): AbcElement[] {
     // the `[` and the space before it belongs to NOTHING. Measured on `selection-tempo`:
     // the barline is 46…47 and the `[Q:"left" …]` 48…73, with 47 in neither.
     if (FIELD_ELEMENTS.has(e.el_type)) return own;
-    const before = elements[i - 1]?.endChar;
-    if (before !== undefined && before >= lineStart(own)) return before;
-    /**
-     * **AND AN INLINE FIELD STOPS THE READING EVEN WHEN IT IS IN NO STREAM.** A `[V: …]`
-     * switches voice and is not an element at all, but abcjs's tokenizer has consumed it,
-     * so the first note after it opens at its `]` and not at the line: on
-     * `selection-multiple` the note is 700…714 (`" !mp![b8B8d8] "`) where the line itself
-     * begins at 681. Only reachable for the FIRST element of a line — anything later takes
-     * the previous element's own close — so the only `]` this can find is a field's; a
-     * chord's is inside an element whose own start precedes it.
-     */
     /**
      * **AND A LINE'S OWN LEADING WHITESPACE BELONGS TO NOTHING.** `parseMusic` eats it
      * before it begins reading, so `\n c8| d4` opens its first element at the `c` — six of
      * `S8-layout`'s ten tunes are written that way and abcjs answers null for the space.
      * The space after an inline `[V: …]` is NOT skipped: that one is inside the line and
-     * goes to the element after it, which is why the two fallbacks differ.
+     * goes to the element after it, which is why the whitespace walk is on THIS branch only.
      */
-    let line = lineStart(own);
-    while (line < own && (abc[line] === " " || abc[line] === "\t")) line += 1;
+    const before = elements[i - 1]?.endChar;
+    let from: number;
+    if (before !== undefined && before >= lineStart(own)) from = before;
+    else {
+      from = lineStart(own);
+      while (from < own && (abc[from] === " " || abc[from] === "\t")) from += 1;
+    }
+    /**
+     * **AND AN INLINE FIELD STOPS THE READING EVEN WHEN IT IS IN NO STREAM.** A `[V: …]`
+     * switches voice, a `[L:1/4]` sets the unit length, an `[I:MIDI …]` is a directive and a
+     * `[K: style=harmonic]` names no key — none of them is an element at all, and abcjs's
+     * tokenizer has consumed every one, so the element AFTER opens at the `]`. On
+     * `selection-multiple` that note is 700…714 where its line begins at 681; on
+     * `S8-layout` tune 11 a `[L:1/4]` mid-line moved a key signature thirteen characters.
+     *
+     * The only `]` reachable between the previous close and this element's own start is a
+     * field's: a CHORD's sits inside an element whose own start precedes it.
+     */
     const field = abc.lastIndexOf("]", own - 1);
-    return field >= line ? field + 1 : line;
+    return field >= from ? field + 1 : from;
   });
   elements.forEach((e, i) => {
     e.startChar = opened[i] ?? e.startChar ?? 0;

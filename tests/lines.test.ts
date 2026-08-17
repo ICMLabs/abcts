@@ -148,6 +148,7 @@ const PASSING: readonly string[] = [
   "sib/S4-bars-repeats-tune1",
   "sib/S4-bars-repeats-tune2",
   "sib/S5-directives-tune0",
+  "sib/S5-directives-tune1",
   "sib/S5-directives-tune3",
   "sib/S5-directives-tune4",
   "sib/S5-directives-tune5",
@@ -190,6 +191,7 @@ const PASSING: readonly string[] = [
   "sib/full-song-template-tune0",
   "sib/grandstaff-inline-meter-tune0",
   "sib/happy-birthday-tune0",
+  "sib/inline-key-per-voice-tune0",
   "sib/little swallow-tune0",
   "sib/missing-decorations-tune0",
   "sib/missing-decorations-tune1",
@@ -241,6 +243,7 @@ const PASSING: readonly string[] = [
   "repo/abcjs-synth-flattener-04-g-gab-cde-d7-fga-def-tune0",
   "repo/abcjs-synth-flattener-05-c-cde-def-c2e-d2f-c-c2-d-d-g-d2-e-e-tune0",
   "repo/abcjs-synth-flattener-06-cde-d7-f2-d2-e2-f2-1-g-g4-fedc-c-e4z4-tune0",
+  "repo/abcjs-synth-flattener-07-metronome-tune0",
   "repo/abcjs-synth-flattener-08-em-egab-tune0",
   "repo/abcjs-synth-flattener-09-d-defg-q-1-2-90-defg-tune0",
   "repo/abcjs-synth-flattener-10-q-1-4-129-0476605-cdef-q-1-4-127-gabc-q--tune0",
@@ -428,7 +431,7 @@ describe("tune.lines and getElementFromChar", () => {
     // 251,396 of 256,138 until 2026-08-16, when the sibling repo's edits to two fixtures
     // took both numbers down with them — the FLOOR moves with its corpus, and the
     // exclusions above are what make it comparable at all.
-    expect(agree).toBeGreaterThanOrEqual(255376);
+    expect(agree).toBeGreaterThanOrEqual(255485);
   });
 
   /**
