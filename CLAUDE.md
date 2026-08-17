@@ -1177,6 +1177,23 @@ backup remote is not a licence to vendor someone else's tree into this one.
 > and by `ls -la` on the two inputs, which is the check the 08-12 checkpoint says to reach
 > for before bisecting.
 >
+> ✅ **AND A DUPLICATE VOICE DRAWS NO BARLINE — `bar` IS 24/24 AND THE SUITE IS GREEN.**
+> A voice after the first on a staff sets `voice.duplicate`, "bar lines and other duplicate
+> info need not be created" (`abstract-engraver.js:150`), and its bar, clef, key and meter
+> are each marked `invisible` (`:321-340`) — which `drawAbsolute` returns on before adding
+> anything, so they are neither drawn NOR selectable. **MEASURED FIRST AND READ SECOND, AND
+> THE TWO AGREED EXACTLY**: a probe printed 36 bars against abcjs's 24, precisely the
+> second-voice rows, and the source then named the rule. The plausible explanation — an
+> invisible barline drawing nothing — had already been ported and fires on nothing at all,
+> which is why the read was worth making. Every element type we build now matches abcjs's
+> count on `selection-multiple`.
+>
+> ⚠️ **AND TWO SHARED FIXTURES WERE REWRITTEN MID-SESSION**, at 21:56 on 2026-08-16:
+> `S7-voices` and `multi-voice-rest-placement` in `../abcMusicKit`. The lines corpus's total
+> character count moved UNDER A RUNNING GATE (256,138 → 256,135) and a ratcheted tune went
+> red with no line of ours changed. Both are excluded and the floor rebased; **the suite is
+> 1799 passing, 2 expected-fail and NO reds**, the first fully green run of the arc.
+>
 > ✅ **AND `selection-tempo` IS GREEN — the second case closed** — on the third span rule:
 > **an inline `[Q:…]` BEGINS AT ITS `[`, and the space before it belongs to NOTHING.** The
 > three rules are one rule, and it is what abcjs's TOKENIZER does rather than anything it
