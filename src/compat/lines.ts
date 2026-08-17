@@ -73,6 +73,13 @@ export interface AbcElement {
    * (`abc_parse_music.js:298-303`), so it travels to a host through `tune.lines`.
    */
   barNumber?: number;
+  /**
+   * `|1` — the ending label this barline OPENS, as written (`"1"`, `"1,2"`), and
+   * `endEnding` on the barline that closes one. Both are the parser's fields on the bar
+   * element itself (`abc_parse_music.js:271-280`).
+   */
+  startEnding?: string;
+  endEnding?: boolean;
   // ── a tempo mark, and a body `P:` ──
   preString?: string;
   postString?: string;
@@ -307,13 +314,45 @@ const bar = (
    * abcjs's own three conditions — first voice, visible barline, non-empty measure.
    */
   barNumber?: number,
+  /**
+   * **`|1` IS ONE ELEMENT IN ABCJS AND TWO IN OUR MODEL.** `letter_to_bar` consumes the
+   * barline, then optional whitespace, an optional `[`, and a run of `1234567890-,`, and
+   * `appendElement('bar', startI, i + ret[0], bar)` spans the lot
+   * (`abc_parse_music.js:873-887`, `:305`). So the element carries `startEnding: "1"` and
+   * READS PAST the digits — `|1` is 893…895 where ours ended at 894. The same shape as the
+   * chord-grid arc's biggest finding, one surface over.
+   */
+  volta?: { label: string; abc: string },
 ): AbcElement | null => {
   const e = el("bar", range);
   if (e === null || range === null) return e;
   e.type = (kind === null ? undefined : BARLINE_TYPE[kind]) ?? "bar_thin";
   if (barNumber !== undefined) e.barNumber = barNumber;
+  if (volta !== undefined) {
+    e.startEnding = volta.label;
+    e.endChar = endingEnd(volta.abc, range.end);
+  }
   byRange?.set(range.start, e);
   return e;
+};
+
+/**
+ * How far past a barline `letter_to_bar` reads for its ending label — whitespace, an
+ * optional `[`, then a token of `1234567890-,`, and NOTHING when that token is empty or
+ * opens with a `-` (`abc_parse_music.js:873-887`). A `["…"]` form takes the bracketted
+ * string instead (`:879-882`).
+ */
+const endingEnd = (abc: string, from: number): number => {
+  let i = from;
+  while (abc[i] === " " || abc[i] === "\t") i += 1;
+  if (abc[i] === "[") i += 1;
+  if (abc[i] === '"' && abc[i - 1] === "[") {
+    const close = abc.indexOf('"', i + 1);
+    return close < 0 ? from : close + 1;
+  }
+  const start = i;
+  while (i < abc.length && "1234567890-,".includes(abc[i] ?? "")) i += 1;
+  return i === start || abc[start] === "-" ? from : i;
 };
 
 /**
@@ -533,12 +572,35 @@ function voiceElements(
   openSlurs: number[] = [],
   /** The tune's own `Q:`, for the first voice of the first line — see `projectionOf`. */
   headTempo: AbcElement | null = null,
+  /** abcjs's `multilineVars.inEnding` — tune-wide state, so it is carried across lines. */
+  ending: { open: boolean } = { open: false },
 ): AbcElement[] {
   const out: (AbcElement | null)[] = [];
   const notes: { event: MusicEvent; e: AbcElement }[] = [];
+  /**
+   * **THE VOLTA BELONGS TO THE MEASURE IT OPENS AND THE LABEL TO THE BARLINE BEFORE IT.**
+   * `Measure.voltaSourceRange` IS that barline's range, so the two are matched by position
+   * — which is also how the drawing finds a barline again.
+   */
+  const voltaAt = new Map<number, string>();
+  for (const m of measures)
+    if (m.volta !== null && m.voltaSourceRange !== null)
+      voltaAt.set(m.voltaSourceRange.start, m.volta);
+  const voltaOn = (
+    range: SourceRange | null,
+  ): { label: string; abc: string } | undefined => {
+    const label = range === null ? undefined : voltaAt.get(range.start);
+    return label === undefined ? undefined : { label, abc };
+  };
   for (const measure of measures) {
     out.push(
-      bar(measure.openingBarline, measure.openingBarlineSourceRange, byRange),
+      bar(
+        measure.openingBarline,
+        measure.openingBarlineSourceRange,
+        byRange,
+        undefined,
+        voltaOn(measure.openingBarlineSourceRange),
+      ),
     );
     // ponytail: a mid-tune `[K:]` and `[M:]` carry source ranges and a `[V:… clef=]`,
     // `[Q:]`, `%%MIDI`, `!style=!`, `%%voicecolor` and `P:` do not yet — so those six
@@ -577,6 +639,7 @@ function voiceElements(
         measure.closingBarlineSourceRange,
         byRange,
         measure.closingBarNumber,
+        voltaOn(measure.closingBarlineSourceRange),
       ),
     );
   }
@@ -588,6 +651,28 @@ function voiceElements(
   const stream = out
     .filter((e): e is AbcElement => e !== null)
     .sort((a, b) => (a.startChar ?? 0) - (b.startChar ?? 0));
+  /**
+   * **ANY BARLINE THAT IS NOT A PLAIN THIN `|` ENDS THE ENDING IT SITS IN**, and a barline
+   * that opens ANOTHER while one is open ends that one too:
+   *
+   *     if (inEnding && bar.type !== 'bar_thin') { bar.endEnding = true; inEnding = false }
+   *     if (ret[2]) { bar.startEnding = ret[2]; if (inEnding) bar.endEnding = true; inEnding = true }
+   *
+   * (`abc_parse_music.js:271-280`.) The order is abcjs's: the close is tested BEFORE the
+   * open, so `|1 … :|2 … |]` puts `endEnding` on the `:|2` and on the `|]`. The renderer
+   * already had this rule as a COMPLEMENT; the projection had it nowhere.
+   */
+  for (const e of stream) {
+    if (e.el_type !== "bar") continue;
+    if (ending.open && e.type !== "bar_thin") {
+      e.endEnding = true;
+      ending.open = false;
+    }
+    if (e.startEnding !== undefined) {
+      if (ending.open) e.endEnding = true;
+      ending.open = true;
+    }
+  }
   markBeams(abc, stream);
   return tile(abc, stream);
 }
@@ -775,6 +860,8 @@ export function projectionOf(
   const lines: AbcLine[] = [];
   /** One open-slur stack per voice, carried across every system — see `markSlurs`. */
   const openSlurs: number[][] = [];
+  /** `multilineVars.inEnding`, per voice and carried across the tune's lines. */
+  const endings: { open: boolean }[] = [];
   // Every `T:` after the first is a line of its own that draws nothing — see
   // `RenderDoc.blankLeadingLines`.
   for (const title of score.metadata.titles.slice(1)) {
@@ -835,6 +922,7 @@ export function projectionOf(
               byRange,
               slurs,
               null,
+              endings[k] ?? (endings[k] = { open: false }),
             );
           }),
         },

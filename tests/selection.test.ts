@@ -44,7 +44,16 @@ const GOLDEN = JSON.parse(
 }[];
 
 /** Cases whose every row agrees. Grows, never shrinks. */
-const PASSING: readonly string[] = ["selection-clefs", "selection-tempo"];
+/**
+ * **ALL FOUR — the gate is CLOSED at 389 of 389.** It opened at 158 with two cases
+ * ratcheted on 2026-08-16.
+ */
+const PASSING: readonly string[] = [
+  "selection-multiple",
+  "selection-tempo",
+  "selection-none",
+  "selection-clefs",
+];
 
 /** Deep equality that ignores KEY ORDER, as `chai.assert.deepStrictEqual` does. */
 const same = (a: unknown, b: unknown): boolean => {
@@ -148,7 +157,7 @@ describe("engraver.selectables", () => {
 
   /** A floor, not a target: it moves up as the projection grows and never down. */
   it("agrees on at least the rows it did", () => {
-    expect(rows.reduce((t, r) => t + r.agree, 0)).toBeGreaterThanOrEqual(385);
+    expect(rows.reduce((t, r) => t + r.agree, 0)).toBeGreaterThanOrEqual(389);
   });
 
   /**

@@ -140,6 +140,8 @@ const PASSING: readonly string[] = [
   "sib/S3-note-syntax-tune22",
   "sib/S3-note-syntax-tune23",
   "sib/S3-note-syntax-tune24",
+  "sib/S4-bars-repeats-tune0",
+  "sib/S4-bars-repeats-tune1",
   "sib/S5-directives-tune0",
   "sib/S5-directives-tune3",
   "sib/S5-directives-tune4",
@@ -218,6 +220,7 @@ const PASSING: readonly string[] = [
   "repo/abcjs-synth-flattener-03-pppp-cdef-gabc-y-ffff-bcba-gfed-y-pppp-c-tune0",
   "repo/abcjs-synth-flattener-04-g-gab-cde-d7-fga-def-tune0",
   "repo/abcjs-synth-flattener-05-c-cde-def-c2e-d2f-c-c2-d-d-g-d2-e-e-tune0",
+  "repo/abcjs-synth-flattener-06-cde-d7-f2-d2-e2-f2-1-g-g4-fedc-c-e4z4-tune0",
   "repo/abcjs-synth-flattener-08-em-egab-tune0",
   "repo/abcjs-synth-flattener-09-d-defg-q-1-2-90-defg-tune0",
   "repo/abcjs-synth-flattener-10-q-1-4-129-0476605-cdef-q-1-4-127-gabc-q--tune0",
@@ -256,8 +259,10 @@ const PASSING: readonly string[] = [
   "repo/abcjs-synth-midi-01-midi-options-tune0",
   "repo/abcjs-synth-midi-02-staccato-tune0",
   "repo/abcjs-synth-midi-03-percmap-tune0",
+  "repo/abcjs-synth-timing-01-cde-fg-ab-1-bcd-2-efg-tune0",
   "repo/abcjs-synth-timing-02-score-1-2-tune0",
   "repo/abcjs-synth-timing-05-subtitle-crash-tune0",
+  "repo/abcjs-synth-timing-06-repeat-at-start-of-line-crash-tune0",
   "repo/abcjs-synth-timing-07-skip-ties-crash-tune0",
   "repo/abcjs-synth-timing-08-tie-repeat-crash-tune0",
   "repo/abcjs-synth-timing-09-f-c-2d-2-e-4-g-6-a-2-g-4-e-4-tune0",
@@ -271,6 +276,7 @@ const PASSING: readonly string[] = [
   "repo/abcjs-visual-layout-06-staves-1-2-3-4-tune0",
   "repo/abcjs-visual-layout-07-v-1-b2-a2-tune0",
   "repo/abcjs-visual-layout-08-staffwidth-100-tune0",
+  "repo/abcjs-visual-layout-09-endings-tune0",
   "repo/abcjs-visual-misc-02-title-tune0",
   "repo/abcjs-visual-misc-03-jazzchords-tune0",
   "repo/abcjs-visual-misc-05-cccc-d-c-alcoda-dddd-d-c-alfine-eeee-d-s-tune0",
@@ -314,6 +320,7 @@ const PASSING: readonly string[] = [
   "repo/abcjs-visual-tablature-14-c-tune0",
   "repo/abcjs-visual-tablature-18-a-b-tune0",
   "repo/abcjs-visual-tablature-19-d-a-d-g-b-e-tune0",
+  "repo/abcjs-visual-tablature-20-score-1-2-tune0",
   "repo/abcjs-visual-tablature-21-a2-a-a-f-f-f-f-f-e-ee-g-gg-g-k-eb-a2-a2-tune0",
   "repo/abcjs-visual-tablature-22-g-cegda-tune0",
   "repo/abcjs-visual-tablature-23-gab-tune0",
@@ -390,7 +397,7 @@ describe("tune.lines and getElementFromChar", () => {
     // 251,396 of 256,138 until 2026-08-16, when the sibling repo's edits to two fixtures
     // took both numbers down with them — the FLOOR moves with its corpus, and the
     // exclusions above are what make it comparable at all.
-    expect(agree).toBeGreaterThanOrEqual(254031);
+    expect(agree).toBeGreaterThanOrEqual(254509);
   });
 
   /**
