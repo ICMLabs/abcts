@@ -871,6 +871,15 @@ export interface PlacedGlyph {
    */
   readonly groupStart?: boolean
   /**
+   * **THE DECORATION'S OWN NAME, ON A VOLUME MARK ONLY** — `drawDynamics` wraps its glyph
+   * with `{el_type: "dynamicDecoration", startChar: -1, endChar: -1, decoration: params.dec}`
+   * (`draw/dynamics.js:16`) where `drawCrescendo` writes the same three fields and NO
+   * `decoration` at all (`draw/crescendo.js:21`). The golden shows both side by side, so
+   * the absence is the contract rather than an omission. Carried on the glyph that OPENS
+   * the mark: a kerned `mp` is two glyphs and one selectable.
+   */
+  readonly decoration?: string
+  /**
    * Position within a CHORD, 1 = lowest pitch, counting upward. Absent on a single note.
    *
    * abcjs puts `abcjs-chord-pos-N` on each notehead of a chord and nothing on a lone one,
@@ -5780,13 +5789,13 @@ function decorationGlyphs(
             y: stepToY(lane),
             role: 'dynamic',
             group: ABCJS_DATA_NAMES_DYNAMIC,
-            ...(i === 0 ? { groupStart: true } : {}),
+            ...(i === 0 ? { groupStart: true, decoration: name } : {}),
           })
           const next = chars[i + 1]
           if (next !== undefined) dx += kernDynamic(chars[i] ?? '', next, table.width(letter))
         })
       } else {
-        out.push({ name: glyph, x: headX, y: stepToY(lane), role: 'dynamic' })
+        out.push({ name: glyph, x: headX, y: stepToY(lane), role: 'dynamic', decoration: name })
       }
     }
   }

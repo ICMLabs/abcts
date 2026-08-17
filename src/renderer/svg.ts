@@ -78,6 +78,20 @@ export interface SelectableRecord {
    * an `absElemType` at all.
    */
   readonly abcelem?: Readonly<Record<string, string | number>>;
+  /**
+   * A CURVE'S TWO ANCHOR ELEMENTS. abcjs reads the span off them —
+   * `anchor1.parent.abcelem.startChar - 1` and `anchor2.parent.abcelem.endChar + 1`, "we
+   * assume that the parenthesis are just to the outside of that" (`draw/tie.js:18-26`) —
+   * and BOTH are `-1` when the curve is a TIE, whose two ends are the same pitch and carry
+   * no parentheses to be outside of.
+   *
+   * The elements travel rather than the numbers because the drawing knows WHICH elements
+   * and only the projection knows their spans. Omitted entirely for a tie.
+   */
+  readonly anchors?: {
+    readonly start?: LayoutElement;
+    readonly end?: LayoutElement;
+  };
 }
 
 export interface RenderOptions {
@@ -234,6 +248,13 @@ const ABCJS_EL_TYPES: Readonly<Record<string, string>> = {
   part: "part",
   voiceName: "voiceName",
 };
+
+/**
+ * Where an `otherchildren` entry's `Selectables.add` attributes go once the run is sorted
+ * into draw order. Not a character any ABC text can produce, so the substitution cannot
+ * hit anything else.
+ */
+const SEL_SLOT = "\u0000sel\u0000";
 
 /** SVG needs `&` and `<` escaped; attribute values here also carry `"`. */
 const escapeAttr = (s: string): string =>
@@ -1002,6 +1023,12 @@ export function toSVG(
     attributes: string,
     role?: string,
     dataName?: string,
+    /**
+     * `Selectables.add`'s attributes, or the slot they will be substituted into. Written
+     * LAST because `setAttributeOnElement` runs after the element exists, like the
+     * notehead's late `class`.
+     */
+    trailing = "",
   ): string => {
     const ink = outline(name);
     /**
@@ -1127,19 +1154,19 @@ export function toSVG(
               `${x * PX}px ${y * PX + oy}px;"`;
         return (
           `<path${late ? attributes.replace(late, "") : attributes}${named ? ` data-name="${named}"` : ""} ` +
-          `d="M ${px} ${py}${ink.path.slice(head[0].length)}"${styleAttr}${late}></path>`
+          `d="M ${px} ${py}${ink.path.slice(head[0].length)}"${styleAttr}${late}${trailing}></path>`
         );
       }
     }
     if (!optimize)
-      return `<path${attributes} transform="${transform}" d="${ink.path}"/>`;
+      return `<path${attributes}${trailing} transform="${transform}" d="${ink.path}"/>`;
     // A `<use>` takes a transform, so a scaled glyph dedupes like any other. It used to
     // fall back to an inline path when scaled, which was fine while only a stretched
     // brace was scaled — and stopped being fine the moment abcjs's outlines arrived,
     // since those are in ITS pixels and every one of them carries a scale.
     return scaled
-      ? `<use${attributes} href="#${defId(name)}" transform="${transform}"/>`
-      : `<use${attributes} href="#${defId(name)}" x="${num(x * PX)}" y="${num(corrected * PX + oy)}"/>`;
+      ? `<use${attributes}${trailing} href="#${defId(name)}" transform="${transform}"/>`
+      : `<use${attributes}${trailing} href="#${defId(name)}" x="${num(x * PX)}" y="${num(corrected * PX + oy)}"/>`;
   };
 
   /**
@@ -1439,25 +1466,32 @@ export function toSVG(
      *
      * Returns the attributes to write, `""` when the row is not selectable at all.
      */
+    const recordWrapped = (
+      kind: SelectableRecord["kind"],
+      abcelem: Readonly<Record<string, string | number>>,
+      anchors?: SelectableRecord["anchors"],
+    ): string => {
+      if (!canSelectHere(String(abcelem.el_type))) return "";
+      const index = selectableIndex++;
+      options.selectables?.push(
+        anchors === undefined
+          ? { index, kind, abcelem }
+          : { index, kind, abcelem, anchors },
+      );
+      return selectableAttrs(index);
+    };
     const recordText = (t: PlacedText): string => {
       const sel = t.selectable;
       // A RICH ROW IS NOT SELECTABLE — `richText`'s array branch pushes its phrases with
       // no `absElemType` (`rich-text.js:18-28`).
       if (sel === undefined || t.phrases !== undefined) return "";
-      if (!canSelectHere(sel.elType)) return "";
-      const index = selectableIndex++;
-      options.selectables?.push({
-        index,
-        kind: "text",
-        abcelem: {
-          el_type: sel.elType,
-          ...(t.dataName === undefined ? {} : { name: t.dataName }),
-          ...(sel.startChar === undefined ? {} : { startChar: sel.startChar }),
-          ...(sel.endChar === undefined ? {} : { endChar: sel.endChar }),
-          text: sel.text ?? t.text,
-        },
+      return recordWrapped("text", {
+        el_type: sel.elType,
+        ...(t.dataName === undefined ? {} : { name: t.dataName }),
+        ...(sel.startChar === undefined ? {} : { startChar: sel.startChar }),
+        ...(sel.endChar === undefined ? {} : { endChar: sel.endChar }),
+        text: sel.text ?? t.text,
       });
-      return selectableAttrs(index);
     };
 
     /**
@@ -1900,10 +1934,22 @@ export function toSVG(
            * `ConnectorSpan.header`.
            */
           const header = span.header;
+          /**
+           * **`wrapSvgEl` TAKES WHATEVER `drawBrace` RETURNED** — the GROUP when the brace
+           * owns a voice name, the PATH when it does not (`draw/brace.js:99-102`), and the
+           * `el_type` is the connector's own kind, `brace` or `bracket`.
+           */
+          const braceAttrs = abcjs
+            ? recordWrapped("brace", {
+                el_type: span.kind,
+                startChar: -1,
+                endChar: -1,
+              })
+            : "";
           if (abcjs && header !== undefined) {
             const cls = classes.generate("staff-extra voice-name");
             parts.push(
-              `<g${cls ? ` class="${cls}"` : ""} data-name="${span.kind}">`,
+              `<g${cls ? ` class="${cls}"` : ""} data-name="${span.kind}"${braceAttrs}>`,
             );
             const position =
               yTop + (yBottom - yTop) / 2 - header.baselineToCentre * PX;
@@ -1925,7 +1971,7 @@ export function toSVG(
           parts.push(
             `<path d="${connectorPath(span, yTop, yBottom)}" stroke="currentColor" ` +
               `fill="currentColor" class="${classes.generate(span.kind)}" ` +
-              `data-name="${span.kind}"></path>`,
+              `data-name="${span.kind}"${header === undefined ? braceAttrs : ""}></path>`,
           );
           if (abcjs && header !== undefined) parts.push("</g>");
         }
@@ -2169,15 +2215,47 @@ export function toSVG(
            * all four attributes itself. `PlacedGlyph.group` names the kind and `groupStart`
            * marks the occurrence.
            */
-          const others: { x: number; s: string; k?: number }[] = [];
+          /**
+           * **THE `otherchildren` RUN IS SORTED AFTER IT IS BUILT, SO ITS SELECTABLE
+           * INDICES CANNOT BE ALLOCATED WHILE IT IS.** Each entry carries the record it
+           * wants and a SLOT in its markup; the indices are handed out once the run is in
+           * draw order, which is the order abcjs's own array has them in.
+           */
+          const others: {
+            x: number;
+            s: string;
+            k?: number;
+            rec?: {
+              kind: SelectableRecord["kind"];
+              abcelem: Readonly<Record<string, string | number>>;
+              anchors?: SelectableRecord["anchors"];
+            };
+          }[] = [];
           let dynBuf: string[] = [];
           let dynX = 0;
+          let dynDec: string | undefined;
           const flushDynamic = (): void => {
             // `volumeDecoration` is `createDecoration`'s FIRST call, so a dynamic on an
             // element comes after its curves and before its hairpin (`decoration.js:379-385`).
             if (dynBuf.length > 0)
-              others.push({ x: dynX, k: 2, s: `${dynBuf.join("")}</g>` });
+              others.push({
+                x: dynX,
+                k: 2,
+                s: `${dynBuf.join("")}</g>`,
+                // `drawDynamics` wraps the whole `<g data-name="dynamics">` it returns, so a
+                // KERNED `mp` is two glyphs and ONE selectable (`draw/dynamics.js:16`).
+                rec: {
+                  kind: "dynamic",
+                  abcelem: {
+                    el_type: "dynamicDecoration",
+                    startChar: -1,
+                    endChar: -1,
+                    ...(dynDec === undefined ? {} : { decoration: dynDec }),
+                  },
+                },
+              });
             dynBuf = [];
+            dynDec = undefined;
           };
           for (const { g, at: dynAt } of dynamics) {
             const dynM = markerAt.get(dynAt) ?? 0;
@@ -2201,15 +2279,28 @@ export function toSVG(
                   // The name is already in the attribute string above; `'' ?? x` is `''`, so
                   // this stops `glyphMarkup` adding a SECOND `data-name` from the glyph key.
                   "",
+                  SEL_SLOT,
                 ),
+                rec: {
+                  kind: "dynamic",
+                  abcelem: {
+                    el_type: "dynamicDecoration",
+                    startChar: -1,
+                    endChar: -1,
+                    ...(g.decoration === undefined
+                      ? {}
+                      : { decoration: g.decoration }),
+                  },
+                },
               });
               continue;
             }
             if (g.groupStart === true) {
               flushDynamic();
               dynX = g.x;
+              dynDec = g.decoration;
               dynBuf.push(
-                `<g${attrIfAny(classes.generateAt("decoration dynamics", dynM))} data-name="${grp}">`,
+                `<g${attrIfAny(classes.generateAt("decoration dynamics", dynM))} data-name="${grp}"${SEL_SLOT}>`,
               );
             }
             dynBuf.push(
@@ -2249,7 +2340,7 @@ export function toSVG(
              * `DynamicDecoration` sit in it together — `visual-selection-01`'s golden writes
              * the dynamics group first.
              */
-            into: { x: number; s: string }[] | null = null,
+            into: typeof others | null = null,
           ): void => {
             if (text === undefined && lines.length === 0) return;
             /** Held rather than written when this group has to take its turn in the merge. */
@@ -2283,7 +2374,8 @@ export function toSVG(
                     ? (text?.measure ?? 0)
                     : (markerAt.get(text.measureElement + voiceBase) ?? 0),
                 ),
-              )}` + `${fill ? ` fill="${ink}"` : ""} data-name="${name}">`,
+              )}` +
+                `${fill ? ` fill="${ink}"` : ""} data-name="${name}"${SEL_SLOT}>`,
             );
             if (d) {
               emit(
@@ -2299,10 +2391,21 @@ export function toSVG(
             // default, exactly as it does for a music text — see `PlacedText.face`.
             // **THE NUMBER IS `if (params.anchor1)`'s** (`draw/ending.js:38-49`), so a
             // bracket carried over a system break has none — see `voltaCarried`.
+            /**
+             * **AN ENDING AND A TRIPLET ARE EACH `wrapSvgEl`'d ON THEIR CLOSED GROUP**, with
+             * no span at all: `{el_type: "ending", startChar: -1, endChar: -1}`
+             * (`draw/ending.js:51`) and the same three fields for a triplet
+             * (`draw/triplet.js:14`). A CARRIED half — the one with no number — is still a
+             * group and still an entry.
+             */
+            const rec = {
+              kind: name === "ending" ? ("ending" as const) : ("triplet" as const),
+              abcelem: { el_type: name, startChar: -1, endChar: -1 },
+            };
             if (text === undefined) {
               emit("</g>");
               if (into !== null)
-                into.push({ x: lines[0]?.x1 ?? 0, s: sink.join("") });
+                into.push({ x: lines[0]?.x1 ?? 0, s: sink.join(""), rec });
               return;
             }
             const face =
@@ -2348,6 +2451,7 @@ export function toSVG(
                   ...lines.map((l) => Math.min(TL(l).x1, TL(l).x2)),
                 ),
                 s: sink.join(""),
+                rec,
               });
           };
           if (abcjs) {
@@ -2459,7 +2563,19 @@ export function toSVG(
                 k: 3,
                 s:
                   `<path d="${d}" highlight="stroke" stroke="${ink}" ` +
-                  `class="${classes.generateAt("dynamics decoration", markerAt.get((line.atElement ?? -1) + voiceBase) ?? 0)}" data-name="dynamics"></path>`,
+                  `class="${classes.generateAt("dynamics decoration", markerAt.get((line.atElement ?? -1) + voiceBase) ?? 0)}" data-name="dynamics"${SEL_SLOT}></path>`,
+                // **A HAIRPIN CARRIES NO `decoration` KEY AT ALL** — `drawCrescendo` writes
+                // the three fields and stops (`draw/crescendo.js:21`) where `drawDynamics`
+                // adds `params.dec`. The golden shows the two side by side, so the absence
+                // is the contract.
+                rec: {
+                  kind: "dynamic",
+                  abcelem: {
+                    el_type: "dynamicDecoration",
+                    startChar: -1,
+                    endChar: -1,
+                  },
+                },
               });
               continue;
             }
@@ -2479,14 +2595,31 @@ export function toSVG(
               s:
                 abcjs && line.squiggles !== undefined
                   ? `<path d="${squigglyPath(t.x1, roundNumber(t.y1), line.squiggles, line.slope ?? 0)}" ` +
-                    `highlight="stroke" stroke="${ink}" class="${cls}" data-name="${named}"></path>`
+                    `highlight="stroke" stroke="${ink}" class="${cls}" data-name="${named}"${SEL_SLOT}></path>`
                   : lineToRect(
                       t,
                       abcjs
-                        ? ` class="${cls}" data-name="${named}"`
+                        ? ` class="${cls}" data-name="${named}"${SEL_SLOT}`
                         : ` class="${prefix}-decoration"`,
                       abcjs,
                     ),
+              // A ONE-ARM hairpin — a `<` with no close — and a GLISSANDO, which has its own
+              // `el_type` (`draw/glissando.js:24`).
+              ...(abcjs
+                ? {
+                    rec: {
+                      kind: "dynamic" as const,
+                      abcelem: {
+                        el_type:
+                          line.role === "dynamic"
+                            ? "dynamicDecoration"
+                            : "glissando",
+                        startChar: -1,
+                        endChar: -1,
+                      },
+                    },
+                  }
+                : {}),
             });
           }
           // …and the two buckets go out as ONE list in x order. `Array.sort` is stable, so a
@@ -2588,7 +2721,7 @@ export function toSVG(
                 abcjs
                   ? // ALWAYS a `class`, empty or not: `generate` returns `''` and `svg.js`'s
                     // `path` sets every key it is handed, so the attribute is written either way.
-                    ` class="${classes.generateAt(klass, at)}" data-name="${curve.kind}"`
+                    ` class="${classes.generateAt(klass, at)}" data-name="${curve.kind}"${SEL_SLOT}`
                   : ` class="${prefix}-${curve.kind}"`,
                 strict,
                 PX,
@@ -2646,6 +2779,38 @@ export function toSVG(
                         .x1 - spaces(ABCJS_ARC.startOffset),
               k: graceCurve ? 1 : 0,
               s: curveSink.pop() ?? "",
+              /**
+               * **EVERY CURVE IS `el_type: "slur"`, WHATEVER IT DRAWS** (`draw/tie.js:28`),
+               * and its span runs ANCHOR ELEMENT to ANCHOR ELEMENT — one character OUTSIDE
+               * each, "we assume that the parenthesis are just to the outside of that"
+               * (`:18-26`). **BOTH ENDS ARE `-1` FOR A TIE**, whose two ends share a pitch
+               * and have no parentheses to be outside of — and `isTie` is recomputed at
+               * draw time, which is what `curve.kind` already holds.
+               *
+               * The ELEMENTS travel, not the numbers: only the projection knows a note's
+               * span. Omitted for a tie, where the answer is the default.
+               */
+              rec: {
+                kind: "curve" as const,
+                abcelem: { el_type: "slur" },
+                ...(curve.kind === "tie"
+                  ? {}
+                  : {
+                      anchors: {
+                        ...(curve.startElement === undefined
+                          ? {}
+                          : {
+                              start:
+                                staff.elements[curve.startElement + voiceBase],
+                            }),
+                        ...(curve.endElement === undefined
+                          ? {}
+                          : {
+                              end: staff.elements[curve.endElement + voiceBase],
+                            }),
+                      },
+                    }),
+              },
             });
           }
           // …and the whole `otherchildren` list goes out as ONE run in x order. `Array.sort`
@@ -2665,7 +2830,13 @@ export function toSVG(
                 "mm=",
                 /abcjs-mm(\d+)/.exec(o.s)?.[1] ?? "-",
               );
-          for (const o of ordered) parts.push(o.s);
+          for (const o of ordered) {
+            const attrs =
+              o.rec === undefined
+                ? ""
+                : recordWrapped(o.rec.kind, o.rec.abcelem, o.rec.anchors);
+            parts.push(o.s.replace(SEL_SLOT, attrs));
+          }
           dynamics.length = 0;
           graceBeams.length = 0;
           /**
@@ -3035,6 +3206,23 @@ export function toSVG(
                       false,
                       // A BOXED row's class is DELETED, not emptied (`draw/text.js:58`).
                       t.noClass === true || bs !== undefined,
+                      /**
+                       * **A VOICE NAME IS `wrapSvgEl`'d, AND IT IS THE ONE MUSIC TEXT THAT
+                       * IS.** `drawVoice` renders it and wraps the returned `<text>` with
+                       * `{el_type: "voiceName", startChar: -1, endChar: -1, text: params.header}`
+                       * (`draw/voice.js:17-20`) — it has no source range at all because
+                       * `params.header` comes off the VOICE, not off a field element. Every
+                       * other music text goes out through `drawRelativeElement`, which
+                       * never touches the selectables.
+                       */
+                      isVoiceName
+                        ? recordWrapped("voiceName", {
+                            el_type: "voiceName",
+                            startChar: -1,
+                            endChar: -1,
+                            text: t.text,
+                          })
+                        : "",
                     )
                   : `<text${partAttr} x="${textNum(t.x * PX)}" y="${textNum(t.y * PX + oy)}" ` +
                     `font-family="serif" font-size="${num(t.size * PX)}"${style}` +
