@@ -1860,6 +1860,17 @@ class ScoreBuilder {
   notes: RichText[] = []
   history: RichText[] = []
   unalignedWords: RichText[] = []
+  /** `metaTextInfo` — see `ScoreMetadata.fieldRanges`. `title` lives in `titleRanges`. */
+  fieldRanges: Record<string, SourceRange> = {}
+  titleRanges: SourceRange[] = []
+  /**
+   * `addMetaText`'s rule: the FIRST write sets both ends, a later one moves only the end
+   * (`tune-builder.js:433-448`). `addMetaTextArray` does the same for `N:`/`H:`/`W:`.
+   */
+  recordField(key: string, range: SourceRange): void {
+    const seen = this.fieldRanges[key]
+    this.fieldRanges[key] = seen === undefined ? range : sourceRange(seen.start, range.end)
+  }
   key: KeySignature = defaultKey()
   clef: Clef = defaultClef
   tempo: Tempo | null = null
@@ -2183,6 +2194,8 @@ class ScoreBuilder {
       notes: this.notes,
       history: this.history,
       unalignedWords: this.unalignedWords,
+      fieldRanges: this.fieldRanges,
+      titleRanges: this.titleRanges,
     }
     return {
       metadata,
@@ -2242,6 +2255,8 @@ class Parser {
   private inTextBlock = false
   /** Lines gathered since `%%begintext`, closed into one block by `%%endtext`. */
   private textBlock: string[] = []
+  /** The `%%begintext` line's own start — abcjs's `iChar` does not advance inside a block. */
+  private textBlockStart = 0
   private lastFieldLetter: string | null = null
   /** A `w:`/`+:` line ended in `\`, so the lyric is not finished. See the handler. */
   private lyricContinues = false
@@ -2304,7 +2319,19 @@ class Parser {
     if (this.textBlock.length === 0) return
     const builder = this.ensureScore(at)
     const target = builder.voice.isEmpty ? builder.textAbove : builder.textBelow
-    target.push({ lines: this.textBlock, align: 'left' })
+    // **abcjs MEASURES THE BLOCK FROM ITS `%%begintext` LINE AND ADDS ITS OWN TEXT'S
+    // LENGTH**, not the source's — `endChar: iChar + textBlock.length + 7`
+    // (`abc_parse_directive.js:964`), where `iChar` is still the opening directive's and
+    // the `+ 7` is `"%%text "`. Its `textBlock` is each line trimmed with a `\n` appended,
+    // which is what `lines` holds; so the end is a length, not an offset into the source.
+    target.push({
+      lines: this.textBlock,
+      align: 'left',
+      sourceRange: sourceRange(
+        this.textBlockStart,
+        this.textBlockStart + this.textBlock.reduce((n, l) => n + l.length + 1, 0) + 7,
+      ),
+    })
     this.textBlock = []
   }
 
@@ -2354,6 +2381,7 @@ class Parser {
     if (line.startsWith('%%begintext')) {
       this.inTextBlock = true
       this.textBlock = []
+      this.textBlockStart = start
       return
     }
 
@@ -2401,9 +2429,18 @@ class Parser {
       // source, so truncating only the local string left the music path reading the comment
       // anyway — the control still parsed `% comment` as two notes.
       end = start + comment
-      line = line.slice(0, comment).replace(/\s+$/, '')
-      if (line.length === 0) return
+      line = line.slice(0, comment)
     }
+    // **AND THE TRAILING-WHITESPACE STRIP IS UNCONDITIONAL** — `line.replace(/\s+$/, '')`
+    // is its own statement after the comment cut, not part of that branch
+    // (`abc_parse.js:408-411`). We ran it only when a `%` was found, so a field line
+    // written with a trailing space carried it in its span: `T:20. Subtitles, The ` gave
+    // `metaTextInfo.title` 4…25 where abcjs gives 4…24. It is the same `end` every field
+    // and every music element takes its offsets from.
+    const trimmed = line.replace(/\s+$/, '')
+    end -= line.length - trimmed.length
+    line = trimmed
+    if (line.length === 0) return
 
     // A `w:` line ending in `\` continues onto a later line, and what counts as "later"
     // is where abcjs and ABC 2.1 part company. MEASURED against abcjs 6.6.3 on Gonzato
@@ -2620,13 +2657,30 @@ class Parser {
     if (freeText !== null) {
       const builder = this.ensureScore(start)
       const target = builder.voice.isEmpty ? builder.textAbove : builder.textBelow
-      target.push({ lines: [decodeTextString((freeText[1] ?? '').trim())], align: 'left' })
+      target.push({
+        lines: [decodeTextString((freeText[1] ?? '').trim())],
+        align: 'left',
+        sourceRange: sourceRange(start, end),
+      })
       return
     }
     // `%%sep` — a horizontal rule as a LINE of its own, with a space above and below. All
     // three numbers are POINTS, each `Math.round`ed (`tune-builder.js:309`), and a bare
     // `%%sep` is 14 / 14 / 85. The rule costs no height: `drawSeparator` paints at the
     // cursor and moves nothing, so the line is worth exactly `above + below`.
+    // `%%header` / `%%footer` — a three-part running head, `left \t center \t right`,
+    // drawn only when printing (`top-text.js:6-14`, `bottom-text.js:83-92`). abcjs records
+    // it with `addMetaTextObj` (`abc_parse_directive.js:1183`), so it has a `metaTextInfo`
+    // entry whether or not the media ever draws it. The TEXT is unmodelled — the rows are
+    // print-only and no gate reads them yet — the POSITION is not.
+    const headFoot = /^(header|footer)\b/.exec(body)
+    if (headFoot?.[1] !== undefined) {
+      // **THE SPAN IS THE LINE WITHOUT ITS `%%`** — `iChar + str.length`, where `str` is
+      // `addDirective`'s argument, `line.substring(2)` (`abc_parse.js:403`). So the range
+      // STARTS at the `%` and is two characters SHORT of the line's end.
+      this.ensureScore(start).recordField(headFoot[1], sourceRange(start, end - 2))
+      return
+    }
     const sep = /^sep\b\s*(.*)$/.exec(body)
     if (sep !== null) {
       const args = (sep[1] ?? '').trim()
@@ -2962,6 +3016,7 @@ class Parser {
             lines: [theReverser(decodeTextString(value))],
             align: 'center',
             role: 'subtitle',
+            sourceRange: range,
           })
         } else {
           // `T: C: O: A: P:` all run through `parseFontChangeLine`
@@ -2969,20 +3024,25 @@ class Parser {
           builder.titles.push(
             parseFontChangeLine(theReverser(decodeTextString(value)), builder.setfont),
           )
+          builder.titleRanges.push(range)
         }
         return
       case 'C':
         builder.composer = parseFontChangeLine(decodeTextString(value), builder.setfont)
+        builder.recordField('composer', range)
         return
       case 'R':
         builder.rhythm = decodeTextString(value)
+        builder.recordField('rhythm', range)
         return
       case 'O':
         builder.origin = parseFontChangeLine(decodeTextString(value), builder.setfont)
+        builder.recordField('origin', range)
         return
       // `A:` — the author of the words, a row of its own in `composerfont`.
       case 'A':
         builder.author = parseFontChangeLine(decodeTextString(value), builder.setfont)
+        builder.recordField('author', range)
         return
       /**
        * **THE BOTTOM-TEXT FIELDS** — `abc_parse_header.js:464-503`'s `metaTextHeaders`.
@@ -2994,24 +3054,31 @@ class Parser {
        */
       case 'B':
         builder.book = parseFontChangeLine(decodeTextString(value), builder.setfont)
+        builder.recordField('book', range)
         return
       case 'S':
         builder.source = parseFontChangeLine(decodeTextString(value), builder.setfont)
+        builder.recordField('source', range)
         return
       case 'D':
         builder.discography = parseFontChangeLine(decodeTextString(value), builder.setfont)
+        builder.recordField('discography', range)
         return
       case 'Z':
         builder.transcription = parseFontChangeLine(decodeTextString(value), builder.setfont)
+        builder.recordField('transcription', range)
         return
       case 'N':
         builder.notes.push(parseFontChangeLine(decodeTextString(value), builder.setfont))
+        builder.recordField('notes', range)
         return
       case 'H':
         builder.history.push(parseFontChangeLine(decodeTextString(value), builder.setfont))
+        builder.recordField('history', range)
         return
       case 'W':
         builder.unalignedWords.push(parseFontChangeLine(decodeTextString(value), builder.setfont))
+        builder.recordField('unalignedWords', range)
         return
       case 'M': {
         if (builder.bodyStarted) {
@@ -3061,6 +3128,7 @@ class Parser {
           builder.voice.setPartLabel(value.trim(), range)
         } else if (!builder.bodyStarted) {
           builder.partOrder = parseFontChangeLine(decodeTextString(value), builder.setfont)
+          builder.recordField('partOrder', range)
         }
         return
       }
@@ -3235,6 +3303,14 @@ class Parser {
         builder.bodyStarted = true // K: ends the header.
         return
       }
+      // `G:` — the tune's GROUP. abcjs records it in `metaText`/`metaTextInfo`
+      // (`abc_parse_header.js:469`) and neither `TopText` nor `BottomText` ever reads it,
+      // so it is a position with no ink. The range is recorded because `metaTextInfo` is
+      // where a host looks for it; the TEXT is not held, which is the same gap `metaText`
+      // has for every field but `title`.
+      case 'G':
+        builder.recordField('group', range)
+        return
       default:
         if (!KNOWN_FIELDS.includes(letter)) {
           this.warn('unknown-field', `unknown information field "${letter}:"`, range)

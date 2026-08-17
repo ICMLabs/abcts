@@ -384,6 +384,15 @@ export interface FreeTextBlock {
    * line's whole cost is `above + below`, measured at 28 bare and 22 for `0.4cm` each way.
    */
   readonly separator?: { readonly above: number; readonly below: number; readonly length: number }
+  /**
+   * The directive line's own span — `{startChar: iChar, endChar: iChar + restOfString.length
+   * + 7}` for `%%text` (`abc_parse_directive.js:983`), which is the whole line, and the
+   * `T:` line's span for a mid-tune subtitle.
+   *
+   * ABSENT FOR `%%center`: `addCentered` takes no `info` at all
+   * (`abc_parse_directive.js:986`), so abcjs's own row carries `startChar: undefined`.
+   */
+  readonly sourceRange?: SourceRange
 }
 
 // ─── Tempo ───────────────────────────────────────────────────────────────────
@@ -1166,6 +1175,27 @@ export interface ScoreMetadata {
   readonly notes: readonly RichText[]
   readonly history: readonly RichText[]
   readonly unalignedWords: readonly RichText[]
+  /**
+   * **WHERE EACH FIELD WAS WRITTEN** — abcjs's `metaTextInfo`, keyed by its own field
+   * names, and the range is the FIELD LINE'S OWN SPAN:
+   * `{startChar: iChar, endChar: iChar + line.length}` (`abc_parse_header.js:486-489`),
+   * so `title 202…219` is `T: Selection Test`.
+   *
+   * A field written twice keeps its FIRST start and takes the LAST end — `addMetaText`
+   * updates `endChar` alone on the second visit (`tune-builder.js:433-448`).
+   *
+   * ONE PIECE OF PLUMBING THAT PAYS FOUR TIMES: `metaTextInfo` itself, and the
+   * `startChar`/`endChar` of the selectable `title` / `subtitle` / `rhythm` / `composer` /
+   * `author` / `partOrder` rows, which `TopText` builds with `info: metaTextInfo.<field>`
+   * (`top-text.js:11-13`, `:23`, `:39`, `:64`, `:70`, `:75`) — that `info` is exactly what
+   * `nonMusic` hands `wrapSvgEl` (`draw/non-music.js:24-30`).
+   *
+   * `title` is NOT here: it is `titleRanges[0]`, since a subtitle needs its own line's
+   * span and the two come off the same `T:` handler.
+   */
+  readonly fieldRanges: Readonly<Partial<Record<string, SourceRange>>>
+  /** One per entry of `titles` — `[0]` is `metaTextInfo.title`, the rest are subtitles. */
+  readonly titleRanges: readonly SourceRange[]
 }
 
 /**

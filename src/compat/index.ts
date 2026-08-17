@@ -483,9 +483,20 @@ export function renderAbc(
         ...(score.percMap === undefined ? {} : { percmap: score.percMap }),
         ...(score.drumMap === undefined ? {} : { drummap: score.drumMap }),
       },
-      // Empty until a field's position is recorded — the same start abcjs has, and the
-      // fields' spans are the piece the text rows need too. See the handoff.
-      metaTextInfo: {},
+      /**
+       * **THE FIELD LINE'S OWN SPAN, PER FIELD** — see `ScoreMetadata.fieldRanges`. abcjs
+       * starts this `{}` and adds a key only when a field is written
+       * (`abc_tune.js:19`, `tune-builder.js:433-462`), so a tune with no `T:` has no
+       * `title` key rather than a null one.
+       */
+      metaTextInfo: Object.fromEntries(
+        [
+          ["title", score.metadata.titleRanges[0]] as const,
+          ...Object.entries(score.metadata.fieldRanges),
+        ].flatMap(([key, r]) =>
+          r === undefined ? [] : [[key, { startChar: r.start, endChar: r.end }]],
+        ),
+      ),
 
       getBeatLength: () => getBeatLength(score),
       getBarLength: () => getBarLength(score),

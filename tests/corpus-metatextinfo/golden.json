@@ -1,0 +1,1734 @@
+{
+ "repo/abcjs-parse-book_parser-01-example-tune0": {
+  "title": {
+   "startChar": 5,
+   "endChar": 15
+  }
+ },
+ "repo/abcjs-parse-book_parser-02-tune-tune0": {
+  "title": {
+   "startChar": 5,
+   "endChar": 7
+  }
+ },
+ "repo/abcjs-parse-book_parser-03-a-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 8
+  }
+ },
+ "repo/abcjs-parse-book_parser-03-a-tune1": {},
+ "repo/abcjs-parse-book_parser-03-a-tune2": {
+  "title": {
+   "startChar": 19,
+   "endChar": 23
+  }
+ },
+ "repo/abcjs-parse-book_parser-04-wed-tune0": {},
+ "repo/abcjs-parse-book_parser-05-a-tune0": {
+  "title": {
+   "startChar": 14,
+   "endChar": 18
+  }
+ },
+ "repo/abcjs-parse-book_parser-05-a-tune1": {},
+ "repo/abcjs-parse-book_parser-06-a-tune0": {
+  "title": {
+   "startChar": 14,
+   "endChar": 18
+  }
+ },
+ "repo/abcjs-parse-book_parser-07-a-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 8
+  }
+ },
+ "repo/abcjs-parse-note-01-c0-d1-eg-0-fa-1-tune0": {},
+ "repo/abcjs-parse-note-id-01-v-v1-c-d-e-f-tune0": {},
+ "repo/abcjs-parse-tie-slur-01-staffwidth-200-tune0": {},
+ "repo/abcjs-parse-tie-slur-02-staffwidth-200-tune0": {},
+ "repo/abcjs-parse-tie-slur-03-staffwidth-200-tune0": {},
+ "repo/abcjs-parse-tie-slur-04-stretchlast-1-tune0": {},
+ "repo/abcjs-synth-flattener-01-crescendo-efga-gab-crescendo-c-diminuend-tune0": {},
+ "repo/abcjs-synth-flattener-02-p-c-def-gabc-d2-b2-g2-f2-f-e-fga-bcde-p--tune0": {},
+ "repo/abcjs-synth-flattener-03-pppp-cdef-gabc-y-ffff-bcba-gfed-y-pppp-c-tune0": {},
+ "repo/abcjs-synth-flattener-04-g-gab-cde-d7-fga-def-tune0": {},
+ "repo/abcjs-synth-flattener-05-c-cde-def-c2e-d2f-c-c2-d-d-g-d2-e-e-tune0": {},
+ "repo/abcjs-synth-flattener-06-cde-d7-f2-d2-e2-f2-1-g-g4-fedc-c-e4z4-tune0": {},
+ "repo/abcjs-synth-flattener-07-metronome-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 16
+  },
+  "notes": {
+   "startChar": 73,
+   "endChar": 238
+  }
+ },
+ "repo/abcjs-synth-flattener-08-em-egab-tune0": {},
+ "repo/abcjs-synth-flattener-09-d-defg-q-1-2-90-defg-tune0": {},
+ "repo/abcjs-synth-flattener-10-q-1-4-129-0476605-cdef-q-1-4-127-gabc-q--tune0": {},
+ "repo/abcjs-synth-flattener-11-midi-program-3-tune0": {},
+ "repo/abcjs-synth-flattener-12-chords-meter-change-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 26
+  }
+ },
+ "repo/abcjs-synth-flattener-13-e7-bcde-a-f-break-efe-e7-bc-ignore-de-tune0": {},
+ "repo/abcjs-synth-flattener-14-eb7-zg2ga2a2-a2ab-b4-ab-z-break-c2cd2d2--tune0": {},
+ "repo/abcjs-synth-flattener-15-c-c4-c-tune0": {},
+ "repo/abcjs-synth-flattener-16-gm-gfdf-gfdf-gf-d2-f-c4-tune0": {},
+ "repo/abcjs-synth-flattener-17-midi-grace-notes-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 23
+  }
+ },
+ "repo/abcjs-synth-flattener-18-midi-program-40-tune0": {},
+ "repo/abcjs-synth-flattener-19-cdef-z4-fedc-tune0": {},
+ "repo/abcjs-synth-flattener-20-k-treble-8-b-a4-ce-f-4-k-treble-8-g8-g-2-tune0": {},
+ "repo/abcjs-synth-flattener-21-c4-d4-tune0": {},
+ "repo/abcjs-synth-flattener-22-b-c4-d4-tune0": {},
+ "repo/abcjs-synth-flattener-23-percmap-d-pedal-hi-hat-x-tune0": {},
+ "repo/abcjs-synth-flattener-24-percmap-c-high-tom-x-tune0": {},
+ "repo/abcjs-synth-flattener-25-cd-d2-d2-dz-tune0": {},
+ "repo/abcjs-synth-flattener-26-gbcd-d4-zcdc-dc3-tune0": {},
+ "repo/abcjs-synth-flattener-27-triplets-and-chord-rhythm-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 31
+  }
+ },
+ "repo/abcjs-synth-flattener-28-midi-channel-10-tune0": {},
+ "repo/abcjs-synth-flattener-29-midi-drum-dddd-76-77-77-77-50-50-50-50-tune0": {},
+ "repo/abcjs-synth-flattener-30-am-a2e-e2d-g-bab-d2b-am-a2e-e2d-g-b2a-ga-tune0": {},
+ "repo/abcjs-synth-flattener-31-tempo-change-three-voices-tune0": {
+  "title": {
+   "startChar": 5,
+   "endChar": 33
+  }
+ },
+ "repo/abcjs-synth-flattener-32-quarter-tone2-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 19
+  },
+  "notes": {
+   "startChar": 37,
+   "endChar": 96
+  }
+ },
+ "repo/abcjs-synth-flattener-33-tempo-override-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 20
+  }
+ },
+ "repo/abcjs-synth-flattener-34-score-s-a-t-b-tune0": {},
+ "repo/abcjs-synth-flattener-35-midi-bassprog-10-tune0": {},
+ "repo/abcjs-synth-flattener-36-midi-gchord-fhihfhih-tune0": {},
+ "repo/abcjs-synth-flattener-37-midi-gchord-bzczbzcz-tune0": {},
+ "repo/abcjs-synth-flattener-38-c-zz-d-z-e-z-tune0": {},
+ "repo/abcjs-synth-flattener-39-midi-gchord-bzczbzcz-tune0": {},
+ "repo/abcjs-synth-flattener-40-c5-z4-tune0": {},
+ "repo/abcjs-synth-flattener-41-midi-bassprog-10-octave-1-tune0": {},
+ "repo/abcjs-synth-flattener-42-midi-gchord-ffffffff-tune0": {},
+ "repo/abcjs-synth-flattener-43-gm-zzz-cm-zzz-tune0": {},
+ "repo/abcjs-synth-flattener-44-cd-pppp-c-ffff-d-ffff-c-pppp-d-cd-tune0": {},
+ "repo/abcjs-synth-flattener-45-segno-f-d2-tune0": {},
+ "repo/abcjs-synth-flattener-46-c8-1-d8-2-e8-3-f8-tune0": {},
+ "repo/abcjs-synth-midi-01-midi-options-tune0": {
+  "title": {
+   "startChar": 58,
+   "endChar": 73
+  }
+ },
+ "repo/abcjs-synth-midi-02-staccato-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 15
+  }
+ },
+ "repo/abcjs-synth-midi-03-percmap-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 13
+  }
+ },
+ "repo/abcjs-synth-timing-01-cde-fg-ab-1-bcd-2-efg-tune0": {},
+ "repo/abcjs-synth-timing-02-score-1-2-tune0": {},
+ "repo/abcjs-synth-timing-03-cd-e-f-3gab-ac-tune0": {},
+ "repo/abcjs-synth-timing-04-cd-e-f-3gab-ac-tune0": {},
+ "repo/abcjs-synth-timing-05-subtitle-crash-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 20
+  }
+ },
+ "repo/abcjs-synth-timing-06-repeat-at-start-of-line-crash-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 35
+  }
+ },
+ "repo/abcjs-synth-timing-07-skip-ties-crash-tune0": {
+  "title": {
+   "startChar": 5,
+   "endChar": 22
+  }
+ },
+ "repo/abcjs-synth-timing-08-tie-repeat-crash-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 22
+  }
+ },
+ "repo/abcjs-synth-timing-09-f-c-2d-2-e-4-g-6-a-2-g-4-e-4-tune0": {},
+ "repo/abcjs-synth-timing-10-stretchlast-1-tune0": {},
+ "repo/abcjs-synth-timing-11-stretchlast-1-tune0": {},
+ "repo/abcjs-synth-timing-12-stretchlast-1-tune0": {},
+ "repo/abcjs-visual-decorations-01-score-s-a-b-tune0": {},
+ "repo/abcjs-visual-directives-01-incipit-test-tune0": {
+  "title": {
+   "startChar": 5,
+   "endChar": 20
+  }
+ },
+ "repo/abcjs-visual-layout-01-barlabelfont-times-bold-18-box-tune0": {},
+ "repo/abcjs-visual-layout-02-barlabelfont-times-bold-18-box-tune0": {},
+ "repo/abcjs-visual-layout-03-cdef-cdef-tune0": {},
+ "repo/abcjs-visual-layout-04-score-s-a-tune0": {},
+ "repo/abcjs-visual-layout-05-c3-abc-cf-3-abc-c3-fa-bc-tune0": {},
+ "repo/abcjs-visual-layout-06-staves-1-2-3-4-tune0": {},
+ "repo/abcjs-visual-layout-07-v-1-b2-a2-tune0": {},
+ "repo/abcjs-visual-layout-08-staffwidth-100-tune0": {},
+ "repo/abcjs-visual-layout-09-endings-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 13
+  }
+ },
+ "repo/abcjs-visual-misc-01-barnumbers-1-tune0": {},
+ "repo/abcjs-visual-misc-02-title-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 11
+  }
+ },
+ "repo/abcjs-visual-misc-03-jazzchords-tune0": {},
+ "repo/abcjs-visual-misc-04-stretchlast-tune0": {},
+ "repo/abcjs-visual-misc-05-cccc-d-c-alcoda-dddd-d-c-alfine-eeee-d-s-tune0": {},
+ "repo/abcjs-visual-misc-06-title-1bold-0-100-reg-the-tune0": {
+  "title": {
+   "startChar": 58,
+   "endChar": 89
+  },
+  "composer": {
+   "startChar": 114,
+   "endChar": 138
+  },
+  "origin": {
+   "startChar": 139,
+   "endChar": 179
+  },
+  "author": {
+   "startChar": 180,
+   "endChar": 189
+  },
+  "partOrder": {
+   "startChar": 190,
+   "endChar": 202
+  },
+  "history": {
+   "startChar": 203,
+   "endChar": 242
+  },
+  "book": {
+   "startChar": 243,
+   "endChar": 251
+  },
+  "discography": {
+   "startChar": 252,
+   "endChar": 261
+  },
+  "notes": {
+   "startChar": 262,
+   "endChar": 290
+  },
+  "unalignedWords": {
+   "startChar": 303,
+   "endChar": 330
+  }
+ },
+ "repo/abcjs-visual-misc-06-title-1bold-0-100-reg-the-tune1": {
+  "title": {
+   "startChar": 438,
+   "endChar": 465
+  },
+  "composer": {
+   "startChar": 486,
+   "endChar": 506
+  },
+  "origin": {
+   "startChar": 507,
+   "endChar": 543
+  },
+  "author": {
+   "startChar": 544,
+   "endChar": 551
+  },
+  "partOrder": {
+   "startChar": 552,
+   "endChar": 560
+  },
+  "history": {
+   "startChar": 561,
+   "endChar": 590
+  },
+  "notes": {
+   "startChar": 591,
+   "endChar": 614
+  },
+  "unalignedWords": {
+   "startChar": 627,
+   "endChar": 650
+  }
+ },
+ "repo/abcjs-visual-misc-07-ab-ef-g-d-df-f-d-a-4-c-4-tune0": {},
+ "repo/abcjs-visual-misc-08-a2-c2-t-a2t-c2-tune0": {},
+ "repo/abcjs-visual-misc-09-begintext-tune0": {},
+ "repo/abcjs-visual-misc-10-begintext-tune0": {},
+ "repo/abcjs-visual-misc-11-begintext-tune0": {},
+ "repo/abcjs-visual-misc-12-b-beambr1-b-bb-tune0": {},
+ "repo/abcjs-visual-misc-13-ceg-t-gce-d-f-b-3-dm7-d-te-tune0": {},
+ "repo/abcjs-visual-misc-14-tune-tune0": {},
+ "repo/abcjs-visual-mouse-click-01-selection-test-tune0": {
+  "title": {
+   "startChar": 81,
+   "endChar": 98
+  },
+  "composer": {
+   "startChar": 134,
+   "endChar": 150
+  },
+  "rhythm": {
+   "startChar": 151,
+   "endChar": 160
+  },
+  "author": {
+   "startChar": 161,
+   "endChar": 175
+  },
+  "source": {
+   "startChar": 176,
+   "endChar": 193
+  },
+  "unalignedWords": {
+   "startChar": 194,
+   "endChar": 270
+  },
+  "history": {
+   "startChar": 271,
+   "endChar": 364
+  },
+  "partOrder": {
+   "startChar": 389,
+   "endChar": 396
+  }
+ },
+ "repo/abcjs-visual-multi-voice-01-score-top-bottom-tune0": {},
+ "repo/abcjs-visual-multi-voice-02-p-c-2b2-z4-f2a2-f4-tune0": {},
+ "repo/abcjs-visual-options-01-fonts-tune0": {
+  "header": {
+   "startChar": 509,
+   "endChar": 526
+  },
+  "footer": {
+   "startChar": 529,
+   "endChar": 546
+  },
+  "title": {
+   "startChar": 563,
+   "endChar": 570
+  },
+  "composer": {
+   "startChar": 592,
+   "endChar": 602
+  },
+  "author": {
+   "startChar": 603,
+   "endChar": 611
+  },
+  "rhythm": {
+   "startChar": 612,
+   "endChar": 621
+  },
+  "history": {
+   "startChar": 622,
+   "endChar": 631
+  },
+  "notes": {
+   "startChar": 632,
+   "endChar": 643
+  },
+  "origin": {
+   "startChar": 644,
+   "endChar": 652
+  },
+  "source": {
+   "startChar": 653,
+   "endChar": 661
+  },
+  "partOrder": {
+   "startChar": 662,
+   "endChar": 674
+  },
+  "unalignedWords": {
+   "startChar": 708,
+   "endChar": 754
+  }
+ },
+ "repo/abcjs-visual-parsing-01-azzz-e2-tune0": {},
+ "repo/abcjs-visual-parsing-02-sx-tune0": {},
+ "repo/abcjs-visual-parsing-03-v-1-f-tune0": {},
+ "repo/abcjs-visual-parsing-04-v-t-c-tune0": {},
+ "repo/abcjs-visual-parsing-05-v-t-c-v-b-a-v-t-d-tune0": {},
+ "repo/abcjs-visual-parsing-06-score-t-b-tune0": {},
+ "repo/abcjs-visual-parsing-07-score-t-b-tune0": {},
+ "repo/abcjs-visual-parsing-08-score-t-b-tune0": {},
+ "repo/abcjs-visual-parsing-09-score-t-b-tune0": {},
+ "repo/abcjs-visual-parsing-10-song-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 10
+  },
+  "composer": {
+   "startChar": 22,
+   "endChar": 32
+  }
+ },
+ "repo/abcjs-visual-selection-01-selection-test-tune0": {
+  "title": {
+   "startChar": 202,
+   "endChar": 219
+  },
+  "composer": {
+   "startChar": 255,
+   "endChar": 271
+  },
+  "rhythm": {
+   "startChar": 272,
+   "endChar": 281
+  },
+  "author": {
+   "startChar": 282,
+   "endChar": 296
+  },
+  "source": {
+   "startChar": 297,
+   "endChar": 314
+  },
+  "unalignedWords": {
+   "startChar": 315,
+   "endChar": 391
+  },
+  "history": {
+   "startChar": 392,
+   "endChar": 485
+  },
+  "partOrder": {
+   "startChar": 510,
+   "endChar": 517
+  }
+ },
+ "repo/abcjs-visual-selection-02-g4-q-left-1-4-170-right-a4-tune0": {},
+ "repo/abcjs-visual-selection-03-c4-tune0": {},
+ "repo/abcjs-visual-slurs-01-score-s-a-tune0": {},
+ "repo/abcjs-visual-slurs-02-score-s-a-t-b-tune0": {},
+ "repo/abcjs-visual-svg-01-staffwidth-5-tune0": {},
+ "repo/abcjs-visual-svg-02-staffwidth-12-tune0": {},
+ "repo/abcjs-visual-svg-03-a4-tune0": {},
+ "repo/abcjs-visual-svg-per-line-01-selection-test-tune0": {
+  "title": {
+   "startChar": 202,
+   "endChar": 219
+  },
+  "composer": {
+   "startChar": 255,
+   "endChar": 271
+  },
+  "rhythm": {
+   "startChar": 272,
+   "endChar": 281
+  },
+  "author": {
+   "startChar": 282,
+   "endChar": 296
+  },
+  "source": {
+   "startChar": 297,
+   "endChar": 314
+  },
+  "unalignedWords": {
+   "startChar": 315,
+   "endChar": 391
+  },
+  "history": {
+   "startChar": 392,
+   "endChar": 485
+  },
+  "partOrder": {
+   "startChar": 510,
+   "endChar": 517
+  }
+ },
+ "repo/abcjs-visual-svg-per-line-02-scaled-tune0": {
+  "title": {
+   "startChar": 34,
+   "endChar": 43
+  }
+ },
+ "repo/abcjs-visual-tablature-01-gr-tune0": {},
+ "repo/abcjs-visual-tablature-02-g-fg-a-g2-a-very-very-long-chord-d2-cd-f-tune0": {},
+ "repo/abcjs-visual-tablature-03-staves-rh-lh-tune0": {},
+ "repo/abcjs-visual-tablature-04-barnumbers-1-tune0": {},
+ "repo/abcjs-visual-tablature-05-a7-a-tune0": {},
+ "repo/abcjs-visual-tablature-06-a7-a-tune0": {
+  "partOrder": {
+   "startChar": 10,
+   "endChar": 17
+  }
+ },
+ "repo/abcjs-visual-tablature-07-staves-rh-lh-tune0": {},
+ "repo/abcjs-visual-tablature-08-first-tune0": {
+  "title": {
+   "startChar": 5,
+   "endChar": 13
+  }
+ },
+ "repo/abcjs-visual-tablature-09-f-g-tune0": {},
+ "repo/abcjs-visual-tablature-10-f3-a-y-tune0": {},
+ "repo/abcjs-visual-tablature-11-f-f-tune0": {},
+ "repo/abcjs-visual-tablature-12-b-tune0": {},
+ "repo/abcjs-visual-tablature-13-g8-c4-d4-e4-f4-tune0": {},
+ "repo/abcjs-visual-tablature-14-c-tune0": {},
+ "repo/abcjs-visual-tablature-15-all-element-types-tune0": {
+  "title": {
+   "startChar": 71,
+   "endChar": 91
+  },
+  "composer": {
+   "startChar": 127,
+   "endChar": 143
+  },
+  "rhythm": {
+   "startChar": 144,
+   "endChar": 153
+  },
+  "author": {
+   "startChar": 154,
+   "endChar": 168
+  },
+  "source": {
+   "startChar": 169,
+   "endChar": 186
+  },
+  "unalignedWords": {
+   "startChar": 187,
+   "endChar": 263
+  },
+  "history": {
+   "startChar": 264,
+   "endChar": 357
+  },
+  "partOrder": {
+   "startChar": 382,
+   "endChar": 389
+  }
+ },
+ "repo/abcjs-visual-tablature-16-g-g-g-g-tune0": {},
+ "repo/abcjs-visual-tablature-17-stretchlast-tune0": {},
+ "repo/abcjs-visual-tablature-18-a-b-tune0": {},
+ "repo/abcjs-visual-tablature-19-d-a-d-g-b-e-tune0": {},
+ "repo/abcjs-visual-tablature-20-score-1-2-tune0": {},
+ "repo/abcjs-visual-tablature-21-a2-a-a-f-f-f-f-f-e-ee-g-gg-g-k-eb-a2-a2-tune0": {},
+ "repo/abcjs-visual-tablature-22-g-cegda-tune0": {},
+ "repo/abcjs-visual-tablature-23-gab-tune0": {},
+ "repo/abcjs-visual-tablature-24-stretchlast-tune0": {},
+ "repo/abcjs-visual-title-01-not-transformed-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 21
+  }
+ },
+ "repo/abcjs-visual-title-02-transformed-the-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 22
+  }
+ },
+ "repo/abcjs-visual-title-03-transformed-the-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 21
+  }
+ },
+ "repo/abcjs-visual-title-04-transformed-a-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 20
+  }
+ },
+ "repo/abcjs-visual-title-05-transformed-an-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 21
+  }
+ },
+ "repo/abcjs-visual-title-06-transformed-a-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 21
+  }
+ },
+ "repo/abcjs-visual-title-07-24-number-transform-the-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 31
+  }
+ },
+ "repo/abcjs-visual-title-08-24-number-transform-a-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 29
+  }
+ },
+ "repo/abcjs-visual-title-09-mal-the-formed-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 22
+  }
+ },
+ "repo/abcjs-visual-title-10-20-subtitles-the-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 24
+  }
+ },
+ "repo/abcjs-visual-transpose-01-f2-f-f-f-f-f2-e2-e-e-e-e-e2-k-ab-f2-f-f--tune0": {},
+ "repo/abcjs-visual-transpose-02-cdef-gabc-c-d-e-f-g-a-b-c-c-d-e-f-g-a-b--tune0": {},
+ "repo/abcjs-visual-transpose-03-cdef-gabc-c-d-e-f-g-a-b-c-c-d-e-f-g-a-b--tune0": {},
+ "repo/abcjs-visual-transpose-04-transpose-annotations-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 27
+  }
+ },
+ "repo/abcjs-visual-transpose-05-n-c-ab-c-c-c-c-d-d-d-d-e-e-f-f-f-f-g-g-g-tune0": {},
+ "repo/abcjs-visual-transpose-06-c-d-e-f-g-a-b-c-cdef-gabc-c-d-e-f-g-a-b--tune0": {},
+ "repo/abcjs-visual-transpose-output-01-transpose-output-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 23
+  }
+ },
+ "repo/abcjs-visual-transpose-output-02-transpose-output-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 23
+  }
+ },
+ "repo/abcjs-visual-transpose-output-03-transpose-output-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 23
+  }
+ },
+ "repo/abcjs-visual-transpose-output-04-transpose-output-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 23
+  }
+ },
+ "repo/abcjs-visual-transpose-output-05-g-tune0": {},
+ "repo/abcjs-visual-transpose-output-06-f-tune0": {},
+ "repo/abcjs-visual-wrap-01-b-4-c2d2-e3f-gabc-d-e-f-g-marcato-d-e-f--tune0": {},
+ "repo/abcjs-visual-wrap-02-stretchlast-1-tune0": {},
+ "repo/abcjs-visual-wrap-03-piano-wrap-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 16
+  }
+ },
+ "repo/abcjs-visual-wrap-04-wrap-quartet-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 19
+  }
+ },
+ "repo/abcjs-visual-wrap-05-score-1-2-3-4-tune0": {},
+ "repo/abcts-keywarn-tune0": {
+  "title": {
+   "startChar": 356,
+   "endChar": 372
+  }
+ },
+ "repo/abcts-keywarn-tune1": {
+  "title": {
+   "startChar": 411,
+   "endChar": 422
+  }
+ },
+ "repo/abcts-keywarn-tune2": {
+  "title": {
+   "startChar": 473,
+   "endChar": 499
+  }
+ },
+ "repo/abcts-visualtranspose-tune0": {
+  "title": {
+   "startChar": 421,
+   "endChar": 464
+  }
+ },
+ "repo/abcts-visualtranspose-tune1": {
+  "title": {
+   "startChar": 517,
+   "endChar": 539
+  }
+ },
+ "repo/abcts-visualtranspose-tune2": {
+  "title": {
+   "startChar": 592,
+   "endChar": 634
+  }
+ },
+ "repo/abcts-visualtranspose-tune3": {
+  "title": {
+   "startChar": 691,
+   "endChar": 720
+  }
+ },
+ "repo/abcts-vskip-tune0": {
+  "title": {
+   "startChar": 364,
+   "endChar": 385
+  }
+ },
+ "repo/abcts-vskip-tune1": {
+  "title": {
+   "startChar": 430,
+   "endChar": 459
+  }
+ },
+ "repo/abcts-vskip-tune2": {
+  "title": {
+   "startChar": 504,
+   "endChar": 526
+  }
+ },
+ "sib/S1-decorations-tune0": {
+  "title": {
+   "startChar": 95,
+   "endChar": 113
+  },
+  "composer": {
+   "startChar": 114,
+   "endChar": 146
+  }
+ },
+ "sib/S1-decorations-tune1": {
+  "title": {
+   "startChar": 358,
+   "endChar": 386
+  },
+  "notes": {
+   "startChar": 391,
+   "endChar": 457
+  }
+ },
+ "sib/S1-decorations-tune2": {
+  "title": {
+   "startChar": 561,
+   "endChar": 583
+  },
+  "notes": {
+   "startChar": 588,
+   "endChar": 654
+  }
+ },
+ "sib/S1-decorations-tune3": {
+  "title": {
+   "startChar": 1306,
+   "endChar": 1333
+  }
+ },
+ "sib/S1-decorations-tune4": {
+  "title": {
+   "startChar": 1409,
+   "endChar": 1430
+  },
+  "composer": {
+   "startChar": 1431,
+   "endChar": 1445
+  }
+ },
+ "sib/S2-fields-tune0": {
+  "title": {
+   "startChar": 97,
+   "endChar": 127
+  },
+  "composer": {
+   "startChar": 146,
+   "endChar": 161
+  },
+  "origin": {
+   "startChar": 162,
+   "endChar": 181
+  },
+  "rhythm": {
+   "startChar": 182,
+   "endChar": 189
+  }
+ },
+ "sib/S2-fields-tune1": {
+  "title": {
+   "startChar": 277,
+   "endChar": 298
+  }
+ },
+ "sib/S2-fields-tune2": {
+  "title": {
+   "startChar": 509,
+   "endChar": 530
+  }
+ },
+ "sib/S3-note-syntax-tune0": {
+  "title": {
+   "startChar": 90,
+   "endChar": 119
+  },
+  "composer": {
+   "startChar": 120,
+   "endChar": 152
+  }
+ },
+ "sib/S3-note-syntax-tune1": {
+  "title": {
+   "startChar": 277,
+   "endChar": 310
+  },
+  "composer": {
+   "startChar": 311,
+   "endChar": 343
+  }
+ },
+ "sib/S3-note-syntax-tune2": {
+  "title": {
+   "startChar": 554,
+   "endChar": 575
+  },
+  "composer": {
+   "startChar": 576,
+   "endChar": 608
+  }
+ },
+ "sib/S3-note-syntax-tune3": {
+  "title": {
+   "startChar": 753,
+   "endChar": 777
+  },
+  "composer": {
+   "startChar": 778,
+   "endChar": 810
+  }
+ },
+ "sib/S3-note-syntax-tune4": {
+  "title": {
+   "startChar": 941,
+   "endChar": 966
+  },
+  "composer": {
+   "startChar": 967,
+   "endChar": 999
+  }
+ },
+ "sib/S3-note-syntax-tune5": {
+  "title": {
+   "startChar": 1172,
+   "endChar": 1201
+  },
+  "composer": {
+   "startChar": 1202,
+   "endChar": 1234
+  }
+ },
+ "sib/S3-note-syntax-tune6": {
+  "title": {
+   "startChar": 1374,
+   "endChar": 1388
+  },
+  "composer": {
+   "startChar": 1389,
+   "endChar": 1421
+  }
+ },
+ "sib/S3-note-syntax-tune7": {
+  "title": {
+   "startChar": 1554,
+   "endChar": 1581
+  },
+  "composer": {
+   "startChar": 1582,
+   "endChar": 1614
+  }
+ },
+ "sib/S3-note-syntax-tune8": {
+  "title": {
+   "startChar": 1786,
+   "endChar": 1824
+  },
+  "composer": {
+   "startChar": 1825,
+   "endChar": 1857
+  }
+ },
+ "sib/S3-note-syntax-tune9": {
+  "title": {
+   "startChar": 2083,
+   "endChar": 2110
+  },
+  "composer": {
+   "startChar": 2111,
+   "endChar": 2143
+  }
+ },
+ "sib/S3-note-syntax-tune10": {
+  "title": {
+   "startChar": 2219,
+   "endChar": 2242
+  }
+ },
+ "sib/S3-note-syntax-tune11": {
+  "title": {
+   "startChar": 2320,
+   "endChar": 2342
+  }
+ },
+ "sib/S3-note-syntax-tune12": {
+  "title": {
+   "startChar": 2418,
+   "endChar": 2441
+  }
+ },
+ "sib/S3-note-syntax-tune13": {
+  "title": {
+   "startChar": 2561,
+   "endChar": 2574
+  }
+ },
+ "sib/S3-note-syntax-tune14": {
+  "title": {
+   "startChar": 2704,
+   "endChar": 2763
+  }
+ },
+ "sib/S3-note-syntax-tune15": {
+  "title": {
+   "startChar": 2846,
+   "endChar": 2883
+  }
+ },
+ "sib/S3-note-syntax-tune16": {
+  "title": {
+   "startChar": 2966,
+   "endChar": 3012
+  }
+ },
+ "sib/S3-note-syntax-tune17": {
+  "title": {
+   "startChar": 3084,
+   "endChar": 3118
+  }
+ },
+ "sib/S3-note-syntax-tune18": {
+  "title": {
+   "startChar": 3434,
+   "endChar": 3459
+  }
+ },
+ "sib/S3-note-syntax-tune19": {
+  "title": {
+   "startChar": 3546,
+   "endChar": 3571
+  }
+ },
+ "sib/S3-note-syntax-tune20": {
+  "title": {
+   "startChar": 3665,
+   "endChar": 3678
+  }
+ },
+ "sib/S3-note-syntax-tune21": {
+  "title": {
+   "startChar": 3772,
+   "endChar": 3784
+  }
+ },
+ "sib/S3-note-syntax-tune22": {
+  "title": {
+   "startChar": 3863,
+   "endChar": 3892
+  },
+  "composer": {
+   "startChar": 3893,
+   "endChar": 3907
+  }
+ },
+ "sib/S3-note-syntax-tune23": {
+  "title": {
+   "startChar": 4142,
+   "endChar": 4166
+  }
+ },
+ "sib/S3-note-syntax-tune24": {
+  "title": {
+   "startChar": 4302,
+   "endChar": 4338
+  },
+  "composer": {
+   "startChar": 4339,
+   "endChar": 4353
+  }
+ },
+ "sib/S4-bars-repeats-tune0": {
+  "title": {
+   "startChar": 93,
+   "endChar": 124
+  },
+  "composer": {
+   "startChar": 125,
+   "endChar": 157
+  }
+ },
+ "sib/S4-bars-repeats-tune1": {
+  "title": {
+   "startChar": 305,
+   "endChar": 334
+  },
+  "composer": {
+   "startChar": 335,
+   "endChar": 349
+  }
+ },
+ "sib/S4-bars-repeats-tune2": {
+  "title": {
+   "startChar": 674,
+   "endChar": 695
+  }
+ },
+ "sib/S5-directives-tune0": {
+  "title": {
+   "startChar": 86,
+   "endChar": 104
+  },
+  "composer": {
+   "startChar": 105,
+   "endChar": 119
+  }
+ },
+ "sib/S5-directives-tune1": {
+  "title": {
+   "startChar": 473,
+   "endChar": 500
+  }
+ },
+ "sib/S5-directives-tune2": {
+  "title": {
+   "startChar": 1124,
+   "endChar": 1143
+  }
+ },
+ "sib/S5-directives-tune3": {
+  "title": {
+   "startChar": 1228,
+   "endChar": 1241
+  },
+  "composer": {
+   "startChar": 1242,
+   "endChar": 1274
+  }
+ },
+ "sib/S5-directives-tune4": {
+  "title": {
+   "startChar": 1418,
+   "endChar": 1431
+  }
+ },
+ "sib/S5-directives-tune5": {
+  "title": {
+   "startChar": 1660,
+   "endChar": 1672
+  }
+ },
+ "sib/S6-keys-tune0": {
+  "title": {
+   "startChar": 92,
+   "endChar": 100
+  }
+ },
+ "sib/S6-keys-tune1": {
+  "title": {
+   "startChar": 176,
+   "endChar": 197
+  }
+ },
+ "sib/S6-keys-tune2": {
+  "title": {
+   "startChar": 427,
+   "endChar": 448
+  },
+  "composer": {
+   "startChar": 449,
+   "endChar": 481
+  }
+ },
+ "sib/S6-keys-tune3": {
+  "title": {
+   "startChar": 646,
+   "endChar": 673
+  },
+  "composer": {
+   "startChar": 674,
+   "endChar": 688
+  }
+ },
+ "sib/S6-keys-tune4": {
+  "title": {
+   "startChar": 1150,
+   "endChar": 1175
+  },
+  "composer": {
+   "startChar": 1176,
+   "endChar": 1190
+  }
+ },
+ "sib/S7-voices-tune0": {
+  "title": {
+   "startChar": 95,
+   "endChar": 117
+  },
+  "composer": {
+   "startChar": 118,
+   "endChar": 130
+  }
+ },
+ "sib/S7-voices-tune1": {
+  "title": {
+   "startChar": 418,
+   "endChar": 445
+  },
+  "composer": {
+   "startChar": 446,
+   "endChar": 464
+  }
+ },
+ "sib/S7-voices-tune2": {
+  "title": {
+   "startChar": 861,
+   "endChar": 890
+  },
+  "composer": {
+   "startChar": 891,
+   "endChar": 902
+  }
+ },
+ "sib/S7-voices-tune3": {
+  "title": {
+   "startChar": 1145,
+   "endChar": 1169
+  },
+  "composer": {
+   "startChar": 1170,
+   "endChar": 1180
+  }
+ },
+ "sib/S7-voices-tune4": {
+  "title": {
+   "startChar": 1557,
+   "endChar": 1575
+  }
+ },
+ "sib/S7-voices-tune5": {
+  "title": {
+   "startChar": 2152,
+   "endChar": 2175
+  },
+  "composer": {
+   "startChar": 2176,
+   "endChar": 2199
+  }
+ },
+ "sib/S7-voices-tune6": {
+  "title": {
+   "startChar": 2626,
+   "endChar": 2643
+  },
+  "composer": {
+   "startChar": 2644,
+   "endChar": 2658
+  }
+ },
+ "sib/S8-layout-tune0": {
+  "title": {
+   "startChar": 116,
+   "endChar": 141
+  },
+  "composer": {
+   "startChar": 142,
+   "endChar": 174
+  }
+ },
+ "sib/S8-layout-tune1": {
+  "title": {
+   "startChar": 321,
+   "endChar": 333
+  },
+  "composer": {
+   "startChar": 334,
+   "endChar": 366
+  }
+ },
+ "sib/S8-layout-tune2": {
+  "title": {
+   "startChar": 505,
+   "endChar": 527
+  },
+  "composer": {
+   "startChar": 528,
+   "endChar": 560
+  }
+ },
+ "sib/S8-layout-tune3": {
+  "title": {
+   "startChar": 709,
+   "endChar": 755
+  },
+  "composer": {
+   "startChar": 756,
+   "endChar": 762
+  }
+ },
+ "sib/S8-layout-tune4": {
+  "title": {
+   "startChar": 902,
+   "endChar": 925
+  }
+ },
+ "sib/S8-layout-tune5": {
+  "title": {
+   "startChar": 1278,
+   "endChar": 1325
+  }
+ },
+ "sib/S8-layout-tune6": {
+  "title": {
+   "startChar": 1641,
+   "endChar": 1658
+  }
+ },
+ "sib/S8-layout-tune7": {
+  "title": {
+   "startChar": 1950,
+   "endChar": 1999
+  }
+ },
+ "sib/S8-layout-tune8": {
+  "title": {
+   "startChar": 2349,
+   "endChar": 2370
+  }
+ },
+ "sib/S8-layout-tune9": {
+  "title": {
+   "startChar": 2569,
+   "endChar": 2597
+  }
+ },
+ "sib/S8-layout-tune10": {
+  "title": {
+   "startChar": 2883,
+   "endChar": 2919
+  }
+ },
+ "sib/S8-layout-tune11": {
+  "title": {
+   "startChar": 3307,
+   "endChar": 3361
+  }
+ },
+ "sib/ave-verum-corpus-tune0": {
+  "title": {
+   "startChar": 5,
+   "endChar": 24
+  },
+  "composer": {
+   "startChar": 25,
+   "endChar": 40
+  }
+ },
+ "sib/brother-john-inline-voices-tune0": {
+  "title": {
+   "startChar": 5,
+   "endChar": 31
+  },
+  "composer": {
+   "startChar": 32,
+   "endChar": 46
+  }
+ },
+ "sib/center-text-tune0": {
+  "title": {
+   "startChar": 249,
+   "endChar": 272
+  },
+  "composer": {
+   "startChar": 273,
+   "endChar": 287
+  }
+ },
+ "sib/chord-grid-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 21
+  }
+ },
+ "sib/clefs-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 17
+  }
+ },
+ "sib/clefs-tune1": {
+  "title": {
+   "startChar": 49,
+   "endChar": 60
+  }
+ },
+ "sib/clefs-tune2": {
+  "title": {
+   "startChar": 90,
+   "endChar": 105
+  }
+ },
+ "sib/clefs-tune3": {
+  "title": {
+   "startChar": 136,
+   "endChar": 148
+  }
+ },
+ "sib/clefs-tune4": {
+  "title": {
+   "startChar": 179,
+   "endChar": 190
+  }
+ },
+ "sib/clefs-tune5": {
+  "title": {
+   "startChar": 220,
+   "endChar": 239
+  }
+ },
+ "sib/clefs-tune6": {
+  "title": {
+   "startChar": 270,
+   "endChar": 284
+  }
+ },
+ "sib/clefs-tune7": {
+  "title": {
+   "startChar": 315,
+   "endChar": 329
+  }
+ },
+ "sib/courtesy-key-before-subtitle-tune0": {
+  "title": {
+   "startChar": 364,
+   "endChar": 370
+  }
+ },
+ "sib/curves-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 10
+  }
+ },
+ "sib/curves-tune1": {
+  "title": {
+   "startChar": 46,
+   "endChar": 53
+  }
+ },
+ "sib/curves-tune2": {
+  "title": {
+   "startChar": 91,
+   "endChar": 105
+  }
+ },
+ "sib/curves-tune3": {
+  "title": {
+   "startChar": 143,
+   "endChar": 169
+  }
+ },
+ "sib/curves-tune4": {
+  "title": {
+   "startChar": 219,
+   "endChar": 252
+  }
+ },
+ "sib/curves-tune5": {
+  "title": {
+   "startChar": 298,
+   "endChar": 338
+  }
+ },
+ "sib/curves-tune6": {
+  "title": {
+   "startChar": 376,
+   "endChar": 393
+  }
+ },
+ "sib/escaped-percent-tune0": {
+  "title": {
+   "startChar": 482,
+   "endChar": 497
+  }
+ },
+ "sib/extra-class-tune0": {},
+ "sib/frere-jacques-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 19
+  },
+  "history": {
+   "startChar": 37,
+   "endChar": 79
+  },
+  "origin": {
+   "startChar": 80,
+   "endChar": 122
+  },
+  "composer": {
+   "startChar": 123,
+   "endChar": 168
+  },
+  "notes": {
+   "startChar": 169,
+   "endChar": 188
+  },
+  "source": {
+   "startChar": 189,
+   "endChar": 248
+  },
+  "transcription": {
+   "startChar": 325,
+   "endChar": 387
+  },
+  "group": {
+   "startChar": 388,
+   "endChar": 400
+  }
+ },
+ "sib/full-song-template-tune0": {
+  "title": {
+   "startChar": 5,
+   "endChar": 25
+  },
+  "composer": {
+   "startChar": 45,
+   "endChar": 67
+  },
+  "origin": {
+   "startChar": 68,
+   "endChar": 88
+  },
+  "source": {
+   "startChar": 89,
+   "endChar": 110
+  },
+  "discography": {
+   "startChar": 111,
+   "endChar": 140
+  },
+  "notes": {
+   "startChar": 141,
+   "endChar": 156
+  },
+  "transcription": {
+   "startChar": 157,
+   "endChar": 195
+  },
+  "history": {
+   "startChar": 196,
+   "endChar": 289
+  },
+  "rhythm": {
+   "startChar": 290,
+   "endChar": 316
+  },
+  "unalignedWords": {
+   "startChar": 638,
+   "endChar": 1029
+  }
+ },
+ "sib/grandstaff-inline-meter-tune0": {
+  "title": {
+   "startChar": 590,
+   "endChar": 616
+  }
+ },
+ "sib/happy-birthday-tune0": {
+  "title": {
+   "startChar": 5,
+   "endChar": 34
+  }
+ },
+ "sib/inline-key-per-voice-tune0": {},
+ "sib/little swallow-tune0": {
+  "title": {
+   "startChar": 5,
+   "endChar": 22
+  },
+  "origin": {
+   "startChar": 49,
+   "endChar": 57
+  },
+  "unalignedWords": {
+   "startChar": 967,
+   "endChar": 1318
+  }
+ },
+ "sib/missing-decorations-tune0": {
+  "title": {
+   "startChar": 229,
+   "endChar": 248
+  },
+  "composer": {
+   "startChar": 249,
+   "endChar": 263
+  }
+ },
+ "sib/missing-decorations-tune1": {
+  "title": {
+   "startChar": 327,
+   "endChar": 347
+  },
+  "composer": {
+   "startChar": 348,
+   "endChar": 362
+  }
+ },
+ "sib/missing-decorations-tune2": {
+  "title": {
+   "startChar": 429,
+   "endChar": 456
+  },
+  "composer": {
+   "startChar": 457,
+   "endChar": 471
+  }
+ },
+ "sib/missing-decorations-tune3": {
+  "title": {
+   "startChar": 550,
+   "endChar": 598
+  },
+  "composer": {
+   "startChar": 599,
+   "endChar": 613
+  }
+ },
+ "sib/missing-decorations-tune4": {
+  "title": {
+   "startChar": 702,
+   "endChar": 746
+  },
+  "composer": {
+   "startChar": 747,
+   "endChar": 761
+  }
+ },
+ "sib/missing-decorations-tune5": {
+  "title": {
+   "startChar": 905,
+   "endChar": 939
+  },
+  "composer": {
+   "startChar": 940,
+   "endChar": 954
+  }
+ },
+ "sib/multi-voice-lyrics-two-voices-tune0": {},
+ "sib/multi-voice-rest-collision-tune0": {},
+ "sib/multi-voice-rest-placement-tune0": {},
+ "sib/multi-voice-triplet-brackets-tune0": {},
+ "sib/program-127-test-tune0": {
+  "title": {
+   "startChar": 5,
+   "endChar": 13
+  },
+  "composer": {
+   "startChar": 33,
+   "endChar": 44
+  },
+  "origin": {
+   "startChar": 45,
+   "endChar": 54
+  },
+  "rhythm": {
+   "startChar": 55,
+   "endChar": 64
+  },
+  "source": {
+   "startChar": 65,
+   "endChar": 74
+  },
+  "notes": {
+   "startChar": 75,
+   "endChar": 108
+  },
+  "transcription": {
+   "startChar": 109,
+   "endChar": 123
+  }
+ },
+ "sib/ragtime-mini-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 18
+  }
+ },
+ "sib/ragtime-nightingale-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 25
+  },
+  "composer": {
+   "startChar": 26,
+   "endChar": 39
+  }
+ },
+ "sib/score-reorder-shared-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 24
+  }
+ },
+ "sib/score-reorder-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 18
+  }
+ },
+ "sib/simple-c-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 14
+  }
+ },
+ "sib/stacked-annotations-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 30
+  }
+ },
+ "sib/tunebook-3-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 14
+  }
+ },
+ "sib/tunebook-3-tune1": {
+  "title": {
+   "startChar": 47,
+   "endChar": 64
+  }
+ },
+ "sib/tunebook-3-tune2": {
+  "title": {
+   "startChar": 107,
+   "endChar": 116
+  }
+ },
+ "sib/twinkle-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 21
+  }
+ },
+ "sib/two-voice-invention-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 25
+  },
+  "composer": {
+   "startChar": 26,
+   "endChar": 40
+  }
+ },
+ "sib/voice-middle-after-clef-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 30
+  }
+ },
+ "sib/voice-octave-shift-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 29
+  }
+ },
+ "sib/vree-compound-meter-tune0": {
+  "title": {
+   "startChar": 5,
+   "endChar": 28
+  }
+ },
+ "sib/vree-grace-notes-tune0": {
+  "title": {
+   "startChar": 5,
+   "endChar": 19
+  }
+ },
+ "sib/vree-sharps-tune0": {
+  "title": {
+   "startChar": 5,
+   "endChar": 28
+  }
+ },
+ "sib/vree-slurs-and-triplets-tune0": {
+  "title": {
+   "startChar": 5,
+   "endChar": 26
+  }
+ },
+ "sib/vree-ties-across-bars-tune0": {
+  "title": {
+   "startChar": 5,
+   "endChar": 24
+  }
+ },
+ "sib/zocharti-loch-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 19
+  },
+  "composer": {
+   "startChar": 20,
+   "endChar": 51
+  }
+ }
+}
