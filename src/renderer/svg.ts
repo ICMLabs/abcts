@@ -35,6 +35,7 @@ import { ENGRAVE, stepToY } from "./layout.js";
 import type {
   ConnectorSpan,
   Layout,
+  LayoutElement,
   PartRole,
   PlacedCurve,
   PlacedGlyph,
@@ -42,9 +43,44 @@ import type {
   PlacedText,
 } from "./layout.js";
 
+/**
+ * One thing a host can click, RECORDED AS IT IS WRITTEN.
+ *
+ * abcjs builds its selectable array inside the drawing — `Selectables.add` at eleven sites
+ * in `write/draw/` — and the index it writes into `data-index` is simply how many were
+ * added before it. The emitter is therefore the only place that knows the ORDER: a
+ * dynamic, a curve, a triplet and an ending are merged into abcjs's `otherchildren` by ADD
+ * ORDER rather than by kind, and re-deriving that merge outside would be a second
+ * implementation of the thing the byte gates already prove.
+ *
+ * `kind` is what abcjs would have wrapped; the compat layer turns it into an `abcelem`,
+ * because that shape is abcjs's PUBLIC one and this file knows nothing about it.
+ */
+export interface SelectableRecord {
+  /** `data-index`, the same number the markup carries. */
+  readonly index: number;
+  readonly kind:
+    | "element"
+    | "text"
+    | "voiceName"
+    | "brace"
+    | "ending"
+    | "triplet"
+    | "curve"
+    | "dynamic";
+  /** The laid-out element, when the record came from one. */
+  readonly element?: LayoutElement;
+}
+
 export interface RenderOptions {
   /** Pixels per staff space. 8 gives a ~32px staff, close to typical engraving size. */
   readonly staffSpace?: number;
+  /**
+   * Where to record what a host can click, in DRAWING ORDER. Absent for every caller that
+   * does not want it, and pushed to only where `data-index` is written — so a run with no
+   * sink writes exactly the bytes it wrote before.
+   */
+  readonly selectables?: SelectableRecord[];
   /** Emitted as a `class` on every element, for host styling. */
   readonly className?: string;
   /**
@@ -1327,6 +1363,20 @@ export function toSVG(
     };
     /** abcjs's `Selectables.elements.length` — one counter for the whole drawing. */
     let selectableIndex = 0;
+    /**
+     * `Selectables.add` — records the entry and RETURNS THE INDEX, so it reads inline where
+     * the attribute is written and cannot drift from it. With no sink it is the identity.
+     */
+    const record = (
+      index: number,
+      kind: SelectableRecord["kind"],
+      element?: LayoutElement,
+    ): number => {
+      options.selectables?.push(
+        element === undefined ? { index, kind } : { index, kind, element },
+      );
+      return index;
+    };
 
     /**
      * A TUNE WITH NO MUSIC still writes its title, in the same `abcjs-meta-top` group a
@@ -2723,7 +2773,7 @@ export function toSVG(
               `<g${gcls ? ` class="${escapeAttr(groupClass)}"` : ""}` +
                 ` fill="${marked ? ABCJS_MARK_COLOUR : fg(voiceOf(elIndex))}" stroke="none"` +
                 ` data-name="${name}"` +
-                `${selectable ? ` selectable="false" data-index="${selectableIndex++}"` : ""}` +
+                `${selectable ? ` selectable="false" data-index="${record(selectableIndex++, "element", el)}"` : ""}` +
                 `${marked && !gcls ? ` class="${groupClass}"` : ""}>`,
             );
             /**
