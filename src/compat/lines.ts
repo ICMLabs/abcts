@@ -144,6 +144,8 @@ const el = (
  * got the graces right and missed a bare `.` staccato and the space before a decoration —
  * because the rule is not about content at all.
  */
+const FIELD_ELEMENTS: ReadonlySet<string> = new Set(["tempo", "part"]);
+
 function tile(abc: string, elements: readonly AbcElement[]): AbcElement[] {
   // **EACH ELEMENT OPENS WHERE THE ONE BEFORE IT CLOSED**, and the first of a line opens
   // at the line. A NOTE closes over its trailing whitespace and a BAR does not — measured
@@ -163,6 +165,10 @@ function tile(abc: string, elements: readonly AbcElement[]): AbcElement[] {
   const lineStart = (at: number): number => abc.lastIndexOf("\n", at - 1) + 1;
   const opened = elements.map((e, i) => {
     const own = e.startChar ?? 0;
+    // **AN INLINE FIELD KEEPS ITS OWN OPENING** — it is bracketed, so the element begins at
+    // the `[` and the space before it belongs to NOTHING. Measured on `selection-tempo`:
+    // the barline is 46…47 and the `[Q:"left" …]` 48…73, with 47 in neither.
+    if (FIELD_ELEMENTS.has(e.el_type)) return own;
     const before = elements[i - 1]?.endChar;
     return before === undefined || before < lineStart(own) ? lineStart(own) : before;
   });

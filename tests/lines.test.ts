@@ -180,6 +180,8 @@ const PASSING: readonly string[] = [
   "repo/abcjs-synth-flattener-04-g-gab-cde-d7-fga-def-tune0",
   "repo/abcjs-synth-flattener-05-c-cde-def-c2e-d2f-c-c2-d-d-g-d2-e-e-tune0",
   "repo/abcjs-synth-flattener-08-em-egab-tune0",
+  "repo/abcjs-synth-flattener-09-d-defg-q-1-2-90-defg-tune0",
+  "repo/abcjs-synth-flattener-10-q-1-4-129-0476605-cdef-q-1-4-127-gabc-q--tune0",
   "repo/abcjs-synth-flattener-11-midi-program-3-tune0",
   "repo/abcjs-synth-flattener-12-chords-meter-change-tune0",
   "repo/abcjs-synth-flattener-13-e7-bcde-a-f-break-efe-e7-bc-ignore-de-tune0",
@@ -193,6 +195,7 @@ const PASSING: readonly string[] = [
   "repo/abcjs-synth-flattener-28-midi-channel-10-tune0",
   "repo/abcjs-synth-flattener-29-midi-drum-dddd-76-77-77-77-50-50-50-50-tune0",
   "repo/abcjs-synth-flattener-30-am-a2e-e2d-g-bab-d2b-am-a2e-e2d-g-b2a-ga-tune0",
+  "repo/abcjs-synth-flattener-31-tempo-change-three-voices-tune0",
   "repo/abcjs-synth-flattener-32-quarter-tone2-tune0",
   "repo/abcjs-synth-flattener-33-tempo-override-tune0",
   "repo/abcjs-synth-flattener-34-score-s-a-t-b-tune0",
@@ -232,6 +235,7 @@ const PASSING: readonly string[] = [
   "repo/abcjs-visual-multi-voice-02-p-c-2b2-z4-f2a2-f4-tune0",
   "repo/abcjs-visual-parsing-01-azzz-e2-tune0",
   "repo/abcjs-visual-parsing-02-sx-tune0",
+  "repo/abcjs-visual-selection-02-g4-q-left-1-4-170-right-a4-tune0",
   "repo/abcjs-visual-svg-01-staffwidth-5-tune0",
   "repo/abcjs-visual-svg-03-a4-tune0",
   "repo/abcjs-visual-svg-per-line-02-scaled-tune0",
@@ -319,7 +323,7 @@ describe("tune.lines and getElementFromChar", () => {
    */
   it("the whole corpus agrees on at least the characters it did", () => {
     const agree = table.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(251312);
+    expect(agree).toBeGreaterThanOrEqual(251396);
   });
 
   /**
