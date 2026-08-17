@@ -343,6 +343,20 @@ export function selectablesOf(
     for (const staff of system.staves) {
       for (const voice of staff.voices) {
         for (const element of voice) {
+          // **AN ELEMENT THAT DREW NOTHING ADDS NO SELECTABLE** — "if there was no output,
+          // then don't add to the selectables" (`draw/absolute.js:66`), the rule that also
+          // makes a `y` spacer produce no markup at all. The emitter already knows it: it
+          // un-writes the group and hands the `data-index` back. This is that test one
+          // layer up, ported because it is abcjs's — and it fires on NOTHING in either
+          // corpus today, which is worth saying: `selection-multiple`'s twelve extra
+          // barlines were the reason it was written and they are NOT this. See
+          // `scripts/zzgap.ts`, which counts a case by element type.
+          if (
+            element.glyphs.length === 0 &&
+            element.lines.length === 0 &&
+            element.texts.length === 0
+          )
+            continue;
           const abcelem = abcelemOf(element, index);
           if (abcelem === undefined) continue;
           stampEngraved(abcelem, element);
