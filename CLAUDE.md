@@ -1133,7 +1133,7 @@ backup remote is not a licence to vendor someone else's tree into this one.
 
 ## Current phase
 
-> 🖱️ **THE SELECTABLES ARE IN — 157 OF 389, AND THE JOIN IS A REFERENCE RATHER THAN A
+> 🖱️ **THE SELECTABLES ARE IN — 158 OF 389, AND THE JOIN IS A REFERENCE RATHER THAN A
 > POSITION** (2026-08-16). abcjs's selectable array holds `absEl.abcelem`, the very
 > `tune.lines` element, so its two public surfaces agree by IDENTITY; ours are separate
 > objects, and pairing them POSITIONALLY — the k-th drawn note against the k-th event of the
@@ -1176,6 +1176,14 @@ backup remote is not a licence to vendor someone else's tree into this one.
 > **no ink at all** — so only a gate comparing offsets can see it. Confirmed by `git stash`
 > and by `ls -la` on the two inputs, which is the check the 08-12 checkpoint says to reach
 > for before bisecting.
+>
+> ✅ **AND `selection-tempo` IS GREEN — the second case closed** — on the third span rule:
+> **an inline `[Q:…]` BEGINS AT ITS `[`, and the space before it belongs to NOTHING.** The
+> three rules are one rule, and it is what abcjs's TOKENIZER does rather than anything it
+> states: an element opens where the previous one stopped reading — at the line's start for
+> the first of a line, at the previous element's end within a line, and at its own bracket
+> for an inline field. `tune.lines` is **251,396 characters** and **186 ratcheted tunes**,
+> from 170.
 >
 > 🎯 **AND THE HEADER `Q:` IS A DRAWN ELEMENT THAT IS NOT IN `tune.lines` — THE TWO GATES
 > SETTLED IT ONE EACH WAY.** abcjs's selectable array holds it (five rows) and
