@@ -2518,13 +2518,13 @@ function layoutMeter(x: number, meter: Meter, strict = true): LayoutElement {
 const SHARP_STEPS = [4, 1, 5, 2, -1, 3, 0] as const
 const FLAT_STEPS = [0, 3, -1, 2, -2, 1, -3] as const
 /** The order the two signatures are written in — F C G D A E B, and its mirror. */
-const SHARP_ORDER: readonly DiatonicStep[] = ['f', 'c', 'g', 'd', 'a', 'e', 'b']
-const FLAT_ORDER: readonly DiatonicStep[] = ['b', 'e', 'a', 'd', 'g', 'c', 'f']
+export const SHARP_ORDER: readonly DiatonicStep[] = ['f', 'c', 'g', 'd', 'a', 'e', 'b']
+export const FLAT_ORDER: readonly DiatonicStep[] = ['b', 'e', 'a', 'd', 'g', 'c', 'f']
 /**
  * Where a letter's key accidental sits, which depends on the SIGN: `g` is step 5 as a
  * sharp and −2 as a flat, because the two signatures are written in opposite octaves.
  */
-const keyStepOf = (letter: DiatonicStep, sharp: boolean): number =>
+export const keyStepOf = (letter: DiatonicStep, sharp: boolean): number =>
   sharp
     ? (SHARP_STEPS[SHARP_ORDER.indexOf(letter)] ?? 0)
     : (FLAT_STEPS[FLAT_ORDER.indexOf(letter)] ?? 0)
@@ -2568,7 +2568,7 @@ const bravuraDeclared = (name: GlyphName) => {
   return { height: g?.height ?? 0, declaredHeight: g?.height ?? 0 }
 }
 
-function keySignatureShift(clef: Clef): number {
+export function keySignatureShift(clef: Clef): number {
   const delta = middleLineIndex(defaultClef) - middleLineIndex(clef)
   const wrapped = ((delta % 7) + 7) % 7
   return wrapped > 3 ? wrapped - 7 : wrapped
@@ -2666,6 +2666,7 @@ function layoutKeySignature(
   return {
     type: 'keySignature',
     sourceKey: key,
+    sourceClef: clef,
     x,
     // No trailing gap: the signature ends at the last glyph's ink.
     width: dx - ENGRAVE.keySignatureGap,
@@ -2802,6 +2803,7 @@ function layoutKeyChange(
   return {
     type: 'keySignature',
     sourceKey: to,
+    sourceClef: clef,
     x,
     // No trailing gap: the signature ends at the last glyph's ink.
     width: dx - ENGRAVE.keySignatureGap,

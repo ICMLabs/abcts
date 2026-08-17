@@ -1,12 +1,19 @@
 import type {
   Clef,
+  KeySignature,
   Meter,
   MusicEvent,
   Pitch,
 } from "../core/model.js";
-import { stepIndex } from "../core/model.js";
+import { keyFifths, stepIndex } from "../core/model.js";
 import type { Layout, LayoutElement } from "../renderer/layout.js";
-import { middleLineIndex } from "../renderer/layout.js";
+import {
+  FLAT_ORDER,
+  keySignatureShift,
+  keyStepOf,
+  middleLineIndex,
+  SHARP_ORDER,
+} from "../renderer/layout.js";
 
 import type { AbcElement } from "./lines.js";
 
@@ -270,7 +277,11 @@ function abcelemOf(
       return element.sourceClef === undefined
         ? undefined
         : clefElement(element.sourceClef);
-    // ponytail: a KEY SIGNATURE is measured and NOT built. Its shape is
+    case "keySignature":
+      return element.sourceKey === undefined || element.sourceClef === undefined
+        ? undefined
+        : keyElement(element.sourceKey, element.sourceClef);
+    // (was: a KEY SIGNATURE is measured and NOT built. Its shape is
     // `{accidentals: [{acc, note, verticalPos}], root, acc, mode}` and the mode is the
     // EMPTY STRING for major — but `note` is the accidental's own written name AT THE
     // POSITION IT IS DRAWN, so B♭ major gives `B` (verticalPos 6) and `e` (verticalPos 9),
@@ -278,7 +289,8 @@ function abcelemOf(
     // model holds no such list at all: `layoutKeySignature` derives the glyph positions
     // from `keyFifths` and the sharp/flat order. Building it needs that derivation
     // repeated with abcjs's naming, which is a measurement this session did not make.
-    // `selection-multiple` has four of them and is blocked ahead of them anyway.
+    // `selection-multiple` has four of them — built now, off the same order and shift the
+    // layout draws them with.)
     case "timeSignature":
       return element.sourceMeter === undefined
         ? undefined
@@ -318,6 +330,72 @@ const CLEF_TYPE: Readonly<Record<string, string>> = {
 
 /** B4, the middle line of a treble staff — what abcjs's `mid` is measured from. */
 const TREBLE_MIDDLE_LINE_INDEX = 34;
+
+/**
+ * `{accidentals: [{acc, note, verticalPos}], root, acc, mode}` — abcjs's parsed key.
+ *
+ * **THE `note` IS THE PITCH AT THE POSITION THE ACCIDENTAL IS DRAWN**, named the way ABC
+ * writes it — B♭ major gives `B` (verticalPos 6) and `e` (9), upper and lower case in one
+ * list, and both move with the clef. So it is derived from the SAME order and shift the
+ * layout draws the signature with (`layoutKeySignature`), not from the key's letters:
+ * `keyStepOf` places each accidental, `keySignatureShift` moves the lot for the clef, and
+ * the step is read back out as a pitch.
+ *
+ * abcjs writes the MAJOR mode as the empty string, and `root`/`acc` are the tonic split in
+ * two — `Bb` is `{root: "B", acc: "b"}`.
+ */
+const keyElement = (key: KeySignature, clef: Clef): AbcElement => {
+  const fifths = keyFifths(key);
+  const sharps = fifths > 0;
+  const shift = keySignatureShift(clef);
+  const letters = (sharps ? SHARP_ORDER : FLAT_ORDER).slice(0, Math.abs(fifths));
+  return {
+    el_type: "keySignature",
+    accidentals: letters.map((letter) => {
+      const step = keyStepOf(letter, sharps) + shift;
+      return {
+        acc: sharps ? "sharp" : "flat",
+        // **THE NAME IS THE TREBLE SPELLING AND DOES NOT MOVE WITH THE CLEF** — abcjs's
+        // table gives each letter a fixed `note` and adjusts only `verticalPos` by the
+        // staff's `mid` (`abc_parse_key_voice.js:107-135`). So B♭ major reads `B` and `e`
+        // on a BASS staff too, where those positions sound `B,,` and `E,`. Measured: our
+        // first cut named the pitch at the drawn position and differed on exactly the two
+        // bass rows.
+        note: abcName(keyStepOf(letter, sharps) + TREBLE_MIDDLE_LINE_INDEX),
+        verticalPos: step + MIDDLE_LINE_VERTICAL_POS,
+      };
+    }),
+    root: key.tonic.step.toUpperCase(),
+    acc:
+      key.tonic.accidental === null || key.tonic.accidental === 0
+        ? ""
+        : key.tonic.accidental > 0
+          ? "#"
+          : "b",
+    mode: KEY_MODE[key.mode] ?? "",
+  };
+};
+
+const KEY_MODE: Readonly<Record<string, string>> = {
+  major: "",
+  minor: "m",
+  mixolydian: "Mix",
+  dorian: "Dor",
+  phrygian: "Phr",
+  lydian: "Lyd",
+  locrian: "Loc",
+};
+
+/** A diatonic index as ABC writes it: `C` is C4, `c` is C5, `C,` is C3, `c'` is C6. */
+const abcName = (index: number): string => {
+  const octave = Math.floor(index / 7);
+  const letter = "cdefgab"[((index % 7) + 7) % 7] ?? "c";
+  return octave >= 5
+    ? letter + "'".repeat(octave - 5)
+    : octave === 4
+      ? letter.toUpperCase()
+      : letter.toUpperCase() + ",".repeat(4 - octave);
+};
 
 /** The same shape `getMeter()` returns — `{type, value: [{num, den}]}`, numbers as STRINGS. */
 const meterElement = (meter: Meter): AbcElement => ({
