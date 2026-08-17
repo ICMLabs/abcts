@@ -1,0 +1,1516 @@
+{
+ "repo/abcjs-parse-book_parser-01-example-tune0": {
+  "title": "example"
+ },
+ "repo/abcjs-parse-book_parser-02-tune-tune0": {
+  "title": ""
+ },
+ "repo/abcjs-parse-book_parser-03-a-tune0": {
+  "title": "a"
+ },
+ "repo/abcjs-parse-book_parser-03-a-tune1": {},
+ "repo/abcjs-parse-book_parser-03-a-tune2": {
+  "title": "c"
+ },
+ "repo/abcjs-parse-book_parser-04-wed-tune0": {},
+ "repo/abcjs-parse-book_parser-05-a-tune0": {
+  "title": "a"
+ },
+ "repo/abcjs-parse-book_parser-05-a-tune1": {},
+ "repo/abcjs-parse-book_parser-06-a-tune0": {
+  "title": "a"
+ },
+ "repo/abcjs-parse-book_parser-07-a-tune0": {
+  "title": "a"
+ },
+ "repo/abcjs-parse-note-01-c0-d1-eg-0-fa-1-tune0": {},
+ "repo/abcjs-parse-note-id-01-v-v1-c-d-e-f-tune0": {},
+ "repo/abcjs-parse-tie-slur-01-staffwidth-200-tune0": {},
+ "repo/abcjs-parse-tie-slur-02-staffwidth-200-tune0": {},
+ "repo/abcjs-parse-tie-slur-03-staffwidth-200-tune0": {},
+ "repo/abcjs-parse-tie-slur-04-stretchlast-1-tune0": {},
+ "repo/abcjs-synth-flattener-01-crescendo-efga-gab-crescendo-c-diminuend-tune0": {
+  "tempo": {
+   "startChar": 16,
+   "endChar": 25,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "repo/abcjs-synth-flattener-02-p-c-def-gabc-d2-b2-g2-f2-f-e-fga-bcde-p--tune0": {},
+ "repo/abcjs-synth-flattener-03-pppp-cdef-gabc-y-ffff-bcba-gfed-y-pppp-c-tune0": {},
+ "repo/abcjs-synth-flattener-04-g-gab-cde-d7-fga-def-tune0": {
+  "tempo": {
+   "startChar": 16,
+   "endChar": 24,
+   "duration": [
+    0.375
+   ],
+   "bpm": 60
+  }
+ },
+ "repo/abcjs-synth-flattener-05-c-cde-def-c2e-d2f-c-c2-d-d-g-d2-e-e-tune0": {
+  "tempo": {
+   "startChar": 10,
+   "endChar": 18,
+   "duration": [
+    0.375
+   ],
+   "bpm": 61
+  }
+ },
+ "repo/abcjs-synth-flattener-06-cde-d7-f2-d2-e2-f2-1-g-g4-fedc-c-e4z4-tune0": {
+  "tempo": {
+   "startChar": 14,
+   "endChar": 22,
+   "duration": [
+    0.5
+   ],
+   "bpm": 50
+  }
+ },
+ "repo/abcjs-synth-flattener-07-metronome-tune0": {
+  "title": "metronome",
+  "tempo": {
+   "startChar": 23,
+   "endChar": 31,
+   "duration": [
+    0.25
+   ],
+   "bpm": 60
+  },
+  "notes": "The drum beat should start on the first full measure.\nThe drum beat should drop out in the second line.\nThe drum beat pattern should change for the third line."
+ },
+ "repo/abcjs-synth-flattener-08-em-egab-tune0": {},
+ "repo/abcjs-synth-flattener-09-d-defg-q-1-2-90-defg-tune0": {
+  "tempo": {
+   "startChar": 15,
+   "endChar": 23,
+   "duration": [
+    0.5
+   ],
+   "bpm": 60
+  }
+ },
+ "repo/abcjs-synth-flattener-10-q-1-4-129-0476605-cdef-q-1-4-127-gabc-q--tune0": {},
+ "repo/abcjs-synth-flattener-11-midi-program-3-tune0": {
+  "tempo": {
+   "startChar": 16,
+   "endChar": 24,
+   "duration": [
+    0.25
+   ],
+   "bpm": 90
+  }
+ },
+ "repo/abcjs-synth-flattener-12-chords-meter-change-tune0": {
+  "title": "chords meter change",
+  "tempo": {
+   "startChar": 33,
+   "endChar": 41,
+   "duration": [
+    0.25
+   ],
+   "bpm": 40
+  }
+ },
+ "repo/abcjs-synth-flattener-13-e7-bcde-a-f-break-efe-e7-bc-ignore-de-tune0": {
+  "tempo": {
+   "startChar": 10,
+   "endChar": 18,
+   "duration": [
+    0.25
+   ],
+   "bpm": 40
+  }
+ },
+ "repo/abcjs-synth-flattener-14-eb7-zg2ga2a2-a2ab-b4-ab-z-break-c2cd2d2--tune0": {
+  "tempo": {
+   "startChar": 10,
+   "endChar": 15,
+   "duration": [
+    0.25
+   ],
+   "bpm": 135
+  }
+ },
+ "repo/abcjs-synth-flattener-15-c-c4-c-tune0": {
+  "tempo": {
+   "startChar": 10,
+   "endChar": 15,
+   "duration": [
+    0.25
+   ],
+   "bpm": 135
+  }
+ },
+ "repo/abcjs-synth-flattener-16-gm-gfdf-gfdf-gf-d2-f-c4-tune0": {},
+ "repo/abcjs-synth-flattener-17-midi-grace-notes-tune0": {
+  "title": "midi-grace-notes",
+  "tempo": {
+   "startChar": 30,
+   "endChar": 38,
+   "duration": [
+    0.25
+   ],
+   "bpm": 40
+  }
+ },
+ "repo/abcjs-synth-flattener-18-midi-program-40-tune0": {
+  "tempo": {
+   "startChar": 65,
+   "endChar": 73,
+   "duration": [
+    0.25
+   ],
+   "bpm": 40
+  }
+ },
+ "repo/abcjs-synth-flattener-19-cdef-z4-fedc-tune0": {
+  "tempo": {
+   "startChar": 16,
+   "endChar": 25,
+   "duration": [
+    0.25
+   ],
+   "bpm": 130
+  }
+ },
+ "repo/abcjs-synth-flattener-20-k-treble-8-b-a4-ce-f-4-k-treble-8-g8-g-2-tune0": {},
+ "repo/abcjs-synth-flattener-21-c4-d4-tune0": {},
+ "repo/abcjs-synth-flattener-22-b-c4-d4-tune0": {},
+ "repo/abcjs-synth-flattener-23-percmap-d-pedal-hi-hat-x-tune0": {
+  "tempo": {
+   "startChar": 614,
+   "endChar": 622,
+   "duration": [
+    0.25
+   ],
+   "bpm": 50
+  }
+ },
+ "repo/abcjs-synth-flattener-24-percmap-c-high-tom-x-tune0": {
+  "tempo": {
+   "startChar": 103,
+   "endChar": 111,
+   "duration": [
+    0.25
+   ],
+   "bpm": 50
+  }
+ },
+ "repo/abcjs-synth-flattener-25-cd-d2-d2-dz-tune0": {
+  "tempo": {
+   "startChar": 10,
+   "endChar": 14,
+   "duration": [
+    0.25
+   ],
+   "bpm": 80
+  }
+ },
+ "repo/abcjs-synth-flattener-26-gbcd-d4-zcdc-dc3-tune0": {
+  "tempo": {
+   "startChar": 16,
+   "endChar": 25,
+   "duration": [
+    0.25
+   ],
+   "bpm": 150
+  }
+ },
+ "repo/abcjs-synth-flattener-27-triplets-and-chord-rhythm-tune0": {
+  "title": "triplets-and-chord-rhythm",
+  "tempo": {
+   "startChar": 46,
+   "endChar": 51,
+   "duration": [
+    0.25
+   ],
+   "bpm": 80
+  }
+ },
+ "repo/abcjs-synth-flattener-28-midi-channel-10-tune0": {},
+ "repo/abcjs-synth-flattener-29-midi-drum-dddd-76-77-77-77-50-50-50-50-tune0": {
+  "tempo": {
+   "startChar": 10,
+   "endChar": 18,
+   "duration": [
+    0.25
+   ],
+   "bpm": 60
+  }
+ },
+ "repo/abcjs-synth-flattener-30-am-a2e-e2d-g-bab-d2b-am-a2e-e2d-g-b2a-ga-tune0": {},
+ "repo/abcjs-synth-flattener-31-tempo-change-three-voices-tune0": {
+  "title": "tempo-change-three-voices",
+  "tempo": {
+   "startChar": 58,
+   "endChar": 66,
+   "duration": [
+    0.25
+   ],
+   "bpm": 70
+  }
+ },
+ "repo/abcjs-synth-flattener-32-quarter-tone2-tune0": {
+  "title": "quarter-tone2",
+  "tempo": {
+   "startChar": 27,
+   "endChar": 36,
+   "duration": [
+    0.125
+   ],
+   "bpm": 120
+  },
+  "notes": "all combinations of accidentals in key sigs and in music"
+ },
+ "repo/abcjs-synth-flattener-33-tempo-override-tune0": {
+  "title": "tempo-override",
+  "tempo": {
+   "startChar": 27,
+   "endChar": 36,
+   "duration": [
+    0.25
+   ],
+   "bpm": 150
+  }
+ },
+ "repo/abcjs-synth-flattener-34-score-s-a-t-b-tune0": {},
+ "repo/abcjs-synth-flattener-35-midi-bassprog-10-tune0": {},
+ "repo/abcjs-synth-flattener-36-midi-gchord-fhihfhih-tune0": {},
+ "repo/abcjs-synth-flattener-37-midi-gchord-bzczbzcz-tune0": {},
+ "repo/abcjs-synth-flattener-38-c-zz-d-z-e-z-tune0": {},
+ "repo/abcjs-synth-flattener-39-midi-gchord-bzczbzcz-tune0": {},
+ "repo/abcjs-synth-flattener-40-c5-z4-tune0": {},
+ "repo/abcjs-synth-flattener-41-midi-bassprog-10-octave-1-tune0": {},
+ "repo/abcjs-synth-flattener-42-midi-gchord-ffffffff-tune0": {},
+ "repo/abcjs-synth-flattener-43-gm-zzz-cm-zzz-tune0": {},
+ "repo/abcjs-synth-flattener-44-cd-pppp-c-ffff-d-ffff-c-pppp-d-cd-tune0": {},
+ "repo/abcjs-synth-flattener-45-segno-f-d2-tune0": {},
+ "repo/abcjs-synth-flattener-46-c8-1-d8-2-e8-3-f8-tune0": {
+  "tempo": {
+   "startChar": 14,
+   "endChar": 23,
+   "duration": [
+    0.25
+   ],
+   "bpm": 130
+  }
+ },
+ "repo/abcjs-synth-midi-01-midi-options-tune0": {
+  "title": "midi options",
+  "tempo": {
+   "startChar": 95,
+   "endChar": 103,
+   "duration": [
+    0.25
+   ],
+   "bpm": 89
+  }
+ },
+ "repo/abcjs-synth-midi-02-staccato-tune0": {
+  "title": "staccato",
+  "tempo": {
+   "startChar": 22,
+   "endChar": 30,
+   "duration": [
+    0.25
+   ],
+   "bpm": 59
+  }
+ },
+ "repo/abcjs-synth-midi-03-percmap-tune0": {
+  "title": "percmap",
+  "tempo": {
+   "startChar": 118,
+   "endChar": 126,
+   "duration": [
+    0.25
+   ],
+   "bpm": 50
+  }
+ },
+ "repo/abcjs-synth-timing-01-cde-fg-ab-1-bcd-2-efg-tune0": {
+  "tempo": {
+   "startChar": 16,
+   "endChar": 24,
+   "duration": [
+    0.25
+   ],
+   "bpm": 60
+  }
+ },
+ "repo/abcjs-synth-timing-02-score-1-2-tune0": {
+  "tempo": {
+   "startChar": 28,
+   "endChar": 37,
+   "duration": [
+    0.25
+   ],
+   "bpm": 140
+  }
+ },
+ "repo/abcjs-synth-timing-03-cd-e-f-3gab-ac-tune0": {
+  "tempo": {
+   "startChar": 10,
+   "endChar": 18,
+   "duration": [
+    0.25
+   ],
+   "bpm": 60
+  }
+ },
+ "repo/abcjs-synth-timing-04-cd-e-f-3gab-ac-tune0": {},
+ "repo/abcjs-synth-timing-05-subtitle-crash-tune0": {
+  "title": "subtitle-crash"
+ },
+ "repo/abcjs-synth-timing-06-repeat-at-start-of-line-crash-tune0": {
+  "title": "repeat-at-start-of-line-crash"
+ },
+ "repo/abcjs-synth-timing-07-skip-ties-crash-tune0": {
+  "title": "skip-ties-crash"
+ },
+ "repo/abcjs-synth-timing-08-tie-repeat-crash-tune0": {
+  "title": "tie-repeat-crash",
+  "tempo": {
+   "startChar": 29,
+   "endChar": 38,
+   "duration": [
+    0.25
+   ],
+   "bpm": 100
+  }
+ },
+ "repo/abcjs-synth-timing-09-f-c-2d-2-e-4-g-6-a-2-g-4-e-4-tune0": {},
+ "repo/abcjs-synth-timing-10-stretchlast-1-tune0": {},
+ "repo/abcjs-synth-timing-11-stretchlast-1-tune0": {},
+ "repo/abcjs-synth-timing-12-stretchlast-1-tune0": {},
+ "repo/abcjs-visual-decorations-01-score-s-a-b-tune0": {},
+ "repo/abcjs-visual-directives-01-incipit-test-tune0": {
+  "title": "Incipit Test"
+ },
+ "repo/abcjs-visual-layout-01-barlabelfont-times-bold-18-box-tune0": {},
+ "repo/abcjs-visual-layout-02-barlabelfont-times-bold-18-box-tune0": {},
+ "repo/abcjs-visual-layout-03-cdef-cdef-tune0": {},
+ "repo/abcjs-visual-layout-04-score-s-a-tune0": {},
+ "repo/abcjs-visual-layout-05-c3-abc-cf-3-abc-c3-fa-bc-tune0": {},
+ "repo/abcjs-visual-layout-06-staves-1-2-3-4-tune0": {},
+ "repo/abcjs-visual-layout-07-v-1-b2-a2-tune0": {},
+ "repo/abcjs-visual-layout-08-staffwidth-100-tune0": {},
+ "repo/abcjs-visual-layout-09-endings-tune0": {
+  "title": "endings"
+ },
+ "repo/abcjs-visual-misc-01-barnumbers-1-tune0": {},
+ "repo/abcjs-visual-misc-02-title-tune0": {
+  "title": "Title"
+ },
+ "repo/abcjs-visual-misc-03-jazzchords-tune0": {},
+ "repo/abcjs-visual-misc-04-stretchlast-tune0": {},
+ "repo/abcjs-visual-misc-05-cccc-d-c-alcoda-dddd-d-c-alfine-eeee-d-s-tune0": {},
+ "repo/abcjs-visual-misc-06-title-1bold-0-100-reg-the-tune0": {
+  "title": [
+   {
+    "text": "the Title "
+   },
+   {
+    "font": {
+     "face": "cursive",
+     "weight": "bold",
+     "style": "normal",
+     "decoration": "none",
+     "size": 16
+    },
+    "text": "bold"
+   },
+   {
+    "text": " $100 reg"
+   }
+  ],
+  "composer": [
+   {
+    "text": "Thomas "
+   },
+   {
+    "font": {
+     "face": "Arial",
+     "weight": "bold",
+     "style": "normal",
+     "decoration": "none",
+     "size": 19
+    },
+    "text": "Fats"
+   },
+   {
+    "text": " Waller"
+   }
+  ],
+  "origin": [
+   {
+    "text": "Copyright "
+   },
+   {
+    "font": {
+     "face": "cursive",
+     "weight": "bold",
+     "style": "normal",
+     "decoration": "none",
+     "size": 16
+    },
+    "text": "1924"
+   },
+   {
+    "text": " All Rights Reserved"
+   }
+  ],
+  "author": [
+   {
+    "text": "by "
+   },
+   {
+    "font": {
+     "face": "cursive",
+     "weight": "bold",
+     "style": "normal",
+     "decoration": "none",
+     "size": 16
+    },
+    "text": "Me"
+   }
+  ],
+  "partOrder": [
+   {
+    "text": "AA"
+   },
+   {
+    "font": {
+     "face": "cursive",
+     "weight": "bold",
+     "style": "normal",
+     "decoration": "none",
+     "size": 16
+    },
+    "text": "BB"
+   },
+   {
+    "text": "CC"
+   }
+  ],
+  "history": [
+   [
+    {
+     "text": "one "
+    },
+    {
+     "font": {
+      "face": "cursive",
+      "weight": "bold",
+      "style": "normal",
+      "decoration": "none",
+      "size": 16
+     },
+     "text": "two "
+    },
+    {
+     "text": " three"
+    }
+   ],
+   [
+    {
+     "text": "aye "
+    },
+    {
+     "font": {
+      "face": "cursive",
+      "weight": "bold",
+      "style": "normal",
+      "decoration": "none",
+      "size": 16
+     },
+     "text": "bee "
+    },
+    {
+     "text": " sea"
+    }
+   ]
+  ],
+  "book": [
+   {
+    "font": {
+     "face": "cursive",
+     "weight": "bold",
+     "style": "normal",
+     "decoration": "none",
+     "size": 16
+    },
+    "text": "book"
+   }
+  ],
+  "discography": "records",
+  "notes": [
+   [
+    {
+     "text": "four "
+    },
+    {
+     "font": {
+      "face": "cursive",
+      "weight": "bold",
+      "style": "normal",
+      "decoration": "none",
+      "size": 16
+     },
+     "text": "five "
+    },
+    {
+     "text": " six"
+    }
+   ],
+   "seven"
+  ],
+  "unalignedWords": [
+   [
+    {
+     "text": "lo "
+    },
+    {
+     "font": {
+      "face": "cursive",
+      "weight": "bold",
+      "style": "normal",
+      "decoration": "none",
+      "size": 16
+     },
+     "text": "loo "
+    },
+    {
+     "text": "lou $1dollar"
+    }
+   ]
+  ]
+ },
+ "repo/abcjs-visual-misc-06-title-1bold-0-100-reg-the-tune1": {
+  "title": "the Title bold $100 reg",
+  "composer": "Thomas Fats Waller",
+  "origin": "Copyright 1924 All Rights Reserved",
+  "author": "by Me",
+  "partOrder": "AABBCC",
+  "history": "one two three\naye bee sea",
+  "notes": "four five six\nseven",
+  "unalignedWords": [
+   "lo loo lou $1dollar"
+  ]
+ },
+ "repo/abcjs-visual-misc-07-ab-ef-g-d-df-f-d-a-4-c-4-tune0": {},
+ "repo/abcjs-visual-misc-08-a2-c2-t-a2t-c2-tune0": {},
+ "repo/abcjs-visual-misc-09-begintext-tune0": {},
+ "repo/abcjs-visual-misc-10-begintext-tune0": {},
+ "repo/abcjs-visual-misc-11-begintext-tune0": {},
+ "repo/abcjs-visual-misc-12-b-beambr1-b-bb-tune0": {},
+ "repo/abcjs-visual-misc-13-ceg-t-gce-d-f-b-3-dm7-d-te-tune0": {},
+ "repo/abcjs-visual-misc-14-tune-tune0": {},
+ "repo/abcjs-visual-mouse-click-01-selection-test-tune0": {
+  "title": "Selection Test",
+  "composer": "public domain",
+  "rhythm": "Hit it",
+  "author": "Yours Truly",
+  "source": "My own testing",
+  "unalignedWords": [
+   "Now is the time for all good men",
+   "",
+   "To come to the aid of their party."
+  ],
+  "history": "This shows every type of thing that can possibly be drawn.\n\nAnd two lines of history!",
+  "tempo": {
+   "startChar": 365,
+   "endChar": 388,
+   "preString": "Easy Swing",
+   "duration": [
+    0.25
+   ],
+   "bpm": 140
+  },
+  "partOrder": "AABB"
+ },
+ "repo/abcjs-visual-multi-voice-01-score-top-bottom-tune0": {},
+ "repo/abcjs-visual-multi-voice-02-p-c-2b2-z4-f2a2-f4-tune0": {},
+ "repo/abcjs-visual-options-01-fonts-tune0": {
+  "header": {
+   "left": "",
+   "center": "The header",
+   "right": ""
+  },
+  "footer": {
+   "left": "",
+   "center": "The footer",
+   "right": ""
+  },
+  "title": "fonts",
+  "composer": "composer",
+  "author": "author",
+  "rhythm": "hopping",
+  "history": "History",
+  "notes": "The notes",
+  "origin": "Origin",
+  "source": "source",
+  "partOrder": "Part Order",
+  "tempo": {
+   "startChar": 681,
+   "endChar": 707,
+   "preString": "This is",
+   "duration": [
+    0.25
+   ],
+   "bpm": 190,
+   "postString": "Fast"
+  },
+  "unalignedWords": [
+   "The extra verses",
+   "The extra verses - line 2"
+  ]
+ },
+ "repo/abcjs-visual-parsing-01-azzz-e2-tune0": {},
+ "repo/abcjs-visual-parsing-02-sx-tune0": {},
+ "repo/abcjs-visual-parsing-03-v-1-f-tune0": {},
+ "repo/abcjs-visual-parsing-04-v-t-c-tune0": {},
+ "repo/abcjs-visual-parsing-05-v-t-c-v-b-a-v-t-d-tune0": {},
+ "repo/abcjs-visual-parsing-06-score-t-b-tune0": {},
+ "repo/abcjs-visual-parsing-07-score-t-b-tune0": {},
+ "repo/abcjs-visual-parsing-08-score-t-b-tune0": {},
+ "repo/abcjs-visual-parsing-09-score-t-b-tune0": {},
+ "repo/abcjs-visual-parsing-10-song-tune0": {
+  "title": "song",
+  "composer": "composer"
+ },
+ "repo/abcjs-visual-selection-01-selection-test-tune0": {
+  "title": "Selection Test",
+  "composer": "public domain",
+  "rhythm": "Hit it",
+  "author": "Yours Truly",
+  "source": "My own testing",
+  "unalignedWords": [
+   "Now is the time for all good men",
+   "",
+   "To come to the aid of their party."
+  ],
+  "history": "This shows every type of thing that can possibly be drawn.\n\nAnd two lines of history!",
+  "tempo": {
+   "startChar": 486,
+   "endChar": 509,
+   "preString": "Easy Swing",
+   "duration": [
+    0.25
+   ],
+   "bpm": 140
+  },
+  "partOrder": "AABB"
+ },
+ "repo/abcjs-visual-selection-02-g4-q-left-1-4-170-right-a4-tune0": {
+  "tempo": {
+   "startChar": 16,
+   "endChar": 39,
+   "preString": "Easy Swing",
+   "duration": [
+    0.25
+   ],
+   "bpm": 140
+  }
+ },
+ "repo/abcjs-visual-selection-03-c4-tune0": {},
+ "repo/abcjs-visual-slurs-01-score-s-a-tune0": {},
+ "repo/abcjs-visual-slurs-02-score-s-a-t-b-tune0": {},
+ "repo/abcjs-visual-svg-01-staffwidth-5-tune0": {},
+ "repo/abcjs-visual-svg-02-staffwidth-12-tune0": {},
+ "repo/abcjs-visual-svg-03-a4-tune0": {},
+ "repo/abcjs-visual-svg-per-line-01-selection-test-tune0": {
+  "title": "Selection Test",
+  "composer": "public domain",
+  "rhythm": "Hit it",
+  "author": "Yours Truly",
+  "source": "My own testing",
+  "unalignedWords": [
+   "Now is the time for all good men",
+   "",
+   "To come to the aid of their party."
+  ],
+  "history": "This shows every type of thing that can possibly be drawn.\n\nAnd two lines of history!",
+  "tempo": {
+   "startChar": 486,
+   "endChar": 509,
+   "preString": "Easy Swing",
+   "duration": [
+    0.25
+   ],
+   "bpm": 140
+  },
+  "partOrder": "AABB"
+ },
+ "repo/abcjs-visual-svg-per-line-02-scaled-tune0": {
+  "title": "Scaled"
+ },
+ "repo/abcjs-visual-tablature-01-gr-tune0": {},
+ "repo/abcjs-visual-tablature-02-g-fg-a-g2-a-very-very-long-chord-d2-cd-f-tune0": {},
+ "repo/abcjs-visual-tablature-03-staves-rh-lh-tune0": {},
+ "repo/abcjs-visual-tablature-04-barnumbers-1-tune0": {},
+ "repo/abcjs-visual-tablature-05-a7-a-tune0": {},
+ "repo/abcjs-visual-tablature-06-a7-a-tune0": {
+  "partOrder": "Verse",
+  "tempo": {
+   "startChar": 4,
+   "endChar": 9,
+   "duration": [
+    0.25
+   ],
+   "bpm": 150
+  }
+ },
+ "repo/abcjs-visual-tablature-07-staves-rh-lh-tune0": {},
+ "repo/abcjs-visual-tablature-08-first-tune0": {
+  "title": "First"
+ },
+ "repo/abcjs-visual-tablature-09-f-g-tune0": {},
+ "repo/abcjs-visual-tablature-10-f3-a-y-tune0": {},
+ "repo/abcjs-visual-tablature-11-f-f-tune0": {},
+ "repo/abcjs-visual-tablature-12-b-tune0": {},
+ "repo/abcjs-visual-tablature-13-g8-c4-d4-e4-f4-tune0": {},
+ "repo/abcjs-visual-tablature-14-c-tune0": {},
+ "repo/abcjs-visual-tablature-15-all-element-types-tune0": {
+  "title": "all-element-types",
+  "composer": "public domain",
+  "rhythm": "Hit it",
+  "author": "Yours Truly",
+  "source": "My own testing",
+  "unalignedWords": [
+   "Now is the time for all good men",
+   "",
+   "To come to the aid of their party."
+  ],
+  "history": "This shows every type of thing that can possibly be drawn.\n\nAnd two lines of history!",
+  "tempo": {
+   "startChar": 358,
+   "endChar": 381,
+   "preString": "Easy Swing",
+   "duration": [
+    0.25
+   ],
+   "bpm": 140
+  },
+  "partOrder": "AABB"
+ },
+ "repo/abcjs-visual-tablature-16-g-g-g-g-tune0": {},
+ "repo/abcjs-visual-tablature-17-stretchlast-tune0": {},
+ "repo/abcjs-visual-tablature-18-a-b-tune0": {},
+ "repo/abcjs-visual-tablature-19-d-a-d-g-b-e-tune0": {},
+ "repo/abcjs-visual-tablature-20-score-1-2-tune0": {},
+ "repo/abcjs-visual-tablature-21-a2-a-a-f-f-f-f-f-e-ee-g-gg-g-k-eb-a2-a2-tune0": {},
+ "repo/abcjs-visual-tablature-22-g-cegda-tune0": {},
+ "repo/abcjs-visual-tablature-23-gab-tune0": {},
+ "repo/abcjs-visual-tablature-24-stretchlast-tune0": {},
+ "repo/abcjs-visual-title-01-not-transformed-tune0": {
+  "title": "Not Transformed"
+ },
+ "repo/abcjs-visual-title-02-transformed-the-tune0": {
+  "title": "The Transformed"
+ },
+ "repo/abcjs-visual-title-03-transformed-the-tune0": {
+  "title": "the Transformed"
+ },
+ "repo/abcjs-visual-title-04-transformed-a-tune0": {
+  "title": "A Transformed"
+ },
+ "repo/abcjs-visual-title-05-transformed-an-tune0": {
+  "title": "An Transformed"
+ },
+ "repo/abcjs-visual-title-06-transformed-a-tune0": {
+  "title": "a Transformed"
+ },
+ "repo/abcjs-visual-title-07-24-number-transform-the-tune0": {
+  "title": "24. The Number Transform"
+ },
+ "repo/abcjs-visual-title-08-24-number-transform-a-tune0": {
+  "title": "24. A Number Transform"
+ },
+ "repo/abcjs-visual-title-09-mal-the-formed-tune0": {
+  "title": "Mal , The Formed"
+ },
+ "repo/abcjs-visual-title-10-20-subtitles-the-tune0": {
+  "title": "20. The Subtitles"
+ },
+ "repo/abcjs-visual-transpose-01-f2-f-f-f-f-f2-e2-e-e-e-e-e2-k-ab-f2-f-f--tune0": {},
+ "repo/abcjs-visual-transpose-02-cdef-gabc-c-d-e-f-g-a-b-c-c-d-e-f-g-a-b--tune0": {},
+ "repo/abcjs-visual-transpose-03-cdef-gabc-c-d-e-f-g-a-b-c-c-d-e-f-g-a-b--tune0": {},
+ "repo/abcjs-visual-transpose-04-transpose-annotations-tune0": {
+  "title": "transpose_annotations"
+ },
+ "repo/abcjs-visual-transpose-05-n-c-ab-c-c-c-c-d-d-d-d-e-e-f-f-f-f-g-g-g-tune0": {},
+ "repo/abcjs-visual-transpose-06-c-d-e-f-g-a-b-c-cdef-gabc-c-d-e-f-g-a-b--tune0": {},
+ "repo/abcjs-visual-transpose-output-01-transpose-output-tune0": {
+  "title": "Transpose Output"
+ },
+ "repo/abcjs-visual-transpose-output-02-transpose-output-tune0": {
+  "title": "Transpose Output"
+ },
+ "repo/abcjs-visual-transpose-output-03-transpose-output-tune0": {
+  "title": "Transpose Output"
+ },
+ "repo/abcjs-visual-transpose-output-04-transpose-output-tune0": {
+  "title": "Transpose Output"
+ },
+ "repo/abcjs-visual-transpose-output-05-g-tune0": {},
+ "repo/abcjs-visual-transpose-output-06-f-tune0": {},
+ "repo/abcjs-visual-wrap-01-b-4-c2d2-e3f-gabc-d-e-f-g-marcato-d-e-f--tune0": {},
+ "repo/abcjs-visual-wrap-02-stretchlast-1-tune0": {
+  "tempo": {
+   "startChar": 20,
+   "endChar": 28,
+   "duration": [
+    0.25
+   ],
+   "bpm": 70
+  }
+ },
+ "repo/abcjs-visual-wrap-03-piano-wrap-tune0": {
+  "title": "piano_wrap"
+ },
+ "repo/abcjs-visual-wrap-04-wrap-quartet-tune0": {
+  "title": "wrap quartet"
+ },
+ "repo/abcjs-visual-wrap-05-score-1-2-3-4-tune0": {},
+ "repo/abcts-keywarn-tune0": {
+  "title": "keywarn absent"
+ },
+ "repo/abcts-keywarn-tune1": {
+  "title": "keywarn 0"
+ },
+ "repo/abcts-keywarn-tune2": {
+  "title": "keywarn false is a no-op"
+ },
+ "repo/abcts-visualtranspose-tune0": {
+  "title": "visualTranspose 0 — the control's control"
+ },
+ "repo/abcts-visualtranspose-tune1": {
+  "title": "visualTranspose up 2"
+ },
+ "repo/abcts-visualtranspose-tune2": {
+  "title": "visualTranspose down 3, with accidentals"
+ },
+ "repo/abcts-visualtranspose-tune3": {
+  "title": "visualTranspose up 7, minor"
+ },
+ "repo/abcts-vskip-tune0": {
+  "title": "vskip between lines"
+ },
+ "repo/abcts-vskip-tune1": {
+  "title": "vskip before the first line"
+ },
+ "repo/abcts-vskip-tune2": {
+  "title": "vskip in centimetres"
+ },
+ "sib/S1-decorations-tune0": {
+  "title": "S1-1 Decorations",
+  "composer": "Test - from Gonzato guide Ch.2"
+ },
+ "sib/S1-decorations-tune1": {
+  "title": "S1-2 Shorthand Decorations",
+  "notes": "from https://abcnotation.com/wiki/abc:standard:v2.1#decorations"
+ },
+ "sib/S1-decorations-tune2": {
+  "title": "S1-3 All Decorations",
+  "notes": "from https://abcnotation.com/wiki/abc:standard:v2.1#decorations"
+ },
+ "sib/S1-decorations-tune3": {
+  "title": "S1-4 Mark Decoration Test"
+ },
+ "sib/S1-decorations-tune4": {
+  "title": "S1-5 Glissando Test",
+  "composer": "Test Fixture"
+ },
+ "sib/S2-fields-tune0": {
+  "title": "S2-1 Title and Header Fields",
+  "composer": "John Composer",
+  "origin": "Country of Origin",
+  "rhythm": "March",
+  "tempo": {
+   "startChar": 202,
+   "endChar": 211,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "sib/S2-fields-tune1": {
+  "title": "S2-2 Text Placement",
+  "tempo": {
+   "startChar": 299,
+   "endChar": 321,
+   "preString": "Dolcemente",
+   "duration": [
+    0.25
+   ],
+   "bpm": 60
+  }
+ },
+ "sib/S2-fields-tune2": {
+  "title": "S2-3 BeginText Test"
+ },
+ "sib/S3-note-syntax-tune0": {
+  "title": "S3-1 Scales and Pitch Range",
+  "composer": "Test - from Gonzato guide Ch.2"
+ },
+ "sib/S3-note-syntax-tune1": {
+  "title": "S3-2 Accidentals and Microtones",
+  "composer": "Test - from Gonzato guide Ch.2"
+ },
+ "sib/S3-note-syntax-tune2": {
+  "title": "S3-3 Note Durations",
+  "composer": "Test - from Gonzato guide Ch.2"
+ },
+ "sib/S3-note-syntax-tune3": {
+  "title": "S3-4 Rests and Spacing",
+  "composer": "Test - from Gonzato guide Ch.2"
+ },
+ "sib/S3-note-syntax-tune4": {
+  "title": "S3-5 Chords and Unisons",
+  "composer": "Test - from Gonzato guide Ch.2"
+ },
+ "sib/S3-note-syntax-tune5": {
+  "title": "S3-6 Broken Rhythm and Dots",
+  "composer": "Test - from Gonzato guide Ch.2"
+ },
+ "sib/S3-note-syntax-tune6": {
+  "title": "S3-7 Tuplets",
+  "composer": "Test - from Gonzato guide Ch.2"
+ },
+ "sib/S3-note-syntax-tune7": {
+  "title": "S3-8 Accompaniment Chords",
+  "composer": "Test - from Gonzato guide Ch.2"
+ },
+ "sib/S3-note-syntax-tune8": {
+  "title": "S3-9 Ties Slurs Staccato Grace Notes",
+  "composer": "Test - from Gonzato guide Ch.2"
+ },
+ "sib/S3-note-syntax-tune9": {
+  "title": "S3-10 Multi-Measure Rests",
+  "composer": "Test - from Gonzato guide Ch.2"
+ },
+ "sib/S3-note-syntax-tune10": {
+  "title": "S3-11 Twinkle Twinkle"
+ },
+ "sib/S3-note-syntax-tune11": {
+  "title": "S3-12 Rests and Bars"
+ },
+ "sib/S3-note-syntax-tune12": {
+  "title": "S3-13 Basic Durations"
+ },
+ "sib/S3-note-syntax-tune13": {
+  "title": "S3-14 Rests"
+ },
+ "sib/S3-note-syntax-tune14": {
+  "title": "S3-15 Pitches and Octaves - C Major Scale - Quarter Notes"
+ },
+ "sib/S3-note-syntax-tune15": {
+  "title": "S3-16 Pitches and Octaves - Octaves"
+ },
+ "sib/S3-note-syntax-tune16": {
+  "title": "S3-17 Pitches and Octaves - Low Ledger Lines"
+ },
+ "sib/S3-note-syntax-tune17": {
+  "title": "S3-18 Happy Birthday with chords",
+  "tempo": {
+   "startChar": 3126,
+   "endChar": 3148,
+   "preString": "Allegro",
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "sib/S3-note-syntax-tune18": {
+  "title": "S3-19 Single Grace Note"
+ },
+ "sib/S3-note-syntax-tune19": {
+  "title": "S3-20 Double Grace Note"
+ },
+ "sib/S3-note-syntax-tune20": {
+  "title": "S3-21 Slurs"
+ },
+ "sib/S3-note-syntax-tune21": {
+  "title": "S3-22 Birl"
+ },
+ "sib/S3-note-syntax-tune22": {
+  "title": "S3-23 Dotted Ties and Slurs",
+  "composer": "Test Fixture"
+ },
+ "sib/S3-note-syntax-tune23": {
+  "title": "S3-24 Chord Break Test"
+ },
+ "sib/S3-note-syntax-tune24": {
+  "title": "S3-25 Slash Chords and Jazz Chords",
+  "composer": "Test Fixture"
+ },
+ "sib/S4-bars-repeats-tune0": {
+  "title": "S4-1 Bars Repeats and Endings",
+  "composer": "Test - from Gonzato guide Ch.2"
+ },
+ "sib/S4-bars-repeats-tune1": {
+  "title": "S4-2 Extended Volta Endings",
+  "composer": "Test Fixture"
+ },
+ "sib/S4-bars-repeats-tune2": {
+  "title": "S4-3 Bars and Rests"
+ },
+ "sib/S5-directives-tune0": {
+  "title": "S5-1 Note Styles",
+  "composer": "Test Fixture"
+ },
+ "sib/S5-directives-tune1": {
+  "title": "S5-2 Alternate Note Heads"
+ },
+ "sib/S5-directives-tune2": {
+  "title": "S5-3 Overlay Test"
+ },
+ "sib/S5-directives-tune3": {
+  "title": "S5-4 Lyrics",
+  "composer": "Test - from Gonzato guide Ch.2"
+ },
+ "sib/S5-directives-tune4": {
+  "title": "S5-5 Vocals"
+ },
+ "sib/S5-directives-tune5": {
+  "title": "S5-6 Scale"
+ },
+ "sib/S6-keys-tune0": {
+  "title": "S6-1 C"
+ },
+ "sib/S6-keys-tune1": {
+  "title": "S6-2 Change Key Sig"
+ },
+ "sib/S6-keys-tune2": {
+  "title": "S6-3 Key Signatures",
+  "composer": "Test - from Gonzato guide Ch.2"
+ },
+ "sib/S6-keys-tune3": {
+  "title": "S6-4 Modal Key Signatures",
+  "composer": "Test Fixture"
+ },
+ "sib/S6-keys-tune4": {
+  "title": "S6-5 Double Accidentals",
+  "composer": "Test Fixture"
+ },
+ "sib/S7-voices-tune0": {
+  "title": "S7-1 Piano Two Voice",
+  "composer": "Elton John",
+  "tempo": {
+   "startChar": 141,
+   "endChar": 150,
+   "duration": [
+    0.25
+   ],
+   "bpm": 128
+  }
+ },
+ "sib/S7-voices-tune1": {
+  "title": "S7-2 Piano Dense Notation",
+  "composer": "L. van Beethoven",
+  "tempo": {
+   "startChar": 476,
+   "endChar": 484,
+   "duration": [
+    0.125
+   ],
+   "bpm": 66
+  }
+ },
+ "sib/S7-voices-tune2": {
+  "title": "S7-3 Counterpoint Two Voice",
+  "composer": "J.S. Bach",
+  "tempo": {
+   "startChar": 914,
+   "endChar": 922,
+   "duration": [
+    0.25
+   ],
+   "bpm": 66
+  }
+ },
+ "sib/S7-voices-tune3": {
+  "title": "S7-4 Three Voice Piano",
+  "composer": "Schumann",
+  "tempo": {
+   "startChar": 1191,
+   "endChar": 1199,
+   "duration": [
+    0.25
+   ],
+   "bpm": 66
+  }
+ },
+ "sib/S7-voices-tune4": {
+  "title": "S7-5 SATB Choral",
+  "tempo": {
+   "startChar": 1609,
+   "endChar": 1617,
+   "duration": [
+    0.25
+   ],
+   "bpm": 48
+  }
+ },
+ "sib/S7-voices-tune5": {
+  "title": "S7-6 Organ Four Voice",
+  "composer": "Johann Nicolaus Hanff",
+  "tempo": {
+   "startChar": 2210,
+   "endChar": 2218,
+   "duration": [
+    0.25
+   ],
+   "bpm": 66
+  }
+ },
+ "sib/S7-voices-tune6": {
+  "title": "S7-7 Organ Trio",
+  "composer": "André Raison",
+  "tempo": {
+   "startChar": 2671,
+   "endChar": 2679,
+   "duration": [
+    0.25
+   ],
+   "bpm": 92
+  }
+ },
+ "sib/S8-layout-tune0": {
+  "title": "S8-1 Beams and Grouping",
+  "composer": "Test - from Gonzato guide Ch.2"
+ },
+ "sib/S8-layout-tune1": {
+  "title": "S8-2 Clefs",
+  "composer": "Test - from Gonzato guide Ch.2"
+ },
+ "sib/S8-layout-tune2": {
+  "title": "S8-3 Time Signatures",
+  "composer": "Test - from Gonzato guide Ch.2"
+ },
+ "sib/S8-layout-tune3": {
+  "title": "S8-4 Short and Long Notes, Beams and Tuplets",
+  "composer": "Trad"
+ },
+ "sib/S8-layout-tune4": {
+  "title": "S8-5 Horizontal beams"
+ },
+ "sib/S8-layout-tune5": {
+  "title": "S8-6 Chords, Unions, First and Second Endings"
+ },
+ "sib/S8-layout-tune6": {
+  "title": "S8-7 Gracenotes"
+ },
+ "sib/S8-layout-tune7": {
+  "title": "S8-8 Key signature, Accidentals and Decorations"
+ },
+ "sib/S8-layout-tune8": {
+  "title": "S8-9 Slurs and Ties"
+ },
+ "sib/S8-layout-tune9": {
+  "title": "S8-10 Strange tuplet cases"
+ },
+ "sib/S8-layout-tune10": {
+  "title": "S8-11 Chords with many accidentals"
+ },
+ "sib/S8-layout-tune11": {
+  "title": "S8-12 Changing Time or Key Signatures, Guitar Chords"
+ },
+ "sib/ave-verum-corpus-tune0": {
+  "title": "Ave Verum Corpus",
+  "composer": "W. A. Mozart",
+  "tempo": {
+   "startChar": 55,
+   "endChar": 66,
+   "preString": "Adagio",
+   "bpm": 68,
+   "suppressBpm": true,
+   "duration": [
+    0.25
+   ]
+  }
+ },
+ "sib/brother-john-inline-voices-tune0": {
+  "title": "Brother John - improved",
+  "composer": "Traditional"
+ },
+ "sib/center-text-tune0": {
+  "title": "Center Directive Test",
+  "composer": "Test Fixture"
+ },
+ "sib/chord-grid-tune0": {
+  "title": "Chord Grid Test"
+ },
+ "sib/clefs-tune0": {
+  "title": "Treble clef"
+ },
+ "sib/clefs-tune1": {
+  "title": "Bass clef"
+ },
+ "sib/clefs-tune2": {
+  "title": "Baritone clef"
+ },
+ "sib/clefs-tune3": {
+  "title": "Tenor clef"
+ },
+ "sib/clefs-tune4": {
+  "title": "Alto clef"
+ },
+ "sib/clefs-tune5": {
+  "title": "Messosoprano clef"
+ },
+ "sib/clefs-tune6": {
+  "title": "Soprano clef"
+ },
+ "sib/clefs-tune7": {
+  "title": "Change Clefs"
+ },
+ "sib/courtesy-key-before-subtitle-tune0": {
+  "title": "Main"
+ },
+ "sib/curves-tune0": {
+  "title": "Ties"
+ },
+ "sib/curves-tune1": {
+  "title": "Slurs"
+ },
+ "sib/curves-tune2": {
+  "title": "Nested Slurs"
+ },
+ "sib/curves-tune3": {
+  "title": "Slurs over Stacked Notes"
+ },
+ "sib/curves-tune4": {
+  "title": "Nested slurs over Stacked Notes"
+ },
+ "sib/curves-tune5": {
+  "title": "Slurs starting and ending on same note"
+ },
+ "sib/curves-tune6": {
+  "title": "Tie within slur"
+ },
+ "sib/escaped-percent-tune0": {
+  "title": "100​％ Amazing"
+ },
+ "sib/extra-class-tune0": {},
+ "sib/frere-jacques-tune0": {
+  "title": "Frère Jacques",
+  "history": "dedicated to my \"out of tune\" sweet lady",
+  "origin": "arr. S. Di Mico for educational purposes",
+  "composer": "attr. to Jean-Philippe Rameau (1683 - 1764)",
+  "notes": "Play expressively",
+  "source": "The copyright for the music and lyrics represented herein",
+  "transcription": "This transcription © Sergio Di Mico - All rights reserved",
+  "group": "Lead Sheet",
+  "tempo": {
+   "startChar": 491,
+   "endChar": 513,
+   "preString": "Allegretto",
+   "duration": [
+    0.25
+   ],
+   "bpm": 100
+  }
+ },
+ "sib/full-song-template-tune0": {
+  "title": "TITLE OF THE SONG",
+  "composer": "COMPOSER/SONGWRITER",
+  "origin": "ORIGIN/GEOGRAPHIC",
+  "source": "SOURCE OF THE SONG",
+  "discography": "DISCOGRAPHY - CD, LP, ETC.",
+  "notes": "NOTES (TEXT)",
+  "transcription": "TRANSCRIBER, COPYRIGHT, PERMISSIONS",
+  "history": "HISTORY OF THE SONG\nThis self-documenting ABC song template was created by Linda Eskin.",
+  "rhythm": "RHYTHM, E.G. JIG, WALTZ",
+  "tempo": {
+   "startChar": 331,
+   "endChar": 341,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  },
+  "unalignedWords": [
+   "Write your extra verses here, verses here, verses here.",
+   "Write your extra verses here, or the whole song if you like.",
+   "",
+   "--- This is where the chorus goes, chorus goes, chorus goes.",
+   "--- Indent it with dashes if you like, but spaces will not work.",
+   "",
+   "Here we have another verse, another verse, another verse.",
+   "Now we have reached the end - this is the last verse of this song."
+  ]
+ },
+ "sib/grandstaff-inline-meter-tune0": {
+  "title": "Grand staff inline meter"
+ },
+ "sib/happy-birthday-tune0": {
+  "title": "Happy Birthday with chords",
+  "tempo": {
+   "startChar": 42,
+   "endChar": 64,
+   "preString": "Allegro",
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "sib/inline-key-per-voice-tune0": {},
+ "sib/little swallow-tune0": {
+  "title": "Little Swallow",
+  "origin": "China",
+  "unalignedWords": [
+   "Little Swallow, you're so beautiful, Every spring you come here and soar,",
+   "\"Why come back here\" I ask you, You say,\"Here spring is most beautiful\".",
+   "Little Swallow, I'd like to tell you, This year here has become more beautiful.",
+   "A large factory has been built, Equipped with new machinery.",
+   "We welcome you to live here as long as possible."
+  ]
+ },
+ "sib/missing-decorations-tune0": {
+  "title": "S-missing-1 xstem",
+  "composer": "Test Fixture"
+ },
+ "sib/missing-decorations-tune1": {
+  "title": "S-missing-2 trillh",
+  "composer": "Test Fixture"
+ },
+ "sib/missing-decorations-tune2": {
+  "title": "S-missing-3 Beam Tremolos",
+  "composer": "Test Fixture"
+ },
+ "sib/missing-decorations-tune3": {
+  "title": "S-missing-4 Editorial and Courtesy Accidentals",
+  "composer": "Test Fixture"
+ },
+ "sib/missing-decorations-tune4": {
+  "title": "S-missing-5 Dal Segno / Da Capo Navigation",
+  "composer": "Test Fixture"
+ },
+ "sib/missing-decorations-tune5": {
+  "title": "S-missing-6 Combined Decorations",
+  "composer": "Test Fixture"
+ },
+ "sib/multi-voice-lyrics-two-voices-tune0": {},
+ "sib/multi-voice-rest-collision-tune0": {},
+ "sib/multi-voice-rest-placement-tune0": {},
+ "sib/multi-voice-triplet-brackets-tune0": {},
+ "sib/program-127-test-tune0": {
+  "title": "Title",
+  "composer": "Composer",
+  "origin": "Origin",
+  "rhythm": "Rhythm",
+  "source": "Source",
+  "notes": "Add notes about this tune here",
+  "transcription": "Transcriber",
+  "tempo": {
+   "startChar": 138,
+   "endChar": 148,
+   "duration": [
+    0.25
+   ],
+   "bpm": 120
+  }
+ },
+ "sib/ragtime-mini-tune0": {
+  "title": "Ragtime Mini",
+  "tempo": {
+   "startChar": 63,
+   "endChar": 67,
+   "duration": [
+    0.25
+   ],
+   "bpm": 80
+  }
+ },
+ "sib/ragtime-nightingale-tune0": {
+  "title": "Ragtime Nightingale",
+  "composer": "Joseph Lamb",
+  "tempo": {
+   "startChar": 84,
+   "endChar": 88,
+   "duration": [
+    0.25
+   ],
+   "bpm": 80
+  }
+ },
+ "sib/score-reorder-shared-tune0": {
+  "title": "Same Staff Reorder"
+ },
+ "sib/score-reorder-tune0": {
+  "title": "Reorder Test"
+ },
+ "sib/simple-c-tune0": {
+  "title": "Simple C"
+ },
+ "sib/stacked-annotations-tune0": {
+  "title": "Stacked annotations test"
+ },
+ "sib/tunebook-3-tune0": {
+  "title": "Simple C"
+ },
+ "sib/tunebook-3-tune1": {
+  "title": "Twinkle Twinkle"
+ },
+ "sib/tunebook-3-tune2": {
+  "title": "D Scale"
+ },
+ "sib/twinkle-tune0": {
+  "title": "Twinkle Twinkle"
+ },
+ "sib/two-voice-invention-tune0": {
+  "title": "Two Voice Invention",
+  "composer": "Test fixture",
+  "tempo": {
+   "startChar": 53,
+   "endChar": 62,
+   "duration": [
+    0.25
+   ],
+   "bpm": 100
+  }
+ },
+ "sib/voice-middle-after-clef-tune0": {
+  "title": "Voice middle= after clef"
+ },
+ "sib/voice-octave-shift-tune0": {
+  "title": "Voice octave shift test"
+ },
+ "sib/vree-compound-meter-tune0": {
+  "title": "Compound Meter (6/8)"
+ },
+ "sib/vree-grace-notes-tune0": {
+  "title": "Grace Notes"
+ },
+ "sib/vree-sharps-tune0": {
+  "title": "Key with Many Sharps"
+ },
+ "sib/vree-slurs-and-triplets-tune0": {
+  "title": "Slurs and Triplets"
+ },
+ "sib/vree-ties-across-bars-tune0": {
+  "title": "Ties Across Bars"
+ },
+ "sib/zocharti-loch-tune0": {
+  "title": "Zocharti Loch",
+  "composer": "Louis Lewandowski (1821-1894)",
+  "tempo": {
+   "startChar": 56,
+   "endChar": 64,
+   "duration": [
+    0.25
+   ],
+   "bpm": 76
+  }
+ }
+}

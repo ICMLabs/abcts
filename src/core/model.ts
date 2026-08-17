@@ -1165,6 +1165,20 @@ export type RichText = string | readonly RichPhrase[]
 export const plainText = (value: RichText | null): string =>
   value === null ? '' : typeof value === 'string' ? value : value.map((p) => p.text).join('')
 
+/**
+ * `%%header` / `%%footer` — a three-part running head, `left \t center \t right`, drawn only
+ * when printing (`top-text.js:6-14`, `bottom-text.js:83-92`).
+ *
+ * ONE tab gives `{left: "", center: a, right: ""}`, two give `{left: a, center: b, right: ""}`
+ * and three or more take the first three, with a warning past that
+ * (`abc_parse_directive.js:1166-1181`). A surrounding pair of quotes is stripped.
+ */
+export interface RunningHead {
+  readonly left: string
+  readonly center: string
+  readonly right: string
+}
+
 export interface ScoreMetadata {
   readonly tuneNumber: number | null
   readonly titles: readonly RichText[]
@@ -1220,6 +1234,14 @@ export interface ScoreMetadata {
    * `title` is NOT here: it is `titleRanges[0]`, since a subtitle needs its own line's
    * span and the two come off the same `T:` handler.
    */
+  /**
+   * `G:` — the tune's GROUP. abcjs records it in `metaText`/`metaTextInfo`
+   * (`abc_parse_header.js:469`) and neither `TopText` nor `BottomText` ever reads it, so it
+   * is a value with no ink. Kept because a host reads `metaText`.
+   */
+  readonly group: RichText | null
+  /** `%%header` / `%%footer`, by name — see `RunningHead`. Print-only and unbuilt in layout. */
+  readonly runningHead: Readonly<Partial<Record<'header' | 'footer', RunningHead>>>
   readonly fieldRanges: Readonly<Partial<Record<string, SourceRange>>>
   /** One per entry of `titles` — `[0]` is `metaTextInfo.title`, the rest are subtitles. */
   readonly titleRanges: readonly SourceRange[]

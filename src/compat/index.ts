@@ -45,6 +45,7 @@ import {
   defaultClef,
   type MusicEvent,
   plainText,
+  type RichPhrase,
   type RichText,
   type Score,
 } from "../core/model.js";
@@ -53,6 +54,7 @@ import {
   type AbcLine,
   elementFromChar,
   projectionOf,
+  tempoElement,
 } from "./lines.js";
 import {
   findSelectable,
@@ -164,6 +166,107 @@ export interface AbcjsMeterFraction {
   readonly den: number;
 }
 
+/**
+ * **`metaText` — THE TUNE'S FIELD VALUES, abcjs'S OWN SHAPE.** `metaTextInfo` says WHERE each
+ * field was written and this says WHAT it said; the two are one surface, and `TopText` and
+ * `BottomText` each read a value from one and a span from the other.
+ *
+ * **THE VALUE IS A STRING OR AN ARRAY OF PHRASES, AND WHICH ONE IS NOT COSMETIC.**
+ * `parseFontChangeLine` returns the line unchanged unless a `$N` font change is in it, in
+ * which case it returns `[{text}, {font, text}, …]` — and a phrase's `font` is abcjs's own
+ * five-field object, `weight`/`style`/`decoration` spelled out where ours carries booleans.
+ * The distinction selects a different ROW HEIGHT downstream; see `RichText`.
+ *
+ * `N:`, `H:` and `W:` are the MULTI-LINE fields: `simplifyMetaText` joins them with `\n` into
+ * ONE string when every entry is plain, and leaves an ARRAY OF ARRAYS when any entry is rich
+ * (`tune-builder.js:479-484`). A key is present only when the field was written, which is why
+ * this is assembled from entries rather than from a literal.
+ *
+ * `abc-copyright`, `abc-creator` and the other `%%abc-*` values are absent here because the
+ * parser does not collect them yet; so are `header`'s and `footer`'s SIZES, which are print
+ * furniture nothing draws.
+ */
+const phraseOf = (p: RichPhrase): Record<string, unknown> =>
+  p.font === null
+    ? { text: p.text }
+    : {
+        font: {
+          face: p.font.face,
+          weight: p.font.bold ? "bold" : "normal",
+          style: p.font.italic ? "italic" : "normal",
+          decoration: "none",
+          size: p.font.size,
+        },
+        text: p.text,
+      };
+
+const richOf = (value: RichText): unknown =>
+  typeof value === "string" ? value : value.map(phraseOf);
+
+/**
+ * `N:` and `H:` are JOINED into one `\n` string when every entry is plain and left an ARRAY
+ * OF ARRAYS when any entry is rich — `simplifyMetaText` tests `isArrayOfStrings`
+ * (`tune-builder.js:479-484`).
+ *
+ * **`W:` IS NOT IN THAT LIST AND STAYS AN ARRAY EITHER WAY**, even when it holds one plain
+ * line: `["lo loo lou $1dollar"]`, not `"lo loo lou $1dollar"`. It is the one field
+ * `simplifyMetaText` leaves alone, which is also why it is the one that reaches
+ * `addMultiLine`'s array branch and the only bottom-block group with a selectable close.
+ */
+const multiOf = (entries: readonly RichText[], join: boolean): unknown =>
+  join && entries.every((e) => typeof e === "string")
+    ? entries.join("\n")
+    : entries.map(richOf);
+
+const metaTextOf = (score: Score): Record<string, unknown> => {
+  const m = score.metadata;
+  const out: Record<string, unknown> = {};
+  // **AN EMPTY FIELD IS STILL A FIELD.** `addMetaText` keys on `=== undefined`, not on
+  // truthiness (`tune-builder.js:433`), so a bare `T:` records `title: ""`.
+  const put = (key: string, value: RichText | null): void => {
+    if (value !== null) out[key] = richOf(value);
+  };
+  put("title", m.titles[0] ?? null);
+  put("composer", m.composer);
+  put("rhythm", m.rhythm);
+  put("origin", m.origin);
+  put("author", m.author);
+  put("partOrder", m.partOrder);
+  put("book", m.book);
+  put("source", m.source);
+  put("discography", m.discography);
+  put("transcription", m.transcription);
+  put("group", m.group);
+  for (const [key, entries, join] of [
+    ["notes", m.notes, true],
+    ["history", m.history, true],
+    ["unalignedWords", m.unalignedWords, false],
+  ] as const)
+    if (entries.length > 0) out[key] = multiOf(entries, join);
+  for (const key of ["header", "footer"] as const) {
+    const head = m.runningHead[key];
+    if (head !== undefined) out[key] = head;
+  }
+  // **THE TUNE'S OWN `Q:` IS A `metaText` ENTRY AND A DRAWN ELEMENT AND NOT IN `tune.lines`**
+  // — the same three-way split the selectable array settled. Its shape here is the tempo
+  // ELEMENT, `startChar`/`endChar` included (`abc_parse_header.js:530-536`).
+  // …and it is `setTempo`'s RAW object here, with neither `el_type` nor the `type: "tempo"`
+  // the DRAWN element carries: `tune.metaText.tempo = tempo.tempo` is a direct assignment
+  // (`abc_parse_header.js:531-533`), where `appendElement` is what adds the two type fields.
+  // **AND AN INLINE `[Q:]` IS NOT THE TUNE'S `metaText.tempo` AT ALL.**
+  // `letter_to_inline_header`'s `[Q:` arm appends an ELEMENT or parks one for the next line
+  // and never touches `metaText` (`abc_parse_header.js:384-397`), where the field-line arm
+  // assigns it (`:530-536`). `synth-flattener-10` is five inline `[Q:]` and no `metaText.tempo`.
+  const tempo = score.tempoInline === true
+    ? null
+    : tempoElement(score.tempo, score.tempoSourceRange);
+  if (tempo !== null) {
+    const { el_type: _drop, type: _drop2, ...rest } = tempo;
+    out.tempo = rest;
+  }
+  return out;
+};
+
 const abcjsMeter = (score: Score): AbcjsMeter => {
   const m = getMeter(score);
   // A tune with no music has no staff and therefore no meter — `getMeter` falls through
@@ -201,7 +304,7 @@ export interface TuneObject {
   /** abcts's own parsed score, for callers that want the real thing. */
   readonly score: Score;
   /** abcjs exposes the title list at `metaText.title`. */
-  readonly metaText: { readonly title?: string };
+  readonly metaText: Readonly<Record<string, unknown>>;
   /** `AbcTune`'s own, and it is abcjs's number rather than abcts's — a host may test it. */
   readonly version: string;
   /** `"screen"` unless `print: true` was asked for (`abc_parse.js:525-526`). */
@@ -453,10 +556,7 @@ export function renderAbc(
       score,
       // abcjs's `metaText.title` is a plain string even when the field changed font
       // mid-line — the phrases are a LAYOUT structure, not part of the public shape.
-      metaText:
-        score.metadata.titles[0] === undefined
-          ? {}
-          : { title: plainText(score.metadata.titles[0]) },
+      metaText: metaTextOf(score),
 
       // abcjs's own version string, not abcts's — a host may feature-detect on it.
       version: ABCJS_TUNE_VERSION,
@@ -711,7 +811,11 @@ export const synth = {
         : (source as readonly TuneObject[]);
     return getMidiFileFor(
       tunes.map((t) => t.score),
-      tunes.map((t) => t.metaText.title),
+      // The MIDI track name, which is the title as a plain string — a RICH title is not one
+      // and abcjs's own writer would put `[object Object]` there, so it is skipped instead.
+      tunes.map((t) =>
+        typeof t.metaText.title === "string" ? t.metaText.title : undefined,
+      ),
       options,
     );
   },

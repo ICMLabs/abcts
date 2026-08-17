@@ -74,6 +74,8 @@ export interface AbcElement {
    * (`abc_parse_music.js:298-303`), so it travels to a host through `tune.lines`.
    */
   barNumber?: number;
+  /** A tempo whose rate came from its WORD and is therefore not printed — see `tempoElement`. */
+  suppressBpm?: boolean;
   /**
    * `|1` — the ending label this barline OPENS, as written (`"1"`, `"1,2"`), and
    * `endEnding` on the barline that closes one. Both are the parser's fields on the bar
@@ -475,7 +477,7 @@ const endingEnd = (abc: string, from: number): number => {
  * A LONE TEMPO WORD still carries the rate it looked up and simply does not print it; the
  * element keeps the `bpm` either way, which is what `getBpm` reads.
  */
-const tempoElement = (
+export const tempoElement = (
   tempo: Tempo | null | undefined,
   range: SourceRange | null | undefined,
   byRange?: Map<number, AbcElement>,
@@ -484,8 +486,26 @@ const tempoElement = (
   if (e === null || tempo == null || range == null) return null;
   e.type = "tempo";
   if (tempo.text !== null) e.preString = tempo.text;
-  if (tempo.beatUnit !== null) e.duration = [ratToNumber(tempo.beatUnit)];
+  /**
+   * **A LONE TEMPO WORD CARRIES A RATE, DOES NOT PRINT IT, AND GETS ITS `duration` LAST.**
+   * `tempoString[preString]` is a 26-entry table and the lookup sets `suppressBpm: true`
+   * beside the bpm it found (`abc_parse_header.js:263-266`), which is what keeps `Q:"Adagio"`
+   * drawing the word alone while `getBpm` still answers 68.
+   *
+   * And the KEY ORDER follows from WHEN each value is assigned: a written `1/4=120` gives the
+   * duration during `setTempo`, before the bpm, while a word-only tempo has no duration in
+   * the field at all and `calcTempo` supplies one at `resolveTempo` — after everything. The
+   * two are exclusive: the table is consulted only when the string is the WHOLE field
+   * (`if (tokens.length === 0)`), so `suppressBpm` is the discriminator rather than a
+   * correlate.
+   */
+  const duration = tempo.beatUnit === null ? null : [ratToNumber(tempo.beatUnit)];
+  if (tempo.suppressBpm !== true && duration !== null) e.duration = duration;
   if (tempo.bpm !== null) e.bpm = tempo.bpm;
+  if (tempo.suppressBpm === true) {
+    e.suppressBpm = true;
+    if (duration !== null) e.duration = duration;
+  }
   if (tempo.postText != null) e.postString = tempo.postText;
   byRange?.set(range.start, e);
   return e;

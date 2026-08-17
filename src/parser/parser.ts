@@ -60,6 +60,7 @@ import {
   ratLt,
   ratMul,
   type Score,
+  type RunningHead,
   type ScoreMetadata,
   type SourceRange,
   type StaffConnector,
@@ -1879,6 +1880,10 @@ class ScoreBuilder {
   notes: RichText[] = []
   history: RichText[] = []
   unalignedWords: RichText[] = []
+  /** `G:` — the tune's group. Recorded and drawn by nothing; see `ScoreMetadata.group`. */
+  group: RichText | null = null
+  /** `%%header` / `%%footer` — see `ScoreMetadata.runningHead`. */
+  runningHead: Partial<Record<'header' | 'footer', RunningHead>> = {}
   /** `metaTextInfo` — see `ScoreMetadata.fieldRanges`. `title` lives in `titleRanges`. */
   fieldRanges: Record<string, SourceRange> = {}
   titleRanges: SourceRange[] = []
@@ -2213,6 +2218,8 @@ class ScoreBuilder {
       notes: this.notes,
       history: this.history,
       unalignedWords: this.unalignedWords,
+      group: this.group,
+      runningHead: this.runningHead,
       fieldRanges: this.fieldRanges,
       titleRanges: this.titleRanges,
     }
@@ -2692,8 +2699,27 @@ class Parser {
     // it with `addMetaTextObj` (`abc_parse_directive.js:1183`), so it has a `metaTextInfo`
     // entry whether or not the media ever draws it. The TEXT is unmodelled — the rows are
     // print-only and no gate reads them yet — the POSITION is not.
-    const headFoot = /^(header|footer)\b/.exec(body)
+    const headFoot = /^(header|footer)\b\s*(.*)$/.exec(body)
     if (headFoot?.[1] !== undefined) {
+      /**
+       * **THE PARTS ARE TAB-SEPARATED AND THE COUNT DECIDES WHICH SLOTS THEY FILL** — one
+       * gives the CENTRE alone, two give left and centre, three or more take the first three
+       * (`abc_parse_directive.js:1166-1181`). A surrounding pair of quotes is stripped, and
+       * the string is `getMeat`ed first, which trims both ends.
+       */
+      const meat = (headFoot[2] ?? '').replace(/%.*$/, '').trim()
+      const bare =
+        meat.length > 1 && meat.startsWith('"') && meat.endsWith('"')
+          ? meat.slice(1, -1)
+          : meat
+      const parts = bare.split('\t')
+      const head: RunningHead =
+        parts.length === 1
+          ? { left: '', center: parts[0] ?? '', right: '' }
+          : parts.length === 2
+            ? { left: parts[0] ?? '', center: parts[1] ?? '', right: '' }
+            : { left: parts[0] ?? '', center: parts[1] ?? '', right: parts[2] ?? '' }
+      this.ensureScore(start).runningHead[headFoot[1] as 'header' | 'footer'] = head
       // **THE SPAN IS THE LINE WITHOUT ITS `%%`** — `iChar + str.length`, where `str` is
       // `addDirective`'s argument, `line.substring(2)` (`abc_parse.js:403`). So the range
       // STARTS at the `%` and is two characters SHORT of the line's end.
@@ -3329,6 +3355,7 @@ class Parser {
       // where a host looks for it; the TEXT is not held, which is the same gap `metaText`
       // has for every field but `title`.
       case 'G':
+        builder.group = parseFontChangeLine(decodeTextString(value), builder.setfont)
         builder.recordField('group', range)
         return
       default:
