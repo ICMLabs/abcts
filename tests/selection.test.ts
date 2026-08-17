@@ -152,6 +152,34 @@ describe("engraver.selectables", () => {
   });
 
   /**
+   * **THE SELECTABLE ARRAY AND `tune.lines` HAND BACK THE SAME OBJECTS.**
+   *
+   * abcjs's two surfaces agree by IDENTITY — its engraver holds the very parse element
+   * `tune.lines` holds — and this session's whole design rests on reproducing that: the
+   * drawing carries a reference to the model event, the projection is built once, and the
+   * engrave-time and flattener fields are stamped on one object and read through the other.
+   * Nothing else in the suite would notice if that quietly became a copy, and a host would:
+   * it would stamp a note through `getSelectableArray()` and read `tune.lines` back
+   * unchanged.
+   */
+  it("hands the same element object to both surfaces", () => {
+    const abc = "X:1\nT:t\nM:4/4\nL:1/4\nK:C\nCDEF|GABc|\n";
+    const tune = renderAbc("*", abc, {})[0];
+    expect(tune).toBeDefined();
+    if (tune === undefined) return;
+    const first = tune.getSelectableArray()[0];
+    expect(first).toBeDefined();
+    // AT its own `startChar`, not one past it: in `CDEF` every note is ONE character, so
+    // `startChar + 1` is the NEXT element — which is what the first version of this test
+    // asked for and then reported as a broken identity.
+    const fromLines = tune.getElementFromChar(first?.absEl.abcelem.startChar ?? 0);
+    expect(fromLines).toBe(first?.absEl.abcelem);
+    // …and a stamp through one is visible through the other, which is what a host does.
+    tune.setUpAudio();
+    expect(fromLines?.midiPitches).toBeDefined();
+  });
+
+  /**
    * **THE COUNT IS THE HALF ALREADY PROVEN.** With the default `selectTypes` the array is
    * the notes and rests, in drawing order — which is what `data-index` numbers, and that
    * is byte-exact against abcjs on every fixture of both corpora.
