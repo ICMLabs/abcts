@@ -308,6 +308,7 @@ const PASSING: readonly string[] = [
   "repo/abcjs-visual-misc-01-barnumbers-1-tune0",
   "repo/abcjs-visual-misc-02-title-tune0",
   "repo/abcjs-visual-misc-03-jazzchords-tune0",
+  "repo/abcjs-visual-misc-04-stretchlast-tune0",
   "repo/abcjs-visual-misc-05-cccc-d-c-alcoda-dddd-d-c-alfine-eeee-d-s-tune0",
   "repo/abcjs-visual-misc-06-title-1bold-0-100-reg-the-tune0",
   "repo/abcjs-visual-misc-06-title-1bold-0-100-reg-the-tune1",
@@ -377,6 +378,8 @@ const PASSING: readonly string[] = [
   "repo/abcjs-visual-transpose-06-c-d-e-f-g-a-b-c-cdef-gabc-c-d-e-f-g-a-b--tune0",
   "repo/abcjs-visual-transpose-output-01-transpose-output-tune0",
   "repo/abcjs-visual-transpose-output-02-transpose-output-tune0",
+  "repo/abcjs-visual-transpose-output-03-transpose-output-tune0",
+  "repo/abcjs-visual-transpose-output-04-transpose-output-tune0",
   "repo/abcjs-visual-transpose-output-05-g-tune0",
   "repo/abcjs-visual-transpose-output-06-f-tune0",
   "repo/abcjs-visual-wrap-01-b-4-c2d2-e3f-gabc-d-e-f-g-marcato-d-e-f--tune0",
@@ -433,7 +436,7 @@ describe("tune.lines and getElementFromChar", () => {
     // 251,396 of 256,138 until 2026-08-16, when the sibling repo's edits to two fixtures
     // took both numbers down with them — the FLOOR moves with its corpus, and the
     // exclusions above are what make it comparable at all.
-    expect(agree).toBeGreaterThanOrEqual(255507);
+    expect(agree).toBeGreaterThanOrEqual(255537);
   });
 
   /**

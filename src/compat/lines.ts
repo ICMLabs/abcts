@@ -338,7 +338,17 @@ function decoratedRange(abc: string, event: MusicEvent): SourceRange | null {
    * tunes red while the aggregate improved, which is what named it.
    */
   if (abc[end] === " " || abc[end] === "\t") {
-    while (abc[end] === " " || abc[end] === "\t" || abc[end] === "-") end += 1;
+    // …**AND A DOTTED TIE JOINS THE RUN**, because the do-while's own condition is
+    // `isWhiteSpace(c) || c === '-' || (c === '.' && next === '-')` and its BODY steps over
+    // the `.` before reading the `-` (`abc_parse_music.js:1244-1262`). So ` D .- E` gives
+    // the first note a span of six.
+    while (
+      abc[end] === " " ||
+      abc[end] === "\t" ||
+      abc[end] === "-" ||
+      (abc[end] === "." && abc[end + 1] === "-")
+    )
+      end += 1;
     /**
      * **AND A CHORD DOES NOT TAKE THE CONTINUATION, BECAUSE A CHORD HAS ITS OWN LOOP.**
      * The post-chord `while (i < line.length && !postChordDone)` switch tests the LITERAL
@@ -347,12 +357,27 @@ function decoratedRange(abc: string, event: MusicEvent): SourceRange | null {
      * `default: postChordDone = true` and stops it. `~g \` is a span of four and
      * `[^G^e^c']   \` one of twelve, on the same line of the same tune.
      */
-    if (event.type !== "chord") {
-      const cont = /^\\[ \t]*(%[^\n]*)?/.exec(abc.slice(end));
-      if (cont !== null) end += cont[0].length;
-    }
+    if (
+      event.type !== "chord" &&
+      abc[end] === "\\" &&
+      /^[ \t]*(%[^\n]*)?(\n|$)/.test(abc.slice(end + 1))
+    )
+      // ONE character, because that is all abcjs leaves: the `\` becomes `\x12` and
+      // everything after it on the line is padding that the right-trim below removes.
+      end += 1;
   }
-  return { start, end };
+  /**
+   * …**AND A LINE'S TRAILING WHITESPACE IS NOT THERE TO BE SWALLOWED AT ALL.**
+   * `line = line.replace(/\s+$/, '')` runs on every line before any handler sees it
+   * (`abc_parse.js:411`), so the last element of a line closes at the last NON-space
+   * character: `!glissando)!c ` is 199…212 and not …213. `\x12` is not `\s`, which is why a
+   * `\` continuation survives the trim and a plain space does not.
+   */
+  const nl = abc.indexOf("\n", end);
+  let limit = nl < 0 ? abc.length : nl;
+  while (limit > own.end && (abc[limit - 1] === " " || abc[limit - 1] === "\t"))
+    limit -= 1;
+  return { start, end: Math.min(end, limit) };
 }
 
 /**
