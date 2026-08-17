@@ -3612,8 +3612,26 @@ export function toSVG(
        * SYSTEM left behind, which is where `abcjs-l1 abcjs-v0` came from.
        */
       let lastNonMusicIndex: number | undefined | -1 = -1;
-      const block = (doc.bottomText ?? [])
-        .map((t) => {
+      const rowsIn = doc.bottomText ?? [];
+      /**
+       * **A GROUP'S CLOSING SELECTABLE IS TAKEN WHERE ITS `</g>` IS WRITTEN**, which is
+       * BEFORE the next block's rows — `addMultiLine` pushes `{endGroup, absElemType}`
+       * ahead of the `extraText` rows that follow it (`bottom-text.js:61`, `:67-79`), and
+       * abcjs's own array has the `W:` entry before both of them. Held here so the index
+       * is allocated in DRAW order even though the `</g>` is written a pass later.
+       */
+      const groupAttrs = new Map<string, string>();
+      const closeIfEnded = (i: number): void => {
+        const prev = rowsIn[i - 1];
+        if (prev?.selectable?.onGroupClose !== true) return;
+        const here = rowsIn[i];
+        const id = prev.groupId ?? prev.groupName;
+        if (here !== undefined && (here.groupId ?? here.groupName) === id) return;
+        if (id !== undefined) groupAttrs.set(id, recordText(prev));
+      };
+      const block = rowsIn
+        .map((t, rowIndex) => {
+          closeIfEnded(rowIndex);
           if (t.nonMusicIndex !== lastNonMusicIndex) {
             lastNonMusicIndex = t.nonMusicIndex;
             if (t.nonMusicIndex === undefined) classes.reset();
@@ -3660,6 +3678,9 @@ export function toSVG(
             t.middleBaseline === true,
             // A BOXED row's class is DELETED, not emptied (`draw/text.js:58`).
             t.boxRect !== undefined,
+            // …and a row that CLOSES a group is not itself selectable; its `endGroup`
+            // record is taken by `closeIfEnded` on the pass after it.
+            t.selectable?.onGroupClose === true ? "" : recordText(t),
           );
           // …and the same group-and-four-rules a boxed row takes anywhere else.
           return t.boxRect === undefined
@@ -3685,10 +3706,11 @@ export function toSVG(
                 options.addClasses === true && row?.groupClass !== undefined
                   ? ` class="${escapeAttr(row.groupClass)}"`
                   : ""
-              } data-name="${escapeAttr(name ?? "")}">`;
+              } data-name="${escapeAttr(name ?? "")}"${groupAttrs.get(id) ?? ""}>`;
           }
           return out + markup;
         });
+      closeIfEnded(rowsIn.length);
       if (openGroup !== undefined) block.push("</g>");
       /**
        * **AND A TRAILING nonMusic LINE IS A SIBLING GROUP, NOT THE HEAD OF THIS ONE.**

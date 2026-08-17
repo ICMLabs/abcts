@@ -14447,6 +14447,8 @@ function bottomTextBlock(
      * `N:` and `H:` draw as `data-name="description"`.
      */
     abcjsClass?: string,
+    /** `absElemType` on this row, when abcjs gives it one — see `PlacedText.selectable`. */
+    selectable?: NonNullable<PlacedText['selectable']>,
   ): void => {
     const text = plainText(value)
     /**
@@ -14556,6 +14558,7 @@ function bottomTextBlock(
       ...faceIn(fontType),
       ...(groupName === undefined ? {} : { groupName }),
       ...(groupId === undefined ? {} : { groupId }),
+      ...(selectable === undefined ? {} : { selectable }),
     })
     move(
       Math.round(
@@ -14568,6 +14571,25 @@ function bottomTextBlock(
   }
   const history = sizeOf('historyfont')
   const historyBox = boxOf('historyfont')
+  /**
+   * **`addMultiLine`'S ARRAY BRANCH CLOSES WITH A SELECTABLE OF ITS OWN** —
+   * `{endGroup, absElemType, startChar: -1, endChar: -1, name}` (`bottom-text.js:61`),
+   * which `nonMusic` wraps around the CLOSED `<g>` with an empty text
+   * (`draw/non-music.js:38-45`). Its rows are NOT selectable — they are handed
+   * `{anchor: 'start'}` and nothing else (`:57`) — so a whole `W:` verse is ONE entry
+   * however many lines it draws.
+   *
+   * Stamped onto the LAST row actually pushed rather than the last one asked for: an
+   * empty entry moves the cursor and writes no row at all.
+   */
+  const closeGroup = (elType: string): void => {
+    const last = texts[texts.length - 1]
+    if (last === undefined) return
+    texts[texts.length - 1] = {
+      ...last,
+      selectable: { elType, startChar: -1, endChar: -1, text: '', onGroupClose: true },
+    }
+  }
 
   // `W:` — a whole verse under the tune, one row per line, in `wordsfont`. The array
   // branch of `addMultiLine`, which closes with one more `size.height` of its own.
@@ -14578,8 +14600,17 @@ function bottomTextBlock(
     // `{move: space.height}` (`:20`). Two raw heights, not one.
     // …AND THE ARRAY BRANCH OPENS A GROUP OF ITS OWN — `rows.push({ startGroup:
     // 'unalignedWords' })` before the rows (`bottom-text.js:48`). See `PlacedText.groupName`.
+    /**
+     * **AND THE SELECTABLE IS THE GROUP'S CLOSE, NOT ANY OF ITS ROWS.** `addMultiLine`'s
+     * array branch gives its `richText` rows `{anchor: 'start'}` and nothing else
+     * (`bottom-text.js:57`) and closes with
+     * `{endGroup, absElemType, startChar: -1, endChar: -1, name}` (`:61`), which
+     * `nonMusic` wraps around the CLOSED `<g>` with an empty text (`draw/non-music.js:38-45`).
+     * So a whole `W:` verse is ONE selectable entry however many lines it draws.
+     */
     for (const line of metadata.unalignedWords)
       addText(line, [], words, 'unalignedWords', false, 0, 'unalignedWords', 'wordsfont', undefined, 'abcjs-extra-text abcjs-unaligned-words')
+    closeGroup('unalignedWords')
     // TWO raw heights, and abcjs spends them as two separate rows.
     move(goldenTextHeight(words))
     move(goldenTextHeight(words))
@@ -14592,7 +14623,10 @@ function bottomTextBlock(
       typeof value === 'string'
         ? prefix + value
         : [{ font: null, text: prefix }, ...value]
-    addText(joined, [], history, 'description', false, historyBox, undefined, 'historyfont', undefined, klass)
+    // `addSingleLine` hands `richText` `{absElemType: "extraText", anchor: 'start'}` and NO
+    // `info` (`bottom-text.js:32`), so `addTextIf` fills in its own `{-2, -2}`.
+    addText(joined, [], history, 'description', false, historyBox, undefined, 'historyfont', undefined, klass,
+      { elType: 'extraText', startChar: -2, endChar: -2, text: plainText(joined) })
   }
   const multi = (value: readonly RichText[], preface: string, groupId: string, klass: string): void => {
     if (value.length === 0) return
@@ -14612,7 +14646,8 @@ function bottomTextBlock(
     if (value.some((v) => typeof v !== 'string')) {
       // `openGroup({klass, "data-name": row.name})` — the drawn name is `description` for
       // BOTH `notes` and `history`, so the run is keyed on the `startGroup` string.
-      addText(preface, [], history, 'description', true, historyBox, 'description', 'historyfont', groupId, klass)
+      addText(preface, [], history, 'description', true, historyBox, 'description', 'historyfont', groupId, klass,
+        { elType: 'extraText', startChar: -2, endChar: -2, text: preface })
       move((goldenTextHeight(history) * 3) / 4)
       value.forEach((entry, j) => {
         if (plainText(entry) !== '') {
@@ -14625,6 +14660,7 @@ function bottomTextBlock(
           move((goldenTextHeight(history) * 3) / 4)
         }
       })
+      closeGroup('extraText')
       move(goldenTextHeight(history))
       return
     }
@@ -14647,7 +14683,11 @@ function bottomTextBlock(
       .replace(/\n\n/g, '\n \n')
       .replace(/^\n/, '\u00A0\n')
       .split('\n')
-    addText(rows[0] ?? preface, rows.slice(1), history, 'description', true, historyBox, undefined, 'historyfont', undefined, klass)
+    // The JOINED branch is one `addTextIf` with `absElemType: "extraText"` and no `info`
+    // (`bottom-text.js:44`) — so `{-2, -2}`, and the text is the join BEFORE `renderText`'s
+    // blank-line rewrite, which happens at draw time on a string the row already holds.
+    addText(rows[0] ?? preface, rows.slice(1), history, 'description', true, historyBox, undefined, 'historyfont', undefined, klass,
+      { elType: 'extraText', startChar: -2, endChar: -2, text: [preface, ...all].join('\n') })
   }
 
   // The class per FIELD — `abcjs-extra-text` plus the field's own (`bottom-text.js:67-79`).
