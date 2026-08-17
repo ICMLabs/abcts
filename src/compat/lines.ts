@@ -273,8 +273,30 @@ function decoratedRange(abc: string, event: MusicEvent): SourceRange | null {
    * what hands the next element its own opening. A `)` after whitespace is NOT swallowed:
    * that branch takes whitespace and ties alone, which is why the two loops are separate.
    */
+  /**
+   * …**EXCEPT A MULTI-MEASURE REST, WHICH CLOSES AT ITS NUMBER.** `state = 'Zduration'`
+   * ends with `el.endChar = num.index; return el` (`abc_parse_music.js:1214-1219`), the one
+   * arm of `getCoreNote` that returns without reaching the whitespace branch — so ` Z2 |`
+   * is a note of three characters and the space after it belongs to the BARLINE. Both `Z`
+   * and `X` take it: the test is `rest.type.indexOf('multimeasure') >= 0` (`:1168`).
+   */
+  const kind = event.type === "rest" ? event.kind : undefined;
+  if (kind === "multiMeasure" || kind === "invisibleMultiMeasure")
+    return { start, end: own.end };
   let end = own.end;
-  while (abc[end] === ")" || abc[end] === "-") end += 1;
+  /**
+   * …**AND A BROKEN RHYTHM BELONGS TO THE NOTE BEFORE IT.** `case '>'`/`case '<'` hands the
+   * run to `getBrokenRhythm`, sets `state = 'end_slur'` and keeps going
+   * (`abc_parse_music.js:1269-1283`), so `G>F` is `G>` and then `F` — 1288…1290 and
+   * 1290…1292 — where ours split it at the `>`.
+   */
+  while (
+    abc[end] === ")" ||
+    abc[end] === "-" ||
+    abc[end] === ">" ||
+    abc[end] === "<"
+  )
+    end += 1;
   while (abc[end] === " " || abc[end] === "\t" || abc[end] === "-") end += 1;
   return { start, end };
 }

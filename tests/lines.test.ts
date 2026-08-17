@@ -122,10 +122,13 @@ const PASSING: readonly string[] = [
   "sib/S2-fields-tune2",
   "sib/S3-note-syntax-tune0",
   "sib/S3-note-syntax-tune2",
+  "sib/S3-note-syntax-tune3",
   "sib/S3-note-syntax-tune4",
+  "sib/S3-note-syntax-tune5",
   "sib/S3-note-syntax-tune6",
   "sib/S3-note-syntax-tune7",
   "sib/S3-note-syntax-tune8",
+  "sib/S3-note-syntax-tune9",
   "sib/S3-note-syntax-tune10",
   "sib/S3-note-syntax-tune11",
   "sib/S3-note-syntax-tune12",
@@ -133,6 +136,7 @@ const PASSING: readonly string[] = [
   "sib/S3-note-syntax-tune14",
   "sib/S3-note-syntax-tune15",
   "sib/S3-note-syntax-tune16",
+  "sib/S3-note-syntax-tune17",
   "sib/S3-note-syntax-tune18",
   "sib/S3-note-syntax-tune19",
   "sib/S3-note-syntax-tune20",
@@ -142,6 +146,7 @@ const PASSING: readonly string[] = [
   "sib/S3-note-syntax-tune24",
   "sib/S4-bars-repeats-tune0",
   "sib/S4-bars-repeats-tune1",
+  "sib/S4-bars-repeats-tune2",
   "sib/S5-directives-tune0",
   "sib/S5-directives-tune3",
   "sib/S5-directives-tune4",
@@ -171,6 +176,7 @@ const PASSING: readonly string[] = [
   "sib/extra-class-tune0",
   "sib/full-song-template-tune0",
   "sib/grandstaff-inline-meter-tune0",
+  "sib/happy-birthday-tune0",
   "sib/little swallow-tune0",
   "sib/missing-decorations-tune0",
   "sib/missing-decorations-tune1",
@@ -183,6 +189,7 @@ const PASSING: readonly string[] = [
   "sib/multi-voice-triplet-brackets-tune0",
   "sib/program-127-test-tune0",
   "sib/ragtime-mini-tune0",
+  "sib/ragtime-nightingale-tune0",
   "sib/score-reorder-shared-tune0",
   "sib/score-reorder-tune0",
   "sib/simple-c-tune0",
@@ -261,6 +268,8 @@ const PASSING: readonly string[] = [
   "repo/abcjs-synth-midi-03-percmap-tune0",
   "repo/abcjs-synth-timing-01-cde-fg-ab-1-bcd-2-efg-tune0",
   "repo/abcjs-synth-timing-02-score-1-2-tune0",
+  "repo/abcjs-synth-timing-03-cd-e-f-3gab-ac-tune0",
+  "repo/abcjs-synth-timing-04-cd-e-f-3gab-ac-tune0",
   "repo/abcjs-synth-timing-05-subtitle-crash-tune0",
   "repo/abcjs-synth-timing-06-repeat-at-start-of-line-crash-tune0",
   "repo/abcjs-synth-timing-07-skip-ties-crash-tune0",
@@ -277,6 +286,7 @@ const PASSING: readonly string[] = [
   "repo/abcjs-visual-layout-07-v-1-b2-a2-tune0",
   "repo/abcjs-visual-layout-08-staffwidth-100-tune0",
   "repo/abcjs-visual-layout-09-endings-tune0",
+  "repo/abcjs-visual-misc-01-barnumbers-1-tune0",
   "repo/abcjs-visual-misc-02-title-tune0",
   "repo/abcjs-visual-misc-03-jazzchords-tune0",
   "repo/abcjs-visual-misc-05-cccc-d-c-alcoda-dddd-d-c-alfine-eeee-d-s-tune0",
@@ -301,12 +311,15 @@ const PASSING: readonly string[] = [
   "repo/abcjs-visual-parsing-07-score-t-b-tune0",
   "repo/abcjs-visual-parsing-08-score-t-b-tune0",
   "repo/abcjs-visual-parsing-09-score-t-b-tune0",
+  "repo/abcjs-visual-parsing-10-song-tune0",
   "repo/abcjs-visual-selection-02-g4-q-left-1-4-170-right-a4-tune0",
   "repo/abcjs-visual-slurs-01-score-s-a-tune0",
+  "repo/abcjs-visual-slurs-02-score-s-a-t-b-tune0",
   "repo/abcjs-visual-svg-01-staffwidth-5-tune0",
   "repo/abcjs-visual-svg-03-a4-tune0",
   "repo/abcjs-visual-svg-per-line-02-scaled-tune0",
   "repo/abcjs-visual-tablature-01-gr-tune0",
+  "repo/abcjs-visual-tablature-02-g-fg-a-g2-a-very-very-long-chord-d2-cd-f-tune0",
   "repo/abcjs-visual-tablature-03-staves-rh-lh-tune0",
   "repo/abcjs-visual-tablature-04-barnumbers-1-tune0",
   "repo/abcjs-visual-tablature-05-a7-a-tune0",
@@ -397,7 +410,7 @@ describe("tune.lines and getElementFromChar", () => {
     // 251,396 of 256,138 until 2026-08-16, when the sibling repo's edits to two fixtures
     // took both numbers down with them — the FLOOR moves with its corpus, and the
     // exclusions above are what make it comparable at all.
-    expect(agree).toBeGreaterThanOrEqual(254509);
+    expect(agree).toBeGreaterThanOrEqual(254969);
   });
 
   /**
