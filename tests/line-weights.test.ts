@@ -47,7 +47,9 @@ function thicknesses(svg: string, needle: string): number[] {
 }
 
 const render = (name: string): string =>
-  renderAll(readFileSync(join(corpusDir, `${name}.abc`), "utf-8"), {})[0]
+  renderAll(readFileSync(join(corpusDir, `${name}.abc`), "utf-8"), {
+    staffwidth: 670,
+  })[0]
     ?.svg ?? "";
 const golden = (name: string): string =>
   readFileSync(join(goldensDir, `${name}.svg`), "utf-8");
@@ -299,9 +301,9 @@ describe("line weights match abcjs in strict mode", () => {
   for (const { fixture, tune, name, what, axis, is } of scalars) {
     it(what, () => {
       const doc = absolutePixels(
-        renderAll(readFileSync(join(corpusDir, `${fixture}.abc`), "utf-8"), {})[
-          tune
-        ]?.svg ?? "",
+        renderAll(readFileSync(join(corpusDir, `${fixture}.abc`), "utf-8"), {
+          staffwidth: 670,
+        })[tune]?.svg ?? "",
       );
       // UPRIGHT pieces only — a triplet's horizontal run and a bracket's two arms are the
       // same `data-name` and would otherwise be averaged in.
@@ -311,9 +313,9 @@ describe("line weights match abcjs in strict mode", () => {
       // answer and the one this gate exists to ask. Falls back to the box for a name still
       // drawn as one rect per stroke.
       const svg =
-        renderAll(readFileSync(join(corpusDir, `${fixture}.abc`), "utf-8"), {})[
-          tune
-        ]?.svg ?? "";
+        renderAll(readFileSync(join(corpusDir, `${fixture}.abc`), "utf-8"), {
+          staffwidth: 670,
+        })[tune]?.svg ?? "";
       const segments: { w: number; h: number }[] = [];
       for (const m of svg.matchAll(/<path[^>]*data-name="([^"]*)"[^>]*>/g)) {
         const tag = m[0];

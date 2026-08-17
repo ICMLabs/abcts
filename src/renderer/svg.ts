@@ -92,6 +92,13 @@ export interface SelectableRecord {
     readonly start?: LayoutElement;
     readonly end?: LayoutElement;
   };
+  /**
+   * The `x`/`y` the wrapped element carries, AS WRITTEN. abcjs's `svgEl` is the live DOM
+   * node, so a host reads its attributes off it — and a `<text>` row has both while a
+   * `<g>` (a boxed row, a brace, a closed group) has neither. The strings travel because
+   * the emitter is the only thing that knows how they were formatted.
+   */
+  readonly xy?: { readonly x: string; readonly y: string };
 }
 
 export interface RenderOptions {
@@ -1469,29 +1476,34 @@ export function toSVG(
     const recordWrapped = (
       kind: SelectableRecord["kind"],
       abcelem: Readonly<Record<string, string | number>>,
-      anchors?: SelectableRecord["anchors"],
+      extra?: Pick<SelectableRecord, "anchors" | "xy">,
     ): string => {
       if (!canSelectHere(String(abcelem.el_type))) return "";
       const index = selectableIndex++;
-      options.selectables?.push(
-        anchors === undefined
-          ? { index, kind, abcelem }
-          : { index, kind, abcelem, anchors },
-      );
+      options.selectables?.push({ index, kind, abcelem, ...extra });
       return selectableAttrs(index);
     };
-    const recordText = (t: PlacedText): string => {
+    const recordText = (
+      t: PlacedText,
+      xy?: { x: string; y: string },
+    ): string => {
       const sel = t.selectable;
       // A RICH ROW IS NOT SELECTABLE — `richText`'s array branch pushes its phrases with
       // no `absElemType` (`rich-text.js:18-28`).
       if (sel === undefined || t.phrases !== undefined) return "";
-      return recordWrapped("text", {
-        el_type: sel.elType,
-        ...(t.dataName === undefined ? {} : { name: t.dataName }),
-        ...(sel.startChar === undefined ? {} : { startChar: sel.startChar }),
-        ...(sel.endChar === undefined ? {} : { endChar: sel.endChar }),
-        text: sel.text ?? t.text,
-      });
+      return recordWrapped(
+        "text",
+        {
+          el_type: sel.elType,
+          ...(t.dataName === undefined ? {} : { name: t.dataName }),
+          ...(sel.startChar === undefined ? {} : { startChar: sel.startChar }),
+          ...(sel.endChar === undefined ? {} : { endChar: sel.endChar }),
+          text: sel.text ?? t.text,
+        },
+        // A BOXED row and a closed GROUP carry neither attribute — abcjs's own golden has
+        // `partOrder`, the brace and the `W:` block with `data-index` alone.
+        xy === undefined ? {} : { xy },
+      );
     };
 
     /**
@@ -1526,7 +1538,10 @@ export function toSVG(
           [],
           false,
           false,
-          recordText(t),
+          recordText(t, {
+            x: round2(t.x * PX),
+            y: round2(t.y * PX + oy),
+          }),
         ),
       );
       parts.push(
@@ -1695,7 +1710,14 @@ export function toSVG(
                     b.t.middleBaseline === true,
                     // A BOXED row's class is DELETED, not emptied (`draw/text.js:58`).
                     b.t.noClass === true,
-                    recordText(b.t),
+                    recordText(b.t, {
+                      x: round2(b.t.x * PX),
+                      y: round2(
+                        b.t.pageY === undefined
+                          ? b.t.y * PX + oy
+                          : b.t.pageY * PX,
+                      ),
+                    }),
                   );
         // …and under `add_classes` the group is named: `abcjs-meta-top` for the tune's own
         // header block, `abcjs-non-music` for a nonMusic line (`draw/draw.js:11-12`, `:55`).
@@ -2834,7 +2856,11 @@ export function toSVG(
             const attrs =
               o.rec === undefined
                 ? ""
-                : recordWrapped(o.rec.kind, o.rec.abcelem, o.rec.anchors);
+                : recordWrapped(
+                    o.rec.kind,
+                    o.rec.abcelem,
+                    o.rec.anchors === undefined ? {} : { anchors: o.rec.anchors },
+                  );
             parts.push(o.s.replace(SEL_SLOT, attrs));
           }
           dynamics.length = 0;
@@ -3216,12 +3242,23 @@ export function toSVG(
                        * never touches the selectables.
                        */
                       isVoiceName
-                        ? recordWrapped("voiceName", {
-                            el_type: "voiceName",
-                            startChar: -1,
-                            endChar: -1,
-                            text: t.text,
-                          })
+                        ? recordWrapped(
+                            "voiceName",
+                            {
+                              el_type: "voiceName",
+                              startChar: -1,
+                              endChar: -1,
+                              text: t.text,
+                            },
+                            {
+                              xy: {
+                                x: textNum((t.x + boxDx) * PX),
+                                y: textNum(
+                                  (t.y + (bs === undefined ? 0 : pad)) * PX + oy,
+                                ),
+                              },
+                            },
+                          )
                         : "",
                     )
                   : `<text${partAttr} x="${textNum(t.x * PX)}" y="${textNum(t.y * PX + oy)}" ` +
@@ -3868,7 +3905,9 @@ export function toSVG(
             t.boxRect !== undefined,
             // …and a row that CLOSES a group is not itself selectable; its `endGroup`
             // record is taken by `closeIfEnded` on the pass after it.
-            t.selectable?.onGroupClose === true ? "" : recordText(t),
+            t.selectable?.onGroupClose === true
+              ? ""
+              : recordText(t, { x: round2(t.x * PX), y: base }),
           );
           // …and the same group-and-four-rules a boxed row takes anywhere else.
           return t.boxRect === undefined

@@ -76,7 +76,7 @@ import { EngraverController, Parse } from "./engraver.js";
 import { strTranspose as transposeString } from "../str/transpose.js";
 import { STAFF_SPACE_PX, UNIT_PX } from "../renderer/abcjs-constants.js";
 import { layout } from "../renderer/layout.js";
-import { toSVG } from "../renderer/svg.js";
+import { type SelectableRecord, toSVG } from "../renderer/svg.js";
 
 /**
  * abcjs's SCREEN padding — `top/left/right/bottom = 15` (`write/renderer.js:69-72`), where
@@ -322,10 +322,24 @@ export function renderAbc(
   const printing = params.print === true;
   const padding = printing ? PRINT_PADDING : SCREEN_PADDING;
   const scale = printing ? PRINT_SCALE : 1;
-  const systemWidth =
-    params.staffwidth === undefined
-      ? undefined
-      : (params.staffwidth + padding * 2) / UNIT_PX / scale;
+  /**
+   * **AND abcjs HAS A DEFAULT STAFFWIDTH OF ITS OWN — 740 ON SCREEN, 680 IN PRINT.**
+   *
+   *     if (params.staffwidth) { staffwidthScreen = staffwidthPrint = params.staffwidth }
+   *     else { staffwidthScreen = 740; staffwidthPrint = 680 }
+   *
+   * (`engraver-controller.js:52-60`, and `:210` picks by media.) The engine's own default
+   * is 700px of PAGE, which is abcjs's 670 plus its margins — the width every golden in
+   * both corpora is generated at, `dump-svg.js`'s explicit `{staffwidth: 670}`.
+   *
+   * **SO NO GATE HERE HAD EVER MEASURED THE DEFAULT**, and it was 70px narrow: a host
+   * calling `renderAbc('paper', abc)` with no params got abcjs's PAGE at 700 instead of
+   * 770, and every centred title with it. Named by the selectable array, whose oracle is
+   * the only one generated WITHOUT a staffwidth — `x="350"` against abcjs's `x="385"`,
+   * which is `15 + 740 / 2`. A gate's reach is a property of its inputs.
+   */
+  const staffwidth = params.staffwidth ?? (printing ? 680 : 740);
+  const systemWidth = (staffwidth + padding * 2) / UNIT_PX / scale;
 
   /**
    * **THE SLOTS, NOT THE TUNES.** A non-array output is one slot (`abc_tunebook.js:65-66`);
@@ -377,9 +391,20 @@ export function renderAbc(
       }
       return eventIndex;
     };
+    /**
+     * **THE RECORDS THE EMITTER MADE WHILE IT DREW.** abcjs builds its selectable array
+     * inside `draw()`, so the array and `data-index` come from ONE walk; ours did too for
+     * the markup and then re-derived the array from the layout, which is a second copy of a
+     * walk that cannot reach a text row, a brace, a voice name, an ending, a triplet, a
+     * curve or a dynamic at all — none of those is in `staff.voices`.
+     *
+     * Filled by the `toSVG` call below, which is EAGER, so it is populated before a host
+     * can ask. Empty when nothing was rendered — `parseOnly` — which is abcjs's `[]`.
+     */
+    const records: SelectableRecord[] = [];
     const selectables = (): readonly Selectable[] => {
       selectableCache ??= selectablesOf(
-        laidOut(),
+        records,
         projection(),
         params.selectTypes,
       );
@@ -396,6 +421,7 @@ export function renderAbc(
         {
           staffSpace,
           classes: "abcjs",
+          selectables: records,
           // What a host may click decides the markup as well as the array — an element is
           // `selectable="false"` with only its index by default and a real tab stop with
           // one (`draw/selectables.js:19-23`).

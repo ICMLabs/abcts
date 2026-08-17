@@ -7,6 +7,7 @@ import type {
 } from "../core/model.js";
 import { keyFifths, stepIndex } from "../core/model.js";
 import type { Layout, LayoutElement } from "../renderer/layout.js";
+import type { SelectableRecord } from "../renderer/svg.js";
 import {
   FLAT_ORDER,
   keySignatureShift,
@@ -88,17 +89,33 @@ const attrs = (
 const selectableAttrs = (
   index: number,
   selectTypes: SelectTypes,
+  /**
+   * The wrapped element's OWN `x`/`y`, where it has them. abcjs's `svgEl` is the live DOM
+   * node and a host reads its attributes off it, so a `<text>` row hands back both and a
+   * `<g>` — a boxed row, a brace, a closed group, and every element group — hands back
+   * neither. They come FIRST, because they were written at creation and the three
+   * `Selectables.add` attributes are set afterwards.
+   */
+  xy?: { readonly x: string; readonly y: string },
 ): SelectableAttrs =>
-  selectTypes === undefined
-    ? attrs([
-        ["selectable", "false"],
-        ["data-index", String(index)],
-      ])
-    : attrs([
-        ["selectable", "true"],
-        ["tabindex", "0"],
-        ["data-index", String(index)],
-      ]);
+  attrs([
+    ...(xy === undefined
+      ? []
+      : ([
+          ["x", xy.x],
+          ["y", xy.y],
+        ] as [string, string][])),
+    ...(selectTypes === undefined
+      ? ([
+          ["selectable", "false"],
+          ["data-index", String(index)],
+        ] as [string, string][])
+      : ([
+          ["selectable", "true"],
+          ["tabindex", "0"],
+          ["data-index", String(index)],
+        ] as [string, string][])),
+  ]);
 
 /** `verticalPos` — `pitch - mid`, and `mid` is the staff's own middle line. */
 const verticalPosOf = (p: Pitch, clef: Clef): number =>
@@ -431,65 +448,82 @@ const meterElement = (meter: Meter): AbcElement => ({
 });
 
 export function selectablesOf(
-  doc: Layout,
+  records: readonly SelectableRecord[],
   index: ProjectionIndex,
   selectTypes: SelectTypes,
   tuneNumber = 0,
 ): Selectable[] {
   const out: Selectable[] = [];
-  for (const system of doc.systems) {
-    for (const staff of system.staves) {
-      for (const [voiceIndex, voice] of staff.voices.entries()) {
-        for (const element of voice) {
-          /**
-           * **A VOICE AFTER THE FIRST ON A STAFF DRAWS NO BARLINE, CLEF, KEY OR METER** —
-           * `voice.duplicate = true`, "bar lines and other duplicate info need not be
-           * created" (`abstract-engraver.js:150`), and the four `case`s that follow each
-           * end `if (voice.duplicate && elemset.length > 0) elemset[0].invisible = true`
-           * (`:321-340`). `drawAbsolute` returns on `params.invisible` before it adds
-           * anything, so those elements are neither drawn NOR selectable.
-           *
-           * MEASURED FIRST AND READ SECOND, and the two agree exactly: `scripts/zzbars.ts`
-           * prints six bars for each of six staff-voices on `selection-multiple` — 36 —
-           * where abcjs counts 24, which is that list without its two second-voice rows.
-           *
-           * Ours draws the same ink either way, because the duplicate voice's barline sits
-           * exactly under the first voice's; what it must not do is count it twice.
-           */
-          if (voiceIndex > 0 && DUPLICATE_HIDES.has(element.type)) continue;
-          // **AN ELEMENT THAT DREW NOTHING ADDS NO SELECTABLE** — "if there was no output,
-          // then don't add to the selectables" (`draw/absolute.js:66`), the rule that also
-          // makes a `y` spacer produce no markup at all. The emitter already knows it: it
-          // un-writes the group and hands the `data-index` back. This is that test one
-          // layer up, ported because it is abcjs's — and it fires on NOTHING in either
-          // corpus today, which is worth saying: `selection-multiple`'s twelve extra
-          // barlines were the reason it was written and they are NOT this. See
-          // `scripts/zzgap.ts`, which counts a case by element type.
-          if (
-            element.glyphs.length === 0 &&
-            element.lines.length === 0 &&
-            element.texts.length === 0
-          )
-            continue;
-          const abcelem = abcelemOf(element, index);
-          if (abcelem === undefined) continue;
-          stampEngraved(abcelem, element);
-          if (!canSelect(abcelem.el_type, selectTypes)) continue;
-          out.push({
-            absEl: { tuneNumber, abcelem, elemset: [] },
-            svgEl: selectableAttrs(out.length, selectTypes),
-            /**
-             * **A REST IS SELECTABLE AND NOT DRAGGABLE.** `isSelectable = params.type ===
-             * 'note' || params.type === 'tabNumber'` (`draw/absolute.js:59-63`) and the
-             * abselem of a rest is typed `rest` — while `canSelect` reads the ABCELEM's
-             * `el_type`, which is `note` for both. Two different type fields, one line
-             * apart, and only one of them says `rest`.
-             */
-            isDraggable: element.type === "note",
-          });
-        }
-      }
+  for (const record of records) {
+    const element = record.element;
+    if (element === undefined) {
+      /**
+       * **A WRAPPED `abcelem` COMES OUT OF THE DRAWING WHOLE**, because only the drawing
+       * knows which rows and spanners carry an `absElemType` at all — the ten text rows,
+       * the voice name, the brace, the ending, the triplet, the curves and the dynamics.
+       *
+       * A CURVE IS THE ONE THAT IS FINISHED HERE: its span is its two ANCHOR ELEMENTS'
+       * own, one character outside each (`draw/tie.js:18-26`), and only the projection
+       * knows a note's span. Absent anchors — a tie, or a half whose other end is on
+       * another system — are abcjs's `-1`.
+       */
+      const wrapped = record.abcelem;
+      if (wrapped === undefined) continue;
+      const spanOf = (
+        anchor: LayoutElement | undefined,
+        which: "startChar" | "endChar",
+      ): number => {
+        const el = anchor === undefined ? undefined : abcelemOf(anchor, index);
+        const at = el === undefined ? undefined : el[which];
+        if (typeof at !== "number") return -1;
+        return which === "startChar" ? at - 1 : at + 1;
+      };
+      out.push({
+        absEl: {
+          tuneNumber,
+          abcelem: {
+            ...wrapped,
+            ...(record.kind === "curve"
+              ? {
+                  startChar: spanOf(record.anchors?.start, "startChar"),
+                  endChar: spanOf(record.anchors?.end, "endChar"),
+                }
+              : {}),
+          } as unknown as AbcElement,
+          elemset: [],
+        },
+        svgEl: selectableAttrs(record.index, selectTypes, record.xy),
+        // `wrapSvgEl` calls `add(absEl, el, false)` — nothing it wraps is draggable
+        // (`draw/selectables.js:47-56`).
+        isDraggable: false,
+      });
+      continue;
     }
+    /**
+     * **AN ELEMENT JOINS BY REFERENCE** — see `abcelemOf`. Every rule about WHICH elements
+     * are selectable has already been applied by the emitter, which is the walk that
+     * assigns `data-index`: `canSelect` over the `el_type`, the duplicate-voice suppression
+     * of a second voice's barline, clef, key and meter (`abstract-engraver.js:150`,
+     * `:321-340`), and "if there was no output, then don't add to the selectables"
+     * (`draw/absolute.js:66`). Re-deriving them here was a second copy of a walk that is
+     * already byte-exact on 544 `data-index` rows, and a second copy is a second thing to
+     * drift.
+     */
+    const abcelem = abcelemOf(element, index);
+    if (abcelem === undefined) continue;
+    stampEngraved(abcelem, element);
+    out.push({
+      absEl: { tuneNumber, abcelem, elemset: [] },
+      svgEl: selectableAttrs(record.index, selectTypes),
+      /**
+       * **A REST IS SELECTABLE AND NOT DRAGGABLE.** `isSelectable = params.type ===
+       * 'note' || params.type === 'tabNumber'` (`draw/absolute.js:59-63`) and the
+       * abselem of a rest is typed `rest` — while `canSelect` reads the ABCELEM's
+       * `el_type`, which is `note` for both. Two different type fields, one line
+       * apart, and only one of them says `rest`.
+       */
+      isDraggable: element.type === "note",
+    });
   }
   return out;
 }

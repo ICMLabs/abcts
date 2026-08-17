@@ -518,7 +518,11 @@ function measure(target: Target): Measured {
   const golden = absolutePixels(
     readFileSync(join(goldensDir, `${target.key}.svg`), "utf-8"),
   );
-  const rendered = renderAll(abc, {});
+  // **THE GOLDENS' OWN WIDTH** — `dump-svg.js` generates every one at
+  // `{staffwidth: 670}`, and abcjs's own DEFAULT is 740 on screen
+  // (`engraver-controller.js:52-60`). Rendering with `{}` was comparing a 770px page
+  // against a 700px one; it agreed only while compat's default was the goldens'.
+  const rendered = renderAll(abc, { staffwidth: 670 });
   const svg = rendered[target.tune]?.svg ?? "";
   const ours = absolutePixels(svg);
   const goldenHeads = byClass(golden, "notehead");
@@ -838,7 +842,7 @@ describe("pixel parity vs abcjs rendered SVG", () => {
         absolutePixels(
           renderAll(
             readFileSync(join(corpusDir, `${target.fixture}.abc`), "utf-8"),
-            {},
+            { staffwidth: 670 },
           )[target.tune]?.svg ?? "",
         ),
         "top-line",

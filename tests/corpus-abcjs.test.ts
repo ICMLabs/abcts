@@ -442,7 +442,8 @@ interface Measured {
 function measure(name: string): Measured {
   const abc = readFileSync(join(fixturesDir, `${name}.abc`), "utf-8");
   const files = goldensFor(name);
-  const ours = renderAll(abc, {});
+  // The goldens' own `{staffwidth: 670}` — abcjs's default is 740 on screen.
+  const ours = renderAll(abc, { staffwidth: 670 });
   if (ours.length !== files.length) {
     return {
       ourHeads: -ours.length,
@@ -503,7 +504,7 @@ describe("abcjs test-suite corpus", () => {
         const abc = readFileSync(join(fixturesDir, `${name}.abc`), "utf-8");
         const result = parse(abc);
         expect(result.ok).toBe(true);
-        const rendered = renderAll(abc, {});
+        const rendered = renderAll(abc, { staffwidth: 670 });
         expect(rendered.length).toBeGreaterThan(0);
         for (const tune of rendered) expect(tune.svg).toContain("<svg");
       });
