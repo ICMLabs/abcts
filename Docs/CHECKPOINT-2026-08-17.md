@@ -255,10 +255,18 @@ Each is a distinct small mechanism, and all five are in `/tmp/abcts-lines.txt`
 
 `/tmp/abcts-compat-surface.txt`. **`tune.topText` and `tune.bottomText` are the two the §1
 plumbing was supposed to unblock and they are still absent**, because they are abcjs's
-INTERMEDIATE row list (`{move}` rows interleaved with text rows) rather than its result. The
-layout already computes both — `topTextBlock`'s `texts` and `advances` ARE those rows — so
-this is a projection like `tune.lines` and not a feature. It is the cheapest remaining
-surface item.
+INTERMEDIATE row list (`{move}` rows interleaved with text rows) rather than its result.
+
+**THE SHAPE IS MEASURED — `HANDOFF-2026-08-17.md` has abcjs's own output for
+`frere-jacques`** — and every field of every row is already computed: `left` is
+`PlacedText.x`, `name` is `dataName`, `absElemType`/`startChar`/`endChar` are
+`PlacedText.selectable`, and the `{move}` sequence IS `topTextBlock`'s `advances`. What is
+missing is not a rule but three plumbing facts, in this order: the INTERLEAVING between
+`texts` and `advances` is not recorded (`PlacedText.advanceAt` is exactly that index and
+`nonMusicBlock` already stamps it, `topTextBlock` does not); a row's FONT TYPE NAME
+(`"titlefont"`) is not carried, only its size and face; and the `Layout` does not expose the
+block at all outside the no-music case. **Written down rather than half-built**, which is
+this branch's own rule.
 
 The rest: `Editor` / `EditArea` / `TimingCallbacks` / the three animation functions /
 `extractMeasures` / `tuneMetrics` / `setGlyph`; `synth.CreateSynth`,
@@ -275,11 +283,25 @@ already produce byte-exactly.
 - **`%%maxStaves` truncates the CLOCK**, because `makeVoicesArray` walks the DRAWN staffgroups.
 - **An `&` overlay's `end` row is a whole note late** while every EVENT row matches.
 
-### 5.4 `metaText` itself
+### 5.4 `metaText` — DONE, 0 of 368
 
-`metaTextInfo` is complete and `metaText` is still `{title}` alone. Every field's TEXT is in
-`ScoreMetadata`; this is a projection of a dozen lines and no measurement, and it is what a
-host reads beside the positions §1 landed.
+Landed the same day, and it did NOT move the surface count: `tune.metaText` was already
+PRESENT as `{title}` alone, so the surface stands at 23 of 64 absent. Four findings, and one
+of them arrived from the other side of a fact this session had already established:
+
+- **`W:` STAYS AN ARRAY AND `N:`/`H:` DO NOT.** `simplifyMetaText` joins an array-of-strings
+  with `\n` and `unalignedWords` is NOT in its list (`tune-builder.js:479-484`) — **which is
+  the same fact that makes `W:` the only field reaching `addMultiLine`'s array branch**, and
+  therefore the only bottom-block group with a selectable close (§2.1).
+- **AN INLINE `[Q:]` IS NOT `metaText.tempo` AT ALL** (`abc_parse_header.js:384-397`), 59
+  rows on one flag.
+- **AN EMPTY FIELD IS STILL A FIELD** — `addMetaText` keys on `=== undefined`.
+- **A LONE TEMPO WORD GETS ITS `duration` LAST**, and the KEY ORDER follows from when each
+  value is assigned. The comparison is on the SERIALISED value because
+  `JSON.stringify(tune.metaText)` is output a host can take.
+
+Also landed with it: `G:`'s text, `%%header`/`%%footer`'s three parts (`RunningHead`), and
+`suppressBpm` on the tempo element.
 
 ---
 
