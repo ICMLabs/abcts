@@ -1144,8 +1144,9 @@ backup remote is not a licence to vendor someone else's tree into this one.
 > (2026-08-17), from 158 when the day opened. `tune.lines` is **255,641 of 255,684
 > characters and 290 of 295 tunes exact**, from 250,942 and 185. A new gate —
 > **`metaTextInfo`, 312 tunes and 310 field positions harvested by RUNNING abcjs, which its
-> own suite asserts nowhere** — opened at 4 of 310 and closed at 0. Suite **1803 passing, 2
-> expected-fail, no reds**; every other table is still at zero.
+> own suite asserts nowhere** — opened at 4 of 310 and closed at 0, and `metaText` beside it
+> at 0 of 368. Suite **1806 passing, 2 expected-fail, no reds**; every other table is still at
+> zero.
 >
 > **THE UNIT WAS ONE PIECE OF PLUMBING AND IT PAID FOUR TIMES**, as the handoff predicted:
 > `applyField`'s ranges now reach `metaTextInfo`, `FreeTextBlock.sourceRange` and the
@@ -1224,10 +1225,24 @@ backup remote is not a licence to vendor someone else's tree into this one.
 > its instrumentation and every top-level file was gone, which reads as `Cannot find module`
 > rather than as a missing tree. The restore recipe is in the handoff.
 >
+> 🧾 **AND `metaText` IS ITS TWIN, AT 0 OF 368 FIELDS OVER 312 TUNES** — `metaTextInfo` says
+> WHERE each field was written and this says WHAT it said, and ours answered `{title}` alone.
+> The comparison is on the SERIALISED value, key order included, because
+> `JSON.stringify(tune.metaText)` is output a host can take. **`W:` STAYS AN ARRAY AND
+> `N:`/`H:` DO NOT** — `simplifyMetaText` joins an array-of-strings and `unalignedWords` is
+> not in its list (`tune-builder.js:479-484`), **which is the same fact that makes `W:` the
+> only field reaching `addMultiLine`'s array branch** and therefore the only bottom-block
+> group with a selectable close, found from the other side the same day. **AN INLINE `[Q:]`
+> IS NOT `metaText.tempo` AT ALL** (59 rows on one flag); **an empty field is still a field**,
+> because `addMetaText` keys on `=== undefined`; and **a lone tempo word gets its `duration`
+> LAST**, the key order following from WHEN each value is assigned. `G:`'s text,
+> `%%header`/`%%footer`'s three parts and `suppressBpm` landed with it.
+>
 > **READ `Docs/HANDOFF-2026-08-17.md` FIRST** — THE NEXT UNIT (`tune.topText` /
-> `tune.bottomText` / `metaText`, which are abcjs's INTERMEDIATE row list and which our
-> layout already computes both halves of), the gate table, the five open `tune.lines` tunes
-> with their character counts, and the six traps — then `Docs/CHECKPOINT-2026-08-17.md`.
+> `tune.bottomText`, whose ROW SHAPE IS MEASURED into the handoff verbatim and whose blocker
+> is three named plumbing facts rather than a rule), the gate table, the five open `tune.lines`
+> tunes with their character counts, and the six traps — then
+> `Docs/CHECKPOINT-2026-08-17.md`.
 
 > 🖱️ **THE SELECTABLES ARE IN — 158 OF 389, AND THE JOIN IS A REFERENCE RATHER THAN A
 > POSITION** (2026-08-16). abcjs's selectable array holds `absEl.abcelem`, the very
