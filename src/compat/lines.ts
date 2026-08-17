@@ -67,6 +67,12 @@ export interface AbcElement {
   endChar?: number;
   /** A barline's drawn kind — `bar_thin`, `bar_left_repeat`, … — or a tempo's `"tempo"`. */
   type?: string;
+  /**
+   * `%%barnumbers N` — the number printed on this barline, and the number of the measure it
+   * OPENS. A PARSE field: `bar.barNumber = currBarNumber` is stamped on the element itself
+   * (`abc_parse_music.js:298-303`), so it travels to a host through `tune.lines`.
+   */
+  barNumber?: number;
   // ── a tempo mark, and a body `P:` ──
   preString?: string;
   postString?: string;
@@ -268,10 +274,20 @@ const bar = (
   kind: Barline | null,
   range: SourceRange | null,
   byRange?: Map<number, AbcElement>,
+  /**
+   * `%%barnumbers N` — the number printed on THIS barline, which is the number of the
+   * measure it OPENS. It is a PARSE field, not a drawing one: abcjs stamps
+   * `bar.barNumber = currBarNumber` onto the element itself
+   * (`abc_parse_music.js:298-303`), so a host reads it off `tune.lines` and the selectable
+   * array hands back the same object. `Measure.closingBarNumber` already holds it, with
+   * abcjs's own three conditions — first voice, visible barline, non-empty measure.
+   */
+  barNumber?: number,
 ): AbcElement | null => {
   const e = el("bar", range);
   if (e === null || range === null) return e;
   e.type = (kind === null ? undefined : BARLINE_TYPE[kind]) ?? "bar_thin";
+  if (barNumber !== undefined) e.barNumber = barNumber;
   byRange?.set(range.start, e);
   return e;
 };
@@ -532,7 +548,12 @@ function voiceElements(
       out.push(e);
     }
     out.push(
-      bar(measure.closingBarline, measure.closingBarlineSourceRange, byRange),
+      bar(
+        measure.closingBarline,
+        measure.closingBarlineSourceRange,
+        byRange,
+        measure.closingBarNumber,
+      ),
     );
   }
   // **SORTED BY POSITION, NOT BY THE ORDER WE HAPPEN TO BUILD THEM.** abcjs appends to the
