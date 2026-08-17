@@ -50,8 +50,19 @@ const SIBLING = join(
 );
 const IN_REPO = join(import.meta.dirname, "corpus-abcjs", "fixtures");
 
-/** `S7-voices` is stale in the sibling repo — see `CHECKPOINT-2026-08-12.md` §5. */
-const STALE = "sib/S7-voices";
+/**
+ * Fixtures the sibling repo is EDITING, whose goldens are older than the edit.
+ *
+ * `S7-voices` since `CHECKPOINT-2026-08-12.md` §5, and `multi-voice-rest-placement` since
+ * 2026-08-16 — both were rewritten again at 21:56 that day, MID-SESSION: the corpus's total
+ * character count changed under a running gate (256,138 → 256,135) and one ratcheted tune
+ * went red without a line of ours changing. Their `.parse.json` goldens are from 08-08.
+ *
+ * Excluded rather than re-ratcheted, because ratcheting against an input someone else is
+ * still editing bakes in whatever it happened to say. Un-exclude when the goldens are
+ * regenerated; `ls -la` on the fixture and its golden is the check.
+ */
+const STALE = ["sib/S7-voices", "sib/multi-voice-rest-placement"];
 
 interface Row {
   readonly slug: string;
@@ -63,7 +74,7 @@ const rows = (): Row[] => {
   const out: Row[] = [];
   const cache = new Map<string, string>();
   for (const [key, want] of Object.entries(GOLDEN)) {
-    if (key.startsWith(STALE)) continue;
+    if (STALE.some((slug) => key.startsWith(slug))) continue;
     const corpus = key.slice(0, key.indexOf("/"));
     const rest = key.slice(key.indexOf("/") + 1);
     const at = rest.lastIndexOf("-tune");
@@ -150,7 +161,6 @@ const PASSING: readonly string[] = [
   "sib/missing-decorations-tune5",
   "sib/multi-voice-lyrics-two-voices-tune0",
   "sib/multi-voice-rest-collision-tune0",
-  "sib/multi-voice-rest-placement-tune0",
   "sib/multi-voice-triplet-brackets-tune0",
   "sib/program-127-test-tune0",
   "sib/simple-c-tune0",
@@ -323,7 +333,10 @@ describe("tune.lines and getElementFromChar", () => {
    */
   it("the whole corpus agrees on at least the characters it did", () => {
     const agree = table.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(251396);
+    // 251,396 of 256,138 until 2026-08-16, when the sibling repo's edits to two fixtures
+    // took both numbers down with them — the FLOOR moves with its corpus, and the
+    // exclusions above are what make it comparable at all.
+    expect(agree).toBeGreaterThanOrEqual(250942);
   });
 
   /**

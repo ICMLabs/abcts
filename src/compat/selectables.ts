@@ -217,6 +217,14 @@ export function findSelectable(
   };
 }
 
+/** What a `duplicate` voice — any but the first on its staff — does not draw. */
+const DUPLICATE_HIDES: ReadonlySet<string> = new Set([
+  "bar",
+  "clef",
+  "keySignature",
+  "timeSignature",
+]);
+
 /** The two maps `projectionOf` hands back — see `abcelemOf`. */
 export interface ProjectionIndex {
   readonly byEvent: ReadonlyMap<MusicEvent, AbcElement>;
@@ -341,8 +349,24 @@ export function selectablesOf(
   const out: Selectable[] = [];
   for (const system of doc.systems) {
     for (const staff of system.staves) {
-      for (const voice of staff.voices) {
+      for (const [voiceIndex, voice] of staff.voices.entries()) {
         for (const element of voice) {
+          /**
+           * **A VOICE AFTER THE FIRST ON A STAFF DRAWS NO BARLINE, CLEF, KEY OR METER** —
+           * `voice.duplicate = true`, "bar lines and other duplicate info need not be
+           * created" (`abstract-engraver.js:150`), and the four `case`s that follow each
+           * end `if (voice.duplicate && elemset.length > 0) elemset[0].invisible = true`
+           * (`:321-340`). `drawAbsolute` returns on `params.invisible` before it adds
+           * anything, so those elements are neither drawn NOR selectable.
+           *
+           * MEASURED FIRST AND READ SECOND, and the two agree exactly: `scripts/zzbars.ts`
+           * prints six bars for each of six staff-voices on `selection-multiple` — 36 —
+           * where abcjs counts 24, which is that list without its two second-voice rows.
+           *
+           * Ours draws the same ink either way, because the duplicate voice's barline sits
+           * exactly under the first voice's; what it must not do is count it twice.
+           */
+          if (voiceIndex > 0 && DUPLICATE_HIDES.has(element.type)) continue;
           // **AN ELEMENT THAT DREW NOTHING ADDS NO SELECTABLE** — "if there was no output,
           // then don't add to the selectables" (`draw/absolute.js:66`), the rule that also
           // makes a `y` spacer produce no markup at all. The emitter already knows it: it
