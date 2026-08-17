@@ -149,6 +149,7 @@ const PASSING: readonly string[] = [
   "sib/S4-bars-repeats-tune2",
   "sib/S5-directives-tune0",
   "sib/S5-directives-tune1",
+  "sib/S5-directives-tune2",
   "sib/S5-directives-tune3",
   "sib/S5-directives-tune4",
   "sib/S5-directives-tune5",
@@ -258,6 +259,8 @@ const PASSING: readonly string[] = [
   "repo/abcjs-synth-flattener-18-midi-program-40-tune0",
   "repo/abcjs-synth-flattener-19-cdef-z4-fedc-tune0",
   "repo/abcjs-synth-flattener-20-k-treble-8-b-a4-ce-f-4-k-treble-8-g8-g-2-tune0",
+  "repo/abcjs-synth-flattener-21-c4-d4-tune0",
+  "repo/abcjs-synth-flattener-22-b-c4-d4-tune0",
   "repo/abcjs-synth-flattener-23-percmap-d-pedal-hi-hat-x-tune0",
   "repo/abcjs-synth-flattener-24-percmap-c-high-tom-x-tune0",
   "repo/abcjs-synth-flattener-25-cd-d2-d2-dz-tune0",
@@ -301,6 +304,7 @@ const PASSING: readonly string[] = [
   "repo/abcjs-visual-directives-01-incipit-test-tune0",
   "repo/abcjs-visual-layout-03-cdef-cdef-tune0",
   "repo/abcjs-visual-layout-04-score-s-a-tune0",
+  "repo/abcjs-visual-layout-05-c3-abc-cf-3-abc-c3-fa-bc-tune0",
   "repo/abcjs-visual-layout-06-staves-1-2-3-4-tune0",
   "repo/abcjs-visual-layout-07-v-1-b2-a2-tune0",
   "repo/abcjs-visual-layout-08-staffwidth-100-tune0",
@@ -351,6 +355,7 @@ const PASSING: readonly string[] = [
   "repo/abcjs-visual-tablature-10-f3-a-y-tune0",
   "repo/abcjs-visual-tablature-11-f-f-tune0",
   "repo/abcjs-visual-tablature-12-b-tune0",
+  "repo/abcjs-visual-tablature-13-g8-c4-d4-e4-f4-tune0",
   "repo/abcjs-visual-tablature-14-c-tune0",
   "repo/abcjs-visual-tablature-16-g-g-g-g-tune0",
   "repo/abcjs-visual-tablature-18-a-b-tune0",
@@ -436,7 +441,7 @@ describe("tune.lines and getElementFromChar", () => {
     // 251,396 of 256,138 until 2026-08-16, when the sibling repo's edits to two fixtures
     // took both numbers down with them — the FLOOR moves with its corpus, and the
     // exclusions above are what make it comparable at all.
-    expect(agree).toBeGreaterThanOrEqual(255537);
+    expect(agree).toBeGreaterThanOrEqual(255641);
   });
 
   /**

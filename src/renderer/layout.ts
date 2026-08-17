@@ -10591,7 +10591,7 @@ interface VoicePlan {
  * one label beside the staff, not one per layer. It keeps the parent's barlines and
  * volta, exactly as a second `V:` on a shared staff does — they draw at the same x.
  */
-function expandOverlays(score: Score): Score {
+export function expandOverlays(score: Score): Score {
   const layersOf = (voice: Score['voices'][number]): number =>
     Math.max(0, ...voice.measures.map((m) => m.overlays.length))
   if (score.voices.every((v) => layersOf(v) === 0)) return score

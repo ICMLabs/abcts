@@ -8,6 +8,7 @@ import type {
   Tempo,
 } from "../core/model.js";
 import { ratToNumber, stepIndex } from "../core/model.js";
+import { expandOverlays } from "../renderer/layout.js";
 
 /**
  * **abcjs's `tune.lines` — ITS LAID-OUT TREE, PROJECTED FROM OURS.**
@@ -223,7 +224,15 @@ function tile(abc: string, elements: readonly AbcElement[]): AbcElement[] {
      * field's: a CHORD's sits inside an element whose own start precedes it.
      */
     const field = abc.lastIndexOf("]", own - 1);
-    return field >= from ? field + 1 : from;
+    const at = field >= from ? field + 1 : from;
+    /**
+     * **AND AN `&` BELONGS TO NOTHING.** abcjs appends an `overlay` element for it, but at
+     * `startOfLine … startOfLine + 1` rather than at the `&`'s own position
+     * (`abc_parse_music.js:314`), so `getElementFromChar` answers NULL for the character
+     * itself — and the layer's first note opens after it: `G4 & E4 |` gives the layer
+     * 36…40 where its main voice closed at 35.
+     */
+    return abc[at] === "&" ? at + 1 : at;
   });
   elements.forEach((e, i) => {
     e.startChar = opened[i] ?? e.startChar ?? 0;
@@ -828,7 +837,11 @@ function voiceElements(
     }
   }
   markBeams(abc, stream);
-  return tile(abc, stream);
+  // …**AND THE TILING IS PER LINE ACROSS EVERY VOICE OF IT, NOT PER VOICE** — see the call
+  // in `projectionOf`. An `&` overlay layer's notes are read BETWEEN the main voice's, so
+  // the barline after them opens where the LAYER stopped reading and not where this voice
+  // did.
+  return stream;
 }
 
 /**
@@ -1002,13 +1015,25 @@ export function linesOf(score: Score, abc: string): AbcLine[] {
  * (`LayoutElement.sourceEvent`), so this map is the join — see `selectables.ts`.
  */
 export function projectionOf(
-  score: Score,
+  input: Score,
   abc: string,
 ): {
   lines: AbcLine[];
   byEvent: Map<MusicEvent, AbcElement>;
   byRange: Map<number, AbcElement>;
 } {
+  /**
+   * **AN `&` OVERLAY LAYER IS A VOICE OF ITS OWN IN `tune.lines`, WITH ITS OWN COPY OF THE
+   * BARLINES.** Measured through abcjs on `synth-flattener-21`: `B4 & d4 & f4 | …` comes
+   * back as THREE `staff[0].voices` entries, each carrying `bar 65…66` and `bar 80…81` — the
+   * same spans, drawn at the same x.
+   *
+   * `expandOverlays` is the RENDERER's own expansion, reused rather than repeated: a layer
+   * inherits its parent's clef, stems, barlines and volta and not its NAME. Without it the
+   * layers were in no stream at all and the barline after them tiled back over their notes,
+   * which is what `getElementFromChar` was answering for `& E4 |`.
+   */
+  const score = expandOverlays(input);
   const byEvent = new Map<MusicEvent, AbcElement>();
   const byRange = new Map<number, AbcElement>();
   const lines: AbcLine[] = [];
@@ -1108,26 +1133,37 @@ export function projectionOf(
 
   breaks.forEach((from, i) => {
     const to = breaks[i + 1] ?? first.measures.length;
-    lines.push({
-      staff: [
-        {
-          voices: score.voices.map((v, k) => {
-            const slurs = openSlurs[k] ?? [];
-            openSlurs[k] = slurs;
-            return voiceElements(
-              abc,
-              v.measures.slice(from, to),
-              byEvent,
-              byRange,
-              slurs,
-              null,
-              endings[k] ?? (endings[k] = { open: false }),
-              score.keywarn,
-            );
-          }),
-        },
-      ],
+    /**
+     * **THE TILING IS PER LINE ACROSS EVERY VOICE, BECAUSE READING IS.** An element opens
+     * where the one before it STOPPED READING, and abcjs's tokenizer reads one line
+     * top-to-bottom whatever voice each element lands in — so an `&` overlay layer's notes
+     * sit between the main voice's, and the barline after them opens at 40 and not at 35.
+     * Measured through abcjs on `synth-flattener-21`, whose main voice reads
+     * `[… note 52…55, bar 65…66 …]` with the layer's `note 56…60` and `note 61…65` in
+     * between: the bar did NOT tile back over them.
+     *
+     * `tile` mutates in place, so the per-voice arrays below still hold the same objects —
+     * which is the identity `getElementFromChar` and the selectable array both rest on.
+     */
+    const lineVoices = score.voices.map((v, k) => {
+      const slurs = openSlurs[k] ?? [];
+      openSlurs[k] = slurs;
+      return voiceElements(
+        abc,
+        v.measures.slice(from, to),
+        byEvent,
+        byRange,
+        slurs,
+        null,
+        endings[k] ?? (endings[k] = { open: false }),
+        score.keywarn,
+      );
     });
+    tile(
+      abc,
+      lineVoices.flat().sort((a, b) => (a.startChar ?? 0) - (b.startChar ?? 0)),
+    );
+    lines.push({ staff: [{ voices: lineVoices }] });
   });
   // …and the hoist runs over the finished lines, per voice, because it moves an element
   // from one line's array into another's.
