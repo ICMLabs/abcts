@@ -338,6 +338,7 @@ Run with
 | Script | Prints |
 |---|---|
 | `mti.js` | **NEW** — abcjs's `metaTextInfo` over both corpora, `label=dir` per corpus |
+| `toptext.js` | **NEW** — `topText.rows` / `bottomText.rows` for one fixture, which is the NEXT UNIT's oracle. Needs `dump-svg.js`'s `getBBox` stub or a boxed font kills it under jsdom; `TOOLS=<abs path to abcjs-debug> F=<fixture> T=<tune> [PRINT=1]` |
 | `lines.js` | a tune's element stream per line/staff/voice — `F=<fixture> T=<tune>` |
 | `twin.js` | every fixture through BOTH abcjs trees, diffed — run after instrumenting |
 | `seldump.js` / `seldump2.js` / `surface.js` / `accessors.js` | selectables and at what depth / the public surface / the numeric accessors |
