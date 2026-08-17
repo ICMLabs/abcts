@@ -963,6 +963,10 @@ class VoiceBuilder {
   private pendingKeyChange: KeySignature | null = null
   /** The clef an INLINE `[K:]` pitches its accidentals for — see `Measure.keyChangeClef`. */
   private pendingKeyChangeClef: Clef | undefined = undefined
+  /** `[K:…]` rather than a standalone `K:` line — see `Measure.keyChangeInline`. */
+  private pendingKeyChangeInline = false
+  /** The meter came off a standalone `M:` LINE — see `Measure.meterChangeStandalone`. */
+  private pendingMeterChangeStandalone = false
   private pendingClefChange: Clef | null = null
   private pendingTempoChange: Tempo | null = null
   private pendingTempoChangeRange: SourceRange | null = null
@@ -1060,10 +1064,11 @@ class VoiceBuilder {
     return shift
   }
 
-  setKeyChange(key: KeySignature, range: SourceRange, clef?: Clef): void {
+  setKeyChange(key: KeySignature, range: SourceRange, clef?: Clef, inline = false): void {
     this.pendingKeyChange = key
     this.pendingKeyChangeRange = range
     this.pendingKeyChangeClef = clef
+    this.pendingKeyChangeInline = inline
   }
 
   /** A mid-tune `K:… clef=` or `[K: bass]`. Delta, like the key change. */
@@ -1136,21 +1141,25 @@ class VoiceBuilder {
       tempoChangeSourceRange: this.pendingTempoChangeRange,
       ...(this.pendingMidi.length > 0 ? { midiCommands: this.pendingMidi } : {}),
       keyChangeSourceRange: this.pendingKeyChangeRange,
+      ...(this.pendingKeyChangeInline ? { keyChangeInline: true } : {}),
       meterChange: this.pendingMeterChange,
       meterChangeSourceRange: this.pendingMeterChangeRange,
       ...(this.pendingMeterChangeInline ? { meterChangeInline: true } : {}),
+      ...(this.pendingMeterChangeStandalone ? { meterChangeStandalone: true } : {}),
       ...(this.pendingMeterChanges.length > 1
         ? { meterChanges: this.pendingMeterChanges }
         : {}),
     }
     this.pendingKeyChange = null
     this.pendingKeyChangeClef = undefined
+    this.pendingKeyChangeInline = false
     this.pendingClefChange = null
     this.pendingTempoChange = null
     this.pendingTempoChangeRange = null
     this.pendingMidi = []
     this.pendingKeyChangeRange = null
     this.pendingMeterChange = null
+    this.pendingMeterChangeStandalone = false
     this.pendingMeterChangeRange = null
     this.pendingMeterChangeInline = false
     this.pendingMeterChanges = []
@@ -1257,6 +1266,7 @@ class VoiceBuilder {
       // The standalone form, by construction — this is abcjs's `startNewLine` consuming
       // `multilineVars.meter`, which the inline arm never fills.
       this.pendingMeterChangeInline = false
+      this.pendingMeterChangeStandalone = true
       this.meterForNextLine = null
     }
   }
@@ -3284,6 +3294,7 @@ class Parser {
               parseKey(value),
               range,
               inline ? (midClef ?? defaultClef) : undefined,
+              inline,
             )
           if (midClef !== null) builder.voice.setClefChange(midClef)
           // A MID-TUNE `K: octave=` is GLOBAL and takes effect from here. abcjs reads it

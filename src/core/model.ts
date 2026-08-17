@@ -836,6 +836,14 @@ export interface Measure {
    */
   readonly keyChangeClef?: Clef
   readonly keyChangeSourceRange: SourceRange | null
+  /**
+   * `[K:…]` rather than a standalone `K:` line, the same distinction `meterChangeInline`
+   * draws — and it decides where the element lands in `tune.lines`, not just how it draws:
+   * an INLINE field is appended to the stream where it stands, while a standalone one goes
+   * through `appendStartingElement` and reaches the PREVIOUS line's voice (see
+   * `src/compat/lines.ts`).
+   */
+  readonly keyChangeInline?: boolean
   /** A mid-tune `M:` taking effect at this measure. */
   readonly meterChange: Meter | null
   readonly meterChangeSourceRange: SourceRange | null
@@ -858,6 +866,14 @@ export interface Measure {
    * renderer, which is the only thing that reads it.
    */
   readonly meterChangeInline?: boolean
+  /**
+   * The meter came off a standalone `M:` LINE, which is a THIRD state rather than the
+   * negation of `meterChangeInline`: an `M:` after a `\` continuation is neither inline nor
+   * standalone. Only the standalone one is absent from `tune.lines` — the header parser's
+   * `M:` arm just fills `multilineVars.meter` for the next `startNewLine`
+   * (`abc_parse_header.js:519-521`), never reaching `appendStartingElement`.
+   */
+  readonly meterChangeStandalone?: boolean
   /**
    * **EVERY `[M:]` IN THIS MEASURE, IN ORDER**, each with the number of events already
    * emitted when it was read — because abcjs treats a meter as an ORDINARY element in the

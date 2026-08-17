@@ -583,6 +583,17 @@ const restType = (kind: string): string =>
  * One voice's elements in SOURCE ORDER: the mid-tune changes where they stand, the events,
  * and the barlines that open and close each measure.
  */
+/**
+ * **`%%keywarn 0` SUPPRESSES A STANDALONE `K:`'s ELEMENTS ENTIRELY.** The guard is
+ * `if (!is_in_header && hasBeginMusic() && multilineVars.keywarn !== false)`
+ * (`abc_parse_header.js:507`), and the INLINE `[K:]` arm has no such test (`:366-371`) — so
+ * the directive turns off the mid-tune key change a `K:` LINE makes and leaves a bracketed
+ * one alone. `abcts-keywarn` is the fixture, and it is one of ours.
+ */
+const keyInStream = (measure: Measure, keywarn?: boolean): boolean =>
+  measure.keyChangeSourceRange !== null &&
+  (measure.keyChangeInline === true || keywarn !== false);
+
 function voiceElements(
   abc: string,
   measures: readonly Measure[],
@@ -596,6 +607,8 @@ function voiceElements(
   headTempo: AbcElement | null = null,
   /** abcjs's `multilineVars.inEnding` — tune-wide state, so it is carried across lines. */
   ending: { open: boolean } = { open: false },
+  /** `%%keywarn` — see `keyInStream`. */
+  keywarn?: boolean,
 ): AbcElement[] {
   const out: (AbcElement | null)[] = [];
   const notes: { event: MusicEvent; e: AbcElement }[] = [];
@@ -637,9 +650,37 @@ function voiceElements(
     // MEASURED on `selection-clefs`, whose seven `K:C clef=…` lines each precede a note:
     // abcjs opens that note at the LINE, and we opened it at the key element's own end,
     // one character earlier.
-    if (!fieldLine(abc, measure.keyChangeSourceRange))
+    /**
+     * **A `K:` NAMING A CLEF APPENDS THE CLEF FIRST AND THEN THE KEY, BOTH WITH THE
+     * FIELD'S OWN SPAN** — `if (result.foundClef) appendStartingElement('clef', …); if
+     * (result.foundKey) appendStartingElement('key', …)`, in that order and from the same
+     * two characters (`abc_parse_header.js:508-513`, `:366-371` for the inline form). So
+     * `getElementFromChar` over `K:C bass` answers `clef`, not `keySignature`, because it
+     * returns the FIRST match in the voice.
+     *
+     * **AND WHETHER EITHER IS IN THE STREAM AT ALL IS DECIDED LATER** — see
+     * `hoistLeadingStaffFields`. Emitted here whatever their position, because the test is
+     * "does music precede it", which only the assembled line can answer.
+     */
+    if (keyInStream(measure, keywarn)) {
+      if (measure.clefChange !== null)
+        out.push(el("clef", measure.keyChangeSourceRange));
       out.push(el("keySignature", measure.keyChangeSourceRange));
-    if (!fieldLine(abc, measure.meterChangeSourceRange))
+    }
+    /**
+     * **A STANDALONE `M:` LINE IS NEVER IN THE STREAM AND AN INLINE OR CONTINUED ONE ALWAYS
+     * IS.** The header parser's `M:` arm only fills `multilineVars.meter` for the next
+     * `startNewLine` (`abc_parse_header.js:519-521`) — its `letter_to_body_header` twin is
+     * reached only after a `\` continuation — while `letter_to_inline_header`'s `[M:` arm
+     * calls `appendStartingElement` (`:356-363`). Our parser already splits the two:
+     * `meterChange` is set for the inline and continued forms and `meterForNextLine` for
+     * the standalone one, so the PRESENCE of a range is the whole test and the old
+     * line-position guard was dropping `[M:C]` written at the head of a line.
+     *
+     * `meterChangeStandalone` is the flag rather than `!meterChangeInline`, because an `M:`
+     * after a `\` continuation is NEITHER — three states, not two.
+     */
+    if (measure.meterChangeStandalone !== true)
       out.push(el("timeSignature", measure.meterChangeSourceRange));
     out.push(tempoElement(measure.tempoChange, measure.tempoChangeSourceRange, byRange));
     out.push(
@@ -929,6 +970,51 @@ export function projectionOf(
   const headTempo = tempoElement(score.tempo, score.tempoSourceRange, byRange);
   void headTempo;
 
+  /**
+   * **A KEY, CLEF OR METER WRITTEN BEFORE ANY MUSIC ON ITS LINE BELONGS TO THE LINE ABOVE.**
+   *
+   * `appendStartingElement` walks the CURRENT line's voice and branches on what it meets
+   * FIRST: a `note` or `bar`, and it PUSHES the field with its span; an element of the same
+   * type, and it REPLACES that one in place; NEITHER, and the value goes onto
+   * `staff[n][type]` — where it carries no span at all and `getElementFromChar`, which
+   * iterates VOICES only (`abc_tune.js:235-253`), can never see it
+   * (`tune-builder.js:272-295`).
+   *
+   * And **`startNewLine` IS LAZY** — it fires when the first music element is appended — so
+   * a field standing at the head of a line is read while `tune.lineNum` still points at the
+   * line ABOVE it, whose voice is full of notes. The push lands there.
+   *
+   * **MEASURED BEFORE IT WAS BUILT AND THE TWO AGREED EXACTLY.** `S6-keys` tune 2 is six
+   * `K:` lines between seven music lines, and abcjs's own `tune.lines` reads
+   * `[…, bar 506…507, keySignature 508…511]` on line 0 — each key at the END of the line
+   * above its own. **THIS CORRECTS 2026-08-16's "a standalone `K:` or `M:` line is NOT in
+   * the stream"**: that was true only of the case measured then, where nothing above it
+   * held a note.
+   *
+   * With NO line above holding music the field is genuinely absent, which is the other half
+   * abcjs states as `hasBeginMusic()` (`abc_parse_header.js:508`) — `S6-keys` tune 1 opens
+   * `K:A` then `[K:G] |` and abcjs answers NOTHING for that `[K:G]`.
+   */
+  const hoistLeadingStaffFields = (voiceLines: AbcElement[][]): void => {
+    const STAFF_FIELD = new Set(["clef", "keySignature", "timeSignature"]);
+    for (let i = 0; i < voiceLines.length; i += 1) {
+      const line = voiceLines[i];
+      if (line === undefined) continue;
+      let lead = 0;
+      while (lead < line.length && STAFF_FIELD.has(line[lead]?.el_type ?? ""))
+        lead += 1;
+      if (lead === 0) continue;
+      const moved = line.splice(0, lead);
+      // The line above, if it has music of its own to be appended after.
+      const above = voiceLines[i - 1];
+      if (
+        above !== undefined &&
+        above.some((e) => e.el_type === "note" || e.el_type === "bar")
+      )
+        above.push(...moved);
+    }
+  };
+
   breaks.forEach((from, i) => {
     const to = breaks[i + 1] ?? first.measures.length;
     lines.push({
@@ -945,12 +1031,26 @@ export function projectionOf(
               slurs,
               null,
               endings[k] ?? (endings[k] = { open: false }),
+              score.keywarn,
             );
           }),
         },
       ],
     });
   });
+  // …and the hoist runs over the finished lines, per voice, because it moves an element
+  // from one line's array into another's.
+  const staffCount = lines[0]?.staff?.length ?? 0;
+  for (let j = 0; j < staffCount; j += 1) {
+    const voiceCount = lines[0]?.staff?.[j]?.voices.length ?? 0;
+    for (let k = 0; k < voiceCount; k += 1)
+      hoistLeadingStaffFields(
+        lines.flatMap((l) => {
+          const v = l.staff?.[j]?.voices[k];
+          return v === undefined ? [] : [v as AbcElement[]];
+        }),
+      );
+  }
   return { lines, byEvent, byRange };
 }
 

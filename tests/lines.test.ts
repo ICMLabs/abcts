@@ -151,8 +151,12 @@ const PASSING: readonly string[] = [
   "sib/S5-directives-tune3",
   "sib/S5-directives-tune4",
   "sib/S6-keys-tune0",
+  "sib/S6-keys-tune1",
+  "sib/S6-keys-tune2",
+  "sib/S6-keys-tune3",
   "sib/S6-keys-tune4",
   "sib/S8-layout-tune0",
+  "sib/S8-layout-tune1",
   "sib/S8-layout-tune2",
   "sib/ave-verum-corpus-tune0",
   "sib/brother-john-inline-voices-tune0",
@@ -165,6 +169,7 @@ const PASSING: readonly string[] = [
   "sib/clefs-tune4",
   "sib/clefs-tune5",
   "sib/clefs-tune6",
+  "sib/clefs-tune7",
   "sib/curves-tune0",
   "sib/curves-tune1",
   "sib/curves-tune2",
@@ -313,6 +318,7 @@ const PASSING: readonly string[] = [
   "repo/abcjs-visual-parsing-09-score-t-b-tune0",
   "repo/abcjs-visual-parsing-10-song-tune0",
   "repo/abcjs-visual-selection-02-g4-q-left-1-4-170-right-a4-tune0",
+  "repo/abcjs-visual-selection-03-c4-tune0",
   "repo/abcjs-visual-slurs-01-score-s-a-tune0",
   "repo/abcjs-visual-slurs-02-score-s-a-t-b-tune0",
   "repo/abcjs-visual-svg-01-staffwidth-5-tune0",
@@ -363,7 +369,9 @@ const PASSING: readonly string[] = [
   "repo/abcjs-visual-wrap-03-piano-wrap-tune0",
   "repo/abcjs-visual-wrap-04-wrap-quartet-tune0",
   "repo/abcjs-visual-wrap-05-score-1-2-3-4-tune0",
+  "repo/abcts-keywarn-tune0",
   "repo/abcts-keywarn-tune1",
+  "repo/abcts-keywarn-tune2",
   "repo/abcts-visualtranspose-tune0",
   "repo/abcts-visualtranspose-tune1",
   "repo/abcts-visualtranspose-tune2",
@@ -410,7 +418,7 @@ describe("tune.lines and getElementFromChar", () => {
     // 251,396 of 256,138 until 2026-08-16, when the sibling repo's edits to two fixtures
     // took both numbers down with them — the FLOOR moves with its corpus, and the
     // exclusions above are what make it comparable at all.
-    expect(agree).toBeGreaterThanOrEqual(254969);
+    expect(agree).toBeGreaterThanOrEqual(255228);
   });
 
   /**
