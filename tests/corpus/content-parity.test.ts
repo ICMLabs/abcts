@@ -122,7 +122,24 @@ const BEAM_FAILURES: string[] = [];
  * escape silently dropped. `\\%` is now the sentinel substitution abcjs 6.7.0 makes
  * (`abc_parse.js:511-512`; see `escapePercent` in the parser), and the list is empty.
  */
-const GOLDEN_FROM_ANOTHER_ABCJS: readonly string[] = [];
+const GOLDEN_FROM_ANOTHER_ABCJS: readonly string[] = [
+  /**
+   * **THE FIXTURE IS NEWER THAN ITS GOLDEN, AND ANOTHER LANE IS STILL EDITING IT.**
+   * `multi-voice-rest-placement.abc` was rewritten in `../abcMusicKit` on 2026-08-15 and
+   * again at 21:56 on 2026-08-16 — an added `X:1` line, which moves every source OFFSET by
+   * four and NO INK at all, so only a gate comparing offsets can see it — while its
+   * `.parse.json` is from 08-08. The whole fixtures directory changed again at 22:49.
+   *
+   * Excluded rather than re-goldened: regenerating someone else's in-flight fixture bakes
+   * in whatever it happened to say this hour, and the same fixture is excluded from
+   * `tests/lines.test.ts` for the same reason. **`ls -la` on the fixture and its golden is
+   * the check** — un-exclude the moment the pair agree again.
+   *
+   * `S7-voices` was here for the same reason and came back on its own when that lane
+   * regenerated it, which is what this list is supposed to allow.
+   */
+  "multi-voice-rest-placement",
+];
 
 /**
  * Fixtures whose verse-1 lyrics do NOT line up with abcjs, and why.

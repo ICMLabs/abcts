@@ -207,6 +207,20 @@ const ABCJS_ELEMENT_NAMES: Readonly<Record<string, string>> = {
   voiceName: "voice-name",
 };
 
+/** Our element types as abcjs's `abcelem.el_type` names them — what `canSelect` tests. */
+const ABCJS_EL_TYPES: Readonly<Record<string, string>> = {
+  note: "note",
+  // **A REST IS A NOTE ELEMENT TO abcjs**, which is why the default admits it.
+  rest: "note",
+  bar: "bar",
+  clef: "clef",
+  keySignature: "keySignature",
+  timeSignature: "timeSignature",
+  tempo: "tempo",
+  part: "part",
+  voiceName: "voiceName",
+};
+
 /** SVG needs `&` and `<` escaped; attribute values here also carry `"`. */
 const escapeAttr = (s: string): string =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");

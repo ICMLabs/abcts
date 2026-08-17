@@ -376,6 +376,12 @@ export function renderAbc(
         {
           staffSpace,
           classes: "abcjs",
+          // What a host may click decides the markup as well as the array — an element is
+          // `selectable="false"` with only its index by default and a real tab stop with
+          // one (`draw/selectables.js:19-23`).
+          ...(params.selectTypes === undefined
+            ? {}
+            : { selectTypes: params.selectTypes }),
           // abcjs emits its per-element class scheme only when the host asks for it.
           ...(params.add_classes === true ? { addClasses: true } : {}),
           /**
