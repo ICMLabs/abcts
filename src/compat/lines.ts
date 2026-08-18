@@ -99,6 +99,8 @@ export interface AbcElement {
   params?: readonly (string | number)[];
   /** A `stem` element's own field — `up`, `down` or `auto`. See `resolveOverlays`. */
   direction?: string;
+  /** `%%voicecolor` — a `color` element at the head of the voice (`tune-builder.js:993`). */
+  color?: string;
   // ── the staff's own furniture, which abcjs hangs on the STAFF and not on the stream ──
   verticalPos?: number;
   clefPos?: number;
@@ -1328,11 +1330,26 @@ export function projectionOf(
     for (let i = 0; i < voiceLines.length; i += 1) {
       const line = voiceLines[i];
       if (line === undefined) continue;
-      let lead = 0;
-      while (lead < line.length && STAFF_FIELD.has(line[lead]?.el_type ?? ""))
-        lead += 1;
-      if (lead === 0) continue;
-      const moved = line.splice(0, lead);
+      /**
+       * **THE TEST IS "BEFORE ANY NOTE OR BAR", NOT "AT THE HEAD".** `appendStartingElement`
+       * scans the voice for a `note` or a `bar` and stops at the first one (`:273-292`);
+       * a `stem`, a `style` or a `color` — which `createVoice` has already put at the head
+       * of every line's voice — is NEITHER, so it is scanned straight past. Reading a
+       * LEADING RUN instead cost five ratcheted tunes the moment the stems landed:
+       * `visual-layout-07`'s second `K:GMin` stopped being hoisted and answered six
+       * characters abcjs answers null for.
+       */
+      let upto = 0;
+      while (
+        upto < line.length &&
+        line[upto]?.el_type !== "note" &&
+        line[upto]?.el_type !== "bar"
+      )
+        upto += 1;
+      const moved: AbcElement[] = [];
+      for (let j = upto - 1; j >= 0; j -= 1)
+        if (STAFF_FIELD.has(line[j]?.el_type ?? "")) moved.unshift(...line.splice(j, 1));
+      if (moved.length === 0) continue;
       // The line above, if it has music of its own to be appended after.
       const above = voiceLines[i - 1];
       if (
@@ -1484,6 +1501,39 @@ export function projectionOf(
      * staff it does not find — `if (inputStaff)` guards the whole merge
      * (`deline-tune.js:23`, `:66`).
      */
+    /**
+     * **`createVoice` OPENS EVERY LINE'S VOICE WITH ITS OWN FURNITURE** — a `style`, a
+     * `stem`, a `scale` and a `color`, in that order and each with a NULL `startChar`, so
+     * `appendElement` leaves the key off entirely (`tune-builder.js:965-994`, `:174-179`).
+     *
+     * Two sources of a `stem`, and the second is the one that surprises:
+     *
+     *   - `V:… stem=up` names it outright, and every line of that voice opens with it;
+     *   - **A VOICE THAT IS NOT THE FIRST ON ITS STAFF GETS `down`, AND PUTS AN `up` ON
+     *     THE FIRST ONE** — that is how two voices sharing a staff are told apart.
+     *
+     * ⚠️ **AND abcjs'S GUARD AGAINST DOUBLING THE `up` NEVER FIRES.** It tests
+     * `thisStaff.voices[0].el_type === 'stem'` — on the ARRAY, not on its elements
+     * (`:980`) — so `found` is always false and a THREE-voice staff splices two `up`
+     * stems onto its first voice. Ported as written, because the count is visible.
+     */
+    voicesOfStaff.forEach((members) => {
+      const firstOfStaff = lineVoices[members[0] ?? 0];
+      members.forEach((k, j) => {
+        const voice = lineVoices[k];
+        if (voice === undefined || voice.length === 0) return;
+        const head: AbcElement[] = [];
+        const stem = score.voices[k]?.stemDirection;
+        if (stem != null) head.push({ el_type: "stem", direction: stem });
+        else if (j > 0) {
+          firstOfStaff?.splice(0, 0, { el_type: "stem", direction: "up" });
+          head.push({ el_type: "stem", direction: "down" });
+        }
+        const color = score.voices[k]?.color;
+        if (color != null) head.push({ el_type: "color", color });
+        voice.splice(0, 0, ...head);
+      });
+    });
     // **FREE TEXT AND MID-TUNE SUBTITLES BETWEEN TWO SYSTEMS ARE LINES OF THEIR OWN**,
     // read off the same first measure the renderer's own block does (`Measure.textBefore`).
     for (const b of score.voices[0]?.measures[from]?.textBefore ?? [])
