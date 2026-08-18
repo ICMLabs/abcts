@@ -950,9 +950,18 @@ checkpoint and hand off as you go so no context is lost.
 > `Docs/CHECKPOINT-2026-08-14.md` — §4 is the work list as it stood, §5 the harness. Then the
 > files below.
 
-**READ `Docs/CHECKPOINT-2026-08-17.md` FIRST** — the current state (selectables CLOSED at
-389 of 389, the tune object's whole DATA surface at zero across five gates, `tune.lines`
-255,641 of 255,684), §1 the field-range
+**READ `Docs/CHECKPOINT-2026-08-17b.md` FIRST** — the current state (**`tune.lines` CLOSED
+at 255,684 of 255,684 characters and 295 of 295 tunes**, the **`AbcTune` accessors CLOSED at
+0 of 291** with BOTH measured-not-ported rows, `tune.deline` BUILT at 1,558 of 1,570, and
+`tune.setupEvents` BUILT with a new gate at 3,339 of 3,366 that compares every column of a
+timing row), §1 the two ORACLE CONFIGURATIONS that each looked like a defect of ours, §2 the
+`deline` port and the nine `tune.lines` structure findings behind it, §3 `resolveOverlays`,
+§4 `createVoice`'s head elements and the ratchet that caught their cost, §5-§7 the four
+findings that closed the character gate, §8 the timing row's GEOMETRY half and the five
+defects it named, §9 the harness and §10 the rules.
+`Docs/HANDOFF-2026-08-17b.md` has the gate table, WHAT TO DO NEXT and the seven traps. Then
+`Docs/CHECKPOINT-2026-08-17.md` — selectables CLOSED at 389 of 389 and the tune object's
+whole DATA surface at zero across five gates, §1 the field-range
 plumbing that paid four times, §2 the selectables' eleven `wrapSvgEl` sites and the
 one-walk refactor, §3 the ten `tune.lines` findings and §3.1's `\x12` table, §4 abcjs's own
 default staffwidth and the SEVEN gates that broke with only three saying so, §5 WHAT IS
