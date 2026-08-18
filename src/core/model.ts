@@ -1482,6 +1482,13 @@ export interface Score {
    * pair — `%%center A` costs 23.27px and `%%text A` costs 33.77, and their rows sit
    * exactly that 10.5 apart.
    */
+  /**
+   * Characters the music scan could not read — a bare `#`, or the `^3/2` of a microtone
+   * strict refuses. abcjs answers NULL for them (`startI` is taken per iteration and an
+   * iteration that appends nothing leaves its characters to nobody), so `tune.lines` must
+   * not tile an element's span back over one.
+   */
+  readonly unreadable?: readonly SourceRange[]
   readonly textAbove: readonly FreeTextBlock[]
   /**
    * The same standing AFTER the music. As well as being drawn, these make the last music

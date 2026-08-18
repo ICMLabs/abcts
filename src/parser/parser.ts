@@ -2075,6 +2075,14 @@ class ScoreBuilder {
   }
   /** `%%center` text, split by whether any music had been parsed when it was read. */
   textAbove: FreeTextBlock[] = []
+  /**
+   * **CHARACTERS THE MUSIC SCAN COULD NOT READ**, in source order — a bare `#`, and the
+   * `^3/2` of a microtone strict must refuse. They belong to no element at all, which is
+   * abcjs's own answer: `startI` is taken at the top of each `parseMusic` iteration, and
+   * an iteration that appends nothing leaves its characters to nobody. `tune.lines` reads
+   * this so its spans do not tile back over them. See `src/compat/lines.ts`.
+   */
+  unreadable: SourceRange[] = []
   textBelow: FreeTextBlock[] = []
   /** Voice ids from `%%score`/`%%staves`, which overrides declaration order. */
   scoreOrder: string[] | null = null
@@ -2328,6 +2336,7 @@ class ScoreBuilder {
       maxStaves: this.maxStaves,
       sysStaffSep: this.sysStaffSep,
       textAbove: this.textAbove,
+      unreadable: this.unreadable,
       // …AND THE BLOCKS STILL WAITING FOR A SYSTEM THAT NEVER CAME. A mid-tune `T:` or
       // `%%text` moves to `pendingTextBefore` at the next system start; when the tune ends
       // before one, it sat there and was DRAWN NOWHERE. `visual-mouse-click-01`'s
@@ -3720,7 +3729,15 @@ class Parser {
             // Every other mode keeps the whole `^3/2G`, which is what the range is FOR:
             // these offsets drive editor cross-linking, and a caret inside `^3/2` must
             // identify the note it alters rather than nothing at all.
-            if (isStrict(this.mode)) accidentalStart = null
+            if (isStrict(this.mode)) {
+              // …and those characters belong to NOTHING, not to the note after them:
+              // `getCoreNote` returned null and abcjs re-read the letter alone.
+              if (accidentalStart !== null && chars > 1)
+                builder.unreadable.push(
+                  sourceRange(accidentalStart, (tokens[i] as Token | undefined)?.start ?? accidentalStart),
+                )
+              accidentalStart = null
+            }
           }
           break
         }
@@ -3888,6 +3905,17 @@ class Parser {
             // abcjs's "Unknown character ignored". Ignored for CONTENT, but not inert —
             // see the whitespace case.
             ignoredSinceNote = true
+            // **AND IT BELONGS TO NO ELEMENT AT ALL.** abcjs's iteration appends nothing
+            // and the next one opens past it, so `tune.lines` must not tile a span back
+            // over it — a bare `#` in `^c# ^d#` is the measured case.
+            //
+            // **EXCEPT THE DOT OF A DOTTED SLUR OR TIE, WHICH IS INSIDE THE ELEMENT.**
+            // `letter_to_accent`'s `case '.'` BREAKS out of its switch when a `(` or `-`
+            // follows (`abc_parse_music.js:784-787`) — it returns no decoration, but the
+            // iteration goes on to read the note, so `startI` is still the dot.
+            // `S3-note-syntax` tune 22 has three, and each was worth four characters.
+            if (!dotsAMark)
+              builder.unreadable.push(sourceRange(token.start, token.start + token.length))
           }
           i++
           break

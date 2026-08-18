@@ -18,19 +18,17 @@ import { parse } from "../src/parser/parser.js";
  * `PASSING` and must stay there. The aggregate is printed too, because the open rows are
  * a work list rather than a regression.
  *
- * **WHAT IS MISSING IS NAMED AND MEASURED, NOT GUESSED AT.** 5,912 characters across 126
- * tunes, and it is two things:
+ * **IT IS CLOSED — 255,684 of 255,684 characters, 295 of 295 tunes.** Every character of
+ * both corpora maps to the element abcjs maps it to, or to nothing where abcjs maps it to
+ * nothing. The last three findings were span RULES rather than missing element types:
  *
- * 1. **SIX ELEMENT TYPES THE PROJECTION DOES NOT CARRY** — `tempo`, `clef`, `midi`,
- *    `style`, `color` and `part`, each needing a source range the model does not keep.
- *    (`stem` is the eleventh type and costs NOTHING: `appendElement('stem', null, null,
- *    …)` gives it a null `startChar`, so abcjs's own truthiness guard skips it —
- *    289 of them and not one reachable.)
- * 2. **A CHORD'S RANGE STOPS SHORT OF A TRAILING TIE.** `ragtime-nightingale` loses 1,273
- *    characters on its own, the most of any row, and the first is `[G,D]/4-` at 272:
- *    abcjs's element is 272…281 and ours 272…279, missing the `-`. That is a PARSER
- *    change — a chord's `sourceRange` — under gates that read source offsets, so it is
- *    measured here rather than guessed at from this side.
+ *   - **A `%%MIDI` and a `[M:]` ARE ELEMENTS** — the first with a `-1 … -1` span, the
+ *     second one per directive rather than one per measure.
+ *   - **AN OPENING `(` BEFORE A GRACE OR A DECORATION BELONGS TO NOTHING**, where a `(3`
+ *     and a `((3` keep the whole run.
+ *   - **AND A PARSE FAILURE OWNS NO CHARACTERS** — a bare `#`, and the `^3/2` of a
+ *     microtone `getCoreNote` returns null for. The parser records both as
+ *     `Score.unreadable`, because it is the only side that knows what it could not read.
  */
 const GOLDEN = JSON.parse(
   readFileSync(
@@ -121,6 +119,7 @@ const PASSING: readonly string[] = [
   "sib/S2-fields-tune1",
   "sib/S2-fields-tune2",
   "sib/S3-note-syntax-tune0",
+  "sib/S3-note-syntax-tune1",
   "sib/S3-note-syntax-tune2",
   "sib/S3-note-syntax-tune3",
   "sib/S3-note-syntax-tune4",
@@ -222,6 +221,7 @@ const PASSING: readonly string[] = [
   "sib/voice-octave-shift-tune0",
   "sib/vree-compound-meter-tune0",
   "sib/vree-grace-notes-tune0",
+  "sib/vree-sharps-tune0",
   "sib/vree-slurs-and-triplets-tune0",
   "sib/vree-ties-across-bars-tune0",
   "sib/zocharti-loch-tune0",
@@ -444,7 +444,7 @@ describe("tune.lines and getElementFromChar", () => {
     // 251,396 of 256,138 until 2026-08-16, when the sibling repo's edits to two fixtures
     // took both numbers down with them — the FLOOR moves with its corpus, and the
     // exclusions above are what make it comparable at all.
-    expect(agree).toBeGreaterThanOrEqual(255660);
+    expect(agree).toBeGreaterThanOrEqual(255684);
   });
 
   /**

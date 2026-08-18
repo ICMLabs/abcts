@@ -230,7 +230,11 @@ const FIELD_ELEMENTS: ReadonlySet<string> = new Set([
   "clef",
 ]);
 
-function tile(abc: string, elements: readonly AbcElement[]): AbcElement[] {
+function tile(
+  abc: string,
+  elements: readonly AbcElement[],
+  unreadable: readonly SourceRange[] = [],
+): AbcElement[] {
   // **EACH ELEMENT OPENS WHERE THE ONE BEFORE IT CLOSED**, and the first of a line opens
   // at the line. A NOTE closes over its trailing whitespace and a BAR does not — measured
   // on `S1-decorations`: `!fermata!C ` is 163…174 and `!accent!D ` 174…184, the space
@@ -326,8 +330,21 @@ function tile(abc: string, elements: readonly AbcElement[]): AbcElement[] {
       j += 1;
     }
     const NOTE_START = /[A-Ga-gzxZ[\^_=]/;
-    const start =
-      sawSlur && !triplet && j <= own && !NOTE_START.test(abc[j] ?? "") ? j : at;
+    let start = sawSlur && !triplet && j <= own && !NOTE_START.test(abc[j] ?? "") ? j : at;
+    /**
+     * **AND A PARSE FAILURE OWNS NO CHARACTERS.** `startI` is taken at the TOP of each
+     * `parseMusic` iteration, so an iteration that reads something and appends NOTHING
+     * leaves its characters to nobody — the next element opens past them. Two shapes in
+     * the two corpora, and the list of every null run abcjs leaves between two elements is
+     * what says there are only two: a bare `#` in `^c# ^d#`, and the `^3/2` of a microtone
+     * `getCoreNote` returns null for, which strict already drops from the note's own range.
+     *
+     * The parser records both as `Score.unreadable` — it is the only side that knows what
+     * it could not read, and guessing the rule from the characters themselves took the
+     * corpus from 255,660 to 255,158 in one run.
+     */
+    for (const r of unreadable)
+      if (r.end > start && r.start < own) start = Math.max(start, r.end);
     return abc[start] === "&" ? start + 1 : start;
   });
   elements.forEach((e, i) => {
@@ -1556,6 +1573,7 @@ export function projectionOf(
         .flat()
         .filter((e) => (e.startChar ?? -1) >= 0)
         .sort((a, b) => (a.startChar ?? 0) - (b.startChar ?? 0)),
+      score.unreadable ?? [],
     );
     /**
      * **A LINE HOLDS ONLY THE STAVES THAT WROTE MUSIC ON IT.** `createStaff` runs from
