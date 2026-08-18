@@ -1585,20 +1585,39 @@ export function projectionOf(
      */
     voicesOfStaff.forEach((members) => {
       const firstOfStaff = lineVoices[members[0] ?? 0];
-      members.forEach((k, j) => {
-        const voice = lineVoices[k];
-        if (voice === undefined || voice.length === 0) return;
-        const head: AbcElement[] = [];
-        const stem = score.voices[k]?.stemDirection;
-        if (stem != null) head.push({ el_type: "stem", direction: stem });
-        else if (j > 0) {
-          firstOfStaff?.splice(0, 0, { el_type: "stem", direction: "up" });
-          head.push({ el_type: "stem", direction: "down" });
-        }
-        const color = score.voices[k]?.color;
-        if (color != null) head.push({ el_type: "color", color });
-        voice.splice(0, 0, ...head);
-      });
+      /**
+       * **AND THE ORDER `createVoice` RUNS IN IS THE SOURCE'S, NOT THE STAFF'S.** The
+       * `up` stem is spliced onto `thisStaff.voices[0]` only `if (thisStaff.voices[0] !==
+       * undefined)` (`:977`) — so a `%%score (V2 V1)` whose `[V:V1]` line is written
+       * FIRST creates staff voice 1 before staff voice 0 exists, and no `up` stem is ever
+       * added. Measured on `score-reorder-shared`: abcjs's `v0` has none and its `v1`
+       * has the `down`.
+       */
+      const opened = (k: number): number =>
+        Math.min(
+          ...(lineVoices[k] ?? []).map((e) => e.startChar ?? Number.POSITIVE_INFINITY),
+          Number.POSITIVE_INFINITY,
+        );
+      const created = new Set<number>();
+      [...members.keys()]
+        .sort((a, b) => opened(members[a] ?? 0) - opened(members[b] ?? 0))
+        .forEach((j) => {
+          const k = members[j] ?? 0;
+          const voice = lineVoices[k];
+          if (voice === undefined || voice.length === 0) return;
+          created.add(j);
+          const head: AbcElement[] = [];
+          const stem = score.voices[k]?.stemDirection;
+          if (stem != null) head.push({ el_type: "stem", direction: stem });
+          else if (j > 0) {
+            if (created.has(0))
+              firstOfStaff?.splice(0, 0, { el_type: "stem", direction: "up" });
+            head.push({ el_type: "stem", direction: "down" });
+          }
+          const color = score.voices[k]?.color;
+          if (color != null) head.push({ el_type: "color", color });
+          voice.splice(0, 0, ...head);
+        });
     });
     // **FREE TEXT AND MID-TUNE SUBTITLES BETWEEN TWO SYSTEMS ARE LINES OF THEIR OWN**,
     // read off the same first measure the renderer's own block does (`Measure.textBefore`).
