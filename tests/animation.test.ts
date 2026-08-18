@@ -30,6 +30,8 @@ interface DomDocument {
   getElementById(id: string): DomElement | null;
 }
 interface DomElement {
+  innerHTML: string;
+  removeAttribute(name: string): void;
   querySelector(selector: string): { style: Record<string, string> } | null;
   querySelectorAll(selector: string): ArrayLike<unknown>;
 }
@@ -69,12 +71,18 @@ const SHAPES: Record<string, Record<string, boolean>> = {
   "hide-current": { showCursor: true, hideCurrentMeasure: true },
 };
 
+/**
+ * ONE jsdom for the whole file, reset between cases — the harvester does the same. Building
+ * 54 of them cost eleven seconds of a twenty-four-second suite, which is the same shape as
+ * the retained-`Layout` trap even though nothing was retained.
+ */
+const dom = new JSDOM(
+  '<!DOCTYPE html><html><body><div id="paper"></div></body></html>',
+);
+
 const drive = (key: string): Frame[] => {
   const [file = "", label = ""] = key.split("#");
   const abc = readFileSync(join(IN_REPO, `${file}.abc`), "utf-8");
-  const dom = new JSDOM(
-    '<!DOCTYPE html><html><body><div id="paper"></div></body></html>',
-  );
   const g = globalThis as Record<string, unknown>;
   const saved = {
     document: g["document"],
@@ -99,6 +107,8 @@ const drive = (key: string): Frame[] => {
   try {
     const paper = dom.window.document.getElementById("paper");
     if (paper === null) return [];
+    paper.innerHTML = "";
+    paper.removeAttribute("style");
     const tune = renderAbc("paper", abc, { add_classes: true })[0];
     if (tune === undefined) return [];
     stopAnimation();
