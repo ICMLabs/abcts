@@ -146,6 +146,7 @@ for (const file of files) {
       r.endCharArray ?? null,
       r.measureStart ?? null,
       r.type,
+      r.endX ?? null,
       // `elements` is a DOM node per drawn glyph — the one column that cannot cross a
       // process boundary. Its LENGTH is kept, which is what a host counts.
       (r.elements ?? []).length,

@@ -811,6 +811,8 @@ export function renderAbc(
      * 70.846, width: 9.81`, and `102.867 − 20.724 × 3.875 = 22.56` against its `top`.
      */
     let geometryCache: Map<MusicEvent, TimingGeometry> | null = null;
+    /** The same, for BARLINES, keyed by where they were written — read only for `endX`. */
+    const barCache = new Map<number, TimingGeometry>();
     const geometryOf = (event: MusicEvent): TimingGeometry | undefined => {
       if (geometryCache === null) {
         const cache = new Map<MusicEvent, TimingGeometry>();
@@ -833,16 +835,29 @@ export function renderAbc(
           if (first === undefined || last === undefined) return;
           const top = first.absoluteY - system.firstTopPitch * PITCH_STEP_PX;
           const bottom = last.absoluteY - system.lastBottomPitch * PITCH_STEP_PX;
+          const geometry = {
+            line,
+            top,
+            height: bottom - top,
+            // abcjs's `staffGroup.w`, which `addEndPoints` runs a row out to.
+            systemWidth: system.width,
+          };
           for (const staff of system.staves)
             for (const voice of staff.voices)
               for (const element of voice) {
+                if (element.sourceRange !== undefined && element.type === "bar")
+                  barCache.set(element.sourceRange.start, {
+                    ...geometry,
+                    left: element.x,
+                    width: element.rodWidth ?? element.width,
+                    startChar: element.sourceRange.start,
+                    endChar: element.sourceRange.end,
+                  });
                 const source = element.sourceEvent;
                 if (source === undefined || cache.has(source)) continue;
                 const abcelem = index.get(source);
                 cache.set(source, {
-                  line,
-                  top,
-                  height: bottom - top,
+                  ...geometry,
                   left: element.x,
                   width: element.rodWidth ?? element.width,
                   startChar: abcelem?.startChar ?? null,
@@ -856,6 +871,10 @@ export function renderAbc(
         });
       }
       return geometryCache.get(event);
+    };
+    const barGeometryOf = (range: { start: number }): TimingGeometry | undefined => {
+      geometryOf({} as unknown as MusicEvent);
+      return barCache.get(range.start);
     };
     const selectables = (): readonly Selectable[] => {
       selectableCache ??= selectablesOf(
@@ -993,6 +1012,7 @@ export function renderAbc(
       setTiming(bpm?: number, measuresOfDelay?: number): NoteTiming[] {
         const t = timingsOf(score, {
           geometryOf,
+          barGeometryOf,
           ...(bpm === undefined ? {} : { bpm }),
           ...(measuresOfDelay === undefined ? {} : { measuresOfDelay }),
         });
@@ -1008,7 +1028,16 @@ export function renderAbc(
         timeDivider: number,
         startingBpm: number,
         warp = 1,
-      ) => setupEventsFor(score, startingDelay, timeDivider, startingBpm, warp, geometryOf),
+      ) =>
+        setupEventsFor(
+          score,
+          startingDelay,
+          timeDivider,
+          startingBpm,
+          warp,
+          geometryOf,
+          barGeometryOf,
+        ),
       addUsefulCallbackInfo: (rows: readonly NoteTiming[], bpm: number) =>
         addUsefulCallbackInfo(score, rows, bpm),
       noteTimings: timings.rows,

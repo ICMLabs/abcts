@@ -12,7 +12,7 @@ const doc = layout(p.scores[Number(process.env["T"] ?? 0)]!, {
 console.log("doc.top", doc.top, "height", doc.height, "width", doc.width);
 doc.systems.forEach((sys, i) => {
   console.log(
-    `system ${i} staves=${sys.staves.length} firstTopPitch=${sys.firstTopPitch} lastBottomPitch=${sys.lastBottomPitch} absoluteY=[${sys.staves.map((s) => s.absoluteY).join(",")}]`,
+    `system ${i} width=${sys.width} musicWidth=${sys.musicWidth} staves=${sys.staves.length} firstTopPitch=${sys.firstTopPitch} lastBottomPitch=${sys.lastBottomPitch} absoluteY=[${sys.staves.map((s) => s.absoluteY).join(",")}]`,
   );
   sys.staves.forEach((st, s) =>
     st.voices.forEach((v, k) =>

@@ -24,13 +24,27 @@ import { renderAbc } from "../src/compat/index.js";
  * `elements` is the one column that cannot cross a process boundary — a DOM node per drawn
  * glyph — so its LENGTH is compared, which is what a host counts.
  *
- * **27 ROWS ARE OPEN AND BOTH CAUSES ARE MEASURED**, neither of them a number to be tuned:
+ ⚠️ **THE FLOOR WENT DOWN WHEN `endX` WAS ADDED AS A COLUMN, AND THAT IS A CHANGE OF UNITS
+ * RATHER THAN A REGRESSION** — 3,339 of 3,366 became 3,042 of the same 3,366 the moment a
+ * fifteenth column was compared. Nothing moved; the gate simply asks more. The three-column
+ * clock assertion below is what did not change.
+ *
+ * **324 ROWS ARE OPEN AND ALL THREE CAUSES ARE MEASURED**, none of them a number to be tuned:
  *
  *   - **21 `startCharArray`: an overlay layer exists on every measure of ours and only
  *     where abcjs's `resolveOverlays` put one.** Our model pads every measure of the tune
  *     to its overlay depth so the renderer can tile the layers; abcjs back-fills only the
  *     lines BEFORE the `&` and leaves the rest alone, so `synth-flattener-21` has three
  *     elements at a time where abcjs has two.
+ *   - **297 `endX`: THE SYSTEM'S OWN RIGHT EDGE, which is abcjs's `staffGroup.w`.** Every
+ *     row whose successor is on the SAME system is exact, because that value is the next
+ *     row's `left`; a row at the END of a system runs out to `lines[el.line].staffGroup.w`
+ *     instead, and our `LayoutSystem.width` is not that number. Measured: for a STRETCHED
+ *     line abcjs's is our width plus the 15 left margin (755 against 740), and for a SHORT
+ *     one it is our width MINUS 15 (315.609 against 330.609) — because our `width` is
+ *     `max(musicWidth, proseWidth)` and abcjs's is the cursor its own layout ended at.
+ *     Neither the ink's right edge (725 on a stretched line) nor either offset is it in
+ *     both cases. The layout would have to record the x it laid the line out to.
  *   - **6 `height`: one system's BOTTOM pitch, and only where a tie hangs below it.**
  *     `synth-timing-10-stretchlast-1` reports −1.0493 against abcjs's −2 on its first
  *     system and −3 on its second, which is exact. Both engines PLACE the two systems
@@ -57,6 +71,7 @@ type Row = readonly [
   endCharArray: readonly number[] | null,
   measureStart: boolean | null,
   type: string,
+  endX: number | null,
   elements: number,
 ];
 
@@ -75,6 +90,7 @@ const COLUMNS = [
   "endCharArray",
   "measureStart",
   "type",
+  "endX",
   "elements",
 ] as const;
 
@@ -103,6 +119,7 @@ interface TimingRow {
   readonly endChar?: number | null;
   readonly startCharArray?: readonly number[];
   readonly endCharArray?: readonly number[];
+  readonly endX?: number;
   readonly elements?: readonly unknown[];
 }
 
@@ -129,6 +146,7 @@ const ours = (row: TimingRow): readonly unknown[] => [
   row.endCharArray ?? null,
   row.measureStart ?? null,
   row.type,
+  row.endX ?? null,
   row.elements?.length ?? 0,
 ];
 
@@ -219,7 +237,7 @@ describe("tune.setupEvents — every column of the row", () => {
   /** A floor, not a target — it moves up as the geometry lands and must never move down. */
   it("the whole corpus agrees on at least the rows it did", () => {
     const agree = table.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(3339);
+    expect(agree).toBeGreaterThanOrEqual(3042);
   });
 
   /**

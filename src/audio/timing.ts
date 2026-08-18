@@ -23,7 +23,7 @@
  * `elem.duration * tripletmultiplier` (`abstract-engraver.js:808`) — the SOUNDING duration,
  * which our model already carries on the event.
  */
-import type { Measure, Meter, MusicEvent, Score, Tempo, Voice } from '../core/model.js'
+import type { Measure, Meter, MusicEvent, Score, SourceRange, Tempo, Voice } from '../core/model.js'
 import { ratToNumber } from '../core/model.js'
 
 export interface NoteTiming {
@@ -56,6 +56,8 @@ export interface NoteTiming {
   readonly endChar?: number | null
   readonly startCharArray?: readonly (number | null)[]
   readonly endCharArray?: readonly (number | null)[]
+  /** Where the cursor stops — the next row's `left`, or the system's right edge. */
+  readonly endX?: number
   /**
    * abcjs's is one DOM NODE ARRAY per element at this time; ours is one entry per element,
    * carrying the `tune.lines` element itself — the same object `getElementFromChar`
@@ -72,6 +74,8 @@ export interface NoteTiming {
  */
 export interface TimingGeometry {
   readonly line: number
+  /** The SYSTEM's right edge — abcjs's `staffGroup.w`, which `addEndPoints` runs out to. */
+  readonly systemWidth?: number
   readonly top: number
   readonly height: number
   readonly left: number
@@ -90,6 +94,8 @@ export interface TimingOptions {
   readonly measuresOfDelay?: number
   /** The drawing, per model event — see `TimingGeometry`. Absent leaves the rows clock-only. */
   readonly geometryOf?: (event: MusicEvent) => TimingGeometry | undefined
+  /** The same for a BARLINE, found by its span — read only for `endX`. */
+  readonly barGeometryOf?: (range: SourceRange) => TimingGeometry | undefined
 }
 
 const DEFAULT_METER: Meter = { numerator: 4, denominator: 4, symbol: 'numeric' }
@@ -265,6 +271,8 @@ interface TimedElement {
   readonly tempo?: Tempo
   /** The model event, for the geometry join — see `TimingGeometry`. */
   readonly event?: MusicEvent
+  /** A BARLINE's own span, which is how the drawing is found for one — see `endX`. */
+  readonly range?: SourceRange
 }
 
 /**
@@ -281,9 +289,15 @@ function voiceElements(voice: Voice, score: Score, tempos: Map<number, Tempo>): 
   const out: TimedElement[] = []
   let measureNumber = 0
   let noteFound = false
-  const bar = (kind: string | null): void => {
+  const bar = (kind: string | null, range: SourceRange | null = null): void => {
     if (kind === null) return
-    out.push({ kind: 'bar', measureNumber, duration: 0, barType: BAR_TYPE[kind] ?? 'bar_thin' })
+    out.push({
+      kind: 'bar',
+      measureNumber,
+      duration: 0,
+      barType: BAR_TYPE[kind] ?? 'bar_thin',
+      ...(range === null ? {} : { range }),
+    })
     if (noteFound) measureNumber += 1
   }
   /**
@@ -322,7 +336,7 @@ function voiceElements(voice: Voice, score: Score, tempos: Map<number, Tempo>): 
      * oracle is harvested from `doWarpTest`, which asserts times alone.
      */
     if (measure.startsSystem) noteFound = false
-    bar(measure.openingBarline)
+    bar(measure.openingBarline, measure.openingBarlineSourceRange)
     stampVolta(measure.volta)
     if (measure.tempoChange != null) {
       tempos.set(measureNumber, measure.tempoChange)
@@ -372,7 +386,7 @@ function voiceElements(voice: Voice, score: Score, tempos: Map<number, Tempo>): 
       })
       noteFound = true
     }
-    bar(measure.closingBarline)
+    bar(measure.closingBarline, measure.closingBarlineSourceRange)
   }
   return out
 }
@@ -397,6 +411,7 @@ function setupEvents(
   startingBpm: number,
   warp: number,
   geometryOf?: (event: MusicEvent) => TimingGeometry | undefined,
+  barGeometryOf?: (range: SourceRange) => TimingGeometry | undefined,
 ): { rows: NoteTiming[]; finalBpm: number } {
   const meter = meterOf(score)
   const beatLength = beatLengthOf(meter)
@@ -436,6 +451,7 @@ function setupEvents(
       startCharArray: (number | null)[]
       endCharArray: (number | null)[]
       midiPitches: unknown[]
+      endX?: number
     }
   >()
   let maxVoiceTimeMs = 0
@@ -447,6 +463,7 @@ function setupEvents(
     let startingRepeatElem = 0
     let endingRepeatElem = -1
     let nextIsBar = true
+    let lastHashMs = -1
     bpm = startingBpm
     let timeDivider = (beatLength * bpm) / 60
     let tempoDone = -1
@@ -519,6 +536,10 @@ function setupEvents(
         tempoDone = el.measureNumber
       }
       voiceTime += add(el, voiceTimeMs, timeDivider)
+      // **THE ROW THE ELEMENT JUST LANDED ON**, kept for the repeat's `endX` —
+      // `if (element.duration > 0 && eventHash["event"+voiceTimeMilliseconds]) lastHash = …`
+      // (`abc_tune.js:472-473`), read only at an end repeat.
+      if (el.duration > 0 && events.has(voiceTimeMs)) lastHashMs = voiceTimeMs
       voiceTimeMs = Math.round(voiceTime * 1000)
       if (el.kind === 'bar') {
         nextIsBar = true
@@ -529,7 +550,17 @@ function setupEvents(
           el.barType === 'bar_dbl_repeat' ||
           el.barType === 'bar_right_repeat'
         if (endRepeat) {
+          /**
+           * **A REPEAT BARLINE CLOSES THE NOTE BEFORE IT** — "the cursor won't go past the
+           * end repeat", `eventHash[lastHash].endX = element.x` (`abc_tune.js:481-483`).
+           * The `elem > 0` guard is abcjs's.
+           */
+          const here = el.range === undefined ? undefined : barGeometryOf?.(el.range)
+          const lastRow = events.get(lastHashMs)
+          if (elem > 0 && lastRow !== undefined && here !== undefined)
+            lastRow.endX = here.left
           if (endingRepeatElem === -1) endingRepeatElem = elem
+          let lastVoiceTimeMs = 0
           tempoDone = -1
           for (let el2 = startingRepeatElem; el2 < endingRepeatElem; el2 += 1) {
             const element2 = elements[el2] as TimedElement
@@ -545,8 +576,19 @@ function setupEvents(
             // replay is not a special case — it was the only place ours did not read the
             // barline, and the first note AFTER a `:|` lost its `measureStart` on 39 rows.
             if (element2.kind === 'bar') nextIsBar = true
+            lastVoiceTimeMs = voiceTimeMs
             voiceTimeMs = Math.round(voiceTime * 1000)
           }
+          /**
+           * …**AND THE LAST ROW OF THE REPLAY CLOSES AT THE BARLINE THE REPLAY ENDED AT**
+           * (`:504-505`). "This won't exist if it is the beginning of the next line."
+           */
+          const closing = elements[endingRepeatElem] as TimedElement | undefined
+          const closingAt =
+            closing?.range === undefined ? undefined : barGeometryOf?.(closing.range)
+          const lastReplayed = events.get(lastVoiceTimeMs)
+          if (lastReplayed !== undefined && closingAt !== undefined)
+            lastReplayed.endX = closingAt.left
           nextIsBar = true
           endingRepeatElem = -1
         }
@@ -557,8 +599,40 @@ function setupEvents(
     maxVoiceTimeMs = Math.max(maxVoiceTimeMs, voiceTimeMs)
   }
 
-  const rows: NoteTiming[] = [...events.entries()]
-    .sort((a, b) => a[0] - b[0])
+  const sorted = [...events.entries()].sort((a, b) => a[0] - b[0])
+  /**
+   * **`addEndPoints` — WHERE THE CURSOR STOPS**, run over the sorted rows before the `end`
+   * row is pushed (`abc_tune.js:544-560`). A row runs to the NEXT row's `left` when the two
+   * are on the same system, and to that system's own right edge when they are not — abcjs's
+   * `lines[el.line].staffGroup.w`. `skipTies` walks past any row with a null `left`, which
+   * is a tie's continuation.
+   *
+   * An `endX` already set by a REPEAT is kept unless the walk finds a closer one, and the
+   * `endX > el.left` guard is abcjs's: a repeat can put the close BEHIND the note.
+   */
+  const skipTies = (from: number): (typeof sorted)[number] | undefined => {
+    let i = from
+    while (i < sorted.length && (sorted[i]?.[1].left ?? null) === null) i += 1
+    return sorted[i]
+  }
+  for (let i = 0; i < sorted.length - 1; i += 1) {
+    const row = sorted[i]?.[1]
+    if (row === undefined || row.geometry === undefined) continue
+    if ((row.left ?? null) === null) continue
+    const next = skipTies(i + 1)?.[1]
+    const endX =
+      next !== undefined && next.geometry !== undefined && next.geometry.top === row.geometry.top
+        ? (next.left ?? row.geometry.systemWidth ?? 0)
+        : (row.geometry.systemWidth ?? 0)
+    if (row.endX !== undefined) {
+      if (endX > (row.left ?? 0)) row.endX = Math.min(row.endX, endX)
+    } else row.endX = endX
+  }
+  const lastRow = sorted[sorted.length - 1]?.[1]
+  if (lastRow !== undefined && lastRow.geometry !== undefined)
+    lastRow.endX = lastRow.geometry.systemWidth ?? 0
+
+  const rows: NoteTiming[] = sorted
     .map(([ms, r]) => ({
       type: 'event' as const,
       milliseconds: ms,
@@ -579,6 +653,7 @@ function setupEvents(
             endCharArray: r.endCharArray,
             elements: r.elements,
             midiPitches: r.midiPitches,
+            ...(r.endX === undefined ? {} : { endX: r.endX }),
           }),
     }))
   rows.push({ type: 'end', milliseconds: maxVoiceTimeMs, millisecondsPerMeasure: 0 })
@@ -679,7 +754,14 @@ export function setTiming(score: Score, options: TimingOptions = {}): NoteTiming
   let startingDelay = (barLengthOf(meter) / beatLength) * measuresOfDelay / beatsPerSecond
   if (startingDelay) startingDelay -= pickupOf(score, meter) / beatLength / beatsPerSecond
 
-  const { rows, finalBpm } = setupEvents(score, startingDelay, bpm, warp, options.geometryOf)
+  const { rows, finalBpm } = setupEvents(
+    score,
+    startingDelay,
+    bpm,
+    warp,
+    options.geometryOf,
+    options.barGeometryOf,
+  )
   // `addUsefulCallbackInfo` stamps every row, INCLUDING the end, with one figure — and the
   // bpm it uses is the LAST voice's running one times the warp, not the tune's.
   return addUsefulCallbackInfo(score, rows, finalBpm * warp)
@@ -709,8 +791,16 @@ export function setupEventsFor(
   startingBpm: number,
   warp = 1,
   geometryOf?: (event: MusicEvent) => TimingGeometry | undefined,
+  barGeometryOf?: (range: SourceRange) => TimingGeometry | undefined,
 ): NoteTiming[] {
-  const { rows, finalBpm } = setupEvents(score, startingDelay, startingBpm, warp, geometryOf)
+  const { rows, finalBpm } = setupEvents(
+    score,
+    startingDelay,
+    startingBpm,
+    warp,
+    geometryOf,
+    barGeometryOf,
+  )
   return addUsefulCallbackInfo(score, rows, finalBpm * warp)
 }
 
