@@ -951,11 +951,12 @@ checkpoint and hand off as you go so no context is lost.
 > files below.
 
 **READ `Docs/CHECKPOINT-2026-08-17.md` FIRST** — the current state (selectables CLOSED at
-389 of 389, `metaTextInfo` 0 of 310, `tune.lines` 255,641 of 255,684), §1 the field-range
+389 of 389, the tune object's whole DATA surface at zero across five gates, `tune.lines`
+255,641 of 255,684), §1 the field-range
 plumbing that paid four times, §2 the selectables' eleven `wrapSvgEl` sites and the
 one-walk refactor, §3 the ten `tune.lines` findings and §3.1's `\x12` table, §4 abcjs's own
 default staffwidth and the SEVEN gates that broke with only three saying so, §5 WHAT IS
-LEFT, §6 the harness and §7 the rules. `Docs/HANDOFF-2026-08-17.md` has the session prompt,
+LEFT, §6 the harness, §7 the rules and §8 the data surface. `Docs/HANDOFF-2026-08-17.md` has the session prompt,
 THE NEXT UNIT and the six traps. Then
 `Docs/CHECKPOINT-2026-08-13.md` — the current state (3 of 171, 168 byte-exact
 and all ratcheted), §2 the ten landings, §3 WHAT IS LEFT (the tempo font measured and
@@ -1144,9 +1145,8 @@ backup remote is not a licence to vendor someone else's tree into this one.
 > (2026-08-17), from 158 when the day opened. `tune.lines` is **255,641 of 255,684
 > characters and 290 of 295 tunes exact**, from 250,942 and 185. A new gate —
 > **`metaTextInfo`, 312 tunes and 310 field positions harvested by RUNNING abcjs, which its
-> own suite asserts nowhere** — opened at 4 of 310 and closed at 0, and `metaText` beside it
-> at 0 of 368. Suite **1806 passing, 2 expected-fail, no reds**; every other table is still at
-> zero.
+> own suite asserts nowhere** — opened at 4 of 310 and closed at 0. Suite **1812 passing, 2
+> expected-fail, no reds**; every other table is still at zero.
 >
 > **THE UNIT WAS ONE PIECE OF PLUMBING AND IT PAID FOUR TIMES**, as the handoff predicted:
 > `applyField`'s ranges now reach `metaTextInfo`, `FreeTextBlock.sourceRange` and the
@@ -1225,7 +1225,37 @@ backup remote is not a licence to vendor someone else's tree into this one.
 > its instrumentation and every top-level file was gone, which reads as `Cannot find module`
 > rather than as a missing tree. The restore recipe is in the handoff.
 >
-> 🧾 **AND `metaText` IS ITS TWIN, AT 0 OF 368 FIELDS OVER 312 TUNES** — `metaTextInfo` says
+> 🧾 **AND THE TUNE OBJECT'S WHOLE DATA SURFACE CLOSED THE SAME DAY — FIVE GATES, 9,240 ROWS
+> AND SETTINGS, ALL AT ZERO, SURFACE 23 → 21 ABSENT.** `metaText` says what each field said,
+> `metaTextInfo` where it was written, `topText`/`bottomText` what rows they became, and
+> `formatting` the `%%` settings underneath all of it — and every oracle was harvested by
+> RUNNING abcjs, which asserts none of them anywhere in its own suite.
+>
+> **`topText`/`bottomText` ARE abcjs'S INTERMEDIATE ROW LIST, NOT ITS ANSWER** — a `rows`
+> array interleaving `{move: n}` with text rows and, in the bottom block, a group's open and
+> close. PROJECTED from the layout on read, with only the two small arrays captured from the
+> render: the `Layout` is never retained. **THE LAYOUT CHANGES WERE ZERO-OUTPUT AND WERE
+> VERIFIED AS SUCH BEFORE ANYTHING READ THEM**, which is the check this repo trusts. The gate
+> opened at 55 of 1,023 and every finding was shape: **`left` IS `params.marginLeft`, BEFORE
+> ANY BOX MOVED IT** (eleven rows on that one fact, and the margin TRAVELS rather than being
+> recovered — subtracting the padding back is not the same double); **a row's text is the
+> WHOLE JOIN, and the join BEFORE `renderText`'s rewrite**, which was already on the
+> `extraText` selectable; **`addMultiLine`'s array branch opens with THREE rows** and **a row
+> that MOVES NOTHING is still a row**; and **the list STOPS at the part order**, because a
+> `%%text` before the music is a nonMusic LINE.
+>
+> **`formatting` IS 0 OF 7,219**, and two of its rules were only reachable by measurement:
+> **eleven fonts report their HEADER value and ten report their LATEST**
+> (`getChangingFont` writes `formatting[cmd]` only `if (is_in_header)`, so
+> `visual-tablature-17` sets `%%gchordfont` five times and abcjs reports the FIRST); and
+> ⚠️ **a `%%MIDI` reaches `formatting.midi` only before `hasBeginMusic()`, which turns TRUE
+> AT A BODY `V:`** — settled by a FIVE-RUNG LADDER through abcjs because the predicate is
+> stated nowhere. **AND IT IS NOT THE FLAG `appendStartingElement` BRANCHES ON**: merging the
+> two moved an accidental 7.75px on `visual-layout-07` and the BYTE GATE is what said so.
+> **WHEN ONE FLAG STANDS FOR TWO PREDICATES, THE GATE THAT DEFENDS THE OTHER ONE IS THE ONLY
+> THING THAT CAN SAY SO.**
+>
+> 🧾 **AND `metaText` IS `metaTextInfo`'S TWIN, AT 0 OF 368 FIELDS OVER 312 TUNES** — `metaTextInfo` says
 > WHERE each field was written and this says WHAT it said, and ours answered `{title}` alone.
 > The comparison is on the SERIALISED value, key order included, because
 > `JSON.stringify(tune.metaText)` is output a host can take. **`W:` STAYS AN ARRAY AND
@@ -1238,11 +1268,10 @@ backup remote is not a licence to vendor someone else's tree into this one.
 > LAST**, the key order following from WHEN each value is assigned. `G:`'s text,
 > `%%header`/`%%footer`'s three parts and `suppressBpm` landed with it.
 >
-> **READ `Docs/HANDOFF-2026-08-17.md` FIRST** — THE NEXT UNIT (`tune.topText` /
-> `tune.bottomText`, whose ROW SHAPE IS MEASURED into the handoff verbatim and whose blocker
-> is three named plumbing facts rather than a rule), the gate table, the five open `tune.lines`
-> tunes with their character counts, and the six traps — then
-> `Docs/CHECKPOINT-2026-08-17.md`.
+> **READ `Docs/HANDOFF-2026-08-17.md` FIRST** — THE NEXT UNIT (`deline`, and why the ground
+> under it moved today), the gate table, the five open `tune.lines` tunes with their character
+> counts, and the six traps — then `Docs/CHECKPOINT-2026-08-17.md`, whose §8 is the data
+> surface.
 
 > 🖱️ **THE SELECTABLES ARE IN — 158 OF 389, AND THE JOIN IS A REFERENCE RATHER THAN A
 > POSITION** (2026-08-16). abcjs's selectable array holds `absEl.abcelem`, the very

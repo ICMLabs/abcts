@@ -2,8 +2,11 @@
 
 **`engraver.selectables` IS CLOSED — 389 of 389, all four cases ratcheted**, from 158 when
 the session opened. `tune.lines` is **255,641 of 255,684 characters** and **290 of 295
-tunes exact**, from 250,942 and 185. A new gate, **`metaTextInfo`, opened at 4 of 310 and
-closed at 0**. Suite **1803 passing, 2 expected-fail, no reds**.
+tunes exact**, from 250,942 and 185. **AND THE TUNE OBJECT'S WHOLE DATA SURFACE IS COMPLETE** — five new
+gates, every one harvested by RUNNING abcjs, which its own suite asserts none of:
+**`metaTextInfo` 4 of 310 → 0**, **`metaText` 68 of 369 → 0**,
+**`topText`/`bottomText` 55 of 1,023 → 0** and **`formatting` 12 of 7,223 → 0**. Surface
+**23 → 21 absent**. Suite **1812 passing, 2 expected-fail, no reds**.
 
 Every other table is where it was, at zero: `svg-bytes` 0 of 188, `svg-bytes-sibling` 0 of
 356 across all five flavours, `strTranspose` 0 of 59, harvested geometry 0 of 177, audio
@@ -251,30 +254,23 @@ Each is a distinct small mechanism, and all five are in `/tmp/abcts-lines.txt`
   from the stream. `repo/abcjs-visual-svg-02-staffwidth-12-tune0`, 7 characters. It needs a
   range per entry — a small parser change, and the renderer already draws all three.
 
-### 5.2 The API surface — 23 of 64 absent
+### 5.2 The API surface — 21 of 64 absent
 
-`/tmp/abcts-compat-surface.txt`. **`tune.topText` and `tune.bottomText` are the two the §1
-plumbing was supposed to unblock and they are still absent**, because they are abcjs's
-INTERMEDIATE row list (`{move}` rows interleaved with text rows) rather than its result.
-
-**THE SHAPE IS MEASURED — `HANDOFF-2026-08-17.md` has abcjs's own output for
-`frere-jacques`** — and every field of every row is already computed: `left` is
-`PlacedText.x`, `name` is `dataName`, `absElemType`/`startChar`/`endChar` are
-`PlacedText.selectable`, and the `{move}` sequence IS `topTextBlock`'s `advances`. What is
-missing is not a rule but three plumbing facts, in this order: the INTERLEAVING between
-`texts` and `advances` is not recorded (`PlacedText.advanceAt` is exactly that index and
-`nonMusicBlock` already stamps it, `topTextBlock` does not); a row's FONT TYPE NAME
-(`"titlefont"`) is not carried, only its size and face; and the `Layout` does not expose the
-block at all outside the no-music case. **Written down rather than half-built**, which is
-this branch's own rule.
-
-The rest: `Editor` / `EditArea` / `TimingCallbacks` / the three animation functions /
-`extractMeasures` / `tuneMetrics` / `setGlyph`; `synth.CreateSynth`,
-`synth.CreateSynthControl`, `synth.SynthController`, `synth.SynthSequence`,
-`synth.midiRenderer`, `synth.playEvent`, `synth.sequence`; and `tune.deline`,
+`/tmp/abcts-compat-surface.txt`. **`topText` and `bottomText` LANDED** — see §8 — and with
+them the whole of the tune object's data surface. What is left is all BEHAVIOUR:
+`Editor` / `EditArea` / `TimingCallbacks` / the three animation functions / `extractMeasures`
+/ `tuneMetrics` / `setGlyph`; the seven `synth.*`; and `tune.deline`,
 `tune.makeVoicesArray`, `tune.setupEvents`, `tune.addElementToEvents`,
-`tune.addUsefulCallbackInfo` — the last three being `setTiming`'s internals, whose ANSWER we
-already produce byte-exactly.
+`tune.addUsefulCallbackInfo`.
+
+**`deline` IS WORTH RE-READING BEFORE IT IS CALLED BLOCKED.** It merges music lines and moves
+staff-level meter/key/clef into the voice stream, and it reads `staff.meter/key/clef` off the
+projected lines — which §3's work brought much closer: a standalone field now lands in a
+voice stream and a clef is its own element. `makeVoicesArray` walks the DRAWN staffgroups,
+which is the `%%maxStaves` question already recorded as measured-not-built. The last three
+are `setTiming`'s internals, whose ANSWER we produce byte-exactly (0 of 38, 0 of 13) —
+exposing them means reproducing abcjs's intermediate shapes rather than its result, the same
+trade `topText` makes and the reason it was worth making there.
 
 ### 5.3 The three measured-and-written-down, unchanged
 
@@ -313,7 +309,8 @@ Ours, gated on their own env var: `ABCTS_Y`, `ABCTS_H`, `ABCTS_PL`, `ABCTS_PLR`,
 
 | Script (`npx tsx scripts/…`) | Prints |
 |---|---|
-| `zzmti.ts` | **NEW** — every `metaTextInfo` row that differs → `/tmp/abcts-metatextinfo.txt` |
+| `zzmti.ts` / `zzmt.ts` | **NEW** — every `metaTextInfo` row / `metaText` field that differs |
+| `zztt.ts` / `zzfmt.ts` | **NEW** — every `topText`/`bottomText` ROW / `formatting` SETTING that differs, counted by kind |
 | `zzsink.ts` | what the EMITTER records, counted by type AND diffed against the golden row at each index |
 | `zzsel.ts` | every open selectable row, counted BY FIELD (`ONLY=<slug>`) |
 | `zzlines.ts` | every character where `getElementFromChar` differs |
@@ -371,3 +368,77 @@ optional — `dump-svg.js` defaults to 6.6.3.**
 - **ONE WALK, NOT TWO.** §2.3. The second walk was not merely redundant — it could not reach
   seven of the eleven `wrapSvgEl` sites, because they are not in `staff.voices`. When two
   surfaces must agree, build them from one pass.
+
+---
+
+## 8. AND THE TUNE OBJECT'S DATA SURFACE CLOSED THE SAME DAY
+
+`metaText` says what each field said, `metaTextInfo` where it was written,
+`topText`/`bottomText` what rows they became, and `formatting` the `%%` settings underneath
+all of it. **Five gates, 9,240 rows and settings, all at zero** — and each oracle was
+harvested by RUNNING abcjs, which asserts none of them anywhere in its own suite.
+
+### 8.1 `topText` / `bottomText` — 0 of 1,023 rows
+
+abcjs's INTERMEDIATE row list rather than its answer: a `rows` array interleaving
+`{move: n}` with text rows and, in the bottom block, a group's open and close, which
+`nonMusic` walks spending each `move` on the page's own cursor. **PROJECTED from the layout
+on read**, like `tune.lines`, with only the two small arrays captured from the render — the
+`Layout` itself is never retained, which is the trap that took the suite from 5.6s to 120s.
+
+**THE LAYOUT CHANGES WERE ZERO-OUTPUT AND WERE VERIFIED AS SUCH BEFORE ANYTHING READ THEM.**
+`rows` is pushed beside every `advances` entry and at every `texts.push`, and the suite was
+run green with no baseline moved at each step. The gate then opened at 55 and every finding
+was shape:
+
+- **`left` IS `params.marginLeft`, BEFORE ANY BOX MOVED IT.** `renderText` adjusts
+  `hash.attr.x` by the padding only when it DRAWS (`draw/text.js:57`), so a boxed row's
+  `left` is still 15 while its text sits at 16.2. Eleven rows were that one fact, and the
+  margin TRAVELS on the row rather than being recovered — subtracting the padding back is not
+  the same double.
+- **A ROW'S TEXT IS THE WHOLE JOIN, AND THE JOIN BEFORE `renderText`'s REWRITE** — which was
+  already on the `extraText` selectable that landed in §2.1, so the two surfaces met.
+- **`addMultiLine`'S ARRAY BRANCH OPENS WITH THREE ROWS** — `{move: spacing.words}`,
+  `{startGroup}`, `{move: spacing.info}` — and **A ROW THAT MOVES NOTHING IS STILL A ROW**:
+  both spacings default to zero (`renderer.js:99`, `:114`), so they are absent from
+  `advances`, where a zero add is a no-op the page walk must not be handed twice.
+- **A ROW THAT CLOSES A GROUP IS NOT ITSELF SELECTABLE** — the `-1`s belong to the `endGroup`
+  row alone.
+- And the list STOPS where abcjs's does, at the part order: **a `%%text` or `%%center` before
+  the music is a nonMusic LINE and not top text.**
+
+### 8.2 `metaText` — 0 of 368 fields
+
+- **`W:` STAYS AN ARRAY AND `N:`/`H:` DO NOT** — `simplifyMetaText` joins an
+  array-of-strings and `unalignedWords` is not in its list (`tune-builder.js:479-484`).
+  **THE SAME FACT THAT MAKES `W:` THE ONLY FIELD REACHING `addMultiLine`'s ARRAY BRANCH**,
+  and therefore the only bottom-block group with a selectable close — found from the other
+  side, hours apart, on the same day.
+- **AN INLINE `[Q:]` IS NOT `metaText.tempo` AT ALL** (59 rows on one flag);
+  **an empty field is still a field**; and **a lone tempo word gets its `duration` LAST**,
+  the key order following from WHEN each value is assigned.
+
+### 8.3 `formatting` — 0 of 7,219 settings
+
+Twenty-one font objects, then the tune's own directives IN SOURCE ORDER
+(`Score.formattingOrder`), then `pagewidth`/`pageheight` LAST.
+
+- **A DEFAULT FONT AND A SET FONT HAVE DIFFERENT KEY ORDERS**, which is how the two are told
+  apart on sight, and the `face` carries its own QUOTES.
+- **ELEVEN FONTS REPORT THEIR HEADER VALUE AND TEN REPORT THEIR LATEST** — `getChangingFont`
+  writes `formatting[cmd]` only `if (is_in_header)` (`abc_parse_directive.js:315-322`), so
+  `visual-tablature-17` sets `%%gchordfont` five times and abcjs reports the FIRST.
+- **`%%staffsep` IS THE POINTS AS WRITTEN**, not the pixels they become.
+- ⚠️ **A `%%MIDI` REACHES `formatting.midi` ONLY BEFORE `hasBeginMusic()`, AND THAT TURNS
+  TRUE AT A BODY `V:`** — measured on a FIVE-RUNG LADDER through abcjs, because the predicate
+  is stated nowhere. **AND IT IS NOT THE FLAG `appendStartingElement` BRANCHES ON**: merging
+  the two moved an accidental 7.75px on `visual-layout-07` and the BYTE GATE is what said so.
+  One flag had been standing for two predicates that part company at exactly that `V:`.
+
+### 8.4 The rule this section adds
+
+**WHEN ONE FLAG STANDS FOR TWO PREDICATES, THE GATE THAT DEFENDS THE OTHER ONE IS THE ONLY
+THING THAT CAN SAY SO.** `musicStarted` was named for abcjs's `hasBeginMusic()` and used for
+"the voice is empty"; the two agree everywhere except a body `V:`, and it took a byte gate
+seven pixels wide to find the difference. Both now have their own name and both say what
+they mean.
