@@ -27,8 +27,8 @@ import type { AbcLine } from "../src/compat/lines.js";
  *      only the subtitle, and carries it at the FRONT rather than where it was written.
  *   2. **THE STREAM IS SHORT AN ELEMENT KIND** — a `stem` (which is `resolveOverlays`'s
  *      doing, not the parser's), a `midi`, a `style` or a `font`.
- *   3. **THE LINE HAS ONE STAFF WHERE abcjs HAS TWO** — the projection puts every voice in
- *      `staff[0]`, which 106 of abcjs's 646 staves say otherwise about.
+ *   3. **AN OVERLAY LAYER IS NOT `resolveOverlays`'s** — abcjs snips the `&` run out of the
+ *      voice, pushes it as a new one and leaves THREE `stem` elements behind per snip.
  *
  * All three are `tune.lines` STRUCTURE gaps that its own gate cannot see, because
  * `getElementFromChar` walks every staff of every line and asks only about characters.
@@ -165,6 +165,6 @@ describe("tune.deline — abcjs's merged line list", () => {
   /** A floor, not a target — it moves up and must never move down. */
   it("the whole corpus agrees on at least the rows it did", () => {
     const agree = table.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(1082);
+    expect(agree).toBeGreaterThanOrEqual(1208);
   });
 });

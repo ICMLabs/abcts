@@ -1197,15 +1197,29 @@ export function projectionOf(
     );
   const leadsLine = (m: Measure, at: number | null | undefined): boolean =>
     at != null && at < musicStartsAt(m);
-  const furniture: {
-    key: AbcElement;
-    clef: AbcElement;
-    meter?: AbcElement;
-  }[] = [];
-  {
-    let clefInForce: Clef = first.clef ?? score.clef ?? defaultClef;
+  /**
+   * **ONE STAFF PER `%%score` GROUP, AND ONE PER VOICE WITHOUT ONE** — the same expression
+   * the renderer's `voicesOfStaff` is, and the same default: with no `%%score` every `V:`
+   * takes a staff of its own, which is what `abcjs-visual-parsing-05`'s `[V:T]`/`[V:B]`
+   * shows as `s0` and `s1`. An `&` layer joins its parent's staff, because `expandOverlays`
+   * has already put its id in that group.
+   */
+  const voicesOfStaff: number[][] =
+    score.staves.length > 0
+      ? score.staves.map((group) =>
+          group.voiceIds
+            .map((id) => score.voices.findIndex((v) => v.id === id))
+            .filter((k) => k >= 0),
+        )
+      : score.voices.map((_, k) => [k]);
+
+  const furnitureOf = (
+    voice: (typeof score.voices)[number] | undefined,
+  ): { key: AbcElement; clef: AbcElement; meter?: AbcElement }[] => {
+    const out: { key: AbcElement; clef: AbcElement; meter?: AbcElement }[] = [];
+    let clefInForce: Clef = voice?.clef ?? score.clef ?? defaultClef;
     let keyInForce: KeySignature = score.key;
-    first.measures.forEach((m, i) => {
+    (voice?.measures ?? []).forEach((m, i) => {
       // A mid-tune clef governs from the START of its measure — the renderer reads it the
       // same way (`layout.ts`, `clefAtMeasure`).
       if (m.clefChange != null) clefInForce = m.clefChange;
@@ -1221,7 +1235,7 @@ export function projectionOf(
             : m.meterChange != null && m.meterChangeStandalone === true
               ? m.meterChange
               : null;
-        furniture.push({
+        out.push({
           key: keyElement(key, clefInForce),
           clef: clefElement(clefInForce),
           ...(meter == null ? {} : { meter: meterElement(meter) }),
@@ -1229,7 +1243,12 @@ export function projectionOf(
       }
       if (m.keyChange !== null) keyInForce = m.keyChange;
     });
-  }
+    return out;
+  };
+  /** Per STAFF, off its first voice — abcjs's is `multilineVars.staves[staffNum]`. */
+  const furniture = voicesOfStaff.map((members) =>
+    furnitureOf(score.voices[members[0] ?? 0]),
+  );
 
   breaks.forEach((from, i) => {
     const to = breaks[i + 1] ?? first.measures.length;
@@ -1263,14 +1282,22 @@ export function projectionOf(
       abc,
       lineVoices.flat().sort((a, b) => (a.startChar ?? 0) - (b.startChar ?? 0)),
     );
-    const staff: AbcStaff = { voices: lineVoices };
-    const own = furniture[i];
-    if (own !== undefined) {
-      if (own.meter !== undefined) staff.meter = own.meter;
-      staff.key = own.key;
-      staff.clef = own.clef;
-    }
-    lines.push({ staff: [staff] });
+    lines.push({
+      staff: voicesOfStaff.map((members, s) => {
+        const staff: AbcStaff = {
+          voices: members.map((k) => lineVoices[k] ?? []),
+        };
+        const own = furniture[s]?.[i];
+        if (own !== undefined) {
+          // THE KEY ORDER IS abcjs's — `{voices, clef, key}` from `createStaff` with the
+          // meter added after, which is what a host comparing the objects sees.
+          if (own.meter !== undefined) staff.meter = own.meter;
+          staff.key = own.key;
+          staff.clef = own.clef;
+        }
+        return staff;
+      }),
+    });
   });
   // …and the hoist runs over the finished lines, per voice, because it moves an element
   // from one line's array into another's.
