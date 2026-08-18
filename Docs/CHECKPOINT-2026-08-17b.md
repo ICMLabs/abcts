@@ -6,8 +6,10 @@
 **`tune.deline` is BUILT and its gate is at 1,558 of 1,570 rows**, from 494 when it opened.
 **`tune.setupEvents` and `tune.addUsefulCallbackInfo` are BUILT** — and their new gate,
 which compares EVERY COLUMN of a timing row, is at 3,339 of 3,366. **`extractMeasures` is
-BUILT AND OPENED AT ZERO**, 1,663 of 1,663 rows across 221 files. Surface **21 → 17
-absent**. Suite **1,820 passing, 2 expected-fail, no reds**.
+BUILT AND OPENED AT ZERO**, 1,663 of 1,663 rows across 221 files. **`TimingCallbacks` and
+the three ANIMATION functions are BUILT** — 4,674 of 4,696 callbacks and 834 of 834
+animation frames. Surface **21 → 13 absent**. Suite **1,825 passing, 2 expected-fail, no
+reds**.
 
 Every other table is where it was, at zero: `svg-bytes` 0 of 188, `svg-bytes-sibling` 0 of
 356, `selectables` 0 of 389 rows across four cases, `metaTextInfo` 0 of 310, `metaText` 0 of
@@ -347,6 +349,42 @@ so it is the strictest consumer of the character gate there is, and it agreeing 
 is an independent check on 255,684 of 255,684. Three quirks ported: it reads ONE staff and
 ONE voice, the header is split on the first `K:` textually (**28 files THROW and the throw
 is in the golden**), and `lastChord` changes type mid-loop from an element to a name string.
+
+---
+
+## 8.5 THE CURSOR — `TimingCallbacks`, THE THREE ANIMATION FUNCTIONS, AND AN ULP
+
+**abcjs's OWN TESTS FOR THESE ARE UNPORTABLE AND THE CODE IS NOT.** They drive a real timer
+and `sleep()`; but `doTiming(timestamp)` takes the time as an ARGUMENT and the only other
+host calls are `requestAnimationFrame`, `setTimeout` and `performance.now()`. Stub those
+three and 436 lines become a pure function of a timestamp sequence — so both oracles drive
+at a fixed 16ms and record every callback (124 cases × four shapes) and every DOM change
+(54 cases × three shapes). ⚠️ **AND THE FIRST FRAME CANNOT BE 0**: `doTiming` opens with
+`if (self.lastTimestamp === timestamp) return` and `lastTimestamp` starts at 0, so a drive
+from zero returns before registering the next frame. The first animation harvest logged one
+frame per case with an empty cursor, which is what that looks like from outside.
+
+Three defects the callback gate named, none of them in the class:
+
+- **`skipTies` TESTS `=== null`, AND THE `end` ROW'S `left` IS `undefined`.** A tie's
+  continuation carries an explicit `null` and is skipped; the END row carries no `left` KEY
+  and is not — which is what gives the last beat its `endMs` and therefore a cursor
+  position. Coercing the two with `?? null` emptied the final `position` of every tune.
+- **THE WARP TESTS `metaText.tempo`, THE HEADER'S ALONE.** An inline `[Q:]` never reaches
+  `metaText`, so a tune whose only tempos are inline is PLAYED at the host's rate with its
+  relative changes intact rather than warped. `getBpm` already made the distinction;
+  `setTiming` did not, and `flattener-10` was 6,678ms against abcjs's 9,318.
+- **`getMeter()` HANDS BACK THE NUMERATOR AS WRITTEN, `2+3` AND NOT `5`** — which is why
+  `getMeterFraction()` splits on `+` at all. The irregular-meter beat branch tests for that
+  `+`, so a summed numerator sent `M:2+3/8` down the regular path.
+
+**AND THE ANIMATION GATE CLOSED ON AN ULP EVERY OTHER GATE'S TOLERANCE WAS HIDING.** The
+cursor's WIDTH came out 15.902000000000008 against abcjs's 15.902000000000001 — an eighth's
+rod, which is its FLAG: `addRight` is `w = max(w, dx + w)` and ours derived the dx back out
+of two absolute x's. `PlacedGlyph.dx` already existed for exactly this reason on the
+placement side. The byte gates are unmoved at 0 of 188 and 0 of 356 and the geometry table
+at 0 of 177 — none of them could see it, because they all compare that number with a
+tolerance.
 
 ---
 
