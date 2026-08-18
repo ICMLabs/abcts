@@ -1937,6 +1937,8 @@ class ScoreBuilder {
   unitNoteLength: Rational = rational(1, 8)
   unitExplicit = false
   bodyStarted = false
+  /** abcjs's `is_in_header`, inverted — cleared by the first `K:` and by nothing else. */
+  sawKey = false
   /**
    * **THE VOICE HAS SOMETHING IN IT** — what `appendStartingElement` branches on when it
    * decides between the staff and the stream, and what the standalone-`M:` and
@@ -3407,7 +3409,17 @@ class Parser {
         // It is voice state, not a property of the K: field.
         const keyStyle = styleModifier(value)
         if (keyStyle !== null) builder.voice.setNoteStyle(keyStyle, inline)
-        if (builder.bodyStarted) {
+        /**
+         * **THE FIRST `K:` OF A TUNE IS NEVER A KEY CHANGE, WHATEVER STOOD ABOVE IT.**
+         * abcjs's guard is `!multilineVars.is_in_header` (`abc_parse_header.js:509`), and
+         * `is_in_header` is cleared by the `K:` ITSELF and by nothing else — where
+         * `bodyStarted` is also set by MUSIC, which strict makes of a `+:` prose line.
+         * `frere-jacques` is that tune: its prose stands above its `K:C`, and reading
+         * `bodyStarted` here put a `keySignature` element in the stream that abcjs keeps
+         * on the staff. The METER is the other way round and stays on `bodyStarted` —
+         * abcjs's `M:` arm tests `hasBeginMusic()`, which the prose does satisfy.
+         */
+        if (builder.sawKey) {
           /**
            * **A STANDALONE `K:` BEFORE ANY MUSIC RESTAMPS THE CURRENT VOICE'S STAFF KEY,
            * AGAINST THE `K:`-CLEF.** `appendStartingElement` lands on
@@ -3454,6 +3466,7 @@ class Parser {
         // …and the header's fonts are frozen here, which is `is_in_header` going false.
         builder.headerFonts ??= { ...builder.fonts }
         builder.bodyStarted = true // K: ends the header.
+        builder.sawKey = true // …and this is abcjs's `is_in_header`, which ONLY a `K:` clears.
         return
       }
       // `G:` — the tune's GROUP. abcjs records it in `metaText`/`metaTextInfo`
