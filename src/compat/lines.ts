@@ -287,7 +287,48 @@ function tile(abc: string, elements: readonly AbcElement[]): AbcElement[] {
      * itself — and the layer's first note opens after it: `G4 & E4 |` gives the layer
      * 36…40 where its main voice closed at 35.
      */
-    return abc[at] === "&" ? at + 1 : at;
+    /**
+     * **AN OPENING `(` RUN BELONGS TO NOTHING UNLESS A NOTE FOLLOWS IT DIRECTLY.**
+     *
+     * `letter_to_open_slurs_and_triplets` eats the `(`s and the whitespace between them
+     * BEFORE anything is appended (`abc_parse_music.js:890-953`), and `startI` was taken at
+     * the top of that iteration — so whether the run is inside the element depends on what
+     * comes next. If it is a core note or a `[` chord, the element is appended in the SAME
+     * iteration and keeps its `(`; if it is a GRACE GROUP, a decoration or a chord symbol,
+     * nothing matches, the iteration ends having appended nothing, and the next one opens
+     * past the run.
+     *
+     * MEASURED, because the source reads both ways and the two look alike — instrumented
+     * `startI` on `"Bb"{C}B,4 ({^CD}B,4`:
+     *
+     *     ITER startI=14  NOTE 14..25 "\"Bb\"{C}B,4 "
+     *     ITER startI=25            <- the `(`, and NOTHING is appended
+     *     ITER startI=26  NOTE 26..35 "{^CD}B,4 "
+     *
+     * A `(3` is the exception and is not this rule at all: the triplet arm consumes the
+     * digit and a note follows directly, so `(3B2` keeps its opening.
+     */
+    let j = at;
+    let sawSlur = false;
+    let triplet = false;
+    while (j < abc.length && (abc[j] === "(" || abc[j] === " " || abc[j] === "\t")) {
+      const next = abc[j + 1] ?? "";
+      if (abc[j] === "(" && next >= "2" && next <= "9") {
+        // …**AND A TRIPLET INSIDE THE RUN KEEPS THE WHOLE RUN**, slurs and all: the
+        // digit is consumed, a note follows directly and the element is appended in the
+        // same iteration. `S8-layout` tune 8 writes `((3e` and abcjs answers `note` for
+        // BOTH parentheses — the first cut dropped the slur's and took a ratcheted tune
+        // red for eight characters.
+        triplet = true;
+        break;
+      }
+      if (abc[j] === "(") sawSlur = true;
+      j += 1;
+    }
+    const NOTE_START = /[A-Ga-gzxZ[\^_=]/;
+    const start =
+      sawSlur && !triplet && j <= own && !NOTE_START.test(abc[j] ?? "") ? j : at;
+    return abc[start] === "&" ? start + 1 : start;
   });
   elements.forEach((e, i) => {
     e.startChar = opened[i] ?? e.startChar ?? 0;

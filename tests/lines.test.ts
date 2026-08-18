@@ -165,6 +165,7 @@ const PASSING: readonly string[] = [
   "sib/S8-layout-tune4",
   "sib/S8-layout-tune5",
   "sib/S8-layout-tune6",
+  "sib/S8-layout-tune7",
   "sib/S8-layout-tune8",
   "sib/S8-layout-tune9",
   "sib/S8-layout-tune10",
@@ -441,7 +442,7 @@ describe("tune.lines and getElementFromChar", () => {
     // 251,396 of 256,138 until 2026-08-16, when the sibling repo's edits to two fixtures
     // took both numbers down with them — the FLOOR moves with its corpus, and the
     // exclusions above are what make it comparable at all.
-    expect(agree).toBeGreaterThanOrEqual(255641);
+    expect(agree).toBeGreaterThanOrEqual(255650);
   });
 
   /**
