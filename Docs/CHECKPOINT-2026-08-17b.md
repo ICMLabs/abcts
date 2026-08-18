@@ -5,7 +5,7 @@
 `AbcTune` accessors are CLOSED at 0 of 291**, both measured-not-ported rows with them.
 **`tune.deline` is BUILT and its gate is at 1,558 of 1,570 rows**, from 494 when it opened.
 **`tune.setupEvents` and `tune.addUsefulCallbackInfo` are BUILT** — and their new gate,
-which compares EVERY COLUMN of a timing row, is at 3,042 of 3,366. **`extractMeasures` is
+which compares EVERY COLUMN of a timing row, is at 3,339 of 3,366. **`extractMeasures` is
 BUILT AND OPENED AT ZERO**, 1,663 of 1,663 rows across 221 files. Surface **21 → 17
 absent**. Suite **1,820 passing, 2 expected-fail, no reds**.
 
@@ -305,26 +305,28 @@ The accessor gate reads its totals off the TUNE OBJECT now, where a host reads t
 than off `timingsOf` — it had been measuring the library path and reporting a row abcjs
 never disagreed with us about. **0 of 291.**
 
-### 8.2 `endX` — WHERE THE CURSOR STOPS, AND THE ONE NUMBER NOT TO GUESS
+### 8.2 `endX` — WHERE THE CURSOR STOPS, AND THE HOUR A UNITS TRAP COST
 
 `addEndPoints` runs over the sorted rows before the `end` row is pushed: a row runs to the
 NEXT row's `left` when the two are on the same system, and to that system's own right edge
 when they are not, with two more assignments from the REPEAT branch — "the cursor won't go
 past the end repeat". Barlines carry their span into the timing walk for those two.
 
-⚠️ **THE GATE'S FLOOR WENT DOWN WHEN THE COLUMN WAS ADDED AND THAT IS A CHANGE OF UNITS**:
-3,339 of 3,366 became 3,042 of the same 3,366 the moment a fifteenth column was compared.
-Nothing moved.
+**abcjs's `staffGroup.w` IS OUR `musicWidth` LESS THE LEFT MARGIN** — 224 of 225 systems
+agree to the digit, stretched and unstretched alike — and it is the MUSIC's width rather
+than the system's box, which `max(musicWidth, proseWidth)` widens for a long title.
 
-**AND THE 297 ROWS LEFT ARE ONE MEASUREMENT NOBODY SHOULD GUESS** — abcjs's `staffGroup.w`:
+⚠️ **AND IT LOOKED LIKE TWO RULES FOR AN HOUR BECAUSE MY OWN PROBE HAD THE WRONG UNITS.**
+`layout`'s `systemWidth` option is the PAGE in layout units — `(staffwidth + 2 × padding) /
+UNIT_PX` — and the probe passed 740, the STAFFWIDTH, so it laid out a different tune from
+the one every gate renders at 770. The derived comparisons then said abcjs's number was our
+width PLUS 15 on a stretched line and MINUS 15 on a short one, with a plausible story for
+each, and the handoff was about to record "the layout must expose a number it does not
+have". Instrumenting the SOLVE itself (`ABCTS_W`, kept in `layout.ts`) printed
+`solved=755.0000000000003` against abcjs's `staffGroup.w` of `755.0000000000003` and ended
+it in one line. **MEASURE THE THING, NOT A DIFFERENCE OF THINGS YOU DERIVED.**
 
-    stretched line   abcjs 755      our `LayoutSystem.width` 740, ink right edge 725
-    short line       abcjs 201.111  our width 216.111, ink right edge 194.111 (bar w = 1)
-
-abcjs's is the cursor ITS layout ended at; ours is `max(musicWidth, proseWidth)`. Neither
-offset works in both cases, and the layout should record the x it laid each line out to.
-
-### 8.3 THE 27 OTHER ROWS
+### 8.3 THE 27 ROWS LEFT
 
 - **21 `startCharArray`: an overlay layer exists on every measure of ours and only where
   `resolveOverlays` put one.** Our model pads every measure to the tune's overlay depth;
@@ -403,6 +405,10 @@ session, and each is three lines in a file that already existed:
 - **A GATE'S REACH IS A PROPERTY OF ITS ENUMERATION** — `deline` covers 312 tunes where the
   character gate covers 295, and `frere-jacques` had never been measured per character at
   all.
+- **MEASURE THE THING, NOT A DIFFERENCE OF THINGS YOU DERIVED.** §8.2: an hour on
+  `staffGroup.w` because a probe passed the STAFFWIDTH where the option is the PAGE, and
+  every comparison after that was between two numbers neither of which was the one in
+  question. One `console.error` inside the solve settled it.
 - **PORT THE QUIRK.** `findLastBar`'s `i > 0`, `createVoice`'s always-false `found`, the dead
   `timeDivider`: three abcjs bugs reproduced deliberately, each visible in a count a host
   reads.
