@@ -1425,6 +1425,16 @@ export interface Score {
    */
   /** `%%MIDI` written before the first note — the tune's own audio settings. */
   readonly midi?: Readonly<Record<string, readonly (string | number)[]>>
+  /**
+   * **THE ORDER `tune.formatting` WAS FILLED IN**, for the directives that reach it.
+   * abcjs writes `tune.formatting[cmd] = …` as each directive is read
+   * (`abc_parse_directive.js:321`, `:421`, `:723`, `:1220`), so the object's KEY ORDER is
+   * the source's — and a key already present keeps its position when set again. The
+   * twenty-one FONTS are not here: `initFormatting` seeds every one of them before any
+   * directive is read, so their order is fixed and known; nor are `pagewidth` and
+   * `pageheight`, which abcjs appends LAST whatever the source said.
+   */
+  readonly formattingOrder?: readonly string[]
   readonly percMap: Readonly<Record<string, PercMapEntry>>
   /**
    * `%%MIDI drummap <abc-note> <midi>` — the written LETTER to a GM percussion pitch.
@@ -1483,6 +1493,15 @@ export interface Score {
    * happens to equal it — the same load-bearing null `vocalFont` has.
    */
   readonly fonts: Readonly<Partial<Record<AbcFontType, LyricFont>>>
+  /**
+   * **THE FONTS AS THEY STOOD AT THE END OF THE HEADER**, which is what `tune.formatting`
+   * reports for the ELEVEN CHANGING types. `getChangingFont` writes `tune.formatting[cmd]`
+   * only `if (multilineVars.is_in_header)` — "If the font appears in the header, then it
+   * becomes the default font" (`abc_parse_directive.js:315-322`) — so a `%%gchordfont` in
+   * the BODY changes what is DRAWN and not what `formatting` reports. The other ten go
+   * through `getGlobalFont` and always report the latest.
+   */
+  readonly headerFonts?: Readonly<Partial<Record<AbcFontType, LyricFont>>>
   readonly sourceStartOffset: number
   readonly keySourceRange: SourceRange | null
   readonly meterSourceRange: SourceRange | null

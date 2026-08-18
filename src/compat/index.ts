@@ -367,6 +367,135 @@ const metaTextRows = (
           : metaTextRow(r.text, r.font, r.left, addClasses),
   );
 
+/**
+ * **abcjs's OWN DEFAULT FONT TABLE, IN `initializeFonts`'s ORDER** — the twenty-one entries
+ * it seeds `tune.formatting` with before any directive is read
+ * (`abc_parse_directive.js:20-52`). It is a GOLDEN VARIABLE in the sense
+ * `abcjs-constants.ts` means: it may change only if abcjs changes.
+ *
+ * **THE `face` IS THE STRING abcjs WROTE, QUOTES INCLUDED.** `"\"Times New Roman\""` and
+ * `"\"Trebuchet MS\""` carry their own quotes where `Helvetica` and `Times` do not — a CSS
+ * font-family list rather than a name, reproduced rather than normalised.
+ *
+ * The ORDER matters because `formatting`'s key order is observable: the three tune-global
+ * fonts come first, then the tab fonts, then the eleven per-element ones.
+ */
+const ABCJS_DEFAULT_FONTS: readonly (readonly [
+  string,
+  { face: string; size: number; weight: string; style: string },
+])[] = [
+  ["composerfont", { face: '"Times New Roman"', size: 14, weight: "normal", style: "italic" }],
+  ["subtitlefont", { face: '"Times New Roman"', size: 16, weight: "normal", style: "normal" }],
+  ["tempofont", { face: '"Times New Roman"', size: 15, weight: "bold", style: "normal" }],
+  ["titlefont", { face: '"Times New Roman"', size: 20, weight: "normal", style: "normal" }],
+  ["footerfont", { face: '"Times New Roman"', size: 12, weight: "normal", style: "normal" }],
+  ["headerfont", { face: '"Times New Roman"', size: 12, weight: "normal", style: "normal" }],
+  ["voicefont", { face: '"Times New Roman"', size: 13, weight: "bold", style: "normal" }],
+  ["tablabelfont", { face: '"Trebuchet MS"', size: 16, weight: "normal", style: "normal" }],
+  ["tabnumberfont", { face: '"Arial"', size: 11, weight: "normal", style: "normal" }],
+  ["tabgracefont", { face: '"Arial"', size: 8, weight: "normal", style: "normal" }],
+  ["annotationfont", { face: "Helvetica", size: 12, weight: "normal", style: "normal" }],
+  ["gchordfont", { face: "Helvetica", size: 12, weight: "normal", style: "normal" }],
+  ["historyfont", { face: '"Times New Roman"', size: 16, weight: "normal", style: "normal" }],
+  ["infofont", { face: '"Times New Roman"', size: 14, weight: "normal", style: "italic" }],
+  ["measurefont", { face: '"Times New Roman"', size: 14, weight: "normal", style: "italic" }],
+  ["partsfont", { face: '"Times New Roman"', size: 15, weight: "normal", style: "normal" }],
+  ["repeatfont", { face: '"Times New Roman"', size: 13, weight: "normal", style: "normal" }],
+  ["textfont", { face: '"Times New Roman"', size: 16, weight: "normal", style: "normal" }],
+  ["tripletfont", { face: "Times", size: 11, weight: "normal", style: "italic" }],
+  ["vocalfont", { face: '"Times New Roman"', size: 13, weight: "bold", style: "normal" }],
+  ["wordsfont", { face: '"Times New Roman"', size: 16, weight: "normal", style: "normal" }],
+];
+
+/**
+ * **`tune.formatting` — THE `%%` SETTINGS abcjs COLLECTED.** Twenty-one font objects seeded
+ * before any directive is read, then whatever the tune set IN SOURCE ORDER
+ * (`Score.formattingOrder`), then `pagewidth` and `pageheight`, which abcjs appends LAST
+ * whatever the source said.
+ *
+ * **A DEFAULT FONT AND A SET FONT HAVE DIFFERENT KEY ORDERS, AND THAT IS HOW abcjs TELLS
+ * THEM APART ON SIGHT.** The default literal is `{face, size, weight, style, decoration}`;
+ * `getFontParameter` builds `{face, weight, style, decoration}` and only then assigns `size`
+ * (and `box`), so a set font reads `{face, weight, style, decoration, size, box?}`
+ * (`abc_parse_directive.js:20-52`, `:200-240`). Reproduced, because `JSON.stringify` of this
+ * object is output a host can take.
+ */
+/**
+ * **THE ELEVEN `getChangingFont` TYPES**, whose `formatting` entry is their value AT THE END
+ * OF THE HEADER and not their latest (`abc_parse_directive.js:315-322`). The other ten are
+ * `getGlobalFont` and always report the latest.
+ */
+const CHANGING_FONTS = new Set([
+  "annotationfont",
+  "gchordfont",
+  "historyfont",
+  "infofont",
+  "measurefont",
+  "partsfont",
+  "repeatfont",
+  "textfont",
+  "tripletfont",
+  "vocalfont",
+  "wordsfont",
+]);
+
+const formattingOf = (score: Score): Record<string, unknown> => {
+  const out: Record<string, unknown> = {};
+  for (const [name, base] of ABCJS_DEFAULT_FONTS) {
+    const from = CHANGING_FONTS.has(name)
+      ? (score.headerFonts ?? score.fonts)
+      : score.fonts;
+    const set = from[name as AbcFontType];
+    /**
+     * **`%%partsbox` MUTATES WHATEVER `partsfont` OBJECT IS CURRENT** —
+     * `multilineVars.partsfont.box = multilineVars.partsBox` (`:921-925`) — so it appends
+     * `box` to the DEFAULT literal when no `%%partsfont` replaced it, which is why the key
+     * lands after `decoration` rather than in a set font's position.
+     */
+    const boxed = name === "partsfont" && score.partsBox === true;
+    out[name] =
+      set === undefined
+        ? { ...base, decoration: "none", ...(boxed ? { box: true } : {}) }
+        : {
+            face: set.face === "" ? base.face : set.face,
+            weight: set.bold ? "bold" : "normal",
+            style: set.italic ? "italic" : "normal",
+            decoration: "none",
+            size: set.size,
+            ...(set.box === true || boxed ? { box: true } : {}),
+          };
+  }
+  for (const key of score.formattingOrder ?? []) {
+    if (key === "staffwidth" && score.staffWidth != null)
+      out[key] = score.staffWidth / 1.33;
+    else if (key === "musicspace" && score.musicSpace != null)
+      out[key] = (score.musicSpace * 3) / 4;
+    else if (key === "stretchlast" && score.stretchLast != null)
+      out[key] = score.stretchLast;
+    // **THE POINTS AS WRITTEN, NOT THE PIXELS THEY BECOME.** `tune.formatting[cmd]` takes
+    // `points.value` straight off the token (`abc_parse_directive.js:421`); the 4/3 is
+    // applied later, in `write/renderer.js`. `%%staffsep 90` is 90 here and 120 there.
+    else if (key === "staffsep" && score.staffSep != null)
+      out[key] = (score.staffSep * 3) / 4;
+    else if (key === "sysstaffsep" && score.sysStaffSep != null)
+      out[key] = (score.sysStaffSep * 3) / 4;
+    else if (key === "maxStaves" && score.maxStaves != null) out[key] = score.maxStaves;
+    else if (key === "jazzchords") out[key] = true;
+    else if (key === "percmap") out[key] = score.percMap;
+    else if (key === "midi")
+      out[key] = {
+        ...score.midi,
+        ...(Object.keys(score.drumMap ?? {}).length === 0
+          ? {}
+          : { drummap: score.drumMap }),
+      };
+  }
+  // **LAST, WHATEVER THE SOURCE SAID** — abcjs writes them after every directive has run.
+  out.pagewidth = 612;
+  out.pageheight = 792;
+  return out;
+};
+
 const abcjsMeter = (score: Score): AbcjsMeter => {
   const m = getMeter(score);
   // A tune with no music has no staff and therefore no meter — `getMeter` falls through
@@ -737,12 +866,7 @@ export function renderAbc(
             : Number.parseInt(first.num, 10);
         return { num, den: Number.parseInt(first.den, 10) };
       })(),
-      formatting: {
-        // The two `setUpAudio` reads, which are the only ones abcjs itself makes of this
-        // object — everything else in it is for a host.
-        ...(score.percMap === undefined ? {} : { percmap: score.percMap }),
-        ...(score.drumMap === undefined ? {} : { drummap: score.drumMap }),
-      },
+      formatting: formattingOf(score),
       /**
        * **THE FIELD LINE'S OWN SPAN, PER FIELD** — see `ScoreMetadata.fieldRanges`. abcjs
        * starts this `{}` and adds a key only when a field is written

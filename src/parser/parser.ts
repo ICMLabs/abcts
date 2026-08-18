@@ -1862,6 +1862,8 @@ interface Formatting {
   sysStaffSep: number | null
   vocalFont: LyricFont | null
   fonts: Partial<Record<AbcFontType, LyricFont>>
+  /** The `tune.formatting` keys the file header set, in its order — see `noteFormatting`. */
+  formattingOrder: readonly string[]
 }
 
 class ScoreBuilder {
@@ -1882,6 +1884,17 @@ class ScoreBuilder {
   unalignedWords: RichText[] = []
   /** `G:` — the tune's group. Recorded and drawn by nothing; see `ScoreMetadata.group`. */
   group: RichText | null = null
+  /**
+   * **THE ORDER `tune.formatting` WAS FILLED IN**, for the directives that reach it — see
+   * `Score.formattingOrder`. abcjs writes `tune.formatting[cmd] = …` as each directive is
+   * read (`abc_parse_directive.js:321`, `:421`, `:723`, `:1220`), so the object's KEY ORDER
+   * is the source's; a key already present keeps its position when it is set again.
+   */
+  formattingOrder: string[] = []
+  /** First write wins the position, as an object key does. */
+  noteFormatting(key: string): void {
+    if (!this.formattingOrder.includes(key)) this.formattingOrder.push(key)
+  }
   /** `%%header` / `%%footer` — see `ScoreMetadata.runningHead`. */
   runningHead: Partial<Record<'header' | 'footer', RunningHead>> = {}
   /** `metaTextInfo` — see `ScoreMetadata.fieldRanges`. `title` lives in `titleRanges`. */
@@ -1905,8 +1918,26 @@ class ScoreBuilder {
   unitNoteLength: Rational = rational(1, 8)
   unitExplicit = false
   bodyStarted = false
-  /** abcjs's `hasBeginMusic()` — a MUSIC LINE has been read, which `K:` alone does not do. */
+  /**
+   * **THE VOICE HAS SOMETHING IN IT** — what `appendStartingElement` branches on when it
+   * decides between the staff and the stream, and what the standalone-`M:` and
+   * `firstLineKeyClef` rules read. NOT abcjs's `hasBeginMusic()`, though it was named for
+   * it: the two part company at a BODY `V:`, and the byte gate is what said so —
+   * `visual-layout-07` moved an accidental 7.75px when they were merged.
+   */
   musicStarted = false
+  /**
+   * **abcjs's `hasBeginMusic()` — "at least one LINE contains a staff"**, which a body `V:`
+   * creates and a header one does not. Read by the `%%MIDI` split alone: a command reaches
+   * `tune.formatting.midi` only while this is false, and becomes an ELEMENT in the voice's
+   * stream once it is true (`abc_parse_directive.js:718-724`).
+   *
+   * **MEASURED ON A FIVE-RUNG LADDER through abcjs rather than reasoned**, because the
+   * predicate is stated nowhere: `%%MIDI program 5` reaches `formatting` before `K:`, after
+   * `K:` with no `V:`, and after a HEADER `V:` — and does NOT after a BODY `V:` or after a
+   * note.
+   */
+  beganMusic = false
   /**
    * The `%%vocalfont` in force, or null while none has been seen.
    *
@@ -1930,6 +1961,18 @@ class ScoreBuilder {
   setfont: (LyricFont | undefined)[] = []
   /** Every `%%<type>font` set so far. The renderer defaults an absent entry itself. */
   fonts: Partial<Record<AbcFontType, LyricFont>> = {}
+  /**
+   * **THE ELEVEN CHANGING FONTS AS THEY STOOD AT THE END OF THE HEADER.**
+   * `getChangingFont` writes `tune.formatting[cmd]` only `if (multilineVars.is_in_header)`
+   * — "If the font appears in the header, then it becomes the default font"
+   * (`abc_parse_directive.js:315-322`) — so a `%%gchordfont` in the BODY changes what is
+   * drawn and not what `formatting` reports. `visual-tablature-17` sets it five times and
+   * abcjs reports the FIRST.
+   *
+   * The other ten are `getGlobalFont` and always report the latest, so the snapshot is the
+   * whole difference between the two arms. See `Score.headerFonts`.
+   */
+  headerFonts: Partial<Record<AbcFontType, LyricFont>> | null = null
   /** See `Score.firstLineKeyClef` — a standalone body `K:` read before any music. */
   firstLineKeyClef: { voiceId: string; clef: Clef } | null = null
   keySourceRange: SourceRange | null = null
@@ -1987,6 +2030,7 @@ class ScoreBuilder {
       sysStaffSep: this.sysStaffSep,
       vocalFont: this.vocalFont,
       fonts: this.fonts,
+      formattingOrder: this.formattingOrder,
     }
   }
 
@@ -1999,6 +2043,11 @@ class ScoreBuilder {
     if (f.drumMap !== undefined) this.drumMap = f.drumMap
     if (f.midi !== undefined) this.midi = f.midi
     this.stretchLast = f.stretchLast
+    // …**AND THE ORDER WITH THEM.** A `%%` directive above the first `X:` is the FILE
+    // HEADER and applies to every tune (ABC 2.1 §4.1), so its `formatting` key must arrive
+    // in the tune too — `%%stretchlast 1` written there was reaching `stretchLast` and not
+    // `formattingOrder`, so the value was right and the key absent.
+    this.formattingOrder = [...f.formattingOrder]
     this.staffWidth = f.staffWidth
     this.maxStaves = f.maxStaves
     this.sysStaffSep = f.sysStaffSep
@@ -2254,6 +2303,7 @@ class ScoreBuilder {
       percMap: this.percMap,
       drumMap: this.drumMap,
       midi: this.midi,
+      formattingOrder: this.formattingOrder,
       stretchLast: this.stretchLast,
       staffWidth: this.staffWidth,
       maxStaves: this.maxStaves,
@@ -2265,6 +2315,7 @@ class ScoreBuilder {
       // `T:Inserted subtitle` vanished outright, and so did 23.175px of page.
       textBelow: [...this.textBelow, ...this.pendingTextBefore.blocks],
       fonts: this.fonts,
+      headerFonts: this.headerFonts ?? this.fonts,
       sourceStartOffset: this.sourceStartOffset,
       keySourceRange: this.keySourceRange,
       meterSourceRange: this.meterSourceRange,
@@ -2801,6 +2852,7 @@ class Parser {
       const builder = this.ensureScore(start)
       if (staffSep[1] === 'staffsep') builder.staffSep = px
       else builder.sysStaffSep = px
+      builder.noteFormatting(staffSep[1] === 'staffsep' ? 'staffsep' : 'sysstaffsep')
       return
     }
     // `%%musicspace` — the gap between the top text and the first staff, in POINTS and
@@ -2811,7 +2863,9 @@ class Parser {
     if (musicSpace?.[1] !== undefined) {
       const px = parseMeasurement(musicSpace[1])
       if (px !== null) {
-        this.ensureScore(start).musicSpace = (px * 4) / 3
+        const b = this.ensureScore(start)
+        b.musicSpace = (px * 4) / 3
+        b.noteFormatting('musicspace')
         return
       }
     }
@@ -2832,7 +2886,9 @@ class Parser {
               ? Number.parseFloat(arg)
               : null
       if (value !== null) {
-        this.ensureScore(start).stretchLast = value
+        const b = this.ensureScore(start)
+        b.stretchLast = value
+        b.noteFormatting('stretchlast')
         return
       }
     }
@@ -2844,14 +2900,20 @@ class Parser {
     // `%%staffwidth 400` a 400px staff against abcjs's 532.
     const staffWidth = /^staffwidth\s+(\d+(?:\.\d+)?)\s*$/.exec(body)
     if (staffWidth?.[1] !== undefined) {
-      this.ensureScore(start).staffWidth = Number.parseFloat(staffWidth[1]) * 1.33
+      const b = this.ensureScore(start)
+      b.staffWidth = Number.parseFloat(staffWidth[1]) * 1.33
+      b.noteFormatting('staffwidth')
       return
     }
     // `%%maxStaves` — an incipit. abcjs matches the directive case-insensitively like
     // every other, so `%%maxStaves` and `%%maxstaves` are the same thing.
     const maxStaves = /^maxstaves\s+(\d+)\s*$/i.exec(body)
     if (maxStaves?.[1] !== undefined) {
-      this.ensureScore(start).maxStaves = Number.parseInt(maxStaves[1], 10)
+      const b = this.ensureScore(start)
+      b.maxStaves = Number.parseInt(maxStaves[1], 10)
+      // **THE KEY IS CAMEL-CASE WHERE THE DIRECTIVE IS NOT** — `%%maxstaves` writes
+      // `tune.formatting.maxStaves`, the only one of the nine that renames itself.
+      b.noteFormatting('maxStaves')
       return
     }
     // `%%partsbox` — a box round every `P:` label, and a taller lane to hold it.
@@ -2890,10 +2952,12 @@ class Parser {
           ? DRUM_NAMES.indexOf(raw.toLowerCase()) + 35
           : asNumber
       if (sound >= 35 && sound <= 81) {
-        this.ensureScore(start).percMap[percMap[1]] = {
+        const b = this.ensureScore(start)
+        b.percMap[percMap[1]] = {
           sound,
           ...(percMap[3] === undefined ? {} : { noteHead: percMap[3] }),
         }
+        b.noteFormatting('percmap')
       }
       return
     }
@@ -2942,17 +3006,27 @@ class Parser {
       // it as an array like the rest would keep only the last.
       if (cmd === 'drummap' && typeof params[0] === 'string' && typeof params[1] === 'number') {
         builder.drumMap[params[0]] = params[1]
+        builder.noteFormatting('midi')
         return
       }
-      if (builder.musicStarted) builder.voice.addMidiCommand(cmd, params)
-      else builder.midi[cmd] = params
+      // **A `%%MIDI` REACHES `formatting.midi` ONLY BEFORE THE MUSIC.**
+      // `if (hasBeginMusic()) appendElement('midi', …) else formatting['midi'][cmd] = params`
+      // (`abc_parse_directive.js:718-724`) — the two are exclusive, which is the same split
+      // `addMidiCommand` already makes here.
+      if (builder.beganMusic) builder.voice.addMidiCommand(cmd, params)
+      else {
+        builder.midi[cmd] = params
+        builder.noteFormatting('midi')
+      }
       return
     }
     // `%%jazzchords` — chord modifiers and bass notes as small sub/superscripts. A bare
     // switch with no argument and no way back: `abc_parse_directive.js:791` only ever
     // assigns `true`.
     if (/^jazzchords\b/.test(body)) {
-      this.ensureScore(start).jazzChords = true
+      const b = this.ensureScore(start)
+      b.jazzChords = true
+      b.noteFormatting('jazzchords')
       return
     }
     this.info(
@@ -3231,7 +3305,10 @@ class Parser {
         // current voice — otherwise `V:1` / `V:2` in the header left voice 2 current and
         // every note landed in it.
         builder.declareVoice(id, mergesStaff(value))
-        if (builder.bodyStarted) builder.selectVoice(id)
+        if (builder.bodyStarted) {
+          builder.selectVoice(id)
+          builder.beganMusic = true
+        }
         const octave = octaveModifier(value)
         if (octave !== null) builder.voiceFor(id).octaveShift = octave
         // `V:… transpose=-2` — SOUNDING only, and abcjs takes the sign from the token
@@ -3346,6 +3423,8 @@ class Parser {
         builder.clef = clefWith(builder.clef, value)
         const keyOctave = octaveModifier(value)
         if (keyOctave !== null) builder.keyOctave.value = keyOctave
+        // …and the header's fonts are frozen here, which is `is_in_header` going false.
+        builder.headerFonts ??= { ...builder.fonts }
         builder.bodyStarted = true // K: ends the header.
         return
       }
@@ -3381,6 +3460,7 @@ class Parser {
     // because abcjs does. abcjs agrees: `frere-jacques`'s `M:4/4` sits on line 14 and its
     // time signature is printed on system 3, so the `+:` prose on line 8 had already made
     // every later field a mid-tune one.
+    builder.headerFonts ??= { ...builder.fonts }
     builder.bodyStarted = true
     // …AND `musicStarted` IS THE NARROWER ONE. `bodyStarted` is also set by `K:`, which
     // ends the HEADER; abcjs's `hasBeginMusic()` asks whether a MUSIC LINE has been read,
@@ -3388,6 +3468,7 @@ class Parser {
     // and before the first note is a TUNE setting to abcjs and a mid-tune element to
     // anything that reads `bodyStarted` — `flatten-decorations` is exactly that shape.
     builder.musicStarted = true
+    builder.beganMusic = true
     // THE VOCALFONT A LYRIC DRAWS IN IS THE ONE IN FORCE WHEN ITS MUSIC LINE BEGAN, not
     // when its `w:` line was read. `%%vocalfont` is a CHANGING font
     // (`abc_parse_directive.js:1022-1030`): it always writes `multilineVars.vocalfont`, and
