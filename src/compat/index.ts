@@ -91,6 +91,7 @@ import { parse } from "../parser/parser.js";
 import { EngraverController, Parse } from "./engraver.js";
 import { strTranspose as transposeString } from "../str/transpose.js";
 import { STAFF_SPACE_PX, UNIT_PX } from "../renderer/abcjs-constants.js";
+export { setGlyph } from "../renderer/set-glyph.js";
 
 /**
  * abcjs's `spacing.STEP` — ONE PITCH, half a staff space. Every vertical figure a timing

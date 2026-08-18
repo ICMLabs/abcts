@@ -37,6 +37,7 @@ import {
 import { SMUFL_TO_ABCJS } from './glyph-map.js'
 import { ENGRAVING_DEFAULTS, GLYPHS, type GlyphName } from './glyphs.js'
 import { ABCJS_GLYPHS, ABCJS_STAFF_SPACE } from './glyphs-abcjs.js'
+import { glyphOverride } from './set-glyph.js'
 
 /** One glyph, as everything downstream of the table wants it. */
 export interface ResolvedGlyph {
@@ -114,7 +115,10 @@ const BRAVURA: GlyphTable = {
 const ABCJS: GlyphTable = {
   get: (name) => {
     const mapped = SMUFL_TO_ABCJS[name]
-    const glyph = mapped === undefined ? undefined : ABCJS_GLYPHS[mapped]
+    // **A HOST'S `setGlyph` WINS OVER THE TABLE**, which is what abcjs's own does by
+    // writing into it — see `src/renderer/set-glyph.ts`.
+    const glyph =
+      mapped === undefined ? undefined : (glyphOverride(mapped) ?? ABCJS_GLYPHS[mapped])
     if (glyph === undefined) return bravuraEntry(name)
     return {
       path: glyph.path,

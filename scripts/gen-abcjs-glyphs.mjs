@@ -58,7 +58,11 @@ const table = eval(
  * `d` string it draws is those joined with the command letter, a space, the numbers
  * space-separated, and NO separator between segments.
  */
-const toPath = (d) => d.map((seg) => `${seg[0]} ${seg.slice(1).join(' ')}`).join('')
+// **THE WHOLE SEGMENT IS JOINED** — `path += pathArray[i].join(" ")`
+// (`write/creation/glyphs.js:139`). A bare `['z']` joins to `"z"`; the command-plus-numbers
+// form gives `"z "` and puts a trailing space in every closed subpath. See
+// `src/renderer/set-glyph.ts`, where the same join is made at run time.
+const toPath = (d) => d.map((seg) => seg.join(' ')).join('')
 
 /**
  * Ink bounding box, walked from the segment arrays.
