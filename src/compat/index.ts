@@ -39,6 +39,7 @@ import {
   getPickupLength,
   millisecondsPerMeasureOf,
   type NoteTiming,
+  type TimingGeometry,
   addUsefulCallbackInfo,
   setupEventsFor,
   timingsOf,
@@ -81,6 +82,12 @@ import { parse } from "../parser/parser.js";
 import { EngraverController, Parse } from "./engraver.js";
 import { strTranspose as transposeString } from "../str/transpose.js";
 import { STAFF_SPACE_PX, UNIT_PX } from "../renderer/abcjs-constants.js";
+
+/**
+ * abcjs's `spacing.STEP` — ONE PITCH, half a staff space. Every vertical figure a timing
+ * row carries is a pitch times this (`abc_tune.js:401-409`).
+ */
+const PITCH_STEP_PX = STAFF_SPACE_PX / 2;
 import { layout, type MetaTextRow, type PlacedText } from "../renderer/layout.js";
 import { type SelectableRecord, toSVG } from "../renderer/svg.js";
 
@@ -782,6 +789,73 @@ export function renderAbc(
       top: [],
       bottom: [],
     };
+    /**
+     * **THE GEOMETRY A TIMING ROW CARRIES, JOINED TO THE CLOCK BY THE MODEL EVENT.**
+     *
+     * abcjs builds its rows by walking the DRAWN staffgroups, so every row has its
+     * system's extent and its element's box for free (`abc_tune.js:396-434`). Ours walks
+     * the parse tree — deliberately, so audio does not need the renderer — and the join is
+     * `LayoutElement.sourceEvent`, the same reference the selectable array and
+     * `tune.lines` are joined by.
+     *
+     * The three formulas are abcjs's, and the unit is the PITCH step, half a staff space:
+     *
+     *     top    = staffs[0].absoluteY   − staffs[0].top    × STEP
+     *     bottom = staffs[last].absoluteY − staffs[last].bottom × STEP
+     *     height = bottom − top
+     *
+     * `left` is the element's own `x` and `width` is its ROD width — abcjs's `element.w`
+     * is `getMinWidth(child)`, the ink, not the spring the cursor advanced by. Measured on
+     * `synth-flattener-01`: `x = 70.846` and `rodWidth = 9.81` against abcjs's `left:
+     * 70.846, width: 9.81`, and `102.867 − 20.724 × 3.875 = 22.56` against its `top`.
+     */
+    let geometryCache: Map<MusicEvent, TimingGeometry> | null = null;
+    const geometryOf = (event: MusicEvent): TimingGeometry | undefined => {
+      if (geometryCache === null) {
+        const cache = new Map<MusicEvent, TimingGeometry>();
+        geometryCache = cache;
+        const doc = laidOut();
+        const index = projection().byEvent;
+        /**
+         * **`line` IS THE INDEX IN `tune.lines`, NOT THE SYSTEM'S OWN.** abcjs reads
+         * `group.line`, which `engraveTune` stamps from the LINE loop, so a subtitle or a
+         * `%%text` standing between two systems counts — `synth-timing-05-subtitle-crash`
+         * has its second system on line 2. The projection already holds the line list.
+         */
+        const staffLines = (lineCache ?? [])
+          .map((l, i) => (l.staff === undefined ? -1 : i))
+          .filter((i) => i >= 0);
+        doc.systems.forEach((system, systemIndex) => {
+          const line = staffLines[systemIndex] ?? systemIndex;
+          const first = system.staves[0];
+          const last = system.staves[system.staves.length - 1];
+          if (first === undefined || last === undefined) return;
+          const top = first.absoluteY - system.firstTopPitch * PITCH_STEP_PX;
+          const bottom = last.absoluteY - system.lastBottomPitch * PITCH_STEP_PX;
+          for (const staff of system.staves)
+            for (const voice of staff.voices)
+              for (const element of voice) {
+                const source = element.sourceEvent;
+                if (source === undefined || cache.has(source)) continue;
+                const abcelem = index.get(source);
+                cache.set(source, {
+                  line,
+                  top,
+                  height: bottom - top,
+                  left: element.x,
+                  width: element.rodWidth ?? element.width,
+                  startChar: abcelem?.startChar ?? null,
+                  endChar: abcelem?.endChar ?? null,
+                  ...(abcelem === undefined ? {} : { abcelem }),
+                  ...(abcelem?.midiPitches === undefined
+                    ? {}
+                    : { midiPitches: abcelem.midiPitches }),
+                });
+              }
+        });
+      }
+      return geometryCache.get(event);
+    };
     const selectables = (): readonly Selectable[] => {
       selectableCache ??= selectablesOf(
         records,
@@ -917,6 +991,7 @@ export function renderAbc(
 
       setTiming(bpm?: number, measuresOfDelay?: number): NoteTiming[] {
         const t = timingsOf(score, {
+          geometryOf,
           ...(bpm === undefined ? {} : { bpm }),
           ...(measuresOfDelay === undefined ? {} : { measuresOfDelay }),
         });
@@ -932,7 +1007,7 @@ export function renderAbc(
         timeDivider: number,
         startingBpm: number,
         warp = 1,
-      ) => setupEventsFor(score, startingDelay, timeDivider, startingBpm, warp),
+      ) => setupEventsFor(score, startingDelay, timeDivider, startingBpm, warp, geometryOf),
       addUsefulCallbackInfo: (rows: readonly NoteTiming[], bpm: number) =>
         addUsefulCallbackInfo(score, rows, bpm),
       noteTimings: timings.rows,

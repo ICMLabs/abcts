@@ -3587,6 +3587,21 @@ function layoutRest(
     width: Math.max(advance, restInk),
     spring: advance,
     rod: restInk,
+    /**
+     * **THE INK HALF, WHICH IS abcjs's `w`** — `getMinWidth(child)` is `child.w` and the
+     * `minspacing` is a SECOND add (`layout/voice-elements.js:74-77`), so a whole rest
+     * reports 11.25 where its rod is 12.25. A timing row carries this number as `width`
+     * and nothing else in the engine reads it; a rest was the one element that set `rod`
+     * without it, so `tune.setupEvents` reported the SPRING — 60 against abcjs's 11.25.
+     */
+    rodWidth: Math.max(
+      spec === null ? 0 : restWidth,
+      dotRight,
+      // …and the CHORD SYMBOL's right edge is already `w`, where the glyph terms are `w`
+      // plus the gap: `restInk` adds `noteRodGap` to those two and not to this one, so
+      // subtracting it back off flat reported a rest under a chord one pixel narrow.
+      textSpan.right,
+    ),
     left: Math.max(textSpan.left, graces.left),
     // abcjs's `rest.type === 'rest'` after `createNote` has had its say — see `plainRest`.
     plainRest: !invisible && rest.kind !== 'spacer' && rest.measureCount === 0 && !fillsMeasure,

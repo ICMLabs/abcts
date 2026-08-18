@@ -118,15 +118,16 @@ const rows = (): Row[] => {
  * renderer, and the Score carries no system boundary to count. Porting it means handing
  * the timing a layout, which is an architecture decision, not a bug fix.
  *
- * `S5-directives-tune2` — an `&` OVERLAY, and **every EVENT row already matches**; only
- * the `end` differs, 4.000s against 3.333. `maxVoiceTimeMilliseconds` is the max over
- * voices (`abc_tune.js:449, 516`) and abcjs's overlay voice finishes a whole note after
- * ours does. The lit elements are identical, so this is the overlay's PADDING and nothing
- * the caller can see through `noteTimings`.
+ **CLOSED 2026-08-17b**: `S5-directives-tune2` was the second row — an `&` overlay whose
+ * `end` came 4.000s against abcjs's 3.333 while every EVENT row matched. The cause was
+ * that the timing walk did not walk the overlay LAYERS at all, where abcjs's
+ * `makeVoicesArray` reads the DRAWN voices and `resolveOverlays` has already split them.
+ * The layers are voices here now, padded with the invisible rests the model already
+ * carries, and the row is gone. It was named by the `setupEvents` gate's
+ * `startCharArray` column, not by the clock.
  */
 const MEASURED_NOT_PORTED: readonly string[] = [
   "repo/abcjs-visual-directives-01-incipit-test-tune0",
-  "sib/S5-directives-tune2",
 ];
 
 describe("abcjs's numeric tune accessors", () => {

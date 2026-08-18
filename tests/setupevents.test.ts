@@ -14,7 +14,7 @@ import { renderAbc } from "../src/compat/index.js";
  * ANSWER at zero — but that oracle comes from abcjs's own `doWarpTest`, which asserts
  * `milliseconds` and `millisecondsPerMeasure` and nothing else.
  *
- * **SO THIS ONE OPENED AT 174 OF 3,366 ROWS WITH THE TIMING GATE AT ZERO.** A row carries
+ * **IT OPENED AT 174 OF 3,366 ROWS WITH THE TIMING GATE AT ZERO.** A row carries
  * `line`, `top`, `height`, `left`, `width`, `startChar`, `endChar`, `startCharArray` and
  * `endCharArray` as well as the clock (`abc_tune.js:298-395`) — the GEOMETRY a playback
  * cursor draws with, joined to the time. Ours carried the clock alone. **A COMPARISON CAN
@@ -206,7 +206,7 @@ describe("tune.setupEvents — every column of the row", () => {
   /** A floor, not a target — it moves up as the geometry lands and must never move down. */
   it("the whole corpus agrees on at least the rows it did", () => {
     const agree = table.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(174);
+    expect(agree).toBeGreaterThanOrEqual(3318);
   });
 
   /**

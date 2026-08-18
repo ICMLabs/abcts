@@ -23,7 +23,7 @@
  * `elem.duration * tripletmultiplier` (`abstract-engraver.js:808`) — the SOUNDING duration,
  * which our model already carries on the event.
  */
-import type { Measure, Meter, Score, Tempo, Voice } from '../core/model.js'
+import type { Measure, Meter, MusicEvent, Score, Tempo, Voice } from '../core/model.js'
 import { ratToNumber } from '../core/model.js'
 
 export interface NoteTiming {
@@ -36,6 +36,51 @@ export interface NoteTiming {
   readonly measureStart?: boolean
   /** Stamped on EVERY row, including the end, by `addUsefulCallbackInfo`. */
   readonly millisecondsPerMeasure: number
+  /**
+   * **THE GEOMETRY HALF, WHICH IS WHAT A PLAYBACK CURSOR DRAWS WITH** — the SYSTEM the
+   * row falls on, that system's ink extent, and the leftmost element's box
+   * (`abc_tune.js:298-395`). Present only when the caller supplied a `geometryOf`, which
+   * the compat tune object does because it has laid the tune out anyway.
+   *
+   * `line`, `top`, `height`, `width` and `measureNumber` come from the element that
+   * CREATED the row; `left` is the MINIMUM across every voice that lands on it, "the left
+   * most element wins"; and the two `…CharArray`s collect every element while the plain
+   * `startChar`/`endChar` keep the first that was not null.
+   */
+  readonly line?: number
+  readonly top?: number
+  readonly height?: number
+  readonly left?: number | null
+  readonly width?: number
+  readonly startChar?: number | null
+  readonly endChar?: number | null
+  readonly startCharArray?: readonly (number | null)[]
+  readonly endCharArray?: readonly (number | null)[]
+  /**
+   * abcjs's is one DOM NODE ARRAY per element at this time; ours is one entry per element,
+   * carrying the `tune.lines` element itself — the same object `getElementFromChar`
+   * returns. A host cannot be handed our markup as nodes (we emit a string), and the
+   * COUNT and the identity are what it reads.
+   */
+  readonly elements?: readonly (readonly unknown[])[]
+  readonly midiPitches?: readonly unknown[]
+}
+
+/**
+ * What the caller knows about an element's DRAWING, supplied to `setTiming` so the clock
+ * and the geometry can be joined without this file importing the renderer.
+ */
+export interface TimingGeometry {
+  readonly line: number
+  readonly top: number
+  readonly height: number
+  readonly left: number
+  readonly width: number
+  readonly startChar: number | null
+  readonly endChar: number | null
+  /** The `tune.lines` element, for the row's `elements` and its `midiPitches`. */
+  readonly abcelem?: unknown
+  readonly midiPitches?: readonly unknown[]
 }
 
 export interface TimingOptions {
@@ -43,6 +88,8 @@ export interface TimingOptions {
   readonly bpm?: number
   /** Whole measures of count-in before the music, less the pickup. */
   readonly measuresOfDelay?: number
+  /** The drawing, per model event — see `TimingGeometry`. Absent leaves the rows clock-only. */
+  readonly geometryOf?: (event: MusicEvent) => TimingGeometry | undefined
 }
 
 const DEFAULT_METER: Meter = { numerator: 4, denominator: 4, symbol: 'numeric' }
@@ -216,6 +263,8 @@ interface TimedElement {
   readonly startEnding?: string
   /** `tempo` only. */
   readonly tempo?: Tempo
+  /** The model event, for the geometry join — see `TimingGeometry`. */
+  readonly event?: MusicEvent
 }
 
 /**
@@ -319,6 +368,7 @@ function voiceElements(voice: Voice, score: Score, tempos: Map<number, Tempo>): 
         kind: 'note',
         measureNumber,
         duration: sounding === 0 && !spacer ? ZERO_LENGTH_DRAWN : sounding,
+        event,
       })
       noteFound = true
     }
@@ -346,13 +396,48 @@ function setupEvents(
   startingDelay: number,
   startingBpm: number,
   warp: number,
- ): { rows: NoteTiming[]; finalBpm: number } {
+  geometryOf?: (event: MusicEvent) => TimingGeometry | undefined,
+): { rows: NoteTiming[]; finalBpm: number } {
   const meter = meterOf(score)
   const beatLength = beatLengthOf(meter)
   const tempos = new Map<number, Tempo>()
-  const voices = score.voices.map((v) => voiceElements(v, score, tempos))
+  /**
+   * **AN `&` OVERLAY LAYER IS A VOICE HERE TOO, BECAUSE abcjs WALKS THE DRAWN ONES.**
+   * `makeVoicesArray` reads `staffgroups[].voices`, which `resolveOverlays` has already
+   * split — and every earlier line of that staff carries an invisible-rest COPY of itself,
+   * so a row in the first measure of a two-layer tune has THREE elements and three
+   * `startCharArray` entries. Our model pads the same way (one layer per measure, invisible
+   * rests where nothing was written), so the layer is a voice by taking `measure.overlays`
+   * as its events — the same shape the renderer's own `expandOverlays` makes, without this
+   * file having to import it.
+   */
+  const layered = score.voices.flatMap((v) => {
+    const depth = v.measures.reduce((n, m) => Math.max(n, m.overlays.length), 0)
+    const layers: Voice[] = []
+    for (let layer = 0; layer < depth; layer += 1)
+      layers.push({
+        ...v,
+        measures: v.measures.map((m) => ({ ...m, events: m.overlays[layer] ?? [], overlays: [] })),
+      })
+    return [v, ...layers]
+  })
+  const voices = layered.map((v) => voiceElements(v, score, tempos))
   /** ms → the row at that time. One row per distinct millisecond, across all voices. */
-  const events = new Map<number, { measureNumber: number; measureStart: boolean }>()
+  const events = new Map<
+    number,
+    {
+      measureNumber: number
+      measureStart: boolean
+      geometry?: TimingGeometry
+      left?: number | null
+      elements: unknown[][]
+      startChar: number | null
+      endChar: number | null
+      startCharArray: (number | null)[]
+      endCharArray: (number | null)[]
+      midiPitches: unknown[]
+    }
+  >()
   let maxVoiceTimeMs = 0
   let bpm = startingBpm
 
@@ -369,10 +454,37 @@ function setupEvents(
     /** `addElementToEvents`, reduced to the time half. Returns the duration to advance. */
     const add = (el: TimedElement, atMs: number, divider: number): number => {
       if (el.duration <= 0) return 0
+      const g = el.event === undefined ? undefined : geometryOf?.(el.event)
       const row = events.get(atMs)
       if (row === undefined) {
-        events.set(atMs, { measureNumber: el.measureNumber, measureStart: nextIsBar })
-      } else if (nextIsBar) row.measureStart = true
+        // **THE FIRST ELEMENT AT A TIME MAKES THE ROW AND GIVES IT ITS SYSTEM** —
+        // `line`, `top`, `height`, `width` and `measureNumber` are its, and every later
+        // one only narrows `left` and appends to the arrays (`abc_tune.js:338-383`).
+        events.set(atMs, {
+          measureNumber: el.measureNumber,
+          measureStart: nextIsBar,
+          ...(g === undefined ? {} : { geometry: g, left: g.left, width: g.width }),
+          elements: g === undefined ? [] : [[g.abcelem]],
+          startChar: g?.startChar ?? null,
+          endChar: g?.endChar ?? null,
+          startCharArray: g === undefined ? [] : [g.startChar],
+          endCharArray: g === undefined ? [] : [g.endChar],
+          midiPitches: [...(g?.midiPitches ?? [])],
+        })
+      } else {
+        if (nextIsBar) row.measureStart = true
+        if (g !== undefined) {
+          // "the left most element wins" — and the test is TRUTHINESS, so a row whose
+          // `left` is 0 or null takes the new one outright (`:359-362`).
+          row.left = row.left ? Math.min(row.left, g.left) : g.left
+          row.elements.push([g.abcelem])
+          row.startCharArray.push(g.startChar)
+          row.endCharArray.push(g.endChar)
+          if (row.startChar === null) row.startChar = g.startChar
+          if (row.endChar === null) row.endChar = g.endChar
+          row.midiPitches.push(...(g.midiPitches ?? []))
+        }
+      }
       nextIsBar = false
       return el.duration / divider
     }
@@ -405,6 +517,12 @@ function setupEvents(
               tempoDone = element2.measureNumber
             }
             voiceTime += add(element2, voiceTimeMs, timeDivider)
+            // **AND A BARLINE INSIDE THE REPLAYED RUN STILL OPENS A MEASURE.**
+            // `nextIsBar = ret.nextIsBar` and `addElementToEvents` returns
+            // `nextIsBar || element.type === 'bar'` (`abc_tune.js:499-500`, `:394`), so the
+            // replay is not a special case — it was the only place ours did not read the
+            // barline, and the first note AFTER a `:|` lost its `measureStart` on 39 rows.
+            if (element2.kind === 'bar') nextIsBar = true
             voiceTimeMs = Math.round(voiceTime * 1000)
           }
           nextIsBar = true
@@ -425,6 +543,21 @@ function setupEvents(
       measureNumber: r.measureNumber,
       ...(r.measureStart ? { measureStart: true } : {}),
       millisecondsPerMeasure: 0,
+      ...(r.geometry === undefined
+        ? {}
+        : {
+            line: r.geometry.line,
+            top: r.geometry.top,
+            height: r.geometry.height,
+            left: r.left ?? null,
+            width: r.geometry.width,
+            startChar: r.startChar,
+            endChar: r.endChar,
+            startCharArray: r.startCharArray,
+            endCharArray: r.endCharArray,
+            elements: r.elements,
+            midiPitches: r.midiPitches,
+          }),
     }))
   rows.push({ type: 'end', milliseconds: maxVoiceTimeMs, millisecondsPerMeasure: 0 })
   return { rows, finalBpm: bpm }
@@ -524,7 +657,7 @@ export function setTiming(score: Score, options: TimingOptions = {}): NoteTiming
   let startingDelay = (barLengthOf(meter) / beatLength) * measuresOfDelay / beatsPerSecond
   if (startingDelay) startingDelay -= pickupOf(score, meter) / beatLength / beatsPerSecond
 
-  const { rows, finalBpm } = setupEvents(score, startingDelay, bpm, warp)
+  const { rows, finalBpm } = setupEvents(score, startingDelay, bpm, warp, options.geometryOf)
   // `addUsefulCallbackInfo` stamps every row, INCLUDING the end, with one figure — and the
   // bpm it uses is the LAST voice's running one times the warp, not the tune's.
   return addUsefulCallbackInfo(score, rows, finalBpm * warp)
@@ -553,8 +686,9 @@ export function setupEventsFor(
   _timeDivider: number,
   startingBpm: number,
   warp = 1,
+  geometryOf?: (event: MusicEvent) => TimingGeometry | undefined,
 ): NoteTiming[] {
-  const { rows, finalBpm } = setupEvents(score, startingDelay, startingBpm, warp)
+  const { rows, finalBpm } = setupEvents(score, startingDelay, startingBpm, warp, geometryOf)
   return addUsefulCallbackInfo(score, rows, finalBpm * warp)
 }
 
