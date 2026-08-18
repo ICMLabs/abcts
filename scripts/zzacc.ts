@@ -6,6 +6,7 @@ import {
   millisecondsPerMeasureOf, timingsOf,
 } from '../src/audio/timing.js'
 import { parse } from '../src/parser/parser.js'
+import { renderAbc } from '../src/compat/index.js'
 const G = JSON.parse(readFileSync(join(import.meta.dirname, '..', 'tests', 'corpus-accessors', 'golden.json'), 'utf-8')) as Record<string, Record<string, number>>
 const SIB = join(import.meta.dirname, '..', '..', 'abcMusicKit', 'Tools', 'abcjs-debug', 'fixtures')
 const REP = join(import.meta.dirname, '..', 'tests', 'corpus-abcjs', 'fixtures')
@@ -17,7 +18,13 @@ for (const [key, want] of Object.entries(G)) {
   const p = parse(readFileSync(join(corpus === 'sib' ? SIB : REP, `${rest.slice(0, at)}.abc`), 'utf-8'), { mode: 'abcjs-strict' })
   const score = p.ok ? p.scores[Number(rest.slice(at + 5))] : undefined
   if (score === undefined) continue
-  const t = timingsOf(score, {})
+  // The TOTALS come off the tune object, where a host reads them — `setTiming` walks the
+  // DRAWN voices, so a `%%maxStaves` incipit's clock is truncated. See `accessors.test.ts`.
+  const slots: string[] = []
+  for (let k = 0; k <= Number(rest.slice(at + 5)); k += 1) slots.push('*')
+  const tune = renderAbc(slots, readFileSync(join(corpus === 'sib' ? SIB : REP, `${rest.slice(0, at)}.abc`), 'utf-8'), {})[Number(rest.slice(at + 5))]
+  tune?.setTiming()
+  const t = { totalTime: tune?.getTotalTime(), totalBeats: tune?.getTotalBeats() }
   const got: Record<string, number | undefined> = {
     beatLength: getBeatLength(score), barLength: getBarLength(score),
     beatsPerMeasure: getBeatsPerMeasure(score), bpm: getBpm(score),

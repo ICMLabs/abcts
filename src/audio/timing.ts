@@ -455,6 +455,19 @@ function setupEvents(
     const add = (el: TimedElement, atMs: number, divider: number): number => {
       if (el.duration <= 0) return 0
       const g = el.event === undefined ? undefined : geometryOf?.(el.event)
+      /**
+       * **`%%maxStaves` TRUNCATES THE CLOCK, AND THIS IS WHERE.** `makeVoicesArray` walks
+       * `this.engraver.staffgroups` — the groups `draw()` actually BUILT — and `draw()`
+       * breaks out of its line loop once `nStaves > maxStaves` (`abc_tune.js:396-436`,
+       * `draw/draw.js:33-39`), so an incipit's later systems are in no voice array and
+       * take no time at all. abcjs answers 2.667s where the whole tune is 5.333.
+       *
+       * A caller that supplied a `geometryOf` has laid the tune out, and our layout
+       * truncates the same way — so an element with an event and NO geometry is one abcjs
+       * never saw. Without a `geometryOf` this cannot be known and the whole tune sounds,
+       * which is what the library path has always done.
+       */
+      if (geometryOf !== undefined && el.event !== undefined && g === undefined) return 0
       const row = events.get(atMs)
       if (row === undefined) {
         // **THE FIRST ELEMENT AT A TIME MAKES THE ROW AND GIVES IT ITS SYSTEM** —

@@ -13,6 +13,7 @@ import {
   timingsOf,
 } from "../src/audio/timing.js";
 import { parse } from "../src/parser/parser.js";
+import { renderAbc } from "../src/compat/index.js";
 
 /**
  * **THE NINE NUMERIC `AbcTune` ACCESSORS, AGAINST ABCJS'S OWN ANSWERS ON 293 TUNES.**
@@ -84,7 +85,22 @@ const rows = (): Row[] => {
     }
     const score = parsed.ok ? parsed.scores[index] : undefined;
     if (score === undefined) continue;
-    const totals = timingsOf(score, {});
+    /**
+     * **THE TOTALS COME OFF THE TUNE OBJECT, WHICH IS WHERE abcjs's DO.** `getTotalTime()`
+     * is `setTiming`'s side effect and `setTiming` walks the DRAWN voices, so a
+     * `%%maxStaves` incipit's clock is truncated — 2.667s against the tune's own 5.333.
+     * Reading `timingsOf` directly measures the library path, which has no layout and
+     * therefore no truncation, and it was reporting a row abcjs never disagreed with us
+     * about.
+     */
+    const slots: string[] = [];
+    for (let k = 0; k <= index; k += 1) slots.push("*");
+    const tune = renderAbc(slots, readFileSync(join(dir, `${file}.abc`), "utf-8"), {})[index];
+    tune?.setTiming();
+    const totals = {
+      totalTime: tune?.getTotalTime(),
+      totalBeats: tune?.getTotalBeats(),
+    };
     out.push({
       slug: key,
       want,
@@ -126,9 +142,7 @@ const rows = (): Row[] => {
  * carries, and the row is gone. It was named by the `setupEvents` gate's
  * `startCharArray` column, not by the clock.
  */
-const MEASURED_NOT_PORTED: readonly string[] = [
-  "repo/abcjs-visual-directives-01-incipit-test-tune0",
-];
+const MEASURED_NOT_PORTED: readonly string[] = [];
 
 describe("abcjs's numeric tune accessors", () => {
   const table = rows();
