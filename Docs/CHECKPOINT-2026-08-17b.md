@@ -8,7 +8,8 @@
 which compares EVERY COLUMN of a timing row, is at 3,339 of 3,366. **`extractMeasures` is
 BUILT AND OPENED AT ZERO**, 1,663 of 1,663 rows across 221 files. **`TimingCallbacks` and
 the three ANIMATION functions are BUILT** — 4,674 of 4,696 callbacks and 834 of 834
-animation frames. Surface **21 → 13 absent**. Suite **1,825 passing, 2 expected-fail, no
+animation frames, and **`setGlyph`** with five of six swapped-glyph renders byte-exact.
+Surface **21 → 12 absent**. Suite **1,825 passing, 2 expected-fail, no
 reds**.
 
 Every other table is where it was, at zero: `svg-bytes` 0 of 188, `svg-bytes-sibling` 0 of
@@ -385,6 +386,21 @@ of two absolute x's. `PlacedGlyph.dx` already existed for exactly this reason on
 placement side. The byte gates are unmoved at 0 of 188 and 0 of 356 and the geometry table
 at 0 of 177 — none of them could see it, because they all compare that number with a
 tolerance.
+
+### 8.6 `setGlyph`, AND A JOIN THE GENERATOR HAD WRONG
+
+abcjs's glyph table IS its drawing data, so `glyphs[name] = path` changes the INK and the
+WIDTH the layout spaces by. The gate is the whole SVG after a swap, byte for byte, because
+one comparing the notehead paths alone would pass with the music in the wrong place.
+
+⚠️ **`path += pathArray[i].join(" ")` JOINS THE WHOLE SEGMENT.** A bare `['z']` becomes
+`"z"`; writing `${cmd} ${rest.join(' ')}` gives `"z "` and puts a trailing space in every
+closed subpath. The committed table has no such spaces, so `gen-abcjs-glyphs.mjs` would
+have introduced them on its next run — fixed there too.
+
+The sixth render differs at ONE byte, an element x one bit apart under an 18-wide synthetic
+notehead; abcjs's own probe shows the dot's `dx` identical on both sides, so it is the
+solve's association and not `setGlyph`. Held at its measurement.
 
 ---
 
