@@ -109,10 +109,7 @@ const ABCJS_SURFACE = {
 const MISSING: readonly string[] = [
   "EditArea",
   "Editor",
-  "pauseAnimation",
   "setGlyph",
-  "startAnimation",
-  "stopAnimation",
   "tuneMetrics",
   "synth.CreateSynth",
   "synth.CreateSynthControl",

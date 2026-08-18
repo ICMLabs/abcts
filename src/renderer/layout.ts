@@ -945,6 +945,12 @@ export interface PlacedGlyph {
    * is ONE addition onto the solved x. Deriving it back out of two absolute x's is
    * `(x + a) - x`, which is not `a`. Absent means "derive", which is what everything did
    * before this field existed.
+   *
+   * **AND THE INK WIDTH READS IT TOO.** `addRight` is `this.w = max(this.w, dx + w)`
+   * (`absolute-element.js:110`), so an element's own `w` is built from the SAME dx the
+   * placement used — deriving it back out cost `synth-timing-03`'s eighth its last bit,
+   * 15.902000000000008 against abcjs's 15.902000000000001, which only the cursor gate
+   * could see because every other comparison of that number carries a tolerance.
    */
   readonly dx?: number
 }
@@ -4573,6 +4579,7 @@ function layoutNoteheads(
       if (flag !== undefined)
         pendingFlag = {
           name: flag,
+          ...(flagDx === null ? {} : { dx: flagDx }),
           x: flagX,
           y: tip,
           role: 'flag',
@@ -4759,7 +4766,8 @@ function layoutNoteheads(
   // stays at its notehead.
   const flagInk = glyphs
     .filter((g) => g.role === 'flag')
-    .map((g) => g.x - headX + glyphsFor(strict).width(g.name))
+    // `dx + w`, abcjs's own two terms — see `PlacedGlyph.dx`.
+    .map((g) => (g.dx ?? g.x - headX) + glyphsFor(strict).width(g.name))
   /** `getMinWidth(child)` — the element's own `w`, WITHOUT the `minspacing` beside it. */
   const inkWidth = Math.max(headRight, dotWidth, textSpan.right, ...flagInk)
   const ink = inkWidth + ENGRAVE.noteRodGap

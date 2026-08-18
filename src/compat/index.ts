@@ -55,6 +55,13 @@ import {
 } from "../core/model.js";
 import { type DelineOptions, delineOf } from "./deline.js";
 export { TimingCallbacks, type TimingCallbacksParams } from "./timing-callbacks.js";
+export {
+  type AnimationOptions,
+  animationTimer,
+  pauseAnimation,
+  startAnimation,
+  stopAnimation,
+} from "./animation.js";
 import { type ExtractedTune, extractMeasuresOf } from "./extract-measures.js";
 import {
   type AbcElement,
