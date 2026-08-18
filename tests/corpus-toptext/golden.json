@@ -1,0 +1,7301 @@
+{
+ "repo/abcjs-parse-book_parser-01-example-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "example",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 5,
+    "endChar": 15,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-parse-book_parser-02-tune-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-parse-book_parser-03-a-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 8,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-parse-book_parser-03-a-tune1": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-parse-book_parser-03-a-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "c",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 19,
+    "endChar": 23,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-parse-book_parser-04-wed-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-parse-book_parser-05-a-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 14,
+    "endChar": 18,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-parse-book_parser-05-a-tune1": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-parse-book_parser-06-a-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 14,
+    "endChar": 18,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-parse-book_parser-07-a-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 8,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-parse-note-01-c0-d1-eg-0-fa-1-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-parse-note-id-01-v-v1-c-d-e-f-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-parse-tie-slur-01-staffwidth-200-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-parse-tie-slur-02-staffwidth-200-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-parse-tie-slur-03-staffwidth-200-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-parse-tie-slur-04-stretchlast-1-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-01-crescendo-efga-gab-crescendo-c-diminuend-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-02-p-c-def-gabc-d2-b2-g2-f2-f-e-fga-bcde-p--tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-03-pppp-cdef-gabc-y-ffff-bcba-gfed-y-pppp-c-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-04-g-gab-cde-d7-fga-def-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-05-c-cde-def-c2e-d2f-c-c2-d-d-g-d2-e-e-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-06-cde-d7-f2-d2-e2-f2-1-g-g4-fedc-c-e4z4-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-07-metronome-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "metronome",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 16,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": [
+   {
+    "left": 15,
+    "text": "Notes:\nThe drum beat should start on the first full measure.\nThe drum beat should drop out in the second line.\nThe drum beat pattern should change for the third line.",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "dominant-baseline": "middle",
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 102
+   }
+  ]
+ },
+ "repo/abcjs-synth-flattener-08-em-egab-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-09-d-defg-q-1-2-90-defg-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-10-q-1-4-129-0476605-cdef-q-1-4-127-gabc-q--tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-11-midi-program-3-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-12-chords-meter-change-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "chords meter change",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 26,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-13-e7-bcde-a-f-break-efe-e7-bc-ignore-de-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-14-eb7-zg2ga2a2-a2ab-b4-ab-z-break-c2cd2d2--tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-15-c-c4-c-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-16-gm-gfdf-gfdf-gf-d2-f-c4-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-17-midi-grace-notes-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "midi-grace-notes",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 23,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-18-midi-program-40-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-19-cdef-z4-fedc-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-20-k-treble-8-b-a4-ce-f-4-k-treble-8-g8-g-2-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-21-c4-d4-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-22-b-c4-d4-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-23-percmap-d-pedal-hi-hat-x-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-24-percmap-c-high-tom-x-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-25-cd-d2-d2-dz-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-26-gbcd-d4-zcdc-dc3-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-27-triplets-and-chord-rhythm-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "triplets-and-chord-rhythm",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 31,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-28-midi-channel-10-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-29-midi-drum-dddd-76-77-77-77-50-50-50-50-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-30-am-a2e-e2d-g-bab-d2b-am-a2e-e2d-g-b2a-ga-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-31-tempo-change-three-voices-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "tempo-change-three-voices",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 5,
+    "endChar": 33,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-32-quarter-tone2-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "quarter-tone2",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 19,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": [
+   {
+    "left": 15,
+    "text": "Notes:\nall combinations of accidentals in key sigs and in music",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "dominant-baseline": "middle",
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 51
+   }
+  ]
+ },
+ "repo/abcjs-synth-flattener-33-tempo-override-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "tempo-override",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 20,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-34-score-s-a-t-b-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-35-midi-bassprog-10-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-36-midi-gchord-fhihfhih-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-37-midi-gchord-bzczbzcz-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-38-c-zz-d-z-e-z-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-39-midi-gchord-bzczbzcz-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-40-c5-z4-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-41-midi-bassprog-10-octave-1-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-42-midi-gchord-ffffffff-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-43-gm-zzz-cm-zzz-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-44-cd-pppp-c-ffff-d-ffff-c-pppp-d-cd-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-45-segno-f-d2-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-flattener-46-c8-1-d8-2-e8-3-f8-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-midi-01-midi-options-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "midi options",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 58,
+    "endChar": 73,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-midi-02-staccato-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "staccato",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 15,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-midi-03-percmap-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "percmap",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 13,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-timing-01-cde-fg-ab-1-bcd-2-efg-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-timing-02-score-1-2-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-timing-03-cd-e-f-3gab-ac-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-timing-04-cd-e-f-3gab-ac-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-timing-05-subtitle-crash-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "subtitle-crash",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 20,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-timing-06-repeat-at-start-of-line-crash-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "repeat-at-start-of-line-crash",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 35,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-timing-07-skip-ties-crash-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "skip-ties-crash",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 5,
+    "endChar": 22,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-timing-08-tie-repeat-crash-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "tie-repeat-crash",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 22,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-timing-09-f-c-2d-2-e-4-g-6-a-2-g-4-e-4-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-timing-10-stretchlast-1-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-timing-11-stretchlast-1-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-synth-timing-12-stretchlast-1-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-decorations-01-score-s-a-b-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-directives-01-incipit-test-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 108.10000000000001,
+    "text": "Incipit Test",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 5,
+    "endChar": 20,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 108.10000000000001,
+    "text": "with Subtitle",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 21,
+    "endChar": 37,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-layout-01-barlabelfont-times-bold-18-box-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-layout-02-barlabelfont-times-bold-18-box-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-layout-03-cdef-cdef-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-layout-04-score-s-a-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-layout-05-c3-abc-cf-3-abc-c3-fa-bc-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-layout-06-staves-1-2-3-4-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-layout-07-v-1-b2-a2-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-layout-08-staffwidth-100-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-layout-09-endings-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "endings",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 13,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-misc-01-barnumbers-1-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-misc-02-title-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Title",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 11,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-misc-03-jazzchords-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-misc-04-stretchlast-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-misc-05-cccc-d-c-alcoda-dddd-d-c-alfine-eeee-d-s-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-misc-06-title-1bold-0-100-reg-the-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "anchor": "middle",
+    "phrases": [
+     {
+      "content": "the Title ",
+      "attrs": {
+       "font-family": "Times New Roman",
+       "font-size": 27,
+       "font-weight": "normal",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     },
+     {
+      "content": "bold",
+      "attrs": {
+       "font-family": "cursive",
+       "font-size": 16,
+       "font-weight": "bold",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     },
+     {
+      "content": " $100 reg",
+      "attrs": {
+       "font-family": "Times New Roman",
+       "font-size": 27,
+       "font-weight": "normal",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     }
+    ]
+   },
+   {
+    "move": 29.91
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "anchor": "middle",
+    "phrases": [
+     {
+      "content": "subtitle ",
+      "attrs": {
+       "font-family": "Times New Roman",
+       "font-size": 21,
+       "font-weight": "normal",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     },
+     {
+      "content": "bold",
+      "attrs": {
+       "font-family": "cursive",
+       "font-size": 16,
+       "font-weight": "bold",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     },
+     {
+      "content": " reg",
+      "attrs": {
+       "font-family": "Times New Roman",
+       "font-size": 21,
+       "font-weight": "normal",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     }
+    ]
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "anchor": "end",
+    "phrases": [
+     {
+      "content": "Thomas ",
+      "attrs": {
+       "font-family": "Times New Roman",
+       "font-size": 19,
+       "font-weight": "normal",
+       "font-style": "italic",
+       "font-decoration": "none"
+      }
+     },
+     {
+      "content": "Fats",
+      "attrs": {
+       "font-family": "Arial",
+       "font-size": 19,
+       "font-weight": "bold",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     },
+     {
+      "content": " Waller",
+      "attrs": {
+       "font-family": "Times New Roman",
+       "font-size": 19,
+       "font-weight": "normal",
+       "font-style": "italic",
+       "font-decoration": "none"
+      }
+     },
+     {
+      "content": " (",
+      "attrs": {
+       "font-family": "Times New Roman",
+       "font-size": 19,
+       "font-weight": "normal",
+       "font-style": "italic",
+       "font-decoration": "none"
+      }
+     },
+     {
+      "content": "Copyright ",
+      "attrs": {
+       "font-family": "Times New Roman",
+       "font-size": 19,
+       "font-weight": "normal",
+       "font-style": "italic",
+       "font-decoration": "none"
+      }
+     },
+     {
+      "content": "1924",
+      "attrs": {
+       "font-family": "cursive",
+       "font-size": 16,
+       "font-weight": "bold",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     },
+     {
+      "content": " All Rights Reserved",
+      "attrs": {
+       "font-family": "Times New Roman",
+       "font-size": 19,
+       "font-weight": "normal",
+       "font-style": "italic",
+       "font-decoration": "none"
+      }
+     },
+     {
+      "content": ")",
+      "attrs": {
+       "font-family": "Times New Roman",
+       "font-size": 19,
+       "font-weight": "normal",
+       "font-style": "italic",
+       "font-decoration": "none"
+      }
+     }
+    ]
+   },
+   {
+    "move": 21.06
+   },
+   {
+    "left": 685,
+    "anchor": "end",
+    "phrases": [
+     {
+      "content": "by ",
+      "attrs": {
+       "font-family": "Times New Roman",
+       "font-size": 19,
+       "font-weight": "normal",
+       "font-style": "italic",
+       "font-decoration": "none"
+      }
+     },
+     {
+      "content": "Me",
+      "attrs": {
+       "font-family": "cursive",
+       "font-size": 16,
+       "font-weight": "bold",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     }
+    ]
+   },
+   {
+    "move": 21.06
+   },
+   {
+    "left": 15,
+    "anchor": "start",
+    "phrases": [
+     {
+      "content": "AA",
+      "attrs": {
+       "font-family": "Times New Roman",
+       "font-size": 20,
+       "font-weight": "normal",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     },
+     {
+      "content": "BB",
+      "attrs": {
+       "font-family": "cursive",
+       "font-size": 16,
+       "font-weight": "bold",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     },
+     {
+      "content": "CC",
+      "attrs": {
+       "font-family": "Times New Roman",
+       "font-size": 20,
+       "font-weight": "normal",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     }
+    ]
+   },
+   {
+    "move": 22.16
+   }
+  ],
+  "bottomText": [
+   {
+    "move": 0
+   },
+   {
+    "startGroup": "unalignedWords",
+    "klass": "",
+    "name": "unalignedWords"
+   },
+   {
+    "move": 0
+   },
+   {
+    "left": 15,
+    "anchor": "start",
+    "phrases": [
+     {
+      "content": "lo ",
+      "attrs": {
+       "font-family": "Times New Roman",
+       "font-size": 21,
+       "font-weight": "normal",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     },
+     {
+      "content": "loo ",
+      "attrs": {
+       "font-family": "cursive",
+       "font-size": 16,
+       "font-weight": "bold",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     },
+     {
+      "content": "lou $1dollar",
+      "attrs": {
+       "font-family": "Times New Roman",
+       "font-size": 21,
+       "font-weight": "normal",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     }
+    ]
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "endGroup": "unalignedWords",
+    "absElemType": "unalignedWords",
+    "startChar": -1,
+    "endChar": -1,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "left": 15,
+    "anchor": "start",
+    "phrases": [
+     {
+      "content": "Book: ",
+      "attrs": {
+       "font-family": "Times New Roman",
+       "font-size": 21,
+       "font-weight": "normal",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     },
+     {
+      "content": "book",
+      "attrs": {
+       "font-family": "cursive",
+       "font-size": 16,
+       "font-weight": "bold",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     }
+    ]
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "left": 15,
+    "text": "Discography: records",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 26
+   },
+   {
+    "startGroup": "notes",
+    "klass": "",
+    "name": "description"
+   },
+   {
+    "move": 0
+   },
+   {
+    "left": 15,
+    "text": "Notes:",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "dominant-baseline": "middle",
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 17.4525
+   },
+   {
+    "left": 15,
+    "anchor": "start",
+    "phrases": [
+     {
+      "content": "four ",
+      "attrs": {
+       "font-family": "Times New Roman",
+       "font-size": 21,
+       "font-weight": "normal",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     },
+     {
+      "content": "five ",
+      "attrs": {
+       "font-family": "cursive",
+       "font-size": 16,
+       "font-weight": "bold",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     },
+     {
+      "content": " six",
+      "attrs": {
+       "font-family": "Times New Roman",
+       "font-size": 21,
+       "font-weight": "normal",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     }
+    ]
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "left": 15,
+    "text": "seven",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "description"
+   },
+   {
+    "move": 26
+   },
+   {
+    "endGroup": "notes",
+    "absElemType": "extraText",
+    "startChar": -1,
+    "endChar": -1,
+    "name": "description"
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "startGroup": "history",
+    "klass": "",
+    "name": "description"
+   },
+   {
+    "move": 0
+   },
+   {
+    "left": 15,
+    "text": "History:",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "dominant-baseline": "middle",
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 17.4525
+   },
+   {
+    "left": 15,
+    "anchor": "start",
+    "phrases": [
+     {
+      "content": "one ",
+      "attrs": {
+       "font-family": "Times New Roman",
+       "font-size": 21,
+       "font-weight": "normal",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     },
+     {
+      "content": "two ",
+      "attrs": {
+       "font-family": "cursive",
+       "font-size": 16,
+       "font-weight": "bold",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     },
+     {
+      "content": " three",
+      "attrs": {
+       "font-family": "Times New Roman",
+       "font-size": 21,
+       "font-weight": "normal",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     }
+    ]
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "left": 15,
+    "anchor": "start",
+    "phrases": [
+     {
+      "content": "aye ",
+      "attrs": {
+       "font-family": "Times New Roman",
+       "font-size": 21,
+       "font-weight": "normal",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     },
+     {
+      "content": "bee ",
+      "attrs": {
+       "font-family": "cursive",
+       "font-size": 16,
+       "font-weight": "bold",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     },
+     {
+      "content": " sea",
+      "attrs": {
+       "font-family": "Times New Roman",
+       "font-size": 21,
+       "font-weight": "normal",
+       "font-style": "normal",
+       "font-decoration": "none"
+      }
+     }
+    ]
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "endGroup": "history",
+    "absElemType": "extraText",
+    "startChar": -1,
+    "endChar": -1,
+    "name": "description"
+   },
+   {
+    "move": 23.27
+   }
+  ]
+ },
+ "repo/abcjs-visual-misc-06-title-1bold-0-100-reg-the-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "the Title bold $100 reg",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 438,
+    "endChar": 465,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "subtitle bold reg",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 466,
+    "endChar": 485,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Thomas Fats Waller (Copyright 1924 All Rights Reserved)",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 486,
+    "endChar": 506,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   },
+   {
+    "left": 685,
+    "text": "by Me",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 544,
+    "endChar": 551,
+    "absElemType": "author",
+    "name": "author"
+   },
+   {
+    "move": 23
+   },
+   {
+    "left": 15,
+    "text": "AABBCC",
+    "font": "partsfont",
+    "anchor": "start",
+    "startChar": 552,
+    "endChar": 560,
+    "absElemType": "partOrder",
+    "name": "part-order"
+   },
+   {
+    "move": 24
+   }
+  ],
+  "bottomText": [
+   {
+    "move": 0
+   },
+   {
+    "startGroup": "unalignedWords",
+    "klass": "",
+    "name": "unalignedWords"
+   },
+   {
+    "move": 0
+   },
+   {
+    "left": 15,
+    "text": "lo loo lou $1dollar",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 26
+   },
+   {
+    "endGroup": "unalignedWords",
+    "absElemType": "unalignedWords",
+    "startChar": -1,
+    "endChar": -1,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "left": 15,
+    "text": "Notes:\nfour five six\nseven",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "dominant-baseline": "middle",
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 77
+   },
+   {
+    "left": 15,
+    "text": "History:\none two three\naye bee sea",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "dominant-baseline": "middle",
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 77
+   }
+  ]
+ },
+ "repo/abcjs-visual-misc-07-ab-ef-g-d-df-f-d-a-4-c-4-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-misc-08-a2-c2-t-a2t-c2-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-misc-09-begintext-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-misc-10-begintext-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-misc-11-begintext-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-misc-12-b-beambr1-b-bb-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-misc-13-ceg-t-gce-d-f-b-3-dm7-d-te-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-misc-14-tune-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-mouse-click-01-selection-test-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Selection Test",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 81,
+    "endChar": 98,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 34
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "Everything should be selectable",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 99,
+    "endChar": 133,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 15,
+    "text": "Hit it",
+    "font": "infofont",
+    "anchor": "start",
+    "startChar": 151,
+    "endChar": 160,
+    "absElemType": "rhythm",
+    "name": "rhythm"
+   },
+   {
+    "left": 685,
+    "text": "public domain",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 134,
+    "endChar": 150,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   },
+   {
+    "left": 685,
+    "text": "Yours Truly",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 161,
+    "endChar": 175,
+    "absElemType": "author",
+    "name": "author"
+   },
+   {
+    "move": 23
+   },
+   {
+    "left": 15,
+    "text": "AABB",
+    "font": "partsfont",
+    "anchor": "start",
+    "startChar": 389,
+    "endChar": 396,
+    "absElemType": "partOrder",
+    "name": "part-order"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": [
+   {
+    "move": 0
+   },
+   {
+    "startGroup": "unalignedWords",
+    "klass": "",
+    "name": "unalignedWords"
+   },
+   {
+    "move": 0
+   },
+   {
+    "left": 15,
+    "text": "Now is the time for all good men",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "left": 15,
+    "text": "To come to the aid of their party.",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 26
+   },
+   {
+    "endGroup": "unalignedWords",
+    "absElemType": "unalignedWords",
+    "startChar": -1,
+    "endChar": -1,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "left": 15,
+    "text": "Source: My own testing",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 26
+   },
+   {
+    "left": 15,
+    "text": "History:\nThis shows every type of thing that can possibly be drawn.\n\nAnd two lines of history!",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "dominant-baseline": "middle",
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 102
+   }
+  ]
+ },
+ "repo/abcjs-visual-multi-voice-01-score-top-bottom-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-multi-voice-02-p-c-2b2-z4-f2a2-f4-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-options-01-fonts-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "fonts",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 563,
+    "endChar": 570,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 50
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "changing all fonts",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 571,
+    "endChar": 591,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 38
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 15,
+    "text": "hopping",
+    "font": "infofont",
+    "anchor": "start",
+    "startChar": 612,
+    "endChar": 621,
+    "absElemType": "rhythm",
+    "name": "rhythm"
+   },
+   {
+    "left": 685,
+    "text": "composer (Origin)",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 592,
+    "endChar": 602,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 19
+   },
+   {
+    "left": 685,
+    "text": "author",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 603,
+    "endChar": 611,
+    "absElemType": "author",
+    "name": "author"
+   },
+   {
+    "move": 19
+   },
+   {
+    "left": 15,
+    "text": "Part Order",
+    "font": "partsfont",
+    "anchor": "start",
+    "startChar": 662,
+    "endChar": 674,
+    "absElemType": "partOrder",
+    "name": "part-order"
+   },
+   {
+    "move": 62
+   }
+  ],
+  "bottomText": [
+   {
+    "move": 0
+   },
+   {
+    "startGroup": "unalignedWords",
+    "klass": "",
+    "name": "unalignedWords"
+   },
+   {
+    "move": 0
+   },
+   {
+    "left": 15,
+    "text": "The extra verses",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 21
+   },
+   {
+    "left": 15,
+    "text": "The extra verses - line 2",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 21
+   },
+   {
+    "endGroup": "unalignedWords",
+    "absElemType": "unalignedWords",
+    "startChar": -1,
+    "endChar": -1,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 18.84
+   },
+   {
+    "move": 18.84
+   },
+   {
+    "left": 15,
+    "text": "Source: source",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 21
+   },
+   {
+    "left": 15,
+    "text": "Notes:\nThe notes",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "dominant-baseline": "middle",
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 41
+   },
+   {
+    "left": 15,
+    "text": "History:\nHistory",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "dominant-baseline": "middle",
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 41
+   }
+  ]
+ },
+ "repo/abcjs-visual-parsing-01-azzz-e2-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-parsing-02-sx-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-parsing-03-v-1-f-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-parsing-04-v-t-c-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-parsing-05-v-t-c-v-b-a-v-t-d-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-parsing-06-score-t-b-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-parsing-07-score-t-b-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-parsing-08-score-t-b-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-parsing-09-score-t-b-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-parsing-10-song-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "song",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 10,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "subtitle",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 11,
+    "endChar": 21,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "composer",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 22,
+    "endChar": 32,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-selection-01-selection-test-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Selection Test",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 202,
+    "endChar": 219,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 34
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "Everything should be selectable",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 220,
+    "endChar": 254,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 15,
+    "text": "Hit it",
+    "font": "infofont",
+    "anchor": "start",
+    "startChar": 272,
+    "endChar": 281,
+    "absElemType": "rhythm",
+    "name": "rhythm"
+   },
+   {
+    "left": 685,
+    "text": "public domain",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 255,
+    "endChar": 271,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   },
+   {
+    "left": 685,
+    "text": "Yours Truly",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 282,
+    "endChar": 296,
+    "absElemType": "author",
+    "name": "author"
+   },
+   {
+    "move": 23
+   },
+   {
+    "left": 15,
+    "text": "AABB",
+    "font": "partsfont",
+    "anchor": "start",
+    "startChar": 510,
+    "endChar": 517,
+    "absElemType": "partOrder",
+    "name": "part-order"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": [
+   {
+    "move": 0
+   },
+   {
+    "startGroup": "unalignedWords",
+    "klass": "",
+    "name": "unalignedWords"
+   },
+   {
+    "move": 0
+   },
+   {
+    "left": 15,
+    "text": "Now is the time for all good men",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "left": 15,
+    "text": "To come to the aid of their party.",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 26
+   },
+   {
+    "endGroup": "unalignedWords",
+    "absElemType": "unalignedWords",
+    "startChar": -1,
+    "endChar": -1,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "left": 15,
+    "text": "Source: My own testing",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 26
+   },
+   {
+    "left": 15,
+    "text": "History:\nThis shows every type of thing that can possibly be drawn.\n\nAnd two lines of history!",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "dominant-baseline": "middle",
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 102
+   }
+  ]
+ },
+ "repo/abcjs-visual-selection-02-g4-q-left-1-4-170-right-a4-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-selection-03-c4-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-slurs-01-score-s-a-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-slurs-02-score-s-a-t-b-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-svg-01-staffwidth-5-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-svg-02-staffwidth-12-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-svg-03-a4-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-svg-per-line-01-selection-test-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Selection Test",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 202,
+    "endChar": 219,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 34
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "Everything should be selectable",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 220,
+    "endChar": 254,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 15,
+    "text": "Hit it",
+    "font": "infofont",
+    "anchor": "start",
+    "startChar": 272,
+    "endChar": 281,
+    "absElemType": "rhythm",
+    "name": "rhythm"
+   },
+   {
+    "left": 685,
+    "text": "public domain",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 255,
+    "endChar": 271,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   },
+   {
+    "left": 685,
+    "text": "Yours Truly",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 282,
+    "endChar": 296,
+    "absElemType": "author",
+    "name": "author"
+   },
+   {
+    "move": 23
+   },
+   {
+    "left": 15,
+    "text": "AABB",
+    "font": "partsfont",
+    "anchor": "start",
+    "startChar": 510,
+    "endChar": 517,
+    "absElemType": "partOrder",
+    "name": "part-order"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": [
+   {
+    "move": 0
+   },
+   {
+    "startGroup": "unalignedWords",
+    "klass": "",
+    "name": "unalignedWords"
+   },
+   {
+    "move": 0
+   },
+   {
+    "left": 15,
+    "text": "Now is the time for all good men",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "left": 15,
+    "text": "To come to the aid of their party.",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 26
+   },
+   {
+    "endGroup": "unalignedWords",
+    "absElemType": "unalignedWords",
+    "startChar": -1,
+    "endChar": -1,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "left": 15,
+    "text": "Source: My own testing",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 26
+   },
+   {
+    "left": 15,
+    "text": "History:\nThis shows every type of thing that can possibly be drawn.\n\nAnd two lines of history!",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "dominant-baseline": "middle",
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 102
+   }
+  ]
+ },
+ "repo/abcjs-visual-svg-per-line-02-scaled-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 281,
+    "text": "Scaled",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 34,
+    "endChar": 43,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-tablature-01-gr-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-tablature-02-g-fg-a-g2-a-very-very-long-chord-d2-cd-f-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-tablature-03-staves-rh-lh-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-tablature-04-barnumbers-1-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-tablature-05-a7-a-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-tablature-06-a7-a-tune0": {
+  "topText": [
+   {
+    "left": 15,
+    "text": "Verse",
+    "font": "partsfont",
+    "anchor": "start",
+    "startChar": 10,
+    "endChar": 17,
+    "absElemType": "partOrder",
+    "name": "part-order"
+   },
+   {
+    "move": 24
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-tablature-07-staves-rh-lh-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-tablature-08-first-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "First",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 5,
+    "endChar": 13,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "Second",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 14,
+    "endChar": 23,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-tablature-09-f-g-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-tablature-10-f3-a-y-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-tablature-11-f-f-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-tablature-12-b-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-tablature-13-g8-c4-d4-e4-f4-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-tablature-14-c-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-tablature-15-all-element-types-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "all-element-types",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 71,
+    "endChar": 91,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 34
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "Everything should be selectable",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 92,
+    "endChar": 126,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 15,
+    "text": "Hit it",
+    "font": "infofont",
+    "anchor": "start",
+    "startChar": 144,
+    "endChar": 153,
+    "absElemType": "rhythm",
+    "name": "rhythm"
+   },
+   {
+    "left": 685,
+    "text": "public domain",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 127,
+    "endChar": 143,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   },
+   {
+    "left": 685,
+    "text": "Yours Truly",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 154,
+    "endChar": 168,
+    "absElemType": "author",
+    "name": "author"
+   },
+   {
+    "move": 23
+   },
+   {
+    "left": 15,
+    "text": "AABB",
+    "font": "partsfont",
+    "anchor": "start",
+    "startChar": 382,
+    "endChar": 389,
+    "absElemType": "partOrder",
+    "name": "part-order"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": [
+   {
+    "move": 0
+   },
+   {
+    "startGroup": "unalignedWords",
+    "klass": "",
+    "name": "unalignedWords"
+   },
+   {
+    "move": 0
+   },
+   {
+    "left": 15,
+    "text": "Now is the time for all good men",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "left": 15,
+    "text": "To come to the aid of their party.",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 26
+   },
+   {
+    "endGroup": "unalignedWords",
+    "absElemType": "unalignedWords",
+    "startChar": -1,
+    "endChar": -1,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "left": 15,
+    "text": "Source: My own testing",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 26
+   },
+   {
+    "left": 15,
+    "text": "History:\nThis shows every type of thing that can possibly be drawn.\n\nAnd two lines of history!",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "dominant-baseline": "middle",
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 102
+   }
+  ]
+ },
+ "repo/abcjs-visual-tablature-16-g-g-g-g-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-tablature-17-stretchlast-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-tablature-18-a-b-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-tablature-19-d-a-d-g-b-e-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-tablature-20-score-1-2-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-tablature-21-a2-a-a-f-f-f-f-f-e-ee-g-gg-g-k-eb-a2-a2-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-tablature-22-g-cegda-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-tablature-23-gab-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-tablature-24-stretchlast-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-title-01-not-transformed-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Not Transformed",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 21,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-title-02-transformed-the-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "The Transformed",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 22,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-title-03-transformed-the-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "the Transformed",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 21,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-title-04-transformed-a-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "A Transformed",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 20,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-title-05-transformed-an-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "An Transformed",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 21,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-title-06-transformed-a-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a Transformed",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 21,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-title-07-24-number-transform-the-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "24. The Number Transform",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 31,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-title-08-24-number-transform-a-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "24. A Number Transform",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 29,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-title-09-mal-the-formed-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Mal , The Formed",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 22,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-title-10-20-subtitles-the-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "20. The Subtitles",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 24,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "The Sub",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 26,
+    "endChar": 36,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "the Sub",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 37,
+    "endChar": 47,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "A Sub",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 48,
+    "endChar": 56,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "a Sub",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 57,
+    "endChar": 65,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "An Sub",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 66,
+    "endChar": 75,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "an Sub",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 76,
+    "endChar": 85,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "Da Sub",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 86,
+    "endChar": 95,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "La Sub",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 96,
+    "endChar": 105,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "Le Sub",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 106,
+    "endChar": 115,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "Les Sub",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 116,
+    "endChar": 126,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "Ye Sub",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 127,
+    "endChar": 136,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-transpose-01-f2-f-f-f-f-f2-e2-e-e-e-e-e2-k-ab-f2-f-f--tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-transpose-02-cdef-gabc-c-d-e-f-g-a-b-c-c-d-e-f-g-a-b--tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-transpose-03-cdef-gabc-c-d-e-f-g-a-b-c-c-d-e-f-g-a-b--tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-transpose-04-transpose-annotations-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "transpose_annotations",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 27,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-transpose-05-n-c-ab-c-c-c-c-d-d-d-d-e-e-f-f-f-f-g-g-g-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-transpose-06-c-d-e-f-g-a-b-c-cdef-gabc-c-d-e-f-g-a-b--tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-transpose-output-01-transpose-output-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Transpose Output",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 23,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-transpose-output-02-transpose-output-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Transpose Output",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 23,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-transpose-output-03-transpose-output-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Transpose Output",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 23,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-transpose-output-04-transpose-output-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Transpose Output",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 23,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-transpose-output-05-g-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-transpose-output-06-f-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-wrap-01-b-4-c2d2-e3f-gabc-d-e-f-g-marcato-d-e-f--tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-wrap-02-stretchlast-1-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-wrap-03-piano-wrap-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "piano_wrap",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 16,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-wrap-04-wrap-quartet-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "wrap quartet",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 19,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcjs-visual-wrap-05-score-1-2-3-4-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "repo/abcts-keywarn-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "keywarn absent",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 356,
+    "endChar": 372,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-keywarn-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "keywarn 0",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 411,
+    "endChar": 422,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-keywarn-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "keywarn false is a no-op",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 473,
+    "endChar": 499,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-visualtranspose-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "visualTranspose 0 — the control's control",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 421,
+    "endChar": 464,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-visualtranspose-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "visualTranspose up 2",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 517,
+    "endChar": 539,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-visualtranspose-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "visualTranspose down 3, with accidentals",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 592,
+    "endChar": 634,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-visualtranspose-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "visualTranspose up 7, minor",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 691,
+    "endChar": 720,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-vskip-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "vskip between lines",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 364,
+    "endChar": 385,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-vskip-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "vskip before the first line",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 430,
+    "endChar": 459,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-vskip-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "vskip in centimetres",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 504,
+    "endChar": 526,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S1-decorations-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S1-1 Decorations",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 95,
+    "endChar": 113,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test - from Gonzato guide Ch.2",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 114,
+    "endChar": 146,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S1-decorations-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S1-2 Shorthand Decorations",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 358,
+    "endChar": 386,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": [
+   {
+    "left": 15,
+    "text": "Notes:\nfrom https://abcnotation.com/wiki/abc:standard:v2.1#decorations",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "dominant-baseline": "middle",
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 51
+   }
+  ]
+ },
+ "sib/S1-decorations-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S1-3 All Decorations",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 561,
+    "endChar": 583,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": [
+   {
+    "left": 15,
+    "text": "Notes:\nfrom https://abcnotation.com/wiki/abc:standard:v2.1#decorations",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "dominant-baseline": "middle",
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 51
+   }
+  ]
+ },
+ "sib/S1-decorations-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S1-4 Mark Decoration Test",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1306,
+    "endChar": 1333,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S1-decorations-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S1-5 Glissando Test",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1409,
+    "endChar": 1430,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test Fixture",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 1431,
+    "endChar": 1445,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S2-fields-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S2-1 Title and Header Fields",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 97,
+    "endChar": 127,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "A Subtitle Here",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 128,
+    "endChar": 145,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 15,
+    "text": "March",
+    "font": "infofont",
+    "anchor": "start",
+    "startChar": 182,
+    "endChar": 189,
+    "absElemType": "rhythm",
+    "name": "rhythm"
+   },
+   {
+    "left": 685,
+    "text": "John Composer (Country of Origin)",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 146,
+    "endChar": 161,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S2-fields-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S2-2 Text Placement",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 277,
+    "endChar": 298,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S2-fields-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S2-3 BeginText Test",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 509,
+    "endChar": 530,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-1 Scales and Pitch Range",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 90,
+    "endChar": 119,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test - from Gonzato guide Ch.2",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 120,
+    "endChar": 152,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-2 Accidentals and Microtones",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 277,
+    "endChar": 310,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test - from Gonzato guide Ch.2",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 311,
+    "endChar": 343,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-3 Note Durations",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 554,
+    "endChar": 575,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test - from Gonzato guide Ch.2",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 576,
+    "endChar": 608,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-4 Rests and Spacing",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 753,
+    "endChar": 777,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test - from Gonzato guide Ch.2",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 778,
+    "endChar": 810,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-5 Chords and Unisons",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 941,
+    "endChar": 966,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test - from Gonzato guide Ch.2",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 967,
+    "endChar": 999,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-6 Broken Rhythm and Dots",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1172,
+    "endChar": 1201,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test - from Gonzato guide Ch.2",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 1202,
+    "endChar": 1234,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-7 Tuplets",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1374,
+    "endChar": 1388,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test - from Gonzato guide Ch.2",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 1389,
+    "endChar": 1421,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-8 Accompaniment Chords",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1554,
+    "endChar": 1581,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test - from Gonzato guide Ch.2",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 1582,
+    "endChar": 1614,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune8": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-9 Ties Slurs Staccato Grace Notes",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1786,
+    "endChar": 1824,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test - from Gonzato guide Ch.2",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 1825,
+    "endChar": 1857,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune9": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-10 Multi-Measure Rests",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2083,
+    "endChar": 2110,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test - from Gonzato guide Ch.2",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 2111,
+    "endChar": 2143,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune10": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-11 Twinkle Twinkle",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2219,
+    "endChar": 2242,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune11": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-12 Rests and Bars",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2320,
+    "endChar": 2342,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune12": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-13 Basic Durations",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2418,
+    "endChar": 2441,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune13": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-14 Rests",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2561,
+    "endChar": 2574,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune14": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-15 Pitches and Octaves - C Major Scale - Quarter Notes",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2704,
+    "endChar": 2763,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune15": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-16 Pitches and Octaves - Octaves",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2846,
+    "endChar": 2883,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune16": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-17 Pitches and Octaves - Low Ledger Lines",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2966,
+    "endChar": 3012,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune17": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-18 Happy Birthday with chords",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 3084,
+    "endChar": 3118,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune18": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-19 Single Grace Note",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 3434,
+    "endChar": 3459,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune19": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-20 Double Grace Note",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 3546,
+    "endChar": 3571,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune20": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-21 Slurs",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 3665,
+    "endChar": 3678,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune21": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-22 Birl",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 3772,
+    "endChar": 3784,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune22": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-23 Dotted Ties and Slurs",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 3863,
+    "endChar": 3892,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test Fixture",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 3893,
+    "endChar": 3907,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune23": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-24 Chord Break Test",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4142,
+    "endChar": 4166,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S3-note-syntax-tune24": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S3-25 Slash Chords and Jazz Chords",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4302,
+    "endChar": 4338,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test Fixture",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 4339,
+    "endChar": 4353,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S4-bars-repeats-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S4-1 Bars Repeats and Endings",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 93,
+    "endChar": 124,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test - from Gonzato guide Ch.2",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 125,
+    "endChar": 157,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S4-bars-repeats-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S4-2 Extended Volta Endings",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 305,
+    "endChar": 334,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test Fixture",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 335,
+    "endChar": 349,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S4-bars-repeats-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S4-3 Bars and Rests",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 674,
+    "endChar": 695,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S5-directives-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S5-1 Note Styles",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 86,
+    "endChar": 104,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test Fixture",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 105,
+    "endChar": 119,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S5-directives-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S5-2 Alternate Note Heads",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 473,
+    "endChar": 500,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S5-directives-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S5-3 Overlay Test",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1124,
+    "endChar": 1143,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S5-directives-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S5-4 Lyrics",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1228,
+    "endChar": 1241,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test - from Gonzato guide Ch.2",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 1242,
+    "endChar": 1274,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S5-directives-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S5-5 Vocals",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1418,
+    "endChar": 1431,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S5-directives-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S5-6 Scale",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1660,
+    "endChar": 1672,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "Second Title",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 1673,
+    "endChar": 1687,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "Third Title",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 1688,
+    "endChar": 1701,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S6-keys-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S6-1 C",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 92,
+    "endChar": 100,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S6-keys-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S6-2 Change Key Sig",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 176,
+    "endChar": 197,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S6-keys-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S6-3 Key Signatures",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 427,
+    "endChar": 448,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test - from Gonzato guide Ch.2",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 449,
+    "endChar": 481,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S6-keys-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S6-4 Modal Key Signatures",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 646,
+    "endChar": 673,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test Fixture",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 674,
+    "endChar": 688,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S6-keys-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S6-5 Double Accidentals",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1150,
+    "endChar": 1175,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test Fixture",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 1176,
+    "endChar": 1190,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S7-voices-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S7-1 Piano Two Voice",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 95,
+    "endChar": 117,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Elton John",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 118,
+    "endChar": 130,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S7-voices-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S7-2 Piano Dense Notation",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 418,
+    "endChar": 445,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "L. van Beethoven",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 446,
+    "endChar": 464,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S7-voices-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S7-3 Counterpoint Two Voice",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 861,
+    "endChar": 890,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "J.S. Bach",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 891,
+    "endChar": 902,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S7-voices-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S7-4 Three Voice Piano",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1145,
+    "endChar": 1169,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Schumann",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 1170,
+    "endChar": 1180,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S7-voices-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S7-5 SATB Choral",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1557,
+    "endChar": 1575,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "(Mor Fawr Wyt Ti!)",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 1576,
+    "endChar": 1596,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S7-voices-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S7-6 Organ Four Voice",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2152,
+    "endChar": 2175,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Johann Nicolaus Hanff",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 2176,
+    "endChar": 2199,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S7-voices-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S7-7 Organ Trio",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2626,
+    "endChar": 2643,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "André Raison",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 2644,
+    "endChar": 2658,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S8-layout-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S8-1 Beams and Grouping",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 116,
+    "endChar": 141,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test - from Gonzato guide Ch.2",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 142,
+    "endChar": 174,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S8-layout-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S8-2 Clefs",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 321,
+    "endChar": 333,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test - from Gonzato guide Ch.2",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 334,
+    "endChar": 366,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S8-layout-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S8-3 Time Signatures",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 505,
+    "endChar": 527,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test - from Gonzato guide Ch.2",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 528,
+    "endChar": 560,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S8-layout-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S8-4 Short and Long Notes, Beams and Tuplets",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 709,
+    "endChar": 755,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Trad",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 756,
+    "endChar": 762,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S8-layout-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S8-5 Horizontal beams",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 902,
+    "endChar": 925,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S8-layout-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S8-6 Chords, Unions, First and Second Endings",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1278,
+    "endChar": 1325,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S8-layout-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S8-7 Gracenotes",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1641,
+    "endChar": 1658,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S8-layout-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S8-8 Key signature, Accidentals and Decorations",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1950,
+    "endChar": 1999,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S8-layout-tune8": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S8-9 Slurs and Ties",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2349,
+    "endChar": 2370,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "Title with funny chars like \\005 Çéñô Àçäßö © …",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 2371,
+    "endChar": 2421,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S8-layout-tune9": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S8-10 Strange tuplet cases",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2569,
+    "endChar": 2597,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S8-layout-tune10": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S8-11 Chords with many accidentals",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 2883,
+    "endChar": 2919,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/S8-layout-tune11": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S8-12 Changing Time or Key Signatures, Guitar Chords",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 3307,
+    "endChar": 3361,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/ave-verum-corpus-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Ave Verum Corpus",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 5,
+    "endChar": 24,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "W. A. Mozart",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 25,
+    "endChar": 40,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/brother-john-inline-voices-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Brother John - improved",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 5,
+    "endChar": 31,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Traditional",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 32,
+    "endChar": 46,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/center-text-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Center Directive Test",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 249,
+    "endChar": 272,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test Fixture",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 273,
+    "endChar": 287,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/chord-grid-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Chord Grid Test",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 21,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/clefs-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Treble clef",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 17,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/clefs-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Bass clef",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 49,
+    "endChar": 60,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/clefs-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Baritone clef",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 90,
+    "endChar": 105,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/clefs-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tenor clef",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 136,
+    "endChar": 148,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/clefs-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Alto clef",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 179,
+    "endChar": 190,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/clefs-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Messosoprano clef",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 220,
+    "endChar": 239,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/clefs-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Soprano clef",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 270,
+    "endChar": 284,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/clefs-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Change Clefs",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 315,
+    "endChar": 329,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/courtesy-key-before-subtitle-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Main",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 364,
+    "endChar": 370,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/curves-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Ties",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 10,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/curves-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Slurs",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 46,
+    "endChar": 53,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/curves-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Nested Slurs",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 91,
+    "endChar": 105,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/curves-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Slurs over Stacked Notes",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 143,
+    "endChar": 169,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/curves-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Nested slurs over Stacked Notes",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 219,
+    "endChar": 252,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/curves-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Slurs starting and ending on same note",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 298,
+    "endChar": 338,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/curves-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Tie within slur",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 376,
+    "endChar": 393,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/escaped-percent-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "100​％ Amazing",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 482,
+    "endChar": 497,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/extra-class-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "sib/frere-jacques-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Frère Jacques",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 19,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "(French rhyme)",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 20,
+    "endChar": 36,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "attr. to Jean-Philippe Rameau (1683 - 1764) (arr. S. Di Mico for educational purposes)",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 123,
+    "endChar": 168,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": [
+   {
+    "left": 15,
+    "text": "Source: The copyright for the music and lyrics represented herein",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 26
+   },
+   {
+    "left": 15,
+    "text": "Notes:\nPlay expressively",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "dominant-baseline": "middle",
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 51
+   },
+   {
+    "left": 15,
+    "text": "Transcription: This transcription © Sergio Di Mico - All rights reserved",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 26
+   },
+   {
+    "left": 15,
+    "text": "History:\ndedicated to my \"out of tune\" sweet lady",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "dominant-baseline": "middle",
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 51
+   }
+  ]
+ },
+ "sib/full-song-template-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "TITLE OF THE SONG",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 5,
+    "endChar": 25,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "ALTERNATE TITLE",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 26,
+    "endChar": 44,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 15,
+    "text": "RHYTHM, E.G. JIG, WALTZ",
+    "font": "infofont",
+    "anchor": "start",
+    "startChar": 290,
+    "endChar": 316,
+    "absElemType": "rhythm",
+    "name": "rhythm"
+   },
+   {
+    "left": 685,
+    "text": "COMPOSER/SONGWRITER (ORIGIN/GEOGRAPHIC)",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 45,
+    "endChar": 67,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": [
+   {
+    "move": 0
+   },
+   {
+    "startGroup": "unalignedWords",
+    "klass": "",
+    "name": "unalignedWords"
+   },
+   {
+    "move": 0
+   },
+   {
+    "left": 15,
+    "text": "Write your extra verses here, verses here, verses here.",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 26
+   },
+   {
+    "left": 15,
+    "text": "Write your extra verses here, or the whole song if you like.",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "left": 15,
+    "text": "--- This is where the chorus goes, chorus goes, chorus goes.",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 26
+   },
+   {
+    "left": 15,
+    "text": "--- Indent it with dashes if you like, but spaces will not work.",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "left": 15,
+    "text": "Here we have another verse, another verse, another verse.",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 26
+   },
+   {
+    "left": 15,
+    "text": "Now we have reached the end - this is the last verse of this song.",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 26
+   },
+   {
+    "endGroup": "unalignedWords",
+    "absElemType": "unalignedWords",
+    "startChar": -1,
+    "endChar": -1,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "left": 15,
+    "text": "Source: SOURCE OF THE SONG",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 26
+   },
+   {
+    "left": 15,
+    "text": "Discography: DISCOGRAPHY - CD, LP, ETC.",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 26
+   },
+   {
+    "left": 15,
+    "text": "Notes:\nNOTES (TEXT)",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "dominant-baseline": "middle",
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 51
+   },
+   {
+    "left": 15,
+    "text": "Transcription: TRANSCRIBER, COPYRIGHT, PERMISSIONS",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 26
+   },
+   {
+    "left": 15,
+    "text": "History:\nHISTORY OF THE SONG\nThis self-documenting ABC song template was created by Linda Eskin.",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "dominant-baseline": "middle",
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 77
+   }
+  ]
+ },
+ "sib/grandstaff-inline-meter-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Grand staff inline meter",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 590,
+    "endChar": 616,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/happy-birthday-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Happy Birthday with chords",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 5,
+    "endChar": 34,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/inline-key-per-voice-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "sib/little swallow-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Little Swallow",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 5,
+    "endChar": 22,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "Xi\\vao yàn zi",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 23,
+    "endChar": 41,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "小燕子",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 42,
+    "endChar": 48,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": " (China)",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": -2,
+    "endChar": -2,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": [
+   {
+    "move": 0
+   },
+   {
+    "startGroup": "unalignedWords",
+    "klass": "",
+    "name": "unalignedWords"
+   },
+   {
+    "move": 0
+   },
+   {
+    "left": 15,
+    "text": "Little Swallow, you're so beautiful, Every spring you come here and soar,",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 26
+   },
+   {
+    "left": 15,
+    "text": "\"Why come back here\" I ask you, You say,\"Here spring is most beautiful\".",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 26
+   },
+   {
+    "left": 15,
+    "text": "Little Swallow, I'd like to tell you, This year here has become more beautiful.",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 26
+   },
+   {
+    "left": 15,
+    "text": "A large factory has been built, Equipped with new machinery.",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 26
+   },
+   {
+    "left": 15,
+    "text": "We welcome you to live here as long as possible.",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 26
+   },
+   {
+    "endGroup": "unalignedWords",
+    "absElemType": "unalignedWords",
+    "startChar": -1,
+    "endChar": -1,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "move": 23.27
+   }
+  ]
+ },
+ "sib/missing-decorations-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S-missing-1 xstem",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 229,
+    "endChar": 248,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test Fixture",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 249,
+    "endChar": 263,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/missing-decorations-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S-missing-2 trillh",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 327,
+    "endChar": 347,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test Fixture",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 348,
+    "endChar": 362,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/missing-decorations-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S-missing-3 Beam Tremolos",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 429,
+    "endChar": 456,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test Fixture",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 457,
+    "endChar": 471,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/missing-decorations-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S-missing-4 Editorial and Courtesy Accidentals",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 550,
+    "endChar": 598,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test Fixture",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 599,
+    "endChar": 613,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/missing-decorations-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S-missing-5 Dal Segno / Da Capo Navigation",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 702,
+    "endChar": 746,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test Fixture",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 747,
+    "endChar": 761,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/missing-decorations-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "S-missing-6 Combined Decorations",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 905,
+    "endChar": 939,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test Fixture",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 940,
+    "endChar": 954,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/multi-voice-lyrics-two-voices-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "sib/multi-voice-rest-collision-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "sib/multi-voice-rest-placement-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "sib/multi-voice-triplet-brackets-tune0": {
+  "topText": [],
+  "bottomText": []
+ },
+ "sib/program-127-test-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Title",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 5,
+    "endChar": 13,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 3.78
+   },
+   {
+    "left": 350,
+    "text": "Alternate Title",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 14,
+    "endChar": 32,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 15,
+    "text": "Rhythm",
+    "font": "infofont",
+    "anchor": "start",
+    "startChar": 55,
+    "endChar": 64,
+    "absElemType": "rhythm",
+    "name": "rhythm"
+   },
+   {
+    "left": 685,
+    "text": "Composer (Origin)",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 33,
+    "endChar": 44,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": [
+   {
+    "left": 15,
+    "text": "Source: Source",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 26
+   },
+   {
+    "left": 15,
+    "text": "Notes:\nAdd notes about this tune here",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "dominant-baseline": "middle",
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 51
+   },
+   {
+    "left": 15,
+    "text": "Transcription: Transcriber",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 26
+   }
+  ]
+ },
+ "sib/ragtime-mini-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Ragtime Mini",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 18,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/ragtime-nightingale-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Ragtime Nightingale",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 25,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Joseph Lamb",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 26,
+    "endChar": 39,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/score-reorder-shared-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Same Staff Reorder",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 24,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/score-reorder-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Reorder Test",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 18,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/simple-c-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Simple C",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 14,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/stacked-annotations-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Stacked annotations test",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 30,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/tunebook-3-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Simple C",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 14,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/tunebook-3-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Twinkle Twinkle",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 47,
+    "endChar": 64,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/tunebook-3-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "D Scale",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 107,
+    "endChar": 116,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/twinkle-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Twinkle Twinkle",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 21,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/two-voice-invention-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Two Voice Invention",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 25,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Test fixture",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 26,
+    "endChar": 40,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/voice-middle-after-clef-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Voice middle= after clef",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 30,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/voice-octave-shift-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Voice octave shift test",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 29,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/vree-compound-meter-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Compound Meter (6/8)",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 5,
+    "endChar": 28,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/vree-grace-notes-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Grace Notes",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 5,
+    "endChar": 19,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/vree-sharps-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Key with Many Sharps",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 5,
+    "endChar": 28,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/vree-slurs-and-triplets-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Slurs and Triplets",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 5,
+    "endChar": 26,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/vree-ties-across-bars-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Ties Across Bars",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 5,
+    "endChar": 24,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "sib/zocharti-loch-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Zocharti Loch",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 19,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 7.56
+   },
+   {
+    "left": 685,
+    "text": "Louis Lewandowski (1821-1894)",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 20,
+    "endChar": 51,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ }
+}

@@ -125,11 +125,9 @@ const MISSING: readonly string[] = [
   "synth.sequence",
   "tune.addElementToEvents",
   "tune.addUsefulCallbackInfo",
-  "tune.bottomText",
   "tune.deline",
   "tune.makeVoicesArray",
   "tune.setupEvents",
-  "tune.topText",
 ];
 
 /** Ours, with no abcjs counterpart — allowed, and listed so the diff is visible. */

@@ -1081,6 +1081,36 @@ export interface PlacedLine {
  * to a different serif whereas a missing Bravura degrades to nothing legible. That
  * asymmetry is the whole argument, and abcMusicKit2 splits the same way.
  */
+/**
+ * **ONE ROW OF abcjs's `TopText` / `BottomText`, IN ITS ORDER.** Those two build a
+ * `rows` array interleaving `{move: n}` with a text row and, in the bottom block, a group's
+ * open and close (`creation/elements/top-text.js`, `bottom-text.js`); `nonMusic` walks it
+ * spending each `move` on the page's own cursor (`draw/non-music.js`).
+ *
+ * It is abcjs's INTERMEDIATE shape rather than its answer — the drawing takes the same
+ * information off `texts` and `advances` — and it exists here because `tune.topText` and
+ * `tune.bottomText` are PUBLIC (`engraver-controller.js:222`, `:236`) and a host reads them.
+ * Recording the ORDER is the whole point: `texts` and `advances` are two parallel arrays and
+ * nothing else in the engine needs to know how they interleave.
+ */
+export type MetaTextRow =
+  | { readonly move: number }
+  | { readonly startGroup: string; readonly klass: string; readonly name: string }
+  | { readonly endGroup: string; readonly absElemType: string; readonly name: string }
+  | {
+      readonly text: PlacedText
+      readonly font: AbcFontType
+      /**
+       * **`params.marginLeft`, BEFORE ANY BOX MOVED IT.** `addTextIf` writes
+       * `left: params.marginLeft` into the row (`add-text-if.js:12`) and `renderText`
+       * adjusts `hash.attr.x` by the padding only when it DRAWS (`draw/text.js:57`), so a
+       * boxed row's `left` is still 15 while its text is at 16.2. `PlacedText.x` carries the
+       * shifted one, and recovering the margin by subtracting the padding back is not the
+       * same double — so it travels.
+       */
+      readonly left: number
+    }
+
 export interface PlacedText {
   readonly text: string
   /** What this text is. Absent means it inherits its element's kind. */
@@ -1915,6 +1945,17 @@ export interface Layout {
    * staff in its own `abcjs-meta-bottom` group. y is already in the document's frame.
    */
   readonly bottomText?: readonly PlacedText[]
+  /**
+   * **abcjs's `TopText.rows` / `BottomText.rows`, IN THEIR ORDER** — see `MetaTextRow`.
+   * `tune.topText` and `tune.bottomText` are PUBLIC (`engraver-controller.js:222`, `:236`)
+   * and a host reads them, so the projection needs the INTERLEAVE of `texts` and
+   * `advances`, which no other consumer does. Nothing in the drawing reads either list.
+   *
+   * Present whether or not there is a staff, unlike `topText` above — that one exists only
+   * for the no-music case, where the block has nothing to ride.
+   */
+  readonly topTextRows?: readonly MetaTextRow[]
+  readonly bottomTextRows?: readonly MetaTextRow[]
   /** `%%sep` rules in a trailing block — see `bottomText`. */
   readonly bottomLines?: readonly PlacedLine[]
   /**
@@ -11399,6 +11440,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
    * page's cursor and the page's HEIGHT is that cursor. See `PlacedText.pageY`.
    */
   let topAdvances: number[] = []
+  /** abcjs's `TopText.rows` — see `Layout.topTextRows`. Built with the block, read by compat. */
+  let topRows: MetaTextRow[] = []
   /**
    * Where the MUSIC starts on each system, past the clef and key — the left clamp for a
    * slur continued from the system above. With one cursor per line there is no shared
@@ -11860,6 +11903,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
                 musicSpace,
               )
               topAdvances = built.advances
+              topRows = built.rows
               return {
                 // …and the rules are rebased with the texts, being in the same frame.
                 lines: built.lines.map((l) => ({
@@ -13429,6 +13473,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     systems: shown,
     ...(stafflessBlock === undefined ? {} : { topText: stafflessBlock.texts }),
     ...(bottomText === undefined ? {} : { bottomText }),
+    // …and the two ROW LISTS, whichever path built the top block — see `Layout.topTextRows`.
+    topTextRows: stafflessBlock === undefined ? topRows : stafflessBlock.rows,
+    bottomTextRows: bottomBlock.rows,
     // **A TRAILING `%%sep` DREW NO RULE AT ALL.** Its two spaces were reserved — the height
     // was exact — but `appendFreeText` collects the rule into a `rules` array the trailing
     // call never passed, so the ink was dropped on the floor. Centred on the STAFF width,
@@ -13585,7 +13632,13 @@ function topTextBlock(
   from = 0,
   /** `spacing.music`, spent before the nonMusic rows — see below. `%%musicspace` sets it. */
   musicSpace: number = ENGRAVE.musicSpace,
-): { texts: PlacedText[]; lines: PlacedLine[]; height: number; advances: number[] } {
+): {
+  texts: PlacedText[]
+  lines: PlacedLine[]
+  height: number
+  advances: number[]
+  rows: MetaTextRow[]
+} {
   const texts: PlacedText[] = []
   /**
    * **A `%%sep` IN THE HEAD OF A TUNE IS A RULE LIKE ANY OTHER, AND ITS `rules` SINK WAS
@@ -13626,14 +13679,28 @@ function topTextBlock(
    * the same 7.56 — **two errors cancelling**, which is why the total was right to the
    * pixel and wrong in the last bits on 26 root elements.
    */
+  /**
+   * **abcjs's `TopText.rows`, IN ITS ORDER** — see `MetaTextRow`. Every `advances` entry is
+   * one of these and so is every text row; the list records only the INTERLEAVE, which
+   * nothing else in the engine needs and `tune.topText` is.
+   *
+   * It stops where abcjs's does, at the part order: **a `%%text` or `%%center` before the
+   * music is a nonMusic LINE and not top text** — `draw()` closes the `abcjs-meta-top`
+   * group, spends `spacing.music` and only then walks `tune.lines`
+   * (`draw/draw.js:12-58`) — so the `appendFreeText` call at the foot of this function is
+   * on neither list.
+   */
+  const rows: MetaTextRow[] = []
   const spend = (px: number): void => {
     advances.push(px)
+    rows.push({ move: px })
     y += px
   }
   const advance = (size: number, extra = 0): void => {
     const step =
       Math.round((goldenTextHeight(size) + extra) * ENGRAVE.lineSkipFactor * UNIT_PX) / UNIT_PX
     advances.push(step)
+    rows.push({ move: step })
     y += step
   }
   /**
@@ -13662,12 +13729,22 @@ function topTextBlock(
       largest = Math.max(largest, goldenTextHeight(phrase.font.size / UNIT_PX))
     }
     advances.push(largest)
+    rows.push({ move: largest })
     y += largest
   }
   /** A row advances one way or the other — never both. */
   const advanceText = (value: RichText, size: number, extra = 0): void => {
     if (typeof value === 'string') advance(size, extra)
     else advanceRich(value, size)
+  }
+  /**
+   * `texts.push` and the row list in ONE place, so they cannot drift — and the FONT TYPE
+   * travels with the row because abcjs's own row carries it by name (`"titlefont"`) where
+   * `PlacedText` carries only a size and a face.
+   */
+  const addRow = (t: PlacedText, font: AbcFontType, left = t.x): void => {
+    texts.push(t)
+    rows.push({ text: t, font, left })
   }
   const sizeOf = (type: AbcFontType): number =>
     Math.round(((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / UNIT_PX
@@ -13836,7 +13913,7 @@ function topTextBlock(
   const [title, ...subtitles] = metadata.titles
   if (title !== undefined && plainText(title) !== '') {
     spend(ENGRAVE.titleSpace)
-    texts.push({
+    addRow({
       text: plainText(title),
       role: 'title',
       dataName: 'title',
@@ -13864,7 +13941,7 @@ function topTextBlock(
       italic: false,
       anchor: 'middle',
       ...selectableIn('title', metadata.titleRanges[0], plainText(title)),
-    })
+    }, 'titlefont', centre)
     advanceText(title, titleSize, boxOf('titlefont'))
   }
 
@@ -13873,7 +13950,7 @@ function topTextBlock(
     if (plainText(subtitle) === '') continue
     // …and a subtitle's own leading gap is a row too — see `spend`.
     spend(ENGRAVE.subtitleSpace)
-    texts.push({
+    addRow({
       text: plainText(subtitle),
       role: 'title',
       dataName: 'subtitle',
@@ -13890,7 +13967,7 @@ function topTextBlock(
       // walks `lines[index].subtitle` and passes that whole object as the `info`
       // (`top-text.js:26-31`), where every other row takes `metaTextInfo.<field>`.
       ...selectableIn('subtitle', metadata.titleRanges[i + 1], plainText(subtitle)),
-    })
+    }, 'subtitlefont', centre)
     advanceText(subtitle, sizeOf('subtitlefont'), boxOf('subtitlefont'))
   }
 
@@ -13911,7 +13988,7 @@ function topTextBlock(
     // `975.1000000000001` against `…03`.
     spend(ENGRAVE.composerSpace)
     if (rhythm !== '') {
-      texts.push({
+      addRow({
         text: rhythm,
         role: 'title',
         dataName: 'rhythm',
@@ -13925,7 +14002,7 @@ function topTextBlock(
         ...faceIn('infofont'),
         ...boxIn('infofont', PAGE_PADDING.left, rhythm, 'start'),
         ...selectableIn('rhythm', metadata.fieldRanges.rhythm, rhythm),
-      })
+      }, 'infofont', PAGE_PADDING.left)
     }
     /**
      * abcjs emits composer and origin as ONE text, the origin parenthesised — and the
@@ -13954,7 +14031,7 @@ function topTextBlock(
             ]
     const right = plainText(rightRich)
     if (right !== '') {
-      texts.push({
+      addRow({
         text: right,
         role: 'title',
         dataName: 'composer',
@@ -13971,7 +14048,7 @@ function topTextBlock(
         // (`top-text.js:64`), so a tune with only an `O:` draws `" (China)"` under the
         // COMPOSER's absent range — `{startChar: -2}`, not the origin's.
         ...selectableIn('composer', metadata.fieldRanges.composer, right),
-      })
+      }, 'composerfont', PAGE_PADDING.left + width)
     }
     // THE ROW ADVANCES BY WHICHEVER FIELD MOVES IT, not by the taller of the two.
     // `addTextIf` measures `getTextSize.calc("A", font)` and moves by `round(height *
@@ -13991,7 +14068,7 @@ function topTextBlock(
   const authorRich = metadata.author ?? ''
   const author = plainText(authorRich)
   if (author !== '') {
-    texts.push({
+    addRow({
       text: author,
       role: 'title',
       dataName: 'author',
@@ -14004,7 +14081,7 @@ function topTextBlock(
       ...boxIn('composerfont', PAGE_PADDING.left + width, author, 'end'),
       ...richIn(authorRich, 'composerfont', false, true),
       ...selectableIn('author', metadata.fieldRanges.author, author),
-    })
+    }, 'composerfont', PAGE_PADDING.left + width)
     advanceText(authorRich, sizeOf('composerfont'), boxOf('composerfont'))
   }
 
@@ -14025,7 +14102,7 @@ function topTextBlock(
     const partsSize = sizeOf('partsfont')
     const pad = partsSize * ENGRAVE.fontBoxPadding
     const boxed = fonts.partsfont?.box === true
-    texts.push({
+    addRow({
       text: partOrder,
       role: 'title',
       dataName: 'part-order',
@@ -14046,7 +14123,7 @@ function topTextBlock(
             },
           }
         : {}),
-    })
+    }, 'partsfont', PAGE_PADDING.left)
     advanceText(partOrderRich, sizeOf('partsfont'), boxOf('partsfont'))
   }
 
@@ -14106,6 +14183,7 @@ function topTextBlock(
   // separately.
   advances.push(musicSpace)
   y += musicSpace
+  // …and NOT onto `rows`: from here on the block is `tune.lines`'s business, not TopText's.
   y = appendFreeText(texts, textAbove, y, width / 2, fonts, rules, true)
 
   // `drawSeparator` centres on `renderer.controller.width` — the STAFF width, which is
@@ -14127,7 +14205,7 @@ function topTextBlock(
 
   // The HEIGHT is still the block's own, so the placement below is unchanged; only the
   // texts' y is now the page's.
-  return { texts, lines, height: y - from, advances }
+  return { texts, lines, height: y - from, advances, rows }
 }
 
 /**
@@ -14406,9 +14484,11 @@ function bottomTextBlock(
    * abcjs's 610.5614999999999. A plain row's `round2` hid it.
    */
   from = 0,
-): { texts: PlacedText[]; height: number; advances: number[] } {
+): { texts: PlacedText[]; height: number; advances: number[]; rows: MetaTextRow[] } {
   const texts: PlacedText[] = []
   const advances: number[] = []
+  /** abcjs's `BottomText.rows`, in its order — see `MetaTextRow` and `topTextBlock`'s. */
+  const rows: MetaTextRow[] = []
   let y = from
   /**
    * **EVERY ROW IS ONE `moveY` ON THE PAGE'S OWN CURSOR, NOT A LOCAL SUM ADDED LATER.**
@@ -14420,7 +14500,32 @@ function bottomTextBlock(
    */
   const move = (d: number): void => {
     advances.push(d)
+    rows.push({ move: d })
     y += d
+  }
+  /**
+   * **A ROW THAT MOVES NOTHING IS STILL A ROW.** `spacing.words` opens the `W:` block and
+   * `spacing.info` opens `addMultiLine`'s array branch (`bottom-text.js:19`, `:49`), and
+   * BOTH default to zero — so they are absent from `advances`, where a zero add is a no-op
+   * the page walk must not be handed a second time, and present in `rows`, which is a list
+   * of what abcjs wrote.
+   */
+  const emptyRow = (d = 0): void => {
+    rows.push({ move: d })
+  }
+  /**
+   * The row `addText` has just pushed, with the FONT TYPE abcjs names it by. Every call
+   * site here passes one; the fallback is `historyfont` because that is the block's own
+   * default and a wrong name would be visible in the gate rather than silent.
+   */
+  const recordRow = (fontType: AbcFontType | undefined): void => {
+    const t = texts[texts.length - 1]
+    // **`marginLeft` IS `PAGE_PADDING.left` FOR EVERY ROW OF THE BOTTOM BLOCK** — it is the
+    // one argument `addSingleLine`/`addMultiLine` ever pass (`bottom-text.js:32`, `:44`),
+    // so the box shift `PlacedText.x` carries is undone by naming the margin rather than
+    // subtracting it back.
+    if (t !== undefined)
+      rows.push({ text: t, font: fontType ?? 'historyfont', left: PAGE_PADDING.left })
   }
   const sizeOf = (type: AbcFontType): number =>
     Math.round(((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / UNIT_PX
@@ -14509,6 +14614,7 @@ function bottomTextBlock(
               },
         ),
       })
+      recordRow(fontType)
       move(largest)
       return
     }
@@ -14569,6 +14675,7 @@ function bottomTextBlock(
       ...(groupId === undefined ? {} : { groupId }),
       ...(selectable === undefined ? {} : { selectable }),
     })
+    recordRow(fontType)
     move(
       Math.round(
         (goldenTextHeight(size) + box) *
@@ -14591,13 +14698,29 @@ function bottomTextBlock(
    * Stamped onto the LAST row actually pushed rather than the last one asked for: an
    * empty entry moves the cursor and writes no row at all.
    */
-  const closeGroup = (elType: string): void => {
+  const closeGroup = (elType: string, name: string, group: string): void => {
     const last = texts[texts.length - 1]
     if (last === undefined) return
-    texts[texts.length - 1] = {
+    const closed = {
       ...last,
-      selectable: { elType, startChar: -1, endChar: -1, text: '', onGroupClose: true },
+      selectable: {
+        elType,
+        startChar: -1,
+        endChar: -1,
+        text: '',
+        onGroupClose: true,
+      } as const,
     }
+    texts[texts.length - 1] = closed
+    // …and the ROW it was stamped on is the same object, so the list follows it.
+    for (let i = rows.length - 1; i >= 0; i -= 1) {
+      const r = rows[i]
+      if (r !== undefined && 'text' in r && r.text === last) {
+        rows[i] = { text: closed, font: r.font, left: r.left }
+        break
+      }
+    }
+    rows.push({ endGroup: group, absElemType: elType, name })
   }
 
   // `W:` — a whole verse under the tune, one row per line, in `wordsfont`. The array
@@ -14617,9 +14740,26 @@ function bottomTextBlock(
      * `nonMusic` wraps around the CLOSED `<g>` with an empty text (`draw/non-music.js:38-45`).
      * So a whole `W:` verse is ONE selectable entry however many lines it draws.
      */
+    /**
+     * `{move: spacing.words}`, then `{startGroup}`, then `{move: spacing.info}` — three rows
+     * before the first verse (`bottom-text.js:19`, `:48-49`).
+     *
+     * **BOTH SPACINGS DEFAULT TO ZERO** (`write/renderer.js:99`, `:114`), which is why they
+     * are absent from `advances`: a zero add is a no-op the page walk must not be handed
+     * twice. `%%wordsspace` is the one directive that can move `spacing.words`
+     * (`renderer.js:170`) and nothing in either corpus writes it — if one ever does, this is
+     * where it enters, and the byte gate will say so before this list does.
+     */
+    emptyRow()
+    rows.push({
+      startGroup: 'unalignedWords',
+      klass: 'abcjs-extra-text abcjs-unaligned-words',
+      name: 'unalignedWords',
+    })
+    emptyRow()
     for (const line of metadata.unalignedWords)
       addText(line, [], words, 'unalignedWords', false, 0, 'unalignedWords', 'wordsfont', undefined, 'abcjs-extra-text abcjs-unaligned-words')
-    closeGroup('unalignedWords')
+    closeGroup('unalignedWords', 'unalignedWords', 'unalignedWords')
     // TWO raw heights, and abcjs spends them as two separate rows.
     move(goldenTextHeight(words))
     move(goldenTextHeight(words))
@@ -14655,6 +14795,10 @@ function bottomTextBlock(
     if (value.some((v) => typeof v !== 'string')) {
       // `openGroup({klass, "data-name": row.name})` — the drawn name is `description` for
       // BOTH `notes` and `history`, so the run is keyed on the `startGroup` string.
+      // …AND THE ARRAY BRANCH OPENS WITH `{startGroup}` AND `{move: spacing.info}`, before
+      // its preface (`bottom-text.js:48-52`) — the same three-row opening `W:` takes.
+      rows.push({ startGroup: groupId, klass, name: 'description' })
+      emptyRow()
       addText(preface, [], history, 'description', true, historyBox, 'description', 'historyfont', groupId, klass,
         { elType: 'extraText', startChar: -2, endChar: -2, text: preface })
       move((goldenTextHeight(history) * 3) / 4)
@@ -14669,7 +14813,7 @@ function bottomTextBlock(
           move((goldenTextHeight(history) * 3) / 4)
         }
       })
-      closeGroup('extraText')
+      closeGroup('extraText', 'description', groupId)
       move(goldenTextHeight(history))
       return
     }
@@ -14687,7 +14831,7 @@ function bottomTextBlock(
      * Worth one byte on `visual-selection-01`: `<tspan x="15" dy="1.2em"></tspan>` against
      * abcjs's `<tspan x="15" dy="1.2em"> </tspan>`, the last of its 202,156.
      */
-    const rows = [preface, ...all]
+    const joinedLines = [preface, ...all]
       .join('\n')
       .replace(/\n\n/g, '\n \n')
       .replace(/^\n/, '\u00A0\n')
@@ -14695,7 +14839,7 @@ function bottomTextBlock(
     // The JOINED branch is one `addTextIf` with `absElemType: "extraText"` and no `info`
     // (`bottom-text.js:44`) — so `{-2, -2}`, and the text is the join BEFORE `renderText`'s
     // blank-line rewrite, which happens at draw time on a string the row already holds.
-    addText(rows[0] ?? preface, rows.slice(1), history, 'description', true, historyBox, undefined, 'historyfont', undefined, klass,
+    addText(joinedLines[0] ?? preface, joinedLines.slice(1), history, 'description', true, historyBox, undefined, 'historyfont', undefined, klass,
       { elType: 'extraText', startChar: -2, endChar: -2, text: [preface, ...all].join('\n') })
   }
 
@@ -14707,7 +14851,7 @@ function bottomTextBlock(
   single(metadata.transcription, 'Transcription: ', 'abcjs-extra-text abcjs-transcription')
   multi(metadata.history, 'History:', 'history', 'abcjs-extra-text abcjs-history')
 
-  return { texts, height: y - from, advances }
+  return { texts, height: y - from, advances, rows }
 }
 
 function freeTextBlock(

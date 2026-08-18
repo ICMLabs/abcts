@@ -42,6 +42,7 @@ import {
   timingsOf,
 } from "../audio/timing.js";
 import {
+  type AbcFontType,
   defaultClef,
   type MusicEvent,
   plainText,
@@ -77,7 +78,7 @@ import { parse } from "../parser/parser.js";
 import { EngraverController, Parse } from "./engraver.js";
 import { strTranspose as transposeString } from "../str/transpose.js";
 import { STAFF_SPACE_PX, UNIT_PX } from "../renderer/abcjs-constants.js";
-import { layout } from "../renderer/layout.js";
+import { layout, type MetaTextRow, type PlacedText } from "../renderer/layout.js";
 import { type SelectableRecord, toSVG } from "../renderer/svg.js";
 
 /**
@@ -267,6 +268,105 @@ const metaTextOf = (score: Score): Record<string, unknown> => {
   return out;
 };
 
+/**
+ * **ONE ROW OF `TopText.rows` / `BottomText.rows`, IN abcjs's OWN KEY ORDER.**
+ *
+ * `addTextIf` builds its row as a LITERAL and then adds three optional keys in a fixed
+ * sequence (`add-text-if.js:10-19`):
+ *
+ *     { left, text, font, anchor, startChar, endChar, 'dominant-baseline' }
+ *     then absElemType, then klass, then name
+ *
+ * so the order is deterministic and `JSON.stringify` of it is output a host can take.
+ * `'dominant-baseline'` is in the literal but `undefined` unless the caller set it, which
+ * `JSON.stringify` drops — that is why it sits between `endChar` and `absElemType` rather
+ * than at the end.
+ *
+ * **A RICH ROW TAKES A DIFFERENT SHAPE ENTIRELY** — `richText`'s array branch pushes
+ * `{left, anchor, phrases}` and adds `klass` after (`rich-text.js:18-26`). It carries no
+ * `absElemType`, which is the same fact that makes a rich row unselectable, and each phrase
+ * is `{content, attrs}` with abcjs's five font attributes spelled out.
+ */
+const metaTextRow = (
+  t: PlacedText,
+  font: AbcFontType,
+  left: number,
+  addClasses: boolean,
+): Record<string, unknown> => {
+  const klass = addClasses ? (t.groupClass ?? "") : "";
+  if (t.phrases !== undefined)
+    return {
+      left,
+      anchor: t.anchor ?? "start",
+      phrases: t.phrases.map((p) => ({
+        content: p.text,
+        attrs: {
+          "font-family": p.face,
+          "font-size": p.size,
+          "font-weight": p.bold ? "bold" : "normal",
+          "font-style": p.italic ? "italic" : "normal",
+          "font-decoration": "none",
+        },
+      })),
+      ...(klass === "" ? {} : { klass }),
+    };
+  /**
+   * **A ROW THAT CLOSES A GROUP IS NOT ITSELF SELECTABLE.** `closeGroup` stamps the
+   * `endGroup`'s `abcelem` onto the LAST row so the emitter can find it, but abcjs's own
+   * row there is an ordinary `richText` one with no `info` and therefore `addTextIf`'s
+   * `{-2, -2}` — the `-1`s belong to the `endGroup` row alone (`bottom-text.js:57`, `:61`).
+   */
+  const sel =
+    t.selectable?.onGroupClose === true ? undefined : t.selectable;
+  return {
+    left,
+    /**
+     * **THE ROW'S TEXT IS THE JOIN, AND IT IS THE JOIN BEFORE `renderText`'s REWRITE.**
+     * `addTextIf` is handed one string with the newlines still in it and `Svg.text` splits
+     * it into a `<tspan>` per line, which is why our `PlacedText` carries a first line and
+     * `extraLines`. `selectable.text` already holds the pre-rewrite join — it is what the
+     * `extraText` selectable is built from — so it is preferred where there is one and the
+     * lines are re-joined where there is not.
+     */
+    text:
+      sel?.text ??
+      (t.extraLines === undefined
+        ? t.text
+        : [t.text, ...t.extraLines].join("\n")),
+    font,
+    anchor: t.anchor ?? "start",
+    startChar: sel?.startChar ?? -2,
+    endChar: sel?.endChar ?? -2,
+    ...(t.middleBaseline === true ? { "dominant-baseline": "middle" } : {}),
+    ...(sel === undefined || sel.onGroupClose === true
+      ? {}
+      : { absElemType: sel.elType }),
+    ...(klass === "" ? {} : { klass }),
+    ...(t.dataName === undefined ? {} : { name: t.dataName }),
+  };
+};
+
+/** `TopText.rows` / `BottomText.rows` — see `metaTextRow` and `MetaTextRow`. */
+const metaTextRows = (
+  rows: readonly MetaTextRow[],
+  addClasses: boolean,
+): Record<string, unknown>[] =>
+  rows.map((r) =>
+    "move" in r
+      ? { move: r.move }
+      : "startGroup" in r
+        ? { startGroup: r.startGroup, klass: addClasses ? r.klass : "", name: r.name }
+        : "endGroup" in r
+          ? {
+              endGroup: r.endGroup,
+              absElemType: r.absElemType,
+              startChar: -1,
+              endChar: -1,
+              name: r.name,
+            }
+          : metaTextRow(r.text, r.font, r.left, addClasses),
+  );
+
 const abcjsMeter = (score: Score): AbcjsMeter => {
   const m = getMeter(score);
   // A tune with no music has no staff and therefore no meter — `getMeter` falls through
@@ -358,6 +458,18 @@ export interface TuneObject {
   readonly formatting: Record<string, unknown>;
   /** `metaTextInfo` — where each `metaText` field was written. `{}` until one is recorded. */
   readonly metaTextInfo: Record<string, unknown>;
+  /**
+   * **abcjs's OWN INTERMEDIATE ROW LIST, not its answer.** `TopText`/`BottomText` build a
+   * `rows` array interleaving `{move: n}` with text rows and, in the bottom block, a
+   * group's open and close; `nonMusic` walks it spending each `move` on the page's own
+   * cursor (`creation/elements/top-text.js`, `bottom-text.js`, `draw/non-music.js`).
+   * `engraver-controller.js:222` and `:236` hang both on the tune, so a host reads them.
+   *
+   * Projected from `Layout.topTextRows` / `.bottomTextRows` on read, like `tune.lines` —
+   * which is why they are not built until asked for and no `Layout` is retained.
+   */
+  readonly topText: { readonly rows: readonly Record<string, unknown>[] };
+  readonly bottomText: { readonly rows: readonly Record<string, unknown>[] };
 
   /**
    * `engraver.selectables` and the two accessors over it. abcjs returns `[]` and `null`
@@ -505,6 +617,17 @@ export function renderAbc(
      * can ask. Empty when nothing was rendered — `parseOnly` — which is abcjs's `[]`.
      */
     const records: SelectableRecord[] = [];
+    /**
+     * **abcjs's `TopText.rows` / `BottomText.rows`, CAPTURED FROM THE RENDER AND NOT THE
+     * `Layout`.** Both are set by `engraveABC` (`engraver-controller.js:222`, `:236`), so
+     * they exist only once something has been drawn — and holding the `Layout` itself to
+     * reach them is the trap that took the suite from 5.6s to 120s. These two arrays are a
+     * few dozen entries; the `Layout` is the biggest object this library makes.
+     */
+    const metaRows: { top: MetaTextRow[]; bottom: MetaTextRow[] } = {
+      top: [],
+      bottom: [],
+    };
     const selectables = (): readonly Selectable[] => {
       selectableCache ??= selectablesOf(
         records,
@@ -519,8 +642,12 @@ export function renderAbc(
       beats: number | undefined;
     } = { rows: [], time: undefined, beats: undefined };
     return {
-      svg: toSVG(
-        laidOut(),
+      svg: ((): string => {
+        const doc = laidOut();
+        metaRows.top = [...(doc.topTextRows ?? [])];
+        metaRows.bottom = [...(doc.bottomTextRows ?? [])];
+        return toSVG(
+        doc,
         {
           staffSpace,
           classes: "abcjs",
@@ -552,11 +679,18 @@ export function renderAbc(
           // know. Forcing it to `staffwidth + 30` wrote `width="700"` where abcjs writes 296
           // for `%%staffwidth 200` and 752.491 for a tune that overflows.
         },
-      ),
+        );
+      })(),
       score,
       // abcjs's `metaText.title` is a plain string even when the field changed font
       // mid-line — the phrases are a LAYOUT structure, not part of the public shape.
       metaText: metaTextOf(score),
+      get topText() {
+        return { rows: metaTextRows(metaRows.top, params.add_classes === true) };
+      },
+      get bottomText() {
+        return { rows: metaTextRows(metaRows.bottom, params.add_classes === true) };
+      },
 
       // abcjs's own version string, not abcts's — a host may feature-detect on it.
       version: ABCJS_TUNE_VERSION,
