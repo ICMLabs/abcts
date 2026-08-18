@@ -24,6 +24,19 @@ import { renderAbc } from "../src/compat/index.js";
  * `elements` is the one column that cannot cross a process boundary — a DOM node per drawn
  * glyph — so its LENGTH is compared, which is what a host counts.
  *
+ * **27 ROWS ARE OPEN AND BOTH CAUSES ARE MEASURED**, neither of them a number to be tuned:
+ *
+ *   - **21 `startCharArray`: an overlay layer exists on every measure of ours and only
+ *     where abcjs's `resolveOverlays` put one.** Our model pads every measure of the tune
+ *     to its overlay depth so the renderer can tile the layers; abcjs back-fills only the
+ *     lines BEFORE the `&` and leaves the rest alone, so `synth-flattener-21` has three
+ *     elements at a time where abcjs has two.
+ *   - **6 `height`: one system's BOTTOM pitch, and only where a tie hangs below it.**
+ *     `synth-timing-10-stretchlast-1` reports −1.0493 against abcjs's −2 on its first
+ *     system and −3 on its second, which is exact. Both engines PLACE the two systems
+ *     identically — the next system's `absoluteY` agrees to the digit — so this is what
+ *     the extent is REPORTED as, not where anything is drawn.
+ *
  * Three parameter sets: the canonical four, a HALVED `timeDivider` and a delayed start with
  * a warp of 2. The halved divider is what proved **`timeDivider` IS A DEAD PARAMETER**:
  * abcjs overwrites it before reading a single element (`:459`), so that case is
@@ -206,7 +219,7 @@ describe("tune.setupEvents — every column of the row", () => {
   /** A floor, not a target — it moves up as the geometry lands and must never move down. */
   it("the whole corpus agrees on at least the rows it did", () => {
     const agree = table.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(3318);
+    expect(agree).toBeGreaterThanOrEqual(3339);
   });
 
   /**

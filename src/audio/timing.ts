@@ -478,8 +478,17 @@ function setupEvents(
           // `left` is 0 or null takes the new one outright (`:359-362`).
           row.left = row.left ? Math.min(row.left, g.left) : g.left
           row.elements.push([g.abcelem])
-          row.startCharArray.push(g.startChar)
-          row.endCharArray.push(g.endChar)
+          /**
+           * **AN OVERLAY LAYER'S PADDING REST BORROWS THE SPAN OF THE ELEMENT IT MIRRORS.**
+           * `resolveOverlays` back-fills every earlier line of the staff with a copy of its
+           * voices, notes replaced by invisible rests **of the same duration and the same
+           * `startChar`/`endChar`** (`tune-builder.js:541-556`), so abcjs's row reads
+           * `[22, 22]` where a layer exists at all. Our model pads with rangeless rests —
+           * the renderer only needs their duration — and the element they mirror is the one
+           * that CREATED this row, at this millisecond, in the voice above.
+           */
+          row.startCharArray.push(g.startChar ?? row.startChar)
+          row.endCharArray.push(g.endChar ?? row.endChar)
           if (row.startChar === null) row.startChar = g.startChar
           if (row.endChar === null) row.endChar = g.endChar
           row.midiPitches.push(...(g.midiPitches ?? []))
