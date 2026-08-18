@@ -336,7 +336,7 @@ function abcelemOf(
  * which is this staff's middle line measured from a treble staff's. `tenor` comes back
  * spelled `alto`, because the field names the clef and the element names what is DRAWN.
  */
-const clefElement = (clef: Clef): AbcElement => ({
+export const clefElement = (clef: Clef): AbcElement => ({
   el_type: "clef",
   type:
     (CLEF_TYPE[clef.shape] ?? "treble") +
@@ -427,7 +427,7 @@ const abcName = (index: number): string => {
 };
 
 /** The same shape `getMeter()` returns — `{type, value: [{num, den}]}`, numbers as STRINGS. */
-const meterElement = (meter: Meter): AbcElement => ({
+export const meterElement = (meter: Meter): AbcElement => ({
   el_type: "timeSignature",
   ...(meter.symbol === "common"
     ? { type: "common_time" }

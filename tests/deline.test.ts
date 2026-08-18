@@ -25,9 +25,8 @@ import type { AbcLine } from "../src/compat/lines.js";
  *   1. **THE LINES DID NOT MERGE THE SAME WAY** — a `%%text`, a `%%sep`, a `%%vskip` or a
  *      mid-tune `T:` between two music lines stops the merge, and our projection carries
  *      only the subtitle, and carries it at the FRONT rather than where it was written.
- *   2. **THE STAFF FURNITURE IS NOT PROJECTED** — abcjs stamps `clef` and `key` on every
- *      line's staff and `meter` on the line after an `M:`; ours carries none of the three,
- *      so `kept=` is empty everywhere and nothing is ever unshifted.
+ *   2. **THE STREAM IS SHORT AN ELEMENT KIND** — a `stem` (which is `resolveOverlays`'s
+ *      doing, not the parser's), a `midi`, a `style` or a `font`.
  *   3. **THE LINE HAS ONE STAFF WHERE abcjs HAS TWO** — the projection puts every voice in
  *      `staff[0]`, which 106 of abcjs's 646 staves say otherwise about.
  *
@@ -166,6 +165,6 @@ describe("tune.deline — abcjs's merged line list", () => {
   /** A floor, not a target — it moves up and must never move down. */
   it("the whole corpus agrees on at least the rows it did", () => {
     const agree = table.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(494);
+    expect(agree).toBeGreaterThanOrEqual(1082);
   });
 });

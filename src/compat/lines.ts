@@ -1,5 +1,7 @@
 import type {
   Barline,
+  Clef,
+  KeySignature,
   Measure,
   MusicEvent,
   Pitch,
@@ -7,8 +9,9 @@ import type {
   SourceRange,
   Tempo,
 } from "../core/model.js";
-import { ratToNumber, stepIndex } from "../core/model.js";
+import { defaultClef, ratToNumber, stepIndex } from "../core/model.js";
 import { expandOverlays } from "../renderer/layout.js";
+import { clefElement, keyElement, meterElement } from "./selectables.js";
 
 /**
  * **abcjs's `tune.lines` — ITS LAID-OUT TREE, PROJECTED FROM OURS.**
@@ -130,6 +133,21 @@ export interface AbcElement {
 
 export interface AbcStaff {
   readonly voices: readonly (readonly AbcElement[])[];
+  /**
+   * **THE STAFF'S OWN FURNITURE, STAMPED ON EVERY LINE.** `createStaff` builds each line's
+   * staff as `{voices, clef: params.clef, key: params.key, workingClef}` and adds
+   * `meter` only `if (params.meter !== undefined)` (`tune-builder.js:1002`, `:1023`), so
+   * the clef and key are on all 646 staves of the two corpora and the meter on 265.
+   *
+   * They carry NO span — a host reading `getElementFromChar` can never reach one — and
+   * `deline` is what moves them into the voice stream when they change at a line boundary.
+   * After a RENDER they also carry `el_type`, because `createKeySignature` and
+   * `createTimeSignature` rename the very object they are handed
+   * (`write/creation/create-key-signature.js:8`).
+   */
+  meter?: AbcElement;
+  key?: AbcElement;
+  clef?: AbcElement;
 }
 
 export interface AbcLine {
@@ -1151,6 +1169,68 @@ export function projectionOf(
     }
   };
 
+  /**
+   * **THE STAFF'S CLEF, KEY AND METER, PER LINE** — `params.clef`/`params.key`/
+   * `params.meter` as `startNewLine` stamps them (`abc_parse_music.js:961-998`,
+   * `tune-builder.js:1002`, `:1023`). The clef and key are on EVERY line; the meter only
+   * where one was newly specified, which is a THREE-WAY split abcjs states in three
+   * different files and a five-rung ladder through it settles:
+   *
+   *     M:3/4  on its own line   the NEXT line's `staff.meter`, nothing in the stream
+   *     [M:3/4] leading a line   a `timeSignature` at the END of the line ABOVE
+   *     K:G    on its own line   a `keySignature` at the end of the line above, AND
+   *                              the next line's `staff.key`
+   *
+   * The parser's `M:` arm just fills `multilineVars.meter` for the next `startNewLine`
+   * (`abc_parse_header.js:519-521`) where the `[M:` arm appends to the current line
+   * (`:356-362`) — so only the standalone form reaches a staff. On the FIRST line there
+   * is no line above and no music yet, so `hasBeginMusic()` is false and BOTH forms land
+   * on the staff.
+   *
+   * The values themselves are only ever compared line to line, by `deline`'s `objEqual`,
+   * so what matters is that they change exactly where abcjs's change.
+   */
+  const musicStartsAt = (m: Measure): number =>
+    Math.min(
+      m.openingBarlineSourceRange?.start ?? Number.POSITIVE_INFINITY,
+      ...m.events.map((e) => e.sourceRange?.start ?? Number.POSITIVE_INFINITY),
+    );
+  const leadsLine = (m: Measure, at: number | null | undefined): boolean =>
+    at != null && at < musicStartsAt(m);
+  const furniture: {
+    key: AbcElement;
+    clef: AbcElement;
+    meter?: AbcElement;
+  }[] = [];
+  {
+    let clefInForce: Clef = first.clef ?? score.clef ?? defaultClef;
+    let keyInForce: KeySignature = score.key;
+    first.measures.forEach((m, i) => {
+      // A mid-tune clef governs from the START of its measure — the renderer reads it the
+      // same way (`layout.ts`, `clefAtMeasure`).
+      if (m.clefChange != null) clefInForce = m.clefChange;
+      if (i === 0 || m.startsSystem) {
+        const key = leadsLine(m, m.keyChangeSourceRange?.start)
+          ? (m.keyChange ?? keyInForce)
+          : keyInForce;
+        const meter =
+          i === 0
+            ? leadsLine(m, m.meterChangeSourceRange?.start)
+              ? m.meterChange
+              : score.meter
+            : m.meterChange != null && m.meterChangeStandalone === true
+              ? m.meterChange
+              : null;
+        furniture.push({
+          key: keyElement(key, clefInForce),
+          clef: clefElement(clefInForce),
+          ...(meter == null ? {} : { meter: meterElement(meter) }),
+        });
+      }
+      if (m.keyChange !== null) keyInForce = m.keyChange;
+    });
+  }
+
   breaks.forEach((from, i) => {
     const to = breaks[i + 1] ?? first.measures.length;
     /**
@@ -1183,7 +1263,14 @@ export function projectionOf(
       abc,
       lineVoices.flat().sort((a, b) => (a.startChar ?? 0) - (b.startChar ?? 0)),
     );
-    lines.push({ staff: [{ voices: lineVoices }] });
+    const staff: AbcStaff = { voices: lineVoices };
+    const own = furniture[i];
+    if (own !== undefined) {
+      if (own.meter !== undefined) staff.meter = own.meter;
+      staff.key = own.key;
+      staff.clef = own.clef;
+    }
+    lines.push({ staff: [staff] });
   });
   // …and the hoist runs over the finished lines, per voice, because it moves an element
   // from one line's array into another's.

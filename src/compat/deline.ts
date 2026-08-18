@@ -114,7 +114,7 @@ export function delineOf(
     tripletfont: [],
     annotationfont: [],
   };
-  for (const raw of inputLines as readonly MutableLine[]) {
+  for (const raw of inputLines as unknown as readonly MutableLine[]) {
     const inputLine = cloneLine(raw);
     if (inputLine.staff) {
       // **THE TEST IS TRUTHINESS, SO A `%%vskip 0` MERGES** — `!inputLine.vskip`
@@ -183,7 +183,7 @@ export function delineOf(
       outputLines.push(inputLine);
     }
   }
-  return outputLines as AbcLine[];
+  return outputLines as unknown as AbcLine[];
 }
 
 /** The projected staff, as `deline` needs to see it. */
