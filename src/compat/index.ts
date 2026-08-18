@@ -54,6 +54,7 @@ import {
   type Score,
 } from "../core/model.js";
 import { type DelineOptions, delineOf } from "./deline.js";
+export { TimingCallbacks, type TimingCallbacksParams } from "./timing-callbacks.js";
 import { type ExtractedTune, extractMeasuresOf } from "./extract-measures.js";
 import {
   type AbcElement,
@@ -518,7 +519,23 @@ const abcjsMeter = (score: Score): AbcjsMeter => {
   if (m.symbol === "cut") return { type: "cut_time" };
   return {
     type: "specified",
-    value: [{ num: String(m.numerator), den: String(m.denominator) }],
+    /**
+     * **THE NUMERATOR IS THE ONE AS WRITTEN, `2+3` AND NOT `5`.** `getMeter()` hands back
+     * the parsed meter object and `getMeterFraction()` is the one that sums — which is why
+     * that function splits on `+` at all. `TimingCallbacks` is what said so: its irregular
+     * -meter branch tests `meter.value[0].num.indexOf('+') > 0`
+     * (`abc_timing_callbacks.js:50-52`), so a summed numerator sent `M:2+3/8` down the
+     * REGULAR beat path and reported five beats where abcjs reports six.
+     */
+    value: [
+      {
+        num:
+          m.numeratorParts === undefined
+            ? String(m.numerator)
+            : m.numeratorParts.join("+"),
+        den: String(m.denominator),
+      },
+    ],
   };
 };
 

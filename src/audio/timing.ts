@@ -746,7 +746,17 @@ export function setTiming(score: Score, options: TimingOptions = {}): NoteTiming
   let warp = 1
   let bpm = options.bpm ?? 0
   if (bpm) {
-    if (score.tempo !== null) warp = bpm / naturalBpm
+    /**
+     * **THE TEMPO THE WARP TESTS IS `metaText.tempo`, THE HEADER'S ALONE** — `var tempo =
+     * this.metaText ? this.metaText.tempo : null; if (tempo) warp = bpm / naturalBpm`
+     * (`abc_tune.js:592-597`). An inline `[Q:]` is a tempo ELEMENT and never reaches
+     * `metaText`, so a tune whose only tempos are inline is PLAYED at the host's rate with
+     * its own relative changes intact rather than warped — the same distinction
+     * `getBpm` makes one line above, and `flattener-10`, five inline `[Q:]` and no header
+     * one, is 9,318ms to abcjs and was 6,678 to us the moment `TimingCallbacks` passed a
+     * bpm in.
+     */
+    if (score.tempo !== null && score.tempoInline !== true) warp = bpm / naturalBpm
   } else bpm = naturalBpm
 
   const beatLength = beatLengthOf(meter)
