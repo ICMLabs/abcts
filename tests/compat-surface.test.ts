@@ -125,7 +125,6 @@ const MISSING: readonly string[] = [
   "synth.sequence",
   "tune.addElementToEvents",
   "tune.addUsefulCallbackInfo",
-  "tune.deline",
   "tune.makeVoicesArray",
   "tune.setupEvents",
 ];

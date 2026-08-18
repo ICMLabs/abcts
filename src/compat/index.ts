@@ -50,6 +50,7 @@ import {
   type RichText,
   type Score,
 } from "../core/model.js";
+import { type DelineOptions, delineOf } from "./deline.js";
 import {
   type AbcElement,
   type AbcLine,
@@ -569,6 +570,12 @@ export interface TuneObject {
    */
   readonly lines: readonly AbcLine[];
   readonly getElementFromChar: (char: number) => AbcElement | null;
+  /**
+   * `deline(options)` — `lines` with every run of music lines merged back into one, and
+   * any staff `meter`/`key`/`clef`/font that CHANGED at a line boundary moved into the
+   * voice stream as a `-1 … -1` element. See `src/compat/deline.ts`.
+   */
+  readonly deline: (options?: DelineOptions) => readonly AbcLine[];
   /** The first key on any staff of any line, or `{}` (`abc_tune.js:222-233`). */
   readonly getKeySignature: () => AbcElement | Record<string, never>;
   /**
@@ -949,6 +956,10 @@ export function renderAbc(
       getElementFromChar(char: number): AbcElement | null {
         selectables();
         return elementFromChar(lineCache ?? [], char);
+      },
+      deline(options?: DelineOptions): readonly AbcLine[] {
+        selectables();
+        return delineOf(lineCache ?? [], options);
       },
 
       get engraver(): { selectables: readonly Selectable[] } {
