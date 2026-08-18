@@ -124,9 +124,7 @@ const MISSING: readonly string[] = [
   "synth.playEvent",
   "synth.sequence",
   "tune.addElementToEvents",
-  "tune.addUsefulCallbackInfo",
   "tune.makeVoicesArray",
-  "tune.setupEvents",
 ];
 
 /** Ours, with no abcjs counterpart — allowed, and listed so the diff is visible. */

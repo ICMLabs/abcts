@@ -263,6 +263,16 @@ function voiceElements(voice: Voice, score: Score, tempos: Map<number, Tempo>): 
     out.push({ kind: 'tempo', measureNumber: 0, duration: 0, tempo: score.tempo })
   }
   for (const measure of voice.measures as readonly Measure[]) {
+    /**
+     * **`noteFound` RESETS AT EVERY LINE, AND `measureNumber` DOES NOT.** abcjs declares it
+     * inside `makeVoicesArray`'s per-LINE loop and the counter outside it
+     * (`abc_tune.js:396-434`), so "skip a bar line that appears at the left of the music,
+     * before any notes" is per SYSTEM rather than per tune — a `|:` opening a second line
+     * does not count a measure either. Three fixtures were one measure high on every row
+     * after the first line break, and only the `setupEvents` gate could say so: the timing
+     * oracle is harvested from `doWarpTest`, which asserts times alone.
+     */
+    if (measure.startsSystem) noteFound = false
     bar(measure.openingBarline)
     stampVolta(measure.volta)
     if (measure.tempoChange != null) {
@@ -336,7 +346,7 @@ function setupEvents(
   startingDelay: number,
   startingBpm: number,
   warp: number,
-): { rows: NoteTiming[]; finalBpm: number } {
+ ): { rows: NoteTiming[]; finalBpm: number } {
   const meter = meterOf(score)
   const beatLength = beatLengthOf(meter)
   const tempos = new Map<number, Tempo>()
@@ -517,7 +527,52 @@ export function setTiming(score: Score, options: TimingOptions = {}): NoteTiming
   const { rows, finalBpm } = setupEvents(score, startingDelay, bpm, warp)
   // `addUsefulCallbackInfo` stamps every row, INCLUDING the end, with one figure — and the
   // bpm it uses is the LAST voice's running one times the warp, not the tune's.
-  const perMeasure = millisecondsPerMeasure(meter, finalBpm * warp)
+  return addUsefulCallbackInfo(score, rows, finalBpm * warp)
+}
+
+/**
+ * **`tune.setupEvents(startingDelay, timeDivider, startingBpm, warp)` — `setTiming`'s own
+ * walk, with the four numbers it computes handed in instead.**
+ *
+ * abcjs exposes it publicly (`abc_tune.js:438`) and `setTiming` is a caller like any other:
+ * it works out `startingDelay` from `measuresOfDelay` and the pickup, `timeDivider` from
+ * the beat length and the rate, and passes them straight through. It closes by stamping
+ * every row with `millisecondsPerMeasure` at `bpm * warp` — the RUNNING bpm at the end of
+ * the walk, not the tune's (`:523`).
+ *
+ * ⚠️ **AND `timeDivider` IS A DEAD PARAMETER.** The first statement inside the voice loop
+ * is `timeDivider = this.getBeatLength() * bpm / 60` (`:459`), which overwrites whatever
+ * was passed before a single element is read. Ours took it seriously and threaded it
+ * through as the initial divider — reasonable, and wrong: the gate's `half-divider` case
+ * is byte-identical to its `canonical` one in abcjs and was DOUBLE in ours. It stays in
+ * the signature because a host passes four arguments.
+ */
+export function setupEventsFor(
+  score: Score,
+  startingDelay: number,
+  _timeDivider: number,
+  startingBpm: number,
+  warp = 1,
+): NoteTiming[] {
+  const { rows, finalBpm } = setupEvents(score, startingDelay, startingBpm, warp)
+  return addUsefulCallbackInfo(score, rows, finalBpm * warp)
+}
+
+/**
+ * `addUsefulCallbackInfo(timingEvents, bpm)` — one figure, stamped on every row INCLUDING
+ * the end row (`abc_tune.js:527-533`). Public because a host that builds its own event
+ * list can call it.
+ *
+ * **IT RETURNS A NEW ARRAY WHERE abcjs MUTATES IN PLACE.** abcjs writes
+ * `ev.millisecondsPerMeasure` onto each row it was handed; ours are frozen records, and
+ * the value a caller reads back is the same either way.
+ */
+export function addUsefulCallbackInfo(
+  score: Score,
+  rows: readonly NoteTiming[],
+  bpm: number,
+): NoteTiming[] {
+  const perMeasure = millisecondsPerMeasure(meterOf(score), bpm)
   return rows.map((r) => ({ ...r, millisecondsPerMeasure: perMeasure }))
 }
 

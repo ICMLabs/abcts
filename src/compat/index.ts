@@ -39,6 +39,8 @@ import {
   getPickupLength,
   millisecondsPerMeasureOf,
   type NoteTiming,
+  addUsefulCallbackInfo,
+  setupEventsFor,
   timingsOf,
 } from "../audio/timing.js";
 import {
@@ -556,6 +558,22 @@ export interface TuneObject {
    * from abcjs and must be `undefined` from us (`abc_tune.js:584-621`).
    */
   readonly setTiming: (bpm?: number, measuresOfDelay?: number) => NoteTiming[];
+  /**
+   * `setupEvents(startingDelay, timeDivider, startingBpm, warp)` — the walk `setTiming`
+   * runs, with the four numbers it computes handed in instead (`abc_tune.js:438`), and
+   * `addUsefulCallbackInfo(timingEvents, bpm)` — the one figure it stamps on every row
+   * (`:527`). Both are public in abcjs and `setTiming` is a caller like any other.
+   */
+  readonly setupEvents: (
+    startingDelay: number,
+    timeDivider: number,
+    startingBpm: number,
+    warp?: number,
+  ) => NoteTiming[];
+  readonly addUsefulCallbackInfo: (
+    timingEvents: readonly NoteTiming[],
+    bpm: number,
+  ) => NoteTiming[];
   readonly noteTimings: NoteTiming[];
   readonly getTotalTime: () => number | undefined;
   readonly getTotalBeats: () => number | undefined;
@@ -909,6 +927,14 @@ export function renderAbc(
         (this as { noteTimings: NoteTiming[] }).noteTimings = t.rows;
         return t.rows;
       },
+      setupEvents: (
+        startingDelay: number,
+        timeDivider: number,
+        startingBpm: number,
+        warp = 1,
+      ) => setupEventsFor(score, startingDelay, timeDivider, startingBpm, warp),
+      addUsefulCallbackInfo: (rows: readonly NoteTiming[], bpm: number) =>
+        addUsefulCallbackInfo(score, rows, bpm),
       noteTimings: timings.rows,
       getTotalTime: () => timings.time,
       getTotalBeats: () => timings.beats,
