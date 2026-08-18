@@ -11,8 +11,15 @@
  * the same.
  *
  * Three parameter sets per tune: the canonical one `setTiming` would use, a HALVED
- * `timeDivider` (everything twice as long until the first `Q:`), and a delayed start with
- * a warp.
+ * `timeDivider` — which turned out to be a DEAD parameter, overwritten before the first
+ * element is read (`abc_tune.js:459`) — and a delayed start with a warp.
+ *
+ * ── THE COLUMNS ─────────────────────────────────────────────────────────────
+ * Every field of a timing row except `elements`, which is a DOM node per drawn glyph and
+ * cannot cross a process boundary; its LENGTH is kept instead, because that is what a host
+ * counts. `line`, `top`, `height`, `left`, `width`, `startChar`, `endChar` and the two
+ * ARRAYS are the geometry a playback cursor draws with, and none of them was in the timing
+ * oracle abcjs's own suite provides.
  *
  * ── LICENCE ─────────────────────────────────────────────────────────────────
  * The fixtures are abcjs's authors' work where they came from abcjs, and abcjs is MIT.
@@ -69,7 +76,20 @@ for (const file of files) {
       r.milliseconds,
       r.millisecondsPerMeasure,
       r.measureNumber ?? null,
+      r.line ?? null,
       r.top ?? null,
+      r.height ?? null,
+      r.left ?? null,
+      r.width ?? null,
+      r.startChar ?? null,
+      r.endChar ?? null,
+      r.startCharArray ?? null,
+      r.endCharArray ?? null,
+      r.measureStart ?? null,
+      r.type,
+      // `elements` is a DOM node per drawn glyph — the one column that cannot cross a
+      // process boundary. Its LENGTH is kept, which is what a host counts.
+      (r.elements ?? []).length,
     ])
   }
 }
