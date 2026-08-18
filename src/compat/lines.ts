@@ -1,6 +1,7 @@
 import type {
   Barline,
   Clef,
+  FreeTextBlock,
   KeySignature,
   Measure,
   MusicEvent,
@@ -9,7 +10,7 @@ import type {
   SourceRange,
   Tempo,
 } from "../core/model.js";
-import { defaultClef, ratToNumber, stepIndex } from "../core/model.js";
+import { defaultClef, plainText, ratToNumber, stepIndex } from "../core/model.js";
 import { expandOverlays } from "../renderer/layout.js";
 import { clefElement, keyElement, meterElement } from "./selectables.js";
 
@@ -152,8 +153,35 @@ export interface AbcStaff {
 
 export interface AbcLine {
   readonly staff?: readonly AbcStaff[];
-  /** A `T:` after the first — a line that draws nothing and still counts. */
-  readonly subtitle?: string;
+  /**
+   * A `T:` after the first — a line of its own. abcjs's payload is the OBJECT
+   * `{text, startChar, endChar}` that `addSubtitle` pushes (`tune-builder.js:297`), the
+   * text without its `T:` and the span of the whole field line.
+   */
+  readonly subtitle?: { readonly text: string; readonly startChar?: number; readonly endChar?: number };
+  /**
+   * `%%text` / `%%begintext` — `{text, startChar, endChar}` — and `%%center`, which is an
+   * ARRAY of one `{text, center: true}` and carries NO span at all, because `addCentered`
+   * takes no `info` (`abc_parse_directive.js:986`, `tune-builder.js:318-320`).
+   */
+  readonly text?:
+    | { readonly text: string; readonly startChar?: number; readonly endChar?: number }
+    | readonly { readonly text: string; readonly center: true }[];
+  /** `%%sep` — three ROUNDED point values and the directive's own span. */
+  readonly separator?: {
+    readonly spaceAbove: number;
+    readonly spaceBelow: number;
+    readonly lineLength: number;
+    readonly startChar?: number;
+    readonly endChar?: number;
+  };
+  /**
+   * `%%vskip n` — blank space above this system. `addSpacing` parks it on
+   * `tune.vskipPending` and `createStaff` stamps it onto the line it then opens
+   * (`tune-builder.js:1024-1027`), so it belongs to the line BELOW the directive — and
+   * `deline` reads it to refuse a merge (`deline-tune.js:16`).
+   */
+  readonly vskip?: number;
 }
 
 const el = (
@@ -1079,10 +1107,68 @@ export function projectionOf(
   const openSlurs: number[][] = [];
   /** `multilineVars.inEnding`, per voice and carried across the tune's lines. */
   const endings: { open: boolean }[] = [];
-  // Every `T:` after the first is a line of its own that draws nothing — see
-  // `RenderDoc.blankLeadingLines`.
-  for (const title of score.metadata.titles.slice(1)) {
-    lines.push({ subtitle: typeof title === "string" ? title : "" });
+  /**
+   * **A NON-MUSIC LINE IS A LINE, AND ITS POSITION IN THE LIST IS LOAD-BEARING.** A `T:`
+   * after the first, a `%%text`, a `%%center`, a `%%begintext` block and a `%%sep` are
+   * each `pushLine`d where they were written (`tune-builder.js:296-320`) — and `deline`
+   * reads exactly that: any line with no `staff` clears `inMusicLine`, so the music line
+   * after one does NOT merge into the one before it (`deline-tune.js:84-87`).
+   *
+   * ⚠️ **abcjs-debt: the `nonMusic` KEY IS NOT BUILT.** The engraver hangs a
+   * `{rows: […]}` on each of these lines at draw time (`engraver-controller.js:229-247`),
+   * the same row shape `topText`/`bottomText` carry, and a host reading `line.nonMusic`
+   * gets nothing from us. The LINE, its kind and its span are here; the rows are the
+   * `topText` machinery pointed at a different list and are owed.
+   */
+  const textLine = (b: FreeTextBlock): AbcLine => {
+    const span =
+      b.sourceRange === undefined
+        ? {}
+        : { startChar: b.sourceRange.start, endChar: b.sourceRange.end };
+    const text = b.lines.join("\n");
+    if (b.role === "separator")
+      return {
+        separator: {
+          spaceAbove: b.separator?.above ?? 14,
+          spaceBelow: b.separator?.below ?? 14,
+          lineLength: b.separator?.length ?? 85,
+          ...span,
+        },
+      };
+    if (b.role === "subtitle") return { subtitle: { text, ...span } };
+    // **`%%center` IS THE ARRAY FORM AND HAS NO SPAN** — `addCentered` takes no `info`.
+    if (b.align === "center") return { text: [{ text, center: true }] };
+    return { text: { text, ...span } };
+  };
+  /**
+   * The blocks standing before any music, in SOURCE ORDER — the header's own `T:`
+   * subtitles and `metadata.textAbove` interleaved. A `%%center` carries no span, so it
+   * keeps the position its neighbours give it rather than sorting to the front.
+   */
+  {
+    const before: { at: number; line: AbcLine }[] = [];
+    score.metadata.titles.slice(1).forEach((title, i) => {
+      const r = score.metadata.titleRanges[i + 1];
+      before.push({
+        at: r?.start ?? 0,
+        line: {
+          subtitle: {
+            text: plainText(title),
+            ...(r === undefined ? {} : { startChar: r.start, endChar: r.end }),
+          },
+        },
+      });
+    });
+    let last = 0;
+    for (const b of score.textAbove) {
+      last = b.sourceRange?.start ?? last + 0.5;
+      before.push({ at: last, line: textLine(b) });
+    }
+    before
+      .sort((a, b) => a.at - b.at)
+      .forEach((b) => {
+        lines.push(b.line);
+      });
   }
 
   /** Measure indexes where each system starts, per voice. */
@@ -1282,28 +1368,54 @@ export function projectionOf(
       abc,
       lineVoices.flat().sort((a, b) => (a.startChar ?? 0) - (b.startChar ?? 0)),
     );
+    /**
+     * **A LINE HOLDS ONLY THE STAVES THAT WROTE MUSIC ON IT.** `createStaff` runs from
+     * `startNewLine`, which fires when a voice appends its first element to the line
+     * (`tune-builder.js:344-351`), so a staff silent on one system is ABSENT from that
+     * line's `staff` array rather than present and empty. Measured on
+     * `abcjs-visual-parsing-04`, three `\`-continued `[V:]` switches: abcjs's line 1 has
+     * `staff[0]` alone, and `deline` therefore pushes NO `{el_type: "break"}` for the
+     * staff it does not find — `if (inputStaff)` guards the whole merge
+     * (`deline-tune.js:23`, `:66`).
+     */
+    // **FREE TEXT AND MID-TUNE SUBTITLES BETWEEN TWO SYSTEMS ARE LINES OF THEIR OWN**,
+    // read off the same first measure the renderer's own block does (`Measure.textBefore`).
+    for (const b of score.voices[0]?.measures[from]?.textBefore ?? [])
+      lines.push(textLine(b));
+    // `%%vskip` — the same first-measure read the renderer's `vskipBeforeSystem` makes.
+    const vskip = score.voices
+      .map((v) => v.measures[from]?.vskip ?? 0)
+      .find((n) => n > 0);
     lines.push({
-      staff: voicesOfStaff.map((members, s) => {
-        const staff: AbcStaff = {
-          voices: members.map((k) => lineVoices[k] ?? []),
-        };
-        const own = furniture[s]?.[i];
-        if (own !== undefined) {
-          // THE KEY ORDER IS abcjs's — `{voices, clef, key}` from `createStaff` with the
-          // meter added after, which is what a host comparing the objects sees.
-          if (own.meter !== undefined) staff.meter = own.meter;
-          staff.key = own.key;
-          staff.clef = own.clef;
-        }
-        return staff;
-      }),
+      ...(vskip === undefined ? {} : { vskip }),
+      staff: voicesOfStaff
+        .map((members, s) => ({ members, s }))
+        .filter(({ members }) => members.some((k) => (lineVoices[k] ?? []).length > 0))
+        .map(({ members, s }) => {
+          const staff: AbcStaff = {
+            voices: members.map((k) => lineVoices[k] ?? []),
+          };
+          const own = furniture[s]?.[i];
+          if (own !== undefined) {
+            // THE KEY ORDER IS abcjs's — `{voices, clef, key}` from `createStaff` with the
+            // meter added after, which is what a host comparing the objects sees.
+            if (own.meter !== undefined) staff.meter = own.meter;
+            staff.key = own.key;
+            staff.clef = own.clef;
+          }
+          return staff;
+        }),
     });
   });
   // …and the hoist runs over the finished lines, per voice, because it moves an element
   // from one line's array into another's.
-  const staffCount = lines[0]?.staff?.length ?? 0;
+  for (const b of score.textBelow) lines.push(textLine(b));
+  // …and the hoist reads the FIRST MUSIC line, which is no longer line 0 once a subtitle
+  // or a `%%text` stands above it.
+  const firstStaff = lines.find((l) => l.staff !== undefined);
+  const staffCount = firstStaff?.staff?.length ?? 0;
   for (let j = 0; j < staffCount; j += 1) {
-    const voiceCount = lines[0]?.staff?.[j]?.voices.length ?? 0;
+    const voiceCount = firstStaff?.staff?.[j]?.voices.length ?? 0;
     for (let k = 0; k < voiceCount; k += 1)
       hoistLeadingStaffFields(
         lines.flatMap((l) => {

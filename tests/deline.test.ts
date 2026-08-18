@@ -22,9 +22,7 @@ import type { AbcLine } from "../src/compat/lines.js";
  * So a row here fails for one of exactly three reasons, and they are worth telling apart
  * before touching anything:
  *
- *   1. **THE LINES DID NOT MERGE THE SAME WAY** — a `%%text`, a `%%sep`, a `%%vskip` or a
- *      mid-tune `T:` between two music lines stops the merge, and our projection carries
- *      only the subtitle, and carries it at the FRONT rather than where it was written.
+ *   1. **A `%%MIDI` IS A STREAM ELEMENT** with a `-1 … -1` span, and is not projected.
  *   2. **THE STREAM IS SHORT AN ELEMENT KIND** — a `stem` (which is `resolveOverlays`'s
  *      doing, not the parser's), a `midi`, a `style` or a `font`.
  *   3. **AN OVERLAY LAYER IS NOT `resolveOverlays`'s** — abcjs snips the `&` run out of the
@@ -165,6 +163,6 @@ describe("tune.deline — abcjs's merged line list", () => {
   /** A floor, not a target — it moves up and must never move down. */
   it("the whole corpus agrees on at least the rows it did", () => {
     const agree = table.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(1208);
+    expect(agree).toBeGreaterThanOrEqual(1326);
   });
 });
