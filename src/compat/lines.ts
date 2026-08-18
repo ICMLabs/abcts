@@ -94,6 +94,9 @@ export interface AbcElement {
   title?: string;
   /** A voice name's label, and a text row's own words. */
   text?: string;
+  /** `%%MIDI <cmd> <params…>` written after the music began — see `voiceElements`. */
+  cmd?: string;
+  params?: readonly (string | number)[];
   // ── the staff's own furniture, which abcjs hangs on the STAFF and not on the stream ──
   verticalPos?: number;
   clefPos?: number;
@@ -769,6 +772,15 @@ function voiceElements(
   const out: (AbcElement | null)[] = [];
   const notes: { event: MusicEvent; e: AbcElement }[] = [];
   /**
+   * **WHERE AN ELEMENT SORTS WHEN IT HAS NO SPAN OF ITS OWN.** The stream is put back into
+   * source order by `startChar`, which a `%%MIDI` element does not have — abcjs writes it
+   * `-1 … -1` (`abc_parse_directive.js:719`) and relies on having APPENDED it in reading
+   * order. Ours is assembled per measure, so the reading order is recovered from the
+   * measure the directive belongs to; the `-0.5` puts it ahead of that measure's own
+   * opening barline, which is where abcjs read it.
+   */
+  const sortAt = new Map<AbcElement, number>();
+  /**
    * **THE VOLTA BELONGS TO THE MEASURE IT OPENS AND THE LABEL TO THE BARLINE BEFORE IT.**
    * `Measure.voltaSourceRange` IS that barline's range, so the two are matched by position
    * — which is also how the drawing finds a barline again.
@@ -784,6 +796,29 @@ function voiceElements(
     return label === undefined ? undefined : { label, abc };
   };
   for (const measure of measures) {
+    /**
+     * **A `%%MIDI` AFTER THE MUSIC HAS BEGUN IS AN ELEMENT OF THE STREAM** —
+     * `if (tuneBuilder.hasBeginMusic()) appendElement('midi', -1, -1, {cmd, params})`, and
+     * BEFORE it, it is `formatting.midi` instead (`abc_parse_directive.js:718-724`). That
+     * split is `formatting`'s own five-rung ladder finding; this is its other half.
+     *
+     * A directive standing between two music LINES lands at the END of the line above,
+     * because `startNewLine` is lazy — the same rule a standalone `K:` follows, and
+     * `hoistLeadingStaffFields` is where both are settled.
+     */
+    const midis: AbcElement[] = [];
+    for (const midi of measure.midiCommands ?? []) {
+      const e: AbcElement = {
+        el_type: "midi",
+        startChar: -1,
+        endChar: -1,
+        cmd: midi.cmd,
+        params: midi.params,
+      };
+      midis.push(e);
+      out.push(e);
+    }
+    const measureFrom = out.length;
     out.push(
       bar(
         measure.openingBarline,
@@ -871,15 +906,27 @@ function voiceElements(
         voltaOn(measure.closingBarlineSourceRange),
       ),
     );
+    /**
+     * …**AND THE POSITION IT SORTS AT IS THIS MEASURE'S OWN FIRST CHARACTER**, taken off
+     * the elements actually built rather than off `sourceRange`: a note's span opens at
+     * its CHORD SYMBOL or decoration, so `"D"z4` begins five characters before the note
+     * and the directive above it has to sort ahead of that too.
+     */
+    const opens = out
+      .slice(measureFrom)
+      .flatMap((e) => (e == null ? [] : [e.startChar ?? Number.POSITIVE_INFINITY]));
+    const at = Math.min(...opens, Number.POSITIVE_INFINITY) - 0.5;
+    for (const e of midis) sortAt.set(e, at);
   }
   // **SORTED BY POSITION, NOT BY THE ORDER WE HAPPEN TO BUILD THEM.** abcjs appends to the
   // voice as it reads the line, so the stream is in source order by construction; ours is
   // assembled from a measure's fields and has to be put back into it.
   markTuplets(notes.filter((n) => n.event.tuplet !== null));
   markTieEnds(notes);
+  const keyOf = (e: AbcElement): number => sortAt.get(e) ?? e.startChar ?? 0;
   const stream = out
     .filter((e): e is AbcElement => e !== null)
-    .sort((a, b) => (a.startChar ?? 0) - (b.startChar ?? 0));
+    .sort((a, b) => keyOf(a) - keyOf(b));
   /**
    * **ANY BARLINE THAT IS NOT A PLAIN THIN `|` ENDS THE ENDING IT SITS IN**, and a barline
    * that opens ANOTHER while one is open ends that one too:
@@ -1236,7 +1283,16 @@ export function projectionOf(
    * `K:A` then `[K:G] |` and abcjs answers NOTHING for that `[K:G]`.
    */
   const hoistLeadingStaffFields = (voiceLines: AbcElement[][]): void => {
-    const STAFF_FIELD = new Set(["clef", "keySignature", "timeSignature"]);
+    const STAFF_FIELD = new Set([
+      "clef",
+      "keySignature",
+      "timeSignature",
+      // A `%%MIDI` between two music lines is read while `tune.lineNum` still points at
+      // the line above, exactly as a standalone `K:` is — measured on
+      // `synth-flattener-07`, whose `%%MIDI drumoff` closes line 0 rather than opening
+      // line 1.
+      "midi",
+    ]);
     for (let i = 0; i < voiceLines.length; i += 1) {
       const line = voiceLines[i];
       if (line === undefined) continue;
@@ -1252,6 +1308,16 @@ export function projectionOf(
         above.some((e) => e.el_type === "note" || e.el_type === "bar")
       )
         above.push(...moved);
+      /**
+       * **AND A `%%MIDI` IS NEVER DROPPED, WHERE A STAFF FIELD IS.** `appendElement`
+       * pushes it onto the current voice unconditionally (`tune-builder.js:174-179`)
+       * where `appendStartingElement` has a third arm that puts the value on the STAFF
+       * and out of the stream (`:295`). So the two part company on exactly the line the
+       * hoist cannot move: with nothing above holding music, a key is absent and a
+       * `%%MIDI` stays where it was written — measured on `synth-flattener-07`, whose
+       * `%%MIDI drumon` after a body `V:` opens line 0.
+       */
+      else line.unshift(...moved.filter((e) => e.el_type === "midi"));
     }
   };
 
@@ -1364,9 +1430,17 @@ export function projectionOf(
         score.keywarn,
       );
     });
+    /**
+     * **ONLY AN ELEMENT WITH A SPAN IS TILED.** A `%%MIDI` is `-1 … -1` and a `stem` has
+     * no `startChar` KEY at all; letting either into the chain both destroyed its own
+     * `-1` and handed the element after it the wrong opening.
+     */
     tile(
       abc,
-      lineVoices.flat().sort((a, b) => (a.startChar ?? 0) - (b.startChar ?? 0)),
+      lineVoices
+        .flat()
+        .filter((e) => (e.startChar ?? -1) >= 0)
+        .sort((a, b) => (a.startChar ?? 0) - (b.startChar ?? 0)),
     );
     /**
      * **A LINE HOLDS ONLY THE STAVES THAT WROTE MUSIC ON IT.** `createStaff` runs from
