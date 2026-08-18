@@ -182,6 +182,7 @@ const PASSING: readonly string[] = [
   "sib/clefs-tune5",
   "sib/clefs-tune6",
   "sib/clefs-tune7",
+  "sib/courtesy-key-before-subtitle-tune0",
   "sib/curves-tune0",
   "sib/curves-tune1",
   "sib/curves-tune2",
@@ -443,7 +444,7 @@ describe("tune.lines and getElementFromChar", () => {
     // 251,396 of 256,138 until 2026-08-16, when the sibling repo's edits to two fixtures
     // took both numbers down with them — the FLOOR moves with its corpus, and the
     // exclusions above are what make it comparable at all.
-    expect(agree).toBeGreaterThanOrEqual(255657);
+    expect(agree).toBeGreaterThanOrEqual(255660);
   });
 
   /**

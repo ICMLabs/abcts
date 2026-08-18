@@ -1672,6 +1672,42 @@ export function projectionOf(
         }),
       );
   }
+
+  /**
+   * **`noWarnBeforeTitle` — A COURTESY KEY BEFORE A SUBTITLE IS POPPED BACK OFF**
+   * (`tune-builder.js:1075-1111`, run from `cleanUp`). A standalone `K:` is appended to
+   * the line ABOVE it, as every other one is; then, if the NEXT line is a subtitle, abcjs
+   * takes it straight back off — "a `K:` immediately preceded by a `T:` starts a new
+   * section, so the cautionary key change belongs to the new section's initial key".
+   *
+   * Instrumented rather than reasoned: `appendStartingElement` fires for that `K:D`
+   * (`ASE type=key 400..403 lineNum=1 … voice=["note","bar"]`) and the element is
+   * nonetheless absent from abcjs's own `tune.lines`. The pop is the only thing that can
+   * explain both.
+   *
+   * The naturals half is ported with it. Ours never carries one — `keyElement` builds the
+   * signature from the fifths and has no `impliedNaturals` — so it is a no-op today and
+   * the shape is what matters.
+   */
+  for (let i = 1; i < lines.length; i += 1) {
+    if (lines[i]?.subtitle === undefined) continue;
+    for (const staff of lines[i - 1]?.staff ?? []) {
+      for (const voice of staff.voices) {
+        const last = voice[voice.length - 1];
+        if (last?.el_type !== "keySignature") continue;
+        (voice as AbcElement[]).pop();
+        let j = i;
+        while (j < lines.length && lines[j]?.staff === undefined) j += 1;
+        for (const next of lines[j]?.staff ?? []) {
+          const acc = next.key?.accidentals;
+          if (acc !== undefined)
+            (next.key as { accidentals?: unknown }).accidentals = acc.filter(
+              (a) => a.acc !== "natural",
+            );
+        }
+      }
+    }
+  }
   return { lines, byEvent, byRange };
 }
 
