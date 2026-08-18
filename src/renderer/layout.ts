@@ -11871,6 +11871,12 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     probeFinalPass = true
     const solved = lineAt(justify)
     probeFinalPass = false
+    // `ABCTS_W` — the width solve's own numbers, which is how `staffGroup.w` was settled:
+    // `solved.width` IS abcjs's, and `musicWidth` is it plus the left margin.
+    if (process.env['ABCTS_W'])
+      console.error(
+        `WIDTHS system=${systemIndex} target=${target} pageWidth=${pageWidth} leftEdge=${leftEdge} solved=${solved.width} isLast=${isLast}`,
+      )
     // The ratchet. abcjs rounds to whole PIXELS before comparing, so a sub-pixel overrun
     // does not drag the page with it.
     const thisWidth = solved.width - leftEdge

@@ -89,6 +89,9 @@ import { STAFF_SPACE_PX, UNIT_PX } from "../renderer/abcjs-constants.js";
  * row carries is a pitch times this (`abc_tune.js:401-409`).
  */
 const PITCH_STEP_PX = STAFF_SPACE_PX / 2;
+
+/** abcjs's `renderer.padding.left` on screen — the margin every system's music starts at. */
+const PAGE_MARGIN_PX = 15;
 import { layout, type MetaTextRow, type PlacedText } from "../renderer/layout.js";
 import { type SelectableRecord, toSVG } from "../renderer/svg.js";
 
@@ -839,8 +842,21 @@ export function renderAbc(
             line,
             top,
             height: bottom - top,
-            // abcjs's `staffGroup.w`, which `addEndPoints` runs a row out to.
-            systemWidth: system.width,
+            /**
+             * **abcjs's `staffGroup.w` IS OUR `musicWidth` LESS THE LEFT MARGIN**, and it
+             * is the MUSIC's width rather than the system's box — `max(musicWidth,
+             * proseWidth)` widens the latter for a long title and `staffGroup.w` is not
+             * widened by one. Measured over every system of the corpus: 224 of 225 agree
+             * to the digit, on stretched and unstretched lines alike, and the one that
+             * does not is `synth-flattener-17`'s first line, 14px apart.
+             *
+             * ⚠️ **AND THE UNITS ARE THE TRAP.** `layout`'s `systemWidth` option is the
+             * PAGE — `(staffwidth + 2 × padding) / UNIT_PX` — so a probe passing 740 lays
+             * out a DIFFERENT tune from the one `renderAbc(…, {})` renders at 770, and
+             * every derived comparison off it says the rule is one thing on a stretched
+             * line and another on a short one. It is not; it is this.
+             */
+            systemWidth: system.musicWidth - PAGE_MARGIN_PX,
           };
           for (const staff of system.staves)
             for (const voice of staff.voices)
