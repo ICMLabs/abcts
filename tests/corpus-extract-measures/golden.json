@@ -1,0 +1,5552 @@
+{
+ "repo/abcjs-parse-book_parser-01-example": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-parse-book_parser-02-tune": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-parse-book_parser-03-a": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-parse-book_parser-04-wed": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-parse-book_parser-05-a": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-parse-book_parser-06-a": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-parse-book_parser-07-a": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-parse-note-01-c0-d1-eg-0-fa-1": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-parse-note-id-01-v-v1-c-d-e-f": [
+  {
+   "header": "X:1\nK: bass\n",
+   "measures": [
+    {
+     "abc": " C,D,E,F, |"
+    },
+    {
+     "abc": " C,,D,,E,,F,,|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-parse-tie-slur-01-staffwidth-200": [
+  {
+   "header": "X:1\n%%staffwidth 200\nM:C\nK:E\n",
+   "measures": [
+    {
+     "abc": " G8-|"
+    },
+    {
+     "abc": " G8-|"
+    },
+    {
+     "abc": "G8||"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-parse-tie-slur-02-staffwidth-200": [
+  {
+   "header": "X:1\n%%staffwidth 200\nM:C\nK:E\n",
+   "measures": [
+    {
+     "abc": " [GB]8-|"
+    },
+    {
+     "abc": " [GB]8-|"
+    },
+    {
+     "abc": "[GB]8||"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-parse-tie-slur-03-staffwidth-200": [
+  {
+   "header": "X:1\n%%staffwidth 200\n%%staves (T1 B1)\nM:C\nK:E\n",
+   "measures": [
+    {
+     "abc": " [GB]8-|"
+    },
+    {
+     "abc": " [GB]8-|"
+    },
+    {
+     "abc": "[GB]8||"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-parse-tie-slur-04-stretchlast-1": [
+  {
+   "header": "X:1\n%%stretchlast 1\nL:1/8\nM:4/4\nK:D\n",
+   "measures": [
+    {
+     "abc": "F2|"
+    },
+    {
+     "abc": "F2 EF G2 E2|"
+    },
+    {
+     "abc": "C6||"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-synth-flattener-01-crescendo-efga-gab-crescendo-c-diminuend": [
+  {
+   "header": "X:1\nM:4/4\nL:1/4\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "!crescendo(! EFGA|"
+    },
+    {
+     "abc": " GAB !crescendo)!c |"
+    },
+    {
+     "abc": " !diminuendo(! EFGA|"
+    },
+    {
+     "abc": " GAB !diminuendo)!c |"
+    },
+    {
+     "abc": "!pppp! A B !ppp!A B |"
+    },
+    {
+     "abc": "!pp! A B !p!A B |"
+    },
+    {
+     "abc": " !mp! AB !sfz! AB|"
+    },
+    {
+     "abc": "!mf! AB !f! AB |"
+    },
+    {
+     "abc": " !ff! AB !fff! AB |"
+    },
+    {
+     "abc": " !ffff! ABAB|]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-02-p-c-def-gabc-d2-b2-g2-f2-f-e-fga-bcde-p-": [
+  {
+   "header": "X: 1\nM: 4/4\nL: 1/8\nK: C\n",
+   "measures": [
+    {
+     "abc": "!p!C!<(!DEF GABc |"
+    },
+    {
+     "abc": "d2 B2 G2 F2!<)! |"
+    },
+    {
+     "abc": " !f!E!>(!FGA Bcde!>)! |"
+    },
+    {
+     "abc": " !p!f2 d2 B2 A2 |"
+    },
+    {
+     "abc": "G2 c2 e2 g2 |"
+    },
+    {
+     "abc": " a2 f2 d2 B2 |"
+    },
+    {
+     "abc": "cdBc ABGA |"
+    },
+    {
+     "abc": " FGEF DEFG |"
+    },
+    {
+     "abc": "E2 C2 D2 B,2 |"
+    },
+    {
+     "abc": " C8 |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-03-pppp-cdef-gabc-y-ffff-bcba-gfed-y-pppp-c": [
+  {
+   "header": "X: 1\nM: 4/4\nL: 1/4\nK: C\n",
+   "measures": [
+    {
+     "abc": "!pppp!CDEF |"
+    },
+    {
+     "abc": " !<(!GABc|"
+    },
+    {
+     "abc": " !<)!y!ffff!BcBA |"
+    },
+    {
+     "abc": " !>(!GFED |"
+    },
+    {
+     "abc": " !>)!y!pppp!C4 |]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-04-g-gab-cde-d7-fga-def": [
+  {
+   "header": "X:1\nM:6/8\nL:1/8\nQ:3/8=60\nK:G\n",
+   "measures": [
+    {
+     "abc": "\"G\"GAB cde|"
+    },
+    {
+     "abc": "\"D7\"fga DEF|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-05-c-cde-def-c2e-d2f-c-c2-d-d-g-d2-e-e": [
+  {
+   "header": "X:1\nL:1/8\nQ:3/8=61\nM:6/8\nK:F\n",
+   "measures": [
+    {
+     "abc": "\"C\"cde def|"
+    },
+    {
+     "abc": "c2e d2f|"
+    },
+    {
+     "abc": "\"C\"c2\"D\"d \"G\"d2\"E\"e|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-06-cde-d7-f2-d2-e2-f2-1-g-g4-fedc-c-e4z4": [
+  {
+   "header": "X:1\nM:C\nL:1/8\nQ:1/2=50\nK:G\n",
+   "measures": [
+    {
+     "abc": "cde|:"
+    },
+    {
+     "abc": "\"D7\"f2 d2 e2 f2|1",
+     "startEnding": "1"
+    },
+    {
+     "abc": "\"G\"g4 fedc:|",
+     "endEnding": true
+    },
+    {
+     "abc": "\"C\"e4z4|]"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-synth-flattener-07-metronome": [
+  {
+   "header": "X:1\nT: metronome\nL:1/4\nQ:1/4=60\n%%MIDI drum dddd 76 77 77 77 50 50 50 50\nN:The drum beat should start on the first full measure.\nN:The drum beat should drop out in the second line.\nN:The drum beat pattern should change for the third line.\nK:A\n",
+   "measures": [
+    {
+     "abc": "e|"
+    },
+    {
+     "abc": "a/g/ f/e/ c3/2 B/|"
+    },
+    {
+     "abc": "Azzz|"
+    },
+    {
+     "abc": "z4|"
+    },
+    {
+     "abc": "z/c/ z/d/ z/e/ z/f/|"
+    },
+    {
+     "abc": "|a/g/ f/e/ c3/2 B/|"
+    },
+    {
+     "abc": "Azzz|"
+    },
+    {
+     "abc": "z4|"
+    },
+    {
+     "abc": "z/c/ z/d/ z/e/ z/f/|"
+    },
+    {
+     "abc": "|a/g/ f/e/ c3/2 B/|"
+    },
+    {
+     "abc": "Azzz|"
+    },
+    {
+     "abc": "z4|"
+    },
+    {
+     "abc": "z/c/ z/d/ z/e/ z/f/|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-synth-flattener-08-em-egab": [
+  {
+   "header": "X: 1\nM: 4/4\nL: 1/4\nK: Em\n",
+   "measures": [
+    {
+     "abc": "\"Em\"EGAB|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-09-d-defg-q-1-2-90-defg": [
+  {
+   "header": "X:1\nL:1/4\nM:C|\nQ:1/2=60\nK:D\n",
+   "measures": [
+    {
+     "abc": "\"D\"DEFG|"
+    },
+    {
+     "abc": "[Q:1/2=90] DEFG |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-10-q-1-4-129-0476605-cdef-q-1-4-127-gabc-q-": [
+  {
+   "header": "X:1\nL:1/4\nM:4/4\nK:F\n",
+   "measures": [
+    {
+     "abc": "[Q:1/4=129.0476605]CDEF |"
+    },
+    {
+     "abc": "[Q:1/4=127]GABc |"
+    },
+    {
+     "abc": "[Q:1/4=131] CDEF |"
+    },
+    {
+     "abc": "[Q:1/4=130] GABc |"
+    },
+    {
+     "abc": "[Q:1/4=127]CDEF |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-11-midi-program-3": [
+  {
+   "header": "X:1\nM:4/4\nL:1/4\nQ:1/4=90\nK:C\n",
+   "measures": [
+    {
+     "abc": "!trill! e !lowermordent! d !uppermordent! c !mordent! B |"
+    },
+    {
+     "abc": " !accent!A .G !turn! g !roll! a |"
+    },
+    {
+     "abc": " !slide! d  !/! G  !//! G   !///! G |"
+    },
+    {
+     "abc": "[Q:1/4=180] !trill! e !lowermordent! d !uppermordent! c !mordent! B |"
+    },
+    {
+     "abc": " !accent!A .G !turn! g !roll! a |"
+    },
+    {
+     "abc": " !slide! d  !/! G  !//! G   !///! G |"
+    },
+    {
+     "abc": "[Q:1/4=60] !trill! e !lowermordent! d !uppermordent! c !mordent! B |"
+    },
+    {
+     "abc": " !accent!A .G !turn! g !roll! a |"
+    },
+    {
+     "abc": " !slide! d  !/! G  !//! G   !///! G |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-12-chords-meter-change": [
+  {
+   "header": "X:1\nT: chords meter change\nL:1/4\nQ:1/4=40\nM:3/4\nK:F\n",
+   "measures": [
+    {
+     "abc": "\"F\"F2A|"
+    },
+    {
+     "abc": "[M:4/4]\"Bb\"Bd2f|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-13-e7-bcde-a-f-break-efe-e7-bc-ignore-de": [
+  {
+   "header": "X:1\nL:1/4\nQ:1/4=40\nK:A\n",
+   "measures": [
+    {
+     "abc": "\"E7\"Bcde|"
+    },
+    {
+     "abc": "\"A\"f\"^break\"efe|"
+    },
+    {
+     "abc": "\"E7\"Bc\"^ignore\"de|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-14-eb7-zg2ga2a2-a2ab-b4-ab-z-break-c2cd2d2-": [
+  {
+   "header": "X:1\nL:1/8\nQ:135\nK:Ab\n",
+   "measures": [
+    {
+     "abc": "\"Eb7\"zG2GA2A2|"
+    },
+    {
+     "abc": "=A2AB-B4|"
+    },
+    {
+     "abc": "\"Ab\"z\"^break\"c2cd2d2|"
+    },
+    {
+     "abc": "=d2de2c2=c|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-15-c-c4-c": [
+  {
+   "header": "X:1\nL:1/4\nQ:135\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"c4-|"
+    },
+    {
+     "abc": "c|]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-16-gm-gfdf-gfdf-gf-d2-f-c4": [
+  {
+   "header": "X:1\nK: Gmin\n",
+   "measures": [
+    {
+     "abc": "|: \"Gm\" GFDF GFDF |"
+    },
+    {
+     "abc": " GF D2 \"F\" C4 |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-17-midi-grace-notes": [
+  {
+   "header": "X:1\nT: midi-grace-notes\nL:1/4\nQ:1/4=40\nK:A\n",
+   "measures": [
+    {
+     "abc": "{e}a|:"
+    },
+    {
+     "abc": "{e}gz{e}ag|"
+    },
+    {
+     "abc": "{efg}ag{ABcdefg}ag:|"
+    },
+    {
+     "abc": "{B}e{B2c/d/}fef|"
+    },
+    {
+     "abc": "[K:Bb]{Bcde}f2{Bcde}f2|]"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-synth-flattener-18-midi-program-40": [
+  {
+   "header": "X:1\n%%MIDI program 40\n%%MIDI channel 4\n%%MIDI transpose -2\nL:1/4\nQ:1/4=40\nK:A\n",
+   "measures": [
+    {
+     "abc": "ABcd|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-19-cdef-z4-fedc": [
+  {
+   "header": "X:1\nM:4/4\nL:1/4\nQ:1/4=130\nK:Bb\n",
+   "measures": [
+    {
+     "abc": "cdef|"
+    },
+    {
+     "abc": "Z4|"
+    },
+    {
+     "abc": "fedc|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-20-k-treble-8-b-a4-ce-f-4-k-treble-8-g8-g-2": [
+  {
+   "header": "X:1\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "{B}A4 [CE^F]4 |"
+    },
+    {
+     "abc": "[K: treble-8]G8|"
+    },
+    {
+     "abc": " G,2B,2 c'2e'2 |"
+    },
+    {
+     "abc": "[K: bass-8]C8|"
+    },
+    {
+     "abc": "[K: bass+8]B,8|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-21-c4-d4": [
+  {
+   "header": "X:1\nM: 4/4\nL: 1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C4 |"
+    },
+    {
+     "abc": " D4 |"
+    },
+    {
+     "abc": "G4 & E4 |"
+    },
+    {
+     "abc": " A4 & F4 |"
+    },
+    {
+     "abc": "B4 & d4 & f4 |"
+    },
+    {
+     "abc": " c4 & e4 & g4 |"
+    },
+    {
+     "abc": "a4 |"
+    },
+    {
+     "abc": " b4 & d'4 |"
+    },
+    {
+     "abc": "C4 |"
+    },
+    {
+     "abc": " D4 |"
+    },
+    {
+     "abc": " E4 & G4 |"
+    },
+    {
+     "abc": " A4 |"
+    },
+    {
+     "abc": " B4 & d4 |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-22-b-c4-d4": [
+  {
+   "header": "X:1\nM: 4/4\nL: 1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "B, |"
+    },
+    {
+     "abc": " C4 |"
+    },
+    {
+     "abc": " D4 |"
+    },
+    {
+     "abc": "G4 & E4 |"
+    },
+    {
+     "abc": " A4 & F4 |"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-synth-flattener-23-percmap-d-pedal-hi-hat-x": [
+  {
+   "header": "X:1\n%%percmap D  pedal-hi-hat x\n%%percmap E  bass-drum-1\n%%percmap F  acoustic-bass-drum\n%%percmap G  low-floor-tom\n%%percmap A  high-floor-tom\n%%percmap B  low-tom\n%%percmap ^B tambourine   triangle\n%%percmap c  acoustic-snare\n%%percmap _c electric-snare\n%%percmap ^c low-wood-block   triangle\n%%percmap =c side-stick\n%%percmap d  low-mid-tom\n%%percmap ^d hi-wood-block    triangle\n%%percmap e  hi-mid-tom\n%%percmap ^e cowbell      triangle\n%%percmap f  high-tom\n%%percmap ^f ride-cymbal-1\n%%percmap g  closed-hi-hat\n%%percmap ^g open-hi-hat\n%%percmap a  crash-cymbal-1  x\n%%percmap ^a open-triangle     triangle\nQ:1/4=50\nK:C perc\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-synth-flattener-24-percmap-c-high-tom-x": [
+  {
+   "header": "X:1\n%%percmap ^c' high-tom  x\n%%percmap c' high-tom  x\n%%percmap b high-tom  x\n%%percmap C high-tom  x\nQ:1/4=50\nK:C perc\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-synth-flattener-25-cd-d2-d2-dz": [
+  {
+   "header": "X:1\nL:1/4\nQ:80\nK:A\n",
+   "measures": [
+    {
+     "abc": "cd-d2-|"
+    },
+    {
+     "abc": "d2-dz|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-26-gbcd-d4-zcdc-dc3": [
+  {
+   "header": "X:1\nM:4/4\nL:1/8\nQ:1/4=150\nK:Bb\n",
+   "measures": [
+    {
+     "abc": "GBcd-d4|"
+    },
+    {
+     "abc": "zcdc dc3:|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-27-triplets-and-chord-rhythm": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-synth-flattener-28-midi-channel-10": [
+  {
+   "header": "X:1\nV:SnareDrum stem=up stafflines=1\nK:C clef=perc\n",
+   "measures": [
+    {
+     "abc": "!f!B2 z2  B/4B/4B/4B/4 B/4B/4B/4B/4 B/4B/4B/4B/4 B/4B/4B/4B/4 B/4B/4B/4B/4 |"
+    },
+    {
+     "abc": " B/4B/4B/4B/4 !>!B2 {/B}B4|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-synth-flattener-29-midi-drum-dddd-76-77-77-77-50-50-50-50": [
+  {
+   "header": "X:1\nL:1/4\nQ:1/4=60\n%%MIDI drum dddd 76 77 77 77 50 50 50 50\nM:4/4\nK:A\n",
+   "measures": [
+    {
+     "abc": "e|"
+    },
+    {
+     "abc": "a/g/ f/e/ c3/2 B/|"
+    },
+    {
+     "abc": "Azzz|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-synth-flattener-30-am-a2e-e2d-g-bab-d2b-am-a2e-e2d-g-b2a-ga": [
+  {
+   "header": "X: 1\nM: 12/8\nK: Ador\n",
+   "measures": [
+    {
+     "abc": "|:\"Am\" A2e e2d \"G\" BAB d2B |"
+    },
+    {
+     "abc": " \"Am\" A2e e2d \"G\" B2A GAB |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-31-tempo-change-three-voices": [
+  {
+   "header": "X: 1\nT: tempo-change-three-voices\n%%score { ( 1 3 ) | 2 }\nQ:1/4=70\nM: 4/4\nL: 1/8\nK: C\n",
+   "measures": [
+    {
+     "abc": "a2b2c'2b2 |"
+    },
+    {
+     "abc": "[Q:1/4=80] a2b2c'2b2 |"
+    },
+    {
+     "abc": " a2b2c'2b2 |"
+    },
+    {
+     "abc": "a2b2c'2b2 |"
+    },
+    {
+     "abc": " a2b2c'2b2 |"
+    },
+    {
+     "abc": " a2b2c'2b2 :|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-32-quarter-tone2": [
+  {
+   "header": "X:1\nT:quarter-tone2\nM:12/8\nQ:1/8=120\nN: all combinations of accidentals in key sigs and in music\nK: C ^/f _/B _A ^D\n",
+   "measures": [
+    {
+     "abc": "ABc def|"
+    },
+    {
+     "abc": "_A_B_c _d_e_f ABc def|"
+    },
+    {
+     "abc": "_/A_/B_/c _/d_/e_/f ABc def|"
+    },
+    {
+     "abc": "=A=B=c =d=e=f ABc def|"
+    },
+    {
+     "abc": "^/A^/B^/c ^/d^/e^/f ABc def|"
+    },
+    {
+     "abc": "^A^B^c ^d^e^f ABc def|"
+    },
+    {
+     "abc": "^^A^^B^^c ^^d^^e^^f ABc def|"
+    },
+    {
+     "abc": "__A__B__c __d__e__f ABc def|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-synth-flattener-33-tempo-override": [
+  {
+   "header": "X:1\nT:tempo-override\nL:1/4\nQ:1/4=150\nM:4/4\nK:G\n",
+   "measures": [
+    {
+     "abc": "C D E F|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-34-score-s-a-t-b": [
+  {
+   "header": "X: 1\nM: 4/4\n%%score (S A) (T B)\nV:S clef=treble middle=B stem=up\nV:A clef=treble middle=B stem=down\nV:T clef=bass,, stem=up\nV:B clef=bass,, stem=down\nL: 1/4\nK: C\n",
+   "measures": [
+    {
+     "abc": "|\"Am\"e4 |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-35-midi-bassprog-10": [
+  {
+   "header": "X: 1\nL: 1/4\nM: 4/4\n%%MIDI bassprog 10\n%%MIDI bassvol 125\n%%MIDI chordprog 72\n%%MIDI chordvol 23\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"z4|"
+    },
+    {
+     "abc": "\"G7\"z4|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-36-midi-gchord-fhihfhih": [
+  {
+   "header": "X: 1\nL: 1/4\nM: 4/4\n%%MIDI gchord fHIHfhih\n%%MIDI bassprog 10\n%%MIDI bassvol 125\n%%MIDI chordprog 72\n%%MIDI chordvol 23\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"z4|"
+    },
+    {
+     "abc": "\"G7\"z2z\"C\"z|"
+    },
+    {
+     "abc": "\"C\"z4|"
+    },
+    {
+     "abc": "\"G7\"z2z\"C\"z|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-37-midi-gchord-bzczbzcz": [
+  {
+   "header": "X: 1\nL: 1/4\nM: 4/4\n%%MIDI gchord bzczbzcz\n%%MIDI bassprog 10\n%%MIDI bassvol 125\n%%MIDI chordprog 72\n%%MIDI chordvol 23\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"z4|"
+    },
+    {
+     "abc": "\"G7\"z4|"
+    },
+    {
+     "abc": "\"C\"z\"C#°7\"z\"Dm7\"z\"G7\"z|"
+    },
+    {
+     "abc": "\"F\"z3\"F#°7\"z|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-38-c-zz-d-z-e-z": [
+  {
+   "header": "X: 1\nL: 1/4\nM: 4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"zz|"
+    },
+    {
+     "abc": "\"D\"z\"E\"z|"
+    },
+    {
+     "abc": "\"C\"zzz|"
+    },
+    {
+     "abc": "\"D\"z\"E\"z\"F\"z|"
+    },
+    {
+     "abc": "z\"G\"zz|"
+    },
+    {
+     "abc": "\"C\"zzzzz|"
+    },
+    {
+     "abc": "\"D\"zzz\"E\"zz|"
+    },
+    {
+     "abc": "z\"G\"zzzz|"
+    },
+    {
+     "abc": "\"C\"zzzzzz|"
+    },
+    {
+     "abc": "\"D\"zzz\"E\"zzz|"
+    },
+    {
+     "abc": "\"G\"zz\"A\"zz\"B\"zz|"
+    },
+    {
+     "abc": "\"C\"zzzz|"
+    },
+    {
+     "abc": "\"D\"zz\"E\"zz|"
+    },
+    {
+     "abc": "\"G\"z\"A\"zz\"B\"z|"
+    },
+    {
+     "abc": "\"C\"zzzzzz|"
+    },
+    {
+     "abc": "\"D\"zzz\"E\"zzz|"
+    },
+    {
+     "abc": "\"G\"zz\"A\"zz\"B\"zz|"
+    },
+    {
+     "abc": "\"C\"zzzzzzzz|"
+    },
+    {
+     "abc": "\"D\"zzzz\"E\"zzzz|"
+    },
+    {
+     "abc": "\"G\"zz\"A\"zz\"B\"zz\"C\"zz|"
+    },
+    {
+     "abc": "\"C\"z/z/z/|"
+    },
+    {
+     "abc": "\"D\"z/\"E\"z/z/|"
+    },
+    {
+     "abc": "\"D\"z/z/\"E\"z/|"
+    },
+    {
+     "abc": "\"G\"z/\"A\"z/\"B\"z/|"
+    },
+    {
+     "abc": "\"C\"z/z/z/z/z/z/|"
+    },
+    {
+     "abc": "\"D\"z/\"E\"z/z/\"D\"z/z/\"E\"z/|"
+    },
+    {
+     "abc": "\"G\"z\"A\"z\"B\"z|"
+    },
+    {
+     "abc": "\"C\"z/z/z/z/z/z/z/z/z/|"
+    },
+    {
+     "abc": "\"D\"z/z/\"E\"z/z/z/\"D\"z/z/z/\"E\"z/|"
+    },
+    {
+     "abc": "\"G\"zz/\"A\"zz/\"B\"zz/|"
+    },
+    {
+     "abc": "\"C\"z/z/z/z/z/z/z/z/z/z/z/z/|"
+    },
+    {
+     "abc": "\"D\"z/z/z/\"E\"z/z/z/z/\"D\"z/z/z/z/\"E\"z/|"
+    },
+    {
+     "abc": "\"G\"zz\"A\"zz\"B\"zz|"
+    },
+    {
+     "abc": "\"C\"z/z/z/z/z/z/z/|"
+    },
+    {
+     "abc": "\"D\"z/z/z/\"E\"z/z/z/z/|"
+    },
+    {
+     "abc": "\"G\"z/z/z/z/\"A\"z/z/z/|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-39-midi-gchord-bzczbzcz": [
+  {
+   "header": "X: 1\nL: 1/4\nM: 4/4\n%%MIDI gchord bzczbzcz\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"z4|"
+    },
+    {
+     "abc": "\"D\"z4|"
+    },
+    {
+     "abc": "\"E\"z4|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-40-c5-z4": [
+  {
+   "header": "X: 1\nL: 1/4\nM: 4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C5\"z4|"
+    },
+    {
+     "abc": "\"D5\"z4|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-41-midi-bassprog-10-octave-1": [
+  {
+   "header": "X: 1\nL: 1/4\nM: 4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"z4|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-42-midi-gchord-ffffffff": [
+  {
+   "header": "X: 1\nL: 1/4\nM: 4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"z4|"
+    },
+    {
+     "abc": "\"C\"z4|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-43-gm-zzz-cm-zzz": [
+  {
+   "header": "X: 1\nM: 3/4\nL: 1/4\nK: Cb\n",
+   "measures": [
+    {
+     "abc": "\"Gm\"zzz|"
+    },
+    {
+     "abc": "\"(Cm)\"zzz|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-flattener-44-cd-pppp-c-ffff-d-ffff-c-pppp-d-cd": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-synth-flattener-45-segno-f-d2": [
+  {
+   "header": "X:11\nM:4/4\nL:1/8\nK:C\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-synth-flattener-46-c8-1-d8-2-e8-3-f8": [
+  {
+   "header": "X:1\nM:C\nL:1/8\nQ:1/4=130\nK:F\n",
+   "measures": [
+    {
+     "abc": "C8 |1",
+     "startEnding": "1"
+    },
+    {
+     "abc": " D8 :|2",
+     "startEnding": "2",
+     "endEnding": true
+    },
+    {
+     "abc": " E8 :|3",
+     "startEnding": "3",
+     "endEnding": true
+    },
+    {
+     "abc": " F8 ||",
+     "endEnding": true
+    },
+    {
+     "abc": "|: B8 |1,3",
+     "startEnding": "1,3"
+    },
+    {
+     "abc": " c8 :|2,4",
+     "startEnding": "2,4",
+     "endEnding": true
+    },
+    {
+     "abc": " d8 :|",
+     "endEnding": true
+    },
+    {
+     "abc": " _e8 |"
+    },
+    {
+     "abc": " e8 ||"
+    },
+    {
+     "abc": "|: _a8 |1-3",
+     "startEnding": "1-3"
+    },
+    {
+     "abc": " b8 :|4",
+     "startEnding": "4",
+     "endEnding": true
+    },
+    {
+     "abc": " c'8 |"
+    },
+    {
+     "abc": " ^c'8 :|",
+     "endEnding": true
+    },
+    {
+     "abc": " d'8 ||"
+    },
+    {
+     "abc": "|: C8 ::"
+    },
+    {
+     "abc": " D8 |"
+    },
+    {
+     "abc": " E8 :|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-midi-01-midi-options": [
+  {
+   "header": "X:1\n%%MIDI program 4\n%%MIDI channel 4\n%%MIDI transpose -2\nT: midi options\n%score {RH LH}\nL:1/4\nQ:1/4=89\nK:A\n",
+   "measures": [
+    {
+     "abc": "A[Bd]c2|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-midi-02-staccato": [
+  {
+   "header": "X:1\nT: staccato\nL:1/4\nQ:1/4=59\nK:cm\n",
+   "measures": [
+    {
+     "abc": ".A.Bcd(ef)|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-synth-midi-03-percmap": [
+  {
+   "header": "X:1\nT:percmap\n%%MIDI drummap F 36 %bass drum 1\n%%MIDI drummap c 38 %acoustic snare\n%%MIDI drummap g 42 %closed hi hat\nQ:1/4=50\nK:C perc\n",
+   "measures": [
+    {
+     "abc": "[gF] g [gc] g [gF] g [gc] g |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-timing-01-cde-fg-ab-1-bcd-2-efg": [
+  {
+   "header": "X:1\nL:1/4\nM:3/4\nQ:1/4=60\nK:Bb\n",
+   "measures": [
+    {
+     "abc": "CDE|:"
+    },
+    {
+     "abc": "FG[Ab]|1",
+     "startEnding": "1"
+    },
+    {
+     "abc": " Bcd:|2",
+     "startEnding": "2",
+     "endEnding": true
+    },
+    {
+     "abc": " efg|]",
+     "endEnding": true
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-timing-02-score-1-2": [
+  {
+   "header": "X:1\n%%score { 1 | 2 }\nL:1/8\nQ:1/4=140\nM:11/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "A,B,CD EFD E2 E2 |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-timing-03-cd-e-f-3gab-ac": [
+  {
+   "header": "X:1\nL:1/4\nQ:1/4=60\nM:4/4\nK:F\n",
+   "measures": [
+    {
+     "abc": "CD E>F |"
+    },
+    {
+     "abc": " (3GAB Ac :|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-timing-04-cd-e-f-3gab-ac": [
+  {
+   "header": "X:1\nL:1/4\nM:4/4\nK:F\n",
+   "measures": [
+    {
+     "abc": "CD E>F |"
+    },
+    {
+     "abc": " (3GAB Ac :|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-timing-05-subtitle-crash": [
+  {
+   "header": "X:1\nT:subtitle-crash\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "cdef|"
+    },
+    {
+     "abc": "fabg|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-timing-06-repeat-at-start-of-line-crash": [
+  {
+   "header": "X:1\nT:repeat-at-start-of-line-crash\nK:C\n",
+   "measures": [
+    {
+     "abc": "E8|"
+    },
+    {
+     "abc": "|1 D8 :|2",
+     "startEnding": "2",
+     "endEnding": true
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-timing-07-skip-ties-crash": [
+  {
+   "header": "X:1 \nT:skip-ties-crash\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "E8- |"
+    },
+    {
+     "abc": " E8 |]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-timing-08-tie-repeat-crash": [
+  {
+   "header": "X:1\nT:tie-repeat-crash\nL:1/8\nQ:1/4=100\nM:4/4\nK:G\n",
+   "measures": [
+    {
+     "abc": "G3 F- F4 :|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-timing-09-f-c-2d-2-e-4-g-6-a-2-g-4-e-4": [
+  {
+   "header": "X:1\nM:2/4\nL:1/16\nK:C clef=bass\n",
+   "measures": [
+    {
+     "abc": "!f!C,2D,2 E,4|"
+    },
+    {
+     "abc": "G,6 A,2|"
+    },
+    {
+     "abc": "G,4 E,4|]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-timing-10-stretchlast-1": [
+  {
+   "header": "X:1\n%%stretchlast 1\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C4 D4-|"
+    },
+    {
+     "abc": "D4 F2-F2 |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-timing-11-stretchlast-1": [
+  {
+   "header": "X:1\n%%stretchlast 1\nM:2+3/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "C4 D6-|"
+    },
+    {
+     "abc": " D4 z2 F2 F2 |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-timing-12-stretchlast-1": [
+  {
+   "header": "X:1\n%%stretchlast 1\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C4 D4-|"
+    },
+    {
+     "abc": " D4 z2 F2 |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-decorations-01-score-s-a-b": [
+  {
+   "header": "X:1\nL:1/8\nM:4/4\n%%score (S A) B\nK:C\n",
+   "measures": [
+    {
+     "abc": "!invertedfermata!EF !invertedfermata!G2 |"
+    },
+    {
+     "abc": " !invertedfermata!ef !invertedfermata!g2 |"
+    },
+    {
+     "abc": "!fermata!EF !fermata!G2 |"
+    },
+    {
+     "abc": " !fermata!ef !fermata!g2 ||"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-directives-01-incipit-test": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-visual-layout-01-barlabelfont-times-bold-18-box": [
+  {
+   "header": "X:1\n%%barlabelfont Times-Bold 18 box\n%%setbarnb 42\n%%barnumbers 1\nM: 4/4\nL: 1/16\nK:D\n",
+   "measures": [
+    {
+     "abc": "z8 |"
+    },
+    {
+     "abc": "z8 |"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-layout-02-barlabelfont-times-bold-18-box": [
+  {
+   "header": "X:1\n%%barlabelfont Times-Bold 18 box\n%%setbarnb 42\n%%barnumbers 1\nM: 4/4\nL: 1/16\nK:D clef=bass\n",
+   "measures": [
+    {
+     "abc": "z8 |"
+    },
+    {
+     "abc": "z8 |"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-layout-03-cdef-cdef": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-visual-layout-04-score-s-a": [
+  {
+   "header": "X:1\nL:1/8\nM:4/4\n%%score (S A)\nV:S clef=treble middle=B stem=up\nV:A clef=treble middle=B stem=down\nK:C\n",
+   "measures": [
+    {
+     "abc": "G4 zA G2 |"
+    },
+    {
+     "abc": " GG GG GG GG |"
+    },
+    {
+     "abc": " G/G/G/G/   [GB]/G/[cG]/G/   G/G/G/G/   G/G/G/G/ |"
+    },
+    {
+     "abc": " C6 ||"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-layout-05-c3-abc-cf-3-abc-c3-fa-bc": [
+  {
+   "header": "X:1\nM:3/8\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "C3 & ABc |"
+    },
+    {
+     "abc": " [CF]3 & ABc |"
+    },
+    {
+     "abc": "C3 & [FA]Bc |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-layout-06-staves-1-2-3-4": [
+  {
+   "header": "X: 1\n%%staves [(1 2) (3 4)]\nV: 1 clef=treble\nV: 2 clef=treble\nV: 3 clef=bass\nV: 4 clef=bass\nK: C\n",
+   "measures": [
+    {
+     "abc": "A2 |"
+    },
+    {
+     "abc": "d2 |"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-layout-07-v-1-b2-a2": [
+  {
+   "header": "X:1\nL:1/4\nK:GMin\n",
+   "measures": [
+    {
+     "abc": " B2    A2 |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-layout-08-staffwidth-100": [
+  {
+   "header": "X:1\nL:1/4\n%%staffwidth 100\nK:C\n",
+   "measures": [
+    {
+     "abc": "A/ !>!A/ |]"
+    },
+    {
+     "abc": "A/!>!A/ |]"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-layout-09-endings": [
+  {
+   "header": "X:1\nT:endings\n%%score (1 2)\nL:1/8\nK:D \n",
+   "measures": [
+    {
+     "abc": "[1 \"D\"fdd2 fded:|",
+     "endEnding": true
+    },
+    {
+     "abc": "[2 \"D\"dffe d3A|]",
+     "endEnding": true
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-misc-01-barnumbers-1": [
+  {
+   "header": "X:1 \nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "Z24 |"
+    },
+    {
+     "abc": " F2 |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-misc-02-title": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-visual-misc-03-jazzchords": [
+  {
+   "header": "X:1\n%%jazzchords\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C7\"C \"C/B\"B \"x\"A \"x/C\"G \"/E\"E|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-misc-04-stretchlast": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-visual-misc-05-cccc-d-c-alcoda-dddd-d-c-alfine-eeee-d-s": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-visual-misc-06-title-1bold-0-100-reg-the": [
+  {
+   "header": "X:1\n%%setfont-1 cursive 16 bold\n%%setfont-7 Arial 19 bold\nT:Title $1bold$0 $$100 reg, the\nT:subtitle $1bold$0 reg\nC:Thomas $7Fats$0 Waller\nO:Copyright $11924$0 All Rights Reserved\nA:by $1Me\nP:AA$1BB$0CC\nH:one $1two $0 three\nH:aye $1bee $0 sea\nB:$1book\nD:records\nN:four $1five $0 six\nN:seven\nL:1/4\nM:4/4\nW: lo $1loo $0lou $$1dollar\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C$1m$7\\ntwo\"G \"Dm7\"E2 F |"
+    },
+    {
+     "abc": " \"^above $1the$0 staff\"D4 |]"
+    },
+    {
+     "abc": "P:chorus $1with feeling\nA4|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:1\nT:Title bold $$100 reg, the\nT:subtitle bold reg\nC:Thomas Fats Waller\nO:Copyright 1924 All Rights Reserved\nA:by Me\nP:AABBCC\nH:one two three\nH:aye bee sea\nN:four five six\nN:seven\nL:1/4\nM:4/4\nW: lo loo lou $$1dollar\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"Cm\"G E2 F |"
+    },
+    {
+     "abc": " \"^above the staff\"D4 |]"
+    },
+    {
+     "abc": "P:chorus with feeling\nA4|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-misc-07-ab-ef-g-d-df-f-d-a-4-c-4": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-visual-misc-08-a2-c2-t-a2t-c2": [
+  {
+   "header": "X:1\nK:C\n",
+   "measures": [
+    {
+     "abc": "!>!A2!>!c2|"
+    },
+    {
+     "abc": "T!>!A2T!>!c2|]"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-misc-09-begintext": [
+  {
+   "header": "X:1\nM: none\nL: 1/4\nK: C none stafflines=0\n",
+   "measures": [],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-misc-10-begintext": [
+  {
+   "header": "X:1\nM: none\nL: 1/4\nK: C none stafflines=0\n",
+   "measures": [],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-misc-11-begintext": [
+  {
+   "header": "X:1\nM: none\nL: 1/4\nK: C none stafflines=0\n",
+   "measures": [],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-misc-12-b-beambr1-b-bb": [
+  {
+   "header": "X: 1\nL: 1/8\nK: C none\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-misc-13-ceg-t-gce-d-f-b-3-dm7-d-te": [
+  {
+   "header": "X: 1\nL: 1/8\nK: C none\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-misc-14-tune": [
+  {
+   "header": "X:1\nM:6/8\nL:1/4\nK:none clef=perc stafflines=1 middle=a\n",
+   "measures": [],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-mouse-click-01-selection-test": [
+  {
+   "header": "X:1\nM:4/4\nL:1/16\n%%titlefont Times New Roman 22.0\n%%partsfont box\n%%barnumbers 1\nT: Selection Test\nT: Everything should be selectable\nC: public domain\nR: Hit it\nA: Yours Truly\nS: My own testing\nW: Now is the time for all good men\nW:\nW: To come to the aid of their party.\nH: This shows every type of thing that can possibly be drawn.\nH:\nH: And two lines of history!\nQ: \"Easy Swing\" 1/4=140\nP: AABB\n%%staves {(PianoRightHand extra) (PianoLeftHand)}\nV:PianoRightHand clef=treble+8 name=RH\nV:PianoLeftHand clef=bass name=LH\nK:Bb\n",
+   "measures": [
+    {
+     "abc": "P:A\n%%text there is some random text\n%%sep 0.4cm 0.4cm 6cm\n[V: PianoRightHand] !mp![b8B8d8] f3g !//!f4|"
+    },
+    {
+     "abc": "!<(![d12b12] !<)![b4g4]|"
+    },
+    {
+     "abc": "z4  b^f_df (3B2d2c2 B4|1",
+     "startEnding": "1"
+    },
+    {
+     "abc": "[Q:\"left\" 1/4=170\"right\"]!f![c4f4] z4 [b8d8]|"
+    },
+    {
+     "abc": " (3[G8e8] Tu[c8f8] G8|]",
+     "endEnding": true
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-multi-voice-01-score-top-bottom": [
+  {
+   "header": "X:1\nM:4/4\nL:1/16\n%%score (Top Bottom)\nV:Top\nK:C clef=treble \n",
+   "measures": [
+    {
+     "abc": "!p!c'2b2 z4 f2a2 f4|"
+    },
+    {
+     "abc": "!p!c'2b2 z4 f2a2 f4|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-multi-voice-02-p-c-2b2-z4-f2a2-f4": [
+  {
+   "header": "X:1\nM:4/4\nL:1/16\nV:Top\nK:C clef=treble \n",
+   "measures": [
+    {
+     "abc": "!p!c'2b2 z4 f2a2 f4|"
+    },
+    {
+     "abc": "!p!c'2b2 z4 f2a2 f4|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-options-01-fonts": [
+  {
+   "header": "X:1\n%%gchordfont Arial 25 box\n%%annotationfont Times-Roman 15 box\n%%composerfont Arial 8 box\n%%footerfont Tahoma 8 box\n%%headerfont Geneva 15 box\n%%historyfont Palatino 9 box\n%%infofont Monaco 11 box\n%%measurefont Helvetica 7 box\n%%partsfont sans-serif 29 box\n%%repeatfont Helvetica 13 box\n%%subtitlefont Arial 17 box\n%%tempofont serif 19 box\n%%textfont Verdana 21 box\n%%titlefont cursive 23 box\n%%tripletfont cursive 39 box\n%%voicefont Verdana 17 box\n%%vocalfont sans-serif 11 box\n%%wordsfont Georgia 13 box\n%%header The header\n%%footer The footer\n%%measurenb 1\nT:fonts\nT:changing all fonts\nC:composer\nA:author\nR:hopping\nH:History\nN:The notes\nO:Origin\nS:source\nP:Part Order\nL:1/4\nQ:\"This is\" 1/4=190 \"Fast\"\nW:The extra verses\nW:The extra verses - line 2\nK:C\n",
+   "measures": [
+    {
+     "abc": "P:Part\nV:1 name=voice\n|1\"C\"CE\"^No Chord\"Gc:|",
+     "endEnding": true
+    },
+    {
+     "abc": "(3aaaa|"
+    },
+    {
+     "abc": "|GGGG|"
+    },
+    {
+     "abc": "AAAA|]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-parsing-01-azzz-e2": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-visual-parsing-02-sx": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-visual-parsing-03-v-1-f": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-visual-parsing-04-v-t-c": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-visual-parsing-05-v-t-c-v-b-a-v-t-d": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-visual-parsing-06-score-t-b": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-visual-parsing-07-score-t-b": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-visual-parsing-08-score-t-b": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-visual-parsing-09-score-t-b": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-visual-parsing-10-song": [
+  {
+   "header": "X:1\nT:song\nT:subtitle\nC:composer\nL:1/4\nM:2/4\nK:BbMaj\n",
+   "measures": [
+    {
+     "abc": "Z24 |"
+    },
+    {
+     "abc": " F2 |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-selection-01-selection-test": [
+  {
+   "header": "X:1\nM:4/4\nL:1/16\n%%titlefont Times New Roman 22.0\n%%vocalfont Helvetica 10.0\n%%voicefont Helvetica-Bold 10.0\n%%measurefont Times-Italic 11\n%%partsfont box\n%%stretchlast .7\n%%musicspace 0\n%%barnumbers 1\nT: Selection Test\nT: Everything should be selectable\nC: public domain\nR: Hit it\nA: Yours Truly\nS: My own testing\nW: Now is the time for all good men\nW:\nW: To come to the aid of their party.\nH: This shows every type of thing that can possibly be drawn.\nH:\nH: And two lines of history!\nQ: \"Easy Swing\" 1/4=140\nP: AABB\n%%staves {(PianoRightHand extra) (PianoLeftHand)}\nV:PianoRightHand clef=treble name=RH\nV:PianoLeftHand clef=bass name=LH\nK:Bb\n",
+   "measures": [
+    {
+     "abc": "P:A\n%%text there is some random text\n[V: PianoRightHand] !mp![b8B8d8] f3g f4|"
+    },
+    {
+     "abc": "!<(![d12b12] !<)![b4g4]|"
+    },
+    {
+     "abc": "z4 !<(! (bfdf) (3B2d2c2 !<)!B4|"
+    },
+    {
+     "abc": "[Q:\"left\" 1/4=170\"right\"]!f![c4f4] z4 [b8d8]|"
+    },
+    {
+     "abc": " !p![G8e8] Tu[c8f8]|"
+    },
+    {
+     "abc": "!<(![d12f12] !<)!g4|"
+    },
+    {
+     "abc": "!f!a4 [g4b4] z4 =e4|"
+    },
+    {
+     "abc": "[A8c8f8] d8|1",
+     "startEnding": "1"
+    },
+    {
+     "abc": " [c8F8] [B4G4] z4|"
+    },
+    {
+     "abc": "[d12B12] A4|"
+    },
+    {
+     "abc": "!>(![D8A8] Bcde fAB!>)!c|"
+    },
+    {
+     "abc": "!mp!d16|]",
+     "endEnding": true
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-selection-02-g4-q-left-1-4-170-right-a4": [
+  {
+   "header": "X:1\nM:4/4\nL:1/4\nQ: \"Easy Swing\" 1/4=140\nK:C\n",
+   "measures": [
+    {
+     "abc": "G4|"
+    },
+    {
+     "abc": "[Q:\"left\" 1/4=170\"right\"] A4 |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-selection-03-c4": [
+  {
+   "header": "X:1\nM:4/4\nL:1/4\nK:C clef=treble\n",
+   "measures": [
+    {
+     "abc": "C4 |"
+    },
+    {
+     "abc": "K:C clef=treble+8\nC4 |"
+    },
+    {
+     "abc": "K:C clef=treble-8\nC4 |"
+    },
+    {
+     "abc": "K:C clef=tenor\nC4 |"
+    },
+    {
+     "abc": "K:C clef=bass-8\nC4 |"
+    },
+    {
+     "abc": "K:C clef=bass+8\nC4 |"
+    },
+    {
+     "abc": "K:C clef=bass\nC4 |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-slurs-01-score-s-a": [
+  {
+   "header": "X:1\nL:1/8\nM:4/4\n%%score (S A)\nK:C\n",
+   "measures": [
+    {
+     "abc": "G2 cc3 ||"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-slurs-02-score-s-a-t-b": [
+  {
+   "header": "X:1\nL:1/8\nM:4/4\n%%score (S A) (T B)\nK:C\n",
+   "measures": [
+    {
+     "abc": "(EFGCF2) (EF) |"
+    },
+    {
+     "abc": " (E2D2) C4 |"
+    },
+    {
+     "abc": " (f2e)c ||"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-svg-01-staffwidth-5": [
+  {
+   "header": "X:1\nL:1/4\n%%staffwidth 5\n%%musicspace 0\nK:C clef=none\n",
+   "measures": [],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-svg-02-staffwidth-12": [
+  {
+   "header": "X:1\nL:1/4\n%%staffwidth 12\n%%musicspace 0\nK:C clef=none stafflines=0\n",
+   "measures": [],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-svg-03-a4": [
+  {
+   "header": "X:1\nL:1/4\nM:12/8\nK:C clef=none\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-svg-per-line-01-selection-test": [
+  {
+   "header": "X:1\nM:4/4\nL:1/16\n%%titlefont Times New Roman 22.0\n%%vocalfont Helvetica 10.0\n%%voicefont Helvetica-Bold 10.0\n%%measurefont Times-Italic 11\n%%partsfont box\n%%stretchlast .7\n%%musicspace 0\n%%barnumbers 1\nT: Selection Test\nT: Everything should be selectable\nC: public domain\nR: Hit it\nA: Yours Truly\nS: My own testing\nW: Now is the time for all good men\nW:\nW: To come to the aid of their party.\nH: This shows every type of thing that can possibly be drawn.\nH:\nH: And two lines of history!\nQ: \"Easy Swing\" 1/4=140\nP: AABB\n%%staves {(PianoRightHand extra) (PianoLeftHand)}\nV:PianoRightHand clef=treble name=RH\nV:PianoLeftHand clef=bass name=LH\nK:Bb\n",
+   "measures": [
+    {
+     "abc": "P:A\n%%text there is some random text\n[V: PianoRightHand] !mp![b8B8d8] f3g f4|"
+    },
+    {
+     "abc": "!<(![d12b12] !<)![b4g4]|"
+    },
+    {
+     "abc": "z4 !<(! (bfdf) (3B2d2c2 !<)!B4|"
+    },
+    {
+     "abc": "[Q:\"left\" 1/4=170\"right\"]!f![c4f4] z4 [b8d8]|"
+    },
+    {
+     "abc": " !p![G8e8] Tu[c8f8]|"
+    },
+    {
+     "abc": "!<(![d12f12] !<)!(g4|"
+    },
+    {
+     "abc": "!f!a4) [g4b4] z4 =e4|"
+    },
+    {
+     "abc": "[A8c8f8] d8|1",
+     "startEnding": "1"
+    },
+    {
+     "abc": " [c8F8] [B4G4] z4|"
+    },
+    {
+     "abc": "[d12B12] A4|"
+    },
+    {
+     "abc": "!>(![D8A8] Bcde fAB!>)!c|"
+    },
+    {
+     "abc": "!mp!d16|]",
+     "endEnding": true
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-svg-per-line-02-scaled": [
+  {
+   "header": "X:1\n%%staffwidth 400\nM:4/4\nL:1/16\nT: Scaled\nK: G\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABC||"
+    },
+    {
+     "abc": "cdef|"
+    },
+    {
+     "abc": "gabc||"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-tablature-01-gr": [
+  {
+   "header": "X:1\nK:C\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-tablature-02-g-fg-a-g2-a-very-very-long-chord-d2-cd-f": [
+  {
+   "header": "X: 1\nK:C\n",
+   "measures": [
+    {
+     "abc": "G>^FG>_A G2 \"a very very long chord\"D2|"
+    },
+    {
+     "abc": " [CD] {fe}d|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-tablature-03-staves-rh-lh": [
+  {
+   "header": "X:5\nL:1/8\n%%staves {RH LH}\nV: RH clef=treble\nV: LH clef=bass\nK:C\n",
+   "measures": [],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-tablature-04-barnumbers-1": [
+  {
+   "header": "X:1\n%% barnumbers 1\nK:C \n",
+   "measures": [
+    {
+     "abc": "F8|"
+    },
+    {
+     "abc": "G8|"
+    },
+    {
+     "abc": "F8|"
+    },
+    {
+     "abc": "!coda!G8|]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-tablature-05-a7-a": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-visual-tablature-06-a7-a": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "repo/abcjs-visual-tablature-07-staves-rh-lh": [
+  {
+   "header": "X:1\n%%staves {RH LH}\nV:RH clef=treble\nV:LH clef=bass\nK:C\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-tablature-08-first": [
+  {
+   "header": "X: 1\nT: First\nT: Second\nM: C\nK: F\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-tablature-09-f-g": [
+  {
+   "header": "X: 1\nM: 4/4\nL: 1/4\nK: Bm\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-tablature-10-f3-a-y": [
+  {
+   "header": "X:1\nK:C\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-tablature-11-f-f": [
+  {
+   "header": "X:1\nK:C\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-tablature-12-b": [
+  {
+   "header": "X:1\nK:C clef=perc stafflines=1 \n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-tablature-13-g8-c4-d4-e4-f4": [
+  {
+   "header": "X:1\nK:C\n",
+   "measures": [
+    {
+     "abc": "G8 & C4 D4|"
+    },
+    {
+     "abc": "E4 F4|]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-tablature-14-c": [
+  {
+   "header": "X: 1\nK: clef=none\n",
+   "measures": [
+    {
+     "abc": "C |"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-tablature-15-all-element-types": [
+  {
+   "header": "X:1\nM:4/4\nL:1/16\n%%titlefont Times 22.0\n%%partsfont box\n%%barnumbers 1\nT: all-element-types\nT: Everything should be selectable\nC: public domain\nR: Hit it\nA: Yours Truly\nS: My own testing\nW: Now is the time for all good men\nW:\nW: To come to the aid of their party.\nH: This shows every type of thing that can possibly be drawn.\nH:\nH: And two lines of history!\nQ: \"Easy Swing\" 1/4=140\nP: AABB\n%%staves {(PianoRightHand extra) (PianoLeftHand)}\nV:PianoRightHand clef=treble+8 name=RH\nV:PianoLeftHand clef=bass name=LH\nK:Bb\n",
+   "measures": [
+    {
+     "abc": "P:A\n%%text there is some random text\n%%sep 0.4cm 0.4cm 6cm\n[V: PianoRightHand] !mp![b8B8d8] f3g !//!f4|"
+    },
+    {
+     "abc": "!<(![d12b12] !<)![b4g4]|"
+    },
+    {
+     "abc": "z4  b^f_df (3B2d2c2 B4|1",
+     "startEnding": "1"
+    },
+    {
+     "abc": "[Q:\"left\" 1/4=170\"right\"]!f![c4f4] z4 [b8d8]|"
+    },
+    {
+     "abc": " (3[G8e8] Tu[c8f8] G8|]",
+     "endEnding": true
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-tablature-16-g-g-g-g": [
+  {
+   "header": "X: 1\nK: C treble-8\n",
+   "measures": [
+    {
+     "abc": "G, G |"
+    },
+    {
+     "abc": " g g' |"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-tablature-17-stretchlast": [
+  {
+   "header": "X:1\n%%stretchlast\n%%gchordfont Arial 10 box\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "|1\"Gbmaj7\"DEGB:|",
+     "endEnding": true
+    },
+    {
+     "abc": "|1\"Gbmaj7\"DEGB:|",
+     "endEnding": true
+    },
+    {
+     "abc": "|1\"Gbmaj7\"DEGB:|",
+     "endEnding": true
+    },
+    {
+     "abc": "|1\"Gbmaj7\"DEGB:|",
+     "endEnding": true
+    },
+    {
+     "abc": "|1\"Gbmaj7\"DEGB:|",
+     "endEnding": true
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-tablature-18-a-b": [
+  {
+   "header": "X:1\nK:C\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-tablature-19-d-a-d-g-b-e": [
+  {
+   "header": "X:1\nK:C\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-tablature-20-score-1-2": [
+  {
+   "header": "X:1\n%%score (1 | 2)\nL:1/4\nM:4/4\nK:D\n",
+   "measures": [
+    {
+     "abc": "A G/F/ G A3/4 A/4 |"
+    },
+    {
+     "abc": "[|]1 F z z A :|",
+     "endEnding": true
+    },
+    {
+     "abc": "[|]2 F z A d [|]",
+     "endEnding": true
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-tablature-21-a2-a-a-f-f-f-f-f-e-ee-g-gg-g-k-eb-a2-a2": [
+  {
+   "header": "X: 1\nM: 4/4\nL: 1/4\nK: G\n",
+   "measures": [
+    {
+     "abc": "A2^A_A|"
+    },
+    {
+     "abc": "F_F^F=F|"
+    },
+    {
+     "abc": "F^E^^EE|"
+    },
+    {
+     "abc": "G_GG=G|"
+    },
+    {
+     "abc": "[K: Eb]A2=A2|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-tablature-22-g-cegda": [
+  {
+   "header": "X: 1\nM: 4/4\nL: 1/4\nK: G\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-tablature-23-gab": [
+  {
+   "header": "X: 1\nM: 3/4\nL: 1/4\nK: G\n",
+   "measures": [
+    {
+     "abc": "GAB|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-tablature-24-stretchlast": [
+  {
+   "header": "X:1\n%%stretchlast\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "|:\"Gbmaj7\"DEGB:|"
+    },
+    {
+     "abc": "|:\"Gbmaj7\"DEGB:|"
+    },
+    {
+     "abc": "|:\"Gbmaj7\"DEGB:|"
+    },
+    {
+     "abc": "|:\"Gbmaj7\"DEGB:|"
+    },
+    {
+     "abc": "|:\"Gbmaj7\"DEGB:|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-title-01-not-transformed": [
+  {
+   "header": "X:1\nT:Not Transformed\nK:C\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-title-02-transformed-the": [
+  {
+   "header": "X:1\nT:Transformed, The\nK:C\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-title-03-transformed-the": [
+  {
+   "header": "X:1\nT:Transformed,the\nK:C\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-title-04-transformed-a": [
+  {
+   "header": "X:1\nT:Transformed, A\nK:C\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-title-05-transformed-an": [
+  {
+   "header": "X:1\nT:Transformed, An\nK:C\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-title-06-transformed-a": [
+  {
+   "header": "X:1\nT:Transformed,  a\nK:C\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-title-07-24-number-transform-the": [
+  {
+   "header": "X:1\nT:24. Number Transform, The\nK:C\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-title-08-24-number-transform-a": [
+  {
+   "header": "X:1\nT:24. Number Transform, A\nK:C\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-title-09-mal-the-formed": [
+  {
+   "header": "X:1\nT:Mal , The Formed\nK:C\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-title-10-20-subtitles-the": [
+  {
+   "header": "X:1\nT:20. Subtitles, The \nT:Sub, The\nT:Sub, the\nT:Sub, A\nT:Sub, a\nT:Sub, An\nT:Sub, an\nT:Sub, Da\nT:Sub, La\nT:Sub, Le\nT:Sub, Les\nT:Sub, Ye\nK:C\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-transpose-01-f2-f-f-f-f-f2-e2-e-e-e-e-e2-k-ab-f2-f-f-": [
+  {
+   "header": "X:1\nK:D\n",
+   "measures": [
+    {
+     "abc": "F2__F_F =F^F^^F2|"
+    },
+    {
+     "abc": "E2__E_E =E^E^^E2||"
+    },
+    {
+     "abc": "[K:Ab]F2__F_F =F^F^^F2|"
+    },
+    {
+     "abc": "E2__E_E =E^E^^E2||"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-transpose-02-cdef-gabc-c-d-e-f-g-a-b-c-c-d-e-f-g-a-b-": [
+  {
+   "header": "X:1\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF GABc|"
+    },
+    {
+     "abc": "^C^D^E^F ^G^A^B^c|"
+    },
+    {
+     "abc": "_C_D_E_F _G_A_B_c|"
+    },
+    {
+     "abc": "F2__F_F =F^F^^F2||"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-transpose-03-cdef-gabc-c-d-e-f-g-a-b-c-c-d-e-f-g-a-b-": [
+  {
+   "header": "X:1\nK:Cm\n",
+   "measures": [
+    {
+     "abc": "CDEF GABc|"
+    },
+    {
+     "abc": "^C^D^E^F ^G^A^B^c|"
+    },
+    {
+     "abc": "_C_D_E_F _G_A_B_c|"
+    },
+    {
+     "abc": "F2__F_F =F^F^^F2||"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-transpose-04-transpose-annotations": [
+  {
+   "header": "X:1\nT:transpose_annotations\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"c\"D\"\"G\"d\"^B\"B\"_A\"A|"
+    },
+    {
+     "abc": "\"<F\"F\">G\"G\"@1,1E\"e\"C/G\"G|"
+    },
+    {
+     "abc": "\"Gb11b9/Cb\"c4||"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-transpose-05-n-c-ab-c-c-c-c-d-d-d-d-e-e-f-f-f-f-g-g-g": [
+  {
+   "header": "X:1\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"N.C.\"AB|"
+    },
+    {
+     "abc": "\"C\"c\"C#\"^c\"D\"d\"D#\"^d|"
+    },
+    {
+     "abc": "\"E\"e\"F\"F\"F#\"^F\"G\"G|"
+    },
+    {
+     "abc": "\"G#\"^G\"A/F#\"A\"A#\"^A\"B\"B|"
+    },
+    {
+     "abc": "\"Db\"_d\"Eb\"_e\"Gb\"_G\"Ab\"_A|"
+    },
+    {
+     "abc": "\"Bb\"_B4||"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-transpose-06-c-d-e-f-g-a-b-c-cdef-gabc-c-d-e-f-g-a-b-": [
+  {
+   "header": "X:1\nK:none\n",
+   "measures": [
+    {
+     "abc": "C,,D,E,F, G,A,B,c,|"
+    },
+    {
+     "abc": "CDEF GABc|"
+    },
+    {
+     "abc": "^C^D^E^F ^G^A^B^c|"
+    },
+    {
+     "abc": "_C_D_E_F _G_A_B_c|"
+    },
+    {
+     "abc": "defg abc''d'||"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-transpose-output-01-transpose-output": [
+  {
+   "header": "X:1\nT: Transpose Output\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"N.C.\"c|"
+    },
+    {
+     "abc": "\"C\"c\"C#\"c\"Dmaj7\"c\"D#\"c|"
+    },
+    {
+     "abc": "\"E\"c\"F\"c\"F#\"c\"G\"c|"
+    },
+    {
+     "abc": "\"G#\"c\"A/F#\"c\"A#\"c\"B\"c|"
+    },
+    {
+     "abc": "\"Db\"c\"Eb\"c\"Gb\"c\"Ab\"c|"
+    },
+    {
+     "abc": "\"Bb\"c \"C/B\"c \"C/Bb\"c \"C/A#\"c |"
+    },
+    {
+     "abc": " \"C/A\"c \"C/Ab\"c \"C/G#\"c \"C/G\"c ||"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-transpose-output-02-transpose-output": [
+  {
+   "header": "X:1\nT: Transpose Output\nK:D\n",
+   "measures": [],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-transpose-output-03-transpose-output": [
+  {
+   "header": "X:1\nT: Transpose Output\nK:F#min\n",
+   "measures": [
+    {
+     "abc": "{/GA}B |"
+    },
+    {
+     "abc": " [G3_d3] |"
+    },
+    {
+     "abc": " =A !arpeggio!A !arpeggio![CEG^c] |"
+    },
+    {
+     "abc": " D .- D |"
+    },
+    {
+     "abc": " {A}B\"<2\"{c}+1+B \"\"_G-_G\"D\"|"
+    },
+    {
+     "abc": "A>B|"
+    },
+    {
+     "abc": "\"<2\"(de)|"
+    },
+    {
+     "abc": " [BG]>[cA] |"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-transpose-output-04-transpose-output": [
+  {
+   "header": "X:1\nT: Transpose Output\nK:G#min\n",
+   "measures": [
+    {
+     "abc": "{/AB}c |"
+    },
+    {
+     "abc": " [A3_e3] |"
+    },
+    {
+     "abc": " =B !arpeggio!B !arpeggio![DFA^d] |"
+    },
+    {
+     "abc": " E .- E |"
+    },
+    {
+     "abc": " {B}c\"<2\"{d}+1+c \"\"_A-_A\"E\"|"
+    },
+    {
+     "abc": "B>c|"
+    },
+    {
+     "abc": "\"<2\"(ef)|"
+    },
+    {
+     "abc": " [cA]>[dB] |"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-transpose-output-05-g": [
+  {
+   "header": "X:1\nK:G dor\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-transpose-output-06-f": [
+  {
+   "header": "X:1\nK:F# dor\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-visual-wrap-01-b-4-c2d2-e3f-gabc-d-e-f-g-marcato-d-e-f-": [
+  {
+   "header": "X:1\nL:1/4\nM:4/4\nK:Bb\n",
+   "measures": [
+    {
+     "abc": "B,4|"
+    },
+    {
+     "abc": "C2D2|"
+    },
+    {
+     "abc": "E3F|"
+    },
+    {
+     "abc": "GABc|"
+    },
+    {
+     "abc": "d/e/f/g/ !marcato!D/ E/ F/ G/|"
+    },
+    {
+     "abc": "B,4|"
+    },
+    {
+     "abc": "C2D2|"
+    },
+    {
+     "abc": "E3F|"
+    },
+    {
+     "abc": "GABc|"
+    },
+    {
+     "abc": "d/e/f/g/ D/ E/ F/ G/|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-wrap-02-stretchlast-1": [
+  {
+   "header": "%%stretchlast 1\nX:1\nQ:1/4=70\nM:2/4\nL:1/4\nK:C clef=bass\n",
+   "measures": [
+    {
+     "abc": "C,D,|"
+    },
+    {
+     "abc": "D,2|"
+    },
+    {
+     "abc": "E,F,|"
+    },
+    {
+     "abc": "G,2|"
+    },
+    {
+     "abc": "G,2|"
+    },
+    {
+     "abc": "F,E,|"
+    },
+    {
+     "abc": "D,D,|"
+    },
+    {
+     "abc": "C,2|]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-wrap-03-piano-wrap": [
+  {
+   "header": "X:1\nT:piano_wrap\nM:4/4\nL:1/16\n%%staves {(RH) (LH)}\n%%barnumbers -1\nV:RH clef=treble\nV:LH clef=bass\nK:C\n",
+   "measures": [
+    {
+     "abc": "c4 f4 e8|"
+    },
+    {
+     "abc": " fede g8 e4|"
+    },
+    {
+     "abc": "g16|"
+    },
+    {
+     "abc": "c4 f4 e8|"
+    },
+    {
+     "abc": " fede g8 e4|"
+    },
+    {
+     "abc": "c4 f4 e8|"
+    },
+    {
+     "abc": " fede g8 e4|"
+    },
+    {
+     "abc": "c4 f4 e8|"
+    },
+    {
+     "abc": " fede g8 e4|"
+    },
+    {
+     "abc": "c4 f4 e8|"
+    },
+    {
+     "abc": " fede g8 e4|"
+    },
+    {
+     "abc": "c4 f4 e8|"
+    },
+    {
+     "abc": " fede g8 e4|]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-wrap-04-wrap-quartet": [
+  {
+   "header": "X:1\nT: wrap quartet\n%%score (1 2) 3 4\nK: C\n",
+   "measures": [
+    {
+     "abc": " CDEF GABc |"
+    },
+    {
+     "abc": " cdef gabc' |"
+    },
+    {
+     "abc": " CDEF GABc |"
+    },
+    {
+     "abc": " cdef gabc' |"
+    },
+    {
+     "abc": " C8 |"
+    },
+    {
+     "abc": " E8 |"
+    },
+    {
+     "abc": " C8 |"
+    },
+    {
+     "abc": " E8 |"
+    },
+    {
+     "abc": " C8 |"
+    },
+    {
+     "abc": " E8 |"
+    },
+    {
+     "abc": " CDEF GABc |"
+    },
+    {
+     "abc": " cdef gabc' |"
+    },
+    {
+     "abc": " CDEF GABc |"
+    },
+    {
+     "abc": " cdef gabc' |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcjs-visual-wrap-05-score-1-2-3-4": [
+  {
+   "header": "X:0\n%%score { ( 1 2 ) | ( 3 4 ) }\nL:1/4\nM:4/4\nK:Bb\n",
+   "measures": [
+    {
+     "abc": "G A B G |"
+    },
+    {
+     "abc": " ^F A G B |"
+    },
+    {
+     "abc": " A G F2 |]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcts-keywarn": [
+  {
+   "header": "X:1\nT:keywarn absent\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "K:G\nGAB^c|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:2\nT:keywarn 0\nL:1/4\nM:4/4\n%%keywarn 0\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GAB^c|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:keywarn false is a no-op\nL:1/4\nM:4/4\n%%keywarn false\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "K:G\nGAB^c|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcts-visualtranspose": [
+  {
+   "header": "X:1\nT:visualTranspose 0 — the control's control\nL:1/4\nM:4/4\n%%visualTranspose 0\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:2\nT:visualTranspose up 2\nL:1/4\nM:4/4\n%%visualTranspose 2\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:visualTranspose down 3, with accidentals\nL:1/4\nM:4/4\n%%visualTranspose -3\nK:D\n",
+   "measures": [
+    {
+     "abc": "^FGA^c|"
+    },
+    {
+     "abc": "d^cBA|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:4\nT:visualTranspose up 7, minor\nL:1/4\nM:4/4\n%%visualTranspose 7\nK:Em\n",
+   "measures": [
+    {
+     "abc": "EFGA|"
+    },
+    {
+     "abc": "Bcde|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "repo/abcts-vskip": [
+  {
+   "header": "X:1\nT:vskip between lines\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:2\nT:vskip before the first line\nL:1/4\nM:4/4\n%%vskip 25\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:vskip in centimetres\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/S1-decorations": [
+  {
+   "header": "X:101\nT:S1-1 Decorations\nC:Test - from Gonzato guide Ch.2\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "!fermata!C !accent!D !tenuto!E !staccato!F |"
+    },
+    {
+     "abc": " !trill!G !mordent!A !turn!B !upbow!c |"
+    },
+    {
+     "abc": "!downbow!C !segno!D !coda!E !breath!F |"
+    },
+    {
+     "abc": " !p!G !f!A !ff!B !pp!c |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:102\nT:S1-2 Shorthand Decorations\nM:C\nN: from https://abcnotation.com/wiki/abc:standard:v2.1#decorations\nL:1/4\nK:C treble\n",
+   "measures": [
+    {
+     "abc": ".C ~C HC LC |"
+    },
+    {
+     "abc": " MC OC PC SC |"
+    },
+    {
+     "abc": " TC uC vC2 |"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:103\nT:S1-3 All Decorations\nM:C\nN: from https://abcnotation.com/wiki/abc:standard:v2.1#decorations\nL:1/4\nK:C treble\n",
+   "measures": [
+    {
+     "abc": "!trill!G!trill(!G!trill)!Gz |"
+    },
+    {
+     "abc": "!lowermordent!G!uppermordent!G!mordent!G!pralltriller!G |"
+    },
+    {
+     "abc": "!roll!G!turn!G!turnx!G!invertedturn!G |"
+    },
+    {
+     "abc": "!invertedturnx!G!arpeggio!G!>!G!accent!G |"
+    },
+    {
+     "abc": "!emphasis!G!fermata!G!invertedfermata!G!tenuto!G |"
+    },
+    {
+     "abc": "!0!G!1!G!2!G!3!G!4!G |"
+    },
+    {
+     "abc": "!5!G!+!G!plus!G!snap!G |"
+    },
+    {
+     "abc": "!slide!G!wedge!G!upbow!G!downbow!G |"
+    },
+    {
+     "abc": "!open!G!thumb!G!breath!G!pppp!G |"
+    },
+    {
+     "abc": "!ppp!G!pp!G!p!G!mp!G |"
+    },
+    {
+     "abc": "!mf!G!f!G!ff!G!fff!G |"
+    },
+    {
+     "abc": "!ffff!G!sfz!G!crescendo(!G!<(!G |"
+    },
+    {
+     "abc": "!crescendo)!G!<)!G!diminuendo(!G!>(!G |"
+    },
+    {
+     "abc": "!diminuendo)!G!>)!G!segno!G!coda!G |"
+    },
+    {
+     "abc": "!D.S.!G!D.C.!G!D.C.alcoda!G!D.C.alfine!G |"
+    },
+    {
+     "abc": "!fine!G!shortphrase!G!mediumphrase!G!longphrase!G |"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:104\nT:S1-4 Mark Decoration Test\nM:C\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "e!mark!fga|"
+    },
+    {
+     "abc": "BAGF|"
+    },
+    {
+     "abc": "C4|]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:105\nT:S1-5 Glissando Test\nC:Test Fixture\nM:4/4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "!slide!C D E F |"
+    },
+    {
+     "abc": " G !slide!A B c |"
+    },
+    {
+     "abc": "!glissando(!C !glissando)!E !glissando(!G !glissando)!c |"
+    },
+    {
+     "abc": " !glissando(!c !glissando)!G !glissando(!E !glissando)!C |]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/S2-fields": [
+  {
+   "header": "X:201\nT:S2-1 Title and Header Fields\nT:A Subtitle Here\nC:John Composer\nO:Country of Origin\nR:March\nL:1/4\nM:4/4\nQ:1/4=120\nK:C\n",
+   "measures": [
+    {
+     "abc": "C D E F |"
+    },
+    {
+     "abc": " G A B c |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:202\nT:S2-2 Text Placement\nQ: \"Dolcemente\" 1/4=60\nL: 1/4\nK: C\n",
+   "measures": [
+    {
+     "abc": "\"_below\"CEG\"^above\"c |"
+    },
+    {
+     "abc": "\"<left\"A\">right\"A,\"^around the note\" \"<(\" \">)\"A2 |"
+    },
+    {
+     "abc": "[Q: \"sostenuto\"] \"_one\" \"_two\" \"_three\" CEG\"@-15,8.5 anywhere\"c|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:203\nT:S2-3 BeginText Test\nM:4/4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    },
+    {
+     "abc": "cBAG|"
+    },
+    {
+     "abc": "FEDC|]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/S3-note-syntax": [
+  {
+   "header": "X:301\nT:S3-1 Scales and Pitch Range\nC:Test - from Gonzato guide Ch.2\nL:1/8\nM:4/4\nK:C treble\n",
+   "measures": [
+    {
+     "abc": "C,D,E,F,G,A,B,C |"
+    },
+    {
+     "abc": " CDEFGAB c |"
+    },
+    {
+     "abc": " cdefgab c' |"
+    },
+    {
+     "abc": " c'e'g'c'' |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:302\nT:S3-2 Accidentals and Microtones\nC:Test - from Gonzato guide Ch.2\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C ^C D ^D |"
+    },
+    {
+     "abc": " E F ^F G |"
+    },
+    {
+     "abc": " ^G A ^A B |"
+    },
+    {
+     "abc": " c^c=cz |"
+    },
+    {
+     "abc": "c B _B A |"
+    },
+    {
+     "abc": " _A G _G F |"
+    },
+    {
+     "abc": " E _E D _D |"
+    },
+    {
+     "abc": " C_C=Cz |"
+    },
+    {
+     "abc": "C ^^C __C z |"
+    },
+    {
+     "abc": " G ^/G ^G ^3/2G A4 |"
+    },
+    {
+     "abc": " A _/A _A _3/2A G4 |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:303\nT:S3-3 Note Durations\nC:Test - from Gonzato guide Ch.2\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C4 |"
+    },
+    {
+     "abc": " D2 D2 |"
+    },
+    {
+     "abc": " E0 E E F/F/ |"
+    },
+    {
+     "abc": " G3 G// G/4 G/8 G/8 G/16 G/16 G/16 G/16 |"
+    },
+    {
+     "abc": "C C3/2 C7/4 C15/8 |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:304\nT:S3-4 Rests and Spacing\nC:Test - from Gonzato guide Ch.2\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "z4 |"
+    },
+    {
+     "abc": " z2 C2 |"
+    },
+    {
+     "abc": " C z C z |"
+    },
+    {
+     "abc": " C z/2z/2 C z/2z/2 |"
+    },
+    {
+     "abc": "x4 |"
+    },
+    {
+     "abc": " C x C x |"
+    },
+    {
+     "abc": " Z2 |"
+    },
+    {
+     "abc": " C D E F |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:305\nT:S3-5 Chords and Unisons\nC:Test - from Gonzato guide Ch.2\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "[CEG] [DFA] [EGB] [FAc] |"
+    },
+    {
+     "abc": " [CEGc]2 [DFAd]2 |"
+    },
+    {
+     "abc": " [ce] [df] [eg] [fa] |"
+    },
+    {
+     "abc": "[C2E2G2] [D2F2A2] |"
+    },
+    {
+     "abc": " [C/E/G/] [C/E/G/] [CEG]2 z |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:306\nT:S3-6 Broken Rhythm and Dots\nC:Test - from Gonzato guide Ch.2\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C3 D |"
+    },
+    {
+     "abc": " E3/2 F//G// A B |"
+    },
+    {
+     "abc": " c3/2 B//A// G>F |"
+    },
+    {
+     "abc": " E D C z |"
+    },
+    {
+     "abc": "CEGc |"
+    },
+    {
+     "abc": " C>E G>>c |"
+    },
+    {
+     "abc": " C<E G<c |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:307\nT:S3-7 Tuplets\nC:Test - from Gonzato guide Ch.2\nL:1/8\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "(3cde e2 |"
+    },
+    {
+     "abc": " (6cegczg (3czg |"
+    },
+    {
+     "abc": "(3:2:2G4c2 |"
+    },
+    {
+     "abc": " (3:2:4G2A2Bc |"
+    },
+    {
+     "abc": " (3:2:6(3GGGA2Bc |]"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:308\nT:S3-8 Accompaniment Chords\nC:Test - from Gonzato guide Ch.2\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"C E G c |"
+    },
+    {
+     "abc": " \"G\"G B d g |"
+    },
+    {
+     "abc": " \"Am\"A c e a |"
+    },
+    {
+     "abc": " \"F\"F A c f |"
+    },
+    {
+     "abc": "\"Dm7\"D F A c |"
+    },
+    {
+     "abc": " \"G7\"G B d f |"
+    },
+    {
+     "abc": " \"Cmaj7\"C E G B |"
+    },
+    {
+     "abc": " \"C\"c4 |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:309\nT:S3-9 Ties Slurs Staccato Grace Notes\nC:Test - from Gonzato guide Ch.2\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": ".C/.C/ D-D .E/.E/ |"
+    },
+    {
+     "abc": " EF-FG |"
+    },
+    {
+     "abc": " (C/E/G/c/) (c/G/E/C/-) |"
+    },
+    {
+     "abc": " C2 z2 |"
+    },
+    {
+     "abc": "~c2 {/d}c {c2d2}c |"
+    },
+    {
+     "abc": " {d/c/d/}c {ede}c {fef}c c |"
+    },
+    {
+     "abc": "c/{[ceg][gc]}c/c/c/ c/c/{gfedc}c/c/ |"
+    },
+    {
+     "abc": " c2 c {cBAGFED}C |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:310\nT:S3-10 Multi-Measure Rests\nC:Test - from Gonzato guide Ch.2\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C D E F |"
+    },
+    {
+     "abc": " Z4 |"
+    },
+    {
+     "abc": " G A B c |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:311\nT:S3-11 Twinkle Twinkle\nM:4/4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CCGG|"
+    },
+    {
+     "abc": "AAG2|"
+    },
+    {
+     "abc": "FFEE|"
+    },
+    {
+     "abc": "DDC2|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:312\nT:S3-12 Rests and Bars\nM:3/4\nL:1/4\nK:D\n",
+   "measures": [
+    {
+     "abc": "DEF|"
+    },
+    {
+     "abc": "z2D|:"
+    },
+    {
+     "abc": "FAd:|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:313\nT:S3-13 Basic Durations\nM:8/4\nL:1/4\nK:C treble\n",
+   "measures": [
+    {
+     "abc": "G8 |"
+    },
+    {
+     "abc": " G8 |"
+    },
+    {
+     "abc": " G4G4 |"
+    },
+    {
+     "abc": " G2G2GGG/2G/2G/4G/4G/8G/8G/16G/16 |"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:314\nT:S3-14 Rests\nM:8/4\nL:1/4\nK:C treble\n",
+   "measures": [
+    {
+     "abc": "z8 |"
+    },
+    {
+     "abc": " z8 |"
+    },
+    {
+     "abc": " z4z4 |"
+    },
+    {
+     "abc": " z2z2zzz/2z/2z/4z/4z/8z/8z/16z/16 |"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:315\nT:S3-15 Pitches and Octaves - C Major Scale - Quarter Notes\nM:4/4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "|CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:316\nT:S3-16 Pitches and Octaves - Octaves\nM:4/4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "|C, C c c'|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:317\nT:S3-17 Pitches and Octaves - Low Ledger Lines\nM:4/4\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "|C,,D,,E,,F,,|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:318\nT:S3-18 Happy Birthday with chords\nM: 3/4\nQ: \"Allegro\" 1/4 = 120 % tempo\nK: F\n",
+   "measures": [
+    {
+     "abc": "C> C |"
+    },
+    {
+     "abc": " \"F\"D2C2F2 |"
+    },
+    {
+     "abc": " \"C\"E3 z C> C |"
+    },
+    {
+     "abc": " \"C\"D2C2G2 |"
+    },
+    {
+     "abc": " \"F\"F3 z C> C |"
+    },
+    {
+     "abc": "\"F\"c2A2F2 |"
+    },
+    {
+     "abc": " \"Bb\"E2D z B> B |"
+    },
+    {
+     "abc": " \"F\"A2F2\"C\"G2 |"
+    },
+    {
+     "abc": " \"F\"F6 |]"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:319\nT:S3-19 Single Grace Note\nM:4/4\nL:1/4\nK:C treble\n",
+   "measures": [],
+   "hasPickup": false
+  },
+  {
+   "header": "X:320\nT:S3-20 Double Grace Note\nM:4/4\nL:1/4\nK:C treble\n",
+   "measures": [],
+   "hasPickup": false
+  },
+  {
+   "header": "X:321\nT:S3-21 Slurs\nM:4/4\nL:1/4\nK:C treble\n",
+   "measures": [],
+   "hasPickup": false
+  },
+  {
+   "header": "X:322\nT:S3-22 Birl\nM:4/4\nL:1/4\nK:C treble\n",
+   "measures": [],
+   "hasPickup": true
+  },
+  {
+   "header": "X:323\nT:S3-23 Dotted Ties and Slurs\nC:Test Fixture\nM:4/4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C-C D E |"
+    },
+    {
+     "abc": " F-F G A |"
+    },
+    {
+     "abc": "(C D E F) |"
+    },
+    {
+     "abc": " (G A B c) |"
+    },
+    {
+     "abc": ".(C D E F) |"
+    },
+    {
+     "abc": " .(G A B c) |"
+    },
+    {
+     "abc": "C.-C D E |"
+    },
+    {
+     "abc": " F.-F G A |"
+    },
+    {
+     "abc": "(C D) .(E F) |"
+    },
+    {
+     "abc": " G-G A.-A |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:324\nT:S3-24 Chord Break Test\nM:C\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    },
+    {
+     "abc": "\"^break\"cBAG|"
+    },
+    {
+     "abc": "\"Am\"AGFE|"
+    },
+    {
+     "abc": "\"C\"CDEF|"
+    },
+    {
+     "abc": "\"^no chord\"GABc|"
+    },
+    {
+     "abc": "\"^n.c.\"cBAG|"
+    },
+    {
+     "abc": "\"C\"C4|]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:325\nT:S3-25 Slash Chords and Jazz Chords\nC:Test Fixture\nM:4/4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"C E G c |"
+    },
+    {
+     "abc": " \"Am\"A, C E A |"
+    },
+    {
+     "abc": " \"G7\"G, B, D G |"
+    },
+    {
+     "abc": " \"F\"F, A, C F |"
+    },
+    {
+     "abc": "\"C/E\"E, C E G |"
+    },
+    {
+     "abc": " \"D/F#\"^F, D A d |"
+    },
+    {
+     "abc": " \"G/B\"B, G B d |"
+    },
+    {
+     "abc": " \"Am/C\"C A, E A |"
+    },
+    {
+     "abc": "\"Cmaj7\"C E G B |"
+    },
+    {
+     "abc": " \"Dm7\"D F A c |"
+    },
+    {
+     "abc": " \"Em7b5\"E G _B d |"
+    },
+    {
+     "abc": " \"Bdim\"B, D F _A, |"
+    },
+    {
+     "abc": "\"F#m7b5\"^F A c e |"
+    },
+    {
+     "abc": " \"Bb13\"_B, D F _A |"
+    },
+    {
+     "abc": " \"C6/9\"C E G A |"
+    },
+    {
+     "abc": " \"Gsus4\"G, C D G |]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/S4-bars-repeats": [
+  {
+   "header": "X:401\nT:S4-1 Bars Repeats and Endings\nC:Test - from Gonzato guide Ch.2\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C D E F |:"
+    },
+    {
+     "abc": " G A B c :|"
+    },
+    {
+     "abc": "|: C D E F |1",
+     "startEnding": "1"
+    },
+    {
+     "abc": " G A B c :|2",
+     "startEnding": "2",
+     "endEnding": true
+    },
+    {
+     "abc": " c B A G ||",
+     "endEnding": true
+    },
+    {
+     "abc": "C D E F ::"
+    },
+    {
+     "abc": " G A B c |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:402\nT:S4-2 Extended Volta Endings\nC:Test Fixture\nM:4/4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "|: C D E F |1",
+     "startEnding": "1"
+    },
+    {
+     "abc": " G A B c :|2",
+     "startEnding": "2",
+     "endEnding": true
+    },
+    {
+     "abc": " c B A G |"
+    },
+    {
+     "abc": "|: C E G c |1",
+     "startEnding": "1"
+    },
+    {
+     "abc": " c G E C :|2",
+     "startEnding": "2",
+     "endEnding": true
+    },
+    {
+     "abc": " C D E F :|3",
+     "startEnding": "3",
+     "endEnding": true
+    },
+    {
+     "abc": " F E D C |"
+    },
+    {
+     "abc": "|: G A B c |1,3",
+     "startEnding": "1,3"
+    },
+    {
+     "abc": " d c B A :|2,4",
+     "startEnding": "2,4",
+     "endEnding": true
+    },
+    {
+     "abc": " A B c d |"
+    },
+    {
+     "abc": "|: C D E F |"
+    },
+    {
+     "abc": " G A B c :|"
+    },
+    {
+     "abc": "|: c B A G |1",
+     "startEnding": "1"
+    },
+    {
+     "abc": " F E D C :|2",
+     "startEnding": "2",
+     "endEnding": true
+    },
+    {
+     "abc": " C E G c |]",
+     "endEnding": true
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:403\nT:S4-3 Bars and Rests\nM:6/8\nL: 1/4\nK:D\n",
+   "measures": [
+    {
+     "abc": "[| z4 |]"
+    },
+    {
+     "abc": " z2 |:"
+    },
+    {
+     "abc": " z z/z// :|"
+    },
+    {
+     "abc": " z2> ::"
+    },
+    {
+     "abc": " z2 z>z |"
+    },
+    {
+     "abc": " f>z g>z ||"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/S5-directives": [
+  {
+   "header": "X:501\nT:S5-1 Note Styles\nC:Test Fixture\nM:4/4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C D E F |"
+    },
+    {
+     "abc": "G A B c |"
+    },
+    {
+     "abc": "c B A G |"
+    },
+    {
+     "abc": "F E D C |"
+    },
+    {
+     "abc": "C E G c |"
+    },
+    {
+     "abc": "c B A G |"
+    },
+    {
+     "abc": " F E D C |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:502\nT:S5-2 Alternate Note Heads\nM:C\nL:1/8\nU:n=!style=normal!\nK:C treble style=rhythm\n",
+   "measures": [
+    {
+     "abc": "\"Am\" BBBB B2 B>B |"
+    },
+    {
+     "abc": " \"Dm\" B2 B/B/B \"C\" B4 |"
+    },
+    {
+     "abc": "\"Am\" B2 nGnB B2 nGnA |"
+    },
+    {
+     "abc": " \"Dm\" nDB/B/ nDB/B/ \"C\" nCB/B/ nCB/B/ |"
+    },
+    {
+     "abc": "B8|"
+    },
+    {
+     "abc": " B0 B0 B0 B0 |]"
+    },
+    {
+     "abc": "[M:C][K:style=normal]\n[A,EAce][A,EAce][A,EAce][A,EAce] [A,EAce]2 [A,EAce]>[A,EAce] |"
+    },
+    {
+     "abc": "[DAdf]2 [DAdf]/[DAdf]/[DAdf] [CEGce]4 |"
+    },
+    {
+     "abc": "[A,EAce]2 GA [A,EAce] GA |"
+    },
+    {
+     "abc": "D[DAdf]/[DAdf]/ D[DAdf]/[DAdf]/ C [CEGce]/[CEGce]/ C[CEGce]/[CEGce]/ |"
+    },
+    {
+     "abc": "[CEGce]8 |"
+    },
+    {
+     "abc": " [CEGce]2 [CEGce]2 [CEGce]2 [CEGce]2 |]"
+    },
+    {
+     "abc": "GAB2 !style=harmonic![gb]4|"
+    },
+    {
+     "abc": "GAB2 [K: style=harmonic]gbgb|"
+    },
+    {
+     "abc": "C/A,/ C/C/E C/zz2|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:503\nT:S5-3 Overlay Test\nM:4/4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2 E2 |"
+    },
+    {
+     "abc": " G2 &E2 B2 |"
+    },
+    {
+     "abc": " A2 G2 |"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:504\nT:S5-4 Lyrics\nC:Test - from Gonzato guide Ch.2\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C D E F |"
+    },
+    {
+     "abc": " G A B c |"
+    },
+    {
+     "abc": " c B A G |"
+    },
+    {
+     "abc": " F E D C |"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:505\nT:S5-5 Vocals\nM: C|\nK: F\n",
+   "measures": [
+    {
+     "abc": "BA |:"
+    },
+    {
+     "abc": " \"Gm\"G2AB|"
+    },
+    {
+     "abc": "\"C7\"cd2e|"
+    },
+    {
+     "abc": "\"F\"f2fe|"
+    },
+    {
+     "abc": "\"Dm\"dA2d|"
+    },
+    {
+     "abc": "\"Bb\"d2dc|"
+    },
+    {
+     "abc": "\"Gm\"B2GF|"
+    },
+    {
+     "abc": "\"Eb\"G4-|"
+    },
+    {
+     "abc": "G2 z2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:506\nT:S5-6 Scale\nT:Second Title\nT:Third Title\nM:C\n%K:C\t\t% abcm2ps: automatic clef processing gives a bass clef\n",
+   "measures": [
+    {
+     "abc": "\"C,\"C,\"D,\"D,\"E,\"E,\"F,\"F,  \"G,\"G,\"A,\"A,\"B,\"B,\\\n|"
+    },
+    {
+     "abc": " \"C\"C\"D\"D\"E\"E\"F\"F  \"G\"G\"A\"A\"B\"B|"
+    },
+    {
+     "abc": " \"c\"c \"d\"d\"e\"e\"f\"f  \"g\"g\"a\"a\"b\"b\"c'\"c' |"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "sib/S6-keys": [
+  {
+   "header": "X:601\nT:S6-1 C\nM:8/4\nL:1/4\nK:C treble\n",
+   "measures": [],
+   "hasPickup": false
+  },
+  {
+   "header": "X:602\nT:S6-2 Change Key Sig\nM:8/4\nL:1/4\nK:A\n",
+   "measures": [
+    {
+     "abc": "        |    \"G\"CDE FGA |"
+    },
+    {
+     "abc": " Bcd efg |"
+    },
+    {
+     "abc": "[K:Bb]       |   \"Bb\"CDE FGA |"
+    },
+    {
+     "abc": " Bcd efg |"
+    },
+    {
+     "abc": "[K:Dm]       |   \"Dm\"CDE FGA |"
+    },
+    {
+     "abc": " Bcd efg |"
+    },
+    {
+     "abc": "[K:F#m]      |  \"F#m\"CDE FGA |"
+    },
+    {
+     "abc": " Bcd efg |"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:603\nT:S6-3 Key Signatures\nC:Test - from Gonzato guide Ch.2\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C D E F |"
+    },
+    {
+     "abc": "K:G\nG A B c |"
+    },
+    {
+     "abc": "K:D\nD E ^F A |"
+    },
+    {
+     "abc": "K:F\nF G A _B |"
+    },
+    {
+     "abc": "K:Bb\n_B c d _e |"
+    },
+    {
+     "abc": "K:Am\nA B c d |"
+    },
+    {
+     "abc": "K:Dm\nD E F G |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:604\nT:S6-4 Modal Key Signatures\nC:Test Fixture\nM:4/4\nL:1/4\nK:D Dorian\n",
+   "measures": [
+    {
+     "abc": "D E F G |"
+    },
+    {
+     "abc": " A B c d |"
+    },
+    {
+     "abc": "K:A Mixolydian\n% A Mix has 2 sharps (F#, C#) — should show courtesy key sig\nA B c d |"
+    },
+    {
+     "abc": " e f g a |"
+    },
+    {
+     "abc": "K:E Dorian\n% E Dor has 2 sharps (F#, C#) — same accidentals, no change needed\nE F G A |"
+    },
+    {
+     "abc": " B c d e |"
+    },
+    {
+     "abc": "K:Bb Lydian\n% Bb Lyd has 1 flat (Bb) — courtesy key sig with naturals + flat\nF G A B |"
+    },
+    {
+     "abc": " c d e f |"
+    },
+    {
+     "abc": "K:G Mixolydian\nG A B c |"
+    },
+    {
+     "abc": " d e f g |"
+    },
+    {
+     "abc": "K:D Dorian\nD E F G |"
+    },
+    {
+     "abc": "[K:G Mixolydian] G A B c |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:605\nT:S6-5 Double Accidentals\nC:Test Fixture\nM:4/4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C ^^D E F |"
+    },
+    {
+     "abc": " G __A B c |"
+    },
+    {
+     "abc": "^C ^^C =C _C |"
+    },
+    {
+     "abc": " __C ^^D _D =D |"
+    },
+    {
+     "abc": "[C^^D] [E__B] [^^FA] [__Gc] |"
+    },
+    {
+     "abc": "^^F-^^F __B-__B |"
+    },
+    {
+     "abc": " =F =B C2 |]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/S7-voices": [
+  {
+   "header": "X:701\nT:S7-1 Piano Two Voice\nC:Elton John\nM:C\nL:1/8\nQ:1/4=128\n%%staves {RH LH}\nK:C\n",
+   "measures": [
+    {
+     "abc": "[C8E8]|"
+    },
+    {
+     "abc": "zE FG- GEC2|"
+    },
+    {
+     "abc": "[B,3E3][B,D]- [B,4D4]|"
+    },
+    {
+     "abc": "zD EF- FED2|"
+    },
+    {
+     "abc": "D8|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:702\nT:S7-2 Piano Dense Notation\nC:L. van Beethoven\nM:C\nL:1/16\nQ:1/8=66\n%%staves {1 2}\nK:Cm\n",
+   "measures": [
+    {
+     "abc": "!f![E,4G,4C4]- [E,3/G,3/C3/]!3![G,/C/]!4![G,3/=B,3/D3/]!5![G,/C/E/] ([=A,4C4E4]!4![=B,2D2])z2|"
+    },
+    {
+     "abc": "!f!!3![=B,4D4F4]- [B,3/D3/F3/][B,/D/F/][B,3/D3/G3/][B,/D/A/] ([B,4D4A4]!3![C2E2G2])z2|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:703\nT:S7-3 Counterpoint Two Voice\nC:J.S. Bach\nM:C\nL:1/16\nQ:1/4=66\n%%staves {RH LH}\n%%MIDI program 6\nK:Cm\n",
+   "measures": [
+    {
+     "abc": "zGFG AFEF GEDE FDCD     |"
+    },
+    {
+     "abc": " E2c2F2c2 E2c2D2=B2                  |"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:704\nT:S7-4 Three Voice Piano\nC:Schumann\nM:C\nL:1/8\nQ:1/4=66\n%%staves {1 (2 3)}\nK:G\n",
+   "measures": [
+    {
+     "abc": "!p!B2AB G3)(A |"
+    },
+    {
+     "abc": "Bcd[Ge]) ([F3A3][^GB])|"
+    },
+    {
+     "abc": "([A2c2][^GB][Ac] AF=GA)|"
+    },
+    {
+     "abc": "[G2B2][F2A2] {/G}G3B|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:705\nT:S7-5 SATB Choral\nT:(Mor Fawr Wyt Ti!)\nM:4/4\nL:1/8\nQ:1/4=48\n%%staves [(S A) (T B)]\nK:A\n",
+   "measures": [
+    {
+     "abc": "EEE\t  |"
+    },
+    {
+     "abc": "C3E\t   EEFF        |"
+    },
+    {
+     "abc": "(D2F3)\t  FFF\t |"
+    },
+    {
+     "abc": "E3C   EEDD\t\t |"
+    },
+    {
+     "abc": "C4   z:|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:706\nT:S7-6 Organ Four Voice\nC:Johann Nicolaus Hanff\nM:C\nL:1/8\nQ:1/4=66\n%%staves [1 (2 3) 4]\nV:1 nm=\"Rückpos\"\nV:2 nm=\"Organo\"\nK:Am\n",
+   "measures": [
+    {
+     "abc": "A3B    c2c2    |"
+    },
+    {
+     "abc": "d2e2    de/f/P ^c3/d/|"
+    },
+    {
+     "abc": "d8    |"
+    },
+    {
+     "abc": "z8\t\t  |"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:707\nT:S7-7 Organ Trio\nC:André Raison\nM:3/4\nL:1/4\nQ:1/4=92\n%%staves {(Pos1 Pos2) Trompette}\nK:F\n",
+   "measures": [
+    {
+     "abc": "\"^Positif\"x3  |"
+    },
+    {
+     "abc": "x3    |"
+    },
+    {
+     "abc": "c'>ba|"
+    },
+    {
+     "abc": "Pga/g/f|:"
+    },
+    {
+     "abc": "g2a  |"
+    },
+    {
+     "abc": "ba2    |"
+    },
+    {
+     "abc": "g2c- |"
+    },
+    {
+     "abc": "c2P=B  |"
+    },
+    {
+     "abc": "c>de  |"
+    },
+    {
+     "abc": "fga    |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/S8-layout": [
+  {
+   "header": "X:801\nT:S8-1 Beams and Grouping\nC:Test - from Gonzato guide Ch.2\nL:1/8\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF GABc |"
+    },
+    {
+     "abc": " C2DE F2GA |"
+    },
+    {
+     "abc": " CDEF G2 AB |"
+    },
+    {
+     "abc": " CDEF GABc cBAG FEDC |"
+    },
+    {
+     "abc": " C2D2 E2F2 G2A2 B2c2 |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:802\nT:S8-2 Clefs\nC:Test - from Gonzato guide Ch.2\nL:1/4\nM:4/4\nK:C treble\n",
+   "measures": [
+    {
+     "abc": "C D E F |"
+    },
+    {
+     "abc": "K:C bass\nC, D, E, F, |"
+    },
+    {
+     "abc": "K:C alto\nC D E F |"
+    },
+    {
+     "abc": "K:C tenor\nC D E F |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:803\nT:S8-3 Time Signatures\nC:Test - from Gonzato guide Ch.2\nL:1/8\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF GABc |"
+    },
+    {
+     "abc": "CDE FGA |"
+    },
+    {
+     "abc": "CDEFGA |"
+    },
+    {
+     "abc": "CDEF |"
+    },
+    {
+     "abc": "CDEF GABc |"
+    },
+    {
+     "abc": "CDEF GABc |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:804\nT:S8-4 Short and Long Notes, Beams and Tuplets\nC:Trad\nM:C\nK:C\n",
+   "measures": [
+    {
+     "abc": "c8|"
+    },
+    {
+     "abc": " d4 e2 fg |"
+    },
+    {
+     "abc": " C c C/ c/ d/e/ d// C// C/D/E/F/ |"
+    },
+    {
+     "abc": " d>e d>>e e<fe (3CDE (4fgab |"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:805\nT:S8-5 Horizontal beams\nM:9/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "c,d,c, d,e,d, e,f,e, b,cb,  |"
+    },
+    {
+     "abc": " c,/d,/c,/ d,/e,/d,/ e,/f,/e,/ |"
+    },
+    {
+     "abc": "c,//d,//c,// d,//e,//d,// e,//f,//e,// |"
+    },
+    {
+     "abc": "cdc ded efe b,a,b,|"
+    },
+    {
+     "abc": " c/d/c/ d/e/d/ e/f/e/ |"
+    },
+    {
+     "abc": " c//d//c// d//e//d// e//f//e// |"
+    },
+    {
+     "abc": "c'd'c' d'e'd' e'f'e' f'g'f' |"
+    },
+    {
+     "abc": " c'/d'/c'/ d'/e'/d'/ e'/f'/e'/ |"
+    },
+    {
+     "abc": "c'//d'//c'// d'//e'//d'// e'//f'//e'// |"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:806\nT:S8-6 Chords, Unions, First and Second Endings\nM:9/8\nK:D\n",
+   "measures": [
+    {
+     "abc": "|: [D2F2A2] ~[d2f2a2] |"
+    },
+    {
+     "abc": " [c2e2][df][eg]|"
+    },
+    {
+     "abc": "[cc] [dd] [F/A][G/B][D/F]>[C/E] [G/e][A/e] [G/e]>.[A/e][B/e]>.[c/e]\\\n|1",
+     "startEnding": "1"
+    },
+    {
+     "abc": " (3[A//df][A//ef][A//cg] [G3Ce] :|2",
+     "startEnding": "2",
+     "endEnding": true
+    },
+    {
+     "abc": " (3[A//=df][^A//dg][_A//_c^g] [e3gc] |]",
+     "endEnding": true
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:807\nT:S8-7 Gracenotes\nL:1/8\nM:C\nK:D\n",
+   "measures": [
+    {
+     "abc": "FA{c}AF DF{^dc}A f{A}df f{AGA}df |"
+    },
+    {
+     "abc": "{B}D2 {A}D2 {G}D2 {F}D2 {E}D2 |"
+    },
+    {
+     "abc": "{E}c2 {F}c2 {G}c2 {A}c2 {B}c2 |"
+    },
+    {
+     "abc": "{A}^c2 {gcd}c2 {gAGAG}A2{g}c<{GdG}e {Gdc}d>c {gBd}B<{e}G |"
+    },
+    {
+     "abc": "{G}[G4e4] {FGAB}[^c4A4] {ef}[e4c4] {d'c'bagfedcB_AcBFGC}D4|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:808\nT:S8-8 Key signature, Accidentals and Decorations\nM:C\nK:A\n",
+   "measures": [
+    {
+     "abc": "^C=C_C ^G=G_G |"
+    },
+    {
+     "abc": " .F/.G/.A/ Ma/Mg/Mf/ Jc J^c J[c^f] J[c^g]  |"
+    },
+    {
+     "abc": "{f}e {C}D {cd}c {E^c}a2 {dedc}d|"
+    },
+    {
+     "abc": "uc vc'-c'/Mb/Mc'/Ma/ |"
+    },
+    {
+     "abc": " (b4 |"
+    },
+    {
+     "abc": " b/).a/.b/.c'/ |"
+    },
+    {
+     "abc": " ~A ~g \\\n% RA Rg MA Mg | .A .g vf/-g/ (u.a/.b/)  | uR~M.c2  Hg4 || % abcm2ps: '-' is not a slur\n RA Rg MA Mg |"
+    },
+    {
+     "abc": " .A .g (vf/g/) (u.a/.b/)  |"
+    },
+    {
+     "abc": " uR~M.c2  Hg4 ||"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:809\nT:S8-9 Slurs and Ties\nT: Title with funny chars like \\005 Çéñô Àçäßö © …\nM:C|\nK:Ebm\n",
+   "measures": [
+    {
+     "abc": "[| (CDEF) ((3efg) ((3gag)|"
+    },
+    {
+     "abc": " (C2 EF) (ef(ga)) |"
+    },
+    {
+     "abc": " ((c2 (3(d)ef) e2)\\\n A2-|"
+    },
+    {
+     "abc": "A4 c4-|"
+    },
+    {
+     "abc": "(c4(e4)|"
+    },
+    {
+     "abc": "a8) |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:810\nT:S8-10 Strange tuplet cases\nM:C\nK:C\n",
+   "measures": [
+    {
+     "abc": "(3cde c(3d/e/f/ |"
+    },
+    {
+     "abc": "(3zcd (3z/c/d/ (3czc c(4d/e/f/z/ d2-(3def |"
+    },
+    {
+     "abc": "(3::2 c4d2  (3::4 cde/f/ (3gfe |"
+    },
+    {
+     "abc": "(3z2G,2A,2 (3C2E2G2 |"
+    },
+    {
+     "abc": "e-(5e//f//g//f//g// de- (5e//f//g//f//g// |"
+    },
+    {
+     "abc": "(6z/c/e/g/e/c/ (6z/c/e/g/e/c/ |"
+    },
+    {
+     "abc": " (3d/e/f/g-(3g/f/e/d ||"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:811\nT:S8-11 Chords with many accidentals\nM: 6/8\nK: G\n",
+   "measures": [
+    {
+     "abc": "[^c^d] [^c^e] [^c^f] [^c^g] [^c^a] [^c^b] |"
+    },
+    {
+     "abc": "[^C^D] [^C^E] [^C^F] [^C^G] [^C^A] [^C^B] |"
+    },
+    {
+     "abc": "[^c^d^e] [^c^d^f] [^c^f^g] [^c^f^a] [^c=d=f^g_a_b]  |]"
+    },
+    {
+     "abc": "[^c^f^a] [^c^f^b] [^c^f^c'] [^c^f^d'] [^c^f^e'] |"
+    },
+    {
+     "abc": "[^c^e^f] [^c^f^g] [^c^g^a] [^c^g^b] |"
+    },
+    {
+     "abc": "[^c^d^c'] [^c^e^c'] [^A^e^c']   [^G^e^c']   \\\n [^c_e^g][^c^f^g][^c^g^a][^c^d^g][^G^e^c']   ||"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:812\nT:S8-12 Changing Time or Key Signatures, Guitar Chords\nM: 6/8\nK: G\n",
+   "measures": [
+    {
+     "abc": "\"Em\"ABc def |"
+    },
+    {
+     "abc": "M: 9/8\n% abcm2ps: '\\' is no more handled\n%\"Am7\"A,CC DFF GBB |\\M:4/4\\\"G\"a,2b,2\"D\"c2d2 ||\\L:1/4\\\\K:Bb\\\"Eb\"e4|\n\"Am7\"A,CC DFF GBB |"
+    },
+    {
+     "abc": "[M:4/4]\"G\"a,2b,2\"D\"c2d2 ||"
+    },
+    {
+     "abc": "[K:Bb]\"Eb\"e4-|"
+    },
+    {
+     "abc": "K: Gb\nM: 6/8\nL:1/8\t\t% abcm2ps: basic length is not reset on M:\n%| -\"Gb\"ede edc | def fed |1 \"A\"efg \"D\"gfe | e6 \\ % abcm2ps: cannot have '-' before a note\n| \"Gb\"ede edc |"
+    },
+    {
+     "abc": " def fed |1",
+     "startEnding": "1"
+    },
+    {
+     "abc": " \"A\"efg \"D\"gfe |"
+    },
+    {
+     "abc": " e6 \\\n:|2",
+     "startEnding": "2",
+     "endEnding": true
+    },
+    {
+     "abc": " \"G\"gag \"F\"f\"Em\"e\"D7\"d |"
+    },
+    {
+     "abc": " \"C\"c6 |]",
+     "endEnding": true
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/ave-verum-corpus": [
+  {
+   "header": "X: 1\nT: Ave Verum Corpus\nC: W. A. Mozart\nM: 4/4\nL: 1/4\nQ: \"Adagio\"\n%%score [(S A) | (T B)] | {(MD1 MD2) | (MS1 MS2)}\nV: S clef=treble name=\"Soprano\" sname=\"S\"\nV: A clef=treble name=\"Alto\" sname=\"A\"\nV: T clef=bass name=\"Tenore\" sname=\"T\"\nV: B clef=bass name=\"Basso\" sname=\"B\"\nV: MD1 clef=treble name=\"Organo\"\nV: MD2 clef=treble\nV: MS1 clef=bass\nV: MS2 clef=bass\nK: D\n",
+   "measures": [
+    {
+     "abc": " z4 |"
+    },
+    {
+     "abc": " z4 |"
+    },
+    {
+     "abc": " A2(dF) |"
+    },
+    {
+     "abc": " (A^G)=G2 |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/brother-john-inline-voices": [
+  {
+   "header": "X: 2\nT: Brother John - improved\nC: Traditional\nL: 1/4\nV: 1 clef=treble name=\"Soprano\" sname=\"S\"\nV: 2 clef=treble name=\"Contralto\" sname=\"C\"\nK: F\n",
+   "measures": [
+    {
+     "abc": " FGAF |"
+    },
+    {
+     "abc": " FGAF |"
+    },
+    {
+     "abc": " ABcz |"
+    },
+    {
+     "abc": " ABcz |"
+    },
+    {
+     "abc": " c/d/c/B/ AF |"
+    },
+    {
+     "abc": " c/d/c/B/ AF |"
+    },
+    {
+     "abc": " GCFz |"
+    },
+    {
+     "abc": " GCFz |"
+    },
+    {
+     "abc": " z4 |"
+    },
+    {
+     "abc": " z4 |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/center-text": [
+  {
+   "header": "X:1\nT:Center Directive Test\nC:Test Fixture\nM:4/4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF |"
+    },
+    {
+     "abc": " GABc |]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/chord-grid": [
+  {
+   "header": "X:1\nT:Chord Grid Test\nM:4/4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"C\"CDEF|"
+    },
+    {
+     "abc": "\"G\"GABc|"
+    },
+    {
+     "abc": "\"Am\"cBAG|"
+    },
+    {
+     "abc": "\"F\"FEDC|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/clefs": [
+  {
+   "header": "X:1\nT:Treble clef\nM:8/4\nL:1/4\nK:C treble\n",
+   "measures": [],
+   "hasPickup": false
+  },
+  {
+   "header": "X:2\nT:Bass clef\nM:8/4\nL:1/4\nK:C bass\n",
+   "measures": [],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:Baritone clef\nM:8/4\nL:1/4\nK:C bass3\n",
+   "measures": [],
+   "hasPickup": false
+  },
+  {
+   "header": "X:4\nT:Tenor clef\nM:8/4\nL:1/4\nK:C tenor\n",
+   "measures": [],
+   "hasPickup": false
+  },
+  {
+   "header": "X:5\nT:Alto clef\nM:8/4\nL:1/4\nK:C alto\n",
+   "measures": [],
+   "hasPickup": false
+  },
+  {
+   "header": "X:6\nT:Messosoprano clef\nM:8/4\nL:1/4\nK:C alto2\n",
+   "measures": [],
+   "hasPickup": false
+  },
+  {
+   "header": "X:7\nT:Soprano clef\nM:8/4\nL:1/4\nK:C alto1\n",
+   "measures": [],
+   "hasPickup": false
+  },
+  {
+   "header": "X:8\nT:Change Clefs\nM:8/4\nL:1/4\nK:A\n",
+   "measures": [
+    {
+     "abc": "        |    \"G\"CDE FGA |"
+    },
+    {
+     "abc": " Bcd efg |"
+    },
+    {
+     "abc": "[K:Bb bass]       |   \"Bb\"CDE FGA |"
+    },
+    {
+     "abc": " Bcd efg |"
+    },
+    {
+     "abc": "[K:Dm alto]       |   \"Dm\"CDE FGA |"
+    },
+    {
+     "abc": " Bcd efg |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/courtesy-key-before-subtitle": [
+  {
+   "header": "X:1\nT:Main\nM: 3/4\nK: Eb\n",
+   "measures": [
+    {
+     "abc": "G|"
+    },
+    {
+     "abc": "K:F\nB|"
+    },
+    {
+     "abc": "d|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "sib/curves": [
+  {
+   "header": "X:1\nT:Ties\nM:4/4\nL:1/4\nK:C treble\n",
+   "measures": [],
+   "hasPickup": false
+  },
+  {
+   "header": "X:2\nT:Slurs\nM:4/4\nL:1/4\nK:C treble\n",
+   "measures": [],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:Nested Slurs\nM:4/4\nL:1/4\nK:C treble\n",
+   "measures": [],
+   "hasPickup": false
+  },
+  {
+   "header": "X:4\nT:Slurs over Stacked Notes\nM:4/4\nL:1/4\nK:C treble\n",
+   "measures": [],
+   "hasPickup": false
+  },
+  {
+   "header": "X:5\nT:Nested slurs over Stacked Notes\nM:4/4\nL:1/4\nK:C treble\n",
+   "measures": [],
+   "hasPickup": false
+  },
+  {
+   "header": "X:6\nT:Slurs starting and ending on same note\nM:4/4\nL:1/4\nK:C treble\n",
+   "measures": [],
+   "hasPickup": false
+  },
+  {
+   "header": "X:7\nT:Tie within slur\nM:4/4\nL:1/4\nK:C treble\n",
+   "measures": [],
+   "hasPickup": false
+  }
+ ],
+ "sib/escaped-percent": [
+  {
+   "header": "%abc-2.1\n% abcjs 6.7.0 fix 4 — a backslash-escaped percent is literal text, not the\n% start of a comment. Harvested from abcjs tests/visual/parsing.test.js\n% \"escape-percent\" (abcEscapePercent). Note abcjs substitutes a sentinel\n% (U+200B U+FF05) and never restores it, so the expected title really is\n% \"100<ZWSP>％ Amazing\" with a FULLWIDTH percent — that is upstream behaviour,\n% not a harness artifact. Under 6.6.3 the title truncates at the % and the\n% tune collects a warning.\nT:100\\% Amazing\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C2 \"Play 100\\% awesomely\"G4 E2 C2|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "sib/extra-class": [
+  {
+   "header": "X:1\nK: C\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "sib/frere-jacques": [
+  {
+   "header": "X:1\nT:Frère Jacques\nT:(French rhyme)\nH:dedicated to my \"out of tune\" sweet lady\nO:arr. S. Di Mico for educational purposes\nC:attr. to Jean-Philippe Rameau (1683 - 1764)\nN:Play expressively\nS:The copyright for the music and lyrics represented herein\n+:belongs to their respective owners, or to the\n+:legally entitled holders.\nZ:This transcription \\251 Sergio Di Mico - All rights reserved\nG:Lead Sheet\nL:1/8\nM:4/4\nU:t = !tenuto!\nU:u = !downbow!\nU:v = !upbow!\n%%partsbox 1\nV:1 clef=treble\nK:C\n",
+   "measures": [
+    {
+     "abc": "gs to their respective owners, or to the\n+:legally entitled holders.\nZ:This transcription \\251 Sergio Di Mico - All rights reserved\nG:Lead Sheet\nL:1/8\nM:4/4\nU:t = !tenuto!\nU:u = !downbow!\nU:v = !upbow!\n%%partsbox 1\nV:1 clef=treble\nK:C\nQ:\"Allegretto\" 1/4=100\nP:A\nc2 d2 e2 c2 |"
+    },
+    {
+     "abc": " c2 d2 e2 c2 |"
+    },
+    {
+     "abc": " e2 f2 Lg4 |"
+    },
+    {
+     "abc": " e2 f2 Lg4 |"
+    },
+    {
+     "abc": "P:B\n.g.a.g.f e2 c2 |"
+    },
+    {
+     "abc": " tgta tgtf e2 c2 |"
+    },
+    {
+     "abc": " \"^dolcemente\"c2 G2 c4 |"
+    },
+    {
+     "abc": " c2 G2 !D.C.!c4 |]"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "sib/full-song-template": [
+  {
+   "header": "X: 1\nT: TITLE OF THE SONG\nT: ALTERNATE TITLE\nC: COMPOSER/SONGWRITER\nO: ORIGIN/GEOGRAPHIC\nS: SOURCE OF THE SONG\nD: DISCOGRAPHY - CD, LP, ETC.\nN: NOTES (TEXT)\nZ: TRANSCRIBER, COPYRIGHT, PERMISSIONS\nH: HISTORY OF THE SONG\nH: This self-documenting ABC song template was created by Linda Eskin.\nR: RHYTHM, E.G. JIG, WALTZ\nM: 4/4\nL: 1/4\nQ: 1/4=120\nK: C\n",
+   "measures": [
+    {
+     "abc": "P: PART - VERSE, CHORUS, ETC.\n\"C\"C D2 E|"
+    },
+    {
+     "abc": "\"F\"F G3|"
+    },
+    {
+     "abc": "\"Am\"A B2 c|"
+    },
+    {
+     "abc": "\"E7\"d e3|"
+    },
+    {
+     "abc": "\"C\"C D2 E|"
+    },
+    {
+     "abc": "\"F\"F G3|"
+    },
+    {
+     "abc": "\"Am\"A B2 c|"
+    },
+    {
+     "abc": "\"E7\"d e3|]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/grandstaff-inline-meter": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
+ "sib/happy-birthday": [
+  {
+   "header": "X: 1\nT: Happy Birthday with chords\nM: 3/4\nQ: \"Allegro\" 1/4 = 120 % tempo\nK: F\n",
+   "measures": [
+    {
+     "abc": "C> C |"
+    },
+    {
+     "abc": " \"F\"D2C2F2 |"
+    },
+    {
+     "abc": " \"C\"E3 z C> C |"
+    },
+    {
+     "abc": " \"C\"D2C2G2 |"
+    },
+    {
+     "abc": " \"F\"F3 z C> C |"
+    },
+    {
+     "abc": "\"F\"c2A2F2 |"
+    },
+    {
+     "abc": " \"Bb\"E2D z B> B |"
+    },
+    {
+     "abc": " \"F\"A2F2\"C\"G2 |"
+    },
+    {
+     "abc": " \"F\"F6 |]"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "sib/inline-key-per-voice": [
+  {
+   "header": "X:1\nM:4/4\nL:1/8\nK:Edor\n",
+   "measures": [
+    {
+     "abc": "C2 D2 E2 F2|"
+    },
+    {
+     "abc": "[K:F] G2 A2 B2 c2|]"
+    },
+    {
+     "abc": "C2 D2 E2 F2|"
+    },
+    {
+     "abc": "[K:Bb^f] G2 A2 B2 c2|]"
+    },
+    {
+     "abc": "C2 D2 E2 F2|"
+    },
+    {
+     "abc": " G2 A2 B2 c2|]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/little swallow": [
+  {
+   "header": "X: 1\nT: Little Swallow\nT: Xi\\vao y\\`an zi\nT: 小燕子\nO: China\nL: 1/8\nM: 4/4\nK: C\n",
+   "measures": [
+    {
+     "abc": "[|\\\n(EG) (cA) G4 |"
+    },
+    {
+     "abc": " (EG) (Ac) G4 |"
+    },
+    {
+     "abc": " c3 e d2 c2  |"
+    },
+    {
+     "abc": " (dc) (Ac) G4 |"
+    },
+    {
+     "abc": "E3 G A2 GA |"
+    },
+    {
+     "abc": " c2 (dG) A4 |"
+    },
+    {
+     "abc": " (ED) C2 D4 |"
+    },
+    {
+     "abc": " D2 DE G2 G2 |"
+    },
+    {
+     "abc": "c2 (DE) G4 |"
+    },
+    {
+     "abc": " (EG) (cA) G4 |"
+    },
+    {
+     "abc": " (EG) (Ac) G4 |"
+    },
+    {
+     "abc": " c3 e d2 c2 |"
+    },
+    {
+     "abc": "(dc) (Ac) G4 |"
+    },
+    {
+     "abc": " E3 G A2 GA |"
+    },
+    {
+     "abc": " c2 (dG) A4 |"
+    },
+    {
+     "abc": " (E3 c) A2 G2 |"
+    },
+    {
+     "abc": "(ED) C2 D4 |"
+    },
+    {
+     "abc": " D3 E G4 |"
+    },
+    {
+     "abc": " (c3 e) (d2 c2) |"
+    },
+    {
+     "abc": " dc (GA) c4 |]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/missing-decorations": [
+  {
+   "header": "X:1\nT:S-missing-1 xstem\nC:Test Fixture\nM:4/4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "!xstem!C !xstem!D E F |"
+    },
+    {
+     "abc": " G A !xstem!B c |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:2\nT:S-missing-2 trillh\nC:Test Fixture\nM:4/4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "!trillh!C D !trillh!E F |"
+    },
+    {
+     "abc": " G A B !trillh!c |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:S-missing-3 Beam Tremolos\nC:Test Fixture\nM:4/4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "!/!C !//!D !///!E !////!F |"
+    },
+    {
+     "abc": " !/!G !//!A !///!B !////!c |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:4\nT:S-missing-4 Editorial and Courtesy Accidentals\nC:Test Fixture\nM:4/4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "!editorial!^C !courtesy!_D E F |"
+    },
+    {
+     "abc": " !editorial!=G !courtesy!^A B c |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:5\nT:S-missing-5 Dal Segno / Da Capo Navigation\nC:Test Fixture\nM:4/4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "!segno!C D E F |"
+    },
+    {
+     "abc": " G A B !D.S.alcoda!c |"
+    },
+    {
+     "abc": "!coda!C D E F |"
+    },
+    {
+     "abc": " G A B !D.C.alfine!c |"
+    },
+    {
+     "abc": "!D.S.alfine!C D E F |"
+    },
+    {
+     "abc": " G A B !D.C.alcoda!c |]"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:6\nT:S-missing-6 Combined Decorations\nC:Test Fixture\nM:4/4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "!xstem!C !trillh!D !editorial!^E !/!F |"
+    },
+    {
+     "abc": " !courtesy!_G !//!A !trillh!B !D.C.alcoda!c |]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/multi-voice-lyrics-two-voices": [
+  {
+   "header": "X:1\nM:4/4\nL:1/16\n%%score (Top Bottom)\nV:Top\nK:C clef=treble\n",
+   "measures": [
+    {
+     "abc": "!p!c'2b2 z4 f2a2 f4|"
+    },
+    {
+     "abc": "!p!c'2b2 z4 f2a2 f4|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/multi-voice-rest-collision": [
+  {
+   "header": "% Fixture: 2-voice rest-vs-note collision (abcjs 6.6.3 Theme C exemplar).\n% Source: abcjs 6.6.3 tests/visual/multi-voice.test.js — `abcRestPlacementBug`.\n% Exercises layout/layout.js:140-189 fixVoiceCollisions: voice 0 plays a half-note\n% rest in m2 while voice 1 plays a low G — the rest gets shifted to clear the note.\nM:4/4\nL:1/16\n%%score (mpguitar mpguitarlow)\nV:mpguitar\nK:G clef=treble\n",
+   "measures": [
+    {
+     "abc": "D16|"
+    },
+    {
+     "abc": "(3B2G2D2 E4|]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/multi-voice-rest-placement": [
+  {
+   "header": "X:1\nK:C\n",
+   "measures": [
+    {
+     "abc": "G4 ED edF2|"
+    },
+    {
+     "abc": "g2 z2 g2 z2|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "sib/multi-voice-triplet-brackets": [
+  {
+   "header": "% Fixture: triplet brackets above + below the staff (abcjs 6.6.3 Theme A exemplar).\n% Source: abcjs 6.6.3 tests/visual/multi-voice.test.js — `abcTripletBrackets`.\n% Top voice: stems-up triplets → brackets above. Bottom voice: stems-down →\n% brackets below. Exercises the new layout/triplet.js stemDirectionUp helper +\n% all four sub-cases (up/down × middle-tall/middle-low) of the bracket math.\nK:C\n",
+   "measures": [
+    {
+     "abc": "e4 e4 e4 e4 e4 |"
+    },
+    {
+     "abc": " (3c2A2G2 (3z2A2G2 (3c2A2z2 (3c2a'2G2 |"
+    },
+    {
+     "abc": "(3c2A2G2 (3c2TA2G2 (3c2A2G2 (3c2A2G2 |"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "sib/program-127-test": [
+  {
+   "header": "X: 1\nT: Title\nT: Alternate Title\nC: Composer\nO: Origin\nR: Rhythm\nS: Source\nN: Add notes about this tune here\nZ: Transcriber\nM: 4/4\nL: 1/4\nQ: 1/4=120\nK: C\n",
+   "measures": [
+    {
+     "abc": "\"C\"C D2 E|"
+    },
+    {
+     "abc": "\"F\"F G3|"
+    },
+    {
+     "abc": "\"Am\"A B2 c|"
+    },
+    {
+     "abc": "\"E7\"d e3|"
+    },
+    {
+     "abc": "\"C\"C D2 E|"
+    },
+    {
+     "abc": "\"F\"F G3|"
+    },
+    {
+     "abc": "\"Am\"A B2 c|"
+    },
+    {
+     "abc": "\"E7\"d e3|]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/ragtime-mini": [
+  {
+   "header": "X:1\nT:Ragtime Mini\n%%score { ( 4 5 ) | ( 1 2 3 ) }\nL:1/4\nM:2/4\nQ:80\nK:Eb\n",
+   "measures": [
+    {
+     "abc": "!mf! x2 |"
+    },
+    {
+     "abc": " [Fc]/4f/4[Fc]/4[G=Bg]/4- [GBg]/4G/4g/4f/4 |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/ragtime-nightingale": [
+  {
+   "header": "X:1\nT:Ragtime Nightingale\nC:Joseph Lamb\n%%score { ( 4 5 ) | ( 1 2 3 ) }\nL:1/4\nM:2/4\nQ:80\nK:Eb\n",
+   "measures": [
+    {
+     "abc": "!mf! x2 |"
+    },
+    {
+     "abc": " [Fc]/4f/4[Fc]/4[G=Bg]/4- [GBg]/4G/4g/4f/4 |"
+    },
+    {
+     "abc": " e/4d/4c/4e/4- e/4d/4c/ |"
+    },
+    {
+     "abc": " [G=Bg] z/4 G/4[dg]/4G/4 |"
+    },
+    {
+     "abc": "|: e/<g/- g |"
+    },
+    {
+     "abc": " x2 |"
+    },
+    {
+     "abc": " e/<g/- g |"
+    },
+    {
+     "abc": " x2 |"
+    },
+    {
+     "abc": "x2 |"
+    },
+    {
+     "abc": " x2 |"
+    },
+    {
+     "abc": " x2 |"
+    },
+    {
+     "abc": " x2 |"
+    },
+    {
+     "abc": "e/<g/- g |"
+    },
+    {
+     "abc": " x2 |"
+    },
+    {
+     "abc": " e/<g/- g |"
+    },
+    {
+     "abc": " x2 |"
+    },
+    {
+     "abc": "x2 |"
+    },
+    {
+     "abc": " x f/4e/4=f/4^f/4 |"
+    },
+    {
+     "abc": " [Geg]/4[Bb]/4[=B=b]/4[cdac']/4- [cdac']/4[_B_b]/4[cdac']/ |1",
+     "startEnding": "1"
+    },
+    {
+     "abc": " [GBe]- [GBe]/4G/4[=Bg]/4G/4 :|",
+     "endEnding": true
+    },
+    {
+     "abc": "|2 [G_Be]- [GBe]/4[ee']/4[dd']/4[cc']/4 |:",
+     "endEnding": true
+    },
+    {
+     "abc": " [=Bfa=b] [cfac']/4 [DA_Bd]3/4 |"
+    },
+    {
+     "abc": " [DGBd]/4[EGBe]/[B-eg-b-]/4 [B^^egb]/4[ee']/4[dd']/4[cc']/4 |"
+    },
+    {
+     "abc": " [=Bfa=b]/4[cfac']/[dfad']/4- [dfad']/4[ee']/4[dd']/4[cc']/4 |"
+    },
+    {
+     "abc": "[=Beg=b]/4[cegc']/[dgbd']/4- [dgbd']/4[ee']/4[dd']/4[cc']/4 |"
+    },
+    {
+     "abc": " [=Bfa=b]/<[cfac']/ [^CG_B^c]/<[DABd]/ |"
+    },
+    {
+     "abc": " [DGBd]/4[EGBe]/[Begb]/4- [Begb]/4[=A=a]/4[Bb]/4[cc']/4 |"
+    },
+    {
+     "abc": " [dgbd']/4[Bb]/4[Gg]/4[EG=Ae]/4 [EGAe]/[DAcd]/ |"
+    },
+    {
+     "abc": "[GBdg]/ z/ g'/4[ee']/4[dd']/4[cc']/4 |"
+    },
+    {
+     "abc": " [=Bfa=b] [cfac']/4 [DA_Bd]3/4 |"
+    },
+    {
+     "abc": " [DGBd]/4[EGBe]/[Begb]/4- [Begb]/4[ee']/4[dd']/4[cc']/4 |"
+    },
+    {
+     "abc": " [=Bfa=b]/4[cfac']/[dfad']/4- [dfad']/4[ee']/4[dd']/4[cc']/4 |"
+    },
+    {
+     "abc": "[=Beg=b]/4[cegc']/[dgbd']/4- [dgbd']/4[_B_b]/4[=A=a]/4[Bb]/4 |"
+    },
+    {
+     "abc": " [=Be=b]/4[ee']/[EAe]/4- [EAe]/4[Ee]/4[F=Af]/4[^F^f]/4 |"
+    },
+    {
+     "abc": " [G_Beg]/4[Bb]/4[cc']/4[d=ebd']/4 z |"
+    },
+    {
+     "abc": " [B_db]/4[Aca]/[GBg]/4- [GBg]/[FAf]/ |"
+    },
+    {
+     "abc": "|1 [EGe]- [EGe]/4[ee']/4[dd']/4[cc']/4 :|2",
+     "startEnding": "2",
+     "endEnding": true
+    },
+    {
+     "abc": " [EGe]- [EGe]/4!>(!G/4[=Bg]/4!>)!G/4 ||",
+     "endEnding": true
+    },
+    {
+     "abc": " e/<g/- g |"
+    },
+    {
+     "abc": " x2 |"
+    },
+    {
+     "abc": "e/<g/- g |"
+    },
+    {
+     "abc": " x2 |"
+    },
+    {
+     "abc": " x2 |"
+    },
+    {
+     "abc": " x2 |"
+    },
+    {
+     "abc": "x2 |"
+    },
+    {
+     "abc": " x2 |"
+    },
+    {
+     "abc": " e/<g/- g |"
+    },
+    {
+     "abc": " x2 |"
+    },
+    {
+     "abc": "e/<g/- g |"
+    },
+    {
+     "abc": " x2 |"
+    },
+    {
+     "abc": " x2 |"
+    },
+    {
+     "abc": " x f/4e/4=f/4^f/4 |"
+    },
+    {
+     "abc": "[Geg]/4[Bb]/4[=B=b]/4[cdac']/4- [cdac']/4[_B_b]/4[cdac']/ |"
+    },
+    {
+     "abc": " [GBe]- [GBe]/ (3c'/4e'/4c'/4 |:"
+    },
+    {
+     "abc": "[K:Ab] e/4e'/4c'/4e'/4 c'/4e'/4c'/4e'/4 |"
+    },
+    {
+     "abc": " [d'e']/4[d'e']/[d'e']/4- [d'e']/x/ |"
+    },
+    {
+     "abc": "e'/4e''/4c''/4e''/4 c''/4e''/4c''/4e''/4 |"
+    },
+    {
+     "abc": " [d''e'']/4[d''e'']/[d''e'']/4- [d''e'']/ x/ |"
+    },
+    {
+     "abc": " e/4e'/4c'/4e'/4 c'/<e'/ |"
+    },
+    {
+     "abc": " x2 |"
+    },
+    {
+     "abc": "b/a/4b/4 g/4b/4f/4b/4 |"
+    },
+    {
+     "abc": " e/ (5:4:5B/8c/8B/8=A/8B/8 e/ (3c/4e/4c/4 |"
+    },
+    {
+     "abc": " E/4e/4c/4e/4 c/4e/4c/4e/4 |"
+    },
+    {
+     "abc": " [de]/4[de]/4x/4[de]/4- [de]/ x/ |"
+    },
+    {
+     "abc": "e/4e'/4c'/4e'/4 c'/4e'/4c'/4e'/4 |"
+    },
+    {
+     "abc": " d'/4d'/[d'e']/4- [d'e']/ x/ |"
+    },
+    {
+     "abc": " A/4a/4_g/4a/4 g/4a/4g/4a/4 |"
+    },
+    {
+     "abc": " [fa]/>[da]/- [da]/4a/4=g/4f/4 |"
+    },
+    {
+     "abc": "e/4f/4a/4g/4- g/4f/4e/ |1",
+     "startEnding": "1"
+    },
+    {
+     "abc": " .[Acea]/Te/{=de} e'/(3c'/4e'/4c'/4 :|2",
+     "startEnding": "2",
+     "endEnding": true
+    },
+    {
+     "abc": " .[Acea]/ z/ [Acea]/ z/ ||",
+     "endEnding": true
+    },
+    {
+     "abc": "[K:Eb]!mf! B/f/ b/f'/ |"
+    },
+    {
+     "abc": "x z/ (3c/4f/4d/4 |"
+    },
+    {
+     "abc": " B/ (3c'/4f'/4d'/4 a/ (3c'/4f'/4d'/4 |"
+    },
+    {
+     "abc": " (3b/ [da]/ z/ z/4!ff! [Bb]/4[=A=a]/4[Bb]/4 ||"
+    },
+    {
+     "abc": " [=Bf=a=b] [cfac']/4 [DA_Bd]3/4 |"
+    },
+    {
+     "abc": "[DGBd]/4[EGBe]/[Begb]/4- [Begb]/4[ee']/4[dd']/4[cc']/4 |"
+    },
+    {
+     "abc": " [=Bfa=b]/4[cfac']/[dfad']/4- [dfad']/4[ee']/4[dd']/4[cc']/4 |"
+    },
+    {
+     "abc": " [=Beg=b]/4[cegc']/[dgbd']/4- [dgbd']/4[ee']/4[dd']/4[cc']/4 |"
+    },
+    {
+     "abc": " [=Bfa=b]/<[cfac']/ [^CG_B^c]/<[DABd]/ |"
+    },
+    {
+     "abc": "[DGBd]/4[EGBe]/[Begb]/4- [Begb]/4[=A=a]/4[Bb]/4[cc']/4 |"
+    },
+    {
+     "abc": " [dgbd']/4[Bb]/4[Gg]/4[EG=Ae]/4 [EGAe]/[DAcd]/ |"
+    },
+    {
+     "abc": " [GBdg]/ z/ g'/4[ee']/4[dd']/4[cc']/4 |"
+    },
+    {
+     "abc": " [=Bfa=b] [cfac']/4 [DA_Bd]3/4 |"
+    },
+    {
+     "abc": "[DGBd]/4[EGBe]/[Begb]/4- [Begb]/4[ee']/4[dd']/4[cc']/4 |"
+    },
+    {
+     "abc": " [=Bfa=b]/4[cfac']/[dfad']/4- [dfad']/4[ee']/4[dd']/4[cc']/4 |"
+    },
+    {
+     "abc": " [=Beg=b]/4[cegc']/[dgbd']/4- [dgbd']/4[_B_b]/4[=A=a]/4[Bb]/4 |"
+    },
+    {
+     "abc": " [=Be=b]/4[ee']/[EAe]/4- [EAe]/4[Ee]/4[F=Af]/4[^F^f]/4 |"
+    },
+    {
+     "abc": "[G_Beg]/4[Bb]/4[cc']/4[d=ebd']/4 [Gg] |"
+    },
+    {
+     "abc": " [Aca]/4[Bb]/4[cc']/4[dad']/4- [dad']/4[cc']/4[Bdb]/ |"
+    },
+    {
+     "abc": " [egbe'] [egbe']/ z/ |]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/score-reorder-shared": [
+  {
+   "header": "X:1\nT:Same Staff Reorder\nM:4/4\nL:1/4\n%%score (V2 V1)\nV:V1 name=\"Melody\"\nV:V2 name=\"Harmony\"\nK:C\n",
+   "measures": [
+    {
+     "abc": " G,A,B,C |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/score-reorder": [
+  {
+   "header": "X:1\nT:Reorder Test\nM:4/4\nL:1/4\n%%score (V2) (V1)\nV:V1 clef=treble name=\"V1-top\"\nV:V2 clef=bass name=\"V2-bottom\"\nK:C\n",
+   "measures": [
+    {
+     "abc": " C,,D,,E,,F,, |"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/simple-c": [
+  {
+   "header": "X:1\nT:Simple C\nM:4/4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/stacked-annotations": [
+  {
+   "header": "X:1\nT:Stacked annotations test\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"^Allegro\"\"^con brio\"C \"_p\"\"_dolce\"D |"
+    },
+    {
+     "abc": " \"^staccato\"E \"_marcato\"F |"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "sib/tunebook-3": [
+  {
+   "header": "X:1\nT:Simple C\nM:4/4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:2\nT:Twinkle Twinkle\nM:4/4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CCGG|"
+    },
+    {
+     "abc": "AAG2|"
+    },
+    {
+     "abc": "FFEE|"
+    },
+    {
+     "abc": "DDC2|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:D Scale\nM:4/4\nL:1/4\nK:D\n",
+   "measures": [
+    {
+     "abc": "DEFG|"
+    },
+    {
+     "abc": "ABcd|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/twinkle": [
+  {
+   "header": "X:1\nT:Twinkle Twinkle\nM:4/4\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CCGG|"
+    },
+    {
+     "abc": "AAG2|"
+    },
+    {
+     "abc": "FFEE|"
+    },
+    {
+     "abc": "DDC2|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/two-voice-invention": [
+  {
+   "header": "X:1\nT:Two Voice Invention\nC:Test fixture\nM:4/4\nL:1/8\nQ:1/4=100\nK:C\n",
+   "measures": [
+    {
+     "abc": "!mp! CDEF GABc|"
+    },
+    {
+     "abc": "cBAG FEDC|"
+    },
+    {
+     "abc": "EFG2 A2B2|"
+    },
+    {
+     "abc": "c4- c2 z2|"
+    },
+    {
+     "abc": "|: cdef gabc'|"
+    },
+    {
+     "abc": "c'bag fedc|"
+    },
+    {
+     "abc": "efg2 a2b2|"
+    },
+    {
+     "abc": "c'4- c'2 z2:|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/voice-middle-after-clef": [
+  {
+   "header": "X:1\nT:Voice middle= after clef\nM:2/2\nL:1/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "G2 G2 |"
+    },
+    {
+     "abc": " c2 c2 |]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/voice-octave-shift": [
+  {
+   "header": "X:1\nT:Voice octave shift test\nM:4/4\nL:1/4\nV:1 clef=treble\nV:2 clef=bass octave=-2\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/vree-compound-meter": [
+  {
+   "header": "X: 1\nT: Compound Meter (6/8)\nM: 6/8\nL: 1/8\nK: C\n",
+   "measures": [
+    {
+     "abc": "ABC|"
+    },
+    {
+     "abc": "DEF|"
+    },
+    {
+     "abc": "GAB|"
+    },
+    {
+     "abc": "cba|]"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "sib/vree-grace-notes": [
+  {
+   "header": "X: 1\nT: Grace Notes\nM: 4/4\nL: 1/4\nK: C\n",
+   "measures": [
+    {
+     "abc": "{/c}B {G}A {AB}G2 |]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/vree-sharps": [
+  {
+   "header": "X: 1\nT: Key with Many Sharps\nM: 4/4\nL: 1/4\nK: B\n",
+   "measures": [
+    {
+     "abc": "B ^c# ^d# ^e# |]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/vree-slurs-and-triplets": [
+  {
+   "header": "X: 1\nT: Slurs and Triplets\nM: 4/4\nL: 1/4\nK: C\n",
+   "measures": [
+    {
+     "abc": "(ABCD) |"
+    },
+    {
+     "abc": " (3ABc d2 |]"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
+ "sib/vree-ties-across-bars": [
+  {
+   "header": "X: 1\nT: Ties Across Bars\nM: 4/4\nL: 1/4\nK: C\n",
+   "measures": [
+    {
+     "abc": "A- |"
+    },
+    {
+     "abc": " A2 B C |]"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
+ "sib/zocharti-loch": [
+  {
+   "header": "X:1\nT:Zocharti Loch\nC:Louis Lewandowski (1821-1894)\nM:C\nQ:1/4=76\n%%score (T1 T2) (B1 B2)\n% from https://abcnotation.com/wiki/abc:standard:v2.1#multiple_voices\nV:T1           clef=treble-8  name=\"Tenore I\"   snm=\"T.I\"\nV:T2           clef=treble-8  name=\"Tenore II\"  snm=\"T.II\"\nV:B1  middle=d clef=bass      name=\"Basso I\"    snm=\"B.I\"  transpose=-24\nV:B2  middle=d clef=bass      name=\"Basso II\"   snm=\"B.II\" transpose=-24\nK:Gm\n",
+   "measures": [
+    {
+     "abc": "  (B2c2 d2g2)  |"
+    },
+    {
+     "abc": " f6e2      |"
+    },
+    {
+     "abc": " (d2c2 d2)e2 |"
+    },
+    {
+     "abc": " d4 c2z2 |"
+    },
+    {
+     "abc": "  (B2c2 d2g2)  |"
+    },
+    {
+     "abc": " f8        |"
+    },
+    {
+     "abc": " d3c (d2fe)  |"
+    },
+    {
+     "abc": " H d6    ||"
+    }
+   ],
+   "hasPickup": false
+  }
+ ]
+}

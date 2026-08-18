@@ -110,7 +110,6 @@ const MISSING: readonly string[] = [
   "EditArea",
   "Editor",
   "TimingCallbacks",
-  "extractMeasures",
   "pauseAnimation",
   "setGlyph",
   "startAnimation",

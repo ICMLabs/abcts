@@ -54,6 +54,7 @@ import {
   type Score,
 } from "../core/model.js";
 import { type DelineOptions, delineOf } from "./deline.js";
+import { type ExtractedTune, extractMeasuresOf } from "./extract-measures.js";
 import {
   type AbcElement,
   type AbcLine,
@@ -1196,6 +1197,14 @@ export const synth = {
  * generator calls. `EngraverController` is what a STACKED render is.
  */
 export const test = { Parse, EngraverController };
+
+/**
+ * `extractMeasures(abc)` — the tune cut into MEASURES OF ABC TEXT, for a chord chart or a
+ * quoted bar. See `src/compat/extract-measures.ts`; the parse it walks is `parseOnly`'s.
+ */
+export function extractMeasures(abc: string): ExtractedTune[] {
+  return extractMeasuresOf(abc, (source) => parseOnly(source));
+}
 
 export function parseOnly(abc: string, params: AbcjsParams = {}): TuneObject[] {
   return renderAbc(
