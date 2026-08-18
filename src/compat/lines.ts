@@ -11,7 +11,7 @@ import type {
   Tempo,
 } from "../core/model.js";
 import { defaultClef, plainText, ratToNumber, stepIndex } from "../core/model.js";
-import { expandOverlays } from "../renderer/layout.js";
+import { resolveOverlays } from "./overlays.js";
 import { clefElement, keyElement, meterElement } from "./selectables.js";
 
 /**
@@ -97,6 +97,8 @@ export interface AbcElement {
   /** `%%MIDI <cmd> <params…>` written after the music began — see `voiceElements`. */
   cmd?: string;
   params?: readonly (string | number)[];
+  /** A `stem` element's own field — `up`, `down` or `auto`. See `resolveOverlays`. */
+  direction?: string;
   // ── the staff's own furniture, which abcjs hangs on the STAFF and not on the stream ──
   verticalPos?: number;
   clefPos?: number;
@@ -887,7 +889,7 @@ function voiceElements(
     out.push(
       partElement(measure.partLabel, measure.partLabelSourceRange, byRange),
     );
-    for (const event of measure.events) {
+    const note = (event: MusicEvent): void => {
       const e = el("note", decoratedRange(abc, event));
       if (e !== null) {
         noteFields(e, event);
@@ -896,7 +898,37 @@ function voiceElements(
         notes.push({ event, e });
       }
       out.push(e);
-    }
+    };
+    for (const event of measure.events) note(event);
+    /**
+     * **AN `&` OVERLAY LAYER IS READ INTO THE VOICE IT INTERRUPTS, AND `resolveOverlays`
+     * SPLITS IT OUT LATER** (`src/compat/overlays.ts`). The parser appends an
+     * `{el_type: "overlay"}` for the `&` itself and then goes on appending to the SAME
+     * voice (`abc_parse_music.js:311-317`), which is why the layer's notes sit between
+     * the main voice's in reading order and why the barline after them does not tile back
+     * over them.
+     *
+     * **THE MARKER CARRIES NO SPAN HERE.** abcjs gives it `startOfLine … startOfLine + 1`,
+     * but it never survives `resolveOverlays` — the snip removes it — so the only thing
+     * its position has to do is sort it between the main voice's notes and the layer's.
+     */
+    measure.overlays.forEach((layer) => {
+      /**
+       * **ONLY THE LAYER ACTUALLY WRITTEN IN THIS MEASURE IS AN `&`.** Our parser PADS
+       * every measure of the tune to the tune's overlay depth with rangeless invisible
+       * rests, so that the renderer can tile them; abcjs's stream has the `&` and its own
+       * notes and NOTHING else, and generates its padding inside `resolveOverlays` from
+       * `durationThisBar`. Emitting the padding here made every measure look like an
+       * overlay and snipped the first line's own notes out of it.
+       */
+      const written = layer.filter((e) => e.sourceRange != null);
+      const first = written[0]?.sourceRange?.start;
+      if (first === undefined) return;
+      const marker: AbcElement = { el_type: "overlay" };
+      sortAt.set(marker, first - 0.25);
+      out.push(marker);
+      for (const event of written) note(event);
+    });
     out.push(
       bar(
         measure.closingBarline,
@@ -1146,7 +1178,7 @@ export function projectionOf(
    * layers were in no stream at all and the barline after them tiled back over their notes,
    * which is what `getElementFromChar` was answering for `& E4 |`.
    */
-  const score = expandOverlays(input);
+  const score = input;
   const byEvent = new Map<MusicEvent, AbcElement>();
   const byRange = new Map<number, AbcElement>();
   const lines: AbcLine[] = [];
@@ -1484,6 +1516,13 @@ export function projectionOf(
   // …and the hoist runs over the finished lines, per voice, because it moves an element
   // from one line's array into another's.
   for (const b of score.textBelow) lines.push(textLine(b));
+  /**
+   * **AND NOW THE `&`s ARE RESOLVED, WHICH IS WHERE abcjs DOES IT TOO** — in `cleanUp`,
+   * over the finished lines rather than while reading them (`tune-builder.js:107-124`).
+   * It moves each layer into a voice of its own, back-fills every EARLIER line with
+   * invisible-rest copies, and leaves three `stem` elements per snip behind.
+   */
+  resolveOverlays(lines);
   // …and the hoist reads the FIRST MUSIC line, which is no longer line 0 once a subtitle
   // or a `%%text` stands above it.
   const firstStaff = lines.find((l) => l.staff !== undefined);
