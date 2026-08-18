@@ -869,8 +869,15 @@ function styleModifier(spec: string): NoteStyle | null {
  * change, wiping the tune's accidentals from that bar on.
  */
 function hasKeySpec(content: string): boolean {
-  const first = (content.trim().split(/\s+/)[0] ?? '').toLowerCase()
-  return /^none\b/.test(first) || /^[a-g]/.test(first)
+  const first = content.trim().split(/\s+/)[0] ?? ''
+  /**
+   * **`getKeyPitch` IS UPPERCASE-ONLY** — its switch has `case 'A'` … `case 'G'` and the
+   * lowercase arms are COMMENTED OUT in abcjs's own source (`abc_tokenizer.js:33-45`). So
+   * `[K: bass-8]` and `[K: alto]` name a CLEF and no key, where lowercasing the token first
+   * read them as B and A: `synth-flattener-20` grew a `keySignature` element beside each of
+   * its two lowercase-initial clefs, and every accidental after them was wiped.
+   */
+  return /^none\b/.test(first.toLowerCase()) || /^[A-G]/.test(first)
 }
 
 /**
