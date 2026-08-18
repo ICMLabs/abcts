@@ -897,7 +897,12 @@ export interface Measure {
    * chord grid read. Both are built from this list in one place (`takeChanges`), so they
    * cannot drift.
    */
-  readonly meterChanges?: readonly { readonly meter: Meter | null; readonly at: number }[]
+  readonly meterChanges?: readonly {
+    readonly meter: Meter | null
+    readonly at: number
+    /** Where THIS one was written — each is an element of `tune.lines` with its own span. */
+    readonly range?: SourceRange
+  }[]
   /**
    * A repeat ending (volta) starting at this measure — the `1` in `|1`, or `1,2`.
    *

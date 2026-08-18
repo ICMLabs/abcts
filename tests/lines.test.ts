@@ -342,6 +342,7 @@ const PASSING: readonly string[] = [
   "repo/abcjs-visual-slurs-01-score-s-a-tune0",
   "repo/abcjs-visual-slurs-02-score-s-a-t-b-tune0",
   "repo/abcjs-visual-svg-01-staffwidth-5-tune0",
+  "repo/abcjs-visual-svg-02-staffwidth-12-tune0",
   "repo/abcjs-visual-svg-03-a4-tune0",
   "repo/abcjs-visual-svg-per-line-02-scaled-tune0",
   "repo/abcjs-visual-tablature-01-gr-tune0",
@@ -442,7 +443,7 @@ describe("tune.lines and getElementFromChar", () => {
     // 251,396 of 256,138 until 2026-08-16, when the sibling repo's edits to two fixtures
     // took both numbers down with them — the FLOOR moves with its corpus, and the
     // exclusions above are what make it comparable at all.
-    expect(agree).toBeGreaterThanOrEqual(255650);
+    expect(agree).toBeGreaterThanOrEqual(255657);
   });
 
   /**

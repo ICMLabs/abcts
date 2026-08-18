@@ -163,6 +163,6 @@ describe("tune.deline — abcjs's merged line list", () => {
   /** A floor, not a target — it moves up and must never move down. */
   it("the whole corpus agrees on at least the rows it did", () => {
     const agree = table.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(1540);
+    expect(agree).toBeGreaterThanOrEqual(1544);
   });
 });

@@ -1106,10 +1106,18 @@ class VoiceBuilder {
     this.pendingMeterChangeInline = inline
     // …AND ITS POSITION IN THE STREAM, because a measure can carry more than one and
     // abcjs draws every one of them where it stands. See `Measure.meterChanges`.
-    this.pendingMeterChanges.push({ meter, at: this.events.length })
+    //
+    // **AND ITS OWN SOURCE RANGE WITH IT**, because each is an ELEMENT of `tune.lines` and
+    // a host reads its span: `[M:2/4]y[M:3/4]y[M:4/4]` is three time signatures and only
+    // the LAST was reachable while the singular `meterChangeSourceRange` was the only one.
+    this.pendingMeterChanges.push({ meter, at: this.events.length, range })
   }
 
-  private pendingMeterChanges: { meter: Meter | null; at: number }[] = []
+  private pendingMeterChanges: {
+    meter: Meter | null
+    at: number
+    range?: SourceRange
+  }[] = []
 
   private pendingMeterChangeInline = false
 
@@ -1272,7 +1280,11 @@ class VoiceBuilder {
     if (this.meterForNextLine !== null) {
       this.pendingMeterChange = this.meterForNextLine.meter
       this.pendingMeterChangeRange = this.meterForNextLine.range
-      this.pendingMeterChanges.push({ meter: this.meterForNextLine.meter, at: this.events.length })
+      this.pendingMeterChanges.push({
+        meter: this.meterForNextLine.meter,
+        at: this.events.length,
+        ...(this.meterForNextLine.range == null ? {} : { range: this.meterForNextLine.range }),
+      })
       // The standalone form, by construction — this is abcjs's `startNewLine` consuming
       // `multilineVars.meter`, which the inline arm never fills.
       this.pendingMeterChangeInline = false

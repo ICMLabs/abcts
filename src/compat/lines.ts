@@ -926,8 +926,21 @@ function voiceElements(
      * `meterChangeStandalone` is the flag rather than `!meterChangeInline`, because an `M:`
      * after a `\` continuation is NEITHER — three states, not two.
      */
-    if (measure.meterChangeStandalone !== true)
-      out.push(el("timeSignature", measure.meterChangeSourceRange));
+    if (measure.meterChangeStandalone !== true) {
+      /**
+       * **EVERY `[M:]` IN THE MEASURE, NOT JUST THE ONE IN FORCE.** abcjs treats a meter
+       * as an ordinary element and draws it where it stands, so `[M:2/4]y[M:3/4]y[M:4/4]`
+       * is three `timeSignature` elements — `meterChanges` is the plural list and
+       * `meterChange` is its LAST entry, the meter in force, which is a different role.
+       * The earlier ones had no range at all until now, so they were in no stream and
+       * `getElementFromChar` answered null for seven characters of
+       * `abcjs-visual-svg-02-staffwidth-12`.
+       */
+      const all = measure.meterChanges;
+      if (all === undefined)
+        out.push(el("timeSignature", measure.meterChangeSourceRange));
+      else for (const m of all) out.push(el("timeSignature", m.range ?? null));
+    }
     out.push(tempoElement(measure.tempoChange, measure.tempoChangeSourceRange, byRange));
     out.push(
       partElement(measure.partLabel, measure.partLabelSourceRange, byRange),
@@ -1469,11 +1482,23 @@ export function projectionOf(
         const key = leadsLine(m, m.keyChangeSourceRange?.start)
           ? (m.keyChange ?? keyInForce)
           : keyInForce;
+        /**
+         * **AND WHEN A MEASURE CARRIES SEVERAL `[M:]`, THE STAFF'S IS THE FIRST ONE THAT
+         * LEADS THE MUSIC, NOT THE ONE IN FORCE.** `meterChange` is the LAST entry —
+         * `abcjs-visual-svg-02-staffwidth-12` is `[M:2/4]y[M:3/4]y[M:4/4]` and abcjs puts
+         * 2/4 on the staff and draws the other two, because only the first was read while
+         * `hasBeginMusic()` was still false.
+         */
+        const leading =
+          m.meterChanges?.find(
+            (x) => x.range != null && x.range.start < musicStartsAt(m),
+          ) ??
+          (leadsLine(m, m.meterChangeSourceRange?.start)
+            ? { meter: m.meterChange }
+            : undefined);
         const meter =
           i === 0
-            ? leadsLine(m, m.meterChangeSourceRange?.start)
-              ? m.meterChange
-              : score.meter
+            ? (leading?.meter ?? score.meter)
             : m.meterChange != null && m.meterChangeStandalone === true
               ? m.meterChange
               : null;
