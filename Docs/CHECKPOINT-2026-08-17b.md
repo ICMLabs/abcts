@@ -4,9 +4,10 @@
 255,641 and 290 when the session opened and from 185 tunes when the arc did. **The
 `AbcTune` accessors are CLOSED at 0 of 291**, both measured-not-ported rows with them.
 **`tune.deline` is BUILT and its gate is at 1,558 of 1,570 rows**, from 494 when it opened.
-**`tune.setupEvents` and `tune.addUsefulCallbackInfo` are BUILT** — surface 21 → 18 absent
-— and their new gate, which compares EVERY COLUMN of a timing row, is at 3,339 of 3,366.
-Suite **1,818 passing, 2 expected-fail, no reds**.
+**`tune.setupEvents` and `tune.addUsefulCallbackInfo` are BUILT** — and their new gate,
+which compares EVERY COLUMN of a timing row, is at 3,042 of 3,366. **`extractMeasures` is
+BUILT AND OPENED AT ZERO**, 1,663 of 1,663 rows across 221 files. Surface **21 → 17
+absent**. Suite **1,820 passing, 2 expected-fail, no reds**.
 
 Every other table is where it was, at zero: `svg-bytes` 0 of 188, `svg-bytes-sibling` 0 of
 356, `selectables` 0 of 389 rows across four cases, `metaTextInfo` 0 of 310, `metaText` 0 of
@@ -304,7 +305,26 @@ The accessor gate reads its totals off the TUNE OBJECT now, where a host reads t
 than off `timingsOf` — it had been measuring the library path and reporting a row abcjs
 never disagreed with us about. **0 of 291.**
 
-### 8.2 THE 27 ROWS LEFT
+### 8.2 `endX` — WHERE THE CURSOR STOPS, AND THE ONE NUMBER NOT TO GUESS
+
+`addEndPoints` runs over the sorted rows before the `end` row is pushed: a row runs to the
+NEXT row's `left` when the two are on the same system, and to that system's own right edge
+when they are not, with two more assignments from the REPEAT branch — "the cursor won't go
+past the end repeat". Barlines carry their span into the timing walk for those two.
+
+⚠️ **THE GATE'S FLOOR WENT DOWN WHEN THE COLUMN WAS ADDED AND THAT IS A CHANGE OF UNITS**:
+3,339 of 3,366 became 3,042 of the same 3,366 the moment a fifteenth column was compared.
+Nothing moved.
+
+**AND THE 297 ROWS LEFT ARE ONE MEASUREMENT NOBODY SHOULD GUESS** — abcjs's `staffGroup.w`:
+
+    stretched line   abcjs 755      our `LayoutSystem.width` 740, ink right edge 725
+    short line       abcjs 201.111  our width 216.111, ink right edge 194.111 (bar w = 1)
+
+abcjs's is the cursor ITS layout ended at; ours is `max(musicWidth, proseWidth)`. Neither
+offset works in both cases, and the layout should record the x it laid each line out to.
+
+### 8.3 THE 27 OTHER ROWS
 
 - **21 `startCharArray`: an overlay layer exists on every measure of ours and only where
   `resolveOverlays` put one.** Our model pads every measure to the tune's overlay depth;
@@ -314,6 +334,17 @@ never disagreed with us about. **0 of 291.**
   −3 on its second, which is exact. Both engines PLACE the two systems identically — the
   next system's `absoluteY` agrees to the digit — so this is what the extent is REPORTED as,
   not where anything is drawn.
+
+---
+
+## 8.4 `extractMeasures` OPENED AT ZERO, AND THAT IS THE SECOND PROOF
+
+1,663 of 1,663 rows across 221 files, first run. Every fragment it returns is
+`tune.abc.substring(fragStart, elem.endChar)` — `tune.lines`'s SPANS read back out as TEXT —
+so it is the strictest consumer of the character gate there is, and it agreeing everywhere
+is an independent check on 255,684 of 255,684. Three quirks ported: it reads ONE staff and
+ONE voice, the header is split on the first `K:` textually (**28 files THROW and the throw
+is in the golden**), and `lastChord` changes type mid-loop from an element to a name string.
 
 ---
 
