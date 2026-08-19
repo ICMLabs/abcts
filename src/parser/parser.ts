@@ -1207,6 +1207,13 @@ class VoiceBuilder {
   }
 
   push(event: MusicEvent): void {
+    /**
+     * **THE LINE'S STYLE IS READ WHERE `startNewLine` FIRES**, which is at the first
+     * element appended and not at the line's first character — the same lazy line start
+     * `styleForNextLine` is built on. See `Measure.lineStyle`.
+     */
+    if (!this.appendedSinceLineStart && this.styleSeen)
+      this.styleAtLineStart = this.noteStyle
     this.target.push(event)
     this.appendedSinceLineStart = true
     // Lyrics align to the primary melody only: overlay notes do not advance the counter,
@@ -1244,6 +1251,10 @@ class VoiceBuilder {
    * arm of `applyField`; the mechanism is `meterForNextLine`'s exactly.
    */
   private styleForNextLine: NoteStyle | null = null
+  /** Has a `style=` been seen AT ALL — abcjs's `if (multilineVars.style)`. */
+  private styleSeen = false
+  /** The style this line opened with — see `push`. */
+  private styleAtLineStart: NoteStyle | null = null
 
   /**
    * `K: style=` / `[K: style=]` — WHEN it takes effect, which is not where it stands.
@@ -1265,6 +1276,7 @@ class VoiceBuilder {
    * not fired yet — the same lazy-line mechanism as findings 125 and 130.
    */
   setNoteStyle(style: NoteStyle, inline: boolean): void {
+    this.styleSeen = true
     if (inline && this.appendedSinceLineStart) this.styleForNextLine = style
     else this.noteStyle = style
   }
@@ -1688,6 +1700,9 @@ class VoiceBuilder {
         this.takeOctave()
         return {
           startsSystem,
+          ...(startsSystem && this.styleAtLineStart !== null
+            ? { lineStyle: this.styleAtLineStart }
+            : {}),
           ...this.takeSystemBarNumber(startsSystem),
           ...this.takeTextBefore(startsSystem),
           ...this.takeVskip(startsSystem),
@@ -1773,6 +1788,9 @@ class VoiceBuilder {
         this.takeOctave()
         return {
           startsSystem,
+          ...(startsSystem && this.styleAtLineStart !== null
+            ? { lineStyle: this.styleAtLineStart }
+            : {}),
           ...this.takeSystemBarNumber(startsSystem),
           ...this.takeTextBefore(startsSystem),
           ...this.takeVskip(startsSystem),

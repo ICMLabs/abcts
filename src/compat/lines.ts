@@ -81,6 +81,12 @@ export interface AbcElement {
   /** A tempo whose rate came from its WORD and is therefore not printed — see `tempoElement`. */
   suppressBpm?: boolean;
   /**
+   * A `style` element's note head — abcjs's `appendElement('style', null, null, {head:
+   * params.style})` (`tune-builder.js:971-972`). The field is literally named `head`
+   * because it is the NOTE HEAD to draw, not a position.
+   */
+  head?: string;
+  /**
    * `|1` — the ending label this barline OPENS, as written (`"1"`, `"1,2"`), and
    * `endEnding` on the barline that closes one. Both are the parser's fields on the bar
    * element itself (`abc_parse_music.js:271-280`).
@@ -1638,6 +1644,15 @@ export function projectionOf(
           if (voice === undefined || voice.length === 0) return;
           created.add(j);
           const head: AbcElement[] = [];
+          /**
+           * **THE `style` COMES FIRST**, and it is on EVERY line once a `style=` has been
+           * seen at all — `if (params.style) appendElement('style', null, null, {head:
+           * params.style})` (`tune-builder.js:971-972`), where `params.style` is
+           * `multilineVars.style` as the line opened. See `Measure.lineStyle`.
+           */
+          const lineStyle = score.voices[k]?.measures[from]?.lineStyle;
+          if (lineStyle !== undefined)
+            head.push({ el_type: "style", head: lineStyle });
           const stem = score.voices[k]?.stemDirection;
           if (stem != null) head.push({ el_type: "stem", direction: stem });
           else if (j > 0) {

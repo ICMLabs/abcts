@@ -1065,6 +1065,13 @@ export interface Measure {
    * `currBarNumber !== 1` says.
    */
   readonly systemBarNumber?: number
+  /**
+   * The note STYLE this line opened with, on the measure that opens it — abcjs's
+   * `params.style` reaching `createVoice`, which appends a `style` ELEMENT at the head of
+   * every voice of every line once a `style=` has been seen at all
+   * (`abc_parse_music.js:1008-1009`, `tune-builder.js:971-972`). Absent until one has.
+   */
+  readonly lineStyle?: NoteStyle
   readonly sourceRange: SourceRange | null
   readonly closingBarlineSourceRange: SourceRange | null
 }
