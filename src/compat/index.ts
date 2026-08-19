@@ -92,6 +92,19 @@ import { EngraverController, Parse } from "./engraver.js";
 import { strTranspose as transposeString } from "../str/transpose.js";
 import { STAFF_SPACE_PX, UNIT_PX } from "../renderer/abcjs-constants.js";
 export { setGlyph } from "../renderer/set-glyph.js";
+/**
+ * The textarea binding — `Editor` and the `EditArea` it wraps one in. Exported from
+ * here because that is where abcjs exports them from, and because `Editor` renders
+ * through `renderAbc` in this very file.
+ */
+export {
+  EditArea,
+  Editor,
+  type EditorListener,
+  type EditorPaper,
+  type EditorParams,
+  type EditorTextArea,
+} from "./editor.js";
 
 /**
  * abcjs's `spacing.STEP` — ONE PITCH, half a staff space. Every vertical figure a timing
@@ -102,7 +115,11 @@ const PITCH_STEP_PX = STAFF_SPACE_PX / 2;
 /** abcjs's `renderer.padding.left` on screen — the margin every system's music starts at. */
 const PAGE_MARGIN_PX = 15;
 import { layout, type MetaTextRow, type PlacedText } from "../renderer/layout.js";
-import { type SelectableRecord, toSVG } from "../renderer/svg.js";
+import { type DrawnElement, type SelectableRecord, toSVG } from "../renderer/svg.js";
+import {
+  type HighlightPaper,
+  rangeHighlighter,
+} from "./range-highlight.js";
 
 /**
  * abcjs's SCREEN padding — `top/left/right/bottom = 15` (`write/renderer.js:69-72`), where
@@ -159,6 +176,13 @@ export interface AbcjsParams {
   readonly add_classes?: boolean;
   /** Which tune of the book the first output slot gets (`abc_tunebook.js:69`). */
   readonly startingTune?: number | string;
+  /**
+   * The ink colour, and the one a CLEARED selection is repainted in —
+   * `params.foregroundColor ? params.foregroundColor : "currentColor"`
+   * (`engraver-controller.js:80`). Read by `rangeHighlight` only; the drawing's own
+   * `currentColor` is emitted whatever this says.
+   */
+  readonly foregroundColor?: string;
   /**
    * abcjs's `visualTranspose` — every pitch moved AT PARSE TIME, key signature and
    * spelling with it. The same thing `%%visualTranspose n` does, and abcjs's own test
@@ -666,7 +690,15 @@ export interface TuneObject {
    * when there is no engraver at all (`abc_tune.js:633-642`), which is what `parseOnly`
    * hands back.
    */
-  readonly engraver: { readonly selectables: readonly Selectable[] };
+  readonly engraver: {
+    readonly selectables: readonly Selectable[];
+    /**
+     * `rangeHighlight(start, end)` — what an editor paints red, and the one thing
+     * `Editor.updateSelection` reaches into the engraver for
+     * (`abc_editor.js:320`). See `range-highlight.ts`.
+     */
+    readonly rangeHighlight: (start: number, end: number) => void;
+  };
   readonly getSelectableArray: () => readonly Selectable[];
   readonly findSelectableElement: (target: unknown) => unknown;
 }
@@ -759,7 +791,10 @@ export function renderAbc(
       ? 0
       : Number.parseInt(String(params.startingTune), 10);
 
-  const render = (score: (typeof result.scores)[number]): TuneObject => {
+  const render = (
+    score: (typeof result.scores)[number],
+    paper: { innerHTML: string } | null,
+  ): TuneObject => {
     /**
      * **`noteTimings` AND THE TOTALS ARE STATE, not derived on read.** `setTiming` writes
      * all three onto the tune and the three getters just read the fields
@@ -807,6 +842,29 @@ export function renderAbc(
      * can ask. Empty when nothing was rendered — `parseOnly` — which is abcjs's `[]`.
      */
     const records: SelectableRecord[] = [];
+    /**
+     * **EVERY ELEMENT GROUP THE DRAWING OPENED, IN THE ORDER IT WROTE THEM** — the join
+     * `rangeHighlight` needs to find a node again in markup it did not keep a handle on.
+     * Filled by the same eager `toSVG` call as `records`, and a few dozen entries rather
+     * than a retained `Layout`.
+     */
+    const drawnRecords: DrawnElement[] = [];
+    /**
+     * `engraver.rangeHighlight` — see `range-highlight.ts`. The paper is the element
+     * `renderAbc` is about to write into, which is the DOM this searches; a headless slot
+     * has none and the highlight is then a no-op, exactly as abcjs's is when nothing was
+     * drawn.
+     */
+    const highlight = rangeHighlighter(
+      () => drawnRecords,
+      projection,
+      () =>
+        paper === null || typeof paper === "string"
+          ? null
+          : (paper as unknown as HighlightPaper),
+      // `params.foregroundColor ? … : "currentColor"` (`engraver-controller.js:80`).
+      params.foregroundColor ?? "currentColor",
+    );
     /**
      * **abcjs's `TopText.rows` / `BottomText.rows`, CAPTURED FROM THE RENDER AND NOT THE
      * `Layout`.** Both are set by `engraveABC` (`engraver-controller.js:222`, `:236`), so
@@ -941,6 +999,7 @@ export function renderAbc(
           staffSpace,
           classes: "abcjs",
           selectables: records,
+          drawn: drawnRecords,
           // What a host may click decides the markup as well as the array — an element is
           // `selectable="false"` with only its index by default and a real tab stop with
           // one (`draw/selectables.js:19-23`).
@@ -1134,8 +1193,11 @@ export function renderAbc(
         return delineOf(lineCache ?? [], options);
       },
 
-      get engraver(): { selectables: readonly Selectable[] } {
-        return { selectables: selectables() };
+      get engraver(): {
+        selectables: readonly Selectable[];
+        rangeHighlight: (start: number, end: number) => void;
+      } {
+        return { selectables: selectables(), rangeHighlight: highlight };
       },
       getSelectableArray: () => selectables(),
       findSelectableElement: (target: unknown) =>
@@ -1144,7 +1206,7 @@ export function renderAbc(
   };
 
   return walkSlots(slots, from, result.scores, (element, score) => {
-    const tune = render(score);
+    const tune = render(score, element);
     if (element !== null) element.innerHTML = tune.svg;
     return tune;
   });

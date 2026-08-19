@@ -107,8 +107,6 @@ const ABCJS_SURFACE = {
  * `Docs/PLAN-REMAINING-2026-08-15.md` is the order they are being taken in.
  */
 const MISSING: readonly string[] = [
-  "EditArea",
-  "Editor",
   "tuneMetrics",
   "synth.CreateSynth",
   "synth.CreateSynthControl",

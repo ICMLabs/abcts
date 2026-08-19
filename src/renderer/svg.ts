@@ -101,6 +101,27 @@ export interface SelectableRecord {
   readonly xy?: { readonly x: string; readonly y: string };
 }
 
+/**
+ * **ONE DRAWN ABSOLUTE ELEMENT, FOR A HOST THAT HAS TO FIND IT IN THE DOM AGAIN.**
+ *
+ * abcjs keeps the SVG node itself — `params.elemset.push(g)` in `draw/absolute.js:57` —
+ * because it draws through a DOM. We emit a STRING, so the join back has to be something
+ * the markup carries: the group's `data-name` and how many groups of that name were
+ * written before it. `rangeHighlight` walks `g[data-name="…"]` in document order, which is
+ * emission order, and takes the `ordinal`-th.
+ *
+ * Pushed for every element group the drawing OPENS, so a caller sees exactly the groups
+ * abcjs's `elemset` would have held — and nothing for a `y` spacer or a voice name, which
+ * open none.
+ */
+export interface DrawnElement {
+  /** The `data-name` written on the group. */
+  readonly name: string;
+  /** How many groups of that same name were written before this one. */
+  readonly ordinal: number;
+  readonly element: LayoutElement;
+}
+
 export interface RenderOptions {
   /** Pixels per staff space. 8 gives a ~32px staff, close to typical engraving size. */
   readonly staffSpace?: number;
@@ -110,6 +131,12 @@ export interface RenderOptions {
    * sink writes exactly the bytes it wrote before.
    */
   readonly selectables?: SelectableRecord[];
+  /**
+   * Where to record every absolute element the drawing gave a group to, in the order the
+   * groups were written — see `DrawnElement`. Absent for every caller that does not want
+   * it, and it changes no byte either way.
+   */
+  readonly drawn?: DrawnElement[];
   /**
    * abcjs's `selectTypes` — which element types a host may click, and it decides the
    * ATTRIBUTES as well as the set: without it an element is `selectable="false"` carrying
@@ -3051,6 +3078,15 @@ export function toSVG(
                 ? `${withExtra} mark`
                 : "mark"
               : withExtra;
+            // The group is about to be written, so this is the order a DOM walk sees.
+            {
+              const drawn = options.drawn;
+              if (drawn !== undefined) {
+                let ordinal = 0;
+                for (const d of drawn) if (d.name === name) ordinal += 1;
+                drawn.push({ name, ordinal, element: el });
+              }
+            }
             parts.push(
               // …AND THE GROUP'S OWN `fill` IS THE VOICE'S — see `fg` at `flushVoice`. An
               // element is drawn inside `drawVoice`, so it is inside the colour swap.

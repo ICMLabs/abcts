@@ -272,7 +272,7 @@ export interface ProjectionIndex {
  * side; the ten `wrapSvgEl` sites are the other half of `selection-multiple`. Both are in
  * `Docs/HANDOFF-2026-08-16.md`.
  */
-function abcelemOf(
+export function abcelemOf(
   element: LayoutElement,
   index: ProjectionIndex,
 ): AbcElement | undefined {
@@ -290,10 +290,22 @@ function abcelemOf(
       return element.sourceRange === undefined
         ? undefined
         : index.byRange.get(element.sourceRange.start);
+    /**
+     * **A CLEF OWNS CHARACTERS ONLY WHEN A MID-TUNE `K:` WROTE IT.** abcjs's line-leading
+     * clef comes off `staff.clef` and carries no span at all; the one a `K:… clef=` puts
+     * in the stream carries the field's own (`abc_parse_header.js:508-509`). See
+     * `layoutMeasure`'s `trailingClefRange`.
+     */
     case "clef":
       return element.sourceClef === undefined
         ? undefined
-        : clefElement(element.sourceClef);
+        : element.sourceRange === undefined
+          ? clefElement(element.sourceClef)
+          : {
+              ...clefElement(element.sourceClef),
+              startChar: element.sourceRange.start,
+              endChar: element.sourceRange.end,
+            };
     case "keySignature":
       return element.sourceKey === undefined || element.sourceClef === undefined
         ? undefined

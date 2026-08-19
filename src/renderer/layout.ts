@@ -9824,6 +9824,17 @@ function layoutMeasure(
   trailingMeter: Meter | null = null,
   /** The tune's FIRST measure — see `meterLeadsFirstMeasure`. */
   isFirstMeasure = false,
+  /**
+   * Where the `K:` that carried `trailingClef` was WRITTEN.
+   *
+   * **A MID-TUNE CLEF IS THE ONE PREFIX ELEMENT THAT OWNS CHARACTERS.** abcjs appends it
+   * to the voice stream with the field's own span — `appendStartingElement('clef',
+   * startChar, endChar, …)` (`abc_parse_header.js:508-509`) — so a selection over that
+   * `K:` line highlights the clef abcjs drew at the end of the PREVIOUS system, while the
+   * one reprinted at the head of the next system owns nothing and never highlights.
+   * Measured on `visual-selection-03`: `start 37, end 54`, exactly `K:C clef=treble+8`.
+   */
+  trailingClefRange: SourceRange | null = null,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
   /**
@@ -9994,7 +10005,11 @@ function layoutMeasure(
     if (measure.clefChange == null || measure.startsSystem) return
     const change = layoutClef(x, measure.clefChange, strict)
     if (change === null) return
-    elements.push(change)
+    elements.push(
+      measure.clefChangeSourceRange == null
+        ? change
+        : { ...change, sourceRange: measure.clefChangeSourceRange },
+    )
     fixed(change.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap, 'other', 0, change.width)
     x += change.width + ENGRAVE.prefixGap
   }
@@ -10435,7 +10450,11 @@ function layoutMeasure(
   if (trailingClef !== null) {
     const trailing = layoutClef(x, trailingClef, strict)
     if (trailing !== null) {
-      elements.push(trailing)
+      elements.push(
+        trailingClefRange === null
+          ? trailing
+          : { ...trailing, sourceRange: trailingClefRange },
+      )
       fixed(trailing.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap, 'other', 0, trailing.width)
       x += trailing.width + ENGRAVE.prefixGap
     }
@@ -11070,6 +11089,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           return meterChangeLeadsLine(next) ? (next?.meterChange ?? null) : null
         })(),
         measureIndex === 0,
+        (() => {
+          const next = (voice?.measures ?? [])[measureIndex + 1]
+          return next?.startsSystem === true ? (next.clefChangeSourceRange ?? null) : null
+        })(),
       )
       if (measure.keyChange !== null) keyInForce = measure.keyChange
       if (measure.meterChange != null) meterInForce = measure.meterChange
