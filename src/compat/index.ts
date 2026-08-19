@@ -85,6 +85,7 @@ import {
   pitchToNoteName,
   registerAudioContext,
   supportsAudio,
+  SynthSequence,
 } from "./synth.js";
 import { numberOfTunes } from "./tunebook.js";
 import { parse } from "../parser/parser.js";
@@ -1340,6 +1341,7 @@ export function strTranspose(
  * soundfont and are not here yet; their contract is the event sequence, already 0 of 72.
  */
 export const synth = {
+  SynthSequence,
   pitchToNoteName,
   instrumentIndexToName,
   supportsAudio,

@@ -111,7 +111,6 @@ const MISSING: readonly string[] = [
   "synth.CreateSynth",
   "synth.CreateSynthControl",
   "synth.SynthController",
-  "synth.SynthSequence",
   "synth.midiRenderer",
   "synth.playEvent",
   "synth.sequence",

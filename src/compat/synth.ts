@@ -5,10 +5,68 @@ import { midiFile, type MidiFileOptions } from "../audio/midi-file.js";
  * `abcjs.synth`'s data and file surface — the parts that make no sound and can therefore
  * be compared exactly.
  *
- * `CreateSynth`, `SynthController` and `CreateSynthControl` are the parts that DO make
- * sound; they need WebAudio and a soundfont, and their gate is the event sequence rather
- * than the samples. They are not here yet.
+ * `CreateSynth`, `SynthController`, `CreateSynthControl` and `playEvent` are the parts
+ * that DO make sound; they need WebAudio and a soundfont, and their gate is the event
+ * sequence rather than the samples. They are not here yet. `sequence` is a third case: it
+ * is abcjs's INTERMEDIATE, and ours fuses sequencing into `flattenAudio`, so exposing it
+ * means splitting that walk rather than writing a second copy of it.
  */
+
+/**
+ * `SynthSequence` — the little builder a host uses to play notes that are not a tune
+ * (`synth/synth-sequence.js`, whole). `playEvent` is nothing but this plus a `CreateSynth`.
+ *
+ * **THE START CLOCK IS PER TRACK AND THE INSTRUMENT IS STICKY**: `appendNote` reads the
+ * track's own running `start` and the instrument last set on it, then advances that track
+ * alone. `totalDuration` is the longest track, kept as a running maximum.
+ */
+export class SynthSequence {
+  readonly tracks: { cmd: string; [key: string]: unknown }[][] = [];
+  totalDuration = 0;
+  readonly currentInstrument: number[] = [];
+  readonly starts: number[] = [];
+
+  addTrack(): number {
+    this.tracks.push([]);
+    this.currentInstrument.push(0);
+    this.starts.push(0);
+    return this.tracks.length - 1;
+  }
+
+  setInstrument(trackNumber: number, instrumentNumber: number): void {
+    this.tracks[trackNumber]?.push({
+      channel: 0,
+      cmd: "program",
+      instrument: instrumentNumber,
+    });
+    this.currentInstrument[trackNumber] = instrumentNumber;
+  }
+
+  appendNote(
+    trackNumber: number,
+    pitch: number,
+    durationInMeasures: number,
+    volume: number,
+    cents?: number,
+  ): void {
+    this.tracks[trackNumber]?.push({
+      cmd: "note",
+      duration: durationInMeasures,
+      gap: 0,
+      instrument: this.currentInstrument[trackNumber] ?? 0,
+      pitch,
+      start: this.starts[trackNumber] ?? 0,
+      volume,
+      // abcjs writes `cents` only when it is TRUTHY, so a 0 is absent rather than zero.
+      ...(cents ? { cents } : {}),
+    });
+    this.starts[trackNumber] = (this.starts[trackNumber] ?? 0) + durationInMeasures;
+    this.totalDuration = Math.max(
+      this.totalDuration,
+      this.starts[trackNumber] ?? 0,
+    );
+  }
+}
 
 /** abcjs's `pitchToNoteName` — MIDI number to a flat-preferring name (`synth/pitch-to-note-name.js`). */
 export const pitchToNoteName: Readonly<Record<number, string>> = (() => {
