@@ -127,6 +127,12 @@ import {
   rangeHighlighter,
 } from "./range-highlight.js";
 import { warningsOf } from "./warnings.js";
+export {
+  type ControlElement,
+  CreateSynthControl,
+  type SynthControlOptions,
+} from "./synth-control.js";
+import { CreateSynthControl } from "./synth-control.js";
 import {
   type MeasureSection,
   measureWidthsOf,
@@ -1386,6 +1392,7 @@ export function strTranspose(
  * soundfont and are not here yet; their contract is the event sequence, already 0 of 72.
  */
 export const synth = {
+  CreateSynthControl,
   SynthSequence,
   pitchToNoteName,
   instrumentIndexToName,
