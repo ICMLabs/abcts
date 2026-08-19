@@ -1333,7 +1333,20 @@ export function projectionOf(
   };
   const first = score.voices[0];
   if (first === undefined) return { lines, byEvent, byRange };
-  const breaks = starts(first);
+  /**
+   * **THE BREAKS ARE EVERY VOICE'S, NOT VOICE 0's.** A voice whose part ends mid-tune
+   * stops contributing measures, and the lines after that are still lines — abcjs builds
+   * them from the SOURCE, one entry per music line, whichever voices are on it. Reading
+   * voice 0 alone lost every system after its last measure: `tune.lines` ended early, and
+   * with it `getElementFromChar`, `deline`, the selectable array and the timing rows for
+   * that music. Found by the `Editor` gate, whose edits routinely add a line past a
+   * finished voice.
+   */
+  const lengths = score.voices.map((v) => v.measures.length);
+  const totalMeasures = Math.max(...lengths, 0);
+  const breaks = [
+    ...new Set(score.voices.flatMap((v) => starts(v))),
+  ].sort((a, b) => a - b);
 
   /**
    * **THE TUNE'S OWN `Q:` IS A DRAWN ELEMENT AND IS NOT IN `tune.lines`** — and the two
@@ -1535,7 +1548,7 @@ export function projectionOf(
   );
 
   breaks.forEach((from, i) => {
-    const to = breaks[i + 1] ?? first.measures.length;
+    const to = breaks[i + 1] ?? totalMeasures;
     /**
      * **THE TILING IS PER LINE ACROSS EVERY VOICE, BECAUSE READING IS.** An element opens
      * where the one before it STOPPED READING, and abcjs's tokenizer reads one line
