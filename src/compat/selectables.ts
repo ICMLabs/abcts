@@ -171,6 +171,26 @@ function stampEngraved(abcelem: AbcElement, element: LayoutElement): void {
           ? 6
           : 0);
     }
+    /**
+     * **`printer_shift` — WHICH HEAD OF A CHORD IS PUSHED ASIDE**, stamped onto the parse
+     * pitch while the engraver decides it (`abstract-engraver.js:649-656`). The walk starts
+     * at the stem end — the second head IN from the stem — and a head no more than a second
+     * from its neighbour is shifted, `"same"` when they share a line and `"different"`
+     * otherwise. **A HEAD ALREADY SHIFTED BLOCKS THE NEXT ONE**, which is what keeps a
+     * cluster from marching sideways.
+     */
+    for (
+      let i = up ? 1 : pitches.length - 2;
+      up ? i < pitches.length : i >= 0;
+      i += up ? 1 : -1
+    ) {
+      const prev = pitches[up ? i - 1 : i + 1];
+      const curr = pitches[i];
+      if (prev === undefined || curr === undefined) continue;
+      const delta = up ? curr.pitch - prev.pitch : prev.pitch - curr.pitch;
+      if (delta <= 1 && prev.printer_shift === undefined)
+        curr.printer_shift = delta ? "different" : "same";
+    }
     abcelem.averagepitch =
       pitches.reduce((t, p) => t + p.verticalPos, 0) / pitches.length;
     abcelem.minpitch = pitches[0]?.verticalPos ?? 0;

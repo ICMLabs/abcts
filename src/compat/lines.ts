@@ -4,6 +4,7 @@ import type {
   FreeTextBlock,
   KeySignature,
   Measure,
+  Meter,
   MusicEvent,
   Pitch,
   Score,
@@ -48,6 +49,13 @@ export interface AbcPitch {
   endSlur?: readonly number[];
   startTie?: Record<string, never>;
   endTie?: boolean;
+  /**
+   * `"same"` or `"different"` — a chord head the engraver pushed aside because it stands a
+   * second (or less) from its neighbour. The engraver's answer, stamped on the parse pitch.
+   */
+  printer_shift?: string;
+  /** `%%MIDI drummap` on a percussion clef — the drum this written letter plays. */
+  midipitch?: number;
 }
 
 /**
@@ -130,6 +138,8 @@ export interface AbcElement {
   lyric?: readonly { syllable: string; divider: string }[];
   startBeam?: boolean;
   endBeam?: boolean;
+  /** `!beambr1!` / `!beambr2!` — a beam break, consumed off the decoration list. */
+  beambr?: number;
   startTriplet?: number;
   endTriplet?: boolean;
   tripletMultiplier?: number;
@@ -716,7 +726,26 @@ const writtenName = (p: Pitch): string => {
  * the first needs the staff's middle line and the rest are the engraver's, so they are
  * stamped onto this same object when the drawing is walked. See `src/compat/selectables.ts`.
  */
-function noteFields(e: AbcElement, event: MusicEvent): void {
+function noteFields(
+  e: AbcElement,
+  event: MusicEvent,
+  /**
+   * **A PERCUSSION CLEF TURNS A WRITTEN LETTER INTO A DRUM.** `%%MIDI drummap B 38` and a
+   * `clef=perc` make the parser stamp `midipitch` on the pitch itself
+   * (`abc_parse_music.js:1129-1137`), keyed by the letter AS WRITTEN with its accidental in
+   * front — no octave marks, because those are read after. The flattener reads it back and
+   * plays it instead of the pitch.
+   *
+   * ponytail: the CLEF IS THE VOICE'S, not the one in force at that measure. abcjs tests
+   * `multilineVars.clef` as the parser walks, so a mid-tune `[K:… clef=perc]` would change
+   * it partway; nothing in either corpus writes one.
+   */
+  drumMap?: Readonly<Record<string, number>>,
+  /** The measure's own length in whole notes — see `voiceElements`. */
+  barLength = 1,
+): void {
+  /** abcjs's key is the letter AS WRITTEN with its accidental, and no octave marks. */
+  const drumKey = (name: string): string => name.replace(/[,']/g, "");
   e.duration = ratToNumber(event.notatedDuration);
   if (event.type === "rest") {
     e.rest = { type: restType(event.kind) };
@@ -729,8 +758,14 @@ function noteFields(e: AbcElement, event: MusicEvent): void {
      */
     if (event.kind === "multiMeasure" || event.kind === "invisibleMultiMeasure") {
       const bars = event.measureCount > 0 ? event.measureCount : 1;
-      e.duration = bars * ratToNumber(event.notatedDuration);
+      e.duration = bars * barLength;
       e.rest.text = bars;
+    } else if (
+      e.duration === barLength &&
+      event.kind !== "invisible" &&
+      event.kind !== "spacer"
+    ) {
+      e.rest.type = "whole";
     }
   } else {
     const pitches = event.type === "note" ? [event.pitch] : event.pitches;
@@ -743,6 +778,9 @@ function noteFields(e: AbcElement, event: MusicEvent): void {
           : { accidental: ACCIDENTAL_NAME[p.accidental] ?? "natural" }),
         pitch: abcjsPitch(p),
         name: writtenName(p),
+        ...(drumMap === undefined || drumMap[drumKey(writtenName(p))] === undefined
+          ? {}
+          : { midipitch: drumMap[drumKey(writtenName(p))] }),
         // A placeholder until the drawing is walked — abcjs's own is `pitch - mid`, and
         // `mid` is the staff's, which this side does not know.
         verticalPos: abcjsPitch(p),
@@ -764,7 +802,19 @@ function noteFields(e: AbcElement, event: MusicEvent): void {
       for (const p of e.pitches) p.startTie = {};
   }
   if (event.decorations.length > 0)
-    e.decoration = event.decorations.map((d) => DECORATION_NAME[d] ?? d);
+    e.decoration = event.decorations
+      .map((d) => DECORATION_NAME[d] ?? d)
+      // **A BEAM BREAK IS CONSUMED, NOT DECORATED.** `!beambr1!` sets `el.beambr = 1` and
+      // is NOT pushed — but the array was already created, so an element whose only
+      // decoration was one carries an EMPTY `decoration` rather than none
+      // (`abc_parse_music.js:232-238`).
+      .filter((d) => d !== "beambr1" && d !== "beambr2");
+    const beambr = event.decorations.includes("beambr2")
+      ? 2
+      : event.decorations.includes("beambr1")
+        ? 1
+        : undefined;
+    if (beambr !== undefined) e.beambr = beambr;
   const chord: { name: string; position: string }[] = [];
   if (event.chordSymbol !== null)
     chord.push({ name: event.chordSymbol, position: "default" });
@@ -784,9 +834,26 @@ function noteFields(e: AbcElement, event: MusicEvent): void {
     ];
   }
   if (event.graceNotes.length > 0)
-    e.gracenotes = event.graceNotes.map((g) => ({
+    e.gracenotes = event.graceNotes.map((g, i) => ({
+      // **A GRACE NAMES ITS ACCIDENTAL TOO** — `getCoreNote` builds one pitch object
+      // whatever it is for, so the grace carries the same `accidental` a note's pitch does.
+      ...(g.accidental === null
+        ? {}
+        : { accidental: ACCIDENTAL_NAME[g.accidental] ?? "natural" }),
       pitch: abcjsPitch(g),
       name: writtenName(g),
+      ...(drumMap === undefined || drumMap[drumKey(writtenName(g))] === undefined
+        ? {}
+        : { midipitch: drumMap[drumKey(writtenName(g))] }),
+      /**
+       * **THE SLASH BELONGS TO THE NOTE AFTER IT** — `if (gra[1][ii] === '/') acciaccatura
+       * = true` runs per grace note inside the group (`abc_parse_music.js:687-697`).
+       *
+       * ponytail: our model carries ONE flag for the group, so the mark lands on the first
+       * grace. `{A/B}` — a slash partway through — would need a flag per note, and nothing
+       * in either corpus writes one.
+       */
+      ...(event.graceSlash && i === 0 ? { acciaccatura: true } : {}),
       // **A GRACE'S DURATION IS RELATIVE TO A SIXTEENTH, NOT TO `L:`** — `note.duration =
       // note.duration / (default_length * 8)` (`abc_parse_music.js:694`), so a bare grace
       // is 0.125 whatever the unit note length is, and `{B2}` is 0.25.
@@ -813,7 +880,13 @@ const DECORATION_NAME: Readonly<Record<string, string>> = {
   plus: "+",
   emphasis: "accent",
   "^": "umarcato",
-  marcato: "umarcato",
+  /**
+   * ⚠️ **AND `marcato` IS NOT ONE OF THEM, though abcjs's own pseudonym list pairs it with
+   * `umarcato`.** Measured through abcjs: `!marcato!` reaches `tune.lines` as `marcato`
+   * while `!^!` reaches it as `umarcato`, because the substitution only fires for a token
+   * that is not already a legal decoration name — and `marcato` is one. The renderer
+   * canonicalises for its own glyph table; the element a host reads keeps what was written.
+   */
   "<(": "crescendo(",
   "<)": "crescendo)",
   ">(": "diminuendo(",
@@ -871,8 +944,30 @@ function voiceElements(
   ending: { open: boolean } = { open: false },
   /** `%%keywarn` — see `keyInStream`. */
   keywarn?: boolean,
+  /** `%%MIDI drummap`, when this voice's clef is percussion — see `noteFields`. */
+  drumMap?: Readonly<Record<string, number>>,
+  /** This voice's own clef — what a standalone `K:`'s accidentals are pitched for. */
+  voiceClef?: Clef | null,
+  /**
+   * **A TIE CROSSES A LINE BREAK, so its open pitches are carried like the slurs and the
+   * endings are.** abcjs's `multilineVars.inTie` is parser state and lives for the whole
+   * tune; ours was scoped to one line, so `[V:T1] G8-|` on one line and `G8` on the next
+   * left the second note without its `endTie` — 13 rows of the `sequence` gate, and
+   * invisible to every other one because a tie's END is drawn from the START's geometry.
+   */
+  openTies: { pitches: number[] } = { pitches: [] },
+  /** The meter in force where this line opens — the bar's own LENGTH, in whole notes. */
+  meterIn?: Meter | null,
 ): AbcElement[] {
   const out: (AbcElement | null)[] = [];
+  /**
+   * **A REST AS LONG AS ITS MEASURE IS A WHOLE REST, WHATEVER THE METER SAYS** —
+   * `if (this.measureLength === duration && …) elem.rest.type = 'whole'`
+   * (`abstract-engraver.js:812-813`), stamped onto the parse element itself, so a host
+   * reads it back off `tune.lines`. The parser has its own narrower copy of the rule for a
+   * `z` of exactly one whole note (`abc_parse_music.js:552-556`).
+   */
+  let barLength = meterIn == null ? 1 : meterIn.numerator / meterIn.denominator;
   const notes: { event: MusicEvent; e: AbcElement }[] = [];
   /**
    * **WHERE AN ELEMENT SORTS WHEN IT HAS NO SPAN OF ITS OWN.** The stream is put back into
@@ -899,6 +994,8 @@ function voiceElements(
     return label === undefined ? undefined : { label, abc };
   };
   for (const measure of measures) {
+    if (measure.meterChange != null)
+      barLength = measure.meterChange.numerator / measure.meterChange.denominator;
     /**
      * **A `%%MIDI` AFTER THE MUSIC HAS BEGUN IS AN ELEMENT OF THE STREAM** —
      * `if (tuneBuilder.hasBeginMusic()) appendElement('midi', -1, -1, {cmd, params})`, and
@@ -979,9 +1076,46 @@ function voiceElements(
         keywarn,
       )
     )
-      out.push(el("clef", measure.clefChangeSourceRange));
+      out.push(
+        (() => {
+          const e = el("clef", measure.clefChangeSourceRange);
+          /**
+           * **AND IT IS THE WHOLE CLEF, NOT A BARE MARKER.** abcjs appends the clef OBJECT
+           * — `type`, `verticalPos`, `clefPos` — and `synth.sequence` reads `elem.type` off
+           * it to decide a `transpose` row: `[K: treble+8]` is worth +12 and `treble-8` is
+           * worth −12 (`abc_midi_sequencer.js:305-312`). Ours pushed an element with a span
+           * and nothing else, so an octave clef changed the page and not the sound.
+           */
+          if (e !== null && measure.clefChange != null)
+            Object.assign(e, clefElement(measure.clefChange), {
+              startChar: e.startChar,
+              endChar: e.endChar,
+            });
+          return e;
+        })(),
+      );
     if (inStream(measure.keyChangeSourceRange, measure.keyChangeInline, keywarn))
-      out.push(el("keySignature", measure.keyChangeSourceRange));
+      out.push(
+        (() => {
+          const e = el("keySignature", measure.keyChangeSourceRange);
+          /**
+           * **AND IT IS THE WHOLE KEY** — the third element this projection pushed as a
+           * bare marker, after the clef and the meter. `synth.sequence` reads
+           * `elem.accidentals` off it, so a mid-tune `[K:Bb]` restated NOTHING and every
+           * note after it sounded in the key it had left.
+           *
+           * The clef is the change's OWN where an inline `[K:]` named one — see
+           * `Measure.keyChangeClef` — and the voice's otherwise.
+           */
+          if (e !== null && measure.keyChange != null)
+            Object.assign(
+              e,
+              keyElement(measure.keyChange, measure.keyChangeClef ?? voiceClef ?? defaultClef),
+              { startChar: e.startChar, endChar: e.endChar },
+            );
+          return e;
+        })(),
+      );
     /**
      * **A STANDALONE `M:` LINE IS NEVER IN THE STREAM AND AN INLINE OR CONTINUED ONE ALWAYS
      * IS.** The header parser's `M:` arm only fills `multilineVars.meter` for the next
@@ -1005,10 +1139,33 @@ function voiceElements(
        * `getElementFromChar` answered null for seven characters of
        * `abcjs-visual-svg-02-staffwidth-12`.
        */
+      /**
+       * **AND IT IS THE WHOLE METER, NOT A BARE MARKER** — `appendStartingElement` pushes
+       * the parsed object, so the element carries `type` and `value` and
+       * `synth.sequence`'s `interpretMeter` can read a `num` and a `den` off it. A marker
+       * with a span alone made an inline `[M:]` a meter of nothing.
+       */
+      const withMeter = (
+        e: AbcElement | null,
+        meter: Meter | null | undefined,
+      ): AbcElement | null => {
+        if (e === null || meter == null) return e;
+        return Object.assign(e, meterElement(meter), {
+          startChar: e.startChar,
+          endChar: e.endChar,
+        });
+      };
       const all = measure.meterChanges;
       if (all === undefined)
-        out.push(el("timeSignature", measure.meterChangeSourceRange));
-      else for (const m of all) out.push(el("timeSignature", m.range ?? null));
+        out.push(
+          withMeter(
+            el("timeSignature", measure.meterChangeSourceRange),
+            measure.meterChange,
+          ),
+        );
+      else
+        for (const m of all)
+          out.push(withMeter(el("timeSignature", m.range ?? null), m.meter));
     }
     out.push(tempoElement(measure.tempoChange, measure.tempoChangeSourceRange, byRange));
     out.push(
@@ -1017,7 +1174,7 @@ function voiceElements(
     const note = (event: MusicEvent): void => {
       const e = el("note", decoratedRange(abc, event));
       if (e !== null) {
-        noteFields(e, event);
+        noteFields(e, event, drumMap, barLength);
         markSlurs(e, event, openSlurs);
         byEvent?.set(event, e);
         notes.push({ event, e });
@@ -1097,7 +1254,7 @@ function voiceElements(
   // voice as it reads the line, so the stream is in source order by construction; ours is
   // assembled from a measure's fields and has to be put back into it.
   markTuplets(notes.filter((n) => n.event.tuplet !== null));
-  markTieEnds(notes);
+  markTieEnds(notes, openTies);
   const keyOf = (e: AbcElement): number => sortAt.get(e) ?? e.startChar ?? 0;
   const stream = out
     .filter((e): e is AbcElement => e !== null)
@@ -1139,13 +1296,15 @@ function voiceElements(
  */
 function markTieEnds(
   notes: readonly { event: MusicEvent; e: AbcElement }[],
+  openTies: { pitches: number[] },
 ): void {
-  let open: number[] = [];
   for (const { e } of notes) {
     const pitches = e.pitches;
     if (pitches === undefined) continue;
-    for (const p of pitches) if (open.includes(p.pitch)) p.endTie = true;
-    open = pitches.filter((p) => p.startTie !== undefined).map((p) => p.pitch);
+    for (const p of pitches) if (openTies.pitches.includes(p.pitch)) p.endTie = true;
+    openTies.pitches = pitches
+      .filter((p) => p.startTie !== undefined)
+      .map((p) => p.pitch);
   }
 }
 
@@ -1329,6 +1488,17 @@ export function projectionOf(
   const openSlurs: number[][] = [];
   /** `multilineVars.inEnding`, per voice and carried across the tune's lines. */
   const endings: { open: boolean }[] = [];
+  /** The meter in force where a line opens — every `[M:]` before it, in order. */
+  const meterAt = (voice: (typeof score.voices)[number], upTo: number): Meter | null => {
+    let meter = score.meter;
+    for (let i = 0; i < upTo; i += 1) {
+      const change = voice.measures[i]?.meterChange;
+      if (change != null) meter = change;
+    }
+    return meter;
+  };
+  /** …and the tie's open pitches, per voice, for the same reason. */
+  const openTies: { pitches: number[] }[] = [];
   /**
    * **A NON-MUSIC LINE IS A LINE, AND ITS POSITION IN THE LIST IS LOAD-BEARING.** A `T:`
    * after the first, a `%%text`, a `%%center`, a `%%begintext` block and a `%%sep` are
@@ -1643,6 +1813,12 @@ export function projectionOf(
         null,
         endings[k] ?? (endings[k] = { open: false }),
         score.keywarn,
+        // The drum map reaches a voice only when ITS clef is percussion.
+        (v.clef ?? score.clef)?.shape === "percussion" ? score.drumMap : undefined,
+        v.clef ?? score.clef,
+        openTies[k] ?? (openTies[k] = { pitches: [] }),
+        // The meter this line OPENS in — every change inside it is walked from here.
+        meterAt(v, from) ?? score.meter,
       );
     });
     /**

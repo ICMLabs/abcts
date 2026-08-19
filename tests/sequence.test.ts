@@ -34,7 +34,11 @@ const IN_REPO = join(import.meta.dirname, "corpus-abcjs", "fixtures");
 const row = (el: SequenceRow): Record<string, unknown> => {
   const out: Record<string, unknown> = { el_type: el.el_type };
   for (const key of Object.keys(el).sort()) {
-    if (key === "el_type" || key === "elem") continue;
+    // **A KEY WHOSE VALUE IS `undefined` IS NOT A KEY** — abcjs pushes
+    // `{el_type, value, octaveShift}` for a `%%MIDI bassprog` with one parameter, and the
+    // harvest's own JSON drops the second. Ours has to drop it the same way or the row
+    // differs by a field neither side can see.
+    if (key === "el_type" || key === "elem" || el[key] === undefined) continue;
     out[key] = el[key];
   }
   return out;
@@ -121,15 +125,21 @@ describe("synth.sequence — the intermediate abcjs plays from", () => {
   /**
    * A floor, not a target — it moves up and must never move down.
    *
-   * **WHAT IS STILL OPEN IS FOUR CLASSES, AND EVERY ONE IS A `tune.lines` FIELD RATHER THAN
-   * A SEQUENCING RULE**: `midipitch` on a percussion-mapped pitch, a mid-tune key change's
-   * accidentals, a `%%MIDI`-set meter, and the last of the crescendo arithmetic. The gate
-   * has already closed four others by naming them — the staff's voice `title`, a barline's
-   * decorations and chord, `V:… transpose=` on the clef, and a multi-measure rest's own
-   * length — which is the argument for a second derivation.
+   * **WHAT IS LEFT IS 21 ROWS AND MOSTLY ONE KNOWN MODEL GAP.** Twenty are
+   * `synth-flattener-32`'s quarter tones, where abcjs's `accMap` has seven entries and our
+   * `Accidental` has five — microtones are deferred, and this is the surface that says so.
+   * The rest are single rows, each measured and named: a pitch with no `highestVert` on an
+   * incipit, a per-voice key's accidental `verticalPos`, a `!segno!` on an invisible rest,
+   * an annotation's `rel_position`, and a DOTTED tie's `startTie: {style: "dotted"}`.
+   *
+   * **NINE CLASSES HAVE ALREADY CLOSED BY BEING NAMED HERE** — the staff's voice `title`, a
+   * barline's decorations and chord, `V:… transpose=` on the clef, a multi-measure rest's
+   * length, `midipitch` from a drummap, `endTie` across a line break, a whole-measure
+   * rest's type, `printer_shift`, and the clef, meter and key elements in the stream, which
+   * were all pushed as bare markers with a span and nothing else.
    */
   it("the whole corpus agrees on at least the rows it did", () => {
     const agree = table.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(4651);
+    expect(agree).toBeGreaterThanOrEqual(4774);
   });
 });
