@@ -108,7 +108,6 @@ const ABCJS_SURFACE = {
  */
 const MISSING: readonly string[] = [
   "synth.CreateSynth",
-  "synth.SynthController",
   "synth.playEvent",
   "synth.sequence",
 ];

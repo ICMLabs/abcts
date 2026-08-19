@@ -134,6 +134,13 @@ export {
   type SynthControlOptions,
 } from "./synth-control.js";
 import { CreateSynthControl } from "./synth-control.js";
+export {
+  type CursorControl,
+  type MidiBuffer,
+  SynthController,
+  type SynthVisualOptions,
+} from "./synth-controller.js";
+import { SynthController } from "./synth-controller.js";
 import {
   type MeasureSection,
   measureWidthsOf,
@@ -1389,11 +1396,14 @@ export function strTranspose(
 
 /**
  * `abcjs.synth` — the parts that make no sound, which are the parts that can be compared
- * exactly. `CreateSynth`, `SynthController` and `CreateSynthControl` need WebAudio and a
- * soundfont and are not here yet; their contract is the event sequence, already 0 of 72.
+ * exactly. `CreateSynth`, `playEvent` and `sequence` are what is left: the first needs
+ * WebAudio and a soundfont, and the other two need it. **`SynthController` does not** — it
+ * decides WHEN rather than making sound, so it takes a midi-buffer factory and is gated
+ * against abcjs with that one class stubbed on both sides.
  */
 export const synth = {
   CreateSynthControl,
+  SynthController,
   midiRenderer,
   SynthSequence,
   pitchToNoteName,
