@@ -178,6 +178,36 @@ const AS_ABCJS: Record<
     for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
     return { message: "Unknown character ignored", column: at - start };
   },
+  /**
+   * `Unknown decoration: <name>`, pointing at the opening `!` in the source line
+   * (`abc_parse_music.js:828`).
+   */
+  "unknown-decoration": (diagnostic, abc) => {
+    const name = /: (.*)$/.exec(diagnostic.message)?.[1];
+    const at = diagnostic.range?.start ?? 0;
+    let start = 0;
+    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    return name === undefined
+      ? null
+      : { message: `Unknown decoration: ${name}`, column: at - start };
+  },
+  /**
+   * `Rests not allowed as grace notes '<c>' while parsing grace note`, pointing at the
+   * GROUP's own start — every rest in one group reports the same column
+   * (`abc_parse_music.js:698-700`).
+   */
+  "grace-rest": (diagnostic, abc) => {
+    const c = /'(.)'/.exec(diagnostic.message)?.[1];
+    const at = diagnostic.range?.start ?? 0;
+    let start = 0;
+    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    return c === undefined
+      ? null
+      : {
+          message: `Rests not allowed as grace notes '${c}' while parsing grace note`,
+          column: at - start,
+        };
+  },
   "unknown-directive": (diagnostic) => {
     const name = /%%\s*(\S+)/.exec(diagnostic.message)?.[1];
     return name === undefined

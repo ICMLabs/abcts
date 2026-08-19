@@ -71,8 +71,10 @@ const PASSING: readonly string[] = [
   "repo/abcjs-parse-book_parser-06-a-tune0",
   "repo/abcjs-synth-flattener-42-midi-gchord-ffffffff-tune0",
   "repo/abcjs-visual-options-01-fonts-tune0",
+  "repo/abcjs-visual-parsing-01-azzz-e2-tune0",
   "repo/abcjs-visual-tablature-01-gr-tune0",
   "repo/abcts-keywarn-tune2",
+  "sib/S1-decorations-tune0",
   "sib/vree-sharps-tune0",
 ];
 

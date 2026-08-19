@@ -4030,6 +4030,18 @@ class Parser {
             pending.decorationSourceRanges.push(
               sourceRange(token.start, token.start + token.length),
             )
+          } else {
+            /**
+             * …**AND A NAME abcjs DOES NOT KNOW IS A WARNING**, pointing at the opening
+             * `!` — `warn("Unknown decoration: " + ret[1], line, i)`
+             * (`abc_parse_music.js:828`). `S1-decorations` writes `!staccato!`, which is a
+             * name abcjs has no entry for even though the SHORTHAND `.` is staccato.
+             */
+            this.warn(
+              'unknown-decoration',
+              `unknown decoration: ${name}`,
+              sourceRange(token.start, token.start + token.length),
+            )
           }
           i++
           break
@@ -4181,6 +4193,18 @@ class Parser {
         }
         case 'grace': {
           const inner = this.src.slice(token.start + 1, token.start + token.length - 1)
+          /**
+           * **A REST INSIDE A GRACE GROUP IS A WARNING, ONE PER REST** — `warn("Rests not
+           * allowed as grace notes '" + gra[1][ii] + "' while parsing grace note", line, i)`
+           * (`abc_parse_music.js:698-700`), where `i` is the group's OWN start, so all of
+           * them point at the `{`. `{Azzz}e2` raises three.
+           */
+          for (const rest of inner.matchAll(/[zx]/g))
+            this.warn(
+              'grace-rest',
+              `rest '${rest[0]}' in a grace group`,
+              sourceRange(token.start, token.start + token.length),
+            )
           const grace = parseGracePitches(inner)
           pendingGrace = grace.pitches
           pendingGraceSlash = grace.slash
