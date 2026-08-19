@@ -2853,19 +2853,46 @@ function layoutKeyChange(
   const naturalShift = keySignatureShift(naturalsClef)
   // Compared UNSHIFTED, so the two lists are comparable however the clefs differ; the
   // shift goes on at the moment each accidental is placed.
-  const stepsFor = (key: KeySignature): { step: number; sharp: boolean }[] => {
+  /**
+   * …**AND A FIELD'S EXPLICIT ACCIDENTALS ARE PART OF THE SIGNATURE**, not a separate list:
+   * `K:Bb ^f` is `flat flat sharp` at the head of EVERY line. abcjs pushes them onto
+   * `key.accidentals` itself (`abc_parse_key_voice.js:375-379`), so `createKeySignature`
+   * cannot tell them apart — they REPLACE a standard accidental on the same letter or are
+   * appended, which is the rule `layoutKeySignature` already carries.
+   *
+   * This function read `keyFifths` ALONE, so the extra was drawn at a mid-tune `[K:]` and
+   * DROPPED at the head of the line — including the tune's first, whose prefix is a change
+   * from the default key. The only fixture that writes one has no `.svg` golden in the
+   * sibling repo, which is why 544 byte rows never saw it; `tuneMetrics` did, as a `left`
+   * 10.25 short — one accidental.
+   */
+  const stepsFor = (key: KeySignature): { step: number; name: GlyphName }[] => {
     const fifths = keyFifths(key)
     const sharp = fifths > 0
-    return (sharp ? SHARP_STEPS : FLAT_STEPS)
+    const name: GlyphName = sharp ? 'accidentalSharp' : 'accidentalFlat'
+    const written: { step: number; name: GlyphName; letter: DiatonicStep }[] = (
+      sharp ? SHARP_ORDER : FLAT_ORDER
+    )
       .slice(0, Math.abs(fifths))
-      .map((step) => ({ step, sharp }))
+      .map((letter) => ({ step: keyStepOf(letter, sharp), name, letter }))
+    for (const acc of key.extra ?? []) {
+      const entry = {
+        name: KEY_ACCIDENTAL_GLYPH[acc.quarters] ?? 'accidentalNatural',
+        step: keyStepOf(acc.step, acc.quarters > 0),
+        letter: acc.step,
+      }
+      const at = written.findIndex((w) => w.letter === acc.step)
+      if (at >= 0) written[at] = entry
+      else written.push(entry)
+    }
+    return written.map(({ step, name: glyph }) => ({ step, name: glyph }))
   }
   const outgoing = stepsFor(from)
   const incoming = stepsFor(to)
-  // Compared on step AND sign: a step that was sharp and is now flat is not "kept", it
-  // is cancelled and re-marked.
-  const kept = new Set(incoming.map((entry) => `${entry.step}:${entry.sharp}`))
-  const cancelled = outgoing.filter((entry) => !kept.has(`${entry.step}:${entry.sharp}`))
+  // Compared on step AND GLYPH: a step that was sharp and is now flat is not "kept", it
+  // is cancelled and re-marked — and neither is one that was sharp and is now a quarter.
+  const kept = new Set(incoming.map((entry) => `${entry.step}:${entry.name}`))
+  const cancelled = outgoing.filter((entry) => !kept.has(`${entry.step}:${entry.name}`))
   if (cancelled.length === 0 && incoming.length === 0) return null
 
   const glyphs: PlacedGlyph[] = []
@@ -2885,8 +2912,7 @@ function layoutKeyChange(
     dx += glyphsFor(strict).advance(name) + ENGRAVE.keySignatureGap
   }
   const marks = (): void => {
-    for (const entry of incoming)
-      advance(entry.sharp ? 'accidentalSharp' : 'accidentalFlat', entry.step + shift)
+    for (const entry of incoming) advance(entry.name, entry.step + shift)
   }
   const naturals = (): void => {
     for (const entry of cancelled) advance('accidentalNatural', entry.step + naturalShift)
@@ -11098,6 +11124,23 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         // NATURAL is the tall accidental and DECLARES a box up to pitch 15.88 against the
         // clef's 13.72, so it raised the chord lane, and the ending lane on top of that,
         // and put every notehead on the system 8.37px low.
+        /**
+         * ⚠️ **AND `keyInForce` FOR BOTH ARMS IS WRONG, THOUGH abcjs READS AS IF IT WERE
+         * RIGHT.** abcjs prints implied naturals ONCE — `appendStartingElement` takes them
+         * off the key object the moment it draws a change, under its own comment "We only
+         * ever want implied naturals the first time" (`tune-builder.js:239-245`), and
+         * `startNewLine` deletes what is left right after using them
+         * (`abc_parse_music.js:1041-1042`). So a line INHERITING a key changed mid-way
+         * through the line above reads as if it should cancel nothing, and
+         * `inline-key-per-voice` says exactly that: our two naturals against abcjs's none.
+         *
+         * MEASURED AND REVERTED: making both arms `keyInForce` took
+         * `ragtime-nightingale`'s page height from 6085.180081567691 to 6085.189239505988
+         * in all three of its byte flavours — and THAT fixture is gated where
+         * `inline-key-per-voice` has no golden at all. So the rule is not the simple one;
+         * something ragtime writes — four mid-line `[K:Ab]`/`[K:Eb]` pairs inside repeats —
+         * puts the naturals back. Left as it stands, with the measurement written down.
+         */
         keyAtPreviousLine = leads ? keyInForce : keyAtLineStart
         // A change that LEADS the line is already in `multilineVars.key` when abcjs stamps
         // `params.key`, so the prefix shows the NEW key. See `keyChangeLeadsLine`.
