@@ -57,7 +57,14 @@ export function measureWidthsOf(
    * Measured: `parse-tie-slur-01` reports `44.023` per measure where honouring the
    * directive gives `181.949`.
    */
-  const doc = layout({ ...score, staffWidth: null }, {
+  /**
+   * …**AND `%%maxStaves` IS A DRAWING RULE, NOT A LAYOUT ONE.** abcjs lays every line out
+   * and simply stops DRAWING past the limit (`draw/draw.js:33-38`), while `getMeasureWidths`
+   * walks `abcTune.lines` — so an incipit still reports all four of its measures.
+   * `visual-directives-01` is exactly that: four measures to abcjs, two to a walk over what
+   * was drawn.
+   */
+  const doc = layout({ ...score, staffWidth: null, maxStaves: null }, {
     mode: "abcjs-strict",
     // abcjs's width 0, in our units: the PAGE is the staff width plus both margins.
     systemWidth: (0 + PADDING * 2) / UNIT_PX,
