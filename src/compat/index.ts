@@ -141,6 +141,17 @@ export {
   type SynthVisualOptions,
 } from "./synth-controller.js";
 import { SynthController } from "./synth-controller.js";
+export {
+  type AudioBufferLike,
+  CreateSynth,
+  type CreateSynthInitOptions,
+  createNoteMap,
+  type MappedNote,
+  playEvent,
+  type Playable,
+  soundsCache,
+} from "./create-synth.js";
+import { CreateSynth, playEvent } from "./create-synth.js";
 import {
   type MeasureSection,
   measureWidthsOf,
@@ -1234,12 +1245,21 @@ export function renderAbc(
             abcelem.currentTrackWholeNotes =
               timing.wholeNotes.length === 1 ? wholes : [...timing.wholeNotes];
           }
-          if (timing.notes.length > 0)
-            abcelem.midiPitches = timing.notes.map((n) => ({
-              ...n,
-              startChar: abcelem.startChar,
-              endChar: abcelem.endChar,
-            }));
+          if (timing.notes.length > 0) {
+            // **ONE OBJECT, PUSHED TO BOTH.** abcjs stamps the span inside the flattener
+            // (`abc_midi_flattener.js:589`), so the note in the TRACK and the note in
+            // `midiPitches` are the same object and both carry `startChar`/`endChar`. Ours
+            // can only know the span here — so it writes the fields onto those very
+            // objects rather than onto copies. `createNoteMap` reads the TRACK, which is
+            // what `CreateSynth`'s `sequenceCallback` then hands a host; copies left that
+            // surface without a span at all.
+            for (const n of timing.notes) {
+              const note = n as { startChar?: number | undefined; endChar?: number | undefined };
+              note.startChar = abcelem.startChar;
+              note.endChar = abcelem.endChar;
+            }
+            abcelem.midiPitches = timing.notes as unknown as readonly Record<string, unknown>[];
+          }
         }
         return audio;
       },
@@ -1395,14 +1415,18 @@ export function strTranspose(
 }
 
 /**
- * `abcjs.synth` — the parts that make no sound, which are the parts that can be compared
- * exactly. `CreateSynth`, `playEvent` and `sequence` are what is left: the first needs
- * WebAudio and a soundfont, and the other two need it. **`SynthController` does not** — it
- * decides WHEN rather than making sound, so it takes a midi-buffer factory and is gated
- * against abcjs with that one class stubbed on both sides.
+ * `abcjs.synth` — and **ALL OF IT MAKES NO SOUND IN NODE, WHICH IS WHY ALL OF IT IS
+ * GATED.** `CreateSynth` computes no waveform: it fetches one mp3 per instrument and pitch
+ * and decides which sample goes where, so with the three host objects replaced by recorders
+ * every decision it makes is an exact comparison (`tests/create-synth.test.ts`).
+ * `SynthController` decides WHEN rather than what, and `playEvent` is `SynthSequence` plus
+ * a `CreateSynth`. Only `sequence` — abcjs's INTERMEDIATE, which ours fuses into
+ * `flattenAudio` — is still absent.
  */
 export const synth = {
+  CreateSynth,
   CreateSynthControl,
+  playEvent,
   SynthController,
   midiRenderer,
   SynthSequence,
