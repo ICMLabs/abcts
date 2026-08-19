@@ -109,7 +109,26 @@ const HALF_STEP = 4096
  * kept as a class for the same reason abcjs keeps it as one: every method appends to a
  * running string and the ORDER is the format.
  */
-class MidiWriter {
+/** abcjs's own key object, which is what a host driving the renderer passes. */
+export interface AbcjsKey {
+  readonly accidentals?: readonly { readonly acc?: string }[]
+  readonly mode?: string
+}
+
+/** As little of the DOM as `embed` touches. */
+interface EmbedElement {
+  innerHTML: string
+  setAttribute(name: string, value: string): void
+}
+interface EmbedDocument {
+  createElement(tag: string): EmbedElement
+}
+export interface EmbedParent {
+  readonly firstChild: unknown
+  insertBefore(node: unknown, before: unknown): void
+}
+
+export class MidiWriter {
   private trackstrings = ''
   private trackcount = 0
   private track = ''
@@ -122,7 +141,24 @@ class MidiWriter {
   private noteOffAndChannel = '%80'
   private noteWarped: Record<number, boolean> = {}
 
-  setGlobalInfo(qpm: number, name: string, key: Score['key'], time: { num: number; den: number }) {
+  /**
+   * `setTempo(qpm)` — the FIRST track and nothing else, exactly as `setGlobalInfo` is:
+   * both open with `if (this.trackcount === 0)` (`abc_midi_renderer.js:22-28`). A host
+   * driving the renderer itself uses this one when it has no key or meter to state.
+   */
+  setTempo(qpm: number): void {
+    if (this.trackcount !== 0) return
+    this.startTrack()
+    this.track += `%00%FF%51%03${toHex(Math.round(60000000 / qpm), 6)}`
+    this.endTrack()
+  }
+
+  setGlobalInfo(
+    qpm: number,
+    name: string,
+    key: Score['key'] | AbcjsKey,
+    time: { num: number; den: number },
+  ) {
     if (this.trackcount !== 0) return
     this.startTrack()
     this.track += `%00%FF%51%03${toHex(Math.round(60000000 / qpm), 6)}`
@@ -139,10 +175,18 @@ class MidiWriter {
     this.trackInstrument = ''
     this.silencelength = 0
     this.trackcount += 1
-    // THE INSTRUMENT LEAKS. abcjs re-states whatever was last set, so a second track that
-    // never asked for a program still carries the first one's — which is why both voices
-    // of `midi-piano` emit `%00%C0%04`.
-    if (this.instrument !== undefined) this.setInstrument(this.instrument)
+    /**
+     * THE INSTRUMENT LEAKS. abcjs re-states whatever was last set, so a second track that
+     * never asked for a program still carries the first one's — which is why both voices
+     * of `midi-piano` emit `%00%C0%04`.
+     *
+     * ⚠️ **AND THE TEST IS TRUTHINESS, SO PROGRAM 0 DOES NOT LEAK.** `if (this.instrument)`
+     * (`abc_midi_renderer.js:55-57`) — the Acoustic Grand is program 0, so a track that
+     * asked for it explicitly leaves the NEXT track with none at all. Measured through the
+     * renderer directly: a second track after `setInstrument(0)` opens at its control
+     * changes, where ours emitted `%00%C0%00` first and made the track three bytes longer.
+     */
+    if (this.instrument) this.setInstrument(this.instrument)
   }
 
   endTrack(): void {
@@ -208,6 +252,34 @@ class MidiWriter {
     if (this.silencelength < 0) this.silencelength = 0
   }
 
+  /**
+   * `embed(parent, noplayer)` — a download link and, unless suppressed, an `<embed>` player
+   * (`abc_midi_renderer.js:150-172`). Both are inserted BEFORE the parent's first child, so
+   * the player ends up above the link that was inserted before it.
+   */
+  embed(parent: EmbedParent, noplayer?: boolean): void {
+    const doc = (globalThis as { document?: EmbedDocument }).document
+    if (doc === undefined) return
+    const data = this.getData()
+    const link = doc.createElement('a')
+    link.setAttribute('href', data)
+    link.innerHTML = 'download midi'
+    parent.insertBefore(link, parent.firstChild)
+    if (noplayer) return
+    const player = doc.createElement('embed')
+    for (const [name, value] of [
+      ['src', data],
+      ['type', 'video/quicktime'],
+      ['controller', 'true'],
+      ['autoplay', 'false'],
+      ['loop', 'false'],
+      ['enablejavascript', 'true'],
+      ['style', 'display:block; height: 20px;'],
+    ])
+      player.setAttribute(name as string, value as string)
+    parent.insertBefore(player, parent.firstChild)
+  }
+
   getData(): string {
     return `data:audio/midi,MThd%00%00%00%06%00%01${toHex(this.trackcount, 4)}%01%e0${this.trackstrings}`
   }
@@ -220,10 +292,30 @@ class MidiWriter {
  * The empty-but-present case is quirk 4 above: abcjs bails on a MISSING `accidentals` and
  * not on an empty one, so a keyless tune still writes `%00%00`.
  */
-function keySignature(key: Score['key']): string {
-  const fifths = keyFifths(key)
+/**
+ * **THE KEY COMES IN TWO SHAPES AND abcjs COUNTS THE ACCIDENTALS.** Its own
+ * `keySignature(key)` walks `key.accidentals`, adding one per `sharp` and subtracting one
+ * from 256 per `flat`, and writes `%01` for mode `"m"` (`abc_midi_renderer.js:180-196`) —
+ * so a host driving `midiRenderer` hands it that object. Ours is handed the model's key and
+ * counts fifths, which is the same number by construction. Both are accepted, because the
+ * class is public now.
+ */
+function keySignature(key: Score['key'] | AbcjsKey): string {
+  const accidentals = (key as AbcjsKey).accidentals
+  if (accidentals !== undefined) {
+    let sharps = 0
+    let flats = 256
+    for (const entry of accidentals) {
+      if (entry.acc === 'sharp') sharps += 1
+      else if (entry.acc === 'flat') flats -= 1
+    }
+    const sig = flats !== 256 ? toHex(flats, 2) : toHex(sharps, 2)
+    return `%00%FF%59%02${sig}${(key as AbcjsKey).mode === 'm' ? '%01' : '%00'}`
+  }
+  const own = key as Score['key']
+  const fifths = keyFifths(own)
   const sig = fifths < 0 ? toHex(256 + fifths, 2) : toHex(fifths, 2)
-  const mode = key.mode === 'minor' ? '%01' : '%00'
+  const mode = own.mode === 'minor' ? '%01' : '%00'
   return `%00%FF%59%02${sig}${mode}`
 }
 

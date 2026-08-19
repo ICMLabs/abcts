@@ -1,5 +1,5 @@
 import type { Score } from "../core/model.js";
-import { midiFile, type MidiFileOptions } from "../audio/midi-file.js";
+import { midiFile, type MidiFileOptions, MidiWriter } from "../audio/midi-file.js";
 
 /**
  * `abcjs.synth`'s data and file surface — the parts that make no sound and can therefore
@@ -11,6 +11,15 @@ import { midiFile, type MidiFileOptions } from "../audio/midi-file.js";
  * is abcjs's INTERMEDIATE, and ours fuses sequencing into `flattenAudio`, so exposing it
  * means splitting that walk rather than writing a second copy of it.
  */
+
+/**
+ * `midiRenderer()` — abcjs's `rendererFactory`, which is a FUNCTION returning a new writer
+ * rather than a class (`abc_midi_renderer.js:292-297`). The writer itself is the one
+ * `getMidiFile` already drives, so this exposes the walk rather than copying it: a host that
+ * wants to build a MIDI file element by element gets the same object our own file writer
+ * uses, and the bytes are the ones the MIDI gate already holds.
+ */
+export const midiRenderer = (): MidiWriter => new MidiWriter();
 
 /**
  * `SynthSequence` — the little builder a host uses to play notes that are not a tune

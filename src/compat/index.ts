@@ -84,6 +84,7 @@ import {
   type MidiFileParams,
   pitchToNoteName,
   registerAudioContext,
+  midiRenderer,
   supportsAudio,
   SynthSequence,
 } from "./synth.js";
@@ -1393,6 +1394,7 @@ export function strTranspose(
  */
 export const synth = {
   CreateSynthControl,
+  midiRenderer,
   SynthSequence,
   pitchToNoteName,
   instrumentIndexToName,
