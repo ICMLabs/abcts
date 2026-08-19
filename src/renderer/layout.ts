@@ -10118,12 +10118,47 @@ function layoutMeasure(
     x += el.width + ENGRAVE.prefixGap
   }
   /** The extra ones — index 0 is `drawMeterChange`'s, wherever that put it. */
-  const extraMeters = (measure.meterChanges ?? []).slice(1)
+  /**
+   * **A MID-MEASURE `[M:]` PRINTS WHERE IT STANDS, NOT AT THE MEASURE'S HEAD.** abcjs keeps
+   * the meter element at its position in the voice's child list, so `CDE [M:2/4] FG|` draws
+   * three notes, the signature, then two more — measured, its `staff-extra time-signature`
+   * sits at 103.276 with notes at 70.846, 81.656 and 92.466 before it.
+   *
+   * The singular `meterChange` carries no index, so it is derived from the ranges: how many
+   * of the measure's events were WRITTEN before the field. A change that leads the measure
+   * gives 0 and keeps the head draw it always had.
+   */
+  const meterEventIndex = (range: SourceRange | null | undefined): number =>
+    range == null
+      ? 0
+      : measure.events.filter(
+          (e) => (e.sourceRange?.start ?? Number.POSITIVE_INFINITY) < range.start,
+        ).length
+  const singularMeterAt =
+    measure.meterChanges === undefined ? meterEventIndex(measure.meterChangeSourceRange) : 0
+  const extraMeters = [
+    ...(measure.meterChanges ?? []).slice(1),
+    // …and the singular one joins them when it does not lead its measure.
+    ...(measure.meterChanges === undefined && singularMeterAt > 0 && measure.meterChange != null
+      ? [
+          {
+            meter: measure.meterChange,
+            at: singularMeterAt,
+            ...(measure.meterChangeSourceRange == null
+              ? {}
+              : { range: measure.meterChangeSourceRange }),
+          },
+        ]
+      : []),
+  ]
   const drawMetersBefore = (eventIndex: number): void => {
     for (const m of extraMeters) if (m.at === eventIndex) emitMeter(m.meter, m.range)
   }
   const drawMeterChange = (): void => {
     if (measure.meterChange == null) return
+    // …and NOT AT THE HEAD when it was written after some of the measure's music — see
+    // `meterEventIndex`. `drawMetersBefore` has it.
+    if (singularMeterAt > 0) return
     // NOT WHEN IT LEADS THE SYSTEM — the previous system's `trailingMeter` drew it, and
     // unlike a key change it is NOT reprinted in this line's prefix either.
     if (meterChangeLeadsLine(measure)) return

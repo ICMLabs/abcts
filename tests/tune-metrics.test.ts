@@ -258,6 +258,7 @@ const PASSING: readonly string[] = [
   "sib/extra-class-tune0",
   "sib/frere-jacques-tune0",
   "sib/full-song-template-tune0",
+  "sib/grandstaff-inline-meter-tune0",
   "sib/happy-birthday-tune0",
   "sib/little swallow-tune0",
   "sib/missing-decorations-tune0",
