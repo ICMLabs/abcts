@@ -388,7 +388,7 @@ export function abcelemOf(
  * which is this staff's middle line measured from a treble staff's. `tenor` comes back
  * spelled `alto`, because the field names the clef and the element names what is DRAWN.
  */
-export const clefElement = (clef: Clef): AbcElement => ({
+export const clefElement = (clef: Clef, transpose?: number): AbcElement => ({
   el_type: "clef",
   type:
     (CLEF_TYPE[clef.shape] ?? "treble") +
@@ -399,6 +399,13 @@ export const clefElement = (clef: Clef): AbcElement => ({
         : "-8"),
   verticalPos: middleLineIndex(clef) - TREBLE_MIDDLE_LINE_INDEX,
   clefPos: clef.line * 2,
+  /**
+   * **`V:… transpose=` RIDES THE CLEF**, because abcjs's `V:` handler writes it onto the
+   * clef object it just built (`abc_parse_key_voice.js`), and `synth.sequence` reads it
+   * back off `staff.clef` as a `transpose` row. Nothing else in this library needed it,
+   * which is why the field was absent until that gate opened.
+   */
+  ...(transpose === undefined || transpose === 0 ? {} : { transpose }),
 });
 
 const CLEF_TYPE: Readonly<Record<string, string>> = {

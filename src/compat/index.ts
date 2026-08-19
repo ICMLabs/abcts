@@ -143,6 +143,18 @@ export {
 } from "./synth-controller.js";
 import { SynthController } from "./synth-controller.js";
 export {
+  type SequenceOptions,
+  type SequenceRow,
+  sequenceOf,
+  type SequenceTune,
+} from "./sequence.js";
+import {
+  type SequenceOptions,
+  sequenceOf,
+  type SequenceRow,
+  type SequenceTune,
+} from "./sequence.js";
+export {
   type AudioBufferLike,
   CreateSynth,
   type CreateSynthInitOptions,
@@ -1443,6 +1455,15 @@ export const synth = {
   CreateSynth,
   CreateSynthControl,
   playEvent,
+  /**
+   * `sequence(tune, options)` — the INTERMEDIATE, which is what `flatten` plays from: one
+   * array per voice of reduced elements with a running `timing`, the repeats unrolled and
+   * the state changes spliced in. A port of `abc_midi_sequencer.js` over `tune.lines`,
+   * exactly as abcjs's runs, and therefore a SECOND derivation of what our own flattener
+   * answers from the parse model — see `tests/sequence.test.ts`.
+   */
+  sequence: (tune: TuneObject, options: SequenceOptions = {}): SequenceRow[][] =>
+    sequenceOf(tune as unknown as SequenceTune, options),
   SynthController,
   midiRenderer,
   SynthSequence,

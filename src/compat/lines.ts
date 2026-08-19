@@ -117,7 +117,7 @@ export interface AbcElement {
   value?: readonly { num: string; den: string }[];
   // ── a note (and a rest, which abcjs also calls a note) ──
   pitches?: AbcPitch[];
-  rest?: { type: string; text?: string };
+  rest?: { type: string; text?: string | number };
   duration?: number | readonly number[];
   decoration?: readonly string[];
   chord?: readonly { name: string; position: string }[];
@@ -162,6 +162,8 @@ export interface AbcStaff {
   meter?: AbcElement;
   key?: AbcElement;
   clef?: AbcElement;
+  /** The staff's voice NAMES — `name` on the first music line, `subname` after it. */
+  title?: readonly string[];
 }
 
 export interface AbcLine {
@@ -552,10 +554,31 @@ const bar = (
    * chord-grid arc's biggest finding, one surface over.
    */
   volta?: { label: string; abc: string },
+  /**
+   * **A BARLINE CARRIES DECORATIONS AND CHORD SYMBOLS OF ITS OWN.** A hairpin's close
+   * written at the end of a bar attaches to the BARLINE rather than to the next note — the
+   * audio arc found that from the flattener's side, and `synth.sequence` is what showed the
+   * projection had never carried it: `numNotesToDecoration` counts to the element holding
+   * `crescendo)`, and with it missing the search ran to the end of the line and made the
+   * hairpin's step 2 where abcjs's is 4.
+   */
+  extras?: {
+    decorations?: readonly string[];
+    chordSymbol?: string;
+    annotations?: readonly string[];
+  },
 ): AbcElement | null => {
   const e = el("bar", range);
   if (e === null || range === null) return e;
   e.type = (kind === null ? undefined : BARLINE_TYPE[kind]) ?? "bar_thin";
+  if (extras?.decorations !== undefined && extras.decorations.length > 0)
+    e.decoration = extras.decorations.map((d) => DECORATION_NAME[d] ?? d);
+  const barChord: { name: string; position: string }[] = [];
+  if (extras?.chordSymbol !== undefined)
+    barChord.push({ name: extras.chordSymbol, position: "default" });
+  for (const a of extras?.annotations ?? [])
+    barChord.push({ name: a.slice(1), position: ANNOTATION_POSITION[a[0] ?? ""] ?? "default" });
+  if (barChord.length > 0) e.chord = barChord;
   if (barNumber !== undefined) e.barNumber = barNumber;
   if (volta !== undefined) {
     e.startEnding = volta.label;
@@ -697,6 +720,18 @@ function noteFields(e: AbcElement, event: MusicEvent): void {
   e.duration = ratToNumber(event.notatedDuration);
   if (event.type === "rest") {
     e.rest = { type: restType(event.kind) };
+    /**
+     * **A MULTI-MEASURE REST IS AS LONG AS IT SAYS, AND IT SAYS SO TWICE.**
+     * `el.duration = num * tune.getBarLength()` and `el.rest.text = num`
+     * (`abc_parse_music.js:1216-1217`), with a bare `Z` taking one bar and a `text` of 1
+     * (`:1169-1170`). Our model holds the BAR's length and the count separately, so the
+     * element multiplies them back — `Z4` in 4/4 is `duration: 4`, not 1.
+     */
+    if (event.kind === "multiMeasure" || event.kind === "invisibleMultiMeasure") {
+      const bars = event.measureCount > 0 ? event.measureCount : 1;
+      e.duration = bars * ratToNumber(event.notatedDuration);
+      e.rest.text = bars;
+    }
   } else {
     const pitches = event.type === "note" ? [event.pitch] : event.pitches;
     e.pitches = pitches
@@ -894,6 +929,17 @@ function voiceElements(
         byRange,
         undefined,
         voltaOn(measure.openingBarlineSourceRange),
+        {
+          ...(measure.openingBarlineDecorations === undefined
+            ? {}
+            : { decorations: measure.openingBarlineDecorations }),
+          ...(measure.openingBarlineChord === undefined
+            ? {}
+            : { chordSymbol: measure.openingBarlineChord }),
+          ...(measure.openingBarlineAnnotations === undefined
+            ? {}
+            : { annotations: measure.openingBarlineAnnotations }),
+        },
       ),
     );
     // ponytail: a mid-tune `[K:]` and `[M:]` carry source ranges and a `[V:… clef=]`,
@@ -1022,6 +1068,17 @@ function voiceElements(
         byRange,
         measure.closingBarNumber,
         voltaOn(measure.closingBarlineSourceRange),
+        {
+          ...(measure.closingBarlineDecorations === undefined
+            ? {}
+            : { decorations: measure.closingBarlineDecorations }),
+          ...(measure.closingBarlineChord === undefined
+            ? {}
+            : { chordSymbol: measure.closingBarlineChord }),
+          ...(measure.closingBarlineAnnotations === undefined
+            ? {}
+            : { annotations: measure.closingBarlineAnnotations }),
+        },
       ),
     );
     /**
@@ -1547,7 +1604,7 @@ export function projectionOf(
               : null;
         out.push({
           key: keyElement(key, clefInForce),
-          clef: clefElement(clefInForce),
+          clef: clefElement(clefInForce, voice?.transpose),
           ...(meter == null ? {} : { meter: meterElement(meter) }),
         });
       }
@@ -1680,6 +1737,7 @@ export function projectionOf(
     const vskip = score.voices
       .map((v) => v.measures[from]?.vskip ?? 0)
       .find((n) => n > 0);
+    const firstMusicLine = !lines.some((l) => l.staff !== undefined);
     lines.push({
       ...(vskip === undefined ? {} : { vskip }),
       staff: voicesOfStaff
@@ -1689,6 +1747,24 @@ export function projectionOf(
           const staff: AbcStaff = {
             voices: members.map((k) => lineVoices[k] ?? []),
           };
+          /**
+           * **THE VOICE NAMES, AND WHICH ONE DEPENDS ON THE LINE.** `createVoice` stamps
+           * `{name, subname}` per voice and `cleanUp` resolves it once the lines are known:
+           * the FIRST music line takes `name`, every later one `subname`, a voice with
+           * neither takes `''`, and **a staff where none of them has a title loses the
+           * array entirely** (`tune-builder.js:635-658`, `:969-971`).
+           *
+           * `synth.sequence` reads it as the track's name — `staff[voiceNumber].title`,
+           * joined with a space, which is the abcjs quirk of indexing the STAFF array by a
+           * VOICE number — and nothing else in this library did, which is why the surface
+           * was missing until that gate opened.
+           */
+          const titles = members.map((k) => {
+            const voice = score.voices[k];
+            return (firstMusicLine ? voice?.name : voice?.subname) ?? "";
+          });
+          if (titles.some((t) => t !== ""))
+            (staff as unknown as Record<string, unknown>)["title"] = titles;
           /**
            * **A CHANGED FONT RIDES THE STAFF**, after the key and the clef — abcjs assigns
            * it in `setLineFont` once the staff object already exists, which is the order a

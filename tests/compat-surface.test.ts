@@ -107,7 +107,6 @@ const ABCJS_SURFACE = {
  * `Docs/PLAN-REMAINING-2026-08-15.md` is the order they are being taken in.
  */
 const MISSING: readonly string[] = [
-  "synth.sequence",
 ];
 
 /** Ours, with no abcjs counterpart — allowed, and listed so the diff is visible. */
