@@ -253,6 +253,7 @@ const PASSING: readonly string[] = [
   "sib/center-text-tune0",
   "sib/chord-grid-tune0",
   "sib/clefs-tune0",
+  "sib/courtesy-key-before-subtitle-tune0",
   "sib/curves-tune0",
   "sib/escaped-percent-tune0",
   "sib/extra-class-tune0",

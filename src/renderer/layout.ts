@@ -9782,6 +9782,14 @@ const keyChangeLeadsLine = (measure: Measure | undefined): boolean => {
  * ends line 0 with `timeSignature x=673.49 w=13.04` and opens line 1 with the clef alone,
  * its first note at 49.05.
  */
+/**
+ * Does a SUBTITLE stand between this measure's line and the one above — abcjs's
+ * `line.subtitle` test in `noWarnBeforeTitle` (`tune-builder.js:1069-1106`). A mid-tune
+ * `T:` is a block on the measure that opens the next system, so that is where it is read.
+ */
+const subtitleLeads = (measure: Measure | undefined): boolean =>
+  (measure?.textBefore ?? []).some((block) => block.role === 'subtitle')
+
 const meterChangeLeadsLine = (measure: Measure | undefined): boolean => {
   if (measure === undefined || !measure.startsSystem || measure.meterChange == null) return false
   // ONLY THE INLINE FORM. A standalone `M:` line goes the OTHER way — into
@@ -11176,7 +11184,15 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
          * something ragtime writes — four mid-line `[K:Ab]`/`[K:Eb]` pairs inside repeats —
          * puts the naturals back. Left as it stands, with the measurement written down.
          */
-        keyAtPreviousLine = leads ? keyInForce : keyAtLineStart
+        keyAtPreviousLine = subtitleLeads(measure)
+          ? // …**AND THE NATURALS GO WITH IT.** `noWarnBeforeTitle` strips them from the
+            // NEXT staff line's own key as well — "the new key signature might have some
+            // naturals, remove that" — so the line a subtitle introduces prints its
+            // signature and nothing else.
+            (measure.keyChange ?? keyInForce)
+          : leads
+            ? keyInForce
+            : keyAtLineStart
         // A change that LEADS the line is already in `multilineVars.key` when abcjs stamps
         // `params.key`, so the prefix shows the NEW key. See `keyChangeLeadsLine`.
         keyAtLineStart = leads ? (measure.keyChange ?? keyInForce) : keyInForce
@@ -11229,6 +11245,15 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
            */
           if (!KEYWARN) return null
           if (!keyChangeLeadsLine(next) || next?.keyChange == null) return null
+          /**
+           * **AND NOT BEFORE A SUBTITLE** — `noWarnBeforeTitle` pops the courtesy key back
+           * off the line above whenever the next line is a `subtitle`, under abcjs's own
+           * "There was a key change after a subtitle. Remove the courtesy key change."
+           * (`tune-builder.js:1069-1106`, new in 6.7.0 and run from `cleanUp`). Our
+           * PROJECTION already pops it; the drawing still reserved 35.9px for it, which is
+           * what `courtesy-key-before-subtitle`'s second measure was short.
+           */
+          if (subtitleLeads(next)) return null
           // The key as THIS measure ends is what the cancellation is measured against, and
           // `keyInForce` is still that: `measure.keyChange` is applied below.
           const from = measure.keyChange ?? keyInForce
@@ -11245,7 +11270,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         })(),
         (() => {
           const next = (voice?.measures ?? [])[measureIndex + 1]
-          return keyChangeLeadsLine(next) ? (next?.keyChangeSourceRange ?? null) : null
+          return keyChangeLeadsLine(next) && !subtitleLeads(next)
+            ? (next?.keyChangeSourceRange ?? null)
+            : null
         })(),
       )
       if (measure.keyChange !== null) keyInForce = measure.keyChange
