@@ -1682,6 +1682,13 @@ export function projectionOf(
           const staff: AbcStaff = {
             voices: members.map((k) => lineVoices[k] ?? []),
           };
+          /**
+           * **A CHANGED FONT RIDES THE STAFF**, after the key and the clef — abcjs assigns
+           * it in `setLineFont` once the staff object already exists, which is the order a
+           * host comparing the objects sees. `deline` unshifts each one back into the
+           * voices as a `font` element. See `Measure.lineFonts`.
+           */
+          const fonts = score.voices[members[0] ?? 0]?.measures[from]?.lineFonts;
           const own = furniture[s]?.[i];
           if (own !== undefined) {
             // THE KEY ORDER IS abcjs's — `{voices, clef, key}` from `createStaff` with the
@@ -1690,6 +1697,13 @@ export function projectionOf(
             staff.key = own.key;
             staff.clef = own.clef;
           }
+          if (fonts !== undefined)
+            for (const [type, font] of Object.entries(fonts))
+              // A COPY, because `deline` writes `el_type` onto this very object the way
+              // abcjs does (`deline-tune.js:153-155`) and the parse tree is frozen.
+              (staff as unknown as Record<string, unknown>)[type] = {
+                ...(font as Record<string, unknown>),
+              };
           return staff;
         }),
     });

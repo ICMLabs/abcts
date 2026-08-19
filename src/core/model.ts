@@ -1072,6 +1072,12 @@ export interface Measure {
    * (`abc_parse_music.js:1008-1009`, `tune-builder.js:971-972`). Absent until one has.
    */
   readonly lineStyle?: NoteStyle
+  /**
+   * The changing fonts that DIFFER from the line above — abcjs's `setLineFont`, which
+   * hangs them on the line's staff (`tune-builder.js:948-962`) for `deline` to unshift
+   * back into the voices as `font` elements. Keyed by abcjs's own type name.
+   */
+  readonly lineFonts?: Readonly<Record<string, unknown>>
   readonly sourceRange: SourceRange | null
   readonly closingBarlineSourceRange: SourceRange | null
 }

@@ -1255,6 +1255,12 @@ class VoiceBuilder {
   private styleSeen = false
   /** The style this line opened with — see `push`. */
   private styleAtLineStart: NoteStyle | null = null
+  /** The fonts that changed as this line opened — see `ScoreBuilder.runningLineFonts`. */
+  private lineFonts: Partial<Record<AbcFontType, LyricFont>> | undefined = undefined
+
+  setLineFonts(fonts: Partial<Record<AbcFontType, LyricFont>> | undefined): void {
+    this.lineFonts = fonts
+  }
 
   /**
    * `K: style=` / `[K: style=]` — WHEN it takes effect, which is not where it stands.
@@ -1703,6 +1709,9 @@ class VoiceBuilder {
           ...(startsSystem && this.styleAtLineStart !== null
             ? { lineStyle: this.styleAtLineStart }
             : {}),
+          ...(startsSystem && this.lineFonts !== undefined
+            ? { lineFonts: this.lineFonts }
+            : {}),
           ...this.takeSystemBarNumber(startsSystem),
           ...this.takeTextBefore(startsSystem),
           ...this.takeVskip(startsSystem),
@@ -1790,6 +1799,9 @@ class VoiceBuilder {
           startsSystem,
           ...(startsSystem && this.styleAtLineStart !== null
             ? { lineStyle: this.styleAtLineStart }
+            : {}),
+          ...(startsSystem && this.lineFonts !== undefined
+            ? { lineFonts: this.lineFonts }
             : {}),
           ...this.takeSystemBarNumber(startsSystem),
           ...this.takeTextBefore(startsSystem),
@@ -2026,6 +2038,29 @@ class ScoreBuilder {
   vocalFont: LyricFont | null = null
   /** …and the one the CURRENT music line started with, which is what a lyric draws in. */
   lineVocalFont: LyricFont | null = null
+  /**
+   * **abcjs's `tune.runningFonts`, SEEDED WHERE THE HEADER ENDS.** `parseLine` calls
+   * `setRunningFont` for all four changing fonts the moment `is_in_header` goes false
+   * (`abc_parse.js:556-561`), and `setLineFont` then stamps a line's staff only when the
+   * current font DIFFERS from the running one (`tune-builder.js:948-962`). So a font set
+   * in the header is on no line at all, and each later change is on exactly one.
+   */
+  runningLineFonts: Partial<Record<AbcFontType, LyricFont>> | null = null
+
+  /** The fonts that CHANGED since the last line — abcjs's four `setLineFont` calls. */
+  takeLineFonts(): Partial<Record<AbcFontType, LyricFont>> | undefined {
+    const running = this.runningLineFonts
+    if (running === null) return undefined
+    const out: Partial<Record<AbcFontType, LyricFont>> = {}
+    for (const type of ['annotationfont', 'gchordfont', 'tripletfont', 'vocalfont'] as const) {
+      const font = this.fonts[type]
+      if (font === undefined) continue
+      const was = running[type]
+      if (was !== undefined && JSON.stringify(was) !== JSON.stringify(font)) out[type] = font
+      running[type] = font
+    }
+    return Object.keys(out).length > 0 ? out : undefined
+  }
   /** The `%%gchordfont` in force — a CHANGING font, so it is stamped per event. */
   chordFont: LyricFont | null = null
   /**
@@ -3524,6 +3559,9 @@ class Parser {
         if (keyOctave !== null) builder.keyOctave.value = keyOctave
         // …and the header's fonts are frozen here, which is `is_in_header` going false.
         builder.headerFonts ??= { ...builder.fonts }
+        // …and so are the four CHANGING ones, which is `setRunningFont` — see
+        // `runningLineFonts`.
+        builder.runningLineFonts ??= { ...builder.fonts }
         builder.bodyStarted = true // K: ends the header.
         builder.sawKey = true // …and this is abcjs's `is_in_header`, which ONLY a `K:` clears.
         return
@@ -3584,6 +3622,7 @@ class Parser {
     // every syllable at the DEFAULT 17 however many `%%vocalfont` lines follow.
     if (!continued) {
       builder.lineVocalFont = builder.vocalFont
+      builder.voice.setLineFonts(builder.takeLineFonts())
       builder.voice.beginMusicLine()
     }
     // Re-read through the builder rather than capturing: an inline `[V:2]` mid-line
