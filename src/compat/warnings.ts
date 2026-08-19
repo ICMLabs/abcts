@@ -208,6 +208,25 @@ const AS_ABCJS: Record<
           column: at - start,
         };
   },
+  /**
+   * `Unknown parameter: <token>` from a `K:` (or `V:`) field, pointing into the FIELD's
+   * VALUE — `cm`, not the `K:cm` line — at the token's own offset
+   * (`abc_parse_key_voice.js:518-519`).
+   */
+  "unknown-parameter": (diagnostic, abc) => {
+    const token = /: (.*)$/.exec(diagnostic.message)?.[1];
+    const text = abc.substring(
+      diagnostic.range?.start ?? 0,
+      diagnostic.range?.end ?? 0,
+    );
+    return token === undefined
+      ? null
+      : {
+          message: `Unknown parameter: ${token}`,
+          column: Math.max(0, text.indexOf(token)),
+          text,
+        };
+  },
   "unknown-directive": (diagnostic) => {
     const name = /%%\s*(\S+)/.exec(diagnostic.message)?.[1];
     return name === undefined

@@ -3543,6 +3543,60 @@ class Parser {
         return
       }
       case 'K': {
+        /**
+         * **A FIRST TOKEN THAT IS NEITHER A KEY NOR A PARAMETER IS A WARNING.** abcjs reads
+         * the tonic with `getKeyPitch`, whose lowercase cases are COMMENTED OUT
+         * (`abc_tokenizer.js:33-46`), and anything it cannot read falls through to the
+         * parameter switch's `default: warn("Unknown parameter: " + token, str, start)`
+         * (`abc_parse_key_voice.js:518-519`). `K:cm` is exactly that — no key at all, C
+         * major drawn, and a warning — which is why the fixture renders byte-identically
+         * while saying nothing.
+         *
+         * The switch's own labels are the list below; a `name=value` is `clef`, `middle`,
+         * `transpose`, `stafflines`, `staffscale`, `octave` or `style`, each of which is
+         * read here or in `clefWith`.
+         */
+        const firstToken = value.trim().split(/\s+/)[0] ?? ''
+        const K_PARAMETERS = new Set([
+          'm',
+          'middle',
+          'transpose',
+          'stafflines',
+          'staffscale',
+          'octave',
+          'style',
+          'clef',
+          'treble',
+          'bass',
+          'alto',
+          'tenor',
+          'perc',
+          'none',
+        ])
+        if (
+          firstToken !== '' &&
+          !/^[A-G]/.test(firstToken) &&
+          !/^(HP|Hp)\b/.test(firstToken) &&
+          // …**AND A CLEF NAME CARRIES ITS OCTAVE**: `K:treble-8` is one token to us and a
+          // `case "treble"` to abcjs, whose own reader takes the `-8` off first.
+          !K_PARAMETERS.has(firstToken.split('=')[0]?.toLowerCase() ?? '') &&
+          ![...K_PARAMETERS].some((p) => firstToken.toLowerCase().startsWith(p))
+        ) {
+          /**
+           * The text a `K:` warning points into is the FIELD's VALUE — `cm` alone, not the
+           * `K:cm` line — at the token's own offset within it. So the RANGE carries the
+           * value and the message carries the token, and `warnings.ts` finds the column by
+           * looking the one up in the other.
+           */
+          // `start` is the FIELD's own start, so the value begins two characters in — past
+          // the `K:` — plus whatever space follows it.
+          const at = start + 2 + (content.length - content.trimStart().length)
+          this.warn(
+            'unknown-parameter',
+            `unknown parameter: ${firstToken}`,
+            sourceRange(at, at + value.length),
+          )
+        }
         // `style=` rides on K: and sets the notehead shape for everything that follows,
         // until the next one — `[K: style=harmonic]`, then `[K: style=normal]` to end it.
         // It is voice state, not a property of the K: field.
