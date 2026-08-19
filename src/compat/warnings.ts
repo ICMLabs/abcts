@@ -167,6 +167,17 @@ const AS_ABCJS: Record<
             .replace(/\r?\n.*$/s, ""),
         };
   },
+  /**
+   * `Unknown character ignored`, pointing AT the character in its own source line
+   * (`abc_parse_music.js:579-581`) — the two characters abcjs stays silent about, a space
+   * and a backtick, are excluded at the parser site.
+   */
+  "unknown-character": (diagnostic, abc) => {
+    const at = diagnostic.range?.start ?? 0;
+    let start = 0;
+    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    return { message: "Unknown character ignored", column: at - start };
+  },
   "unknown-directive": (diagnostic) => {
     const name = /%%\s*(\S+)/.exec(diagnostic.message)?.[1];
     return name === undefined

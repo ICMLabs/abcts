@@ -4070,8 +4070,22 @@ class Parser {
             // follows (`abc_parse_music.js:784-787`) — it returns no decoration, but the
             // iteration goes on to read the note, so `startI` is still the dot.
             // `S3-note-syntax` tune 22 has three, and each was worth four characters.
-            if (!dotsAMark)
+            if (!dotsAMark) {
               builder.unreadable.push(sourceRange(token.start, token.start + token.length))
+              /**
+               * …**AND abcjs SAYS SO**: `if (line[i] !== ' ' && line[i] !== '`')
+               * warn("Unknown character ignored", line, i)` (`abc_parse_music.js:579-581`),
+               * pointing at the character itself in its own source line. The two exceptions
+               * are the two characters that mean nothing and are not errors.
+               */
+              const ch = this.src[token.start]
+              if (ch !== ' ' && ch !== '`')
+                this.warn(
+                  'unknown-character',
+                  'unknown character ignored',
+                  sourceRange(token.start, token.start + token.length),
+                )
+            }
           }
           i++
           break
