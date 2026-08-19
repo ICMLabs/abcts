@@ -6826,19 +6826,39 @@ function layoutConnectors(
   const spans: ConnectorSpan[] = []
   if (groups.length === 0) return { glyphs, lines, spans }
 
-  /** Runs of consecutive staves sharing a connector, from its `start`…`end` markers. */
+  /**
+   * Runs of consecutive staves sharing a connector — a LINE-BY-LINE port of the chain at
+   * `abstract-engraver.js:188-196`, and it is not the `start`…`end` pairing it looks like.
+   *
+   * **A DANGLING `end` OPENS A CONNECTOR OF ITS OWN**: the first arm is
+   * `abcstaff.brace === "start" || (!staffgroup.brace && abcstaff.brace)`, so a staff
+   * carrying ANY marker starts one when the group has none yet. That is what a system the
+   * top staves have dropped out of looks like — `{(A B) (C)}` with only C left is a staff
+   * marked `end` and nothing open — and abcjs braces that single staff. Ours required the
+   * pair and drew nothing.
+   *
+   * **AND A BRACE WITH NO BOTTOM STAFF SPANS ITS OWN**: `drawBrace` falls back from
+   * `endVoice` to `lastContinuedVoice` to `startVoice` (`draw/brace.js:8-14`).
+   *
+   * The `else if`s are abcjs's own: once a connector exists, a later marker adjusts the
+   * LAST one rather than opening another.
+   */
   const runs = (kind: 'brace' | 'bracket'): { from: number; to: number }[] => {
-    const out: { from: number; to: number }[] = []
-    let open: number | null = null
+    const out: { from: number; to: number; continued?: number }[] = []
     groups.forEach((group, i) => {
       const mark = kind === 'brace' ? group.brace : group.bracket
-      if (mark === 'start') open = i
-      if (mark === 'end' && open !== null) {
-        out.push({ from: open, to: i })
-        open = null
-      }
+      if (mark === undefined || mark === null) return
+      const last = out[out.length - 1]
+      if (mark === 'start' || last === undefined) out.push({ from: i, to: i })
+      else if (mark === 'end') last.to = i
+      else if (mark === 'continue') last.continued = i
     })
-    return out
+    // `endVoice ?? lastContinuedVoice ?? startVoice` — a run never closed takes the last
+    // staff it was continued through, and failing that its own.
+    return out.map((run) => ({
+      from: run.from,
+      to: run.to === run.from && run.continued !== undefined ? run.continued : run.to,
+    }))
   }
 
   const edge = (index: number): { top: number; bottom: number } | null => {
@@ -13050,8 +13070,19 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       }
     })
 
+    /**
+     * **THE CONNECTORS SEE THE STAVES THAT ARE ON THIS SYSTEM, NOT THE DECLARED LIST.**
+     * abcjs reads each brace marker off the line's own `abcstaff` after `cleanUp` has
+     * dropped the absent ones (`abstract-engraver.js:188-196`), so on a system a voice has
+     * run out of, the markers that survive are whatever the remaining staves carry — see
+     * the dangling-`end` rule in `runs`. Ours handed over `score.staves` whole, whose
+     * indices then named the wrong staff, and the brace was dropped for want of an edge.
+     */
+    const stavesHere = voicesHere
+      .map((members) => score.staves[voicesOfStaff.indexOf(members)])
+      .filter((st): st is StaffGroup => st !== undefined)
     const connectors = layoutConnectors(
-      score.staves,
+      stavesHere,
       placed,
       braceHeaders(systemIndex).byStaff,
       PAGE_PADDING.left + headerIndentFor(systemIndex),
