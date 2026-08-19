@@ -76,6 +76,7 @@ const PASSING: readonly string[] = [
   "repo/abcjs-visual-tablature-01-gr-tune0",
   "repo/abcts-keywarn-tune2",
   "sib/S1-decorations-tune0",
+  "sib/frere-jacques-tune0",
   "sib/vree-sharps-tune0",
 ];
 

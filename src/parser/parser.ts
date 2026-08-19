@@ -4145,7 +4145,20 @@ class Parser {
                * are the two characters that mean nothing and are not errors.
                */
               const ch = this.src[token.start]
-              if (ch !== ' ' && ch !== '`')
+              /**
+               * …**EXCEPT AN UNCLOSED `+`, WHICH IS A DECORATION ATTEMPT.** `case '!': case
+               * '+':` share one branch, and `getBrackettedSubstring` gives up after
+               * `maxErrorChars` (5) with whatever it read, so abcjs reports
+               * `Unknown decoration: :bel` where a character-by-character reader would
+               * report six unknown characters. See the lexer's own note on the six.
+               */
+              if (ch === '+' && token.length > 1)
+                this.warn(
+                  'unknown-decoration',
+                  `unknown decoration: ${this.src.slice(token.start + 1, token.start + token.length - 1)}`,
+                  sourceRange(token.start, token.start + token.length),
+                )
+              else if (ch !== ' ' && ch !== '`')
                 this.warn(
                   'unknown-character',
                   'unknown character ignored',
@@ -4382,6 +4395,23 @@ class Parser {
           break
         }
         default:
+          /**
+           * **A STANDALONE OCTAVE MARK IS AN UNKNOWN CHARACTER TO abcjs.** `,` and `'` are
+           * read only inside `parseNote`, so one that follows no note letter reaches the
+           * `if (i === startI)` arm and warns (`abc_parse_music.js:579-581`). Measured on
+           * `frere-jacques`, whose prose abcjs reads as music: the comma of "owners," is
+           * its warning 16 and was our only missing one.
+           *
+           * ponytail: the WARNING alone, not `unreadable` — the character-ownership gate is
+           * closed at 255,684 and nothing there stands on this path, so moving ownership
+           * would be a change with no oracle asking for it.
+           */
+          if (token.kind === 'octaveUp' || token.kind === 'octaveDown')
+            this.warn(
+              'unknown-character',
+              'unknown character ignored',
+              sourceRange(token.start, token.start + token.length),
+            )
           i++
           break
       }
