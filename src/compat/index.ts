@@ -126,6 +126,7 @@ import {
   type HighlightPaper,
   rangeHighlighter,
 } from "./range-highlight.js";
+import { warningsOf } from "./warnings.js";
 import {
   type AbsoluteElementLike,
   addElementToEvents,
@@ -720,6 +721,15 @@ export interface TuneObject {
    * voice, and the step that turns one of those rows into a timing event. See
    * `voices-array.ts`; `setupEvents` is the loop around the two.
    */
+  /**
+   * **THE PARSER'S WARNINGS, AND ONLY WHEN THERE ARE ANY.** `renderEngine` hangs them on
+   * the tune with `if (warnings) tune.warnings = warnings` (`abc_tunebook.js:87-89`), so an
+   * absent field and an empty array are different answers — `Editor` shows "No errors" for
+   * the first. See `warnings.ts` for the format, which is as much of the contract as the
+   * wording.
+   */
+  readonly warnings?: readonly string[];
+
   readonly makeVoicesArray: () => VoiceElementRow[][];
   readonly addElementToEvents: (
     eventHash: Record<string, TimingEvent>,
@@ -827,6 +837,13 @@ export function renderAbc(
     score: (typeof result.scores)[number],
     paper: { innerHTML: string } | null,
   ): TuneObject => {
+    /** See `warningsOf` — the file header's are repeated on every tune, as abcjs's are. */
+    const warnings = warningsOf(
+      result.diagnostics,
+      result.scores,
+      result.scores.indexOf(score),
+      abc,
+    );
     /**
      * **`noteTimings` AND THE TOTALS ARE STATE, not derived on read.** `setTiming` writes
      * all three onto the tune and the three getters just read the fields
@@ -1240,6 +1257,8 @@ export function renderAbc(
        * `laidOut`. `tune.lines` is asked for first because the row's `line` is an index
        * into it.
        */
+      ...(warnings === undefined ? {} : { warnings }),
+
       makeVoicesArray: (): VoiceElementRow[][] => {
         selectables();
         return makeVoicesArrayOf(laidOut(), projection(), lineCache ?? []);

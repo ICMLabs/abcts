@@ -229,6 +229,8 @@ const PASSING: readonly string[] = [
   "abcjs-parse-book_parser-01-example",
   "abcjs-parse-book_parser-02-tune",
   "abcjs-parse-book_parser-03-a",
+  "abcjs-parse-book_parser-04-wed",
+  "abcjs-parse-book_parser-05-a",
   "abcjs-parse-note-01-c0-d1-eg-0-fa-1",
   "abcjs-parse-note-id-01-v-v1-c-d-e-f",
   "abcjs-visual-mouse-click-01-selection-test",
