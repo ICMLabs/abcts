@@ -1,5 +1,6 @@
 import { STAFF_SPACE_PX } from "../renderer/abcjs-constants.js";
 import type { Layout, LayoutElement } from "../renderer/layout.js";
+import { glyphsFor } from "../renderer/glyph-table.js";
 import { ABCJS_ELEMENT_NAMES } from "../renderer/svg.js";
 
 import type { AbcElement, AbcLine } from "./lines.js";
@@ -100,6 +101,39 @@ const spacingDurationOf = (element: LayoutElement): number => {
   return element.durationClass ?? 0;
 };
 
+/**
+ * **`getMinWidth(child)` IS A MAX OVER `dx + w`, MEASURED FROM THE ELEMENT'S OWN x** —
+ * `max(child.dx + child.w)` over an absolute element's children
+ * (`absolute-element.js`). For most elements that is the ink our layout already records as
+ * `rodWidth`, and for a BARLINE it is a DECLARED number the drawing does not use
+ * (`LayoutElement.minWidth`).
+ *
+ * **A DISPLACED CHORD IS THE THIRD CASE.** abcjs expresses a whole-chord shift as a
+ * per-head `shiftheadx`, so both heads of `[ce]` under a down stem carry `dx = 14.985` and
+ * `getMinWidth` is 29.97 — twice the head. Ours puts the same shift in the head's x and
+ * measures the ink from THERE, which is 14.985. Measured on
+ * `parse-tie-slur-03-staffwidth-200`, whose lower staff reports 29.97 on every note while
+ * the two engines draw the heads at the same coordinates. So the width is taken back from
+ * the DRAWN heads, which is abcjs's definition rather than a second guess at it.
+ */
+const minWidthOf = (element: LayoutElement): number => {
+  const own = element.minWidth ?? element.rodWidth ?? element.width;
+  if (element.minWidth !== undefined) return own;
+  const glyphs = glyphsFor(true);
+  let heads = 0;
+  for (const g of element.glyphs) {
+    if (g.role !== "notehead") continue;
+    heads = Math.max(heads, g.x - element.x + glyphs.width(g.name));
+  }
+  /**
+   * ⚠️ **AND `own` WINS ANY TIE, BECAUSE THE SUBTRACTION IS NOT abcjs'S SUM.** abcjs adds
+   * `dx + w`; reading it back off the drawn head is `(g.x - element.x) + w`, which lands one
+   * ULP away — `20.740000000000002` for its `20.74` — on the ordinary notes where the two
+   * agree. So the head-derived width is taken only where it is genuinely WIDER.
+   */
+  return heads > own + 1e-9 ? heads : own;
+};
+
 const elemOf = (
   element: LayoutElement,
   index: ProjectionIndex,
@@ -110,9 +144,8 @@ const elemOf = (
     type: ABCJS_ELEMENT_NAMES[element.type] ?? element.type,
     abcelem: abcelem ?? { el_type: element.type },
     x: element.x,
-    // `getMinWidth` — the INK for a note, the DECLARED width for a barline. See
-    // `LayoutElement.minWidth`.
-    w: element.minWidth ?? element.rodWidth ?? element.width,
+    // `getMinWidth` — see `minWidthOf`.
+    w: minWidthOf(element),
     /**
      * **THE ELEMENT'S DURATION IS THE `durationClass`, NOT THE WRITTEN ONE.** Measured on
      * `(3ABc`: abcjs reports `duration` and `durationClass` both 1/12 while its
