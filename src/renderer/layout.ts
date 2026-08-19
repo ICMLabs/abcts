@@ -11940,7 +11940,20 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // or a mid-tune `T:`. They belong to the SYSTEM, so they are read off the first
       // measure of the span whichever voice happened to claim them, and drawn on the
       // first voice only.
-      const midTune = voiceIndex !== 0 ? [] : (blocksBeforeSystem[systemIndex] ?? [])
+      /**
+       * ⚠️ **AND THE VOICE THAT CARRIES THEM IS THE FIRST ONE STILL ON THIS SYSTEM, WHICH
+       * IS NOT ALWAYS VOICE 0.** A voice that has run out of measures is dropped from the
+       * line entirely — see `voicesHere` — so on a system its part does not reach, hanging
+       * the blocks on voice 0 threw them away with the empty staff. Measured: a mid-tune
+       * `T:` written between two voice lines, with one more music line after it, VANISHED
+       * from a render that was otherwise byte-exact, and `visual-mouse-click-01` loses its
+       * `Inserted subtitle` the moment anything is typed after it.
+       */
+      const carrier = plans.findIndex((p) => p.measures.length > span.start)
+      const midTune =
+        voiceIndex !== (carrier < 0 ? 0 : carrier)
+          ? []
+          : (blocksBeforeSystem[systemIndex] ?? [])
       const block: { texts: PlacedText[]; lines: PlacedLine[]; height: number } =
         systemIndex === 0 && voiceIndex === 0
           ? (() => {
