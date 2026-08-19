@@ -10664,6 +10664,8 @@ interface VoicePlan {
     indent: number,
     /** Index of the system's first measure — the prefix prints the clef in force THERE. */
     from?: number,
+    /** The bar number this system opens with, when this staff is the one to draw it. */
+    systemNumber?: number,
   ) => { elements: LayoutElement[]; advances: Advance[] }
   /** The clef in force at measure `i`, after every `Measure.clefChange` before it. */
   readonly clefAt: (i: number) => Clef
@@ -11131,6 +11133,17 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       leftEdge: number,
       /** The first measure of the system, so the prefix prints the clef in force there. */
       from = 0,
+      /**
+       * The bar number this system opens with, when this staff is the one to draw it.
+       *
+       * **IT IS THE FIRST STAFF ON THE LINE, NOT VOICE 0's.** `cleanUp` hands the number
+       * forward with `nextLine.staff[0].barNumber = …` (`tune-builder.js:139-144`) and
+       * `staff[0]` is whatever survived the same pass's filtering, so on a system voice 0
+       * has run out of, the number lands on the voice that IS there. Ours read it off the
+       * drawing voice's own measure and lost it with the empty staff — the same shape as
+       * the mid-tune block and the brace.
+       */
+      systemNumber: number | undefined = undefined,
     ): { elements: LayoutElement[]; advances: Advance[] } => {
       const clef = clefAtMeasure[from] ?? clefInForce
       const elements: LayoutElement[] = []
@@ -11162,8 +11175,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       // `addMeasureNumber` ever sees one: `createABCStaff` calls it with the clef element
       // (`abstract-engraver.js:161`) where every other setting calls it with a barline
       // (`abc_parse_music.js:296-301`). The parser has already applied abcjs's two guards —
-      // first voice, and not the first system.
-      const systemNumber = (voice?.measures ?? [])[from]?.systemBarNumber
+      // first voice, and not the first system; WHICH staff draws it is the caller's, see
+      // `systemNumber`.
       const bare = layoutClef(x, clef, strict)
       const clefElement =
         bare === null || systemNumber === undefined
@@ -11617,8 +11630,25 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     const leadsStaff = (v: number): boolean =>
       (voicesOfStaff.find((m) => m.includes(v)) ?? [v])[0] === v
     const blank = { elements: [] as LayoutElement[], advances: [] as Advance[] }
+    /**
+     * The voice that draws this system's bar number — the first one still on the line, and
+     * the number is whichever voice the parser stamped it on. See `prefix`'s
+     * `systemNumber`.
+     */
+    const firstHere = plans.findIndex((p) => p.measures.length > span.start)
+    const numberHere = plans
+      .map((p) => p.measures[span.start]?.systemBarNumber)
+      .find((n) => n !== undefined)
     const heads = plans.map((plan, v) =>
-      leadsStaff(v) ? plan.prefix(withMeter, v === 0, leftEdge, span.start) : blank,
+      leadsStaff(v)
+        ? plan.prefix(
+            withMeter,
+            v === 0,
+            leftEdge,
+            span.start,
+            v === (firstHere < 0 ? 0 : firstHere) ? numberHere : undefined,
+          )
+        : blank,
     )
     const lines = plans.map((plan, v) => {
       const items: Advance[] = [...(heads[v]?.advances ?? [])]

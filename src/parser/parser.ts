@@ -1858,11 +1858,49 @@ function moveTrailingBarNumbers(measures: readonly Measure[]): Measure[] {
     const next = out[i + 1]
     // The last measure of a source line is the one whose successor OPENS one.
     if (next !== undefined && !next.startsSystem) continue
+    /**
+     * **A NUMBER PAST THIS VOICE'S LAST MEASURE IS NOT THIS VOICE'S TO DELETE.** abcjs
+     * hands it to `getNextMusicLine(tune.lines, i).staff[0]` — the next LINE of the TUNE,
+     * whichever voices are on it (`tune-builder.js:139-144`) — so a voice whose part ends
+     * mid-tune passes its trailing number to whoever is still playing. Deleting it here
+     * cost `%%barnumbers 1` its `3` on a system voice 0 had dropped out of. See
+     * `carryDanglingBarNumbers`, which finishes the move and deletes what no later system
+     * claims.
+     */
+    if (next === undefined) continue
     const moved = measure.closingBarNumber
     delete (measure as { closingBarNumber?: number }).closingBarNumber
-    if (next !== undefined) (next as { systemBarNumber?: number }).systemBarNumber = moved
+    ;(next as { systemBarNumber?: number }).systemBarNumber = moved
   }
   return out
+}
+
+/**
+ * **THE OTHER HALF OF `moveTrailingBarNumbers`, ACROSS VOICES.**
+ *
+ * A bar number left on a voice's LAST measure belongs to the next music LINE of the tune,
+ * not to this voice — `nextLine.staff[0].barNumber` (`tune-builder.js:139-144`). So it
+ * travels to the first measure that OPENS a system after it, in whichever voice still has
+ * one, and is deleted only when the tune ends there, which is why a tune ending `…|`
+ * prints no number on its final barline.
+ */
+function carryDanglingBarNumbers(voices: readonly Voice[]): void {
+  const startsSystemAt = (index: number): Voice | undefined =>
+    voices.find((v) => v.measures[index]?.startsSystem === true)
+  for (const voice of voices) {
+    const last = voice.measures.length - 1
+    const measure = voice.measures[last]
+    const number = measure?.closingBarNumber
+    if (measure === undefined || number === undefined) continue
+    delete (measure as { closingBarNumber?: number }).closingBarNumber
+    const longest = Math.max(...voices.map((v) => v.measures.length))
+    for (let j = last + 1; j < longest; j += 1) {
+      const owner = startsSystemAt(j)
+      if (owner === undefined) continue
+      ;(owner.measures[j] as { systemBarNumber?: number }).systemBarNumber = number
+      break
+    }
+  }
 }
 
 /** The `%%` formatting a file header passes to every tune under it. */
@@ -2316,12 +2354,15 @@ class ScoreBuilder {
         // `Voice.declaredIndex`. `this.voices` is a Map, so its insertion order IS the
         // order the `V:` fields were read in.
         const declared = new Map([...this.voices.keys()].map((id, i) => [id, i]))
-        return this.orderedVoices().map((v) => {
+        const finished = this.orderedVoices().map((v) => {
           // The meter lives on the score, and a voice needs it to pad an empty overlay
           // layer to a full measure's silence.
           v.meterForOverlays = this.meter
           return { ...v.finish(), declaredIndex: declared.get(v.id) ?? 0 }
         })
+        // A trailing number crosses to whichever voice is still on the next line.
+        carryDanglingBarNumbers(finished)
+        return finished
       })(),
       staves: this.resolvedStaves(),
       staffSep: this.staffSep,
