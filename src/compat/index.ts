@@ -128,6 +128,10 @@ import {
 } from "./range-highlight.js";
 import { warningsOf } from "./warnings.js";
 import {
+  type MeasureSection,
+  measureWidthsOf,
+} from "./tune-metrics.js";
+import {
   type AbsoluteElementLike,
   addElementToEvents,
   makeVoicesArrayOf,
@@ -1272,6 +1276,28 @@ export function renderAbc(
     if (element !== null) element.innerHTML = tune.svg;
     return tune;
   });
+}
+
+/**
+ * `tuneMetrics(abc, params)` — each tune's MEASURE WIDTHS, from a layout at width 0.
+ *
+ * abcjs runs the tunebook walker with a single `"*"` slot and lets the callback REPLACE the
+ * tune in the result (`api/tune-metrics.js`), which is why the array holds `{sections}`
+ * objects rather than tunes. See `tune-metrics.ts` for what the numbers are.
+ */
+export function tuneMetrics(
+  abc: string,
+  params: AbcjsParams = {},
+): { sections: MeasureSection[] }[] {
+  /**
+   * ⚠️ **ONE SLOT, SO ONE TUNE.** `tuneMetrics` passes the STRING `"*"`, which
+   * `renderEngine` normalises to a single-slot array (`abc_tunebook.js:65-66`) — so a book
+   * of twelve tunes reports metrics for the FIRST, or for `startingTune` where one is
+   * given. Measured: abcjs returns 223 entries over 303 files, one apiece.
+   */
+  return renderAbc(["*"], abc, params).map((tune) => ({
+    sections: measureWidthsOf(tune.score, tune.lines),
+  }));
 }
 
 /**

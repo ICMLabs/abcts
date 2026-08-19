@@ -66,7 +66,7 @@ const PITCH_STEP_PX = STAFF_SPACE_PX / 2;
  * those in `tune.lines` as non-music lines instead. Without this filter a title shifted
  * every row after it by one and 50 tunes reported a different row count.
  */
-const VOICE_CHILD_TYPES: ReadonlySet<string> = new Set([
+export const VOICE_CHILD_TYPES: ReadonlySet<string> = new Set([
   "clef",
   "keySignature",
   "timeSignature",
