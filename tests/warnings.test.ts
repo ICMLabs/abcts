@@ -69,6 +69,9 @@ const PASSING: readonly string[] = [
   "repo/abcjs-parse-book_parser-05-a-tune0",
   "repo/abcjs-parse-book_parser-05-a-tune1",
   "repo/abcjs-parse-book_parser-06-a-tune0",
+  "repo/abcjs-synth-flattener-42-midi-gchord-ffffffff-tune0",
+  "repo/abcjs-visual-options-01-fonts-tune0",
+  "repo/abcts-keywarn-tune2",
 ];
 
 describe("tune.warnings — what a host shows", () => {

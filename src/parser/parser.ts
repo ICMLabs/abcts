@@ -2805,6 +2805,21 @@ class Parser {
         const font = boxable(type)
           ? parseFontSpec(fontDirective[2], ABC_FONT_DEFAULT_PT[type])
           : { ...parseFontSpec(fontDirective[2], ABC_FONT_DEFAULT_PT[type]), box: false }
+        /**
+         * …**AND abcjs SAYS SO OUT LOUD**: `warn("This font style doesn't support \"box\"",
+         * str, position)` where `str` is the directive's BODY and `position` is 0
+         * (`abc_parse_directive.js:230-234`, `:262-266`) — so the warning underlines the
+         * font's own first letter, not the word `box`. Measured on `visual-options-01-fonts`,
+         * which trips it seven times.
+         */
+        if (!boxable(type) && /(^|\s)box(\s|$)/.test(fontDirective[2]))
+          this.warn(
+            'font-box-unsupported',
+            `${type} does not support box`,
+            // The BODY's own start: it runs to the end of the directive, so `end` less
+            // its length is where it begins — `%%` and any space after it excluded.
+            sourceRange(end - fontDirective[0].length, end),
+          )
         builder.fonts[type] = font
         // The two that are also stamped PER ELEMENT, because they can change mid-tune and
         // a fixture does change them between music lines.
@@ -2951,6 +2966,20 @@ class Parser {
     const keywarn = /^keywarn\s+([01])\s*$/.exec(body)
     if (keywarn?.[1] !== undefined) {
       if (this.builder) this.builder.keywarn = keywarn[1] === '1'
+      return
+    }
+    /**
+     * …**AND ANYTHING ELSE AFTER `%%keywarn` IS A WARNING, NOT A SILENT NO-OP.** abcjs
+     * RETURNS a message from the directive parser — `'Directive ' + cmd + ' requires 0 or 1
+     * as a parameter.'` (`abc_parse_directive.js:941-946`) — and the caller warns with the
+     * whole `%%` line at column 2, which is where every returned message lands.
+     */
+    if (/^keywarn(\s|$)/.test(body)) {
+      this.warn(
+        'directive-parameter',
+        'keywarn requires 0 or 1',
+        sourceRange(start, end),
+      )
       return
     }
     const vskip = /^vskip\s+(-?\d+(?:\.\d+)?)\s*(cm|in|pt)?/.exec(body)
@@ -3112,6 +3141,22 @@ class Parser {
         .split(/\s+/)
         .filter((t) => t !== '')
         .map((t) => (/^-?\d+$/.test(t) ? Number.parseInt(t, 10) : t))
+      /**
+       * **A ONE-PARAMETER `%%MIDI` COMMAND WITH THE WRONG COUNT IS A WARNING**, and the
+       * text it points into is the REST OF THE STRING — `warn("Expected one parameter in
+       * MIDI " + midi_cmd, restOfString, 0)` (`abc_parse_directive.js:546-554`), which for
+       * a bare `%%MIDI gchord` is the word `gchord` alone, underlined at its first letter.
+       * The three string-parameter commands are abcjs's own list (`:480-484`).
+       */
+      if (
+        (cmd === 'gchord' || cmd === 'ptstress' || cmd === 'beatstring') &&
+        params.length !== 1
+      )
+        this.warn(
+          'midi-one-parameter',
+          `${cmd} expects one parameter`,
+          sourceRange(end - (midiDirective[0].length - 'MIDI '.length), end),
+        )
       // `%%MIDI bassprog 10 octave=-1` — the octave arrives as a NUMBER, not as the token.
       // abcjs's `midiCmdParam1Integer1OptionalString` arm strips `octave=`, parses what is
       // left and CLAMPS it to [-1, 3] (`abc_parse_directive.js:686-716`), so the flattener

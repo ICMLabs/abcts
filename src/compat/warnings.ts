@@ -112,7 +112,10 @@ const fileHeaderEnd = (abc: string): number => {
  */
 const AS_ABCJS: Record<
   string,
-  (diagnostic: Diagnostic, abc: string) => { message: string; column: number } | null
+  (
+    diagnostic: Diagnostic,
+    abc: string,
+  ) => { message: string; column: number; text?: string } | null
 > = {
   /**
    * `Unknown directive: <name>`, pointing at the character right after the `%%` —
@@ -120,6 +123,50 @@ const AS_ABCJS: Record<
    * (`abc_parse_directive.js`). A `%% example` therefore points at a SPACE and prints
    * `SPACE`.
    */
+  /**
+   * `This font style doesn't support "box"`, pointing at column 0 of the directive's BODY —
+   * `warn(…, str, position)` where `str` is the body and `position` is 0
+   * (`abc_parse_directive.js:230-234`). So the underlined character is the font's own first
+   * letter and the text carries no `%%`.
+   */
+  "font-box-unsupported": (diagnostic, abc) => ({
+    message: 'This font style doesn\'t support "box"',
+    column: 0,
+    text: abc
+      .substring(diagnostic.range?.start ?? 0, diagnostic.range?.end ?? 0)
+      .replace(/\r?\n.*$/s, ""),
+  }),
+  /**
+   * A message the DIRECTIVE PARSER returned — abcjs warns those with the whole `%%` line at
+   * column 2, the same place `Unknown directive` points (`abc_parse_directive.js`, and the
+   * caller that turns a returned string into a `warn`).
+   */
+  "directive-parameter": (diagnostic) => {
+    const name = /^(\S+)/.exec(diagnostic.message)?.[1];
+    return name === undefined
+      ? null
+      : {
+          message: `Directive ${name} requires 0 or 1 as a parameter.`,
+          column: 2,
+        };
+  },
+  /**
+   * `Expected one parameter in MIDI <cmd>`, pointing at column 0 of the REST OF THE STRING —
+   * the command and its arguments with the `%%MIDI ` stripped
+   * (`abc_parse_directive.js:546-554`).
+   */
+  "midi-one-parameter": (diagnostic, abc) => {
+    const cmd = /^(\S+)/.exec(diagnostic.message)?.[1];
+    return cmd === undefined
+      ? null
+      : {
+          message: `Expected one parameter in MIDI ${cmd}`,
+          column: 0,
+          text: abc
+            .substring(diagnostic.range?.start ?? 0, diagnostic.range?.end ?? 0)
+            .replace(/\r?\n.*$/s, ""),
+        };
+  },
   "unknown-directive": (diagnostic) => {
     const name = /%%\s*(\S+)/.exec(diagnostic.message)?.[1];
     return name === undefined
@@ -167,8 +214,15 @@ export function warningsOf(
     const as = AS_ABCJS[diagnostic.code]?.(diagnostic, abc);
     if (as === null || as === undefined) continue;
     const { index: lineIndex, start } = lineAt(abc, at, header ? 0 : from);
+    // …and the TEXT a warning points into is the site's, not always the source line — see
+    // the note at the top.
     out.push(
-      abcjsWarning(as.message, lineTextAt(abc, start), as.column, lineIndex),
+      abcjsWarning(
+        as.message,
+        as.text ?? lineTextAt(abc, start),
+        as.column,
+        lineIndex,
+      ),
     );
   }
   return out.length > 0 ? out : undefined;
