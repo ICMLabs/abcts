@@ -583,6 +583,26 @@ export interface Rest {
   readonly duration: Rational
   readonly notatedDuration: Rational
   /**
+   * **A STAND-IN, NOT SOMETHING ANYONE WROTE.** `resolveOverlays` fills the measures an `&`
+   * layer does not sing in with invisible rests — one summed rest for a measure on the
+   * layer's own line, one per note for a line back-filled from a later `&` — so that the
+   * layer is a VOICE for its whole line rather than a fragment (`core/overlays.ts`).
+   *
+   * It carries the span of the note or barline it stands in for, exactly as abcjs's does,
+   * which is why the projection cannot tell it from a written rest by its range alone and
+   * reads this flag instead.
+   */
+  readonly overlayPad?: boolean
+  /**
+   * The note this pad stands in for, when it is a BACK-FILL rather than a whole measure.
+   *
+   * abcjs's back-filled rest copies the note's `startChar`/`endChar` — and abcjs's spans are
+   * the TOKENIZER's, which swallow a note's trailing whitespace where our model's raw range
+   * does not. So the span a host must see is the PROJECTED one of the note this mirrors,
+   * not this rest's own; the reference is what makes that lookup possible.
+   */
+  readonly overlayMirrors?: MusicEvent
+  /**
    * Shared id across a beamed run — a rest INSIDE one is a member of it.
    *
    * `BeamElem.add` takes every element the group covers and only tracks `allrests`

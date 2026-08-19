@@ -21,6 +21,11 @@
  */
 
 import {
+  type OverlayElement,
+  type OverlayLine,
+  resolveOverlays,
+} from '../core/overlays.js'
+import {
   ABC_FONT_DEFAULT_PT,
   type AbcFontType,
   Accidental,
@@ -57,6 +62,7 @@ import {
   type RichText,
   ratEq,
   rational,
+  ratToNumber,
   ratLt,
   ratMul,
   type Score,
@@ -659,64 +665,163 @@ function shiftMeasure(measure: Measure, octaves: number): Measure {
 }
 
 /**
- * An `&` overlay is a VOICE, so it exists for the whole tune — not only where it sings.
+ * **AN `&` OVERLAY IS A VOICE, AND WHICH LINES IT EXISTS ON IS abcjs'S OWN ANSWER.**
  *
- * abcjs models it that way: for `C2 E2 | G2 &E2 B2 | A2 G2 |` its overlay voice is a
- * whole-measure invisible rest, then `E B`, then another whole-measure invisible rest.
- * We emitted just the two notes, so the tune had two fewer elements and `S5-directives`
- * failed a beam gate on LENGTH while every beam link in it matched.
+ * This runs `core/overlays.ts` — the very pass `tune.lines` resolves with, and the very one
+ * abcjs runs in `cleanUp` — over a line-structured view of the MODEL, so the renderer, the
+ * clock and the flattener lay out the same voices a host reads. All three already expand
+ * `measure.overlays` into a voice; what changed is what is IN it.
  *
- * Padding with an invisible rest changes nothing on the page — it draws nothing — but it
- * makes the overlay a voice rather than a fragment, which is what it is.
+ * ⚠️ **THE PADDING IS TWO DIFFERENT THINGS AND WE USED TO WRITE ONE.** On the layer's own
+ * line, a measure that does not sing gets ONE invisible rest of the measure's summed
+ * duration carrying the BARLINE's span (`tune-builder.js:572-575`); a line ABOVE one that
+ * sings is BACK-FILLED with one invisible rest PER NOTE, each carrying that note's own span
+ * (`:536-545`). A single per-measure rest with no span at all — what this used to write —
+ * is neither, and it read as a `startCharArray` of `[82,82,82]` against abcjs's `[82,85]`.
+ *
+ * ⚠️ **AND HOW MANY LAYERS A LINE HAS IS NOT THE TUNE'S MAXIMUM.** The back-fill's guard —
+ * `staff.voices.length < s.voices.length`, the CURRENT line's count against the earlier
+ * line's and taken BEFORE the new voice is pushed — is what stops a line already carrying
+ * its own layer from being back-filled by a later one. `synth-flattener-21` has five lines
+ * and its fourth carries ONE layer where the tune's maximum is two. That rule was
+ * re-derived wrong twice; this runs it instead of restating it.
+ *
+ * ponytail: ONE STAFF PER VOICE. abcjs back-fills a staff by copying EVERY voice on it, so
+ * a two-voice staff gains two voices per pass where this gains one each. Nothing in either
+ * corpus writes an `&` on a shared staff; the ranked tables will say so if anything does.
  */
-function padOverlays(measures: readonly Measure[], _meter: Meter | null): Measure[] {
-  const layers = Math.max(0, ...measures.map((m) => m.overlays.length))
-  if (layers === 0) return [...measures]
+const overlayElementFor = (event: MusicEvent): OverlayElement => {
+  const range = event.sourceRange
+  return {
+    el_type: 'note',
+    duration: ratToNumber(event.duration),
+    ...(range == null ? {} : { startChar: range.start, endChar: range.end }),
+    ...(event.type === 'rest' ? { rest: { type: event.kind } } : {}),
+    // `voiceUseful` keeps a voice whose REST carries a chord symbol, so it has to be seen.
+    ...(event.chordSymbol == null ? {} : { chord: [event.chordSymbol] }),
+    ref: event,
+  }
+}
 
-  return measures.map((measure) => {
-    if (measure.overlays.length === layers) return measure
-    // THE PAD IS THE MEASURE'S OWN DURATION, NOT THE METER'S. abcjs sums
-    // `durationThisBar` over the measure's notes — SPACERS EXCLUDED — and pushes one
-    // invisible rest of exactly that, `if (durationThisBar > 0)`
-    // (`tune-builder.js:572-575`). A pickup bar therefore pads to the pickup, not to a
-    // full measure: `synth-flattener-22`'s `B, |` padded to 1 where abcjs pads to 0.25,
-    // and the overlay voice then wanted a whole note's spring under a quarter note.
-    const filled = measure.events.reduce(
-      (sum, event) =>
-        event.type === 'rest' && event.kind === 'spacer'
-          ? sum
-          : rational(
-              sum.numerator * event.duration.denominator +
-                event.duration.numerator * sum.denominator,
-              sum.denominator * event.duration.denominator,
-            ),
-      rational(0, 1),
-    )
-    if (filled.numerator === 0) return measure
-    const padded = Array.from({ length: layers }, (_, i) => {
-      const existing = measure.overlays[i]
-      if (existing !== undefined && existing.length > 0) return existing
-      const rest: Rest = {
-        type: 'rest',
-        kind: 'invisible',
-        duration: filled,
-        notatedDuration: filled,
-        decorations: [],
-        decorationSourceRanges: [],
-        chordSymbol: null,
-        chordSymbolSourceRange: null,
-        chordFont: null,
-        annotations: [],
-        annotationSourceRanges: [],
-        graceNotes: [],
-        graceSlash: false,
-        tuplet: null,
-        measureCount: 0,
-        sourceRange: null,
+const invisibleRest = (
+  duration: Rational,
+  el: OverlayElement,
+  mirrors?: MusicEvent,
+): Rest => ({
+  type: 'rest',
+  kind: 'invisible',
+  overlayPad: true,
+  ...(mirrors === undefined ? {} : { overlayMirrors: mirrors }),
+  duration,
+  notatedDuration: duration,
+  decorations: [],
+  decorationSourceRanges: [],
+  chordSymbol: null,
+  chordSymbolSourceRange: null,
+  chordFont: null,
+  annotations: [],
+  annotationSourceRanges: [],
+  graceNotes: [],
+  graceSlash: false,
+  tuplet: null,
+  measureCount: 0,
+  sourceRange:
+    el.startChar === undefined || el.endChar === undefined
+      ? null
+      : { start: el.startChar, end: el.endChar },
+})
+
+/** The measure's own sounding length — abcjs's `durationThisBar`, SPACERS EXCLUDED. */
+const soundingLength = (measure: Measure): Rational =>
+  measure.events.reduce(
+    (sum, event) =>
+      event.type === 'rest' && event.kind === 'spacer'
+        ? sum
+        : rational(
+            sum.numerator * event.duration.denominator +
+              event.duration.numerator * sum.denominator,
+            sum.denominator * event.duration.denominator,
+          ),
+    rational(0, 1),
+  )
+
+function padOverlays(measures: readonly Measure[], _meter: Meter | null): Measure[] {
+  if (!measures.some((m) => m.overlays.length > 0)) return [...measures]
+
+  // ── abcjs's own view: one LINE per system, one staff, one voice ──
+  const lines: OverlayLine[] = []
+  const lineMeasures: number[][] = []
+  const measureOfBar = new Map<OverlayElement, number>()
+  let voice: OverlayElement[] = []
+  measures.forEach((measure, index) => {
+    if (index === 0 || measure.startsSystem) {
+      voice = []
+      lines.push({ staff: [{ voices: [voice] }] })
+      lineMeasures.push([])
+    }
+    lineMeasures[lineMeasures.length - 1]?.push(index)
+    for (const event of measure.events) voice.push(overlayElementFor(event))
+    for (const layer of measure.overlays) {
+      voice.push({ el_type: 'overlay' })
+      for (const event of layer) voice.push(overlayElementFor(event))
+    }
+    const range = measure.closingBarlineSourceRange
+    const bar: OverlayElement = {
+      el_type: 'bar',
+      ...(range == null ? {} : { startChar: range.start, endChar: range.end }),
+    }
+    measureOfBar.set(bar, index)
+    voice.push(bar)
+  })
+
+  resolveOverlays(lines)
+
+  // ── Read the layers back. A chunk NAMES its measure rather than being counted into it:
+  // the bars in a layer voice are the very objects the main voice holds.
+  const resolved: MusicEvent[][][] = measures.map(() => [])
+  lines.forEach((line, l) => {
+    const voices = line.staff?.[0]?.voices ?? []
+    const indices = lineMeasures[l] ?? []
+    for (let j = 1; j < voices.length; j += 1) {
+      for (const index of indices) {
+        const rows = resolved[index]
+        if (rows !== undefined) rows[j - 1] = []
       }
-      return [rest]
-    })
-    return { ...measure, overlays: padded }
+      let chunk: MusicEvent[] = []
+      let at = 0
+      const put = (index: number | undefined): void => {
+        const rows = index === undefined ? undefined : resolved[index]
+        if (rows !== undefined) rows[j - 1] = chunk
+        chunk = []
+      }
+      for (const el of voices[j] ?? []) {
+        if (el.el_type === 'bar') {
+          put(measureOfBar.get(el) ?? indices[at])
+          at += 1
+          continue
+        }
+        if (el.el_type !== 'note') continue
+        const pad = el.pad as MusicEvent | undefined
+        const ref = el.ref as MusicEvent | undefined
+        if (pad !== undefined) chunk.push(invisibleRest(pad.duration, el, pad))
+        else if (ref !== undefined) chunk.push(ref)
+        else {
+          const measure = measures[indices[at] ?? 0]
+          chunk.push(
+            invisibleRest(measure === undefined ? rational(0, 1) : soundingLength(measure), el),
+          )
+        }
+      }
+      // A line whose last measure has no closing barline leaves a chunk with no bar to name
+      // it; it belongs to that measure.
+      if (chunk.length > 0) put(indices[indices.length - 1])
+    }
+  })
+
+  return measures.map((measure, index) => {
+    const layers = resolved[index] ?? []
+    if (layers.length === 0 && measure.overlays.length === 0) return measure
+    return { ...measure, overlays: layers }
   })
 }
 

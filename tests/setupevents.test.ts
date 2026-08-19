@@ -223,7 +223,7 @@ describe("tune.setupEvents — every column of the row", () => {
   /** A floor, not a target — it moves up as the geometry lands and must never move down. */
   it("the whole corpus agrees on at least the rows it did", () => {
     const agree = table.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(3339);
+    expect(agree).toBeGreaterThanOrEqual(3366);
   });
 
   /**

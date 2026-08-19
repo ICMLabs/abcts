@@ -11,7 +11,7 @@ import type {
   Tempo,
 } from "../core/model.js";
 import { defaultClef, plainText, ratToNumber, stepIndex } from "../core/model.js";
-import { resolveOverlays } from "./overlays.js";
+import { resolveOverlays, type OverlayLine } from "../core/overlays.js";
 import { clefElement, keyElement, meterElement } from "./selectables.js";
 
 /**
@@ -993,14 +993,21 @@ function voiceElements(
      */
     measure.overlays.forEach((layer) => {
       /**
-       * **ONLY THE LAYER ACTUALLY WRITTEN IN THIS MEASURE IS AN `&`.** Our parser PADS
-       * every measure of the tune to the tune's overlay depth with rangeless invisible
-       * rests, so that the renderer can tile them; abcjs's stream has the `&` and its own
-       * notes and NOTHING else, and generates its padding inside `resolveOverlays` from
-       * `durationThisBar`. Emitting the padding here made every measure look like an
+       * **ONLY THE LAYER ACTUALLY WRITTEN IN THIS MEASURE IS AN `&`.** The parser resolves
+       * the model's overlays through the SAME pass this projection runs (`padOverlays` →
+       * `core/overlays.ts`), so a measure the layer does not sing in holds invisible rests
+       * standing in for notes and barlines; abcjs's stream has the `&` and its own notes
+       * and NOTHING else. Emitting the padding here made every measure look like an
        * overlay and snipped the first line's own notes out of it.
+       *
+       * ⚠️ **AND A PAD CANNOT BE TOLD FROM A WRITTEN REST BY ITS RANGE** — it carries the
+       * span of whatever it stands in for, exactly as abcjs's does — so `overlayPad` is
+       * what this reads. It used to test for a null range, which was true only while the
+       * padding was spanless and wrong.
        */
-      const written = layer.filter((e) => e.sourceRange != null);
+      const written = layer.filter(
+        (e) => e.sourceRange != null && !(e.type === "rest" && e.overlayPad === true),
+      );
       const first = written[0]?.sourceRange?.start;
       if (first === undefined) return;
       const marker: AbcElement = { el_type: "overlay" };
@@ -1717,7 +1724,7 @@ export function projectionOf(
    * It moves each layer into a voice of its own, back-fills every EARLIER line with
    * invisible-rest copies, and leaves three `stem` elements per snip behind.
    */
-  resolveOverlays(lines);
+  resolveOverlays(lines as unknown as OverlayLine[]);
   // …and the hoist reads the FIRST MUSIC line, which is no longer line 0 once a subtitle
   // or a `%%text` stands above it.
   const firstStaff = lines.find((l) => l.staff !== undefined);

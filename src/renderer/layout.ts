@@ -11774,6 +11774,29 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     const leftEdge = leftEdgeFor(systemIndex)
 
     /**
+     * **AN `&` LAYER THAT SINGS NOWHERE ON THIS LINE IS NOT A VOICE ON IT.**
+     * `resolveOverlays` pushes a layer onto the lines it REACHES — its own, and the ones
+     * above it that the back-fill's guard admits — so `synth-flattener-21` has three voices
+     * on its first three lines and TWO on its last two, where the tune's maximum is three
+     * throughout (`core/overlays.ts`). Ours holds a voice for the whole tune, so the layer
+     * is dropped per SYSTEM instead: it contributes no advances to the solve and no part to
+     * the merge.
+     *
+     * ⚠️ **AN EMPTY PART IS NOT A FREE ONE.** Dropping it from the MERGE alone left it in
+     * the solve, where a voice with no staff-extra of its own still moved the line's left
+     * edge — that fixture's last two clefs stood at 20 against abcjs's 15, and the whole
+     * corpus differed by exactly those five pixels (byte 25862 of 42859).
+     */
+    const overlaySilentHere = (v: number): boolean => {
+      const plan = plans[v]
+      if (plan === undefined || voices[v]?.id.includes('$') !== true) return false
+      for (let i = span.start; i <= span.end; i += 1)
+        if ((plan.measures[i]?.events.length ?? 0) > 0) return false
+      return true
+    }
+
+
+    /**
      * Every element of one voice on this line, prefix included, in cursor order.
      *
      * ONLY THE FIRST VOICE OF A STAFF CARRIES THE STAFF-EXTRAS. abcjs hangs the clef, key
@@ -11810,6 +11833,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         : blank,
     )
     const lines = plans.map((plan, v) => {
+      if (overlaySilentHere(v)) return { items: [] as Advance[], slots: [] as { block: number; index: number }[] }
       const items: Advance[] = [...(heads[v]?.advances ?? [])]
       /** Where item `k` belongs: the prefix (`block: -1`) or element `index` of `block`. */
       const slots: { block: number; index: number }[] = (heads[v]?.advances ?? []).map(
@@ -12846,9 +12870,16 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
      * assumed.
      */
     const voicesHere = voicesOfStaff.filter((members) =>
-      members.some((v) => (plans[v]?.measures.length ?? 0) > span.start),
+      members.some(
+        (v) => (plans[v]?.measures.length ?? 0) > span.start && !overlaySilentHere(v),
+      ),
     )
-    const merged = voicesHere.map((members) => {
+    const merged = voicesHere.map((staffMembers) => {
+      // ⚠️ **THE ARRAY ITSELF IS AN IDENTITY** — `stavesHere` recovers a staff by
+      // `voicesOfStaff.indexOf(members)` — so the silent layers are dropped from a COPY
+      // here rather than from the list above. Filtering there cost eleven fixtures their
+      // brace, every one of them a tune with no `&` in it at all.
+      const members = staffMembers.filter((v) => !overlaySilentHere(v))
       const parts = anchorVoltas(
         anchorBelowStaff(
           anchorAboveStaff(

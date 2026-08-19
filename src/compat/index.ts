@@ -71,6 +71,7 @@ import {
   tempoElement,
 } from "./lines.js";
 import {
+  abcelemOf,
   findSelectable,
   keyElement,
   type Selectable,
@@ -1032,13 +1033,28 @@ export function renderAbc(
                   });
                 const source = element.sourceEvent;
                 if (source === undefined || cache.has(source)) continue;
-                const abcelem = index.get(source);
+                const abcelem = abcelemOf(element, projection());
+                /**
+                 * **AN OVERLAY PAD BORROWS ITS SPAN, EXACTLY AS abcjs'S DOES.** A layer's
+                 * back-filled rest is a copy of a note "of the same duration and the same
+                 * `startChar`/`endChar`" (`tune-builder.js:541-556`), and a whole-measure
+                 * one takes the BARLINE's. Both are real elements of abcjs's own
+                 * `tune.lines`; ours are the model's, and the projection resolves its own
+                 * copies separately — so the span comes from the element the pad MIRRORS,
+                 * and falls back to the pad's own range, which for the measure case is the
+                 * barline's already.
+                 */
+                const mirror =
+                  abcelem === undefined && source.type === "rest"
+                    ? index.get(source.overlayMirrors as MusicEvent)
+                    : undefined;
                 cache.set(source, {
                   ...geometry,
                   left: element.x,
                   width: element.rodWidth ?? element.width,
-                  startChar: abcelem?.startChar ?? null,
-                  endChar: abcelem?.endChar ?? null,
+                  startChar:
+                    abcelem?.startChar ?? mirror?.startChar ?? source.sourceRange?.start ?? null,
+                  endChar: abcelem?.endChar ?? mirror?.endChar ?? source.sourceRange?.end ?? null,
                   ...(abcelem === undefined ? {} : { abcelem }),
                   ...(abcelem?.midiPitches === undefined
                     ? {}

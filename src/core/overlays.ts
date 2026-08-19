@@ -1,5 +1,3 @@
-import type { AbcElement, AbcLine, AbcStaff } from "./lines.js";
-
 /**
  * **`resolveOverlays` — WHAT AN `&` ACTUALLY IS IN `tune.lines`.**
  *
@@ -33,7 +31,37 @@ import type { AbcElement, AbcLine, AbcStaff } from "./lines.js";
  * pass resolves one `&` per voice, so `B4 & d4 & f4` takes two.
  */
 
-type MutableStaff = { voices: AbcElement[][] } & Record<string, unknown>;
+/**
+ * **THE ELEMENT THIS ALGORITHM NEEDS, AND NOTHING MORE.** It lives in `core` rather than in
+ * `compat` because BOTH surfaces run it: the `tune.lines` projection resolves the elements a
+ * host reads, and the parser resolves the MODEL the renderer, the clock and the flattener
+ * all lay out — and a second copy of this walk would be a second thing to drift.
+ *
+ * `ref` and `pad` are OPAQUE to it. The model side hangs its own event on `ref`, and the
+ * back-fill copies that reference across as `pad` so the reader can tell a rest STANDING IN
+ * for a note from a note. The projection sets neither, so nothing about its answer changes.
+ */
+export interface OverlayElement {
+  el_type: string;
+  duration?: number | undefined;
+  startChar?: number | undefined;
+  endChar?: number | undefined;
+  rest?: { type: string } | undefined;
+  ref?: unknown;
+  pad?: unknown;
+  [key: string]: unknown;
+}
+
+export interface OverlayStaff {
+  voices: OverlayElement[][];
+}
+
+export interface OverlayLine {
+  staff?: OverlayStaff[];
+}
+
+type AbcElement = OverlayElement;
+type MutableStaff = OverlayStaff & Record<string, unknown>;
 type MutableLine = { staff?: MutableStaff[] } & Record<string, unknown>;
 
 /** `findLastBar` — and its `i > 0` guard is load-bearing (`tune-builder.js:626-631`). */
@@ -91,6 +119,9 @@ function resolvePass(lines: MutableLine[]): boolean {
                         rest: { type: "invisible" },
                         ...(ev.startChar === undefined ? {} : { startChar: ev.startChar }),
                         ...(ev.endChar === undefined ? {} : { endChar: ev.endChar }),
+                        // The model side's own reference, carried so the reader can tell
+                        // a stand-in from a note. Undefined for the projection.
+                        ...(ev.ref === undefined ? {} : { pad: ev.ref }),
                       });
                   }
                   s.voices.push(nv);
@@ -191,8 +222,8 @@ const deleteVoice = (lines: readonly MutableLine[], voiceNum: number): void => {
       if (voiceNum < staff.voices.length) staff.voices.splice(voiceNum, 1);
 };
 
-/** Resolve every `&` in the projected lines, in place. */
-export function resolveOverlays(input: readonly AbcLine[]): void {
+/** Resolve every `&` in the lines, in place. */
+export function resolveOverlays(input: readonly OverlayLine[]): void {
   const lines = input as unknown as MutableLine[];
   let hadOverlays = false;
   while (resolvePass(lines)) hadOverlays = true;
@@ -205,5 +236,3 @@ export function resolveOverlays(input: readonly AbcLine[]): void {
     else voiceNum += 1;
   }
 }
-
-export type { AbcStaff };

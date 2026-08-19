@@ -5,7 +5,7 @@ import type {
   MusicEvent,
   Pitch,
 } from "../core/model.js";
-import { keyFifths, stepIndex } from "../core/model.js";
+import { keyFifths, ratToNumber, stepIndex } from "../core/model.js";
 import type { Layout, LayoutElement } from "../renderer/layout.js";
 import type { SelectableRecord } from "../renderer/svg.js";
 import {
@@ -294,7 +294,36 @@ export function abcelemOf(
     case "note":
     case "rest": {
       const event = element.sourceEvent;
-      return event === undefined ? undefined : index.byEvent.get(event);
+      if (event === undefined) return undefined;
+      const found = index.byEvent.get(event);
+      if (found !== undefined) return found;
+      /**
+       * **AN OVERLAY PAD IS AN ELEMENT OF abcjs'S OWN `tune.lines`, SO IT NEEDS ONE HERE.**
+       * `resolveOverlays` fills a layer's silent measures with invisible rests — one per
+       * note when a line is back-filled, one per measure otherwise — and they carry the
+       * span of whatever they stand in for (`tune-builder.js:541-556, 572-575`). Both
+       * sides of this library resolve them, but SEPARATELY: the model's are what the
+       * renderer lays out and the projection's are what a host reads, and no identity
+       * joins the two. So the element is synthesized here, with the projected span of the
+       * note it mirrors — the model's own range is the RAW one, which stops short of the
+       * trailing whitespace abcjs's tokenizer swallows.
+       */
+      if (event.type === "rest" && event.overlayPad === true) {
+        const mirror =
+          event.overlayMirrors === undefined
+            ? undefined
+            : index.byEvent.get(event.overlayMirrors);
+        const start = mirror?.startChar ?? event.sourceRange?.start;
+        const end = mirror?.endChar ?? event.sourceRange?.end;
+        return {
+          el_type: "note",
+          rest: { type: "invisible" },
+          duration: ratToNumber(event.duration),
+          ...(start === undefined ? {} : { startChar: start }),
+          ...(end === undefined ? {} : { endChar: end }),
+        };
+      }
+      return undefined;
     }
     // A BARLINE, a TEMPO and a body `P:` are all stream elements the projection already
     // built; each joins by where it was WRITTEN.
