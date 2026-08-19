@@ -158,6 +158,7 @@ const PASSING: readonly string[] = [
   "abcjs-synth-timing-07-skip-ties-crash",
   "abcjs-synth-timing-08-tie-repeat-crash",
   "abcjs-synth-timing-09-f-c-2d-2-e-4-g-6-a-2-g-4-e-4",
+  "abcjs-synth-timing-10-stretchlast-1",
   "abcjs-synth-timing-11-stretchlast-1",
   "abcjs-synth-timing-12-stretchlast-1",
   "abcjs-visual-decorations-01-score-s-a-b",

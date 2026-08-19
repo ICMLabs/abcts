@@ -8495,6 +8495,25 @@ function curveReserves(
     if (anchor.event.tiedToNext || anchor.tiedHeads?.some(Boolean) === true) {
       const next = anchors[i + 1]
       if (next !== undefined) for (const [a, b] of tiePairs(anchor, next)) add(a, b, 'tie')
+      /**
+       * **…AND A TIE LEAVING THE SYSTEM RESERVES OFF ITS ONE ANCHOR**, the same way an
+       * unclosed slur does. abcjs splits such a tie in two and puts BOTH halves on their
+       * voice's `otherchildren`; the outgoing half has a null `anchor2`, so `calcTieY`
+       * falls to `startY = endY = anchor1.pitch` and `getYBounds` takes the flat 3 off it
+       * (`tie-element.js:203-206`, `:240-252`). That box is not the INK box `setEndAnchor`
+       * builds — which really does cost nothing here — it is the one
+       * `setUpperAndLowerVoiceElements` mins into `voice.staff.bottom`
+       * (`layout/set-upper-and-lower-elements.js:140-146`).
+       *
+       * MEASURED on `synth-timing-10-stretchlast-1`, whose `D4-` ties across the break:
+       * abcjs reports that system's `staff.bottom` as -2 where its VOICE's is -1.0493, and
+       * `1 - 3` is exactly the difference. Ours reserved nothing and reported the voice's.
+       */
+      else {
+        const above = curveIsAbove(anchor, anchor, voicePos, 'tie')
+        const y = endAt(anchor, above, true)
+        reserves.push(above ? { top: y - three, bottom: y } : { top: y, bottom: y + three })
+      }
     }
   })
   // AN UNCLOSED SLUR STILL RESERVES. `voice.addOther(this)` runs where the `(` is seen, so
