@@ -227,6 +227,29 @@ const AS_ABCJS: Record<
           text,
         };
   },
+  /** `Can't nest triplets`, pointing at the inner `(` (`abc_parse_music.js:329-331`). */
+  "nested-triplet": (diagnostic, abc) => {
+    const at = diagnostic.range?.start ?? 0;
+    let start = 0;
+    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    return { message: "Can't nest triplets", column: at - start };
+  },
+  /**
+   * `Unknown character '<c>' while parsing grace note`, at the GROUP's own start — the same
+   * column as the rests beside it (`abc_parse_music.js:719-725`).
+   */
+  "grace-character": (diagnostic, abc) => {
+    const c = /'(.)'/.exec(diagnostic.message)?.[1];
+    const at = diagnostic.range?.start ?? 0;
+    let start = 0;
+    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    return c === undefined
+      ? null
+      : {
+          message: `Unknown character '${c}' while parsing grace note`,
+          column: at - start,
+        };
+  },
   "unknown-directive": (diagnostic) => {
     const name = /%%\s*(\S+)/.exec(diagnostic.message)?.[1];
     return name === undefined

@@ -3942,10 +3942,26 @@ class Parser {
             if (isStrict(this.mode)) {
               // …and those characters belong to NOTHING, not to the note after them:
               // `getCoreNote` returned null and abcjs re-read the letter alone.
-              if (accidentalStart !== null && chars > 1)
-                builder.unreadable.push(
-                  sourceRange(accidentalStart, (tokens[i] as Token | undefined)?.start ?? accidentalStart),
-                )
+              if (accidentalStart !== null && chars > 1) {
+                const upTo = (tokens[i] as Token | undefined)?.start ?? accidentalStart
+                builder.unreadable.push(sourceRange(accidentalStart, upTo))
+                /**
+                 * …**AND abcjs WARNS ONCE PER CHARACTER.** The note is abandoned and the
+                 * iteration re-reads from the accidental, so each of `^`, `3`, `/`, `2`
+                 * reaches the `if (i === startI)` arm on its own
+                 * (`abc_parse_music.js:579-581`). `S3-note-syntax` tune 1 raises four for
+                 * `^3/2G` and eight for the pair of them.
+                 */
+                for (let at = accidentalStart; at < upTo; at += 1) {
+                  const ch = this.src[at]
+                  if (ch !== ' ' && ch !== '`')
+                    this.warn(
+                      'unknown-character',
+                      'unknown character ignored',
+                      sourceRange(at, at + 1),
+                    )
+                }
+              }
               accidentalStart = null
             }
           }
@@ -4273,6 +4289,19 @@ class Parser {
               sourceRange(token.start, token.start + token.length),
             )
           const grace = parseGracePitches(inner)
+          /**
+           * …**AND EVERY OTHER CHARACTER IN THE GROUP IS AN ERROR, ONE WARNING EACH**, at
+           * the GROUP's own start like the rests above — `warn("Unknown character '" +
+           * gra[1][ii] + "' while parsing grace note", line, i)`
+           * (`abc_parse_music.js:719-725`). `{[ceg][gc]}` raises four: the two brackets of
+           * each chord.
+           */
+          for (const at of grace.unparsed)
+            this.warn(
+              'grace-character',
+              `unknown character '${inner[at] ?? ''}' in a grace group`,
+              sourceRange(token.start, token.start + token.length),
+            )
           pendingGrace = grace.pitches
           pendingGraceSlash = grace.slash
           i++
@@ -4302,7 +4331,17 @@ class Parser {
 
           // A nested `(3` inside an unfinished group is swallowed: `(3:2:6(3GGGA2Bc` is
           // one 6-note group, matching abcjs. The outer group keeps running.
-          if (tupletRemaining > 0) break
+          //
+          // …**AND abcjs SAYS SO**: `if (tripletNotesLeft > 0) warn("Can't nest triplets",
+          // line, i)` (`abc_parse_music.js:329-331`), pointing at the inner `(`.
+          if (tupletRemaining > 0) {
+            this.warn(
+              'nested-triplet',
+              "can't nest triplets",
+              sourceRange(token.start, token.start + 1),
+            )
+            break
+          }
 
           const p = Number.parseInt(spec[1], 10)
           const compound = builder.meter ? isCompoundMeter(builder.meter) : false
@@ -5046,13 +5085,25 @@ function graceLength(text: string): Rational {
   return denominator === 0 ? rational(numerator) : rational(numerator, denominator)
 }
 
-function parseGracePitches(raw: string): { pitches: GracePitch[]; slash: boolean } {
+function parseGracePitches(raw: string): {
+  pitches: GracePitch[]
+  slash: boolean
+  /**
+   * Characters inside the group that are neither a note, a rest nor a space — abcjs's
+   * "We shouldn't get anything but notes or a space here, so report an error"
+   * (`abc_parse_music.js:719-725`). Indices are into `raw`, so the caller can name each
+   * character; a `[ceg]` chord contributes its two brackets.
+   */
+  unparsed: number[]
+} {
   let text = raw
   let slash = false
   if (text.startsWith('/')) {
     slash = true
     text = text.slice(1)
   }
+  const offset = raw.length - text.length
+  const unparsed: number[] = []
   const pitches: GracePitch[] = []
   let i = 0
   while (i < text.length) {
@@ -5063,6 +5114,10 @@ function parseGracePitches(raw: string): { pitches: GracePitch[]; slash: boolean
     }
     const letter = text[i]
     if (!letter || !/[a-gA-G]/.test(letter)) {
+      // A SPACE ends a beam rather than erring, and a REST has its own message — see the
+      // `grace-rest` warning at the call site.
+      if (letter !== undefined && letter !== ' ' && !/[zx]/.test(letter))
+        unparsed.push(offset + i)
       i++
       continue
     }
@@ -5086,7 +5141,7 @@ function parseGracePitches(raw: string): { pitches: GracePitch[]; slash: boolean
       length: graceLength(text.slice(lengthStart, i)),
     })
   }
-  return { pitches, slash }
+  return { pitches, slash, unparsed }
 }
 
 /**
