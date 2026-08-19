@@ -272,6 +272,20 @@ export interface ProjectionIndex {
  * side; the ten `wrapSvgEl` sites are the other half of `selection-multiple`. Both are in
  * `Docs/HANDOFF-2026-08-16.md`.
  */
+export /**
+ * **A PREFIX ELEMENT OWNS CHARACTERS ONLY WHEN A MID-TUNE FIELD WROTE IT.** The clef, key
+ * and meter reprinted at the head of a system come off the STAFF and carry no span at all;
+ * the ones a body `K:`, `[K:]` or `M:` puts in the stream carry the field's own
+ * (`abc_parse_header.js:508-509`). See `layoutMeasure`'s `trailingClefRange`.
+ */
+const withSpan = (
+  element: AbcElement,
+  range: { start: number; end: number } | undefined,
+): AbcElement =>
+  range === undefined
+    ? element
+    : { ...element, startChar: range.start, endChar: range.end };
+
 export function abcelemOf(
   element: LayoutElement,
   index: ProjectionIndex,
@@ -299,17 +313,14 @@ export function abcelemOf(
     case "clef":
       return element.sourceClef === undefined
         ? undefined
-        : element.sourceRange === undefined
-          ? clefElement(element.sourceClef)
-          : {
-              ...clefElement(element.sourceClef),
-              startChar: element.sourceRange.start,
-              endChar: element.sourceRange.end,
-            };
+        : withSpan(clefElement(element.sourceClef), element.sourceRange);
     case "keySignature":
       return element.sourceKey === undefined || element.sourceClef === undefined
         ? undefined
-        : keyElement(element.sourceKey, element.sourceClef);
+        : withSpan(
+            keyElement(element.sourceKey, element.sourceClef),
+            element.sourceRange,
+          );
     // (was: a KEY SIGNATURE is measured and NOT built. Its shape is
     // `{accidentals: [{acc, note, verticalPos}], root, acc, mode}` and the mode is the
     // EMPTY STRING for major — but `note` is the accidental's own written name AT THE
@@ -335,7 +346,7 @@ export function abcelemOf(
     case "timeSignature":
       return element.sourceMeter === undefined
         ? undefined
-        : meterElement(element.sourceMeter);
+        : withSpan(meterElement(element.sourceMeter), element.sourceRange);
     default:
       return undefined;
   }

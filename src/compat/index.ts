@@ -92,6 +92,11 @@ import { EngraverController, Parse } from "./engraver.js";
 import { strTranspose as transposeString } from "../str/transpose.js";
 import { STAFF_SPACE_PX, UNIT_PX } from "../renderer/abcjs-constants.js";
 export { setGlyph } from "../renderer/set-glyph.js";
+export type {
+  AbsoluteElementLike,
+  TimingEvent,
+  VoiceElementRow,
+} from "./voices-array.js";
 /**
  * The textarea binding — `Editor` and the `EditArea` it wraps one in. Exported from
  * here because that is where abcjs exports them from, and because `Editor` renders
@@ -120,6 +125,13 @@ import {
   type HighlightPaper,
   rangeHighlighter,
 } from "./range-highlight.js";
+import {
+  type AbsoluteElementLike,
+  addElementToEvents,
+  makeVoicesArrayOf,
+  type TimingEvent,
+  type VoiceElementRow,
+} from "./voices-array.js";
 
 /**
  * abcjs's SCREEN padding — `top/left/right/bottom = 15` (`write/renderer.js:69-72`), where
@@ -701,6 +713,25 @@ export interface TuneObject {
   };
   readonly getSelectableArray: () => readonly Selectable[];
   readonly findSelectableElement: (target: unknown) => unknown;
+
+  /**
+   * abcjs's LAYOUT elements, handed out — `{top, height, line, measureNumber, elem}` per
+   * voice, and the step that turns one of those rows into a timing event. See
+   * `voices-array.ts`; `setupEvents` is the loop around the two.
+   */
+  readonly makeVoicesArray: () => VoiceElementRow[][];
+  readonly addElementToEvents: (
+    eventHash: Record<string, TimingEvent>,
+    element: AbsoluteElementLike,
+    voiceTimeMilliseconds: number,
+    top: number,
+    height: number,
+    line: number,
+    measureNumber: number,
+    timeDivider: number,
+    isTiedState: number | undefined,
+    nextIsBar: boolean,
+  ) => { isTiedState: number | undefined; duration: number; nextIsBar?: boolean };
 }
 
 /** A div, an id, `"*"` for a headless slot, or nothing (`abc_tunebook.js:76-82`). */
@@ -1202,6 +1233,17 @@ export function renderAbc(
       getSelectableArray: () => selectables(),
       findSelectableElement: (target: unknown) =>
         findSelectable(selectables(), target),
+
+      /**
+       * **LAID OUT AGAIN RATHER THAN RETAINED**, like every other projection here — see
+       * `laidOut`. `tune.lines` is asked for first because the row's `line` is an index
+       * into it.
+       */
+      makeVoicesArray: (): VoiceElementRow[][] => {
+        selectables();
+        return makeVoicesArrayOf(laidOut(), projection(), lineCache ?? []);
+      },
+      addElementToEvents,
     };
   };
 

@@ -1499,6 +1499,13 @@ export interface LayoutElement {
   /** The `getMinWidth` half of `rod`, where the two are a sum — see `Advance.width`. */
   readonly rodWidth?: number
   /**
+   * abcjs's `getMinWidth(child)` when it is NOT the drawn ink — which is a BARLINE and
+   * only a barline. `createBarLine` gives a thin bar a `RelativeElement` of width 1 and
+   * paints a 0.6px rect (`ENGRAVE.barLayoutWidth`), so a host reading `elem.w` off
+   * `makeVoicesArray` is told 1. Set where `barWidthOf` is spent, so the two cannot drift.
+   */
+  readonly minWidth?: number
+  /**
    * abcjs's `roomtaken` AS IT STOOD WHEN `createDecoration` WAS CALLED — the accidental
    * columns plus the graces, with the double-count `roomAfterGraces` reproduces. Only
    * `!slide!` reads it: its two blanks hang at `-roomtaken - 15` and `-roomtaken - 5` off
@@ -9855,6 +9862,8 @@ function layoutMeasure(
    * Measured on `visual-selection-03`: `start 37, end 54`, exactly `K:C clef=treble+8`.
    */
   trailingClefRange: SourceRange | null = null,
+  /** Where the `K:` that carried `trailingKey` was written — see `trailingClefRange`. */
+  trailingKeyRange: SourceRange | null = null,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
   /**
@@ -9938,7 +9947,13 @@ function layoutMeasure(
       clef,
     )
     if (change === null) return
-    elements.push(change)
+    // A MID-TUNE `K:` OWNS ITS FIELD'S CHARACTERS, exactly as its clef does — see
+    // `trailingClefRange`.
+    elements.push(
+      measure.keyChangeSourceRange == null
+        ? change
+        : { ...change, sourceRange: measure.keyChangeSourceRange },
+    )
     fixed(change.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap, 'other', 0, change.width)
     x += change.width + ENGRAVE.prefixGap
   }
@@ -10000,10 +10015,10 @@ function layoutMeasure(
         ? withMarks
         : { ...withMarks, texts: [...withMarks.texts, ...chordTexts] }
     openingBarIndex = elements.length
-    elements.push(bar)
     // `addCentered` gives a barline carrying a chord `w = max(w, chordWidth / 2)`, so the
     // width is one max and the `minspacing` is the separate sum below.
     const openW = Math.max(barWidthOf(measure.openingBarline, bar, strict), barSpan.right)
+    elements.push({ ...bar, minWidth: openW })
     const openGap = ENGRAVE.prefixGap + endingRoom(measure.volta)
     fixed(
       openW + openGap,
@@ -10045,17 +10060,22 @@ function layoutMeasure(
    * `Measure.meterChanges`; `drawMeterChange` remains the whole path when a measure
    * carries one, which is every measure in both corpora but this fixture's.
    */
-  const emitMeter = (m: Meter | null): void => {
+  const emitMeter = (m: Meter | null, range?: SourceRange | null): void => {
     if (m == null) return
     const el = layoutMeter(x, m, strict)
-    elements.push(el)
+    // …and so does an INLINE `[M:]`. **A STANDALONE `M:` LINE OWNS NOTHING**, which is
+    // not the asymmetry it looks: abcjs's standalone meter is set on the STAFF and only an
+    // inline one is `appendStartingElement`'d into the stream, where a standalone `K:` —
+    // clef and all — goes into the stream either way. Measured on `synth-flattener-38`,
+    // twelve rows of `M:` lines whose time signatures abcjs reports with no characters.
+    elements.push(range == null ? el : { ...el, sourceRange: range })
     fixed(el.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap, 'other', 0, el.width)
     x += el.width + ENGRAVE.prefixGap
   }
   /** The extra ones — index 0 is `drawMeterChange`'s, wherever that put it. */
   const extraMeters = (measure.meterChanges ?? []).slice(1)
   const drawMetersBefore = (eventIndex: number): void => {
-    for (const m of extraMeters) if (m.at === eventIndex) emitMeter(m.meter)
+    for (const m of extraMeters) if (m.at === eventIndex) emitMeter(m.meter, m.range)
   }
   const drawMeterChange = (): void => {
     if (measure.meterChange == null) return
@@ -10082,7 +10102,14 @@ function layoutMeasure(
     ) {
       return
     }
-    emitMeter(measure.meterChanges === undefined ? measure.meterChange : measure.meterChanges[0]?.meter ?? null)
+    emitMeter(
+      measure.meterChanges === undefined ? measure.meterChange : measure.meterChanges[0]?.meter ?? null,
+      measure.meterChangeStandalone === true
+        ? null
+        : measure.meterChanges === undefined
+          ? measure.meterChangeSourceRange
+          : measure.meterChanges[0]?.range ?? null,
+    )
   }
   /**
    * **A `P:` LABEL COMES AFTER THE CLEF, KEY AND METER — AND BEFORE THE BARLINE.**
@@ -10453,8 +10480,8 @@ function layoutMeasure(
       barChordTexts.length === 0
         ? numbered
         : { ...numbered, texts: [...numbered.texts, ...barChordTexts] }
-    elements.push(bar)
     const closeW = Math.max(barWidthOf(measure.closingBarline, bar, strict), barSpan.right)
+    elements.push({ ...bar, minWidth: closeW })
     const closeGap = ENGRAVE.prefixGap + endingRoom(voltaAfter)
     fixed(
       closeW + closeGap,
@@ -10484,7 +10511,11 @@ function layoutMeasure(
   if (trailingKey !== null) {
     const trailing = layoutKeyChange(x, trailingKey[0], trailingKey[1], clef, strict)
     if (trailing !== null) {
-      elements.push(trailing)
+      elements.push(
+        trailingKeyRange === null
+          ? trailing
+          : { ...trailing, sourceRange: trailingKeyRange },
+      )
       fixed(trailing.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap, 'other', 0, trailing.width)
       x += trailing.width + ENGRAVE.prefixGap
     }
@@ -11114,6 +11145,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         (() => {
           const next = (voice?.measures ?? [])[measureIndex + 1]
           return next?.startsSystem === true ? (next.clefChangeSourceRange ?? null) : null
+        })(),
+        (() => {
+          const next = (voice?.measures ?? [])[measureIndex + 1]
+          return keyChangeLeadsLine(next) ? (next?.keyChangeSourceRange ?? null) : null
         })(),
       )
       if (measure.keyChange !== null) keyInForce = measure.keyChange

@@ -262,7 +262,7 @@ const ABCJS_DATA_NAMES: Readonly<Record<string, string>> = {
  * it would cost did not exist. The one still missing is the NOTEHEAD's, which abcjs names
  * with the written note rather than the glyph; see `glyphMarkup`.
  */
-const ABCJS_ELEMENT_NAMES: Readonly<Record<string, string>> = {
+export const ABCJS_ELEMENT_NAMES: Readonly<Record<string, string>> = {
   clef: "staff-extra clef",
   keySignature: "staff-extra key-signature",
   timeSignature: "staff-extra time-signature",
