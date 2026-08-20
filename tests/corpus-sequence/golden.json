@@ -49870,6 +49870,92 @@
    }
   ]
  ],
+ "abcts-model-gaps": [
+  [
+   {
+    "el_type": "instrument",
+    "pickupLength": 0,
+    "program": 0
+   },
+   {
+    "el_type": "tempo",
+    "qpm": 180
+   },
+   {
+    "el_type": "key",
+    "accidentals": []
+   },
+   {
+    "el_type": "meter",
+    "den": "4",
+    "num": 4
+   },
+   {
+    "el_type": "note",
+    "duration": 0.25,
+    "gracenotes": [
+     {
+      "pitch": 5,
+      "name": "A",
+      "duration": 0.125,
+      "acciaccatura": true,
+      "verticalPos": 5
+     }
+    ],
+    "pitches": [
+     {
+      "pitch": 4,
+      "name": "G",
+      "verticalPos": 4,
+      "highestVert": 10
+     }
+    ],
+    "timing": 0
+   },
+   {
+    "el_type": "note",
+    "duration": 0.25,
+    "pitches": [
+     {
+      "pitch": 4,
+      "name": "G",
+      "verticalPos": 4,
+      "highestVert": 10
+     }
+    ],
+    "timing": 0.25
+   },
+   {
+    "el_type": "note",
+    "duration": 0.25,
+    "pitches": [
+     {
+      "pitch": 4,
+      "name": "G",
+      "verticalPos": 4,
+      "highestVert": 10
+     }
+    ],
+    "timing": 0.5
+   },
+   {
+    "el_type": "note",
+    "duration": 0.25,
+    "pitches": [
+     {
+      "pitch": 4,
+      "name": "G",
+      "verticalPos": 4,
+      "highestVert": 10
+     }
+    ],
+    "timing": 0.75
+   },
+   {
+    "el_type": "bar"
+   }
+  ]
+ ],
  "abcts-slur-shapes": [
   [
    {

@@ -722,7 +722,6 @@ const invisibleRest = (
   annotations: [],
   annotationSourceRanges: [],
   graceNotes: [],
-  graceSlash: false,
   tuplet: null,
   measureCount: 0,
   sourceRange:
@@ -3897,7 +3896,6 @@ class Parser {
     let pendingSlurDotted = false
     let dottedCurve = false
     let pendingGrace: GracePitch[] = []
-    let pendingGraceSlash = false
 
     // ABC beaming: adjacent notes shorter than a quarter beam together. A space,
     // barline, rest, longer note, overlay boundary or end of line breaks the run.
@@ -3977,7 +3975,6 @@ class Parser {
         voice().push({
           ...scaled,
           graceNotes: pendingGrace,
-          graceSlash: pendingGraceSlash,
           decorations: pending.decorations,
           decorationSourceRanges: pending.decorationSourceRanges,
           ...(pending.extraClass === undefined ? {} : { extraClass: pending.extraClass }),
@@ -4002,7 +3999,6 @@ class Parser {
           slurStarts: pendingSlurStarts,
           ...(pendingSlurDotted ? { slurDotted: true } : {}),
           graceNotes: pendingGrace,
-          graceSlash: pendingGraceSlash,
         }
         voice().push(attached)
       }
@@ -4011,7 +4007,6 @@ class Parser {
       pendingSlurStarts = 0
       pendingSlurDotted = false
       pendingGrace = []
-      pendingGraceSlash = false
       beamAfterEmit()
     }
 
@@ -4437,7 +4432,6 @@ class Parser {
               sourceRange(token.start, token.start + token.length),
             )
           pendingGrace = grace.pitches
-          pendingGraceSlash = grace.slash
           i++
           break
         }
@@ -4616,7 +4610,6 @@ class Parser {
       slurStarts: 0,
       slurEnds: 0,
       graceNotes: [],
-      graceSlash: false,
       beamGroup: null,
       lyric: null,
       lyricSourceRange: null,
@@ -4809,8 +4802,7 @@ class Parser {
         slurStarts: 0,
         slurEnds: 0,
         graceNotes: [],
-        graceSlash: false,
-        beamGroup: null,
+          beamGroup: null,
         lyric: null,
         lyricSourceRange: null,
         lyricFont: null,
@@ -4918,8 +4910,7 @@ class Parser {
         annotations: [],
         annotationSourceRanges: [],
         graceNotes: [],
-        graceSlash: false,
-        tuplet: null, // set by applyTuplet() on emit
+          tuplet: null, // set by applyTuplet() on emit
         // `Z4` is FOUR bars' rest — the multiplier counts measures, not note lengths, and
         // a bare `Z` is one. Only a multi-measure rest carries it.
         measureCount: bars,
@@ -5248,7 +5239,6 @@ function graceLength(text: string): Rational {
 
 function parseGracePitches(raw: string): {
   pitches: GracePitch[]
-  slash: boolean
   /**
    * Characters inside the group that are neither a note, a rest nor a space — abcjs's
    * "We shouldn't get anything but notes or a space here, so report an error"
@@ -5257,13 +5247,14 @@ function parseGracePitches(raw: string): {
    */
   unparsed: number[]
 } {
-  let text = raw
-  let slash = false
-  if (text.startsWith('/')) {
-    slash = true
-    text = text.slice(1)
-  }
-  const offset = raw.length - text.length
+  const text = raw
+  const offset = 0
+  /**
+   * **A `/` MARKS THE NOTE AFTER IT, WHEREVER IT IS IN THE GROUP.** This stripped a LEADING
+   * one and let every other fall through to the unknown-character arm, so `{A /B}` warned
+   * and drew nothing where abcjs draws a slash on the `B`. See `GracePitch.acciaccatura`.
+   */
+  let pendingAcciaccatura = false
   const unparsed: number[] = []
   const pitches: GracePitch[] = []
   /**
@@ -5276,6 +5267,11 @@ function parseGracePitches(raw: string): {
   let pendingSlurs = 0
   let i = 0
   while (i < text.length) {
+    if (text[i] === '/') {
+      pendingAcciaccatura = true
+      i++
+      continue
+    }
     if (text[i] === '(') {
       pendingSlurs += 1
       i++
@@ -5322,10 +5318,12 @@ function parseGracePitches(raw: string): {
       accidental,
       length: graceLength(text.slice(lengthStart, i)),
       ...(pendingSlurs === 0 ? {} : { slurStarts: pendingSlurs }),
+      ...(pendingAcciaccatura ? { acciaccatura: true as const } : {}),
     })
     pendingSlurs = 0
+    pendingAcciaccatura = false
   }
-  return { pitches, slash, unparsed }
+  return { pitches, unparsed }
 }
 
 /**

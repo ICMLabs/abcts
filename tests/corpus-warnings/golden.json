@@ -209,6 +209,15 @@
  "repo/abcts-keywarn-tune2": [
   "Music Line:5:3: Directive keywarn requires 0 or 1 as a parameter.:  %%<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">k</span>eywarn false"
  ],
+ "repo/abcts-model-gaps-tune0": null,
+ "repo/abcts-model-gaps-tune1": null,
+ "repo/abcts-model-gaps-tune2": null,
+ "repo/abcts-model-gaps-tune3": null,
+ "repo/abcts-model-gaps-tune4": null,
+ "repo/abcts-model-gaps-tune5": null,
+ "repo/abcts-model-gaps-tune6": null,
+ "repo/abcts-model-gaps-tune7": null,
+ "repo/abcts-model-gaps-tune8": null,
  "repo/abcts-slur-shapes-tune0": null,
  "repo/abcts-slur-shapes-tune1": null,
  "repo/abcts-slur-shapes-tune2": null,

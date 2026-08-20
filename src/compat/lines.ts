@@ -928,13 +928,10 @@ function noteFields(
         : { midipitch: drumMap[drumKey(writtenName(g))] }),
       /**
        * **THE SLASH BELONGS TO THE NOTE AFTER IT** — `if (gra[1][ii] === '/') acciaccatura
-       * = true` runs per grace note inside the group (`abc_parse_music.js:687-697`).
-       *
-       * ponytail: our model carries ONE flag for the group, so the mark lands on the first
-       * grace. `{A/B}` — a slash partway through — would need a flag per note, and nothing
-       * in either corpus writes one.
+       * = true` runs per grace note inside the group (`abc_parse_music.js:687-697`), and
+       * the model carries it per note now. See `GracePitch.acciaccatura`.
        */
-      ...(event.graceSlash && i === 0 ? { acciaccatura: true } : {}),
+      ...(g.acciaccatura === true ? { acciaccatura: true } : {}),
       // **A GRACE'S DURATION IS RELATIVE TO A SIXTEENTH, NOT TO `L:`** — `note.duration =
       // note.duration / (default_length * 8)` (`abc_parse_music.js:694`), so a bare grace
       // is 0.125 whatever the unit note length is, and `{B2}` is 0.25.

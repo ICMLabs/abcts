@@ -411,10 +411,16 @@ const WITHIN: Readonly<Record<string, number>> = {
   // Its goldens come from running abcjs 6.7.0 like every other row here, so it is measured
   // the same way; only its INPUT was chosen by us. That is the pattern this branch has
   // used for every feature no fixture exercised.
+  //
+  // …and `abcts-slur-shapes.abc` and `abcts-model-gaps.abc` are two more of them.
+  // **THE 0.05 BUCKET IS ONE SHORT OF THE OTHERS ON PURPOSE**: `model-gaps` is off on the
+  // PAGE HEIGHT, which this table cannot express — its four axes pair NOTEHEADS — so it
+  // sits inside 1px here and differs by 11.07 on `svg-bytes`. Two of its tunes want an
+  // inline `[I:…font]` at the head of a line, which is not built.
   "0.05": 178,
-  "1": 178,
-  "5": 178,
-  "25": 178,
+  "1": 179,
+  "5": 179,
+  "25": 179,
 };
 
 const names = readdirSync(fixturesDir)

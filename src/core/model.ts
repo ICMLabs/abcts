@@ -482,8 +482,6 @@ export interface Note {
   readonly slurEnds: number
   /** `{gfe}` ornament pitches played before this event; empty means none. */
   readonly graceNotes: readonly GracePitch[]
-  /** `{/g}` — an acciaccatura, drawn with a slash through the stem. */
-  readonly graceSlash: boolean
   /** Shared id across a beamed run; null when this event beams with nothing. */
   readonly beamGroup: number | null
   /** First-verse syllable sung on this event, if any. */
@@ -588,6 +586,21 @@ export interface Note {
 export interface GracePitch extends Pitch {
   readonly length: Rational
   /**
+   * **THE SLASH BELONGS TO THE GRACE NOTE IT PRECEDES, AND ANY OF THEM CAN HAVE ONE.**
+   * abcjs re-declares `var acciaccatura = false` at the TOP of every iteration of the
+   * group's own loop, so a `/` wherever a note is expected marks THAT note
+   * (`abc_parse_music.js:686-697`), and `addGraceNotes` draws one `flags.ugrace` per
+   * flagged head (`abstract-engraver.js:501-505`).
+   *
+   * ⚠️ **AND `{A/B}` IS NOT ONE OF THEM.** `getCoreNote` reads a length greedily, so the
+   * `/` after `A` is `A`'s duration — a half-length grace — and the group has NO slash at
+   * all. `{A /B}` does, because the space ends `A` and the next iteration opens on the `/`.
+   * This carried a `ponytail:` calling `{A/B}` "a flag per note, and nothing in either
+   * corpus writes one"; the premise was wrong and the shape it predicted is right for the
+   * spelling beside it.
+   */
+  readonly acciaccatura?: true
+  /**
    * **A `)` WRITTEN AFTER A GRACE GROUP CLOSES ON THE LAST GRACE, NOT ON THE NOTE**, and a
    * `(` inside one opens on the grace it precedes. Both are `Pitch.slurStarts`/`slurEnds`
    * now — the same two counts a chord's own head carries, because abcjs numbers them the
@@ -679,7 +692,6 @@ export interface Rest {
    * came out one notehead short and 9.6px high on every axis that reads the staff.
    */
   readonly graceNotes: readonly GracePitch[]
-  readonly graceSlash: boolean
   readonly tuplet: TupletMark | null
   /**
    * **A `)` CLOSES ON A REST AND A `(` DOES NOT OPEN ON ONE**, which is not symmetry anyone
@@ -747,8 +759,6 @@ export interface Chord {
   readonly slurEnds: number
   /** `{gfe}` ornament pitches played before this event; empty means none. */
   readonly graceNotes: readonly GracePitch[]
-  /** `{/g}` — an acciaccatura, drawn with a slash through the stem. */
-  readonly graceSlash: boolean
   /** Shared id across a beamed run; null when this event beams with nothing. */
   readonly beamGroup: number | null
   /** First-verse syllable sung on this event, if any. */

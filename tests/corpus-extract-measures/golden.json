@@ -2720,6 +2720,92 @@
    "hasPickup": false
   }
  ],
+ "repo/abcts-model-gaps": [
+  {
+   "header": "X:1\nT:grace slash on the FIRST note\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "{/A}G G G G|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:2\nT:grace slash PARTWAY through the group\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "{A/B}G G G G|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:a slash before every grace of the group\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "{/A/B}G G G G|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:4\nT:stafflines written out as the default\nL:1/4\nM:4/4\nK:C stafflines=5\n",
+   "measures": [
+    {
+     "abc": "C D E F|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:5\nT:stafflines on a voice, written out as the default\nL:1/4\nM:4/4\nV:1 clef=treble stafflines=5\nK:C\n",
+   "measures": [
+    {
+     "abc": "C D E F|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:6\nT:an inline font directive MID-LINE\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C D [I:vocalfont Times-Roman 20] E F|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:7\nT:an inline font directive at the START of a line\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": " C D E F|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:8\nT:an inline font directive at the start of the SECOND line\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C D E F|"
+    },
+    {
+     "abc": " G A B c|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:9\nT:a slash before a grace note that is not the first\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "{A /B}G G G G|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
  "repo/abcts-slur-shapes": [
   {
    "header": "X:1\nT:slur two notes\nL:1/4\nM:4/4\nK:C\n",

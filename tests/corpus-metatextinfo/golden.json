@@ -687,6 +687,60 @@
    "endChar": 499
   }
  },
+ "repo/abcts-model-gaps-tune0": {
+  "title": {
+   "startChar": 298,
+   "endChar": 329
+  }
+ },
+ "repo/abcts-model-gaps-tune1": {
+  "title": {
+   "startChar": 364,
+   "endChar": 403
+  }
+ },
+ "repo/abcts-model-gaps-tune2": {
+  "title": {
+   "startChar": 439,
+   "endChar": 480
+  }
+ },
+ "repo/abcts-model-gaps-tune3": {
+  "title": {
+   "startChar": 517,
+   "endChar": 556
+  }
+ },
+ "repo/abcts-model-gaps-tune4": {
+  "title": {
+   "startChar": 600,
+   "endChar": 651
+  }
+ },
+ "repo/abcts-model-gaps-tune5": {
+  "title": {
+   "startChar": 711,
+   "endChar": 746
+  }
+ },
+ "repo/abcts-model-gaps-tune6": {
+  "title": {
+   "startChar": 820,
+   "endChar": 869
+  }
+ },
+ "repo/abcts-model-gaps-tune7": {
+  "title": {
+   "startChar": 943,
+   "endChar": 1001
+  }
+ },
+ "repo/abcts-model-gaps-tune8": {
+  "title": {
+   "startChar": 1098,
+   "endChar": 1149
+  }
+ },
  "repo/abcts-slur-shapes-tune0": {
   "title": {
    "startChar": 496,

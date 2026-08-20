@@ -3310,6 +3310,195 @@
   ],
   "bottomText": []
  },
+ "repo/abcts-model-gaps-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "grace slash on the FIRST note",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 298,
+    "endChar": 329,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-model-gaps-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "grace slash PARTWAY through the group",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 364,
+    "endChar": 403,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-model-gaps-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a slash before every grace of the group",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 439,
+    "endChar": 480,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-model-gaps-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "stafflines written out as the default",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 517,
+    "endChar": 556,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-model-gaps-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "stafflines on a voice, written out as the default",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 600,
+    "endChar": 651,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-model-gaps-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "an inline font directive MID-LINE",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 711,
+    "endChar": 746,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-model-gaps-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "an inline font directive at the START of a line",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 820,
+    "endChar": 869,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-model-gaps-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "an inline font directive at the start of the SECOND line",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 943,
+    "endChar": 1001,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-model-gaps-tune8": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a slash before a grace note that is not the first",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1098,
+    "endChar": 1149,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
  "repo/abcts-slur-shapes-tune0": {
   "topText": [
    {

@@ -98,7 +98,6 @@ describe("parse: simple-c", () => {
       slurStarts: 0,
       slurEnds: 0,
       graceNotes: [],
-      graceSlash: false,
       beamGroup: null,
       lyric: null,
       lyricSourceRange: null,
@@ -334,13 +333,33 @@ describe("ties, slurs, grace notes and beams", () => {
     const [note] = eventsOf("X:1\nL:1/4\nK:C\n{gab}c |\n");
     if (note?.type !== "note") throw new Error("expected a note");
     expect(note.graceNotes.map((p) => p.step)).toEqual(["g", "a", "b"]);
-    expect(note.graceSlash).toBe(false);
+    expect(note.graceNotes.map((p) => p.acciaccatura)).toEqual([
+      undefined,
+      undefined,
+      undefined,
+    ]);
     expect(note.pitch.step).toBe("c");
   });
 
   it("reads {/g} as an acciaccatura", () => {
     const [note] = eventsOf("X:1\nL:1/4\nK:C\n{/g}c |\n");
-    expect(note?.type === "note" && note.graceSlash).toBe(true);
+    if (note?.type !== "note") throw new Error("expected a note");
+    expect(note.graceNotes.map((p) => p.acciaccatura)).toEqual([true]);
+  });
+
+  // **AND THE SLASH IS PER GRACE NOTE, WHEREVER IT IS WRITTEN.** `{A/B}` has NONE — the
+  // `/` is `A`'s own length, read greedily by `getCoreNote` — while `{A /B}` marks the
+  // `B`, because the space ends `A` and the next iteration of abcjs's loop opens on the
+  // slash (`abc_parse_music.js:686-697`). Both spellings verified against abcjs's own SVG:
+  // `{A/B}G` draws no `flags.ugrace` and `{A /B}G` draws one.
+  it("marks a grace note the slash precedes, and reads {A/B}'s slash as a length", () => {
+    const [none] = eventsOf("X:1\nL:1/4\nK:C\n{A/B}G |\n");
+    if (none?.type !== "note") throw new Error("expected a note");
+    expect(none.graceNotes.map((p) => p.acciaccatura)).toEqual([undefined, undefined]);
+
+    const [later] = eventsOf("X:1\nL:1/4\nK:C\n{A /B}G |\n");
+    if (later?.type !== "note") throw new Error("expected a note");
+    expect(later.graceNotes.map((p) => p.acciaccatura)).toEqual([undefined, true]);
   });
 
   it("beams runs shorter than a quarter, breaking on space and barline", () => {

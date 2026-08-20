@@ -887,6 +887,33 @@
  "repo/abcts-keywarn-tune2": {
   "title": "keywarn false is a no-op"
  },
+ "repo/abcts-model-gaps-tune0": {
+  "title": "grace slash on the FIRST note"
+ },
+ "repo/abcts-model-gaps-tune1": {
+  "title": "grace slash PARTWAY through the group"
+ },
+ "repo/abcts-model-gaps-tune2": {
+  "title": "a slash before every grace of the group"
+ },
+ "repo/abcts-model-gaps-tune3": {
+  "title": "stafflines written out as the default"
+ },
+ "repo/abcts-model-gaps-tune4": {
+  "title": "stafflines on a voice, written out as the default"
+ },
+ "repo/abcts-model-gaps-tune5": {
+  "title": "an inline font directive MID-LINE"
+ },
+ "repo/abcts-model-gaps-tune6": {
+  "title": "an inline font directive at the START of a line"
+ },
+ "repo/abcts-model-gaps-tune7": {
+  "title": "an inline font directive at the start of the SECOND line"
+ },
+ "repo/abcts-model-gaps-tune8": {
+  "title": "a slash before a grace note that is not the first"
+ },
  "repo/abcts-slur-shapes-tune0": {
   "title": "slur two notes"
  },

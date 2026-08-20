@@ -1639,6 +1639,78 @@
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@532..533 note@533..534 note@534..535 note@535..536 bar@536..537 keySignature@538..541 break@undefined..undefined key@-1..-1 note@542..543 note@543..544 note@544..545 note@545..547 bar@547..548"
  ],
+ "repo/abcts-model-gaps-tune0": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@346..352 note@352..354 note@354..356 note@356..357 bar@357..358"
+ ],
+ "repo/abcts-model-gaps-tune1": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@420..427 note@427..429 note@429..431 note@431..432 bar@432..433"
+ ],
+ "repo/abcts-model-gaps-tune2": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@497..505 note@505..507 note@507..509 note@509..510 bar@510..511"
+ ],
+ "repo/abcts-model-gaps-tune3": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@586..588 note@588..590 note@590..592 note@592..593 bar@593..594"
+ ],
+ "repo/abcts-model-gaps-tune4": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@697..699 note@699..701 note@701..703 note@703..704 bar@704..705"
+ ],
+ "repo/abcts-model-gaps-tune5": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@763..765 note@765..767 note@795..798 note@798..799 bar@799..800"
+ ],
+ "repo/abcts-model-gaps-tune6": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@914..917 note@917..919 note@919..921 note@921..922 bar@922..923"
+ ],
+ "repo/abcts-model-gaps-tune7": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@1018..1020 note@1020..1022 note@1022..1024 note@1024..1025 bar@1025..1026 font@-1..-1 note@1069..1072 note@1072..1074 note@1074..1076 note@1076..1077 bar@1077..1078"
+ ],
+ "repo/abcts-model-gaps-tune8": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@1166..1174 note@1174..1176 note@1176..1178 note@1178..1179 bar@1179..1180"
+ ],
+ "repo/abcts-model-gaps-tune0#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@346..352 note@352..354 note@354..356 note@356..357 bar@357..358"
+ ],
+ "repo/abcts-model-gaps-tune1#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@420..427 note@427..429 note@429..431 note@431..432 bar@432..433"
+ ],
+ "repo/abcts-model-gaps-tune2#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@497..505 note@505..507 note@507..509 note@509..510 bar@510..511"
+ ],
+ "repo/abcts-model-gaps-tune3#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@586..588 note@588..590 note@590..592 note@592..593 bar@593..594"
+ ],
+ "repo/abcts-model-gaps-tune4#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@697..699 note@699..701 note@701..703 note@703..704 bar@704..705"
+ ],
+ "repo/abcts-model-gaps-tune5#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@763..765 note@765..767 note@795..798 note@798..799 bar@799..800"
+ ],
+ "repo/abcts-model-gaps-tune6#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@914..917 note@917..919 note@919..921 note@921..922 bar@922..923"
+ ],
+ "repo/abcts-model-gaps-tune7#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@1018..1020 note@1020..1022 note@1022..1024 note@1024..1025 bar@1025..1026 break@undefined..undefined font@-1..-1 note@1069..1072 note@1072..1074 note@1074..1076 note@1076..1077 bar@1077..1078"
+ ],
+ "repo/abcts-model-gaps-tune8#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@1166..1174 note@1174..1176 note@1176..1178 note@1178..1179 bar@1179..1180"
+ ],
  "repo/abcts-slur-shapes-tune0": [
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@529..531 note@531..533 bar@533..534"

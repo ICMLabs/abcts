@@ -27,12 +27,24 @@ const only = process.argv.includes('--only')
   : undefined
 
 mkdirSync(out, { recursive: true })
-for (const f of readdirSync(out)) rmSync(join(out, f))
 
 const names = readdirSync(fixtures)
   .filter((f) => f.endsWith('.abc') && (only === undefined || f.includes(only)))
   .map((f) => f.replace(/\.abc$/, ''))
   .sort()
+
+/**
+ * ⚠️ **`--only` USED TO WIPE EVERY GOLDEN AND REGENERATE ONE.** The clear ran over the
+ * whole directory BEFORE the filter was applied, so the flag that exists to touch one
+ * fixture deleted the other 197 — the same shape as the 6.6.3 default beside it, and worse,
+ * because it leaves nothing to diff against. Only the goldens this run is about to rewrite
+ * are cleared, matched the way `goldensFor` matches them: `<name>.svg` or `<name>-tuneN.svg`.
+ */
+const owned = new Set(names)
+for (const f of readdirSync(out)) {
+  const slug = f.replace(/\.svg$/, '').replace(/-tune\d+$/, '')
+  if (owned.has(slug)) rmSync(join(out, f))
+}
 
 /**
  * ⚠️ **`dump-svg.js` DEFAULTS TO abcjs 6.6.3, AND THIS SCRIPT USED TO LET IT.**

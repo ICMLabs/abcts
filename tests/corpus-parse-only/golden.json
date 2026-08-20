@@ -1174,6 +1174,71 @@
   "key acc,accidentals,el_type,endChar,mode,root,startChar",
   "note duration,el_type,endChar,pitches,pitches.accidental,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
  ],
+ "repo/abcts-model-gaps-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,gracenotes,gracenotes.acciaccatura,gracenotes.duration,gracenotes.name,gracenotes.pitch,gracenotes.verticalPos,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-model-gaps-tune1": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,gracenotes,gracenotes.duration,gracenotes.name,gracenotes.pitch,gracenotes.verticalPos,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-model-gaps-tune2": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,gracenotes,gracenotes.acciaccatura,gracenotes.duration,gracenotes.name,gracenotes.pitch,gracenotes.verticalPos,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-model-gaps-tune3": [
+  "staff.clef el_type=undefined clefPos,stafflines,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-model-gaps-tune4": [
+  "staff.clef el_type=undefined clefPos,stafflines,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-model-gaps-tune5": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,fonts,lyric,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-model-gaps-tune6": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "staff.vocalfont el_type=undefined decoration,face,size,style,weight",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,fonts,lyric,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-model-gaps-tune7": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "staff.vocalfont el_type=undefined decoration,face,size,style,weight",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,fonts,lyric,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-model-gaps-tune8": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,gracenotes,gracenotes.acciaccatura,gracenotes.duration,gracenotes.endBeam,gracenotes.name,gracenotes.pitch,gracenotes.verticalPos,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
  "repo/abcts-slur-shapes-tune0": [
   "staff.clef el_type=undefined clefPos,type,verticalPos",
   "staff.key el_type=undefined acc,accidentals,mode,root",

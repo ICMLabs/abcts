@@ -10051,7 +10051,6 @@ const EMPTY_BAR_EVENT: Rest = {
   annotations: [],
   annotationSourceRanges: [],
   graceNotes: [],
-  graceSlash: false,
   tuplet: null,
   measureCount: 0,
   sourceRange: null,
@@ -17864,7 +17863,9 @@ function layoutGraces(
        * (`abstract-engraver.js:501-506`) — abcjs's own grace FLAG reused as the stroke, at
        * "the same formula that determines the flag position", scaled like the head and
        * with ZERO width. Ours drew a thickened line from five invented ratios, after every
-       * grace rather than after the one the slash belongs to.
+       * grace rather than after the one the slash belongs to — and then after the FIRST
+       * one only, which is right for `{/A}` and wrong for `{A /B}`. See
+       * `GracePitch.acciaccatura`.
        *
        * `dAcciaccatura` is 5 when the group is BEAMED and 6 when it is not — "just an
        * offset to make it line up correctly", abcjs's own words, and the only place a beam
@@ -17875,7 +17876,7 @@ function layoutGraces(
        * The grace accidental beside it carries the same note for the same reason, and the
        * pixel gate counted this one as a sixth notehead the moment it did not.
        */
-      if (i === 0 && event.graceSlash) {
+      if (event.graceNotes[i]?.acciaccatura === true) {
         graceGlyphs.push({
           name: 'graceNoteSlashStemUp',
           x: gx + (beamedGraces ? ENGRAVE.acciaccaturaBeamed : ENGRAVE.acciaccaturaUnbeamed),
