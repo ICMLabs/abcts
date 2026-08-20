@@ -2100,7 +2100,15 @@ class ScoreBuilder {
     const seen = this.fieldRanges[key]
     this.fieldRanges[key] = seen === undefined ? range : sourceRange(seen.start, range.end)
   }
-  key: KeySignature = defaultKey()
+  /**
+   * **BEFORE THE FIRST `K:` THE KEY IS `none`, NOT C MAJOR** — abcjs opens
+   * `multilineVars.key` at `{accidentals: [], root: 'none', acc: '', mode: ''}`
+   * (`abc_parse.js:80`). The two alter nothing and print nothing, so only `root` can tell
+   * them apart, and it shows wherever a music line is read before the `K:` — `frere-jacques`
+   * is one, whose `S:`/`Z:` prose the music scan reads as notes. It is also what an
+   * unparseable `K:` leaves in force, `K:cm` and a bare `K:` alike.
+   */
+  key: KeySignature = { ...defaultKey(), none: true }
   clef: Clef = defaultClef
   tempo: Tempo | null = null
   tempoSourceRange: SourceRange | null = null
@@ -3755,7 +3763,12 @@ class Parser {
           if (midOctave !== null) builder.keyOctave.value = midOctave
           return
         }
-        builder.key = parseKey(value)
+        // **AND AN UNPARSEABLE `K:` LEAVES THE KEY IN FORCE**, exactly as the mid-tune arm
+        // above already did: abcjs's `getKeyPitch` finds nothing in `cm`, a bare `K:` or a
+        // `K: style=harmonic`, so `multilineVars.key` is never written and stays what it
+        // was — `none` at the head of a tune, and the previous key after one. This side
+        // reset it to C major, which is a DIFFERENT key that happens to print the same.
+        if (hasKeySpec(value)) builder.key = parseKey(value)
         builder.keySourceRange = range
         // `K:C bass` sets the tune's clef; a `V:… clef=` still overrides it per voice.
         builder.clef = clefWith(builder.clef, value)

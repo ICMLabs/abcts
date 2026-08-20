@@ -130,7 +130,10 @@ const rows = (): Row[] => {
 };
 
 /** Cases whose every row agrees. Grows, never shrinks. */
-const PASSING: readonly string[] = [];
+const PASSING: readonly string[] = [
+  "sib/frere-jacques-tune0",
+  "sib/frere-jacques-tune0#breaks",
+];
 
 describe("tune.deline — abcjs's merged line list", () => {
   const table = rows();
@@ -163,6 +166,6 @@ describe("tune.deline — abcjs's merged line list", () => {
   /** A floor, not a target — it moves up and must never move down. */
   it("the whole corpus agrees on at least the rows it did", () => {
     const agree = table.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(1566);
+    expect(agree).toBeGreaterThanOrEqual(1568);
   });
 });

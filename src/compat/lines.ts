@@ -366,8 +366,17 @@ function tile(
      * it could not read, and guessing the rule from the characters themselves took the
      * corpus from 255,660 to 255,158 in one run.
      */
+    /**
+     * …**AND A DECORATION DOES NOT REACH BACK ACROSS ONE.** The test is the element's own
+     * CLOSE, not its opening: `startI` is retaken by every junk character, while `el` — the
+     * decorations, the chord symbol, the grace group — SURVIVES the iteration that appended
+     * nothing. So `t o t he` in prose gives abcjs a note at the `e` carrying two tenutos
+     * read eleven characters earlier, and our opening walked back to the first of them.
+     * Measured on `frere-jacques`, whose `U:t`/`U:u`/`U:v` make its own prose parse that way.
+     */
+    const reach = e.endChar ?? own;
     for (const r of unreadable)
-      if (r.end > start && r.start < own) start = Math.max(start, r.end);
+      if (r.end > start && r.start < reach) start = Math.max(start, r.end);
     return abc[start] === "&" ? start + 1 : start;
   });
   elements.forEach((e, i) => {
@@ -1829,7 +1838,18 @@ export function projectionOf(
         const leadingKey = leadsLine(m, m.keyChangeSourceRange?.start)
           ? (m.keyChange ?? null)
           : (restamp?.keyChange ?? null);
-        const key = leadingKey ?? keyInForce;
+        /**
+         * ⚠️ **AND A LINE READ BEFORE THE `K:` IS IN THE KEY `none`.** abcjs's key is
+         * PARSE-TIME state opened at `{root: 'none', …}` (`abc_parse.js:80`), so music the
+         * scan reaches before the field has been read carries that and not the tune's own
+         * key — `frere-jacques`, whose `S:`/`Z:` prose the music scan reads as notes eleven
+         * lines above its `K:C`, is the corpus's one case and it costs two `deline` rows.
+         * Ours held `score.key` for every line, which prints the same and IS a different key.
+         */
+        const beforeKey =
+          score.keySourceRange != null &&
+          musicStartsAt(m) < score.keySourceRange.start;
+        const key = leadingKey ?? (beforeKey ? { ...keyInForce, none: true } : keyInForce);
         /**
          * ⚠️ **A KEY IS PITCHED WHERE IT IS PARSED, FOR WHATEVER CLEF THAT FIELD KNEW.**
          * `addPosToKey` runs in the `K:` handler, so a key declared with the voice — a

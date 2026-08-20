@@ -512,14 +512,20 @@ export const keyElement = (key: KeySignature, clef: Clef): AbcElement => {
       note,
       verticalPos,
     })),
-    root: key.tonic.step.toUpperCase(),
+    // **`K:none` NAMES ITSELF** — abcjs writes the literal `"none"` where a real key writes
+    // its tonic (`abc_parse_key_voice.js:261`), and the same string is what the implicit
+    // pre-`K:` key carries. `accidentals` is empty either way, so this is the only field
+    // that separates `K:none` from `K:C`.
+    root: key.none ? "none" : key.tonic.step.toUpperCase(),
     acc:
-      key.tonic.accidental === null || key.tonic.accidental === 0
+      key.none ||
+      key.tonic.accidental === null ||
+      key.tonic.accidental === 0
         ? ""
         : key.tonic.accidental > 0
           ? "#"
           : "b",
-    mode: KEY_MODE[key.mode] ?? "",
+    mode: key.none ? "" : (KEY_MODE[key.mode] ?? ""),
   };
 };
 
