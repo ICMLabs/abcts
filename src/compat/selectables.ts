@@ -164,12 +164,29 @@ function stampEngraved(abcelem: AbcElement, element: LayoutElement): void {
     const top = pitches[pitches.length - 1];
     const up = element.stemUp === true;
     const anchor = up ? pitches[0] : top;
-    if (anchor !== undefined && top !== undefined && pitches.length === 1) {
-      anchor.highestVert =
-        top.verticalPos +
-        (up && (typeof abcelem.duration === "number" ? abcelem.duration : 0) < 1
-          ? 6
-          : 0);
+    /**
+     * **AND A WHOLE-CHORD SLUR IS COPIED DOWN ONTO THE ANCHOR HEAD** — the same branch and
+     * the same head as `highestVert`, because they answer the same question: which notehead
+     * a curve for the whole chord hangs from (`abstract-engraver.js:696-717`). The mark is
+     * on the ELEMENT until then; a rendered chord carries it in BOTH places, which is what
+     * `addIfNotExist` keeps from doubling. See `markSlurs` for where it starts.
+     */
+    const raise =
+      top === undefined
+        ? 0
+        : (up && (typeof abcelem.duration === "number" ? abcelem.duration : 0) < 1 ? 6 : 0);
+    if (anchor !== undefined && top !== undefined && (pitches.length === 1 || abcelem.startSlur))
+      anchor.highestVert = top.verticalPos + raise;
+    if (anchor !== undefined && top !== undefined && abcelem.endSlur !== undefined)
+      anchor.highestVert = top.verticalPos + raise;
+    if (anchor !== undefined && abcelem.startSlur !== undefined) {
+      const into = anchor.startSlur ?? (anchor.startSlur = []);
+      for (const mark of abcelem.startSlur)
+        if (!into.some((x) => x.label === mark.label)) into.push(mark);
+    }
+    if (anchor !== undefined && abcelem.endSlur !== undefined) {
+      const into = anchor.endSlur ?? (anchor.endSlur = []);
+      for (const label of abcelem.endSlur) if (!into.includes(label)) into.push(label);
     }
     /**
      * **`printer_shift` — WHICH HEAD OF A CHORD IS PUSHED ASIDE**, stamped onto the parse

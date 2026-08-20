@@ -45,8 +45,8 @@ export interface AbcPitch {
   verticalPos: number;
   /** Where a slur may hang off it — the engraver's answer, not the parser's. */
   highestVert?: number;
-  startSlur?: readonly { label: number }[];
-  endSlur?: readonly number[];
+  startSlur?: { label: number; style?: string }[];
+  endSlur?: number[];
   startTie?: { style?: string };
   endTie?: boolean;
   /**
@@ -145,6 +145,12 @@ export interface AbcElement {
   endBeam?: boolean;
   /** `!beambr1!` / `!beambr2!` — a beam break, consumed off the decoration list. */
   beambr?: number;
+  /**
+   * **A WHOLE-CHORD SLUR SITS ON THE ELEMENT, NOT ON A HEAD** — and so does a `)` that
+   * closes on a rest. See `markSlurs`.
+   */
+  startSlur?: { label: number; style?: string }[];
+  endSlur?: number[];
   startTriplet?: number;
   endTriplet?: boolean;
   tripletMultiplier?: number;
@@ -1020,7 +1026,7 @@ function voiceElements(
   /** The same, for elements the drawing joins by SOURCE RANGE rather than by event. */
   byRange?: Map<number, AbcElement>,
   /** The slur labels still open on this VOICE — one stack for the whole tune. */
-  openSlurs: number[] = [],
+  openSlurs: SlurStacks = {},
   /** The tune's own `Q:`, for the first voice of the first line — see `projectionOf`. */
   headTempo: AbcElement | null = null,
   /** abcjs's `multilineVars.inEnding` — tune-wide state, so it is carried across lines. */
@@ -1412,47 +1418,164 @@ function markTieEnds(
 /**
  * **A SLUR IS A NUMBERED PAIR, AND THE NUMBER IS THE CHORD POSITION TIMES A HUNDRED.**
  *
- * `addStartSlur` opens at `chordPos * 100 + 1` and walks up past whatever is already open
- * on that voice (`tune-builder.js:697-721`), so the first slur of an ordinary note is
- * **101** — chord position 1, because a slur written before a note is moved onto
- * `pitches[0]` and numbered as that head (`abc_parse_music.js:507-508`). Grace notes take
- * chord position 20, i.e. 2001.
+ * A LINE-BY-LINE PORT of `cleanUpSlursInLine` (`tune-builder.js:664-790`), because the
+ * numbering is bookkeeping whose every branch is observable and the shape is not the one
+ * a reasonable person would build: **there is one open-slur stack PER CHORD POSITION**,
+ * not one per voice, and a close that finds its own position empty takes any other.
  *
- * The stack is per VOICE and spans the whole tune, which is why it is threaded in rather
- * than being local to a line: a slur may open on one system and close on the next.
+ * `chordPos` is 0 for a mark on the ELEMENT, `p + 1` for one on a pitch, and 20 for a
+ * grace — so the labels come out 1, 101, 201, … and 2001. Measured shape by shape:
+ *
+ *     (CD)          p0.start [{label:101}]      p0.end [101]
+ *     ([CE]G)       el.start [{label:1}]        p0.end [1]      ← the fallback
+ *     ([CE][GB])    el.start [{label:1}]        el.end [1]
+ *     (C[EG])       p0.start [{label:101}]      el.end [101]
+ *     [(CE)G]       p0.start [{label:101}]      p1.end [201]
+ *     {(CD)}E       g0.start [{label:2001}]     g1.end [2001]
+ *     (Cz)          p0.start [{label:101}]      el.end [101]
+ *     (zC)          NOTHING on the rest         p0.end [101]    ← invented
+ *
+ * **SO THE MARK GOES WHERE THERE IS A PITCH TO PUT IT ON, AND ON THE ELEMENT WHEN THERE IS
+ * NOT** — a CHORD, whose slur belongs to no single head, or a REST, which has no pitches
+ * at all. ⚠️ And a `(` before a rest opens NOTHING: `(zC)` leaves the rest bare and the
+ * `)` on C invents its own 101 out of `addEndSlur`'s last arm. Measured, both ways.
+ *
+ * The stacks are per VOICE and span the whole tune, which is why they are threaded in
+ * rather than being local to a line: a slur may open on one system and close on the next.
+ *
+ * ponytail: a slur written INSIDE a chord — `[(CE)G]` — needs a per-PITCH count the model
+ * does not carry, so those two marks are dropped. Neither corpus writes one; the shape to
+ * add is a `slurStarts`/`slurEnds` on `Pitch`, and the numbering below already takes the
+ * chord position it would need. Grace STARTS are the same gap and the same fix.
  */
-function markSlurs(
-  e: AbcElement,
-  event: MusicEvent,
-  open: number[],
-): void {
+type SlurStacks = Record<number, number[]>;
+
+/**
+ * `addEndSlur` — pop the most recent open slur at this chord position, and if there is
+ * none, **take any other position's** (`tune-builder.js:672-696`). With nothing open
+ * anywhere it INVENTS `chordPos * 100 + 1`, stepped down past anything this element has
+ * already closed.
+ */
+const addEndSlur = (
+  open: SlurStacks,
+  into: number[],
+  num: number,
+  chordPos: number,
+): void => {
+  let at = chordPos;
+  if (open[at] === undefined) {
+    // The scan is over an ARRAY indexed by chord position, so it runs 0 upward.
+    const first = Object.keys(open)
+      .map(Number)
+      .sort((a, b) => a - b)
+      .find((k) => open[k] !== undefined);
+    if (first !== undefined) at = first;
+    if (open[at] === undefined) {
+      let offNum = at * 100 + 1;
+      for (const x of into) if (offNum === x) offNum -= 1;
+      open[at] = [offNum];
+    }
+  }
+  const stack = open[at] as number[];
+  for (let i = 0; i < num; i += 1) {
+    const label = stack.pop();
+    if (label !== undefined) into.push(label);
+  }
+  if (stack.length === 0) delete open[at];
+};
+
+/**
+ * `addStartSlur` — the next free number at this chord position, walked past anything the
+ * element's own closes used and anything already open (`tune-builder.js:697-721`).
+ *
+ * ⚠️ **THE WALK IS THREE PASSES AND TWO, NOT A LOOP UNTIL FREE.** abcjs writes the same
+ * `forEach` out three times for `usedNums` and twice for the open stack, which is a crude
+ * bound rather than a search — ported as written, because the number is visible.
+ */
+const addStartSlur = (
+  open: SlurStacks,
+  into: { label: number; style?: string }[],
+  num: number,
+  chordPos: number,
+  dotted: boolean,
+  usedNums: readonly number[] = [],
+): void => {
+  const stack = open[chordPos] ?? (open[chordPos] = []);
+  let nextNum = chordPos * 100 + 1;
+  for (let i = 0; i < num; i += 1) {
+    for (let pass = 0; pass < 3; pass += 1)
+      for (const x of usedNums) if (nextNum === x) nextNum += 1;
+    for (let pass = 0; pass < 2; pass += 1)
+      for (const x of stack) if (nextNum === x) nextNum += 1;
+    stack.push(nextNum);
+    // `.( ` — the dot rides the LAST start abcjs made, and is consumed.
+    into.push(dotted ? { label: nextNum, style: "dotted" } : { label: nextNum });
+    nextNum += 1;
+  }
+};
+
+/** The chord position a grace note's slur is numbered at — abcjs's literal 20. */
+const GRACE_CHORD_POS = 20;
+
+function markSlurs(e: AbcElement, event: MusicEvent, open: SlurStacks): void {
+  /**
+   * **THE GRACE NOTES ARE NUMBERED FIRST**, each one's ends before its starts
+   * (`tune-builder.js:730-742`). A `)` written after a grace group closes on the LAST
+   * grace, and `addEndSlur`'s fallback is what lets it reach a slur opened on the note
+   * before — `(f3 {a})y` gives that grace `endSlur: [101]`, not 2001.
+   */
+  const graces = e.gracenotes as
+    | { endSlur?: number[]; startSlur?: { label: number }[] }[]
+    | undefined;
+  if (graces !== undefined)
+    (event.graceNotes as readonly { slurEnds?: number }[]).forEach((g, i) => {
+      const target = graces[i];
+      if (target === undefined) return;
+      for (let n = 0; n < (g.slurEnds ?? 0); n += 1) {
+        const into = target.endSlur ?? (target.endSlur = []);
+        addEndSlur(open, into, 1, GRACE_CHORD_POS);
+      }
+    });
+  /**
+   * ponytail: **A `)` THAT CLOSES ON A REST IS NOT IN THE MODEL** — `Rest` carries no
+   * `slurStarts`/`slurEnds` where `Note` does, so `(Cz)`'s close is dropped where abcjs
+   * puts `endSlur: [101]` on the rest ELEMENT. Neither corpus writes one. The numbering
+   * below already takes chord position 0 for it; what is owed is the two counts on `Rest`
+   * and the parser filling them.
+   */
   if (event.type === "rest") return;
   const head = e.pitches?.[0];
-  if (head === undefined) return;
-  // **A CLOSE IS MATCHED LAST-OPENED-FIRST**, and it is a bare number where an open is an
-  // object (`{label}` against `[101]`).
+  /**
+   * **A MARK WITH NO PITCH TO SIT ON GOES ON THE ELEMENT** — a CHORD, whose slur belongs to
+   * no single head — and it is numbered at chord position 0, which is where the label 1
+   * comes from. A rest is the other such element; see above.
+   */
+  const onElement = (e.pitches?.length ?? 0) > 1;
   if (event.slurEnds > 0) {
-    const ends: number[] = [];
-    for (let i = 0; i < event.slurEnds; i += 1) {
-      const label = open.pop();
-      if (label !== undefined) ends.push(label);
+    const into: number[] = [];
+    addEndSlur(open, into, event.slurEnds, onElement ? 0 : 1);
+    if (into.length > 0) {
+      if (onElement) e.endSlur = into;
+      else if (head !== undefined) head.endSlur = into;
     }
-    if (ends.length > 0) head.endSlur = ends;
   }
+  // ⚠️ **AND A `(` BEFORE A REST OPENS NOTHING AT ALL** — measured on `(zC)`, where the
+  // rest carries no mark and the `)` on the next note invents its own label out of
+  // `addEndSlur`'s last arm. So the rest's early return above is abcjs's answer for the
+  // START even once the model carries one.
   if (event.slurStarts > 0) {
-    const starts: { label: number }[] = [];
-    for (let i = 0; i < event.slurStarts; i += 1) {
-      let next = SLUR_LABEL_BASE;
-      while (open.includes(next)) next += 1;
-      open.push(next);
-      starts.push({ label: next });
-    }
-    head.startSlur = starts;
+    const into: { label: number; style?: string }[] = [];
+    addStartSlur(
+      open,
+      into,
+      event.slurStarts,
+      onElement ? 0 : 1,
+      event.slurDotted === true,
+    );
+    if (onElement) e.startSlur = into;
+    else if (head !== undefined) head.startSlur = into;
   }
 }
-
-/** `chordPos * 100 + 1` with `chordPos` 1 — the first head of the element. */
-const SLUR_LABEL_BASE = 101;
 
 /**
  * `(3` — **THE MARKS RIDE ON THE FIRST NOTE OF THE GROUP AND ON THE LAST, AND NOTHING IN
@@ -1598,8 +1721,11 @@ export function projectionOf(
   const byEvent = new Map<MusicEvent, AbcElement>();
   const byRange = new Map<number, AbcElement>();
   const lines: AbcLine[] = [];
-  /** One open-slur stack per voice, carried across every system — see `markSlurs`. */
-  const openSlurs: number[][] = [];
+  /**
+   * One open-slur stack SET per voice, carried across every system — see `markSlurs`.
+   * abcjs's `currSlur[staffNum][voiceNum]` is itself indexed by CHORD POSITION.
+   */
+  const openSlurs: SlurStacks[] = [];
   /** `multilineVars.inEnding`, per voice and carried across the tune's lines. */
   const endings: { open: boolean }[] = [];
   /** The meter in force where a line opens — every `[M:]` before it, in order. */
@@ -1974,7 +2100,7 @@ export function projectionOf(
      * which is the identity `getElementFromChar` and the selectable array both rest on.
      */
     const lineVoices = score.voices.map((v, k) => {
-      const slurs = openSlurs[k] ?? [];
+      const slurs = openSlurs[k] ?? {};
       openSlurs[k] = slurs;
       return voiceElements(
         abc,
