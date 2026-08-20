@@ -366,6 +366,8 @@ const CLEF_NAMES: ReadonlyArray<readonly [string, ClefShape, number]> = [
 export function parseClef(spec: string): Clef | null {
   const middleOverride = middleLineOverride(spec)
   const staffLines = staffLineCount(spec)
+  // See `Clef.staffLinesWritten` — the COUNT defaults, the flag does not.
+  const written = staffLinesWritten(spec)
   const build = (name: string, digit: string, octave: string): Clef | null => {
     const entry = CLEF_NAMES.find(([n]) => n === name.toLowerCase())
     if (!entry) return null
@@ -377,6 +379,7 @@ export function parseClef(spec: string): Clef | null {
       octaveShift: octave === '+8' ? 1 : octave === '-8' ? -1 : 0,
       middleOverride,
       staffLines,
+      ...(written ? { staffLinesWritten: true as const } : {}),
     }
   }
 
@@ -428,7 +431,13 @@ export function parseClef(spec: string): Clef | null {
  * default treble alongside it.
  */
 function clefWith(current: Clef, spec: string): Clef {
-  return parseClef(spec) ?? { ...current, staffLines: staffLineCount(spec) }
+  return (
+    parseClef(spec) ?? {
+      ...current,
+      staffLines: staffLineCount(spec),
+      ...(staffLinesWritten(spec) ? { staffLinesWritten: true as const } : {}),
+    }
+  )
 }
 
 /**
@@ -488,8 +497,18 @@ const bareStaffLines = (spec: string): number | null =>
  * which is what a non-integer or out-of-range value falls back to here. `stafflines=0` is a
  * real value, not "unset" — it draws no staff at all — so the range test has to admit it.
  */
+const STAFFLINES = /\bstafflines=(-?\d+)/i
+
+/** Whether the field wrote a usable `stafflines=` — see `Clef.staffLinesWritten`. */
+function staffLinesWritten(spec: string): boolean {
+  const m = STAFFLINES.exec(spec)
+  if (!m) return false
+  const n = Number.parseInt(m[1] ?? '', 10)
+  return Number.isInteger(n) && n >= 0 && n <= 10
+}
+
 function staffLineCount(spec: string): number {
-  const m = /\bstafflines=(-?\d+)/i.exec(spec)
+  const m = STAFFLINES.exec(spec)
   if (!m) return DEFAULT_STAFF_LINES
   const n = Number.parseInt(m[1] ?? '', 10)
   return Number.isInteger(n) && n >= 0 && n <= 10 ? n : DEFAULT_STAFF_LINES

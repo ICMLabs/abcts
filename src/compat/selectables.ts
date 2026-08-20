@@ -450,11 +450,16 @@ export const clefElement = (
    * (`abc_parse_key_voice.js:429`, `:796-797`), so the field exists on the projected clef
    * exactly when the source says so — `clef=none` reads 0 and a percussion staff 1.
    *
-   * ponytail: an EXPLICIT `stafflines=5` is indistinguishable from the default here,
-   * because the model carries the count and not whether it was written. Neither corpus has
-   * one (the eight in them are 0 and 1); give `Clef` a written-flag if one ever turns up.
+   * **AND AN EXPLICIT `stafflines=5` IS NOT THE DEFAULT.** This tested the VALUE, so
+   * `K:C stafflines=5` published no field where abcjs publishes 5 — the two draw
+   * identically and only the parse tree can say. `Clef.staffLinesWritten` is the flag its
+   * own `ponytail:` asked for; `abcts-model-gaps.abc` is the fixture that turned one up.
+   * The value test stays beside it, because a count that is not 5 is written by
+   * definition and some of them reach the clef by routes that set no flag.
    */
-  ...((staffLineOverride ?? clef.staffLines) === DEFAULT_STAFF_LINES
+  ...(staffLineOverride == null &&
+  clef.staffLinesWritten !== true &&
+  clef.staffLines === DEFAULT_STAFF_LINES
     ? {}
     : { stafflines: staffLineOverride ?? clef.staffLines }),
   /**

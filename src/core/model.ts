@@ -232,6 +232,18 @@ export interface Clef {
    * and matching it is what keeps a short staff from re-spacing everything around it.
    */
   readonly staffLines: number
+  /**
+   * **WAS `stafflines=` ACTUALLY WRITTEN.** abcjs assigns `multilineVars.clef.stafflines`
+   * ONLY from the token (`abc_parse_key_voice.js:429`, `parse/tune-builder.js:1009-1011`)
+   * and `abstract-engraver.js:182` defaults an absent one to 5 at draw time — so `K:C
+   * stafflines=5` and a bare `K:C` DRAW identically and publish different clef objects.
+   *
+   * Carried because the count alone cannot say: this had a `ponytail:` on the projection
+   * reading "an EXPLICIT `stafflines=5` is indistinguishable from the default here …
+   * neither corpus has one; give `Clef` a written-flag if one ever turns up."
+   * `abcts-model-gaps.abc` writes two.
+   */
+  readonly staffLinesWritten?: true
 }
 
 /** Five, as every ABC clef is unless `stafflines=` says otherwise. */
