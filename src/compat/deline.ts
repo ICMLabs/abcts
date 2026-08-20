@@ -58,10 +58,53 @@ interface MutableLine {
 const replacer = (key: string, value: unknown): unknown =>
   key === "abselem" ? "abselem" : value;
 
+/**
+ * ⚠️ **AND THE SKIP IS NOT AN IGNORE — `abselem`'s PRESENCE STILL COUNTS.** The replacer
+ * flattens the engraver's back-pointer to a constant so two drawn lines compare equal
+ * whatever it holds, but a field that HAS one and a field that has none stringify
+ * differently, and `objEqual` reports a change. That is a DRAWING fact reaching a data
+ * function: `params.abcelem.abselem = params` is written in `draw/absolute.js:72`, so only
+ * a line that was DRAWN carries one.
+ *
+ * `%%maxStaves` is where it shows. abcjs lays the whole tune out and stops DRAWING at the
+ * limit, so an incipit's hidden lines have bare staff furniture — and `deline` unshifts a
+ * clef in front of every one of them, then keeps unshifting, because the first unshift
+ * MUTATES the object it records. `abcjs-visual-directives-01-incipit-test` is the corpora's
+ * one case and it is worth two rows.
+ *
+ * Two of the three fields need more than the line's own drawn-ness, because their
+ * `AbsoluteElement` is not always built:
+ *
+ * - **A KEY WITH NOTHING TO DRAW HAS NO ELEMENT** — `createKeySignature` returns null on an
+ *   empty `accidentals` (`write/creation/create-key-signature.js:8-9`), so `K:C` carries no
+ *   `abselem` on a DRAWN line either. Measured against `K:G`, which does.
+ * - **AND `clef=none` HAS NONE** — `createClef`'s `case 'none': return null` (`:26`).
+ * - A time signature is always built (`create-time-signature.js:8`).
+ */
+const hasAbselem = (
+  field: "meter" | "key" | "clef" | "font",
+  value: unknown,
+  drawn: boolean,
+): boolean => {
+  if (!drawn || field === "font") return false;
+  const v = value as { accidentals?: unknown[]; type?: string } | null | undefined;
+  if (field === "key") return (v?.accidentals?.length ?? 0) > 0;
+  if (field === "clef") return v?.type !== "none";
+  return true;
+};
+
+/** What `objEqual` compares: the field's JSON, and whether the drawing hung itself on it. */
+const stampOf = (value: unknown, abselem: boolean): string | undefined =>
+  value === undefined
+    ? undefined
+    : `${JSON.stringify(value, replacer)}${abselem ? "|abselem" : ""}`;
+
 /** `objEqual` — an ABSENT input equals anything (`:163-169`). */
-const objEqual = (input: unknown, output: unknown): boolean =>
-  input == null ||
-  JSON.stringify(input, replacer) === JSON.stringify(output, replacer);
+const objEqual = (
+  input: unknown,
+  output: string | undefined,
+  abselem: boolean,
+): boolean => input == null || stampOf(input, abselem) === output;
 
 /** `cloneLine` — deep down to the voice ARRAYS, shallow at the elements (`:171-197`). */
 const cloneLine = (line: MutableLine): MutableLine => {
@@ -101,14 +144,22 @@ const unshiftInto = (
 export function delineOf(
   inputLines: readonly AbcLine[],
   options: DelineOptions = {},
+  /**
+   * How many of the MUSIC lines were drawn — `Layout.systems.length`, which `%%maxStaves`
+   * truncates out of `Layout.engraved`. The music lines of `tune.lines` are the engraved
+   * systems in order, so the first `drawnLines` of them are the drawn ones. Defaults to
+   * every line, which is every tune without the directive.
+   */
+  drawnLines: number = Number.POSITIVE_INFINITY,
 ): AbcLine[] {
   const lineBreaks = options.lineBreaks === true;
   const outputLines: MutableLine[] = [];
   let inMusicLine = false;
-  const currentMeter: unknown[] = [];
-  const currentKey: unknown[] = [];
-  const currentClef: unknown[] = [];
-  const currentFont: Record<string, unknown[]> = {
+  let musicLines = 0;
+  const currentMeter: (string | undefined)[] = [];
+  const currentKey: (string | undefined)[] = [];
+  const currentClef: (string | undefined)[] = [];
+  const currentFont: Record<string, (string | undefined)[]> = {
     vocalfont: [],
     gchordfont: [],
     tripletfont: [],
@@ -117,6 +168,8 @@ export function delineOf(
   for (const raw of inputLines as unknown as readonly MutableLine[]) {
     const inputLine = cloneLine(raw);
     if (inputLine.staff) {
+      const drawn = musicLines < drawnLines;
+      musicLines += 1;
       // **THE TEST IS TRUTHINESS, SO A `%%vskip 0` MERGES** — `!inputLine.vskip`
       // (`:16`), not a presence check.
       if (inMusicLine && !inputLine.vskip) {
@@ -126,20 +179,40 @@ export function delineOf(
           const inputStaff = inputLine.staff[s];
           const outputStaff = outStaves[s];
           if (inputStaff === undefined || outputStaff === undefined) continue;
-          if (!objEqual(inputStaff.meter, currentMeter[s])) {
+          const stamp = (f: "meter" | "key" | "clef", v: unknown): string | undefined =>
+            stampOf(v, hasAbselem(f, v, drawn));
+          if (
+            !objEqual(
+              inputStaff.meter,
+              currentMeter[s],
+              hasAbselem("meter", inputStaff.meter, drawn),
+            )
+          ) {
             unshiftInto(inputStaff.voices, inputStaff.meter ?? {}, "meter");
-            currentMeter[s] = inputStaff.meter;
+            currentMeter[s] = stamp("meter", inputStaff.meter);
             delete inputStaff.meter;
           }
-          if (!objEqual(inputStaff.key, currentKey[s])) {
+          if (
+            !objEqual(
+              inputStaff.key,
+              currentKey[s],
+              hasAbselem("key", inputStaff.key, drawn),
+            )
+          ) {
             unshiftInto(inputStaff.voices, inputStaff.key ?? {}, "key");
-            currentKey[s] = inputStaff.key;
+            currentKey[s] = stamp("key", inputStaff.key);
             delete inputStaff.key;
           }
           if (inputStaff.title) outputStaff.abbrevTitle = inputStaff.title;
-          if (!objEqual(inputStaff.clef, currentClef[s])) {
+          if (
+            !objEqual(
+              inputStaff.clef,
+              currentClef[s],
+              hasAbselem("clef", inputStaff.clef, drawn),
+            )
+          ) {
             unshiftInto(inputStaff.voices, inputStaff.clef ?? {}, "clef");
-            currentClef[s] = inputStaff.clef;
+            currentClef[s] = stamp("clef", inputStaff.clef);
             delete inputStaff.clef;
           }
           for (const font of [
@@ -149,14 +222,14 @@ export function delineOf(
             "annotationfont",
           ] as const) {
             const seen = currentFont[font] ?? [];
-            if (!objEqual(inputStaff[font], seen[s])) {
+            if (!objEqual(inputStaff[font], seen[s], false)) {
               unshiftInto(
                 inputStaff.voices,
                 inputStaff[font] ?? {},
                 "font",
                 font,
               );
-              seen[s] = inputStaff[font];
+              seen[s] = stampOf(inputStaff[font], false);
               delete inputStaff[font];
             }
           }
@@ -170,9 +243,15 @@ export function delineOf(
       } else {
         for (let ii = 0; ii < inputLine.staff.length; ii += 1) {
           const staff = inputLine.staff[ii];
-          currentKey[ii] = staff?.key;
-          currentMeter[ii] = staff?.meter;
-          currentClef[ii] = staff?.clef;
+          currentKey[ii] = stampOf(staff?.key, hasAbselem("key", staff?.key, drawn));
+          currentMeter[ii] = stampOf(
+            staff?.meter,
+            hasAbselem("meter", staff?.meter, drawn),
+          );
+          currentClef[ii] = stampOf(
+            staff?.clef,
+            hasAbselem("clef", staff?.clef, drawn),
+          );
         }
         // Copied AGAIN because this one is going to be written to.
         outputLines.push(cloneLine(inputLine));

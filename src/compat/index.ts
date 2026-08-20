@@ -1312,7 +1312,10 @@ export function renderAbc(
       },
       deline(options?: DelineOptions): readonly AbcLine[] {
         selectables();
-        return delineOf(lineCache ?? [], options);
+        // **AND HOW MANY LINES WERE DRAWN**, because `deline` can SEE the engraver's
+        // back-pointer — see `hasAbselem`. `%%maxStaves` is the only thing that makes the
+        // two counts differ.
+        return delineOf(lineCache ?? [], options, laidOut().systems.length);
       },
 
       get engraver(): {

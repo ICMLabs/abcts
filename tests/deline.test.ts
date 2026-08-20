@@ -163,9 +163,13 @@ describe("tune.deline — abcjs's merged line list", () => {
     expect(broken).toEqual([]);
   });
 
-  /** A floor, not a target — it moves up and must never move down. */
+  /**
+   * A floor, not a target — it moves up and must never move down. **IT IS NOW THE TOTAL**,
+   * so this is an exact gate and the `PASSING` list above is redundant: any row that
+   * regresses anywhere fails here.
+   */
   it("the whole corpus agrees on at least the rows it did", () => {
     const agree = table.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(1568);
+    expect(agree).toBeGreaterThanOrEqual(1570);
   });
 });
