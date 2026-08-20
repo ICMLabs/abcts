@@ -72,18 +72,15 @@ export const CHANGING_FONTS: ReadonlySet<string> = new Set([
 ]);
 
 /** The four an ELEMENT can carry, in `addFormattingOptions`'s own order (`abc_parse.js:127-130`). */
-export const NOTE_FONTS: readonly AbcFontType[] = [
+export const NOTE_FONTS = [
   "annotationfont",
   "gchordfont",
   "vocalfont",
   "tripletfont",
-] as unknown as readonly AbcFontType[];
+] as const;
 
 /** The two a BARLINE can carry (`:136-137`). */
-export const BAR_FONTS: readonly AbcFontType[] = [
-  "measurefont",
-  "repeatfont",
-] as unknown as readonly AbcFontType[];
+export const BAR_FONTS = ["measurefont", "repeatfont"] as const;
 
 const DEFAULT_BY_NAME = new Map(ABCJS_DEFAULT_FONTS);
 

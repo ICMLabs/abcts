@@ -14,7 +14,12 @@ import type {
 } from "../core/model.js";
 import { defaultClef, plainText, ratToNumber, stepIndex } from "../core/model.js";
 import { resolveOverlays, type OverlayLine } from "../core/overlays.js";
-import { abcjsFont } from "./fonts.js";
+import {
+  abcjsFont,
+  BAR_FONTS,
+  differentFont,
+  NOTE_FONTS,
+} from "./fonts.js";
 import { clefElement, keyElement, meterElement } from "./selectables.js";
 
 /**
@@ -155,6 +160,8 @@ export interface AbcElement {
   endSlur?: number[];
   /** `!class=…!` — a host's own class on this element. See `noteFields`. */
   extraClass?: string;
+  /** `%%…font` overrides in force here that differ from the tune's — see `voiceElements`. */
+  fonts?: Record<string, unknown>;
   /** `!style=x!` — the DECORATION's notehead shape. See `Note.styleMark`. */
   style?: string;
   startTriplet?: number;
@@ -608,9 +615,12 @@ const bar = (
     chordSymbol?: string;
     annotations?: readonly string[];
   },
+  /** `addFormattingOptions`'s two for a bar — `measurefont` and `repeatfont`. */
+  fonts?: Record<string, unknown>,
 ): AbcElement | null => {
   const e = el("bar", range);
   if (e === null || range === null) return e;
+  if (fonts !== undefined) e.fonts = fonts;
   e.type = (kind === null ? undefined : BARLINE_TYPE[kind]) ?? "bar_thin";
   if (extras?.decorations !== undefined && extras.decorations.length > 0)
     e.decoration = extras.decorations.map((d) => DECORATION_NAME[d] ?? d);
@@ -782,6 +792,8 @@ function noteFields(
   drumMap?: Readonly<Record<string, number>>,
   /** The measure's own length in whole notes — see `voiceElements`. */
   barLength = 1,
+  /** `addFormattingOptions`'s four — see `voiceElements`. */
+  fonts?: Record<string, unknown>,
 ): void {
   /** abcjs's key is the letter AS WRITTEN with its accidental, and no octave marks. */
   const drumKey = (name: string): string => name.replace(/[,']/g, "");
@@ -864,6 +876,7 @@ function noteFields(
   if (extraClass !== undefined) e.extraClass = extraClass;
   const styleMark = (event as { styleMark?: string }).styleMark;
   if (styleMark !== undefined) e.style = styleMark;
+  if (fonts !== undefined) e.fonts = fonts;
   if (
     event.decorations.length > 0 &&
     !(event.type === "rest" && event.kind === "invisible")
@@ -1073,6 +1086,13 @@ function voiceElements(
   meterIn?: Meter | null,
   /** See `projectionOf` — the engraver RENAMES the two it draws. */
   engraved = true,
+  /**
+   * **`addFormattingOptions` — THE FONTS THAT DIFFER FROM THE TUNE'S DEFAULT**, stamped on
+   * every element as it is appended (`abc_parse.js:120-138`). Four for a note and two for a
+   * bar, and the object is the whole font. See `projectionOf`, which runs the changes
+   * forward line by line.
+   */
+  elementFonts: { note?: Record<string, unknown>; bar?: Record<string, unknown> } = {},
 ): AbcElement[] {
   /**
    * **THE NAME THE ENGRAVER WOULD HAVE WRITTEN, OR THE PARSER'S OWN.**
@@ -1161,6 +1181,7 @@ function voiceElements(
             ? {}
             : { annotations: measure.openingBarlineAnnotations }),
         },
+        elementFonts.bar,
       ),
     );
     // ponytail: a mid-tune `[K:]` and `[M:]` carry source ranges and a `[V:… clef=]`,
@@ -1305,7 +1326,7 @@ function voiceElements(
     const note = (event: MusicEvent): void => {
       const e = el("note", decoratedRange(abc, event));
       if (e !== null) {
-        noteFields(e, event, drumMap, barLength);
+        noteFields(e, event, drumMap, barLength, elementFonts.note);
         markSlurs(e, event, openSlurs);
         byEvent?.set(event, e);
         notes.push({ event, e });
@@ -1367,6 +1388,7 @@ function voiceElements(
             ? {}
             : { annotations: measure.closingBarlineAnnotations }),
         },
+        elementFonts.bar,
       ),
     );
     /**
@@ -2109,8 +2131,61 @@ export function projectionOf(
     ),
   );
 
+  /**
+   * **`addFormattingOptions` — THE FONTS IN FORCE, AGAINST THE TUNE'S DEFAULT.** abcjs
+   * stamps `el.fonts` on every element it appends, carrying whichever of four fonts (for a
+   * note) or two (for a bar) differ from `tune.formatting` — which for all six is their
+   * value AT THE END OF THE HEADER (`abc_parse.js:120-138`, `abc_parse_directive.js:315`).
+   *
+   * So the DEFAULT is the header's and the IN-FORCE one is the header's with every line's
+   * changes run forward on top: `Measure.lineFonts` is `setLineFont`'s "differs from the
+   * line above", which is exactly a delta. `%%gchordfont Arial 10` in the header and
+   * `Arial 20` in the body makes every note after it carry the 20.
+   *
+   * ponytail: the granularity is the LINE, because a `%%` directive occupies a line of its
+   * own. An inline `[I:gchordfont …]` mid-line would need the running value per EVENT;
+   * neither corpus writes one.
+   */
+  const defaultFont = new Map<string, Record<string, unknown>>();
+  const inForceFont = new Map<string, Record<string, unknown>>();
+  for (const name of [...NOTE_FONTS, ...BAR_FONTS]) {
+    const seed = abcjsFont(name, score.headerFonts?.[name]);
+    defaultFont.set(name, seed);
+    inForceFont.set(name, seed);
+  }
+  /** The four, then the two, in `addFormattingOptions`'s own order. */
+  const stampedFonts = (
+    names: readonly string[],
+  ): Record<string, unknown> | undefined => {
+    let out: Record<string, unknown> | undefined;
+    for (const name of names) {
+      const now = inForceFont.get(name);
+      const base = defaultFont.get(name);
+      if (now === undefined || base === undefined || !differentFont(now, base)) continue;
+      out ??= {};
+      out[name] = now;
+    }
+    return out;
+  };
+
   breaks.forEach((from, i) => {
     const to = breaks[i + 1] ?? totalMeasures;
+    // The line's own `%%…font` changes, from whichever voice recorded them — abcjs's
+    // `multilineVars` is tune-global where ours rides the measure that opens the system.
+    for (const v of score.voices) {
+      const changed = v.measures[from]?.lineFonts;
+      if (changed === undefined) continue;
+      for (const [name, font] of Object.entries(changed))
+        inForceFont.set(name, abcjsFont(name, font as LyricFont));
+    }
+    const elementFonts = {
+      ...(stampedFonts(NOTE_FONTS) === undefined
+        ? {}
+        : { note: stampedFonts(NOTE_FONTS) as Record<string, unknown> }),
+      ...(stampedFonts(BAR_FONTS) === undefined
+        ? {}
+        : { bar: stampedFonts(BAR_FONTS) as Record<string, unknown> }),
+    };
     /**
      * **THE TILING IS PER LINE ACROSS EVERY VOICE, BECAUSE READING IS.** An element opens
      * where the one before it STOPPED READING, and abcjs's tokenizer reads one line
@@ -2142,6 +2217,7 @@ export function projectionOf(
         // The meter this line OPENS in — every change inside it is walked from here.
         meterAt(v, from) ?? score.meter,
         engraved,
+        elementFonts,
       );
     });
     /**

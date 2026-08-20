@@ -105,8 +105,12 @@ describe("parseOnly — the tune that was never engraved", () => {
     expect(fixtureCount()).toBeGreaterThan(200);
   });
 
+  /**
+   * A floor, not a target — it moves up and must never move down. **IT IS NOW THE TOTAL**,
+   * so this is an exact gate: any row that regresses anywhere fails here.
+   */
   it("the whole corpus agrees on at least the rows it did", () => {
     const agree = rows.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(1519);
+    expect(agree).toBeGreaterThanOrEqual(1520);
   });
 });
