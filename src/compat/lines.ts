@@ -864,13 +864,10 @@ function noteFields(
    * (`abc_parse_music.js:229-230`), so a host reads it off the note. Ours carried it in the
    * model and never projected it.
    *
-   * ponytail: `el.style` — its neighbour in that chain, from `!style=x!` — is NOT projected,
-   * because `Note.style` is a REQUIRED `NoteStyle` defaulting to `'normal'` and abcjs's
-   * field exists only where a decoration wrote one. `S5-directives` writes `!style=normal!`
-   * through a `U:` shorthand, so "differs from the default" is not the test; what is owed is
-   * a written-flag on the model, as `stafflines` needs. One tune in either corpus.
-   * `el.fonts` — `addFormattingOptions`'s per-note `%%…font` override
-   * (`abc_parse.js:120-138`) — is the same shape and the same one-tune reach.
+   * Its two neighbours in that chain are here as well: `el.style` from `!style=x!` — which
+   * needed `Note.styleMark`, because `Note.style` is the EFFECTIVE shape and "differs from
+   * the default" cannot recover which — and `el.fonts`, which `voiceElements` stamps from
+   * the fonts in force. All three arrived with the `parseOnly` gate.
    */
   const extraClass = (event as { extraClass?: string }).extraClass;
   if (extraClass !== undefined) e.extraClass = extraClass;
@@ -1571,25 +1568,38 @@ function markSlurs(e: AbcElement, event: MusicEvent, open: SlurStacks): void {
    * before — `(f3 {a})y` gives that grace `endSlur: [101]`, not 2001.
    */
   const graces = e.gracenotes as
-    | { endSlur?: number[]; startSlur?: { label: number }[] }[]
+    | { endSlur?: number[]; startSlur?: { label: number; style?: string }[] }[]
     | undefined;
   if (graces !== undefined)
-    (event.graceNotes as readonly { slurEnds?: number }[]).forEach((g, i) => {
-      const target = graces[i];
-      if (target === undefined) return;
-      for (let n = 0; n < (g.slurEnds ?? 0); n += 1) {
-        const into = target.endSlur ?? (target.endSlur = []);
-        addEndSlur(open, into, 1, GRACE_CHORD_POS);
-      }
-    });
+    (event.graceNotes as readonly { slurStarts?: number; slurEnds?: number }[]).forEach(
+      (g, i) => {
+        const target = graces[i];
+        if (target === undefined) return;
+        for (let n = 0; n < (g.slurEnds ?? 0); n += 1)
+          addEndSlur(open, target.endSlur ?? (target.endSlur = []), 1, GRACE_CHORD_POS);
+        if ((g.slurStarts ?? 0) > 0)
+          addStartSlur(
+            open,
+            target.startSlur ?? (target.startSlur = []),
+            g.slurStarts ?? 0,
+            GRACE_CHORD_POS,
+            false,
+          );
+      },
+    );
   /**
-   * ponytail: **A `)` THAT CLOSES ON A REST IS NOT IN THE MODEL** — `Rest` carries no
-   * `slurStarts`/`slurEnds` where `Note` does, so `(Cz)`'s close is dropped where abcjs
-   * puts `endSlur: [101]` on the rest ELEMENT. Neither corpus writes one. The numbering
-   * below already takes chord position 0 for it; what is owed is the two counts on `Rest`
-   * and the parser filling them.
+   * **A `)` CLOSES ON A REST AND A `(` DOES NOT OPEN ON ONE** — see `Rest.slurEnds`. A rest
+   * has no pitches, so the mark goes on the ELEMENT, at chord position 0.
    */
-  if (event.type === "rest") return;
+  if (event.type === "rest") {
+    const ends = event.slurEnds ?? 0;
+    if (ends > 0) {
+      const into: number[] = [];
+      addEndSlur(open, into, ends, 0);
+      if (into.length > 0) e.endSlur = into;
+    }
+    return;
+  }
   const head = e.pitches?.[0];
   /**
    * **A MARK WITH NO PITCH TO SIT ON GOES ON THE ELEMENT** — a CHORD, whose slur belongs to
@@ -1605,10 +1615,6 @@ function markSlurs(e: AbcElement, event: MusicEvent, open: SlurStacks): void {
       else if (head !== undefined) head.endSlur = into;
     }
   }
-  // ⚠️ **AND A `(` BEFORE A REST OPENS NOTHING AT ALL** — measured on `(zC)`, where the
-  // rest carries no mark and the `)` on the next note invents its own label out of
-  // `addEndSlur`'s last arm. So the rest's early return above is abcjs's answer for the
-  // START even once the model carries one.
   if (event.slurStarts > 0) {
     const into: { label: number; style?: string }[] = [];
     addStartSlur(
@@ -1621,6 +1627,39 @@ function markSlurs(e: AbcElement, event: MusicEvent, open: SlurStacks): void {
     if (onElement) e.startSlur = into;
     else if (head !== undefined) head.startSlur = into;
   }
+  /**
+   * **THEN THE PITCHES, EVERY END BEFORE ANY START** — and the ends' labels are collected
+   * into `usedNums`, which the starts then walk past (`tune-builder.js:751-770`). That
+   * two-pass order is why `[(CE)G]` numbers its close 201 rather than 102: the close runs
+   * first, at its OWN chord position.
+   */
+  const pitches =
+    event.type === "chord"
+      ? (event.pitches as readonly { slurStarts?: number; slurEnds?: number }[])
+      : [];
+  const usedNums: number[] = [];
+  pitches.forEach((p, i) => {
+    const target = e.pitches?.[i];
+    if (target === undefined) return;
+    for (let n = 0; n < (p.slurEnds ?? 0); n += 1) {
+      const into = target.endSlur ?? (target.endSlur = []);
+      const before = into.length;
+      addEndSlur(open, into, 1, i + 1);
+      for (let k = before; k < into.length; k += 1) usedNums.push(into[k] as number);
+    }
+  });
+  pitches.forEach((p, i) => {
+    const target = e.pitches?.[i];
+    if (target === undefined || (p.slurStarts ?? 0) === 0) return;
+    addStartSlur(
+      open,
+      target.startSlur ?? (target.startSlur = []),
+      p.slurStarts ?? 0,
+      i + 1,
+      false,
+      usedNums,
+    );
+  });
 }
 
 /**

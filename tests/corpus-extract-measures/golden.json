@@ -2720,6 +2720,98 @@
    "hasPickup": false
   }
  ],
+ "repo/abcts-slur-shapes": [
+  {
+   "header": "X:1\nT:slur two notes\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "(CD)|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:2\nT:slur round a chord\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "([CE]G)|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:3\nT:slur inside a chord\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "[(CE)G]|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:4\nT:nested slurs\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "((CD)E)|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:5\nT:grace slur\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "{(CD)}E|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:6\nT:slur to a rest\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "(Cz)|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:7\nT:slur ending on a chord\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "(C[EG])|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:8\nT:slur chord to chord\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "([CE][GB])|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:9\nT:slur from a rest\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "(zC)|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:10\nT:a close after a grace group reaches the note before it\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "(F {a})y|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
  "repo/abcts-visualtranspose": [
   {
    "header": "X:1\nT:visualTranspose 0 — the control's control\nL:1/4\nM:4/4\n%%visualTranspose 0\nK:C\n",

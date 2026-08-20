@@ -118,6 +118,18 @@ export interface Pitch {
    */
   readonly written?: string
   /**
+   * **A SLUR WRITTEN ON THIS HEAD, NOT ON THE ELEMENT** — `[(CE)G]` opens on the chord's
+   * first pitch and closes on its second, and a grace group's `{(CD)}` does the same to its
+   * own notes.
+   *
+   * abcjs numbers them at CHORD POSITION `p + 1` — 101, 201, … — where a mark on the
+   * ELEMENT takes position 0 and a grace takes 20 (`tune-builder.js:723-790`). The two
+   * cannot be one field: a slur round a whole chord belongs to no single head, and a slur
+   * inside one belongs to exactly one. See `markSlurs`.
+   */
+  readonly slurStarts?: number
+  readonly slurEnds?: number
+  /**
    * The ACCIDENTAL as abcjs names it, when that is not derivable from `accidental` alone.
    *
    * `el.name = accMap[el.accidental] + el.name` (`abc_parse_music.js:1118`) and `accMap`
@@ -576,15 +588,17 @@ export interface Note {
 export interface GracePitch extends Pitch {
   readonly length: Rational
   /**
-   * **A `)` WRITTEN AFTER A GRACE GROUP CLOSES ON THE LAST GRACE, NOT ON THE NOTE.**
+   * **A `)` WRITTEN AFTER A GRACE GROUP CLOSES ON THE LAST GRACE, NOT ON THE NOTE**, and a
+   * `(` inside one opens on the grace it precedes. Both are `Pitch.slurStarts`/`slurEnds`
+   * now — the same two counts a chord's own head carries, because abcjs numbers them the
+   * same way and only the CHORD POSITION differs: 20 for a grace, `p + 1` for a head.
    *
-   * abcjs's parser puts it there — `(f3 {a})y` gives the grace
+   * abcjs's parser puts the close there — `(f3 {a})y` gives the grace
    * `{"pitch":12,"name":"a","endSlur":[101]}` — and `addSlursAndTies` runs for grace notes
    * as well as pitches (`abstract-engraver.js:498`, `:728`), so the curve's `anchor2` is
    * the GRACE head. It never runs for a rest, which is why the `y` spacer after it closes
    * nothing at all.
    */
-  readonly slurEnds?: number
 }
 
 export type RestKind = 'normal' | 'invisible' | 'multiMeasure' | 'invisibleMultiMeasure' | 'spacer'
@@ -667,6 +681,17 @@ export interface Rest {
   readonly graceNotes: readonly GracePitch[]
   readonly graceSlash: boolean
   readonly tuplet: TupletMark | null
+  /**
+   * **A `)` CLOSES ON A REST AND A `(` DOES NOT OPEN ON ONE**, which is not symmetry anyone
+   * would guess and is one line of abcjs: the rest arm assigns both
+   * (`abc_parse_music.js:516-518`) and then `delete el.startSlur` runs unconditionally four
+   * lines later (`:527`), where nothing deletes `endSlur`. So `(Cz)` puts `endSlur: [101]`
+   * on the REST element and `(zC)` opens nothing at all — the `)` on the note after it
+   * invents its own label out of `addEndSlur`'s last arm.
+   *
+   * There is deliberately no `slurStarts` here. See `markSlurs`.
+   */
+  readonly slurEnds?: number
   /**
    * How many BARS a `Z`/`X` stands for — the number printed over the multi-measure bar.
    * Zero for every other rest. abcjs keeps it as `rest.text` and draws it at pitch 16

@@ -7801,10 +7801,35 @@ function layoutCurves(
   voicePos: number,
 ): PlacedCurve[][] {
   const curves: PlacedCurve[][] = bounds.map(() => [])
-  const open: number[] = []
+  /**
+   * The slurs still open on this voice.
+   *
+   * **AN ENTRY CARRIES ITS OWN ANCHOR WHERE THE MARK WAS NOT ON THE ELEMENT** — a `(`
+   * written inside a grace group belongs to that grace head, and one written inside a
+   * chord to that notehead, so the curve has to start where the mark was and not at the
+   * element's own `pitches[0]`. Everything else pushes the index alone.
+   */
+  const open: { i: number; from?: NoteAnchor }[] = []
   /** `(` order, by stack depth — see `PlacedCurve.openSeq`. */
   const openSeq = new Map<number, number>()
   let seq = 0
+
+  /**
+   * One notehead of a chord as an anchor of its own — the same construction `tiePairs`
+   * makes, and for the same reason: a mark written INSIDE the brackets hangs on that head.
+   */
+  const headAnchor = (a: NoteAnchor, index: number): NoteAnchor => {
+    const step = a.tieSteps?.[index]
+    if (step === undefined) return a
+    const dx = a.tieHeadDx?.[index] ?? 0
+    return {
+      ...a,
+      pitchStep: step,
+      pitchY: stepToY(step),
+      left: a.left + dx,
+      right: a.right + dx,
+    }
+  }
 
   /**
    * Emit one logical curve, SPLITTING it if its ends are in different systems.
@@ -8051,8 +8076,8 @@ function layoutCurves(
     if ('graceNotes' in event)
       for (const [gi, g] of event.graceNotes.entries())
         for (let n = 0; n < (g.slurEnds ?? 0); n++) {
-          const start = open.pop()
-          const from = start === undefined ? undefined : anchors[start]
+          const rec = open.pop()
+          const from = rec === undefined ? undefined : (rec.from ?? anchors[rec.i])
           const head = anchor.graceHeads?.[gi]
           if (from === undefined || head === undefined) continue
           // The GRACE's own pitch, not the element's: `buildCurve` reads `pitchStep` for the
@@ -8065,14 +8090,63 @@ function layoutCurves(
             'slur',
           )
         }
-    // …and only THEN is a rest done with: it can carry graces, but never a slur of its own.
-    if (event.type === 'rest') return
+    /**
+     * **AND A `(` INSIDE A GRACE GROUP OPENS ON THAT GRACE HEAD** — `getCoreNote` reads it
+     * onto the grace note itself (`abc_parse_music.js:691`), so `{(CD)}E` is a curve from
+     * the first grace to the second and never touches the note they decorate.
+     */
+    if ('graceNotes' in event)
+      for (const [gi, g] of event.graceNotes.entries())
+        for (let n = 0; n < ((g as { slurStarts?: number }).slurStarts ?? 0); n++) {
+          const head = anchor.graceHeads?.[gi]
+          open.push(
+            head === undefined
+              ? { i }
+              : {
+                  i,
+                  from: {
+                    ...anchor,
+                    left: head.x,
+                    right: head.x,
+                    pitchY: head.y,
+                    pitchStep: -head.y / ENGRAVE.spacePerStep - PITCH_ORIGIN,
+                  },
+                },
+          )
+          openSeq.set(open.length - 1, seq++)
+        }
+
+    /**
+     * **A `)` CLOSES ON A REST**, where a `(` does not open on one — see `Rest.slurEnds`.
+     * The anchor is the rest's own drawn position, which is what `(Cz)` hangs its curve on.
+     */
+    if (event.type === 'rest') {
+      for (let n = 0; n < ((event as { slurEnds?: number }).slurEnds ?? 0); n++) {
+        const depth = open.length - 1
+        const rec = open.pop()
+        const from = rec === undefined ? undefined : (rec.from ?? anchors[rec.i])
+        if (from === undefined) continue
+        const internal = anchors
+          .slice((rec?.i ?? 0) + 1, i)
+          .filter((a) => a.event.type !== 'rest').length
+        emit(
+          from,
+          anchor,
+          drawnKind(from, anchor, 'slur', internal),
+          internalHighOf(rec?.i ?? 0, i, from),
+          openSeq.get(depth),
+          internalDownOf(rec?.i ?? 0, i),
+        )
+      }
+      return
+    }
 
     // Slurs close before they open, so `(A)(B)` closes on A before opening on B.
     for (let n = 0; n < event.slurEnds; n++) {
       const depth = open.length - 1
-      const start = open.pop()
-      const from = start === undefined ? undefined : anchors[start]
+      const rec = open.pop()
+      const start = rec?.i
+      const from = rec === undefined ? undefined : (rec.from ?? anchors[rec.i])
       if (from !== undefined) {
         // Notes strictly between the two ends — abcjs's `internalNotes`, which a REST and
         // a GRACE never join. See `drawnKind`.
@@ -8103,9 +8177,38 @@ function layoutCurves(
       }
     }
     for (let n = 0; n < event.slurStarts; n++) {
-      open.push(i)
+      open.push({ i })
       openSeq.set(open.length - 1, seq++)
     }
+    /**
+     * **AND THE MARKS WRITTEN INSIDE A CHORD ARE PER NOTEHEAD** — `[(CE)G]` opens on the
+     * first head and closes on the second, and abcjs numbers those at chord positions 1
+     * and 2. Ends before starts, as the numbering pass runs them (`tune-builder.js:751-770`).
+     */
+    const heads = event.type === 'chord' ? event.pitches : []
+    ;(heads as readonly { slurStarts?: number; slurEnds?: number }[]).forEach((p, k) => {
+      for (let n = 0; n < (p.slurEnds ?? 0); n++) {
+        const depth = open.length - 1
+        const rec = open.pop()
+        const from = rec === undefined ? undefined : (rec.from ?? anchors[rec.i])
+        if (from === undefined) continue
+        const to = headAnchor(anchor, k)
+        emit(
+          from,
+          to,
+          drawnKind(from, to, 'slur', 0),
+          internalHighOf(rec?.i ?? 0, i, from),
+          openSeq.get(depth),
+          internalDownOf(rec?.i ?? 0, i),
+        )
+      }
+    })
+    ;(heads as readonly { slurStarts?: number; slurEnds?: number }[]).forEach((p, k) => {
+      for (let n = 0; n < (p.slurStarts ?? 0); n++) {
+        open.push({ i, from: headAnchor(anchor, k) })
+        openSeq.set(open.length - 1, seq++)
+      }
+    })
 
     // A tie joins this note to the next SOUNDING one, wherever it falls.
     if (event.tiedToNext || anchor.tiedHeads?.some(Boolean) === true) {

@@ -3310,6 +3310,216 @@
   ],
   "bottomText": []
  },
+ "repo/abcts-slur-shapes-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "slur two notes",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 496,
+    "endChar": 512,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-slur-shapes-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "slur round a chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 540,
+    "endChar": 560,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-slur-shapes-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "slur inside a chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 591,
+    "endChar": 612,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-slur-shapes-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "nested slurs",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 643,
+    "endChar": 657,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-slur-shapes-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "grace slur",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 688,
+    "endChar": 700,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-slur-shapes-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "slur to a rest",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 731,
+    "endChar": 747,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-slur-shapes-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "slur ending on a chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 775,
+    "endChar": 799,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-slur-shapes-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "slur chord to chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 830,
+    "endChar": 851,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-slur-shapes-tune8": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "slur from a rest",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 885,
+    "endChar": 903,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-slur-shapes-tune9": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a close after a grace group reaches the note before it",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 932,
+    "endChar": 988,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
  "repo/abcts-visualtranspose-tune0": {
   "topText": [
    {

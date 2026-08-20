@@ -1625,12 +1625,25 @@ class VoiceBuilder {
       this.replaceLast({ ...last, tiedToNext: true, ...(dotted ? { tieDotted: true } : {}) })
   }
 
-  /** `)` likewise closes the slur on the preceding note. Rests cannot be slurred. */
+  /**
+   * `)` likewise closes the slur on the preceding event — **INCLUDING A REST.**
+   *
+   * ⚠️ That is not symmetry: a `(` does NOT open on one. abcjs's rest arm assigns both
+   * (`abc_parse_music.js:516-518`) and then `delete el.startSlur` runs unconditionally four
+   * lines later (`:527`), where nothing deletes `endSlur`. So `(Cz)` puts `endSlur: [101]`
+   * on the REST and `(zC)` opens nothing at all. See `Rest.slurEnds`.
+   *
+   * This said "Rests cannot be slurred" and dropped the close, which is the rule the tie
+   * beside it follows and the slur does not.
+   */
   slurEndLast(): void {
     const last = this.last
-    if (last && last.type !== 'rest') {
-      this.replaceLast({ ...last, slurEnds: last.slurEnds + 1 })
+    if (!last) return
+    if (last.type === 'rest') {
+      this.replaceLast({ ...last, slurEnds: (last.slurEnds ?? 0) + 1 })
+      return
     }
+    this.replaceLast({ ...last, slurEnds: last.slurEnds + 1 })
   }
 
   /**
@@ -4706,6 +4719,15 @@ class Parser {
     /** One flag per pitch — see `Chord.tiedPitches`. */
     const innerTies: boolean[] = []
     let pendingInner: string[] = []
+    /**
+     * **A `(` INSIDE THE BRACKETS OPENS ON THE HEAD IT PRECEDES AND A `)` CLOSES ON THE ONE
+     * BEFORE IT** — `[(CE)G]` is a slur from the chord's first pitch to its second, which
+     * abcjs numbers at chord positions 1 and 2 and therefore as 101 and 201
+     * (`tune-builder.js:752-770`). It reaches forward where the tie reaches back, and both
+     * were being SKIPPED here: `chordDecoration` answers null for a paren, so the token was
+     * consumed and the mark lost.
+     */
+    let pendingInnerSlurs = 0
 
     while (i < tokens.length && (tokens[i] as Token).kind !== 'closeBracket') {
       const token = tokens[i] as Token
@@ -4714,10 +4736,28 @@ class Parser {
         i++
         continue
       }
+      if (token.kind === 'lparen') {
+        pendingInnerSlurs += 1
+        i++
+        continue
+      }
+      if (token.kind === 'rparen') {
+        const at = pitches.length - 1
+        const target = pitches[at]
+        if (target !== undefined)
+          pitches[at] = { ...target, slurEnds: (target.slurEnds ?? 0) + 1 }
+        i++
+        continue
+      }
       if (token.kind === 'noteLetter') {
         const head = this.readNoteHead(tokens, i, accidental)
         const length = this.readLength(tokens, head.next)
-        pitches.push(head.pitch)
+        pitches.push(
+          pendingInnerSlurs === 0
+            ? head.pitch
+            : { ...head.pitch, slurStarts: pendingInnerSlurs },
+        )
+        pendingInnerSlurs = 0
         innerTies.push(false)
         innerMultipliers.push(length.factor)
         innerDecorations.push(...pendingInner)
@@ -5226,8 +5266,29 @@ function parseGracePitches(raw: string): {
   const offset = raw.length - text.length
   const unparsed: number[] = []
   const pitches: GracePitch[] = []
+  /**
+   * **A SLUR INSIDE THE GROUP IS READ, NOT REPORTED.** abcjs parses each grace with
+   * `getCoreNote`, which consumes a leading `(` onto the note's own `startSlur` and a
+   * trailing `)` onto its `endSlur` (`abc_parse_music.js:691`) — so `{(CD)}` is a slur from
+   * the first grace to the second, numbered at chord position 20 and therefore 2001. Ours
+   * fell through to the "unknown character" arm and warned about both parens.
+   */
+  let pendingSlurs = 0
   let i = 0
   while (i < text.length) {
+    if (text[i] === '(') {
+      pendingSlurs += 1
+      i++
+      continue
+    }
+    if (text[i] === ')') {
+      const at = pitches.length - 1
+      const target = pitches[at]
+      if (target !== undefined)
+        pitches[at] = { ...target, slurEnds: (target.slurEnds ?? 0) + 1 }
+      i++
+      continue
+    }
     let accidental: Accidental | null = null
     while (i < text.length && '^_='.includes(text[i] as string)) {
       accidental = combineAccidental(accidental, text[i] as string)
@@ -5260,7 +5321,9 @@ function parseGracePitches(raw: string): {
       octave,
       accidental,
       length: graceLength(text.slice(lengthStart, i)),
+      ...(pendingSlurs === 0 ? {} : { slurStarts: pendingSlurs }),
     })
+    pendingSlurs = 0
   }
   return { pitches, slash, unparsed }
 }

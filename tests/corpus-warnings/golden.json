@@ -209,6 +209,16 @@
  "repo/abcts-keywarn-tune2": [
   "Music Line:5:3: Directive keywarn requires 0 or 1 as a parameter.:  %%<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">k</span>eywarn false"
  ],
+ "repo/abcts-slur-shapes-tune0": null,
+ "repo/abcts-slur-shapes-tune1": null,
+ "repo/abcts-slur-shapes-tune2": null,
+ "repo/abcts-slur-shapes-tune3": null,
+ "repo/abcts-slur-shapes-tune4": null,
+ "repo/abcts-slur-shapes-tune5": null,
+ "repo/abcts-slur-shapes-tune6": null,
+ "repo/abcts-slur-shapes-tune7": null,
+ "repo/abcts-slur-shapes-tune8": null,
+ "repo/abcts-slur-shapes-tune9": null,
  "repo/abcts-visualtranspose-tune0": null,
  "repo/abcts-visualtranspose-tune1": null,
  "repo/abcts-visualtranspose-tune2": null,

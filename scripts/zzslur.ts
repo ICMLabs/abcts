@@ -15,6 +15,9 @@ const CASES: Record<string, string> = {
   "nested slurs": "X:1\nL:1/4\nK:C\n((CD)E)|\n",
   "grace slur": "X:1\nL:1/4\nK:C\n{(CD)}E|\n",
   "slur to a rest": "X:1\nL:1/4\nK:C\n(Cz)|\n",
+  "slur ending on a chord": "X:1\nL:1/4\nK:C\n(C[EG])|\n",
+  "slur chord to chord": "X:1\nL:1/4\nK:C\n([CE][GB])|\n",
+  "slur from a rest": "X:1\nL:1/4\nK:C\n(zC)|\n",
 };
 
 const dump = (t: any): string[] => {

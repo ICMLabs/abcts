@@ -687,6 +687,66 @@
    "endChar": 499
   }
  },
+ "repo/abcts-slur-shapes-tune0": {
+  "title": {
+   "startChar": 496,
+   "endChar": 512
+  }
+ },
+ "repo/abcts-slur-shapes-tune1": {
+  "title": {
+   "startChar": 540,
+   "endChar": 560
+  }
+ },
+ "repo/abcts-slur-shapes-tune2": {
+  "title": {
+   "startChar": 591,
+   "endChar": 612
+  }
+ },
+ "repo/abcts-slur-shapes-tune3": {
+  "title": {
+   "startChar": 643,
+   "endChar": 657
+  }
+ },
+ "repo/abcts-slur-shapes-tune4": {
+  "title": {
+   "startChar": 688,
+   "endChar": 700
+  }
+ },
+ "repo/abcts-slur-shapes-tune5": {
+  "title": {
+   "startChar": 731,
+   "endChar": 747
+  }
+ },
+ "repo/abcts-slur-shapes-tune6": {
+  "title": {
+   "startChar": 775,
+   "endChar": 799
+  }
+ },
+ "repo/abcts-slur-shapes-tune7": {
+  "title": {
+   "startChar": 830,
+   "endChar": 851
+  }
+ },
+ "repo/abcts-slur-shapes-tune8": {
+  "title": {
+   "startChar": 885,
+   "endChar": 903
+  }
+ },
+ "repo/abcts-slur-shapes-tune9": {
+  "title": {
+   "startChar": 932,
+   "endChar": 988
+  }
+ },
  "repo/abcts-visualtranspose-tune0": {
   "title": {
    "startChar": 421,

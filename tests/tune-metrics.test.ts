@@ -63,6 +63,7 @@ const table = (): Row[] =>
 
 /** Tunes whose every section agrees. Grows, never shrinks. */
 const PASSING: readonly string[] = [
+  "repo/abcts-slur-shapes-tune0",
   "sib/inline-key-per-voice-tune0",
   "sib/ragtime-nightingale-tune0",
   "repo/abcjs-parse-book_parser-01-example-tune0",

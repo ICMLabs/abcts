@@ -887,6 +887,36 @@
  "repo/abcts-keywarn-tune2": {
   "title": "keywarn false is a no-op"
  },
+ "repo/abcts-slur-shapes-tune0": {
+  "title": "slur two notes"
+ },
+ "repo/abcts-slur-shapes-tune1": {
+  "title": "slur round a chord"
+ },
+ "repo/abcts-slur-shapes-tune2": {
+  "title": "slur inside a chord"
+ },
+ "repo/abcts-slur-shapes-tune3": {
+  "title": "nested slurs"
+ },
+ "repo/abcts-slur-shapes-tune4": {
+  "title": "grace slur"
+ },
+ "repo/abcts-slur-shapes-tune5": {
+  "title": "slur to a rest"
+ },
+ "repo/abcts-slur-shapes-tune6": {
+  "title": "slur ending on a chord"
+ },
+ "repo/abcts-slur-shapes-tune7": {
+  "title": "slur chord to chord"
+ },
+ "repo/abcts-slur-shapes-tune8": {
+  "title": "slur from a rest"
+ },
+ "repo/abcts-slur-shapes-tune9": {
+  "title": "a close after a grace group reaches the note before it"
+ },
  "repo/abcts-visualtranspose-tune0": {
   "title": "visualTranspose 0 — the control's control"
  },

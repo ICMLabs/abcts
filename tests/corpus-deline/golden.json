@@ -1639,6 +1639,86 @@
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@532..533 note@533..534 note@534..535 note@535..536 bar@536..537 keySignature@538..541 break@undefined..undefined key@-1..-1 note@542..543 note@543..544 note@544..545 note@545..547 bar@547..548"
  ],
+ "repo/abcts-slur-shapes-tune0": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@529..531 note@531..533 bar@533..534"
+ ],
+ "repo/abcts-slur-shapes-tune1": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@577..582 note@582..584 bar@584..585"
+ ],
+ "repo/abcts-slur-shapes-tune2": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@629..636 bar@636..637"
+ ],
+ "repo/abcts-slur-shapes-tune3": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@674..677 note@677..679 note@679..681 bar@681..682"
+ ],
+ "repo/abcts-slur-shapes-tune4": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@717..724 bar@724..725"
+ ],
+ "repo/abcts-slur-shapes-tune5": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@764..766 note@766..768 bar@768..769"
+ ],
+ "repo/abcts-slur-shapes-tune6": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@816..818 note@818..823 bar@823..824"
+ ],
+ "repo/abcts-slur-shapes-tune7": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@868..873 note@873..878 bar@878..879"
+ ],
+ "repo/abcts-slur-shapes-tune8": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@920..922 note@922..924 bar@924..925"
+ ],
+ "repo/abcts-slur-shapes-tune9": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@1005..1008 note@1008..1013 bar@1013..1014"
+ ],
+ "repo/abcts-slur-shapes-tune0#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@529..531 note@531..533 bar@533..534"
+ ],
+ "repo/abcts-slur-shapes-tune1#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@577..582 note@582..584 bar@584..585"
+ ],
+ "repo/abcts-slur-shapes-tune2#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@629..636 bar@636..637"
+ ],
+ "repo/abcts-slur-shapes-tune3#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@674..677 note@677..679 note@679..681 bar@681..682"
+ ],
+ "repo/abcts-slur-shapes-tune4#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@717..724 bar@724..725"
+ ],
+ "repo/abcts-slur-shapes-tune5#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@764..766 note@766..768 bar@768..769"
+ ],
+ "repo/abcts-slur-shapes-tune6#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@816..818 note@818..823 bar@823..824"
+ ],
+ "repo/abcts-slur-shapes-tune7#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@868..873 note@873..878 bar@878..879"
+ ],
+ "repo/abcts-slur-shapes-tune8#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@920..922 note@922..924 bar@924..925"
+ ],
+ "repo/abcts-slur-shapes-tune9#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@1005..1008 note@1008..1013 bar@1013..1014"
+ ],
  "repo/abcts-visualtranspose-tune0": [
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@501..502 note@502..503 note@503..504 note@504..505 bar@505..506 note@506..507 note@507..508 note@508..509 note@509..510 bar@510..511"

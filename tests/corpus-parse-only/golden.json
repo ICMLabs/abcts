@@ -1174,6 +1174,76 @@
   "key acc,accidentals,el_type,endChar,mode,root,startChar",
   "note duration,el_type,endChar,pitches,pitches.accidental,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
  ],
+ "repo/abcts-slur-shapes-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,pitches,pitches.endSlur,pitches.name,pitches.pitch,pitches.startSlur,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-slur-shapes-tune1": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,pitches,pitches.endSlur,pitches.name,pitches.pitch,pitches.verticalPos,startChar,startSlur"
+ ],
+ "repo/abcts-slur-shapes-tune2": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,pitches,pitches.endSlur,pitches.name,pitches.pitch,pitches.startSlur,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-slur-shapes-tune3": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,pitches,pitches.endSlur,pitches.name,pitches.pitch,pitches.startSlur,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-slur-shapes-tune4": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,gracenotes,gracenotes.duration,gracenotes.endSlur,gracenotes.name,gracenotes.pitch,gracenotes.startSlur,gracenotes.verticalPos,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-slur-shapes-tune5": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,endSlur,pitches,pitches.name,pitches.pitch,pitches.startSlur,pitches.verticalPos,rest,rest.type,startChar"
+ ],
+ "repo/abcts-slur-shapes-tune6": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,endSlur,pitches,pitches.name,pitches.pitch,pitches.startSlur,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-slur-shapes-tune7": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,endSlur,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar,startSlur"
+ ],
+ "repo/abcts-slur-shapes-tune8": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,pitches,pitches.endSlur,pitches.name,pitches.pitch,pitches.verticalPos,rest,rest.type,startChar"
+ ],
+ "repo/abcts-slur-shapes-tune9": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,gracenotes,gracenotes.duration,gracenotes.endSlur,gracenotes.name,gracenotes.pitch,gracenotes.verticalPos,pitches,pitches.name,pitches.pitch,pitches.startSlur,pitches.verticalPos,rest,rest.type,startChar"
+ ],
  "repo/abcts-visualtranspose-tune0": [
   "staff.clef el_type=undefined clefPos,type,verticalPos",
   "staff.key el_type=undefined acc,accidentals,mode,root",

@@ -34,6 +34,22 @@ const names = readdirSync(fixtures)
   .map((f) => f.replace(/\.abc$/, ''))
   .sort()
 
+/**
+ * ⚠️ **`dump-svg.js` DEFAULTS TO abcjs 6.6.3, AND THIS SCRIPT USED TO LET IT.**
+ *
+ *     var abcjsPath = path.resolve(__dirname,
+ *       '../../Docs/References/abcjs/abcjs-' + (process.env.ABCJS_VERSION || '6.6.3'))
+ *
+ * The committed goldens are 6.7.0 — the parity target since 2026-08-08 — so running this
+ * without the variable REBASELINED THE BYTE GATE'S ORACLE AGAINST A SUPERSEDED REFERENCE,
+ * silently and across all 176 fixtures. The tell is `class=""` on every element group: 6.6.3
+ * writes it and 6.7.0 does not, so the diff looks cosmetic and is a version change.
+ *
+ * The version is taken from `abcts.config.json`'s `abcjsRef`, which is the same path every
+ * other harvester loads abcjs from — one source, so the two cannot disagree.
+ */
+const ABCJS_VERSION = /abcjs-([\d.]+)$/.exec(config.abcjsRef)?.[1] ?? '6.7.0'
+
 const skipped = {}
 let made = 0
 for (const name of names) {
@@ -42,7 +58,7 @@ for (const name of names) {
     execFileSync(
       process.execPath,
       [join(tools, 'dump-svg.js'), '--file', abc, '--output', join(out, `${name}.svg`)],
-      { cwd: tools, stdio: ['ignore', 'ignore', 'pipe'] },
+      { cwd: tools, stdio: ['ignore', 'ignore', 'pipe'], env: { ...process.env, ABCJS_VERSION } },
     )
     made++
   } catch (e) {

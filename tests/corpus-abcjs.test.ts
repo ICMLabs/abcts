@@ -399,7 +399,7 @@ const WITHIN: Readonly<Record<string, number>> = {
   // `%%` lines (`abc_parse_book.js:12-33`). That was the last CONTENT gap, and closing it
   // made the 174th fixture measurable for the first time.
   //
-  // **177 OF 177, ON EVERY THRESHOLD.** The whole harvested corpus agrees with abcjs on
+  // **178 OF 178, ON EVERY THRESHOLD.** The whole harvested corpus agrees with abcjs on
   // note content and on all four geometric axes to within 0.05px. The ranked table is
   // EMPTY — it prints no rows at all — so it can no longer name anything, and the gates
   // that remain are regression nets rather than instruments. See
@@ -411,10 +411,10 @@ const WITHIN: Readonly<Record<string, number>> = {
   // Its goldens come from running abcjs 6.7.0 like every other row here, so it is measured
   // the same way; only its INPUT was chosen by us. That is the pattern this branch has
   // used for every feature no fixture exercised.
-  "0.05": 177,
-  "1": 177,
-  "5": 177,
-  "25": 177,
+  "0.05": 178,
+  "1": 178,
+  "5": 178,
+  "25": 178,
 };
 
 const names = readdirSync(fixturesDir)
