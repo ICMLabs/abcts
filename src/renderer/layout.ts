@@ -10823,11 +10823,20 @@ const displaceHeads = (el: LayoutElement, dx: number): LayoutElement =>
          * reading the offset back off the moved glyph — `(g.x - el.x) + w` — lands one ULP
          * away at `29.970000000000013`. A CONSTRUCTED OFFSET IS BUILT, NEVER DERIVED.
          */
-        glyphs: el.glyphs.map((g) =>
-          g.name.startsWith('accidental') || g.role === 'dynamic'
-            ? g
-            : { ...g, x: g.x + dx, dx: (g.dx ?? 0) + dx },
-        ),
+        /**
+         * …**AND THE MOVED GLYPH'S x IS REBUILT FROM THE ELEMENT, NOT NUDGED.** abcjs never
+         * touches a relative child's `x` here at all — it rewrites the `dx` and lets
+         * `setX` spend it as `this.x = x + this.dx` (`relative-element.js:124-125`), which
+         * is one add onto the element's own x. Shifting the glyph instead makes it
+         * `(el.x + dx) + width`, and the two part in the last bits: a displaced
+         * `dots.dot` on `visual-layout-04` came out at `1053.7069999999999` where
+         * `1029.967 + 23.74` is `1053.707`, and the dot printed one ULP left.
+         */
+        glyphs: el.glyphs.map((g) => {
+          if (g.name.startsWith('accidental') || g.role === 'dynamic') return g
+          const off = (g.dx ?? g.x - el.x) + dx
+          return { ...g, x: el.x + off, dx: off }
+        }),
         lines: el.lines.map((l) => ({ ...l, x1: l.x1 + dx, x2: l.x2 + dx })),
         texts: el.texts.map((t) => ({ ...t, x: t.x + dx })),
       }

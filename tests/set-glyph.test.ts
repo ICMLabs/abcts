@@ -22,17 +22,15 @@ import { renderAll } from "./render-all.js";
  * Two swaps, a plain rectangle each way — 18 × 6 and 4 × 3 — so the difference is
  * unmistakable in the markup and in the spacing.
  *
- * ⚠️ **FIVE OF THE SIX ARE BYTE-EXACT AND THE SIXTH IS ONE ULP, WHICH IS NOT `setGlyph`'s.**
- * `visual-layout-04#wide` writes a dot at `1055.0269999999998` against abcjs's `1055.027` —
- * the same element x one bit apart, because an 18-wide quarter notehead makes every note's
- * rod 19 and the line's accumulation lands differently. abcjs's own probe says its
- * `notehead.w` there is 10.37, a HALF note, so the dot's own `dx` of 13.37 is identical on
- * both sides; what differs is where the element was placed. It is the solve's association,
- * the same class as `Advance.width`'s ULP notes, and it appears under a SYNTHETIC glyph
- * width that no real table produces — which is why the byte gates at 0 of 188 and 0 of 356
- * are unmoved.
+ * ✅ **ALL SIX ARE BYTE-EXACT.** The sixth was one ULP for a while — `visual-layout-04#wide`
+ * wrote a dot at `1055.0269999999998` against abcjs's `1055.027` — and the note here said
+ * it was "the solve's association" and not `setGlyph`'s. It was neither: the dot is a
+ * DISPLACED one, and the voice-overlap rule was NUDGING the glyph where abcjs rewrites its
+ * `dx` and lets `setX` spend it as one add onto the element's x. An 18-wide quarter
+ * notehead is what makes a second voice overlap here at all, which is why only this render
+ * could see it. See `displaceHeads`.
  */
-const ULP_ONLY = ["abcjs-visual-layout-04-score-s-a#wide"];
+const ULP_ONLY: readonly string[] = [];
 const GOLDEN = JSON.parse(
   readFileSync(join(import.meta.dirname, "corpus-set-glyph", "golden.json"), "utf-8"),
 ) as Record<string, string>;
