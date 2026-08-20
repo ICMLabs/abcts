@@ -47,7 +47,7 @@ export interface AbcPitch {
   highestVert?: number;
   startSlur?: readonly { label: number }[];
   endSlur?: readonly number[];
-  startTie?: Record<string, never>;
+  startTie?: { style?: string };
   endTie?: boolean;
   /**
    * `"same"` or `"different"` — a chord head the engraver pushed aside because it stands a
@@ -128,7 +128,12 @@ export interface AbcElement {
   rest?: { type: string; text?: string | number };
   duration?: number | readonly number[];
   decoration?: readonly string[];
-  chord?: readonly { name: string; position: string }[];
+  chord?: readonly {
+    name: string;
+    position?: string;
+    /** `"@x,y TEXT"` — an ABSOLUTELY positioned annotation, which carries no `position`. */
+    rel_position?: { x: number; y: number };
+  }[];
   gracenotes?: readonly {
     pitch: number;
     name: string;
@@ -583,11 +588,10 @@ const bar = (
   e.type = (kind === null ? undefined : BARLINE_TYPE[kind]) ?? "bar_thin";
   if (extras?.decorations !== undefined && extras.decorations.length > 0)
     e.decoration = extras.decorations.map((d) => DECORATION_NAME[d] ?? d);
-  const barChord: { name: string; position: string }[] = [];
+  const barChord: NonNullable<AbcElement["chord"]>[number][] = [];
   if (extras?.chordSymbol !== undefined)
     barChord.push({ name: extras.chordSymbol, position: "default" });
-  for (const a of extras?.annotations ?? [])
-    barChord.push({ name: a.slice(1), position: ANNOTATION_POSITION[a[0] ?? ""] ?? "default" });
+  for (const a of extras?.annotations ?? []) barChord.push(annotationEntry(a));
   if (barChord.length > 0) e.chord = barChord;
   if (barNumber !== undefined) e.barNumber = barNumber;
   if (volta !== undefined) {
@@ -775,7 +779,7 @@ function noteFields(
         // note taking its accidental from the key signature carries none.
         ...(p.accidental === null
           ? {}
-          : { accidental: ACCIDENTAL_NAME[p.accidental] ?? "natural" }),
+          : { accidental: accidentalName(p, writtenName(p)) }),
         pitch: abcjsPitch(p),
         name: writtenName(p),
         ...(drumMap === undefined || drumMap[drumKey(writtenName(p))] === undefined
@@ -790,18 +794,33 @@ function noteFields(
     // (`abc_parse_music.js:427`), and `[B-eg-b-]` ties three of its four heads. A plain
     // note's `-` lands on `pitches[0]` (`tune-builder.js:162-171`), which is the same rule
     // for a chord of one.
+    /**
+     * **A DOTTED TIE SAYS SO ON THE `startTie` ITSELF** — `{style: "dotted"}`, where a plain
+     * one is the empty object (`abc_parse_music.js:896`). `.-` is not a staccato: abcjs's
+     * decoration lexer breaks out of `case '.'` when `-` follows.
+     */
+    const tieStyle: { style?: string } = event.tieDotted === true ? { style: "dotted" } : {};
     const tied =
       event.type === "chord" && event.tiedPitches !== undefined
         ? event.tiedPitches
         : undefined;
     e.pitches.forEach((p, i) => {
       if (tied === undefined ? event.tiedToNext && i === 0 : tied[i] === true)
-        p.startTie = {};
+        p.startTie = { ...tieStyle };
     });
     if (tied === undefined && event.tiedToNext && e.pitches.length > 1)
-      for (const p of e.pitches) p.startTie = {};
+      for (const p of e.pitches) p.startTie = { ...tieStyle };
   }
-  if (event.decorations.length > 0)
+  if (
+    event.decorations.length > 0 &&
+    !(event.type === "rest" && event.kind === "invisible")
+  )
+    /**
+     * ⚠️ **AN INVISIBLE REST LOSES ITS DECORATIONS, AND NOTHING ELSE DOES.** Measured
+     * through abcjs on five rungs: `!segno!x` and `Sx` come back as a bare invisible rest,
+     * while `!segno!z`, `!segno!y` (a spacer), `!segno!Z2` and the same decoration on a NOTE
+     * all keep it.
+     */
     e.decoration = event.decorations
       .map((d) => DECORATION_NAME[d] ?? d)
       // **A BEAM BREAK IS CONSUMED, NOT DECORATED.** `!beambr1!` sets `el.beambr = 1` and
@@ -815,11 +834,10 @@ function noteFields(
         ? 1
         : undefined;
     if (beambr !== undefined) e.beambr = beambr;
-  const chord: { name: string; position: string }[] = [];
+  const chord: NonNullable<AbcElement["chord"]>[number][] = [];
   if (event.chordSymbol !== null)
     chord.push({ name: event.chordSymbol, position: "default" });
-  for (const a of event.annotations)
-    chord.push({ name: a.slice(1), position: ANNOTATION_POSITION[a[0] ?? ""] ?? "default" });
+  for (const a of event.annotations) chord.push(annotationEntry(a));
   if (chord.length > 0) e.chord = chord;
   if (event.type !== "rest" && event.lyric !== null) {
     // **THE DIVIDER IS PART OF THE SYLLABLE IN OUR MODEL AND A FIELD OF ITS OWN IN
@@ -873,6 +891,48 @@ function noteFields(
  * failed `closeDecoration`'s `name === 'accent'` test, and every accent in the corpus sat
  * one pitch out.
  */
+/**
+ * **A QUARTER TONE NAMES ITSELF, AND THE NAME IS IN THE SPELLING.** abcjs's `accMap` has
+ * seven entries — `quarterflat` is `_/` and `quartersharp` is `^/`
+ * (`abc_parse_settings.js:147-155`) — where our `Accidental` has five and the microtone
+ * rides the EVENT as cents. The written name already carries the `/`, so the element takes
+ * its accidental from what was typed rather than from an enum that cannot say it.
+ *
+ * ponytail: the source spelling is the whole test. A microtone reached any other way — the
+ * DSL, a converter — has no `/` to read and falls back to the plain name, which is what the
+ * enum can express anyway.
+ */
+const accidentalName = (
+  p: { accidental: number | string | null },
+  written: string,
+): string => {
+  if (written.startsWith("^/")) return "quartersharp";
+  if (written.startsWith("_/")) return "quarterflat";
+  return ACCIDENTAL_NAME[p.accidental as number] ?? "natural";
+};
+
+/**
+ * One `"…"` annotation as abcjs's `letter_to_chord` reads it (`abc_parse_music.js:608-660`).
+ *
+ * ⚠️ **`@x,y` IS NOT A POSITION, IT IS A PAIR OF FLOATS AND A NAME WITHOUT THEM.** The mark
+ * is stripped, a float is read, a comma is required, a second float is read, the whitespace
+ * after it is skipped, and what remains is the text — `position` is NULL and `rel_position`
+ * carries the two numbers. A malformation warns, strips the `@`, and falls back to `above`.
+ */
+const annotationEntry = (
+  a: string,
+): { name: string; position?: string; rel_position?: { x: number; y: number } } => {
+  const mark = a[0] ?? "";
+  if (mark !== "@")
+    return { name: a.slice(1), position: ANNOTATION_POSITION[mark] ?? "default" };
+  const at = /^@(-?[0-9]*\.?[0-9]+),(-?[0-9]*\.?[0-9]+)[ \t]*/.exec(a);
+  if (at === null) return { name: a.slice(1).replace("@", ""), position: "above" };
+  return {
+    name: a.slice(at[0].length),
+    rel_position: { x: Number(at[1]), y: Number(at[2]) },
+  };
+};
+
 const DECORATION_NAME: Readonly<Record<string, string>> = {
   "<": "accent",
   ">": "accent",
@@ -1740,6 +1800,14 @@ export function projectionOf(
 
   const furnitureOf = (
     voice: (typeof score.voices)[number] | undefined,
+    /**
+     * Every voice on this staff — because a standalone body `K:` RESTAMPS THE STAFF, and
+     * the parser was inside whichever voice happened to be current when it read it.
+     * `visual-layout-07` writes its second `K:GMin` after four `V:` lines, so ours records
+     * it on voice 4 while abcjs stamps it on the staff voice 4 sits on, where voice 3 reads
+     * it too.
+     */
+    staffVoices: readonly (typeof score.voices)[number][] = [],
   ): { key: AbcElement; clef: AbcElement; meter?: AbcElement }[] => {
     const out: { key: AbcElement; clef: AbcElement; meter?: AbcElement }[] = [];
     let clefInForce: Clef = voice?.clef ?? score.clef ?? defaultClef;
@@ -1749,9 +1817,42 @@ export function projectionOf(
       // same way (`layout.ts`, `clefAtMeasure`).
       if (m.clefChange != null) clefInForce = m.clefChange;
       if (i === 0 || m.startsSystem) {
-        const key = leadsLine(m, m.keyChangeSourceRange?.start)
-          ? (m.keyChange ?? keyInForce)
-          : keyInForce;
+        const restamp = staffVoices
+          .map((other) => other.measures[i])
+          .filter(
+            (om): om is Measure =>
+              om !== undefined &&
+              om.keyChange != null &&
+              leadsLine(om, om.keyChangeSourceRange?.start),
+          )
+          .pop();
+        const leadingKey = leadsLine(m, m.keyChangeSourceRange?.start)
+          ? (m.keyChange ?? null)
+          : (restamp?.keyChange ?? null);
+        const key = leadingKey ?? keyInForce;
+        /**
+         * ⚠️ **A KEY IS PITCHED WHERE IT IS PARSED, FOR WHATEVER CLEF THAT FIELD KNEW.**
+         * `addPosToKey` runs in the `K:` handler, so a key declared with the voice — a
+         * header `K:D` read after `V:T clef=bass,,` — takes the VOICE's clef, while a
+         * standalone body `K:` restamps the staff against ITS OWN field's clef, which is
+         * the default treble when the field names none.
+         *
+         * Measured both ways, because one fixture alone would have written the wrong rule:
+         * `parse-tie-slur-04`'s `V:T clef=bass,,` reports the bass positions 8 and 5, and
+         * `visual-layout-07` — whose second `K:GMin` stands AFTER its `V:3 bass,,` — reports
+         * the treble 6 and 9 on the same kind of staff.
+         *
+         * The DRAWING still moves them; `keySignatureShift` is what the layout uses. This is
+         * the element a host reads, not where the ink lands.
+         */
+        const keyClef =
+          leadingKey === null
+            ? clefInForce
+            : ((leadsLine(m, m.keyChangeSourceRange?.start) ? m : restamp)?.keyChangeClef ??
+              ((leadsLine(m, m.keyChangeSourceRange?.start) ? m : restamp)?.keyChangeInline ===
+              true
+                ? clefInForce
+                : defaultClef));
         /**
          * **AND WHEN A MEASURE CARRIES SEVERAL `[M:]`, THE STAFF'S IS THE FIRST ONE THAT
          * LEADS THE MUSIC, NOT THE ONE IN FORCE.** `meterChange` is the LAST entry —
@@ -1773,7 +1874,7 @@ export function projectionOf(
               ? m.meterChange
               : null;
         out.push({
-          key: keyElement(key, clefInForce),
+          key: keyElement(key, keyClef),
           clef: clefElement(clefInForce, voice?.transpose),
           ...(meter == null ? {} : { meter: meterElement(meter) }),
         });
@@ -1784,7 +1885,10 @@ export function projectionOf(
   };
   /** Per STAFF, off its first voice — abcjs's is `multilineVars.staves[staffNum]`. */
   const furniture = voicesOfStaff.map((members) =>
-    furnitureOf(score.voices[members[0] ?? 0]),
+    furnitureOf(
+      score.voices[members[0] ?? 0],
+      members.map((k) => score.voices[k]).filter((v) => v !== undefined),
+    ),
   );
 
   breaks.forEach((from, i) => {

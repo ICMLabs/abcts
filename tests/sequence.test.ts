@@ -123,23 +123,22 @@ describe("synth.sequence — the intermediate abcjs plays from", () => {
   });
 
   /**
-   * A floor, not a target — it moves up and must never move down.
+   * **CLOSED — 4,795 of 4,795 rows over 177 tunes.** A floor, not a target; it must never
+   * move down.
    *
-   * **WHAT IS LEFT IS 21 ROWS AND MOSTLY ONE KNOWN MODEL GAP.** Twenty are
-   * `synth-flattener-32`'s quarter tones, where abcjs's `accMap` has seven entries and our
-   * `Accidental` has five — microtones are deferred, and this is the surface that says so.
-   * The rest are single rows, each measured and named: a pitch with no `highestVert` on an
-   * incipit, a per-voice key's accidental `verticalPos`, a `!segno!` on an invisible rest,
-   * an annotation's `rel_position`, and a DOTTED tie's `startTie: {style: "dotted"}`.
-   *
-   * **NINE CLASSES HAVE ALREADY CLOSED BY BEING NAMED HERE** — the staff's voice `title`, a
-   * barline's decorations and chord, `V:… transpose=` on the clef, a multi-measure rest's
-   * length, `midipitch` from a drummap, `endTie` across a line break, a whole-measure
-   * rest's type, `printer_shift`, and the clef, meter and key elements in the stream, which
-   * were all pushed as bare markers with a span and nothing else.
+   * **EVERY CLASS THIS GATE NAMED WAS A `tune.lines` FIELD, NOT A SEQUENCING RULE.** Sixteen
+   * of them: the staff's voice `title`; a barline's decorations and chord; `V:… transpose=`
+   * on the clef; a multi-measure rest's own length and `text`; `midipitch` from a
+   * `%%MIDI drummap`; `endTie`, which was scoped to one LINE where abcjs's tie state is the
+   * tune's; a whole-measure rest's `whole` type; `printer_shift`; a grace note's
+   * `accidental`, `midipitch` and `acciaccatura`; the clef, meter and key elements in the
+   * stream, all three of which were bare markers with a span and nothing else; a quarter
+   * tone naming itself; a `K:` field's own explicit accidentals; WHICH CLEF a key is pitched
+   * for; the engrave-time fields on a system `%%maxStaves` hides; an invisible rest losing
+   * its decorations; `@x,y`'s `rel_position`; and a dotted tie's `startTie: {style}`.
    */
   it("the whole corpus agrees on at least the rows it did", () => {
     const agree = table.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(4774);
+    expect(agree).toBeGreaterThanOrEqual(4795);
   });
 });

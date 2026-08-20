@@ -452,14 +452,23 @@ const TREBLE_MIDDLE_LINE_INDEX = 34;
  * abcjs writes the MAJOR mode as the empty string, and `root`/`acc` are the tonic split in
  * two — `Bb` is `{root: "B", acc: "b"}`.
  */
+/** A `K:` field's explicit accidental, in QUARTER tones, as abcjs's `accMap` names it. */
+const KEY_ACCIDENTAL_ACC: Readonly<Record<number, string>> = {
+  [-4]: "dblflat",
+  [-2]: "flat",
+  [-1]: "quarterflat",
+  [0]: "natural",
+  [1]: "quartersharp",
+  [2]: "sharp",
+  [4]: "dblsharp",
+};
+
 export const keyElement = (key: KeySignature, clef: Clef): AbcElement => {
   const fifths = keyFifths(key);
   const sharps = fifths > 0;
   const shift = keySignatureShift(clef);
   const letters = (sharps ? SHARP_ORDER : FLAT_ORDER).slice(0, Math.abs(fifths));
-  return {
-    el_type: "keySignature",
-    accidentals: letters.map((letter) => {
+  const accidentals = letters.map((letter) => {
       const step = keyStepOf(letter, sharps) + shift;
       return {
         acc: sharps ? "sharp" : "flat",
@@ -471,8 +480,38 @@ export const keyElement = (key: KeySignature, clef: Clef): AbcElement => {
         // bass rows.
         note: abcName(keyStepOf(letter, sharps) + TREBLE_MIDDLE_LINE_INDEX),
         verticalPos: step + MIDDLE_LINE_VERTICAL_POS,
+        letter,
       };
-    }),
+    });
+  /**
+   * **AN EXPLICIT ACCIDENTAL ON THE FIELD REPLACES A STANDARD ONE ON THE SAME LETTER, OR IS
+   * APPENDED** (`abc_parse_key_voice.js:320-350`) — the rule the layout already draws with,
+   * and the element carries it too, in the order written. `K: C ^/f _/B _A ^D` is four
+   * accidentals over a key with none of its own, and this side reported an empty list.
+   *
+   * Its position follows the accidental's SIGN, because a sharp and a flat sit an octave
+   * apart for several letters.
+   */
+  for (const acc of key.extra ?? []) {
+    const up = acc.quarters > 0;
+    const step = keyStepOf(acc.step, up) + shift;
+    const entry = {
+      acc: KEY_ACCIDENTAL_ACC[acc.quarters] ?? "natural",
+      note: abcName(keyStepOf(acc.step, up) + TREBLE_MIDDLE_LINE_INDEX),
+      verticalPos: step + MIDDLE_LINE_VERTICAL_POS,
+      letter: acc.step,
+    };
+    const at = accidentals.findIndex((w) => w.letter === acc.step);
+    if (at >= 0) accidentals[at] = entry;
+    else accidentals.push(entry);
+  }
+  return {
+    el_type: "keySignature",
+    accidentals: accidentals.map(({ acc, note, verticalPos }) => ({
+      acc,
+      note,
+      verticalPos,
+    })),
     root: key.tonic.step.toUpperCase(),
     acc:
       key.tonic.accidental === null || key.tonic.accidental === 0
@@ -525,6 +564,25 @@ export const meterElement = (meter: Meter): AbcElement => ({
           ],
         }),
 });
+
+/**
+ * Stamp the engrave-time fields onto every element of every system that was LAID OUT —
+ * see the call in `index.ts`. Idempotent: each field is recomputed from the element, and
+ * `printer_shift` only fills a gap.
+ */
+export function stampEngravedSystems(
+  systems: readonly Layout["systems"][number][],
+  index: ProjectionIndex,
+): void {
+  for (const system of systems)
+    for (const staff of system.staves)
+      for (const voice of staff.voices)
+        for (const element of voice) {
+          if (element.type !== "note" && element.type !== "rest") continue;
+          const abcelem = abcelemOf(element, index);
+          if (abcelem !== undefined) stampEngraved(abcelem, element);
+        }
+}
 
 export function selectablesOf(
   records: readonly SelectableRecord[],

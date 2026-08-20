@@ -73,6 +73,7 @@ import {
 import {
   abcelemOf,
   findSelectable,
+  stampEngravedSystems,
   keyElement,
   type Selectable,
   selectablesOf,
@@ -1082,12 +1083,18 @@ export function renderAbc(
       return barCache.get(range.start);
     };
     const selectables = (): readonly Selectable[] => {
-      selectableCache ??= selectablesOf(
-        records,
-        projection(),
-        params.selectTypes,
-      );
-      return selectableCache;
+      if (selectableCache == null) {
+        /**
+         * **THE ENGRAVE-TIME FIELDS BELONG TO EVERY SYSTEM, NOT ONLY THE DRAWN ONES.**
+         * abcjs stamps `highestVert`, `averagepitch` and `printer_shift` in the ENGRAVER,
+         * and `%%maxStaves` stops the DRAWING alone (`draw/draw.js:33-38`) — so an
+         * incipit's hidden lines carry them too. The selectable array is still built from
+         * what was drawn, which is what `data-index` counts.
+         */
+        stampEngravedSystems(laidOut().engraved, projection());
+        selectableCache = selectablesOf(records, projection(), params.selectTypes);
+      }
+      return selectableCache ?? [];
     };
     const timings: {
       rows: NoteTiming[];

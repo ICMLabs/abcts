@@ -1936,6 +1936,14 @@ export interface LayoutSystem {
 
 export interface Layout {
   readonly systems: readonly LayoutSystem[]
+  /**
+   * **EVERY SYSTEM THAT WAS ENGRAVED, INCLUDING THE ONES `%%maxStaves` STOPS DRAWING.**
+   * abcjs lays the whole tune out and stops at the limit in `draw()` (`draw/draw.js:33-38`),
+   * so its engraver still stamps `highestVert`, `averagepitch` and `printer_shift` onto
+   * every element — including an incipit's hidden lines, which a host reads off
+   * `tune.lines` all the same. Identical to `systems` when there is no limit.
+   */
+  readonly engraved: readonly LayoutSystem[]
   /** Bounding box in staff spaces; the SVG backend applies the scale. */
   readonly width: number
   /**
@@ -13787,6 +13795,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
 
   return {
     systems: shown,
+    engraved: placed,
     ...(stafflessBlock === undefined ? {} : { topText: stafflessBlock.texts }),
     ...(bottomText === undefined ? {} : { bottomText }),
     // …and the two ROW LISTS, whichever path built the top block — see `Layout.topTextRows`.
@@ -13889,6 +13898,8 @@ export function layoutBook(scores: readonly Score[], options: LayoutOptions = {}
   // AND IT CLOSES WITH `padding.bottom` — see `PAGE_PADDING.bottom`.
   return {
     systems,
+    // A stacked render draws every system it was handed; nothing is held back.
+    engraved: systems,
     width,
     pageWidth,
     height: cursor + PAGE_PADDING.top + PAGE_PADDING.bottom,
