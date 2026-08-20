@@ -950,8 +950,16 @@ checkpoint and hand off as you go so no context is lost.
 > `Docs/CHECKPOINT-2026-08-14.md` — §4 is the work list as it stood, §5 the harness. Then the
 > files below.
 
-**READ `Docs/CHECKPOINT-2026-08-19.md` FIRST** — the current state: **the abcjs API SURFACE
-IS COMPLETE (0 of 64 absent) and EVERY RANKED TABLE READS ZERO EXCEPT FOUR ROWS**, with
+**READ `Docs/HANDOFF-2026-08-20.md` FIRST** — the current state: **the abcjs API SURFACE IS
+COMPLETE (0 of 64 absent) and EVERY RANKED TABLE IN THE REPO READS ZERO.** The four rows the
+day before left are closed — `deline` 1,570 of 1,570, `Editor` 196 of 196, `tuneMetrics` 217
+of 217, `setGlyph` 6 of 6 byte-exact — and four ratchets are EXACT now rather than floors. It
+has the gate table, the rule each closure paid for (three are A CONSTRUCTED OFFSET IS BUILT,
+NEVER DERIVED, and one of them is that rule INVERTED, because abcjs's `shiftRight` derives),
+the two things left that are not defects, and the harness.
+
+Then `Docs/CHECKPOINT-2026-08-19.md` — how the surface was BUILT, and still current except
+for its §5 work list: with
 `synth.sequence` at 4,795 of 4,795, `makeVoicesArray` at 4,208 of 4,208, `tune.setupEvents`
 at 3,366 of 3,366 and the whole synth surface built without a speaker. §1 the four synth
 symbols and the RECORDING harnesses that gate them, §2 the `&` overlay model resolved ONCE in
@@ -959,7 +967,8 @@ the model, §3 the sixteen `tune.lines` fields a SECOND DERIVATION found, §4 th
 the four-probe ladder that tracked it to a tuplet's box declared in y, §5 WHAT IS LEFT (four
 rows, each named) and the one divergence written down rather than fixed — **our `parseOnly`
 ENGRAVES and abcjs's does not** — §6 the harness and §7 the rules.
-`Docs/HANDOFF-2026-08-19.md` has the gate table, WHAT TO DO NEXT and the six traps.
+`Docs/HANDOFF-2026-08-19.md` has the gate table as it stood and the six traps; its §1 work
+list is CLOSED — see `HANDOFF-2026-08-20.md`.
 
 Then `Docs/HANDOFF-2026-08-18.md` — superseded for the state, but it keeps the per-kind
 warning table, the `tuneMetrics` rules and the IMPLIED-NATURALS rule that is measured,
