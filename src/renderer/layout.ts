@@ -12128,8 +12128,24 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           if (shifts && room < item.left) {
             // Everything already placed at this time slot moves with the cursor —
             // abcjs's `shiftRight`, which carries each voice's own expectations along.
-            const dx = item.left - room
-            x += dx
+            /**
+             * ⚠️ **AND THE SHIFT THE OTHERS TAKE IS DERIVED FROM THE PLACED x, NOT THE
+             * AMOUNT ASKED FOR.** `layoutOneItem` moves the cursor with
+             * `x += extraWidth - er` and RETURNS it; the caller then takes
+             * `var dx = voicechildx - x` and hands THAT to `shiftRight`
+             * (`layout/staff-group.js:85-91`). The two are the same number in algebra and
+             * not in doubles: `21.775 - 7.333819891893739` is `14.44118010810626`, while
+             * the same shift read back off the cursor is `14.441180108106238`.
+             *
+             * This is the CONSTRUCTED-OFFSET rule pointing the other way, and it is the
+             * only place on this branch where abcjs is the side that derives. On
+             * `ragtime-nightingale` the 2.2e-14 rode the top voice's `minx` into the next
+             * slot and put two of its measure widths one ULP apart, in opposite directions
+             * with the section total exact.
+             */
+            const placed = x + (item.left - room)
+            const dx = placed - x
+            x = placed
             for (const w of done) {
               const row = at[w]
               if (row !== undefined && row.length > 0) row[row.length - 1] = x
@@ -12138,7 +12154,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             }
           }
           at[v]?.push(x)
-          if (process.env.ABCTS_XX) console.log('XX v', v, 'i', k, 'kind', item.kind, 'x', x, 'minx', minx[v], 'nextx', nextx[v], 'dur', item.duration)
+          if (process.env.ABCTS_XX) console.log('XX v', v, 'i', k, 'kind', item.kind, 'x', x, 'minx', minx[v], 'nextx', nextx[v], 'dur', item.duration, 'rod', item.rod, 'wid', item.width, 'gap', item.gap)
           if (PROBE && probeFinalPass) {
             const px = (n: number) => (n * 7.75).toFixed(3)
             console.log(
