@@ -113,7 +113,13 @@ const DIVERGENT: readonly string[] = [];
 const PASSING: readonly string[] = [
   "abcts-slur-shapes-tune0",
   "abcts-slur-shapes-tune1",
+  // CLOSED 2026-08-20: the two the fixture opened. `{(CD)}E` was two passes over the grace
+  // group — every close, then every open — where `addGraceNotes` makes ONE, so its `)`
+  // popped an empty stack; and `[(CE)G]`'s two halves are built at ONE element and were
+  // ordered by an absent `startElement` rather than by their own anchors.
+  "abcts-slur-shapes-tune2",
   "abcts-slur-shapes-tune3",
+  "abcts-slur-shapes-tune4",
   "abcts-slur-shapes-tune5",
   "abcts-slur-shapes-tune6",
   "abcts-slur-shapes-tune7",

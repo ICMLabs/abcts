@@ -1677,6 +1677,19 @@ export interface PlacedCurve {
    */
   readonly openSeq?: number
   /**
+   * **THIS HALF WAS `addOther`'d AT THE TOP OF ITS LINE**, and leads everything on it.
+   *
+   * A curve crossing a system break is REBUILT for the new line — `for (var slur in
+   * this.slurs) … this.slurs[slur] = new TieElem(…); voice.addOther(this.slurs[slur])`,
+   * before the line's own elements are walked (`abstract-engraver.js:236-242`). So its
+   * place in `otherchildren` is first, whatever x it ends up at.
+   *
+   * An UNPAIRED half is the opposite: it is built where the mark was read, mid-line, and
+   * takes its place from its own anchor. Both have no `startElement`, which is what the
+   * emitter used to key on — so `[(CE)G]`'s two halves came out the wrong way round.
+   */
+  readonly carried?: true
+  /**
    * How far this curve's start was moved onto its OWN notehead, to be taken back off for
    * the DRAW ORDER.
    *
@@ -8093,6 +8106,7 @@ function layoutCurves(
         end: to.element,
       }),
       ...style,
+      carried: true,
     })
   }
 
@@ -8106,7 +8120,7 @@ function layoutCurves(
      * the GRACE head, so the curve stops inside the group rather than at the notehead.
      */
     if ('graceNotes' in event)
-      for (const [gi, g] of event.graceNotes.entries())
+      for (const [gi, g] of event.graceNotes.entries()) {
         for (let n = 0; n < (g.slurEnds ?? 0); n++) {
           const rec = open.pop()
           const from = rec === undefined ? undefined : (rec.from ?? anchors[rec.i])
@@ -8145,13 +8159,19 @@ function layoutCurves(
             internalDownOf(rec?.i ?? 0, i),
           )
         }
-    /**
-     * **AND A `(` INSIDE A GRACE GROUP OPENS ON THAT GRACE HEAD** — `getCoreNote` reads it
-     * onto the grace note itself (`abc_parse_music.js:691`), so `{(CD)}E` is a curve from
-     * the first grace to the second and never touches the note they decorate.
-     */
-    if ('graceNotes' in event)
-      for (const [gi, g] of event.graceNotes.entries())
+        /**
+         * **AND A `(` INSIDE A GRACE GROUP OPENS ON THAT GRACE HEAD** — `getCoreNote` reads
+         * it onto the grace note itself (`abc_parse_music.js:691`), so `{(CD)}E` is a curve
+         * from the first grace to the second and never touches the note they decorate.
+         *
+         * ⚠️ **AND IT OPENS INSIDE THE SAME PASS THAT CLOSES.** `addGraceNotes` walks the
+         * group ONCE and calls `addSlursAndTies` per grace note, which handles that note's
+         * `endSlur` and then its `startSlur` (`abstract-engraver.js:489-498`). These were
+         * two loops over the group — every close, then every open — so `{(CD)}`'s `)` on
+         * grace 1 popped an empty stack and its `(` on grace 0 was pushed afterwards and
+         * never closed. The one paired curve abcjs draws came out as an unpaired half
+         * running to the end of the line.
+         */
         for (let n = 0; n < ((g as { slurStarts?: number }).slurStarts ?? 0); n++) {
           const head = anchor.graceHeads?.[gi]
           open.push(
@@ -8161,7 +8181,13 @@ function layoutCurves(
                   i,
                   from: {
                     ...anchor,
-                    left: head.x,
+                    // **AND A GRACE HEAD AT THE OPENING END PULLS THE ARC BACK 3.**
+                    // `calcX`'s one special case: `if (this.anchor1.scalex < 1)
+                    // this.startX -= 3` — "this is a grace note - don't offset the tie as
+                    // much" (`tie-element.js:120-122`). It tests `anchor1` ALONE, so the
+                    // grace that CLOSES a slur below takes no inset. `graceStartInset` was
+                    // already spent by the automatic grace slur and not by a written one.
+                    left: head.x - spaces(ABCJS_ARC.graceStartInset),
                     right: head.x,
                     pitchY: head.y,
                     pitchStep: -head.y / ENGRAVE.spacePerStep - PITCH_ORIGIN,
@@ -8170,6 +8196,7 @@ function layoutCurves(
           )
           openSeq.set(open.length - 1, seq++)
         }
+      }
 
     /**
      * ⚠️ **A REST'S `endSlur` IS PARSE DATA THAT THE DRAWING IGNORES.** `Rest.slurEnds` is
@@ -8427,7 +8454,12 @@ function curveReserves(
    */
   const ink: CurveReserve[] = []
   const four = 4 * ENGRAVE.spacePerStep
-  const open: number[] = []
+  /**
+   * The slurs open on this voice, each carrying its own anchor where the `(` was written
+   * on a GRACE HEAD rather than on the element — the same stack `layoutCurves` keeps, and
+   * for the same reason.
+   */
+  const open: { i: number; from?: NoteAnchor }[] = []
   const centre = (a: NoteAnchor) => a.pitchY
   /**
    * `parent.fixed` — the element's OWN box over its fixed children, so on a beamed note
@@ -8722,14 +8754,46 @@ function curveReserves(
           reserves.push(above ? { top: y - three, bottom: y } : { top: y, bottom: y + three })
         }
       }
+    /**
+     * **AND A SLUR WRITTEN INSIDE A GRACE GROUP RESERVES OFF THE GRACE HEADS.**
+     * `voice.setRange(slur)` runs on whichever `TieElem` the close pairs with, grace or
+     * not (`abstract-engraver.js:915-920`), and `addGraceNotes` walks the group once — one
+     * `addSlursAndTies` per grace note, ends then starts — so this is `layoutCurves`' own
+     * pass over the same marks. `{(CD)}E` reserved NOTHING for its curve and came out one
+     * pitch short of abcjs's page.
+     */
+    if ('graceNotes' in anchor.event)
+      for (const [gi, g] of anchor.event.graceNotes.entries()) {
+        const head = anchor.graceHeads?.[gi]
+        const at: NoteAnchor | undefined =
+          head === undefined
+            ? undefined
+            : {
+                ...anchor,
+                left: head.x,
+                right: head.x,
+                pitchY: head.y,
+                pitchStep: -head.y / ENGRAVE.spacePerStep - PITCH_ORIGIN,
+                stemUp: true,
+              }
+        for (let n = 0; n < (g.slurEnds ?? 0); n++) {
+          const rec = open.pop()
+          const from = rec === undefined ? undefined : (rec.from ?? anchors[rec.i])
+          if (at === undefined) continue
+          if (from !== undefined) add(from, at, 'slur')
+          else unopened(at)
+        }
+        for (let n = 0; n < ((g as { slurStarts?: number }).slurStarts ?? 0); n++)
+          open.push(at === undefined ? { i } : { i, from: at })
+      }
     if (anchor.event.type === 'rest') return
     for (let n = 0; n < anchor.event.slurEnds; n++) {
-      const start = open.pop()
-      const from = start === undefined ? undefined : anchors[start]
+      const rec = open.pop()
+      const from = rec === undefined ? undefined : (rec.from ?? anchors[rec.i])
       if (from !== undefined) add(from, anchor, 'slur')
       else unopened(anchor)
     }
-    for (let n = 0; n < anchor.event.slurStarts; n++) open.push(i)
+    for (let n = 0; n < anchor.event.slurStarts; n++) open.push({ i })
     // …**AND A PARTLY-TIED CHORD RESERVES FOR ITS TIED HEADS**, the same set the drawing
     // takes — see `Chord.tiedPitches`. `voice.addOther(tie)` runs whatever the tie's
     // extent, so a reserve missing here is a staff 4 pitch short of abcjs's.
@@ -8770,8 +8834,8 @@ function curveReserves(
   //
   // Its INK box is NOT taken: `this.top = max(anchor1.pitch, anchor2.pitch) + 4` is set in
   // `setEndAnchor`, which never runs. So the post-lane reserve and nothing else.
-  for (const start of open) {
-    const a = anchors[start]
+  for (const rec of open) {
+    const a = rec.from ?? anchors[rec.i]
     if (a === undefined) continue
     const above = curveIsAbove(a, a, voicePos, 'slur')
     const y = endAt(a, above, true)

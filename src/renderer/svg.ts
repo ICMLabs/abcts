@@ -2812,14 +2812,21 @@ export function toSVG(
                * `:840`, then `createDecoration` at `:847` — whose first call is
                * `volumeDecoration` and whose second builds the `CrescendoElem`.
                */
-              // **AN INCOMING HALF LEADS THE LINE.** The `TieElem` was `addOther`'d on the
-              // line the curve OPENED on and carries over, so it is already in the voice's
-              // `otherchildren` before anything this line adds. `startElement` is absent on
-              // exactly that half — `layoutCurves` passes only `{ end }` for it.
+              // **AN INCOMING HALF LEADS THE LINE — IF IT CAME FROM THE LINE ABOVE.** That
+              // one is rebuilt and `addOther`'d before the new line's own elements are
+              // walked, so nothing on the line can precede it (`abstract-engraver.js:236-242`).
+              // See `PlacedCurve.carried`.
+              //
+              // **AN UNPAIRED HALF IS NOT THAT, AND KEYS ON ITS OWN ANCHOR.** `[(CE)G]`
+              // builds TWO `TieElem`s at ONE element — the open on head 0, the close on
+              // head 1, in that order — and both are `addOther`'d there. Keying the close
+              // at −∞ because it has no `startElement` put it FIRST, and abcjs writes it
+              // second. Its anchor is `anchor2`, which is the `x2` end, exactly as a grace
+              // slur's is.
               x:
-                curve.startElement === undefined
+                curve.carried === true
                   ? Number.NEGATIVE_INFINITY
-                  : graceCurve
+                  : graceCurve || curve.startElement === undefined
                     ? TC(curve).x2 - spaces(ABCJS_ARC.endOffset)
                     : // …**AND A CHORD'S TIES ALL KEY ON THE ELEMENT**, not on the head each
                       // one hangs off — see `PlacedCurve.orderShift`. Transformed with the
