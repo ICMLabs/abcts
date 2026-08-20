@@ -1943,7 +1943,7 @@ export function projectionOf(
               : null;
         out.push({
           key: keyElement(key, keyClef),
-          clef: clefElement(clefInForce, voice?.transpose),
+          clef: clefElement(clefInForce, voice?.transpose, voice?.staffLineOverride),
           ...(meter == null ? {} : { meter: meterElement(meter) }),
         });
       }

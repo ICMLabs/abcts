@@ -408,7 +408,16 @@ export function abcelemOf(
  * which is this staff's middle line measured from a treble staff's. `tenor` comes back
  * spelled `alto`, because the field names the clef and the element names what is DRAWN.
  */
-export const clefElement = (clef: Clef, transpose?: number): AbcElement => ({
+export const clefElement = (
+  clef: Clef,
+  transpose?: number,
+  /**
+   * `V:… stafflines=` written WITHOUT a `clef=` beside it — see `Voice.staffLineOverride`.
+   * abcjs has no such split: it writes the count straight onto `multilineVars.clef`, so a
+   * `V:SnareDrum stafflines=1` followed by `K:C clef=perc` gives ONE object carrying both.
+   */
+  staffLineOverride?: number | null,
+): AbcElement => ({
   el_type: "clef",
   type:
     (CLEF_TYPE[clef.shape] ?? "treble") +
@@ -428,7 +437,9 @@ export const clefElement = (clef: Clef, transpose?: number): AbcElement => ({
    * because the model carries the count and not whether it was written. Neither corpus has
    * one (the eight in them are 0 and 1); give `Clef` a written-flag if one ever turns up.
    */
-  ...(clef.staffLines === DEFAULT_STAFF_LINES ? {} : { stafflines: clef.staffLines }),
+  ...((staffLineOverride ?? clef.staffLines) === DEFAULT_STAFF_LINES
+    ? {}
+    : { stafflines: staffLineOverride ?? clef.staffLines }),
   /**
    * **AND A `clef=none` HAS NO `clefPos` AT ALL.** `fixClef` assigns one only when the
    * type is in `clefLines`, and `none` is not a row in that table
