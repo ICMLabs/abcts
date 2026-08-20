@@ -107,6 +107,6 @@ describe("parseOnly — the tune that was never engraved", () => {
 
   it("the whole corpus agrees on at least the rows it did", () => {
     const agree = rows.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(1450);
+    expect(agree).toBeGreaterThanOrEqual(1462);
   });
 });

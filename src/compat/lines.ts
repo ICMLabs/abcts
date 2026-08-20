@@ -2256,6 +2256,23 @@ export function projectionOf(
            * VOICE number — and nothing else in this library did, which is why the surface
            * was missing until that gate opened.
            */
+          /**
+           * **THE GROUPING PUNCTUATION RIDES THE STAFF** — `startNewLine` copies `brace`,
+           * `bracket` and `connectBarLines` off `multilineVars.staves[staffNum]` onto the
+           * line's params (`abc_parse_music.js:1011-1014`), each `"start"`, `"continue"` or
+           * `"end"`, and `createStaff` puts them on the staff object a host reads.
+           *
+           * All three were in the model — `%%score`/`%%staves` parse into `StaffGroup` and
+           * the renderer draws from it — and none of them was projected. Fifty tunes across
+           * the two corpora carry at least one, and no gate could see it: `deline` compares
+           * the staff's fields only to OURS, through `objEqual`.
+           */
+          const group = score.staves[s];
+          if (group?.brace != null) (staff as unknown as Record<string, unknown>)["brace"] = group.brace;
+          if (group?.bracket != null)
+            (staff as unknown as Record<string, unknown>)["bracket"] = group.bracket;
+          if (group?.connectBarLines != null)
+            (staff as unknown as Record<string, unknown>)["connectBarLines"] = group.connectBarLines;
           const titles = members.map((k) => {
             const voice = score.voices[k];
             return (firstMusicLine ? voice?.name : voice?.subname) ?? "";

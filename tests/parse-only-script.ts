@@ -33,15 +33,31 @@ export const rowsOfTune = (tune: { lines?: readonly AbcLine[] }): string[] => {
   for (const line of tune.lines ?? []) {
     if (line.staff === undefined) continue;
     for (const staff of line.staff) {
-      for (const which of ["clef", "key", "meter"]) {
+      /**
+       * **EVERY FIELD THE STAFF CARRIES, NOT ONLY THE THREE THE ENGRAVER RENAMES.** A staff
+       * also holds the voice `title`s and any `%%…font` that changed at this line, which
+       * `deline` unshifts back into the voices — and its own gate compares those only to
+       * OURS, through `objEqual`, so their SHAPE has never been measured against abcjs at
+       * all. Listing the names here is what puts them under one.
+       */
+      for (const which of Object.keys(staff as unknown as Record<string, unknown>)) {
+        if (which === "voices") continue;
         const field = (staff as unknown as Record<string, unknown>)[which] as
           | Record<string, unknown>
           | undefined;
         if (field === undefined) continue;
         if (!staffFields.has(which)) staffFields.set(which, new Set());
         if (!staffTypes.has(which)) staffTypes.set(which, new Set());
-        fieldsOf(field, "", staffFields.get(which) as Set<string>);
-        (staffTypes.get(which) as Set<string>).add(String(field["el_type"]));
+        // An ARRAY of voice titles, or a scalar, has no fields of its own to list.
+        if (typeof field === "object" && !Array.isArray(field))
+          fieldsOf(field, "", staffFields.get(which) as Set<string>);
+        (staffTypes.get(which) as Set<string>).add(
+          typeof field === "object" && !Array.isArray(field)
+            ? String(field["el_type"])
+            : Array.isArray(field)
+              ? "array"
+              : typeof field,
+        );
       }
       for (const voice of staff.voices ?? []) {
         for (const el of voice) {
@@ -53,7 +69,7 @@ export const rowsOfTune = (tune: { lines?: readonly AbcLine[] }): string[] => {
     }
   }
   const rows: string[] = [];
-  for (const which of ["clef", "key", "meter"]) {
+  for (const which of [...staffFields.keys()].sort()) {
     const fields = staffFields.get(which);
     if (fields === undefined) continue;
     rows.push(

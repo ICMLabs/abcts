@@ -36,6 +36,7 @@
  ],
  "repo/abcjs-parse-tie-slur-03-staffwidth-200-tune0": [
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type",
   "bar el_type,endChar,startChar,type",
@@ -259,7 +260,9 @@
   "note chord,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
  ],
  "repo/abcjs-synth-flattener-31-tempo-change-three-voices-tune0": [
+  "staff.brace el_type=string ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type,value",
   "bar el_type,endChar,startChar,type",
@@ -379,6 +382,7 @@
  "repo/abcjs-synth-midi-01-midi-options-tune0": [
   "staff.clef el_type=undefined clefPos,type,verticalPos",
   "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.title el_type=array ",
   "bar el_type,endChar,startChar,type",
   "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
  ],
@@ -402,9 +406,12 @@
   "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
  ],
  "repo/abcjs-synth-timing-02-score-1-2-tune0": [
+  "staff.brace el_type=string ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type,value",
+  "staff.title el_type=array ",
   "bar el_type,endChar,startChar,type",
   "note decoration,duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
  ],
@@ -492,6 +499,7 @@
   "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
  ],
  "repo/abcjs-visual-layout-01-barlabelfont-times-bold-18-box-tune0": [
+  "staff.barNumber el_type=number ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type,value",
@@ -499,6 +507,7 @@
   "note duration,el_type,endChar,rest,rest.type,startChar"
  ],
  "repo/abcjs-visual-layout-02-barlabelfont-times-bold-18-box-tune0": [
+  "staff.barNumber el_type=number ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type,value",
@@ -529,7 +538,9 @@
   "stem direction,el_type"
  ],
  "repo/abcjs-visual-layout-06-staves-1-2-3-4-tune0": [
+  "staff.bracket el_type=string ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "bar el_type,endChar,startChar,type",
   "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar",
@@ -640,9 +651,12 @@
  ],
  "repo/abcjs-visual-misc-14-tune-tune0": [],
  "repo/abcjs-visual-mouse-click-01-selection-test-tune0": [
+  "staff.brace el_type=string ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type,value",
+  "staff.title el_type=array ",
   "bar barNumber,el_type,endChar,endEnding,startChar,startEnding,type",
   "note chord,decoration,duration,el_type,endBeam,endChar,endTriplet,gracenotes,gracenotes.accidental,gracenotes.duration,gracenotes.name,gracenotes.pitch,gracenotes.verticalPos,lyric,pitches,pitches.accidental,pitches.endSlur,pitches.name,pitches.pitch,pitches.startSlur,pitches.verticalPos,rest,rest.text,rest.type,startBeam,startChar,startTriplet,tripletMultiplier,tripletR",
   "part el_type,endChar,startChar,title",
@@ -665,8 +679,10 @@
   "note decoration,duration,el_type,endBeam,endChar,lyric,pitches,pitches.name,pitches.pitch,pitches.verticalPos,rest,rest.type,startBeam,startChar"
  ],
  "repo/abcjs-visual-options-01-fonts-tune0": [
+  "staff.barNumber el_type=number ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
   "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.title el_type=array ",
   "bar barNumber,el_type,endChar,endEnding,startChar,startEnding,type",
   "note chord,duration,el_type,endChar,endTriplet,lyric,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar,startTriplet,tripletMultiplier,tripletR",
   "part el_type,endChar,startChar,title"
@@ -735,9 +751,13 @@
   "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,rest,rest.text,rest.type,startChar"
  ],
  "repo/abcjs-visual-selection-01-selection-test-tune0": [
+  "staff.barNumber el_type=number ",
+  "staff.brace el_type=string ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type,value",
+  "staff.title el_type=array ",
   "bar barNumber,el_type,endChar,endEnding,startChar,startEnding,type",
   "note chord,decoration,duration,el_type,endBeam,endChar,endTriplet,gracenotes,gracenotes.duration,gracenotes.name,gracenotes.pitch,gracenotes.verticalPos,lyric,pitches,pitches.accidental,pitches.endSlur,pitches.endTie,pitches.name,pitches.pitch,pitches.startSlur,pitches.startTie,pitches.verticalPos,rest,rest.type,startBeam,startChar,startTriplet,tripletMultiplier,tripletR",
   "part el_type,endChar,startChar,title",
@@ -797,9 +817,13 @@
   "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
  ],
  "repo/abcjs-visual-svg-per-line-01-selection-test-tune0": [
+  "staff.barNumber el_type=number ",
+  "staff.brace el_type=string ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type,value",
+  "staff.title el_type=array ",
   "bar barNumber,el_type,endChar,endEnding,startChar,startEnding,type",
   "note chord,decoration,duration,el_type,endBeam,endChar,endTriplet,gracenotes,gracenotes.duration,gracenotes.name,gracenotes.pitch,gracenotes.verticalPos,lyric,pitches,pitches.accidental,pitches.endSlur,pitches.endTie,pitches.name,pitches.pitch,pitches.startSlur,pitches.startTie,pitches.verticalPos,rest,rest.type,startBeam,startChar,startTriplet,tripletMultiplier,tripletR",
   "part el_type,endChar,startChar,title",
@@ -825,12 +849,15 @@
   "note chord,duration,el_type,endBeam,endChar,gracenotes,gracenotes.duration,gracenotes.name,gracenotes.pitch,gracenotes.verticalPos,pitches,pitches.accidental,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
  ],
  "repo/abcjs-visual-tablature-03-staves-rh-lh-tune0": [
+  "staff.brace el_type=string ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "bar el_type,endChar,startChar,type",
   "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
  ],
  "repo/abcjs-visual-tablature-04-barnumbers-1-tune0": [
+  "staff.barNumber el_type=number ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "bar barNumber,el_type,endChar,startChar,type",
@@ -847,7 +874,9 @@
   "note chord,duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
  ],
  "repo/abcjs-visual-tablature-07-staves-rh-lh-tune0": [
+  "staff.brace el_type=string ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "note duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
  ],
@@ -892,9 +921,12 @@
   "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
  ],
  "repo/abcjs-visual-tablature-15-all-element-types-tune0": [
+  "staff.brace el_type=string ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type,value",
+  "staff.title el_type=array ",
   "bar barNumber,el_type,endChar,endEnding,startChar,startEnding,type",
   "note chord,decoration,duration,el_type,endBeam,endChar,endTriplet,gracenotes,gracenotes.accidental,gracenotes.duration,gracenotes.name,gracenotes.pitch,gracenotes.verticalPos,lyric,pitches,pitches.accidental,pitches.endSlur,pitches.name,pitches.pitch,pitches.startSlur,pitches.verticalPos,rest,rest.text,rest.type,startBeam,startChar,startTriplet,tripletMultiplier,tripletR",
   "part el_type,endChar,startChar,title",
@@ -909,6 +941,7 @@
  ],
  "repo/abcjs-visual-tablature-17-stretchlast-tune0": [
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.gchordfont el_type=undefined box,decoration,face,size,style,weight",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "bar el_type,endChar,endEnding,startChar,startEnding,type",
   "note chord,duration,el_type,endChar,fonts,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
@@ -925,6 +958,7 @@
  ],
  "repo/abcjs-visual-tablature-20-score-1-2-tune0": [
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type,value",
   "bar el_type,endChar,endEnding,startChar,startEnding,type",
@@ -1090,7 +1124,10 @@
   "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
  ],
  "repo/abcjs-visual-wrap-03-piano-wrap-tune0": [
+  "staff.barNumber el_type=number ",
+  "staff.brace el_type=string ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type,value",
   "bar barNumber,el_type,endChar,startChar,type",
@@ -1099,12 +1136,15 @@
  "repo/abcjs-visual-wrap-04-wrap-quartet-tune0": [
   "staff.clef el_type=undefined clefPos,type,verticalPos",
   "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.title el_type=array ",
   "bar el_type,endChar,startChar,type",
   "note duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar",
   "stem direction,el_type"
  ],
  "repo/abcjs-visual-wrap-05-score-1-2-3-4-tune0": [
+  "staff.brace el_type=string ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type,value",
   "bar el_type,endChar,startChar,type",
@@ -1515,28 +1555,36 @@
   "note duration,el_type,endChar,pitches,pitches.accidental,pitches.endTie,pitches.name,pitches.pitch,pitches.startTie,pitches.verticalPos,startChar"
  ],
  "sib/S7-voices-tune0": [
+  "staff.brace el_type=string ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type",
   "bar el_type,endChar,startChar,type",
   "note duration,el_type,endBeam,endChar,pitches,pitches.accidental,pitches.endTie,pitches.name,pitches.pitch,pitches.startTie,pitches.verticalPos,rest,rest.type,startBeam,startChar"
  ],
  "sib/S7-voices-tune1": [
+  "staff.brace el_type=string ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type",
   "bar el_type,endChar,startChar,type",
   "note decoration,duration,el_type,endBeam,endChar,endSlur,pitches,pitches.accidental,pitches.endSlur,pitches.endTie,pitches.name,pitches.pitch,pitches.startSlur,pitches.startTie,pitches.verticalPos,rest,rest.type,startBeam,startChar,startSlur"
  ],
  "sib/S7-voices-tune2": [
+  "staff.brace el_type=string ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type",
   "bar el_type,endChar,startChar,type",
   "note duration,el_type,endBeam,endChar,pitches,pitches.accidental,pitches.name,pitches.pitch,pitches.verticalPos,rest,rest.type,startBeam,startChar"
  ],
  "sib/S7-voices-tune3": [
+  "staff.brace el_type=string ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type",
   "bar el_type,endChar,startChar,type",
@@ -1544,7 +1592,9 @@
   "stem direction,el_type"
  ],
  "sib/S7-voices-tune4": [
+  "staff.bracket el_type=string ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type,value",
   "bar el_type,endChar,startChar,type",
@@ -1552,16 +1602,21 @@
   "stem direction,el_type"
  ],
  "sib/S7-voices-tune5": [
+  "staff.bracket el_type=string ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type",
+  "staff.title el_type=array ",
   "bar el_type,endChar,startChar,type",
   "midi cmd,el_type,endChar,params,startChar",
   "note decoration,duration,el_type,endBeam,endChar,pitches,pitches.accidental,pitches.endTie,pitches.name,pitches.pitch,pitches.startTie,pitches.verticalPos,rest,rest.type,startBeam,startChar",
   "stem direction,el_type"
  ],
  "sib/S7-voices-tune6": [
+  "staff.brace el_type=string ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type,value",
   "bar el_type,endChar,startChar,type",
@@ -1658,9 +1713,13 @@
   "note chord,duration,el_type,endBeam,endChar,pitches,pitches.endTie,pitches.name,pitches.pitch,pitches.startTie,pitches.verticalPos,startBeam,startChar"
  ],
  "sib/ave-verum-corpus-tune0": [
+  "staff.brace el_type=string ",
+  "staff.bracket el_type=string ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type,value",
+  "staff.title el_type=array ",
   "bar el_type,endChar,startChar,type",
   "note duration,el_type,endChar,endSlur,lyric,pitches,pitches.accidental,pitches.endSlur,pitches.endTie,pitches.name,pitches.pitch,pitches.startSlur,pitches.startTie,pitches.verticalPos,rest,rest.type,startChar,startSlur",
   "stem direction,el_type"
@@ -1668,6 +1727,7 @@
  "sib/brother-john-inline-voices-tune0": [
   "staff.clef el_type=undefined clefPos,type,verticalPos",
   "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.title el_type=array ",
   "bar el_type,endChar,startChar,type",
   "note duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,rest,rest.type,startBeam,startChar"
  ],
@@ -1815,7 +1875,9 @@
   "part el_type,endChar,startChar,title"
  ],
  "sib/grandstaff-inline-meter-tune0": [
+  "staff.brace el_type=string ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type,value",
   "bar el_type,endChar,startChar,type",
@@ -1926,7 +1988,9 @@
   "note chord,duration,el_type,endChar,lyric,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
  ],
  "sib/ragtime-mini-tune0": [
+  "staff.brace el_type=string ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type,value",
   "bar el_type,endChar,startChar,type",
@@ -1934,7 +1998,9 @@
   "stem direction,el_type"
  ],
  "sib/ragtime-nightingale-tune0": [
+  "staff.brace el_type=string ",
   "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.connectBarLines el_type=string ",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type,value",
   "bar el_type,endChar,endEnding,startChar,startEnding,type",
@@ -1946,6 +2012,7 @@
   "staff.clef el_type=undefined clefPos,type,verticalPos",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type,value",
+  "staff.title el_type=array ",
   "bar el_type,endChar,startChar,type",
   "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar",
   "stem direction,el_type"
@@ -1954,6 +2021,7 @@
   "staff.clef el_type=undefined clefPos,type,verticalPos",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type,value",
+  "staff.title el_type=array ",
   "bar el_type,endChar,startChar,type",
   "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
  ],
@@ -2058,6 +2126,7 @@
   "staff.clef el_type=undefined clefPos,transpose,type,verticalPos",
   "staff.key el_type=undefined acc,accidentals,mode,root",
   "staff.meter el_type=undefined type",
+  "staff.title el_type=array ",
   "bar el_type,endChar,startChar,type",
   "note decoration,duration,el_type,endBeam,endChar,pitches,pitches.accidental,pitches.endSlur,pitches.name,pitches.pitch,pitches.startSlur,pitches.verticalPos,rest,rest.type,startBeam,startChar",
   "stem direction,el_type"
