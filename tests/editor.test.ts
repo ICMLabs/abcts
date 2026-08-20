@@ -236,6 +236,7 @@ const PASSING: readonly string[] = [
   "abcjs-visual-mouse-click-01-selection-test",
   "abcjs-visual-selection-01-selection-test",
   "abcjs-visual-selection-02-g4-q-left-1-4-170-right-a4",
+  "abcjs-visual-selection-03-c4",
   "abcjs-visual-title-01-not-transformed",
   "abcjs-visual-title-02-transformed-the",
   "abcjs-visual-title-03-transformed-the",

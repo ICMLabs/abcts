@@ -2438,6 +2438,8 @@ function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null 
   const glyphs: PlacedGlyph[] = [
     {
       ...glyphAt(name, x + ENGRAVE.clefIndent, step),
+      // The same constructed offset as the octave marker's below — see its note.
+      dx: ENGRAVE.clefIndent,
       reserve: [pitchStep(declared(clefTop)), pitchStep(declared(clefBottom))],
       // `{ top: height + clefPos + ofs, bottom: clefPos + ofs }` is stated in PITCH and
       // `calcY` converts once (`create-clef.js:37`), so the extent takes the pitch itself.
@@ -2468,6 +2470,15 @@ function layoutClef(x: number, clef: Clef, strict = true): LayoutElement | null 
       // (`create-clef.js:49`, `relative-element.js:124-125`). Ours read left to right and
       // formed `(x + 5) + adjust`, which is 78.6605 against abcjs's 78.66050000000001.
       x: x + (ENGRAVE.clefIndent + adjust),
+      /**
+       * …**AND THE OFFSET IS CARRIED, NOT RE-DERIVED FROM THE PLACED x.** `placeElement`
+       * reads `g.dx` when it has one and falls back to `g.x - el.x`, which subtracts the
+       * element's own x back out and lands one ULP away — the same
+       * A-CONSTRUCTED-OFFSET-IS-BUILT rule the voice-overlap displacement pays.
+       * `visual-selection-03` at `staffwidth: 300` printed this `8` at `306.8125` against
+       * abcjs's `306.81250000000006`, and about ten glyph paths with it.
+       */
+      dx: ENGRAVE.clefIndent + adjust,
       y: pitchStep(drawPitch),
       scale: OCTAVE_MARKER_SCALE,
       role: 'clef',
