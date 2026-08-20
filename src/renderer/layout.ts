@@ -8291,8 +8291,22 @@ function curveReserves(
      * height (a quarter's differs from a half's), so the head arm stays undefined and
      * `include` keeps its old fallback for it.
      */
-    let topPitch: number | undefined
-    let bottomPitch: number | undefined
+    /**
+     * **AND THE HEAD ARM CARRIES ITS PITCH TOO NOW.** `PlacedGlyph.reservePitch` is the
+     * same declared box stated the way abcjs states it — `pitch ± symbolHeightInPitches/2`
+     * — so nothing has to be divided back out of a y. Without it a tie's reserve reached
+     * `include`'s `-a / spacePerStep` fallback and `f-f` reported its staff top as
+     * 22.560000000000002 against abcjs's 22.559999999999995: the same number, one round
+     * trip apart.
+     */
+    const heads = (elements[a.element]?.glyphs ?? []).filter(
+      (g): g is typeof g & { reservePitch: readonly [number, number] } =>
+        g.reservePitch !== undefined,
+    )
+    let topPitch: number | undefined =
+      heads.length === 0 ? undefined : Math.max(...heads.map((g) => g.reservePitch[0]))
+    let bottomPitch: number | undefined =
+      heads.length === 0 ? undefined : Math.min(...heads.map((g) => g.reservePitch[1]))
     for (const line of elements[a.element]?.lines ?? []) {
       const hi = Math.min(line.y1, line.y2)
       const lo = Math.max(line.y1, line.y2)
@@ -9823,7 +9837,15 @@ const meterLeadsFirstMeasure = (measure: Measure | undefined): boolean => {
   if (measure === undefined || measure.startsSystem !== true || measure.meterChange == null) {
     return false
   }
-  const at = measure.meterChangeSourceRange?.start
+  /**
+   * ⚠️ **AND WHEN THE MEASURE CARRIES SEVERAL `[M:]`, IT IS THE FIRST ONE THAT DECIDES.**
+   * `meterChange` is the meter in FORCE — the last — and its range is somewhere in the
+   * middle of the music, so the singular field answered "no" for
+   * `[M:2/4]y[M:3/4]y[M:4/4]` and the staff's own signature went into the STREAM carrying
+   * a span. abcjs's staff-extra is `staff.meter` and has none.
+   */
+  const at = (measure.meterChanges?.[0] ?? { range: measure.meterChangeSourceRange }).range
+    ?.start
   return at != null && at < musicStartsAt(measure)
 }
 
@@ -10722,8 +10744,18 @@ const displaceHeads = (el: LayoutElement, dx: number): LayoutElement =>
          * two `mp` marks printed 143.003 and 425.916 where abcjs has 133.193 and 416.106,
          * a whole notehead each and only on the notes the overlap rule moved.
          */
+        /**
+         * **AND THE SHIFT JOINS THE CHILD'S OWN `dx`, WHICH IS WHAT abcjs ADDS IT TO** —
+         * `child.dx += firstChildNoteWidth` beside `child.w = firstChildNoteWidth + child.w`
+         * (`layout/voice-elements.js:56-62`). It is not decoration: `getMinWidth` is
+         * `max(child.dx + child.w)`, so a displaced chord's element is 29.97 wide where
+         * reading the offset back off the moved glyph — `(g.x - el.x) + w` — lands one ULP
+         * away at `29.970000000000013`. A CONSTRUCTED OFFSET IS BUILT, NEVER DERIVED.
+         */
         glyphs: el.glyphs.map((g) =>
-          g.name.startsWith('accidental') || g.role === 'dynamic' ? g : { ...g, x: g.x + dx },
+          g.name.startsWith('accidental') || g.role === 'dynamic'
+            ? g
+            : { ...g, x: g.x + dx, dx: (g.dx ?? 0) + dx },
         ),
         lines: el.lines.map((l) => ({ ...l, x1: l.x1 + dx, x2: l.x2 + dx })),
         texts: el.texts.map((t) => ({ ...t, x: t.x + dx })),

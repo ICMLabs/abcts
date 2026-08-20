@@ -123,7 +123,10 @@ const minWidthOf = (element: LayoutElement): number => {
   let heads = 0;
   for (const g of element.glyphs) {
     if (g.role !== "notehead") continue;
-    heads = Math.max(heads, g.x - element.x + glyphs.width(g.name));
+    // **`dx + w`, abcjs'S OWN SUM** — the head's constructed offset within its element,
+    // carrying both the seconds displacement and the voice-overlap shift. Deriving it as
+    // `g.x - element.x` gets the magnitude right and the last bit wrong.
+    heads = Math.max(heads, (g.dx ?? g.x - element.x) + glyphs.width(g.name));
   }
   /**
    * ⚠️ **AND `own` WINS ANY TIE, BECAUSE THE SUBTRACTION IS NOT abcjs'S SUM.** abcjs adds
