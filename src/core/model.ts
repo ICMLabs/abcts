@@ -564,6 +564,17 @@ export interface Note {
    * each staff's chord symbols take the size in force above them.
    */
   readonly chordFont: LyricFont | null
+  /**
+   * **THE RUNNING `%%…font` SET WHEN A MID-LINE DIRECTIVE CHANGED IT**, absent otherwise.
+   *
+   * `addFormattingOptions` reads `multilineVars.<font>` at the moment each element is
+   * appended (`abc_parse.js:120-138`), so what a note publishes as `fonts` is the RUNNING
+   * value, compared against the header's. Everywhere else that value changes on a line of
+   * its own and the LINE-level delta says it — which is why the projection carried a
+   * `ponytail:` reading "an inline `[I:gchordfont …]` mid-line would need the running
+   * value per EVENT; neither corpus writes one." `abcts-model-gaps` tune 5 writes one.
+   */
+  readonly runningFonts?: Readonly<Partial<Record<AbcFontType, LyricFont>>>
   /** `!trill!`, `.` staccato, and the shorthand letters. */
   /**
    * **`!class=name!` IS NOT A DECORATION** — `abc_parse_music.js:227-231` handles it in
@@ -700,6 +711,17 @@ export interface Rest {
   readonly chordSymbol: string | null
   readonly chordSymbolSourceRange: SourceRange | null
   readonly chordFont: LyricFont | null
+  /**
+   * **THE RUNNING `%%…font` SET WHEN A MID-LINE DIRECTIVE CHANGED IT**, absent otherwise.
+   *
+   * `addFormattingOptions` reads `multilineVars.<font>` at the moment each element is
+   * appended (`abc_parse.js:120-138`), so what a note publishes as `fonts` is the RUNNING
+   * value, compared against the header's. Everywhere else that value changes on a line of
+   * its own and the LINE-level delta says it — which is why the projection carried a
+   * `ponytail:` reading "an inline `[I:gchordfont …]` mid-line would need the running
+   * value per EVENT; neither corpus writes one." `abcts-model-gaps` tune 5 writes one.
+   */
+  readonly runningFonts?: Readonly<Partial<Record<AbcFontType, LyricFont>>>
   readonly annotations: readonly string[]
   readonly annotationSourceRanges: readonly SourceRange[]
   /**
@@ -853,6 +875,17 @@ export interface Chord {
    * each staff's chord symbols take the size in force above them.
    */
   readonly chordFont: LyricFont | null
+  /**
+   * **THE RUNNING `%%…font` SET WHEN A MID-LINE DIRECTIVE CHANGED IT**, absent otherwise.
+   *
+   * `addFormattingOptions` reads `multilineVars.<font>` at the moment each element is
+   * appended (`abc_parse.js:120-138`), so what a note publishes as `fonts` is the RUNNING
+   * value, compared against the header's. Everywhere else that value changes on a line of
+   * its own and the LINE-level delta says it — which is why the projection carried a
+   * `ponytail:` reading "an inline `[I:gchordfont …]` mid-line would need the running
+   * value per EVENT; neither corpus writes one." `abcts-model-gaps` tune 5 writes one.
+   */
+  readonly runningFonts?: Readonly<Partial<Record<AbcFontType, LyricFont>>>
   /** `!trill!`, `.` staccato, and the shorthand letters. */
   /**
    * **`!class=name!` IS NOT A DECORATION** — `abc_parse_music.js:227-231` handles it in

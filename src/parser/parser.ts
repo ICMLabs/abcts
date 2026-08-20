@@ -2217,6 +2217,17 @@ class ScoreBuilder {
     }
     return Object.keys(out).length > 0 ? out : undefined
   }
+  /**
+   * Has this music line got past its leading inline headers — see `takeLineStartFonts`.
+   * A font directive read while this is FALSE belongs to the line's own snapshot; one read
+   * while it is true is a MID-LINE change and rides the elements after it.
+   */
+  lineOpen = false
+  /**
+   * The running font set as of the last MID-LINE change, or null when the line has had
+   * none. Stamped onto every event appended after it — see `MusicEvent.runningFonts`.
+   */
+  midLineFonts: Partial<Record<AbcFontType, LyricFont>> | null = null
   /** The `%%gchordfont` in force — a CHANGING font, so it is stamped per event. */
   chordFont: LyricFont | null = null
   /**
@@ -2977,6 +2988,16 @@ class Parser {
             sourceRange(end - fontDirective[0].length, end),
           )
         builder.fonts[type] = font
+        /**
+         * …**AND A CHANGE MADE AFTER THE LINE OPENED IS CARRIED BY THE ELEMENTS.**
+         * `addFormattingOptions` reads `multilineVars.<font>` — the RUNNING value — at the
+         * moment each element is appended (`abc_parse.js:120-138`), so `C D [I:vocalfont
+         * …] E F` stamps `fonts` on `E` and `F` and not on `C` and `D`. The line-level
+         * delta cannot say that: a `%%` directive owns a line, so it was the only shape
+         * either corpus had, and the projection carried a `ponytail:` predicting exactly
+         * this. See `MusicEvent.runningFonts`.
+         */
+        if (builder.lineOpen) builder.midLineFonts = { ...builder.fonts }
         // The two that are also stamped PER ELEMENT, because they can change mid-tune and
         // a fixture does change them between music lines.
         if (type === 'gchordfont') builder.chordFont = font
@@ -3928,11 +3949,16 @@ class Parser {
      * per line — which is why this is a latch and not a re-take.
      */
     let lineFontsPending = !continued
+    if (!continued) {
+      builder.lineOpen = false
+      builder.midLineFonts = null
+    }
     const takeLineStartFonts = (): void => {
       if (!lineFontsPending) return
       lineFontsPending = false
       builder.lineVocalFont = builder.vocalFont
       builder.voice.setLineFonts(builder.takeLineFonts())
+      builder.lineOpen = true
     }
     // Re-read through the builder rather than capturing: an inline `[V:2]` mid-line
     // switches which voice subsequent events belong to.
@@ -4689,6 +4715,9 @@ class Parser {
     const note: Note = {
       type: 'note',
       chordFont: builder.chordFont,
+      // …and the whole running set when a MID-LINE directive changed it — see
+      // `MusicEvent.runningFonts`.
+      ...(builder.midLineFonts === null ? {} : { runningFonts: builder.midLineFonts }),
       pitch: head.pitch,
       duration,
       notatedDuration: duration,
@@ -4876,6 +4905,7 @@ class Parser {
       chord: {
         type: 'chord',
         chordFont: builder.chordFont,
+        ...(builder.midLineFonts === null ? {} : { runningFonts: builder.midLineFonts }),
         pitches,
         duration,
         notatedDuration: duration,

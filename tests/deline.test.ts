@@ -170,6 +170,6 @@ describe("tune.deline — abcjs's merged line list", () => {
    */
   it("the whole corpus agrees on at least the rows it did", () => {
     const agree = table.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(1570);
+    expect(agree).toBeGreaterThanOrEqual(1646);
   });
 });

@@ -1088,7 +1088,15 @@ function voiceElements(
    * bar, and the object is the whole font. See `projectionOf`, which runs the changes
    * forward line by line.
    */
-  elementFonts: { note?: Record<string, unknown>; bar?: Record<string, unknown> } = {},
+  elementFonts: {
+    /**
+     * A FUNCTION, not a value: `addFormattingOptions` reads the RUNNING font at the moment
+     * each element is appended, and a mid-line `[I:…font]` makes two notes on one line
+     * disagree. See `MusicEvent.runningFonts`.
+     */
+    note?: (event: MusicEvent) => Record<string, unknown> | undefined
+    bar?: Record<string, unknown>
+  } = {},
 ): AbcElement[] {
   /**
    * **THE NAME THE ENGRAVER WOULD HAVE WRITTEN, OR THE PARSER'S OWN.**
@@ -1322,7 +1330,7 @@ function voiceElements(
     const note = (event: MusicEvent): void => {
       const e = el("note", decoratedRange(abc, event));
       if (e !== null) {
-        noteFields(e, event, drumMap, barLength, elementFonts.note);
+        noteFields(e, event, drumMap, barLength, elementFonts.note?.(event));
         markSlurs(e, event, openSlurs);
         byEvent?.set(event, e);
         notes.push({ event, e });
@@ -2180,9 +2188,11 @@ export function projectionOf(
    * line above", which is exactly a delta. `%%gchordfont Arial 10` in the header and
    * `Arial 20` in the body makes every note after it carry the 20.
    *
-   * ponytail: the granularity is the LINE, because a `%%` directive occupies a line of its
-   * own. An inline `[I:gchordfont …]` mid-line would need the running value per EVENT;
-   * neither corpus writes one.
+   * **AND THE GRANULARITY IS THE ELEMENT, NOT THE LINE.** This read "the granularity is
+   * the LINE, because a `%%` directive occupies a line of its own", with a `ponytail:`
+   * predicting that an inline `[I:…font]` mid-line "would need the running value per
+   * EVENT; neither corpus writes one". `abcts-model-gaps` tune 5 writes one, and the
+   * prediction was right: `MusicEvent.runningFonts` is that value, and it wins here.
    */
   const defaultFont = new Map<string, Record<string, unknown>>();
   const inForceFont = new Map<string, Record<string, unknown>>();
@@ -2191,13 +2201,17 @@ export function projectionOf(
     defaultFont.set(name, seed);
     inForceFont.set(name, seed);
   }
-  /** The four, then the two, in `addFormattingOptions`'s own order. */
-  const stampedFonts = (
+  /**
+   * The four, then the two, in `addFormattingOptions`'s own order — whichever of them
+   * `inForce` says differs from the header's.
+   */
+  const stampedFrom = (
+    inForce: (name: string) => Record<string, unknown> | undefined,
     names: readonly string[],
   ): Record<string, unknown> | undefined => {
     let out: Record<string, unknown> | undefined;
     for (const name of names) {
-      const now = inForceFont.get(name);
+      const now = inForce(name);
       const base = defaultFont.get(name);
       if (now === undefined || base === undefined || !differentFont(now, base)) continue;
       out ??= {};
@@ -2205,6 +2219,8 @@ export function projectionOf(
     }
     return out;
   };
+  const stampedFonts = (names: readonly string[]): Record<string, unknown> | undefined =>
+    stampedFrom((name) => inForceFont.get(name), names);
 
   breaks.forEach((from, i) => {
     const to = breaks[i + 1] ?? totalMeasures;
@@ -2216,10 +2232,25 @@ export function projectionOf(
       for (const [name, font] of Object.entries(changed))
         inForceFont.set(name, abcjsFont(name, font as LyricFont));
     }
+    // Captured now: `stampedFonts` reads the live `inForceFont` map, and the closure below
+    // outlives this line's turn through it.
+    const lineNoteFonts = stampedFonts(NOTE_FONTS);
     const elementFonts = {
-      ...(stampedFonts(NOTE_FONTS) === undefined
-        ? {}
-        : { note: stampedFonts(NOTE_FONTS) as Record<string, unknown> }),
+      // **AND AN EVENT'S OWN RUNNING SET WINS WHERE IT HAS ONE.** Only a MID-LINE
+      // directive writes it, so everything else takes the line's answer unchanged.
+      note: (event: MusicEvent): Record<string, unknown> | undefined =>
+        event.runningFonts === undefined
+          ? lineNoteFonts
+          : stampedFrom(
+              (name) =>
+                abcjsFont(
+                  name,
+                  (event.runningFonts as Partial<Record<string, LyricFont>> | undefined)?.[
+                    name
+                  ],
+                ),
+              NOTE_FONTS,
+            ),
       ...(stampedFonts(BAR_FONTS) === undefined
         ? {}
         : { bar: stampedFonts(BAR_FONTS) as Record<string, unknown> }),
