@@ -951,14 +951,16 @@ checkpoint and hand off as you go so no context is lost.
 > files below.
 
 **READ `Docs/HANDOFF-2026-08-20.md` FIRST** — the current state: **the abcjs API SURFACE IS
-COMPLETE (0 of 64 absent), EVERY RANKED TABLE IN THE REPO READS ZERO, and `parseOnly` — the
-one divergence three checkpoints wrote down rather than fixed — has a gate at 1,450 of
-1,451.** The four rows the day before left are closed (`deline` 1,570 of 1,570, `Editor` 196
+COMPLETE (0 of 64 absent) and EVERY RANKED TABLE IN THE REPO READS ZERO — including
+`parseOnly`, the one divergence three checkpoints wrote down rather than fixed, which now
+has a gate and is CLOSED at 1,520 of 1,520.** The four rows the day before left are closed (`deline` 1,570 of 1,570, `Editor` 196
 of 196, `tuneMetrics` 217 of 217, `setGlyph` 6 of 6 byte-exact), four ratchets are EXACT now
 rather than floors, and the two behaviours that were built-but-ungated — `CreateSynth`'s
 error arms and `runWhenReady`'s `isLoading` re-entry — are driven. §5 is `parseOnly`: **our
-`parseOnly` ENGRAVED**, it does not any more, and closing it took ten classes, not the three
-that had been written down. §6 is the synth behaviours, including the arm that turns out to
+`parseOnly` ENGRAVED**, it does not any more, and closing it took fourteen classes, not the
+three that had been written down — four of which only appeared once the gate was WIDENED to
+every field a staff carries, among them `brace`, `bracket` and `connectBarLines`, which
+fifty tunes carry and nothing here had ever projected. §6 is the synth behaviours, including the arm that turns out to
 be **dead code in abcjs itself**. The rules each closure paid for are at the end — three are
 A CONSTRUCTED OFFSET IS BUILT, NEVER DERIVED, one is that rule INVERTED, and one is that a
 gate can agree for the wrong reason.
