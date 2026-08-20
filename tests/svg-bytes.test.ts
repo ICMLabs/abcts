@@ -313,6 +313,17 @@ const PASSING: readonly string[] = [
   "abcts-visualtranspose-tune1",
   "abcts-visualtranspose-tune2",
   "abcts-visualtranspose-tune3",
+  // `abcts-model-gaps.abc` — the three shapes `HANDOFF-2026-08-20.md` §2 named. Two were
+  // already exact and are here to SAY SO; the other two named the inline-font rule.
+  "abcts-model-gaps-tune0",
+  "abcts-model-gaps-tune1",
+  "abcts-model-gaps-tune2",
+  "abcts-model-gaps-tune3",
+  "abcts-model-gaps-tune4",
+  "abcts-model-gaps-tune5",
+  "abcts-model-gaps-tune6",
+  "abcts-model-gaps-tune7",
+  "abcts-model-gaps-tune8",
 ];
 
 interface Diff {

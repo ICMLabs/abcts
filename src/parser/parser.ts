@@ -3849,11 +3849,38 @@ class Parser {
     // syllable at 32; the same directive between two music lines draws 17,17,17,17 then
     // 32,32,32,32; and Gonzato's fixture, whose music all precedes its directives, draws
     // every syllable at the DEFAULT 17 however many `%%vocalfont` lines follow.
+    /**
+     * ⚠️ **AND THE SNAPSHOT IS TAKEN PAST THE LINE'S LEADING INLINE HEADERS, NOT AT ITS
+     * FIRST CHARACTER.** abcjs's own comment says so where it calls `startNewLine`:
+     * *"Wait until here to actually start the line because we know we're past the inline
+     * statements"* (`abc_parse_music.js:143-157`) — the call sits in the ELSE arm of
+     * `letter_to_inline_header`, so every `[…:…]` at the head of a line is read BEFORE the
+     * line's `params` are built and every one after the first music element is read after.
+     *
+     * `[I:` routes straight to `addDirective` (`abc_parse_header.js:353`), so an inline
+     * font directive is subject to exactly that split. Measured both ways on abcjs:
+     * `C D [I:vocalfont Times-Roman 20] E F` draws its lyric at 17 and
+     * `[I:vocalfont Times-Roman 20] C D E F` at 27, on the first line of a tune and on a
+     * later one alike — 11.07px of page each. Ours took the snapshot before any token was
+     * read, so the directive could only reach the NEXT line.
+     *
+     * A line of nothing but inline headers never reaches the else arm in abcjs either; it
+     * fires here after the loop instead, because `beginMusicLine` is our own bookkeeping
+     * and a line that opens none is not a shape abcjs has to model.
+     */
     if (!continued) {
       builder.lineVocalFont = builder.vocalFont
       builder.voice.setLineFonts(builder.takeLineFonts())
       builder.voice.beginMusicLine()
     }
+    /**
+     * ⚠️ **AND IT IS RE-TAKEN AFTER EACH OF THE LINE'S LEADING INLINE HEADERS.** Deferring
+     * the WHOLE block instead — the shape abcjs has — costs `flatten-treble-8` an octave on
+     * its first note: `beginMusicLine` is our own per-line bookkeeping and the voice's clef
+     * is bound by it, so running it past a `[V:1]` binds the wrong line's clef. The
+     * measurement is about the FONT and this is what the measurement supports.
+     */
+    let leadingHeaders = !continued
     // Re-read through the builder rather than capturing: an inline `[V:2]` mid-line
     // switches which voice subsequent events belong to.
     const voice = () => builder.voice
@@ -4012,6 +4039,9 @@ class Parser {
 
     while (i < tokens.length) {
       const token = tokens[i] as Token
+      // …**AND WHITESPACE DOES NOT END THE RUN**, because `letter_to_inline_header` opens
+      // with `eatWhiteSpace` and consumes it as part of the attempt.
+      if (token.kind !== 'inlineField' && token.kind !== 'whitespace') leadingHeaders = false
       switch (token.kind) {
         case 'accidental': {
           if (accidentalStart === null) accidentalStart = token.start
@@ -4508,6 +4538,7 @@ class Parser {
               true,
             )
           }
+          if (leadingHeaders) builder.lineVocalFont = builder.vocalFont
           i++
           break
         }

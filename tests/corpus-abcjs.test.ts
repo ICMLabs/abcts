@@ -413,11 +413,7 @@ const WITHIN: Readonly<Record<string, number>> = {
   // used for every feature no fixture exercised.
   //
   // …and `abcts-slur-shapes.abc` and `abcts-model-gaps.abc` are two more of them.
-  // **THE 0.05 BUCKET IS ONE SHORT OF THE OTHERS ON PURPOSE**: `model-gaps` is off on the
-  // PAGE HEIGHT, which this table cannot express — its four axes pair NOTEHEADS — so it
-  // sits inside 1px here and differs by 11.07 on `svg-bytes`. Two of its tunes want an
-  // inline `[I:…font]` at the head of a line, which is not built.
-  "0.05": 178,
+  "0.05": 179,
   "1": 179,
   "5": 179,
   "25": 179,
