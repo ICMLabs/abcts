@@ -37,7 +37,12 @@ const kindOf = (head: string): string => head.split(" ")[0] ?? head;
 const extra = new Map<string, number>();
 const missing = new Map<string, number>();
 const renamed = new Map<string, number>();
-const bump = (m: Map<string, number>, k: string): void => m.set(k, (m.get(k) ?? 0) + 1);
+const where = new Map<string, string>();
+let slugNow = "";
+const bump = (m: Map<string, number>, k: string): void => {
+  m.set(k, (m.get(k) ?? 0) + 1);
+  if (!where.has(k)) where.set(k, slugNow);
+};
 
 const cache = new Map<string, string[][]>();
 for (const [slug, want] of Object.entries(GOLDEN)) {
@@ -47,6 +52,7 @@ for (const [slug, want] of Object.entries(GOLDEN)) {
   const cut = rest.lastIndexOf("-tune");
   const file = rest.slice(0, cut);
   const index = Number(rest.slice(cut + "-tune".length));
+  slugNow = slug;
   const key = `${corpus}/${file}`;
   let all = cache.get(key);
   if (all === undefined) {
@@ -75,7 +81,7 @@ for (const [slug, want] of Object.entries(GOLDEN)) {
 const show = (label: string, m: Map<string, number>): void => {
   console.log(`\n## ${label}`);
   for (const [k, n] of [...m].sort((x, y) => y[1] - x[1]))
-    console.log(`  ${String(n).padStart(4)}  ${k}`);
+    console.log(`  ${String(n).padStart(4)}  ${k.padEnd(40)} e.g. ${where.get(k) ?? ""}`);
 };
 show("OURS HAS, abcjs does NOT", extra);
 show("abcjs HAS, ours does NOT", missing);

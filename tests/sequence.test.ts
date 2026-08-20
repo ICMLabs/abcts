@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { parseOnly } from "../src/compat/index.js";
+import { renderAbc } from "../src/compat/index.js";
 import { sequenceOf, type SequenceRow, type SequenceTune } from "../src/compat/sequence.js";
 
 /**
@@ -72,7 +72,15 @@ const rows = (): Row[] => {
     const abc = readFileSync(join(IN_REPO, `${slug}.abc`), "utf-8");
     let got: SequenceRow[][] = [];
     try {
-      const tune = parseOnly(abc)[0];
+      /**
+       * ⚠️ **RENDERED, NOT PARSED — and this side had to catch up.** The harvester renders
+       * (`harvest-abcjs-sequence.mjs:58-61`) because abcjs's `parseOnly` never engraves and
+       * its pitches carry no `highestVert`. Ours engraved whatever the entry point until
+       * `parseOnly` was made lazy, at which point this line started reading a tune two
+       * thousand rows different from its own oracle. **THE ORACLE'S ENTRY POINT IS PART OF
+       * THE EXPERIMENT.**
+       */
+      const tune = renderAbc(["*"], abc, {})[0];
       got =
         tune === undefined ? [] : sequenceOf(tune as unknown as SequenceTune, {}).map((v) => v);
     } catch (e) {

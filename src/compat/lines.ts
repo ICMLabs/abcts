@@ -251,6 +251,11 @@ const FIELD_ELEMENTS: ReadonlySet<string> = new Set([
   "keySignature",
   "timeSignature",
   "clef",
+  // …**AND THE PARSER'S OWN TWO NAMES**, which is what an UNENGRAVED tune carries — see
+  // `projectionOf`'s `engraved`. Every test on an element's kind needs both spellings, or
+  // it silently stops firing for `parseOnly`.
+  "key",
+  "meter",
 ]);
 
 function tile(
@@ -1027,7 +1032,18 @@ function voiceElements(
   openTies: { pitches: number[] } = { pitches: [] },
   /** The meter in force where this line opens — the bar's own LENGTH, in whole notes. */
   meterIn?: Meter | null,
+  /** See `projectionOf` — the engraver RENAMES the two it draws. */
+  engraved = true,
 ): AbcElement[] {
+  /**
+   * **THE NAME THE ENGRAVER WOULD HAVE WRITTEN, OR THE PARSER'S OWN.**
+   * `appendStartingElement` names an in-stream key `key` and an in-stream meter `meter`
+   * (`tune-builder.js:277`, and `deline` unshifts under the same two names);
+   * `createKeySignature` and `createTimeSignature` then rewrite them on the very object
+   * `tune.lines` holds. A clef is `clef` on both sides.
+   */
+  const drawnName = (name: "keySignature" | "timeSignature"): string =>
+    engraved ? name : name === "keySignature" ? "key" : "meter";
   const out: (AbcElement | null)[] = [];
   /**
    * **A REST AS LONG AS ITS MEASURE IS A WHOLE REST, WHATEVER THE METER SAYS** —
@@ -1166,7 +1182,7 @@ function voiceElements(
     if (inStream(measure.keyChangeSourceRange, measure.keyChangeInline, keywarn))
       out.push(
         (() => {
-          const e = el("keySignature", measure.keyChangeSourceRange);
+          const e = el(drawnName("keySignature"), measure.keyChangeSourceRange);
           /**
            * **AND IT IS THE WHOLE KEY** — the third element this projection pushed as a
            * bare marker, after the clef and the meter. `synth.sequence` reads
@@ -1180,7 +1196,10 @@ function voiceElements(
             Object.assign(
               e,
               keyElement(measure.keyChange, measure.keyChangeClef ?? voiceClef ?? defaultClef),
-              { startChar: e.startChar, endChar: e.endChar },
+              // …**AND THE NAME SURVIVES THE MERGE.** `keyElement` builds the element the
+              // ENGRAVER would have, `el_type` and all, so the assign has to put the
+              // drawn-or-parsed name back on top of it — see `drawnName`.
+              { startChar: e.startChar, endChar: e.endChar, el_type: e.el_type },
             );
           return e;
         })(),
@@ -1219,22 +1238,24 @@ function voiceElements(
         meter: Meter | null | undefined,
       ): AbcElement | null => {
         if (e === null || meter == null) return e;
+        // The name survives the merge, as the key's does — see `drawnName`.
         return Object.assign(e, meterElement(meter), {
           startChar: e.startChar,
           endChar: e.endChar,
+          el_type: e.el_type,
         });
       };
       const all = measure.meterChanges;
       if (all === undefined)
         out.push(
           withMeter(
-            el("timeSignature", measure.meterChangeSourceRange),
+            el(drawnName("timeSignature"), measure.meterChangeSourceRange),
             measure.meterChange,
           ),
         );
       else
         for (const m of all)
-          out.push(withMeter(el("timeSignature", m.range ?? null), m.meter));
+          out.push(withMeter(el(drawnName("timeSignature"), m.range ?? null), m.meter));
     }
     out.push(tempoElement(measure.tempoChange, measure.tempoChangeSourceRange, byRange));
     out.push(
@@ -1533,6 +1554,19 @@ export function linesOf(score: Score, abc: string): AbcLine[] {
 export function projectionOf(
   input: Score,
   abc: string,
+  /**
+   * **WHETHER AN ENGRAVER RAN**, which changes the projection in one way beyond the fields
+   * it stamps: **THE ENGRAVER RENAMES THE ELEMENT IT DRAWS.** `createKeySignature` opens
+   * with `elem.el_type = "keySignature"` and `createTimeSignature` with `"timeSignature"`
+   * (`write/creation/create-key-signature.js:8`, `create-time-signature.js:8`), writing on
+   * the very object `tune.lines` holds — so a PARSE-ONLY tune says `key` and `meter` where
+   * a rendered one says `keySignature` and `timeSignature`, and the STAFF's own furniture
+   * carries no `el_type` at all until something draws it.
+   *
+   * `createClef` writes `"clef"`, which is what the parser already calls it, so only the
+   * staff's copy changes there. See `tests/parse-only.test.ts`.
+   */
+  engraved = true,
 ): {
   lines: AbcLine[];
   byEvent: Map<MusicEvent, AbcElement>;
@@ -1714,6 +1748,9 @@ export function projectionOf(
       "clef",
       "keySignature",
       "timeSignature",
+      // …and the parser's own names for the same two — see `FIELD_ELEMENTS`.
+      "key",
+      "meter",
       // A `%%MIDI` between two music lines is read while `tune.lineNum` still points at
       // the line above, exactly as a standalone `K:` is — measured on
       // `synth-flattener-07`, whose `%%MIDI drumoff` closes line 0 rather than opening
@@ -1943,6 +1980,7 @@ export function projectionOf(
         openTies[k] ?? (openTies[k] = { pitches: [] }),
         // The meter this line OPENS in — every change inside it is walked from here.
         meterAt(v, from) ?? score.meter,
+        engraved,
       );
     });
     /**
@@ -2074,11 +2112,25 @@ export function projectionOf(
           const fonts = score.voices[members[0] ?? 0]?.measures[from]?.lineFonts;
           const own = furniture[s]?.[i];
           if (own !== undefined) {
+            /**
+             * …**AND THE STAFF'S OWN FURNITURE IS UNNAMED UNTIL SOMETHING DRAWS IT.**
+             * `createStaff` assigns `{clef: params.clef, key: params.key}` straight off
+             * `startNewLine`'s params (`tune-builder.js:1002`), and NOTHING has written an
+             * `el_type` on those objects yet — the three `create*` functions in the
+             * engraver are what do, each on its first line. So a `parseOnly` tune's staff
+             * carries a clef with `type` and `clefPos` and no name at all.
+             */
+            const named = (field: AbcElement): AbcElement => {
+              if (engraved) return field;
+              const copy = { ...(field as unknown as Record<string, unknown>) };
+              delete copy["el_type"];
+              return copy as unknown as AbcElement;
+            };
             // THE KEY ORDER IS abcjs's — `{voices, clef, key}` from `createStaff` with the
             // meter added after, which is what a host comparing the objects sees.
-            if (own.meter !== undefined) staff.meter = own.meter;
-            staff.key = own.key;
-            staff.clef = own.clef;
+            if (own.meter !== undefined) staff.meter = named(own.meter);
+            staff.key = named(own.key);
+            staff.clef = named(own.clef);
           }
           if (fonts !== undefined)
             for (const [type, font] of Object.entries(fonts))
@@ -2137,7 +2189,7 @@ export function projectionOf(
     for (const staff of lines[i - 1]?.staff ?? []) {
       for (const voice of staff.voices) {
         const last = voice[voice.length - 1];
-        if (last?.el_type !== "keySignature") continue;
+        if (last?.el_type !== "keySignature" && last?.el_type !== "key") continue;
         (voice as AbcElement[]).pop();
         let j = i;
         while (j < lines.length && lines[j]?.staff === undefined) j += 1;

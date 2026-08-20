@@ -827,6 +827,25 @@ export function renderAbc(
   abc: string,
   params: AbcjsParams = {},
 ): TuneObject[] {
+  return renderInto(target, abc, params, true);
+}
+
+/**
+ * `renderAbc`'s body, with the one thing `parseOnly` needs to say: **WHETHER THE TUNE WAS
+ * ENGRAVED.**
+ *
+ * abcjs's `parseOnly` is `renderEngine` with a callback that does nothing
+ * (`api/abc_tunebook.js:42-54`) — the tune is PARSED and never LAID OUT — where
+ * `renderAbc('*')` engraves into a div it then throws away. Ours had no way to tell the two
+ * apart, so a `parseOnly` tune carried every field the engraver stamps and every rename it
+ * makes. See `tests/parse-only.test.ts`.
+ */
+function renderInto(
+  target: Target | readonly Target[],
+  abc: string,
+  params: AbcjsParams,
+  engraved: boolean,
+): TuneObject[] {
   const result = parse(abc, {
     mode: "abcjs-strict",
     ...(params.visualTranspose
@@ -917,7 +936,7 @@ export function renderAbc(
       byRange: ReadonlyMap<number, AbcElement>;
     } => {
       if (eventIndex === null) {
-        const p = projectionOf(score, abc);
+        const p = projectionOf(score, abc, engraved);
         lineCache = p.lines;
         eventIndex = { byEvent: p.byEvent, byRange: p.byRange };
       }
@@ -1091,7 +1110,8 @@ export function renderAbc(
          * incipit's hidden lines carry them too. The selectable array is still built from
          * what was drawn, which is what `data-index` counts.
          */
-        stampEngravedSystems(laidOut().engraved, projection());
+        // …**AND ONLY WHEN THERE WAS AN ENGRAVER.** See `renderInto`.
+        if (engraved) stampEngravedSystems(laidOut().engraved, projection());
         selectableCache = selectablesOf(records, projection(), params.selectTypes);
       }
       return selectableCache ?? [];
@@ -1103,6 +1123,14 @@ export function renderAbc(
     } = { rows: [], time: undefined, beats: undefined };
     return {
       svg: ((): string => {
+        /**
+         * **AND NOTHING IS DRAWN WHEN NOTHING ENGRAVED.** `parseOnly` never reaches a
+         * renderer at all in abcjs (`api/abc_tunebook.js:42-54`), so there is no markup,
+         * no selectable array and — the part that shows in `tune.lines` — no
+         * `highestVert`, `averagepitch`, `minpitch`, `maxpitch` or `printer_shift`, which
+         * `selectablesOf` stamps as it walks what was DRAWN. See `renderInto`.
+         */
+        if (!engraved) return "";
         const doc = laidOut();
         metaRows.top = [...(doc.topTextRows ?? [])];
         metaRows.bottom = [...(doc.bottomTextRows ?? [])];
@@ -1518,10 +1546,11 @@ export function extractMeasures(abc: string): ExtractedTune[] {
 }
 
 export function parseOnly(abc: string, params: AbcjsParams = {}): TuneObject[] {
-  return renderAbc(
+  return renderInto(
     new Array<string>(numberOfTunes(abc)).fill("*"),
     abc,
     params,
+    false,
   );
 }
 
