@@ -649,10 +649,19 @@ export const tempoElement = (
   tempo: Tempo | null | undefined,
   range: SourceRange | null | undefined,
   byRange?: Map<number, AbcElement>,
+  /** See `projectionOf` — `type` is the ENGRAVER's, and abcjs says so in a TODO. */
+  engraved = true,
 ): AbcElement | null => {
   const e = el("tempo", range);
   if (e === null || tempo == null || range == null) return null;
-  e.type = "tempo";
+  /**
+   * ⚠️ **AND `type` IS STAMPED BY THE ENGRAVER, NOT THE PARSER** — `TempoElement`'s
+   * constructor opens `this.tempo.type = "tempo"` under abcjs's own comment "TODO-PER:
+   * this should be set earlier, in the parser, probably"
+   * (`write/creation/elements/tempo-element.js:9`). So an unengraved tune's tempo carries
+   * `el_type` and no `type`, which is the same word twice one time instead of two.
+   */
+  if (engraved) e.type = "tempo";
   if (tempo.text !== null) e.preString = tempo.text;
   /**
    * **A LONE TEMPO WORD CARRIES A RATE, DOES NOT PRINT IT, AND GETS ITS `duration` LAST.**
@@ -1257,7 +1266,9 @@ function voiceElements(
         for (const m of all)
           out.push(withMeter(el(drawnName("timeSignature"), m.range ?? null), m.meter));
     }
-    out.push(tempoElement(measure.tempoChange, measure.tempoChangeSourceRange, byRange));
+    out.push(
+      tempoElement(measure.tempoChange, measure.tempoChangeSourceRange, byRange, engraved),
+    );
     out.push(
       partElement(measure.partLabel, measure.partLabelSourceRange, byRange),
     );

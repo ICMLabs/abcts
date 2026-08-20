@@ -5,7 +5,7 @@ import type {
   MusicEvent,
   Pitch,
 } from "../core/model.js";
-import { keyFifths, ratToNumber, stepIndex } from "../core/model.js";
+import { DEFAULT_STAFF_LINES, keyFifths, ratToNumber, stepIndex } from "../core/model.js";
 import type { Layout, LayoutElement } from "../renderer/layout.js";
 import type { SelectableRecord } from "../renderer/svg.js";
 import {
@@ -418,7 +418,24 @@ export const clefElement = (clef: Clef, transpose?: number): AbcElement => ({
         ? "+8"
         : "-8"),
   verticalPos: middleLineIndex(clef) - TREBLE_MIDDLE_LINE_INDEX,
-  clefPos: clef.line * 2,
+  /**
+   * **`stafflines=` RIDES THE CLEF, AND ONLY WHEN IT WAS WRITTEN.** `V:` and `K:` both
+   * assign `multilineVars.clef.stafflines` from the token
+   * (`abc_parse_key_voice.js:429`, `:796-797`), so the field exists on the projected clef
+   * exactly when the source says so — `clef=none` reads 0 and a percussion staff 1.
+   *
+   * ponytail: an EXPLICIT `stafflines=5` is indistinguishable from the default here,
+   * because the model carries the count and not whether it was written. Neither corpus has
+   * one (the eight in them are 0 and 1); give `Clef` a written-flag if one ever turns up.
+   */
+  ...(clef.staffLines === DEFAULT_STAFF_LINES ? {} : { stafflines: clef.staffLines }),
+  /**
+   * **AND A `clef=none` HAS NO `clefPos` AT ALL.** `fixClef` assigns one only when the
+   * type is in `clefLines`, and `none` is not a row in that table
+   * (`abc_parse_key_voice.js:75-81`) — where `perc` is, at pitch 6. So the field is absent
+   * rather than 0, which is what `visual-misc-09`'s `%%stafflines 0` staff shows.
+   */
+  ...(clef.shape === "none" ? {} : { clefPos: clef.line * 2 }),
   /**
    * **`V:… transpose=` RIDES THE CLEF**, because abcjs's `V:` handler writes it onto the
    * clef object it just built (`abc_parse_key_voice.js`), and `synth.sequence` reads it
