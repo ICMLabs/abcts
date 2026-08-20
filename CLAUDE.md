@@ -950,7 +950,20 @@ checkpoint and hand off as you go so no context is lost.
 > `Docs/CHECKPOINT-2026-08-14.md` — §4 is the work list as it stood, §5 the harness. Then the
 > files below.
 
-**READ `Docs/CHECKPOINT-2026-08-17b.md` FIRST** — the current state (**`tune.lines` CLOSED
+**READ `Docs/CHECKPOINT-2026-08-19.md` FIRST** — the current state: **the abcjs API SURFACE
+IS COMPLETE (0 of 64 absent) and EVERY RANKED TABLE READS ZERO EXCEPT FOUR ROWS**, with
+`synth.sequence` at 4,795 of 4,795, `makeVoicesArray` at 4,208 of 4,208, `tune.setupEvents`
+at 3,366 of 3,366 and the whole synth surface built without a speaker. §1 the four synth
+symbols and the RECORDING harnesses that gate them, §2 the `&` overlay model resolved ONCE in
+the model, §3 the sixteen `tune.lines` fields a SECOND DERIVATION found, §4 the last ULP and
+the four-probe ladder that tracked it to a tuplet's box declared in y, §5 WHAT IS LEFT (four
+rows, each named) and the one divergence written down rather than fixed — **our `parseOnly`
+ENGRAVES and abcjs's does not** — §6 the harness and §7 the rules.
+`Docs/HANDOFF-2026-08-19.md` has the gate table, WHAT TO DO NEXT and the six traps.
+
+Then `Docs/HANDOFF-2026-08-18.md` — superseded for the state, but it keeps the per-kind
+warning table, the `tuneMetrics` rules and the IMPLIED-NATURALS rule that is measured,
+written down and deliberately NOT applied. Then `Docs/CHECKPOINT-2026-08-17b.md` — the state as it stood then (**`tune.lines` CLOSED
 at 255,684 of 255,684 characters and 295 of 295 tunes**, the **`AbcTune` accessors CLOSED at
 0 of 291** with BOTH measured-not-ported rows, `tune.deline` BUILT at 1,558 of 1,570, and
 `tune.setupEvents` BUILT with a new gate at 3,339 of 3,366 that compares every column of a
