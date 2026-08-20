@@ -31,7 +31,9 @@ import { installRecorder } from "../tests/audio-recorder.js";
 import {
   CASES,
   drive,
+  driveErrors,
   drivePlayEvent,
+  ERROR_CASES,
   FIXTURES,
   PLAY_EVENT_CASES,
   type PlayEvent,
@@ -76,6 +78,30 @@ for (const fixture of FIXTURES) {
 
 for (const [label, params] of PLAY_EVENT_CASES)
   out[`playEvent#${label}`] = await drivePlayEvent(ABCJS.synth.playEvent, params, recorder);
+
+/**
+ * ⚠️ **`soundsCache` IS NOT PUBLIC IN abcjs, AND THE ERROR ARMS CANNOT BE GATED WITHOUT
+ * IT** — a note that 404s stays rejected in there for the life of the page, so every case
+ * after the first would be reading someone else's failure. It is a module of its own
+ * (`src/synth/sounds-cache.js`), so it is requireable even though `index.js` does not
+ * re-export it. Ours exports it from `compat`, which is a surface ADDITION and deliberate:
+ * a host that wants a second chance at a failed soundfont has no other way in.
+ */
+const abcjsCache = require(join(abcjsPath, "src/synth/sounds-cache")) as Record<
+  string,
+  unknown
+>;
+const clearAbcjsCache = (): void => {
+  for (const key of Object.keys(abcjsCache)) delete abcjsCache[key];
+};
+for (const [label, spec] of ERROR_CASES)
+  out[`error#${label}`] = await driveErrors(
+    () => new ABCJS.synth.CreateSynth() as never,
+    (abc: string) => ABCJS.parseOnly(abc)[0],
+    spec,
+    recorder,
+    clearAbcjsCache,
+  );
 
 const outDir = join(root, "tests", "corpus-create-synth");
 mkdirSync(outDir, { recursive: true });

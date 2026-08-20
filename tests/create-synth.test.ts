@@ -4,13 +4,15 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { parseOnly } from "../src/compat/index.js";
-import { CreateSynth, playEvent } from "../src/compat/create-synth.js";
+import { CreateSynth, playEvent, soundsCache } from "../src/compat/create-synth.js";
 import { registerAudioContext } from "../src/compat/synth.js";
 import { installRecorder } from "./audio-recorder.js";
 import {
   CASES,
   drive,
+  driveErrors,
   drivePlayEvent,
+  ERROR_CASES,
   FIXTURES,
   PLAY_EVENT_CASES,
   type Step,
@@ -127,6 +129,28 @@ const run = async (): Promise<Row[]> => {
       }
       out.push({ slug: key, agree, total: want.length, first });
     }
+    for (const [label, spec] of ERROR_CASES) {
+      const key = `error#${label}`;
+      const want = GOLDEN[key];
+      if (want === undefined) continue;
+      const got = await driveErrors(
+        () => new CreateSynth() as unknown as SynthLike,
+        (abc: string) => parseOnly(abc)[0],
+        spec,
+        recorder,
+        () => {
+          for (const k of Object.keys(soundsCache)) delete soundsCache[k];
+        },
+      );
+      let agree = 0;
+      let first = "";
+      for (let i = 0; i < Math.max(want.length, got.length); i += 1) {
+        if (near(want[i], got[i])) agree += 1;
+        else if (first === "")
+          first = `step ${i}: abcjs ${JSON.stringify(want[i]).slice(0, 240)} ours ${JSON.stringify(got[i]).slice(0, 240)}`;
+      }
+      out.push({ slug: key, agree, total: want.length, first });
+    }
   } finally {
     for (const [k, v] of Object.entries(saved)) g[k] = v;
   }
@@ -148,7 +172,7 @@ describe("CreateSynth — the scheduler behind the sound", async () => {
         ...off.map((r) => `  ${r.slug.padEnd(52)} ${r.agree}/${r.total}  ${r.first}`),
       ].join("\n")}\n`,
     );
-    expect(table.length).toBe(18);
+    expect(table.length).toBe(24);
   });
 
   it("every case agrees on every step", () => {

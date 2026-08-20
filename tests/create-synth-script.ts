@@ -247,3 +247,90 @@ export async function drivePlayEvent(
   }
   return log;
 }
+
+/**
+ * **THE ERROR ARMS — the half of `CreateSynth` the happy path never reaches.**
+ *
+ * Five of them, each driven the same way on both sides. The recorder makes the first
+ * possible at all: a fake server that answers 404 is the only way to reach `getNote`'s
+ * rejection without a network.
+ *
+ * ⚠️ **AND THE CACHE HAS TO BE CLEARED BETWEEN THEM, BECAUSE A FAILURE IS CACHED.**
+ * `soundsCache` holds one promise per instrument and pitch for the life of the page, and
+ * `getNote` stores the REJECTED one just as readily as a resolved one — so a note that
+ * 404s once is never requested again. `cache-keeps-the-failure` gates exactly that, and
+ * every other case needs a cold cache to mean anything.
+ */
+export interface ErrorCase {
+  /** The tune. Absent means `init` is called with NEITHER a visualObj nor a sequence. */
+  readonly abc?: string;
+  /** Which note URLs the fake server refuses, and with what. */
+  readonly refuse?: boolean;
+  /** Run `init` twice, and report what the SECOND one asked the server for. */
+  readonly twice?: boolean;
+}
+
+export const ERROR_CASES: readonly [string, ErrorCase][] = [
+  // `init` with neither a `visualObj` nor a `sequence` — the one arm that rejects outright.
+  ["no-input", {}],
+  // A pitch BELOW `pitchToNoteName`'s lowest entry (21 = A0). `C,,,,` is MIDI 12.
+  ["pitch-too-low", { abc: "X:1\nL:1/4\nK:C\nC,,,,|\n" }],
+  // …and above its highest (108 = C8). `c'''''` is MIDI 132.
+  ["pitch-too-high", { abc: "X:1\nL:1/4\nK:C\nc'''''|\n" }],
+  // Nothing to render — `prime`'s `duration <= 0` arm.
+  ["empty-tune", { abc: "X:1\nL:1/4\nK:C\n" }],
+  // Every mp3 404s.
+  ["soundfont-404", { abc: "X:1\nL:1/4\nK:C\nCDE|\n", refuse: true }],
+  // …and the second `init` asks for nothing, because the rejection is in the cache.
+  ["cache-keeps-the-failure", { abc: "X:1\nL:1/4\nK:C\nCDE|\n", refuse: true, twice: true }],
+];
+
+export async function driveErrors(
+  make: () => SynthLike,
+  tuneOf: (abc: string) => unknown,
+  spec: ErrorCase,
+  recorder: Recorder,
+  clearCache: () => void,
+): Promise<Step[]> {
+  const log: Step[] = [];
+  clearCache();
+  recorder.setXhrStatus(() => (spec.refuse === true ? 404 : 200));
+  recorder.setNow(0);
+  recorder.take();
+
+  const one = async (label: string): Promise<boolean> => {
+    const synth = make();
+    let noteMap: unknown = null;
+    try {
+      const initResult = await synth.init({
+        visualObj: spec.abc === undefined ? undefined : tuneOf(spec.abc),
+        options: {
+          sequenceCallback: (tracks: unknown) => {
+            noteMap = tracks;
+          },
+        },
+      });
+      log.push([`${label} init`, recorder.take(), [initResult, noteMap === null]]);
+    } catch (e) {
+      log.push([`${label} init threw: ${(e as Error).message}`, recorder.take(), null]);
+      return false;
+    }
+    try {
+      const primeResult = await synth.prime();
+      const buffer = synth.getAudioBuffer();
+      log.push([
+        `${label} prime`,
+        recorder.take(),
+        [primeResult, round(synth.duration), recorder.fingerprint(buffer)],
+      ]);
+    } catch (e) {
+      log.push([`${label} prime threw: ${(e as Error).message}`, recorder.take(), null]);
+    }
+    return true;
+  };
+
+  await one("first");
+  if (spec.twice === true) await one("second");
+  recorder.setXhrStatus(() => 200);
+  return log;
+}

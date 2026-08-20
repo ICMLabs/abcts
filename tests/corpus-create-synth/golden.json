@@ -5,35 +5,43 @@
    [
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/D4.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/D4.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/E4.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/E4.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/Gb4.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/Gb4.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/G4.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/G4.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/D2.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/D2.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/D3.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/D3.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/Gb3.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/Gb3.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/A3.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/A3.mp3",
+     200
     ]
    ],
    [
@@ -4139,47 +4147,58 @@
    [
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/F4.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/F4.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/A4.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/A4.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/Bb4.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/Bb4.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/D5.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/D5.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/F5.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/F5.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/F2.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/F2.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/F3.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/F3.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/C4.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/C4.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/Bb1.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/Bb1.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/Bb2.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/Bb2.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/F1.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/F1.mp3",
+     200
     ]
    ],
    [
@@ -7843,35 +7862,43 @@
    [
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/Ab4.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/Ab4.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/B4.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/B4.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/C5.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/C5.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/Eb5.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/Eb5.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/E5.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/E5.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/Db5.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/Db5.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/Gb5.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/Gb5.mp3",
+     200
     ],
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/G5.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/G5.mp3",
+     200
     ]
    ],
    [
@@ -20090,7 +20117,8 @@
    [
     [
      "xhr",
-     "/midi-js-soundfonts/FluidR3_GM/violin-mp3/G4.mp3"
+     "/midi-js-soundfonts/FluidR3_GM/violin-mp3/G4.mp3",
+     200
     ],
     [
      "createBuffer",
@@ -20325,6 +20353,313 @@
      "direct.source.start",
      0,
      0
+    ]
+   ],
+   null
+  ]
+ ],
+ "error#no-input": [
+  [
+   "first init threw: Must pass in either a visualObj or a sequence",
+   [],
+   null
+  ]
+ ],
+ "error#pitch-too-low": [
+  [
+   "first init",
+   [],
+   [
+    {
+     "cached": [],
+     "error": [
+      "acoustic_grand_piano:undefined"
+     ],
+     "loaded": []
+    },
+    true
+   ]
+  ],
+  [
+   "first prime",
+   [
+    [
+     "createBuffer",
+     2,
+     4266,
+     8000
+    ],
+    [
+     "offline",
+     2,
+     4266,
+     8000
+    ]
+   ],
+   [
+    {
+     "status": "running",
+     "duration": 0.53325
+    },
+    0.533333,
+    [
+     [
+      0,
+      0,
+      -1,
+      -1
+     ],
+     [
+      0,
+      0,
+      -1,
+      -1
+     ]
+    ]
+   ]
+  ]
+ ],
+ "error#pitch-too-high": [
+  [
+   "first init",
+   [],
+   [
+    {
+     "cached": [],
+     "error": [
+      "acoustic_grand_piano:undefined"
+     ],
+     "loaded": []
+    },
+    true
+   ]
+  ],
+  [
+   "first prime",
+   [
+    [
+     "createBuffer",
+     2,
+     4266,
+     8000
+    ],
+    [
+     "offline",
+     2,
+     4266,
+     8000
+    ]
+   ],
+   [
+    {
+     "status": "running",
+     "duration": 0.53325
+    },
+    0.533333,
+    [
+     [
+      0,
+      0,
+      -1,
+      -1
+     ],
+     [
+      0,
+      0,
+      -1,
+      -1
+     ]
+    ]
+   ]
+  ]
+ ],
+ "error#empty-tune": [
+  [
+   "first init",
+   [],
+   [
+    {
+     "cached": [],
+     "error": [],
+     "loaded": []
+    },
+    true
+   ]
+  ],
+  [
+   "first prime",
+   [],
+   [
+    {
+     "status": "empty",
+     "seconds": 0
+    },
+    0,
+    []
+   ]
+  ]
+ ],
+ "error#soundfont-404": [
+  [
+   "first init",
+   [
+    [
+     "xhr",
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/C4.mp3",
+     404
+    ],
+    [
+     "xhr",
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/D4.mp3",
+     404
+    ],
+    [
+     "xhr",
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/E4.mp3",
+     404
+    ]
+   ],
+   [
+    {
+     "cached": [],
+     "error": [],
+     "loaded": []
+    },
+    true
+   ]
+  ],
+  [
+   "first prime threw: Can't load sound at https://paulrosen.github.io/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/C4.mp3 status=404",
+   [
+    [
+     "createBuffer",
+     2,
+     9600,
+     8000
+    ],
+    [
+     "offline",
+     2,
+     4266,
+     8000
+    ],
+    [
+     "offline",
+     2,
+     4266,
+     8000
+    ],
+    [
+     "offline",
+     2,
+     4266,
+     8000
+    ]
+   ],
+   null
+  ]
+ ],
+ "error#cache-keeps-the-failure": [
+  [
+   "first init",
+   [
+    [
+     "xhr",
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/C4.mp3",
+     404
+    ],
+    [
+     "xhr",
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/D4.mp3",
+     404
+    ],
+    [
+     "xhr",
+     "/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/E4.mp3",
+     404
+    ]
+   ],
+   [
+    {
+     "cached": [],
+     "error": [],
+     "loaded": []
+    },
+    true
+   ]
+  ],
+  [
+   "first prime threw: Can't load sound at https://paulrosen.github.io/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/C4.mp3 status=404",
+   [
+    [
+     "createBuffer",
+     2,
+     9600,
+     8000
+    ],
+    [
+     "offline",
+     2,
+     4266,
+     8000
+    ],
+    [
+     "offline",
+     2,
+     4266,
+     8000
+    ],
+    [
+     "offline",
+     2,
+     4266,
+     8000
+    ]
+   ],
+   null
+  ],
+  [
+   "second init",
+   [],
+   [
+    {
+     "cached": [
+      "acoustic_grand_piano:C4",
+      "acoustic_grand_piano:D4",
+      "acoustic_grand_piano:E4"
+     ],
+     "error": [],
+     "loaded": []
+    },
+    true
+   ]
+  ],
+  [
+   "second prime threw: Can't load sound at https://paulrosen.github.io/midi-js-soundfonts/FluidR3_GM/acoustic_grand_piano-mp3/C4.mp3 status=404",
+   [
+    [
+     "createBuffer",
+     2,
+     9600,
+     8000
+    ],
+    [
+     "offline",
+     2,
+     4266,
+     8000
+    ],
+    [
+     "offline",
+     2,
+     4266,
+     8000
+    ],
+    [
+     "offline",
+     2,
+     4266,
+     8000
     ]
    ],
    null

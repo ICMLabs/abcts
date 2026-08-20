@@ -51,6 +51,12 @@ export interface Recorder {
   take(): unknown[][];
   /** What the output buffer holds: per channel, where the ink is. */
   fingerprint(buffer: unknown): unknown[];
+  /**
+   * **THE STATUS THE FAKE SERVER ANSWERS WITH**, by note URL — how the 404 arm is driven.
+   * `getNote` rejects on anything but 200 and the rejection is CACHED, so a gate that
+   * wants a failure has to control this and the cache together.
+   */
+  setXhrStatus(of: (url: string) => number): void;
 }
 
 const round = (n: number): number => Math.round(n * 1000000) / 1000000;
@@ -59,6 +65,8 @@ export function installRecorder(win: Record<string, unknown>): Recorder {
   const calls: unknown[][] = [];
   const log = (...row: unknown[]): void => void calls.push(row);
   let now = 0;
+
+  let xhrStatus: (url: string) => number = () => 200;
 
   class FakeXHR {
     status = 200;
@@ -71,7 +79,8 @@ export function installRecorder(win: Record<string, unknown>): Recorder {
       this.url = url;
     }
     send(): void {
-      log("xhr", this.url.replace(/^https:\/\/[^/]+/, ""));
+      this.status = xhrStatus(this.url);
+      log("xhr", this.url.replace(/^https:\/\/[^/]+/, ""), this.status);
       // Asynchronous, as a real request is: the promise in `loadNote` must not resolve
       // inside `send()` or the batching would be a different shape.
       queueMicrotask(() => this.onload?.());
@@ -218,6 +227,9 @@ export function installRecorder(win: Record<string, unknown>): Recorder {
     ac,
     setNow: (seconds: number): void => {
       now = seconds;
+    },
+    setXhrStatus: (of: (url: string) => number): void => {
+      xhrStatus = of;
     },
     take: (): unknown[][] => calls.splice(0),
     fingerprint: (buffer: unknown): unknown[] => {

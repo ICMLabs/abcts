@@ -24,7 +24,12 @@
  * controller is handed is a rendered one, and without the stub abcjs lays it out 1.78px
  * differently.
  *
- *   node scripts/harvest-abcjs-synth-controller.mjs
+ * ⚠️ **THE SCRIPT IS A SHARED FILE NOW** — `tests/synth-controller-script.ts`, imported by
+ * this harvester and by `tests/synth-controller.test.ts`. It was duplicated in both, each
+ * copy labelled "verbatim", which is a promise a comment cannot keep. That is why this is
+ * a `.ts` run through `tsx`, as `harvest-abcjs-create-synth.ts` already was:
+ *
+ *   npx tsx scripts/harvest-abcjs-synth-controller.ts
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
@@ -111,22 +116,13 @@ dom.window.setTimeout = global.setTimeout
 const ac = { state: 'running', resume: () => Promise.resolve(), close: () => {} }
 global.AudioContext = function () { return ac }
 
-/** THE BUFFER STUB, duplicated verbatim in `tests/synth-controller.test.ts`. */
-let bufLog = []
-const makeBuffer = () => ({
-  duration: 12.5,
-  init: (options) => {
-    bufLog.push(['init', options.millisecondsPerMeasure, JSON.stringify(options.options)])
-    return Promise.resolve({ status: 'ok', loaded: ['a'] })
-  },
-  prime: () => { bufLog.push(['prime']); return Promise.resolve({ status: 'primed' }) },
-  start: () => bufLog.push(['start']),
-  pause: () => bufLog.push(['pause']),
-  seek: (position, units) => bufLog.push(['seek', position, units ?? null]),
-  finished: () => bufLog.push(['finished']),
-  stop: () => bufLog.push(['stop']),
-  download: () => { bufLog.push(['download']); return 'blob:stub' },
-})
+import {
+  CASES,
+  drive,
+  driveLoading,
+  FIXTURES,
+  makeBuffer,
+} from "../tests/synth-controller-script.js";
 
 // ── THE SEAM: abcjs's `CreateSynth`, replaced before `index.js` loads it ──
 const createSynthPath = require.resolve(join(abcjsPath, 'src/synth/create-synth.js'))
@@ -140,123 +136,6 @@ require.cache[createSynthPath] = {
 
 const ABCJS = require(join(abcjsPath, 'index'))
 ABCJS.synth.registerAudioContext(ac)
-
-/** THE CASES, duplicated verbatim in the test. */
-const CASES = [
-  ['all', { displayLoop: true, displayRestart: true, displayPlay: true, displayProgress: true, displayWarp: true }, 'full'],
-  ['no-control', null, 'full'],
-  ['no-cursor', { displayLoop: true, displayPlay: true }, null],
-  ['subdivisions', {}, 'subdivided'],
-]
-const FIXTURES = [
-  'abcjs-synth-flattener-09-d-defg-q-1-2-90-defg',
-  'abcjs-synth-flattener-12-chords-meter-change',
-]
-
-const cursorFor = (kind, log) => {
-  if (kind === null) return null
-  const cc = {
-    onReady: () => log.push(['onReady']),
-    onStart: () => log.push(['onStart']),
-    onFinished: () => log.push(['onFinished']),
-    onBeat: (beat, total, totalTime, position) =>
-      log.push(['onBeat', beat, total, totalTime, position ? [position.left ?? null, position.top ?? null] : null]),
-    onEvent: (e) => log.push(['onEvent', e ? (e.milliseconds ?? null) : null]),
-    onLineEnd: (lineEvent, leftEvent) =>
-      log.push(['onLineEnd', lineEvent ? (lineEvent.milliseconds ?? null) : null, leftEvent ? (leftEvent.milliseconds ?? null) : null]),
-  }
-  if (kind === 'subdivided') {
-    cc.beatSubdivisions = 4
-    cc.extraMeasuresAtBeginning = 1
-    cc.lineEndAnticipation = 50
-  }
-  return cc
-}
-
-/** The transport bar as the CONTROLLER drives it — not its markup, which its own gate holds. */
-const controlState = (parent) => {
-  const q = (s) => parent.querySelector(s)
-  const cls = (s, name) => { const el = q(s); return el ? el.classList.contains(name) : null }
-  const html = (s) => { const el = q(s); return el ? el.innerHTML : null }
-  return [
-    cls('.abcjs-inline-audio', 'abcjs-disabled'),
-    cls('.abcjs-midi-start', 'abcjs-pushed'),
-    cls('.abcjs-midi-loop', 'abcjs-pushed'),
-    html('.abcjs-midi-clock'),
-    html('.abcjs-midi-current-tempo'),
-    q('.abcjs-midi-tempo') ? q('.abcjs-midi-tempo').value : null,
-    q('.abcjs-midi-progress-indicator') ? q('.abcjs-midi-progress-indicator').style.left : null,
-  ]
-}
-
-const state = (c) => [
-  c.isStarted, c.isLoaded, c.isLoading, c.isLooping, c.warp,
-  c.percent === undefined ? null : c.percent,
-  c.currentTempo,
-  c.timer ? [c.timer.lastMoment, c.timer.totalBeats] : null,
-]
-
-/** The fake progress-bar click: 60px into a bar whose box starts at 10 and is 200 wide. */
-const CLICK = {
-  x: 60,
-  target: {
-    classList: { contains: () => false },
-    parentNode: null,
-    getBoundingClientRect: () => ({ left: 10 }),
-    offsetWidth: 200,
-  },
-}
-
-/** THE SCRIPT, duplicated verbatim in the test. */
-const drive = async (make, tune, visualOptions, cursorKind, parent) => {
-  parent.innerHTML = ''
-  bufLog = []
-  const cursorLog = []
-  const log = []
-  const c = make()
-  const snap = (step) => log.push([step, bufLog.splice(0), cursorLog.splice(0), controlState(parent), state(c)])
-  const step = async (label, fn) => {
-    try { snap(`${label}${(await fn()) ?? ''}`) } catch (e) { snap(`${label} threw: ${e.message}`) }
-  }
-
-  snap('new')
-  if (visualOptions !== null) {
-    c.load('#bar', cursorFor(cursorKind, cursorLog), visualOptions)
-    snap(`load ${JSON.stringify(visualOptions)}`)
-  }
-  await step('setTune passive -> ', async () => JSON.stringify(await c.setTune(tune, false, {})))
-  await step('setTune userAction -> ', async () => JSON.stringify(await c.setTune(tune, true, { chordsOff: true })))
-  await step('play -> ', async () => JSON.stringify(await c.play()))
-  c.beatCallback(2, 8, 4000, { left: 5, top: 6, height: 7 })
-  snap('beatCallback')
-  c.eventCallback({ type: 'event', milliseconds: 100, startChar: 3 })
-  snap('eventCallback event')
-  c.lineEndCallback({ milliseconds: 50 }, { type: 'event', milliseconds: 20 })
-  snap('lineEndCallback')
-  snap(`eventCallback null -> ${c.eventCallback(null)}`)
-  await step('play again -> ', async () => JSON.stringify(await c.play()))
-  c.toggleLoop()
-  snap('toggleLoop')
-  c.restart()
-  snap('restart')
-  c.seek(0.25)
-  snap('seek 0.25')
-  c.seek(3, 'seconds')
-  snap('seek 3 seconds')
-  await step('randomAccess -> ', async () => JSON.stringify(await c.randomAccess(CLICK)))
-  await step('onWarp 50', async () => { await c.onWarp({ target: { value: '50' } }) })
-  snap(`eventCallback null looping -> ${c.eventCallback(null)}`)
-  c.toggleLoop()
-  c.pause()
-  snap('pause')
-  snap(`getUrl -> ${c.getUrl()}`)
-  try { c.download('x.wav'); snap('download') } catch (e) { snap(`download threw: ${e.message}`) }
-  c.destroy()
-  snap('destroy')
-  c.disable(true)
-  snap('disable true')
-  return log
-}
 
 const dir = join(root, 'tests', 'corpus-abcjs', 'fixtures')
 const out = {}
@@ -273,6 +152,11 @@ for (const fixture of FIXTURES) {
       parent,
     )
   }
+  out[`${fixture}#loading`] = await driveLoading(
+    () => new ABCJS.synth.SynthController(),
+    tune,
+    dom.window.document.getElementById('bar'),
+  )
 }
 
 const outDir = join(root, 'tests', 'corpus-synth-controller')
