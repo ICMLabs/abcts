@@ -11257,6 +11257,27 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     const keyBeforeLine: KeySignature[] = []
     let keyAtLineStart = score.key
     let keyAtPreviousLine = score.key
+    /**
+     * ⚠️ **AND A VOICE SWITCH THROWS THE PENDING CANCELLATION AWAY** — the rule the note
+     * below was missing, measured by instrumenting abcjs's own `impliedNaturals`.
+     *
+     * `setCurrentVoice` restores the key with `deepCopyKey`, and that function builds
+     * `{accidentals, root, acc, mode}` and copies `explicitAccidentals` — it does NOT copy
+     * `impliedNaturals` (`abc_parse_key_voice.js:535-537`, `:167-179`). So a set of pending
+     * naturals survives only as far as the next line of the SAME voice, and any other
+     * voice's line in between silently drops it.
+     *
+     * That is the whole difference between the two fixtures that disagreed:
+     * `ragtime-nightingale` is written VOICE BY VOICE — every `V:1` line follows the last —
+     * so its `[K:Eb]` reaches the next line and prints its `d` natural, while
+     * `inline-key-per-voice` alternates `V:1`/`V:2` every line, so its `[K:F]` naturals die
+     * at the switch and abcjs prints the plain `Bb`. Traced in abcjs, both ways:
+     * `STARTNEWLINE key=E naturals=[{"note":"d"}]` against `naturals=undefined`.
+     */
+    const otherVoiceLinesOpenAt: number[] = voices
+      .filter((v) => v !== undefined && v !== voice)
+      .flatMap((v) => (v?.measures ?? []).filter((m) => m.startsSystem).map(musicStartsAt))
+    let previousLineOpenedAt = -1
     const blocks = (voice?.measures ?? []).map((measure, measureIndex) => {
       // A mid-tune clef prints at the START of its measure and governs it — abcjs's
       // `staff-extra clef` is emitted before the measure's notes, and everything after it
@@ -11295,13 +11316,20 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
          * something ragtime writes — four mid-line `[K:Ab]`/`[K:Eb]` pairs inside repeats —
          * puts the naturals back. Left as it stands, with the measurement written down.
          */
+        const opensAt = musicStartsAt(measure)
+        const switched =
+          previousLineOpenedAt >= 0 &&
+          otherVoiceLinesOpenAt.some(
+            (at) => at > previousLineOpenedAt && at < opensAt,
+          )
+        previousLineOpenedAt = opensAt
         keyAtPreviousLine = subtitleLeads(measure)
           ? // …**AND THE NATURALS GO WITH IT.** `noWarnBeforeTitle` strips them from the
             // NEXT staff line's own key as well — "the new key signature might have some
             // naturals, remove that" — so the line a subtitle introduces prints its
             // signature and nothing else.
             (measure.keyChange ?? keyInForce)
-          : leads
+          : leads || switched
             ? keyInForce
             : keyAtLineStart
         // A change that LEADS the line is already in `multilineVars.key` when abcjs stamps
