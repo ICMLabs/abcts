@@ -3983,6 +3983,9 @@ class Parser {
           ...scaled,
           ...pending,
           style,
+          // …and the DECORATION's own, which is what abcjs puts on the element. See
+          // `Note.styleMark`.
+          ...(inline === null ? {} : { styleMark: inline }),
           slurStarts: pendingSlurStarts,
           ...(pendingSlurDotted ? { slurDotted: true } : {}),
           graceNotes: pendingGrace,

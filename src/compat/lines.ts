@@ -153,6 +153,8 @@ export interface AbcElement {
   endSlur?: number[];
   /** `!class=…!` — a host's own class on this element. See `noteFields`. */
   extraClass?: string;
+  /** `!style=x!` — the DECORATION's notehead shape. See `Note.styleMark`. */
+  style?: string;
   startTriplet?: number;
   endTriplet?: boolean;
   tripletMultiplier?: number;
@@ -858,6 +860,8 @@ function noteFields(
    */
   const extraClass = (event as { extraClass?: string }).extraClass;
   if (extraClass !== undefined) e.extraClass = extraClass;
+  const styleMark = (event as { styleMark?: string }).styleMark;
+  if (styleMark !== undefined) e.style = styleMark;
   if (
     event.decorations.length > 0 &&
     !(event.type === "rest" && event.kind === "invisible")

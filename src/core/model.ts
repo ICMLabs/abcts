@@ -514,6 +514,17 @@ export interface Note {
   readonly extraVerses: readonly (string | null)[]
   readonly style: NoteStyle
   /**
+   * **THE `!style=x!` DECORATION ALONE**, where `style` is the effective one — the
+   * decoration's if it wrote one, and the voice's standing `K: style=` otherwise.
+   *
+   * abcjs keeps only the decoration on the element (`el.style = ret[1].substring(6)`,
+   * `abc_parse_music.js:228`); a `K: style=` never reaches a note at all, it becomes the
+   * line's own `style` element. So the two cannot be one field: `U:n = !style=normal!`
+   * inside a `rhythm` voice writes `normal` explicitly, and "differs from the default" is
+   * not the test. `resolveStyle` already answers null for absent.
+   */
+  readonly styleMark?: NoteStyle
+  /**
    * Microtonal detune in cents from a fractional accidental — `^/` is +50, `_/` is -50,
    * `^3/2` is +150. The printed accidental stays the base sign; this is the sounding
    * deviation, realized as a MIDI pitch bend. 0 means none.
@@ -754,6 +765,17 @@ export interface Chord {
   /** Verses 2..n, parallel and positional — null where a verse skips this event. */
   readonly extraVerses: readonly (string | null)[]
   readonly style: NoteStyle
+  /**
+   * **THE `!style=x!` DECORATION ALONE**, where `style` is the effective one — the
+   * decoration's if it wrote one, and the voice's standing `K: style=` otherwise.
+   *
+   * abcjs keeps only the decoration on the element (`el.style = ret[1].substring(6)`,
+   * `abc_parse_music.js:228`); a `K: style=` never reaches a note at all, it becomes the
+   * line's own `style` element. So the two cannot be one field: `U:n = !style=normal!`
+   * inside a `rhythm` voice writes `normal` explicitly, and "differs from the default" is
+   * not the test. `resolveStyle` already answers null for absent.
+   */
+  readonly styleMark?: NoteStyle
   /**
    * Per-notehead notated durations for a mixed-length chord (`[C2G]` → half + quarter),
    * parallel to `pitches`. Empty when uniform. Visual only — stems, flags and sounding
