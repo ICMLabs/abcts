@@ -111,6 +111,14 @@ const DIVERGENT: readonly string[] = [];
  * lands; never delete a row to make a run pass.
  */
 const PASSING: readonly string[] = [
+  "abcts-slur-shapes-tune0",
+  "abcts-slur-shapes-tune1",
+  "abcts-slur-shapes-tune3",
+  "abcts-slur-shapes-tune5",
+  "abcts-slur-shapes-tune6",
+  "abcts-slur-shapes-tune7",
+  "abcts-slur-shapes-tune8",
+  "abcts-slur-shapes-tune9",
   "abcjs-parse-book_parser-01-example",
   "abcjs-parse-book_parser-02-tune",
   "abcjs-parse-book_parser-03-a-tune0",

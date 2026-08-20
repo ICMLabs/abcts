@@ -7818,6 +7818,38 @@ function layoutCurves(
    * One notehead of a chord as an anchor of its own — the same construction `tiePairs`
    * makes, and for the same reason: a mark written INSIDE the brackets hangs on that head.
    */
+  /**
+   * **A SLUR WITH ONLY ONE END IS STILL DRAWN, AS A HALF.**
+   *
+   * `calcX` has an arm for each missing anchor: with no `anchor2` the curve runs to
+   * `lineEndX`, and with no `anchor1` it starts at `startLimitX.x + startLimitX.w` — the
+   * line's own prefix end (`tie-element.js:98-122`). `calcTieY` makes BOTH ends the pitch
+   * of whichever anchor exists, so the half is level. And `draw/tie.js:39-40` forces
+   * `isTie = true` for either, which is the same recomputation a system-split half takes.
+   *
+   * Two shapes reach this, and both are abcjs's own numbering refusing to pair:
+   * a `(` closed by a REST — the engraver never sees the close — and a slur written INSIDE
+   * a chord, whose open is numbered 101 and whose close is 201.
+   */
+  const emitHalf = (a: NoteAnchor, side: 'out' | 'in'): void => {
+    const at = bounds[a.system]
+    if (at === undefined) return
+    const x =
+      side === 'out'
+        ? at.right - ENGRAVE.lineEndInset
+        : (at.prefixEnd ?? a.left - ENGRAVE.curveContinuation)
+    const halfKind = 'tie' as const
+    curves[a.system]?.push(
+      side === 'out'
+        ? buildCurve(a, { ...a, left: x, right: x }, halfKind, voicePos, strict, {
+            start: a.element,
+          })
+        : buildCurve({ ...a, left: x, right: x }, a, halfKind, voicePos, strict, {
+            end: a.element,
+          }),
+    )
+  }
+
   const headAnchor = (a: NoteAnchor, index: number): NoteAnchor => {
     const step = a.tieSteps?.[index]
     if (step === undefined) return a
@@ -8084,10 +8116,33 @@ function layoutCurves(
           // arc's ends and `pitchY` for its y, and both have to be the head the `)` landed
           // on. `stepToY` is `-(step + PITCH_ORIGIN) * spacePerStep`, so this inverts it.
           const graceStep = -head.y / ENGRAVE.spacePerStep - PITCH_ORIGIN
+          /**
+           * …**AND WITH THE SAME DIRECTION INPUTS THE ELEMENT'S OWN CLOSE GETS.** They were
+           * omitted here, so a grace close took `buildCurve`'s default side: `(F {a})y`
+           * drew ABOVE where abcjs's `TieElem` reports `above=false`.
+           */
+          /**
+           * ⚠️ **AND A GRACE IS ALWAYS STEM-UP TO THE DIRECTION RULE**, because abcjs passes
+           * the LITERAL `"up"` — `addSlursAndTies(abselem, elem.gracenotes[i], grace, voice,
+           * "up", true)` (`abstract-engraver.js:498`) — where every other call site passes
+           * the note's own. `(F {a})y` closes on a grace belonging to a SPACER, which has no
+           * stem at all, so `!to.stemUp` made the curve go ABOVE; abcjs's `TieElem` reports
+           * `above=false` and draws it below. Instrumented on both sides.
+           */
           emit(
             from,
-            { ...anchor, left: head.x, right: head.x, pitchY: head.y, pitchStep: graceStep },
+            {
+              ...anchor,
+              left: head.x,
+              right: head.x,
+              pitchY: head.y,
+              pitchStep: graceStep,
+              stemUp: true,
+            },
             'slur',
+            internalHighOf(rec?.i ?? 0, i, from),
+            undefined,
+            internalDownOf(rec?.i ?? 0, i),
           )
         }
     /**
@@ -8117,29 +8172,17 @@ function layoutCurves(
         }
 
     /**
-     * **A `)` CLOSES ON A REST**, where a `(` does not open on one — see `Rest.slurEnds`.
-     * The anchor is the rest's own drawn position, which is what `(Cz)` hangs its curve on.
+     * ⚠️ **A REST'S `endSlur` IS PARSE DATA THAT THE DRAWING IGNORES.** `Rest.slurEnds` is
+     * real — abcjs keeps `endSlur: [101]` on the rest element and a host reads it — but
+     * `addSlursAndTies` has exactly two call sites, `elem.gracenotes[i]` and
+     * `elem.pitches[p]` (`abstract-engraver.js:498`, `:728`), and a rest has no `pitches`.
+     * So the curve is never closed and abcjs draws it as an OPEN slur running past the rest.
+     *
+     * The two answers disagree on purpose, which is why this is stated here as well as on
+     * the model: **closing it here looked right and moved `(Cz)`'s curve 22px and the wrong
+     * way round.**
      */
-    if (event.type === 'rest') {
-      for (let n = 0; n < ((event as { slurEnds?: number }).slurEnds ?? 0); n++) {
-        const depth = open.length - 1
-        const rec = open.pop()
-        const from = rec === undefined ? undefined : (rec.from ?? anchors[rec.i])
-        if (from === undefined) continue
-        const internal = anchors
-          .slice((rec?.i ?? 0) + 1, i)
-          .filter((a) => a.event.type !== 'rest').length
-        emit(
-          from,
-          anchor,
-          drawnKind(from, anchor, 'slur', internal),
-          internalHighOf(rec?.i ?? 0, i, from),
-          openSeq.get(depth),
-          internalDownOf(rec?.i ?? 0, i),
-        )
-      }
-      return
-    }
+    if (event.type === 'rest') return
 
     // Slurs close before they open, so `(A)(B)` closes on A before opening on B.
     for (let n = 0; n < event.slurEnds; n++) {
@@ -8147,6 +8190,7 @@ function layoutCurves(
       const rec = open.pop()
       const start = rec?.i
       const from = rec === undefined ? undefined : (rec.from ?? anchors[rec.i])
+      if (from === undefined) emitHalf(anchor, 'in')
       if (from !== undefined) {
         // Notes strictly between the two ends — abcjs's `internalNotes`, which a REST and
         // a GRACE never join. See `drawnKind`.
@@ -8181,33 +8225,26 @@ function layoutCurves(
       openSeq.set(open.length - 1, seq++)
     }
     /**
-     * **AND THE MARKS WRITTEN INSIDE A CHORD ARE PER NOTEHEAD** — `[(CE)G]` opens on the
-     * first head and closes on the second, and abcjs numbers those at chord positions 1
-     * and 2. Ends before starts, as the numbering pass runs them (`tune-builder.js:751-770`).
+     * ⚠️ **A SLUR WRITTEN INSIDE A CHORD CANNOT PAIR, AND abcjs DRAWS TWO HALVES.**
+     *
+     * The label is `chordPos * 100 + 1`, and the OPEN takes the position of the head it is
+     * on while the CLOSE takes the position of ITS head — so `[(CE)G]` opens 101 on pitch 0
+     * and closes 201 on pitch 1, and `slurs[slurid]` finds nothing for either
+     * (`abstract-engraver.js:910-940`, `tune-builder.js:751-770`). Instrumented rather than
+     * reasoned: abcjs builds TWO `TieElem`s for that chord, one `anchor1=70.846 anchor2=none`
+     * and one `anchor1=none anchor2=70.846`.
+     *
+     * So a chord-internal mark pairs ONLY when it opens and closes on the same head index,
+     * and there is nothing to add here: pairing them looked right and drew a curve abcjs
+     * does not. What is still owed is the UNPAIRED HALF — see the note in the handoff.
      */
-    const heads = event.type === 'chord' ? event.pitches : []
-    ;(heads as readonly { slurStarts?: number; slurEnds?: number }[]).forEach((p, k) => {
-      for (let n = 0; n < (p.slurEnds ?? 0); n++) {
-        const depth = open.length - 1
-        const rec = open.pop()
-        const from = rec === undefined ? undefined : (rec.from ?? anchors[rec.i])
-        if (from === undefined) continue
-        const to = headAnchor(anchor, k)
-        emit(
-          from,
-          to,
-          drawnKind(from, to, 'slur', 0),
-          internalHighOf(rec?.i ?? 0, i, from),
-          openSeq.get(depth),
-          internalDownOf(rec?.i ?? 0, i),
-        )
-      }
-    })
-    ;(heads as readonly { slurStarts?: number; slurEnds?: number }[]).forEach((p, k) => {
-      for (let n = 0; n < (p.slurStarts ?? 0); n++) {
-        open.push({ i, from: headAnchor(anchor, k) })
-        openSeq.set(open.length - 1, seq++)
-      }
+    const heads =
+      event.type === 'chord'
+        ? (event.pitches as readonly { slurStarts?: number; slurEnds?: number }[])
+        : []
+    heads.forEach((p, k) => {
+      for (let n = 0; n < (p.slurEnds ?? 0); n++) emitHalf(headAnchor(anchor, k), 'in')
+      for (let n = 0; n < (p.slurStarts ?? 0); n++) emitHalf(headAnchor(anchor, k), 'out')
     })
 
     // A tie joins this note to the next SOUNDING one, wherever it falls.
@@ -8321,6 +8358,9 @@ function layoutCurves(
       })
     }
   })
+
+  // …**AND WHATEVER IS STILL OPEN RUNS OFF THE END OF ITS LINE.** See `emitHalf`.
+  for (const rec of open) emitHalf(rec.from ?? (anchors[rec.i] as NoteAnchor), 'out')
 
   return curves
 }
@@ -8649,12 +8689,45 @@ function curveReserves(
     if (main !== undefined)
       a.graceSlur = { graceX: head.x, graceY: head.y, headX: main.x, headY: main.y }
   }
+  /**
+   * **A CLOSE WITH NOTHING OPEN RESERVES `pitch ± 4` AS INK** — the same arm a tie arriving
+   * from the system above takes. `setEndAnchor` runs whenever the CLOSING note is on this
+   * line, and with a null `anchor1` it falls to `top = anchor2.pitch + 4`,
+   * `bottom = anchor2.pitch - 4` (`tie-element.js:35-38`).
+   *
+   * Two shapes reach it, both of them abcjs's own numbering refusing to pair: a `)` after a
+   * REST, whose `(` the engraver never saw closed, and a slur written INSIDE a chord, whose
+   * open is numbered 101 and whose close is 201. `(zC)` and `[(CE)G]` each came out
+   * 7.578px short of abcjs's page without it.
+   */
+  const unopened = (a: NoteAnchor): void => {
+    const above = curveIsAbove(a, a, voicePos, 'slur')
+    const y = endAt(a, above, true)
+    reserves.push(above ? { top: y - three, bottom: y } : { top: y, bottom: y + three })
+  }
   anchors.forEach((anchor, i) => {
+    /**
+     * …**AND THE MARKS INSIDE A CHORD ARE EACH A HALF OF THEIR OWN** — see `layoutCurves`.
+     * They never pair, so each one reserves as if its other end were on another line.
+     */
+    if (anchor.event.type === 'chord')
+      for (const p of anchor.event.pitches as readonly {
+        slurStarts?: number
+        slurEnds?: number
+      }[]) {
+        for (let n = 0; n < (p.slurEnds ?? 0); n++) unopened(anchor)
+        for (let n = 0; n < (p.slurStarts ?? 0); n++) {
+          const above = curveIsAbove(anchor, anchor, voicePos, 'slur')
+          const y = endAt(anchor, above, true)
+          reserves.push(above ? { top: y - three, bottom: y } : { top: y, bottom: y + three })
+        }
+      }
     if (anchor.event.type === 'rest') return
     for (let n = 0; n < anchor.event.slurEnds; n++) {
       const start = open.pop()
       const from = start === undefined ? undefined : anchors[start]
       if (from !== undefined) add(from, anchor, 'slur')
+      else unopened(anchor)
     }
     for (let n = 0; n < anchor.event.slurStarts; n++) open.push(i)
     // …**AND A PARTLY-TIED CHORD RESERVES FOR ITS TIED HEADS**, the same set the drawing
