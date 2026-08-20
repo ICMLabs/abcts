@@ -613,6 +613,16 @@ export interface GracePitch extends Pitch {
    */
   readonly acciaccatura?: true
   /**
+   * **A SPACE AFTER A GRACE NOTE ENDS ITS BEAM**, exactly as one after an ordinary note
+   * does. abcjs reaches it two ways and they agree: `getCoreNote` sets `end_beam` when a
+   * complete note is followed by whitespace (`abc_parse_music.js:1243-1246`, copied onto
+   * `endBeam` at `:714-716`), and the group loop's else-arm sets it on the PREVIOUS grace
+   * when the space is what it lands on (`:719-723`).
+   *
+   * Ours skipped the space silently, so `{A /B}` published no `endBeam` at all.
+   */
+  readonly endBeam?: true
+  /**
    * **A `)` WRITTEN AFTER A GRACE GROUP CLOSES ON THE LAST GRACE, NOT ON THE NOTE**, and a
    * `(` inside one opens on the grace it precedes. Both are `Pitch.slurStarts`/`slurEnds`
    * now — the same two counts a chord's own head carries, because abcjs numbers them the

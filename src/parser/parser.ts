@@ -507,6 +507,18 @@ function staffLinesWritten(spec: string): boolean {
   return Number.isInteger(n) && n >= 0 && n <= 10
 }
 
+/**
+ * The four CHANGING fonts at their built-in values — abcjs's `initialize` literals
+ * (`abc_parse_directive.js:23-31`), which is what `runningLineFonts` is seeded with.
+ * `box` is false on all four: none is written with one by default.
+ */
+const DEFAULT_CHANGING_FONTS: Readonly<Record<string, LyricFont>> = {
+  annotationfont: { face: 'Helvetica', size: 12, bold: false, italic: false, box: false },
+  gchordfont: { face: 'Helvetica', size: 12, bold: false, italic: false, box: false },
+  tripletfont: { face: 'Times', size: 11, bold: false, italic: true, box: false },
+  vocalfont: { face: '"Times New Roman"', size: 13, bold: true, italic: false, box: false },
+}
+
 function staffLineCount(spec: string): number {
   const m = STAFFLINES.exec(spec)
   if (!m) return DEFAULT_STAFF_LINES
@@ -3807,9 +3819,25 @@ class Parser {
         if (keyOctave !== null) builder.keyOctave.value = keyOctave
         // …and the header's fonts are frozen here, which is `is_in_header` going false.
         builder.headerFonts ??= { ...builder.fonts }
-        // …and so are the four CHANGING ones, which is `setRunningFont` — see
-        // `runningLineFonts`.
-        builder.runningLineFonts ??= { ...builder.fonts }
+        /**
+         * …and so are the four CHANGING ones, which is `setRunningFont` — see
+         * `runningLineFonts`.
+         *
+         * ⚠️ **SEEDED WITH THE DEFAULTS, NOT WITH WHAT WAS SET.** abcjs hands
+         * `setRunningFont` `multilineVars.<type>`, which is initialised to the built-in
+         * font at tune start and only then overwritten by a header directive
+         * (`abc_parse.js:557-562`, `abc_parse_directive.js:23-31`) — so it is NEVER
+         * undefined, and `setLineFont`'s `if (tune.runningFonts[type])` guard passes from
+         * the first line onward.
+         *
+         * Ours seeded from `builder.fonts`, which holds an entry only for a font the
+         * SOURCE set. A tune with no header font directive therefore had
+         * `runningLineFonts.vocalfont` undefined, `takeLineFonts`' `was !== undefined`
+         * test failed, and the FIRST `%%vocalfont` of the body produced no delta at all —
+         * so the staff never published it. `abcts-model-gaps` tunes 6 and 7 are exactly
+         * that shape and nothing else in either corpus is.
+         */
+        builder.runningLineFonts ??= { ...DEFAULT_CHANGING_FONTS, ...builder.fonts }
         builder.bodyStarted = true // K: ends the header.
         builder.sawKey = true // …and this is abcjs's `is_in_header`, which ONLY a `K:` clears.
         return
@@ -3887,19 +3915,25 @@ class Parser {
      * fires here after the loop instead, because `beginMusicLine` is our own bookkeeping
      * and a line that opens none is not a shape abcjs has to model.
      */
-    if (!continued) {
+    if (!continued) builder.voice.beginMusicLine()
+    /**
+     * ⚠️ **BOTH FONT SNAPSHOTS ARE DEFERRED, AND `beginMusicLine` IS NOT.** Deferring the
+     * WHOLE block — the shape abcjs has — costs `flatten-treble-8` an octave on its first
+     * note: `beginMusicLine` is OUR bookkeeping, not abcjs's, and the voice's clef is bound
+     * by it, so running it past a `[V:1]` binds the wrong line's clef.
+     *
+     * The two that do move are `lineVocalFont` (what a lyric DRAWS in) and
+     * `takeLineFonts` (what the STAFF publishes), and they move together because they read
+     * the same running state. `takeLineFonts` also ADVANCES it, so it must run exactly once
+     * per line — which is why this is a latch and not a re-take.
+     */
+    let lineFontsPending = !continued
+    const takeLineStartFonts = (): void => {
+      if (!lineFontsPending) return
+      lineFontsPending = false
       builder.lineVocalFont = builder.vocalFont
       builder.voice.setLineFonts(builder.takeLineFonts())
-      builder.voice.beginMusicLine()
     }
-    /**
-     * ⚠️ **AND IT IS RE-TAKEN AFTER EACH OF THE LINE'S LEADING INLINE HEADERS.** Deferring
-     * the WHOLE block instead — the shape abcjs has — costs `flatten-treble-8` an octave on
-     * its first note: `beginMusicLine` is our own per-line bookkeeping and the voice's clef
-     * is bound by it, so running it past a `[V:1]` binds the wrong line's clef. The
-     * measurement is about the FONT and this is what the measurement supports.
-     */
-    let leadingHeaders = !continued
     // Re-read through the builder rather than capturing: an inline `[V:2]` mid-line
     // switches which voice subsequent events belong to.
     const voice = () => builder.voice
@@ -4060,7 +4094,7 @@ class Parser {
       const token = tokens[i] as Token
       // …**AND WHITESPACE DOES NOT END THE RUN**, because `letter_to_inline_header` opens
       // with `eatWhiteSpace` and consumes it as part of the attempt.
-      if (token.kind !== 'inlineField' && token.kind !== 'whitespace') leadingHeaders = false
+      if (token.kind !== 'inlineField' && token.kind !== 'whitespace') takeLineStartFonts()
       switch (token.kind) {
         case 'accidental': {
           if (accidentalStart === null) accidentalStart = token.start
@@ -4557,7 +4591,6 @@ class Parser {
               true,
             )
           }
-          if (leadingHeaders) builder.lineVocalFont = builder.vocalFont
           i++
           break
         }
@@ -4633,6 +4666,9 @@ class Parser {
           break
       }
     }
+    // A line of nothing but inline headers still takes its snapshot — abcjs never reaches
+    // the else arm for one either, but `takeLineFonts` has to advance once per line.
+    takeLineStartFonts()
     closeBeamRun() // end of line breaks any open beam
   }
 
@@ -5344,8 +5380,17 @@ function parseGracePitches(raw: string): {
     if (!letter || !/[a-gA-G]/.test(letter)) {
       // A SPACE ends a beam rather than erring, and a REST has its own message — see the
       // `grace-rest` warning at the call site.
-      if (letter !== undefined && letter !== ' ' && !/[zx]/.test(letter))
+      //
+      // …**AND "ENDS A BEAM" IS A FACT THE GROUP HAS TO CARRY.** It was read here as
+      // "not an error" and dropped; abcjs writes it onto the grace BEFORE the space.
+      // See `GracePitch.endBeam`.
+      if (letter === ' ' || letter === '\t') {
+        const at = pitches.length - 1
+        const target = pitches[at]
+        if (target !== undefined) pitches[at] = { ...target, endBeam: true }
+      } else if (letter !== undefined && !/[zx]/.test(letter)) {
         unparsed.push(offset + i)
+      }
       i++
       continue
     }

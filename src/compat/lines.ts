@@ -932,6 +932,8 @@ function noteFields(
        * the model carries it per note now. See `GracePitch.acciaccatura`.
        */
       ...(g.acciaccatura === true ? { acciaccatura: true } : {}),
+      // …and the space that ended its beam — see `GracePitch.endBeam`.
+      ...(g.endBeam === true ? { endBeam: true } : {}),
       // **A GRACE'S DURATION IS RELATIVE TO A SIXTEENTH, NOT TO `L:`** — `note.duration =
       // note.duration / (default_length * 8)` (`abc_parse_music.js:694`), so a bare grace
       // is 0.125 whatever the unit note length is, and `{B2}` is 0.25.
