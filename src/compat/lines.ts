@@ -151,6 +151,8 @@ export interface AbcElement {
    */
   startSlur?: { label: number; style?: string }[];
   endSlur?: number[];
+  /** `!class=…!` — a host's own class on this element. See `noteFields`. */
+  extraClass?: string;
   startTriplet?: number;
   endTriplet?: boolean;
   tripletMultiplier?: number;
@@ -840,6 +842,22 @@ function noteFields(
     if (tied === undefined && event.tiedToNext && e.pitches.length > 1)
       for (const p of e.pitches) p.startTie = { ...tieStyle };
   }
+  /**
+   * **`!class=…!` RIDES THE ELEMENT** — `letter_to_accent`'s `class=` arm sets
+   * `el.extraClass` in the same `if` chain as `style=` and `!…!` decorations
+   * (`abc_parse_music.js:229-230`), so a host reads it off the note. Ours carried it in the
+   * model and never projected it.
+   *
+   * ponytail: `el.style` — its neighbour in that chain, from `!style=x!` — is NOT projected,
+   * because `Note.style` is a REQUIRED `NoteStyle` defaulting to `'normal'` and abcjs's
+   * field exists only where a decoration wrote one. `S5-directives` writes `!style=normal!`
+   * through a `U:` shorthand, so "differs from the default" is not the test; what is owed is
+   * a written-flag on the model, as `stafflines` needs. One tune in either corpus.
+   * `el.fonts` — `addFormattingOptions`'s per-note `%%…font` override
+   * (`abc_parse.js:120-138`) — is the same shape and the same one-tune reach.
+   */
+  const extraClass = (event as { extraClass?: string }).extraClass;
+  if (extraClass !== undefined) e.extraClass = extraClass;
   if (
     event.decorations.length > 0 &&
     !(event.type === "rest" && event.kind === "invisible")
