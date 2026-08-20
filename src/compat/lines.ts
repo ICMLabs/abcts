@@ -2,6 +2,7 @@ import type {
   Barline,
   Clef,
   FreeTextBlock,
+  LyricFont,
   KeySignature,
   Measure,
   Meter,
@@ -13,6 +14,7 @@ import type {
 } from "../core/model.js";
 import { defaultClef, plainText, ratToNumber, stepIndex } from "../core/model.js";
 import { resolveOverlays, type OverlayLine } from "../core/overlays.js";
+import { abcjsFont } from "./fonts.js";
 import { clefElement, keyElement, meterElement } from "./selectables.js";
 
 /**
@@ -2267,6 +2269,22 @@ export function projectionOf(
            * the two corpora carry at least one, and no gate could see it: `deline` compares
            * the staff's fields only to OURS, through `objEqual`.
            */
+          /**
+           * **AND `%%barnumbers 0` HANGS ITS NUMBER ON THE STAFF** — `params.barNumber` at
+           * `startNewLine`, guarded by the first voice and by not being bar 1
+           * (`abc_parse_music.js:1035-1036`). The model has carried it since the layout
+           * needed it (`Measure.systemBarNumber`); the projection never did.
+           *
+           * ⚠️ **AND IT IS WHICHEVER VOICE THE PARSER STAMPED IT ON, NOT THE STAFF'S OWN
+           * FIRST.** The layout already reads it that way — `plans.map(…).find(n => n !==
+           * undefined)` — because a voice suppressed on this line leaves a gap.
+           */
+          const numbered = score.voices.findIndex(
+            (v) => v.measures[from]?.systemBarNumber !== undefined,
+          );
+          if (numbered >= 0 && members.includes(numbered))
+            (staff as unknown as Record<string, unknown>)["barNumber"] =
+              score.voices[numbered]?.measures[from]?.systemBarNumber;
           const group = score.staves[s];
           if (group?.brace != null) (staff as unknown as Record<string, unknown>)["brace"] = group.brace;
           if (group?.bracket != null)
@@ -2310,11 +2328,20 @@ export function projectionOf(
           }
           if (fonts !== undefined)
             for (const [type, font] of Object.entries(fonts))
-              // A COPY, because `deline` writes `el_type` onto this very object the way
-              // abcjs does (`deline-tune.js:153-155`) and the parse tree is frozen.
-              (staff as unknown as Record<string, unknown>)[type] = {
-                ...(font as Record<string, unknown>),
-              };
+              /**
+               * **AND IT IS abcjs's FONT OBJECT, NOT THE MODEL'S.** `{face, weight, style,
+               * decoration, size, box?}` where `LyricFont` is `{face, size, bold, italic,
+               * box?}` — the same font said two ways, and this side said ours. `deline`'s
+               * gate compares a staff's fonts only to OURS through `objEqual`, so the shape
+               * was never measured until the `parseOnly` gate listed the field names.
+               *
+               * A COPY, because `deline` writes `el_type` onto this very object the way
+               * abcjs does (`deline-tune.js:153-155`) and the parse tree is frozen.
+               */
+              (staff as unknown as Record<string, unknown>)[type] = abcjsFont(
+                type,
+                font as LyricFont,
+              );
           return staff;
         }),
     });
