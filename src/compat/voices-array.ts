@@ -120,12 +120,24 @@ const minWidthOf = (element: LayoutElement): number => {
   const own = element.minWidth ?? element.rodWidth ?? element.width;
   if (element.minWidth !== undefined) return own;
   const glyphs = glyphsFor(true);
+  /**
+   * **`getMinWidth(child)` IS `child.w`, AND AN ABSOLUTE ELEMENT'S `w` IS ITS WIDEST CHILD**
+   * — `addChild` grows it as each one arrives: `if (child.dx + child.w > this.w) this.w =
+   * child.dx + child.w` (`absolute-element.js`, `layout/voice-elements.js:117-119`).
+   *
+   * ⚠️ **AND THE DOTS COUNT.** A dotted second's rightmost child is its second DOT —
+   * `23.74 + 3.45` — where the displaced head reaches only 20.74, which was the last row of
+   * this gate. Taking EVERY glyph instead put 169 rows out: a decoration, a tempo's parts
+   * and a rest's own furniture are not `addRight` children of the note, so their reach is
+   * not the element's width. Measured both ways; heads and dots is the rule.
+   *
+   * **`dx + w`, abcjs's own sum** — the child's constructed offset within its element,
+   * carrying the seconds displacement and the voice-overlap shift. Deriving it as
+   * `g.x - element.x` gets the magnitude right and the last bit wrong.
+   */
   let heads = 0;
   for (const g of element.glyphs) {
-    if (g.role !== "notehead") continue;
-    // **`dx + w`, abcjs'S OWN SUM** — the head's constructed offset within its element,
-    // carrying both the seconds displacement and the voice-overlap shift. Deriving it as
-    // `g.x - element.x` gets the magnitude right and the last bit wrong.
+    if (g.role !== "notehead" && g.role !== "dot") continue;
     heads = Math.max(heads, (g.dx ?? g.x - element.x) + glyphs.width(g.name));
   }
   /**

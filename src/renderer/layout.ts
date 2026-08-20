@@ -1767,7 +1767,13 @@ export interface LayoutStaff {
   readonly dynamicsAbove: boolean
   readonly tupletReservesAbove: boolean
   /** abcjs's declared box per tuplet on this staff — see `layoutTuplets`. */
-  readonly tupletReserves: readonly { top: number; bottom: number }[]
+  readonly tupletReserves: readonly {
+    top: number
+    bottom: number
+    /** …and the same box in PITCH where the producer knows it — see `layoutTuplets`. */
+    topPitch?: number
+    bottomPitch?: number
+  }[]
   /** abcjs's declared box per tie and slur — see `curveReserves`. */
   readonly curveReserves: readonly CurveReserve[]
   /** Tuplet brackets, and the numbers that go with them. Also span elements. */
@@ -8638,7 +8644,7 @@ function layoutTuplets(
   texts: PlacedText[]
   reservesAbove: boolean
   /** abcjs's declared `[top, bottom]` per tuplet, in our y — see `reserves` below. */
-  reserves: { top: number; bottom: number }[]
+  reserves: { top: number; bottom: number; topPitch?: number; bottomPitch?: number }[]
 } {
   /**
    * A member's extent AS abcjs DECLARES IT — not as it paints.
@@ -8691,7 +8697,7 @@ function layoutTuplets(
    * PITCH around where the NUMBER sits, and not the bracket's drawn lines at all. `y` is
    * our equivalent of `yTextPos`, so +1 pitch up is half a space and -2 pitch down is one.
    */
-  const reserves: { top: number; bottom: number }[] = []
+  const reserves: { top: number; bottom: number; topPitch?: number; bottomPitch?: number }[] = []
 
   // Members of one tuplet are contiguous, so grouping by id preserves their order.
   const groups = new Map<number, NoteAnchor[]>()
@@ -8845,6 +8851,35 @@ function layoutTuplets(
             : a.y + ((b.y - a.y) * (midX - a.x)) / span
       return y + (up ? -3 : 2) * ENGRAVE.spacePerStep
     }
+    /**
+     * **THE SAME SAMPLE IN PITCH, WHICH IS THE FORM THE RESERVE NEEDS.**
+     * `yTextPos = heightAtMidpoint(left, anchor2.x, beam)` interpolates the BEAM's own two
+     * ends — `beam.startY` and `beam.endY`, which are PITCHES in abcjs — and then adds
+     * `isAbove ? 3 : -2` (`layout/triplet.js:15-17`). Ours samples the drawn line and undoes
+     * half its thickness to recover the same edge; the pitch needs neither, because
+     * `PlacedLine.pitchRange` carries the line's own ends.
+     *
+     * Undefined when the group's beam is not in this list — the stem-tip fallback has no
+     * pitch, and the extent keeps its division for that case.
+     */
+    const beamPitch = (): number | undefined => {
+      const tipX = (a: NoteAnchor): number | null =>
+        elements[a.element]?.lines.find((l) => l.role === 'stem')?.x1 ?? null
+      const ax = tipX(first)
+      const bx = tipX(last)
+      if (ax === null || bx === null) return undefined
+      const onBeam = beamLines.find(
+        (l) => Math.min(l.x1, l.x2) <= ax + 1e-9 && Math.max(l.x1, l.x2) >= bx - 1e-9,
+      )
+      if (onBeam?.pitchRange === undefined) return undefined
+      const [p1, p2] = onBeam.pitchRange
+      const at = beamMidX()
+      const pitch =
+        onBeam.x2 === onBeam.x1
+          ? p1
+          : p1 + ((p2 - p1) * (at - onBeam.x1)) / (onBeam.x2 - onBeam.x1)
+      return pitch + (up ? 3 : -2)
+    }
     let startNote = endPitch(firstExtent)
     let endNote = endPitch(lastExtent)
     // A rest at either end makes the bracket horizontal.
@@ -8977,7 +9012,28 @@ function layoutTuplets(
       italic: SCORE_FONTS.tripletfont?.italic ?? true,
     })
 
-    reserves.push({ top: y - ENGRAVE.spacePerStep, bottom: y + 2 * ENGRAVE.spacePerStep })
+    /**
+     * **AND THE BOX IS DECLARED IN PITCH, WHICH IS THE ONLY FORM `calcHeight` CAN USE.**
+     * `element.top = element.yTextPos + 1` and `element.bottom = element.yTextPos - 2`
+     * (`layout/triplet.js:19-20, 76-77`), where `yTextPos` is a PITCH throughout — the
+     * midpoint of the two end notes on an unbeamed group. Ours pushed the y alone, so the
+     * extent divided it back and `synth-flattener-27`'s third staff top came out
+     * 22.318670814720246 against abcjs's 22.318670814720242: 1.4e-13 of page, and the last
+     * thing `makeVoicesArray` could see.
+     *
+     * ponytail: the BEAMED arm still has no pitch. `heightAtMidpoint` interpolates the
+     * beam's own two pitches where ours samples the drawn line and undoes half its
+     * thickness — a length with no pitch of its own — so that arm keeps the division. No
+     * fixture in either corpus reaches the extent through a beamed tuplet.
+     */
+    const yTextPitch = beamed ? beamPitch() : startNote + (endNote - startNote) / 2
+    reserves.push({
+      top: y - ENGRAVE.spacePerStep,
+      bottom: y + 2 * ENGRAVE.spacePerStep,
+      ...(yTextPitch === undefined
+        ? {}
+        : { topPitch: yTextPitch + 1, bottomPitch: yTextPitch - 2 }),
+    })
 
     if (beamed) continue
 
@@ -9456,6 +9512,9 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
           y1: yAt(stubAt) + offset,
           x2,
           y2: yAt(x2) + offset,
+          // …and the LINE's own two ends in PITCH, which is what abcjs's `beam.startY` and
+          // `beam.endY` are — see `pitchRange` and `heightAtMidpoint`.
+          pitchRange: [pitchAt(stubAt), pitchAt(x2)] as [number, number],
           thickness,
           ...(firstDuration === undefined ? {} : { durationClass: firstDuration }),
           ...closeSplit(x2, runEnd),
@@ -9483,6 +9542,7 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
         y1: yAt(sampleAt) + offset,
         x2,
         y2: yAt(x2) + offset,
+        pitchRange: [pitchAt(sampleAt), pitchAt(x2)] as [number, number],
         thickness,
         ...closeSplit(x2, runEnd),
         // A BEAM'S CLASS CARRIES ITS DURATION, and the duration is the FIRST element's —
@@ -15541,7 +15601,15 @@ function aboveLadder<
    * `dim.height`), so it converts once on the way in — exactly where abcjs's
    * `dim.height / spacing.STEP` does.
    */
-  const PITCH_PER_UNIT = 1 / ENGRAVE.spacePerStep
+  /**
+   * ⚠️ **AND IT IS A DIVISION, NOT A MULTIPLY BY THE RECIPROCAL.** `x / 3.875` and
+   * `x * (1 / 3.875)` are different doubles, and abcjs writes the division:
+   * `var chordHeight = dim.height / spacing.STEP` (`creation/add-chord.js:49`). Reading the
+   * reciprocal once and reusing it put `synth-flattener-27`'s third staff top at
+   * 22.318670814720246 against abcjs's 22.318670814720242, which is 1.4e-13 of page and the
+   * last thing `makeVoicesArray` could see.
+   */
+  const toPitch = (length: number): number => length / ENGRAVE.spacePerStep
   /**
    * **AND THE RUNG IT STARTS ON IS `staff.top` ITSELF, NOT THAT TOP DIVIDED BACK.** abcjs
    * enters `setUpperAndLowerElements` with `staff.top` already a pitch — the max of the
@@ -15556,11 +15624,21 @@ function aboveLadder<
   const yOfPitch = (pitch: number): number => -pitch * ENGRAVE.spacePerStep
   /** A lane whose margin is already inside the figure — the ending's and the dynamics'. */
   const spend = (height: number): number => {
-    topPitch += height * PITCH_PER_UNIT
+    topPitch += toPitch(height)
     return yOfPitch(topPitch)
   }
-  /** abcjs's `incTop`: `staff.top += height + margin`, and the mark goes at the result. */
-  const reserve = (height: number): number => spend(height + ENGRAVE.aboveStackMargin)
+  /**
+   * abcjs's `incTop`: `staff.top += height + margin`, and the mark goes at the result.
+   *
+   * **THE MARGIN IS A PITCH AND JOINS AS ONE** — `var margin = 1` and
+   * `staff.top += height + margin` (`layout/set-upper-and-lower-elements.js:102-108`), with
+   * the height ALREADY divided where it was measured. Converting the SUM instead is a
+   * different double from converting the height and adding a whole pitch.
+   */
+  const reserve = (height: number): number => {
+    topPitch += toPitch(height) + ABCJS_PITCH.laneMargin
+    return yOfPitch(topPitch)
+  }
   // ── CHORD SYMBOLS AND ANNOTATIONS SHARE A LANE, AND THE LANE COUNT IS PACKED ─
   //
   // `setLaneForChord` (`layout/voice.js:70-101`) walks a voice's items left to right and
@@ -16568,7 +16646,13 @@ interface StaffFurniture {
   /** abcjs's `endingHeightAbove` from a tuplet — see `layoutTuplets`. Never below. */
   readonly tupletReservesAbove?: boolean
   /** abcjs's declared box per tuplet — NOT the bracket's drawn lines. */
-  readonly tupletReserves?: readonly { top: number; bottom: number }[]
+  readonly tupletReserves?: readonly {
+    top: number
+    bottom: number
+    /** The same box in abcjs PITCH where the producer knows it — see `layoutTuplets`. */
+    topPitch?: number
+    bottomPitch?: number
+  }[]
   /** abcjs's declared box per tie and slur, applied AFTER the lanes. */
   readonly curveReserves?: readonly {
     top: number
@@ -16706,7 +16790,8 @@ function verticalExtent(
   // its top from the lane it was given and never adjusts the staff's range by its ink.
   if (furniture.tupletReservesAbove === true)
     endingAbove = Math.max(endingAbove, ENGRAVE.tupletLane)
-  for (const r of furniture.tupletReserves ?? []) include(r.top, r.bottom)
+  for (const r of furniture.tupletReserves ?? [])
+    include(r.top, r.bottom, r.topPitch, r.bottomPitch)
   for (const line of furniture.voltaLines ?? []) flag((line.y1 + line.y2) / 2)
   for (const t of furniture.voltaTexts ?? []) flag(t.y)
   // Melisma extenders and hairpins/glissandi keep their actual geometry — they sit in the
