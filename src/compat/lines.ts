@@ -2841,10 +2841,28 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color"]);
             (staff as unknown as Record<string, unknown>)["bracket"] = group.bracket;
           if (group?.connectBarLines != null)
             (staff as unknown as Record<string, unknown>)["connectBarLines"] = group.connectBarLines;
-          const titles = members.map((k) => {
-            const voice = score.voices[k];
-            return (firstMusicLine ? voice?.name : voice?.subname) ?? "";
-          });
+          /**
+           * ⚠️ **THE TITLES ARE IN DECLARATION ORDER WHERE THE VOICES ARE IN `%%score`
+           * ORDER, AND abcjs PAIRS THEM BY INDEX.** `createVoice` writes
+           * `thisStaff.title[tune.voiceNum] = {name: params.name}`
+           * (`tune-builder.js:970-976`) as each voice's first line is READ, so a
+           * `%%score (V2 V1)` fills slot 0 from the voice declared first and slot 0 of
+           * `voices` from the one the score puts first — and draws each voice's music
+           * under the other's name.
+           *
+           * That mismatch is already reproduced in the DRAWING; the projection published
+           * the array in score order and so did not have it. `score-reorder-shared` is
+           * abcjs's `["Melody","Harmony"]` against our `["Harmony","Melody"]`.
+           */
+          const titles = [...members]
+            .sort(
+              (a, b) =>
+                (score.voices[a]?.declaredIndex ?? a) - (score.voices[b]?.declaredIndex ?? b),
+            )
+            .map((k) => {
+              const voice = score.voices[k];
+              return (firstMusicLine ? voice?.name : voice?.subname) ?? "";
+            });
           if (titles.some((t) => t !== ""))
             (staff as unknown as Record<string, unknown>)["title"] = titles;
           /**

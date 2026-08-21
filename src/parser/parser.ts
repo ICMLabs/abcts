@@ -3103,10 +3103,22 @@ class Parser {
           : (measured as number[])
       const builder = this.ensureScore(start)
       const target = builder.voice.isEmpty ? builder.textAbove : builder.textBelow
+      /**
+       * ⚠️ **THE SPAN IS THE LINE'S START PLUS THE LENGTH OF A DIFFERENT STRING.**
+       * `{startChar: multilineVars.iChar, endChar: multilineVars.iChar + restOfString.length}`
+       * (`abc_parse_directive.js:899`), where `iChar` is at the first `%` and
+       * `restOfString` is `str.substring(str.indexOf(tokens[0].token) + …)` — the ARGUMENT
+       * TAIL with its leading space gone. So `%%sep 0.4cm 0.4cm 6cm` at 562 ends at 577,
+       * fifteen characters in, which is neither the line's end nor the arguments' own
+       * position. Instrumented: `SEP iChar=562 rest="0.4cm 0.4cm 6cm" len=15`.
+       *
+       * The no-argument form is a literal `iChar + 5` — the length of `%%sep`.
+       */
       target.push({
         lines: [],
         align: 'center',
         role: 'separator',
+        sourceRange: sourceRange(start, start + (args === '' ? 5 : args.length)),
         separator: {
           above: Math.round(above ?? 14),
           below: Math.round(below ?? 14),
