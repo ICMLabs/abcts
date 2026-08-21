@@ -831,9 +831,27 @@ function noteFields(
       e.duration = bars * barLength;
       e.rest.text = bars;
     } else if (
-      e.duration === barLength &&
-      event.kind !== "invisible" &&
-      event.kind !== "spacer"
+      /**
+       * ⚠️ **THERE ARE TWO WHOLE-REST RULES AND THEY ARE NOT THE SAME RULE.**
+       *
+       *   PARSER   `el.rest.type === 'rest' && el.duration === 1 && durationOfMeasure <= 1`
+       *            (`abc_parse_music.js:552-557`) — the rest is WRITTEN as a whole and the
+       *            measure is no longer than one, whatever it actually fills.
+       *   ENGRAVER `this.measureLength === duration`, and not invisible/spacer/multimeasure
+       *            (`abstract-engraver.js:812-813`) — the rest FILLS the measure, whatever
+       *            it was written as.
+       *
+       * Ours was the ENGRAVER's, applied unconditionally. Gating that one on `engraved`
+       * alone took the row count the WRONG WAY — 8 differing to 35 — because 27 rests are
+       * `whole` in abcjs's PARSE tree and the engraver's condition is not what puts them
+       * there. **A rule that fires in two places is two rules until the source says
+       * otherwise.**
+       */
+      (event.kind === "normal" && ratToNumber(event.notatedDuration) === 1 && barLength <= 1) ||
+      (engraved &&
+        e.duration === barLength &&
+        event.kind !== "invisible" &&
+        event.kind !== "spacer")
     ) {
       e.rest.type = "whole";
     }
@@ -1766,6 +1784,71 @@ function markTuplets(
  * not "the first and last of a beam group": it is abcjs's own bookkeeping, and reading the
  * drawn beams instead would differ on every one of those three cases.
  */
+/**
+ * ⚠️ **A CHORD DECIDES `end_beam` BY TWO RULES, AND ONE OF THEM READS THE WRONG DURATION.**
+ *
+ * The post-`]` loop has its own whitespace arm:
+ *
+ *     var postChordDone = false;
+ *     while (i < line.length && !postChordDone) {
+ *       switch (line[i]) {
+ *         case ' ': case '\t': addEndBeam(el); break;
+ *         case ')':  … case '-':  … case '>': case '<': …
+ *         case '1'…'9': case '/':
+ *           var fraction = tokenizer.getFraction(line, i);
+ *           chordDuration = fraction.value; i = fraction.index;
+ *           if (line[i] === ' ') rememberEndBeam = true;
+ *           …
+ *     }
+ *     if (chordDuration !== null) {
+ *       el.duration = el.duration * chordDuration;
+ *       if (rememberEndBeam) addEndBeam(el);
+ *     }
+ *
+ * (`abc_parse_music.js:416-478`.) So whitespace ANYWHERE in the run after `]` — past a
+ * `-`, a `)`, a `<` — ends the beam, and `addEndBeam`'s `duration < 0.25` test is applied
+ * to `el.duration` **BEFORE `* chordDuration`**: the duration of the chord's FIRST NOTE,
+ * not the chord's own. `rememberEndBeam` is the second path and runs AFTER the multiply,
+ * so it tests the real one, and it fires only when the space is immediately after the
+ * duration.
+ *
+ * **THAT IS WHY THE SAME SOURCE ANSWERS DIFFERENTLY AT TWO `L:` VALUES.**
+ * `[CE]/[DF]/- [CE]/[DF]/` is one beam at `L:1/4` and two at `L:1/8`, because the inner
+ * note is 0.25 in the first and 0.125 in the second while the chord is 0.125 either way.
+ * A LADDER caught the flip and an instrumented abcjs named the cause; two readings taken
+ * off the corpus alone — "a tie suppresses the break", then "a chord needs an explicit
+ * duration" — were both wrong, and the second one improved the corpus while being wrong.
+ * **A ROW COUNT GOING DOWN IS NOT A RULE BEING RIGHT.**
+ *
+ * `null` means "not a chord, use the note rule".
+ */
+const chordEndBeam = (abc: string, e: AbcElement, final: number): boolean | null => {
+  const from = e.startChar ?? 0;
+  const close = abc.lastIndexOf("]", (e.endChar ?? 0) - 1);
+  if (close <= from) return null;
+  let k = close + 1;
+  const durFrom = k;
+  while (k < abc.length && /[0-9/]/.test(abc[k] as string)) k += 1;
+  const written = abc.slice(durFrom, k);
+  // `getFraction`: a bare `/` halves, `/n` divides, `n` multiplies, absent is 1.
+  const m = /^(\d*)(\/*)(\d*)$/.exec(written);
+  const chordDuration =
+    written === ""
+      ? null
+      : (m?.[1] ? Number(m[1]) : 1) /
+        (m?.[3] ? Number(m[3]) : m?.[2] ? 2 ** m[2].length : 1);
+  // `el.duration` as `addEndBeam` sees it in the loop — before the multiply.
+  const preMultiply = chordDuration === null || chordDuration === 0 ? final : final / chordDuration;
+  const rememberEndBeam = chordDuration !== null && abc[k] === " ";
+  let sawSpace = false;
+  for (let j = k; j < abc.length; j += 1) {
+    const c = abc[j] as string;
+    if (c === " " || c === "\t") sawSpace = true;
+    else if (c !== "-" && c !== ")" && c !== "<" && c !== ">") break;
+  }
+  return (sawSpace && preMultiply < 0.25) || (rememberEndBeam && final < 0.25);
+};
+
 function markBeams(abc: string, stream: readonly AbcElement[]): void {
   let start: AbcElement | undefined;
   let end: AbcElement | undefined;
@@ -1788,8 +1871,9 @@ function markBeams(abc: string, stream: readonly AbcElement[]): void {
     // SPACE** — `decoratedRange` walks it, because a note's span closes over its trailing
     // whitespace — so the character to test is the one BEFORE the end, not after it.
     const at = (e.endChar ?? 0) - 1;
-    const spaced = abc[at] === " " || abc[at] === "\t";
-    if ((typeof e.duration === "number" ? e.duration : 0) >= 0.25) closeLast();
+    const dur = typeof e.duration === "number" ? e.duration : 0;
+    const spaced = chordEndBeam(abc, e, dur) ?? (abc[at] === " " || abc[at] === "\t");
+    if (dur >= 0.25) closeLast();
     else if (spaced && start !== undefined) {
       if (isRest) closeLast();
       else {
