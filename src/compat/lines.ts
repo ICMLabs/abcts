@@ -16,6 +16,7 @@ import { defaultClef, plainText, ratToNumber, stepIndex } from "../core/model.js
 import { resolveOverlays, type OverlayLine } from "../core/overlays.js";
 import {
   abcjsFont,
+  richOf,
   BAR_FONTS,
   differentFont,
   NOTE_FONTS,
@@ -213,7 +214,12 @@ export interface AbcLine {
    * `{text, startChar, endChar}` that `addSubtitle` pushes (`tune-builder.js:297`), the
    * text without its `T:` and the span of the whole field line.
    */
-  readonly subtitle?: { readonly text: string; readonly startChar?: number; readonly endChar?: number };
+  readonly subtitle?: {
+    /** A string, or `parseFontChangeLine`'s phrases — see the `T:` note at `textLine`. */
+    readonly text: unknown;
+    readonly startChar?: number;
+    readonly endChar?: number;
+  };
   /**
    * `%%text` / `%%begintext` — `{text, startChar, endChar}` — and `%%center`, which is an
    * ARRAY of one `{text, center: true}` and carries NO span at all, because `addCentered`
@@ -2125,7 +2131,9 @@ export function projectionOf(
           ...span,
         },
       };
-    if (b.role === "subtitle") return { subtitle: { text, ...span } };
+    // …and a subtitle publishes its PHRASES where it has them — see `FreeTextBlock.rich`.
+    if (b.role === "subtitle")
+      return { subtitle: { text: richOf(b.rich ?? text), ...span } };
     // **`%%center` IS THE ARRAY FORM AND HAS NO SPAN** — `addCentered` takes no `info`.
     if (b.align === "center") return { text: [{ text, center: true }] };
     return { text: { text, ...span } };
@@ -2143,7 +2151,12 @@ export function projectionOf(
         at: r?.start ?? 0,
         line: {
           subtitle: {
-            text: plainText(title),
+            // **THE PHRASES, NOT THE FLATTENED STRING** — `setTitle` is handed
+            // `parseFontChangeLine(...)` and only then decides whether the `T:` is the
+            // title or a subtitle (`abc_parse_header.js:14-22`, `:543`), so a `$1bold$0`
+            // in the second `T:` survives exactly as it does in the first. `titles`
+            // already holds `RichText`; this flattened it on the way out.
+            text: richOf(title),
             ...(r === undefined ? {} : { startChar: r.start, endChar: r.end }),
           },
         },
@@ -2369,8 +2382,15 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color"]);
     const out: { key: AbcElement; clef: AbcElement; meter?: AbcElement }[] = [];
     let clefInForce: Clef = voice?.clef ?? score.clef ?? defaultClef;
     let keyInForce: KeySignature = score.key;
-    /** The naturals a change has left for the NEXT line's staff — see the note below. */
-    let pendingNaturals: { acc: string; note: string; verticalPos: number }[] = [];
+    /**
+     * The key change whose naturals are still pending for the NEXT line's staff — see the
+     * note below. **THE PAIR, NOT THE STAMPED LIST**: `addPosToKey(params.clef, …)` runs
+     * in `startNewLine` for the LINE's own clef (`abc_parse_music.js:985`), so a natural
+     * pending across a line break is pitched for the STAFF it lands on and not for the
+     * clef in force where the `[K:]` was written. `ragtime-nightingale`'s `d` is 8 on the
+     * treble staff and 6 on the bass one, from one change.
+     */
+    let pendingChange: { from: KeySignature; to: KeySignature } | null = null;
     /**
      * ⚠️ **AND A VOICE SWITCH THROWS THE PENDING CANCELLATION AWAY.** `setCurrentVoice`
      * restores the key with `deepCopyKey`, which does not copy `impliedNaturals`
@@ -2459,7 +2479,31 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color"]);
             : undefined);
         const meter =
           i === 0
-            ? (leading?.meter ?? score.meter)
+            ? /**
+               * ⚠️ **AND A PENDING HEADER `M:` OVERWRITES WHAT A LEADING `[M:]` SET.**
+               * abcjs 6.7.0's inline branch writes
+               * `staves[currentVoice.staffNum].meter = meter` when the `[M:]` starts a
+               * voice's line (`abc_parse_header.js:357-359`) — and then `startNewLine`
+               * runs `if (multilineVars.meter !== null) { staves.forEach(st => st.meter =
+               * multilineVars.meter); params.meter = staves[…].meter; }`
+               * (`abc_parse_music.js:986-995`), which STAMPS THE HEADER'S OVER EVERY STAFF
+               * and takes that. So `grandstaff-inline-meter`'s `[M:3/4]` leading V:1 is
+               * destroyed on line 0 and the staff reads the header's 4/4.
+               *
+               * ⚠️ **AND A STANDALONE `M:` IS NOT AN INLINE ONE** — it writes the SAME
+               * slot the header does (`multilineVars.meter`, `abc_parse_header.js:519-521`)
+               * and therefore replaces it, where `[M:]` writes the staff's. So
+               * `flattener-38`'s `M:2/4` on its own line after `K:C` beats the header's
+               * 4/4 and `grandstaff-inline-meter`'s `[M:3/4]` does not. Preferring
+               * `leading` outright got the first right and the second wrong; preferring
+               * `score.meter` outright swapped them.
+               */
+              ((m.meterChangeStandalone === true &&
+              leadsLine(m, m.meterChangeSourceRange?.start)
+                ? m.meterChange
+                : null) ??
+              score.meter ??
+              leading?.meter)
             : m.meterChange != null && m.meterChangeStandalone === true
               ? m.meterChange
               : null;
@@ -2534,12 +2578,12 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color"]);
             ? []
             : leadingKey != null
               ? impliedNaturals(keyInForce, key, keyClef)
-              : switched
+              : switched || pendingChange === null
                 ? []
-                : pendingNaturals;
+                : impliedNaturals(pendingChange.from, pendingChange.to, keyClef);
         // …and a change consumed by THIS push must not also be left pending below.
         consumedHere = leadingKey != null;
-        pendingNaturals = [];
+        pendingChange = null;
         previousLineOpenedAt = musicStartsAt(m);
         out.push({
           key:
@@ -2560,15 +2604,7 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color"]);
          * testing it directly skipped the very change this list exists for. The flag the
          * push sets is the only thing that knows.
          */
-        if (!consumedHere)
-          pendingNaturals =
-            score.keywarn === false
-              ? []
-              : impliedNaturals(
-                  keyInForce,
-                  m.keyChange,
-                  m.keyChangeClef ?? voice?.clef ?? score.clef ?? defaultClef,
-                );
+        if (!consumedHere) pendingChange = { from: keyInForce, to: m.keyChange };
         keyInForce = m.keyChange;
       }
     });

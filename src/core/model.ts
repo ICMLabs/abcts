@@ -413,6 +413,14 @@ export interface FreeTextBlock {
    */
   readonly fromBlock?: true
   /**
+   * **A MID-TUNE `T:` IS RICH TEXT, LIKE EVERY OTHER `T:`.** `setTitle` is handed
+   * `parseFontChangeLine(theReverser(restOfLine))` and only THEN decides whether this is
+   * the title or a subtitle (`abc_parse_header.js:14-22`, `:543`) — so a `$1bold$0`
+   * inside one comes back as PHRASES either way. Ours ran the reverser and skipped the
+   * font split for the subtitle branch alone, and published a flat string.
+   */
+  readonly rich?: RichText
+  /**
    * `%%sep` — a horizontal rule, centred on the STAFF width, with a space above and below.
    * All three in POINTS and each `Math.round`ed at parse (`tune-builder.js:309`); bare
    * `%%sep` is 14 / 14 / 85 (`abc_parse_directive.js:883`). The rule itself costs no

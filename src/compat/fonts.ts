@@ -9,7 +9,7 @@
  * until this existed, which is a divergence no gate could see: `deline` compares a staff's
  * fonts only to OURS, through `objEqual`.
  */
-import type { AbcFontType, LyricFont } from "../core/model.js";
+import type { AbcFontType, LyricFont, RichPhrase, RichText } from "../core/model.js";
 
 /**
  * **abcjs's OWN DEFAULT FONT TABLE, IN `initializeFonts`'s ORDER** — the twenty-one entries
@@ -127,3 +127,30 @@ export const differentFont = (
   a["size"] !== b["size"] ||
   a["style"] !== b["style"] ||
   a["weight"] !== b["weight"];
+
+/**
+ * **ONE PHRASE OF RICH TEXT, IN abcjs's SHAPE.** A `$1bold$0` inside a `T:`, `C:` or a
+ * `%%text` comes back from `parseFontChangeLine` as phrases, and abcjs writes each as
+ * `{text}` alone or `{font: {face, weight, style, decoration, size}, text}` — a font key
+ * that is ABSENT rather than null when the phrase carries none, and the five-key font
+ * object rather than the model's `{face, size, bold, italic, box}`.
+ *
+ * Lives here, beside `abcjsFont`, because `index.ts` and `lines.ts` both need it and
+ * `index.ts` imports `lines.ts`.
+ */
+export const phraseOf = (p: RichPhrase): Record<string, unknown> =>
+  p.font === null
+    ? { text: p.text }
+    : {
+        font: {
+          face: p.font.face,
+          weight: p.font.bold ? "bold" : "normal",
+          style: p.font.italic ? "italic" : "normal",
+          decoration: "none",
+          size: p.font.size,
+        },
+        text: p.text,
+      };
+
+export const richOf = (value: RichText): unknown =>
+  typeof value === "string" ? value : value.map(phraseOf);

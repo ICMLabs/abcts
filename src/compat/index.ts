@@ -165,7 +165,7 @@ export {
   type Playable,
   soundsCache,
 } from "./create-synth.js";
-import { abcjsFont, ABCJS_DEFAULT_FONTS, CHANGING_FONTS } from "./fonts.js";
+import { abcjsFont, ABCJS_DEFAULT_FONTS, CHANGING_FONTS, richOf } from "./fonts.js";
 import { CreateSynth, playEvent } from "./create-synth.js";
 import {
   type MeasureSection,
@@ -292,22 +292,6 @@ export interface AbcjsMeterFraction {
  * parser does not collect them yet; so are `header`'s and `footer`'s SIZES, which are print
  * furniture nothing draws.
  */
-const phraseOf = (p: RichPhrase): Record<string, unknown> =>
-  p.font === null
-    ? { text: p.text }
-    : {
-        font: {
-          face: p.font.face,
-          weight: p.font.bold ? "bold" : "normal",
-          style: p.font.italic ? "italic" : "normal",
-          decoration: "none",
-          size: p.font.size,
-        },
-        text: p.text,
-      };
-
-const richOf = (value: RichText): unknown =>
-  typeof value === "string" ? value : value.map(phraseOf);
 
 /**
  * `N:` and `H:` are JOINED into one `\n` string when every entry is plain and left an ARRAY

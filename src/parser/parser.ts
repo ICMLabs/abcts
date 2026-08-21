@@ -3496,10 +3496,14 @@ class Parser {
         // a tune with a header title, and we drew it as a trailing subtitle: 13.51px, on a
         // control ladder run through abcjs 6.7.0.
         if (builder.bodyStarted && builder.titles.length > 0) {
+          // …**AND IT GOES THROUGH `parseFontChangeLine` LIKE THE TITLE DOES** — see
+          // `FreeTextBlock.rich`. `setTitle` splits the fonts BEFORE it branches.
+          const rich = parseFontChangeLine(theReverser(decodeTextString(value)), builder.setfont)
           builder.textBelow.push({
             lines: [theReverser(decodeTextString(value))],
             align: 'center',
             role: 'subtitle',
+            rich,
             sourceRange: range,
           })
         } else {
