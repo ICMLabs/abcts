@@ -20,7 +20,13 @@ import {
   differentFont,
   NOTE_FONTS,
 } from "./fonts.js";
-import { clefElement, clefVerticalPos, keyElement, meterElement } from "./selectables.js";
+import {
+  clefElement,
+  clefVerticalPos,
+  impliedNaturals,
+  keyElement,
+  meterElement,
+} from "./selectables.js";
 
 /**
  * **abcjs's `tune.lines` — ITS LAID-OUT TREE, PROJECTED FROM OURS.**
@@ -1132,6 +1138,8 @@ function voiceElements(
   openTies: { pitches: number[] } = { pitches: [] },
   /** The meter in force where this line opens — the bar's own LENGTH, in whole notes. */
   meterIn?: Meter | null,
+  /** The key in force where this line opens — what its first change cancels. See `keyAt`. */
+  keyIn?: KeySignature,
   /** See `projectionOf` — the engraver RENAMES the two it draws. */
   engraved = true,
   /**
@@ -1193,7 +1201,13 @@ function voiceElements(
     const label = range === null ? undefined : voltaAt.get(range.start);
     return label === undefined ? undefined : { label, abc };
   };
+  // `workingClef`, walked — a `[K: clef=]` governs from the START of its measure, which is
+  // how the renderer reads it too (`layout.ts`, `clefAtMeasure`).
+  let clefNow = voiceClef ?? null;
+  /** …and the key, so a change knows what it is cancelling. See `impliedNaturals`. */
+  let keyNow = keyIn;
   for (const measure of measures) {
+    if (measure.clefChange != null) clefNow = measure.clefChange;
     if (measure.meterChange != null)
       barLength = measure.meterChange.numerator / measure.meterChange.denominator;
     /**
@@ -1308,18 +1322,38 @@ function voiceElements(
            * The clef is the change's OWN where an inline `[K:]` named one — see
            * `Measure.keyChangeClef` — and the voice's otherwise.
            */
-          if (e !== null && measure.keyChange != null)
+          if (e !== null && measure.keyChange != null) {
+            const keyClef = measure.keyChangeClef ?? clefNow ?? defaultClef;
+            const built = keyElement(measure.keyChange, keyClef);
+            /**
+             * **AND THE NATURALS THAT CANCEL THE OLD KEY GO IN FRONT** —
+             * `impliedNaturals.concat(hashParams.accidentals)`
+             * (`parse/tune-builder.js:281-291`), where the STAFF's key concatenates them
+             * the other way round. Suppressed by `%%keywarn` off, which is abcjs's
+             * `multilineVars.keywarn !== false` guard on building the list at all.
+             */
+            const naturals =
+              keywarn === false || keyNow === undefined
+                ? []
+                : impliedNaturals(keyNow, measure.keyChange, keyClef);
             Object.assign(
               e,
-              keyElement(measure.keyChange, measure.keyChangeClef ?? voiceClef ?? defaultClef),
+              built,
+              naturals.length === 0
+                ? {}
+                : { accidentals: [...naturals, ...(built.accidentals ?? [])] },
               // …**AND THE NAME SURVIVES THE MERGE.** `keyElement` builds the element the
               // ENGRAVER would have, `el_type` and all, so the assign has to put the
               // drawn-or-parsed name back on top of it — see `drawnName`.
               { startChar: e.startChar, endChar: e.endChar, el_type: e.el_type },
             );
+          }
           return e;
         })(),
       );
+    // …and only NOW does the running key advance: the element above cancels what was in
+    // force BEFORE it. See `impliedNaturals`.
+    if (measure.keyChange != null) keyNow = measure.keyChange;
     /**
      * **A STANDALONE `M:` LINE IS NEVER IN THE STREAM AND AN INLINE OR CONTINUED ONE ALWAYS
      * IS.** The header parser's `M:` arm only fills `multilineVars.meter` for the next
@@ -1390,7 +1424,7 @@ function voiceElements(
           elementFonts.note?.(event),
           // `currStaff.workingClef.verticalPos` — the voice's clef, which is what
           // `voiceClef` already is for the standalone-`K:` rule below.
-          voiceClef == null ? 0 : clefVerticalPos(voiceClef),
+          clefNow == null ? 0 : clefVerticalPos(clefNow),
           engraved,
         );
         markSlurs(e, event, openSlurs);
@@ -1949,6 +1983,30 @@ export function projectionOf(
   /** `multilineVars.inEnding`, per voice and carried across the tune's lines. */
   const endings: { open: boolean }[] = [];
   /** The meter in force where a line opens — every `[M:]` before it, in order. */
+  /**
+   * The clef IN FORCE at a measure — abcjs's `currStaff.workingClef`, which a `[K: clef=]`
+   * replaces as the parser walks. `pushNote` reads its `verticalPos` for every pitch, so a
+   * mid-tune clef change moves `verticalPos` on every note after it and moves NOTHING
+   * else. Same shape as `meterAt` beside it, and for the same reason: `voiceElements` is
+   * handed one LINE's measures and cannot see the change that happened before them.
+   */
+  const clefAt = (voice: (typeof score.voices)[number], upTo: number): Clef | null => {
+    let clef = voice.clef ?? score.clef;
+    for (let i = 0; i < upTo; i += 1) {
+      const change = voice.measures[i]?.clefChange;
+      if (change != null) clef = change;
+    }
+    return clef;
+  };
+  /** …and the key, for the naturals a change cancels with. See `impliedNaturals`. */
+  const keyAt = (voice: (typeof score.voices)[number], upTo: number): KeySignature => {
+    let key = score.key;
+    for (let i = 0; i < upTo; i += 1) {
+      const change = voice.measures[i]?.keyChange;
+      if (change != null) key = change;
+    }
+    return key;
+  };
   const meterAt = (voice: (typeof score.voices)[number], upTo: number): Meter | null => {
     let meter = score.meter;
     for (let i = 0; i < upTo; i += 1) {
@@ -2409,10 +2467,13 @@ export function projectionOf(
         score.keywarn,
         // The drum map reaches a voice only when ITS clef is percussion.
         (v.clef ?? score.clef)?.shape === "percussion" ? score.drumMap : undefined,
-        v.clef ?? score.clef,
+        // …**AND IT IS THE CLEF IN FORCE, NOT THE VOICE'S OWN.** See `clefAt`.
+        clefAt(v, from),
         openTies[k] ?? (openTies[k] = { pitches: [] }),
         // The meter this line OPENS in — every change inside it is walked from here.
         meterAt(v, from) ?? score.meter,
+        // …and the key, for the same reason.
+        keyAt(v, from),
         engraved,
         elementFonts,
       );

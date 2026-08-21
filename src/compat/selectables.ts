@@ -523,6 +523,62 @@ const KEY_ACCIDENTAL_ACC: Readonly<Record<number, string>> = {
   [4]: "dblsharp",
 };
 
+/**
+ * abcjs's own `pitches` table — the TREBLE position of each key-signature letter
+ * (`abc_parse_key_voice.js:102`). Uppercase is the lower octave.
+ */
+const KEY_PITCHES: Readonly<Record<string, number>> = {
+  A: 5, B: 6, C: 0, D: 1, E: 2, F: 3, G: 4,
+  a: 12, b: 13, c: 7, d: 8, e: 9, f: 10, g: 11,
+};
+
+/**
+ * **THE NATURALS THAT CANCEL THE KEY BEING LEFT.**
+ *
+ *     for (k…) for (kk…)
+ *       if (oldKey.accidentals[kk].note && newKey.accidentals[k].note.toLowerCase()
+ *           === oldKey.accidentals[kk].note.toLowerCase())
+ *         oldKey.accidentals[kk].note = null;
+ *     for (kk…)
+ *       if (oldKey.accidentals[kk].note)
+ *         impliedNaturals.push({ acc: 'natural', note: oldKey.accidentals[kk].note });
+ *
+ * (`abc_parse_key_voice.js:318-334`, gated on `multilineVars.keywarn !== false`.) Every
+ * letter the OLD key accidentalised and the NEW one does not, compared case-insensitively.
+ *
+ * `addPosToKey` then stamps them with the SAME code it uses for the accidentals
+ * (`:113-158`) — except that its extra shifts test `acc.acc`, and a natural is neither
+ * `sharp` nor `flat`, so only the clef-range adjustment applies to it.
+ *
+ * They reach the element as a PREFIX: `appendStartingElement` writes
+ * `hashParams.accidentals = impliedNaturals.concat(hashParams.accidentals)`
+ * (`parse/tune-builder.js:281-291`), where `createStaff` concatenates them the other way
+ * round. That asymmetry was already recorded; what was missing is that ours never built
+ * the list at all — `keyElement` derives the signature from the fifths, and the note on
+ * the subtitle rule said so and called it "a no-op today".
+ */
+export const impliedNaturals = (
+  oldKey: KeySignature,
+  newKey: KeySignature,
+  clef: Clef,
+): { acc: string; note: string; verticalPos: number }[] => {
+  const mid = clefVerticalPos(clef);
+  const now = new Set(
+    (keyElement(newKey, clef).accidentals ?? []).map((a) => a.note.toLowerCase()),
+  );
+  const out: { acc: string; note: string; verticalPos: number }[] = [];
+  for (const was of keyElement(oldKey, clef).accidentals ?? []) {
+    if (now.has(was.note.toLowerCase())) continue;
+    let pos = (KEY_PITCHES[was.note] ?? 0) - mid;
+    // The clef-range adjustment alone — the `sharp`/`flat` clauses cannot fire on a natural.
+    if (mid < -4) pos -= 7;
+    else if (mid >= 7) pos += 7;
+    if (mid < -10 && pos >= 11) pos -= 7;
+    out.push({ acc: "natural", note: was.note, verticalPos: pos });
+  }
+  return out;
+};
+
 export const keyElement = (key: KeySignature, clef: Clef): AbcElement => {
   const fifths = keyFifths(key);
   const sharps = fifths > 0;
