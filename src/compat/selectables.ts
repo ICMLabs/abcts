@@ -443,7 +443,7 @@ export const clefElement = (
       : clef.octaveShift > 0
         ? "+8"
         : "-8"),
-  verticalPos: middleLineIndex(clef) - TREBLE_MIDDLE_LINE_INDEX,
+  verticalPos: clefVerticalPos(clef),
   /**
    * **`stafflines=` RIDES THE CLEF, AND ONLY WHEN IT WAS WRITTEN.** `V:` and `K:` both
    * assign `multilineVars.clef.stafflines` from the token
@@ -488,6 +488,16 @@ const CLEF_TYPE: Readonly<Record<string, string>> = {
 
 /** B4, the middle line of a treble staff — what abcjs's `mid` is measured from. */
 const TREBLE_MIDDLE_LINE_INDEX = 34;
+
+/**
+ * **`workingClef.verticalPos` — WHAT A PITCH IS MEASURED FROM.** `pushNote` writes
+ * `p.verticalPos = p.pitch - mid` for every pitch and every grace note of the element,
+ * where `mid` is this number (`parse/tune-builder.js:917-928`). It is 0 for treble — which
+ * is why `verticalPos === pitch` looks like an identity until a `bass` or `alto` clef turns
+ * up — and abcjs computes it in the PARSER, so an unengraved tune already has it.
+ */
+export const clefVerticalPos = (clef: Clef): number =>
+  middleLineIndex(clef) - TREBLE_MIDDLE_LINE_INDEX;
 
 /**
  * `{accidentals: [{acc, note, verticalPos}], root, acc, mode}` — abcjs's parsed key.

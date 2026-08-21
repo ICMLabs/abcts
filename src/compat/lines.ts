@@ -20,7 +20,7 @@ import {
   differentFont,
   NOTE_FONTS,
 } from "./fonts.js";
-import { clefElement, keyElement, meterElement } from "./selectables.js";
+import { clefElement, clefVerticalPos, keyElement, meterElement } from "./selectables.js";
 
 /**
  * **abcjs's `tune.lines` — ITS LAID-OUT TREE, PROJECTED FROM OURS.**
@@ -771,9 +771,17 @@ const writtenName = (p: Pitch): string => {
 /**
  * The PARSE-TIME half of a note element — everything abcjs's parser puts on it.
  *
- * `verticalPos`, `highestVert`, `averagepitch`, `minpitch` and `maxpitch` are NOT here:
- * the first needs the staff's middle line and the rest are the engraver's, so they are
- * stamped onto this same object when the drawing is walked. See `src/compat/selectables.ts`.
+ * ⚠️ **`verticalPos` IS THE PARSER'S, AND IT WAS HELD BACK WITH THE ENGRAVER'S.**
+ * `highestVert`, `averagepitch`, `minpitch` and `maxpitch` really are stamped when the
+ * drawing is walked (`src/compat/selectables.ts`) — but `pushNote` writes
+ * `p.verticalPos = p.pitch - mid` for every pitch and every grace note as the element is
+ * APPENDED (`parse/tune-builder.js:917-928`), so an unengraved tune already carries it.
+ * Ours stood at `pitch` under a note reading "a placeholder until the drawing is walked …
+ * `mid` is the staff's, which this side does not know" — the second clause was true and
+ * the conclusion did not follow: the clef is a parameter here now.
+ *
+ * `mid` is 0 for treble, which is why `verticalPos === pitch` reads as an identity until a
+ * `bass` or `alto` clef turns up. 1,220 of the 1,249 rows the element-VALUE probe opened at.
  */
 function noteFields(
   e: AbcElement,
@@ -794,6 +802,17 @@ function noteFields(
   barLength = 1,
   /** `addFormattingOptions`'s four — see `voiceElements`. */
   fonts?: Record<string, unknown>,
+  /** `workingClef.verticalPos` — what `verticalPos` is measured from. See the note above. */
+  clefMid = 0,
+  /**
+   * **A CHORD'S PITCHES ARE SORTED BY THE ENGRAVER, NOT THE PARSER.** `[cD]` is read as
+   * written and `createNote` sorts `elem.pitches` in place before it builds the heads,
+   * because noteheads must STACK in pitch order to be drawn. So a RENDERED tune reads
+   * `D, c` and an unengraved one reads `c, D` — both right about their own entry point,
+   * which is the same split `getMidiFile` on a string already proved from the audio side.
+   * 63 rows of the element-VALUE probe.
+   */
+  engraved = true,
 ): void {
   /** abcjs's key is the letter AS WRITTEN with its accidental, and no octave marks. */
   const drumKey = (name: string): string => name.replace(/[,']/g, "");
@@ -819,8 +838,8 @@ function noteFields(
       e.rest.type = "whole";
     }
   } else {
-    const pitches = event.type === "note" ? [event.pitch] : event.pitches;
-    e.pitches = pitches
+    const written = event.type === "note" ? [event.pitch] : event.pitches;
+    const unsorted = written
       .map((p) => ({
         // **AN EXPLICIT ACCIDENTAL IS NAMED ON THE PITCH**, and only an explicit one — a
         // note taking its accidental from the key signature carries none.
@@ -832,11 +851,10 @@ function noteFields(
         ...(drumMap === undefined || drumMap[drumKey(writtenName(p))] === undefined
           ? {}
           : { midipitch: drumMap[drumKey(writtenName(p))] }),
-        // A placeholder until the drawing is walked — abcjs's own is `pitch - mid`, and
-        // `mid` is the staff's, which this side does not know.
-        verticalPos: abcjsPitch(p),
+        verticalPos: abcjsPitch(p) - clefMid,
       }))
-      .sort((a, b) => a.pitch - b.pitch);
+    // …and see `engraved`: the parser leaves them as written.
+    e.pitches = engraved ? [...unsorted].sort((a, b) => a.pitch - b.pitch) : unsorted;
     // **A TIE IS A PROPERTY OF THE PITCH** — `el.pitches.forEach(p => p.startTie = {})`
     // (`abc_parse_music.js:427`), and `[B-eg-b-]` ties three of its four heads. A plain
     // note's `-` lands on `pitches[0]` (`tune-builder.js:162-171`), which is the same rule
@@ -902,17 +920,31 @@ function noteFields(
     chord.push({ name: event.chordSymbol, position: "default" });
   for (const a of event.annotations) chord.push(annotationEntry(a));
   if (chord.length > 0) e.chord = chord;
-  if (event.type !== "rest" && event.lyric !== null) {
-    // **THE DIVIDER IS PART OF THE SYLLABLE IN OUR MODEL AND A FIELD OF ITS OWN IN
-    // abcjs's** — `Strang-` is `{syllable: "Strang", divider: "-"}`, and a syllable that
-    // ends a word takes a space.
-    const hyphen = event.lyric.endsWith("-");
-    e.lyric = [
-      {
-        syllable: hyphen ? event.lyric.slice(0, -1) : event.lyric,
-        divider: hyphen ? "-" : " ",
-      },
-    ];
+  if (event.type !== "rest") {
+    /**
+     * **THE DIVIDER IS PART OF THE SYLLABLE IN OUR MODEL AND A FIELD OF ITS OWN IN
+     * abcjs's** — `Strang-` is `{syllable: "Strang", divider: "-"}`, and a syllable that
+     * ends a word takes a space.
+     *
+     * ⚠️ **AND `el.lyric` IS EVERY VERSE, NOT THE FIRST.** A `w:` line pushes one entry per
+     * note onto the array it finds there, so two `w:` lines under one music line give every
+     * note TWO entries — which is what `addLyric` then joins with `\n` into a single
+     * `<text>` of stacked `<tspan>`s (`abstract-engraver.js:769-778`). Ours emitted verse 1
+     * alone: 133 rows of the element-VALUE probe, on `visual-tablature-23` and every other
+     * multi-verse fixture, and INVISIBLE to every other gate because the DRAWING already
+     * reads `extraVerses` and stacks them correctly.
+     *
+     * A `null` verse is one that never covered this note and contributes no entry; an
+     * EMPTY one covered it and contributes `{syllable: "", divider: " "}` — the `*` and
+     * `_` rule, which cost four tests when it was found from the drawing side.
+     */
+    const entries = [event.lyric, ...event.extraVerses]
+      .filter((v): v is string => v !== null)
+      .map((v) => {
+        const hyphen = v.endsWith("-");
+        return { syllable: hyphen ? v.slice(0, -1) : v, divider: hyphen ? "-" : " " };
+      });
+    if (entries.length > 0) e.lyric = entries;
   }
   if (event.graceNotes.length > 0)
     e.gracenotes = event.graceNotes.map((g, i) => ({
@@ -938,7 +970,9 @@ function noteFields(
       // note.duration / (default_length * 8)` (`abc_parse_music.js:694`), so a bare grace
       // is 0.125 whatever the unit note length is, and `{B2}` is 0.25.
       duration: ratToNumber(g.length) / 8,
-      verticalPos: abcjsPitch(g),
+      // …**AND A GRACE NOTE TAKES THE SAME SUBTRACTION** from the same clef
+      // (`parse/tune-builder.js:925-928`).
+      verticalPos: abcjsPitch(g) - clefMid,
     }));
 }
 
@@ -1330,7 +1364,17 @@ function voiceElements(
     const note = (event: MusicEvent): void => {
       const e = el("note", decoratedRange(abc, event));
       if (e !== null) {
-        noteFields(e, event, drumMap, barLength, elementFonts.note?.(event));
+        noteFields(
+          e,
+          event,
+          drumMap,
+          barLength,
+          elementFonts.note?.(event),
+          // `currStaff.workingClef.verticalPos` — the voice's clef, which is what
+          // `voiceClef` already is for the standalone-`K:` rule below.
+          voiceClef == null ? 0 : clefVerticalPos(voiceClef),
+          engraved,
+        );
         markSlurs(e, event, openSlurs);
         byEvent?.set(event, e);
         notes.push({ event, e });
