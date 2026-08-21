@@ -939,10 +939,29 @@ function noteFields(
         ? 1
         : undefined;
     if (beambr !== undefined) e.beambr = beambr;
+  /**
+   * ⚠️ **TWO AT THE SAME POSITION ARE ONE ENTRY, JOINED WITH A NEWLINE**, and abcjs says
+   * so in its own comment: *"There could be more than one chord here if they have
+   * different positions. If two chords have the same position, then connect them with
+   * newline"* — `el.chord[ci].name += "\n" + chordName` (`abc_parse_music.js:191-210`).
+   * So `"_one" "_two" "_three"` on one note is ONE below-entry reading `one\ntwo\nthree`,
+   * which is exactly what `renderText` then splits into three `<tspan>`s.
+   *
+   * A `rel_position` entry never merges: it is pushed on the `ret[2] === null` arm, so it
+   * has no `position` to match on.
+   */
   const chord: NonNullable<AbcElement["chord"]>[number][] = [];
+  const addChord = (entry: NonNullable<AbcElement["chord"]>[number]): void => {
+    const at =
+      entry.position === undefined
+        ? -1
+        : chord.findIndex((c) => c.position === entry.position);
+    if (at < 0) chord.push(entry);
+    else (chord[at] as { name: string }).name += `\n${entry.name}`;
+  };
   if (event.chordSymbol !== null)
-    chord.push({ name: event.chordSymbol, position: "default" });
-  for (const a of event.annotations) chord.push(annotationEntry(a));
+    addChord({ name: event.chordSymbol, position: "default" });
+  for (const a of event.annotations) addChord(annotationEntry(a));
   if (chord.length > 0) e.chord = chord;
   if (event.type !== "rest") {
     /**
@@ -2158,6 +2177,9 @@ export function projectionOf(
    * abcjs states as `hasBeginMusic()` (`abc_parse_header.js:508`) — `S6-keys` tune 1 opens
    * `K:A` then `[K:G] |` and abcjs answers NOTHING for that `[K:G]`.
    */
+/** What `createVoice` puts at the head of a voice, in its own order (`:971-998`). */
+const VOICE_FURNITURE = new Set(["style", "stem", "color"]);
+
   const hoistLeadingStaffFields = (voiceLines: AbcElement[][]): void => {
     const STAFF_FIELD = new Set([
       "clef",
@@ -2211,7 +2233,20 @@ export function projectionOf(
        * `%%MIDI` stays where it was written — measured on `synth-flattener-07`, whose
        * `%%MIDI drumon` after a body `V:` opens line 0.
        */
-      else line.unshift(...moved.filter((e) => e.el_type === "midi"));
+      else {
+        /**
+         * ⚠️ **AND IT GOES BEHIND `createVoice`'s FURNITURE, NOT IN FRONT OF IT.** The
+         * `style`, `stem` and `color` elements are appended when the LINE IS CREATED
+         * (`tune-builder.js:970-998`) and everything the source writes is appended after
+         * them — including the `up` stem a second voice SPLICES onto voice 0 at index 0
+         * (`:988`). This unshifted to 0 and put a `%%MIDI program` ahead of the stem;
+         * abcjs's own answer for `S7-voices` is `stem` then `midi`. 8 rows.
+         */
+        const midi = moved.filter((e) => e.el_type === "midi");
+        let at = 0;
+        while (VOICE_FURNITURE.has(line[at]?.el_type ?? "")) at += 1;
+        line.splice(at, 0, ...midi);
+      }
     }
   };
 

@@ -124,7 +124,7 @@ describe("parseOnly element values vs abcjs", () => {
    */
   it("the whole corpus agrees on at least the rows it did", () => {
     const agree = rows.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(9705);
+    expect(agree).toBeGreaterThanOrEqual(9716);
   });
 
   /** The canonicaliser is what both sides trust; a stray `undefined` would hide a row. */
