@@ -2366,6 +2366,13 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color"]);
     const out: { key: AbcElement; clef: AbcElement; meter?: AbcElement }[] = [];
     let clefInForce: Clef = voice?.clef ?? score.clef ?? defaultClef;
     let keyInForce: KeySignature = score.key;
+    /**
+     * The key this VOICE opened its previous line with — see the naturals below. Seeded
+     * with the HEADER's, because a `[K:G]` leading the FIRST line cancels the `K:A` above
+     * it: abcjs's `multilineVars.key` is A when `parseKey` runs, so the naturals are real.
+     * `S6-keys` X:602 is that tune, and a `undefined` seed emitted none.
+     */
+    let openedWith: KeySignature | undefined = score.key;
     (voice?.measures ?? []).forEach((m, i) => {
       // A mid-tune clef governs from the START of its measure — the renderer reads it the
       // same way (`layout.ts`, `clefAtMeasure`).
@@ -2438,8 +2445,31 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color"]);
             : m.meterChange != null && m.meterChangeStandalone === true
               ? m.meterChange
               : null;
+        /**
+         * ⚠️ **AND THE STAFF'S KEY CARRIES THE CANCELLING NATURALS TOO — CONCATENATED THE
+         * OTHER WAY ROUND.** `createStaff` writes
+         * `params.key.accidentals = params.key.accidentals.concat(params.key.impliedNaturals)`
+         * (`tune-builder.js:1002-1005`) where `appendStartingElement` writes
+         * `impliedNaturals.concat(hashParams.accidentals)` (`:281-291`): naturals LAST on
+         * the staff, FIRST in the stream. That asymmetry was already recorded here and
+         * neither half was built until the walk started reading staff VALUES.
+         *
+         * Exactly ONE line cancels — `startNewLine` copies the list onto the line's key
+         * and then deletes it (`abc_parse_music.js:964-965`, `:1041-1042`) — so this is
+         * the line whose key differs from the one this VOICE opened its last line with.
+         * Per voice, because `deepCopyKey` drops the pending naturals at a voice switch.
+         */
+        const built = keyElement(key, keyClef);
+        const naturals =
+          score.keywarn === false || openedWith === undefined
+            ? []
+            : impliedNaturals(openedWith, key, keyClef);
+        openedWith = key;
         out.push({
-          key: keyElement(key, keyClef),
+          key:
+            naturals.length === 0
+              ? built
+              : { ...built, accidentals: [...(built.accidentals ?? []), ...naturals] },
           clef: clefElement(clefInForce, voice?.transpose, voice?.staffLineOverride),
           ...(meter == null ? {} : { meter: meterElement(meter) }),
         });

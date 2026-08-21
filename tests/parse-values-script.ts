@@ -50,18 +50,35 @@ export const canon = (v: unknown): unknown => {
  * which is stable under everything except a change to the LINE ASSIGNMENT — and that is
  * `tune.lines`' own gate, so a wholesale shift here means look there first.
  */
+/** Every own field except one — the container the walk descends into. */
+const without = (o: object, skip: string): Record<string, unknown> => {
+  const out: Record<string, unknown> = {};
+  for (const key of Object.keys(o)) if (key !== skip) out[key] = (o as Record<string, unknown>)[key];
+  return out;
+};
+
 export const valuesOfTune = (tune: {
   lines?: readonly { staff?: readonly { voices?: readonly (readonly unknown[])[] }[] }[];
 }): Map<string, string> => {
   const out = new Map<string, string>();
-  (tune.lines ?? []).forEach((line, li) =>
-    (line.staff ?? []).forEach((staff, si) =>
+  (tune.lines ?? []).forEach((line, li) => {
+    /**
+     * ⚠️ **THE LINE'S AND THE STAFF'S OWN FIELDS ARE ROWS TOO.** The first cut of this walk
+     * descended `line.staff[].voices[]` and emitted only what it found at the bottom — so
+     * a staff's `clef`, `key`, `meter`, `title`, `brace`, `bracket`, `connectBarLines`,
+     * `stafflines` and its `%%…font` changes, and a line's `vskip` / `subtitle` / `text`,
+     * were all unmeasured. Exactly the hole this gate was built to close in `parse-only`,
+     * one level up: **a walk measures what it descends INTO, and nothing it passes over.**
+     */
+    out.set(`L${li}`, JSON.stringify(canon(without(line, "staff"))));
+    (line.staff ?? []).forEach((staff, si) => {
+      out.set(`L${li}/s${si}`, JSON.stringify(canon(without(staff, "voices"))));
       (staff.voices ?? []).forEach((voice, vi) =>
         voice.forEach((el, ei) =>
           out.set(`L${li}/s${si}/v${vi}/${ei}`, JSON.stringify(canon(el))),
         ),
-      ),
-    ),
-  );
+      );
+    });
+  });
   return out;
 };

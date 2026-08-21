@@ -3,34 +3,17 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseOnly } from "../src/compat/index.js";
+import { valuesOfTune } from "../tests/parse-values-script.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const config = JSON.parse(readFileSync(join(root, "abcts.config.json"), "utf-8"));
 const require = createRequire(join(root, config.goldens, "..", "package.json"));
 const ABCJS = require(join(root, config.abcjsRef, "index"));
 
-const canon = (v: unknown): unknown => {
-  if (Array.isArray(v)) return v.map(canon);
-  if (v !== null && typeof v === "object") {
-    const o: Record<string, unknown> = {};
-    for (const k of Object.keys(v as object).sort()) {
-      const x = (v as Record<string, unknown>)[k];
-      if (x === undefined) continue;
-      o[k] = canon(x);
-    }
-    return o;
-  }
-  return v;
-};
-const rows = (tune: any): Map<string, string> => {
-  const out = new Map<string, string>();
-  (tune.lines ?? []).forEach((line: any, li: number) =>
-    (line.staff ?? []).forEach((staff: any, si: number) =>
-      (staff.voices ?? []).forEach((voice: any, vi: number) =>
-        voice.forEach((el: any, ei: number) =>
-          out.set(`L${li}/s${si}/v${vi}/${ei}`, JSON.stringify(canon(el)))))));
-  return out;
-};
+// **THE SHARED REDUCTION, NOT A COPY OF IT.** This probe held its own `canon`/`rows` pair
+// and drifted the moment the gate's walk was widened to lines and staves — reporting 9,727
+// where the gate saw 11,004. Same trap `synth-controller.test.ts` paid for.
+const rows = valuesOfTune;
 
 const corpora: [string, string][] = [
   ["repo", join(root, "tests", "corpus-abcjs", "fixtures")],
@@ -46,7 +29,7 @@ for (const [label, dir] of corpora) {
     try { theirs = ABCJS.parseOnly(abc); } catch { continue; }
     try { ours = parseOnly(abc); } catch { diffs.push(`${label}/${f} OURS THREW`); continue; }
     theirs.forEach((t: any, i: number) => {
-      const a = rows(t), b = rows(ours[i] ?? {});
+      const a = rows(t as any), b = rows((ours[i] ?? {}) as any);
       for (const [k, v] of a) {
         total++;
         if (b.get(k) === v) { agree++; continue; }

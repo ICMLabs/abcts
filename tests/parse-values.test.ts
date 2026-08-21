@@ -119,19 +119,24 @@ describe("parseOnly element values vs abcjs", () => {
   });
 
   /**
-   * **CLOSED — EVERY ELEMENT, EVERY FIELD.** This opened at 1,249 of 9,727 differing and
-   * is at zero, so it is an EXACT gate now and not a floor: any element that regresses
-   * anywhere fails here, and the row it names is the defect.
+   * A floor — it moves up and must never move down.
+   *
+   * **THE ELEMENT ROWS ARE AT ZERO AND WERE AN EXACT GATE**; the twelve open rows are all
+   * LINE and STAFF furniture, which this walk only started reading when it was widened
+   * past `staff.voices`. See `valuesOfTune` for what that hole was, and the handoff's
+   * WHAT IS LEFT for the six classes.
    */
-  it("every element value agrees with abcjs", () => {
+  it("the whole corpus agrees on at least the rows it did", () => {
     const agree = rows.reduce((t, r) => t + r.agree, 0);
-    const total = rows.reduce((t, r) => t + r.total, 0);
-    const worst = rows
-      .filter((r) => r.diffs.length > 0)
-      .flatMap((r) => r.diffs.slice(0, 1).map((d) => `${r.slug} ${d.at}\n  abcjs ${d.theirs}\n  ours  ${d.ours}`))
-      .slice(0, 3)
-      .join("\n");
-    expect(`${total - agree} differ\n${worst}`).toBe("0 differ\n");
+    expect(agree).toBeGreaterThanOrEqual(10992);
+  });
+
+  /** …and the ELEMENT rows stay exact, which is the part that was closed. */
+  it("every element value agrees with abcjs", () => {
+    const bad = rows.flatMap((r) =>
+      r.diffs.filter((d) => /\/v\d+\//.test(d.at)).map((d) => `${r.slug} ${d.at}`),
+    );
+    expect(bad).toEqual([]);
   });
 
   /** The canonicaliser is what both sides trust; a stray `undefined` would hide a row. */
