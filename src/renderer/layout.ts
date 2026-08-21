@@ -5359,6 +5359,10 @@ const DECORATIONS: Readonly<
   // The glyph is core's own choice from SMuFL, as everywhere else: what is reproduced is
   // abcjs's decision to MARK the note, not the shape of its private font.
   roll: { above: 'ornamentTremblement', below: 'ornamentTremblement', place: 'ornament' },
+  // `~` — abcjs gives it `scripts.roll`, the same glyph `R` gets (`decoration.js:179-180`).
+  // A DIFFERENT NAME with the same drawing, and the audio treats the two differently; see
+  // `DECORATION_SHORTHAND`.
+  irishroll: { above: 'ornamentTremblement', below: 'ornamentTremblement', place: 'ornament' },
   // `slide` IS NOT HERE. abcjs draws it as a small TIE between two zero-width blanks at
   // the note (`decoration.js:51-59`), reserving nothing above — see `layoutCurves`. It sat
   // here as an above-stacked `brassLiftShort` and pushed `S1-decorations` X:105 a uniform

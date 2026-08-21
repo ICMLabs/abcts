@@ -5188,6 +5188,7 @@ const ABCJS_KNOWN_DECORATIONS: ReadonlySet<string> = new Set([
   'uppermordent',
   'mordent',
   'pralltriller',
+  'irishroll',
   'accent',
   'fermata',
   'invertedfermata',
@@ -5292,15 +5293,28 @@ const decorationLookupName = (name: string): string =>
   name.length > 1 && (name[0] === '^' || name[0] === '_') ? name.slice(1) : name
 
 /** Decoration shorthands. Safe to treat as decorations: none of these are note letters. */
+/**
+ * ⚠️ **A SHORTHAND AND ITS LONG FORM ARE DIFFERENT NAMES, AND abcjs KEEPS BOTH.** Its
+ * oracle publishes `mordent` AND `lowermordent`, `pralltriller` AND `uppermordent`,
+ * `irishroll` AND `roll` — so `M` is not `!lowermordent!` and `~` is not `!R!`. Ours
+ * expanded each shorthand to the long name and erased the distinction, which the
+ * element-VALUE gate saw on 26 rows.
+ *
+ * **AND IT IS NOT COSMETIC.** `abc_midi_flattener.js:404-419` dispatches on the name and
+ * has no `irishroll` case at all, so `~` sounds PLAIN where `R` is rolled; `mordent` and
+ * `lowermordent` are two different modifications. The drawing does not care — abcjs gives
+ * each pair the same glyph (`decoration.js:179-188`) — which is why only a gate reading
+ * the parse tree could state it.
+ */
 const DECORATION_SHORTHAND: Record<string, string> = {
   '.': 'staccato',
-  '~': 'roll',
+  '~': 'irishroll',
   H: 'fermata',
   J: 'slide',
   L: 'accent',
-  M: 'lowermordent',
+  M: 'mordent',
   O: 'coda',
-  P: 'uppermordent',
+  P: 'pralltriller',
   R: 'roll',
   S: 'segno',
   T: 'trill',
