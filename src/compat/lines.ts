@@ -2366,17 +2366,32 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color"]);
     const out: { key: AbcElement; clef: AbcElement; meter?: AbcElement }[] = [];
     let clefInForce: Clef = voice?.clef ?? score.clef ?? defaultClef;
     let keyInForce: KeySignature = score.key;
+    /** The naturals a change has left for the NEXT line's staff — see the note below. */
+    let pendingNaturals: { acc: string; note: string; verticalPos: number }[] = [];
     /**
-     * The key this VOICE opened its previous line with — see the naturals below. Seeded
-     * with the HEADER's, because a `[K:G]` leading the FIRST line cancels the `K:A` above
-     * it: abcjs's `multilineVars.key` is A when `parseKey` runs, so the naturals are real.
-     * `S6-keys` X:602 is that tune, and a `undefined` seed emitted none.
+     * ⚠️ **AND A VOICE SWITCH THROWS THE PENDING CANCELLATION AWAY.** `setCurrentVoice`
+     * restores the key with `deepCopyKey`, which does not copy `impliedNaturals`
+     * (`abc_parse_key_voice.js:535-537`), so a pending list survives only as far as the
+     * next line of the SAME voice — any other voice's line in between silently drops it.
+     *
+     * That is the whole difference between `ragtime-nightingale`, written voice by voice
+     * so its `[K:Eb]` reaches the next line, and `inline-key-per-voice`, which alternates
+     * `V:1`/`V:2` every line so its `[K:F]` naturals die at the switch. **The renderer
+     * already measured and ported this rule; the projection had no share of it.**
      */
-    let openedWith: KeySignature | undefined = score.key;
+    const otherVoiceOpensAt: number[] = score.voices
+      .filter((other) => other !== voice)
+      .flatMap((other) =>
+        (other.measures ?? [])
+          .filter((om) => om.startsSystem === true)
+          .map((om) => musicStartsAt(om)),
+      );
+    let previousLineOpenedAt = -1;
     (voice?.measures ?? []).forEach((m, i) => {
       // A mid-tune clef governs from the START of its measure — the renderer reads it the
       // same way (`layout.ts`, `clefAtMeasure`).
       if (m.clefChange != null) clefInForce = m.clefChange;
+      let consumedHere = false;
       if (i === 0 || m.startsSystem) {
         const restamp = staffVoices
           .map((other) => other.measures[i])
@@ -2460,11 +2475,69 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color"]);
          * Per voice, because `deepCopyKey` drops the pending naturals at a voice switch.
          */
         const built = keyElement(key, keyClef);
+        /**
+         * ⚠️ **AND THEY ARE EMITTED ONCE — WHICHEVER PATH REACHES THEM FIRST TAKES THEM.**
+         * `appendStartingElement` reads `hashParams2.impliedNaturals` and DELETES it
+         * (`tune-builder.js:241-247`); `startNewLine` copies the list onto the line's key
+         * and deletes it too (`abc_parse_music.js:964-965`, `:1041-1042`). So a change
+         * that LEADS its line hands them to the STAFF, and one written mid-line hands them
+         * to the STREAM element and the next line's staff gets none.
+         *
+         * Instrumented on `S8-layout` X:812, whose `[K:Bb]` sits mid-line:
+         * `CREATESTAFF line=0 nat=undefined`, `ASE-KEY took=[{natural f}] line=0`,
+         * `ASE-KEY took=undefined` for the second key element on that line, then
+         * `CREATESTAFF line=1 nat=undefined`. Computing them here unconditionally put a
+         * natural on line 1's staff that abcjs does not have.
+         */
+        /**
+         * ⚠️ **AND WHAT THEY CANCEL IS THE KEY IN FORCE AT THE CHANGE, NOT THE ONE THIS
+         * LINE OPENED WITH.** `parseKey` computes them from `multilineVars.key` at the
+         * MOMENT the new key is read (`abc_parse_key_voice.js:305-334`), which is what
+         * `keyInForce` already tracks. `S8-layout` X:812 runs G → `[K:Bb]` mid-line →
+         * `K: Gb` standalone: Bb's flats are a SUBSET of Gb's, so abcjs cancels nothing,
+         * while the key line 1 opened with was still G and gave a spurious natural f.
+         *
+         * The renderer's prefix logic states this rule in as many words already
+         * (`layout.ts`, `keyBeforeLine`) — it just had nothing to share it with.
+         */
+        /**
+         * ⚠️ **A KEY CHANGE REPLACES THE PENDING NATURALS; THE NEXT LINE CONSUMES THEM.**
+         * `parseKey` rebuilds `multilineVars.key` with `deepCopyKey`, which does NOT copy
+         * `impliedNaturals` (`abc_parse_key_voice.js:305-334`, `:535-537`), so a second
+         * change DROPS whatever the first left pending and computes its own. `startNewLine`
+         * copies the survivor onto the line's key and deletes it
+         * (`abc_parse_music.js:964-965`, `:1041-1042`) — so exactly ONE line cancels.
+         *
+         * ⚠️ **AND A STREAM ELEMENT TAKING THEM DOES NOT CONSUME THEM.**
+         * `appendStartingElement` deletes the property on `fixKey`'s SHALLOW COPY, not on
+         * `multilineVars.key` (`tune-builder.js:241-247`) — so `ragtime-nightingale`'s
+         * `[K:Eb]` puts the `d` natural on FIVE stream elements on line 17 AND on line 18's
+         * staff, while `S8-layout` X:812's `[K:Bb]` reaches no staff at all because the
+         * `K: Gb` after it threw the pending list away.
+         *
+         * ⚠️ **BOTH READINGS BEFORE THIS ONE CAME FROM A PROBE PLACED AFTER THE
+         * CONSUMPTION.** `createStaff` concatenates and deletes at `:1002-1005`, and the
+         * instrument sat below it, so every line reported `nat=undefined` and "first taker
+         * wins" looked measured. **PRINT THE VALUE THE CALLER PASSED, NOT THE ONE THE
+         * CALLEE HAS LEFT.**
+         */
+        const switched =
+          previousLineOpenedAt >= 0 &&
+          otherVoiceOpensAt.some(
+            (at) => at > previousLineOpenedAt && at < musicStartsAt(m),
+          );
         const naturals =
-          score.keywarn === false || openedWith === undefined
+          score.keywarn === false
             ? []
-            : impliedNaturals(openedWith, key, keyClef);
-        openedWith = key;
+            : leadingKey != null
+              ? impliedNaturals(keyInForce, key, keyClef)
+              : switched
+                ? []
+                : pendingNaturals;
+        // …and a change consumed by THIS push must not also be left pending below.
+        consumedHere = leadingKey != null;
+        pendingNaturals = [];
+        previousLineOpenedAt = musicStartsAt(m);
         out.push({
           key:
             naturals.length === 0
@@ -2474,7 +2547,27 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color"]);
           ...(meter == null ? {} : { meter: meterElement(meter) }),
         });
       }
-      if (m.keyChange !== null) keyInForce = m.keyChange;
+      if (m.keyChange !== null) {
+        /**
+         * A change consumed by THIS line's push is done; any other stays pending for the
+         * NEXT line's staff, replacing whatever an earlier one left — see the note above.
+         *
+         * ⚠️ **`leadsLine` MEANS "LEADS ITS MEASURE", NOT "LEADS ITS SYSTEM".**
+         * `ragtime-nightingale`'s `[K:Eb]` reports `leads=true startsSystem=false`, so
+         * testing it directly skipped the very change this list exists for. The flag the
+         * push sets is the only thing that knows.
+         */
+        if (!consumedHere)
+          pendingNaturals =
+            score.keywarn === false
+              ? []
+              : impliedNaturals(
+                  keyInForce,
+                  m.keyChange,
+                  m.keyChangeClef ?? voice?.clef ?? score.clef ?? defaultClef,
+                );
+        keyInForce = m.keyChange;
+      }
     });
     return out;
   };

@@ -128,7 +128,7 @@ describe("parseOnly element values vs abcjs", () => {
    */
   it("the whole corpus agrees on at least the rows it did", () => {
     const agree = rows.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(10992);
+    expect(agree).toBeGreaterThanOrEqual(10994);
   });
 
   /** …and the ELEMENT rows stay exact, which is the part that was closed. */
