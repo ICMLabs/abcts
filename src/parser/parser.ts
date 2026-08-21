@@ -2687,17 +2687,24 @@ class Parser {
     if (this.textBlock.length === 0) return
     const builder = this.ensureScore(at)
     const target = builder.voice.isEmpty ? builder.textAbove : builder.textBelow
-    // **abcjs MEASURES THE BLOCK FROM ITS `%%begintext` LINE AND ADDS ITS OWN TEXT'S
-    // LENGTH**, not the source's — `endChar: iChar + textBlock.length + 7`
-    // (`abc_parse_directive.js:964`), where `iChar` is still the opening directive's and
-    // the `+ 7` is `"%%text "`. Its `textBlock` is each line trimmed with a `\n` appended,
-    // which is what `lines` holds; so the end is a length, not an offset into the source.
+    /**
+     * **abcjs MEASURES THE BLOCK FROM ITS `%%endtext` LINE AND ADDS ITS OWN TEXT'S
+     * LENGTH**, not the source's — `endChar: iChar + textBlock.length + 7`
+     * (`abc_parse_directive.js:964`), where the `+ 7` is `"%%text "` and the end is a
+     * LENGTH rather than an offset into the source.
+     *
+     * ⚠️ **AND `iChar` IS THE CLOSING LINE'S, NOT THE OPENING ONE'S.** The note here said
+     * "still the opening directive's" — `tokenizer.nextLine()` advances it once per line
+     * the block swallows, so by the time `addText` runs it points at `%%endtext`. abcjs's
+     * own answer for `visual-misc-09` is 57…65 where the `%%begintext` line starts at 42.
+     */
     target.push({
       lines: this.textBlock,
       align: 'left',
+      fromBlock: true,
       sourceRange: sourceRange(
-        this.textBlockStart,
-        this.textBlockStart + this.textBlock.reduce((n, l) => n + l.length + 1, 0) + 7,
+        at,
+        at + this.textBlock.reduce((n, l) => n + l.length + 1, 0) + 7,
       ),
     })
     this.textBlock = []

@@ -401,6 +401,18 @@ export interface FreeTextBlock {
    */
   readonly role?: 'text' | 'subtitle' | 'separator'
   /**
+   * **A `%%begintext` BLOCK'S TEXT ENDS WITH A NEWLINE, BECAUSE EVERY LINE CONTRIBUTES
+   * ONE.** abcjs builds it as `textBlock += line.trim() + "\n"` per line
+   * (`abc_parse_directive.js:948-964`), so a block of one EMPTY line is `"\n"` and never
+   * the empty string. Ours joined the lines WITH newlines instead of appending one to
+   * each, which is the same string for every block except at its end — and all four
+   * blocks in both corpora differ there.
+   *
+   * A `%%text` line is not built that way and carries no trailing newline, which is why
+   * this is a flag on the block rather than a rule in the emitter.
+   */
+  readonly fromBlock?: true
+  /**
    * `%%sep` — a horizontal rule, centred on the STAFF width, with a space above and below.
    * All three in POINTS and each `Math.round`ed at parse (`tune-builder.js:309`); bare
    * `%%sep` is 14 / 14 / 85 (`abc_parse_directive.js:883`). The rule itself costs no

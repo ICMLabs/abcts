@@ -2112,7 +2112,10 @@ export function projectionOf(
       b.sourceRange === undefined
         ? {}
         : { startChar: b.sourceRange.start, endChar: b.sourceRange.end };
-    const text = b.lines.join("\n");
+    // …**AND A BLOCK'S LINES EACH CARRY THEIR OWN NEWLINE** — see `FreeTextBlock.fromBlock`.
+    const text = b.fromBlock === true
+      ? b.lines.map((l) => `${l}\n`).join("")
+      : b.lines.join("\n");
     if (b.role === "separator")
       return {
         separator: {
