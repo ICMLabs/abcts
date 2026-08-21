@@ -654,6 +654,19 @@ export interface Rest {
   readonly duration: Rational
   readonly notatedDuration: Rational
   /**
+   * **THE PARSER'S WHOLE-REST RULE ALREADY FIRED** — `el.duration === 1 &&
+   * durationOfMeasure <= 1` (`abc_parse_music.js:549-555`), which sets the type AND
+   * rewrites the duration to the measure's.
+   *
+   * Carried rather than re-derived, because the rewrite DESTROYS its own test: once
+   * `notatedDuration` is the measure's, "was this written as a whole note" cannot be asked
+   * again. `M:6/8 L:1/4 z4` is a whole note in a three-quarter bar and reads 0.75 after.
+   *
+   * The ENGRAVER has a SECOND rule — `measureLength === duration`
+   * (`abstract-engraver.js:812`) — which is not this one and fires on different rests.
+   */
+  readonly wholeRest?: true
+  /**
    * **A STAND-IN, NOT SOMETHING ANYONE WROTE.** `resolveOverlays` fills the measures an `&`
    * layer does not sing in with invisible rests — one summed rest for a measure on the
    * layer's own line, one per note for a line back-filled from a later `&` — so that the

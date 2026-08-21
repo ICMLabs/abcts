@@ -842,7 +842,11 @@ function noteFields(
        *
        *   PARSER   `el.rest.type === 'rest' && el.duration === 1 && durationOfMeasure <= 1`
        *            (`abc_parse_music.js:552-557`) — the rest is WRITTEN as a whole and the
-       *            measure is no longer than one, whatever it actually fills.
+       *            measure is no longer than one, whatever it actually fills. ⚠️ **ASKED
+       *            OF THE PARSER, NOT RE-DERIVED HERE**: that rule rewrites the duration
+       *            to the measure's, which destroys the test that chose it, so
+       *            `M:6/8 L:1/4 z4` reads 0.75 by the time this sees it. See
+       *            `Rest.wholeRest`.
        *   ENGRAVER `this.measureLength === duration`, and not invisible/spacer/multimeasure
        *            (`abstract-engraver.js:812-813`) — the rest FILLS the measure, whatever
        *            it was written as.
@@ -853,7 +857,7 @@ function noteFields(
        * there. **A rule that fires in two places is two rules until the source says
        * otherwise.**
        */
-      (event.kind === "normal" && ratToNumber(event.notatedDuration) === 1 && barLength <= 1) ||
+      event.wholeRest === true ||
       (engraved &&
         e.duration === barLength &&
         event.kind !== "invisible" &&
@@ -981,11 +985,26 @@ function noteFields(
      * EMPTY one covered it and contributes `{syllable: "", divider: " "}` — the `*` and
      * `_` rule, which cost four tests when it was found from the drawing side.
      */
+    /**
+     * **THE DIVIDER IS THE CHARACTER THAT TERMINATED THE SYLLABLE**, and there are three:
+     * `var div = words[i]; if (div !== '_' && div !== '-') div = ' ';`
+     * (`abc_parse.js:231-241`). So a syllable a `_` HOLDS OVER carries `_`, not a space —
+     * and `lyricMelismaStart` is already the flag for "a hold follows this one".
+     *
+     * ponytail: verse 1 only, because `lyricMelismaStart` is. `extraVerses` is a bare
+     * `(string|null)[]` with nowhere to put a per-verse melisma — the same limitation the
+     * DRAWING has, recorded on `Note.lyricMelisma`. No fixture in either corpus holds a
+     * syllable in a LATER verse.
+     */
     const entries = [event.lyric, ...event.extraVerses]
       .filter((v): v is string => v !== null)
-      .map((v) => {
+      .map((v, verse) => {
         const hyphen = v.endsWith("-");
-        return { syllable: hyphen ? v.slice(0, -1) : v, divider: hyphen ? "-" : " " };
+        const held = verse === 0 && event.lyricMelismaStart === true;
+        return {
+          syllable: hyphen ? v.slice(0, -1) : v,
+          divider: hyphen ? "-" : held ? "_" : " ",
+        };
       });
     if (entries.length > 0) e.lyric = entries;
   }
@@ -1351,10 +1370,32 @@ function voiceElements(
              * the other way round. Suppressed by `%%keywarn` off, which is abcjs's
              * `multilineVars.keywarn !== false` guard on building the list at all.
              */
+            /**
+             * ⚠️ **AND THE NATURALS ARE PITCHED FOR THE STAFF'S CLEF WHERE THE
+             * ACCIDENTALS ARE PITCHED FOR THE CHANGE'S OWN.** One element, two clefs, and
+             * abcjs's own output says so: on `ragtime-nightingale` the `[K:Eb]` element
+             * carries its three FLATS at treble positions on BOTH staves — 6, 9, 5 — and
+             * its natural at 8 on the treble staff and 6 on the bass one.
+             *
+             * The mechanism is that `impliedNaturals` OUTLIVES the element.
+             * `appendStartingElement` stamps the accidentals through
+             * `fixKey(multilineVars.clef, …)` — the clef in force where the inline `[K:]`
+             * was READ — while `deepCopyKey` does not copy `impliedNaturals`
+             * (`abc_parse_key_voice.js:535-537`, the same omission the `tuneMetrics` work
+             * found), so the natural objects survive onto the next `startNewLine` and are
+             * re-stamped by ITS `addPosToKey(params.clef, params.key)`, which is the
+             * STAFF's clef.
+             *
+             * Instrumented on both sides before it was written: abcjs's `addPosToKey`
+             * logs `mid=0 … nat=[{d}]` and then `mid=-12 … nat=[{d, verticalPos: 8}]` for
+             * the SAME object, taking it to 6. Reasoning from the corpus alone had already
+             * produced two wrong readings — "the flats must be bass too" and "the arrays
+             * alias across staves" — and the second is denied by staff 0 keeping 8.
+             */
             const naturals =
               keywarn === false || keyNow === undefined
                 ? []
-                : impliedNaturals(keyNow, measure.keyChange, keyClef);
+                : impliedNaturals(keyNow, measure.keyChange, clefNow ?? keyClef);
             Object.assign(
               e,
               built,
@@ -1729,9 +1770,26 @@ function markSlurs(e: AbcElement, event: MusicEvent, open: SlurStacks): void {
    * comes from. A rest is the other such element; see above.
    */
   const onElement = (e.pitches?.length ?? 0) > 1;
+  /**
+   * ⚠️ **AND A PLAIN NOTE'S MARKS GO THROUGH THE PITCH LOOP, WHICH IS THE ONE THAT CARRIES
+   * `usedNums`.** abcjs has TWO numbering paths and only one of them avoids the labels this
+   * element just freed: `addStartSlur(el, x, 0)` for `el.startSlur` takes three arguments,
+   * where `addStartSlur(el.pitches[p], x, p + 1, usedNums)` takes four
+   * (`tune-builder.js:755-772`). A single note's `(` and `)` live on `pitches[0]`, so it is
+   * the four-argument one.
+   *
+   * `(D2)CB,)` on `S7-voices` V:3 is the case: the `D` closes 101 and opens on the SAME
+   * head, and abcjs gives the new slur 102 because 101 is in `usedNums`. Ours reused 101,
+   * and then its close 15 elements later carried the wrong label too — 6 rows, and
+   * invisible to every other gate because BOTH ends agreed with each other.
+   */
+  const usedNums: number[] = [];
   if (event.slurEnds > 0) {
     const into: number[] = [];
     addEndSlur(open, into, event.slurEnds, onElement ? 0 : 1);
+    // Only the PITCH path feeds `usedNums`; `usedNums` is declared inside abcjs's
+    // `if (el.pitches)` block and the chord-position-0 ends never reach it.
+    if (!onElement) usedNums.push(...into);
     if (into.length > 0) {
       if (onElement) e.endSlur = into;
       else if (head !== undefined) head.endSlur = into;
@@ -1745,6 +1803,7 @@ function markSlurs(e: AbcElement, event: MusicEvent, open: SlurStacks): void {
       event.slurStarts,
       onElement ? 0 : 1,
       event.slurDotted === true,
+      onElement ? [] : usedNums,
     );
     if (onElement) e.startSlur = into;
     else if (head !== undefined) head.startSlur = into;
@@ -1759,7 +1818,6 @@ function markSlurs(e: AbcElement, event: MusicEvent, open: SlurStacks): void {
     event.type === "chord"
       ? (event.pitches as readonly { slurStarts?: number; slurEnds?: number }[])
       : [];
-  const usedNums: number[] = [];
   pitches.forEach((p, i) => {
     const target = e.pitches?.[i];
     if (target === undefined) return;

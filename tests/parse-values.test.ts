@@ -119,12 +119,19 @@ describe("parseOnly element values vs abcjs", () => {
   });
 
   /**
-   * A floor, not a target — it moves up and must never move down. **IT IS THE TOTAL**, so
-   * this is an exact gate: any element that regresses anywhere fails here.
+   * **CLOSED — EVERY ELEMENT, EVERY FIELD.** This opened at 1,249 of 9,727 differing and
+   * is at zero, so it is an EXACT gate now and not a floor: any element that regresses
+   * anywhere fails here, and the row it names is the defect.
    */
-  it("the whole corpus agrees on at least the rows it did", () => {
+  it("every element value agrees with abcjs", () => {
     const agree = rows.reduce((t, r) => t + r.agree, 0);
-    expect(agree).toBeGreaterThanOrEqual(9716);
+    const total = rows.reduce((t, r) => t + r.total, 0);
+    const worst = rows
+      .filter((r) => r.diffs.length > 0)
+      .flatMap((r) => r.diffs.slice(0, 1).map((d) => `${r.slug} ${d.at}\n  abcjs ${d.theirs}\n  ours  ${d.ours}`))
+      .slice(0, 3)
+      .join("\n");
+    expect(`${total - agree} differ\n${worst}`).toBe("0 differ\n");
   });
 
   /** The canonicaliser is what both sides trust; a stray `undefined` would hide a row. */

@@ -5002,6 +5002,12 @@ class Parser {
     // is none (`:743-751`), which is `builder.meter`: a mid-tune `M:` goes to
     // `setMeterChange` and never touches it.
     const barLength = builder.meter === null ? rational(1, 1) : measureDuration(builder.meter)
+    // …**AND THE TYPE IS DECIDED HERE TOO, NOT RE-DERIVED DOWNSTREAM.** The rule sets BOTH
+    // `el.rest.type = 'whole'` and the duration, and once the duration has been rewritten
+    // the test that chose it cannot be run again: `notatedDuration` is the MEASURE's by
+    // then, so a reader asking "was this written as a whole note" gets the wrong answer in
+    // any bar that is not one whole note long. `M:6/8 L:1/4 z4` is exactly that bar.
+    let whole = false
     if (
       !multi &&
       kind === 'normal' &&
@@ -5009,6 +5015,7 @@ class Parser {
       !ratLt(rational(1, 1), barLength)
     ) {
       duration = barLength
+      whole = true
     }
     // `Z4` is four measures of the bar counter, not one — see `countMultiMeasureRest`.
     if (multi) builder.countMultiMeasureRest(bars)
@@ -5017,6 +5024,7 @@ class Parser {
         type: 'rest',
         duration,
         notatedDuration: duration,
+        ...(whole ? { wholeRest: true as const } : {}),
         kind,
         decorations: [], // filled in by emit()
         decorationSourceRanges: [],
