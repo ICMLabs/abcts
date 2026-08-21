@@ -950,25 +950,38 @@ checkpoint and hand off as you go so no context is lost.
 > `Docs/CHECKPOINT-2026-08-14.md` — §4 is the work list as it stood, §5 the harness. Then the
 > files below.
 
-**READ `Docs/HANDOFF-2026-08-20.md` FIRST** — the current state: **the abcjs API SURFACE IS
-COMPLETE (0 of 64 absent) and every ranked table reads zero except TWO TUNES of a fixture
-written that day, which is a gain and not a regression — the fixture did not exist and it
-found a rendering gap nothing else could see. `parseOnly`, the one divergence three
-checkpoints wrote down rather than fixed, has a gate and is CLOSED at 1,570 of 1,570.** The four rows the day before left are closed (`deline` 1,570 of 1,570, `Editor` 196
-of 196, `tuneMetrics` 217 of 217, `setGlyph` 6 of 6 byte-exact), four ratchets are EXACT now
-rather than floors, and the two behaviours that were built-but-ungated — `CreateSynth`'s
-error arms and `runWhenReady`'s `isLoading` re-entry — are driven. Its WHAT IS LEFT comes first and is four items, one of
-them measured down to abcjs's own instrumented numbers. Then what closed and the rule each
-one paid for: **our `parseOnly` ENGRAVED** and does not any more (fourteen classes, not the
-three written down — four appeared only once the gate was WIDENED to every field a staff
-carries, among them `brace`, `bracket` and `connectBarLines`, which fifty tunes carry and
-nothing here had ever projected); the two behaviours that were built-but-ungated, one of
-them **dead code in abcjs itself**; the three slur placements the model could not say, and
-the fixture that gates them; and ⚠️ **`harvest-abcjs-goldens.mjs` silently rebaselining the
-byte gate against abcjs 6.6.3**, which is the trap most likely to bite someone next. §6 is the synth behaviours, including the arm that turns out to
-be **dead code in abcjs itself**. The rules each closure paid for are at the end — three are
-A CONSTRUCTED OFFSET IS BUILT, NEVER DERIVED, one is that rule INVERTED, and one is that a
-gate can agree for the wrong reason.
+**READ `Docs/HANDOFF-2026-08-21.md` FIRST** — the current state: **EVERY RANKED TABLE IN
+THE REPO READS ZERO, including the one built that day.** Suite 1,883, 2 expected-fail, no
+reds. The SVG byte gate is 0 of 207 in-repo and 0 of 356 sibling; the abcjs API surface is
+0 of 64 absent.
+
+**The day's work is ONE GATE and the TWENTY-TWO defects it found**, none of which any other
+gate could state, because every other one was already at zero.
+`tests/parse-values.test.ts` compares the VALUES of every line, staff and element of a
+`parseOnly` tune — 11,004 rows — where `parse-only` compares only field NAMES, per kind,
+unioned. It opened at 1,249, closed, was WIDENED past `staff.voices` and opened again at 12,
+and is at zero. The largest single finding is `verticalPos`, which was `pitch` on every note
+of every non-treble clef in BOTH corpora.
+
+Its WHAT IS LEFT comes first: the RENDERED tune's object, measured at 10,109 of 11,004 —
+**of which 10,049 are ONE architectural decision** (an absent `abselem`/`staffGroup`, whose
+fix means retaining the `Layout` that once killed the suite's workers) and 60 are named
+defects. **That decision is the owner's, not the next agent's.**
+
+Then the rules, and they cost something to learn: ⚠️ **A ROW COUNT GOING DOWN IS NOT A RULE
+BEING RIGHT** — one reading improved the corpus by 44 rows while being wrong, and the tell
+was the same source answering differently at two `L:` values; ⚠️ **PRINT THE VALUE THE
+CALLER PASSED, NOT THE ONE THE CALLEE HAS LEFT** — two readings came from a probe placed
+below the delete they were measuring; ⚠️ **A WALK MEASURES WHAT IT DESCENDS INTO, AND
+NOTHING IT PASSES OVER**; and ⚠️ **A FIELD CAN BE RIGHT WHERE IT IS DRAWN AND ABSENT WHERE
+IT IS PUBLISHED** — a missing lyric verse, the voice titles in the wrong order and three
+decoration shorthands were all drawn correctly for months, and the decoration one is not
+cosmetic: `~` sounds PLAIN where `R` is rolled.
+
+`Docs/HANDOFF-2026-08-20.md` is superseded for the state. Read it for its §6 — the synth
+behaviours, including the arm that is **dead code in abcjs itself** — and for ⚠️
+**`harvest-abcjs-goldens.mjs` silently rebaselining the byte gate against abcjs 6.6.3**,
+which is still the trap most likely to bite someone next.
 
 Then `Docs/CHECKPOINT-2026-08-19.md` — how the surface was BUILT, and still current except
 for its §5 work list: with
