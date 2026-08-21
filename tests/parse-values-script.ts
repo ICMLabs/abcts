@@ -30,7 +30,28 @@
  * union of both and be unable to attribute a difference to either.
  */
 
-/** Keys sorted, `undefined` dropped — `exactOptionalPropertyTypes` omits where abcjs assigns. */
+/**
+ * Keys sorted, `undefined` dropped — `exactOptionalPropertyTypes` omits where abcjs assigns.
+ *
+ * ⚠️ **AND `abselem` IS REPLACED BY ITS OWN NAME, WHICH IS abcjs'S CHOICE AND NOT A
+ * TOLERANCE OF OURS.** `deline`'s comparison uses
+ * `JSON.stringify(input, replacer)` with `if (key === 'abselem') return 'abselem'`
+ * (`data/deline-tune.js:118-124`) — the drawn element hangs off every element a RENDERED
+ * tune drew, and it points back at the tune, so a plain walk recurses until the stack
+ * gives out. **PRESENCE STILL COUNTS**: only a DRAWN line carries one
+ * (`draw/absolute.js:72`), which is how `%%maxStaves`' hidden lines are told apart.
+ */
+/**
+ * Compared by PRESENCE, replaced with their own name.
+ *
+ * `abselem` is abcjs's own choice (see `canon`). `staffGroup` is ours and is DECLARED
+ * here rather than silently dropped: a rendered line carries the laid-out staff group,
+ * which is the DRAWING — already gated byte for byte by `svg-bytes`, and a graph that
+ * points back at the tune. What matters at this level is that a line HAS one, which is
+ * what a rendered line has and an unengraved one does not.
+ */
+const BY_PRESENCE = new Set(["abselem", "staffGroup"]);
+
 export const canon = (v: unknown): unknown => {
   if (Array.isArray(v)) return v.map(canon);
   if (v !== null && typeof v === "object") {
@@ -38,7 +59,7 @@ export const canon = (v: unknown): unknown => {
     for (const key of Object.keys(v as object).sort()) {
       const value = (v as Record<string, unknown>)[key];
       if (value === undefined) continue;
-      out[key] = canon(value);
+      out[key] = BY_PRESENCE.has(key) ? key : canon(value);
     }
     return out;
   }
