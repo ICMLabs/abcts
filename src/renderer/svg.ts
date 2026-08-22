@@ -3827,9 +3827,24 @@ export function toSVG(
            * lands one ULP above and rounds to `445.59`. `visual-multi-voice-02`'s last 92
            * bytes.
            */
+          /**
+           * **AND THE TOP IS THE STAFF'S OWN TOP LINE, NOT PITCH 10.** `calcY(10)` is only
+           * the fallback assigned before `printStaff` runs; what line 143 reads back is
+           * `params.staffs[0].topLine`, which `printStaff` sets to `calcY(numLines *
+           * linePitch)` — its highest drawn rule (`draw/staff.js:19-27`,
+           * `draw/staff-group.js:86-97, 143`). A `V:1 stafflines=3` upper staff therefore
+           * starts the rule at pitch 6, and ours started it at 10: 15.5px of rule hanging
+           * above a staff that is not there.
+           *
+           * ⚠️ **A ONE-LINE STAFF IS THE EXCEPTION AND KEEPS THE FULL SPAN** — `printStaff`
+           * draws its single rule at pitch 6 and then returns `calcY(10)`/`calcY(2)`
+           * regardless (`draw/staff.js:14-17`). So does a staff with NO lines, which never
+           * reaches `printStaff` at all and leaves `topLine` unset.
+           */
+          const n = first.staffLineCount;
+          const topPitch = n > 1 ? n * 2 : ABCJS_PITCH.topLine;
           const top =
-            first.absoluteY * PX -
-            ENGRAVE.spacePerStep * ABCJS_PITCH.topLine * PX;
+            first.absoluteY * PX - ENGRAVE.spacePerStep * topPitch * PX;
           const bottom =
             last.absoluteY * PX -
             ENGRAVE.spacePerStep * ABCJS_PITCH.bottomLine * PX;

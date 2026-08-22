@@ -1159,6 +1159,36 @@
    "endChar": 720
   }
  },
+ "repo/abcts-voice-modifiers-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 22
+  }
+ },
+ "repo/abcts-voice-modifiers-tune1": {
+  "title": {
+   "startChar": 102,
+   "endChar": 120
+  }
+ },
+ "repo/abcts-voice-modifiers-tune2": {
+  "title": {
+   "startChar": 190,
+   "endChar": 208
+  }
+ },
+ "repo/abcts-voice-modifiers-tune3": {
+  "title": {
+   "startChar": 275,
+   "endChar": 291
+  }
+ },
+ "repo/abcts-voice-modifiers-tune4": {
+  "title": {
+   "startChar": 358,
+   "endChar": 381
+  }
+ },
  "repo/abcts-vskip-tune0": {
   "title": {
    "startChar": 364,

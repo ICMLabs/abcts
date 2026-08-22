@@ -425,11 +425,12 @@ const WITHIN: Readonly<Record<string, number>> = {
   // byte-exact, which is the one row that takes each count from 185 to 186.
   //
   // …and `abcts-last-bar.abc` is the 187th — `checkLastBarX`, which that enumeration's own
-  // control found before any modifier did.
-  "0.05": 187,
-  "1": 187,
-  "5": 187,
-  "25": 187,
+  // control found before any modifier did, and `abcts-voice-modifiers.abc` the 188th —
+  // the three defects the modifiers themselves found.
+  "0.05": 188,
+  "1": 188,
+  "5": 188,
+  "25": 188,
 };
 
 const names = readdirSync(fixturesDir)

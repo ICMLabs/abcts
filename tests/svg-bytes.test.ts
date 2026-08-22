@@ -314,6 +314,18 @@ const PASSING: readonly string[] = [
   "abcts-visualtranspose-tune2",
   "abcts-visualtranspose-tune3",
   /**
+   * `abcts-voice-modifiers.abc` — three of the four defects the V:-modifier enumeration
+   * itself found: `^8`/`_8` as clef octave suffixes (abcjs takes any of `- + ^ _` before
+   * an `8`), `cl=` as `clef=`, and the staff-connecting rule starting at the FIRST staff's
+   * own top line rather than at pitch 10. Tune 4 is the one-line exception, which keeps
+   * the full span.
+   */
+  "abcts-voice-modifiers-tune0",
+  "abcts-voice-modifiers-tune1",
+  "abcts-voice-modifiers-tune2",
+  "abcts-voice-modifiers-tune3",
+  "abcts-voice-modifiers-tune4",
+  /**
    * `abcts-last-bar.abc` — `checkLastBarX`, found by the V:-modifier enumeration's own
    * CONTROL rather than by any modifier: a voice that runs out of music early left its
    * closing rule hanging 30px short. Tune 2 is the one that gates abcjs's one-directional

@@ -5002,6 +5002,111 @@
   ],
   "bottomText": []
  },
+ "repo/abcts-voice-modifiers-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Clef Caret Eight",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 22,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-voice-modifiers-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Clef Abbreviated",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 102,
+    "endChar": 120,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-voice-modifiers-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Stafflines Three",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 190,
+    "endChar": 208,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-voice-modifiers-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Stafflines One",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 275,
+    "endChar": 291,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-voice-modifiers-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Clef Alto Caret Eight",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 358,
+    "endChar": 381,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
  "repo/abcts-vskip-tune0": {
   "topText": [
    {

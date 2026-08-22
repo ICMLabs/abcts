@@ -374,14 +374,27 @@ export function parseClef(spec: string): Clef | null {
     return {
       shape,
       line: line >= 1 && line <= 5 ? line : defaultLine,
-      octaveShift: octave === '+8' ? 1 : octave === '-8' ? -1 : 0,
+      // **`^8` IS `+8` AND `_8` IS `-8`.** `parseKeyVoice` appends whichever of the four
+      // signs it finds to the clef name verbatim — `'-' || '+' || '^' || '_'` followed by
+      // an `8` (`abc_parse_key_voice.js:511`) — and the V: switch carries a case for each
+      // of the eight spellings. Ours knew only the two ASCII ones, so `clef=treble^8` came
+      // out a plain treble, 1361 bytes short of abcjs's.
+      octaveShift:
+        octave === '+8' || octave === '^8'
+          ? 1
+          : octave === '-8' || octave === '_8'
+            ? -1
+            : 0,
       middleOverride,
       staffLines,
       ...(written ? { staffLinesWritten: true as const } : {}),
     }
   }
 
-  const explicit = /clef=([a-z]+)(\d?)([+-]8)?/i.exec(spec)
+  // **`cl=` IS `clef=`** — one case label sharing its arm (`abc_parse_key_voice.js:641`).
+  // V:-only: abcjs's K: switch has no such alias, and reading it on both is a divergence
+  // only a `K:C cl=bass` could show. No corpus writes one.
+  const explicit = /\bcl(?:ef)?=([a-z]+)(\d?)([-+^_]8)?/i.exec(spec)
   if (explicit) return build(explicit[1] ?? '', explicit[2] ?? '', explicit[3] ?? '')
 
   // Bare form, as in `K:C bass`. EVERY word is tried, not just the first: the first word
@@ -413,7 +426,7 @@ export function parseClef(spec: string): Clef | null {
   const first = spec.trim().split(/\s+/)[0] ?? ''
   const isKey = /^(HP|Hp|none$|[A-G])/.test(first)
   const modifiers = spec.replace(/"[^"]*"/g, ' ').replace(isKey ? /^\s*\S+/ : /^$/, '')
-  for (const m of modifiers.matchAll(/(?:^|\s)([a-z]+)(\d?)([+-]8)?/gi)) {
+  for (const m of modifiers.matchAll(/(?:^|\s)([a-z]+)(\d?)([-+^_]8)?/gi)) {
     const clef = build(m[1] ?? '', m[2] ?? '', m[3] ?? '')
     if (clef) return clef
   }

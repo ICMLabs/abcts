@@ -1,0 +1,44 @@
+X:1
+T:Clef Caret Eight
+L:1/8
+K:C
+V:1 clef=treble^8
+V:2 clef=bass_8
+[V:1]CDEF|GABc|
+[V:2]C,4 G,4|
+
+X:2
+T:Clef Abbreviated
+L:1/8
+K:C
+V:1 cl=alto
+V:2 cl=bass
+[V:1]CDEF|GABc|
+[V:2]C,4 G,4|
+
+X:3
+T:Stafflines Three
+L:1/8
+K:C
+V:1 stafflines=3
+V:2
+[V:1]CDEF|GABc|
+[V:2]C,4 G,4|
+
+X:4
+T:Stafflines One
+L:1/8
+K:C
+V:1 stafflines=1
+V:2
+[V:1]CDEF|GABc|
+[V:2]C,4 G,4|
+
+X:5
+T:Clef Alto Caret Eight
+L:1/8
+K:C
+V:1 clef=alto^8
+V:2 clef=alto_8
+[V:1]CDEF|GABc|
+[V:2]C,4 G,4|

@@ -114,6 +114,11 @@ const PASSING: readonly string[] = [
   // enumeration — every one of which agrees on every character from its first run.
   // `abcts-decorations` is the sixth, from the decoration-table enumeration, and
   // `abcts-last-bar` the seventh, from the V:-modifier enumeration's control.
+  "repo/abcts-voice-modifiers-tune0",
+  "repo/abcts-voice-modifiers-tune1",
+  "repo/abcts-voice-modifiers-tune2",
+  "repo/abcts-voice-modifiers-tune3",
+  "repo/abcts-voice-modifiers-tune4",
   "repo/abcts-last-bar-tune0",
   "repo/abcts-last-bar-tune1",
   "repo/abcts-last-bar-tune2",
@@ -505,8 +510,8 @@ describe("tune.lines and getElementFromChar", () => {
     // the golden had been generated ad hoc on 08-15 and could not be regenerated, so every
     // fixture added after it was ungated on this surface. Five were.
     // 328,548 of 328,548 until `abcts-decorations.abc` added six tunes on the same day,
-    // and `abcts-last-bar.abc` three more.
-    expect(agree).toBeGreaterThanOrEqual(331497);
+    // `abcts-last-bar.abc` three more and `abcts-voice-modifiers.abc` five.
+    expect(agree).toBeGreaterThanOrEqual(333767);
   });
 
   /**

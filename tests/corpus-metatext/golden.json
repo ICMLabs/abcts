@@ -1121,6 +1121,21 @@
  "repo/abcts-visualtranspose-tune3": {
   "title": "visualTranspose up 7, minor"
  },
+ "repo/abcts-voice-modifiers-tune0": {
+  "title": "Clef Caret Eight"
+ },
+ "repo/abcts-voice-modifiers-tune1": {
+  "title": "Clef Abbreviated"
+ },
+ "repo/abcts-voice-modifiers-tune2": {
+  "title": "Stafflines Three"
+ },
+ "repo/abcts-voice-modifiers-tune3": {
+  "title": "Stafflines One"
+ },
+ "repo/abcts-voice-modifiers-tune4": {
+  "title": "Clef Alto Caret Eight"
+ },
  "repo/abcts-vskip-tune0": {
   "title": "vskip between lines"
  },

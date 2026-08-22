@@ -3522,6 +3522,68 @@
    "hasPickup": false
   }
  ],
+ "repo/abcts-voice-modifiers": [
+  {
+   "header": "X:1\nT:Clef Caret Eight\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:2\nT:Clef Abbreviated\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:3\nT:Stafflines Three\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:4\nT:Stafflines One\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:5\nT:Clef Alto Caret Eight\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
  "repo/abcts-vskip": [
   {
    "header": "X:1\nT:vskip between lines\nL:1/4\nM:4/4\nK:C\n",

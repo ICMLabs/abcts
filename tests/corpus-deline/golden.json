@@ -2275,6 +2275,66 @@
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@758..759 note@759..760 note@760..761 note@761..762 bar@762..763 note@763..764 note@764..765 note@765..766 note@766..767 bar@767..768"
  ],
+ "repo/abcts-voice-modifiers-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@72..73 note@73..74 note@74..75 note@75..76 bar@76..77 note@77..78 note@78..79 note@79..80 note@80..81 bar@81..82",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@88..92 note@92..95 bar@95..96"
+ ],
+ "repo/abcts-voice-modifiers-tune1": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@160..161 note@161..162 note@162..163 note@163..164 bar@164..165 note@165..166 note@166..167 note@167..168 note@168..169 bar@169..170",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@176..180 note@180..183 bar@183..184"
+ ],
+ "repo/abcts-voice-modifiers-tune2": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@245..246 note@246..247 note@247..248 note@248..249 bar@249..250 note@250..251 note@251..252 note@252..253 note@253..254 bar@254..255",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@261..265 note@265..268 bar@268..269"
+ ],
+ "repo/abcts-voice-modifiers-tune3": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@328..329 note@329..330 note@330..331 note@331..332 bar@332..333 note@333..334 note@334..335 note@335..336 note@336..337 bar@337..338",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@344..348 note@348..351 bar@351..352"
+ ],
+ "repo/abcts-voice-modifiers-tune4": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@429..430 note@430..431 note@431..432 note@432..433 bar@433..434 note@434..435 note@435..436 note@436..437 note@437..438 bar@438..439",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@445..449 note@449..452 bar@452..453"
+ ],
+ "repo/abcts-voice-modifiers-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@72..73 note@73..74 note@74..75 note@75..76 bar@76..77 note@77..78 note@78..79 note@79..80 note@80..81 bar@81..82",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@88..92 note@92..95 bar@95..96"
+ ],
+ "repo/abcts-voice-modifiers-tune1#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@160..161 note@161..162 note@162..163 note@163..164 bar@164..165 note@165..166 note@166..167 note@167..168 note@168..169 bar@169..170",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@176..180 note@180..183 bar@183..184"
+ ],
+ "repo/abcts-voice-modifiers-tune2#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@245..246 note@246..247 note@247..248 note@248..249 bar@249..250 note@250..251 note@251..252 note@252..253 note@253..254 bar@254..255",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@261..265 note@265..268 bar@268..269"
+ ],
+ "repo/abcts-voice-modifiers-tune3#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@328..329 note@329..330 note@330..331 note@331..332 bar@332..333 note@333..334 note@334..335 note@335..336 note@336..337 bar@337..338",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@344..348 note@348..351 bar@351..352"
+ ],
+ "repo/abcts-voice-modifiers-tune4#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@429..430 note@430..431 note@431..432 note@432..433 bar@433..434 note@434..435 note@435..436 note@436..437 note@437..438 bar@438..439",
+  "L0 s1 kept=key,clef",
+  "L0 s1 v0 note@445..449 note@449..452 bar@452..453"
+ ],
  "repo/abcts-vskip-tune0": [
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@402..403 note@403..404 note@404..405 note@405..406 bar@406..407",
