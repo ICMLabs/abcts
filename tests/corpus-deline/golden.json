@@ -1639,6 +1639,74 @@
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@532..533 note@533..534 note@534..535 note@535..536 bar@536..537 keySignature@538..541 break@undefined..undefined key@-1..-1 note@542..543 note@543..544 note@544..545 note@545..547 bar@547..548"
  ],
+ "repo/abcts-ledger-gaps-2-tune0": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@392..394 note@394..396 note@396..398 note@398..399 bar@399..400"
+ ],
+ "repo/abcts-ledger-gaps-2-tune1": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@470..476 note@476..477 bar@477..478"
+ ],
+ "repo/abcts-ledger-gaps-2-tune2": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@553..555 note@555..557 note@557..567 note@567..568 bar@568..569"
+ ],
+ "repo/abcts-ledger-gaps-2-tune3": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@663..668 note@668..670 note@670..672 note@672..673 bar@673..674 note@689..694 note@694..696 note@696..698 note@698..699 bar@699..700"
+ ],
+ "repo/abcts-ledger-gaps-2-tune4": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@784..788 note@788..790 bar@790..791",
+  "L0 s1 kept=meter,key,clef",
+  "L0 s1 v0 note@797..807 note@807..809 bar@809..810"
+ ],
+ "repo/abcts-ledger-gaps-2-tune5": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@927..932 note@932..934 note@934..936 note@936..937 bar@937..938"
+ ],
+ "repo/abcts-ledger-gaps-2-tune6": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@1019..1021 note@1021..1023 clef@1023..1038 keySignature@1023..1038 note@1038..1041 note@1041..1042 bar@1042..1043"
+ ],
+ "repo/abcts-ledger-gaps-2-tune7": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@1108..1116 note@1116..1118 note@1118..1120 note@1120..1121 bar@1121..1122"
+ ],
+ "repo/abcts-ledger-gaps-2-tune0#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@392..394 note@394..396 note@396..398 note@398..399 bar@399..400"
+ ],
+ "repo/abcts-ledger-gaps-2-tune1#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@470..476 note@476..477 bar@477..478"
+ ],
+ "repo/abcts-ledger-gaps-2-tune2#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@553..555 note@555..557 note@557..567 note@567..568 bar@568..569"
+ ],
+ "repo/abcts-ledger-gaps-2-tune3#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@663..668 note@668..670 note@670..672 note@672..673 bar@673..674 break@undefined..undefined note@689..694 note@694..696 note@696..698 note@698..699 bar@699..700"
+ ],
+ "repo/abcts-ledger-gaps-2-tune4#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@784..788 note@788..790 bar@790..791",
+  "L0 s1 kept=meter,key,clef",
+  "L0 s1 v0 note@797..807 note@807..809 bar@809..810"
+ ],
+ "repo/abcts-ledger-gaps-2-tune5#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@927..932 note@932..934 note@934..936 note@936..937 bar@937..938"
+ ],
+ "repo/abcts-ledger-gaps-2-tune6#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@1019..1021 note@1021..1023 clef@1023..1038 keySignature@1023..1038 note@1038..1041 note@1041..1042 bar@1042..1043"
+ ],
+ "repo/abcts-ledger-gaps-2-tune7#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@1108..1116 note@1116..1118 note@1118..1120 note@1120..1121 bar@1121..1122"
+ ],
  "repo/abcts-ledger-gaps-tune0": [
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@385..393 note@393..399 note@399..401 bar@401..402"

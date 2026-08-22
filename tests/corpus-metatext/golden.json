@@ -887,6 +887,30 @@
  "repo/abcts-keywarn-tune2": {
   "title": "keywarn false is a no-op"
  },
+ "repo/abcts-ledger-gaps-2-tune0": {
+  "title": "a key signature on a TENOR clef"
+ },
+ "repo/abcts-ledger-gaps-2-tune1": {
+  "title": "a chord whose dotted heads are a second apart"
+ },
+ "repo/abcts-ledger-gaps-2-tune2": {
+  "title": "a below annotation on a staff that also has lyrics"
+ },
+ "repo/abcts-ledger-gaps-2-tune3": {
+  "title": "lyrics on the FIRST system only, with a dynamic on both"
+ },
+ "repo/abcts-ledger-gaps-2-tune4": {
+  "title": "an annotation on the note a rest collides with"
+ },
+ "repo/abcts-ledger-gaps-2-tune5": {
+  "title": "a percussion chord whose heads map differently"
+ },
+ "repo/abcts-ledger-gaps-2-tune6": {
+  "title": "a mid-tune clef change to percussion"
+ },
+ "repo/abcts-ledger-gaps-2-tune7": {
+  "title": "a slur written inside the chord brackets"
+ },
  "repo/abcts-ledger-gaps-tune0": {
   "title": "a chord where only SOME heads are tied"
  },

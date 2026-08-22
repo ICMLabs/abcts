@@ -64,6 +64,7 @@ const table = (): Row[] =>
 /** Tunes whose every section agrees. Grows, never shrinks. */
 const PASSING: readonly string[] = [
   "repo/abcts-ledger-gaps-tune0",
+  "repo/abcts-ledger-gaps-2-tune0",
   "repo/abcts-model-gaps-tune0",
   "repo/abcts-slur-shapes-tune0",
   "sib/inline-key-per-voice-tune0",

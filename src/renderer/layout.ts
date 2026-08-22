@@ -2328,7 +2328,6 @@ function dotGlyphs(
    */
   offset: number,
   step: number,
-  taken: Set<number>,
   /**
    * REQUIRED, not defaulted. It held `= ENGRAVE.dotSpacing`, and a default is exactly how
    * `abcjs-strict` ends up reading one of OUR constants without anyone deciding it should:
@@ -2337,12 +2336,17 @@ function dotGlyphs(
    */
   spacing: number,
 ): PlacedGlyph[] {
-  let dotStep = step % 2 === 0 ? step + 1 : step
-  // ponytail: in a chord, two notes a second apart can want the same dot space — one is
-  // on a line and bumps up onto its neighbour's. Moved up a space rather than solved
-  // properly; engraving has finer rules for dot columns. No corpus fixture has one.
-  while (taken.has(dotStep)) dotStep += 2
-  taken.add(dotStep)
+  /**
+   * **A DOT ON A LINE GOES UP A SPACE, AND THAT IS THE WHOLE RULE.**
+   * `dotadjusty = 1 - Math.abs(pitch) % 2` (`create-note-head.js:52-53`), applied per head
+   * with no memory of the heads before it.
+   *
+   * ⚠️ **abcjs-debt: SO TWO DOTS CAN COINCIDE.** `[CD]3` puts C's dot up onto D's space and
+   * draws D's there too — one dot's ink over another's. This side used to bump the second
+   * up by a space, which is better engraving and a different picture: `abcts-ledger-gaps-2`
+   * tune 1 had it 7.75px high. Engraving's real dot-column rules are finer than either.
+   */
+  const dotStep = step % 2 === 0 ? step + 1 : step
 
   const out: PlacedGlyph[] = []
   // **THE DOTS GO OUT FROM THE OUTSIDE IN.** `for (; dot > 0; dot--)` with
@@ -2714,9 +2718,10 @@ const KEY_ACCIDENTAL_GLYPH: Readonly<Record<number, GlyphName>> = {
  * Bass works out to -2, giving F# on the fourth line and C# in the second space, the
  * standard pattern. Alto gives -1.
  *
- * ponytail: TENOR is genuinely irregular. Engravers drop some of its accidentals an
- * octave to avoid ledger lines, and no single shift reproduces that. This formula puts
- * them an octave high. No corpus fixture uses a tenor key signature; fix it when one does.
+ * ⚠️ **AND IT IS SUPERSEDED BY `placeKeyAccidental`, which is abcjs's own table.** A
+ * `ponytail:` here said TENOR is irregular and no single shift reproduces it — right about
+ * the shift, and abcjs has three brackets with per-accidental exceptions inside them. This
+ * function is kept only for the doc references around it; nothing places with it now.
  */
 /**
  * Last-resort metrics for a glyph NEITHER table carries — zeros rather than a crash.
@@ -2735,6 +2740,56 @@ export function keySignatureShift(clef: Clef): number {
   const wrapped = ((delta % 7) + 7) % 7
   return wrapped > 3 ? wrapped - 7 : wrapped
 }
+
+/** Our step → abcjs's `verticalPos` in TREBLE, where its own table is written. */
+const KEY_POS_OFFSET = 6
+
+/**
+ * **WHERE ONE KEY-SIGNATURE ACCIDENTAL LANDS, AND IT IS abcjs's TABLE RATHER THAN A
+ * SHIFT.** `addPosToKey` takes the accidental's TREBLE position, subtracts the clef's
+ * `verticalPos`, and then applies one of three brackets with per-accidental exceptions
+ * inside them (`abc_parse_key_voice.js:104-160`):
+ *
+ *     mid < -10   -7, and -7 again at 11 (or 10 flat), for `A` sharp, and for `G`/`F` flat
+ *     mid <  -4   -7, and -7 again for `f`/`g` sharp WHEN mid is exactly -8 — the TENOR
+ *     mid >=  7   +7
+ *
+ * ⚠️ **THE EXCEPTIONS ARE KEYED ON THE WRITTEN NAME, CASE INCLUDED**, which is fixed by the
+ * TREBLE position and does not move with the clef: `A` sharp is 5, `G`/`F` flat are 4 and
+ * 3, `f`/`g` sharp are 10 and 11. So the test is on that number, and nothing has to carry a
+ * letter's case through the layout.
+ *
+ * The fold this replaced — the difference reduced mod 7 into [-3, 3] — agrees with abcjs on
+ * treble, bass and alto, which is every clef either corpus writes a signature on, and puts
+ * TENOR's an octave high. A `ponytail:` here called that irregularity unreproducible by any
+ * single shift; it is right about the shift and abcjs has a table.
+ * `abcts-ledger-gaps-2` tune 0 is the fixture.
+ */
+export function placeKeyAccidental(
+  trebleStep: number,
+  acc: 'sharp' | 'flat' | 'natural' | 'other',
+  clef: Clef,
+): number {
+  const written = trebleStep + KEY_POS_OFFSET
+  const mid = middleLineIndex(clef) - middleLineIndex(defaultClef)
+  let pos = written - mid
+  if (mid < -10) {
+    pos -= 7
+    if (pos >= 11 || (pos === 10 && acc === 'flat')) pos -= 7
+    if (written === 5 && acc === 'sharp') pos -= 7
+    if ((written === 4 || written === 3) && acc === 'flat') pos -= 7
+  } else if (mid < -4) {
+    pos -= 7
+    if (mid === -8 && (written === 10 || written === 11) && acc === 'sharp') pos -= 7
+  } else if (mid >= 7) {
+    pos += 7
+  }
+  return pos - KEY_POS_OFFSET
+}
+
+/** The `acc` name abcjs's exceptions test — see `placeKeyAccidental`. */
+export const keyAccKind = (quarters: number): 'sharp' | 'flat' | 'natural' | 'other' =>
+  quarters === 2 ? 'sharp' : quarters === -2 ? 'flat' : quarters === 0 ? 'natural' : 'other'
 
 /**
  * The box a key-signature accidental reserves — abcjs's, not its ink.
@@ -2764,14 +2819,17 @@ function layoutKeySignature(
   strict = true,
 ): LayoutElement | null {
   const fifths = keyFifths(key)
-  const shift = keySignatureShift(clef)
   const sharps = fifths > 0
   const name: GlyphName = sharps ? 'accidentalSharp' : 'accidentalFlat'
   const written: { name: GlyphName; step: number; letter: DiatonicStep }[] = (
     sharps ? SHARP_ORDER : FLAT_ORDER
   )
     .slice(0, Math.abs(fifths))
-    .map((letter) => ({ name, step: keyStepOf(letter, sharps) + shift, letter }))
+    .map((letter) => ({
+      name,
+      step: placeKeyAccidental(keyStepOf(letter, sharps), sharps ? 'sharp' : 'flat', clef),
+      letter,
+    }))
 
   // EXPLICIT ACCIDENTALS on the field REPLACE a standard one on the same letter, or are
   // appended (`abc_parse_key_voice.js:320-350`). Their own position follows the accidental's
@@ -2781,7 +2839,11 @@ function layoutKeySignature(
     const glyph = KEY_ACCIDENTAL_GLYPH[acc.quarters] ?? 'accidentalNatural'
     const entry = {
       name: glyph,
-      step: keyStepOf(acc.step, acc.quarters > 0) + shift,
+      step: placeKeyAccidental(
+        keyStepOf(acc.step, acc.quarters > 0),
+        keyAccKind(acc.quarters),
+        clef,
+      ),
       letter: acc.step,
     }
     const at = written.findIndex((w) => w.letter === acc.step)
@@ -2911,9 +2973,6 @@ function layoutKeyChange(
   // two sharps to two sharps, and abcjs reprints all of it — 18.50px of fixed width at the
   // end of that system, which justification then spread over eight noteheads as a clean
   // 3.56px-per-note ramp out to dx 24.93.
-  const shift = keySignatureShift(clef)
-  /** The naturals' own shift — see `naturalsClef`. */
-  const naturalShift = keySignatureShift(naturalsClef)
   // Compared UNSHIFTED, so the two lists are comparable however the clefs differ; the
   // shift goes on at the moment each accidental is placed.
   /**
@@ -2929,26 +2988,35 @@ function layoutKeyChange(
    * sibling repo, which is why 544 byte rows never saw it; `tuneMetrics` did, as a `left`
    * 10.25 short — one accidental.
    */
-  const stepsFor = (key: KeySignature): { step: number; name: GlyphName }[] => {
+  const stepsFor = (
+    key: KeySignature,
+  ): { step: number; name: GlyphName; acc: 'sharp' | 'flat' | 'natural' | 'other' }[] => {
     const fifths = keyFifths(key)
     const sharp = fifths > 0
     const name: GlyphName = sharp ? 'accidentalSharp' : 'accidentalFlat'
-    const written: { step: number; name: GlyphName; letter: DiatonicStep }[] = (
-      sharp ? SHARP_ORDER : FLAT_ORDER
-    )
-      .slice(0, Math.abs(fifths))
-      .map((letter) => ({ step: keyStepOf(letter, sharp), name, letter }))
+    const written: {
+      step: number
+      name: GlyphName
+      letter: DiatonicStep
+      acc: 'sharp' | 'flat' | 'natural' | 'other'
+    }[] = (sharp ? SHARP_ORDER : FLAT_ORDER).slice(0, Math.abs(fifths)).map((letter) => ({
+      step: keyStepOf(letter, sharp),
+      name,
+      letter,
+      acc: sharp ? ('sharp' as const) : ('flat' as const),
+    }))
     for (const acc of key.extra ?? []) {
       const entry = {
         name: KEY_ACCIDENTAL_GLYPH[acc.quarters] ?? 'accidentalNatural',
         step: keyStepOf(acc.step, acc.quarters > 0),
         letter: acc.step,
+        acc: keyAccKind(acc.quarters),
       }
       const at = written.findIndex((w) => w.letter === acc.step)
       if (at >= 0) written[at] = entry
       else written.push(entry)
     }
-    return written.map(({ step, name: glyph }) => ({ step, name: glyph }))
+    return written.map(({ step, name: glyph, acc }) => ({ step, name: glyph, acc }))
   }
   const outgoing = stepsFor(from)
   const incoming = stepsFor(to)
@@ -2975,10 +3043,15 @@ function layoutKeyChange(
     dx += glyphsFor(strict).advance(name) + ENGRAVE.keySignatureGap
   }
   const marks = (): void => {
-    for (const entry of incoming) advance(entry.name, entry.step + shift)
+    for (const entry of incoming)
+      advance(entry.name, placeKeyAccidental(entry.step, entry.acc, clef))
   }
+  // …**AND A CANCELLING NATURAL IS PLACED AS A NATURAL**, which is what abcjs's own
+  // `impliedNaturals` walk does: the same three brackets, and its `A` sharp / `G`-`F` flat
+  // exceptions cannot fire because the `acc` is `natural` (`abc_parse_key_voice.js:113-152`).
   const naturals = (): void => {
-    for (const entry of cancelled) advance('accidentalNatural', entry.step + naturalShift)
+    for (const entry of cancelled)
+      advance('accidentalNatural', placeKeyAccidental(entry.step, 'natural', naturalsClef))
   }
   if (naturalsLast) {
     marks()
@@ -3639,7 +3712,6 @@ function layoutRest(
           glyphsFor(strict).width(spec.name),
           dotOff,
           spec.step + restPitchShift(sharedStaffStem),
-          new Set(),
           step,
         ),
       )
@@ -3814,9 +3886,10 @@ function percHead(step: number, accidental: Accidental | null): NoteStyle | null
  * `!style=x!` on the note wins, and only then does a percussion voice consult the map
  * (`abstract-engraver.js:679-688`).
  *
- * ponytail: resolved from the FIRST pitch of a chord, because one head glyph serves the
- * whole chord here — the same shape as the duration, which abcjs also takes from the first
- * note. No corpus tune writes a percussion chord whose pitches map to different heads.
+ * **AND IT IS RESOLVED PER PITCH** — abcjs's loop asks for each head in turn
+ * (`abstract-engraver.js:678-688`), so one `[CE]` can draw an X and a triangle under two
+ * `%%percmap` rows. See `headOf` at the placement site; the chord-level answer still
+ * decides the WIDTH, the dots and the stem, which is abcjs's `noteSymbol`.
  */
 function styledHead(
   base: GlyphName,
@@ -4344,13 +4417,33 @@ function layoutNoteheads(
    * **So the fix is not at this site — the EXTENT has to be carried in pitch.** Left as it
    * is deliberately, with the failed shape recorded so it is not tried a third time.
    */
-  const headDeclaredHalf = (glyphsFor(strict).get(headName)?.declaredHeight ?? 0) / 2
-  /** `symbolHeightInPitches(c) * scale / 2` — the same half box, in PITCH. */
-  const headHalfPitch =
-    (glyphsFor(strict).get(headName)?.declaredHeight ?? 0) / ENGRAVE.spacePerStep / 2
+  /**
+   * ⚠️ **THE HEAD GLYPH IS RESOLVED PER PITCH, NOT PER CHORD.** abcjs's loop tests
+   * `elem.pitches[p].style` first and only then consults the percussion map FOR THAT PITCH
+   * (`abstract-engraver.js:678-688`), so `%%percmap C 36 x` beside `%%percmap E 40
+   * triangle` draws an X and a TRIANGLE in one `[CE]`. Ours took the first pitch's answer
+   * for every head, under a `ponytail:` saying no corpus tune maps two heads differently;
+   * `abcts-ledger-gaps-2` tune 5 does, and the taller triangle is 3.16px of page.
+   *
+   * The chord-level `headName` still decides the WIDTH, the dots and the stem, which is
+   * abcjs's `noteSymbol` — computed once, before the loop, from the element.
+   */
+  const headOf = (position: number): GlyphName =>
+    styledHead(
+      spec.head,
+      event,
+      clef.shape === 'percussion',
+      steps[position] ?? 0,
+      pitches[position]?.accidental ?? null,
+    )
   for (const [position, step] of steps.entries()) {
     const dx = offsetAt[position] ?? 0
     const y = stepToY(step)
+    const drawn = headOf(position)
+    const headDeclaredHalf = (glyphsFor(strict).get(drawn)?.declaredHeight ?? 0) / 2
+    /** `symbolHeightInPitches(c) * scale / 2` — the same half box, in PITCH. */
+    const headHalfPitch =
+      (glyphsFor(strict).get(drawn)?.declaredHeight ?? 0) / ENGRAVE.spacePerStep / 2
     pendingHeads.push({
       /**
        * **THE OFFSET IS `shiftheadx` AND NOTHING ELSE.** `createNoteHead` builds the head as
@@ -4366,7 +4459,7 @@ function layoutNoteheads(
        * derivation shows: `S8-layout` X:811 prints `off -9.810000000000002` where abcjs
        * constructs -9.81, and `856.2469999999996 + 6.09` is one ULP under its `…998`.
        */
-      ...glyphAt(headName, headX + dx, step),
+      ...glyphAt(drawn, headX + dx, step),
       dx,
       role: 'notehead',
       ...(stepped[position] === undefined ? {} : { dataName: writtenNote(stepped[position].pitch) }),
@@ -4427,12 +4520,11 @@ function layoutNoteheads(
      */
     const dotShiftX = up && offsetAt.some((d) => d > 0) ? headInk + ENGRAVE.accidentalGap : 0
     const dxBase = headInk + dotShiftX
-    const taken = new Set<number>()
     for (const step of steps) {
       const pos = chordPosOf(step)
       pendingDots.set(
         step,
-        dotGlyphs(spec.dots, headX, dxBase, dotOff, step, taken, dotStep).map((g) => ({
+        dotGlyphs(spec.dots, headX, dxBase, dotOff, step, dotStep).map((g) => ({
           ...g,
           ...pos,
         })),
@@ -4528,14 +4620,23 @@ function layoutNoteheads(
      * `S5-directives`' `K:C treble style=rhythm` opens with four beamed `B`s whose stems
      * stopped 3.88px — one whole pitch — short of abcjs's.
      */
+    /**
+     * ⚠️ **AND IT IS THE HIGHEST HEAD'S GLYPH, BECAUSE `noteHead` IS WHATEVER THE PITCH
+     * LOOP LEFT.** abcjs reassigns it per pitch and tests it AFTER the loop
+     * (`abstract-engraver.js:730-761`), so on a chord whose heads differ — a `%%percmap`
+     * mapping two of them to different shapes — the rule follows the LAST one created,
+     * which is the top of the chord. Reading the chord-level glyph took
+     * `abcts-ledger-gaps-2` tune 5's stem 1.2 pitch short.
+     */
+    const stemmedHead = headOf(steps.length - 1)
     const headStemShift =
-      headName === 'noteheadSlashHorizontalEnds'
+      stemmedHead === 'noteheadSlashHorizontalEnds'
         ? up
           ? 1
           : -1
         : beamed
           ? 0
-          : headName === 'noteheadTriangleUpBlack'
+          : stemmedHead === 'noteheadTriangleUpBlack'
             ? up
               ? -1.2
               : -0.7
@@ -10475,11 +10576,28 @@ function layoutMeasure(
   // measure's notes — abcjs builds it with `createClef` like any other, an ordinary
   // zero-duration `staff-extra clef` on the voice's child list.
   const drawClefChange = (): void => {
-    // NOT WHEN THE MEASURE OPENS A SYSTEM — the prefix already reprints the clef in force
-    // there, and abcjs prints exactly one. A `K:C clef=bass` written on its own line above
-    // the music it governs is that case, and drawing both put `visual-selection-03` 24px
-    // wider than abcjs on every line.
-    if (measure.clefChange == null || measure.startsSystem) return
+    /**
+     * NOT WHEN THE PREFIX ALREADY PRINTED IT — abcjs prints exactly one. A `K:C clef=bass`
+     * written on its own line above the music it governs is that case, and drawing both put
+     * `visual-selection-03` 24px wider than abcjs on every line.
+     *
+     * ⚠️ **AND "THE PREFIX PRINTED IT" IS THE LEADS-LINE TEST, NOT `startsSystem`.** An
+     * INLINE `[K:… clef=]` written after the line's first note is not that line's clef at
+     * all (see `clefLeadsHere`), so the prefix has the OLD one and this change is a stream
+     * element like any other — which is where abcjs draws it. Guarding on the flag alone
+     * dropped it outright: `abcts-ledger-gaps-2` tune 6 came out 36px narrow with one clef
+     * where abcjs draws two.
+     */
+    if (measure.clefChange == null) return
+    // …and NOT AT THE HEAD when it was written after some of the measure's music — see
+    // `clefChangeAt`. The event loop has it.
+    if (clefChangeAt > 0) return
+    if (
+      measure.startsSystem === true &&
+      (measure.clefChangeSourceRange?.start ?? Number.NEGATIVE_INFINITY) <
+        musicStartsAt(measure)
+    )
+      return
     const change = layoutClef(x, measure.clefChange, strict)
     if (change === null) return
     elements.push(
@@ -10533,6 +10651,13 @@ function layoutMeasure(
         ).length
   const singularMeterAt =
     measure.meterChanges === undefined ? meterEventIndex(measure.meterChangeSourceRange) : 0
+  /**
+   * **AND A MID-MEASURE CLEF CHANGE IS THE SAME QUESTION** — `B B [K:C clef=perc] B B|`
+   * draws the clef between the second and third notes, because abcjs appends it to the
+   * voice's child list where it is READ (`abc_parse_header.js:508-509`). Ours drew it at
+   * the measure's head and pitched every note of the measure by one clef.
+   */
+  const clefChangeAt = meterEventIndex(measure.clefChangeSourceRange)
   const extraMeters = [
     ...(measure.meterChanges ?? []).slice(1),
     // …and the singular one joins them when it does not lead its measure.
@@ -10643,8 +10768,29 @@ function layoutMeasure(
     drawPart()
   }
 
+  /**
+   * The clef in force INSIDE this measure — the parameter until a mid-measure change, and
+   * the new one after it. Every pitch after the change is read against it, which is what
+   * `getCoreNote` does with `multilineVars.clef` as the parser walks the line.
+   */
+  let clefNow = clef
+  const drawClefBefore = (eventIndex: number): void => {
+    if (measure.clefChange == null || clefChangeAt === 0 || clefChangeAt !== eventIndex) return
+    const change = layoutClef(x, measure.clefChange, strict)
+    if (change !== null) {
+      elements.push(
+        measure.clefChangeSourceRange == null
+          ? change
+          : { ...change, sourceRange: measure.clefChangeSourceRange },
+      )
+      fixed(change.width + ENGRAVE.prefixGap, ENGRAVE.prefixGap, 'other', 0, change.width)
+      x += change.width + ENGRAVE.prefixGap
+    }
+    clefNow = measure.clefChange
+  }
   for (const [eventIndex, event] of measure.events.entries()) {
     drawMetersBefore(eventIndex)
+    drawClefBefore(eventIndex)
     if (measure.partLabel !== null && eventIndex === partIndex && partIndex > 0) {
       elements.push(layoutPart(x, measure.partLabel, measure.partLabelSourceRange))
       fixed(0, 0, 'part')
@@ -10656,7 +10802,7 @@ function layoutMeasure(
     const el = layoutEvent(
       event,
       x,
-      clef,
+      clefNow,
       spacingScale,
       group === null ? null : (directions.get(group) ?? null),
       stemOut,
@@ -10733,20 +10879,20 @@ function layoutMeasure(
         event.type === 'note'
           ? event.pitch
           : event.type === 'chord'
-            ? [...event.pitches].sort((a, b) => pitchToStep(a, clef) - pitchToStep(b, clef))[0]
+            ? [...event.pitches].sort((a, b) => pitchToStep(a, clefNow) - pitchToStep(b, clefNow))[0]
             : undefined
       /** The chord's heads ASCENDING, with each one's own tie flag beside it. */
       const tieHeads =
         event.type === 'chord'
           ? event.pitches
               .map((pp, k) => ({
-                step: pitchToStep(pp, clef),
+                step: pitchToStep(pp, clefNow),
                 tied: event.tiedPitches?.[k] ?? false,
               }))
               .sort((a, b) => a.step - b.step)
           : first === undefined
             ? []
-            : [{ step: pitchToStep(first, clef), tied: false }]
+            : [{ step: pitchToStep(first, clefNow), tied: false }]
       anchors.push({
         system: 0, // filled in when the block is placed into a system
         element: elements.length,
@@ -10760,8 +10906,8 @@ function layoutMeasure(
         pitchY:
           first === undefined
             ? (Math.min(...heads.map((h) => h.y)) + Math.max(...heads.map((h) => h.y))) / 2
-            : stepToY(pitchToStep(first, clef)),
-        ...(first === undefined ? {} : { pitchStep: pitchToStep(first, clef) }),
+            : stepToY(pitchToStep(first, clefNow)),
+        ...(first === undefined ? {} : { pitchStep: pitchToStep(first, clefNow) }),
         // Ascending, which is the order `layoutNoteheads` draws them in and the order
         // abcjs's sorted `el.pitches` hands `addSlursAndTies`.
         tieSteps: tieHeads.map((h) => h.step),
@@ -11625,11 +11771,28 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       .flatMap((v) => (v?.measures ?? []).filter((m) => m.startsSystem).map(musicStartsAt))
     let previousLineOpenedAt = -1
     const blocks = (voice?.measures ?? []).map((measure, measureIndex) => {
-      // A mid-tune clef prints at the START of its measure and governs it — abcjs's
-      // `staff-extra clef` is emitted before the measure's notes, and everything after it
-      // is read against the new clef.
-      if (measure.clefChange != null) clefInForce = measure.clefChange
+      /**
+       * A mid-tune clef prints at the START of its measure and governs it — abcjs's
+       * `staff-extra clef` is emitted before the measure's notes, and everything after it
+       * is read against the new clef.
+       *
+       * ⚠️ **BUT A CHANGE THAT DOES NOT LEAD ITS LINE IS NOT THAT LINE'S CLEF.**
+       * `startNewLine` copies `multilineVars.clef` at the moment the line opens
+       * (`abc_parse_music.js:980-990`), so an INLINE `[K:… clef=]` written after the line's
+       * first note leaves `staff.clef` alone and reaches the NEXT line's. Measured through
+       * abcjs on `B B [K:C clef=bass] B B|` + a second line: staff 1 is treble with a
+       * `clef` element in its stream, staff 2 is bass. Ours took it for the whole line and
+       * drew ONE clef, at the head, in the wrong shape — the same test
+       * `keyChangeLeadsLine` already makes for the key.
+       */
+      const clefLeadsHere =
+        measure.clefChange == null ||
+        !(measureIndex === 0 || measure.startsSystem === true) ||
+        (measure.clefChangeSourceRange?.start ?? Number.POSITIVE_INFINITY) <
+          musicStartsAt(measure)
+      if (measure.clefChange != null && clefLeadsHere) clefInForce = measure.clefChange
       clefAtMeasure.push(clefInForce)
+      if (measure.clefChange != null && !clefLeadsHere) clefInForce = measure.clefChange
       if (measure.startsSystem) {
         const leads = keyChangeLeadsLine(measure)
         // WHAT THE PREFIX CANCELS IS THE KEY IN FORCE AT THE CHANGE, NOT THE PREVIOUS
@@ -16474,11 +16637,11 @@ function partBox(el: LayoutElement): PlacedLine[] {
  * cancels the backward walk. Measure the output before trusting the source on order;
  * `anchorAboveStaff` carries the same warning for the same reason.
  *
- * ponytail: anchored on the music ink, so a staff carrying BOTH lyrics and a below
- * annotation would put the mark inside the lyric block — abcjs's below chain is lyric,
- * then chord, then dynamics. No fixture in either corpus writes both, and the honest fix
- * is the same refactor `anchorAboveStaff`'s ending-lane note already asks for: one stack,
- * spent once, instead of three passes each re-deriving the ink.
+ * **THE LYRIC LANE IS SPENT FIRST** — abcjs's below chain is lyric, then chord, then
+ * dynamics — so a staff carrying BOTH takes its annotation off the lane's foot. This used
+ * to anchor on the music's ink and put the mark inside the lyric block; see the
+ * `verticalExtent` call below. The refactor `anchorAboveStaff`'s ending-lane note asks for
+ * — one stack, spent once — is still the honest shape for all three passes.
  */
 function anchorChordsBelow<
   T extends {
@@ -16489,10 +16652,18 @@ function anchorChordsBelow<
   const isBelow = (t: PlacedText): boolean => t.role === 'chordBelow'
   if (!parts.some((p) => p.elements.some((el) => el.texts.some(isBelow)))) return [...parts]
 
-  // The MUSIC's ink. The below marks are already POINT-reserved at the staff line, so
-  // nothing they do reaches this — the same guarantee `anchorAboveStaff` gets by
-  // filtering them out of its own call.
-  const inkBottom = verticalExtent(
+  /**
+   * The MUSIC's ink, **PLUS THE LYRIC LANE**. The below marks are already POINT-reserved at
+   * the staff line, so nothing they do reaches this — the same guarantee
+   * `anchorAboveStaff` gets by filtering them out of its own call.
+   *
+   * ⚠️ **AND abcjs'S BELOW CHAIN SPENDS THE LYRIC LANE FIRST** — lyric, then chord, then
+   * dynamics (`set-upper-and-lower-elements.js:50-96`) — where this anchored on the ink and
+   * put a `"_dolce"` INSIDE the lyric block, 22.71px high, on any staff carrying both. A
+   * `ponytail:` here predicted that and said no fixture in either corpus writes the pair;
+   * `abcts-ledger-gaps-2` tune 2 does.
+   */
+  const extent = verticalExtent(
     parts.flatMap((p) => p.elements.filter((el) => el.type !== 'title')),
     parts.flatMap((p) => p.beams),
     strict,
@@ -16503,7 +16674,8 @@ function anchorChordsBelow<
       voltaLines: parts.flatMap((p) => p.voltaLines ?? []),
       voltaTexts: parts.flatMap((p) => p.voltaTexts ?? []),
     },
-  ).inkBottom
+  )
+  const inkBottom = extent.inkBottom + extent.lyricLane
 
   // `placeInLane`, below arm: each note's marks in REVERSE, into the first lane whose
   // right edge clears this one's left.
@@ -16548,7 +16720,13 @@ function anchorChordsBelow<
 
   const marks = parts.flatMap((p) => p.elements.flatMap((el) => el.texts.filter(isBelow)))
   const block = Math.max(...marks.map(chordHeightOf)) * lanes + ENGRAVE.aboveStackMargin
-  const reserve: readonly [number, number] = [inkBottom, inkBottom + block]
+  /**
+   * ⚠️ **THE RESERVE IS OFF THE INK AND THE BASELINE IS OFF THE LANE.** abcjs spends the
+   * two lanes in turn — `staff.bottom -= lyricLane` then `-= chordLane` — so the chord
+   * lane's own HEIGHT is what it costs the staff, and adding it below the already-spent
+   * lyric lane counts that lane twice: the page grew by exactly one lyric block, 22.71px.
+   */
+  const reserve: readonly [number, number] = [extent.inkBottom, extent.inkBottom + block]
   return parts.map((part) => ({
     ...part,
     elements: part.elements.map((el) =>
@@ -17158,7 +17336,15 @@ function verticalExtent(
   beams: readonly PlacedLine[] = [],
   strict = true,
   furniture: StaffFurniture = {},
-): { top: number; bottom: number; inkBottom: number; topPitch: number; bottomPitch: number } {
+): {
+  top: number
+  bottom: number
+  inkBottom: number
+  /** The LYRIC lane alone — see the return below. */
+  lyricLane: number
+  topPitch: number
+  bottomPitch: number
+} {
   // The staff itself is always present, spanning steps 4 to -4.
   let top = stepToY(4)
   let bottom = stepToY(-4)
@@ -17666,6 +17852,15 @@ function verticalExtent(
     top: top - ENGRAVE.marginY,
     bottom: bottom + ENGRAVE.marginY,
     inkBottom,
+    /**
+     * **THE LYRIC LANE ALONE, IN PIXELS** — what `lower()` spent for it just above, and
+     * zero when the staff sings nothing. abcjs's below chain is lyric, then chord, then
+     * dynamics (`set-upper-and-lower-elements.js:50-96`), so a BELOW annotation hangs off
+     * the lane's foot rather than off the music's ink; `anchorChordsBelow` is the reader.
+     */
+    lyricLane: Number.isFinite(lyricBottom)
+      ? (lyricLanePitch + ENGRAVE.laneMargin + lyricVoiceDrop) * ENGRAVE.spacePerStep
+      : 0,
     topPitch: topPitch + ENGRAVE.marginY / ENGRAVE.spacePerStep,
     bottomPitch: bottomPitch - ENGRAVE.marginY / ENGRAVE.spacePerStep,
   }

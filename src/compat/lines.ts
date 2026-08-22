@@ -805,9 +805,9 @@ function noteFields(
    * front — no octave marks, because those are read after. The flattener reads it back and
    * plays it instead of the pitch.
    *
-   * ponytail: the CLEF IS THE VOICE'S, not the one in force at that measure. abcjs tests
-   * `multilineVars.clef` as the parser walks, so a mid-tune `[K:… clef=perc]` would change
-   * it partway; nothing in either corpus writes one.
+   * **AND THE CLEF IN FORCE DECIDES, NOT THE VOICE'S** — abcjs tests `multilineVars.clef`
+   * as the parser walks, so a mid-tune `[K:… clef=perc]` turns the map on partway through a
+   * line. `abcts-ledger-gaps-2` tune 6 is the fixture; see the call site.
    */
   drumMap?: Readonly<Record<string, number>>,
   /** The measure's own length in whole notes — see `voiceElements`. */
@@ -1251,7 +1251,23 @@ function voiceElements(
   /** …and the key, so a change knows what it is cancelling. See `impliedNaturals`. */
   let keyNow = keyIn;
   for (const measure of measures) {
-    if (measure.clefChange != null) clefNow = measure.clefChange;
+    /**
+     * ⚠️ **A CLEF CHANGE GOVERNS FROM WHERE IT IS WRITTEN, NOT FROM THE MEASURE'S HEAD.**
+     * abcjs reads `multilineVars.clef` as the parser walks the line, so `B B [K:C
+     * clef=perc] B B|` pitches the first two notes in treble and the last two in
+     * percussion — and only the last two are stamped with a `%%MIDI drummap` pitch
+     * (`abc_parse_music.js:1129-1137`). The renderer takes the same split at
+     * `drawClefBefore`; this is its half.
+     */
+    const clefChangeAt =
+      measure.clefChangeSourceRange == null
+        ? 0
+        : measure.events.filter(
+            (e) =>
+              (e.sourceRange?.start ?? Number.POSITIVE_INFINITY) <
+              (measure.clefChangeSourceRange?.start ?? 0),
+          ).length;
+    if (measure.clefChange != null && clefChangeAt === 0) clefNow = measure.clefChange;
     if (measure.meterChange != null)
       barLength = measure.meterChange.numerator / measure.meterChange.denominator;
     /**
@@ -1485,7 +1501,12 @@ function voiceElements(
         noteFields(
           e,
           event,
-          drumMap,
+          // **THE CLEF IN FORCE DECIDES, NOT THE VOICE'S** — `%%MIDI drummap` is read
+          // `if (multilineVars.clef.type === "perc")` as the parser walks
+          // (`abc_parse_music.js:1129`), so a mid-tune `[K:… clef=perc]` turns it on
+          // partway through a line. A `ponytail:` here predicted exactly that shape and
+          // said nothing in either corpus writes one; `abcts-ledger-gaps-2` tune 6 does.
+          clefNow?.shape === "percussion" ? drumMap : undefined,
           barLength,
           elementFonts.note?.(event),
           // `currStaff.workingClef.verticalPos` — the voice's clef, which is what
@@ -1499,7 +1520,11 @@ function voiceElements(
       }
       out.push(e);
     };
-    for (const event of measure.events) note(event);
+    for (const [eventIndex, event] of measure.events.entries()) {
+      if (measure.clefChange != null && clefChangeAt > 0 && eventIndex === clefChangeAt)
+        clefNow = measure.clefChange;
+      note(event);
+    }
     /**
      * **AN `&` OVERLAY LAYER IS READ INTO THE VOICE IT INTERRUPTS, AND `resolveOverlays`
      * SPLITS IT OUT LATER** (`src/compat/overlays.ts`). The parser appends an
@@ -2423,9 +2448,17 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color"]);
       );
     let previousLineOpenedAt = -1;
     (voice?.measures ?? []).forEach((m, i) => {
-      // A mid-tune clef governs from the START of its measure — the renderer reads it the
-      // same way (`layout.ts`, `clefAtMeasure`).
-      if (m.clefChange != null) clefInForce = m.clefChange;
+      /**
+       * A mid-tune clef governs from the START of its measure — the renderer reads it the
+       * same way (`layout.ts`, `clefAtMeasure`) — **EXCEPT WHERE IT DOES NOT LEAD ITS
+       * LINE**, in which case `startNewLine` has already copied the old one onto the staff
+       * and only the NEXT line sees the change. See the renderer's `clefLeadsHere`.
+       */
+      const clefDeferred =
+        m.clefChange != null &&
+        (i === 0 || m.startsSystem === true) &&
+        !leadsLine(m, m.clefChangeSourceRange?.start);
+      if (m.clefChange != null && !clefDeferred) clefInForce = m.clefChange;
       let consumedHere = false;
       if (i === 0 || m.startsSystem) {
         const restamp = staffVoices
@@ -2606,6 +2639,9 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color"]);
           ...(meter == null ? {} : { meter: meterElement(meter) }),
         });
       }
+      // …and a DEFERRED clef change takes effect once the staff has been stamped, which is
+      // what makes it the NEXT line's — see `clefDeferred`.
+      if (clefDeferred && m.clefChange != null) clefInForce = m.clefChange
       if (m.keyChange !== null) {
         /**
          * A change consumed by THIS line's push is done; any other stays pending for the
@@ -2733,7 +2769,7 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color"]);
         endings[k] ?? (endings[k] = { open: false }),
         score.keywarn,
         // The drum map reaches a voice only when ITS clef is percussion.
-        (v.clef ?? score.clef)?.shape === "percussion" ? score.drumMap : undefined,
+        score.drumMap,
         // …**AND IT IS THE CLEF IN FORCE, NOT THE VOICE'S OWN.** See `clefAt`.
         clefAt(v, from),
         openTies[k] ?? (openTies[k] = { pitches: [] }),

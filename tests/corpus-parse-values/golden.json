@@ -4794,6 +4794,87 @@
   "L1/s0/v0/3": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":547,\"pitches\":[{\"accidental\":\"sharp\",\"name\":\"^c\",\"pitch\":7,\"verticalPos\":7}],\"startChar\":545}",
   "L1/s0/v0/4": "{\"el_type\":\"bar\",\"endChar\":548,\"startChar\":547,\"type\":\"bar_thin\"}"
  },
+ "repo/abcts-ledger-gaps-2-tune0": {
+  "L0": "{}",
+  "L0/s0": "{\"clef\":{\"clefPos\":8,\"type\":\"alto\",\"verticalPos\":-8},\"key\":{\"acc\":\"#\",\"accidentals\":[{\"acc\":\"sharp\",\"note\":\"f\",\"verticalPos\":4},{\"acc\":\"sharp\",\"note\":\"c\",\"verticalPos\":8},{\"acc\":\"sharp\",\"note\":\"g\",\"verticalPos\":5},{\"acc\":\"sharp\",\"note\":\"d\",\"verticalPos\":9},{\"acc\":\"sharp\",\"note\":\"A\",\"verticalPos\":6},{\"acc\":\"sharp\",\"note\":\"e\",\"verticalPos\":10}],\"mode\":\"\",\"root\":\"F\"},\"meter\":{\"type\":\"specified\",\"value\":[{\"den\":\"4\",\"num\":\"4\"}]}}",
+  "L0/s0/v0/0": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":394,\"pitches\":[{\"name\":\"C\",\"pitch\":0,\"verticalPos\":8}],\"startChar\":392}",
+  "L0/s0/v0/1": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":396,\"pitches\":[{\"name\":\"D\",\"pitch\":1,\"verticalPos\":9}],\"startChar\":394}",
+  "L0/s0/v0/2": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":398,\"pitches\":[{\"name\":\"E\",\"pitch\":2,\"verticalPos\":10}],\"startChar\":396}",
+  "L0/s0/v0/3": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":399,\"pitches\":[{\"name\":\"F\",\"pitch\":3,\"verticalPos\":11}],\"startChar\":398}",
+  "L0/s0/v0/4": "{\"el_type\":\"bar\",\"endChar\":400,\"startChar\":399,\"type\":\"bar_thin\"}"
+ },
+ "repo/abcts-ledger-gaps-2-tune1": {
+  "L0": "{}",
+  "L0/s0": "{\"clef\":{\"clefPos\":4,\"type\":\"treble\",\"verticalPos\":0},\"key\":{\"acc\":\"\",\"accidentals\":[],\"mode\":\"\",\"root\":\"C\"},\"meter\":{\"type\":\"specified\",\"value\":[{\"den\":\"4\",\"num\":\"4\"}]}}",
+  "L0/s0/v0/0": "{\"duration\":0.75,\"el_type\":\"note\",\"endChar\":476,\"pitches\":[{\"name\":\"C\",\"pitch\":0,\"verticalPos\":0},{\"name\":\"D\",\"pitch\":1,\"verticalPos\":1}],\"startChar\":470}",
+  "L0/s0/v0/1": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":477,\"pitches\":[{\"name\":\"E\",\"pitch\":2,\"verticalPos\":2}],\"startChar\":476}",
+  "L0/s0/v0/2": "{\"el_type\":\"bar\",\"endChar\":478,\"startChar\":477,\"type\":\"bar_thin\"}"
+ },
+ "repo/abcts-ledger-gaps-2-tune2": {
+  "L0": "{}",
+  "L0/s0": "{\"clef\":{\"clefPos\":4,\"type\":\"treble\",\"verticalPos\":0},\"key\":{\"acc\":\"\",\"accidentals\":[],\"mode\":\"\",\"root\":\"C\"},\"meter\":{\"type\":\"specified\",\"value\":[{\"den\":\"4\",\"num\":\"4\"}]}}",
+  "L0/s0/v0/0": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":555,\"lyric\":[{\"divider\":\" \",\"syllable\":\"la\"}],\"pitches\":[{\"name\":\"C\",\"pitch\":0,\"verticalPos\":0}],\"startChar\":553}",
+  "L0/s0/v0/1": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":557,\"lyric\":[{\"divider\":\" \",\"syllable\":\"la\"}],\"pitches\":[{\"name\":\"D\",\"pitch\":1,\"verticalPos\":1}],\"startChar\":555}",
+  "L0/s0/v0/2": "{\"chord\":[{\"name\":\"dolce\",\"position\":\"below\"}],\"duration\":0.25,\"el_type\":\"note\",\"endChar\":567,\"lyric\":[{\"divider\":\" \",\"syllable\":\"la\"}],\"pitches\":[{\"name\":\"E\",\"pitch\":2,\"verticalPos\":2}],\"startChar\":557}",
+  "L0/s0/v0/3": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":568,\"lyric\":[{\"divider\":\" \",\"syllable\":\"la\"}],\"pitches\":[{\"name\":\"F\",\"pitch\":3,\"verticalPos\":3}],\"startChar\":567}",
+  "L0/s0/v0/4": "{\"el_type\":\"bar\",\"endChar\":569,\"startChar\":568,\"type\":\"bar_thin\"}"
+ },
+ "repo/abcts-ledger-gaps-2-tune3": {
+  "L0": "{}",
+  "L0/s0": "{\"clef\":{\"clefPos\":4,\"type\":\"treble\",\"verticalPos\":0},\"key\":{\"acc\":\"\",\"accidentals\":[],\"mode\":\"\",\"root\":\"C\"},\"meter\":{\"type\":\"specified\",\"value\":[{\"den\":\"4\",\"num\":\"4\"}]}}",
+  "L0/s0/v0/0": "{\"decoration\":[\"p\"],\"duration\":0.25,\"el_type\":\"note\",\"endChar\":668,\"lyric\":[{\"divider\":\" \",\"syllable\":\"la\"}],\"pitches\":[{\"name\":\"C\",\"pitch\":0,\"verticalPos\":0}],\"startChar\":663}",
+  "L0/s0/v0/1": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":670,\"lyric\":[{\"divider\":\" \",\"syllable\":\"la\"}],\"pitches\":[{\"name\":\"D\",\"pitch\":1,\"verticalPos\":1}],\"startChar\":668}",
+  "L0/s0/v0/2": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":672,\"lyric\":[{\"divider\":\" \",\"syllable\":\"la\"}],\"pitches\":[{\"name\":\"E\",\"pitch\":2,\"verticalPos\":2}],\"startChar\":670}",
+  "L0/s0/v0/3": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":673,\"lyric\":[{\"divider\":\" \",\"syllable\":\"la\"}],\"pitches\":[{\"name\":\"F\",\"pitch\":3,\"verticalPos\":3}],\"startChar\":672}",
+  "L0/s0/v0/4": "{\"el_type\":\"bar\",\"endChar\":674,\"startChar\":673,\"type\":\"bar_thin\"}",
+  "L1": "{}",
+  "L1/s0": "{\"clef\":{\"clefPos\":4,\"type\":\"treble\",\"verticalPos\":0},\"key\":{\"acc\":\"\",\"accidentals\":[],\"mode\":\"\",\"root\":\"C\"}}",
+  "L1/s0/v0/0": "{\"decoration\":[\"f\"],\"duration\":0.25,\"el_type\":\"note\",\"endChar\":694,\"pitches\":[{\"name\":\"G\",\"pitch\":4,\"verticalPos\":4}],\"startChar\":689}",
+  "L1/s0/v0/1": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":696,\"pitches\":[{\"name\":\"A\",\"pitch\":5,\"verticalPos\":5}],\"startChar\":694}",
+  "L1/s0/v0/2": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":698,\"pitches\":[{\"name\":\"B\",\"pitch\":6,\"verticalPos\":6}],\"startChar\":696}",
+  "L1/s0/v0/3": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":699,\"pitches\":[{\"name\":\"c\",\"pitch\":7,\"verticalPos\":7}],\"startChar\":698}",
+  "L1/s0/v0/4": "{\"el_type\":\"bar\",\"endChar\":700,\"startChar\":699,\"type\":\"bar_thin\"}"
+ },
+ "repo/abcts-ledger-gaps-2-tune4": {
+  "L0": "{}",
+  "L0/s0": "{\"clef\":{\"clefPos\":4,\"type\":\"treble\",\"verticalPos\":0},\"key\":{\"acc\":\"\",\"accidentals\":[],\"mode\":\"\",\"root\":\"C\"},\"meter\":{\"type\":\"specified\",\"value\":[{\"den\":\"4\",\"num\":\"4\"}]}}",
+  "L0/s0/v0/0": "{\"duration\":0.5,\"el_type\":\"note\",\"endChar\":788,\"rest\":{\"type\":\"rest\"},\"startChar\":784}",
+  "L0/s0/v0/1": "{\"duration\":0.5,\"el_type\":\"note\",\"endChar\":790,\"pitches\":[{\"name\":\"C\",\"pitch\":0,\"verticalPos\":0}],\"startChar\":788}",
+  "L0/s0/v0/2": "{\"el_type\":\"bar\",\"endChar\":791,\"startChar\":790,\"type\":\"bar_thin\"}",
+  "L0/s1": "{\"clef\":{\"clefPos\":4,\"type\":\"treble\",\"verticalPos\":0},\"key\":{\"acc\":\"\",\"accidentals\":[],\"mode\":\"\",\"root\":\"C\"},\"meter\":{\"type\":\"specified\",\"value\":[{\"den\":\"4\",\"num\":\"4\"}]}}",
+  "L0/s1/v0/0": "{\"chord\":[{\"name\":\"top\",\"position\":\"above\"}],\"duration\":0.5,\"el_type\":\"note\",\"endChar\":807,\"pitches\":[{\"name\":\"E\",\"pitch\":2,\"verticalPos\":2}],\"startChar\":797}",
+  "L0/s1/v0/1": "{\"duration\":0.5,\"el_type\":\"note\",\"endChar\":809,\"pitches\":[{\"name\":\"F\",\"pitch\":3,\"verticalPos\":3}],\"startChar\":807}",
+  "L0/s1/v0/2": "{\"el_type\":\"bar\",\"endChar\":810,\"startChar\":809,\"type\":\"bar_thin\"}"
+ },
+ "repo/abcts-ledger-gaps-2-tune5": {
+  "L0": "{}",
+  "L0/s0": "{\"clef\":{\"clefPos\":6,\"type\":\"perc\",\"verticalPos\":0},\"key\":{\"acc\":\"\",\"accidentals\":[],\"mode\":\"\",\"root\":\"C\"},\"meter\":{\"type\":\"specified\",\"value\":[{\"den\":\"4\",\"num\":\"4\"}]}}",
+  "L0/s0/v0/0": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":932,\"pitches\":[{\"name\":\"C\",\"pitch\":0,\"verticalPos\":0},{\"name\":\"E\",\"pitch\":2,\"verticalPos\":2}],\"startChar\":927}",
+  "L0/s0/v0/1": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":934,\"pitches\":[{\"name\":\"C\",\"pitch\":0,\"verticalPos\":0}],\"startChar\":932}",
+  "L0/s0/v0/2": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":936,\"pitches\":[{\"name\":\"E\",\"pitch\":2,\"verticalPos\":2}],\"startChar\":934}",
+  "L0/s0/v0/3": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":937,\"pitches\":[{\"name\":\"C\",\"pitch\":0,\"verticalPos\":0}],\"startChar\":936}",
+  "L0/s0/v0/4": "{\"el_type\":\"bar\",\"endChar\":938,\"startChar\":937,\"type\":\"bar_thin\"}"
+ },
+ "repo/abcts-ledger-gaps-2-tune6": {
+  "L0": "{}",
+  "L0/s0": "{\"clef\":{\"clefPos\":4,\"type\":\"treble\",\"verticalPos\":0},\"key\":{\"acc\":\"\",\"accidentals\":[],\"mode\":\"\",\"root\":\"C\"},\"meter\":{\"type\":\"specified\",\"value\":[{\"den\":\"4\",\"num\":\"4\"}]}}",
+  "L0/s0/v0/0": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":1021,\"pitches\":[{\"name\":\"B\",\"pitch\":6,\"verticalPos\":6}],\"startChar\":1019}",
+  "L0/s0/v0/1": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":1023,\"pitches\":[{\"name\":\"B\",\"pitch\":6,\"verticalPos\":6}],\"startChar\":1021}",
+  "L0/s0/v0/2": "{\"clefPos\":6,\"el_type\":\"clef\",\"endChar\":1038,\"startChar\":1023,\"type\":\"perc\",\"verticalPos\":0}",
+  "L0/s0/v0/3": "{\"acc\":\"\",\"accidentals\":[],\"el_type\":\"key\",\"endChar\":1038,\"mode\":\"\",\"root\":\"C\",\"startChar\":1023}",
+  "L0/s0/v0/4": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":1041,\"pitches\":[{\"midipitch\":38,\"name\":\"B\",\"pitch\":6,\"verticalPos\":6}],\"startChar\":1038}",
+  "L0/s0/v0/5": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":1042,\"pitches\":[{\"midipitch\":38,\"name\":\"B\",\"pitch\":6,\"verticalPos\":6}],\"startChar\":1041}",
+  "L0/s0/v0/6": "{\"el_type\":\"bar\",\"endChar\":1043,\"startChar\":1042,\"type\":\"bar_thin\"}"
+ },
+ "repo/abcts-ledger-gaps-2-tune7": {
+  "L0": "{}",
+  "L0/s0": "{\"clef\":{\"clefPos\":4,\"type\":\"treble\",\"verticalPos\":0},\"key\":{\"acc\":\"\",\"accidentals\":[],\"mode\":\"\",\"root\":\"C\"},\"meter\":{\"type\":\"specified\",\"value\":[{\"den\":\"4\",\"num\":\"4\"}]}}",
+  "L0/s0/v0/0": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":1116,\"pitches\":[{\"name\":\"C\",\"pitch\":0,\"startSlur\":[{\"label\":101}],\"verticalPos\":0},{\"endSlur\":[201],\"name\":\"E\",\"pitch\":2,\"verticalPos\":2},{\"name\":\"G\",\"pitch\":4,\"verticalPos\":4}],\"startChar\":1108}",
+  "L0/s0/v0/1": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":1118,\"pitches\":[{\"name\":\"D\",\"pitch\":1,\"verticalPos\":1}],\"startChar\":1116}",
+  "L0/s0/v0/2": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":1120,\"pitches\":[{\"name\":\"E\",\"pitch\":2,\"verticalPos\":2}],\"startChar\":1118}",
+  "L0/s0/v0/3": "{\"duration\":0.25,\"el_type\":\"note\",\"endChar\":1121,\"pitches\":[{\"name\":\"F\",\"pitch\":3,\"verticalPos\":3}],\"startChar\":1120}",
+  "L0/s0/v0/4": "{\"el_type\":\"bar\",\"endChar\":1122,\"startChar\":1121,\"type\":\"bar_thin\"}"
+ },
  "repo/abcts-ledger-gaps-tune0": {
   "L0": "{}",
   "L0/s0": "{\"clef\":{\"clefPos\":4,\"type\":\"treble\",\"verticalPos\":0},\"key\":{\"acc\":\"\",\"accidentals\":[],\"mode\":\"\",\"root\":\"C\"},\"meter\":{\"type\":\"specified\",\"value\":[{\"den\":\"4\",\"num\":\"4\"}]}}",

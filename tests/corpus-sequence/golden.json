@@ -49870,6 +49870,114 @@
    }
   ]
  ],
+ "abcts-ledger-gaps-2": [
+  [
+   {
+    "el_type": "instrument",
+    "pickupLength": 0,
+    "program": 0
+   },
+   {
+    "el_type": "tempo",
+    "qpm": 180
+   },
+   {
+    "el_type": "key",
+    "accidentals": [
+     {
+      "acc": "sharp",
+      "note": "f",
+      "verticalPos": 4
+     },
+     {
+      "acc": "sharp",
+      "note": "c",
+      "verticalPos": 8
+     },
+     {
+      "acc": "sharp",
+      "note": "g",
+      "verticalPos": 5
+     },
+     {
+      "acc": "sharp",
+      "note": "d",
+      "verticalPos": 9
+     },
+     {
+      "acc": "sharp",
+      "note": "A",
+      "verticalPos": 6
+     },
+     {
+      "acc": "sharp",
+      "note": "e",
+      "verticalPos": 10
+     }
+    ]
+   },
+   {
+    "el_type": "meter",
+    "den": "4",
+    "num": 4
+   },
+   {
+    "el_type": "note",
+    "duration": 0.25,
+    "pitches": [
+     {
+      "pitch": 0,
+      "name": "C",
+      "verticalPos": 8,
+      "highestVert": 8
+     }
+    ],
+    "timing": 0
+   },
+   {
+    "el_type": "note",
+    "duration": 0.25,
+    "pitches": [
+     {
+      "pitch": 1,
+      "name": "D",
+      "verticalPos": 9,
+      "highestVert": 9
+     }
+    ],
+    "timing": 0.25
+   },
+   {
+    "el_type": "note",
+    "duration": 0.25,
+    "pitches": [
+     {
+      "pitch": 2,
+      "name": "E",
+      "verticalPos": 10,
+      "highestVert": 10
+     }
+    ],
+    "timing": 0.5
+   },
+   {
+    "el_type": "note",
+    "duration": 0.25,
+    "pitches": [
+     {
+      "pitch": 3,
+      "name": "F",
+      "verticalPos": 11,
+      "highestVert": 11
+     }
+    ],
+    "timing": 0.75
+   },
+   {
+    "el_type": "bar"
+   }
+  ]
+ ],
  "abcts-ledger-gaps": [
   [
    {

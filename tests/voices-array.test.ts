@@ -92,6 +92,7 @@ const table = (): Case[] =>
 /** The cases that agree on EVERY row. Shrinks never — see `tests/lines.test.ts`. */
 const PASSING: readonly string[] = [
   "abcts-ledger-gaps",
+  "abcts-ledger-gaps-2",
   "abcts-model-gaps",
   "abcts-slur-shapes",
   "abcjs-parse-book_parser-01-example",

@@ -313,6 +313,18 @@ const PASSING: readonly string[] = [
   "abcts-visualtranspose-tune1",
   "abcts-visualtranspose-tune2",
   "abcts-visualtranspose-tune3",
+  // `abcts-ledger-gaps-2.abc` — eight more, and FIVE were real defects: a key signature on
+  // a TENOR clef sat an octave high, a chord's dots were bumped apart where abcjs lets them
+  // coincide, a below annotation landed inside the lyric block, a percussion chord took one
+  // head glyph for every pitch, and a mid-measure `[K:… clef=]` was read as the whole line's.
+  "abcts-ledger-gaps-2-tune0",
+  "abcts-ledger-gaps-2-tune1",
+  "abcts-ledger-gaps-2-tune2",
+  "abcts-ledger-gaps-2-tune3",
+  "abcts-ledger-gaps-2-tune4",
+  "abcts-ledger-gaps-2-tune5",
+  "abcts-ledger-gaps-2-tune6",
+  "abcts-ledger-gaps-2-tune7",
   // `abcts-ledger-gaps.abc` — six shapes the `ponytail:` LEDGER named, each under a note
   // saying no fixture writes one. THREE WERE REAL DEFECTS: `%%scale` was unmodelled, a
   // chord symbol inside the brackets did not end the chord, and a microtone inside them was

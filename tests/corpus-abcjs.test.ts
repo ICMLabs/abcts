@@ -413,13 +413,14 @@ const WITHIN: Readonly<Record<string, number>> = {
   // used for every feature no fixture exercised.
   //
   // …and `abcts-slur-shapes.abc`, `abcts-model-gaps.abc` and `abcts-ledger-gaps.abc` are
-  // three more of them — the last written for six shapes the `ponytail:` LEDGER named as
-  // things this engine does not do, each under a note saying no fixture writes one. Three
-  // of the six were real defects and all six are byte-exact now.
-  "0.05": 180,
-  "1": 180,
-  "5": 180,
-  "25": 180,
+  // three more of them — and `abcts-ledger-gaps-2.abc` is a FOURTH. Both ledger fixtures
+  // write shapes a `ponytail:` had named and declared unwritten by either corpus: three of
+  // the first six were real defects and FIVE of the second eight were. All fourteen tunes
+  // are byte-exact.
+  "0.05": 181,
+  "1": 181,
+  "5": 181,
+  "25": 181,
 };
 
 const names = readdirSync(fixturesDir)

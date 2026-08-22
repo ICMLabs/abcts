@@ -2720,6 +2720,83 @@
    "hasPickup": false
   }
  ],
+ "repo/abcts-ledger-gaps-2": [
+  {
+   "header": "X:1\nT:a key signature on a TENOR clef\nL:1/4\nM:4/4\nK:F# clef=tenor\n",
+   "measures": [
+    {
+     "abc": "C D E F|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:2\nT:a chord whose dotted heads are a second apart\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "[CD]3 E|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:a below annotation on a staff that also has lyrics\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C D \"_dolce\"E F|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:4\nT:lyrics on the FIRST system only, with a dynamic on both\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "!p!C D E F|"
+    },
+    {
+     "abc": "!f!G A B c|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:5\nT:an annotation on the note a rest collides with\nL:1/4\nM:4/4\nV:1\nV:2\nK:C\n",
+   "measures": [
+    {
+     "abc": " z2 C2|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:6\nT:a percussion chord whose heads map differently\nL:1/4\nM:4/4\n%%percmap C 36 x\n%%percmap E 40 triangle\nK:C perc\n",
+   "measures": [
+    {
+     "abc": "[CE] C E C|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:7\nT:a mid-tune clef change to percussion\nL:1/4\nM:4/4\n%%MIDI drummap B 38\nK:C\n",
+   "measures": [
+    {
+     "abc": "B B [K:C clef=perc] B B|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:8\nT:a slur written inside the chord brackets\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "[(CE)G] D E F|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
  "repo/abcts-ledger-gaps": [
   {
    "header": "X:1\nT:a chord where only SOME heads are tied\nL:1/4\nM:4/4\nK:C\n",

@@ -10,7 +10,8 @@ import type { Layout, LayoutElement } from "../renderer/layout.js";
 import type { SelectableRecord } from "../renderer/svg.js";
 import {
   FLAT_ORDER,
-  keySignatureShift,
+  keyAccKind,
+  placeKeyAccidental,
   keyStepOf,
   middleLineIndex,
   SHARP_ORDER,
@@ -582,10 +583,16 @@ export const impliedNaturals = (
 export const keyElement = (key: KeySignature, clef: Clef): AbcElement => {
   const fifths = keyFifths(key);
   const sharps = fifths > 0;
-  const shift = keySignatureShift(clef);
   const letters = (sharps ? SHARP_ORDER : FLAT_ORDER).slice(0, Math.abs(fifths));
   const accidentals = letters.map((letter) => {
-      const step = keyStepOf(letter, sharps) + shift;
+      // …**AND THE POSITION IS abcjs's OWN TABLE, NOT A SINGLE SHIFT** — see
+      // `placeKeyAccidental`. The two agree on treble, bass and alto and part company on
+      // TENOR, which `abcts-ledger-gaps-2` tune 0 is.
+      const step = placeKeyAccidental(
+        keyStepOf(letter, sharps),
+        sharps ? "sharp" : "flat",
+        clef,
+      );
       return {
         acc: sharps ? "sharp" : "flat",
         // **THE NAME IS THE TREBLE SPELLING AND DOES NOT MOVE WITH THE CLEF** — abcjs's
@@ -610,7 +617,7 @@ export const keyElement = (key: KeySignature, clef: Clef): AbcElement => {
    */
   for (const acc of key.extra ?? []) {
     const up = acc.quarters > 0;
-    const step = keyStepOf(acc.step, up) + shift;
+    const step = placeKeyAccidental(keyStepOf(acc.step, up), keyAccKind(acc.quarters), clef);
     const entry = {
       acc: KEY_ACCIDENTAL_ACC[acc.quarters] ?? "natural",
       note: abcName(keyStepOf(acc.step, up) + TREBLE_MIDDLE_LINE_INDEX),

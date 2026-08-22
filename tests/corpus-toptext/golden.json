@@ -3310,6 +3310,174 @@
   ],
   "bottomText": []
  },
+ "repo/abcts-ledger-gaps-2-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a key signature on a TENOR clef",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 330,
+    "endChar": 363,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-ledger-gaps-2-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a chord whose dotted heads are a second apart",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 406,
+    "endChar": 453,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-ledger-gaps-2-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a below annotation on a staff that also has lyrics",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 484,
+    "endChar": 536,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-ledger-gaps-2-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "lyrics on the FIRST system only, with a dynamic on both",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 589,
+    "endChar": 646,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-ledger-gaps-2-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "an annotation on the note a rest collides with",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 706,
+    "endChar": 754,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-ledger-gaps-2-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a percussion chord whose heads map differently",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 816,
+    "endChar": 864,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-ledger-gaps-2-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a mid-tune clef change to percussion",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 944,
+    "endChar": 982,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-ledger-gaps-2-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a slur written inside the chord brackets",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1049,
+    "endChar": 1091,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
  "repo/abcts-ledger-gaps-tune0": {
   "topText": [
    {
