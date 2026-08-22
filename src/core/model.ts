@@ -439,6 +439,22 @@ export interface FreeTextBlock {
   readonly sourceRange?: SourceRange
 }
 
+/**
+ * **THE BLOCK'S TEXT AS abcjs HOLDS IT** — one string, and a `%%begintext` block's every
+ * line contributes its OWN newline (`FreeTextBlock.fromBlock`), so a block of one empty
+ * line is `"\n"` and never the empty string.
+ *
+ * It is `info.text` on both surfaces abcjs publishes it through — the `tune.lines` entry
+ * and the `nonMusic` row the engraver hangs on it, which is also what the row's selectable
+ * carries (`draw/non-music.js:29`) — so ONE function serves both rather than two joins
+ * drifting apart.
+ */
+export const freeTextOf = (block: FreeTextBlock): string =>
+  block.fromBlock === true
+    ? block.lines.map((l) => `${l}\n`).join('')
+    : block.lines.join('\n')
+
+
 // ─── Tempo ───────────────────────────────────────────────────────────────────
 
 /**

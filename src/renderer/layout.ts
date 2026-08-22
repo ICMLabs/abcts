@@ -28,6 +28,7 @@ import {
   defaultClef,
   defaultMode,
   type FreeTextBlock,
+  freeTextOf,
   isStrict,
   type KeySignature,
   keyFifths,
@@ -1101,6 +1102,12 @@ export interface PlacedLine {
  */
 export type MetaTextRow =
   | { readonly move: number }
+  /**
+   * **A `%%sep`'s OWN ROW** — `{separator: lineLength, absElemType: "separator"}`
+   * (`elements/separator.js:5`). Only a nonMusic LINE can carry one; neither text block
+   * ever pushes it.
+   */
+  | { readonly separator: number }
   | { readonly startGroup: string; readonly klass: string; readonly name: string }
   | { readonly endGroup: string; readonly absElemType: string; readonly name: string }
   | {
@@ -1996,6 +2003,16 @@ export interface Layout {
    */
   readonly topTextRows?: readonly MetaTextRow[]
   readonly bottomTextRows?: readonly MetaTextRow[]
+  /**
+   * **`abcLine.nonMusic.rows` FOR EVERY NONMUSIC LINE, keyed by the block it was written
+   * as.** The engraver hangs a `Subtitle`, a `FreeText` or a `Separator` on each of those
+   * lines (`engraver-controller.js:229-247`) and a host reads `line.nonMusic`; the rows
+   * are the same shape `topTextRows` carries and are recorded by the walk that spends
+   * them. The projection joins them back by block IDENTITY — `compat/lines.ts` builds
+   * every one of those lines from a `FreeTextBlock` — so nothing is re-derived and no
+   * `Layout` is retained.
+   */
+  readonly nonMusicRows?: ReadonlyMap<FreeTextBlock, readonly MetaTextRow[]>
   /** `%%sep` rules in a trailing block — see `bottomText`. */
   readonly bottomLines?: readonly PlacedLine[]
   /**
@@ -12072,6 +12089,13 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     plans.flatMap((p) => [...(p.measures[sp.start]?.textBefore ?? [])]),
   )
   /**
+   * **EVERY NONMUSIC LINE'S OWN `rows`, KEYED BY THE BLOCK IT WAS WRITTEN AS** — see
+   * `Layout.nonMusicRows`. One map for all three walks: the tune's own leading blocks, the
+   * mid-tune ones and the trailing ones are the same kind of line in abcjs and differ only
+   * in where they stand.
+   */
+  const nonMusicRows = new Map<FreeTextBlock, MetaTextRow[]>()
+  /**
    * **`%%vskip` BELONGS TO THE LINE IT WAS STAMPED ON**, read off the same first measure
    * the blocks are — `pushLine` puts it on the next line pushed and `draw()` spends it with
    * `moveY(abcLine.vskip)` before the staff padding (`tune-builder.js:906-911`,
@@ -12634,6 +12658,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
                 score.fonts,
                 PAGE_TOP + PAGE_PADDING.top,
                 musicSpace,
+                nonMusicRows,
               )
               topAdvances = built.advances
               topRows = built.rows
@@ -12658,6 +12683,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
                   midTune,
                   systemWidth - PAGE_PADDING.left * 2,
                   score.fonts,
+                  nonMusicRows,
                 )
                 midAdvances = built.advances
                 return built
@@ -14109,6 +14135,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           score.fonts,
           0,
           musicSpace,
+          nonMusicRows,
         )
 
   /**
@@ -14145,6 +14172,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           (systemWidth - PAGE_PADDING.left * 2) / 2,
           score.fonts,
           trailingRules,
+          false,
+          [],
+          nonMusicRows,
         )
 
   const bottomStart = bottom + trailingHeight + spaces(ABCJS_PX.bottomTextGap)
@@ -14227,6 +14257,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     ...(bottomText === undefined ? {} : { bottomText }),
     // …and the two ROW LISTS, whichever path built the top block — see `Layout.topTextRows`.
     topTextRows: stafflessBlock === undefined ? topRows : stafflessBlock.rows,
+    nonMusicRows,
     bottomTextRows: bottomBlock.rows,
     // **A TRAILING `%%sep` DREW NO RULE AT ALL.** Its two spaces were reserved — the height
     // was exact — but `appendFreeText` collects the rule into a `rules` array the trailing
@@ -14386,6 +14417,8 @@ function topTextBlock(
   from = 0,
   /** `spacing.music`, spent before the nonMusic rows — see below. `%%musicspace` sets it. */
   musicSpace: number = ENGRAVE.musicSpace,
+  /** `abcLine.nonMusic.rows`, per block — see `appendFreeText`. */
+  blockRows?: Map<FreeTextBlock, MetaTextRow[]>,
 ): {
   texts: PlacedText[]
   lines: PlacedLine[]
@@ -14938,7 +14971,7 @@ function topTextBlock(
   advances.push(musicSpace)
   y += musicSpace
   // …and NOT onto `rows`: from here on the block is `tune.lines`'s business, not TopText's.
-  y = appendFreeText(texts, textAbove, y, width / 2, fonts, rules, true)
+  y = appendFreeText(texts, textAbove, y, width / 2, fonts, rules, true, [], blockRows)
 
   // `drawSeparator` centres on `renderer.controller.width` — the STAFF width, which is
   // what `width` is here — and paints a 1px rule at `Math.round(renderer.y)`
@@ -14994,8 +15027,19 @@ function appendFreeText(
    * family. See the placement loop's `leadAdvances`.
    */
   advances: number[] = [],
+  /**
+   * **`abcLine.nonMusic.rows` — ONE LIST PER BLOCK, keyed by the block itself.** Each of
+   * these blocks IS a nonMusic line of `tune.lines`, and the engraver hangs a `Subtitle`,
+   * a `FreeText` or a `Separator` on it at draw time (`engraver-controller.js:229-247`),
+   * every one of them a `{rows: […]}` in the shape `topText` already publishes. The rows
+   * are this walk's own moves and texts, so they are RECORDED here rather than rebuilt in
+   * `compat` — the projection joins them back by block IDENTITY, as the overlay pads do.
+   */
+  blockRows?: Map<FreeTextBlock, MetaTextRow[]>,
 ): number {
   let y = from
+  /** The block being walked — see `blockRows`. */
+  let rows: MetaTextRow[] | undefined
   /**
    * **AND A MID-TUNE ROW'S BASELINE IS THE PAGE CURSOR PLUS ITS FONT SIZE, ONE ADD EACH —
    * MEASURED, NOT FIXED.** `nonMusic` moves the page's own cursor row by row and
@@ -15017,7 +15061,18 @@ function appendFreeText(
    */
   const spend = (px: number): void => {
     advances.push(px)
+    rows?.push({ move: px })
     y += px
+  }
+  /**
+   * The row for the text just pushed. `left` is `Subtitle`'s `center` or `FreeText`'s
+   * `paddingLeft` / `width / 2` — abcjs's own three (`subtitle.js:8`, `free-text.js:11`,
+   * `:37`) — and NOT the shifted x a box moves the ink to; see `MetaTextRow.left`.
+   */
+  const recordRow = (font: AbcFontType, left: number): void => {
+    const placed = texts[texts.length - 1]
+    if (rows === undefined || placed === undefined) return
+    rows.push({ text: placed, font, left })
   }
   const sizeOf = (type: AbcFontType): number =>
     Math.round(((fonts[type]?.size ?? ABC_FONT_DEFAULT_PT[type]) * 4) / 3) / UNIT_PX
@@ -15085,10 +15140,13 @@ function appendFreeText(
   }
   for (const [blockIndex, block] of blocks.entries()) {
     const tag: { nonMusicIndex?: number } = tagNonMusic ? { nonMusicIndex: blockIndex } : {}
+    rows = blockRows === undefined ? undefined : []
+    if (rows !== undefined && blockRows !== undefined) blockRows.set(block, rows)
     if (block.separator !== undefined) {
       // The RULE COSTS NO HEIGHT — `drawSeparator` paints at the cursor and moves nothing
       // — so the line is worth exactly its two spaces. Points to staff spaces on the way.
       spend(block.separator.above / UNIT_PX)
+      rows?.push({ separator: block.separator.length })
       rules.push({ y, width: block.separator.length / UNIT_PX, index: blockIndex })
       spend(block.separator.below / UNIT_PX)
       continue
@@ -15132,6 +15190,7 @@ function appendFreeText(
           // (`subtitle.js:7`), which for a mid-tune `T:` is that field line's own span.
           ...selectableRow('subtitle', block.sourceRange, line),
         })
+        recordRow('subtitlefont', centre + PAGE_PADDING.left)
       }
       spend(goldenTextHeight(size) + boxOf('subtitlefont'))
       continue
@@ -15187,9 +15246,16 @@ function appendFreeText(
               block.align === 'center' ? 'middle' : 'start',
             )
           : {}),
-        // **A `%%center` HAS NO SPAN AT ALL** — see `PlacedText.selectable`.
-        ...selectableRow('freeText', block.sourceRange, line),
+        /**
+         * **A `%%center` HAS NO SPAN AT ALL** — see `PlacedText.selectable` — **AND THE
+         * ROW'S TEXT IS THE WHOLE BLOCK**, newlines and all: `FreeText` is handed
+         * `info.text` (`free-text.js:11`) and hands the same string to the selectable it
+         * wraps (`draw/non-music.js:29`). Ours passed the FIRST line, so a `%%begintext`
+         * block of one empty line read `""` where abcjs reads `"\n"`.
+         */
+        ...selectableRow('freeText', block.sourceRange, freeTextOf(block)),
       })
+      recordRow('textfont', block.align === 'center' ? centre : PAGE_PADDING.left)
     })
     spend(
       goldenTextHeight(textSize) +
@@ -15612,6 +15678,8 @@ function freeTextBlock(
   blocks: readonly FreeTextBlock[],
   width: number,
   fonts: Score['fonts'] = {},
+  /** `abcLine.nonMusic.rows`, per block — see `appendFreeText`. */
+  blockRows?: Map<FreeTextBlock, MetaTextRow[]>,
 ): { texts: PlacedText[]; lines: PlacedLine[]; height: number; advances: number[] } {
   const texts: PlacedText[] = []
   const rules: { y: number; width: number; index?: number }[] = []
@@ -15620,7 +15688,17 @@ function freeTextBlock(
   // opens one `<g>` per `abcLine.nonMusic` and runs `classes.incrLine()` for each
   // (`draw/draw.js:53-58`). A `%%text` followed by a mid-tune `T:` is two lines, two
   // groups; ours put every block between two systems into one.
-  const height = appendFreeText(texts, blocks, 0, width / 2, fonts, rules, true, advances)
+  const height = appendFreeText(
+    texts,
+    blocks,
+    0,
+    width / 2,
+    fonts,
+    rules,
+    true,
+    advances,
+    blockRows,
+  )
   // Centred on the STAFF width, as `drawSeparator` centres it, and one pixel thick.
   const lines: PlacedLine[] = rules.map((r) => ({
     x1: (width - r.width) / 2,

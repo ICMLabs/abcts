@@ -48,6 +48,7 @@ import {
   type AbcFontType,
   defaultClef,
   type MusicEvent,
+  type FreeTextBlock,
   plainText,
   type RichPhrase,
   type RichText,
@@ -435,6 +436,52 @@ const metaTextRow = (
   };
 };
 
+/**
+ * **ONE ROW OF `abcLine.nonMusic.rows`, WHICH IS NOT `addTextIf`'s SHAPE.** `Subtitle` and
+ * `FreeText` push their row as a LITERAL of their own — `{left, text, font, klass, anchor,
+ * startChar, endChar, absElemType, name}` (`elements/subtitle.js:7`, `free-text.js:11`) —
+ * so the keys come in a different order from a top-block row's, and
+ * **THE CLASS IS UNCONDITIONAL**: both elements name it outright where `TopText` gates
+ * every one of its own on `shouldAddClasses`.
+ */
+const nonMusicRow = (
+  t: PlacedText,
+  font: AbcFontType,
+  left: number,
+): Record<string, unknown> => {
+  const row = metaTextRow(t, font, left, false);
+  return {
+    left: row.left,
+    text: row.text,
+    font: row.font,
+    klass: t.dataName === "subtitle" ? "text subtitle" : "defined-text",
+    anchor: row.anchor,
+    /**
+     * ⚠️ **AND AN ABSENT SPAN IS ABSENT, NOT `-2`.** `Subtitle` and `FreeText` write
+     * `info.startChar` straight into the row (`subtitle.js:7`, `free-text.js:11`) and a
+     * `%%center` has no `info` at all (`abc_parse_directive.js:986`), so `JSON.stringify`
+     * drops both keys. The `-2` is `addTextIf`'s own default and belongs to the TOP
+     * block's rows alone.
+     */
+    ...(t.selectable?.startChar === undefined ? {} : { startChar: row.startChar }),
+    ...(t.selectable?.endChar === undefined ? {} : { endChar: row.endChar }),
+    ...(row.absElemType === undefined ? {} : { absElemType: row.absElemType }),
+    ...(row.name === undefined ? {} : { name: row.name }),
+  };
+};
+
+/** `abcLine.nonMusic.rows` — see `nonMusicRow`. */
+const nonMusicRowsOf = (rows: readonly MetaTextRow[]): Record<string, unknown>[] =>
+  rows.map((r) =>
+    "move" in r
+      ? { move: r.move }
+      : "separator" in r
+        ? { separator: r.separator, absElemType: "separator" }
+        : "text" in r
+          ? nonMusicRow(r.text, r.font, r.left)
+          : {},
+  );
+
 /** `TopText.rows` / `BottomText.rows` — see `metaTextRow` and `MetaTextRow`. */
 const metaTextRows = (
   rows: readonly MetaTextRow[],
@@ -453,7 +500,9 @@ const metaTextRows = (
               endChar: -1,
               name: r.name,
             }
-          : metaTextRow(r.text, r.font, r.left, addClasses),
+          : "separator" in r
+            ? { separator: r.separator, absElemType: "separator" }
+            : metaTextRow(r.text, r.font, r.left, addClasses),
   );
 
 /**
@@ -830,6 +879,8 @@ function renderInto(
      * `undefined` from abcjs — and must get `undefined` from us.
      */
     let lineCache: readonly AbcLine[] | null = null;
+    /** Which `FreeTextBlock` each nonMusic line was written as — see `attachNonMusic`. */
+    let blockOf: ReadonlyMap<AbcLine, FreeTextBlock> | null = null;
     let eventIndex: {
       byEvent: ReadonlyMap<MusicEvent, AbcElement>;
       byRange: ReadonlyMap<number, AbcElement>;
@@ -855,9 +906,40 @@ function renderInto(
       if (eventIndex === null) {
         const p = projectionOf(score, abc, engraved);
         lineCache = p.lines;
+        blockOf = p.blockOf;
         eventIndex = { byEvent: p.byEvent, byRange: p.byRange };
       }
       return eventIndex;
+    };
+    /**
+     * **`abcLine.nonMusic` — THE ENGRAVER'S OWN, HUNG ON THE LINE IT WAS WRITTEN AS.**
+     * `constructTuneElements` walks the finished lines and hangs a `Subtitle`, a `FreeText`
+     * or a `Separator` on each nonMusic one (`engraver-controller.js:229-247`), so it
+     * exists only where something ENGRAVED — a `parseOnly` tune has none — and the rows are
+     * the layout's own, joined back by block identity.
+     *
+     * ⚠️ **A SUBTITLE ABOVE THE FIRST NON-SUBTITLE LINE GETS NOTHING**, because the title
+     * block already accounted for it: `hasSeenNonSubtitle` gates that arm alone, where a
+     * `%%text` or a `%%sep` sets the flag as well as taking its own rows.
+     */
+    const attachNonMusic = (
+      rows: ReadonlyMap<FreeTextBlock, readonly MetaTextRow[]> | undefined,
+    ): void => {
+      if (rows === undefined || blockOf === null) return;
+      let seenNonSubtitle = false;
+      for (const line of lineCache ?? []) {
+        const l = line as { staff?: unknown; subtitle?: unknown; nonMusic?: unknown };
+        if (l.staff !== undefined) {
+          seenNonSubtitle = true;
+          continue;
+        }
+        const block = blockOf.get(line);
+        const own = block === undefined ? undefined : rows.get(block);
+        if (l.subtitle === undefined) seenNonSubtitle = true;
+        else if (!seenNonSubtitle) continue;
+        if (own !== undefined)
+          l.nonMusic = { rows: nonMusicRowsOf(own) };
+      }
     };
     /**
      * **THE RECORDS THE EMITTER MADE WHILE IT DREW.** abcjs builds its selectable array
@@ -1028,7 +1110,13 @@ function renderInto(
          * what was drawn, which is what `data-index` counts.
          */
         // …**AND ONLY WHEN THERE WAS AN ENGRAVER.** See `renderInto`.
-        if (engraved) stampEngravedSystems(laidOut().engraved, projection());
+        if (engraved) {
+          const doc = laidOut();
+          stampEngravedSystems(doc.engraved, projection());
+          // …and the nonMusic lines' rows off the SAME layout — see `attachNonMusic`.
+          projection();
+          attachNonMusic(doc.nonMusicRows);
+        }
         selectableCache = selectablesOf(records, projection(), params.selectTypes);
       }
       return selectableCache ?? [];

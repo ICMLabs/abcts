@@ -12,7 +12,7 @@ import type {
   SourceRange,
   Tempo,
 } from "../core/model.js";
-import { defaultClef, plainText, ratToNumber, stepIndex } from "../core/model.js";
+import { defaultClef, freeTextOf, plainText, ratToNumber, stepIndex } from "../core/model.js";
 import { resolveOverlays, type OverlayLine } from "../core/overlays.js";
 import {
   abcjsFont,
@@ -2042,6 +2042,7 @@ export function projectionOf(
   lines: AbcLine[];
   byEvent: Map<MusicEvent, AbcElement>;
   byRange: Map<number, AbcElement>;
+  blockOf: Map<AbcLine, FreeTextBlock>;
 } {
   /**
    * **AN `&` OVERLAY LAYER IS A VOICE OF ITS OWN IN `tune.lines`, WITH ITS OWN COPY OF THE
@@ -2057,6 +2058,13 @@ export function projectionOf(
   const score = input;
   const byEvent = new Map<MusicEvent, AbcElement>();
   const byRange = new Map<number, AbcElement>();
+  /**
+   * **WHICH `FreeTextBlock` EACH NONMUSIC LINE WAS WRITTEN AS.** The engraver hangs a
+   * `{rows: […]}` on every one of these lines at draw time and the layout records those
+   * rows against the same blocks (`Layout.nonMusicRows`), so this is the join — an
+   * IDENTITY, like the overlay pads', rather than a position.
+   */
+  const blockOf = new Map<AbcLine, FreeTextBlock>();
   const lines: AbcLine[] = [];
   /**
    * One open-slur stack SET per voice, carried across every system — see `markSlurs`.
@@ -2107,21 +2115,25 @@ export function projectionOf(
    * reads exactly that: any line with no `staff` clears `inMusicLine`, so the music line
    * after one does NOT merge into the one before it (`deline-tune.js:84-87`).
    *
-   * ⚠️ **abcjs-debt: the `nonMusic` KEY IS NOT BUILT.** The engraver hangs a
-   * `{rows: […]}` on each of these lines at draw time (`engraver-controller.js:229-247`),
-   * the same row shape `topText`/`bottomText` carry, and a host reading `line.nonMusic`
-   * gets nothing from us. The LINE, its kind and its span are here; the rows are the
-   * `topText` machinery pointed at a different list and are owed.
+   * **AND THE ENGRAVER HANGS A `nonMusic` BLOCK ON EACH OF THEM** — a `Subtitle`, a
+   * `FreeText` or a `Separator`, whose `{rows: […]}` is the shape `topText`/`bottomText`
+   * carry (`engraver-controller.js:229-247`). The rows are the LAYOUT's own, recorded as
+   * it spends them and joined back to these lines by BLOCK IDENTITY — see `blockOf`,
+   * `Layout.nonMusicRows` and `attachNonMusic`. Only a tune that ENGRAVED has them, which
+   * is abcjs's own split: a `parseOnly` line carries none.
    */
   const textLine = (b: FreeTextBlock): AbcLine => {
+    const line = textLineOf(b);
+    blockOf.set(line, b);
+    return line;
+  };
+  const textLineOf = (b: FreeTextBlock): AbcLine => {
     const span =
       b.sourceRange === undefined
         ? {}
         : { startChar: b.sourceRange.start, endChar: b.sourceRange.end };
-    // …**AND A BLOCK'S LINES EACH CARRY THEIR OWN NEWLINE** — see `FreeTextBlock.fromBlock`.
-    const text = b.fromBlock === true
-      ? b.lines.map((l) => `${l}\n`).join("")
-      : b.lines.join("\n");
+    // …**AND A BLOCK'S LINES EACH CARRY THEIR OWN NEWLINE** — see `freeTextOf`.
+    const text = freeTextOf(b);
     if (b.role === "separator")
       return {
         separator: {
@@ -2183,7 +2195,7 @@ export function projectionOf(
     return at.length > 0 ? at : [0];
   };
   const first = score.voices[0];
-  if (first === undefined) return { lines, byEvent, byRange };
+  if (first === undefined) return { lines, byEvent, byRange, blockOf };
   /**
    * **THE BREAKS ARE EVERY VOICE'S, NOT VOICE 0's.** A voice whose part ends mid-tune
    * stops contributing measures, and the lines after that are still lines — abcjs builds
@@ -3092,7 +3104,7 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color"]);
       }
     }
   }
-  return { lines, byEvent, byRange };
+  return { lines, byEvent, byRange, blockOf };
 }
 
 /**
