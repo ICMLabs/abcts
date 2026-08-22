@@ -937,6 +937,24 @@
  "repo/abcts-ledger-gaps-3-tune7": {
   "title": "a lyric on the voice whose stem is not the deepest"
  },
+ "repo/abcts-ledger-gaps-4-tune0": {
+  "title": "lyrics on the SECOND system only, with dynamics on both"
+ },
+ "repo/abcts-ledger-gaps-4-tune1": {
+  "title": "a hairpin opening on one system and closing on the next"
+ },
+ "repo/abcts-ledger-gaps-4-tune2": {
+  "title": "a third-tone microtone"
+ },
+ "repo/abcts-ledger-gaps-4-tune3": {
+  "title": "two verses where one holds a blank syllable"
+ },
+ "repo/abcts-ledger-gaps-4-tune4": {
+  "title": "a voice whose lowest note is not its last"
+ },
+ "repo/abcts-ledger-gaps-4-tune5": {
+  "title": "a key change on a line that wraps"
+ },
  "repo/abcts-ledger-gaps-tune0": {
   "title": "a chord where only SOME heads are tied"
  },

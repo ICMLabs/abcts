@@ -225,6 +225,17 @@
  "repo/abcts-ledger-gaps-3-tune5": null,
  "repo/abcts-ledger-gaps-3-tune6": null,
  "repo/abcts-ledger-gaps-3-tune7": null,
+ "repo/abcts-ledger-gaps-4-tune0": null,
+ "repo/abcts-ledger-gaps-4-tune1": null,
+ "repo/abcts-ledger-gaps-4-tune2": [
+  "Music Line:6:1: Unknown character ignored:  <span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">^</span>1/3G A B c|",
+  "Music Line:6:2: Unknown character ignored:  ^<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">1</span>/3G A B c|",
+  "Music Line:6:3: Unknown character ignored:  ^1<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">/</span>3G A B c|",
+  "Music Line:6:4: Unknown character ignored:  ^1/<span style=\"text-decoration:underline;font-size:1.3em;font-weight:bold;\">3</span>G A B c|"
+ ],
+ "repo/abcts-ledger-gaps-4-tune3": null,
+ "repo/abcts-ledger-gaps-4-tune4": null,
+ "repo/abcts-ledger-gaps-4-tune5": null,
  "repo/abcts-ledger-gaps-tune0": null,
  "repo/abcts-ledger-gaps-tune1": null,
  "repo/abcts-ledger-gaps-tune2": [

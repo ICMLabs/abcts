@@ -2877,6 +2877,71 @@
    "hasPickup": false
   }
  ],
+ "repo/abcts-ledger-gaps-4": [
+  {
+   "header": "X:1\nT:lyrics on the SECOND system only, with dynamics on both\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "!p!C D E F|"
+    },
+    {
+     "abc": "!f!G A B c|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:2\nT:a hairpin opening on one system and closing on the next\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "!<(!C D E F|"
+    },
+    {
+     "abc": "G A B !<)!c|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:a third-tone microtone\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "G A B c|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:4\nT:two verses where one holds a blank syllable\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C D E F|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:5\nT:a voice whose lowest note is not its last\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "c c C,, c|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:6\nT:a key change on a line that wraps\nL:1/8\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF GABc cBAG FEDC CDEF GABc cBAG FEDC CDEF GABc cBAG FEDC|"
+    },
+    {
+     "abc": "[K:D] DEFG ABcd|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
  "repo/abcts-ledger-gaps": [
   {
    "header": "X:1\nT:a chord where only SOME heads are tied\nL:1/4\nM:4/4\nK:C\n",

@@ -416,11 +416,13 @@ const WITHIN: Readonly<Record<string, number>> = {
   // three more of them — and the `abcts-ledger-gaps` pair plus `-3` are three FIXTURES of
   // the same kind: every tune is a shape a `ponytail:` had named and declared unwritten by
   // either corpus. Three of the first six were real defects, five of the second eight, and
-  // five of the third eight. All twenty-two tunes are byte-exact.
-  "0.05": 182,
-  "1": 182,
-  "5": 182,
-  "25": 182,
+  // five of the third eight, and NONE of the fourth six — which is the other honest
+  // outcome of the pattern: six more entries are measurements now rather than predictions.
+  // All twenty-eight tunes are byte-exact.
+  "0.05": 183,
+  "1": 183,
+  "5": 183,
+  "25": 183,
 };
 
 const names = readdirSync(fixturesDir)

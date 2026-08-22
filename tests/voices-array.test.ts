@@ -94,6 +94,7 @@ const PASSING: readonly string[] = [
   "abcts-ledger-gaps",
   "abcts-ledger-gaps-2",
   "abcts-ledger-gaps-3",
+  "abcts-ledger-gaps-4",
   "abcts-model-gaps",
   "abcts-slur-shapes",
   "abcjs-parse-book_parser-01-example",

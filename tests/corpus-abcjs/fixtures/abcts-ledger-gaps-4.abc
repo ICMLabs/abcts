@@ -1,0 +1,52 @@
+%abc-2.1
+% CONTROL — a fourth pass over the `ponytail:` LEDGER. Every tune is a shape an entry
+% NAMED and then declared unwritten by either corpus. Goldens by running abcjs 6.7.0 at
+% {staffwidth: 670}.
+X:1
+T:lyrics on the SECOND system only, with dynamics on both
+L:1/4
+M:4/4
+K:C
+!p!C D E F|
+!f!G A B c|
+w:la la la la
+
+X:2
+T:a hairpin opening on one system and closing on the next
+L:1/4
+M:4/4
+K:C
+!<(!C D E F|
+G A B !<)!c|
+
+X:3
+T:a third-tone microtone
+L:1/4
+M:4/4
+K:C
+^1/3G A B c|
+
+X:4
+T:two verses where one holds a blank syllable
+L:1/4
+M:4/4
+K:C
+C D E F|
+w:one two three four
+w:* deux trois quatre
+
+X:5
+T:a voice whose lowest note is not its last
+L:1/4
+M:4/4
+K:C
+c c C,, c|
+w:la la la la
+
+X:6
+T:a key change on a line that wraps
+L:1/8
+M:4/4
+K:C
+CDEF GABc cBAG FEDC CDEF GABc cBAG FEDC CDEF GABc cBAG FEDC|
+[K:D] DEFG ABcd|

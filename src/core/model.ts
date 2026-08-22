@@ -1553,7 +1553,8 @@ export interface Score {
    *
    * ponytail: scoped to the FIRST SYSTEM rather than to abcjs's tune LINE. The two differ
    * only when the first source line WRAPS, where `wrap_lines.js:50` copies the running key
-   * signature onto the continuation; no fixture does both.
+   * signature onto the continuation. **MEASURED: `abcts-ledger-gaps-4` tune 5 wraps its
+   * first line and changes key after it, and is byte-exact.**
    */
   readonly firstLineKeyClef?: { readonly voiceId: string; readonly clef: Clef }
   readonly voices: readonly Voice[]

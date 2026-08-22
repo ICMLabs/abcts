@@ -335,9 +335,9 @@ export const ENGRAVE = {
    * `anchorBelowStaff` the below one onto the staff's ink, so these two numbers only have
    * to be the step the mark was drawn at, not where it ends up.
    *
-   * ponytail: `hasVocals` is read tune-wide, not per system — the corpus never varies
-   * lyrics across a tune's systems, so the two agree; a per-system read is the faithful
-   * version if one ever does.
+   * **MEASURED, AND THE TWO AGREE.** `abcts-ledger-gaps-4` tune 0 puts the lyrics under
+   * the SECOND system and a dynamic on both, which is the case a `ponytail:` here said the
+   * corpus never varies — byte-exact on the first run. The tune-wide read stands.
    */
   dynamicAboveStep: 19.5,
   dynamicBelowStep: -10.96,
@@ -2279,9 +2279,9 @@ export function noteGlyph(notated: Rational): NoteGlyphSpec | null {
   // plain note is `noteheads.quarter` (`:36`). We drew nothing at all, so half the notes
   // in abcjs's own `parse/note.test.js` fixture never reached the page.
   //
-  // ponytail: abcjs also SPACES it as a quarter, by rewriting `duration` before spacing
-  // runs. Ours still spaces it at zero — the head is content, the advance is geometry,
-  // and no fixture measures the second yet.
+  // **AND THE SPACING IS MEASURED NOW** — `abcts-ledger-gaps-3` tune 0 is `C0 D E F|`,
+  // whose every x is abcjs's, so `ZERO_DURATION_SPACING` already answers what abcjs's
+  // rewrite of `duration` does.
   if (notated.numerator === 0) return { head: 'noteheadBlack', stemmed: false, flags: 0, dots: 0 }
 
   const split = splitDots(notated)
@@ -3970,8 +3970,10 @@ const MICROTONE_GLYPHS: Readonly<Record<number, GlyphName>> = {
  * sharp and `^3/2G` printed ink abcjs does not print. Wrong output, not missing output,
  * which is why the gap list's "parsed, not rendered" undersold it.
  *
- * ponytail: quantised to the nearest quarter tone, so `^1/3G` rounds to a half-sharp
- * rather than drawing nothing. Bravura has no third-tone glyph and no fixture writes one.
+ * ponytail: quantised to the nearest quarter tone in the OTHER modes, so `^1/3G` rounds to
+ * a half-sharp rather than drawing nothing; Bravura has no third-tone glyph. In STRICT it
+ * never arises — `^1/3` is three characters and `getCoreNote` abandons the note, which is
+ * `abcts-ledger-gaps-4` tune 2, byte-exact with four warnings.
  */
 function microtoneAccidental(
   accidental: Accidental | null,
@@ -6927,8 +6929,8 @@ function noteText(
        * ponytail: abcjs writes ONE `<text>` for every verse of a note, tspan per line,
        * where ours writes one per verse in its own lane. The trailing blank is added only
        * where there is a single verse; a note with two would need the texts merged, which
-       * is a lane change rather than a markup one. No corpus fixture puts two verses on
-       * one note.
+       * is a lane change rather than a markup one. **MEASURED: `abcts-ledger-gaps-4` tune 3
+       * is two verses with a blank syllable in one, and is byte-exact.**
        */
       extraLines: lyricLines.slice(1),
       // Tagged so the melisma pass can find the syllable it must extend from. Matching
@@ -7009,7 +7011,8 @@ function noteText(
  * ponytail: a pair that opens on one system and closes on another is dropped rather than
  * split, because anchors arrive filtered to a single system. Slurs solve this properly by
  * resolving after the whole tune is packed; hairpins can move to that machinery when a
- * fixture needs it. No corpus fixture spans one.
+ * fixture needs it. **MEASURED: `abcts-ledger-gaps-4` tune 1 spans one and is byte-exact,
+ * because abcjs drops it too** — its `crescendo` element is per LINE like the tie's.
  */
 const SPANNER_OPEN: Readonly<Record<string, 'crescendo' | 'diminuendo' | 'glissando'>> = {
   '<(': 'crescendo',
@@ -17882,9 +17885,9 @@ function verticalExtent(
      *
      * ponytail: abcjs's `diff` also carries `element.bottom - staff.bottom` — the element's
      * own overhang below the staff's lowest point — and takes the LAST such element rather
-     * than the deepest. Nothing in either corpus separates the two: every fixture's
-     * lyric-bearing element IS its lowest. A control that puts a low stem on a voice whose
-     * lyric is not the deepest would name it.
+     * than the deepest. **MEASURED: `abcts-ledger-gaps-4` tune 4 is `c c C,, c|` with
+     * lyrics, whose lowest note is not its last, and it is byte-exact** — so the two
+     * readings agree at least where one voice carries both.
      */
     lower(lyricLanePitch + ENGRAVE.laneMargin + lyricVoiceDrop)
   }

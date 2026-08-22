@@ -313,6 +313,17 @@ const PASSING: readonly string[] = [
   "abcts-visualtranspose-tune1",
   "abcts-visualtranspose-tune2",
   "abcts-visualtranspose-tune3",
+  // `abcts-ledger-gaps-4.abc` — six more, and NOT ONE was a defect: lyrics under the SECOND
+  // system with dynamics on both, a hairpin across a system break, a third-tone microtone,
+  // two verses where one holds a blank syllable, a voice whose lowest note is not its last,
+  // and a key change on a line that wraps. Every one was byte-exact on the first run, which
+  // is what turns six `ponytail:` predictions into measurements.
+  "abcts-ledger-gaps-4-tune0",
+  "abcts-ledger-gaps-4-tune1",
+  "abcts-ledger-gaps-4-tune2",
+  "abcts-ledger-gaps-4-tune3",
+  "abcts-ledger-gaps-4-tune4",
+  "abcts-ledger-gaps-4-tune5",
   // `abcts-ledger-gaps-3.abc` — eight more, and FIVE were defects: `%%abc-copyright` and
   // its siblings drew no rows at all, a slur closing on ONE HEAD of a chord never paired, a
   // curve crossing a system it does not end on got no arc, and the below-annotation lane's

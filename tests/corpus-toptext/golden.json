@@ -3673,6 +3673,132 @@
   ],
   "bottomText": []
  },
+ "repo/abcts-ledger-gaps-4-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "lyrics on the SECOND system only, with dynamics on both",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 208,
+    "endChar": 265,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-ledger-gaps-4-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a hairpin opening on one system and closing on the next",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 325,
+    "endChar": 382,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-ledger-gaps-4-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a third-tone microtone",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 430,
+    "endChar": 454,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-ledger-gaps-4-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "two verses where one holds a blank syllable",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 489,
+    "endChar": 534,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-ledger-gaps-4-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a voice whose lowest note is not its last",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 608,
+    "endChar": 651,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-ledger-gaps-4-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a key change on a line that wraps",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 698,
+    "endChar": 733,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
  "repo/abcts-ledger-gaps-tune0": {
   "topText": [
    {

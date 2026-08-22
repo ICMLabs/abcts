@@ -65,6 +65,9 @@ const rows = (): Row[] =>
 
 /** Tunes whose warnings agree exactly — the field's PRESENCE included. Grows, never shrinks. */
 const PASSING: readonly string[] = [
+  // …and the third-tone microtone of `abcts-ledger-gaps-4`, whose four characters abcjs
+  // warns about one at a time.
+  "repo/abcts-ledger-gaps-4-tune2",
   "repo/abcjs-parse-book_parser-04-wed-tune0",
   "repo/abcjs-parse-book_parser-05-a-tune0",
   "repo/abcjs-parse-book_parser-05-a-tune1",
