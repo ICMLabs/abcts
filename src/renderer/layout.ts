@@ -10261,6 +10261,8 @@ function layoutMeasure(
   trailingClefRange: SourceRange | null = null,
   /** Where the `K:` that carried `trailingKey` was written — see `trailingClefRange`. */
   trailingKeyRange: SourceRange | null = null,
+  /** Is this voice an `&` overlay layer — only a REST reads it. See `layoutEvent`. */
+  isOverlayLayer = false,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
   /**
@@ -10629,6 +10631,7 @@ function layoutMeasure(
        * `flattener-07` has no `M:` and its `z4` sat 20.58px left of abcjs's.
        */
       meterInForce === null ? 1 : meterInForce.numerator / meterInForce.denominator,
+      isOverlayLayer,
     )
     if (el === null) continue
     if (group !== null && stemOut?.value) {
@@ -11665,6 +11668,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             ? (next?.keyChangeSourceRange ?? null)
             : null
         })(),
+        // `parent$layer` — see `layoutEvent`'s rest-pitch note.
+        (voices[voiceIndex]?.id ?? '').includes('$')
       )
       if (measure.keyChange !== null) keyInForce = measure.keyChange
       if (measure.meterChange != null) meterInForce = measure.meterChange
@@ -17528,6 +17533,8 @@ function layoutEvent(
   sharedStaff = false,
   /** abcjs's `measureLength` — a rest exactly this long becomes a WHOLE rest. */
   measureLength: number | null = null,
+  /** Is this an `&` overlay layer — only the REST reads it. See below. */
+  isOverlayLayer = false,
 ): LayoutElement | null {
   const advance = naturalWidth(event.duration, spacingScale)
   // The beam's direction wins over the voice convention: a beam cannot join opposed stems,
@@ -17561,7 +17568,33 @@ function layoutEvent(
       dynamicsAbove,
     )
   }
-  return layoutRest(event, advance, x, strict, clef, sharedStaff ? voiceStem : null, measureLength)
+  /**
+   * ⚠️ **AN `&` OVERLAY LAYER GETS NO BACK-FILLED STEM, SO ITS RESTS TAKE THE DEFAULT
+   * `restpitch` 7.** The `else if (tune.voiceNum > 0) appendElement('stem', …)` back-fill
+   * lives in `createVoice` (`parse/tune-builder.js:970-993`), which `startNewLine` calls
+   * only for a voice it is CREATING — and a layer is created by `resolveOverlays` in
+   * cleanUp, after parsing. Measured: abcjs's rendered `flattener-21` has NO `stem` element
+   * in ANY of its three voices, so `this.stemdir` is null throughout and
+   * `addRestToAbsElement`'s `if (isMultiVoice)` shifts nothing.
+   *
+   * ⚠️ **AND ONLY THE REST PITCH TAKES THIS, NOT THE DRAWN STEM DIRECTION.** Returning
+   * `null` from `voiceStem` itself — which is what abcjs's absent element would imply —
+   * takes SEVEN fixtures off the byte-exact list. Our notes reach abcjs's drawing through
+   * `voiceStem` where abcjs reaches it another way, so the two are not interchangeable and
+   * the gate is what says so. The change is scoped to what was measured.
+   *
+   * The id is `parent$layer` and `$` cannot appear in a declared voice id — see
+   * `expandOverlays`.
+   */
+  return layoutRest(
+    event,
+    advance,
+    x,
+    strict,
+    clef,
+    sharedStaff && !isOverlayLayer ? voiceStem : null,
+    measureLength,
+  )
 }
 
 /**
