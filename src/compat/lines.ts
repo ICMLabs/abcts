@@ -2962,7 +2962,86 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color"]);
    * It moves each layer into a voice of its own, back-fills every EARLIER line with
    * invisible-rest copies, and leaves three `stem` elements per snip behind.
    */
+  /**
+   * **AN OVERLAY PAD HAS TWO CREATORS AND THIS IS WHERE THEY ARE JOINED.** `resolveOverlays`
+   * runs on BOTH sides — the parser back-fills the MODEL with pad events (`padOverlays`),
+   * this walk back-fills the PROJECTION with pad elements — and until now nothing said the
+   * two were the same element, so `abcelemOf` synthesized a third object for the drawing
+   * and `stampEngraved` stamped a throwaway while the published pad carried no
+   * `averagepitch` at all.
+   *
+   * `ref` is the hook `core/overlays.ts` already carries for the model side: the back-fill
+   * copies it onto the pad as `pad`, so tagging each projected element with its own event
+   * before the pass makes every pad name the event it MIRRORS when the pass is over. The
+   * model's pad names the same one (`overlayMirrors`), which is the join.
+   *
+   * ⚠️ **THE TAGS COME OFF BY WALKING THE LINES, NOT `byEvent`** — the ending-mark sweep
+   * shallow-COPIES the last voice's elements, so the published object is not always the one
+   * `byEvent` holds and a `ref` left on a copy would be published.
+   *
+   * ponytail: a mirror with several pads is matched IN ORDER, on the two walks agreeing;
+   * a whole-measure pad has no mirror and is still synthesized. Both are what the corpus
+   * has — the ranked table in `scripts/zzrv.ts` says so if that changes.
+   */
+  type Tagged = Record<string, unknown> & { ref?: MusicEvent; pad?: MusicEvent };
+  const padsByMirror = new Map<MusicEvent, MusicEvent[]>();
+  /**
+   * **AND A WHOLE-MEASURE PAD HAS NO MIRROR TO NAME IT**, so it joins by the only thing it
+   * has: the BARLINE's span, which both sides give it (`tune-builder.js:572-575`). A layer
+   * voice's untagged invisible rest is one by construction — a rest the SOURCE wrote is a
+   * model event and carries a tag.
+   */
+  const padsByStart = new Map<number, MusicEvent[]>();
+  for (const v of score.voices)
+    for (const m of v.measures)
+      for (const layer of m.overlays)
+        for (const e of layer) {
+          if (e.type !== "rest" || e.overlayPad !== true) continue;
+          const mirror = e.overlayMirrors;
+          if (mirror === undefined) {
+            const at = e.sourceRange?.start;
+            if (at === undefined) continue;
+            const byStart = padsByStart.get(at);
+            if (byStart === undefined) padsByStart.set(at, [e]);
+            else byStart.push(e);
+            continue;
+          }
+          const list = padsByMirror.get(mirror);
+          if (list === undefined) padsByMirror.set(mirror, [e]);
+          else list.push(e);
+        }
+  for (const [event, e] of byEvent) (e as unknown as Tagged).ref = event;
   resolveOverlays(lines as unknown as OverlayLine[]);
+  const taken = new Map<MusicEvent | number, number>();
+  const next = (key: MusicEvent | number): number => {
+    const at = taken.get(key) ?? 0;
+    taken.set(key, at + 1);
+    return at;
+  };
+  for (const line of lines)
+    for (const staff of line.staff ?? [])
+      for (const voice of staff.voices)
+        for (const element of voice) {
+          const e = element as unknown as Tagged;
+          const mirror = e.pad;
+          const tagged = e.ref !== undefined;
+          // …and the SAME copy costs the layer's own notes their identity, which is why a
+          // note of an `&` layer went unstamped too. The tag survives onto the copy, so
+          // re-pointing the index at whatever was PUBLISHED closes both.
+          if (e.ref !== undefined) byEvent.set(e.ref, element);
+          delete e.ref;
+          delete e.pad;
+          if (mirror !== undefined) {
+            const pad = padsByMirror.get(mirror)?.[next(mirror)];
+            if (pad !== undefined) byEvent.set(pad, element);
+            continue;
+          }
+          const start = element.startChar;
+          if (tagged || element.rest?.type !== "invisible" || start === undefined) continue;
+          const pad = padsByStart.get(start)?.[next(start)];
+          if (pad !== undefined) byEvent.set(pad, element);
+        }
+  for (const [, e] of byEvent) delete (e as unknown as Tagged).ref;
   // …and the hoist reads the FIRST MUSIC line, which is no longer line 0 once a subtitle
   // or a `%%text` stands above it.
   const firstStaff = lines.find((l) => l.staff !== undefined);

@@ -10261,7 +10261,10 @@ function layoutMeasure(
   trailingClefRange: SourceRange | null = null,
   /** Where the `K:` that carried `trailingKey` was written — see `trailingClefRange`. */
   trailingKeyRange: SourceRange | null = null,
-  /** Is this voice an `&` overlay layer — only a REST reads it. See `layoutEvent`. */
+  /**
+   * Is this voice an `&` overlay layer on a line it does NOT sing on — only a REST reads
+   * it. See `layerSingsOn` and `layoutEvent`.
+   */
   isOverlayLayer = false,
 ): MeasureBlock {
   const elements: LayoutElement[] = []
@@ -11452,6 +11455,24 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       lineOfMeasure[i] = line
     }
   }
+  /**
+   * **AN `&` LAYER CARRIES ITS `stem` ELEMENT ON THE LINE IT SINGS ON AND NOWHERE ELSE.**
+   * `resolveOverlays` splices `{el_type: "stem", direction: "down"}` onto the front of the
+   * voice it CREATES (`tune-builder.js:596-599`) and back-fills every earlier line with
+   * bars and invisible rests alone — so `createABCVoice`, which resets `this.stemdir` to
+   * null per line and takes it off that element (`abstract-engraver.js:229, 343`), reads
+   * `down` on the singing line and null above it. A line the layer only pads therefore
+   * takes the DEFAULT `restpitch` 7 where its own line takes 3.
+   *
+   * ponytail: re-scanned per measure rather than gathered once — it runs for `$` voices
+   * only, and both corpora have five such lines between them.
+   */
+  const layerSingsOn = (v: number, line: number): boolean =>
+    (voices[v]?.measures ?? []).some(
+      (m, i) =>
+        lineOfMeasure[i] === line &&
+        m.events.some((e) => !(e.type === 'rest' && e.overlayPad === true)),
+    )
   /** `thisStaff.voices[n] = []` — does this voice open at all on that line? */
   const opensOnLine = (v: number, line: number): boolean =>
     (voices[v]?.measures ?? []).some((_, i) => lineOfMeasure[i] === line)
@@ -11668,8 +11689,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             ? (next?.keyChangeSourceRange ?? null)
             : null
         })(),
-        // `parent$layer` — see `layoutEvent`'s rest-pitch note.
-        (voices[voiceIndex]?.id ?? '').includes('$')
+        // `parent$layer`, and ONLY on a line it does not sing on — see `layerSingsOn` and
+        // `layoutEvent`'s rest-pitch note.
+        (voices[voiceIndex]?.id ?? '').includes('$') &&
+          !layerSingsOn(voiceIndex, lineOfMeasure[measureIndex] ?? 0)
       )
       if (measure.keyChange !== null) keyInForce = measure.keyChange
       if (measure.meterChange != null) meterInForce = measure.meterChange
@@ -17533,7 +17556,7 @@ function layoutEvent(
   sharedStaff = false,
   /** abcjs's `measureLength` — a rest exactly this long becomes a WHOLE rest. */
   measureLength: number | null = null,
-  /** Is this an `&` overlay layer — only the REST reads it. See below. */
+  /** Is this an `&` overlay layer on a line it does NOT sing on — only the REST reads it. */
   isOverlayLayer = false,
 ): LayoutElement | null {
   const advance = naturalWidth(event.duration, spacingScale)
@@ -17569,13 +17592,18 @@ function layoutEvent(
     )
   }
   /**
-   * ⚠️ **AN `&` OVERLAY LAYER GETS NO BACK-FILLED STEM, SO ITS RESTS TAKE THE DEFAULT
-   * `restpitch` 7.** The `else if (tune.voiceNum > 0) appendElement('stem', …)` back-fill
-   * lives in `createVoice` (`parse/tune-builder.js:970-993`), which `startNewLine` calls
-   * only for a voice it is CREATING — and a layer is created by `resolveOverlays` in
-   * cleanUp, after parsing. Measured: abcjs's rendered `flattener-21` has NO `stem` element
-   * in ANY of its three voices, so `this.stemdir` is null throughout and
-   * `addRestToAbsElement`'s `if (isMultiVoice)` shifts nothing.
+   * ⚠️ **AN `&` OVERLAY LAYER GETS NO BACK-FILLED STEM ON A LINE IT ONLY PADS, SO ITS RESTS
+   * THERE TAKE THE DEFAULT `restpitch` 7.** The `else if (tune.voiceNum > 0)
+   * appendElement('stem', …)` back-fill lives in `createVoice`
+   * (`parse/tune-builder.js:970-993`), which `startNewLine` calls only for a voice it is
+   * CREATING — and a layer is created by `resolveOverlays` in cleanUp, after parsing.
+   *
+   * ⚠️ **BUT `resolveOverlays` SPLICES ITS OWN `{el_type: "stem", direction: "down"}` ONTO
+   * THE VOICE IT CREATES**, so on the line the layer SINGS on `this.stemdir` is `down` and
+   * `addRestToAbsElement` shifts to 3. An earlier note here said abcjs's rendered
+   * `flattener-21` has no `stem` element in any of its three voices; dumping that tune's
+   * `tune.lines` denies it — `L3/s0/v1` reads `STEM:down r bar n bar` — and abcjs stamps
+   * that rest `averagepitch: 3`. See `layerSingsOn`, which is what decides between the two.
    *
    * ⚠️ **AND ONLY THE REST PITCH TAKES THIS, NOT THE DRAWN STEM DIRECTION.** Returning
    * `null` from `voiceStem` itself — which is what abcjs's absent element would imply —
