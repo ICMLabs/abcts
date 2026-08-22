@@ -590,6 +590,17 @@ interface Timed {
   readonly clefTranspose: number
   /** A tie's continuation, silenced: it was folded into the note that opened the tie. */
   readonly tiedOver: boolean
+  /**
+   * **A CHORD TIES PER HEAD, SO ITS DURATIONS ARE PER HEAD TOO.** abcjs resolves ties on
+   * the PITCH — `ties[pitch.pitch]` keyed by MIDI number, `pitches[k].duration += dur` and
+   * the later pitch NULLED (`abc_midi_flattener.js:287-316`) — so `[C-EG-] [CEG]` sounds a
+   * half-note C and G under a re-articulated E. The whole-event `tiedOver` cannot say that.
+   *
+   * Written duration ADDED to this head, keyed by the head's own name; absent means the
+   * event's own. `silenced` is the other half: a head that was folded into an earlier one.
+   */
+  readonly tieExtra?: Map<string, number>
+  readonly tieSilenced?: Set<string>
 }
 
 /**
@@ -672,9 +683,23 @@ function writtenTimeline(voice: Voice): WrittenTimeline {
        * gives 0.166667 twice and 0.166666 last, and `(3 C` gives 0.083333 twice and
        * 0.083334 last.
        *
-       * ponytail: `(p:q:r` with `p !== r` takes a different total in abcjs — the sum of the
-       * first `r` written durations — and our model does not record `r`. Nothing in the
-       * corpus writes one; the table will say so if anything does.
+       * ⚠️ **AND `(p:q:r` WITH `r < p` NEVER ENDS IN ABCJS — MEASURED, NOT PORTED.**
+       * `abcts-ledger-gaps` tune 1 is `(3:2:1 ABC D2 E2` at `L:1/8`, and abcjs sounds ALL
+       * FIVE notes at two thirds: 0.083333 × 3 then 0.166667 × 2. The mechanism is one
+       * `if`: `tripletNotesLeft = num_notes` makes the group ONE note, so that note carries
+       * BOTH `startTriplet` and `endTriplet` — and `if (elem.startTriplet)` wins the
+       * if/else, so the `endTriplet` arm that clears `tripletMultiplier` never runs
+       * (`abc_midi_sequencer.js:253-277`). The multiplier is then applied to every element
+       * to the end of the voice. Its `startTriplet !== tripletR` branch — the sum of the
+       * first `r` written durations — only feeds the remainder that arm would have used, so
+       * it is unreachable here too.
+       *
+       * Ours scales the r notes at PARSE time, so the first note agrees and every note
+       * after it is unscaled: 0.083333 then 0.125 × 2 then 0.25 × 2. Reproducing the leak
+       * means running abcjs's state machine over the voice at sequence time — the durations
+       * here are already tuplet-scaled — which is a change to WHERE tuplets are resolved,
+       * for a shape neither corpus writes. Written down rather than half-done; the object,
+       * the SVG and the timings are byte-exact on that tune either way.
        */
       const tuplet = event.tuplet
       let dur = spacer ? 0 : ratToNumber(event.duration) * bars
@@ -850,6 +875,7 @@ function sequenceVoice(
       const dur = measureDurations[eventIndex] ?? 0
       written += dur
       let tiedOver = false
+      let silenced: Set<string> | undefined
       if (event.type === 'note') {
         const name = `${event.pitch.step}${event.pitch.octave}`
         const open = ties.get(name)
@@ -859,6 +885,39 @@ function sequenceVoice(
           ties.delete(name)
         }
         if (event.tiedToNext) ties.set(name, tiedOver ? (open as number) : out.length)
+      } else if (event.type === 'chord') {
+        /**
+         * **A CHORD'S TIES ARE ONE PER HEAD** — see `VoiceItem.tieExtra`. The bookkeeping is
+         * the note's, keyed by the head's own name rather than by the event, and it never
+         * touches `durations`: a chord with SOME heads tied still sounds and still spends
+         * its own time, and only the tied heads' note-offs move.
+         *
+         * `tiedToNext` is the whole-chord form (`[CEG]-`) and `tiedPitches` the partial one;
+         * a head that closes a tie and opens another carries the duration forward, which is
+         * the `open as number` arm the note path has.
+         */
+        const flags =
+          event.tiedPitches ?? (event.tiedToNext ? event.pitches.map(() => true) : [])
+        for (const [k, head] of event.pitches.entries()) {
+          const name = `${head.step}${head.octave}`
+          const open = ties.get(name)
+          let carried = false
+          if (open !== undefined) {
+            const item = out[open]
+            if (item !== undefined) {
+              const extra = item.tieExtra ?? new Map<string, number>()
+              extra.set(name, (extra.get(name) ?? 0) + dur)
+              ;(item as { tieExtra?: Map<string, number> }).tieExtra = extra
+            }
+            ;(silenced ??= new Set()).add(name)
+            carried = true
+            ties.delete(name)
+          }
+          if (flags[k] === true) ties.set(name, carried ? (open as number) : out.length)
+        }
+        // …and a chord EVERY head of which was tied into is silent outright, which is what
+        // the whole-event flag already says.
+        tiedOver = silenced !== undefined && silenced.size === event.pitches.length
       }
       out.push({
         kind: 'note',
@@ -873,8 +932,15 @@ function sequenceVoice(
         factor: tempoFactor,
         clefTranspose,
         tiedOver,
+        ...(silenced === undefined ? {} : { tieSilenced: silenced }),
       })
-      durations.push(tiedOver ? 0 : dur)
+      /**
+       * ⚠️ **ONLY THE NOTE PATH MOVES THE DURATION, SO ONLY IT ZEROES THE CLOCK.** A chord
+       * records its extension on the HEAD (`tieExtra`) and leaves `durations` alone, so a
+       * chord tied into keeps its own place in time and simply sounds nothing — zeroing it
+       * would take that time off the voice.
+       */
+      durations.push(tiedOver && event.type === 'note' ? 0 : dur)
       time += Math.round(dur * tempoFactor * MICRO)
       first = false
     }
@@ -1738,6 +1804,15 @@ export function flattenAudio(
       }
 
       for (const [pitchIndex, written] of pitches.entries()) {
+        // …**AND A HEAD FOLDED INTO AN EARLIER TIE SOUNDS NOTHING**, where its neighbours
+        // in the same chord still do — see `VoiceItem.tieExtra`.
+        const headName = `${written.step}${written.octave}`
+        if (item.tieSilenced?.has(headName) === true) continue
+        const headExtra = item.tieExtra?.get(headName) ?? 0
+        const headDuration =
+          headExtra === 0
+            ? mainDuration
+            : mainDuration + Math.round(headExtra * item.factor * MICRO) / MICRO
         const transpose = transposeOf(item)
         // The per-pitch volume, and abcjs's guard is on the DECORATION count rather than
         // on `volumesPerNotePitch`'s: `elem.decoration.length > i` decides whether to
@@ -1767,9 +1842,9 @@ export function flattenAudio(
             pitch: mapped,
             volume: pitchVolume,
             start: mainStart,
-            duration: mainDuration,
+            duration: headDuration,
             instrument: voiceProgram,
-            ...endTypeAndGap(mods.endType, slurCount, mainDuration, startingTempo),
+            ...endTypeAndGap(mods.endType, slurCount, headDuration, startingTempo),
           }
           if (mods.ornament !== undefined) doModifiedNotes(mods.ornament, drum, item.factor, track)
           else track.push(drum)
@@ -1807,9 +1882,9 @@ export function flattenAudio(
           pitch,
           volume: pitchVolume,
           start: mainStart,
-          duration: mainDuration,
+          duration: headDuration,
           instrument: voiceProgram,
-          ...endTypeAndGap(mods.endType, slurCount, mainDuration, startingTempo),
+          ...endTypeAndGap(mods.endType, slurCount, headDuration, startingTempo),
           ...(cents === undefined ? {} : { cents }),
         }
         // AN ORNAMENT REPLACES THE NOTE RATHER THAN DECORATING IT — abcjs's own

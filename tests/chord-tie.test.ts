@@ -4,7 +4,7 @@ import { flattenAudio } from "../src/audio/flatten.js";
 import { parse } from "../src/parser/parser.js";
 
 /**
- * **A CHORD'S TIES ARE PER PITCH, AND OURS ARE NOT HANDLED AT ALL.**
+ * **A CHORD'S TIES ARE PER PITCH — CLOSED 2026-08-22.**
  *
  * The renderer has known this since 2026-08-12 — `el.pitches.forEach(pitch => { pitch.startTie
  * = {} })` (`abc_parse_music.js:427`), so `[GB]8-` builds TWO `TieElem`s — and
@@ -30,15 +30,16 @@ import { parse } from "../src/parser/parser.js";
  * nothing downstream reads a whole-event duration; and an unclosed `startTie` is simply
  * cleared. Ties key on the WRITTEN pitch, so a chord can hold four independent ones.
  *
- * **NOT PORTED YET, DELIBERATELY.** Our flattener carries one duration per EVENT and one
- * `tiedOver` flag per EVENT — the emission loop shares `mainDuration` across every pitch —
- * so this is a change to the shape of `FlatItem`, in a module that is byte-exact against
- * three separate oracles (0 of 72 events, 0 of 3 MIDI files, 0 of 38 timings). It is
- * understood and it is not integrated, which is the same hazard a half-understood fix is.
+ * **PORTED.** `VoiceItem.tieExtra` and `.tieSilenced` are the per-HEAD halves of what
+ * `tiedOver` says for a whole event: a head folded into an earlier tie sounds nothing and
+ * its duration is added to the head that opened it, keyed by the head's own name. **The
+ * CLOCK is untouched** — only the note path moves a duration between events, because a
+ * chord with some heads tied still sounds and still spends its own time.
  *
- * These tests assert what abcjs DOES and are marked `.fails`, so they are green while the
- * gap stands and go RED the moment it closes — at which point delete the `.fails` and the
- * gate holds the behaviour forever.
+ * These tests assert what abcjs DOES. They were `.fails` while the gap stood and went RED
+ * the moment it closed, which is what they were written for; the `.fails` are gone and the
+ * gate holds the behaviour now. The three oracles that made this delicate — 0 of 72 events,
+ * 0 of 3 MIDI files, 0 of 38 timings — are all still at zero.
  */
 const notes = (
   abc: string,
@@ -66,7 +67,7 @@ describe("a tie inside a chord", () => {
     expect(notes("c-|c|")).toEqual([[72, 0, 0.5]]);
   });
 
-  it.fails("ties EVERY head of a fully tied chord", () => {
+  it("ties EVERY head of a fully tied chord", () => {
     expect(notes("[ceg]-|[ceg]|")).toEqual([
       [72, 0, 0.5],
       [76, 0, 0.5],
@@ -74,7 +75,7 @@ describe("a tie inside a chord", () => {
     ]);
   });
 
-  it.fails("ties only the heads that carry one", () => {
+  it("ties only the heads that carry one", () => {
     // `[B-eg-b-]` ties B, g and b; the `e` re-articulates.
     expect(notes("[B-eg-b-]|[Begb]|")).toEqual([
       [71, 0, 0.5],
