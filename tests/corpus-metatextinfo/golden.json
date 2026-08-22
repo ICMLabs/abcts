@@ -669,6 +669,42 @@
   }
  },
  "repo/abcjs-visual-wrap-05-score-1-2-3-4-tune0": {},
+ "repo/abcts-decorations-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 11
+  }
+ },
+ "repo/abcts-decorations-tune1": {
+  "title": {
+   "startChar": 52,
+   "endChar": 64
+  }
+ },
+ "repo/abcts-decorations-tune2": {
+  "title": {
+   "startChar": 110,
+   "endChar": 121
+  }
+ },
+ "repo/abcts-decorations-tune3": {
+  "title": {
+   "startChar": 179,
+   "endChar": 196
+  }
+ },
+ "repo/abcts-decorations-tune4": {
+  "title": {
+   "startChar": 238,
+   "endChar": 256
+  }
+ },
+ "repo/abcts-decorations-tune5": {
+  "title": {
+   "startChar": 308,
+   "endChar": 326
+  }
+ },
  "repo/abcts-directives-2-tune0": {
   "title": {
    "startChar": 417,

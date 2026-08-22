@@ -3247,6 +3247,132 @@
   "topText": [],
   "bottomText": []
  },
+ "repo/abcts-decorations-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Slide",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 11,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-decorations-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Slide High",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 52,
+    "endChar": 64,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-decorations-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Glissando",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 110,
+    "endChar": 121,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-decorations-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Glissando Tilde",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 179,
+    "endChar": 196,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-decorations-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Glissando Dotted",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 238,
+    "endChar": 256,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-decorations-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Glissando Beamed",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 308,
+    "endChar": 326,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
  "repo/abcts-directives-2-tune0": {
   "topText": [
    {

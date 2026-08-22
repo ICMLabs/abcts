@@ -878,6 +878,24 @@
   "title": "wrap quartet"
  },
  "repo/abcjs-visual-wrap-05-score-1-2-3-4-tune0": {},
+ "repo/abcts-decorations-tune0": {
+  "title": "Slide"
+ },
+ "repo/abcts-decorations-tune1": {
+  "title": "Slide High"
+ },
+ "repo/abcts-decorations-tune2": {
+  "title": "Glissando"
+ },
+ "repo/abcts-decorations-tune3": {
+  "title": "Glissando Tilde"
+ },
+ "repo/abcts-decorations-tune4": {
+  "title": "Glissando Dotted"
+ },
+ "repo/abcts-decorations-tune5": {
+  "title": "Glissando Beamed"
+ },
  "repo/abcts-directives-2-tune0": {
   "title": "subtitlespace"
  },

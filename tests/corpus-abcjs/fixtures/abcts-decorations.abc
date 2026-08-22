@@ -1,0 +1,35 @@
+X:1
+T:Slide
+L:1/8
+K:C
+!slide!C DEF|GA B[CEG]2|
+
+X:2
+T:Slide High
+L:1/8
+K:C
+!slide!g abc'|d'2 !slide!e'2|
+
+X:3
+T:Glissando
+L:1/8
+K:C
+!glissando(!C DEF|GA !glissando)!B[CEG]2|
+
+X:4
+T:Glissando Tilde
+L:1/8
+K:C
+!~(!C DEF|GA !~)!B[CEG]2|
+
+X:5
+T:Glissando Dotted
+L:1/8
+K:C
+!glissando(!C3 D|E2 !glissando)!F2|
+
+X:6
+T:Glissando Beamed
+L:1/8
+K:C
+!glissando(!CDEF|GAB!glissando)!c|

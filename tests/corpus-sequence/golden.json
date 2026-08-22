@@ -49727,6 +49727,148 @@
    }
   ]
  ],
+ "abcts-decorations": [
+  [
+   {
+    "el_type": "instrument",
+    "pickupLength": 0.5,
+    "program": 0
+   },
+   {
+    "el_type": "tempo",
+    "qpm": 180
+   },
+   {
+    "el_type": "key",
+    "accidentals": []
+   },
+   {
+    "el_type": "note",
+    "decoration": [
+     "slide"
+    ],
+    "duration": 0.125,
+    "pitches": [
+     {
+      "pitch": 0,
+      "name": "C",
+      "verticalPos": 0,
+      "highestVert": 6
+     }
+    ],
+    "timing": 0
+   },
+   {
+    "el_type": "note",
+    "duration": 0.125,
+    "pitches": [
+     {
+      "pitch": 1,
+      "name": "D",
+      "verticalPos": 1,
+      "highestVert": 7
+     }
+    ],
+    "timing": 0.125
+   },
+   {
+    "el_type": "note",
+    "duration": 0.125,
+    "pitches": [
+     {
+      "pitch": 2,
+      "name": "E",
+      "verticalPos": 2,
+      "highestVert": 8
+     }
+    ],
+    "timing": 0.25
+   },
+   {
+    "el_type": "note",
+    "duration": 0.125,
+    "pitches": [
+     {
+      "pitch": 3,
+      "name": "F",
+      "verticalPos": 3,
+      "highestVert": 9
+     }
+    ],
+    "timing": 0.375
+   },
+   {
+    "el_type": "bar"
+   },
+   {
+    "el_type": "note",
+    "duration": 0.125,
+    "pitches": [
+     {
+      "pitch": 4,
+      "name": "G",
+      "verticalPos": 4,
+      "highestVert": 10
+     }
+    ],
+    "timing": 0.5
+   },
+   {
+    "el_type": "note",
+    "duration": 0.125,
+    "pitches": [
+     {
+      "pitch": 5,
+      "name": "A",
+      "verticalPos": 5,
+      "highestVert": 11
+     }
+    ],
+    "timing": 0.625
+   },
+   {
+    "el_type": "note",
+    "duration": 0.125,
+    "pitches": [
+     {
+      "pitch": 6,
+      "name": "B",
+      "verticalPos": 6,
+      "highestVert": 6
+     }
+    ],
+    "timing": 0.75
+   },
+   {
+    "el_type": "note",
+    "duration": 0.25,
+    "pitches": [
+     {
+      "pitch": 0,
+      "name": "C",
+      "verticalPos": 0,
+      "highestVert": 0
+     },
+     {
+      "pitch": 2,
+      "name": "E",
+      "verticalPos": 2,
+      "highestVert": 2
+     },
+     {
+      "pitch": 4,
+      "name": "G",
+      "verticalPos": 4,
+      "highestVert": 4
+     }
+    ],
+    "timing": 0.875
+   },
+   {
+    "el_type": "bar"
+   }
+  ]
+ ],
  "abcts-directives-2": [
   [
    {

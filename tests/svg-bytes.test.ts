@@ -314,6 +314,24 @@ const PASSING: readonly string[] = [
   "abcts-visualtranspose-tune2",
   "abcts-visualtranspose-tune3",
   /**
+   * `abcts-decorations.abc` — the three `!…!` names abcjs's own decoration tables hold and
+   * this engine got wrong, found by rendering every one of the 96 through both engines:
+   * `slide`'s EXTENT (its curve was byte-exact and its reserve was missing), `~(`/`~)` as
+   * an alias of `glissando(`/`glissando)`, and a glissando's inset, which is half the
+   * ELEMENT's width and not half the notehead's — so tunes 4 and 5 put a dot and a beam on
+   * the anchor, the two other things that move `abselem.w`.
+   *
+   * ⚠️ **`!glissando)!` AND `!~)!` WITH NOTHING OPEN CRASH abcjs** — `drawGlissando` reads
+   * `params.anchor1.heads[0]` after logging "Glissando Element not set" and carrying on
+   * (`draw/glissando.js:6-10`). There can be no golden for either, so neither is here.
+   */
+  "abcts-decorations-tune0",
+  "abcts-decorations-tune1",
+  "abcts-decorations-tune2",
+  "abcts-decorations-tune3",
+  "abcts-decorations-tune4",
+  "abcts-decorations-tune5",
+  /**
    * `abcts-directives-2.abc` — the SEVEN more that move abcjs's output only in a shape that
    * can reach them: a subtitle, a composer, a `W:`, four bars, a beam, a grace group.
    * `%%topspace` is the eighth and is PRINT-only, so no screen golden can gate it.

@@ -67,6 +67,7 @@ const PASSING: readonly string[] = [
   "repo/abcts-ledger-gaps-2-tune0",
   "repo/abcts-ledger-gaps-3-tune0",
   "repo/abcts-ledger-gaps-4-tune0",
+  "repo/abcts-decorations-tune0",
   "repo/abcts-directives-tune0",
   "repo/abcts-directives-2-tune0",
   "repo/abcts-model-gaps-tune0",

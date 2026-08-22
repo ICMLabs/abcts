@@ -2682,6 +2682,80 @@
    "hasPickup": false
   }
  ],
+ "repo/abcts-decorations": [
+  {
+   "header": "X:1\nT:Slide\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "!slide!C DEF|"
+    },
+    {
+     "abc": "GA B[CEG]2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:2\nT:Slide High\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "!slide!g abc'|"
+    },
+    {
+     "abc": "d'2 !slide!e'2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:3\nT:Glissando\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "!glissando(!C DEF|"
+    },
+    {
+     "abc": "GA !glissando)!B[CEG]2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:4\nT:Glissando Tilde\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "!~(!C DEF|"
+    },
+    {
+     "abc": "GA !~)!B[CEG]2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:5\nT:Glissando Dotted\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "!glissando(!C3 D|"
+    },
+    {
+     "abc": "E2 !glissando)!F2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:6\nT:Glissando Beamed\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "!glissando(!CDEF|"
+    },
+    {
+     "abc": "GAB!glissando)!c|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
  "repo/abcts-directives-2": [
   {
    "header": "X:1\nT:subtitlespace\nT:the subtitle\n%%subtitlespace 40\nL:1/4\nM:4/4\nK:C\n",

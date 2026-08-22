@@ -419,10 +419,14 @@ const WITHIN: Readonly<Record<string, number>> = {
   // five of the third eight, and NONE of the fourth six — which is the other honest
   // outcome of the pattern: six more entries are measurements now rather than predictions.
   // All twenty-eight tunes are byte-exact.
-  "0.05": 185,
-  "1": 185,
-  "5": 185,
-  "25": 185,
+  //
+  // …and `abcts-decorations.abc` is the same pattern applied to abcjs's DECORATION tables:
+  // all 96 names rendered through both engines, three of them wrong. Its six tunes are
+  // byte-exact, which is the one row that takes each count from 185 to 186.
+  "0.05": 186,
+  "1": 186,
+  "5": 186,
+  "25": 186,
 };
 
 const names = readdirSync(fixturesDir)

@@ -7063,6 +7063,11 @@ const SPANNER_OPEN: Readonly<Record<string, 'crescendo' | 'diminuendo' | 'glissa
   '>(': 'diminuendo',
   'diminuendo(': 'diminuendo',
   'glissando(': 'glissando',
+  // **AND `~(` IS A GLISSANDO**, a case label sharing `glissando(`'s arm
+  // (`decoration.js:341-343`) — not a pseudonym the parser rewrites, so the writer's own
+  // switch is the only place it is spelled. Ours knew the long name only, and `!~(!C … !~)!B`
+  // drew no squiggle at all.
+  '~(': 'glissando',
 }
 const SPANNER_CLOSE: Readonly<Record<string, 'crescendo' | 'diminuendo' | 'glissando'>> = {
   '<)': 'crescendo',
@@ -7070,6 +7075,7 @@ const SPANNER_CLOSE: Readonly<Record<string, 'crescendo' | 'diminuendo' | 'gliss
   '>)': 'diminuendo',
   'diminuendo)': 'diminuendo',
   'glissando)': 'glissando',
+  '~)': 'glissando',
 }
 
 /**
@@ -7324,8 +7330,13 @@ function layoutSpanners(
        * both margins, `len` being the centre-to-centre hypotenuse — `Math.sqrt`, not
        * `hypot`, which is the same abcjs-debt the curve's arc carries.
        */
-      const w1 = fromNote.headWidth ?? 0
-      const w2 = toNote.headWidth ?? 0
+      // ⚠️ **AND `anchor1.w` IS THE ELEMENT'S WIDTH, NOT THE NOTEHEAD'S.** `drawGlissando`
+      // reads `params.anchor1.x` and `.w` off the ABSOLUTE element, whose `w` an unbeamed
+      // up-stem flag grows past the head: instrumented, `!glissando(!C` reports
+      // `a1.w 15.902` against `head.w 9.81`, and taking the head put the squiggle's `M`
+      // at 62.861 for abcjs's 68.953. See `NoteAnchor.absWidth`.
+      const w1 = fromNote.absWidth ?? fromNote.headWidth ?? 0
+      const w2 = toNote.absWidth ?? toNote.headWidth ?? 0
       const leftX = fromNote.left + w1 / 2
       const rightX = toNote.left + w2 / 2
       const leftY = fromNote.pitchY
@@ -7583,6 +7594,12 @@ interface NoteAnchor {
   readonly bottom: number
   /** The element's `slideRoom`, carried so `!slide!` can hang its blanks off it. */
   readonly slideRoom?: number
+  /**
+   * The whole ELEMENT's width — abcjs's `abselem.w`, which is NOT the notehead's. A
+   * glissando insets by half of it at each end, so an unbeamed up-stem eighth's FLAG moves
+   * the squiggle's start. Built where the glyphs are; see the construction site.
+   */
+  readonly absWidth?: number
   /**
    * `anchor.pitch` AS ABCJS MEANS IT — the FIRST pitch of the chord as the source wrote
    * it, not the chord's middle and not its lowest note. A slur or tie is hung on
@@ -9137,6 +9154,47 @@ function curveReserves(
   const arriving = tiedIntoSystem ? anchors[0] : undefined
   if (arriving !== undefined) {
     ink.push({ top: centre(arriving) - four, bottom: centre(arriving) + four })
+  }
+  /**
+   * **AND `!slide!` RESERVES LIKE ANY OTHER CURVE.** Its `TieElem` reaches the voice
+   * through `addOther` (`decoration.js:51-59`), so `setUpperAndLowerVoiceElements`' own
+   * `TieElem` case grows the staff by its `getYBounds` box
+   * (`set-upper-and-lower-elements.js:139-146`) — the drawing was byte-exact and the
+   * EXTENT was not, which the root `height` alone showed: 154.552 against our 139.052 on
+   * `!slide!C`, four pitch.
+   *
+   * The ends are the two blanks' own pitches, `head.pitch - 3` and `head.pitch - 1`:
+   * `fixedY` switches off both mid-stem arms of `calcSlurY` (`tie-element.js:166, 175`),
+   * and neither blank is beamed.
+   *
+   * ⚠️ **AND THE EXTENT BOWS THE OTHER WAY FROM THE DRAWING.** `getYBounds` branches on
+   * `this.isTie`, which nothing has set at layout time, so it takes `calcSlurDirection` —
+   * where a slide's `voiceNumber` is UNDEFINED (`decoration.js:58` passes none), the
+   * `=== 0` and `> 0` arms both fail, and the `else` reads `stemDir` off two blanks that
+   * have none. `above` is FALSE, unconditionally and for every tune. The DRAWING recomputes
+   * `isTie` from the anchors and reaches `calcTieDirection`, which says above — see the
+   * arc's own note. So the box is the below branch: `top = min(…) = pitch - 3`,
+   * `bottom = top - 3 = pitch - 6`.
+   *
+   * Instrumented, not inferred: `!slide!C DEF|GA B[CEG]2|` reports `yBounds [-3,-6]
+   * above false` and takes `staff.bottom` from -2 to -6 — four pitch, the 15.5px the root
+   * `height` was short. Reading `above` as true off the drawing's direction paid back
+   * exactly one of the four.
+   *
+   * ⚠️ **AND ITS INK BOX IS NOT TAKEN.** The `pitch ± 4` range is set in `setEndAnchor`,
+   * which never runs on a `TieElem` constructed with BOTH anchors, and `adjustRange` skips
+   * an undefined `top`/`bottom` (`voice-element.js:66-71`). Post lane only.
+   */
+  for (const a of anchors) {
+    if (!a.event.decorations.includes('slide')) continue
+    const step = a.pitchStep
+    if (step === undefined) continue
+    reserves.push({
+      top: stepToY(step - 3),
+      bottom: stepToY(step - 6),
+      topPitch: step - 3 + PITCH_ORIGIN,
+      bottomPitch: step - 6 + PITCH_ORIGIN,
+    })
   }
   return { ink, post: reserves }
 }
@@ -11062,6 +11120,19 @@ function layoutMeasure(
         // The notehead's DECLARED width — `anchor.w` — which an ABOVE slur bumps its own
         // ends by half of. See `buildCurve`.
         headWidth: heads[0] === undefined ? 0 : glyphsFor(strict).width(heads[0].name),
+        /**
+         * abcjs's `abselem.w` — `max(dx + w)` over the `addRight` children only
+         * (`absolute-element.js:141`), which for a note is its heads, its UNBEAMED flag and
+         * its dots. An accidental and a grace are `addExtra`, a ledger `addFixed` and a
+         * decoration `addFixedX`; none of the three touches `w`. The stem is `addRight` at
+         * `w = 0` and `dx = ` the head's own width, so it never wins.
+         */
+        absWidth:
+          Math.max(
+            ...el.glyphs
+              .filter((g) => g.role === 'notehead' || g.role === 'flag' || g.role === 'dot')
+              .map((g) => g.x + glyphsFor(strict).width(g.name)),
+          ) - Math.min(...heads.map((h) => h.x)),
         event,
       })
     } else if (event.type === 'rest') {

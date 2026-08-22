@@ -1615,6 +1615,54 @@
   "L0 s1 v0 stem@undefined..undefined note@170..173 note@173..175 note@175..177 note@177..179 note@179..183 bar@183..184 note@184..188 note@188..190 note@190..193 note@193..195 bar@195..196 note@196..199 note@199..202 note@202..206 note@206..210 bar@210..212",
   "L0 s1 v1 stem@undefined..undefined note@218..221 note@221..224 note@224..228 note@228..231 bar@231..232 note@232..236 note@236..239 note@239..242 note@242..246 note@246..250 bar@250..251 note@251..255 note@255..258 note@258..263 bar@263..265"
  ],
+ "repo/abcts-decorations-tune0": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@22..31 note@31..32 note@32..33 note@33..34 bar@34..35 note@35..36 note@36..38 note@38..39 note@39..45 bar@45..46"
+ ],
+ "repo/abcts-decorations-tune1": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@75..84 note@84..85 note@85..86 note@86..88 bar@88..89 note@89..93 note@93..103 bar@103..104"
+ ],
+ "repo/abcts-decorations-tune2": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@132..146 note@146..147 note@147..148 note@148..149 bar@149..150 note@150..151 note@151..153 note@153..166 note@166..172 bar@172..173"
+ ],
+ "repo/abcts-decorations-tune3": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@207..213 note@213..214 note@214..215 note@215..216 bar@216..217 note@217..218 note@218..220 note@220..225 note@225..231 bar@231..232"
+ ],
+ "repo/abcts-decorations-tune4": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@267..282 note@282..283 bar@283..284 note@284..287 note@287..301 bar@301..302"
+ ],
+ "repo/abcts-decorations-tune5": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@337..350 note@350..351 note@351..352 note@352..353 bar@353..354 note@354..355 note@355..356 note@356..357 note@357..370 bar@370..371"
+ ],
+ "repo/abcts-decorations-tune0#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@22..31 note@31..32 note@32..33 note@33..34 bar@34..35 note@35..36 note@36..38 note@38..39 note@39..45 bar@45..46"
+ ],
+ "repo/abcts-decorations-tune1#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@75..84 note@84..85 note@85..86 note@86..88 bar@88..89 note@89..93 note@93..103 bar@103..104"
+ ],
+ "repo/abcts-decorations-tune2#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@132..146 note@146..147 note@147..148 note@148..149 bar@149..150 note@150..151 note@151..153 note@153..166 note@166..172 bar@172..173"
+ ],
+ "repo/abcts-decorations-tune3#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@207..213 note@213..214 note@214..215 note@215..216 bar@216..217 note@217..218 note@218..220 note@220..225 note@225..231 bar@231..232"
+ ],
+ "repo/abcts-decorations-tune4#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@267..282 note@282..283 bar@283..284 note@284..287 note@287..301 bar@301..302"
+ ],
+ "repo/abcts-decorations-tune5#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@337..350 note@350..351 note@351..352 note@352..353 bar@353..354 note@354..355 note@355..356 note@356..357 note@357..370 bar@370..371"
+ ],
  "repo/abcts-directives-2-tune0": [
   "L0 subtitle",
   "L1 s0 kept=meter,key,clef",
