@@ -728,6 +728,16 @@ export const ENGRAVE = {
   curveContinuation: spaces(ABCJS_PX.curveStub),
   /** `var width = params.w - 1` — see the curve split (`draw/voice.js:12`). */
   lineEndInset: spaces(ABCJS_PX.lineEndInset),
+  /**
+   * `drawTie(renderer, child, params.startx + 10, width, …)` — abcjs's `lineStartX`, which
+   * only a curve with NEITHER anchor reaches (`draw/voice.js:85`, `tie-element.js:129`).
+   */
+  crossedLineStart: spaces(10),
+  /**
+   * `startY = endY = this.above ? 14 : 0`, under abcjs's own *"This is the case where the
+   * slur covers the entire line"* (`tie-element.js:206-213`).
+   */
+  crossedLinePitch: 14,
   /** How far a slur or tie endpoint sits clear of the notehead it springs from. */
   curveEndGap: 0.3 * SPACE,
   /** Arc height as a fraction of the curve's horizontal span, before clamping. */
@@ -1303,6 +1313,14 @@ export interface PlacedText {
    * `143.15373506324653` against abcjs's `…56` on that one round trip.
    */
   readonly reserveTopPitch?: number
+  /**
+   * The BOTTOM edge of that reserve in abcjs's own PITCH — the mirror of
+   * `reserveTopPitch`, and for the same reason: `staff.bottom -= chordHeightBelow` is a
+   * PITCH subtraction (`set-upper-and-lower-elements.js:88-96`), so a reserve stated in
+   * pixels and divided back is a different double. One ULP of the root `height`, which is
+   * all `abcts-ledger-gaps-3` tune 1 has ever differed by.
+   */
+  readonly reserveBottomPitch?: number
   readonly x: number
   /** Baseline y, staff spaces. */
   readonly y: number
@@ -7163,7 +7181,7 @@ function layoutConnectors(
 function layoutSpanners(
   anchors: readonly NoteAnchor[],
   /** Where each system's music starts and ends, exactly as `layoutCurves` uses it. */
-  bounds: readonly { left: number; right: number; prefixEnd?: number }[],
+  bounds: readonly { left: number; right: number; prefixEnd?: number; staffLeft?: number }[],
   /**
    * Hairpins share the dynamics lane, so they share its side — **PER SYSTEM, as the notes
    * read it.** `hasVocals` is set once per LINE in abcjs (`abstract-engraver.js:110`) and
@@ -7954,7 +7972,7 @@ function layoutCurves(
    * Where each system's music starts and ends. A split curve runs to the right edge of
    * the system it leaves and resumes after the clef and key of the one it enters.
    */
-  bounds: readonly { left: number; right: number; prefixEnd?: number }[],
+  bounds: readonly { left: number; right: number; prefixEnd?: number; staffLeft?: number }[],
   /** The voice's index on its staff, or −1 when it has that staff to itself. */
   voicePos: number,
 ): PlacedCurve[][] {
@@ -8028,9 +8046,8 @@ function layoutCurves(
    * of its system, and a piece from the start of the next system to the second note.
    * Each half keeps the full arc shape, so the eye completes it across the break.
    *
-   * ponytail: a curve spanning THREE systems — possible only for a very long slur —
-   * gets its two ends and no middle. The intervening systems would each want a full-width
-   * arc; no corpus fixture has one.
+   * …**AND A SYSTEM IT ONLY CROSSES GETS A FULL-WIDTH ARC** — see the loop at the foot of
+   * the cross-system branch. `abcts-ledger-gaps-3` tune 3 is the fixture.
    */
   /**
    * **`isTie` IS RECOMPUTED AT DRAW TIME FROM THE ANCHORS, NOT TAKEN FROM THE SOURCE.**
@@ -8253,6 +8270,57 @@ function layoutCurves(
       ...style,
       carried: true,
     })
+    /**
+     * **AND A SYSTEM THE CURVE ONLY CROSSES GETS A FULL-WIDTH ARC OF ITS OWN.** `TieElem`
+     * is per LINE, so the intervening line has NEITHER anchor: `calcX` falls to
+     * `startLimitX.x + w` — that line's own prefix, the same term the incoming half takes —
+     * and to `lineEndX` at the other end (`tie-element.js:118-139`). Measured on
+     * `abcts-ledger-gaps-3` tune 3, whose slur spans three systems: abcjs draws
+     * `M 31 … 688`, a clean arc across the middle staff, where we drew the two ends and
+     * nothing between them. A `ponytail:` here predicted the shape and said no corpus
+     * fixture has one.
+     */
+    for (let sys = from.system + 1; sys < to.system; sys += 1) {
+      const across = bounds[sys]
+      if (across === undefined) continue
+      /**
+       * **NEITHER ANCHOR, SO NEITHER RULE THE HALVES TAKE.** `calcX` falls past
+       * `startLimitX` — which only a line that OPENS a slur ever gets — to `lineStartX`,
+       * and `drawVoice` hands it `params.startx + 10` (`draw/voice.js:85`). The other end
+       * is `lineEndX`, the same `w - 1` the outgoing half takes.
+       *
+       * **AND THE PITCH IS abcjs's OWN 14, ABOVE** — `startY = endY = this.above ? 14 : 0`
+       * under its comment *"This is the case where the slur covers the entire line"*
+       * (`tie-element.js:206-213`), with `calcSlurDirection` answering ABOVE for an
+       * anchorless curve. Instrumented on this fixture: `DRAWTIE start=10,14 end=1000,14
+       * above=true`.
+       */
+      const left = (across.staffLeft ?? across.left) + ENGRAVE.crossedLineStart
+      const right = across.right - ENGRAVE.lineEndInset
+      const step = ENGRAVE.crossedLinePitch - PITCH_ORIGIN
+      const anchorless: NoteAnchor = {
+        ...to,
+        left,
+        right: left,
+        pitchStep: step,
+        // …and a HALF is drawn as a tie, which reads `pitchY` outright — see `endY`.
+        pitchY: stepToY(step),
+        stemUp: false,
+        system: sys,
+      }
+      curves[sys]?.push({
+        ...buildCurve(
+          anchorless,
+          { ...anchorless, left: right, right },
+          halfKind,
+          voicePos,
+          strict,
+          {},
+        ),
+        ...style,
+        carried: true,
+      })
+    }
   }
 
   anchors.forEach((anchor, i) => {
@@ -8356,13 +8424,16 @@ function layoutCurves(
      */
     if (event.type === 'rest') return
 
-    // Slurs close before they open, so `(A)(B)` closes on A before opening on B.
-    for (let n = 0; n < event.slurEnds; n++) {
+    /**
+     * One close, against whatever is open. Factored out because a chord HEAD's `)` closes
+     * the same way — see the head loop below — where it used to be a half in every case.
+     */
+    const closeInto = (target: NoteAnchor): void => {
       const depth = open.length - 1
       const rec = open.pop()
       const start = rec?.i
       const from = rec === undefined ? undefined : (rec.from ?? anchors[rec.i])
-      if (from === undefined) emitHalf(anchor, 'in')
+      if (from === undefined) emitHalf(target, 'in')
       if (from !== undefined) {
         // Notes strictly between the two ends — abcjs's `internalNotes`, which a REST and
         // a GRACE never join. See `drawnKind`.
@@ -8384,14 +8455,16 @@ function layoutCurves(
           anchors.slice((start ?? 0) + 1, i).filter((a) => a.event.type !== 'rest').length
         emit(
           from,
-          anchor,
-          drawnKind(from, anchor, 'slur', internal),
+          target,
+          drawnKind(from, target, 'slur', internal),
           internalHighOf(start ?? 0, i, from),
           openSeq.get(depth),
           internalDownOf(start ?? 0, i),
         )
       }
     }
+    // Slurs close before they open, so `(A)(B)` closes on A before opening on B.
+    for (let n = 0; n < event.slurEnds; n++) closeInto(anchor)
     for (let n = 0; n < event.slurStarts; n++) {
       open.push({ i })
       openSeq.set(open.length - 1, seq++)
@@ -8415,7 +8488,18 @@ function layoutCurves(
         ? (event.pitches as readonly { slurStarts?: number; slurEnds?: number }[])
         : []
     heads.forEach((p, k) => {
-      for (let n = 0; n < (p.slurEnds ?? 0); n++) emitHalf(headAnchor(anchor, k), 'in')
+      /**
+       * ⚠️ **BUT A CLOSE WHOSE OWN POSITION IS EMPTY TAKES ANY OTHER OPEN**, which is the
+       * other half of `cleanUpSlursInLine`'s rule and what makes `(F [GB)d]` a real curve:
+       * the `(` on a single note is numbered 101 and the `)` on the chord's SECOND head
+       * would be 201, finds nothing at 201, and takes the 101 (`tune-builder.js:751-770`).
+       * So a head close pairs whenever something is open and is a half only when nothing
+       * is — which is exactly the `[(CE)G]` case above, where the open is on a HEAD and
+       * never reaches this stack.
+       */
+      for (let n = 0; n < (p.slurEnds ?? 0); n++)
+        if (open.length > 0) closeInto(headAnchor(anchor, k))
+        else emitHalf(headAnchor(anchor, k), 'in')
       for (let n = 0; n < (p.slurStarts ?? 0); n++) emitHalf(headAnchor(anchor, k), 'out')
     })
 
@@ -14034,6 +14118,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     const last = prefix[prefix.length - 1]
     return {
       left: musicLeft[i] ?? leftEdgeFor(i),
+      // …**AND THE STAFF'S OWN LEFT EDGE**, which is abcjs's `staffGroup.startx` and the
+      // only thing a curve with NEITHER anchor has to go on — see the cross-system loop.
+      staffLeft: leftEdgeFor(i),
       // …and the RIGHT edge is the MUSIC's, not the system's — see `LayoutSystem.musicWidth`.
       right: system.musicWidth - PAGE_PADDING.left,
       ...(last === undefined ? {} : { prefixEnd: last.x + last.width }),
@@ -15508,8 +15595,10 @@ function appendFreeText(
  * spent by the caller. "Empirically discovered. What variable should this be?"
  * (`draw/draw.js:66`.)
  *
- * ponytail: `%%abc-copyright`, `%%abc-creator` and `%%abc-edited-by` have their own rows
- * in `extraText` and are not parsed here yet — no fixture in either corpus sets one.
+ * `%%abc-copyright`, `%%abc-creator` and `%%abc-edited-by` have their own rows in
+ * `extraText`, after `History:` and with abcjs's own English prefixes; `%%abc-version` and
+ * `%%abc-charset` reach `metaText` and draw nothing. `abcts-ledger-gaps-3` tune 6 is the
+ * fixture, written for a `ponytail:` that said no fixture in either corpus sets one.
  */
 function bottomTextBlock(
   metadata: ScoreMetadata,
@@ -15887,6 +15976,21 @@ function bottomTextBlock(
   multi(metadata.notes, 'Notes:', 'notes', 'abcjs-extra-text abcjs-notes')
   single(metadata.transcription, 'Transcription: ', 'abcjs-extra-text abcjs-transcription')
   multi(metadata.history, 'History:', 'history', 'abcjs-extra-text abcjs-history')
+  // …and the three `%%abc-…` rows, in abcjs's order and with its literal prefixes
+  // (`bottom-text.js:77-79`). `%%abc-version` and `%%abc-charset` reach `metaText` and
+  // draw nothing, which is abcjs's own split.
+  const abcRow = (key: string, preface: string, klass: string): void => {
+    const text = metadata.abcMeta[key]
+    if (text === undefined || text === '') return
+    // A PLAIN STRING, so `richText` takes its string branch — `addMetaText` never splits
+    // these for a `$N` and `addSingleLine` prefixes them by concatenation
+    // (`bottom-text.js:27-33`). Handing it a one-phrase ARRAY takes the other branch and
+    // draws an unnamed, `dominant-baseline: middle` row instead.
+    single(text, preface, klass)
+  }
+  abcRow('abc-copyright', 'Copyright: ', 'abcjs-extra-text abcjs-copyright')
+  abcRow('abc-creator', 'Creator: ', 'abcjs-extra-text abcjs-creator')
+  abcRow('abc-edited-by', 'Edited By: ', 'abcjs-extra-text abcjs-edited-by')
 
   return { texts, height: y - from, advances, rows }
 }
@@ -16727,6 +16831,8 @@ function anchorChordsBelow<
    * lyric lane counts that lane twice: the page grew by exactly one lyric block, 22.71px.
    */
   const reserve: readonly [number, number] = [extent.inkBottom, extent.inkBottom + block]
+  /** …and the same lower edge in PITCH — see `PlacedText.reserveBottomPitch`. */
+  const reserveBottomPitch = extent.inkBottomPitch - block / ENGRAVE.spacePerStep
   return parts.map((part) => ({
     ...part,
     elements: part.elements.map((el) =>
@@ -16743,6 +16849,7 @@ function anchorChordsBelow<
                     y:
                       inkBottom + t.size + (laneOf.get(t) ?? 0) * t.size * ABCJS_RATIO.laneLineStep,
                     reserve,
+                    reserveBottomPitch,
                   }
                 : t,
             ),
@@ -17340,6 +17447,8 @@ function verticalExtent(
   top: number
   bottom: number
   inkBottom: number
+  /** The same edge in PITCH — see `PlacedText.reserveBottomPitch`. */
+  inkBottomPitch: number
   /** The LYRIC lane alone — see the return below. */
   lyricLane: number
   topPitch: number
@@ -17666,7 +17775,7 @@ function verticalExtent(
       // The 0.8/0.25 estimate is kept for the TITLE block, where it was measured and where
       // raising the ascent to 1.0 is recorded as moving every drawing 3.7px down.
       if (t.reserve !== undefined) {
-        include(t.reserve[0], t.reserve[1])
+        include(t.reserve[0], t.reserve[1], t.reserveTopPitch, t.reserveBottomPitch)
         continue
       }
       // …AND A RICH ROW DECLARES ITS OWN SPAN — see `PlacedText.rowSpan`.
@@ -17729,6 +17838,12 @@ function verticalExtent(
    * before the `TieElem` push. `anchorLyrics` reads this rather than measuring its own.
    */
   const inkBottom = bottom
+  /**
+   * …**AND THE SAME EDGE IN PITCH**, which is what a lane BELOW has to be subtracted from:
+   * `staff.bottom -= chordHeightBelow` is a pitch subtraction, and recovering the pitch by
+   * dividing the y back is a different double — see `PlacedText.reserveBottomPitch`.
+   */
+  const inkBottomPitch = bottomPitch
   /** Every lane below is abcjs's own `staff.top += …` / `staff.bottom -= …`, in PITCH. */
   const raise = (pitch: number): void => {
     top -= pitch * ENGRAVE.spacePerStep
@@ -17852,6 +17967,7 @@ function verticalExtent(
     top: top - ENGRAVE.marginY,
     bottom: bottom + ENGRAVE.marginY,
     inkBottom,
+    inkBottomPitch,
     /**
      * **THE LYRIC LANE ALONE, IN PIXELS** — what `lower()` spent for it just above, and
      * zero when the staff sings nothing. abcjs's below chain is lyric, then chord, then

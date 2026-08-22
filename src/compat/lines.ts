@@ -1680,10 +1680,11 @@ function markTieEnds(
  * The stacks are per VOICE and span the whole tune, which is why they are threaded in
  * rather than being local to a line: a slur may open on one system and close on the next.
  *
- * ponytail: a slur written INSIDE a chord — `[(CE)G]` — needs a per-PITCH count the model
- * does not carry, so those two marks are dropped. Neither corpus writes one; the shape to
- * add is a `slurStarts`/`slurEnds` on `Pitch`, and the numbering below already takes the
- * chord position it would need. Grace STARTS are the same gap and the same fix.
+ * **A SLUR WRITTEN INSIDE A CHORD IS PER PITCH** — `Pitch.slurStarts`/`slurEnds` carry it
+ * and the numbering below takes the chord position, which is the shape an earlier
+ * `ponytail:` here asked for. `abcts-ledger-gaps-2` tune 7 (`[(CE)G]`, two halves that
+ * cannot pair) and `-3` tune 2 (`(F [GB)d]`, a close that takes the open before it) are the
+ * two fixtures.
  */
 type SlurStacks = Record<number, number[]>;
 

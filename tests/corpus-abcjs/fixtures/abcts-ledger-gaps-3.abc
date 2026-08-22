@@ -1,0 +1,74 @@
+%abc-2.1
+% CONTROL — a third pass over the `ponytail:` LEDGER. Same rule as the first two: every
+% shape here is one an entry NAMED and then declared unwritten by either corpus, which
+% makes it a prediction. Goldens by running abcjs 6.7.0 at {staffwidth: 670}.
+X:1
+T:a zero-length note
+L:1/4
+M:4/4
+K:C
+C0 D E F|
+
+X:2
+T:three annotations above and two below on one staff
+L:1/4
+M:4/4
+K:C
+"^one""^two""^three"C "_down""_lower"D E F|
+
+X:3
+T:a slur closing on ONE head of a chord
+L:1/4
+M:4/4
+K:C
+(F [GB)d] c F|
+
+X:4
+T:a slur spanning three systems
+L:1/4
+M:4/4
+K:C
+(C D E F|
+G A B c|
+d e f g)|
+
+X:5
+T:one voice declares its stems and the other does not
+L:1/4
+M:4/4
+%%score (V1 V2)
+V:V1 stem=up
+V:V2
+K:C
+[V:V1] C D E F|
+[V:V2] G A B c|
+
+X:6
+T:a melisma held in the SECOND verse
+L:1/4
+M:4/4
+K:C
+C D E F|
+w:one two three four
+w:un _ deux trois
+
+X:7
+T:the abc-copyright rows
+%%abc-copyright (c) ICM Labs
+%%abc-creator abcts
+L:1/4
+M:4/4
+K:C
+C D E F|
+
+X:8
+T:a lyric on the voice whose stem is not the deepest
+L:1/4
+M:4/4
+%%score (V1 V2)
+V:V1
+V:V2
+K:C
+[V:V1] c c c c|
+w:la la la la
+[V:V2] C,, D,, E,, F,,|

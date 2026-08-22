@@ -1412,6 +1412,16 @@ export interface ScoreMetadata {
   readonly source: RichText | null
   readonly discography: RichText | null
   readonly transcription: RichText | null
+  /**
+   * `%%abc-copyright`, `%%abc-creator`, `%%abc-edited-by`, `%%abc-version`, `%%abc-charset`
+   * — keyed by abcjs's own `metaText` name (`abc-copyright`, …) and held as PLAIN STRINGS,
+   * because `addMetaText(cmd + subCmd, arr.join(' '), …)` never runs the font-change split
+   * (`abc_parse_directive.js:1150-1161`).
+   *
+   * The first three draw a `"Copyright: "` / `"Creator: "` / `"Edited By: "` row at the
+   * foot of the tune (`bottom-text.js:77-79`); the other two are metaText and no ink.
+   */
+  readonly abcMeta: Readonly<Partial<Record<string, string>>>
   readonly notes: readonly RichText[]
   readonly history: readonly RichText[]
   readonly unalignedWords: readonly RichText[]

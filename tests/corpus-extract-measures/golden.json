@@ -2797,6 +2797,86 @@
    "hasPickup": false
   }
  ],
+ "repo/abcts-ledger-gaps-3": [
+  {
+   "header": "X:1\nT:a zero-length note\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C0 D E F|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:2\nT:three annotations above and two below on one staff\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"^one\"\"^two\"\"^three\"C \"_down\"\"_lower\"D E F|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:a slur closing on ONE head of a chord\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "(F [GB)d] c F|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:4\nT:a slur spanning three systems\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "(C D E F|"
+    },
+    {
+     "abc": "G A B c|"
+    },
+    {
+     "abc": "d e f g)|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:5\nT:one voice declares its stems and the other does not\nL:1/4\nM:4/4\n%%score (V1 V2)\nV:V1 stem=up\nV:V2\nK:C\n",
+   "measures": [
+    {
+     "abc": " C D E F|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:6\nT:a melisma held in the SECOND verse\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C D E F|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:7\nT:the abc-copyright rows\n%%abc-copyright (c) ICM Labs\n%%abc-creator abcts\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "C D E F|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:8\nT:a lyric on the voice whose stem is not the deepest\nL:1/4\nM:4/4\n%%score (V1 V2)\nV:V1\nV:V2\nK:C\n",
+   "measures": [
+    {
+     "abc": " c c c c|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
  "repo/abcts-ledger-gaps": [
   {
    "header": "X:1\nT:a chord where only SOME heads are tied\nL:1/4\nM:4/4\nK:C\n",

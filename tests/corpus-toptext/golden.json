@@ -3478,6 +3478,201 @@
   ],
   "bottomText": []
  },
+ "repo/abcts-ledger-gaps-3-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a zero-length note",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 266,
+    "endChar": 286,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-ledger-gaps-3-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "three annotations above and two below on one staff",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 318,
+    "endChar": 370,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-ledger-gaps-3-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a slur closing on ONE head of a chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 436,
+    "endChar": 475,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-ledger-gaps-3-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a slur spanning three systems",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 512,
+    "endChar": 543,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-ledger-gaps-3-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "one voice declares its stems and the other does not",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 594,
+    "endChar": 647,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-ledger-gaps-3-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a melisma held in the SECOND verse",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 735,
+    "endChar": 771,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-ledger-gaps-3-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "the abc-copyright rows",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 841,
+    "endChar": 865,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": [
+   {
+    "left": 15,
+    "text": "Copyright: (c) ICM Labs",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 26
+   },
+   {
+    "left": 15,
+    "text": "Creator: abcts",
+    "font": "historyfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "absElemType": "extraText",
+    "name": "description"
+   },
+   {
+    "move": 26
+   }
+  ]
+ },
+ "repo/abcts-ledger-gaps-3-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a lyric on the voice whose stem is not the deepest",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 945,
+    "endChar": 997,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
  "repo/abcts-ledger-gaps-tune0": {
   "topText": [
    {

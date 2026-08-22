@@ -1707,6 +1707,74 @@
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@1108..1116 note@1116..1118 note@1118..1120 note@1120..1121 bar@1121..1122"
  ],
+ "repo/abcts-ledger-gaps-3-tune0": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@303..306 note@306..308 note@308..310 note@310..311 bar@311..312"
+ ],
+ "repo/abcts-ledger-gaps-3-tune1": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@387..409 note@409..426 note@426..428 note@428..429 bar@429..430"
+ ],
+ "repo/abcts-ledger-gaps-3-tune2": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@492..495 note@495..502 note@502..504 note@504..505 bar@505..506"
+ ],
+ "repo/abcts-ledger-gaps-3-tune3": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@560..563 note@563..565 note@565..567 note@567..568 bar@568..569 note@570..572 note@572..574 note@574..576 note@576..577 bar@577..578 note@579..581 note@581..583 note@583..585 note@585..587 bar@587..588"
+ ],
+ "repo/abcts-ledger-gaps-3-tune4": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 stem@undefined..undefined stem@undefined..undefined note@704..707 note@707..709 note@709..711 note@711..712 bar@712..713",
+  "L0 s0 v1 stem@undefined..undefined note@720..723 note@723..725 note@725..727 note@727..728 bar@728..729"
+ ],
+ "repo/abcts-ledger-gaps-3-tune5": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@788..790 note@790..792 note@792..794 note@794..795 bar@795..796"
+ ],
+ "repo/abcts-ledger-gaps-3-tune6": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@931..933 note@933..935 note@935..937 note@937..938 bar@938..939"
+ ],
+ "repo/abcts-ledger-gaps-3-tune7": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@1046..1049 note@1049..1051 note@1051..1053 note@1053..1054 bar@1054..1055",
+  "L0 s0 v1 stem@undefined..undefined note@1076..1081 note@1081..1085 note@1085..1089 note@1089..1092 bar@1092..1093"
+ ],
+ "repo/abcts-ledger-gaps-3-tune0#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@303..306 note@306..308 note@308..310 note@310..311 bar@311..312"
+ ],
+ "repo/abcts-ledger-gaps-3-tune1#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@387..409 note@409..426 note@426..428 note@428..429 bar@429..430"
+ ],
+ "repo/abcts-ledger-gaps-3-tune2#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@492..495 note@495..502 note@502..504 note@504..505 bar@505..506"
+ ],
+ "repo/abcts-ledger-gaps-3-tune3#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@560..563 note@563..565 note@565..567 note@567..568 bar@568..569 break@undefined..undefined note@570..572 note@572..574 note@574..576 note@576..577 bar@577..578 break@undefined..undefined note@579..581 note@581..583 note@583..585 note@585..587 bar@587..588"
+ ],
+ "repo/abcts-ledger-gaps-3-tune4#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 stem@undefined..undefined stem@undefined..undefined note@704..707 note@707..709 note@709..711 note@711..712 bar@712..713",
+  "L0 s0 v1 stem@undefined..undefined note@720..723 note@723..725 note@725..727 note@727..728 bar@728..729"
+ ],
+ "repo/abcts-ledger-gaps-3-tune5#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@788..790 note@790..792 note@792..794 note@794..795 bar@795..796"
+ ],
+ "repo/abcts-ledger-gaps-3-tune6#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@931..933 note@933..935 note@935..937 note@937..938 bar@938..939"
+ ],
+ "repo/abcts-ledger-gaps-3-tune7#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 stem@undefined..undefined note@1046..1049 note@1049..1051 note@1051..1053 note@1053..1054 bar@1054..1055",
+  "L0 s0 v1 stem@undefined..undefined note@1076..1081 note@1081..1085 note@1085..1089 note@1089..1092 bar@1092..1093"
+ ],
  "repo/abcts-ledger-gaps-tune0": [
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@385..393 note@393..399 note@399..401 bar@401..402"

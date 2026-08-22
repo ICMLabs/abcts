@@ -1232,6 +1232,64 @@
   "bar el_type,endChar,startChar,type",
   "note duration,el_type,endChar,pitches,pitches.endSlur,pitches.name,pitches.pitch,pitches.startSlur,pitches.verticalPos,startChar"
  ],
+ "repo/abcts-ledger-gaps-3-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-ledger-gaps-3-tune1": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-ledger-gaps-3-tune2": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,pitches,pitches.endSlur,pitches.name,pitches.pitch,pitches.startSlur,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-ledger-gaps-3-tune3": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,pitches,pitches.endSlur,pitches.name,pitches.pitch,pitches.startSlur,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-ledger-gaps-3-tune4": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar",
+  "stem direction,el_type"
+ ],
+ "repo/abcts-ledger-gaps-3-tune5": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,lyric,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-ledger-gaps-3-tune6": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-ledger-gaps-3-tune7": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,lyric,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar",
+  "stem direction,el_type"
+ ],
  "repo/abcts-ledger-gaps-tune0": [
   "staff.clef el_type=undefined clefPos,type,verticalPos",
   "staff.key el_type=undefined acc,accidentals,mode,root",

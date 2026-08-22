@@ -327,6 +327,9 @@ const metaTextOf = (score: Score): Record<string, unknown> => {
   put("source", m.source);
   put("discography", m.discography);
   put("transcription", m.transcription);
+  // …and the `%%abc-…` five, which are PLAIN STRINGS and keyed by abcjs's own hyphenated
+  // names — see `ScoreMetadata.abcMeta`.
+  for (const [key, value] of Object.entries(m.abcMeta)) if (value !== undefined) out[key] = value;
   put("group", m.group);
   for (const [key, entries, join] of [
     ["notes", m.notes, true],

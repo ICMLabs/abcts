@@ -2113,6 +2113,8 @@ class ScoreBuilder {
   source: RichText | null = null
   discography: RichText | null = null
   transcription: RichText | null = null
+  /** `%%abc-copyright` and its four siblings — see `ScoreMetadata.abcMeta`. */
+  abcMeta: Record<string, string> = {}
   notes: RichText[] = []
   history: RichText[] = []
   unalignedWords: RichText[] = []
@@ -2553,6 +2555,7 @@ class ScoreBuilder {
       source: this.source,
       discography: this.discography,
       transcription: this.transcription,
+      abcMeta: this.abcMeta,
       notes: this.notes,
       history: this.history,
       unalignedWords: this.unalignedWords,
@@ -3101,6 +3104,27 @@ class Parser {
       // `addDirective`'s argument, `line.substring(2)` (`abc_parse.js:403`). So the range
       // STARTS at the `%` and is two characters SHORT of the line's end.
       this.ensureScore(start).recordField(headFoot[1], sourceRange(start, end - 2))
+      return
+    }
+    /**
+     * `%%abc-copyright` and its four siblings. **THE SUB-COMMAND IS SPLIT OFF THE FIRST
+     * TOKEN AND THE REST IS JOINED BACK WITH SINGLE SPACES** — `restOfString.split(' ')`,
+     * `arr.shift()`, `arr.join(' ')` — so a run of spaces inside the value collapses; and
+     * the span is `iChar … iChar + restOfString.length + 5`, the five being `%%abc`
+     * (`abc_parse_directive.js:1150-1161`). Anything else after `%%abc` is an unknown
+     * directive rather than a value.
+     */
+    const abcMeta = /^abc(-copyright|-creator|-edited-by|-version|-charset)\b\s*(.*)$/.exec(body)
+    if (abcMeta !== null) {
+      const b = this.ensureScore(start)
+      b.abcMeta[`abc${abcMeta[1]}`] = (abcMeta[2] ?? '').split(' ').filter((w) => w !== '').join(' ')
+      /**
+       * ⚠️ **AND `restOfString` IS WHAT FOLLOWS `%%abc`, NOT THE WHOLE DIRECTIVE.** The
+       * span is `iChar … iChar + restOfString.length + 5` where the five is `%%abc`
+       * itself, so the `abc` is counted ONCE and our `body` — which carries it — is three
+       * characters long. Measured by `metaTextInfo`, whose oracle is abcjs's own object.
+       */
+      b.recordField(`abc${abcMeta[1]}`, sourceRange(start, start + body.length + 2))
       return
     }
     const sep = /^sep\b\s*(.*)$/.exec(body)

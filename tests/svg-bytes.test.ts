@@ -313,6 +313,18 @@ const PASSING: readonly string[] = [
   "abcts-visualtranspose-tune1",
   "abcts-visualtranspose-tune2",
   "abcts-visualtranspose-tune3",
+  // `abcts-ledger-gaps-3.abc` — eight more, and FIVE were defects: `%%abc-copyright` and
+  // its siblings drew no rows at all, a slur closing on ONE HEAD of a chord never paired, a
+  // curve crossing a system it does not end on got no arc, and the below-annotation lane's
+  // reserve round-tripped through pixels for one ULP of the page.
+  "abcts-ledger-gaps-3-tune0",
+  "abcts-ledger-gaps-3-tune1",
+  "abcts-ledger-gaps-3-tune2",
+  "abcts-ledger-gaps-3-tune3",
+  "abcts-ledger-gaps-3-tune4",
+  "abcts-ledger-gaps-3-tune5",
+  "abcts-ledger-gaps-3-tune6",
+  "abcts-ledger-gaps-3-tune7",
   // `abcts-ledger-gaps-2.abc` — eight more, and FIVE were real defects: a key signature on
   // a TENOR clef sat an octave high, a chord's dots were bumped apart where abcjs lets them
   // coincide, a below annotation landed inside the lyric block, a percussion chord took one

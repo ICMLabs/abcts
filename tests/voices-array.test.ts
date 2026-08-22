@@ -93,6 +93,7 @@ const table = (): Case[] =>
 const PASSING: readonly string[] = [
   "abcts-ledger-gaps",
   "abcts-ledger-gaps-2",
+  "abcts-ledger-gaps-3",
   "abcts-model-gaps",
   "abcts-slur-shapes",
   "abcjs-parse-book_parser-01-example",
