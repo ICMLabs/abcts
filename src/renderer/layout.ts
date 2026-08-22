@@ -6196,9 +6196,42 @@ const textWidth = (text: string, size: number, face: Face = 'serif'): number =>
  */
 let PAGE_PADDING = {
   left: ENGRAVE.marginX,
+  /**
+   * **THE RIGHT MARGIN IS ITS OWN NUMBER, AND ONLY `%%rightmargin` MAKES IT DIFFER.**
+   * abcjs keeps four (`write/renderer.js:69-72`); this engine read `left` twice, which is
+   * the same value until a tune sets one of them.
+   */
+  right: ENGRAVE.marginX,
   top: ENGRAVE.marginTop,
   bottom: ENGRAVE.marginBottom,
 }
+
+/**
+ * **`%%titlespace`, `%%vocalspace` AND `%%stafftopmargin`, IN PIXELS** — abcjs's
+ * `renderer.spacing.title`, `.vocal` and `.staffTopMargin`, each written in POINTS and
+ * multiplied by `4 / 3` (`write/renderer.js:140-170`). Absent means the engine's own
+ * default, which for the last two is ZERO: measured through abcjs, `%%vocalspace 30` and
+ * `%%stafftopmargin 30` each grow the page by exactly 40px.
+ *
+ * ponytail: a module-level map, the seventh such switch, for the same reason as
+ * `SCORE_FONTS` — these are read deep in the lane arithmetic and threading them would
+ * touch every frame between.
+ */
+let SPACING: Readonly<Partial<Record<string, number>>> = {}
+
+/** `%%titleleft` — see `ScoreMetadata.titleLeft`. */
+let TITLE_LEFT = false
+
+/**
+ * **BOTH SIDE MARGINS AS ONE TERM, AND `2 * m` WHERE THEY ARE EQUAL.** `(w - m) - m` is
+ * not `w - 2m` in doubles: splitting the subtraction moved a notehead's x on every
+ * `-print` fixture of the sibling byte gate, 47 of them at once. The pair form is reached
+ * only when a `%%leftmargin` or `%%rightmargin` actually makes them differ.
+ */
+const pageSides = (): number =>
+  PAGE_PADDING.left === PAGE_PADDING.right
+    ? 2 * PAGE_PADDING.left
+    : PAGE_PADDING.left + PAGE_PADDING.right
 
 /** 1 on screen; `%%scale`'s number, or `print`'s own 0.75 — see `LayoutOptions.print`. */
 let PRINT_SCALE = 1
@@ -11507,7 +11540,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   const score = expandOverlays(input)
   // `%%staffwidth` names the same quantity as the host's `staffwidth` param; the
   // DIRECTIVE wins, because it is the tune saying how wide it wants to be.
-  const systemWidth =
+  let systemWidth =
     score.staffWidth !== null
       ? // ONE DIVISION, NOT TWO ADDITIONS. `w / 7.75 + 2 * (15 / 7.75)` re-multiplied by
         // 7.75 gives 295.99999999999994 where abcjs writes 296; `(w + 30) / 7.75` gives
@@ -11560,18 +11593,48 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   PRINT = options.print === true
   // …and the page's own origin, which a stacked book seeds with the tune above's `endY`.
   PAGE_TOP = options.pageTop ?? 0
+  /**
+   * **AND `%%topmargin` / `%%botmargin` / `%%leftmargin` REPLACE THE DEFAULT OUTRIGHT.**
+   * `setPaddingVariable` reads the formatting value FIRST, then the host override, then
+   * print's 38/68, then screen's 15 (`write/renderer.js:55-73`) — so a directive wins over
+   * everything and the print/screen split only decides what it is missing.
+   */
+  const margin = (key: string, fallback: number): number =>
+    (score.measurements[key] ?? fallback) / printScale
   PAGE_PADDING =
     options.print === true
       ? {
-          left: spaces(ABCJS_PX.printPaddingLeft) / printScale,
-          top: spaces(ABCJS_PX.printPaddingTop) / printScale,
-          bottom: spaces(ABCJS_PX.printPaddingTop) / printScale,
+          left: margin('leftmargin', spaces(ABCJS_PX.printPaddingLeft)),
+          right: margin('rightmargin', spaces(ABCJS_PX.printPaddingLeft)),
+          top: margin('topmargin', spaces(ABCJS_PX.printPaddingTop)),
+          bottom: margin('botmargin', spaces(ABCJS_PX.printPaddingTop)),
         }
       : {
-          left: ENGRAVE.marginX / printScale,
-          top: ENGRAVE.marginTop / printScale,
-          bottom: ENGRAVE.marginBottom / printScale,
+          left: margin('leftmargin', ENGRAVE.marginX),
+          right: margin('rightmargin', ENGRAVE.marginX),
+          top: margin('topmargin', ENGRAVE.marginTop),
+          bottom: margin('botmargin', ENGRAVE.marginBottom),
         }
+  /**
+   * **AND A MARGIN DIRECTIVE WIDENS THE PAGE, BECAUSE THE HOST'S WIDTH ASSUMED 15 A SIDE.**
+   * `renderAbc`'s caller computes `staffwidth + 2 × padding` before any tune is parsed, so
+   * the difference between the default margin and the one the tune asked for is added here
+   * — **after `PAGE_PADDING` is assigned**, which is a module-level global: reading it
+   * before took the PREVIOUS render's margins and broke a byte-exact fixture.
+   *
+   * **The default path adds a literal ZERO**, which is exact, rather than re-deriving the
+   * width: `(w - 2m) + 2m` is not `w` in doubles, and every fixture of the byte gate rests
+   * on that number.
+   */
+  const defaultSide =
+    (options.print === true ? spaces(ABCJS_PX.printPaddingLeft) : ENGRAVE.marginX) / printScale
+  // …**AND IN THE SCALED FRAME**, because `PAGE_PADDING` is already divided by the scale:
+  // comparing against the unscaled default counted `%%scale`'s own widening a second time
+  // and put that page 7.5px out.
+  const marginDelta = PAGE_PADDING.left - defaultSide + (PAGE_PADDING.right - defaultSide)
+  if (marginDelta !== 0) systemWidth += marginDelta
+  SPACING = score.measurements
+  TITLE_LEFT = score.titleLeft
   STRICT_TEXT_METRICS = strict
   LINE_WEIGHTS = lineWeightsFor(strict)
   JAZZ_CHORDS = score.jazzChords
@@ -11658,6 +11721,14 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
    * here, forcing every voice after the first down, so strict has nothing to answer for.
    */
   const stemForVoiceOn = (index: number, line: number): boolean | null => {
+    /**
+     * **`%%bagpipes` FORCES EVERY STEM DOWN**, and it does it as a VOICE convention rather
+     * than per note: `createABCVoice` opens each line with
+     * `this.stemdir = this.isBagpipes ? "down" : null` (`abstract-engraver.js:229`), which
+     * is the same field a `V:… stems=down` writes. So it wins over the shared-staff rule
+     * below for the same reason a declared direction does.
+     */
+    if (score.bagpipes) return false
     // `V:… stems=` WINS over the shared-staff convention — abcjs takes
     // `if (params.stem) … else if (voiceNum > 0)` (`parse/tune-builder.js:971-986`), so a
     // declared direction also suppresses the `up` back-filled onto the staff's first voice.
@@ -12447,7 +12518,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
    * `expandToWidest` would re-run the earlier lines at the final width; abcjs leaves it
    * off by default and so do we, which is why this is a forward-only ratchet.
    */
-  let pageWidth = systemWidth - 2 * PAGE_PADDING.left
+  let pageWidth = systemWidth - pageSides()
   /**
    * …and whether it ever fired, because `(w - 2m) + 2m` is not `w` in floating point:
    * `%%staffwidth 200` came back 296.00000000000006 against abcjs's 296. When the ratchet
@@ -12875,7 +12946,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         if (isLast) {
           if (score.stretchLast === null) {
             if (width / target < ENGRAVE.lastSystemFill) break
-          } else if (!(1 - (width + 2 * PAGE_PADDING.left) / target < score.stretchLast)) break
+          } else if (!(1 - (width + pageSides()) / target < score.stretchLast)) break
         }
         // abcjs compares in PIXELS — `Math.abs(…) < 2` — so the threshold converts.
         if (Math.abs(target - width) < 2 / UNIT_PX) break
@@ -12956,7 +13027,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
               // `PlacedText.pageY`.
               const built = topTextBlock(
                 score.metadata,
-                systemWidth - PAGE_PADDING.left * 2,
+                systemWidth - pageSides(),
                 score.textAbove,
                 score.fonts,
                 PAGE_TOP + PAGE_PADDING.top,
@@ -12984,7 +13055,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             ? (() => {
                 const built = freeTextBlock(
                   midTune,
-                  systemWidth - PAGE_PADDING.left * 2,
+                  systemWidth - pageSides(),
                   score.fonts,
                   nonMusicRows,
                 )
@@ -13746,8 +13817,17 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     // `abcTune.lines`, which is what makes `line > 0` true. Six of the thirteen were
     // exactly that and nothing else — `T:First` / `T:Second` over four notes moves 61.33px
     // in 6.7.0 and moved nothing in 6.6.3.
+    /**
+     * …**AND A `%%newpage` IS ONE OF THEM.** `addNewPage` pushes a `{newpage: n}` LINE that
+     * nothing in `write/` reads (`tune-builder.js:306-308`), so its whole cost is this
+     * branch: `abcts-directives` tune 9 is 61.33px taller in abcjs than the same tune
+     * without it, and every coordinate below the title moves with the staff.
+     */
     const nonMusicBeforeMusic =
-      systemIndex === 0 && (score.textAbove.length > 0 || score.metadata.titles.length > 1)
+      systemIndex === 0 &&
+      (score.textAbove.length > 0 ||
+        score.metadata.titles.length > 1 ||
+        score.newPage !== null)
     // …**AND PRINT'S `spacing.top` IS A ROW OF THE TOP BLOCK EVEN WHEN THE BLOCK IS
     // EMPTY** — `TopText` pushes it before it looks at the title (`top-text.js:17-18`),
     // so a title-less tune, whose block this branch skips entirely, still spends it.
@@ -13800,7 +13880,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         heading.length === 0
           ? staff.elements
           : (() => {
-              const musicExtent = verticalExtent(musicOnly, staff.beams, strict, staff)
+              const musicExtent = verticalExtent(musicOnly, staff.beams, strict, staff, false)
               const musicTop = musicExtent.top
               musicOnlyTopPitch = musicExtent.topPitch
               // The block's own height, not its last descender: abcjs advances by a
@@ -14436,7 +14516,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       ? undefined
       : topTextBlock(
           score.metadata,
-          systemWidth - PAGE_PADDING.left * 2,
+          systemWidth - pageSides(),
           score.textAbove,
           score.fonts,
           0,
@@ -14475,7 +14555,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           trailing,
           trailingBlocks,
           0,
-          (systemWidth - PAGE_PADDING.left * 2) / 2,
+          (systemWidth - pageSides()) / 2,
           score.fonts,
           trailingRules,
           false,
@@ -14573,9 +14653,9 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
       ? {}
       : {
           bottomLines: trailingRules.map((r) => ({
-            x1: (systemWidth - PAGE_PADDING.left * 2 - r.width) / 2,
+            x1: (systemWidth - pageSides() - r.width) / 2,
             y1: r.y + bottom,
-            x2: (systemWidth - PAGE_PADDING.left * 2 + r.width) / 2,
+            x2: (systemWidth - pageSides() + r.width) / 2,
             y2: r.y + bottom,
             thickness: 1 / UNIT_PX,
             role: 'separator' as const,
@@ -14592,7 +14672,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
      * neither expressible as a host-supplied constant, and the byte table is the only gate
      * that could see it, since a page too narrow moves no ink.
      */
-    pageWidth: pageRatcheted ? pageWidth + 2 * PAGE_PADDING.left : systemWidth,
+    pageWidth: pageRatcheted ? pageWidth + pageSides() : systemWidth,
     // See `blankLeadingLines` — every `T:` past the first is one.
     blankLeadingLines: Math.max(0, score.metadata.titles.length - 1),
     printScale: PRINT_SCALE,
@@ -15004,20 +15084,29 @@ function topTextBlock(
   if (PRINT) spend(spaces(ABCJS_PX.printTopSpace))
 
   const titleSize = sizeOf('titlefont')
+  /**
+   * **`%%titleleft` MOVES BOTH THE ANCHOR AND THE x** — `tAnchor = titleleft ? 'start' :
+   * 'middle'` and `tLeft = titleleft ? paddingLeft : paddingLeft + width / 2`
+   * (`top-text.js:19-20`), and `Subtitle` reads the same flag for a mid-tune `T:`
+   * (`elements/subtitle.js:5-6`).
+   */
+  const titleAnchor: 'start' | 'middle' = TITLE_LEFT ? 'start' : 'middle'
+  const titleX = TITLE_LEFT ? PAGE_PADDING.left : centre
   const [title, ...subtitles] = metadata.titles
   if (title !== undefined && plainText(title) !== '') {
-    spend(ENGRAVE.titleSpace)
+    // …and `%%titlespace` REPLACES the default gap above it — see `SPACING`.
+    spend(SPACING.titlespace ?? ENGRAVE.titleSpace)
     addRow({
       text: plainText(title),
       role: 'title',
       dataName: 'title',
-      x: centre,
+      x: titleX,
       // abcjs writes the baseline one font size below the cursor (`text.js:30`) — unless
       // the row is RICH, which returns before that line. See `richIn`.
       y: baselineOf(title, titleSize, boxPad('titlefont')),
       size: titleSize,
       ...faceIn('titlefont'),
-      ...boxIn('titlefont', centre, plainText(title), 'middle'),
+      ...boxIn('titlefont', titleX, plainText(title), titleAnchor),
       ...richIn(title, 'titlefont', false, false),
       /**
        * **NOT BOLD.** abcjs's default `titlefont` is
@@ -15033,9 +15122,9 @@ function topTextBlock(
        */
       bold: false,
       italic: false,
-      anchor: 'middle',
+      anchor: titleAnchor,
       ...selectableIn('title', metadata.titleRanges[0], plainText(title)),
-    }, 'titlefont', centre)
+    }, 'titlefont', titleX)
     advanceText(title, titleSize, boxOf('titlefont'))
   }
 
@@ -15048,20 +15137,20 @@ function topTextBlock(
       text: plainText(subtitle),
       role: 'title',
       dataName: 'subtitle',
-      x: centre,
+      x: titleX,
       y: baselineOf(subtitle, sizeOf('subtitlefont'), boxPad('subtitlefont')),
       size: sizeOf('subtitlefont'),
       bold: false,
       italic: false,
-      anchor: 'middle',
+      anchor: titleAnchor,
       ...faceIn('subtitlefont'),
-      ...boxIn('subtitlefont', centre, plainText(subtitle), 'middle'),
+      ...boxIn('subtitlefont', titleX, plainText(subtitle), titleAnchor),
       ...richIn(subtitle, 'subtitlefont', false, false),
       // **A LEADING SUBTITLE'S RANGE IS ITS OWN `T:` LINE'S**, not the title's — `TopText`
       // walks `lines[index].subtitle` and passes that whole object as the `info`
       // (`top-text.js:26-31`), where every other row takes `metaTextInfo.<field>`.
       ...selectableIn('subtitle', metadata.titleRanges[i + 1], plainText(subtitle)),
-    }, 'subtitlefont', centre)
+    }, 'subtitlefont', titleX)
     advanceText(subtitle, sizeOf('subtitlefont'), boxOf('subtitlefont'))
   }
 
@@ -16115,7 +16204,16 @@ function anchorLyrics<
     // figure into the lane while leaving the approximation here put
     // `visual-multi-voice-02` — four voices, two verses, no `%%vocalfont` at all — 0.05px
     // out on nothing but the four-thousandths between them.
-    const shift = inkBottom + size + voiceIndex * goldenTextHeight(size) - written
+    /**
+     * …**AND `%%vocalspace` DROPS THE BASELINE BY ITS OWN VALUE**, on top of the lane it
+     * grew: `element.pitch -= renderSpacing.vocal / spacing.STEP` beside
+     * `element.top = positionY.lyricHeightBelow + …` (`set-upper-and-lower-elements.js:
+     * 239-247`), so the text moves down exactly as far as the room made for it and the
+     * page total is unchanged. Measured through abcjs: the lyric baseline of
+     * `abcts-directives` tune 6 is 40px lower and every other coordinate identical.
+     */
+    const shift =
+      inkBottom + size + voiceIndex * goldenTextHeight(size) - written + (SPACING.vocalspace ?? 0)
     return {
       ...part,
       elements: part.elements.map((el) =>
@@ -17446,6 +17544,13 @@ function verticalExtent(
   beams: readonly PlacedLine[] = [],
   strict = true,
   furniture: StaffFurniture = {},
+  /**
+   * Whether `%%stafftopmargin` counts — see the raise below. The MUSIC-ONLY call that
+   * places a heading block must not see it: the block is positioned off the music's own
+   * ink and the staff's origin off this same extent, so counting it in both put the staff
+   * 40px below abcjs's on `abcts-directives` tune 4 while the title matched to the digit.
+   */
+  staffMargin = true,
 ): {
   top: number
   bottom: number
@@ -17799,7 +17904,13 @@ function verticalExtent(
     if (versesHere > 0) {
       const h =
         goldenTextHeight(versesSize) + (versesHere - 1) * versesSize * ABCJS_RATIO.textLineStep
-      lyricLanePitch = Math.max(lyricLanePitch, h / ENGRAVE.spacePerStep)
+      // …**AND `%%vocalspace` IS ADDED TO THE LANE IN PITCH** —
+      // `lyricHeightBelow += renderer.spacing.vocal / spacing.STEP`
+      // (`set-upper-and-lower-elements.js:52`), where the DEFAULT is zero.
+      lyricLanePitch = Math.max(
+        lyricLanePitch,
+        h / ENGRAVE.spacePerStep + (SPACING.vocalspace ?? 0) / ENGRAVE.spacePerStep,
+      )
       /**
        * **AND EVERY VOICE AFTER THE FIRST DROPS ITS WHOLE BLOCK AGAIN** —
        * `child.pitch -= child.voiceNumber * child.lyricHeightBelow`, whose `bottom` then
@@ -17948,6 +18059,17 @@ function verticalExtent(
       furniture.chordLaneAbove === true ? ENGRAVE.endingOverChordLane : lane(endingAbove),
     )
   if (endingBelow > 0 && !hasBlock) lower(lane(endingBelow))
+
+  // **`%%stafftopmargin` IS ONE MORE PITCH ON THE TOP, AFTER EVERY LANE** —
+  // `staff.top += renderer.spacing.staffTopMargin / spacing.STEP`
+  // (`set-upper-and-lower-elements.js:91`), and its default is zero.
+  if (staffMargin && SPACING.stafftopmargin !== undefined) {
+    // ⚠️ **AND THE PIXELS GO IN AS PIXELS.** abcjs states the margin in px and divides it
+    // into pitch (`renderer.spacing.staffTopMargin / spacing.STEP`), so multiplying that
+    // quotient back is the round trip §3 names: `201.76700000000002` against abcjs's
+    // `201.767`. The y takes the value it was written in and the pitch takes the quotient.
+    raise(SPACING.stafftopmargin / ENGRAVE.spacePerStep)
+  }
 
   // A TIE OR SLUR PUSHES THE LANES' RESULT — IT DOES NOT GO UNDER THEM.
   //

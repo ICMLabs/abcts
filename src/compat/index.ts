@@ -543,6 +543,16 @@ const formattingOf = (score: Score): Record<string, unknown> => {
       out[key] = score.staffWidth / 1.33;
     else if (key === "musicspace" && score.musicSpace != null)
       out[key] = (score.musicSpace * 3) / 4;
+    // …**AND THE OTHER MEASUREMENTS REPORT THE POINTS THEY WERE WRITTEN IN**, exactly as
+    // `%%musicspace` beside them does — the `4 / 3` is `write/renderer.js`'s, not the
+    // parser's (`abc_parse_directive.js:417-423`). See `ScoreMetadata.measurements`.
+    else if (score.measurements[key] !== undefined)
+      // …and a MARGIN was never multiplied, so it is reported as it was written — see the
+      // parser's note on `setPaddingVariable`.
+      out[key] =
+        key.endsWith("margin") && key !== "stafftopmargin"
+          ? (score.measurements[key] ?? 0)
+          : ((score.measurements[key] ?? 0) * 3) / 4;
     else if (key === "stretchlast" && score.stretchLast != null)
       out[key] = score.stretchLast;
     // **THE POINTS AS WRITTEN, NOT THE PIXELS THEY BECOME.** `tune.formatting[cmd]` takes
@@ -557,6 +567,11 @@ const formattingOf = (score: Score): Record<string, unknown> => {
     // (`abc_parse_directive.js:339`), with no unit conversion of any kind.
     else if (key === "scale" && score.scale != null) out[key] = score.scale;
     else if (key === "jazzchords") out[key] = true;
+    // …and the other two FLAG directives, which abcjs sets to a bare `true` as well
+    // (`abc_parse_directive.js:789`, `:821`). `%%newpage` is NOT among them: it pushes a
+    // line rather than a setting.
+    else if (key === "titleleft" && score.titleLeft) out[key] = true;
+    else if (key === "bagpipes" && score.bagpipes) out[key] = true;
     else if (key === "percmap") out[key] = score.percMap;
     else if (key === "midi")
       out[key] = {

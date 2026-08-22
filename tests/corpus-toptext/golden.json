@@ -3247,6 +3247,216 @@
   "topText": [],
   "bottomText": []
  },
+ "repo/abcts-directives-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "topmargin",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 414,
+    "endChar": 425,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-directives-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "botmargin",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 499,
+    "endChar": 510,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-directives-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 375,
+    "text": "leftmargin",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 584,
+    "endChar": 596,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-directives-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "rightmargin",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 671,
+    "endChar": 684,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-directives-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "stafftopmargin",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 760,
+    "endChar": 776,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-directives-tune5": {
+  "topText": [
+   {
+    "move": 40
+   },
+   {
+    "left": 350,
+    "text": "titlespace",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 855,
+    "endChar": 867,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-directives-tune6": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "vocalspace",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 942,
+    "endChar": 954,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-directives-tune7": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 15,
+    "text": "titleleft",
+    "font": "titlefont",
+    "anchor": "start",
+    "startChar": 1029,
+    "endChar": 1040,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-directives-tune8": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "bagpipes",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1113,
+    "endChar": 1123,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-directives-tune9": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "newpage",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 1196,
+    "endChar": 1205,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
  "repo/abcts-keywarn-tune0": {
   "topText": [
    {

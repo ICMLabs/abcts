@@ -669,6 +669,66 @@
   }
  },
  "repo/abcjs-visual-wrap-05-score-1-2-3-4-tune0": {},
+ "repo/abcts-directives-tune0": {
+  "title": {
+   "startChar": 414,
+   "endChar": 425
+  }
+ },
+ "repo/abcts-directives-tune1": {
+  "title": {
+   "startChar": 499,
+   "endChar": 510
+  }
+ },
+ "repo/abcts-directives-tune2": {
+  "title": {
+   "startChar": 584,
+   "endChar": 596
+  }
+ },
+ "repo/abcts-directives-tune3": {
+  "title": {
+   "startChar": 671,
+   "endChar": 684
+  }
+ },
+ "repo/abcts-directives-tune4": {
+  "title": {
+   "startChar": 760,
+   "endChar": 776
+  }
+ },
+ "repo/abcts-directives-tune5": {
+  "title": {
+   "startChar": 855,
+   "endChar": 867
+  }
+ },
+ "repo/abcts-directives-tune6": {
+  "title": {
+   "startChar": 942,
+   "endChar": 954
+  }
+ },
+ "repo/abcts-directives-tune7": {
+  "title": {
+   "startChar": 1029,
+   "endChar": 1040
+  }
+ },
+ "repo/abcts-directives-tune8": {
+  "title": {
+   "startChar": 1113,
+   "endChar": 1123
+  }
+ },
+ "repo/abcts-directives-tune9": {
+  "title": {
+   "startChar": 1196,
+   "endChar": 1205
+  }
+ },
  "repo/abcts-keywarn-tune0": {
   "title": {
    "startChar": 356,

@@ -313,6 +313,26 @@ const PASSING: readonly string[] = [
   "abcts-visualtranspose-tune1",
   "abcts-visualtranspose-tune2",
   "abcts-visualtranspose-tune3",
+  /**
+   * `abcts-directives.abc` — the TEN directives abcjs's own switch names, this parser never
+   * mentioned, and that MOVE its output. Measured by rendering one tune through abcjs with
+   * and without each of the forty-one absent ones: thirty-one are inert in that shape.
+   *
+   * ⚠️ **`abcts-directives-tune4` (`%%stafftopmargin`) IS NOT HERE, AND ITS RESIDUE IS NOT
+   * THE DIRECTIVE.** The same tune WITHOUT a title is byte-identical in both engines
+   * (138.492 / 76.64); with one, the root height differs in its last bits, which is the
+   * y-versus-pitch asymmetry a staff carrying a heading block already has. Two different
+   * formulations of the margin produce the identical double, which is what says so.
+   */
+  "abcts-directives-tune0",
+  "abcts-directives-tune1",
+  "abcts-directives-tune2",
+  "abcts-directives-tune3",
+  "abcts-directives-tune5",
+  "abcts-directives-tune6",
+  "abcts-directives-tune7",
+  "abcts-directives-tune8",
+  "abcts-directives-tune9",
   // `abcts-ledger-gaps-4.abc` — six more, and NOT ONE was a defect: lyrics under the SECOND
   // system with dynamics on both, a hairpin across a system break, a third-tone microtone,
   // two verses where one holds a blank syllable, a voice whose lowest note is not its last,

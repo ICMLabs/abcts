@@ -2205,6 +2205,17 @@ export function projectionOf(
       last = b.sourceRange?.start ?? last + 0.5;
       before.push({ at: last, line: textLine(b) });
     }
+    /**
+     * **AND `%%newpage` IS A LINE OF ITS OWN** — `addNewPage` calls `pushLine(tune,
+     * {newpage: num})` (`tune-builder.js:306-308`), which nothing in `write/` reads. It
+     * still costs the `staffSeparation` any non-music line before the first staff costs,
+     * and it still shifts every line index a host reads.
+     */
+    if (score.newPage !== null)
+      before.push({
+        at: score.newPageAt ?? 0,
+        line: { newpage: score.newPage } as unknown as AbcLine,
+      });
     before
       .sort((a, b) => a.at - b.at)
       .forEach((b) => {

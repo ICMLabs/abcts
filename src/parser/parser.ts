@@ -2083,6 +2083,11 @@ function carryDanglingBarNumbers(voices: readonly Voice[]): void {
 interface Formatting {
   staffSep: number | null
   musicSpace: number | null
+  measurements: Record<string, number>
+  titleLeft: boolean
+  bagpipes: boolean
+  newPage: number | null
+  newPageAt: number | null
   partsBox: boolean
   jazzChords: boolean
   keywarn: boolean
@@ -2277,6 +2282,15 @@ class ScoreBuilder {
   staffSep: number | null = null
   /** `%%musicspace` in PIXELS, or null for the engine default. */
   musicSpace: number | null = null
+  /** The other `oneParameterMeasurement` directives — see `ScoreMetadata.measurements`. */
+  measurements: Record<string, number> = {}
+  /** `%%titleleft` — see `ScoreMetadata.titleLeft`. */
+  titleLeft = false
+  /** `%%bagpipes` — see `ScoreMetadata.bagpipes`. */
+  bagpipes = false
+  /** `%%newpage` — see `ScoreMetadata.newPage`. */
+  newPage: number | null = null
+  newPageAt: number | null = null
   partsBox = false
   jazzChords = false
   /** `%%keywarn 0` stops a mid-tune `K:` being DRAWN — see `Score.keywarn`. */
@@ -2299,6 +2313,11 @@ class ScoreBuilder {
     return {
       staffSep: this.staffSep,
       musicSpace: this.musicSpace,
+      measurements: this.measurements,
+      titleLeft: this.titleLeft,
+      bagpipes: this.bagpipes,
+      newPage: this.newPage,
+      newPageAt: this.newPageAt,
       partsBox: this.partsBox,
       jazzChords: this.jazzChords,
       keywarn: this.keywarn,
@@ -2319,6 +2338,11 @@ class ScoreBuilder {
   applyFormatting(f: Formatting): void {
     this.staffSep = f.staffSep
     this.musicSpace = f.musicSpace
+    this.measurements = f.measurements
+    this.titleLeft = f.titleLeft
+    this.bagpipes = f.bagpipes
+    this.newPage = f.newPage
+    this.newPageAt = f.newPageAt
     this.partsBox = f.partsBox
     this.jazzChords = f.jazzChords
     this.percMap = f.percMap
@@ -2592,6 +2616,11 @@ class ScoreBuilder {
       staves: this.resolvedStaves(),
       staffSep: this.staffSep,
       musicSpace: this.musicSpace,
+      measurements: this.measurements,
+      titleLeft: this.titleLeft,
+      bagpipes: this.bagpipes,
+      newPage: this.newPage,
+      newPageAt: this.newPageAt,
       partsBox: this.partsBox,
       jazzChords: this.jazzChords,
       keywarn: this.keywarn,
@@ -3244,6 +3273,59 @@ class Parser {
         b.noteFormatting('musicspace')
         return
       }
+    }
+    /**
+     * **THE OTHER `oneParameterMeasurement` DIRECTIVES**, which abcjs reads with ONE
+     * function and stores by their own name (`abc_parse_directive.js:417-423`, `:830-853`).
+     * Measured through abcjs before any was written: of the forty-one directives its switch
+     * names and this parser did not, only TEN move its output on a plain tune, and these
+     * seven are the measurements among them.
+     */
+    const measured =
+      /^(topmargin|botmargin|leftmargin|rightmargin|titlespace|vocalspace|stafftopmargin)\s+(\S+)\s*$/.exec(
+        body,
+      )
+    if (measured?.[1] !== undefined && measured[2] !== undefined) {
+      const points = parseMeasurement(measured[2])
+      if (points !== null) {
+        const b = this.ensureScore(start)
+        /**
+         * ⚠️ **A MARGIN IS USED RAW AND A SPACING TAKES THE `4 / 3`.** `setPaddingVariable`
+         * assigns `formatting[key]` straight onto `renderer.padding`
+         * (`write/renderer.js:55-73`) where every `spacing.*` line beside it multiplies
+         * (`:140-170`) — so `%%topmargin 40` is FORTY PIXELS and `%%vocalspace 30` is
+         * forty. Measured through abcjs on one tune: the margin moved the page by `40 - 15`
+         * and the spacing by `30 * 4/3`. Reading both as points put every margin 13.33px
+         * out.
+         */
+        const margin = measured[1].endsWith('margin') && measured[1] !== 'stafftopmargin'
+        b.measurements[measured[1]] = margin ? points : (points * 4) / 3
+        b.noteFormatting(measured[1])
+        return
+      }
+    }
+    /**
+     * The three FLAG directives among the ten that move abcjs's output: `%%titleleft` and
+     * `%%bagpipes` are `tune.formatting.<name> = true` outright
+     * (`abc_parse_directive.js:789`, `:821`), and `%%newpage` pushes a LINE
+     * (`tune-builder.js:306-308`) whose only cost is the `staffSeparation` a non-music line
+     * before the first staff spends.
+     */
+    const flag = /^(titleleft|bagpipes)\b/.exec(body)
+    if (flag?.[1] !== undefined) {
+      const b = this.ensureScore(start)
+      if (flag[1] === 'titleleft') b.titleLeft = true
+      else b.bagpipes = true
+      b.noteFormatting(flag[1])
+      return
+    }
+    const newPage = /^newpage(?:\s+(-?\d+))?\s*$/.exec(body)
+    if (newPage !== null) {
+      // `pgNum.digits === 0 ? -1 : pgNum.value` — a bare `%%newpage` is -1.
+      const b = this.ensureScore(start)
+      b.newPage = newPage[1] === undefined ? -1 : Number.parseInt(newPage[1], 10)
+      b.newPageAt = start
+      return
     }
     // `%%stretchlast` — bare or `true` is 1, `false` is 0, a number 0..1 is itself
     // (`abc_parse_directive.js:1294-1305`). Anything else abcjs rejects, so it stays null

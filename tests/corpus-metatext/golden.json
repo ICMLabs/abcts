@@ -878,6 +878,36 @@
   "title": "wrap quartet"
  },
  "repo/abcjs-visual-wrap-05-score-1-2-3-4-tune0": {},
+ "repo/abcts-directives-tune0": {
+  "title": "topmargin"
+ },
+ "repo/abcts-directives-tune1": {
+  "title": "botmargin"
+ },
+ "repo/abcts-directives-tune2": {
+  "title": "leftmargin"
+ },
+ "repo/abcts-directives-tune3": {
+  "title": "rightmargin"
+ },
+ "repo/abcts-directives-tune4": {
+  "title": "stafftopmargin"
+ },
+ "repo/abcts-directives-tune5": {
+  "title": "titlespace"
+ },
+ "repo/abcts-directives-tune6": {
+  "title": "vocalspace"
+ },
+ "repo/abcts-directives-tune7": {
+  "title": "titleleft"
+ },
+ "repo/abcts-directives-tune8": {
+  "title": "bagpipes"
+ },
+ "repo/abcts-directives-tune9": {
+  "title": "newpage"
+ },
  "repo/abcts-keywarn-tune0": {
   "title": "keywarn absent"
  },

@@ -2682,6 +2682,128 @@
    "hasPickup": false
   }
  ],
+ "repo/abcts-directives": [
+  {
+   "header": "X:1\nT:topmargin\n%%topmargin 40\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:2\nT:botmargin\n%%botmargin 40\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:leftmargin\n%%leftmargin 40\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:4\nT:rightmargin\n%%rightmargin 40\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:5\nT:stafftopmargin\n%%stafftopmargin 30\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:6\nT:titlespace\n%%titlespace 30\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:7\nT:vocalspace\n%%vocalspace 30\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:8\nT:titleleft\n%%titleleft 1\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:9\nT:bagpipes\n%%bagpipes 1\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:10\nT:newpage\n%%newpage 1\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
  "repo/abcts-keywarn": [
   {
    "header": "X:1\nT:keywarn absent\nL:1/4\nM:4/4\nK:C\n",

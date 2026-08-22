@@ -1581,6 +1581,38 @@ export interface Score {
    */
   readonly musicSpace: number | null
   /**
+   * **abcjs's `oneParameterMeasurement` DIRECTIVES, IN PIXELS** — keyed by the directive's
+   * own name. Every one of them is written in POINTS and multiplied by `4 / 3` on the way
+   * in (`abc_parse_directive.js:417-423`, `write/renderer.js:140-170`), which is the same
+   * conversion `%%musicspace` and `%%staffwidth` beside them already make.
+   *
+   * The four margins land on `renderer.padding` (screen default 15 a side, print 38 top and
+   * bottom and 68 left and right) and the rest on `renderer.spacing`.
+   */
+  readonly measurements: Readonly<Partial<Record<string, number>>>
+  /**
+   * `%%titleleft` — the title and every subtitle anchored at the LEFT MARGIN rather than
+   * centred on the page (`top-text.js:19-20`, `elements/subtitle.js:5-6`).
+   */
+  readonly titleLeft: boolean
+  /**
+   * `%%bagpipes` — `createABCVoice` opens each line with `this.stemdir = "down"` instead of
+   * null (`abstract-engraver.js:229`), so every stem points down and every beam with it.
+   */
+  readonly bagpipes: boolean
+  /**
+   * `%%newpage [n]` — abcjs pushes a LINE of its own (`tune-builder.js:306-308`) that
+   * draws nothing at all; `write/` never reads it. What it costs is the
+   * `spacing.staffSeparation` that any non-music line standing before the first staff
+   * costs (`draw/draw.js`, new in 6.7.0), which is 61.33px.
+   *
+   * ponytail: the HEADER position only, which is what `abcts-directives` tune 9 measures.
+   * A mid-tune one would be a line where it stands.
+   */
+  readonly newPage: number | null
+  /** Where `%%newpage` was written, so the projection can slot its LINE in source order. */
+  readonly newPageAt: number | null
+  /**
    * `%%partsbox` — draw a box round every `P:` label.
    *
    * It is not only decoration: a boxed font measures `height + padding * 4` and
