@@ -950,10 +950,25 @@ checkpoint and hand off as you go so no context is lost.
 > `Docs/CHECKPOINT-2026-08-14.md` — §4 is the work list as it stood, §5 the harness. Then the
 > files below.
 
-**READ `Docs/HANDOFF-2026-08-21.md` FIRST** — the current state: **EVERY RANKED TABLE IN
-THE REPO READS ZERO, including the one built that day.** Suite 1,883, 2 expected-fail, no
-reds. The SVG byte gate is 0 of 207 in-repo and 0 of 356 sibling; the abcjs API surface is
-0 of 64 absent.
+**READ `Docs/HANDOFF-2026-08-22.md` FIRST** — the current state. Suite **1,938 passing, NO
+reds and no expected-fails**; the SVG byte gate is **1 of 251** in-repo (one row, whose cause
+is named and is NOT the directive it sits on) and 0 of 356 sibling; `tune.lines` is 328,548
+of 328,548 characters over 367 tunes; parse-values and render-values are 0 of 11,495.
+
+**That day's work is THIRTY-ONE DEFECTS, and where they came from is the finding.** Two came
+off the previous handoff's work list, thirteen off four sweeps of the `ponytail:` LEDGER —
+each entry that says "no fixture in either corpus writes one" is a PREDICTION, and writing
+the fixture is how it becomes a measurement — and **sixteen off enumerating abcjs's own
+DIRECTIVE SWITCH**, which names 41 directives this parser never mentioned. ⚠️ **ENUMERATE
+THE REFERENCE, NOT THE NOTES**, and ⚠️ **A "SAME" IS ONLY AS GOOD AS THE SHAPE THAT ASKED**:
+the first control reached ten of the seventeen that move abcjs's output, a tailored control
+per directive reached the rest. ⚠️ **AND A GATE THAT CANNOT BE REGENERATED STOPS GROWING
+WITH THE CORPUS** — the character gate had no harvester, so five fixtures sat outside it
+while it read a confident zero.
+
+**AND `Docs/HANDOFF-2026-08-21.md` IS THE ONE BEFORE IT** — the state as it stood then:
+**EVERY RANKED TABLE IN THE REPO READ ZERO, including the one built that day.** Suite 1,883,
+2 expected-fail, no reds.
 
 **The day's work is ONE GATE and the TWENTY-TWO defects it found**, none of which any other
 gate could state, because every other one was already at zero.
