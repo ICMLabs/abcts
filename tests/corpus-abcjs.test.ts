@@ -423,10 +423,13 @@ const WITHIN: Readonly<Record<string, number>> = {
   // …and `abcts-decorations.abc` is the same pattern applied to abcjs's DECORATION tables:
   // all 96 names rendered through both engines, three of them wrong. Its six tunes are
   // byte-exact, which is the one row that takes each count from 185 to 186.
-  "0.05": 186,
-  "1": 186,
-  "5": 186,
-  "25": 186,
+  //
+  // …and `abcts-last-bar.abc` is the 187th — `checkLastBarX`, which that enumeration's own
+  // control found before any modifier did.
+  "0.05": 187,
+  "1": 187,
+  "5": 187,
+  "25": 187,
 };
 
 const names = readdirSync(fixturesDir)

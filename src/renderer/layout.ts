@@ -13061,6 +13061,49 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     probeFinalPass = true
     const solved = lineAt(justify)
     probeFinalPass = false
+    /**
+     * **THE LAST BARLINE OF EVERY VOICE IS ALIGNED, AND ONLY THE LAST** — `checkLastBarX`,
+     * run at the end of `layoutStaffGroup` (`layout/staff-group.js:3-20, 119`). Interior
+     * bars fall where each voice's own time puts them, which the cursor above already
+     * reproduces; the FINAL one does not, because a voice that runs out of music early
+     * would otherwise leave its closing rule hanging mid-staff. `[V:1]CDEFGABc2|` against
+     * `[V:2]C,4 G,4|` is exactly that: abcjs draws both closing bars at 319.05, ours drew
+     * the short voice's at 289.05 — one 30px advance short — with every notehead and both
+     * staves byte-identical.
+     *
+     * ⚠️ **IT IS A ONE-DIRECTIONAL FORWARD PASS, WHICH IS abcjs's OWN BUG AND IS KEPT.**
+     * `maxX` accumulates as it walks: a voice whose bar is further right than everything
+     * BEFORE it sets the new max and is never moved, so the voices already passed keep
+     * their short bars. Only a voice trailing a wider one is pushed. A second pass would
+     * align all of them and diverge.
+     *
+     * ⚠️ **AND A VOICE WHOSE LAST ELEMENT IS NOT A BAR IS SKIPPED ENTIRELY** — it neither
+     * moves nor contributes to `maxX`.
+     *
+     * ponytail: abcjs moves `maxChild.children[0].x`, the bar's FIRST relative child,
+     * where this moves the whole element. The two agree on a plain `|`, whose element is
+     * that one rule. They part on a `|]` (two rules, one of which would stay behind) and
+     * on a bar carrying a number — abcjs would deform it and we translate it. No fixture
+     * writes an unequal-length voice ending in either; widen this when one does.
+     */
+    const lastBarNudge: ({ block: number; index: number; dx: number } | undefined)[] = []
+    ;(() => {
+      let maxX = 0
+      for (let v = 0; v < lines.length; v += 1) {
+        const line = lines[v]
+        const xs = solved.at[v]
+        if (line === undefined || xs === undefined || line.slots.length === 0) continue
+        const k = line.slots.length - 1
+        const slot = line.slots[k]
+        if (slot === undefined || slot.block < 0) continue
+        if (plans[v]?.blocks[slot.block]?.elements[slot.index]?.type !== 'bar') continue
+        const barX = xs[k]
+        if (barX === undefined) continue
+        if (barX > maxX) maxX = barX
+        else if (maxX !== barX)
+          lastBarNudge[v] = { block: slot.block, index: slot.index, dx: maxX - barX }
+      }
+    })()
     // `ABCTS_W` — the width solve's own numbers, which is how `staffGroup.w` was settled:
     // `solved.width` IS abcjs's, and `musicWidth` is it plus the left margin.
     if (process.env['ABCTS_W'])
@@ -13546,13 +13589,23 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
             const own = block.elements[index]?.x ?? 0
             return (placedAt[index] ?? own) + (x - own)
           }
+          const nudge = lastBarNudge[voiceIndex]
           block.elements.forEach((el, index) => {
-            elements.push(
-              displaceHeads(
-                placeElement(el, placedAt[index] ?? el.x),
-                displacementOf(voiceIndex, i, index),
-              ),
-            )
+            const placed = placeElement(el, placedAt[index] ?? el.x)
+            // …**AND ONLY THE RULE MOVES** — see `lastBarNudge`. `checkLastBarX` assigns
+            // `maxChild.children[0].x`, so the ELEMENT keeps the x every host reads back
+            // through `makeVoicesArray` and only its first drawn child follows the wider
+            // voice.
+            const aligned =
+              nudge !== undefined && nudge.block === i && nudge.index === index
+                ? {
+                    ...placed,
+                    lines: placed.lines.map((l, li) =>
+                      li === 0 ? { ...l, x1: l.x1 + nudge.dx, x2: l.x2 + nudge.dx } : l,
+                    ),
+                  }
+                : placed
+            elements.push(displaceHeads(aligned, displacementOf(voiceIndex, i, index)))
           })
           for (const [group, members] of block.beams) {
             const shifted = members.map((m) => ({

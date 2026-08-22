@@ -1,0 +1,28 @@
+X:1
+T:Voice Ends Early
+L:1/8
+K:C
+V:1
+V:2
+[V:1]CDEFGABc2|
+[V:2]C,4 G,4|
+
+X:2
+T:Three Voices Uneven
+L:1/8
+K:C
+V:1
+V:2
+V:3
+[V:1]C,4 G,4|
+[V:2]CDEFGABc2|
+[V:3]C,4 G,4|
+
+X:3
+T:Even Voices
+L:1/8
+K:C
+V:1
+V:2
+[V:1]CDEF|GABc|
+[V:2]C,4 G,4|C,4 G,4|

@@ -827,6 +827,24 @@
    "endChar": 499
   }
  },
+ "repo/abcts-last-bar-tune0": {
+  "title": {
+   "startChar": 4,
+   "endChar": 22
+  }
+ },
+ "repo/abcts-last-bar-tune1": {
+  "title": {
+   "startChar": 76,
+   "endChar": 97
+  }
+ },
+ "repo/abcts-last-bar-tune2": {
+  "title": {
+   "startChar": 169,
+   "endChar": 182
+  }
+ },
  "repo/abcts-ledger-gaps-2-tune0": {
   "title": {
    "startChar": 330,

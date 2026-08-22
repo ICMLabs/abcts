@@ -314,6 +314,16 @@ const PASSING: readonly string[] = [
   "abcts-visualtranspose-tune2",
   "abcts-visualtranspose-tune3",
   /**
+   * `abcts-last-bar.abc` — `checkLastBarX`, found by the V:-modifier enumeration's own
+   * CONTROL rather than by any modifier: a voice that runs out of music early left its
+   * closing rule hanging 30px short. Tune 2 is the one that gates abcjs's one-directional
+   * forward pass — three voices, the LONGEST in the middle, so the first keeps its short
+   * bar and only the third is pushed. Tune 3 is the equal-length control.
+   */
+  "abcts-last-bar-tune0",
+  "abcts-last-bar-tune1",
+  "abcts-last-bar-tune2",
+  /**
    * `abcts-decorations.abc` — the three `!…!` names abcjs's own decoration tables hold and
    * this engine got wrong, found by rendering every one of the 96 through both engines:
    * `slide`'s EXTENT (its curve was byte-exact and its reserve was missing), `~(`/`~)` as

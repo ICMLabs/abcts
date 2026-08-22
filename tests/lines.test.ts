@@ -112,7 +112,11 @@ const rows = (): Row[] => {
 const PASSING: readonly string[] = [
   // …and the five CONTROL fixtures of 2026-08-22 — the ledger sweeps and the directive
   // enumeration — every one of which agrees on every character from its first run.
-  // `abcts-decorations` is the sixth, from the decoration-table enumeration.
+  // `abcts-decorations` is the sixth, from the decoration-table enumeration, and
+  // `abcts-last-bar` the seventh, from the V:-modifier enumeration's control.
+  "repo/abcts-last-bar-tune0",
+  "repo/abcts-last-bar-tune1",
+  "repo/abcts-last-bar-tune2",
   "repo/abcts-decorations-tune0",
   "repo/abcts-decorations-tune1",
   "repo/abcts-decorations-tune2",
@@ -500,8 +504,9 @@ describe("tune.lines and getElementFromChar", () => {
     // 255,684 of 255,684 until 2026-08-22, when `harvest-abcjs-lines.mjs` was WRITTEN —
     // the golden had been generated ad hoc on 08-15 and could not be regenerated, so every
     // fixture added after it was ungated on this surface. Five were.
-    // 328,548 of 328,548 until `abcts-decorations.abc` added six tunes on the same day.
-    expect(agree).toBeGreaterThanOrEqual(330780);
+    // 328,548 of 328,548 until `abcts-decorations.abc` added six tunes on the same day,
+    // and `abcts-last-bar.abc` three more.
+    expect(agree).toBeGreaterThanOrEqual(331497);
   });
 
   /**

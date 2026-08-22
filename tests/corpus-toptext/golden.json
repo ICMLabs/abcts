@@ -3841,6 +3841,69 @@
   ],
   "bottomText": []
  },
+ "repo/abcts-last-bar-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Voice Ends Early",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 4,
+    "endChar": 22,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-last-bar-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Three Voices Uneven",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 76,
+    "endChar": 97,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-last-bar-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "Even Voices",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 169,
+    "endChar": 182,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
  "repo/abcts-ledger-gaps-2-tune0": {
   "topText": [
    {

@@ -2981,6 +2981,38 @@
    "hasPickup": false
   }
  ],
+ "repo/abcts-last-bar": [
+  {
+   "header": "X:1\nT:Voice Ends Early\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEFGABc2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:2\nT:Three Voices Uneven\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "C,4 G,4|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:Even Voices\nL:1/8\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": true
+  }
+ ],
  "repo/abcts-ledger-gaps-2": [
   {
    "header": "X:1\nT:a key signature on a TENOR clef\nL:1/4\nM:4/4\nK:F# clef=tenor\n",

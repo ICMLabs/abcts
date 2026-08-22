@@ -957,6 +957,15 @@
  "repo/abcts-keywarn-tune2": {
   "title": "keywarn false is a no-op"
  },
+ "repo/abcts-last-bar-tune0": {
+  "title": "Voice Ends Early"
+ },
+ "repo/abcts-last-bar-tune1": {
+  "title": "Three Voices Uneven"
+ },
+ "repo/abcts-last-bar-tune2": {
+  "title": "Even Voices"
+ },
  "repo/abcts-ledger-gaps-2-tune0": {
   "title": "a key signature on a TENOR clef"
  },
