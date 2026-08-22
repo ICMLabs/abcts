@@ -419,10 +419,10 @@ const WITHIN: Readonly<Record<string, number>> = {
   // five of the third eight, and NONE of the fourth six — which is the other honest
   // outcome of the pattern: six more entries are measurements now rather than predictions.
   // All twenty-eight tunes are byte-exact.
-  "0.05": 184,
-  "1": 184,
-  "5": 184,
-  "25": 184,
+  "0.05": 185,
+  "1": 185,
+  "5": 185,
+  "25": 185,
 };
 
 const names = readdirSync(fixturesDir)

@@ -2682,6 +2682,71 @@
    "hasPickup": false
   }
  ],
+ "repo/abcts-directives-2": [
+  {
+   "header": "X:1\nT:subtitlespace\nT:the subtitle\n%%subtitlespace 40\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:2\nT:composerspace\nC:the composer\n%%composerspace 40\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:3\nT:wordsspace\n%%wordsspace 40\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:4\nT:barsperstaff\n%%barsperstaff 2\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    },
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:5\nT:flatbeams\n%%flatbeams 1\nL:1/8\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "CDEF GABc|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:6\nT:graceslurs\n%%graceslurs 0\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "{ab}c d e f|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
  "repo/abcts-directives": [
   {
    "header": "X:1\nT:topmargin\n%%topmargin 40\nL:1/4\nM:4/4\nK:C\n",

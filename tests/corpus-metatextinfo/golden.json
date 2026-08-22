@@ -669,6 +669,50 @@
   }
  },
  "repo/abcjs-visual-wrap-05-score-1-2-3-4-tune0": {},
+ "repo/abcts-directives-2-tune0": {
+  "title": {
+   "startChar": 417,
+   "endChar": 432
+  }
+ },
+ "repo/abcts-directives-2-tune1": {
+  "title": {
+   "startChar": 494,
+   "endChar": 509
+  },
+  "composer": {
+   "startChar": 510,
+   "endChar": 524
+  }
+ },
+ "repo/abcts-directives-2-tune2": {
+  "title": {
+   "startChar": 571,
+   "endChar": 583
+  },
+  "unalignedWords": {
+   "startChar": 622,
+   "endChar": 639
+  }
+ },
+ "repo/abcts-directives-2-tune3": {
+  "title": {
+   "startChar": 645,
+   "endChar": 659
+  }
+ },
+ "repo/abcts-directives-2-tune4": {
+  "title": {
+   "startChar": 719,
+   "endChar": 730
+  }
+ },
+ "repo/abcts-directives-2-tune5": {
+  "title": {
+   "startChar": 777,
+   "endChar": 789
+  }
+ },
  "repo/abcts-directives-tune0": {
   "title": {
    "startChar": 414,

@@ -1151,6 +1151,48 @@
   "note duration,el_type,endBeam,endChar,pitches,pitches.accidental,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar",
   "stem direction,el_type"
  ],
+ "repo/abcts-directives-2-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-directives-2-tune1": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-directives-2-tune2": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-directives-2-tune3": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-directives-2-tune4": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-directives-2-tune5": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,gracenotes,gracenotes.duration,gracenotes.name,gracenotes.pitch,gracenotes.verticalPos,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
  "repo/abcts-directives-tune0": [
   "staff.clef el_type=undefined clefPos,type,verticalPos",
   "staff.key el_type=undefined acc,accidentals,mode,root",

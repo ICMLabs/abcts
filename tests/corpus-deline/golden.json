@@ -1615,6 +1615,56 @@
   "L0 s1 v0 stem@undefined..undefined note@170..173 note@173..175 note@175..177 note@177..179 note@179..183 bar@183..184 note@184..188 note@188..190 note@190..193 note@193..195 bar@195..196 note@196..199 note@199..202 note@202..206 note@206..210 bar@210..212",
   "L0 s1 v1 stem@undefined..undefined note@218..221 note@221..224 note@224..228 note@228..231 bar@231..232 note@232..236 note@236..239 note@239..242 note@242..246 note@246..250 bar@250..251 note@251..255 note@255..258 note@258..263 bar@263..265"
  ],
+ "repo/abcts-directives-2-tune0": [
+  "L0 subtitle",
+  "L1 s0 kept=meter,key,clef",
+  "L1 s0 v0 note@483..484 note@484..485 note@485..486 note@486..487 bar@487..488"
+ ],
+ "repo/abcts-directives-2-tune1": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@560..561 note@561..562 note@562..563 note@563..564 bar@564..565"
+ ],
+ "repo/abcts-directives-2-tune2": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@616..617 note@617..618 note@618..619 note@619..620 bar@620..621"
+ ],
+ "repo/abcts-directives-2-tune3": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@693..694 note@694..695 note@695..696 note@696..697 bar@697..698 note@698..699 note@699..700 note@700..701 note@701..702 bar@702..703 note@703..704 note@704..705 note@705..706 note@706..707 bar@707..708 note@708..709 note@709..710 note@710..711 note@711..712 bar@712..713"
+ ],
+ "repo/abcts-directives-2-tune4": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@761..762 note@762..763 note@763..764 note@764..766 note@766..767 note@767..768 note@768..769 note@769..770 bar@770..771"
+ ],
+ "repo/abcts-directives-2-tune5": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@821..827 note@827..829 note@829..831 note@831..832 bar@832..833"
+ ],
+ "repo/abcts-directives-2-tune0#breaks": [
+  "L0 subtitle",
+  "L1 s0 kept=meter,key,clef",
+  "L1 s0 v0 note@483..484 note@484..485 note@485..486 note@486..487 bar@487..488"
+ ],
+ "repo/abcts-directives-2-tune1#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@560..561 note@561..562 note@562..563 note@563..564 bar@564..565"
+ ],
+ "repo/abcts-directives-2-tune2#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@616..617 note@617..618 note@618..619 note@619..620 bar@620..621"
+ ],
+ "repo/abcts-directives-2-tune3#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@693..694 note@694..695 note@695..696 note@696..697 bar@697..698 note@698..699 note@699..700 note@700..701 note@701..702 bar@702..703 break@undefined..undefined note@703..704 note@704..705 note@705..706 note@706..707 bar@707..708 note@708..709 note@709..710 note@710..711 note@711..712 bar@712..713"
+ ],
+ "repo/abcts-directives-2-tune4#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@761..762 note@762..763 note@763..764 note@764..766 note@766..767 note@767..768 note@768..769 note@769..770 bar@770..771"
+ ],
+ "repo/abcts-directives-2-tune5#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@821..827 note@827..829 note@829..831 note@831..832 bar@832..833"
+ ],
  "repo/abcts-directives-tune0": [
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@457..458 note@458..459 note@459..460 note@460..461 bar@461..462 note@462..463 note@463..464 note@464..465 note@465..466 bar@466..467"

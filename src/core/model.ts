@@ -1190,6 +1190,15 @@ export interface Measure {
   }[]
   readonly startsSystem: boolean
   /**
+   * **THIS LINE WAS CUT OUT OF THE ONE ABOVE BY `%%barsperstaff`**, which is a PARSE-time
+   * rewrite: `wrapMusicLines` copies the line with `JSON.parse(JSON.stringify(...))` and
+   * empties its voices (`tune-builder.js:794-833`), so the new line's staff keeps the
+   * `meter` a later line would not have — and the engraver therefore REPRINTS the time
+   * signature on it. Measured through abcjs: two `staff-extra time-signature` groups where
+   * an ordinary wrapped tune has one.
+   */
+  readonly wrappedLine?: true
+  /**
    * **`%%vskip n` — BLANK VERTICAL SPACE ABOVE THIS SYSTEM**, in pixels.
    *
    * `addSpacing` parks the number on `tune.vskipPending` and `pushLine` stamps it onto the
@@ -1600,6 +1609,13 @@ export interface Score {
    * null (`abstract-engraver.js:229`), so every stem points down and every beam with it.
    */
   readonly bagpipes: boolean
+  /** `%%flatbeams` — `calcSlant` returns 0 (`write/layout/beam.js:57-59`). */
+  readonly flatBeams: boolean
+  /**
+   * `%%graceslurs` — the curve a grace group draws to its note. UNSET is TRUE:
+   * `graceSlurs: abcTune.formatting.graceSlurs !== false` (`engraver-controller.js:197`).
+   */
+  readonly graceSlurs: boolean
   /**
    * `%%newpage [n]` — abcjs pushes a LINE of its own (`tune-builder.js:306-308`) that
    * draws nothing at all; `write/` never reads it. What it costs is the

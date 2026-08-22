@@ -878,6 +878,28 @@
   "title": "wrap quartet"
  },
  "repo/abcjs-visual-wrap-05-score-1-2-3-4-tune0": {},
+ "repo/abcts-directives-2-tune0": {
+  "title": "subtitlespace"
+ },
+ "repo/abcts-directives-2-tune1": {
+  "title": "composerspace",
+  "composer": "the composer"
+ },
+ "repo/abcts-directives-2-tune2": {
+  "title": "wordsspace",
+  "unalignedWords": [
+   "the words below"
+  ]
+ },
+ "repo/abcts-directives-2-tune3": {
+  "title": "barsperstaff"
+ },
+ "repo/abcts-directives-2-tune4": {
+  "title": "flatbeams"
+ },
+ "repo/abcts-directives-2-tune5": {
+  "title": "graceslurs"
+ },
  "repo/abcts-directives-tune0": {
   "title": "topmargin"
  },

@@ -314,6 +314,17 @@ const PASSING: readonly string[] = [
   "abcts-visualtranspose-tune2",
   "abcts-visualtranspose-tune3",
   /**
+   * `abcts-directives-2.abc` — the SEVEN more that move abcjs's output only in a shape that
+   * can reach them: a subtitle, a composer, a `W:`, four bars, a beam, a grace group.
+   * `%%topspace` is the eighth and is PRINT-only, so no screen golden can gate it.
+   */
+  "abcts-directives-2-tune0",
+  "abcts-directives-2-tune1",
+  "abcts-directives-2-tune2",
+  "abcts-directives-2-tune3",
+  "abcts-directives-2-tune4",
+  "abcts-directives-2-tune5",
+  /**
    * `abcts-directives.abc` — the TEN directives abcjs's own switch names, this parser never
    * mentioned, and that MOVE its output. Measured by rendering one tune through abcjs with
    * and without each of the forty-one absent ones: thirty-one are inert in that shape.

@@ -293,6 +293,16 @@ function tile(
   abc: string,
   elements: readonly AbcElement[],
   unreadable: readonly SourceRange[] = [],
+  /**
+   * Where the PREVIOUS projected line's last element closed, when there is one.
+   *
+   * ⚠️ **A `%%barsperstaff` LINE IS NOT A SOURCE LINE.** abcjs does not tile at all — each
+   * element's `startChar` is where its tokenizer began, which for the first note of a
+   * WRAPPED line is right after the barline before it, not at the source line's start.
+   * Reading the line's own start there took `abcts-directives-2` tune 3's ninth note back
+   * ten characters.
+   */
+  carried?: number,
 ): AbcElement[] {
   // **EACH ELEMENT OPENS WHERE THE ONE BEFORE IT CLOSED**, and the first of a line opens
   // at the line. A NOTE closes over its trailing whitespace and a BAR does not — measured
@@ -323,7 +333,7 @@ function tile(
      * The space after an inline `[V: …]` is NOT skipped: that one is inside the line and
      * goes to the element after it, which is why the whitespace walk is on THIS branch only.
      */
-    const before = elements[i - 1]?.endChar;
+    const before = i === 0 ? carried : elements[i - 1]?.endChar;
     let from: number;
     if (before !== undefined && before >= lineStart(own)) from = before;
     else {
@@ -2242,6 +2252,8 @@ export function projectionOf(
    * that music. Found by the `Editor` gate, whose edits routinely add a line past a
    * finished voice.
    */
+  /** Where the previous projected line's last element closed — see `tile`'s `carried`. */
+  let carriedTileEnd: number | undefined
   const lengths = score.voices.map((v) => v.measures.length);
   const totalMeasures = Math.max(...lengths, 0);
   const breaks = [
@@ -2535,7 +2547,9 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color"]);
             ? { meter: m.meterChange }
             : undefined);
         const meter =
-          i === 0
+          // …**AND A LINE `%%barsperstaff` CUT OUT KEEPS THE METER IT WAS COPIED WITH** —
+          // see `Measure.wrappedLine`.
+          i === 0 || m.wrappedLine === true
             ? /**
                * ⚠️ **AND A PENDING HEADER `M:` OVERWRITES WHAT A LEADING `[M:]` SET.**
                * abcjs 6.7.0's inline branch writes
@@ -2798,14 +2812,20 @@ const VOICE_FURNITURE = new Set(["style", "stem", "color"]);
      * no `startChar` KEY at all; letting either into the chain both destroyed its own
      * `-1` and handed the element after it the wrong opening.
      */
-    tile(
-      abc,
-      lineVoices
-        .flat()
-        .filter((e) => (e.startChar ?? -1) >= 0)
-        .sort((a, b) => (a.startChar ?? 0) - (b.startChar ?? 0)),
-      score.unreadable ?? [],
-    );
+    const tiled = lineVoices
+      .flat()
+      .filter((e) => (e.startChar ?? -1) >= 0)
+      .sort((a, b) => (a.startChar ?? 0) - (b.startChar ?? 0));
+    /**
+     * ⚠️ **AND ONLY A `%%barsperstaff` LINE CARRIES.** Every other projected line IS a
+     * source line, where abcjs's own tokenizer position is the line's start — carrying
+     * there took 30 notes of `parse-tie-slur-01-staffwidth-200` back a character, because a
+     * NOTE closes over its trailing newline and the guard could not tell the two apart.
+     */
+    const wrapped = score.voices.some((v) => v.measures[from]?.wrappedLine === true);
+    tile(abc, tiled, score.unreadable ?? [], wrapped ? carriedTileEnd : undefined);
+    // …and what THIS line closed at, for a line the source did not break — see `tile`.
+    carriedTileEnd = tiled[tiled.length - 1]?.endChar;
     /**
      * **A LINE HOLDS ONLY THE STAVES THAT WROTE MUSIC ON IT.** `createStaff` runs from
      * `startNewLine`, which fires when a voice appends its first element to the line

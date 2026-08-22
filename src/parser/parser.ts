@@ -2086,8 +2086,11 @@ interface Formatting {
   measurements: Record<string, number>
   titleLeft: boolean
   bagpipes: boolean
+  flatBeams: boolean
+  graceSlurs: boolean
   newPage: number | null
   newPageAt: number | null
+  barsPerStaff: number | null
   partsBox: boolean
   jazzChords: boolean
   keywarn: boolean
@@ -2288,8 +2291,14 @@ class ScoreBuilder {
   titleLeft = false
   /** `%%bagpipes` — see `ScoreMetadata.bagpipes`. */
   bagpipes = false
+  /** `%%flatbeams` — see `ScoreMetadata.flatBeams`. */
+  flatBeams = false
+  /** `%%graceslurs` — see `ScoreMetadata.graceSlurs`; UNSET is true. */
+  graceSlurs = true
   /** `%%newpage` — see `ScoreMetadata.newPage`. */
   newPage: number | null = null
+  /** `%%barsperstaff` — see the wrap pass in the score build. */
+  barsPerStaff: number | null = null
   newPageAt: number | null = null
   partsBox = false
   jazzChords = false
@@ -2314,8 +2323,11 @@ class ScoreBuilder {
       staffSep: this.staffSep,
       musicSpace: this.musicSpace,
       measurements: this.measurements,
+      barsPerStaff: this.barsPerStaff,
       titleLeft: this.titleLeft,
       bagpipes: this.bagpipes,
+      flatBeams: this.flatBeams,
+      graceSlurs: this.graceSlurs,
       newPage: this.newPage,
       newPageAt: this.newPageAt,
       partsBox: this.partsBox,
@@ -2341,8 +2353,11 @@ class ScoreBuilder {
     this.measurements = f.measurements
     this.titleLeft = f.titleLeft
     this.bagpipes = f.bagpipes
+    this.flatBeams = f.flatBeams
+    this.graceSlurs = f.graceSlurs
     this.newPage = f.newPage
     this.newPageAt = f.newPageAt
+    this.barsPerStaff = f.barsPerStaff
     this.partsBox = f.partsBox
     this.jazzChords = f.jazzChords
     this.percMap = f.percMap
@@ -2611,6 +2626,35 @@ class ScoreBuilder {
         })
         // A trailing number crosses to whichever voice is still on the next line.
         carryDanglingBarNumbers(finished)
+        /**
+         * **`%%barsperstaff N` FORCES A LINE BREAK EVERY N BARS**, and it is a PARSE-time
+         * rewrite rather than a layout one: `cleanUp` runs `while (wrapMusicLines(lines,
+         * barsperstaff))` until nothing more splits, and each pass pushes everything after
+         * the Nth barline of a line onto the next (`tune-builder.js:63-68`, `:794-833`).
+         *
+         * Our model says the same thing with `Measure.startsSystem`, so the rewrite is a
+         * count: every N measures from the start of a line, the next one opens a line. It
+         * only ever SPLITS — a line the source already broke shorter stays short, which is
+         * what abcjs's repeated pass does too.
+         */
+        if (this.barsPerStaff !== null && this.barsPerStaff > 0) {
+          const per = this.barsPerStaff
+          for (const v of finished) {
+            let bars = 0
+            const measures = v.measures.map((m, i) => {
+              if (i === 0 || m.startsSystem === true) bars = 0
+              bars += 1
+              if (bars > per && m.startsSystem !== true) {
+                bars = 1
+                // …**AND THE LINE IT OPENS REPRINTS THE METER**, because abcjs's copy of
+                // the line carries `staff.meter` — see `Measure.wrappedLine`.
+                return { ...m, startsSystem: true, wrappedLine: true as const }
+              }
+              return m
+            })
+            ;(v as { measures: readonly Measure[] }).measures = measures
+          }
+        }
         return finished
       })(),
       staves: this.resolvedStaves(),
@@ -2619,6 +2663,8 @@ class ScoreBuilder {
       measurements: this.measurements,
       titleLeft: this.titleLeft,
       bagpipes: this.bagpipes,
+      flatBeams: this.flatBeams,
+      graceSlurs: this.graceSlurs,
       newPage: this.newPage,
       newPageAt: this.newPageAt,
       partsBox: this.partsBox,
@@ -3282,7 +3328,7 @@ class Parser {
      * seven are the measurements among them.
      */
     const measured =
-      /^(topmargin|botmargin|leftmargin|rightmargin|titlespace|vocalspace|stafftopmargin)\s+(\S+)\s*$/.exec(
+      /^(topmargin|botmargin|leftmargin|rightmargin|titlespace|vocalspace|stafftopmargin|botspace|composerspace|indent|linesep|partsspace|pageheight|pagewidth|subtitlespace|systemsep|textspace|topspace|wordsspace)\s+(\S+)\s*$/.exec(
         body,
       )
     if (measured?.[1] !== undefined && measured[2] !== undefined) {
@@ -3311,12 +3357,35 @@ class Parser {
      * (`tune-builder.js:306-308`) whose only cost is the `staffSeparation` a non-music line
      * before the first staff spends.
      */
-    const flag = /^(titleleft|bagpipes)\b/.exec(body)
+    const flag = /^(titleleft|bagpipes|flatbeams)\b/.exec(body)
     if (flag?.[1] !== undefined) {
       const b = this.ensureScore(start)
       if (flag[1] === 'titleleft') b.titleLeft = true
-      else b.bagpipes = true
+      else if (flag[1] === 'bagpipes') b.bagpipes = true
+      else b.flatBeams = true
       b.noteFormatting(flag[1])
+      return
+    }
+    /**
+     * `%%graceslurs 0|1|true|false` — **ONE PARAMETER, AND ANYTHING ELSE IS A WARNING**
+     * (`abc_parse_directive.js:796-805`). It is the only one of these flags that can be
+     * turned OFF, which is why it is a tri-state on the model rather than a `true`.
+     */
+    const graceSlurs = /^graceslurs\s+(\S+)\s*$/.exec(body)
+    if (graceSlurs?.[1] !== undefined) {
+      const arg = graceSlurs[1]
+      if (arg === '0' || arg === 'false' || arg === '1' || arg === 'true') {
+        const b = this.ensureScore(start)
+        b.graceSlurs = arg === '1' || arg === 'true'
+        b.noteFormatting('graceSlurs')
+      }
+      return
+    }
+    const barsPerStaff = /^barsperstaff\s+(\d+)\s*$/.exec(body)
+    if (barsPerStaff?.[1] !== undefined) {
+      const b = this.ensureScore(start)
+      b.barsPerStaff = Number.parseInt(barsPerStaff[1], 10)
+      b.noteFormatting('barsperstaff')
       return
     }
     const newPage = /^newpage(?:\s+(-?\d+))?\s*$/.exec(body)

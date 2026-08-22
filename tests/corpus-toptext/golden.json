@@ -3247,6 +3247,201 @@
   "topText": [],
   "bottomText": []
  },
+ "repo/abcts-directives-2-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "subtitlespace",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 417,
+    "endChar": 432,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 53.333333333333336
+   },
+   {
+    "left": 350,
+    "text": "the subtitle",
+    "font": "subtitlefont",
+    "anchor": "middle",
+    "startChar": 433,
+    "endChar": 447,
+    "absElemType": "subtitle",
+    "name": "subtitle"
+   },
+   {
+    "move": 26
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-directives-2-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "composerspace",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 494,
+    "endChar": 509,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   },
+   {
+    "move": 53.333333333333336
+   },
+   {
+    "left": 685,
+    "text": "the composer",
+    "font": "composerfont",
+    "anchor": "end",
+    "startChar": 510,
+    "endChar": 524,
+    "absElemType": "composer",
+    "name": "composer"
+   },
+   {
+    "move": 23
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-directives-2-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "wordsspace",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 571,
+    "endChar": 583,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": [
+   {
+    "move": 53.333333333333336
+   },
+   {
+    "startGroup": "unalignedWords",
+    "klass": "",
+    "name": "unalignedWords"
+   },
+   {
+    "move": 0
+   },
+   {
+    "left": 15,
+    "text": "the words below",
+    "font": "wordsfont",
+    "anchor": "start",
+    "startChar": -2,
+    "endChar": -2,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 26
+   },
+   {
+    "endGroup": "unalignedWords",
+    "absElemType": "unalignedWords",
+    "startChar": -1,
+    "endChar": -1,
+    "name": "unalignedWords"
+   },
+   {
+    "move": 23.27
+   },
+   {
+    "move": 23.27
+   }
+  ]
+ },
+ "repo/abcts-directives-2-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "barsperstaff",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 645,
+    "endChar": 659,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-directives-2-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "flatbeams",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 719,
+    "endChar": 730,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-directives-2-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "graceslurs",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 777,
+    "endChar": 789,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
  "repo/abcts-directives-tune0": {
   "topText": [
    {

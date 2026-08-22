@@ -6222,6 +6222,16 @@ let SPACING: Readonly<Partial<Record<string, number>>> = {}
 /** `%%titleleft` — see `ScoreMetadata.titleLeft`. */
 let TITLE_LEFT = false
 
+/** `%%flatbeams` — see `calcSlant`'s first line. */
+let FLAT_BEAMS = false
+
+/**
+ * `%%graceslurs 0` — abcjs's `graceSlurs: formatting.graceSlurs !== false`, so UNSET is
+ * true and only an explicit `0`/`false` suppresses the curve a grace group draws to its
+ * note (`engraver-controller.js:197`, `abstract-engraver.js:525-532`).
+ */
+let GRACE_SLURS = true
+
 /**
  * **BOTH SIDE MARGINS AS ONE TERM, AND `2 * m` WHERE THEY ARE EQUAL.** `(w - m) - m` is
  * not `w - 2m` in doubles: splitting the subtraction moved a notehead's x on every
@@ -8961,6 +8971,10 @@ function curveReserves(
       .map((g) => ({ x: g.x, y: g.y }))
     if (a.event.type === 'rest' && (a.event.kind === 'invisible' || a.event.kind === 'spacer'))
       continue
+    // …**AND `%%graceslurs 0` SUPPRESSES IT**, the third term of the same `if`. UNSET is
+    // TRUE — `graceSlurs: formatting.graceSlurs !== false` — so only an explicit `0` or
+    // `false` reaches here (`engraver-controller.js:197`).
+    if (!GRACE_SLURS) continue
     const head = elements[a.element]?.glyphs.find((g) => g.role === 'grace')
     if (head === undefined) continue
     // abcjs's `Math.min` over PITCHES is our `Math.max` over y, as above.
@@ -9691,7 +9705,10 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
   // makes an odd slant land asymmetrically rather than splitting evenly.
   const maxSlant = group.length / 2 // `beam.elems.length` — the REST counts here.
   const rawSlant = first.averageStep - last.averageStep
-  const slant = Math.max(-maxSlant, Math.min(maxSlant, rawSlant))
+  // **`%%flatbeams` IS `calcSlant`'s FIRST LINE** — `if (isFlat) return 0`
+  // (`layout/beam.js:57-59`), reached through `BeamElem`'s `isflat` from the engraver's
+  // own `flatBeams` option. Every other term of the beam is unchanged.
+  const slant = FLAT_BEAMS ? 0 : Math.max(-maxSlant, Math.min(maxSlant, rawSlant))
   let startStep = pos + Math.floor(slant / 2)
   let endStep = pos + Math.floor(-slant / 2)
 
@@ -11635,6 +11652,8 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   if (marginDelta !== 0) systemWidth += marginDelta
   SPACING = score.measurements
   TITLE_LEFT = score.titleLeft
+  FLAT_BEAMS = score.flatBeams
+  GRACE_SLURS = score.graceSlurs
   STRICT_TEXT_METRICS = strict
   LINE_WEIGHTS = lineWeightsFor(strict)
   JAZZ_CHORDS = score.jazzChords
@@ -12538,7 +12557,10 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
    */
   let voltaCarried: { label: string; measure: number } | null = null
   const systems: LayoutSystem[] = spans.map((span, systemIndex) => {
-    const withMeter = systemIndex === 0
+    // …**AND A LINE `%%barsperstaff` CUT OUT PRINTS ONE TOO** — see `Measure.wrappedLine`.
+    const withMeter =
+      systemIndex === 0 ||
+      plans.some((p) => p.measures[span.start]?.wrappedLine === true)
 
     /**
      * ONE CURSOR ACROSS EVERY VOICE, FOR THE WHOLE LINE — abcjs's `layoutStaffGroup`.
@@ -15131,8 +15153,9 @@ function topTextBlock(
   // Second and later `T:` fields are subtitles — abcm2ps's convention, and abcjs's.
   for (const [i, subtitle] of subtitles.entries()) {
     if (plainText(subtitle) === '') continue
-    // …and a subtitle's own leading gap is a row too — see `spend`.
-    spend(ENGRAVE.subtitleSpace)
+    // …and a subtitle's own leading gap is a row too — see `spend`, and `%%subtitlespace`
+    // replaces it (`write/renderer.js:163-164`).
+    spend(SPACING.subtitlespace ?? ENGRAVE.subtitleSpace)
     addRow({
       text: plainText(subtitle),
       role: 'title',
@@ -15169,7 +15192,8 @@ function topTextBlock(
     // nothing, so the page recovered it as the block's REMAINDER — `7.559999999999974`
     // where abcjs spends `7.56` — and `visual-options-01`'s root `height` printed
     // `975.1000000000001` against `…03`.
-    spend(ENGRAVE.composerSpace)
+    // …and `%%composerspace` replaces it (`write/renderer.js:149-150`).
+    spend(SPACING.composerspace ?? ENGRAVE.composerSpace)
     if (rhythm !== '') {
       addRow({
         text: rhythm,
@@ -15549,7 +15573,9 @@ function appendFreeText(
     }
     if (block.role === 'subtitle') {
       const size = sizeOf('subtitlefont')
-      spend(ENGRAVE.subtitleSpace)
+      // …and `%%subtitlespace` replaces it here too — `engraver-controller.js:239` hands
+      // `Subtitle` the same `renderer.spacing.subtitle`.
+      spend(SPACING.subtitlespace ?? ENGRAVE.subtitleSpace)
       for (const line of block.lines) {
         texts.push({
           text: line,
@@ -15968,7 +15994,13 @@ function bottomTextBlock(
      * (`renderer.js:170`) and nothing in either corpus writes it — if one ever does, this is
      * where it enters, and the byte gate will say so before this list does.
      */
-    emptyRow()
+    /**
+     * …and `%%wordsspace` is what makes that first row anything but zero — **which makes
+     * it a MOVE rather than an empty row**: `emptyRow` writes the row and spends nothing,
+     * because a zero add must not reach the page walk twice. A real value must.
+     */
+    if (SPACING.wordsspace !== undefined) move(SPACING.wordsspace)
+    else emptyRow()
     rows.push({
       startGroup: 'unalignedWords',
       klass: 'abcjs-extra-text abcjs-unaligned-words',

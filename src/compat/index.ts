@@ -572,6 +572,10 @@ const formattingOf = (score: Score): Record<string, unknown> => {
     // line rather than a setting.
     else if (key === "titleleft" && score.titleLeft) out[key] = true;
     else if (key === "bagpipes" && score.bagpipes) out[key] = true;
+    else if (key === "flatbeams" && score.flatBeams) out[key] = true;
+    // …and `graceSlurs` is the one that can be FALSE, keyed by abcjs's own camel-case name
+    // (`abc_parse_directive.js:796-805`).
+    else if (key === "graceSlurs") out[key] = score.graceSlurs;
     else if (key === "percmap") out[key] = score.percMap;
     else if (key === "midi")
       out[key] = {
