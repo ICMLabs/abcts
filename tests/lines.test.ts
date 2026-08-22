@@ -110,6 +110,52 @@ const rows = (): Row[] => {
 
 /** Tunes that agree on EVERY character. Grows, never shrinks. */
 const PASSING: readonly string[] = [
+  // …and the five CONTROL fixtures of 2026-08-22 — the ledger sweeps and the directive
+  // enumeration — every one of which agrees on every character from its first run.
+  "repo/abcts-directives-2-tune0",
+  "repo/abcts-directives-2-tune1",
+  "repo/abcts-directives-2-tune2",
+  "repo/abcts-directives-2-tune3",
+  "repo/abcts-directives-2-tune4",
+  "repo/abcts-directives-2-tune5",
+  "repo/abcts-directives-tune0",
+  "repo/abcts-directives-tune1",
+  "repo/abcts-directives-tune2",
+  "repo/abcts-directives-tune3",
+  "repo/abcts-directives-tune4",
+  "repo/abcts-directives-tune5",
+  "repo/abcts-directives-tune6",
+  "repo/abcts-directives-tune7",
+  "repo/abcts-directives-tune8",
+  "repo/abcts-directives-tune9",
+  "repo/abcts-ledger-gaps-2-tune0",
+  "repo/abcts-ledger-gaps-2-tune1",
+  "repo/abcts-ledger-gaps-2-tune2",
+  "repo/abcts-ledger-gaps-2-tune3",
+  "repo/abcts-ledger-gaps-2-tune4",
+  "repo/abcts-ledger-gaps-2-tune5",
+  "repo/abcts-ledger-gaps-2-tune6",
+  "repo/abcts-ledger-gaps-2-tune7",
+  "repo/abcts-ledger-gaps-3-tune0",
+  "repo/abcts-ledger-gaps-3-tune1",
+  "repo/abcts-ledger-gaps-3-tune2",
+  "repo/abcts-ledger-gaps-3-tune3",
+  "repo/abcts-ledger-gaps-3-tune4",
+  "repo/abcts-ledger-gaps-3-tune5",
+  "repo/abcts-ledger-gaps-3-tune6",
+  "repo/abcts-ledger-gaps-3-tune7",
+  "repo/abcts-ledger-gaps-4-tune0",
+  "repo/abcts-ledger-gaps-4-tune1",
+  "repo/abcts-ledger-gaps-4-tune2",
+  "repo/abcts-ledger-gaps-4-tune3",
+  "repo/abcts-ledger-gaps-4-tune4",
+  "repo/abcts-ledger-gaps-4-tune5",
+  "repo/abcts-ledger-gaps-tune0",
+  "repo/abcts-ledger-gaps-tune1",
+  "repo/abcts-ledger-gaps-tune2",
+  "repo/abcts-ledger-gaps-tune3",
+  "repo/abcts-ledger-gaps-tune4",
+  "repo/abcts-ledger-gaps-tune5",
   "sib/S1-decorations-tune0",
   "sib/S1-decorations-tune1",
   "sib/S1-decorations-tune2",
@@ -444,7 +490,10 @@ describe("tune.lines and getElementFromChar", () => {
     // 251,396 of 256,138 until 2026-08-16, when the sibling repo's edits to two fixtures
     // took both numbers down with them — the FLOOR moves with its corpus, and the
     // exclusions above are what make it comparable at all.
-    expect(agree).toBeGreaterThanOrEqual(255684);
+    // 255,684 of 255,684 until 2026-08-22, when `harvest-abcjs-lines.mjs` was WRITTEN —
+    // the golden had been generated ad hoc on 08-15 and could not be regenerated, so every
+    // fixture added after it was ungated on this surface. Five were.
+    expect(agree).toBeGreaterThanOrEqual(328548);
   });
 
   /**
