@@ -1174,6 +1174,48 @@
   "key acc,accidentals,el_type,endChar,mode,root,startChar",
   "note duration,el_type,endChar,pitches,pitches.accidental,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
  ],
+ "repo/abcts-ledger-gaps-tune0": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,pitches,pitches.endTie,pitches.name,pitches.pitch,pitches.startTie,pitches.verticalPos,rest,rest.type,startChar"
+ ],
+ "repo/abcts-ledger-gaps-tune1": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endBeam,endChar,endTriplet,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar,startTriplet,tripletMultiplier,tripletR"
+ ],
+ "repo/abcts-ledger-gaps-tune2": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note chord,duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-ledger-gaps-tune3": [
+  "staff.clef el_type=undefined clefPos,transpose,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-ledger-gaps-tune4": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,pitches,pitches.accidental,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
+ "repo/abcts-ledger-gaps-tune5": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "staff.meter el_type=undefined type,value",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startChar"
+ ],
  "repo/abcts-model-gaps-tune0": [
   "staff.clef el_type=undefined clefPos,type,verticalPos",
   "staff.key el_type=undefined acc,accidentals,mode,root",

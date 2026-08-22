@@ -1660,6 +1660,18 @@ export interface Score {
   /** `%%staffwidth` — the music area in PIXELS, or `null` for the engine default. */
   readonly staffWidth: number | null
   /**
+   * `%%scale` — the whole page CSS-scaled, and every unscaled item divided back out.
+   *
+   * `adjustNonScaledItems` divides the music width, all four page margins and the header
+   * and footer font sizes by it (`engraver-controller.js:124-126`, `renderer.js:79-86`),
+   * then `setPaperSize` CSS-scales the finished SVG — so the tune is laid out LARGER and
+   * drawn smaller, which is why a `%%scale 0.8` page is `700 / 0.8` wide.
+   *
+   * It WINS over print's own 0.75 (`engraver-controller.js:213-216`), and `NaN` or `0` is
+   * no directive at all (`abc_parse_directive.js:336-339`).
+   */
+  readonly scale: number | null
+  /**
    * `%%maxStaves` — an INCIPIT: draw at most this many staff lines and stop.
    *
    * abcjs counts them as it draws and `break`s past the limit

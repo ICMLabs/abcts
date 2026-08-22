@@ -412,11 +412,14 @@ const WITHIN: Readonly<Record<string, number>> = {
   // the same way; only its INPUT was chosen by us. That is the pattern this branch has
   // used for every feature no fixture exercised.
   //
-  // …and `abcts-slur-shapes.abc` and `abcts-model-gaps.abc` are two more of them.
-  "0.05": 179,
-  "1": 179,
-  "5": 179,
-  "25": 179,
+  // …and `abcts-slur-shapes.abc`, `abcts-model-gaps.abc` and `abcts-ledger-gaps.abc` are
+  // three more of them — the last written for six shapes the `ponytail:` LEDGER named as
+  // things this engine does not do, each under a note saying no fixture writes one. Three
+  // of the six were real defects and all six are byte-exact now.
+  "0.05": 180,
+  "1": 180,
+  "5": 180,
+  "25": 180,
 };
 
 const names = readdirSync(fixturesDir)

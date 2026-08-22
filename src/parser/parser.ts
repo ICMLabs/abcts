@@ -14,8 +14,7 @@
  * `clef=` / `octave=` / `middle=` / `stafflines=` / `style=` modifiers on both `K:` and
  * `V:`.
  * ponytail: DEFERRED — part ORDER (a header `P:ABAB`, which is a different thing from the
- * body `P:` label), symbol lines (`s:`), a `transpose=` written on `K:` rather than `V:`,
- * and most `%%` directives.
+ * body `P:` label), symbol lines (`s:`), and most `%%` directives.
  * Each is a separate step driven by the corpus fixture that needs it; the lexer
  * already tokenizes all of them, so the work is parser-side only.
  */
@@ -197,9 +196,8 @@ function parseKey(content: string): KeySignature {
   // renderer never reads it either, so no "written half" is owed; this line used to call
   // it unrealized, which reads as work outstanding where there is none.
   //
-  // ponytail: a `transpose=` written on `K:` rather than `V:` is not read. abcjs accepts
-  // both — the modifier switch is shared (`abc_parse_key_voice.js:411`) — and no fixture
-  // in either corpus and no audio case writes the K: form, so it has no oracle yet.
+  // The `K:` FORM is read too, in the `case 'K'` arm rather than here: abcjs's modifier
+  // switch is shared between the two fields (`abc_parse_key_voice.js:411-418`).
   const spec = (content.split(/\s+/)[0] ?? '').trim()
   // UPPERCASE ONLY. abcjs's `getKeyPitch` is a switch on `A`..`G` with the lowercase cases
   // COMMENTED OUT (`abc_tokenizer.js:33-46`), so `K:cm` finds no key at all and the tune
@@ -2093,6 +2091,7 @@ interface Formatting {
   midi?: Record<string, readonly (string | number)[]>
   stretchLast: number | null
   staffWidth: number | null
+  scale: number | null
   maxStaves: number | null
   sysStaffSep: number | null
   vocalFont: LyricFont | null
@@ -2289,6 +2288,7 @@ class ScoreBuilder {
   midi: Record<string, readonly (string | number)[]> = {}
   stretchLast: number | null = null
   staffWidth: number | null = null
+  scale: number | null = null
   maxStaves: number | null = null
   sysStaffSep: number | null = null
 
@@ -2305,6 +2305,7 @@ class ScoreBuilder {
       midi: this.midi,
       stretchLast: this.stretchLast,
       staffWidth: this.staffWidth,
+      scale: this.scale,
       maxStaves: this.maxStaves,
       sysStaffSep: this.sysStaffSep,
       vocalFont: this.vocalFont,
@@ -2328,6 +2329,7 @@ class ScoreBuilder {
     // `formattingOrder`, so the value was right and the key absent.
     this.formattingOrder = [...f.formattingOrder]
     this.staffWidth = f.staffWidth
+    this.scale = f.scale
     this.maxStaves = f.maxStaves
     this.sysStaffSep = f.sysStaffSep
     this.vocalFont = f.vocalFont
@@ -2596,6 +2598,7 @@ class ScoreBuilder {
       formattingOrder: this.formattingOrder,
       stretchLast: this.stretchLast,
       staffWidth: this.staffWidth,
+      scale: this.scale,
       maxStaves: this.maxStaves,
       sysStaffSep: this.sysStaffSep,
       textAbove: this.textAbove,
@@ -3254,6 +3257,21 @@ class Parser {
       b.noteFormatting('staffwidth')
       return
     }
+    /**
+     * `%%scale` — see `Score.scale`. **A NUMBER, AND `NaN` OR `0` IS NO DIRECTIVE AT
+     * ALL** (`abc_parse_directive.js:336-339`), which is how a bare `%%scale` is ignored
+     * rather than making the page infinite.
+     */
+    const scale = /^scale\s+(\S+)\s*$/.exec(body)
+    if (scale?.[1] !== undefined) {
+      const num = Number.parseFloat(scale[1])
+      if (!Number.isNaN(num) && num !== 0) {
+        const b = this.ensureScore(start)
+        b.scale = num
+        b.noteFormatting('scale')
+      }
+      return
+    }
     // `%%maxStaves` — an incipit. abcjs matches the directive case-insensitively like
     // every other, so `%%maxStaves` and `%%maxstaves` are the same thing.
     const maxStaves = /^maxstaves\s+(\d+)\s*$/i.exec(body)
@@ -3859,6 +3877,21 @@ class Parser {
         builder.keySourceRange = range
         // `K:C bass` sets the tune's clef; a `V:… clef=` still overrides it per voice.
         builder.clef = clefWith(builder.clef, value)
+        /**
+         * **`transpose=` RIDES ON `K:` TOO, AND IT IS THE SAME SWITCH.** abcjs's clef
+         * modifiers are read by ONE function for both fields, and its `case "transpose"`
+         * writes `multilineVars.clef.transpose` outright (`abc_parse_key_voice.js:411-418`)
+         * — which is why a `K:C transpose=2` staff reports `clef.transpose: 2` where the
+         * page is unmoved: the renderer never reads it and only the synth does.
+         *
+         * ponytail: onto the voice in force, which for a header `K:` is the implicit one.
+         * A voice DECLARED after such a `K:` takes the clef's copy in abcjs (`:514-515`),
+         * where here it would take its own default; nothing in either corpus writes that
+         * pair, and `abcts-ledger-gaps` tune 4 is what named the field at all.
+         */
+        const keyShift = /\btranspose=\s*(-?\d+)/.exec(value)
+        if (keyShift?.[1] !== undefined)
+          builder.voiceFor(builder.lastVoiceId).transpose = Number.parseInt(keyShift[1], 10)
         const keyOctave = octaveModifier(value)
         if (keyOctave !== null) builder.keyOctave.value = keyOctave
         // …and the header's fonts are frozen here, which is `is_in_header` going false.
@@ -4643,9 +4676,23 @@ class Parser {
           i++
           break
         }
+        /**
+         * ⚠️ **A STRAY `]` IS AN INVISIBLE BARLINE.** `getBarLine`'s `]` arm falls through
+         * to `{len: 1, token: "bar_invisible"}` for anything that is not `|` or `[`
+         * (`abc_tokenizer.js:161-173`), so the `]` left over by `[C"Am"E]` — where the
+         * chord ended at the quote — is a BAR in abcjs's stream, and its own object says
+         * so: `bar 559..560 bar_invisible`. Ours dropped the token, which is one element
+         * of misalignment for every row after it.
+         *
+         * Only a `]` the CHORD and the inline-field parsers did not consume reaches here.
+         */
+        case 'closeBracket':
         case 'barline': {
           closeBeamRun() // beams do not cross barlines; assign before the measure closes
-          const text = this.src.slice(token.start, token.start + token.length)
+          const text =
+            token.kind === 'closeBracket'
+              ? '['
+              : this.src.slice(token.start, token.start + token.length)
           // A DECORATION STILL WAITING WHEN THE BAR ARRIVES ATTACHES TO THE BAR — abcjs
           // builds it in `createBarLine`, not on the next note (`abstract-engraver.js:1002`).
           // Held for the NEXT note instead, `CCCC!D.C.alcoda!|DDDD` put the mark over the D.
@@ -4859,12 +4906,34 @@ class Parser {
      * consumed and the mark lost.
      */
     let pendingInnerSlurs = 0
+    /** `^/` and `_/` on THIS head — see `readNoteHead`. Cleared with the accidental. */
+    let microtone = 0
 
     while (i < tokens.length && (tokens[i] as Token).kind !== 'closeBracket') {
       const token = tokens[i] as Token
       if (token.kind === 'accidental') {
         accidental = combineAccidental(accidental, token.aux)
         i++
+        /**
+         * **A MICROTONE INSIDE A CHORD IS READ EXACTLY AS ONE OUTSIDE IT** — `getCoreNote`
+         * is the same function on both paths (`abc_parse_music.js:357`), so `[^/CE]` is a
+         * QUARTERSHARP C and an E, one chord. Ours read the `^` and left the `/`, which
+         * named the head `^C` and — once an unparseable token ended the chord — split it
+         * in two.
+         *
+         * **ONE CHARACTER, AND A SECOND IS A PARSE FAILURE**: see the note path for the
+         * six-rung ladder that pins it. A longer fraction is left where it stands, and the
+         * `break` below ends the chord there, which is what abcjs's own `null` does.
+         */
+        const fraction = tokens[i] as Token | undefined
+        if (fraction?.kind === 'digit' || fraction?.kind === 'slash') {
+          const read = this.readLength(tokens, i)
+          const chars = read.next - i === 1 ? fraction.length : 2
+          if (chars === 1) {
+            microtone = Math.sign(accidental ?? 0) * 50
+            i = read.next
+          }
+        }
         continue
       }
       if (token.kind === 'lparen') {
@@ -4881,7 +4950,7 @@ class Parser {
         continue
       }
       if (token.kind === 'noteLetter') {
-        const head = this.readNoteHead(tokens, i, accidental)
+        const head = this.readNoteHead(tokens, i, accidental, microtone)
         const length = this.readLength(tokens, head.next)
         pitches.push(
           pendingInnerSlurs === 0
@@ -4894,6 +4963,7 @@ class Parser {
         innerDecorations.push(...pendingInner)
         pendingInner = []
         accidental = null
+        microtone = 0
         i = length.next
         continue
       }
@@ -4908,8 +4978,24 @@ class Parser {
         continue
       }
       const decoration = this.chordDecoration(token, builder)
-      if (decoration !== null) pendingInner.push(decoration)
-      i++ // ponytail: chord symbols inside `[…]` are still skipped.
+      if (decoration !== null) {
+        pendingInner.push(decoration)
+        i++
+        continue
+      }
+      /**
+       * ⚠️ **ANYTHING ELSE ENDS THE CHORD WHERE IT STANDS, AND IS NOT CONSUMED.** abcjs's
+       * loop has four arms — a decoration, a pitch, a SPACE (warned and skipped), and the
+       * `]` — and its `else` warns "Expected ']' to end the chords", appends the pitches it
+       * already has and stops (`abc_parse_music.js:472-489`). So `[C"Am"E]` is a CHORD OF
+       * ONE followed by an annotated `E`, with the `]` left over, and abcjs's own object
+       * says so: two notes, the second carrying the chord symbol.
+       *
+       * Ours skipped the token and kept collecting, which made it one two-note chord with
+       * the symbol thrown away — invisible to every gate until `abcts-ledger-gaps` wrote
+       * one, and worth 22.4px of page, because a chord symbol takes a lane.
+       */
+      break
     }
     if ((tokens[i] as Token | undefined)?.kind === 'closeBracket') i++
 

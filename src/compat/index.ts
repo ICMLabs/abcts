@@ -550,6 +550,9 @@ const formattingOf = (score: Score): Record<string, unknown> => {
     else if (key === "sysstaffsep" && score.sysStaffSep != null)
       out[key] = (score.sysStaffSep * 3) / 4;
     else if (key === "maxStaves" && score.maxStaves != null) out[key] = score.maxStaves;
+    // **`%%scale` IS THE NUMBER AS WRITTEN** — `tune.formatting.scale = parseFloat(…)`
+    // (`abc_parse_directive.js:339`), with no unit conversion of any kind.
+    else if (key === "scale" && score.scale != null) out[key] = score.scale;
     else if (key === "jazzchords") out[key] = true;
     else if (key === "percmap") out[key] = score.percMap;
     else if (key === "midi")

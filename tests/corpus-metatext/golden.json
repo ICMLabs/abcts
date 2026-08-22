@@ -887,6 +887,24 @@
  "repo/abcts-keywarn-tune2": {
   "title": "keywarn false is a no-op"
  },
+ "repo/abcts-ledger-gaps-tune0": {
+  "title": "a chord where only SOME heads are tied"
+ },
+ "repo/abcts-ledger-gaps-tune1": {
+  "title": "a tuplet whose r differs from its p"
+ },
+ "repo/abcts-ledger-gaps-tune2": {
+  "title": "a chord symbol written INSIDE the chord brackets"
+ },
+ "repo/abcts-ledger-gaps-tune3": {
+  "title": "transpose written on K: rather than V:"
+ },
+ "repo/abcts-ledger-gaps-tune4": {
+  "title": "a microtone inside a chord"
+ },
+ "repo/abcts-ledger-gaps-tune5": {
+  "title": "a scale directive"
+ },
  "repo/abcts-model-gaps-tune0": {
   "title": "grace slash on the FIRST note"
  },

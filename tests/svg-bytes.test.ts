@@ -313,7 +313,19 @@ const PASSING: readonly string[] = [
   "abcts-visualtranspose-tune1",
   "abcts-visualtranspose-tune2",
   "abcts-visualtranspose-tune3",
+  // `abcts-ledger-gaps.abc` — six shapes the `ponytail:` LEDGER named, each under a note
+  // saying no fixture writes one. THREE WERE REAL DEFECTS: `%%scale` was unmodelled, a
+  // chord symbol inside the brackets did not end the chord, and a microtone inside them was
+  // read as a plain accidental. All six are byte-exact.
+  "abcts-ledger-gaps-tune0",
+  "abcts-ledger-gaps-tune1",
+  "abcts-ledger-gaps-tune2",
+  "abcts-ledger-gaps-tune3",
+  "abcts-ledger-gaps-tune4",
+  "abcts-ledger-gaps-tune5",
   // `abcts-model-gaps.abc` — the three shapes `HANDOFF-2026-08-20.md` §2 named. Two were
+  // already exact and are here to SAY SO; the other two named the inline-font rule.
+    // `abcts-model-gaps.abc` — the three shapes `HANDOFF-2026-08-20.md` §2 named. Two were
   // already exact and are here to SAY SO; the other two named the inline-font rule.
   "abcts-model-gaps-tune0",
   "abcts-model-gaps-tune1",

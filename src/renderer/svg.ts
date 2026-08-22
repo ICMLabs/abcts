@@ -4019,11 +4019,12 @@ export function toSVG(
   // the tune above's `endY` — see `LayoutOptions.pageTop`.
   const h = lastDoc.height * OUT;
   /**
-   * **PRINT IS A CSS SCALE ON THE ROOT AND AN ELEVEN-INCH FLOOR ON ITS HEIGHT.**
+   * **A SCALE IS A CSS TRANSFORM ON THE ROOT; THE ELEVEN-INCH FLOOR IS PRINT'S ALONE.**
    * `setPaperSize` computes `w`/`h` at the scale and then hands `setSize` `w / scale` and
    * `h / scale` whenever the scale is under 1 (`draw/set-paper-size.js:1-41`), so the two
-   * divisions cancel on the WIDTH and leave the floor as the only thing the height gains:
-   * `max(h, 1056) / scale`. `setScale` then writes the transform
+   * divisions cancel on the WIDTH — and the floor, `if (renderer.isPrint) h = max(h, 1056)`
+   * (`:5`), is gated on PRINT and not on the scale, so a screen `%%scale 0.8` takes the
+   * transform without it. Reading the two as one flag made such a page 1320px tall. `setScale` then writes the transform
    * (`write/svg.js:71-83`) — and jsdom serialises only the three properties it knows, so
    * the `-ms-` pair and the `-*-transform-origin-x/y` four are absent from the goldens.
    */
@@ -4034,9 +4035,11 @@ export function toSVG(
   const lastTitle = titles[titles.length - 1];
   const printScale = lastDoc.printScale ?? 1;
   const printH =
-    printScale === 1
-      ? h
-      : Math.max(h * printScale, ABCJS_PX.printMinHeight) / printScale;
+    lastDoc.print === true
+      ? Math.max(h * printScale, ABCJS_PX.printMinHeight) / printScale
+      : printScale === 1
+        ? h
+        : (h * printScale) / printScale;
   const printStyle =
     printScale === 1
       ? ""

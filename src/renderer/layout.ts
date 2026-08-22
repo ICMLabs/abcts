@@ -2035,6 +2035,14 @@ export interface Layout {
    */
   readonly printScale?: number
   /**
+   * **PRINT ITSELF, WHICH IS NOT THE SAME QUESTION AS THE SCALE.** The eleven-inch floor
+   * on the page is `if (renderer.isPrint)` and nothing else (`draw/set-paper-size.js:5`),
+   * while the CSS scale and its division apply to any scale under 1 — so a screen
+   * `%%scale 0.8` takes the transform and NOT the floor. They were one flag here, and a
+   * `%%scale` page came out 1320px tall.
+   */
+  readonly print?: boolean
+  /**
    * `renderer.padding.left` for this render — 15 on screen, `68 / scale` in print. The
    * emitter needs it for the one thing it places absolutely: a brace's own voice name.
    */
@@ -4067,11 +4075,16 @@ function layoutNoteheads(
   const noteX = x + graceWidth
   /** An accidental `place` units left of the notehead, in absolute x. */
   const headXOf = (place: number): number => noteX + accidentalWidth - place
-  // ponytail: `microtoneCents` is per-EVENT, not per-pitch, so a chord's microtone
-  // applies to every altered head in it. `[^/G^/B]` is right; a chord mixing a microtone
-  // with a plain accidental is not expressible. No fixture writes one, and fixing it
-  // means moving the field onto Pitch.
   const cents = event === null || event.type === 'rest' ? 0 : event.microtoneCents
+  /**
+   * **AND A QUARTER TONE IS A PROPERTY OF THE HEAD, NOT OF THE EVENT.** `getCoreNote` runs
+   * per pitch on both paths (`abc_parse_music.js:357`), so `[^/CE]` is a HALFSHARP C beside
+   * a plain E — and `microtoneCents` is per EVENT here, which drew a full sharp on the C
+   * because the chord path recorded no cents at all. The head's own written accidental is
+   * what says so, and it is the same string `accMap` names it by.
+   */
+  const centsOf = (p: Pitch): number =>
+    p.writtenAccidental === '^/' ? 50 : p.writtenAccidental === '_/' ? -50 : cents
   // A PERCUSSION VOICE PRINTS NO ACCIDENTALS. `createNote` passes
   // `printAccidentals: !voice.isPercussion` (`abstract-engraver.js:723`), so `^c'` on a
   // `clef=perc` staff draws its head and nothing else — the golden has no
@@ -4082,7 +4095,7 @@ function layoutNoteheads(
       ? []
       : pitches
           .map((p) => ({
-            glyph: microtoneAccidental(p.accidental, cents, strict),
+            glyph: microtoneAccidental(p.accidental, centsOf(p), strict),
             step: pitchToStep(p, clef),
           }))
           .filter((a): a is { glyph: GlyphName; step: number } => a.glyph !== null)
@@ -6066,8 +6079,18 @@ let PAGE_PADDING = {
   bottom: ENGRAVE.marginBottom,
 }
 
-/** 1 on screen; `print`'s own 0.75 otherwise — see `LayoutOptions.print`. */
+/** 1 on screen; `%%scale`'s number, or `print`'s own 0.75 — see `LayoutOptions.print`. */
 let PRINT_SCALE = 1
+
+/**
+ * PRINT ITSELF. **A `%%scale` IS NOT A PRINT**, and the two were one flag: abcjs gates
+ * `spacing.top` and the eleven-inch floor on `isPrint` (`top-text.js:17`,
+ * `draw/set-paper-size.js:5`) where the CSS transform and its divisions key on the SCALE.
+ * A screen `%%scale 0.8` therefore took print's 30.24px lead and its page floor.
+ *
+ * ponytail: a module-level switch, the sixth beside `PRINT_SCALE` and `STRICT_TEXT_METRICS`.
+ */
+let PRINT = false
 
 /** Where this render's page cursor opens — see `LayoutOptions.pageTop`. */
 let PAGE_TOP = 0
@@ -11260,8 +11283,22 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
         // (`engraver-controller.js:124-126`), which is one division of the same sum.
         (score.staffWidth + 2 * (options.print === true ? ABCJS_PX.printPaddingLeft : ABCJS_PX.paddingLeft)) /
         UNIT_PX /
-        (options.print === true ? ABCJS_RATIO.printScale : 1)
-      : (options.systemWidth ?? ENGRAVE.systemWidth)
+        (score.scale ?? (options.print === true ? ABCJS_RATIO.printScale : 1))
+      : /**
+         * …**AND THE HOST'S OWN WIDTH TAKES THE SAME DIVISION** — `adjustNonScaledItems`
+         * divides `this.width` whatever set it (`engraver-controller.js:125`) — **BUT THE
+         * CALLER HAS ALREADY DIVIDED BY PRINT'S 0.75**, so only a DIRECTIVE is applied
+         * here, and it multiplies the caller's assumption back out first.
+         *
+         * ⚠️ **THE UNTOUCHED PATH IS UNTOUCHED ON PURPOSE**: `x * 0.75 / 0.75` is not `x`
+         * in doubles, and every `-print` fixture of the sibling byte gate is exact on this
+         * number. Dividing unconditionally put all 121 of them 358px wide.
+         */
+        score.scale === null
+          ? (options.systemWidth ?? ENGRAVE.systemWidth)
+          : ((options.systemWidth ?? ENGRAVE.systemWidth) *
+              (options.print === true ? ABCJS_RATIO.printScale : 1)) /
+            score.scale
   // The mode picks the look; `profile` can still override it explicitly.
   const profile: RenderProfile =
     options.profile ?? (isStrict(options.mode ?? defaultMode) ? 'abcjs' : 'standard')
@@ -11269,13 +11306,25 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   // may set it either way, but whether a melisma prints abcjs's literal `_` or an
   // extender is a question about which engine's behaviour is being reproduced.
   const strict = isStrict(options.mode ?? defaultMode)
-  // **PRINT'S SCALE IS 0.75 AND EVERY PAGE MARGIN IS DIVIDED BY IT** — see `PAGE_PADDING`
-  // and `LayoutOptions.print`. `%%scale` wins where the tune states one
-  // (`engraver-controller.js:214-217`).
-  // ponytail: `%%scale` is not modelled, so print always takes abcjs's 0.75. No fixture
-  // in either corpus sets one.
-  const printScale = options.print === true ? ABCJS_RATIO.printScale : 1
+  /**
+   * **PRINT'S SCALE IS 0.75, `%%scale` WINS OVER IT, AND EVERY UNSCALED ITEM IS DIVIDED
+   * BACK OUT** — `scale = formatting.scale || params.scale`, then
+   * `if (scale === undefined) scale = isPrint ? 0.75 : 1` and `adjustNonScaledItems`
+   * divides the music width and all four margins by it (`engraver-controller.js:213-217`,
+   * `:124-126`, `renderer.js:79-86`). The tune is therefore laid out LARGER and the
+   * finished SVG CSS-scaled down, which is why a screen `%%scale 0.8` page is `700 / 0.8`
+   * wide with its music unchanged in shape.
+   *
+   * ⚠️ **AND `> 0.1` IS abcjs's OWN FLOOR** on the host param (`:47-50`); the DIRECTIVE
+   * has only `NaN`/`0` ruled out at parse (`abc_parse_directive.js:336-339`), so
+   * `%%scale 0.05` is honoured where `{scale: 0.05}` is not.
+   *
+   * ponytail: the host `params.scale` is not read — nothing in either corpus or any gate
+   * passes one, and the directive is what the fixtures write.
+   */
+  const printScale = score.scale ?? (options.print === true ? ABCJS_RATIO.printScale : 1)
   PRINT_SCALE = printScale
+  PRINT = options.print === true
   // …and the page's own origin, which a stacked book seeds with the tune above's `endY`.
   PAGE_TOP = options.pageTop ?? 0
   PAGE_PADDING =
@@ -11285,7 +11334,11 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
           top: spaces(ABCJS_PX.printPaddingTop) / printScale,
           bottom: spaces(ABCJS_PX.printPaddingTop) / printScale,
         }
-      : { left: ENGRAVE.marginX, top: ENGRAVE.marginTop, bottom: ENGRAVE.marginBottom }
+      : {
+          left: ENGRAVE.marginX / printScale,
+          top: ENGRAVE.marginTop / printScale,
+          bottom: ENGRAVE.marginBottom / printScale,
+        }
   STRICT_TEXT_METRICS = strict
   LINE_WEIGHTS = lineWeightsFor(strict)
   JAZZ_CHORDS = score.jazzChords
@@ -13448,7 +13501,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     // …**AND PRINT'S `spacing.top` IS A ROW OF THE TOP BLOCK EVEN WHEN THE BLOCK IS
     // EMPTY** — `TopText` pushes it before it looks at the title (`top-text.js:17-18`),
     // so a title-less tune, whose block this branch skips entirely, still spends it.
-    const printTopSpace = PRINT_SCALE === 1 ? 0 : spaces(ABCJS_PX.printTopSpace)
+    const printTopSpace = PRINT ? spaces(ABCJS_PX.printTopSpace) : 0
     let cursor =
       (headingless ? printTopSpace + musicSpace : 0) + (nonMusicBeforeMusic ? interSystemSep : 0)
     /** abcjs's `staffGroup.height`, in PITCH — see `LayoutSystem.heightPitch`. */
@@ -14290,6 +14343,7 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
     // See `blankLeadingLines` — every `T:` past the first is one.
     blankLeadingLines: Math.max(0, score.metadata.titles.length - 1),
     printScale: PRINT_SCALE,
+    print: options.print === true,
     paddingLeft: PAGE_PADDING.left,
     paddingBottom: PAGE_PADDING.bottom,
     // `cursor` has one trailing gap on it, added after the last system. abcjs opens with
@@ -14694,7 +14748,7 @@ function topTextBlock(
   // **AND PRINT OPENS THE BLOCK WITH `spacing.top`** — `if (isPrint) this.rows.push({ move:
   // spacing.top })`, ahead of the title and after the `%%header` row
   // (`top-text.js:17-18`). A row of its own, so the page's cursor spends it in its turn.
-  if (PRINT_SCALE !== 1) spend(spaces(ABCJS_PX.printTopSpace))
+  if (PRINT) spend(spaces(ABCJS_PX.printTopSpace))
 
   const titleSize = sizeOf('titlefont')
   const [title, ...subtitles] = metadata.titles

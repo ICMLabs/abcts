@@ -2720,6 +2720,65 @@
    "hasPickup": false
   }
  ],
+ "repo/abcts-ledger-gaps": [
+  {
+   "header": "X:1\nT:a chord where only SOME heads are tied\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "[C-EG-] [CEG] z2|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:2\nT:a tuplet whose r differs from its p\nL:1/8\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "(3:2:1 ABC D2 E2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:3\nT:a chord symbol written INSIDE the chord brackets\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "[C\"Am\"E]"
+    },
+    {
+     "abc": " D E F|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:4\nT:transpose written on K: rather than V:\n",
+   "measures": [
+    {
+     "abc": "C D E F|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:5\nT:a microtone inside a chord\nL:1/4\nM:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "[^/CE] D E F|"
+    }
+   ],
+   "hasPickup": false
+  },
+  {
+   "header": "X:6\nT:a scale directive\nL:1/4\nM:4/4\n%%scale 0.8\nK:C\n",
+   "measures": [
+    {
+     "abc": "C D E F|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
  "repo/abcts-model-gaps": [
   {
    "header": "X:1\nT:grace slash on the FIRST note\nL:1/4\nM:4/4\nK:C\n",

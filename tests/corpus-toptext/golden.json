@@ -3310,6 +3310,132 @@
   ],
   "bottomText": []
  },
+ "repo/abcts-ledger-gaps-tune0": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a chord where only SOME heads are tied",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 328,
+    "endChar": 368,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-ledger-gaps-tune1": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a tuplet whose r differs from its p",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 408,
+    "endChar": 445,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-ledger-gaps-tune2": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a chord symbol written INSIDE the chord brackets",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 485,
+    "endChar": 535,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-ledger-gaps-tune3": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "transpose written on K: rather than V:",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 573,
+    "endChar": 613,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-ledger-gaps-tune4": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 350,
+    "text": "a microtone inside a chord",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 656,
+    "endChar": 684,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
+ "repo/abcts-ledger-gaps-tune5": {
+  "topText": [
+   {
+    "move": 7.56
+   },
+   {
+    "left": 437.5,
+    "text": "a scale directive",
+    "font": "titlefont",
+    "anchor": "middle",
+    "startChar": 720,
+    "endChar": 739,
+    "absElemType": "title",
+    "name": "title"
+   },
+   {
+    "move": 33
+   }
+  ],
+  "bottomText": []
+ },
  "repo/abcts-model-gaps-tune0": {
   "topText": [
    {
