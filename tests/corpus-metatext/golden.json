@@ -1761,6 +1761,7 @@
  "repo/abcts-slur-shapes-tune9": {
   "title": "a close after a grace group reaches the note before it"
  },
+ "repo/abcts-start-char-tune0": {},
  "repo/abcts-visualtranspose-tune0": {
   "title": "visualTranspose 0 — the control's control"
  },

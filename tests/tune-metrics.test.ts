@@ -67,6 +67,7 @@ const PASSING: readonly string[] = [
   "repo/abcts-ledger-gaps-2-tune0",
   "repo/abcts-ledger-gaps-3-tune0",
   "repo/abcts-ledger-gaps-4-tune0",
+  "repo/abcts-start-char-tune0",
   ...Array.from({ length: 12 }, (_, i) => `repo/abcts-key-modifiers-tune${i}`),
   "repo/abcts-voice-style-tune0",
   ...Array.from({ length: 56 }, (_, i) => `repo/abcts-midi-tune${i}`),

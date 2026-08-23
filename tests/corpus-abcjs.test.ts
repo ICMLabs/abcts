@@ -428,11 +428,12 @@ const WITHIN: Readonly<Record<string, number>> = {
   // control found before any modifier did, and `abcts-voice-modifiers.abc` the 188th —
   // the three defects the modifiers themselves found. `abcts-midi.abc` is the 189th — 56
   // tunes, one per `%%MIDI` sub-command, none of which moves a note, and
-  // `abcts-voice-style.abc` the 190th and `abcts-key-modifiers.abc` the 191st.
-  "0.05": 191,
-  "1": 191,
-  "5": 191,
-  "25": 191,
+  // `abcts-voice-style.abc` the 190th, `abcts-key-modifiers.abc` the 191st and
+  // `abcts-start-char.abc` — abcjs's own test tune — the 192nd.
+  "0.05": 192,
+  "1": 192,
+  "5": 192,
+  "25": 192,
 };
 
 const names = readdirSync(fixturesDir)

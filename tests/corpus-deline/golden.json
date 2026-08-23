@@ -2787,6 +2787,14 @@
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@1005..1008 note@1008..1013 bar@1013..1014"
  ],
+ "repo/abcts-start-char-tune0": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@56..69 note@69..74 note@74..79 note@79..82 bar@82..83"
+ ],
+ "repo/abcts-start-char-tune0#breaks": [
+  "L0 s0 kept=meter,key,clef",
+  "L0 s0 v0 note@56..69 note@69..74 note@74..79 note@79..82 bar@82..83"
+ ],
  "repo/abcts-visualtranspose-tune0": [
   "L0 s0 kept=meter,key,clef",
   "L0 s0 v0 note@501..502 note@502..503 note@503..504 note@504..505 bar@505..506 note@506..507 note@507..508 note@508..509 note@509..510 bar@510..511"

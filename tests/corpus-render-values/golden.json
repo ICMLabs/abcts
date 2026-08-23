@@ -6619,6 +6619,15 @@
   "L0/s0/v0/1": "{\"abselem\":\"abselem\",\"averagepitch\":7,\"duration\":0.25,\"el_type\":\"note\",\"endChar\":1013,\"gracenotes\":[{\"duration\":0.125,\"endSlur\":[101],\"name\":\"a\",\"pitch\":12,\"verticalPos\":12}],\"maxpitch\":7,\"minpitch\":7,\"rest\":{\"type\":\"spacer\"},\"startChar\":1008}",
   "L0/s0/v0/2": "{\"abselem\":\"abselem\",\"el_type\":\"bar\",\"endChar\":1014,\"startChar\":1013,\"type\":\"bar_thin\"}"
  },
+ "repo/abcts-start-char-tune0": {
+  "L0": "{\"staffGroup\":\"staffGroup\"}",
+  "L0/s0": "{\"clef\":{\"abselem\":\"abselem\",\"clefPos\":4,\"el_type\":\"clef\",\"type\":\"treble\",\"verticalPos\":0},\"key\":{\"acc\":\"\",\"accidentals\":[],\"el_type\":\"keySignature\",\"mode\":\"\",\"root\":\"C\"},\"meter\":{\"abselem\":\"abselem\",\"el_type\":\"timeSignature\",\"type\":\"specified\",\"value\":[{\"den\":\"4\",\"num\":\"4\"}]},\"title\":[\"Sop.\"]}",
+  "L0/s0/v0/0": "{\"abselem\":\"abselem\",\"averagepitch\":3,\"chord\":[{\"name\":\"🚩\",\"position\":\"above\"},{\"name\":\"II7\",\"position\":\"below\"}],\"duration\":0.25,\"el_type\":\"note\",\"endChar\":69,\"maxpitch\":3,\"minpitch\":3,\"pitches\":[{\"highestVert\":9,\"name\":\"F\",\"pitch\":3,\"startSlur\":[{\"label\":101,\"style\":\"dotted\"}],\"verticalPos\":3}],\"startChar\":56}",
+  "L0/s0/v0/1": "{\"abselem\":\"abselem\",\"averagepitch\":9,\"duration\":0.25,\"el_type\":\"note\",\"endChar\":74,\"maxpitch\":9,\"minpitch\":9,\"pitches\":[{\"endSlur\":[101],\"highestVert\":9,\"name\":\"e\",\"pitch\":9,\"startSlur\":[{\"label\":102,\"style\":\"dotted\"}],\"verticalPos\":9}],\"startChar\":69}",
+  "L0/s0/v0/2": "{\"abselem\":\"abselem\",\"averagepitch\":3,\"duration\":0.25,\"el_type\":\"note\",\"endChar\":79,\"maxpitch\":3,\"minpitch\":3,\"pitches\":[{\"endSlur\":[102],\"highestVert\":9,\"name\":\"F\",\"pitch\":3,\"startSlur\":[{\"label\":101,\"style\":\"dotted\"}],\"verticalPos\":3}],\"startChar\":74}",
+  "L0/s0/v0/3": "{\"abselem\":\"abselem\",\"averagepitch\":9,\"duration\":0.25,\"el_type\":\"note\",\"endChar\":82,\"maxpitch\":9,\"minpitch\":9,\"pitches\":[{\"endSlur\":[101],\"highestVert\":9,\"name\":\"e\",\"pitch\":9,\"verticalPos\":9}],\"startChar\":79}",
+  "L0/s0/v0/4": "{\"abselem\":\"abselem\",\"el_type\":\"bar\",\"endChar\":83,\"startChar\":82,\"type\":\"bar_thin\"}"
+ },
  "repo/abcts-visualtranspose-tune0": {
   "L0": "{\"staffGroup\":\"staffGroup\"}",
   "L0/s0": "{\"clef\":{\"abselem\":\"abselem\",\"clefPos\":4,\"el_type\":\"clef\",\"type\":\"treble\",\"verticalPos\":0},\"key\":{\"acc\":\"\",\"accidentals\":[],\"el_type\":\"keySignature\",\"mode\":\"\",\"root\":\"C\"},\"meter\":{\"abselem\":\"abselem\",\"el_type\":\"timeSignature\",\"type\":\"specified\",\"value\":[{\"den\":\"4\",\"num\":\"4\"}]}}",

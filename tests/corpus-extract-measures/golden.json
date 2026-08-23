@@ -4292,6 +4292,17 @@
    "hasPickup": true
   }
  ],
+ "repo/abcts-start-char": [
+  {
+   "header": "M:4/4\nK:C\n",
+   "measures": [
+    {
+     "abc": "\"^🚩\"\"_II7\"F4.(e4).(F4)e4)|"
+    }
+   ],
+   "hasPickup": false
+  }
+ ],
  "repo/abcts-visualtranspose": [
   {
    "header": "X:1\nT:visualTranspose 0 — the control's control\nL:1/4\nM:4/4\n%%visualTranspose 0\nK:C\n",

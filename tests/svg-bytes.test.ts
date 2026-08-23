@@ -314,6 +314,15 @@ const PASSING: readonly string[] = [
   "abcts-visualtranspose-tune2",
   "abcts-visualtranspose-tune3",
   /**
+   * `abcts-start-char.abc` — abcjs's OWN `tests/parse/start-char.test.js` tune, the last
+   * unenumerated list's first case. Its emoji chord symbol makes it look like a
+   * surrogate-pair test and it is not: what it catches is an opening slur's iteration
+   * split. See `tile`'s run walk.
+   */
+  // ⚠️ Its golden is `abcts-start-char.svg`, not `-tune0`: abcjs's own tune has NO `X:`,
+  // so the book holds one tune and `dump-svg.js` writes the single-tune name.
+  "abcts-start-char",
+  /**
    * `abcts-key-modifiers.abc` — the K: switch's own 31 case labels, which are NOT the V:
    * ones: four defects, and tune 9 gates the rule that decided the fourth — accidentals
    * are a PREFIX, so `K:C =f clef=alto` draws the natural and `K:C clef=alto =f` does not.

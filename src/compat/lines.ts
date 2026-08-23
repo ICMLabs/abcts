@@ -384,7 +384,27 @@ function tile(
     let j = at;
     let sawSlur = false;
     let triplet = false;
-    while (j < abc.length && (abc[j] === "(" || abc[j] === " " || abc[j] === "\t")) {
+    /**
+     * ⚠️ **AND A `.` BEFORE THE SLUR JOINS THE RUN WHILE ONE AFTER IT ENDS THE RUN.** The
+     * gather loop takes decorations, chord symbols and graces at the iteration's HEAD and
+     * breaks on the `(`; the slur is then consumed and the iteration ends if what follows
+     * is not note-ish. So a `.` reached BEFORE any slur is still being gathered by this
+     * iteration, and a `.` reached AFTER one is the next iteration's first token.
+     * Instrumented on abcjs's own `startI`, four shapes that only this asymmetry explains:
+     *
+     *     .(F4)        0   the dotted slur is inside the note
+     *     .("^X"F4)    2   the chord symbol after it opens a new iteration
+     *     (.F4)        1   the dot after the slur opens a new iteration
+     *     ((F4))       0
+     *
+     * `abcts-start-char`'s `.("^🚩""_II7"F4` is the second shape, and the run used to stop
+     * dead at the `.` — `sawSlur` never became true and the note kept the two characters
+     * abcjs leaves to nobody.
+     */
+    while (
+      j < abc.length &&
+      (abc[j] === "(" || abc[j] === " " || abc[j] === "\t" || (abc[j] === "." && !sawSlur))
+    ) {
       const next = abc[j + 1] ?? "";
       if (abc[j] === "(" && next >= "2" && next <= "9") {
         // …**AND A TRIPLET INSIDE THE RUN KEEPS THE WHOLE RUN**, slurs and all: the

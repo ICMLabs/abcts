@@ -51271,6 +51271,124 @@
    }
   ]
  ],
+ "abcts-start-char": [
+  [
+   {
+    "el_type": "name",
+    "pickupLength": 0,
+    "trackName": "Sop."
+   },
+   {
+    "el_type": "instrument",
+    "program": 0
+   },
+   {
+    "el_type": "tempo",
+    "qpm": 180
+   },
+   {
+    "el_type": "key",
+    "accidentals": []
+   },
+   {
+    "el_type": "meter",
+    "den": "4",
+    "num": 4
+   },
+   {
+    "el_type": "note",
+    "chord": [
+     {
+      "name": "🚩",
+      "position": "above"
+     },
+     {
+      "name": "II7",
+      "position": "below"
+     }
+    ],
+    "duration": 0.25,
+    "pitches": [
+     {
+      "pitch": 3,
+      "name": "F",
+      "startSlur": [
+       {
+        "label": 101,
+        "style": "dotted"
+       }
+      ],
+      "verticalPos": 3,
+      "highestVert": 9
+     }
+    ],
+    "timing": 0
+   },
+   {
+    "el_type": "note",
+    "duration": 0.25,
+    "pitches": [
+     {
+      "pitch": 9,
+      "name": "e",
+      "endSlur": [
+       101
+      ],
+      "startSlur": [
+       {
+        "label": 102,
+        "style": "dotted"
+       }
+      ],
+      "verticalPos": 9,
+      "highestVert": 9
+     }
+    ],
+    "timing": 0.25
+   },
+   {
+    "el_type": "note",
+    "duration": 0.25,
+    "pitches": [
+     {
+      "pitch": 3,
+      "name": "F",
+      "endSlur": [
+       102
+      ],
+      "startSlur": [
+       {
+        "label": 101,
+        "style": "dotted"
+       }
+      ],
+      "verticalPos": 3,
+      "highestVert": 9
+     }
+    ],
+    "timing": 0.5
+   },
+   {
+    "el_type": "note",
+    "duration": 0.25,
+    "pitches": [
+     {
+      "pitch": 9,
+      "name": "e",
+      "endSlur": [
+       101
+      ],
+      "verticalPos": 9,
+      "highestVert": 9
+     }
+    ],
+    "timing": 0.75
+   },
+   {
+    "el_type": "bar"
+   }
+  ]
+ ],
  "abcts-visualtranspose": [
   [
    {
