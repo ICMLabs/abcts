@@ -161,6 +161,7 @@
    "endChar": 13
   }
  },
+ "repo/abcjs-synth-synth-y01-tune0": {},
  "repo/abcjs-synth-timing-01-cde-fg-ab-1-bcd-2-efg-tune0": {},
  "repo/abcjs-synth-timing-02-score-1-2-tune0": {},
  "repo/abcjs-synth-timing-03-cd-e-f-3gab-ac-tune0": {},
@@ -193,6 +194,8 @@
  "repo/abcjs-synth-timing-10-stretchlast-1-tune0": {},
  "repo/abcjs-synth-timing-11-stretchlast-1-tune0": {},
  "repo/abcjs-synth-timing-12-stretchlast-1-tune0": {},
+ "repo/abcjs-synth-timing-y02-tune0": {},
+ "repo/abcjs-synth-timing-y03-tune0": {},
  "repo/abcjs-visual-decorations-01-score-s-a-b-tune0": {},
  "repo/abcjs-visual-decorations-x02-tune0": {},
  "repo/abcjs-visual-directives-01-incipit-test-tune0": {

@@ -314,6 +314,14 @@ const PASSING: readonly string[] = [
   "abcts-visualtranspose-tune2",
   "abcts-visualtranspose-tune3",
   /**
+   * …and the same sweep over `tests/synth/`, which the visual pass did not cover: three
+   * more, all byte-exact on arrival. `synth-y01` is `|:C8|1D8::2E8||F8:|` — a first/second
+   * ending inside a double repeat, which nothing else in either corpus writes.
+   */
+  "abcjs-synth-timing-y02",
+  "abcjs-synth-timing-y03",
+  "abcjs-synth-synth-y01",
+  /**
    * abcjs's OWN TEST INPUTS, the ones its harvester never took. Counting `var abc`
    * declarations per file against the fixtures already here named ~20 absent — nine of them
    * in `multi-voice`, which is where `checkLastBarX` came from. Thirteen of fourteen and all

@@ -130,6 +130,9 @@ const PASSING: readonly string[] = [
   "repo/abcjs-visual-parsing-x11-tune0",
   "repo/abcjs-visual-parsing-x12-tune0",
   "repo/abcjs-visual-parsing-x14-tune0",
+  "repo/abcjs-synth-timing-y02-tune0",
+  "repo/abcjs-synth-timing-y03-tune0",
+  "repo/abcjs-synth-synth-y01-tune0",
   "repo/abcts-start-char-tune0",
   ...Array.from({ length: 12 }, (_, i) => `repo/abcts-key-modifiers-tune${i}`),
   ...Array.from({ length: 5 }, (_, i) => `repo/abcts-voice-style-tune${i}`),
@@ -534,7 +537,7 @@ describe("tune.lines and getElementFromChar", () => {
     // `abcts-midi.abc` fifty-six, `abcts-voice-style.abc` five and
     // `abcts-key-modifiers.abc` twelve, `abcts-start-char.abc` one, and seventeen tunes of
     // abcjs's own test inputs its harvester had never taken.
-    expect(agree).toBeGreaterThanOrEqual(590636);
+    expect(agree).toBeGreaterThanOrEqual(590737);
   });
 
   /**

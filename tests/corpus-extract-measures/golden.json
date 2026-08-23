@@ -1204,6 +1204,9 @@
    "hasPickup": false
   }
  ],
+ "repo/abcjs-synth-synth-y01": {
+  "throws": "Cannot read properties of undefined (reading 'split')"
+ },
  "repo/abcjs-synth-timing-01-cde-fg-ab-1-bcd-2-efg": [
   {
    "header": "X:1\nL:1/4\nM:3/4\nQ:1/4=60\nK:Bb\n",
@@ -1379,6 +1382,20 @@
     }
    ],
    "hasPickup": false
+  }
+ ],
+ "repo/abcjs-synth-timing-y02": [
+  {
+   "header": "X:1\nK: D\n",
+   "measures": [],
+   "hasPickup": true
+  }
+ ],
+ "repo/abcjs-synth-timing-y03": [
+  {
+   "header": "X:1\nK: D\n",
+   "measures": [],
+   "hasPickup": true
   }
  ],
  "repo/abcjs-visual-decorations-01-score-s-a-b": [

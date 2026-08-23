@@ -435,10 +435,11 @@ const WITHIN: Readonly<Record<string, number>> = {
   // `tie-slur` files and twelve tunes counted out of `multi-voice`, `parsing`, `misc`,
   // `decorations` and `directives` by comparing each file's `var abc` declarations against
   // the fixtures already here. Every one byte-exact on arrival.
-  "0.05": 208,
-  "1": 208,
-  "5": 208,
-  "25": 208,
+  // …and three more from `tests/synth/`, which that sweep did not cover.
+  "0.05": 211,
+  "1": 211,
+  "5": 211,
+  "25": 211,
 };
 
 const names = readdirSync(fixturesDir)
