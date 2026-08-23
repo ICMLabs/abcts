@@ -1,11 +1,12 @@
 # CHECKPOINT — 2026-08-23
 
-**Branch `main`. Suite 2,086 passing, 3 EXPECTED-FAIL, no reds. Everything pushed.**
+**Branch `main`. Suite 2,100 passing, NO reds and no expected-fails. Everything pushed.**
 
 Two landings. **§3e of the previous handoff is CLOSED — the warnings gate reads 0 of 487**,
-and every gate in this repo except the one byte row now reads zero. Then **§3g, the one
-untried sweep, was run**, and it produced a work list plus one feature-sized defect whose
-parse half is landed and whose layout half is measured to the digit.
+and every gate in this repo except the one byte row reads zero. Then **§3g, the one untried
+sweep, was run**, and it named a feature-sized defect that is now BUILT AND GATED: the five
+`positionChoices` directives, ten of ten rungs byte-identical to abcjs, with
+`abcts-positioning.abc` carrying them on every surface. The byte gate is **1 of 371**.
 
 ---
 
@@ -107,8 +108,9 @@ below`, which is the default and is therefore the one rung that genuinely cannot
 **A "SAME" IS ONLY AS GOOD AS THE SHAPE THAT ASKED**, one enumeration later and on a list
 that had already been enumerated.
 
-**THE PARSE HALF IS LANDED** — see the commit and `tests/positioning.test.ts`. **THE LAYOUT
-HALF IS MEASURED AND NOT BUILT**, three `.fails` holding the numbers. Its mechanism:
+**BOTH HALVES ARE LANDED — ALL TEN RUNGS BYTE-IDENTICAL**, and `abcts-positioning.abc`'s
+eight tunes were byte-exact on arrival. Four rules did it, and the first is where nine of
+the nine moving rungs move:
 
 1. **`containsLyrics` TESTS `=== 'below'`, NOT `!== 'above'`**
    (`abstract-engraver.js:114-119`). `%%ornament above` on a singing tune writes
@@ -126,10 +128,35 @@ HALF IS MEASURED AND NOT BUILT**, three `.fails` holding the numbers. Its mechan
    tests the OBJECT, not the field. Measured: abcjs's lyric goes **195.69 → 129.64**, above
    the staff, on a tune with no ornament in it.
 4. `'hidden'` **DROPS** a chord symbol rather than moving it — `if (pos2 !== 'hidden')`
-   guards the `addCentered` outright (`add-chord.js:104-108`).
+   guards the `addCentered` outright (`add-chord.js:104-108`) — and `%%gchord below` is a
+   ROLE change into the below lane a `"_text"` annotation already opens, not a second lane.
 
-So what is owed is a `lyricHeightAbove` lane this engine has never had a producer for, plus
-the three literal-`'below'` tests. abcjs's numbers for all of it are in the test file.
+⚠️ **AND AN ABOVE LYRIC IS INK ONLY ONCE IT HAS BEEN PLACED.** Spending its lane inside
+`verticalExtent` was tried twice and double-counted both times, because the chord sits
+OUTSIDE the lyric rung and a placed chord's ink already carries it. It carries a POINT
+`reserve` at the rung and its `reserveTopPitch` instead — the shape the tempo's and the
+below annotation's already use.
+
+⚠️ **AND THE LAST TOKEN OF THE TEN WAS A ULP WITH ITS OWN RULE: A GLYPH'S `getYCorr` JOINS
+ITS PITCH, NOT ITS y.** abcjs draws at `renderer.calcY(offset + ycorr)` — one sum, one
+multiply (`draw/print-symbol.js:21`, `:34`) — where the emitter had only the y and spent the
+correction on it as a LENGTH: `offset * STEP + ycorr * STEP` against `(offset + ycorr) *
+STEP`. The two agree on every tune in both corpora and part by one ULP the moment the rung
+has a long tail, which a lyric singing above the staff is the first thing to give it:
+`69.91999999999999` against `69.92`. `PlacedGlyph.drawPitch` carries it, set on the DYNAMIC
+alone — whose lane is a walked sum and therefore the first place a tail appears.
+
+⚠️ **AND THE LADDER RULED ITSELF OUT TWO STEPS BEFORE THE ANSWER.** A `ZZTOPA` probe in
+abcjs's `incTop` and its twin in our `aboveLadder` printed **bit-identical** walks —
+`16 → 21.861935483870968966 → 27.641290322580644556 → 34.641290322580644556` — which said
+the arithmetic was exact and left only the DRAW. Without it the search would have gone back
+through the lane heights, and they were right all along.
+
+⚠️ **AND THE ROOT `height` IS NOT WHAT MOVES** — 216.402 on all ten rungs and on the bare
+tune, in BOTH engines. The above stack is anchored to the page and the STAFF drops inside
+it. The first cut of the layout tests asserted a height delta, having taken the 22.71px off
+the TOP LINE's diff: **a test can carry an inference as firmly as a comment can, and a green
+one reads as a checked fact.** They assert the top line now.
 
 ### 2e. WHAT THE SWEEP LEFT, AS A LIST
 
@@ -137,7 +164,7 @@ Reachable from ABC, declared by abcjs, produced by NO corpus tune, and untried:
 
 | Field | Where it comes from |
 |---|---|
-| `positioning` (×5) | the five directives — §2d, parse half landed |
+| ~~`positioning` (×5)~~ | ~~the five directives~~ — **CLOSED, §2d** |
 | `stafflines` | `[K:C stafflines=1]` — a clef element's own field |
 | `staffscale` | `[K:C staffscale=1.5]` |
 | `transpose` | `V:… transpose=` reaching a clef element |
@@ -165,7 +192,7 @@ Unchanged from `HANDOFF-2026-08-22b.md` except that **§3e is closed** and §3g 
   the obstacle. Instrument `layoutOneItem`'s `er`/`extraWidth` arm.
 - **§3c** — `V:… scale=` / `cue=`. **Named a second time by §3g**, as `AbcElem.size`.
 - **§3d** — `wrap`, with its nine-case JSON oracle.
-- **NEW** — the layout half of §2d above, and the §2e list.
+- **NEW** — the §2e list. §2d is closed both halves.
 
 ---
 
@@ -183,6 +210,11 @@ a PRODUCER is the second half of it.
 AGAIN.** Five directives were enumerated on 2026-08-22, measured, and recorded as moving
 nothing. They move nine ways. The list was right and the control was empty of the four
 things the list positions.
+
+⚠️ **A PROBE THAT PRINTS THE RIGHT ANSWER HAS RULED SOMETHING OUT.** Our ladder walk came
+back bit-identical to abcjs's while the output still differed, and that is what moved the
+search from the lane heights — where it would have spent a session — to the six characters
+of `calcY(offset + ycorr)`.
 
 ⚠️ **AND A DIAGNOSTIC'S COLUMN IS DATA, NOT A LOOKUP.** Two warnings on adjacent characters
 cannot both be found by their text, whatever the search. abcjs had the offset in hand; the
