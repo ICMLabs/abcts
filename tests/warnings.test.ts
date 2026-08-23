@@ -68,6 +68,17 @@ const PASSING: readonly string[] = [
   // …and the third-tone microtone of `abcts-ledger-gaps-4`, whose four characters abcjs
   // warns about one at a time.
   /**
+   * `[V:1]P:A` — a `P:` written on a music line rather than as a field. `getBarLine`'s
+   * `case ':'` returns `{len: 1, warn: "Unknown bar symbol"}` for anything that is not `:`
+   * or `|` after it, and the caller then finds an empty type and warns AGAIN at the same
+   * column: TWO warnings on one character where this engine had `Unknown character
+   * ignored` once.
+   */
+  "repo/abcts-tempo-rung-tune0",
+  "repo/abcts-tempo-rung-tune1",
+  "repo/abcts-tempo-rung-tune2",
+  "repo/abcts-tempo-rung-tune3",
+  /**
    * `[C"Am"E]` — an unparseable token ends the chord where it stands, and abcjs WARNS as it
    * stops: `warn("Expected ']' to end the chords", line, index)` (`abc_parse_music.js:487`).
    * The GEOMETRY has agreed since that rule landed on 2026-08-21 and only the diagnostic

@@ -239,6 +239,24 @@ const AS_ABCJS: Record<
     for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
     return { message: "Expected ']' to end the chords", column: at - start };
   },
+  /**
+   * A `:` that starts no bar is TWO warnings on one character — `getBarLine`'s
+   * `{len: 1, warn: "Unknown bar symbol"}` and then the caller's `Unknown bar type`, both
+   * at the same column (`abc_tokenizer.js:200`, `abc_parse_music.js:268-269`). One
+   * diagnostic maps to both, in that order.
+   */
+  "unknown-bar-symbol": (diagnostic, abc) => {
+    const at = diagnostic.range?.start ?? 0;
+    let start = 0;
+    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    return { message: "Unknown bar symbol", column: at - start };
+  },
+  "unknown-bar-type": (diagnostic, abc) => {
+    const at = diagnostic.range?.start ?? 0;
+    let start = 0;
+    for (let i = 0; i < at; i += 1) if (abc[i] === "\n") start = i + 1;
+    return { message: "Unknown bar type", column: at - start };
+  },
   "nested-triplet": (diagnostic, abc) => {
     const at = diagnostic.range?.start ?? 0;
     let start = 0;

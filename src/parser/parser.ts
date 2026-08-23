@@ -4812,6 +4812,30 @@ class Parser {
                   `unknown decoration: ${this.src.slice(token.start + 1, token.start + token.length - 1)}`,
                   sourceRange(token.start, token.start + token.length),
                 )
+              /**
+               * …**AND A `:` IS A BAR ATTEMPT, NOT AN UNKNOWN CHARACTER.** `letter_to_bar`
+               * reaches `getBarLine`, whose `case ':'` returns `{len: 1, warn: "Unknown bar
+               * symbol"}` for anything that is not `:` or `|` after it
+               * (`abc_tokenizer.js:175-202`) — and the caller then finds an empty type and
+               * warns AGAIN, `warn("Unknown bar type", line, i)` at the same column
+               * (`abc_parse_music.js:268-269`). TWO warnings on one character.
+               *
+               * `[V:1]P:A` is the shape: a `P:` written on a music line rather than as a
+               * field. All four tunes of `abcts-tempo-rung` carry one, and their geometry
+               * was byte-exact while this row read `Unknown character ignored` once.
+               */
+              else if (ch === ':') {
+                this.warn(
+                  'unknown-bar-symbol',
+                  'unknown bar symbol',
+                  sourceRange(token.start, token.start + 1),
+                )
+                this.warn(
+                  'unknown-bar-type',
+                  'unknown bar type',
+                  sourceRange(token.start, token.start + 1),
+                )
+              }
               else if (ch !== ' ' && ch !== '`')
                 this.warn(
                   'unknown-character',
