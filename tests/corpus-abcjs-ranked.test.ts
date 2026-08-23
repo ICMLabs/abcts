@@ -31,10 +31,23 @@ const goldenDir = join(base, "golden");
 const goldens = readdirSync(goldenDir);
 
 /** abcjs writes one SVG per tune, `<name>.svg` alone or `<name>-tuneN.svg` for a book. */
+/**
+ * ⚠️ **NUMERIC, NOT LEXICOGRAPHIC** — a plain `.sort()` puts `-tune10` between `-tune1` and
+ * `-tune2`, so every tune from the tenth on is measured against the WRONG golden. See the
+ * same note in `corpus-abcjs.test.ts`, which owns the ratchet.
+ *
+ * ⚠️ **AND THE RULE LIVES IN TWO FILES.** Fixing only the gate's copy left THIS table
+ * reporting `abcts-voice-scale` at dy 42.6 while the gate it belongs to read 215 of 215
+ * within — a report contradicting its own ratchet, which is how the second copy was found.
+ */
+const tuneIndex = (file: string): number =>
+  Number(/-tune(\d+)\.svg$/.exec(file)?.[1] ?? -1);
 const goldensFor = (name: string): string[] =>
   existsSync(join(goldenDir, `${name}.svg`))
     ? [`${name}.svg`]
-    : goldens.filter((g) => g.startsWith(`${name}-tune`)).sort();
+    : goldens
+        .filter((g) => g.startsWith(`${name}-tune`))
+        .sort((a, b) => tuneIndex(a) - tuneIndex(b));
 
 describe("abcjs test-suite corpus, ranked", () => {
   it("writes the worst-axis table", () => {

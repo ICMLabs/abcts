@@ -441,10 +441,13 @@ const WITHIN: Readonly<Record<string, number>> = {
   // less the trailing gap where abcjs takes the last child's BUILT right edge.
   // …and `abcts-positioning.abc`, the five `positionChoices` directives, whose eight tunes
   // are exact on all four axes on arrival — see `tests/positioning.test.ts`.
-  "0.05": 214,
-  "1": 214,
-  "5": 214,
-  "25": 214,
+  // …and `abcts-voice-scale.abc`, `V:… scale=`/`cue=`, whose twelve are too — ONCE THE
+  // PAIRING ABOVE WAS NUMERIC. It is the first fixture here with more than ten tunes that
+  // renders them differently, and it read dy 42.6 against goldens it was byte-identical to.
+  "0.05": 215,
+  "1": 215,
+  "5": 215,
+  "25": 215,
 };
 
 const names = readdirSync(fixturesDir)
@@ -454,11 +457,27 @@ const names = readdirSync(fixturesDir)
 
 const goldens = readdirSync(goldenDir);
 
-/** abcjs writes one SVG per tune, `<name>.svg` alone or `<name>-tuneN.svg` for a book. */
+/**
+ * abcjs writes one SVG per tune, `<name>.svg` alone or `<name>-tuneN.svg` for a book.
+ *
+ * ⚠️ **AND THE ORDER IS NUMERIC, NOT LEXICOGRAPHIC.** A plain `.sort()` puts `-tune10`
+ * between `-tune1` and `-tune2`, so every tune from the tenth on is compared against the
+ * WRONG golden. It read zero for months because no fixture with more than ten tunes
+ * rendered them differently: `abcts-midi.abc` has fifty-six and not one `%%MIDI`
+ * sub-command moves the drawing, so mis-pairing them is invisible by construction.
+ * `abcts-voice-scale` is the first where it shows — twelve tunes at four different scales,
+ * BYTE-IDENTICAL on `svg-bytes` and reported here at dy 42.6.
+ *
+ * **A GATE'S REACH IS A PROPERTY OF ITS ENUMERATION**, and so is its PAIRING.
+ */
+const tuneIndex = (file: string): number =>
+  Number(/-tune(\d+)\.svg$/.exec(file)?.[1] ?? -1);
 const goldensFor = (name: string): string[] =>
   existsSync(join(goldenDir, `${name}.svg`))
     ? [`${name}.svg`]
-    : goldens.filter((g) => g.startsWith(`${name}-tune`)).sort();
+    : goldens
+        .filter((g) => g.startsWith(`${name}-tune`))
+        .sort((a, b) => tuneIndex(a) - tuneIndex(b));
 
 interface Measured {
   ourHeads: number;
