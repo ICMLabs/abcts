@@ -127,6 +127,7 @@ const PASSING: readonly string[] = [
   "repo/abcjs-visual-multi-voice-x04-tune0",
   "repo/abcjs-visual-multi-voice-x05-tune0",
   "repo/abcjs-visual-multi-voice-x08-tune0",
+  "repo/abcjs-visual-parsing-x10-tune0",
   "repo/abcjs-visual-parsing-x11-tune0",
   "repo/abcjs-visual-parsing-x12-tune0",
   "repo/abcjs-visual-parsing-x14-tune0",

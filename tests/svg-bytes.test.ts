@@ -358,6 +358,8 @@ const PASSING: readonly string[] = [
   "abcjs-visual-multi-voice-x04",
   "abcjs-visual-multi-voice-x05",
   "abcjs-visual-multi-voice-x08",
+  // …and `-x10` joined once the key signature's width stopped being `dx` less the gap.
+  "abcjs-visual-parsing-x10",
   "abcjs-visual-parsing-x11",
   "abcjs-visual-parsing-x12",
   "abcjs-visual-parsing-x14",

@@ -2880,9 +2880,20 @@ function layoutKeySignature(
    * BUILT, NEVER DERIVED.
    */
   let dx = 0
+  /**
+   * …**AND THE ELEMENT'S OWN WIDTH IS THE LAST CHILD'S RIGHT EDGE, NOT `dx` LESS THE GAP.**
+   * `abselem.w` is `max(right.dx + right.w)` over the `addRight` children
+   * (`absolute-element.js:141`) — a running maximum that never subtracts — where this took
+   * the cursor and removed the trailing 2. `(a + 2) - 2` is not `a`: one sharp came out
+   * `15.649999999999999` against abcjs's `15.65`, and the width is what the line solve
+   * spends as `(x + w) + minspacing`, so every element after a key signature inherited it.
+   * `abcjs-visual-parsing-x10`'s third line is where it showed.
+   */
+  let lastRight = 0
   const glyphs: PlacedGlyph[] = written.map((w) => {
     const at = x + dx
     const own = dx
+    lastRight = own + glyphsFor(strict).advance(w.name)
     dx += glyphsFor(strict).advance(w.name) + ENGRAVE.keySignatureGap
     return {
       ...glyphAt(w.name, at, w.step),
@@ -2910,8 +2921,9 @@ function layoutKeySignature(
     sourceKey: key,
     sourceClef: clef,
     x,
-    // No trailing gap: the signature ends at the last glyph's ink.
-    width: dx - ENGRAVE.keySignatureGap,
+    // No trailing gap: the signature ends at the last glyph's ink — and that edge is
+    // BUILT, not recovered by subtracting the gap back off the cursor. See `lastRight`.
+    width: lastRight,
     staffSteps: [],
     glyphs,
     lines: [],
@@ -3047,6 +3059,8 @@ function layoutKeyChange(
   const glyphs: PlacedGlyph[] = []
   // `dx` from ZERO, added to `x` once per child — see `layoutKeySignature`.
   let dx = 0
+  /** The last child's right edge — abcjs's `max(dx + w)`. See `layoutKeySignature`. */
+  let lastRight = 0
   const advance = (name: GlyphName, step: number): void => {
     // The SAME declared box the opening signature reserves — `createKeySignature` is one
     // function and abcjs calls it for a mid-tune `[K:]` too. A NATURAL's fudge is 0 and it
@@ -3058,6 +3072,7 @@ function layoutKeyChange(
       dx,
       reserve: keyAccidentalReserve(name, step, strict),
     })
+    lastRight = dx + glyphsFor(strict).advance(name)
     dx += glyphsFor(strict).advance(name) + ENGRAVE.keySignatureGap
   }
   const marks = (): void => {
@@ -3085,7 +3100,8 @@ function layoutKeyChange(
     sourceClef: clef,
     x,
     // No trailing gap: the signature ends at the last glyph's ink.
-    width: dx - ENGRAVE.keySignatureGap,
+    // …and the same BUILT edge — see `layoutKeySignature`.
+    width: lastRight,
     staffSteps: [],
     glyphs,
     lines: [],
@@ -10695,15 +10711,30 @@ function layoutMeasure(
     // so a directive between two key changes governs only what follows it. This took the
     // tune-level flag, so `abcjs-visual-parsing-x10` — which toggles it three times — drew
     // every change the same way. See `Measure.keyChangeKeywarn`.
-    if (!(measure.keyChangeKeywarn ?? KEYWARN)) return
+    // ⚠️ **AND AN INLINE `[K:]` IS EXEMPT.** The guard is on `appendStartingElement`, the
+    // STANDALONE `K:`'s route into the stream; an inline field is a `key` element whatever
+    // `%%keywarn` says, which is the same split `keyInStream` already makes on the compat
+    // side. Suppressing it dropped `[K:A]`'s three sharps and took the last line's second
+    // bar 38.75px left of abcjs's — the NATURALS are what `%%keywarn 0` removes here, and
+    // `parseKey` removes those for an inline change too.
+    if (measure.keyChangeInline !== true && !(measure.keyChangeKeywarn ?? KEYWARN)) return
     // NOT WHEN IT LEADS THE SYSTEM — the prefix already carries it, and the previous
     // system's `trailingKey` already drew it. See `keyChangeLeadsLine`.
     if (keyChangeLeadsLine(measure)) return
     // …**AND AN INLINE `[K:]` IS PITCHED FOR ITS OWN CLEF, NOT THE VOICE'S** — see
     // `Measure.keyChangeClef`.
+    /**
+     * …**AND `%%keywarn 0` TAKES THE CANCELLATIONS, NOT THE SIGNATURE.** abcjs builds
+     * `impliedNaturals` inside `parseKey`, under `if (oldKey && multilineVars.keywarn !==
+     * false)` (`abc_parse_key_voice.js:319-331`), so with the directive off the key simply
+     * carries none — while the SHARPS or FLATS it does carry are drawn as always. Passing
+     * the new key as the outgoing one is how a change with nothing to cancel is stated
+     * here. `abcjs-visual-parsing-x10`'s `[K:A]` is the case: three sharps and no natural.
+     */
+    const cancelling = (measure.keyChangeKeywarn ?? KEYWARN) ? keyInForce : measure.keyChange
     const change = layoutKeyChange(
       x,
-      keyInForce,
+      cancelling,
       measure.keyChange,
       measure.keyChangeClef ?? clef,
       strict,

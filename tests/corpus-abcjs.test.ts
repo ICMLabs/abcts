@@ -437,10 +437,12 @@ const WITHIN: Readonly<Record<string, number>> = {
   // the fixtures already here. Every one byte-exact on arrival.
   // …and three more from `tests/synth/`, which that sweep did not cover.
   // …and `abcts-tempo-rung.abc`, the tempo ULP's own fixture.
-  "0.05": 212,
-  "1": 212,
-  "5": 212,
-  "25": 212,
+  // …and `abcjs-visual-parsing-x10` joins them: the key signature's own width was `dx`
+  // less the trailing gap where abcjs takes the last child's BUILT right edge.
+  "0.05": 213,
+  "1": 213,
+  "5": 213,
+  "25": 213,
 };
 
 const names = readdirSync(fixturesDir)
