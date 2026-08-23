@@ -326,6 +326,213 @@ function parseKeyAccidentals(content: string): KeyAccidental[] {
   return out
 }
 
+/**
+ * **A `K:` TOKEN THE MODIFIER LOOP DOES NOT RECOGNISE IS A WARNING, AND IT CARRIES ITS OWN
+ * COLUMN.** `default: warn("Unknown parameter: " + tokens[0].token, str, tokens[0].start)`
+ * (`abc_parse_key_voice.js:518-519`) — `tokens[0].start`, an offset abcjs has in hand and
+ * which a reader cannot recover from the token's TEXT. `K:C clef=alto =f` is TWO warnings
+ * on two ADJACENT characters, and looking either one up with `indexOf` finds the `=` inside
+ * `clef=` instead.
+ *
+ * So this walks abcjs's own consumption — the key head, the two deprecated words, the
+ * accidentals and then the modifier switch — and reports what the switch's `default` arm
+ * reaches. NOTHING HERE IS APPLIED: the key, the clef and the style are read by their own
+ * functions above, and this is the DIAGNOSTIC alone.
+ *
+ * ponytail: the `Unsupported key signature` early return is not reproduced, so a
+ * `K:Cbmin clef=x` would report a parameter abcjs never reaches. No corpus tune writes an
+ * impossible key with a modifier after it; add the guard when one does.
+ */
+interface KeyToken {
+  type: 'quote' | 'alpha' | 'number' | 'punct'
+  token: string
+  readonly start: number
+}
+
+/**
+ * `tokenizer.tokenize(str, 0, str.length)` (`abc_tokenizer.js:445-503`), whole, with
+ * `alphaUntilWhiteSpace` off — which is the call `parseKey` makes.
+ *
+ * ⚠️ **AND `i` IS DELIBERATELY STALE ACROSS ITERATIONS.** abcjs tests `line[i + 1]` for the
+ * digit after a `.` or a `-` while `i` still holds the END of the PREVIOUS token, and that
+ * is what makes `K:treble-8` one clef: at the `-`, `i` is the `treble` run's end, `line[i+1]`
+ * is the `8`, and the number branch takes `-8` whole. Written the obvious way —
+ * `line[start + 1]` — the `-` is punctuation and the clef loses its octave.
+ */
+const tokenizeKeyValue = (line: string): KeyToken[] => {
+  const isLetter = (c: string | undefined): boolean =>
+    c !== undefined && ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
+  const isNumber = (c: string | undefined): boolean =>
+    c !== undefined && c >= '0' && c <= '9'
+  // `getMeat` — the comment goes and both ends are trimmed (`abc_tokenizer.js:424-435`).
+  const blank = (c: string | undefined): boolean => c === ' ' || c === '\t' || c === '\x12'
+  const comment = line.indexOf('%')
+  let end = comment >= 0 ? comment : line.length
+  let start = 0
+  while (start < end && blank(line[start])) start += 1
+  while (start < end && blank(line[end - 1])) end -= 1
+
+  const tokens: KeyToken[] = []
+  let i = Number.NaN
+  while (start < end) {
+    if (line[start] === '"') {
+      i = start + 1
+      while (i < end && line[i] !== '"') i += 1
+      tokens.push({ type: 'quote', token: line.substring(start + 1, i), start: start + 1 })
+      i += 1
+    } else if (isLetter(line[start])) {
+      i = start + 1
+      while (i < end && isLetter(line[i])) i += 1
+      tokens.push({ type: 'alpha', token: line.substring(start, i), start })
+    } else if (
+      (line[start] === '.' && isNumber(line[i + 1])) ||
+      isNumber(line[start]) ||
+      (line[start] === '-' && isNumber(line[i + 1]))
+    ) {
+      i = start + 1
+      while (i < end && isNumber(line[i])) i += 1
+      if (line[i] === '.' && isNumber(line[i + 1])) {
+        i += 1
+        while (i < end && isNumber(line[i])) i += 1
+      }
+      tokens.push({ type: 'number', token: line.substring(start, i), start })
+    } else if (line[start] === ' ' || line[start] === '\t') {
+      i = start + 1
+    } else {
+      tokens.push({ type: 'punct', token: line[start] ?? '', start })
+      i = start + 1
+    }
+    start = i
+  }
+  return tokens
+}
+
+/**
+ * `getMode`'s own `len > 0` (`abc_tokenizer.js:67-93`), for ONE TOKEN.
+ *
+ * Its truncation rule — "this will handle the case of 'm'" — tests the SECOND character for
+ * a space, `^`, `_` or `=`, none of which can appear inside an alpha token, so on a token
+ * stream the first three characters are the whole test. `parseKey` above needs the rule
+ * itself because it reads WORDS.
+ */
+const isModeToken = (token: string): boolean =>
+  ['mix', 'dor', 'phr', 'lyd', 'loc', 'aeo', 'maj', 'ion', 'min', 'm'].includes(
+    token.slice(0, 3).toLowerCase(),
+  )
+
+/** `getKeyAccidentals2` (`abc_tokenizer.js:283-340`) — the CONSUMPTION alone. */
+const eatKeyAccidentals = (tokens: KeyToken[]): void => {
+  while (tokens.length > 0) {
+    const sign = tokens[0]?.token
+    if (sign === '^' || sign === '_') {
+      tokens.shift()
+      if (tokens.length === 0) return
+      if (tokens[0]?.token === sign || tokens[0]?.token === '/') tokens.shift()
+    } else if (sign === '=') tokens.shift()
+    else return
+    const note = tokens[0]
+    if (note === undefined || !/^[A-Ga-g]/.test(note.token)) return
+    if (note.token.length === 1) tokens.shift()
+    else note.token = note.token.substring(1)
+  }
+}
+
+/** `getPitchFromTokens` (`abc_tokenizer.js:266-281`) — the CONSUMPTION alone. */
+const eatPitch = (tokens: KeyToken[]): void => {
+  if (!/^[A-Ga-g]$/.test(tokens[0]?.token ?? '')) return
+  tokens.shift()
+  while (tokens.length > 0 && (tokens[0]?.token === ',' || tokens[0]?.token === "'"))
+    tokens.shift()
+}
+
+/** The switch's own clef labels — and ⚠️ `C`, `F` and `G` are NOT among them, see below. */
+const CLEF_TOKENS: ReadonlySet<string> = new Set([
+  'treble', 'bass', 'alto', 'tenor', 'perc', 'none',
+])
+const STYLE_TOKENS: ReadonlySet<string> = new Set([
+  'normal', 'harmonic', 'rhythm', 'x', 'triangle',
+])
+
+/** The tokens `parseKey`'s modifier switch reaches its `default` arm with, and where. */
+function unknownKeyParameters(str: string): Array<{ token: string; column: number }> {
+  const tokens = tokenizeKeyValue(str)
+  const out: Array<{ token: string; column: number }> = []
+
+  // The key itself (`abc_parse_key_voice.js:236-339`). `getKeyPitch`'s lowercase cases are
+  // COMMENTED OUT, so only `A`..`G` is a key — see `parseKey` above.
+  const first = tokens[0]
+  if (first !== undefined) {
+    if (first.token === 'HP' || first.token === 'Hp' || first.token === 'none') tokens.shift()
+    else if (/^[A-G]/.test(first.token)) {
+      // ⚠️ **THE TRUNCATION LEAVES `start` WHERE IT WAS** — abcjs's own
+      // `tokens[0].token = tokens[0].token.substring(1)`, untouched `start` and all — so a
+      // leftover that reaches the `default` arm reports the WHOLE token's column.
+      if (first.token.length > 1) first.token = first.token.substring(1)
+      else tokens.shift()
+      // `getSharpFlat`, whose ONE exception is `bass` — a clef name that starts with a `b`.
+      const acc = tokens[0]
+      if (acc !== undefined && acc.token !== 'bass' && /^[#b]/.test(acc.token)) {
+        if (acc.token.length > 1) acc.token = acc.token.substring(1)
+        else tokens.shift()
+      }
+      if (isModeToken(tokens[0]?.token ?? '')) tokens.shift()
+    }
+  }
+  // "There are two special cases of deprecated syntax. Ignore them if they occur."
+  if (tokens[0]?.token === 'exp') tokens.shift()
+  if (tokens[0]?.token === 'oct') tokens.shift()
+  eatKeyAccidentals(tokens)
+
+  while (tokens.length > 0) {
+    const head = tokens[0]
+    if (head === undefined) break
+    const name = head.token
+    if (
+      name === 'm' || name === 'middle' || name === 'transpose' || name === 'stafflines' ||
+      name === 'staffscale' || name === 'octave' || name === 'style' || name === 'clef'
+    ) {
+      tokens.shift()
+      if (tokens.length === 0) return out
+      // "Expected = after <name>" — and the token that was not an `=` is shifted with it.
+      if (tokens.shift()?.token !== '=') continue
+      if (tokens.length === 0) return out
+      if (name === 'm' || name === 'middle') {
+        eatPitch(tokens)
+        continue
+      }
+      if (name === 'style') {
+        // ⚠️ **A VALUE THE ARM REJECTS IS LEFT WHERE IT STANDS** — abcjs warns and `break`s
+        // without shifting, so the switch sees it again and it becomes an unknown parameter.
+        if (STYLE_TOKENS.has(tokens[0]?.token ?? '')) tokens.shift()
+        continue
+      }
+      if (name !== 'clef') {
+        if (tokens[0]?.type === 'number') tokens.shift()
+        continue
+      }
+      // `clef=` FALLS THROUGH — abcjs's own comment, which is what makes it optional. And
+      // ⚠️ **ONLY HERE DO `C`, `F` AND `G` NAME CLEFS**: a bare `K:C G` never reaches this
+      // arm and is an unknown parameter.
+    } else if (!CLEF_TOKENS.has(name)) {
+      out.push({ token: name, column: head.start })
+      tokens.shift()
+      continue
+    }
+    // The clef arm: the name, then an optional line NUMBER, then an optional `±8`.
+    tokens.shift()
+    if (tokens[0]?.type === 'number') tokens.shift()
+    if (
+      tokens.length > 1 &&
+      ['-', '+', '^', '_'].includes(tokens[0]?.token ?? '') &&
+      tokens[1]?.token === '8'
+    ) {
+      tokens.shift()
+      tokens.shift()
+    }
+  }
+  return out
+}
+
 function parseMeter(content: string): Meter | null {
   const spec = content.trim()
   if (spec === 'C') return { numerator: 4, denominator: 4, symbol: 'common' }
@@ -2842,8 +3049,20 @@ class Parser {
     this.warn(code, message, sourceRange(token.start, token.start + token.length))
   }
 
-  private warn(code: string, message: string, range: SourceRange | null): void {
-    this.diagnostics.push({ code, severity: 'warning', message, range })
+  private warn(
+    code: string,
+    message: string,
+    range: SourceRange | null,
+    /** Where inside `range` the caret goes, when the text cannot say — see `Diagnostic`. */
+    column?: number,
+  ): void {
+    this.diagnostics.push({
+      code,
+      severity: 'warning',
+      message,
+      range,
+      ...(column === undefined ? {} : { column }),
+    })
   }
 
   private info(code: string, message: string, range: SourceRange | null): void {
@@ -4105,59 +4324,24 @@ class Parser {
       }
       case 'K': {
         /**
-         * **A FIRST TOKEN THAT IS NEITHER A KEY NOR A PARAMETER IS A WARNING.** abcjs reads
-         * the tonic with `getKeyPitch`, whose lowercase cases are COMMENTED OUT
-         * (`abc_tokenizer.js:33-46`), and anything it cannot read falls through to the
-         * parameter switch's `default: warn("Unknown parameter: " + token, str, start)`
-         * (`abc_parse_key_voice.js:518-519`). `K:cm` is exactly that — no key at all, C
-         * major drawn, and a warning — which is why the fixture renders byte-identically
-         * while saying nothing.
+         * **A TOKEN THE MODIFIER SWITCH DOES NOT RECOGNISE IS A WARNING** — `K:cm` is no key
+         * at all (`getKeyPitch`'s lowercase cases are COMMENTED OUT), C major drawn, and one
+         * warning, which is why that fixture renders byte-identically while saying nothing.
+         * `unknownKeyParameters` walks abcjs's own consumption to find them; see it.
          *
-         * The switch's own labels are the list below; a `name=value` is `clef`, `middle`,
-         * `transpose`, `stafflines`, `staffscale`, `octave` or `style`, each of which is
-         * read here or in `clefWith`.
+         * The text such a warning points into is the FIELD's VALUE — `cm` alone, not the
+         * `K:cm` line — and `start` is the FIELD's own start, so the value begins two
+         * characters in, past the `K:`. The COLUMN travels with the diagnostic because two
+         * of them can stand on adjacent characters and neither is findable by its text.
          */
-        const firstToken = value.trim().split(/\s+/)[0] ?? ''
-        const K_PARAMETERS = new Set([
-          'm',
-          'middle',
-          'transpose',
-          'stafflines',
-          'staffscale',
-          'octave',
-          'style',
-          'clef',
-          'treble',
-          'bass',
-          'alto',
-          'tenor',
-          'perc',
-          'none',
-        ])
-        if (
-          firstToken !== '' &&
-          !/^[A-G]/.test(firstToken) &&
-          !/^(HP|Hp)\b/.test(firstToken) &&
-          // …**AND A CLEF NAME CARRIES ITS OCTAVE**: `K:treble-8` is one token to us and a
-          // `case "treble"` to abcjs, whose own reader takes the `-8` off first.
-          !K_PARAMETERS.has(firstToken.split('=')[0]?.toLowerCase() ?? '') &&
-          ![...K_PARAMETERS].some((p) => firstToken.toLowerCase().startsWith(p))
-        ) {
-          /**
-           * The text a `K:` warning points into is the FIELD's VALUE — `cm` alone, not the
-           * `K:cm` line — at the token's own offset within it. So the RANGE carries the
-           * value and the message carries the token, and `warnings.ts` finds the column by
-           * looking the one up in the other.
-           */
-          // `start` is the FIELD's own start, so the value begins two characters in — past
-          // the `K:` — plus whatever space follows it.
-          const at = start + 2 + (content.length - content.trimStart().length)
+        const valueAt = start + 2
+        for (const bad of unknownKeyParameters(content))
           this.warn(
             'unknown-parameter',
-            `unknown parameter: ${firstToken}`,
-            sourceRange(at, at + value.length),
+            `unknown parameter: ${bad.token}`,
+            sourceRange(valueAt, valueAt + content.length),
+            bad.column,
           )
-        }
         // `style=` rides on K: and sets the notehead shape for everything that follows,
         // until the next one — `[K: style=harmonic]`, then `[K: style=normal]` to end it.
         // It is voice state, not a property of the K: field.

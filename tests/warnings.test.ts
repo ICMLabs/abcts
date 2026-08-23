@@ -96,6 +96,14 @@ const PASSING: readonly string[] = [
   "repo/abcjs-visual-parsing-01-azzz-e2-tune0",
   "repo/abcjs-visual-tablature-01-gr-tune0",
   "repo/abcts-keywarn-tune2",
+  /**
+   * `K:C clef=alto =f` — the `=f` stands AFTER a modifier, so it is past
+   * `getKeyAccidentals2` and reaches the modifier switch's `default` arm as TWO tokens:
+   * `Unknown parameter: =` at column 12 and `Unknown parameter: f` at 13, on ADJACENT
+   * characters. Neither is findable by its text — `indexOf('=')` takes the one inside
+   * `clef=` — so the column travels with the diagnostic; see `Diagnostic.column`.
+   */
+  "repo/abcts-key-modifiers-tune9",
   "sib/S1-decorations-tune0",
   "sib/S3-note-syntax-tune1",
   "sib/S3-note-syntax-tune6",

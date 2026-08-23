@@ -223,7 +223,9 @@ const AS_ABCJS: Record<
       ? null
       : {
           message: `Unknown parameter: ${token}`,
-          column: Math.max(0, text.indexOf(token)),
+          // …AND THE COLUMN IS THE DIAGNOSTIC's WHERE IT HAS ONE. `text.indexOf` cannot
+          // separate two warnings standing on adjacent characters — see `Diagnostic.column`.
+          column: diagnostic.column ?? Math.max(0, text.indexOf(token)),
           text,
         };
   },

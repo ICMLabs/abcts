@@ -1803,6 +1803,16 @@ export interface Diagnostic {
   readonly severity: Severity
   readonly message: string
   readonly range: SourceRange | null
+  /**
+   * Where inside `range` the offending character stands, when the message cannot say.
+   *
+   * Almost every diagnostic points at its own range and needs none of this. A `K:` field's
+   * `Unknown parameter` is the exception: its range is the whole FIELD VALUE, because that
+   * is the text abcjs prints, and `K:C clef=alto =f` raises two of them on two ADJACENT
+   * characters — so looking a token up in the text finds the `=` inside `clef=` for the
+   * first and nothing for the second.
+   */
+  readonly column?: number
 }
 
 /** Position on the circle of fifths for a natural step: F=-1, C=0, G=1, D=2 … */
