@@ -611,6 +611,20 @@ export interface Note {
    * value per EVENT; neither corpus writes one." `abcts-model-gaps` tune 5 writes one.
    */
   readonly runningFonts?: Readonly<Partial<Record<AbcFontType, LyricFont>>>
+  /**
+   * **`%%vocal` / `%%dynamic` / `%%gchord` / `%%ornament` / `%%volume`, IN FORCE AT THIS
+   * ELEMENT** — abcjs's five `positionChoices` directives (`abc_parse_directive.js:824-828`,
+   * `751`), absent while every one of them is `auto`.
+   *
+   * The same running-state shape `runningFonts` has and for the same reason:
+   * `addFormattingOptions` reads `multilineVars.<x>Position` as each element is appended
+   * (`abc_parse.js:120-138`), so a directive part-way down a tune governs only what follows
+   * it. ⚠️ **AND `auto` IS NOT A VALUE THAT TRAVELS** — the arm is
+   * `if (this.vocalPosition !== 'auto') addPositioning(…)`, so an explicit `%%vocal auto`
+   * publishes nothing and the engraver takes its own default, which is NOT always the same
+   * answer as the matching explicit word.
+   */
+  readonly positioning?: Readonly<Partial<Record<PositionKind, ElementPosition>>>
   /** `!trill!`, `.` staccato, and the shorthand letters. */
   /**
    * **`!class=name!` IS NOT A DECORATION** — `abc_parse_music.js:227-231` handles it in
@@ -771,6 +785,20 @@ export interface Rest {
    * value per EVENT; neither corpus writes one." `abcts-model-gaps` tune 5 writes one.
    */
   readonly runningFonts?: Readonly<Partial<Record<AbcFontType, LyricFont>>>
+  /**
+   * **`%%vocal` / `%%dynamic` / `%%gchord` / `%%ornament` / `%%volume`, IN FORCE AT THIS
+   * ELEMENT** — abcjs's five `positionChoices` directives (`abc_parse_directive.js:824-828`,
+   * `751`), absent while every one of them is `auto`.
+   *
+   * The same running-state shape `runningFonts` has and for the same reason:
+   * `addFormattingOptions` reads `multilineVars.<x>Position` as each element is appended
+   * (`abc_parse.js:120-138`), so a directive part-way down a tune governs only what follows
+   * it. ⚠️ **AND `auto` IS NOT A VALUE THAT TRAVELS** — the arm is
+   * `if (this.vocalPosition !== 'auto') addPositioning(…)`, so an explicit `%%vocal auto`
+   * publishes nothing and the engraver takes its own default, which is NOT always the same
+   * answer as the matching explicit word.
+   */
+  readonly positioning?: Readonly<Partial<Record<PositionKind, ElementPosition>>>
   readonly annotations: readonly string[]
   readonly annotationSourceRanges: readonly SourceRange[]
   /**
@@ -935,6 +963,20 @@ export interface Chord {
    * value per EVENT; neither corpus writes one." `abcts-model-gaps` tune 5 writes one.
    */
   readonly runningFonts?: Readonly<Partial<Record<AbcFontType, LyricFont>>>
+  /**
+   * **`%%vocal` / `%%dynamic` / `%%gchord` / `%%ornament` / `%%volume`, IN FORCE AT THIS
+   * ELEMENT** — abcjs's five `positionChoices` directives (`abc_parse_directive.js:824-828`,
+   * `751`), absent while every one of them is `auto`.
+   *
+   * The same running-state shape `runningFonts` has and for the same reason:
+   * `addFormattingOptions` reads `multilineVars.<x>Position` as each element is appended
+   * (`abc_parse.js:120-138`), so a directive part-way down a tune governs only what follows
+   * it. ⚠️ **AND `auto` IS NOT A VALUE THAT TRAVELS** — the arm is
+   * `if (this.vocalPosition !== 'auto') addPositioning(…)`, so an explicit `%%vocal auto`
+   * publishes nothing and the engraver takes its own default, which is NOT always the same
+   * answer as the matching explicit word.
+   */
+  readonly positioning?: Readonly<Partial<Record<PositionKind, ElementPosition>>>
   /** `!trill!`, `.` staccato, and the shorthand letters. */
   /**
    * **`!class=name!` IS NOT A DECORATION** — `abc_parse_music.js:227-231` handles it in
@@ -1796,6 +1838,27 @@ export interface Score {
 // ─── Diagnostics ─────────────────────────────────────────────────────────────
 
 export type Severity = 'error' | 'warning' | 'info'
+
+/**
+ * The five things a `%%`-directive can move to the other side of the staff, in
+ * `addFormattingOptions`'s own order (`abc_parse.js:120-138`).
+ *
+ * ⚠️ **`measurefont` AND `repeatfont` HAVE NO POSITION COUNTERPART HERE ON PURPOSE.**
+ * abcjs's `elType === 'bar'` arm sets four of these on `el` — and `el` is the ACCUMULATOR,
+ * discarded one line later by `el = {}`, while `appendElement('bar', …, bar)` publishes
+ * `bar` (`abc_parse_music.js:305-309`). So a bar's positioning is written to an object
+ * nothing reads, and no bar abcjs produces has ever carried one. Measured on a control
+ * with all five directives set: every note carries all five, the bars carry nothing.
+ */
+export type PositionKind =
+  | 'vocalPosition'
+  | 'dynamicPosition'
+  | 'chordPosition'
+  | 'ornamentPosition'
+  | 'volumePosition'
+
+/** `positionChoices` — `['auto', 'above', 'below', 'hidden']` (`abc_parse_directive.js:751`). */
+export type ElementPosition = 'auto' | 'above' | 'below' | 'hidden'
 
 export interface Diagnostic {
   /** Stable kebab-case identifier, e.g. `unknown-field`. */

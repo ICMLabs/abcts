@@ -74,6 +74,8 @@ import {
   stepIndex,
   type Tempo,
   type Voice,
+  type PositionKind,
+  type ElementPosition,
 } from '../core/model.js'
 import { Lexer, type Token } from './lexer.js'
 import { decodeTextString, setAbcjsEscapes } from './text.js'
@@ -290,6 +292,27 @@ function parseKey(content: string): KeySignature {
  * is why the stop tests the switch's own keywords and the bare clef names, and why the
  * KEY's own word is never one of them.
  */
+/** `addFormattingOptions`'s own order for a note (`abc_parse.js:122-126`). */
+const POSITION_KINDS: readonly PositionKind[] = [
+  'vocalPosition',
+  'dynamicPosition',
+  'chordPosition',
+  'ornamentPosition',
+  'volumePosition',
+]
+
+/** `positionChoices` — `abc_parse_directive.js:751`. */
+const POSITION_CHOICES: ReadonlySet<string> = new Set(['auto', 'above', 'below', 'hidden'])
+
+/** The directive word each one answers to, in the switch's own order. */
+const POSITION_DIRECTIVES: Readonly<Record<string, PositionKind>> = {
+  vocal: 'vocalPosition',
+  dynamic: 'dynamicPosition',
+  gchord: 'chordPosition',
+  ornament: 'ornamentPosition',
+  volume: 'volumePosition',
+}
+
 const KEY_VOICE_MODIFIERS: ReadonlySet<string> = new Set([
   'clef', 'cl', 'middle', 'm', 'transpose', 'stafflines', 'staffscale', 'octave', 'style',
   'name', 'nm', 'subname', 'sname', 'snm', 'scale', 'score', 'space', 'spc', 'staves',
@@ -2416,6 +2439,8 @@ interface Formatting {
   sysStaffSep: number | null
   vocalFont: LyricFont | null
   fonts: Partial<Record<AbcFontType, LyricFont>>
+  /** The five `positionChoices` directives — see `ScoreBuilder.positions`. */
+  positions: Partial<Record<PositionKind, ElementPosition>>
   /** The `tune.formatting` keys the file header set, in its order — see `noteFormatting`. */
   formattingOrder: readonly string[]
 }
@@ -2549,6 +2574,33 @@ class ScoreBuilder {
    * none. Stamped onto every event appended after it — see `MusicEvent.runningFonts`.
    */
   midLineFonts: Partial<Record<AbcFontType, LyricFont>> | null = null
+  /**
+   * **THE FIVE `positionChoices` DIRECTIVES IN FORCE** — `%%vocal`, `%%dynamic`,
+   * `%%gchord`, `%%ornament` and `%%volume` (`abc_parse_directive.js:824-828`).
+   *
+   * `multilineVars.<x>Position` is TUNE-GLOBAL running state that only a directive writes,
+   * and `addFormattingOptions` reads it as each element is appended — so a directive
+   * part-way down a tune governs the elements after it and no others.
+   *
+   * ⚠️ **AND THE ABSENT STATE IS `auto`, WHICH IS NOT A POSITION.** The arm is
+   * `if (this.vocalPosition !== 'auto')`, so `auto` publishes NOTHING and lets the engraver
+   * pick — and its choice is not always the explicit word it looks like: measured on a ten-
+   * rung ladder, `%%ornament above` MOVES abcjs's output on a tune whose ornaments already
+   * draw above, and only `%%vocal below` is a true no-op.
+   */
+  positions: Partial<Record<PositionKind, ElementPosition>> = {}
+
+  /** What `addFormattingOptions` stamps on a NOTE — absent while every one is `auto`. */
+  stampedPositions(): Readonly<Partial<Record<PositionKind, ElementPosition>>> | undefined {
+    let out: Partial<Record<PositionKind, ElementPosition>> | undefined
+    for (const kind of POSITION_KINDS) {
+      const at = this.positions[kind]
+      if (at === undefined || at === 'auto') continue
+      out ??= {}
+      out[kind] = at
+    }
+    return out
+  }
   /** The `%%gchordfont` in force — a CHANGING font, so it is stamped per event. */
   chordFont: LyricFont | null = null
   /**
@@ -2655,6 +2707,10 @@ class ScoreBuilder {
       sysStaffSep: this.sysStaffSep,
       vocalFont: this.vocalFont,
       fonts: this.fonts,
+      // …and the five POSITION directives, which a FILE HEADER can set for every tune
+      // (ABC 2.1 §4.1) exactly as it can a font. `multilineVars` survives the header in
+      // abcjs; ours is per builder, so it has to travel here.
+      positions: this.positions,
       formattingOrder: this.formattingOrder,
     }
   }
@@ -2687,6 +2743,7 @@ class ScoreBuilder {
     this.sysStaffSep = f.sysStaffSep
     this.vocalFont = f.vocalFont
     this.fonts = { ...f.fonts }
+    this.positions = { ...f.positions }
   }
   /** `%%center` text, split by whether any music had been parsed when it was read. */
   textAbove: FreeTextBlock[] = []
@@ -3932,6 +3989,26 @@ class Parser {
         builder.midi[cmd] = params
         builder.noteFormatting('midi')
       }
+      return
+    }
+    /**
+     * **THE FIVE POSITION DIRECTIVES** — `%%vocal`, `%%dynamic`, `%%gchord`, `%%ornament`
+     * and `%%volume`, each `addMultilineVarOneParamChoice(<x>Position, cmd, tokens,
+     * positionChoices)` (`abc_parse_directive.js:824-828`). Running state on the tune,
+     * stamped onto every note element appended after it — see `ScoreBuilder.positions`.
+     *
+     * ⚠️ **THEY WERE SWEPT ONCE AND CALLED "SAME".** The 2026-08-22 directive enumeration
+     * rendered one control with and without each of abcjs's 41 absent directives; these
+     * five moved nothing, because that control had no lyric, no chord symbol, no dynamic
+     * and no ornament — the only things they position. A control carrying all four makes
+     * NINE of their ten forms move abcjs's own output. **A "SAME" IS ONLY AS GOOD AS THE
+     * SHAPE THAT ASKED**, and the tenth (`%%vocal below`) is the default, so it is the one
+     * rung that genuinely cannot move.
+     */
+    const position = /^(vocal|dynamic|gchord|ornament|volume)\s+(\S+)\s*$/.exec(body)
+    const positionKind = POSITION_DIRECTIVES[position?.[1] ?? '']
+    if (positionKind !== undefined && POSITION_CHOICES.has(position?.[2] ?? '')) {
+      this.ensureScore(start).positions[positionKind] = position?.[2] as ElementPosition
       return
     }
     // `%%jazzchords` — chord modifiers and bass notes as small sub/superscripts. A bare
@@ -5333,6 +5410,7 @@ class Parser {
     const length = this.readLength(tokens, head.next)
     const last = tokens[Math.max(index, length.next - 1)] as Token
     const duration = ratMul(builder.unitNoteLength, length.factor)
+    const positions = builder.stampedPositions()
 
     const note: Note = {
       type: 'note',
@@ -5340,6 +5418,9 @@ class Parser {
       // …and the whole running set when a MID-LINE directive changed it — see
       // `MusicEvent.runningFonts`.
       ...(builder.midLineFonts === null ? {} : { runningFonts: builder.midLineFonts }),
+      // …and the five POSITION directives in force, which travel the same way — see
+      // `ScoreBuilder.positions`.
+      ...(positions === undefined ? {} : { positioning: positions }),
       pitch: head.pitch,
       duration,
       notatedDuration: duration,
@@ -5573,11 +5654,15 @@ class Parser {
     const mixed = headDurations.some((h) => !ratEq(h, duration))
 
     const last = tokens[Math.max(index, post.next - 1)] as Token
+    const positions = builder.stampedPositions()
     return {
       chord: {
         type: 'chord',
         chordFont: builder.chordFont,
         ...(builder.midLineFonts === null ? {} : { runningFonts: builder.midLineFonts }),
+      // …and the five POSITION directives in force, which travel the same way — see
+      // `ScoreBuilder.positions`.
+      ...(positions === undefined ? {} : { positioning: positions }),
         pitches,
         duration,
         notatedDuration: duration,
@@ -5691,9 +5776,14 @@ class Parser {
     }
     // `Z4` is four measures of the bar counter, not one — see `countMultiMeasureRest`.
     if (multi) builder.countMultiMeasureRest(bars)
+    const restPositions = builder.stampedPositions()
     return {
       rest: {
         type: 'rest',
+        // …and the five POSITION directives in force. A REST IS A `note` ELEMENT to abcjs,
+        // so `addFormattingOptions(el, …, 'note')` stamps it exactly as it does a pitch
+        // (`abc_parse_music.js:262`).
+        ...(restPositions === undefined ? {} : { positioning: restPositions }),
         duration,
         notatedDuration: duration,
         ...(whole ? { wholeRest: true as const } : {}),

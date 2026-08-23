@@ -168,6 +168,7 @@ export interface AbcElement {
   /** `!class=…!` — a host's own class on this element. See `noteFields`. */
   extraClass?: string;
   /** `%%…font` overrides in force here that differ from the tune's — see `voiceElements`. */
+  positioning?: Record<string, unknown>;
   fonts?: Record<string, unknown>;
   /** `!style=x!` — the DECORATION's notehead shape. See `Note.styleMark`. */
   style?: string;
@@ -955,6 +956,14 @@ function noteFields(
   if (extraClass !== undefined) e.extraClass = extraClass;
   const styleMark = (event as { styleMark?: string }).styleMark;
   if (styleMark !== undefined) e.style = styleMark;
+  /**
+   * **AND `positioning` STANDS IMMEDIATELY BEFORE `fonts`**, both of them written by
+   * `addFormattingOptions` in that order (`abc_parse.js:120-138`) — MEASURED on a control
+   * carrying both, whose notes read `…,duration,positioning,fonts,el_type,…`. It comes off
+   * the EVENT because the directives are running state; see `MusicEvent.positioning`.
+   */
+  const positioning = (event as { positioning?: Record<string, unknown> }).positioning;
+  if (positioning !== undefined) e.positioning = positioning;
   if (fonts !== undefined) e.fonts = fonts;
   if (
     event.decorations.length > 0 &&

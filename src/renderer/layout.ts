@@ -11911,12 +11911,38 @@ export function layout(input: Score, options: LayoutOptions = {}): Layout {
   // `visual-selection-01` does: its `w:` follows the SECOND of two `[V: PianoRightHand]`
   // lines, and putting system 1's dynamics above cost 27.11px — seven pitch, the lane —
   // between its two staves.
+  /**
+   * ⚠️ **AND A LYRIC WITH ANY `positioning` AT ALL SILENCES THE FLAG, WHATEVER IT SAYS.**
+   *
+   *     if (el.lyric) {
+   *       if (!el.positioning || el.positioning.vocalPosition === 'below')
+   *         this.hasVocals = true;
+   *       return;
+   *     }
+   *
+   * (`abstract-engraver.js:114-119`.) The test is `=== 'below'`, not `!== 'above'` — so a
+   * `%%ornament above` on a tune with lyrics, which writes `{ornamentPosition: 'above'}`
+   * and no `vocalPosition` at all, makes the object EXIST with `vocalPosition` undefined
+   * and the flag goes FALSE. MEASURED on a ten-rung ladder through abcjs: nine of the ten
+   * directive forms move its own output on a tune carrying a lyric, a chord symbol and a
+   * `!p!`, every one of the nine by the SAME 22.71px staff drop, and the tenth is
+   * `%%vocal below` — the only one that sets `vocalPosition` to the word the test asks
+   * for. So the dominant effect of all five directives on such a tune is not what any of
+   * them positions; it is this flag.
+   *
+   * ponytail: abcjs `return`s at the FIRST lyric-bearing element, so a later one cannot
+   * revive the flag; this filters and asks `some`. The two differ only where one LINE holds
+   * two lyric elements with different `vocalPosition`, which needs an inline `[I:vocal …]`
+   * mid-line — nothing in either corpus writes one. Make it "the first decides" when one does.
+   */
   const sings = (measure: Measure): boolean =>
     measure.events.some(
       (event) =>
         (event.type === 'note' || event.type === 'chord') &&
         ((event.lyric !== null && event.lyric !== '') ||
-          event.extraVerses.some((v) => v !== null && v !== '')),
+          event.extraVerses.some((v) => v !== null && v !== '')) &&
+        (event.positioning === undefined ||
+          event.positioning.vocalPosition === 'below'),
     )
   /** Measure indices that open a system, taken from the measures themselves. */
   const systemOpensAt = new Set<number>([0])
