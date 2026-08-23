@@ -9809,6 +9809,9 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
   // 545.9215; every stem `getBarYAt` delivers along that line inherits it, and it was the
   // last token between `visual-decorations-01` and byte parity.
   const beamStartX = up ? first.headX + (first.headWidth - inset) : first.headX
+  if (process.env.ZZBX)
+    console.error('ZZBX headX', first.headX.toPrecision(20), 'w', first.headWidth, 'up', up,
+      'startX', beamStartX.toPrecision(20))
   const beamEndX = up ? last.headX + last.headWidth : last.headX + inset
   const span = beamEndX - beamStartX
   const startY = stepToY(startStep)
@@ -10053,7 +10056,25 @@ function layoutBeam(group: readonly StemInfo[], elements: LayoutElement[]): Plac
       // Level 0 is the main beam and takes `calcXPos`; a deeper one is an `auxBeam`, which
       // is measured the same way except that a descending run ends flush at the head
       // rather than 0.6 past it (`createAdditionalBeams`, `layout/beam.js:180-200`).
-      let x1 = up ? runStart.headX + runStart.headWidth - inset : runStart.headX
+      /**
+       * ⚠️ **AND LEVEL 0 GROUPS THE 0.6 DIFFERENTLY FROM AN AUXILIARY BEAM.** `calcXPos`
+       * writes `startX = starthead.x; if (asc) startX += starthead.w - 0.6` — the 0.6 comes
+       * off the WIDTH — where `createAdditionalBeams` builds
+       * `x = furthestHead.x + (asc ? furthestHead.w : 0)` and THEN `x + (asc ? -0.6 : 0)`,
+       * off the SUM (`layout/beam.js:74-81, 175-186`). Two groupings, both abcjs's, and
+       * this line had the auxiliary one for both.
+       *
+       * `beamStartX` above already takes the level-0 form, so the beam's y was solved at
+       * one x and DRAWN at another: `K:C clef=alto2` writes `93.315000000000011937` here
+       * against abcjs's `93.314999999999997726`, which `toFixed(2)` sends to 93.32 and
+       * 93.31. Three K: clefs showed it — `alto2`, `perc` and `none` — because only a clef
+       * whose width lands the line on a `.xx5` boundary can.
+       */
+      let x1 = up
+        ? level === 0
+          ? runStart.headX + (runStart.headWidth - inset)
+          : runStart.headX + runStart.headWidth - inset
+        : runStart.headX
       let x2 =
         level === 0
           ? up

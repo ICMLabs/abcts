@@ -1835,6 +1835,14 @@
   "L0 s0 kept=key,clef",
   "L0 s0 v0 note@577..578 note@578..579 note@579..580 note@580..581 bar@581..582 note@582..583 note@583..584 note@584..585 note@585..591 bar@591..592"
  ],
+ "repo/abcts-key-modifiers-tune10": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@635..636 note@636..637 note@637..638 note@638..639 bar@639..640 note@640..641 note@641..642 note@642..643 note@643..649 bar@649..650"
+ ],
+ "repo/abcts-key-modifiers-tune11": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@698..699 note@699..700 note@700..701 note@701..702 bar@702..703 note@703..704 note@704..705 note@705..706 note@706..712 bar@712..713"
+ ],
  "repo/abcts-key-modifiers-tune0#breaks": [
   "L0 s0 kept=key,clef",
   "L0 s0 v0 note@38..39 note@39..40 note@40..41 note@41..42 bar@42..43 note@43..44 note@44..45 note@45..46 note@46..52 bar@52..53"
@@ -1874,6 +1882,14 @@
  "repo/abcts-key-modifiers-tune9#breaks": [
   "L0 s0 kept=key,clef",
   "L0 s0 v0 note@577..578 note@578..579 note@579..580 note@580..581 bar@581..582 note@582..583 note@583..584 note@584..585 note@585..591 bar@591..592"
+ ],
+ "repo/abcts-key-modifiers-tune10#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@635..636 note@636..637 note@637..638 note@638..639 bar@639..640 note@640..641 note@641..642 note@642..643 note@643..649 bar@649..650"
+ ],
+ "repo/abcts-key-modifiers-tune11#breaks": [
+  "L0 s0 kept=key,clef",
+  "L0 s0 v0 note@698..699 note@699..700 note@700..701 note@701..702 bar@702..703 note@703..704 note@704..705 note@705..706 note@706..712 bar@712..713"
  ],
  "repo/abcts-keywarn-tune0": [
   "L0 s0 kept=meter,key,clef",

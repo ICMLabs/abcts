@@ -3063,6 +3063,30 @@
     }
    ],
    "hasPickup": true
+  },
+  {
+   "header": "X:11\nT:Key Clef Perc\nL:1/8\nK:C clef=perc\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GAB[ceg]2|"
+    }
+   ],
+   "hasPickup": true
+  },
+  {
+   "header": "X:12\nT:Key Clef Alto Two\nL:1/8\nK:C clef=alto2\n",
+   "measures": [
+    {
+     "abc": "CDEF|"
+    },
+    {
+     "abc": "GAB[ceg]2|"
+    }
+   ],
+   "hasPickup": true
   }
  ],
  "repo/abcts-keywarn": [

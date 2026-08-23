@@ -5179,6 +5179,34 @@
   "L0/s0/v0/8": "{\"abselem\":\"abselem\",\"averagepitch\":15,\"duration\":0.25,\"el_type\":\"note\",\"endChar\":591,\"maxpitch\":17,\"minpitch\":13,\"pitches\":[{\"highestVert\":13,\"name\":\"c\",\"pitch\":7,\"verticalPos\":13},{\"highestVert\":15,\"name\":\"e\",\"pitch\":9,\"verticalPos\":15},{\"highestVert\":17,\"name\":\"g\",\"pitch\":11,\"verticalPos\":17}],\"startChar\":585}",
   "L0/s0/v0/9": "{\"abselem\":\"abselem\",\"el_type\":\"bar\",\"endChar\":592,\"startChar\":591,\"type\":\"bar_thin\"}"
  },
+ "repo/abcts-key-modifiers-tune10": {
+  "L0": "{\"staffGroup\":\"staffGroup\"}",
+  "L0/s0": "{\"clef\":{\"abselem\":\"abselem\",\"clefPos\":6,\"el_type\":\"clef\",\"type\":\"perc\",\"verticalPos\":0},\"key\":{\"acc\":\"\",\"accidentals\":[],\"el_type\":\"keySignature\",\"mode\":\"\",\"root\":\"C\"}}",
+  "L0/s0/v0/0": "{\"abselem\":\"abselem\",\"averagepitch\":0,\"duration\":0.125,\"el_type\":\"note\",\"endChar\":636,\"maxpitch\":0,\"minpitch\":0,\"pitches\":[{\"highestVert\":6,\"name\":\"C\",\"pitch\":0,\"verticalPos\":0}],\"startBeam\":true,\"startChar\":635}",
+  "L0/s0/v0/1": "{\"abselem\":\"abselem\",\"averagepitch\":1,\"duration\":0.125,\"el_type\":\"note\",\"endChar\":637,\"maxpitch\":1,\"minpitch\":1,\"pitches\":[{\"highestVert\":7,\"name\":\"D\",\"pitch\":1,\"verticalPos\":1}],\"startChar\":636}",
+  "L0/s0/v0/2": "{\"abselem\":\"abselem\",\"averagepitch\":2,\"duration\":0.125,\"el_type\":\"note\",\"endChar\":638,\"maxpitch\":2,\"minpitch\":2,\"pitches\":[{\"highestVert\":8,\"name\":\"E\",\"pitch\":2,\"verticalPos\":2}],\"startChar\":637}",
+  "L0/s0/v0/3": "{\"abselem\":\"abselem\",\"averagepitch\":3,\"duration\":0.125,\"el_type\":\"note\",\"endBeam\":true,\"endChar\":639,\"maxpitch\":3,\"minpitch\":3,\"pitches\":[{\"highestVert\":9,\"name\":\"F\",\"pitch\":3,\"verticalPos\":3}],\"startChar\":638}",
+  "L0/s0/v0/4": "{\"abselem\":\"abselem\",\"el_type\":\"bar\",\"endChar\":640,\"startChar\":639,\"type\":\"bar_thin\"}",
+  "L0/s0/v0/5": "{\"abselem\":\"abselem\",\"averagepitch\":4,\"duration\":0.125,\"el_type\":\"note\",\"endChar\":641,\"maxpitch\":4,\"minpitch\":4,\"pitches\":[{\"highestVert\":10,\"name\":\"G\",\"pitch\":4,\"verticalPos\":4}],\"startBeam\":true,\"startChar\":640}",
+  "L0/s0/v0/6": "{\"abselem\":\"abselem\",\"averagepitch\":5,\"duration\":0.125,\"el_type\":\"note\",\"endChar\":642,\"maxpitch\":5,\"minpitch\":5,\"pitches\":[{\"highestVert\":11,\"name\":\"A\",\"pitch\":5,\"verticalPos\":5}],\"startChar\":641}",
+  "L0/s0/v0/7": "{\"abselem\":\"abselem\",\"averagepitch\":6,\"duration\":0.125,\"el_type\":\"note\",\"endBeam\":true,\"endChar\":643,\"maxpitch\":6,\"minpitch\":6,\"pitches\":[{\"highestVert\":12,\"name\":\"B\",\"pitch\":6,\"verticalPos\":6}],\"startChar\":642}",
+  "L0/s0/v0/8": "{\"abselem\":\"abselem\",\"averagepitch\":9,\"duration\":0.25,\"el_type\":\"note\",\"endChar\":649,\"maxpitch\":11,\"minpitch\":7,\"pitches\":[{\"highestVert\":7,\"name\":\"c\",\"pitch\":7,\"verticalPos\":7},{\"highestVert\":9,\"name\":\"e\",\"pitch\":9,\"verticalPos\":9},{\"highestVert\":11,\"name\":\"g\",\"pitch\":11,\"verticalPos\":11}],\"startChar\":643}",
+  "L0/s0/v0/9": "{\"abselem\":\"abselem\",\"el_type\":\"bar\",\"endChar\":650,\"startChar\":649,\"type\":\"bar_thin\"}"
+ },
+ "repo/abcts-key-modifiers-tune11": {
+  "L0": "{\"staffGroup\":\"staffGroup\"}",
+  "L0/s0": "{\"clef\":{\"abselem\":\"abselem\",\"clefPos\":4,\"el_type\":\"clef\",\"type\":\"alto\",\"verticalPos\":-4},\"key\":{\"acc\":\"\",\"accidentals\":[],\"el_type\":\"keySignature\",\"mode\":\"\",\"root\":\"C\"}}",
+  "L0/s0/v0/0": "{\"abselem\":\"abselem\",\"averagepitch\":4,\"duration\":0.125,\"el_type\":\"note\",\"endChar\":699,\"maxpitch\":4,\"minpitch\":4,\"pitches\":[{\"highestVert\":10,\"name\":\"C\",\"pitch\":0,\"verticalPos\":4}],\"startBeam\":true,\"startChar\":698}",
+  "L0/s0/v0/1": "{\"abselem\":\"abselem\",\"averagepitch\":5,\"duration\":0.125,\"el_type\":\"note\",\"endChar\":700,\"maxpitch\":5,\"minpitch\":5,\"pitches\":[{\"highestVert\":11,\"name\":\"D\",\"pitch\":1,\"verticalPos\":5}],\"startChar\":699}",
+  "L0/s0/v0/2": "{\"abselem\":\"abselem\",\"averagepitch\":6,\"duration\":0.125,\"el_type\":\"note\",\"endChar\":701,\"maxpitch\":6,\"minpitch\":6,\"pitches\":[{\"highestVert\":12,\"name\":\"E\",\"pitch\":2,\"verticalPos\":6}],\"startChar\":700}",
+  "L0/s0/v0/3": "{\"abselem\":\"abselem\",\"averagepitch\":7,\"duration\":0.125,\"el_type\":\"note\",\"endBeam\":true,\"endChar\":702,\"maxpitch\":7,\"minpitch\":7,\"pitches\":[{\"highestVert\":13,\"name\":\"F\",\"pitch\":3,\"verticalPos\":7}],\"startChar\":701}",
+  "L0/s0/v0/4": "{\"abselem\":\"abselem\",\"el_type\":\"bar\",\"endChar\":703,\"startChar\":702,\"type\":\"bar_thin\"}",
+  "L0/s0/v0/5": "{\"abselem\":\"abselem\",\"averagepitch\":8,\"duration\":0.125,\"el_type\":\"note\",\"endChar\":704,\"maxpitch\":8,\"minpitch\":8,\"pitches\":[{\"highestVert\":8,\"name\":\"G\",\"pitch\":4,\"verticalPos\":8}],\"startBeam\":true,\"startChar\":703}",
+  "L0/s0/v0/6": "{\"abselem\":\"abselem\",\"averagepitch\":9,\"duration\":0.125,\"el_type\":\"note\",\"endChar\":705,\"maxpitch\":9,\"minpitch\":9,\"pitches\":[{\"highestVert\":9,\"name\":\"A\",\"pitch\":5,\"verticalPos\":9}],\"startChar\":704}",
+  "L0/s0/v0/7": "{\"abselem\":\"abselem\",\"averagepitch\":10,\"duration\":0.125,\"el_type\":\"note\",\"endBeam\":true,\"endChar\":706,\"maxpitch\":10,\"minpitch\":10,\"pitches\":[{\"highestVert\":10,\"name\":\"B\",\"pitch\":6,\"verticalPos\":10}],\"startChar\":705}",
+  "L0/s0/v0/8": "{\"abselem\":\"abselem\",\"averagepitch\":13,\"duration\":0.25,\"el_type\":\"note\",\"endChar\":712,\"maxpitch\":15,\"minpitch\":11,\"pitches\":[{\"highestVert\":11,\"name\":\"c\",\"pitch\":7,\"verticalPos\":11},{\"highestVert\":13,\"name\":\"e\",\"pitch\":9,\"verticalPos\":13},{\"highestVert\":15,\"name\":\"g\",\"pitch\":11,\"verticalPos\":15}],\"startChar\":706}",
+  "L0/s0/v0/9": "{\"abselem\":\"abselem\",\"el_type\":\"bar\",\"endChar\":713,\"startChar\":712,\"type\":\"bar_thin\"}"
+ },
  "repo/abcts-keywarn-tune0": {
   "L0": "{\"staffGroup\":\"staffGroup\"}",
   "L0/s0": "{\"clef\":{\"abselem\":\"abselem\",\"clefPos\":4,\"el_type\":\"clef\",\"type\":\"treble\",\"verticalPos\":0},\"key\":{\"acc\":\"\",\"accidentals\":[],\"el_type\":\"keySignature\",\"mode\":\"\",\"root\":\"C\"},\"meter\":{\"abselem\":\"abselem\",\"el_type\":\"timeSignature\",\"type\":\"specified\",\"value\":[{\"den\":\"4\",\"num\":\"4\"}]}}",

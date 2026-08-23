@@ -57,3 +57,15 @@ T:Key Clef Alto With Naturals
 L:1/8
 K:C clef=alto =f
 CDEF|GAB[ceg]2|
+
+X:11
+T:Key Clef Perc
+L:1/8
+K:C clef=perc
+CDEF|GAB[ceg]2|
+
+X:12
+T:Key Clef Alto Two
+L:1/8
+K:C clef=alto2
+CDEF|GAB[ceg]2|

@@ -978,6 +978,12 @@
  "repo/abcts-key-modifiers-tune9": {
   "title": "Key Clef Alto With Naturals"
  },
+ "repo/abcts-key-modifiers-tune10": {
+  "title": "Key Clef Perc"
+ },
+ "repo/abcts-key-modifiers-tune11": {
+  "title": "Key Clef Alto Two"
+ },
  "repo/abcts-keywarn-tune0": {
   "title": "keywarn absent"
  },

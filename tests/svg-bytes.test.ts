@@ -318,12 +318,15 @@ const PASSING: readonly string[] = [
    * ones: four defects, and tune 9 gates the rule that decided the fourth — accidentals
    * are a PREFIX, so `K:C =f clef=alto` draws the natural and `K:C clef=alto =f` does not.
    *
-   * ⚠️ **`clef=perc`, `clef=none` AND `clef=alto2` ARE NOT HERE.** All three are one open
-   * row: the BEAM's left x, which abcjs builds from the head and we translate from the
-   * element, so a clef that lands the line on a `.xx5` boundary rounds the other way. The
-   * stem half of that pair is fixed and gated here; the beam half is not.
+   * ⚠️ **`clef=none` IS NOT HERE, AND IT IS THE LAST OF ITS FAMILY.** `perc` and `alto2`
+   * joined once the beam's level-0 grouping was corrected (tunes 10 and 11); `none` keeps
+   * ONE stem, whose centre is itself `origin + (headInk - half)` and whose drawn edge the
+   * emitter rebuilds as `(centre - half) + half` — three operations where abcjs has one
+   * sum, `58.604999999999996873` against `58.605000000000003979`. Carrying abcjs's anchor
+   * on the line instead was tried and broke all 33 rows: `headX + baseShift` is NOT the
+   * element origin the anchor is measured from, and finding what is remains open.
    */
-  ...Array.from({ length: 10 }, (_, i) => `abcts-key-modifiers-tune${i}`),
+  ...Array.from({ length: 12 }, (_, i) => `abcts-key-modifiers-tune${i}`),
   /**
    * `abcts-voice-style.abc` — `V:… style=`, the first of the three modifiers the V:
    * enumeration left as a FEATURE. All five shapes, one voice each.

@@ -1359,6 +1359,18 @@
   "bar el_type,endChar,startChar,type",
   "note duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
  ],
+ "repo/abcts-key-modifiers-tune10": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
+ "repo/abcts-key-modifiers-tune11": [
+  "staff.clef el_type=undefined clefPos,type,verticalPos",
+  "staff.key el_type=undefined acc,accidentals,mode,root",
+  "bar el_type,endChar,startChar,type",
+  "note duration,el_type,endBeam,endChar,pitches,pitches.name,pitches.pitch,pitches.verticalPos,startBeam,startChar"
+ ],
  "repo/abcts-keywarn-tune0": [
   "staff.clef el_type=undefined clefPos,type,verticalPos",
   "staff.key el_type=undefined acc,accidentals,mode,root",
